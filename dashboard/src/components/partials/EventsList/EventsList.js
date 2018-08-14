@@ -198,6 +198,7 @@ class EventsContainer extends React.Component {
       selected={selected}
       onChangeSelected={setSelected}
       onClickClearSilences={() => this.clearSilences([event])}
+      onClickSilencePair={() => this.silenceEvents([event])}
       onClickSilenceEntity={() => this.silenceEntity(event.entity)}
       onClickSilenceCheck={() => this.silenceCheck(event.check)}
       onClickResolve={() => this.resolveEvents([event])}

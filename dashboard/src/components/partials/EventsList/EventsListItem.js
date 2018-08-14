@@ -10,14 +10,13 @@ import MoreVert from "@material-ui/icons/MoreVert";
 import RootRef from "@material-ui/core/RootRef";
 import TableCell from "@material-ui/core/TableCell";
 
-import { RelativeToCurrentDate } from "/components/RelativeDate";
-
 import MenuController from "/components/controller/MenuController";
 
 import ResourceDetails from "/components/partials/ResourceDetails";
 import TableOverflowCell from "/components/partials/TableOverflowCell";
 import TableSelectableRow from "/components/partials/TableSelectableRow";
 
+import EventStatusDescriptor from "/components/partials/EventStatusDescriptor";
 import NamespaceLink from "/components/util/NamespaceLink";
 import CheckStatusIcon from "/components/CheckStatusIcon";
 
@@ -26,6 +25,7 @@ class EventListItem extends React.PureComponent {
     selected: PropTypes.bool.isRequired,
     onChangeSelected: PropTypes.func.isRequired,
     onClickClearSilences: PropTypes.func.isRequired,
+    onClickSilencePair: PropTypes.func.isRequired,
     onClickSilenceEntity: PropTypes.func.isRequired,
     onClickSilenceCheck: PropTypes.func.isRequired,
     onClickResolve: PropTypes.func.isRequired,
@@ -44,16 +44,15 @@ class EventListItem extends React.PureComponent {
     event: gql`
       fragment EventsListItem_event on Event {
         id
-        timestamp
         isSilenced
+        isNewIncident
+        timestamp
         deleted @client
         check {
-          status
           name
           isSilenced
-          history(first: 1) {
-            status
-          }
+          status
+          ...EventStatusDescriptor_check
         }
         entity {
           name
@@ -62,7 +61,11 @@ class EventListItem extends React.PureComponent {
           organization
           environment
         }
+        ...EventStatusDescriptor_event
       }
+
+      ${EventStatusDescriptor.fragments.check}
+      ${EventStatusDescriptor.fragments.event}
     `,
   };
 
@@ -92,6 +95,15 @@ class EventListItem extends React.PureComponent {
           }}
         >
           Silence Check
+        </MenuItem>
+        <MenuItem
+          key={"silence-pair"}
+          onClick={() => {
+            this.props.onClickSilencePair();
+            close();
+          }}
+        >
+          Silence Both
         </MenuItem>
         {event.check.isSilenced && (
           <MenuItem
@@ -123,14 +135,12 @@ class EventListItem extends React.PureComponent {
 
     // Try to determine if the failing check just started failing and if so
     // highlight the row.
-    const incidentStarted =
-      check.status > 0 &&
-      check.history.length > 0 &&
-      check.history[0].status !== check.status &&
+    const isNewIncident =
+      event.isNewIncident &&
       new Date(new Date(timestamp).valueOf() + 2500) >= new Date();
 
     return (
-      <TableSelectableRow selected={selected} highlight={incidentStarted}>
+      <TableSelectableRow selected={selected} highlight={isNewIncident}>
         <TableCell padding="checkbox">
           <Checkbox
             color="primary"
@@ -159,13 +169,7 @@ class EventListItem extends React.PureComponent {
               </NamespaceLink>
             }
             details={
-              <React.Fragment>
-                Last occurred{" "}
-                <strong>
-                  <RelativeToCurrentDate dateTime={timestamp} />
-                </strong>{" "}
-                and exited with status <strong>{check.status}</strong>.
-              </React.Fragment>
+              <EventStatusDescriptor event={event} check={event.check} />
             }
           />
         </TableOverflowCell>

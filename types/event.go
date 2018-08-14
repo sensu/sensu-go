@@ -201,8 +201,9 @@ func EventsByTimestamp(es []*Event, asc bool) sort.Interface {
 
 // EventsByLastOk can be used to sort a given collection of events by time it
 // last received an OK status.
-func EventsByLastOk(es []*Event, asc bool) sort.Interface {
+func EventsByLastOk(es []*Event) sort.Interface {
 	return &eventSorter{es, createCmpEvents(
+		cmpByIncident,
 		cmpByLastOk,
 		cmpByEntityID,
 	)}
@@ -232,6 +233,18 @@ func cmpBySeverity(a, b *Event) int {
 	if ap == bp {
 		return 0
 	} else if ap < bp {
+		return 1
+	}
+	return -1
+}
+
+func cmpByIncident(a, b *Event) int {
+	av, bv := a.IsIncident(), b.IsIncident()
+
+	// Rank higher if incident
+	if av == bv {
+		return 0
+	} else if av {
 		return 1
 	}
 	return -1

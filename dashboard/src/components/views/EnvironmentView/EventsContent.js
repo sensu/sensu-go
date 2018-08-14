@@ -39,7 +39,7 @@ class EventsContent extends React.Component {
   static query = gql`
     query EnvironmentViewEventsContentQuery(
       $filter: String = "${defaultExpression}"
-      $order: EventsListOrder = SEVERITY
+      $order: EventsListOrder = LASTOK
       $limit: Int,
       $offset: Int,
       $environment: String!

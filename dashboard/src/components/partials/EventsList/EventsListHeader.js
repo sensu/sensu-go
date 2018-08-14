@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import capitalize from "lodash/capitalize";
 
 import MenuItem from "@material-ui/core/MenuItem";
 import ListItemText from "@material-ui/core/ListItemText";
@@ -89,8 +88,10 @@ class EventsListHeader extends React.PureComponent {
         const val = newValue.join(",");
         this.props.onChangeQuery({ filter: `Check.Status IN (${val})` });
       }
-    } else {
+    } else if (newValue === "") {
       this.props.onChangeQuery(query => query.delete("filter"));
+    } else {
+      this.props.onChangeQuery({ filter: newValue });
     }
   };
 
@@ -245,15 +246,20 @@ class EventsListHeader extends React.PureComponent {
               pinned
               renderMenu={({ anchorEl, close }) => (
                 <Menu open onClose={close} anchorEl={anchorEl}>
-                  {["SEVERITY", "NEWEST", "OLDEST"].map(name => (
+                  {[
+                    { name: "Last OK", value: "LASTOK" },
+                    { name: "Severity", value: "SEVERITY" },
+                    { name: "Newest", value: "NEWEST" },
+                    { name: "Oldest", value: "OLDEST" },
+                  ].map(option => (
                     <MenuItem
-                      key={name}
+                      key={option.value}
                       onClick={() => {
-                        this._handleChangeSort(name);
+                        this._handleChangeSort(option.value);
                         close();
                       }}
                     >
-                      <ListItemText primary={capitalize(name)} />
+                      <ListItemText primary={option.name} />
                     </MenuItem>
                   ))}
                 </Menu>

@@ -749,6 +749,12 @@ type Event implements Node {
   isIncident: Boolean!
 
   """
+  isNewIncident returns true if the event is an incident but it's previous
+  iteration was OK.
+  """
+  isNewIncident: Boolean!
+
+  """
   isResolution returns true if an event has just transitions from an incident.
   """
   isResolution: Boolean!
@@ -770,6 +776,8 @@ enum EventsListOrder {
   OLDEST
   NEWEST
   SEVERITY
+  LASTOK
+  LASTOK_DESC
 }
 
 input ExecuteCheckInput {
@@ -1091,7 +1099,7 @@ type ProxyRequests {
   splayCoverage is the percentage used for proxy check request splay
   calculation.
   """
-  splay_coverage: Int!
+  splayCoverage: Int!
 }
 
 """The query root of Sensu's GraphQL interface."""

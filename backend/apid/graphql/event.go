@@ -42,6 +42,18 @@ func (r *eventImpl) IsIncident(p graphql.ResolveParams) (bool, error) {
 	return event.IsIncident(), nil
 }
 
+// IsNewIncident implements response to request for 'isNewIncident' field.
+func (r *eventImpl) IsNewIncident(p graphql.ResolveParams) (bool, error) {
+	event := p.Source.(*types.Event)
+	check := event.Check
+	if check == nil || check.Status == 0 || len(check.History) == 0 {
+		return false, nil
+	}
+
+	lastExecution := check.History[0].Status
+	return lastExecution == 0, nil
+}
+
 // IsResolution implements response to request for 'isResolution' field.
 func (r *eventImpl) IsResolution(p graphql.ResolveParams) (bool, error) {
 	event := p.Source.(*types.Event)

@@ -101,8 +101,9 @@ enum EntityListOrder {
 }
 
 enum EventsListOrder {
-  OLDEST
+  LASTOK
   NEWEST
+  OLDEST
   SEVERITY
 }
 

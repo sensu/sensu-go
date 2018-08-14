@@ -251,6 +251,50 @@ func TestEventsBySeverity(t *testing.T) {
 	}
 }
 
+func TestEventsByLastOk(t *testing.T) {
+	incident := FixtureEvent("zeta", "check")
+	incident.Check.Status = 2 // crit
+	incidentNewer := FixtureEvent("zeta", "check")
+	incidentNewer.Check.Status = 2 // crit
+	incidentNewer.Check.LastOK = 1
+	ok := FixtureEvent("zeta", "check")
+	ok.Check.Status = 0 // ok
+	okNewer := FixtureEvent("zeta", "check")
+	okNewer.Check.Status = 0 // ok
+	okNewer.Check.LastOK = 1
+	okDiffEntity := FixtureEvent("abba", "check")
+	okDiffEntity.Check.Status = 0 // ok
+
+	testCases := []struct {
+		name     string
+		input    []*Event
+		expected []*Event
+	}{
+		{
+			name:     "Sorts by lastOK",
+			input:    []*Event{ok, okNewer, incidentNewer, incident},
+			expected: []*Event{incidentNewer, incident, okNewer, ok},
+		},
+		{
+			name:     "incidents are sorted to the top",
+			input:    []*Event{okNewer, incidentNewer, ok, incident},
+			expected: []*Event{incidentNewer, incident, okNewer, ok},
+		},
+		{
+			name:     "Fallback to entity ID when severity is same",
+			input:    []*Event{ok, okNewer, okDiffEntity},
+			expected: []*Event{okNewer, okDiffEntity, ok},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sort.Sort(EventsByLastOk(tc.input))
+			assert.EqualValues(t, tc.expected, tc.input)
+		})
+	}
+}
+
 func TestEventsByTimestamp(t *testing.T) {
 	old := &Event{Timestamp: 3}
 	older := &Event{Timestamp: 2}
