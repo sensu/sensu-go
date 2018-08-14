@@ -4,12 +4,21 @@ import (
 	"fmt"
 	"net/http"
 	"testing"
-	"time"
 
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/echlebek/crock"
+	time "github.com/echlebek/timeproxy"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
+
+var testTime = crock.NewTime(time.Now())
+
+func init() {
+	time.TimeProxy = testTime
+	jwt.TimeFunc = testTime.Now
+}
 
 func TestAccessToken(t *testing.T) {
 	secret = []byte("foobar")
@@ -113,34 +122,30 @@ func TestRefreshToken(t *testing.T) {
 
 func TestValidateTokenError(t *testing.T) {
 	// Create an expired token
-	defaultExpiration = time.Second * time.Duration(1)
 	username := "foo"
 	_, tokenString, _ := AccessToken(username)
 
-	// Wait for the token to expire
-	time.Sleep(time.Second * 2)
+	// Assert that the token is currently valid
 	_, err := ValidateToken(tokenString)
-	assert.Error(t, err)
+	assert.NoError(t, err)
 
-	// Set back the default value
-	defaultExpiration = time.Minute * time.Duration(15)
+	// The token should expire after the expiration time
+	testTime.Set(time.Now().Add(defaultExpiration + time.Hour))
+	_, err = ValidateToken(tokenString)
+	assert.Error(t, err)
 }
 
 // ValidateExpiredToken should not return an error if we provide an expired
 // token but otherwise valid
 func TestValidateExpiredToken(t *testing.T) {
 	// Create an expired token
-	defaultExpiration = time.Second * time.Duration(1)
 	username := "foo"
 	_, tokenString, _ := AccessToken(username)
 
 	// Wait for the token to expire
-	time.Sleep(time.Second * 2)
+	testTime.Set(time.Now().Add(defaultExpiration + time.Second))
 	_, err := ValidateExpiredToken(tokenString)
 	assert.NoError(t, err, "An expired token should not be considered as invalid")
-
-	// Set back the default value
-	defaultExpiration = time.Minute * time.Duration(15)
 }
 
 func TestValidateExpiredTokenActive(t *testing.T) {
@@ -158,19 +163,15 @@ func TestValidateExpiredTokenActive(t *testing.T) {
 func TestValidateExpiredTokenInvalid(t *testing.T) {
 	// Create an expired token
 	secret = []byte("foobar")
-	defaultExpiration = time.Second * time.Duration(1)
 	username := "foo"
 	_, tokenString, _ := AccessToken(username)
 
-	// Wait for the token to expire
-	time.Sleep(time.Second * 2)
+	// The token will expire
+	testTime.Set(time.Now().Add(defaultExpiration + time.Second))
 
 	// Modify the secret so it's no longer valid
 	secret = []byte("qux")
 
 	_, err := ValidateExpiredToken(tokenString)
 	assert.Error(t, err, "An invalid token should not be valid even if it's expired")
-
-	// Set back the default value
-	defaultExpiration = time.Minute * time.Duration(15)
 }
