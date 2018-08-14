@@ -1,9 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 import SvgIcon from "@material-ui/core/SvgIcon";
-import { pure } from "recompose";
 
-class Icon extends React.Component {
+class SensuIcon extends React.PureComponent {
   static propTypes = {
     viewBox: PropTypes.string,
   };
@@ -26,7 +25,4 @@ class Icon extends React.Component {
   }
 }
 
-const EnhancedIcon = pure(Icon);
-EnhancedIcon.muiName = "SvgIcon";
-
-export default EnhancedIcon;
+export default SensuIcon;
