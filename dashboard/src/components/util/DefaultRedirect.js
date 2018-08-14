@@ -1,8 +1,18 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { Redirect } from "react-router-dom";
 import { graphql } from "react-apollo";
 import gql from "graphql-tag";
+
+import SigninRedirect from "./SigninRedirect";
+import LastEnvironmentRedirect from "./LastEnvironmentRedirect";
+
+const query = gql`
+  query DefaultRedirectQuery {
+    auth @client {
+      accessToken
+    }
+  }
+`;
 
 class DefaultRedirect extends React.PureComponent {
   static propTypes = {
@@ -10,21 +20,11 @@ class DefaultRedirect extends React.PureComponent {
   };
 
   render() {
-    const { data } = this.props;
-
-    // TODO: Store and retrieve last viewed environment.
-    const lastEnvironment = "/default/default";
-
-    const nextPath = data.auth.accessToken ? lastEnvironment : "/signin";
-
-    return <Redirect to={nextPath} />;
+    if (!this.props.data.auth.accessToken) {
+      return <SigninRedirect />;
+    }
+    return <LastEnvironmentRedirect />;
   }
 }
 
-export default graphql(gql`
-  query {
-    auth @client {
-      accessToken
-    }
-  }
-`)(DefaultRedirect);
+export default graphql(query)(DefaultRedirect);
