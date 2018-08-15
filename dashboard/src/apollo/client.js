@@ -54,6 +54,11 @@ const createClient = () => {
         }
       }
     `,
+    {
+      // To avoid any confusion when multiple tabs are open, ignore updates from
+      // other tabs / windows.
+      ignoreRemoteUpdates: true,
+    },
   );
 
   localStorageSync(
