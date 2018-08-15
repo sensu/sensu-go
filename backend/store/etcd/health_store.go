@@ -30,7 +30,6 @@ func (s *Store) GetClusterHealth(ctx context.Context) []*types.ClusterHealth {
 			Endpoints:   member.ClientURLs,
 			DialTimeout: 5 * time.Second,
 		})
-		defer cli.Close()
 
 		if err != nil || cli == nil {
 			health.Err = cliErr
@@ -38,6 +37,8 @@ func (s *Store) GetClusterHealth(ctx context.Context) []*types.ClusterHealth {
 			healthList = append(healthList, health)
 			continue
 		}
+		defer cli.Close()
+
 		_, getErr := cli.Get(context.Background(), "health")
 
 		if getErr == nil || getErr == rpctypes.ErrPermissionDenied {
