@@ -31,7 +31,8 @@ func (s *Store) GetClusterHealth(ctx context.Context) []*types.ClusterHealth {
 			DialTimeout: 5 * time.Second,
 		})
 
-		if err != nil || cli == nil {
+		if cliErr != nil {
+			logger.WithField("member", member.ID).WithError(cliErr).Error("unhealthy cluster member")
 			health.Err = cliErr
 			health.Healthy = false
 			healthList = append(healthList, health)
