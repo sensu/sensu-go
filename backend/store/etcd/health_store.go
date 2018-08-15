@@ -30,12 +30,13 @@ func (s *Store) GetClusterHealth(ctx context.Context) []*types.ClusterHealth {
 			Endpoints:   member.ClientURLs,
 			DialTimeout: 5 * time.Second,
 		})
+		defer cli.Close()
 
-		if err != nil {
+		if err != nil || cli == nil {
 			health.Err = cliErr
 			health.Healthy = false
 			healthList = append(healthList, health)
-			return healthList
+			continue
 		}
 		_, getErr := cli.Get(context.Background(), "health")
 
