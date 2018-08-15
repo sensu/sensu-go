@@ -32,6 +32,7 @@ message on startup failure.
 compliant with InfluxDB line protocol.
 - Fixed an issue where adhoc checks would not be issued to all agents in a
 clustered installation.
+- Fixes a bug in `sensuctl cluster health` so the correct error is handled.
 
 ### Breaking Changes
 - Corrects the check field `total_state-change` json tag to `total_state_change`.
