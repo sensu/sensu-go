@@ -31,12 +31,15 @@ func (s *Store) GetClusterHealth(ctx context.Context) []*types.ClusterHealth {
 			DialTimeout: 5 * time.Second,
 		})
 
-		if err != nil {
+		if cliErr != nil {
+			logger.WithField("member", member.ID).WithError(cliErr).Error("unhealthy cluster member")
 			health.Err = cliErr
 			health.Healthy = false
 			healthList = append(healthList, health)
-			return healthList
+			continue
 		}
+		defer cli.Close()
+
 		_, getErr := cli.Get(context.Background(), "health")
 
 		if getErr == nil || getErr == rpctypes.ErrPermissionDenied {
