@@ -47,6 +47,23 @@ const createClient = () => {
   localStorageSync(
     client,
     gql`
+      query SyncLastEnvironmentQuery {
+        lastEnvironment @client {
+          organization
+          environment
+        }
+      }
+    `,
+    {
+      // To avoid any confusion when multiple tabs are open, ignore updates from
+      // other tabs / windows.
+      ignoreRemoteUpdates: true,
+    },
+  );
+
+  localStorageSync(
+    client,
+    gql`
       query SyncAuthQuery {
         auth @client {
           invalid

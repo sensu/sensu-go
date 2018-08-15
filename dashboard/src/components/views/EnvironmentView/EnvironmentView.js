@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { Switch, Route, Redirect } from "react-router-dom";
 
 import AppWrapper from "/components/AppWrapper";
+import LastEnvironmentUpdater from "/components/util/LastEnvironmentUpdater";
 import NotFoundView from "/components/views/NotFoundView";
 
 import ChecksContent from "./ChecksContent";
@@ -26,42 +27,48 @@ class EnvironmentView extends React.PureComponent {
         organization={match.params.organization}
         environment={match.params.environment}
       >
-        <Switch>
-          <Route
-            exact
-            path={`${match.path}/checks`}
-            component={ChecksContent}
+        <React.Fragment>
+          <Switch>
+            <Route
+              exact
+              path={`${match.path}/checks`}
+              component={ChecksContent}
+            />
+            <Route
+              exact
+              path={`${match.path}/entities`}
+              component={EntitiesContent}
+            />
+            <Route
+              exact
+              path={`${match.path}/events`}
+              component={EventsContent}
+            />
+            <Route
+              path={`${match.path}/events/:entity/:check`}
+              component={EventDetailsContent}
+            />
+            <Route
+              path={`${match.path}/entities/:name`}
+              component={EntityDetailsContent}
+            />
+            <Route
+              exact
+              path={`${match.path}/silences`}
+              component={SilencesContent}
+            />
+            <Route
+              path={`${match.path}/checks/:name`}
+              component={CheckDetailsContent}
+            />
+            <Redirect exact from={match.path} to={`${match.url}/events`} />
+            <Route component={NotFoundView} />
+          </Switch>
+          <LastEnvironmentUpdater
+            organization={match.params.organization}
+            environment={match.params.environment}
           />
-          <Route
-            exact
-            path={`${match.path}/entities`}
-            component={EntitiesContent}
-          />
-          <Route
-            exact
-            path={`${match.path}/events`}
-            component={EventsContent}
-          />
-          <Route
-            path={`${match.path}/events/:entity/:check`}
-            component={EventDetailsContent}
-          />
-          <Route
-            path={`${match.path}/entities/:name`}
-            component={EntityDetailsContent}
-          />
-          <Route
-            exact
-            path={`${match.path}/silences`}
-            component={SilencesContent}
-          />
-          <Route
-            path={`${match.path}/checks/:name`}
-            component={CheckDetailsContent}
-          />
-          <Redirect exact from={match.path} to={`${match.url}/events`} />
-          <Route component={NotFoundView} />
-        </Switch>
+        </React.Fragment>
       </AppWrapper>
     );
   }

@@ -961,6 +961,7 @@ type Mutation {
   createTokens(username: String!, password: String!): Boolean
   refreshTokens(notBefore: DateTime): RefreshTokensPayload!
   invalidateTokens: Boolean
+  setLastEnvironment(organization: String!, environment: String!): Boolean
 }
 
 """A Mutator is a mutator specification."""
@@ -1132,6 +1133,9 @@ type Query {
 
   """Describes state of authorization tokens"""
   auth: Auth
+
+  """The last environment that the client accessed."""
+  lastEnvironment: Namespace
 }
 
 type RefreshTokensPayload {

@@ -4,7 +4,8 @@ import handle from "/exceptionHandler";
 
 const getQueryName = document => document.definitions[0].name.value;
 
-const localStorageSync = (client, query) => {
+const localStorageSync = (client, query, opts = {}) => {
+  const { ignoreRemoteUpdates = false } = opts;
   const storageKey = `$SYNC.${getQueryName(query)}`;
 
   const restoreData = data => {
@@ -21,11 +22,13 @@ const localStorageSync = (client, query) => {
     restoreData(currentValue);
   }
 
-  window.addEventListener("storage", event => {
-    if (event.storageArea === localStorage && event.key === storageKey) {
-      restoreData(event.newValue);
-    }
-  });
+  if (!ignoreRemoteUpdates) {
+    window.addEventListener("storage", event => {
+      if (event.storageArea === localStorage && event.key === storageKey) {
+        restoreData(event.newValue);
+      }
+    });
+  }
 
   const queryObservable = client.watchQuery({ query });
   let first = true;

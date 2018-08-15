@@ -26,12 +26,19 @@ extend type CheckConfig {
 extend type Query {
   "Describes state of authorization tokens"
   auth: Auth
+
+  "The last environment that the client accessed."
+  lastEnvironment: Namespace
 }
 
 extend type Mutation {
+  # Authentication
   createTokens(username: String!, password: String!): Boolean
   refreshTokens(notBefore: DateTime): RefreshTokensPayload!
   invalidateTokens: Boolean
+
+  # Last Environment
+  setLastEnvironment(organization: String!, environment: String!): Boolean
 }
 
 type Auth {
