@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [2.0.0-beta.4] - 2018-08-14
+
 ### Added
 - Added the Sensu edition in sensuctl config view subcommand.
 - List the supported resource types in sensuctl.
