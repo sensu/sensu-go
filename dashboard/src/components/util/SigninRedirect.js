@@ -1,8 +1,8 @@
 import React from "react";
 import { Route, Redirect } from "react-router-dom";
+import { redirectKey } from "/constants/queryParams";
 
 const signinPath = "/signin";
-const redirectKey = "redirect-to";
 
 class SigninRedirect extends React.PureComponent {
   renderRedirect = ({ location }) => {

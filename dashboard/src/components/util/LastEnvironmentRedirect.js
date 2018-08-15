@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import { compose } from "recompose";
 import { Redirect, withRouter } from "react-router-dom";
 import { graphql, Query } from "react-apollo";
+import { redirectKey } from "/constants/queryParams";
 import gql from "graphql-tag";
 
 const primaryQuery = gql`
@@ -59,10 +60,11 @@ class LastEnvironmentRedirect extends React.PureComponent {
 
     // 1. if 'redirect-to' query parameter is present use given path.
     const queryParams = new URLSearchParams(location.search);
-    const redirectQueryParam = queryParams.get("redirect-to");
+    const redirectQueryParam = queryParams.get(redirectKey);
     if (redirectQueryParam) {
       return <Redirect to={redirectQueryParam} />;
     }
+
     // 2. if the user's last environment was not recovered from localStorage
     // we fetch all the user's organizations and redirect to first result.
     const { lastEnvironment } = data;
