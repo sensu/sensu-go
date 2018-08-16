@@ -12,6 +12,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [2.0.0-beta.4] - 2018-08-14
 
+### Fixed
+- Fixed a bug where assets could not extract git tarballs.
+
 ### Added
 - Added the Sensu edition in sensuctl config view subcommand.
 - List the supported resource types in sensuctl.
