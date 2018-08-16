@@ -12,10 +12,6 @@ import (
 func (s *Store) GetClusterHealth(ctx context.Context) *types.HealthResponse {
 	healthResponse := &types.HealthResponse{}
 
-	alarmResponse, err := s.client.Maintenance.AlarmList(ctx)
-	if err == nil {
-		healthResponse.Alarms = alarmResponse.Alarms
-	}
 	// Do a get op against every cluster member. Collect the  memberIDs and
 	// op errors into a response map, and return this map as etcd health
 	// information.
@@ -57,8 +53,12 @@ func (s *Store) GetClusterHealth(ctx context.Context) *types.HealthResponse {
 		healthResponse.ClusterHealth = append(healthResponse.ClusterHealth, health)
 	}
 
-	alarmResponse, err = s.client.Maintenance.AlarmList(ctx)
-	if err == nil {
+	alarmResponse, err := s.client.Maintenance.AlarmList(ctx)
+	if err != nil {
+		logger.WithError(err).Error("failed to fetch etcd alarm list")
+	}
+
+	if alarmResponse != nil {
 		healthResponse.Alarms = alarmResponse.Alarms
 	}
 	return healthResponse
