@@ -556,11 +556,11 @@
   revision = "9520e82c474b0a04dd04f8a40959027271bab992"
 
 [[projects]]
-  digest = "1:54810f1da274687d725732a273e250c59ac0374cdbf6288ac206ef24c53c5478"
+  digest = "1:4f17855b701d15f25e282fe70d432ecb023c9f115c79b211a06845e50dce7c48"
   name = "github.com/mholt/archiver"
   packages = ["."]
   pruneopts = "UT"
-  revision = "e4ef56d48eb029648b0e895bb0b6a393ef0829c3"
+  revision = "85d3d0b511eae05958ddb34e9eac57d8ffea03bf"
 
 [[projects]]
   branch = "master"
