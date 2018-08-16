@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Fixes a bug in `sensuctl cluster health` so the correct error is handled.
+
 ## [2.0.0-beta.4] - 2018-08-14
 
 ### Added
@@ -34,7 +37,6 @@ message on startup failure.
 compliant with InfluxDB line protocol.
 - Fixed an issue where adhoc checks would not be issued to all agents in a
 clustered installation.
-- Fixes a bug in `sensuctl cluster health` so the correct error is handled.
 
 ### Breaking Changes
 - Corrects the check field `total_state-change` json tag to `total_state_change`.
