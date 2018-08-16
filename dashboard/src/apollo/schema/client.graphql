@@ -32,12 +32,25 @@ extend type Query {
 }
 
 extend type Mutation {
+  #
   # Authentication
+
+  "Create new authorization tokens."
   createTokens(username: String!, password: String!): Boolean
+
+  "Create new authorization tokens using refresh token."
   refreshTokens(notBefore: DateTime): RefreshTokensPayload!
+
+  "Invalidates authorization tokens."
   invalidateTokens: Boolean
 
+  "Flags authorization tokens as invalid."
+  flagTokens: Boolean
+
+  #
   # Last Environment
+
+  "Stores given pair as user's last visited environment."
   setLastEnvironment(organization: String!, environment: String!): Boolean
 }
 

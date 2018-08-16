@@ -10,6 +10,7 @@ const query = gql`
   query DefaultRedirectQuery {
     auth @client {
       accessToken
+      invalid
     }
   }
 `;
@@ -20,7 +21,7 @@ class DefaultRedirect extends React.PureComponent {
   };
 
   render() {
-    if (!this.props.data.auth.accessToken) {
+    if (!this.props.data.auth.accessToken || this.props.data.auth.invalid) {
       return <SigninRedirect />;
     }
     return <LastEnvironmentRedirect />;

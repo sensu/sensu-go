@@ -29,7 +29,7 @@ const Branding = createStyledComponent({
 });
 
 const Headline = createStyledComponent({
-  component: Typography,
+  component: "div",
   styles: theme => ({
     marginBottom: theme.spacing.unit * 3,
   }),
@@ -46,7 +46,6 @@ const Container = createStyledComponent({
 
 class SignInView extends React.Component {
   static propTypes = {
-    classes: PropTypes.object.isRequired,
     client: PropTypes.object.isRequired,
     fullScreen: PropTypes.bool,
     TransitionComponent: PropTypes.func,
@@ -85,7 +84,6 @@ class SignInView extends React.Component {
 
   render() {
     const {
-      classes,
       fullScreen,
       TransitionComponent,
       onSuccess,
