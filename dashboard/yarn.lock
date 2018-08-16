@@ -6,9 +6,9 @@
   version "0.1.5"
   resolved "https://registry.yarnpkg.com/@10xjs/date-input-controller/-/date-input-controller-0.1.5.tgz#0532a68a46a7fdcc6990a0c05672750cbf4e8820"
 
-"@10xjs/form@https://github.com/jamesdphillips/form/releases/download/0.1.7/form.tgz":
-  version "0.1.6"
-  resolved "https://github.com/jamesdphillips/form/releases/download/0.1.7/form.tgz#2d061718de4ded68e79b99afb687159d13f7acfa"
+"@10xjs/form@^0.1.7":
+  version "0.1.7"
+  resolved "https://registry.yarnpkg.com/@10xjs/form/-/form-0.1.7.tgz#ada3beffb0dc9f16d79650c56f82c126dad1bad3"
   dependencies:
     es6-error "^4.1.1"
     hoist-non-react-statics "^2.5.0"
