@@ -6,7 +6,6 @@ import CardContent from "@material-ui/core/CardContent";
 import EntityStatusDescriptor from "/components/partials/EntityStatusDescriptor";
 import Typography from "@material-ui/core/Typography";
 import List from "@material-ui/core/List";
-import { RelativeToCurrentDate } from "/components/RelativeDate";
 import StatusIcon from "/components/CheckStatusIcon";
 import InlineLink from "/components/InlineLink";
 import ListItem, {
