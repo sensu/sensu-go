@@ -34,12 +34,14 @@ class EntityDetailsDeleteAction extends React.PureComponent {
   };
 
   deleteRecord = () => {
-    // delete
     const { client, entity } = this.props;
-    deleteEntity(client, entity);
+    const { id, ns } = entity;
+
+    // delete
+    deleteEntity(client, { id });
 
     // optimistically redirect
-    this.props.history.push(`/${entity.ns.org}/${entity.ns.env}/entities`);
+    this.props.history.push(`/${ns.org}/${ns.env}/entities`);
   };
 
   render() {

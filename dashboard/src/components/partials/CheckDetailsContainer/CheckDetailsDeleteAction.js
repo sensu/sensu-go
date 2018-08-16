@@ -34,22 +34,11 @@ class CheckDetailsDeleteAction extends React.PureComponent {
   };
 
   deleteRecord = () => {
-    const {
-      client,
-      check: { id, ns },
-      history,
-    } = this.props;
+    const { client, check, history } = this.props;
+    const { id, ns } = check;
 
     // Send request
-    deleteCheck(client, { id }).then(
-      () => {
-        this.requestEnd();
-      },
-      error => {
-        this.requestEnd();
-        throw error;
-      },
-    );
+    deleteCheck(client, { id });
 
     // Optimistically redirect
     history.replace(`/${ns.org}/${ns.env}/checks`);

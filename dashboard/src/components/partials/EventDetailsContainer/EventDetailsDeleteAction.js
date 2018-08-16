@@ -33,16 +33,14 @@ class EventDetailsDeleteAction extends React.PureComponent {
   };
 
   deleteEvent = () => {
-    const {
-      client,
-      event: { id, ns },
-      history,
-    } = this.props;
+    const { client, event, history } = this.props;
+    const { id, ns } = event;
 
     // Send request
-    deleteEvent(client, { id }).then(() =>
-      history.replace(`/${ns.org}/${ns.env}/events`),
-    );
+    deleteEvent(client, { id });
+
+    // Optimistically redirect
+    history.replace(`/${ns.org}/${ns.env}/events`);
   };
 
   render() {
