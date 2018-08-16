@@ -323,8 +323,6 @@ func (a *Agent) sendPump() {
 	}()
 
 	logger.Info("connected - starting sendPump")
-	ticker := time.NewTicker(100 * time.Millisecond)
-	defer ticker.Stop()
 
 	for {
 		select {
