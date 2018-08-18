@@ -42,8 +42,17 @@ func (f *EventFilter) Validate() error {
 		return errors.New("filter must have one or more statements")
 	}
 
-	if err := eval.ValidateStatements(f.Statements, false); err != nil {
-		return err
+	switch f.Type {
+	case "js":
+		if err := eval.ValidateJSStatements(f.Statements); err != nil {
+			return err
+		}
+	case "govaluate":
+		fallthrough
+	default:
+		if err := eval.ValidateStatements(f.Statements, false); err != nil {
+			return err
+		}
 	}
 
 	if f.Environment == "" {
