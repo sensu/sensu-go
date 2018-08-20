@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/coreos/etcd/etcdserver/etcdserverpb"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
@@ -22,16 +23,31 @@ func HealthCommand(cli *cli.SensuCli) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			return helpers.Print(cmd, cli.Config.Format(), printToTable, nil, result)
+			clusterHealth := result.ClusterHealth
+			alarms := result.Alarms
+			// pass the slice from the struct and handle the error instead of
+			// returning
+			err = helpers.Print(cmd, cli.Config.Format(), printHealthToTable, nil, clusterHealth)
+			if err != nil {
+				return err
+			}
+			if alarms != nil {
+				err := helpers.Print(cmd, cli.Config.Format(), printAlarmsToTable, nil, alarms)
+				if err != nil {
+					return err
+				}
+			}
+
+			return nil
 		},
 	}
 	return cmd
 }
 
-func printToTable(result interface{}, w io.Writer) {
+func printHealthToTable(result interface{}, w io.Writer) {
 	table := table.New([]*table.Column{
 		{
-			Title:       "ID",
+			Title:       "MemberID",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
 				clusterHealth, ok := data.(*types.ClusterHealth)
@@ -76,5 +92,33 @@ func printToTable(result interface{}, w io.Writer) {
 		},
 	})
 
+	table.Render(w, result)
+}
+
+func printAlarmsToTable(result interface{}, w io.Writer) {
+	table := table.New([]*table.Column{
+		{
+			Title:       "MemberID",
+			ColumnStyle: table.PrimaryTextStyle,
+			CellTransformer: func(data interface{}) string {
+				alarm, ok := data.(*etcdserverpb.AlarmMember)
+				if !ok {
+					return cli.TypeError
+				}
+				return fmt.Sprintf("%x", alarm.MemberID)
+			},
+		},
+		{
+			Title:       "Name",
+			ColumnStyle: table.PrimaryTextStyle,
+			CellTransformer: func(data interface{}) string {
+				alarm, ok := data.(*etcdserverpb.AlarmMember)
+				if !ok {
+					return cli.TypeError
+				}
+				return fmt.Sprintf("%d", alarm.Alarm)
+			},
+		},
+	})
 	table.Render(w, result)
 }
