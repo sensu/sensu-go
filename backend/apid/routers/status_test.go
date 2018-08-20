@@ -2,6 +2,7 @@ package routers
 
 import (
 	"context"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -120,6 +121,48 @@ func TestHealthyClusterStatus(t *testing.T) {
 	})
 	healthResponse.ClusterHealth = clusterHealth
 	healthResponse.Alarms = []*etcdserverpb.AlarmMember{}
+	controller.On("GetClusterHealth", mock.Anything).Return(healthResponse)
+
+	client := new(http.Client)
+	endpoint := "/health"
+	req := newRequest(t, http.MethodGet, server.URL+endpoint, nil)
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if resp.StatusCode >= 400 {
+		body, _ := ioutil.ReadAll(resp.Body)
+		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
+	}
+}
+
+func TestUnHealthyClusterStatus(t *testing.T) {
+	controller, server := newStatusTest(t, passStatus())
+	defer server.Close()
+	healthResponse := &types.HealthResponse{}
+	clusterHealth := []*types.ClusterHealth{}
+	clusterHealth = append(clusterHealth, &types.ClusterHealth{
+		MemberID: uint64(12345),
+		Name:     "backend0",
+		Err:      nil,
+		Healthy:  true,
+	})
+	clusterHealth = append(clusterHealth, &types.ClusterHealth{
+		MemberID: uint64(12345),
+		Name:     "backend1",
+		Err:      errors.New("cluster error"),
+		Healthy:  false,
+	})
+
+	alarms := []*etcdserverpb.AlarmMember{}
+	alarms = append(alarms, &etcdserverpb.AlarmMember{
+		MemberID: uint64(56789),
+		Alarm:    etcdserverpb.AlarmType_CORRUPT,
+	})
+
+	healthResponse.ClusterHealth = clusterHealth
+	healthResponse.Alarms = alarms
 	controller.On("GetClusterHealth", mock.Anything).Return(healthResponse)
 
 	client := new(http.Client)

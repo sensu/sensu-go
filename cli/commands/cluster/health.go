@@ -25,29 +25,27 @@ func HealthCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 			clusterHealth := result.ClusterHealth
 			alarms := result.Alarms
-			// pass the slice from the struct and handle the error instead of
-			// returning
 			err = helpers.Print(cmd, cli.Config.Format(), printHealthToTable, nil, clusterHealth)
 			if err != nil {
 				return err
 			}
-			if alarms != nil {
-				err := helpers.Print(cmd, cli.Config.Format(), printAlarmsToTable, nil, alarms)
-				if err != nil {
-					return err
-				}
+			err = helpers.Print(cmd, cli.Config.Format(), printAlarmsToTable, nil, alarms)
+			if err != nil {
+				return err
 			}
 
 			return nil
 		},
 	}
+
+	helpers.AddFormatFlag(cmd.Flags())
 	return cmd
 }
 
 func printHealthToTable(result interface{}, w io.Writer) {
 	table := table.New([]*table.Column{
 		{
-			Title:       "MemberID",
+			Title:       "ID",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
 				clusterHealth, ok := data.(*types.ClusterHealth)
@@ -98,7 +96,7 @@ func printHealthToTable(result interface{}, w io.Writer) {
 func printAlarmsToTable(result interface{}, w io.Writer) {
 	table := table.New([]*table.Column{
 		{
-			Title:       "MemberID",
+			Title:       "ID",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
 				alarm, ok := data.(*etcdserverpb.AlarmMember)
@@ -109,7 +107,7 @@ func printAlarmsToTable(result interface{}, w io.Writer) {
 			},
 		},
 		{
-			Title:       "Name",
+			Title:       "Alarm Type",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
 				alarm, ok := data.(*etcdserverpb.AlarmMember)
