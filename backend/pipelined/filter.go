@@ -155,6 +155,11 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 				Errorf("could not execute the filter %s", filterName)
 			continue
 		}
+		defer func() {
+			if err := executor.Close(); err != nil {
+				logger.WithError(err).Debug("error closing grpc client")
+			}
+		}()
 		filtered, err := executor.FilterEvent(event)
 		if err != nil {
 			logger.WithFields(fields).WithError(err).

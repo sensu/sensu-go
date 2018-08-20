@@ -39,6 +39,11 @@ func (m *mockExec) FilterEvent(evt *types.Event) (bool, error) {
 	return args.Get(0).(bool), args.Error(1)
 }
 
+// No need to override this method, consumers only log its error
+func (m *mockExec) Close() error {
+	return nil
+}
+
 func TestHelperHandlerProcess(t *testing.T) {
 	if os.Getenv("GO_WANT_HELPER_HANDLER_PROCESS") != "1" {
 		return

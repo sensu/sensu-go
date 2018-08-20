@@ -268,6 +268,11 @@ func (p *Pipelined) grpcHandler(ext *types.Extension, evt *types.Event, mutated 
 		logger.WithFields(fields).WithError(err).Error("failed to execute event handler extension")
 		return rpc.HandleEventResponse{}, err
 	}
+	defer func() {
+		if err := executor.Close(); err != nil {
+			logger.WithError(err).Debug("error closing grpc client conn")
+		}
+	}()
 
 	result, err := executor.HandleEvent(evt, mutated)
 	if err != nil {

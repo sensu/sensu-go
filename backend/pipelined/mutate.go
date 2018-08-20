@@ -60,6 +60,11 @@ func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]b
 		if err != nil {
 			return nil, err
 		}
+		defer func() {
+			if err := executor.Close(); err != nil {
+				logger.WithError(err).Debug("error closing grpc client conn")
+			}
+		}()
 		eventData, err := executor.MutateEvent(event)
 		if err != nil {
 			return nil, err
