@@ -24,7 +24,7 @@ func TestHealthCommand(t *testing.T) {
 	assert.Regexp("get sensu health status", cmd.Short)
 }
 
-func TestHealthCommandAlarms(t *testing.T) {
+func TestHealthCommandAlarmCorrupt(t *testing.T) {
 	assert := assert.New(t)
 
 	healthResponse := &types.HealthResponse{}
@@ -38,7 +38,7 @@ func TestHealthCommandAlarms(t *testing.T) {
 	clusterHealth = append(clusterHealth, &types.ClusterHealth{
 		MemberID: uint64(12345),
 		Name:     "backend1",
-		Err:      errors.New("cluster error runs off screen"),
+		Err:      errors.New("error"),
 		Healthy:  false,
 	})
 
@@ -68,5 +68,45 @@ func TestHealthCommandAlarms(t *testing.T) {
 	assert.Contains(out, "true")       // healthy cluster member
 	assert.Contains(out, "false")      // unhealthy cluster member
 	assert.Contains(out, "error")      // cluster error
-	assert.Contains(out, "2")          // alarm type
+	assert.Contains(out, "CORRUPT")    // alarm type
+}
+
+func TestHealthCommandAlarmNoSpace(t *testing.T) {
+	assert := assert.New(t)
+
+	healthResponse := &types.HealthResponse{}
+	clusterHealth := []*types.ClusterHealth{}
+	clusterHealth = append(clusterHealth, &types.ClusterHealth{
+		MemberID: uint64(12345),
+		Name:     "backend1",
+		Err:      errors.New("error"),
+		Healthy:  false,
+	})
+
+	alarms := []*etcdserverpb.AlarmMember{}
+	alarms = append(alarms, &etcdserverpb.AlarmMember{
+		MemberID: uint64(56789),
+		Alarm:    etcdserverpb.AlarmType_NOSPACE,
+	})
+
+	healthResponse.ClusterHealth = clusterHealth
+	healthResponse.Alarms = alarms
+
+	cli := test.NewCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("Health").Return(healthResponse, nil)
+
+	cmd := HealthCommand(cli)
+	require.NoError(t, cmd.Flags().Set("format", "none"))
+	out, err := test.RunCmd(cmd, []string{})
+	require.NoError(t, err)
+
+	assert.Contains(out, "ID")         // heading
+	assert.Contains(out, "Name")       // heading
+	assert.Contains(out, "Error")      // heading
+	assert.Contains(out, "Healthy")    // heading
+	assert.Contains(out, "Alarm Type") // Heading
+	assert.Contains(out, "false")      // unhealthy cluster member
+	assert.Contains(out, "error")      // cluster error
+	assert.Contains(out, "NOSPACE")    // alarm type
 }

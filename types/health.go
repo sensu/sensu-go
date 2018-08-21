@@ -16,6 +16,8 @@ type ClusterHealth struct {
 
 // HealthResponse contains cluster health and cluster alarms.
 type HealthResponse struct {
-	Alarms        []*etcdserverpb.AlarmMember
+	// Alarms is the list of active etcd alarms.
+	Alarms []*etcdserverpb.AlarmMember
+	// ClusterHealth is the list of health status for every cluster member.
 	ClusterHealth []*ClusterHealth
 }

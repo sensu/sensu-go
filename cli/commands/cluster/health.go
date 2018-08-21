@@ -29,9 +29,12 @@ func HealthCommand(cli *cli.SensuCli) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			err = helpers.Print(cmd, cli.Config.Format(), printAlarmsToTable, nil, alarms)
-			if err != nil {
-				return err
+
+			if alarms != nil {
+				err = helpers.Print(cmd, cli.Config.Format(), printAlarmsToTable, nil, alarms)
+				if err != nil {
+					return err
+				}
 			}
 
 			return nil
@@ -103,7 +106,7 @@ func printAlarmsToTable(result interface{}, w io.Writer) {
 				if !ok {
 					return cli.TypeError
 				}
-				return fmt.Sprintf("%x", alarm.MemberID)
+				return fmt.Sprintf("%x", alarm.GetMemberID())
 			},
 		},
 		{
@@ -114,7 +117,7 @@ func printAlarmsToTable(result interface{}, w io.Writer) {
 				if !ok {
 					return cli.TypeError
 				}
-				return fmt.Sprintf("%d", alarm.Alarm)
+				return fmt.Sprintf("%s", alarm.Alarm.String())
 			},
 		},
 	})

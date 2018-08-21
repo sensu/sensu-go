@@ -54,6 +54,7 @@ func (s *Store) GetClusterHealth(ctx context.Context) *types.HealthResponse {
 	}
 
 	alarmResponse, err := s.client.Maintenance.AlarmList(ctx)
+
 	if err != nil {
 		logger.WithError(err).Error("failed to fetch etcd alarm list")
 	}
