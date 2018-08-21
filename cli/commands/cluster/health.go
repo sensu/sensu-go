@@ -117,7 +117,7 @@ func printAlarmsToTable(result interface{}, w io.Writer) {
 				if !ok {
 					return cli.TypeError
 				}
-				return fmt.Sprintf("%s", alarm.Alarm.String())
+				return alarm.Alarm.String()
 			},
 		},
 	})
