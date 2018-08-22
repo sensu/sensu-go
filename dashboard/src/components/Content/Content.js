@@ -8,14 +8,6 @@ const styles = theme => ({
     display: "flex",
     alignItems: "center",
   },
-  gutters: {
-    paddingLeft: theme.spacing.unit,
-    paddingRight: theme.spacing.unit,
-    [theme.breakpoints.up("sm")]: {
-      paddingLeft: 0,
-      paddingRight: 0,
-    },
-  },
   bottomMargin: {
     marginBottom: theme.spacing.unit * 2,
   },
@@ -26,9 +18,7 @@ class Content extends React.PureComponent {
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,
     children: PropTypes.node.isRequired,
-    container: PropTypes.bool,
     bottomMargin: PropTypes.bool,
-    gutters: PropTypes.bool,
   };
 
   static defaultProps = {
@@ -43,20 +33,14 @@ class Content extends React.PureComponent {
       children,
       classes,
       className: classNameProp,
-      container,
       bottomMargin,
-      gutters,
     } = this.props;
 
     const className = classnames(classes.root, classNameProp, {
       [classes.bottomMargin]: bottomMargin,
-      [classes.gutters]: gutters,
     });
 
-    if (container || React.Children.count(children) > 1) {
-      return <div className={className}>{children}</div>;
-    }
-    return React.cloneElement(children, { className });
+    return <div className={className}>{children}</div>;
   }
 }
 

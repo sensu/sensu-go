@@ -5,7 +5,6 @@ import gql from "graphql-tag";
 import LiveIcon from "/icons/Live";
 
 import { withQueryParams } from "/components/QueryParams";
-import AppContent from "/components/AppContent";
 
 import Query from "/components/util/Query";
 
@@ -15,7 +14,6 @@ import ListToolbar from "/components/partials/ListToolbar";
 import NotFoundView from "/components/views/NotFoundView";
 
 import CollapsingMenu from "/components/partials/CollapsingMenu";
-import Content from "/components/Content";
 import SearchBox from "/components/SearchBox";
 
 // duration used when polling is enabled; set fairly high until we understand
@@ -75,39 +73,35 @@ class ChecksContent extends React.Component {
           }
 
           return (
-            <AppContent>
-              <Content bottomMargin container gutters>
-                <ListToolbar
-                  renderSearch={
-                    <SearchBox
-                      placeholder="Filter checks…"
-                      initialValue={filter}
-                      onSearch={value => setQueryParams({ filter: value })}
-                    />
-                  }
-                  renderMenuItems={
-                    <CollapsingMenu.Button
-                      title="LIVE"
-                      icon={<LiveIcon active={isPolling} />}
-                      onClick={() =>
-                        isPolling ? stopPolling() : startPolling(pollInterval)
-                      }
-                    />
-                  }
-                />
-              </Content>
+            <div>
+              <ListToolbar
+                renderSearch={
+                  <SearchBox
+                    placeholder="Filter checks…"
+                    initialValue={filter}
+                    onSearch={value => setQueryParams({ filter: value })}
+                  />
+                }
+                renderMenuItems={
+                  <CollapsingMenu.Button
+                    title="LIVE"
+                    icon={<LiveIcon active={isPolling} />}
+                    onClick={() =>
+                      isPolling ? stopPolling() : startPolling(pollInterval)
+                    }
+                  />
+                }
+              />
 
-              <Content bottomMargin>
-                <ChecksList
-                  limit={limit}
-                  offset={offset}
-                  onChangeQuery={setQueryParams}
-                  environment={environment}
-                  loading={(loading && (!environment || !isPolling)) || aborted}
-                  refetch={refetch}
-                />
-              </Content>
-            </AppContent>
+              <ChecksList
+                limit={limit}
+                offset={offset}
+                onChangeQuery={setQueryParams}
+                environment={environment}
+                loading={(loading && (!environment || !isPolling)) || aborted}
+                refetch={refetch}
+              />
+            </div>
           );
         }}
       </Query>

@@ -9,34 +9,38 @@ import { withStyles } from "@material-ui/core/styles";
 import MenuIcon from "@material-ui/icons/Menu";
 import EnvironmentLabel from "/components/EnvironmentLabel";
 import Wordmark from "/icons/SensuWordmark";
+import Drawer from "/components/Drawer";
 
 class AppBar extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
+    viewer: PropTypes.object,
     environment: PropTypes.object,
-    toggleToolbar: PropTypes.func.isRequired,
+    loading: PropTypes.bool.isRequired,
   };
 
-  static defaultProps = { environment: null };
+  static defaultProps = { environment: null, viewer: null };
 
   static fragments = {
+    viewer: gql`
+      fragment AppBar_viewer on Viewer {
+        ...Drawer_viewer
+      }
+      ${Drawer.fragments.viewer}
+    `,
+
     environment: gql`
       fragment AppBar_environment on Environment {
         ...EnvironmentLabel_environment
+        ...Drawer_environment
       }
 
       ${EnvironmentLabel.fragments.environment}
+      ${Drawer.fragments.environment}
     `,
   };
 
   static styles = theme => ({
-    container: {
-      paddingTop: "env(safe-area-inset-top)",
-      backgroundColor: theme.palette.primary.dark,
-    },
-    appBar: {
-      transition: theme.transitions.create("width"),
-    },
     toolbar: {
       marginLeft: -12, // Account for button padding to match style guide.
       // marginRight: -12, // Label is not a button at this time.
@@ -56,15 +60,23 @@ class AppBar extends React.Component {
     },
   });
 
+  state = {
+    drawerOpen: false,
+  };
+
+  handleToggleDrawer = () => {
+    this.setState(state => ({ drawerOpen: !state.drawerOpen }));
+  };
+
   render() {
-    const { environment, toggleToolbar, classes } = this.props;
+    const { environment, viewer, loading, classes } = this.props;
 
     return (
-      <MUIAppBar className={classes.appBar}>
-        <div className={classes.container}>
+      <React.Fragment>
+        <MUIAppBar className={classes.appBar} position="static">
           <MaterialToolbar className={classes.toolbar}>
             <IconButton
-              onClick={toggleToolbar}
+              onClick={this.handleToggleDrawer}
               aria-label="Menu"
               color="inherit"
             >
@@ -81,8 +93,16 @@ class AppBar extends React.Component {
             <div className={classes.grow} />
             {environment && <EnvironmentLabel environment={environment} />}
           </MaterialToolbar>
-        </div>
-      </MUIAppBar>
+        </MUIAppBar>
+        <Drawer
+          loading={loading}
+          viewer={viewer}
+          open={this.state.drawerOpen}
+          onToggle={this.handleToggleDrawer}
+          environment={environment}
+          className={classes.drawer}
+        />
+      </React.Fragment>
     );
   }
 }

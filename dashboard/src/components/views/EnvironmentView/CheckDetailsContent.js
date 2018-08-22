@@ -4,7 +4,6 @@ import gql from "graphql-tag";
 
 import Query from "/components/util/Query";
 
-import AppContent from "/components/AppContent";
 import NotFoundView from "/components/views/NotFoundView";
 import CheckDetailsContainer from "/components/partials/CheckDetailsContainer";
 
@@ -58,19 +57,17 @@ class CheckDetailsContent extends React.PureComponent {
           }
 
           return (
-            <AppContent>
-              <CheckDetailsContainer
-                client={client}
-                check={check}
-                loading={(loading && !isPolling) || aborted}
-                poller={{
-                  running: isPolling,
-                  start: startPolling,
-                  stop: stopPolling,
-                }}
-                refetch={refetch}
-              />
-            </AppContent>
+            <CheckDetailsContainer
+              client={client}
+              check={check}
+              loading={(loading && !isPolling) || aborted}
+              poller={{
+                running: isPolling,
+                start: startPolling,
+                stop: stopPolling,
+              }}
+              refetch={refetch}
+            />
           );
         }}
       </Query>

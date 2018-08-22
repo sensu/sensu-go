@@ -2,9 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import AppContent from "/components/AppContent";
 import CollapsingMenu from "/components/partials/CollapsingMenu";
-import Content from "/components/Content";
 import ModalController from "/components/controller/ModalController";
 import ListToolbar from "/components/partials/ListToolbar";
 import LiveIcon from "/icons/Live";
@@ -72,64 +70,60 @@ class SilencesContent extends React.Component {
           }
 
           return (
-            <AppContent>
-              <Content bottomMargin container gutters>
-                <ListToolbar
-                  renderSearch={
-                    <SearchBox
-                      placeholder="Filter silences…"
-                      initialValue={filter}
-                      onSearch={value => setQueryParams({ filter: value })}
+            <div>
+              <ListToolbar
+                renderSearch={
+                  <SearchBox
+                    placeholder="Filter silences…"
+                    initialValue={filter}
+                    onSearch={value => setQueryParams({ filter: value })}
+                  />
+                }
+                renderMenuItems={
+                  <React.Fragment>
+                    <ModalController
+                      renderModal={({ close }) => (
+                        <SilenceEntryDialog
+                          values={{
+                            props: {},
+                            ns: match.params,
+                          }}
+                          onClose={() => {
+                            // TODO: Only refetch / poison list on success
+                            refetch();
+                            close();
+                          }}
+                        />
+                      )}
+                    >
+                      {({ open }) => (
+                        <CollapsingMenu.Button
+                          title="New"
+                          icon={<PlusIcon />}
+                          onClick={() => open()}
+                        />
+                      )}
+                    </ModalController>
+                    <CollapsingMenu.Button
+                      title="LIVE"
+                      icon={<LiveIcon active={isPolling} />}
+                      onClick={() =>
+                        isPolling ? stopPolling() : startPolling(pollInterval)
+                      }
                     />
-                  }
-                  renderMenuItems={
-                    <React.Fragment>
-                      <ModalController
-                        renderModal={({ close }) => (
-                          <SilenceEntryDialog
-                            values={{
-                              props: {},
-                              ns: match.params,
-                            }}
-                            onClose={() => {
-                              // TODO: Only refetch / poison list on success
-                              refetch();
-                              close();
-                            }}
-                          />
-                        )}
-                      >
-                        {({ open }) => (
-                          <CollapsingMenu.Button
-                            title="New"
-                            icon={<PlusIcon />}
-                            onClick={() => open()}
-                          />
-                        )}
-                      </ModalController>
-                      <CollapsingMenu.Button
-                        title="LIVE"
-                        icon={<LiveIcon active={isPolling} />}
-                        onClick={() =>
-                          isPolling ? stopPolling() : startPolling(pollInterval)
-                        }
-                      />
-                    </React.Fragment>
-                  }
-                />
-              </Content>
+                  </React.Fragment>
+                }
+              />
 
-              <Content bottomMargin>
-                <SilencesList
-                  limit={limit}
-                  offset={offset}
-                  onChangeQuery={setQueryParams}
-                  environment={environment}
-                  loading={(loading && (!environment || !isPolling)) || aborted}
-                  refetch={refetch}
-                />
-              </Content>
-            </AppContent>
+              <SilencesList
+                limit={limit}
+                offset={offset}
+                onChangeQuery={setQueryParams}
+                environment={environment}
+                loading={(loading && (!environment || !isPolling)) || aborted}
+                refetch={refetch}
+              />
+            </div>
           );
         }}
       </Query>

@@ -13,9 +13,7 @@ import NotFoundView from "/components/views/NotFoundView";
 
 import SearchBox from "/components/SearchBox";
 import { withQueryParams } from "/components/QueryParams";
-import AppContent from "/components/AppContent";
 import CollapsingMenu from "/components/partials/CollapsingMenu";
-import Content from "/components/Content";
 
 // If none given default expression is used.
 const defaultExpression = "HasCheck";
@@ -78,39 +76,35 @@ class EventsContent extends React.Component {
           }
 
           return (
-            <AppContent>
-              <Content bottomMargin container gutters>
-                <ListToolbar
-                  renderSearch={
-                    <SearchBox
-                      placeholder="Filter events…"
-                      initialValue={filter}
-                      onSearch={value => setQueryParams({ filter: value })}
-                    />
-                  }
-                  renderMenuItems={
-                    <CollapsingMenu.Button
-                      title="LIVE"
-                      icon={<LiveIcon active={isPolling} />}
-                      onClick={() =>
-                        isPolling ? stopPolling() : startPolling(pollInterval)
-                      }
-                    />
-                  }
-                />
-              </Content>
+            <div>
+              <ListToolbar
+                renderSearch={
+                  <SearchBox
+                    placeholder="Filter events…"
+                    initialValue={filter}
+                    onSearch={value => setQueryParams({ filter: value })}
+                  />
+                }
+                renderMenuItems={
+                  <CollapsingMenu.Button
+                    title="LIVE"
+                    icon={<LiveIcon active={isPolling} />}
+                    onClick={() =>
+                      isPolling ? stopPolling() : startPolling(pollInterval)
+                    }
+                  />
+                }
+              />
 
-              <Content bottomMargin>
-                <EventsList
-                  limit={limit}
-                  offset={offset}
-                  onChangeQuery={setQueryParams}
-                  environment={environment}
-                  loading={(loading && (!environment || !isPolling)) || aborted}
-                  refetch={refetch}
-                />
-              </Content>
-            </AppContent>
+              <EventsList
+                limit={limit}
+                offset={offset}
+                onChangeQuery={setQueryParams}
+                environment={environment}
+                loading={(loading && (!environment || !isPolling)) || aborted}
+                refetch={refetch}
+              />
+            </div>
           );
         }}
       </Query>

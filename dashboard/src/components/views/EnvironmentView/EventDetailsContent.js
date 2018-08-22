@@ -4,7 +4,6 @@ import gql from "graphql-tag";
 
 import Query from "/components/util/Query";
 
-import AppContent from "/components/AppContent";
 import NotFoundView from "/components/views/NotFoundView";
 import Container from "/components/partials/EventDetailsContainer";
 
@@ -60,18 +59,16 @@ class EventDetailsContent extends React.PureComponent {
           }
 
           return (
-            <AppContent>
-              <Container
-                client={client}
-                event={event}
-                loading={(loading && !isPolling) || aborted}
-                poller={{
-                  running: isPolling,
-                  start: startPolling,
-                  stop: stopPolling,
-                }}
-              />
-            </AppContent>
+            <Container
+              client={client}
+              event={event}
+              loading={(loading && !isPolling) || aborted}
+              poller={{
+                running: isPolling,
+                start: startPolling,
+                stop: stopPolling,
+              }}
+            />
           );
         }}
       </Query>

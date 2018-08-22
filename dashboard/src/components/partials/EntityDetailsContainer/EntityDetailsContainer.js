@@ -68,19 +68,17 @@ class EntityDetailsContainer extends React.PureComponent {
             />
           </CollapsingMenu>
         </Content>
-        <Content container>
-          <Grid container spacing={16}>
-            <Grid item xs={12}>
-              <EntityDetailsInformation entity={entity} />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <RelatedEntitiesCard entity={entity} />
-            </Grid>
-            <Grid item xs={12} md={6}>
-              <EntityDetailsEvents events={entity.events} />
-            </Grid>
+        <Grid container spacing={16}>
+          <Grid item xs={12}>
+            <EntityDetailsInformation entity={entity} />
           </Grid>
-        </Content>
+          <Grid item xs={12} md={6}>
+            <RelatedEntitiesCard entity={entity} />
+          </Grid>
+          <Grid item xs={12} md={6}>
+            <EntityDetailsEvents events={entity.events} />
+          </Grid>
+        </Grid>
       </React.Fragment>
     );
   }

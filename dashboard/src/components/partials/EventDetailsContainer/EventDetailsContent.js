@@ -112,19 +112,17 @@ class EventDetailsContainer extends React.PureComponent {
                 />
               </CollapsingMenu>
             </Content>
-            <Content container>
-              <Grid container spacing={16}>
-                <Grid item xs={12}>
-                  <CheckResult check={event.check} entity={event.entity} />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <RelatedEntitiesCard entity={event.entity} />
-                </Grid>
-                <Grid item xs={12} md={6}>
-                  <Summary check={event.check} entity={event.entity} />
-                </Grid>
+            <Grid container spacing={16}>
+              <Grid item xs={12}>
+                <CheckResult check={event.check} entity={event.entity} />
               </Grid>
-            </Content>
+              <Grid item xs={12} md={6}>
+                <RelatedEntitiesCard entity={event.entity} />
+              </Grid>
+              <Grid item xs={12} md={6}>
+                <Summary check={event.check} entity={event.entity} />
+              </Grid>
+            </Grid>
           </React.Fragment>
         )}
       </Loader>
