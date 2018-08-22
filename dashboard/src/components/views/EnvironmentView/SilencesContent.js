@@ -13,6 +13,7 @@ import SearchBox from "/components/SearchBox";
 import SilencesList from "/components/partials/SilencesList";
 import SilenceEntryDialog from "/components/partials/SilenceEntryDialog";
 import { withQueryParams } from "/components/QueryParams";
+import AppLayout from "/components/AppLayout";
 
 // duration used when polling is enabled; set fairly high until we understand
 // the impact.
@@ -114,15 +115,16 @@ class SilencesContent extends React.Component {
                   </React.Fragment>
                 }
               />
-
-              <SilencesList
-                limit={limit}
-                offset={offset}
-                onChangeQuery={setQueryParams}
-                environment={environment}
-                loading={(loading && (!environment || !isPolling)) || aborted}
-                refetch={refetch}
-              />
+              <AppLayout.MobileFullWidthContent>
+                <SilencesList
+                  limit={limit}
+                  offset={offset}
+                  onChangeQuery={setQueryParams}
+                  environment={environment}
+                  loading={(loading && (!environment || !isPolling)) || aborted}
+                  refetch={refetch}
+                />
+              </AppLayout.MobileFullWidthContent>
             </div>
           );
         }}

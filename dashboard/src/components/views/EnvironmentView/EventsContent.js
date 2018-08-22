@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
 import LiveIcon from "/icons/Live";
+import AppLayout from "/components/AppLayout";
 
 import Query from "/components/util/Query";
 
@@ -96,14 +97,16 @@ class EventsContent extends React.Component {
                 }
               />
 
-              <EventsList
-                limit={limit}
-                offset={offset}
-                onChangeQuery={setQueryParams}
-                environment={environment}
-                loading={(loading && (!environment || !isPolling)) || aborted}
-                refetch={refetch}
-              />
+              <AppLayout.MobileFullWidthContent>
+                <EventsList
+                  limit={limit}
+                  offset={offset}
+                  onChangeQuery={setQueryParams}
+                  environment={environment}
+                  loading={(loading && (!environment || !isPolling)) || aborted}
+                  refetch={refetch}
+                />
+              </AppLayout.MobileFullWidthContent>
             </div>
           );
         }}

@@ -3,6 +3,9 @@ import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
 import ResizeObserver from "react-resize-observer";
 
+import MobileFullWidthContent from "./MobileFullWidthContent";
+import Context from "./Context";
+
 const styles = theme => ({
   root: {
     flex: 1,
@@ -75,8 +78,8 @@ const styles = theme => ({
 
     maxWidth: 1224,
 
-    paddingLeft: 8,
-    paddingRight: 8,
+    paddingLeft: theme.spacing.unit,
+    paddingRight: theme.spacing.unit,
 
     paddingTop: 24,
     paddingBottom: 24,
@@ -101,8 +104,6 @@ const styles = theme => ({
   },
 });
 
-export const LayoutContext = React.createContext({ topBarHeight: 0 });
-
 class AppLayout extends React.PureComponent {
   static propTypes = {
     classes: PropTypes.object.isRequired,
@@ -120,6 +121,9 @@ class AppLayout extends React.PureComponent {
     alert: undefined,
     toast: undefined,
   };
+
+  static MobileFullWidthContent = MobileFullWidthContent;
+  static Context = Context;
 
   state = { topBarHeight: 0 };
 
@@ -142,7 +146,7 @@ class AppLayout extends React.PureComponent {
         : this.state.topBarHeight;
 
     return (
-      <LayoutContext.Provider value={this.state}>
+      <Context.Provider value={this.state}>
         <div className={classes.root}>
           <div className={classes.topBarContainer}>
             <div className={classes.topBarObserver}>
@@ -164,7 +168,7 @@ class AppLayout extends React.PureComponent {
             <div className={classes.toast}>{toast}</div>
           </div>
         </div>
-      </LayoutContext.Provider>
+      </Context.Provider>
     );
   }
 }

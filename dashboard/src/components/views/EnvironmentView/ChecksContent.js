@@ -5,6 +5,7 @@ import gql from "graphql-tag";
 import LiveIcon from "/icons/Live";
 
 import { withQueryParams } from "/components/QueryParams";
+import AppLayout from "/components/AppLayout";
 
 import Query from "/components/util/Query";
 
@@ -93,14 +94,16 @@ class ChecksContent extends React.Component {
                 }
               />
 
-              <ChecksList
-                limit={limit}
-                offset={offset}
-                onChangeQuery={setQueryParams}
-                environment={environment}
-                loading={(loading && (!environment || !isPolling)) || aborted}
-                refetch={refetch}
-              />
+              <AppLayout.MobileFullWidthContent>
+                <ChecksList
+                  limit={limit}
+                  offset={offset}
+                  onChangeQuery={setQueryParams}
+                  environment={environment}
+                  loading={(loading && (!environment || !isPolling)) || aborted}
+                  refetch={refetch}
+                />
+              </AppLayout.MobileFullWidthContent>
             </div>
           );
         }}

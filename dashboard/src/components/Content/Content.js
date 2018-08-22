@@ -25,7 +25,6 @@ class Content extends React.PureComponent {
     bottomMargin: false,
     className: "",
     container: false,
-    gutters: false,
   };
 
   render() {

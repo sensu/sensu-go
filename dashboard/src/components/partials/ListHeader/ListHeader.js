@@ -6,7 +6,7 @@ import { withStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 import Checkbox from "@material-ui/core/Checkbox";
 
-import { LayoutContext } from "/components/AppLayout";
+import AppLayout from "/components/AppLayout";
 
 const styles = theme => ({
   root: {
@@ -71,7 +71,7 @@ class ListHeader extends React.Component {
     } = this.props;
 
     return (
-      <LayoutContext.Consumer>
+      <AppLayout.Context.Consumer>
         {({ topBarHeight }) => (
           <Typography
             component="div"
@@ -93,7 +93,7 @@ class ListHeader extends React.Component {
             {selectedCount > 0 ? renderBulkActions() : renderActions()}
           </Typography>
         )}
-      </LayoutContext.Consumer>
+      </AppLayout.Context.Consumer>
     );
   }
 }

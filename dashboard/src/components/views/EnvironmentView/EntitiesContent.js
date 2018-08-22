@@ -9,6 +9,7 @@ import ListToolbar from "/components/partials/ListToolbar";
 import LiveIcon from "/icons/Live";
 import CollapsingMenu from "/components/partials/CollapsingMenu";
 import { withQueryParams } from "/components/QueryParams";
+import AppLayout from "/components/AppLayout";
 
 // duration used when polling is enabled; set fairly high until we understand
 // the impact.
@@ -87,14 +88,16 @@ class EntitiesContent extends React.PureComponent {
                   />
                 }
               />
-              <EntitiesList
-                limit={limit}
-                offset={offset}
-                loading={(loading && (!environment || !isPolling)) || aborted}
-                onChangeQuery={setQueryParams}
-                environment={environment}
-                refetch={refetch}
-              />
+              <AppLayout.MobileFullWidthContent>
+                <EntitiesList
+                  limit={limit}
+                  offset={offset}
+                  loading={(loading && (!environment || !isPolling)) || aborted}
+                  onChangeQuery={setQueryParams}
+                  environment={environment}
+                  refetch={refetch}
+                />
+              </AppLayout.MobileFullWidthContent>
             </div>
           );
         }}
