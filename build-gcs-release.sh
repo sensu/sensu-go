@@ -38,21 +38,28 @@ clean_target_dir() {
 build_supported_binaries() {
   clean_target_dir
 
+  # ctl binaries
   GOOS=darwin GOARCH=amd64 ./build.sh build_cli
   GOOS=linux GOARCH=amd64 ./build.sh build_cli
   GOOS=linux GOARCH=386 ./build.sh build_cli
   GOOS=freebsd GOARCH=amd64 ./build.sh build_cli
   GOOS=windows GOARCH=amd64 ./build.sh build_cli
+  GOOS=windows GOARCH=386 ./build.sh build_cli
+
+  # backend binaries
   GOOS=darwin GOARCH=amd64 ./build.sh build_backend
   GOOS=linux GOARCH=amd64 ./build.sh build_backend
   GOOS=linux GOARCH=386 ./build.sh build_backend
   GOOS=freebsd GOARCH=amd64 ./build.sh build_backend
   GOOS=windows GOARCH=amd64 ./build.sh build_backend
+
+  # agent binaries
   GOOS=darwin GOARCH=amd64 ./build.sh build_agent
   GOOS=linux GOARCH=amd64 ./build.sh build_agent
   GOOS=linux GOARCH=386 ./build.sh build_agent
   GOOS=freebsd GOARCH=amd64 ./build.sh build_agent
   GOOS=windows GOARCH=amd64 ./build.sh build_agent
+  GOOS=windows GOARCH=386 ./build.sh build_agent
 }
 
 upload_supported_binaries() {
@@ -61,6 +68,7 @@ upload_supported_binaries() {
   upload_binary linux 386
   upload_binary linux amd64
   upload_binary windows amd64
+  upload_binary windows 386
 }
 
 upload_binary() {
