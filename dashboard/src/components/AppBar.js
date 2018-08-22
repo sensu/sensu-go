@@ -41,6 +41,10 @@ class AppBar extends React.Component {
   };
 
   static styles = theme => ({
+    container: {
+      paddingTop: "env(safe-area-inset-top)",
+      backgroundColor: theme.palette.primary.dark,
+    },
     toolbar: {
       marginLeft: -12, // Account for button padding to match style guide.
       // marginRight: -12, // Label is not a button at this time.
@@ -74,25 +78,27 @@ class AppBar extends React.Component {
     return (
       <React.Fragment>
         <MUIAppBar className={classes.appBar} position="static">
-          <MaterialToolbar className={classes.toolbar}>
-            <IconButton
-              onClick={this.handleToggleDrawer}
-              aria-label="Menu"
-              color="inherit"
-            >
-              <MenuIcon />
-            </IconButton>
-            <Typography
-              className={classes.title}
-              variant="title"
-              color="inherit"
-              noWrap
-            >
-              <Wordmark alt="sensu logo" className={classes.logo} />
-            </Typography>
-            <div className={classes.grow} />
-            {environment && <EnvironmentLabel environment={environment} />}
-          </MaterialToolbar>
+          <div className={classes.container}>
+            <MaterialToolbar className={classes.toolbar}>
+              <IconButton
+                onClick={this.handleToggleDrawer}
+                aria-label="Menu"
+                color="inherit"
+              >
+                <MenuIcon />
+              </IconButton>
+              <Typography
+                className={classes.title}
+                variant="title"
+                color="inherit"
+                noWrap
+              >
+                <Wordmark alt="sensu logo" className={classes.logo} />
+              </Typography>
+              <div className={classes.grow} />
+              {environment && <EnvironmentLabel environment={environment} />}
+            </MaterialToolbar>
+          </div>
         </MUIAppBar>
         <Drawer
           loading={loading}
