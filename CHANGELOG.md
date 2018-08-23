@@ -13,6 +13,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Fixes a bug in `sensuctl cluster health` so the correct error is handled.
 - Fixed a bug where assets could not extract git tarballs.
+- Fixed a bug where assets would not install if given cache directory was a
+  relative path.
 
 ## [2.0.0-beta.4] - 2018-08-14
 
