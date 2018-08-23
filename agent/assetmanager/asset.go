@@ -35,11 +35,11 @@ const (
 // A RuntimeAsset refers to an asset that is currently in use by the agent.
 type RuntimeAsset struct {
 	path  string
-	asset *types.Asset
+	asset types.Asset
 }
 
 // NewRuntimeAsset given asset and pathPrefix return new managed asset
-func NewRuntimeAsset(asset *types.Asset, pathPrefix string) *RuntimeAsset {
+func NewRuntimeAsset(asset types.Asset, pathPrefix string) *RuntimeAsset {
 	path := filepath.Join(pathPrefix, asset.Sha512)
 	return &RuntimeAsset{path: path, asset: asset}
 }

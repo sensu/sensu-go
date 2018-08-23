@@ -70,7 +70,7 @@ func TestReset(t *testing.T) {
 func TestRegisterSet(t *testing.T) {
 	test := newManagerTest(t)
 	defer test.Dispose(t)
-	assets := []types.Asset{*types.FixtureAsset("asset")}
+	assets := []types.Asset{types.FixtureAsset("asset")}
 	assetSet := test.manager.RegisterSet(assets)
 	assert.NotEmpty(t, assetSet.Env)
 	assert.NotEmpty(t, assetSet.assets)

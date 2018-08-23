@@ -13,7 +13,7 @@ type AssetFactory struct {
 }
 
 // NewAsset returns a new RuntimeAsset given an asset
-func (factory AssetFactory) NewAsset(asset *types.Asset) *RuntimeAsset {
+func (factory AssetFactory) NewAsset(asset types.Asset) *RuntimeAsset {
 	return NewRuntimeAsset(asset, factory.CacheDir)
 }
 

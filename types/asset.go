@@ -85,12 +85,12 @@ func (a *Asset) Filename() string {
 }
 
 // FixtureAsset given a name returns a valid asset for use in tests
-func FixtureAsset(name string) *Asset {
+func FixtureAsset(name string) Asset {
 	bytes := make([]byte, 10)
 	_, _ = rand.Read(bytes)
 	hash := hex.EncodeToString(bytes)
 
-	return &Asset{
+	return Asset{
 		Name:   name,
 		Sha512: "25e01b962045f4f5b624c3e47e782bef65c6c82602524dc569a8431b76cc1f57639d267380a7ec49f70876339ae261704fc51ed2fc520513cf94bc45ed7f6e17",
 		URL:    "https://localhost/" + hash + ".zip",

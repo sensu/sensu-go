@@ -15,7 +15,7 @@ type AssetStore struct {
 	rwMutex   *sync.RWMutex
 }
 
-type newAssetFn func(*types.Asset) *RuntimeAsset
+type newAssetFn func(types.Asset) *RuntimeAsset
 type newSetFn func([]*RuntimeAsset) *RuntimeAssetSet
 
 // NewAssetStore ...
@@ -28,7 +28,7 @@ func NewAssetStore() *AssetStore {
 }
 
 // FetchAsset - fetches asset from store, otherwise creates & adds it
-func (storePtr *AssetStore) FetchAsset(asset *types.Asset, newFn newAssetFn) *RuntimeAsset {
+func (storePtr *AssetStore) FetchAsset(asset types.Asset, newFn newAssetFn) *RuntimeAsset {
 	key := asset.Sha512
 
 	// Return asset if it is already in the store
@@ -38,6 +38,7 @@ func (storePtr *AssetStore) FetchAsset(asset *types.Asset, newFn newAssetFn) *Ru
 
 	// Instantiate & store
 	runtimeAsset := newFn(asset)
+
 	storePtr.setAsset(key, runtimeAsset)
 
 	return runtimeAsset
@@ -95,7 +96,7 @@ func (storePtr *AssetStore) Clear() {
 func concatAssetSetKey(runtimeAssets []*RuntimeAsset) string {
 	names := make([]string, len(runtimeAssets))
 	for _, runtimeAsset := range runtimeAssets {
-		names = append(names, runtimeAsset.asset.Sha512[:7])
+		names = append(names, runtimeAsset.asset.Sha512)
 	}
 
 	sort.Strings(names)

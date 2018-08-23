@@ -351,7 +351,7 @@ func FixtureCheckRequest(id string) *CheckRequest {
 	return &CheckRequest{
 		Config: config,
 		Assets: []Asset{
-			*FixtureAsset("ruby-2-4-2"),
+			FixtureAsset("ruby-2-4-2"),
 		},
 		Hooks: []HookConfig{
 			*FixtureHookConfig("hook1"),
