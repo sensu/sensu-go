@@ -31,8 +31,9 @@ func New(agentCacheDir string, entity *types.Entity) *Manager {
 // RegisterSet - registers given assets and returns resulting set
 func (mngrPtr *Manager) RegisterSet(assets []types.Asset) *RuntimeAssetSet {
 	runtimeAssets := make([]*RuntimeAsset, len(assets))
+
 	for i, asset := range assets {
-		runtimeAsset := mngrPtr.store.FetchAsset(&asset, mngrPtr.factory.NewAsset)
+		runtimeAsset := mngrPtr.store.FetchAsset(asset, mngrPtr.factory.NewAsset)
 		runtimeAssets[i] = runtimeAsset
 	}
 

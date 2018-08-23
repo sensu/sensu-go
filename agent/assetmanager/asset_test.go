@@ -16,7 +16,7 @@ import (
 )
 
 type runtimeAssetTest struct {
-	asset        *types.Asset
+	asset        types.Asset
 	runtimeAsset *RuntimeAsset
 
 	responseBody string
@@ -48,7 +48,7 @@ func newTest(t *testing.T) (*httptest.Server, *runtimeAssetTest) {
 	test.workDir = tmpDir
 
 	// Test asset
-	test.asset = &types.Asset{
+	test.asset = types.Asset{
 		Name:   "ruby24",
 		Sha512: "123456",
 		URL:    server.URL + "/myfile",
@@ -85,7 +85,7 @@ func TestIsRelevant(t *testing.T) {
 			Platform: "darwin",
 		},
 	}
-	test.asset.Filters = []string{
+	test.runtimeAsset.asset.Filters = []string{
 		`entity.System.Hostname == 'space.localdomain'`, // same
 		`entity.System.Platform == 'darwin'`,            // same
 	}
@@ -95,7 +95,7 @@ func TestIsRelevant(t *testing.T) {
 	assert.True(t, ok, "filters match entity's system definition")
 
 	// Failing
-	test.asset.Filters = []string{
+	test.runtimeAsset.asset.Filters = []string{
 		`entity.System.Hostname == 'space.localdomain'`, // same
 		`entity.System.Platform == 'ubuntu'`,            // diff
 	}
@@ -105,7 +105,7 @@ func TestIsRelevant(t *testing.T) {
 	assert.False(t, ok, "filters do not match entity's system definition")
 
 	// With error
-	test.asset.Filters = []string{
+	test.runtimeAsset.asset.Filters = []string{
 		`entity.System.Hostname == 'space.localdomain'`, // same
 		`entity.System.Platform =  'ubuntu'`,            // bad syntax
 	}
@@ -115,7 +115,7 @@ func TestIsRelevant(t *testing.T) {
 	assert.False(t, ok)
 
 	// Filter is not predicate
-	test.asset.Filters = []string{
+	test.runtimeAsset.asset.Filters = []string{
 		`entity.System.Hostname == 'space.localdomain'`, // same
 		`entity.LastSeen + 10`,                          // returns int64
 	}
@@ -131,7 +131,7 @@ func TestInstall(t *testing.T) {
 	defer test.Dispose(t)
 
 	test.responseBody = readFixture("rubby-on-rails.tar")
-	test.asset.Sha512 = stringToSHA512(test.responseBody)
+	test.runtimeAsset.asset.Sha512 = stringToSHA512(test.responseBody)
 
 	require.NoError(t, test.runtimeAsset.install())
 }
@@ -142,7 +142,7 @@ func TestParallelInstall(t *testing.T) {
 	defer test.Dispose(t)
 
 	test.responseBody = readFixture("rubby-on-rails.tar")
-	test.asset.Sha512 = stringToSHA512(test.responseBody)
+	test.runtimeAsset.asset.Sha512 = stringToSHA512(test.responseBody)
 
 	errs := make(chan error, 5)
 

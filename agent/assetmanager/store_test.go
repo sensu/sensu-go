@@ -9,14 +9,14 @@ import (
 
 type storeTest struct {
 	store      *AssetStore
-	newAssetFn func(*types.Asset) *RuntimeAsset
+	newAssetFn func(types.Asset) *RuntimeAsset
 	newSetFn   func([]*RuntimeAsset) *RuntimeAssetSet
 }
 
 func newStoreTest() *storeTest {
 	return &storeTest{
 		store: NewAssetStore(),
-		newAssetFn: func(a *types.Asset) *RuntimeAsset {
+		newAssetFn: func(a types.Asset) *RuntimeAsset {
 			return NewRuntimeAsset(a, "")
 		},
 		newSetFn: func(a []*RuntimeAsset) *RuntimeAssetSet {
