@@ -10,6 +10,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Add windows/386 to binary gcs releases
 
+### Changed
+- Changed sensuctl title colour to use terminal's configured default for bold
+  text.
+
 ### Fixed
 - Fixes a bug in `sensuctl cluster health` so the correct error is handled.
 - Fixed a bug where assets could not extract git tarballs.
