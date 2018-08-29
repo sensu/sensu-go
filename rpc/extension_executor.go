@@ -44,12 +44,16 @@ type ExtensionExecutor interface {
 	// HandleEvent handles an event. It is passed both the original event
 	// and the mutated event, if the event was mutated.
 	HandleEvent(*types.Event, []byte) (HandleEventResponse, error)
+
+	// Close closes the underlying TCP connection of the executor
+	Close() error
 }
 
 // GRPCExtensionExecutor executes extension rpc methods.
 type GRPCExtensionExecutor struct {
 	extension *types.Extension
 	client    ExtensionClient
+	conn      *grpc.ClientConn
 }
 
 // NewGRPCExtensionExecutor creates a new GRPCExtensionExecutor.
@@ -61,7 +65,13 @@ func NewGRPCExtensionExecutor(ext *types.Extension) (ExtensionExecutor, error) {
 	return &GRPCExtensionExecutor{
 		extension: ext,
 		client:    NewExtensionClient(conn),
+		conn:      conn,
 	}, nil
+}
+
+// Close closes the extension executor. It will not be usable after Close is called.
+func (e *GRPCExtensionExecutor) Close() error {
+	return e.conn.Close()
 }
 
 // FilterEvent filters an event.
