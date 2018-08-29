@@ -97,7 +97,12 @@ func (d *RuntimeAsset) markAsInstalled() error {
 
 // Avoid competing installation of assets
 func (d *RuntimeAsset) awaitLock() (*lockfile.Lockfile, error) {
-	lockfile, err := lockfile.New(filepath.Join(d.path, ".lock"))
+	lockpath, err := filepath.Abs(filepath.Join(d.path, ".lock"))
+	if err != nil {
+		return nil, err
+	}
+
+	lockfile, err := lockfile.New(lockpath)
 	if err != nil {
 		return nil, err
 	}
