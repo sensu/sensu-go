@@ -4,19 +4,19 @@ import (
 	"io"
 	"reflect"
 
-	"github.com/mgutz/ansi"
 	"github.com/olekukonko/tablewriter"
+	"github.com/sensu/sensu-go/cli/elements/globals"
 )
 
 var (
 	// TitleStyle can be used to format a string; suitable for titles
-	TitleStyle = ansi.ColorFunc("white+bh")
+	TitleStyle = globals.TitleStyle
 
 	// PrimaryTextStyle can be used to format a string; suitable for emphasis
-	PrimaryTextStyle = ansi.ColorFunc("blue+b")
+	PrimaryTextStyle = globals.PrimaryTextStyle
 
 	// CTATextStyle can be used to format a string; important text
-	CTATextStyle = ansi.ColorFunc("red+b:white+h") // Call To Action
+	CTATextStyle = globals.CTATextStyle
 )
 
 // Row describes a value that will represent a row in our table
