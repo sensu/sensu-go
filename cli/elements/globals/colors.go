@@ -8,7 +8,7 @@ import (
 
 var (
 	// TitleStyle can be used to format a string; suitable for titles
-	TitleStyle = ansi.ColorFunc("white+bh")
+	TitleStyle = ansi.ColorFunc("default+bh")
 
 	// PrimaryTextStyle can be used to format a string; suitable for emphasis
 	PrimaryTextStyle = ansi.ColorFunc("blue+b")
