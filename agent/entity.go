@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/dynamic"
 )
@@ -43,10 +42,10 @@ func (a *Agent) getAgentEntity() *types.Entity {
 			}
 		}
 
-		s, err := system.Info()
-		if err == nil {
-			e.System = s
-		}
+		// Retrieve the system info from the agent's cached value
+		a.systemInfoMu.RLock()
+		e.System = *a.systemInfo
+		a.systemInfoMu.RUnlock()
 
 		a.entity = e
 	}
