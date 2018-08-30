@@ -91,7 +91,7 @@ type Config struct {
 	// keepalive to sensu-backend. Default: 60
 	KeepaliveInterval int
 	// KeepaliveTimeout is the time after which a sensu-agent is considered dead
-	// back the backend.
+	// by the backend.
 	KeepaliveTimeout uint32
 	// Organization sets the Agent's RBAC organization identifier
 	Organization string
