@@ -1,0 +1,113 @@
+package asset
+
+import (
+	"encoding/json"
+	"os"
+	"path/filepath"
+
+	"github.com/boltdb/bolt"
+	"github.com/sensu/sensu-go/types"
+)
+
+var (
+	assetBucketName = []byte("assets")
+)
+
+// A Getter is responsible for fetching (based on fitler selection), verifying,
+// and expanding an asset. Calls to the Get method block until the Asset has
+// fetched, verified, and expanded or it returns an error indicating why getting
+// the asset failed.
+type Getter interface {
+	Get(*types.Asset) (*RuntimeAsset, error)
+}
+
+// BoltDBAssetManager is responsible for the installing and storing the metadata
+// for assets backed by an instance of BoltDB on the local filesystem. BoltDB
+// provides the serialization guarantee that the asset contract specifies.
+// We rely on long-lived BoltDB transactions during Get to provide this
+// mechanism for blocking.
+type BoltDBAssetManager struct {
+	// CacheDir specifies the location of local asset storage.
+	LocalStorage string
+
+	// DB is the BoltDB
+	DB *bolt.DB
+
+	Fetcher
+	Expander
+	Verifier
+}
+
+// Get opens a read-write transaction to BoltDB, causing subsequent calls to
+// Get to block. During this transaction, we attempt to determine if the asset
+// is installed by querying BoltDB for the asset's SHA (which we use as an ID).
+//
+// If a value is returned, we return the deserialized asset stored in BoltDB.
+// If deserialization fails, we assume there is some level of corruption and
+// attempt to re-install the asset.
+//
+// If a value is not returned, the asset is not installed or not installed
+// correctly. We then proceed to attempt asset installation.
+func (b *BoltDBAssetManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
+	var localAsset *RuntimeAsset
+	key := []byte(asset.Sha512)
+
+	if err := b.DB.Update(func(tx *bolt.Tx) error {
+		bucket, err := tx.CreateBucketIfNotExists(assetBucketName)
+		if err != nil {
+			return err
+		}
+
+		value := bucket.Get(key)
+		if value != nil {
+			// deserialize asset
+			if err := json.Unmarshal(value, &localAsset); err == nil {
+				return nil
+			}
+		}
+
+		// install the asset
+		tmpFile, err := b.Fetch(asset.URL)
+		if err != nil {
+			return err
+		}
+		defer tmpFile.Close()
+		defer os.Remove(tmpFile.Name())
+
+		// verify
+		if err := b.Verify(tmpFile, asset.Sha512); err != nil {
+			return err
+		}
+
+		// expand
+		assetPath := filepath.Join(b.LocalStorage, asset.Sha512)
+		if err := b.Expand(tmpFile, assetPath); err != nil {
+			return err
+		}
+
+		localAsset = &RuntimeAsset{
+			Path: assetPath,
+		}
+
+		assetJSON, err := json.Marshal(localAsset)
+		if err != nil {
+			return err
+		}
+
+		return bucket.Put(key, assetJSON)
+	}); err != nil {
+		panic(err)
+	}
+
+	return localAsset, nil
+}
+
+func validate(file *os.File, sha512 string) error {
+
+	return nil
+}
+
+func expand(file *os.File) error {
+
+	return nil
+}
