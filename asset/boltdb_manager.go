@@ -96,7 +96,7 @@ func (b *BoltDBAssetManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 
 		return bucket.Put(key, assetJSON)
 	}); err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	return localAsset, nil
