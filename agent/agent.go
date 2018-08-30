@@ -63,6 +63,9 @@ const (
 	DefaultStatsdMetricsHost = "127.0.0.1"
 	// DefaultStatsdMetricsPort specifies the default metrics port for statsd server
 	DefaultStatsdMetricsPort = 8125
+	// DefaultSystemInfoRefreshInterval specifies the default refresh interval
+	// (in seconds) for the agent's cached system information.
+	DefaultSystemInfoRefreshInterval = 20
 	// DefaultUser specifies the default user
 	DefaultUser = "agent"
 )
@@ -429,8 +432,7 @@ func (a *Agent) Run() error {
 	}
 
 	go func() {
-		// TODO(cyril): create a separate config knob for system info refresh interval?
-		systemInfoTicker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
+		systemInfoTicker := time.NewTicker(time.Duration(DefaultSystemInfoRefreshInterval) * time.Second)
 		for {
 			select {
 			case <-systemInfoTicker.C:
