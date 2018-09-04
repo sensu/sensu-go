@@ -2,8 +2,6 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 import Query from "/components/util/Query";
-import Content from "/components/Content";
-import AppContent from "/components/AppContent";
 import NotFoundView from "/components/views/NotFoundView";
 import EntitiesList from "/components/partials/EntitiesList";
 import SearchBox from "/components/SearchBox";
@@ -11,6 +9,7 @@ import ListToolbar from "/components/partials/ListToolbar";
 import LiveIcon from "/icons/Live";
 import CollapsingMenu from "/components/partials/CollapsingMenu";
 import { withQueryParams } from "/components/QueryParams";
+import AppLayout from "/components/AppLayout";
 
 // duration used when polling is enabled; set fairly high until we understand
 // the impact.
@@ -70,28 +69,26 @@ class EntitiesContent extends React.PureComponent {
           }
 
           return (
-            <AppContent>
-              <Content bottomMargin container gutters>
-                <ListToolbar
-                  renderSearch={
-                    <SearchBox
-                      placeholder="Filter entities…"
-                      initialValue={filter}
-                      onSearch={value => setQueryParams({ filter: value })}
-                    />
-                  }
-                  renderMenuItems={
-                    <CollapsingMenu.Button
-                      title="LIVE"
-                      icon={<LiveIcon active={isPolling} />}
-                      onClick={() =>
-                        isPolling ? stopPolling() : startPolling(pollInterval)
-                      }
-                    />
-                  }
-                />
-              </Content>
-              <Content bottomMargin>
+            <div>
+              <ListToolbar
+                renderSearch={
+                  <SearchBox
+                    placeholder="Filter entities…"
+                    initialValue={filter}
+                    onSearch={value => setQueryParams({ filter: value })}
+                  />
+                }
+                renderMenuItems={
+                  <CollapsingMenu.Button
+                    title="LIVE"
+                    icon={<LiveIcon active={isPolling} />}
+                    onClick={() =>
+                      isPolling ? stopPolling() : startPolling(pollInterval)
+                    }
+                  />
+                }
+              />
+              <AppLayout.MobileFullWidthContent>
                 <EntitiesList
                   limit={limit}
                   offset={offset}
@@ -100,8 +97,8 @@ class EntitiesContent extends React.PureComponent {
                   environment={environment}
                   refetch={refetch}
                 />
-              </Content>
-            </AppContent>
+              </AppLayout.MobileFullWidthContent>
+            </div>
           );
         }}
       </Query>

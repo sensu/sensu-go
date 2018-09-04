@@ -6,53 +6,38 @@ import { withStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
 import Checkbox from "@material-ui/core/Checkbox";
 
-const styles = theme => {
-  const toolbar = theme.mixins.toolbar;
-  const xsBrk = `${theme.breakpoints.up("xs")} and (orientation: landscape)`;
-  const smBrk = theme.breakpoints.up("sm");
-  const calcTopWithFallback = size => ({
-    top: `calc(${size}px + env(safe-area-inset-top))`,
-    fallbacks: [{ top: size }],
-  });
+import AppLayout from "/components/AppLayout";
 
-  return {
-    root: {
-      // This padding is set to match the "checkbox" padding of a <TableCell>
-      // component to keep the header checkbox aligned with row checkboxes.
-      // See: https://github.com/mui-org/material-ui/blob/3353f44/packages/material-ui/src/TableCell/TableCell.js#L50
-      paddingLeft: 12,
-      paddingRight: 12,
-      paddingTop: theme.spacing.unit / 2,
-      paddingBottom: theme.spacing.unit / 2,
-      backgroundColor: theme.palette.primary.light,
-      color: theme.palette.primary.contrastText,
-      display: "flex",
-      alignItems: "center",
-      zIndex: theme.zIndex.appBar - 1,
-      // "& *": {
-      //   color: theme.palette.primary.contrastText,
-      // },
-    },
-    active: {
-      backgroundColor: theme.palette.primary.main,
-    },
-    sticky: {
-      position: "sticky",
-      ...calcTopWithFallback(toolbar.minHeight),
-      [xsBrk]: {
-        ...calcTopWithFallback(toolbar[xsBrk].minHeight),
-      },
-      [smBrk]: {
-        ...calcTopWithFallback(toolbar[smBrk].minHeight),
-      },
-      color: theme.palette.primary.contrastText,
-    },
+const styles = theme => ({
+  root: {
+    // This padding is set to match the "checkbox" padding of a <TableCell>
+    // component to keep the header checkbox aligned with row checkboxes.
+    // See: https://github.com/mui-org/material-ui/blob/3353f44/packages/material-ui/src/TableCell/TableCell.js#L50
+    paddingLeft: 12,
+    paddingRight: 12,
+    paddingTop: theme.spacing.unit / 2,
+    paddingBottom: theme.spacing.unit / 2,
+    backgroundColor: theme.palette.primary.light,
+    color: theme.palette.primary.contrastText,
+    display: "flex",
+    alignItems: "center",
+    zIndex: theme.zIndex.appBar - 1,
+    // "& *": {
+    //   color: theme.palette.primary.contrastText,
+    // },
+  },
+  active: {
+    backgroundColor: theme.palette.primary.main,
+  },
+  sticky: {
+    position: "sticky",
+    color: theme.palette.primary.contrastText,
+  },
 
-    grow: {
-      flex: "1 1 auto",
-    },
-  };
-};
+  grow: {
+    flex: "1 1 auto",
+  },
+});
 
 class ListHeader extends React.Component {
   static propTypes = {
@@ -86,24 +71,29 @@ class ListHeader extends React.Component {
     } = this.props;
 
     return (
-      <Typography
-        component="div"
-        className={classnames(classes.root, {
-          [classes.active]: selectedCount > 0,
-          [classes.sticky]: sticky,
-        })}
-      >
-        <Checkbox
-          component="button"
-          onClick={onClickSelect}
-          checked={selectedCount === rowCount}
-          indeterminate={selectedCount > 0 && selectedCount !== rowCount}
-          style={{ color: "inherit" }}
-        />
-        {selectedCount > 0 && <div>{selectedCount} Selected</div>}
-        <div className={classes.grow} />
-        {selectedCount > 0 ? renderBulkActions() : renderActions()}
-      </Typography>
+      <AppLayout.Context.Consumer>
+        {({ topBarHeight }) => (
+          <Typography
+            component="div"
+            className={classnames(classes.root, {
+              [classes.active]: selectedCount > 0,
+              [classes.sticky]: sticky,
+            })}
+            style={{ top: sticky ? topBarHeight : undefined }}
+          >
+            <Checkbox
+              component="button"
+              onClick={onClickSelect}
+              checked={selectedCount === rowCount}
+              indeterminate={selectedCount > 0 && selectedCount !== rowCount}
+              style={{ color: "inherit" }}
+            />
+            {selectedCount > 0 && <div>{selectedCount} Selected</div>}
+            <div className={classes.grow} />
+            {selectedCount > 0 ? renderBulkActions() : renderActions()}
+          </Typography>
+        )}
+      </AppLayout.Context.Consumer>
     );
   }
 }

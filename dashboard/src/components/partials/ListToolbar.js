@@ -11,6 +11,10 @@ const FillSpace = withStyles({
 })(({ classes }) => <div className={classes.root} />);
 
 const styles = theme => ({
+  root: {
+    display: "flex",
+    marginBottom: 16,
+  },
   search: {
     width: "100%",
     [theme.breakpoints.up("sm")]: {
@@ -41,13 +45,13 @@ class ListToolbar extends React.PureComponent {
     }
 
     return (
-      <React.Fragment>
+      <div className={classes.root}>
         {search}
         <FillSpace />
         <CollapsingMenu breakpoint="sm">
           {this.props.renderMenuItems}
         </CollapsingMenu>
-      </React.Fragment>
+      </div>
     );
   }
 }

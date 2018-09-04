@@ -2,9 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import AppContent from "/components/AppContent";
 import CollapsingMenu from "/components/partials/CollapsingMenu";
-import Content from "/components/Content";
 import ModalController from "/components/controller/ModalController";
 import ListToolbar from "/components/partials/ListToolbar";
 import LiveIcon from "/icons/Live";
@@ -15,6 +13,7 @@ import SearchBox from "/components/SearchBox";
 import SilencesList from "/components/partials/SilencesList";
 import SilenceEntryDialog from "/components/partials/SilenceEntryDialog";
 import { withQueryParams } from "/components/QueryParams";
+import AppLayout from "/components/AppLayout";
 
 // duration used when polling is enabled; set fairly high until we understand
 // the impact.
@@ -72,54 +71,51 @@ class SilencesContent extends React.Component {
           }
 
           return (
-            <AppContent>
-              <Content bottomMargin container gutters>
-                <ListToolbar
-                  renderSearch={
-                    <SearchBox
-                      placeholder="Filter silences…"
-                      initialValue={filter}
-                      onSearch={value => setQueryParams({ filter: value })}
+            <div>
+              <ListToolbar
+                renderSearch={
+                  <SearchBox
+                    placeholder="Filter silences…"
+                    initialValue={filter}
+                    onSearch={value => setQueryParams({ filter: value })}
+                  />
+                }
+                renderMenuItems={
+                  <React.Fragment>
+                    <ModalController
+                      renderModal={({ close }) => (
+                        <SilenceEntryDialog
+                          values={{
+                            props: {},
+                            ns: match.params,
+                          }}
+                          onClose={() => {
+                            // TODO: Only refetch / poison list on success
+                            refetch();
+                            close();
+                          }}
+                        />
+                      )}
+                    >
+                      {({ open }) => (
+                        <CollapsingMenu.Button
+                          title="New"
+                          icon={<PlusIcon />}
+                          onClick={() => open()}
+                        />
+                      )}
+                    </ModalController>
+                    <CollapsingMenu.Button
+                      title="LIVE"
+                      icon={<LiveIcon active={isPolling} />}
+                      onClick={() =>
+                        isPolling ? stopPolling() : startPolling(pollInterval)
+                      }
                     />
-                  }
-                  renderMenuItems={
-                    <React.Fragment>
-                      <ModalController
-                        renderModal={({ close }) => (
-                          <SilenceEntryDialog
-                            values={{
-                              props: {},
-                              ns: match.params,
-                            }}
-                            onClose={() => {
-                              // TODO: Only refetch / poison list on success
-                              refetch();
-                              close();
-                            }}
-                          />
-                        )}
-                      >
-                        {({ open }) => (
-                          <CollapsingMenu.Button
-                            title="New"
-                            icon={<PlusIcon />}
-                            onClick={() => open()}
-                          />
-                        )}
-                      </ModalController>
-                      <CollapsingMenu.Button
-                        title="LIVE"
-                        icon={<LiveIcon active={isPolling} />}
-                        onClick={() =>
-                          isPolling ? stopPolling() : startPolling(pollInterval)
-                        }
-                      />
-                    </React.Fragment>
-                  }
-                />
-              </Content>
-
-              <Content bottomMargin>
+                  </React.Fragment>
+                }
+              />
+              <AppLayout.MobileFullWidthContent>
                 <SilencesList
                   limit={limit}
                   offset={offset}
@@ -128,8 +124,8 @@ class SilencesContent extends React.Component {
                   loading={(loading && (!environment || !isPolling)) || aborted}
                   refetch={refetch}
                 />
-              </Content>
-            </AppContent>
+              </AppLayout.MobileFullWidthContent>
+            </div>
           );
         }}
       </Query>

@@ -2,7 +2,6 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import AppContent from "/components/AppContent";
 import EntityDetailsContainer from "/components/partials/EntityDetailsContainer";
 import Loader from "/components/util/Loader";
 import NotFoundView from "/components/views/NotFoundView";
@@ -53,20 +52,18 @@ class EntityDetailsContent extends React.PureComponent {
           }
 
           return (
-            <AppContent>
-              <Loader loading={(loading && !isPolling) || aborted} passthrough>
-                {entity && (
-                  <EntityDetailsContainer
-                    entity={entity}
-                    poller={{
-                      running: isPolling,
-                      start: startPolling,
-                      stop: stopPolling,
-                    }}
-                  />
-                )}
-              </Loader>
-            </AppContent>
+            <Loader loading={(loading && !isPolling) || aborted} passthrough>
+              {entity && (
+                <EntityDetailsContainer
+                  entity={entity}
+                  poller={{
+                    running: isPolling,
+                    start: startPolling,
+                    stop: stopPolling,
+                  }}
+                />
+              )}
+            </Loader>
           );
         }}
       </Query>

@@ -181,253 +181,251 @@ class CheckDetailsContainer extends React.PureComponent {
                 />
               </CollapsingMenu>
             </Content>
-            <Content container>
-              <Grid container spacing={16}>
-                <Grid item xs={12}>
-                  <Card>
-                    <CardContent>
-                      <Typography variant="headline">
-                        {check.isSilenced > 0 && (
-                          <Tooltip title="Silenced">
-                            <SilencedIcon style={{ float: "right" }} />
-                          </Tooltip>
-                        )}
-                        Configuration
-                      </Typography>
-                      <Typography variant="caption" paragraph>
-                        Defines when, where and how a check is executed.
-                      </Typography>
-                      <Grid container spacing={0}>
-                        <Grid item xs={12} sm={6}>
-                          <Dictionary>
-                            <DictionaryEntry>
-                              <DictionaryKey>Name</DictionaryKey>
-                              <DictionaryValue>{check.name}</DictionaryValue>
-                            </DictionaryEntry>
+            <Grid container spacing={16}>
+              <Grid item xs={12}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="headline">
+                      {check.isSilenced > 0 && (
+                        <Tooltip title="Silenced">
+                          <SilencedIcon style={{ float: "right" }} />
+                        </Tooltip>
+                      )}
+                      Configuration
+                    </Typography>
+                    <Typography variant="caption" paragraph>
+                      Defines when, where and how a check is executed.
+                    </Typography>
+                    <Grid container spacing={0}>
+                      <Grid item xs={12} sm={6}>
+                        <Dictionary>
+                          <DictionaryEntry>
+                            <DictionaryKey>Name</DictionaryKey>
+                            <DictionaryValue>{check.name}</DictionaryValue>
+                          </DictionaryEntry>
 
-                            <DictionaryEntry>
-                              <DictionaryKey>Command</DictionaryKey>
-                              <DictionaryValue>
-                                <Code>{check.command}</Code>
-                              </DictionaryValue>
-                            </DictionaryEntry>
+                          <DictionaryEntry>
+                            <DictionaryKey>Command</DictionaryKey>
+                            <DictionaryValue>
+                              <Code>{check.command}</Code>
+                            </DictionaryValue>
+                          </DictionaryEntry>
 
-                            <DictionaryEntry>
-                              <DictionaryKey>Subscriptions</DictionaryKey>
-                              <DictionaryValue>
-                                {check.subscriptions.length > 0 ? (
-                                  <List disablePadding>
-                                    {check.subscriptions.map(subscription => (
-                                      <ListItem key={subscription}>
-                                        <ListItemTitle>
-                                          {subscription}
-                                        </ListItemTitle>
-                                      </ListItem>
-                                    ))}
-                                  </List>
-                                ) : (
-                                  "—"
-                                )}
-                              </DictionaryValue>
-                            </DictionaryEntry>
-                          </Dictionary>
-                        </Grid>
-
-                        <Grid item xs={12} sm={6}>
-                          <Dictionary>
-                            <DictionaryEntry>
-                              <DictionaryKey>Published?</DictionaryKey>
-                              <DictionaryValue>
-                                {check.publish ? "Yes" : "No"}
-                              </DictionaryValue>
-                            </DictionaryEntry>
-
-                            <DictionaryEntry>
-                              <DictionaryKey>Schedule</DictionaryKey>
-                              <DictionaryValue>
-                                {this.renderSchedule()}
-                              </DictionaryValue>
-                            </DictionaryEntry>
-
-                            <DictionaryEntry>
-                              <DictionaryKey>Round Robin</DictionaryKey>
-                              <DictionaryValue>
-                                {check.roundRobin ? "Yes" : "No"}
-                              </DictionaryValue>
-                            </DictionaryEntry>
-                          </Dictionary>
-                        </Grid>
+                          <DictionaryEntry>
+                            <DictionaryKey>Subscriptions</DictionaryKey>
+                            <DictionaryValue>
+                              {check.subscriptions.length > 0 ? (
+                                <List disablePadding>
+                                  {check.subscriptions.map(subscription => (
+                                    <ListItem key={subscription}>
+                                      <ListItemTitle>
+                                        {subscription}
+                                      </ListItemTitle>
+                                    </ListItem>
+                                  ))}
+                                </List>
+                              ) : (
+                                "—"
+                              )}
+                            </DictionaryValue>
+                          </DictionaryEntry>
+                        </Dictionary>
                       </Grid>
-                    </CardContent>
 
-                    <Divider />
+                      <Grid item xs={12} sm={6}>
+                        <Dictionary>
+                          <DictionaryEntry>
+                            <DictionaryKey>Published?</DictionaryKey>
+                            <DictionaryValue>
+                              {check.publish ? "Yes" : "No"}
+                            </DictionaryValue>
+                          </DictionaryEntry>
 
-                    <CardContent>
-                      <Grid container spacing={0}>
-                        <Grid item xs={12} sm={6}>
-                          <Dictionary>
-                            <DictionaryEntry>
-                              <DictionaryKey>Timeout</DictionaryKey>
-                              <DictionaryValue>
-                                <Maybe value={check.timeout} fallback="Never">
-                                  {timeout => `${timeout}s`}
-                                </Maybe>
-                              </DictionaryValue>
-                            </DictionaryEntry>
+                          <DictionaryEntry>
+                            <DictionaryKey>Schedule</DictionaryKey>
+                            <DictionaryValue>
+                              {this.renderSchedule()}
+                            </DictionaryValue>
+                          </DictionaryEntry>
 
-                            <DictionaryEntry>
-                              <DictionaryKey>TTL</DictionaryKey>
-                              <DictionaryValue>
-                                <Maybe value={check.ttl} fallback="Forever">
-                                  {ttl => `${ttl}s`}
-                                </Maybe>
-                              </DictionaryValue>
-                            </DictionaryEntry>
-
-                            <DictionaryEntry>
-                              <DictionaryKey>Proxy Entity ID</DictionaryKey>
-                              <DictionaryValue>
-                                <Maybe
-                                  value={check.outputMetricFormat}
-                                  fallback="None"
-                                />
-                              </DictionaryValue>
-                            </DictionaryEntry>
-
-                            <DictionaryEntry>
-                              <DictionaryKey>Proxy Requests</DictionaryKey>
-                              <DictionaryValue>
-                                <Maybe
-                                  value={check.proxyRequests}
-                                  fallback="None"
-                                >
-                                  {val => JSON.stringify(val)}
-                                </Maybe>
-                              </DictionaryValue>
-                            </DictionaryEntry>
-                          </Dictionary>
-                        </Grid>
-
-                        <Grid item xs={12} sm={6}>
-                          <Dictionary>
-                            <DictionaryEntry>
-                              <DictionaryKey>Flap Threshold</DictionaryKey>
-                              <DictionaryValue>
-                                High: {check.highFlapThreshold} Low:{" "}
-                                {check.lowFlapThreshold}
-                              </DictionaryValue>
-                            </DictionaryEntry>
-
-                            <DictionaryEntry>
-                              <DictionaryKey>Accepts STDIN?</DictionaryKey>
-                              <DictionaryValue>
-                                {check.stdin ? "Yes" : "No"}
-                              </DictionaryValue>
-                            </DictionaryEntry>
-
-                            <DictionaryEntry>
-                              <DictionaryKey>ENV Vars</DictionaryKey>
-                              <DictionaryValue>
-                                {check.envVars.length > 0 ? (
-                                  <Monospaced highlight background>
-                                    {check.envVars.join("\n")}
-                                  </Monospaced>
-                                ) : (
-                                  "None"
-                                )}
-                              </DictionaryValue>
-                            </DictionaryEntry>
-                          </Dictionary>
-                        </Grid>
+                          <DictionaryEntry>
+                            <DictionaryKey>Round Robin</DictionaryKey>
+                            <DictionaryValue>
+                              {check.roundRobin ? "Yes" : "No"}
+                            </DictionaryValue>
+                          </DictionaryEntry>
+                        </Dictionary>
                       </Grid>
-                    </CardContent>
+                    </Grid>
+                  </CardContent>
 
-                    <Divider />
+                  <Divider />
 
-                    <CardContent>
-                      <Grid container spacing={0}>
-                        <Grid item xs={12} sm={6}>
-                          <Dictionary>
-                            <DictionaryEntry>
-                              <DictionaryKey>Handlers</DictionaryKey>
-                              <DictionaryValue>
-                                {check.handlers.length > 0 ? (
-                                  <List disablePadding>
-                                    {check.handlers.map(handler => (
-                                      <ListItem key={handler.name}>
-                                        <ListItemTitle>
-                                          {handler.name}
-                                        </ListItemTitle>
-                                      </ListItem>
-                                    ))}
-                                  </List>
-                                ) : (
-                                  "—"
-                                )}
-                              </DictionaryValue>
-                            </DictionaryEntry>
+                  <CardContent>
+                    <Grid container spacing={0}>
+                      <Grid item xs={12} sm={6}>
+                        <Dictionary>
+                          <DictionaryEntry>
+                            <DictionaryKey>Timeout</DictionaryKey>
+                            <DictionaryValue>
+                              <Maybe value={check.timeout} fallback="Never">
+                                {timeout => `${timeout}s`}
+                              </Maybe>
+                            </DictionaryValue>
+                          </DictionaryEntry>
 
-                            <DictionaryEntry>
-                              <DictionaryKey>Hooks</DictionaryKey>
-                              <DictionaryValue>
-                                {this.renderHooks()}
-                              </DictionaryValue>
-                            </DictionaryEntry>
-                          </Dictionary>
-                        </Grid>
-                        <Grid item xs={12} sm={6}>
-                          <Dictionary>
-                            <DictionaryEntry>
-                              <DictionaryKey>Metric Format</DictionaryKey>
-                              <DictionaryValue>
-                                <Maybe
-                                  value={check.outputMetricFormat}
-                                  fallback="None"
-                                />
-                              </DictionaryValue>
-                            </DictionaryEntry>
+                          <DictionaryEntry>
+                            <DictionaryKey>TTL</DictionaryKey>
+                            <DictionaryValue>
+                              <Maybe value={check.ttl} fallback="Forever">
+                                {ttl => `${ttl}s`}
+                              </Maybe>
+                            </DictionaryValue>
+                          </DictionaryEntry>
 
-                            <DictionaryEntry>
-                              <DictionaryKey>Metric Handlers</DictionaryKey>
-                              <DictionaryValue>
-                                {check.outputMetricHandlers.length > 0 ? (
-                                  <List disablePadding>
-                                    {check.outputMetricHandlers.map(handler => (
-                                      <ListItem key={handler.name}>
-                                        <ListItemTitle>
-                                          {handler.name}
-                                        </ListItemTitle>
-                                      </ListItem>
-                                    ))}
-                                  </List>
-                                ) : (
-                                  "—"
-                                )}
-                              </DictionaryValue>
-                            </DictionaryEntry>
-                          </Dictionary>
-                        </Grid>
+                          <DictionaryEntry>
+                            <DictionaryKey>Proxy Entity ID</DictionaryKey>
+                            <DictionaryValue>
+                              <Maybe
+                                value={check.outputMetricFormat}
+                                fallback="None"
+                              />
+                            </DictionaryValue>
+                          </DictionaryEntry>
+
+                          <DictionaryEntry>
+                            <DictionaryKey>Proxy Requests</DictionaryKey>
+                            <DictionaryValue>
+                              <Maybe
+                                value={check.proxyRequests}
+                                fallback="None"
+                              >
+                                {val => JSON.stringify(val)}
+                              </Maybe>
+                            </DictionaryValue>
+                          </DictionaryEntry>
+                        </Dictionary>
                       </Grid>
-                    </CardContent>
 
-                    {Object.keys(check.extendedAttributes).length > 0 && (
-                      <React.Fragment>
-                        <Divider />
-                        <Monospaced background>
-                          <CardContent>
-                            {`# Extra\n\n${JSON.stringify(
-                              check.extendedAttributes,
-                              null,
-                              "\t",
-                            )}`}
-                          </CardContent>
-                        </Monospaced>
-                      </React.Fragment>
-                    )}
-                  </Card>
-                </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Dictionary>
+                          <DictionaryEntry>
+                            <DictionaryKey>Flap Threshold</DictionaryKey>
+                            <DictionaryValue>
+                              High: {check.highFlapThreshold} Low:{" "}
+                              {check.lowFlapThreshold}
+                            </DictionaryValue>
+                          </DictionaryEntry>
+
+                          <DictionaryEntry>
+                            <DictionaryKey>Accepts STDIN?</DictionaryKey>
+                            <DictionaryValue>
+                              {check.stdin ? "Yes" : "No"}
+                            </DictionaryValue>
+                          </DictionaryEntry>
+
+                          <DictionaryEntry>
+                            <DictionaryKey>ENV Vars</DictionaryKey>
+                            <DictionaryValue>
+                              {check.envVars.length > 0 ? (
+                                <Monospaced highlight background>
+                                  {check.envVars.join("\n")}
+                                </Monospaced>
+                              ) : (
+                                "None"
+                              )}
+                            </DictionaryValue>
+                          </DictionaryEntry>
+                        </Dictionary>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+
+                  <Divider />
+
+                  <CardContent>
+                    <Grid container spacing={0}>
+                      <Grid item xs={12} sm={6}>
+                        <Dictionary>
+                          <DictionaryEntry>
+                            <DictionaryKey>Handlers</DictionaryKey>
+                            <DictionaryValue>
+                              {check.handlers.length > 0 ? (
+                                <List disablePadding>
+                                  {check.handlers.map(handler => (
+                                    <ListItem key={handler.name}>
+                                      <ListItemTitle>
+                                        {handler.name}
+                                      </ListItemTitle>
+                                    </ListItem>
+                                  ))}
+                                </List>
+                              ) : (
+                                "—"
+                              )}
+                            </DictionaryValue>
+                          </DictionaryEntry>
+
+                          <DictionaryEntry>
+                            <DictionaryKey>Hooks</DictionaryKey>
+                            <DictionaryValue>
+                              {this.renderHooks()}
+                            </DictionaryValue>
+                          </DictionaryEntry>
+                        </Dictionary>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <Dictionary>
+                          <DictionaryEntry>
+                            <DictionaryKey>Metric Format</DictionaryKey>
+                            <DictionaryValue>
+                              <Maybe
+                                value={check.outputMetricFormat}
+                                fallback="None"
+                              />
+                            </DictionaryValue>
+                          </DictionaryEntry>
+
+                          <DictionaryEntry>
+                            <DictionaryKey>Metric Handlers</DictionaryKey>
+                            <DictionaryValue>
+                              {check.outputMetricHandlers.length > 0 ? (
+                                <List disablePadding>
+                                  {check.outputMetricHandlers.map(handler => (
+                                    <ListItem key={handler.name}>
+                                      <ListItemTitle>
+                                        {handler.name}
+                                      </ListItemTitle>
+                                    </ListItem>
+                                  ))}
+                                </List>
+                              ) : (
+                                "—"
+                              )}
+                            </DictionaryValue>
+                          </DictionaryEntry>
+                        </Dictionary>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+
+                  {Object.keys(check.extendedAttributes).length > 0 && (
+                    <React.Fragment>
+                      <Divider />
+                      <Monospaced background>
+                        <CardContent>
+                          {`# Extra\n\n${JSON.stringify(
+                            check.extendedAttributes,
+                            null,
+                            "\t",
+                          )}`}
+                        </CardContent>
+                      </Monospaced>
+                    </React.Fragment>
+                  )}
+                </Card>
               </Grid>
-            </Content>
+            </Grid>
           </React.Fragment>
         )}
       </Loader>
