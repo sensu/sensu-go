@@ -52,12 +52,44 @@ func (b *BoltDBAssetManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 	var localAsset *RuntimeAsset
 	key := []byte(asset.Sha512)
 
+	// This is racey, but the udpate transaction that comes over this view
+	// will cause all other update transactions to block. We always want
+	// to allow this Get() to return if the asset is already installed.
+	if err := b.DB.View(func(tx *bolt.Tx) error {
+		// If the key exists, the bucket should already exist.
+		bucket := tx.Bucket(assetBucketName)
+		if bucket == nil {
+			return nil
+		}
+
+		value := bucket.Get(key)
+		if value != nil {
+			// deserialize asset
+			if err := json.Unmarshal(value, &localAsset); err == nil {
+				return nil
+			}
+		}
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	// Check to see if the view was successful.
+	if localAsset != nil {
+		return localAsset, nil
+	}
+
 	if err := b.DB.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists(assetBucketName)
 		if err != nil {
 			return err
 		}
 
+		// Though we've already attempted to do this, it's possible that a previous
+		// call completed installation of the asset while this transaction
+		// was blocked on serialization. Re-attempt to get the key in case that is
+		// what happened.
 		value := bucket.Get(key)
 		if value != nil {
 			// deserialize asset
