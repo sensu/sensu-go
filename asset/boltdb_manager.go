@@ -133,13 +133,3 @@ func (b *BoltDBAssetManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 
 	return localAsset, nil
 }
-
-func validate(file *os.File, sha512 string) error {
-
-	return nil
-}
-
-func expand(file *os.File) error {
-
-	return nil
-}
