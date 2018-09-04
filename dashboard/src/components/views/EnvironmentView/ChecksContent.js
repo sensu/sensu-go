@@ -12,7 +12,7 @@ import Query from "/components/util/Query";
 import ChecksList from "/components/partials/ChecksList";
 import ListToolbar from "/components/partials/ListToolbar";
 
-import NotFoundView from "/components/views/NotFoundView";
+import NotFound from "/components/partials/NotFound";
 
 import CollapsingMenu from "/components/partials/CollapsingMenu";
 import SearchBox from "/components/SearchBox";
@@ -70,7 +70,7 @@ class ChecksContent extends React.Component {
           refetch,
         }) => {
           if (!environment && !loading && !aborted) {
-            return <NotFoundView />;
+            return <NotFound />;
           }
 
           return (

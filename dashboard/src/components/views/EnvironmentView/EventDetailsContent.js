@@ -4,7 +4,7 @@ import gql from "graphql-tag";
 
 import Query from "/components/util/Query";
 
-import NotFoundView from "/components/views/NotFoundView";
+import NotFound from "/components/partials/NotFound";
 import Container from "/components/partials/EventDetailsContainer";
 
 // duration used when polling is enabled; set fairly high until we understand
@@ -55,7 +55,7 @@ class EventDetailsContent extends React.PureComponent {
           stopPolling,
         }) => {
           if (!loading && !aborted && (!event || event.deleted)) {
-            return <NotFoundView />;
+            return <NotFound />;
           }
 
           return (

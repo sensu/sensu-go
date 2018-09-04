@@ -6,7 +6,7 @@ import CollapsingMenu from "/components/partials/CollapsingMenu";
 import ModalController from "/components/controller/ModalController";
 import ListToolbar from "/components/partials/ListToolbar";
 import LiveIcon from "/icons/Live";
-import NotFoundView from "/components/views/NotFoundView";
+import NotFound from "/components/partials/NotFound";
 import PlusIcon from "@material-ui/icons/Add";
 import Query from "/components/util/Query";
 import SearchBox from "/components/SearchBox";
@@ -67,7 +67,7 @@ class SilencesContent extends React.Component {
           stopPolling,
         }) => {
           if (!environment && !loading && !aborted) {
-            return <NotFoundView />;
+            return <NotFound />;
           }
 
           return (

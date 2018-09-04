@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 import Query from "/components/util/Query";
-import NotFoundView from "/components/views/NotFoundView";
+import NotFound from "/components/partials/NotFound";
 import EntitiesList from "/components/partials/EntitiesList";
 import SearchBox from "/components/SearchBox";
 import ListToolbar from "/components/partials/ListToolbar";
@@ -65,7 +65,7 @@ class EntitiesContent extends React.PureComponent {
           stopPolling,
         }) => {
           if (!environment && !loading && !aborted) {
-            return <NotFoundView />;
+            return <NotFound />;
           }
 
           return (
