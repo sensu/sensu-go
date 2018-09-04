@@ -21,6 +21,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
   relative path.
 - Fixed a bug where an agent's collection of system information could delay
   sending of keepalive messages.
+- Fixed a bug in nagios perfdata parsing.
 
 ## [2.0.0-beta.4] - 2018-08-14
 

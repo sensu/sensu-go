@@ -50,18 +50,22 @@ func ParseNagios(event *types.Event) (NagiosList, error) {
 	}
 
 	// Fetch the perfdata and remove leading & trailing whitespaces
-	perfdata := strings.Trim(output[1], " ")
+	perfdata := strings.TrimSpace(output[1])
 
 	// Split the perfdata into a slice of metrics
 	metrics := strings.Split(perfdata, " ")
 
 	// Create a Nagios metric for each perfdata metrics
 	for _, metric := range metrics {
+		if metric = strings.TrimSpace(metric); len(metric) == 0 {
+			// the token was just whitespace, ignore it
+			continue
+		}
 		// Clear everything after ';' and split the label and the value
 		parts := strings.Split(metric, ";")
 		parts = strings.Split(parts[0], "=")
 		if len(parts) != 2 {
-			return nil, fmt.Errorf("invalid nagios perfdata metric: %s", metric)
+			return nil, fmt.Errorf("invalid nagios perfdata metric: %q", metric)
 		}
 
 		// Make sure we don't have any whitespace in our label
@@ -74,7 +78,7 @@ func ParseNagios(event *types.Event) (NagiosList, error) {
 		// Parse the value as a float64
 		value, err := strconv.ParseFloat(strValue, 64)
 		if err != nil {
-			return nil, fmt.Errorf("invalid nagios perfdata metric value: %s", parts[1])
+			return nil, fmt.Errorf("invalid nagios perfdata metric value: %q", parts[1])
 		}
 
 		// Add this metric to our list
