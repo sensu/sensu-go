@@ -3,6 +3,8 @@ import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
 import ResizeObserver from "react-resize-observer";
 
+import ToastWell from "/components/relocation/ToastWell";
+
 import MobileFullWidthContent from "./MobileFullWidthContent";
 import Context from "./Context";
 
@@ -12,6 +14,8 @@ const styles = theme => ({
     display: "flex",
     flexDirection: "column",
     alignItems: "stretch",
+    paddingLeft: "env(safe-area-inset-left)",
+    paddingRight: "env(safe-area-inset-right)",
   },
 
   topBarContainer: {
@@ -64,6 +68,7 @@ const styles = theme => ({
   contentContainer: {
     flex: 1,
     display: "flex",
+    zIndex: 0,
   },
 
   content: {
@@ -95,12 +100,19 @@ const styles = theme => ({
     position: "fixed",
     bottom: 0,
     left: 0,
+    right: 0,
+    height: 0,
   },
 
   toast: {
     position: "absolute",
     bottom: 0,
+    right: 0,
     left: 0,
+
+    [theme.breakpoints.up("md")]: {
+      left: "auto",
+    },
   },
 });
 
@@ -111,7 +123,6 @@ class AppLayout extends React.PureComponent {
     quickNav: PropTypes.node,
     content: PropTypes.node,
     alert: PropTypes.node,
-    toast: PropTypes.node,
   };
 
   static defaultProps = {
@@ -119,7 +130,6 @@ class AppLayout extends React.PureComponent {
     quickNav: undefined,
     content: undefined,
     alert: undefined,
-    toast: undefined,
   };
 
   static MobileFullWidthContent = MobileFullWidthContent;
@@ -138,7 +148,7 @@ class AppLayout extends React.PureComponent {
   };
 
   render() {
-    const { classes, topBar, quickNav, content, alert, toast } = this.props;
+    const { classes, topBar, quickNav, content, alert } = this.props;
 
     const contentOffset =
       CSS && CSS.supports && CSS.supports("position: sticky")
@@ -165,7 +175,9 @@ class AppLayout extends React.PureComponent {
             <div className={classes.content}>{content}</div>
           </div>
           <div className={classes.toastContainer}>
-            <div className={classes.toast}>{toast}</div>
+            <div className={classes.toast}>
+              <ToastWell />
+            </div>
           </div>
         </div>
       </Context.Provider>
