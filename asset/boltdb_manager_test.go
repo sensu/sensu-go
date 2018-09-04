@@ -2,7 +2,7 @@ package asset_test
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 	"io/ioutil"
 	"log"
 	"os"
@@ -13,8 +13,45 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+type mockFetcher struct {
+	pass bool
+}
+
+func (m *mockFetcher) Fetch(string) (*os.File, error) {
+	if m.pass {
+		return ioutil.TempFile(os.TempDir(), "boltdb_manager_test_fetcher")
+	}
+
+	return nil, errors.New("")
+}
+
+type mockVerifier struct {
+	pass bool
+}
+
+func (m *mockVerifier) Verify(f *os.File, sha512 string) error {
+	if m.pass {
+		return nil
+	}
+	return errors.New("")
+}
+
+type mockExpander struct {
+	pass bool
+}
+
+func (m *mockExpander) Expand(f *os.File, path string) error {
+	if m.pass {
+		return nil
+	}
+
+	return errors.New("")
+}
+
 func TestGetExistingAsset(t *testing.T) {
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "asset_test_get_existing_asset")
+	t.Parallel()
+
+	tmpFile, err := ioutil.TempFile(os.TempDir(), "asset_test_get_existing_asset.db")
 	if err != nil {
 		log.Printf("unable to create test boltdb file: %v", err)
 		t.FailNow()
@@ -69,14 +106,10 @@ func TestGetExistingAsset(t *testing.T) {
 	}
 }
 
-type FailingFetcher struct{}
-
-func (f FailingFetcher) Fetch(path string) (*os.File, error) {
-	return nil, fmt.Errorf("failure")
-}
-
 func TestGetNonexistentAsset(t *testing.T) {
-	tmpFile, err := ioutil.TempFile(os.TempDir(), "asset_test_get_existing_asset")
+	t.Parallel()
+
+	tmpFile, err := ioutil.TempFile(os.TempDir(), "asset_test_get_nonexistent_asset.db")
 	if err != nil {
 		log.Printf("unable to create test boltdb file: %v", err)
 		t.FailNow()
@@ -92,11 +125,11 @@ func TestGetNonexistentAsset(t *testing.T) {
 
 	manager := &asset.BoltDBAssetManager{
 		DB:      db,
-		Fetcher: FailingFetcher{},
+		Fetcher: &mockFetcher{false},
 	}
 
 	a := &types.Asset{
-		URL: "url",
+		URL: "nonexistent.tar",
 	}
 
 	runtimeAsset, err := manager.Get(a)
@@ -109,20 +142,129 @@ func TestGetNonexistentAsset(t *testing.T) {
 	}
 }
 
-type LocalFetcher struct{}
-
-func (l LocalFetcher) Fetch(path string) (*os.File, error) {
-	return os.Open(path)
-}
-
 func TestGetInvalidAsset(t *testing.T) {
+	t.Parallel()
 
+	tmpFile, err := ioutil.TempFile(os.TempDir(), "asset_test_get_invalid_asset.db")
+	if err != nil {
+		log.Printf("unable to create test boltdb file: %v", err)
+		t.FailNow()
+	}
+	defer tmpFile.Close()
+	defer os.Remove(tmpFile.Name())
+
+	db, err := bolt.Open(tmpFile.Name(), 0666, &bolt.Options{})
+	if err != nil {
+		log.Fatalf("unable to open boltdb in test: %v", err)
+	}
+	defer db.Close()
+
+	manager := &asset.BoltDBAssetManager{
+		DB:       db,
+		Fetcher:  &mockFetcher{true},
+		Verifier: &mockVerifier{false},
+	}
+
+	a := &types.Asset{
+		URL: "",
+	}
+
+	runtimeAsset, err := manager.Get(a)
+	if runtimeAsset != nil {
+		t.Failed()
+	}
+
+	if err == nil {
+		t.Failed()
+	}
 }
 
-func TestGetInvalidArchive(t *testing.T) {
+func TestFailedExpand(t *testing.T) {
+	t.Parallel()
 
+	tmpFile, err := ioutil.TempFile(os.TempDir(), "asset_test_get_invalid_asset.db")
+	if err != nil {
+		log.Printf("unable to create test boltdb file: %v", err)
+		t.FailNow()
+	}
+	defer tmpFile.Close()
+	defer os.Remove(tmpFile.Name())
+
+	db, err := bolt.Open(tmpFile.Name(), 0666, &bolt.Options{})
+	if err != nil {
+		log.Fatalf("unable to open boltdb in test: %v", err)
+	}
+	defer db.Close()
+
+	manager := &asset.BoltDBAssetManager{
+		DB:       db,
+		Fetcher:  &mockFetcher{true},
+		Verifier: &mockVerifier{true},
+		Expander: &mockExpander{false},
+	}
+
+	a := &types.Asset{
+		URL: "",
+	}
+
+	runtimeAsset, err := manager.Get(a)
+	if runtimeAsset != nil {
+		log.Println("received asset, expected nil")
+		t.FailNow()
+	}
+
+	if err == nil {
+		log.Println("received nil error, expected error")
+	}
 }
 
-func TestSuccessfulGetExternalAsset(t *testing.T) {
+func TestSuccessfulGetAsset(t *testing.T) {
+	t.Parallel()
 
+	tmpFile, err := ioutil.TempFile(os.TempDir(), "asset_test_get_invalid_asset.db")
+	if err != nil {
+		log.Printf("unable to create test boltdb file: %v", err)
+		t.FailNow()
+	}
+	defer tmpFile.Close()
+	defer os.Remove(tmpFile.Name())
+
+	db, err := bolt.Open(tmpFile.Name(), 0666, &bolt.Options{})
+	if err != nil {
+		log.Fatalf("unable to open boltdb in test: %v", err)
+	}
+	defer db.Close()
+
+	manager := &asset.BoltDBAssetManager{
+		DB:       db,
+		Fetcher:  &mockFetcher{true},
+		Verifier: &mockVerifier{true},
+		Expander: &mockExpander{true},
+	}
+
+	a := &types.Asset{
+		Name:   "asset",
+		Sha512: "sha",
+		URL:    "path",
+	}
+
+	runtimeAsset, err := manager.Get(a)
+	if runtimeAsset == nil {
+		log.Println("expected asset, got nil")
+	}
+
+	if err != nil {
+		log.Printf("expected no error, got: %v", err)
+	}
+
+	d := runtimeAsset.LibDir()
+
+	if d == "" {
+		log.Printf("expected lib directory, got: %s", d)
+	}
+
+	runtimeAsset, err = manager.Get(a)
+	if d2 := runtimeAsset.LibDir(); d2 != d {
+		log.Printf("expected lib path to be %s, got %s", d, d2)
+	}
 }
