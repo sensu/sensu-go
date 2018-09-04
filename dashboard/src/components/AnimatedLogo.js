@@ -1,11 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-let id = 0;
-const getNextId = () => {
-  id += 1;
-  return id;
-};
+import uniqueId from "/utils/uniqueId";
 
 class AnimatedLogo extends React.PureComponent {
   static propTypes = {
@@ -21,7 +17,7 @@ class AnimatedLogo extends React.PureComponent {
   };
 
   componentWillMount() {
-    this._id = `AnimatedLogo-${getNextId()}`;
+    this._id = `AnimatedLogo-${uniqueId()}`;
   }
 
   render() {

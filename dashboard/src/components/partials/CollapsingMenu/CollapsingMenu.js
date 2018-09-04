@@ -7,17 +7,13 @@ import DisclosureIcon from "@material-ui/icons/MoreVert";
 import IconButton from "@material-ui/core/IconButton";
 import Menu from "@material-ui/core/Menu";
 
+import uniqueId from "/utils/uniqueId";
+
 import Item from "./Item";
 import Button from "./Button";
 import SubMenu from "./SubMenu";
 
 const Context = React.createContext();
-
-let id = 0;
-const getNextId = () => {
-  id += 1;
-  return id;
-};
 
 const breakpoints = ["xs", "sm", "md", "lg", "xl"];
 
@@ -42,7 +38,7 @@ class CollapsingMenu extends React.PureComponent {
 
   constructor(props) {
     super(props);
-    this._id = getNextId();
+    this._id = uniqueId();
   }
 
   state = {
