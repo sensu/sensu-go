@@ -19,6 +19,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed a bug where assets could not extract git tarballs.
 - Fixed a bug where assets would not install if given cache directory was a
   relative path.
+- Fixed a bug where an agent's collection of system information could delay
+  sending of keepalive messages.
 
 ## [2.0.0-beta.4] - 2018-08-14
 

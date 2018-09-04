@@ -18,6 +18,7 @@ import (
 	"github.com/atlassian/gostatsd/pkg/statsd"
 	"github.com/sensu/sensu-go/agent/assetmanager"
 	"github.com/sensu/sensu-go/handler"
+	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/path"
@@ -62,6 +63,9 @@ const (
 	DefaultStatsdMetricsHost = "127.0.0.1"
 	// DefaultStatsdMetricsPort specifies the default metrics port for statsd server
 	DefaultStatsdMetricsPort = 8125
+	// DefaultSystemInfoRefreshInterval specifies the default refresh interval
+	// (in seconds) for the agent's cached system information.
+	DefaultSystemInfoRefreshInterval = 20
 	// DefaultUser specifies the default user
 	DefaultUser = "agent"
 )
@@ -90,7 +94,7 @@ type Config struct {
 	// keepalive to sensu-backend. Default: 60
 	KeepaliveInterval int
 	// KeepaliveTimeout is the time after which a sensu-agent is considered dead
-	// back the backend.
+	// by the backend.
 	KeepaliveTimeout uint32
 	// Organization sets the Agent's RBAC organization identifier
 	Organization string
@@ -196,6 +200,8 @@ type Agent struct {
 	sendq           chan *transport.Message
 	stopped         chan struct{}
 	stopping        chan struct{}
+	systemInfo      *types.System
+	systemInfoMu    *sync.RWMutex
 	wg              *sync.WaitGroup
 }
 
@@ -214,11 +220,17 @@ func NewAgent(config *Config) *Agent {
 		stopping:        make(chan struct{}),
 		stopped:         make(chan struct{}),
 		sendq:           make(chan *transport.Message, 10),
+		systemInfo:      &types.System{},
+		systemInfoMu:    &sync.RWMutex{},
 		wg:              &sync.WaitGroup{},
 	}
 
 	agent.statsdServer = NewStatsdServer(agent)
 	agent.handler.AddHandler(types.CheckRequestType, agent.handleCheck)
+
+	// We don't check for errors here and let the agent get created regardless
+	// of system info status.
+	_ = agent.refreshSystemInfo()
 	agent.assetManager = assetmanager.New(config.CacheDir, agent.getAgentEntity())
 
 	return agent
@@ -336,6 +348,19 @@ func (a *Agent) sendPump() {
 	}
 }
 
+func (a *Agent) refreshSystemInfo() error {
+	info, err := system.Info()
+	if err != nil {
+		return err
+	}
+
+	a.systemInfoMu.Lock()
+	a.systemInfo = &info
+	a.systemInfoMu.Unlock()
+
+	return nil
+}
+
 func (a *Agent) sendKeepalive() error {
 	logger.Info("sending keepalive")
 	msg := &transport.Message{
@@ -374,8 +399,10 @@ func (a *Agent) buildTransportHeaderMap() http.Header {
 // 2. Connect to the backend, return an error if unsuccessful.
 // 3. Start the socket listeners, return an error if unsuccessful.
 // 4. Start the send/receive pumps.
-// 5. Start sending keepalives.
-// 6. Start the API server, shutdown the agent if doing so fails.
+// 5. Issue a keepalive immediately.
+// 6. Start refreshing system info periodically.
+// 7. Start sending periodic keepalives.
+// 8. Start the API server, shutdown the agent if doing so fails.
 func (a *Agent) Run() error {
 	userCredentials := fmt.Sprintf("%s:%s", a.config.User, a.config.Password)
 	userCredentials = base64.StdEncoding.EncodeToString([]byte(userCredentials))
@@ -403,6 +430,20 @@ func (a *Agent) Run() error {
 	if err := a.sendKeepalive(); err != nil {
 		logger.WithError(err).Error("error sending keepalive")
 	}
+
+	go func() {
+		systemInfoTicker := time.NewTicker(time.Duration(DefaultSystemInfoRefreshInterval) * time.Second)
+		for {
+			select {
+			case <-systemInfoTicker.C:
+				if err := a.refreshSystemInfo(); err != nil {
+					logger.WithError(err).Error("failed to refresh system info")
+				}
+			case <-a.stopping:
+				return
+			}
+		}
+	}()
 
 	go func() {
 		keepaliveTicker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
