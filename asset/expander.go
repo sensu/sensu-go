@@ -15,12 +15,12 @@ const (
 	headerSize = 262
 )
 
-// An Expander expands the provided *os.File to the target direcrtory.
+// An expander expands the provided *os.File to the target direcrtory.
 type expander interface {
 	Expand(archive io.ReadSeeker, targetDirectory string) error
 }
 
-// A ArchiveExpander detects the archive type and expands it to the local
+// A archiveExpander detects the archive type and expands it to the local
 // filesystem.
 //
 // Supported archive types:
