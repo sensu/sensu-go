@@ -3,8 +3,8 @@ package asset_test
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"testing"
 
@@ -29,7 +29,7 @@ type mockVerifier struct {
 	pass bool
 }
 
-func (m *mockVerifier) Verify(f *os.File, sha512 string) error {
+func (m *mockVerifier) Verify(f io.ReadSeeker, sha512 string) error {
 	if m.pass {
 		return nil
 	}
@@ -53,14 +53,14 @@ func TestGetExistingAsset(t *testing.T) {
 
 	tmpFile, err := ioutil.TempFile(os.TempDir(), "asset_test_get_existing_asset.db")
 	if err != nil {
-		log.Fatalf("unable to create test boltdb file: %v", err)
+		t.Fatalf("unable to create test boltdb file: %v", err)
 	}
 	defer tmpFile.Close()
 	defer os.Remove(tmpFile.Name())
 
 	db, err := bolt.Open(tmpFile.Name(), 0666, &bolt.Options{})
 	if err != nil {
-		log.Fatalf("unable to open boltdb in test: %v", err)
+		t.Fatalf("unable to open boltdb in test: %v", err)
 	}
 	defer db.Close()
 
@@ -76,7 +76,7 @@ func TestGetExistingAsset(t *testing.T) {
 
 	runtimeAssetJSON, err := json.Marshal(runtimeAsset)
 	if err != nil {
-		log.Fatalf("unable to marshal runtime asset in test: %v", err)
+		t.Fatalf("unable to marshal runtime asset in test: %v", err)
 	}
 
 	if err := db.Update(func(tx *bolt.Tx) error {
@@ -86,7 +86,7 @@ func TestGetExistingAsset(t *testing.T) {
 		}
 		return bucket.Put([]byte(a.Sha512), runtimeAssetJSON)
 	}); err != nil {
-		log.Fatalf("unable to update boltdb: %v", err)
+		t.Fatalf("unable to update boltdb: %v", err)
 	}
 
 	manager := &asset.BoltDBAssetManager{
@@ -95,12 +95,12 @@ func TestGetExistingAsset(t *testing.T) {
 
 	fetchedAsset, err := manager.Get(a)
 	if err != nil {
-		log.Printf("expected no error getting asset, got: %v", err)
+		t.Logf("expected no error getting asset, got: %v", err)
 		t.Failed()
 	}
 
 	if fetchedAsset.Path != path {
-		log.Printf("expected asset path %s, got %s", runtimeAsset.Path, path)
+		t.Logf("expected asset path %s, got %s", runtimeAsset.Path, path)
 		t.Failed()
 	}
 }
@@ -110,14 +110,14 @@ func TestGetNonexistentAsset(t *testing.T) {
 
 	tmpFile, err := ioutil.TempFile(os.TempDir(), "asset_test_get_nonexistent_asset.db")
 	if err != nil {
-		log.Fatalf("unable to create test boltdb file: %v", err)
+		t.Fatalf("unable to create test boltdb file: %v", err)
 	}
 	defer tmpFile.Close()
 	defer os.Remove(tmpFile.Name())
 
 	db, err := bolt.Open(tmpFile.Name(), 0666, &bolt.Options{})
 	if err != nil {
-		log.Fatalf("unable to open boltdb in test: %v", err)
+		t.Fatalf("unable to open boltdb in test: %v", err)
 	}
 	defer db.Close()
 
@@ -132,10 +132,12 @@ func TestGetNonexistentAsset(t *testing.T) {
 
 	runtimeAsset, err := manager.Get(a)
 	if runtimeAsset != nil {
+		t.Logf("expected nil runtime asset, got %v", runtimeAsset)
 		t.Failed()
 	}
 
 	if err == nil {
+		t.Log("expected error, got nil")
 		t.Failed()
 	}
 }
@@ -145,14 +147,14 @@ func TestGetInvalidAsset(t *testing.T) {
 
 	tmpFile, err := ioutil.TempFile(os.TempDir(), "asset_test_get_invalid_asset.db")
 	if err != nil {
-		log.Fatalf("unable to create test boltdb file: %v", err)
+		t.Fatalf("unable to create test boltdb file: %v", err)
 	}
 	defer tmpFile.Close()
 	defer os.Remove(tmpFile.Name())
 
 	db, err := bolt.Open(tmpFile.Name(), 0666, &bolt.Options{})
 	if err != nil {
-		log.Fatalf("unable to open boltdb in test: %v", err)
+		t.Fatalf("unable to open boltdb in test: %v", err)
 	}
 	defer db.Close()
 
@@ -168,10 +170,12 @@ func TestGetInvalidAsset(t *testing.T) {
 
 	runtimeAsset, err := manager.Get(a)
 	if runtimeAsset != nil {
+		t.Logf("expected nil runtime asset, got %v", runtimeAsset)
 		t.Failed()
 	}
 
 	if err == nil {
+		t.Log("expected error, got nil")
 		t.Failed()
 	}
 }
@@ -181,14 +185,14 @@ func TestFailedExpand(t *testing.T) {
 
 	tmpFile, err := ioutil.TempFile(os.TempDir(), "asset_test_get_invalid_asset.db")
 	if err != nil {
-		log.Fatalf("unable to create test boltdb file: %v", err)
+		t.Fatalf("unable to create test boltdb file: %v", err)
 	}
 	defer tmpFile.Close()
 	defer os.Remove(tmpFile.Name())
 
 	db, err := bolt.Open(tmpFile.Name(), 0666, &bolt.Options{})
 	if err != nil {
-		log.Fatalf("unable to open boltdb in test: %v", err)
+		t.Fatalf("unable to open boltdb in test: %v", err)
 	}
 	defer db.Close()
 
@@ -205,12 +209,13 @@ func TestFailedExpand(t *testing.T) {
 
 	runtimeAsset, err := manager.Get(a)
 	if runtimeAsset != nil {
-		log.Println("received asset, expected nil")
-		t.FailNow()
+		t.Logf("expected nil runtime asset, got %v", runtimeAsset)
+		t.Fail()
 	}
 
 	if err == nil {
-		log.Println("received nil error, expected error")
+		t.Log("expected error, got nil")
+		t.Fail()
 	}
 }
 
@@ -219,14 +224,14 @@ func TestSuccessfulGetAsset(t *testing.T) {
 
 	tmpFile, err := ioutil.TempFile(os.TempDir(), "asset_test_get_invalid_asset.db")
 	if err != nil {
-		log.Fatalf("unable to create test boltdb file: %v", err)
+		t.Fatalf("unable to create test boltdb file: %v", err)
 	}
 	defer tmpFile.Close()
 	defer os.Remove(tmpFile.Name())
 
 	db, err := bolt.Open(tmpFile.Name(), 0666, &bolt.Options{})
 	if err != nil {
-		log.Fatalf("unable to open boltdb in test: %v", err)
+		t.Fatalf("unable to open boltdb in test: %v", err)
 	}
 	defer db.Close()
 
@@ -244,31 +249,38 @@ func TestSuccessfulGetAsset(t *testing.T) {
 	}
 
 	runtimeAsset, err := manager.Get(a)
-	if runtimeAsset == nil {
-		log.Println("expected asset, got nil")
-		t.FailNow()
+	if err != nil {
+		t.Logf("expected no error, got: %v", err)
+		t.Fail()
 	}
 
-	if err != nil {
-		log.Printf("expected no error, got: %v", err)
+	if runtimeAsset == nil {
+		t.Log("expected runtime asset, got nil")
+		// can't continue, will panic on runtimeAsset.LibDir()
 		t.FailNow()
 	}
 
 	d := runtimeAsset.LibDir()
 
 	if d == "" {
-		log.Printf("expected lib directory, got: %s", d)
-		t.FailNow()
+		t.Logf("expected lib directory, got: %s", d)
+		t.Fail()
 	}
 
 	runtimeAsset, err = manager.Get(a)
 	if err != nil {
-		log.Printf("expected not to receive error, got: %v", err)
+		t.Logf("expected not to receive error, got: %v", err)
+		t.Fail()
+	}
+
+	if runtimeAsset == nil {
+		t.Log("expected runtime asset, got nil")
+		// can't continue, will panic on runtimeAsset.LibDir()
 		t.FailNow()
 	}
 
 	if d2 := runtimeAsset.LibDir(); d2 != d {
-		log.Printf("expected lib path to be %s, got %s", d, d2)
-		t.FailNow()
+		t.Logf("expected lib path to be %s, got %s", d, d2)
+		t.Fail()
 	}
 }
