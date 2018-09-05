@@ -4,8 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/sensu/sensu-go/asset"
 )
 
 func TestExpandValidTar(t *testing.T) {
@@ -24,7 +22,7 @@ func TestExpandValidTar(t *testing.T) {
 	}
 	defer os.RemoveAll(targetDirectory)
 
-	expander := &asset.archiveExpander{}
+	expander := &archiveExpander{}
 	if err := expander.Expand(f, targetDirectory); err != nil {
 		t.Logf("expected no error, got %v", err)
 		t.Fail()
@@ -48,7 +46,7 @@ func TestExpandValidTGZ(t *testing.T) {
 	}
 	defer os.RemoveAll(targetDirectory)
 
-	expander := &asset.archiveExpander{}
+	expander := &archiveExpander{}
 	if err := expander.Expand(f, targetDirectory); err != nil {
 		t.Logf("expected no error, got %v", err)
 		t.Fail()
@@ -72,7 +70,7 @@ func TestExpandUnsupportedArchive(t *testing.T) {
 	}
 	defer os.RemoveAll(targetDirectory)
 
-	expander := &asset.archiveExpander{}
+	expander := &archiveExpander{}
 	if err := expander.Expand(f, targetDirectory); err == nil {
 		t.Log("expected error, got nil")
 		t.Fail()
@@ -96,7 +94,7 @@ func TestExpandInvalidArchive(t *testing.T) {
 	}
 	defer os.RemoveAll(targetDirectory)
 
-	expander := &asset.archiveExpander{}
+	expander := &archiveExpander{}
 	if err := expander.Expand(f, targetDirectory); err == nil {
 		t.Log("expected error, got nil")
 		t.Fail()

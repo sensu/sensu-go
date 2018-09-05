@@ -1,4 +1,4 @@
-package asset_test
+package asset
 
 import (
 	"fmt"
@@ -7,8 +7,6 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
-
-	"github.com/sensu/sensu-go/asset"
 )
 
 var (
@@ -40,7 +38,7 @@ func TestFetchExistingAsset(t *testing.T) {
 
 	assetName := "rubby-on-rails.tar"
 
-	fetcher := &asset.HTTPFetcher{}
+	fetcher := &httpFetcher{}
 	fetcher.InjectGetter(&mockURLGetter{getFixturePath(assetName)})
 	f, err := fetcher.Fetch("")
 	if err != nil {
@@ -52,7 +50,7 @@ func TestFetchExistingAsset(t *testing.T) {
 
 	desiredSHA, _ := ioutil.ReadFile(getFixturePath(fmt.Sprintf("%s.sha512", assetName)))
 
-	verifier := &asset.SHA512Verifier{}
+	verifier := &sha512Verifier{}
 	if err := verifier.Verify(f, string(desiredSHA)); err != nil {
 		t.Logf("expected no error, got: %v", err)
 		t.FailNow()

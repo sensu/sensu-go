@@ -1,4 +1,4 @@
-package asset_test
+package asset
 
 import (
 	"encoding/json"
@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/boltdb/bolt"
-	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -70,7 +69,7 @@ func TestGetExistingAsset(t *testing.T) {
 	a := &types.Asset{
 		Sha512: sha,
 	}
-	runtimeAsset := &asset.RuntimeAsset{
+	runtimeAsset := &RuntimeAsset{
 		Path: path,
 	}
 
@@ -89,7 +88,7 @@ func TestGetExistingAsset(t *testing.T) {
 		t.Fatalf("unable to update boltdb: %v", err)
 	}
 
-	manager := &asset.BoltDBAssetManager{
+	manager := &boltDBAssetManager{
 		DB: db,
 	}
 
@@ -121,9 +120,9 @@ func TestGetNonexistentAsset(t *testing.T) {
 	}
 	defer db.Close()
 
-	manager := &asset.BoltDBAssetManager{
+	manager := &boltDBAssetManager{
 		DB:      db,
-		Fetcher: &mockFetcher{false},
+		fetcher: &mockFetcher{false},
 	}
 
 	a := &types.Asset{
@@ -158,10 +157,10 @@ func TestGetInvalidAsset(t *testing.T) {
 	}
 	defer db.Close()
 
-	manager := &asset.BoltDBAssetManager{
+	manager := &boltDBAssetManager{
 		DB:       db,
-		Fetcher:  &mockFetcher{true},
-		Verifier: &mockVerifier{false},
+		fetcher:  &mockFetcher{true},
+		verifier: &mockVerifier{false},
 	}
 
 	a := &types.Asset{
@@ -196,11 +195,11 @@ func TestFailedExpand(t *testing.T) {
 	}
 	defer db.Close()
 
-	manager := &asset.BoltDBAssetManager{
+	manager := &boltDBAssetManager{
 		DB:       db,
-		Fetcher:  &mockFetcher{true},
-		Verifier: &mockVerifier{true},
-		Expander: &mockExpander{false},
+		fetcher:  &mockFetcher{true},
+		verifier: &mockVerifier{true},
+		expander: &mockExpander{false},
 	}
 
 	a := &types.Asset{
@@ -235,11 +234,11 @@ func TestSuccessfulGetAsset(t *testing.T) {
 	}
 	defer db.Close()
 
-	manager := &asset.BoltDBAssetManager{
+	manager := &boltDBAssetManager{
 		DB:       db,
-		Fetcher:  &mockFetcher{true},
-		Verifier: &mockVerifier{true},
-		Expander: &mockExpander{true},
+		fetcher:  &mockFetcher{true},
+		verifier: &mockVerifier{true},
+		expander: &mockExpander{true},
 	}
 
 	a := &types.Asset{

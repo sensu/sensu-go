@@ -33,32 +33,32 @@ func NewGetter(localStorage string, timeout time.Duration) (Getter, error) {
 		return nil, err
 	}
 
-	return &BoltDBAssetManager{
+	return &boltDBAssetManager{
 		LocalStorage: localStorage,
 		DB:           db,
-		Fetcher: &HTTPFetcher{
+		fetcher: &httpFetcher{
 			Timeout: timeout,
 		},
 		expander: &archiveExpander{},
-		Verifier: &SHA512Verifier{},
+		verifier: &sha512Verifier{},
 	}, nil
 }
 
-// BoltDBAssetManager is responsible for the installing and storing the metadata
+// boltDBAssetManager is responsible for the installing and storing the metadata
 // for assets backed by an instance of BoltDB on the local filesystem. BoltDB
 // provides the serialization guarantee that the asset contract specifies.
 // We rely on long-lived BoltDB transactions during Get to provide this
 // mechanism for blocking.
-type BoltDBAssetManager struct {
+type boltDBAssetManager struct {
 	// LocalStorage specifies the location of local asset storage.
 	LocalStorage string
 
 	// DB is the BoltDB
 	DB *bolt.DB
 
-	Fetcher
+	fetcher  fetcher
 	expander expander
-	Verifier
+	verifier verifier
 }
 
 // Get opens a read-write transaction to BoltDB, causing subsequent calls to
@@ -71,7 +71,7 @@ type BoltDBAssetManager struct {
 //
 // If a value is not returned, the asset is not installed or not installed
 // correctly. We then proceed to attempt asset installation.
-func (b *BoltDBAssetManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
+func (b *boltDBAssetManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 	var localAsset *RuntimeAsset
 	key := []byte(asset.Sha512)
 
@@ -122,7 +122,7 @@ func (b *BoltDBAssetManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 		}
 
 		// install the asset
-		tmpFile, err := b.Fetch(asset.URL)
+		tmpFile, err := b.fetcher.Fetch(asset.URL)
 		if err != nil {
 			return err
 		}
@@ -130,7 +130,7 @@ func (b *BoltDBAssetManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 		defer os.Remove(tmpFile.Name())
 
 		// verify
-		if err := b.Verify(tmpFile, asset.Sha512); err != nil {
+		if err := b.verifier.Verify(tmpFile, asset.Sha512); err != nil {
 			return err
 		}
 

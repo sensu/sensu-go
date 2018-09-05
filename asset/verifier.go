@@ -7,17 +7,17 @@ import (
 	"io"
 )
 
-// A Verifier verifies that a file's SHA-512 matches the specified
+// A verifier verifies that a file's SHA-512 matches the specified
 // SHA-512.
-type Verifier interface {
+type verifier interface {
 	Verify(file io.ReadSeeker, sha512 string) error
 }
 
-// SHA512Verifier verifies that a file matches a specified SHA-512 sum.
-type SHA512Verifier struct{}
+// sha512Verifier verifies that a file matches a specified SHA-512 sum.
+type sha512Verifier struct{}
 
 // Verify that the file matches the desired SHA-512 sum.
-func (v *SHA512Verifier) Verify(rs io.ReadSeeker, desiredSHA string) error {
+func (v *sha512Verifier) Verify(rs io.ReadSeeker, desiredSHA string) error {
 	// Generate checksum for downloaded file
 	h := sha512.New()
 	if _, err := io.Copy(h, rs); err != nil {
