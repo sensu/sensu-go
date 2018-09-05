@@ -1,8 +1,71 @@
 package asset
 
-import "os"
+import (
+	"fmt"
+	"os"
+
+	"github.com/mholt/archiver"
+
+	filetype "gopkg.in/h2non/filetype.v1"
+	filetype_types "gopkg.in/h2non/filetype.v1/types"
+)
+
+const (
+	// Size of file header for sniffing type
+	headerSize = 262
+)
 
 // An Expander expands the provided *os.File to the target direcrtory.
 type Expander interface {
 	Expand(archive *os.File, targetDirectory string) error
+}
+
+// A ArchiveExpander detects the archive type and expands it to the local
+// filesystem.
+//
+// Supported archive types:
+// - tar
+// - tar-gzip
+type ArchiveExpander struct{}
+
+func (a *ArchiveExpander) Expand(f *os.File, targetDirectory string) error {
+	// detect the type of archive the asset is
+	ft, err := sniffType(f)
+	if err != nil {
+		return err
+	}
+
+	var ar archiver.Archiver
+
+	// If the file is not an archive, exit with an error.
+	switch ft.MIME.Value {
+	case "application/x-tar":
+		ar = archiver.Tar
+	case "application/gzip":
+		ar = archiver.TarGz
+	default:
+		return fmt.Errorf(
+			"given file of format '%s' does not appear valid",
+			ft.MIME.Value,
+		)
+	}
+
+	// Extract the archive to the desired path
+	if err := ar.Read(f, targetDirectory); err != nil {
+		return fmt.Errorf("error extracting asset: %s", err)
+	}
+
+	return nil
+}
+
+func sniffType(f *os.File) (filetype_types.Type, error) {
+	header := make([]byte, headerSize)
+	if _, err := f.Read(header); err != nil {
+		return filetype_types.Type{}, fmt.Errorf("unable to read asset header: %s", err)
+	}
+	ft, err := filetype.Match(header)
+	if err != nil {
+		return ft, err
+	}
+	return ft, resetFile(f)
 }

@@ -39,7 +39,7 @@ func NewGetter(localStorage string, timeout time.Duration) (Getter, error) {
 		Fetcher: &HTTPFetcher{
 			Timeout: timeout,
 		},
-		Expander: &TGZExpander{},
+		Expander: &ArchiveExpander{},
 		Verifier: &SHA512Verifier{},
 	}, nil
 }
