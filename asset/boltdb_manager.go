@@ -27,7 +27,7 @@ type Getter interface {
 // We rely on long-lived BoltDB transactions during Get to provide this
 // mechanism for blocking.
 type BoltDBAssetManager struct {
-	// CacheDir specifies the location of local asset storage.
+	// LocalStorage specifies the location of local asset storage.
 	LocalStorage string
 
 	// DB is the BoltDB
@@ -123,7 +123,7 @@ func (b *BoltDBAssetManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 
 		assetJSON, err := json.Marshal(localAsset)
 		if err != nil {
-			return err
+			panic(err)
 		}
 
 		return bucket.Put(key, assetJSON)
