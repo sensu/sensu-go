@@ -4,9 +4,14 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/sensu/sensu-go/types"
+)
+
+const (
+	assetDBName = "assets.db"
 )
 
 var (
@@ -19,6 +24,24 @@ var (
 // the asset failed.
 type Getter interface {
 	Get(*types.Asset) (*RuntimeAsset, error)
+}
+
+// NewGetter returns a new default asset Getter.
+func NewGetter(localStorage string, timeout time.Duration) (Getter, error) {
+	db, err := bolt.Open(filepath.Join(localStorage, assetDBName), 0666, &bolt.Options{})
+	if err != nil {
+		return nil, err
+	}
+
+	return &BoltDBAssetManager{
+		LocalStorage: localStorage,
+		DB:           db,
+		Fetcher: &HTTPFetcher{
+			Timeout: timeout,
+		},
+		Expander: &TGZExpander{},
+		Verifier: &SHA512Verifier{},
+	}, nil
 }
 
 // BoltDBAssetManager is responsible for the installing and storing the metadata
