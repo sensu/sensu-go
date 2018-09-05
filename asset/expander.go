@@ -16,7 +16,7 @@ const (
 )
 
 // An Expander expands the provided *os.File to the target direcrtory.
-type Expander interface {
+type expander interface {
 	Expand(archive io.ReadSeeker, targetDirectory string) error
 }
 
@@ -26,9 +26,10 @@ type Expander interface {
 // Supported archive types:
 // - tar
 // - tar-gzip
-type ArchiveExpander struct{}
+type archiveExpander struct{}
 
-func (a *ArchiveExpander) Expand(archive io.ReadSeeker, targetDirectory string) error {
+// Expand an archive to a target directory.
+func (a *archiveExpander) Expand(archive io.ReadSeeker, targetDirectory string) error {
 	// detect the type of archive the asset is
 	ft, err := sniffType(archive)
 	if err != nil {

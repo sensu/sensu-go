@@ -39,7 +39,7 @@ func NewGetter(localStorage string, timeout time.Duration) (Getter, error) {
 		Fetcher: &HTTPFetcher{
 			Timeout: timeout,
 		},
-		Expander: &ArchiveExpander{},
+		expander: &archiveExpander{},
 		Verifier: &SHA512Verifier{},
 	}, nil
 }
@@ -57,7 +57,7 @@ type BoltDBAssetManager struct {
 	DB *bolt.DB
 
 	Fetcher
-	Expander
+	expander expander
 	Verifier
 }
 
@@ -136,7 +136,7 @@ func (b *BoltDBAssetManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 
 		// expand
 		assetPath := filepath.Join(b.LocalStorage, asset.Sha512)
-		if err := b.Expand(tmpFile, assetPath); err != nil {
+		if err := b.expander.Expand(tmpFile, assetPath); err != nil {
 			return err
 		}
 

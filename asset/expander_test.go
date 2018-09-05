@@ -1,4 +1,4 @@
-package asset_test
+package asset
 
 import (
 	"os"
@@ -24,7 +24,7 @@ func TestExpandValidTar(t *testing.T) {
 	}
 	defer os.RemoveAll(targetDirectory)
 
-	expander := &asset.ArchiveExpander{}
+	expander := &asset.archiveExpander{}
 	if err := expander.Expand(f, targetDirectory); err != nil {
 		t.Logf("expected no error, got %v", err)
 		t.Fail()
@@ -48,7 +48,7 @@ func TestExpandValidTGZ(t *testing.T) {
 	}
 	defer os.RemoveAll(targetDirectory)
 
-	expander := &asset.ArchiveExpander{}
+	expander := &asset.archiveExpander{}
 	if err := expander.Expand(f, targetDirectory); err != nil {
 		t.Logf("expected no error, got %v", err)
 		t.Fail()
@@ -72,7 +72,7 @@ func TestExpandUnsupportedArchive(t *testing.T) {
 	}
 	defer os.RemoveAll(targetDirectory)
 
-	expander := &asset.ArchiveExpander{}
+	expander := &asset.archiveExpander{}
 	if err := expander.Expand(f, targetDirectory); err == nil {
 		t.Log("expected error, got nil")
 		t.Fail()
@@ -96,7 +96,7 @@ func TestExpandInvalidArchive(t *testing.T) {
 	}
 	defer os.RemoveAll(targetDirectory)
 
-	expander := &asset.ArchiveExpander{}
+	expander := &asset.archiveExpander{}
 	if err := expander.Expand(f, targetDirectory); err == nil {
 		t.Log("expected error, got nil")
 		t.Fail()
