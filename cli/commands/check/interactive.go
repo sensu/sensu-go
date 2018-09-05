@@ -236,13 +236,18 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 		},
 		{
 			Name: "output-metric-format",
-			Prompt: &survey.Input{
+			Prompt: &survey.Select{
 				Message: "Metric Format:",
-				Help:    "Optional output metric format used to parse check output for metric extraction. Valid formats include: nagios_perfdata, graphite_plaintext, opentsdb_line, and influxdb_line",
-				Default: opts.OutputMetricFormat,
+				Options: []string{
+					"nagios_perfdata",
+					"graphite_plaintext",
+					"opentsdb_line",
+					"influxdb_line",
+					"none",
+				},
 			},
 			Validate: func(val interface{}) error {
-				if val.(string) != "" {
+				if value := strings.TrimSpace(val.(string)); value != "" && value != "none" {
 					if err := types.ValidateOutputMetricFormat(val.(string)); err != nil {
 						return err
 					}
@@ -299,6 +304,9 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	check.HighFlapThreshold = uint32(highFlap)
 	check.LowFlapThreshold = uint32(lowFlap)
 	check.OutputMetricFormat = opts.OutputMetricFormat
+	if check.OutputMetricFormat == "none" {
+		check.OutputMetricFormat = ""
+	}
 	check.OutputMetricHandlers = helpers.SafeSplitCSV(opts.OutputMetricHandlers)
 	check.RoundRobin, _ = strconv.ParseBool(opts.RoundRobin)
 }
