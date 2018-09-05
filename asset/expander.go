@@ -69,7 +69,7 @@ func sniffType(f io.ReadSeeker) (filetype_types.Type, error) {
 		return ft, err
 	}
 
-	if _, err := f.Seek(io.SeekStart, io.SeekStart); err != nil {
+	if _, err := f.Seek(0, 0); err != nil {
 		return filetype_types.Type{}, err
 	}
 

@@ -76,7 +76,7 @@ func (h *httpFetcher) Fetch(url string) (*os.File, error) {
 		return nil, err
 	}
 
-	if _, err := tmpFile.Seek(io.SeekStart, io.SeekStart); err != nil {
+	if _, err := tmpFile.Seek(0, 0); err != nil {
 		tmpFile.Close()
 		return nil, err
 	}

@@ -24,7 +24,7 @@ func (v *sha512Verifier) Verify(rs io.ReadSeeker, desiredSHA string) error {
 		return fmt.Errorf("generating checksum for asset failed: %s", err)
 	}
 
-	if _, err := rs.Seek(io.SeekStart, io.SeekStart); err != nil {
+	if _, err := rs.Seek(0, 0); err != nil {
 		return err
 	}
 
