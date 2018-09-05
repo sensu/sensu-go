@@ -2,7 +2,7 @@ package asset
 
 import (
 	"fmt"
-	"os"
+	"io"
 
 	"github.com/mholt/archiver"
 
@@ -17,7 +17,7 @@ const (
 
 // An Expander expands the provided *os.File to the target direcrtory.
 type Expander interface {
-	Expand(archive *os.File, targetDirectory string) error
+	Expand(archive io.ReadSeeker, targetDirectory string) error
 }
 
 // A ArchiveExpander detects the archive type and expands it to the local
@@ -28,9 +28,9 @@ type Expander interface {
 // - tar-gzip
 type ArchiveExpander struct{}
 
-func (a *ArchiveExpander) Expand(f *os.File, targetDirectory string) error {
+func (a *ArchiveExpander) Expand(archive io.ReadSeeker, targetDirectory string) error {
 	// detect the type of archive the asset is
-	ft, err := sniffType(f)
+	ft, err := sniffType(archive)
 	if err != nil {
 		return err
 	}
@@ -51,14 +51,14 @@ func (a *ArchiveExpander) Expand(f *os.File, targetDirectory string) error {
 	}
 
 	// Extract the archive to the desired path
-	if err := ar.Read(f, targetDirectory); err != nil {
+	if err := ar.Read(archive, targetDirectory); err != nil {
 		return fmt.Errorf("error extracting asset: %s", err)
 	}
 
 	return nil
 }
 
-func sniffType(f *os.File) (filetype_types.Type, error) {
+func sniffType(f io.ReadSeeker) (filetype_types.Type, error) {
 	header := make([]byte, headerSize)
 	if _, err := f.Read(header); err != nil {
 		return filetype_types.Type{}, fmt.Errorf("unable to read asset header: %s", err)
@@ -67,5 +67,10 @@ func sniffType(f *os.File) (filetype_types.Type, error) {
 	if err != nil {
 		return ft, err
 	}
-	return ft, resetFile(f)
+
+	if _, err := f.Seek(io.SeekStart, io.SeekStart); err != nil {
+		return filetype_types.Type{}, err
+	}
+
+	return ft, nil
 }

@@ -42,17 +42,18 @@ func TestFetchExistingAsset(t *testing.T) {
 
 	fetcher := &asset.HTTPFetcher{}
 	fetcher.InjectGetter(&mockURLGetter{getFixturePath(assetName)})
-	resp, err := fetcher.Fetch("")
+	f, err := fetcher.Fetch("")
 	if err != nil {
 		t.Logf("expected no error, got: %v", err)
 		t.FailNow()
 	}
-	defer resp.Close()
+	defer f.Close()
+	defer os.Remove(f.Name())
 
 	desiredSHA, _ := ioutil.ReadFile(getFixturePath(fmt.Sprintf("%s.sha512", assetName)))
 
 	verifier := &asset.SHA512Verifier{}
-	if err := verifier.Verify(resp, string(desiredSHA)); err != nil {
+	if err := verifier.Verify(f, string(desiredSHA)); err != nil {
 		t.Logf("expected no error, got: %v", err)
 		t.FailNow()
 	}

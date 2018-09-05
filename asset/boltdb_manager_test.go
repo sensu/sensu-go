@@ -40,7 +40,7 @@ type mockExpander struct {
 	pass bool
 }
 
-func (m *mockExpander) Expand(f *os.File, path string) error {
+func (m *mockExpander) Expand(f io.ReadSeeker, path string) error {
 	if m.pass {
 		return nil
 	}
