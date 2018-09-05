@@ -101,17 +101,42 @@ func TestParseNagios(t *testing.T) {
 			want:    NagiosList(nil),
 			wantErr: true,
 		},
+		{
+			name: "bug #2021",
+			event: &types.Event{
+				Check: &types.Check{
+					Executed: 12345,
+					Output:   "CRITICAL - load average: 0.01, 0.04, 0.05|load1=0.010;0.010;0.010;0; load5=0.040;0.010;0.010;0; load15=0.050;0.010;0.010;0; \n",
+				},
+			},
+			want: NagiosList{
+				Nagios{
+					Label:     "load1",
+					Value:     0.01,
+					Timestamp: 12345,
+				},
+				Nagios{
+					Label:     "load5",
+					Value:     0.04,
+					Timestamp: 12345,
+				},
+				Nagios{
+					Label:     "load15",
+					Value:     0.05,
+					Timestamp: 12345,
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			got, err := ParseNagios(tc.event)
 			if (err != nil) != tc.wantErr {
-				t.Errorf("ParseNagios() error = %v, wantErr %v", err, tc.wantErr)
-				return
+				t.Fatalf("ParseNagios() error = %v, wantErr %v", err, tc.wantErr)
 			}
-			if !assert.Equal(t, got, tc.want) {
-				t.Errorf("ParseNagios() = %v, want %v", got, tc.want)
+			if !assert.Equal(t, tc.want, got) {
+				t.Fatalf("ParseNagios() = %v, want %v", got, tc.want)
 			}
 		})
 	}
