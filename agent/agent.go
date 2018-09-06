@@ -361,6 +361,20 @@ func (a *Agent) refreshSystemInfo() error {
 	return nil
 }
 
+func (a *Agent) refreshSystemInfoPeriodically() {
+	systemInfoTicker := time.NewTicker(time.Duration(DefaultSystemInfoRefreshInterval) * time.Second)
+	for {
+		select {
+		case <-systemInfoTicker.C:
+			if err := a.refreshSystemInfo(); err != nil {
+				logger.WithError(err).Error("failed to refresh system info")
+			}
+		case <-a.stopping:
+			return
+		}
+	}
+}
+
 func (a *Agent) sendKeepalive() error {
 	logger.Info("sending keepalive")
 	msg := &transport.Message{
@@ -380,6 +394,20 @@ func (a *Agent) sendKeepalive() error {
 	a.sendq <- msg
 
 	return nil
+}
+
+func (a *Agent) sendKeepalivePeriodically() {
+	keepaliveTicker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
+	for {
+		select {
+		case <-keepaliveTicker.C:
+			if err := a.sendKeepalive(); err != nil {
+				logger.WithError(err).Error("failed sending keepalive")
+			}
+		case <-a.stopping:
+			return
+		}
+	}
 }
 
 func (a *Agent) buildTransportHeaderMap() http.Header {
@@ -431,34 +459,8 @@ func (a *Agent) Run() error {
 		logger.WithError(err).Error("error sending keepalive")
 	}
 
-	go func() {
-		systemInfoTicker := time.NewTicker(time.Duration(DefaultSystemInfoRefreshInterval) * time.Second)
-		for {
-			select {
-			case <-systemInfoTicker.C:
-				if err := a.refreshSystemInfo(); err != nil {
-					logger.WithError(err).Error("failed to refresh system info")
-				}
-			case <-a.stopping:
-				return
-			}
-		}
-	}()
-
-	go func() {
-		keepaliveTicker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
-		for {
-			select {
-			case <-keepaliveTicker.C:
-				if err := a.sendKeepalive(); err != nil {
-					logger.WithError(err).Error("failed sending keepalive")
-				}
-			case <-a.stopping:
-				return
-			}
-
-		}
-	}()
+	go a.refreshSystemInfoPeriodically()
+	go a.sendKeepalivePeriodically()
 
 	return nil
 }
