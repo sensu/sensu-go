@@ -2,11 +2,13 @@ package routers
 
 import (
 	"context"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/coreos/etcd/etcdserver/etcdserverpb"
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/mock"
@@ -34,9 +36,9 @@ type mockHealthController struct {
 	mock.Mock
 }
 
-func (m *mockHealthController) GetClusterHealth(ctx context.Context) []*types.ClusterHealth {
+func (m *mockHealthController) GetClusterHealth(ctx context.Context) *types.HealthResponse {
 	args := m.Called(ctx)
-	return args.Get(0).([]*types.ClusterHealth)
+	return args.Get(0).(*types.HealthResponse)
 }
 
 func newStatusTest(t *testing.T, fn func() types.StatusMap) (*mockHealthController, *httptest.Server) {
@@ -50,7 +52,8 @@ func newStatusTest(t *testing.T, fn func() types.StatusMap) (*mockHealthControll
 func TestStatusInfo(t *testing.T) {
 	controller, server := newStatusTest(t, passStatus())
 	defer server.Close()
-	controller.On("GetClusterHealth", mock.Anything).Return([]*types.ClusterHealth{})
+	healthResponse := &types.HealthResponse{}
+	controller.On("GetClusterHealth", mock.Anything).Return(healthResponse)
 	client := new(http.Client)
 	endpoint := "/info"
 	req := newRequest(t, http.MethodGet, server.URL+endpoint, nil)
@@ -68,7 +71,8 @@ func TestStatusInfo(t *testing.T) {
 func TestHealthStatusSuccess(t *testing.T) {
 	controller, server := newStatusTest(t, passStatus())
 	defer server.Close()
-	controller.On("GetClusterHealth", mock.Anything).Return([]*types.ClusterHealth{})
+	healthResponse := &types.HealthResponse{}
+	controller.On("GetClusterHealth", mock.Anything).Return(healthResponse)
 
 	client := new(http.Client)
 	endpoint := "/health"
@@ -87,7 +91,8 @@ func TestHealthStatusSuccess(t *testing.T) {
 func TestHealthStatusFail(t *testing.T) {
 	controller, server := newStatusTest(t, failStatus())
 	defer server.Close()
-	controller.On("GetClusterHealth", mock.Anything).Return([]*types.ClusterHealth{})
+	healthResponse := &types.HealthResponse{}
+	controller.On("GetClusterHealth", mock.Anything).Return(healthResponse)
 
 	client := new(http.Client)
 	endpoint := "/health"
@@ -106,6 +111,7 @@ func TestHealthStatusFail(t *testing.T) {
 func TestHealthyClusterStatus(t *testing.T) {
 	controller, server := newStatusTest(t, passStatus())
 	defer server.Close()
+	healthResponse := &types.HealthResponse{}
 	clusterHealth := []*types.ClusterHealth{}
 	clusterHealth = append(clusterHealth, &types.ClusterHealth{
 		MemberID: uint64(12345),
@@ -113,7 +119,51 @@ func TestHealthyClusterStatus(t *testing.T) {
 		Err:      nil,
 		Healthy:  true,
 	})
-	controller.On("GetClusterHealth", mock.Anything).Return(clusterHealth)
+	healthResponse.ClusterHealth = clusterHealth
+	healthResponse.Alarms = []*etcdserverpb.AlarmMember{}
+	controller.On("GetClusterHealth", mock.Anything).Return(healthResponse)
+
+	client := new(http.Client)
+	endpoint := "/health"
+	req := newRequest(t, http.MethodGet, server.URL+endpoint, nil)
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if resp.StatusCode >= 400 {
+		body, _ := ioutil.ReadAll(resp.Body)
+		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
+	}
+}
+
+func TestUnHealthyClusterStatus(t *testing.T) {
+	controller, server := newStatusTest(t, passStatus())
+	defer server.Close()
+	healthResponse := &types.HealthResponse{}
+	clusterHealth := []*types.ClusterHealth{}
+	clusterHealth = append(clusterHealth, &types.ClusterHealth{
+		MemberID: uint64(12345),
+		Name:     "backend0",
+		Err:      nil,
+		Healthy:  true,
+	})
+	clusterHealth = append(clusterHealth, &types.ClusterHealth{
+		MemberID: uint64(12345),
+		Name:     "backend1",
+		Err:      errors.New("cluster error"),
+		Healthy:  false,
+	})
+
+	alarms := []*etcdserverpb.AlarmMember{}
+	alarms = append(alarms, &etcdserverpb.AlarmMember{
+		MemberID: uint64(56789),
+		Alarm:    etcdserverpb.AlarmType_CORRUPT,
+	})
+
+	healthResponse.ClusterHealth = clusterHealth
+	healthResponse.Alarms = alarms
+	controller.On("GetClusterHealth", mock.Anything).Return(healthResponse)
 
 	client := new(http.Client)
 	endpoint := "/health"

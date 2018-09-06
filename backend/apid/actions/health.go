@@ -16,6 +16,6 @@ func NewHealthController(store store.HealthStore) HealthController {
 	}
 }
 
-func (h HealthController) Health(ctx context.Context) []*types.ClusterHealth {
+func (h HealthController) Health(ctx context.Context) *types.HealthResponse {
 	return h.store.GetClusterHealth(ctx)
 }

@@ -35,6 +35,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Rename list-rules subcommand to info in sensuctl role commmand with alias
 for backward compatibility.
 - Updated gogo/protobuf and golang/protobuf versions.
+- Health API now returns etcd alarms in addition to cluster health.
 
 ### Fixed
 - Fixed agentd so it does not subscribe to empty subscriptions.
