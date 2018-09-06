@@ -238,13 +238,7 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			Name: "output-metric-format",
 			Prompt: &survey.Select{
 				Message: "Metric Format:",
-				Options: []string{
-					"nagios_perfdata",
-					"graphite_plaintext",
-					"opentsdb_line",
-					"influxdb_line",
-					"none",
-				},
+				Options: append(types.OutputMetricFormats, "none"),
 			},
 			Validate: func(val interface{}) error {
 				if value := strings.TrimSpace(val.(string)); value != "" && value != "none" {
