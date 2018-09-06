@@ -362,10 +362,12 @@ func (a *Agent) refreshSystemInfo() error {
 }
 
 func (a *Agent) refreshSystemInfoPeriodically() {
-	systemInfoTicker := time.NewTicker(time.Duration(DefaultSystemInfoRefreshInterval) * time.Second)
+	ticker := time.NewTicker(time.Duration(DefaultSystemInfoRefreshInterval) * time.Second)
+	defer ticker.Stop()
+
 	for {
 		select {
-		case <-systemInfoTicker.C:
+		case <-ticker.C:
 			if err := a.refreshSystemInfo(); err != nil {
 				logger.WithError(err).Error("failed to refresh system info")
 			}
@@ -397,10 +399,12 @@ func (a *Agent) sendKeepalive() error {
 }
 
 func (a *Agent) sendKeepalivePeriodically() {
-	keepaliveTicker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
+	ticker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
+	defer ticker.Stop()
+
 	for {
 		select {
-		case <-keepaliveTicker.C:
+		case <-ticker.C:
 			if err := a.sendKeepalive(); err != nil {
 				logger.WithError(err).Error("failed sending keepalive")
 			}
