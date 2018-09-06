@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"runtime/debug"
+	"strings"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/agentd"
@@ -66,7 +67,7 @@ func Initialize(config *Config) (*Backend, error) {
 	// the Wizard bus, which requires etcd to be started.
 	cfg := etcd.NewConfig()
 	cfg.DataDir = config.StateDir
-	cfg.ListenClientURL = config.EtcdListenClientURL
+	cfg.ListenClientURLs = strings.Split(config.EtcdListenClientURL, ",")
 	cfg.ListenPeerURL = config.EtcdListenPeerURL
 	cfg.InitialCluster = config.EtcdInitialCluster
 	cfg.InitialClusterState = config.EtcdInitialClusterState

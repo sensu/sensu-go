@@ -13,6 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - Changed sensuctl title colour to use terminal's configured default for bold
   text.
+- The backend no longer forcibly binds to localhost.
 
 ### Fixed
 - Fixes a bug in `sensuctl cluster health` so the correct error is handled.
@@ -22,6 +23,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed a bug where an agent's collection of system information could delay
   sending of keepalive messages.
 - Fixed a bug in nagios perfdata parsing.
+- Etcd client URLs can now be a comma-separated list.
 
 ## [2.0.0-beta.4] - 2018-08-14
 
