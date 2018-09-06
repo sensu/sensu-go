@@ -117,7 +117,7 @@ type HandlerAPIClient interface {
 
 // HealthAPIClient client methods for health api
 type HealthAPIClient interface {
-	Health() ([]*types.ClusterHealth, error)
+	Health() (*types.HealthResponse, error)
 }
 
 // HookAPIClient client methods for hooks

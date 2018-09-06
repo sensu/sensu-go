@@ -353,7 +353,7 @@ type HandlerStore interface {
 
 // HealthStore provides methods for cluster health
 type HealthStore interface {
-	GetClusterHealth(ctx context.Context) []*types.ClusterHealth
+	GetClusterHealth(ctx context.Context) *types.HealthResponse
 }
 
 // KeepaliveStore provides methods for managing entities keepalives
