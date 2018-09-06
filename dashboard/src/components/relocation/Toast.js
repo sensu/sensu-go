@@ -39,8 +39,7 @@ export const styles = theme => {
       display: "flex",
       alignItems: "center",
       [theme.breakpoints.up("md")]: {
-        minWidth: 288,
-        maxWidth: 568,
+        width: 400,
         borderRadius: theme.shape.borderRadius,
       },
       [theme.breakpoints.down("sm")]: {
@@ -127,7 +126,29 @@ class Toast extends React.PureComponent {
     progress: undefined,
   };
 
+  state = { mouseOver: false };
+
   id = `Toast-${uniqueId()}`;
+
+  _handleMouseOver = () => {
+    this.setState(state => {
+      if (state.mouseOver) {
+        return null;
+      }
+
+      return { mouseOver: true };
+    });
+  };
+
+  _handleMouseLeave = () => {
+    this.setState(state => {
+      if (!state.mouseOver) {
+        return null;
+      }
+
+      return { mouseOver: false };
+    });
+  };
 
   render() {
     const {
@@ -138,6 +159,9 @@ class Toast extends React.PureComponent {
       maxAge,
       progress: progressBar,
     } = this.props;
+
+    const { mouseOver } = this.state;
+
     const Icon = icons[variant];
 
     const messageId = `${this.id}-message`;
@@ -165,6 +189,8 @@ class Toast extends React.PureComponent {
         elevation={6}
         className={classNames(classes.root, classes[variant])}
         aria-describedby={messageId}
+        onMouseOver={this._handleMouseOver}
+        onMouseLeave={this._handleMouseLeave}
       >
         <div className={classes.progress}>{progressBar}</div>
         <div id={messageId} className={classes.message}>
@@ -173,7 +199,12 @@ class Toast extends React.PureComponent {
         </div>
         <div className={classes.action}>
           {maxAge !== 0 ? (
-            <Timer key={closeButton.props.key} delay={maxAge} onEnd={onClose}>
+            <Timer
+              key={closeButton.props.key}
+              delay={maxAge}
+              onEnd={onClose}
+              paused={mouseOver}
+            >
               {progress => (
                 <CircularProgress width={4} value={progress} opacity={0.5}>
                   {closeButton}

@@ -6,12 +6,33 @@ class Timer extends React.PureComponent {
     onEnd: PropTypes.func,
     delay: PropTypes.number.isRequired,
     children: PropTypes.func,
+    paused: PropTypes.bool,
   };
 
   static defaultProps = {
     children: undefined,
     onEnd: undefined,
+    paused: false,
   };
+
+  static getDerivedStateFromProps(props, state) {
+    if (state.pausedTime !== null && !props.paused) {
+      const timePaused = Date.now() - state.pausedTime;
+
+      return {
+        pausedTime: null,
+        startTime: state.startTime + timePaused,
+      };
+    }
+
+    if (state.pausedTime === null && props.paused) {
+      return {
+        pausedTime: state.currentTime,
+      };
+    }
+
+    return null;
+  }
 
   constructor(props) {
     super(props);
@@ -21,23 +42,26 @@ class Timer extends React.PureComponent {
     this.state = {
       currentTime: now,
       startTime: now,
+      pausedTime: null,
     };
   }
 
   componentDidMount() {
-    this.animationFrameRef = requestAnimationFrame(this.tick);
+    if (!this.props.paused) {
+      this.animationFrameRef = requestAnimationFrame(this.tick);
+    }
   }
 
   componentDidUpdate() {
     const { startTime, currentTime } = this.state;
-    const { delay, onEnd } = this.props;
+    const { delay, onEnd, paused } = this.props;
 
     if (currentTime >= startTime + delay) {
       if (onEnd && !this.onEndCalled) {
         this.onEndCalled = true;
         onEnd();
       }
-    } else if (!this.animationFrameRef) {
+    } else if (!this.animationFrameRef && !paused) {
       this.animationFrameRef = requestAnimationFrame(this.tick);
     }
   }
