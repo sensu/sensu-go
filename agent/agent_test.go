@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -100,6 +101,58 @@ func TestReceiveLoop(t *testing.T) {
 	msgBytes, _ := json.Marshal(&testMessageType{"message"})
 	ta.sendMessage("testMessageType", msgBytes)
 	<-done
+	<-done
+}
+
+// TestPeriodicKeepalive checks that a running Agent sends its periodic
+// keepalive messages at the expected frequency, allowing for +/- 1s drift.
+// TODO: use Eric's crock package to test many more ticks in a short amount of time.
+func TestPeriodicKeepalive(t *testing.T) {
+	done := make(chan struct{})
+
+	cfg := FixtureConfig()
+	server := transport.NewServer()
+
+	testKeepalive := func(w http.ResponseWriter, r *http.Request) {
+		conn, err := server.Serve(w, r)
+		assert.NoError(t, err)
+
+		lastKeepalive := time.Time{}
+		keepaliveInterval := time.Duration(cfg.KeepaliveInterval) * time.Second
+
+		for keepaliveCount := 0; keepaliveCount < 5; keepaliveCount++ {
+			msg, err := conn.Receive()
+			assert.NoError(t, err)
+
+			if msg.Type == "keepalive" {
+				if keepaliveCount > 0 {
+					expected := lastKeepalive.Add(keepaliveInterval)
+					actual := time.Now()
+					assert.WithinDuration(t, expected, actual, time.Second)
+				}
+				lastKeepalive = time.Now()
+			}
+		}
+
+		conn.Close()
+		done <- struct{}{}
+	}
+
+	ts := httptest.NewServer(http.HandlerFunc(testKeepalive))
+	defer ts.Close()
+
+	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
+	cfg.BackendURLs = []string{wsURL}
+	cfg.KeepaliveInterval = 1
+
+	ta := NewAgent(cfg)
+	err := ta.Run()
+	assert.NoError(t, err)
+	if err != nil {
+		assert.FailNow(t, "agent failed to run")
+	}
+	defer ta.Stop()
+
 	<-done
 }
 
