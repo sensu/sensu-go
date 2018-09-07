@@ -60,7 +60,7 @@ func newAfterTimer(t *Time, d time.Duration, f func()) *timer {
 		C:         make(chan time.Time, 1),
 		duration:  d,
 		fireAt:    at,
-		eventFunc: f,
+		eventFunc: func() { go f() },
 	}
 	timer.eventFuncID = t.event(at, timer.eventFunc)
 	timer.running = 1

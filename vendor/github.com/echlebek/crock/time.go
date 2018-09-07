@@ -26,7 +26,7 @@ var (
 // Don't change the Resolution and Multiplier fields when time is in motion.
 type Time struct {
 	running int64
-	now     time.Time
+	now     atomic.Value
 	mu      sync.Mutex
 	done    chan struct{}
 	events  map[int64][]idFunc
@@ -43,19 +43,18 @@ type Time struct {
 // NewTime creates a new time, which is now. Resolution and Multiplier are
 // set to their defaults.
 func NewTime(now time.Time) *Time {
-	return &Time{
-		now:        now,
+	t := &Time{
 		Resolution: DefaultResolution,
 		Multiplier: DefaultMultiplier,
 		events:     make(map[int64][]idFunc),
 	}
+	t.Set(now)
+	return t
 }
 
 // Now returns t's current time.
 func (t *Time) Now() time.Time {
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	return t.now
+	return t.now.Load().(time.Time)
 }
 
 // Sleep sleeps for real duration d / t.Multiplier.
@@ -88,9 +87,7 @@ func (t *Time) Stop() {
 // is currently progressing. If there are timer or ticker events that would
 // have occurred before the set crock time, they will fire.
 func (t *Time) Set(to time.Time) {
-	t.mu.Lock()
-	t.now = to
-	t.mu.Unlock()
+	t.now.Store(to)
 	t.processEvents()
 }
 
@@ -102,7 +99,7 @@ func (t *Time) loop(done chan struct{}) {
 		select {
 		case <-ticker.C:
 			t.Set(t.Now().Add(time.Duration(float64(t.Resolution) * t.Multiplier)))
-			go t.processEvents()
+			t.processEvents()
 		case <-done:
 			return
 		}
@@ -161,10 +158,12 @@ func (t *Time) processEvents() {
 	defer t.mu.Unlock()
 	for nano, funcs := range t.events {
 		if nano <= now {
-			for i, fn := range funcs {
-				t.events[nano] = append(t.events[nano][:i], t.events[nano][i+1:]...)
-				go fn.Call()
+			for _, fn := range funcs {
+				t.mu.Unlock()
+				fn.Call()
+				t.mu.Lock()
 			}
+			t.events[nano] = nil
 		}
 	}
 }
@@ -178,6 +177,7 @@ func (t *Time) After(d time.Duration) <-chan time.Time {
 	then := now.Add(d)
 
 	t.event(then, func() { ch <- then; close(ch) })
+	t.processEvents()
 
 	return ch
 }

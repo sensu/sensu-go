@@ -239,20 +239,20 @@
   revision = "bb3d318650d48840a39aa21a027c6630e198e626"
 
 [[projects]]
-  branch = "master"
-  digest = "1:4c6bcdba286b48fc683ed73c0e2d8248d3ba57b4431fd210f071279423d67d1f"
+  digest = "1:6e3284ba4b7eb26e3a88ee5f39ce6e5dc6793fde50812cb00e79524e10e54dd6"
   name = "github.com/echlebek/crock"
   packages = ["."]
   pruneopts = "UT"
-  revision = "d3073eb0a044dbc6f88962d94ffb2e987b31c19a"
+  revision = "053fea6ef7dbceae5833b029801e833a89e56e1c"
+  version = "v1.0.1"
 
 [[projects]]
-  branch = "master"
   digest = "1:9d5bd7c02a73959247ccbf524180e363631ece23c58e12b21d697f4741c7926f"
   name = "github.com/echlebek/timeproxy"
   packages = ["."]
   pruneopts = "UT"
   revision = "d7c2918981322d4d437f7a52f3a15c7ec5a4f488"
+  version = "v1.0.0"
 
 [[projects]]
   digest = "1:46831ac031ae286b36baca94e71eb83e0493ebae1dbcd04fea42fa4f503970c3"

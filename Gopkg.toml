@@ -188,12 +188,12 @@ required = [
   version = "6.1.1"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/echlebek/timeproxy"
+  version = "1.0.0"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/echlebek/crock"
+  version = "1.0.1"
 
 [[constraint]]
   name = "github.com/golang/protobuf"
