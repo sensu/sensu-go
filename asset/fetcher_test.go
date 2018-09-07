@@ -29,13 +29,14 @@ func TestFetchExistingAsset(t *testing.T) {
 	t.Parallel()
 
 	assetName := "rubby-on-rails.tar"
+	localAssetPath := getFixturePath(assetName)
 
 	fetcher := &httpFetcher{
 		URLGetter: func(path string) (io.ReadCloser, error) {
 			return os.Open(path)
 		},
 	}
-	f, err := fetcher.Fetch("")
+	f, err := fetcher.Fetch(localAssetPath)
 	if err != nil {
 		t.Logf("expected no error, got: %v", err)
 		t.FailNow()
