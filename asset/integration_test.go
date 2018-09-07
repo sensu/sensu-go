@@ -32,8 +32,12 @@ func TestBoltDBManager(t *testing.T) {
 	// the asset manager actually deletes the "downloaded" archive
 	// for us, because it's a temporary file. So create a link to the
 	// original asset in the temp dir and use that as our asset "URL".
-	if err := os.Link(fixturePath, tmpFixturePath); err != nil {
-		t.Fatalf("unable to create fixture link in temporary directory, error: %v", err)
+	srcBytes, err := ioutil.ReadFile(fixturePath)
+	if err != nil {
+		t.Fatalf("unable to read fixture: %v", err)
+	}
+	if err := ioutil.WriteFile(tmpFixturePath, srcBytes, 0644); err != nil {
+		t.Fatalf("unable to write tmp fixture: %v", err)
 	}
 
 	fixtureSHAPath := fmt.Sprintf("%s.sha512", fixturePath)
