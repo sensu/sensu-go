@@ -106,9 +106,9 @@ func ensureDir(path string) error {
 
 // Etcd is a wrapper around github.com/coreos/etcd/embed.Etcd
 type Etcd struct {
-	cfg         *Config
-	etcd        *embed.Etcd
-	loopbackURL string
+	cfg        *Config
+	etcd       *embed.Etcd
+	clientURLs []string
 }
 
 // BackendID returns the ID of the etcd cluster member
@@ -201,7 +201,7 @@ func NewEtcd(config *Config) (*Etcd, error) {
 		return nil, fmt.Errorf("Etcd failed to start in %d seconds", EtcdStartupTimeout)
 	}
 
-	return &Etcd{config, e, clientURLs[0].String()}, nil
+	return &Etcd{cfg: config, etcd: e, clientURLs: config.ListenClientURLs}, nil
 }
 
 // Name returns the configured name for Etcd.
@@ -235,7 +235,7 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 	}
 
 	cli, err := clientv3.New(clientv3.Config{
-		Endpoints:   []string{e.loopbackURL},
+		Endpoints:   e.clientURLs,
 		DialTimeout: 5 * time.Second,
 		TLS:         tlsCfg,
 	})
@@ -260,7 +260,8 @@ func (e *Etcd) Healthy() bool {
 	return err == nil
 }
 
-// LoopbackURL returns the lookback URL used by etcd
-func (e *Etcd) LoopbackURL() string {
-	return e.loopbackURL
+func (e *Etcd) ClientURLs() []string {
+	result := make([]string, len(e.clientURLs))
+	copy(result, e.clientURLs)
+	return result
 }

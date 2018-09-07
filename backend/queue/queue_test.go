@@ -4,13 +4,10 @@ package queue
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"testing"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/etcdserver/etcdserverpb"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,7 +22,11 @@ func TestEnqueue(t *testing.T) {
 	defer client.Close()
 	require.NoError(t, err)
 
-	queue := New("testenq", client, e.BackendID())
+	backendID, err := etcd.BackendID(context.TODO(), client)
+	if err != nil {
+		t.Fatal(err)
+	}
+	queue := New("testenq", client, backendID)
 	err = queue.Enqueue(context.Background(), "test item")
 	assert.NoError(t, err)
 }
@@ -39,7 +40,11 @@ func TestDequeueSingleItem(t *testing.T) {
 	defer client.Close()
 	require.NoError(t, err)
 
-	queue := New("testdeq", client, e.BackendID())
+	backendID, err := etcd.BackendID(context.TODO(), client)
+	if err != nil {
+		t.Fatal(err)
+	}
+	queue := New("testdeq", client, backendID)
 	err = queue.Enqueue(context.Background(), "test single item dequeue")
 	require.NoError(t, err)
 
@@ -65,7 +70,11 @@ func TestDequeueFIFO(t *testing.T) {
 	defer client.Close()
 	require.NoError(t, err)
 
-	queue := New("testfifo", client, e.BackendID())
+	backendID, err := etcd.BackendID(context.TODO(), client)
+	if err != nil {
+		t.Fatal(err)
+	}
+	queue := New("testfifo", client, backendID)
 	items := []string{"hello", "there", "world", "asdf", "fjdksl", "lalalal"}
 
 	for _, item := range items {
@@ -92,7 +101,11 @@ func TestNack(t *testing.T) {
 	defer client.Close()
 	require.NoError(t, err)
 
-	queue := New("testnack", client, e.BackendID())
+	backendID, err := etcd.BackendID(context.TODO(), client)
+	if err != nil {
+		t.Fatal(err)
+	}
+	queue := New("testnack", client, backendID)
 	err = queue.Enqueue(context.Background(), "test item")
 	require.NoError(t, err)
 
@@ -117,7 +130,11 @@ func TestAck(t *testing.T) {
 	defer client.Close()
 	require.NoError(t, err)
 
-	queue := New("testack", client, e.BackendID())
+	backendID, err := etcd.BackendID(context.TODO(), client)
+	if err != nil {
+		t.Fatal(err)
+	}
+	queue := New("testack", client, backendID)
 	err = queue.Enqueue(context.Background(), "test item")
 	require.NoError(t, err)
 
@@ -143,7 +160,11 @@ func TestOnce(t *testing.T) {
 	defer client.Close()
 	require.NoError(t, err)
 
-	queue := New("testonce", client, e.BackendID())
+	backendID, err := etcd.BackendID(context.TODO(), client)
+	if err != nil {
+		t.Fatal(err)
+	}
+	queue := New("testonce", client, backendID)
 
 	err = queue.Enqueue(context.Background(), "test item")
 	require.NoError(t, err)
@@ -166,10 +187,14 @@ func TestNackExpired(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
-	defer client.Close()
 	require.NoError(t, err)
+	defer client.Close()
 
-	queue := New("testexpired", client, e.BackendID())
+	backendID, err := etcd.BackendID(context.TODO(), client)
+	if err != nil {
+		t.Fatal(err)
+	}
+	queue := New("testexpired", client, backendID)
 	queue.itemTimeout = 2 * time.Second
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -187,13 +212,13 @@ func TestNackExpired(t *testing.T) {
 
 	// create a new client and queue
 	newClient, err := e.NewClient()
-	defer newClient.Close()
 	require.NoError(t, err)
+	defer newClient.Close()
 
 	// wait to make sure the item has timed out
 	time.Sleep(2 * time.Second)
 
-	newQueue := New("testexpired", newClient, e.BackendID())
+	newQueue := New("testexpired", newClient, backendID)
 	newQueue.itemTimeout = 2 * time.Second
 
 	// nacked item should go back in the work queue lane
@@ -201,16 +226,6 @@ func TestNackExpired(t *testing.T) {
 	require.NoError(t, err)
 
 	require.Equal(t, "test item", item.Value())
-}
-
-type memberListOverrideClient struct {
-	*clientv3.Client
-	memberListResponse *clientv3.MemberListResponse
-	memberListError    error
-}
-
-func (o *memberListOverrideClient) MemberList(ctx context.Context) (*clientv3.MemberListResponse, error) {
-	return o.memberListResponse, o.memberListError
 }
 
 func TestMultipleSubscribers(t *testing.T) {
@@ -223,30 +238,23 @@ func TestMultipleSubscribers(t *testing.T) {
 	require.NoError(t, err)
 	defer client.Close()
 
-	// the override client simulates multiple backends by providing a custom
-	// MemberList method
-	override := &memberListOverrideClient{
-		Client: client,
-		memberListResponse: &clientv3.MemberListResponse{
-			Header: &etcdserverpb.ResponseHeader{},
-			Members: []*etcdserverpb.Member{
-				{
-					ID: 1,
-				},
-				{
-					ID: 2,
-				},
-				{
-					ID: 3,
-				},
-			},
-		},
+	backendID1, err := etcd.BackendID(context.TODO(), client)
+	if err != nil {
+		t.Fatal(err)
+	}
+	backendID2, err := etcd.BackendID(context.TODO(), client)
+	if err != nil {
+		t.Fatal(err)
+	}
+	backendID3, err := etcd.BackendID(context.TODO(), client)
+	if err != nil {
+		t.Fatal(err)
 	}
 
 	// Each queue is associated with a different backend
-	q1 := New("testMultipleSubscribers", override, fmt.Sprintf("%x", 1))
-	q2 := New("testMultipleSubscribers", override, fmt.Sprintf("%x", 2))
-	q3 := New("testMultipleSubscribers", override, fmt.Sprintf("%x", 3))
+	q1 := New("testMultipleSubscribers", client, backendID1)
+	q2 := New("testMultipleSubscribers", client, backendID2)
+	q3 := New("testMultipleSubscribers", client, backendID3)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
@@ -263,86 +271,6 @@ func TestMultipleSubscribers(t *testing.T) {
 	}
 }
 
-func TestCleanupQueue(t *testing.T) {
-	// This tests ensures that defunct queues are garbage-collected
-	t.Parallel()
-
-	e, cleanup := etcd.NewTestEtcd(t)
-	defer cleanup()
-
-	client, err := e.NewClient()
-	require.NoError(t, err)
-	defer client.Close()
-
-	// the override client simulates multiple backends by providing a custom
-	// MemberList method
-	memberListResponse := &clientv3.MemberListResponse{
-		Header: &etcdserverpb.ResponseHeader{},
-		Members: []*etcdserverpb.Member{
-			{
-				ID: 1,
-			},
-			{
-				ID: 2,
-			},
-			{
-				ID: 3,
-			},
-		},
-	}
-	override := &memberListOverrideClient{
-		Client:             client,
-		memberListResponse: memberListResponse,
-	}
-
-	// Each queue is associated with a different backend
-	q1 := New("testMultipleSubscribers", override, fmt.Sprintf("%x", 1))
-	q2 := New("testMultipleSubscribers", override, fmt.Sprintf("%x", 2))
-	q3 := New("testMultipleSubscribers", override, fmt.Sprintf("%x", 3))
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
-	// At this point q1, q2 and q3 all have items waiting
-	require.NoError(t, q1.Enqueue(ctx, "foobar"))
-
-	// Truncate the member list to be only q1
-	oldMembers := memberListResponse.Members
-	memberListResponse.Members = oldMembers[:1]
-
-	ctx, cancel = context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
-	// After the next enqueue operation, the values for q2 and q3 will be removed
-	require.NoError(t, q1.Enqueue(ctx, "barbaz"))
-
-	// Restore the member list to its original state
-	memberListResponse.Members = oldMembers
-
-	ctx, cancel = context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-	require.NoError(t, q1.Enqueue(ctx, "rubber ducky"))
-
-	// q1 expects to get three values
-	for _, exp := range []string{"foobar", "barbaz", "rubber ducky"} {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
-		item, err := q1.Dequeue(ctx)
-		require.NoError(t, err)
-		assert.Equal(t, exp, item.Value())
-	}
-
-	// q2 and q3 expect only a single value
-	for _, q := range []*Queue{q2, q3} {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-		defer cancel()
-
-		item, err := q.Dequeue(ctx)
-		require.NoError(t, err)
-		assert.Equal(t, "rubber ducky", item.Value())
-	}
-}
-
 func TestDequeueParallel(t *testing.T) {
 	t.Parallel()
 	e, cleanup := etcd.NewTestEtcd(t)
@@ -350,7 +278,11 @@ func TestDequeueParallel(t *testing.T) {
 	client, err := e.NewClient()
 	defer client.Close()
 	require.NoError(t, err)
-	queue := New("testparallel", client, e.BackendID())
+	backendID, err := etcd.BackendID(context.TODO(), client)
+	if err != nil {
+		t.Fatal(err)
+	}
+	queue := New("testparallel", client, backendID)
 	items := map[string]struct{}{
 		"hello":   struct{}{},
 		"there":   struct{}{},

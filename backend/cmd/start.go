@@ -47,6 +47,7 @@ const (
 	flagStoreInitialClusterState     = "initial-cluster-state"
 	flagStoreInitialClusterToken     = "initial-cluster-token"
 	flagStoreNodeName                = "name"
+	flagNoEmbed                      = "no-embed"
 
 	// Default values
 
@@ -118,6 +119,7 @@ func newStartCommand() *cobra.Command {
 				EtcdInitialAdvertisePeerURL: viper.GetString(flagStoreInitialAdvertisePeerURL),
 				EtcdInitialClusterToken:     viper.GetString(flagStoreInitialClusterToken),
 				EtcdName:                    viper.GetString(flagStoreNodeName),
+				NoEmbed:                     viper.GetBool(flagNoEmbed),
 			}
 
 			certFile := viper.GetString(flagCertFile)
@@ -218,6 +220,7 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagStoreInitialClusterState, etcd.ClusterStateNew)
 	viper.SetDefault(flagStoreInitialClusterToken, "")
 	viper.SetDefault(flagStoreNodeName, defaultEtcdName)
+	viper.SetDefault(flagNoEmbed, false)
 
 	// Merge in config flag set so that it appears in command usage
 	cmd.Flags().AddFlagSet(configFlagSet)
@@ -246,6 +249,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagStoreInitialClusterState, viper.GetString(flagStoreInitialClusterState), "store initial cluster state")
 	cmd.Flags().String(flagStoreInitialClusterToken, viper.GetString(flagStoreInitialClusterToken), "store initial cluster token")
 	cmd.Flags().String(flagStoreNodeName, viper.GetString(flagStoreNodeName), "store cluster member node name")
+	cmd.Flags().Bool(flagNoEmbed, viper.GetBool(flagNoEmbed), "don't embed etcd, use external etcd instead")
 
 	// Load the configuration file but only error out if flagConfigFile is used
 	if err := viper.ReadInConfig(); err != nil && configFile != "" {
