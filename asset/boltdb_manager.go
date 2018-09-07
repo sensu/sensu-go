@@ -9,10 +9,6 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-const (
-	assetDBName = "assets.db"
-)
-
 var (
 	assetBucketName = []byte("assets")
 )
