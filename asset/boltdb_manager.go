@@ -56,12 +56,12 @@ type boltDBAssetManager struct {
 	// DB is the BoltDB
 	DB *bolt.DB
 
-	fetcher  fetcher
-	expander expander
-	verifier verifier
+	fetcher  Fetcher
+	expander Expander
+	verifier Verifier
 }
 
-// Get opens a read-write transaction to BoltDB, causing subsequent calls to
+// Get opens a transaction to BoltDB, causing subsequent calls to
 // Get to block. During this transaction, we attempt to determine if the asset
 // is installed by querying BoltDB for the asset's SHA (which we use as an ID).
 //
@@ -75,9 +75,8 @@ func (b *boltDBAssetManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 	var localAsset *RuntimeAsset
 	key := []byte(asset.Sha512)
 
-	// This is racey, but the udpate transaction that comes over this view
-	// will cause all other update transactions to block. We always want
-	// to allow this Get() to return if the asset is already installed.
+	// Concurrent calls to View are allowed, but a concurrent call that has
+	// has proceeded to Update below will block here.
 	if err := b.DB.View(func(tx *bolt.Tx) error {
 		// If the key exists, the bucket should already exist.
 		bucket := tx.Bucket(assetBucketName)

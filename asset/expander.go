@@ -15,8 +15,8 @@ const (
 	headerSize = 262
 )
 
-// An expander expands the provided *os.File to the target direcrtory.
-type expander interface {
+// An Expander expands the provided *os.File to the target direcrtory.
+type Expander interface {
 	Expand(archive io.ReadSeeker, targetDirectory string) error
 }
 

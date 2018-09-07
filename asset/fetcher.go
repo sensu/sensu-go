@@ -11,7 +11,7 @@ import (
 
 // A Fetcher fetches a file from the specified source and returns an *os.File
 // with the contents of the file found at source.
-type fetcher interface {
+type Fetcher interface {
 	Fetch(source string) (*os.File, error)
 }
 
