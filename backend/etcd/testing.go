@@ -25,7 +25,7 @@ func NewTestEtcd(t *testing.T) (*Etcd, func()) {
 
 	cfg := NewConfig()
 	cfg.DataDir = tmpDir
-	cfg.ListenClientURL = clURL
+	cfg.ListenClientURLs = []string{clURL}
 	cfg.ListenPeerURL = apURL
 	cfg.InitialCluster = initCluster
 	cfg.InitialClusterState = ClusterStateNew

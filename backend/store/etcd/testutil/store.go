@@ -51,7 +51,7 @@ func NewStoreInstance() (*IntegrationTestStore, error) {
 
 	peerURL := fmt.Sprintf("http://127.0.0.1:%d", p[1])
 
-	cfg.ListenClientURL = fmt.Sprintf("http://127.0.0.1:%d", p[0])
+	cfg.ListenClientURLs = []string{fmt.Sprintf("http://127.0.0.1:%d", p[0])}
 	cfg.ListenPeerURL = peerURL
 	cfg.InitialCluster = fmt.Sprintf("default=http://127.0.0.1:%d", p[1])
 	cfg.InitialAdvertisePeerURL = peerURL
