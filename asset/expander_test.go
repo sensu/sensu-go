@@ -27,6 +27,17 @@ func TestExpandValidTar(t *testing.T) {
 		t.Logf("expected no error, got %v", err)
 		t.Fail()
 	}
+
+	railsFile, err := os.Open(filepath.Join(targetDirectory, "bin", "rails"))
+	if err != nil {
+		t.Logf("could not open asset contents, err: %v", err)
+		t.Fail()
+	}
+
+	if railsFile == nil {
+		t.Logf("no file opened")
+		t.Fail()
+	}
 }
 
 func TestExpandValidTGZ(t *testing.T) {
