@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/sensu/sensu-go/types"
@@ -26,21 +25,32 @@ type Getter interface {
 	Get(*types.Asset) (*RuntimeAsset, error)
 }
 
-// NewGetter returns a new default asset Getter.
-func NewGetter(localStorage string, timeout time.Duration) (Getter, error) {
-	db, err := bolt.Open(filepath.Join(localStorage, assetDBName), 0666, &bolt.Options{})
-	if err != nil {
-		return nil, err
+// NewBoltDBGetter returns a new default asset Getter. If fetcher, verifier, or
+// expander are nil, the getter will use the built-in components.
+func NewBoltDBGetter(db *bolt.DB,
+	localStorage string,
+	fetcher Fetcher,
+	verifier Verifier,
+	expander Expander) (Getter, error) {
+
+	if fetcher == nil {
+		fetcher = defaultFetcher
+	}
+
+	if expander == nil {
+		expander = defaultExpander
+	}
+
+	if verifier == nil {
+		verifier = defaultVerifier
 	}
 
 	return &boltDBAssetManager{
-		LocalStorage: localStorage,
-		DB:           db,
-		fetcher: &httpFetcher{
-			Timeout: timeout,
-		},
-		expander: &archiveExpander{},
-		verifier: &sha512Verifier{},
+		localStorage: localStorage,
+		db:           db,
+		fetcher:      fetcher,
+		expander:     expander,
+		verifier:     verifier,
 	}, nil
 }
 
@@ -50,15 +60,11 @@ func NewGetter(localStorage string, timeout time.Duration) (Getter, error) {
 // We rely on long-lived BoltDB transactions during Get to provide this
 // mechanism for blocking.
 type boltDBAssetManager struct {
-	// LocalStorage specifies the location of local asset storage.
-	LocalStorage string
-
-	// DB is the BoltDB
-	DB *bolt.DB
-
-	fetcher  Fetcher
-	expander Expander
-	verifier Verifier
+	localStorage string
+	db           *bolt.DB
+	fetcher      Fetcher
+	expander     Expander
+	verifier     Verifier
 }
 
 // Get opens a transaction to BoltDB, causing subsequent calls to
@@ -77,7 +83,7 @@ func (b *boltDBAssetManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 
 	// Concurrent calls to View are allowed, but a concurrent call that has
 	// has proceeded to Update below will block here.
-	if err := b.DB.View(func(tx *bolt.Tx) error {
+	if err := b.db.View(func(tx *bolt.Tx) error {
 		// If the key exists, the bucket should already exist.
 		bucket := tx.Bucket(assetBucketName)
 		if bucket == nil {
@@ -102,7 +108,7 @@ func (b *boltDBAssetManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 		return localAsset, nil
 	}
 
-	if err := b.DB.Update(func(tx *bolt.Tx) error {
+	if err := b.db.Update(func(tx *bolt.Tx) error {
 		bucket, err := tx.CreateBucketIfNotExists(assetBucketName)
 		if err != nil {
 			return err
@@ -134,7 +140,7 @@ func (b *boltDBAssetManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 		}
 
 		// expand
-		assetPath := filepath.Join(b.LocalStorage, asset.Sha512)
+		assetPath := filepath.Join(b.localStorage, asset.Sha512)
 		if err := b.expander.Expand(tmpFile, assetPath); err != nil {
 			return err
 		}

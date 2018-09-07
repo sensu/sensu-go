@@ -25,21 +25,16 @@ func getFixturePath(name string) string {
 	return filepath.Join(fixturePath, name)
 }
 
-type mockURLGetter struct {
-	filePath string
-}
-
-func (m *mockURLGetter) Get(string) (io.ReadCloser, error) {
-	return os.Open(m.filePath)
-}
-
 func TestFetchExistingAsset(t *testing.T) {
 	t.Parallel()
 
 	assetName := "rubby-on-rails.tar"
 
-	fetcher := &httpFetcher{}
-	fetcher.InjectGetter(&mockURLGetter{getFixturePath(assetName)})
+	fetcher := &httpFetcher{
+		URLGetter: func(path string) (io.ReadCloser, error) {
+			return os.Open(path)
+		},
+	}
 	f, err := fetcher.Fetch("")
 	if err != nil {
 		t.Logf("expected no error, got: %v", err)

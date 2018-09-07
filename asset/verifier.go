@@ -7,6 +7,10 @@ import (
 	"io"
 )
 
+var (
+	defaultVerifier = &sha512Verifier{}
+)
+
 // A Verifier verifies that a file's SHA-512 matches the specified
 // SHA-512.
 type Verifier interface {

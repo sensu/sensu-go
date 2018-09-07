@@ -89,7 +89,7 @@ func TestGetExistingAsset(t *testing.T) {
 	}
 
 	manager := &boltDBAssetManager{
-		DB: db,
+		db: db,
 	}
 
 	fetchedAsset, err := manager.Get(a)
@@ -121,7 +121,7 @@ func TestGetNonexistentAsset(t *testing.T) {
 	defer db.Close()
 
 	manager := &boltDBAssetManager{
-		DB:      db,
+		db:      db,
 		fetcher: &mockFetcher{false},
 	}
 
@@ -158,7 +158,7 @@ func TestGetInvalidAsset(t *testing.T) {
 	defer db.Close()
 
 	manager := &boltDBAssetManager{
-		DB:       db,
+		db:       db,
 		fetcher:  &mockFetcher{true},
 		verifier: &mockVerifier{false},
 	}
@@ -196,7 +196,7 @@ func TestFailedExpand(t *testing.T) {
 	defer db.Close()
 
 	manager := &boltDBAssetManager{
-		DB:       db,
+		db:       db,
 		fetcher:  &mockFetcher{true},
 		verifier: &mockVerifier{true},
 		expander: &mockExpander{false},
@@ -235,7 +235,7 @@ func TestSuccessfulGetAsset(t *testing.T) {
 	defer db.Close()
 
 	manager := &boltDBAssetManager{
-		DB:       db,
+		db:       db,
 		fetcher:  &mockFetcher{true},
 		verifier: &mockVerifier{true},
 		expander: &mockExpander{true},

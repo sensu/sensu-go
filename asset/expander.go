@@ -15,6 +15,10 @@ const (
 	headerSize = 262
 )
 
+var (
+	defaultExpander = &archiveExpander{}
+)
+
 // An Expander expands the provided *os.File to the target direcrtory.
 type Expander interface {
 	Expand(archive io.ReadSeeker, targetDirectory string) error
