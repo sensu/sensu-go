@@ -13,7 +13,8 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"time"
+
+	time "github.com/echlebek/timeproxy"
 
 	"github.com/atlassian/gostatsd/pkg/statsd"
 	"github.com/sensu/sensu-go/agent/assetmanager"

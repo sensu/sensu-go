@@ -101,7 +101,6 @@ func TestReceiveLoop(t *testing.T) {
 
 // TestPeriodicKeepalive checks that a running Agent sends its periodic
 // keepalive messages at the expected frequency, allowing for +/- 1s drift.
-// TODO: use Eric's crock package to test many more ticks in a short amount of time.
 func TestPeriodicKeepalive(t *testing.T) {
 	done := make(chan struct{})
 
@@ -115,17 +114,17 @@ func TestPeriodicKeepalive(t *testing.T) {
 		lastKeepalive := time.Time{}
 		keepaliveInterval := time.Duration(cfg.KeepaliveInterval) * time.Second
 
-		for keepaliveCount := 0; keepaliveCount < 5; keepaliveCount++ {
+		for keepaliveCount := 0; keepaliveCount < 10; keepaliveCount++ {
 			msg, err := conn.Receive()
 			assert.NoError(t, err)
 
 			if msg.Type == "keepalive" {
 				if keepaliveCount > 0 {
 					expected := lastKeepalive.Add(keepaliveInterval)
-					actual := time.Now()
+					actual := mockTime.Now()
 					assert.WithinDuration(t, expected, actual, time.Second)
 				}
-				lastKeepalive = time.Now()
+				lastKeepalive = mockTime.Now()
 			}
 		}
 
@@ -138,7 +137,9 @@ func TestPeriodicKeepalive(t *testing.T) {
 
 	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
 	cfg.BackendURLs = []string{wsURL}
-	cfg.KeepaliveInterval = 1
+
+	mockTime.Start()
+	defer mockTime.Stop()
 
 	ta := NewAgent(cfg)
 	err := ta.Run()
