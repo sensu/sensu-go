@@ -22,7 +22,6 @@ message Entity {
   int64 last_seen = 5 [(gogoproto.jsontag) = "last_seen"];
   bool deregister = 6 [(gogoproto.jsontag) = "deregister"];
   Deregistration deregistration = 7 [(gogoproto.nullable) = false];
-  uint32 keepalive_timeout = 8 [(gogoproto.jsontag) = "keepalive_timeout"];
   string environment = 9;
   string organization = 10;
   string user = 11;

@@ -61,7 +61,7 @@ func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
 	if entity.Deregistration.Handler != "" {
 		deregistrationCheck := &types.Check{
 			Name:          "deregistration",
-			Interval:      entity.KeepaliveTimeout,
+			Interval:      1,
 			Subscriptions: []string{""},
 			Command:       "",
 			Handlers:      []string{entity.Deregistration.Handler},

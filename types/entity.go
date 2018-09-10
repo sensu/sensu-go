@@ -74,12 +74,11 @@ func GetEntitySubscription(entityID string) string {
 // FixtureEntity returns a testing fixture for an Entity object.
 func FixtureEntity(id string) *Entity {
 	return &Entity{
-		ID:               id,
-		Class:            "host",
-		Subscriptions:    []string{"linux"},
-		Environment:      "default",
-		Organization:     "default",
-		KeepaliveTimeout: 120,
+		ID:            id,
+		Class:         "host",
+		Subscriptions: []string{"linux"},
+		Environment:   "default",
+		Organization:  "default",
 	}
 }
 

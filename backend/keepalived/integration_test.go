@@ -65,9 +65,9 @@ func TestKeepaliveMonitor(t *testing.T) {
 	}
 
 	entity := types.FixtureEntity("entity1")
-	entity.KeepaliveTimeout = 1
 
 	keepalive := &types.Event{
+		Check:     &types.Check{Timeout: 1},
 		Entity:    entity,
 		Timestamp: time.Now().Unix(),
 	}
