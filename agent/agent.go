@@ -393,10 +393,7 @@ func (a *Agent) sendKeepalive() error {
 		return err
 	}
 	msg.Payload = msgBytes
-<<<<<<< HEAD
-=======
-	fmt.Println(string(msgBytes))
->>>>>>> Remove the KeepaliveTimeout attribute from entities
+
 	a.sendq <- msg
 
 	return nil
