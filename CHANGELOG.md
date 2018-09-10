@@ -21,6 +21,7 @@ keepalive events.
 - The backend no longer requires embedded etcd. External etcd instances can be
 used by providing the --no-embed option. In this case, the client will dial
 the URLs provided by --listen-client-urls.
+- The sensu-agent binary is now located at ./cmd/sensu-agent.
 
 ### Fixed
 - Fixes a bug in `sensuctl cluster health` so the correct error is handled.
