@@ -8,11 +8,13 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type testMessageType struct {
@@ -24,7 +26,7 @@ func TestSendLoop(t *testing.T) {
 	server := transport.NewServer()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := server.Serve(w, r)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		msg, err := conn.Receive()
 		assert.NoError(t, err)
@@ -47,10 +49,7 @@ func TestSendLoop(t *testing.T) {
 	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
 	err := ta.Run()
-	assert.NoError(t, err)
-	if err != nil {
-		assert.FailNow(t, "agent failed to run")
-	}
+	require.NoError(t, err)
 	defer ta.Stop()
 	<-done
 }
@@ -62,7 +61,7 @@ func TestReceiveLoop(t *testing.T) {
 	server := transport.NewServer()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := server.Serve(w, r)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		msgBytes, err := json.Marshal(testMessage)
 		assert.NoError(t, err)
@@ -92,14 +91,61 @@ func TestReceiveLoop(t *testing.T) {
 		return nil
 	})
 	err := ta.Run()
-	assert.NoError(t, err)
-	if err != nil {
-		assert.FailNow(t, "agent failed to run")
-	}
+	require.NoError(t, err)
 	defer ta.Stop()
 	msgBytes, _ := json.Marshal(&testMessageType{"message"})
 	ta.sendMessage("testMessageType", msgBytes)
 	<-done
+	<-done
+}
+
+// TestPeriodicKeepalive checks that a running Agent sends its periodic
+// keepalive messages at the expected frequency, allowing for +/- 1s drift.
+func TestPeriodicKeepalive(t *testing.T) {
+	done := make(chan struct{})
+
+	cfg := FixtureConfig()
+	server := transport.NewServer()
+
+	testKeepalive := func(w http.ResponseWriter, r *http.Request) {
+		conn, err := server.Serve(w, r)
+		require.NoError(t, err)
+
+		lastKeepalive := time.Time{}
+		keepaliveInterval := time.Duration(cfg.KeepaliveInterval) * time.Second
+
+		for keepaliveCount := 0; keepaliveCount < 10; keepaliveCount++ {
+			msg, err := conn.Receive()
+			assert.NoError(t, err)
+
+			if msg.Type == "keepalive" {
+				if keepaliveCount > 0 {
+					expected := lastKeepalive.Add(keepaliveInterval)
+					actual := mockTime.Now()
+					assert.WithinDuration(t, expected, actual, time.Second)
+				}
+				lastKeepalive = mockTime.Now()
+			}
+		}
+
+		conn.Close()
+		done <- struct{}{}
+	}
+
+	ts := httptest.NewServer(http.HandlerFunc(testKeepalive))
+	defer ts.Close()
+
+	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
+	cfg.BackendURLs = []string{wsURL}
+
+	mockTime.Start()
+	defer mockTime.Stop()
+
+	ta := NewAgent(cfg)
+	err := ta.Run()
+	require.NoError(t, err)
+	defer ta.Stop()
+
 	<-done
 }
 
@@ -108,7 +154,7 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 	server := transport.NewServer()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := server.Serve(w, r)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		msg, err := conn.Receive()
 		assert.NoError(t, err)
@@ -144,10 +190,7 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
 	err := ta.Run()
-	assert.NoError(t, err)
-	if err != nil {
-		assert.FailNow(t, "agent failed to run")
-	}
+	require.NoError(t, err)
 	defer ta.Stop()
 	<-done
 }
