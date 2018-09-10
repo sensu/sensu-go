@@ -379,7 +379,6 @@ func (a *Agent) sendKeepalive() error {
 		return err
 	}
 	msg.Payload = msgBytes
-	fmt.Println(string(msgBytes))
 	a.sendq <- msg
 
 	return nil
