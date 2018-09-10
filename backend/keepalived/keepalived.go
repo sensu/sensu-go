@@ -16,10 +16,6 @@ const (
 	// handling keepalive events.
 	DefaultHandlerCount = 10
 
-	// DefaultKeepaliveTimeout is the amount of time we consider a Keepalive
-	// valid for.
-	DefaultKeepaliveTimeout = 120 // seconds
-
 	// KeepaliveCheckName is the name of the check that is created when a
 	// keepalive timeout occurs.
 	KeepaliveCheckName = "keepalive"
