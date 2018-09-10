@@ -14,6 +14,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Changed sensuctl title colour to use terminal's configured default for bold
   text.
 - The backend no longer forcibly binds to localhost.
+- The sensu-agent binary is now located at ./cmd/sensu-agent.
 
 ### Fixed
 - Fixes a bug in `sensuctl cluster health` so the correct error is handled.
