@@ -49,6 +49,9 @@ error in an unhealthy cluster.
 ### Breaking Changes
 - Removed the KeepaliveTimeout attribute from entities.
 
+### Breaking Changes
+- Removed the KeepaliveTimeout attribute from entities.
+
 ## [2.0.0-beta.4] - 2018-08-14
 
 ### Added
