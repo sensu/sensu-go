@@ -30,8 +30,24 @@ func evaluateEventFilterStatement(event *types.Event, statement string) bool {
 	return result
 }
 
+func evaluateJSFilter(event *types.Event, expr string) bool {
+	parameters := map[string]interface{}{"event": event}
+	result, err := eval.EvaluateJSExpression(expr, parameters)
+	if err != nil {
+		logger.WithError(err).Error("error executing JS")
+	}
+	return result
+}
+
 // Returns true if the event should be filtered.
 func evaluateEventFilter(event *types.Event, filter *types.EventFilter) bool {
+	var evaluator func(*types.Event, string) bool
+	if filter.Type == "js" {
+		evaluator = evaluateJSFilter
+	} else {
+		evaluator = evaluateEventFilterStatement
+	}
+
 	if filter.When != nil {
 		inWindows, err := filter.When.InWindows(time.Now().UTC())
 		if err != nil {
@@ -51,7 +67,7 @@ func evaluateEventFilter(event *types.Event, filter *types.EventFilter) bool {
 	}
 
 	for _, statement := range filter.Statements {
-		match := evaluateEventFilterStatement(event, statement)
+		match := evaluator(event, statement)
 
 		// Allow - One of the statements did not match, filter the event
 		if filter.Action == types.EventFilterActionAllow && !match {

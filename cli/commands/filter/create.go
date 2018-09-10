@@ -78,6 +78,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		"comma separated list of boolean expressions that are evaluated to "+
 			"determine if the event matches this filter",
 	)
+	cmd.Flags().StringP("type", "t", "govaluate", "filter language type (js or govaluate)")
 
 	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd

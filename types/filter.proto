@@ -33,4 +33,7 @@ message EventFilter {
 
   // When indicates a TimeWindowWhen that a filter uses to filter by days & times
   TimeWindowWhen when = 6;
+
+  // The type of the filter (govaluate or js)
+  string type = 7;
 }
