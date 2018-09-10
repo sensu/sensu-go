@@ -12,19 +12,24 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - Changed sensuctl title colour to use terminal's configured default for bold
-  text.
+text.
 - The backend no longer forcibly binds to localhost.
+- Keepalive intervals and timeouts are now configured in the check object of
+keepalive events.
 
 ### Fixed
 - Fixes a bug in `sensuctl cluster health` so the correct error is handled.
 - Fixed a bug where assets could not extract git tarballs.
 - Fixed a bug where assets would not install if given cache directory was a
-  relative path.
+relative path.
 - Fixed a bug where an agent's collection of system information could delay
-  sending of keepalive messages.
+sending of keepalive messages.
 - Fixed a bug in nagios perfdata parsing.
 - Etcd client URLs can now be a comma-separated list.
 - Fixed a bug where output metric format could not be unset.
+
+### Breaking Changes
+- Removed the KeepaliveTimeout attribute from entities.
 
 ## [2.0.0-beta.4] - 2018-08-14
 
