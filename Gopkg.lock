@@ -76,6 +76,14 @@
   revision = "3b1fffcc45b37a2644a23eb7dc434d4d9f0987ba"
 
 [[projects]]
+  digest = "1:0f98f59e9a2f4070d66f0c9c39561f68fcd1dc837b22a852d28d0003aebd1b1e"
+  name = "github.com/boltdb/bolt"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "2f1ce7a837dcb8da3ec595b1dac9d0632f0f99e8"
+  version = "v1.3.1"
+
+[[projects]]
   digest = "1:6bda4e232607261eeaee45b0a0e8a2ef097bd44e8a44d9b7ca1badb36e523891"
   name = "github.com/coreos/bbolt"
   packages = ["."]
@@ -595,12 +603,11 @@
   revision = "f22b7ef81a0afac9ce1447d37e5ab8e99fbd2f73"
 
 [[projects]]
-  branch = "master"
-  digest = "1:fcd8d1158c2081d83071b72599c9b7ef98ca08830870982848b9848ebc47c60b"
+  digest = "1:4daa045e1e1f3e23f4b07db6880cdf9f259dab65312dfe244a878e6070faaf77"
   name = "github.com/olekukonko/tablewriter"
   packages = ["."]
   pruneopts = "UT"
-  revision = "0fd34425a5aee40ff3f260b34e6c3b0d59f58c66"
+  revision = "d4647c9c7a84d847478d890b816b7d8b62b0b279"
 
 [[projects]]
   digest = "1:450b7623b185031f3a456801155c8320209f75d0d4c4e633c6b1e59d44d6e392"
@@ -1046,6 +1053,7 @@
     "github.com/atlassian/gostatsd",
     "github.com/atlassian/gostatsd/pkg/statsd",
     "github.com/bluele/slack",
+    "github.com/boltdb/bolt",
     "github.com/coreos/etcd/clientv3",
     "github.com/coreos/etcd/clientv3/concurrency",
     "github.com/coreos/etcd/embed",

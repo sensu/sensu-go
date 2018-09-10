@@ -15,6 +15,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
   text.
 - The backend no longer forcibly binds to localhost.
 - The sensu-agent binary is now located at ./cmd/sensu-agent.
+- Sensuctl no longer uses auto text wrapping.
 
 ### Fixed
 - Fixes a bug in `sensuctl cluster health` so the correct error is handled.
