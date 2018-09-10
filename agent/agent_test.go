@@ -194,3 +194,25 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 	defer ta.Stop()
 	<-done
 }
+
+func TestInvalidAgentID_GH2022(t *testing.T) {
+	server := transport.NewServer()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		conn, err := server.Serve(w, r)
+		require.NoError(t, err)
+		conn.Close()
+	}))
+	defer ts.Close()
+
+	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
+
+	cfg := FixtureConfig()
+	cfg.AgentID = "Test Agent"
+	cfg.BackendURLs = []string{wsURL}
+	cfg.API.Port = 0
+	cfg.Socket.Port = 0
+	ta := NewAgent(cfg)
+	err := ta.Run()
+	require.Error(t, err)
+	defer ta.Stop()
+}

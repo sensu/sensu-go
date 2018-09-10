@@ -438,6 +438,11 @@ func (a *Agent) Run() error {
 	a.header = a.buildTransportHeaderMap()
 	a.header.Set("Authorization", "Basic "+userCredentials)
 
+	// Fail the agent after startup if the id is invalid
+	if err := types.ValidateName(a.config.AgentID); err != nil {
+		return fmt.Errorf("invalid agent id: %v", err)
+	}
+
 	// Start the statsd listener only if the agent configuration has it enabled
 	if !a.config.StatsdServer.Disable {
 		a.StartStatsd()

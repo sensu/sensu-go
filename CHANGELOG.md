@@ -25,6 +25,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed a bug in nagios perfdata parsing.
 - Etcd client URLs can now be a comma-separated list.
 - Fixed a bug where output metric format could not be unset.
+- Fixed a bug where the agent does not validate the ID at startup.
 
 ## [2.0.0-beta.4] - 2018-08-14
 
