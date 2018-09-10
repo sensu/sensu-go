@@ -91,7 +91,7 @@ type Config struct {
 	// start
 	ExtendedAttributes []byte
 	// KeepaliveInterval is the interval, in seconds, when agents will send a
-	// keepalive to sensu-backend. Default: 60
+	// keepalive to sensu-backend.
 	KeepaliveInterval int
 	// KeepaliveTimeout is the time after which a sensu-agent is considered dead
 	// by the backend.
