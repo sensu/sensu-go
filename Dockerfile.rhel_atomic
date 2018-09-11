@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/rhel7/rhel
+FROM registry.access.redhat.com/rhel-atomic
 MAINTAINER Sensu, Inc. Engineering <engineering@sensu.io>
 
 LABEL name="sensu/sensu-rhel" \
