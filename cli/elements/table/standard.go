@@ -117,6 +117,7 @@ func newWriter(io io.Writer) *tablewriter.Table {
 	stdTableWriter.SetCenterSeparator(" ")
 	stdTableWriter.SetColumnSeparator(" ")
 	stdTableWriter.SetRowSeparator("─")
+	stdTableWriter.SetAutoWrapText(false)
 
 	// By default tablewriter wants to format headers in all caps. Rework.
 	// We'll uniformly format the headers as bold and capitalized when we

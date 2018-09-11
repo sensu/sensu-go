@@ -82,8 +82,8 @@ required = [
   name = "github.com/nightlyone/lockfile"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/olekukonko/tablewriter"
+  revision = "d4647c9c7a84d847478d890b816b7d8b62b0b279"
 
 [[constraint]]
   name = "github.com/shirou/gopsutil"
@@ -198,3 +198,7 @@ required = [
 [[constraint]]
   name = "github.com/golang/protobuf"
   version = "1.1.0"
+
+[[constraint]]
+  name = "github.com/boltdb/bolt"
+  revision = "e9cf4fae01b5a8ff89d0ec6b32f0d9c9f79aefdd"
