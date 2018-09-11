@@ -13,7 +13,8 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"time"
+
+	time "github.com/echlebek/timeproxy"
 
 	"github.com/atlassian/gostatsd/pkg/statsd"
 	"github.com/sensu/sensu-go/agent/assetmanager"
@@ -258,10 +259,6 @@ func (a *Agent) receiveMessages(out chan *transport.Message) {
 					Multiplier:           1.5,
 				}
 				if err := backoff.Retry(func(retry int) (bool, error) {
-					//if retry != 0 {
-					//	logger.Debugf("reconnection attempt #%d", retry)
-					//}
-
 					if err = a.conn.Reconnect(a.backendSelector.Select(), a.config.TLS, a.header); err != nil {
 						logger.WithError(err).Error("reconnection attempt failed")
 						return false, nil
@@ -359,6 +356,22 @@ func (a *Agent) refreshSystemInfo() error {
 	return nil
 }
 
+func (a *Agent) refreshSystemInfoPeriodically() {
+	ticker := time.NewTicker(time.Duration(DefaultSystemInfoRefreshInterval) * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			if err := a.refreshSystemInfo(); err != nil {
+				logger.WithError(err).Error("failed to refresh system info")
+			}
+		case <-a.stopping:
+			return
+		}
+	}
+}
+
 func (a *Agent) sendKeepalive() error {
 	logger.Info("sending keepalive")
 	msg := &transport.Message{
@@ -382,6 +395,22 @@ func (a *Agent) sendKeepalive() error {
 	a.sendq <- msg
 
 	return nil
+}
+
+func (a *Agent) sendKeepalivePeriodically() {
+	ticker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			if err := a.sendKeepalive(); err != nil {
+				logger.WithError(err).Error("failed sending keepalive")
+			}
+		case <-a.stopping:
+			return
+		}
+	}
 }
 
 func (a *Agent) buildTransportHeaderMap() http.Header {
@@ -411,6 +440,11 @@ func (a *Agent) Run() error {
 	a.header = a.buildTransportHeaderMap()
 	a.header.Set("Authorization", "Basic "+userCredentials)
 
+	// Fail the agent after startup if the id is invalid
+	if err := types.ValidateName(a.config.AgentID); err != nil {
+		return fmt.Errorf("invalid agent id: %v", err)
+	}
+
 	// Start the statsd listener only if the agent configuration has it enabled
 	if !a.config.StatsdServer.Disable {
 		a.StartStatsd()
@@ -433,34 +467,8 @@ func (a *Agent) Run() error {
 		logger.WithError(err).Error("error sending keepalive")
 	}
 
-	go func() {
-		systemInfoTicker := time.NewTicker(time.Duration(DefaultSystemInfoRefreshInterval) * time.Second)
-		for {
-			select {
-			case <-systemInfoTicker.C:
-				if err := a.refreshSystemInfo(); err != nil {
-					logger.WithError(err).Error("failed to refresh system info")
-				}
-			case <-a.stopping:
-				return
-			}
-		}
-	}()
-
-	go func() {
-		keepaliveTicker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
-		for {
-			select {
-			case <-keepaliveTicker.C:
-				if err := a.sendKeepalive(); err != nil {
-					logger.WithError(err).Error("failed sending keepalive")
-				}
-			case <-a.stopping:
-				return
-			}
-
-		}
-	}()
+	go a.refreshSystemInfoPeriodically()
+	go a.sendKeepalivePeriodically()
 
 	return nil
 }
