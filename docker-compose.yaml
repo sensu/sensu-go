@@ -2,7 +2,7 @@ version: '3'
 services:
   backend1:
     image: sensu/sensu:master
-    command: sensu-backend start --listen-client-urls http://0.0.0.0:2379 --name backend1 --initial-cluster backend1=http://backend1:2380,backend2=http://backend2:2380,backend3=http://backend3:2380 --initial-cluster-state new --initial-advertise-peer-urls http://backend1:2380 --state-dir /var/lib/sensu/etcd1 --listen-peer-urls http://0.0.0.0:2380
+    command: sensu-backend start --listen-client-urls http://0.0.0.0:2379 --name backend1 --initial-cluster backend1=http://backend1:2380,backend2=http://backend2:2380,backend3=http://backend3:2380 --initial-cluster-state new --initial-advertise-peer-urls http://backend1:2380 --state-dir /var/lib/sensu/etcd1 --listen-peer-urls http://0.0.0.0:2380 --log-level debug
     hostname: backend1
     restart: always
     ports:
@@ -12,7 +12,7 @@ services:
       - "8081:8081"
   backend2:
     image: sensu/sensu:master
-    command: sensu-backend start --listen-client-urls http://0.0.0.0:2379 --name backend2 --initial-cluster backend1=http://backend1:2380,backend2=http://backend2:2380,backend3=http://backend3:2380 --initial-cluster-state new --initial-advertise-peer-urls http://backend2:2380 --state-dir /var/lib/sensu/etcd2 --listen-peer-urls http://0.0.0.0:2380
+    command: sensu-backend start --listen-client-urls http://0.0.0.0:2379 --name backend2 --initial-cluster backend1=http://backend1:2380,backend2=http://backend2:2380,backend3=http://backend3:2380 --initial-cluster-state new --initial-advertise-peer-urls http://backend2:2380 --state-dir /var/lib/sensu/etcd2 --listen-peer-urls http://0.0.0.0:2380 --log-level debug
     hostname: backend2
     restart: always
     ports:
@@ -22,7 +22,7 @@ services:
       - "18081:8081"
   backend3:
     image: sensu/sensu:master
-    command: sensu-backend start --listen-client-urls http://0.0.0.0:2379 --name backend3 --initial-cluster backend1=http://backend1:2380,backend2=http://backend2:2380,backend3=http://backend3:2380 --initial-cluster-state new --initial-advertise-peer-urls http://backend3:2380 --state-dir /var/lib/sensu/etcd3 --listen-peer-urls http://0.0.0.0:2380
+    command: sensu-backend start --listen-client-urls http://0.0.0.0:2379 --name backend3 --initial-cluster backend1=http://backend1:2380,backend2=http://backend2:2380,backend3=http://backend3:2380 --initial-cluster-state new --initial-advertise-peer-urls http://backend3:2380 --state-dir /var/lib/sensu/etcd3 --listen-peer-urls http://0.0.0.0:2380 --log-level debug
     hostname: backend3
     restart: always
     ports:
@@ -30,18 +30,30 @@ services:
       - "22380:2380"
       - "28080:8080"
       - "28081:8081"
-  sensu-agent1:
+  agent1:
     image: sensu/sensu:master
-    command: sensu-agent start --backend-url ws://backend1:8081 --subscriptions test
+    command: sensu-agent start --backend-url ws://backend1:8081 --subscriptions test --log-level debug
     hostname: agent1
     restart: always
-  sensu-agent2:
+    depends_on:
+      - backend1
+      - backend2
+      - backend3
+  agent2:
     image: sensu/sensu:master
-    command: sensu-agent start --backend-url ws://backend2:8081 --subscriptions test
+    command: sensu-agent start --backend-url ws://backend2:8081 --subscriptions test --log-level debug
     hostname: agent2
     restart: always
-  sensu-agent3:
+    depends_on:
+      - backend1
+      - backend2
+      - backend3
+  agent3:
     image: sensu/sensu:master
-    command: sensu-agent start --backend-url ws://backend3:8081 --subscriptions test
+    command: sensu-agent start --backend-url ws://backend3:8081 --subscriptions test --log-level debug
     hostname: agent3
     restart: always
+    depends_on:
+      - backend1
+      - backend2
+      - backend3
