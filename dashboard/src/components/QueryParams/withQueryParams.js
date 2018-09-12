@@ -3,11 +3,11 @@ import PropTypes from "prop-types";
 import hoistStatics from "hoist-non-react-statics";
 import QueryParams from "./QueryParams";
 
-const withQueryParams = keys => Component => {
+const withQueryParams = ({ keys, defaults = {} }) => Component => {
   const C = props => {
     const { wrappedComponentRef, ...restProps } = props;
     return (
-      <QueryParams keys={keys}>
+      <QueryParams keys={keys} defaults={defaults}>
         {(query, setQuery) => (
           <Component
             {...restProps}
