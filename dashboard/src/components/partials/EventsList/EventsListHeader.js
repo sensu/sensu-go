@@ -185,17 +185,20 @@ class EventsListHeader extends React.PureComponent {
             <Option value="silenced">Silenced</Option>
           </Select>
         </ToolbarMenu.Item>
+
         <ToolbarMenu.Item visible="if-room">
           <Select title="Entity" onChange={this.requeryEntity}>
             {entities.map(name => <Option key={name} value={name} />)}
           </Select>
         </ToolbarMenu.Item>
+
         <ToolbarMenu.Item visible="if-room">
           <Select title="Check" onChange={this.requeryCheck}>
             {checks.map(name => <Option key={name} value={name} />)}
           </Select>
         </ToolbarMenu.Item>
-        <ToolbarMenu.Item visible="if-room">
+
+        <ToolbarMenu.Item visible="always">
           <SubmenuItem
             autoClose
             title="Status"
@@ -211,6 +214,7 @@ class EventsListHeader extends React.PureComponent {
             )}
           />
         </ToolbarMenu.Item>
+
         <ToolbarMenu.Item visible="always">
           <Select title="Sort" onChange={this.updateSort}>
             <Option value="LASTOK">Last OK</Option>
