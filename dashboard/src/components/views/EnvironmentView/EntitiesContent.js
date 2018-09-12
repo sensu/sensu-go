@@ -45,7 +45,7 @@ class EntitiesContent extends React.PureComponent {
 
   renderContent = renderProps => {
     const { queryParams, setQueryParams } = this.props;
-    const { filter, limit, offset } = queryParams;
+    const { filter, limit, offset, order } = queryParams;
     const {
       data: { environment } = {},
       loading,
@@ -76,7 +76,7 @@ class EntitiesContent extends React.PureComponent {
             onChangeQuery={setQueryParams}
             environment={environment}
             refetch={refetch}
-            orderBy={queryParams.order}
+            order={order}
           />
         </AppLayout.MobileFullWidthContent>
       </div>

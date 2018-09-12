@@ -21,7 +21,7 @@ class EntitiesListHeader extends React.PureComponent {
     onClickSilence: PropTypes.func.isRequired,
     rowCount: PropTypes.number.isRequired,
     selectedItems: PropTypes.array.isRequired,
-    orderBy: PropTypes.string.isRequired,
+    order: PropTypes.string.isRequired,
   };
 
   static defaultProps = {
@@ -48,7 +48,7 @@ class EntitiesListHeader extends React.PureComponent {
   };
 
   renderActions = () => {
-    const { environment: env, onChangeQuery, orderBy } = this.props;
+    const { environment: env, onChangeQuery, order} = this.props;
     const subs = env ? env.subscriptions.values : [];
 
     return (
@@ -62,7 +62,7 @@ class EntitiesListHeader extends React.PureComponent {
           <ListSortSelector
             options={[{ label: "Name", value: "ID" }]}
             onChangeQuery={onChangeQuery}
-            value={orderBy}
+            value={order}
           />
         </ToolbarMenu.Item>
       </ToolbarMenu>

@@ -20,7 +20,7 @@ class ChecksListHeader extends React.PureComponent {
     onClickDelete: PropTypes.func.isRequired,
     onClickExecute: PropTypes.func.isRequired,
     onClickSilence: PropTypes.func.isRequired,
-    orderBy: PropTypes.string.isRequired,
+    order: PropTypes.string.isRequired,
     rowCount: PropTypes.number.isRequired,
     selectedItems: PropTypes.array.isRequired,
     toggleSelectedItems: PropTypes.func.isRequired,
@@ -45,7 +45,7 @@ class ChecksListHeader extends React.PureComponent {
   };
 
   renderActions = () => {
-    const { environment, onChangeQuery, orderBy } = this.props;
+    const { environment, onChangeQuery, order } = this.props;
     const subscriptions = environment ? environment.subscriptions.values : [];
 
     return (
@@ -59,7 +59,7 @@ class ChecksListHeader extends React.PureComponent {
           <ListSortSelector
             options={[{ label: "Name", value: "NAME" }]}
             onChangeQuery={onChangeQuery}
-            value={orderBy}
+            value={order}
           />
         </ToolbarMenu.Item>
       </ToolbarMenu>

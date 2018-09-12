@@ -32,7 +32,7 @@ class ChecksList extends React.Component {
     onChangeQuery: PropTypes.func.isRequired,
     limit: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     offset: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    orderBy: PropTypes.string.isRequired,
+    order: PropTypes.string.isRequired,
     refetch: PropTypes.func.isRequired,
   };
 
@@ -178,7 +178,7 @@ class ChecksList extends React.Component {
       loading,
       limit,
       offset,
-      orderBy,
+      order,
       onChangeQuery,
       refetch,
     } = this.props;
@@ -215,7 +215,7 @@ class ChecksList extends React.Component {
                   setSelectedItems([]);
                 }}
                 onClickSilence={() => this.silenceChecks(selectedItems)}
-                orderBy={orderBy}
+                order={order}
                 rowCount={items.length}
                 selectedItems={selectedItems}
                 toggleSelectedItems={toggleSelectedItems}

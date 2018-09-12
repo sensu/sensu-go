@@ -76,7 +76,7 @@ class ChecksContent extends React.Component {
             environment={environment}
             loading={(loading && (!environment || !isPolling)) || aborted}
             refetch={refetch}
-            orderBy={queryParams.order}
+            order={queryParams.order}
           />
         </AppLayout.MobileFullWidthContent>
       </div>
