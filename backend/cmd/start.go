@@ -14,6 +14,7 @@ import (
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/path"
+	stringsutil "github.com/sensu/sensu-go/util/strings"
 	"github.com/sensu/sensu-go/version"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -59,6 +60,35 @@ const (
 	// DefaultEtcdPeerURL is the default URL to listen for Etcd peers (single-node
 	// cluster only)
 	defaultEtcdPeerURL = "http://127.0.0.1:2380"
+
+	// Start command usage template
+	startUsageTemplate = `Usage:{{if .Runnable}}
+  {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
+	{{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
+
+Aliases:
+	{{.NameAndAliases}}{{end}}{{if .HasExample}}
+
+Examples:
+{{.Example}}{{end}}{{if .HasAvailableSubCommands}}
+
+Available Commands:{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
+	{{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+
+General Flags:
+{{ $flags := categoryFlags "" .LocalFlags }}{{ $flags.FlagUsages | trimTrailingWhitespaces}}
+
+Store Flags:
+{{ $storeFlags := categoryFlags "store" .LocalFlags }}{{ $storeFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
+
+Global Flags:
+{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
+
+Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
+	{{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
+
+Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
+`
 )
 
 func init() {
@@ -225,7 +255,7 @@ func newStartCommand() *cobra.Command {
 	// Merge in config flag set so that it appears in command usage
 	cmd.Flags().AddFlagSet(configFlagSet)
 
-	// Flags
+	// Main Flags
 	cmd.Flags().String(flagAgentHost, viper.GetString(flagAgentHost), "agent listener host")
 	cmd.Flags().Int(flagAgentPort, viper.GetInt(flagAgentPort), "agent listener port")
 	cmd.Flags().String(flagAPIHost, viper.GetString(flagAPIHost), "http api listener host")
@@ -241,14 +271,22 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().Bool(flagDebug, false, "enable debugging and profiling features")
 	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
 
-	// Etcd flags
+	// Store flags
 	cmd.Flags().String(flagStoreClientURL, viper.GetString(flagStoreClientURL), "store listen client URL")
+	_ = cmd.Flags().SetAnnotation(flagStoreClientURL, "categories", []string{"store"})
 	cmd.Flags().String(flagStorePeerURL, viper.GetString(flagStorePeerURL), "store listen peer URL")
+	_ = cmd.Flags().SetAnnotation(flagStorePeerURL, "categories", []string{"store"})
 	cmd.Flags().String(flagStoreInitialCluster, viper.GetString(flagStoreInitialCluster), "store initial cluster")
+	_ = cmd.Flags().SetAnnotation(flagStoreInitialCluster, "categories", []string{"store"})
 	cmd.Flags().String(flagStoreInitialAdvertisePeerURL, viper.GetString(flagStoreInitialAdvertisePeerURL), "store initial advertise peer URL")
+	_ = cmd.Flags().SetAnnotation(flagStoreInitialAdvertisePeerURL, "categories", []string{"store"})
 	cmd.Flags().String(flagStoreInitialClusterState, viper.GetString(flagStoreInitialClusterState), "store initial cluster state")
+	_ = cmd.Flags().SetAnnotation(flagStoreInitialClusterState, "categories", []string{"store"})
 	cmd.Flags().String(flagStoreInitialClusterToken, viper.GetString(flagStoreInitialClusterToken), "store initial cluster token")
+	_ = cmd.Flags().SetAnnotation(flagStoreInitialClusterToken, "categories", []string{"store"})
 	cmd.Flags().String(flagStoreNodeName, viper.GetString(flagStoreNodeName), "store cluster member node name")
+	_ = cmd.Flags().SetAnnotation(flagStoreNodeName, "categories", []string{"store"})
+
 	cmd.Flags().Bool(flagNoEmbedEtcd, viper.GetBool(flagNoEmbedEtcd), "don't embed etcd, use external etcd instead")
 
 	// Load the configuration file but only error out if flagConfigFile is used
@@ -256,5 +294,26 @@ func newStartCommand() *cobra.Command {
 		setupErr = err
 	}
 
+	// Use our custom template for the start command
+	cobra.AddTemplateFunc("categoryFlags", categoryFlags)
+	cmd.SetUsageTemplate(startUsageTemplate)
+
 	return cmd
+}
+
+func categoryFlags(category string, flags *pflag.FlagSet) *pflag.FlagSet {
+	flagSet := pflag.NewFlagSet(category, pflag.ContinueOnError)
+
+	flags.VisitAll(func(flag *pflag.Flag) {
+		if categories, ok := flag.Annotations["categories"]; ok {
+			if stringsutil.InArray(category, categories) {
+				flagSet.AddFlag(flag)
+			}
+		} else if category == "" {
+			// If no category was specified, return all flags without a category
+			flagSet.AddFlag(flag)
+		}
+	})
+
+	return flagSet
 }
