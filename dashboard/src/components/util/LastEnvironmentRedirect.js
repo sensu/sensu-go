@@ -1,10 +1,10 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { compose } from "recompose";
 import { Redirect, withRouter } from "react-router-dom";
-import { graphql, Query } from "react-apollo";
 import { redirectKey } from "/constants/queryParams";
 import gql from "graphql-tag";
+
+import Query from "/components/util/Query";
 
 const primaryQuery = gql`
   query LastEnvironmentQuery {
@@ -30,15 +30,12 @@ const fallbackQuery = gql`
 
 class LastEnvironmentRedirect extends React.PureComponent {
   static propTypes = {
-    // from graphql HOC
-    data: PropTypes.object.isRequired,
-
     // from withRouter HOC
     location: PropTypes.object.isRequired,
   };
 
-  renderFallback = ({ data, loading }) => {
-    if (loading) {
+  renderFallback = ({ data, aborted, loading }) => {
+    if (loading || aborted) {
       return null;
     }
 
@@ -55,8 +52,8 @@ class LastEnvironmentRedirect extends React.PureComponent {
     return <Redirect to={`/${firstOrg.name}/${firstEnv.name}`} />;
   };
 
-  render() {
-    const { location, data } = this.props;
+  renderRedirect = ({ data }) => {
+    const { location } = this.props;
 
     // 1. if 'redirect-to' query parameter is present use given path.
     const queryParams = new URLSearchParams(location.search);
@@ -78,8 +75,11 @@ class LastEnvironmentRedirect extends React.PureComponent {
       lastEnvironment.environment,
     ].join("/");
     return <Redirect to={nextPath} />;
+  };
+
+  render() {
+    return <Query query={primaryQuery}>{this.renderRedirect}</Query>;
   }
 }
 
-const enhance = compose(graphql(primaryQuery), withRouter);
-export default enhance(LastEnvironmentRedirect);
+export default withRouter(LastEnvironmentRedirect);
