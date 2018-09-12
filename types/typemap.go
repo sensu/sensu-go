@@ -45,6 +45,8 @@ var typeMap = map[string]interface{}{
 	"handler":                &Handler{},
 	"HandlerSocket":          &HandlerSocket{},
 	"handler_socket":         &HandlerSocket{},
+	"HealthResponse":         &HealthResponse{},
+	"health_response":        &HealthResponse{},
 	"Hook":                   &Hook{},
 	"hook":                   &Hook{},
 	"HookConfig":             &HookConfig{},

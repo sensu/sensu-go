@@ -11,6 +11,7 @@ import (
 	"syscall"
 
 	"github.com/sensu/sensu-go/agent"
+	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/util/url"
@@ -126,7 +127,7 @@ func newStartCommand() *cobra.Command {
 			cfg.DeregistrationHandler = viper.GetString(flagDeregistrationHandler)
 			cfg.Environment = viper.GetString(flagEnvironment)
 			cfg.ExtendedAttributes = []byte(viper.GetString(flagExtendedAttributes))
-			cfg.KeepaliveInterval = viper.GetInt(flagKeepaliveInterval)
+			cfg.KeepaliveInterval = uint32(viper.GetInt(flagKeepaliveInterval))
 			cfg.KeepaliveTimeout = uint32(viper.GetInt(flagKeepaliveTimeout))
 			cfg.Organization = viper.GetString(flagOrganization)
 			cfg.Password = viper.GetString(flagPassword)
@@ -228,7 +229,7 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagDeregistrationHandler, "")
 	viper.SetDefault(flagEnvironment, agent.DefaultEnvironment)
 	viper.SetDefault(flagKeepaliveInterval, agent.DefaultKeepaliveInterval)
-	viper.SetDefault(flagKeepaliveTimeout, agent.DefaultKeepaliveTimeout)
+	viper.SetDefault(flagKeepaliveTimeout, types.DefaultKeepaliveTimeout)
 	viper.SetDefault(flagOrganization, agent.DefaultOrganization)
 	viper.SetDefault(flagPassword, agent.DefaultPassword)
 	viper.SetDefault(flagRedact, dynamic.DefaultRedactFields)

@@ -11,16 +11,15 @@ import (
 func (a *Agent) getAgentEntity() *types.Entity {
 	if a.entity == nil {
 		e := &types.Entity{
-			Class:            types.EntityAgentClass,
-			Deregister:       a.config.Deregister,
-			Environment:      a.config.Environment,
-			ID:               a.config.AgentID,
-			KeepaliveTimeout: a.config.KeepaliveTimeout,
-			LastSeen:         time.Now().Unix(),
-			Organization:     a.config.Organization,
-			Redact:           a.config.Redact,
-			Subscriptions:    a.config.Subscriptions,
-			User:             a.config.User,
+			Class:         types.EntityAgentClass,
+			Deregister:    a.config.Deregister,
+			Environment:   a.config.Environment,
+			ID:            a.config.AgentID,
+			LastSeen:      time.Now().Unix(),
+			Organization:  a.config.Organization,
+			Redact:        a.config.Redact,
+			Subscriptions: a.config.Subscriptions,
+			User:          a.config.User,
 		}
 
 		if a.config.DeregistrationHandler != "" {

@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/agent"
+	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/path"
 )
 
@@ -40,7 +41,7 @@ func main() {
 		cfg.Environment = agent.DefaultEnvironment
 		cfg.ExtendedAttributes = []byte{}
 		cfg.KeepaliveInterval = agent.DefaultKeepaliveInterval
-		cfg.KeepaliveTimeout = agent.DefaultKeepaliveTimeout
+		cfg.KeepaliveTimeout = types.DefaultKeepaliveTimeout
 		cfg.Organization = agent.DefaultOrganization
 		cfg.Password = agent.DefaultPassword
 		cfg.Socket.Host = agent.DefaultAPIHost
