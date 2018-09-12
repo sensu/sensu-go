@@ -1,59 +1,50 @@
 import React from "react";
 import PropTypes from "prop-types";
-import classnames from "classnames";
-import { withStyles } from "@material-ui/core/styles";
-import CollapsingMenu from "/components/partials/CollapsingMenu";
+import Toolbar from "/components/partials/Toolbar";
+import WithWidth, { isWidthUp } from "/components/WithWidth";
 
-const FillSpace = withStyles({
-  root: {
-    flex: "1 1 auto",
-  },
-})(({ classes }) => <div className={classes.root} />);
-
-const styles = theme => ({
-  root: {
-    display: "flex",
-    marginBottom: 16,
-  },
-  search: {
-    width: "100%",
-    [theme.breakpoints.up("sm")]: {
-      width: "50%",
-    },
-  },
-});
+const collapseAtWidth = "xs";
 
 class ListToolbar extends React.PureComponent {
   static propTypes = {
-    classes: PropTypes.object.isRequired,
-    renderSearch: PropTypes.node.isRequired,
-    renderMenuItems: PropTypes.node.isRequired,
+    search: PropTypes.node.isRequired,
+    toolbarItems: PropTypes.func.isRequired,
+    widthProvider: PropTypes.node,
   };
 
   static defaultProps = {
-    renderSearch: null,
+    widthProvider: <WithWidth />,
+  };
+
+  renderSearch = ({ width: targetWidth }) => {
+    const { search } = this.props;
+    const { style: inlineStyleProp } = search.props;
+
+    const width = isWidthUp(targetWidth, collapseAtWidth) ? "100%" : "50%";
+    const style = { width, ...inlineStyleProp };
+    return React.cloneElement(search, { style });
+  };
+
+  renderToolbarItems = ({ width }) => {
+    const collapsed = width === collapseAtWidth;
+    return this.props.toolbarItems({ width, collapsed });
   };
 
   render() {
-    const { classes, renderSearch } = this.props;
-
-    let search;
-    if (renderSearch) {
-      search = React.cloneElement(renderSearch, {
-        className: classnames(classes.search, renderSearch.props.className),
-      });
-    }
+    const { search, toolbarItems, widthProvider, ...props } = this.props;
 
     return (
-      <div className={classes.root}>
-        {search}
-        <FillSpace />
-        <CollapsingMenu breakpoint="sm">
-          {this.props.renderMenuItems}
-        </CollapsingMenu>
-      </div>
+      <widthProvider.type {...widthProvider.props}>
+        {providerProps => (
+          <Toolbar
+            left={this.renderSearch(providerProps)}
+            right={this.renderToolbarItems(providerProps)}
+            {...props}
+          />
+        )}
+      </widthProvider.type>
     );
   }
 }
 
-export default withStyles(styles)(ListToolbar);
+export default ListToolbar;

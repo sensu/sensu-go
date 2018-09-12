@@ -33,6 +33,9 @@ rules:
   # Moving to flowtype
   react/forbid-prop-types: 0
 
+  # Avoid conflicts with Prettier
+  react/jsx-indent: 0
+
   # https://github.com/prettier/prettier#eslint
   prettier/prettier: error
 
