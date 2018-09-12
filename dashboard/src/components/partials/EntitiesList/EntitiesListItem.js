@@ -3,16 +3,14 @@ import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
 import Checkbox from "@material-ui/core/Checkbox";
-import IconButton from "@material-ui/core/IconButton";
-import Menu from "@material-ui/core/Menu";
-import MenuItem from "@material-ui/core/MenuItem";
-import MoreVert from "@material-ui/icons/MoreVert";
-import RootRef from "@material-ui/core/RootRef";
 import TableCell from "@material-ui/core/TableCell";
 
-import MenuController from "/components/controller/MenuController";
-
 import ConfirmDelete from "/components/partials/ConfirmDelete";
+import DeleteMenuItem from "/components/partials/ToolbarMenuItems/Delete";
+import SilenceMenuItem from "/components/partials/ToolbarMenuItems/Silence";
+import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
+import ToolbarMenu from "/components/partials/ToolbarMenu";
+
 import ResourceDetails from "/components/partials/ResourceDetails";
 import TableOverflowCell from "/components/partials/TableOverflowCell";
 import TableSelectableRow from "/components/partials/TableSelectableRow";
@@ -72,51 +70,6 @@ class EntitiesListItem extends React.PureComponent {
     );
   };
 
-  renderMenu = ({ close, anchorEl }) => {
-    const {
-      entity,
-      onClickClearSilence,
-      onClickDelete,
-      onClickSilence,
-    } = this.props;
-
-    return (
-      <Menu open onClose={close} anchorEl={anchorEl}>
-        {entity.isSilenced ? (
-          <MenuItem
-            onClick={ev => {
-              onClickClearSilence(ev);
-              close(ev);
-            }}
-          >
-            Unsilence
-          </MenuItem>
-        ) : (
-          <MenuItem
-            onClick={ev => {
-              onClickSilence(ev);
-              close(ev);
-            }}
-          >
-            Silence
-          </MenuItem>
-        )}
-        <ConfirmDelete key="delete" onSubmit={onClickDelete}>
-          {confirm => (
-            <MenuItem
-              onClick={() => {
-                confirm.open();
-                close();
-              }}
-            >
-              Delete
-            </MenuItem>
-          )}
-        </ConfirmDelete>
-      </Menu>
-    );
-  };
-
   render() {
     const { entity, selected, onChangeSelected } = this.props;
 
@@ -129,6 +82,7 @@ class EntitiesListItem extends React.PureComponent {
             onChange={e => onChangeSelected(e.target.checked)}
           />
         </TableCell>
+
         <TableOverflowCell>
           <ResourceDetails
             icon={
@@ -149,16 +103,40 @@ class EntitiesListItem extends React.PureComponent {
             details={this.renderDescription()}
           />
         </TableOverflowCell>
+
         <TableCell padding="checkbox">
-          <MenuController renderMenu={this.renderMenu}>
-            {({ open, ref }) => (
-              <RootRef rootRef={ref}>
-                <IconButton onClick={open}>
-                  <MoreVert />
-                </IconButton>
-              </RootRef>
-            )}
-          </MenuController>
+          <ToolbarMenu>
+            <ToolbarMenu.Item visible="never">
+              <SilenceMenuItem
+                disabled={entity.isSilenced}
+                onClick={this.props.onClickSilence}
+              />
+            </ToolbarMenu.Item>
+            <ToolbarMenu.Item visible="never">
+              <UnsilenceMenuItem
+                disabled={!entity.isSilenced}
+                onClick={this.props.onClickClearSilence}
+              />
+            </ToolbarMenu.Item>
+            <ToolbarMenu.Item visible="never">
+              {menu => (
+                <ConfirmDelete
+                  onSubmit={() => {
+                    this.props.onClickDelete();
+                    menu.close();
+                  }}
+                >
+                  {dialog => (
+                    <DeleteMenuItem
+                      autoClose={false}
+                      title="Delete…"
+                      onClick={dialog.open}
+                    />
+                  )}
+                </ConfirmDelete>
+              )}
+            </ToolbarMenu.Item>
+          </ToolbarMenu>
         </TableCell>
       </TableSelectableRow>
     );

@@ -25,11 +25,4 @@ export default (client, { id }) =>
       const data = { ...ev, deleted: true };
       cache.writeFragment({ fragment, id, data });
     },
-    optimisticResponse: {
-      deleteSilence: {
-        deletedId: id,
-        __typename: "DeleteRecordPayload",
-      },
-      __typename: "Mutation",
-    },
   });

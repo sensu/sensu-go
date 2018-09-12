@@ -36,7 +36,7 @@ class EventDetailsResolveAction extends React.PureComponent {
   };
 
   render() {
-    const canResolve = this.props.event && this.props.event.check.status === 0;
+    const canResolve = this.props.event && this.props.event.check.status > 0;
     const childProps = {
       canResolve,
       resolve: this.resolveEvent,

@@ -9,7 +9,7 @@ import Container from "/components/partials/EventDetailsContainer";
 
 // duration used when polling is enabled; set fairly high until we understand
 // the impact.
-const pollInterval = 1500; // 1.5s
+const pollInterval = 0; // 1.5s
 
 const query = gql`
   query EventDetailsContentQuery(

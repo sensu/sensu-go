@@ -27,6 +27,7 @@ class EntitiesList extends React.PureComponent {
     client: PropTypes.object.isRequired,
     environment: PropTypes.object,
     loading: PropTypes.bool,
+    orderBy: PropTypes.string.isRequired,
     onChangeQuery: PropTypes.func.isRequired,
     limit: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     offset: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
@@ -159,6 +160,7 @@ class EntitiesList extends React.PureComponent {
       limit,
       offset,
       refetch,
+      orderBy,
     } = this.props;
 
     const items = environment
@@ -189,6 +191,7 @@ class EntitiesList extends React.PureComponent {
                 onClickClearSilences={() => this.clearSilences(selectedItems)}
                 onChangeQuery={onChangeQuery}
                 environment={environment}
+                orderBy={orderBy}
               />
 
               <Table>

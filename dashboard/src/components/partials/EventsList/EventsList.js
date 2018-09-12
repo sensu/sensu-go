@@ -9,8 +9,9 @@ import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
 import TableRow from "@material-ui/core/TableRow";
 
-import resolveEvent from "/mutations/resolveEvent";
 import deleteEvent from "/mutations/deleteEvent";
+import executeCheck from "/mutations/executeCheck";
+import resolveEvent from "/mutations/resolveEvent";
 
 import Loader from "/components/util/Loader";
 import ListController from "/components/controller/ListController";
@@ -79,6 +80,7 @@ class EventsContainer extends React.Component {
             }
 
             check {
+              nodeId
               name
               silences {
                 ...ClearSilencedEntriesDialog_silence
@@ -120,6 +122,17 @@ class EventsContainer extends React.Component {
     events.forEach(event => deleteEvent(client, { id: event.id }));
   };
 
+  executeCheck = events => {
+    const { client } = this.props;
+
+    events.forEach(({ check, entity }) => {
+      executeCheck(client, {
+        id: check.nodeId,
+        subscriptions: [`entity:${entity.name}`],
+      });
+    });
+  };
+
   clearSilences = items => {
     this.setState({
       unsilence: items
@@ -141,33 +154,52 @@ class EventsContainer extends React.Component {
     if (targets.length === 1) {
       this.setState({
         silence: {
-          props: {},
           ...targets[0],
+          props: {
+            begin: null,
+          },
         },
       });
     } else if (targets.length) {
       this.setState({
-        silence: { props: {}, targets },
+        silence: {
+          props: {
+            begin: null,
+          },
+          targets,
+        },
       });
     }
   };
 
-  silenceEntity = entity => {
+  silenceEntity = event => {
     this.setState({
       silence: {
         check: "*",
-        subscription: `entity:${entity.name}`,
-        props: {},
+        subscription: `entity:${event.entity.name}`,
+        props: {
+          begin: null,
+        },
+        ns: {
+          environment: event.namespace.environment,
+          organization: event.namespace.organization,
+        },
       },
     });
   };
 
-  silenceCheck = check => {
+  silenceCheck = event => {
     this.setState({
       silence: {
-        check: check.name,
+        check: event.check.name,
         subscription: "*",
-        props: {},
+        props: {
+          begin: null,
+        },
+        ns: {
+          environment: event.namespace.environment,
+          organization: event.namespace.organization,
+        },
       },
     });
   };
@@ -199,9 +231,11 @@ class EventsContainer extends React.Component {
       onChangeSelected={setSelected}
       onClickClearSilences={() => this.clearSilences([event])}
       onClickSilencePair={() => this.silenceEvents([event])}
-      onClickSilenceEntity={() => this.silenceEntity(event.entity)}
-      onClickSilenceCheck={() => this.silenceCheck(event.check)}
+      onClickSilenceEntity={() => this.silenceEntity(event)}
+      onClickSilenceCheck={() => this.silenceCheck(event)}
       onClickResolve={() => this.resolveEvents([event])}
+      onClickRerun={() => this.executeCheck([event])}
+      onClickDelete={() => this.deleteEvents([event])}
     />
   );
 
@@ -238,16 +272,27 @@ class EventsContainer extends React.Component {
           <Paper>
             <Loader loading={loading}>
               <EventsListHeader
-                selectedItems={selectedItems}
-                rowCount={children.length || 0}
+                environment={environment}
                 onClickSelect={toggleSelectedItems}
                 onClickClearSilences={() => this.clearSilences(selectedItems)}
                 onClickSilence={() => this.silenceEvents(selectedItems)}
-                onClickResolve={() => this.resolveEvents(selectedItems)}
-                onClickDelete={() => this.deleteEvents(selectedItems)}
-                environment={environment}
+                onClickResolve={() => {
+                  this.resolveEvents(selectedItems);
+                  setSelectedItems([]);
+                }}
+                onClickRerun={() => {
+                  this.executeCheck(selectedItems);
+                  setSelectedItems([]);
+                }}
+                onClickDelete={() => {
+                  this.deleteEvents(selectedItems);
+                  setSelectedItems([]);
+                }}
                 onChangeQuery={onChangeQuery}
+                rowCount={children.length || 0}
+                selectedItems={selectedItems}
               />
+
               <Table>
                 <TableBody>{children}</TableBody>
               </Table>

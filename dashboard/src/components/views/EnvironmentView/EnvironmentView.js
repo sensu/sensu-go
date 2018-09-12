@@ -42,15 +42,14 @@ class EnvironmentView extends React.PureComponent {
   render() {
     const { match } = this.props;
 
+    const namespace = {
+      organization: match.params.organization,
+      environment: match.params.environment,
+    };
+
     return (
       <React.Fragment>
-        <Query
-          query={EnvironmentView.query}
-          variables={{
-            organization: match.params.organization,
-            environment: match.params.environment,
-          }}
-        >
+        <Query query={EnvironmentView.query} variables={namespace}>
           {({ data: { viewer, environment } = {}, loading, aborted }) => (
             <Loader loading={loading}>
               <AppLayout
@@ -62,7 +61,10 @@ class EnvironmentView extends React.PureComponent {
                   />
                 }
                 quickNav={
-                  <QuickNav organization={"default"} environment={"default"} />
+                  <QuickNav
+                    organization={namespace.organization}
+                    environment={namespace.environment}
+                  />
                 }
                 content={
                   <Switch>
@@ -111,8 +113,8 @@ class EnvironmentView extends React.PureComponent {
           )}
         </Query>
         <LastEnvironmentUpdater
-          organization={match.params.organization}
-          environment={match.params.environment}
+          organization={namespace.organization}
+          environment={namespace.environment}
         />
       </React.Fragment>
     );

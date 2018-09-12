@@ -8,7 +8,7 @@ const styles = theme => ({
     display: "flex",
     alignItems: "center",
   },
-  bottomMargin: {
+  marginBottom: {
     marginBottom: theme.spacing.unit * 2,
   },
 });
@@ -18,13 +18,13 @@ class Content extends React.PureComponent {
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,
     children: PropTypes.node.isRequired,
-    bottomMargin: PropTypes.bool,
+    marginBottom: PropTypes.bool,
   };
 
   static defaultProps = {
-    bottomMargin: false,
     className: "",
     container: false,
+    marginBottom: false,
   };
 
   render() {
@@ -32,11 +32,11 @@ class Content extends React.PureComponent {
       children,
       classes,
       className: classNameProp,
-      bottomMargin,
+      marginBottom,
     } = this.props;
 
     const className = classnames(classes.root, classNameProp, {
-      [classes.bottomMargin]: bottomMargin,
+      [classes.marginBottom]: marginBottom,
     });
 
     return <div className={className}>{children}</div>;

@@ -2,19 +2,13 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import LiveIcon from "/icons/Live";
 import AppLayout from "/components/AppLayout";
-
-import Query from "/components/util/Query";
-
+import Content from "/components/Content";
 import EventsList from "/components/partials/EventsList";
-import ListToolbar from "/components/partials/ListToolbar";
-
+import ListToolbar from "/components/partials/EventsList/EventsListToolbar";
 import NotFoundView from "/components/views/NotFoundView";
-
-import SearchBox from "/components/SearchBox";
+import Query from "/components/util/Query";
 import { withQueryParams } from "/components/QueryParams";
-import CollapsingMenu from "/components/partials/CollapsingMenu";
 
 // If none given default expression is used.
 const defaultExpression = "HasCheck";
@@ -26,19 +20,23 @@ const pollInterval = 5000; // 5s
 class EventsContent extends React.Component {
   static propTypes = {
     match: PropTypes.object.isRequired,
+
+    // from withQueryParams HOC
     queryParams: PropTypes.shape({
       filter: PropTypes.string,
       order: PropTypes.string,
       offset: PropTypes.string,
       limit: PropTypes.string,
     }).isRequired,
+
+    // from withQueryParams HOC
     setQueryParams: PropTypes.func.isRequired,
   };
 
   static query = gql`
     query EnvironmentViewEventsContentQuery(
       $filter: String = "${defaultExpression}"
-      $order: EventsListOrder = LASTOK
+      $order: EventsListOrder
       $limit: Int,
       $offset: Int,
       $environment: String!
@@ -52,69 +50,70 @@ class EventsContent extends React.Component {
     ${EventsList.fragments.environment}
   `;
 
+  renderContent = renderProps => {
+    const { queryParams, setQueryParams } = this.props;
+    const { filter, limit, offset } = queryParams;
+    const {
+      data: { environment } = {},
+      loading,
+      aborted,
+      isPolling,
+      refetch,
+    } = renderProps;
+
+    if (!environment && !loading && !aborted) {
+      return <NotFoundView />;
+    }
+
+    return (
+      <div>
+        <Content marginBottom>
+          <ListToolbar
+            onChangeQuery={value => setQueryParams({ filter: value })}
+            onClickReset={() =>
+              setQueryParams(q => q.reset(["filter", "order"]))
+            }
+            query={filter}
+          />
+        </Content>
+
+        <AppLayout.MobileFullWidthContent>
+          <EventsList
+            limit={limit}
+            offset={offset}
+            onChangeQuery={setQueryParams}
+            environment={environment}
+            loading={(loading && (!environment || !isPolling)) || aborted}
+            refetch={refetch}
+          />
+        </AppLayout.MobileFullWidthContent>
+      </div>
+    );
+  };
+
   render() {
-    const { queryParams, setQueryParams, match } = this.props;
-    const { filter, order, limit = "25", offset = "0" } = queryParams;
+    const { queryParams, match } = this.props;
+    const variables = { ...match.params, ...queryParams };
 
     return (
       <Query
         query={EventsContent.query}
         fetchPolicy="cache-and-network"
         pollInterval={pollInterval}
-        variables={{ ...match.params, filter, order, limit, offset }}
+        variables={variables}
       >
-        {({
-          data: { environment } = {},
-          loading,
-          aborted,
-          isPolling,
-          startPolling,
-          stopPolling,
-          refetch,
-        }) => {
-          if (!environment && !loading && !aborted) {
-            return <NotFoundView />;
-          }
-
-          return (
-            <div>
-              <ListToolbar
-                renderSearch={
-                  <SearchBox
-                    placeholder="Filter events…"
-                    initialValue={filter}
-                    onSearch={value => setQueryParams({ filter: value })}
-                  />
-                }
-                renderMenuItems={
-                  <CollapsingMenu.Button
-                    title="LIVE"
-                    icon={<LiveIcon active={isPolling} />}
-                    onClick={() =>
-                      isPolling ? stopPolling() : startPolling(pollInterval)
-                    }
-                  />
-                }
-              />
-
-              <AppLayout.MobileFullWidthContent>
-                <EventsList
-                  limit={limit}
-                  offset={offset}
-                  onChangeQuery={setQueryParams}
-                  environment={environment}
-                  loading={(loading && (!environment || !isPolling)) || aborted}
-                  refetch={refetch}
-                />
-              </AppLayout.MobileFullWidthContent>
-            </div>
-          );
-        }}
+        {this.renderContent}
       </Query>
     );
   }
 }
 
-export default withQueryParams(["filter", "order", "offset", "limit"])(
-  EventsContent,
-);
+const enhance = withQueryParams({
+  keys: ["filter", "order", "offset", "limit"],
+  defaults: {
+    limit: "25",
+    offset: "0",
+    order: "LASTOK",
+  },
+});
+export default enhance(EventsContent);

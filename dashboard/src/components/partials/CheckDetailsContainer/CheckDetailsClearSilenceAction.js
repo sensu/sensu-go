@@ -3,11 +3,11 @@ import PropTypes from "prop-types";
 import gql from "graphql-tag";
 import ClearSilencedEntriesDialog from "/components/partials/ClearSilencedEntriesDialog";
 
-class CheckDetailsUnsilenceAction extends React.PureComponent {
+class CheckDetailsClearSilenceAction extends React.PureComponent {
   static propTypes = {
     check: PropTypes.object,
     children: PropTypes.func.isRequired,
-    refetch: PropTypes.func.isRequired,
+    onDone: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
@@ -16,8 +16,9 @@ class CheckDetailsUnsilenceAction extends React.PureComponent {
 
   static fragments = {
     check: gql`
-      fragment CheckDetailsUnsilenceAction_check on CheckConfig {
+      fragment CheckDetailsClearSilenceAction_check on CheckConfig {
         id
+        isSilenced
         silences {
           ...ClearSilencedEntriesDialog_silence
         }
@@ -27,38 +28,29 @@ class CheckDetailsUnsilenceAction extends React.PureComponent {
     `,
   };
 
-  state = {
-    unsilence: null,
-  };
-
-  openDialog = () => {
-    this.setState({
-      unsilence: this.props.check.silences,
-    });
-  };
-
-  closeDialog = () => {
-    this.setState({ unsilence: null });
-  };
+  state = { isOpen: false };
 
   render() {
-    const { children, refetch } = this.props;
-    const { unsilence } = this.state;
+    const { check, children } = this.props;
+    const { isOpen } = this.state;
+
+    const open = () => this.setState({ isOpen: true });
+    const canOpen = !check.isSilenced;
 
     return (
       <React.Fragment>
+        {children({ canOpen, open })}
         <ClearSilencedEntriesDialog
-          silences={unsilence}
-          open={!!unsilence}
+          silences={check.silences}
+          open={isOpen}
           close={() => {
-            this.closeDialog();
-            refetch();
+            this.props.onDone();
+            this.setState({ isOpen: false });
           }}
         />
-        {children(this.openDialog)}
       </React.Fragment>
     );
   }
 }
 
-export default CheckDetailsUnsilenceAction;
+export default CheckDetailsClearSilenceAction;
