@@ -15,7 +15,6 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/path"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
-	"github.com/sensu/sensu-go/version"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -92,24 +91,7 @@ Use "{{.CommandPath}} [command] --help" for more information about a command.{{e
 )
 
 func init() {
-	rootCmd.AddCommand(newVersionCommand())
 	rootCmd.AddCommand(newStartCommand())
-}
-
-func newVersionCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "version",
-		Short: "Show the sensu-backend version information",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("sensu-backend version %s, build %s, built %s\n",
-				version.Semver(),
-				version.BuildSHA,
-				version.BuildDate,
-			)
-		},
-	}
-
-	return cmd
 }
 
 func newStartCommand() *cobra.Command {
