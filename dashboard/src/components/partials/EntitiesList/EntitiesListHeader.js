@@ -48,7 +48,7 @@ class EntitiesListHeader extends React.PureComponent {
   };
 
   renderActions = () => {
-    const { environment: env, onChangeQuery, order} = this.props;
+    const { environment: env, onChangeQuery, order } = this.props;
     const subs = env ? env.subscriptions.values : [];
 
     return (
