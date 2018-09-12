@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import memoize from "memoize-one";
 
 import StatusMenu from "/components/partials/StatusMenu";
 import ListHeader from "/components/partials/ListHeader";
@@ -98,14 +97,6 @@ class EventsListHeader extends React.PureComponent {
   updateSort = newValue => {
     this.props.onChangeQuery({ order: newValue });
   };
-
-  entityNames = memoize(
-    env => (env ? env.entities.nodes.map(node => node.name) : []),
-  );
-
-  checkNames = memoize(
-    env => (env ? env.checks.nodes.map(node => node.name) : []),
-  );
 
   renderBulkActions = () => {
     const { selectedItems } = this.props;

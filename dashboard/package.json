@@ -98,7 +98,6 @@
     "koa-connect": "^2.0.1",
     "koa-webpack": "^3.0.2",
     "lodash": "^4.17.0",
-    "memoize-one": "^4.0.0",
     "modernizr": "^3.6.0",
     "prettier": "^1.12.1",
     "prop-types": "^15.6.0",
