@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"path"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
@@ -46,9 +45,9 @@ func (e EtcdGetter) GetQueue(path ...string) types.Queue {
 
 // Queue is a durable FIFO queue that is backed by etcd.
 // When an item is received by a client, it is deleted from
-// the work lane, and added to the in-flight lane. The item stays in-flight
-// until it is acked by the client, or returned to the work queue in case the
-// client nacks it or times out.
+// the work lane, and added to the in-flight lane. The item stays in the
+// in-flight lane until it is Acked by the client, or returned to the work
+// lane with Nack.
 type Queue struct {
 	kv              clientv3.KV
 	lease           clientv3.Lease
@@ -85,13 +84,14 @@ func New(name string, client *clientv3.Client, backendIDGetter BackendIDGetter) 
 
 // Item is a Queue item.
 type Item struct {
-	key       string
-	value     string
-	revision  int64
-	timestamp int64
-	queue     *Queue
-	once      sync.Once
-	mu        *sync.Mutex
+	key   string
+	value string
+	queue *Queue
+}
+
+// Key returns the key of the Item.
+func (i *Item) Key() string {
+	return i.key
 }
 
 // Value returns the value of the Item.
@@ -100,33 +100,20 @@ func (i *Item) Value() string {
 }
 
 // Ack acknowledges the Item has been received and processed, and deletes it
-// from the in flight queue.
+// from the in flight lane.
 func (i *Item) Ack(ctx context.Context) error {
-	var err error
-	i.once.Do(func() {
-		i.mu.Lock()
-		defer i.mu.Unlock()
-		delCmp := clientv3.Compare(clientv3.ModRevision(i.key), "=", i.revision)
-		delReq := clientv3.OpDelete(i.key)
-		_, err = i.queue.kv.Txn(ctx).If(delCmp).Then(delReq).Commit()
-	})
+	_, err := i.queue.kv.Delete(ctx, i.key)
 	return err
 }
 
 // Nack returns the Item to the work queue and deletes it from the in-flight
-// queue.
+// lane.
 func (i *Item) Nack(ctx context.Context) error {
-	var err error
-	i.once.Do(func() {
-		i.mu.Lock()
-		defer i.mu.Unlock()
-		err = i.queue.swapLane(ctx, i.key, i.revision, i.value, i.queue.workPrefix())
-	})
-	return err
+	return i.queue.swapLane(ctx, i.key, i.value, i.queue.workPrefix())
 }
 
-// swapLane swaps a key/value pair from one place to another
-func (q *Queue) swapLane(ctx context.Context, currentKey string, currentRevision int64, value string, lane string) error {
+// swapLane swaps a key/value pair from one lane to another
+func (q *Queue) swapLane(ctx context.Context, currentKey, value string, lane string) error {
 	for {
 		seq, err := q.timeStamp()
 		if err != nil {
@@ -135,12 +122,11 @@ func (q *Queue) swapLane(ctx context.Context, currentKey string, currentRevision
 		uKey := path.Join(lane, seq)
 
 		putCmp := clientv3.Compare(clientv3.ModRevision(uKey), "=", 0)
-		delCmp := clientv3.Compare(clientv3.ModRevision(currentKey), "=", currentRevision)
 		leaseID := clientv3.LeaseID(q.backendID())
 		putReq := clientv3.OpPut(uKey, value, clientv3.WithLease(leaseID))
 		delReq := clientv3.OpDelete(currentKey)
 
-		response, err := q.kv.Txn(ctx).If(putCmp, delCmp).Then(putReq, delReq).Commit()
+		response, err := q.kv.Txn(ctx).If(putCmp).Then(putReq, delReq).Commit()
 		if response.Succeeded {
 			break
 		}
@@ -215,11 +201,6 @@ func (q *Queue) enqueueOps(backendIDs []string, value string) ([]clientv3.Cmp, [
 // Dequeue gets a value from the queue. It returns an error if the context
 // is cancelled, the deadline exceeded, or if the client encounters an error.
 func (q *Queue) Dequeue(ctx context.Context) (types.QueueItem, error) {
-	err := q.nackExpiredItems(ctx, q.itemTimeout)
-	if err != nil {
-		return nil, err
-	}
-
 	response, err := q.kv.Get(ctx, q.workPrefix(), clientv3.WithFirstKey()...)
 	if err != nil {
 		return nil, err
@@ -269,31 +250,6 @@ func (q *Queue) getItemTimestamp(key []byte) (time.Time, error) {
 	return unixTimestamp, nil
 }
 
-func (q *Queue) nackExpiredItems(ctx context.Context, timeout time.Duration) error {
-	// get all items in the inflight queue
-	inFlightItems, err := q.kv.Get(ctx, q.inFlightPrefix(), clientv3.WithPrefix())
-	if err != nil {
-		return err
-	}
-
-	// get the timestamp from each key
-	for _, item := range inFlightItems.Kvs {
-		itemTimestamp, err := q.getItemTimestamp(item.Key)
-		if err != nil {
-			return err
-		}
-		// If the item has timed out or the client has disconnected, the item is
-		// considered expired and should be moved back to the work queue.
-		if time.Since(itemTimestamp) > timeout || ctx.Err() != nil {
-			err = q.swapLane(ctx, string(item.Key), item.ModRevision, string(item.Value), q.workPrefix())
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
 func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (types.QueueItem, error) {
 	key := string(kv.Key)
 
@@ -317,16 +273,11 @@ func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (types.Queue
 
 	// return the new item
 	if response.Succeeded {
-		putResp := response.Responses[0].GetResponsePut()
-		revision := putResp.GetHeader().GetRevision()
 		value := string(kv.Value)
 		item := &Item{
-			key:       string(uKey),
-			value:     value,
-			revision:  revision,
-			timestamp: time.Now().UnixNano(),
-			queue:     q,
-			mu:        &sync.Mutex{},
+			key:   string(uKey),
+			value: value,
+			queue: q,
 		}
 		return item, nil
 	}
