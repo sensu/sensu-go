@@ -130,7 +130,7 @@ class Loader extends React.PureComponent {
     const { visible, spinnerPosition } = this.state;
 
     const overlay = (
-      <Spring from={{ opacity: 0 }} to={{ opacity: visible ? 1 : 0 }}>
+      <Spring to={{ opacity: visible ? 1 : 0 }} force>
         {styles =>
           styles.opacity > 0.1 && (
             <React.Fragment>
