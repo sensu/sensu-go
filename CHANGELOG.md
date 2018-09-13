@@ -30,6 +30,8 @@ sending of keepalive messages.
 - Etcd client URLs can now be a comma-separated list.
 - Fixed a bug where output metric format could not be unset.
 - Fixed a bug where the agent does not validate the ID at startup.
+- Fixed a bug in `sensuctl cluster health` that resulted in an unmarshal
+error in an unhealthy cluster.
 
 ### Breaking Changes
 - Removed the KeepaliveTimeout attribute from entities.
