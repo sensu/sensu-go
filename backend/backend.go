@@ -125,18 +125,15 @@ func Initialize(config *Config) (*Backend, error) {
 	logger.Debug("Done initializing store")
 
 	logger.Debug("Registering backend...")
-	backendID, err := etcd.BackendID(b.ctx, client)
-	if err != nil {
-		return nil, fmt.Errorf("error creating backend ID: %s", err)
-	}
+	backendID := etcd.NewBackendIDGetter(b.ctx, client)
 	logger.Debug("Done registering backend.")
 
 	// Initialize an etcd getter
-	queueGetter := queue.EtcdGetter{Client: client, BackendID: backendID}
+	queueGetter := queue.EtcdGetter{Client: client, BackendIDGetter: backendID}
 
 	// Initialize the bus
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: ring.EtcdGetter{Client: client, BackendID: fmt.Sprintf("%x", backendID)},
+		RingGetter: ring.EtcdGetter{Client: client, BackendID: fmt.Sprintf("%x", backendID.GetBackendID())},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", bus.Name(), err.Error())

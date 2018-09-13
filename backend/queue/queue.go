@@ -29,15 +29,19 @@ var (
 	backendIDKeyPrefix = store.NewKeyBuilder("backends").Build()
 )
 
+type BackendIDGetter interface {
+	GetBackendID() int64
+}
+
 // EtcdGetter provides access to the etcd client for creating a new queue.
 type EtcdGetter struct {
-	Client    *clientv3.Client
-	BackendID int64
+	Client          *clientv3.Client
+	BackendIDGetter BackendIDGetter
 }
 
 // GetQueue gets a new Queue.
 func (e EtcdGetter) GetQueue(path ...string) types.Queue {
-	return New(queueKeyBuilder.Build(path...), e.Client, e.BackendID)
+	return New(queueKeyBuilder.Build(path...), e.Client, e.BackendIDGetter)
 }
 
 // Queue is a durable FIFO queue that is backed by etcd.
@@ -46,31 +50,35 @@ func (e EtcdGetter) GetQueue(path ...string) types.Queue {
 // until it is acked by the client, or returned to the work queue in case the
 // client nacks it or times out.
 type Queue struct {
-	kv          clientv3.KV
-	lease       clientv3.Lease
-	watcher     clientv3.Watcher
-	itemTimeout time.Duration
-	name        string
-	backendID   int64
+	kv              clientv3.KV
+	lease           clientv3.Lease
+	watcher         clientv3.Watcher
+	itemTimeout     time.Duration
+	name            string
+	backendIDGetter BackendIDGetter
+}
+
+func (q *Queue) backendID() int64 {
+	return q.backendIDGetter.GetBackendID()
 }
 
 func (q *Queue) workPrefix() string {
-	return path.Join(q.name, fmt.Sprintf("%x", q.backendID), workPostfix)
+	return path.Join(q.name, fmt.Sprintf("%x", q.backendID()), workPostfix)
 }
 
 func (q *Queue) inFlightPrefix() string {
-	return path.Join(q.name, fmt.Sprintf("%x", q.backendID), inFlightPostfix)
+	return path.Join(q.name, fmt.Sprintf("%x", q.backendID()), inFlightPostfix)
 }
 
 // New returns an instance of Queue.
-func New(name string, client *clientv3.Client, backendID int64) *Queue {
+func New(name string, client *clientv3.Client, backendIDGetter BackendIDGetter) *Queue {
 	queue := &Queue{
-		name:        name,
-		kv:          client,
-		lease:       client,
-		watcher:     client,
-		itemTimeout: itemTimeout,
-		backendID:   backendID,
+		name:            name,
+		kv:              client,
+		lease:           client,
+		watcher:         client,
+		itemTimeout:     itemTimeout,
+		backendIDGetter: backendIDGetter,
 	}
 	return queue
 }
@@ -84,7 +92,6 @@ type Item struct {
 	queue     *Queue
 	once      sync.Once
 	mu        *sync.Mutex
-	cancel    context.CancelFunc
 }
 
 // Value returns the value of the Item.
@@ -98,11 +105,10 @@ func (i *Item) Ack(ctx context.Context) error {
 	var err error
 	i.once.Do(func() {
 		i.mu.Lock()
+		defer i.mu.Unlock()
 		delCmp := clientv3.Compare(clientv3.ModRevision(i.key), "=", i.revision)
 		delReq := clientv3.OpDelete(i.key)
 		_, err = i.queue.kv.Txn(ctx).If(delCmp).Then(delReq).Commit()
-		i.mu.Unlock()
-		i.cancel()
 	})
 	return err
 }
@@ -113,56 +119,10 @@ func (i *Item) Nack(ctx context.Context) error {
 	var err error
 	i.once.Do(func() {
 		i.mu.Lock()
+		defer i.mu.Unlock()
 		err = i.queue.swapLane(ctx, i.key, i.revision, i.value, i.queue.workPrefix())
-		i.mu.Unlock()
-		i.cancel()
 	})
 	return err
-}
-
-func (i *Item) keepalive(ctx context.Context) {
-	ticker := time.NewTicker(1 * time.Second)
-	// stop the goroutine when the context is canceled (if Ack or Nack is
-	// called)
-	go func() {
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				// create new key with new timestamp
-				seq, err := i.queue.timeStamp()
-				if err != nil {
-					logger.WithError(err).Error("error creating unique name for item keepalive")
-					return
-				}
-				updateKey := path.Join(i.queue.inFlightPrefix(), seq)
-
-				i.mu.Lock()
-				// create new key, delete old key
-				putCmp := clientv3.Compare(clientv3.ModRevision(updateKey), "=", 0)
-				delCmp := clientv3.Compare(clientv3.ModRevision(i.key), "=", i.revision)
-				leaseID := clientv3.LeaseID(i.queue.backendID)
-				putReq := clientv3.OpPut(updateKey, i.value, clientv3.WithLease(leaseID))
-				delReq := clientv3.OpDelete(i.key)
-
-				_, err = i.queue.kv.Txn(ctx).If(putCmp, delCmp).Then(putReq, delReq).Commit()
-
-				if err != nil {
-					// log error
-					if err != context.Canceled {
-						logger.WithError(err).Error("error updating item keepalive timestamp")
-					}
-					i.mu.Unlock()
-					return
-				}
-
-				i.key = updateKey
-				i.mu.Unlock()
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
 }
 
 // swapLane swaps a key/value pair from one place to another
@@ -176,7 +136,7 @@ func (q *Queue) swapLane(ctx context.Context, currentKey string, currentRevision
 
 		putCmp := clientv3.Compare(clientv3.ModRevision(uKey), "=", 0)
 		delCmp := clientv3.Compare(clientv3.ModRevision(currentKey), "=", currentRevision)
-		leaseID := clientv3.LeaseID(q.backendID)
+		leaseID := clientv3.LeaseID(q.backendID())
 		putReq := clientv3.OpPut(uKey, value, clientv3.WithLease(leaseID))
 		delReq := clientv3.OpDelete(currentKey)
 
@@ -346,7 +306,7 @@ func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (types.Queue
 
 	delCmp := clientv3.Compare(clientv3.Version(key), ">", 0)
 	putCmp := clientv3.Compare(clientv3.Version(uKey), "=", 0)
-	leaseID := clientv3.LeaseID(q.backendID)
+	leaseID := clientv3.LeaseID(q.backendID())
 	putReq := clientv3.OpPut(uKey, string(kv.Value), clientv3.WithLease(leaseID))
 	delReq := clientv3.OpDelete(key)
 
@@ -359,7 +319,6 @@ func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (types.Queue
 	if response.Succeeded {
 		putResp := response.Responses[0].GetResponsePut()
 		revision := putResp.GetHeader().GetRevision()
-		context, cancel := context.WithCancel(ctx)
 		value := string(kv.Value)
 		item := &Item{
 			key:       string(uKey),
@@ -368,9 +327,7 @@ func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (types.Queue
 			timestamp: time.Now().UnixNano(),
 			queue:     q,
 			mu:        &sync.Mutex{},
-			cancel:    cancel,
 		}
-		item.keepalive(context)
 		return item, nil
 	}
 	return nil, nil
