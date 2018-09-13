@@ -289,19 +289,19 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
 
 	// Etcd flags
-	cmd.Flags().String(flagEtcdClientURL, viper.GetString(flagEtcdClientURL), "store listen client URL")
+	cmd.Flags().String(flagEtcdClientURL, viper.GetString(flagEtcdClientURL), "list of URLs to listen on for client traffic")
 	_ = cmd.Flags().SetAnnotation(flagEtcdClientURL, "categories", []string{"store"})
-	cmd.Flags().String(flagEtcdPeerURL, viper.GetString(flagEtcdPeerURL), "store listen peer URL")
+	cmd.Flags().String(flagEtcdPeerURL, viper.GetString(flagEtcdPeerURL), "list of URLs to listen on for peer traffic")
 	_ = cmd.Flags().SetAnnotation(flagEtcdPeerURL, "categories", []string{"store"})
-	cmd.Flags().String(flagEtcdInitialCluster, viper.GetString(flagEtcdInitialCluster), "store initial cluster")
+	cmd.Flags().String(flagEtcdInitialCluster, viper.GetString(flagEtcdInitialCluster), "initial cluster configuration for bootstrapping")
 	_ = cmd.Flags().SetAnnotation(flagEtcdInitialCluster, "categories", []string{"store"})
-	cmd.Flags().String(flagEtcdInitialAdvertisePeerURL, viper.GetString(flagEtcdInitialAdvertisePeerURL), "store initial advertise peer URL")
+	cmd.Flags().String(flagEtcdInitialAdvertisePeerURL, viper.GetString(flagEtcdInitialAdvertisePeerURL), "list of this member's peer URLs to advertise to the rest of the cluster")
 	_ = cmd.Flags().SetAnnotation(flagEtcdInitialAdvertisePeerURL, "categories", []string{"store"})
-	cmd.Flags().String(flagEtcdInitialClusterState, viper.GetString(flagEtcdInitialClusterState), "store initial cluster state")
+	cmd.Flags().String(flagEtcdInitialClusterState, viper.GetString(flagEtcdInitialClusterState), "initial cluster state (\"new\" or \"existing\")")
 	_ = cmd.Flags().SetAnnotation(flagEtcdInitialClusterState, "categories", []string{"store"})
-	cmd.Flags().String(flagEtcdInitialClusterToken, viper.GetString(flagEtcdInitialClusterToken), "store initial cluster token")
+	cmd.Flags().String(flagEtcdInitialClusterToken, viper.GetString(flagEtcdInitialClusterToken), "initial cluster token for the etcd cluster during bootstrap")
 	_ = cmd.Flags().SetAnnotation(flagEtcdInitialClusterToken, "categories", []string{"store"})
-	cmd.Flags().String(flagEtcdNodeName, viper.GetString(flagEtcdNodeName), "store cluster member node name")
+	cmd.Flags().String(flagEtcdNodeName, viper.GetString(flagEtcdNodeName), "human-readable name for this member")
 	_ = cmd.Flags().SetAnnotation(flagEtcdNodeName, "categories", []string{"store"})
 
 	// Etcd TLS flags
@@ -309,11 +309,11 @@ func newStartCommand() *cobra.Command {
 	_ = cmd.Flags().SetAnnotation(flagEtcdCertFile, "categories", []string{"store"})
 	cmd.Flags().String(flagEtcdKeyFile, viper.GetString(flagEtcdKeyFile), "path to the client server TLS key file")
 	_ = cmd.Flags().SetAnnotation(flagEtcdKeyFile, "categories", []string{"store"})
-	cmd.Flags().String(flagEtcdClientCertAuth, viper.GetString(flagEtcdClientCertAuth), "enable client cert authentication")
+	cmd.Flags().Bool(flagEtcdClientCertAuth, viper.GetBool(flagEtcdClientCertAuth), "enable client cert authentication")
 	_ = cmd.Flags().SetAnnotation(flagEtcdClientCertAuth, "categories", []string{"store"})
 	cmd.Flags().String(flagEtcdTrustedCAFile, viper.GetString(flagEtcdTrustedCAFile), "path to the client server TLS trusted CA cert file")
 	_ = cmd.Flags().SetAnnotation(flagEtcdTrustedCAFile, "categories", []string{"store"})
-	cmd.Flags().String(flagEtcdAutoTLS, viper.GetString(flagEtcdAutoTLS), "client TLS using generated certificates")
+	cmd.Flags().Bool(flagEtcdAutoTLS, viper.GetBool(flagEtcdAutoTLS), "client TLS using generated certificates")
 	_ = cmd.Flags().SetAnnotation(flagEtcdAutoTLS, "categories", []string{"store"})
 
 	// Mark the old etcd flags as deprecated and maintain backward compability
