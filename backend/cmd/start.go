@@ -66,6 +66,13 @@ const (
 	flagEtcdNodeName                          = "etcd-name"
 >>>>>>> Prefix etcd flags
 
+	// Etcd TLS flag constants
+	flagEtcdCertFile       = "etcd-cert-file"
+	flagEtcdKeyFile        = "etcd-key-file"
+	flagEtcdClientCertAuth = "etcd-client-cert-auth"
+	flagEtcdTrustedCAFile  = "etcd-trusted-ca-file"
+	flagEtcdAutoTLS        = "etcd-auto-tls"
+
 	// Default values
 
 	// defaultEtcdClientURL is the default URL to listen for Etcd clients
@@ -296,6 +303,18 @@ func newStartCommand() *cobra.Command {
 	_ = cmd.Flags().SetAnnotation(flagEtcdInitialClusterToken, "categories", []string{"store"})
 	cmd.Flags().String(flagEtcdNodeName, viper.GetString(flagEtcdNodeName), "store cluster member node name")
 	_ = cmd.Flags().SetAnnotation(flagEtcdNodeName, "categories", []string{"store"})
+
+	// Etcd TLS flags
+	cmd.Flags().String(flagEtcdCertFile, viper.GetString(flagEtcdCertFile), "path to the client server TLS cert file")
+	_ = cmd.Flags().SetAnnotation(flagEtcdCertFile, "categories", []string{"store"})
+	cmd.Flags().String(flagEtcdKeyFile, viper.GetString(flagEtcdKeyFile), "path to the client server TLS key file")
+	_ = cmd.Flags().SetAnnotation(flagEtcdKeyFile, "categories", []string{"store"})
+	cmd.Flags().String(flagEtcdClientCertAuth, viper.GetString(flagEtcdClientCertAuth), "enable client cert authentication")
+	_ = cmd.Flags().SetAnnotation(flagEtcdClientCertAuth, "categories", []string{"store"})
+	cmd.Flags().String(flagEtcdTrustedCAFile, viper.GetString(flagEtcdTrustedCAFile), "path to the client server TLS trusted CA cert file")
+	_ = cmd.Flags().SetAnnotation(flagEtcdTrustedCAFile, "categories", []string{"store"})
+	cmd.Flags().String(flagEtcdAutoTLS, viper.GetString(flagEtcdAutoTLS), "client TLS using generated certificates")
+	_ = cmd.Flags().SetAnnotation(flagEtcdAutoTLS, "categories", []string{"store"})
 
 	// Mark the old etcd flags as deprecated and maintain backward compability
 	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc)
