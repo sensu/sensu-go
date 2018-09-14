@@ -71,12 +71,10 @@ const (
 	flagEtcdKeyFile            = "etcd-key-file"
 	flagEtcdClientCertAuth     = "etcd-client-cert-auth"
 	flagEtcdTrustedCAFile      = "etcd-trusted-ca-file"
-	flagEtcdAutoTLS            = "etcd-auto-tls"
 	flagEtcdPeerCertFile       = "etcd-peer-cert-file"
 	flagEtcdPeerKeyFile        = "etcd-peer-key-file"
 	flagEtcdPeerClientCertAuth = "etcd-peer-client-cert-auth"
 	flagEtcdPeerTrustedCAFile  = "etcd-peer-trusted-ca-file"
-	flagEtcdPeerAutoTLS        = "etcd-peer-auto-tls"
 
 	// Default values
 
@@ -202,14 +200,12 @@ func newStartCommand() *cobra.Command {
 			}
 
 			// Etcd TLS config
-			cfg.EtcdClientAutoTLS = viper.GetBool(flagEtcdAutoTLS)
 			cfg.EtcdClientTLSInfo = etcd.TLSInfo{
 				CertFile:       viper.GetString(flagEtcdCertFile),
 				KeyFile:        viper.GetString(flagEtcdKeyFile),
 				TrustedCAFile:  viper.GetString(flagEtcdTrustedCAFile),
 				ClientCertAuth: viper.GetBool(flagEtcdClientCertAuth),
 			}
-			cfg.EtcdPeerAutoTLS = viper.GetBool(flagEtcdPeerAutoTLS)
 			cfg.EtcdPeerTLSInfo = etcd.TLSInfo{
 				CertFile:       viper.GetString(flagEtcdPeerCertFile),
 				KeyFile:        viper.GetString(flagEtcdPeerKeyFile),
@@ -335,8 +331,6 @@ func newStartCommand() *cobra.Command {
 	_ = cmd.Flags().SetAnnotation(flagEtcdClientCertAuth, "categories", []string{"store"})
 	cmd.Flags().String(flagEtcdTrustedCAFile, viper.GetString(flagEtcdTrustedCAFile), "path to the client server TLS trusted CA cert file")
 	_ = cmd.Flags().SetAnnotation(flagEtcdTrustedCAFile, "categories", []string{"store"})
-	cmd.Flags().Bool(flagEtcdAutoTLS, viper.GetBool(flagEtcdAutoTLS), "client TLS using generated certificates")
-	_ = cmd.Flags().SetAnnotation(flagEtcdAutoTLS, "categories", []string{"store"})
 	cmd.Flags().String(flagEtcdPeerCertFile, viper.GetString(flagEtcdPeerCertFile), "path to the peer server TLS cert file")
 	_ = cmd.Flags().SetAnnotation(flagEtcdPeerCertFile, "categories", []string{"store"})
 	cmd.Flags().String(flagEtcdPeerKeyFile, viper.GetString(flagEtcdPeerKeyFile), "path to the peer server TLS key file")
@@ -345,8 +339,6 @@ func newStartCommand() *cobra.Command {
 	_ = cmd.Flags().SetAnnotation(flagEtcdPeerClientCertAuth, "categories", []string{"store"})
 	cmd.Flags().String(flagEtcdPeerTrustedCAFile, viper.GetString(flagEtcdPeerTrustedCAFile), "path to the peer server TLS trusted CA file")
 	_ = cmd.Flags().SetAnnotation(flagEtcdPeerTrustedCAFile, "categories", []string{"store"})
-	cmd.Flags().Bool(flagEtcdPeerAutoTLS, viper.GetBool(flagEtcdPeerAutoTLS), "peer TLS using self-generated certificates")
-	_ = cmd.Flags().SetAnnotation(flagEtcdPeerAutoTLS, "categories", []string{"store"})
 
 	// Mark the old etcd flags as deprecated and maintain backward compability
 	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc)

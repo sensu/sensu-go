@@ -42,28 +42,16 @@ type Backend struct {
 	cancel context.CancelFunc
 }
 
-func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
-	// Intialize the TLS configuration
-	var (
-		tlsConfig *tls.Config
-		err       error
-	)
-	if config.TLS != nil {
-		tlsConfig, err = config.TLS.ToTLSConfig()
-		if err != nil {
-			return nil, err
-		}
-	}
+// Initialize instantiates a Backend struct with the provided config, by
+// configuring etcd and establishing a list of daemons, which constitute our
+// backend. The daemons will later be started according to their position in the
+// b.Daemons list, and stopped in reverse order
+func Initialize(config *Config) (*Backend, error) {
+	// Initialize a Backend struct
+	b := &Backend{}
 
-	if config.NoEmbedEtcd {
-		// Don't start up an embedded etcd, return a client that connects to an
-		// external etcd instead.
-		return clientv3.New(clientv3.Config{
-			Endpoints:   strings.Split(config.EtcdListenClientURL, ","),
-			DialTimeout: 5 * time.Second,
-			TLS:         tlsConfig,
-		})
-	}
+	b.done = make(chan struct{})
+	b.shutdownChan = make(chan struct{})
 
 	// Initialize and start etcd, because we'll need to provide an etcd client to
 	// the Wizard bus, which requires etcd to be started.
@@ -77,21 +65,8 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 	cfg.Name = config.EtcdName
 
 	// Etcd TLS config
-	cfg.ClientAutoTLS = config.EtcdClientAutoTLS
 	cfg.ClientTLSInfo = config.EtcdClientTLSInfo
-	cfg.PeerAutoTLS = config.EtcdPeerAutoTLS
 	cfg.PeerTLSInfo = config.EtcdPeerTLSInfo
-
-	if config.TLS != nil {
-		cfg.TLSConfig = &etcd.TLSConfig{
-			Info: etcd.TLSInfo{
-				CertFile:      config.TLS.CertFile,
-				KeyFile:       config.TLS.KeyFile,
-				TrustedCAFile: config.TLS.TrustedCAFile,
-			},
-			TLS: tlsConfig,
-		}
-	}
 
 	// Start etcd
 	e, err := etcd.NewEtcd(cfg)

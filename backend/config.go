@@ -47,9 +47,7 @@ type Config struct {
 	NoEmbedEtcd                 bool
 
 	// Etcd TLS configuration
-	EtcdClientAutoTLS bool
 	EtcdClientTLSInfo etcd.TLSInfo
-	EtcdPeerAutoTLS   bool
 	EtcdPeerTLSInfo   etcd.TLSInfo
 
 	TLS *types.TLSOptions

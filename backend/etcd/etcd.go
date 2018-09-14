@@ -59,9 +59,7 @@ type Config struct {
 	InitialClusterToken     string
 	InitialAdvertisePeerURL string
 
-	ClientAutoTLS bool
 	ClientTLSInfo TLSInfo
-	PeerAutoTLS   bool
 	PeerTLSInfo   TLSInfo
 }
 
@@ -178,9 +176,7 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	cfg.QuotaBackendBytes = int64(4 * 1024 * 1024 * 1024)
 
 	// Etcd TLS config
-	cfg.ClientAutoTLS = config.ClientAutoTLS
 	cfg.ClientTLSInfo = (transport.TLSInfo)(config.ClientTLSInfo)
-	cfg.PeerAutoTLS = config.PeerAutoTLS
 	cfg.PeerTLSInfo = (transport.TLSInfo)(config.PeerTLSInfo)
 
 	capnslog.SetFormatter(NewLogrusFormatter())
@@ -228,12 +224,6 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 		TrustedCAFile: e.cfg.ClientTLSInfo.TrustedCAFile,
 	}
 
-	// Trust insecure certificates if etcd was configured to use self-signed
-	// certificates
-	if e.cfg.ClientAutoTLS {
-		tlsOptions.InsecureSkipVerify = true
-	}
-
 	// Translate our TLS options to a *tls.Config
 	tlsConfig, err := tlsOptions.ToTLSConfig()
 	if err != nil {
@@ -250,6 +240,12 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 		DialTimeout: 5 * time.Second,
 		TLS:         tlsConfig,
 	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return cli, nil
 }
 
 // Healthy returns Etcd status information.
