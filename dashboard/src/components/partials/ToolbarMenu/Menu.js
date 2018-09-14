@@ -1,12 +1,21 @@
 import React from "react";
-import ReactDOM from "react-dom";
 import PropTypes from "prop-types";
 import EventListener from "react-event-listener";
+import ResizeObserver from "react-resize-observer";
+import debounce from "debounce";
+import { shallowEqual } from "/utils/array";
 
-import MenuItems from "./MenuItems";
-import MenuItem from "./MenuItem";
+import ButtonSet from "/components/ButtonSet";
+import MoreMenu from "/components/partials/MoreMenu";
+
+import MenuItem from "./Item";
+import Partitioner from "./Partitioner";
 
 const Context = React.createContext();
+
+// Resize events are handled syncronously and can cause significant thrashing
+// unless debounced.
+const windowResizeInterval = 200;
 
 class ToolbarMenu extends React.PureComponent {
   static propTypes = {
@@ -14,167 +23,165 @@ class ToolbarMenu extends React.PureComponent {
       PropTypes.arrayOf(PropTypes.node),
       PropTypes.node,
     ]).isRequired,
+    fillWidth: PropTypes.bool,
+    width: PropTypes.number,
+  };
+
+  static defaultProps = {
+    fillWidth: false,
+    width: null,
   };
 
   static Item = MenuItem;
 
   state = {
-    toolbarWidth: null,
-    buttonWidths: null,
+    ids: [],
+    buttonsWidth: null,
+    width: 0,
   };
 
-  static getDerivedStateFromProps(_, state) {
-    return { ...state, buttonWidths: null };
-  }
-
-  componentDidMount() {
-    this.updateWidths();
-  }
-
-  componentDidUpdate() {
-    this.updateWidths();
-  }
-
-  updateWidths = () => {
-    if (this.state.buttonWidths !== null) {
-      return;
+  // If the menu items change poison the buttons container's width, to ensure
+  // that we are displaying as many buttons as possible.
+  static getDerivedStateFromProps(props, state) {
+    const ids = React.Children.map(props.children, child => child.props.id);
+    if (!shallowEqual(ids, state.ids)) {
+      return { ids, buttonsWidth: null };
     }
+    return null;
+  }
 
-    // eslint-disable-next-line react/no-find-dom-node
-    const el = ReactDOM.findDOMNode(this.barRef.current);
-    const toolbarWidth = el.getBoundingClientRect().width;
-
-    const children = React.Children.map(this.props.children, child => child);
-    const widths = [];
-
-    for (let [i, j] = [0, 0]; i < children.length; i += 1) {
-      const child = children[i];
-      if (child.props.visible === "never") {
-        continue; // eslint-disable-line no-continue
+  handleResize = rect => {
+    this.setState(state => {
+      if (state.width === rect.width) {
+        return null;
       }
 
-      const childEl = el.children.item(j);
-      j += 1;
-
-      const rect = childEl.getBoundingClientRect();
-      const styles = window.getComputedStyle(childEl);
-
-      const marginLeft = parseFloat(styles.marginLeft, 10);
-      const marginRight = parseFloat(styles.marginRight, 10);
-
-      widths[i] = rect.width + marginLeft + marginRight;
-    }
-
-    if (widths.length === 0) {
-      return;
-    }
-
-    // eslint-disable-next-line react/no-did-update-set-state
-    this.setState({ buttonWidths: widths, toolbarWidth });
+      return { width: rect.width };
+    });
   };
 
-  barRef = React.createRef();
+  handleButtonsResize = rect => {
+    this.setState(state => {
+      if (state.buttonsWidth === rect.width) {
+        return null;
+      }
 
-  handleResize = () => {
-    this.setState({ buttonWidths: null, toolbarWidth: null });
+      return { buttonsWidth: rect.width };
+    });
+  };
+
+  handleWindowResize = debounce(ev => {
+    const newWidth = ev.currentTarget.innerWidth;
+    const oldWidth = this.windowWidth || 0;
+
+    // If the window grew in size and the toolbar menu isn't configured to fill
+    // the entire space we try rendering all the items again.
+    if (!this.props.width && newWidth > oldWidth) {
+      this.setState({ buttonsWidth: null }); // synchronous
+    }
+
+    this.windowWidth = newWidth;
+  }, windowResizeInterval);
+
+  buttonsWidth = () => {
+    const { width } = this.props;
+    const { buttonsWidth, menuWidth } = this.state;
+
+    return buttonsWidth || width - menuWidth;
   };
 
   renderItems = items => {
-    const childProps = {
+    const ctx = {
       close: () => null,
       collapsed: false,
     };
 
-    return React.Children.map(items, child => {
-      let children = child.props.children;
-      if (typeof children === "function") {
-        children = children(childProps);
-      }
-
-      return (
-        <Context.Provider value={childProps}>
-          {React.cloneElement(child, { children })}
-        </Context.Provider>
-      );
-    });
+    return React.Children.map(items, child => (
+      <Context.Provider value={ctx}>{child}</Context.Provider>
+    ));
   };
 
   renderOverflow = items => {
-    if (items.length === 0 && this.state.buttonWidths !== null) {
+    if (items.length === 0) {
       return null;
     }
 
     return renderProps =>
-      React.Children.map(items, child => {
-        const childProps = {
-          collapsed: true,
-          ...renderProps,
-        };
-
-        let children = child.props.children;
-        if (typeof children === "function") {
-          children = children(childProps);
-        }
-
-        return (
-          <Context.Provider value={childProps}>
-            {React.cloneElement(child, { children })}
-          </Context.Provider>
-        );
-      });
+      React.Children.map(items, child => (
+        <Context.Provider value={{ collapsed: true, ...renderProps }}>
+          {child}
+        </Context.Provider>
+      ));
   };
 
-  render() {
-    const { children: childrenProp } = this.props;
-    const { toolbarWidth, buttonWidths: buttonWidthsState } = this.state;
+  renderButtonSet = items => {
+    const ctx = { collapsed: false, close: () => null };
+    const buttons = (
+      <ButtonSet>
+        {React.Children.map(items, child => (
+          <Context.Provider value={ctx}>{child}</Context.Provider>
+        ))}
+      </ButtonSet>
+    );
 
-    const buttonWidths = buttonWidthsState || [];
-    const children = React.Children.map(childrenProp, child => child);
+    if (this.props.width === null) {
+      return (
+        <div style={{ position: "relative" }}>
+          <ResizeObserver onResize={this.handleButtonsResize} />
+          {buttons}
+        </div>
+      );
+    }
 
-    let remainingWidth = children.reduce((acc, child, i) => {
-      if (child.props.visible === "always") {
-        return acc - buttonWidths[i];
-      }
-      return acc;
-    }, toolbarWidth);
+    return buttons;
+  };
 
-    let visible = [];
-    let collapsed = [];
-
-    for (let i = 0; i < children.length; i += 1) {
-      const item = children[i];
-      const itemWidth = buttonWidths[i];
-      const visibility = item.props.visible;
-
-      if (item.type !== MenuItem) {
-        throw new Error(
-          "A partitioned toolbar's children must be of type ToolbarMenu.Item",
-        );
-      }
-
-      if (visibility === "never") {
-        collapsed = [...collapsed, item];
-      } else if (buttonWidthsState === null || visibility === "always") {
-        visible = [...visible, item];
-      } else if (remainingWidth >= itemWidth) {
-        remainingWidth -= itemWidth;
-        visible = [...visible, item];
-      } else {
-        collapsed = [...collapsed, item];
-      }
+  renderOverflow = items => {
+    if (items.length === 0) {
+      return null;
     }
 
     return (
-      <React.Fragment>
-        <EventListener target="window" onResize={this.handleResize} />
-
-        <MenuItems
-          items={this.renderItems(visible)}
-          itemsRef={this.barRef}
-          overflow={this.renderOverflow(collapsed)}
-        />
-      </React.Fragment>
+      <MoreMenu
+        renderMenu={({ close }) =>
+          React.Children.map(items, child => (
+            <Context.Provider value={{ collapsed: true, close }}>
+              {child}
+            </Context.Provider>
+          ))
+        }
+      />
     );
+  };
+
+  renderItems = partition => (
+    <React.Fragment>
+      {this.renderButtonSet(partition.visible)}
+      {this.renderOverflow(partition.collapsed)}
+    </React.Fragment>
+  );
+
+  render() {
+    const items = (
+      <Partitioner items={this.props.children} width={this.buttonsWidth()}>
+        {this.renderItems}
+      </Partitioner>
+    );
+
+    if (!this.props.width) {
+      return (
+        <React.Fragment>
+          <EventListener target="window" onResize={this.handleWindowResize} />
+          {items}
+        </React.Fragment>
+      );
+    }
+
+    if (this.props.fillWidth) {
+      // TODO
+    }
+
+    return items;
   }
 }
 

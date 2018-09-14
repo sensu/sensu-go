@@ -50,12 +50,15 @@ class CheckDetailsToolbar extends React.Component {
       <Toolbar
         right={
           <ToolbarMenu>
-            <ToolbarMenu.Item visible="always">
+            <ToolbarMenu.Item id="execute " visible="always">
               <ExecuteAction check={check}>
                 {handler => <QueueMenuItem onClick={handler} />}
               </ExecuteAction>
             </ToolbarMenu.Item>
-            <ToolbarMenu.Item visible={check.isSilenced ? "never" : "if-room"}>
+            <ToolbarMenu.Item
+              id="silence"
+              visible={check.isSilenced ? "never" : "if-room"}
+            >
               <SilenceAction check={check} onDone={refetch}>
                 {dialog => (
                   <SilenceMenuItem
@@ -65,7 +68,10 @@ class CheckDetailsToolbar extends React.Component {
                 )}
               </SilenceAction>
             </ToolbarMenu.Item>
-            <ToolbarMenu.Item visible={check.isSilenced ? "if-room" : "never"}>
+            <ToolbarMenu.Item
+              id="unsilence"
+              visible={check.isSilenced ? "if-room" : "never"}
+            >
               <ClearSilenceAction check={check} onDone={refetch}>
                 {dialog => (
                   <UnsilenceMenuItem
@@ -75,7 +81,7 @@ class CheckDetailsToolbar extends React.Component {
                 )}
               </ClearSilenceAction>
             </ToolbarMenu.Item>
-            <ToolbarMenu.Item visible="never">
+            <ToolbarMenu.Item id="delete" visible="never">
               <DeleteAction check={check}>
                 {handler => <DeleteMenuItem onClick={handler} />}
               </DeleteAction>

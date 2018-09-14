@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
+import equals from "lodash/isEqual";
 
 import Checkbox from "@material-ui/core/Checkbox";
 import TableCell from "@material-ui/core/TableCell";
@@ -22,7 +23,7 @@ import EventStatusDescriptor from "/components/partials/EventStatusDescriptor";
 import NamespaceLink from "/components/util/NamespaceLink";
 import CheckStatusIcon from "/components/CheckStatusIcon";
 
-class EventListItem extends React.PureComponent {
+class EventListItem extends React.Component {
   static propTypes = {
     selected: PropTypes.bool.isRequired,
     onChangeSelected: PropTypes.func.isRequired,
@@ -33,28 +34,17 @@ class EventListItem extends React.PureComponent {
     onClickSilenceCheck: PropTypes.func.isRequired,
     onClickResolve: PropTypes.func.isRequired,
     onClickRerun: PropTypes.func.isRequired,
-    event: PropTypes.shape({
-      entity: PropTypes.shape({
-        name: PropTypes.string.isRequired,
-      }).isRequired,
-      check: PropTypes.shape({
-        name: PropTypes.string.isRequired,
-      }).isRequired,
-      timestamp: PropTypes.string.isRequired,
-    }).isRequired,
+    event: PropTypes.object.isRequired,
   };
 
   static fragments = {
     event: gql`
       fragment EventsListItem_event on Event {
-        id
         isSilenced
         isNewIncident
         timestamp
-        deleted @client
         check {
           name
-          isSilenced
           status
           ...EventStatusDescriptor_check
         }
@@ -72,6 +62,13 @@ class EventListItem extends React.PureComponent {
       ${EventStatusDescriptor.fragments.event}
     `,
   };
+
+  shouldComponentUpdate(props) {
+    return (
+      this.props.selected !== props.selected ||
+      !equals(this.props.event, props.event)
+    );
+  }
 
   handleClickCheckbox = () => {
     this.props.onChangeSelected(!this.props.selected);
@@ -122,19 +119,19 @@ class EventListItem extends React.PureComponent {
             }
           />
         </TableOverflowCell>
-
+        {/*
         <TableCell padding="checkbox">
           <ToolbarMenu>
-            <ToolbarMenu.Item visible="never">
+            <ToolbarMenu.Item id="resolve" visible="never">
               <ResolveMenuItem onClick={this.props.onClickResolve} />
             </ToolbarMenu.Item>
-            <ToolbarMenu.Item visible="never">
+            <ToolbarMenu.Item id="re-run" visible="never">
               <QueueMenuItem
                 title="Re-run Check"
                 onClick={this.props.onClickRerun}
               />
             </ToolbarMenu.Item>
-            <ToolbarMenu.Item visible="never">
+            <ToolbarMenu.Item id="re-run" visible="never">
               <Select
                 disabled={event.isSilenced}
                 icon={<SilenceIcon />}
@@ -154,13 +151,13 @@ class EventListItem extends React.PureComponent {
                 <Option value="both">Both</Option>
               </Select>
             </ToolbarMenu.Item>
-            <ToolbarMenu.Item visible="never">
+            <ToolbarMenu.Item id="re-run" visible="never">
               <UnsilenceMenuItem
                 disabled={!event.isSilenced}
                 onClick={this.props.onClickClearSilences}
               />
             </ToolbarMenu.Item>
-            <ToolbarMenu.Item visible="never">
+            <ToolbarMenu.Item id="re-run" visible="never">
               {menu => (
                 <ConfirmDelete
                   onSubmit={() => {
@@ -180,6 +177,7 @@ class EventListItem extends React.PureComponent {
             </ToolbarMenu.Item>
           </ToolbarMenu>
         </TableCell>
+        */}
       </TableSelectableRow>
     );
   }

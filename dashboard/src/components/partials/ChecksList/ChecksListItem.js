@@ -105,22 +105,22 @@ class CheckListItem extends React.Component {
 
         <TableCell padding="checkbox">
           <ToolbarMenu>
-            <ToolbarMenu.Item visible="never">
+            <ToolbarMenu.Item id="queue" visible="never">
               <QueueMenuItem onClick={this.props.onClickExecute} />
             </ToolbarMenu.Item>
-            <ToolbarMenu.Item visible="never">
+            <ToolbarMenu.Item id="silence" visible="never">
               <SilenceMenuItem
                 disabled={!!check.isSilenced}
                 onClick={this.props.onClickSilence}
               />
             </ToolbarMenu.Item>
-            <ToolbarMenu.Item visible="never">
+            <ToolbarMenu.Item id="unsilence" visible="never">
               <UnsilenceMenuItem
                 disabled={!check.isSilenced}
                 onClick={this.props.onClickClearSilences}
               />
             </ToolbarMenu.Item>
-            <ToolbarMenu.Item visible="never">
+            <ToolbarMenu.Item id="delete" visible="never">
               <ConfirmDelete onSubmit={this.props.onClickDelete}>
                 {dialog => <DeleteMenuItem onClick={dialog.open} />}
               </ConfirmDelete>

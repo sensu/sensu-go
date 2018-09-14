@@ -50,12 +50,12 @@ class ChecksListHeader extends React.PureComponent {
 
     return (
       <ToolbarMenu>
-        <ToolbarMenu.Item visible="if-room">
+        <ToolbarMenu.Item id="filter-by-subscription" visible="if-room">
           <Select title="Subscription" onChange={this.updateFilter}>
             {subscriptions.map(val => <Option key={val} value={val} />)}
           </Select>
         </ToolbarMenu.Item>
-        <ToolbarMenu.Item visible="if-room">
+        <ToolbarMenu.Item id="sort" visible="if-room">
           <ListSortSelector
             options={[{ label: "Name", value: "NAME" }]}
             onChangeQuery={onChangeQuery}
@@ -76,25 +76,31 @@ class ChecksListHeader extends React.PureComponent {
 
     return (
       <ToolbarMenu>
-        <ToolbarMenu.Item visible="always">
+        <ToolbarMenu.Item id="queue" visible="always">
           <QueueMenuItem
             onClick={this.props.onClickExecute}
             description="Queue an adhoc execution of the selected checks."
           />
         </ToolbarMenu.Item>
-        <ToolbarMenu.Item visible={allSelectedSilenced ? "never" : "if-room"}>
+        <ToolbarMenu.Item
+          id="silence"
+          visible={allSelectedSilenced ? "never" : "if-room"}
+        >
           <SilenceMenuItem
             disabled={allSelectedSilenced}
             onClick={this.props.onClickSilence}
           />
         </ToolbarMenu.Item>
-        <ToolbarMenu.Item visible={allSelectedUnsilenced ? "never" : "if-room"}>
+        <ToolbarMenu.Item
+          id="unsilence"
+          visible={allSelectedUnsilenced ? "never" : "if-room"}
+        >
           <UnsilenceMenuItem
             disabled={allSelectedUnsilenced}
             onClick={this.props.onClickClearSilences}
           />
         </ToolbarMenu.Item>
-        <ToolbarMenu.Item visible="never">
+        <ToolbarMenu.Item id="delete" visible="never">
           {menu => (
             <ConfirmDelete
               identifier={

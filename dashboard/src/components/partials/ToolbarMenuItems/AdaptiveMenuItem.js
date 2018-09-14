@@ -9,6 +9,7 @@ class MenuItem extends React.Component {
 
   static propTypes = {
     collapsed: PropTypes.bool,
+    color: PropTypes.string,
     description: PropTypes.node,
     icon: PropTypes.node,
     onClick: PropTypes.func,
@@ -18,6 +19,7 @@ class MenuItem extends React.Component {
 
   static defaultProps = {
     collapsed: false,
+    color: "inherit",
     description: null,
     icon: null,
     onClick: () => null,
@@ -25,9 +27,21 @@ class MenuItem extends React.Component {
     titleCondensed: null,
   };
 
+  state = {
+    title: null,
+  };
+
+  componentWillUnmount() {
+    if (this.interval) {
+      clearInterval(this.interval);
+      this.interval = null;
+    }
+  }
+
   render() {
     const {
       collapsed,
+      color,
       description,
       icon,
       onClick,
@@ -51,8 +65,9 @@ class MenuItem extends React.Component {
       <Button
         description={description}
         icon={icon}
-        label={titleCondensed || title}
+        label={this.state.title || titleCondensed || title}
         onClick={onClick}
+        color={color}
         {...props}
       />
     );

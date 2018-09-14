@@ -37,15 +37,15 @@ class EventDetailsToolbar extends React.Component {
     return (
       <Toolbar
         right={
-          <ToolbarMenu>
-            <ToolbarMenu.Item visible="always">
+          <ToolbarMenu fillWidth>
+            <ToolbarMenu.Item id="resolve" visible="always">
               <ResolveAction event={event}>
                 {({ resolve, canResolve }) => (
                   <ResolveMenuItem disabled={!canResolve} onClick={resolve} />
                 )}
               </ResolveAction>
             </ToolbarMenu.Item>
-            <ToolbarMenu.Item visible="if-room">
+            <ToolbarMenu.Item id="re-run" visible="if-room">
               <ReRunAction event={event}>
                 {run => (
                   <QueueMenuItem
@@ -56,7 +56,7 @@ class EventDetailsToolbar extends React.Component {
                 )}
               </ReRunAction>
             </ToolbarMenu.Item>
-            <ToolbarMenu.Item visible="never">
+            <ToolbarMenu.Item id="delete" visible="never">
               <DeleteAction event={event}>
                 {handler => <DeleteMenuItem onClick={handler} />}
               </DeleteAction>

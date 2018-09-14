@@ -106,19 +106,19 @@ class EntitiesListItem extends React.PureComponent {
 
         <TableCell padding="checkbox">
           <ToolbarMenu>
-            <ToolbarMenu.Item visible="never">
+            <ToolbarMenu.Item id="silence" visible="never">
               <SilenceMenuItem
                 disabled={entity.isSilenced}
                 onClick={this.props.onClickSilence}
               />
             </ToolbarMenu.Item>
-            <ToolbarMenu.Item visible="never">
+            <ToolbarMenu.Item id="unsilence" visible="never">
               <UnsilenceMenuItem
                 disabled={!entity.isSilenced}
                 onClick={this.props.onClickClearSilence}
               />
             </ToolbarMenu.Item>
-            <ToolbarMenu.Item visible="never">
+            <ToolbarMenu.Item id="delete" visible="never">
               {menu => (
                 <ConfirmDelete
                   onSubmit={() => {

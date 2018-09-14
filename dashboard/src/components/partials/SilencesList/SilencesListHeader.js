@@ -27,7 +27,7 @@ class SilencesListHeader extends React.PureComponent {
 
     return (
       <ToolbarMenu>
-        <ToolbarMenu.Item visible="always">
+        <ToolbarMenu.Item id="sort" visible="always">
           <ListSortSelector
             onChangeQuery={onChangeQuery}
             options={[
@@ -46,7 +46,7 @@ class SilencesListHeader extends React.PureComponent {
 
     return (
       <ToolbarMenu>
-        <ToolbarMenu.Item visible="always">
+        <ToolbarMenu.Item id="delete" visible="always">
           <ConfirmDelete onSubmit={onClickDelete}>
             {confirm => <DeleteMenuItem onClick={confirm.open} />}
           </ConfirmDelete>

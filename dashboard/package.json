@@ -13,7 +13,7 @@
   },
   "scripts": {
     "prettier": "npx prettier --write '**/*.js'",
-    "start": "node scripts serve",
+    "start": "NODE_OPTIONS=--max_old_space_size=8192 node scripts serve",
     "build": "node scripts build",
     "analyze": "npx webpack-bundle-analyzer stats.json -s gzip",
     "lint": "npx eslint .",
@@ -59,6 +59,7 @@
     "connect-history-api-fallback": "^1.5.0",
     "core-js": "^2.5.6",
     "cronstrue": "^1.31.0",
+    "debounce": "^1.2.0",
     "deepmerge": "^2.0.1",
     "enzyme": "^3.3.0",
     "error-stack-parser": "^2.0.1",

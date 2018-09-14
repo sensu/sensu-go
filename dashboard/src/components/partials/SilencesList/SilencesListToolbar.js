@@ -29,19 +29,24 @@ class SilencesListToolbar extends React.Component {
             onSearch={this.props.onChangeQuery}
           />
         }
-        toolbarItems={({ collapsed }) => (
-          <ToolbarMenu>
-            <ToolbarMenu.Item visible={collapsed ? "never" : "always"}>
-              <NewMenuItem
-                title="New Silence…"
-                onClick={this.props.onClickCreate}
-              />
-            </ToolbarMenu.Item>
-            <ToolbarMenu.Item visible={collapsed ? "never" : "if-room"}>
-              <ResetMenuItem onClick={this.props.onClickReset} />
-            </ToolbarMenu.Item>
-          </ToolbarMenu>
-        )}
+        toolbarItems={({ collapsed }) => {
+          const unlessCollapsed = visiblity =>
+            collapsed ? "never" : visiblity;
+
+          return (
+            <ToolbarMenu>
+              <ToolbarMenu.Item id="new" visible={unlessCollapsed("always")}>
+                <NewMenuItem
+                  title="New Silence…"
+                  onClick={this.props.onClickCreate}
+                />
+              </ToolbarMenu.Item>
+              <ToolbarMenu.Item id="reset" visible={unlessCollapsed("if-room")}>
+                <ResetMenuItem onClick={this.props.onClickReset} />
+              </ToolbarMenu.Item>
+            </ToolbarMenu>
+          );
+        }}
       />
     );
   }

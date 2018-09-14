@@ -9,7 +9,7 @@ import Container from "/components/partials/EventDetailsContainer";
 
 // duration used when polling is enabled; set fairly high until we understand
 // the impact.
-const pollInterval = 0; // 1.5s
+const pollInterval = 0; // 1500; // 1.5s
 
 const query = gql`
   query EventDetailsContentQuery(
@@ -45,29 +45,15 @@ class EventDetailsContent extends React.PureComponent {
         pollInterval={pollInterval}
         variables={{ ...match.params, ns }}
       >
-        {({
-          client,
-          data: { event } = {},
-          loading,
-          aborted,
-          isPolling,
-          startPolling,
-          stopPolling,
-        }) => {
+        {({ data: { event } = {}, loading, aborted, isPolling }) => {
           if (!loading && !aborted && (!event || event.deleted)) {
             return <NotFoundView />;
           }
 
           return (
             <Container
-              client={client}
               event={event}
               loading={(loading && !isPolling) || aborted}
-              poller={{
-                running: isPolling,
-                start: startPolling,
-                stop: stopPolling,
-              }}
             />
           );
         }}

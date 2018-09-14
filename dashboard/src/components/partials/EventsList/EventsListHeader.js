@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
+import equals from "lodash/isEqual";
 
 import StatusMenu from "/components/partials/StatusMenu";
 import ListHeader from "/components/partials/ListHeader";
@@ -15,7 +16,7 @@ import SubmenuItem from "/components/partials/ToolbarMenuItems/Submenu";
 import ToolbarMenu from "/components/partials/ToolbarMenu";
 import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
 
-class EventsListHeader extends React.PureComponent {
+class EventsListHeader extends React.Component {
   static propTypes = {
     onClickClearSilences: PropTypes.func.isRequired,
     onClickSelect: PropTypes.func.isRequired,
@@ -60,6 +61,14 @@ class EventsListHeader extends React.PureComponent {
       }
     `,
   };
+
+  shouldComponentUpdate(props) {
+    return (
+      !equals(this.props.environment, props.environment) ||
+      !equals(this.props.rowCount, props.rowCount) ||
+      !equals(this.props.selectedItems, props.selectedItems)
+    );
+  }
 
   requeryEntity = newValue => {
     this.props.onChangeQuery({ filter: `Entity.ID == '${newValue}'` });
@@ -108,14 +117,14 @@ class EventsListHeader extends React.PureComponent {
 
     return (
       <ToolbarMenu>
-        <ToolbarMenu.Item visible="always">
+        <ToolbarMenu.Item id="resolve" visible="always">
           <ResolveMenuItem
             description="Resolve selected event(s)."
             onClick={this.props.onClickResolve}
           />
         </ToolbarMenu.Item>
 
-        <ToolbarMenu.Item visible="if-room">
+        <ToolbarMenu.Item id="re-run" visible="if-room">
           <ExecuteMenuItem
             title="Re-run Checks"
             titleCondensed="Re-run"
@@ -124,21 +133,27 @@ class EventsListHeader extends React.PureComponent {
           />
         </ToolbarMenu.Item>
 
-        <ToolbarMenu.Item visible={allSelectedSilenced ? "never" : "if-room"}>
+        <ToolbarMenu.Item
+          id="silence"
+          visible={allSelectedSilenced ? "never" : "if-room"}
+        >
           <SilenceMenuItem
             disabled={allSelectedSilenced}
             onClick={this.props.onClickSilence}
           />
         </ToolbarMenu.Item>
 
-        <ToolbarMenu.Item visible={allSelectedUnsilenced ? "never" : "if-room"}>
+        <ToolbarMenu.Item
+          id="unsilence"
+          visible={allSelectedUnsilenced ? "never" : "if-room"}
+        >
           <UnsilenceMenuItem
             disabled={allSelectedUnsilenced}
             onClick={this.props.onClickClearSilences}
           />
         </ToolbarMenu.Item>
 
-        <ToolbarMenu.Item visible="never">
+        <ToolbarMenu.Item id="delete" visible="never">
           {menu => (
             <ConfirmDelete
               identifier={`${selectedCount} ${
@@ -170,26 +185,26 @@ class EventsListHeader extends React.PureComponent {
 
     return (
       <ToolbarMenu>
-        <ToolbarMenu.Item visible="if-room">
+        <ToolbarMenu.Item id="hide" visible="if-room">
           <Select title="Hide" onChange={this.requeryHide}>
             <Option value="passing">Passing</Option>
             <Option value="silenced">Silenced</Option>
           </Select>
         </ToolbarMenu.Item>
 
-        <ToolbarMenu.Item visible="if-room">
+        <ToolbarMenu.Item id="filter-by-entity" visible="if-room">
           <Select title="Entity" onChange={this.requeryEntity}>
             {entities.map(name => <Option key={name} value={name} />)}
           </Select>
         </ToolbarMenu.Item>
 
-        <ToolbarMenu.Item visible="if-room">
+        <ToolbarMenu.Item id="filter-by-check" visible="if-room">
           <Select title="Check" onChange={this.requeryCheck}>
             {checks.map(name => <Option key={name} value={name} />)}
           </Select>
         </ToolbarMenu.Item>
 
-        <ToolbarMenu.Item visible="always">
+        <ToolbarMenu.Item id="filter-by-status" visible="always">
           <SubmenuItem
             autoClose
             title="Status"
@@ -206,7 +221,7 @@ class EventsListHeader extends React.PureComponent {
           />
         </ToolbarMenu.Item>
 
-        <ToolbarMenu.Item visible="always">
+        <ToolbarMenu.Item id="sort" visible="always">
           <Select title="Sort" onChange={this.updateSort}>
             <Option value="LASTOK">Last OK</Option>
             <Option value="SEVERITY">Severity</Option>

@@ -1,10 +1,11 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
+import equals from "lodash/isEqual";
 
 import { RelativeToCurrentDate } from "/components/RelativeDate";
 
-class EventStatusDescriptor extends React.PureComponent {
+class EventStatusDescriptor extends React.Component {
   static propTypes = {
     check: PropTypes.object,
     compact: PropTypes.bool,
@@ -30,6 +31,10 @@ class EventStatusDescriptor extends React.PureComponent {
       }
     `,
   };
+
+  shouldComponentUpdate(props) {
+    return !equals(this.props, props);
+  }
 
   numFormatter = new Intl.NumberFormat();
 

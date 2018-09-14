@@ -11,15 +11,10 @@ import CheckResult from "./EventDetailsCheckResult";
 import Toolbar from "./EventDetailsToolbar";
 import Summary from "./EventDetailsSummary";
 
-class EventDetailsContainer extends React.PureComponent {
+class EventDetailsContainer extends React.Component {
   static propTypes = {
     event: PropTypes.object,
     loading: PropTypes.bool.isRequired,
-    poller: PropTypes.shape({
-      running: PropTypes.bool,
-      start: PropTypes.func,
-      stop: PropTypes.func,
-    }).isRequired,
   };
 
   static defaultProps = {
@@ -55,14 +50,14 @@ class EventDetailsContainer extends React.PureComponent {
   };
 
   render() {
-    const { event, loading, poller } = this.props;
+    const { event, loading } = this.props;
 
     return (
       <Loader loading={loading} passthrough>
         {event && (
           <React.Fragment>
             <Content marginBottom>
-              <Toolbar event={event} poller={poller} />
+              <Toolbar event={event} />
             </Content>
             <Grid container spacing={16}>
               <Grid item xs={12}>

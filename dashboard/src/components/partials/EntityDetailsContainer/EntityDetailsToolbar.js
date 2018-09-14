@@ -41,7 +41,10 @@ class EntityDetailsToolbar extends React.Component {
       <Toolbar
         right={
           <ToolbarMenu>
-            <ToolbarMenu.Item visible={entity.isSilenced ? "never" : "if-room"}>
+            <ToolbarMenu.Item
+              id="silence"
+              visible={entity.isSilenced ? "never" : "if-room"}
+            >
               <SilenceAction entity={entity} onDone={refetch}>
                 {dialog => (
                   <SilenceMenuItem
@@ -52,7 +55,10 @@ class EntityDetailsToolbar extends React.Component {
               </SilenceAction>
             </ToolbarMenu.Item>
 
-            <ToolbarMenu.Item visible={entity.isSilenced ? "if-room" : "never"}>
+            <ToolbarMenu.Item
+              id="unsilence"
+              visible={entity.isSilenced ? "if-room" : "never"}
+            >
               <ClearSilenceAction entity={entity} onDone={refetch}>
                 {dialog => (
                   <UnsilenceMenuItem
@@ -63,7 +69,7 @@ class EntityDetailsToolbar extends React.Component {
               </ClearSilenceAction>
             </ToolbarMenu.Item>
 
-            <ToolbarMenu.Item visible="never">
+            <ToolbarMenu.Item id="delete" visible="never">
               <DeleteAction entity={entity}>
                 {handler => <DeleteMenuItem onClick={handler} />}
               </DeleteAction>

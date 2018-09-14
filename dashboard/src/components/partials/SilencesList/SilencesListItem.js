@@ -152,7 +152,7 @@ class SilencesListItem extends React.Component {
             )}
 
             <ToolbarMenu>
-              <ToolbarMenu.Item visible="never">
+              <ToolbarMenu.Item id="delete" visible="never">
                 <ConfirmDelete
                   identifier={silence.storeId}
                   onSubmit={this.props.onClickDelete}
