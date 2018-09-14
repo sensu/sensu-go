@@ -8,8 +8,8 @@ type ClusterHealth struct {
 	MemberID uint64
 	// Name is the cluster member's name.
 	Name string
-	// Err holds any errors encountered while checking the member's health.
-	Err error
+	// Err holds the string representation of any errors encountered while checking the member's health.
+	Err string
 	// Healthy describes the health of the cluster member.
 	Healthy bool
 }

@@ -2,7 +2,6 @@ package routers
 
 import (
 	"context"
-	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -116,7 +115,7 @@ func TestHealthyClusterStatus(t *testing.T) {
 	clusterHealth = append(clusterHealth, &types.ClusterHealth{
 		MemberID: uint64(12345),
 		Name:     "backend0",
-		Err:      nil,
+		Err:      "",
 		Healthy:  true,
 	})
 	healthResponse.ClusterHealth = clusterHealth
@@ -145,13 +144,13 @@ func TestUnHealthyClusterStatus(t *testing.T) {
 	clusterHealth = append(clusterHealth, &types.ClusterHealth{
 		MemberID: uint64(12345),
 		Name:     "backend0",
-		Err:      nil,
+		Err:      "",
 		Healthy:  true,
 	})
 	clusterHealth = append(clusterHealth, &types.ClusterHealth{
 		MemberID: uint64(12345),
 		Name:     "backend1",
-		Err:      errors.New("cluster error"),
+		Err:      "cluster error",
 		Healthy:  false,
 	})
 
