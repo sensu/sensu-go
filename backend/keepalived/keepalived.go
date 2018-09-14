@@ -113,11 +113,6 @@ func (k *Keepalived) Stop() error {
 	return err
 }
 
-// Status returns nil if the Daemon is healthy, otherwise it returns an error.
-func (k *Keepalived) Status() error {
-	return nil
-}
-
 // Err returns a channel that the caller can use to listen for terminal errors
 // indicating a premature shutdown of the Daemon.
 func (k *Keepalived) Err() <-chan error {

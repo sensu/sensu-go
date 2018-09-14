@@ -125,11 +125,6 @@ func (a *Agentd) Stop() error {
 	return nil
 }
 
-// Status returns an error if Agentd is unhealthy.
-func (a *Agentd) Status() error {
-	return nil
-}
-
 // Err returns a channel to listen for terminal errors on.
 func (a *Agentd) Err() <-chan error {
 	return a.errChan

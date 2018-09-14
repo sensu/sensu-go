@@ -63,11 +63,6 @@ func (s *Schedulerd) Stop() error {
 	return nil
 }
 
-// Status returns the health of the scheduler daemon.
-func (s *Schedulerd) Status() error {
-	return nil
-}
-
 // Err returns a channel on which to listen for terminal errors.
 func (s *Schedulerd) Err() <-chan error {
 	return s.errChan

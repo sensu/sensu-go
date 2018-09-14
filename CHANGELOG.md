@@ -18,6 +18,8 @@ text.
 keepalive events.
 - The sensu-agent binary is now located at ./cmd/sensu-agent.
 - Sensuctl no longer uses auto text wrapping.
+- Deprecated daemon `Status()` functions and `/info` (`/info` will be
+re-implemented in https://github.com/sensu/sensu-go/issues/1739).
 
 ### Fixed
 - Fixes a bug in `sensuctl cluster health` so the correct error is handled.

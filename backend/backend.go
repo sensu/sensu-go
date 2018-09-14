@@ -26,7 +26,6 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/rpc"
-	"github.com/sensu/sensu-go/types"
 )
 
 // Backend represents the backend server, which is used to hold the datastore
@@ -175,14 +174,13 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize apid
 	api, err := apid.New(apid.Config{
-		Host:          config.APIHost,
-		Port:          config.APIPort,
-		Bus:           bus,
-		Store:         store,
-		QueueGetter:   queueGetter,
-		TLS:           config.TLS,
-		BackendStatus: b.Status,
-		Cluster:       clientv3.NewCluster(client),
+		Host:        config.APIHost,
+		Port:        config.APIPort,
+		Bus:         bus,
+		Store:       store,
+		QueueGetter: queueGetter,
+		TLS:         config.TLS,
+		Cluster:     clientv3.NewCluster(client),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err.Error())
@@ -325,19 +323,6 @@ func (b *Backend) Migration() error {
 	logger.Infof("starting migration on the store with URL '%s'", b.Etcd.LoopbackURL())
 	migration.Run(b.Etcd.LoopbackURL())
 	return nil
-}
-
-// Status returns a map of component name to boolean healthy indicator.
-func (b *Backend) Status() types.StatusMap {
-	sm := map[string]bool{
-		"store": b.Etcd.Healthy(),
-	}
-
-	for _, d := range b.Daemons {
-		sm[d.Name()] = d.Status() == nil
-	}
-
-	return sm
 }
 
 // Stop the Backend cleanly.
