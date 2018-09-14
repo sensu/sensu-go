@@ -56,7 +56,7 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 		}
 	}
 
-	if config.NoEmbed {
+	if config.NoEmbedEtcd {
 		// Don't start up an embedded etcd, return a client that connects to an
 		// external etcd instead.
 		return clientv3.New(clientv3.Config{

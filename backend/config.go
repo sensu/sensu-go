@@ -41,7 +41,7 @@ type Config struct {
 	EtcdListenClientURL         string
 	EtcdListenPeerURL           string
 	EtcdName                    string
-	NoEmbed                     bool
+	NoEmbedEtcd                 bool
 
 	TLS *types.TLSOptions
 }
