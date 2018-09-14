@@ -8,7 +8,6 @@ package etcd
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -21,6 +20,7 @@ import (
 	"github.com/coreos/etcd/embed"
 	"github.com/coreos/etcd/pkg/transport"
 	"github.com/coreos/pkg/capnslog"
+	"github.com/sensu/sensu-go/types"
 	"google.golang.org/grpc/grpclog"
 )
 
@@ -58,13 +58,11 @@ type Config struct {
 	InitialClusterState     string
 	InitialClusterToken     string
 	InitialAdvertisePeerURL string
-	TLSConfig               *TLSConfig
-}
 
-// TLSConfig wraps Crypto TLSInfo
-type TLSConfig struct {
-	Info TLSInfo
-	TLS  *tls.Config
+	ClientAutoTLS bool
+	ClientTLSInfo TLSInfo
+	PeerAutoTLS   bool
+	PeerTLSInfo   TLSInfo
 }
 
 // TLSInfo wraps etcd transport TLSInfo
@@ -179,12 +177,11 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	// Default to 4G etcd size. TODO: make this configurable.
 	cfg.QuotaBackendBytes = int64(4 * 1024 * 1024 * 1024)
 
-	if config.TLSConfig != nil {
-		cfg.ClientTLSInfo = (transport.TLSInfo)(config.TLSConfig.Info)
-		cfg.PeerTLSInfo = (transport.TLSInfo)(config.TLSConfig.Info)
-		cfg.ClientTLSInfo.ClientCertAuth = false
-		cfg.PeerTLSInfo.ClientCertAuth = false
-	}
+	// Etcd TLS config
+	cfg.ClientAutoTLS = config.ClientAutoTLS
+	cfg.ClientTLSInfo = (transport.TLSInfo)(config.ClientTLSInfo)
+	cfg.PeerAutoTLS = config.PeerAutoTLS
+	cfg.PeerTLSInfo = (transport.TLSInfo)(config.PeerTLSInfo)
 
 	capnslog.SetFormatter(NewLogrusFormatter())
 
@@ -224,9 +221,23 @@ func (e *Etcd) Shutdown() error {
 
 // NewClient returns a new etcd v3 client. Clients must be closed after use.
 func (e *Etcd) NewClient() (*clientv3.Client, error) {
-	var tlsCfg *tls.Config
-	if e.cfg.TLSConfig != nil {
-		tlsCfg = e.cfg.TLSConfig.TLS
+	// Define the TLS options for the client using the etcd client config
+	tlsOptions := &types.TLSOptions{
+		CertFile:      e.cfg.ClientTLSInfo.CertFile,
+		KeyFile:       e.cfg.ClientTLSInfo.KeyFile,
+		TrustedCAFile: e.cfg.ClientTLSInfo.TrustedCAFile,
+	}
+
+	// Trust insecure certificates if etcd was configured to use self-signed
+	// certificates
+	if e.cfg.ClientAutoTLS {
+		tlsOptions.InsecureSkipVerify = true
+	}
+
+	// Translate our TLS options to a *tls.Config
+	tlsConfig, err := tlsOptions.ToTLSConfig()
+	if err != nil {
+		return nil, err
 	}
 
 	listeners := e.etcd.Clients
@@ -237,13 +248,8 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 	cli, err := clientv3.New(clientv3.Config{
 		Endpoints:   e.clientURLs,
 		DialTimeout: 5 * time.Second,
-		TLS:         tlsCfg,
+		TLS:         tlsConfig,
 	})
-	if err != nil {
-		return nil, err
-	}
-
-	return cli, nil
 }
 
 // Healthy returns Etcd status information.

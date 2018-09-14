@@ -76,6 +76,12 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 	cfg.InitialAdvertisePeerURL = config.EtcdInitialAdvertisePeerURL
 	cfg.Name = config.EtcdName
 
+	// Etcd TLS config
+	cfg.ClientAutoTLS = config.EtcdClientAutoTLS
+	cfg.ClientTLSInfo = config.EtcdClientTLSInfo
+	cfg.PeerAutoTLS = config.EtcdPeerAutoTLS
+	cfg.PeerTLSInfo = config.EtcdPeerTLSInfo
+
 	if config.TLS != nil {
 		cfg.TLSConfig = &etcd.TLSConfig{
 			Info: etcd.TLSInfo{

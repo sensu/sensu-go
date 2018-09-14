@@ -173,6 +173,7 @@ func newStartCommand() *cobra.Command {
 >>>>>>> Prefix etcd flags
 			}
 
+			// Sensu APIs TLS config
 			certFile := viper.GetString(flagCertFile)
 			keyFile := viper.GetString(flagKeyFile)
 			trustedCAFile := viper.GetString(flagTrustedCAFile)
@@ -198,6 +199,22 @@ func newStartCommand() *cobra.Command {
 				}
 
 				return fmt.Errorf("missing the following cert flags: %s", emptyFlags)
+			}
+
+			// Etcd TLS config
+			cfg.EtcdClientAutoTLS = viper.GetBool(flagEtcdAutoTLS)
+			cfg.EtcdClientTLSInfo = etcd.TLSInfo{
+				CertFile:       viper.GetString(flagEtcdCertFile),
+				KeyFile:        viper.GetString(flagEtcdKeyFile),
+				TrustedCAFile:  viper.GetString(flagEtcdTrustedCAFile),
+				ClientCertAuth: viper.GetBool(flagEtcdClientCertAuth),
+			}
+			cfg.EtcdPeerAutoTLS = viper.GetBool(flagEtcdPeerAutoTLS)
+			cfg.EtcdPeerTLSInfo = etcd.TLSInfo{
+				CertFile:       viper.GetString(flagEtcdPeerCertFile),
+				KeyFile:        viper.GetString(flagEtcdPeerKeyFile),
+				TrustedCAFile:  viper.GetString(flagEtcdPeerTrustedCAFile),
+				ClientCertAuth: viper.GetBool(flagEtcdPeerClientCertAuth),
 			}
 
 			sensuBackend, err := initialize(cfg)
