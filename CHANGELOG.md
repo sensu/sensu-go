@@ -18,6 +18,14 @@ text.
 keepalive events.
 - The sensu-agent binary is now located at ./cmd/sensu-agent.
 - Sensuctl no longer uses auto text wrapping.
+- The backend no longer requires embedded etcd. External etcd instances can be
+used by providing the --no-embed option. In this case, the client will dial
+the URLs provided by --listen-client-urls.
+- The sensu-agent binary is now located at ./cmd/sensu-agent.
+- Sensuctl no longer uses auto text wrapping.
+- The backend no longer requires embedded etcd. External etcd instances can be
+used by providing the --no-embed option. In this case, the client will dial
+the URLs provided by --listen-client-urls.
 - Deprecated daemon `Status()` functions and `/info` (`/info` will be
 re-implemented in https://github.com/sensu/sensu-go/issues/1739).
 
