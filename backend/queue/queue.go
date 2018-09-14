@@ -43,7 +43,7 @@ func (e EtcdGetter) GetQueue(path ...string) types.Queue {
 	return New(queueKeyBuilder.Build(path...), e.Client, e.BackendIDGetter)
 }
 
-// Queue is a durable FIFO queue that is backed by etcd.
+// Queue is a non-durable FIFO queue that is backed by etcd.
 // When an item is received by a client, it is deleted from
 // the work lane, and added to the in-flight lane. The item stays in the
 // in-flight lane until it is Acked by the client, or returned to the work
