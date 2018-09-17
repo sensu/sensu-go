@@ -27,7 +27,7 @@ class EntityDetailsContainer extends React.PureComponent {
     entity: gql`
       fragment EntityDetailsContainer_entity on Entity {
         id
-        events {
+        events(orderBy: LASTOK) {
           ...EntityDetailsEvents_event
         }
 
