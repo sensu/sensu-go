@@ -68,11 +68,7 @@ func TestBackendHTTPListener(t *testing.T) {
 			dashboardPort := ports[4]
 			initCluster := fmt.Sprintf("default=%s", apURL)
 
-			fmt.Printf("EtcdListenClientURL: %s\n", clURL)
-			fmt.Printf("EtcdListenPeerURL: %s\n", apURL)
-
 			var tlsInfo etcd.TLSInfo
-			fmt.Println(tc.tls)
 			if tc.tls != nil {
 				tlsInfo = etcd.TLSInfo{
 					ClientCertAuth: true,
