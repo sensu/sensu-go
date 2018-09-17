@@ -116,6 +116,7 @@ class Toast extends React.PureComponent {
     variant: PropTypes.oneOf(Object.keys(icons)),
     onClose: PropTypes.func.isRequired,
     maxAge: PropTypes.number,
+    showAgeIndicator: PropTypes.bool,
     progress: PropTypes.node,
   };
 
@@ -124,6 +125,7 @@ class Toast extends React.PureComponent {
     variant: undefined,
     message: undefined,
     progress: undefined,
+    showAgeIndicator: false,
   };
 
   state = { mouseOver: false };
@@ -157,6 +159,7 @@ class Toast extends React.PureComponent {
       onClose,
       variant,
       maxAge,
+      showAgeIndicator,
       progress: progressBar,
     } = this.props;
 
@@ -198,22 +201,22 @@ class Toast extends React.PureComponent {
           {message}
         </div>
         <div className={classes.action}>
-          {maxAge !== 0 ? (
+          {maxAge && (
             <Timer
               key={closeButton.props.key}
               delay={maxAge}
               onEnd={onClose}
               paused={mouseOver}
             >
-              {progress => (
-                <CircularProgress width={4} value={progress} opacity={0.5}>
-                  {closeButton}
-                </CircularProgress>
-              )}
+              {showAgeIndicator &&
+                (progress => (
+                  <CircularProgress width={4} value={progress} opacity={0.5}>
+                    {closeButton}
+                  </CircularProgress>
+                ))}
             </Timer>
-          ) : (
-            closeButton
           )}
+          {(!showAgeIndicator || !maxAge) && closeButton}
         </div>
       </Paper>
     );
