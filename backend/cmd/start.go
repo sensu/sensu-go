@@ -40,16 +40,6 @@ const (
 	flagLogLevel              = "log-level"
 
 	// Etcd flag constants
-<<<<<<< HEAD
-	flagStoreClientURL               = "listen-client-urls"
-	flagStorePeerURL                 = "listen-peer-urls"
-	flagStoreInitialCluster          = "initial-cluster"
-	flagStoreInitialAdvertisePeerURL = "initial-advertise-peer-urls"
-	flagStoreInitialClusterState     = "initial-cluster-state"
-	flagStoreInitialClusterToken     = "initial-cluster-token"
-	flagStoreNodeName                = "name"
-	flagNoEmbedEtcd                  = "no-embed-etcd"
-=======
 	deprecatedFlagEtcdClientURL               = "listen-client-urls"
 	flagEtcdClientURL                         = "etcd-listen-client-urls"
 	deprecatedFlagEtcdPeerURL                 = "listen-peer-urls"
@@ -64,7 +54,7 @@ const (
 	flagEtcdInitialClusterToken               = "etcd-initial-cluster-token"
 	deprecatedFlagEtcdNodeName                = "name"
 	flagEtcdNodeName                          = "etcd-name"
->>>>>>> Prefix etcd flags
+	flagNoEmbedEtcd                           = "no-embed-etcd"
 
 	// Etcd TLS flag constants
 	flagEtcdCertFile           = "etcd-cert-file"
@@ -151,16 +141,6 @@ func newStartCommand() *cobra.Command {
 				DeregistrationHandler: viper.GetString(flagDeregistrationHandler),
 				StateDir:              viper.GetString(flagStateDir),
 
-<<<<<<< HEAD
-				EtcdListenClientURL:         viper.GetString(flagStoreClientURL),
-				EtcdListenPeerURL:           viper.GetString(flagStorePeerURL),
-				EtcdInitialCluster:          viper.GetString(flagStoreInitialCluster),
-				EtcdInitialClusterState:     viper.GetString(flagStoreInitialClusterState),
-				EtcdInitialAdvertisePeerURL: viper.GetString(flagStoreInitialAdvertisePeerURL),
-				EtcdInitialClusterToken:     viper.GetString(flagStoreInitialClusterToken),
-				EtcdName:                    viper.GetString(flagStoreNodeName),
-				NoEmbedEtcd:                 viper.GetBool(flagNoEmbedEtcd),
-=======
 				EtcdListenClientURL:         viper.GetString(flagEtcdClientURL),
 				EtcdListenPeerURL:           viper.GetString(flagEtcdPeerURL),
 				EtcdInitialCluster:          viper.GetString(flagEtcdInitialCluster),
@@ -168,7 +148,7 @@ func newStartCommand() *cobra.Command {
 				EtcdInitialAdvertisePeerURL: viper.GetString(flagEtcdInitialAdvertisePeerURL),
 				EtcdInitialClusterToken:     viper.GetString(flagEtcdInitialClusterToken),
 				EtcdName:                    viper.GetString(flagEtcdNodeName),
->>>>>>> Prefix etcd flags
+				NoEmbedEtcd:                 viper.GetBool(flagNoEmbedEtcd),
 			}
 
 			// Sensu APIs TLS config
@@ -286,7 +266,6 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagEtcdNodeName, defaultEtcdName)
 	viper.SetDefault(flagNoEmbedEtcd, false)
 
-
 	// Merge in config flag set so that it appears in command usage
 	cmd.Flags().AddFlagSet(configFlagSet)
 
@@ -321,6 +300,8 @@ func newStartCommand() *cobra.Command {
 	_ = cmd.Flags().SetAnnotation(flagEtcdInitialClusterToken, "categories", []string{"store"})
 	cmd.Flags().String(flagEtcdNodeName, viper.GetString(flagEtcdNodeName), "human-readable name for this member")
 	_ = cmd.Flags().SetAnnotation(flagEtcdNodeName, "categories", []string{"store"})
+	cmd.Flags().Bool(flagNoEmbedEtcd, viper.GetBool(flagNoEmbedEtcd), "don't embed etcd, use external etcd instead")
+	_ = cmd.Flags().SetAnnotation(flagNoEmbedEtcd, "categories", []string{"store"})
 
 	// Etcd TLS flags
 	cmd.Flags().String(flagEtcdCertFile, viper.GetString(flagEtcdCertFile), "path to the client server TLS cert file")
@@ -342,8 +323,6 @@ func newStartCommand() *cobra.Command {
 
 	// Mark the old etcd flags as deprecated and maintain backward compability
 	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc)
-
-	cmd.Flags().Bool(flagNoEmbedEtcd, viper.GetBool(flagNoEmbedEtcd), "don't embed etcd, use external etcd instead")
 
 	// Load the configuration file but only error out if flagConfigFile is used
 	if err := viper.ReadInConfig(); err != nil && configFile != "" {
