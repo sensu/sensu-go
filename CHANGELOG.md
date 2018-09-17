@@ -42,6 +42,7 @@ sending of keepalive messages.
 - Fixed a bug where the agent does not validate the ID at startup.
 - Fixed a bug in `sensuctl cluster health` that resulted in an unmarshal
 error in an unhealthy cluster.
+- Fixed a bug in the web ui, removed references to keepaliveTimeout.
 
 ### Breaking Changes
 - Removed the KeepaliveTimeout attribute from entities.
