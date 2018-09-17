@@ -64,12 +64,6 @@ type EntityDeregistrationFieldResolver interface {
 	Deregistration(p graphql.ResolveParams) (interface{}, error)
 }
 
-// EntityKeepaliveTimeoutFieldResolver implement to resolve requests for the Entity's keepaliveTimeout field.
-type EntityKeepaliveTimeoutFieldResolver interface {
-	// KeepaliveTimeout implements response to request for keepaliveTimeout field.
-	KeepaliveTimeout(p graphql.ResolveParams) (int, error)
-}
-
 // EntityUserFieldResolver implement to resolve requests for the Entity's user field.
 type EntityUserFieldResolver interface {
 	// User implements response to request for user field.
@@ -211,7 +205,6 @@ type EntityFieldResolvers interface {
 	EntityLastSeenFieldResolver
 	EntityDeregisterFieldResolver
 	EntityDeregistrationFieldResolver
-	EntityKeepaliveTimeoutFieldResolver
 	EntityUserFieldResolver
 	EntityRedactFieldResolver
 	EntityStatusFieldResolver
@@ -365,19 +358,6 @@ func (_ EntityAliases) Deregistration(p graphql.ResolveParams) (interface{}, err
 	return val, err
 }
 
-// KeepaliveTimeout implements response to request for 'keepaliveTimeout' field.
-func (_ EntityAliases) KeepaliveTimeout(p graphql.ResolveParams) (int, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := graphql1.Int.ParseValue(val).(int)
-	if err != nil {
-		return ret, err
-	}
-	if !ok {
-		return ret, errors.New("unable to coerce value for field 'keepaliveTimeout'")
-	}
-	return ret, err
-}
-
 // User implements response to request for 'user' field.
 func (_ EntityAliases) User(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -527,13 +507,6 @@ func _ObjTypeEntityDeregistrationHandler(impl interface{}) graphql1.FieldResolve
 	}
 }
 
-func _ObjTypeEntityKeepaliveTimeoutHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EntityKeepaliveTimeoutFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.KeepaliveTimeout(frp)
-	}
-}
-
 func _ObjTypeEntityUserHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EntityUserFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -659,13 +632,6 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				Name:              "isSilenced",
 				Type:              graphql1.NewNonNull(graphql1.Boolean),
 			},
-			"keepaliveTimeout": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "keepaliveTimeout",
-				Type:              graphql1.NewNonNull(graphql1.Int),
-			},
 			"lastSeen": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -766,7 +732,6 @@ var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 		"extendedAttributes": _ObjTypeEntityExtendedAttributesHandler,
 		"id":                 _ObjTypeEntityIDHandler,
 		"isSilenced":         _ObjTypeEntityIsSilencedHandler,
-		"keepaliveTimeout":   _ObjTypeEntityKeepaliveTimeoutHandler,
 		"lastSeen":           _ObjTypeEntityLastSeenHandler,
 		"name":               _ObjTypeEntityNameHandler,
 		"namespace":          _ObjTypeEntityNamespaceHandler,
