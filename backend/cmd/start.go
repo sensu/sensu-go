@@ -363,31 +363,24 @@ func aliasNormalizeFunc(f *pflag.FlagSet, name string) pflag.NormalizedName {
 	case deprecatedFlagEtcdClientURL:
 		deprecatedFlagMessage(name, flagEtcdClientURL)
 		name = flagEtcdClientURL
-		break
 	case deprecatedFlagEtcdInitialAdvertisePeerURL:
 		deprecatedFlagMessage(name, flagEtcdInitialAdvertisePeerURL)
 		name = flagEtcdInitialAdvertisePeerURL
-		break
 	case deprecatedFlagEtcdInitialCluster:
 		deprecatedFlagMessage(name, flagEtcdInitialCluster)
 		name = flagEtcdInitialCluster
-		break
 	case deprecatedFlagEtcdInitialClusterState:
 		deprecatedFlagMessage(name, flagEtcdInitialCluster)
 		name = flagEtcdInitialClusterState
-		break
 	case deprecatedFlagEtcdInitialClusterToken:
 		deprecatedFlagMessage(name, flagEtcdInitialClusterToken)
 		name = flagEtcdInitialClusterToken
-		break
 	case deprecatedFlagEtcdNodeName:
 		deprecatedFlagMessage(name, flagEtcdNodeName)
 		name = flagEtcdNodeName
-		break
 	case deprecatedFlagEtcdPeerURL:
 		deprecatedFlagMessage(name, flagEtcdPeerURL)
 		name = flagEtcdPeerURL
-		break
 	}
 	return pflag.NormalizedName(name)
 }
