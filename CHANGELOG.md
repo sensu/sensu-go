@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Add windows/386 to binary gcs releases
+- TLS authentication and encryption for etcd client and peer communication.
 
 ### Removed
 - Staging resources and configurations have been removed from sensu-go.
@@ -31,6 +32,8 @@ used by providing the --no-embed option. In this case, the client will dial
 the URLs provided by --listen-client-urls.
 - Deprecated daemon `Status()` functions and `/info` (`/info` will be
 re-implemented in https://github.com/sensu/sensu-go/issues/1739).
+- The sensu-backend flags related to etcd are now all prefixed with `etcd` and
+the older versions are now deprecated.
 
 ### Fixed
 - Fixes a bug in `sensuctl cluster health` so the correct error is handled.
