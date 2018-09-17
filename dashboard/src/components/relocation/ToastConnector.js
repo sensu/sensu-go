@@ -1,9 +1,10 @@
+/* eslint-disable react/no-multi-comp */
 import React from "react";
 import PropTypes from "prop-types";
 
 import { Consumer } from "/components/relocation/Relocation";
 
-class ToastProvider extends React.PureComponent {
+class ToastConnector extends React.PureComponent {
   static propTypes = {
     children: PropTypes.func.isRequired,
   };
@@ -22,4 +23,4 @@ class ToastProvider extends React.PureComponent {
   }
 }
 
-export default ToastProvider;
+export default ToastConnector;

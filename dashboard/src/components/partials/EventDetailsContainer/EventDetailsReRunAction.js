@@ -7,7 +7,7 @@ import { withApollo } from "react-apollo";
 
 import executeCheck from "/mutations/executeCheck";
 
-import ToastProvider from "/components/relocation/ToastProvider";
+import ToastConnector from "/components/relocation/ToastConnector";
 import ExecuteCheckStatusToast from "/components/relocation/ExecuteCheckStatusToast";
 
 class EventDetailsReRunAction extends React.PureComponent {
@@ -38,7 +38,7 @@ class EventDetailsReRunAction extends React.PureComponent {
     const { children, event, client } = this.props;
 
     return (
-      <ToastProvider>
+      <ToastConnector>
         {({ addToast }) =>
           children(() => {
             const promise = executeCheck(client, {
@@ -57,7 +57,7 @@ class EventDetailsReRunAction extends React.PureComponent {
             ));
           })
         }
-      </ToastProvider>
+      </ToastConnector>
     );
   }
 }

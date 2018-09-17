@@ -8,7 +8,7 @@ import NamespaceLink from "/components/util/NamespaceLink";
 import InlineLink from "/components/InlineLink";
 
 import Toast from "./Toast";
-import ToastProvider from "./ToastProvider";
+import ToastConnector from "./ToastConnector";
 
 class ExecuteCheckStatusToast extends React.PureComponent {
   static propTypes = {
@@ -55,7 +55,7 @@ class ExecuteCheckStatusToast extends React.PureComponent {
     );
 
     return (
-      <ToastProvider>
+      <ToastConnector>
         {({ addToast }) => (
           <Toast
             maxAge={loading ? undefined : 5000}
@@ -98,7 +98,7 @@ class ExecuteCheckStatusToast extends React.PureComponent {
             }}
           />
         )}
-      </ToastProvider>
+      </ToastConnector>
     );
   }
 }
