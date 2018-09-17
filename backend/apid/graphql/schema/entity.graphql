@@ -17,7 +17,6 @@ type Entity implements Node {
   lastSeen: DateTime
   deregister: Boolean!
   deregistration: Deregistration!
-  keepaliveTimeout: Int!
   user: String!
 
   "Redact contains the fields to redact on the agent."
