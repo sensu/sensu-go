@@ -144,7 +144,6 @@ func TestStartStop(t *testing.T) {
 			}
 
 			require.NoError(t, k.Start())
-			require.NoError(t, k.Status())
 
 			var err error
 			select {

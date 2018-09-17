@@ -309,11 +309,6 @@ func (e *Eventd) Stop() error {
 	return nil
 }
 
-// Status returns an error if eventd is unhealthy.
-func (e *Eventd) Status() error {
-	return nil
-}
-
 // Err returns a channel to listen for terminal errors on.
 func (e *Eventd) Err() <-chan error {
 	return e.errChan

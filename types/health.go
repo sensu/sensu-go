@@ -1,6 +1,8 @@
 package types
 
-import "github.com/coreos/etcd/etcdserver/etcdserverpb"
+import (
+	"github.com/coreos/etcd/etcdserver/etcdserverpb"
+)
 
 // ClusterHealth holds cluster member status info.
 type ClusterHealth struct {
@@ -20,4 +22,39 @@ type HealthResponse struct {
 	Alarms []*etcdserverpb.AlarmMember
 	// ClusterHealth is the list of health status for every cluster member.
 	ClusterHealth []*ClusterHealth
+}
+
+// FixtureHealthResponse returns a HealthResponse fixture for testing.
+func FixtureHealthResponse(healthy bool) *HealthResponse {
+	var err string
+	healthResponse := &HealthResponse{}
+	clusterHealth := []*ClusterHealth{}
+	clusterHealth = append(clusterHealth, &ClusterHealth{
+		MemberID: uint64(12345),
+		Name:     "backend0",
+		Err:      "",
+		Healthy:  true,
+	})
+	if healthy {
+		err = ""
+	} else {
+		err = "cluster error"
+	}
+	clusterHealth = append(clusterHealth, &ClusterHealth{
+		MemberID: uint64(12345),
+		Name:     "backend1",
+		Err:      err,
+		Healthy:  false,
+	})
+
+	alarms := []*etcdserverpb.AlarmMember{}
+	alarms = append(alarms, &etcdserverpb.AlarmMember{
+		MemberID: uint64(56789),
+		Alarm:    etcdserverpb.AlarmType_CORRUPT,
+	})
+
+	healthResponse.ClusterHealth = clusterHealth
+	healthResponse.Alarms = alarms
+
+	return healthResponse
 }

@@ -98,11 +98,6 @@ func (p *Pipelined) Stop() error {
 	return err
 }
 
-// Status returns an error if pipelined is unhealthy.
-func (p *Pipelined) Status() error {
-	return nil
-}
-
 // Err returns a channel to listen for terminal errors on.
 func (p *Pipelined) Err() <-chan error {
 	return p.errChan

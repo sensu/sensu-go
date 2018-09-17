@@ -26,6 +26,8 @@ the URLs provided by --listen-client-urls.
 - The backend no longer requires embedded etcd. External etcd instances can be
 used by providing the --no-embed option. In this case, the client will dial
 the URLs provided by --listen-client-urls.
+- Deprecated daemon `Status()` functions and `/info` (`/info` will be
+re-implemented in https://github.com/sensu/sensu-go/issues/1739).
 
 ### Fixed
 - Fixes a bug in `sensuctl cluster health` so the correct error is handled.

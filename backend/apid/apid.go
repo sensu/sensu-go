@@ -28,17 +28,16 @@ type APId struct {
 	// Port is the port APId is running on.
 	Port int
 
-	stopping      chan struct{}
-	running       *atomic.Value
-	wg            *sync.WaitGroup
-	errChan       chan error
-	HttpServer    *http.Server
-	bus           messaging.MessageBus
-	backendStatus func() types.StatusMap
-	store         store.Store
-	queueGetter   types.QueueGetter
-	tls           *types.TLSOptions
-	cluster       clientv3.Cluster
+	stopping    chan struct{}
+	running     *atomic.Value
+	wg          *sync.WaitGroup
+	errChan     chan error
+	HTTPServer  *http.Server
+	bus         messaging.MessageBus
+	store       store.Store
+	queueGetter types.QueueGetter
+	tls         *types.TLSOptions
+	cluster     clientv3.Cluster
 }
 
 // Option is a functional option.
@@ -46,40 +45,38 @@ type Option func(*APId) error
 
 // Config configures APId.
 type Config struct {
-	Host          string
-	Port          int
-	Bus           messaging.MessageBus
-	Store         store.Store
-	QueueGetter   types.QueueGetter
-	TLS           *types.TLSOptions
-	BackendStatus func() types.StatusMap
-	Cluster       clientv3.Cluster
+	Host        string
+	Port        int
+	Bus         messaging.MessageBus
+	Store       store.Store
+	QueueGetter types.QueueGetter
+	TLS         *types.TLSOptions
+	Cluster     clientv3.Cluster
 }
 
 // New creates a new APId.
 func New(c Config, opts ...Option) (*APId, error) {
 	a := &APId{
-		Host:          c.Host,
-		Port:          c.Port,
-		store:         c.Store,
-		queueGetter:   c.QueueGetter,
-		tls:           c.TLS,
-		backendStatus: c.BackendStatus,
-		bus:           c.Bus,
-		stopping:      make(chan struct{}, 1),
-		running:       &atomic.Value{},
-		wg:            &sync.WaitGroup{},
-		errChan:       make(chan error, 1),
-		cluster:       c.Cluster,
+		Host:        c.Host,
+		Port:        c.Port,
+		store:       c.Store,
+		queueGetter: c.QueueGetter,
+		tls:         c.TLS,
+		bus:         c.Bus,
+		stopping:    make(chan struct{}, 1),
+		running:     &atomic.Value{},
+		wg:          &sync.WaitGroup{},
+		errChan:     make(chan error, 1),
+		cluster:     c.Cluster,
 	}
 
 	router := mux.NewRouter().UseEncodedPath()
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
-	registerUnauthenticatedResources(router, a.backendStatus, a.store)
+	registerUnauthenticatedResources(router, a.store)
 	registerAuthenticationResources(router, a.store)
 	registerRestrictedResources(router, a.store, a.queueGetter, a.bus, a.cluster)
 
-	a.HttpServer = &http.Server{
+	a.HTTPServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
 		Handler:      router,
 		WriteTimeout: 15 * time.Second,
@@ -105,16 +102,16 @@ func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 
 // Start APId.
 func (a *APId) Start() error {
-	logger.Info("starting apid on address: ", a.HttpServer.Addr)
+	logger.Info("starting apid on address: ", a.HTTPServer.Addr)
 	a.wg.Add(1)
 
 	go func() {
 		defer a.wg.Done()
 		var err error
 		if a.tls != nil {
-			err = a.HttpServer.ListenAndServeTLS(a.tls.CertFile, a.tls.KeyFile)
+			err = a.HTTPServer.ListenAndServeTLS(a.tls.CertFile, a.tls.KeyFile)
 		} else {
-			err = a.HttpServer.ListenAndServe()
+			err = a.HTTPServer.ListenAndServe()
 		}
 		if err != nil && err != http.ErrServerClosed {
 			a.errChan <- fmt.Errorf("failed to start http/https server %s", err.Error())
@@ -126,10 +123,10 @@ func (a *APId) Start() error {
 
 // Stop httpApi.
 func (a *APId) Stop() error {
-	if err := a.HttpServer.Shutdown(context.TODO()); err != nil {
+	if err := a.HTTPServer.Shutdown(context.TODO()); err != nil {
 		// failure/timeout shutting down the server gracefully
 		logger.Error("failed to shutdown http server gracefully - forcing shutdown")
-		if closeErr := a.HttpServer.Close(); closeErr != nil {
+		if closeErr := a.HTTPServer.Close(); closeErr != nil {
 			logger.Error("failed to shutdown http server forcefully")
 		}
 	}
@@ -139,11 +136,6 @@ func (a *APId) Stop() error {
 	a.wg.Wait()
 	close(a.errChan)
 
-	return nil
-}
-
-// Status returns an error if httpApi is unhealthy.
-func (a *APId) Status() error {
 	return nil
 }
 
@@ -159,7 +151,6 @@ func (a *APId) Name() string {
 
 func registerUnauthenticatedResources(
 	router *mux.Router,
-	bStatus func() types.StatusMap,
 	store store.Store,
 ) {
 	mountRouters(
@@ -169,7 +160,7 @@ func registerUnauthenticatedResources(
 			middlewares.LimitRequest{},
 			middlewares.Edition{Name: version.Edition},
 		),
-		routers.NewStatusRouter(bStatus, store),
+		routers.NewHealthRouter(actions.NewHealthController(store)),
 	)
 }
 

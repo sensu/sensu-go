@@ -66,14 +66,6 @@ func (b *WizardBus) Stop() error {
 	return nil
 }
 
-// Status ...
-func (b *WizardBus) Status() error {
-	if !b.running.Load().(bool) {
-		return errors.New("bus has shutdown")
-	}
-	return nil
-}
-
 // Err ...
 func (b *WizardBus) Err() <-chan error {
 	return b.errchan
