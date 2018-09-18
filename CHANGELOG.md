@@ -31,6 +31,7 @@ used by providing the --no-embed option. In this case, the client will dial
 the URLs provided by --listen-client-urls.
 - Deprecated daemon `Status()` functions and `/info` (`/info` will be
 re-implemented in https://github.com/sensu/sensu-go/issues/1739).
+- Web ui entity recent events are sorted by last ok
 
 ### Fixed
 - Fixes a bug in `sensuctl cluster health` so the correct error is handled.
