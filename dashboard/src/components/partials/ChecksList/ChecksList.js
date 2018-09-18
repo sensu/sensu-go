@@ -84,6 +84,8 @@ class ChecksList extends React.Component {
   state = {
     silence: null,
     unsilence: null,
+    publish: null,
+    unpublish: null,
   };
 
   silenceChecks = checks => {
@@ -115,6 +117,16 @@ class ChecksList extends React.Component {
     this.setState({
       unsilence: checks.reduce((memo, ch) => [...memo, ...ch.silences], []),
     });
+  };
+
+  publishChecks = checks => {
+    // eslint-disable-next-line no-console
+    console.log("Yay");
+  };
+
+  unpublishChecks = checks => {
+    // eslint-disable-next-line no-console
+    console.log("Yay");
   };
 
   executeChecks = checks => {
@@ -177,6 +189,8 @@ class ChecksList extends React.Component {
       onClickDelete={() => this.deleteChecks([check])}
       onClickExecute={() => this.executeChecks([check])}
       onClickSilence={() => this.silenceChecks([check])}
+      onClickPublish={() => this.publishChecks([check])}
+      onClickUnpublish={() => this.unpublishChecks([check])}
     />
   );
 

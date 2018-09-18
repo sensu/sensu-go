@@ -28,6 +28,8 @@ class CheckListItem extends React.Component {
     onClickDelete: PropTypes.func.isRequired,
     onClickExecute: PropTypes.func.isRequired,
     onClickSilence: PropTypes.func.isRequired,
+    onClickPublish: PropTypes.func.isRequired,
+    onClickUnpublish: PropTypes.func.isRequired,
   };
 
   static fragments = {
@@ -39,6 +41,7 @@ class CheckListItem extends React.Component {
         interval
         cron
         isSilenced
+        publish
         namespace {
           organization
           environment
@@ -56,6 +59,8 @@ class CheckListItem extends React.Component {
       onClickDelete,
       onClickExecute,
       onClickSilence,
+      onClickPublish,
+      onClickUnpublish,
     } = this.props;
 
     return (
@@ -143,6 +148,27 @@ class CheckListItem extends React.Component {
                     Unsilence
                   </MenuItem>
                 )}
+                {!check.publish && (
+                  <MenuItem
+                    onClick={() => {
+                      onClickPublish();
+                      close();
+                    }}
+                  >
+                    Publish
+                  </MenuItem>
+                )}
+                {check.publish && (
+                  <MenuItem
+                    onClick={() => {
+                      onClickUnpublish();
+                      close();
+                    }}
+                  >
+                    Unpublish
+                  </MenuItem>
+                )}
+
                 <ConfirmDelete
                   key="delete"
                   onSubmit={ev => {
