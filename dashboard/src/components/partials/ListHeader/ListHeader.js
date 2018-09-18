@@ -21,7 +21,7 @@ const styles = theme => ({
     color: theme.palette.primary.contrastText,
     display: "flex",
     alignItems: "center",
-    zIndex: theme.zIndex.appBar - 1,
+    zIndex: 1,
     // "& *": {
     //   color: theme.palette.primary.contrastText,
     // },

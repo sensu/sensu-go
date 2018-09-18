@@ -8,14 +8,10 @@ import {
   componentFromProp,
 } from "recompose";
 
-let id = 0;
-const getNextId = () => {
-  id += 1;
-  return id;
-};
+import uniqueId from "/utils/uniqueId";
 
 export const withStyle = styles => {
-  const path = `with-style-${getNextId()}`;
+  const path = `with-style-${uniqueId()}`;
   return compose(
     withStyles(theme => ({ [path]: styles(theme) })),
     mapProps(

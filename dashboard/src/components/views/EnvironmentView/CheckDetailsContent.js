@@ -4,7 +4,7 @@ import gql from "graphql-tag";
 
 import Query from "/components/util/Query";
 
-import NotFoundView from "/components/views/NotFoundView";
+import NotFound from "/components/partials/NotFound";
 import CheckDetailsContainer from "/components/partials/CheckDetailsContainer";
 
 // duration used when polling is enabled; set fairly high until we understand
@@ -53,7 +53,7 @@ class CheckDetailsContent extends React.PureComponent {
           refetch,
         }) => {
           if (!loading && !aborted && (!check || check.deleted)) {
-            return <NotFoundView />;
+            return <NotFound />;
           }
 
           return (

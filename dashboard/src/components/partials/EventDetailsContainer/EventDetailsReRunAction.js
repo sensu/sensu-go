@@ -7,15 +7,14 @@ import { withApollo } from "react-apollo";
 
 import executeCheck from "/mutations/executeCheck";
 
+import ToastConnector from "/components/relocation/ToastConnector";
+import ExecuteCheckStatusToast from "/components/relocation/ExecuteCheckStatusToast";
+
 class EventDetailsReRunAction extends React.PureComponent {
   static propTypes = {
     children: PropTypes.func.isRequired,
     client: PropTypes.object.isRequired,
-    event: PropTypes.object,
-  };
-
-  static defaultProps = {
-    event: null,
+    event: PropTypes.object.isRequired,
   };
 
   static fragments = {
@@ -27,24 +26,39 @@ class EventDetailsReRunAction extends React.PureComponent {
         entity {
           name
         }
+        namespace {
+          organization
+          environment
+        }
       }
     `,
   };
 
-  handleClick = () => {
-    const {
-      client,
-      event: { check, entity },
-    } = this.props;
-
-    executeCheck(client, {
-      id: check.nodeId,
-      subscriptions: [`entity:${entity.name}`],
-    });
-  };
-
   render() {
-    return this.props.children(this.handleClick);
+    const { children, event, client } = this.props;
+
+    return (
+      <ToastConnector>
+        {({ addToast }) =>
+          children(() => {
+            const promise = executeCheck(client, {
+              id: event.check.nodeId,
+              subscriptions: [`entity:${event.entity.name}`],
+            });
+
+            addToast(({ remove }) => (
+              <ExecuteCheckStatusToast
+                onClose={remove}
+                mutation={promise}
+                checkName={event.check.name}
+                entityName={event.entity.name}
+                namespace={event.namespace}
+              />
+            ));
+          })
+        }
+      </ToastConnector>
+    );
   }
 }
 

@@ -9,10 +9,12 @@ import AppLayout from "/components/AppLayout";
 
 import Query from "/components/util/Query";
 
+import ToastConnector from "/components/relocation/ToastConnector";
+
 import ChecksList from "/components/partials/ChecksList";
 import ListToolbar from "/components/partials/ListToolbar";
 
-import NotFoundView from "/components/views/NotFoundView";
+import NotFound from "/components/partials/NotFound";
 
 import CollapsingMenu from "/components/partials/CollapsingMenu";
 import SearchBox from "/components/SearchBox";
@@ -70,7 +72,7 @@ class ChecksContent extends React.Component {
           refetch,
         }) => {
           if (!environment && !loading && !aborted) {
-            return <NotFoundView />;
+            return <NotFound />;
           }
 
           return (
@@ -95,14 +97,21 @@ class ChecksContent extends React.Component {
               />
 
               <AppLayout.MobileFullWidthContent>
-                <ChecksList
-                  limit={limit}
-                  offset={offset}
-                  onChangeQuery={setQueryParams}
-                  environment={environment}
-                  loading={(loading && (!environment || !isPolling)) || aborted}
-                  refetch={refetch}
-                />
+                <ToastConnector>
+                  {({ addToast }) => (
+                    <ChecksList
+                      limit={limit}
+                      offset={offset}
+                      onChangeQuery={setQueryParams}
+                      environment={environment}
+                      loading={
+                        (loading && (!environment || !isPolling)) || aborted
+                      }
+                      refetch={refetch}
+                      addToast={addToast}
+                    />
+                  )}
+                </ToastConnector>
               </AppLayout.MobileFullWidthContent>
             </div>
           );

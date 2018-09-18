@@ -2,7 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
 import ResizeObserver from "react-resize-observer";
-import { Motion, spring, presets } from "react-motion";
+import { Spring } from "react-spring";
 import classnames from "classnames";
 
 import AnimatedLogo from "/components/AnimatedLogo";
@@ -38,10 +38,6 @@ class Loader extends React.PureComponent {
       flex: 1,
       flexBasis: "auto",
       alignItems: "stretch",
-    },
-
-    children: {
-      zIndex: 0,
     },
 
     overlay: {
@@ -134,12 +130,12 @@ class Loader extends React.PureComponent {
     const { visible, spinnerPosition } = this.state;
 
     const overlay = (
-      <Motion style={{ progress: spring(visible ? 1 : 0, presets.noWobble) }}>
-        {({ progress }) =>
-          progress > 0.1 && (
+      <Spring to={{ opacity: visible ? 1 : 0 }} force>
+        {styles =>
+          styles.opacity > 0.1 && (
             <React.Fragment>
               <ResizeObserver onReflow={this._handleRect} />
-              <div className={classes.overlay} style={{ opacity: progress }}>
+              <div className={classes.overlay} style={styles}>
                 <AnimatedLogo
                   size={50}
                   style={{
@@ -153,7 +149,7 @@ class Loader extends React.PureComponent {
             </React.Fragment>
           )
         }
-      </Motion>
+      </Spring>
     );
 
     if (passthrough) {
