@@ -329,6 +329,18 @@ func newStartCommand() *cobra.Command {
 		setupErr = err
 	}
 
+	// Mark the old etcd keys as deprecated in the config file and then register
+	// aliases for older etcd attributes in config file to maintain backward
+	// compatiblity
+	deprecatedConfigAttributes()
+	viper.RegisterAlias(deprecatedFlagEtcdClientURL, flagEtcdClientURL)
+	viper.RegisterAlias(deprecatedFlagEtcdInitialAdvertisePeerURL, flagEtcdInitialAdvertisePeerURL)
+	viper.RegisterAlias(deprecatedFlagEtcdInitialCluster, flagEtcdInitialCluster)
+	viper.RegisterAlias(deprecatedFlagEtcdInitialClusterState, flagEtcdInitialClusterState)
+	viper.RegisterAlias(deprecatedFlagEtcdInitialClusterToken, flagEtcdInitialClusterToken)
+	viper.RegisterAlias(deprecatedFlagEtcdNodeName, flagEtcdNodeName)
+	viper.RegisterAlias(deprecatedFlagEtcdPeerURL, flagEtcdPeerURL)
+
 	// Use our custom template for the start command
 	cobra.AddTemplateFunc("categoryFlags", categoryFlags)
 	cmd.SetUsageTemplate(startUsageTemplate)
@@ -383,6 +395,29 @@ func aliasNormalizeFunc(f *pflag.FlagSet, name string) pflag.NormalizedName {
 		name = flagEtcdPeerURL
 	}
 	return pflag.NormalizedName(name)
+}
+
+// Look up the deprecated attributes in our config file and print a warning
+// message if set
+func deprecatedConfigAttributes() {
+	attributes := map[string]string{
+		deprecatedFlagEtcdClientURL:               flagEtcdClientURL,
+		deprecatedFlagEtcdInitialAdvertisePeerURL: flagEtcdInitialAdvertisePeerURL,
+		deprecatedFlagEtcdInitialCluster:          flagEtcdInitialCluster,
+		deprecatedFlagEtcdInitialClusterState:     flagEtcdInitialClusterState,
+		deprecatedFlagEtcdInitialClusterToken:     flagEtcdInitialClusterToken,
+		deprecatedFlagEtcdNodeName:                flagEtcdNodeName,
+		deprecatedFlagEtcdPeerURL:                 flagEtcdPeerURL,
+	}
+
+	for old, new := range attributes {
+		if viper.IsSet(old) {
+			logger.Warningf(
+				"config attribute %s has been deprecated, please use %s instead",
+				old, new,
+			)
+		}
+	}
 }
 
 func deprecatedFlagMessage(oldFlag, newFlag string) {
