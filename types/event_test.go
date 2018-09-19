@@ -122,7 +122,7 @@ func TestEventIsResolution(t *testing.T) {
 				CheckHistory{Status: 0},
 			},
 			status:   0,
-			expected: false,
+			expected: true,
 		},
 		{
 			name: "check has just transitioned",
@@ -131,13 +131,13 @@ func TestEventIsResolution(t *testing.T) {
 				CheckHistory{Status: 1},
 			},
 			status:   0,
-			expected: true,
+			expected: false,
 		},
 		{
 			name: "check has transitioned but still an incident",
 			history: []CheckHistory{
-				CheckHistory{Status: 0},
 				CheckHistory{Status: 2},
+				CheckHistory{Status: 0},
 			},
 			status:   1,
 			expected: false,

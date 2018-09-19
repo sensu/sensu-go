@@ -128,12 +128,12 @@ func (e *Event) IsResolution() bool {
 	}
 
 	// Try to retrieve the previous status in the check history and verify if it
-	// was a non-zero status, therefore indicating a resolution
-	isResolution := (len(e.Check.History) > 0 &&
-		e.Check.History[len(e.Check.History)-1].Status != 0 &&
+	// was a non-zero status, therefore indicating a resolution. The current event
+	// has already been added to the check history by eventd so we must retrieve
+	// the second to the last
+	return (len(e.Check.History) > 1 &&
+		e.Check.History[len(e.Check.History)-2].Status != 0 &&
 		!e.IsIncident())
-
-	return isResolution
 }
 
 // IsSilenced determines if an event has any silenced entries

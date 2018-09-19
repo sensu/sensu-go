@@ -118,7 +118,9 @@ func silencedBy(event *types.Event, silencedEntries []*types.Silenced) []string 
 }
 
 func handleExpireOnResolveEntries(ctx context.Context, event *types.Event, store store.Store) error {
-	if !event.HasCheck() || !event.IsResolution() {
+	// Make sure we have a check that contains at least one silenced ID and that
+	// its a resolution event
+	if !event.HasCheck() || len(event.Check.Silenced) == 0 || !event.IsResolution() {
 		return nil
 	}
 

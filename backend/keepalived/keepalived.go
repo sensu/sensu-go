@@ -258,14 +258,8 @@ func createKeepaliveEvent(rawEvent *types.Event) *types.Event {
 		Handlers:     []string{KeepaliveHandlerName},
 		Environment:  rawEvent.Entity.Environment,
 		Organization: rawEvent.Entity.Organization,
-		Status:       1,
+		Executed:     time.Now().Unix(),
 		Issued:       time.Now().Unix(),
-		History: []types.CheckHistory{
-			{
-				Status:   1,
-				Executed: time.Now().Unix(),
-			},
-		},
 	}
 	keepaliveEvent := &types.Event{
 		Timestamp: time.Now().Unix(),
@@ -311,7 +305,7 @@ func (k *Keepalived) handleUpdate(e *types.Event) error {
 		return err
 	}
 	event := createKeepaliveEvent(e)
-	event.Check.Status = 0
+
 	return k.bus.Publish(messaging.TopicEventRaw, event)
 }
 
@@ -335,6 +329,7 @@ func (k *Keepalived) HandleFailure(e *types.Event) error {
 	// this is a real keepalive event, emit it.
 	event := createKeepaliveEvent(e)
 	event.Check.Status = 1
+
 	if err := k.bus.Publish(messaging.TopicEventRaw, event); err != nil {
 		return err
 	}
