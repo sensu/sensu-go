@@ -46,6 +46,9 @@ sending of keepalive messages.
 - Fixed a bug in `sensuctl cluster health` that resulted in an unmarshal
 error in an unhealthy cluster.
 - Fixed a bug in the web ui, removed references to keepaliveTimeout.
+- Keepalive checks now have an history.
+- Some keepalive events were misinterpreted as resolution events, which caused
+these events to be handled instead of filtered.
 
 ### Breaking Changes
 - Removed the KeepaliveTimeout attribute from entities.
