@@ -19,15 +19,7 @@ class EntityDetailsContainer extends React.PureComponent {
   static fragments = {
     entity: gql`
       fragment EntityDetailsContainer_entity on Entity {
-        id
-        name
-        namespace {
-          organization
-          environment
-        }
-        isSilenced
-
-        events {
+        events(orderBy: LASTOK) {
           ...EntityDetailsEvents_event
         }
 

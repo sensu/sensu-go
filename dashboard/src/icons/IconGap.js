@@ -1,11 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-let id = 0;
-const getNextId = () => {
-  id += 1;
-  return id;
-};
+import uniqueId from "/utils/uniqueId";
 
 class IconGap extends React.PureComponent {
   static propTypes = {
@@ -15,7 +11,7 @@ class IconGap extends React.PureComponent {
 
   componentWillMount() {
     if (!this.props.disabled) {
-      this._id = `ic-gap-${getNextId()}`;
+      this._id = `ic-gap-${uniqueId()}`;
     }
   }
 

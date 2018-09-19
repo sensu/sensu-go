@@ -1,7 +1,6 @@
 package cluster
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/coreos/etcd/etcdserver/etcdserverpb"
@@ -32,13 +31,13 @@ func TestHealthCommandAlarmCorrupt(t *testing.T) {
 	clusterHealth = append(clusterHealth, &types.ClusterHealth{
 		MemberID: uint64(12345),
 		Name:     "backend0",
-		Err:      nil,
+		Err:      "",
 		Healthy:  true,
 	})
 	clusterHealth = append(clusterHealth, &types.ClusterHealth{
 		MemberID: uint64(12345),
 		Name:     "backend1",
-		Err:      errors.New("error"),
+		Err:      "error",
 		Healthy:  false,
 	})
 
@@ -79,7 +78,7 @@ func TestHealthCommandAlarmNoSpace(t *testing.T) {
 	clusterHealth = append(clusterHealth, &types.ClusterHealth{
 		MemberID: uint64(12345),
 		Name:     "backend1",
-		Err:      errors.New("error"),
+		Err:      "error",
 		Healthy:  false,
 	})
 

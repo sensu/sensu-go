@@ -118,11 +118,6 @@ func (d *Dashboardd) Stop() error {
 	return nil
 }
 
-// Status returns an error if dashboardd is unhealthy.
-func (d *Dashboardd) Status() error {
-	return nil
-}
-
 // Err returns a channel to listen for terminal errors on.
 func (d *Dashboardd) Err() <-chan error {
 	return d.errChan

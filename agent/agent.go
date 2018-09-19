@@ -46,8 +46,6 @@ const (
 	DefaultEnvironment = "default"
 	// DefaultKeepaliveInterval specifies the default keepalive interval
 	DefaultKeepaliveInterval = 20
-	// DefaultKeepaliveTimeout specifies the default keepalive timeout
-	DefaultKeepaliveTimeout = 120
 	// DefaultOrganization specifies the default organization
 	DefaultOrganization = "default"
 	// DefaultPassword specifies the default password
@@ -92,10 +90,11 @@ type Config struct {
 	// start
 	ExtendedAttributes []byte
 	// KeepaliveInterval is the interval, in seconds, when agents will send a
-	// keepalive to sensu-backend. Default: 60
-	KeepaliveInterval int
+	// keepalive to sensu-backend.
+	KeepaliveInterval uint32
 	// KeepaliveTimeout is the time after which a sensu-agent is considered dead
-	// by the backend.
+	// by the backend. See DefaultKeepaliveTimeout in types package for default
+	// value.
 	KeepaliveTimeout uint32
 	// Organization sets the Agent's RBAC organization identifier
 	Organization string
@@ -143,7 +142,7 @@ func FixtureConfig() *Config {
 		CacheDir:          path.SystemCacheDir("sensu-agent"),
 		Environment:       DefaultEnvironment,
 		KeepaliveInterval: DefaultKeepaliveInterval,
-		KeepaliveTimeout:  DefaultKeepaliveTimeout,
+		KeepaliveTimeout:  types.DefaultKeepaliveTimeout,
 		Organization:      DefaultOrganization,
 		Password:          DefaultPassword,
 		Socket: &SocketConfig{
@@ -381,15 +380,19 @@ func (a *Agent) sendKeepalive() error {
 	}
 	keepalive := &types.Event{}
 
+	keepalive.Check = &types.Check{
+		Name:     "keepalive",
+		Interval: a.config.KeepaliveInterval,
+		Timeout:  a.config.KeepaliveTimeout,
+	}
 	keepalive.Entity = a.getAgentEntity()
-
 	keepalive.Timestamp = time.Now().Unix()
+
 	msgBytes, err := json.Marshal(keepalive)
 	if err != nil {
 		return err
 	}
 	msg.Payload = msgBytes
-
 	a.sendq <- msg
 
 	return nil

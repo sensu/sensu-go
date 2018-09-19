@@ -6,16 +6,19 @@ import (
 	"golang.org/x/net/context"
 )
 
+// HealthController exposes actions which a viewer can perform
 type HealthController struct {
 	store store.HealthStore
 }
 
+// NewHealthController returns new HealthController
 func NewHealthController(store store.HealthStore) HealthController {
 	return HealthController{
 		store: store,
 	}
 }
 
-func (h HealthController) Health(ctx context.Context) *types.HealthResponse {
+// GetClusterHealth returns health information
+func (h HealthController) GetClusterHealth(ctx context.Context) *types.HealthResponse {
 	return h.store.GetClusterHealth(ctx)
 }

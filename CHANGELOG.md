@@ -10,24 +10,46 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Add windows/386 to binary gcs releases
 
+### Removed
+- Staging resources and configurations have been removed from sensu-go.
+
 ### Changed
 - Changed sensuctl title colour to use terminal's configured default for bold
-  text.
+text.
 - The backend no longer forcibly binds to localhost.
+- Keepalive intervals and timeouts are now configured in the check object of
+keepalive events.
 - The sensu-agent binary is now located at ./cmd/sensu-agent.
 - Sensuctl no longer uses auto text wrapping.
+- The backend no longer requires embedded etcd. External etcd instances can be
+used by providing the --no-embed option. In this case, the client will dial
+the URLs provided by --listen-client-urls.
+- The sensu-agent binary is now located at ./cmd/sensu-agent.
+- Sensuctl no longer uses auto text wrapping.
+- The backend no longer requires embedded etcd. External etcd instances can be
+used by providing the --no-embed option. In this case, the client will dial
+the URLs provided by --listen-client-urls.
+- Deprecated daemon `Status()` functions and `/info` (`/info` will be
+re-implemented in https://github.com/sensu/sensu-go/issues/1739).
+- Web ui entity recent events are sorted by last ok
 
 ### Fixed
 - Fixes a bug in `sensuctl cluster health` so the correct error is handled.
 - Fixed a bug where assets could not extract git tarballs.
 - Fixed a bug where assets would not install if given cache directory was a
-  relative path.
+relative path.
 - Fixed a bug where an agent's collection of system information could delay
-  sending of keepalive messages.
+sending of keepalive messages.
 - Fixed a bug in nagios perfdata parsing.
 - Etcd client URLs can now be a comma-separated list.
 - Fixed a bug where output metric format could not be unset.
 - Fixed a bug where the agent does not validate the ID at startup.
+- Fixed a bug in `sensuctl cluster health` that resulted in an unmarshal
+error in an unhealthy cluster.
+- Fixed a bug in the web ui, removed references to keepaliveTimeout.
+
+### Breaking Changes
+- Removed the KeepaliveTimeout attribute from entities.
 
 ## [2.0.0-beta.4] - 2018-08-14
 

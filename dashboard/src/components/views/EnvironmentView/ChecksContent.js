@@ -6,8 +6,9 @@ import AppLayout from "/components/AppLayout";
 import ChecksList from "/components/partials/ChecksList";
 import Content from "/components/Content";
 import ListToolbar from "/components/partials/ChecksList/ChecksListToolbar";
-import NotFoundView from "/components/views/NotFoundView";
+import NotFound from "/components/partials/NotFound";
 import Query from "/components/util/Query";
+import ToastConnector from "/components/relocation/ToastConnector";
 import { withQueryParams } from "/components/QueryParams";
 
 // duration used when polling is enabled; set fairly high until we understand
@@ -53,7 +54,7 @@ class ChecksContent extends React.Component {
     } = renderProps;
 
     if (!environment && !loading && !aborted) {
-      return <NotFoundView />;
+      return <NotFound />;
     }
 
     return (
@@ -69,15 +70,20 @@ class ChecksContent extends React.Component {
         </Content>
 
         <AppLayout.MobileFullWidthContent>
-          <ChecksList
-            limit={limit}
-            offset={offset}
-            onChangeQuery={setQueryParams}
-            environment={environment}
-            loading={(loading && (!environment || !isPolling)) || aborted}
-            refetch={refetch}
-            order={queryParams.order}
-          />
+          <ToastConnector>
+            {({ addToast }) => (
+              <ChecksList
+                limit={limit}
+                offset={offset}
+                onChangeQuery={setQueryParams}
+                environment={environment}
+                loading={(loading && (!environment || !isPolling)) || aborted}
+                refetch={refetch}
+                order={queryParams.order}
+                addToast={addToast}
+              />
+            )}
+          </ToastConnector>
         </AppLayout.MobileFullWidthContent>
       </div>
     );

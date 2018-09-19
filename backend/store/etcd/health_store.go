@@ -33,7 +33,7 @@ func (s *Store) GetClusterHealth(ctx context.Context) *types.HealthResponse {
 
 		if cliErr != nil {
 			logger.WithField("member", member.ID).WithError(cliErr).Error("unhealthy cluster member")
-			health.Err = cliErr
+			health.Err = cliErr.Error()
 			health.Healthy = false
 			healthResponse.ClusterHealth = append(healthResponse.ClusterHealth, health)
 			continue
@@ -43,10 +43,10 @@ func (s *Store) GetClusterHealth(ctx context.Context) *types.HealthResponse {
 		_, getErr := cli.Get(context.Background(), "health")
 
 		if getErr == nil || getErr == rpctypes.ErrPermissionDenied {
-			health.Err = nil
+			health.Err = ""
 			health.Healthy = true
 		} else {
-			health.Err = getErr
+			health.Err = getErr.Error()
 			health.Healthy = false
 		}
 

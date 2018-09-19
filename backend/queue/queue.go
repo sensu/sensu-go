@@ -7,22 +7,14 @@ import (
 	"encoding/hex"
 	"fmt"
 	"path"
-	"strings"
-	"sync"
+	"strconv"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/etcdserver/etcdserverpb"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
-
-type QueueClient interface {
-	clientv3.KV
-	clientv3.Cluster
-	clientv3.Watcher
-}
 
 const (
 	queuePrefix     = "queue"
@@ -32,65 +24,74 @@ const (
 )
 
 var (
-	queueKeyBuilder = store.NewKeyBuilder(queuePrefix)
+	queueKeyBuilder    = store.NewKeyBuilder(queuePrefix)
+	backendIDKeyPrefix = store.NewKeyBuilder("backends").Build()
 )
+
+type BackendIDGetter interface {
+	GetBackendID() int64
+}
 
 // EtcdGetter provides access to the etcd client for creating a new queue.
 type EtcdGetter struct {
-	Client    *clientv3.Client
-	BackendID string
+	Client          *clientv3.Client
+	BackendIDGetter BackendIDGetter
 }
 
 // GetQueue gets a new Queue.
 func (e EtcdGetter) GetQueue(path ...string) types.Queue {
-	return New(queueKeyBuilder.Build(path...), e.Client, e.BackendID)
+	return New(queueKeyBuilder.Build(path...), e.Client, e.BackendIDGetter)
 }
 
-// Queue is a durable FIFO queue that is backed by etcd.
+// Queue is a non-durable FIFO queue that is backed by etcd.
 // When an item is received by a client, it is deleted from
-// the work lane, and added to the in-flight lane. The item stays in-flight
-// until it is acked by the client, or returned to the work queue in case the
-// client nacks it or times out.
+// the work lane, and added to the in-flight lane. The item stays in the
+// in-flight lane until it is Acked by the client, or returned to the work
+// lane with Nack.
 type Queue struct {
-	kv          clientv3.KV
-	cluster     clientv3.Cluster
-	watcher     clientv3.Watcher
-	itemTimeout time.Duration
-	name        string
-	backendID   string
+	kv              clientv3.KV
+	lease           clientv3.Lease
+	watcher         clientv3.Watcher
+	itemTimeout     time.Duration
+	name            string
+	backendIDGetter BackendIDGetter
+}
+
+func (q *Queue) backendID() int64 {
+	return q.backendIDGetter.GetBackendID()
 }
 
 func (q *Queue) workPrefix() string {
-	return path.Join(q.name, q.backendID, workPostfix)
+	return path.Join(q.name, fmt.Sprintf("%x", q.backendID()), workPostfix)
 }
 
 func (q *Queue) inFlightPrefix() string {
-	return path.Join(q.name, q.backendID, inFlightPostfix)
+	return path.Join(q.name, fmt.Sprintf("%x", q.backendID()), inFlightPostfix)
 }
 
 // New returns an instance of Queue.
-func New(name string, client QueueClient, backendID string) *Queue {
+func New(name string, client *clientv3.Client, backendIDGetter BackendIDGetter) *Queue {
 	queue := &Queue{
-		name:        name,
-		kv:          client,
-		cluster:     client,
-		watcher:     client,
-		itemTimeout: itemTimeout,
-		backendID:   backendID,
+		name:            name,
+		kv:              client,
+		lease:           client,
+		watcher:         client,
+		itemTimeout:     itemTimeout,
+		backendIDGetter: backendIDGetter,
 	}
 	return queue
 }
 
 // Item is a Queue item.
 type Item struct {
-	key       string
-	value     string
-	revision  int64
-	timestamp int64
-	queue     *Queue
-	once      sync.Once
-	mu        *sync.Mutex
-	cancel    context.CancelFunc
+	key   string
+	value string
+	queue *Queue
+}
+
+// Key returns the key of the Item.
+func (i *Item) Key() string {
+	return i.key
 }
 
 // Value returns the value of the Item.
@@ -99,79 +100,20 @@ func (i *Item) Value() string {
 }
 
 // Ack acknowledges the Item has been received and processed, and deletes it
-// from the in flight queue.
+// from the in flight lane.
 func (i *Item) Ack(ctx context.Context) error {
-	var err error
-	i.once.Do(func() {
-		i.mu.Lock()
-		delCmp := clientv3.Compare(clientv3.ModRevision(i.key), "=", i.revision)
-		delReq := clientv3.OpDelete(i.key)
-		_, err = i.queue.kv.Txn(ctx).If(delCmp).Then(delReq).Commit()
-		i.mu.Unlock()
-		i.cancel()
-	})
+	_, err := i.queue.kv.Delete(ctx, i.key)
 	return err
 }
 
 // Nack returns the Item to the work queue and deletes it from the in-flight
-// queue.
+// lane.
 func (i *Item) Nack(ctx context.Context) error {
-	var err error
-	i.once.Do(func() {
-		i.mu.Lock()
-		err = i.queue.swapLane(ctx, i.key, i.revision, i.value, i.queue.workPrefix())
-		i.mu.Unlock()
-		i.cancel()
-	})
-	return err
+	return i.queue.swapLane(ctx, i.key, i.value, i.queue.workPrefix())
 }
 
-func (i *Item) keepalive(ctx context.Context) {
-	ticker := time.NewTicker(1 * time.Second)
-	// stop the goroutine when the context is canceled (if Ack or Nack is
-	// called)
-	go func() {
-		defer ticker.Stop()
-		for {
-			select {
-			case <-ticker.C:
-				// create new key with new timestamp
-				seq, err := i.queue.timeStamp()
-				if err != nil {
-					logger.WithError(err).Error("error creating unique name for item keepalive")
-					return
-				}
-				updateKey := path.Join(i.queue.inFlightPrefix(), seq)
-
-				i.mu.Lock()
-				// create new key, delete old key
-				putCmp := clientv3.Compare(clientv3.ModRevision(updateKey), "=", 0)
-				delCmp := clientv3.Compare(clientv3.ModRevision(i.key), "=", i.revision)
-				putReq := clientv3.OpPut(updateKey, i.value)
-				delReq := clientv3.OpDelete(i.key)
-
-				_, err = i.queue.kv.Txn(ctx).If(putCmp, delCmp).Then(putReq, delReq).Commit()
-
-				if err != nil {
-					// log error
-					if err != context.Canceled {
-						logger.WithError(err).Error("error updating item keepalive timestamp")
-					}
-					i.mu.Unlock()
-					return
-				}
-
-				i.key = updateKey
-				i.mu.Unlock()
-			case <-ctx.Done():
-				return
-			}
-		}
-	}()
-}
-
-// swapLane swaps a key/value pair from one place to another
-func (q *Queue) swapLane(ctx context.Context, currentKey string, currentRevision int64, value string, lane string) error {
+// swapLane swaps a key/value pair from one lane to another
+func (q *Queue) swapLane(ctx context.Context, currentKey, value string, lane string) error {
 	for {
 		seq, err := q.timeStamp()
 		if err != nil {
@@ -180,11 +122,11 @@ func (q *Queue) swapLane(ctx context.Context, currentKey string, currentRevision
 		uKey := path.Join(lane, seq)
 
 		putCmp := clientv3.Compare(clientv3.ModRevision(uKey), "=", 0)
-		delCmp := clientv3.Compare(clientv3.ModRevision(currentKey), "=", currentRevision)
-		putReq := clientv3.OpPut(uKey, value)
+		leaseID := clientv3.LeaseID(q.backendID())
+		putReq := clientv3.OpPut(uKey, value, clientv3.WithLease(leaseID))
 		delReq := clientv3.OpDelete(currentKey)
 
-		response, err := q.kv.Txn(ctx).If(putCmp, delCmp).Then(putReq, delReq).Commit()
+		response, err := q.kv.Txn(ctx).If(putCmp).Then(putReq, delReq).Commit()
 		if response.Succeeded {
 			break
 		}
@@ -195,17 +137,27 @@ func (q *Queue) swapLane(ctx context.Context, currentKey string, currentRevision
 	return nil
 }
 
+// getAllBackendIDs gets all currently valid BackendIDs.
+func getAllBackendIDs(ctx context.Context, kv clientv3.KV) ([]string, error) {
+	resp, err := kv.Get(ctx, backendIDKeyPrefix, clientv3.WithPrefix())
+	if err != nil {
+		return nil, err
+	}
+	result := make([]string, 0, len(resp.Kvs))
+	for _, kv := range resp.Kvs {
+		result = append(result, string(kv.Value))
+	}
+	return result, nil
+}
+
 // Enqueue adds a new value to the queue. It returns an error if the context is
 // canceled, the deadline exceeded, or if the client encounters an error.
 func (q *Queue) Enqueue(ctx context.Context, value string) error {
-	resp, err := q.cluster.MemberList(ctx)
+	backendIDs, err := getAllBackendIDs(ctx, q.kv)
 	if err != nil {
 		return fmt.Errorf("queue: couldn't enqueue item: %s", err)
 	}
-	if err := q.cleanup(ctx, resp.Members); err != nil {
-		return fmt.Errorf("queue: couldn't enqueue item: %s", err)
-	}
-	cmps, ops, err := q.enqueueOps(resp.Members, value)
+	cmps, ops, err := q.enqueueOps(backendIDs, value)
 	if err != nil {
 		return fmt.Errorf("queue: couldn't enqueue item: %s", err)
 	}
@@ -223,43 +175,22 @@ func (q *Queue) Enqueue(ctx context.Context, value string) error {
 	}
 }
 
-// cleanup stale queue entries belonging to backends that no longer exist
-func (q *Queue) cleanup(ctx context.Context, members []*etcdserverpb.Member) error {
-	memberSet := make(map[string]struct{})
-	for _, member := range members {
-		memberSet[fmt.Sprintf("%x", member.ID)] = struct{}{}
-	}
-	resp, err := q.kv.Get(ctx, q.name, clientv3.WithPrefix())
-	if err != nil {
-		return err
-	}
-	ops := []clientv3.Op{}
-	for _, kv := range resp.Kvs {
-		// Look for backends that are not present anymore in the member list
-		key := string(kv.Key)
-		parts := strings.Split(key, "/")
-		backendID := parts[len(parts)-3]
-		if _, ok := memberSet[backendID]; !ok {
-			ops = append(ops, clientv3.OpDelete(key))
-		}
-	}
-	_, err = q.kv.Txn(ctx).If().Then(ops...).Commit()
-	return err
-}
-
-func (q *Queue) enqueueOps(members []*etcdserverpb.Member, value string) ([]clientv3.Cmp, []clientv3.Op, error) {
+func (q *Queue) enqueueOps(backendIDs []string, value string) ([]clientv3.Cmp, []clientv3.Op, error) {
 	cmps := []clientv3.Cmp{}
 	ops := []clientv3.Op{}
 
-	for _, m := range members {
-		backendID := fmt.Sprintf("%x", m.ID)
+	for _, backendID := range backendIDs {
 		seq, err := q.timeStamp()
 		if err != nil {
 			return nil, nil, fmt.Errorf("queue error: %s", err)
 		}
+		leaseID, err := strconv.ParseInt(backendID, 16, 64)
+		if err != nil {
+			return nil, nil, fmt.Errorf("queue: invalid backend ID %q: %s", backendID, err)
+		}
 		workKey := path.Join(q.name, backendID, workPostfix, seq)
 		cmp := clientv3.Compare(clientv3.ModRevision(workKey), "=", 0)
-		op := clientv3.OpPut(workKey, value)
+		op := clientv3.OpPut(workKey, value, clientv3.WithLease(clientv3.LeaseID(leaseID)))
 		cmps = append(cmps, cmp)
 		ops = append(ops, op)
 	}
@@ -270,11 +201,6 @@ func (q *Queue) enqueueOps(members []*etcdserverpb.Member, value string) ([]clie
 // Dequeue gets a value from the queue. It returns an error if the context
 // is cancelled, the deadline exceeded, or if the client encounters an error.
 func (q *Queue) Dequeue(ctx context.Context) (types.QueueItem, error) {
-	err := q.nackExpiredItems(ctx, q.itemTimeout)
-	if err != nil {
-		return nil, err
-	}
-
 	response, err := q.kv.Get(ctx, q.workPrefix(), clientv3.WithFirstKey()...)
 	if err != nil {
 		return nil, err
@@ -324,31 +250,6 @@ func (q *Queue) getItemTimestamp(key []byte) (time.Time, error) {
 	return unixTimestamp, nil
 }
 
-func (q *Queue) nackExpiredItems(ctx context.Context, timeout time.Duration) error {
-	// get all items in the inflight queue
-	inFlightItems, err := q.kv.Get(ctx, q.inFlightPrefix(), clientv3.WithPrefix())
-	if err != nil {
-		return err
-	}
-
-	// get the timestamp from each key
-	for _, item := range inFlightItems.Kvs {
-		itemTimestamp, err := q.getItemTimestamp(item.Key)
-		if err != nil {
-			return err
-		}
-		// If the item has timed out or the client has disconnected, the item is
-		// considered expired and should be moved back to the work queue.
-		if time.Since(itemTimestamp) > timeout || ctx.Err() != nil {
-			err = q.swapLane(ctx, string(item.Key), item.ModRevision, string(item.Value), q.workPrefix())
-			if err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
 func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (types.QueueItem, error) {
 	key := string(kv.Key)
 
@@ -361,7 +262,8 @@ func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (types.Queue
 
 	delCmp := clientv3.Compare(clientv3.Version(key), ">", 0)
 	putCmp := clientv3.Compare(clientv3.Version(uKey), "=", 0)
-	putReq := clientv3.OpPut(uKey, string(kv.Value))
+	leaseID := clientv3.LeaseID(q.backendID())
+	putReq := clientv3.OpPut(uKey, string(kv.Value), clientv3.WithLease(leaseID))
 	delReq := clientv3.OpDelete(key)
 
 	response, err := q.kv.Txn(ctx).If(putCmp, delCmp).Then(putReq, delReq).Commit()
@@ -371,20 +273,12 @@ func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (types.Queue
 
 	// return the new item
 	if response.Succeeded {
-		putResp := response.Responses[0].GetResponsePut()
-		revision := putResp.GetHeader().GetRevision()
-		context, cancel := context.WithCancel(ctx)
 		value := string(kv.Value)
 		item := &Item{
-			key:       string(uKey),
-			value:     value,
-			revision:  revision,
-			timestamp: time.Now().UnixNano(),
-			queue:     q,
-			mu:        &sync.Mutex{},
-			cancel:    cancel,
+			key:   string(uKey),
+			value: value,
+			queue: q,
 		}
-		item.keepalive(context)
 		return item, nil
 	}
 	return nil, nil

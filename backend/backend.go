@@ -1,11 +1,13 @@
 package backend
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
 	"runtime/debug"
 	"strings"
+	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/agentd"
@@ -26,7 +28,6 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/rpc"
-	"github.com/sensu/sensu-go/types"
 )
 
 // Backend represents the backend server, which is used to hold the datastore
@@ -36,21 +37,12 @@ type Backend struct {
 	Etcd    *etcd.Etcd
 	Store   store.Store
 
-	done         chan struct{}
-	shutdownChan chan struct{}
+	done   chan struct{}
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
-// Initialize instantiates a Backend struct with the provided config, by
-// configuring etcd and establishing a list of daemons, which constitute our
-// backend. The daemons will later be started according to their position in the
-// b.Daemons list, and stopped in reverse order
-func Initialize(config *Config) (*Backend, error) {
-	// Initialize a Backend struct
-	b := &Backend{}
-
-	b.done = make(chan struct{})
-	b.shutdownChan = make(chan struct{})
-
+func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 	// Intialize the TLS configuration
 	var (
 		tlsConfig *tls.Config
@@ -61,6 +53,16 @@ func Initialize(config *Config) (*Backend, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if config.NoEmbedEtcd {
+		// Don't start up an embedded etcd, return a client that connects to an
+		// external etcd instead.
+		return clientv3.New(clientv3.Config{
+			Endpoints:   strings.Split(config.EtcdListenClientURL, ","),
+			DialTimeout: 5 * time.Second,
+			TLS:         tlsConfig,
+		})
 	}
 
 	// Initialize and start etcd, because we'll need to provide an etcd client to
@@ -88,27 +90,49 @@ func Initialize(config *Config) (*Backend, error) {
 	// Start etcd
 	e, err := etcd.NewEtcd(cfg)
 	if err != nil {
-		return nil, errors.New("error starting etcd: " + err.Error())
+		return nil, fmt.Errorf("error starting etcd: %s", err)
 	}
 
-	// Create an etcd client for our daemons
-	client, err := e.NewClient()
+	backend.Etcd = e
+
+	// Create an etcd client
+	return e.NewClient()
+}
+
+// Initialize instantiates a Backend struct with the provided config, by
+// configuring etcd and establishing a list of daemons, which constitute our
+// backend. The daemons will later be started according to their position in the
+// b.Daemons list, and stopped in reverse order
+func Initialize(config *Config) (*Backend, error) {
+	// Initialize a Backend struct
+	b := &Backend{}
+
+	b.done = make(chan struct{})
+	b.ctx, b.cancel = context.WithCancel(context.Background())
+
+	client, err := newClient(config, b)
 	if err != nil {
-		return nil, errors.New("error initializing an etcd client: " + err.Error())
+		return nil, err
 	}
 
 	// Initialize the store, which lives on top of etcd
-	store := etcdstore.NewStore(client, e.Name())
+	logger.Debug("Initializing store...")
+	store := etcdstore.NewStore(client, config.EtcdName)
 	if err = seeds.SeedInitialData(store); err != nil {
 		return nil, errors.New("error initializing the store: " + err.Error())
 	}
+	logger.Debug("Done initializing store")
+
+	logger.Debug("Registering backend...")
+	backendID := etcd.NewBackendIDGetter(b.ctx, client)
+	logger.Debug("Done registering backend.")
 
 	// Initialize an etcd getter
-	queueGetter := queue.EtcdGetter{Client: client, BackendID: e.BackendID()}
+	queueGetter := queue.EtcdGetter{Client: client, BackendIDGetter: backendID}
 
 	// Initialize the bus
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: ring.EtcdGetter{Client: client, BackendID: e.BackendID()},
+		RingGetter: ring.EtcdGetter{Client: client, BackendID: fmt.Sprintf("%x", backendID.GetBackendID())},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", bus.Name(), err.Error())
@@ -175,14 +199,13 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize apid
 	api, err := apid.New(apid.Config{
-		Host:          config.APIHost,
-		Port:          config.APIPort,
-		Bus:           bus,
-		Store:         store,
-		QueueGetter:   queueGetter,
-		TLS:           config.TLS,
-		BackendStatus: b.Status,
-		Cluster:       clientv3.NewCluster(client),
+		Host:        config.APIHost,
+		Port:        config.APIPort,
+		Bus:         bus,
+		Store:       store,
+		QueueGetter: queueGetter,
+		TLS:         config.TLS,
+		Cluster:     clientv3.NewCluster(client),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err.Error())
@@ -201,8 +224,7 @@ func Initialize(config *Config) (*Backend, error) {
 	}
 	b.Daemons = append(b.Daemons, dashboard)
 
-	// Add etcd and store to our backend, since it's needed across the methods
-	b.Etcd = e
+	// Add store to our backend, since it's needed across the methods
 	b.Store = store
 
 	return b, nil
@@ -238,30 +260,34 @@ func (b *Backend) Run() error {
 		sg[i], sg[opp] = sg[opp], sg[i]
 	}
 
-	// Add etcd to our errGroup, since it's not included in the daemon list
-	eg.errors = append(eg.errors, b.Etcd)
+	if b.Etcd != nil {
+		// Add etcd to our errGroup, since it's not included in the daemon list
+		eg.errors = append(eg.errors, b.Etcd)
+	}
 	eg.Go()
 
 	select {
 	case err := <-eg.Err():
 		logger.Error(err.Error())
-	case <-b.shutdownChan:
+	case <-b.ctx.Done():
 		logger.Info("backend shutting down")
 	}
 
 	var derr error
-	logger.Info("shutting down etcd")
-	defer func() {
-		if err := recover(); err != nil {
-			trace := string(debug.Stack())
-			logger.WithField("panic", trace).WithError(err.(error)).
-				Error("recovering from panic due to error, shutting down etcd")
-		}
-		err := b.Etcd.Shutdown()
-		if derr == nil {
-			derr = err
-		}
-	}()
+	if b.Etcd != nil {
+		logger.Info("shutting down etcd")
+		defer func() {
+			if err := recover(); err != nil {
+				trace := string(debug.Stack())
+				logger.WithField("panic", trace).WithError(err.(error)).
+					Error("recovering from panic due to error, shutting down etcd")
+			}
+			err := b.Etcd.Shutdown()
+			if derr == nil {
+				derr = err
+			}
+		}()
+	}
 
 	if err := sg.Stop(); err != nil {
 		if derr == nil {
@@ -322,26 +348,17 @@ func (e errGroup) Err() <-chan error {
 
 // Migration performs the migration of data inside the store
 func (b *Backend) Migration() error {
-	logger.Infof("starting migration on the store with URL '%s'", b.Etcd.LoopbackURL())
-	migration.Run(b.Etcd.LoopbackURL())
+	clientURLs := b.Etcd.ClientURLs()
+	if len(clientURLs) == 0 {
+		return errors.New("no client URLs specified")
+	}
+	logger.Infof("starting migration on the store with URL %q", clientURLs[0])
+	migration.Run(clientURLs[0])
 	return nil
-}
-
-// Status returns a map of component name to boolean healthy indicator.
-func (b *Backend) Status() types.StatusMap {
-	sm := map[string]bool{
-		"store": b.Etcd.Healthy(),
-	}
-
-	for _, d := range b.Daemons {
-		sm[d.Name()] = d.Status() == nil
-	}
-
-	return sm
 }
 
 // Stop the Backend cleanly.
 func (b *Backend) Stop() {
-	close(b.shutdownChan)
+	b.cancel()
 	<-b.done
 }

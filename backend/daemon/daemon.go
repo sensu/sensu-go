@@ -11,9 +11,6 @@ type Daemon interface {
 	// shutdown.
 	Stop() error
 
-	// Status returns nil if the Daemon is healthy, otherwise it returns an error.
-	Status() error
-
 	// Err returns a channel that the caller can use to listen for terminal errors
 	// indicating a premature shutdown of the Daemon.
 	Err() <-chan error

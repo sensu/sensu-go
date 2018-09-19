@@ -512,7 +512,6 @@ type Entity implements Node {
   lastSeen: DateTime
   deregister: Boolean!
   deregistration: Deregistration!
-  keepaliveTimeout: Int!
   user: String!
 
   """Redact contains the fields to redact on the agent."""
@@ -773,11 +772,10 @@ type EventConnection {
 }
 
 enum EventsListOrder {
-  OLDEST
-  NEWEST
-  SEVERITY
   LASTOK
-  LASTOK_DESC
+  NEWEST
+  OLDEST
+  SEVERITY
 }
 
 input ExecuteCheckInput {
@@ -958,9 +956,20 @@ type Mutation {
 
   """Removes given silence."""
   deleteSilence(input: DeleteRecordInput!): DeleteRecordPayload
+
+  """Create new authorization tokens."""
   createTokens(username: String!, password: String!): Boolean
+
+  """Create new authorization tokens using refresh token."""
   refreshTokens(notBefore: DateTime): RefreshTokensPayload!
+
+  """Invalidates authorization tokens."""
   invalidateTokens: Boolean
+
+  """Flags authorization tokens as invalid."""
+  flagTokens: Boolean
+
+  """Stores given pair as user's last visited environment."""
   setLastEnvironment(organization: String!, environment: String!): Boolean
 }
 

@@ -6,7 +6,7 @@ import AppLayout from "/components/AppLayout";
 import Content from "/components/Content";
 import EventsList from "/components/partials/EventsList";
 import ListToolbar from "/components/partials/EventsList/EventsListToolbar";
-import NotFoundView from "/components/views/NotFoundView";
+import NotFound from "/components/partials/NotFound";
 import Query from "/components/util/Query";
 import { withQueryParams } from "/components/QueryParams";
 
@@ -62,7 +62,7 @@ class EventsContent extends React.Component {
     } = renderProps;
 
     if (!environment && !loading && !aborted) {
-      return <NotFoundView />;
+      return <NotFound />;
     }
 
     return (

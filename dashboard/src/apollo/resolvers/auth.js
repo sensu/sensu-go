@@ -103,6 +103,18 @@ export default {
           handleTokens(cache, "InvalidateTokensMutation"),
         );
       },
+
+      flagTokens: (_, vars, { cache }) => {
+        const data = {
+          auth: {
+            __typename: "Auth",
+            invalid: true,
+          },
+        };
+        cache.writeData({ data });
+
+        return null;
+      },
     },
   },
 };

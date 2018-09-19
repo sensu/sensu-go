@@ -16,10 +16,6 @@ const (
 	// handling keepalive events.
 	DefaultHandlerCount = 10
 
-	// DefaultKeepaliveTimeout is the amount of time we consider a Keepalive
-	// valid for.
-	DefaultKeepaliveTimeout = 120 // seconds
-
 	// KeepaliveCheckName is the name of the check that is created when a
 	// keepalive timeout occurs.
 	KeepaliveCheckName = "keepalive"
@@ -117,11 +113,6 @@ func (k *Keepalived) Stop() error {
 	return err
 }
 
-// Status returns nil if the Daemon is healthy, otherwise it returns an error.
-func (k *Keepalived) Status() error {
-	return nil
-}
-
 // Err returns a channel that the caller can use to listen for terminal errors
 // indicating a premature shutdown of the Daemon.
 func (k *Keepalived) Err() <-chan error {
@@ -217,7 +208,13 @@ func (k *Keepalived) processKeepalives() {
 			logger.WithError(err).Error("error handling entity registration")
 		}
 
-		timeout := int64(entity.KeepaliveTimeout)
+		// Retrieve the keepalive timeout or use a default value in case an older
+		// agent version was used, since entity.KeepaliveTimeout no longer exist
+		timeout := int64(types.DefaultKeepaliveTimeout)
+		if event.Check != nil {
+			timeout = int64(event.Check.Timeout)
+		}
+
 		supervisor := k.monitorFactory(k)
 		if err := supervisor.Monitor(context.TODO(), entity.ID, event, timeout); err != nil {
 			logger.WithError(err).Error("error monitoring entity")
@@ -253,13 +250,14 @@ func (k *Keepalived) handleEntityRegistration(entity *types.Entity) error {
 	return err
 }
 
-func createKeepaliveEvent(entity *types.Entity) *types.Event {
+func createKeepaliveEvent(rawEvent *types.Event) *types.Event {
 	keepaliveCheck := &types.Check{
 		Name:         KeepaliveCheckName,
-		Interval:     entity.KeepaliveTimeout,
+		Interval:     rawEvent.Check.Interval,
+		Timeout:      rawEvent.Check.Timeout,
 		Handlers:     []string{KeepaliveHandlerName},
-		Environment:  entity.Environment,
-		Organization: entity.Organization,
+		Environment:  rawEvent.Entity.Environment,
+		Organization: rawEvent.Entity.Organization,
 		Status:       1,
 		Issued:       time.Now().Unix(),
 		History: []types.CheckHistory{
@@ -271,7 +269,7 @@ func createKeepaliveEvent(entity *types.Entity) *types.Event {
 	}
 	keepaliveEvent := &types.Event{
 		Timestamp: time.Now().Unix(),
-		Entity:    entity,
+		Entity:    rawEvent.Entity,
 		Check:     keepaliveCheck,
 	}
 
@@ -281,7 +279,7 @@ func createKeepaliveEvent(entity *types.Entity) *types.Event {
 func createRegistrationEvent(entity *types.Entity) *types.Event {
 	registrationCheck := &types.Check{
 		Name:         RegistrationCheckName,
-		Interval:     entity.KeepaliveTimeout,
+		Interval:     1,
 		Handlers:     []string{RegistrationHandlerName},
 		Environment:  entity.Environment,
 		Organization: entity.Organization,
@@ -312,7 +310,7 @@ func (k *Keepalived) handleUpdate(e *types.Event) error {
 		logger.WithError(err).Error("error updating entity in store")
 		return err
 	}
-	event := createKeepaliveEvent(entity)
+	event := createKeepaliveEvent(e)
 	event.Check.Status = 0
 	return k.bus.Publish(messaging.TopicEventRaw, event)
 }
@@ -335,13 +333,13 @@ func (k *Keepalived) HandleFailure(e *types.Event) error {
 	}
 
 	// this is a real keepalive event, emit it.
-	event := createKeepaliveEvent(entity)
+	event := createKeepaliveEvent(e)
 	event.Check.Status = 1
 	if err := k.bus.Publish(messaging.TopicEventRaw, event); err != nil {
 		return err
 	}
 
 	logger.WithField("entity", entity.GetID()).Info("keepalive timed out, creating keepalive event for entity")
-	timeout := time.Now().Unix() + int64(entity.KeepaliveTimeout)
+	timeout := time.Now().Unix() + int64(e.Check.Timeout)
 	return k.store.UpdateFailingKeepalive(ctx, entity, timeout)
 }

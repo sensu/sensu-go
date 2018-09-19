@@ -13,8 +13,9 @@ class UnauthenticatedRoute extends React.PureComponent {
 
   render() {
     const { data, ...props } = this.props;
+    const authenticated = data.auth.accessToken && !data.auth.invalid;
 
-    return <ConditionalRoute {...props} active={!data.auth.accessToken} />;
+    return <ConditionalRoute {...props} active={!authenticated} />;
   }
 }
 
@@ -22,6 +23,7 @@ export default graphql(gql`
   query UnauthenticatedRouteQuery {
     auth @client {
       accessToken
+      invalid
     }
   }
 `)(UnauthenticatedRoute);

@@ -6,7 +6,7 @@ import AppLayout from "/components/AppLayout";
 import Content from "/components/Content";
 import EntitiesList from "/components/partials/EntitiesList";
 import ListToolbar from "/components/partials/EntitiesList/EntitiesListToolbar";
-import NotFoundView from "/components/views/NotFoundView";
+import NotFound from "/components/partials/NotFound";
 import Query from "/components/util/Query";
 import { withQueryParams } from "/components/QueryParams";
 
@@ -55,7 +55,7 @@ class EntitiesContent extends React.PureComponent {
     } = renderProps;
 
     if (!environment && !loading && !aborted) {
-      return <NotFoundView />;
+      return <NotFound />;
     }
 
     return (

@@ -16,6 +16,7 @@ import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
 import TableRow from "@material-ui/core/TableRow";
 import { TableListEmptyState } from "/components/TableList";
+import ExecuteCheckStatusToast from "/components/relocation/ExecuteCheckStatusToast";
 
 import ChecksListHeader from "./ChecksListHeader";
 import ChecksListItem from "./ChecksListItem";
@@ -34,6 +35,7 @@ class ChecksList extends React.Component {
     offset: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     order: PropTypes.string.isRequired,
     refetch: PropTypes.func.isRequired,
+    addToast: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
@@ -120,7 +122,18 @@ class ChecksList extends React.Component {
   };
 
   executeChecks = checks => {
-    checks.forEach(({ id }) => executeCheck(this.props.client, { id }));
+    checks.forEach(({ id, name, namespace }) => {
+      const promise = executeCheck(this.props.client, { id });
+
+      this.props.addToast(({ remove }) => (
+        <ExecuteCheckStatusToast
+          onClose={remove}
+          mutation={promise}
+          checkName={name}
+          namespace={namespace}
+        />
+      ));
+    });
   };
 
   deleteChecks = checks => {

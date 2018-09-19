@@ -6,7 +6,7 @@ import toRenderProps from "recompose/toRenderProps";
 
 import AppLayout from "/components/AppLayout";
 import Content from "/components/Content";
-import NotFoundView from "/components/views/NotFoundView";
+import NotFound from "/components/partials/NotFound";
 import Query from "/components/util/Query";
 import SilencesList from "/components/partials/SilencesList";
 import SilencesListToolbar from "/components/partials/SilencesList/SilencesListToolbar";
@@ -66,7 +66,7 @@ class SilencesContent extends React.Component {
     } = renderProps;
 
     if (!environment && !loading && !aborted) {
-      return <NotFoundView />;
+      return <NotFound />;
     }
 
     return (

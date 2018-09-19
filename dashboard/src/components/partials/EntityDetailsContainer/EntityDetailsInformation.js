@@ -42,7 +42,6 @@ class EntityDetailsInformation extends React.PureComponent {
         name
         class
         subscriptions
-        keepaliveTimeout
         lastSeen
         status
         silences {
