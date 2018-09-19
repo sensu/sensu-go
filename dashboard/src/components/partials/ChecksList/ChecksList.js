@@ -5,6 +5,7 @@ import { withApollo } from "react-apollo";
 
 import deleteCheck from "/mutations/deleteCheck";
 import executeCheck from "/mutations/executeCheck";
+import setCheckPublish from "/mutations/setCheckPublish";
 import ClearSilencesDialog from "/components/partials/ClearSilencedEntriesDialog";
 import ListController from "/components/controller/ListController";
 import Loader from "/components/util/Loader";
@@ -84,8 +85,6 @@ class ChecksList extends React.Component {
   state = {
     silence: null,
     unsilence: null,
-    publish: null,
-    unpublish: null,
   };
 
   silenceChecks = checks => {
@@ -120,13 +119,15 @@ class ChecksList extends React.Component {
   };
 
   publishChecks = checks => {
-    // eslint-disable-next-line no-console
-    console.log("Yay");
+    checks.forEach(check => {
+      setCheckPublish(this.props.client, { id: check.id, publish: true });
+    });
   };
 
   unpublishChecks = checks => {
-    // eslint-disable-next-line no-console
-    console.log("Yay");
+    checks.forEach(check => {
+      setCheckPublish(this.props.client, { id: check.id, publish: false });
+    });
   };
 
   executeChecks = checks => {
