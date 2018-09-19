@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/mitchellh/mapstructure"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
@@ -19,8 +20,13 @@ var _ schema.MutationFieldResolvers = (*mutationsImpl)(nil)
 //
 
 type mutationsImpl struct {
-	checkCtrl     actions.CheckController
-	checkExecutor checkExecutor
+	checkCreator   checkCreator
+	checkDestroyer checkDestroyer
+	checkExecutor  checkExecutor
+	checkReplacer  interface {
+		checkFinder
+		checkReplacer
+	}
 
 	entityDestroyer entityDestroyer
 
@@ -39,8 +45,10 @@ func newMutationImpl(store store.Store, getter types.QueueGetter, bus messaging.
 	silenceCtrl := actions.NewSilencedController(store)
 
 	return &mutationsImpl{
-		checkCtrl:     checkCtrl,
-		checkExecutor: checkCtrl,
+		checkCreator:   checkCtrl,
+		checkDestroyer: checkCtrl,
+		checkExecutor:  checkCtrl,
+		checkReplacer:  checkCtrl,
 
 		entityDestroyer: entityCtrl,
 
@@ -69,9 +77,34 @@ func (r *mutationsImpl) CreateCheck(p schema.MutationCreateCheckFieldResolverPar
 	check.Name = inputs.Name
 	check.Organization = inputs.Ns.Organization
 	check.Environment = inputs.Ns.Environment
-	copyCheckInputs(&check, inputs.Props)
 
-	err := r.checkCtrl.Create(p.Context, check)
+	rawArgs := p.ResolveParams.Args
+	copyCheckInputs(&check, rawArgs["input"])
+
+	err := r.checkCreator.Create(p.Context, check)
+	if err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{
+		"clientMutationId": p.Args.Input.ClientMutationID,
+		"check":            &check,
+	}, nil
+}
+
+// UpdateCheck implements response to request for the 'updateCheck' field.
+func (r *mutationsImpl) UpdateCheck(p schema.MutationUpdateCheckFieldResolverParams) (interface{}, error) {
+	components, _ := globalid.Decode(p.Args.Input.ID)
+	ctx := setContextFromComponents(p.Context, components)
+
+	check, err := r.checkReplacer.Find(ctx, components.UniqueComponent())
+	if err != nil {
+		return nil, err
+	}
+
+	rawArgs := p.ResolveParams.Args
+	copyCheckInputs(check, rawArgs["input"])
+
+	err = r.checkReplacer.CreateOrReplace(p.Context, *check)
 	if err != nil {
 		return nil, err
 	}
@@ -81,33 +114,12 @@ func (r *mutationsImpl) CreateCheck(p schema.MutationCreateCheckFieldResolverPar
 	}, nil
 }
 
-// UpdateCheck implements response to request for the 'updateCheck' field.
-func (r *mutationsImpl) UpdateCheck(p schema.MutationUpdateCheckFieldResolverParams) (interface{}, error) {
-	inputs := p.Args.Input
-	components, _ := globalid.Decode(inputs.ID)
-
-	var check types.CheckConfig
-	check.Name = components.UniqueComponent()
-	check.Organization = components.Organization()
-	check.Environment = components.Environment()
-	copyCheckInputs(&check, inputs.Props)
-
-	err := r.checkCtrl.Update(p.Context, check)
-	if err != nil {
-		return nil, err
-	}
-	return map[string]interface{}{
-		"clientMutationId": inputs.ClientMutationID,
-		"check":            check,
-	}, nil
-}
-
 // DeleteCheck implements response to request for the 'deleteCheck' field.
 func (r *mutationsImpl) DeleteCheck(p schema.MutationDeleteCheckFieldResolverParams) (interface{}, error) {
 	components, _ := globalid.Decode(p.Args.Input.ID)
 	ctx := setContextFromComponents(p.Context, components)
 
-	err := r.checkCtrl.Destroy(ctx, components.UniqueComponent())
+	err := r.checkDestroyer.Destroy(ctx, components.UniqueComponent())
 	if err != nil {
 		return nil, err
 	}
@@ -136,15 +148,17 @@ func (r *mutationsImpl) ExecuteCheck(p schema.MutationExecuteCheckFieldResolverP
 	}, nil
 }
 
-func copyCheckInputs(r *types.CheckConfig, ins *schema.CheckConfigInputs) {
-	r.RuntimeAssets = ins.Assets
-	r.Command = ins.Command
-	r.Handlers = ins.Handlers
-	r.Interval = uint32(ins.Interval)
-	r.HighFlapThreshold = uint32(ins.HighFlapThreshold)
-	r.LowFlapThreshold = uint32(ins.LowFlapThreshold)
-	r.Subscriptions = ins.Subscriptions
-	r.Publish = ins.Publish
+func copyCheckInputs(r *types.CheckConfig, in interface{}) {
+	ins, ok := in.(map[string]interface{})
+	if !ok {
+		return
+	}
+	props, ok := ins["props"].(map[string]interface{})
+	if !ok {
+		return
+	}
+
+	mapstructure.Decode(props, r)
 }
 
 type checkMutationPayload struct {

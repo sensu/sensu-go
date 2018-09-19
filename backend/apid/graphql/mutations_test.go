@@ -29,6 +29,57 @@ func TestMutationTypeExecuteCheck(t *testing.T) {
 	assert.NotEmpty(t, body)
 }
 
+func TestMutationTypeUpdateCheck(t *testing.T) {
+	inputs := schema.UpdateCheckInput{}
+	params := schema.MutationUpdateCheckFieldResolverParams{}
+	params.Args.Input = &inputs
+
+	check := types.FixtureCheckConfig("a")
+	impl := mutationsImpl{}
+
+	// Success
+	mock := struct {
+		checkFinder
+		checkReplacer
+	}{
+		mockCheckFinder{record: check},
+		mockCheckReplacer{},
+	}
+
+	impl.checkReplacer = mock
+	body, err := impl.UpdateCheck(params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, body)
+
+	// Failure - no check
+	mock = struct {
+		checkFinder
+		checkReplacer
+	}{
+		mockCheckFinder{err: errors.New("test")},
+		mockCheckReplacer{},
+	}
+	impl.checkReplacer = mock
+
+	body, err = impl.UpdateCheck(params)
+	assert.Error(t, err)
+	assert.Empty(t, body)
+
+	// Failure - replace fails
+	mock = struct {
+		checkFinder
+		checkReplacer
+	}{
+		mockCheckFinder{record: check},
+		mockCheckReplacer{err: errors.New("test")},
+	}
+	impl.checkReplacer = mock
+
+	body, err = impl.UpdateCheck(params)
+	assert.Error(t, err)
+	assert.Empty(t, body)
+}
+
 func TestMutationTypeDeleteEntityField(t *testing.T) {
 	inputs := schema.DeleteRecordInput{}
 	params := schema.MutationDeleteEntityFieldResolverParams{}
