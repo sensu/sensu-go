@@ -79,7 +79,9 @@ func (r *mutationsImpl) CreateCheck(p schema.MutationCreateCheckFieldResolverPar
 	check.Environment = inputs.Ns.Environment
 
 	rawArgs := p.ResolveParams.Args
-	copyCheckInputs(&check, rawArgs["input"])
+	if err := copyCheckInputs(&check, rawArgs["input"]); err != nil {
+		return nil, err
+	}
 
 	err := r.checkCreator.Create(p.Context, check)
 	if err != nil {
@@ -102,7 +104,9 @@ func (r *mutationsImpl) UpdateCheck(p schema.MutationUpdateCheckFieldResolverPar
 	}
 
 	rawArgs := p.ResolveParams.Args
-	copyCheckInputs(check, rawArgs["input"])
+	if err := copyCheckInputs(check, rawArgs["input"]); err != nil {
+		return nil, err
+	}
 
 	err = r.checkReplacer.CreateOrReplace(p.Context, *check)
 	if err != nil {
@@ -148,17 +152,17 @@ func (r *mutationsImpl) ExecuteCheck(p schema.MutationExecuteCheckFieldResolverP
 	}, nil
 }
 
-func copyCheckInputs(r *types.CheckConfig, in interface{}) {
+func copyCheckInputs(r *types.CheckConfig, in interface{}) error {
 	ins, ok := in.(map[string]interface{})
 	if !ok {
-		return
+		return errors.New("given unexpected arguments")
 	}
 	props, ok := ins["props"].(map[string]interface{})
 	if !ok {
-		return
+		return errors.New("given unexpected arguments; props is not a map")
 	}
 
-	mapstructure.Decode(props, r)
+	return mapstructure.Decode(props, r)
 }
 
 type checkMutationPayload struct {
