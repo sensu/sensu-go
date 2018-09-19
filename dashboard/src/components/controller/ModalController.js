@@ -24,7 +24,7 @@ class ModalController extends React.Component {
 
     return (
       <React.Fragment>
-        {children({ open: this.open })}
+        {children({ isOpen: modalOpen, open: this.open })}
         {modalOpen && renderModal({ close: this.close })}
       </React.Fragment>
     );

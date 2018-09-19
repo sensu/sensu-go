@@ -6,6 +6,9 @@ import { Context } from "/components/partials/ToolbarMenu";
 
 import MenuItem from "./AdaptiveMenuItem";
 
+const buttonIcon = <ArrowDown />;
+const menuIcon = <ArrowRight />;
+
 class Disclosure extends React.Component {
   static displayName = "ToolbarMenuItems.Disclosure";
 
@@ -16,7 +19,7 @@ class Disclosure extends React.Component {
           <MenuItem
             {...this.props}
             collapsed={collapsed}
-            ornament={collapsed ? <ArrowRight /> : <ArrowDown />}
+            ornament={collapsed ? menuIcon : buttonIcon}
           />
         )}
       </Context.Consumer>

@@ -31,7 +31,10 @@ class ChecksListToolbar extends React.PureComponent {
         }
         toolbarItems={({ collapsed }) => (
           <ToolbarMenu>
-            <ToolbarMenu.Item id="reset" visible={collapsed ? "never" : "if-room"}>
+            <ToolbarMenu.Item
+              id="reset"
+              visible={collapsed ? "never" : "if-room"}
+            >
               <ResetMenuItem onClick={onClickReset} />
             </ToolbarMenu.Item>
           </ToolbarMenu>

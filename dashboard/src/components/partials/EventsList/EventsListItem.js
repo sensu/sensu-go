@@ -119,7 +119,7 @@ class EventListItem extends React.Component {
             }
           />
         </TableOverflowCell>
-        {/*
+
         <TableCell padding="checkbox">
           <ToolbarMenu>
             <ToolbarMenu.Item id="resolve" visible="never">
@@ -177,7 +177,6 @@ class EventListItem extends React.Component {
             </ToolbarMenu.Item>
           </ToolbarMenu>
         </TableCell>
-        */}
       </TableSelectableRow>
     );
   }

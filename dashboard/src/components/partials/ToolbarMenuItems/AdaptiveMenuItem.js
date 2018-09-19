@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import Button from "./Button";
 import CollapsedItem from "./CollapsedItem";
 
-class MenuItem extends React.Component {
+class MenuItem extends React.PureComponent {
   static displayName = "ToolbarMenuItems.MenuItem";
 
   static propTypes = {
@@ -26,17 +26,6 @@ class MenuItem extends React.Component {
     title: null,
     titleCondensed: null,
   };
-
-  state = {
-    title: null,
-  };
-
-  componentWillUnmount() {
-    if (this.interval) {
-      clearInterval(this.interval);
-      this.interval = null;
-    }
-  }
 
   render() {
     const {
@@ -65,7 +54,7 @@ class MenuItem extends React.Component {
       <Button
         description={description}
         icon={icon}
-        label={this.state.title || titleCondensed || title}
+        label={titleCondensed || title}
         onClick={onClick}
         color={color}
         {...props}

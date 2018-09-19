@@ -3,9 +3,10 @@ import PropTypes from "prop-types";
 
 import BaseButton from "@material-ui/core/Button";
 import ButtonIcon from "/components/ButtonIcon";
+import IconButton from "@material-ui/core/IconButton";
 import Tooltip from "@material-ui/core/Tooltip";
 
-class Button extends React.Component {
+class Button extends React.PureComponent {
   static displayName = "ToolbarMenuItems.Button";
 
   static propTypes = {
@@ -15,6 +16,7 @@ class Button extends React.Component {
     disabled: PropTypes.bool,
     icon: PropTypes.node,
     iconAlignment: PropTypes.oneOf(["left", "right"]),
+    iconOnly: PropTypes.bool,
     iconRef: PropTypes.func,
     label: PropTypes.node.isRequired,
     ornament: PropTypes.node,
@@ -28,6 +30,7 @@ class Button extends React.Component {
     disabled: false,
     icon: null,
     iconAlignment: "left",
+    iconOnly: false,
     iconRef: null,
     ornament: null,
     ornamentRef: null,
@@ -40,6 +43,7 @@ class Button extends React.Component {
       description,
       icon: iconProp,
       iconAlignment,
+      iconOnly,
       iconRef,
       label,
       ornament: ornamentProp,
@@ -59,20 +63,29 @@ class Button extends React.Component {
     let ornament;
     if (ornamentProp) {
       ornament = (
-        <ButtonIcon alignment="right" ref={ornamentRef}>
+        <ButtonIcon alignment="right" color={color} ref={ornamentRef}>
           {ornamentProp}
         </ButtonIcon>
       );
     }
 
-    const button = (
-      <Component aria-label={label} color={color} {...props}>
-        {iconAlignment === "left" && icon}
-        {label}
-        {iconAlignment === "right" && icon}
-        {ornament}
-      </Component>
-    );
+    let button;
+    if (iconOnly) {
+      button = (
+        <IconButton ref={iconRef} {...props}>
+          {iconProp}
+        </IconButton>
+      );
+    } else {
+      button = (
+        <Component aria-label={label} color={color} {...props}>
+          {iconAlignment === "left" && icon}
+          {label}
+          {iconAlignment === "right" && icon}
+          {ornament}
+        </Component>
+      );
+    }
 
     if (description && !props.disabled) {
       return <Tooltip title={description}>{button}</Tooltip>;

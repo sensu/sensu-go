@@ -107,8 +107,6 @@ class Partitioner extends React.Component {
   };
 
   render() {
-    console.debug("<MenuToolbar.Partitioner />", "#render");
-
     const visible = [];
     const collapsed = [];
 

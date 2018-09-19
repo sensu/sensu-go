@@ -1,13 +1,11 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import ArrowDown from "@material-ui/icons/ArrowDropDown";
-import ArrowRight from "@material-ui/icons/KeyboardArrowRight";
 import { Context } from "/components/partials/ToolbarMenu";
 import MenuController from "/components/controller/MenuController";
 import RootRef from "@material-ui/core/RootRef";
 
-import MenuItem from "./AdaptiveMenuItem";
+import Disclosure from "./AdaptiveMenuItem";
 
 class Submenu extends React.Component {
   static displayName = "ToolbarMenuItems.Submenu";
@@ -15,7 +13,6 @@ class Submenu extends React.Component {
   static propTypes = {
     autoClose: PropTypes.bool,
     renderMenu: PropTypes.func.isRequired,
-    ...MenuItem.propTypes,
   };
 
   static defaultProps = {
@@ -44,12 +41,7 @@ class Submenu extends React.Component {
           >
             {({ open, ref }) => (
               <RootRef rootRef={ref}>
-                <MenuItem
-                  {...props}
-                  collapsed={collapsed}
-                  onClick={open}
-                  ornament={collapsed ? <ArrowRight /> : <ArrowDown />}
-                />
+                <Disclosure collapsed={collapsed} onClick={open} {...props} />
               </RootRef>
             )}
           </MenuController>

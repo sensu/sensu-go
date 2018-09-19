@@ -31,17 +31,19 @@ class Select extends React.Component {
 
     return (
       <Context.Consumer>
-        {({ close }) => {
+        {({ close: closeProp }) => {
+          const close = autoClose ? closeProp : () => null;
+
           let onChange = onChangeProp;
           if (autoClose) {
             onChange = val => {
               onChangeProp(val);
-              close();
+              closeProp();
             };
           }
 
           return (
-            <Controller onChange={onChange} options={children}>
+            <Controller onChange={onChange} onClose={close} options={children}>
               {ctrl => <Disclosure {...props} onClick={ctrl.open} />}
             </Controller>
           );

@@ -6,8 +6,11 @@ import debounce from "debounce";
 import { shallowEqual } from "/utils/array";
 
 import ButtonSet from "/components/ButtonSet";
-import MoreMenu from "/components/partials/MoreMenu";
+import RootRef from "@material-ui/core/RootRef";
+import MenuController from "/components/controller/MenuController";
 
+import Menu from "./OverflowMenu";
+import MenuButton from "./OverflowButton";
 import MenuItem from "./Item";
 import Partitioner from "./Partitioner";
 
@@ -23,12 +26,10 @@ class ToolbarMenu extends React.PureComponent {
       PropTypes.arrayOf(PropTypes.node),
       PropTypes.node,
     ]).isRequired,
-    fillWidth: PropTypes.bool,
     width: PropTypes.number,
   };
 
   static defaultProps = {
-    fillWidth: false,
     width: null,
   };
 
@@ -37,7 +38,7 @@ class ToolbarMenu extends React.PureComponent {
   state = {
     ids: [],
     buttonsWidth: null,
-    width: 0,
+    overflowButtonWidth: 48,
   };
 
   // If the menu items change poison the buttons container's width, to ensure
@@ -48,6 +49,10 @@ class ToolbarMenu extends React.PureComponent {
       return { ids, buttonsWidth: null };
     }
     return null;
+  }
+
+  componentWillUnmount() {
+    this.handleWindowResize.clear();
   }
 
   handleResize = rect => {
@@ -90,30 +95,6 @@ class ToolbarMenu extends React.PureComponent {
     return buttonsWidth || width - menuWidth;
   };
 
-  renderItems = items => {
-    const ctx = {
-      close: () => null,
-      collapsed: false,
-    };
-
-    return React.Children.map(items, child => (
-      <Context.Provider value={ctx}>{child}</Context.Provider>
-    ));
-  };
-
-  renderOverflow = items => {
-    if (items.length === 0) {
-      return null;
-    }
-
-    return renderProps =>
-      React.Children.map(items, child => (
-        <Context.Provider value={{ collapsed: true, ...renderProps }}>
-          {child}
-        </Context.Provider>
-      ));
-  };
-
   renderButtonSet = items => {
     const ctx = { collapsed: false, close: () => null };
     const buttons = (
@@ -142,15 +123,23 @@ class ToolbarMenu extends React.PureComponent {
     }
 
     return (
-      <MoreMenu
-        renderMenu={({ close }) =>
-          React.Children.map(items, child => (
-            <Context.Provider value={{ collapsed: true, close }}>
-              {child}
-            </Context.Provider>
-          ))
-        }
-      />
+      <MenuController
+        renderMenu={({ anchorEl, idx, close }) => (
+          <Menu id={idx} open onClose={close} anchorEl={anchorEl}>
+            {React.Children.map(items, child => (
+              <Context.Provider value={{ collapsed: true, close }}>
+                {child}
+              </Context.Provider>
+            ))}
+          </Menu>
+        )}
+      >
+        {({ ref, isOpen, idx, open }) => (
+          <RootRef rootRef={ref}>
+            <MenuButton active={isOpen} idx={idx} onClick={open} />
+          </RootRef>
+        )}
+      </MenuController>
     );
   };
 
@@ -175,10 +164,6 @@ class ToolbarMenu extends React.PureComponent {
           {items}
         </React.Fragment>
       );
-    }
-
-    if (this.props.fillWidth) {
-      // TODO
     }
 
     return items;
