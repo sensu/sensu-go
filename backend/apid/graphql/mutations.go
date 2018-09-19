@@ -152,12 +152,12 @@ func (r *mutationsImpl) ExecuteCheck(p schema.MutationExecuteCheckFieldResolverP
 	}, nil
 }
 
-func copyCheckInputs(r *types.CheckConfig, in interface{}) error {
-	ins, ok := in.(map[string]interface{})
+func copyCheckInputs(r *types.CheckConfig, args interface{}) error {
+	input, ok := args.(map[string]interface{})
 	if !ok {
 		return errors.New("given unexpected arguments")
 	}
-	props, ok := ins["props"].(map[string]interface{})
+	props, ok := input["props"].(map[string]interface{})
 	if !ok {
 		return errors.New("given unexpected arguments; props is not a map")
 	}

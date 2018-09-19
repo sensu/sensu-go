@@ -33,6 +33,13 @@ func TestMutationTypeUpdateCheck(t *testing.T) {
 	inputs := schema.UpdateCheckInput{}
 	params := schema.MutationUpdateCheckFieldResolverParams{}
 	params.Args.Input = &inputs
+	params.ResolveParams.Args = map[string]interface{}{
+		"input": map[string]interface{}{
+			"props": map[string]interface{}{
+				"command": "yes",
+			},
+		},
+	}
 
 	check := types.FixtureCheckConfig("a")
 	impl := mutationsImpl{}
