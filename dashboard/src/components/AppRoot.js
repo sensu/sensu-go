@@ -16,6 +16,7 @@ import AuthInvalidRoute from "/components/util/AuthInvalidRoute";
 import DefaultRedirect from "/components/util/DefaultRedirect";
 import LastEnvironmentRedirect from "/components/util/LastEnvironmentRedirect";
 import SigninRedirect from "/components/util/SigninRedirect";
+import { Provider as RelocationProvider } from "/components/relocation/Relocation";
 
 import EnvironmentView from "/components/views/EnvironmentView";
 import SignInView from "/components/views/SignInView";
@@ -35,33 +36,35 @@ class AppRoot extends React.PureComponent {
     const { reduxStore, apolloClient } = this.props;
 
     return (
-      <Provider store={reduxStore}>
-        <ApolloProvider client={apolloClient}>
-          <AppThemeProvider>
-            <Switch>
-              <Route exact path="/" component={DefaultRedirect} />
-              <UnauthenticatedRoute
-                exact
-                path="/signin"
-                component={SignInView}
-                fallbackComponent={LastEnvironmentRedirect}
-              />
-              <AuthenticatedRoute
-                path="/:organization/:environment"
-                component={EnvironmentView}
-                fallbackComponent={SigninRedirect}
-              />
-              <Route component={NotFoundView} />
-            </Switch>
-            <Switch>
-              <UnauthenticatedRoute exact path="/signin" />
-              <AuthInvalidRoute component={AuthInvalidDialog} />
-            </Switch>
-            <ResetStyles />
-            <ThemeStyles />
-          </AppThemeProvider>
-        </ApolloProvider>
-      </Provider>
+      <RelocationProvider>
+        <Provider store={reduxStore}>
+          <ApolloProvider client={apolloClient}>
+            <AppThemeProvider>
+              <Switch>
+                <Route exact path="/" component={DefaultRedirect} />
+                <UnauthenticatedRoute
+                  exact
+                  path="/signin"
+                  component={SignInView}
+                  fallbackComponent={LastEnvironmentRedirect}
+                />
+                <AuthenticatedRoute
+                  path="/:organization/:environment"
+                  component={EnvironmentView}
+                  fallbackComponent={SigninRedirect}
+                />
+                <Route component={NotFoundView} />
+              </Switch>
+              <Switch>
+                <UnauthenticatedRoute exact path="/signin" />
+                <AuthInvalidRoute component={AuthInvalidDialog} />
+              </Switch>
+              <ResetStyles />
+              <ThemeStyles />
+            </AppThemeProvider>
+          </ApolloProvider>
+        </Provider>
+      </RelocationProvider>
     );
   }
 }

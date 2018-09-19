@@ -10,7 +10,7 @@ import Query from "/components/util/Query";
 import EventsList from "/components/partials/EventsList";
 import ListToolbar from "/components/partials/ListToolbar";
 
-import NotFoundView from "/components/views/NotFoundView";
+import NotFound from "/components/partials/NotFound";
 
 import SearchBox from "/components/SearchBox";
 import { withQueryParams } from "/components/QueryParams";
@@ -73,7 +73,7 @@ class EventsContent extends React.Component {
           refetch,
         }) => {
           if (!environment && !loading && !aborted) {
-            return <NotFoundView />;
+            return <NotFound />;
           }
 
           return (

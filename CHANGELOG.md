@@ -34,6 +34,7 @@ the URLs provided by --listen-client-urls.
 re-implemented in https://github.com/sensu/sensu-go/issues/1739).
 - The sensu-backend flags related to etcd are now all prefixed with `etcd` and
 the older versions are now deprecated.
+- Web ui entity recent events are sorted by last ok
 
 ### Fixed
 - Fixes a bug in `sensuctl cluster health` so the correct error is handled.
@@ -48,6 +49,7 @@ sending of keepalive messages.
 - Fixed a bug where the agent does not validate the ID at startup.
 - Fixed a bug in `sensuctl cluster health` that resulted in an unmarshal
 error in an unhealthy cluster.
+- Fixed a bug in the web ui, removed references to keepaliveTimeout.
 
 ### Breaking Changes
 - Removed the KeepaliveTimeout attribute from entities.

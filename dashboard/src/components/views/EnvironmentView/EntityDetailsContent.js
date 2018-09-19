@@ -4,7 +4,7 @@ import gql from "graphql-tag";
 
 import EntityDetailsContainer from "/components/partials/EntityDetailsContainer";
 import Loader from "/components/util/Loader";
-import NotFoundView from "/components/views/NotFoundView";
+import NotFound from "/components/partials/NotFound";
 import Query from "/components/util/Query";
 
 // duration used when polling is enabled; set fairly high until we understand
@@ -48,7 +48,7 @@ class EntityDetailsContent extends React.PureComponent {
           stopPolling,
         }) => {
           if (!loading && !aborted && (!entity || entity.deleted)) {
-            return <NotFoundView />;
+            return <NotFound />;
           }
 
           return (

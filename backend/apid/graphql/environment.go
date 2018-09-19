@@ -262,16 +262,7 @@ func (r *envImpl) Events(p schema.EnvironmentEventsFieldResolverParams) (interfa
 	}
 
 	// sort records
-	if p.Args.OrderBy == schema.EventsListOrders.SEVERITY {
-		sort.Sort(types.EventsBySeverity(filteredEvents))
-	} else if p.Args.OrderBy == schema.EventsListOrders.LASTOK {
-		sort.Sort(types.EventsByLastOk(filteredEvents))
-	} else {
-		sort.Sort(types.EventsByTimestamp(
-			filteredEvents,
-			p.Args.OrderBy == schema.EventsListOrders.NEWEST,
-		))
-	}
+	sortEvents(filteredEvents, p.Args.OrderBy)
 
 	// pagination
 	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(filteredEvents))
