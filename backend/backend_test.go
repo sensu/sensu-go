@@ -68,7 +68,15 @@ func TestBackendHTTPListener(t *testing.T) {
 			dashboardPort := ports[4]
 			initCluster := fmt.Sprintf("default=%s", apURL)
 
-			tlsOpts := tc.tls
+			var tlsInfo etcd.TLSInfo
+			if tc.tls != nil {
+				tlsInfo = etcd.TLSInfo{
+					ClientCertAuth: true,
+					CertFile:       tc.tls.CertFile,
+					KeyFile:        tc.tls.KeyFile,
+					TrustedCAFile:  tc.tls.TrustedCAFile,
+				}
+			}
 
 			b, err := Initialize(&Config{
 				AgentHost:                   "127.0.0.1",
@@ -78,13 +86,15 @@ func TestBackendHTTPListener(t *testing.T) {
 				DashboardHost:               "127.0.0.1",
 				DashboardPort:               dashboardPort,
 				StateDir:                    path,
+				TLS:                         tc.tls,
 				EtcdListenClientURL:         clURL,
 				EtcdListenPeerURL:           apURL,
 				EtcdInitialCluster:          initCluster,
 				EtcdInitialClusterState:     etcd.ClusterStateNew,
 				EtcdInitialAdvertisePeerURL: apURL,
 				EtcdName:                    "default",
-				TLS:                         tlsOpts,
+				EtcdClientTLSInfo:           tlsInfo,
+				EtcdPeerTLSInfo:             tlsInfo,
 			})
 			assert.NoError(t, err)
 			if err != nil {

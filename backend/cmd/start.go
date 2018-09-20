@@ -14,7 +14,7 @@ import (
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/path"
-	"github.com/sensu/sensu-go/version"
+	stringsutil "github.com/sensu/sensu-go/util/strings"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -40,14 +40,31 @@ const (
 	flagLogLevel              = "log-level"
 
 	// Etcd flag constants
-	flagStoreClientURL               = "listen-client-urls"
-	flagStorePeerURL                 = "listen-peer-urls"
-	flagStoreInitialCluster          = "initial-cluster"
-	flagStoreInitialAdvertisePeerURL = "initial-advertise-peer-urls"
-	flagStoreInitialClusterState     = "initial-cluster-state"
-	flagStoreInitialClusterToken     = "initial-cluster-token"
-	flagStoreNodeName                = "name"
-	flagNoEmbedEtcd                  = "no-embed-etcd"
+	deprecatedFlagEtcdClientURL               = "listen-client-urls"
+	flagEtcdClientURL                         = "etcd-listen-client-urls"
+	deprecatedFlagEtcdPeerURL                 = "listen-peer-urls"
+	flagEtcdPeerURL                           = "etcd-listen-peer-urls"
+	deprecatedFlagEtcdInitialCluster          = "initial-cluster"
+	flagEtcdInitialCluster                    = "etcd-initial-cluster"
+	deprecatedFlagEtcdInitialAdvertisePeerURL = "initial-advertise-peer-urls"
+	flagEtcdInitialAdvertisePeerURL           = "etcd-initial-advertise-peer-urls"
+	deprecatedFlagEtcdInitialClusterState     = "initial-cluster-state"
+	flagEtcdInitialClusterState               = "etcd-initial-cluster-state"
+	deprecatedFlagEtcdInitialClusterToken     = "initial-cluster-token"
+	flagEtcdInitialClusterToken               = "etcd-initial-cluster-token"
+	deprecatedFlagEtcdNodeName                = "name"
+	flagEtcdNodeName                          = "etcd-name"
+	flagNoEmbedEtcd                           = "no-embed-etcd"
+
+	// Etcd TLS flag constants
+	flagEtcdCertFile           = "etcd-cert-file"
+	flagEtcdKeyFile            = "etcd-key-file"
+	flagEtcdClientCertAuth     = "etcd-client-cert-auth"
+	flagEtcdTrustedCAFile      = "etcd-trusted-ca-file"
+	flagEtcdPeerCertFile       = "etcd-peer-cert-file"
+	flagEtcdPeerKeyFile        = "etcd-peer-key-file"
+	flagEtcdPeerClientCertAuth = "etcd-peer-client-cert-auth"
+	flagEtcdPeerTrustedCAFile  = "etcd-peer-trusted-ca-file"
 
 	// Default values
 
@@ -59,27 +76,39 @@ const (
 	// DefaultEtcdPeerURL is the default URL to listen for Etcd peers (single-node
 	// cluster only)
 	defaultEtcdPeerURL = "http://127.0.0.1:2380"
+
+	// Start command usage template
+	startUsageTemplate = `Usage:{{if .Runnable}}
+  {{.UseLine}}{{end}}{{if .HasAvailableSubCommands}}
+	{{.CommandPath}} [command]{{end}}{{if gt (len .Aliases) 0}}
+
+Aliases:
+	{{.NameAndAliases}}{{end}}{{if .HasExample}}
+
+Examples:
+{{.Example}}{{end}}{{if .HasAvailableSubCommands}}
+
+Available Commands:{{range .Commands}}{{if (or .IsAvailableCommand (eq .Name "help"))}}
+	{{rpad .Name .NamePadding }} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableLocalFlags}}
+
+General Flags:
+{{ $flags := categoryFlags "" .LocalFlags }}{{ $flags.FlagUsages | trimTrailingWhitespaces}}
+
+Store Flags:
+{{ $storeFlags := categoryFlags "store" .LocalFlags }}{{ $storeFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasAvailableInheritedFlags}}
+
+Global Flags:
+{{.InheritedFlags.FlagUsages | trimTrailingWhitespaces}}{{end}}{{if .HasHelpSubCommands}}
+
+Additional help topics:{{range .Commands}}{{if .IsAdditionalHelpTopicCommand}}
+	{{rpad .CommandPath .CommandPathPadding}} {{.Short}}{{end}}{{end}}{{end}}{{if .HasAvailableSubCommands}}
+
+Use "{{.CommandPath}} [command] --help" for more information about a command.{{end}}
+`
 )
 
 func init() {
-	rootCmd.AddCommand(newVersionCommand())
 	rootCmd.AddCommand(newStartCommand())
-}
-
-func newVersionCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "version",
-		Short: "Show the sensu-backend version information",
-		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("sensu-backend version %s, build %s, built %s\n",
-				version.Semver(),
-				version.BuildSHA,
-				version.BuildDate,
-			)
-		},
-	}
-
-	return cmd
 }
 
 func newStartCommand() *cobra.Command {
@@ -112,16 +141,17 @@ func newStartCommand() *cobra.Command {
 				DeregistrationHandler: viper.GetString(flagDeregistrationHandler),
 				StateDir:              viper.GetString(flagStateDir),
 
-				EtcdListenClientURL:         viper.GetString(flagStoreClientURL),
-				EtcdListenPeerURL:           viper.GetString(flagStorePeerURL),
-				EtcdInitialCluster:          viper.GetString(flagStoreInitialCluster),
-				EtcdInitialClusterState:     viper.GetString(flagStoreInitialClusterState),
-				EtcdInitialAdvertisePeerURL: viper.GetString(flagStoreInitialAdvertisePeerURL),
-				EtcdInitialClusterToken:     viper.GetString(flagStoreInitialClusterToken),
-				EtcdName:                    viper.GetString(flagStoreNodeName),
+				EtcdListenClientURL:         viper.GetString(flagEtcdClientURL),
+				EtcdListenPeerURL:           viper.GetString(flagEtcdPeerURL),
+				EtcdInitialCluster:          viper.GetString(flagEtcdInitialCluster),
+				EtcdInitialClusterState:     viper.GetString(flagEtcdInitialClusterState),
+				EtcdInitialAdvertisePeerURL: viper.GetString(flagEtcdInitialAdvertisePeerURL),
+				EtcdInitialClusterToken:     viper.GetString(flagEtcdInitialClusterToken),
+				EtcdName:                    viper.GetString(flagEtcdNodeName),
 				NoEmbedEtcd:                 viper.GetBool(flagNoEmbedEtcd),
 			}
 
+			// Sensu APIs TLS config
 			certFile := viper.GetString(flagCertFile)
 			keyFile := viper.GetString(flagKeyFile)
 			trustedCAFile := viper.GetString(flagTrustedCAFile)
@@ -147,6 +177,20 @@ func newStartCommand() *cobra.Command {
 				}
 
 				return fmt.Errorf("missing the following cert flags: %s", emptyFlags)
+			}
+
+			// Etcd TLS config
+			cfg.EtcdClientTLSInfo = etcd.TLSInfo{
+				CertFile:       viper.GetString(flagEtcdCertFile),
+				KeyFile:        viper.GetString(flagEtcdKeyFile),
+				TrustedCAFile:  viper.GetString(flagEtcdTrustedCAFile),
+				ClientCertAuth: viper.GetBool(flagEtcdClientCertAuth),
+			}
+			cfg.EtcdPeerTLSInfo = etcd.TLSInfo{
+				CertFile:       viper.GetString(flagEtcdPeerCertFile),
+				KeyFile:        viper.GetString(flagEtcdPeerKeyFile),
+				TrustedCAFile:  viper.GetString(flagEtcdPeerTrustedCAFile),
+				ClientCertAuth: viper.GetBool(flagEtcdPeerClientCertAuth),
 			}
 
 			sensuBackend, err := initialize(cfg)
@@ -212,20 +256,20 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagLogLevel, "warn")
 
 	// Etcd defaults
-	viper.SetDefault(flagStoreClientURL, defaultEtcdClientURL)
-	viper.SetDefault(flagStorePeerURL, defaultEtcdPeerURL)
-	viper.SetDefault(flagStoreInitialCluster,
+	viper.SetDefault(flagEtcdClientURL, defaultEtcdClientURL)
+	viper.SetDefault(flagEtcdPeerURL, defaultEtcdPeerURL)
+	viper.SetDefault(flagEtcdInitialCluster,
 		fmt.Sprintf("%s=%s", defaultEtcdName, defaultEtcdPeerURL))
-	viper.SetDefault(flagStoreInitialAdvertisePeerURL, defaultEtcdPeerURL)
-	viper.SetDefault(flagStoreInitialClusterState, etcd.ClusterStateNew)
-	viper.SetDefault(flagStoreInitialClusterToken, "")
-	viper.SetDefault(flagStoreNodeName, defaultEtcdName)
+	viper.SetDefault(flagEtcdInitialAdvertisePeerURL, defaultEtcdPeerURL)
+	viper.SetDefault(flagEtcdInitialClusterState, etcd.ClusterStateNew)
+	viper.SetDefault(flagEtcdInitialClusterToken, "")
+	viper.SetDefault(flagEtcdNodeName, defaultEtcdName)
 	viper.SetDefault(flagNoEmbedEtcd, false)
 
 	// Merge in config flag set so that it appears in command usage
 	cmd.Flags().AddFlagSet(configFlagSet)
 
-	// Flags
+	// Main Flags
 	cmd.Flags().String(flagAgentHost, viper.GetString(flagAgentHost), "agent listener host")
 	cmd.Flags().Int(flagAgentPort, viper.GetInt(flagAgentPort), "agent listener port")
 	cmd.Flags().String(flagAPIHost, viper.GetString(flagAPIHost), "http api listener host")
@@ -242,19 +286,141 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
 
 	// Etcd flags
-	cmd.Flags().String(flagStoreClientURL, viper.GetString(flagStoreClientURL), "store listen client URL")
-	cmd.Flags().String(flagStorePeerURL, viper.GetString(flagStorePeerURL), "store listen peer URL")
-	cmd.Flags().String(flagStoreInitialCluster, viper.GetString(flagStoreInitialCluster), "store initial cluster")
-	cmd.Flags().String(flagStoreInitialAdvertisePeerURL, viper.GetString(flagStoreInitialAdvertisePeerURL), "store initial advertise peer URL")
-	cmd.Flags().String(flagStoreInitialClusterState, viper.GetString(flagStoreInitialClusterState), "store initial cluster state")
-	cmd.Flags().String(flagStoreInitialClusterToken, viper.GetString(flagStoreInitialClusterToken), "store initial cluster token")
-	cmd.Flags().String(flagStoreNodeName, viper.GetString(flagStoreNodeName), "store cluster member node name")
+	cmd.Flags().String(flagEtcdClientURL, viper.GetString(flagEtcdClientURL), "list of URLs to listen on for client traffic")
+	_ = cmd.Flags().SetAnnotation(flagEtcdClientURL, "categories", []string{"store"})
+	cmd.Flags().String(flagEtcdPeerURL, viper.GetString(flagEtcdPeerURL), "list of URLs to listen on for peer traffic")
+	_ = cmd.Flags().SetAnnotation(flagEtcdPeerURL, "categories", []string{"store"})
+	cmd.Flags().String(flagEtcdInitialCluster, viper.GetString(flagEtcdInitialCluster), "initial cluster configuration for bootstrapping")
+	_ = cmd.Flags().SetAnnotation(flagEtcdInitialCluster, "categories", []string{"store"})
+	cmd.Flags().String(flagEtcdInitialAdvertisePeerURL, viper.GetString(flagEtcdInitialAdvertisePeerURL), "list of this member's peer URLs to advertise to the rest of the cluster")
+	_ = cmd.Flags().SetAnnotation(flagEtcdInitialAdvertisePeerURL, "categories", []string{"store"})
+	cmd.Flags().String(flagEtcdInitialClusterState, viper.GetString(flagEtcdInitialClusterState), "initial cluster state (\"new\" or \"existing\")")
+	_ = cmd.Flags().SetAnnotation(flagEtcdInitialClusterState, "categories", []string{"store"})
+	cmd.Flags().String(flagEtcdInitialClusterToken, viper.GetString(flagEtcdInitialClusterToken), "initial cluster token for the etcd cluster during bootstrap")
+	_ = cmd.Flags().SetAnnotation(flagEtcdInitialClusterToken, "categories", []string{"store"})
+	cmd.Flags().String(flagEtcdNodeName, viper.GetString(flagEtcdNodeName), "human-readable name for this member")
+	_ = cmd.Flags().SetAnnotation(flagEtcdNodeName, "categories", []string{"store"})
 	cmd.Flags().Bool(flagNoEmbedEtcd, viper.GetBool(flagNoEmbedEtcd), "don't embed etcd, use external etcd instead")
+	_ = cmd.Flags().SetAnnotation(flagNoEmbedEtcd, "categories", []string{"store"})
+
+	// Etcd TLS flags
+	cmd.Flags().String(flagEtcdCertFile, viper.GetString(flagEtcdCertFile), "path to the client server TLS cert file")
+	_ = cmd.Flags().SetAnnotation(flagEtcdCertFile, "categories", []string{"store"})
+	cmd.Flags().String(flagEtcdKeyFile, viper.GetString(flagEtcdKeyFile), "path to the client server TLS key file")
+	_ = cmd.Flags().SetAnnotation(flagEtcdKeyFile, "categories", []string{"store"})
+	cmd.Flags().Bool(flagEtcdClientCertAuth, viper.GetBool(flagEtcdClientCertAuth), "enable client cert authentication")
+	_ = cmd.Flags().SetAnnotation(flagEtcdClientCertAuth, "categories", []string{"store"})
+	cmd.Flags().String(flagEtcdTrustedCAFile, viper.GetString(flagEtcdTrustedCAFile), "path to the client server TLS trusted CA cert file")
+	_ = cmd.Flags().SetAnnotation(flagEtcdTrustedCAFile, "categories", []string{"store"})
+	cmd.Flags().String(flagEtcdPeerCertFile, viper.GetString(flagEtcdPeerCertFile), "path to the peer server TLS cert file")
+	_ = cmd.Flags().SetAnnotation(flagEtcdPeerCertFile, "categories", []string{"store"})
+	cmd.Flags().String(flagEtcdPeerKeyFile, viper.GetString(flagEtcdPeerKeyFile), "path to the peer server TLS key file")
+	_ = cmd.Flags().SetAnnotation(flagEtcdPeerKeyFile, "categories", []string{"store"})
+	cmd.Flags().Bool(flagEtcdPeerClientCertAuth, viper.GetBool(flagEtcdPeerClientCertAuth), "enable peer client cert authentication")
+	_ = cmd.Flags().SetAnnotation(flagEtcdPeerClientCertAuth, "categories", []string{"store"})
+	cmd.Flags().String(flagEtcdPeerTrustedCAFile, viper.GetString(flagEtcdPeerTrustedCAFile), "path to the peer server TLS trusted CA file")
+	_ = cmd.Flags().SetAnnotation(flagEtcdPeerTrustedCAFile, "categories", []string{"store"})
+
+	// Mark the old etcd flags as deprecated and maintain backward compability
+	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc)
 
 	// Load the configuration file but only error out if flagConfigFile is used
 	if err := viper.ReadInConfig(); err != nil && configFile != "" {
 		setupErr = err
 	}
 
+	// Mark the old etcd keys as deprecated in the config file and then register
+	// aliases for older etcd attributes in config file to maintain backward
+	// compatiblity
+	deprecatedConfigAttributes()
+	viper.RegisterAlias(deprecatedFlagEtcdClientURL, flagEtcdClientURL)
+	viper.RegisterAlias(deprecatedFlagEtcdInitialAdvertisePeerURL, flagEtcdInitialAdvertisePeerURL)
+	viper.RegisterAlias(deprecatedFlagEtcdInitialCluster, flagEtcdInitialCluster)
+	viper.RegisterAlias(deprecatedFlagEtcdInitialClusterState, flagEtcdInitialClusterState)
+	viper.RegisterAlias(deprecatedFlagEtcdInitialClusterToken, flagEtcdInitialClusterToken)
+	viper.RegisterAlias(deprecatedFlagEtcdNodeName, flagEtcdNodeName)
+	viper.RegisterAlias(deprecatedFlagEtcdPeerURL, flagEtcdPeerURL)
+
+	// Use our custom template for the start command
+	cobra.AddTemplateFunc("categoryFlags", categoryFlags)
+	cmd.SetUsageTemplate(startUsageTemplate)
+
 	return cmd
+}
+
+func categoryFlags(category string, flags *pflag.FlagSet) *pflag.FlagSet {
+	flagSet := pflag.NewFlagSet(category, pflag.ContinueOnError)
+
+	flags.VisitAll(func(flag *pflag.Flag) {
+		if categories, ok := flag.Annotations["categories"]; ok {
+			if stringsutil.InArray(category, categories) {
+				flagSet.AddFlag(flag)
+			}
+		} else if category == "" {
+			// If no category was specified, return all flags without a category
+			flagSet.AddFlag(flag)
+		}
+	})
+
+	return flagSet
+}
+
+func aliasNormalizeFunc(f *pflag.FlagSet, name string) pflag.NormalizedName {
+	// Wait until the command-line flags have been parsed
+	if !f.Parsed() {
+		return pflag.NormalizedName(name)
+	}
+
+	switch name {
+	case deprecatedFlagEtcdClientURL:
+		deprecatedFlagMessage(name, flagEtcdClientURL)
+		name = flagEtcdClientURL
+	case deprecatedFlagEtcdInitialAdvertisePeerURL:
+		deprecatedFlagMessage(name, flagEtcdInitialAdvertisePeerURL)
+		name = flagEtcdInitialAdvertisePeerURL
+	case deprecatedFlagEtcdInitialCluster:
+		deprecatedFlagMessage(name, flagEtcdInitialCluster)
+		name = flagEtcdInitialCluster
+	case deprecatedFlagEtcdInitialClusterState:
+		deprecatedFlagMessage(name, flagEtcdInitialCluster)
+		name = flagEtcdInitialClusterState
+	case deprecatedFlagEtcdInitialClusterToken:
+		deprecatedFlagMessage(name, flagEtcdInitialClusterToken)
+		name = flagEtcdInitialClusterToken
+	case deprecatedFlagEtcdNodeName:
+		deprecatedFlagMessage(name, flagEtcdNodeName)
+		name = flagEtcdNodeName
+	case deprecatedFlagEtcdPeerURL:
+		deprecatedFlagMessage(name, flagEtcdPeerURL)
+		name = flagEtcdPeerURL
+	}
+	return pflag.NormalizedName(name)
+}
+
+// Look up the deprecated attributes in our config file and print a warning
+// message if set
+func deprecatedConfigAttributes() {
+	attributes := map[string]string{
+		deprecatedFlagEtcdClientURL:               flagEtcdClientURL,
+		deprecatedFlagEtcdInitialAdvertisePeerURL: flagEtcdInitialAdvertisePeerURL,
+		deprecatedFlagEtcdInitialCluster:          flagEtcdInitialCluster,
+		deprecatedFlagEtcdInitialClusterState:     flagEtcdInitialClusterState,
+		deprecatedFlagEtcdInitialClusterToken:     flagEtcdInitialClusterToken,
+		deprecatedFlagEtcdNodeName:                flagEtcdNodeName,
+		deprecatedFlagEtcdPeerURL:                 flagEtcdPeerURL,
+	}
+
+	for old, new := range attributes {
+		if viper.IsSet(old) {
+			logger.Warningf(
+				"config attribute %s has been deprecated, please use %s instead",
+				old, new,
+			)
+		}
+	}
+}
+
+func deprecatedFlagMessage(oldFlag, newFlag string) {
+	logger.Warningf("flag --%s has been deprecated, please use --%s instead",
+		oldFlag, newFlag)
 }
