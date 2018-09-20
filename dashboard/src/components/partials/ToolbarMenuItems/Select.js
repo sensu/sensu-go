@@ -31,7 +31,7 @@ class Select extends React.Component {
 
     return (
       <Context.Consumer>
-        {({ close: closeProp }) => {
+        {({ collapsed, close: closeProp }) => {
           const close = autoClose ? closeProp : () => null;
 
           let onChange = onChangeProp;
@@ -44,7 +44,13 @@ class Select extends React.Component {
 
           return (
             <Controller onChange={onChange} onClose={close} options={children}>
-              {ctrl => <Disclosure {...props} onClick={ctrl.open} />}
+              {ctrl => (
+                <Disclosure
+                  {...props}
+                  collapsed={collapsed}
+                  onClick={ctrl.open}
+                />
+              )}
             </Controller>
           );
         }}
