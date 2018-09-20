@@ -166,15 +166,15 @@ func watchMon(ctx context.Context, cli *clientv3.Client, mon *monitor, failureHa
 	go func() {
 		sig := <-sigs
 
+		logger.Debugf("signal %s received, revoking lease for key %s",
+			sig.String(),
+			mon.key,
+		)
+
 		if _, err := cli.Lease.Revoke(ctx, mon.leaseID); err != nil {
 			logger.WithError(err).Warningf("could not revoke the lease %s for the key %s",
 				mon.leaseID, mon.key,
 			)
 		}
-
-		logger.Debugf("signal %s received, revoking lease for key %s",
-			sig.String(),
-			mon.key,
-		)
 	}()
 }
