@@ -62,7 +62,7 @@ class CheckDetailsConfiguration extends React.PureComponent {
           hooks
         }
 
-        # proxyEntityId
+        proxyEntityId
         proxyRequests {
           entityAttributes
           splay
@@ -213,7 +213,7 @@ class CheckDetailsConfiguration extends React.PureComponent {
                 <DictionaryEntry>
                   <DictionaryKey>Proxy Entity ID</DictionaryKey>
                   <DictionaryValue>
-                    <Maybe value={check.outputMetricFormat} fallback="None" />
+                    <Maybe value={check.proxyEntityId} fallback="None" />
                   </DictionaryValue>
                 </DictionaryEntry>
 

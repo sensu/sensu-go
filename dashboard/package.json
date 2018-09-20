@@ -13,7 +13,7 @@
   },
   "scripts": {
     "prettier": "npx prettier --write '**/*.js'",
-    "start": "NODE_OPTIONS=--max_old_space_size=8192 node scripts serve",
+    "start": "node scripts serve",
     "build": "node scripts build",
     "analyze": "npx webpack-bundle-analyzer stats.json -s gzip",
     "lint": "npx eslint .",

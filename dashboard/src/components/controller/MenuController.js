@@ -1,12 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
+import getNextId from "/utils/uniqueId";
 import ModalController from "./ModalController";
-
-let id = 0;
-const getNextId = () => {
-  id += 1;
-  return id;
-};
 
 class MenuController extends React.Component {
   static propTypes = {
