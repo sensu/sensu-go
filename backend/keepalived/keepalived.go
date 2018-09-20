@@ -305,6 +305,7 @@ func (k *Keepalived) handleUpdate(e *types.Event) error {
 		return err
 	}
 	event := createKeepaliveEvent(e)
+	event.Check.Status = 0
 
 	return k.bus.Publish(messaging.TopicEventRaw, event)
 }
