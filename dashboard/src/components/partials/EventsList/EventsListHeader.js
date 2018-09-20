@@ -184,52 +184,56 @@ class EventsListHeader extends React.Component {
     const checks = env ? env.checks.nodes.map(e => e.name) : [];
 
     return (
-      <ToolbarMenu>
-        <ToolbarMenu.Item id="hide" visible="if-room">
-          <Select title="Hide" onChange={this.requeryHide}>
-            <Option value="passing">Passing</Option>
-            <Option value="silenced">Silenced</Option>
-          </Select>
-        </ToolbarMenu.Item>
+      <ToolbarMenu.Autosizer>
+        {({ width }) => (
+          <ToolbarMenu width={width}>
+            <ToolbarMenu.Item id="hide" visible="if-room">
+              <Select title="Hide" onChange={this.requeryHide}>
+                <Option value="passing">Passing</Option>
+                <Option value="silenced">Silenced</Option>
+              </Select>
+            </ToolbarMenu.Item>
 
-        <ToolbarMenu.Item id="filter-by-entity" visible="if-room">
-          <Select title="Entity" onChange={this.requeryEntity}>
-            {entities.map(name => <Option key={name} value={name} />)}
-          </Select>
-        </ToolbarMenu.Item>
+            <ToolbarMenu.Item id="filter-by-entity" visible="if-room">
+              <Select title="Entity" onChange={this.requeryEntity}>
+                {entities.map(name => <Option key={name} value={name} />)}
+              </Select>
+            </ToolbarMenu.Item>
 
-        <ToolbarMenu.Item id="filter-by-check" visible="if-room">
-          <Select title="Check" onChange={this.requeryCheck}>
-            {checks.map(name => <Option key={name} value={name} />)}
-          </Select>
-        </ToolbarMenu.Item>
+            <ToolbarMenu.Item id="filter-by-check" visible="if-room">
+              <Select title="Check" onChange={this.requeryCheck}>
+                {checks.map(name => <Option key={name} value={name} />)}
+              </Select>
+            </ToolbarMenu.Item>
 
-        <ToolbarMenu.Item id="filter-by-status" visible="always">
-          <SubmenuItem
-            autoClose
-            title="Status"
-            renderMenu={({ anchorEl, close }) => (
-              <StatusMenu
-                anchorEl={anchorEl}
-                onClose={close}
-                onChange={val => {
-                  this.requeryStatus(val);
-                  close();
-                }}
+            <ToolbarMenu.Item id="filter-by-status" visible="always">
+              <SubmenuItem
+                autoClose
+                title="Status"
+                renderMenu={({ anchorEl, close }) => (
+                  <StatusMenu
+                    anchorEl={anchorEl}
+                    onClose={close}
+                    onChange={val => {
+                      this.requeryStatus(val);
+                      close();
+                    }}
+                  />
+                )}
               />
-            )}
-          />
-        </ToolbarMenu.Item>
+            </ToolbarMenu.Item>
 
-        <ToolbarMenu.Item id="sort" visible="always">
-          <Select title="Sort" onChange={this.updateSort}>
-            <Option value="LASTOK">Last OK</Option>
-            <Option value="SEVERITY">Severity</Option>
-            <Option value="NEWEST">Newest</Option>
-            <Option value="OLDEST">Oldest</Option>
-          </Select>
-        </ToolbarMenu.Item>
-      </ToolbarMenu>
+            <ToolbarMenu.Item id="sort" visible="always">
+              <Select title="Sort" onChange={this.updateSort}>
+                <Option value="LASTOK">Last OK</Option>
+                <Option value="SEVERITY">Severity</Option>
+                <Option value="NEWEST">Newest</Option>
+                <Option value="OLDEST">Oldest</Option>
+              </Select>
+            </ToolbarMenu.Item>
+          </ToolbarMenu>
+        )}
+      </ToolbarMenu.Autosizer>
     );
   };
 

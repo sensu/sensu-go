@@ -5,7 +5,6 @@ import ResizeObserver from "react-resize-observer";
 import debounce from "debounce";
 import { shallowEqual } from "/utils/array";
 
-import ButtonSet from "/components/ButtonSet";
 import RootRef from "@material-ui/core/RootRef";
 import MenuController from "/components/controller/MenuController";
 
@@ -13,8 +12,9 @@ import Menu from "./OverflowMenu";
 import MenuButton from "./OverflowButton";
 import MenuItem from "./Item";
 import Partitioner from "./Partitioner";
+import Autosizer from "./Autosizer";
 
-const Context = React.createContext();
+const Context = React.createContext({});
 
 // Resize events are handled syncronously and can cause significant thrashing
 // unless debounced.
@@ -33,13 +33,8 @@ class ToolbarMenu extends React.PureComponent {
     width: null,
   };
 
+  static Autosizer = Autosizer;
   static Item = MenuItem;
-
-  state = {
-    ids: [],
-    buttonsWidth: null,
-    overflowButtonWidth: 48,
-  };
 
   // If the menu items change poison the buttons container's width, to ensure
   // that we are displaying as many buttons as possible.
@@ -51,17 +46,28 @@ class ToolbarMenu extends React.PureComponent {
     return null;
   }
 
+  state = {
+    // List of item ids
+    ids: [],
+
+    // Width of buttons container
+    buttonsWidth: null,
+
+    // Assume the overflow button is default size of icon button.
+    overflowButtonWidth: 48,
+  };
+
   componentWillUnmount() {
     this.handleWindowResize.clear();
   }
 
-  handleResize = rect => {
+  handleOverflowButtonResize = rect => {
     this.setState(state => {
-      if (state.width === rect.width) {
+      if (state.overflowButtonWidth === rect.width) {
         return null;
       }
 
-      return { width: rect.width };
+      return { overflowButtonWidth: rect.width };
     });
   };
 
@@ -90,20 +96,16 @@ class ToolbarMenu extends React.PureComponent {
 
   buttonsWidth = () => {
     const { width } = this.props;
-    const { buttonsWidth, menuWidth } = this.state;
+    const { buttonsWidth, overflowButtonWidth } = this.state;
 
-    return buttonsWidth || width - menuWidth;
+    return width === null ? buttonsWidth : width - overflowButtonWidth;
   };
 
   renderButtonSet = items => {
     const ctx = { collapsed: false, close: () => null };
-    const buttons = (
-      <ButtonSet>
-        {React.Children.map(items, child => (
-          <Context.Provider value={ctx}>{child}</Context.Provider>
-        ))}
-      </ButtonSet>
-    );
+    const buttons = React.Children.map(items, child => (
+      <Context.Provider value={ctx}>{child}</Context.Provider>
+    ));
 
     if (this.props.width === null) {
       return (
@@ -134,13 +136,27 @@ class ToolbarMenu extends React.PureComponent {
           </Menu>
         )}
       >
-        {({ ref, isOpen, idx, open }) => (
-          <RootRef rootRef={ref}>
-            <MenuButton active={isOpen} idx={idx} onClick={open} />
-          </RootRef>
-        )}
+        {this.renderOverflowButton}
       </MenuController>
     );
+  };
+
+  renderOverflowButton = ({ idx, isOpen, open, ref }) => {
+    const button = (
+      <RootRef rootRef={ref}>
+        <MenuButton active={isOpen} idx={idx} onClick={open} />
+      </RootRef>
+    );
+
+    if (this.props.width !== null) {
+      return (
+        <div style={{ display: "inline", position: "relative" }}>
+          <ResizeObserver onResize={this.handleOverflowButtonResize} />
+          {button}
+        </div>
+      );
+    }
+    return button;
   };
 
   renderItems = partition => (

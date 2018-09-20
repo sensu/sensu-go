@@ -7,7 +7,7 @@ import MenuItem from "./Item";
 // Return given set of menu items and a width return map describing which items
 // are visible and which items should be collapsed.
 const partitionItems = ({ items, itemWidths, width: widthProp }) => {
-  const width = widthProp || 4096;
+  const width = widthProp !== null ? widthProp : 4096;
 
   // 1. We first want initialize the remaining width accounting for any items
   //    that are /always/ displayed.
@@ -46,7 +46,11 @@ class Partitioner extends React.Component {
   static propTypes = {
     children: PropTypes.func.isRequired,
     items: PropTypes.node.isRequired,
-    width: PropTypes.number.isRequired, // eslint-disable-line react/no-unused-prop-types
+    width: PropTypes.number, // eslint-disable-line react/no-unused-prop-types
+  };
+
+  static defaultProps = {
+    width: null,
   };
 
   static getDerivedStateFromProps(props, state) {
