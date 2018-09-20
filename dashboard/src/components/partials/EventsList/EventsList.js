@@ -28,9 +28,14 @@ import EventsListItem from "./EventsListItem";
 class EventsContainer extends React.Component {
   static propTypes = {
     client: PropTypes.object.isRequired,
+<<<<<<< HEAD
     namespace: PropTypes.shape({
       checks: PropTypes.object,
       entities: PropTypes.object,
+=======
+    editable: PropTypes.bool,
+    environment: PropTypes.shape({
+>>>>>>> 37a71d43... Only display list item toolbar on hover
       events: PropTypes.object,
     }),
     onChangeQuery: PropTypes.func.isRequired,
@@ -42,7 +47,12 @@ class EventsContainer extends React.Component {
 
   static defaultProps = {
     loading: false,
+<<<<<<< HEAD
     namespace: null,
+=======
+    editable: true,
+    environment: null,
+>>>>>>> 37a71d43... Only display list item toolbar on hover
     limit: undefined,
     offset: undefined,
   };
@@ -212,26 +222,43 @@ class EventsContainer extends React.Component {
     );
   };
 
-  renderEvent = ({ key, item: event, selected, setSelected }) => (
+  renderEvent = ({
+    key,
+    item,
+    selectedCount,
+    hovered,
+    setHovered,
+    selected,
+    setSelected,
+  }) => (
     <EventsListItem
       key={key}
-      event={event}
+      event={item}
+      editable={this.props.editable}
+      editing={selectedCount > 0}
       selected={selected}
       onChangeSelected={setSelected}
-      onClickClearSilences={() => this.clearSilences([event])}
-      onClickSilencePair={() => this.silenceEvents([event])}
-      onClickSilenceEntity={() => this.silenceEntity(event)}
-      onClickSilenceCheck={() => this.silenceCheck(event)}
-      onClickResolve={() => this.resolveEvents([event])}
-      onClickRerun={() => this.executeCheck([event])}
-      onClickDelete={() => this.deleteEvents([event])}
+      hovered={hovered}
+      onHover={this.props.editable ? setHovered : () => null}
+      onClickClearSilences={() => this.clearSilences([item])}
+      onClickSilencePair={() => this.silenceEvents([item])}
+      onClickSilenceEntity={() => this.silenceEntity(item)}
+      onClickSilenceCheck={() => this.silenceCheck(item)}
+      onClickResolve={() => this.resolveEvents([item])}
+      onClickRerun={() => this.executeCheck([item])}
+      onClickDelete={() => this.deleteEvents([item])}
     />
   );
 
   render() {
     const { silence, unsilence } = this.state;
     const {
+<<<<<<< HEAD
       namespace,
+=======
+      editable,
+      environment,
+>>>>>>> 37a71d43... Only display list item toolbar on hover
       loading,
       limit,
       offset,
@@ -261,7 +288,12 @@ class EventsContainer extends React.Component {
           <Paper>
             <Loader loading={loading}>
               <EventsListHeader
+<<<<<<< HEAD
                 namespace={namespace}
+=======
+                editable={editable}
+                environment={environment}
+>>>>>>> 37a71d43... Only display list item toolbar on hover
                 onClickSelect={toggleSelectedItems}
                 onClickClearSilences={() => this.clearSilences(selectedItems)}
                 onClickSilence={() => this.silenceEvents(selectedItems)}

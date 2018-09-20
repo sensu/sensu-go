@@ -16,6 +16,7 @@ import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import FaceIcon from "@material-ui/icons/Face";
 import Hidden from "@material-ui/core/Hidden";
+import HoverController from "/components/controller/HoverController";
 import IconButton from "@material-ui/core/IconButton";
 import ModalController from "/components/controller/ModalController";
 import NotesIcon from "@material-ui/icons/Notes";
@@ -26,6 +27,7 @@ import Slide from "@material-ui/core/Slide";
 import TableCell from "@material-ui/core/TableCell";
 import TableOverflowCell from "/components/partials/TableOverflowCell";
 import TableSelectableRow from "/components/partials/TableSelectableRow";
+import TableToolbarCell from "/components/partials/TableToolbarCell";
 import ToolbarMenu from "/components/partials/ToolbarMenu";
 import Tooltip from "@material-ui/core/Tooltip";
 
@@ -39,7 +41,11 @@ const RightAlign = withProps({
 
 class SilencesListItem extends React.Component {
   static propTypes = {
+    editable: PropTypes.bool.isRequired,
+    editing: PropTypes.bool.isRequired,
     silence: PropTypes.object.isRequired,
+    hovered: PropTypes.bool.isRequired,
+    onHover: PropTypes.func.isRequired,
     selected: PropTypes.bool.isRequired,
     onClickSelect: PropTypes.func.isRequired,
     onClickDelete: PropTypes.func.isRequired,
@@ -79,91 +85,100 @@ class SilencesListItem extends React.Component {
   };
 
   render() {
-    const { silence, selected, onClickSelect } = this.props;
+    const { editing, silence, selected, onClickSelect } = this.props;
 
     return (
-      <TableSelectableRow selected={selected}>
-        <TableCell padding="checkbox">
-          <Checkbox
-            checked={selected}
-            onChange={() => onClickSelect(!selected)}
-          />
-        </TableCell>
-        <TableOverflowCell>
-          <ResourceDetails
-            title={<strong>{silence.storeId}</strong>}
-            details={this.renderDetails()}
-          />
-        </TableOverflowCell>
-        <Hidden only="xs">
-          <TableCell
-            padding="none"
-            style={{
-              // TODO: magic number
-              paddingTop: 8, // one spacing unit
-            }}
-          >
-            <Chip
-              avatar={
-                <Avatar>
-                  <FaceIcon />
-                </Avatar>
-              }
-              label={silence.creator.username}
-              style={{
-                // TODO: ideally have Chip scale to current fontSize(?)
-                transform: "scale(0.87)",
-              }}
+      <HoverController onHover={this.props.onHover}>
+        <TableSelectableRow selected={selected}>
+          {this.props.editable && (
+            <TableCell padding="checkbox">
+              <Checkbox
+                checked={selected}
+                onChange={() => onClickSelect(!selected)}
+              />
+            </TableCell>
+          )}
+
+          <TableOverflowCell>
+            <ResourceDetails
+              title={<strong>{silence.storeId}</strong>}
+              details={this.renderDetails()}
             />
-          </TableCell>
-        </Hidden>
+          </TableOverflowCell>
 
-        <TableCell padding="checkbox">
-          <RightAlign>
-            {silence.reason && (
-              <ModalController
-                renderModal={({ close }) => (
-                  <Dialog
-                    open
-                    fullWidth
-                    TransitionComponent={SlideUp}
-                    onClose={close}
+          <Hidden only="xs">
+            <TableCell
+              style={{
+                // TODO: magic number
+                paddingTop: 8, // one spacing unit
+              }}
+            >
+              <Chip
+                avatar={
+                  <Avatar>
+                    <FaceIcon />
+                  </Avatar>
+                }
+                label={silence.creator.username}
+                style={{
+                  // TODO: ideally have Chip scale to current fontSize(?)
+                  transform: "scale(0.87)",
+                }}
+              />
+            </TableCell>
+          </Hidden>
+
+          <TableToolbarCell disabled={editing || !this.props.hovered}>
+            {() => (
+              <RightAlign>
+                {silence.reason && (
+                  <ModalController
+                    renderModal={({ close }) => (
+                      <Dialog
+                        open
+                        fullWidth
+                        TransitionComponent={SlideUp}
+                        onClose={close}
+                      >
+                        <DialogTitle>Reason Given</DialogTitle>
+                        <DialogContent>
+                          <DialogContentText>
+                            {silence.reason}
+                          </DialogContentText>
+                        </DialogContent>
+                        <DialogActions>
+                          <Button onClick={close} color="contrast">
+                            Close
+                          </Button>
+                        </DialogActions>
+                      </Dialog>
+                    )}
                   >
-                    <DialogTitle>Reason Given</DialogTitle>
-                    <DialogContent>
-                      <DialogContentText>{silence.reason}</DialogContentText>
-                    </DialogContent>
-                    <DialogActions>
-                      <Button onClick={close} color="contrast">
-                        Close
-                      </Button>
-                    </DialogActions>
-                  </Dialog>
+                    {({ open }) => (
+                      <Tooltip title={"Reason"}>
+                        <IconButton onClick={open}>
+                          <NotesIcon />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </ModalController>
                 )}
-              >
-                {({ open }) => (
-                  <Tooltip title={"Reason"}>
-                    <IconButton onClick={open}>
-                      <NotesIcon />
-                    </IconButton>
-                  </Tooltip>
-                )}
-              </ModalController>
-            )}
 
-            <ToolbarMenu>
-              <ToolbarMenu.Item id="delete" visible="never">
-                <ConfirmDelete
-                  identifier={silence.storeId}
-                  onSubmit={this.props.onClickDelete}
-                >
-                  {dialog => <DeleteMenuItem onClick={dialog.open} />}
-                </ConfirmDelete>
-              </ToolbarMenu.Item>
-            </ToolbarMenu>
-          </RightAlign>
-        </TableCell>
-      </TableSelectableRow>
+                <ToolbarMenu>
+                  <ToolbarMenu.Item id="delete" visible="never">
+                    <ConfirmDelete
+                      identifier={silence.storeId}
+                      onSubmit={this.props.onClickDelete}
+                    >
+                      {dialog => <DeleteMenuItem onClick={dialog.open} />}
+                    </ConfirmDelete>
+                  </ToolbarMenu.Item>
+                </ToolbarMenu>
+              </RightAlign>
+            )}
+          </TableToolbarCell>
+        </TableSelectableRow>
+      </HoverController>
     );
   }
 }

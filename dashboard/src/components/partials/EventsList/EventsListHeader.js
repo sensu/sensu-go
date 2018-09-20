@@ -17,6 +17,7 @@ import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
 
 class EventsListHeader extends React.Component {
   static propTypes = {
+    editable: PropTypes.bool.isRequired,
     onClickClearSilences: PropTypes.func.isRequired,
     onClickSelect: PropTypes.func.isRequired,
     onClickSilence: PropTypes.func.isRequired,
@@ -229,12 +230,13 @@ class EventsListHeader extends React.Component {
   };
 
   render() {
-    const { selectedItems, rowCount, onClickSelect } = this.props;
+    const { editable, selectedItems, rowCount, onClickSelect } = this.props;
     const selectedCount = selectedItems.length;
 
     return (
       <ListHeader
         sticky
+        editable={editable}
         selectedCount={selectedCount}
         rowCount={rowCount}
         onClickSelect={onClickSelect}

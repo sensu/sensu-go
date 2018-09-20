@@ -12,6 +12,7 @@ import SilencesList from "/components/partials/SilencesList";
 import SilencesListToolbar from "/components/partials/SilencesList/SilencesListToolbar";
 import SilenceEntryDialog from "/components/partials/SilenceEntryDialog";
 import { withQueryParams } from "/components/QueryParams";
+import WithWidth from "/components/WithWidth";
 
 const WithDialogState = toRenderProps(
   withStateHandlers(
@@ -102,17 +103,22 @@ class SilencesContent extends React.Component {
         </WithDialogState>
 
         <AppLayout.MobileFullWidthContent>
-          <SilencesList
-            limit={limit}
-            offset={offset}
-            order={order}
-            onChangeQuery={setQueryParams}
-            namespace={namespace}
-            loading={
-              (loading && (!namespace || !poller.isRunning())) || aborted
-            }
-            refetch={refetch}
-          />
+          <WithWidth>
+            {({ width }) => (
+              <SilencesList
+                editable={width !== "xs"}
+                limit={limit}
+                offset={offset}
+                order={order}
+                onChangeQuery={setQueryParams}
+                namespace={namespace}
+                loading={
+                  (loading && (!namespace || !poller.isRunning())) || aborted
+                }
+                refetch={refetch}
+              />
+            )}
+          </WithWidth>
         </AppLayout.MobileFullWidthContent>
       </div>
     );

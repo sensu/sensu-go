@@ -16,6 +16,7 @@ import QueueMenuItem from "/components/partials/ToolbarMenuItems/QueueExecution"
 
 class ChecksListHeader extends React.PureComponent {
   static propTypes = {
+    editable: PropTypes.bool.isRequired,
     namespace: PropTypes.object,
     onChangeQuery: PropTypes.func.isRequired,
     onClickClearSilences: PropTypes.func.isRequired,
@@ -149,13 +150,18 @@ class ChecksListHeader extends React.PureComponent {
   };
 
   render() {
-    const { selectedItems, toggleSelectedItems, rowCount } = this.props;
-    const selectedCount = selectedItems.length;
+    const {
+      editable,
+      selectedItems,
+      toggleSelectedItems,
+      rowCount,
+    } = this.props;
 
     return (
       <ListHeader
         sticky
-        selectedCount={selectedCount}
+        editable={editable}
+        selectedCount={selectedItems.length}
         rowCount={rowCount}
         onClickSelect={toggleSelectedItems}
         renderActions={this.renderActions}

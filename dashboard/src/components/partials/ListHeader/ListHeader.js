@@ -21,10 +21,8 @@ const styles = theme => ({
     color: theme.palette.primary.contrastText,
     display: "flex",
     alignItems: "center",
-    zIndex: 1,
-    // "& *": {
-    //   color: theme.palette.primary.contrastText,
-    // },
+    zIndex: theme.zIndex.appBar - 1,
+    minHeight: theme.spacing.unit * 7,
   },
   active: {
     backgroundColor: theme.palette.primary.main,
@@ -41,6 +39,7 @@ const styles = theme => ({
 
 class ListHeader extends React.Component {
   static propTypes = {
+    editable: PropTypes.bool,
     classes: PropTypes.object.isRequired,
     sticky: PropTypes.bool,
 
@@ -53,19 +52,39 @@ class ListHeader extends React.Component {
   };
 
   static defaultProps = {
+    editable: true,
     sticky: false,
     renderActions: () => {},
     renderBulkActions: () => {},
     onClickSelect: () => {},
   };
 
+  renderCheckbox = () => {
+    const { editable, onClickSelect, selectedCount, rowCount } = this.props;
+
+    if (!editable) {
+      return null;
+    }
+
+    return (
+      <React.Fragment>
+        <Checkbox
+          component="button"
+          onClick={onClickSelect}
+          checked={selectedCount === rowCount}
+          indeterminate={selectedCount > 0 && selectedCount !== rowCount}
+          style={{ color: "inherit" }}
+        />
+        {selectedCount > 0 && <div>{selectedCount} Selected</div>}
+      </React.Fragment>
+    );
+  };
+
   render() {
     const {
       sticky,
       classes,
-      onClickSelect,
       selectedCount,
-      rowCount,
       renderActions,
       renderBulkActions,
     } = this.props;
@@ -81,14 +100,7 @@ class ListHeader extends React.Component {
             })}
             style={{ top: sticky ? topBarHeight : undefined }}
           >
-            <Checkbox
-              component="button"
-              onClick={onClickSelect}
-              checked={selectedCount === rowCount}
-              indeterminate={selectedCount > 0 && selectedCount !== rowCount}
-              style={{ color: "inherit" }}
-            />
-            {selectedCount > 0 && <div>{selectedCount} Selected</div>}
+            {this.renderCheckbox()}
             <div className={classes.grow} />
             {selectedCount > 0 ? renderBulkActions() : renderActions()}
           </Typography>
