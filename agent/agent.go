@@ -86,7 +86,7 @@ type Config struct {
 	DeregistrationHandler string
 	// Environment sets the Agent's RBAC environment identifier
 	Environment string
-	// ExtendedAttributes contains any custom attributes passed to the agent on
+	// ExtendedAttributes contains any extended attributes passed to the agent on
 	// start
 	ExtendedAttributes []byte
 	// KeepaliveInterval is the interval, in seconds, when agents will send a
