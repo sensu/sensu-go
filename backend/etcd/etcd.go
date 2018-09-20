@@ -10,7 +10,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -21,7 +20,6 @@ import (
 	"github.com/coreos/etcd/pkg/transport"
 	"github.com/coreos/pkg/capnslog"
 	"github.com/sensu/sensu-go/types"
-	"google.golang.org/grpc/grpclog"
 )
 
 const (
@@ -43,10 +41,6 @@ const (
 	// ClusterStateExisting specifies ths is an existing etcd cluster
 	ClusterStateExisting = "existing"
 )
-
-func init() {
-	clientv3.SetLogger(grpclog.NewLoggerV2(ioutil.Discard, ioutil.Discard, ioutil.Discard))
-}
 
 // Config is a configuration for the embedded etcd
 type Config struct {
@@ -185,6 +179,11 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	if err != nil {
 		return nil, err
 	}
+	// The StartEtcd function overwrites the gRPC logger to log warnings and
+	// errors directly to stderr. This functionality cannot be turned off, but
+	// will be removed as part of the etcd 3.4 release. Until then, reset the
+	// gRPC logger to use logrus after starting the etcd server.
+	setGRPCLogger()
 
 	select {
 	case <-e.Server.ReadyNotify():
