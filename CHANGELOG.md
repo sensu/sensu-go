@@ -50,6 +50,8 @@ sending of keepalive messages.
 - Fixed a bug in `sensuctl cluster health` that resulted in an unmarshal
 error in an unhealthy cluster.
 - Fixed a bug in the web ui, removed references to keepaliveTimeout.
+- The check output attribute is still present in JSON-encoded events even if
+empty.
 
 ### Breaking Changes
 - Removed the KeepaliveTimeout attribute from entities.
