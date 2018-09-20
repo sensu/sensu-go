@@ -153,7 +153,7 @@ required = [
 
 [[constraint]]
   name = "github.com/coreos/etcd"
-  version = "3.3.2"
+  version = "3.3.9"
 
 [[constraint]]
   name = "github.com/robfig/cron"
