@@ -5,7 +5,7 @@ import { Context } from "/components/partials/ToolbarMenu";
 import MenuController from "/components/controller/MenuController";
 import RootRef from "@material-ui/core/RootRef";
 
-import Disclosure from "./AdaptiveMenuItem";
+import Disclosure from "./Disclosure";
 
 class Submenu extends React.Component {
   static displayName = "ToolbarMenuItems.Submenu";

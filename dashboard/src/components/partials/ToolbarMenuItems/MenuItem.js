@@ -24,23 +24,26 @@ class PureMenuItem extends React.PureComponent {
 
   static propTypes = {
     autoClose: PropTypes.bool,
+    close: PropTypes.func,
     onClick: PropTypes.func,
   };
 
   static defaultProps = {
     autoClose: true,
+    close: () => null,
     onClick: () => null,
   };
 
   handleClick = ev => {
     if (this.props.autoClose) {
-      close(ev);
+      this.props.close(ev);
     }
     this.props.onClick(ev);
   };
 
   render() {
-    return <AdaptiveMenuItem {...this.props} onClick={this.handleClick} />;
+    const { autoClose, close, onClick, ...props } = this.props;
+    return <AdaptiveMenuItem {...props} onClick={this.handleClick} />;
   }
 }
 
