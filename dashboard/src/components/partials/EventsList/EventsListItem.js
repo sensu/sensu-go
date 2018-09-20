@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import equals from "lodash/isEqual";
 
 import Checkbox from "@material-ui/core/Checkbox";
 import TableCell from "@material-ui/core/TableCell";
@@ -62,13 +61,6 @@ class EventListItem extends React.Component {
       ${EventStatusDescriptor.fragments.event}
     `,
   };
-
-  shouldComponentUpdate(props) {
-    return (
-      this.props.selected !== props.selected ||
-      !equals(this.props.event, props.event)
-    );
-  }
 
   handleClickCheckbox = () => {
     this.props.onChangeSelected(!this.props.selected);

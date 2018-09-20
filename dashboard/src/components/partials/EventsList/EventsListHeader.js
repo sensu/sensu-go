@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import equals from "lodash/isEqual";
 
 import StatusMenu from "/components/partials/StatusMenu";
 import ListHeader from "/components/partials/ListHeader";
@@ -61,14 +60,6 @@ class EventsListHeader extends React.Component {
       }
     `,
   };
-
-  shouldComponentUpdate(props) {
-    return (
-      !equals(this.props.environment, props.environment) ||
-      !equals(this.props.rowCount, props.rowCount) ||
-      !equals(this.props.selectedItems, props.selectedItems)
-    );
-  }
 
   requeryEntity = newValue => {
     this.props.onChangeQuery({ filter: `Entity.ID == '${newValue}'` });
