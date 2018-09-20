@@ -3,7 +3,10 @@ package monitor
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/signal"
 	"strconv"
+	"syscall"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
@@ -71,6 +74,7 @@ func (m *EtcdSupervisor) Monitor(ctx context.Context, name string, event *types.
 	// if it exists and the ttl matches the original ttl of the lease, extend its
 	// lease with keep-alive.
 	if mon != nil && mon.ttl == ttl {
+		logger.Debugf("a lease for the key %s already exist, extending it", key)
 		_, kaerr := m.client.KeepAliveOnce(ctx, mon.leaseID)
 		return kaerr
 	}
@@ -106,7 +110,9 @@ func (m *EtcdSupervisor) Monitor(ctx context.Context, name string, event *types.
 	}
 
 	// start the watcher
-	watchMon(ctx, m.client, mon.key, failureFunc, shutdownFunc)
+	watchMon(ctx, m.client, mon, failureFunc, shutdownFunc)
+	logger.Debugf("starting a monitor for the key %s", key)
+
 	return nil
 }
 
@@ -136,8 +142,8 @@ func (m *EtcdSupervisor) getMonitor(ctx context.Context, key string) (*monitor, 
 // watchMon takes a monitor key and watches for etcd ops. If a DELETE event
 // is witnessed, it calls the provided HandleFailure func. If a PUT event is
 // witnessed, the watcher is stopped.
-func watchMon(ctx context.Context, cli *clientv3.Client, key string, failureHandler func(), shutdownHandler func()) {
-	responseChan := cli.Watch(ctx, key)
+func watchMon(ctx context.Context, cli *clientv3.Client, mon *monitor, failureHandler func(), shutdownHandler func()) {
+	responseChan := cli.Watch(ctx, mon.key)
 	go func() {
 		for wresp := range responseChan {
 			for _, ev := range wresp.Events {
@@ -153,5 +159,22 @@ func watchMon(ctx context.Context, cli *clientv3.Client, key string, failureHand
 				}
 			}
 		}
+	}()
+
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		sig := <-sigs
+
+		if _, err := cli.Lease.Revoke(ctx, mon.leaseID); err != nil {
+			logger.WithError(err).Warningf("could not revoke the lease %s for the key %s",
+				mon.leaseID, mon.key,
+			)
+		}
+
+		logger.Debugf("signal %s received, revoking lease for key %s",
+			sig.String(),
+			mon.key,
+		)
 	}()
 }
