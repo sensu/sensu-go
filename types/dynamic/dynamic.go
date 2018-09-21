@@ -212,7 +212,7 @@ func Synthesize(v AttrGetter) (map[string]interface{}, error) {
 			continue
 		}
 
-		// Determine if we are handling custom attributes
+		// Determine if we are handling extended attributes
 		if !empty && isExtendedAttributes(extendedAttributesAddress, value.Field(i)) {
 			var attrs interface{}
 			if err := json.Unmarshal(value.Field(i).Bytes(), &attrs); err != nil {

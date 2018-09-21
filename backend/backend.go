@@ -267,6 +267,13 @@ func (b *Backend) Run() error {
 	}
 
 	var derr error
+
+	if err := sg.Stop(); err != nil {
+		if derr == nil {
+			derr = err
+		}
+	}
+
 	if b.Etcd != nil {
 		logger.Info("shutting down etcd")
 		defer func() {
@@ -280,12 +287,6 @@ func (b *Backend) Run() error {
 				derr = err
 			}
 		}()
-	}
-
-	if err := sg.Stop(); err != nil {
-		if derr == nil {
-			derr = err
-		}
 	}
 
 	// we allow inErrChan to leak to avoid panics from other

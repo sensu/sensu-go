@@ -47,6 +47,6 @@
 #deregistration-handler: ""
 #keepalive-timeout: 120
 #keepalive-interval: 20
-#custom-attributes: ""
+#extended-attributes: ""
 #log-level: "warn"
 #redact: ""
