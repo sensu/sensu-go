@@ -10,6 +10,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Add windows/386 to binary gcs releases
 - TLS authentication and encryption for etcd client and peer communication.
+- Added a debug log message for interval timer initial offset.
 
 ### Removed
 - Staging resources and configurations have been removed from sensu-go.
