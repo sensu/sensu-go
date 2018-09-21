@@ -187,6 +187,7 @@ func TestHandleExpireOnResolveEntries(t *testing.T) {
 	resolution := func(e *types.Event) *types.Event {
 		e.Check.History = []types.CheckHistory{
 			types.CheckHistory{Status: 1},
+			types.CheckHistory{Status: 0},
 		}
 		e.Check.Status = 0
 		return e

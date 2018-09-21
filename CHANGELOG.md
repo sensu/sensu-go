@@ -57,6 +57,9 @@ sending of keepalive messages.
 - Fixed a bug in `sensuctl cluster health` that resulted in an unmarshal
 error in an unhealthy cluster.
 - Fixed a bug in the web ui, removed references to keepaliveTimeout.
+- Keepalive checks now have a history.
+- Some keepalive events were misinterpreted as resolution events, which caused
+these events to be handled instead of filtered.
 - Some failing keepalive events were not properly emitted after a restart of
 sensu-backend.
 - The check output attribute is still present in JSON-encoded events even if

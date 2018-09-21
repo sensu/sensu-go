@@ -188,13 +188,11 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	}
 
 	// Handle expire on resolve silenced entries
-	err = handleExpireOnResolveEntries(ctx, event, e.store)
-	if err != nil {
+	if err = handleExpireOnResolveEntries(ctx, event, e.store); err != nil {
 		return err
 	}
 
-	err = e.store.UpdateEvent(ctx, event)
-	if err != nil {
+	if err := e.store.UpdateEvent(ctx, event); err != nil {
 		return err
 	}
 
