@@ -35,6 +35,8 @@ the URLs provided by --listen-client-urls.
 re-implemented in https://github.com/sensu/sensu-go/issues/1739).
 - The sensu-backend flags related to etcd are now all prefixed with `etcd` and
 the older versions are now deprecated.
+- Web ui entity recent events are sorted by last ok.
+- etcd is now the last component to shutdown during a graceful shutdown.
 - Web ui entity recent events are sorted by last ok
 - Deprecated --custom-attributes in the sensu-agent command, changed to
 --extended-attributes.
@@ -53,6 +55,8 @@ sending of keepalive messages.
 - Fixed a bug in `sensuctl cluster health` that resulted in an unmarshal
 error in an unhealthy cluster.
 - Fixed a bug in the web ui, removed references to keepaliveTimeout.
+- Some failing keepalive events were not properly emitted after a restart of
+sensu-backend.
 - The check output attribute is still present in JSON-encoded events even if
 empty.
 

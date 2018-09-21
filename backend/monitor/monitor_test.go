@@ -150,12 +150,16 @@ func TestWatchMonDelete(t *testing.T) {
 		failWait.Done()
 	}
 
-	key := "monitorTestDelete"
-	_, err = client.Put(context.Background(), key, "test value")
+	mon := &monitor{
+		key:     "monitorTestDelete",
+		leaseID: 0,
+		ttl:     0,
+	}
+	_, err = client.Put(context.Background(), mon.key, "test value")
 	require.NoError(t, err)
-	watchMon(context.Background(), client, key, testFailureHandler, nil)
+	watchMon(context.Background(), client, mon, testFailureHandler, nil)
 	failWait.Add(1)
-	_, err = client.Delete(context.Background(), key)
+	_, err = client.Delete(context.Background(), mon.key)
 	require.NoError(t, err)
 	failWait.Wait()
 }
@@ -175,12 +179,17 @@ func TestWatchMonPut(t *testing.T) {
 		shutdownWait.Done()
 	}
 
-	key := "monitorTestPut"
-	_, err = client.Put(context.Background(), key, "test value")
+	mon := &monitor{
+		key:     "monitorTestPut",
+		leaseID: 0,
+		ttl:     0,
+	}
+
+	_, err = client.Put(context.Background(), mon.key, "test value")
 	require.NoError(t, err)
-	watchMon(context.Background(), client, key, nil, testShutdownHandler)
+	watchMon(context.Background(), client, mon, nil, testShutdownHandler)
 	shutdownWait.Add(1)
-	_, err = client.Put(context.Background(), key, "test value")
+	_, err = client.Put(context.Background(), mon.key, "test value")
 	require.NoError(t, err)
 	shutdownWait.Wait()
 }
