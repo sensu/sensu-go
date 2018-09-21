@@ -85,6 +85,14 @@ class ChecksList extends React.Component {
   state = {
     silence: null,
     unsilence: null,
+    publish: null,
+  };
+
+  setChecksPublish = (checks, publish) => {
+    checks.forEach(check => {
+      this.setState({ publish });
+      setCheckPublish(this.props.client, { id: check.id, publish });
+    });
   };
 
   silenceChecks = checks => {
@@ -115,18 +123,6 @@ class ChecksList extends React.Component {
   clearSilences = checks => {
     this.setState({
       unsilence: checks.reduce((memo, ch) => [...memo, ...ch.silences], []),
-    });
-  };
-
-  publishChecks = checks => {
-    checks.forEach(check => {
-      setCheckPublish(this.props.client, { id: check.id, publish: true });
-    });
-  };
-
-  unpublishChecks = checks => {
-    checks.forEach(check => {
-      setCheckPublish(this.props.client, { id: check.id, publish: false });
     });
   };
 
@@ -189,9 +185,8 @@ class ChecksList extends React.Component {
       onClickClearSilences={() => this.clearSilences([check])}
       onClickDelete={() => this.deleteChecks([check])}
       onClickExecute={() => this.executeChecks([check])}
+      onClickSetPublish={publish => this.setChecksPublish([check], publish)}
       onClickSilence={() => this.silenceChecks([check])}
-      onClickPublish={() => this.publishChecks([check])}
-      onClickUnpublish={() => this.unpublishChecks([check])}
     />
   );
 
@@ -230,6 +225,7 @@ class ChecksList extends React.Component {
                 onClickClearSilences={() => this.clearSilences(selectedItems)}
                 onClickDelete={() => this.deleteChecks(selectedItems)}
                 onClickExecute={() => this.executeChecks(selectedItems)}
+                // onClickSetPublish={() => this.setChecksPublish(selectedItems)}
                 onClickSilence={() => this.silenceChecks(selectedItems)}
                 rowCount={items.length}
                 selectedItems={selectedItems}

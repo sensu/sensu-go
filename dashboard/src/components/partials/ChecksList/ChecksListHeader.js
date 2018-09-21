@@ -9,6 +9,7 @@ import ListSortMenu from "/components/partials/ListSortMenu";
 import SilenceIcon from "/icons/Silence";
 import QueueIcon from "@material-ui/icons/Queue";
 import UnsilenceIcon from "/icons/Unsilence";
+import PublishIcon from "@material-ui/icons/AvTimer";
 
 class ChecksListHeader extends React.PureComponent {
   static propTypes = {
@@ -16,6 +17,7 @@ class ChecksListHeader extends React.PureComponent {
     onClickClearSilences: PropTypes.func.isRequired,
     onClickDelete: PropTypes.func.isRequired,
     onClickExecute: PropTypes.func.isRequired,
+    // onClickSetPublish: PropTypes.func.isRequired,
     onClickSilence: PropTypes.func.isRequired,
     rowCount: PropTypes.number.isRequired,
     selectedItems: PropTypes.array.isRequired,
@@ -27,6 +29,7 @@ class ChecksListHeader extends React.PureComponent {
       onClickClearSilences,
       onClickDelete,
       onClickExecute,
+      // onClickSetPublish,
       onClickSilence,
       onChangeQuery,
       selectedItems,
@@ -66,6 +69,14 @@ class ChecksListHeader extends React.PureComponent {
               alt="Clear silences associated with selected checks."
               disabled={selectedSilenced.length > 0}
             />
+            <CollapsingMenu.Button
+              title="Publish"
+              icon={<PublishIcon />}
+              // onClick={onClickSetPublish({ selectedItems }, true)}
+              alt="Publish selected checks."
+              pinned
+            />
+
             <ConfirmDelete
               onSubmit={ev => {
                 onClickDelete(ev);

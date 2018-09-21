@@ -2,7 +2,6 @@ import React from "react";
 import PropTypes from "prop-types";
 
 import CronDescriptor from "/components/partials/CronDescriptor";
-import Code from "/components/Code";
 
 class CheckPublishInfo extends React.Component {
   static propTypes = {
@@ -14,16 +13,14 @@ class CheckPublishInfo extends React.Component {
 
     return (
       <React.Fragment>
-        <Code>{check.command}</Code>
-        <br />
         Executed{" "}
         <strong>
           {check.interval ? (
             `
-                        every
-                        ${check.interval}
-                        ${check.interval === 1 ? "second" : "seconds"}
-                      `
+              every
+              ${check.interval}
+              ${check.interval === 1 ? "second" : "seconds"}
+            `
           ) : (
             <CronDescriptor expression={check.cron} />
           )}

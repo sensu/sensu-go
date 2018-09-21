@@ -16,6 +16,7 @@ import SilenceIcon from "/icons/Silence";
 import TableCell from "@material-ui/core/TableCell";
 import TableOverflowCell from "/components/partials/TableOverflowCell";
 import TableSelectableRow from "/components/partials/TableSelectableRow";
+import Code from "/components/Code";
 import CheckPublishInfo from "/components/CheckPublishInfo";
 
 class CheckListItem extends React.Component {
@@ -26,9 +27,8 @@ class CheckListItem extends React.Component {
     onClickClearSilences: PropTypes.func.isRequired,
     onClickDelete: PropTypes.func.isRequired,
     onClickExecute: PropTypes.func.isRequired,
+    onClickSetPublish: PropTypes.func.isRequired,
     onClickSilence: PropTypes.func.isRequired,
-    onClickPublish: PropTypes.func.isRequired,
-    onClickUnpublish: PropTypes.func.isRequired,
   };
 
   static fragments = {
@@ -57,9 +57,8 @@ class CheckListItem extends React.Component {
       onClickClearSilences,
       onClickDelete,
       onClickExecute,
+      onClickSetPublish,
       onClickSilence,
-      onClickPublish,
-      onClickUnpublish,
     } = this.props;
 
     return (
@@ -87,7 +86,14 @@ class CheckListItem extends React.Component {
                 )}
               </NamespaceLink>
             }
-            details={<CheckPublishInfo check={check} />}
+            details={
+              <React.Fragment>
+                <Code>{check.command}</Code>
+                <br />
+                {check.publish && <CheckPublishInfo check={check} />}
+                {!check.publish && <span>Unpublished</span>}
+              </React.Fragment>
+            }
           />
         </TableOverflowCell>
 
@@ -126,7 +132,7 @@ class CheckListItem extends React.Component {
                 {!check.publish && (
                   <MenuItem
                     onClick={() => {
-                      onClickPublish();
+                      onClickSetPublish(true);
                       close();
                     }}
                   >
@@ -136,7 +142,7 @@ class CheckListItem extends React.Component {
                 {check.publish && (
                   <MenuItem
                     onClick={() => {
-                      onClickUnpublish();
+                      onClickSetPublish(false);
                       close();
                     }}
                   >
