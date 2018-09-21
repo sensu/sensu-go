@@ -42,6 +42,8 @@ the older versions are now deprecated.
 --extended-attributes.
 
 ### Fixed
+- Fixed a bug in `sensuctl configure` where an output format called `none` could
+  be selected instead of `tabular`.
 - Fixes a bug in `sensuctl cluster health` so the correct error is handled.
 - Fixed a bug where assets could not extract git tarballs.
 - Fixed a bug where assets would not install if given cache directory was a
