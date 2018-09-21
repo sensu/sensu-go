@@ -35,6 +35,8 @@ re-implemented in https://github.com/sensu/sensu-go/issues/1739).
 - The sensu-backend flags related to etcd are now all prefixed with `etcd` and
 the older versions are now deprecated.
 - Web ui entity recent events are sorted by last ok
+- Deprecated --custom-attributes in the sensu-agent command, changed to
+--extended-attributes.
 
 ### Fixed
 - Fixes a bug in `sensuctl cluster health` so the correct error is handled.
