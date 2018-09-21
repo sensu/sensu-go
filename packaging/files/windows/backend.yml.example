@@ -27,13 +27,13 @@ state-dir: "C:\ProgramData\sensu\data"
 ##
 # store configuration
 ##
-#listen-client-urls: ""
-#listen-peer-urls: ""
-#initial-cluster: ""
-#initial-advertise-peer-urls: ""
-#initial-cluster-state: ""
-#initial-cluster-token: ""
-#name: ""
+#etcd-listen-client-urls: ""
+#etcd-listen-peer-urls: ""
+#etcd-initial-cluster: ""
+#etcd-initial-advertise-peer-urls: ""
+#etcd-initial-cluster-state: ""
+#etcd-initial-cluster-token: ""
+#etcd-name: ""
 
 ##
 # dashboard configuration

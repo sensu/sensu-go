@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Add windows/386 to binary gcs releases
+- TLS authentication and encryption for etcd client and peer communication.
 
 ### Removed
 - Staging resources and configurations have been removed from sensu-go.
@@ -31,6 +32,9 @@ used by providing the --no-embed option. In this case, the client will dial
 the URLs provided by --listen-client-urls.
 - Deprecated daemon `Status()` functions and `/info` (`/info` will be
 re-implemented in https://github.com/sensu/sensu-go/issues/1739).
+- The sensu-backend flags related to etcd are now all prefixed with `etcd` and
+the older versions are now deprecated.
+- Web ui entity recent events are sorted by last ok
 
 ### Fixed
 - Fixes a bug in `sensuctl cluster health` so the correct error is handled.
@@ -49,6 +53,8 @@ error in an unhealthy cluster.
 - Keepalive checks now have a history.
 - Some keepalive events were misinterpreted as resolution events, which caused
 these events to be handled instead of filtered.
+- The check output attribute is still present in JSON-encoded events even if
+empty.
 
 ### Breaking Changes
 - Removed the KeepaliveTimeout attribute from entities.

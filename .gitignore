@@ -15,6 +15,9 @@ yarn-error.log*
 *.test
 *.prof
 coverage.out
+*.csr
+*.pem
+ca-config.json
 
 # packaging
 *.log

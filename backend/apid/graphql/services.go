@@ -8,12 +8,24 @@ import (
 
 // checks
 
+type checkCreator interface {
+	Create(context.Context, types.CheckConfig) error
+}
+
+type checkDestroyer interface {
+	Destroy(context.Context, string) error
+}
+
 type checkFinder interface {
 	Find(ctx context.Context, name string) (*types.CheckConfig, error)
 }
 
 type checkExecutor interface {
 	QueueAdhocRequest(context.Context, string, *types.AdhocRequest) error
+}
+
+type checkReplacer interface {
+	CreateOrReplace(context.Context, types.CheckConfig) error
 }
 
 // entities

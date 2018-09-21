@@ -83,14 +83,7 @@ func (r *entityImpl) Events(p schema.EntityEventsFieldResolverParams) (interface
 	}
 
 	// sort records
-	if p.Args.OrderBy == schema.EventsListOrders.SEVERITY {
-		sort.Sort(types.EventsBySeverity(evs))
-	} else {
-		sort.Sort(types.EventsByTimestamp(
-			evs,
-			p.Args.OrderBy == schema.EventsListOrders.NEWEST,
-		))
-	}
+	sortEvents(evs, p.Args.OrderBy)
 
 	return evs, nil
 }
