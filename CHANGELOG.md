@@ -64,6 +64,7 @@ these events to be handled instead of filtered.
 sensu-backend.
 - The check output attribute is still present in JSON-encoded events even if
 empty.
+- Prevent an empty Path environment variable for agents on Windows.
 
 ### Breaking Changes
 - Removed the KeepaliveTimeout attribute from entities.

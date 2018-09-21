@@ -77,15 +77,16 @@ func getSystemEnviron() []string {
 
 	for _, e := range env {
 		pair := strings.Split(e, "=")
-		key, _ := pair[0], pair[1]
+		// Transform the key to uppercase because Windows uses "Path" and not "PATH"
+		key := strings.ToUpper(pair[0])
 
-		if presentVars[key] != true {
+		if !presentVars[key] {
 			presentVars[key] = true
 		}
 	}
 
 	for key, val := range presentVars {
-		if val == false {
+		if !val {
 			env = append(env, key+"=")
 		}
 	}
