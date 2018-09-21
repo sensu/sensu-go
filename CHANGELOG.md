@@ -53,6 +53,8 @@ error in an unhealthy cluster.
 - Fixed a bug in the web ui, removed references to keepaliveTimeout.
 - Some failing keepalive events were not properly emitted after a restart of
 sensu-backend.
+- The check output attribute is still present in JSON-encoded events even if
+empty.
 
 ### Breaking Changes
 - Removed the KeepaliveTimeout attribute from entities.
