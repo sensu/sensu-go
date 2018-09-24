@@ -4,8 +4,8 @@ import { when } from "/utils/promise";
 import { UnauthorizedError } from "/errors/FetchError";
 import QueryAbortedError from "/errors/QueryAbortedError";
 
-import flagTokens from "/mutations/flagTokens";
 import refreshTokens from "/mutations/refreshTokens";
+import flagTokens from "/mutations/flagTokens";
 
 const EXPIRY_THRESHOLD_MS = 13 * 60 * 1000;
 const MAX_REFRESHES = 3;
@@ -35,8 +35,12 @@ const authLink = ({ getClient }) =>
                 });
 
                 const nextObserver = {
-                  next: observer.next.bind(observer),
-                  complete: observer.complete.bind(observer),
+                  next: (...args) => {
+                    observer.next(...args);
+                  },
+                  complete: () => {
+                    observer.complete();
+                  },
 
                   // If chain results in an unauthorized error being thrown,
                   // either attempt to create a new access token or flag the
