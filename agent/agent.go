@@ -18,6 +18,7 @@ import (
 
 	"github.com/atlassian/gostatsd/pkg/statsd"
 	"github.com/sensu/sensu-go/agent/assetmanager"
+	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/transport"
@@ -129,6 +130,8 @@ type SocketConfig struct {
 	Port int
 }
 
+type executionFunction func(ctx context.Context, execution *command.Execution) (*command.Execution, error)
+
 // FixtureConfig provides a new Config object initialized with defaults for use
 // in tests
 func FixtureConfig() *Config {
@@ -192,6 +195,7 @@ type Agent struct {
 	conn            transport.Transport
 	context         context.Context
 	entity          *types.Entity
+	exFunc          executionFunction
 	handler         *handler.MessageHandler
 	header          http.Header
 	inProgress      map[string]*types.CheckConfig
@@ -215,6 +219,7 @@ func NewAgent(config *Config) *Agent {
 		context:         ctx,
 		config:          config,
 		handler:         handler.NewMessageHandler(),
+		exFunc:          command.ExecuteCommand,
 		inProgress:      make(map[string]*types.CheckConfig),
 		inProgressMu:    &sync.Mutex{},
 		stopping:        make(chan struct{}),

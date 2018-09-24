@@ -1,10 +1,10 @@
 package agent
 
 import (
-	"path/filepath"
 	"testing"
 
-	"github.com/sensu/sensu-go/testing/testutil"
+	"github.com/sensu/sensu-go/testing/mockexecution"
+
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -20,9 +20,7 @@ func TestExecuteHook(t *testing.T) {
 	agent := NewAgent(config)
 	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch
-
-	truePath := testutil.CommandPath(filepath.Join(toolsDir, "true"))
-	hookConfig.Command = truePath
+	agent.exFunc = mockexecution.True
 
 	hook := agent.executeHook(hookConfig, "check")
 
@@ -30,8 +28,7 @@ func TestExecuteHook(t *testing.T) {
 	assert.Equal(hook.Status, int32(0))
 	assert.Equal(hook.Output, "")
 
-	hookConfig.Command = "printf hello"
-
+	agent.exFunc = mockexecution.Hello
 	hook = agent.executeHook(hookConfig, "check")
 
 	assert.NotZero(hook.Executed)

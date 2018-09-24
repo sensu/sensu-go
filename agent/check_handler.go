@@ -99,7 +99,7 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 		return
 	}
 
-	if _, err := command.ExecuteCommand(context.Background(), ex); err != nil {
+	if _, err := a.exFunc(context.Background(), ex); err != nil {
 		event.Check.Output = err.Error()
 	} else {
 		event.Check.Output = ex.Output

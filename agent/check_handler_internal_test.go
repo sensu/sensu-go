@@ -2,29 +2,21 @@ package agent
 
 import (
 	"encoding/json"
-	"fmt"
-	"io/ioutil"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
-	"github.com/sensu/sensu-go/testing/testutil"
+	"github.com/sensu/sensu-go/testing/mockexecution"
+
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-var binDir = filepath.Join("..", "bin")
-var toolsDir = filepath.Join(binDir, "tools")
-
 func TestHandleCheck(t *testing.T) {
 	assert := assert.New(t)
 
 	checkConfig := types.FixtureCheckConfig("check")
-	truePath := testutil.CommandPath(filepath.Join(toolsDir, "true"))
-	checkConfig.Command = truePath
 
 	request := &types.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
 	payload, err := json.Marshal(request)
@@ -34,6 +26,7 @@ func TestHandleCheck(t *testing.T) {
 
 	config := FixtureConfig()
 	agent := NewAgent(config)
+	agent.exFunc = mockexecution.True
 	ch := make(chan *transport.Message, 5)
 	agent.sendq = ch
 
@@ -61,10 +54,7 @@ func TestExecuteCheck(t *testing.T) {
 	agent := NewAgent(config)
 	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch
-
-	truePath := testutil.CommandPath(filepath.Join(toolsDir, "true"))
-	checkConfig.Command = truePath
-	checkConfig.Timeout = 10
+	agent.exFunc = mockexecution.True
 
 	agent.executeCheck(request)
 
@@ -75,9 +65,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NotZero(event.Timestamp)
 	assert.Equal(uint32(0), event.Check.Status)
 	assert.False(event.HasMetrics())
-
-	falsePath := testutil.CommandPath(filepath.Join(toolsDir, "false"))
-	checkConfig.Command = falsePath
+	agent.exFunc = mockexecution.False
 
 	agent.executeCheck(request)
 
@@ -88,10 +76,19 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NotZero(event.Timestamp)
 	assert.Equal(uint32(1), event.Check.Status)
 	assert.NotZero(event.Check.Issued)
+	agent.exFunc = mockexecution.Error
 
-	sleepPath := testutil.CommandPath(filepath.Join(toolsDir, "sleep"), "5")
-	checkConfig.Command = sleepPath
-	checkConfig.Timeout = 1
+	agent.executeCheck(request)
+
+	msg = <-ch
+
+	event = &types.Event{}
+	assert.NoError(json.Unmarshal(msg.Payload, event))
+	assert.NotZero(event.Timestamp)
+	assert.Equal(uint32(127), event.Check.Status)
+	assert.Equal("command not found", event.Check.Output)
+	assert.NotZero(event.Check.Issued)
+	agent.exFunc = mockexecution.Timeout
 
 	agent.executeCheck(request)
 
@@ -101,8 +98,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.Equal(uint32(2), event.Check.Status)
-
-	checkConfig.Command = truePath
+	agent.exFunc = mockexecution.Metrics
 	checkConfig.OutputMetricHandlers = nil
 	checkConfig.OutputMetricFormat = ""
 
@@ -114,17 +110,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.False(event.HasMetrics())
-
-	metrics := "metric.foo 1 123456789\nmetric.bar 2 987654321"
-	f, err := ioutil.TempFile("", "metric")
-	assert.NoError(err)
-	_, err = fmt.Fprintln(f, metrics)
-	require.NoError(t, err)
-	f.Close()
-	defer os.Remove(f.Name())
 	checkConfig.OutputMetricFormat = types.GraphiteOutputMetricFormat
-	catPath := testutil.CommandPath(filepath.Join(toolsDir, "cat"), f.Name())
-	checkConfig.Command = catPath
 
 	agent.executeCheck(request)
 

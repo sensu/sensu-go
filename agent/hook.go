@@ -71,7 +71,7 @@ func (a *Agent) executeHook(hookConfig *types.HookConfig, check string) *types.H
 		ex.Input = string(input)
 	}
 
-	if _, err := command.ExecuteCommand(context.Background(), ex); err != nil {
+	if _, err := a.exFunc(context.Background(), ex); err != nil {
 		hook.Output = err.Error()
 	} else {
 		hook.Output = ex.Output

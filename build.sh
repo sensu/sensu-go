@@ -99,18 +99,6 @@ build_binary () {
     echo $outfile
 }
 
-build_tools () {
-    echo "Running tool & plugin builds..."
-
-    for cmd in cat false sleep true; do
-        build_tool $cmd "tools"
-    done
-
-    for cmd in ${HANDLERS[@]}; do
-        build_tool $cmd "handlers"
-    done
-}
-
 build_tool () {
     local cmd=$1
     local subdir=$2
@@ -234,18 +222,6 @@ docker_build() {
     local build_sha=$(git rev-parse HEAD)
     local ext=$@
 
-    # build Sensu binaries for amd64 platform
-    for cmd in cat false sleep true; do
-        echo "Building tools/$cmd for linux-amd64"
-        build_tool_binary linux amd64 $cmd "tools"
-    done
-
-    # build built-in handlers for amd64 platform
-    for cmd in ${HANDLERS[@]}; do
-        echo "Building handlers/$cmd for linux-amd64"
-        build_tool_binary linux amd64 $cmd "handlers"
-    done
-
     # When publishing image, ensure that we can bundle the web UI.
     build_dashboard $ext
 
@@ -358,9 +334,6 @@ case "$cmd" in
     "build_cli")
         build_cli "${@:2}"
         ;;
-    "build_tools")
-        build_tools
-        ;;
     "dashboard")
         test_dashboard
         ;;
@@ -398,7 +371,6 @@ case "$cmd" in
         integration_test_commands
         ;;
     *)
-        build_tools
         unit_test_commands
         integration_test_commands
         build_commands
