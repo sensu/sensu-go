@@ -16,8 +16,6 @@ RACE=""
 
 VERSION_CMD="go run ./version/cmd/version/version.go"
 
-HANDLERS=(slack)
-
 set_race_flag() {
     if [ "$GOARCH" == "amd64" ] && [ "$CGO_ENABLED" == "1" ]; then
         RACE="-race"
