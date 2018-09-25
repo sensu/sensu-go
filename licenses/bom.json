@@ -45,15 +45,6 @@
 		]
 	},
 	{
-		"project": "github.com/bluele/slack",
-		"licenses": [
-			{
-				"type": "MIT License",
-				"confidence": 1
-			}
-		]
-	},
-	{
 		"project": "github.com/coreos/bbolt",
 		"licenses": [
 			{

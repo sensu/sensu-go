@@ -69,13 +69,6 @@
   revision = "4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9"
 
 [[projects]]
-  digest = "1:f9687c9c31f00a0f68744c9116ce81c0560d9448bcc17e3f3e8c05ebf82f1952"
-  name = "github.com/bluele/slack"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "3b1fffcc45b37a2644a23eb7dc434d4d9f0987ba"
-
-[[projects]]
   digest = "1:6bda4e232607261eeaee45b0a0e8a2ef097bd44e8a44d9b7ca1badb36e523891"
   name = "github.com/coreos/bbolt"
   packages = ["."]
@@ -1050,7 +1043,6 @@
     "github.com/NYTimes/gziphandler",
     "github.com/atlassian/gostatsd",
     "github.com/atlassian/gostatsd/pkg/statsd",
-    "github.com/bluele/slack",
     "github.com/coreos/etcd/clientv3",
     "github.com/coreos/etcd/clientv3/concurrency",
     "github.com/coreos/etcd/embed",

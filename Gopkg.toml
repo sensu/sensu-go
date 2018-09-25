@@ -38,10 +38,6 @@ required = [
   version = "1.0.5"
 
 [[constraint]]
-  name = "github.com/bluele/slack"
-  revision = "3b1fffcc45b37a2644a23eb7dc434d4d9f0987ba"
-
-[[constraint]]
   name = "github.com/coreos/pkg"
   version = "3.0.0"
 

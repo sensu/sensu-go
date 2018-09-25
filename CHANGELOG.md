@@ -14,6 +14,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Removed
 - Staging resources and configurations have been removed from sensu-go.
+- Removed handlers/slack from sensu/sensu-go. It can now be found in
+sensu/slack-handler.
 
 ### Changed
 - Changed sensuctl title colour to use terminal's configured default for bold
