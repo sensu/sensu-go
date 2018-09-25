@@ -64,6 +64,8 @@ these events to be handled instead of filtered.
 sensu-backend.
 - The check output attribute is still present in JSON-encoded events even if
 empty.
+- Fixed a bug in `sensuctl check update` interactive mode. Boolean defaults
+were being displayed rather than the check's current values.
 
 ### Breaking Changes
 - Removed the KeepaliveTimeout attribute from entities.
