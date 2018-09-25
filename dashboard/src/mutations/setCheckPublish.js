@@ -44,7 +44,7 @@ export default (client, { id, publish }) =>
       updateCheck: {
         check: {
           publish,
-          __typename: "Check",
+          __typename: "CheckConfig",
         },
         __typename: "UpdateCheckPayload",
       },

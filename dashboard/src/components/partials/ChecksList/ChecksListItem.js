@@ -17,7 +17,7 @@ import TableCell from "@material-ui/core/TableCell";
 import TableOverflowCell from "/components/partials/TableOverflowCell";
 import TableSelectableRow from "/components/partials/TableSelectableRow";
 import Code from "/components/Code";
-import CheckPublishInfo from "/components/CheckPublishInfo";
+import CheckPublishInfo from "./CheckPublishInfo";
 
 class CheckListItem extends React.Component {
   static propTypes = {

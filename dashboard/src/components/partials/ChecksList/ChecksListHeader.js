@@ -9,7 +9,8 @@ import ListSortMenu from "/components/partials/ListSortMenu";
 import SilenceIcon from "/icons/Silence";
 import QueueIcon from "@material-ui/icons/Queue";
 import UnsilenceIcon from "/icons/Unsilence";
-import PublishIcon from "@material-ui/icons/AvTimer";
+import PublishIcon from "@material-ui/icons/Publish";
+import UnpublishIcon from "/icons/Unpublish";
 
 class ChecksListHeader extends React.PureComponent {
   static propTypes = {
@@ -17,19 +18,21 @@ class ChecksListHeader extends React.PureComponent {
     onClickClearSilences: PropTypes.func.isRequired,
     onClickDelete: PropTypes.func.isRequired,
     onClickExecute: PropTypes.func.isRequired,
-    // onClickSetPublish: PropTypes.func.isRequired,
+    onClickSetPublish: PropTypes.func.isRequired,
     onClickSilence: PropTypes.func.isRequired,
     rowCount: PropTypes.number.isRequired,
     selectedItems: PropTypes.array.isRequired,
     toggleSelectedItems: PropTypes.func.isRequired,
   };
 
+  // TODO add a fragment
+
   render() {
     const {
       onClickClearSilences,
       onClickDelete,
       onClickExecute,
-      // onClickSetPublish,
+      onClickSetPublish,
       onClickSilence,
       onChangeQuery,
       selectedItems,
@@ -39,6 +42,8 @@ class ChecksListHeader extends React.PureComponent {
 
     const selectedCount = selectedItems.length;
     const selectedSilenced = selectedItems.filter(ch => !ch.silences.length);
+    const selectedPublished = selectedItems.filter(ch => ch.publish === true);
+    const publish = selectedCount === selectedPublished.length;
 
     return (
       <ListHeader
@@ -69,13 +74,28 @@ class ChecksListHeader extends React.PureComponent {
               alt="Clear silences associated with selected checks."
               disabled={selectedSilenced.length > 0}
             />
-            <CollapsingMenu.Button
-              title="Publish"
-              icon={<PublishIcon />}
-              // onClick={onClickSetPublish({ selectedItems }, true)}
-              alt="Publish selected checks."
-              pinned
-            />
+            {!publish && (
+              <CollapsingMenu.Button
+                title="Publish"
+                icon={<PublishIcon />}
+                onClick={() => {
+                  onClickSetPublish(true);
+                }}
+                alt="Publish selected checks."
+                pinned
+              />
+            )}
+            {publish && (
+              <CollapsingMenu.Button
+                title="Unpublish"
+                icon={<UnpublishIcon />}
+                onClick={() => {
+                  onClickSetPublish(false);
+                }}
+                alt="Unpublish selected checks."
+                pinned
+              />
+            )}
 
             <ConfirmDelete
               onSubmit={ev => {

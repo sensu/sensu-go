@@ -85,12 +85,16 @@ class ChecksList extends React.Component {
   state = {
     silence: null,
     unsilence: null,
-    publish: null,
   };
 
-  setChecksPublish = (checks, publish) => {
+  setChecksPublish = (checks, publish = true) => {
+    // eslint-disable-next-line no-console
+    console.log("AAAAAA");
+    // eslint-disable-next-line no-console
+    console.log(checks);
+    // eslint-disable-next-line no-console
+    console.log(publish);
     checks.forEach(check => {
-      this.setState({ publish });
       setCheckPublish(this.props.client, { id: check.id, publish });
     });
   };
@@ -225,7 +229,9 @@ class ChecksList extends React.Component {
                 onClickClearSilences={() => this.clearSilences(selectedItems)}
                 onClickDelete={() => this.deleteChecks(selectedItems)}
                 onClickExecute={() => this.executeChecks(selectedItems)}
-                // onClickSetPublish={() => this.setChecksPublish(selectedItems)}
+                onClickSetPublish={publish =>
+                  this.setChecksPublish(selectedItems, publish)
+                }
                 onClickSilence={() => this.silenceChecks(selectedItems)}
                 rowCount={items.length}
                 selectedItems={selectedItems}
