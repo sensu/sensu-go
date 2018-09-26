@@ -18,6 +18,7 @@ import TableCell from "@material-ui/core/TableCell";
 import TableRow from "@material-ui/core/TableRow";
 import { TableListEmptyState } from "/components/TableList";
 import ExecuteCheckStatusToast from "/components/relocation/ExecuteCheckStatusToast";
+import PublishCheckStatusToast from "/components/relocation/PublishCheckStatusToast";
 
 import ChecksListHeader from "./ChecksListHeader";
 import ChecksListItem from "./ChecksListItem";
@@ -89,7 +90,18 @@ class ChecksList extends React.Component {
 
   setChecksPublish = (checks, publish = true) => {
     checks.forEach(check => {
-      setCheckPublish(this.props.client, { id: check.id, publish });
+      const promise = setCheckPublish(this.props.client, {
+        id: check.id,
+        publish,
+      });
+      this.props.addToast(({ remove }) => (
+        <PublishCheckStatusToast
+          onClose={remove}
+          mutation={promise}
+          checkName={check.name}
+          publish={publish}
+        />
+      ));
     });
   };
 
