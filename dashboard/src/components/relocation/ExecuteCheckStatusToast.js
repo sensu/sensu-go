@@ -87,11 +87,7 @@ class ExecuteCheckStatusToast extends React.PureComponent {
               if (loading) {
                 const onMutationEnd = () =>
                   addToast(({ remove }) => (
-                    <ExecuteCheckStatusToast
-                      mutation={mutation}
-                      onClose={remove}
-                      check={check}
-                    />
+                    <ExecuteCheckStatusToast {...this.props} onClose={remove} />
                   ));
                 mutation.then(onMutationEnd, onMutationEnd);
               }
