@@ -91,7 +91,9 @@ class CheckListItem extends React.Component {
                 <Code>{check.command}</Code>
                 <br />
                 {check.publish && <CheckPublishInfo check={check} />}
-                {!check.publish && <span>Unpublished</span>}
+                {!check.publish && (
+                  <span>Unpublished. This check does not execute.</span>
+                )}
               </React.Fragment>
             }
           />
