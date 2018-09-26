@@ -78,9 +78,7 @@ class ChecksListHeader extends React.PureComponent {
               <CollapsingMenu.Button
                 title="Publish"
                 icon={<PublishIcon />}
-                onClick={() => {
-                  onClickSetPublish(true);
-                }}
+                onClick={() => onClickSetPublish(true)}
                 alt="Publish selected checks."
                 pinned
               />
@@ -89,9 +87,7 @@ class ChecksListHeader extends React.PureComponent {
               <CollapsingMenu.Button
                 title="Unpublish"
                 icon={<UnpublishIcon />}
-                onClick={() => {
-                  onClickSetPublish(false);
-                }}
+                onClick={() => onClickSetPublish(false)}
                 alt="Unpublish selected checks."
                 pinned
               />

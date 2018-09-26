@@ -88,12 +88,6 @@ class ChecksList extends React.Component {
   };
 
   setChecksPublish = (checks, publish = true) => {
-    // eslint-disable-next-line no-console
-    console.log("AAAAAA");
-    // eslint-disable-next-line no-console
-    console.log(checks);
-    // eslint-disable-next-line no-console
-    console.log(publish);
     checks.forEach(check => {
       setCheckPublish(this.props.client, { id: check.id, publish });
     });
