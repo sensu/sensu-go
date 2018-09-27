@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	bolt "go.etcd.io/bbolt"
+
 	"github.com/sensu/sensu-go/types"
 )
 
