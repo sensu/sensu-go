@@ -22,7 +22,7 @@ func New(agentCacheDir string, entity *types.Entity) *Manager {
 	manager.store = NewAssetStore()
 	manager.factory = &AssetFactory{
 		CacheDir: agentCacheDir,
-		BaseEnv:  getSystemEnviron(),
+		BaseEnv:  getSystemEnviron(os.Environ()),
 	}
 
 	return manager
@@ -61,14 +61,13 @@ func (mngrPtr *Manager) SetCacheDir(baseDir string) {
 //
 // NOTE: Cache on disk is not cleared.
 func (mngrPtr *Manager) Reset() {
-	mngrPtr.factory.BaseEnv = getSystemEnviron()
+	mngrPtr.factory.BaseEnv = getSystemEnviron(os.Environ())
 	mngrPtr.store.Clear()
 }
 
 // Get system ENV variables and append any PATH, LD_LIBRARY_PATH,  & CPATH if
 // missing.
-func getSystemEnviron() []string {
-	env := os.Environ()
+func getSystemEnviron(env []string) []string {
 	presentVars := map[string]bool{
 		"PATH":            false,
 		"LD_LIBRARY_PATH": false,
@@ -77,15 +76,15 @@ func getSystemEnviron() []string {
 
 	for _, e := range env {
 		pair := strings.Split(e, "=")
-		key, _ := pair[0], pair[1]
+		// Transform the key to uppercase because Windows uses "Path" and not "PATH"
+		key := strings.ToUpper(pair[0])
 
-		if presentVars[key] != true {
-			presentVars[key] = true
-		}
+		// Mark it as present
+		presentVars[key] = true
 	}
 
 	for key, val := range presentVars {
-		if val == false {
+		if !val {
 			env = append(env, key+"=")
 		}
 	}

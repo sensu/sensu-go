@@ -122,7 +122,7 @@ func TestPeriodicKeepalive(t *testing.T) {
 				if keepaliveCount > 0 {
 					expected := lastKeepalive.Add(keepaliveInterval)
 					actual := mockTime.Now()
-					assert.WithinDuration(t, expected, actual, time.Second)
+					assert.WithinDuration(t, expected, actual, (2 * time.Second))
 				}
 				lastKeepalive = mockTime.Now()
 			}
