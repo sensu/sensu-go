@@ -79,9 +79,8 @@ func getSystemEnviron(env []string) []string {
 		// Transform the key to uppercase because Windows uses "Path" and not "PATH"
 		key := strings.ToUpper(pair[0])
 
-		if !presentVars[key] {
-			presentVars[key] = true
-		}
+		// Mark it as present
+		presentVars[key] = true
 	}
 
 	for key, val := range presentVars {
