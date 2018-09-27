@@ -5,11 +5,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/testing/mockexecution"
 
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -26,7 +28,10 @@ func TestHandleCheck(t *testing.T) {
 
 	config := FixtureConfig()
 	agent := NewAgent(config)
-	agent.exFunc = mockexecution.True
+	ex := &mockexecution.MockExecution{}
+	agent.execution = ex
+	execution := command.FixtureExecution(0, "")
+	ex.On("ExecuteCommand", mock.Anything, mock.Anything).Return(execution, nil)
 	ch := make(chan *transport.Message, 5)
 	agent.sendq = ch
 
@@ -54,10 +59,12 @@ func TestExecuteCheck(t *testing.T) {
 	agent := NewAgent(config)
 	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch
-	agent.exFunc = mockexecution.True
+	ex := &mockexecution.MockExecution{}
+	agent.execution = ex
+	execution := command.FixtureExecution(0, "")
+	ex.On("ExecuteCommand", mock.Anything, mock.Anything).Return(execution, nil)
 
 	agent.executeCheck(request)
-
 	msg := <-ch
 
 	event := &types.Event{}
@@ -65,10 +72,9 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NotZero(event.Timestamp)
 	assert.Equal(uint32(0), event.Check.Status)
 	assert.False(event.HasMetrics())
-	agent.exFunc = mockexecution.False
 
+	execution.Status = 1
 	agent.executeCheck(request)
-
 	msg = <-ch
 
 	event = &types.Event{}
@@ -76,10 +82,10 @@ func TestExecuteCheck(t *testing.T) {
 	assert.NotZero(event.Timestamp)
 	assert.Equal(uint32(1), event.Check.Status)
 	assert.NotZero(event.Check.Issued)
-	agent.exFunc = mockexecution.Error
 
+	execution.Status = 127
+	execution.Output = "command not found"
 	agent.executeCheck(request)
-
 	msg = <-ch
 
 	event = &types.Event{}
@@ -88,32 +94,33 @@ func TestExecuteCheck(t *testing.T) {
 	assert.Equal(uint32(127), event.Check.Status)
 	assert.Equal("command not found", event.Check.Output)
 	assert.NotZero(event.Check.Issued)
-	agent.exFunc = mockexecution.Timeout
 
+	execution.Status = 2
+	execution.Output = ""
 	agent.executeCheck(request)
-
 	msg = <-ch
 
 	event = &types.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.Equal(uint32(2), event.Check.Status)
-	agent.exFunc = mockexecution.Metrics
+
 	checkConfig.OutputMetricHandlers = nil
 	checkConfig.OutputMetricFormat = ""
-
+	execution.Status = 0
+	execution.Output = "metric.foo 1 123456789\nmetric.bar 2 987654321"
+	ex.On("ExecuteCommand", mock.Anything, mock.Anything).Return(execution, nil)
 	agent.executeCheck(request)
-
 	msg = <-ch
 
 	event = &types.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.False(event.HasMetrics())
+
 	checkConfig.OutputMetricFormat = types.GraphiteOutputMetricFormat
-
+	ex.On("ExecuteCommand", mock.Anything, mock.Anything).Return(execution, nil)
 	agent.executeCheck(request)
-
 	msg = <-ch
 
 	event = &types.Event{}

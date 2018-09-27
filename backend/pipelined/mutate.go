@@ -123,7 +123,7 @@ func (p *Pipelined) pipeMutator(mutator *types.Mutator, event *types.Event) ([]b
 
 	mutatorExec.Input = string(eventData[:])
 
-	result, err := command.ExecuteCommand(context.Background(), mutatorExec)
+	result, err := p.execution.ExecuteCommand(context.Background(), mutatorExec)
 
 	if err != nil {
 		return nil, err

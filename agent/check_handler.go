@@ -99,20 +99,21 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 		return
 	}
 
-	if _, err := a.exFunc(context.Background(), ex); err != nil {
+	checkExec, err := a.execution.ExecuteCommand(context.Background(), ex)
+	if err != nil {
 		event.Check.Output = err.Error()
 	} else {
-		event.Check.Output = ex.Output
+		event.Check.Output = checkExec.Output
 	}
 
-	event.Check.Duration = ex.Duration
-	event.Check.Status = uint32(ex.Status)
+	event.Check.Duration = checkExec.Duration
+	event.Check.Status = uint32(checkExec.Status)
 
 	event.Entity = a.getAgentEntity()
 	event.Timestamp = time.Now().Unix()
 
 	if len(checkHooks) != 0 {
-		event.Check.Hooks = a.ExecuteHooks(request, ex.Status)
+		event.Check.Hooks = a.ExecuteHooks(request, checkExec.Status)
 	}
 
 	// Instantiate metrics in the event if the check is attempting to extract metrics

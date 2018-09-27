@@ -14,6 +14,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// ExecutionCommand ...
+type ExecutionCommand interface {
+	ExecuteCommand(context.Context, *Execution) (*Execution, error)
+}
+
 const (
 	// TimeoutOutput specifies the command execution output in the
 	// event of an execution timeout.
@@ -70,10 +75,15 @@ type Execution struct {
 	InProgressMu *sync.Mutex
 }
 
+// NewExecutionCommand ...
+func NewExecutionCommand() ExecutionCommand {
+	return &Execution{}
+}
+
 // ExecuteCommand executes a system command (fork/exec) with a
 // timeout, optionally writing to STDIN, capturing its combined output
 // (STDOUT/ERR) and exit status.
-func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, error) {
+func (e *Execution) ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, error) {
 	logger := logrus.WithFields(logrus.Fields{"component": "command"})
 	// Using a platform specific shell to "cheat", as the shell
 	// will handle certain failures for us, where golang exec is
@@ -175,5 +185,21 @@ func escapeZombie(ex *Execution) {
 		ex.InProgressMu.Unlock()
 	} else {
 		logger.Error("unable to escape zombie process created from command execution")
+	}
+}
+
+// FixtureExecution returns an Execution for use in testing
+func FixtureExecution(status int, output string) *Execution {
+	return &Execution{
+		Command:      "fake command",
+		Env:          []string{},
+		Input:        "",
+		Timeout:      0,
+		Output:       "",
+		Status:       0,
+		Duration:     1,
+		Name:         "check1",
+		InProgress:   map[string]*types.CheckConfig{},
+		InProgressMu: &sync.Mutex{},
 	}
 }

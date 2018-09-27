@@ -191,7 +191,7 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 		"handler":      handler.Name,
 	}
 
-	result, err := command.ExecuteCommand(context.Background(), handlerExec)
+	result, err := p.execution.ExecuteCommand(context.Background(), handlerExec)
 
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Error("failed to execute event pipe handler")

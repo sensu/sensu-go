@@ -7,6 +7,7 @@ import (
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/types"
 )
@@ -35,6 +36,7 @@ type Pipelined struct {
 	store             store.Store
 	bus               messaging.MessageBus
 	extensionExecutor ExtensionExecutorGetterFunc
+	execution         command.ExecutionCommand
 }
 
 // Config configures a Pipelined.
@@ -58,6 +60,7 @@ func New(c Config, options ...Option) (*Pipelined, error) {
 		wg:                &sync.WaitGroup{},
 		errChan:           make(chan error, 1),
 		eventChan:         make(chan interface{}, 100),
+		execution:         command.NewExecutionCommand(),
 	}
 	for _, o := range options {
 		if err := o(p); err != nil {

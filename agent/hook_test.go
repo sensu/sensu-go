@@ -3,11 +3,13 @@ package agent
 import (
 	"testing"
 
+	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/testing/mockexecution"
 
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestExecuteHook(t *testing.T) {
@@ -20,20 +22,23 @@ func TestExecuteHook(t *testing.T) {
 	agent := NewAgent(config)
 	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch
-	agent.exFunc = mockexecution.True
+	ex := &mockexecution.MockExecution{}
+	agent.execution = ex
+	execution := command.FixtureExecution(0, "")
+	ex.On("ExecuteCommand", mock.Anything, mock.Anything).Return(execution, nil)
 
 	hook := agent.executeHook(hookConfig, "check")
 
 	assert.NotZero(hook.Executed)
-	assert.Equal(hook.Status, int32(0))
-	assert.Equal(hook.Output, "")
+	assert.Equal(int32(0), hook.Status)
+	assert.Equal("", hook.Output)
 
-	agent.exFunc = mockexecution.Hello
+	execution.Output = "hello"
 	hook = agent.executeHook(hookConfig, "check")
 
 	assert.NotZero(hook.Executed)
-	assert.Equal(hook.Status, int32(0))
-	assert.Equal(hook.Output, "hello")
+	assert.Equal(int32(0), hook.Status)
+	assert.Equal("hello", hook.Output)
 }
 
 func TestPrepareHook(t *testing.T) {

@@ -71,14 +71,15 @@ func (a *Agent) executeHook(hookConfig *types.HookConfig, check string) *types.H
 		ex.Input = string(input)
 	}
 
-	if _, err := a.exFunc(context.Background(), ex); err != nil {
+	hookExec, err := a.execution.ExecuteCommand(context.Background(), ex)
+	if err != nil {
 		hook.Output = err.Error()
 	} else {
-		hook.Output = ex.Output
+		hook.Output = hookExec.Output
 	}
 
-	hook.Duration = ex.Duration
-	hook.Status = int32(ex.Status)
+	hook.Duration = hookExec.Duration
+	hook.Status = int32(hookExec.Status)
 
 	return hook
 }
