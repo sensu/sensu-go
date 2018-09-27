@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+
 	"github.com/sensu/sensu-go/graphql/generator"
 )
 
