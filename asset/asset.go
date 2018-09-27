@@ -32,10 +32,7 @@ type Getter interface {
 	Get(*types.Asset) (*RuntimeAsset, error)
 }
 
-// An RuntimeAsset is a locally expanded Asset. After downloading, verifying,
-// and expanding the Asset, the RuntimeAsset struct contains everything
-// necessary to create a runtime environment composed of one or more
-// RuntimeAssets.
+// A RuntimeAsset is a locally expanded Asset.
 type RuntimeAsset struct {
 	// Path is the absolute path to the asset's base directory.
 	Path string

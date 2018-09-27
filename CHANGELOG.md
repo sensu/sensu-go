@@ -21,7 +21,9 @@ sensu/slack-handler.
 
 ### Changed
 - Changed the default sensu-agent cache directory from /var/cache/sensu to
-/Library/Caches/sensu.
+/Library/Caches/sensu. This may cause assets to be redownloaded on sensu-agent
+running on macOS.
+- Changed sensu-agent's internal asset manager to use BoltDB.
 - Changed sensuctl title colour to use terminal's configured default for bold
 text.
 - The backend no longer forcibly binds to localhost.

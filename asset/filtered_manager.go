@@ -8,7 +8,7 @@ import (
 // NewFilteredManager returns an asset Getter that filters assets based on the
 // given entity. Assets that aren't filtered get passed to the underlying
 // getter, allowing composition with other asset managers.
-func NewFilteredManager(getter Getter, entity *types.Entity) Getter {
+func NewFilteredManager(getter Getter, entity *types.Entity) *filteredManager {
 	return &filteredManager{
 		getter: getter,
 		entity: entity,
