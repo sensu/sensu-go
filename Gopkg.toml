@@ -99,7 +99,7 @@ required = [
 
 [[constraint]]
   name = "github.com/stretchr/testify"
-  revision = "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f"
+  version = "1.2.2"
 
 [[constraint]]
   branch = "master"
