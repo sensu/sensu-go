@@ -68,6 +68,8 @@ sensu-backend.
 empty.
 - Fixed a bug in `sensuctl check update` interactive mode. Boolean defaults
 were being displayed rather than the check's current values.
+- Use the provided etcd client TLS information when the flag `--no-embed-etcd` 
+is used.
 
 ### Breaking Changes
 - Removed the KeepaliveTimeout attribute from entities.
