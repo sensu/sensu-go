@@ -86,7 +86,7 @@ input CheckConfigInputs {
   "command to run."
   command: String
 
-  "interval is the time interval, in seconds, in which the check should be run. Defaults to 60."
+  "interval is the time interval, in seconds, in which the check should be run."
   interval: Int
 
   """

@@ -17,7 +17,7 @@ import TableCell from "@material-ui/core/TableCell";
 import TableOverflowCell from "/components/partials/TableOverflowCell";
 import TableSelectableRow from "/components/partials/TableSelectableRow";
 import Code from "/components/Code";
-import CheckPublishInfo from "./CheckPublishInfo";
+import CheckSchedule from "./CheckSchedule";
 
 class CheckListItem extends React.Component {
   static propTypes = {
@@ -36,16 +36,15 @@ class CheckListItem extends React.Component {
       fragment ChecksListItem_check on CheckConfig {
         name
         command
-        subscriptions
-        interval
-        cron
         isSilenced
-        publish
         namespace {
           organization
           environment
         }
+        ...CheckSchedule_check
       }
+
+      ${CheckSchedule.fragments.check}
     `,
   };
 
@@ -90,12 +89,7 @@ class CheckListItem extends React.Component {
               <React.Fragment>
                 <Code>{check.command}</Code>
                 <br />
-                {check.publish && <CheckPublishInfo check={check} />}
-                {!check.publish && (
-                  <span>
-                    Unpublished. This check is not scheduled for execution.
-                  </span>
-                )}
+                <CheckSchedule check={check} />
               </React.Fragment>
             }
           />

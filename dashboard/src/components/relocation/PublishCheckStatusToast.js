@@ -12,12 +12,10 @@ class PublishCheckStatusToast extends React.PureComponent {
     mutation: PropTypes.object.isRequired,
     onClose: PropTypes.func.isRequired,
     checkName: PropTypes.string.isRequired,
-    entityName: PropTypes.string,
     publish: PropTypes.bool,
   };
 
   static defaultProps = {
-    entityName: undefined,
     publish: true,
   };
 
@@ -37,18 +35,12 @@ class PublishCheckStatusToast extends React.PureComponent {
   }
 
   render() {
-    const { mutation, onClose, checkName, entityName } = this.props;
+    const { mutation, onClose, checkName } = this.props;
     const { loading } = this.state;
 
     const subject = (
       <React.Fragment>
         <strong>{checkName}</strong>
-        {entityName && (
-          <span>
-            {" "}
-            on <strong>{entityName}</strong>
-          </span>
-        )}
       </React.Fragment>
     );
 
