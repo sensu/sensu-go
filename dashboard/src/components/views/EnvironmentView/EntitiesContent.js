@@ -51,7 +51,7 @@ class EntitiesContent extends React.PureComponent {
       loading,
       aborted,
       refetch,
-      isPolling,
+      poller,
     } = renderProps;
 
     if (!environment && !loading && !aborted) {
@@ -72,7 +72,9 @@ class EntitiesContent extends React.PureComponent {
           <EntitiesList
             limit={limit}
             offset={offset}
-            loading={(loading && (!environment || !isPolling)) || aborted}
+            loading={
+              (loading && (!environment || !poller.isRunning())) || aborted
+            }
             onChangeQuery={setQueryParams}
             environment={environment}
             refetch={refetch}

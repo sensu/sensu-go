@@ -62,7 +62,7 @@ class SilencesContent extends React.Component {
       loading,
       aborted,
       refetch,
-      isPolling,
+      poller,
     } = renderProps;
 
     if (!environment && !loading && !aborted) {
@@ -109,7 +109,9 @@ class SilencesContent extends React.Component {
             order={order}
             onChangeQuery={setQueryParams}
             environment={environment}
-            loading={(loading && (!environment || !isPolling)) || aborted}
+            loading={
+              (loading && (!environment || !poller.isRunning())) || aborted
+            }
             refetch={refetch}
           />
         </AppLayout.MobileFullWidthContent>
