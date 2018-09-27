@@ -38,6 +38,5 @@ func TestNewAuthContext(t *testing.T) {
 		authCtx = ExtractValueFromContext(tCtx)
 		assert.NotNil(t, authCtx)
 		assert.Equal(t, "default", authCtx.Organization)
-		assert.NotEmpty(t, authCtx.Actor)
 	})
 }
