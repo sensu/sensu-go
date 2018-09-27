@@ -47,7 +47,7 @@ class CheckDetailsContent extends React.PureComponent {
           client,
           data: { check } = {},
           loading,
-          isPolling,
+          poller,
           refetch,
         }) => {
           if (!loading && !aborted && (!check || check.deleted)) {
@@ -58,7 +58,7 @@ class CheckDetailsContent extends React.PureComponent {
             <CheckDetailsContainer
               client={client}
               check={check}
-              loading={(loading && !isPolling) || aborted}
+              loading={(loading && !poller.isRunning()) || aborted}
               refetch={refetch}
             />
           );

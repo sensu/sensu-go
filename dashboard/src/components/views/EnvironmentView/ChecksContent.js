@@ -49,7 +49,7 @@ class ChecksContent extends React.Component {
       aborted,
       data: { environment } = {},
       loading,
-      isPolling,
+      poller,
       refetch,
     } = renderProps;
 
@@ -77,7 +77,9 @@ class ChecksContent extends React.Component {
                 offset={offset}
                 onChangeQuery={setQueryParams}
                 environment={environment}
-                loading={(loading && (!environment || !isPolling)) || aborted}
+                loading={
+                  (loading && (!environment || !poller.isRunning())) || aborted
+                }
                 refetch={refetch}
                 order={queryParams.order}
                 addToast={addToast}
