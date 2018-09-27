@@ -3,7 +3,6 @@ package assetmanager
 import (
 	"io/ioutil"
 	"os"
-	"reflect"
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
@@ -105,7 +104,7 @@ func TestGetSystemEnviron(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := getSystemEnviron(tt.env); !reflect.DeepEqual(got, tt.want) {
+			if got := getSystemEnviron(tt.env); !assert.ElementsMatch(t, got, tt.want) {
 				t.Errorf("getSystemEnviron() = %v, want %v", got, tt.want)
 			}
 		})
