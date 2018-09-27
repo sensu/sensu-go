@@ -14,6 +14,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Removed
 - Staging resources and configurations have been removed from sensu-go.
+- Removed handlers/slack from sensu/sensu-go. It can now be found in
+sensu/slack-handler.
 
 ### Changed
 - Changed sensuctl title colour to use terminal's configured default for bold
@@ -65,6 +67,10 @@ sensu-backend.
 - The check output attribute is still present in JSON-encoded events even if
 empty.
 - Prevent an empty Path environment variable for agents on Windows.
+- Fixed a bug in `sensuctl check update` interactive mode. Boolean defaults
+were being displayed rather than the check's current values.
+- Use the provided etcd client TLS information when the flag `--no-embed-etcd` 
+is used.
 
 ### Breaking Changes
 - Removed the KeepaliveTimeout attribute from entities.

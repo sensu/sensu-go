@@ -38,10 +38,6 @@ required = [
   version = "1.0.5"
 
 [[constraint]]
-  name = "github.com/bluele/slack"
-  revision = "3b1fffcc45b37a2644a23eb7dc434d4d9f0987ba"
-
-[[constraint]]
   name = "github.com/coreos/pkg"
   version = "3.0.0"
 
@@ -200,5 +196,5 @@ required = [
   version = "1.1.0"
 
 [[constraint]]
-  name = "github.com/boltdb/bolt"
-  revision = "e9cf4fae01b5a8ff89d0ec6b32f0d9c9f79aefdd"
+  name = "go.etcd.io/bbolt"
+  version = "1.3.0"

@@ -16,8 +16,6 @@ RACE=""
 
 VERSION_CMD="go run ./version/cmd/version/version.go"
 
-HANDLERS=(slack)
-
 set_race_flag() {
     if [ "$GOARCH" == "amd64" ] && [ "$CGO_ENABLED" == "1" ]; then
         RACE="-race"
@@ -104,10 +102,6 @@ build_tools () {
 
     for cmd in cat false sleep true; do
         build_tool $cmd "tools"
-    done
-
-    for cmd in ${HANDLERS[@]}; do
-        build_tool $cmd "handlers"
     done
 }
 

@@ -101,10 +101,6 @@ function build_tools
     ForEach ($bin in "cat","false","sleep","true") {
         build_tool $bin "tools"
     }
-
-    ForEach ($bin in "slack") {
-        build_tool $bin "handlers"
-    }
 }
 
 function build_tool([string]$bin, [string]$subdir)

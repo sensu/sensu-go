@@ -14,6 +14,7 @@ import (
 const (
 	stdinDefault      = "false"
 	roundRobinDefault = "false"
+	publishDefault    = "true"
 )
 
 type checkOpts struct {
@@ -40,6 +41,9 @@ type checkOpts struct {
 
 func newCheckOpts() *checkOpts {
 	opts := checkOpts{}
+	opts.RoundRobin = roundRobinDefault
+	opts.Stdin = stdinDefault
+	opts.Publish = publishDefault
 	return &opts
 }
 
@@ -54,13 +58,14 @@ func (opts *checkOpts) withCheck(check *types.CheckConfig) {
 	opts.Handlers = strings.Join(check.Handlers, ",")
 	opts.RuntimeAssets = strings.Join(check.RuntimeAssets, ",")
 	opts.ProxyEntityID = check.ProxyEntityID
-	opts.Stdin = stdinDefault
+	opts.Stdin = strconv.FormatBool(check.Stdin)
 	opts.Timeout = strconv.Itoa(int(check.Timeout))
 	opts.HighFlapThreshold = strconv.Itoa(int(check.HighFlapThreshold))
 	opts.LowFlapThreshold = strconv.Itoa(int(check.LowFlapThreshold))
 	opts.OutputMetricFormat = check.OutputMetricFormat
 	opts.OutputMetricHandlers = strings.Join(check.OutputMetricHandlers, ",")
-	opts.RoundRobin = roundRobinDefault
+	opts.RoundRobin = strconv.FormatBool(check.RoundRobin)
+	opts.Publish = strconv.FormatBool(check.Publish)
 }
 
 func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
@@ -196,8 +201,8 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			Name: "publish",
 			Prompt: &survey.Input{
 				Message: "Publish:",
+				Default: opts.Publish,
 				Help:    "If check requests are published for the check. Value must be true or false.",
-				Default: "true",
 			},
 			Validate: func(val interface{}) error {
 				_, err := strconv.ParseBool(val.(string))
@@ -260,7 +265,7 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			Name: "round-robin",
 			Prompt: &survey.Input{
 				Message: "Round Robin",
-				Default: roundRobinDefault,
+				Default: opts.RoundRobin,
 				Help:    "if true, schedule this check in a round-robin fashion",
 			},
 			Validate: func(val interface{}) error {

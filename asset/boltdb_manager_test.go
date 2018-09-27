@@ -8,7 +8,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/boltdb/bolt"
+	bolt "go.etcd.io/bbolt"
+
 	"github.com/sensu/sensu-go/types"
 )
 
