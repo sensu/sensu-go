@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -23,7 +24,6 @@ import (
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/util/retry"
 	"github.com/sirupsen/logrus"
 )
@@ -131,8 +131,10 @@ type SocketConfig struct {
 }
 
 // FixtureConfig provides a new Config object initialized with defaults for use
-// in tests
-func FixtureConfig() *Config {
+// in tests, as well as a cleanup function to call at the end of the test.
+func FixtureConfig() (*Config, func()) {
+	cacheDir := filepath.Join(os.TempDir(), "sensu-agent-test")
+
 	c := &Config{
 		AgentID: GetDefaultAgentID(),
 		API: &APIConfig{
@@ -140,7 +142,7 @@ func FixtureConfig() *Config {
 			Port: DefaultAPIPort,
 		},
 		BackendURLs:       []string{},
-		CacheDir:          path.SystemCacheDir("sensu-agent"),
+		CacheDir:          cacheDir,
 		Environment:       DefaultEnvironment,
 		KeepaliveInterval: DefaultKeepaliveInterval,
 		KeepaliveTimeout:  types.DefaultKeepaliveTimeout,
@@ -159,7 +161,11 @@ func FixtureConfig() *Config {
 		},
 		User: DefaultUser,
 	}
-	return c
+	return c, func() {
+		if err := os.RemoveAll(cacheDir); err != nil {
+			logger.Debugf("Error removing test agent cache dir: %s", err)
+		}
+	}
 }
 
 // NewConfig provides a new empty Config object

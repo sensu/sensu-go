@@ -18,7 +18,8 @@ func TestExecuteHook(t *testing.T) {
 	hookConfig := types.FixtureHookConfig("hook")
 	hookConfig.Stdin = true
 
-	config := FixtureConfig()
+	config, cleanup := FixtureConfig()
+	defer cleanup()
 	agent := NewAgent(config)
 	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch
@@ -44,7 +45,8 @@ func TestExecuteHook(t *testing.T) {
 func TestPrepareHook(t *testing.T) {
 	assert := assert.New(t)
 
-	config := FixtureConfig()
+	config, cleanup := FixtureConfig()
+	defer cleanup()
 	agent := NewAgent(config)
 
 	// nil hook

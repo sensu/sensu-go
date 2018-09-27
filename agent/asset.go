@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"os"
 	"path/filepath"
 	"time"
 
@@ -14,6 +15,10 @@ const (
 
 // startAssetManager starts the agent's asset manager.
 func (a *Agent) startAssetManager() (asset.Getter, error) {
+	// create agent cache directory if it doesn't already exist
+	if err := os.MkdirAll(a.config.CacheDir, 0755); err != nil {
+		return nil, err
+	}
 	db, err := bolt.Open(filepath.Join(a.config.CacheDir, dbName), 0600, &bolt.Options{Timeout: 1 * time.Second})
 	if err != nil {
 		return nil, err

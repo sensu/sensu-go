@@ -15,7 +15,8 @@ import (
 )
 
 func TestNewStatsdServer(t *testing.T) {
-	c := FixtureConfig()
+	c, cleanup := FixtureConfig()
+	defer cleanup()
 	a := &Agent{config: c}
 	s := NewStatsdServer(a)
 	assert.NotNil(t, s)
@@ -150,7 +151,8 @@ func TestPreparePoints(t *testing.T) {
 func TestReceiveMetrics(t *testing.T) {
 	assert := assert.New(t)
 
-	cfg := FixtureConfig()
+	cfg, cleanup := FixtureConfig()
+	defer cleanup()
 	cfg.StatsdServer.FlushInterval = 1
 	ta := NewAgent(cfg)
 
