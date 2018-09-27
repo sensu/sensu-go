@@ -20,6 +20,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 sensu/slack-handler.
 
 ### Changed
+- Changed the default sensu-agent cache directory from /var/cache/sensu to
+/Library/Caches/sensu.
 - Changed sensuctl title colour to use terminal's configured default for bold
 text.
 - The backend no longer forcibly binds to localhost.

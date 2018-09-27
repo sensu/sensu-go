@@ -36,6 +36,8 @@ func (r *RuntimeAssetSet) Env() []string {
 		fmt.Sprintf("CPATH=%s${CPATH}", r.joinPaths((*RuntimeAsset).IncludeDir)),
 	}
 	for i, envVar := range assetEnv {
+		// ExpandEnv replaces ${var} with the contents of var from the current
+		// environment, or an empty string if var doesn't exist.
 		assetEnv[i] = os.ExpandEnv(envVar)
 	}
 	return assetEnv
