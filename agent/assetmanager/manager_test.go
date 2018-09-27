@@ -3,6 +3,7 @@ package assetmanager
 import (
 	"io/ioutil"
 	"os"
+	"reflect"
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
@@ -78,4 +79,35 @@ func TestRegisterSet(t *testing.T) {
 	store := test.manager.store
 	assert.NotEmpty(t, store.assets)
 	assert.NotEmpty(t, store.assetSets)
+}
+
+func TestGetSystemEnviron(t *testing.T) {
+	tests := []struct {
+		name string
+		env  []string
+		want []string
+	}{
+		{
+			name: "empty env",
+			env:  []string{},
+			want: []string{"PATH=", "LD_LIBRARY_PATH=", "CPATH="},
+		},
+		{
+			name: "missing CPATH env",
+			env:  []string{"PATH=", "LD_LIBRARY_PATH="},
+			want: []string{"PATH=", "LD_LIBRARY_PATH=", "CPATH="},
+		},
+		{
+			name: "windows env",
+			env:  []string{"Path="},
+			want: []string{"Path=", "LD_LIBRARY_PATH=", "CPATH="},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := getSystemEnviron(tt.env); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("getSystemEnviron() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }

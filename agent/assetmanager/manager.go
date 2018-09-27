@@ -22,7 +22,7 @@ func New(agentCacheDir string, entity *types.Entity) *Manager {
 	manager.store = NewAssetStore()
 	manager.factory = &AssetFactory{
 		CacheDir: agentCacheDir,
-		BaseEnv:  getSystemEnviron(),
+		BaseEnv:  getSystemEnviron(os.Environ()),
 	}
 
 	return manager
@@ -61,14 +61,13 @@ func (mngrPtr *Manager) SetCacheDir(baseDir string) {
 //
 // NOTE: Cache on disk is not cleared.
 func (mngrPtr *Manager) Reset() {
-	mngrPtr.factory.BaseEnv = getSystemEnviron()
+	mngrPtr.factory.BaseEnv = getSystemEnviron(os.Environ())
 	mngrPtr.store.Clear()
 }
 
 // Get system ENV variables and append any PATH, LD_LIBRARY_PATH,  & CPATH if
 // missing.
-func getSystemEnviron() []string {
-	env := os.Environ()
+func getSystemEnviron(env []string) []string {
 	presentVars := map[string]bool{
 		"PATH":            false,
 		"LD_LIBRARY_PATH": false,
