@@ -39,6 +39,8 @@ func SystemCacheDir(exeName string) string {
 	switch runtime.GOOS {
 	case windows:
 		return filepath.Join(windowsProgramDataPath(), "sensu", "cache", exeName)
+	case darwin:
+		return filepath.Join("/Library/Caches/sensu", exeName)
 	default:
 		return filepath.Join("/var/cache/sensu", exeName)
 	}
