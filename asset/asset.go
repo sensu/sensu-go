@@ -13,35 +13,22 @@
 package asset
 
 import (
-	"path/filepath"
+	"github.com/sensu/sensu-go/types"
 )
 
-const (
-	binDir     = "bin"
-	libDir     = "lib"
-	includeDir = "include"
-)
+// A Getter is responsible for fetching (based on fitler selection), verifying,
+// and expanding an asset. Calls to the Get method block until the Asset has
+// fetched, verified, and expanded or it returns an error indicating why getting
+// the asset failed.
+type Getter interface {
+	Get(*types.Asset) (*RuntimeAsset, error)
+}
 
 // An RuntimeAsset is a locally expanded Asset. After downloading, verifying,
-// and expanding the Asset, the RuntimeAsset struct contains everything necessary
-// to create a runtime environment composed of one or more RuntimeAssets.
+// and expanding the Asset, the RuntimeAsset struct contains everything
+// necessary to create a runtime environment composed of one or more
+// RuntimeAssets.
 type RuntimeAsset struct {
-
-	// The fully-qualified local path to the asset.
+	// Path is the absolute path to the asset's base directory.
 	Path string
-}
-
-// BinDir returns the full path to the asset's bin directory.
-func (r *RuntimeAsset) BinDir() string {
-	return filepath.Join(r.Path, binDir)
-}
-
-// LibDir returns the full path to the asset's lib directory.
-func (r *RuntimeAsset) LibDir() string {
-	return filepath.Join(r.Path, libDir)
-}
-
-// IncludeDir returns the full path to the asset's include directory.
-func (r *RuntimeAsset) IncludeDir() string {
-	return filepath.Join(r.Path, includeDir)
 }
