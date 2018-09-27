@@ -20,7 +20,7 @@ func NewBoltDBGetter(db *bolt.DB,
 	localStorage string,
 	fetcher Fetcher,
 	verifier Verifier,
-	expander Expander) (Getter, error) {
+	expander Expander) Getter {
 
 	if fetcher == nil {
 		fetcher = defaultFetcher
@@ -40,7 +40,7 @@ func NewBoltDBGetter(db *bolt.DB,
 		fetcher:      fetcher,
 		expander:     expander,
 		verifier:     verifier,
-	}, nil
+	}
 }
 
 // boltDBAssetManager is responsible for the installing and storing the metadata

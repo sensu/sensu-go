@@ -17,7 +17,7 @@ import (
 	time "github.com/echlebek/timeproxy"
 
 	"github.com/atlassian/gostatsd/pkg/statsd"
-	"github.com/sensu/sensu-go/agent/assetmanager"
+	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/system"
@@ -186,7 +186,7 @@ func GetDefaultAgentID() string {
 // An Agent receives and acts on messages from a Sensu Backend.
 type Agent struct {
 	api             *http.Server
-	assetManager    *assetmanager.Manager
+	assetManager    asset.Getter
 	backendSelector BackendSelector
 	cancel          context.CancelFunc
 	config          *Config
@@ -234,8 +234,6 @@ func NewAgent(config *Config) *Agent {
 	// We don't check for errors here and let the agent get created regardless
 	// of system info status.
 	_ = agent.refreshSystemInfo()
-	agent.assetManager = assetmanager.New(config.CacheDir, agent.getAgentEntity())
-
 	return agent
 }
 
@@ -430,15 +428,22 @@ func (a *Agent) buildTransportHeaderMap() http.Header {
 
 // Run starts the Agent.
 //
-// 1. Start a statsd server on the agent and logs the received metrics.
-// 2. Connect to the backend, return an error if unsuccessful.
-// 3. Start the socket listeners, return an error if unsuccessful.
-// 4. Start the send/receive pumps.
-// 5. Issue a keepalive immediately.
-// 6. Start refreshing system info periodically.
-// 7. Start sending periodic keepalives.
-// 8. Start the API server, shutdown the agent if doing so fails.
+// 1. Start the asset manager.
+// 2. Start a statsd server on the agent and logs the received metrics.
+// 3. Connect to the backend, return an error if unsuccessful.
+// 4. Start the socket listeners, return an error if unsuccessful.
+// 5. Start the send/receive pumps.
+// 6. Issue a keepalive immediately.
+// 7. Start refreshing system info periodically.
+// 8. Start sending periodic keepalives.
+// 9. Start the API server, shutdown the agent if doing so fails.
 func (a *Agent) Run() error {
+	var err error
+	a.assetManager, err = a.startAssetManager()
+	if err != nil {
+		return err
+	}
+
 	userCredentials := fmt.Sprintf("%s:%s", a.config.User, a.config.Password)
 	userCredentials = base64.StdEncoding.EncodeToString([]byte(userCredentials))
 	a.header = a.buildTransportHeaderMap()

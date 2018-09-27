@@ -72,17 +72,13 @@ func TestBoltDBManager(t *testing.T) {
 	}
 	defer os.RemoveAll(tmpAssetDir)
 
-	getter, err := asset.NewBoltDBGetter(
+	getter := asset.NewBoltDBGetter(
 		db,
 		tmpAssetDir,
 		&localFetcher{},
 		nil,
 		nil,
 	)
-	if err != nil {
-		t.Logf("error returned, expected nil: %v", err)
-		t.Fail()
-	}
 
 	if getter == nil {
 		t.Log("expected getter to be returned, got nil")

@@ -13,7 +13,15 @@
 package asset
 
 import (
+	"path/filepath"
+
 	"github.com/sensu/sensu-go/types"
+)
+
+const (
+	binDir     = "bin"
+	libDir     = "lib"
+	includeDir = "include"
 )
 
 // A Getter is responsible for fetching (based on fitler selection), verifying,
@@ -31,4 +39,19 @@ type Getter interface {
 type RuntimeAsset struct {
 	// Path is the absolute path to the asset's base directory.
 	Path string
+}
+
+// BinDir returns the full path to the asset's bin directory.
+func (r *RuntimeAsset) BinDir() string {
+	return filepath.Join(r.Path, binDir)
+}
+
+// LibDir returns the full path to the asset's lib directory.
+func (r *RuntimeAsset) LibDir() string {
+	return filepath.Join(r.Path, libDir)
+}
+
+// IncludeDir returns the full path to the asset's include directory.
+func (r *RuntimeAsset) IncludeDir() string {
+	return filepath.Join(r.Path, includeDir)
 }
