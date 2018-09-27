@@ -10,7 +10,7 @@ import (
 )
 
 func TestQueryTypeEventField(t *testing.T) {
-	mock := mockEventFetcher{&types.Event{}, nil}
+	mock := mockEventFetcher{&types.Event{Timestamp: 123456789}, nil}
 	impl := queryImpl{eventFinder: mock}
 
 	args := schema.QueryEventFieldResolverArgs{Ns: schema.NewNamespaceInput("a", "b")}
@@ -22,7 +22,7 @@ func TestQueryTypeEventField(t *testing.T) {
 }
 
 func TestQueryTypeEnvironmentField(t *testing.T) {
-	mock := mockEnvironmentFinder{&types.Environment{}, nil}
+	mock := mockEnvironmentFinder{&types.Environment{Name: "us-west-2"}, nil}
 	impl := queryImpl{envFinder: mock}
 
 	params := schema.QueryEnvironmentFieldResolverParams{}

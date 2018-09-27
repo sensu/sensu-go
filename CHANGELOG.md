@@ -67,8 +67,12 @@ these events to be handled instead of filtered.
 sensu-backend.
 - The check output attribute is still present in JSON-encoded events even if
 empty.
+- Prevent an empty Path environment variable for agents on Windows.
 - Fixed a bug in `sensuctl check update` interactive mode. Boolean defaults
 were being displayed rather than the check's current values.
+- Use the provided etcd client TLS information when the flag `--no-embed-etcd` 
+is used.
+- Increase duration delta in TestPeriodicKeepalive integration test.
 
 ### Breaking Changes
 - Removed the KeepaliveTimeout attribute from entities.

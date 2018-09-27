@@ -41,6 +41,9 @@ jobs:
       - run: sudo $CIRCLE_WORKING_DIRECTORY/build/ci/circle-ci-setup.sh
       - run: $SENSU_RELEASE_REPO/install-awscli.sh
 
+      # *Now* get to initial linting
+      - run: GOFMT=/usr/local/go/bin/gofmt ./build/ci/gofmt-linting-check.sh
+
       # Post packages to S3
       - run: $SENSU_RELEASE_REPO/post-packages-s3.sh $CIRCLE_WORKING_DIRECTORY/out
 

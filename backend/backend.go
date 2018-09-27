@@ -2,7 +2,6 @@ package backend
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"runtime/debug"
@@ -10,6 +9,7 @@ import (
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/coreos/etcd/pkg/transport"
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
 	"github.com/sensu/sensu-go/backend/daemon"
@@ -43,19 +43,13 @@ type Backend struct {
 }
 
 func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
-	// Intialize the TLS configuration
-	var (
-		tlsConfig *tls.Config
-		err       error
-	)
-	if config.TLS != nil {
-		tlsConfig, err = config.TLS.ToTLSConfig()
+	if config.NoEmbedEtcd {
+		tlsInfo := (transport.TLSInfo)(config.EtcdClientTLSInfo)
+		tlsConfig, err := tlsInfo.ClientConfig()
 		if err != nil {
 			return nil, err
 		}
-	}
 
-	if config.NoEmbedEtcd {
 		// Don't start up an embedded etcd, return a client that connects to an
 		// external etcd instead.
 		return clientv3.New(clientv3.Config{
