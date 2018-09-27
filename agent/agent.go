@@ -130,8 +130,6 @@ type SocketConfig struct {
 	Port int
 }
 
-type executionFunction func(ctx context.Context, execution *command.Execution) (*command.Execution, error)
-
 // FixtureConfig provides a new Config object initialized with defaults for use
 // in tests
 func FixtureConfig() *Config {
