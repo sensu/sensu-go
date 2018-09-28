@@ -12,8 +12,8 @@ sensu_go_build_env: &sensu_go_build_env
   environment:
     # Hard-coding this for now.
     - SENSU_BUILD_ITERATION: 1
-    - SENSU_RELEASE_REPO: /home/circleci/sensu-release
-    - SECURE_VARIABLES_PLAINTEXT_FILE: /home/circleci/secure-variables.plain
+    - SENSU_RELEASE_REPO: /go/sensu-release
+    - SECURE_VARIABLES_PLAINTEXT_FILE: /go/secure-variables.plain
 
   working_directory: /go/src/github.com/sensu/sensu-go
   docker:
@@ -47,23 +47,28 @@ jobs:
       - run: make
 
       # Post packages to S3
-      - run: $SENSU_RELEASE_REPO/collect-circle-log.sh $CIRCLE_WORKING_DIRECTORY/out
+      - run: $SENSU_RELEASE_REPO/collect-circle-log.sh $CIRCLE_WORKING_DIRECTORY/out log-build.txt
       - run: $SENSU_RELEASE_REPO/post-packages-s3.sh $CIRCLE_WORKING_DIRECTORY/out
 
       - persist_to_workspace:
-          root: /go/src/github.com/
+          root: /go
           paths:
-            - sensu
+            - src/github.com/sensu
+            - sensu-release
 
   test:
     <<: *sensu_go_build_env
     steps:
       - attach_workspace:
           # Must be absolute path or relative path from working_directory
-          at: /go/src/github.com
+          at: /go
+      - run: cat $SECURE_VARIABLES_PLAINTEXT_FILE >> $BASH_ENV
+      - run: mkdir -pv $CIRCLE_WORKING_DIRECTORY/out
       - run: ./build.sh unit
       - run: ./build.sh integration
       - run: ./build.sh e2e
+      - run: $SENSU_RELEASE_REPO/collect-circle-log.sh $CIRCLE_WORKING_DIRECTORY/out log-test.txt
+      - run: $SENSU_RELEASE_REPO/post-packages-s3.sh $CIRCLE_WORKING_DIRECTORY/out
 
 workflows:
   version: 2
