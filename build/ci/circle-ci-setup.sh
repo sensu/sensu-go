@@ -19,5 +19,3 @@ apt-get update
 apt-get install yarn
 gem install --no-ri --no-rdoc fpm
 apt-get clean
-
-apt-get install python-setuptools
