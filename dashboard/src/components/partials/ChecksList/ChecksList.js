@@ -5,6 +5,7 @@ import { withApollo } from "react-apollo";
 
 import deleteCheck from "/mutations/deleteCheck";
 import executeCheck from "/mutations/executeCheck";
+import setCheckPublish from "/mutations/setCheckPublish";
 import ClearSilencesDialog from "/components/partials/ClearSilencedEntriesDialog";
 import ListController from "/components/controller/ListController";
 import Loader from "/components/util/Loader";
@@ -17,6 +18,7 @@ import TableCell from "@material-ui/core/TableCell";
 import TableRow from "@material-ui/core/TableRow";
 import { TableListEmptyState } from "/components/TableList";
 import ExecuteCheckStatusToast from "/components/relocation/ExecuteCheckStatusToast";
+import PublishCheckStatusToast from "/components/relocation/PublishCheckStatusToast";
 
 import ChecksListHeader from "./ChecksListHeader";
 import ChecksListItem from "./ChecksListItem";
@@ -84,6 +86,23 @@ class ChecksList extends React.Component {
   state = {
     silence: null,
     unsilence: null,
+  };
+
+  setChecksPublish = (checks, publish = true) => {
+    checks.forEach(check => {
+      const promise = setCheckPublish(this.props.client, {
+        id: check.id,
+        publish,
+      });
+      this.props.addToast(({ remove }) => (
+        <PublishCheckStatusToast
+          onClose={remove}
+          mutation={promise}
+          checkName={check.name}
+          publish={publish}
+        />
+      ));
+    });
   };
 
   silenceChecks = checks => {
@@ -176,6 +195,7 @@ class ChecksList extends React.Component {
       onClickClearSilences={() => this.clearSilences([check])}
       onClickDelete={() => this.deleteChecks([check])}
       onClickExecute={() => this.executeChecks([check])}
+      onClickSetPublish={publish => this.setChecksPublish([check], publish)}
       onClickSilence={() => this.silenceChecks([check])}
     />
   );
@@ -215,6 +235,9 @@ class ChecksList extends React.Component {
                 onClickClearSilences={() => this.clearSilences(selectedItems)}
                 onClickDelete={() => this.deleteChecks(selectedItems)}
                 onClickExecute={() => this.executeChecks(selectedItems)}
+                onClickSetPublish={publish =>
+                  this.setChecksPublish(selectedItems, publish)
+                }
                 onClickSilence={() => this.silenceChecks(selectedItems)}
                 rowCount={items.length}
                 selectedItems={selectedItems}

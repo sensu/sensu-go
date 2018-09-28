@@ -86,8 +86,8 @@ input CheckConfigInputs {
   "command to run."
   command: String
 
-  "interval is the time interval, in seconds, in which the check should be run. Defaults to 60."
-  interval: Int = 60
+  "interval is the time interval, in seconds, in which the check should be run."
+  interval: Int
 
   """
 	lowFlapThreshold is the flap detection low threshold (% state change) for
@@ -108,7 +108,7 @@ input CheckConfigInputs {
   handlers: [String!]
 
 	"publish indicates if check requests are published for the check"
-  publish: Boolean = true
+  publish: Boolean
 
 	"Provide a list of valid assets that are required to execute the check."
   assets: [String!]
