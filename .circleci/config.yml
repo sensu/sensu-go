@@ -47,6 +47,7 @@ jobs:
       - run: make
 
       # Post packages to S3
+      - run: $SENSU_RELEASE_REPO/collect-circle-log.sh $CIRCLE_WORKING_DIRECTORY/out
       - run: $SENSU_RELEASE_REPO/post-packages-s3.sh $CIRCLE_WORKING_DIRECTORY/out
 
       - persist_to_workspace:
