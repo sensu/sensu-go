@@ -69,6 +69,9 @@ jobs:
       # Set up items in the test container that we still need
       - run: cat $SECURE_VARIABLES_PLAINTEXT_FILE >> $BASH_ENV
       - run: $SENSU_RELEASE_REPO/install-awscli.sh
+
+      # Clean out the "out" directory from the build workspace run
+      - run: rm -rf $CIRCLE_WORKING_DIRECTORY/out
       - run: mkdir -pv $CIRCLE_WORKING_DIRECTORY/out
 
       # Run tests
