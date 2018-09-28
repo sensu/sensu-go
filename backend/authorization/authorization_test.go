@@ -130,3 +130,46 @@ func TestCanAccessResource(t *testing.T) {
 		})
 	}
 }
+
+func TestPrivilegeEscalation(t *testing.T) {
+	assert := assert.New(t)
+	actor := Actor{
+		Name: "bob",
+		Rules: []types.Rule{
+			{
+				Type:         "rules",
+				Organization: "hasaccess",
+				Environment:  "hasaccess",
+				Permissions:  []string{types.RulePermCreate},
+			},
+			{
+				Type:         "roles",
+				Organization: "hasaccess",
+				Environment:  "hasaccess",
+				Permissions:  []string{types.RulePermCreate},
+			},
+		},
+	}
+
+	assert.Equal(
+		false,
+		CanAccessResource(
+			actor,
+			"doesnothaveaccess",
+			"doesnothaveaccess",
+			"roles",
+			types.RulePermCreate,
+		),
+	)
+
+	assert.Equal(
+		false,
+		CanAccessResource(
+			actor,
+			"doesnothaveaccess",
+			"doesnothaveaccess",
+			"rules",
+			types.RulePermCreate,
+		),
+	)
+}
