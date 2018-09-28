@@ -65,11 +65,18 @@ jobs:
       - attach_workspace:
           # Must be absolute path or relative path from working_directory
           at: /go
+
+      # Set up items in the test container that we still need
       - run: cat $SECURE_VARIABLES_PLAINTEXT_FILE >> $BASH_ENV
+      - run: $SENSU_RELEASE_REPO/install-awscli.sh
       - run: mkdir -pv $CIRCLE_WORKING_DIRECTORY/out
+
+      # Run tests
       - run: ./build.sh unit
       - run: ./build.sh integration
       - run: ./build.sh e2e
+
+      # Upload test logs
       - run: $SENSU_RELEASE_REPO/collect-circle-log.sh $CIRCLE_WORKING_DIRECTORY/out log-test.txt
       - run: $SENSU_RELEASE_REPO/post-packages-s3.sh $CIRCLE_WORKING_DIRECTORY/out
 
