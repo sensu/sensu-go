@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
-	"path"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -22,9 +22,9 @@ func fixtureAssets() []types.Asset {
 
 func fixtureRuntimeAssets() RuntimeAssetSet {
 	return RuntimeAssetSet{
-		&RuntimeAsset{Path: string(os.PathSeparator) + path.Join("foo", "bar", "asset-1")},
-		&RuntimeAsset{Path: string(os.PathSeparator) + path.Join("foo", "bar", "asset-2")},
-		&RuntimeAsset{Path: string(os.PathSeparator) + path.Join("foo", "bar", "asset-3")},
+		&RuntimeAsset{Path: string(os.PathSeparator) + filepath.Join("foo", "bar", "asset-1")},
+		&RuntimeAsset{Path: string(os.PathSeparator) + filepath.Join("foo", "bar", "asset-2")},
+		&RuntimeAsset{Path: string(os.PathSeparator) + filepath.Join("foo", "bar", "asset-3")},
 	}
 }
 
