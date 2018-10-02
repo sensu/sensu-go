@@ -250,7 +250,7 @@ class CheckDetailsConfiguration extends React.PureComponent {
                   <DictionaryValue>
                     {check.envVars.length > 0 ? (
                       <Monospaced highlight background>
-                        {check.envVars.join("\n")}
+                        <code>{check.envVars.join("\n")}</code>
                       </Monospaced>
                     ) : (
                       "None"
