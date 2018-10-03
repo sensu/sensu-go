@@ -3,14 +3,18 @@ import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
 import DeleteMenuItem from "/components/partials/ToolbarMenuItems/Delete";
+import PublishMenuItem from "/components/partials/ToolbarMenuItems/Publish";
 import SilenceMenuItem from "/components/partials/ToolbarMenuItems/Silence";
 import Toolbar from "/components/partials/Toolbar";
 import ToolbarMenu from "/components/partials/ToolbarMenu";
+import UnpublishMenuItem from "/components/partials/ToolbarMenuItems/Unpublish";
 import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
 import QueueMenuItem from "/components/partials/ToolbarMenuItems/QueueExecution";
 
 import DeleteAction from "./CheckDetailsDeleteAction";
 import ExecuteAction from "./CheckDetailsExecuteAction";
+import PublishAction from "./CheckDetailsPublishAction";
+import UnpublishAction from "./CheckDetailsUnpublishAction";
 import SilenceAction from "./CheckDetailsSilenceAction";
 import ClearSilenceAction from "./CheckDetailsClearSilenceAction";
 
@@ -80,6 +84,22 @@ class CheckDetailsToolbar extends React.Component {
                   />
                 )}
               </ClearSilenceAction>
+            </ToolbarMenu.Item>
+            <ToolbarMenu.Item
+              id="publish"
+              visible={check.publish ? "never" : "if-room"}
+            >
+              <PublishAction check={check}>
+                {handler => <PublishMenuItem onClick={handler} />}
+              </PublishAction>
+            </ToolbarMenu.Item>
+            <ToolbarMenu.Item
+              id="unpublish"
+              visible={check.publish ? "if-room" : "never"}
+            >
+              <UnpublishAction check={check}>
+                {handler => <UnpublishMenuItem onClick={handler} />}
+              </UnpublishAction>
             </ToolbarMenu.Item>
             <ToolbarMenu.Item id="delete" visible="never">
               <DeleteAction check={check}>
