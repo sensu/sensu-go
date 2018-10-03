@@ -91,3 +91,12 @@ workflows:
       - test:
           requires:
             - build
+  rel_build_and_test:
+    jobs:
+      - build:
+          filters:
+            tags:
+              only: /^\d\.\d\.\d\-beta.\d+.+/
+      - test:
+          requires:
+            - build
