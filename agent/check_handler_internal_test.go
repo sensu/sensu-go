@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/command"
-	"github.com/sensu/sensu-go/testing/mockexecution"
+	"github.com/sensu/sensu-go/testing/mockexecutor"
 
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -28,8 +28,8 @@ func TestHandleCheck(t *testing.T) {
 
 	config := FixtureConfig()
 	agent := NewAgent(config)
-	ex := &mockexecution.MockExecution{}
-	agent.execution = ex
+	ex := &mockexecutor.MockExecutor{}
+	agent.executor = ex
 	execution := command.FixtureExecutionResponse(0, "")
 	ex.On("Execute", mock.Anything, mock.Anything).Return(execution, nil)
 	ch := make(chan *transport.Message, 5)
@@ -59,8 +59,8 @@ func TestExecuteCheck(t *testing.T) {
 	agent := NewAgent(config)
 	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch
-	ex := &mockexecution.MockExecution{}
-	agent.execution = ex
+	ex := &mockexecutor.MockExecutor{}
+	agent.executor = ex
 	execution := command.FixtureExecutionResponse(0, "")
 	ex.On("Execute", mock.Anything, mock.Anything).Return(execution, nil)
 

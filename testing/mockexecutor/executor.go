@@ -1,4 +1,4 @@
-package mockexecution
+package mockexecutor
 
 import (
 	"context"
@@ -7,13 +7,13 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// MockExecution ...
-type MockExecution struct {
+// MockExecutor ...
+type MockExecutor struct {
 	mock.Mock
 }
 
 // Execute ...
-func (e *MockExecution) Execute(ctx context.Context, execution *command.ExecutionRequest) (*command.ExecutionResponse, error) {
+func (e *MockExecutor) Execute(ctx context.Context, execution command.ExecutionRequest) (*command.ExecutionResponse, error) {
 	args := e.Called(ctx, execution)
 	return args.Get(0).(*command.ExecutionResponse), args.Error(1)
 }

@@ -16,7 +16,7 @@ import (
 
 // Executor ...
 type Executor interface {
-	Execute(context.Context, *ExecutionRequest) (*ExecutionResponse, error)
+	Execute(context.Context, ExecutionRequest) (*ExecutionResponse, error)
 }
 
 const (
@@ -83,16 +83,11 @@ func NewExecutor() Executor {
 	return &ExecutionRequest{}
 }
 
-// NewExecutionResponse ...
-func NewExecutionResponse() *ExecutionResponse {
-	return &ExecutionResponse{}
-}
-
 // Execute executes a system command (fork/exec) with a
 // timeout, optionally writing to STDIN, capturing its combined output
 // (STDOUT/ERR) and exit status.
-func (e *ExecutionRequest) Execute(ctx context.Context, execution *ExecutionRequest) (*ExecutionResponse, error) {
-	resp := NewExecutionResponse()
+func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionRequest) (*ExecutionResponse, error) {
+	resp := &ExecutionResponse{}
 	logger := logrus.WithFields(logrus.Fields{"component": "command"})
 	// Using a platform specific shell to "cheat", as the shell
 	// will handle certain failures for us, where golang exec is
@@ -142,7 +137,7 @@ func (e *ExecutionRequest) Execute(ctx context.Context, execution *ExecutionRequ
 			timeout()
 			if err := KillProcess(cmd); err != nil {
 				logger.WithError(err).Errorf("Execution timed out - Unable to TERM/KILL the process: #%d", cmd.Process.Pid)
-				escapeZombie(execution)
+				escapeZombie(&execution)
 			}
 		})
 	}
