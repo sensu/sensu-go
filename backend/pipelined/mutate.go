@@ -111,7 +111,7 @@ func (p *Pipelined) onlyCheckOutputMutator(event *types.Event) []byte {
 // STDIN, and captures the command output (STDOUT/ERR) to be used as
 // the mutated event data for a Sensu event handler.
 func (p *Pipelined) pipeMutator(mutator *types.Mutator, event *types.Event) ([]byte, error) {
-	mutatorExec := &command.Execution{}
+	mutatorExec := &command.ExecutionRequest{}
 	mutatorExec.Command = mutator.Command
 	mutatorExec.Timeout = int(mutator.Timeout)
 	mutatorExec.Env = mutator.EnvVars
@@ -123,7 +123,7 @@ func (p *Pipelined) pipeMutator(mutator *types.Mutator, event *types.Event) ([]b
 
 	mutatorExec.Input = string(eventData[:])
 
-	result, err := p.execution.ExecuteCommand(context.Background(), mutatorExec)
+	result, err := p.execution.Execute(context.Background(), mutatorExec)
 
 	if err != nil {
 		return nil, err

@@ -12,8 +12,8 @@ type MockExecution struct {
 	mock.Mock
 }
 
-// ExecuteCommand ...
-func (e *MockExecution) ExecuteCommand(ctx context.Context, execution *command.Execution) (*command.Execution, error) {
+// Execute ...
+func (e *MockExecution) Execute(ctx context.Context, execution *command.ExecutionRequest) (*command.ExecutionResponse, error) {
 	args := e.Called(ctx, execution)
-	return args.Get(0).(*command.Execution), args.Error(1)
+	return args.Get(0).(*command.ExecutionResponse), args.Error(1)
 }

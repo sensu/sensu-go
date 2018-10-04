@@ -74,7 +74,7 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 
 	// Inject the dependenices into PATH, LD_LIBRARY_PATH & CPATH so that they are
 	// availabe when when the command is executed.
-	ex := &command.Execution{
+	ex := &command.ExecutionRequest{
 		Env:          append(assets.Env(), check.EnvVars...),
 		Command:      checkConfig.Command,
 		Timeout:      int(checkConfig.Timeout),
@@ -99,7 +99,7 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 		return
 	}
 
-	checkExec, err := a.execution.ExecuteCommand(context.Background(), ex)
+	checkExec, err := a.execution.Execute(context.Background(), ex)
 	if err != nil {
 		event.Check.Output = err.Error()
 	} else {

@@ -156,7 +156,7 @@ func TestPipelinedExpandHandlers(t *testing.T) {
 
 func TestPipelinedPipeHandler(t *testing.T) {
 	p := &Pipelined{}
-	p.execution = &command.Execution{}
+	p.execution = &command.ExecutionRequest{}
 
 	handler := types.FakeHandlerCommand("cat")
 	handler.Type = "pipe"

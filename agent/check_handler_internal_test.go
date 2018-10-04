@@ -30,8 +30,8 @@ func TestHandleCheck(t *testing.T) {
 	agent := NewAgent(config)
 	ex := &mockexecution.MockExecution{}
 	agent.execution = ex
-	execution := command.FixtureExecution(0, "")
-	ex.On("ExecuteCommand", mock.Anything, mock.Anything).Return(execution, nil)
+	execution := command.FixtureExecutionResponse(0, "")
+	ex.On("Execute", mock.Anything, mock.Anything).Return(execution, nil)
 	ch := make(chan *transport.Message, 5)
 	agent.sendq = ch
 
@@ -61,8 +61,8 @@ func TestExecuteCheck(t *testing.T) {
 	agent.sendq = ch
 	ex := &mockexecution.MockExecution{}
 	agent.execution = ex
-	execution := command.FixtureExecution(0, "")
-	ex.On("ExecuteCommand", mock.Anything, mock.Anything).Return(execution, nil)
+	execution := command.FixtureExecutionResponse(0, "")
+	ex.On("Execute", mock.Anything, mock.Anything).Return(execution, nil)
 
 	agent.executeCheck(request)
 	msg := <-ch
@@ -109,7 +109,7 @@ func TestExecuteCheck(t *testing.T) {
 	checkConfig.OutputMetricFormat = ""
 	execution.Status = 0
 	execution.Output = "metric.foo 1 123456789\nmetric.bar 2 987654321"
-	ex.On("ExecuteCommand", mock.Anything, mock.Anything).Return(execution, nil)
+	ex.On("Execute", mock.Anything, mock.Anything).Return(execution, nil)
 	agent.executeCheck(request)
 	msg = <-ch
 
@@ -119,7 +119,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.False(event.HasMetrics())
 
 	checkConfig.OutputMetricFormat = types.GraphiteOutputMetricFormat
-	ex.On("ExecuteCommand", mock.Anything, mock.Anything).Return(execution, nil)
+	ex.On("Execute", mock.Anything, mock.Anything).Return(execution, nil)
 	agent.executeCheck(request)
 	msg = <-ch
 

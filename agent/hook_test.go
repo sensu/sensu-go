@@ -24,8 +24,8 @@ func TestExecuteHook(t *testing.T) {
 	agent.sendq = ch
 	ex := &mockexecution.MockExecution{}
 	agent.execution = ex
-	execution := command.FixtureExecution(0, "")
-	ex.On("ExecuteCommand", mock.Anything, mock.Anything).Return(execution, nil)
+	execution := command.FixtureExecutionResponse(0, "")
+	ex.On("Execute", mock.Anything, mock.Anything).Return(execution, nil)
 
 	hook := agent.executeHook(hookConfig, "check")
 

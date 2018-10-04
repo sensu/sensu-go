@@ -193,7 +193,7 @@ type Agent struct {
 	conn            transport.Transport
 	context         context.Context
 	entity          *types.Entity
-	execution       command.ExecutionCommand
+	execution       command.Executor
 	handler         *handler.MessageHandler
 	header          http.Header
 	inProgress      map[string]*types.CheckConfig
@@ -219,7 +219,7 @@ func NewAgent(config *Config) *Agent {
 		handler:         handler.NewMessageHandler(),
 		inProgress:      make(map[string]*types.CheckConfig),
 		inProgressMu:    &sync.Mutex{},
-		execution:       command.NewExecutionCommand(),
+		execution:       command.NewExecutor(),
 		stopping:        make(chan struct{}),
 		stopped:         make(chan struct{}),
 		sendq:           make(chan *transport.Message, 10),

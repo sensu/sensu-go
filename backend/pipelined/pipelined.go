@@ -36,7 +36,7 @@ type Pipelined struct {
 	store             store.Store
 	bus               messaging.MessageBus
 	extensionExecutor ExtensionExecutorGetterFunc
-	execution         command.ExecutionCommand
+	execution         command.Executor
 }
 
 // Config configures a Pipelined.
@@ -60,7 +60,7 @@ func New(c Config, options ...Option) (*Pipelined, error) {
 		wg:                &sync.WaitGroup{},
 		errChan:           make(chan error, 1),
 		eventChan:         make(chan interface{}, 100),
-		execution:         command.NewExecutionCommand(),
+		execution:         command.NewExecutor(),
 	}
 	for _, o := range options {
 		if err := o(p); err != nil {
