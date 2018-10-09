@@ -106,7 +106,7 @@ func (m *EtcdSupervisor) Monitor(ctx context.Context, name string, event *types.
 	}
 
 	shutdownFunc := func() {
-		logger.Info("shutting down monitor for %s", key)
+		logger.Infof("shutting down monitor for %s", key)
 	}
 
 	// start the watcher
@@ -172,7 +172,7 @@ func watchMon(ctx context.Context, cli *clientv3.Client, mon *monitor, failureHa
 		)
 
 		if _, err := cli.Lease.Revoke(ctx, mon.leaseID); err != nil {
-			logger.WithError(err).Warningf("could not revoke the lease %s for the key %s",
+			logger.WithError(err).Warningf("could not revoke the lease %v for the key %s",
 				mon.leaseID, mon.key,
 			)
 		}
