@@ -75,6 +75,7 @@ were being displayed rather than the check's current values.
 - Use the provided etcd client TLS information when the flag `--no-embed-etcd` 
 is used.
 - Increase duration delta in TestPeriodicKeepalive integration test.
+- Fixed some problems introduced by Go 1.11.
 
 ### Breaking Changes
 - Removed the KeepaliveTimeout attribute from entities.

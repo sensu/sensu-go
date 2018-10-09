@@ -79,6 +79,9 @@ func defaultFunc(v ...interface{}) interface{} {
 	if len(v) == 1 {
 		return v[0]
 	} else if len(v) == 2 {
+		if v[1] == nil {
+			return v[0]
+		}
 		return v[1]
 	}
 	return nil

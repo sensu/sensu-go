@@ -235,7 +235,6 @@ func TestDequeueParallel(t *testing.T) {
 	// If we had multiple errors, only the last one is saved
 	require.NoError(t, errEnqueue)
 	results := make(map[string]struct{})
-	var errDequeue error
 	wg.Add(len(items))
 	for range items {
 		go func() {
@@ -245,7 +244,6 @@ func TestDequeueParallel(t *testing.T) {
 			mu.Lock()
 			defer mu.Unlock()
 			if err != nil {
-				errDequeue = err
 				return
 			}
 			results[item.Value()] = struct{}{}
