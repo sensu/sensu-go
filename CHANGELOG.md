@@ -44,6 +44,7 @@ the older versions are now deprecated.
 - Web ui entity recent events are sorted by last ok
 - Deprecated --custom-attributes in the sensu-agent command, changed to
 --extended-attributes.
+- Interfaced command execution and mocked it for testing.
 
 ### Fixed
 - Fixed a bug in `sensuctl configure` where an output format called `none` could

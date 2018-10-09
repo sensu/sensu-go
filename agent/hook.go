@@ -53,7 +53,7 @@ func (a *Agent) executeHook(hookConfig *types.HookConfig, check string) *types.H
 	}
 
 	// Instantiate the execution command
-	ex := &command.Execution{
+	ex := command.ExecutionRequest{
 		Command:      hookConfig.Command,
 		Timeout:      int(hookConfig.Timeout),
 		InProgress:   a.inProgress,
@@ -71,14 +71,15 @@ func (a *Agent) executeHook(hookConfig *types.HookConfig, check string) *types.H
 		ex.Input = string(input)
 	}
 
-	if _, err := command.ExecuteCommand(context.Background(), ex); err != nil {
+	hookExec, err := a.executor.Execute(context.Background(), ex)
+	if err != nil {
 		hook.Output = err.Error()
 	} else {
-		hook.Output = ex.Output
+		hook.Output = hookExec.Output
 	}
 
-	hook.Duration = ex.Duration
-	hook.Status = int32(ex.Status)
+	hook.Duration = hookExec.Duration
+	hook.Status = int32(hookExec.Status)
 
 	return hook
 }

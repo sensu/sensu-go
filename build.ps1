@@ -94,15 +94,6 @@ function build_binary([string]$goos, [string]$goarch, [string]$bin, [string]$cmd
     return $outfile
 }
 
-function build_tools
-{
-    echo "Running tool & plugin builds..."
-
-    ForEach ($bin in "cat","false","sleep","true") {
-        build_tool $bin "tools"
-    }
-}
-
 function build_tool([string]$bin, [string]$subdir)
 {
     If (!(Test-Path -Path "bin/$subdir")) {
@@ -283,9 +274,6 @@ ElseIf ($cmd -eq "build_backend") {
 ElseIf ($cmd -eq "build_cli") {
     build_command "cli"
 }
-ElseIf ($cmd -eq "build_tools") {
-    build_tools
-}
 ElseIf ($cmd -eq "docker") {
     # no-op for now
 }
@@ -320,7 +308,6 @@ ElseIf ($cmd -eq "wait_for_appveyor_jobs") {
     }
 }
 Else {
-    build_tools
     unit_test_commands
     integration_test_commands
     build_commands

@@ -177,8 +177,8 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 
 // pipeHandler fork/executes a child process for a Sensu pipe handler
 // command and writes the mutated eventData to it via STDIN.
-func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*command.Execution, error) {
-	handlerExec := &command.Execution{}
+func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*command.ExecutionResponse, error) {
+	handlerExec := command.ExecutionRequest{}
 	handlerExec.Command = handler.Command
 	handlerExec.Timeout = int(handler.Timeout)
 	handlerExec.Env = handler.EnvVars
@@ -191,7 +191,7 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 		"handler":      handler.Name,
 	}
 
-	result, err := command.ExecuteCommand(context.Background(), handlerExec)
+	result, err := p.executor.Execute(context.Background(), handlerExec)
 
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Error("failed to execute event pipe handler")

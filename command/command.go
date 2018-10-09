@@ -14,6 +14,11 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Executor ...
+type Executor interface {
+	Execute(context.Context, ExecutionRequest) (*ExecutionResponse, error)
+}
+
 const (
 	// TimeoutOutput specifies the command execution output in the
 	// event of an execution timeout.
@@ -33,10 +38,10 @@ const (
 	FallbackExitStatus int = 3
 )
 
-// Execution provides information about a system command execution,
+// ExecutionRequest provides information about a system command execution,
 // somewhat of an abstraction intended to be used for Sensu check,
 // mutator, and handler execution.
-type Execution struct {
+type ExecutionRequest struct {
 	// Command is the command to be executed.
 	Command string
 
@@ -50,15 +55,6 @@ type Execution struct {
 	// not specified.
 	Timeout int
 
-	// Combined command execution STDOUT/ERR.
-	Output string
-
-	// Command execution exit status.
-	Status int
-
-	// Duration provides command execution time in seconds.
-	Duration float64
-
 	// Name is the name of the resource that is invoking the execution.
 	Name string
 
@@ -70,10 +66,28 @@ type Execution struct {
 	InProgressMu *sync.Mutex
 }
 
-// ExecuteCommand executes a system command (fork/exec) with a
+// ExecutionResponse provides the response information of an ExecutionRequest.
+type ExecutionResponse struct {
+	// Combined command execution STDOUT/ERR.
+	Output string
+
+	// Command execution exit status.
+	Status int
+
+	// Duration provides command execution time in seconds.
+	Duration float64
+}
+
+// NewExecutor ...
+func NewExecutor() Executor {
+	return &ExecutionRequest{}
+}
+
+// Execute executes a system command (fork/exec) with a
 // timeout, optionally writing to STDIN, capturing its combined output
 // (STDOUT/ERR) and exit status.
-func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, error) {
+func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionRequest) (*ExecutionResponse, error) {
+	resp := &ExecutionResponse{}
 	logger := logrus.WithFields(logrus.Fields{"component": "command"})
 	// Using a platform specific shell to "cheat", as the shell
 	// will handle certain failures for us, where golang exec is
@@ -112,7 +126,7 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 
 	started := time.Now()
 	defer func() {
-		execution.Duration = time.Since(started).Seconds()
+		resp.Duration = time.Since(started).Seconds()
 	}()
 
 	var timer *time.Timer
@@ -123,7 +137,7 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 			timeout()
 			if err := KillProcess(cmd); err != nil {
 				logger.WithError(err).Errorf("Execution timed out - Unable to TERM/KILL the process: #%d", cmd.Process.Pid)
-				escapeZombie(execution)
+				escapeZombie(&execution)
 			}
 		})
 	}
@@ -131,7 +145,7 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 	if err := cmd.Start(); err != nil {
 		// Something unexpected happended when attepting to
 		// fork/exec, return immediately.
-		return execution, err
+		return nil, err
 	}
 
 	err := cmd.Wait()
@@ -139,34 +153,34 @@ func ExecuteCommand(ctx context.Context, execution *Execution) (*Execution, erro
 		timer.Stop()
 	}
 
-	execution.Output = output.String()
+	resp.Output = output.String()
 
 	// The command execution timed out if the context was cancelled prematurely
 	if ctx.Err() == context.Canceled {
-		execution.Output = TimeoutOutput
-		execution.Status = TimeoutExitStatus
+		resp.Output = TimeoutOutput
+		resp.Status = TimeoutExitStatus
 	} else if err != nil {
 		// The command most likely return a non-zero exit status.
 		if exitError, ok := err.(*exec.ExitError); ok {
 			// Best effort to determine the exit status, this
 			// should work on Linux, OSX, and Windows.
 			if status, ok := exitError.Sys().(syscall.WaitStatus); ok {
-				execution.Status = status.ExitStatus()
+				resp.Status = status.ExitStatus()
 			} else {
-				execution.Status = FallbackExitStatus
+				resp.Status = FallbackExitStatus
 			}
 		} else {
-			execution.Status = FallbackExitStatus
+			resp.Status = FallbackExitStatus
 		}
 	} else {
 		// Everything is A-OK.
-		execution.Status = 0
+		resp.Status = 0
 	}
 
-	return execution, nil
+	return resp, nil
 }
 
-func escapeZombie(ex *Execution) {
+func escapeZombie(ex *ExecutionRequest) {
 	logger := logrus.WithFields(logrus.Fields{"component": "command"})
 	if ex.InProgress != nil && ex.InProgressMu != nil && ex.Name != "" {
 		logger.WithField("check", ex.Name).Warn("check or hook execution created zombie process - escaping in order for the check to execute again")
@@ -175,5 +189,14 @@ func escapeZombie(ex *Execution) {
 		ex.InProgressMu.Unlock()
 	} else {
 		logger.Error("unable to escape zombie process created from command execution")
+	}
+}
+
+// FixtureExecutionResponse returns an Execution for use in testing
+func FixtureExecutionResponse(status int, output string) *ExecutionResponse {
+	return &ExecutionResponse{
+		Output:   "",
+		Status:   0,
+		Duration: 1,
 	}
 }

@@ -74,7 +74,7 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 
 	// Inject the dependenices into PATH, LD_LIBRARY_PATH & CPATH so that they are
 	// availabe when when the command is executed.
-	ex := &command.Execution{
+	ex := command.ExecutionRequest{
 		Env:          append(assets.Env(), check.EnvVars...),
 		Command:      checkConfig.Command,
 		Timeout:      int(checkConfig.Timeout),
@@ -99,20 +99,21 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 		return
 	}
 
-	if _, err := command.ExecuteCommand(context.Background(), ex); err != nil {
+	checkExec, err := a.executor.Execute(context.Background(), ex)
+	if err != nil {
 		event.Check.Output = err.Error()
 	} else {
-		event.Check.Output = ex.Output
+		event.Check.Output = checkExec.Output
 	}
 
-	event.Check.Duration = ex.Duration
-	event.Check.Status = uint32(ex.Status)
+	event.Check.Duration = checkExec.Duration
+	event.Check.Status = uint32(checkExec.Status)
 
 	event.Entity = a.getAgentEntity()
 	event.Timestamp = time.Now().Unix()
 
 	if len(checkHooks) != 0 {
-		event.Check.Hooks = a.ExecuteHooks(request, ex.Status)
+		event.Check.Hooks = a.ExecuteHooks(request, checkExec.Status)
 	}
 
 	// Instantiate metrics in the event if the check is attempting to extract metrics
