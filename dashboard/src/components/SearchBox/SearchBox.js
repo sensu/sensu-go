@@ -6,6 +6,8 @@ import { withStyles } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
 import Typography from "@material-ui/core/Typography";
 import Icon from "@material-ui/icons/FilterList";
+import IconButton from "@material-ui/core/IconButton";
+import ClearIcon from "@material-ui/icons/Clear";
 
 const Keycap = withStyles(theme => ({
   root: {
@@ -54,6 +56,10 @@ const styles = theme => ({
     paddingRight: theme.spacing.unit,
     height: theme.spacing.unit * 5,
   },
+  filterContainer: {
+    display: "flex",
+    width: "100%",
+  },
   iconContainer: {
     display: "flex",
     alignItems: "center",
@@ -65,6 +71,9 @@ const styles = theme => ({
     alignItems: "center",
     width: "100%",
     fontFamily: theme.typography.monospace.fontFamily,
+  },
+  clearButton: {
+    marginTop: "-2px",
   },
 });
 
@@ -159,6 +168,14 @@ class SearchBox extends React.Component {
             value={value}
           />
           {this.state.focus && <Keycap>return</Keycap>}
+          <div
+            className={classes.clearButton}
+            style={{ visibility: value.length > 0 ? "visible" : "hidden" }}
+          >
+            <IconButton>
+              <ClearIcon />
+            </IconButton>
+          </div>
         </Typography>
       </Paper>
     );
