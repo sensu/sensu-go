@@ -97,7 +97,8 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 		ex.Input = string(input)
 	}
 
-	if _, err := command.ExecuteCommand(context.Background(), ex); err != nil {
+	checkExec, err := a.executor.Execute(context.Background(), ex)
+	if err != nil {
 		event.Check.Output = err.Error()
 	} else {
 		event.Check.Output = checkExec.Output
