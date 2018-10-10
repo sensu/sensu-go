@@ -3,7 +3,10 @@ package etcd
 import (
 	"context"
 	"errors"
+	"fmt"
+	"reflect"
 
+	"github.com/sensu/sensu-go/internal/apis/meta"
 	"github.com/sensu/sensu-go/runtime/codec"
 	"github.com/sensu/sensu-go/storage"
 	"go.etcd.io/etcd/clientv3"
@@ -108,8 +111,44 @@ func (s *Storage) CreateOrUpdate(ctx context.Context, key string, objPtr interfa
 	return nil
 }
 
-// List resources at a given prefix
-func (s *Storage) List(ctx context.Context, prefix string, objsPtr interface{}) error {
+// List all keys from storage under the provided prefix key and deserialize it
+// into objsPtr.
+func (s *Storage) List(key string, objsPtr interface{}) error {
+	// Make sure the interface is a pointer, and that the element at this address
+	// is a slice.
+	// TODO: better validation and move that logic into its own package.
+	// See https://github.com/kubernetes/apimachinery/blob/c6dd271be00615c6fa8c91fdf63381265a5f0e4e/pkg/conversion/helper.go#L27
+	v := reflect.ValueOf(objsPtr)
+	if v.Kind() != reflect.Ptr {
+		return fmt.Errorf("expected pointer, but got %v type", v.Type())
+	}
+	if v.Elem().Kind() != reflect.Slice {
+		return fmt.Errorf("expected slice, but got %s", v.Elem().Kind())
+	}
+	v = v.Elem()
+
+	opts := []clientv3.OpOption{
+		clientv3.WithPrefix(),
+	}
+	resp, err := s.client.Get(context.TODO(), key, opts...)
+	if err != nil {
+		return err
+	}
+
+	for _, kv := range resp.Kvs {
+		// Decode and append the value to v, which must be a slice.
+		// See https://github.com/kubernetes/apiserver/blob/10d97565493b4eea44b1ef6c1b3fd47d2876a866/pkg/storage/etcd3/store.go#L786
+		obj, ok := reflect.New(v.Type().Elem()).Interface().(meta.Object)
+		if !ok {
+			return fmt.Errorf("type assertion failed, got data of type %T, not meta.Object", v.Type().Elem())
+		}
+		if err := s.codec.Decode(kv.Value, obj); err != nil {
+			return err
+		}
+
+		v.Set(reflect.Append(v, reflect.ValueOf(obj).Elem()))
+	}
+
 	return nil
 }
 
