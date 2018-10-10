@@ -57,7 +57,7 @@ class EventsContent extends React.Component {
       data: { environment } = {},
       loading,
       aborted,
-      isPolling,
+      poller,
       refetch,
     } = renderProps;
 
@@ -83,7 +83,9 @@ class EventsContent extends React.Component {
             offset={offset}
             onChangeQuery={setQueryParams}
             environment={environment}
-            loading={(loading && (!environment || !isPolling)) || aborted}
+            loading={
+              (loading && (!environment || !poller.isRunning())) || aborted
+            }
             refetch={refetch}
           />
         </AppLayout.MobileFullWidthContent>
