@@ -113,7 +113,7 @@ func (s *Storage) CreateOrUpdate(ctx context.Context, key string, objPtr interfa
 
 // List all keys from storage under the provided prefix key and deserialize it
 // into objsPtr.
-func (s *Storage) List(key string, objsPtr interface{}) error {
+func (s *Storage) List(ctx context.Context, key string, objsPtr interface{}) error {
 	// Make sure the interface is a pointer, and that the element at this address
 	// is a slice.
 	// TODO: better validation and move that logic into its own package.
@@ -130,7 +130,7 @@ func (s *Storage) List(key string, objsPtr interface{}) error {
 	opts := []clientv3.OpOption{
 		clientv3.WithPrefix(),
 	}
-	resp, err := s.client.Get(context.TODO(), key, opts...)
+	resp, err := s.client.Get(ctx, key, opts...)
 	if err != nil {
 		return err
 	}
