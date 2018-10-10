@@ -168,9 +168,27 @@ brew install protobuf
 ```
 Otherwise, see the **for non-C++ users** [instructions here.](https://github.com/google/protobuf#protocol-compiler-installation)
 
-#### Quick Start
+#### Generating Go files from protobuf
 
 Once you make a change to any `*.proto` file within the **types** package, you will need to regenerate the associated `*.pb.go` file. To do so, simply run `go generate` on the package.
+
+#### Generating proto files from Go files
+
+In order to generate the proto files, additional binaries are required. First,
+we'll make sure all your dependencies are up-to-date and then we will install
+the `go-to-protobuf` & `binaries`.
+
+```
+dep ensure
+go install ./vendor/k8s.io/code-generator/cmd/go-to-protobuf
+go install ./vendor/k8s.io/code-generator/cmd/go-to-protobuf/protoc-gen-gogo
+```
+
+Then, you can launch the generation with the following command:
+
+```
+./hack/update-protobuf.sh
+```
 
 ### Dependencies
 
