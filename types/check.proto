@@ -203,7 +203,7 @@ message Check {
   int64 issued = 25 [(gogoproto.jsontag) = "issued"];
 
   // Output from the execution of Command
-  string output = 26;
+  string output = 26 [(gogoproto.jsontag) = "output"];
 
   // State provides handlers with more information about the state change
   string state = 27;

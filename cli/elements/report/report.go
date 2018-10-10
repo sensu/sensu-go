@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/sirupsen/logrus"
+
 	"github.com/sensu/sensu-go/cli/elements/globals"
 )
 

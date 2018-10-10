@@ -922,18 +922,16 @@ func _InputTypeCheckConfigInputsConfigFn() graphql1.InputObjectConfig {
 				Type:        graphql1.Int,
 			},
 			"interval": &graphql1.InputObjectFieldConfig{
-				DefaultValue: 60,
-				Description:  "interval is the time interval, in seconds, in which the check should be run. Defaults to 60.",
-				Type:         graphql1.Int,
+				Description: "interval is the time interval, in seconds, in which the check should be run. Defaults to 60.",
+				Type:        graphql1.Int,
 			},
 			"lowFlapThreshold": &graphql1.InputObjectFieldConfig{
 				Description: "lowFlapThreshold is the flap detection low threshold (% state change) for\nthe check. Sensu uses the same flap detection algorithm as Nagios.",
 				Type:        graphql1.Int,
 			},
 			"publish": &graphql1.InputObjectFieldConfig{
-				DefaultValue: true,
-				Description:  "publish indicates if check requests are published for the check",
-				Type:         graphql1.Boolean,
+				Description: "publish indicates if check requests are published for the check",
+				Type:        graphql1.Boolean,
 			},
 			"subscriptions": &graphql1.InputObjectFieldConfig{
 				Description: "subscriptions refers to the list of subscribers for the check.",

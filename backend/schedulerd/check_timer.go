@@ -81,6 +81,7 @@ func (timerPtr *IntervalTimer) Stop() {
 func (timerPtr *IntervalTimer) calcInitialOffset() time.Duration {
 	now := uint64(time.Now().UnixNano())
 	offset := (timerPtr.splay - now) % uint64(timerPtr.interval)
+	logger.WithField("offset", time.Duration(offset)/time.Second).Debug("initial offset for interval timer (in seconds)")
 	return time.Duration(offset) / time.Nanosecond
 }
 

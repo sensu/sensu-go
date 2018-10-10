@@ -153,6 +153,7 @@ func TestPipelinedFilter(t *testing.T) {
 			status: 0,
 			history: []types.CheckHistory{
 				types.CheckHistory{Status: 0},
+				types.CheckHistory{Status: 0},
 			},
 			metrics:  nil,
 			silenced: []string{},
@@ -164,6 +165,7 @@ func TestPipelinedFilter(t *testing.T) {
 			status: 0,
 			history: []types.CheckHistory{
 				types.CheckHistory{Status: 1},
+				types.CheckHistory{Status: 0},
 			},
 			metrics:  nil,
 			silenced: []string{},

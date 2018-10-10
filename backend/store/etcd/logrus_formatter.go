@@ -3,8 +3,8 @@ package etcd
 import (
 	"fmt"
 
-	"github.com/sirupsen/logrus"
 	"github.com/coreos/pkg/capnslog"
+	"github.com/sirupsen/logrus"
 )
 
 type logrusFormatter struct {

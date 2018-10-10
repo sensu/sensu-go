@@ -18,6 +18,7 @@ import (
 
 	"github.com/atlassian/gostatsd/pkg/statsd"
 	"github.com/sensu/sensu-go/agent/assetmanager"
+	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/transport"
@@ -86,7 +87,7 @@ type Config struct {
 	DeregistrationHandler string
 	// Environment sets the Agent's RBAC environment identifier
 	Environment string
-	// ExtendedAttributes contains any custom attributes passed to the agent on
+	// ExtendedAttributes contains any extended attributes passed to the agent on
 	// start
 	ExtendedAttributes []byte
 	// KeepaliveInterval is the interval, in seconds, when agents will send a
@@ -192,6 +193,7 @@ type Agent struct {
 	conn            transport.Transport
 	context         context.Context
 	entity          *types.Entity
+	executor        command.Executor
 	handler         *handler.MessageHandler
 	header          http.Header
 	inProgress      map[string]*types.CheckConfig
@@ -217,6 +219,7 @@ func NewAgent(config *Config) *Agent {
 		handler:         handler.NewMessageHandler(),
 		inProgress:      make(map[string]*types.CheckConfig),
 		inProgressMu:    &sync.Mutex{},
+		executor:        command.NewExecutor(),
 		stopping:        make(chan struct{}),
 		stopped:         make(chan struct{}),
 		sendq:           make(chan *transport.Message, 10),

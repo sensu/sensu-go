@@ -16,6 +16,23 @@ func (m mockCheckExecutor) QueueAdhocRequest(_ context.Context, _ string, _ *typ
 	return m.err
 }
 
+type mockCheckReplacer struct {
+	err error
+}
+
+func (m mockCheckReplacer) CreateOrReplace(_ context.Context, _ types.CheckConfig) error {
+	return m.err
+}
+
+type mockCheckFinder struct {
+	record *types.CheckConfig
+	err    error
+}
+
+func (m mockCheckFinder) Find(_ context.Context, _ string) (*types.CheckConfig, error) {
+	return m.record, m.err
+}
+
 // entities
 
 type mockEntityFetcher struct {

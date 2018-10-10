@@ -1,13 +1,15 @@
 package agent
 
 import (
-	"path/filepath"
 	"testing"
 
-	"github.com/sensu/sensu-go/testing/testutil"
+	"github.com/sensu/sensu-go/command"
+	"github.com/sensu/sensu-go/testing/mockexecutor"
+
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestExecuteHook(t *testing.T) {
@@ -20,23 +22,23 @@ func TestExecuteHook(t *testing.T) {
 	agent := NewAgent(config)
 	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch
-
-	truePath := testutil.CommandPath(filepath.Join(toolsDir, "true"))
-	hookConfig.Command = truePath
+	ex := &mockexecutor.MockExecutor{}
+	agent.executor = ex
+	execution := command.FixtureExecutionResponse(0, "")
+	ex.On("Execute", mock.Anything, mock.Anything).Return(execution, nil)
 
 	hook := agent.executeHook(hookConfig, "check")
 
 	assert.NotZero(hook.Executed)
-	assert.Equal(hook.Status, int32(0))
-	assert.Equal(hook.Output, "")
+	assert.Equal(int32(0), hook.Status)
+	assert.Equal("", hook.Output)
 
-	hookConfig.Command = "printf hello"
-
+	execution.Output = "hello"
 	hook = agent.executeHook(hookConfig, "check")
 
 	assert.NotZero(hook.Executed)
-	assert.Equal(hook.Status, int32(0))
-	assert.Equal(hook.Output, "hello")
+	assert.Equal(int32(0), hook.Status)
+	assert.Equal("hello", hook.Output)
 }
 
 func TestPrepareHook(t *testing.T) {

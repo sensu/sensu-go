@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	storre "github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
@@ -155,6 +156,7 @@ func TestPipelinedExpandHandlers(t *testing.T) {
 
 func TestPipelinedPipeHandler(t *testing.T) {
 	p := &Pipelined{}
+	p.executor = &command.ExecutionRequest{}
 
 	handler := types.FakeHandlerCommand("cat")
 	handler.Type = "pipe"

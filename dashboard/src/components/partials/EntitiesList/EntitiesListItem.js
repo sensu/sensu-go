@@ -15,7 +15,7 @@ import ResourceDetails from "/components/partials/ResourceDetails";
 import TableOverflowCell from "/components/partials/TableOverflowCell";
 import TableSelectableRow from "/components/partials/TableSelectableRow";
 
-import { RelativeToCurrentDate } from "/components/RelativeDate";
+import EntityStatusDescriptor from "/components/partials/EntityStatusDescriptor";
 import CheckStatusIcon from "/components/CheckStatusIcon";
 import NamespaceLink from "/components/util/NamespaceLink";
 
@@ -42,32 +42,17 @@ class EntitiesListItem extends React.PureComponent {
       fragment EntitiesListItem_entity on Entity {
         id
         name
-        lastSeen
-        class
         status
         isSilenced
         system {
           platform
           platformVersion
         }
+        ...EntityStatusDescriptor_entity
       }
+
+      ${EntityStatusDescriptor.fragments.entity}
     `,
-  };
-
-  renderDescription = () => {
-    const { entity } = this.props;
-
-    return (
-      <React.Fragment>
-        <strong>{entity.class}</strong> - Last seen{" "}
-        {entity.lastSeen && (
-          <strong>
-            <RelativeToCurrentDate dateTime={entity.lastSeen} />{" "}
-          </strong>
-        )}
-        with status <strong>{entity.status}</strong>.
-      </React.Fragment>
-    );
   };
 
   render() {
@@ -100,7 +85,7 @@ class EntitiesListItem extends React.PureComponent {
                 {entity.system.platformVersion}
               </NamespaceLink>
             }
-            details={this.renderDescription()}
+            details={<EntityStatusDescriptor entity={entity} />}
           />
         </TableOverflowCell>
 

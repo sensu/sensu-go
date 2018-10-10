@@ -10,7 +10,7 @@ const (
 	// DefaultEnvironment represents the default environment
 	DefaultEnvironment = "default"
 	// DefaultFormat represents the default format output when displaying objects
-	DefaultFormat = "tabular"
+	DefaultFormat = FormatTabular
 	// DefaultOrganization represents the default organization
 	DefaultOrganization = "default"
 	// FormatTabular represents the string for tabular format

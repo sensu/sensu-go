@@ -5,9 +5,9 @@ import gql from "graphql-tag";
 import Checkbox from "@material-ui/core/Checkbox";
 import Code from "/components/Code";
 import ConfirmDelete from "/components/partials/ConfirmDelete";
-import CronDescriptor from "/components/partials/CronDescriptor";
 import DeleteMenuItem from "/components/partials/ToolbarMenuItems/Delete";
 import NamespaceLink from "/components/util/NamespaceLink";
+import PublishMenuItem from "/components/partials/ToolbarMenuItems/Publish";
 import ResourceDetails from "/components/partials/ResourceDetails";
 import SilenceIcon from "/icons/Silence";
 import SilenceMenuItem from "/components/partials/ToolbarMenuItems/Silence";
@@ -16,7 +16,10 @@ import TableOverflowCell from "/components/partials/TableOverflowCell";
 import TableSelectableRow from "/components/partials/TableSelectableRow";
 import ToolbarMenu from "/components/partials/ToolbarMenu";
 import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
+import UnpublishMenuItem from "/components/partials/ToolbarMenuItems/Unpublish";
 import QueueMenuItem from "/components/partials/ToolbarMenuItems/QueueExecution";
+
+import CheckSchedule from "./CheckSchedule";
 
 class CheckListItem extends React.Component {
   static propTypes = {
@@ -26,6 +29,7 @@ class CheckListItem extends React.Component {
     onClickClearSilences: PropTypes.func.isRequired,
     onClickDelete: PropTypes.func.isRequired,
     onClickExecute: PropTypes.func.isRequired,
+    onClickSetPublish: PropTypes.func.isRequired,
     onClickSilence: PropTypes.func.isRequired,
   };
 
@@ -34,15 +38,16 @@ class CheckListItem extends React.Component {
       fragment ChecksListItem_check on CheckConfig {
         name
         command
-        subscriptions
-        interval
-        cron
         isSilenced
+        publish
         namespace {
           organization
           environment
         }
+        ...CheckSchedule_check
       }
+
+      ${CheckSchedule.fragments.check}
     `,
   };
 
@@ -79,25 +84,7 @@ class CheckListItem extends React.Component {
               <React.Fragment>
                 <Code>{check.command}</Code>
                 <br />
-                Executed{" "}
-                <strong>
-                  {check.interval ? (
-                    `
-                      every
-                      ${check.interval}
-                      ${check.interval === 1 ? "second" : "seconds"}
-                    `
-                  ) : (
-                    <CronDescriptor expression={check.cron} />
-                  )}
-                </strong>{" "}
-                by{" "}
-                <strong>
-                  {check.subscriptions.length}{" "}
-                  {check.subscriptions.length === 1
-                    ? "subscription"
-                    : "subscriptions"}
-                </strong>.
+                <CheckSchedule check={check} />
               </React.Fragment>
             }
           />
@@ -120,6 +107,21 @@ class CheckListItem extends React.Component {
                 onClick={this.props.onClickClearSilences}
               />
             </ToolbarMenu.Item>
+            {!check.publish ? (
+              <ToolbarMenu.Item id="publish" visible="never">
+                <PublishMenuItem
+                  description="Publish check"
+                  onClick={() => this.props.onClickSetPublish(true)}
+                />
+              </ToolbarMenu.Item>
+            ) : (
+              <ToolbarMenu.Item id="unpublish" visible="never">
+                <UnpublishMenuItem
+                  description="Unpublish check"
+                  onClick={() => this.props.onClickSetPublish(false)}
+                />
+              </ToolbarMenu.Item>
+            )}
             <ToolbarMenu.Item id="delete" visible="never">
               <ConfirmDelete onSubmit={this.props.onClickDelete}>
                 {dialog => <DeleteMenuItem onClick={dialog.open} />}

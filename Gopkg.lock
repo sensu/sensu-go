@@ -69,20 +69,6 @@
   revision = "4c0e84591b9aa9e6dcfdf3e020114cd81f89d5f9"
 
 [[projects]]
-  digest = "1:f9687c9c31f00a0f68744c9116ce81c0560d9448bcc17e3f3e8c05ebf82f1952"
-  name = "github.com/bluele/slack"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "3b1fffcc45b37a2644a23eb7dc434d4d9f0987ba"
-
-[[projects]]
-  digest = "1:cbc96f2553a9e55f2c2644fe5a3b5471fabc2f4223d714da5084391c19db5058"
-  name = "github.com/boltdb/bolt"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "e9cf4fae01b5a8ff89d0ec6b32f0d9c9f79aefdd"
-
-[[projects]]
   digest = "1:6bda4e232607261eeaee45b0a0e8a2ef097bd44e8a44d9b7ca1badb36e523891"
   name = "github.com/coreos/bbolt"
   packages = ["."]
@@ -831,15 +817,15 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "master"
-  digest = "1:9bf0f8c6684cd6cb34d838c6f8a07043d6c48be79ffe271cae99633990f8d786"
+  digest = "1:ac83cf90d08b63ad5f7e020ef480d319ae890c208f8524622a2f3136e2686b02"
   name = "github.com/stretchr/objx"
   packages = ["."]
   pruneopts = "UT"
-  revision = "1a9d0bb9f541897e62256577b352fdbc1fb4fd94"
+  revision = "477a77ecc69700c7cdeb1fa9e129548e1c1c393c"
+  version = "v0.1.1"
 
 [[projects]]
-  digest = "1:afa503f22c5464c93393d25b1c3b8743fe1a96ff0db2b99cbb2091214995bf4b"
+  digest = "1:cf4fdb98e23a565bd82473027d37512a3d5b186fba3a1895d7e8401d8ce3ffe1"
   name = "github.com/stretchr/testify"
   packages = [
     "assert",
@@ -847,7 +833,8 @@
     "require",
   ]
   pruneopts = "UT"
-  revision = "2aa2c176b9dab406a6970f6a55f513e8a8c8b18f"
+  revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
+  version = "v1.2.2"
 
 [[projects]]
   branch = "master"
@@ -901,6 +888,14 @@
   pruneopts = "UT"
   revision = "07dd2e8dfe18522e9c447ba95f2fe95262f63bb2"
   version = "0.0.1"
+
+[[projects]]
+  digest = "1:c28625428387b63dd7154eb857f51e700465cfbf7c06f619e71f2da33cefe47e"
+  name = "go.etcd.io/bbolt"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "583e8937c61f1af6513608ccc75c97b6abdf4ff9"
+  version = "v1.3.0"
 
 [[projects]]
   branch = "master"
@@ -1051,8 +1046,6 @@
     "github.com/NYTimes/gziphandler",
     "github.com/atlassian/gostatsd",
     "github.com/atlassian/gostatsd/pkg/statsd",
-    "github.com/bluele/slack",
-    "github.com/boltdb/bolt",
     "github.com/coreos/etcd/clientv3",
     "github.com/coreos/etcd/clientv3/concurrency",
     "github.com/coreos/etcd/embed",
@@ -1103,6 +1096,7 @@
     "github.com/stretchr/testify/mock",
     "github.com/stretchr/testify/require",
     "github.com/willf/pad/utf8",
+    "go.etcd.io/bbolt",
     "golang.org/x/crypto/bcrypt",
     "golang.org/x/net/context",
     "golang.org/x/time/rate",

@@ -7,8 +7,10 @@ import DeleteMenuItem from "/components/partials/ToolbarMenuItems/Delete";
 import ListHeader from "/components/partials/ListHeader";
 import ListSortSelector from "/components/partials/ListSortSelector";
 import Select, { Option } from "/components/partials/ToolbarMenuItems/Select";
+import PublishMenuItem from "/components/partials/ToolbarMenuItems/Publish";
 import SilenceMenuItem from "/components/partials/ToolbarMenuItems/Silence";
 import ToolbarMenu from "/components/partials/ToolbarMenu";
+import UnpublishMenuItem from "/components/partials/ToolbarMenuItems/Unpublish";
 import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
 import QueueMenuItem from "/components/partials/ToolbarMenuItems/QueueExecution";
 
@@ -19,6 +21,7 @@ class ChecksListHeader extends React.PureComponent {
     onClickClearSilences: PropTypes.func.isRequired,
     onClickDelete: PropTypes.func.isRequired,
     onClickExecute: PropTypes.func.isRequired,
+    onClickSetPublish: PropTypes.func.isRequired,
     onClickSilence: PropTypes.func.isRequired,
     order: PropTypes.string.isRequired,
     rowCount: PropTypes.number.isRequired,
@@ -35,6 +38,15 @@ class ChecksListHeader extends React.PureComponent {
       fragment ChecksListHeader_environment on Environment {
         subscriptions(orderBy: OCCURRENCES) {
           values(limit: 25)
+        }
+      }
+    `,
+    check: gql`
+      fragment ChecksListHeader_check on CheckConfig {
+        id
+        publish
+        silences {
+          id
         }
       }
     `,
@@ -73,6 +85,8 @@ class ChecksListHeader extends React.PureComponent {
     const selectedSilenced = selectedItems.filter(en => en.silences.length > 0);
     const allSelectedSilenced = selectedSilenced.length === selectedCount;
     const allSelectedUnsilenced = selectedSilenced.length === 0;
+    const selectedPublished = selectedItems.filter(ch => ch.publish === true);
+    const published = selectedCount === selectedPublished.length;
 
     return (
       <ToolbarMenu>
@@ -100,6 +114,21 @@ class ChecksListHeader extends React.PureComponent {
             onClick={this.props.onClickClearSilences}
           />
         </ToolbarMenu.Item>
+        {!published ? (
+          <ToolbarMenu.Item id="publish" visible={"if-room"}>
+            <PublishMenuItem
+              description="Publish selected checks."
+              onClick={() => this.props.onClickSetPublish(true)}
+            />
+          </ToolbarMenu.Item>
+        ) : (
+          <ToolbarMenu.Item id="unpublish" visible={"if-room"}>
+            <UnpublishMenuItem
+              description="Unpublish selected checks."
+              onClick={() => this.props.onClickSetPublish(false)}
+            />
+          </ToolbarMenu.Item>
+        )}
         <ToolbarMenu.Item id="delete" visible="never">
           {menu => (
             <ConfirmDelete

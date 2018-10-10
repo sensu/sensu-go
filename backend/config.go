@@ -1,6 +1,9 @@
 package backend
 
-import "github.com/sensu/sensu-go/types"
+import (
+	"github.com/sensu/sensu-go/backend/etcd"
+	"github.com/sensu/sensu-go/types"
+)
 
 const (
 	// DefaultEtcdName is the default etcd member node name (single-node cluster only)
@@ -42,6 +45,10 @@ type Config struct {
 	EtcdListenPeerURL           string
 	EtcdName                    string
 	NoEmbedEtcd                 bool
+
+	// Etcd TLS configuration
+	EtcdClientTLSInfo etcd.TLSInfo
+	EtcdPeerTLSInfo   etcd.TLSInfo
 
 	TLS *types.TLSOptions
 }
