@@ -6,10 +6,9 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/sensu/sensu-go/internal/apis/meta"
+	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/runtime/codec"
 	"github.com/sensu/sensu-go/storage"
-	"go.etcd.io/etcd/clientv3"
 )
 
 // NewStorage returns new non-prefixed etcd store.
@@ -31,10 +30,6 @@ func (s *Storage) Get(ctx context.Context, key string, objPtr interface{}) error
 	resp, err := s.client.Get(ctx, key)
 	if err != nil {
 		return err
-	}
-
-	if len(resp.Kvs) == 0 {
-		return storage.ErrNotFound
 	}
 
 	if len(resp.Kvs) == 0 {
@@ -138,10 +133,7 @@ func (s *Storage) List(ctx context.Context, key string, objsPtr interface{}) err
 	for _, kv := range resp.Kvs {
 		// Decode and append the value to v, which must be a slice.
 		// See https://github.com/kubernetes/apiserver/blob/10d97565493b4eea44b1ef6c1b3fd47d2876a866/pkg/storage/etcd3/store.go#L786
-		obj, ok := reflect.New(v.Type().Elem()).Interface().(meta.Object)
-		if !ok {
-			return fmt.Errorf("type assertion failed, got data of type %T, not meta.Object", v.Type().Elem())
-		}
+		obj := reflect.New(v.Type().Elem()).Interface()
 		if err := s.codec.Decode(kv.Value, obj); err != nil {
 			return err
 		}
