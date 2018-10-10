@@ -21,7 +21,6 @@ class CheckDetailsPublishAction extends React.PureComponent {
         id
         name
         publish
-        }
       }
     `,
   };

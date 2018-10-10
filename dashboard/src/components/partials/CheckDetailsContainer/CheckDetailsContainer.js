@@ -5,17 +5,6 @@ import gql from "graphql-tag";
 import Content from "/components/Content";
 import Grid from "@material-ui/core/Grid";
 import Loader from "/components/util/Loader";
-<<<<<<< HEAD
-=======
-import Maybe from "/components/Maybe";
-import Monospaced from "/components/Monospaced";
-import SilencedIcon from "/icons/Silence";
-import Typography from "@material-ui/core/Typography";
-import Tooltip from "@material-ui/core/Tooltip";
-import QueueIcon from "@material-ui/icons/Queue";
-import PublishIcon from "@material-ui/icons/Publish";
-import UnpublishIcon from "/icons/Unpublish";
->>>>>>> Add buttons for publish and unpublish
 
 import Configuration from "./CheckDetailsConfiguration";
 import Toolbar from "./CheckDetailsToolbar";
