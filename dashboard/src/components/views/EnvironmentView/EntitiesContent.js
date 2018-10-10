@@ -1,15 +1,14 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
-import Query from "/components/util/Query";
-import NotFound from "/components/partials/NotFound";
-import EntitiesList from "/components/partials/EntitiesList";
-import SearchBox from "/components/SearchBox";
-import ListToolbar from "/components/partials/ListToolbar";
-import LiveIcon from "/icons/Live";
-import CollapsingMenu from "/components/partials/CollapsingMenu";
-import { withQueryParams } from "/components/QueryParams";
+
 import AppLayout from "/components/AppLayout";
+import Content from "/components/Content";
+import EntitiesList from "/components/partials/EntitiesList";
+import ListToolbar from "/components/partials/EntitiesList/EntitiesListToolbar";
+import NotFound from "/components/partials/NotFound";
+import Query from "/components/util/Query";
+import { withQueryParams } from "/components/QueryParams";
 
 // duration used when polling is enabled; set fairly high until we understand
 // the impact.
@@ -33,7 +32,7 @@ class EntitiesContent extends React.PureComponent {
       $organization: String!
       $limit: Int
       $offset: Int
-      $order: EntityListOrder = ID
+      $order: EntityListOrder
       $filter: String
     ) {
       environment(organization: $organization, environment: $environment) {
@@ -44,68 +43,69 @@ class EntitiesContent extends React.PureComponent {
     ${EntitiesList.fragments.environment}
   `;
 
+  renderContent = renderProps => {
+    const { queryParams, setQueryParams } = this.props;
+    const { filter, limit, offset, order } = queryParams;
+    const {
+      data: { environment } = {},
+      loading,
+      aborted,
+      refetch,
+      isPolling,
+    } = renderProps;
+
+    if (!environment && !loading && !aborted) {
+      return <NotFound />;
+    }
+
+    return (
+      <div>
+        <Content marginBottom>
+          <ListToolbar
+            onChangeQuery={value => setQueryParams({ filter: value })}
+            onClickReset={() => setQueryParams(q => q.reset())}
+            query={filter}
+          />
+        </Content>
+
+        <AppLayout.MobileFullWidthContent>
+          <EntitiesList
+            limit={limit}
+            offset={offset}
+            loading={(loading && (!environment || !isPolling)) || aborted}
+            onChangeQuery={setQueryParams}
+            environment={environment}
+            refetch={refetch}
+            order={order}
+          />
+        </AppLayout.MobileFullWidthContent>
+      </div>
+    );
+  };
+
   render() {
-    const { queryParams, setQueryParams, match } = this.props;
-    const { filter, order, limit = "25", offset = "0" } = queryParams;
+    const { queryParams, match } = this.props;
+    const variables = { ...match.params, ...queryParams };
 
     return (
       <Query
         query={EntitiesContent.query}
         fetchPolicy="cache-and-network"
         pollInterval={pollInterval}
-        variables={{ ...match.params, filter, order, limit, offset }}
+        variables={variables}
       >
-        {({
-          data: { environment } = {},
-          loading,
-          aborted,
-          refetch,
-          isPolling,
-          startPolling,
-          stopPolling,
-        }) => {
-          if (!environment && !loading && !aborted) {
-            return <NotFound />;
-          }
-
-          return (
-            <div>
-              <ListToolbar
-                renderSearch={
-                  <SearchBox
-                    placeholder="Filter entities…"
-                    initialValue={filter}
-                    onSearch={value => setQueryParams({ filter: value })}
-                  />
-                }
-                renderMenuItems={
-                  <CollapsingMenu.Button
-                    title="LIVE"
-                    icon={<LiveIcon active={isPolling} />}
-                    onClick={() =>
-                      isPolling ? stopPolling() : startPolling(pollInterval)
-                    }
-                  />
-                }
-              />
-              <AppLayout.MobileFullWidthContent>
-                <EntitiesList
-                  limit={limit}
-                  offset={offset}
-                  loading={(loading && (!environment || !isPolling)) || aborted}
-                  onChangeQuery={setQueryParams}
-                  environment={environment}
-                  refetch={refetch}
-                />
-              </AppLayout.MobileFullWidthContent>
-            </div>
-          );
-        }}
+        {this.renderContent}
       </Query>
     );
   }
 }
 
-export default withQueryParams(["filter", "order", "offset", "limit"])(
-  EntitiesContent,
-);
+const enhance = withQueryParams({
+  keys: ["filter", "order", "offset", "limit"],
+  defaults: {
+    limit: "25",
+    offset: "0",
+    order: "ID",
+  },
+});
+export default enhance(EntitiesContent);

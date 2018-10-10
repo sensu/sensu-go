@@ -135,7 +135,7 @@ class ClearSilencedEntriesDialog extends React.PureComponent {
     );
 
     return (
-      <Dialog fullScreen={fullScreen} open={open} onClose={close}>
+      <Dialog fullWidth fullScreen={fullScreen} open={open} onClose={close}>
         <ListController
           items={silences}
           getItemKey={node => node.storeId}
@@ -156,7 +156,7 @@ class ClearSilencedEntriesDialog extends React.PureComponent {
                 </StyledTable>
               </DialogContent>
               <DialogActions>
-                <Button onClick={close} color="contrast">
+                <Button onClick={close} color="default">
                   Cancel
                 </Button>
                 <Button

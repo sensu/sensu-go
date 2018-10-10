@@ -35,6 +35,7 @@ class ChecksList extends React.Component {
     onChangeQuery: PropTypes.func.isRequired,
     limit: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     offset: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    order: PropTypes.string.isRequired,
     refetch: PropTypes.func.isRequired,
     addToast: PropTypes.func.isRequired,
   };
@@ -75,8 +76,11 @@ class ChecksList extends React.Component {
             ...Pagination_pageInfo
           }
         }
+
+        ...ChecksListHeader_environment
       }
 
+      ${ChecksListHeader.fragments.environment}
       ${ChecksListItem.fragments.check}
       ${ClearSilencesDialog.fragments.silence}
       ${Pagination.fragments.pageInfo}
@@ -207,6 +211,7 @@ class ChecksList extends React.Component {
       loading,
       limit,
       offset,
+      order,
       onChangeQuery,
       refetch,
     } = this.props;
@@ -231,14 +236,23 @@ class ChecksList extends React.Component {
           <Paper>
             <Loader loading={loading}>
               <ChecksListHeader
+                environment={environment}
                 onChangeQuery={onChangeQuery}
                 onClickClearSilences={() => this.clearSilences(selectedItems)}
-                onClickDelete={() => this.deleteChecks(selectedItems)}
-                onClickExecute={() => this.executeChecks(selectedItems)}
-                onClickSetPublish={publish =>
-                  this.setChecksPublish(selectedItems, publish)
-                }
+                onClickDelete={() => {
+                  this.deleteChecks(selectedItems);
+                  setSelectedItems([]);
+                }}
+                onClickExecute={() => {
+                  this.executeChecks(selectedItems);
+                  setSelectedItems([]);
+                }}
+                onClickSetPublish={publish => {
+                  this.setChecksPublish(selectedItems, publish);
+                  setSelectedItems([]);
+                }}
                 onClickSilence={() => this.silenceChecks(selectedItems)}
+                order={order}
                 rowCount={items.length}
                 selectedItems={selectedItems}
                 toggleSelectedItems={toggleSelectedItems}

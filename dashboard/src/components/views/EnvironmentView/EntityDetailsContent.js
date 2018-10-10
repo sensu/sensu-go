@@ -39,14 +39,7 @@ class EntityDetailsContent extends React.PureComponent {
         pollInterval={pollInterval}
         variables={{ ...params, ns }}
       >
-        {({
-          data: { entity } = {},
-          loading,
-          aborted,
-          isPolling,
-          startPolling,
-          stopPolling,
-        }) => {
+        {({ data: { entity } = {}, loading, aborted, isPolling, refetch }) => {
           if (!loading && !aborted && (!entity || entity.deleted)) {
             return <NotFound />;
           }
@@ -54,14 +47,7 @@ class EntityDetailsContent extends React.PureComponent {
           return (
             <Loader loading={(loading && !isPolling) || aborted} passthrough>
               {entity && (
-                <EntityDetailsContainer
-                  entity={entity}
-                  poller={{
-                    running: isPolling,
-                    start: startPolling,
-                    stop: stopPolling,
-                  }}
-                />
+                <EntityDetailsContainer entity={entity} refetch={refetch} />
               )}
             </Loader>
           );

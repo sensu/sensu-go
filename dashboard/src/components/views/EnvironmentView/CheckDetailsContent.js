@@ -14,11 +14,11 @@ const pollInterval = 1500; // 1.5s
 const query = gql`
   query CheckDetailsContentQuery($ns: NamespaceInput!, $name: String!) {
     check(ns: $ns, name: $name) {
-      ...CheckDetailsContainer_checkConfig
+      ...CheckDetailsContainer_check
     }
   }
 
-  ${CheckDetailsContainer.fragments.checkConfig}
+  ${CheckDetailsContainer.fragments.check}
 `;
 
 class CheckDetailsContent extends React.PureComponent {
@@ -48,8 +48,6 @@ class CheckDetailsContent extends React.PureComponent {
           data: { check } = {},
           loading,
           isPolling,
-          startPolling,
-          stopPolling,
           refetch,
         }) => {
           if (!loading && !aborted && (!check || check.deleted)) {
@@ -61,11 +59,6 @@ class CheckDetailsContent extends React.PureComponent {
               client={client}
               check={check}
               loading={(loading && !isPolling) || aborted}
-              poller={{
-                running: isPolling,
-                start: startPolling,
-                stop: stopPolling,
-              }}
               refetch={refetch}
             />
           );

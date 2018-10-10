@@ -3,14 +3,16 @@ import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
 import Checkbox from "@material-ui/core/Checkbox";
-import IconButton from "@material-ui/core/IconButton";
-import Menu from "@material-ui/core/Menu";
-import MenuItem from "@material-ui/core/MenuItem";
-import MoreVert from "@material-ui/icons/MoreVert";
-import RootRef from "@material-ui/core/RootRef";
 import TableCell from "@material-ui/core/TableCell";
 
-import MenuController from "/components/controller/MenuController";
+import ConfirmDelete from "/components/partials/ConfirmDelete";
+import DeleteMenuItem from "/components/partials/ToolbarMenuItems/Delete";
+import QueueMenuItem from "/components/partials/ToolbarMenuItems/QueueExecution";
+import ResolveMenuItem from "/components/partials/ToolbarMenuItems/Resolve";
+import Select, { Option } from "/components/partials/ToolbarMenuItems/Select";
+import SilenceIcon from "/icons/Silence";
+import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
+import ToolbarMenu from "/components/partials/ToolbarMenu";
 
 import ResourceDetails from "/components/partials/ResourceDetails";
 import TableOverflowCell from "/components/partials/TableOverflowCell";
@@ -20,37 +22,28 @@ import EventStatusDescriptor from "/components/partials/EventStatusDescriptor";
 import NamespaceLink from "/components/util/NamespaceLink";
 import CheckStatusIcon from "/components/CheckStatusIcon";
 
-class EventListItem extends React.PureComponent {
+class EventListItem extends React.Component {
   static propTypes = {
     selected: PropTypes.bool.isRequired,
     onChangeSelected: PropTypes.func.isRequired,
     onClickClearSilences: PropTypes.func.isRequired,
+    onClickDelete: PropTypes.func.isRequired,
     onClickSilencePair: PropTypes.func.isRequired,
     onClickSilenceEntity: PropTypes.func.isRequired,
     onClickSilenceCheck: PropTypes.func.isRequired,
     onClickResolve: PropTypes.func.isRequired,
-    event: PropTypes.shape({
-      entity: PropTypes.shape({
-        name: PropTypes.string.isRequired,
-      }).isRequired,
-      check: PropTypes.shape({
-        name: PropTypes.string.isRequired,
-      }).isRequired,
-      timestamp: PropTypes.string.isRequired,
-    }).isRequired,
+    onClickRerun: PropTypes.func.isRequired,
+    event: PropTypes.object.isRequired,
   };
 
   static fragments = {
     event: gql`
       fragment EventsListItem_event on Event {
-        id
         isSilenced
         isNewIncident
         timestamp
-        deleted @client
         check {
           name
-          isSilenced
           status
           ...EventStatusDescriptor_check
         }
@@ -73,62 +66,6 @@ class EventListItem extends React.PureComponent {
     this.props.onChangeSelected(!this.props.selected);
   };
 
-  renderMenu = ({ close, anchorEl }) => {
-    const { event } = this.props;
-
-    return (
-      <Menu open onClose={close} anchorEl={anchorEl}>
-        <MenuItem
-          key={"silence-Entity"}
-          onClick={() => {
-            this.props.onClickSilenceEntity();
-            close();
-          }}
-        >
-          Silence Entity
-        </MenuItem>
-        <MenuItem
-          key={"silence-Check"}
-          onClick={() => {
-            this.props.onClickSilenceCheck();
-            close();
-          }}
-        >
-          Silence Check
-        </MenuItem>
-        <MenuItem
-          key={"silence-pair"}
-          onClick={() => {
-            this.props.onClickSilencePair();
-            close();
-          }}
-        >
-          Silence Both
-        </MenuItem>
-        {event.check.isSilenced && (
-          <MenuItem
-            onClick={() => {
-              this.props.onClickClearSilences();
-              close();
-            }}
-          >
-            Unsilence
-          </MenuItem>
-        )}
-        {event.check.status !== 0 && (
-          <MenuItem
-            onClick={() => {
-              this.props.onClickResolve();
-              close();
-            }}
-          >
-            Resolve
-          </MenuItem>
-        )}
-      </Menu>
-    );
-  };
-
   render() {
     const { selected, event } = this.props;
     const { entity, check, timestamp } = event;
@@ -148,6 +85,7 @@ class EventListItem extends React.PureComponent {
             onChange={this.handleClickCheckbox}
           />
         </TableCell>
+
         <TableOverflowCell>
           <ResourceDetails
             icon={
@@ -173,16 +111,63 @@ class EventListItem extends React.PureComponent {
             }
           />
         </TableOverflowCell>
+
         <TableCell padding="checkbox">
-          <MenuController renderMenu={this.renderMenu}>
-            {({ open, ref }) => (
-              <RootRef rootRef={ref}>
-                <IconButton onClick={open}>
-                  <MoreVert />
-                </IconButton>
-              </RootRef>
-            )}
-          </MenuController>
+          <ToolbarMenu>
+            <ToolbarMenu.Item id="resolve" visible="never">
+              <ResolveMenuItem onClick={this.props.onClickResolve} />
+            </ToolbarMenu.Item>
+            <ToolbarMenu.Item id="re-run" visible="never">
+              <QueueMenuItem
+                title="Re-run Check"
+                onClick={this.props.onClickRerun}
+              />
+            </ToolbarMenu.Item>
+            <ToolbarMenu.Item id="re-run" visible="never">
+              <Select
+                disabled={event.isSilenced}
+                icon={<SilenceIcon />}
+                primary="Silence"
+                onChange={sl => {
+                  if (sl === "check") {
+                    this.props.onClickSilenceCheck();
+                  } else if (sl === "entity") {
+                    this.props.onClickSilenceEntity();
+                  } else {
+                    this.props.onClickSilencePair();
+                  }
+                }}
+              >
+                <Option value="check">Check</Option>
+                <Option value="entity">Entity</Option>
+                <Option value="both">Both</Option>
+              </Select>
+            </ToolbarMenu.Item>
+            <ToolbarMenu.Item id="re-run" visible="never">
+              <UnsilenceMenuItem
+                disabled={!event.isSilenced}
+                onClick={this.props.onClickClearSilences}
+              />
+            </ToolbarMenu.Item>
+            <ToolbarMenu.Item id="re-run" visible="never">
+              {menu => (
+                <ConfirmDelete
+                  onSubmit={() => {
+                    this.props.onClickDelete();
+                    menu.close();
+                  }}
+                >
+                  {dialog => (
+                    <DeleteMenuItem
+                      autoClose={false}
+                      title="Delete…"
+                      onClick={dialog.open}
+                    />
+                  )}
+                </ConfirmDelete>
+              )}
+            </ToolbarMenu.Item>
+          </ToolbarMenu>
         </TableCell>
       </TableSelectableRow>
     );

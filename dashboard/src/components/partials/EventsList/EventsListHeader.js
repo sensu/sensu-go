@@ -2,27 +2,26 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import MenuItem from "@material-ui/core/MenuItem";
-import ListItemText from "@material-ui/core/ListItemText";
-
-import CollapsingMenu from "/components/partials/CollapsingMenu";
-import Menu from "@material-ui/core/Menu";
-
-import ConfirmDelete from "/components/partials/ConfirmDelete";
 import StatusMenu from "/components/partials/StatusMenu";
 import ListHeader from "/components/partials/ListHeader";
 
-import DeleteIcon from "@material-ui/icons/Delete";
-import SilenceIcon from "/icons/Silence";
-import SmallCheckIcon from "/icons/SmallCheck";
-import UnsilenceIcon from "/icons/Unsilence";
+import ConfirmDelete from "/components/partials/ConfirmDelete";
+import DeleteMenuItem from "/components/partials/ToolbarMenuItems/Delete";
+import ExecuteMenuItem from "/components/partials/ToolbarMenuItems/QueueExecution";
+import ResolveMenuItem from "/components/partials/ToolbarMenuItems/Resolve";
+import Select, { Option } from "/components/partials/ToolbarMenuItems/Select";
+import SilenceMenuItem from "/components/partials/ToolbarMenuItems/Silence";
+import SubmenuItem from "/components/partials/ToolbarMenuItems/Submenu";
+import ToolbarMenu from "/components/partials/ToolbarMenu";
+import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
 
-class EventsListHeader extends React.PureComponent {
+class EventsListHeader extends React.Component {
   static propTypes = {
     onClickClearSilences: PropTypes.func.isRequired,
     onClickSelect: PropTypes.func.isRequired,
     onClickSilence: PropTypes.func.isRequired,
     onClickResolve: PropTypes.func.isRequired,
+    onClickRerun: PropTypes.func.isRequired,
     onClickDelete: PropTypes.func.isRequired,
     selectedItems: PropTypes.array.isRequired,
     rowCount: PropTypes.number.isRequired,
@@ -95,33 +94,143 @@ class EventsListHeader extends React.PureComponent {
     }
   };
 
-  _handleChangeSort = newValue => {
+  updateSort = newValue => {
     this.props.onChangeQuery({ order: newValue });
   };
 
-  render() {
-    const {
-      selectedItems,
-      rowCount,
-      onClickClearSilences,
-      onClickDelete,
-      onClickSelect,
-      onClickSilence,
-      onClickResolve,
-      environment,
-    } = this.props;
-
-    const entityNames = environment
-      ? environment.entities.nodes.map(node => node.name)
-      : [];
-
-    const checkNames = [
-      ...(environment ? environment.checks.nodes.map(node => node.name) : []),
-      "keepalive",
-    ];
-
+  renderBulkActions = () => {
+    const { selectedItems } = this.props;
     const selectedCount = selectedItems.length;
     const selectedSilenced = selectedItems.filter(ev => ev.check.isSilenced);
+
+    const allSelectedSilenced = selectedSilenced.length === selectedCount;
+    const allSelectedUnsilenced = selectedSilenced.length === 0;
+
+    return (
+      <ToolbarMenu>
+        <ToolbarMenu.Item id="resolve" visible="always">
+          <ResolveMenuItem
+            description="Resolve selected event(s)."
+            onClick={this.props.onClickResolve}
+          />
+        </ToolbarMenu.Item>
+
+        <ToolbarMenu.Item id="re-run" visible="if-room">
+          <ExecuteMenuItem
+            title="Re-run Checks"
+            titleCondensed="Re-run"
+            description="Queue adhoc check executions for selected event(s)."
+            onClick={this.props.onClickRerun}
+          />
+        </ToolbarMenu.Item>
+
+        <ToolbarMenu.Item
+          id="silence"
+          visible={allSelectedSilenced ? "never" : "if-room"}
+        >
+          <SilenceMenuItem
+            disabled={allSelectedSilenced}
+            onClick={this.props.onClickSilence}
+          />
+        </ToolbarMenu.Item>
+
+        <ToolbarMenu.Item
+          id="unsilence"
+          visible={allSelectedUnsilenced ? "never" : "if-room"}
+        >
+          <UnsilenceMenuItem
+            disabled={allSelectedUnsilenced}
+            onClick={this.props.onClickClearSilences}
+          />
+        </ToolbarMenu.Item>
+
+        <ToolbarMenu.Item id="delete" visible="never">
+          {menu => (
+            <ConfirmDelete
+              identifier={`${selectedCount} ${
+                selectedCount === 1 ? "event" : "events"
+              }`}
+              onSubmit={() => {
+                this.props.onClickDelete();
+                menu.close();
+              }}
+            >
+              {confirm => (
+                <DeleteMenuItem
+                  autoClose={false}
+                  title="Delete…"
+                  onClick={confirm.open}
+                />
+              )}
+            </ConfirmDelete>
+          )}
+        </ToolbarMenu.Item>
+      </ToolbarMenu>
+    );
+  };
+
+  renderActions = () => {
+    const { environment: env } = this.props;
+    const entities = env ? env.entities.nodes.map(e => e.name) : [];
+    const checks = env ? env.checks.nodes.map(e => e.name) : [];
+
+    return (
+      <ToolbarMenu.Autosizer>
+        {({ width }) => (
+          <ToolbarMenu width={width}>
+            <ToolbarMenu.Item id="hide" visible="if-room">
+              <Select title="Hide" onChange={this.requeryHide}>
+                <Option value="passing">Passing</Option>
+                <Option value="silenced">Silenced</Option>
+              </Select>
+            </ToolbarMenu.Item>
+
+            <ToolbarMenu.Item id="filter-by-entity" visible="if-room">
+              <Select title="Entity" onChange={this.requeryEntity}>
+                {entities.map(name => <Option key={name} value={name} />)}
+              </Select>
+            </ToolbarMenu.Item>
+
+            <ToolbarMenu.Item id="filter-by-check" visible="if-room">
+              <Select title="Check" onChange={this.requeryCheck}>
+                {checks.map(name => <Option key={name} value={name} />)}
+              </Select>
+            </ToolbarMenu.Item>
+
+            <ToolbarMenu.Item id="filter-by-status" visible="always">
+              <SubmenuItem
+                autoClose
+                title="Status"
+                renderMenu={({ anchorEl, close }) => (
+                  <StatusMenu
+                    anchorEl={anchorEl}
+                    onClose={close}
+                    onChange={val => {
+                      this.requeryStatus(val);
+                      close();
+                    }}
+                  />
+                )}
+              />
+            </ToolbarMenu.Item>
+
+            <ToolbarMenu.Item id="sort" visible="always">
+              <Select title="Sort" onChange={this.updateSort}>
+                <Option value="LASTOK">Last OK</Option>
+                <Option value="SEVERITY">Severity</Option>
+                <Option value="NEWEST">Newest</Option>
+                <Option value="OLDEST">Oldest</Option>
+              </Select>
+            </ToolbarMenu.Item>
+          </ToolbarMenu>
+        )}
+      </ToolbarMenu.Autosizer>
+    );
+  };
+
+  render() {
+    const { selectedItems, rowCount, onClickSelect } = this.props;
+    const selectedCount = selectedItems.length;
 
     return (
       <ListHeader
@@ -129,144 +238,8 @@ class EventsListHeader extends React.PureComponent {
         selectedCount={selectedCount}
         rowCount={rowCount}
         onClickSelect={onClickSelect}
-        renderBulkActions={() => (
-          <CollapsingMenu breakpoint="md">
-            <CollapsingMenu.Button
-              alt="Create a silence targeting selected events."
-              icon={<SilenceIcon />}
-              onClick={onClickSilence}
-              title="Silence"
-            />
-            <CollapsingMenu.Button
-              title="Unsilence"
-              icon={<UnsilenceIcon />}
-              onClick={onClickClearSilences}
-              alt="Clear silences associated with selected events."
-              disabled={selectedSilenced.length === 0}
-            />
-            <CollapsingMenu.Button
-              title="Resolve"
-              icon={<SmallCheckIcon />}
-              onClick={onClickResolve}
-              pinned
-            />
-            <ConfirmDelete
-              identifier={`${selectedCount} ${
-                selectedCount === 1 ? "event" : "events"
-              }`}
-              onSubmit={onClickDelete}
-            >
-              {confirm => (
-                <CollapsingMenu.Button
-                  title="Delete"
-                  icon={<DeleteIcon />}
-                  onClick={confirm.open}
-                />
-              )}
-            </ConfirmDelete>
-          </CollapsingMenu>
-        )}
-        renderActions={() => (
-          <CollapsingMenu breakpoint="md">
-            <CollapsingMenu.SubMenu
-              title="Hide"
-              renderMenu={({ anchorEl, close }) => (
-                <Menu open onClose={close} anchorEl={anchorEl}>
-                  <MenuItem
-                    onClick={() => {
-                      this.requeryHide("passing");
-                      close();
-                    }}
-                  >
-                    <ListItemText primary="Passing" />
-                  </MenuItem>
-                  <MenuItem
-                    onClick={() => {
-                      this.requeryHide("silenced");
-                      close();
-                    }}
-                  >
-                    <ListItemText primary="Silenced" />
-                  </MenuItem>
-                </Menu>
-              )}
-            />
-            <CollapsingMenu.SubMenu
-              title="Entity"
-              renderMenu={({ anchorEl, close }) => (
-                <Menu open onClose={close} anchorEl={anchorEl}>
-                  {entityNames.map(name => (
-                    <MenuItem
-                      key={name}
-                      onClick={() => {
-                        this.requeryEntity(name);
-                        close();
-                      }}
-                    >
-                      <ListItemText primary={name} />
-                    </MenuItem>
-                  ))}
-                </Menu>
-              )}
-            />
-            <CollapsingMenu.SubMenu
-              title="Check"
-              renderMenu={({ anchorEl, close }) => (
-                <Menu open onClose={close} anchorEl={anchorEl}>
-                  {checkNames.map(name => (
-                    <MenuItem
-                      key={name}
-                      onClick={() => {
-                        this.requeryCheck(name);
-                        close();
-                      }}
-                    >
-                      <ListItemText primary={name} />
-                    </MenuItem>
-                  ))}
-                </Menu>
-              )}
-            />
-            <CollapsingMenu.SubMenu
-              title="Status"
-              pinned
-              renderMenu={({ anchorEl, close }) => (
-                <StatusMenu
-                  anchorEl={anchorEl}
-                  onClose={close}
-                  onChange={val => {
-                    this.requeryStatus(val);
-                    close();
-                  }}
-                />
-              )}
-            />
-            <CollapsingMenu.SubMenu
-              title="Sort"
-              pinned
-              renderMenu={({ anchorEl, close }) => (
-                <Menu open onClose={close} anchorEl={anchorEl}>
-                  {[
-                    { name: "Last OK", value: "LASTOK" },
-                    { name: "Severity", value: "SEVERITY" },
-                    { name: "Newest", value: "NEWEST" },
-                    { name: "Oldest", value: "OLDEST" },
-                  ].map(option => (
-                    <MenuItem
-                      key={option.value}
-                      onClick={() => {
-                        this._handleChangeSort(option.value);
-                        close();
-                      }}
-                    >
-                      <ListItemText primary={option.name} />
-                    </MenuItem>
-                  ))}
-                </Menu>
-              )}
-            />
-          </CollapsingMenu>
-        )}
+        renderBulkActions={this.renderBulkActions}
+        renderActions={this.renderActions}
       />
     );
   }

@@ -1,12 +1,14 @@
 import React from "react";
 import PropTypes from "prop-types";
-import Menu from "@material-ui/core/Menu";
+import BaseMenu from "@material-ui/core/Menu";
 
-class ButtonMenu extends React.Component {
+class Menu extends React.Component {
+  static displayName = "ToolbarSelect.Menu";
+
   static propTypes = {
     onClose: PropTypes.func.isRequired,
     children: PropTypes.node.isRequired,
-    anchorEl: PropTypes.string.isRequired,
+    anchorEl: PropTypes.object.isRequired,
     onChange: PropTypes.func.isRequired,
   };
 
@@ -14,7 +16,7 @@ class ButtonMenu extends React.Component {
     const { anchorEl, children, onClose, onChange } = this.props;
 
     return (
-      <Menu open onClose={onClose} anchorEl={anchorEl}>
+      <BaseMenu open onClose={onClose} anchorEl={anchorEl}>
         {React.Children.map(children, child => {
           const onClick = event => {
             if (child.props.onClick) {
@@ -33,9 +35,9 @@ class ButtonMenu extends React.Component {
 
           return React.cloneElement(child, { onClick });
         })}
-      </Menu>
+      </BaseMenu>
     );
   }
 }
 
-export default ButtonMenu;
+export default Menu;

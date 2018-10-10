@@ -45,29 +45,15 @@ class EventDetailsContent extends React.PureComponent {
         pollInterval={pollInterval}
         variables={{ ...match.params, ns }}
       >
-        {({
-          client,
-          data: { event } = {},
-          loading,
-          aborted,
-          isPolling,
-          startPolling,
-          stopPolling,
-        }) => {
+        {({ data: { event } = {}, loading, aborted, isPolling }) => {
           if (!loading && !aborted && (!event || event.deleted)) {
             return <NotFound />;
           }
 
           return (
             <Container
-              client={client}
               event={event}
               loading={(loading && !isPolling) || aborted}
-              poller={{
-                running: isPolling,
-                start: startPolling,
-                stop: stopPolling,
-              }}
             />
           );
         }}

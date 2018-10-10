@@ -2,16 +2,14 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import CollapsingMenu from "/components/partials/CollapsingMenu";
 import ConfirmDelete from "/components/partials/ConfirmDelete";
-import DeleteIcon from "@material-ui/icons/Delete";
+import DeleteMenuItem from "/components/partials/ToolbarMenuItems/Delete";
 import ListHeader from "/components/partials/ListHeader";
-import ListItemText from "@material-ui/core/ListItemText";
-import ListSortMenu from "/components/partials/ListSortMenu";
-import { Menu } from "/components/partials/ButtonMenu";
-import MenuItem from "@material-ui/core/MenuItem";
-import SilenceIcon from "/icons/Silence";
-import UnsilenceIcon from "/icons/Unsilence";
+import ListSortSelector from "/components/partials/ListSortSelector";
+import Select, { Option } from "/components/partials/ToolbarMenuItems/Select";
+import SilenceMenuItem from "/components/partials/ToolbarMenuItems/Silence";
+import ToolbarMenu from "/components/partials/ToolbarMenu";
+import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
 
 class EntitiesListHeader extends React.PureComponent {
   static propTypes = {
@@ -23,6 +21,7 @@ class EntitiesListHeader extends React.PureComponent {
     onClickSilence: PropTypes.func.isRequired,
     rowCount: PropTypes.number.isRequired,
     selectedItems: PropTypes.array.isRequired,
+    order: PropTypes.string.isRequired,
   };
 
   static defaultProps = {
@@ -43,42 +42,93 @@ class EntitiesListHeader extends React.PureComponent {
     `,
   };
 
-  _handleChangeSort = val => {
-    let newVal = val;
-    this.props.onChangeQuery(query => {
-      // Toggle between ASC & DESC
-      const curVal = query.get("order");
-      if (curVal === "ID" && newVal === "ID") {
-        newVal = "ID_DESC";
-      }
-      query.set("order", newVal);
-    });
+  updateFilter = val => {
+    const filter = `'${val}' IN Subscriptions`;
+    this.props.onChangeQuery({ filter });
   };
 
-  _handleChangeFiler = (filter, val) => {
-    switch (filter) {
-      case "subscription":
-        this.props.onChangeQuery({ filter: `'${val}' IN Subscriptions` });
-        break;
-      default:
-        throw new Error(`unexpected filter '${filter}'`);
-    }
+  renderActions = () => {
+    const { environment: env, onChangeQuery, order } = this.props;
+    const subs = env ? env.subscriptions.values : [];
+
+    return (
+      <ToolbarMenu>
+        <ToolbarMenu.Item id="filter-by-subscriptions" visible="if-room">
+          <Select title="Subscription" onChange={this.updateFilter}>
+            {subs.map(v => <Option key={v} value={v} />)}
+          </Select>
+        </ToolbarMenu.Item>
+        <ToolbarMenu.Item id="sort" visible="always">
+          <ListSortSelector
+            options={[{ label: "Name", value: "ID" }]}
+            onChangeQuery={onChangeQuery}
+            value={order}
+          />
+        </ToolbarMenu.Item>
+      </ToolbarMenu>
+    );
+  };
+
+  renderBulkActions = () => {
+    const { selectedItems } = this.props;
+
+    const selectedCount = selectedItems.length;
+    const selectedSilenced = selectedItems.filter(en => en.silences.length > 0);
+    const allSelectedSilenced = selectedSilenced.length === selectedCount;
+    const allSelectedUnsilenced = selectedSilenced.length === 0;
+
+    return (
+      <ToolbarMenu>
+        <ToolbarMenu.Item
+          id="silence"
+          visible={allSelectedSilenced ? "never" : "always"}
+        >
+          <SilenceMenuItem
+            description="Create a silence targeting selected entities."
+            disabled={allSelectedSilenced}
+            onClick={this.props.onClickSilence}
+          />
+        </ToolbarMenu.Item>
+
+        <ToolbarMenu.Item
+          id="unsilence"
+          visible={allSelectedUnsilenced ? "never" : "if-room"}
+        >
+          <UnsilenceMenuItem
+            description="Clear silences associated with selected entities."
+            disabled={allSelectedUnsilenced}
+            onClick={this.props.onClickClearSilences}
+          />
+        </ToolbarMenu.Item>
+
+        <ToolbarMenu.Item id="delete" visible="never">
+          {menu => (
+            <ConfirmDelete
+              identifier={`${selectedCount} ${
+                selectedCount === 1 ? "entity" : "entities"
+              }`}
+              onSubmit={() => {
+                this.props.onClickDelete();
+                menu.close();
+              }}
+            >
+              {confirm => (
+                <DeleteMenuItem
+                  autoClose={false}
+                  title="Delete…"
+                  onClick={confirm.open}
+                />
+              )}
+            </ConfirmDelete>
+          )}
+        </ToolbarMenu.Item>
+      </ToolbarMenu>
+    );
   };
 
   render() {
-    const {
-      environment,
-      onClickClearSilences,
-      onClickDelete,
-      onClickSelect,
-      onClickSilence,
-      selectedItems,
-      rowCount,
-    } = this.props;
-
+    const { onClickSelect, selectedItems, rowCount } = this.props;
     const selectedCount = selectedItems.length;
-    const selectedSilenced = selectedItems.filter(en => !en.silences.length);
-    const subscriptions = environment ? environment.subscriptions.values : [];
 
     return (
       <ListHeader
@@ -86,71 +136,8 @@ class EntitiesListHeader extends React.PureComponent {
         selectedCount={selectedCount}
         rowCount={rowCount}
         onClickSelect={onClickSelect}
-        renderBulkActions={() => (
-          <CollapsingMenu>
-            <CollapsingMenu.Button
-              alt="Create a silence targeting selected entities."
-              disabled={selectedSilenced.length === 0}
-              icon={<SilenceIcon />}
-              onClick={onClickSilence}
-              title="Silence"
-              pinned
-            />
-            <CollapsingMenu.Button
-              title="Unsilence"
-              icon={<UnsilenceIcon />}
-              onClick={onClickClearSilences}
-              alt="Clear silences associated with selected entities."
-              disabled={selectedSilenced.length > 0}
-            />
-            <ConfirmDelete
-              identifier={`${selectedCount} ${
-                selectedCount === 1 ? "entity" : "entities"
-              }`}
-              onSubmit={onClickDelete}
-            >
-              {confirm => (
-                <CollapsingMenu.Button
-                  title="Delete"
-                  icon={<DeleteIcon />}
-                  onClick={confirm.open}
-                />
-              )}
-            </ConfirmDelete>
-          </CollapsingMenu>
-        )}
-        renderActions={() => (
-          <CollapsingMenu>
-            <CollapsingMenu.SubMenu
-              title="Subscription"
-              renderMenu={({ anchorEl, close }) => (
-                <Menu
-                  anchorEl={anchorEl}
-                  onChange={val => this._handleChangeFiler("subscription", val)}
-                  onClose={close}
-                >
-                  {subscriptions.map(entry => (
-                    <MenuItem key={entry} value={entry}>
-                      <ListItemText primary={entry} />
-                    </MenuItem>
-                  ))}
-                </Menu>
-              )}
-            />
-            <CollapsingMenu.SubMenu
-              title="Sort"
-              pinned
-              renderMenu={({ anchorEl, close }) => (
-                <ListSortMenu
-                  anchorEl={anchorEl}
-                  onClose={close}
-                  options={["ID"]}
-                  onChangeQuery={this.props.onChangeQuery}
-                />
-              )}
-            />
-          </CollapsingMenu>
-        )}
+        renderBulkActions={this.renderBulkActions}
+        renderActions={this.renderActions}
       />
     );
   }

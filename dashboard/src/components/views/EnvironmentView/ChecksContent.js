@@ -2,22 +2,14 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import LiveIcon from "/icons/Live";
-
-import { withQueryParams } from "/components/QueryParams";
 import AppLayout from "/components/AppLayout";
-
-import Query from "/components/util/Query";
-
-import ToastConnector from "/components/relocation/ToastConnector";
-
 import ChecksList from "/components/partials/ChecksList";
-import ListToolbar from "/components/partials/ListToolbar";
-
+import Content from "/components/Content";
+import ListToolbar from "/components/partials/ChecksList/ChecksListToolbar";
 import NotFound from "/components/partials/NotFound";
-
-import CollapsingMenu from "/components/partials/CollapsingMenu";
-import SearchBox from "/components/SearchBox";
+import Query from "/components/util/Query";
+import ToastConnector from "/components/relocation/ToastConnector";
+import { withQueryParams } from "/components/QueryParams";
 
 // duration used when polling is enabled; set fairly high until we understand
 // the impact.
@@ -50,77 +42,75 @@ class ChecksContent extends React.Component {
     ${ChecksList.fragments.environment}
   `;
 
-  render() {
-    const { match, queryParams, setQueryParams } = this.props;
+  renderContent = renderProps => {
+    const { queryParams, setQueryParams } = this.props;
+    const { limit, offset, filter } = queryParams;
+    const {
+      aborted,
+      data: { environment } = {},
+      loading,
+      isPolling,
+      refetch,
+    } = renderProps;
 
-    const { limit = "25", offset = "0", order, filter } = queryParams;
+    if (!environment && !loading && !aborted) {
+      return <NotFound />;
+    }
+
+    return (
+      <div>
+        <Content marginBottom>
+          <ListToolbar
+            query={filter}
+            onChangeQuery={value => setQueryParams({ filter: value })}
+            onClickReset={() =>
+              setQueryParams(q => q.reset(["filter", "order"]))
+            }
+          />
+        </Content>
+
+        <AppLayout.MobileFullWidthContent>
+          <ToastConnector>
+            {({ addToast }) => (
+              <ChecksList
+                limit={limit}
+                offset={offset}
+                onChangeQuery={setQueryParams}
+                environment={environment}
+                loading={(loading && (!environment || !isPolling)) || aborted}
+                refetch={refetch}
+                order={queryParams.order}
+                addToast={addToast}
+              />
+            )}
+          </ToastConnector>
+        </AppLayout.MobileFullWidthContent>
+      </div>
+    );
+  };
+
+  render() {
+    const { match, queryParams } = this.props;
+    const variables = { ...match.params, ...queryParams };
 
     return (
       <Query
         query={ChecksContent.query}
         fetchPolicy="cache-and-network"
         pollInterval={pollInterval}
-        variables={{ ...match.params, limit, offset, order, filter }}
+        variables={variables}
       >
-        {({
-          aborted,
-          data: { environment } = {},
-          loading,
-          isPolling,
-          startPolling,
-          stopPolling,
-          refetch,
-        }) => {
-          if (!environment && !loading && !aborted) {
-            return <NotFound />;
-          }
-
-          return (
-            <div>
-              <ListToolbar
-                renderSearch={
-                  <SearchBox
-                    placeholder="Filter checks…"
-                    initialValue={filter}
-                    onSearch={value => setQueryParams({ filter: value })}
-                  />
-                }
-                renderMenuItems={
-                  <CollapsingMenu.Button
-                    title="LIVE"
-                    icon={<LiveIcon active={isPolling} />}
-                    onClick={() =>
-                      isPolling ? stopPolling() : startPolling(pollInterval)
-                    }
-                  />
-                }
-              />
-
-              <AppLayout.MobileFullWidthContent>
-                <ToastConnector>
-                  {({ addToast }) => (
-                    <ChecksList
-                      limit={limit}
-                      offset={offset}
-                      onChangeQuery={setQueryParams}
-                      environment={environment}
-                      loading={
-                        (loading && (!environment || !isPolling)) || aborted
-                      }
-                      refetch={refetch}
-                      addToast={addToast}
-                    />
-                  )}
-                </ToastConnector>
-              </AppLayout.MobileFullWidthContent>
-            </div>
-          );
-        }}
+        {this.renderContent}
       </Query>
     );
   }
 }
-
-export default withQueryParams(["filter", "order", "offset", "limit"])(
-  ChecksContent,
-);
+const enhance = withQueryParams({
+  keys: ["filter", "order", "offset", "limit"],
+  defaults: {
+    limit: "25",
+    offset: "0",
+    order: "NAME",
+  },
+});
+export default enhance(ChecksContent);

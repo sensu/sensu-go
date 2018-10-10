@@ -3,9 +3,6 @@ import PropTypes from "prop-types";
 import gql from "graphql-tag";
 import { withApollo } from "react-apollo";
 
-import CollapsingMenu from "/components/partials/CollapsingMenu";
-import ConfirmDelete from "/components/partials/ConfirmDelete";
-import DeleteIcon from "@material-ui/icons/Delete";
 import Paper from "@material-ui/core/Paper";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
@@ -15,11 +12,10 @@ import { TableListEmptyState } from "/components/TableList";
 import Loader from "/components/util/Loader";
 import ListController from "/components/controller/ListController";
 import Pagination from "/components/partials/Pagination";
-import ListHeader from "/components/partials/ListHeader";
 import SilenceEntryDialog from "/components/partials/SilenceEntryDialog";
-import ListSortMenu from "/components/partials/ListSortMenu";
 import deleteSilence from "/mutations/deleteSilence";
 
+import ListHeader from "./SilencesListHeader";
 import ListItem from "./SilencesListItem";
 
 class SilencesList extends React.Component {
@@ -34,6 +30,7 @@ class SilencesList extends React.Component {
     onChangeQuery: PropTypes.func.isRequired,
     limit: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     offset: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    order: PropTypes.string.isRequired,
   };
 
   static defaultProps = {
@@ -124,7 +121,14 @@ class SilencesList extends React.Component {
   );
 
   render() {
-    const { environment, loading, limit, offset, onChangeQuery } = this.props;
+    const {
+      environment,
+      loading,
+      limit,
+      offset,
+      order,
+      onChangeQuery,
+    } = this.props;
     const items = environment
       ? environment.silences.nodes.filter(node => !node.deleted)
       : [];
@@ -140,41 +144,12 @@ class SilencesList extends React.Component {
           <Paper>
             <Loader loading={loading}>
               <ListHeader
-                sticky
-                selectedCount={selectedItems.length}
                 rowCount={children.length || 0}
+                selectedItems={selectedItems}
+                onChangeQuery={onChangeQuery}
                 onClickSelect={toggleSelectedItems}
-                renderBulkActions={() => (
-                  <CollapsingMenu>
-                    <ConfirmDelete
-                      onSubmit={() => this.deleteItems(selectedItems)}
-                    >
-                      {confirm => (
-                        <CollapsingMenu.Button
-                          title="Delete"
-                          icon={<DeleteIcon />}
-                          onClick={confirm.open}
-                        />
-                      )}
-                    </ConfirmDelete>
-                  </CollapsingMenu>
-                )}
-                renderActions={() => (
-                  <CollapsingMenu>
-                    <CollapsingMenu.SubMenu
-                      title="Sort"
-                      pinned
-                      renderMenu={({ anchorEl, close }) => (
-                        <ListSortMenu
-                          anchorEl={anchorEl}
-                          onClose={close}
-                          options={["ID", "BEGIN"]}
-                          onChangeQuery={onChangeQuery}
-                        />
-                      )}
-                    />
-                  </CollapsingMenu>
-                )}
+                onClickDelete={() => this.deleteItems(selectedItems)}
+                order={order}
               />
 
               <Table>

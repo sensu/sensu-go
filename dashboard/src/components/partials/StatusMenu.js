@@ -10,7 +10,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 
 class StatusMenu extends React.Component {
   static propTypes = {
-    anchorEl: PropTypes.string,
+    anchorEl: PropTypes.object,
     className: PropTypes.string,
     onChange: PropTypes.func,
     onClose: PropTypes.func,

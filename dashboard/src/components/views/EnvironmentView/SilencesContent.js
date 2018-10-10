@@ -1,19 +1,27 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
+import withStateHandlers from "recompose/withStateHandlers";
+import toRenderProps from "recompose/toRenderProps";
 
-import CollapsingMenu from "/components/partials/CollapsingMenu";
-import ModalController from "/components/controller/ModalController";
-import ListToolbar from "/components/partials/ListToolbar";
-import LiveIcon from "/icons/Live";
+import AppLayout from "/components/AppLayout";
+import Content from "/components/Content";
 import NotFound from "/components/partials/NotFound";
-import PlusIcon from "@material-ui/icons/Add";
 import Query from "/components/util/Query";
-import SearchBox from "/components/SearchBox";
 import SilencesList from "/components/partials/SilencesList";
+import SilencesListToolbar from "/components/partials/SilencesList/SilencesListToolbar";
 import SilenceEntryDialog from "/components/partials/SilenceEntryDialog";
 import { withQueryParams } from "/components/QueryParams";
-import AppLayout from "/components/AppLayout";
+
+const WithDialogState = toRenderProps(
+  withStateHandlers(
+    { isOpen: false },
+    {
+      open: () => () => ({ isOpen: true }),
+      close: () => () => ({ isOpen: false }),
+    },
+  ),
+);
 
 // duration used when polling is enabled; set fairly high until we understand
 // the impact.
@@ -46,93 +54,92 @@ class SilencesContent extends React.Component {
     ${SilencesList.fragments.environment}
   `;
 
-  render() {
+  renderContent = renderProps => {
     const { match, queryParams, setQueryParams } = this.props;
-    const { limit = "25", offset = "0", order, filter } = queryParams;
+    const { filter, limit, offset, order } = queryParams;
+    const {
+      data: { environment } = {},
+      loading,
+      aborted,
+      refetch,
+      isPolling,
+    } = renderProps;
+
+    if (!environment && !loading && !aborted) {
+      return <NotFound />;
+    }
+
+    return (
+      <div>
+        <WithDialogState>
+          {newDialog => (
+            <React.Fragment>
+              <Content marginBottom>
+                <SilencesListToolbar
+                  filter={filter}
+                  onChangeQuery={val => setQueryParams({ filter: val })}
+                  onClickCreate={newDialog.open}
+                  onClickReset={() =>
+                    setQueryParams(q => q.reset(["filter", "offset"]))
+                  }
+                />
+              </Content>
+
+              {newDialog.isOpen && (
+                <SilenceEntryDialog
+                  values={{
+                    props: {},
+                    ns: match.params,
+                  }}
+                  onClose={() => {
+                    // TODO: Only refetch / poison list on success
+                    refetch();
+                    newDialog.close();
+                  }}
+                />
+              )}
+            </React.Fragment>
+          )}
+        </WithDialogState>
+
+        <AppLayout.MobileFullWidthContent>
+          <SilencesList
+            limit={limit}
+            offset={offset}
+            order={order}
+            onChangeQuery={setQueryParams}
+            environment={environment}
+            loading={(loading && (!environment || !isPolling)) || aborted}
+            refetch={refetch}
+          />
+        </AppLayout.MobileFullWidthContent>
+      </div>
+    );
+  };
+
+  render() {
+    const { match, queryParams } = this.props;
+    const variables = { ...match.params, ...queryParams };
 
     return (
       <Query
         query={SilencesContent.query}
         fetchPolicy="cache-and-network"
         pollInterval={pollInterval}
-        variables={{ ...match.params, limit, offset, order, filter }}
+        variables={variables}
       >
-        {({
-          data: { environment } = {},
-          loading,
-          aborted,
-          refetch,
-          isPolling,
-          startPolling,
-          stopPolling,
-        }) => {
-          if (!environment && !loading && !aborted) {
-            return <NotFound />;
-          }
-
-          return (
-            <div>
-              <ListToolbar
-                renderSearch={
-                  <SearchBox
-                    placeholder="Filter silences…"
-                    initialValue={filter}
-                    onSearch={value => setQueryParams({ filter: value })}
-                  />
-                }
-                renderMenuItems={
-                  <React.Fragment>
-                    <ModalController
-                      renderModal={({ close }) => (
-                        <SilenceEntryDialog
-                          values={{
-                            props: {},
-                            ns: match.params,
-                          }}
-                          onClose={() => {
-                            // TODO: Only refetch / poison list on success
-                            refetch();
-                            close();
-                          }}
-                        />
-                      )}
-                    >
-                      {({ open }) => (
-                        <CollapsingMenu.Button
-                          title="New"
-                          icon={<PlusIcon />}
-                          onClick={() => open()}
-                        />
-                      )}
-                    </ModalController>
-                    <CollapsingMenu.Button
-                      title="LIVE"
-                      icon={<LiveIcon active={isPolling} />}
-                      onClick={() =>
-                        isPolling ? stopPolling() : startPolling(pollInterval)
-                      }
-                    />
-                  </React.Fragment>
-                }
-              />
-              <AppLayout.MobileFullWidthContent>
-                <SilencesList
-                  limit={limit}
-                  offset={offset}
-                  onChangeQuery={setQueryParams}
-                  environment={environment}
-                  loading={(loading && (!environment || !isPolling)) || aborted}
-                  refetch={refetch}
-                />
-              </AppLayout.MobileFullWidthContent>
-            </div>
-          );
-        }}
+        {this.renderContent}
       </Query>
     );
   }
 }
 
-export default withQueryParams(["filter", "order", "offset", "limit"])(
-  SilencesContent,
-);
+const enhance = withQueryParams({
+  keys: ["filter", "order", "offset", "limit"],
+  defaults: {
+    limit: "25",
+    offset: "0",
+    order: "ID",
+  },
+});
+export default enhance(SilencesContent);

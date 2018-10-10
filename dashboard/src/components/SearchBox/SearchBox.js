@@ -124,16 +124,24 @@ class SearchBox extends React.Component {
   };
 
   render() {
-    const { classes, className: classNameProp } = this.props;
+    const {
+      classes,
+      className: classNameProp,
+      initialValue,
+      placeholder,
+      onSearch,
+      ...props
+    } = this.props;
+
     const className = classnames(classNameProp, classes.root);
 
     let value = this.state.value;
     if (value === null) {
-      value = this.props.initialValue || "";
+      value = initialValue || "";
     }
 
     return (
-      <Paper className={className}>
+      <Paper className={className} {...props}>
         <div className={classes.iconContainer}>
           <Icon className={classes.filterIcon} />
         </div>
@@ -143,7 +151,7 @@ class SearchBox extends React.Component {
           className={classes.inputContainer}
         >
           <SearchInput
-            placeholder={this.props.placeholder}
+            placeholder={placeholder}
             onChange={this.handleChange}
             onKeyPress={this.handleKeyPress}
             onFocus={this.handleFocus}

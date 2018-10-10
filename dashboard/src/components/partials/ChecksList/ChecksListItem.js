@@ -3,20 +3,22 @@ import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
 import Checkbox from "@material-ui/core/Checkbox";
+import Code from "/components/Code";
 import ConfirmDelete from "/components/partials/ConfirmDelete";
-import IconButton from "@material-ui/core/IconButton";
-import Menu from "@material-ui/core/Menu";
-import MenuController from "/components/controller/MenuController";
-import MenuItem from "@material-ui/core/MenuItem";
-import MoreVert from "@material-ui/icons/MoreVert";
+import DeleteMenuItem from "/components/partials/ToolbarMenuItems/Delete";
 import NamespaceLink from "/components/util/NamespaceLink";
+import PublishMenuItem from "/components/partials/ToolbarMenuItems/Publish";
 import ResourceDetails from "/components/partials/ResourceDetails";
-import RootRef from "@material-ui/core/RootRef";
 import SilenceIcon from "/icons/Silence";
+import SilenceMenuItem from "/components/partials/ToolbarMenuItems/Silence";
 import TableCell from "@material-ui/core/TableCell";
 import TableOverflowCell from "/components/partials/TableOverflowCell";
 import TableSelectableRow from "/components/partials/TableSelectableRow";
-import Code from "/components/Code";
+import ToolbarMenu from "/components/partials/ToolbarMenu";
+import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
+import UnpublishMenuItem from "/components/partials/ToolbarMenuItems/Unpublish";
+import QueueMenuItem from "/components/partials/ToolbarMenuItems/QueueExecution";
+
 import CheckSchedule from "./CheckSchedule";
 
 class CheckListItem extends React.Component {
@@ -37,6 +39,7 @@ class CheckListItem extends React.Component {
         name
         command
         isSilenced
+        publish
         namespace {
           organization
           environment
@@ -49,16 +52,7 @@ class CheckListItem extends React.Component {
   };
 
   render() {
-    const {
-      check,
-      selected,
-      onChangeSelected,
-      onClickClearSilences,
-      onClickDelete,
-      onClickExecute,
-      onClickSetPublish,
-      onClickSilence,
-    } = this.props;
+    const { check, selected, onChangeSelected } = this.props;
 
     return (
       <TableSelectableRow selected={selected}>
@@ -69,6 +63,7 @@ class CheckListItem extends React.Component {
             onChange={e => onChangeSelected(e.target.checked)}
           />
         </TableCell>
+
         <TableOverflowCell>
           <ResourceDetails
             title={
@@ -96,86 +91,43 @@ class CheckListItem extends React.Component {
         </TableOverflowCell>
 
         <TableCell padding="checkbox">
-          <MenuController
-            renderMenu={({ anchorEl, close }) => (
-              <Menu open onClose={close} anchorEl={anchorEl}>
-                <MenuItem
-                  onClick={() => {
-                    onClickExecute();
-                    close();
-                  }}
-                >
-                  Execute
-                </MenuItem>
-                {!check.isSilenced && (
-                  <MenuItem
-                    onClick={() => {
-                      onClickSilence();
-                      close();
-                    }}
-                  >
-                    Silence
-                  </MenuItem>
-                )}
-                {check.isSilenced && (
-                  <MenuItem
-                    onClick={() => {
-                      onClickClearSilences();
-                      close();
-                    }}
-                  >
-                    Unsilence
-                  </MenuItem>
-                )}
-                {!check.publish && (
-                  <MenuItem
-                    onClick={() => {
-                      onClickSetPublish(true);
-                      close();
-                    }}
-                  >
-                    Publish
-                  </MenuItem>
-                )}
-                {check.publish && (
-                  <MenuItem
-                    onClick={() => {
-                      onClickSetPublish(false);
-                      close();
-                    }}
-                  >
-                    Unpublish
-                  </MenuItem>
-                )}
-
-                <ConfirmDelete
-                  key="delete"
-                  onSubmit={ev => {
-                    onClickDelete(ev);
-                    close();
-                  }}
-                >
-                  {confirm => (
-                    <MenuItem
-                      onClick={() => {
-                        confirm.open();
-                      }}
-                    >
-                      Delete
-                    </MenuItem>
-                  )}
-                </ConfirmDelete>
-              </Menu>
+          <ToolbarMenu>
+            <ToolbarMenu.Item id="queue" visible="never">
+              <QueueMenuItem onClick={this.props.onClickExecute} />
+            </ToolbarMenu.Item>
+            <ToolbarMenu.Item id="silence" visible="never">
+              <SilenceMenuItem
+                disabled={!!check.isSilenced}
+                onClick={this.props.onClickSilence}
+              />
+            </ToolbarMenu.Item>
+            <ToolbarMenu.Item id="unsilence" visible="never">
+              <UnsilenceMenuItem
+                disabled={!check.isSilenced}
+                onClick={this.props.onClickClearSilences}
+              />
+            </ToolbarMenu.Item>
+            {!check.publish ? (
+              <ToolbarMenu.Item id="publish" visible="never">
+                <PublishMenuItem
+                  description="Publish check"
+                  onClick={() => this.props.onClickSetPublish(true)}
+                />
+              </ToolbarMenu.Item>
+            ) : (
+              <ToolbarMenu.Item id="unpublish" visible="never">
+                <UnpublishMenuItem
+                  description="Unpublish check"
+                  onClick={() => this.props.onClickSetPublish(false)}
+                />
+              </ToolbarMenu.Item>
             )}
-          >
-            {({ open, ref }) => (
-              <RootRef rootRef={ref}>
-                <IconButton onClick={open}>
-                  <MoreVert />
-                </IconButton>
-              </RootRef>
-            )}
-          </MenuController>
+            <ToolbarMenu.Item id="delete" visible="never">
+              <ConfirmDelete onSubmit={this.props.onClickDelete}>
+                {dialog => <DeleteMenuItem onClick={dialog.open} />}
+              </ConfirmDelete>
+            </ToolbarMenu.Item>
+          </ToolbarMenu>
         </TableCell>
       </TableSelectableRow>
     );

@@ -2,8 +2,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import { withRouter } from "react-router-dom";
 
-function expandParams(params, keys) {
-  return Array.from(params).reduce((acc, entry) => {
+function expandParams(params, keys, defaults) {
+  const matched = Array.from(params).reduce((acc, entry) => {
     const [key, val] = entry;
     if (keys && keys.indexOf(key) === -1) {
       return acc;
@@ -20,18 +20,27 @@ function expandParams(params, keys) {
 
     return acc;
   }, {});
+
+  return keys.reduce((acc, key) => {
+    if (!acc[key]) {
+      acc[key] = defaults[key];
+    }
+    return acc;
+  }, matched);
 }
 
 class QueryParams extends React.Component {
   static propTypes = {
     children: PropTypes.func.isRequired,
-    location: PropTypes.object.isRequired,
+    defaults: PropTypes.object,
     history: PropTypes.object.isRequired,
     keys: PropTypes.arrayOf(PropTypes.string),
+    location: PropTypes.object.isRequired,
   };
 
   static defaultProps = {
     keys: null,
+    defaults: {},
   };
 
   static getDerivedStateFromProps(nextProps) {
@@ -55,6 +64,8 @@ class QueryParams extends React.Component {
 
   changeQuery = fnOrObj => {
     const params = Object.assign(this.state.params, {});
+    params.reset = keys =>
+      Array.from(keys || params.keys()).forEach(key => params.delete(key));
 
     if (typeof fnOrObj === "function") {
       fnOrObj(params);
@@ -67,7 +78,12 @@ class QueryParams extends React.Component {
   };
 
   render() {
-    const params = expandParams(this.state.params, this.props.keys);
+    const params = expandParams(
+      this.state.params,
+      this.props.keys,
+      this.props.defaults,
+    );
+
     return this.props.children(params, this.changeQuery);
   }
 }

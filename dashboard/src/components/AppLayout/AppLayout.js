@@ -86,10 +86,13 @@ const styles = theme => ({
     paddingLeft: theme.spacing.unit,
     paddingRight: theme.spacing.unit,
 
-    paddingTop: 24,
+    paddingTop: 16,
     paddingBottom: 24,
 
     [theme.breakpoints.up("md")]: {
+      // align with quick nav container
+      paddingTop: 24,
+
       // add gutters for quick nav and any floating actions.
       paddingLeft: 80,
       paddingRight: 80,
