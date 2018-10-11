@@ -22,7 +22,15 @@ func TestRequestInfo(t *testing.T) {
 		expected    types.RequestInfo
 	}{
 		{
-			description: "path not starting with the rigth prefix",
+			description: "path is empty",
+			method:      "GET",
+			path:        "",
+			expected: types.RequestInfo{
+				Verb: "get",
+			},
+		},
+		{
+			description: "path not starting with API prefix",
 			method:      "GET",
 			path:        "/some/unrelated/path",
 			expected: types.RequestInfo{
@@ -30,7 +38,7 @@ func TestRequestInfo(t *testing.T) {
 			},
 		},
 		{
-			description: "path doesn't have an API group",
+			description: "path only has API prefix",
 			method:      "GET",
 			path:        "/apis/",
 			expected: types.RequestInfo{
@@ -38,21 +46,91 @@ func TestRequestInfo(t *testing.T) {
 			},
 		},
 		{
-			description: "path doesn't have an API version",
+			description: "path valid up to API group",
 			method:      "GET",
 			path:        "/apis/rbac/",
 			expected: types.RequestInfo{
-				Verb: "get",
+				APIGroup: "rbac",
+				Verb:     "get",
 			},
 		},
 		{
-			description: "path has both API group and version",
+			description: "path valid up to API version",
 			method:      "GET",
 			path:        "/apis/rbac/v1alpha1",
 			expected: types.RequestInfo{
 				APIGroup:   "rbac",
 				APIVersion: "v1alpha1",
 				Verb:       "get",
+			},
+		},
+		{
+			description: "path with wrong namespace prefix",
+			method:      "GET",
+			path:        "/apis/rbac/v1alpha1/some/unrelated/path",
+			expected: types.RequestInfo{
+				APIGroup:   "rbac",
+				APIVersion: "v1alpha1",
+				Verb:       "get",
+			},
+		},
+		{
+			description: "path valid up to namespaces endpoint",
+			method:      "GET",
+			path:        "/apis/rbac/v1alpha1/namespaces",
+			expected: types.RequestInfo{
+				APIGroup:   "rbac",
+				APIVersion: "v1alpha1",
+				Verb:       "get",
+			},
+		},
+		{
+			description: "path valid up to specific namespace",
+			method:      "GET",
+			path:        "/apis/rbac/v1alpha1/namespaces/my-namespace",
+			expected: types.RequestInfo{
+				APIGroup:   "rbac",
+				APIVersion: "v1alpha1",
+				Namespace:  "my-namespace",
+				Verb:       "get",
+			},
+		},
+		{
+			description: "path valid up to specific resource type",
+			method:      "GET",
+			path:        "/apis/rbac/v1alpha1/namespaces/my-namespace/check",
+			expected: types.RequestInfo{
+				APIGroup:   "rbac",
+				APIVersion: "v1alpha1",
+				Namespace:  "my-namespace",
+				Resource:   "check",
+				Verb:       "get",
+			},
+		},
+		{
+			description: "path valid up to specific resource name",
+			method:      "GET",
+			path:        "/apis/rbac/v1alpha1/namespaces/my-namespace/check/my-check",
+			expected: types.RequestInfo{
+				APIGroup:     "rbac",
+				APIVersion:   "v1alpha1",
+				Namespace:    "my-namespace",
+				Resource:     "check",
+				ResourceName: "my-check",
+				Verb:         "get",
+			},
+		},
+		{
+			description: "ignore path beyond resource name",
+			method:      "GET",
+			path:        "/apis/rbac/v1alpha1/namespaces/my-namespace/check/my-check/ignored/bits",
+			expected: types.RequestInfo{
+				APIGroup:     "rbac",
+				APIVersion:   "v1alpha1",
+				Namespace:    "my-namespace",
+				Resource:     "check",
+				ResourceName: "my-check",
+				Verb:         "get",
 			},
 		},
 	}
