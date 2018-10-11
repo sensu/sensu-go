@@ -9,9 +9,72 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+// TestRequestInfoVerb checks that the various HTTP methods are translated into
+// the right verbs that Sensu uses internally, including "watch" and "list".
 func TestRequestInfoVerb(t *testing.T) {
-	// TODO: Test focused on the translation of HTTP methods and "special verbs",
-	// such as "watch" and "list", to a Verb by the middleware.
+	cases := []struct {
+		description string
+		method      string
+		expected    string
+	}{
+		{
+			description: "HTTP POST is create",
+			method:      "POST",
+			expected:    "create",
+		},
+		{
+			description: "HTTP GET is get",
+			method:      "GET",
+			expected:    "get",
+		},
+		{
+			// This is not exactly correct, per HTTP HEAD semantics
+			description: "HTTP HEAD is get",
+			method:      "HEAD",
+			expected:    "get",
+		},
+		{
+			description: "HTTP PUT is update",
+			method:      "PUT",
+			expected:    "update",
+		},
+		{
+			description: "HTTP DELETE is delete",
+			method:      "DELETE",
+			expected:    "delete",
+		},
+		{
+			description: "invalid method gives empty verb",
+			method:      "TEST",
+			expected:    "",
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.description, func(t *testing.T) {
+			checkResult := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				info := types.ContextRequestInfo(r.Context())
+				assert.NotNil(t, info)
+				assert.Equal(t, tt.expected, info.Verb)
+			})
+
+			middleware := RequestInfo{}
+			server := httptest.NewServer(middleware.Then(checkResult))
+
+			req, err := http.NewRequest(tt.method, server.URL, nil)
+			if err != nil {
+				t.Fatal("Couldn't create request: ", err)
+			}
+
+			resp, err := http.DefaultClient.Do(req)
+			if err != nil {
+				t.Fatal("Failed to get a response: ", err)
+			}
+
+			assert.Equal(t, http.StatusOK, resp.StatusCode)
+			server.Close()
+		})
+	}
 }
 
 func TestRequestInfo(t *testing.T) {
