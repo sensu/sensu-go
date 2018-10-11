@@ -108,6 +108,11 @@ class SearchBox extends React.Component {
     this.setState(defaultState);
   }
 
+  clearFilter = () => {
+    this.resetState();
+    this.props.onSearch("");
+  };
+
   handleChange = ev => {
     this.setState({ value: ev.currentTarget.value || "" });
   };
@@ -174,7 +179,7 @@ class SearchBox extends React.Component {
             mountOnEnter
             unmountOnExit
           >
-            <IconButton>
+            <IconButton onClick={this.clearFilter}>
               <ClearIcon />
             </IconButton>
           </Slide>
