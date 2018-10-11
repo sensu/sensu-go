@@ -51,21 +51,22 @@ func (i RequestInfo) Then(next http.Handler) http.Handler {
 
 		path := strings.Trim(r.URL.Path, "/")
 		parts := strings.Split(path, "/")
+		nParts := len(parts)
 
 		// The first part of the path has to be "apis", the API prefix.
 		if parts[0] != "apis" {
 			return
 		}
 
-		if len(parts) >= 2 {
+		if nParts >= 2 {
 			info.APIGroup = parts[1]
 		}
 
-		if len(parts) >= 3 {
+		if nParts >= 3 {
 			info.APIVersion = parts[2]
 		}
 
-		if len(parts) >= 4 {
+		if nParts >= 4 {
 			// The fourth part of the path has to be "namespaces", the namespace prefix.
 			if parts[3] != "namespaces" {
 				return
@@ -73,17 +74,17 @@ func (i RequestInfo) Then(next http.Handler) http.Handler {
 		}
 
 		// A specific namespace is in the path.
-		if len(parts) >= 5 {
+		if nParts >= 5 {
 			info.Namespace = parts[4]
 		}
 
 		// A specific resource type is in the path.
-		if len(parts) >= 6 {
+		if nParts >= 6 {
 			info.Resource = parts[5]
 		}
 
 		// A specific resource name is in the path.
-		if len(parts) >= 7 {
+		if nParts >= 7 {
 			info.ResourceName = parts[6]
 		}
 	})
