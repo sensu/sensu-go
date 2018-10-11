@@ -5,6 +5,7 @@ ROOT=$(dirname "${BASH_SOURCE}")/..
 PACKAGES=(
     github.com/sensu/sensu-go/internal/apis/meta
     github.com/sensu/sensu-go/internal/apis/rbac
+    github.com/sensu/sensu-go/internal/apis/core
 )
 
 go-to-protobuf \
