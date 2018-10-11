@@ -40,7 +40,7 @@ func (m *Tokens) Reset()         { *m = Tokens{} }
 func (m *Tokens) String() string { return proto.CompactTextString(m) }
 func (*Tokens) ProtoMessage()    {}
 func (*Tokens) Descriptor() ([]byte, []int) {
-	return fileDescriptor_authentication_02faf1bd19288b36, []int{0}
+	return fileDescriptor_authentication_7ec3dff714cd3d0a, []int{0}
 }
 func (m *Tokens) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -526,10 +526,10 @@ var (
 )
 
 func init() {
-	proto.RegisterFile("authentication.proto", fileDescriptor_authentication_02faf1bd19288b36)
+	proto.RegisterFile("authentication.proto", fileDescriptor_authentication_7ec3dff714cd3d0a)
 }
 
-var fileDescriptor_authentication_02faf1bd19288b36 = []byte{
+var fileDescriptor_authentication_7ec3dff714cd3d0a = []byte{
 	// 232 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x49, 0x2c, 0x2d, 0xc9,
 	0x48, 0xcd, 0x2b, 0xc9, 0x4c, 0x4e, 0x2c, 0xc9, 0xcc, 0xcf, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9,

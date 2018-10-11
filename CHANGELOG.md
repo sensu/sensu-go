@@ -18,6 +18,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Staging resources and configurations have been removed from sensu-go.
 - Removed handlers/slack from sensu/sensu-go. It can now be found in
 sensu/slack-handler.
+- Removed the `Error` store and type.
 
 ### Changed
 - Changed sensuctl title colour to use terminal's configured default for bold
@@ -45,6 +46,7 @@ the older versions are now deprecated.
 - Deprecated --custom-attributes in the sensu-agent command, changed to
 --extended-attributes.
 - Interfaced command execution and mocked it for testing.
+- Updated the version of `libprotoc` used to 3.6.1.
 
 ### Fixed
 - Fixed a bug in `sensuctl configure` where an output format called `none` could

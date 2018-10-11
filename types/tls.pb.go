@@ -39,7 +39,7 @@ func (m *TLSOptions) Reset()         { *m = TLSOptions{} }
 func (m *TLSOptions) String() string { return proto.CompactTextString(m) }
 func (*TLSOptions) ProtoMessage()    {}
 func (*TLSOptions) Descriptor() ([]byte, []int) {
-	return fileDescriptor_tls_11c895a297d2a083, []int{0}
+	return fileDescriptor_tls_8fa6c71f00fd15ce, []int{0}
 }
 func (m *TLSOptions) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -577,9 +577,9 @@ var (
 	ErrIntOverflowTls   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("tls.proto", fileDescriptor_tls_11c895a297d2a083) }
+func init() { proto.RegisterFile("tls.proto", fileDescriptor_tls_8fa6c71f00fd15ce) }
 
-var fileDescriptor_tls_11c895a297d2a083 = []byte{
+var fileDescriptor_tls_8fa6c71f00fd15ce = []byte{
 	// 266 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x2c, 0xc9, 0x29, 0xd6,
 	0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2e, 0x4e, 0xcd, 0x2b, 0x2e, 0xd5, 0x2b, 0xa9, 0x2c,

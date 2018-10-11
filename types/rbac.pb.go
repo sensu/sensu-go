@@ -38,7 +38,7 @@ func (m *Rule) Reset()         { *m = Rule{} }
 func (m *Rule) String() string { return proto.CompactTextString(m) }
 func (*Rule) ProtoMessage()    {}
 func (*Rule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rbac_d66417309d00d7dd, []int{0}
+	return fileDescriptor_rbac_3de2e0303f753163, []int{0}
 }
 func (m *Rule) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -108,7 +108,7 @@ func (m *Role) Reset()         { *m = Role{} }
 func (m *Role) String() string { return proto.CompactTextString(m) }
 func (*Role) ProtoMessage()    {}
 func (*Role) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rbac_d66417309d00d7dd, []int{1}
+	return fileDescriptor_rbac_3de2e0303f753163, []int{1}
 }
 func (m *Role) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -880,9 +880,9 @@ var (
 	ErrIntOverflowRbac   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("rbac.proto", fileDescriptor_rbac_d66417309d00d7dd) }
+func init() { proto.RegisterFile("rbac.proto", fileDescriptor_rbac_3de2e0303f753163) }
 
-var fileDescriptor_rbac_d66417309d00d7dd = []byte{
+var fileDescriptor_rbac_3de2e0303f753163 = []byte{
 	// 270 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x54, 0x50, 0x4d, 0x4a, 0xc4, 0x30,
 	0x18, 0x9d, 0x4c, 0x3b, 0xc2, 0xa4, 0x8a, 0x98, 0x55, 0x71, 0x91, 0x96, 0xba, 0xe9, 0xc6, 0x0c,
