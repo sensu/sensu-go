@@ -33,8 +33,6 @@ var typeMap = map[string]interface{}{
 	"entity":                 &Entity{},
 	"Environment":            &Environment{},
 	"environment":            &Environment{},
-	"Error":                  &Error{},
-	"error":                  &Error{},
 	"Event":                  &Event{},
 	"event":                  &Event{},
 	"EventFilter":            &EventFilter{},

@@ -40,7 +40,7 @@ func (m *Extension) Reset()         { *m = Extension{} }
 func (m *Extension) String() string { return proto.CompactTextString(m) }
 func (*Extension) ProtoMessage()    {}
 func (*Extension) Descriptor() ([]byte, []int) {
-	return fileDescriptor_extension_118dd9190d6b2c53, []int{0}
+	return fileDescriptor_extension_f6ac13478a820beb, []int{0}
 }
 func (m *Extension) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -534,9 +534,9 @@ var (
 	ErrIntOverflowExtension   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("extension.proto", fileDescriptor_extension_118dd9190d6b2c53) }
+func init() { proto.RegisterFile("extension.proto", fileDescriptor_extension_f6ac13478a820beb) }
 
-var fileDescriptor_extension_118dd9190d6b2c53 = []byte{
+var fileDescriptor_extension_f6ac13478a820beb = []byte{
 	// 194 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4f, 0xad, 0x28, 0x49,
 	0xcd, 0x2b, 0xce, 0xcc, 0xcf, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2e, 0x4e, 0xcd,

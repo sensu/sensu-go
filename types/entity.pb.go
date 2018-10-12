@@ -49,7 +49,7 @@ func (m *Entity) Reset()         { *m = Entity{} }
 func (m *Entity) String() string { return proto.CompactTextString(m) }
 func (*Entity) ProtoMessage()    {}
 func (*Entity) Descriptor() ([]byte, []int) {
-	return fileDescriptor_entity_83344c280eacf254, []int{0}
+	return fileDescriptor_entity_a099efab6b93031f, []int{0}
 }
 func (m *Entity) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -181,7 +181,7 @@ func (m *System) Reset()         { *m = System{} }
 func (m *System) String() string { return proto.CompactTextString(m) }
 func (*System) ProtoMessage()    {}
 func (*System) Descriptor() ([]byte, []int) {
-	return fileDescriptor_entity_83344c280eacf254, []int{1}
+	return fileDescriptor_entity_a099efab6b93031f, []int{1}
 }
 func (m *System) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -273,7 +273,7 @@ func (m *Network) Reset()         { *m = Network{} }
 func (m *Network) String() string { return proto.CompactTextString(m) }
 func (*Network) ProtoMessage()    {}
 func (*Network) Descriptor() ([]byte, []int) {
-	return fileDescriptor_entity_83344c280eacf254, []int{2}
+	return fileDescriptor_entity_a099efab6b93031f, []int{2}
 }
 func (m *Network) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -324,7 +324,7 @@ func (m *NetworkInterface) Reset()         { *m = NetworkInterface{} }
 func (m *NetworkInterface) String() string { return proto.CompactTextString(m) }
 func (*NetworkInterface) ProtoMessage()    {}
 func (*NetworkInterface) Descriptor() ([]byte, []int) {
-	return fileDescriptor_entity_83344c280eacf254, []int{3}
+	return fileDescriptor_entity_a099efab6b93031f, []int{3}
 }
 func (m *NetworkInterface) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -386,7 +386,7 @@ func (m *Deregistration) Reset()         { *m = Deregistration{} }
 func (m *Deregistration) String() string { return proto.CompactTextString(m) }
 func (*Deregistration) ProtoMessage()    {}
 func (*Deregistration) Descriptor() ([]byte, []int) {
-	return fileDescriptor_entity_83344c280eacf254, []int{4}
+	return fileDescriptor_entity_a099efab6b93031f, []int{4}
 }
 func (m *Deregistration) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2304,9 +2304,9 @@ var (
 	ErrIntOverflowEntity   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("entity.proto", fileDescriptor_entity_83344c280eacf254) }
+func init() { proto.RegisterFile("entity.proto", fileDescriptor_entity_a099efab6b93031f) }
 
-var fileDescriptor_entity_83344c280eacf254 = []byte{
+var fileDescriptor_entity_a099efab6b93031f = []byte{
 	// 639 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x54, 0xcd, 0x6e, 0xd3, 0x4c,
 	0x14, 0xed, 0xc4, 0xf9, 0x69, 0x6e, 0xd2, 0x7c, 0xfd, 0xa6, 0x55, 0x35, 0x5f, 0x3f, 0x11, 0x5b,

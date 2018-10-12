@@ -44,7 +44,7 @@ func (m *CheckRequest) Reset()         { *m = CheckRequest{} }
 func (m *CheckRequest) String() string { return proto.CompactTextString(m) }
 func (*CheckRequest) ProtoMessage()    {}
 func (*CheckRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_check_ebc1835e5729033b, []int{0}
+	return fileDescriptor_check_6647961810e328d8, []int{0}
 }
 func (m *CheckRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -121,7 +121,7 @@ func (m *ProxyRequests) Reset()         { *m = ProxyRequests{} }
 func (m *ProxyRequests) String() string { return proto.CompactTextString(m) }
 func (*ProxyRequests) ProtoMessage()    {}
 func (*ProxyRequests) Descriptor() ([]byte, []int) {
-	return fileDescriptor_check_ebc1835e5729033b, []int{1}
+	return fileDescriptor_check_6647961810e328d8, []int{1}
 }
 func (m *ProxyRequests) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -235,7 +235,7 @@ func (m *CheckConfig) Reset()         { *m = CheckConfig{} }
 func (m *CheckConfig) String() string { return proto.CompactTextString(m) }
 func (*CheckConfig) ProtoMessage()    {}
 func (*CheckConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_check_ebc1835e5729033b, []int{2}
+	return fileDescriptor_check_6647961810e328d8, []int{2}
 }
 func (m *CheckConfig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -524,7 +524,7 @@ func (m *Check) Reset()         { *m = Check{} }
 func (m *Check) String() string { return proto.CompactTextString(m) }
 func (*Check) ProtoMessage()    {}
 func (*Check) Descriptor() ([]byte, []int) {
-	return fileDescriptor_check_ebc1835e5729033b, []int{3}
+	return fileDescriptor_check_6647961810e328d8, []int{3}
 }
 func (m *Check) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -827,7 +827,7 @@ func (m *CheckHistory) Reset()         { *m = CheckHistory{} }
 func (m *CheckHistory) String() string { return proto.CompactTextString(m) }
 func (*CheckHistory) ProtoMessage()    {}
 func (*CheckHistory) Descriptor() ([]byte, []int) {
-	return fileDescriptor_check_ebc1835e5729033b, []int{4}
+	return fileDescriptor_check_6647961810e328d8, []int{4}
 }
 func (m *CheckHistory) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -4865,9 +4865,9 @@ var (
 	ErrIntOverflowCheck   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("check.proto", fileDescriptor_check_ebc1835e5729033b) }
+func init() { proto.RegisterFile("check.proto", fileDescriptor_check_6647961810e328d8) }
 
-var fileDescriptor_check_ebc1835e5729033b = []byte{
+var fileDescriptor_check_6647961810e328d8 = []byte{
 	// 1233 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x57, 0xcd, 0x72, 0x1b, 0x45,
 	0x10, 0xce, 0xc6, 0xb1, 0x64, 0x8d, 0x2c, 0xff, 0x4c, 0xec, 0x78, 0xac, 0x80, 0x56, 0x28, 0x49,
