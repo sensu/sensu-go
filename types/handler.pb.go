@@ -56,7 +56,7 @@ func (m *Handler) Reset()         { *m = Handler{} }
 func (m *Handler) String() string { return proto.CompactTextString(m) }
 func (*Handler) ProtoMessage()    {}
 func (*Handler) Descriptor() ([]byte, []int) {
-	return fileDescriptor_handler_93bcbe4bbb5cf625, []int{0}
+	return fileDescriptor_handler_cfae883876dfbd79, []int{0}
 }
 func (m *Handler) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -177,7 +177,7 @@ func (m *HandlerSocket) Reset()         { *m = HandlerSocket{} }
 func (m *HandlerSocket) String() string { return proto.CompactTextString(m) }
 func (*HandlerSocket) ProtoMessage()    {}
 func (*HandlerSocket) Descriptor() ([]byte, []int) {
-	return fileDescriptor_handler_93bcbe4bbb5cf625, []int{1}
+	return fileDescriptor_handler_cfae883876dfbd79, []int{1}
 }
 func (m *HandlerSocket) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1254,9 +1254,9 @@ var (
 	ErrIntOverflowHandler   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("handler.proto", fileDescriptor_handler_93bcbe4bbb5cf625) }
+func init() { proto.RegisterFile("handler.proto", fileDescriptor_handler_cfae883876dfbd79) }
 
-var fileDescriptor_handler_93bcbe4bbb5cf625 = []byte{
+var fileDescriptor_handler_cfae883876dfbd79 = []byte{
 	// 382 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x54, 0x91, 0x3f, 0xce, 0xd3, 0x30,
 	0x18, 0xc6, 0x31, 0x4d, 0x9b, 0xd4, 0x69, 0x16, 0x4f, 0x56, 0x85, 0x92, 0xa8, 0x08, 0x91, 0x85,

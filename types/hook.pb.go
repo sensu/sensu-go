@@ -48,7 +48,7 @@ func (m *HookConfig) Reset()         { *m = HookConfig{} }
 func (m *HookConfig) String() string { return proto.CompactTextString(m) }
 func (*HookConfig) ProtoMessage()    {}
 func (*HookConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_hook_e5ba98497dafa5a3, []int{0}
+	return fileDescriptor_hook_95eb01caedc29e8f, []int{0}
 }
 func (m *HookConfig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -143,7 +143,7 @@ func (m *Hook) Reset()         { *m = Hook{} }
 func (m *Hook) String() string { return proto.CompactTextString(m) }
 func (*Hook) ProtoMessage()    {}
 func (*Hook) Descriptor() ([]byte, []int) {
-	return fileDescriptor_hook_e5ba98497dafa5a3, []int{1}
+	return fileDescriptor_hook_95eb01caedc29e8f, []int{1}
 }
 func (m *Hook) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -221,7 +221,7 @@ func (m *HookList) Reset()         { *m = HookList{} }
 func (m *HookList) String() string { return proto.CompactTextString(m) }
 func (*HookList) ProtoMessage()    {}
 func (*HookList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_hook_e5ba98497dafa5a3, []int{2}
+	return fileDescriptor_hook_95eb01caedc29e8f, []int{2}
 }
 func (m *HookList) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1370,9 +1370,9 @@ var (
 	ErrIntOverflowHook   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("hook.proto", fileDescriptor_hook_e5ba98497dafa5a3) }
+func init() { proto.RegisterFile("hook.proto", fileDescriptor_hook_95eb01caedc29e8f) }
 
-var fileDescriptor_hook_e5ba98497dafa5a3 = []byte{
+var fileDescriptor_hook_95eb01caedc29e8f = []byte{
 	// 406 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x54, 0x92, 0xb1, 0xae, 0xd3, 0x30,
 	0x14, 0x86, 0x6b, 0xda, 0xe6, 0xb6, 0xa7, 0x65, 0xf1, 0x00, 0xd1, 0x1d, 0x92, 0x28, 0x08, 0x29,

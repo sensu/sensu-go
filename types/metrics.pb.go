@@ -40,7 +40,7 @@ func (m *Metrics) Reset()         { *m = Metrics{} }
 func (m *Metrics) String() string { return proto.CompactTextString(m) }
 func (*Metrics) ProtoMessage()    {}
 func (*Metrics) Descriptor() ([]byte, []int) {
-	return fileDescriptor_metrics_f833999814533f72, []int{0}
+	return fileDescriptor_metrics_42e2fab6aaca5690, []int{0}
 }
 func (m *Metrics) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -102,7 +102,7 @@ func (m *MetricPoint) Reset()         { *m = MetricPoint{} }
 func (m *MetricPoint) String() string { return proto.CompactTextString(m) }
 func (*MetricPoint) ProtoMessage()    {}
 func (*MetricPoint) Descriptor() ([]byte, []int) {
-	return fileDescriptor_metrics_f833999814533f72, []int{1}
+	return fileDescriptor_metrics_42e2fab6aaca5690, []int{1}
 }
 func (m *MetricPoint) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -174,7 +174,7 @@ func (m *MetricTag) Reset()         { *m = MetricTag{} }
 func (m *MetricTag) String() string { return proto.CompactTextString(m) }
 func (*MetricTag) ProtoMessage()    {}
 func (*MetricTag) Descriptor() ([]byte, []int) {
-	return fileDescriptor_metrics_f833999814533f72, []int{2}
+	return fileDescriptor_metrics_42e2fab6aaca5690, []int{2}
 }
 func (m *MetricTag) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1141,9 +1141,9 @@ var (
 	ErrIntOverflowMetrics   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("metrics.proto", fileDescriptor_metrics_f833999814533f72) }
+func init() { proto.RegisterFile("metrics.proto", fileDescriptor_metrics_42e2fab6aaca5690) }
 
-var fileDescriptor_metrics_f833999814533f72 = []byte{
+var fileDescriptor_metrics_42e2fab6aaca5690 = []byte{
 	// 316 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x90, 0xbf, 0x4e, 0xf3, 0x30,
 	0x14, 0xc5, 0xbf, 0xdb, 0xb4, 0xfd, 0x1a, 0x97, 0x2e, 0x16, 0x42, 0x16, 0x83, 0x1d, 0x95, 0xc5,

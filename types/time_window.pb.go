@@ -36,7 +36,7 @@ func (m *TimeWindowWhen) Reset()         { *m = TimeWindowWhen{} }
 func (m *TimeWindowWhen) String() string { return proto.CompactTextString(m) }
 func (*TimeWindowWhen) ProtoMessage()    {}
 func (*TimeWindowWhen) Descriptor() ([]byte, []int) {
-	return fileDescriptor_time_window_a02508284a08209b, []int{0}
+	return fileDescriptor_time_window_21b411355e7b62af, []int{0}
 }
 func (m *TimeWindowWhen) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -91,7 +91,7 @@ func (m *TimeWindowDays) Reset()         { *m = TimeWindowDays{} }
 func (m *TimeWindowDays) String() string { return proto.CompactTextString(m) }
 func (*TimeWindowDays) ProtoMessage()    {}
 func (*TimeWindowDays) Descriptor() ([]byte, []int) {
-	return fileDescriptor_time_window_a02508284a08209b, []int{1}
+	return fileDescriptor_time_window_21b411355e7b62af, []int{1}
 }
 func (m *TimeWindowDays) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -193,7 +193,7 @@ func (m *TimeWindowTimeRange) Reset()         { *m = TimeWindowTimeRange{} }
 func (m *TimeWindowTimeRange) String() string { return proto.CompactTextString(m) }
 func (*TimeWindowTimeRange) ProtoMessage()    {}
 func (*TimeWindowTimeRange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_time_window_a02508284a08209b, []int{2}
+	return fileDescriptor_time_window_21b411355e7b62af, []int{2}
 }
 func (m *TimeWindowTimeRange) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1422,9 +1422,9 @@ var (
 	ErrIntOverflowTimeWindow   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("time_window.proto", fileDescriptor_time_window_a02508284a08209b) }
+func init() { proto.RegisterFile("time_window.proto", fileDescriptor_time_window_21b411355e7b62af) }
 
-var fileDescriptor_time_window_a02508284a08209b = []byte{
+var fileDescriptor_time_window_21b411355e7b62af = []byte{
 	// 367 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x92, 0x4f, 0x4a, 0xc3, 0x40,
 	0x14, 0x87, 0x3b, 0x4d, 0xfa, 0x6f, 0x2a, 0x82, 0xe3, 0x26, 0x2a, 0x24, 0xa5, 0x6e, 0xba, 0x31,
