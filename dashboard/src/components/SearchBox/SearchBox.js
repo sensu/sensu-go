@@ -58,10 +58,6 @@ const styles = theme => ({
     paddingRight: theme.spacing.unit,
     height: theme.spacing.unit * 5,
   },
-  filterContainer: {
-    display: "flex",
-    width: "100%",
-  },
   iconContainer: {
     display: "flex",
     alignItems: "center",
