@@ -34,10 +34,10 @@ func (i RequestInfo) Then(next http.Handler) http.Handler {
 		info := types.RequestInfo{}
 
 		router := mux.NewRouter().PathPrefix("/apis/{group}/{version}/namespaces/").Subrouter()
-		router.Path("").Methods("GET", "POST")
-		router.Path("/{namespace}").Methods("GET", "PUT", "DELETE")
-		router.Path("/{namespace}/{type}").Methods("GET", "POST")
-		router.Path("/{namespace}/{type}/{name}").Methods("GET", "PUT", "DELETE")
+		router.Path("").Methods("GET", "HEAD", "POST")
+		router.Path("/{namespace}").Methods("GET", "HEAD", "PUT", "DELETE")
+		router.Path("/{namespace}/{type}").Methods("GET", "HEAD", "POST")
+		router.Path("/{namespace}/{type}/{name}").Methods("GET", "HEAD", "PUT", "DELETE")
 
 		ctx = context.WithValue(ctx, types.RequestInfoKey, &info)
 		defer next.ServeHTTP(w, r.WithContext(ctx))
