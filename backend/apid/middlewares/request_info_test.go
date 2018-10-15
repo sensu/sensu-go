@@ -88,54 +88,19 @@ func TestRequestInfo(t *testing.T) {
 			description: "path is empty",
 			method:      "GET",
 			path:        "",
-			expected: types.RequestInfo{
-				Verb: "get",
-			},
+			expected:    types.RequestInfo{},
 		},
 		{
 			description: "path not starting with API prefix",
 			method:      "GET",
 			path:        "/some/unrelated/path",
-			expected: types.RequestInfo{
-				Verb: "get",
-			},
+			expected:    types.RequestInfo{},
 		},
 		{
 			description: "path only has API prefix",
 			method:      "GET",
 			path:        "/apis/",
-			expected: types.RequestInfo{
-				Verb: "get",
-			},
-		},
-		{
-			description: "path valid up to API group",
-			method:      "GET",
-			path:        "/apis/rbac/",
-			expected: types.RequestInfo{
-				APIGroup: "rbac",
-				Verb:     "get",
-			},
-		},
-		{
-			description: "path valid up to API version",
-			method:      "GET",
-			path:        "/apis/rbac/v1alpha1",
-			expected: types.RequestInfo{
-				APIGroup:   "rbac",
-				APIVersion: "v1alpha1",
-				Verb:       "get",
-			},
-		},
-		{
-			description: "path with wrong namespace prefix",
-			method:      "GET",
-			path:        "/apis/rbac/v1alpha1/some/unrelated/path",
-			expected: types.RequestInfo{
-				APIGroup:   "rbac",
-				APIVersion: "v1alpha1",
-				Verb:       "get",
-			},
+			expected:    types.RequestInfo{},
 		},
 		{
 			description: "path valid up to namespaces endpoint",
@@ -174,19 +139,6 @@ func TestRequestInfo(t *testing.T) {
 			description: "path valid up to specific resource name",
 			method:      "GET",
 			path:        "/apis/rbac/v1alpha1/namespaces/my-namespace/check/my-check",
-			expected: types.RequestInfo{
-				APIGroup:     "rbac",
-				APIVersion:   "v1alpha1",
-				Namespace:    "my-namespace",
-				Resource:     "check",
-				ResourceName: "my-check",
-				Verb:         "get",
-			},
-		},
-		{
-			description: "ignore path beyond resource name",
-			method:      "GET",
-			path:        "/apis/rbac/v1alpha1/namespaces/my-namespace/check/my-check/ignored/bits",
 			expected: types.RequestInfo{
 				APIGroup:     "rbac",
 				APIVersion:   "v1alpha1",

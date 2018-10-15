@@ -3,8 +3,8 @@ package middlewares
 import (
 	"context"
 	"net/http"
-	"strings"
 
+	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -33,59 +33,35 @@ func (i RequestInfo) Then(next http.Handler) http.Handler {
 		ctx := r.Context()
 		info := types.RequestInfo{}
 
+		router := mux.NewRouter().PathPrefix("/apis/{group}/{version}/namespaces/").Subrouter()
+		router.Path("").Methods("GET", "POST")
+		router.Path("/{namespace}").Methods("GET", "PUT", "DELETE")
+		router.Path("/{namespace}/{type}").Methods("GET", "POST")
+		router.Path("/{namespace}/{type}/{name}").Methods("GET", "PUT", "DELETE")
+
 		ctx = context.WithValue(ctx, types.RequestInfoKey, &info)
 		defer next.ServeHTTP(w, r.WithContext(ctx))
 
-		switch r.Method {
-		case "POST":
-			info.Verb = "create"
-		case "GET", "HEAD":
-			info.Verb = "get"
-		case "PUT":
-			info.Verb = "update"
-		case "DELETE":
-			info.Verb = "delete"
-		default:
-			info.Verb = ""
-		}
-
-		path := strings.Trim(r.URL.Path, "/")
-		parts := strings.Split(path, "/")
-		nParts := len(parts)
-
-		// The first part of the path has to be "apis", the API prefix.
-		if parts[0] != "apis" {
-			return
-		}
-
-		if nParts >= 2 {
-			info.APIGroup = parts[1]
-		}
-
-		if nParts >= 3 {
-			info.APIVersion = parts[2]
-		}
-
-		if nParts >= 4 {
-			// The fourth part of the path has to be "namespaces", the namespace prefix.
-			if parts[3] != "namespaces" {
-				return
+		match := mux.RouteMatch{}
+		if router.Match(r, &match) {
+			switch r.Method {
+			case "POST":
+				info.Verb = "create"
+			case "GET", "HEAD":
+				info.Verb = "get"
+			case "PUT":
+				info.Verb = "update"
+			case "DELETE":
+				info.Verb = "delete"
+			default:
+				info.Verb = ""
 			}
-		}
 
-		// A specific namespace is in the path.
-		if nParts >= 5 {
-			info.Namespace = parts[4]
-		}
-
-		// A specific resource type is in the path.
-		if nParts >= 6 {
-			info.Resource = parts[5]
-		}
-
-		// A specific resource name is in the path.
-		if nParts >= 7 {
-			info.ResourceName = parts[6]
+			info.APIGroup = match.Vars["group"]
+			info.APIVersion = match.Vars["version"]
+			info.Namespace = match.Vars["namespace"]
+			info.Resource = match.Vars["type"]
+			info.ResourceName = match.Vars["name"]
 		}
 	})
 }
