@@ -62,6 +62,21 @@ func (i RequestInfo) Then(next http.Handler) http.Handler {
 			info.Namespace = match.Vars["namespace"]
 			info.Resource = match.Vars["type"]
 			info.ResourceName = match.Vars["name"]
+
+			if info.Verb == "get" {
+				// If there is no namespace specified, the request targets
+				// /namespaces and a GET on this endpoint corresponds to a list verb.
+				if info.Namespace == "" {
+					info.Verb = "list"
+				}
+
+				// Likewise, if there is no resource name specified, the request
+				// targets /namespaces/{namespace}/{type} and a GET on this endpoint
+				// corresponds to a list verb.
+				if info.Namespace != "" && info.Resource != "" && info.ResourceName == "" {
+					info.Verb = "list"
+				}
+			}
 		}
 	})
 }

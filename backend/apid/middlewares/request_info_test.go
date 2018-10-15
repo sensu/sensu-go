@@ -109,7 +109,7 @@ func TestRequestInfo(t *testing.T) {
 			expected: types.RequestInfo{
 				APIGroup:   "rbac",
 				APIVersion: "v1alpha1",
-				Verb:       "get",
+				Verb:       "list",
 			},
 		},
 		{
@@ -132,7 +132,7 @@ func TestRequestInfo(t *testing.T) {
 				APIVersion: "v1alpha1",
 				Namespace:  "my-namespace",
 				Resource:   "check",
-				Verb:       "get",
+				Verb:       "list",
 			},
 		},
 		{
