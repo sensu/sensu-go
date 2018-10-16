@@ -445,6 +445,7 @@ func (a *Agent) buildTransportHeaderMap() http.Header {
 // 9. Start the API server, shutdown the agent if doing so fails.
 func (a *Agent) Run() error {
 	var err error
+	a.entity = a.getAgentEntity()
 	a.assetManager, err = a.startAssetManager()
 	if err != nil {
 		return err
