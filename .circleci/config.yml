@@ -59,6 +59,7 @@ jobs:
 
   test:
     <<: *sensu_go_build_env
+    resource_class: medium+
     steps:
       - attach_workspace:
           # Must be absolute path or relative path from working_directory

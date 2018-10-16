@@ -100,7 +100,7 @@ func TestReceiveLoop(t *testing.T) {
 }
 
 // TestPeriodicKeepalive checks that a running Agent sends its periodic
-// keepalive messages at the expected frequency, allowing for +/- 1s drift.
+// keepalive messages at the expected frequency, allowing for +/- 2s drift.
 func TestPeriodicKeepalive(t *testing.T) {
 	done := make(chan struct{})
 
@@ -122,7 +122,7 @@ func TestPeriodicKeepalive(t *testing.T) {
 				if keepaliveCount > 0 {
 					expected := lastKeepalive.Add(keepaliveInterval)
 					actual := mockTime.Now()
-					assert.WithinDuration(t, expected, actual, (1 * time.Second))
+					assert.WithinDuration(t, expected, actual, (2 * time.Second))
 				}
 				lastKeepalive = mockTime.Now()
 			}
