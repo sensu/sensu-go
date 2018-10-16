@@ -235,21 +235,6 @@ func (q *Queue) Dequeue(ctx context.Context) (types.QueueItem, error) {
 	return q.Dequeue(ctx)
 }
 
-func (q *Queue) getItemTimestamp(key []byte) (time.Time, error) {
-	ts, err := hex.DecodeString(string(key[len(key)-16:]))
-	if err != nil {
-		return time.Time{}, err
-	}
-
-	var itemTimestamp int64
-	buf := bytes.NewReader(ts)
-	if err := binary.Read(buf, binary.BigEndian, &itemTimestamp); err != nil {
-		return time.Time{}, err
-	}
-	unixTimestamp := time.Unix(0, itemTimestamp)
-	return unixTimestamp, nil
-}
-
 func (q *Queue) tryDelete(ctx context.Context, kv *mvccpb.KeyValue) (types.QueueItem, error) {
 	key := string(kv.Key)
 
