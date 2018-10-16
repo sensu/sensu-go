@@ -41,10 +41,10 @@ func TestFilteredManagerCallsGetter(t *testing.T) {
 
 // FilteredManager should not call underlying Getter on filtered asset.
 func TestFilteredManagerFilteredAsset(t *testing.T) {
-	mockGetter, _, filteredManager := NewTestFilteredManager()
+	mockGetter, entity, filteredManager := NewTestFilteredManager()
 
 	fixtureAsset := types.FixtureAsset("test-asset")
-	fixtureAsset.Filters = []string{"entity.ID == 'badEntity'"}
+	fixtureAsset.Filters = []string{fmt.Sprintf("entity.ID == '%s'", entity.ID)}
 	actualAsset, err := filteredManager.Get(fixtureAsset)
 	assert.NoError(t, err)
 	assert.Nil(t, actualAsset)
@@ -65,22 +65,34 @@ func TestFilteredManagerError(t *testing.T) {
 func TestIsFiltered(t *testing.T) {
 	_, entity, filteredManager := NewTestFilteredManager()
 
+	// filtered is true, filter matches
 	fixtureAsset := types.FixtureAsset("test-asset")
-	fixtureAsset.Filters = []string{
-		fmt.Sprintf("entity.ID == '%s'", entity.ID),
-	}
+	fixtureAsset.Filters = []string{fmt.Sprintf("entity.ID == '%s'", entity.ID)}
 	filtered, err := filteredManager.isFiltered(fixtureAsset)
 	assert.NoError(t, err)
-	assert.False(t, filtered)
-}
-
-// isFiltered should return true on syntax error
-func TestIsFilteredSyntaxError(t *testing.T) {
-	_, _, filteredManager := NewTestFilteredManager()
-
-	fixtureAsset := types.FixtureAsset("test-asset")
-	fixtureAsset.Filters = []string{"[(!@#$%^&"}
-	filtered, err := filteredManager.isFiltered(fixtureAsset)
-	assert.Error(t, err)
 	assert.True(t, filtered)
+
+	// filtered is true, all filters match
+	fixtureAsset.Filters = []string{fmt.Sprintf("entity.ID == '%s'", entity.ID), "entity.Class == 'host'"}
+	filtered, err = filteredManager.isFiltered(fixtureAsset)
+	assert.NoError(t, err)
+	assert.True(t, filtered)
+
+	// filtered is false, filter does not match
+	fixtureAsset.Filters = []string{"entity.ID == 'foo'"}
+	filtered, err = filteredManager.isFiltered(fixtureAsset)
+	assert.NoError(t, err)
+	assert.False(t, filtered)
+
+	// filtered is false, all filters do not match
+	fixtureAsset.Filters = []string{"entity.ID == 'foo'", "entity.Class == 'host'"}
+	filtered, err = filteredManager.isFiltered(fixtureAsset)
+	assert.NoError(t, err)
+	assert.False(t, filtered)
+
+	// filtered is false, syntax error
+	fixtureAsset.Filters = []string{"[(!@#$%^&"}
+	filtered, err = filteredManager.isFiltered(fixtureAsset)
+	assert.Error(t, err)
+	assert.False(t, filtered)
 }

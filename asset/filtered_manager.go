@@ -32,14 +32,18 @@ func (f *filteredManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 
 	if filtered {
 		return nil, nil
-	} else {
-		return f.getter.Get(asset)
 	}
+
+	return f.getter.Get(asset)
 }
 
-// isFiltered evaluates the given asset's filters and returns true if any of
+// isFiltered evaluates the given asset's filters and returns true if all of
 // them match the current entity.
 func (f *filteredManager) isFiltered(asset *types.Asset) (bool, error) {
+	if len(asset.Filters) == 0 {
+		return false, nil
+	}
+
 	params := make(map[string]interface{}, 1)
 	params["entity"] = f.entity
 
@@ -48,7 +52,7 @@ func (f *filteredManager) isFiltered(asset *types.Asset) (bool, error) {
 		if err != nil {
 			switch err.(type) {
 			case eval.SyntaxError, eval.TypeError:
-				return true, err
+				return result, err
 			default:
 				// Other errors during execution are likely due to missing
 				// attrs, simply continue in this case.
@@ -57,9 +61,9 @@ func (f *filteredManager) isFiltered(asset *types.Asset) (bool, error) {
 		}
 
 		if !result {
-			return true, nil
+			return result, err
 		}
 	}
 
-	return false, nil
+	return true, nil
 }
