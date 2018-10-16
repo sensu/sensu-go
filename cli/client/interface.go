@@ -139,11 +139,13 @@ type NamespaceAPIClient interface {
 
 // UserAPIClient client methods for users
 type UserAPIClient interface {
+	AddGroupToUser(string, string) error
 	AddRoleToUser(string, string) error
 	CreateUser(*types.User) error
 	DisableUser(string) error
 	ListUsers() ([]types.User, error)
 	ReinstateUser(string) error
+	RemoveGroupFromUser(string, string) error
 	RemoveRoleFromUser(string, string) error
 	UpdatePassword(string, string) error
 }

@@ -7,6 +7,21 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// AddGroupToUser makes "username" a member of "group".
+func (client *RestClient) AddGroupToUser(username, group string) error {
+	username, group = url.PathEscape(username), url.PathEscape(group)
+	res, err := client.R().Put("/rbac/users/" + username + "/groups/" + group)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return UnmarshalError(res)
+	}
+
+	return nil
+}
+
 // AddRoleToUser adds roles to given user on configured Sensu instance
 func (client *RestClient) AddRoleToUser(username, role string) error {
 	username, role = url.PathEscape(username), url.PathEscape(role)
@@ -72,6 +87,21 @@ func (client *RestClient) ListUsers() ([]types.User, error) {
 func (client *RestClient) ReinstateUser(uname string) error {
 	res, err := client.R().Put("/rbac/users/" + url.PathEscape(uname) + "/reinstate")
 
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return UnmarshalError(res)
+	}
+
+	return nil
+}
+
+// RemoveGroupFromUser removes "username" from the given "group".
+func (client *RestClient) RemoveGroupFromUser(username, group string) error {
+	username, group = url.PathEscape(username), url.PathEscape(group)
+	res, err := client.R().Delete("/rbac/users/" + username + "/groups/" + group)
 	if err != nil {
 		return err
 	}
