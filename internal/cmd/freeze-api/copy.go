@@ -16,8 +16,8 @@ var packageDeclRe = regexp.MustCompile(`([\/\*]*[pP]ackage)[ ]+([_a-z0-9]+)`)
 // copyPackage naively copies a package from one place to another, updating its
 // package declaration.
 func copyPackage(fromPackage, toPackage string) error {
-	from := findPackageDir(fromPackage)
-	to := findPackageDir(toPackage)
+	from := packagePath(fromPackage)
+	to := packagePath(toPackage)
 	if err := os.MkdirAll(to, os.ModeDir|0755); err != nil {
 		return fmt.Errorf("couldn't copy package: %s", err)
 	}
@@ -87,6 +87,6 @@ func copyFile(from, to string) error {
 	return ioutil.WriteFile(to, b, 0644)
 }
 
-func findPackageDir(path string) string {
+func packagePath(path string) string {
 	return filepath.Join(build.Default.GOPATH, "src", path)
 }

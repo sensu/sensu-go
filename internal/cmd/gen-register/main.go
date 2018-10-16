@@ -14,6 +14,7 @@ import (
 	"text/template"
 
 	"github.com/sensu/sensu-go/internal/apis/meta"
+	"github.com/sensu/sensu-go/internal/astutil"
 )
 
 type templateData []meta.TypeMeta
@@ -23,8 +24,6 @@ var (
 	tmplPath    = flag.String("t", "", "Path to template file")
 	outPath     = flag.String("o", "", "Output path")
 )
-
-const TypeMetaName = "TypeMeta"
 
 func main() {
 	log.SetFlags(log.Lshortfile)
@@ -89,57 +88,12 @@ func scanPackages(packages map[string]*ast.Package) templateData {
 		if strings.HasSuffix(pkg.Name, "_test") {
 			continue
 		}
-		kinds := getKinds(pkg)
+		kinds := astutil.GetKindNames(pkg)
 		for _, kind := range kinds {
 			td = append(td, meta.TypeMeta{APIVersion: pkg.Name, Kind: kind})
 		}
 	}
 	return td
-}
-
-// getKinds finds all the sensu-go kinds in a package.
-func getKinds(pkg *ast.Package) (result []string) {
-	for _, f := range pkg.Files {
-		for _, decl := range f.Decls {
-			gendecl, ok := decl.(*ast.GenDecl)
-			if !ok || gendecl.Tok != token.TYPE {
-				continue
-			}
-			for _, spec := range gendecl.Specs {
-				ts, ok := spec.(*ast.TypeSpec)
-				if !ok || !ts.Name.IsExported() {
-					continue
-				}
-				if isKind(ts.Type) {
-					result = append(result, ts.Name.Name)
-				}
-			}
-		}
-	}
-	return result
-}
-
-// isKind returns true if the type is an *ast.StructType, and it embeds
-// meta.TypeMeta.
-func isKind(typ ast.Expr) bool {
-	strukt, ok := typ.(*ast.StructType)
-	if !ok {
-		return false
-	}
-	for _, field := range strukt.Fields.List {
-		if len(field.Names) != 0 {
-			// not embedded
-			continue
-		}
-		expr, ok := field.Type.(*ast.SelectorExpr)
-		if !ok {
-			continue
-		}
-		if expr.Sel.Name == TypeMetaName {
-			return true
-		}
-	}
-	return false
 }
 
 // walker walks a filesystem recursively, looking for Go packages to parse.
