@@ -24,8 +24,17 @@ var (
 	outPath     = flag.String("o", "", "Output path")
 )
 
+const TypeMetaName = "TypeMeta"
+
 func main() {
 	log.SetFlags(log.Lshortfile)
+	flag.Usage = func() {
+		w := flag.CommandLine.Output()
+		fmt.Fprintf(w, "%s: Generate a type registry for sensu-go API types.\n", os.Args[0])
+		fmt.Fprintln(w)
+		fmt.Fprintln(w, "Example usage: gen-register -pkg github.com/sensu/sensu-go -t register.go.tmpl -o register.go")
+		flag.PrintDefaults()
+	}
 	flag.Parse()
 	if *packagePath == "" {
 		log.Fatal("no package path supplied (-pkg)")
@@ -42,7 +51,7 @@ func main() {
 		log.Fatalf("couldn't read template: %s", err)
 	}
 
-	types, err := getPackageTypes(*packagePath)
+	kinds, err := getPackageKinds(*packagePath)
 	if err != nil {
 		log.Fatalf("couldn't get package types: %s", err)
 	}
@@ -52,12 +61,14 @@ func main() {
 		log.Fatalf("couldn't open output for writing: %s", err)
 	}
 
-	if err := tmpl.Execute(w, types); err != nil {
+	if err := tmpl.Execute(w, kinds); err != nil {
 		log.Fatalf("couldn't write registry: %s", err)
 	}
 }
 
-func getPackageTypes(path string) (templateData, error) {
+// getPackageKinds recursively traverses the package and all sub-packages for
+// sensu-go kinds (structs that embed meta.TypeMeta).
+func getPackageKinds(path string) (templateData, error) {
 	root := filepath.Join(build.Default.GOPATH, "src", path)
 	walker := &walker{
 		fset:     token.NewFileSet(),
@@ -70,34 +81,24 @@ func getPackageTypes(path string) (templateData, error) {
 	return td, nil
 }
 
+// scanPackages scans all of the collected packages for kinds and collects them
+// into a slice.
 func scanPackages(packages map[string]*ast.Package) templateData {
 	td := make(templateData, 0)
 	for _, pkg := range packages {
 		if strings.HasSuffix(pkg.Name, "_test") {
 			continue
 		}
-		data := scanPackage(pkg)
-		td = append(td, data...)
+		kinds := getKinds(pkg)
+		for _, kind := range kinds {
+			td = append(td, meta.TypeMeta{APIVersion: pkg.Name, Kind: kind})
+		}
 	}
 	return td
 }
 
-func scanPackage(pkg *ast.Package) templateData {
-	result := make(templateData, 0)
-	kinds := getTypeKinds(pkg)
-	for _, kind := range kinds {
-		result = append(result, meta.TypeMeta{APIVersion: pkg.Name, Kind: kind})
-	}
-	return result
-}
-
-type walker struct {
-	packages map[string]*ast.Package
-	fset     *token.FileSet
-}
-
-func getTypeKinds(pkg *ast.Package) []string {
-	result := make([]string, 0)
+// getKinds finds all the sensu-go kinds in a package.
+func getKinds(pkg *ast.Package) (result []string) {
 	for _, f := range pkg.Files {
 		for _, decl := range f.Decls {
 			gendecl, ok := decl.(*ast.GenDecl)
@@ -109,22 +110,8 @@ func getTypeKinds(pkg *ast.Package) []string {
 				if !ok || !ts.Name.IsExported() {
 					continue
 				}
-				strukt, ok := ts.Type.(*ast.StructType)
-				if !ok {
-					continue
-				}
-				for _, field := range strukt.Fields.List {
-					if len(field.Names) != 0 {
-						// not embedded
-						continue
-					}
-					expr, ok := field.Type.(*ast.SelectorExpr)
-					if !ok {
-						continue
-					}
-					if expr.Sel.Name == "TypeMeta" {
-						result = append(result, ts.Name.Name)
-					}
+				if isKind(ts.Type) {
+					result = append(result, ts.Name.Name)
 				}
 			}
 		}
@@ -132,14 +119,43 @@ func getTypeKinds(pkg *ast.Package) []string {
 	return result
 }
 
+// isKind returns true if the type is an *ast.StructType, and it embeds
+// meta.TypeMeta.
+func isKind(typ ast.Expr) bool {
+	strukt, ok := typ.(*ast.StructType)
+	if !ok {
+		return false
+	}
+	for _, field := range strukt.Fields.List {
+		if len(field.Names) != 0 {
+			// not embedded
+			continue
+		}
+		expr, ok := field.Type.(*ast.SelectorExpr)
+		if !ok {
+			continue
+		}
+		if expr.Sel.Name == TypeMetaName {
+			return true
+		}
+	}
+	return false
+}
+
+// walker walks a filesystem recursively, looking for Go packages to parse.
+type walker struct {
+	packages map[string]*ast.Package
+	fset     *token.FileSet
+}
+
 func (w *walker) walk(path string, fi os.FileInfo, err error) error {
-	if !fi.IsDir() {
+	if fi == nil || !fi.IsDir() {
 		return nil
 	}
-	if fi.IsDir() && fi.Name() == "internal" {
+	if strings.HasPrefix(fi.Name(), ".") {
 		return filepath.SkipDir
 	}
-	if fi.IsDir() && strings.HasPrefix(fi.Name(), ".") {
+	if fi.Name() == "vendor" {
 		return filepath.SkipDir
 	}
 	packages, err := parser.ParseDir(w.fset, path, nil, 0)
