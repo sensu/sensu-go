@@ -50,7 +50,7 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 	// Create the token and a signed version
 	token, tokenString, err := jwt.AccessToken(user.Username)
 	if err != nil {
-		err = fmt.Errorf("could not issue an access token: %s", err.Error())
+		err = fmt.Errorf("could not issue an access token: %s", err)
 		logger.WithField("user", username).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -59,7 +59,7 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 	// Retrieve the claims because we later need the expiration
 	claims, err := jwt.GetClaims(token)
 	if err != nil {
-		err = fmt.Errorf("could not get the access token claims: %s", err.Error())
+		err = fmt.Errorf("could not get the access token claims: %s", err)
 		logger.WithField("user", username).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -67,7 +67,7 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 
 	refreshToken, refreshTokenString, err := jwt.RefreshToken(user.Username)
 	if err != nil {
-		err = fmt.Errorf("could not issue a refresh token: %s", err.Error())
+		err = fmt.Errorf("could not issue a refresh token: %s", err)
 		logger.WithField("user", username).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -75,7 +75,7 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 
 	refreshClaims, err := jwt.GetClaims(refreshToken)
 	if err != nil {
-		err = fmt.Errorf("could not get the refresh token claims: %s", err.Error())
+		err = fmt.Errorf("could not get the refresh token claims: %s", err)
 		logger.WithField("user", username).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -83,14 +83,14 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 
 	// store the access and refresh tokens in the access list
 	if err = a.store.CreateToken(claims); err != nil {
-		err = fmt.Errorf("could not add the access token to the access list: %s", err.Error())
+		err = fmt.Errorf("could not add the access token to the access list: %s", err)
 		logger.WithField("user", username).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	if err = a.store.CreateToken(refreshClaims); err != nil {
-		err = fmt.Errorf("could not add the refresh token to the access list: %s", err.Error())
+		err = fmt.Errorf("could not add the refresh token to the access list: %s", err)
 		logger.WithField("user", username).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -105,7 +105,7 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 
 	resBytes, err := json.Marshal(response)
 	if err != nil {
-		err = fmt.Errorf("could not not marshal response: %s", err.Error())
+		err = fmt.Errorf("could not not marshal response: %s", err)
 		logger.WithField("user", username).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -138,7 +138,7 @@ func (a *AuthenticationRouter) logout(w http.ResponseWriter, r *http.Request) {
 	// Remove the access & refresh tokens from the access list
 	tokensToRemove := []string{accessClaims.Id, refreshClaims.Id}
 	if err := a.store.DeleteTokens(refreshClaims.Subject, tokensToRemove); err != nil {
-		err = fmt.Errorf("could not remove the access and refresh tokens from the access list: %s", err.Error())
+		err = fmt.Errorf("could not remove the access and refresh tokens from the access list: %s", err)
 		logger.WithField("user", refreshClaims.Subject).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -176,7 +176,7 @@ func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 
 	// Make sure the refresh token is authorized in the access list
 	if _, err := a.store.GetToken(refreshClaims.Subject, refreshClaims.Id); err != nil {
-		err = fmt.Errorf("the refresh token is not authorized: %s", err.Error())
+		err = fmt.Errorf("the refresh token is not authorized: %s", err)
 		logger.WithField("user", refreshClaims.Subject).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -184,7 +184,7 @@ func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 
 	// Remove the old access token from the access list
 	if err := a.store.DeleteTokens(accessClaims.Subject, []string{accessClaims.Id}); err != nil {
-		err = fmt.Errorf("could not remove the access token from the access list: %s", err.Error())
+		err = fmt.Errorf("could not remove the access token from the access list: %s", err)
 		logger.WithField("user", refreshClaims.Subject).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -193,7 +193,7 @@ func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 	// Issue a new access token
 	accessToken, accessTokenString, err := jwt.AccessToken(refreshClaims.Subject)
 	if err != nil {
-		err = fmt.Errorf("could not issue a new access token: %s", err.Error())
+		err = fmt.Errorf("could not issue a new access token: %s", err)
 		logger.WithField("user", refreshClaims.Subject).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -202,7 +202,7 @@ func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 	// Retrieve the claims because we later need the expiration
 	accessClaims, err = jwt.GetClaims(accessToken)
 	if err != nil {
-		err = fmt.Errorf("could not issue a new access token: %s", err.Error())
+		err = fmt.Errorf("could not issue a new access token: %s", err)
 		logger.WithField("user", refreshClaims.Subject).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -210,7 +210,7 @@ func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 
 	// store the new access token in the access list
 	if err = a.store.CreateToken(accessClaims); err != nil {
-		err = fmt.Errorf("could not add the new access token to the access list: %s", err.Error())
+		err = fmt.Errorf("could not add the new access token to the access list: %s", err)
 		logger.WithField("user", refreshClaims.Subject).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -225,7 +225,7 @@ func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 
 	resBytes, err := json.Marshal(response)
 	if err != nil {
-		err = fmt.Errorf("could not not marshal response: %s", err.Error())
+		err = fmt.Errorf("could not not marshal response: %s", err)
 		logger.WithField("user", refreshClaims.Subject).Error(err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

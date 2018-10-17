@@ -70,7 +70,7 @@ func addEvent(a *Agent) http.HandlerFunc {
 
 		msg, err := json.Marshal(event)
 		if err != nil {
-			http.Error(w, fmt.Sprintf("error marshaling check result: %s", err.Error()), http.StatusInternalServerError)
+			http.Error(w, fmt.Sprintf("error marshaling check result: %s", err), http.StatusInternalServerError)
 			return
 		}
 

@@ -106,7 +106,7 @@ func Initialize(config *Config) (*Backend, error) {
 	logger.Debug("Initializing store...")
 	store := etcdstore.NewStore(client, config.EtcdName)
 	if err = seeds.SeedInitialData(store); err != nil {
-		return nil, errors.New("error initializing the store: " + err.Error())
+		return nil, fmt.Errorf("error initializing the store: %s", err)
 	}
 	logger.Debug("Done initializing store")
 
@@ -122,7 +122,7 @@ func Initialize(config *Config) (*Backend, error) {
 		RingGetter: ring.EtcdGetter{Client: client, BackendID: fmt.Sprintf("%x", backendID.GetBackendID())},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", bus.Name(), err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", bus.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, bus)
 
@@ -133,7 +133,7 @@ func Initialize(config *Config) (*Backend, error) {
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", pipeline.Name(), err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", pipeline.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, pipeline)
 
@@ -144,7 +144,7 @@ func Initialize(config *Config) (*Backend, error) {
 		MonitorFactory: monitor.EtcdFactory(client),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", event.Name(), err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", event.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, event)
 
@@ -155,7 +155,7 @@ func Initialize(config *Config) (*Backend, error) {
 		QueueGetter: queueGetter,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", scheduler.Name(), err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", scheduler.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, scheduler)
 
@@ -168,7 +168,7 @@ func Initialize(config *Config) (*Backend, error) {
 		TLS:   config.TLS,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, agent)
 
@@ -180,7 +180,7 @@ func Initialize(config *Config) (*Backend, error) {
 		MonitorFactory: monitor.EtcdFactory(client),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, keepalive)
 
@@ -195,7 +195,7 @@ func Initialize(config *Config) (*Backend, error) {
 		Cluster:     clientv3.NewCluster(client),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, api)
 
@@ -207,7 +207,7 @@ func Initialize(config *Config) (*Backend, error) {
 		TLS:     config.TLS,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", dashboard.Name(), err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", dashboard.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, dashboard)
 
@@ -227,7 +227,7 @@ func (b *Backend) Run() error {
 	// Loop across the daemons in order to start them, then add them to our groups
 	for _, d := range b.Daemons {
 		if err := d.Start(); err != nil {
-			return fmt.Errorf("error starting %s: %s", d.Name(), err.Error())
+			return fmt.Errorf("error starting %s: %s", d.Name(), err)
 		}
 
 		// Add the daemon to our errGroup
@@ -255,7 +255,7 @@ func (b *Backend) Run() error {
 
 	select {
 	case err := <-eg.Err():
-		logger.Error(err.Error())
+		logger.WithError(err).Error("error in error group")
 	case <-b.ctx.Done():
 		logger.Info("backend shutting down")
 	}
