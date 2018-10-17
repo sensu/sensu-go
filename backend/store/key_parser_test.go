@@ -7,12 +7,11 @@ import (
 )
 
 func TestParseResourceKey(t *testing.T) {
-	const input = "/sensu.io/checks/default/foobar/baz"
+	const input = "/sensu.io/checks/acme/baz"
 	sk := ParseResourceKey(input)
 	assert.Equal(t, "sensu.io", sk.Root)
 	assert.Equal(t, "checks", sk.ResourceType)
-	assert.Equal(t, "default", sk.Organization)
-	assert.Equal(t, "foobar", sk.Environment)
+	assert.Equal(t, "acme", sk.Namespace)
 	assert.Equal(t, "baz", sk.ResourceName)
 	assert.Equal(t, input, sk.String())
 }

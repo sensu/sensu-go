@@ -7,12 +7,10 @@ import (
 const (
 	// DefaultEdition represents the default Sensu edition
 	DefaultEdition = types.CoreEdition
-	// DefaultEnvironment represents the default environment
-	DefaultEnvironment = "default"
 	// DefaultFormat represents the default format output when displaying objects
 	DefaultFormat = FormatTabular
-	// DefaultOrganization represents the default organization
-	DefaultOrganization = "default"
+	// DefaultNamespace represents the default namespace
+	DefaultNamespace = "default"
 	// FormatTabular represents the string for tabular format
 	FormatTabular = "tabular"
 	// FormatJSON represents the string for JSON format
@@ -31,9 +29,8 @@ type Config interface {
 type Read interface {
 	APIUrl() string
 	Edition() string
-	Environment() string
 	Format() string
-	Organization() string
+	Namespace() string
 	Tokens() *types.Tokens
 }
 
@@ -41,8 +38,7 @@ type Read interface {
 type Write interface {
 	SaveAPIUrl(string) error
 	SaveEdition(string) error
-	SaveEnvironment(string) error
 	SaveFormat(string) error
-	SaveOrganization(string) error
+	SaveNamespace(string) error
 	SaveTokens(*types.Tokens) error
 }

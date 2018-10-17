@@ -24,18 +24,16 @@ func getEventPath(event *types.Event) string {
 	return path.Join(
 		EtcdRoot,
 		eventsPathPrefix,
-		event.Entity.Organization,
-		event.Entity.Environment,
+		event.Entity.Namespace,
 		event.Entity.ID,
 		event.Check.Name,
 	)
 }
 
 func getEventWithCheckPath(ctx context.Context, entity, check string) string {
-	env := types.ContextEnvironment(ctx)
-	org := types.ContextOrganization(ctx)
+	namespace := types.ContextNamespace(ctx)
 
-	return path.Join(EtcdRoot, eventsPathPrefix, org, env, entity, check)
+	return path.Join(EtcdRoot, eventsPathPrefix, namespace, entity, check)
 }
 
 func getEventsPath(ctx context.Context, entity string) string {
@@ -52,8 +50,8 @@ func (s *Store) DeleteEventByEntityCheck(ctx context.Context, entityID, checkID 
 	return err
 }
 
-// GetEvents returns the events for an (optional) organization. If org is the
-// empty string, GetEvents returns all events for all orgs.
+// GetEvents returns the events for an (optional) namespace. If namespace is the
+// empty string, GetEvents returns all events for all namespaces.
 func (s *Store) GetEvents(ctx context.Context) ([]*types.Event, error) {
 	resp, err := query(ctx, s, getEventsPath)
 	if err != nil {
@@ -64,24 +62,12 @@ func (s *Store) GetEvents(ctx context.Context) ([]*types.Event, error) {
 		return []*types.Event{}, nil
 	}
 
-	// Support "*" as a wildcard for filtering environments
-	var env string
-	if env = types.ContextEnvironment(ctx); env == types.EnvironmentTypeAll {
-		env = ""
-	}
-
 	var eventsArray []*types.Event
 	for _, kv := range resp.Kvs {
 		event := &types.Event{}
 		err = json.Unmarshal(kv.Value, event)
 		if err != nil {
 			return nil, err
-		}
-
-		// We need to manually filters the events since the events don't have
-		// their environment at the top level of the struct
-		if env != "" && event.Entity.Environment != env {
-			continue
 		}
 
 		eventsArray = append(eventsArray, event)
@@ -162,7 +148,7 @@ func (s *Store) UpdateEvent(ctx context.Context, event *types.Event) error {
 		return err
 	}
 
-	cmp := environmentExistsForResource(event.Entity)
+	cmp := namespaceExistsForResource(event.Entity)
 	req := clientv3.OpPut(getEventPath(event), string(eventBytes))
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
@@ -170,11 +156,10 @@ func (s *Store) UpdateEvent(ctx context.Context, event *types.Event) error {
 	}
 	if !res.Succeeded {
 		return fmt.Errorf(
-			"could not create the event %s/%s in environment %s/%s",
+			"could not create the event %s/%s in namespace %s",
 			event.Entity.ID,
 			event.Check.Name,
-			event.Entity.Organization,
-			event.Entity.Environment,
+			event.Entity.Namespace,
 		)
 	}
 

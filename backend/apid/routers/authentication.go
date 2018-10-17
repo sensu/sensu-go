@@ -112,7 +112,7 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, string(resBytes))
+	_, _ = fmt.Fprint(w, string(resBytes))
 }
 
 // logout handles the logout flow
@@ -232,5 +232,5 @@ func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	fmt.Fprintf(w, string(resBytes))
+	_, _ = fmt.Fprint(w, string(resBytes))
 }

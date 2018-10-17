@@ -41,11 +41,8 @@ message Handler {
   // EnvVars is a list of environment variables to use with command execution
   repeated string env_vars = 9 [(gogoproto.jsontag) = "env_vars"];
 
-  // Environment indicates to which env a handler belongs to
-  string environment = 10;
-
-  // Organization indicates to which org a handler belongs to
-  string organization = 11;
+  // Namespace to which the handler belongs to
+  string namespace = 12;
 }
 
 // HandlerSocket contains configuration for a TCP or UDP handler.

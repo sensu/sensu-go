@@ -32,8 +32,7 @@ type handlerExtensionUnion struct {
 // errors are only logged and used for flow control, they will not
 // interupt event handling.
 func (p *Pipelined) handleEvent(event *types.Event) error {
-	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
-	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
+	ctx := context.WithValue(context.Background(), types.NamespaceKey, event.Entity.Namespace)
 
 	// Prepare debug log entry
 	debugFields := utillogging.EventFields(event, true)
@@ -110,11 +109,9 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 	expanded := map[string]handlerExtensionUnion{}
 
 	// Prepare log entry
-	env := types.ContextEnvironment(ctx)
-	org := types.ContextOrganization(ctx)
+	namespace := types.ContextNamespace(ctx)
 	fields := logrus.Fields{
-		"environment":  env,
-		"organization": org,
+		"namespace": namespace,
 	}
 
 	for _, handlerName := range handlers {
@@ -186,9 +183,8 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 
 	// Prepare log entry
 	fields := logrus.Fields{
-		"environment":  handler.Environment,
-		"organization": handler.Organization,
-		"handler":      handler.Name,
+		"namespace": handler.Namespace,
+		"handler":   handler.Name,
 	}
 
 	result, err := p.executor.Execute(context.Background(), handlerExec)
@@ -214,10 +210,9 @@ func (p *Pipelined) socketHandler(handler *types.Handler, eventData []byte) (con
 
 	// Prepare log entry
 	fields := logrus.Fields{
-		"environment":  handler.Environment,
-		"organization": handler.Organization,
-		"handler":      handler.Name,
-		"protocol":     protocol,
+		"namespace": handler.Namespace,
+		"handler":   handler.Name,
+		"protocol":  protocol,
 	}
 
 	// If Timeout is not specified, use the default.
@@ -256,9 +251,8 @@ func (p *Pipelined) socketHandler(handler *types.Handler, eventData []byte) (con
 func (p *Pipelined) grpcHandler(ext *types.Extension, evt *types.Event, mutated []byte) (rpc.HandleEventResponse, error) {
 	// Prepare log entry
 	fields := logrus.Fields{
-		"environment":  ext.GetEnvironment(),
-		"organization": ext.GetOrganization(),
-		"handler":      ext.GetName(),
+		"namespace": ext.GetNamespace(),
+		"handler":   ext.GetName(),
 	}
 
 	logger.WithFields(fields).Debug("sending event to handler extension")

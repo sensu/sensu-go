@@ -37,13 +37,9 @@ func TestEventFilterValidate(t *testing.T) {
 	assert.Error(t, f.Validate())
 	f.Statements = []string{"event.Check.Team == 'ops'"}
 
-	// Invalid organization
+	// Invalid namespace
 	assert.Error(t, f.Validate())
-	f.Organization = "default"
-
-	// Invalid environment
-	assert.Error(t, f.Validate())
-	f.Environment = "default"
+	f.Namespace = "default"
 
 	// Valid filter
 	assert.NoError(t, f.Validate())

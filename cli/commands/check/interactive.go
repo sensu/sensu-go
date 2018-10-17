@@ -25,8 +25,7 @@ type checkOpts struct {
 	Subscriptions        string `survey:"subscriptions"`
 	Handlers             string `survey:"handlers"`
 	RuntimeAssets        string `survey:"assets"`
-	Env                  string
-	Org                  string
+	Namespace            string
 	Publish              string `survey:"publish"`
 	ProxyEntityID        string `survey:"proxy-entity-id"`
 	Stdin                string `survey:"stdin"`
@@ -49,8 +48,7 @@ func newCheckOpts() *checkOpts {
 
 func (opts *checkOpts) withCheck(check *types.CheckConfig) {
 	opts.Name = check.Name
-	opts.Org = check.Organization
-	opts.Env = check.Environment
+	opts.Namespace = check.Namespace
 	opts.Command = check.Command
 	opts.Interval = strconv.Itoa(int(check.Interval))
 	opts.Cron = check.Cron
@@ -88,11 +86,8 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	roundRobinBool, _ := flags.GetBool("round-robin")
 	opts.RoundRobin = strconv.FormatBool(roundRobinBool)
 
-	if org := helpers.GetChangedStringValueFlag("organization", flags); org != "" {
-		opts.Org = org
-	}
-	if env := helpers.GetChangedStringValueFlag("environment", flags); env != "" {
-		opts.Env = env
+	if namespace := helpers.GetChangedStringValueFlag("namespace", flags); namespace != "" {
+		opts.Namespace = namespace
 	}
 }
 
@@ -110,18 +105,10 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 				Validate: survey.Required,
 			},
 			{
-				Name: "org",
+				Name: "namespace",
 				Prompt: &survey.Input{
-					Message: "Organization:",
-					Default: opts.Org,
-				},
-				Validate: survey.Required,
-			},
-			{
-				Name: "env",
-				Prompt: &survey.Input{
-					Message: "Environment:",
-					Default: opts.Env,
+					Message: "Namespace:",
+					Default: opts.Namespace,
 				},
 				Validate: survey.Required,
 			},
@@ -287,8 +274,7 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	lowFlap, _ := strconv.ParseUint(opts.LowFlapThreshold, 10, 32)
 
 	check.Name = opts.Name
-	check.Environment = opts.Env
-	check.Organization = opts.Org
+	check.Namespace = opts.Namespace
 	check.Interval = uint32(interval)
 	check.Command = opts.Command
 	check.Cron = opts.Cron

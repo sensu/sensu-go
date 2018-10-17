@@ -62,14 +62,8 @@ type eventReplacer interface {
 
 // environments
 
-type environmentFinder interface {
-	Find(ctx context.Context, org, env string) (*types.Environment, error)
-}
-
-// organizations
-
-type organizationFinder interface {
-	Find(ctx context.Context, name string) (*types.Organization, error)
+type namespaceFinder interface {
+	Find(ctx context.Context, name string) (*types.Namespace, error)
 }
 
 // silences

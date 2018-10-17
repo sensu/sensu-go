@@ -24,7 +24,7 @@ func (p *EntityPolicy) Context() Context {
 	return p.context
 }
 
-// WithContext returns new policy populated with rules & organization.
+// WithContext returns new policy populated with rules & namespace.
 func (p EntityPolicy) WithContext(ctx context.Context) EntityPolicy { // nolint
 	p.context = ExtractValueFromContext(ctx)
 	return p
@@ -37,17 +37,17 @@ func (p *EntityPolicy) CanList() bool {
 
 // CanRead returns true if actor has read access to resource.
 func (p *EntityPolicy) CanRead(entity *types.Entity) bool {
-	return canPerformOn(p, entity.Organization, entity.Environment, types.RulePermRead)
+	return canPerformOn(p, entity.Namespace, types.RulePermRead)
 }
 
 // CanCreate returns true if actor has access to create.
 func (p *EntityPolicy) CanCreate(entity *types.Entity) bool {
-	return canPerformOn(p, entity.Organization, entity.Environment, types.RulePermCreate)
+	return canPerformOn(p, entity.Namespace, types.RulePermCreate)
 }
 
 // CanUpdate returns true if actor has access to update.
 func (p *EntityPolicy) CanUpdate(entity *types.Entity) bool {
-	return canPerformOn(p, entity.Organization, entity.Environment, types.RulePermUpdate)
+	return canPerformOn(p, entity.Namespace, types.RulePermUpdate)
 }
 
 // CanDelete returns true if actor has access to delete.

@@ -46,12 +46,8 @@ func (f *EventFilter) Validate() error {
 		return err
 	}
 
-	if f.Environment == "" {
-		return errors.New("environment must be set")
-	}
-
-	if f.Organization == "" {
-		return errors.New("organization must be set")
+	if f.Namespace == "" {
+		return errors.New("namespace must be set")
 	}
 
 	return nil
@@ -78,22 +74,20 @@ func (f *EventFilter) Update(from *EventFilter, fields ...string) error {
 // FixtureEventFilter returns a Filter fixture for testing.
 func FixtureEventFilter(name string) *EventFilter {
 	return &EventFilter{
-		Name:         name,
-		Action:       EventFilterActionAllow,
-		Statements:   []string{"event.Check.Team == 'ops'"},
-		Environment:  "default",
-		Organization: "default",
+		Name:       name,
+		Action:     EventFilterActionAllow,
+		Statements: []string{"event.Check.Team == 'ops'"},
+		Namespace:  "default",
 	}
 }
 
 // FixtureDenyEventFilter returns a Filter fixture for testing.
 func FixtureDenyEventFilter(name string) *EventFilter {
 	return &EventFilter{
-		Name:         name,
-		Action:       EventFilterActionDeny,
-		Statements:   []string{"event.Check.Team == 'ops'"},
-		Environment:  "default",
-		Organization: "default",
+		Name:       name,
+		Action:     EventFilterActionDeny,
+		Statements: []string{"event.Check.Team == 'ops'"},
+		Namespace:  "default",
 	}
 }
 

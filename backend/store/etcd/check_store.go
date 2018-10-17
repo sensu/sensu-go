@@ -37,7 +37,7 @@ func (s *Store) DeleteCheckConfigByName(ctx context.Context, name string) error 
 	return err
 }
 
-// GetCheckConfigs returns check configurations for an (optional) organization.
+// GetCheckConfigs returns check configurations for an (optional) namespace.
 // If org is the empty string, it returns all check configs.
 func (s *Store) GetCheckConfigs(ctx context.Context) ([]*types.CheckConfig, error) {
 	resp, err := query(ctx, s, getCheckConfigsPath)
@@ -95,7 +95,7 @@ func (s *Store) UpdateCheckConfig(ctx context.Context, check *types.CheckConfig)
 		return err
 	}
 
-	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(check.Organization, check.Environment)), ">", 0)
+	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(check.Namespace)), ">", 0)
 	req := clientv3.OpPut(getCheckConfigPath(check), string(checkBytes))
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
@@ -103,10 +103,9 @@ func (s *Store) UpdateCheckConfig(ctx context.Context, check *types.CheckConfig)
 	}
 	if !res.Succeeded {
 		return fmt.Errorf(
-			"could not create the check %s in environment %s/%s",
+			"could not create the check %s in namespace %s",
 			check.Name,
-			check.Organization,
-			check.Environment,
+			check.Namespace,
 		)
 	}
 

@@ -19,20 +19,17 @@ var _ schema.SilencedFieldResolvers = (*silencedImpl)(nil)
 
 type silencedImpl struct {
 	schema.SilencedAliases
-	orgFinder   organizationFinder
-	envFinder   environmentFinder
+	nsFinder    namespaceFinder
 	userFinder  userFinder
 	checkFinder checkFinder
 }
 
 func newSilencedImpl(store store.Store, queue types.QueueGetter) *silencedImpl {
-	envCtrl := actions.NewEnvironmentController(store)
-	orgCtrl := actions.NewOrganizationsController(store)
+	nsCtrl := actions.NewNamespacesController(store)
 	userCtrl := actions.NewUserController(store)
 	checkCtrl := actions.NewCheckController(store, queue)
 	return &silencedImpl{
-		orgFinder:   orgCtrl,
-		envFinder:   envCtrl,
+		nsFinder:    nsCtrl,
 		userFinder:  userCtrl,
 		checkFinder: checkCtrl,
 	}
@@ -57,10 +54,10 @@ func (r *silencedImpl) Check(p graphql.ResolveParams) (interface{}, error) {
 	return handleControllerResults(r.checkFinder.Find(ctx, sil.Check))
 }
 
-// Environment implements response to request for 'environment' field.
-func (r *silencedImpl) Environment(p graphql.ResolveParams) (interface{}, error) {
-	return findEnvironment(p.Context, r.envFinder, p.Source.(types.MultitenantResource))
-}
+// Namespace implements response to request for 'namespace' field.
+// func (r *silencedImpl) Namespace(p graphql.ResolveParams) (interface{}, error) {
+// 	return findNamespace(p.Context, r.nsFinder, p.Source.(types.MultitenantResource))
+// }
 
 // Expires implements response to request for 'expires' field.
 func (r *silencedImpl) Expires(p graphql.ResolveParams) (*time.Time, error) {
@@ -74,11 +71,6 @@ func (r *silencedImpl) Expires(p graphql.ResolveParams) (*time.Time, error) {
 // ID implements response to request for 'id' field.
 func (r *silencedImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.SilenceTranslator.EncodeToString(p.Source), nil
-}
-
-// Organization implements response to request for 'organization' field.
-func (r *silencedImpl) Organization(p graphql.ResolveParams) (interface{}, error) {
-	return findOrganization(p.Context, r.orgFinder, p.Source.(types.MultitenantResource))
 }
 
 // StoreID implements response to request for 'storeId' field.

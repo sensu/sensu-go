@@ -11,12 +11,12 @@ import (
 )
 
 type mutatorOpts struct {
-	Name    string `survey:"name"`
-	Command string `survey:"command"`
-	Timeout string `survey:"timeout"`
-	EnvVars string `survey:"env-vars"`
-	Env     string
-	Org     string
+	Name      string `survey:"name"`
+	Command   string `survey:"command"`
+	Timeout   string `survey:"timeout"`
+	EnvVars   string `survey:"env-vars"`
+	Env       string
+	Namespace string
 }
 
 func newMutatorOpts() *mutatorOpts {
@@ -26,8 +26,7 @@ func newMutatorOpts() *mutatorOpts {
 
 func (opts *mutatorOpts) withMutator(mutator *types.Mutator) {
 	opts.Name = mutator.Name
-	opts.Env = mutator.Environment
-	opts.Org = mutator.Organization
+	opts.Namespace = mutator.Namespace
 
 	opts.Command = mutator.Command
 	opts.Timeout = strconv.FormatUint(uint64(mutator.Timeout), 10)
@@ -39,11 +38,8 @@ func (opts *mutatorOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Timeout, _ = flags.GetString("timeout")
 	opts.EnvVars, _ = flags.GetString("env-vars")
 
-	if org := helpers.GetChangedStringValueFlag("organization", flags); org != "" {
-		opts.Org = org
-	}
-	if env := helpers.GetChangedStringValueFlag("environment", flags); env != "" {
-		opts.Env = env
+	if namespace := helpers.GetChangedStringValueFlag("namespace", flags); namespace != "" {
+		opts.Namespace = namespace
 	}
 }
 
@@ -59,18 +55,10 @@ func (opts *mutatorOpts) administerQuestionnaire(editing bool) error {
 				Validate: survey.Required,
 			},
 			{
-				Name: "org",
+				Name: "namespace",
 				Prompt: &survey.Input{
-					Message: "Organization:",
-					Default: opts.Org,
-				},
-				Validate: survey.Required,
-			},
-			{
-				Name: "env",
-				Prompt: &survey.Input{
-					Message: "Environment:",
-					Default: opts.Env,
+					Message: "Namespace:",
+					Default: opts.Namespace,
 				},
 				Validate: survey.Required,
 			},
@@ -105,8 +93,7 @@ func (opts *mutatorOpts) administerQuestionnaire(editing bool) error {
 
 func (opts *mutatorOpts) Copy(mutator *types.Mutator) {
 	mutator.Name = opts.Name
-	mutator.Environment = opts.Env
-	mutator.Organization = opts.Org
+	mutator.Namespace = opts.Namespace
 
 	mutator.Command = opts.Command
 	mutator.EnvVars = helpers.SafeSplitCSV(opts.EnvVars)

@@ -14,7 +14,7 @@ import (
 // When represented as a string the ID appears in the follwoing format, parens
 // denote optional components.
 //
-//   srn:resource:(?org:)(?env:)(?resourceType/)uniqueComponents
+//   srn:resource:(?ns:)(?resourceType/)uniqueComponents
 //
 // Example global IDs
 //
@@ -27,11 +27,8 @@ type Components interface {
 	// Resource definition associated with this ID.
 	Resource() string
 
-	// Organization is the organization the resource belongs to.
-	Organization() string
-
-	// Environment is the environment the resource belongs to.
-	Environment() string
+	// Namespace is the name of the namespace the resource belongs to.
+	Namespace() string
 
 	// ResourceType is a optional element that describes any sort of sub-type of
 	// the resource.
@@ -48,8 +45,7 @@ type Components interface {
 // StandardComponents describes the standard components of a global identifier.
 type StandardComponents struct {
 	resource        string
-	organization    string
-	environment     string
+	namespace       string
 	resourceType    string
 	uniqueComponent string
 }
@@ -60,8 +56,7 @@ func (id StandardComponents) String() string {
 	nameComponents = omitEmpty(nameComponents)
 	pathComponents := omitEmpty([]string{
 		id.resource,
-		id.organization,
-		id.environment,
+		id.namespace,
 	})
 
 	// srn:{pathComponents}:{nameComponents}
@@ -74,14 +69,9 @@ func (id StandardComponents) Resource() string {
 	return id.resource
 }
 
-// Organization is the organization the resource belongs to.
-func (id StandardComponents) Organization() string {
-	return id.organization
-}
-
-// Environment is the environment the resource belongs to.
-func (id StandardComponents) Environment() string {
-	return id.environment
+// Namespace is the name of the namespace the resource belongs to.
+func (id StandardComponents) Namespace() string {
+	return id.namespace
 }
 
 // ResourceType is a optional element that describes any sort of sub-type of
@@ -99,7 +89,7 @@ func (id StandardComponents) UniqueComponent() string {
 // Parse takes a global ID string, decodes it and returns it's components.
 func Parse(gid string) (StandardComponents, error) {
 	id := StandardComponents{}
-	pathComponents := strings.SplitN(gid, ":", 5)
+	pathComponents := strings.SplitN(gid, ":", 4)
 
 	// Should be at least srn:resource:name
 	if len(pathComponents) < 3 {
@@ -110,27 +100,20 @@ func Parse(gid string) (StandardComponents, error) {
 		return id, errors.New("given string does not appear to be a Sensu global ID")
 	}
 
-	// Pop the resource from the path components, eg. srn:resource:org:env:type/name
+	// Pop the resource from the path components, eg. srn:resource:ns:type/name
 	//                                                    ^^^^^^^^
 	id.resource = pathComponents[1]
 	pathComponents = pathComponents[2:]
 
-	// Pop the name components from the path components, eg. org:env:type/name
-	//                                                               ^^^^^^^^^
+	// Pop the name components from the path components, eg. ns:type/name
+	//                                                          ^^^^^^^^^
 	nameComponents := strings.Split(pathComponents[len(pathComponents)-1], "/")
 	pathComponents = pathComponents[0 : len(pathComponents)-1]
 
-	// If present pop the org from the path components, eg. org:env
-	//                                                      ^^^
+	// If present pop the ns from the path components, eg. ns
+	//                                                     ^^
 	if len(pathComponents) > 0 {
-		id.organization = pathComponents[0]
-		pathComponents = pathComponents[1:]
-	}
-
-	// If present pop the env from the path components, eg. env
-	//                                                      ^^^
-	if len(pathComponents) > 0 {
-		id.environment = pathComponents[0]
+		id.namespace = pathComponents[0]
 	}
 
 	// If present pop the type from the name components, eg. type/my-great-check

@@ -8,7 +8,7 @@ import (
 )
 
 func TestSubscriptionTopic(t *testing.T) {
-	expectedTopic := fmt.Sprintf("%s:default:dev:foo", TopicSubscriptions)
-	topic := SubscriptionTopic("default", "dev", "foo")
+	expectedTopic := fmt.Sprintf("%s:acme:foo", TopicSubscriptions)
+	topic := SubscriptionTopic("acme", "foo")
 	assert.Equal(t, expectedTopic, topic)
 }

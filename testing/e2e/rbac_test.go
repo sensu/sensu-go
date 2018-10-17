@@ -14,19 +14,18 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func newRBACSensuctl(t *testing.T, wsURL, httpURL, org, env, user, pass string) (*sensuCtl, func()) {
+func newRBACSensuctl(t *testing.T, wsURL, httpURL, namespace, user, pass string) (*sensuCtl, func()) {
 	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensuctl")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	ctl := &sensuCtl{
-		Organization: org,
-		Environment:  env,
-		ConfigDir:    tmpDir,
-		stdin:        os.Stdin,
-		wsURL:        wsURL,
-		httpURL:      httpURL,
+		Namespace: namespace,
+		ConfigDir: tmpDir,
+		stdin:     os.Stdin,
+		wsURL:     wsURL,
+		httpURL:   httpURL,
 	}
 
 	// Authenticate sensuctl
@@ -36,25 +35,10 @@ func newRBACSensuctl(t *testing.T, wsURL, httpURL, org, env, user, pass string) 
 		"--username", user,
 		"--password", pass,
 		"--format", "json",
-		"--organization", "default",
-		"--environment", "default",
+		"--namespace", "default",
 	)
 	if err != nil {
 		t.Fatal(err, string(out))
-	}
-
-	// Set default environment to newly created org and env
-	_, err = ctl.run("configure",
-		"-n",
-		"--url", httpURL,
-		"--username", user,
-		"--password", pass,
-		"--format", "json",
-		"--organization", org,
-		"--environment", env,
-	)
-	if err != nil {
-		t.Fatal(err)
 	}
 
 	return ctl, func() { _ = os.RemoveAll(tmpDir) }
@@ -78,7 +62,7 @@ func TestRBAC(t *testing.T) {
 	}
 
 	// Initializes sensuctl
-	adminctl, cleanup := newCustomSensuctl(t, backend.WSURL, backend.HTTPURL, "default", "default")
+	adminctl, cleanup := newCustomSensuctl(t, backend.WSURL, backend.HTTPURL, "default")
 	defer cleanup()
 
 	// Make sure we are properly authenticated
@@ -90,30 +74,14 @@ func TestRBAC(t *testing.T) {
 	assert.NotZero(t, len(users))
 
 	// Create the following hierarchy for RBAC:
-	// -- default (organization)
-	//    -- default (environment)
+	// -- default (namespace)
 	//        -- default-check (check)
 	//        -- default-handler (handler)
-	// -- acme (organization)
-	//    -- dev (environment)
+	// -- acme (namespace)
 	//        -- dev-check (check)
 	//        -- dev-handler (handler)
-	//    -- prod (environment)
-	//        -- prod-check (check)
-	//        -- prod-handler (handler)
-
-	output, err = adminctl.run("organization", "create", "acme",
+	output, err = adminctl.run("namespace", "create", "acme",
 		"--description", "acme",
-	)
-	assert.NoError(t, err, string(output))
-
-	output, err = adminctl.run("environment", "create", "dev",
-		"--organization", "acme",
-	)
-	assert.NoError(t, err, string(output))
-
-	output, err = adminctl.run("environment", "create", "prod",
-		"--organization", "acme",
 	)
 	assert.NoError(t, err, string(output))
 
@@ -123,60 +91,33 @@ func TestRBAC(t *testing.T) {
 		"--interval", strconv.FormatUint(uint64(defaultCheck.Interval), 10),
 		"--runtime-assets", strings.Join(defaultCheck.RuntimeAssets, ","),
 		"--subscriptions", strings.Join(defaultCheck.Subscriptions, ","),
-		"--organization", defaultCheck.Organization,
-		"--environment", defaultCheck.Environment,
+		"--namespace", defaultCheck.Namespace,
 		"--publish",
 	)
 	assert.NoError(t, err, string(output))
 
 	devCheck := types.FixtureCheckConfig("dev-check")
-	devCheck.Organization = "acme"
-	devCheck.Environment = "dev"
+	devCheck.Namespace = "acme"
 	output, err = adminctl.run("check", "create", devCheck.Name,
 		"--command", devCheck.Command,
 		"--interval", strconv.FormatUint(uint64(devCheck.Interval), 10),
 		"--runtime-assets", strings.Join(devCheck.RuntimeAssets, ","),
 		"--subscriptions", strings.Join(devCheck.Subscriptions, ","),
-		"--organization", devCheck.Organization,
-		"--environment", devCheck.Environment,
-		"--publish",
-	)
-	assert.NoError(t, err, string(output))
-
-	prodCheck := types.FixtureCheckConfig("prod-check")
-	prodCheck.Organization = "acme"
-	prodCheck.Environment = "prod"
-	output, err = adminctl.run("check", "create", prodCheck.Name,
-		"--command", prodCheck.Command,
-		"--interval", strconv.FormatUint(uint64(prodCheck.Interval), 10),
-		"--runtime-assets", strings.Join(prodCheck.RuntimeAssets, ","),
-		"--subscriptions", strings.Join(prodCheck.Subscriptions, ","),
-		"--organization", prodCheck.Organization,
-		"--environment", prodCheck.Environment,
+		"--namespace", devCheck.Namespace,
 		"--publish",
 	)
 	assert.NoError(t, err, string(output))
 
 	checkHook := types.FixtureHookList("hook1")
 	output, err = adminctl.run("check", "set-hooks", defaultCheck.Name,
-		"--organization", defaultCheck.Organization,
-		"--environment", defaultCheck.Environment,
+		"--namespace", defaultCheck.Namespace,
 		"--type", checkHook.Type,
 		"--hooks", strings.Join(checkHook.Hooks, ","),
 	)
 	assert.NoError(t, err, string(output))
 
 	output, err = adminctl.run("check", "set-hooks", devCheck.Name,
-		"--organization", devCheck.Organization,
-		"--environment", devCheck.Environment,
-		"--type", checkHook.Type,
-		"--hooks", strings.Join(checkHook.Hooks, ","),
-	)
-	assert.NoError(t, err, string(output))
-
-	output, err = adminctl.run("check", "set-hooks", prodCheck.Name,
-		"--organization", prodCheck.Organization,
-		"--environment", prodCheck.Environment,
+		"--namespace", devCheck.Namespace,
 		"--type", checkHook.Type,
 		"--hooks", strings.Join(checkHook.Hooks, ","),
 	)
@@ -191,14 +132,12 @@ func TestRBAC(t *testing.T) {
 		"--socket-host", "",
 		"--socket-port", "",
 		"--handlers", strings.Join(defaultHandler.Handlers, ","),
-		"--organization", defaultHandler.Organization,
-		"--environment", defaultHandler.Environment,
+		"--namespace", defaultHandler.Namespace,
 	)
 	assert.NoError(t, err, string(output))
 
 	devHandler := types.FixtureHandler("dev-handler")
-	devHandler.Organization = "acme"
-	devHandler.Environment = "dev"
+	devHandler.Namespace = "acme"
 	output, err = adminctl.run("handler", "create", devHandler.Name,
 		"--type", devHandler.Type,
 		"--mutator", devHandler.Mutator,
@@ -207,54 +146,27 @@ func TestRBAC(t *testing.T) {
 		"--socket-host", "",
 		"--socket-port", "",
 		"--handlers", strings.Join(devHandler.Handlers, ","),
-		"--organization", devHandler.Organization,
-		"--environment", devHandler.Environment,
+		"--namespace", devHandler.Namespace,
 	)
 	assert.NoError(t, err, string(output))
 
-	prodHandler := types.FixtureHandler("prod-handler")
-	prodHandler.Organization = "acme"
-	prodHandler.Environment = "prod"
-	_, err = adminctl.run("handler", "create", prodHandler.Name,
-		"--type", prodHandler.Type,
-		"--mutator", prodHandler.Mutator,
-		"--command", prodHandler.Command,
-		"--timeout", strconv.FormatUint(uint64(prodHandler.Timeout), 10),
-		"--socket-host", "",
-		"--socket-port", "",
-		"--handlers", strings.Join(prodHandler.Handlers, ","),
-		"--organization", prodHandler.Organization,
-		"--environment", prodHandler.Environment,
-	)
-	assert.NoError(t, err, string(output))
-
-	// Create roles for every environment
-	defaultRole := types.FixtureRole("default", "default", "default")
+	// Create roles for every namespace
+	defaultRole := types.FixtureRole("default", "default")
 	output, err = adminctl.run("role", "create", defaultRole.Name,
 		"--type", defaultRole.Rules[0].Type,
 		"-crud",
 	)
 	assert.NoError(t, err, string(output))
 
-	devRole := types.FixtureRole("dev", "acme", "dev")
+	devRole := types.FixtureRole("dev", "acme")
 	output, err = adminctl.run("role", "create", devRole.Name,
 		"--type", devRole.Rules[0].Type,
-		"--organization", devRole.Rules[0].Organization,
-		"--environment", devRole.Rules[0].Environment,
+		"--namespace", devRole.Rules[0].Namespace,
 		"-crud",
 	)
 	assert.NoError(t, err, string(output))
 
-	prodRole := types.FixtureRole("prod", "acme", "prod")
-	output, err = adminctl.run("role", "create", prodRole.Name,
-		"--type", prodRole.Rules[0].Type,
-		"--organization", prodRole.Rules[0].Organization,
-		"--environment", prodRole.Rules[0].Environment,
-		"-crud",
-	)
-	assert.NoError(t, err, string(output))
-
-	// Create users for every environment
+	// Create users for every namespace
 	defaultUser := types.FixtureUser("default")
 	defaultUser.Roles = []string{defaultRole.Name}
 	output, err = adminctl.run("user", "create", defaultUser.Username,
@@ -271,22 +183,11 @@ func TestRBAC(t *testing.T) {
 	)
 	assert.NoError(t, err, string(output))
 
-	prodUser := types.FixtureUser("prod")
-	prodUser.Roles = []string{prodRole.Name}
-	output, err = adminctl.run("user", "create", prodUser.Username,
-		"--password", prodUser.Password,
-		"--roles", strings.Join(prodUser.Roles, ","),
-	)
-	assert.NoError(t, err, string(output))
-
-	// Create a Sensu client for every environment
-	defaultctl, cleanup := newRBACSensuctl(t, backend.WSURL, backend.HTTPURL, "default", "default", "default", "P@ssw0rd!")
+	// Create a Sensu client for every namespace
+	defaultctl, cleanup := newRBACSensuctl(t, backend.WSURL, backend.HTTPURL, "default", "default", "P@ssw0rd!")
 	defer cleanup()
 
-	devctl, cleanup := newRBACSensuctl(t, backend.WSURL, backend.HTTPURL, "acme", "dev", "dev", "P@ssw0rd!")
-	defer cleanup()
-
-	prodctl, cleanup := newRBACSensuctl(t, backend.WSURL, backend.HTTPURL, "acme", "prod", "prod", "P@ssw0rd!")
+	devctl, cleanup := newRBACSensuctl(t, backend.WSURL, backend.HTTPURL, "acme", "dev", "P@ssw0rd!")
 	defer cleanup()
 
 	// Make sure each of these clients only has access to objects within its role
@@ -302,31 +203,23 @@ func TestRBAC(t *testing.T) {
 	require.NoError(t, json.Unmarshal(output, &checks))
 	assert.Equal(t, devCheck, &checks[0])
 
-	checks = []types.CheckConfig{}
-	output, err = prodctl.run("check", "list")
-	assert.NoError(t, err, string(output))
-	require.NoError(t, json.Unmarshal(output, &checks))
-	assert.Equal(t, prodCheck, &checks[0])
-
 	// A user with all privileges should be able to query all checks
 	checks = []types.CheckConfig{}
-	output, err = adminctl.run("check", "list", "--environment", "*", "--all-organizations")
-	// output, err = adminctl.run("check", "list", "--organization", "*", "--environment", "*")
+	output, err = adminctl.run("check", "list", "--all-namespaces")
 	assert.NoError(t, err, string(output))
 	require.NoError(t, json.Unmarshal(output, &checks))
 	assert.Len(t, checks, 3)
 
-	// A user with all privileges should be able to query a specific organization
+	// A user with all privileges should be able to query a specific namespace
 	checks = []types.CheckConfig{}
-	output, err = adminctl.run("check", "list", "--environment", "*", "--organization", "acme")
+	output, err = adminctl.run("check", "list", "--namespace", "acme")
 	assert.NoError(t, err, string(output))
 	require.NoError(t, json.Unmarshal(output, &checks))
 	assert.Len(t, checks, 2)
 
-	// A user with all privileges should be able to query a specific organization
-	// and a specific environment
+	// A user with all privileges should be able to query a specific namespace
 	checks = []types.CheckConfig{}
-	output, err = adminctl.run("check", "list", "--environment", "dev", "--organization", "acme")
+	output, err = adminctl.run("check", "list", "--namespace", "acme")
 	assert.NoError(t, err, string(output))
 	require.NoError(t, json.Unmarshal(output, &checks))
 	assert.Len(t, checks, 1)
@@ -337,40 +230,16 @@ func TestRBAC(t *testing.T) {
 		"--interval", strconv.FormatUint(uint64(defaultCheck.Interval), 10),
 		"--runtime-assets", strings.Join(defaultCheck.RuntimeAssets, ","),
 		"--subscriptions", strings.Join(defaultCheck.Subscriptions, ","),
-		"--organization", defaultCheck.Organization,
-		"--environment", defaultCheck.Environment,
-	)
-	assert.Error(t, err, string(output))
-
-	output, err = devctl.run("check", "create", prodCheck.Name,
-		"--command", prodCheck.Command,
-		"--interval", strconv.FormatUint(uint64(prodCheck.Interval), 10),
-		"--runtime-assets", strings.Join(prodCheck.RuntimeAssets, ","),
-		"--subscriptions", strings.Join(prodCheck.Subscriptions, ","),
-		"--organization", prodCheck.Organization,
-		"--environment", prodCheck.Environment,
+		"--namespace", defaultCheck.Namespace,
 	)
 	assert.Error(t, err, string(output))
 
 	// Make sure a client can delete objects within its role
 	output, err = devctl.run("check", "delete", devCheck.Name,
-		"--organization", devCheck.Organization,
-		"--environment", devCheck.Environment,
+		"--namespace", devCheck.Namespace,
 		"--skip-confirm",
 	)
 	assert.NoError(t, err, string(output))
-
-	// Make sure a client can't delete objects outside of its role
-	output, err = devctl.run("check", "delete", prodCheck.Name,
-		"--organization", prodCheck.Organization,
-		"--environment", prodCheck.Environment,
-		"--skip-confirm",
-	)
-	assert.Error(t, err, string(output))
-
-	// Make sure a client can't read objects outside of its role
-	_, err = devctl.run("check", "info", prodCheck.Name)
-	assert.Error(t, err)
 
 	// Now we want to restart the backend to make sure the JWT will continue
 	// to work and prevent an issue like https://github.com/sensu/sensu-go/issues/502

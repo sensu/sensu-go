@@ -24,7 +24,7 @@ func (p *HookPolicy) Context() Context {
 	return p.context
 }
 
-// WithContext returns new policy populated with rules & organization.
+// WithContext returns new policy populated with rules & namespace.
 func (p HookPolicy) WithContext(ctx context.Context) HookPolicy { // nolint
 	p.context = ExtractValueFromContext(ctx)
 	return p
@@ -37,17 +37,17 @@ func (p *HookPolicy) CanList() bool {
 
 // CanRead returns true if actor has read access to resource.
 func (p *HookPolicy) CanRead(hook *types.HookConfig) bool {
-	return canPerformOn(p, hook.Organization, hook.Environment, types.RulePermRead)
+	return canPerformOn(p, hook.Namespace, types.RulePermRead)
 }
 
 // CanCreate returns true if actor has access to create.
 func (p *HookPolicy) CanCreate(hook *types.HookConfig) bool {
-	return canPerformOn(p, hook.Organization, hook.Environment, types.RulePermCreate)
+	return canPerformOn(p, hook.Namespace, types.RulePermCreate)
 }
 
 // CanUpdate returns true if actor has access to update.
 func (p *HookPolicy) CanUpdate(hook *types.HookConfig) bool {
-	return canPerformOn(p, hook.Organization, hook.Environment, types.RulePermUpdate)
+	return canPerformOn(p, hook.Namespace, types.RulePermUpdate)
 }
 
 // CanDelete returns true if actor has access to delete.

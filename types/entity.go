@@ -27,12 +27,8 @@ func (e *Entity) Validate() error {
 		return errors.New("entity class " + err.Error())
 	}
 
-	if e.Environment == "" {
-		return errors.New("environment must be set")
-	}
-
-	if e.Organization == "" {
-		return errors.New("organization must be set")
+	if e.Namespace == "" {
+		return errors.New("namespace must be set")
 	}
 
 	return nil
@@ -77,8 +73,7 @@ func FixtureEntity(id string) *Entity {
 		ID:            id,
 		Class:         "host",
 		Subscriptions: []string{"linux"},
-		Environment:   "default",
-		Organization:  "default",
+		Namespace:     "default",
 	}
 }
 

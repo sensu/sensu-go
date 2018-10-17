@@ -24,7 +24,7 @@ func (p *HandlerPolicy) Context() Context {
 	return p.context
 }
 
-// WithContext returns new policy populated with rules & organization.
+// WithContext returns new policy populated with rules & namespace.
 func (p HandlerPolicy) WithContext(ctx context.Context) HandlerPolicy { // nolint
 	p.context = ExtractValueFromContext(ctx)
 	return p
@@ -37,17 +37,17 @@ func (p *HandlerPolicy) CanList() bool {
 
 // CanRead returns true if actor has read access to resource.
 func (p *HandlerPolicy) CanRead(handler *types.Handler) bool {
-	return canPerformOn(p, handler.Organization, handler.Environment, types.RulePermRead)
+	return canPerformOn(p, handler.Namespace, types.RulePermRead)
 }
 
 // CanCreate returns true if actor has access to create.
 func (p *HandlerPolicy) CanCreate(handler *types.Handler) bool {
-	return canPerformOn(p, handler.Organization, handler.Environment, types.RulePermCreate)
+	return canPerformOn(p, handler.Namespace, types.RulePermCreate)
 }
 
 // CanUpdate returns true if actor has access to update.
 func (p *HandlerPolicy) CanUpdate(handler *types.Handler) bool {
-	return canPerformOn(p, handler.Organization, handler.Environment, types.RulePermUpdate)
+	return canPerformOn(p, handler.Namespace, types.RulePermUpdate)
 }
 
 // CanDelete returns true if actor has access to delete.

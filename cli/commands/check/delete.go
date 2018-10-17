@@ -34,12 +34,8 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 
 			check := &types.CheckConfig{Name: name}
 
-			if org, _ := cmd.Flags().GetString("organization"); org != "" {
-				check.Organization = org
-			}
-
-			if env, _ := cmd.Flags().GetString("environment"); env != "" {
-				check.Environment = env
+			if namespace, _ := cmd.Flags().GetString("namespace"); namespace != "" {
+				check.Namespace = namespace
 			}
 
 			err := cli.Client.DeleteCheck(check)

@@ -2,8 +2,8 @@
 Describes a viewer of the system; generally an authenticated user.
 """
 type Viewer {
-  "All organizations the viewer has access to view."
-  organizations: [Organization!]!
+  "All namespaces the viewer has access to view."
+  namespaces: [Namespace!]!
 
   "User account associated with the viewer."
   user: User

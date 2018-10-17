@@ -49,63 +49,49 @@ func TestHandlerValidate(t *testing.T) {
 				Name: "foo",
 				Type: "pipe",
 			},
-			Error: "environment must be set",
+			Error: "namespace must be set",
 		},
 		{
 			Handler: Handler{
-				Name:        "foo",
-				Type:        "pipe",
-				Environment: "default",
-			},
-			Error: "organization must be set",
-		},
-		{
-			Handler: Handler{
-				Name:         "foo",
-				Type:         "pipe",
-				Organization: "default",
-				Environment:  "default",
+				Name:      "foo",
+				Type:      "pipe",
+				Namespace: "default",
 			},
 		},
 		{
 			Handler: Handler{
-				Name:         "foo",
-				Type:         "grpc",
-				Organization: "default",
-				Environment:  "default",
+				Name:      "foo",
+				Type:      "grpc",
+				Namespace: "default",
 			},
 		},
 		{
 			Handler: Handler{
-				Name:         "foo",
-				Type:         "grpc",
-				Organization: "default",
-				Environment:  "default",
+				Name:      "foo",
+				Type:      "grpc",
+				Namespace: "default",
 			},
 		},
 		{
 			Handler: Handler{
-				Name:         "foo",
-				Type:         "set",
-				Organization: "default",
-				Environment:  "default",
+				Name:      "foo",
+				Type:      "set",
+				Namespace: "default",
 			},
 		},
 		{
 			Handler: Handler{
-				Name:         "foo",
-				Type:         "tcp",
-				Organization: "default",
-				Environment:  "default",
+				Name:      "foo",
+				Type:      "tcp",
+				Namespace: "default",
 			},
 			Error: "tcp and udp handlers need a valid socket",
 		},
 		{
 			Handler: Handler{
-				Name:         "foo",
-				Type:         "tcp",
-				Organization: "default",
-				Environment:  "default",
+				Name:      "foo",
+				Type:      "tcp",
+				Namespace: "default",
 				Socket: &HandlerSocket{
 					Host: "localhost",
 				},
@@ -114,10 +100,9 @@ func TestHandlerValidate(t *testing.T) {
 		},
 		{
 			Handler: Handler{
-				Name:         "foo",
-				Type:         "tcp",
-				Organization: "default",
-				Environment:  "default",
+				Name:      "foo",
+				Type:      "tcp",
+				Namespace: "default",
 				Socket: &HandlerSocket{
 					Port: 1234,
 				},
@@ -126,10 +111,9 @@ func TestHandlerValidate(t *testing.T) {
 		},
 		{
 			Handler: Handler{
-				Name:         "foo",
-				Type:         "tcp",
-				Organization: "default",
-				Environment:  "default",
+				Name:      "foo",
+				Type:      "tcp",
+				Namespace: "default",
 				Socket: &HandlerSocket{
 					Host: "localhost",
 					Port: 1234,
@@ -138,10 +122,9 @@ func TestHandlerValidate(t *testing.T) {
 		},
 		{
 			Handler: Handler{
-				Name:         "foo",
-				Type:         "udp",
-				Organization: "default",
-				Environment:  "default",
+				Name:      "foo",
+				Type:      "udp",
+				Namespace: "default",
 				Socket: &HandlerSocket{
 					Host: "localhost",
 				},
@@ -150,10 +133,9 @@ func TestHandlerValidate(t *testing.T) {
 		},
 		{
 			Handler: Handler{
-				Name:         "foo",
-				Type:         "udp",
-				Organization: "default",
-				Environment:  "default",
+				Name:      "foo",
+				Type:      "udp",
+				Namespace: "default",
 				Socket: &HandlerSocket{
 					Port: 1234,
 				},
@@ -162,10 +144,9 @@ func TestHandlerValidate(t *testing.T) {
 		},
 		{
 			Handler: Handler{
-				Name:         "foo",
-				Type:         "udp",
-				Organization: "default",
-				Environment:  "default",
+				Name:      "foo",
+				Type:      "udp",
+				Namespace: "default",
 				Socket: &HandlerSocket{
 					Host: "localhost",
 					Port: 1234,
@@ -174,10 +155,9 @@ func TestHandlerValidate(t *testing.T) {
 		},
 		{
 			Handler: Handler{
-				Name:         "foo",
-				Type:         "magic",
-				Organization: "default",
-				Environment:  "default",
+				Name:      "foo",
+				Type:      "magic",
+				Namespace: "default",
 			},
 			Error: "unknown handler type: magic",
 		},

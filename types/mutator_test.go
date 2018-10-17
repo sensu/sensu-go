@@ -23,13 +23,9 @@ func TestMutatorValidate(t *testing.T) {
 	assert.Error(t, m.Validate())
 	m.Command = "echo 'foo'"
 
-	// Invalid organization
+	// Invalid namespace
 	assert.Error(t, m.Validate())
-	m.Organization = "default"
-
-	// Invalid environment
-	assert.Error(t, m.Validate())
-	m.Environment = "default"
+	m.Namespace = "default"
 
 	// Valid mutator
 	assert.NoError(t, m.Validate())

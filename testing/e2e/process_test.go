@@ -2,9 +2,7 @@ package e2e
 
 import (
 	"bufio"
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -17,8 +15,6 @@ import (
 	"syscall"
 	"testing"
 	"time"
-
-	"github.com/sensu/sensu-go/types"
 )
 
 type backendProcess struct {
@@ -149,27 +145,25 @@ func (b *backendProcess) Terminate() error {
 }
 
 type sensuCtl struct {
-	ConfigDir    string
-	Organization string
-	Environment  string
-	wsURL        string
-	httpURL      string
-	stdin        io.Reader
+	ConfigDir string
+	Namespace string
+	wsURL     string
+	httpURL   string
+	stdin     io.Reader
 }
 
-func newCustomSensuctl(t *testing.T, wsURL, httpURL, org, env string) (*sensuCtl, func()) {
+func newCustomSensuctl(t *testing.T, wsURL, httpURL, namespace string) (*sensuCtl, func()) {
 	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensuctl")
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	ctl := &sensuCtl{
-		Organization: org,
-		Environment:  env,
-		ConfigDir:    tmpDir,
-		stdin:        os.Stdin,
-		wsURL:        wsURL,
-		httpURL:      httpURL,
+		Namespace: namespace,
+		ConfigDir: tmpDir,
+		stdin:     os.Stdin,
+		wsURL:     wsURL,
+		httpURL:   httpURL,
 	}
 
 	// Authenticate sensuctl
@@ -179,47 +173,26 @@ func newCustomSensuctl(t *testing.T, wsURL, httpURL, org, env string) (*sensuCtl
 		"--username", "admin",
 		"--password", "P@ssw0rd!",
 		"--format", "json",
-		"--organization", "default",
-		"--environment", "default",
+		"--namespace", "default",
 	)
 	if err != nil {
 		t.Fatal(err, string(out))
 	}
-	if org != "default" {
-		out, err = ctl.run("organization", "create", org)
-		if err != nil {
-			t.Fatal(err, string(out))
-		}
-	}
-	if env != "default" {
-		b, err := json.Marshal(types.Wrapper{
-			Value: &types.Environment{
-				Name:         env,
-				Organization: org,
-				Description:  t.Name(),
-			},
-			Type: "Environment",
-		})
-		if err != nil {
-			t.Fatal(err)
-		}
-		ctl.stdin = bytes.NewReader(b)
-		// creates the environment. have to do it this way due to #1514
-		out, err = ctl.run("create")
+	if namespace != "default" {
+		out, err = ctl.run("namespace", "create", namespace)
 		if err != nil {
 			t.Fatal(err, string(out))
 		}
 	}
 
-	// Set default environment to newly created org and env
+	// Switch to the configured namespace
 	_, err = ctl.run("configure",
 		"-n",
 		"--url", httpURL,
 		"--username", "admin",
 		"--password", "P@ssw0rd!",
 		"--format", "json",
-		"--organization", org,
-		"--environment", env,
+		"--namespace", namespace,
 	)
 	if err != nil {
 		t.Fatal(err)

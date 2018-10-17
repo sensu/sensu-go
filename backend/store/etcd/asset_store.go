@@ -24,9 +24,9 @@ func getAssetPath(asset *types.Asset) string {
 }
 
 func getAssetsPath(ctx context.Context, name string) string {
-	org := types.ContextOrganization(ctx)
+	namespace := types.ContextNamespace(ctx)
 
-	return assetKeyBuilder.WithOrg(org).Build(name)
+	return assetKeyBuilder.WithNamespace(namespace).Build(name)
 }
 
 // DeleteAssetByName deletes an asset by name.
@@ -65,7 +65,7 @@ func (s *Store) GetAssets(ctx context.Context) ([]*types.Asset, error) {
 // GetAssetByName gets an Asset by name.
 func (s *Store) GetAssetByName(ctx context.Context, name string) (*types.Asset, error) {
 	if name == "" {
-		return nil, errors.New("must specify organization and name")
+		return nil, errors.New("must specify namespace and name")
 	}
 
 	resp, err := s.client.Get(ctx, getAssetsPath(ctx, name))
@@ -96,7 +96,7 @@ func (s *Store) UpdateAsset(ctx context.Context, asset *types.Asset) error {
 		return err
 	}
 
-	cmp := clientv3.Compare(clientv3.Version(getOrganizationsPath(asset.Organization)), ">", 0)
+	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(asset.Namespace)), ">", 0)
 	req := clientv3.OpPut(getAssetPath(asset), string(assetBytes))
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
@@ -104,9 +104,9 @@ func (s *Store) UpdateAsset(ctx context.Context, asset *types.Asset) error {
 	}
 	if !res.Succeeded {
 		return fmt.Errorf(
-			"could not create the asset %s in organization %s",
+			"could not create the asset %s in namespace %s",
 			asset.Name,
-			asset.Organization,
+			asset.Namespace,
 		)
 	}
 

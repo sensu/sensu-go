@@ -154,8 +154,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		return e.bus.Publish(messaging.TopicEvent, event)
 	}
 
-	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
-	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
+	ctx := context.WithValue(context.Background(), types.NamespaceKey, event.Entity.Namespace)
 
 	prevEvent, err := e.store.GetEventByEntityCheck(
 		ctx, event.Entity.ID, event.Check.Name,
@@ -244,8 +243,7 @@ func updateOccurrences(event *types.Event) {
 
 // HandleUpdate updates the event in the store and publishes it to TopicEvent.
 func (e *Eventd) HandleUpdate(event *types.Event) error {
-	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
-	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
+	ctx := context.WithValue(context.Background(), types.NamespaceKey, event.Entity.Namespace)
 
 	err := e.store.UpdateEvent(ctx, event)
 	if err != nil {
@@ -259,8 +257,7 @@ func (e *Eventd) HandleUpdate(event *types.Event) error {
 // TopicEvent.
 func (e *Eventd) HandleFailure(event *types.Event) error {
 	entity := event.Entity
-	ctx := context.WithValue(context.Background(), types.OrganizationKey, entity.Organization)
-	ctx = context.WithValue(ctx, types.EnvironmentKey, entity.Environment)
+	ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
 
 	failedCheckEvent, err := e.createFailedCheckEvent(ctx, event)
 	if err != nil {
