@@ -34,11 +34,6 @@ func (*handlerImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.HandlerTranslator.EncodeToString(p.Source), nil
 }
 
-// Namespace implements response to request for 'namespace' field.
-func (*handlerImpl) Namespace(p graphql.ResolveParams) (interface{}, error) {
-	return p.Source, nil
-}
-
 // Mutator implements response to request for 'mutator' field.
 func (r *handlerImpl) Mutator(p graphql.ResolveParams) (interface{}, error) {
 	handler := p.Source.(*types.Handler)

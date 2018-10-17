@@ -54,9 +54,8 @@ func (s *Store) GetCheckConfigWatcher(ctx context.Context) <-chan store.WatchEve
 				if action == store.WatchDelete {
 					key := store.ParseResourceKey(string(event.Kv.Key))
 					checkConfig = &types.CheckConfig{
-						Organization: key.Organization,
-						Environment:  key.Environment,
-						Name:         key.ResourceName,
+						Namespace: key.Namespace,
+						Name:      key.ResourceName,
 					}
 				} else {
 					checkConfig = &types.CheckConfig{}

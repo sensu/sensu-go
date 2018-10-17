@@ -40,7 +40,7 @@ func (c *CheckWatcher) startScheduler(check *types.CheckConfig) error {
 
 	// Guard against creating a duplicate scheduler; schedulers are able to update
 	// their internal state with any changes that occur to their associated check.
-	key := concatUniqueKey(check.Name, check.Organization, check.Environment)
+	key := concatUniqueKey(check.Name, check.Namespace)
 	if existing := c.items[key]; existing != nil {
 		return nil
 	}
@@ -106,7 +106,7 @@ func (c *CheckWatcher) startWatcher() {
 
 func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) {
 	check := watchEvent.CheckConfig
-	key := concatUniqueKey(check.Name, check.Organization, check.Environment)
+	key := concatUniqueKey(check.Name, check.Namespace)
 
 	c.mu.Lock()
 	defer c.mu.Unlock()

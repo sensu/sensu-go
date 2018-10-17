@@ -24,10 +24,10 @@ func (p *RolePolicy) Context() Context {
 	return p.context
 }
 
-// WithContext returns new policy populated with rules & organization.
+// WithContext returns new policy populated with rules & namespace.
 func (p RolePolicy) WithContext(ctx context.Context) RolePolicy { // nolint
 	p.context = ExtractValueFromContext(ctx)
-	p.context.Organization = types.OrganizationTypeAll
+	p.context.Namespace = types.NamespaceTypeAll
 
 	return p
 }

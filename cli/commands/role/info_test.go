@@ -34,7 +34,7 @@ func TestInfoCommandRunEWithError(t *testing.T) {
 
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchRole", "abc").Return(
-		types.FixtureRole("abc", "default", "default"),
+		types.FixtureRole("abc", "default"),
 		errors.New("sadfa"),
 	)
 
@@ -54,7 +54,7 @@ func TestInfoCommandRunEClosure(t *testing.T) {
 
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchRole", "abc").Return(
-		types.FixtureRole("abc", "default", "default"),
+		types.FixtureRole("abc", "default"),
 		nil,
 	)
 
@@ -63,8 +63,7 @@ func TestInfoCommandRunEClosure(t *testing.T) {
 
 	assert.NotEmpty(out)
 	assert.Contains(out, "Type")
-	assert.Contains(out, "Org")
-	assert.Contains(out, "Env")
+	assert.Contains(out, "Namespace")
 	assert.Contains(out, "Permissions")
 	assert.Nil(err)
 }
@@ -75,7 +74,7 @@ func TestInfoCommandRunEJSON(t *testing.T) {
 
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchRole", "abc").Return(
-		types.FixtureRole("abc", "default", "default"),
+		types.FixtureRole("abc", "default"),
 		nil,
 	)
 

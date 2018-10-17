@@ -56,7 +56,7 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))
-	require.NoError(t, cmd.Flags().Set(flags.AllOrgs, "t"))
+	require.NoError(t, cmd.Flags().Set(flags.AllNamespaces, "t"))
 	out, err := test.RunCmd(cmd, []string{})
 	assert.NotEmpty(out)
 	assert.Nil(err)
@@ -109,7 +109,7 @@ func TestListCommandRunEClosureWithAlphaNumericChars(t *testing.T) {
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))
-	require.NoError(t, cmd.Flags().Set(flags.AllOrgs, "t"))
+	require.NoError(t, cmd.Flags().Set(flags.AllNamespaces, "t"))
 	out, err := test.RunCmd(cmd, []string{})
 	assert.NotEmpty(out)
 	assert.Contains(out, "10 > 0")
@@ -122,7 +122,7 @@ func TestListFlags(t *testing.T) {
 	cli := test.NewCLI()
 	cmd := ListCommand(cli)
 
-	flag := cmd.Flag("all-organizations")
+	flag := cmd.Flag("all-namespaces")
 	assert.NotNil(flag)
 
 	flag = cmd.Flag("format")

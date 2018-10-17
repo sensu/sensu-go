@@ -24,7 +24,7 @@ func (p *UserPolicy) Context() Context {
 	return p.context
 }
 
-// WithContext returns new policy populated with rules & organization.
+// WithContext returns new policy populated with rules & namespace.
 func (p UserPolicy) WithContext(ctx context.Context) UserPolicy { // nolint
 	p.context = ExtractValueFromContext(ctx)
 	return p

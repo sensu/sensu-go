@@ -19,12 +19,12 @@ const (
 )
 
 type hookOpts struct {
-	Name    string `survey:"name"`
-	Command string `survey:"command"`
-	Timeout string `survey:"timeout"`
-	Stdin   string `survey:"stdin"`
-	Env     string
-	Org     string
+	Name      string `survey:"name"`
+	Command   string `survey:"command"`
+	Timeout   string `survey:"timeout"`
+	Stdin     string `survey:"stdin"`
+	Env       string
+	Namespace string
 }
 
 func newHookOpts() *hookOpts {
@@ -36,8 +36,7 @@ func newHookOpts() *hookOpts {
 
 func (opts *hookOpts) withHook(hook *types.HookConfig) {
 	opts.Name = hook.Name
-	opts.Org = hook.Organization
-	opts.Env = hook.Environment
+	opts.Namespace = hook.Namespace
 	opts.Command = hook.Command
 	opts.Timeout = strconv.Itoa(int(hook.Timeout))
 	opts.Stdin = strconv.FormatBool(hook.Stdin)
@@ -49,11 +48,8 @@ func (opts *hookOpts) withFlags(flags *pflag.FlagSet) {
 	stdinBool, _ := flags.GetBool("stdin")
 	opts.Stdin = strconv.FormatBool(stdinBool)
 
-	if org := helpers.GetChangedStringValueFlag("organization", flags); org != "" {
-		opts.Org = org
-	}
-	if env := helpers.GetChangedStringValueFlag("environment", flags); env != "" {
-		opts.Env = env
+	if namespace := helpers.GetChangedStringValueFlag("namespace", flags); namespace != "" {
+		opts.Namespace = namespace
 	}
 }
 
@@ -71,18 +67,10 @@ func (opts *hookOpts) administerQuestionnaire(editing bool) error {
 				Validate: survey.Required,
 			},
 			{
-				Name: "org",
+				Name: "namespace",
 				Prompt: &survey.Input{
-					Message: "Organization:",
-					Default: opts.Org,
-				},
-				Validate: survey.Required,
-			},
-			{
-				Name: "env",
-				Prompt: &survey.Input{
-					Message: "Environment:",
-					Default: opts.Env,
+					Message: "Namespace:",
+					Default: opts.Namespace,
 				},
 				Validate: survey.Required,
 			},
@@ -129,8 +117,7 @@ func (opts *hookOpts) Copy(hook *types.HookConfig) {
 	stdin, _ := strconv.ParseBool(opts.Stdin)
 
 	hook.Name = opts.Name
-	hook.Environment = opts.Env
-	hook.Organization = opts.Org
+	hook.Namespace = opts.Namespace
 	hook.Timeout = uint32(timeout)
 	hook.Command = opts.Command
 	hook.Stdin = stdin

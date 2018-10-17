@@ -19,11 +19,10 @@ func ViewCommand(cli *cli.SensuCli) *cobra.Command {
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			activeConfig := map[string]string{
-				"api-url":      cli.Config.APIUrl(),
-				"edition":      cli.Config.Edition(),
-				"environment":  cli.Config.Environment(),
-				"organization": cli.Config.Organization(),
-				"format":       cli.Config.Format(),
+				"api-url":   cli.Config.APIUrl(),
+				"edition":   cli.Config.Edition(),
+				"namespace": cli.Config.Namespace(),
+				"format":    cli.Config.Format(),
 			}
 
 			// Determine the format to use to output the data
@@ -61,12 +60,8 @@ func printToList(v interface{}, writer io.Writer) error {
 				Value: r["edition"],
 			},
 			{
-				Label: "Environment",
-				Value: r["environment"],
-			},
-			{
-				Label: "Organization",
-				Value: r["organization"],
+				Label: "Namespace",
+				Value: r["namespace"],
 			},
 			{
 				Label: "Format",

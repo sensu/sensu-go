@@ -585,41 +585,6 @@ var _ObjectTypeMutationDesc = graphql.ObjectDesc{
 	},
 }
 
-// NamespaceInput refers to the namespace a resource may belong to.
-type NamespaceInput struct {
-	// Organization - self descriptive
-	Organization string
-	// Environment - self descriptive
-	Environment string
-}
-
-// NamespaceInputType NamespaceInput refers to the namespace a resource may belong to.
-var NamespaceInputType = graphql.NewType("NamespaceInput", graphql.InputKind)
-
-// RegisterNamespaceInput registers NamespaceInput object type with given service.
-func RegisterNamespaceInput(svc *graphql.Service) {
-	svc.RegisterInput(_InputTypeNamespaceInputDesc)
-}
-func _InputTypeNamespaceInputConfigFn() graphql1.InputObjectConfig {
-	return graphql1.InputObjectConfig{
-		Description: "NamespaceInput refers to the namespace a resource may belong to.",
-		Fields: graphql1.InputObjectConfigFieldMap{
-			"environment": &graphql1.InputObjectFieldConfig{
-				Description: "self descriptive",
-				Type:        graphql1.String,
-			},
-			"organization": &graphql1.InputObjectFieldConfig{
-				Description: "self descriptive",
-				Type:        graphql1.NewNonNull(graphql1.String),
-			},
-		},
-		Name: "NamespaceInput",
-	}
-}
-
-// describe NamespaceInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _InputTypeNamespaceInputDesc = graphql.InputDesc{Config: _InputTypeNamespaceInputConfigFn}
-
 // DeleteRecordPayloadClientMutationIDFieldResolver implement to resolve requests for the DeleteRecordPayload's clientMutationId field.
 type DeleteRecordPayloadClientMutationIDFieldResolver interface {
 	// ClientMutationID implements response to request for clientMutationId field.
@@ -872,7 +837,7 @@ var _InputTypeDeleteRecordInputDesc = graphql.InputDesc{Config: _InputTypeDelete
 type CheckConfigInputs struct {
 	// Command - command to run.
 	Command string
-	// Interval - interval is the time interval, in seconds, in which the check should be run. Defaults to 60.
+	// Interval - interval is the time interval, in seconds, in which the check should be run.
 	Interval int
 	/*
 	   LowFlapThreshold - lowFlapThreshold is the flap detection low threshold (% state change) for
@@ -922,7 +887,7 @@ func _InputTypeCheckConfigInputsConfigFn() graphql1.InputObjectConfig {
 				Type:        graphql1.Int,
 			},
 			"interval": &graphql1.InputObjectFieldConfig{
-				Description: "interval is the time interval, in seconds, in which the check should be run. Defaults to 60.",
+				Description: "interval is the time interval, in seconds, in which the check should be run.",
 				Type:        graphql1.Int,
 			},
 			"lowFlapThreshold": &graphql1.InputObjectFieldConfig{
@@ -949,8 +914,8 @@ var _InputTypeCheckConfigInputsDesc = graphql.InputDesc{Config: _InputTypeCheckC
 type CreateCheckInput struct {
 	// ClientMutationID - A unique identifier for the client performing the mutation.
 	ClientMutationID string
-	// Ns - namespace the resulting resource will belong to.
-	Ns *NamespaceInput
+	// Namespace - namespace the resulting resource will belong to.
+	Namespace string
 	// Name - name of the resulting check.
 	Name string
 	// Props - properties of the check
@@ -976,13 +941,10 @@ func _InputTypeCreateCheckInputConfigFn() graphql1.InputObjectConfig {
 				Description: "name of the resulting check.",
 				Type:        graphql1.NewNonNull(graphql1.String),
 			},
-			"ns": &graphql1.InputObjectFieldConfig{
-				DefaultValue: map[string]interface{}{
-					"environment":  "default",
-					"organization": "default",
-				},
-				Description: "namespace the resulting resource will belong to.",
-				Type:        graphql.InputType("NamespaceInput"),
+			"namespace": &graphql1.InputObjectFieldConfig{
+				DefaultValue: "default",
+				Description:  "namespace the resulting resource will belong to.",
+				Type:         graphql1.String,
 			},
 			"props": &graphql1.InputObjectFieldConfig{
 				Description: "properties of the check",
@@ -1956,8 +1918,8 @@ var _ObjectTypeResolveEventPayloadDesc = graphql.ObjectDesc{
 type CreateSilenceInput struct {
 	// ClientMutationID - A unique identifier for the client performing the mutation.
 	ClientMutationID string
-	// Ns - namespace the resulting resource will belong to.
-	Ns *NamespaceInput
+	// Namespace - namespace the resulting resource will belong to.
+	Namespace string
 	// Check - check associated with the silenced entry; optional.
 	Check string
 	// Subscription - subscription associated with the silenced entry; optional.
@@ -1985,13 +1947,10 @@ func _InputTypeCreateSilenceInputConfigFn() graphql1.InputObjectConfig {
 				Description: "A unique identifier for the client performing the mutation.",
 				Type:        graphql1.String,
 			},
-			"ns": &graphql1.InputObjectFieldConfig{
-				DefaultValue: map[string]interface{}{
-					"environment":  "default",
-					"organization": "default",
-				},
-				Description: "namespace the resulting resource will belong to.",
-				Type:        graphql.InputType("NamespaceInput"),
+			"namespace": &graphql1.InputObjectFieldConfig{
+				DefaultValue: "default",
+				Description:  "namespace the resulting resource will belong to.",
+				Type:         graphql1.String,
 			},
 			"props": &graphql1.InputObjectFieldConfig{
 				Description: "properties of the silence",

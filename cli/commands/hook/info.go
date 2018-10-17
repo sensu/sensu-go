@@ -70,12 +70,8 @@ func printToList(v interface{}, writer io.Writer) error {
 				Value: globals.BooleanStyleP(r.Stdin),
 			},
 			{
-				Label: "Organization",
-				Value: r.Organization,
-			},
-			{
-				Label: "Environment",
-				Value: r.Environment,
+				Label: "Namespace",
+				Value: r.Namespace,
 			},
 		},
 	}

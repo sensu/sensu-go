@@ -146,8 +146,7 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	cfg := SessionConfig{
 		AgentAddr:     r.RemoteAddr,
 		AgentID:       r.Header.Get(transport.HeaderKeyAgentID),
-		Environment:   r.Header.Get(transport.HeaderKeyEnvironment),
-		Organization:  r.Header.Get(transport.HeaderKeyOrganization),
+		Namespace:     r.Header.Get(transport.HeaderKeyNamespace),
 		User:          r.Header.Get(transport.HeaderKeyUser),
 		Subscriptions: strings.Split(r.Header.Get(transport.HeaderKeySubscriptions), ","),
 	}

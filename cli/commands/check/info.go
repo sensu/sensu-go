@@ -107,12 +107,8 @@ func printToList(v interface{}, writer io.Writer) error {
 				Value: r.ProxyEntityID,
 			},
 			{
-				Label: "Organization",
-				Value: r.Organization,
-			},
-			{
-				Label: "Environment",
-				Value: r.Environment,
+				Label: "Namespace",
+				Value: r.Namespace,
 			},
 			{
 				Label: "Metric Format",

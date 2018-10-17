@@ -22,50 +22,33 @@ func MatchesRuleType(rule types.Rule, resource string) bool {
 	return rule.Type == resource || rule.Type == types.RuleTypeAll
 }
 
-func matchesRuleEnvironment(rule types.Rule, environment string) bool {
-	return rule.Environment == environment || rule.Environment == types.EnvironmentTypeAll
+func matchesRuleNamespace(rule types.Rule, namespace string) bool {
+	return rule.Namespace == namespace || rule.Namespace == types.NamespaceTypeAll
 }
 
-func matchesRuleOrganization(rule types.Rule, organization string) bool {
-	return rule.Organization == organization || rule.Organization == types.OrganizationTypeAll
-}
-
-// isReadingRuleEnvironment returns true if the user tries to read an
-// environment that is specified in the rule
-func isReadingRuleEnvironment(rule types.Rule, action, resource, environment string) bool {
-	if action == types.RulePermRead && resource == types.RuleTypeEnvironment && environment == rule.Environment {
-		return true
-	}
-	return false
-}
-
-// isReadingRuleOrganization returns true if the user tries to read an
-// organization that is specified in the rule
-func isReadingRuleOrganization(rule types.Rule, action, resource, organization string) bool {
-	if action == types.RulePermRead && resource == types.RuleTypeOrganization && organization == rule.Organization {
+// isReadingRuleNamespace returns true if the user tries to read an
+// namespace that is specified in the rule
+func isReadingRuleNamespace(rule types.Rule, action, resource, namespace string) bool {
+	if action == types.RulePermRead && resource == types.RuleTypeNamespace && namespace == rule.Namespace {
 		return true
 	}
 	return false
 }
 
 // CanAccessResource will verify whether or not a user has permission to perform
-// an action, for a resource, within an organization
-func CanAccessResource(actor Actor, org, env, resource, action string) bool {
+// an action, for a resource, within an namespace
+func CanAccessResource(actor Actor, namespace, resource, action string) bool {
 	// TODO: Reject irrelevant rules?
 	for _, rule := range actor.Rules {
-		// Verify if the user is trying to read an environment or an organization
-		// that would implicitly be granted if one its rules belongs to this
-		// environment or organization
-		if isReadingRuleEnvironment(rule, action, resource, env) || isReadingRuleOrganization(rule, action, resource, org) {
+		// Verify if the user is trying to read  anamespace that would implicitly be
+		// granted if one its rules belongs to this namespace
+		if isReadingRuleNamespace(rule, action, resource, namespace) {
 			return true
 		}
 		if !MatchesRuleType(rule, resource) {
 			continue
 		}
-		if !matchesRuleOrganization(rule, org) {
-			continue
-		}
-		if resource != types.RuleTypeAsset && resource != types.RuleTypeOrganization && !matchesRuleEnvironment(rule, env) {
+		if !matchesRuleNamespace(rule, namespace) {
 			continue
 		}
 		if HasPermission(rule, action) {
@@ -74,11 +57,10 @@ func CanAccessResource(actor Actor, org, env, resource, action string) bool {
 	}
 
 	logrus.WithFields(logrus.Fields{
-		"action":   action,
-		"actor":    actor,
-		"env":      env,
-		"org":      org,
-		"resource": resource,
+		"action":    action,
+		"actor":     actor,
+		"namespace": namespace,
+		"resource":  resource,
 	}).Info("request to resource not allowed")
 
 	return false
@@ -86,7 +68,7 @@ func CanAccessResource(actor Actor, org, env, resource, action string) bool {
 
 // UnauthorizedAccessToResource will return an HTTP error that specifies that a
 // user does not have access to a requested action, for a resource, within an
-// organization
+// namespace
 func UnauthorizedAccessToResource(w http.ResponseWriter) {
 	http.Error(w, "Not authorized to access the requested resource", http.StatusUnauthorized)
 }

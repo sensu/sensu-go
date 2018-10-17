@@ -9,6 +9,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// GetClusterHealth retrieves the cluster health
 func (s *Store) GetClusterHealth(ctx context.Context) *types.HealthResponse {
 	healthResponse := &types.HealthResponse{}
 
@@ -38,7 +39,9 @@ func (s *Store) GetClusterHealth(ctx context.Context) *types.HealthResponse {
 			healthResponse.ClusterHealth = append(healthResponse.ClusterHealth, health)
 			continue
 		}
-		defer cli.Close()
+		defer func() {
+			_ = cli.Close()
+		}()
 
 		_, getErr := cli.Get(context.Background(), "health")
 

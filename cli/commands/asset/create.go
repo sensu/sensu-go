@@ -18,8 +18,8 @@ import (
 // CreateCommand adds command that allows user to create new assets
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	exec := &CreateExecutor{
-		Client: cli.Client,
-		Org:    cli.Config.Organization(),
+		Client:    cli.Client,
+		Namespace: cli.Config.Namespace(),
 	}
 	cmd := &cobra.Command{
 		Use:   "create [NAME]",
@@ -46,8 +46,8 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 // CreateExecutor executes create asset command
 type CreateExecutor struct {
-	Client client.APIClient
-	Org    string
+	Client    client.APIClient
+	Namespace string
 }
 
 // Run runs the command given arguments
@@ -58,9 +58,9 @@ func (exePtr *CreateExecutor) Run(cmd *cobra.Command, args []string) error {
 	}
 
 	cfg := ConfigureAsset{
-		Flags: cmd.Flags(),
-		Args:  args,
-		Org:   exePtr.Org,
+		Flags:     cmd.Flags(),
+		Args:      args,
+		Namespace: exePtr.Namespace,
 	}
 
 	asset, errs := cfg.Configure()
@@ -76,15 +76,15 @@ func (exePtr *CreateExecutor) Run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Fprintln(cmd.OutOrStdout(), "OK")
+	_, _ = fmt.Fprintln(cmd.OutOrStdout(), "OK")
 	return nil
 }
 
 // ConfigureAsset given details configures a new asset
 type ConfigureAsset struct {
-	Flags *pflag.FlagSet
-	Args  []string
-	Org   string
+	Flags     *pflag.FlagSet
+	Args      []string
+	Namespace string
 
 	cfg    Config
 	errors []error
@@ -101,7 +101,7 @@ func (cfgPtr *ConfigureAsset) Configure() (*types.Asset, []error) {
 	}
 
 	if isInteractive {
-		cfgPtr.setOrg()
+		cfgPtr.setNamespace()
 		if err := cfgPtr.administerQuestionnaire(); err != nil {
 			cfgPtr.addError(err)
 		}
@@ -126,10 +126,10 @@ func (cfgPtr *ConfigureAsset) administerQuestionnaire() error {
 			Validate: survey.Required,
 		},
 		{
-			Name: "org",
+			Name: "namespace",
 			Prompt: &survey.Input{
-				Message: "Organization:",
-				Default: cfgPtr.Org,
+				Message: "Namespace:",
+				Default: cfgPtr.Namespace,
 			},
 			Validate: survey.Required,
 		},
@@ -154,7 +154,7 @@ func (cfgPtr *ConfigureAsset) administerQuestionnaire() error {
 
 func (cfgPtr *ConfigureAsset) configureFromFlags() {
 	cfgPtr.setName()
-	cfgPtr.setOrg()
+	cfgPtr.setNamespace()
 	cfgPtr.setSha512()
 	cfgPtr.setURL()
 	cfgPtr.setMeta()
@@ -171,12 +171,12 @@ func (cfgPtr *ConfigureAsset) setName() {
 	}
 }
 
-func (cfgPtr *ConfigureAsset) setOrg() {
-	if len(cfgPtr.Org) == 0 {
-		cfgPtr.addError(errors.New("organization name cannot be blank"))
+func (cfgPtr *ConfigureAsset) setNamespace() {
+	if len(cfgPtr.Namespace) == 0 {
+		cfgPtr.addError(errors.New("namespace name cannot be blank"))
 	}
 
-	cfgPtr.cfg.Org = cfgPtr.Org
+	cfgPtr.cfg.Namespace = cfgPtr.Namespace
 }
 
 func (cfgPtr *ConfigureAsset) setSha512() {
@@ -220,12 +220,12 @@ func (cfgPtr *ConfigureAsset) addError(err error) {
 
 // Config represents configurable attributes of an asset
 type Config struct {
-	Name    string
-	Org     string
-	Sha512  string
-	URL     string
-	Meta    map[string]string
-	Filters string
+	Name      string
+	Namespace string
+	Sha512    string
+	URL       string
+	Meta      map[string]string
+	Filters   string
 }
 
 // SetMeta sets metadata given values
@@ -253,7 +253,7 @@ func (cfgPtr *Config) SetMeta(metadata []string) error {
 // Copy applies configured details to given asset
 func (cfgPtr *Config) Copy(asset *types.Asset) {
 	asset.Name = cfgPtr.Name
-	asset.Organization = cfgPtr.Org
+	asset.Namespace = cfgPtr.Namespace
 	asset.Sha512 = cfgPtr.Sha512
 	asset.URL = cfgPtr.URL
 	asset.Metadata = cfgPtr.Meta

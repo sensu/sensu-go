@@ -20,6 +20,6 @@ message Extension {
 	// URL is the URL of the gRPC service that implements the extension.
 	string url = 2 [(gogoproto.customname) = "URL"];
 
-	// Organization indicates which organization an extension belongs to.
-	string organization = 3;
+	// Namespace to which the extension belongs to
+	string namespace = 4;
 }

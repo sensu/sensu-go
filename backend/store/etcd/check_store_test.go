@@ -16,8 +16,7 @@ func TestCheckConfigStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		check := types.FixtureCheckConfig("check1")
 		check.SetExtendedAttributes([]byte(`{"foo":"bar"}`))
-		ctx := context.WithValue(context.Background(), types.OrganizationKey, check.Organization)
-		ctx = context.WithValue(ctx, types.EnvironmentKey, check.Environment)
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, check.Namespace)
 
 		// We should receive an empty slice if no results were found
 		checks, err := store.GetCheckConfigs(ctx)
@@ -46,8 +45,7 @@ func TestCheckConfigStorage(t *testing.T) {
 		assert.Equal(t, 1, len(checks))
 
 		// Updating a check in a nonexistent org and env should not work
-		check.Organization = "missing"
-		check.Environment = "missing"
+		check.Namespace = "missing"
 		err = store.UpdateCheckConfig(ctx, check)
 		assert.Error(t, err)
 	})

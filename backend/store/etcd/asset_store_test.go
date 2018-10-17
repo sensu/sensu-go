@@ -14,7 +14,7 @@ import (
 func TestAssetStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		asset := types.FixtureAsset("ruby")
-		ctx := context.WithValue(context.Background(), types.OrganizationKey, asset.Organization)
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, asset.Namespace)
 
 		err := store.UpdateAsset(ctx, asset)
 		assert.NoError(t, err)
@@ -34,7 +34,7 @@ func TestAssetStorage(t *testing.T) {
 		assert.Equal(t, 1, len(assets))
 
 		// Updating an asset in a nonexistent org should not work
-		asset.Organization = "missing"
+		asset.Namespace = "missing"
 		err = store.UpdateAsset(ctx, asset)
 		assert.Error(t, err)
 	})

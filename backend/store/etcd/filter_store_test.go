@@ -15,8 +15,7 @@ import (
 func TestEventFilterStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		filter := types.FixtureEventFilter("filter1")
-		ctx := context.WithValue(context.Background(), types.OrganizationKey, filter.Organization)
-		ctx = context.WithValue(ctx, types.EnvironmentKey, filter.Environment)
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, filter.Namespace)
 
 		// We should receive an empty slice if no results were found
 		filters, err := store.GetEventFilters(ctx)
@@ -39,9 +38,8 @@ func TestEventFilterStorage(t *testing.T) {
 		require.NotEmpty(t, filters)
 		assert.Equal(t, 1, len(filters))
 
-		// Updating a filter in a nonexistent org and env should not work
-		filter.Organization = "missing"
-		filter.Environment = "missing"
+		// Updating a filter in a nonexistent namespace
+		filter.Namespace = "missing"
 		err = store.UpdateEventFilter(ctx, filter)
 		assert.Error(t, err)
 	})

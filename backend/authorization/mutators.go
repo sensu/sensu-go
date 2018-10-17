@@ -24,7 +24,7 @@ func (p *MutatorPolicy) Context() Context {
 	return p.context
 }
 
-// WithContext returns new policy populated with rules & organization.
+// WithContext returns new policy populated with rules & namespace.
 func (p MutatorPolicy) WithContext(ctx context.Context) MutatorPolicy { // nolint
 	p.context = ExtractValueFromContext(ctx)
 	return p
@@ -37,17 +37,17 @@ func (p *MutatorPolicy) CanList() bool {
 
 // CanRead returns true if actor has read access to resource.
 func (p *MutatorPolicy) CanRead(mutator *types.Mutator) bool {
-	return canPerformOn(p, mutator.Organization, mutator.Environment, types.RulePermRead)
+	return canPerformOn(p, mutator.Namespace, types.RulePermRead)
 }
 
 // CanCreate returns true if actor has access to create.
 func (p *MutatorPolicy) CanCreate(mutator *types.Mutator) bool {
-	return canPerformOn(p, mutator.Organization, mutator.Environment, types.RulePermCreate)
+	return canPerformOn(p, mutator.Namespace, types.RulePermCreate)
 }
 
 // CanUpdate returns true if actor has access to update.
 func (p *MutatorPolicy) CanUpdate(mutator *types.Mutator) bool {
-	return canPerformOn(p, mutator.Organization, mutator.Environment, types.RulePermUpdate)
+	return canPerformOn(p, mutator.Namespace, types.RulePermUpdate)
 }
 
 // CanDelete returns true if actor has access to delete.

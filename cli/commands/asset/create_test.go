@@ -90,21 +90,21 @@ func TestConfigureAsset(t *testing.T) {
 	flags.String("url", "http://lol", "")
 
 	// Too many args
-	cfg := ConfigureAsset{Flags: flags, Args: []string{"one", "too many"}, Org: "default"}
+	cfg := ConfigureAsset{Flags: flags, Args: []string{"one", "too many"}, Namespace: "default"}
 	asset, errs := cfg.Configure()
 	assert.NotEmpty(errs)
 	assert.Empty(asset.Name)
 
-	// Empty org
-	cfg = ConfigureAsset{Flags: flags, Args: []string{"ruby22"}, Org: ""}
+	// Empty namespace
+	cfg = ConfigureAsset{Flags: flags, Args: []string{"ruby22"}, Namespace: ""}
 	asset, errs = cfg.Configure()
 	assert.NotEmpty(errs)
-	assert.Empty(asset.Organization)
+	assert.Empty(asset.Namespace)
 
 	// Valid Metadata
 	require.NoError(t, flags.Set("metadata", "One: Two"))
 	require.NoError(t, flags.Set("metadata", "  Three : Four "))
-	cfg = ConfigureAsset{Flags: flags, Args: []string{"ruby22"}, Org: "default"}
+	cfg = ConfigureAsset{Flags: flags, Args: []string{"ruby22"}, Namespace: "default"}
 	asset, errs = cfg.Configure()
 	assert.Empty(errs)
 	assert.Equal("ruby22", asset.Name)

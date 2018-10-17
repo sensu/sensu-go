@@ -15,8 +15,7 @@ import (
 func TestHookConfigStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		hook := types.FixtureHookConfig("hook1")
-		ctx := context.WithValue(context.Background(), types.OrganizationKey, hook.Organization)
-		ctx = context.WithValue(ctx, types.EnvironmentKey, hook.Environment)
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, hook.Namespace)
 
 		// We should receive an empty slice if no results were found
 		hooks, err := store.GetHookConfigs(ctx)
@@ -41,8 +40,7 @@ func TestHookConfigStorage(t *testing.T) {
 		assert.Equal(t, 1, len(hooks))
 
 		// Updating a hook in a nonexistent org and env should not work
-		hook.Organization = "missing"
-		hook.Environment = "missing"
+		hook.Namespace = "missing"
 		err = store.UpdateHookConfig(ctx, hook)
 		assert.Error(t, err)
 	})

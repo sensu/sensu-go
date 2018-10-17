@@ -19,10 +19,9 @@ func newRequest(t *testing.T, method, endpoint string, body io.Reader) *http.Req
 	ctx := context.Background()
 	rules := []types.Rule{
 		types.Rule{
-			Type:         types.RuleTypeAll,
-			Environment:  "*",
-			Organization: "*",
-			Permissions:  types.RuleAllPerms,
+			Type:        types.RuleTypeAll,
+			Namespace:   "*",
+			Permissions: types.RuleAllPerms,
 		},
 	}
 	actor := authorization.Actor{

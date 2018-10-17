@@ -13,24 +13,19 @@ type Actor struct {
 	Rules []types.Rule
 }
 
-// Context holds the organization the action is associated with and the user
+// Context holds the namespace the action is associated with and the user
 // making said action.
 type Context struct {
-	Actor        Actor
-	Environment  string
-	Organization string
+	Actor     Actor
+	Namespace string
 }
 
 // ExtractValueFromContext extracts authorization details from a context
 func ExtractValueFromContext(ctx context.Context) Context {
 	context := Context{}
 
-	if organization, ok := ctx.Value(types.OrganizationKey).(string); ok {
-		context.Organization = organization
-	}
-
-	if environment, ok := ctx.Value(types.EnvironmentKey).(string); ok {
-		context.Environment = environment
+	if namespace, ok := ctx.Value(types.NamespaceKey).(string); ok {
+		context.Namespace = namespace
 	}
 
 	if actor, ok := ctx.Value(types.AuthorizationActorKey).(Actor); ok {
@@ -49,17 +44,15 @@ type Policy interface { // TODO: rename to ...?
 func canPerform(policy Policy, action string) bool {
 	return canPerformOn(
 		policy,
-		policy.Context().Organization,
-		policy.Context().Environment,
+		policy.Context().Namespace,
 		action,
 	)
 }
 
-func canPerformOn(policy Policy, organization, environment, action string) bool {
+func canPerformOn(policy Policy, namespace, action string) bool {
 	return CanAccessResource(
 		policy.Context().Actor,
-		organization,
-		environment,
+		namespace,
 		policy.Resource(),
 		action,
 	)

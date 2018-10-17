@@ -15,8 +15,7 @@ import (
 func TestEntityStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		entity := types.FixtureEntity("entity")
-		ctx := context.WithValue(context.Background(), types.OrganizationKey, entity.Organization)
-		ctx = context.WithValue(ctx, types.EnvironmentKey, entity.Environment)
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
 
 		// We should receive an empty slice if no results were found
 		entities, err := store.GetEntities(ctx)
@@ -48,8 +47,7 @@ func TestEntityStorage(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Updating an enity in a nonexistent org and env should not work
-		entity.Organization = "missing"
-		entity.Environment = "missing"
+		entity.Namespace = "missing"
 		err = store.UpdateEntity(ctx, entity)
 		assert.Error(t, err)
 	})

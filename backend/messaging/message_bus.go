@@ -72,7 +72,7 @@ type MessageBus interface {
 }
 
 // SubscriptionTopic is a helper to determine the proper topic name for a
-// subscription based on the organization
-func SubscriptionTopic(org, env, sub string) string {
-	return fmt.Sprintf("%s:%s:%s:%s", TopicSubscriptions, org, env, sub)
+// subscription based on the namespace
+func SubscriptionTopic(namespace, sub string) string {
+	return fmt.Sprintf("%s:%s:%s", TopicSubscriptions, namespace, sub)
 }

@@ -34,9 +34,6 @@ const (
 	// RuleTypeEntity access control for entity objects
 	RuleTypeEntity = "entities"
 
-	// RuleTypeEnvironment access control for organization objects
-	RuleTypeEnvironment = "environments"
-
 	// RuleTypeEvent access control for event objects
 	RuleTypeEvent = "events"
 
@@ -55,8 +52,8 @@ const (
 	// RuleTypeMutator access control for mutator objects
 	RuleTypeMutator = "mutators"
 
-	// RuleTypeOrganization access control for organization objects
-	RuleTypeOrganization = "organizations"
+	// RuleTypeNamespace access control for namespace objects
+	RuleTypeNamespace = "namespaces"
 
 	// RuleTypeRole access control for role objects
 	RuleTypeRole = "roles"
@@ -83,14 +80,13 @@ var (
 		RuleTypeAsset,
 		RuleTypeCheck,
 		RuleTypeEntity,
-		RuleTypeEnvironment,
 		RuleTypeEvent,
 		RuleTypeEventFilter,
 		RuleTypeExtension,
 		RuleTypeHandler,
 		RuleTypeHook,
 		RuleTypeMutator,
-		RuleTypeOrganization,
+		RuleTypeNamespace,
 		RuleTypeRole,
 		RuleTypeSilenced,
 		RuleTypeUser,
@@ -106,15 +102,9 @@ func (r *Rule) Validate() error {
 		return errors.New("type can't be empty")
 	}
 
-	if r.Environment != "*" {
-		if err := ValidateNameStrict(r.Environment); err != nil {
-			return errors.New("environment " + err.Error())
-		}
-	}
-
-	if r.Organization != "*" {
-		if err := ValidateNameStrict(r.Organization); err != nil {
-			return errors.New("organization " + err.Error())
+	if r.Namespace != "*" {
+		if err := ValidateNameStrict(r.Namespace); err != nil {
+			return errors.New("namespace " + err.Error())
 		}
 	}
 
@@ -166,11 +156,10 @@ func (r *Role) URIPath() string {
 // Fixtures
 
 // FixtureRule returns a partial rule
-func FixtureRule(org, env string) *Rule {
+func FixtureRule(namespace string) *Rule {
 	return &Rule{
-		Type:         RuleTypeAll,
-		Environment:  env,
-		Organization: org,
+		Type:      RuleTypeAll,
+		Namespace: namespace,
 		Permissions: []string{
 			RulePermCreate,
 			RulePermRead,
@@ -182,18 +171,18 @@ func FixtureRule(org, env string) *Rule {
 
 // FixtureRuleWithPerms returns a partial rule with perms applied
 func FixtureRuleWithPerms(T string, perms ...string) Rule {
-	rule := *FixtureRule("*", "*")
+	rule := *FixtureRule("*")
 	rule.Type = T
 	rule.Permissions = perms
 	return rule
 }
 
 // FixtureRole returns a partial role
-func FixtureRole(name, org, env string) *Role {
+func FixtureRole(name, namespace string) *Role {
 	return &Role{
 		Name: name,
 		Rules: []Rule{
-			*FixtureRule(org, env),
+			*FixtureRule(namespace),
 		},
 	}
 }

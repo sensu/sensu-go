@@ -26,8 +26,7 @@ type Deregistration struct {
 
 // Deregister an entity and all of its associated events.
 func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
-	ctx := context.WithValue(context.Background(), types.OrganizationKey, entity.Organization)
-	ctx = context.WithValue(ctx, types.EnvironmentKey, entity.Environment)
+	ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
 
 	if err := adapterPtr.Store.DeleteEntity(ctx, entity); err != nil {
 		return fmt.Errorf("error deleting entity in store: %s", err.Error())
@@ -65,8 +64,7 @@ func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
 			Subscriptions: []string{""},
 			Command:       "",
 			Handlers:      []string{entity.Deregistration.Handler},
-			Environment:   entity.Environment,
-			Organization:  entity.Organization,
+			Namespace:     entity.Namespace,
 			Status:        1,
 		}
 

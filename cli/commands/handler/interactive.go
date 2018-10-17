@@ -21,8 +21,7 @@ type handlerOpts struct {
 	SocketPort string `survey:"socketPort"`
 	Timeout    string `survey:"timeout"`
 	Type       string `survey:"type"`
-	Env        string
-	Org        string
+	Namespace  string
 }
 
 const (
@@ -37,8 +36,7 @@ func newHandlerOpts() *handlerOpts {
 
 func (opts *handlerOpts) withHandler(handler *types.Handler) {
 	opts.Name = handler.Name
-	opts.Env = handler.Environment
-	opts.Org = handler.Organization
+	opts.Namespace = handler.Namespace
 
 	opts.Command = handler.Command
 	opts.EnvVars = strings.Join(handler.EnvVars, ",")
@@ -65,11 +63,8 @@ func (opts *handlerOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Timeout, _ = flags.GetString("timeout")
 	opts.Type, _ = flags.GetString("type")
 
-	if org := helpers.GetChangedStringValueFlag("organization", flags); org != "" {
-		opts.Org = org
-	}
-	if env := helpers.GetChangedStringValueFlag("environment", flags); env != "" {
-		opts.Env = env
+	if namespace := helpers.GetChangedStringValueFlag("namespace", flags); namespace != "" {
+		opts.Namespace = namespace
 	}
 }
 
@@ -106,18 +101,10 @@ func (opts *handlerOpts) queryForBaseParameters(editing bool) error {
 				Validate: survey.Required,
 			},
 			{
-				Name: "org",
+				Name: "namespace",
 				Prompt: &survey.Input{
-					Message: "Organization:",
-					Default: opts.Org,
-				},
-				Validate: survey.Required,
-			},
-			{
-				Name: "env",
-				Prompt: &survey.Input{
-					Message: "Environment:",
-					Default: opts.Env,
+					Message: "Namespace:",
+					Default: opts.Namespace,
 				},
 				Validate: survey.Required,
 			},
@@ -225,8 +212,7 @@ func (opts *handlerOpts) queryForSocket() error {
 
 func (opts *handlerOpts) Copy(handler *types.Handler) {
 	handler.Name = opts.Name
-	handler.Environment = opts.Env
-	handler.Organization = opts.Org
+	handler.Namespace = opts.Namespace
 
 	handler.Command = opts.Command
 	handler.EnvVars = helpers.SafeSplitCSV(opts.EnvVars)

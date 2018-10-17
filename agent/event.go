@@ -29,12 +29,8 @@ func prepareEvent(a *Agent, event *types.Event) error {
 		event.Check.Interval = 1
 	}
 
-	if event.Check.Organization == "" {
-		event.Check.Organization = a.config.Organization
-	}
-
-	if event.Check.Environment == "" {
-		event.Check.Environment = a.config.Environment
+	if event.Check.Namespace == "" {
+		event.Check.Namespace = a.config.Namespace
 	}
 
 	if event.Check.Executed == 0 {

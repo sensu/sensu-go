@@ -62,23 +62,13 @@ func printRulesToTable(v interface{}, io io.Writer) error {
 			},
 		},
 		{
-			Title: "Org.",
+			Title: "Namespace.",
 			CellTransformer: func(data interface{}) string {
 				rule, ok := data.(types.Rule)
 				if !ok {
 					return cli.TypeError
 				}
-				return rule.Organization
-			},
-		},
-		{
-			Title: "Env.",
-			CellTransformer: func(data interface{}) string {
-				rule, ok := data.(types.Rule)
-				if !ok {
-					return cli.TypeError
-				}
-				return rule.Environment
+				return rule.Namespace
 			},
 		},
 		{

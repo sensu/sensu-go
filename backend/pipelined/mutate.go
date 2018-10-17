@@ -37,8 +37,7 @@ func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]b
 		}
 	}
 
-	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
-	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
+	ctx := context.WithValue(context.Background(), types.NamespaceKey, event.Entity.Namespace)
 	fields["mutator"] = handler.Mutator
 
 	mutator, err := p.store.GetMutatorByName(ctx, handler.Mutator)

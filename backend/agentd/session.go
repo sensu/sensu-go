@@ -20,7 +20,7 @@ var json = jsoniter.ConfigDefault
 // SessionStore specifies the storage requirements of the Session.
 type SessionStore interface {
 	store.EntityStore
-	store.EnvironmentStore
+	store.NamespaceStore
 }
 
 // A Session is a server-side connection between a Sensu backend server and
@@ -53,8 +53,7 @@ func newSessionHandler(s *Session) *handler.MessageHandler {
 // A SessionConfig contains all of the ncessary information to initialize
 // an agent session.
 type SessionConfig struct {
-	Organization  string
-	Environment   string
+	Namespace     string
 	AgentAddr     string
 	AgentID       string
 	User          string
@@ -66,10 +65,10 @@ type SessionConfig struct {
 // The Session is responsible for stopping itself, and does so when it
 // encounters a receive error.
 func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store Store) (*Session, error) {
-	// Validate the agent organization and environment
+	// Validate the agent namespace
 	ctx := context.TODO()
-	if _, err := store.GetEnvironment(ctx, cfg.Organization, cfg.Environment); err != nil {
-		return nil, fmt.Errorf("the environment '%s:%s' is invalid", cfg.Organization, cfg.Environment)
+	if _, err := store.GetNamespace(ctx, cfg.Namespace); err != nil {
+		return nil, fmt.Errorf("the namespace '%s' is invalid", cfg.Namespace)
 	}
 
 	logger.WithFields(logrus.Fields{
@@ -204,8 +203,8 @@ func (s *Session) Start() (err error) {
 	go s.recvPump()
 	go s.subPump()
 
-	org, env := s.cfg.Organization, s.cfg.Environment
-	agentID := fmt.Sprintf("%s:%s:%s", org, env, s.cfg.AgentID)
+	namespace := s.cfg.Namespace
+	agentID := fmt.Sprintf("%s:%s", namespace, s.cfg.AgentID)
 
 	defer func() {
 		if err != nil {
@@ -219,7 +218,7 @@ func (s *Session) Start() (err error) {
 			continue
 		}
 
-		topic := messaging.SubscriptionTopic(org, env, sub)
+		topic := messaging.SubscriptionTopic(namespace, sub)
 		logger.WithField("topic", topic).Debug("subscribing to topic")
 		subscription, err := s.bus.Subscribe(topic, agentID, s)
 		if err != nil {

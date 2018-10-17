@@ -15,12 +15,8 @@ func (m *Mutator) Validate() error {
 		return errors.New("mutator command must be set")
 	}
 
-	if m.Environment == "" {
-		return errors.New("mutator environment must be set")
-	}
-
-	if m.Organization == "" {
-		return errors.New("mutator organization must be set")
+	if m.Namespace == "" {
+		return errors.New("namespace must be set")
 	}
 
 	return nil
@@ -47,10 +43,9 @@ func (m *Mutator) Update(from *Mutator, fields ...string) error {
 // FixtureMutator returns a Mutator fixture for testing.
 func FixtureMutator(name string) *Mutator {
 	return &Mutator{
-		Name:         name,
-		Command:      "command",
-		Environment:  "default",
-		Organization: "default",
+		Name:      name,
+		Command:   "command",
+		Namespace: "default",
 	}
 }
 

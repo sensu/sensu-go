@@ -25,7 +25,7 @@ type silencedOpts struct {
 	Creator         string
 	Reason          string `survey:"reason"`
 	Env             string
-	Org             string
+	Namespace       string
 	Begin           string `survey:"begin"`
 }
 
@@ -41,8 +41,7 @@ func (o *silencedOpts) Apply(s *types.Silenced) (err error) {
 	s.Check = o.Check
 	s.Creator = o.Creator
 	s.Reason = o.Reason
-	s.Environment = o.Env
-	s.Organization = o.Org
+	s.Namespace = o.Namespace
 	s.ExpireOnResolve = o.ExpireOnResolve
 	s.Expire, err = strconv.ParseInt(o.Expire, 10, 64)
 	if err != nil {
@@ -60,11 +59,8 @@ func (o *silencedOpts) withFlags(flags *pflag.FlagSet) {
 	o.Check, _ = flags.GetString("check")
 	o.Begin, _ = flags.GetString("begin")
 
-	if org := helpers.GetChangedStringValueFlag("organization", flags); org != "" {
-		o.Org = org
-	}
-	if env := helpers.GetChangedStringValueFlag("environment", flags); env != "" {
-		o.Env = env
+	if namespace := helpers.GetChangedStringValueFlag("namespace", flags); namespace != "" {
+		o.Namespace = namespace
 	}
 }
 
@@ -74,18 +70,10 @@ func (o *silencedOpts) administerQuestionnaire(editing bool) error {
 	if !editing {
 		qs = []*survey.Question{
 			{
-				Name: "org",
+				Name: "namespace",
 				Prompt: &survey.Input{
-					Message: "Organization:",
-					Default: o.Org,
-				},
-				Validate: survey.Required,
-			},
-			{
-				Name: "env",
-				Prompt: &survey.Input{
-					Message: "Environment:",
-					Default: o.Env,
+					Message: "Namespace:",
+					Default: o.Namespace,
 				},
 				Validate: survey.Required,
 			},
@@ -185,8 +173,7 @@ func toOpts(s *types.Silenced) *silencedOpts {
 	o.Check = s.Check
 	o.Creator = s.Creator
 	o.Reason = s.Reason
-	o.Env = s.Environment
-	o.Org = s.Organization
+	o.Namespace = s.Namespace
 	o.ExpireOnResolve = s.ExpireOnResolve
 	o.Expire = fmt.Sprintf("%d", s.Expire)
 	o.Begin = fmt.Sprintf("%d", s.Begin)
