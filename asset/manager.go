@@ -4,7 +4,6 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-	"time"
 
 	"github.com/sensu/sensu-go/types"
 	bolt "go.etcd.io/bbolt"
@@ -38,10 +37,13 @@ func (m *Manager) StartAssetManager() (Getter, error) {
 	if err := os.MkdirAll(m.cacheDir, 0755); err != nil {
 		return nil, err
 	}
-	db, err := bolt.Open(filepath.Join(m.cacheDir, dbName), 0600, &bolt.Options{Timeout: 1 * time.Second})
+
+	logger.WithField("cache", m.cacheDir).Debug("initializing cache directory")
+	db, err := bolt.Open(filepath.Join(m.cacheDir, dbName), 0600, &bolt.Options{})
 	if err != nil {
 		return nil, err
 	}
+	logger.WithField("cache", m.cacheDir).Debug("done initializing cache directory")
 
 	m.wg.Add(1)
 	go func() {
