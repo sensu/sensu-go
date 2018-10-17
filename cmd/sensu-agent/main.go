@@ -13,6 +13,6 @@ var (
 
 func main() {
 	if err := rootCmd.Execute(); err != nil {
-		logger.Fatal(err.Error())
+		logger.WithError(err).Fatal("error executing sensu-agent")
 	}
 }

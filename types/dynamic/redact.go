@@ -66,7 +66,7 @@ func redactValue(original, redacted reflect.Value, fieldName string, fields []st
 		// Unmarshal the extended attributes so we can deal with them
 		var attrs interface{}
 		if err := json.Unmarshal(original.Bytes(), &attrs); err != nil {
-			return fmt.Errorf("could not unmarshal the redacted version of extended attribute: %s", err.Error())
+			return fmt.Errorf("could not unmarshal the redacted version of extended attribute: %s", err)
 		}
 
 		// Get the underlying value of the extended attributes
@@ -83,7 +83,7 @@ func redactValue(original, redacted reflect.Value, fieldName string, fields []st
 		// Marshal back the extended attributes so we can set them back into redacted
 		bytes, err := json.Marshal(redactedValue.Interface())
 		if err != nil {
-			return fmt.Errorf("could not marshal the redacted version of extended attribute: %s", err.Error())
+			return fmt.Errorf("could not marshal the redacted version of extended attribute: %s", err)
 		}
 
 		redacted.SetBytes(bytes)
