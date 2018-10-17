@@ -137,7 +137,7 @@ func Initialize(config *Config) (*Backend, error) {
 	assetManager := asset.NewManager(config.CacheDir, backendEntity, make(chan struct{}), &sync.WaitGroup{})
 	assetGetter, err := assetManager.StartAssetManager()
 	if err != nil {
-		return nil, fmt.Errorf("error initializing asset manager: %s", err.Error())
+		return nil, fmt.Errorf("error initializing asset manager: %s", err)
 	}
 
 	// Initialize pipelined
@@ -148,7 +148,7 @@ func Initialize(config *Config) (*Backend, error) {
 		AssetGetter:             assetGetter,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", pipeline.Name(), err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", pipeline.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, pipeline)
 
