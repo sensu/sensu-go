@@ -1,21 +1,168 @@
 """
-Namespace represents the unique details describing where a resource is located.
+Namespaced represents an object that belongs to a unique namespace.
 """
-type Namespace {
-  "environment indicates to which env a check belongs to."
-  environment: String
-
-  "organization indicates to which org a check belongs to."
-  organization: String!
+interface Namespaced {
+  "The namespace the object belongs to."
+  namespace: String!
 }
 
 """
-Describes a node in an environment.
+Represents a virtual cluster
 """
-interface EnvironmentNode {
-  "Organization indicates to which org a silenced entry belongs to."
-  organization: Organization!
+type Namespace implements Node {
+  "The globally unique identifier of the check."
+  id: ID!
 
-  "Environment indicates which env a silenced entry belongs to."
-  environment: Environment
+  "Name is the unique identifier for a namespace."
+  name: String!
+
+  #
+  # NOTE:
+  #
+  # We could implement a different container that exposes the following fields.
+  # Eg. a "Scope" type or something of in that vein.
+  #
+
+  "All check configurations associated with the environment."
+  checks(
+    offset: Int = 0,
+    "Limit adds optional limit to the number of entries returned."
+    limit: Int = 10,
+    "OrderBy adds optional order to the records retrieved."
+    orderBy: CheckListOrder = NAME_DESC
+    "Filter reduces the set using the given Sensu Query Expression predicate."
+    filter: String = "",
+  ): CheckConfigConnection!
+
+  "All entities associated with the environment."
+  entities(
+    offset: Int = 0,
+    "Limit adds optional limit to the number of entries returned."
+    limit: Int = 10,
+    "OrderBy adds optional order to the records retrieved."
+    orderBy: EntityListOrder = ID_DESC
+    "Filter reduces the set using the given Sensu Query Expression predicate."
+    filter: String = "",
+  ): EntityConnection!
+
+  "All events associated with the environment."
+  events(
+    offset: Int = 0,
+    "Limit adds optional limit to the number of entries returned."
+    limit: Int = 10,
+    "OrderBy adds optional order to the records retrieved."
+    orderBy: EventsListOrder = SEVERITY
+    "Filter reduces the set using the given Sensu Query Expression predicate."
+    filter: String = "",
+  ): EventConnection!
+
+  "All silences associated with the environment."
+  silences(
+    offset: Int = 0
+    "Limit adds optional limit to the number of entries returned."
+    limit: Int = 10
+    "OrderBy adds optional order to the records retrieved."
+    orderBy: SilencesListOrder = ID_DESC
+    "Filter reduces the set using the given Sensu Query Expression predicate."
+    filter: String = "",
+  ): SilencedConnection!
+
+  "All subscriptions in use in the environment."
+  subscriptions(
+    "Omit entity subscriptions from set."
+    omitEntity: Boolean = false
+    "OrderBy adds optional order to the records retrieved."
+    orderBy: SubscriptionSetOrder = OCCURRENCES
+  ): SubscriptionSet!
+
+  """
+  checkHistory includes all persisted check execution results associated with
+  the environment. Unlike the Check type's history this field includes the most
+  recent result.
+  """
+  checkHistory(
+    "Filter reduces the set using the given Sensu Query Expression predicate."
+    filter: String = ""
+    "Limit adds optional limit to the number of entries returned."
+    limit: Int = 10000
+  ): [CheckHistory]!
+
+  #
+  # Icon & colour are pulled over from the previous namespace implementation.
+  # Retained in the short term to keep implementation of frontend as straight
+  # forward as possible.
+  #
+  # Likely to be deprecated.
+  #
+
+  "IconId. Experimental. Use graphical interfaces as symbolic reference to organization"
+  iconId: Icon!
+
+  "ColourId. Experimental. Use graphical interfaces as symbolic reference to environment"
+  colourId: MutedColour!
+}
+
+"Describes ways in which a set of subscriptions can be ordered."
+enum SubscriptionSetOrder {
+  ALPHA_ASC
+  ALPHA_DESC
+  OCCURRENCES
+}
+
+"Describes ways in which a list of checks can be ordered."
+enum CheckListOrder {
+  NAME
+  NAME_DESC
+}
+
+"Describes ways in which a list of entities can be ordered."
+enum EntityListOrder {
+  ID
+  ID_DESC
+  LASTSEEN
+}
+
+"Describes ways in which a list of events can be ordered."
+enum EventsListOrder {
+  LASTOK
+  NEWEST
+  OLDEST
+  SEVERITY
+}
+
+"Describes ways in which a list of silences can be ordered."
+enum SilencesListOrder {
+  ID
+  ID_DESC
+  BEGIN
+  BEGIN_DESC
+}
+
+"Describes a graphical element that can be used to distinguish a resource."
+enum Icon {
+  BRIEFCASE
+  DONUT
+  EMOTICON
+  ESPRESSO
+  EXPLORE
+  FIRE
+  HALFHEART
+  HEART
+  MUG
+  POLYGON
+  VISIBILITY
+}
+
+"""
+Describes a color from a muted palette that can be used to distinguish a
+resource.
+"""
+enum MutedColour {
+  BLUE
+  GRAY
+  GREEN
+  ORANGE
+  PINK
+  PURPLE
+  YELLOW
 }

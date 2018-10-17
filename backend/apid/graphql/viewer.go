@@ -4,7 +4,6 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/authorization"
-	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
@@ -17,26 +16,20 @@ var _ schema.ViewerFieldResolvers = (*viewerImpl)(nil)
 //
 
 type viewerImpl struct {
-	checksCtrl actions.CheckController
-	entityCtrl actions.EntityController
-	eventsCtrl actions.EventController
-	usersCtrl  actions.UserController
-	orgsCtrl   actions.OrganizationsController
+	usersCtrl actions.UserController
+	nsCtrl    actions.NamespacesController
 }
 
-func newViewerImpl(store store.Store, getter types.QueueGetter, bus messaging.MessageBus) *viewerImpl {
+func newViewerImpl(store store.Store) *viewerImpl {
 	return &viewerImpl{
-		checksCtrl: actions.NewCheckController(store, getter),
-		entityCtrl: actions.NewEntityController(store),
-		eventsCtrl: actions.NewEventController(store, bus),
-		usersCtrl:  actions.NewUserController(store),
-		orgsCtrl:   actions.NewOrganizationsController(store),
+		usersCtrl: actions.NewUserController(store),
+		nsCtrl:    actions.NewNamespacesController(store),
 	}
 }
 
-// Organizations implements response to request for 'organizations' field.
-func (r *viewerImpl) Organizations(p graphql.ResolveParams) (interface{}, error) {
-	return r.orgsCtrl.Query(p.Context)
+// Namespaces implements response to request for 'namespaces' field.
+func (r *viewerImpl) Namespaces(p graphql.ResolveParams) (interface{}, error) {
+	return r.nsCtrl.Query(p.Context)
 }
 
 // User implements response to request for 'user' field.

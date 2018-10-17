@@ -27,10 +27,9 @@ func ApplyContext(ctx context.Context, fns ...SetContextFn) context.Context {
 }
 
 // ContextWithOrgEnv given org & env returns new contextFn with values added.
-func ContextWithOrgEnv(org, env string) SetContextFn {
+func ContextWithNamespace(namespace string) SetContextFn {
 	return func(ctx context.Context) context.Context {
-		ctx = context.WithValue(ctx, types.EnvironmentKey, env)
-		ctx = context.WithValue(ctx, types.OrganizationKey, org)
+		ctx = context.WithValue(ctx, types.NamespaceKey, namespace)
 		return ctx
 	}
 }
@@ -59,7 +58,7 @@ func ContextWithPerms(rule string, perms ...string) SetContextFn {
 // ContextWithFullAccess instantiates new Actor with full access to resources across
 // the system and returns new contextFn w/ actor value applied.
 func ContextWithFullAccess(ctx context.Context) context.Context {
-	applyContextFn := ContextWithRules(*types.FixtureRule("*", "*"))
+	applyContextFn := ContextWithRules(*types.FixtureRule("*"))
 	return applyContextFn(ctx)
 }
 

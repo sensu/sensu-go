@@ -31,8 +31,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 			opts := &ruleOpts{}
 
-			opts.Org = cli.Config.Organization()
-			opts.Env = cli.Config.Environment()
+			opts.Namespace = cli.Config.Namespace()
 
 			opts.withFlags(cmd.Flags())
 			opts.Role = args[0]

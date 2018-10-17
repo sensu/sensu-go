@@ -33,11 +33,8 @@ const (
 	// HeaderKeyAgentID is the HTTP request header specifying the Agent ID
 	HeaderKeyAgentID = "Sensu-AgentID"
 
-	// HeaderKeyEnvironment is the HTTP request header specifying the Agent Environment
-	HeaderKeyEnvironment = "Sensu-Environment"
-
-	// HeaderKeyOrganization is the HTTP request header specifying the Agent Organization
-	HeaderKeyOrganization = "Sensu-Organization"
+	// HeaderKeyNamespace is the HTTP request header specifying the Agent Namespace
+	HeaderKeyNamespace = "Sensu-Namespace"
 
 	// HeaderKeyUser is the HTTP request header specifying the Agent User
 	HeaderKeyUser = "Sensu-User"

@@ -18,8 +18,7 @@ type ruleOpts struct {
 	Role        string   `survey:"role"`
 	Type        string   `survey:"type"`
 	Permissions []string `survey:"permissions"`
-	Env         string
-	Org         string
+	Namespace   string
 }
 
 // AddRuleCommand defines new command to add rules to a role
@@ -45,8 +44,7 @@ func AddRuleCommand(cli *cli.SensuCli) *cobra.Command {
 
 			opts := &ruleOpts{}
 
-			opts.Org = cli.Config.Organization()
-			opts.Env = cli.Config.Environment()
+			opts.Namespace = cli.Config.Namespace()
 
 			if len(args) > 0 {
 				opts.Role = args[0]
@@ -112,11 +110,8 @@ func (opts *ruleOpts) withFlags(flags *pflag.FlagSet) {
 		opts.Permissions = append(opts.Permissions, "delete")
 	}
 
-	if org := helpers.GetChangedStringValueFlag("organization", flags); org != "" {
-		opts.Org = org
-	}
-	if env := helpers.GetChangedStringValueFlag("environment", flags); env != "" {
-		opts.Env = env
+	if namespace := helpers.GetChangedStringValueFlag("namespace", flags); namespace != "" {
+		opts.Namespace = namespace
 	}
 }
 
@@ -131,18 +126,10 @@ func (opts *ruleOpts) administerQuestionnaire() error {
 			Validate: survey.Required,
 		},
 		{
-			Name: "org",
+			Name: "namespace",
 			Prompt: &survey.Input{
-				Message: "Organization:",
-				Default: opts.Org,
-			},
-			Validate: survey.Required,
-		},
-		{
-			Name: "env",
-			Prompt: &survey.Input{
-				Message: "Environment:",
-				Default: opts.Env,
+				Message: "Namespace:",
+				Default: opts.Namespace,
 			},
 			Validate: survey.Required,
 		},
@@ -168,7 +155,6 @@ func (opts *ruleOpts) administerQuestionnaire() error {
 
 func (opts *ruleOpts) Copy(rule *types.Rule) {
 	rule.Type = opts.Type
-	rule.Environment = opts.Env
-	rule.Organization = opts.Org
+	rule.Namespace = opts.Namespace
 	rule.Permissions = opts.Permissions
 }

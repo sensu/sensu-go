@@ -7,9 +7,8 @@ const DefaultKeepaliveTimeout = 120
 // an entity and its expiration time.
 func NewKeepaliveRecord(e *Entity, t int64) *KeepaliveRecord {
 	return &KeepaliveRecord{
-		Environment:  e.Environment,
-		Organization: e.Organization,
-		EntityID:     e.ID,
-		Time:         t,
+		Namespace: e.Namespace,
+		EntityID:  e.ID,
+		Time:      t,
 	}
 }

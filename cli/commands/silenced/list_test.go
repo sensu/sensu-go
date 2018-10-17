@@ -56,7 +56,7 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))
-	require.NoError(t, cmd.Flags().Set(flags.AllOrgs, "t"))
+	require.NoError(t, cmd.Flags().Set(flags.AllNamespaces, "t"))
 	out, err := test.RunCmd(cmd, []string{})
 	assert.NotEmpty(out)
 	assert.Nil(err)
@@ -71,8 +71,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	silenced.Creator = "eric"
 	silenced.Check = "bar"
 	silenced.Subscription = "foo"
-	silenced.Organization = "defaultorg"
-	silenced.Environment = "defaultenv"
+	silenced.Namespace = "defaultnamespace"
 
 	client := cli.Client.(*client.MockClient)
 	client.On("ListSilenceds", mock.Anything, mock.Anything, mock.Anything).Return([]types.Silenced{*silenced}, nil)
@@ -90,13 +89,11 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert.Contains(out, "Check")           // heading
 	assert.Contains(out, "Reason")          // heading
 	assert.Contains(out, "Subscription")    // heading
-	assert.Contains(out, "Organization")    // heading
-	assert.Contains(out, "Environment")     // heading
+	assert.Contains(out, "Namespace")       // heading
 	assert.Contains(out, "justcause!")
 	assert.Contains(out, "foo:bar")
 	assert.Contains(out, "eric")
-	assert.Contains(out, "defaultorg")
-	assert.Contains(out, "defaultenv")
+	assert.Contains(out, "defaultnamespace")
 	assert.Contains(out, "false")
 	assert.Contains(out, "0s")
 }
@@ -123,7 +120,7 @@ func TestListFlags(t *testing.T) {
 	cli := test.NewCLI()
 	cmd := ListCommand(cli)
 
-	flag := cmd.Flag("all-organizations")
+	flag := cmd.Flag("all-namespaces")
 	assert.NotNil(flag)
 
 	flag = cmd.Flag("format")

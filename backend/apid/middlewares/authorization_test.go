@@ -58,9 +58,9 @@ func TestAuthorization(t *testing.T) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims)
 
 	rule := types.Rule{
-		Type:         "entities",
-		Organization: "sensu",
-		Permissions:  []string{types.RulePermRead},
+		Type:        "entities",
+		Namespace:   "sensu",
+		Permissions: []string{types.RulePermRead},
 	}
 
 	roles := []*types.Role{

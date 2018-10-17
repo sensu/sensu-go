@@ -15,7 +15,7 @@ const (
 )
 
 func getKeepalivePath(keepalivesPath string, entity *types.Entity) string {
-	return path.Join(keepalivesPath, entity.Organization, entity.Environment, entity.ID)
+	return path.Join(keepalivesPath, entity.Namespace, entity.ID)
 }
 
 // DeleteFailingKeepalive deletes a failing KeepaliveRecord.
@@ -56,7 +56,7 @@ func (s *Store) UpdateFailingKeepalive(ctx context.Context, entity *types.Entity
 		return err
 	}
 
-	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(entity.Organization, entity.Environment)), ">", 0)
+	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(entity.Namespace)), ">", 0)
 	req := clientv3.OpPut(getKeepalivePath(s.keepalivesPath, entity), string(krBytes))
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
@@ -64,10 +64,9 @@ func (s *Store) UpdateFailingKeepalive(ctx context.Context, entity *types.Entity
 	}
 	if !res.Succeeded {
 		return fmt.Errorf(
-			"could not create the keepalive for entity %s in environment %s/%s",
+			"could not create the keepalive for entity %s in namespace %s",
 			entity.ID,
-			entity.Organization,
-			entity.Environment,
+			entity.Namespace,
 		)
 	}
 

@@ -13,8 +13,7 @@ type entityOpts struct {
 	ID            string `survey:"id"`
 	Class         string `survey:"class"`
 	Subscriptions string `survey:"subscriptions"`
-	Org           string
-	Env           string
+	Namespace     string
 }
 
 func newEntityOpts() *entityOpts {
@@ -25,11 +24,8 @@ func (opts *entityOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Class, _ = flags.GetString("class")
 	opts.Subscriptions, _ = flags.GetString("subscriptions")
 
-	if org := helpers.GetChangedStringValueFlag("organization", flags); org != "" {
-		opts.Org = org
-	}
-	if env := helpers.GetChangedStringValueFlag("environment", flags); env != "" {
-		opts.Env = env
+	if namespace := helpers.GetChangedStringValueFlag("namespace", flags); namespace != "" {
+		opts.Namespace = namespace
 	}
 }
 
@@ -53,18 +49,10 @@ func (opts *entityOpts) administerQuestionnaire() error {
 			},
 		},
 		{
-			Name: "org",
+			Name: "namespace",
 			Prompt: &survey.Input{
-				Message: "Organization:",
-				Default: opts.Org,
-			},
-			Validate: survey.Required,
-		},
-		{
-			Name: "env",
-			Prompt: &survey.Input{
-				Message: "Environment:",
-				Default: opts.Env,
+				Message: "Namespace:",
+				Default: opts.Namespace,
 			},
 			Validate: survey.Required,
 		},
@@ -77,14 +65,12 @@ func (opts *entityOpts) copy(entity *types.Entity) {
 	entity.ID = opts.ID
 	entity.Class = opts.Class
 	entity.Subscriptions = helpers.SafeSplitCSV(opts.Subscriptions)
-	entity.Environment = opts.Env
-	entity.Organization = opts.Org
+	entity.Namespace = opts.Namespace
 }
 
 func (opts *entityOpts) withEntity(entity *types.Entity) {
 	opts.ID = entity.ID
 	opts.Class = entity.Class
 	opts.Subscriptions = strings.Join(entity.Subscriptions, ",")
-	opts.Env = entity.Environment
-	opts.Org = entity.Organization
+	opts.Namespace = entity.Namespace
 }

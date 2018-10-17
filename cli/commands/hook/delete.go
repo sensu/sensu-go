@@ -34,12 +34,8 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 
 			hook := &types.HookConfig{Name: name}
 
-			if org, _ := cmd.Flags().GetString("organization"); org != "" {
-				hook.Organization = org
-			}
-
-			if env, _ := cmd.Flags().GetString("environment"); env != "" {
-				hook.Environment = env
+			if namespace, _ := cmd.Flags().GetString("namespace"); namespace != "" {
+				hook.Namespace = namespace
 			}
 
 			err := cli.Client.DeleteHook(hook)

@@ -43,7 +43,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert.Nil(err)
 }
 
-func TestListCommandRunEClosureWithAllOrgs(t *testing.T) {
+func TestListCommandRunEClosureWithAllNamespaces(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewCLI()
 

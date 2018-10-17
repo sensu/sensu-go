@@ -61,8 +61,7 @@ func (r commonTranslator) Decode(components StandardComponents) Components {
 //
 
 func addMultitenantFields(c *StandardComponents, r types.MultitenantResource) {
-	c.organization = r.GetOrganization()
-	c.environment = r.GetEnvironment()
+	c.namespace = r.GetNamespace()
 }
 
 // newComponentsWith returns new instance of StandardComponents w/ name and ids
@@ -99,7 +98,7 @@ func standardEncoder(name string, fNames ...string) encoderFunc {
 		// Add string value of field to global id components
 		components := newComponentsWith(name, fVal.String())
 
-		// Add org & env to global id components
+		// Add namespace to global id components
 		if multiRecord, ok := record.(types.MultitenantResource); ok {
 			addMultitenantFields(&components, multiRecord)
 		}

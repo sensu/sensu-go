@@ -25,12 +25,12 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 				_ = cmd.Help()
 				return errors.New("invalid argument(s) received")
 			}
-			org := cli.Config.Organization()
+			namespace := cli.Config.Namespace()
 			flg := cmd.Flags()
-			if ok, err := flg.GetBool(flags.AllOrgs); err != nil {
+			if ok, err := flg.GetBool(flags.AllNamespaces); err != nil {
 				return err
 			} else if ok {
-				org = types.OrganizationTypeAll
+				namespace = types.NamespaceTypeAll
 			}
 			// Fetch silenceds from the API
 			sub, err := flg.GetString("subscription")
@@ -41,7 +41,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			results, err := cli.Client.ListSilenceds(org, sub, check)
+			results, err := cli.Client.ListSilenceds(namespace, sub, check)
 			if err != nil {
 				return err
 			}
@@ -57,7 +57,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 
 	flags := cmd.Flags()
 	helpers.AddFormatFlag(flags)
-	helpers.AddAllOrganization(flags)
+	helpers.AddAllNamespace(flags)
 	_ = flags.StringP("subscription", "s", "", "name of the silenced subscription")
 	_ = flags.StringP("check", "c", "", "name of the silenced check")
 
@@ -148,25 +148,14 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
-			Title:       "Organization",
+			Title:       "Namespace",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
 				silenced, ok := data.(types.Silenced)
 				if !ok {
 					return cli.TypeError
 				}
-				return silenced.Organization
-			},
-		},
-		{
-			Title:       "Environment",
-			ColumnStyle: table.PrimaryTextStyle,
-			CellTransformer: func(data interface{}) string {
-				silenced, ok := data.(types.Silenced)
-				if !ok {
-					return cli.TypeError
-				}
-				return silenced.Environment
+				return silenced.Namespace
 			},
 		},
 	})

@@ -69,9 +69,9 @@ func SeedInitialData(store store.Store) (err error) {
 		return err
 	}
 
-	// Default organization & environment
-	if err := setupDefaultOrganization(store); err != nil {
-		logger.WithError(err).Error("unable to setup 'default' organization")
+	// Default namespace & environment
+	if err := setupDefaultNamespace(store); err != nil {
+		logger.WithError(err).Error("unable to setup 'default' namespace")
 		return err
 	}
 
@@ -85,10 +85,9 @@ func setupAdminRole(store store.Store) error {
 		&types.Role{
 			Name: "admin",
 			Rules: []types.Rule{{
-				Type:         types.RuleTypeAll,
-				Environment:  types.EnvironmentTypeAll,
-				Organization: types.OrganizationTypeAll,
-				Permissions:  types.RuleAllPerms,
+				Type:        types.RuleTypeAll,
+				Namespace:   types.NamespaceTypeAll,
+				Permissions: types.RuleAllPerms,
 			}},
 		},
 	)
@@ -100,21 +99,19 @@ func setupReadOnlyRole(store store.Store) error {
 		&types.Role{
 			Name: "read-only",
 			Rules: []types.Rule{{
-				Type:         types.RuleTypeAll,
-				Environment:  types.EnvironmentTypeAll,
-				Organization: types.OrganizationTypeAll,
-				Permissions:  []string{types.RulePermRead},
+				Type:        types.RuleTypeAll,
+				Namespace:   types.NamespaceTypeAll,
+				Permissions: []string{types.RulePermRead},
 			}},
 		},
 	)
 }
 
-func setupDefaultOrganization(store store.Store) error {
-	return store.CreateOrganization(
+func setupDefaultNamespace(store store.Store) error {
+	return store.CreateNamespace(
 		context.Background(),
-		&types.Organization{
-			Name:        "default",
-			Description: "Default organization",
+		&types.Namespace{
+			Name: "default",
 		})
 }
 

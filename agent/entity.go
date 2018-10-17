@@ -13,10 +13,9 @@ func (a *Agent) getAgentEntity() *types.Entity {
 		e := &types.Entity{
 			Class:         types.EntityAgentClass,
 			Deregister:    a.config.Deregister,
-			Environment:   a.config.Environment,
 			ID:            a.config.AgentID,
 			LastSeen:      time.Now().Unix(),
-			Organization:  a.config.Organization,
+			Namespace:     a.config.Namespace,
 			Redact:        a.config.Redact,
 			Subscriptions: a.config.Subscriptions,
 			User:          a.config.User,
@@ -65,7 +64,6 @@ func (a *Agent) getEntities(event *types.Event) {
 	}
 
 	// From this point we make sure that the agent's entity is used in the event
-	// so we provide details like the environment and the organization to the
-	// backend
+	// so we provide details like the namespace to the backend
 	event.Entity = a.getAgentEntity()
 }
