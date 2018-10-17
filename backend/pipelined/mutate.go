@@ -138,7 +138,7 @@ func (p *Pipelined) pipeMutator(mutator *types.Mutator, event *types.Event) ([]b
 		logger.WithFields(fields).Debug("fetching assets for mutator")
 		// Fetch and install all assets required for handler execution
 		ctx := types.SetContextFromResource(context.Background(), mutator)
-		matchedAssets, err := asset.GetAssets(ctx, p.store, mutator.RuntimeAssets)
+		matchedAssets := asset.GetAssets(ctx, p.store, mutator.RuntimeAssets)
 
 		assets, err := asset.GetAll(p.assetGetter, matchedAssets)
 		if err != nil {

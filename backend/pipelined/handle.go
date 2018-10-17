@@ -198,7 +198,7 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 		logger.WithFields(fields).Debug("fetching assets for handler")
 		// Fetch and install all assets required for handler execution
 		ctx := types.SetContextFromResource(context.Background(), handler)
-		matchedAssets, err := asset.GetAssets(ctx, p.store, handler.RuntimeAssets)
+		matchedAssets := asset.GetAssets(ctx, p.store, handler.RuntimeAssets)
 
 		assets, err := asset.GetAll(p.assetGetter, matchedAssets)
 		if err != nil {

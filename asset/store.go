@@ -8,7 +8,7 @@ import (
 )
 
 // GetAssets retrieves all Assets from the store if contained in the list of asset names
-func GetAssets(ctx context.Context, store store.Store, assetList []string) ([]types.Asset, error) {
+func GetAssets(ctx context.Context, store store.Store, assetList []string) []types.Asset {
 	var assets []types.Asset
 
 	for _, assetName := range assetList {
@@ -22,5 +22,5 @@ func GetAssets(ctx context.Context, store store.Store, assetList []string) ([]ty
 		}
 	}
 
-	return assets, nil
+	return assets
 }
