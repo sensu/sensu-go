@@ -192,7 +192,7 @@ func GetDefaultAgentID() string {
 // An Agent receives and acts on messages from a Sensu Backend.
 type Agent struct {
 	api             *http.Server
-	assetManager    asset.Getter
+	assetGetter     asset.Getter
 	backendSelector BackendSelector
 	cancel          context.CancelFunc
 	config          *Config
@@ -222,10 +222,10 @@ func NewAgent(config *Config) *Agent {
 		cancel:          cancel,
 		context:         ctx,
 		config:          config,
+		executor:        command.NewExecutor(),
 		handler:         handler.NewMessageHandler(),
 		inProgress:      make(map[string]*types.CheckConfig),
 		inProgressMu:    &sync.Mutex{},
-		executor:        command.NewExecutor(),
 		stopping:        make(chan struct{}),
 		stopped:         make(chan struct{}),
 		sendq:           make(chan *transport.Message, 10),
@@ -445,8 +445,8 @@ func (a *Agent) buildTransportHeaderMap() http.Header {
 // 9. Start the API server, shutdown the agent if doing so fails.
 func (a *Agent) Run() error {
 	var err error
-	a.entity = a.getAgentEntity()
-	a.assetManager, err = a.startAssetManager()
+	assetManager := asset.NewManager(a.config.CacheDir, a.getAgentEntity(), a.stopping, a.wg)
+	a.assetGetter, err = assetManager.StartAssetManager()
 	if err != nil {
 		return err
 	}

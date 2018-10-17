@@ -46,6 +46,9 @@ message Handler {
 
   // Organization indicates to which org a handler belongs to
   string organization = 11;
+
+  // RuntimeAssets are a list of assets required to execute a handler.
+  repeated string runtime_assets = 12 [(gogoproto.jsontag) = "runtime_assets"];
 }
 
 // HandlerSocket contains configuration for a TCP or UDP handler.

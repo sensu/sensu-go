@@ -13,6 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added a debug log message for interval timer initial offset.
 - Added a privilege escalation test for RBAC.
 - Web ui allows publishing and unpublishing on checks page
+- Asset functionality for mutators and handlers.
 
 ### Removed
 - Staging resources and configurations have been removed from sensu-go.

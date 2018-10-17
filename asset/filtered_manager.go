@@ -3,6 +3,7 @@ package asset
 import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/eval"
+	"github.com/sirupsen/logrus"
 )
 
 // NewFilteredManager returns an asset Getter that filters assets based on the
@@ -25,15 +26,23 @@ type filteredManager struct {
 // Get fetches, verifies, and expands an asset, but only if it is not
 // filtered.
 func (f *filteredManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
+	fields := logrus.Fields{
+		"entity":  f.entity.ID,
+		"asset":   asset.Name,
+		"filters": asset.Filters,
+	}
 	filtered, err := f.isFiltered(asset)
 	if err != nil {
+		logger.WithFields(fields).WithError(err).Error("error filtering entities from asset")
 		return nil, err
 	}
 
 	if filtered {
+		logger.WithFields(fields).Debug("entity filtered, not installing asset")
 		return nil, nil
 	}
 
+	logger.WithFields(fields).Debug("entity not filtered, installing asset")
 	return f.getter.Get(asset)
 }
 
