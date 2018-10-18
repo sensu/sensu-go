@@ -18,12 +18,9 @@ type RequestInfo struct{}
 //
 // The general, expected format of a path one of the following:
 // - /apis/{group}/{version}/namespaces, to create or list namespaces
-// - /apis/{group}/{version}/namespaces/{namespace}, to retrieve, update or
-//   delete namespace {namespace}
-// - /apis/{group}/{version}/namespaces/{namespace}/{kind}, to create or list
-//   objects of kind {kind} in namespace {namespace}
-// - /apis/{group}/{version}/namespaces/{namespace}/{kind}/{name}, to retrieve,
-//   update or delete object {name} of kind {kind} in namespace {namespace}
+// - /apis/{group}/{version}/namespaces/{name}
+// - /apis/{group}/{version}/namespaces/{namespace}/{kind}
+// - /apis/{group}/{version}/namespaces/{namespace}/{kind}/{name}
 //
 // This middleware tries to fill in as many fields as it can in the
 // types.RequestInfo struct added to the context, but there is no guarantee of
