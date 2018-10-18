@@ -39,12 +39,24 @@ func TestFilteredManagerCallsGetter(t *testing.T) {
 	assert.True(t, mockGetter.getCalled)
 }
 
-// FilteredManager should not call underlying Getter on filtered asset.
+// FilteredManager should call underlying Getter on filtered asset.
 func TestFilteredManagerFilteredAsset(t *testing.T) {
 	mockGetter, entity, filteredManager := NewTestFilteredManager()
 
 	fixtureAsset := types.FixtureAsset("test-asset")
 	fixtureAsset.Filters = []string{fmt.Sprintf("entity.ID == '%s'", entity.ID)}
+	actualAsset, err := filteredManager.Get(fixtureAsset)
+	assert.NoError(t, err)
+	assert.Equal(t, mockGetter.asset, actualAsset)
+	assert.True(t, mockGetter.getCalled)
+}
+
+// FilteredManager should not call underlying Getter on unfiltered asset.
+func TestFilteredManagerUnfilteredAsset(t *testing.T) {
+	mockGetter, _, filteredManager := NewTestFilteredManager()
+
+	fixtureAsset := types.FixtureAsset("test-asset")
+	fixtureAsset.Filters = []string{"entity.ID == 'foo'"}
 	actualAsset, err := filteredManager.Get(fixtureAsset)
 	assert.NoError(t, err)
 	assert.Nil(t, actualAsset)
@@ -74,6 +86,12 @@ func TestIsFiltered(t *testing.T) {
 
 	// filtered is true, all filters match
 	fixtureAsset.Filters = []string{fmt.Sprintf("entity.ID == '%s'", entity.ID), "entity.Class == 'host'"}
+	filtered, err = filteredManager.isFiltered(fixtureAsset)
+	assert.NoError(t, err)
+	assert.True(t, filtered)
+
+	// filtered is true, filters empty
+	fixtureAsset.Filters = []string{}
 	filtered, err = filteredManager.isFiltered(fixtureAsset)
 	assert.NoError(t, err)
 	assert.True(t, filtered)

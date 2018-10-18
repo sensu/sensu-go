@@ -23,8 +23,7 @@ type filteredManager struct {
 	getter Getter
 }
 
-// Get fetches, verifies, and expands an asset, but only if it is not
-// filtered.
+// Get fetches, verifies, and expands an asset, but only if it is filtered.
 func (f *filteredManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 	fields := logrus.Fields{
 		"entity":  f.entity.ID,
@@ -37,12 +36,12 @@ func (f *filteredManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 		return nil, err
 	}
 
-	if filtered {
-		logger.WithFields(fields).Debug("entity filtered, not installing asset")
+	if !filtered {
+		logger.WithFields(fields).Debug("entity not filtered, not installing asset")
 		return nil, nil
 	}
 
-	logger.WithFields(fields).Debug("entity not filtered, installing asset")
+	logger.WithFields(fields).Debug("entity filtered, installing asset")
 	return f.getter.Get(asset)
 }
 
@@ -50,7 +49,7 @@ func (f *filteredManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 // them match the current entity.
 func (f *filteredManager) isFiltered(asset *types.Asset) (bool, error) {
 	if len(asset.Filters) == 0 {
-		return false, nil
+		return true, nil
 	}
 
 	params := make(map[string]interface{}, 1)
@@ -58,19 +57,8 @@ func (f *filteredManager) isFiltered(asset *types.Asset) (bool, error) {
 
 	for _, filter := range asset.Filters {
 		result, err := eval.EvaluatePredicate(filter, params)
-		if err != nil {
-			switch err.(type) {
-			case eval.SyntaxError, eval.TypeError:
-				return result, err
-			default:
-				// Other errors during execution are likely due to missing
-				// attrs, simply continue in this case.
-				continue
-			}
-		}
-
-		if !result {
-			return result, err
+		if err != nil || !result {
+			return false, err
 		}
 	}
 
