@@ -21,7 +21,7 @@ func main() {
 	if err := freezeAPI(*fromPath, *toPath); err != nil {
 		log.Fatal(err)
 	}
-	successMessage := fmt.Sprintf("Froze API to %q. Now run: 'go generate github.com/sensu/sensu-go/runtime/registry'.")
+	successMessage := fmt.Sprintf("Froze API to %q. Now run: 'go generate github.com/sensu/sensu-go/runtime/registry'.", *toPath)
 	fmt.Fprintln(flag.CommandLine.Output(), successMessage)
 }
 
