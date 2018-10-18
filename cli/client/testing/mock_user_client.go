@@ -56,6 +56,12 @@ func (c *MockClient) RemoveRoleFromUser(username, role string) error {
 	return args.Error(0)
 }
 
+// SetGroupsForUser for use with mock lib
+func (c *MockClient) SetGroupsForUser(username string, groups []string) error {
+	args := c.Called(username, groups)
+	return args.Error(0)
+}
+
 // UpdatePassword for use with mock lib
 func (c *MockClient) UpdatePassword(username, pwd string) error {
 	args := c.Called(username, pwd)

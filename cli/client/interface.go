@@ -148,6 +148,7 @@ type UserAPIClient interface {
 	RemoveGroupFromUser(string, string) error
 	RemoveAllGroupsFromUser(string) error
 	RemoveRoleFromUser(string, string) error
+	SetGroupsForUser(string, []string) error
 	UpdatePassword(string, string) error
 }
 

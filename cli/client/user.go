@@ -144,6 +144,28 @@ func (client *RestClient) RemoveRoleFromUser(username, role string) error {
 	return nil
 }
 
+// SetGroupsForUser sets the groups for "username" to "groups".
+func (client *RestClient) SetGroupsForUser(username string, groups []string) error {
+	username = url.PathEscape(username)
+
+	// Note: Instead of the implementation below, we can have the backend
+	// support receiving a list of groups on /rbac/users/{username}/groups
+
+	// Start by removing all the existing groups
+	if err := client.RemoveAllGroupsFromUser(username); err != nil {
+		return err
+	}
+
+	// Then add each group in the set one by one
+	for _, group := range groups {
+		if err := client.AddGroupToUser(username, url.PathEscape(group)); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // UpdatePassword updates password of given user on configured Sensu instance
 func (client *RestClient) UpdatePassword(username, pwd string) error {
 	bytes, err := json.Marshal(map[string]string{"password": pwd})
