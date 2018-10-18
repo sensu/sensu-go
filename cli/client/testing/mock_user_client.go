@@ -38,6 +38,12 @@ func (c *MockClient) ReinstateUser(uname string) error {
 	return args.Error(0)
 }
 
+// RemoveAllGroupsFromUser for use with mock lib
+func (c *MockClient) RemoveAllGroupsFromUser(username string) error {
+	args := c.Called(username)
+	return args.Error(0)
+}
+
 // RemoveGroupFromUser for use with mock lib
 func (c *MockClient) RemoveGroupFromUser(username, group string) error {
 	args := c.Called(username, group)

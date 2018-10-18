@@ -258,6 +258,14 @@ func (a UserController) RemoveGroup(ctx context.Context, username string, group 
 	})
 }
 
+// RemoveAllGroups removes all groups from a given user
+func (a UserController) RemoveAllGroups(ctx context.Context, username string) error {
+	return a.findAndUpdateUser(ctx, username, func(user *types.User) error {
+		user.Groups = []string{}
+		return nil
+	})
+}
+
 // AddRole adds a given role to a user
 func (a UserController) AddRole(ctx context.Context, username string, role string) error {
 	return a.findAndUpdateUser(ctx, username, func(user *types.User) error {

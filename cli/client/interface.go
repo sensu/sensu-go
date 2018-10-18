@@ -146,6 +146,7 @@ type UserAPIClient interface {
 	ListUsers() ([]types.User, error)
 	ReinstateUser(string) error
 	RemoveGroupFromUser(string, string) error
+	RemoveAllGroupsFromUser(string) error
 	RemoveRoleFromUser(string, string) error
 	UpdatePassword(string, string) error
 }

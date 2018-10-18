@@ -33,6 +33,7 @@ func (r *UsersRouter) Mount(parent *mux.Router) {
 
 	// Custom
 	routes.Path("{id}/reinstate", r.reinstate).Methods(http.MethodPut)
+	routes.Path("{id}/groups", r.removeAllGroups).Methods(http.MethodDelete)
 	routes.Path("{id}/groups/{group}", r.addGroup).Methods(http.MethodPut)
 	routes.Path("{id}/groups/{group}", r.removeGroup).Methods(http.MethodDelete)
 	routes.Path("{id}/roles/{role}", r.addRole).Methods(http.MethodPut)
@@ -158,6 +159,17 @@ func (r *UsersRouter) removeGroup(req *http.Request) (interface{}, error) {
 	}
 
 	err = r.controller.RemoveGroup(req.Context(), id, group)
+	return nil, err
+}
+
+func (r *UsersRouter) removeAllGroups(req *http.Request) (interface{}, error) {
+	params := mux.Vars(req)
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.controller.RemoveAllGroups(req.Context(), id)
 	return nil, err
 }
 

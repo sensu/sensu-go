@@ -113,6 +113,22 @@ func (client *RestClient) RemoveGroupFromUser(username, group string) error {
 	return nil
 }
 
+// RemoveGroupsFromUser removes all the groups for "username".
+func (client *RestClient) RemoveAllGroupsFromUser(username string) error {
+	username = url.PathEscape(username)
+
+	res, err := client.R().Delete("/rbac/users/" + username + "/groups")
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return UnmarshalError(res)
+	}
+
+	return nil
+}
+
 // RemoveRoleFromUser removes role from given user on configured Sensu instance
 func (client *RestClient) RemoveRoleFromUser(username, role string) error {
 	username, role = url.PathEscape(username), url.PathEscape(role)

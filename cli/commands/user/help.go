@@ -21,6 +21,7 @@ func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 		ListCommand(cli),
 		ReinstateCommand(cli),
 		RemoveGroupCommand(cli),
+		RemoveAllGroupsCommand(cli),
 		RemoveRoleCommand(cli),
 		SetPasswordCommand(cli),
 	)
