@@ -45,6 +45,7 @@ jobs:
 
       # *Now* get to initial linting
       - run: GOFMT=/usr/local/go/bin/gofmt ./build/ci/gofmt-linting-check.sh
+      - run: make
 
       # Post packages to S3
       - run: $SENSU_RELEASE_REPO/collect-circle-log.sh $CIRCLE_WORKING_DIRECTORY/out log-build.txt
