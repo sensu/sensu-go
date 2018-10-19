@@ -38,7 +38,7 @@ Follow these steps to create a public API for sensu-go.
 
 1. Create one or more datatypes that embed `meta.TypeMeta` and `meta.ObjectMeta`
 in the `internal/apis` package.
-2. Run the `go-to-protobuf` tool. This needs to be formalized somewhat, but see
+2. Run the `./hack/update-protobuf.sh` tool. This needs to be formalized somewhat, but see
 the `hack` directory for more information. This tool will generate a `.proto`
 file and compile it to Go source code.
 3. Implement any business logic required in the API.
