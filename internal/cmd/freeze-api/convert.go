@@ -50,17 +50,27 @@ import (
 	"{{ .ImportPackage }}"
 )
 {{ $toPackage := .ToPackage }}{{ range $idx, $t := .Types }}
-// Convert converts a *{{ $t.TypeName }} to a *{{ $toPackage }}.{{ $t.TypeName }}. It panics if the
-// to parameter is not a *{{ $t.TypeName }}.
-func (r *{{ $t.TypeName }}) Convert(to interface{}) {
+// ConvertTo converts a *{{ $t.TypeName }} to a *{{ $toPackage }}.{{ $t.TypeName }}.
+// It panics if the to parameter is not a *{{ $toPackage }}.{{ $t.TypeName }}.
+func (r *{{ $t.TypeName }}) ConvertTo(to interface{}) {
 	ptr := to.(*{{ $toPackage }}.{{ $t.TypeName }})
 	convert_{{ $t.TypeName }}_To_{{ $toPackage }}_{{ $t.TypeName }}(r, ptr)
 }
 
 var convert_{{ $t.TypeName }}_To_{{ $toPackage }}_{{ $t.TypeName}} = func(from *{{ $t.TypeName }}, to *{{ $toPackage}}.{{ $t.TypeName }}) {
-	{{ if $t.Simple }} *to = *(*{{ $toPackage }}.{{ $t.TypeName }})(unsafe.Pointer(from))
-	{{ else }}panic("not supported yet")
-{{end }}}
+	{{ if $t.Simple }} *to = *(*{{ $toPackage }}.{{ $t.TypeName }})(unsafe.Pointer(from)){{ else }}panic("complex conversion not supported yet"){{ end }}
+}
+
+// ConvertFrom converts the receiver to a *{{ $toPackage }}.{{ $t.TypeName }}.
+// It panics if the from parameter is not a *{{ $toPackage }}.{{ $t.TypeName }}.
+func (r *{{ $t.TypeName}}) ConvertFrom(from interface{}) {
+	ptr := from.(*{{ $toPackage }}.{{ $t.TypeName }})
+	convert_{{ $toPackage }}_{{ $t.TypeName}}_To_{{ $t.TypeName}}(ptr, r)
+}
+
+var convert_{{ $toPackage }}_{{ $t.TypeName}}_To_{{ $t.TypeName}} = func(from *{{ $toPackage }}.{{ $t.TypeName }}, to *{{ $t.TypeName }}) {
+	{{ if $t.Simple }} *to = *(*{{ $t.TypeName }})(unsafe.Pointer(from)){{ else }}panic("complex conversion not supported yet"){{end}}
+}
 {{ end }}
 `
 
