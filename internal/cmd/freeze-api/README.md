@@ -1,24 +1,39 @@
-freeze-api
-==========
-
-Introduction
+`freeze-api`
 ------------
+
+### Introduction
 The `freeze-api` tool is the official way to create public APIs for sensu-go.
 Public APIs are created from internal APIs. Internal APIs are housed in
 `github.com/sensu/sensu-go/internal/apis`. When the development team decides it
 is time for an internal API to be publicized, then a public, versioned API will
 be created in `github.com/sensu/sensu-go/apis`.
 
-What does the `freeze-api` tool actually do?
---------------------------------------------
+
+### Usage
+```
+$ freeze-api -h
+Usage of freeze-api:
+  -from string
+    	Package to freeze
+  -to string
+    	Versioned package to create
+```
+
+#### Example Usage
+```
+freeze-api -from github.com/sensu/sensu-go/internal/apis/rbac -to github.com/sensu/sensu-go/apis/rbac/v1
+```
+
+
+### What does the `freeze-api` tool actually do?
 The `freeze-api` tool has two key responsibilities.
 
 1. Create the versioned package hierarchy based on the internal package hierarchy.
 2. Generate conversion functions for the public API data types. This will allow
 the data types to be converted to internal data types.
 
-How can developers create a public sensu-go API?
-------------------------------------------------
+
+### How can developers create a public sensu-go API?
 Follow these steps to create a public API for sensu-go.
 
 1. Create one or more datatypes that embed `meta.TypeMeta` and `meta.ObjectMeta`
@@ -35,8 +50,8 @@ existing public APIs.
 register the newly created versioned types. (In fact, it will register all
 of the types in the project that have embedded `meta.TypeMeta`.)
 
-What are converters?
---------------------
+
+### What are converters?
 Converters are functions that convert from a published API type to an internal
 API type. They are patchable; that is, developers can redefine how types should
 be converted. When making changes to an existing internal API, it may be
@@ -79,8 +94,8 @@ function at runtime instead of the old one. Developers should take care to
 not perform overly expensive operations in conversions. Use reflection
 sparingly, and don't do round-trip marshaling.
 
-Conclusion
-----------
+
+### Conclusion
 The `freeze-api` tool, and the new API hierarchy, are being introduced in an
 effort to standardize the package layout of sensu-go, while providing a way
 to develop new APIs in a backwards-compatible manner. While developers should
