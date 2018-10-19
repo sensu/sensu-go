@@ -7,5 +7,6 @@ type RequestInfo struct {
 	Namespace    string
 	Resource     string
 	ResourceName string
+	User         User
 	Verb         string
 }
