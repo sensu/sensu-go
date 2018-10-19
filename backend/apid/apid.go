@@ -188,6 +188,7 @@ func registerRestrictedResources(router *mux.Router, store store.Store, getter t
 			middlewares.Authorization{Store: store},
 			middlewares.LimitRequest{},
 			middlewares.Edition{Name: version.Edition},
+			middlewares.RequestInfo{},
 		),
 		routers.NewAssetRouter(store),
 		routers.NewChecksRouter(actions.NewCheckController(store, getter)),
