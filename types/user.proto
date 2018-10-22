@@ -16,6 +16,6 @@ option (gogoproto.testgen_all) = true;
 message User {
 	string username = 1;
 	string password = 2;
-	bool disabled = 4 [(gogoproto.jsontag) = "disabled"];
 	repeated string groups = 3;
+	bool disabled = 4 [(gogoproto.jsontag) = "disabled"];
 }

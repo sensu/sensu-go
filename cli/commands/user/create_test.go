@@ -65,6 +65,7 @@ func TestListCommandRunEClosureWithRoles(t *testing.T) {
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("password", "b0b"))
 	require.NoError(t, cmd.Flags().Set("roles", "     meowmix , marxist   "))
+	require.NoError(t, cmd.Flags().Set("groups", "     wheel , read-only   "))
 	require.NoError(t, cmd.Flags().Set("admin", "t"))
 
 	out, err := test.RunCmd(cmd, []string{"bob"})

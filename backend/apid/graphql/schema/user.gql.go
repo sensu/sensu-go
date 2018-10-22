@@ -20,6 +20,12 @@ type UserRolesFieldResolver interface {
 	Roles(p graphql.ResolveParams) (interface{}, error)
 }
 
+// UserGroupsFieldResolver implement to resolve requests for the User's groups field.
+type UserGroupsFieldResolver interface {
+	// Groups implements response to request for groups field.
+	Groups(p graphql.ResolveParams) ([]string, error)
+}
+
 // UserDisabledFieldResolver implement to resolve requests for the User's disabled field.
 type UserDisabledFieldResolver interface {
 	// Disabled implements response to request for disabled field.
@@ -96,6 +102,7 @@ type UserHasPasswordFieldResolver interface {
 type UserFieldResolvers interface {
 	UserUsernameFieldResolver
 	UserRolesFieldResolver
+	UserGroupsFieldResolver
 	UserDisabledFieldResolver
 	UserHasPasswordFieldResolver
 }
@@ -166,6 +173,19 @@ func (_ UserAliases) Roles(p graphql.ResolveParams) (interface{}, error) {
 	return val, err
 }
 
+// Groups implements response to request for 'groups' field.
+func (_ UserAliases) Groups(p graphql.ResolveParams) ([]string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.([]string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'groups'")
+	}
+	return ret, err
+}
+
 // Disabled implements response to request for 'disabled' field.
 func (_ UserAliases) Disabled(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -213,6 +233,13 @@ func _ObjTypeUserRolesHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeUserGroupsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(UserGroupsFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Groups(frp)
+	}
+}
+
 func _ObjTypeUserDisabledHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(UserDisabledFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -237,6 +264,13 @@ func _ObjectTypeUserConfigFn() graphql1.ObjectConfig {
 				Description:       "self descriptive",
 				Name:              "disabled",
 				Type:              graphql1.NewNonNull(graphql1.Boolean),
+			},
+			"groups": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "groups",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql1.String))),
 			},
 			"hasPassword": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -278,6 +312,7 @@ var _ObjectTypeUserDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeUserConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"disabled":    _ObjTypeUserDisabledHandler,
+		"groups":      _ObjTypeUserGroupsHandler,
 		"hasPassword": _ObjTypeUserHasPasswordHandler,
 		"roles":       _ObjTypeUserRolesHandler,
 		"username":    _ObjTypeUserUsernameHandler,
