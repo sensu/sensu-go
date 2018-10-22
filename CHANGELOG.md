@@ -8,12 +8,16 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+- Asset functionality for mutators and handlers.
+
+## [2.0.0-beta.6-2] - 2018-10-22
+
+### Added
 - Add windows/386 to binary gcs releases
 - TLS authentication and encryption for etcd client and peer communication.
 - Added a debug log message for interval timer initial offset.
 - Added a privilege escalation test for RBAC.
 - Web ui allows publishing and unpublishing on checks page
-- Asset functionality for mutators and handlers.
 
 ### Removed
 - Staging resources and configurations have been removed from sensu-go.
