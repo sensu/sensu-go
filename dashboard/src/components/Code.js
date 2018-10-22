@@ -20,27 +20,32 @@ const styles = theme => ({
         ? theme.palette.secondary.light
         : theme.palette.secondary.dark,
   },
-  rightMargin: {
-    whiteSpace: "pre-wrap",
-    marginRight: "24px",
+  preWrap: { whiteSpace: "pre-wrap" },
+  block: {
+    // because this seems to be layered with Monospaced
+    // the background colours overlap otherwise
+    backgroundColor: "unset",
   },
 });
 
 class Code extends React.PureComponent {
   static propTypes = {
     classes: PropTypes.object.isRequired,
-    dictionaryMargin: PropTypes.bool,
+    block: PropTypes.bool,
+    preWrap: PropTypes.bool,
   };
 
   static defaultProps = {
-    dictionaryMargin: false,
+    block: false,
+    preWrap: false,
   };
 
   render() {
-    const { classes, dictionaryMargin, ...props } = this.props;
-    const className = dictionaryMargin
-      ? classes.root
-      : classNames(classes.root, classes.rightMargin);
+    const { classes, block, preWrap, ...props } = this.props;
+    const className = classNames(classes.root, {
+      [classes.block]: block,
+      [classes.preWrap]: preWrap,
+    });
     return <code {...props} className={className} />;
   }
 }

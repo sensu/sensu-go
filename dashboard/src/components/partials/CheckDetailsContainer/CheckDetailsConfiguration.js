@@ -137,8 +137,8 @@ class CheckDetailsConfiguration extends React.PureComponent {
 
                 <DictionaryEntry>
                   <DictionaryKey>Command</DictionaryKey>
-                  <DictionaryValue>
-                    <Code>{check.command}</Code>
+                  <DictionaryValue explicitRightMargin>
+                    <Code preWrap>{check.command}</Code>
                   </DictionaryValue>
                 </DictionaryEntry>
 
@@ -250,7 +250,9 @@ class CheckDetailsConfiguration extends React.PureComponent {
                   <DictionaryValue>
                     {check.envVars.length > 0 ? (
                       <Monospaced highlight background>
-                        <Code dictionaryMargin>{check.envVars.join("\n")}</Code>
+                        <Code block preWrap>
+                          {check.envVars.join("\n")}
+                        </Code>
                       </Monospaced>
                     ) : (
                       "None"

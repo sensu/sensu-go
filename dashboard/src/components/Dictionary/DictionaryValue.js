@@ -13,6 +13,7 @@ const styles = theme => ({
   limit: {
     maxWidth: "60%",
   },
+  explicitRightMargin: { marginRight: "24px" },
 });
 
 class DictionaryValue extends React.Component {
@@ -21,11 +22,13 @@ class DictionaryValue extends React.Component {
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,
     constrain: PropTypes.bool,
+    explicitRightMargin: PropTypes.bool,
   };
 
   static defaultProps = {
     className: null,
     constrain: false,
+    explicitRightMargin: false,
   };
 
   render() {
@@ -34,10 +37,12 @@ class DictionaryValue extends React.Component {
       classes,
       children,
       constrain,
+      explicitRightMargin,
       ...props
     } = this.props;
     const className = classnames(classes.root, classNameProp, {
       [classes.limit]: constrain,
+      [classes.explicitRightMargin]: explicitRightMargin,
     });
 
     return (
