@@ -186,6 +186,7 @@ func registerRestrictedResources(router *mux.Router, store store.Store, storev2 
 	mountRouters(
 		NewSubrouter(
 			router.NewRoute(),
+			middlewares.RequestInfo{},
 			middlewares.SimpleLogger{},
 			middlewares.Namespace{Store: store},
 			middlewares.Authentication{},
@@ -193,7 +194,6 @@ func registerRestrictedResources(router *mux.Router, store store.Store, storev2 
 			middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: storev2}},
 			middlewares.LimitRequest{},
 			middlewares.Edition{Name: version.Edition},
-			middlewares.RequestInfo{},
 		),
 		routers.NewAssetRouter(store),
 		routers.NewChecksRouter(actions.NewCheckController(store, getter)),
@@ -210,6 +210,7 @@ func registerRestrictedResources(router *mux.Router, store store.Store, storev2 
 		routers.NewUsersRouter(store),
 		routers.NewExtensionsRouter(store),
 		routers.NewClusterRouter(actions.NewClusterController(cluster)),
+		routers.NewRBACRouter(storev2),
 	)
 }
 

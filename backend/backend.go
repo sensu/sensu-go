@@ -2,6 +2,7 @@ package backend
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -107,20 +108,20 @@ func Initialize(config *Config) (*Backend, error) {
 		return nil, err
 	}
 
+	// Initialize the v2 store
+	storev2 := etcdstorev2.NewStorage(client, codec.UniversalCodec())
+
 	// Initialize the store, which lives on top of etcd
 	logger.Debug("Initializing store...")
 	store := etcdstore.NewStore(client, config.EtcdName)
-	if err = seeds.SeedInitialData(store); err != nil {
-		return nil, fmt.Errorf("error initializing the store: %s", err)
+	if err = seeds.SeedInitialData(store, storev2); err != nil {
+		return nil, errors.New("error initializing the store: " + err.Error())
 	}
 	logger.Debug("Done initializing store")
 
 	logger.Debug("Registering backend...")
 	backendID := etcd.NewBackendIDGetter(b.ctx, client)
 	logger.Debug("Done registering backend.")
-
-	// Initialize the v2 store
-	storev2 := etcdstorev2.NewStorage(client, codec.UniversalCodec())
 
 	// Initialize an etcd getter
 	queueGetter := queue.EtcdGetter{Client: client, BackendIDGetter: backendID}
