@@ -29,6 +29,8 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/rpc"
+	"github.com/sensu/sensu-go/runtime/codec"
+	etcdstorev2 "github.com/sensu/sensu-go/storage/etcd"
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/types"
 )
@@ -117,6 +119,9 @@ func Initialize(config *Config) (*Backend, error) {
 	backendID := etcd.NewBackendIDGetter(b.ctx, client)
 	logger.Debug("Done registering backend.")
 
+	// Initialize the v2 store
+	storev2 := etcdstorev2.NewStorage(client, codec.UniversalCodec())
+
 	// Initialize an etcd getter
 	queueGetter := queue.EtcdGetter{Client: client, BackendIDGetter: backendID}
 
@@ -203,6 +208,7 @@ func Initialize(config *Config) (*Backend, error) {
 		Port:        config.APIPort,
 		Bus:         bus,
 		Store:       store,
+		Storev2:     storev2,
 		QueueGetter: queueGetter,
 		TLS:         config.TLS,
 		Cluster:     clientv3.NewCluster(client),

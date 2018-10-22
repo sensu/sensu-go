@@ -44,7 +44,8 @@ func TestRefreshTokenNoRefreshToken(t *testing.T) {
 	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
-	_, tokenString, _ := jwt.AccessToken("foo")
+	user := &types.User{Username: "foo"}
+	_, tokenString, _ := jwt.AccessToken(user)
 
 	req, _ := http.NewRequest(http.MethodPost, server.URL, nil)
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
@@ -66,7 +67,8 @@ func TestRefreshTokenInvalidRefreshToken(t *testing.T) {
 	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
-	_, tokenString, _ := jwt.AccessToken("foo")
+	user := &types.User{Username: "foo"}
+	_, tokenString, _ := jwt.AccessToken(user)
 	refreshTokenString := "foobar"
 	body := &types.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
@@ -84,8 +86,11 @@ func TestRefreshTokenMismatchingSub(t *testing.T) {
 	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
-	_, tokenString, _ := jwt.AccessToken("foo")
-	_, refreshTokenString, _ := jwt.RefreshToken("bar")
+	user1 := &types.User{Username: "foo"}
+	user2 := &types.User{Username: "bar"}
+	_, tokenString, _ := jwt.AccessToken(user1)
+	_, refreshTokenString, _ := jwt.RefreshToken(user2)
+
 	body := &types.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
 
@@ -117,8 +122,9 @@ func TestRefreshTokenSuccess(t *testing.T) {
 	))
 	defer server.Close()
 
-	_, tokenString, _ := jwt.AccessToken("foo")
-	_, refreshTokenString, _ := jwt.RefreshToken("foo")
+	user := &types.User{Username: "foo"}
+	_, tokenString, _ := jwt.AccessToken(user)
+	_, refreshTokenString, _ := jwt.RefreshToken(user)
 	body := &types.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
 

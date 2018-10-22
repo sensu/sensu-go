@@ -5,23 +5,23 @@ import (
 	"path"
 
 	"github.com/sensu/sensu-go/internal/apis/rbac"
-	"github.com/sensu/sensu-go/storage"
+	storev2 "github.com/sensu/sensu-go/storage"
 	"github.com/sensu/sensu-go/types"
 )
 
 // Authorizer implements an authorizer interface using Role-Based Acccess
 // Control (RBAC)
 type Authorizer struct {
-	store storage.Store
+	Store storev2.Store
 }
 
 // Authorize determines if a request is authorized based on its attributes
-func (a *Authorizer) Authorize(reqInfo types.RequestInfo) (bool, error) {
+func (a *Authorizer) Authorize(reqInfo *types.RequestInfo) (bool, error) {
 	ctx := context.Background()
 
 	// Get cluster roles binding
 	clusterRoleBindings := []rbac.ClusterRoleBinding{}
-	if err := a.store.List(ctx, "clusterrolebindings", &clusterRoleBindings); err != nil {
+	if err := a.Store.List(ctx, "clusterrolebindings", &clusterRoleBindings); err != nil {
 		return false, err
 	}
 
@@ -35,7 +35,7 @@ func (a *Authorizer) Authorize(reqInfo types.RequestInfo) (bool, error) {
 		// Get the cluster role that matched our user
 		clusterRole := &rbac.ClusterRole{}
 		key := path.Join("clusterroles", clusterRoleBinding.RoleRef.Name)
-		if err := a.store.Get(ctx, key, clusterRole); err != nil {
+		if err := a.Store.Get(ctx, key, clusterRole); err != nil {
 			return false, err
 		}
 
@@ -54,7 +54,7 @@ func (a *Authorizer) Authorize(reqInfo types.RequestInfo) (bool, error) {
 		// Get roles binding
 		roleBindings := []rbac.RoleBinding{}
 		key := path.Join("rolebindings", reqInfo.Namespace)
-		if err := a.store.List(ctx, key, &roleBindings); err != nil {
+		if err := a.Store.List(ctx, key, &roleBindings); err != nil {
 			return false, err
 		}
 
@@ -67,7 +67,7 @@ func (a *Authorizer) Authorize(reqInfo types.RequestInfo) (bool, error) {
 			// Get the role that matched our user
 			role := &rbac.Role{}
 			key := path.Join("roles", reqInfo.Namespace, roleBinding.RoleRef.Name)
-			if err := a.store.Get(ctx, key, role); err != nil {
+			if err := a.Store.Get(ctx, key, role); err != nil {
 				return false, err
 			}
 
@@ -107,7 +107,7 @@ func matchesUser(user types.User, subjects []rbac.Subject) bool {
 
 // ruleAllows returns whether the specified rule allows the request based on its
 // attributes
-func ruleAllows(reqInfo types.RequestInfo, rule rbac.Rule) bool {
+func ruleAllows(reqInfo *types.RequestInfo, rule rbac.Rule) bool {
 	return rule.VerbMatches(reqInfo.Verb) &&
 		rule.APIGroupMatches(reqInfo.APIGroup) &&
 		rule.ResourceMatches(reqInfo.Resource) &&

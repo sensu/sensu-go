@@ -53,7 +53,7 @@ func BasicAuthentication(next http.Handler, store AuthStore) http.Handler {
 		}
 
 		// Authenticate against the provider
-		_, err := store.AuthenticateUser(r.Context(), username, password)
+		user, err := store.AuthenticateUser(r.Context(), username, password)
 		if err != nil {
 			logger.WithField(
 				"user", username,
@@ -62,7 +62,7 @@ func BasicAuthentication(next http.Handler, store AuthStore) http.Handler {
 			return
 		}
 		// TODO: eventually break out authroization details in context from jwt claims; in this method they are too tightly bound
-		claims, _ := jwt.NewClaims(username)
+		claims, _ := jwt.NewClaims(user)
 		ctx := jwt.SetClaimsIntoContext(r, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
