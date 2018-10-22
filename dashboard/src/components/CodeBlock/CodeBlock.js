@@ -30,9 +30,10 @@ const styles = theme => ({
     // Attempt to scale accordingly.
     fontSize: "0.8125rem", // TODO: Scale given fontSize from theme?
   },
+  wrap: { whiteSpace: "pre-wrap" },
 });
 
-class Monospaced extends React.Component {
+class CodeBlock extends React.Component {
   static propTypes = {
     background: PropTypes.bool,
     classes: PropTypes.object.isRequired,
@@ -69,10 +70,10 @@ class Monospaced extends React.Component {
     });
     return (
       <Typography className={className} {...props}>
-        {children}
+        <code className={classes.wrap}>{children}</code>
       </Typography>
     );
   }
 }
 
-export default withStyles(styles)(Monospaced);
+export default withStyles(styles)(CodeBlock);

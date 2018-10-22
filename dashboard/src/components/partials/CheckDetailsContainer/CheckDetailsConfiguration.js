@@ -16,7 +16,7 @@ import Grid from "@material-ui/core/Grid";
 import List from "@material-ui/core/List";
 import ListItem, { ListItemTitle } from "/components/DetailedListItem";
 import Maybe from "/components/Maybe";
-import Monospaced from "/components/Monospaced";
+import CodeBlock from "/components/CodeBlock";
 import SilencedIcon from "/icons/Silence";
 import Typography from "@material-ui/core/Typography";
 import Tooltip from "@material-ui/core/Tooltip";
@@ -138,7 +138,7 @@ class CheckDetailsConfiguration extends React.PureComponent {
                 <DictionaryEntry>
                   <DictionaryKey>Command</DictionaryKey>
                   <DictionaryValue explicitRightMargin>
-                    <Code preWrap>{check.command}</Code>
+                    <Code>{check.command}</Code>
                   </DictionaryValue>
                 </DictionaryEntry>
 
@@ -249,11 +249,9 @@ class CheckDetailsConfiguration extends React.PureComponent {
                   <DictionaryKey>ENV Vars</DictionaryKey>
                   <DictionaryValue>
                     {check.envVars.length > 0 ? (
-                      <Monospaced highlight background>
-                        <Code block preWrap>
-                          {check.envVars.join("\n")}
-                        </Code>
-                      </Monospaced>
+                      <CodeBlock highlight background>
+                        {check.envVars.join("\n")}
+                      </CodeBlock>
                     ) : (
                       "None"
                     )}
@@ -326,7 +324,7 @@ class CheckDetailsConfiguration extends React.PureComponent {
         {Object.keys(check.extendedAttributes).length > 0 && (
           <React.Fragment>
             <Divider />
-            <Monospaced background>
+            <CodeBlock background>
               <CardContent>
                 {`# Extra\n\n${JSON.stringify(
                   check.extendedAttributes,
@@ -334,7 +332,7 @@ class CheckDetailsConfiguration extends React.PureComponent {
                   "\t",
                 )}`}
               </CardContent>
-            </Monospaced>
+            </CodeBlock>
           </React.Fragment>
         )}
       </Card>
