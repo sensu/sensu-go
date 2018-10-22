@@ -2,6 +2,7 @@ import * as React from "react";
 import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
 import { fade } from "@material-ui/core/styles/colorManipulator";
+import classNames from "classnames";
 
 const styles = theme => ({
   root: {
@@ -19,16 +20,28 @@ const styles = theme => ({
         ? theme.palette.secondary.light
         : theme.palette.secondary.dark,
   },
+  rightMargin: {
+    whiteSpace: "pre-wrap",
+    marginRight: "24px",
+  },
 });
 
 class Code extends React.PureComponent {
   static propTypes = {
     classes: PropTypes.object.isRequired,
+    dictionaryMargin: PropTypes.bool,
+  };
+
+  static defaultProps = {
+    dictionaryMargin: false,
   };
 
   render() {
-    const { classes, ...props } = this.props;
-    return <code {...props} className={classes.root} />;
+    const { classes, dictionaryMargin, ...props } = this.props;
+    const className = dictionaryMargin
+      ? classes.root
+      : classNames(classes.root, classes.rightMargin);
+    return <code {...props} className={className} />;
   }
 }
 

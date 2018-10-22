@@ -6,13 +6,9 @@ import Typography from "@material-ui/core/Typography";
 
 const styles = theme => ({
   root: {
-    display: "grid",
+    display: "inline-grid",
     paddingLeft: theme.spacing.unit,
     userSelect: "text",
-    "& > code": {
-      whiteSpace: "pre-wrap",
-      marginRight: "24px",
-    },
   },
   limit: {
     maxWidth: "60%",
