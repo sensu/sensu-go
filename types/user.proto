@@ -18,4 +18,5 @@ message User {
 	string password = 2;
 	repeated string roles = 3;
 	bool disabled = 4 [(gogoproto.jsontag) = "disabled"];
+	repeated string groups = 5;
 }

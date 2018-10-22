@@ -121,6 +121,7 @@ func setupAdminUser(store store.Store) error {
 		Username: "admin",
 		Password: "P@ssw0rd!",
 		Roles:    []string{"admin"},
+		Groups:   []string{},
 	}
 
 	return store.CreateUser(admin)
@@ -132,6 +133,7 @@ func setupReadOnlyUser(store store.Store) error {
 		Username: "sensu",
 		Password: "sensu",
 		Roles:    []string{"read-only"},
+		Groups:   []string{},
 	}
 
 	return store.CreateUser(sensu)
@@ -143,6 +145,7 @@ func setupDefaultAgentUser(store store.Store) error {
 		Username: "agent",
 		Password: "P@ssw0rd!",
 		Roles:    []string{"agent"},
+		Groups:   []string{},
 	}
 
 	return store.CreateUser(agent)
