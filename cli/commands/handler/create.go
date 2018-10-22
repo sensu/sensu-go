@@ -71,6 +71,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().String("socket-port", "", "port of handler socket")
 	cmd.Flags().StringP("timeout", "i", "", "execution duration timeout in seconds (hard stop)")
 	cmd.Flags().StringP("type", "t", typeDefault, "type of handler (pipe, tcp, udp, or set)")
+	cmd.Flags().StringP("runtime-assets", "r", "", "comma separated list of assets this handler depends on")
 
 	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd

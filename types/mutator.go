@@ -37,6 +37,8 @@ func (m *Mutator) Update(from *Mutator, fields ...string) error {
 			m.Timeout = from.Timeout
 		case "EnvVars":
 			m.EnvVars = append(m.EnvVars[0:0], from.EnvVars...)
+		case "RuntimeAssets":
+			m.RuntimeAssets = append(m.RuntimeAssets[0:0], from.RuntimeAssets...)
 		default:
 			return fmt.Errorf("unsupported field: %q", f)
 		}

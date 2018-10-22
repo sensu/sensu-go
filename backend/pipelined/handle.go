@@ -8,6 +8,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
@@ -189,6 +190,22 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 		"environment":  handler.Environment,
 		"organization": handler.Organization,
 		"handler":      handler.Name,
+		"assets":       handler.RuntimeAssets,
+	}
+
+	// Only add assets to execution context if handler requires them
+	if len(handler.RuntimeAssets) != 0 {
+		logger.WithFields(fields).Debug("fetching assets for handler")
+		// Fetch and install all assets required for handler execution
+		ctx := types.SetContextFromResource(context.Background(), handler)
+		matchedAssets := asset.GetAssets(ctx, p.store, handler.RuntimeAssets)
+
+		assets, err := asset.GetAll(p.assetGetter, matchedAssets)
+		if err != nil {
+			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for handler")
+		} else {
+			handlerExec.Env = append(handlerExec.Env, assets.Env()...)
+		}
 	}
 
 	result, err := p.executor.Execute(context.Background(), handlerExec)

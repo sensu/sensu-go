@@ -4,12 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"runtime/debug"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/pkg/transport"
+	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
 	"github.com/sensu/sensu-go/backend/daemon"
@@ -28,6 +31,8 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/rpc"
+	"github.com/sensu/sensu-go/system"
+	"github.com/sensu/sensu-go/types"
 )
 
 // Backend represents the backend server, which is used to hold the datastore
@@ -126,11 +131,21 @@ func Initialize(config *Config) (*Backend, error) {
 	}
 	b.Daemons = append(b.Daemons, bus)
 
+	// Initialize asset manager
+	backendEntity := b.getBackendEntity(config)
+	logger.WithField("entity", backendEntity).Info("backend entity information")
+	assetManager := asset.NewManager(config.CacheDir, backendEntity, make(chan struct{}), &sync.WaitGroup{})
+	assetGetter, err := assetManager.StartAssetManager()
+	if err != nil {
+		return nil, fmt.Errorf("error initializing asset manager: %s", err)
+	}
+
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
 		Store: store,
 		Bus:   bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
+		AssetGetter:             assetGetter,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", pipeline.Name(), err)
@@ -349,4 +364,39 @@ func (b *Backend) Migration() error {
 func (b *Backend) Stop() {
 	b.cancel()
 	<-b.done
+}
+
+func (b *Backend) getBackendEntity(config *Config) *types.Entity {
+	entity := &types.Entity{
+		Class:  types.EntityBackendClass,
+		ID:     getDefaultBackendID(),
+		System: getSystemInfo(),
+	}
+
+	if config.DeregistrationHandler != "" {
+		entity.Deregistration = types.Deregistration{
+			Handler: config.DeregistrationHandler,
+		}
+	}
+
+	return entity
+}
+
+// getDefaultBackendID returns the default backend ID
+func getDefaultBackendID() string {
+	defaultBackendID, err := os.Hostname()
+	if err != nil {
+		logger.WithError(err).Error("error getting hostname")
+		defaultBackendID = "unidentified-sensu-backend"
+	}
+	return defaultBackendID
+}
+
+// getSystemInfo returns the system info of the backend
+func getSystemInfo() types.System {
+	info, err := system.Info()
+	if err != nil {
+		logger.WithError(err).Error("error getting system info")
+	}
+	return info
 }

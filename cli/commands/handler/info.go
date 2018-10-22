@@ -111,6 +111,10 @@ func printToList(v interface{}, writer io.Writer) error {
 				Label: "Environment Variables",
 				Value: strings.Join(handler.EnvVars, ", "),
 			},
+			{
+				Label: "Runtime Assets",
+				Value: strings.Join(handler.RuntimeAssets, ", "),
+			},
 		},
 	}
 
