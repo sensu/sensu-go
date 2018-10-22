@@ -2,26 +2,17 @@ package meta
 
 import "strings"
 
-// TypeMetaAccessor returns a GroupVersionKind if the Object has type
-// metadata associated with it, otherwise it returns nil.
-func GetGroupVersionKind(obj Object) GroupVersionKind {
-	gvk, ok := obj.(GroupVersionKind)
-	if ok {
-		return gvk
-	}
-
-	return nil
-}
-
 type GroupVersionKind interface {
 	GetKind() string
 	GetGroup() string
 	GetVersion() string
+	GetTypeMeta() TypeMeta
 }
 
-func (gvk TypeMeta) GetKind() string    { return gvk.Kind }
-func (gvk TypeMeta) GetGroup() string   { return strings.Split(gvk.APIVersion, "/")[0] }
-func (gvk TypeMeta) GetVersion() string { return strings.Split(gvk.APIVersion, "/")[1] }
+func (tm TypeMeta) GetTypeMeta() TypeMeta { return tm }
+func (gvk TypeMeta) GetKind() string      { return gvk.Kind }
+func (gvk TypeMeta) GetGroup() string     { return strings.Split(gvk.APIVersion, "/")[0] }
+func (gvk TypeMeta) GetVersion() string   { return strings.Split(gvk.APIVersion, "/")[1] }
 
 // Object lets you work with object metadata from any of the versioned or
 // internal API objects. Attempting to set or retrieve a field on an object that does
