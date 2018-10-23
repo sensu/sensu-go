@@ -44,6 +44,7 @@ state-dir: "C:\ProgramData\sensu\data"
 ##
 # other
 ##
+#cache-dir: "C:\ProgramData\sensu\cache\sensu-backend"
 #config-file: ""
 #debug: false
 #deregistration-handler: ""

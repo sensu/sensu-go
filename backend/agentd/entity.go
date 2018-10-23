@@ -26,7 +26,7 @@ func getProxyEntity(event *types.Event, s SessionStore) error {
 		// Query the store for an entity using the given proxy entity ID
 		entity, err := s.GetEntityByID(ctx, event.Check.ProxyEntityID)
 		if err != nil {
-			return fmt.Errorf("could not query the store for a proxy entity: %s", err.Error())
+			return fmt.Errorf("could not query the store for a proxy entity: %s", err)
 		}
 
 		// Check if an entity was found for this proxy entity. If not, we need to create it
@@ -39,7 +39,7 @@ func getProxyEntity(event *types.Event, s SessionStore) error {
 			}
 
 			if err := s.UpdateEntity(ctx, entity); err != nil {
-				return fmt.Errorf("could not create a proxy entity: %s", err.Error())
+				return fmt.Errorf("could not create a proxy entity: %s", err)
 			}
 		}
 

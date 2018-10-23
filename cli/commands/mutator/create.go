@@ -70,6 +70,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.Flags().StringP("command", "c", "", "command to be executed. The event data is passed to the process via STDIN")
 	cmd.Flags().String("env-vars", "", "comma separated list of key=value environment variables for the mutator command")
 	cmd.Flags().StringP("timeout", "t", "", "execution duration timeout in seconds (hard stop)")
+	cmd.Flags().StringP("runtime-assets", "r", "", "comma separated list of assets this mutator depends on")
 	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd
 }

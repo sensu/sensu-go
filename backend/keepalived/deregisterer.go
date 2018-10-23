@@ -29,12 +29,12 @@ func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
 	ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
 
 	if err := adapterPtr.Store.DeleteEntity(ctx, entity); err != nil {
-		return fmt.Errorf("error deleting entity in store: %s", err.Error())
+		return fmt.Errorf("error deleting entity in store: %s", err)
 	}
 
 	events, err := adapterPtr.Store.GetEventsByEntity(ctx, entity.ID)
 	if err != nil {
-		return fmt.Errorf("error fetching events for entity: %s", err.Error())
+		return fmt.Errorf("error fetching events for entity: %s", err)
 	}
 
 	for _, event := range events {
@@ -45,7 +45,7 @@ func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
 		if err := adapterPtr.Store.DeleteEventByEntityCheck(
 			ctx, entity.ID, event.Check.Name,
 		); err != nil {
-			return fmt.Errorf("error deleting event for entity: %s", err.Error())
+			return fmt.Errorf("error deleting event for entity: %s", err)
 		}
 
 		event.Check.Output = "Resolving due to entity deregistering"
@@ -53,7 +53,7 @@ func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
 		event.Check.History = []types.CheckHistory{}
 
 		if err := adapterPtr.MessageBus.Publish(messaging.TopicEvent, event); err != nil {
-			return fmt.Errorf("error publishing deregistration event: %s", err.Error())
+			return fmt.Errorf("error publishing deregistration event: %s", err)
 		}
 	}
 

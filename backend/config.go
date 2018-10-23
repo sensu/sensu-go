@@ -20,6 +20,7 @@ const (
 type Config struct {
 	// Backend Configuration
 	StateDir string
+	CacheDir string
 
 	// Agentd Configuration
 	AgentHost string

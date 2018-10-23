@@ -98,6 +98,16 @@ func printToTable(results interface{}, writer io.Writer) {
 				return timeout
 			},
 		},
+		{
+			Title: "Assets",
+			CellTransformer: func(data interface{}) string {
+				mutator, ok := data.(types.Mutator)
+				if !ok {
+					return cli.TypeError
+				}
+				return strings.Join(mutator.RuntimeAssets, ",")
+			},
+		},
 	})
 	table.Render(writer, results)
 }

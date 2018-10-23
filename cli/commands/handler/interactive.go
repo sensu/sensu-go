@@ -11,17 +11,18 @@ import (
 )
 
 type handlerOpts struct {
-	Name       string `survey:"name"`
-	Command    string `survey:"command"`
-	EnvVars    string `survey:"env-vars"`
-	Filters    string `survey:"filters"`
-	Handlers   string `survey:"handlers"`
-	Mutator    string `survey:"mutator"`
-	SocketHost string `survey:"socketHost"`
-	SocketPort string `survey:"socketPort"`
-	Timeout    string `survey:"timeout"`
-	Type       string `survey:"type"`
-	Namespace  string
+	Name          string `survey:"name"`
+	Command       string `survey:"command"`
+	EnvVars       string `survey:"env-vars"`
+	Filters       string `survey:"filters"`
+	Handlers      string `survey:"handlers"`
+	Mutator       string `survey:"mutator"`
+	SocketHost    string `survey:"socketHost"`
+	SocketPort    string `survey:"socketPort"`
+	Timeout       string `survey:"timeout"`
+	Type          string `survey:"type"`
+	Namespace     string
+	RuntimeAssets string `survey:"assets"`
 }
 
 const (
@@ -45,6 +46,7 @@ func (opts *handlerOpts) withHandler(handler *types.Handler) {
 	opts.Mutator = handler.Mutator
 	opts.Timeout = strconv.FormatUint(uint64(handler.Timeout), 10)
 	opts.Type = handler.Type
+	opts.RuntimeAssets = strings.Join(handler.RuntimeAssets, ",")
 
 	if handler.Socket != nil {
 		opts.SocketHost = handler.Socket.Host
@@ -62,6 +64,7 @@ func (opts *handlerOpts) withFlags(flags *pflag.FlagSet) {
 	opts.SocketPort, _ = flags.GetString("socket-port")
 	opts.Timeout, _ = flags.GetString("timeout")
 	opts.Type, _ = flags.GetString("type")
+	opts.RuntimeAssets, _ = flags.GetString("runtime-assets")
 
 	if namespace := helpers.GetChangedStringValueFlag("namespace", flags); namespace != "" {
 		opts.Namespace = namespace
@@ -150,6 +153,14 @@ func (opts *handlerOpts) queryForBaseParameters(editing bool) error {
 				Default: opts.Type,
 			},
 			Validate: survey.Required,
+		},
+		{
+			Name: "assets",
+			Prompt: &survey.Input{
+				Message: "Runtime Assets:",
+				Help:    "A list of comma-separated list of assets to use when executing the handler",
+				Default: opts.RuntimeAssets,
+			},
 		},
 	}...)
 
@@ -244,5 +255,11 @@ func (opts *handlerOpts) Copy(handler *types.Handler) {
 	handler.Handlers = make([]string, len(handlers))
 	for i, h := range handlers {
 		handler.Handlers[i] = strings.TrimSpace(h)
+	}
+
+	assets := helpers.SafeSplitCSV(opts.RuntimeAssets)
+	handler.RuntimeAssets = make([]string, len(assets))
+	for i, h := range assets {
+		handler.RuntimeAssets[i] = strings.TrimSpace(h)
 	}
 }

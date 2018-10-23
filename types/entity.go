@@ -15,6 +15,9 @@ const (
 
 	// EntityProxyClass is the name of the class given to proxy entities.
 	EntityProxyClass = "proxy"
+
+	// EntityBackendClass is the name of the class given to backend entities.
+	EntityBackendClass = "backend"
 )
 
 // Validate returns an error if the entity is invalid.

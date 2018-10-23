@@ -26,6 +26,9 @@ message Mutator {
   // Env is a list of environment variables to use with command execution
   repeated string env_vars = 4 [(gogoproto.jsontag) = "env_vars"];
 
+  // RuntimeAssets are a list of assets required to execute a mutator.
+  repeated string runtime_assets = 7 [(gogoproto.jsontag) = "runtime_assets"];  
+
   // Namespace to which the mutator belongs to
-  string namespace = 7;
+  string namespace = 8;
 }

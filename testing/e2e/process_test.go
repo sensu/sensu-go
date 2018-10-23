@@ -22,6 +22,7 @@ type backendProcess struct {
 	AgentPort               int
 	APIHost                 string
 	APIPort                 int
+	CacheDir                string
 	DashboardHost           string
 	DashboardPort           int
 	StateDir                string
@@ -48,7 +49,12 @@ func newDefaultBackend() (*backendProcess, func(), error) {
 
 // newBackendProcess initializes a backendProcess struct
 func newBackendProcess(etcdClientPort, etcdPeerPort, agentPort, apiPort, dashboardPort int) (*backendProcess, func(), error) {
-	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensu")
+	tmpStateDir, err := ioutil.TempDir(os.TempDir(), "sensu-state")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	tmpCacheDir, err := ioutil.TempDir(os.TempDir(), "sensu-cache")
 	if err != nil {
 		return nil, nil, err
 	}
@@ -64,7 +70,8 @@ func newBackendProcess(etcdClientPort, etcdPeerPort, agentPort, apiPort, dashboa
 		APIPort:                 apiPort,
 		DashboardHost:           "127.0.0.1",
 		DashboardPort:           dashboardPort,
-		StateDir:                tmpDir,
+		StateDir:                tmpStateDir,
+		CacheDir:                tmpCacheDir,
 		EtcdClientURL:           etcdClientURL,
 		EtcdPeerURL:             etcdPeerURL,
 		EtcdInitialCluster:      initialCluster,
@@ -78,7 +85,8 @@ func newBackendProcess(etcdClientPort, etcdPeerPort, agentPort, apiPort, dashboa
 		if err := bep.Terminate(); err != nil {
 			log.Println(err)
 		}
-		_ = os.RemoveAll(tmpDir)
+		_ = os.RemoveAll(tmpStateDir)
+		_ = os.RemoveAll(tmpCacheDir)
 	}
 	return bep, cleanup, nil
 }
@@ -92,6 +100,7 @@ func (b *backendProcess) Start() error {
 		ctx,
 		backendPath, "start",
 		"-d", b.StateDir,
+		"--cache-dir", b.CacheDir,
 		"--agent-host", b.AgentHost,
 		"--agent-port", fmt.Sprintf("%d", b.AgentPort),
 		"--api-host", b.APIHost,

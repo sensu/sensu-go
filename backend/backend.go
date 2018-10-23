@@ -4,12 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"runtime/debug"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/pkg/transport"
+	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
 	"github.com/sensu/sensu-go/backend/daemon"
@@ -27,6 +30,8 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/rpc"
+	"github.com/sensu/sensu-go/system"
+	"github.com/sensu/sensu-go/types"
 )
 
 // Backend represents the backend server, which is used to hold the datastore
@@ -105,7 +110,7 @@ func Initialize(config *Config) (*Backend, error) {
 	logger.Debug("Initializing store...")
 	store := etcdstore.NewStore(client, config.EtcdName)
 	if err = seeds.SeedInitialData(store); err != nil {
-		return nil, errors.New("error initializing the store: " + err.Error())
+		return nil, fmt.Errorf("error initializing the store: %s", err)
 	}
 	logger.Debug("Done initializing store")
 
@@ -121,18 +126,28 @@ func Initialize(config *Config) (*Backend, error) {
 		RingGetter: ring.EtcdGetter{Client: client, BackendID: fmt.Sprintf("%x", backendID.GetBackendID())},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", bus.Name(), err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", bus.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, bus)
+
+	// Initialize asset manager
+	backendEntity := b.getBackendEntity(config)
+	logger.WithField("entity", backendEntity).Info("backend entity information")
+	assetManager := asset.NewManager(config.CacheDir, backendEntity, make(chan struct{}), &sync.WaitGroup{})
+	assetGetter, err := assetManager.StartAssetManager()
+	if err != nil {
+		return nil, fmt.Errorf("error initializing asset manager: %s", err)
+	}
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
 		Store: store,
 		Bus:   bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
+		AssetGetter:             assetGetter,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", pipeline.Name(), err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", pipeline.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, pipeline)
 
@@ -143,7 +158,7 @@ func Initialize(config *Config) (*Backend, error) {
 		MonitorFactory: monitor.EtcdFactory(client),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", event.Name(), err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", event.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, event)
 
@@ -154,7 +169,7 @@ func Initialize(config *Config) (*Backend, error) {
 		QueueGetter: queueGetter,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", scheduler.Name(), err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", scheduler.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, scheduler)
 
@@ -167,7 +182,7 @@ func Initialize(config *Config) (*Backend, error) {
 		TLS:   config.TLS,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, agent)
 
@@ -179,7 +194,7 @@ func Initialize(config *Config) (*Backend, error) {
 		MonitorFactory: monitor.EtcdFactory(client),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, keepalive)
 
@@ -194,7 +209,7 @@ func Initialize(config *Config) (*Backend, error) {
 		Cluster:     clientv3.NewCluster(client),
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, api)
 
@@ -206,7 +221,7 @@ func Initialize(config *Config) (*Backend, error) {
 		TLS:     config.TLS,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error initializing %s: %s", dashboard.Name(), err.Error())
+		return nil, fmt.Errorf("error initializing %s: %s", dashboard.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, dashboard)
 
@@ -226,7 +241,7 @@ func (b *Backend) Run() error {
 	// Loop across the daemons in order to start them, then add them to our groups
 	for _, d := range b.Daemons {
 		if err := d.Start(); err != nil {
-			return fmt.Errorf("error starting %s: %s", d.Name(), err.Error())
+			return fmt.Errorf("error starting %s: %s", d.Name(), err)
 		}
 
 		// Add the daemon to our errGroup
@@ -254,7 +269,7 @@ func (b *Backend) Run() error {
 
 	select {
 	case err := <-eg.Err():
-		logger.Error(err.Error())
+		logger.WithError(err).Error("error in error group")
 	case <-b.ctx.Done():
 		logger.Info("backend shutting down")
 	}
@@ -337,4 +352,39 @@ func (e errGroup) Err() <-chan error {
 func (b *Backend) Stop() {
 	b.cancel()
 	<-b.done
+}
+
+func (b *Backend) getBackendEntity(config *Config) *types.Entity {
+	entity := &types.Entity{
+		Class:  types.EntityBackendClass,
+		ID:     getDefaultBackendID(),
+		System: getSystemInfo(),
+	}
+
+	if config.DeregistrationHandler != "" {
+		entity.Deregistration = types.Deregistration{
+			Handler: config.DeregistrationHandler,
+		}
+	}
+
+	return entity
+}
+
+// getDefaultBackendID returns the default backend ID
+func getDefaultBackendID() string {
+	defaultBackendID, err := os.Hostname()
+	if err != nil {
+		logger.WithError(err).Error("error getting hostname")
+		defaultBackendID = "unidentified-sensu-backend"
+	}
+	return defaultBackendID
+}
+
+// getSystemInfo returns the system info of the backend
+func getSystemInfo() types.System {
+	info, err := system.Info()
+	if err != nil {
+		logger.WithError(err).Error("error getting system info")
+	}
+	return info
 }

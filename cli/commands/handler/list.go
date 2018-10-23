@@ -151,6 +151,16 @@ func printToTable(results interface{}, writer io.Writer) {
 				return strings.Join(handler.EnvVars, ",")
 			},
 		},
+		{
+			Title: "Assets",
+			CellTransformer: func(data interface{}) string {
+				handler, ok := data.(types.Handler)
+				if !ok {
+					return cli.TypeError
+				}
+				return strings.Join(handler.RuntimeAssets, ",")
+			},
+		},
 	})
 
 	table.Render(writer, results)

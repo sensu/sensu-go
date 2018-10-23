@@ -53,8 +53,11 @@ func TestBackendHTTPListener(t *testing.T) {
 	// tc = Test Case
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			path, remove := testutil.TempDir(t)
+			dataPath, remove := testutil.TempDir(t)
 			defer remove()
+
+			cachePath, cleanup := testutil.TempDir(t)
+			defer cleanup()
 
 			ports := make([]int, 5)
 			err := testutil.RandomPorts(ports)
@@ -85,7 +88,8 @@ func TestBackendHTTPListener(t *testing.T) {
 				APIPort:                     apiPort,
 				DashboardHost:               "127.0.0.1",
 				DashboardPort:               dashboardPort,
-				StateDir:                    path,
+				StateDir:                    dataPath,
+				CacheDir:                    cachePath,
 				TLS:                         tc.tls,
 				EtcdListenClientURL:         clURL,
 				EtcdListenPeerURL:           apURL,
