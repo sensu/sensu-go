@@ -6,13 +6,14 @@ import Typography from "@material-ui/core/Typography";
 
 const styles = theme => ({
   root: {
-    display: "inline-grid",
+    display: "table-cell",
     paddingLeft: theme.spacing.unit,
     userSelect: "text",
   },
   limit: {
     maxWidth: "60%",
   },
+  scrollableContent: { display: "inline-grid" },
   explicitRightMargin: { marginRight: "24px" },
 });
 
@@ -23,12 +24,14 @@ class DictionaryValue extends React.Component {
     className: PropTypes.string,
     constrain: PropTypes.bool,
     explicitRightMargin: PropTypes.bool,
+    scrollableContent: PropTypes.bool,
   };
 
   static defaultProps = {
     className: null,
     constrain: false,
     explicitRightMargin: false,
+    scrollableContent: false,
   };
 
   render() {
@@ -38,11 +41,13 @@ class DictionaryValue extends React.Component {
       children,
       constrain,
       explicitRightMargin,
+      scrollableContent,
       ...props
     } = this.props;
     const className = classnames(classes.root, classNameProp, {
       [classes.limit]: constrain,
       [classes.explicitRightMargin]: explicitRightMargin,
+      [classes.scrollableContent]: scrollableContent,
     });
 
     return (

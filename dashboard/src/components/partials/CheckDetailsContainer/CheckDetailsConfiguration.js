@@ -247,7 +247,7 @@ class CheckDetailsConfiguration extends React.PureComponent {
 
                 <DictionaryEntry>
                   <DictionaryKey>ENV Vars</DictionaryKey>
-                  <DictionaryValue>
+                  <DictionaryValue scrollableContent>
                     {check.envVars.length > 0 ? (
                       <CodeBlock highlight background>
                         {check.envVars.join("\n")}
