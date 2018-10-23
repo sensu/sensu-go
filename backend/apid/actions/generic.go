@@ -1,8 +1,9 @@
 package actions
 
 import (
+	"context"
+
 	storev2 "github.com/sensu/sensu-go/storage"
-	"golang.org/x/net/context"
 )
 
 // GenericController exposes generic actions available to most resources
