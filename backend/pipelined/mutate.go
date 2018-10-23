@@ -126,10 +126,9 @@ func (p *Pipelined) pipeMutator(mutator *types.Mutator, event *types.Event) ([]b
 
 	// Prepare log entry
 	fields := logrus.Fields{
-		"environment":  mutator.Environment,
-		"organization": mutator.Organization,
-		"mutator":      mutator.Name,
-		"assets":       mutator.RuntimeAssets,
+		"namespace": mutator.Namespace,
+		"mutator":   mutator.Name,
+		"assets":    mutator.RuntimeAssets,
 	}
 
 	// Only add assets to execution context if handler requires them
