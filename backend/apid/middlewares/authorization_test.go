@@ -36,7 +36,7 @@ func TestAuthorization(t *testing.T) {
 		expected        int
 	}{
 		{
-			name:     "missing JWT",
+			name:     "missing JWT claims & request info",
 			expected: http.StatusInternalServerError,
 		},
 		{
