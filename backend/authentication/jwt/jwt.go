@@ -52,7 +52,7 @@ func NewClaims(user *types.User) (*types.Claims, error) {
 			Id:        hex.EncodeToString(jti),
 			Subject:   user.Username,
 		},
-		//Groups: user.Groups,
+		Groups: user.Groups,
 	}
 	return &claims, nil
 }
@@ -147,7 +147,7 @@ func RefreshToken(user *types.User) (*jwt.Token, string, error) {
 			Id:      hex.EncodeToString(jti),
 			Subject: user.Username,
 		},
-		//Groups: user.Groups,
+		Groups: user.Groups,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims)

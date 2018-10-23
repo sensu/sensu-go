@@ -28,11 +28,6 @@ func (r *RBACRouter) Mount(parent *mux.Router) {
 }
 
 func (r *RBACRouter) list(req *http.Request) (interface{}, error) {
-	// params := mux.Vars(req)
-	// kind, err := url.PathUnescape(params["kind"])
-	// if err != nil {
-	// 	return nil, err
-	// }
 	clusterRoles := []rbac.ClusterRole{}
 	err := r.controller.List(req.Context(), "clusterroles", &clusterRoles)
 	return clusterRoles, err

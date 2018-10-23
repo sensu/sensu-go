@@ -5,13 +5,13 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/internal/apis/rbac"
-	"github.com/sensu/sensu-go/testing/mockstorage"
+	"github.com/sensu/sensu-go/testing/mockstore/v2"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/mock"
 )
 
 func TestAuthorize(t *testing.T) {
-	type storeFunc func(*mockstorage.MockStorage)
+	type storeFunc func(*mockstore.MockStore)
 	tests := []struct {
 		name      string
 		reqInfo   *types.RequestInfo
@@ -22,7 +22,7 @@ func TestAuthorize(t *testing.T) {
 		{
 			name:    "no bindings",
 			reqInfo: &types.RequestInfo{Namespace: "acme"},
-			storeFunc: func(store *mockstorage.MockStorage) {
+			storeFunc: func(store *mockstore.MockStore) {
 				store.On("List", mock.AnythingOfType("*context.emptyCtx"), "clusterrolebindings", mock.Anything).Return(nil)
 				store.On("List", mock.AnythingOfType("*context.emptyCtx"), "rolebindings/acme", mock.Anything).Return(nil)
 			},
@@ -30,7 +30,7 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			name: "clusterrolebindings store err",
-			storeFunc: func(store *mockstorage.MockStorage) {
+			storeFunc: func(store *mockstore.MockStore) {
 				store.On("List", mock.AnythingOfType("*context.emptyCtx"), "clusterrolebindings", mock.Anything).
 					Return(errors.New("error"))
 			},
@@ -44,7 +44,7 @@ func TestAuthorize(t *testing.T) {
 					Username: "foo",
 				},
 			},
-			storeFunc: func(store *mockstorage.MockStorage) {
+			storeFunc: func(store *mockstore.MockStore) {
 				store.On("List", mock.AnythingOfType("*context.emptyCtx"), "clusterrolebindings", mock.Anything).Return(nil).
 					Run(func(args mock.Arguments) {
 						clusterRoleBindings := args.Get(2).(*[]rbac.ClusterRoleBinding)
@@ -65,7 +65,7 @@ func TestAuthorize(t *testing.T) {
 					Username: "foo",
 				},
 			},
-			storeFunc: func(store *mockstorage.MockStorage) {
+			storeFunc: func(store *mockstore.MockStore) {
 				store.On("List", mock.AnythingOfType("*context.emptyCtx"), "clusterrolebindings", mock.Anything).Return(nil).
 					Run(func(args mock.Arguments) {
 						clusterRoleBindings := args.Get(2).(*[]rbac.ClusterRoleBinding)
@@ -93,7 +93,7 @@ func TestAuthorize(t *testing.T) {
 					Username: "foo",
 				},
 			},
-			storeFunc: func(store *mockstorage.MockStorage) {
+			storeFunc: func(store *mockstore.MockStore) {
 				store.On("List", mock.AnythingOfType("*context.emptyCtx"), "clusterrolebindings", mock.Anything).Return(nil).
 					Run(func(args mock.Arguments) {
 						clusterRoleBindings := args.Get(2).(*[]rbac.ClusterRoleBinding)
@@ -124,7 +124,7 @@ func TestAuthorize(t *testing.T) {
 		{
 			name:    "rolebindings store err",
 			reqInfo: &types.RequestInfo{Namespace: "acme"},
-			storeFunc: func(store *mockstorage.MockStorage) {
+			storeFunc: func(store *mockstore.MockStore) {
 				store.On("List", mock.AnythingOfType("*context.emptyCtx"), "clusterrolebindings", mock.Anything).Return(nil)
 				store.On("List", mock.AnythingOfType("*context.emptyCtx"), "rolebindings/acme", mock.Anything).Return(errors.New("error"))
 			},
@@ -138,7 +138,7 @@ func TestAuthorize(t *testing.T) {
 					Username: "foo",
 				},
 			},
-			storeFunc: func(store *mockstorage.MockStorage) {
+			storeFunc: func(store *mockstore.MockStore) {
 				store.On("List", mock.AnythingOfType("*context.emptyCtx"), "clusterrolebindings", mock.Anything).Return(nil)
 				store.On("List", mock.AnythingOfType("*context.emptyCtx"), "rolebindings/acme", mock.Anything).Return(nil).
 					Run(func(args mock.Arguments) {
@@ -160,7 +160,7 @@ func TestAuthorize(t *testing.T) {
 					Username: "foo",
 				},
 			},
-			storeFunc: func(store *mockstorage.MockStorage) {
+			storeFunc: func(store *mockstore.MockStore) {
 				store.On("List", mock.AnythingOfType("*context.emptyCtx"), "clusterrolebindings", mock.Anything).Return(nil)
 				store.On("List", mock.AnythingOfType("*context.emptyCtx"), "rolebindings/acme", mock.Anything).Return(nil).
 					Run(func(args mock.Arguments) {
@@ -188,7 +188,7 @@ func TestAuthorize(t *testing.T) {
 				Resource:     "checks",
 				ResourceName: "check-cpu",
 			},
-			storeFunc: func(store *mockstorage.MockStorage) {
+			storeFunc: func(store *mockstore.MockStore) {
 				store.On("List", mock.AnythingOfType("*context.emptyCtx"), "clusterrolebindings", mock.Anything).Return(nil)
 				store.On("List", mock.AnythingOfType("*context.emptyCtx"), "rolebindings/acme", mock.Anything).Return(nil).
 					Run(func(args mock.Arguments) {
@@ -218,7 +218,7 @@ func TestAuthorize(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			store := &mockstorage.MockStorage{}
+			store := &mockstore.MockStore{}
 			a := &Authorizer{
 				Store: store,
 			}
@@ -261,14 +261,14 @@ func TestMatchesUser(t *testing.T) {
 			},
 			want: true,
 		},
-		// {
-		// 	name: "matching via group",
-		// 	user: types.User{Username: "foo", Groups: []string{"acme"}},
-		// 	subjects: []rbac.Subject{
-		// 		rbac.Subject{Kind: rbac.GroupKind, Name: "acme"},
-		// 	},
-		// 	want: true,
-		// },
+		{
+			name: "matching via group",
+			user: types.User{Username: "foo", Groups: []string{"acme"}},
+			subjects: []rbac.Subject{
+				rbac.Subject{Kind: rbac.GroupKind, Name: "acme"},
+			},
+			want: true,
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {

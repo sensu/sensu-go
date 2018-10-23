@@ -93,12 +93,12 @@ func matchesUser(user types.User, subjects []rbac.Subject) bool {
 				return true
 			}
 
-			// case rbac.GroupKind:
-			// 	for _, group := range user.Groups {
-			// 		if group == subject.Name {
-			// 			return true
-			// 		}
-			// 	}
+		case rbac.GroupKind:
+			for _, group := range user.Groups {
+				if group == subject.Name {
+					return true
+				}
+			}
 		}
 	}
 
