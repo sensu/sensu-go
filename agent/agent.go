@@ -11,19 +11,19 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
 	time "github.com/echlebek/timeproxy"
 
 	"github.com/atlassian/gostatsd/pkg/statsd"
-	"github.com/sensu/sensu-go/agent/assetmanager"
+	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/util/retry"
 	"github.com/sirupsen/logrus"
 )
@@ -127,8 +127,9 @@ type SocketConfig struct {
 }
 
 // FixtureConfig provides a new Config object initialized with defaults for use
-// in tests
-func FixtureConfig() *Config {
+// in tests, as well as a cleanup function to call at the end of the test.
+func FixtureConfig() (*Config, func()) {
+	cacheDir := filepath.Join(os.TempDir(), "sensu-agent-test")
 	c := &Config{
 		AgentID: GetDefaultAgentID(),
 		API: &APIConfig{
@@ -136,7 +137,7 @@ func FixtureConfig() *Config {
 			Port: DefaultAPIPort,
 		},
 		BackendURLs:       []string{},
-		CacheDir:          path.SystemCacheDir("sensu-agent"),
+		CacheDir:          cacheDir,
 		KeepaliveInterval: DefaultKeepaliveInterval,
 		KeepaliveTimeout:  types.DefaultKeepaliveTimeout,
 		Namespace:         DefaultNamespace,
@@ -154,7 +155,11 @@ func FixtureConfig() *Config {
 		},
 		User: DefaultUser,
 	}
-	return c
+	return c, func() {
+		if err := os.RemoveAll(cacheDir); err != nil {
+			logger.Debugf("Error removing test agent cache dir: %s", err)
+		}
+	}
 }
 
 // NewConfig provides a new empty Config object
@@ -181,7 +186,7 @@ func GetDefaultAgentID() string {
 // An Agent receives and acts on messages from a Sensu Backend.
 type Agent struct {
 	api             *http.Server
-	assetManager    *assetmanager.Manager
+	assetGetter     asset.Getter
 	backendSelector BackendSelector
 	cancel          context.CancelFunc
 	config          *Config
@@ -211,10 +216,10 @@ func NewAgent(config *Config) *Agent {
 		cancel:          cancel,
 		context:         ctx,
 		config:          config,
+		executor:        command.NewExecutor(),
 		handler:         handler.NewMessageHandler(),
 		inProgress:      make(map[string]*types.CheckConfig),
 		inProgressMu:    &sync.Mutex{},
-		executor:        command.NewExecutor(),
 		stopping:        make(chan struct{}),
 		stopped:         make(chan struct{}),
 		sendq:           make(chan *transport.Message, 10),
@@ -229,8 +234,6 @@ func NewAgent(config *Config) *Agent {
 	// We don't check for errors here and let the agent get created regardless
 	// of system info status.
 	_ = agent.refreshSystemInfo()
-	agent.assetManager = assetmanager.New(config.CacheDir, agent.getAgentEntity())
-
 	return agent
 }
 
@@ -424,15 +427,23 @@ func (a *Agent) buildTransportHeaderMap() http.Header {
 
 // Run starts the Agent.
 //
-// 1. Start a statsd server on the agent and logs the received metrics.
-// 2. Connect to the backend, return an error if unsuccessful.
-// 3. Start the socket listeners, return an error if unsuccessful.
-// 4. Start the send/receive pumps.
-// 5. Issue a keepalive immediately.
-// 6. Start refreshing system info periodically.
-// 7. Start sending periodic keepalives.
-// 8. Start the API server, shutdown the agent if doing so fails.
+// 1. Start the asset manager.
+// 2. Start a statsd server on the agent and logs the received metrics.
+// 3. Connect to the backend, return an error if unsuccessful.
+// 4. Start the socket listeners, return an error if unsuccessful.
+// 5. Start the send/receive pumps.
+// 6. Issue a keepalive immediately.
+// 7. Start refreshing system info periodically.
+// 8. Start sending periodic keepalives.
+// 9. Start the API server, shutdown the agent if doing so fails.
 func (a *Agent) Run() error {
+	var err error
+	assetManager := asset.NewManager(a.config.CacheDir, a.getAgentEntity(), a.stopping, a.wg)
+	a.assetGetter, err = assetManager.StartAssetManager()
+	if err != nil {
+		return err
+	}
+
 	userCredentials := fmt.Sprintf("%s:%s", a.config.User, a.config.Password)
 	userCredentials = base64.StdEncoding.EncodeToString([]byte(userCredentials))
 	a.header = a.buildTransportHeaderMap()

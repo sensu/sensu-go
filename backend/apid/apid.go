@@ -114,7 +114,7 @@ func (a *APId) Start() error {
 			err = a.HTTPServer.ListenAndServe()
 		}
 		if err != nil && err != http.ErrServerClosed {
-			a.errChan <- fmt.Errorf("failed to start http/https server %s", err.Error())
+			a.errChan <- fmt.Errorf("failed to start http/https server %s", err)
 		}
 	}()
 

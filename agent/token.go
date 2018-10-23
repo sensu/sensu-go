@@ -15,7 +15,7 @@ import (
 func TokenSubstitution(data, input interface{}) ([]byte, error) {
 	inputBytes, err := json.Marshal(input)
 	if err != nil {
-		return nil, fmt.Errorf("could not marshal the provided template: %s", err.Error())
+		return nil, fmt.Errorf("could not marshal the provided template: %s", err)
 	}
 
 	// replace special character \" with " only if contained within {{ }}
@@ -36,13 +36,13 @@ func TokenSubstitution(data, input interface{}) ([]byte, error) {
 
 	tmpl, err = tmpl.Parse(inputString)
 	if err != nil {
-		return nil, fmt.Errorf("could not parse the template: %s", err.Error())
+		return nil, fmt.Errorf("could not parse the template: %s", err)
 	}
 
 	var buf bytes.Buffer
 	err = tmpl.Execute(&buf, data)
 	if err != nil {
-		return nil, fmt.Errorf("could not execute the template: %s", err.Error())
+		return nil, fmt.Errorf("could not execute the template: %s", err)
 	}
 
 	// Verify if the output contains the "<no value>" string, indicating that a
@@ -57,7 +57,7 @@ func TokenSubstitution(data, input interface{}) ([]byte, error) {
 			return nil, errors.New("unmatched token: found an undefined value but could not identify the token")
 		}
 
-		return nil, fmt.Errorf("unmatched token: %s", err.Error())
+		return nil, fmt.Errorf("unmatched token: %s", err)
 	}
 
 	return buf.Bytes(), nil

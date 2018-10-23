@@ -31,6 +31,7 @@ const (
 	flagDashboardHost         = "dashboard-host"
 	flagDashboardPort         = "dashboard-port"
 	flagDeregistrationHandler = "deregistration-handler"
+	flagCacheDir              = "cache-dir"
 	flagStateDir              = "state-dir"
 	flagCertFile              = "cert-file"
 	flagKeyFile               = "key-file"
@@ -139,6 +140,7 @@ func newStartCommand() *cobra.Command {
 				DashboardHost:         viper.GetString(flagDashboardHost),
 				DashboardPort:         viper.GetInt(flagDashboardPort),
 				DeregistrationHandler: viper.GetString(flagDeregistrationHandler),
+				CacheDir:              viper.GetString(flagCacheDir),
 				StateDir:              viper.GetString(flagStateDir),
 
 				EtcdListenClientURL:         viper.GetString(flagEtcdClientURL),
@@ -244,6 +246,7 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagDashboardHost, "[::]")
 	viper.SetDefault(flagDashboardPort, 3000)
 	viper.SetDefault(flagDeregistrationHandler, "")
+	viper.SetDefault(flagCacheDir, path.SystemCacheDir("sensu-backend"))
 	viper.SetDefault(flagStateDir, path.SystemDataDir())
 	viper.SetDefault(flagCertFile, "")
 	viper.SetDefault(flagKeyFile, "")
@@ -273,6 +276,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagDashboardHost, viper.GetString(flagDashboardHost), "dashboard listener host")
 	cmd.Flags().Int(flagDashboardPort, viper.GetInt(flagDashboardPort), "dashboard listener port")
 	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "default deregistration handler")
+	cmd.Flags().String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
 	cmd.Flags().StringP(flagStateDir, "d", viper.GetString(flagStateDir), "path to sensu state storage")
 	cmd.Flags().String(flagCertFile, viper.GetString(flagCertFile), "tls certificate")
 	cmd.Flags().String(flagKeyFile, viper.GetString(flagKeyFile), "tls certificate key")

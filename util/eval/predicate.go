@@ -34,7 +34,7 @@ func NewPredicate(expression string) (*Predicate, error) {
 
 	expr, err := govaluate.NewEvaluableExpressionWithFunctions(expression, funcs)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse the expression: %s", err.Error())
+		return nil, fmt.Errorf("failed to parse the expression: %s", err)
 	}
 	return &Predicate{expr}, nil
 }
@@ -45,7 +45,7 @@ func NewPredicate(expression string) (*Predicate, error) {
 func (p *Predicate) Eval(parameters govaluate.Parameters) (bool, error) {
 	result, err := p.expression.Eval(parameters)
 	if err != nil {
-		return false, fmt.Errorf("failed to evaluate the expression: %s", err.Error())
+		return false, fmt.Errorf("failed to evaluate the expression: %s", err)
 	}
 
 	match, ok := result.(bool)

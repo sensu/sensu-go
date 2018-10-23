@@ -28,4 +28,7 @@ message Mutator {
 
   // Namespace to which the mutator belongs to
   string namespace = 7;
+
+  // RuntimeAssets are a list of assets required to execute a mutator.
+  repeated string runtime_assets = 8 [(gogoproto.jsontag) = "runtime_assets"];
 }

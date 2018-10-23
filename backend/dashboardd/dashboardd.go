@@ -94,7 +94,7 @@ func (d *Dashboardd) Start() error {
 			err = d.httpServer.ListenAndServe()
 		}
 		if err != nil && err != http.ErrServerClosed {
-			d.errChan <- fmt.Errorf("failed to start http/https server %s", err.Error())
+			d.errChan <- fmt.Errorf("failed to start http/https server %s", err)
 		}
 	}()
 

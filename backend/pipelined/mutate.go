@@ -6,10 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 
+	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/types"
 	utillogging "github.com/sensu/sensu-go/util/logging"
+	"github.com/sirupsen/logrus"
 )
 
 // mutateEvent mutates (transforms) a Sensu event into a serialized
@@ -122,16 +124,39 @@ func (p *Pipelined) pipeMutator(mutator *types.Mutator, event *types.Event) ([]b
 
 	mutatorExec.Input = string(eventData[:])
 
+	// Prepare log entry
+	fields := logrus.Fields{
+		"namespace": mutator.Namespace,
+		"mutator":   mutator.Name,
+		"assets":    mutator.RuntimeAssets,
+	}
+
+	// Only add assets to execution context if handler requires them
+	if len(mutator.RuntimeAssets) != 0 {
+		logger.WithFields(fields).Debug("fetching assets for mutator")
+		// Fetch and install all assets required for handler execution
+		ctx := types.SetContextFromResource(context.Background(), mutator)
+		matchedAssets := asset.GetAssets(ctx, p.store, mutator.RuntimeAssets)
+
+		assets, err := asset.GetAll(p.assetGetter, matchedAssets)
+		if err != nil {
+			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for mutator")
+		} else {
+			mutatorExec.Env = append(mutatorExec.Env, assets.Env()...)
+		}
+	}
+
 	result, err := p.executor.Execute(context.Background(), mutatorExec)
 
 	if err != nil {
+		logger.WithFields(fields).WithError(err).Error("failed to execute event pipe mutator")
 		return nil, err
 	} else if result.Status != 0 {
 		return nil, errors.New("pipe mutator execution returned non-zero exit status")
 	}
 
-	fields := utillogging.EventFields(event, false)
-	fields["mutator"] = mutator.Name
+	fields["status"] = result.Status
+	fields["output"] = result.Output
 	logger.WithFields(fields).Debug("event pipe mutator executed")
 
 	return []byte(result.Output), nil

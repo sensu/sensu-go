@@ -43,6 +43,9 @@ message Handler {
 
   // Namespace to which the handler belongs to
   string namespace = 12;
+
+  // RuntimeAssets are a list of assets required to execute a handler.
+  repeated string runtime_assets = 13 [(gogoproto.jsontag) = "runtime_assets"];
 }
 
 // HandlerSocket contains configuration for a TCP or UDP handler.

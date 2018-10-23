@@ -8,10 +8,12 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/agent/transformers"
+	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/dynamic"
+	"github.com/sirupsen/logrus"
 )
 
 // TODO(greg): At some point, we're going to need max parallelism.
@@ -68,9 +70,20 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 		Check: check,
 	}
 
-	// Ensure that the asset manager is aware of all the assets required to
-	// execute the given check.
-	assets := a.assetManager.RegisterSet(checkAssets)
+	// Prepare log entry
+	fields := logrus.Fields{
+		"namespace": check.Namespace,
+		"check":     check.Name,
+		"assets":    check.RuntimeAssets,
+	}
+
+	// Fetch and install all assets required for check execution.
+	logger.WithFields(fields).Debug("fetching assets for check")
+	assets, err := asset.GetAll(a.assetGetter, checkAssets)
+	if err != nil {
+		a.sendFailure(event, fmt.Errorf("error getting assets for event: %s", err))
+		return
+	}
 
 	// Inject the dependenices into PATH, LD_LIBRARY_PATH & CPATH so that they are
 	// availabe when when the command is executed.
@@ -91,12 +104,6 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 			return
 		}
 		ex.Input = string(input)
-	}
-
-	// Ensure that all the dependencies are installed.
-	if err := assets.InstallAll(); err != nil {
-		a.sendFailure(event, fmt.Errorf("error installing dependencies: %s", err))
-		return
 	}
 
 	checkExec, err := a.executor.Execute(context.Background(), ex)

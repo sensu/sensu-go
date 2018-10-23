@@ -19,7 +19,8 @@ func TestEnvVars(t *testing.T) {
 	checkConfig.Stdin = true
 	checkConfig.Command = "echo $FOO"
 
-	config := FixtureConfig()
+	config, cleanup := FixtureConfig()
+	defer cleanup()
 	agent := NewAgent(config)
 	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch

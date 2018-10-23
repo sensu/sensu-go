@@ -11,12 +11,13 @@ import (
 )
 
 type mutatorOpts struct {
-	Name      string `survey:"name"`
-	Command   string `survey:"command"`
-	Timeout   string `survey:"timeout"`
-	EnvVars   string `survey:"env-vars"`
-	Env       string
-	Namespace string
+	Name          string `survey:"name"`
+	Command       string `survey:"command"`
+	Timeout       string `survey:"timeout"`
+	EnvVars       string `survey:"env-vars"`
+	Env           string
+	Namespace     string
+	RuntimeAssets string `survey:"assets"`
 }
 
 func newMutatorOpts() *mutatorOpts {
@@ -31,12 +32,14 @@ func (opts *mutatorOpts) withMutator(mutator *types.Mutator) {
 	opts.Command = mutator.Command
 	opts.Timeout = strconv.FormatUint(uint64(mutator.Timeout), 10)
 	opts.EnvVars = strings.Join(mutator.EnvVars, ",")
+	opts.RuntimeAssets = strings.Join(mutator.RuntimeAssets, ",")
 }
 
 func (opts *mutatorOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Command, _ = flags.GetString("command")
 	opts.Timeout, _ = flags.GetString("timeout")
 	opts.EnvVars, _ = flags.GetString("env-vars")
+	opts.RuntimeAssets, _ = flags.GetString("runtime-assets")
 
 	if namespace := helpers.GetChangedStringValueFlag("namespace", flags); namespace != "" {
 		opts.Namespace = namespace
@@ -86,6 +89,14 @@ func (opts *mutatorOpts) administerQuestionnaire(editing bool) error {
 				Default: opts.EnvVars,
 			},
 		},
+		{
+			Name: "assets",
+			Prompt: &survey.Input{
+				Message: "Runtime Assets:",
+				Help:    "A list of comma-separated list of assets to use when executing the mutator",
+				Default: opts.RuntimeAssets,
+			},
+		},
 	}...)
 
 	return survey.Ask(qs, opts)
@@ -103,5 +114,11 @@ func (opts *mutatorOpts) Copy(mutator *types.Mutator) {
 		mutator.Timeout = uint32(t)
 	} else {
 		mutator.Timeout = 0
+	}
+
+	assets := helpers.SafeSplitCSV(opts.RuntimeAssets)
+	mutator.RuntimeAssets = make([]string, len(assets))
+	for i, h := range assets {
+		mutator.RuntimeAssets[i] = strings.TrimSpace(h)
 	}
 }
