@@ -42,85 +42,51 @@ func SeedInitialData(store store.Store, storev2 storev2.Store) (err error) {
 	}
 	logger.Info("seeding etcd store w/ intial data")
 
-	// Set admin role
-	// if err := setupAdminRole(store); err != nil {
-	// 	logger.WithError(err).Error("unable to setup admin role")
-	// 	return err
-	// }
+	// Create the default namespace
+	if err := setupDefaultNamespace(store); err != nil {
+		logger.WithError(err).Error("unable to setup 'default' namespace")
+		return err
+	}
 
-	// Set read-only role
-	// if err := setupReadOnlyRole(store); err != nil {
-	// 	logger.WithError(err).Error("unable to setup read-only role")
-	// 	return err
-	// }
-
-	// Admin user
+	// Create the admin user
 	if err := setupAdminUser(store); err != nil {
 		logger.WithError(err).Error("unable to setup admin user")
 		return err
 	}
 
-	// Default read-only user (sensu)
+	// Create the sensu read-only user
 	if err := setupReadOnlyUser(store); err != nil {
 		logger.WithError(err).Error("unable to setup sensu user")
 		return err
 	}
 
-	// Default Agent user
-	if err := setupDefaultAgentUser(store); err != nil {
+	// Create the agent user
+	if err := setupAgentUser(store); err != nil {
 		logger.WithError(err).Error("unable to setup agent user")
 		return err
 	}
 
-	// Default admin cluster role & binding
+	// Create the admin cluster role
 	if err := setupAdminClusterRole(storev2); err != nil {
-		logger.WithError(err).Error("unable to setup the cluster admin role")
+		logger.WithError(err).Error("unable to setup the cluster-admin role")
 		return err
 	}
 
-	// Default read-only role & binding
+	// Create the read-only role
 	if err := setupReadOnlyRole(storev2); err != nil {
 		logger.WithError(err).Error("unable to setup the read-only role")
 		return err
 	}
 
-	// Default namespace
-	if err := setupDefaultNamespace(store); err != nil {
-		logger.WithError(err).Error("unable to setup 'default' namespace")
+	// Create the agent role
+	if err := setupAgentRole(storev2); err != nil {
+		logger.WithError(err).Error("unable to setup the agent role")
 		return err
 	}
 
 	// Set initialized flag
 	return initializer.FlagAsInitialized()
 }
-
-// func setupAdminRole(store store.Store) error {
-// 	return store.UpdateRole(
-// 		context.Background(),
-// 		&types.Role{
-// 			Name: "admin",
-// 			Rules: []types.Rule{{
-// 				Type:        types.RuleTypeAll,
-// 				Namespace:   types.NamespaceTypeAll,
-// 				Permissions: types.RuleAllPerms,
-// 			}},
-// 		},
-// 	)
-// }
-
-// func setupReadOnlyRole(store store.Store) error {
-// 	return store.UpdateRole(
-// 		context.Background(),
-// 		&types.Role{
-// 			Name: "read-only",
-// 			Rules: []types.Rule{{
-// 				Type:        types.RuleTypeAll,
-// 				Namespace:   types.NamespaceTypeAll,
-// 				Permissions: []string{types.RulePermRead},
-// 			}},
-// 		},
-// 	)
-// }
 
 func setupDefaultNamespace(store store.Store) error {
 	return store.CreateNamespace(
@@ -135,8 +101,7 @@ func setupAdminUser(store store.Store) error {
 	admin := &types.User{
 		Username: "admin",
 		Password: "P@ssw0rd!",
-		Roles:    []string{"admin"},
-		Groups:   []string{},
+		Groups:   []string{"cluster-admin"},
 	}
 
 	return store.CreateUser(admin)
@@ -147,20 +112,18 @@ func setupReadOnlyUser(store store.Store) error {
 	sensu := &types.User{
 		Username: "sensu",
 		Password: "sensu",
-		Roles:    []string{"read-only"},
-		Groups:   []string{},
+		Groups:   []string{"read-only"},
 	}
 
 	return store.CreateUser(sensu)
 }
 
-func setupDefaultAgentUser(store store.Store) error {
+func setupAgentUser(store store.Store) error {
 	// default agent user/pass
 	agent := &types.User{
 		Username: "agent",
 		Password: "P@ssw0rd!",
-		Roles:    []string{"agent"},
-		Groups:   []string{},
+		Groups:   []string{"agent"},
 	}
 
 	return store.CreateUser(agent)
@@ -197,8 +160,8 @@ func setupAdminClusterRole(store storev2.Store) error {
 		},
 		Subjects: []rbac.Subject{
 			rbac.Subject{
-				Kind: rbac.UserKind,
-				Name: "admin",
+				Kind: rbac.GroupKind,
+				Name: "cluster-admin",
 			},
 		},
 	}
@@ -232,7 +195,7 @@ func setupReadOnlyRole(store storev2.Store) error {
 	}
 	rolebinding := rbac.ClusterRoleBinding{
 		TypeMeta: meta.TypeMeta{
-			Kind:       "rRoleBinding",
+			Kind:       "RoleBinding",
 			APIVersion: "v1alpha1",
 		},
 		ObjectMeta: meta.ObjectMeta{
@@ -244,8 +207,55 @@ func setupReadOnlyRole(store storev2.Store) error {
 		},
 		Subjects: []rbac.Subject{
 			rbac.Subject{
-				Kind: rbac.UserKind,
-				Name: "sensu",
+				Kind: rbac.GroupKind,
+				Name: "read-only",
+			},
+		},
+	}
+
+	if err := store.Create(context.Background(), "roles/"+role.Name, role); err != nil {
+		return err
+	}
+	if err := store.Create(context.Background(), "rolebindings/"+role.Name, rolebinding); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func setupAgentRole(store storev2.Store) error {
+	role := &rbac.Role{
+		TypeMeta: meta.TypeMeta{
+			Kind:       "ClusterRole",
+			APIVersion: "v1alpha1",
+		},
+		ObjectMeta: meta.ObjectMeta{
+			Name: "agent",
+		},
+		Rules: []rbac.Rule{
+			rbac.Rule{
+				APIGroups: []string{"core"},
+				Resources: []string{"events"},
+				Verbs:     []string{"create", "update"},
+			},
+		},
+	}
+	rolebinding := rbac.ClusterRoleBinding{
+		TypeMeta: meta.TypeMeta{
+			Kind:       "ClusterRoleBinding",
+			APIVersion: "v1alpha1",
+		},
+		ObjectMeta: meta.ObjectMeta{
+			Name: "agent-binding",
+		},
+		RoleRef: rbac.RoleRef{
+			Type: "ClusterRole",
+			Name: "agent",
+		},
+		Subjects: []rbac.Subject{
+			rbac.Subject{
+				Kind: rbac.GroupKind,
+				Name: "agent",
 			},
 		},
 	}

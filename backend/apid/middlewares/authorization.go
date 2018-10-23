@@ -35,7 +35,7 @@ func (a Authorization) Then(next http.Handler) http.Handler {
 		// Add the user to our request info
 		reqInfo.User = types.User{
 			Username: claims.Subject,
-			// Groups: claims.Groups,
+			Groups:   claims.Groups,
 		}
 
 		authorized, err := a.Authorizer.Authorize(reqInfo)
