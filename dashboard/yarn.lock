@@ -6315,9 +6315,9 @@ react-redux@^5.0.6:
     loose-envify "^1.1.0"
     prop-types "^15.6.0"
 
-react-resize-observer@^0.2.2:
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/react-resize-observer/-/react-resize-observer-0.2.2.tgz#bd18e669c18a5adf65c18280ad79daa286af5118"
+react-resize-observer@^1.1.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/react-resize-observer/-/react-resize-observer-1.1.0.tgz#ad1d4e23501fc0b753a39cc690004a1b5eb69b3d"
 
 react-router-dom@^4.2.2:
   version "4.2.2"
