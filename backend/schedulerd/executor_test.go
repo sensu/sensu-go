@@ -18,7 +18,8 @@ import (
 )
 
 func TestAdhocExecutor(t *testing.T) {
-	store, err := testutil.NewStoreInstance()
+	storeInst, err := testutil.NewStoreInstance()
+	store := storeInst.GetStore()
 
 	if err != nil {
 		assert.FailNow(t, err.Error())

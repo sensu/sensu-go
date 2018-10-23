@@ -46,12 +46,14 @@ func TestKeepaliveMonitor(t *testing.T) {
 	}
 	defer subscription.Cancel()
 
-	store, err := testutil.NewStoreInstance()
+	storeInst, err := testutil.NewStoreInstance()
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
 
-	if err := seeds.SeedInitialData(store); err != nil {
+	store := storeInst.GetStore()
+	storev2 := storeInst.GetStoreV2()
+	if err := seeds.SeedInitialData(store, storev2); err != nil {
 		assert.FailNow(t, err.Error())
 	}
 

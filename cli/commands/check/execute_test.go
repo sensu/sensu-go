@@ -33,7 +33,9 @@ func TestExecuteCommandRunEClosureSuccess(t *testing.T) {
 	client.On("ExecuteCheck", mock.AnythingOfType("*types.AdhocRequest")).Return(nil)
 
 	config := cli.Config.(*clientmock.MockConfig)
-	_, accessToken, _ := jwt.AccessToken("foo")
+
+	user := &types.User{Username: "foo"}
+	_, accessToken, _ := jwt.AccessToken(user)
 	config.On("Tokens").Return(&types.Tokens{Access: accessToken})
 
 	cmd := ExecuteCommand(cli)
@@ -53,7 +55,9 @@ func TestExecuteCommandRunEClosureServerErr(t *testing.T) {
 	client.On("ExecuteCheck", mock.AnythingOfType("*types.AdhocRequest")).Return(errors.New("whoops"))
 
 	config := cli.Config.(*clientmock.MockConfig)
-	_, accessToken, _ := jwt.AccessToken("foo")
+
+	user := &types.User{Username: "foo"}
+	_, accessToken, _ := jwt.AccessToken(user)
 	config.On("Tokens").Return(&types.Tokens{Access: accessToken})
 
 	cmd := ExecuteCommand(cli)
