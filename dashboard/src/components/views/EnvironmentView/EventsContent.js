@@ -35,33 +35,32 @@ class EventsContent extends React.Component {
 
   static query = gql`
     query EnvironmentViewEventsContentQuery(
+      $namespace: String!
       $filter: String = "${defaultExpression}"
       $order: EventsListOrder
       $limit: Int,
       $offset: Int,
-      $environment: String!
-      $organization: String!
     ) {
-      environment(organization: $organization, environment: $environment) {
-        ...EventsList_environment
+      namespace(name: $namespace) {
+        ...EventsList_namespace
       }
     }
 
-    ${EventsList.fragments.environment}
+    ${EventsList.fragments.namespace}
   `;
 
   renderContent = renderProps => {
     const { queryParams, setQueryParams } = this.props;
     const { filter, limit, offset } = queryParams;
     const {
-      data: { environment } = {},
+      data: { namespace } = {},
       loading,
       aborted,
       poller,
       refetch,
     } = renderProps;
 
-    if (!environment && !loading && !aborted) {
+    if (!namespace && !loading && !aborted) {
       return <NotFound />;
     }
 
@@ -82,9 +81,9 @@ class EventsContent extends React.Component {
             limit={limit}
             offset={offset}
             onChangeQuery={setQueryParams}
-            environment={environment}
+            namespace={namespace}
             loading={
-              (loading && (!environment || !poller.isRunning())) || aborted
+              (loading && (!namespace || !poller.isRunning())) || aborted
             }
             refetch={refetch}
           />

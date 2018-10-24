@@ -28,33 +28,32 @@ class EntitiesContent extends React.PureComponent {
 
   static query = gql`
     query EnvironmentViewEntitiesContentQuery(
-      $environment: String!
-      $organization: String!
+      $namespace: String!
       $limit: Int
       $offset: Int
       $order: EntityListOrder
       $filter: String
     ) {
-      environment(organization: $organization, environment: $environment) {
-        ...EntitiesList_environment
+      namespace(name: $namespace) {
+        ...EntitiesList_namespace
       }
     }
 
-    ${EntitiesList.fragments.environment}
+    ${EntitiesList.fragments.namespace}
   `;
 
   renderContent = renderProps => {
     const { queryParams, setQueryParams } = this.props;
     const { filter, limit, offset, order } = queryParams;
     const {
-      data: { environment } = {},
+      data: { namespace } = {},
       loading,
       aborted,
       refetch,
       poller,
     } = renderProps;
 
-    if (!environment && !loading && !aborted) {
+    if (!namespace && !loading && !aborted) {
       return <NotFound />;
     }
 
@@ -73,10 +72,10 @@ class EntitiesContent extends React.PureComponent {
             limit={limit}
             offset={offset}
             loading={
-              (loading && (!environment || !poller.isRunning())) || aborted
+              (loading && (!namespace || !poller.isRunning())) || aborted
             }
             onChangeQuery={setQueryParams}
-            environment={environment}
+            namespace={namespace}
             refetch={refetch}
             order={order}
           />

@@ -22,12 +22,8 @@ class RelatedEntitiesCard extends React.Component {
     entity: gql`
       fragment RelatedEntitiesCard_entity on Entity {
         related(limit: 5) {
-          ns: namespace {
-            org: organization
-            env: environment
-          }
-
           id
+          namespace
           name
           status
 
@@ -39,8 +35,8 @@ class RelatedEntitiesCard extends React.Component {
     `,
   };
 
-  _renderItem = entityProp => {
-    const { ns, ...entity } = entityProp;
+  renderItem = entityProp => {
+    const { namespace, ...entity } = entityProp;
 
     return (
       <ListItem key={entity.id}>
@@ -51,7 +47,7 @@ class RelatedEntitiesCard extends React.Component {
           >
             <StatusIcon statusCode={entity.status} inline mutedOK small />
           </Typography>
-          <InlineLink to={`/${ns.org}/${ns.env}/entities/${entity.name}`}>
+          <InlineLink to={`/${namespace}/entities/${entity.name}`}>
             {entity.name}
           </InlineLink>
         </ListItemTitle>
@@ -62,14 +58,13 @@ class RelatedEntitiesCard extends React.Component {
     );
   };
 
-  _renderItems = () => {
-    const {
-      entity: { related },
-    } = this.props;
-    if (related.length === 0) {
+  renderItems = () => {
+    const { entity } = this.props;
+
+    if (entity.related.length === 0) {
       return <Typography>None found.</Typography>;
     }
-    return related.map(this._renderItem);
+    return entity.related.map(this.renderItem);
   };
 
   render() {
@@ -79,7 +74,7 @@ class RelatedEntitiesCard extends React.Component {
           <Typography variant="headline" paragraph>
             Related Entities
           </Typography>
-          <List disablePadding>{this._renderItems()}</List>
+          <List disablePadding>{this.renderItems()}</List>
         </CardContent>
       </Card>
     );

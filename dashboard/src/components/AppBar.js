@@ -7,7 +7,7 @@ import Typography from "@material-ui/core/Typography";
 import IconButton from "@material-ui/core/IconButton";
 import { withStyles } from "@material-ui/core/styles";
 import MenuIcon from "@material-ui/icons/Menu";
-import EnvironmentLabel from "/components/EnvironmentLabel";
+import NamespaceLabel from "/components/partials/NamespaceLabel";
 import Wordmark from "/icons/SensuWordmark";
 import Drawer from "/components/Drawer";
 
@@ -15,11 +15,11 @@ class AppBar extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
     viewer: PropTypes.object,
-    environment: PropTypes.object,
+    namespace: PropTypes.object,
     loading: PropTypes.bool.isRequired,
   };
 
-  static defaultProps = { environment: null, viewer: null };
+  static defaultProps = { namespace: null, viewer: null };
 
   static fragments = {
     viewer: gql`
@@ -29,14 +29,14 @@ class AppBar extends React.Component {
       ${Drawer.fragments.viewer}
     `,
 
-    environment: gql`
-      fragment AppBar_environment on Environment {
-        ...EnvironmentLabel_environment
-        ...Drawer_environment
+    namespace: gql`
+      fragment AppBar_namespace on Namespace {
+        ...NamespaceLabel_namespace
+        ...Drawer_namespace
       }
 
-      ${EnvironmentLabel.fragments.environment}
-      ${Drawer.fragments.environment}
+      ${NamespaceLabel.fragments.namespace}
+      ${Drawer.fragments.namespace}
     `,
   };
 
@@ -73,7 +73,7 @@ class AppBar extends React.Component {
   };
 
   render() {
-    const { environment, viewer, loading, classes } = this.props;
+    const { namespace, viewer, loading, classes } = this.props;
 
     return (
       <React.Fragment>
@@ -96,7 +96,7 @@ class AppBar extends React.Component {
                 <Wordmark alt="sensu logo" className={classes.logo} />
               </Typography>
               <div className={classes.grow} />
-              {environment && <EnvironmentLabel environment={environment} />}
+              {namespace && <NamespaceLabel namespace={namespace} />}
             </MaterialToolbar>
           </div>
         </MUIAppBar>
@@ -105,7 +105,7 @@ class AppBar extends React.Component {
           viewer={viewer}
           open={this.state.drawerOpen}
           onToggle={this.handleToggleDrawer}
-          environment={environment}
+          namespace={namespace}
           className={classes.drawer}
         />
       </React.Fragment>

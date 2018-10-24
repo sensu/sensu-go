@@ -22,10 +22,7 @@ class CheckDetailsExecuteAction extends React.PureComponent {
       fragment CheckDetailsExecuteAction_check on CheckConfig {
         id
         name
-        namespace {
-          organization
-          environment
-        }
+        namespace
       }
     `,
   };

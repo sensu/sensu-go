@@ -24,23 +24,20 @@ class EventDetailsDeleteAction extends React.PureComponent {
     event: gql`
       fragment EventDetailsDeleteAction_event on Event {
         id
-        ns: namespace {
-          org: organization
-          env: environment
-        }
+        namespace
       }
     `,
   };
 
   deleteEvent = () => {
     const { client, event, history } = this.props;
-    const { id, ns } = event;
+    const { id, namespace } = event;
 
     // Send request
     deleteEvent(client, { id });
 
     // Optimistically redirect
-    history.replace(`/${ns.org}/${ns.env}/events`);
+    history.replace(`/${namespace}/events`);
   };
 
   render() {

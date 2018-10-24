@@ -21,10 +21,7 @@ class EntityDetailsEvents extends React.PureComponent {
   static fragments = {
     event: gql`
       fragment EntityDetailsEvents_event on Event {
-        ns: namespace {
-          org: organization
-          env: environment
-        }
+        namespace
         check {
           name
           status
@@ -46,7 +43,7 @@ class EntityDetailsEvents extends React.PureComponent {
   };
 
   _renderItem = eventProp => {
-    const { check, entity, ns, ...event } = eventProp;
+    const { check, entity, namespace, ...event } = eventProp;
 
     if (check === null) {
       return null;
@@ -67,9 +64,7 @@ class EntityDetailsEvents extends React.PureComponent {
               small
             />
           </Typography>
-          <InlineLink
-            to={`/${ns.org}/${ns.env}/events/${entity.name}/${check.name}`}
-          >
+          <InlineLink to={`/${namespace}/events/${entity.name}/${check.name}`}>
             {check.name}
           </InlineLink>
         </ListItemTitle>
@@ -82,6 +77,7 @@ class EntityDetailsEvents extends React.PureComponent {
 
   _renderItems = () => {
     const { events } = this.props;
+
     if (events.length === 0) {
       return <Typography>No events found.</Typography>;
     }

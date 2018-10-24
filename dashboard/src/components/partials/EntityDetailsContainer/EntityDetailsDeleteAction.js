@@ -25,23 +25,20 @@ class EntityDetailsDeleteAction extends React.PureComponent {
       fragment EntityDetailsDeleteAction_entity on Entity {
         id
         name
-        ns: namespace {
-          org: organization
-          env: environment
-        }
+        namespace
       }
     `,
   };
 
   deleteRecord = () => {
     const { client, entity } = this.props;
-    const { id, ns } = entity;
+    const { id, namespace } = entity;
 
     // delete
     deleteEntity(client, { id });
 
     // optimistically redirect
-    this.props.history.push(`/${ns.org}/${ns.env}/entities`);
+    this.props.history.push(`/${namespace}/entities`);
   };
 
   render() {

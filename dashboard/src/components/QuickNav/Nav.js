@@ -2,57 +2,47 @@ import React from "react";
 import PropTypes from "prop-types";
 import classNames from "classnames";
 
-import { withStyles } from "@material-ui/core/styles";
 import CheckIcon from "/icons/Check";
 import EntityIcon from "/icons/Entity";
 import EventIcon from "/icons/Event";
 import SilenceIcon from "/icons/Silence";
 
-import QuickNavButton from "/components/QuickNavButton";
-
-const styles = {
-  quickNavContainer: {},
-};
+import Button from "./Button";
 
 class QuickNav extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,
-    organization: PropTypes.string.isRequired,
-    environment: PropTypes.string.isRequired,
+    namespace: PropTypes.string.isRequired,
   };
 
   static defaultProps = { className: "" };
 
   render() {
-    const { classes, className, organization, environment } = this.props;
+    const { classes, className, namespace } = this.props;
 
     return (
       <div className={classNames(classes.quickNavContainer, className)}>
-        <QuickNavButton
-          organization={organization}
-          environment={environment}
+        <Button
+          namespace={namespace}
           Icon={EventIcon}
           caption="Events"
           to="events"
         />
-        <QuickNavButton
-          organization={organization}
-          environment={environment}
+        <Button
+          namespace={namespace}
           Icon={EntityIcon}
           caption="Entities"
           to="entities"
         />
-        <QuickNavButton
-          organization={organization}
-          environment={environment}
+        <Button
+          namespace={namespace}
           Icon={CheckIcon}
           caption="Checks"
           to="checks"
         />
-        <QuickNavButton
-          organization={organization}
-          environment={environment}
+        <Button
+          namespace={namespace}
           Icon={SilenceIcon}
           caption="Silenced"
           to="silences"
@@ -62,4 +52,4 @@ class QuickNav extends React.Component {
   }
 }
 
-export default withStyles(styles)(QuickNav);
+export default QuickNav;

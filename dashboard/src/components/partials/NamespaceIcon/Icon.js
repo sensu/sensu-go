@@ -47,7 +47,7 @@ const styles = theme => ({
   },
 });
 
-class OrganizationIcon extends React.PureComponent {
+class Icon extends React.PureComponent {
   static propTypes = {
     children: PropTypes.node,
     classes: PropTypes.object.isRequired,
@@ -96,4 +96,4 @@ class OrganizationIcon extends React.PureComponent {
   }
 }
 
-export default withStyles(styles)(OrganizationIcon);
+export default withStyles(styles)(Icon);

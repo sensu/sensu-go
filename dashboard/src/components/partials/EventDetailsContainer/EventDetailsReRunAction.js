@@ -26,10 +26,7 @@ class EventDetailsReRunAction extends React.PureComponent {
         entity {
           name
         }
-        namespace {
-          organization
-          environment
-        }
+        namespace
       }
     `,
   };
