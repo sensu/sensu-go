@@ -21,7 +21,7 @@ import {
 } from "/components/DateFormatter";
 import Duration from "/components/Duration";
 import StatusIcon from "/components/CheckStatusIcon";
-import Monospaced from "/components/Monospaced";
+import CodeBlock from "/components/CodeBlock";
 import Maybe from "/components/Maybe";
 import SilencedIcon from "/icons/Silence";
 import Tooltip from "@material-ui/core/Tooltip";
@@ -154,9 +154,9 @@ class EventDetailsCheckResult extends React.PureComponent {
         {check.output ? (
           <React.Fragment>
             <Divider />
-            <Monospaced background>
+            <CodeBlock>
               <CardContent>{check.output}</CardContent>
-            </Monospaced>
+            </CodeBlock>
           </React.Fragment>
         ) : (
           <React.Fragment>

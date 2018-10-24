@@ -16,7 +16,8 @@ import Grid from "@material-ui/core/Grid";
 import List from "@material-ui/core/List";
 import ListItem, { ListItemTitle } from "/components/DetailedListItem";
 import Maybe from "/components/Maybe";
-import Monospaced from "/components/Monospaced";
+import CodeBlock from "/components/CodeBlock";
+import CodeHighlight from "/components/CodeHighlight/CodeHighlight";
 import SilencedIcon from "/icons/Silence";
 import Typography from "@material-ui/core/Typography";
 import Tooltip from "@material-ui/core/Tooltip";
@@ -137,8 +138,12 @@ class CheckDetailsConfiguration extends React.PureComponent {
 
                 <DictionaryEntry>
                   <DictionaryKey>Command</DictionaryKey>
-                  <DictionaryValue>
-                    <Code>{check.command}</Code>
+                  <DictionaryValue explicitRightMargin>
+                    <CodeHighlight language="bash" code={check.command}>
+                      {code => (
+                        <Code dangerouslySetInnerHTML={{ __html: code }} />
+                      )}
+                    </CodeHighlight>
                   </DictionaryValue>
                 </DictionaryEntry>
 
@@ -247,11 +252,18 @@ class CheckDetailsConfiguration extends React.PureComponent {
 
                 <DictionaryEntry>
                   <DictionaryKey>ENV Vars</DictionaryKey>
-                  <DictionaryValue>
+                  <DictionaryValue scrollableContent>
                     {check.envVars.length > 0 ? (
-                      <Monospaced highlight background>
-                        {check.envVars.join("\n")}
-                      </Monospaced>
+                      <CodeBlock>
+                        <CodeHighlight
+                          language="properties"
+                          code={check.envVars.join("\n")}
+                        >
+                          {code => (
+                            <code dangerouslySetInnerHTML={{ __html: code }} />
+                          )}
+                        </CodeHighlight>
+                      </CodeBlock>
                     ) : (
                       "None"
                     )}
@@ -324,15 +336,20 @@ class CheckDetailsConfiguration extends React.PureComponent {
         {Object.keys(check.extendedAttributes).length > 0 && (
           <React.Fragment>
             <Divider />
-            <Monospaced background>
+            <CodeBlock>
               <CardContent>
-                {`# Extra\n\n${JSON.stringify(
-                  check.extendedAttributes,
-                  null,
-                  "\t",
-                )}`}
+                <CodeHighlight
+                  language="json"
+                  code={`# Extra\n\n${JSON.stringify(
+                    check.extendedAttributes,
+                    null,
+                    "\t",
+                  )}`}
+                >
+                  {code => <code dangerouslySetInnerHTML={{ __html: code }} />}
+                </CodeHighlight>
               </CardContent>
-            </Monospaced>
+            </CodeBlock>
           </React.Fragment>
         )}
       </Card>

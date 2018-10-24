@@ -28,6 +28,8 @@ export default () => {
     entry: [path.resolve(root, "src/index.js")],
 
     output: {
+      globalObject: "self",
+
       path: outputPath,
 
       publicPath: "/",
@@ -111,6 +113,18 @@ export default () => {
                 name: "static/media/[name].[hash:8].[ext]",
               },
             },
+            {
+              test: /\.css$/,
+              use: ["style-loader", "css-loader"],
+            },
+            {
+              test: /\.worker\.js$/,
+              loader: "worker-loader",
+              options: {
+                name: "static/[hash].worker.js",
+              },
+            },
+
             {
               test: /\.macro\.js$/,
               exclude: path.resolve(root, "node_modules"),

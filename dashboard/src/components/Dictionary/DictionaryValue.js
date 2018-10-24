@@ -13,6 +13,8 @@ const styles = theme => ({
   limit: {
     maxWidth: "60%",
   },
+  scrollableContent: { display: "inline-grid" },
+  explicitRightMargin: { paddingRight: "24px" },
 });
 
 class DictionaryValue extends React.Component {
@@ -21,11 +23,15 @@ class DictionaryValue extends React.Component {
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,
     constrain: PropTypes.bool,
+    explicitRightMargin: PropTypes.bool,
+    scrollableContent: PropTypes.bool,
   };
 
   static defaultProps = {
     className: null,
     constrain: false,
+    explicitRightMargin: false,
+    scrollableContent: false,
   };
 
   render() {
@@ -34,10 +40,14 @@ class DictionaryValue extends React.Component {
       classes,
       children,
       constrain,
+      explicitRightMargin,
+      scrollableContent,
       ...props
     } = this.props;
     const className = classnames(classes.root, classNameProp, {
       [classes.limit]: constrain,
+      [classes.explicitRightMargin]: explicitRightMargin,
+      [classes.scrollableContent]: scrollableContent,
     });
 
     return (

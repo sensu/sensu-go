@@ -5,7 +5,7 @@ import { fade } from "@material-ui/core/styles/colorManipulator";
 
 const styles = theme => ({
   root: {
-    whiteSpace: "nowrap",
+    whiteSpace: "pre-wrap",
     margin: "0 1px",
     padding: `${2 / 16}em ${4 / 16}em`,
     borderRadius: `${5 / 16}em`,
@@ -24,11 +24,18 @@ const styles = theme => ({
 class Code extends React.PureComponent {
   static propTypes = {
     classes: PropTypes.object.isRequired,
+    children: PropTypes.node,
   };
 
+  static defaultProps = { children: null };
+
   render() {
-    const { classes, ...props } = this.props;
-    return <code {...props} className={classes.root} />;
+    const { classes, children, ...props } = this.props;
+    return (
+      <code {...props} className={classes.root}>
+        {children}
+      </code>
+    );
   }
 }
 

@@ -47,6 +47,9 @@ rules:
 
   import/prefer-default-export: 0
 
+  # Code Highlighting requirees dangerously setting
+  react/no-danger: 0
+
   # https://github.com/apollographql/eslint-plugin-graphql
   graphql/template-strings:
     - error
