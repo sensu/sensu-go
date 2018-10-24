@@ -72,6 +72,14 @@ var convert_{{ $toPackage }}_{{ $t.TypeName}}_To_{{ $t.TypeName}} = func(from *{
 {{ end }}
 `
 
+const converterTestTmplStr = `package {{ .FromPackage }}
+
+import (
+	"{{ .ImportPackage }}"
+)
+{{ $toPackage := .ToPackage }}{{ range $i, $t := .Types }}
+func TestConvert`
+
 var converterTmpl = template.Must(template.New("converter").Parse(converterTmplStr))
 
 func createConverters(from, to string) error {

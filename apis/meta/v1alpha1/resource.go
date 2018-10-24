@@ -22,3 +22,4 @@ func (r ObjectMeta) ResourceName() string {
 func (r TypeMeta) ResourceName() string {
 	return ""
 }
+

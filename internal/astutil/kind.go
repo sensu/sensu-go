@@ -4,6 +4,7 @@ import (
 	"go/ast"
 	"go/token"
 	"sort"
+	"strings"
 )
 
 const (
@@ -51,7 +52,10 @@ func IsKind(spec *ast.TypeSpec) bool {
 
 func GetKinds(pkg *ast.Package) map[string]*ast.TypeSpec {
 	result := make(map[string]*ast.TypeSpec)
-	for _, f := range pkg.Files {
+	for filename, f := range pkg.Files {
+		if strings.HasSuffix(filename, "_test.go") {
+			continue
+		}
 		for _, decl := range f.Decls {
 			gendecl, ok := decl.(*ast.GenDecl)
 			if !ok || gendecl.Tok != token.TYPE {

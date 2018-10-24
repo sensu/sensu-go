@@ -121,7 +121,7 @@ message ObjectMeta {
 
 // Time is a wrapper around time.Time which supports correct
 // marshaling to YAML and JSON.  Wrappers are provided for many
-// of the factory methods that the time package v1alpha1.
+// of the factory methods that the time package github.com.sensu.sensu_go.apis.meta.v1alpha1
 // 
 // +protobuf.options.marshal=false
 // +protobuf.as=Timestamp
