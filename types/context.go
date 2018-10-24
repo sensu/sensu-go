@@ -22,9 +22,9 @@ const (
 	RefreshTokenClaims
 	// RefreshTokenString contains the key name to retrieve the refresh token string
 	RefreshTokenString
-	// RequestInfoKey is the key name used to store information about the
-	// request within a context
-	RequestInfoKey
+	// AuthorizationAttributesKey is the key name used to store authorization
+	// attributes extracted from a request
+	AuthorizationAttributesKey
 	// StoreKey contains the key name to retrieve the etcd store from within a context
 	StoreKey
 )
@@ -37,10 +37,10 @@ func ContextNamespace(ctx context.Context) string {
 	return ""
 }
 
-// ContextRequestInfo returns the request information stored in the given context.
-func ContextRequestInfo(ctx context.Context) *RequestInfo {
-	if value := ctx.Value(RequestInfoKey); value != nil {
-		return value.(*RequestInfo)
-	}
-	return nil
-}
+// // ContextRequestInfo returns the request information stored in the given context.
+// func ContextRequestInfo(ctx context.Context) *RequestInfo {
+// 	if value := ctx.Value(RequestInfoKey); value != nil {
+// 		return value.(*RequestInfo)
+// 	}
+// 	return nil
+// }

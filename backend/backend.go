@@ -2,6 +2,7 @@ package backend
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -29,6 +30,8 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/rpc"
+	"github.com/sensu/sensu-go/runtime/codec"
+	etcdstorev2 "github.com/sensu/sensu-go/storage/etcd"
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/types"
 )
@@ -105,11 +108,14 @@ func Initialize(config *Config) (*Backend, error) {
 		return nil, err
 	}
 
+	// Initialize the v2 store
+	storev2 := etcdstorev2.NewStorage(client, codec.UniversalCodec())
+
 	// Initialize the store, which lives on top of etcd
 	logger.Debug("Initializing store...")
 	store := etcdstore.NewStore(client, config.EtcdName)
-	if err = seeds.SeedInitialData(store); err != nil {
-		return nil, fmt.Errorf("error initializing the store: %s", err)
+	if err = seeds.SeedInitialData(store, storev2); err != nil {
+		return nil, errors.New("error initializing the store: " + err.Error())
 	}
 	logger.Debug("Done initializing store")
 
@@ -203,6 +209,7 @@ func Initialize(config *Config) (*Backend, error) {
 		Port:        config.APIPort,
 		Bus:         bus,
 		Store:       store,
+		Storev2:     storev2,
 		QueueGetter: queueGetter,
 		TLS:         config.TLS,
 		Cluster:     clientv3.NewCluster(client),

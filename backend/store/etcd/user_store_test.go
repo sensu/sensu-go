@@ -70,7 +70,8 @@ func TestUserStorage(t *testing.T) {
 		assert.Equal(t, 2, len(users))
 
 		// Generate a token for the bar user
-		token, _, _ := jwt.AccessToken("bar")
+		userBar := &types.User{Username: "bar"}
+		token, _, _ := jwt.AccessToken(userBar)
 		claims, _ := jwt.GetClaims(token)
 		err = store.CreateToken(claims)
 		assert.NoError(t, err)

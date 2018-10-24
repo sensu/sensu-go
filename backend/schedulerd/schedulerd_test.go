@@ -26,17 +26,18 @@ func TestSchedulerd(t *testing.T) {
 	}
 
 	// Setup store
-	st, serr := testutil.NewStoreInstance()
+	storeInst, serr := testutil.NewStoreInstance()
 	if serr != nil {
 		assert.FailNow(t, serr.Error())
 	}
-	defer st.Teardown()
+	defer storeInst.Teardown()
+	store := storeInst.GetStore()
 
 	// Mock a default namespace
-	require.NoError(t, st.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
+	require.NoError(t, store.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
 
 	schedulerd, err := New(Config{
-		Store:       st,
+		Store:       store,
 		QueueGetter: queue.NewMemoryGetter(),
 		Bus:         bus,
 	})
@@ -55,9 +56,9 @@ func TestSchedulerd(t *testing.T) {
 	ctx := context.WithValue(context.Background(), types.NamespaceKey, check.Namespace)
 
 	assert.NoError(t, check.Validate())
-	assert.NoError(t, st.UpdateCheckConfig(ctx, check))
+	assert.NoError(t, store.UpdateCheckConfig(ctx, check))
 
-	require.NoError(t, st.DeleteCheckConfigByName(ctx, check.Name))
+	require.NoError(t, store.DeleteCheckConfigByName(ctx, check.Name))
 
 	sub.Cancel()
 	close(tsub.ch)

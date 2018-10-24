@@ -1,12 +1,12 @@
 package actions
 
 import (
+	"context"
 	"testing"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
-	"golang.org/x/net/context"
 )
 
 type mockCluster struct {

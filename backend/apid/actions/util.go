@@ -1,10 +1,10 @@
 package actions
 
 import (
+	"context"
 	"reflect"
 
 	"github.com/sensu/sensu-go/types"
-	"golang.org/x/net/context"
 )
 
 func addOrgEnvToContext(

@@ -14,8 +14,10 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/apid/routers"
+	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/storage"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/version"
 )
@@ -35,6 +37,7 @@ type APId struct {
 	HTTPServer  *http.Server
 	bus         messaging.MessageBus
 	store       store.Store
+	storev2     storev2.Store
 	queueGetter types.QueueGetter
 	tls         *types.TLSOptions
 	cluster     clientv3.Cluster
@@ -49,6 +52,7 @@ type Config struct {
 	Port        int
 	Bus         messaging.MessageBus
 	Store       store.Store
+	Storev2     storev2.Store
 	QueueGetter types.QueueGetter
 	TLS         *types.TLSOptions
 	Cluster     clientv3.Cluster
@@ -60,6 +64,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 		Host:        c.Host,
 		Port:        c.Port,
 		store:       c.Store,
+		storev2:     c.Storev2,
 		queueGetter: c.QueueGetter,
 		tls:         c.TLS,
 		bus:         c.Bus,
@@ -74,7 +79,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
 	registerUnauthenticatedResources(router, a.store)
 	registerAuthenticationResources(router, a.store)
-	registerRestrictedResources(router, a.store, a.queueGetter, a.bus, a.cluster)
+	registerRestrictedResources(router, a.store, a.storev2, a.queueGetter, a.bus, a.cluster)
 
 	a.HTTPServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
@@ -177,18 +182,18 @@ func registerAuthenticationResources(router *mux.Router, store store.Store) {
 	)
 }
 
-func registerRestrictedResources(router *mux.Router, store store.Store, getter types.QueueGetter, bus messaging.MessageBus, cluster clientv3.Cluster) {
+func registerRestrictedResources(router *mux.Router, store store.Store, storev2 storev2.Store, getter types.QueueGetter, bus messaging.MessageBus, cluster clientv3.Cluster) {
 	mountRouters(
 		NewSubrouter(
 			router.NewRoute(),
+			middlewares.AuthorizationAttributes{},
 			middlewares.SimpleLogger{},
 			middlewares.Namespace{Store: store},
 			middlewares.Authentication{},
 			middlewares.AllowList{Store: store},
-			middlewares.Authorization{Store: store},
+			middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: storev2}},
 			middlewares.LimitRequest{},
 			middlewares.Edition{Name: version.Edition},
-			middlewares.RequestInfo{},
 		),
 		routers.NewAssetRouter(store),
 		routers.NewChecksRouter(actions.NewCheckController(store, getter)),
@@ -205,6 +210,7 @@ func registerRestrictedResources(router *mux.Router, store store.Store, getter t
 		routers.NewUsersRouter(store),
 		routers.NewExtensionsRouter(store),
 		routers.NewClusterRouter(actions.NewClusterController(cluster)),
+		routers.NewRBACRouter(storev2),
 	)
 }
 

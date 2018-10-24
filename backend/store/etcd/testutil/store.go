@@ -8,12 +8,16 @@ import (
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
+	"github.com/sensu/sensu-go/runtime/codec"
+	storev2 "github.com/sensu/sensu-go/storage"
+	etcdstorev2 "github.com/sensu/sensu-go/storage/etcd"
 	"github.com/sensu/sensu-go/testing/testutil"
 )
 
 // IntegrationTestStore wrapper for etcd & store
 type IntegrationTestStore struct {
-	*etcdstore.Store
+	store   *etcdstore.Store
+	storev2 storev2.Store
 	// underscores to avoid collision w/ store
 	_etcd        *etcd.Etcd
 	_removeTmpFn func()
@@ -25,9 +29,14 @@ func (e *IntegrationTestStore) Teardown() {
 	e._removeTmpFn()
 }
 
-// GetStore return etcd client
+// GetStore returns the v1 store
 func (e *IntegrationTestStore) GetStore() store.Store {
-	return e.Store
+	return e.store
+}
+
+// GetStoreV2 returns the v2 store
+func (e *IntegrationTestStore) GetStoreV2() storev2.Store {
+	return e.storev2
 }
 
 // NewStoreInstance returns new isolated store
@@ -68,10 +77,12 @@ func NewStoreInstance() (*IntegrationTestStore, error) {
 		return nil, err
 	}
 
-	st := etcdstore.NewStore(client, e.Name())
+	store := etcdstore.NewStore(client, e.Name())
+	storev2 := etcdstorev2.NewStorage(client, codec.UniversalCodec())
 
 	return &IntegrationTestStore{
-		Store:        st,
+		store:        store,
+		storev2:      storev2,
 		_etcd:        e,
 		_removeTmpFn: removeTmp,
 	}, nil
@@ -94,6 +105,6 @@ func RunWithStore(fn func(store.Store)) error {
 	}
 	defer store.Teardown()
 
-	fn(store.Store)
+	fn(store.store)
 	return nil
 }

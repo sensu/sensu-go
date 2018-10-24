@@ -22,9 +22,9 @@ func init() {
 
 func TestAccessToken(t *testing.T) {
 	secret = []byte("foobar")
-	username := "foo"
+	user := &types.User{Username: "foo"}
 
-	_, tokenString, err := AccessToken(username)
+	_, tokenString, err := AccessToken(user)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, tokenString)
 
@@ -33,31 +33,33 @@ func TestAccessToken(t *testing.T) {
 	assert.NotNil(t, token)
 
 	claims, _ := token.Claims.(*types.Claims)
-	assert.Equal(t, username, claims.Subject)
+	assert.Equal(t, user.Username, claims.Subject)
 	assert.NotEmpty(t, claims.Id)
 	assert.NotZero(t, claims.ExpiresAt)
 }
 
 func TestClaimsContext(t *testing.T) {
-	username := "foo"
-	token, _, _ := AccessToken(username)
+	user := &types.User{Username: "foo"}
+	token, _, _ := AccessToken(user)
 
 	r, _ := http.NewRequest("GET", "/foo", nil)
 
 	ctx := SetClaimsIntoContext(r, token.Claims.(*types.Claims))
 	claims := GetClaimsFromContext(ctx)
-	assert.Equal(t, username, claims.Subject)
+	assert.Equal(t, user.Username, claims.Subject)
 }
 
 func TestGetClaims(t *testing.T) {
-	username := "foo"
-	token, _, _ := AccessToken(username)
+	user := &types.User{Username: "foo"}
+	token, _, _ := AccessToken(user)
 
 	_, err := GetClaims(token)
 	assert.NoError(t, err)
 }
 
 func TestExtractBearerToken(t *testing.T) {
+	user := &types.User{Username: "foo"}
+
 	// No bearer token
 	r, _ := http.NewRequest("GET", "/foo", nil)
 	token := ExtractBearerToken(r)
@@ -66,7 +68,7 @@ func TestExtractBearerToken(t *testing.T) {
 
 	// Valid bearer token
 	r, _ = http.NewRequest("GET", "/foo", nil)
-	_, tokenString, _ := AccessToken("foo")
+	_, tokenString, _ := AccessToken(user)
 	r.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
 	token = ExtractBearerToken(r)
 
@@ -107,8 +109,8 @@ func TestInitSecretEtcdError(t *testing.T) {
 
 func TestRefreshToken(t *testing.T) {
 	secret = []byte("foobar")
-	username := "foo"
-	_, tokenString, err := RefreshToken(username)
+	user := &types.User{Username: "foo"}
+	_, tokenString, err := RefreshToken(user)
 	assert.NoError(t, err)
 
 	token, err := ValidateToken(tokenString)
@@ -116,14 +118,14 @@ func TestRefreshToken(t *testing.T) {
 	assert.NotNil(t, token)
 
 	claims, _ := token.Claims.(*types.Claims)
-	assert.Equal(t, username, claims.Subject)
+	assert.Equal(t, user.Username, claims.Subject)
 	assert.NotEmpty(t, claims.Id)
 }
 
 func TestValidateTokenError(t *testing.T) {
 	// Create an expired token
-	username := "foo"
-	_, tokenString, _ := AccessToken(username)
+	user := &types.User{Username: "foo"}
+	_, tokenString, _ := AccessToken(user)
 
 	// Assert that the token is currently valid
 	_, err := ValidateToken(tokenString)
@@ -139,8 +141,8 @@ func TestValidateTokenError(t *testing.T) {
 // token but otherwise valid
 func TestValidateExpiredToken(t *testing.T) {
 	// Create an expired token
-	username := "foo"
-	_, tokenString, _ := AccessToken(username)
+	user := &types.User{Username: "foo"}
+	_, tokenString, _ := AccessToken(user)
 
 	// Wait for the token to expire
 	testTime.Set(time.Now().Add(defaultExpiration + time.Second))
@@ -149,9 +151,9 @@ func TestValidateExpiredToken(t *testing.T) {
 }
 
 func TestValidateExpiredTokenActive(t *testing.T) {
-	username := "foo"
+	user := &types.User{Username: "foo"}
 
-	_, tokenString, err := AccessToken(username)
+	_, tokenString, err := AccessToken(user)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, tokenString)
 
@@ -163,8 +165,8 @@ func TestValidateExpiredTokenActive(t *testing.T) {
 func TestValidateExpiredTokenInvalid(t *testing.T) {
 	// Create an expired token
 	secret = []byte("foobar")
-	username := "foo"
-	_, tokenString, _ := AccessToken(username)
+	user := &types.User{Username: "foo"}
+	_, tokenString, _ := AccessToken(user)
 
 	// The token will expire
 	testTime.Set(time.Now().Add(defaultExpiration + time.Second))

@@ -81,8 +81,9 @@ func TestLogoutNotWhitelisted(t *testing.T) {
 		mock.AnythingOfType("[]string"),
 	).Return(fmt.Errorf("error"))
 
-	_, tokenString, _ := jwt.AccessToken("foo")
-	_, refreshTokenString, _ := jwt.RefreshToken("foo")
+	user := &types.User{Username: "foo"}
+	_, tokenString, _ := jwt.AccessToken(user)
+	_, refreshTokenString, _ := jwt.RefreshToken(user)
 	body := &types.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
 
@@ -104,8 +105,9 @@ func TestLogoutSuccess(t *testing.T) {
 		mock.AnythingOfType("[]string"),
 	).Return(nil)
 
-	_, tokenString, _ := jwt.AccessToken("foo")
-	_, refreshTokenString, _ := jwt.RefreshToken("foo")
+	user := &types.User{Username: "foo"}
+	_, tokenString, _ := jwt.AccessToken(user)
+	_, refreshTokenString, _ := jwt.RefreshToken(user)
 	body := &types.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
 
@@ -119,6 +121,7 @@ func TestLogoutSuccess(t *testing.T) {
 func TestTokenRefreshTokenNotWhitelisted(t *testing.T) {
 	store := &mockstore.MockStore{}
 	a := &AuthenticationRouter{store}
+	user := &types.User{Username: "foo"}
 
 	// Mock calls to the store
 	store.On(
@@ -126,9 +129,13 @@ func TestTokenRefreshTokenNotWhitelisted(t *testing.T) {
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("string"),
 	).Return(&types.Claims{}, fmt.Errorf("error"))
+	store.On("GetUser",
+		mock.AnythingOfType("*context.valueCtx"),
+		mock.AnythingOfType("string"),
+	).Return(user, nil)
 
-	_, tokenString, _ := jwt.AccessToken("foo")
-	_, refreshTokenString, _ := jwt.RefreshToken("foo")
+	_, tokenString, _ := jwt.AccessToken(user)
+	_, refreshTokenString, _ := jwt.RefreshToken(user)
 	body := &types.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
 
@@ -142,6 +149,7 @@ func TestTokenRefreshTokenNotWhitelisted(t *testing.T) {
 func TestTokenCannotWhitelistAccessToken(t *testing.T) {
 	store := &mockstore.MockStore{}
 	a := &AuthenticationRouter{store}
+	user := &types.User{Username: "foo"}
 
 	// Mock calls to the store
 	store.On("CreateToken", mock.AnythingOfType("*types.Claims")).Return(fmt.Errorf("error"))
@@ -155,9 +163,13 @@ func TestTokenCannotWhitelistAccessToken(t *testing.T) {
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("string"),
 	).Return(&types.Claims{}, nil)
+	store.On("GetUser",
+		mock.AnythingOfType("*context.valueCtx"),
+		mock.AnythingOfType("string"),
+	).Return(user, nil)
 
-	_, tokenString, _ := jwt.AccessToken("foo")
-	_, refreshTokenString, _ := jwt.RefreshToken("foo")
+	_, tokenString, _ := jwt.AccessToken(user)
+	_, refreshTokenString, _ := jwt.RefreshToken(user)
 	body := &types.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
 
@@ -171,6 +183,7 @@ func TestTokenCannotWhitelistAccessToken(t *testing.T) {
 func TestTokenSuccess(t *testing.T) {
 	store := &mockstore.MockStore{}
 	a := &AuthenticationRouter{store}
+	user := &types.User{Username: "foo"}
 
 	// Mock calls to the store
 	store.On("CreateToken", mock.AnythingOfType("*types.Claims")).Return(nil)
@@ -184,9 +197,13 @@ func TestTokenSuccess(t *testing.T) {
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("string"),
 	).Return(&types.Claims{}, nil)
+	store.On("GetUser",
+		mock.AnythingOfType("*context.valueCtx"),
+		mock.AnythingOfType("string"),
+	).Return(user, nil)
 
-	_, tokenString, _ := jwt.AccessToken("foo")
-	_, refreshTokenString, _ := jwt.RefreshToken("foo")
+	_, tokenString, _ := jwt.AccessToken(user)
+	_, refreshTokenString, _ := jwt.RefreshToken(user)
 	body := &types.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
 
