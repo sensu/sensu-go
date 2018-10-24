@@ -27,8 +27,8 @@ extend type Query {
   "Describes state of authorization tokens"
   auth: Auth
 
-  "The last environment that the client accessed."
-  lastEnvironment: Namespace
+  "The last namespace that the client accessed."
+  lastNamespace: String!
 }
 
 extend type Mutation {
@@ -48,10 +48,10 @@ extend type Mutation {
   flagTokens: Boolean
 
   #
-  # Last Environment
+  # Last Namespace
 
-  "Stores given pair as user's last visited environment."
-  setLastEnvironment(organization: String!, environment: String!): Boolean
+  "Stores given pair as user's last visited namespace."
+  setLastNamespace(name: String!): Boolean
 }
 
 type Auth {

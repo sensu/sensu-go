@@ -6,8 +6,8 @@ import gql from "graphql-tag";
 import { withStyles } from "@material-ui/core/styles";
 import Button from "@material-ui/core/ButtonBase";
 
-import NamespaceSelectorBuilder from "/components/NamespaceSelectorBuilder";
-import NamespaceSelectorMenu from "/components/NamespaceSelectorMenu";
+import NamespaceSelectorBuilder from "./NamespaceSelectorBuilder";
+import NamespaceSelectorMenu from "./NamespaceSelectorMenu";
 
 const styles = {
   button: {
@@ -21,7 +21,7 @@ const styles = {
 class NamespaceSelector extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
-    environment: PropTypes.object,
+    namespace: PropTypes.object,
     loading: PropTypes.bool,
     onChange: PropTypes.func.isRequired,
     viewer: PropTypes.object,
@@ -29,7 +29,7 @@ class NamespaceSelector extends React.Component {
 
   static defaultProps = {
     viewer: null,
-    environment: null,
+    namespace: null,
     loading: false,
   };
 
@@ -42,12 +42,9 @@ class NamespaceSelector extends React.Component {
       ${NamespaceSelectorMenu.fragments.viewer}
     `,
 
-    environment: gql`
-      fragment NamespaceSelector_environment on Environment {
+    namespace: gql`
+      fragment NamespaceSelector_namespace on Namespace {
         name
-        organization {
-          name
-        }
       }
     `,
   };
@@ -67,7 +64,7 @@ class NamespaceSelector extends React.Component {
   render() {
     const {
       classes,
-      environment,
+      namespace,
       loading,
       onChange,
       viewer,
@@ -77,7 +74,7 @@ class NamespaceSelector extends React.Component {
 
     return (
       <Route
-        path="/:organization/:environment"
+        path="/:namespace"
         render={({ match: { params } }) => (
           <div {...props}>
             <Button
@@ -85,7 +82,7 @@ class NamespaceSelector extends React.Component {
               className={classes.button}
               onClick={this.handleClick}
             >
-              <NamespaceSelectorBuilder environment={environment} />
+              <NamespaceSelectorBuilder namespace={namespace} />
             </Button>
             <NamespaceSelectorMenu
               anchorEl={anchorEl}

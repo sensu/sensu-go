@@ -11,7 +11,9 @@ const styles = () => ({
   },
 });
 
-class TagOrb extends React.Component {
+class Oval extends React.Component {
+  static displayName = "TagOrb.Oval";
+
   static propTypes = {
     classes: PropTypes.object.isRequired,
     className: PropTypes.string,
@@ -45,4 +47,4 @@ class TagOrb extends React.Component {
   }
 }
 
-export default withStyles(styles)(TagOrb);
+export default withStyles(styles)(Oval);

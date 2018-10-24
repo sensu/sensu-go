@@ -14,7 +14,7 @@ import AuthenticatedRoute from "/components/util/AuthenticatedRoute";
 import UnauthenticatedRoute from "/components/util/UnauthenticatedRoute";
 import AuthInvalidRoute from "/components/util/AuthInvalidRoute";
 import DefaultRedirect from "/components/util/DefaultRedirect";
-import LastEnvironmentRedirect from "/components/util/LastEnvironmentRedirect";
+import LastNamespaceRedirect from "/components/util/LastNamespaceRedirect";
 import SigninRedirect from "/components/util/SigninRedirect";
 import { Provider as RelocationProvider } from "/components/relocation/Relocation";
 
@@ -46,10 +46,10 @@ class AppRoot extends React.PureComponent {
                   exact
                   path="/signin"
                   component={SignInView}
-                  fallbackComponent={LastEnvironmentRedirect}
+                  fallbackComponent={LastNamespaceRedirect}
                 />
                 <AuthenticatedRoute
-                  path="/:organization/:environment"
+                  path="/:namespace"
                   component={EnvironmentView}
                   fallbackComponent={SigninRedirect}
                 />

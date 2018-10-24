@@ -16,7 +16,7 @@ import QueueMenuItem from "/components/partials/ToolbarMenuItems/QueueExecution"
 
 class ChecksListHeader extends React.PureComponent {
   static propTypes = {
-    environment: PropTypes.object,
+    namespace: PropTypes.object,
     onChangeQuery: PropTypes.func.isRequired,
     onClickClearSilences: PropTypes.func.isRequired,
     onClickDelete: PropTypes.func.isRequired,
@@ -30,12 +30,12 @@ class ChecksListHeader extends React.PureComponent {
   };
 
   static defaultProps = {
-    environment: null,
+    namespace: null,
   };
 
   static fragments = {
-    environment: gql`
-      fragment ChecksListHeader_environment on Environment {
+    namespace: gql`
+      fragment ChecksListHeader_namespace on Namespace {
         subscriptions(orderBy: OCCURRENCES) {
           values(limit: 25)
         }
@@ -57,8 +57,8 @@ class ChecksListHeader extends React.PureComponent {
   };
 
   renderActions = () => {
-    const { environment, onChangeQuery, order } = this.props;
-    const subscriptions = environment ? environment.subscriptions.values : [];
+    const { namespace, onChangeQuery, order } = this.props;
+    const subscriptions = namespace ? namespace.subscriptions.values : [];
 
     return (
       <ToolbarMenu>

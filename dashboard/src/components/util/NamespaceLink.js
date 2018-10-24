@@ -6,10 +6,7 @@ class NamespaceLink extends React.PureComponent {
   static propTypes = {
     ...Link.PropTypes,
     to: PropTypes.string.isRequired,
-    namespace: PropTypes.shape({
-      organization: PropTypes.string.isRequired,
-      environment: PropTypes.string.isRequired,
-    }),
+    namespace: PropTypes.string.isRequired,
   };
 
   static defaultProps = {
@@ -24,18 +21,14 @@ class NamespaceLink extends React.PureComponent {
   render() {
     const { namespace } = this.props;
 
-    if (this.props.namespace) {
-      return this.renderLink(namespace.organization, namespace.environment);
+    if (namespace) {
+      return this.renderLink(namespace);
     }
 
     return (
       <Route
-        path="/:organization/:environment"
-        render={({
-          match: {
-            params: { organization, environment },
-          },
-        }) => this.renderLink(organization, environment)}
+        path="/:namespace"
+        render={({ match: { params } }) => this.renderLink(params.namespace)}
       />
     );
   }

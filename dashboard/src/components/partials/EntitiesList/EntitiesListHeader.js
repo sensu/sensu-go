@@ -13,7 +13,7 @@ import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
 
 class EntitiesListHeader extends React.PureComponent {
   static propTypes = {
-    environment: PropTypes.object,
+    namespace: PropTypes.object,
     onChangeQuery: PropTypes.func.isRequired,
     onClickClearSilences: PropTypes.func.isRequired,
     onClickDelete: PropTypes.func.isRequired,
@@ -29,12 +29,12 @@ class EntitiesListHeader extends React.PureComponent {
     onChangeFilter: () => {},
     onChangeSort: () => {},
     onSubmitDelete: () => {},
-    environment: undefined,
+    namespace: undefined,
   };
 
   static fragments = {
-    environment: gql`
-      fragment EntitiesListHeader_environment on Environment {
+    namespace: gql`
+      fragment EntitiesListHeader_namespace on Namespace {
         subscriptions(orderBy: OCCURRENCES, omitEntity: true) {
           values(limit: 25)
         }
@@ -48,8 +48,8 @@ class EntitiesListHeader extends React.PureComponent {
   };
 
   renderActions = () => {
-    const { environment: env, onChangeQuery, order } = this.props;
-    const subs = env ? env.subscriptions.values : [];
+    const { namespace, onChangeQuery, order } = this.props;
+    const subs = namespace ? namespace.subscriptions.values : [];
 
     return (
       <ToolbarMenu>

@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-import TagOrb from "/components/TagOrb";
+import Orb from "./Orb";
 
 const colours = {
   BLUE: "#8AB8D0",
@@ -12,7 +12,7 @@ const colours = {
   YELLOW: "#FAD66B",
 };
 
-class EnvironmentSymbol extends React.Component {
+class TagOrb extends React.Component {
   static propTypes = {
     colour: PropTypes.oneOf(Object.keys(colours)).isRequired,
   };
@@ -20,8 +20,8 @@ class EnvironmentSymbol extends React.Component {
   render() {
     const { colour, ...props } = this.props;
     const effectiveColour = colours[colour];
-    return <TagOrb colour={effectiveColour} {...props} />;
+    return <Orb colour={effectiveColour} {...props} />;
   }
 }
 
-export default EnvironmentSymbol;
+export default TagOrb;

@@ -7,28 +7,22 @@ import gql from "graphql-tag";
 import Query from "/components/util/Query";
 
 const primaryQuery = gql`
-  query LastEnvironmentQuery {
-    lastEnvironment @client {
-      organization
-      environment
-    }
+  query LastNamespaceQuery {
+    lastNamespace @client
   }
 `;
 
 const fallbackQuery = gql`
-  query LastEnvironmentFallbackQuery {
+  query LastNamespaceFallbackQuery {
     viewer {
-      organizations {
+      namespaces {
         name
-        environments {
-          name
-        }
       }
     }
   }
 `;
 
-class LastEnvironmentRedirect extends React.PureComponent {
+class LastNamespaceRedirect extends React.PureComponent {
   static propTypes = {
     // from withRouter HOC
     location: PropTypes.object.isRequired,
@@ -39,17 +33,12 @@ class LastEnvironmentRedirect extends React.PureComponent {
       return null;
     }
 
-    if (data.viewer && data.viewer.organizations.length === 0) {
-      return <Redirect to={"/default/default"} />;
+    if (data.viewer && data.viewer.namespaces.length === 0) {
+      return <Redirect to={"/default"} />;
     }
 
-    const firstOrg = data.viewer.organizations[0];
-    if (firstOrg.environments.length === 0) {
-      return <Redirect to={`/${firstOrg.name}/default`} />;
-    }
-
-    const firstEnv = firstOrg.environments[0];
-    return <Redirect to={`/${firstOrg.name}/${firstEnv.name}`} />;
+    const firstSpace = data.viewer.namespaces[0];
+    return <Redirect to={`/${firstSpace.name}`} />;
   };
 
   renderRedirect = ({ data }) => {
@@ -63,17 +52,14 @@ class LastEnvironmentRedirect extends React.PureComponent {
     }
 
     // 2. if the user's last environment was not recovered from localStorage
-    // we fetch all the user's organizations and redirect to first result.
-    const { lastEnvironment } = data;
-    if (!lastEnvironment) {
+    // we fetch all the user's namespaces and redirect to first result.
+    const { lastNamespace } = data;
+    if (!lastNamespace) {
       return <Query query={fallbackQuery}>{this.renderFallback}</Query>;
     }
 
     // 3. if the user's last environment is available, build path.
-    const nextPath = [
-      lastEnvironment.organization,
-      lastEnvironment.environment,
-    ].join("/");
+    const nextPath = lastNamespace;
     return <Redirect to={nextPath} />;
   };
 
@@ -82,4 +68,4 @@ class LastEnvironmentRedirect extends React.PureComponent {
   }
 }
 
-export default withRouter(LastEnvironmentRedirect);
+export default withRouter(LastNamespaceRedirect);

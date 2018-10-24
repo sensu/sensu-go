@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
 import Query from "/components/util/Query";
-
 import NotFound from "/components/partials/NotFound";
 import CheckDetailsContainer from "/components/partials/CheckDetailsContainer";
 
@@ -12,8 +11,8 @@ import CheckDetailsContainer from "/components/partials/CheckDetailsContainer";
 const pollInterval = 1500; // 1.5s
 
 const query = gql`
-  query CheckDetailsContentQuery($ns: NamespaceInput!, $name: String!) {
-    check(ns: $ns, name: $name) {
+  query CheckDetailsContentQuery($namespace: String!, $name: String!) {
+    check(namespace: $namespace, name: $name) {
       ...CheckDetailsContainer_check
     }
   }
@@ -27,20 +26,12 @@ class CheckDetailsContent extends React.PureComponent {
   };
 
   render() {
-    const { match } = this.props;
-    const ns = {
-      organization: match.params.organization,
-      environment: match.params.environment,
-    };
-
-    const { name } = match.params;
-
     return (
       <Query
         query={query}
         pollInterval={pollInterval}
         fetchPolicy="cache-and-network"
-        variables={{ name, ns }}
+        variables={this.props.match.params}
       >
         {({
           aborted,
