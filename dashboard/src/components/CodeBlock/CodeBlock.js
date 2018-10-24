@@ -11,6 +11,10 @@ const styles = theme => ({
     overflowX: "scroll",
     userSelect: "text",
     tabSize: 2,
+    color:
+      theme.palette.type === "dark"
+        ? theme.palette.secondary.light
+        : theme.palette.secondary.dark,
   },
   background: {
     backgroundColor: emphasize(theme.palette.background.paper, 0.01875),
