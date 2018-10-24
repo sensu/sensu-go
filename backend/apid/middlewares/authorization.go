@@ -26,19 +26,19 @@ func (a Authorization) Then(next http.Handler) http.Handler {
 		}
 
 		// Get the request info from context
-		reqInfo := types.ContextRequestInfo(ctx)
-		if reqInfo == nil {
+		attrs := authorization.GetAttributes(ctx)
+		if attrs == nil {
 			http.Error(w, "could not retrieve the request info", http.StatusInternalServerError)
 			return
 		}
 
 		// Add the user to our request info
-		reqInfo.User = types.User{
+		attrs.User = types.User{
 			Username: claims.Subject,
 			Groups:   claims.Groups,
 		}
 
-		authorized, err := a.Authorizer.Authorize(reqInfo)
+		authorized, err := a.Authorizer.Authorize(attrs)
 		if err != nil {
 			logger.WithError(err).Warning("unexpected error occurred during authorization")
 			http.Error(w, "unexpected error occurred during authorization", http.StatusInternalServerError)

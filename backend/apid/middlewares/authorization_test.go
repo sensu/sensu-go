@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -11,6 +10,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	sensujwt "github.com/sensu/sensu-go/backend/authentication/jwt"
+	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -19,7 +19,7 @@ type FakeAuthorizer struct {
 	err        error
 }
 
-func (a *FakeAuthorizer) Authorize(reqInfo *types.RequestInfo) (bool, error) {
+func (a *FakeAuthorizer) Authorize(attrs *authorization.Attributes) (bool, error) {
 	if a.err != nil {
 		return false, a.err
 	}
@@ -30,7 +30,7 @@ func TestAuthorization(t *testing.T) {
 	cases := []struct {
 		name            string
 		claims          *types.Claims
-		reqInfo         *types.RequestInfo
+		attrs           *authorization.Attributes
 		authorizedError error
 		isAuthorized    bool
 		expected        int
@@ -47,21 +47,21 @@ func TestAuthorization(t *testing.T) {
 		{
 			name:            "authorizer error",
 			claims:          &types.Claims{},
-			reqInfo:         &types.RequestInfo{},
+			attrs:           &authorization.Attributes{},
 			authorizedError: errors.New("error"),
 			expected:        http.StatusInternalServerError,
 		},
 		{
 			name:         "unauthorized",
 			claims:       &types.Claims{},
-			reqInfo:      &types.RequestInfo{},
+			attrs:        &authorization.Attributes{},
 			isAuthorized: false,
 			expected:     http.StatusForbidden,
 		},
 		{
 			name:         "unauthorized",
 			claims:       &types.Claims{},
-			reqInfo:      &types.RequestInfo{},
+			attrs:        &authorization.Attributes{},
 			isAuthorized: true,
 			expected:     http.StatusOK,
 		},
@@ -88,7 +88,7 @@ func TestAuthorization(t *testing.T) {
 			ctx := sensujwt.SetClaimsIntoContext(r, token.Claims.(*types.Claims))
 
 			// inject the request info into the request context
-			ctx = context.WithValue(ctx, types.RequestInfoKey, tt.reqInfo)
+			ctx = authorization.SetAttributes(ctx, tt.attrs)
 
 			// serve our request with our authorization middleware
 			handler := authzMiddleware.Then(&testHandler)

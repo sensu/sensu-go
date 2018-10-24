@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/internal/apis/rbac"
 	"github.com/sensu/sensu-go/testing/mockstore/v2"
 	"github.com/sensu/sensu-go/types"
@@ -14,14 +15,14 @@ func TestAuthorize(t *testing.T) {
 	type storeFunc func(*mockstore.MockStore)
 	tests := []struct {
 		name      string
-		reqInfo   *types.RequestInfo
+		attrs     *authorization.Attributes
 		storeFunc storeFunc
 		want      bool
 		wantErr   bool
 	}{
 		{
-			name:    "no bindings",
-			reqInfo: &types.RequestInfo{Namespace: "acme"},
+			name:  "no bindings",
+			attrs: &authorization.Attributes{Namespace: "acme"},
 			storeFunc: func(store *mockstore.MockStore) {
 				store.On("List", mock.AnythingOfType("*context.emptyCtx"), "clusterrolebindings", mock.Anything).Return(nil)
 				store.On("List", mock.AnythingOfType("*context.emptyCtx"), "rolebindings/acme", mock.Anything).Return(nil)
@@ -38,7 +39,7 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			name: "no matching clusterRoleBindings",
-			reqInfo: &types.RequestInfo{
+			attrs: &authorization.Attributes{
 				Namespace: "acme",
 				User: types.User{
 					Username: "foo",
@@ -60,7 +61,7 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			name: "clusterroles/admin store err",
-			reqInfo: &types.RequestInfo{
+			attrs: &authorization.Attributes{
 				User: types.User{
 					Username: "foo",
 				},
@@ -84,7 +85,7 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			name: "matching clusterRoleBinding",
-			reqInfo: &types.RequestInfo{
+			attrs: &authorization.Attributes{
 				Verb:         "create",
 				APIGroup:     "checks.sensu.io",
 				Resource:     "checks",
@@ -122,8 +123,8 @@ func TestAuthorize(t *testing.T) {
 			want: true,
 		},
 		{
-			name:    "rolebindings store err",
-			reqInfo: &types.RequestInfo{Namespace: "acme"},
+			name:  "rolebindings store err",
+			attrs: &authorization.Attributes{Namespace: "acme"},
 			storeFunc: func(store *mockstore.MockStore) {
 				store.On("List", mock.AnythingOfType("*context.emptyCtx"), "clusterrolebindings", mock.Anything).Return(nil)
 				store.On("List", mock.AnythingOfType("*context.emptyCtx"), "rolebindings/acme", mock.Anything).Return(errors.New("error"))
@@ -132,7 +133,7 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			name: "no matching roleBindings",
-			reqInfo: &types.RequestInfo{
+			attrs: &authorization.Attributes{
 				Namespace: "acme",
 				User: types.User{
 					Username: "foo",
@@ -154,7 +155,7 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			name: "roles/admin store err",
-			reqInfo: &types.RequestInfo{
+			attrs: &authorization.Attributes{
 				Namespace: "acme",
 				User: types.User{
 					Username: "foo",
@@ -178,7 +179,7 @@ func TestAuthorize(t *testing.T) {
 		},
 		{
 			name: "matching roleBinding",
-			reqInfo: &types.RequestInfo{
+			attrs: &authorization.Attributes{
 				Namespace: "acme",
 				User: types.User{
 					Username: "foo",
@@ -224,7 +225,7 @@ func TestAuthorize(t *testing.T) {
 			}
 			tc.storeFunc(store)
 
-			got, err := a.Authorize(tc.reqInfo)
+			got, err := a.Authorize(tc.attrs)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("Authorizer.Authorize() error = %v, wantErr %v", err, tc.wantErr)
 				return
@@ -281,14 +282,14 @@ func TestMatchesUser(t *testing.T) {
 
 func TestRuleAllows(t *testing.T) {
 	tests := []struct {
-		name    string
-		reqInfo *types.RequestInfo
-		rule    rbac.Rule
-		want    bool
+		name  string
+		attrs *authorization.Attributes
+		rule  rbac.Rule
+		want  bool
 	}{
 		{
 			name: "verb does not match",
-			reqInfo: &types.RequestInfo{
+			attrs: &authorization.Attributes{
 				Verb: "create",
 			},
 			rule: rbac.Rule{
@@ -298,7 +299,7 @@ func TestRuleAllows(t *testing.T) {
 		},
 		{
 			name: "api group does not match",
-			reqInfo: &types.RequestInfo{
+			attrs: &authorization.Attributes{
 				Verb:     "create",
 				APIGroup: "rbac.authorization.sensu.io",
 			},
@@ -310,7 +311,7 @@ func TestRuleAllows(t *testing.T) {
 		},
 		{
 			name: "resource does not match",
-			reqInfo: &types.RequestInfo{
+			attrs: &authorization.Attributes{
 				Verb:     "create",
 				APIGroup: "core.sensu.io",
 				Resource: "events",
@@ -324,7 +325,7 @@ func TestRuleAllows(t *testing.T) {
 		},
 		{
 			name: "resource name does not match",
-			reqInfo: &types.RequestInfo{
+			attrs: &authorization.Attributes{
 				Verb:         "create",
 				APIGroup:     "core.sensu.io",
 				Resource:     "checks",
@@ -340,7 +341,7 @@ func TestRuleAllows(t *testing.T) {
 		},
 		{
 			name: "matches",
-			reqInfo: &types.RequestInfo{
+			attrs: &authorization.Attributes{
 				Verb:         "create",
 				APIGroup:     "checks.sensu.io",
 				Resource:     "checks",
@@ -357,7 +358,7 @@ func TestRuleAllows(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := ruleAllows(tc.reqInfo, tc.rule); got != tc.want {
+			if got := ruleAllows(tc.attrs, tc.rule); got != tc.want {
 				t.Errorf("ruleAllows() = %v, want %v", got, tc.want)
 			}
 		})

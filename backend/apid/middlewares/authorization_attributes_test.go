@@ -6,22 +6,22 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestRequestInfo(t *testing.T) {
+func TestAuthorizationAttributes(t *testing.T) {
 	cases := []struct {
 		description string
 		method      string
 		urlVars     map[string]string
-		expected    types.RequestInfo
+		expected    authorization.Attributes
 	}{
 		{
 			description: "GET /",
 			method:      "GET",
 			urlVars:     map[string]string{},
-			expected:    types.RequestInfo{Verb: "list"},
+			expected:    authorization.Attributes{Verb: "list"},
 		},
 		{
 			description: "GET /apis/core/v1alpha1/namespaces",
@@ -31,7 +31,7 @@ func TestRequestInfo(t *testing.T) {
 				"version": "v1alpha1",
 				"kind":    "namespaces",
 			},
-			expected: types.RequestInfo{
+			expected: authorization.Attributes{
 				APIGroup:   "core",
 				APIVersion: "v1alpha1",
 				Resource:   "namespaces",
@@ -47,7 +47,7 @@ func TestRequestInfo(t *testing.T) {
 				"kind":    "namespaces",
 				"name":    "default",
 			},
-			expected: types.RequestInfo{
+			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v1alpha1",
 				Resource:     "namespaces",
@@ -64,7 +64,7 @@ func TestRequestInfo(t *testing.T) {
 				"namespace": "default",
 				"kind":      "checks",
 			},
-			expected: types.RequestInfo{
+			expected: authorization.Attributes{
 				APIGroup:   "core",
 				APIVersion: "v1alpha1",
 				Namespace:  "default",
@@ -82,7 +82,7 @@ func TestRequestInfo(t *testing.T) {
 				"kind":      "checks",
 				"name":      "check-cpu",
 			},
-			expected: types.RequestInfo{
+			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v1alpha1",
 				Namespace:    "default",
@@ -95,7 +95,7 @@ func TestRequestInfo(t *testing.T) {
 			description: "DELETE /foo",
 			method:      "DELETE",
 			urlVars:     map[string]string{},
-			expected: types.RequestInfo{
+			expected: authorization.Attributes{
 				Verb: "delete",
 			},
 		},
@@ -103,7 +103,7 @@ func TestRequestInfo(t *testing.T) {
 			description: "POST /foo",
 			method:      "POST",
 			urlVars:     map[string]string{},
-			expected: types.RequestInfo{
+			expected: authorization.Attributes{
 				Verb: "create",
 			},
 		},
@@ -111,7 +111,7 @@ func TestRequestInfo(t *testing.T) {
 			description: "PUT /foo",
 			method:      "PUT",
 			urlVars:     map[string]string{},
-			expected: types.RequestInfo{
+			expected: authorization.Attributes{
 				Verb: "update",
 			},
 		},
@@ -120,11 +120,11 @@ func TestRequestInfo(t *testing.T) {
 	for _, tt := range cases {
 		t.Run(tt.description, func(t *testing.T) {
 			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				info := types.ContextRequestInfo(r.Context())
-				assert.NotNil(t, info)
-				assert.Equal(t, &tt.expected, info)
+				attrs := authorization.GetAttributes(r.Context())
+				assert.NotNil(t, attrs)
+				assert.Equal(t, &tt.expected, attrs)
 			})
-			middleware := RequestInfo{}
+			middleware := AuthorizationAttributes{}
 
 			w := httptest.NewRecorder()
 			r, err := http.NewRequest(tt.method, "/", nil)
