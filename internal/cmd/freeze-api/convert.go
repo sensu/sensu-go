@@ -56,7 +56,7 @@ func (r *{{ $t.TypeName }}) ConvertTo(to interface{}) {
 }
 
 var convert_{{ $t.TypeName }}_To_{{ $toPackage }}_{{ $t.TypeName}} = func(from *{{ $t.TypeName }}, to *{{ $toPackage}}.{{ $t.TypeName }}) {
-	{{ if $t.Simple }} *to = *(*{{ $toPackage }}.{{ $t.TypeName }})(unsafe.Pointer(from)){{ else }}panic("complex conversion not supported yet"){{ end }}
+	{{ if $t.Simple }}*to = *(*{{ $toPackage }}.{{ $t.TypeName }})(unsafe.Pointer(from)){{ else }}panic("complex conversion not supported yet"){{ end }}
 }
 
 // ConvertFrom converts the receiver to a *{{ $toPackage }}.{{ $t.TypeName }}.
@@ -67,7 +67,7 @@ func (r *{{ $t.TypeName}}) ConvertFrom(from interface{}) {
 }
 
 var convert_{{ $toPackage }}_{{ $t.TypeName}}_To_{{ $t.TypeName}} = func(from *{{ $toPackage }}.{{ $t.TypeName }}, to *{{ $t.TypeName }}) {
-	{{ if $t.Simple }} *to = *(*{{ $t.TypeName }})(unsafe.Pointer(from)){{ else }}panic("complex conversion not supported yet"){{end}}
+	{{ if $t.Simple }}*to = *(*{{ $t.TypeName }})(unsafe.Pointer(from)){{ else }}panic("complex conversion not supported yet"){{end}}
 }
 {{ end }}
 `

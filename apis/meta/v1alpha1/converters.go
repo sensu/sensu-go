@@ -14,7 +14,7 @@ func (r *ObjectMeta) ConvertTo(to interface{}) {
 }
 
 var convert_ObjectMeta_To_meta_ObjectMeta = func(from *ObjectMeta, to *meta.ObjectMeta) {
-	 *to = *(*meta.ObjectMeta)(unsafe.Pointer(from))
+	*to = *(*meta.ObjectMeta)(unsafe.Pointer(from))
 }
 
 // ConvertFrom converts the receiver to a *meta.ObjectMeta.
@@ -25,7 +25,7 @@ func (r *ObjectMeta) ConvertFrom(from interface{}) {
 }
 
 var convert_meta_ObjectMeta_To_ObjectMeta = func(from *meta.ObjectMeta, to *ObjectMeta) {
-	 *to = *(*ObjectMeta)(unsafe.Pointer(from))
+	*to = *(*ObjectMeta)(unsafe.Pointer(from))
 }
 
 // ConvertTo converts a *TypeMeta to a *meta.TypeMeta.
@@ -36,7 +36,7 @@ func (r *TypeMeta) ConvertTo(to interface{}) {
 }
 
 var convert_TypeMeta_To_meta_TypeMeta = func(from *TypeMeta, to *meta.TypeMeta) {
-	 *to = *(*meta.TypeMeta)(unsafe.Pointer(from))
+	*to = *(*meta.TypeMeta)(unsafe.Pointer(from))
 }
 
 // ConvertFrom converts the receiver to a *meta.TypeMeta.
@@ -47,6 +47,6 @@ func (r *TypeMeta) ConvertFrom(from interface{}) {
 }
 
 var convert_meta_TypeMeta_To_TypeMeta = func(from *meta.TypeMeta, to *TypeMeta) {
-	 *to = *(*TypeMeta)(unsafe.Pointer(from))
+	*to = *(*TypeMeta)(unsafe.Pointer(from))
 }
 
