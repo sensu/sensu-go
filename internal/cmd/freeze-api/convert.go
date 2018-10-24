@@ -98,6 +98,7 @@ func createConverters(from, to string) error {
 		fromType := fromTypes[typeName]
 		toType, ok := toTypes[typeName]
 		if !ok {
+			fmt.Println(typeName)
 			continue
 		}
 		simple := typesEquivalent(fromType, toType)
