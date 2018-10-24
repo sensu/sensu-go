@@ -6,6 +6,9 @@ import { withStyles } from "@material-ui/core/styles";
 import Paper from "@material-ui/core/Paper";
 import Typography from "@material-ui/core/Typography";
 import Icon from "@material-ui/icons/FilterList";
+import IconButton from "@material-ui/core/IconButton";
+import ClearIcon from "@material-ui/icons/Cancel";
+import Slide from "@material-ui/core/Slide";
 
 const Keycap = withStyles(theme => ({
   root: {
@@ -45,6 +48,7 @@ const SearchInput = withStyles(theme => ({
 
 const styles = theme => ({
   root: {
+    overflow: "hidden",
     minWidth: 300,
     display: "flex",
     border: "1px solid",
@@ -99,6 +103,11 @@ class SearchBox extends React.Component {
   resetState() {
     this.setState(defaultState);
   }
+
+  clearFilter = () => {
+    this.resetState();
+    this.props.onSearch("");
+  };
 
   handleChange = ev => {
     this.setState({ value: ev.currentTarget.value || "" });
@@ -159,6 +168,17 @@ class SearchBox extends React.Component {
             value={value}
           />
           {this.state.focus && <Keycap>return</Keycap>}
+          <Slide
+            direction="left"
+            in={value.length > 0}
+            timeout={200}
+            mountOnEnter
+            unmountOnExit
+          >
+            <IconButton onClick={this.clearFilter}>
+              <ClearIcon />
+            </IconButton>
+          </Slide>
         </Typography>
       </Paper>
     );
