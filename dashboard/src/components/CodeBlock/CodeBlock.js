@@ -4,11 +4,11 @@ import classnames from "classnames";
 import { withStyles } from "@material-ui/core/styles";
 import { emphasize } from "@material-ui/core/styles/colorManipulator";
 import Typography from "@material-ui/core/Typography";
+import CodeHighlight from "../CodeHighlight/CodeHighlight";
 
 const styles = theme => ({
   root: {
-    // TODO: Move into theme so that it can be overridden.
-    fontFamily: `"SFMono-Regular",Consolas,"Liberation Mono",Menlo,Courier,monospace`,
+    fontFamily: theme.typography.monospace.fontFamily,
     overflowX: "scroll",
     userSelect: "text",
     tabSize: 2,
@@ -68,9 +68,21 @@ class CodeBlock extends React.Component {
       [classes.scaleFont]: scaleFont,
       [classes.highlight]: highlight,
     });
+
+    // TODO: make highlight be a prop used to specify the language
+    // one of instead of a free string
+    // on highlight component, for polling, need to make sure it will also update
+
     return (
       <Typography className={className} {...props}>
-        <code className={classes.wrap}>{children}</code>
+        <CodeHighlight language="properties" code={children}>
+          {code => (
+            <code
+              className={classes.wrap}
+              dangerouslySetInnerHTML={{ __html: code }}
+            />
+          )}
+        </CodeHighlight>
       </Typography>
     );
   }
