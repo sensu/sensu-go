@@ -14,7 +14,7 @@ const styles = theme => ({
     maxWidth: "60%",
   },
   scrollableContent: { display: "inline-grid" },
-  explicitRightMargin: { marginRight: "24px" },
+  explicitRightMargin: { paddingRight: "24px" },
 });
 
 class DictionaryValue extends React.Component {

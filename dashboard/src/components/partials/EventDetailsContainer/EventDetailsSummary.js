@@ -12,6 +12,7 @@ import Dictionary, {
 } from "/components/Dictionary";
 import { RelativeToCurrentDate } from "/components/RelativeDate";
 import CodeBlock from "/components/CodeBlock";
+import CodeHighlight from "/components/CodeHighlight/CodeHighlight";
 import Maybe from "/components/Maybe";
 import InlineLink from "/components/InlineLink";
 import Typography from "@material-ui/core/Typography";
@@ -127,9 +128,14 @@ class EventDetailsSummary extends React.Component {
         {check.command && (
           <React.Fragment>
             <Divider />
-            <CodeBlock background>
+            <CodeBlock>
               <CardContent>
-                {`# Executed command\n$ ${check.command}`}
+                <CodeHighlight
+                  language="bash"
+                  code={`# Executed command\n$ ${check.command}`}
+                >
+                  {code => <code dangerouslySetInnerHTML={{ __html: code }} />}
+                </CodeHighlight>
               </CardContent>
             </CodeBlock>
           </React.Fragment>

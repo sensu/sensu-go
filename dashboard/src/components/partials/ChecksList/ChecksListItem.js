@@ -4,6 +4,7 @@ import gql from "graphql-tag";
 
 import Checkbox from "@material-ui/core/Checkbox";
 import Code from "/components/Code";
+import CodeHighlight from "/components/CodeHighlight/CodeHighlight";
 import ConfirmDelete from "/components/partials/ConfirmDelete";
 import DeleteMenuItem from "/components/partials/ToolbarMenuItems/Delete";
 import NamespaceLink from "/components/util/NamespaceLink";
@@ -82,7 +83,9 @@ class CheckListItem extends React.Component {
             }
             details={
               <React.Fragment>
-                <Code>{check.command}</Code>
+                <CodeHighlight language="bash" code={check.command}>
+                  {code => <Code dangerouslySetInnerHTML={{ __html: code }} />}
+                </CodeHighlight>
                 <br />
                 <CheckSchedule check={check} />
               </React.Fragment>

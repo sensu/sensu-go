@@ -24,11 +24,18 @@ const styles = theme => ({
 class Code extends React.PureComponent {
   static propTypes = {
     classes: PropTypes.object.isRequired,
+    children: PropTypes.node,
   };
 
+  static defaultProps = { children: null };
+
   render() {
-    const { classes, ...props } = this.props;
-    return <code {...props} className={classes.root} />;
+    const { classes, children, ...props } = this.props;
+    return (
+      <code {...props} className={classes.root}>
+        {children}
+      </code>
+    );
   }
 }
 

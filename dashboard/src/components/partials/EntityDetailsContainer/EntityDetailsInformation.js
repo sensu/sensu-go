@@ -18,6 +18,7 @@ import List from "@material-ui/core/List";
 import ListItem, { ListItemTitle } from "/components/DetailedListItem";
 import Maybe from "/components/Maybe";
 import CodeBlock from "/components/CodeBlock";
+import CodeHighlight from "/components/CodeHighlight/CodeHighlight";
 import { RelativeToCurrentDate } from "/components/RelativeDate";
 import StatusIcon from "/components/CheckStatusIcon";
 import SilencedIcon from "/icons/Silence";
@@ -233,9 +234,14 @@ class EntityDetailsInformation extends React.PureComponent {
         {Object.keys(entity.extendedAttributes).length > 0 && (
           <React.Fragment>
             <Divider />
-            <CodeBlock background>
+            <CodeBlock>
               <CardContent>
-                {JSON.stringify(entity.extendedAttributes, null, "\t")}
+                <CodeHighlight
+                  language="json"
+                  code={JSON.stringify(entity.extendedAttributes, null, "\t")}
+                >
+                  {code => <code dangerouslySetInnerHTML={{ __html: code }} />}
+                </CodeHighlight>
               </CardContent>
             </CodeBlock>
           </React.Fragment>

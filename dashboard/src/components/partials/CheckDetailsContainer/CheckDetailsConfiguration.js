@@ -17,6 +17,7 @@ import List from "@material-ui/core/List";
 import ListItem, { ListItemTitle } from "/components/DetailedListItem";
 import Maybe from "/components/Maybe";
 import CodeBlock from "/components/CodeBlock";
+import CodeHighlight from "/components/CodeHighlight/CodeHighlight";
 import SilencedIcon from "/icons/Silence";
 import Typography from "@material-ui/core/Typography";
 import Tooltip from "@material-ui/core/Tooltip";
@@ -138,7 +139,11 @@ class CheckDetailsConfiguration extends React.PureComponent {
                 <DictionaryEntry>
                   <DictionaryKey>Command</DictionaryKey>
                   <DictionaryValue explicitRightMargin>
-                    <Code>{check.command}</Code>
+                    <CodeHighlight language="bash" code={check.command}>
+                      {code => (
+                        <Code dangerouslySetInnerHTML={{ __html: code }} />
+                      )}
+                    </CodeHighlight>
                   </DictionaryValue>
                 </DictionaryEntry>
 
@@ -249,8 +254,15 @@ class CheckDetailsConfiguration extends React.PureComponent {
                   <DictionaryKey>ENV Vars</DictionaryKey>
                   <DictionaryValue scrollableContent>
                     {check.envVars.length > 0 ? (
-                      <CodeBlock highlight background>
-                        {check.envVars.join("\n")}
+                      <CodeBlock>
+                        <CodeHighlight
+                          language="properties"
+                          code={check.envVars.join("\n")}
+                        >
+                          {code => (
+                            <code dangerouslySetInnerHTML={{ __html: code }} />
+                          )}
+                        </CodeHighlight>
                       </CodeBlock>
                     ) : (
                       "None"
@@ -324,13 +336,18 @@ class CheckDetailsConfiguration extends React.PureComponent {
         {Object.keys(check.extendedAttributes).length > 0 && (
           <React.Fragment>
             <Divider />
-            <CodeBlock background>
+            <CodeBlock>
               <CardContent>
-                {`# Extra\n\n${JSON.stringify(
-                  check.extendedAttributes,
-                  null,
-                  "\t",
-                )}`}
+                <CodeHighlight
+                  language="json"
+                  code={`# Extra\n\n${JSON.stringify(
+                    check.extendedAttributes,
+                    null,
+                    "\t",
+                  )}`}
+                >
+                  {code => <code dangerouslySetInnerHTML={{ __html: code }} />}
+                </CodeHighlight>
               </CardContent>
             </CodeBlock>
           </React.Fragment>

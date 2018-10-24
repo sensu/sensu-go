@@ -154,7 +154,7 @@ class EventDetailsCheckResult extends React.PureComponent {
         {check.output ? (
           <React.Fragment>
             <Divider />
-            <CodeBlock background>
+            <CodeBlock>
               <CardContent>{check.output}</CardContent>
             </CodeBlock>
           </React.Fragment>
