@@ -27,10 +27,13 @@ func main() {
 
 func freezeAPI(from, to string) error {
 	if err := copyPackage(from, to); err != nil {
-		return fmt.Errorf("error copying packages: %s", err)
+		return fmt.Errorf("error freezing API: %s", err)
 	}
 	if err := createConverters(to, from); err != nil {
-		return fmt.Errorf("error creating converters: %s", err)
+		return fmt.Errorf("error freezing API: %s", err)
+	}
+	if err := createResourceNameMethods(from, to); err != nil {
+		return fmt.Errorf("error freezing API: %s", err)
 	}
 	return nil
 }

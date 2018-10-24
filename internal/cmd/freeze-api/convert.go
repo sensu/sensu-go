@@ -1,15 +1,13 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"go/ast"
-	"go/parser"
-	"go/token"
+	"go/build"
 	"os"
 	"path"
+	"path/filepath"
 	"reflect"
-	"strings"
 	"text/template"
 
 	"github.com/sensu/sensu-go/internal/astutil"
@@ -76,38 +74,13 @@ var convert_{{ $toPackage }}_{{ $t.TypeName}}_To_{{ $t.TypeName}} = func(from *{
 
 var converterTmpl = template.Must(template.New("converter").Parse(converterTmplStr))
 
-func removeTestPackages(packages map[string]*ast.Package) {
-	for k := range packages {
-		if strings.HasSuffix(k, "_test") {
-			delete(packages, k)
-		}
-	}
-}
-
-func getPackage(pkg string) (*ast.Package, error) {
-	path := packagePath(pkg)
-	fset := token.NewFileSet()
-	packages, err := parser.ParseDir(fset, path, nil, 0)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing package: %s", err)
-	}
-	removeTestPackages(packages)
-	if len(packages) > 1 {
-		return nil, errors.New("too many 'from' packages")
-	}
-	for _, v := range packages {
-		return v, nil
-	}
-	return nil, errors.New("no packages found")
-}
-
 func createConverters(from, to string) error {
-	fromPackage, err := getPackage(from)
+	fromPackage, err := astutil.GetPackage(from)
 	if err != nil {
 		return err
 	}
 
-	toPackage, err := getPackage(to)
+	toPackage, err := astutil.GetPackage(to)
 	if err != nil {
 		return err
 	}
@@ -148,4 +121,8 @@ func typesEquivalent(a, b *ast.TypeSpec) bool {
 	t2 := reflect.Indirect(reflect.ValueOf(b.Type)).Type()
 
 	return t1 == t2
+}
+
+func packagePath(path string) string {
+	return filepath.Join(build.Default.GOPATH, "src", path)
 }

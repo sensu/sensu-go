@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"go/build"
 	"io/ioutil"
 	"os"
 	"path"
@@ -85,8 +84,4 @@ func copyFile(from, to string) error {
 		return err
 	}
 	return ioutil.WriteFile(to, b, 0644)
-}
-
-func packagePath(path string) string {
-	return filepath.Join(build.Default.GOPATH, "src", path)
 }
