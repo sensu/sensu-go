@@ -75,12 +75,30 @@ var convert_{{ $toPackage }}_{{ $t.TypeName}}_To_{{ $t.TypeName}} = func(from *{
 const converterTestTmplStr = `package {{ .FromPackage }}
 
 import (
+	"reflect"
+	"testing"
+
+	fuzz "github.com/google/gofuzz"
 	"{{ .ImportPackage }}"
 )
 {{ $toPackage := .ToPackage }}{{ range $i, $t := .Types }}
-func TestConvert`
+func Test_convert_{{ $t.TypeName }}_To_{{ $toPackage }}_{{ $t.TypeName}}(t *testing.T) {
+	var v1, v2 {{ $t.TypeName }}
+	var v3 {{ $toPackage }}.{{ $t.TypeName }}
+	fuzzer := fuzz.New().NilChance(0)
+	fuzzer.Fuzz(&v1)
+	v1.ConvertTo(&v3)
+	v2.ConvertFrom(&v3)
+	{{ if $t.Simple }}if !reflect.DeepEqual(v1, v2) {
+		t.Fatal("values not equal")
+	}{{ end }}
+}{{ end }}
+`
 
-var converterTmpl = template.Must(template.New("converter").Parse(converterTmplStr))
+var (
+	converterTmpl      = template.Must(template.New("converter").Parse(converterTmplStr))
+	converterTestsTmpl = template.Must(template.New("converter_test").Parse(converterTestTmplStr))
+)
 
 func createConverters(from, to string) error {
 	fromPackage, err := astutil.GetPackage(from)
@@ -119,10 +137,22 @@ func createConverters(from, to string) error {
 	outPath := path.Join(packagePath(from), "converters.go")
 	w, err := os.OpenFile(outPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
-		return fmt.Errorf("couldn't create converters: %s", err)
+		return fmt.Errorf("couldn't create converters.go: %s", err)
+	}
+	defer w.Close()
+
+	testOutPath := path.Join(packagePath(from), "converters_test.go")
+	x, err := os.OpenFile(testOutPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("couldn't create converters_test.go: %s", err)
+	}
+	defer x.Close()
+
+	if err := converterTmpl.Execute(w, td); err != nil {
+		return err
 	}
 
-	return converterTmpl.Execute(w, td)
+	return converterTestsTmpl.Execute(x, td)
 }
 
 func typesEquivalent(a, b *ast.TypeSpec) bool {
