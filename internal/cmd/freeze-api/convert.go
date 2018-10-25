@@ -68,8 +68,8 @@ func (r *{{ $t.TypeName}}) ConvertFrom(from interface{}) {
 
 var convert_{{ $toPackage }}_{{ $t.TypeName}}_To_{{ $t.TypeName}} = func(from *{{ $toPackage }}.{{ $t.TypeName }}, to *{{ $t.TypeName }}) {
 	{{ if $t.Simple }}*to = *(*{{ $t.TypeName }})(unsafe.Pointer(from)){{ else }}panic("complex conversion not supported yet"){{end}}
-}{{ end }}
-`
+}
+{{ end }}`
 
 const converterTestTmplStr = `package {{ .FromPackage }}
 
