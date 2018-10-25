@@ -91,7 +91,7 @@ class EntitiesList extends React.PureComponent {
     const targets = entities
       .filter(entity => entity.silences.length === 0)
       .map(entity => ({
-        ns: entity.namespace,
+        namespace: entity.namespace,
         check: "*",
         subscription: `entity:${entity.name}`,
       }));

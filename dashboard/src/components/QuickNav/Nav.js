@@ -1,6 +1,5 @@
 import React from "react";
 import PropTypes from "prop-types";
-import classNames from "classnames";
 
 import CheckIcon from "/icons/Check";
 import EntityIcon from "/icons/Entity";
@@ -11,7 +10,6 @@ import Button from "./Button";
 
 class QuickNav extends React.Component {
   static propTypes = {
-    classes: PropTypes.object.isRequired,
     className: PropTypes.string,
     namespace: PropTypes.string.isRequired,
   };
@@ -19,10 +17,10 @@ class QuickNav extends React.Component {
   static defaultProps = { className: "" };
 
   render() {
-    const { classes, className, namespace } = this.props;
+    const { className, namespace } = this.props;
 
     return (
-      <div className={classNames(classes.quickNavContainer, className)}>
+      <div className={className}>
         <Button
           namespace={namespace}
           Icon={EventIcon}

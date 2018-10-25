@@ -30,13 +30,14 @@ const styles = theme => ({
 });
 
 class QuickNavButton extends React.Component {
+  static displayName = "QuickNav.Button";
+
   static propTypes = {
     classes: PropTypes.object.isRequired,
     Icon: PropTypes.func.isRequired,
     caption: PropTypes.string.isRequired,
     to: PropTypes.string.isRequired,
-    organization: PropTypes.string.isRequired,
-    environment: PropTypes.string.isRequired,
+    namespace: PropTypes.string.isRequired,
     exact: PropTypes.bool,
   };
 
@@ -45,15 +46,7 @@ class QuickNavButton extends React.Component {
   };
 
   render() {
-    const {
-      classes,
-      Icon,
-      caption,
-      to,
-      organization,
-      environment,
-      exact,
-    } = this.props;
+    const { classes, Icon, caption, to, namespace, exact } = this.props;
 
     return (
       <IconButton
@@ -63,7 +56,7 @@ class QuickNavButton extends React.Component {
         }}
         className={classes.link}
         component={NavLink}
-        to={`/${organization}/${environment}/${to}`}
+        to={`/${namespace}/${to}`}
         activeClassName={classes.active}
         exact={exact}
       >

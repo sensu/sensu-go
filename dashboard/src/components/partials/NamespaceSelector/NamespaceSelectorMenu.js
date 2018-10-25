@@ -23,7 +23,6 @@ const styles = () => ({
 class NamespaceSelectorMenu extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
-    org: PropTypes.string.isRequired,
     onClick: PropTypes.func.isRequired,
     viewer: PropTypes.object,
   };
@@ -46,38 +45,44 @@ class NamespaceSelectorMenu extends React.Component {
   };
 
   render() {
-    const { viewer, classes, org, onClick, ...props } = this.props;
+    const { viewer, classes, onClick, ...props } = this.props;
 
     if (!viewer) {
       return null;
     }
 
-    const groupedNamespaces = viewer.namespaces
-      .map(ns => ns.split("/", 1))
-      .reduce((acc, ns) => {
-        acc[ns[0]] = acc[ns[0]] || [];
-        acc[ns[0]].append(ns.join("/"));
-        return acc;
-      }, {});
+    const groups = viewer.namespaces.reduce((acc, ns) => {
+      const [key] = ns.name.split("-", 1);
+
+      acc[key] = acc[key] || [];
+      acc[key].push(ns);
+
+      return acc;
+    }, {});
 
     return (
       <Menu {...props}>
-        {Object.keys(groupedNamespaces).map((key, i) => {
-          const namesapces = groupedNamespaces[key];
+        {Object.keys(groups).map((key, i) => {
+          const namesapces = groups[key];
 
           return (
             <React.Fragment key={`prefix-${key}`}>
               {namesapces.map(namespace => (
-                <Link to={`/${namespace}`} onClick={onClick}>
+                <Link
+                  key={namespace.name}
+                  to={`/${namespace.name}`}
+                  onClick={onClick}
+                >
                   <MenuItem>
                     <ListItemIcon>
                       <NamespaceIcon namespace={namespace} size={24} />
                     </ListItemIcon>
-                    <ListItemText inset primary={namespace} />
+                    <ListItemText inset primary={namespace.name} />
                   </MenuItem>
                 </Link>
               ))}
-              {i + 1 < groupedNamespaces.length && <Divider />}
+
+              {i + 1 < groups.length && <Divider />}
             </React.Fragment>
           );
         })}

@@ -141,7 +141,7 @@ class EventsContainer extends React.Component {
 
   silenceEvents = events => {
     const targets = events.map(event => ({
-      ns: event.namespace,
+      namespace: event.namespace,
       subscription: `entity:${event.entity.name}`,
       check: event.check.name,
     }));
@@ -170,7 +170,7 @@ class EventsContainer extends React.Component {
   silenceEntity = event => {
     this.setState({
       silence: {
-        ns: event.namespace,
+        namespace: event.namespace,
         check: "*",
         subscription: `entity:${event.entity.name}`,
         props: {
@@ -183,7 +183,7 @@ class EventsContainer extends React.Component {
   silenceCheck = event => {
     this.setState({
       silence: {
-        ns: event.namespace,
+        namespace: event.namespace,
         check: event.check.name,
         subscription: "*",
         props: {
