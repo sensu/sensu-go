@@ -27,7 +27,6 @@ func (r *ObjectMeta) ConvertFrom(from interface{}) {
 var convert_meta_ObjectMeta_To_ObjectMeta = func(from *meta.ObjectMeta, to *ObjectMeta) {
 	*to = *(*ObjectMeta)(unsafe.Pointer(from))
 }
-
 // ConvertTo converts a *TypeMeta to a *meta.TypeMeta.
 // It panics if the to parameter is not a *meta.TypeMeta.
 func (r *TypeMeta) ConvertTo(to interface{}) {
@@ -49,4 +48,3 @@ func (r *TypeMeta) ConvertFrom(from interface{}) {
 var convert_meta_TypeMeta_To_TypeMeta = func(from *meta.TypeMeta, to *TypeMeta) {
 	*to = *(*TypeMeta)(unsafe.Pointer(from))
 }
-
