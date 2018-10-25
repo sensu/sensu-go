@@ -87,8 +87,8 @@ class SilencesContent extends React.Component {
               {newDialog.isOpen && (
                 <SilenceEntryDialog
                   values={{
+                    namespace: match.params.namespace,
                     props: {},
-                    ns: match.params,
                   }}
                   onClose={() => {
                     // TODO: Only refetch / poison list on success
