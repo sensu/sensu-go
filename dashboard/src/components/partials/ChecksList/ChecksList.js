@@ -110,7 +110,7 @@ class ChecksList extends React.Component {
     const targets = checks
       .filter(check => check.silences.length === 0)
       .map(check => ({
-        ns: check.namespace,
+        namespace: check.namespace,
         check: check.name,
       }));
 

@@ -40,7 +40,7 @@ class CheckDetailsSilenceAction extends React.Component {
         {isOpen && (
           <SilenceEntryDialog
             values={{
-              ns: check.namespace,
+              namespace: check.namespace,
               check: check.name,
               subscription: "*",
             }}
