@@ -6,20 +6,19 @@ package v1alpha1
 This file contains methods on the types in the v1alpha1 package for
 determining resource names.
 
-Resource names are specified with the '+resource-name' special comment, on
-types containing meta.TypeMeta. Resource names are specified statically,
-and do not change at runtime.
+Resource names are specified with the '+freeze-api:resource-name' special
+comment, on types containing meta.TypeMeta. Resource names are specified
+statically, and do not change at runtime.
 */
 
 // ResourceName returns the resource name for a ObjectMeta.
-// The resource name for ObjectMeta is "".
+// The resource name for ObjectMeta is "objectMetas".
 func (r ObjectMeta) ResourceName() string {
-	return ""
+	return "objectMetas"
 }
 
 // ResourceName returns the resource name for a TypeMeta.
-// The resource name for TypeMeta is "".
+// The resource name for TypeMeta is "typeMetas".
 func (r TypeMeta) ResourceName() string {
-	return ""
+	return "typeMetas"
 }
-

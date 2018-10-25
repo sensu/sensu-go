@@ -11,7 +11,8 @@ import (
 	"strings"
 )
 
-func packagePath(path string) string {
+// PackagePath returns the filesystem path of supplied the Go package.
+func PackagePath(path string) string {
 	return filepath.Join(build.Default.GOPATH, "src", path)
 }
 
@@ -23,8 +24,10 @@ func removeTestPackages(packages map[string]*ast.Package) {
 	}
 }
 
+// GetPacakge parses the given Go package, and returns an *ast.Package, along
+// with any error encountered.
 func GetPackage(pkg string) (*ast.Package, error) {
-	path := packagePath(pkg)
+	path := PackagePath(pkg)
 	fset := token.NewFileSet()
 	packages, err := parser.ParseDir(fset, path, nil, parser.ParseComments)
 	if err != nil {

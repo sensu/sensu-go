@@ -1,17 +1,17 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"go/doc"
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
 	"text/template"
 
 	"github.com/sensu/sensu-go/internal/astutil"
 )
+
+const resourceTag = "+freeze-api:resource-name"
 
 var resourceTmpl = template.Must(template.New("resource.go").Parse(`package {{ .PackageName }}
 
@@ -21,9 +21,9 @@ var resourceTmpl = template.Must(template.New("resource.go").Parse(`package {{ .
 This file contains methods on the types in the {{ .PackageName }} package for
 determining resource names.
 
-Resource names are specified with the '+resource-name' special comment, on
-types containing meta.TypeMeta. Resource names are specified statically,
-and do not change at runtime.
+Resource names are specified with the '+freeze-api:resource-name' special
+comment, on types containing meta.TypeMeta. Resource names are specified
+statically, and do not change at runtime.
 */
 {{ range $i, $k := .Kinds }}
 // ResourceName returns the resource name for a {{ $k.Kind }}.
@@ -63,7 +63,7 @@ func createResourceNameMethods(from, to string) error {
 		Kinds:       kr,
 	}
 
-	outPath := filepath.Join(packagePath(to), "resource.go")
+	outPath := filepath.Join(astutil.PackagePath(to), "resource.go")
 
 	w, err := os.OpenFile(outPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
@@ -78,26 +78,5 @@ func createResourceNameMethods(from, to string) error {
 }
 
 func resourceName(kindName string, pkg *doc.Package) string {
-	var docType *doc.Type
-	for _, t := range pkg.Types {
-		if t.Name == kindName {
-			docType = t
-		}
-	}
-	if docType == nil {
-		return ""
-	}
-	scanner := bufio.NewScanner(strings.NewReader(docType.Doc))
-	scanner.Split(bufio.ScanWords)
-	var found bool
-	for scanner.Scan() {
-		if found {
-			return scanner.Text()
-		}
-		token := scanner.Text()
-		if token == "+resource-name" {
-			found = true
-		}
-	}
-	return ""
+	return astutil.ParseCommentTags(kindName, pkg)[resourceTag]
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/sensu/sensu-go/internal/apis/meta"
 )
 
-func Test_convert_ObjectMeta_To_meta_ObjectMeta(t *testing.T) {
+func Test_Convert_ObjectMeta_To_meta_ObjectMeta_AndBack(t *testing.T) {
 	var v1, v2 ObjectMeta
 	var v3 meta.ObjectMeta
 	fuzzer := fuzz.New().NilChance(0)
@@ -19,7 +19,7 @@ func Test_convert_ObjectMeta_To_meta_ObjectMeta(t *testing.T) {
 		t.Fatal("values not equal")
 	}
 }
-func Test_convert_TypeMeta_To_meta_TypeMeta(t *testing.T) {
+func Test_Convert_TypeMeta_To_meta_TypeMeta_AndBack(t *testing.T) {
 	var v1, v2 TypeMeta
 	var v3 meta.TypeMeta
 	fuzzer := fuzz.New().NilChance(0)

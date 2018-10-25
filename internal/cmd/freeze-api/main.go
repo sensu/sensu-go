@@ -5,7 +5,11 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
+	"path"
 )
+
+const registryPath = "github.com/sensu/sensu-go/runtime/registry"
 
 var (
 	fromPath = flag.String("from", "", "Package to freeze")
@@ -21,7 +25,7 @@ func main() {
 	if err := freezeAPI(*fromPath, *toPath); err != nil {
 		log.Fatal(err)
 	}
-	successMessage := fmt.Sprintf("Froze API to %q. Now run: 'go generate github.com/sensu/sensu-go/runtime/registry'.", *toPath)
+	successMessage := fmt.Sprintf("Froze API to %q.", *toPath)
 	fmt.Fprintln(flag.CommandLine.Output(), successMessage)
 }
 
@@ -35,5 +39,14 @@ func freezeAPI(from, to string) error {
 	if err := createResourceNameMethods(from, to); err != nil {
 		return fmt.Errorf("error freezing API: %s", err)
 	}
+
+	if err := exec.Command("go", "generate", registryPath).Run(); err != nil {
+		return fmt.Errorf("error freezing API: %s", err)
+	}
+
+	if err := exec.Command("go", "fmt", path.Join(*toPath, "...")).Run(); err != nil {
+		return fmt.Errorf("error freezing API: %s", err)
+	}
+
 	return nil
 }

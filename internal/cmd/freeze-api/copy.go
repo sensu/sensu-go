@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/sensu/sensu-go/internal/astutil"
 )
 
 var packageDeclRe = regexp.MustCompile(`([\/\*]*[pP]ackage)[ ]+([_a-z0-9]+)`)
@@ -15,8 +17,8 @@ var packageDeclRe = regexp.MustCompile(`([\/\*]*[pP]ackage)[ ]+([_a-z0-9]+)`)
 // copyPackage naively copies a package from one place to another, updating its
 // package declaration.
 func copyPackage(fromPackage, toPackage string) error {
-	from := packagePath(fromPackage)
-	to := packagePath(toPackage)
+	from := astutil.PackagePath(fromPackage)
+	to := astutil.PackagePath(toPackage)
 	if err := os.MkdirAll(to, os.ModeDir|0755); err != nil {
 		return fmt.Errorf("couldn't copy package: %s", err)
 	}

@@ -3,10 +3,8 @@ package main
 import (
 	"fmt"
 	"go/ast"
-	"go/build"
 	"os"
 	"path"
-	"path/filepath"
 	"reflect"
 	"text/template"
 
@@ -59,7 +57,7 @@ var convert_{{ $t.TypeName }}_To_{{ $toPackage }}_{{ $t.TypeName}} = func(from *
 	{{ if $t.Simple }}*to = *(*{{ $toPackage }}.{{ $t.TypeName }})(unsafe.Pointer(from)){{ else }}panic("complex conversion not supported yet"){{ end }}
 }
 
-// ConvertFrom converts the receiver to a *{{ $toPackage }}.{{ $t.TypeName }}.
+// ConvertFrom converts a *{{ $t.TypeName }} to a *{{ $toPackage }}.{{ $t.TypeName }}.
 // It panics if the from parameter is not a *{{ $toPackage }}.{{ $t.TypeName }}.
 func (r *{{ $t.TypeName}}) ConvertFrom(from interface{}) {
 	ptr := from.(*{{ $toPackage }}.{{ $t.TypeName }})
@@ -81,7 +79,7 @@ import (
 	"{{ .ImportPackage }}"
 )
 {{ $toPackage := .ToPackage }}{{ range $i, $t := .Types }}
-func Test_convert_{{ $t.TypeName }}_To_{{ $toPackage }}_{{ $t.TypeName}}(t *testing.T) {
+func Test_Convert_{{ $t.TypeName }}_To_{{ $toPackage }}_{{ $t.TypeName}}_AndBack(t *testing.T) {
 	var v1, v2 {{ $t.TypeName }}
 	var v3 {{ $toPackage }}.{{ $t.TypeName }}
 	fuzzer := fuzz.New().NilChance(0)
@@ -133,14 +131,14 @@ func createConverters(from, to string) error {
 		})
 	}
 
-	outPath := path.Join(packagePath(from), "converters.go")
+	outPath := path.Join(astutil.PackagePath(from), "converters.go")
 	w, err := os.OpenFile(outPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
 		return fmt.Errorf("couldn't create converters.go: %s", err)
 	}
 	defer w.Close()
 
-	testOutPath := path.Join(packagePath(from), "converters_test.go")
+	testOutPath := path.Join(astutil.PackagePath(from), "converters_test.go")
 	x, err := os.OpenFile(testOutPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
 		return fmt.Errorf("couldn't create converters_test.go: %s", err)
@@ -159,8 +157,4 @@ func typesEquivalent(a, b *ast.TypeSpec) bool {
 	t2 := reflect.Indirect(reflect.ValueOf(b.Type)).Type()
 
 	return t1 == t2
-}
-
-func packagePath(path string) string {
-	return filepath.Join(build.Default.GOPATH, "src", path)
 }
