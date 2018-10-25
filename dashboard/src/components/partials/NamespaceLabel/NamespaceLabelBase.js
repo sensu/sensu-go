@@ -34,16 +34,16 @@ class NamespaceLabelBase extends React.Component {
 
   render() {
     const { classes, name, icon, colour } = this.props;
-    const nsComponents = name.split("/", 1);
+    const nsComponents = name.split("-");
 
     return (
       <div className={classes.container}>
         <Typography className={classes.label} variant="subheading">
-          <span className={classes.lighter}>{nsComponents[0]}</span>
-          {nsComponents.length > 1 && (
+          <span className={classes.lighter}>{nsComponents.shift()}</span>
+          {nsComponents.length > 0 && (
             <React.Fragment>
-              {" / "}
-              <span className={classes.heavier}>{nsComponents[1]}</span>
+              {" - "}
+              <span className={classes.heavier}>{nsComponents.join("-")}</span>
             </React.Fragment>
           )}
         </Typography>
