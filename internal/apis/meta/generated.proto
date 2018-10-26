@@ -31,6 +31,7 @@ option go_package = "meta";
 
 // ObjectMeta is metadata that all persisted resources must have, which includes all objects
 // users must create.
+// +freeze-api:resource-name objectMetas
 message ObjectMeta {
   // Name must be unique within a namespace. Name is primarily intended for creation
   // idempotence and configuration definition.
@@ -155,6 +156,8 @@ message Timestamp {
   optional int32 nanos = 2;
 }
 
+// TypeMeta is type metadata.
+// +freeze-api:resource-name typeMetas
 message TypeMeta {
   optional string kind = 1;
 

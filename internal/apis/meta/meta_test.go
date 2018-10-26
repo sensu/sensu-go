@@ -1,14 +1,12 @@
-package meta_test
+package meta
 
 import (
 	"testing"
-
-	"github.com/sensu/sensu-go/internal/apis/meta"
 )
 
 type TestType struct {
-	meta.TypeMeta
-	meta.ObjectMeta
+	TypeMeta
+	ObjectMeta
 }
 
 func TestMetaObjectAccess(t *testing.T) {
@@ -24,13 +22,13 @@ func TestMetaObjectAccess(t *testing.T) {
 
 func TestGroupVersionKind(t *testing.T) {
 	var obj interface{} = &TestType{
-		TypeMeta: meta.TypeMeta{
+		TypeMeta: TypeMeta{
 			Kind:       "TestType",
 			APIVersion: "apis.meta/v0",
 		},
 	}
 
-	gvk, ok := obj.(meta.GroupVersionKind)
+	gvk, ok := obj.(GroupVersionKind)
 	if !ok {
 		t.Error("cannot cast test type to GroupVersion")
 		t.FailNow()

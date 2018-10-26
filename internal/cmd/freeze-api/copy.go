@@ -31,6 +31,11 @@ func copyPackage(fromPackage, toPackage string) error {
 		if f.IsDir() {
 			continue
 		}
+		if strings.HasSuffix(f.Name(), "_generated.go") || strings.HasSuffix(f.Name(), "_generated_test.go") {
+			// Generated code from internal packages does not belong in
+			// versioned packages.
+			continue
+		}
 		oldFileName := filepath.Join(from, f.Name())
 		newFileName := filepath.Join(to, f.Name())
 		packageName := filepath.Base(to)

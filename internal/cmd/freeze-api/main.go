@@ -33,19 +33,17 @@ func freezeAPI(from, to string) error {
 	if err := copyPackage(from, to); err != nil {
 		return fmt.Errorf("error freezing API: %s", err)
 	}
-	if err := createConverters(to, from); err != nil {
+	if err := createConverters(from, to); err != nil {
 		return fmt.Errorf("error freezing API: %s", err)
 	}
 	if err := createResourceNameMethods(from, to); err != nil {
 		return fmt.Errorf("error freezing API: %s", err)
 	}
-
-	if err := exec.Command("go", "generate", registryPath).Run(); err != nil {
-		return fmt.Errorf("error freezing API: %s", err)
+	if out, err := exec.Command("go", "generate", registryPath).CombinedOutput(); err != nil {
+		return fmt.Errorf("error freezing API: %s", string(out))
 	}
-
-	if err := exec.Command("go", "fmt", path.Join(*toPath, "...")).Run(); err != nil {
-		return fmt.Errorf("error freezing API: %s", err)
+	if out, err := exec.Command("go", "fmt", path.Join(*toPath, "...")).CombinedOutput(); err != nil {
+		return fmt.Errorf("error freezing API: %s", out)
 	}
 
 	return nil

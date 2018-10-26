@@ -31,6 +31,7 @@ option go_package = "v1alpha1";
 
 // ObjectMeta is metadata that all persisted resources must have, which includes all objects
 // users must create.
+// +freeze-api:resource-name objectMetas
 message ObjectMeta {
   // Name must be unique within a namespace. Name is primarily intended for creation
   // idempotence and configuration definition.
@@ -121,7 +122,7 @@ message ObjectMeta {
 
 // Time is a wrapper around time.Time which supports correct
 // marshaling to YAML and JSON.  Wrappers are provided for many
-// of the factory methods that the time package github.com.sensu.sensu_go.apis.meta.v1alpha1
+// of the factory methods that the time package v1alpha1.
 // 
 // +protobuf.options.marshal=false
 // +protobuf.as=Timestamp
@@ -155,6 +156,8 @@ message Timestamp {
   optional int32 nanos = 2;
 }
 
+// TypeMeta is type metadata.
+// +freeze-api:resource-name typeMetas
 message TypeMeta {
   optional string kind = 1;
 
