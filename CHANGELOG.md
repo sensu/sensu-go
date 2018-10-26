@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [2.0.0-beta.7-1] - 2018-10-26
+
 ### Added
 - Asset functionality for mutators and handlers.
 
