@@ -49,7 +49,7 @@ const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 func (m *ObjectMeta) Reset()      { *m = ObjectMeta{} }
 func (*ObjectMeta) ProtoMessage() {}
 func (*ObjectMeta) Descriptor() ([]byte, []int) {
-	return fileDescriptor_generated_de45643ac127e9e8, []int{0}
+	return fileDescriptor_generated_337b69c53cfcf7f2, []int{0}
 }
 func (m *ObjectMeta) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -77,7 +77,7 @@ var xxx_messageInfo_ObjectMeta proto.InternalMessageInfo
 func (m *Time) Reset()      { *m = Time{} }
 func (*Time) ProtoMessage() {}
 func (*Time) Descriptor() ([]byte, []int) {
-	return fileDescriptor_generated_de45643ac127e9e8, []int{1}
+	return fileDescriptor_generated_337b69c53cfcf7f2, []int{1}
 }
 func (m *Time) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Time.Unmarshal(m, b)
@@ -100,7 +100,7 @@ var xxx_messageInfo_Time proto.InternalMessageInfo
 func (m *Timestamp) Reset()      { *m = Timestamp{} }
 func (*Timestamp) ProtoMessage() {}
 func (*Timestamp) Descriptor() ([]byte, []int) {
-	return fileDescriptor_generated_de45643ac127e9e8, []int{2}
+	return fileDescriptor_generated_337b69c53cfcf7f2, []int{2}
 }
 func (m *Timestamp) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -128,7 +128,7 @@ var xxx_messageInfo_Timestamp proto.InternalMessageInfo
 func (m *TypeMeta) Reset()      { *m = TypeMeta{} }
 func (*TypeMeta) ProtoMessage() {}
 func (*TypeMeta) Descriptor() ([]byte, []int) {
-	return fileDescriptor_generated_de45643ac127e9e8, []int{3}
+	return fileDescriptor_generated_337b69c53cfcf7f2, []int{3}
 }
 func (m *TypeMeta) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1269,10 +1269,10 @@ var (
 )
 
 func init() {
-	proto.RegisterFile("github.com/sensu/sensu-go/internal/apis/meta/generated.proto", fileDescriptor_generated_de45643ac127e9e8)
+	proto.RegisterFile("github.com/sensu/sensu-go/internal/apis/meta/generated.proto", fileDescriptor_generated_337b69c53cfcf7f2)
 }
 
-var fileDescriptor_generated_de45643ac127e9e8 = []byte{
+var fileDescriptor_generated_337b69c53cfcf7f2 = []byte{
 	// 603 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x54, 0x4d, 0x4f, 0xd4, 0x4c,
 	0x1c, 0x6f, 0xd9, 0x17, 0xd8, 0xff, 0x3e, 0x8f, 0xc0, 0x88, 0xb1, 0xe1, 0xd0, 0x6e, 0xd6, 0x0b,

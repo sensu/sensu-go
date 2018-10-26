@@ -1,5 +1,7 @@
 package meta
 
+// TypeMeta is type metadata.
+// +freeze-api:resource-name typeMetas
 type TypeMeta struct {
 	Kind       string `json:"kind" protobuf:"bytes,1,opt,name=kind"`
 	APIVersion string `json:"apiVersion" protobuf:"bytes,2,opt,name=apiVersion"`
@@ -7,6 +9,7 @@ type TypeMeta struct {
 
 // ObjectMeta is metadata that all persisted resources must have, which includes all objects
 // users must create.
+// +freeze-api:resource-name objectMetas
 type ObjectMeta struct {
 	// Name must be unique within a namespace. Name is primarily intended for creation
 	// idempotence and configuration definition.

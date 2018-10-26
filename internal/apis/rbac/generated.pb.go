@@ -47,7 +47,7 @@ const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 func (m *ClusterRole) Reset()      { *m = ClusterRole{} }
 func (*ClusterRole) ProtoMessage() {}
 func (*ClusterRole) Descriptor() ([]byte, []int) {
-	return fileDescriptor_generated_460cf1f11fbc09f5, []int{0}
+	return fileDescriptor_generated_ac26bdbed9f89119, []int{0}
 }
 func (m *ClusterRole) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -75,7 +75,7 @@ var xxx_messageInfo_ClusterRole proto.InternalMessageInfo
 func (m *ClusterRoleBinding) Reset()      { *m = ClusterRoleBinding{} }
 func (*ClusterRoleBinding) ProtoMessage() {}
 func (*ClusterRoleBinding) Descriptor() ([]byte, []int) {
-	return fileDescriptor_generated_460cf1f11fbc09f5, []int{1}
+	return fileDescriptor_generated_ac26bdbed9f89119, []int{1}
 }
 func (m *ClusterRoleBinding) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -103,7 +103,7 @@ var xxx_messageInfo_ClusterRoleBinding proto.InternalMessageInfo
 func (m *Role) Reset()      { *m = Role{} }
 func (*Role) ProtoMessage() {}
 func (*Role) Descriptor() ([]byte, []int) {
-	return fileDescriptor_generated_460cf1f11fbc09f5, []int{2}
+	return fileDescriptor_generated_ac26bdbed9f89119, []int{2}
 }
 func (m *Role) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -131,7 +131,7 @@ var xxx_messageInfo_Role proto.InternalMessageInfo
 func (m *RoleBinding) Reset()      { *m = RoleBinding{} }
 func (*RoleBinding) ProtoMessage() {}
 func (*RoleBinding) Descriptor() ([]byte, []int) {
-	return fileDescriptor_generated_460cf1f11fbc09f5, []int{3}
+	return fileDescriptor_generated_ac26bdbed9f89119, []int{3}
 }
 func (m *RoleBinding) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -159,7 +159,7 @@ var xxx_messageInfo_RoleBinding proto.InternalMessageInfo
 func (m *RoleRef) Reset()      { *m = RoleRef{} }
 func (*RoleRef) ProtoMessage() {}
 func (*RoleRef) Descriptor() ([]byte, []int) {
-	return fileDescriptor_generated_460cf1f11fbc09f5, []int{4}
+	return fileDescriptor_generated_ac26bdbed9f89119, []int{4}
 }
 func (m *RoleRef) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -187,7 +187,7 @@ var xxx_messageInfo_RoleRef proto.InternalMessageInfo
 func (m *Rule) Reset()      { *m = Rule{} }
 func (*Rule) ProtoMessage() {}
 func (*Rule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_generated_460cf1f11fbc09f5, []int{5}
+	return fileDescriptor_generated_ac26bdbed9f89119, []int{5}
 }
 func (m *Rule) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -215,7 +215,7 @@ var xxx_messageInfo_Rule proto.InternalMessageInfo
 func (m *Subject) Reset()      { *m = Subject{} }
 func (*Subject) ProtoMessage() {}
 func (*Subject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_generated_460cf1f11fbc09f5, []int{6}
+	return fileDescriptor_generated_ac26bdbed9f89119, []int{6}
 }
 func (m *Subject) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1781,10 +1781,10 @@ var (
 )
 
 func init() {
-	proto.RegisterFile("github.com/sensu/sensu-go/internal/apis/rbac/generated.proto", fileDescriptor_generated_460cf1f11fbc09f5)
+	proto.RegisterFile("github.com/sensu/sensu-go/internal/apis/rbac/generated.proto", fileDescriptor_generated_ac26bdbed9f89119)
 }
 
-var fileDescriptor_generated_460cf1f11fbc09f5 = []byte{
+var fileDescriptor_generated_ac26bdbed9f89119 = []byte{
 	// 521 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x52, 0xbb, 0x8e, 0xd3, 0x40,
 	0x14, 0x8d, 0xf3, 0xd0, 0xc6, 0x13, 0x22, 0x60, 0x2a, 0x6b, 0x0b, 0x27, 0x4a, 0x15, 0x01, 0x3b,

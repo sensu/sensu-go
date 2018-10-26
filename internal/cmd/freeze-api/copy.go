@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
-	"go/build"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
+
+	"github.com/sensu/sensu-go/internal/astutil"
 )
 
 var packageDeclRe = regexp.MustCompile(`([\/\*]*[pP]ackage)[ ]+([_a-z0-9]+)`)
@@ -16,8 +17,8 @@ var packageDeclRe = regexp.MustCompile(`([\/\*]*[pP]ackage)[ ]+([_a-z0-9]+)`)
 // copyPackage naively copies a package from one place to another, updating its
 // package declaration.
 func copyPackage(fromPackage, toPackage string) error {
-	from := packagePath(fromPackage)
-	to := packagePath(toPackage)
+	from := astutil.PackagePath(fromPackage)
+	to := astutil.PackagePath(toPackage)
 	if err := os.MkdirAll(to, os.ModeDir|0755); err != nil {
 		return fmt.Errorf("couldn't copy package: %s", err)
 	}
@@ -28,6 +29,11 @@ func copyPackage(fromPackage, toPackage string) error {
 
 	for _, f := range files {
 		if f.IsDir() {
+			continue
+		}
+		if strings.HasSuffix(f.Name(), "_generated.go") || strings.HasSuffix(f.Name(), "_generated_test.go") {
+			// Generated code from internal packages does not belong in
+			// versioned packages.
 			continue
 		}
 		oldFileName := filepath.Join(from, f.Name())
@@ -85,8 +91,4 @@ func copyFile(from, to string) error {
 		return err
 	}
 	return ioutil.WriteFile(to, b, 0644)
-}
-
-func packagePath(path string) string {
-	return filepath.Join(build.Default.GOPATH, "src", path)
 }

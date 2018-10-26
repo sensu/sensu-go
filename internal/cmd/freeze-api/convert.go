@@ -1,29 +1,30 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"go/ast"
-	"go/parser"
-	"go/token"
 	"os"
 	"path"
 	"reflect"
-	"strings"
 	"text/template"
 
 	"github.com/sensu/sensu-go/internal/astutil"
 )
 
+const conversionPackage = "github.com/sensu/sensu-go/internal/conversion"
+
 type templateData struct {
-	// ToPackage is the name of the destination package.
-	ToPackage string
+	// VersionedPackage is the name of the versioned package.
+	VersionedPackage string
 
-	// FromPackage is the name of the source package.
-	FromPackage string
+	// InternalPackage is the name of the internal package.
+	InternalPackage string
 
-	// ImportPackage is the fully qualified package path of ToPackage
-	ImportPackage string
+	// InternalPackagePath is the fully qualified package path of InternalPackage
+	InternalPackagePath string
+
+	// VersionedPackagePath is the fully qualified package path of VersionedPackage
+	VersionedPackagePath string
 
 	// Types is a list of types to generate converters for
 	Types []conversionType
@@ -42,105 +43,190 @@ type conversionType struct {
 	ComplexFields map[string]reflect.Kind
 }
 
-const converterTmplStr = `package {{ .FromPackage }}
+const conversionInitFuncs = `package conversion
 
 import (
-	"unsafe"
-
-	"{{ .ImportPackage }}"
+	"{{ .InternalPackagePath }}"
 )
-{{ $toPackage := .ToPackage }}{{ range $idx, $t := .Types }}
-// ConvertTo converts a *{{ $t.TypeName }} to a *{{ $toPackage }}.{{ $t.TypeName }}.
-// It panics if the to parameter is not a *{{ $toPackage }}.{{ $t.TypeName }}.
-func (r *{{ $t.TypeName }}) ConvertTo(to interface{}) {
-	ptr := to.(*{{ $toPackage }}.{{ $t.TypeName }})
-	convert_{{ $t.TypeName }}_To_{{ $toPackage }}_{{ $t.TypeName }}(r, ptr)
-}
+{{ $vPkg := .VersionedPackage }}
+{{ $iPkg := .InternalPackage }}
+{{ range $i, $t := .Types }}
+{{ $internalToVersioned := conversionFuncName $iPkg $vPkg $t.TypeName }}
+{{ $versionedToInternal := conversionFuncName $vPkg $iPkg $t.TypeName }}
+func init() {
+	registry[key{
+		SourceAPIVersion: "{{ $iPkg }}",
+		DestAPIVersion: "{{ $iPkg }}/{{ $vPkg}}",
+		Kind: "{{ $t.TypeName }}",
+	}] = {{ $iPkg }}.{{ $internalToVersioned }}
 
-var convert_{{ $t.TypeName }}_To_{{ $toPackage }}_{{ $t.TypeName}} = func(from *{{ $t.TypeName }}, to *{{ $toPackage}}.{{ $t.TypeName }}) {
-	{{ if $t.Simple }} *to = *(*{{ $toPackage }}.{{ $t.TypeName }})(unsafe.Pointer(from)){{ else }}panic("complex conversion not supported yet"){{ end }}
-}
-
-// ConvertFrom converts the receiver to a *{{ $toPackage }}.{{ $t.TypeName }}.
-// It panics if the from parameter is not a *{{ $toPackage }}.{{ $t.TypeName }}.
-func (r *{{ $t.TypeName}}) ConvertFrom(from interface{}) {
-	ptr := from.(*{{ $toPackage }}.{{ $t.TypeName }})
-	convert_{{ $toPackage }}_{{ $t.TypeName}}_To_{{ $t.TypeName}}(ptr, r)
-}
-
-var convert_{{ $toPackage }}_{{ $t.TypeName}}_To_{{ $t.TypeName}} = func(from *{{ $toPackage }}.{{ $t.TypeName }}, to *{{ $t.TypeName }}) {
-	{{ if $t.Simple }} *to = *(*{{ $t.TypeName }})(unsafe.Pointer(from)){{ else }}panic("complex conversion not supported yet"){{end}}
+	registry[key{
+		SourceAPIVersion: "{{ $iPkg }}/{{ $vPkg}}",
+		DestAPIVersion: "{{ $iPkg }}",
+		Kind: "{{ $t.TypeName }}",
+	}] = {{ $iPkg }}.{{ $versionedToInternal }}
 }
 {{ end }}
 `
 
-var converterTmpl = template.Must(template.New("converter").Parse(converterTmplStr))
+const converterTmplStr = `package {{ .InternalPackage }}
 
-func removeTestPackages(packages map[string]*ast.Package) {
-	for k := range packages {
-		if strings.HasSuffix(k, "_test") {
-			delete(packages, k)
-		}
-	}
+import (
+	"unsafe"
+
+	"{{ .VersionedPackagePath }}"
+)
+{{ $vPkg := .VersionedPackage }}
+{{ $iPkg := .InternalPackage }}
+{{ range $i, $t := .Types }}
+{{ $internalToVersioned := conversionFuncName $iPkg $vPkg $t.TypeName }}
+{{ $versionedToInternal := conversionFuncName $vPkg $iPkg $t.TypeName }}
+{{ $internalType := $t.TypeName }}
+{{ $versionedType := typeName $vPkg $t.TypeName }}
+func {{ $internalToVersioned }}(dst, src interface{}) error {
+	dstp := dst.(*{{ $versionedType }})
+	srcp := src.(*{{ $internalType }})
+	{{ if $t.Simple }}
+	*dstp = *(*{{ $versionedType }})(unsafe.Pointer(srcp))
+	{{ else }}
+	panic("complex conversions not supported yet")
+	{{ end }}
+	return nil
 }
 
-func getPackage(pkg string) (*ast.Package, error) {
-	path := packagePath(pkg)
-	fset := token.NewFileSet()
-	packages, err := parser.ParseDir(fset, path, nil, 0)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing package: %s", err)
+func {{ $versionedToInternal }}(dst, src interface{}) error {
+	dstp := dst.(*{{ $internalType }})
+	srcp := src.(*{{ $versionedType }})
+	{{ if $t.Simple }}
+	*dstp = *(*{{ $internalType }})(unsafe.Pointer(srcp))
+	{{ else }}
+	panic("complex conversions not supported yet")
+	{{ end }}
+	return nil
+}
+{{ end }}`
+
+const converterTestTmplStr = `package {{ .InternalPackage }}
+
+import (
+	"reflect"
+	"testing"
+
+	fuzz "github.com/google/gofuzz"
+	"{{ .VersionedPackagePath }}"
+)
+{{ $vPkg := .VersionedPackage }}
+{{ $iPkg := .InternalPackage }}
+{{ range $i, $t := .Types }}
+{{ $internalToVersioned := conversionFuncName $iPkg $vPkg $t.TypeName }}
+{{ $versionedToInternal := conversionFuncName $vPkg $iPkg $t.TypeName }}
+{{ $internalType := $t.TypeName }}
+{{ $versionedType := typeName $vPkg $t.TypeName }}
+func Test_Convert_{{ $internalToVersioned }}_And_{{ $versionedToInternal }}(t *testing.T) {
+	var v1, v2 {{ $internalType }}
+	var v3 {{ $versionedType }}
+	fuzzer := fuzz.New().NilChance(0)
+	fuzzer.Fuzz(&v1)
+	if err := {{ $internalToVersioned }}(&v3, &v1); err != nil {
+		t.Fatal(err)
 	}
-	removeTestPackages(packages)
-	if len(packages) > 1 {
-		return nil, errors.New("too many 'from' packages")
+	if err := {{ $versionedToInternal }}(&v2, &v3); err != nil {
+		t.Fatal(err)
 	}
-	for _, v := range packages {
-		return v, nil
-	}
-	return nil, errors.New("no packages found")
+	{{ if $t.Simple }}
+	if !reflect.DeepEqual(v1, v2) {
+		t.Fatal("values not equal")
+	}{{ end }}
+}{{ end }}
+`
+
+var templateFuncs = map[string]interface{}{
+	"conversionFuncName": func(fromPkg, versionedPkg, typename string) string {
+		return fmt.Sprintf("Convert_%s_%s_To_%s_%s", fromPkg, typename, versionedPkg, typename)
+	},
+	"typeName": func(pkg, typename string) string {
+		return fmt.Sprintf("%s.%s", pkg, typename)
+	},
 }
 
-func createConverters(from, to string) error {
-	fromPackage, err := getPackage(from)
+var (
+	converterTmpl           = template.Must(template.New("converter").Funcs(templateFuncs).Parse(converterTmplStr))
+	converterTestsTmpl      = template.Must(template.New("converter_test").Funcs(templateFuncs).Parse(converterTestTmplStr))
+	conversionInitFuncsTmpl = template.Must(template.New("pkginits").Funcs(templateFuncs).Parse(conversionInitFuncs))
+)
+
+func createConverters(internal, versioned string) error {
+	internalPackage, err := astutil.GetPackage(internal)
 	if err != nil {
 		return err
 	}
 
-	toPackage, err := getPackage(to)
+	versionedPackage, err := astutil.GetPackage(versioned)
 	if err != nil {
 		return err
 	}
 
-	fromTypes := astutil.GetKinds(fromPackage)
-	toTypes := astutil.GetKinds(toPackage)
+	internalTypes := astutil.GetKinds(internalPackage)
+	versionedTypes := astutil.GetKinds(versionedPackage)
 
 	td := templateData{
-		ToPackage:     path.Base(to),
-		FromPackage:   path.Base(from),
-		ImportPackage: to,
+		VersionedPackage:     path.Base(versioned),
+		InternalPackage:      path.Base(internal),
+		VersionedPackagePath: versioned,
+		InternalPackagePath:  internal,
 	}
 
-	for _, typeName := range astutil.GetKindNames(fromPackage) {
-		fromType := fromTypes[typeName]
-		toType, ok := toTypes[typeName]
+	for _, typeName := range astutil.GetKindNames(internalPackage) {
+		internalType := internalTypes[typeName]
+		versionedType, ok := versionedTypes[typeName]
 		if !ok {
 			continue
 		}
-		simple := typesEquivalent(fromType, toType)
+		simple := typesEquivalent(internalType, versionedType)
 		td.Types = append(td.Types, conversionType{
 			Simple:   simple,
 			TypeName: typeName,
 		})
 	}
 
-	outPath := path.Join(packagePath(from), "converters.go")
-	w, err := os.OpenFile(outPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
-	if err != nil {
-		return fmt.Errorf("couldn't create converters: %s", err)
+	outPaths := []string{
+		path.Join(
+			astutil.PackagePath(internal),
+			fmt.Sprintf("converters_%s_generated.go", path.Base(versioned))),
+		path.Join(
+			astutil.PackagePath(internal),
+			fmt.Sprintf("converters_%s_generated_test.go", path.Base(versioned))),
+		path.Join(
+			astutil.PackagePath(conversionPackage),
+			fmt.Sprintf("registry_%s_generated.go", path.Base(versioned))),
 	}
 
-	return converterTmpl.Execute(w, td)
+	tmpls := []*template.Template{
+		converterTmpl,
+		converterTestsTmpl,
+		conversionInitFuncsTmpl,
+	}
+
+	for i := range outPaths {
+		if err := writeTemplate(outPaths[i], tmpls[i], td); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func writeTemplate(path string, tmpl *template.Template, data interface{}) (err error) {
+	w, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("couldn't create %s: %s", path, err)
+	}
+	defer func() {
+		if err == nil {
+			err = w.Close()
+		}
+	}()
+	return tmpl.Execute(w, data)
 }
 
 func typesEquivalent(a, b *ast.TypeSpec) bool {

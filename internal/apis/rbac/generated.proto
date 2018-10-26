@@ -33,6 +33,7 @@ option go_package = "rbac";
 
 // ClusterRole is a role that applies to all Namespaces within
 // a cluster.
+// +freeze-api:resource-name clusterRoles
 message ClusterRole {
   optional github.com.sensu.sensu_go.internal.apis.meta.ObjectMeta metadata = 1;
 
@@ -42,6 +43,7 @@ message ClusterRole {
 
 // ClusterRoleBinding grants the permissions defined in a ClusterRole referenced
 // to a user or a set of users
+// +freeze-api:resource-name clusterRoleBindings
 message ClusterRoleBinding {
   optional github.com.sensu.sensu_go.internal.apis.meta.ObjectMeta metadata = 1;
 
@@ -53,6 +55,7 @@ message ClusterRoleBinding {
 }
 
 // A Role applies only to a single Namespace.
+// +freeze-api:resource-name roles
 message Role {
   optional github.com.sensu.sensu_go.internal.apis.meta.ObjectMeta metadata = 1;
 
@@ -62,6 +65,7 @@ message Role {
 
 // RoleBinding grants the permissions defined in a Role referenced to a user or
 // a set of users
+// +freeze-api:resource-name roleBindings
 message RoleBinding {
   optional github.com.sensu.sensu_go.internal.apis.meta.ObjectMeta metadata = 1;
 
@@ -105,6 +109,7 @@ message Rule {
 }
 
 // Subject contains a reference to the user identity a role binding applies to
+// +freeze-api:resource-name subjects
 message Subject {
   // Kind is the type of object referenced
   optional string kind = 1;

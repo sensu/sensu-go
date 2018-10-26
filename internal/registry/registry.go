@@ -9,6 +9,7 @@ import (
 	"html/template"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/sensu/sensu-go/internal/apis/meta"
@@ -26,15 +27,16 @@ import (
   "github.com/sensu/sensu-go/internal/apis/meta"
 )
 
-type registry map[meta.TypeMeta]meta.GroupVersionKind
+type registry map[meta.TypeMeta]interface{}
 
 var typeRegistry = registry{ {{ range $index, $t := . }}
-  meta.TypeMeta{Kind: "{{ $t.Kind }}", APIVersion: "{{ $t.APIVersion }}"}: {{ $t.APIVersion }}.{{ $t.Kind }}{}, {{ end }}
+  meta.TypeMeta{APIVersion: "{{ $t.APIVersion }}", Kind: "{{ $t.Kind }}"}: {{ $t.APIVersion }}.{{ $t.Kind }}{},
+  meta.TypeMeta{APIVersion: "{{ $t.APIVersion }}", Kind: "{{ lower $t.Kind }}"}: {{ $t.APIVersion }}.{{ $t.Kind }}{}, {{ end }}
 }
 
 // Resolve returns a zero-valued meta.GroupVersionKind, given a meta.TypeMeta.
 // If the type does not exist, then an error will be returned.
-func Resolve(mt meta.TypeMeta) (meta.GroupVersionKind, error) {
+func Resolve(mt meta.TypeMeta) (interface{}, error) {
 	t, ok := typeRegistry[mt]
   if !ok {
     return nil, fmt.Errorf("type could not be found: %v", mt)
@@ -44,7 +46,12 @@ func Resolve(mt meta.TypeMeta) (meta.GroupVersionKind, error) {
 `
 
 var (
-	registryTmpl = template.Must(template.New("registry").Parse(templateText))
+	registryTmpl = template.Must(
+		template.New("registry").
+			Funcs(map[string]interface{}{
+				"lower": strings.ToLower,
+			}).
+			Parse(templateText))
 )
 
 type templateData []meta.TypeMeta
@@ -78,6 +85,12 @@ func getPackageKinds(path string) (templateData, error) {
 		return nil, fmt.Errorf("couldn't walk filesystem: %s", err)
 	}
 	td := scanPackages(walker.packages)
+	sort.Slice(td, func(i, j int) bool {
+		if td[i].APIVersion == td[j].APIVersion {
+			return td[i].Kind < td[j].Kind
+		}
+		return td[i].APIVersion < td[j].APIVersion
+	})
 	return td, nil
 }
 

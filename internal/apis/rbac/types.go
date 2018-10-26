@@ -40,6 +40,7 @@ type Rule struct {
 }
 
 // A Role applies only to a single Namespace.
+// +freeze-api:resource-name roles
 type Role struct {
 	meta.TypeMeta   `json:",inline" protobuf:"bytes,3,opt,name=typeMeta"`
 	meta.ObjectMeta `json:"metadata" protobuf:"bytes,1,opt,name=metadata"`
@@ -50,6 +51,7 @@ type Role struct {
 
 // ClusterRole is a role that applies to all Namespaces within
 // a cluster.
+// +freeze-api:resource-name clusterRoles
 type ClusterRole struct {
 	meta.TypeMeta   `json:",inline" protobuf:"bytes,3,opt,name=typeMeta"`
 	meta.ObjectMeta `json:"metadata" protobuf:"bytes,1,opt,name=metadata"`
@@ -69,6 +71,7 @@ type RoleRef struct {
 
 // ClusterRoleBinding grants the permissions defined in a ClusterRole referenced
 // to a user or a set of users
+// +freeze-api:resource-name clusterRoleBindings
 type ClusterRoleBinding struct {
 	meta.TypeMeta   `json:",inline" protobuf:"bytes,4,opt,name=typeMeta"`
 	meta.ObjectMeta `json:"metadata" protobuf:"bytes,1,opt,name=metadata"`
@@ -82,6 +85,7 @@ type ClusterRoleBinding struct {
 
 // RoleBinding grants the permissions defined in a Role referenced to a user or
 // a set of users
+// +freeze-api:resource-name roleBindings
 type RoleBinding struct {
 	meta.TypeMeta   `json:",inline" protobuf:"bytes,4,opt,name=typeMeta"`
 	meta.ObjectMeta `json:"metadata" protobuf:"bytes,1,opt,name=metadata"`
@@ -94,6 +98,7 @@ type RoleBinding struct {
 }
 
 // Subject contains a reference to the user identity a role binding applies to
+// +freeze-api:resource-name subjects
 type Subject struct {
 	meta.TypeMeta `json:",inline" protobuf:"bytes,3,opt,name=typeMeta"`
 
