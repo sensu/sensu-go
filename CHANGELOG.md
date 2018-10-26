@@ -11,12 +11,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Asset functionality for mutators and handlers.
-- Code highlighting added.
-
-### Fixed
 - Web ui allows publishing and unpublishing on checks page.
 - Web ui allows publishing and unpublishing on check details page.
-- Fixes exception thrown when browser window is resized.
+- Web ui code highlighting added.
+
+### Fixed
+- Fixes exception thrown when web ui browser window is resized.
 
 ## [2.0.0-beta.6-2] - 2018-10-22
 
