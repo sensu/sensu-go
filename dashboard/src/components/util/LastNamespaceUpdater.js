@@ -26,7 +26,7 @@ class LastNamespaceUpdater extends React.PureComponent {
 
   updateLastNamespace = () => {
     const { namespace } = this.props;
-    const variables = { namespace };
+    const variables = { name: namespace };
 
     this.props.client.mutate({ mutation, variables });
   };

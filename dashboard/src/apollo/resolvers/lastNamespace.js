@@ -1,6 +1,6 @@
 export default {
   defaults: {
-    lastNamespace: null,
+    lastNamespace: "default",
   },
   resolvers: {
     Mutation: {

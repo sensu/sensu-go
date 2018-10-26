@@ -57,6 +57,7 @@ const styles = theme => ({
   namespaceSelector: {
     margin: "8px 0 -8px 0",
     width: "100%",
+    height: 56,
   },
   namespaceIcon: {
     margin: "24px 0 0 16px",
