@@ -1,6 +1,6 @@
 package rbac
 
-import "github.com/sensu/sensu-go/internal/apis/meta"
+import meta "github.com/sensu/sensu-go/apis/meta/v1alpha1"
 
 const (
 	// APIGroupAll represents all possible API groups
