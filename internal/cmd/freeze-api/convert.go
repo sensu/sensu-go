@@ -11,6 +11,8 @@ import (
 	"github.com/sensu/sensu-go/internal/astutil"
 )
 
+const conversionPackage = "github.com/sensu/sensu-go/internal/conversion"
+
 type templateData struct {
 	// VersionedPackage is the name of the versioned package.
 	VersionedPackage string
@@ -45,7 +47,6 @@ const conversionInitFuncs = `package conversion
 
 import (
 	"{{ .InternalPackagePath }}"
-	"{{ .VersionedPackagePath }}"
 )
 {{ $vPkg := .VersionedPackage }}
 {{ $iPkg := .InternalPackage }}
@@ -57,13 +58,13 @@ func init() {
 		SourceAPIVersion: "{{ $iPkg }}",
 		DestAPIVersion: "{{ $iPkg }}/{{ $vPkg}}",
 		Kind: "{{ $t.TypeName }}",
-	}] = {{ $internalToVersioned }}
+	}] = {{ $iPkg }}.{{ $internalToVersioned }}
 
 	registry[key{
 		SourceAPIVersion: "{{ $iPkg }}/{{ $vPkg}}",
 		DestAPIVersion: "{{ $iPkg }}",
 		Kind: "{{ $t.TypeName }}",
-	}] = {{ $versionedToInternal }}
+	}] = {{ $iPkg }}.{{ $versionedToInternal }}
 }
 {{ end }}
 `
@@ -189,25 +190,44 @@ func createConverters(internal, versioned string) error {
 		})
 	}
 
-	outPath := path.Join(astutil.PackagePath(internal), fmt.Sprintf("converters_%s_generated.go", path.Base(versioned)))
-	w, err := os.OpenFile(outPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	outPaths := []string{
+		path.Join(
+			astutil.PackagePath(internal),
+			fmt.Sprintf("converters_%s_generated.go", path.Base(versioned))),
+		path.Join(
+			astutil.PackagePath(internal),
+			fmt.Sprintf("converters_%s_generated_test.go", path.Base(versioned))),
+		path.Join(
+			astutil.PackagePath(conversionPackage),
+			fmt.Sprintf("registry_%s_generated.go", path.Base(versioned))),
+	}
+
+	tmpls := []*template.Template{
+		converterTmpl,
+		converterTestsTmpl,
+		conversionInitFuncsTmpl,
+	}
+
+	for i := range outPaths {
+		if err := writeTemplate(outPaths[i], tmpls[i], td); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func writeTemplate(path string, tmpl *template.Template, data interface{}) (err error) {
+	w, err := os.OpenFile(path, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
 	if err != nil {
-		return fmt.Errorf("couldn't create converters.go: %s", err)
+		return fmt.Errorf("couldn't create %s: %s", path, err)
 	}
-	defer w.Close()
-
-	testOutPath := path.Join(astutil.PackagePath(internal), fmt.Sprintf("converters_%s_generated_test.go", path.Base(versioned)))
-	x, err := os.OpenFile(testOutPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
-	if err != nil {
-		return fmt.Errorf("couldn't create converters_test.go: %s", err)
-	}
-	defer x.Close()
-
-	if err := converterTmpl.Execute(w, td); err != nil {
-		return err
-	}
-
-	return converterTestsTmpl.Execute(x, td)
+	defer func() {
+		if err == nil {
+			err = w.Close()
+		}
+	}()
+	return tmpl.Execute(w, data)
 }
 
 func typesEquivalent(a, b *ast.TypeSpec) bool {

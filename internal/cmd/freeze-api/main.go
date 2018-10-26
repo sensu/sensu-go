@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"path"
 )
 
 const registryPath = "github.com/sensu/sensu-go/runtime/registry"
@@ -42,7 +41,7 @@ func freezeAPI(from, to string) error {
 	if out, err := exec.Command("go", "generate", registryPath).CombinedOutput(); err != nil {
 		return fmt.Errorf("error freezing API: %s", string(out))
 	}
-	if out, err := exec.Command("go", "fmt", path.Join(*toPath, "...")).CombinedOutput(); err != nil {
+	if out, err := exec.Command("go", "fmt", "github.com/sensu/sensu-go/...").CombinedOutput(); err != nil {
 		return fmt.Errorf("error freezing API: %s", out)
 	}
 
