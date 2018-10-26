@@ -31,7 +31,7 @@ type registry map[meta.TypeMeta]interface{}
 
 var typeRegistry = registry{ {{ range $index, $t := . }}
   meta.TypeMeta{APIVersion: "{{ $t.APIVersion }}", Kind: "{{ $t.Kind }}"}: {{ $t.APIVersion }}.{{ $t.Kind }}{},
-  meta.TypeMeta{APIVersion: "{{ $t.APIVersion }}", Kind: "{{ lowerKind $t.Kind }}"}: {{ $t.APIVersion }}.{{ $t.Kind }}{}, {{ end }}
+  meta.TypeMeta{APIVersion: "{{ $t.APIVersion }}", Kind: "{{ lower $t.Kind }}"}: {{ $t.APIVersion }}.{{ $t.Kind }}{}, {{ end }}
 }
 
 // Resolve returns a zero-valued meta.GroupVersionKind, given a meta.TypeMeta.
@@ -49,7 +49,7 @@ var (
 	registryTmpl = template.Must(
 		template.New("registry").
 			Funcs(map[string]interface{}{
-				"lowerKind": lowerKind,
+				"lower": strings.ToLower,
 			}).
 			Parse(templateText))
 )
@@ -108,15 +108,6 @@ func scanPackages(packages map[string]*ast.Package) templateData {
 		}
 	}
 	return td
-}
-
-func lowerKind(kind string) (result string) {
-	for _, r := range kind {
-		result += strings.ToLower(string(r))
-		break
-	}
-	result += string(kind[1:])
-	return result
 }
 
 // walker walks a filesystem recursively, looking for Go packages to parse.

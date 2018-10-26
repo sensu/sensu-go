@@ -180,7 +180,6 @@ func createConverters(internal, versioned string) error {
 		internalType := internalTypes[typeName]
 		versionedType, ok := versionedTypes[typeName]
 		if !ok {
-			fmt.Println(typeName)
 			continue
 		}
 		simple := typesEquivalent(internalType, versionedType)
