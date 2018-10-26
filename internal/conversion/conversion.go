@@ -39,9 +39,6 @@ type conversionFunc func(dst, src interface{}) error
 // If the types passed to ConvertTypes are incompatible, that is, no conversion
 // method exists, ErrImpossibleConversion will be returned.
 func ConvertTypes(dst, src Interface) (err error) {
-	if src.GetKind() != dst.GetKind() {
-		return ErrImpossibleConversion
-	}
 	key := key{
 		SourceAPIVersion: src.GetAPIVersion(),
 		DestAPIVersion:   dst.GetAPIVersion(),
