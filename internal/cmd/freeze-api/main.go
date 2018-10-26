@@ -44,6 +44,9 @@ func freezeAPI(from, to string) error {
 	if out, err := exec.Command("go", "fmt", "github.com/sensu/sensu-go/...").CombinedOutput(); err != nil {
 		return fmt.Errorf("error freezing API: %s", out)
 	}
+	if out, err := exec.Command("./hack/update-protobuf.sh").CombinedOutput(); err != nil {
+		return fmt.Errorf("error freezing API: %s", out)
+	}
 
 	return nil
 }
