@@ -57,6 +57,7 @@ func imports(kinds []metav1.TypeMeta) (result []string) {
 		} else {
 			imp = fmt.Sprintf(`"github.com/sensu/sensu-go/internal/apis/%s"`, kind.APIVersion)
 		}
+		fmt.Println(imp)
 		set[imp] = struct{}{}
 	}
 	for k := range set {
@@ -122,13 +123,13 @@ func getPackageKinds(path string) (templateData, error) {
 // into a slice.
 func scanPackages(packages map[string]*ast.Package) templateData {
 	td := make(templateData, 0)
-	for _, pkg := range packages {
+	for apiGroup, pkg := range packages {
 		if strings.HasSuffix(pkg.Name, "_test") {
 			continue
 		}
 		kinds := astutil.GetKindNames(pkg)
 		for _, kind := range kinds {
-			td = append(td, metav1.TypeMeta{APIVersion: pkg.Name, Kind: kind})
+			td = append(td, metav1.TypeMeta{APIVersion: apiGroup, Kind: kind})
 		}
 	}
 	return td
@@ -169,8 +170,8 @@ func (w *walker) walk(path string, fi os.FileInfo, err error) error {
 	return nil
 }
 
-func apiName(pth string) string {
-	parts := filepath.SplitList(pth)
+func apiName(pth string) (result string) {
+	parts := strings.Split(filepath.ToSlash(pth), "/")
 	if version, err := api.ParseVersion(parts[len(parts)-1]); err != nil {
 		return filepath.Base(pth)
 	} else {

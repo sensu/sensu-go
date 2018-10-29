@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-	"strings"
 )
 
 // Version is a data type that represents a Sensu object version.
@@ -14,18 +13,15 @@ type Version struct {
 	InterimNumber int
 }
 
-var versionRe = regexp.MustCompile(`^v([0-9]+)([a-z]+[0-9]+)?$`)
+var versionRe = regexp.MustCompile(`^v([0-9]+)(([a-z]+)([0-9]+))?$`)
 
 // ParseVersion parses a Sensu object version (like v1, v1alpha1), and returns
 // a decoded data structure. If an error in encountered while processing the
 // string, it is returned.
 func ParseVersion(v string) (Version, error) {
-	if !strings.HasPrefix("v", v) {
-		return Version{}, fmt.Errorf("not a version: %q", v)
-	}
 	matches := versionRe.FindStringSubmatch(v)
 	if len(matches) != 5 {
-		return Version{}, fmt.Errorf("not a version: %q", v)
+		return Version{}, fmt.Errorf("not a version: %q: no regexp match", v)
 	}
 	number, err := strconv.Atoi(matches[1])
 	if err != nil {
@@ -48,5 +44,8 @@ func ParseVersion(v string) (Version, error) {
 
 // String turns the decoded version into an encoded one.
 func (v Version) String() string {
-	return fmt.Sprintf("%d%s%d", v.Number, v.Interim, v.InterimNumber)
+	if len(v.Interim) > 0 {
+		return fmt.Sprintf("v%d%s%d", v.Number, v.Interim, v.InterimNumber)
+	}
+	return fmt.Sprintf("v%d", v.Number)
 }
