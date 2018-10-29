@@ -6,6 +6,7 @@ PACKAGES=(
     github.com/sensu/sensu-go/apis/meta/v1
     github.com/sensu/sensu-go/internal/apis/rbac
     github.com/sensu/sensu-go/internal/apis/core
+    github.com/sensu/sensu-go/apis/rbac/v1alpha1
 )
 
 go-to-protobuf \
