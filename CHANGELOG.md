@@ -9,6 +9,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [2.0.0-beta.7-1] - 2018-10-26
 
+### Fixed
+- Silences List in web ui sorted by ascending order
+- Sorting button now works properly
+
 ### Added
 - Asset functionality for mutators and handlers.
 - Web ui allows publishing and unpublishing on checks page.
