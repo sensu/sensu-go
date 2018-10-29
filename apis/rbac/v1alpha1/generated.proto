@@ -24,12 +24,12 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 syntax = 'proto2';
 
-package github.com.sensu.sensu_go.internal.apis.rbac;
+package github.com.sensu.sensu_go.apis.rbac.v1alpha1;
 
 import "github.com/sensu/sensu-go/apis/meta/v1/generated.proto";
 
 // Package-wide variables from generator "generated".
-option go_package = "rbac";
+option go_package = "v1alpha1";
 
 // ClusterRole is a role that applies to all Namespaces within
 // a cluster.

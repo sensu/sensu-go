@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package v1alpha1
+package v1
 
 import (
 	"encoding/json"
@@ -25,7 +25,7 @@ import (
 
 // Time is a wrapper around time.Time which supports correct
 // marshaling to YAML and JSON.  Wrappers are provided for many
-// of the factory methods that the time package v1alpha1.
+// of the factory methods that the time package offers.
 //
 // +protobuf.options.marshal=false
 // +protobuf.as=Timestamp

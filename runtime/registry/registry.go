@@ -5,40 +5,42 @@ package registry
 import (
 	"fmt"
 
-	"github.com/sensu/sensu-go/apis/meta/v1alpha1"
+	metav1 "github.com/sensu/sensu-go/apis/meta/v1"
+	rbacv1alpha1 "github.com/sensu/sensu-go/apis/rbac/v1alpha1"
 	"github.com/sensu/sensu-go/internal/apis/core"
-	"github.com/sensu/sensu-go/internal/apis/meta"
 	"github.com/sensu/sensu-go/internal/apis/rbac"
 )
 
-type registry map[meta.TypeMeta]interface{}
+type registry map[metav1.TypeMeta]interface{}
 
 var typeRegistry = registry{
-	meta.TypeMeta{APIVersion: "core", Kind: "Namespace"}:          core.Namespace{},
-	meta.TypeMeta{APIVersion: "core", Kind: "namespace"}:          core.Namespace{},
-	meta.TypeMeta{APIVersion: "meta", Kind: "ObjectMeta"}:         meta.ObjectMeta{},
-	meta.TypeMeta{APIVersion: "meta", Kind: "objectmeta"}:         meta.ObjectMeta{},
-	meta.TypeMeta{APIVersion: "meta", Kind: "TypeMeta"}:           meta.TypeMeta{},
-	meta.TypeMeta{APIVersion: "meta", Kind: "typemeta"}:           meta.TypeMeta{},
-	meta.TypeMeta{APIVersion: "rbac", Kind: "ClusterRole"}:        rbac.ClusterRole{},
-	meta.TypeMeta{APIVersion: "rbac", Kind: "clusterrole"}:        rbac.ClusterRole{},
-	meta.TypeMeta{APIVersion: "rbac", Kind: "ClusterRoleBinding"}: rbac.ClusterRoleBinding{},
-	meta.TypeMeta{APIVersion: "rbac", Kind: "clusterrolebinding"}: rbac.ClusterRoleBinding{},
-	meta.TypeMeta{APIVersion: "rbac", Kind: "Role"}:               rbac.Role{},
-	meta.TypeMeta{APIVersion: "rbac", Kind: "role"}:               rbac.Role{},
-	meta.TypeMeta{APIVersion: "rbac", Kind: "RoleBinding"}:        rbac.RoleBinding{},
-	meta.TypeMeta{APIVersion: "rbac", Kind: "rolebinding"}:        rbac.RoleBinding{},
-	meta.TypeMeta{APIVersion: "rbac", Kind: "Subject"}:            rbac.Subject{},
-	meta.TypeMeta{APIVersion: "rbac", Kind: "subject"}:            rbac.Subject{},
-	meta.TypeMeta{APIVersion: "v1alpha1", Kind: "ObjectMeta"}:     v1alpha1.ObjectMeta{},
-	meta.TypeMeta{APIVersion: "v1alpha1", Kind: "objectmeta"}:     v1alpha1.ObjectMeta{},
-	meta.TypeMeta{APIVersion: "v1alpha1", Kind: "TypeMeta"}:       v1alpha1.TypeMeta{},
-	meta.TypeMeta{APIVersion: "v1alpha1", Kind: "typemeta"}:       v1alpha1.TypeMeta{},
+	metav1.TypeMeta{APIVersion: "core", Kind: "Namespace"}:                   core.Namespace{},
+	metav1.TypeMeta{APIVersion: "core", Kind: "namespace"}:                   core.Namespace{},
+	metav1.TypeMeta{APIVersion: "rbac", Kind: "ClusterRole"}:                 rbac.ClusterRole{},
+	metav1.TypeMeta{APIVersion: "rbac", Kind: "clusterrole"}:                 rbac.ClusterRole{},
+	metav1.TypeMeta{APIVersion: "rbac", Kind: "ClusterRoleBinding"}:          rbac.ClusterRoleBinding{},
+	metav1.TypeMeta{APIVersion: "rbac", Kind: "clusterrolebinding"}:          rbac.ClusterRoleBinding{},
+	metav1.TypeMeta{APIVersion: "rbac", Kind: "Role"}:                        rbac.Role{},
+	metav1.TypeMeta{APIVersion: "rbac", Kind: "role"}:                        rbac.Role{},
+	metav1.TypeMeta{APIVersion: "rbac", Kind: "RoleBinding"}:                 rbac.RoleBinding{},
+	metav1.TypeMeta{APIVersion: "rbac", Kind: "rolebinding"}:                 rbac.RoleBinding{},
+	metav1.TypeMeta{APIVersion: "rbac", Kind: "Subject"}:                     rbac.Subject{},
+	metav1.TypeMeta{APIVersion: "rbac", Kind: "subject"}:                     rbac.Subject{},
+	metav1.TypeMeta{APIVersion: "rbac/v1alpha1", Kind: "ClusterRole"}:        rbacv1alpha1.ClusterRole{},
+	metav1.TypeMeta{APIVersion: "rbac/v1alpha1", Kind: "clusterrole"}:        rbacv1alpha1.ClusterRole{},
+	metav1.TypeMeta{APIVersion: "rbac/v1alpha1", Kind: "ClusterRoleBinding"}: rbacv1alpha1.ClusterRoleBinding{},
+	metav1.TypeMeta{APIVersion: "rbac/v1alpha1", Kind: "clusterrolebinding"}: rbacv1alpha1.ClusterRoleBinding{},
+	metav1.TypeMeta{APIVersion: "rbac/v1alpha1", Kind: "Role"}:               rbacv1alpha1.Role{},
+	metav1.TypeMeta{APIVersion: "rbac/v1alpha1", Kind: "role"}:               rbacv1alpha1.Role{},
+	metav1.TypeMeta{APIVersion: "rbac/v1alpha1", Kind: "RoleBinding"}:        rbacv1alpha1.RoleBinding{},
+	metav1.TypeMeta{APIVersion: "rbac/v1alpha1", Kind: "rolebinding"}:        rbacv1alpha1.RoleBinding{},
+	metav1.TypeMeta{APIVersion: "rbac/v1alpha1", Kind: "Subject"}:            rbacv1alpha1.Subject{},
+	metav1.TypeMeta{APIVersion: "rbac/v1alpha1", Kind: "subject"}:            rbacv1alpha1.Subject{},
 }
 
-// Resolve returns a zero-valued meta.GroupVersionKind, given a meta.TypeMeta.
+// Resolve returns a zero-valued metav1.GroupVersionKind, given a metav1.TypeMeta.
 // If the type does not exist, then an error will be returned.
-func Resolve(mt meta.TypeMeta) (interface{}, error) {
+func Resolve(mt metav1.TypeMeta) (interface{}, error) {
 	t, ok := typeRegistry[mt]
 	if !ok {
 		return nil, fmt.Errorf("type could not be found: %v", mt)

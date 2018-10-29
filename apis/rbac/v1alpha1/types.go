@@ -1,4 +1,4 @@
-package rbac
+package v1alpha1
 
 import meta "github.com/sensu/sensu-go/apis/meta/v1"
 
