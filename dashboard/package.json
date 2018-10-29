@@ -22,7 +22,7 @@
     "update-schema": "node scripts updateSchema"
   },
   "dependencies": {
-    "@10xjs/date-input-controller": "^0.1.5",
+    "@10xjs/date-input-controller": "0.1.6",
     "@10xjs/form": "^0.1.7",
     "@material-ui/core": "^1.4.0",
     "@material-ui/icons": "^2.0.0",
