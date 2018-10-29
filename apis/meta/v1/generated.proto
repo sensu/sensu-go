@@ -24,7 +24,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 syntax = 'proto2';
 
-package github.com.sensu.sensu_go.internal.apis.meta.v1;
+package github.com.sensu.sensu_go.apis.meta.v1;
 
 // Package-wide variables from generator "generated".
 option go_package = "v1";

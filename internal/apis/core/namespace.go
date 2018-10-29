@@ -1,6 +1,6 @@
 package core
 
-import metav1 "github.com/sensu/sensu-go/internal/apis/meta/v1"
+import metav1 "github.com/sensu/sensu-go/apis/meta/v1"
 
 // A Namespace is a resource that defines where other resources are located.
 type Namespace struct {

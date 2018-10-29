@@ -5,8 +5,8 @@ package registry
 import (
 	"fmt"
 
+	metav1 "github.com/sensu/sensu-go/apis/meta/v1"
 	"github.com/sensu/sensu-go/internal/apis/core"
-	metav1 "github.com/sensu/sensu-go/internal/apis/meta/v1"
 	"github.com/sensu/sensu-go/internal/apis/rbac"
 )
 

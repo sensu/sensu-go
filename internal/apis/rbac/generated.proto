@@ -26,7 +26,7 @@ syntax = 'proto2';
 
 package github.com.sensu.sensu_go.internal.apis.rbac;
 
-import "github.com/sensu/sensu-go/internal/apis/meta/v1/generated.proto";
+import "github.com/sensu/sensu-go/apis/meta/v1/generated.proto";
 
 // Package-wide variables from generator "generated".
 option go_package = "rbac";
@@ -35,7 +35,7 @@ option go_package = "rbac";
 // a cluster.
 // +freeze-api:resource-name clusterRoles
 message ClusterRole {
-  optional github.com.sensu.sensu_go.internal.apis.meta.v1.ObjectMeta metadata = 1;
+  optional github.com.sensu.sensu_go.apis.meta.v1.ObjectMeta metadata = 1;
 
   // Rules hold all of the Rules for this Role.
   repeated Rule rules = 2;
@@ -45,7 +45,7 @@ message ClusterRole {
 // to a user or a set of users
 // +freeze-api:resource-name clusterRoleBindings
 message ClusterRoleBinding {
-  optional github.com.sensu.sensu_go.internal.apis.meta.v1.ObjectMeta metadata = 1;
+  optional github.com.sensu.sensu_go.apis.meta.v1.ObjectMeta metadata = 1;
 
   // Subjects holds references to the objects the role applies to
   repeated Subject subjects = 2;
@@ -57,7 +57,7 @@ message ClusterRoleBinding {
 // A Role applies only to a single Namespace.
 // +freeze-api:resource-name roles
 message Role {
-  optional github.com.sensu.sensu_go.internal.apis.meta.v1.ObjectMeta metadata = 1;
+  optional github.com.sensu.sensu_go.apis.meta.v1.ObjectMeta metadata = 1;
 
   // Rules hold all of the Rules for this Role.
   repeated Rule rules = 2;
@@ -67,7 +67,7 @@ message Role {
 // a set of users
 // +freeze-api:resource-name roleBindings
 message RoleBinding {
-  optional github.com.sensu.sensu_go.internal.apis.meta.v1.ObjectMeta metadata = 1;
+  optional github.com.sensu.sensu_go.apis.meta.v1.ObjectMeta metadata = 1;
 
   // Subjects holds references to the objects the role applies to
   repeated Subject subjects = 2;

@@ -12,8 +12,8 @@ import (
 	"strings"
 	"text/template"
 
+	metav1 "github.com/sensu/sensu-go/apis/meta/v1"
 	"github.com/sensu/sensu-go/internal/api"
-	metav1 "github.com/sensu/sensu-go/internal/apis/meta/v1"
 	"github.com/sensu/sensu-go/internal/astutil"
 )
 
@@ -25,7 +25,7 @@ import (
   "fmt"
   "reflect"
 
-  metav1 "github.com/sensu/sensu-go/internal/apis/meta/v1"
+  metav1 "github.com/sensu/sensu-go/apis/meta/v1"
   {{ range $i, $import := imports . }}{{ $import }}
   {{ end }}
 )
@@ -57,7 +57,6 @@ func imports(kinds []metav1.TypeMeta) (result []string) {
 		} else {
 			imp = fmt.Sprintf(`"github.com/sensu/sensu-go/internal/apis/%s"`, kind.APIVersion)
 		}
-		fmt.Printf("%q\n", imp)
 		set[imp] = struct{}{}
 	}
 	for k := range set {
