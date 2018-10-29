@@ -38,6 +38,19 @@ var typeRegistry = registry{
 	metav1.TypeMeta{APIVersion: "rbac/v1alpha1", Kind: "subject"}:            rbacv1alpha1.Subject{},
 }
 
+func init() {
+	for k, v := range typeRegistry {
+		r, ok := v.(interface{ ResourceName() string })
+		if ok {
+			newKey := metav1.TypeMeta{
+				APIVersion: k.APIVersion,
+				Kind:       r.ResourceName(),
+			}
+			typeRegistry[newKey] = v
+		}
+	}
+}
+
 // Resolve returns a zero-valued metav1.GroupVersionKind, given a metav1.TypeMeta.
 // If the type does not exist, then an error will be returned.
 func Resolve(mt metav1.TypeMeta) (interface{}, error) {

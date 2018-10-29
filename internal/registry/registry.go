@@ -22,29 +22,42 @@ const templateText = `package registry
 // automatically generated file, do not edit!
 
 import (
-  "fmt"
-  "reflect"
-
-  metav1 "github.com/sensu/sensu-go/apis/meta/v1"
-  {{ range $i, $import := imports . }}{{ $import }}
-  {{ end }}
+	"fmt"
+	"reflect"
+	
+	metav1 "github.com/sensu/sensu-go/apis/meta/v1"
+	{{ range $i, $import := imports . }}{{ $import }}
+	{{ end }}
 )
 
 type registry map[metav1.TypeMeta]interface{}
 
 var typeRegistry = registry{ {{ range $index, $t := . }}
-  metav1.TypeMeta{APIVersion: "{{ $t.APIVersion }}", Kind: "{{ $t.Kind }}"}: {{ replace $t.APIVersion "/" "" 1 }}.{{ $t.Kind }}{},
-  metav1.TypeMeta{APIVersion: "{{ $t.APIVersion }}", Kind: "{{ lower $t.Kind }}"}: {{ replace $t.APIVersion "/" "" 1 }}.{{ $t.Kind }}{}, {{ end }}
+	metav1.TypeMeta{APIVersion: "{{ $t.APIVersion }}", Kind: "{{ $t.Kind }}"}: {{ replace $t.APIVersion "/" "" 1 }}.{{ $t.Kind }}{},
+	metav1.TypeMeta{APIVersion: "{{ $t.APIVersion }}", Kind: "{{ lower $t.Kind }}"}: {{ replace $t.APIVersion "/" "" 1 }}.{{ $t.Kind }}{}, {{ end }}
+}
+
+func init() {
+	for k, v := range typeRegistry {
+		r, ok := v.(interface{ResourceName() string})
+		if ok {
+			newKey := metav1.TypeMeta{
+				APIVersion: k.APIVersion,
+				Kind: r.ResourceName(),
+			}
+			typeRegistry[newKey] = v
+		}
+	}
 }
 
 // Resolve returns a zero-valued metav1.GroupVersionKind, given a metav1.TypeMeta.
 // If the type does not exist, then an error will be returned.
 func Resolve(mt metav1.TypeMeta) (interface{}, error) {
 	t, ok := typeRegistry[mt]
-  if !ok {
-    return nil, fmt.Errorf("type could not be found: %v", mt)
-  }
-  return t, nil
+	if !ok {
+	  return nil, fmt.Errorf("type could not be found: %v", mt)
+	}
+	return t, nil
 }
 `
 
@@ -57,7 +70,6 @@ func imports(kinds []metav1.TypeMeta) (result []string) {
 		} else {
 			imp = fmt.Sprintf(`"github.com/sensu/sensu-go/internal/apis/%s"`, kind.APIVersion)
 		}
-		fmt.Println(imp)
 		set[imp] = struct{}{}
 	}
 	for k := range set {
