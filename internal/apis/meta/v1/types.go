@@ -1,4 +1,4 @@
-package meta
+package v1
 
 // TypeMeta is type metadata.
 // +freeze-api:resource-name typeMetas

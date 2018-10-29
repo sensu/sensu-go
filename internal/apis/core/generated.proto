@@ -26,13 +26,13 @@ syntax = 'proto2';
 
 package github.com.sensu.sensu_go.internal.apis.core;
 
-import "github.com/sensu/sensu-go/internal/apis/meta/generated.proto";
+import "github.com/sensu/sensu-go/internal/apis/meta/v1/generated.proto";
 
 // Package-wide variables from generator "generated".
 option go_package = "core";
 
 // A Namespace is a resource that defines where other resources are located.
 message Namespace {
-  optional github.com.sensu.sensu_go.internal.apis.meta.ObjectMeta metadata = 2;
+  optional github.com.sensu.sensu_go.internal.apis.meta.v1.ObjectMeta metadata = 2;
 }
 

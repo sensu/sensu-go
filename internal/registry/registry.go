@@ -6,13 +6,14 @@ import (
 	"go/build"
 	"go/parser"
 	"go/token"
-	"html/template"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"text/template"
 
-	"github.com/sensu/sensu-go/internal/apis/meta"
+	"github.com/sensu/sensu-go/internal/api"
+	metav1 "github.com/sensu/sensu-go/internal/apis/meta/v1"
 	"github.com/sensu/sensu-go/internal/astutil"
 )
 
@@ -24,19 +25,21 @@ import (
   "fmt"
   "reflect"
 
-  "github.com/sensu/sensu-go/internal/apis/meta"
+  metav1 "github.com/sensu/sensu-go/internal/apis/meta/v1"
+  {{ range $i, $import := imports . }}{{ $import }}
+  {{ end }}
 )
 
-type registry map[meta.TypeMeta]interface{}
+type registry map[metav1.TypeMeta]interface{}
 
 var typeRegistry = registry{ {{ range $index, $t := . }}
-  meta.TypeMeta{APIVersion: "{{ $t.APIVersion }}", Kind: "{{ $t.Kind }}"}: {{ $t.APIVersion }}.{{ $t.Kind }}{},
-  meta.TypeMeta{APIVersion: "{{ $t.APIVersion }}", Kind: "{{ lower $t.Kind }}"}: {{ $t.APIVersion }}.{{ $t.Kind }}{}, {{ end }}
+  metav1.TypeMeta{APIVersion: "{{ $t.APIVersion }}", Kind: "{{ $t.Kind }}"}: {{ replace $t.APIVersion "/" "" 1 }}.{{ $t.Kind }}{},
+  metav1.TypeMeta{APIVersion: "{{ $t.APIVersion }}", Kind: "{{ lower $t.Kind }}"}: {{ replace $t.APIVersion "/" "" 1 }}.{{ $t.Kind }}{}, {{ end }}
 }
 
-// Resolve returns a zero-valued meta.GroupVersionKind, given a meta.TypeMeta.
+// Resolve returns a zero-valued metav1.GroupVersionKind, given a metav1.TypeMeta.
 // If the type does not exist, then an error will be returned.
-func Resolve(mt meta.TypeMeta) (interface{}, error) {
+func Resolve(mt metav1.TypeMeta) (interface{}, error) {
 	t, ok := typeRegistry[mt]
   if !ok {
     return nil, fmt.Errorf("type could not be found: %v", mt)
@@ -45,16 +48,38 @@ func Resolve(mt meta.TypeMeta) (interface{}, error) {
 }
 `
 
+func imports(kinds []metav1.TypeMeta) (result []string) {
+	set := map[string]struct{}{}
+	for _, kind := range kinds {
+		var imp string
+		if strings.Contains(kind.APIVersion, "/") {
+			imp = fmt.Sprintf(`%s "github.com/sensu/sensu-go/apis/%s"`, strings.Replace(kind.APIVersion, "/", "", -1), kind.APIVersion)
+		} else {
+			imp = fmt.Sprintf(`"github.com/sensu/sensu-go/internal/apis/%s"`, kind.APIVersion)
+		}
+		fmt.Printf("%q\n", imp)
+		set[imp] = struct{}{}
+	}
+	for k := range set {
+		result = append(result, k)
+	}
+	sort.Strings(result)
+	return result
+}
+
 var (
 	registryTmpl = template.Must(
 		template.New("registry").
 			Funcs(map[string]interface{}{
-				"lower": strings.ToLower,
+				"lower":    strings.ToLower,
+				"replace":  strings.Replace,
+				"contains": strings.Contains,
+				"imports":  imports,
 			}).
 			Parse(templateText))
 )
 
-type templateData []meta.TypeMeta
+type templateData []metav1.TypeMeta
 
 func RegisterTypes(packagePath, outPath string) error {
 	kinds, err := getPackageKinds(packagePath)
@@ -74,7 +99,7 @@ func RegisterTypes(packagePath, outPath string) error {
 }
 
 // getPackageKinds recursively traverses the package and all sub-packages for
-// sensu-go kinds (structs that embed meta.TypeMeta).
+// sensu-go kinds (structs that embed metav1.TypeMeta).
 func getPackageKinds(path string) (templateData, error) {
 	root := filepath.Join(build.Default.GOPATH, "src", path)
 	walker := &walker{
@@ -104,7 +129,7 @@ func scanPackages(packages map[string]*ast.Package) templateData {
 		}
 		kinds := astutil.GetKindNames(pkg)
 		for _, kind := range kinds {
-			td = append(td, meta.TypeMeta{APIVersion: pkg.Name, Kind: kind})
+			td = append(td, metav1.TypeMeta{APIVersion: pkg.Name, Kind: kind})
 		}
 	}
 	return td
@@ -126,6 +151,9 @@ func (w *walker) walk(path string, fi os.FileInfo, err error) error {
 	if strings.HasPrefix(fi.Name(), ".") {
 		return filepath.SkipDir
 	}
+	if fi.Name() == "meta" {
+		return filepath.SkipDir
+	}
 	// special case for vendor directory and types package
 	// we can eventually remove the special case for the types package
 	if fi.Name() == "vendor" || fi.Name() == "types" {
@@ -135,8 +163,18 @@ func (w *walker) walk(path string, fi os.FileInfo, err error) error {
 	if err != nil {
 		return fmt.Errorf("couldn't parse directory: %s", err)
 	}
-	for k, v := range packages {
-		w.packages[k] = v
+	for _, v := range packages {
+		key := apiName(path)
+		w.packages[key] = v
 	}
 	return nil
+}
+
+func apiName(pth string) string {
+	parts := filepath.SplitList(pth)
+	if version, err := api.ParseVersion(parts[len(parts)-1]); err != nil {
+		return filepath.Base(pth)
+	} else {
+		return fmt.Sprintf("%s/%s", parts[len(parts)-2], version.String())
+	}
 }

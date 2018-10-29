@@ -3,9 +3,9 @@ package seeds
 import (
 	"context"
 
-	meta "github.com/sensu/sensu-go/apis/meta/v1alpha1"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
+	meta "github.com/sensu/sensu-go/internal/apis/meta/v1"
 	"github.com/sensu/sensu-go/internal/apis/rbac"
 	storev2 "github.com/sensu/sensu-go/storage"
 	"github.com/sensu/sensu-go/types"

@@ -24,10 +24,10 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 syntax = 'proto2';
 
-package github.com.sensu.sensu_go.apis.meta.v1alpha1;
+package github.com.sensu.sensu_go.internal.apis.meta.v1;
 
 // Package-wide variables from generator "generated".
-option go_package = "v1alpha1";
+option go_package = "v1";
 
 // ObjectMeta is metadata that all persisted resources must have, which includes all objects
 // users must create.
@@ -122,7 +122,7 @@ message ObjectMeta {
 
 // Time is a wrapper around time.Time which supports correct
 // marshaling to YAML and JSON.  Wrappers are provided for many
-// of the factory methods that the time package v1alpha1.
+// of the factory methods that the time package offers.
 // 
 // +protobuf.options.marshal=false
 // +protobuf.as=Timestamp
