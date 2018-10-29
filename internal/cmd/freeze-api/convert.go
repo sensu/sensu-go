@@ -91,6 +91,7 @@ func {{ $internalToVersioned }}(dst, src interface{}) error {
 	{{ else }}
 	panic("complex conversions not supported yet")
 	{{ end }}
+	dstp.APIVersion = "{{ $vPkg }}"
 	return nil
 }
 
@@ -134,6 +135,8 @@ func Test_Convert_{{ $internalToVersioned }}_And_{{ $versionedToInternal }}(t *t
 		t.Fatal(err)
 	}
 	{{ if $t.Simple }}
+	// Set the APIVersion so we can do a DeepEqual
+	v1.APIVersion = "{{ $vPkg }}"
 	if !reflect.DeepEqual(v1, v2) {
 		t.Fatal("values not equal")
 	}{{ end }}

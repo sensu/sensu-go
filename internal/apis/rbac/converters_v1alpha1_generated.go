@@ -12,6 +12,7 @@ func Convert_rbac_ClusterRole_To_v1alpha1_ClusterRole(dst, src interface{}) erro
 
 	*dstp = *(*v1alpha1.ClusterRole)(unsafe.Pointer(srcp))
 
+	dstp.APIVersion = "v1alpha1"
 	return nil
 }
 
@@ -30,6 +31,7 @@ func Convert_rbac_ClusterRoleBinding_To_v1alpha1_ClusterRoleBinding(dst, src int
 
 	*dstp = *(*v1alpha1.ClusterRoleBinding)(unsafe.Pointer(srcp))
 
+	dstp.APIVersion = "v1alpha1"
 	return nil
 }
 
@@ -48,6 +50,7 @@ func Convert_rbac_Role_To_v1alpha1_Role(dst, src interface{}) error {
 
 	*dstp = *(*v1alpha1.Role)(unsafe.Pointer(srcp))
 
+	dstp.APIVersion = "v1alpha1"
 	return nil
 }
 
@@ -66,6 +69,7 @@ func Convert_rbac_RoleBinding_To_v1alpha1_RoleBinding(dst, src interface{}) erro
 
 	*dstp = *(*v1alpha1.RoleBinding)(unsafe.Pointer(srcp))
 
+	dstp.APIVersion = "v1alpha1"
 	return nil
 }
 
@@ -84,6 +88,7 @@ func Convert_rbac_Subject_To_v1alpha1_Subject(dst, src interface{}) error {
 
 	*dstp = *(*v1alpha1.Subject)(unsafe.Pointer(srcp))
 
+	dstp.APIVersion = "v1alpha1"
 	return nil
 }
 
