@@ -20,6 +20,8 @@ func Test_Convert_Convert_rbac_ClusterRole_To_v1alpha1_ClusterRole_And_Convert_v
 		t.Fatal(err)
 	}
 
+	// Set the APIVersion so we can do a DeepEqual
+	v1.APIVersion = "v1alpha1"
 	if !reflect.DeepEqual(v1, v2) {
 		t.Fatal("values not equal")
 	}
@@ -37,6 +39,8 @@ func Test_Convert_Convert_rbac_ClusterRoleBinding_To_v1alpha1_ClusterRoleBinding
 		t.Fatal(err)
 	}
 
+	// Set the APIVersion so we can do a DeepEqual
+	v1.APIVersion = "v1alpha1"
 	if !reflect.DeepEqual(v1, v2) {
 		t.Fatal("values not equal")
 	}
@@ -54,6 +58,8 @@ func Test_Convert_Convert_rbac_Role_To_v1alpha1_Role_And_Convert_v1alpha1_Role_T
 		t.Fatal(err)
 	}
 
+	// Set the APIVersion so we can do a DeepEqual
+	v1.APIVersion = "v1alpha1"
 	if !reflect.DeepEqual(v1, v2) {
 		t.Fatal("values not equal")
 	}
@@ -71,6 +77,8 @@ func Test_Convert_Convert_rbac_RoleBinding_To_v1alpha1_RoleBinding_And_Convert_v
 		t.Fatal(err)
 	}
 
+	// Set the APIVersion so we can do a DeepEqual
+	v1.APIVersion = "v1alpha1"
 	if !reflect.DeepEqual(v1, v2) {
 		t.Fatal("values not equal")
 	}
@@ -88,6 +96,8 @@ func Test_Convert_Convert_rbac_Subject_To_v1alpha1_Subject_And_Convert_v1alpha1_
 		t.Fatal(err)
 	}
 
+	// Set the APIVersion so we can do a DeepEqual
+	v1.APIVersion = "v1alpha1"
 	if !reflect.DeepEqual(v1, v2) {
 		t.Fatal("values not equal")
 	}
