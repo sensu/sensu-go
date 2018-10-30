@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Display appropriate fallback when an entity's lastSeen field is empty.
+- Fixed unresponsive silencing entry form begin date input.
 
 ## [2.0.0-beta.7-1] - 2018-10-26
 
