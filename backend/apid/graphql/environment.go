@@ -170,9 +170,9 @@ func (r *envImpl) Silences(p schema.EnvironmentSilencesFieldResolverParams) (int
 		sort.Sort(sort.Reverse(types.SortSilencedByBegin(filteredSilences)))
 	case schema.SilencesListOrders.BEGIN:
 		sort.Sort(types.SortSilencedByBegin(filteredSilences))
-	case schema.SilencesListOrders.ID:
-		sort.Sort(sort.Reverse(types.SortSilencedByID(filteredSilences)))
 	case schema.SilencesListOrders.ID_DESC:
+		sort.Sort(sort.Reverse(types.SortSilencedByID(filteredSilences)))
+	case schema.SilencesListOrders.ID:
 	default:
 		sort.Sort(types.SortSilencedByID(filteredSilences))
 	}
