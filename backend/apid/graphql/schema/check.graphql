@@ -68,6 +68,9 @@ type CheckConfig implements Node {
   "Publish indicates if check requests are published for the check"
   publish: Boolean!
 
+  "RuntimeAssets are a list of assets required to execute check."
+  runtimeAssets: [Asset]!
+
   "RoundRobin enables round-robin scheduling if set true."
   roundRobin: Boolean!
 

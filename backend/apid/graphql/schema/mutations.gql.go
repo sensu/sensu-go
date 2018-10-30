@@ -872,7 +872,7 @@ var _InputTypeDeleteRecordInputDesc = graphql.InputDesc{Config: _InputTypeDelete
 type CheckConfigInputs struct {
 	// Command - command to run.
 	Command string
-	// Interval - interval is the time interval, in seconds, in which the check should be run. Defaults to 60.
+	// Interval - interval is the time interval, in seconds, in which the check should be run.
 	Interval int
 	/*
 	   LowFlapThreshold - lowFlapThreshold is the flap detection low threshold (% state change) for
@@ -922,7 +922,7 @@ func _InputTypeCheckConfigInputsConfigFn() graphql1.InputObjectConfig {
 				Type:        graphql1.Int,
 			},
 			"interval": &graphql1.InputObjectFieldConfig{
-				Description: "interval is the time interval, in seconds, in which the check should be run. Defaults to 60.",
+				Description: "interval is the time interval, in seconds, in which the check should be run.",
 				Type:        graphql1.Int,
 			},
 			"lowFlapThreshold": &graphql1.InputObjectFieldConfig{

@@ -6,6 +6,17 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// assets
+
+type mockAssetQuerier struct {
+	els []*types.Asset
+	err error
+}
+
+func (m mockAssetQuerier) Query(_ context.Context) ([]*types.Asset, error) {
+	return m.els, m.err
+}
+
 // checks
 
 type mockCheckExecutor struct {
