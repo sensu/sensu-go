@@ -10,6 +10,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Silences List in web ui sorted by ascending order
 - Sorting button now works properly
+- Fixed unresponsive silencing entry form begin date input.
 
 ## [2.0.0-beta.7-1] - 2018-10-26
 
