@@ -69,5 +69,5 @@ func ResolveSlice(mt metav1.TypeMeta) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	return reflect.Indirect(reflect.New(reflect.SliceOf(reflect.TypeOf(t)))).Interface(), nil
+	return reflect.MakeSlice(reflect.SliceOf(reflect.TypeOf(t)), 0, 0).Interface(), nil
 }
