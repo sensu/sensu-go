@@ -2,9 +2,9 @@
 # yarn lockfile v1
 
 
-"@10xjs/date-input-controller@^0.1.5":
-  version "0.1.5"
-  resolved "https://registry.yarnpkg.com/@10xjs/date-input-controller/-/date-input-controller-0.1.5.tgz#0532a68a46a7fdcc6990a0c05672750cbf4e8820"
+"@10xjs/date-input-controller@0.1.6":
+  version "0.1.6"
+  resolved "https://registry.yarnpkg.com/@10xjs/date-input-controller/-/date-input-controller-0.1.6.tgz#bd63235293cfb109c3d7f466c48257854e724a0d"
 
 "@10xjs/form@^0.1.7":
   version "0.1.7"
