@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Display appropriate fallback when an entity's lastSeen field is empty.
+
 ## [2.0.0-beta.7-1] - 2018-10-26
 
 ### Added
@@ -87,7 +90,7 @@ empty.
 - Prevent an empty Path environment variable for agents on Windows.
 - Fixed a bug in `sensuctl check update` interactive mode. Boolean defaults
 were being displayed rather than the check's current values.
-- Use the provided etcd client TLS information when the flag `--no-embed-etcd` 
+- Use the provided etcd client TLS information when the flag `--no-embed-etcd`
 is used.
 - Increase duration delta in TestPeriodicKeepalive integration test.
 - Fixed some problems introduced by Go 1.11.
