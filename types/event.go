@@ -82,24 +82,24 @@ func (e *Event) Validate() error {
 	}
 
 	if err := e.Entity.Validate(); err != nil {
-		return errors.New("entity " + err.Error())
+		return errors.New("entity is invalid: " + err.Error())
 	}
 
 	if e.HasCheck() {
 		if err := e.Check.Validate(); err != nil {
-			return errors.New("check " + err.Error())
+			return errors.New("check is invalid: " + err.Error())
 		}
 	}
 
 	if e.HasMetrics() {
 		if err := e.Metrics.Validate(); err != nil {
-			return errors.New("metrics " + err.Error())
+			return errors.New("metrics are invalid: " + err.Error())
 		}
 	}
 
 	for _, hook := range e.Hooks {
 		if err := hook.Validate(); err != nil {
-			return errors.New("hook " + err.Error())
+			return errors.New("hook is invalid: " + err.Error())
 		}
 	}
 
