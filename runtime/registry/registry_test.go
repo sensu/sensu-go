@@ -2,6 +2,7 @@ package registry
 
 import (
 	"fmt"
+	"reflect"
 	"testing"
 
 	metav1 "github.com/sensu/sensu-go/apis/meta/v1"
@@ -19,6 +20,24 @@ func TestRegistryResourceAliases(t *testing.T) {
 			if !ok {
 				t.Fatalf("%v resource missing", key)
 			}
+		})
+	}
+}
+
+func TestResolveSlice(t *testing.T) {
+	for key, kind := range typeRegistry {
+		t.Run(fmt.Sprintf("slice of %s", key.Kind), func(t *testing.T) {
+			defer func() {
+				if e := recover(); e != nil {
+					t.Fatal(e)
+				}
+			}()
+			slice, err := ResolveSlice(key)
+			if err != nil {
+				t.Fatal(err)
+			}
+			// Will panic if ResolveSlice is broken
+			reflect.Append(reflect.ValueOf(slice), reflect.ValueOf(kind))
 		})
 	}
 }

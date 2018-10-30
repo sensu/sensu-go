@@ -4,6 +4,7 @@ package registry
 
 import (
 	"fmt"
+	"reflect"
 
 	metav1 "github.com/sensu/sensu-go/apis/meta/v1"
 	rbacv1alpha1 "github.com/sensu/sensu-go/apis/rbac/v1alpha1"
@@ -51,7 +52,7 @@ func init() {
 	}
 }
 
-// Resolve returns a zero-valued metav1.GroupVersionKind, given a metav1.TypeMeta.
+// Resolve returns a zero-valued sensu object, given a metav1.TypeMeta.
 // If the type does not exist, then an error will be returned.
 func Resolve(mt metav1.TypeMeta) (interface{}, error) {
 	t, ok := typeRegistry[mt]
@@ -59,4 +60,14 @@ func Resolve(mt metav1.TypeMeta) (interface{}, error) {
 		return nil, fmt.Errorf("type could not be found: %v", mt)
 	}
 	return t, nil
+}
+
+// ResolveSlice returns a zero-valued slice of sensu objects, given a
+// meta.TypeMeta. If the type does not exist, then an error will be returned.
+func ResolveSlice(mt metav1.TypeMeta) (interface{}, error) {
+	t, err := Resolve(mt)
+	if err != nil {
+		return nil, err
+	}
+	return reflect.Indirect(reflect.New(reflect.SliceOf(reflect.TypeOf(t)))).Interface(), nil
 }
