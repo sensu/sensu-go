@@ -12,15 +12,15 @@ statically, and do not change at runtime.
 */
 
 // ResourceName returns the resource name for a ClusterRole.
-// The resource name for ClusterRole is "clusterRoles".
+// The resource name for ClusterRole is "clusterroles".
 func (r ClusterRole) ResourceName() string {
-	return "clusterRoles"
+	return "clusterroles"
 }
 
 // ResourceName returns the resource name for a ClusterRoleBinding.
-// The resource name for ClusterRoleBinding is "clusterRoleBindings".
+// The resource name for ClusterRoleBinding is "clusterrolebindings".
 func (r ClusterRoleBinding) ResourceName() string {
-	return "clusterRoleBindings"
+	return "clusterrolebindings"
 }
 
 // ResourceName returns the resource name for a Role.
@@ -30,9 +30,9 @@ func (r Role) ResourceName() string {
 }
 
 // ResourceName returns the resource name for a RoleBinding.
-// The resource name for RoleBinding is "roleBindings".
+// The resource name for RoleBinding is "rolebindings".
 func (r RoleBinding) ResourceName() string {
-	return "roleBindings"
+	return "rolebindings"
 }
 
 // ResourceName returns the resource name for a Subject.
