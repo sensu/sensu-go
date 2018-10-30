@@ -12,6 +12,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Sorting button now works properly
 - Fixed unresponsive silencing entry form begin date input.
 
+### Breaking Changes
+- Environments and organizations have been replaced with namespaces.
+
 ## [2.0.0-beta.7-1] - 2018-10-26
 
 ### Added
