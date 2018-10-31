@@ -20,12 +20,12 @@ message Rule {
   // until a further release). TODO: add support for "watch" (via websockets)
   repeated string verbs = 1 [(gogoproto.jsontag) = "verbs"];
 
-  // Resources is a list of resources that this rule applies to.
-	// "*" represents all resources.
+  // Resources is a list of resources that this rule applies to. "*" represents
+  // all resources.
   repeated string resources = 2 [(gogoproto.jsontag) = "resources"];
 
-  // ResourceNames is an optional list of resource names that the rule
-	// applies to.
+  // ResourceNames is an optional list of resource names that the rule applies
+  // to.
   repeated string resource_names = 3 [(gogoproto.jsontag) = "resourceNames"];
 }
 
