@@ -10,7 +10,7 @@ func FixtureUser(username string) *User {
 	return &User{
 		Username: username,
 		Password: "P@ssw0rd!",
-		Roles:    []string{"default"},
+		Groups:   []string{"default"},
 	}
 }
 

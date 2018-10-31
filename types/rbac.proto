@@ -13,15 +13,81 @@ option (gogoproto.sizer_all) = true;
 option (gogoproto.testgen_all) = true;
 
 // Rule maps permissions to a given type
+// message Rule {
+//   string type = 1;
+//   string environment = 2;
+//   string organization = 3;
+//   repeated string permissions = 4 [(gogoproto.jsontag) = "permissions"];
+// }
+
+// // Role describes set of rules
+// message Role {
+//   string name = 1;
+//   repeated Rule rules = 2 [(gogoproto.jsontag) = "rules", (gogoproto.nullable) = false];
+// }
+
+// Rule holds information that describes an action that can be taken
 message Rule {
-  string type = 1;
-  string environment = 2;
-  string organization = 3;
-  repeated string permissions = 4 [(gogoproto.jsontag) = "permissions"];
+  // Verbs is a list of verbs that apply to all of the listed
+	// resources for this rule. These include "get", "list", "watch",
+	// "create", "update", "delete".
+	// TODO: add support for "patch" (this is expensive and should be
+	// delayed until a further release).
+	// TODO: add support for "watch" (via websockets)
+  repeated string verbs = 1 [(gogoproto.jsontag) = "verbs"];
+
+  // Resources is a list of resources that this rule applies to.
+	// "*" represents all resources.
+  repeated string resources = 2 [(gogoproto.jsontag) = "resources"];
+
+  // ResourceNames is an optional list of resource names that the rule
+	// applies to.
+  repeated string resource_names = 3 [(gogoproto.jsontag) = "resourceNames"];
 }
 
-// Role describes set of rules
+// ClusterRole applies to all namespaces within a cluster.
+message ClusterRole {
+  repeated Rule rules = 1 [(gogoproto.jsontag) = "rules", (gogoproto.nullable) = false];
+}
+
+// Role applies only to a single namespace.
 message Role {
-  string name = 1;
-  repeated Rule rules = 2 [(gogoproto.jsontag) = "rules", (gogoproto.nullable) = false];
+  repeated Rule rules = 1 [(gogoproto.jsontag) = "rules", (gogoproto.nullable) = false];
+}
+
+// RoleRef maps groups to Roles or ClusterRoles.
+message RoleRef {
+  // Type of role being referenced.
+  string type = 1 [(gogoproto.jsontag) = "type"];
+
+  // Name of the resource being referenced
+  string name = 2 [(gogoproto.jsontag) = "name"];
+}
+
+message Subject {
+  // Kind of object referenced (user or group)
+  string kind = 1 [(gogoproto.jsontag) = "kind"];
+
+  // Name of the referenced object
+  string name = 2 [(gogoproto.jsontag) = "name"];
+}
+
+// ClusterRoleBinding grants the permissions defined in a ClusterRole referenced
+// to a user or a set of users
+message ClusterRoleBinding {
+  // Subjects holds references to the objects the ClusterRole applies to
+  repeated Subject subjects = 1 [(gogoproto.jsontag) = "subjects", (gogoproto.nullable) = false];
+
+  // RoleRef references a ClusterRole in the current namespace
+  RoleRef role_ref = 2 [(gogoproto.jsontag) = "roleRef", (gogoproto.nullable) = false];
+}
+
+// RoleBinding grants the permissions defined in a Role referenced to a user or
+// a set of users
+message RoleBinding {
+  // Subjects holds references to the objects the Role applies to
+  repeated Subject subjects = 1 [(gogoproto.jsontag) = "subjects", (gogoproto.nullable) = false];
+
+  // RoleRef references a Role in the current namespace
+  RoleRef role_ref = 2 [(gogoproto.jsontag) = "roleRef", (gogoproto.nullable) = false];
 }
