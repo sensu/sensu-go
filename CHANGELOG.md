@@ -14,6 +14,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed a panic on the backend when handling keepalives from older agent versions.
 - Fixed a bug that would prevent some keepalive failures from occurring.
 - Improved event validation error messages.
+- Improved agent logging for statsd events.
 
 ## [2.0.0-beta.7-1] - 2018-10-26
 
