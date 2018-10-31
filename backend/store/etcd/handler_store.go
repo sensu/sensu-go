@@ -34,7 +34,7 @@ func (s *Store) DeleteHandlerByName(ctx context.Context, name string) error {
 	return err
 }
 
-// GetHandlers gets the list of handlers for an (optional) organization. Passing
+// GetHandlers gets the list of handlers for an (optional) namespace. Passing
 // the empty string as the org will return all handlers.
 func (s *Store) GetHandlers(ctx context.Context) ([]*types.Handler, error) {
 	resp, err := query(ctx, s, getHandlersPath)
@@ -92,7 +92,7 @@ func (s *Store) UpdateHandler(ctx context.Context, handler *types.Handler) error
 		return err
 	}
 
-	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(handler.Organization, handler.Environment)), ">", 0)
+	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(handler.Namespace)), ">", 0)
 	req := clientv3.OpPut(getHandlerPath(handler), string(handlerBytes))
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
@@ -100,10 +100,9 @@ func (s *Store) UpdateHandler(ctx context.Context, handler *types.Handler) error
 	}
 	if !res.Succeeded {
 		return fmt.Errorf(
-			"could not create the handler %s in environment %s/%s",
+			"could not create the handler %s in namespace %s",
 			handler.Name,
-			handler.Organization,
-			handler.Environment,
+			handler.Namespace,
 		)
 	}
 

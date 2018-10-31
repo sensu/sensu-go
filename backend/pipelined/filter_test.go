@@ -195,8 +195,7 @@ func TestPipelinedFilter(t *testing.T) {
 					Silenced: tc.silenced,
 				},
 				Entity: &types.Entity{
-					Environment:  "default",
-					Organization: "default",
+					Namespace: "default",
 				},
 				Metrics: tc.metrics,
 			}
@@ -218,8 +217,7 @@ func TestPipelinedWhenFilter(t *testing.T) {
 			Output: "bar",
 		},
 		Entity: &types.Entity{
-			Environment:  "default",
-			Organization: "default",
+			Namespace: "default",
 		},
 	}
 

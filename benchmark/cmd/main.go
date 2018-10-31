@@ -38,11 +38,10 @@ func main() {
 		cfg.CacheDir = path.SystemCacheDir("sensu-agent")
 		cfg.Deregister = true
 		cfg.DeregistrationHandler = ""
-		cfg.Environment = agent.DefaultEnvironment
 		cfg.ExtendedAttributes = []byte{}
 		cfg.KeepaliveInterval = agent.DefaultKeepaliveInterval
 		cfg.KeepaliveTimeout = types.DefaultKeepaliveTimeout
-		cfg.Organization = agent.DefaultOrganization
+		cfg.Namespace = agent.DefaultNamespace
 		cfg.Password = agent.DefaultPassword
 		cfg.Socket.Host = agent.DefaultAPIHost
 		cfg.Socket.Port = agent.DefaultAPIPort

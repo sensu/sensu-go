@@ -1,12 +1,12 @@
 """
 Asset defines an archive, an agent will install as a dependency for a check.
 """
-type Asset implements Node {
+type Asset implements Node, Namespaced {
   "The globally unique identifier of the record"
   id: ID!
 
   "Namespace in which this record resides"
-  namespace: Namespace!
+  namespace: String!
 
   "Name is the unique identifier for an asset"
   name: String

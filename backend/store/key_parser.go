@@ -6,15 +6,14 @@ import "strings"
 type SplitKey struct {
 	Root         string
 	ResourceType string
-	Organization string
-	Environment  string
+	Namespace    string
 	ResourceName string
 }
 
 // ParseResourceKey splits a resource key into its component parts.
 // It assumes the following key structure:
 //
-// /root/resourcetype/organization/environment/resourcename
+// /root/resourcetype/namespace/resourcename
 // With the leading slash being optional.
 func ParseResourceKey(key string) SplitKey {
 	var result SplitKey
@@ -29,20 +28,17 @@ func ParseResourceKey(key string) SplitKey {
 		result.ResourceType = split[1]
 	}
 	if len(split) > 2 {
-		result.Organization = split[2]
+		result.Namespace = split[2]
 	}
 	if len(split) > 3 {
-		result.Environment = split[3]
-	}
-	if len(split) > 4 {
-		result.ResourceName = split[4]
+		result.ResourceName = split[3]
 	}
 	return result
 }
 
 func (s SplitKey) String() string {
 	b := NewKeyBuilder(s.ResourceType)
-	b = b.WithNamespace(Namespace{Org: s.Organization, Env: s.Environment})
+	b = b.WithNamespace(s.Namespace)
 
 	return b.Build(s.ResourceName)
 }

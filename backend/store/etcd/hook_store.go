@@ -37,7 +37,7 @@ func (s *Store) DeleteHookConfigByName(ctx context.Context, name string) error {
 	return err
 }
 
-// GetHookConfigs returns hook configurations for an (optional) organization.
+// GetHookConfigs returns hook configurations for an (optional) namespace.
 // If org is the empty string, it returns all hook configs.
 func (s *Store) GetHookConfigs(ctx context.Context) ([]*types.HookConfig, error) {
 	resp, err := query(ctx, s, getHookConfigsPath)
@@ -95,7 +95,7 @@ func (s *Store) UpdateHookConfig(ctx context.Context, hook *types.HookConfig) er
 		return err
 	}
 
-	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(hook.Organization, hook.Environment)), ">", 0)
+	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(hook.Namespace)), ">", 0)
 	req := clientv3.OpPut(getHookConfigPath(hook), string(hookBytes))
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
@@ -103,10 +103,9 @@ func (s *Store) UpdateHookConfig(ctx context.Context, hook *types.HookConfig) er
 	}
 	if !res.Succeeded {
 		return fmt.Errorf(
-			"could not create the hook %s in environment %s/%s",
+			"could not create the hook %s in namespace %s",
 			hook.Name,
-			hook.Organization,
-			hook.Environment,
+			hook.Namespace,
 		)
 	}
 

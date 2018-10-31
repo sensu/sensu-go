@@ -164,7 +164,7 @@ command should always be guarded by a confirmation prompt.
 
 Example unrecoverable operations:
 
-- Deleting an organization or environment that is not empty.
+- Deleting a namespace that is not empty.
 - Operation that could result in an ops individual or team being paged at 2AM.
 - Updating resource where non-trivial side-effects may be present.
 

@@ -16,6 +16,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Improved event validation error messages.
 - Improved agent logging for statsd events.
 
+### Breaking Changes
+- Environments and organizations have been replaced with namespaces.
+
 ## [2.0.0-beta.7-1] - 2018-10-26
 
 ### Added

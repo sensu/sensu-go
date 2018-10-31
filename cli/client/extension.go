@@ -9,10 +9,10 @@ import (
 )
 
 // ListExtensions retrieves a list of extension resources from the backend
-func (client *RestClient) ListExtensions(org string) ([]types.Extension, error) {
+func (client *RestClient) ListExtensions(namespace string) ([]types.Extension, error) {
 	var extensions []types.Extension
 
-	res, err := client.R().Get("/extensions?org=" + org)
+	res, err := client.R().Get("/extensions?namespace=" + namespace)
 	if err != nil {
 		return extensions, err
 	}
@@ -26,8 +26,8 @@ func (client *RestClient) ListExtensions(org string) ([]types.Extension, error) 
 }
 
 // DeregisterExtension deregisters an extension resource from the backend
-func (client *RestClient) DeregisterExtension(name, org string) error {
-	extensionPath := fmt.Sprintf("/extensions/%s?org=%s", url.PathEscape(name), url.PathEscape(org))
+func (client *RestClient) DeregisterExtension(name, namespace string) error {
+	extensionPath := fmt.Sprintf("/extensions/%s?namespace=%s", url.PathEscape(name), url.PathEscape(namespace))
 	res, err := client.R().Delete(extensionPath)
 	if err != nil {
 		return fmt.Errorf("DELETE %q: %s", extensionPath, err)

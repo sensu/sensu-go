@@ -13,12 +13,11 @@ import (
 )
 
 type configureAnswers struct {
-	URL          string `survey:"url"`
-	Username     string `survey:"username"`
-	Password     string
-	Environment  string `survey:"environment"`
-	Format       string `survey:"format"`
-	Organization string `survey:"organization"`
+	URL       string `survey:"url"`
+	Username  string `survey:"username"`
+	Password  string
+	Format    string `survey:"format"`
+	Namespace string `survey:"namespace"`
 }
 
 // Command defines new configuration command
@@ -98,23 +97,11 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 				)
 			}
 
-			if _, err := cli.Client.FetchOrganization(answers.Organization); err != nil {
+			if _, err := cli.Client.FetchNamespace(answers.Namespace); err != nil {
 				return err
 			}
 
-			if err = cli.Config.SaveOrganization(answers.Organization); err != nil {
-				fmt.Fprintln(cmd.OutOrStderr())
-				return fmt.Errorf(
-					"unable to write new configuration file with error: %s",
-					err,
-				)
-			}
-
-			if _, err := cli.Client.FetchEnvironment(answers.Environment); err != nil {
-				return err
-			}
-
-			if err = cli.Config.SaveEnvironment(answers.Environment); err != nil {
+			if err = cli.Config.SaveNamespace(answers.Namespace); err != nil {
 				fmt.Fprintln(cmd.OutOrStderr())
 				return fmt.Errorf(
 					"unable to write new configuration file with error: %s",
@@ -135,9 +122,8 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 	_ = cmd.Flags().StringP("url", "", cli.Config.APIUrl(), "the sensu backend url")
 	_ = cmd.Flags().StringP("username", "", "", "username")
 	_ = cmd.Flags().StringP("password", "", "", "password")
-	_ = cmd.Flags().StringP("environment", "", cli.Config.Environment(), "environment")
 	_ = cmd.Flags().StringP("format", "", cli.Config.Format(), "preferred output format")
-	_ = cmd.Flags().StringP("organization", "", cli.Config.Organization(), "organization")
+	_ = cmd.Flags().StringP("namespace", "", cli.Config.Namespace(), "namespace")
 
 	return cmd
 }
@@ -147,8 +133,7 @@ func (answers *configureAnswers) administerQuestionnaire(c config.Config) error 
 		askForURL(c),
 		askForUsername(),
 		askForPassword(),
-		askForOrganization(c),
-		askForEnvironment(c),
+		askForNamespace(c),
 		askForDefaultFormat(c),
 	}
 
@@ -159,9 +144,8 @@ func (answers *configureAnswers) withFlags(flags *pflag.FlagSet) {
 	answers.URL, _ = flags.GetString("url")
 	answers.Username, _ = flags.GetString("username")
 	answers.Password, _ = flags.GetString("password")
-	answers.Environment, _ = flags.GetString("environment")
 	answers.Format, _ = flags.GetString("format")
-	answers.Organization, _ = flags.GetString("organization")
+	answers.Namespace, _ = flags.GetString("namespace")
 }
 
 func askForURL(c config.Config) *survey.Question {
@@ -206,26 +190,14 @@ func askForDefaultFormat(c config.Config) *survey.Question {
 	}
 }
 
-func askForEnvironment(c config.Config) *survey.Question {
-	env := c.Environment()
+func askForNamespace(c config.Config) *survey.Question {
+	namespace := c.Namespace()
 
 	return &survey.Question{
-		Name: "environment",
+		Name: "namespace",
 		Prompt: &survey.Input{
-			Message: "Environment:",
-			Default: env,
-		},
-	}
-}
-
-func askForOrganization(c config.Config) *survey.Question {
-	organization := c.Organization()
-
-	return &survey.Question{
-		Name: "organization",
-		Prompt: &survey.Input{
-			Message: "Organization:",
-			Default: organization,
+			Message: "Namespace:",
+			Default: namespace,
 		},
 	}
 }

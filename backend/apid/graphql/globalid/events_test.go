@@ -13,8 +13,7 @@ func TestEncodeEvent(t *testing.T) {
 	event := types.FixtureEvent("one", "two")
 	components := encodeEvent(event)
 	assert.Equal("events", components.Resource())
-	assert.Equal("default", components.Organization())
-	assert.Equal("default", components.Environment())
+	assert.Equal("default", components.Namespace())
 	assert.Equal("check", components.ResourceType())
 	assert.NotEmpty(components.UniqueComponent())
 

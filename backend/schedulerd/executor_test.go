@@ -39,7 +39,7 @@ func TestAdhocExecutor(t *testing.T) {
 	ch := make(chan interface{}, 1)
 	tsub := testSubscriber{ch}
 
-	topic := messaging.SubscriptionTopic(goodCheck.Organization, goodCheck.Environment, "subscription1")
+	topic := messaging.SubscriptionTopic(goodCheck.Namespace, "subscription1")
 	sub, err := bus.Subscribe(topic, "testSubscriber", tsub)
 	if err != nil {
 		assert.FailNow(t, err.Error())
@@ -85,10 +85,9 @@ func TestPublishProxyCheckRequest(t *testing.T) {
 
 	c1 := make(chan interface{}, 10)
 	topic := fmt.Sprintf(
-		"%s:%s:%s:subscription1",
+		"%s:%s:subscription1",
 		messaging.TopicSubscriptions,
-		check.Organization,
-		check.Environment,
+		check.Namespace,
 	)
 	tsub := testSubscriber{
 		ch: c1,
@@ -137,10 +136,9 @@ func TestPublishProxyCheckRequestsInterval(t *testing.T) {
 
 	c1 := make(chan interface{}, 10)
 	topic := fmt.Sprintf(
-		"%s:%s:%s:subscription1",
+		"%s:%s:subscription1",
 		messaging.TopicSubscriptions,
-		check.Organization,
-		check.Environment,
+		check.Namespace,
 	)
 
 	tsub := testSubscriber{
@@ -194,10 +192,9 @@ func TestPublishProxyCheckRequestsCron(t *testing.T) {
 
 	c1 := make(chan interface{}, 10)
 	topic := fmt.Sprintf(
-		"%s:%s:%s:subscription1",
+		"%s:%s:subscription1",
 		messaging.TopicSubscriptions,
-		check.Organization,
-		check.Environment,
+		check.Namespace,
 	)
 
 	tsub := testSubscriber{c1}

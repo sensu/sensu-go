@@ -43,12 +43,10 @@ const (
 	DefaultAPIPort = 3031
 	// DefaultBackendURL specifies the default backend URL
 	DefaultBackendURL = "ws://127.0.0.1:8081"
-	// DefaultEnvironment specifies the default environment
-	DefaultEnvironment = "default"
 	// DefaultKeepaliveInterval specifies the default keepalive interval
 	DefaultKeepaliveInterval = 20
-	// DefaultOrganization specifies the default organization
-	DefaultOrganization = "default"
+	// DefaultNamespace specifies the default namespace
+	DefaultNamespace = "default"
 	// DefaultPassword specifies the default password
 	DefaultPassword = "P@ssw0rd!"
 	// DefaultSocketHost specifies the default socket host
@@ -85,8 +83,6 @@ type Config struct {
 	Deregister bool
 	// DeregistrationHandler specifies a single deregistration handler
 	DeregistrationHandler string
-	// Environment sets the Agent's RBAC environment identifier
-	Environment string
 	// ExtendedAttributes contains any extended attributes passed to the agent on
 	// start
 	ExtendedAttributes []byte
@@ -97,8 +93,8 @@ type Config struct {
 	// by the backend. See DefaultKeepaliveTimeout in types package for default
 	// value.
 	KeepaliveTimeout uint32
-	// Organization sets the Agent's RBAC organization identifier
-	Organization string
+	// Namespace sets the Agent's RBAC namespace identifier
+	Namespace string
 	// Password sets Agent's password
 	Password string
 	// Redact contains the fields to redact when marshalling the agent's entity
@@ -143,10 +139,9 @@ func FixtureConfig() (*Config, func()) {
 		},
 		BackendURLs:       []string{},
 		CacheDir:          cacheDir,
-		Environment:       DefaultEnvironment,
 		KeepaliveInterval: DefaultKeepaliveInterval,
 		KeepaliveTimeout:  types.DefaultKeepaliveTimeout,
-		Organization:      DefaultOrganization,
+		Namespace:         DefaultNamespace,
 		Password:          DefaultPassword,
 		Socket: &SocketConfig{
 			Host: DefaultSocketHost,
@@ -424,8 +419,7 @@ func (a *Agent) sendKeepalivePeriodically() {
 func (a *Agent) buildTransportHeaderMap() http.Header {
 	header := http.Header{}
 	header.Set(transport.HeaderKeyAgentID, a.config.AgentID)
-	header.Set(transport.HeaderKeyEnvironment, a.config.Environment)
-	header.Set(transport.HeaderKeyOrganization, a.config.Organization)
+	header.Set(transport.HeaderKeyNamespace, a.config.Namespace)
 	header.Set(transport.HeaderKeyUser, a.config.User)
 	header.Set(transport.HeaderKeySubscriptions, strings.Join(a.config.Subscriptions, ","))
 

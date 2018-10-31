@@ -21,8 +21,8 @@ func (c *MockClient) FetchFilter(name string) (*types.EventFilter, error) {
 }
 
 // ListFilters for use with mock lib
-func (c *MockClient) ListFilters(org string) ([]types.EventFilter, error) {
-	args := c.Called(org)
+func (c *MockClient) ListFilters(namespace string) ([]types.EventFilter, error) {
+	args := c.Called(namespace)
 	return args.Get(0).([]types.EventFilter), args.Error(1)
 }
 

@@ -15,11 +15,11 @@ func RegisterCommand(cli *cli.SensuCli) *cobra.Command {
 	return &cobra.Command{
 		Use:   "register NAME URL",
 		Short: "register extensions",
-		RunE:  runRegister(cli.Client, cli.Config.Organization()),
+		RunE:  runRegister(cli.Client, cli.Config.Namespace()),
 	}
 }
 
-func runRegister(client client.APIClient, org string) func(*cobra.Command, []string) error {
+func runRegister(client client.APIClient, namespace string) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		if len(args) != 2 {
 			_ = cmd.Help()
@@ -30,9 +30,9 @@ func runRegister(client client.APIClient, org string) func(*cobra.Command, []str
 		url := args[1]
 
 		extension := types.Extension{
-			Organization: org,
-			Name:         name,
-			URL:          url,
+			Namespace: namespace,
+			Name:      name,
+			URL:       url,
 		}
 
 		if err := extension.Validate(); err != nil {

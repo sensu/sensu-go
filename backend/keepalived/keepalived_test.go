@@ -90,14 +90,14 @@ func TestStartStop(t *testing.T) {
 			name: "Passing Keepalives",
 			records: []*types.KeepaliveRecord{
 				{
-					EntityID:     "entity1",
-					Organization: "org",
-					Time:         0,
+					EntityID:  "entity1",
+					Namespace: "org",
+					Time:      0,
 				},
 				{
-					EntityID:     "entity2",
-					Organization: "org",
-					Time:         0,
+					EntityID:  "entity2",
+					Namespace: "org",
+					Time:      0,
 				},
 			},
 			events: []*types.Event{
@@ -110,14 +110,14 @@ func TestStartStop(t *testing.T) {
 			name: "Failing Keepalives",
 			records: []*types.KeepaliveRecord{
 				{
-					EntityID:     "entity1",
-					Organization: "org",
-					Time:         0,
+					EntityID:  "entity1",
+					Namespace: "org",
+					Time:      0,
 				},
 				{
-					EntityID:     "entity2",
-					Organization: "org",
-					Time:         0,
+					EntityID:  "entity2",
+					Namespace: "org",
+					Time:      0,
 				},
 			},
 			events: []*types.Event{

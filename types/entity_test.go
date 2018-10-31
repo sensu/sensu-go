@@ -20,13 +20,9 @@ func TestEntityValidate(t *testing.T) {
 	assert.Error(t, e.Validate())
 	e.Class = "agent"
 
-	// Invalid organization
+	// Invalid namespace
 	assert.Error(t, e.Validate())
-	e.Organization = "default"
-
-	// Invalid environment
-	assert.Error(t, e.Validate())
-	e.Environment = "default"
+	e.Namespace = "default"
 
 	// Valid entity
 	assert.NoError(t, e.Validate())

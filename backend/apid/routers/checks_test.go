@@ -239,7 +239,7 @@ func TestDeleteCheckHook(t *testing.T) {
 
 func TestHttpApiChecksAdhocRequest(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermCreate, types.RulePermRead),
 		),

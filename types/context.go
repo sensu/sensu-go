@@ -16,10 +16,8 @@ const (
 	AccessTokenClaims
 	// ClaimsKey contains key name to retrieve the jwt claims from context
 	ClaimsKey
-	// EnvironmentKey contains the key name to retrieve the env from context
-	EnvironmentKey
-	// OrganizationKey contains the key name to retrieve the org from context
-	OrganizationKey
+	// NamespaceKey contains the key name to retrieve the namespace from context
+	NamespaceKey
 	// RefreshTokenClaims contains the key name to retrieve the refresh token claims
 	RefreshTokenClaims
 	// RefreshTokenString contains the key name to retrieve the refresh token string
@@ -28,17 +26,9 @@ const (
 	StoreKey
 )
 
-// ContextEnvironment returns the environment name injected in the context
-func ContextEnvironment(ctx context.Context) string {
-	if value := ctx.Value(EnvironmentKey); value != nil {
-		return value.(string)
-	}
-	return ""
-}
-
-// ContextOrganization returns the organization name injected in the context
-func ContextOrganization(ctx context.Context) string {
-	if value := ctx.Value(OrganizationKey); value != nil {
+// ContextNamespace returns the namespace injected in the context
+func ContextNamespace(ctx context.Context) string {
+	if value := ctx.Value(NamespaceKey); value != nil {
 		return value.(string)
 	}
 	return ""

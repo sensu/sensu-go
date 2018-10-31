@@ -5,7 +5,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-func environmentExistsForResource(r types.MultitenantResource) clientv3.Cmp {
-	key := getEnvironmentsPath(r.GetOrganization(), r.GetEnvironment())
+func namespaceExistsForResource(r types.MultitenantResource) clientv3.Cmp {
+	key := getNamespacePath(r.GetNamespace())
 	return clientv3.Compare(clientv3.Version(key), ">", 0)
 }

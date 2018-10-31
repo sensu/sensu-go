@@ -15,8 +15,7 @@ import (
 func TestEventStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		event := types.FixtureEvent("entity1", "check1")
-		ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
-		ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, event.Entity.Namespace)
 
 		// We should receive an empty slice if no results were found
 		events, err := store.GetEvents(ctx)
@@ -36,28 +35,19 @@ func TestEventStorage(t *testing.T) {
 		assert.EqualValues(t, event, events[0])
 
 		// Get all events with wildcards
-		ctx = context.WithValue(ctx, types.OrganizationKey, types.OrganizationTypeAll)
-		ctx = context.WithValue(ctx, types.EnvironmentKey, types.EnvironmentTypeAll)
+		ctx = context.WithValue(ctx, types.NamespaceKey, types.NamespaceTypeAll)
 		events, err = store.GetEvents(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(events))
 
-		// Get all events from an unexisting env
-		ctx = context.WithValue(ctx, types.EnvironmentKey, "dev")
-		events, err = store.GetEvents(ctx)
-		require.NoError(t, err)
-		require.Equal(t, 0, len(events))
-
-		// Get all events from an unexisting org
-		ctx = context.WithValue(ctx, types.OrganizationKey, "acme")
-		ctx = context.WithValue(ctx, types.EnvironmentKey, types.EnvironmentTypeAll)
+		// Get all events from a missing namespace
+		ctx = context.WithValue(ctx, types.NamespaceKey, "acme")
 		events, err = store.GetEvents(ctx)
 		require.NoError(t, err)
 		require.Equal(t, 0, len(events))
 
 		// Set back the context
-		ctx = context.WithValue(ctx, types.OrganizationKey, event.Entity.Organization)
-		ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
+		ctx = context.WithValue(ctx, types.NamespaceKey, event.Entity.Namespace)
 
 		newEv, err = store.GetEventByEntityCheck(ctx, "", "foo")
 		assert.Nil(t, newEv)
@@ -86,8 +76,7 @@ func TestEventStorage(t *testing.T) {
 		assert.Error(t, store.DeleteEventByEntityCheck(ctx, "foo", ""))
 
 		// Updating an event in a nonexistent org and env should not work
-		event.Entity.Organization = "missing"
-		event.Entity.Environment = "missing"
+		event.Entity.Namespace = "missing"
 		err = store.UpdateEvent(ctx, event)
 		assert.Error(t, err)
 	})

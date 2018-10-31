@@ -48,7 +48,7 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "OK")
+			_, _ = fmt.Fprintln(cmd.OutOrStdout(), "OK")
 			return nil
 		},
 	}

@@ -39,12 +39,11 @@ const (
 	flagConfigFile                   = "config-file"
 	flagDeregister                   = "deregister"
 	flagDeregistrationHandler        = "deregistration-handler"
-	flagEnvironment                  = "environment"
 	deprecatedFlagExtendedAttributes = "custom-attributes"
 	flagExtendedAttributes           = "extended-attributes"
 	flagKeepaliveInterval            = "keepalive-interval"
 	flagKeepaliveTimeout             = "keepalive-timeout"
-	flagOrganization                 = "organization"
+	flagNamespace                    = "namespace"
 	flagPassword                     = "password"
 	flagRedact                       = "redact"
 	flagSocketHost                   = "socket-host"
@@ -126,11 +125,10 @@ func newStartCommand() *cobra.Command {
 			cfg.CacheDir = viper.GetString(flagCacheDir)
 			cfg.Deregister = viper.GetBool(flagDeregister)
 			cfg.DeregistrationHandler = viper.GetString(flagDeregistrationHandler)
-			cfg.Environment = viper.GetString(flagEnvironment)
 			cfg.ExtendedAttributes = []byte(viper.GetString(flagExtendedAttributes))
 			cfg.KeepaliveInterval = uint32(viper.GetInt(flagKeepaliveInterval))
 			cfg.KeepaliveTimeout = uint32(viper.GetInt(flagKeepaliveTimeout))
-			cfg.Organization = viper.GetString(flagOrganization)
+			cfg.Namespace = viper.GetString(flagNamespace)
 			cfg.Password = viper.GetString(flagPassword)
 			cfg.Socket.Host = viper.GetString(flagSocketHost)
 			cfg.Socket.Port = viper.GetInt(flagSocketPort)
@@ -228,10 +226,9 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagCacheDir, path.SystemCacheDir("sensu-agent"))
 	viper.SetDefault(flagDeregister, false)
 	viper.SetDefault(flagDeregistrationHandler, "")
-	viper.SetDefault(flagEnvironment, agent.DefaultEnvironment)
 	viper.SetDefault(flagKeepaliveInterval, agent.DefaultKeepaliveInterval)
 	viper.SetDefault(flagKeepaliveTimeout, types.DefaultKeepaliveTimeout)
-	viper.SetDefault(flagOrganization, agent.DefaultOrganization)
+	viper.SetDefault(flagNamespace, agent.DefaultNamespace)
 	viper.SetDefault(flagPassword, agent.DefaultPassword)
 	viper.SetDefault(flagRedact, dynamic.DefaultRedactFields)
 	viper.SetDefault(flagSocketHost, agent.DefaultSocketHost)
@@ -260,9 +257,8 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagAPIHost, viper.GetString(flagAPIHost), "address to bind the Sensu client HTTP API to")
 	cmd.Flags().String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
 	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "deregistration handler that should process the entity deregistration event.")
-	cmd.Flags().String(flagEnvironment, viper.GetString(flagEnvironment), "agent environment")
 	cmd.Flags().String(flagExtendedAttributes, viper.GetString(flagExtendedAttributes), "extended attributes to include in the agent entity in serialized json format (ex: {\"team\":\"ops\"})")
-	cmd.Flags().String(flagOrganization, viper.GetString(flagOrganization), "agent organization")
+	cmd.Flags().String(flagNamespace, viper.GetString(flagNamespace), "agent namespace")
 	cmd.Flags().String(flagPassword, viper.GetString(flagPassword), "agent password")
 	cmd.Flags().String(flagRedact, viper.GetString(flagRedact), "comma-delimited customized list of fields to redact")
 	cmd.Flags().String(flagSocketHost, viper.GetString(flagSocketHost), "address to bind the Sensu client socket to")

@@ -24,7 +24,7 @@ func (p *SilencedPolicy) Context() Context {
 	return p.context
 }
 
-// WithContext returns new policy populated with rules & organization.
+// WithContext returns new policy populated with rules & namespace.
 func (p SilencedPolicy) WithContext(ctx context.Context) SilencedPolicy { // nolint
 	p.context = ExtractValueFromContext(ctx)
 	return p
@@ -37,17 +37,17 @@ func (p *SilencedPolicy) CanList() bool {
 
 // CanRead returns true if actor has read access to resource.
 func (p *SilencedPolicy) CanRead(silenced *types.Silenced) bool {
-	return canPerformOn(p, silenced.Organization, silenced.Environment, types.RulePermRead)
+	return canPerformOn(p, silenced.Namespace, types.RulePermRead)
 }
 
 // CanCreate returns true if actor has access to create.
 func (p *SilencedPolicy) CanCreate(silenced *types.Silenced) bool {
-	return canPerformOn(p, silenced.Organization, silenced.Environment, types.RulePermCreate)
+	return canPerformOn(p, silenced.Namespace, types.RulePermCreate)
 }
 
 // CanUpdate returns true if actor has access to update.
 func (p *SilencedPolicy) CanUpdate(silenced *types.Silenced) bool {
-	return canPerformOn(p, silenced.Organization, silenced.Environment, types.RulePermUpdate)
+	return canPerformOn(p, silenced.Namespace, types.RulePermUpdate)
 }
 
 // CanDelete returns true if actor has access to delete.

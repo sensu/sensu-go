@@ -37,9 +37,8 @@ type Cluster struct {
 
 // Profile contains the active configuration
 type Profile struct {
-	Environment  string `json:"environment"`
-	Format       string `json:"format"`
-	Organization string `json:"organization"`
+	Format    string `json:"format"`
+	Namespace string `json:"namespace"`
 }
 
 // Load imports the CLI configuration and returns an initialized Config struct
@@ -71,15 +70,10 @@ func Load(flags *pflag.FlagSet) *Config {
 		logger.Debug(err)
 	}
 
-	// Override environment
 	if flags != nil {
-		if value := helpers.GetChangedStringValueFlag("environment", flags); value != "" {
-			conf.Profile.Environment = value
-		}
-
-		// Override organization
-		if value := helpers.GetChangedStringValueFlag("organization", flags); value != "" {
-			conf.Profile.Organization = value
+		// Override namespace
+		if value := helpers.GetChangedStringValueFlag("namespace", flags); value != "" {
+			conf.Profile.Namespace = value
 		}
 	}
 

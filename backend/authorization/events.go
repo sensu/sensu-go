@@ -24,7 +24,7 @@ func (p *EventPolicy) Context() Context {
 	return p.context
 }
 
-// WithContext returns new policy populated with rules & organization.
+// WithContext returns new policy populated with rules & namespace.
 func (p EventPolicy) WithContext(ctx context.Context) EventPolicy { // nolint
 	p.context = ExtractValueFromContext(ctx)
 	return p
@@ -37,17 +37,17 @@ func (p *EventPolicy) CanList() bool {
 
 // CanRead returns true if actor has read access to resource.
 func (p *EventPolicy) CanRead(event *types.Event) bool {
-	return canPerformOn(p, event.Entity.Organization, event.Entity.Environment, types.RulePermRead)
+	return canPerformOn(p, event.Entity.Namespace, types.RulePermRead)
 }
 
 // CanCreate returns true if actor has access to create.
 func (p *EventPolicy) CanCreate(event *types.Event) bool {
-	return canPerformOn(p, event.Entity.Organization, event.Entity.Environment, types.RulePermCreate)
+	return canPerformOn(p, event.Entity.Namespace, types.RulePermCreate)
 }
 
 // CanUpdate returns true if actor has access to update.
 func (p *EventPolicy) CanUpdate(event *types.Event) bool {
-	return canPerformOn(p, event.Entity.Organization, event.Entity.Environment, types.RulePermUpdate)
+	return canPerformOn(p, event.Entity.Namespace, types.RulePermUpdate)
 }
 
 // CanDelete returns true if actor has access to delete.

@@ -25,10 +25,9 @@ OUTER:
 			result, err := eval.EvaluatePredicate(statement, parameters)
 			if err != nil {
 				fields := logrus.Fields{
-					"statement":    statement,
-					"entity":       entity.ID,
-					"organization": entity.Organization,
-					"environment":  entity.Environment,
+					"statement": statement,
+					"entity":    entity.ID,
+					"namespace": entity.Namespace,
 				}
 				// Only report an error if the expression's syntax is invalid
 				switch err.(type) {

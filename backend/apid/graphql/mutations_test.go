@@ -136,8 +136,8 @@ func TestMutationTypeDeleteEventField(t *testing.T) {
 
 func TestMutationTypeCreateSilenceField(t *testing.T) {
 	inputs := schema.CreateSilenceInput{
-		Ns:    schema.NewNamespaceInput("a", "b"),
-		Props: &schema.SilenceInputs{},
+		Namespace: "a",
+		Props:     &schema.SilenceInputs{},
 	}
 	params := schema.MutationCreateSilenceFieldResolverParams{}
 	params.Args.Input = &inputs
