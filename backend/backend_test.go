@@ -125,8 +125,7 @@ func TestBackendHTTPListener(t *testing.T) {
 
 			hdr := http.Header{
 				"Authorization":                  {"Basic " + userCredentials},
-				transport.HeaderKeyEnvironment:   {"default"},
-				transport.HeaderKeyOrganization:  {"default"},
+				transport.HeaderKeyNamespace:     {"default"},
 				transport.HeaderKeyAgentID:       {"agent"},
 				transport.HeaderKeySubscriptions: {},
 			}

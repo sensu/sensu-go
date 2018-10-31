@@ -42,7 +42,7 @@ func (s *Store) DeleteEventFilterByName(ctx context.Context, name string) error 
 	return nil
 }
 
-// GetEventFilters gets the list of filters for an (optional) organization. Passing
+// GetEventFilters gets the list of filters for an (optional) namespace. Passing
 // the empty string as the org will return all filters.
 func (s *Store) GetEventFilters(ctx context.Context) ([]*types.EventFilter, error) {
 	resp, err := query(ctx, s, getEventFiltersPath)
@@ -100,7 +100,7 @@ func (s *Store) UpdateEventFilter(ctx context.Context, filter *types.EventFilter
 		return err
 	}
 
-	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(filter.Organization, filter.Environment)), ">", 0)
+	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(filter.Namespace)), ">", 0)
 	req := clientv3.OpPut(getEventFilterPath(filter), string(filterBytes))
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
@@ -108,10 +108,9 @@ func (s *Store) UpdateEventFilter(ctx context.Context, filter *types.EventFilter
 	}
 	if !res.Succeeded {
 		return fmt.Errorf(
-			"could not create the filter %s in environment %s/%s",
+			"could not create the filter %s in namespace %s",
 			filter.Name,
-			filter.Organization,
-			filter.Environment,
+			filter.Namespace,
 		)
 	}
 

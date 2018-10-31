@@ -7,9 +7,21 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Adds links to view entities and checks from the events page.
+
 ### Fixed
+- Silences List in web ui sorted by ascending order
+- Sorting button now works properly
 - Fixed unresponsive silencing entry form begin date input.
 - Removed lastSeen field from check summary
+- Fixed a panic on the backend when handling keepalives from older agent versions.
+- Fixed a bug that would prevent some keepalive failures from occurring.
+- Improved event validation error messages.
+- Improved agent logging for statsd events.
+
+### Breaking Changes
+- Environments and organizations have been replaced with namespaces.
 
 ## [2.0.0-beta.7-1] - 2018-10-26
 
@@ -19,8 +31,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Web ui allows publishing and unpublishing on check details page.
 - Web ui code highlighting added.
 
-### Fixed
-- Fixes exception thrown when web ui browser window is resized.
+### fixed
+- fixes exception thrown when web ui browser window is resized.
 
 ## [2.0.0-beta.6-2] - 2018-10-22
 

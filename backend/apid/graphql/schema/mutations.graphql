@@ -48,14 +48,6 @@ type Mutation {
 }
 
 """
-NamespaceInput refers to the namespace a resource may belong to.
-"""
-input NamespaceInput {
-  organization: String!
-  environment: String
-}
-
-"""
 Generic container for deleted record payload.
 """
 type DeleteRecordPayload {
@@ -120,7 +112,7 @@ input CreateCheckInput {
   clientMutationId: String
 
   "namespace the resulting resource will belong to."
-  ns: NamespaceInput = {organization: "default", environment: "default"}
+  namespace: String = "default"
 
   "name of the resulting check."
   name: String!
@@ -221,7 +213,7 @@ input CreateSilenceInput {
   clientMutationId: String
 
   "namespace the resulting resource will belong to."
-  ns: NamespaceInput = {organization: "default", environment: "default"}
+  namespace: String = "default"
 
   "check associated with the silenced entry; optional."
   check: String

@@ -191,6 +191,7 @@ func handleAction(router *mux.Router, path string, fn actionHandlerFunc) *mux.Ro
 	return router.HandleFunc(path, actionHandler(fn))
 }
 
+// UnmarshalBody decodes the request body
 func UnmarshalBody(req *http.Request, record interface{}) error {
 	err := json.NewDecoder(req.Body).Decode(&record)
 	if err != nil {

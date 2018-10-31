@@ -38,11 +38,6 @@ func (*hookCfgImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.HookTranslator.EncodeToString(p.Source), nil
 }
 
-// Namespace implements response to request for 'namespace' field.
-func (*hookCfgImpl) Namespace(p graphql.ResolveParams) (interface{}, error) {
-	return p.Source, nil
-}
-
 // IsTypeOf is used to determine if a given value is associated with the type
 func (*hookCfgImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 	_, ok := s.(*types.HookConfig)

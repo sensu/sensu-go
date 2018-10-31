@@ -209,10 +209,6 @@ func newStartCommand() *cobra.Command {
 				sensuBackend.Stop()
 			}()
 
-			if len(args) == 1 && args[0] == "migration" {
-				return sensuBackend.Migration()
-			}
-
 			if viper.GetBool(flagDebug) {
 				go func() {
 					log.Println(http.ListenAndServe("localhost:6060", nil))

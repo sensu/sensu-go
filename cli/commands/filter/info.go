@@ -65,12 +65,8 @@ func printToList(v interface{}, writer io.Writer) error {
 				Value: strings.Join(filter.Statements, " && "),
 			},
 			{
-				Label: "Organization",
-				Value: filter.Organization,
-			},
-			{
-				Label: "Environment",
-				Value: filter.Environment,
+				Label: "Namespace",
+				Value: filter.Namespace,
 			},
 		},
 	}

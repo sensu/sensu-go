@@ -13,8 +13,7 @@ func TestFixtureSilenced(t *testing.T) {
 	s.ExpireOnResolve = true
 	s.Creator = "creator@example.com"
 	s.Reason = "test reason"
-	s.Organization = "default"
-	s.Environment = "default"
+	s.Namespace = "default"
 	assert.NotNil(t, s)
 	assert.NotNil(t, s.ID)
 	assert.Equal(t, "test_subscription:test_check", s.ID)
@@ -25,8 +24,7 @@ func TestFixtureSilenced(t *testing.T) {
 	assert.NotNil(t, s.Check)
 	assert.NotNil(t, s.Reason)
 	assert.NotNil(t, s.Subscription)
-	assert.NotNil(t, s.Organization)
-	assert.NotNil(t, s.Environment)
+	assert.NotNil(t, s.Namespace)
 
 	s = FixtureSilenced("entity:test_subscription:test_check")
 	assert.Equal(t, "entity:test_subscription", s.Subscription)

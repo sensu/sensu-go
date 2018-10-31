@@ -48,11 +48,6 @@ func (*entityImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.EntityTranslator.EncodeToString(p.Source), nil
 }
 
-// Namespace implements response to request for 'namespace' field.
-func (*entityImpl) Namespace(p graphql.ResolveParams) (interface{}, error) {
-	return p.Source, nil
-}
-
 // Name implements response to request for 'name' field.
 func (*entityImpl) Name(p graphql.ResolveParams) (string, error) {
 	entity := p.Source.(*types.Entity)

@@ -42,17 +42,14 @@ class Menu extends React.PureComponent {
     if (valueProp === value || valueProp === `${value}_DESC`) {
       icon = (
         <ListItemIcon style={{ transform: "scale(0.77)" }}>
-          {strEndsWith(valueProp, "_DESC") ? <ArrowDown /> : <ArrowUp />}
+          {strEndsWith(valueProp, "_DESC") ? <ArrowUp /> : <ArrowDown />}
         </ListItemIcon>
       );
     }
 
     const onClick = () => {
       onChangeQuery(query => {
-        query.set(
-          queryKey,
-          query.get(queryKey) === value ? `${value}_DESC` : value,
-        );
+        query.set(queryKey, valueProp === value ? `${value}_DESC` : value);
       });
       onClose();
     };

@@ -66,12 +66,8 @@ func printToList(v interface{}, writer io.Writer) error {
 				Value: strconv.FormatUint(uint64(mutator.Timeout), 10),
 			},
 			{
-				Label: "Organization",
-				Value: mutator.Organization,
-			},
-			{
-				Label: "Environment",
-				Value: mutator.Environment,
+				Label: "Namespace",
+				Value: mutator.Namespace,
 			},
 			{
 				Label: "Runtime Assets",

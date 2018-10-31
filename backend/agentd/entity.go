@@ -19,8 +19,7 @@ func addEntitySubscription(entityID string, subscriptions []string) []string {
 // event's entity with it. In case no entity exists, we create an entity with
 // the proxy class
 func getProxyEntity(event *types.Event, s SessionStore) error {
-	ctx := context.WithValue(context.Background(), types.OrganizationKey, event.Entity.Organization)
-	ctx = context.WithValue(ctx, types.EnvironmentKey, event.Entity.Environment)
+	ctx := context.WithValue(context.Background(), types.NamespaceKey, event.Entity.Namespace)
 
 	// Verify if a proxy entity id, representing a proxy entity, is defined in the check
 	if event.HasCheck() && event.Check.ProxyEntityID != "" {
@@ -35,8 +34,7 @@ func getProxyEntity(event *types.Event, s SessionStore) error {
 			entity = &types.Entity{
 				ID:            event.Check.ProxyEntityID,
 				Class:         types.EntityProxyClass,
-				Environment:   event.Entity.Environment,
-				Organization:  event.Entity.Organization,
+				Namespace:     event.Entity.Namespace,
 				Subscriptions: addEntitySubscription(event.Check.ProxyEntityID, []string{}),
 			}
 

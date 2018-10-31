@@ -14,8 +14,7 @@ import (
 func TestKeepaliveStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		entity := types.FixtureEntity("entity")
-		ctx := context.WithValue(context.Background(), types.OrganizationKey, entity.Environment)
-		ctx = context.WithValue(ctx, types.EnvironmentKey, entity.Environment)
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
 
 		err := store.UpdateFailingKeepalive(ctx, entity, 1)
 		assert.NoError(t, err)
@@ -25,8 +24,7 @@ func TestKeepaliveStorage(t *testing.T) {
 		assert.Equal(t, 1, len(records))
 
 		// Updating a keepalive in a nonexistent org and env should not work
-		entity.Organization = "missing"
-		entity.Environment = "missing"
+		entity.Namespace = "missing"
 		err = store.UpdateFailingKeepalive(ctx, entity, 1)
 		assert.Error(t, err)
 	})

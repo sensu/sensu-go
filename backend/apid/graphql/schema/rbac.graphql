@@ -1,9 +1,9 @@
 """
 Rule maps permissions to a given type
 """
-type Rule {
+type Rule implements Namespaced {
   "namespace in which this record resides"
-  namespace: Namespace!
+  namespace: String!
 
   "resource the permissions apply to"
   type: RuleResource!

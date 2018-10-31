@@ -102,7 +102,7 @@ func (s *Store) UpdateEntity(ctx context.Context, e *types.Entity) error {
 		return err
 	}
 
-	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(e.Organization, e.Environment)), ">", 0)
+	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(e.Namespace)), ">", 0)
 	req := clientv3.OpPut(getEntityPath(e), string(eStr))
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
@@ -110,10 +110,9 @@ func (s *Store) UpdateEntity(ctx context.Context, e *types.Entity) error {
 	}
 	if !res.Succeeded {
 		return fmt.Errorf(
-			"could not create the entity %s in environment %s/%s",
+			"could not create the entity %s in namespace %s",
 			e.ID,
-			e.Organization,
-			e.Environment,
+			e.Namespace,
 		)
 	}
 

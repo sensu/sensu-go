@@ -26,13 +26,13 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 				_ = cmd.Help()
 				return errors.New("invalid argument(s) received")
 			}
-			org := cli.Config.Organization()
-			if ok, _ := cmd.Flags().GetBool(flags.AllOrgs); ok {
-				org = types.OrganizationTypeAll
+			namespace := cli.Config.Namespace()
+			if ok, _ := cmd.Flags().GetBool(flags.AllNamespaces); ok {
+				namespace = types.NamespaceTypeAll
 			}
 
 			// Fetch handlers from API
-			results, err := cli.Client.ListHandlers(org)
+			results, err := cli.Client.ListHandlers(namespace)
 			if err != nil {
 				return err
 			}
@@ -47,7 +47,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	helpers.AddFormatFlag(cmd.Flags())
-	helpers.AddAllOrganization(cmd.Flags())
+	helpers.AddAllNamespace(cmd.Flags())
 
 	return cmd
 }

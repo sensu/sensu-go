@@ -15,7 +15,7 @@ import (
 func TestExtensionStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		ext := types.FixtureExtension("frobber")
-		ctx := context.WithValue(context.Background(), types.OrganizationKey, ext.Organization)
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, ext.Namespace)
 
 		err := store.RegisterExtension(ctx, ext)
 		assert.NoError(t, err)
@@ -33,7 +33,7 @@ func TestExtensionStorage(t *testing.T) {
 		assert.Equal(t, 1, len(extensions))
 
 		// Updating an ext in a nonexistent org should not work
-		ext.Organization = "missing"
+		ext.Namespace = "missing"
 		err = store.RegisterExtension(ctx, ext)
 		assert.Error(t, err)
 	})

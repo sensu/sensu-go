@@ -21,16 +21,6 @@ func TestEdition(t *testing.T) {
 	assert.Equal(t, types.CoreEdition, conf.Edition())
 }
 
-func TestEnvironment(t *testing.T) {
-	conf := &Config{Profile: Profile{Environment: "dev"}}
-	assert.Equal(t, conf.Profile.Environment, conf.Environment())
-}
-
-func TestEnvironmentDefault(t *testing.T) {
-	conf := &Config{}
-	assert.Equal(t, config.DefaultEnvironment, conf.Environment())
-}
-
 func TestFormat(t *testing.T) {
 	conf := &Config{Profile: Profile{Format: "json"}}
 	assert.Equal(t, conf.Profile.Format, conf.Format())
@@ -41,14 +31,14 @@ func TestFormatDefault(t *testing.T) {
 	assert.Equal(t, config.DefaultFormat, conf.Format())
 }
 
-func TestOrganization(t *testing.T) {
-	conf := &Config{Profile: Profile{Organization: "dev"}}
-	assert.Equal(t, conf.Profile.Organization, conf.Organization())
+func TestNamespace(t *testing.T) {
+	conf := &Config{Profile: Profile{Namespace: "dev"}}
+	assert.Equal(t, conf.Profile.Namespace, conf.Namespace())
 }
 
-func TestOrganizationDefault(t *testing.T) {
+func TestNamespaceDefault(t *testing.T) {
 	conf := &Config{}
-	assert.Equal(t, config.DefaultOrganization, conf.Organization())
+	assert.Equal(t, config.DefaultNamespace, conf.Namespace())
 }
 
 func TestTokens(t *testing.T) {

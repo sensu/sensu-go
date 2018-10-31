@@ -64,9 +64,9 @@ func (client *RestClient) FetchFilter(name string) (*types.EventFilter, error) {
 }
 
 // ListFilters fetches all filters from configured Sensu instance
-func (client *RestClient) ListFilters(org string) ([]types.EventFilter, error) {
+func (client *RestClient) ListFilters(namespace string) ([]types.EventFilter, error) {
 	var filters []types.EventFilter
-	res, err := client.R().Get("/filters?org=" + url.QueryEscape(org))
+	res, err := client.R().Get("/filters?namespace=" + url.QueryEscape(namespace))
 	if err != nil {
 		return filters, err
 	}

@@ -67,7 +67,7 @@ func TestInfoCommandRunEClosureWithTable(t *testing.T) {
 	assert.NotEmpty(out)
 	assert.Contains(out, "Reason")
 	assert.Contains(out, "Subscription")
-	assert.Contains(out, "Organization")
+	assert.Contains(out, "Namespace")
 }
 
 func TestInfoCommandRunEClosureWithErr(t *testing.T) {

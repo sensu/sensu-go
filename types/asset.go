@@ -24,8 +24,8 @@ func (a *Asset) Validate() error {
 		return err
 	}
 
-	if a.Organization == "" {
-		return errors.New("organization cannot be empty")
+	if a.Namespace == "" {
+		return errors.New("namespace cannot be empty")
 	}
 
 	if a.Sha512 == "" {
@@ -51,11 +51,6 @@ func (a *Asset) Validate() error {
 
 	// Validate the statements and forbid govaluate's modifier tokens
 	return eval.ValidateStatements(a.Filters, true)
-}
-
-// GetEnvironment refers to the organization the check belongs to
-func (a *Asset) GetEnvironment() string {
-	return ""
 }
 
 // ValidateAssetName validates that asset's name is valid
@@ -98,7 +93,7 @@ func FixtureAsset(name string) *Asset {
 			"Content-Type":            "application/zip",
 			"X-Intended-Distribution": "trusty-14",
 		},
-		Organization: "default",
+		Namespace: "default",
 	}
 }
 
