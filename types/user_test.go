@@ -10,7 +10,7 @@ func TestFixtureUser(t *testing.T) {
 	u := FixtureUser("foo")
 	assert.NoError(t, u.Validate())
 	assert.Equal(t, "foo", u.Username)
-	assert.Contains(t, u.Roles, "default")
+	assert.Contains(t, u.Groups, "default")
 }
 
 func TestUserValidate(t *testing.T) {
