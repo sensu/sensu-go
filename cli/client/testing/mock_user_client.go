@@ -8,12 +8,6 @@ func (c *MockClient) AddGroupToUser(username, group string) error {
 	return args.Error(0)
 }
 
-// AddRoleToUser for use with mock lib
-func (c *MockClient) AddRoleToUser(username, role string) error {
-	args := c.Called(username, role)
-	return args.Error(0)
-}
-
 // CreateUser for use with mock lib
 func (c *MockClient) CreateUser(user *types.User) error {
 	args := c.Called(user)
@@ -47,12 +41,6 @@ func (c *MockClient) RemoveAllGroupsFromUser(username string) error {
 // RemoveGroupFromUser for use with mock lib
 func (c *MockClient) RemoveGroupFromUser(username, group string) error {
 	args := c.Called(username, group)
-	return args.Error(0)
-}
-
-// RemoveRoleFromUser for use with mock lib
-func (c *MockClient) RemoveRoleFromUser(username, role string) error {
-	args := c.Called(username, role)
 	return args.Error(0)
 }
 

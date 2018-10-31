@@ -15,14 +15,12 @@ func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 	// Add sub-commands
 	cmd.AddCommand(
 		AddGroupCommand(cli),
-		AddRoleCommand(cli),
 		CreateCommand(cli),
 		DeleteCommand(cli),
 		ListCommand(cli),
 		ReinstateCommand(cli),
 		RemoveGroupCommand(cli),
 		RemoveAllGroupsCommand(cli),
-		RemoveRoleCommand(cli),
 		SetGroupsCommand(cli),
 		SetPasswordCommand(cli),
 	)

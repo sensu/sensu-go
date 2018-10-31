@@ -22,21 +22,6 @@ func (client *RestClient) AddGroupToUser(username, group string) error {
 	return nil
 }
 
-// AddRoleToUser adds roles to given user on configured Sensu instance
-func (client *RestClient) AddRoleToUser(username, role string) error {
-	username, role = url.PathEscape(username), url.PathEscape(role)
-	res, err := client.R().Put("/rbac/users/" + username + "/roles/" + role)
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode() >= 400 {
-		return UnmarshalError(res)
-	}
-
-	return nil
-}
-
 // CreateUser creates new check on configured Sensu instance
 func (client *RestClient) CreateUser(user *types.User) error {
 	res, err := client.R().SetBody(user).Post("/rbac/users")
@@ -118,21 +103,6 @@ func (client *RestClient) RemoveAllGroupsFromUser(username string) error {
 	username = url.PathEscape(username)
 
 	res, err := client.R().Delete("/rbac/users/" + username + "/groups")
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode() >= 400 {
-		return UnmarshalError(res)
-	}
-
-	return nil
-}
-
-// RemoveRoleFromUser removes role from given user on configured Sensu instance
-func (client *RestClient) RemoveRoleFromUser(username, role string) error {
-	username, role = url.PathEscape(username), url.PathEscape(role)
-	res, err := client.R().Delete("/rbac/users/" + username + "/roles/" + role)
 	if err != nil {
 		return err
 	}
