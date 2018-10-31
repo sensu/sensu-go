@@ -73,7 +73,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 
 var jsonRe = regexp.MustCompile(`^(\s)*[\{\[]`)
 
-// parseResources is a rather heroic function that will any number of valid
+// parseResources is a rather heroic function that will parse any number of valid
 // JSON or YAML resources. Since it attempts to be intelligent, it likely
 // contains bugs.
 //
