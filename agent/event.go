@@ -78,13 +78,16 @@ func translateToEvent(a *Agent, result v1.CheckResult, event *types.Event) error
 		Command:       result.Command,
 		Subscriptions: result.Subscribers,
 		Interval:      result.Interval,
-		Name:          result.Name,
 		Issued:        result.Issued,
 		Executed:      result.Executed,
 		Duration:      result.Duration,
 		Output:        result.Output,
 	}
-	check.SetExtendedAttributes(result.GetExtendedAttributes())
+	check.Name = result.Name
+	check.Namespace = agentEntity.Namespace
+	// TODO(grepory): Determine how we scope annotations that are programmatically
+	// inserted into objects.
+	check.Annotations["extended.checks.sensu.io"] = string(result.GetExtendedAttributes())
 
 	// add config and check values to the 2.x event
 	event.Check = check

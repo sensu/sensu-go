@@ -47,13 +47,17 @@ var OutputMetricFormats = []string{NagiosOutputMetricFormat, GraphiteOutputMetri
 // and encoding/json.
 func NewCheck(c *CheckConfig) *Check {
 	check := &Check{
+		ObjectMeta: ObjectMeta{
+			Name:        c.Name,
+			Namespace:   c.Namespace,
+			Labels:      c.Labels,
+			Annotations: c.Annotations,
+		},
 		Command:              c.Command,
 		Handlers:             c.Handlers,
 		HighFlapThreshold:    c.HighFlapThreshold,
 		Interval:             c.Interval,
 		LowFlapThreshold:     c.LowFlapThreshold,
-		Name:                 c.Name,
-		Namespace:            c.Namespace,
 		Publish:              c.Publish,
 		RuntimeAssets:        c.RuntimeAssets,
 		Subscriptions:        c.Subscriptions,
@@ -359,15 +363,17 @@ func FixtureCheckConfig(id string) *CheckConfig {
 	interval := uint32(60)
 	timeout := uint32(0)
 
-	return &CheckConfig{
-		Name:                 id,
+	check := &CheckConfig{
+		ObjectMeta: ObjectMeta{
+			Name:      id,
+			Namespace: "default",
+		},
 		Interval:             interval,
 		Subscriptions:        []string{"linux"},
 		Command:              "command",
 		Handlers:             []string{},
 		RuntimeAssets:        []string{"ruby-2-4-2"},
 		CheckHooks:           []HookList{*FixtureHookList("hook1")},
-		Namespace:            "default",
 		Publish:              true,
 		Cron:                 "",
 		Ttl:                  0,
@@ -375,6 +381,7 @@ func FixtureCheckConfig(id string) *CheckConfig {
 		OutputMetricHandlers: []string{},
 		OutputMetricFormat:   "",
 	}
+	return check
 }
 
 // FixtureCheck returns a fixture for a Check object.

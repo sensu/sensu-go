@@ -19,8 +19,8 @@ func TestGetSilenced(t *testing.T) {
 		expectedEntries       []string
 	}{
 		{
-			name:  "Sets the silenced attribute of an event",
-			event: types.FixtureEvent("foo", "check_cpu"),
+			name:                  "Sets the silenced attribute of an event",
+			event:                 types.FixtureEvent("foo", "check_cpu"),
 			silencedSubscriptions: []*types.Silenced{},
 			silencedChecks: []*types.Silenced{
 				types.FixtureSilenced("entity:foo:check_cpu"),
@@ -137,7 +137,9 @@ func TestSilencedBy(t *testing.T) {
 			name: "not silenced, silenced & client don't have a common subscription",
 			event: &types.Event{
 				Check: &types.Check{
-					Name:          "check_cpu",
+					ObjectMeta: types.ObjectMeta{
+						Name: "check_cpu",
+					},
 					Subscriptions: []string{"linux", "windows"},
 				},
 				Entity: &types.Entity{
@@ -154,7 +156,9 @@ func TestSilencedBy(t *testing.T) {
 			name: "silenced, silenced & client do have a common subscription",
 			event: &types.Event{
 				Check: &types.Check{
-					Name:          "check_cpu",
+					ObjectMeta: types.ObjectMeta{
+						Name: "check_cpu",
+					},
 					Subscriptions: []string{"linux", "windows"},
 				},
 				Entity: &types.Entity{

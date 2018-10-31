@@ -63,8 +63,8 @@ type Config struct {
 // New creates a new Keepalived.
 func New(c Config, opts ...Option) (*Keepalived, error) {
 	k := &Keepalived{
-		store: c.Store,
-		bus:   c.Bus,
+		store:                 c.Store,
+		bus:                   c.Bus,
 		deregistrationHandler: c.DeregistrationHandler,
 		monitorFactory:        c.MonitorFactory,
 		keepaliveChan:         make(chan interface{}, 10),
@@ -259,13 +259,15 @@ func createKeepaliveEvent(rawEvent *types.Event) *types.Event {
 		}
 	}
 	keepaliveCheck := &types.Check{
-		Name:      KeepaliveCheckName,
-		Interval:  check.Interval,
-		Timeout:   check.Timeout,
-		Handlers:  []string{KeepaliveHandlerName},
-		Namespace: rawEvent.Entity.Namespace,
-		Executed:  time.Now().Unix(),
-		Issued:    time.Now().Unix(),
+		ObjectMeta: types.ObjectMeta{
+			Name:      KeepaliveCheckName,
+			Namespace: rawEvent.Entity.Namespace,
+		},
+		Interval: check.Interval,
+		Timeout:  check.Timeout,
+		Handlers: []string{KeepaliveHandlerName},
+		Executed: time.Now().Unix(),
+		Issued:   time.Now().Unix(),
 	}
 	keepaliveEvent := &types.Event{
 		Timestamp: time.Now().Unix(),
@@ -278,11 +280,13 @@ func createKeepaliveEvent(rawEvent *types.Event) *types.Event {
 
 func createRegistrationEvent(entity *types.Entity) *types.Event {
 	registrationCheck := &types.Check{
-		Name:      RegistrationCheckName,
-		Interval:  1,
-		Handlers:  []string{RegistrationHandlerName},
-		Namespace: entity.Namespace,
-		Status:    1,
+		ObjectMeta: types.ObjectMeta{
+			Name:      RegistrationCheckName,
+			Namespace: entity.Namespace,
+		},
+		Interval: 1,
+		Handlers: []string{RegistrationHandlerName},
+		Status:   1,
 	}
 	registrationEvent := &types.Event{
 		Timestamp: time.Now().Unix(),
