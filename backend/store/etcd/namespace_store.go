@@ -74,7 +74,7 @@ func (s *Store) DeleteNamespace(ctx context.Context, name string) error {
 	}
 	for _, r := range getresp.Responses {
 		if r.GetResponseRange().Count > 0 {
-			return errors.New("namespace is not empty") // TODO
+			return errors.New("namespace is not empty")
 		}
 	}
 

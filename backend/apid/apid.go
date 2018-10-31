@@ -182,7 +182,6 @@ func registerRestrictedResources(router *mux.Router, store store.Store, getter t
 		NewSubrouter(
 			router.NewRoute(),
 			middlewares.SimpleLogger{},
-			middlewares.Namespace{Store: store},
 			middlewares.Authentication{},
 			middlewares.AllowList{Store: store},
 			middlewares.Authorization{Store: store},

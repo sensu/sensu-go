@@ -68,7 +68,9 @@ func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.Messa
 	// Validate the agent namespace
 	ctx := context.TODO()
 	if _, err := store.GetNamespace(ctx, cfg.Namespace); err != nil {
-		return nil, fmt.Errorf("the namespace '%s' is invalid", cfg.Namespace)
+		return nil, fmt.Errorf(
+			"could not retrieve the namespace '%s': %s", cfg.Namespace, err.Error(),
+		)
 	}
 
 	logger.WithFields(logrus.Fields{
