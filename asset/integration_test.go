@@ -48,9 +48,12 @@ func TestBoltDBManager(t *testing.T) {
 	}
 
 	fixtureAsset := &types.Asset{
+		ObjectMeta: types.ObjectMeta{
+			Name:      "rubby-on-rails",
+			Namespace: "default",
+		},
 		Sha512: string(sha512),
 		URL:    tmpFixturePath,
-		Name:   "rubby-on-rails",
 	}
 
 	tmpFile, err := ioutil.TempFile(tmpDir, "asset_integration_test.db")
