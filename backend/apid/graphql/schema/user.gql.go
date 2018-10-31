@@ -14,12 +14,6 @@ type UserUsernameFieldResolver interface {
 	Username(p graphql.ResolveParams) (string, error)
 }
 
-// UserRolesFieldResolver implement to resolve requests for the User's roles field.
-type UserRolesFieldResolver interface {
-	// Roles implements response to request for roles field.
-	Roles(p graphql.ResolveParams) (interface{}, error)
-}
-
 // UserGroupsFieldResolver implement to resolve requests for the User's groups field.
 type UserGroupsFieldResolver interface {
 	// Groups implements response to request for groups field.
@@ -101,7 +95,6 @@ type UserHasPasswordFieldResolver interface {
 //
 type UserFieldResolvers interface {
 	UserUsernameFieldResolver
-	UserRolesFieldResolver
 	UserGroupsFieldResolver
 	UserDisabledFieldResolver
 	UserHasPasswordFieldResolver
@@ -167,12 +160,6 @@ func (_ UserAliases) Username(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
-// Roles implements response to request for 'roles' field.
-func (_ UserAliases) Roles(p graphql.ResolveParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
 // Groups implements response to request for 'groups' field.
 func (_ UserAliases) Groups(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -226,13 +213,6 @@ func _ObjTypeUserUsernameHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
-func _ObjTypeUserRolesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(UserRolesFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Roles(frp)
-	}
-}
-
 func _ObjTypeUserGroupsHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(UserGroupsFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -279,13 +259,6 @@ func _ObjectTypeUserConfigFn() graphql1.ObjectConfig {
 				Name:              "hasPassword",
 				Type:              graphql1.NewNonNull(graphql1.Boolean),
 			},
-			"roles": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "roles",
-				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Role")))),
-			},
 			"username": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -314,7 +287,6 @@ var _ObjectTypeUserDesc = graphql.ObjectDesc{
 		"disabled":    _ObjTypeUserDisabledHandler,
 		"groups":      _ObjTypeUserGroupsHandler,
 		"hasPassword": _ObjTypeUserHasPasswordHandler,
-		"roles":       _ObjTypeUserRolesHandler,
 		"username":    _ObjTypeUserUsernameHandler,
 	},
 }

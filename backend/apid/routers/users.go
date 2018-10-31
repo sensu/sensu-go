@@ -36,8 +36,6 @@ func (r *UsersRouter) Mount(parent *mux.Router) {
 	routes.Path("{id}/groups", r.removeAllGroups).Methods(http.MethodDelete)
 	routes.Path("{id}/groups/{group}", r.addGroup).Methods(http.MethodPut)
 	routes.Path("{id}/groups/{group}", r.removeGroup).Methods(http.MethodDelete)
-	routes.Path("{id}/roles/{role}", r.addRole).Methods(http.MethodPut)
-	routes.Path("{id}/roles/{role}", r.removeRole).Methods(http.MethodDelete)
 
 	// TODO: Remove?
 	routes.Path("{id}/password", r.updatePassword).Methods(http.MethodPut)
@@ -170,33 +168,5 @@ func (r *UsersRouter) removeAllGroups(req *http.Request) (interface{}, error) {
 	}
 
 	err = r.controller.RemoveAllGroups(req.Context(), id)
-	return nil, err
-}
-
-func (r *UsersRouter) addRole(req *http.Request) (interface{}, error) {
-	params := mux.Vars(req)
-	id, err := url.PathUnescape(params["id"])
-	if err != nil {
-		return nil, err
-	}
-	role, err := url.PathUnescape(params["role"])
-	if err != nil {
-		return nil, err
-	}
-	err = r.controller.AddRole(req.Context(), id, role)
-	return nil, err
-}
-
-func (r *UsersRouter) removeRole(req *http.Request) (interface{}, error) {
-	params := mux.Vars(req)
-	id, err := url.PathUnescape(params["id"])
-	if err != nil {
-		return nil, err
-	}
-	role, err := url.PathUnescape(params["role"])
-	if err != nil {
-		return nil, err
-	}
-	err = r.controller.RemoveRole(req.Context(), id, role)
 	return nil, err
 }
