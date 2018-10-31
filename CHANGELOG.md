@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Adds links to view entities and checks from the events page.
+
 ### Fixed
 - Silences List in web ui sorted by ascending order
 - Sorting button now works properly
@@ -27,8 +30,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Web ui allows publishing and unpublishing on check details page.
 - Web ui code highlighting added.
 
-### Fixed
-- Fixes exception thrown when web ui browser window is resized.
+### fixed
+- fixes exception thrown when web ui browser window is resized.
 
 ## [2.0.0-beta.6-2] - 2018-10-22
 
@@ -99,7 +102,7 @@ empty.
 - Prevent an empty Path environment variable for agents on Windows.
 - Fixed a bug in `sensuctl check update` interactive mode. Boolean defaults
 were being displayed rather than the check's current values.
-- Use the provided etcd client TLS information when the flag `--no-embed-etcd` 
+- Use the provided etcd client TLS information when the flag `--no-embed-etcd`
 is used.
 - Increase duration delta in TestPeriodicKeepalive integration test.
 - Fixed some problems introduced by Go 1.11.
