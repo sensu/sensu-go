@@ -54,11 +54,6 @@ func (r *silencedImpl) Check(p graphql.ResolveParams) (interface{}, error) {
 	return handleControllerResults(r.checkFinder.Find(ctx, sil.Check))
 }
 
-// Namespace implements response to request for 'namespace' field.
-// func (r *silencedImpl) Namespace(p graphql.ResolveParams) (interface{}, error) {
-// 	return findNamespace(p.Context, r.nsFinder, p.Source.(types.MultitenantResource))
-// }
-
 // Expires implements response to request for 'expires' field.
 func (r *silencedImpl) Expires(p graphql.ResolveParams) (*time.Time, error) {
 	s := p.Source.(*types.Silenced)
