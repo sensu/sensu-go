@@ -11,9 +11,8 @@ import (
 
 type filterOpts struct {
 	Action     string `survey:"action"`
-	Env        string
 	Name       string `survey:"name"`
-	Org        string
+	Namespace  string
 	Statements string `survey:"statements"`
 }
 
@@ -35,18 +34,10 @@ func (opts *filterOpts) administerQuestionnaire(editing bool) error {
 				Validate: survey.Required,
 			},
 			{
-				Name: "org",
+				Name: "namespace",
 				Prompt: &survey.Input{
-					Message: "Organization:",
-					Default: opts.Org,
-				},
-				Validate: survey.Required,
-			},
-			{
-				Name: "env",
-				Prompt: &survey.Input{
-					Message: "Environment:",
-					Default: opts.Env,
+					Message: "Namespace:",
+					Default: opts.Namespace,
 				},
 				Validate: survey.Required,
 			},
@@ -78,16 +69,14 @@ func (opts *filterOpts) administerQuestionnaire(editing bool) error {
 
 func (opts *filterOpts) Copy(filter *types.EventFilter) {
 	filter.Action = opts.Action
-	filter.Environment = opts.Env
 	filter.Name = opts.Name
-	filter.Organization = opts.Org
+	filter.Namespace = opts.Namespace
 	filter.Statements = helpers.SafeSplitCSV(opts.Statements)
 }
 
 func (opts *filterOpts) withFilter(filter *types.EventFilter) {
 	opts.Name = filter.Name
-	opts.Org = filter.Organization
-	opts.Env = filter.Environment
+	opts.Namespace = filter.Namespace
 	opts.Action = filter.Action
 	opts.Statements = strings.Join(filter.Statements, ",")
 }
@@ -96,10 +85,7 @@ func (opts *filterOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Action, _ = flags.GetString("action")
 	opts.Statements, _ = flags.GetString("statements")
 
-	if org := helpers.GetChangedStringValueFlag("organization", flags); org != "" {
-		opts.Org = org
-	}
-	if env := helpers.GetChangedStringValueFlag("environment", flags); env != "" {
-		opts.Env = env
+	if namespace := helpers.GetChangedStringValueFlag("namespace", flags); namespace != "" {
+		opts.Namespace = namespace
 	}
 }

@@ -128,7 +128,7 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *types.Silence
 		return err
 	}
 	var req clientv3.Op
-	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(silenced.Organization, silenced.Environment)), ">", 0)
+	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(silenced.Namespace)), ">", 0)
 	if silenced.Expire > 0 {
 		// add expire time to begin time, that is the ttl for the lease
 		var expireTime int64
@@ -158,10 +158,9 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *types.Silence
 	}
 	if !res.Succeeded {
 		return fmt.Errorf(
-			"could not create the silenced entry %s in environment %s/%s",
+			"could not create the silenced entry %s in namespace %s",
 			silenced.ID,
-			silenced.Organization,
-			silenced.Environment,
+			silenced.Namespace,
 		)
 	}
 

@@ -29,9 +29,9 @@ func TestValidator(t *testing.T) {
 	asset.URL = ""
 	assert.Error(asset.Validate())
 
-	// Given asset without an organization it should not pass
+	// Given asset without an namespace it should not pass
 	asset = FixtureAsset("name")
-	asset.Organization = ""
+	asset.Namespace = ""
 	assert.Error(asset.Validate())
 
 	// Given asset with an invalid URL it should not pass

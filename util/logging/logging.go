@@ -14,9 +14,8 @@ func EventFields(event *types.Event, debug bool) map[string]interface{} {
 	}
 
 	fields := logrus.Fields{
-		"entity":       event.Entity.ID,
-		"environment":  event.Entity.Environment,
-		"organization": event.Entity.Organization,
+		"entity":    event.Entity.ID,
+		"namespace": event.Entity.Namespace,
 	}
 
 	if debug {

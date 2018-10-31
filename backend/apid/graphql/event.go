@@ -24,12 +24,6 @@ func (r *eventImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.EventTranslator.EncodeToString(p.Source), nil
 }
 
-// Namespace implements response to request for 'namespace' field.
-func (r *eventImpl) Namespace(p graphql.ResolveParams) (interface{}, error) {
-	event := p.Source.(*types.Event)
-	return event.Entity, nil
-}
-
 // Timestamp implements response to request for 'timestamp' field.
 func (r *eventImpl) Timestamp(p graphql.ResolveParams) (time.Time, error) {
 	event := p.Source.(*types.Event)

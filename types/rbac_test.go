@@ -7,15 +7,14 @@ import (
 )
 
 func TestFixtureRule(t *testing.T) {
-	r := FixtureRule("acme", "dev")
+	r := FixtureRule("dev")
 	assert.Equal(t, "*", r.Type)
-	assert.Equal(t, "acme", r.Organization)
-	assert.Equal(t, "dev", r.Environment)
+	assert.Equal(t, "dev", r.Namespace)
 	assert.Equal(t, []string{"create", "read", "update", "delete"}, r.Permissions)
 }
 
 func TestFixtureRole(t *testing.T) {
-	r := FixtureRole("foo", "acme", "dev")
+	r := FixtureRole("foo", "dev")
 	assert.Equal(t, "foo", r.Name)
 	assert.NotEmpty(t, r.Rules)
 }
@@ -23,13 +22,9 @@ func TestFixtureRole(t *testing.T) {
 func TestRuleValidate(t *testing.T) {
 	r := &Rule{Type: "battlestar"}
 
-	// Empty environment
+	// Empty namespace
 	assert.Error(t, r.Validate())
-	r.Environment = "dev"
-
-	// Empty organization
-	assert.Error(t, r.Validate())
-	r.Organization = "acme"
+	r.Namespace = "dev"
 
 	// No permissions
 	assert.Error(t, r.Validate())
@@ -41,18 +36,17 @@ func TestRuleValidate(t *testing.T) {
 
 	// Valid params
 	assert.Equal(t, "battlestar", r.Type)
-	assert.Equal(t, "dev", r.Environment)
-	assert.Equal(t, "acme", r.Organization)
+	assert.Equal(t, "dev", r.Namespace)
 	assert.Equal(t, []string{"create"}, r.Permissions)
 	assert.NoError(t, r.Validate())
 
 	// Wildcard org
-	r.Organization = OrganizationTypeAll
+	r.Namespace = NamespaceTypeAll
 	assert.NoError(t, r.Validate())
 }
 
 func TestRoleValidate(t *testing.T) {
-	r := FixtureRole("foo", "acme", "dev")
+	r := FixtureRole("foo", "dev")
 
 	// Valid
 	assert.NoError(t, r.Validate())

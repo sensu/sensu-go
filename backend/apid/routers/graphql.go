@@ -41,8 +41,7 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 	ctx := req.Context()
 
 	// reset org & env keys to empty state so that all resources are queryable.
-	ctx = context.WithValue(ctx, types.OrganizationKey, "")
-	ctx = context.WithValue(ctx, types.EnvironmentKey, "")
+	ctx = context.WithValue(ctx, types.NamespaceKey, "")
 
 	// Parse request body
 	var reqBody interface{}

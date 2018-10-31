@@ -15,28 +15,27 @@ func TestNewAuthContext(t *testing.T) {
 	t.Run("empty context", func(t *testing.T) {
 		authCtx = ExtractValueFromContext(ctx)
 		assert.NotNil(t, authCtx)
-		assert.Empty(t, authCtx.Organization)
+		assert.Empty(t, authCtx.Namespace)
 		assert.Empty(t, authCtx.Actor.Rules)
 	})
 
-	t.Run("given context w/ organization", func(t *testing.T) {
-		orgCtx := context.WithValue(ctx, types.OrganizationKey, "default")
-		authCtx = ExtractValueFromContext(orgCtx)
+	t.Run("given context w/ namespace", func(t *testing.T) {
+		namespaceCtx := context.WithValue(ctx, types.NamespaceKey, "default")
+		authCtx = ExtractValueFromContext(namespaceCtx)
 		assert.NotNil(t, authCtx)
-		assert.Equal(t, authCtx.Organization, "default")
+		assert.Equal(t, authCtx.Namespace, "default")
 		assert.Empty(t, authCtx.Actor.Rules)
 	})
 
-	t.Run("given context w/ org & roles", func(t *testing.T) {
-		tCtx := context.WithValue(ctx, types.OrganizationKey, "default")
-		tCtx = context.WithValue(tCtx, types.EnvironmentKey, "dev")
+	t.Run("given context w/ namespace & roles", func(t *testing.T) {
+		tCtx := context.WithValue(ctx, types.NamespaceKey, "default")
 		tCtx = context.WithValue(
 			tCtx,
 			types.AuthorizationRoleKey,
-			[]*types.Role{types.FixtureRole("x", "y", "z")},
+			[]*types.Role{types.FixtureRole("x", "y")},
 		)
 		authCtx = ExtractValueFromContext(tCtx)
 		assert.NotNil(t, authCtx)
-		assert.Equal(t, "default", authCtx.Organization)
+		assert.Equal(t, "default", authCtx.Namespace)
 	})
 }

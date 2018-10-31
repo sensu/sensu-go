@@ -31,8 +31,7 @@ func TestGetSilenced(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.WithValue(context.Background(), types.OrganizationKey, "default")
-			ctx = context.WithValue(ctx, types.EnvironmentKey, "default")
+			ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
 
 			mockStore := &mockstore.MockStore{}
 			mockStore.On(
@@ -227,8 +226,7 @@ func TestHandleExpireOnResolveEntries(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.WithValue(context.Background(), types.OrganizationKey, "default")
-			ctx = context.WithValue(ctx, types.EnvironmentKey, "default")
+			ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
 
 			mockStore := &mockstore.MockStore{}
 

@@ -26,12 +26,10 @@ message Mutator {
   // Env is a list of environment variables to use with command execution
   repeated string env_vars = 4 [(gogoproto.jsontag) = "env_vars"];
 
-  // Environment indicates to which env a mutator belongs to
-  string environment = 5;
-
-  // Organization specifies the organization to which the mutator belongs.
-  string organization = 6;
+  // Namespace to which the mutator belongs to
+  string namespace = 7;
 
   // RuntimeAssets are a list of assets required to execute a mutator.
-  repeated string runtime_assets = 7 [(gogoproto.jsontag) = "runtime_assets"];
+  repeated string runtime_assets = 8 [(gogoproto.jsontag) = "runtime_assets"];
+
 }

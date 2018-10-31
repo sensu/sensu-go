@@ -25,12 +25,9 @@ message EventFilter {
   // to determine if the event matches this filter.
   repeated string statements = 3 [(gogoproto.jsontag) = "statements"];
 
-  // Environment indicates to which env a filter belongs to
-  string environment = 4;
-
-  // Organization indicates to which org a filter belongs to
-  string organization = 5;
-
   // When indicates a TimeWindowWhen that a filter uses to filter by days & times
   TimeWindowWhen when = 6;
+
+   // Namespace to which the filter belongs to
+   string namespace = 7;
 }

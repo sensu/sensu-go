@@ -91,15 +91,15 @@ func (m mockEventDestroyer) Destroy(ctx context.Context, a, b string) error {
 	return m.err
 }
 
-// environments
+// namespaces
 
-type mockEnvironmentFinder struct {
-	record *types.Environment
+type mockNamespaceFinder struct {
+	record *types.Namespace
 	err    error
 }
 
-func (m mockEnvironmentFinder) Find(_ context.Context, org, env string) (*types.Environment, error) {
-	if org != "bobs-burgers" || env != "us-west-2" {
+func (m mockNamespaceFinder) Find(_ context.Context, name string) (*types.Namespace, error) {
+	if name != "us-west-2" {
 		return nil, nil
 	}
 	return m.record, m.err

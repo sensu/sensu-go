@@ -27,15 +27,10 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-// returns true iff --organization or --environment are specified to be
-// anything other than "default"
+// returns true if --namespace is specified to be anything other than "default"
 func namespaceFlagsSet(cmd *cobra.Command) bool {
-	org, err := cmd.Flags().GetString("organization")
-	if err == nil && org != config.DefaultOrganization {
-		return true
-	}
-	env, err := cmd.Flags().GetString("environment")
-	if err == nil && env != config.DefaultEnvironment {
+	namespace, err := cmd.Flags().GetString("namespace")
+	if err == nil && namespace != config.DefaultNamespace {
 		return true
 	}
 	return false

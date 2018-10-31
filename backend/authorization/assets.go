@@ -24,7 +24,7 @@ func (p *AssetPolicy) Context() Context {
 	return p.context
 }
 
-// WithContext returns new policy populated with rules & organization.
+// WithContext returns new policy populated with rules & namespace.
 func (p AssetPolicy) WithContext(ctx context.Context) AssetPolicy { // nolint
 	p.context = ExtractValueFromContext(ctx)
 	return p
@@ -37,7 +37,7 @@ func (p *AssetPolicy) CanList() bool {
 
 // CanRead returns true if actor has read access to resource.
 func (p *AssetPolicy) CanRead(asset *types.Asset) bool {
-	return canPerformOn(p, asset.Organization, "", types.RulePermRead)
+	return canPerformOn(p, asset.Namespace, types.RulePermRead)
 }
 
 // CanCreate returns true if actor has access to create.

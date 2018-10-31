@@ -90,14 +90,14 @@ func TestStartStop(t *testing.T) {
 			name: "Passing Keepalives",
 			records: []*types.KeepaliveRecord{
 				{
-					EntityID:     "entity1",
-					Organization: "org",
-					Time:         0,
+					EntityID:  "entity1",
+					Namespace: "org",
+					Time:      0,
 				},
 				{
-					EntityID:     "entity2",
-					Organization: "org",
-					Time:         0,
+					EntityID:  "entity2",
+					Namespace: "org",
+					Time:      0,
 				},
 			},
 			events: []*types.Event{
@@ -110,14 +110,14 @@ func TestStartStop(t *testing.T) {
 			name: "Failing Keepalives",
 			records: []*types.KeepaliveRecord{
 				{
-					EntityID:     "entity1",
-					Organization: "org",
-					Time:         0,
+					EntityID:  "entity1",
+					Namespace: "org",
+					Time:      0,
 				},
 				{
-					EntityID:     "entity2",
-					Organization: "org",
-					Time:         0,
+					EntityID:  "entity2",
+					Namespace: "org",
+					Time:      0,
 				},
 			},
 			events: []*types.Event{
@@ -248,4 +248,10 @@ func TestCreateKeepaliveEvent(t *testing.T) {
 	assert.Equal(t, []string{"keepalive"}, keepaliveEvent.Check.Handlers)
 	assert.Equal(t, uint32(0), keepaliveEvent.Check.Status)
 	assert.NotEqual(t, int64(0), keepaliveEvent.Check.Issued)
+
+	event.Check = nil
+	keepaliveEvent = createKeepaliveEvent(event)
+	assert.Equal(t, "keepalive", keepaliveEvent.Check.Name)
+	assert.Equal(t, uint32(20), keepaliveEvent.Check.Interval)
+	assert.Equal(t, uint32(120), keepaliveEvent.Check.Timeout)
 }

@@ -1,12 +1,12 @@
 """
 CheckConfig is the specification of a check.
 """
-type CheckConfig implements Node {
+type CheckConfig implements Node, Namespaced {
   "The globally unique identifier of the check."
   id: ID!
 
   "namespace in which this check resides"
-  namespace: Namespace!
+  namespace: String!
 
   "name is the unique identifier for a check"
   name: String!
