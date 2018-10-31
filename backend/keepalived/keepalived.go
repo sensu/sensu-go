@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/backend/store"
@@ -250,10 +251,17 @@ func (k *Keepalived) handleEntityRegistration(entity *types.Entity) error {
 }
 
 func createKeepaliveEvent(rawEvent *types.Event) *types.Event {
+	check := rawEvent.Check
+	if check == nil {
+		check = &types.Check{
+			Interval: agent.DefaultKeepaliveInterval,
+			Timeout:  types.DefaultKeepaliveTimeout,
+		}
+	}
 	keepaliveCheck := &types.Check{
 		Name:      KeepaliveCheckName,
-		Interval:  rawEvent.Check.Interval,
-		Timeout:   rawEvent.Check.Timeout,
+		Interval:  check.Interval,
+		Timeout:   check.Timeout,
 		Handlers:  []string{KeepaliveHandlerName},
 		Namespace: rawEvent.Entity.Namespace,
 		Executed:  time.Now().Unix(),

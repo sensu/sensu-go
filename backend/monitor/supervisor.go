@@ -74,9 +74,12 @@ func (m *EtcdSupervisor) Monitor(ctx context.Context, name string, event *types.
 	// if it exists and the ttl matches the original ttl of the lease, extend its
 	// lease with keep-alive.
 	if mon != nil && mon.ttl == ttl {
-		logger.Debugf("a lease for the key %s already exist, extending it", key)
+		logger.Debugf("a lease for the key %s already exists, extending lease %v", key, mon.leaseID)
 		_, kaerr := m.client.KeepAliveOnce(ctx, mon.leaseID)
-		return kaerr
+		if kaerr == nil {
+			return kaerr
+		}
+		logger.WithError(kaerr).Errorf("unable to extend lease %v, creating new lease for the key %s", mon.leaseID, key)
 	}
 
 	// If the ttls do not match or the monitor doesn't exist, create a new lease

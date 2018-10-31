@@ -11,6 +11,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Silences List in web ui sorted by ascending order
 - Sorting button now works properly
 - Fixed unresponsive silencing entry form begin date input.
+- Fixed a panic on the backend when handling keepalives from older agent versions.
+- Fixed a bug that would prevent some keepalive failures from occurring.
+- Improved event validation error messages.
 
 ### Breaking Changes
 - Environments and organizations have been replaced with namespaces.

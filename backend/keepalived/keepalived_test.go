@@ -248,4 +248,10 @@ func TestCreateKeepaliveEvent(t *testing.T) {
 	assert.Equal(t, []string{"keepalive"}, keepaliveEvent.Check.Handlers)
 	assert.Equal(t, uint32(0), keepaliveEvent.Check.Status)
 	assert.NotEqual(t, int64(0), keepaliveEvent.Check.Issued)
+
+	event.Check = nil
+	keepaliveEvent = createKeepaliveEvent(event)
+	assert.Equal(t, "keepalive", keepaliveEvent.Check.Name)
+	assert.Equal(t, uint32(20), keepaliveEvent.Check.Interval)
+	assert.Equal(t, uint32(120), keepaliveEvent.Check.Timeout)
 }
