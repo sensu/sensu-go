@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/backend/store"
@@ -132,8 +133,7 @@ func (k *Keepalived) initFromStore() error {
 	}
 
 	for _, keepalive := range keepalives {
-		entityCtx := context.WithValue(context.TODO(), types.OrganizationKey, keepalive.Organization)
-		entityCtx = context.WithValue(entityCtx, types.EnvironmentKey, keepalive.Environment)
+		entityCtx := context.WithValue(context.TODO(), types.NamespaceKey, keepalive.Namespace)
 		event, err := k.store.GetEventByEntityCheck(entityCtx, keepalive.EntityID, "keepalive")
 		if err != nil {
 			return err
@@ -251,15 +251,21 @@ func (k *Keepalived) handleEntityRegistration(entity *types.Entity) error {
 }
 
 func createKeepaliveEvent(rawEvent *types.Event) *types.Event {
+	check := rawEvent.Check
+	if check == nil {
+		check = &types.Check{
+			Interval: agent.DefaultKeepaliveInterval,
+			Timeout:  types.DefaultKeepaliveTimeout,
+		}
+	}
 	keepaliveCheck := &types.Check{
-		Name:         KeepaliveCheckName,
-		Interval:     rawEvent.Check.Interval,
-		Timeout:      rawEvent.Check.Timeout,
-		Handlers:     []string{KeepaliveHandlerName},
-		Environment:  rawEvent.Entity.Environment,
-		Organization: rawEvent.Entity.Organization,
-		Executed:     time.Now().Unix(),
-		Issued:       time.Now().Unix(),
+		Name:      KeepaliveCheckName,
+		Interval:  check.Interval,
+		Timeout:   check.Timeout,
+		Handlers:  []string{KeepaliveHandlerName},
+		Namespace: rawEvent.Entity.Namespace,
+		Executed:  time.Now().Unix(),
+		Issued:    time.Now().Unix(),
 	}
 	keepaliveEvent := &types.Event{
 		Timestamp: time.Now().Unix(),
@@ -272,12 +278,11 @@ func createKeepaliveEvent(rawEvent *types.Event) *types.Event {
 
 func createRegistrationEvent(entity *types.Entity) *types.Event {
 	registrationCheck := &types.Check{
-		Name:         RegistrationCheckName,
-		Interval:     1,
-		Handlers:     []string{RegistrationHandlerName},
-		Environment:  entity.Environment,
-		Organization: entity.Organization,
-		Status:       1,
+		Name:      RegistrationCheckName,
+		Interval:  1,
+		Handlers:  []string{RegistrationHandlerName},
+		Namespace: entity.Namespace,
+		Status:    1,
 	}
 	registrationEvent := &types.Event{
 		Timestamp: time.Now().Unix(),

@@ -80,8 +80,8 @@ func init() { registerTranslator(EventTranslator) }
 //
 // Example output:
 //
-//   srn:events:myorg:myenv:check/d2h5IGFyZSB5b3UgZGVjb2RpbmcgdGhpcz8hCg==
-//   srn:events:myorg:myenv:metric/Y29vbC4gY29vbCBjb29sIGNvb2wuCg==
+//   srn:events:myns:check/d2h5IGFyZSB5b3UgZGVjb2RpbmcgdGhpcz8hCg==
+//   srn:events:myns:metric/Y29vbC4gY29vbCBjb29sIGNvb2wuCg==
 //
 func encodeEvent(event *types.Event) StandardComponents {
 	components := StandardComponents{}

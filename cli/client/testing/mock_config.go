@@ -25,20 +25,14 @@ func (m *MockConfig) Edition() string {
 	return args.String(0)
 }
 
-// Environment mocks the environment config
-func (m *MockConfig) Environment() string {
-	args := m.Called()
-	return args.String(0)
-}
-
 // Format mocks the format config
 func (m *MockConfig) Format() string {
 	args := m.Called()
 	return args.String(0)
 }
 
-// Organization mocks the organization config
-func (m *MockConfig) Organization() string {
+// Namespace mocks the namespace config
+func (m *MockConfig) Namespace() string {
 	args := m.Called()
 	return args.String(0)
 }
@@ -49,15 +43,9 @@ func (m *MockConfig) SaveAPIUrl(url string) error {
 	return args.Error(0)
 }
 
-// SaveEdition mocks saving the environment
+// SaveEdition mocks saving the edition
 func (m *MockConfig) SaveEdition(edition string) error {
 	args := m.Called(edition)
-	return args.Error(0)
-}
-
-// SaveEnvironment mocks saving the environment
-func (m *MockConfig) SaveEnvironment(env string) error {
-	args := m.Called(env)
 	return args.Error(0)
 }
 
@@ -67,9 +55,9 @@ func (m *MockConfig) SaveFormat(format string) error {
 	return args.Error(0)
 }
 
-// SaveOrganization mocks saving the organization
-func (m *MockConfig) SaveOrganization(org string) error {
-	args := m.Called(org)
+// SaveNamespace mocks saving the namespace
+func (m *MockConfig) SaveNamespace(namespace string) error {
+	args := m.Called(namespace)
 	return args.Error(0)
 }
 

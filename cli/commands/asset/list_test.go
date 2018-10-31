@@ -45,7 +45,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert.Nil(err)
 }
 
-func TestListCommandRunEClosureWithAllOrgs(t *testing.T) {
+func TestListCommandRunEClosureWithAllNamespaces(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewCLI()
 
@@ -58,7 +58,7 @@ func TestListCommandRunEClosureWithAllOrgs(t *testing.T) {
 	}, nil)
 
 	cmd := ListCommand(cli)
-	require.NoError(t, cmd.Flags().Set(flags.AllOrgs, "t"))
+	require.NoError(t, cmd.Flags().Set(flags.AllNamespaces, "t"))
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
@@ -103,7 +103,7 @@ func TestListFlags(t *testing.T) {
 	cli := test.NewCLI()
 	cmd := ListCommand(cli)
 
-	flag := cmd.Flag("all-organizations")
+	flag := cmd.Flag("all-namespaces")
 	assert.NotNil(flag)
 
 	flag = cmd.Flag("format")

@@ -51,65 +51,40 @@ func TestMatchesRuleType(t *testing.T) {
 	}
 }
 
-func TestMatchesRuleEnvironment(t *testing.T) {
+func TestMatchesRuleNamespace(t *testing.T) {
 	testCases := []struct {
-		RuleEnvironment string
-		Environment     string
-		Want            bool
-	}{
-		{"dev", "prod", false},
-		{"dev", "dev", true},
-		{"*", "dev", true},
-	}
-	for _, tc := range testCases {
-		testName := fmt.Sprintf("%s matches %s", tc.RuleEnvironment, tc.Environment)
-		t.Run(testName, func(t *testing.T) {
-			assert := assert.New(t)
-			rule := types.Rule{
-				Environment: tc.RuleEnvironment,
-			}
-			assert.Equal(tc.Want, matchesRuleEnvironment(rule, tc.Environment))
-		})
-	}
-}
-
-func TestMatchesRuleOrganization(t *testing.T) {
-	testCases := []struct {
-		RuleOrganization string
-		Organization     string
-		Want             bool
+		RuleNamespace string
+		Namespace     string
+		Want          bool
 	}{
 		{"sensu", "notsensu", false},
 		{"sensu", "sensu", true},
 		{"*", "sensu", true},
 	}
 	for _, tc := range testCases {
-		testName := fmt.Sprintf("%s matches %s", tc.RuleOrganization, tc.Organization)
+		testName := fmt.Sprintf("%s matches %s", tc.RuleNamespace, tc.Namespace)
 		t.Run(testName, func(t *testing.T) {
 			assert := assert.New(t)
 			rule := types.Rule{
-				Organization: tc.RuleOrganization,
+				Namespace: tc.RuleNamespace,
 			}
-			assert.Equal(tc.Want, matchesRuleOrganization(rule, tc.Organization))
+			assert.Equal(tc.Want, matchesRuleNamespace(rule, tc.Namespace))
 		})
 	}
 }
 
 func TestCanAccessResource(t *testing.T) {
 	testCases := []struct {
-		TestName     string
-		Resource     string
-		Environment  string
-		Organization string
-		Action       string
-		Want         bool
+		TestName  string
+		Resource  string
+		Namespace string
+		Action    string
+		Want      bool
 	}{
-		{"NoMatches", "checks", "prod", "notsensu", types.RulePermCreate, false},
-		{"AllMatch", "entities", "dev", "sensu", types.RulePermRead, true},
-		{"ReadItsEnvironment", types.RuleTypeEnvironment, "dev", "sensu", types.RulePermRead, true},
-		{"ReadItsOrganization", types.RuleTypeOrganization, "", "sensu", types.RulePermRead, true},
-		{"ReadAnotherEnvironment", types.RuleTypeEnvironment, "prod", "sensu", types.RulePermRead, false},
-		{"ReadAnotherOrganization", types.RuleTypeOrganization, "", "acme", types.RulePermRead, false},
+		{"wrong resource", types.RuleTypeEvent, "notsensu", types.RulePermCreate, false},
+		{"right resource", types.RuleTypeEntity, "sensu", types.RulePermRead, true},
+		{"right namespace", types.RuleTypeNamespace, "sensu", types.RulePermRead, true},
+		{"wrong namespace", types.RuleTypeNamespace, "acme", types.RulePermRead, false},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.TestName, func(t *testing.T) {
@@ -118,15 +93,13 @@ func TestCanAccessResource(t *testing.T) {
 				Name: "bob",
 				Rules: []types.Rule{
 					{
-						Type:         "entities",
-						Organization: "sensu",
-						Environment:  "dev",
-						Permissions:  []string{types.RulePermRead},
+						Type:        types.RuleTypeEntity,
+						Namespace:   "sensu",
+						Permissions: []string{types.RulePermRead},
 					},
 				},
 			}
-
-			assert.Equal(tc.Want, CanAccessResource(actor, tc.Organization, tc.Environment, tc.Resource, tc.Action))
+			assert.Equal(tc.Want, CanAccessResource(actor, tc.Namespace, tc.Resource, tc.Action))
 		})
 	}
 }
@@ -137,16 +110,14 @@ func TestPrivilegeEscalation(t *testing.T) {
 		Name: "bob",
 		Rules: []types.Rule{
 			{
-				Type:         "rules",
-				Organization: "hasaccess",
-				Environment:  "hasaccess",
-				Permissions:  []string{types.RulePermCreate},
+				Type:        "rules",
+				Namespace:   "hasaccess",
+				Permissions: []string{types.RulePermCreate},
 			},
 			{
-				Type:         "roles",
-				Organization: "hasaccess",
-				Environment:  "hasaccess",
-				Permissions:  []string{types.RulePermCreate},
+				Type:        "roles",
+				Namespace:   "hasaccess",
+				Permissions: []string{types.RulePermCreate},
 			},
 		},
 	}
@@ -155,7 +126,6 @@ func TestPrivilegeEscalation(t *testing.T) {
 		false,
 		CanAccessResource(
 			actor,
-			"doesnothaveaccess",
 			"doesnothaveaccess",
 			"roles",
 			types.RulePermCreate,
@@ -166,7 +136,6 @@ func TestPrivilegeEscalation(t *testing.T) {
 		false,
 		CanAccessResource(
 			actor,
-			"doesnothaveaccess",
 			"doesnothaveaccess",
 			"rules",
 			types.RulePermCreate,

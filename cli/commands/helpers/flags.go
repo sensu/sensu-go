@@ -28,9 +28,9 @@ func AddFormatFlag(flagSet *pflag.FlagSet) {
 	)
 }
 
-// AddAllOrganization adds the '--all-organizations' flag to the given command
-func AddAllOrganization(flagSet *pflag.FlagSet) {
-	flagSet.Bool(flags.AllOrgs, false, "Include records from all organizations")
+// AddAllNamespace adds the '--all-namespaces' flag to the given command
+func AddAllNamespace(flagSet *pflag.FlagSet) {
+	flagSet.Bool(flags.AllNamespaces, false, "Include records from all namespaces")
 }
 
 // AddInteractiveFlag adds the '--interactive' flag to the given command
@@ -76,7 +76,7 @@ func SafeSplitCSV(i string) []string {
 
 func init() {
 	// Matches same whitespace that the stdlib's unicode or strings packages would
-	// https://golang.org/src/unicode/graphic.go?s=3997:4022#L116
+	// https://golang.namespace/src/unicode/graphic.go?s=3997:4022#L116
 	whiteSpc := "\\t\\n\\v\\f\\r\u0085\u00A0 "
 	commaWhitespaceRegex = regexp.MustCompile(
 		fmt.Sprintf("[%s]*,[%s]*", whiteSpc, whiteSpc),

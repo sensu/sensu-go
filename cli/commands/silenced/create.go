@@ -34,8 +34,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 			opts := newSilencedOpts()
 
-			opts.Org = cli.Config.Organization()
-			opts.Env = cli.Config.Environment()
+			opts.Namespace = cli.Config.Namespace()
 
 			if isInteractive {
 				if err := opts.administerQuestionnaire(false); err != nil {

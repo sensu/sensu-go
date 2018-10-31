@@ -18,7 +18,7 @@ type queryImpl struct {
 	eventFinder  eventFinder
 	entityFinder entityFinder
 	checkFinder  checkFinder
-	envFinder    environmentFinder
+	nsFinder     namespaceFinder
 
 	nodeResolver *nodeResolver
 }
@@ -28,7 +28,7 @@ func newQueryImpl(store store.Store, resolver *nodeResolver, queue types.QueueGe
 		eventFinder:  actions.NewEventController(store, nil),
 		entityFinder: actions.NewEntityController(store),
 		checkFinder:  actions.NewCheckController(store, queue),
-		envFinder:    actions.NewEnvironmentController(store),
+		nsFinder:     actions.NewNamespacesController(store),
 		nodeResolver: resolver,
 	}
 }
@@ -38,29 +38,29 @@ func (r *queryImpl) Viewer(p graphql.ResolveParams) (interface{}, error) {
 	return struct{}{}, nil
 }
 
-// Environment implements response to request for 'environment' field.
-func (r *queryImpl) Environment(p schema.QueryEnvironmentFieldResolverParams) (interface{}, error) {
-	env, err := r.envFinder.Find(p.Context, p.Args.Organization, p.Args.Environment)
+// Environment implements response to request for 'namespace' field.
+func (r *queryImpl) Namespace(p schema.QueryNamespaceFieldResolverParams) (interface{}, error) {
+	env, err := r.nsFinder.Find(p.Context, p.Args.Name)
 	return handleControllerResults(env, err)
 }
 
 // Event implements response to request for 'event' field.
 func (r *queryImpl) Event(p schema.QueryEventFieldResolverParams) (interface{}, error) {
-	ctx := types.SetContextFromResource(p.Context, p.Args.Ns)
+	ctx := contextWithNamespace(p.Context, p.Args.Namespace)
 	event, err := r.eventFinder.Find(ctx, p.Args.Entity, p.Args.Check)
 	return handleControllerResults(event, err)
 }
 
 // Entity implements response to request for 'entity' field.
 func (r *queryImpl) Entity(p schema.QueryEntityFieldResolverParams) (interface{}, error) {
-	ctx := types.SetContextFromResource(p.Context, p.Args.Ns)
+	ctx := contextWithNamespace(p.Context, p.Args.Namespace)
 	entity, err := r.entityFinder.Find(ctx, p.Args.Name)
 	return handleControllerResults(entity, err)
 }
 
 // Check implements response to request for 'check' field.
 func (r *queryImpl) Check(p schema.QueryCheckFieldResolverParams) (interface{}, error) {
-	ctx := types.SetContextFromResource(p.Context, p.Args.Ns)
+	ctx := contextWithNamespace(p.Context, p.Args.Namespace)
 	check, err := r.checkFinder.Find(ctx, p.Args.Name)
 	return handleControllerResults(check, err)
 }

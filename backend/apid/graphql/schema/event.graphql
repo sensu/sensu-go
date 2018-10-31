@@ -1,12 +1,12 @@
 """
 An Event is the encapsulating type sent across the Sensu websocket transport.
 """
-type Event implements Node {
+type Event implements Node, Namespaced {
   "The globally unique identifier of the record."
   id: ID!
 
   "namespace in which this record resides"
-  namespace: Namespace!
+  namespace: String!
 
   "Timestamp is the time in seconds since the Epoch."
   timestamp: DateTime!

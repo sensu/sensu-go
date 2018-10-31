@@ -78,9 +78,9 @@ func (client *RestClient) FetchHook(name string) (*types.HookConfig, error) {
 }
 
 // ListHooks fetches all hooks from configured Sensu instance
-func (client *RestClient) ListHooks(org string) ([]types.HookConfig, error) {
+func (client *RestClient) ListHooks(namespace string) ([]types.HookConfig, error) {
 	var hooks []types.HookConfig
-	res, err := client.R().SetQueryParam("org", org).Get("/hooks")
+	res, err := client.R().SetQueryParam("namespace", namespace).Get("/hooks")
 	if err != nil {
 		return hooks, err
 	}

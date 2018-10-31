@@ -1,9 +1,12 @@
 """
 Silenced is the representation of a silence entry.
 """
-type Silenced implements Node, EnvironmentNode {
+type Silenced implements Node, Namespaced {
   "The globally unique identifier for the record."
   id: ID!
+
+  "The namespace the object belongs to."
+  namespace: String!
 
   "ID is the combination of subscription and check name (subscription:checkname)"
   storeId: String!
@@ -31,12 +34,6 @@ type Silenced implements Node, EnvironmentNode {
 
   "Subscription is the name of the subscription to which the entry applies."
   subscription: String
-
-  "Organization indicates to which org a silenced entry belongs to."
-  organization: Organization!
-
-  "Environment indicates which env a silenced entry belongs to."
-  environment: Environment
 
   "Begin is a timestamp at which the silenced entry takes effect."
   begin: DateTime

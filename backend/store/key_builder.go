@@ -21,10 +21,10 @@ func NewKeyBuilder(resourceName string) KeyBuilder {
 	return builder
 }
 
-// WithOrg adds an Organization to a key.
-func (b KeyBuilder) WithOrg(org string) KeyBuilder {
-	ns := Namespace{Org: org}
-	return b.WithNamespace(ns)
+// WithNamespace adds a namespace to a key.
+func (b KeyBuilder) WithNamespace(namespace string) KeyBuilder {
+	b.namespace = Namespace{Namespace: namespace}
+	return b
 }
 
 // WithResource adds a resource to a key.
@@ -35,13 +35,7 @@ func (b KeyBuilder) WithResource(r types.MultitenantResource) KeyBuilder {
 
 // WithContext adds a namespace from a context.
 func (b KeyBuilder) WithContext(ctx context.Context) KeyBuilder {
-	ns := NewNamespaceFromContext(ctx)
-	return b.WithNamespace(ns)
-}
-
-// WithNamespace adds a Namespace to a key.
-func (b KeyBuilder) WithNamespace(ns Namespace) KeyBuilder {
-	b.namespace = ns
+	b.namespace = NewNamespaceFromContext(ctx)
 	return b
 }
 
@@ -51,8 +45,7 @@ func (b KeyBuilder) Build(keys ...string) string {
 		[]string{
 			Root,
 			b.resourceName,
-			b.namespace.Org,
-			b.namespace.Env,
+			b.namespace.Namespace,
 		},
 		keys...,
 	)
@@ -65,7 +58,7 @@ func (b KeyBuilder) Build(keys ...string) string {
 func (b KeyBuilder) BuildPrefix(keys ...string) string {
 	out := Root + keySeparator + b.resourceName
 
-	keys = append([]string{b.namespace.Org, b.namespace.Env}, keys...)
+	keys = append([]string{b.namespace.Namespace}, keys...)
 	for _, key := range keys {
 		// If we encounter a wildcard stop and return key
 		if key == WildcardValue {

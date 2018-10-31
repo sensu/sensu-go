@@ -93,8 +93,7 @@ platforms. Please download and install Docker CE before proceeding._
    ? Sensu Backend URL: http://127.0.0.1:8080
    ? Username: admin
    ? Password: P@ssw0rd!
-   ? Organization: default
-   ? Environment: default
+   ? Namespace: default
    ? Preferred output format: tabular
    ```
 

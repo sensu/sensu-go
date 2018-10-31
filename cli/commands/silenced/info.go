@@ -91,16 +91,11 @@ func printToList(v interface{}, writer io.Writer) error {
 				Value: r.Subscription,
 			},
 			{
-				Label: "Organization",
-				Value: r.Organization,
-			},
-			{
-				Label: "Environment",
-				Value: r.Environment,
+				Label: "Namespace",
+				Value: r.Namespace,
 			},
 		},
 	}
-
 	if time.Now().Before(time.Unix(r.Begin, 0)) {
 		extraRows := []*list.Row{{
 			Label: "Begin",

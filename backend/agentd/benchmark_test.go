@@ -25,16 +25,14 @@ func BenchmarkSubPump(b *testing.B) {
 
 	st := &mockstore.MockStore{}
 	st.On(
-		"GetEnvironment",
+		"GetNamespace",
 		mock.Anything,
-		"org",
-		"env",
-	).Return(&types.Environment{}, nil)
+		"acme",
+	).Return(&types.Namespace{}, nil)
 
 	cfg := SessionConfig{
 		AgentID:       "testing",
-		Organization:  "org",
-		Environment:   "env",
+		Namespace:     "acme",
 		Subscriptions: []string{"testing"},
 	}
 	session, err := NewSession(cfg, conn, bus, st)

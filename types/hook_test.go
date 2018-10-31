@@ -20,11 +20,10 @@ func TestHookValidate(t *testing.T) {
 
 	// Valid with valid config
 	h.HookConfig = HookConfig{
-		Name:         "test",
-		Command:      "yes",
-		Timeout:      10,
-		Environment:  "default",
-		Organization: "default",
+		Name:      "test",
+		Command:   "yes",
+		Timeout:   10,
+		Namespace: "default",
 	}
 	assert.NoError(t, h.Validate())
 }
@@ -68,13 +67,9 @@ func TestHookConfig(t *testing.T) {
 	assert.Error(t, h.Validate())
 	h.Command = "echo 'foo'"
 
-	// Invalid organization
+	// Invalid Namespace
 	assert.Error(t, h.Validate())
-	h.Organization = "default"
-
-	// Invalid environment
-	assert.Error(t, h.Validate())
-	h.Environment = "default"
+	h.Namespace = "default"
 
 	// Valid hook
 	assert.NoError(t, h.Validate())
@@ -89,7 +84,7 @@ func TestFixtureHookIsValid(t *testing.T) {
 }
 
 func TestHookUnmarshal_GH1520(t *testing.T) {
-	b := []byte(`{"name":"foo","command":"ps aux","timeout":60,"environment":"default","organization":"default"}`)
+	b := []byte(`{"name":"foo","command":"ps aux","timeout":60,"namespace":"default"}`)
 	var h Hook
 	var err error
 	if err := json.Unmarshal(b, &h); err != nil {

@@ -17,7 +17,7 @@ type HookConfigIDFieldResolver interface {
 // HookConfigNamespaceFieldResolver implement to resolve requests for the HookConfig's namespace field.
 type HookConfigNamespaceFieldResolver interface {
 	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (interface{}, error)
+	Namespace(p graphql.ResolveParams) (string, error)
 }
 
 // HookConfigNameFieldResolver implement to resolve requests for the HookConfig's name field.
@@ -175,9 +175,16 @@ func (_ HookConfigAliases) ID(p graphql.ResolveParams) (string, error) {
 }
 
 // Namespace implements response to request for 'namespace' field.
-func (_ HookConfigAliases) Namespace(p graphql.ResolveParams) (interface{}, error) {
+func (_ HookConfigAliases) Namespace(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'namespace'")
+	}
+	return ret, err
 }
 
 // Name implements response to request for 'name' field.
@@ -311,7 +318,7 @@ func _ObjectTypeHookConfigConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Namespace in which this record resides",
 				Name:              "namespace",
-				Type:              graphql1.NewNonNull(graphql.OutputType("Namespace")),
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"stdin": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -329,7 +336,8 @@ func _ObjectTypeHookConfigConfigFn() graphql1.ObjectConfig {
 			},
 		},
 		Interfaces: []*graphql1.Interface{
-			graphql.Interface("Node")},
+			graphql.Interface("Node"),
+			graphql.Interface("Namespaced")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of

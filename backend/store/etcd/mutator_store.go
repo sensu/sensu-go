@@ -34,7 +34,7 @@ func (s *Store) DeleteMutatorByName(ctx context.Context, name string) error {
 	return err
 }
 
-// GetMutators gets the list of mutators for an (optional) organization. If org is
+// GetMutators gets the list of mutators for an (optional) namespace. If org is
 // the empty string, GetMutators returns all mutators for all orgs.
 func (s *Store) GetMutators(ctx context.Context) ([]*types.Mutator, error) {
 	resp, err := query(ctx, s, getMutatorsPath)
@@ -92,7 +92,7 @@ func (s *Store) UpdateMutator(ctx context.Context, mutator *types.Mutator) error
 		return err
 	}
 
-	cmp := clientv3.Compare(clientv3.Version(getEnvironmentsPath(mutator.Organization, mutator.Environment)), ">", 0)
+	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(mutator.Namespace)), ">", 0)
 	req := clientv3.OpPut(getMutatorPath(mutator), string(mutatorBytes))
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
@@ -100,10 +100,9 @@ func (s *Store) UpdateMutator(ctx context.Context, mutator *types.Mutator) error
 	}
 	if !res.Succeeded {
 		return fmt.Errorf(
-			"could not create the mutator %s in environment %s/%s",
+			"could not create the mutator %s in namespace %s",
 			mutator.Name,
-			mutator.Organization,
-			mutator.Environment,
+			mutator.Namespace,
 		)
 	}
 

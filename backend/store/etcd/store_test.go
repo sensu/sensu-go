@@ -21,8 +21,8 @@ func testWithEtcd(t *testing.T, f func(store.Store)) {
 
 	s := NewStore(client, e.Name())
 
-	// Mock a default organization & environment
-	require.NoError(t, s.CreateOrganization(context.Background(), types.FixtureOrganization("default")))
+	// Mock a default namespace
+	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
 
 	f(s)
 }

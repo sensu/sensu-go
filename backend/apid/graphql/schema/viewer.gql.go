@@ -7,10 +7,10 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// ViewerOrganizationsFieldResolver implement to resolve requests for the Viewer's organizations field.
-type ViewerOrganizationsFieldResolver interface {
-	// Organizations implements response to request for organizations field.
-	Organizations(p graphql.ResolveParams) (interface{}, error)
+// ViewerNamespacesFieldResolver implement to resolve requests for the Viewer's namespaces field.
+type ViewerNamespacesFieldResolver interface {
+	// Namespaces implements response to request for namespaces field.
+	Namespaces(p graphql.ResolveParams) (interface{}, error)
 }
 
 // ViewerUserFieldResolver implement to resolve requests for the Viewer's user field.
@@ -81,7 +81,7 @@ type ViewerUserFieldResolver interface {
 //   }
 //
 type ViewerFieldResolvers interface {
-	ViewerOrganizationsFieldResolver
+	ViewerNamespacesFieldResolver
 	ViewerUserFieldResolver
 }
 
@@ -132,8 +132,8 @@ type ViewerFieldResolvers interface {
 //
 type ViewerAliases struct{}
 
-// Organizations implements response to request for 'organizations' field.
-func (_ ViewerAliases) Organizations(p graphql.ResolveParams) (interface{}, error) {
+// Namespaces implements response to request for 'namespaces' field.
+func (_ ViewerAliases) Namespaces(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -151,10 +151,10 @@ var ViewerType = graphql.NewType("Viewer", graphql.ObjectKind)
 func RegisterViewer(svc *graphql.Service, impl ViewerFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeViewerDesc, impl)
 }
-func _ObjTypeViewerOrganizationsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(ViewerOrganizationsFieldResolver)
+func _ObjTypeViewerNamespacesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ViewerNamespacesFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Organizations(frp)
+		return resolver.Namespaces(frp)
 	}
 }
 
@@ -169,12 +169,12 @@ func _ObjectTypeViewerConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Describes a viewer of the system; generally an authenticated user.",
 		Fields: graphql1.Fields{
-			"organizations": &graphql1.Field{
+			"namespaces": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "All organizations the viewer has access to view.",
-				Name:              "organizations",
-				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Organization")))),
+				Description:       "All namespaces the viewer has access to view.",
+				Name:              "namespaces",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Namespace")))),
 			},
 			"user": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -201,7 +201,7 @@ func _ObjectTypeViewerConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeViewerDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeViewerConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"organizations": _ObjTypeViewerOrganizationsHandler,
-		"user":          _ObjTypeViewerUserHandler,
+		"namespaces": _ObjTypeViewerNamespacesHandler,
+		"user":       _ObjTypeViewerUserHandler,
 	},
 }

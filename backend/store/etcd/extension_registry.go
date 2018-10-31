@@ -20,9 +20,9 @@ var (
 )
 
 func getExtensionPath(ctx context.Context, name string) string {
-	org := types.ContextOrganization(ctx)
+	namespace := types.ContextNamespace(ctx)
 
-	return extKeyBuilder.WithOrg(org).Build(name)
+	return extKeyBuilder.WithNamespace(namespace).Build(name)
 }
 
 // RegisterExtension registers an extension.
@@ -36,7 +36,7 @@ func (s *Store) RegisterExtension(ctx context.Context, ext *types.Extension) err
 		return err
 	}
 
-	cmp := clientv3.Compare(clientv3.Version(getOrganizationsPath(ext.Organization)), ">", 0)
+	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(ext.Namespace)), ">", 0)
 	req := clientv3.OpPut(getExtensionPath(ctx, ext.Name), string(b))
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
@@ -44,8 +44,8 @@ func (s *Store) RegisterExtension(ctx context.Context, ext *types.Extension) err
 	}
 	if !res.Succeeded {
 		return fmt.Errorf(
-			"could not create the extension %q in organization %q",
-			ext.Name, ext.Organization,
+			"could not create the extension %q in namespace %q",
+			ext.Name, ext.Namespace,
 		)
 	}
 

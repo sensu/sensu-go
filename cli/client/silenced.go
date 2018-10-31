@@ -41,7 +41,7 @@ func (client *RestClient) DeleteSilenced(id string) error {
 }
 
 // ListSilenceds fetches all silenced entries from configured Sensu instance
-func (client *RestClient) ListSilenceds(org, sub, check string) ([]types.Silenced, error) {
+func (client *RestClient) ListSilenceds(namespace, sub, check string) ([]types.Silenced, error) {
 	if sub != "" && check != "" {
 		id, err := types.SilencedID(sub, check)
 		if err != nil {
@@ -59,7 +59,7 @@ func (client *RestClient) ListSilenceds(org, sub, check string) ([]types.Silence
 	} else if check != "" {
 		endpoint = path.Join(endpoint, "checks", url.PathEscape(check))
 	}
-	resp, err := client.R().SetQueryParam("org", org).Get(endpoint)
+	resp, err := client.R().SetQueryParam("namespace", namespace).Get(endpoint)
 	if err != nil {
 		return nil, err
 	}

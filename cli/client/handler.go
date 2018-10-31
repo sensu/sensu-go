@@ -9,10 +9,10 @@ import (
 )
 
 // ListHandlers fetches all handlers from configured Sensu instance
-func (client *RestClient) ListHandlers(org string) ([]types.Handler, error) {
+func (client *RestClient) ListHandlers(namespace string) ([]types.Handler, error) {
 	var handlers []types.Handler
 
-	res, err := client.R().Get("/handlers?org=" + url.QueryEscape(org))
+	res, err := client.R().Get("/handlers?namespace=" + url.QueryEscape(namespace))
 	if err != nil {
 		return handlers, err
 	}
