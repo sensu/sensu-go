@@ -1021,12 +1021,12 @@
   version = "v1.0.3"
 
 [[projects]]
-  branch = "v2"
-  digest = "1:6570992c02a2137a20be83990a979b6fe892e20ecdc6b756449989b2a7efb8ae"
+  digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "UT"
-  revision = "eb3733d160e74a9c7e442f435eb3bea458e1d19f"
+  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
+  version = "v2.2.1"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -1052,6 +1052,7 @@
     "github.com/echlebek/crock",
     "github.com/echlebek/timeproxy",
     "github.com/emicklei/proto",
+    "github.com/ghodss/yaml",
     "github.com/go-resty/resty",
     "github.com/gogo/protobuf/gogoproto",
     "github.com/gogo/protobuf/jsonpb",
@@ -1093,6 +1094,7 @@
     "google.golang.org/grpc/grpclog",
     "gopkg.in/h2non/filetype.v1",
     "gopkg.in/h2non/filetype.v1/types",
+    "gopkg.in/yaml.v2",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

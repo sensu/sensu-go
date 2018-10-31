@@ -1,12 +1,15 @@
 package create
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 
+	"github.com/ghodss/yaml"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/client/config"
@@ -69,9 +72,16 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 
 func parseResources(in io.Reader) ([]types.Resource, error) {
 	var resources []types.Resource
-	dec := json.NewDecoder(in)
+	b, err := ioutil.ReadAll(in)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing resources: %s", err)
+	}
+	jsonBytes, err := yaml.YAMLToJSON(b)
+	if err != nil {
+		return nil, fmt.Errorf("error parsing resources: %s", err)
+	}
+	dec := json.NewDecoder(bytes.NewReader(jsonBytes))
 	dec.DisallowUnknownFields()
-	var err error
 	errCount := 0
 	for dec.More() {
 		var w types.Wrapper
