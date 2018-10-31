@@ -65,7 +65,6 @@ func TestInfoCommandRunEClosureWithTable(t *testing.T) {
 	assert.NotEmpty(out)
 	assert.Contains(out, "Name")
 	assert.Contains(out, "Filters")
-	assert.Contains(out, "Metadata")
 	assert.Nil(err)
 }
 

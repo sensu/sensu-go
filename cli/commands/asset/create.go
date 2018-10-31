@@ -37,7 +37,6 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 	_ = cmd.Flags().StringP("sha512", "", "", "SHA-512 checksum of the asset's archive")
 	_ = cmd.Flags().StringP("url", "u", "", "the URL of the asset")
-	_ = cmd.Flags().StringSliceP("metadata", "m", []string{}, "metadata associated with asset")
 	_ = cmd.Flags().StringSlice("filter", []string{}, "queries used by an entity to determine if it should include the asset")
 
 	helpers.AddInteractiveFlag(cmd.Flags())
@@ -157,7 +156,6 @@ func (cfgPtr *ConfigureAsset) configureFromFlags() {
 	cfgPtr.setNamespace()
 	cfgPtr.setSha512()
 	cfgPtr.setURL()
-	cfgPtr.setMeta()
 	cfgPtr.setFilters()
 }
 
@@ -195,15 +193,6 @@ func (cfgPtr *ConfigureAsset) setURL() {
 	}
 }
 
-func (cfgPtr *ConfigureAsset) setMeta() {
-	if meta, err := cfgPtr.Flags.GetStringSlice("metadata"); err != nil {
-		panic(err)
-	} else {
-		err = cfgPtr.cfg.SetMeta(meta)
-		cfgPtr.addError(err)
-	}
-}
-
 func (cfgPtr *ConfigureAsset) setFilters() {
 	if filters, err := cfgPtr.Flags.GetStringSlice("filter"); err != nil {
 		panic(err)
@@ -224,30 +213,7 @@ type Config struct {
 	Namespace string
 	Sha512    string
 	URL       string
-	Meta      map[string]string
 	Filters   string
-}
-
-// SetMeta sets metadata given values
-func (cfgPtr *Config) SetMeta(metadata []string) error {
-	cfgPtr.Meta = make(map[string]string, len(metadata))
-	for _, meta := range metadata {
-		// TODO(james): naive
-		splitMeta := strings.SplitAfterN(meta, ":", 2)
-
-		if len(splitMeta) == 2 {
-			key := strings.TrimSpace(strings.TrimRight(splitMeta[0], ":"))
-			val := strings.TrimSpace(splitMeta[1])
-			cfgPtr.Meta[key] = val
-		} else {
-			return fmt.Errorf(
-				"Metadata value '%s' appears invalid;"+
-					"should be in format 'KEY: VALUE'.",
-				splitMeta,
-			)
-		}
-	}
-	return nil
 }
 
 // Copy applies configured details to given asset
@@ -256,6 +222,5 @@ func (cfgPtr *Config) Copy(asset *types.Asset) {
 	asset.Namespace = cfgPtr.Namespace
 	asset.Sha512 = cfgPtr.Sha512
 	asset.URL = cfgPtr.URL
-	asset.Metadata = cfgPtr.Meta
 	asset.Filters = helpers.SafeSplitCSV(cfgPtr.Filters)
 }

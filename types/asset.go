@@ -86,13 +86,9 @@ func FixtureAsset(name string) *Asset {
 	hash := hex.EncodeToString(bytes)
 
 	return &Asset{
-		Name:   name,
-		Sha512: "25e01b962045f4f5b624c3e47e782bef65c6c82602524dc569a8431b76cc1f57639d267380a7ec49f70876339ae261704fc51ed2fc520513cf94bc45ed7f6e17",
-		URL:    "https://localhost/" + hash + ".zip",
-		Metadata: map[string]string{
-			"Content-Type":            "application/zip",
-			"X-Intended-Distribution": "trusty-14",
-		},
+		Name:      name,
+		Sha512:    "25e01b962045f4f5b624c3e47e782bef65c6c82602524dc569a8431b76cc1f57639d267380a7ec49f70876339ae261704fc51ed2fc520513cf94bc45ed7f6e17",
+		URL:       "https://localhost/" + hash + ".zip",
 		Namespace: "default",
 	}
 }
