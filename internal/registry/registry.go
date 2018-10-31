@@ -17,34 +17,104 @@ import (
 	"github.com/sensu/sensu-go/internal/astutil"
 )
 
+const fileFlags = os.O_CREATE | os.O_TRUNC | os.O_WRONLY
+
 const templateText = `package registry
 
 // automatically generated file, do not edit!
 
 import (
-  "fmt"
-  "reflect"
-
-  metav1 "github.com/sensu/sensu-go/apis/meta/v1"
-  {{ range $i, $import := imports . }}{{ $import }}
-  {{ end }}
+	"fmt"
+	"reflect"
+	
+	metav1 "github.com/sensu/sensu-go/apis/meta/v1"
+	{{ range $i, $import := imports . }}{{ $import }}
+	{{ end }}
 )
 
 type registry map[metav1.TypeMeta]interface{}
 
 var typeRegistry = registry{ {{ range $index, $t := . }}
-  metav1.TypeMeta{APIVersion: "{{ $t.APIVersion }}", Kind: "{{ $t.Kind }}"}: {{ replace $t.APIVersion "/" "" 1 }}.{{ $t.Kind }}{},
-  metav1.TypeMeta{APIVersion: "{{ $t.APIVersion }}", Kind: "{{ lower $t.Kind }}"}: {{ replace $t.APIVersion "/" "" 1 }}.{{ $t.Kind }}{}, {{ end }}
+	metav1.TypeMeta{APIVersion: "{{ $t.APIVersion }}", Kind: "{{ $t.Kind }}"}: {{ replace $t.APIVersion "/" "" 1 }}.{{ $t.Kind }}{},
+	metav1.TypeMeta{APIVersion: "{{ $t.APIVersion }}", Kind: "{{ lower $t.Kind }}"}: {{ replace $t.APIVersion "/" "" 1 }}.{{ $t.Kind }}{}, {{ end }}
 }
 
-// Resolve returns a zero-valued metav1.GroupVersionKind, given a metav1.TypeMeta.
+func init() {
+	for k, v := range typeRegistry {
+		r, ok := v.(interface{ResourceName() string})
+		if ok {
+			newKey := metav1.TypeMeta{
+				APIVersion: k.APIVersion,
+				Kind: r.ResourceName(),
+			}
+			typeRegistry[newKey] = v
+		}
+	}
+}
+
+// Resolve returns a zero-valued sensu object, given a metav1.TypeMeta.
 // If the type does not exist, then an error will be returned.
 func Resolve(mt metav1.TypeMeta) (interface{}, error) {
 	t, ok := typeRegistry[mt]
-  if !ok {
-    return nil, fmt.Errorf("type could not be found: %v", mt)
-  }
-  return t, nil
+	if !ok {
+	  return nil, fmt.Errorf("type could not be found: %v", mt)
+	}
+	return t, nil
+}
+
+// ResolveSlice returns a zero-valued slice of sensu objects, given a
+// meta.TypeMeta. If the type does not exist, then an error will be returned.
+func ResolveSlice(mt metav1.TypeMeta) (interface{}, error) {
+	t, err := Resolve(mt)
+	if err != nil {
+		return nil, err
+	}
+	return reflect.MakeSlice(reflect.SliceOf(reflect.TypeOf(t)), 0, 0).Interface(), nil
+}
+`
+
+const testText = `package registry
+
+import (
+	"fmt"
+	"reflect"
+	"testing"
+
+	metav1 "github.com/sensu/sensu-go/apis/meta/v1"
+	"github.com/sensu/sensu-go/internal/api"
+)
+
+func TestRegistryResourceAliases(t *testing.T) {
+	for key, kind := range typeRegistry {
+		if api.IsInternal(key.APIVersion) {
+			continue
+		}
+		r := kind.(interface{ ResourceName() string })
+		t.Run(fmt.Sprintf("%s -> %s", key.Kind, r.ResourceName()), func(t *testing.T) {
+			_, ok := typeRegistry[metav1.TypeMeta{APIVersion: key.APIVersion, Kind: r.ResourceName()}]
+			if !ok {
+				t.Fatalf("%v resource missing", key)
+			}
+		})
+	}
+}
+
+func TestResolveSlice(t *testing.T) {
+	for key, kind := range typeRegistry {
+		t.Run(fmt.Sprintf("slice of %s", key.Kind), func(t *testing.T) {
+			defer func() {
+				if e := recover(); e != nil {
+					t.Fatal(e)
+				}
+			}()
+			slice, err := ResolveSlice(key)
+			if err != nil {
+				t.Fatal(err)
+			}
+			// Will panic if ResolveSlice is broken
+			reflect.Append(reflect.ValueOf(slice), reflect.ValueOf(kind))
+		})
+	}
 }
 `
 
@@ -57,7 +127,6 @@ func imports(kinds []metav1.TypeMeta) (result []string) {
 		} else {
 			imp = fmt.Sprintf(`"github.com/sensu/sensu-go/internal/apis/%s"`, kind.APIVersion)
 		}
-		fmt.Println(imp)
 		set[imp] = struct{}{}
 	}
 	for k := range set {
@@ -87,7 +156,7 @@ func RegisterTypes(packagePath, outPath string) error {
 		return fmt.Errorf("couldn't get package types: %s", err)
 	}
 
-	w, err := os.OpenFile(outPath, os.O_CREATE|os.O_TRUNC|os.O_WRONLY, 0644)
+	w, err := os.OpenFile(filepath.Join(outPath, "registry.go"), fileFlags, 0644)
 	if err != nil {
 		return fmt.Errorf("couldn't open output for writing: %s", err)
 	}
@@ -95,7 +164,14 @@ func RegisterTypes(packagePath, outPath string) error {
 	if err := registryTmpl.Execute(w, kinds); err != nil {
 		return fmt.Errorf("couldn't write registry: %s", err)
 	}
-	return nil
+
+	x, err := os.OpenFile(filepath.Join(outPath, "registry_test.go"), fileFlags, 0644)
+	if err != nil {
+		return fmt.Errorf("couldn't open output for writing: %s", err)
+	}
+
+	_, err = fmt.Fprint(x, testText)
+	return err
 }
 
 // getPackageKinds recursively traverses the package and all sub-packages for

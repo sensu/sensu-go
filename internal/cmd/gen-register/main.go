@@ -11,7 +11,7 @@ import (
 
 var (
 	packagePath = flag.String("pkg", "", "Path to package to generate registry for")
-	outPath     = flag.String("o", "", "Output path")
+	outPath     = flag.String("o", "", "Output package path")
 )
 
 func main() {
