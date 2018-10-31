@@ -14,10 +14,10 @@ type Wrapper struct {
 	// github.com/sensu/sensu-go/types.Check,
 	// OR, a short-hand name that assumes a package path of
 	// github.com/sensu/sensu-go/types.
-	Type string `json:"type"`
+	Type string `json:"type" yaml:"type"`
 
 	// Value is a valid Resource of concrete type Type.
-	Value Resource `json:"spec"`
+	Value Resource `json:"spec" yaml:"spec"`
 }
 
 type rawWrapper struct {

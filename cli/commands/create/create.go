@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"regexp"
 
 	"github.com/ghodss/yaml"
 	"github.com/sensu/sensu-go/cli"
@@ -70,33 +71,57 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 	}
 }
 
+var jsonRe = regexp.MustCompile(`^(\s)*[\{\[]`)
+
+// parseResources is a rather heroic function that will any number of valid
+// JSON or YAML resources. Since it attempts to be intelligent, it likely
+// contains bugs.
+//
+// The general approach is:
+// 1. detect if the stream is JSON by sniffing the first non-whitespace byte.
+// 2. If the stream is JSON, goto 4.
+// 3. If the stream is YAML, split it on '---' to support multiple yaml documents.
+// 3. Convert the YAML to JSON document-by-document.
+// 4. Unmarshal the JSON one resource at a time.
 func parseResources(in io.Reader) ([]types.Resource, error) {
 	var resources []types.Resource
 	b, err := ioutil.ReadAll(in)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing resources: %s", err)
 	}
-	jsonBytes, err := yaml.YAMLToJSON(b)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing resources: %s", err)
-	}
-	dec := json.NewDecoder(bytes.NewReader(jsonBytes))
-	dec.DisallowUnknownFields()
-	errCount := 0
-	for dec.More() {
-		var w types.Wrapper
-		if rerr := dec.Decode(&w); rerr != nil {
-			// Write out as many errors as possible before bailing,
-			// but cap it at 10.
-			err = errors.New("some resources couldn't be parsed")
-			if errCount > 10 {
-				err = errors.New("too many errors")
-				break
+	// Support concatenated yaml documents separated by '---'
+	array := bytes.Split(b, []byte("\n---\n"))
+	for _, b := range array {
+		var jsonBytes []byte
+		if jsonRe.Match(b) {
+			// We are dealing with JSON data
+			jsonBytes = b
+		} else {
+			// We are dealing with YAML data
+			var err error
+			jsonBytes, err = yaml.YAMLToJSON(b)
+			if err != nil {
+				return nil, fmt.Errorf("error parsing resources: %s", err)
 			}
-			describeError(rerr)
-			errCount++
 		}
-		resources = append(resources, w.Value)
+		dec := json.NewDecoder(bytes.NewReader(jsonBytes))
+		dec.DisallowUnknownFields()
+		errCount := 0
+		for dec.More() {
+			var w types.Wrapper
+			if rerr := dec.Decode(&w); rerr != nil {
+				// Write out as many errors as possible before bailing,
+				// but cap it at 10.
+				err = errors.New("some resources couldn't be parsed")
+				if errCount > 10 {
+					err = errors.New("too many errors")
+					break
+				}
+				describeError(rerr)
+				errCount++
+			}
+			resources = append(resources, w.Value)
+		}
 	}
 	return resources, err
 }
