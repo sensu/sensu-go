@@ -129,8 +129,6 @@ func TestCreateCommandYAML(t *testing.T) {
 	f, err := os.Create(fp)
 	require.NoError(t, err)
 
-	buf := new(bytes.Buffer)
-	yamlSpecTmpl.Execute(buf, yamlResources)
 	err = yamlSpecTmpl.Execute(f, yamlResources)
 	require.NoError(t, err)
 	require.NoError(t, f.Close())
