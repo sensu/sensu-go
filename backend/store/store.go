@@ -231,7 +231,7 @@ type EntityStore interface {
 // EventStore provides methods for managing events
 type EventStore interface {
 	// DeleteEventByEntityCheck deletes an event using the given entity and check,
-	// within the namespacestored in ctx.
+	// within the namespace stored in ctx.
 	DeleteEventByEntityCheck(ctx context.Context, entity, check string) error
 
 	// GetEvents returns all events in the given ctx's namespace. A nil slice with
