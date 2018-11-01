@@ -16,8 +16,7 @@ import (
 type createOpts struct {
 	Username string `survey:"username"`
 	Password string `survey:"password"`
-	Roles    string `survey:"roles"`
-	Admin    bool
+	Groups   string `survey:"group"`
 }
 
 // CreateCommand adds command that allows user to create new users
@@ -73,8 +72,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	_ = cmd.Flags().StringP("password", "p", "", "Password")
-	_ = cmd.Flags().Bool("admin", false, "Give user the administrator role")
-	_ = cmd.Flags().StringP("roles", "r", "", "Comma separated list of roles to assign")
+	_ = cmd.Flags().StringP("groups", "g", "", "Comma separated list of the groups to assign")
 
 	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd
@@ -82,11 +80,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 func (opts *createOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Password, _ = flags.GetString("password")
-	opts.Roles, _ = flags.GetString("roles")
-
-	if isAdmin, _ := flags.GetBool("admin"); isAdmin {
-		opts.Admin = isAdmin
-	}
+	opts.Groups, _ = flags.GetString("groups")
 }
 
 func (opts *createOpts) administerQuestionnaire() error {
@@ -107,9 +101,9 @@ func (opts *createOpts) administerQuestionnaire() error {
 			Validate: survey.Required,
 		},
 		{
-			Name: "roles",
+			Name: "groups",
 			Prompt: &survey.Input{
-				Message: "Roles:",
+				Message: "Groups:",
 			},
 		},
 	}
@@ -118,15 +112,11 @@ func (opts *createOpts) administerQuestionnaire() error {
 }
 
 func (opts *createOpts) toUser() *types.User {
-	roles := helpers.SafeSplitCSV(opts.Roles)
-
-	if opts.Admin {
-		roles = append(roles, "admin")
-	}
+	groups := helpers.SafeSplitCSV(opts.Groups)
 
 	return &types.User{
 		Username: opts.Username,
 		Password: opts.Password,
-		Roles:    roles,
+		Groups:   groups,
 	}
 }

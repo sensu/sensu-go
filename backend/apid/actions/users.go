@@ -91,11 +91,6 @@ func (a UserController) Create(ctx context.Context, newUser types.User) error {
 		return NewError(InvalidArgument, err)
 	}
 
-	// Validate roles
-	if err := validateRoles(ctx, a.Store, newUser.Roles); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-
 	// Persist
 	if err := a.Store.UpdateUser(&newUser); err != nil {
 		return NewError(InternalErr, err)
@@ -119,11 +114,6 @@ func (a UserController) CreateOrReplace(ctx context.Context, newUser types.User)
 
 	// Validate password
 	if err := newUser.ValidatePassword(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-
-	// Validate roles
-	if err := validateRoles(ctx, a.Store, newUser.Roles); err != nil {
 		return NewError(InvalidArgument, err)
 	}
 
@@ -161,13 +151,6 @@ func (a UserController) Update(ctx context.Context, given types.User) error {
 		// Validate password
 		if err := user.ValidatePassword(); err != nil {
 			return NewError(InvalidArgument, err)
-		}
-	}
-
-	// Copy & validate new roles, if given
-	if given.Roles != nil {
-		if err := configureRoles(ctx, a.Store, &abilities, given.Roles, user); err != nil {
-			return err
 		}
 	}
 
@@ -224,44 +207,44 @@ func (a UserController) Enable(ctx context.Context, name string) error {
 	return err
 }
 
-// AddRole adds a given role to a user
-func (a UserController) AddRole(ctx context.Context, username string, role string) error {
+// AddGroup adds a given group to a user
+func (a UserController) AddGroup(ctx context.Context, username string, group string) error {
 	return a.findAndUpdateUser(ctx, username, func(user *types.User) error {
 		var exists bool
-		for _, r := range user.Roles {
-			if r == role {
+		for _, g := range user.Groups {
+			if g == group {
 				exists = true
 				break
 			}
 		}
 
 		if !exists {
-			newRoles := append(user.Roles, role)
-			abilities := a.Policy.WithContext(ctx)
-			return configureRoles(ctx, a.Store, &abilities, newRoles, user)
+			user.Groups = append(user.Groups, group)
 		}
 
 		return nil
 	})
 }
 
-// RemoveRole adds a given role to a user
-func (a UserController) RemoveRole(ctx context.Context, username string, role string) error {
+// RemoveGroup removes a group from a given user
+func (a UserController) RemoveGroup(ctx context.Context, username string, group string) error {
 	return a.findAndUpdateUser(ctx, username, func(user *types.User) error {
-		newRoles := []string{}
-		for _, r := range user.Roles {
-			if r != role {
-				newRoles = append(newRoles, r)
+		updatedGroups := []string{}
+		for _, g := range user.Groups {
+			if g != group {
+				updatedGroups = append(updatedGroups, g)
 			}
 		}
-		user.Roles = newRoles
 
-		// Verify viewer can make change
-		abilities := a.Policy.WithContext(ctx)
-		if yes := abilities.CanUpdate(user); !yes {
-			return NewErrorf(PermissionDenied)
-		}
+		user.Groups = updatedGroups
+		return nil
+	})
+}
 
+// RemoveAllGroups removes all groups from a given user
+func (a UserController) RemoveAllGroups(ctx context.Context, username string) error {
+	return a.findAndUpdateUser(ctx, username, func(user *types.User) error {
+		user.Groups = []string{}
 		return nil
 	})
 }
@@ -303,66 +286,4 @@ func (a UserController) findAndUpdateUser(
 
 	// Update
 	return a.updateUser(ctx, user)
-}
-
-func configureRoles(
-	ctx context.Context,
-	store store.RBACStore,
-	abilities *authorization.UserPolicy,
-	newRoles []string,
-	user *types.User,
-) error {
-	user.Roles = newRoles
-
-	// Verify viewer can make change
-	if yes := abilities.CanUpdate(user); !yes {
-		return NewErrorf(PermissionDenied)
-	}
-
-	// Validate roles
-	if err := validateRoles(ctx, store, user.Roles); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-
-	return nil
-}
-
-func validateRoles(ctx context.Context, store store.RBACStore, givenRoles []string) error {
-	storedRoles, err := store.GetRoles(ctx)
-	if err != nil {
-		return err
-	}
-
-	missingRoles := []string{}
-
-	for _, givenRole := range givenRoles {
-		if present := hasRole(storedRoles, givenRole); !present {
-			missingRoles = append(missingRoles, givenRole)
-		}
-	}
-
-	if len(missingRoles) != 0 {
-		message := "not exist and should be created first"
-		if len(missingRoles) == 1 {
-			message = fmt.Sprintf("given role '%s' does %s", missingRoles[0], message)
-		} else {
-			message = fmt.Sprintf(
-				"given roles '%s' do %s",
-				strings.Join(missingRoles, ", "),
-				message,
-			)
-		}
-		return fmt.Errorf(message)
-	}
-
-	return nil
-}
-
-func hasRole(roles []*types.Role, roleName string) bool {
-	for _, role := range roles {
-		if roleName == role.Name {
-			return true
-		}
-	}
-	return false
 }

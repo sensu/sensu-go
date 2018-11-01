@@ -8,11 +8,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// RemoveRoleCommand adds a command that allows admin's to remove a role from a user
-func RemoveRoleCommand(cli *cli.SensuCli) *cobra.Command {
+// AddGroupCommand adds a command that allows admins to add a group to a user.
+func AddGroupCommand(cli *cli.SensuCli) *cobra.Command {
 	return &cobra.Command{
-		Use:          "remove-role [USERNAME] [ROLE]",
-		Short:        "remove role from user given username and role",
+		Use:          "add-group [USERNAME] [GROUP]",
+		Short:        "add group to user given username and group",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If no name is present print out usage
@@ -22,12 +22,12 @@ func RemoveRoleCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			username := args[0]
-			role := args[1]
-			if err := cli.Client.RemoveRoleFromUser(username, role); err != nil {
+			group := args[1]
+			if err := cli.Client.AddGroupToUser(username, group); err != nil {
 				return err
 			}
 
-			_, err := fmt.Fprintln(cmd.OutOrStdout(), "Removed")
+			_, err := fmt.Fprintln(cmd.OutOrStdout(), "Added")
 			return err
 		},
 	}
