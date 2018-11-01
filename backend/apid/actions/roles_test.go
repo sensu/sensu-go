@@ -802,5 +802,5 @@ func TestRoleDestroy(t *testing.T) {
 }
 
 func simpleRoleFixture() *types.Role {
-	return types.FixtureRole("a", "b", "c")
+	return types.FixtureRole("a", "b")
 }

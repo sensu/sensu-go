@@ -50,9 +50,6 @@ message CheckConfig {
   // Command is the command to be executed.
   string command = 1;
 
-  // Environment indicates to which env a check belongs to
-  string environment = 2;
-
   // Handlers are the event handler for the check (incidents and/or metrics).
   repeated string handlers = 3 [(gogoproto.jsontag) = "handlers"];
 
@@ -69,9 +66,6 @@ message CheckConfig {
 
   // Name is the unique identifier for a check.
   string name = 7;
-
-  // Organization indicates to which org a check belongs to
-  string organization = 8;
 
   // Publish indicates if check requests are published for the check
   bool publish = 9 [(gogoproto.jsontag) = "publish"];
@@ -123,6 +117,9 @@ message CheckConfig {
   // EnvVars is the list of environment variables to set for the check's
   // execution environment.
   repeated string env_vars = 24 [(gogoproto.jsontag) = "env_vars"];
+
+  // Namespace to which the check belongs to
+  string namespace = 25;
 }
 
 // A Check is a check specification and optionally the results of the check's
@@ -130,9 +127,6 @@ message CheckConfig {
 message Check {
   // Command is the command to be executed.
   string command = 1;
-
-  // Environment indicates to which env a check belongs to
-  string environment = 2;
 
   // Handlers are the event handler for the check (incidents and/or metrics).
   repeated string handlers = 3 [(gogoproto.jsontag) = "handlers"];
@@ -150,9 +144,6 @@ message Check {
 
   // Name is the unique identifier for a check.
   string name = 7;
-
-  // Organization indicates to which org a check belongs to
-  string organization = 8;
 
   // Publish indicates if check requests are published for the check
   bool publish = 9 [(gogoproto.jsontag) = "publish"];
@@ -241,6 +232,9 @@ message Check {
   // EnvVars is the list of environment variables to set for the check's
   // execution environment.
   repeated string env_vars = 37 [(gogoproto.jsontag) = "env_vars"];
+
+  // Namespace to which the check belongs to
+  string namespace = 38;
 
   // ExtendedAttributes store serialized arbitrary JSON-encoded data
   bytes ExtendedAttributes = 99 [(gogoproto.jsontag) = "-"];

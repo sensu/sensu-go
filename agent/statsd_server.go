@@ -15,6 +15,7 @@ import (
 	"github.com/atlassian/gostatsd/pkg/statsd"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
 	"golang.org/x/time/rate"
 )
@@ -157,6 +158,10 @@ func (c Client) sendMetrics(points []*types.MetricPoint) (retErr error) {
 		return err
 	}
 
+	logger.WithFields(logrus.Fields{
+		"metrics": event.Metrics,
+		"entity":  event.Entity.ID,
+	}).Debug("sending statsd metrics")
 	c.agent.sendMessage(transport.MessageTypeEvent, msg)
 	return nil
 }

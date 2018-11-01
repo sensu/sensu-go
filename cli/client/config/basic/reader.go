@@ -18,14 +18,6 @@ func (c *Config) Edition() string {
 	return c.Cluster.Edition
 }
 
-// Environment returns the user's active environment
-func (c *Config) Environment() string {
-	if c.Profile.Environment == "" {
-		return config.DefaultEnvironment
-	}
-	return c.Profile.Environment
-}
-
 // Format returns the user's preferred format
 func (c *Config) Format() string {
 	if c.Profile.Format == "" {
@@ -34,12 +26,12 @@ func (c *Config) Format() string {
 	return c.Profile.Format
 }
 
-// Organization returns the user's active organization
-func (c *Config) Organization() string {
-	if c.Profile.Organization == "" {
-		return config.DefaultOrganization
+// Namespace returns the user's active namespace
+func (c *Config) Namespace() string {
+	if c.Profile.Namespace == "" {
+		return config.DefaultNamespace
 	}
-	return c.Profile.Organization
+	return c.Profile.Namespace
 }
 
 // Tokens returns the active cluster JWT

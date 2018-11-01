@@ -38,13 +38,9 @@ func TestCheckConfig(t *testing.T) {
 	assert.Error(t, c.Validate())
 	c.Command = "echo 'foo'"
 
-	// Invalid organization
+	// Invalid namespace
 	assert.Error(t, c.Validate())
-	c.Organization = "default"
-
-	// Invalid environment
-	assert.Error(t, c.Validate())
-	c.Environment = "default"
+	c.Namespace = "default"
 
 	// Invalid ttl
 	c.Ttl = 10

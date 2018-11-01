@@ -31,10 +31,10 @@ func (client *RestClient) FetchEvent(entity, check string) (*types.Event, error)
 }
 
 // ListEvents fetches events from Sensu API
-func (client *RestClient) ListEvents(org string) ([]types.Event, error) {
+func (client *RestClient) ListEvents(namespace string) ([]types.Event, error) {
 	var events []types.Event
 
-	res, err := client.R().Get("/events?org=" + url.QueryEscape(org))
+	res, err := client.R().Get("/events?namespace=" + url.QueryEscape(namespace))
 	if err != nil {
 		return events, err
 	}

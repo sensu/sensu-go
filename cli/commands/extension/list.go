@@ -20,19 +20,19 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "list",
 		Short: "list extensions",
-		RunE:  runList(cli.Config.Format(), cli.Client, cli.Config.Organization(), cli.Config.Format()),
+		RunE:  runList(cli.Config.Format(), cli.Client, cli.Config.Namespace(), cli.Config.Format()),
 	}
 	helpers.AddFormatFlag(cmd.Flags())
 	return cmd
 }
 
-func runList(config string, client client.APIClient, org, format string) func(*cobra.Command, []string) error {
+func runList(config string, client client.APIClient, namespace, format string) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		if len(args) != 0 {
 			_ = cmd.Help()
 			return errors.New("invalid arguments received")
 		}
-		extensions, err := client.ListExtensions(org)
+		extensions, err := client.ListExtensions(namespace)
 		if err != nil {
 			return err
 		}

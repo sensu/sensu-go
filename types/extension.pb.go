@@ -29,8 +29,8 @@ type Extension struct {
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// URL is the URL of the gRPC service that implements the extension.
 	URL string `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
-	// Organization indicates which organization an extension belongs to.
-	Organization         string   `protobuf:"bytes,3,opt,name=organization,proto3" json:"organization,omitempty"`
+	// Namespace to which the extension belongs to
+	Namespace            string   `protobuf:"bytes,4,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -40,7 +40,7 @@ func (m *Extension) Reset()         { *m = Extension{} }
 func (m *Extension) String() string { return proto.CompactTextString(m) }
 func (*Extension) ProtoMessage()    {}
 func (*Extension) Descriptor() ([]byte, []int) {
-	return fileDescriptor_extension_f6ac13478a820beb, []int{0}
+	return fileDescriptor_extension_49b6149995d6e5bd, []int{0}
 }
 func (m *Extension) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -83,9 +83,9 @@ func (m *Extension) GetURL() string {
 	return ""
 }
 
-func (m *Extension) GetOrganization() string {
+func (m *Extension) GetNamespace() string {
 	if m != nil {
-		return m.Organization
+		return m.Namespace
 	}
 	return ""
 }
@@ -118,7 +118,7 @@ func (this *Extension) Equal(that interface{}) bool {
 	if this.URL != that1.URL {
 		return false
 	}
-	if this.Organization != that1.Organization {
+	if this.Namespace != that1.Namespace {
 		return false
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
@@ -153,11 +153,11 @@ func (m *Extension) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintExtension(dAtA, i, uint64(len(m.URL)))
 		i += copy(dAtA[i:], m.URL)
 	}
-	if len(m.Organization) > 0 {
-		dAtA[i] = 0x1a
+	if len(m.Namespace) > 0 {
+		dAtA[i] = 0x22
 		i++
-		i = encodeVarintExtension(dAtA, i, uint64(len(m.Organization)))
-		i += copy(dAtA[i:], m.Organization)
+		i = encodeVarintExtension(dAtA, i, uint64(len(m.Namespace)))
+		i += copy(dAtA[i:], m.Namespace)
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -178,9 +178,9 @@ func NewPopulatedExtension(r randyExtension, easy bool) *Extension {
 	this := &Extension{}
 	this.Name = string(randStringExtension(r))
 	this.URL = string(randStringExtension(r))
-	this.Organization = string(randStringExtension(r))
+	this.Namespace = string(randStringExtension(r))
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedExtension(r, 4)
+		this.XXX_unrecognized = randUnrecognizedExtension(r, 5)
 	}
 	return this
 }
@@ -268,7 +268,7 @@ func (m *Extension) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovExtension(uint64(l))
 	}
-	l = len(m.Organization)
+	l = len(m.Namespace)
 	if l > 0 {
 		n += 1 + l + sovExtension(uint64(l))
 	}
@@ -378,9 +378,9 @@ func (m *Extension) Unmarshal(dAtA []byte) error {
 			}
 			m.URL = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 3:
+		case 4:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Organization", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -405,7 +405,7 @@ func (m *Extension) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Organization = string(dAtA[iNdEx:postIndex])
+			m.Namespace = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -534,21 +534,20 @@ var (
 	ErrIntOverflowExtension   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("extension.proto", fileDescriptor_extension_f6ac13478a820beb) }
+func init() { proto.RegisterFile("extension.proto", fileDescriptor_extension_49b6149995d6e5bd) }
 
-var fileDescriptor_extension_f6ac13478a820beb = []byte{
-	// 194 bytes of a gzipped FileDescriptorProto
+var fileDescriptor_extension_49b6149995d6e5bd = []byte{
+	// 189 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4f, 0xad, 0x28, 0x49,
 	0xcd, 0x2b, 0xce, 0xcc, 0xcf, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2e, 0x4e, 0xcd,
 	0x2b, 0x2e, 0xd5, 0x2b, 0xa9, 0x2c, 0x48, 0x2d, 0x96, 0xd2, 0x4d, 0xcf, 0x2c, 0xc9, 0x28, 0x4d,
 	0xd2, 0x4b, 0xce, 0xcf, 0xd5, 0x4f, 0xcf, 0x4f, 0xcf, 0xd7, 0x07, 0xab, 0x49, 0x2a, 0x4d, 0x03,
-	0xf3, 0xc0, 0x1c, 0x30, 0x0b, 0xa2, 0x57, 0x29, 0x8e, 0x8b, 0xd3, 0x15, 0x66, 0x9c, 0x90, 0x10,
+	0xf3, 0xc0, 0x1c, 0x30, 0x0b, 0xa2, 0x57, 0x29, 0x82, 0x8b, 0xd3, 0x15, 0x66, 0x9c, 0x90, 0x10,
 	0x17, 0x4b, 0x5e, 0x62, 0x6e, 0xaa, 0x04, 0xa3, 0x02, 0xa3, 0x06, 0x67, 0x10, 0x98, 0x2d, 0x24,
 	0xc9, 0xc5, 0x5c, 0x5a, 0x94, 0x23, 0xc1, 0x04, 0x12, 0x72, 0x62, 0x7f, 0x74, 0x4f, 0x9e, 0x39,
-	0x34, 0xc8, 0x27, 0x08, 0x24, 0x26, 0xa4, 0xc4, 0xc5, 0x93, 0x5f, 0x94, 0x9e, 0x98, 0x97, 0x59,
-	0x95, 0x58, 0x92, 0x99, 0x9f, 0x27, 0xc1, 0x0c, 0xd6, 0x86, 0x22, 0xe6, 0xa4, 0xfc, 0xe3, 0xa1,
-	0x1c, 0xe3, 0x8a, 0x47, 0x72, 0x8c, 0x3b, 0x1e, 0xc9, 0x31, 0x9e, 0x78, 0x24, 0xc7, 0x78, 0xe1,
-	0x91, 0x1c, 0xe3, 0x83, 0x47, 0x72, 0x8c, 0x33, 0x1e, 0xcb, 0x31, 0x44, 0xb1, 0x82, 0xdd, 0x9c,
-	0xc4, 0x06, 0x76, 0x8b, 0x31, 0x20, 0x00, 0x00, 0xff, 0xff, 0xd3, 0x59, 0x77, 0x6f, 0xda, 0x00,
-	0x00, 0x00,
+	0x34, 0xc8, 0x27, 0x08, 0x24, 0x26, 0x24, 0xc3, 0xc5, 0x09, 0x52, 0x52, 0x5c, 0x90, 0x98, 0x9c,
+	0x2a, 0xc1, 0x02, 0xd6, 0x83, 0x10, 0x70, 0x52, 0xfe, 0xf1, 0x50, 0x8e, 0x71, 0xc5, 0x23, 0x39,
+	0xc6, 0x1d, 0x8f, 0xe4, 0x18, 0x4f, 0x3c, 0x92, 0x63, 0xbc, 0xf0, 0x48, 0x8e, 0xf1, 0xc1, 0x23,
+	0x39, 0xc6, 0x19, 0x8f, 0xe5, 0x18, 0xa2, 0x58, 0xc1, 0xae, 0x4d, 0x62, 0x03, 0xbb, 0xc2, 0x18,
+	0x10, 0x00, 0x00, 0xff, 0xff, 0x4a, 0x06, 0x62, 0xab, 0xd4, 0x00, 0x00, 0x00,
 }

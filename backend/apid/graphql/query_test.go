@@ -13,7 +13,7 @@ func TestQueryTypeEventField(t *testing.T) {
 	mock := mockEventFetcher{&types.Event{Timestamp: 123456789}, nil}
 	impl := queryImpl{eventFinder: mock}
 
-	args := schema.QueryEventFieldResolverArgs{Ns: schema.NewNamespaceInput("a", "b")}
+	args := schema.QueryEventFieldResolverArgs{Namespace: "ns"}
 	params := schema.QueryEventFieldResolverParams{Args: args}
 
 	res, err := impl.Event(params)
@@ -21,15 +21,14 @@ func TestQueryTypeEventField(t *testing.T) {
 	assert.NotEmpty(t, res)
 }
 
-func TestQueryTypeEnvironmentField(t *testing.T) {
-	mock := mockEnvironmentFinder{&types.Environment{Name: "us-west-2"}, nil}
-	impl := queryImpl{envFinder: mock}
+func TestQueryTypeNamespaceField(t *testing.T) {
+	mock := mockNamespaceFinder{&types.Namespace{Name: "us-west-2"}, nil}
+	impl := queryImpl{nsFinder: mock}
 
-	params := schema.QueryEnvironmentFieldResolverParams{}
-	params.Args.Environment = "us-west-2"
-	params.Args.Organization = "bobs-burgers"
+	params := schema.QueryNamespaceFieldResolverParams{}
+	params.Args.Name = "us-west-2"
 
-	res, err := impl.Environment(params)
+	res, err := impl.Namespace(params)
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 }
@@ -39,7 +38,7 @@ func TestQueryTypeEntityField(t *testing.T) {
 	impl := queryImpl{entityFinder: mock}
 
 	params := schema.QueryEntityFieldResolverParams{}
-	params.Args.Ns = schema.NewNamespaceInput("org", "env")
+	params.Args.Namespace = "ns"
 	params.Args.Name = "abc"
 
 	res, err := impl.Entity(params)

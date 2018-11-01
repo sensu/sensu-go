@@ -1,12 +1,12 @@
 """
 A Handler is a handler specification.
 """
-type Handler implements Node {
+type Handler implements Node, Namespaced {
   "The globally unique identifier of the record."
   id: ID!
 
   "namespace in which this record resides"
-  namespace: Namespace!
+  namespace: String!
 
   "Name is the unique identifier for a handler."
   name: String!

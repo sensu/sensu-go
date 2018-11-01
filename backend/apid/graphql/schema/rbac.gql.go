@@ -11,7 +11,7 @@ import (
 // RuleNamespaceFieldResolver implement to resolve requests for the Rule's namespace field.
 type RuleNamespaceFieldResolver interface {
 	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (interface{}, error)
+	Namespace(p graphql.ResolveParams) (string, error)
 }
 
 // RuleTypeFieldResolver implement to resolve requests for the Rule's type field.
@@ -141,9 +141,16 @@ type RuleFieldResolvers interface {
 type RuleAliases struct{}
 
 // Namespace implements response to request for 'namespace' field.
-func (_ RuleAliases) Namespace(p graphql.ResolveParams) (interface{}, error) {
+func (_ RuleAliases) Namespace(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'namespace'")
+	}
+	return ret, err
 }
 
 // Type implements response to request for 'type' field.
@@ -204,7 +211,7 @@ func _ObjectTypeRuleConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "namespace in which this record resides",
 				Name:              "namespace",
-				Type:              graphql1.NewNonNull(graphql.OutputType("Namespace")),
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"permissions": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -221,7 +228,8 @@ func _ObjectTypeRuleConfigFn() graphql1.ObjectConfig {
 				Type:              graphql1.NewNonNull(graphql.OutputType("RuleResource")),
 			},
 		},
-		Interfaces: []*graphql1.Interface{},
+		Interfaces: []*graphql1.Interface{
+			graphql.Interface("Namespaced")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of

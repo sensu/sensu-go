@@ -23,8 +23,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 
 	// Register types
 	schema.RegisterAsset(svc, &assetImpl{})
-	schema.RegisterEnvironment(svc, newEnvImpl(store, cfg.QueueGetter))
-	schema.RegisterEnvironmentNode(svc, envNodeImpl{})
+	schema.RegisterNamespace(svc, newNamespaceImpl(store, cfg.QueueGetter))
 	schema.RegisterErrCode(svc)
 	schema.RegisterError(svc, nil)
 	schema.RegisterEvent(svc, &eventImpl{})
@@ -36,10 +35,8 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterQuery(svc, newQueryImpl(store, nodeResolver, cfg.QueueGetter))
 	schema.RegisterMutator(svc, &mutatorImpl{})
 	schema.RegisterMutedColour(svc)
-	schema.RegisterNamespace(svc, &namespaceImpl{})
 	schema.RegisterNode(svc, &nodeImpl{nodeResolver})
-	schema.RegisterNamespaceInput(svc)
-	schema.RegisterOrganization(svc, newOrgImpl(store))
+	schema.RegisterNamespaced(svc, nil)
 	schema.RegisterOffsetPageInfo(svc, &offsetPageInfoImpl{})
 	schema.RegisterProxyRequests(svc, &schema.ProxyRequestsAliases{})
 	schema.RegisterResolveEventPayload(svc, &schema.ResolveEventPayloadAliases{})
@@ -51,7 +48,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterSubscriptionSetOrder(svc)
 	schema.RegisterSubscriptionOccurences(svc, &schema.SubscriptionOccurencesAliases{})
 	schema.RegisterSilencesListOrder(svc)
-	schema.RegisterViewer(svc, newViewerImpl(store, cfg.QueueGetter, cfg.Bus))
+	schema.RegisterViewer(svc, newViewerImpl(store))
 
 	// Register check types
 	schema.RegisterCheck(svc, newCheckImpl(store))

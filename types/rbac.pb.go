@@ -25,18 +25,16 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Rule holds information that describes an action that can be taken
 type Rule struct {
-	// Verbs is a list of verbs that apply to all of the listed
-	// resources for this rule. These include "get", "list", "watch",
-	// "create", "update", "delete".
-	// TODO: add support for "patch" (this is expensive and should be
-	// delayed until a further release).
-	// TODO: add support for "watch" (via websockets)
+	// Verbs is a list of verbs that apply to all of the listed resources for this
+	// rule. These include "get", "list", "watch", "create", "update", "delete".
+	// TODO: add support for "patch" (this is expensive and should be delayed
+	// until a further release). TODO: add support for "watch" (via websockets)
 	Verbs []string `protobuf:"bytes,1,rep,name=verbs" json:"verbs"`
-	// Resources is a list of resources that this rule applies to.
-	// "*" represents all resources.
+	// Resources is a list of resources that this rule applies to. "*" represents
+	// all resources.
 	Resources []string `protobuf:"bytes,2,rep,name=resources" json:"resources"`
-	// ResourceNames is an optional list of resource names that the rule
-	// applies to.
+	// ResourceNames is an optional list of resource names that the rule applies
+	// to.
 	ResourceNames        []string `protobuf:"bytes,3,rep,name=resource_names,json=resourceNames" json:"resourceNames"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -47,7 +45,7 @@ func (m *Rule) Reset()         { *m = Rule{} }
 func (m *Rule) String() string { return proto.CompactTextString(m) }
 func (*Rule) ProtoMessage()    {}
 func (*Rule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rbac_95c02dbbb91c0f2f, []int{0}
+	return fileDescriptor_rbac_3c08c736d7484163, []int{0}
 }
 func (m *Rule) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -109,7 +107,7 @@ func (m *ClusterRole) Reset()         { *m = ClusterRole{} }
 func (m *ClusterRole) String() string { return proto.CompactTextString(m) }
 func (*ClusterRole) ProtoMessage()    {}
 func (*ClusterRole) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rbac_95c02dbbb91c0f2f, []int{1}
+	return fileDescriptor_rbac_3c08c736d7484163, []int{1}
 }
 func (m *ClusterRole) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -157,7 +155,7 @@ func (m *Role) Reset()         { *m = Role{} }
 func (m *Role) String() string { return proto.CompactTextString(m) }
 func (*Role) ProtoMessage()    {}
 func (*Role) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rbac_95c02dbbb91c0f2f, []int{2}
+	return fileDescriptor_rbac_3c08c736d7484163, []int{2}
 }
 func (m *Role) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -208,7 +206,7 @@ func (m *RoleRef) Reset()         { *m = RoleRef{} }
 func (m *RoleRef) String() string { return proto.CompactTextString(m) }
 func (*RoleRef) ProtoMessage()    {}
 func (*RoleRef) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rbac_95c02dbbb91c0f2f, []int{3}
+	return fileDescriptor_rbac_3c08c736d7484163, []int{3}
 }
 func (m *RoleRef) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -265,7 +263,7 @@ func (m *Subject) Reset()         { *m = Subject{} }
 func (m *Subject) String() string { return proto.CompactTextString(m) }
 func (*Subject) ProtoMessage()    {}
 func (*Subject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rbac_95c02dbbb91c0f2f, []int{4}
+	return fileDescriptor_rbac_3c08c736d7484163, []int{4}
 }
 func (m *Subject) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -324,7 +322,7 @@ func (m *ClusterRoleBinding) Reset()         { *m = ClusterRoleBinding{} }
 func (m *ClusterRoleBinding) String() string { return proto.CompactTextString(m) }
 func (*ClusterRoleBinding) ProtoMessage()    {}
 func (*ClusterRoleBinding) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rbac_95c02dbbb91c0f2f, []int{5}
+	return fileDescriptor_rbac_3c08c736d7484163, []int{5}
 }
 func (m *ClusterRoleBinding) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -383,7 +381,7 @@ func (m *RoleBinding) Reset()         { *m = RoleBinding{} }
 func (m *RoleBinding) String() string { return proto.CompactTextString(m) }
 func (*RoleBinding) ProtoMessage()    {}
 func (*RoleBinding) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rbac_95c02dbbb91c0f2f, []int{6}
+	return fileDescriptor_rbac_3c08c736d7484163, []int{6}
 }
 func (m *RoleBinding) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -2136,9 +2134,9 @@ var (
 	ErrIntOverflowRbac   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("rbac.proto", fileDescriptor_rbac_95c02dbbb91c0f2f) }
+func init() { proto.RegisterFile("rbac.proto", fileDescriptor_rbac_3c08c736d7484163) }
 
-var fileDescriptor_rbac_95c02dbbb91c0f2f = []byte{
+var fileDescriptor_rbac_3c08c736d7484163 = []byte{
 	// 403 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x53, 0x3d, 0x6e, 0xdb, 0x30,
 	0x14, 0x36, 0xfd, 0x53, 0x5b, 0x14, 0xdc, 0xd6, 0x44, 0x07, 0xa1, 0x28, 0x24, 0x43, 0x5d, 0x0c,

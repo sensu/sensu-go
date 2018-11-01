@@ -18,35 +18,33 @@ const (
 
 // A CheckScheduler schedules checks to be executed on a timer
 type CheckScheduler struct {
-	checkName     string
-	checkEnv      string
-	checkOrg      string
-	checkInterval uint32
-	checkCron     string
-	lastCronState string
-	store         store.Store
-	bus           messaging.MessageBus
-	logger        *logrus.Entry
-	ctx           context.Context
-	cancel        context.CancelFunc
-	interrupt     chan struct{}
+	checkName      string
+	checkNamespace string
+	checkInterval  uint32
+	checkCron      string
+	lastCronState  string
+	store          store.Store
+	bus            messaging.MessageBus
+	logger         *logrus.Entry
+	ctx            context.Context
+	cancel         context.CancelFunc
+	interrupt      chan struct{}
 }
 
 func NewCheckScheduler(store store.Store, bus messaging.MessageBus, check *types.CheckConfig, ctx context.Context) *CheckScheduler {
 	sched := &CheckScheduler{
-		store:         store,
-		bus:           bus,
-		checkName:     check.Name,
-		checkEnv:      check.Environment,
-		checkOrg:      check.Organization,
-		checkInterval: check.Interval,
-		checkCron:     check.Cron,
-		lastCronState: check.Cron,
-		interrupt:     make(chan struct{}),
+		store:          store,
+		bus:            bus,
+		checkName:      check.Name,
+		checkNamespace: check.Namespace,
+		checkInterval:  check.Interval,
+		checkCron:      check.Cron,
+		lastCronState:  check.Cron,
+		interrupt:      make(chan struct{}),
 		logger: logger.WithFields(logrus.Fields{
-			"name": check.Name,
-			"org":  check.Organization,
-			"env":  check.Environment}),
+			"name":      check.Name,
+			"namespace": check.Namespace,
+		}),
 	}
 	sched.ctx, sched.cancel = context.WithCancel(ctx)
 	sched.ctx = types.SetContextFromResource(sched.ctx, check)
@@ -137,7 +135,7 @@ func (s *CheckScheduler) start() {
 	}
 
 	executor := NewCheckExecutor(
-		s.bus, newRoundRobinScheduler(s.ctx, s.bus), s.checkOrg, s.checkEnv, s.store)
+		s.bus, newRoundRobinScheduler(s.ctx, s.bus), s.checkNamespace, s.store)
 
 	timer.Start()
 

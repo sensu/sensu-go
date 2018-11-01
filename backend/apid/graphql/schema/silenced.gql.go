@@ -15,6 +15,12 @@ type SilencedIDFieldResolver interface {
 	ID(p graphql.ResolveParams) (string, error)
 }
 
+// SilencedNamespaceFieldResolver implement to resolve requests for the Silenced's namespace field.
+type SilencedNamespaceFieldResolver interface {
+	// Namespace implements response to request for namespace field.
+	Namespace(p graphql.ResolveParams) (string, error)
+}
+
 // SilencedStoreIDFieldResolver implement to resolve requests for the Silenced's storeId field.
 type SilencedStoreIDFieldResolver interface {
 	// StoreID implements response to request for storeId field.
@@ -61,18 +67,6 @@ type SilencedReasonFieldResolver interface {
 type SilencedSubscriptionFieldResolver interface {
 	// Subscription implements response to request for subscription field.
 	Subscription(p graphql.ResolveParams) (string, error)
-}
-
-// SilencedOrganizationFieldResolver implement to resolve requests for the Silenced's organization field.
-type SilencedOrganizationFieldResolver interface {
-	// Organization implements response to request for organization field.
-	Organization(p graphql.ResolveParams) (interface{}, error)
-}
-
-// SilencedEnvironmentFieldResolver implement to resolve requests for the Silenced's environment field.
-type SilencedEnvironmentFieldResolver interface {
-	// Environment implements response to request for environment field.
-	Environment(p graphql.ResolveParams) (interface{}, error)
 }
 
 // SilencedBeginFieldResolver implement to resolve requests for the Silenced's begin field.
@@ -144,6 +138,7 @@ type SilencedBeginFieldResolver interface {
 //
 type SilencedFieldResolvers interface {
 	SilencedIDFieldResolver
+	SilencedNamespaceFieldResolver
 	SilencedStoreIDFieldResolver
 	SilencedExpireFieldResolver
 	SilencedExpiresFieldResolver
@@ -152,8 +147,6 @@ type SilencedFieldResolvers interface {
 	SilencedCheckFieldResolver
 	SilencedReasonFieldResolver
 	SilencedSubscriptionFieldResolver
-	SilencedOrganizationFieldResolver
-	SilencedEnvironmentFieldResolver
 	SilencedBeginFieldResolver
 }
 
@@ -213,6 +206,19 @@ func (_ SilencedAliases) ID(p graphql.ResolveParams) (string, error) {
 	}
 	if !ok {
 		return ret, errors.New("unable to coerce value for field 'id'")
+	}
+	return ret, err
+}
+
+// Namespace implements response to request for 'namespace' field.
+func (_ SilencedAliases) Namespace(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'namespace'")
 	}
 	return ret, err
 }
@@ -307,18 +313,6 @@ func (_ SilencedAliases) Subscription(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
-// Organization implements response to request for 'organization' field.
-func (_ SilencedAliases) Organization(p graphql.ResolveParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
-// Environment implements response to request for 'environment' field.
-func (_ SilencedAliases) Environment(p graphql.ResolveParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
 // Begin implements response to request for 'begin' field.
 func (_ SilencedAliases) Begin(p graphql.ResolveParams) (*time.Time, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -343,6 +337,13 @@ func _ObjTypeSilencedIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(SilencedIDFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.ID(frp)
+	}
+}
+
+func _ObjTypeSilencedNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SilencedNamespaceFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Namespace(frp)
 	}
 }
 
@@ -402,20 +403,6 @@ func _ObjTypeSilencedSubscriptionHandler(impl interface{}) graphql1.FieldResolve
 	}
 }
 
-func _ObjTypeSilencedOrganizationHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SilencedOrganizationFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Organization(frp)
-	}
-}
-
-func _ObjTypeSilencedEnvironmentHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SilencedEnvironmentFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Environment(frp)
-	}
-}
-
 func _ObjTypeSilencedBeginHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(SilencedBeginFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -448,13 +435,6 @@ func _ObjectTypeSilencedConfigFn() graphql1.ObjectConfig {
 				Name:              "creator",
 				Type:              graphql1.NewNonNull(graphql.OutputType("User")),
 			},
-			"environment": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "Environment indicates which env a silenced entry belongs to.",
-				Name:              "environment",
-				Type:              graphql.OutputType("Environment"),
-			},
 			"expire": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -483,12 +463,12 @@ func _ObjectTypeSilencedConfigFn() graphql1.ObjectConfig {
 				Name:              "id",
 				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
-			"organization": &graphql1.Field{
+			"namespace": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "Organization indicates to which org a silenced entry belongs to.",
-				Name:              "organization",
-				Type:              graphql1.NewNonNull(graphql.OutputType("Organization")),
+				Description:       "The namespace the object belongs to.",
+				Name:              "namespace",
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"reason": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -514,7 +494,7 @@ func _ObjectTypeSilencedConfigFn() graphql1.ObjectConfig {
 		},
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node"),
-			graphql.Interface("EnvironmentNode")},
+			graphql.Interface("Namespaced")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -534,12 +514,11 @@ var _ObjectTypeSilencedDesc = graphql.ObjectDesc{
 		"begin":           _ObjTypeSilencedBeginHandler,
 		"check":           _ObjTypeSilencedCheckHandler,
 		"creator":         _ObjTypeSilencedCreatorHandler,
-		"environment":     _ObjTypeSilencedEnvironmentHandler,
 		"expire":          _ObjTypeSilencedExpireHandler,
 		"expireOnResolve": _ObjTypeSilencedExpireOnResolveHandler,
 		"expires":         _ObjTypeSilencedExpiresHandler,
 		"id":              _ObjTypeSilencedIDHandler,
-		"organization":    _ObjTypeSilencedOrganizationHandler,
+		"namespace":       _ObjTypeSilencedNamespaceHandler,
 		"reason":          _ObjTypeSilencedReasonHandler,
 		"storeId":         _ObjTypeSilencedStoreIDHandler,
 		"subscription":    _ObjTypeSilencedSubscriptionHandler,

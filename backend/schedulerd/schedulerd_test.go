@@ -32,8 +32,8 @@ func TestSchedulerd(t *testing.T) {
 	}
 	defer st.Teardown()
 
-	// Mock a default organization & environment
-	require.NoError(t, st.CreateOrganization(context.Background(), types.FixtureOrganization("default")))
+	// Mock a default namespace
+	require.NoError(t, st.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
 
 	schedulerd, err := New(Config{
 		Store:       st,
@@ -52,8 +52,7 @@ func TestSchedulerd(t *testing.T) {
 	}
 
 	check := types.FixtureCheckConfig("check_name")
-	ctx := context.WithValue(context.Background(), types.OrganizationKey, check.Organization)
-	ctx = context.WithValue(ctx, types.EnvironmentKey, check.Environment)
+	ctx := context.WithValue(context.Background(), types.NamespaceKey, check.Namespace)
 
 	assert.NoError(t, check.Validate())
 	assert.NoError(t, st.UpdateCheckConfig(ctx, check))

@@ -17,10 +17,9 @@ func TestMiddlewareLimits(t *testing.T) {
 
 	goodCheck := &types.CheckConfig{
 		Command:       "true",
-		Environment:   "default",
 		Interval:      30,
 		Name:          "goodcheck",
-		Organization:  "default",
+		Namespace:     "default",
 		Publish:       true,
 		Subscriptions: []string{"system"},
 	}
@@ -29,10 +28,9 @@ func TestMiddlewareLimits(t *testing.T) {
 	rand.Read(maxCheck)
 	badCheck := &types.CheckConfig{
 		Command:       string(maxCheck),
-		Environment:   "default",
 		Interval:      30,
 		Name:          "badcheck",
-		Organization:  "default",
+		Namespace:     "default",
 		Publish:       true,
 		Subscriptions: []string{"system"},
 	}

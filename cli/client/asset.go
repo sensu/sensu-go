@@ -9,10 +9,10 @@ import (
 )
 
 // ListAssets fetches a list of asset resources from the backend
-func (client *RestClient) ListAssets(org string) ([]types.Asset, error) {
+func (client *RestClient) ListAssets(namespace string) ([]types.Asset, error) {
 	var assets []types.Asset
 
-	res, err := client.R().Get("/assets?org=" + org)
+	res, err := client.R().Get("/assets?namespace=" + namespace)
 	if err != nil {
 		return assets, err
 	}

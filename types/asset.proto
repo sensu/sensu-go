@@ -31,6 +31,6 @@ message Asset {
   // queries are joined by the "AND" operator.
   repeated string filters = 5 [(gogoproto.jsontag) = "filters"];
 
-  // Organization indicates to which org an asset belongs to
-  string organization = 6;
+  // Namespace to which the asset belongs to
+  string namespace = 7;
 }

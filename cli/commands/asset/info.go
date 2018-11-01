@@ -62,8 +62,8 @@ func printToList(v interface{}, writer io.Writer) error {
 				Value: r.Name,
 			},
 			{
-				Label: "Organization",
-				Value: r.Organization,
+				Label: "Namespace",
+				Value: r.Namespace,
 			},
 			{
 				Label: "URL",

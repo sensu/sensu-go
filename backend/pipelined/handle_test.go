@@ -111,7 +111,7 @@ func TestPipelinedExpandHandlers(t *testing.T) {
 	p.store = store
 
 	handler1 := types.FixtureHandler("handler1")
-	ctx := context.WithValue(context.Background(), types.OrganizationKey, handler1.Organization)
+	ctx := context.WithValue(context.Background(), types.NamespaceKey, handler1.Namespace)
 
 	store.On("GetHandlerByName", mock.Anything, "handler1").Return(handler1, nil)
 

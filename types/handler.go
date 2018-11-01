@@ -38,12 +38,8 @@ func (h *Handler) Validate() error {
 		return err
 	}
 
-	if h.Environment == "" {
-		return errors.New("environment must be set")
-	}
-
-	if h.Organization == "" {
-		return errors.New("organization must be set")
+	if h.Namespace == "" {
+		return errors.New("namespace must be set")
 	}
 
 	return nil
@@ -80,11 +76,10 @@ func (s *HandlerSocket) Validate() error {
 // FixtureHandler returns a Handler fixture for testing.
 func FixtureHandler(name string) *Handler {
 	return &Handler{
-		Name:         name,
-		Type:         HandlerPipeType,
-		Command:      "command",
-		Environment:  "default",
-		Organization: "default",
+		Name:      name,
+		Type:      HandlerPipeType,
+		Command:   "command",
+		Namespace: "default",
 	}
 }
 

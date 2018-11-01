@@ -59,21 +59,6 @@ func TestSaveEdition(t *testing.T) {
 	assert.Equal(t, types.CoreEdition, config.Edition())
 }
 
-func TestSaveEnvironment(t *testing.T) {
-	dir, cleanup := tmpDir(t)
-	defer cleanup()
-
-	// Set flags
-	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
-	flags.String("config-dir", dir, "")
-
-	config := Load(flags)
-
-	env := "json"
-	require.NoError(t, config.SaveEnvironment(env))
-	assert.Equal(t, env, config.Environment())
-}
-
 func TestSaveFormat(t *testing.T) {
 	dir, cleanup := tmpDir(t)
 	defer cleanup()
@@ -89,7 +74,7 @@ func TestSaveFormat(t *testing.T) {
 	assert.Equal(t, format, config.Format())
 }
 
-func TestSaveOrganization(t *testing.T) {
+func TestSaveNamespace(t *testing.T) {
 	dir, cleanup := tmpDir(t)
 	defer cleanup()
 
@@ -99,9 +84,9 @@ func TestSaveOrganization(t *testing.T) {
 
 	config := Load(flags)
 
-	org := "json"
-	require.NoError(t, config.SaveOrganization(org))
-	assert.Equal(t, org, config.Organization())
+	namespace := "json"
+	require.NoError(t, config.SaveNamespace(namespace))
+	assert.Equal(t, namespace, config.Namespace())
 }
 
 func TestSaveTokens(t *testing.T) {

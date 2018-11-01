@@ -27,7 +27,7 @@ func (c *MockClient) FetchHook(name string) (*types.HookConfig, error) {
 }
 
 // ListHooks for use with mock lib
-func (c *MockClient) ListHooks(org string) ([]types.HookConfig, error) {
-	args := c.Called(org)
+func (c *MockClient) ListHooks(namespace string) ([]types.HookConfig, error) {
+	args := c.Called(namespace)
 	return args.Get(0).([]types.HookConfig), args.Error(1)
 }
