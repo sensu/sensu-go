@@ -69,6 +69,11 @@ class CheckDetailsConfiguration extends React.PureComponent {
           splay
         }
 
+        assets: runtimeAssets {
+          id
+          name
+        }
+
         envVars
         extendedAttributes
       }
@@ -96,20 +101,29 @@ class CheckDetailsConfiguration extends React.PureComponent {
       ),
     );
 
-    if (hooks.length === 0) {
+    return this.renderList(hooks);
+  }
+
+  renderAssets = () => {
+    const { assets } = this.props.check;
+    return this.renderList(assets.map(asset => asset.name));
+  };
+
+  renderList = items => {
+    if (items.length === 0) {
       return "—";
     }
 
     return (
       <List disablePadding>
-        {hooks.map(hook => (
-          <ListItem key={hook}>
-            <ListItemTitle>{hook}</ListItemTitle>
+        {items.map(item => (
+          <ListItem key={item}>
+            <ListItemTitle>{item}</ListItemTitle>
           </ListItem>
         ))}
       </List>
     );
-  }
+  };
 
   render() {
     const { check } = this.props;
@@ -300,6 +314,11 @@ class CheckDetailsConfiguration extends React.PureComponent {
                 <DictionaryEntry>
                   <DictionaryKey>Hooks</DictionaryKey>
                   <DictionaryValue>{this.renderHooks()}</DictionaryValue>
+                </DictionaryEntry>
+
+                <DictionaryEntry>
+                  <DictionaryKey>Assets</DictionaryKey>
+                  <DictionaryValue>{this.renderAssets()}</DictionaryValue>
                 </DictionaryEntry>
               </Dictionary>
             </Grid>
