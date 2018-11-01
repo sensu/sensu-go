@@ -75,8 +75,7 @@ func (r *mutationsImpl) CreateCheck(p schema.MutationCreateCheckFieldResolverPar
 
 	var check types.CheckConfig
 	check.Name = inputs.Name
-	check.Organization = inputs.Ns.Organization
-	check.Environment = inputs.Ns.Environment
+	check.Namespace = inputs.Namespace
 
 	rawArgs := p.ResolveParams.Args
 	if err := copyCheckInputs(&check, rawArgs["input"]); err != nil {
@@ -267,8 +266,7 @@ func (r *mutationsImpl) CreateSilence(p schema.MutationCreateSilenceFieldResolve
 	var silence types.Silenced
 	silence.Check = inputs.Check
 	silence.Subscription = inputs.Subscription
-	silence.Organization = inputs.Ns.Organization
-	silence.Environment = inputs.Ns.Environment
+	silence.Namespace = inputs.Namespace
 	copySilenceInputs(&silence, inputs.Props)
 
 	err := r.silenceCreator.Create(p.Context, &silence)

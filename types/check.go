@@ -48,13 +48,12 @@ var OutputMetricFormats = []string{NagiosOutputMetricFormat, GraphiteOutputMetri
 func NewCheck(c *CheckConfig) *Check {
 	check := &Check{
 		Command:              c.Command,
-		Environment:          c.Environment,
 		Handlers:             c.Handlers,
 		HighFlapThreshold:    c.HighFlapThreshold,
 		Interval:             c.Interval,
 		LowFlapThreshold:     c.LowFlapThreshold,
 		Name:                 c.Name,
-		Organization:         c.Organization,
+		Namespace:            c.Namespace,
 		Publish:              c.Publish,
 		RuntimeAssets:        c.RuntimeAssets,
 		Subscriptions:        c.Subscriptions,
@@ -240,12 +239,8 @@ func (c *CheckConfig) Validate() error {
 		return errors.New("check interval must be greater than 0 or a valid cron schedule must be provided")
 	}
 
-	if c.Environment == "" {
-		return errors.New("environment cannot be empty")
-	}
-
-	if c.Organization == "" {
-		return errors.New("organization must be set")
+	if c.Namespace == "" {
+		return errors.New("namespace must be set")
 	}
 
 	if c.Ttl > 0 && c.Ttl <= int64(c.Interval) {
@@ -372,8 +367,7 @@ func FixtureCheckConfig(id string) *CheckConfig {
 		Handlers:             []string{},
 		RuntimeAssets:        []string{"ruby-2-4-2"},
 		CheckHooks:           []HookList{*FixtureHookList("hook1")},
-		Environment:          "default",
-		Organization:         "default",
+		Namespace:            "default",
 		Publish:              true,
 		Cron:                 "",
 		Ttl:                  0,

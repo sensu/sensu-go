@@ -15,8 +15,7 @@ import (
 func TestHandlerStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		handler := types.FixtureHandler("handler1")
-		ctx := context.WithValue(context.Background(), types.OrganizationKey, handler.Organization)
-		ctx = context.WithValue(ctx, types.EnvironmentKey, handler.Environment)
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, handler.Namespace)
 
 		// We should receive an empty slice if no results were found
 		handlers, err := store.GetHandlers(ctx)
@@ -41,8 +40,7 @@ func TestHandlerStorage(t *testing.T) {
 		assert.Equal(t, 1, len(handlers))
 
 		// Updating a handler in a nonexistent org and env should not work
-		handler.Organization = "missing"
-		handler.Environment = "missing"
+		handler.Namespace = "missing"
 		err = store.UpdateHandler(ctx, handler)
 		assert.Error(t, err)
 	})

@@ -24,7 +24,7 @@ func (p *ExtensionPolicy) Context() Context {
 	return p.context
 }
 
-// WithContext returns new policy populated with rules & organization.
+// WithContext returns new policy populated with rules & namespace.
 func (p ExtensionPolicy) WithContext(ctx context.Context) ExtensionPolicy { // nolint
 	p.context = ExtractValueFromContext(ctx)
 	return p
@@ -37,7 +37,7 @@ func (p *ExtensionPolicy) CanList() bool {
 
 // CanRead returns true if actor has read access to resource.
 func (p *ExtensionPolicy) CanRead(extension *types.Extension) bool {
-	return canPerformOn(p, extension.Organization, "", types.RulePermRead)
+	return canPerformOn(p, extension.Namespace, types.RulePermRead)
 }
 
 // CanCreate returns true if actor has access to create.

@@ -82,8 +82,7 @@ func (client *RestClient) ExecuteCheck(req *types.AdhocRequest) error {
 
 	checkPath := fmt.Sprintf("/checks/%s/execute", url.PathEscape(req.Name))
 	res, err := client.R().
-		SetQueryParam("env", client.config.Environment()).
-		SetQueryParam("org", client.config.Organization()).
+		SetQueryParam("namespace", client.config.Namespace()).
 		SetBody(bytes).
 		Post(checkPath)
 
@@ -117,9 +116,9 @@ func (client *RestClient) FetchCheck(name string) (*types.CheckConfig, error) {
 }
 
 // ListChecks fetches all checks from configured Sensu instance
-func (client *RestClient) ListChecks(org string) ([]types.CheckConfig, error) {
+func (client *RestClient) ListChecks(namespace string) ([]types.CheckConfig, error) {
 	var checks []types.CheckConfig
-	res, err := client.R().SetQueryParam("org", org).Get("/checks")
+	res, err := client.R().SetQueryParam("namespace", namespace).Get("/checks")
 	if err != nil {
 		return checks, err
 	}
@@ -135,7 +134,7 @@ func (client *RestClient) ListChecks(org string) ([]types.CheckConfig, error) {
 // AddCheckHook associates an existing hook with an existing check
 func (client *RestClient) AddCheckHook(check *types.CheckConfig, checkHook *types.HookList) error {
 	key := checksPath(check.Name, "hooks", checkHook.Type)
-	res, err := client.R().SetQueryParam("org", check.Organization).SetQueryParam("env", check.Environment).SetBody(checkHook).Put(key)
+	res, err := client.R().SetQueryParam("namespace", check.Namespace).SetBody(checkHook).Put(key)
 	if err != nil {
 		return err
 	}
@@ -150,7 +149,7 @@ func (client *RestClient) AddCheckHook(check *types.CheckConfig, checkHook *type
 // RemoveCheckHook removes an association between an existing hook and an existing check
 func (client *RestClient) RemoveCheckHook(check *types.CheckConfig, checkHookType string, hookName string) error {
 	path := checksPath(check.Name, "hooks", checkHookType, "hook", hookName)
-	res, err := client.R().SetQueryParam("org", check.Organization).SetQueryParam("env", check.Environment).Delete(path)
+	res, err := client.R().SetQueryParam("namespace", check.Namespace).Delete(path)
 	if err != nil {
 		return err
 	}

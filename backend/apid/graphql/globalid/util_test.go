@@ -15,7 +15,6 @@ func TestStandardDecoder(t *testing.T) {
 	components := encoderFn(handler)
 
 	assert.Equal("handlers", components.Resource())
-	assert.Equal("default", components.Organization())
-	assert.Equal("default", components.Environment())
+	assert.Equal("default", components.Namespace())
 	assert.Equal("myHandler", components.UniqueComponent())
 }

@@ -33,6 +33,7 @@ func newNodeResolver(store store.Store, getter types.QueueGetter) *nodeResolver 
 	registerRoleNodeResolver(register, store)
 	registerUserNodeResolver(register, store)
 	registerEventNodeResolver(register, store)
+	registerNamespaceNodeResolver(register, store)
 
 	return &nodeResolver{register}
 }
@@ -273,5 +274,26 @@ func (f *eventNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, erro
 
 	ctx := setContextFromComponents(p.Context, p.IDComponents)
 	record, err := f.controller.Find(ctx, evComponents.EntityName(), evComponents.CheckName())
+	return handleControllerResults(record, err)
+}
+
+// namespaces
+
+type namespaceNodeResolver struct {
+	controller actions.NamespacesController
+}
+
+func registerNamespaceNodeResolver(register relay.NodeRegister, store store.Store) {
+	controller := actions.NewNamespacesController(store)
+	resolver := &namespaceNodeResolver{controller}
+	register.RegisterResolver(relay.NodeResolver{
+		ObjectType: schema.NamespaceType,
+		Translator: globalid.NamespaceTranslator,
+		Resolve:    resolver.fetch,
+	})
+}
+
+func (f *namespaceNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
+	record, err := f.controller.Find(p.Context, p.IDComponents.UniqueComponent())
 	return handleControllerResults(record, err)
 }

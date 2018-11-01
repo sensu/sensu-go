@@ -5,8 +5,8 @@ import (
 )
 
 // ListHandlers for use with mock package
-func (c *MockClient) ListHandlers(org string) ([]types.Handler, error) {
-	args := c.Called(org)
+func (c *MockClient) ListHandlers(namespace string) ([]types.Handler, error) {
+	args := c.Called(namespace)
 	return args.Get(0).([]types.Handler), args.Error(1)
 }
 

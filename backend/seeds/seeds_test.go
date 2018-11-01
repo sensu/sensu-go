@@ -36,13 +36,9 @@ func TestSeedInitialData(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEmpty(t, agent, "agent user should be present after seed process")
 
-	defaultOrg, err := st.GetOrganizationByName(ctx, "default")
+	defaultNamespace, err := st.GetNamespace(ctx, "default")
 	require.NoError(t, err)
-	assert.NotEmpty(t, defaultOrg, "default organization should be present after seed process")
-
-	defaultEnv, err := st.GetEnvironment(ctx, "default", "default")
-	require.NoError(t, err)
-	assert.NotEmpty(t, defaultEnv, "default environment should be present after seed process")
+	assert.NotEmpty(t, defaultNamespace, "default namespace should be present after seed process")
 
 	sensu, err := st.GetUser(ctx, "sensu")
 	require.NoError(t, err)

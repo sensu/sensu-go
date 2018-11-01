@@ -24,7 +24,7 @@ func TestNewMutatorController(t *testing.T) {
 
 func TestMutatorCreateOrReplace(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(
 				types.RuleTypeMutator,
@@ -34,7 +34,7 @@ func TestMutatorCreateOrReplace(t *testing.T) {
 		),
 	)
 	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermCreate),
 		),
@@ -111,13 +111,13 @@ func TestMutatorCreateOrReplace(t *testing.T) {
 
 func TestMutatorCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermCreate),
 		),
 	)
 	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermRead),
 		),
@@ -204,13 +204,13 @@ func TestMutatorCreate(t *testing.T) {
 
 func TestMutatorDestroy(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermDelete),
 		),
 	)
 	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermCreate),
 		),
@@ -304,13 +304,13 @@ func TestMutatorDestroy(t *testing.T) {
 
 func TestMutatorUpdate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermUpdate),
 		),
 	)
 	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermRead),
 		),

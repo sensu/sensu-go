@@ -63,16 +63,14 @@ func TestGoodSessionConfig(t *testing.T) {
 
 	st := &mockstore.MockStore{}
 	st.On(
-		"GetEnvironment",
+		"GetNamespace",
 		mock.Anything,
-		"org",
-		"env",
-	).Return(&types.Environment{}, nil)
+		"acme",
+	).Return(&types.Namespace{}, nil)
 
 	cfg := SessionConfig{
 		AgentID:       "testing",
-		Organization:  "org",
-		Environment:   "env",
+		Namespace:     "acme",
 		Subscriptions: []string{"testing"},
 	}
 	session, err := NewSession(cfg, conn, bus, st)
@@ -98,11 +96,10 @@ func TestBadSessionConfig(t *testing.T) {
 		mock.AnythingOfType("*types.Entity"),
 	).Return(nil)
 	st.On(
-		"GetEnvironment",
+		"GetNamespace",
 		mock.Anything,
 		mock.AnythingOfType("string"),
-		mock.AnythingOfType("string"),
-	).Return(&types.Environment{}, fmt.Errorf("error"))
+	).Return(&types.Namespace{}, fmt.Errorf("error"))
 
 	cfg := SessionConfig{
 		Subscriptions: []string{"testing"},

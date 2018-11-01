@@ -27,7 +27,7 @@ func TestNewCheckController(t *testing.T) {
 
 func TestCheckQuery(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermRead),
 		),
@@ -104,7 +104,7 @@ func TestCheckQuery(t *testing.T) {
 
 func TestCheckFind(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermRead),
 		),
@@ -181,13 +181,13 @@ func TestCheckFind(t *testing.T) {
 
 func TestCheckCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermCreate),
 		),
 	)
 	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermRead),
 		),
@@ -287,7 +287,7 @@ func TestCheckCreate(t *testing.T) {
 
 func TestCheckCreateOrReplace(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(
 				types.RuleTypeCheck,
@@ -297,7 +297,7 @@ func TestCheckCreateOrReplace(t *testing.T) {
 		),
 	)
 	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermCreate),
 		),
@@ -387,13 +387,13 @@ func TestCheckCreateOrReplace(t *testing.T) {
 
 func TestCheckUpdate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermUpdate),
 		),
 	)
 	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermRead),
 		),
@@ -498,13 +498,13 @@ func TestCheckUpdate(t *testing.T) {
 
 func TestCheckDestroy(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermDelete),
 		),
 	)
 	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermCreate),
 		),
@@ -598,13 +598,13 @@ func TestCheckDestroy(t *testing.T) {
 
 func TestCheckAdhoc(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermCreate, types.RulePermRead),
 		),
 	)
 	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermRead),
 		),

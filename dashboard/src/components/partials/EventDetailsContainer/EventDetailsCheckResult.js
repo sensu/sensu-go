@@ -26,6 +26,9 @@ import Maybe from "/components/Maybe";
 import SilencedIcon from "/icons/Silence";
 import Tooltip from "@material-ui/core/Tooltip";
 
+import NamespaceLink from "/components/util/NamespaceLink";
+import InlineLink from "/components/InlineLink";
+
 class EventDetailsCheckResult extends React.PureComponent {
   static propTypes = {
     check: PropTypes.object.isRequired,
@@ -119,11 +122,25 @@ class EventDetailsCheckResult extends React.PureComponent {
               <Dictionary>
                 <DictionaryEntry>
                   <DictionaryKey>Check</DictionaryKey>
-                  <DictionaryValue>{check.name}</DictionaryValue>
+                  <DictionaryValue>
+                    <NamespaceLink
+                      component={InlineLink}
+                      to={`/checks/${check.name}`}
+                    >
+                      {check.name}
+                    </NamespaceLink>
+                  </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>
                   <DictionaryKey>Entity</DictionaryKey>
-                  <DictionaryValue>{entity.name}</DictionaryValue>
+                  <DictionaryValue>
+                    <NamespaceLink
+                      component={InlineLink}
+                      to={`/entities/${entity.name}`}
+                    >
+                      {entity.name}
+                    </NamespaceLink>
+                  </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>
                   <DictionaryKey>Issued at</DictionaryKey>

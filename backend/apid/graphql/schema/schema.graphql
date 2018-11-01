@@ -12,26 +12,23 @@ type Query {
   """
   viewer: Viewer
 
-  """
-  Environment fetches the environment associated with the given
-  organization & environment arguments.
-  """
-  environment(environment: String!, organization: String!): Environment
+  "Namespace fetches the namespace object associated with the given name."
+  namespace(name: String!): Namespace
 
   """
   Event fetches the event associated with the given set of arguments.
   """
-  event(ns: NamespaceInput!, entity: String!, check: String): Event
+  event(namespace: String!, entity: String!, check: String): Event
 
   """
   Entity fetches the entity associated with the given set of arguments.
   """
-  entity(ns: NamespaceInput!, name: String!): Entity
+  entity(namespace: String!, name: String!): Entity
 
   """
   check fetches the check config associated with the given set of arguments.
   """
-  check(ns: NamespaceInput!, name: String!): CheckConfig
+  check(namespace: String!, name: String!): CheckConfig
 
   """
   Node fetches an object given its ID.

@@ -57,9 +57,9 @@ func SeedInitialData(store store.Store) (err error) {
 		return err
 	}
 
-	// Default organization & environment
-	if err := setupDefaultOrganization(store); err != nil {
-		logger.WithError(err).Error("unable to setup 'default' organization")
+	// Default namespace & environment
+	if err := setupDefaultNamespace(store); err != nil {
+		logger.WithError(err).Error("unable to setup 'default' namespace")
 		return err
 	}
 
@@ -67,12 +67,11 @@ func SeedInitialData(store store.Store) (err error) {
 	return initializer.FlagAsInitialized()
 }
 
-func setupDefaultOrganization(store store.Store) error {
-	return store.CreateOrganization(
+func setupDefaultNamespace(store store.Store) error {
+	return store.CreateNamespace(
 		context.Background(),
-		&types.Organization{
-			Name:        "default",
-			Description: "Default organization",
+		&types.Namespace{
+			Name: "default",
 		})
 }
 

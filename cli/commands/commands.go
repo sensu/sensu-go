@@ -10,7 +10,6 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/configure"
 	"github.com/sensu/sensu-go/cli/commands/create"
 	"github.com/sensu/sensu-go/cli/commands/entity"
-	"github.com/sensu/sensu-go/cli/commands/environment"
 	"github.com/sensu/sensu-go/cli/commands/event"
 	"github.com/sensu/sensu-go/cli/commands/extension"
 	"github.com/sensu/sensu-go/cli/commands/filter"
@@ -18,7 +17,12 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/hook"
 	"github.com/sensu/sensu-go/cli/commands/logout"
 	"github.com/sensu/sensu-go/cli/commands/mutator"
+<<<<<<< HEAD
 	"github.com/sensu/sensu-go/cli/commands/organization"
+=======
+	"github.com/sensu/sensu-go/cli/commands/namespace"
+	"github.com/sensu/sensu-go/cli/commands/role"
+>>>>>>> feature/rbac
 	"github.com/sensu/sensu-go/cli/commands/silenced"
 	"github.com/sensu/sensu-go/cli/commands/user"
 	"github.com/spf13/cobra"
@@ -36,13 +40,17 @@ func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 		check.HelpCommand(cli),
 		config.HelpCommand(cli),
 		entity.HelpCommand(cli),
-		environment.HelpCommand(cli),
 		event.HelpCommand(cli),
 		filter.HelpCommand(cli),
 		handler.HelpCommand(cli),
 		hook.HelpCommand(cli),
 		mutator.HelpCommand(cli),
+<<<<<<< HEAD
 		organization.HelpCommand(cli),
+=======
+		namespace.HelpCommand(cli),
+		role.HelpCommand(cli),
+>>>>>>> feature/rbac
 		user.HelpCommand(cli),
 		silenced.HelpCommand(cli),
 		create.CreateCommand(cli),

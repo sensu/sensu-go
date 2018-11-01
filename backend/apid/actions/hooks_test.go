@@ -25,7 +25,7 @@ func TestNewHookController(t *testing.T) {
 
 func TestHookQuery(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermRead),
 		),
@@ -102,7 +102,7 @@ func TestHookQuery(t *testing.T) {
 
 func TestHookFind(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermRead),
 		),
@@ -179,7 +179,7 @@ func TestHookFind(t *testing.T) {
 
 func TestHookCreateOrReplace(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(
 				types.RuleTypeHook,
@@ -189,7 +189,7 @@ func TestHookCreateOrReplace(t *testing.T) {
 		),
 	)
 	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermCreate),
 		),
@@ -279,13 +279,13 @@ func TestHookCreateOrReplace(t *testing.T) {
 
 func TestHookCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermCreate),
 		),
 	)
 	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermRead),
 		),
@@ -385,13 +385,13 @@ func TestHookCreate(t *testing.T) {
 
 func TestHookUpdate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermUpdate),
 		),
 	)
 	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermRead),
 		),
@@ -496,13 +496,13 @@ func TestHookUpdate(t *testing.T) {
 
 func TestHookDestroy(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermDelete),
 		),
 	)
 	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermCreate),
 		),

@@ -22,13 +22,12 @@ message Entity {
   int64 last_seen = 5 [(gogoproto.jsontag) = "last_seen"];
   bool deregister = 6 [(gogoproto.jsontag) = "deregister"];
   Deregistration deregistration = 7 [(gogoproto.nullable) = false];
-  string environment = 9;
-  string organization = 10;
   string user = 11;
   // ExtendedAttributes store serialized arbitrary JSON-encoded data
   bytes extended_attributes = 12 [(gogoproto.jsontag) = "-"];
   // Redact contains the fields to redact on the agent
   repeated string redact = 13;
+  string namespace = 14;
 }
 
 // System contains information about the system that the Agent process

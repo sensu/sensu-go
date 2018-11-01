@@ -74,9 +74,6 @@ type Store interface {
 	// EntityStore provides an interface for managing entities
 	EntityStore
 
-	// EnvironmentStore provides an interface for managing environments
-	EnvironmentStore
-
 	// EventStore provides an interface for managing events
 	EventStore
 
@@ -98,8 +95,8 @@ type Store interface {
 	// MutatorStore provides an interface for managing events mutators
 	MutatorStore
 
-	// OrganizationStore provides an interface for managing organizations
-	OrganizationStore
+	// NamespaceStore provides an interface for managing namespaces
+	NamespaceStore
 
 	// RBACStore provides an interface for managing RBAC roles and rules
 	RBACStore
@@ -125,14 +122,14 @@ type Store interface {
 // AssetStore provides methods for managing checks assets
 type AssetStore interface {
 	// DeleteAssetByName deletes an asset using the given name and the
-	// organization stored in ctx.
+	// namespace stored in ctx.
 	DeleteAssetByName(ctx context.Context, name string) error
 
-	// GetAssets returns all assets in the given ctx's organization. A nil
+	// GetAssets returns all assets in the given ctx's namespace. A nil
 	// slice with no error is returned if none were found.
 	GetAssets(ctx context.Context) ([]*types.Asset, error)
 
-	// GetAssetByName returns an asset using the given name and the organization
+	// GetAssetByName returns an asset using the given name and the namespace
 	// stored in ctx. The resulting asset is nil if none was found.
 	GetAssetByName(ctx context.Context, name string) (*types.Asset, error)
 
@@ -162,16 +159,16 @@ type AuthenticationStore interface {
 // CheckConfigStore provides methods for managing checks configuration
 type CheckConfigStore interface {
 	// DeleteCheckConfigByName deletes a check's configuration using the given name
-	// and the organization and environment stored in ctx.
+	// and the namespace stored in ctx.
 	DeleteCheckConfigByName(ctx context.Context, name string) error
 
 	// GetCheckConfigs returns all checks configurations in the given ctx's
-	// organization and environment. A nil slice with no error is returned if none
+	// namespace. A nil slice with no error is returned if none
 	// were found.
 	GetCheckConfigs(ctx context.Context) ([]*types.CheckConfig, error)
 
 	// GetCheckConfigByName returns a check's configuration using the given name
-	// and the organization and environment stored in ctx. The resulting check is
+	// and the namespace stored in ctx. The resulting check is
 	// nil if none was found.
 	GetCheckConfigByName(ctx context.Context, name string) (*types.CheckConfig, error)
 
@@ -188,17 +185,16 @@ type CheckConfigStore interface {
 // HookConfigStore provides methods for managing hooks configuration
 type HookConfigStore interface {
 	// DeleteHookConfigByName deletes a hook's configuration using the given name
-	// and the organization and environment stored in ctx.
+	// and the namespace stored in ctx.
 	DeleteHookConfigByName(ctx context.Context, name string) error
 
 	// GetHookConfigs returns all hooks configurations in the given ctx's
-	// organization and environment. A nil slice with no error is returned if none
+	// namespace. A nil slice with no error is returned if none
 	// were found.
 	GetHookConfigs(ctx context.Context) ([]*types.HookConfig, error)
 
-	// GetHookConfigByName returns a hook's configuration using the given name
-	// and the organization and environment stored in ctx. The resulting hook is
-	// nil if none was found.
+	// GetHookConfigByName returns a hook's configuration using the given name and
+	// the namespace stored in ctx. The resulting hook is nil if none was found.
 	GetHookConfigByName(ctx context.Context, name string) (*types.HookConfig, error)
 
 	// UpdateHookConfig creates or updates a given hook's configuration.
@@ -217,56 +213,37 @@ type EntityStore interface {
 	DeleteEntity(ctx context.Context, entity *types.Entity) error
 
 	// DeleteEntityByID deletes an entity using the given id and the
-	// organization and environment stored in ctx.
+	// namespace stored in ctx.
 	DeleteEntityByID(ctx context.Context, id string) error
 
-	// GetEntities returns all entities in the given ctx's organization and
-	// environment. A nil slice with no error is returned if none were found.
+	// GetEntities returns all entities in the given ctx's namespace. A nil slice
+	// with no error is returned if none were found.
 	GetEntities(ctx context.Context) ([]*types.Entity, error)
 
-	// GetEntityByID returns an entity using the given id and the organization
-	// and environment stored in ctx. The resulting entity is nil if none was
-	// found.
+	// GetEntityByID returns an entity using the given id and the namespace stored
+	// in ctx. The resulting entity is nil if none was found.
 	GetEntityByID(ctx context.Context, id string) (*types.Entity, error)
 
 	// UpdateEntity creates or updates a given entity.
 	UpdateEntity(ctx context.Context, entity *types.Entity) error
 }
 
-// EnvironmentStore provides methods for managing environments
-type EnvironmentStore interface {
-	// DeleteEnvironment deletes an environment using the given env struct.
-	DeleteEnvironment(ctx context.Context, env *types.Environment) error
-
-	// GetEnvironment returns an environment using the given org and env. The
-	// result is nil if none was found.
-	GetEnvironment(ctx context.Context, org, env string) (*types.Environment, error)
-
-	// GetEnvironments returns all environments in the given ctx's organization. A
-	// nil slice with no error is returned if none were found.
-	GetEnvironments(ctx context.Context, org string) ([]*types.Environment, error)
-
-	// UpdateEnvironment creates or updates a given env.
-	UpdateEnvironment(ctx context.Context, env *types.Environment) error
-}
-
 // EventStore provides methods for managing events
 type EventStore interface {
 	// DeleteEventByEntityCheck deletes an event using the given entity and check,
-	// within the organization and environment stored in ctx.
+	// within the namespace stored in ctx.
 	DeleteEventByEntityCheck(ctx context.Context, entity, check string) error
 
-	// GetEvents returns all events in the given ctx's organization and
-	// environment. A nil slice with no error is returned if none were found.
+	// GetEvents returns all events in the given ctx's namespace. A nil slice with
+	// no error is returned if none were found.
 	GetEvents(ctx context.Context) ([]*types.Event, error)
 
 	// GetEventsByEntity returns all events for the given entity within the ctx's
-	// organization and environment. A nil slice with no error is returned if none
-	// were found.
+	// namespace. A nil slice with no error is returned if none were found.
 	GetEventsByEntity(ctx context.Context, entity string) ([]*types.Event, error)
 
 	// GetEventByEntityCheck returns an event using the given entity and check,
-	// within the organization and environment stored in ctx. The resulting event
+	// within the namespace stored in ctx. The resulting event
 	// is nil if none was found.
 	GetEventByEntityCheck(ctx context.Context, entity, check string) (*types.Event, error)
 
@@ -277,16 +254,15 @@ type EventStore interface {
 // EventFilterStore provides methods for managing events filters
 type EventFilterStore interface {
 	// DeleteEventFilterByName deletes an event filter using the given name and the
-	// organization and environment stored in ctx.
+	// namespace stored in ctx.
 	DeleteEventFilterByName(ctx context.Context, name string) error
 
-	// GetEventFilters returns all filters in the given ctx's organization and
-	// environment. A nil slice with no error is returned if none were found.
+	// GetEventFilters returns all filters in the given ctx's namespace. A nil
+	// slice with no error is returned if none were found.
 	GetEventFilters(ctx context.Context) ([]*types.EventFilter, error)
 
 	// GetEventFilterByName returns a filter using the given name and the
-	// organization and environment stored in ctx. The resulting filter is nil if
-	// none was found.
+	// namespace stored in ctx. The resulting filter is nil if none was found.
 	GetEventFilterByName(ctx context.Context, name string) (*types.EventFilter, error)
 
 	// UpdateEventFilter creates or updates a given filter.
@@ -296,16 +272,15 @@ type EventFilterStore interface {
 // HandlerStore provides methods for managing events handlers
 type HandlerStore interface {
 	// DeleteHandlerByName deletes a handler using the given name and the
-	// organization and environment stored in ctx.
+	// namespace stored in ctx.
 	DeleteHandlerByName(ctx context.Context, name string) error
 
-	// GetHandlers returns all handlers in the given ctx's organization and
-	// environment. A nil slice with no error is returned if none were found.
+	// GetHandlers returns all handlers in the given ctx's namespace. A nil slice
+	// with no error is returned if none were found.
 	GetHandlers(ctx context.Context) ([]*types.Handler, error)
 
-	// GetHandlerByName returns a handler using the given name and the
-	// organization and environment stored in ctx. The resulting handler is nil if
-	// none was found.
+	// GetHandlerByName returns a handler using the given name and the namespace
+	// stored in ctx. The resulting handler is nil if none was found.
 	GetHandlerByName(ctx context.Context, name string) (*types.Handler, error)
 
 	// UpdateHandler creates or updates a given handler.
@@ -333,15 +308,15 @@ type KeepaliveStore interface {
 // MutatorStore provides methods for managing events mutators
 type MutatorStore interface {
 	// DeleteMutatorByName deletes a mutator using the given name and the
-	// organization and environment stored in ctx.
+	// namespace stored in ctx.
 	DeleteMutatorByName(ctx context.Context, name string) error
 
-	// GetMutators returns all mutators in the given ctx's organization and
-	// environment. A nil slice with no error is returned if none were found.
+	// GetMutators returns all mutators in the given ctx's namespace. A nil slice
+	// with no error is returned if none were found.
 	GetMutators(ctx context.Context) ([]*types.Mutator, error)
 
 	// GetMutatorByName returns a mutator using the given name and the
-	// organization and environment stored in ctx. The resulting mutator is nil if
+	// namespace stored in ctx. The resulting mutator is nil if
 	// none was found.
 	GetMutatorByName(ctx context.Context, name string) (*types.Mutator, error)
 
@@ -349,25 +324,24 @@ type MutatorStore interface {
 	UpdateMutator(ctx context.Context, mutator *types.Mutator) error
 }
 
-// OrganizationStore provides methods for managing organizations
-type OrganizationStore interface {
-	// CreateOrganization creates a given organization and a default environment
-	// within this new organization
-	CreateOrganization(ctx context.Context, org *types.Organization) error
+// NamespaceStore provides methods for managing namespaces
+type NamespaceStore interface {
+	// CreateNamespace creates a given namespace
+	CreateNamespace(ctx context.Context, namespace *types.Namespace) error
 
-	// DeleteOrganizationByName deletes an organization using the given name.
-	DeleteOrganizationByName(ctx context.Context, name string) error
+	// DeleteNamespace deletes a namespace using the given name.
+	DeleteNamespace(ctx context.Context, name string) error
 
-	// GetOrganizations returns all organizations. A nil slice with no error is
+	// ListNamespaces returns all namespaces. A nil slice with no error is
 	// returned if none were found.
-	GetOrganizations(ctx context.Context) ([]*types.Organization, error)
+	ListNamespaces(ctx context.Context) ([]*types.Namespace, error)
 
-	// GetOrganizationByName returns an organization using the given name. The
+	// GetNamespace returns a namespace using the given name. The
 	// result is nil if none was found.
-	GetOrganizationByName(ctx context.Context, name string) (*types.Organization, error)
+	GetNamespace(ctx context.Context, name string) (*types.Namespace, error)
 
-	// UpdateOrganization updates an existing organization.
-	UpdateOrganization(ctx context.Context, org *types.Organization) error
+	// UpdateNamespace updates an existing namespace.
+	UpdateNamespace(ctx context.Context, org *types.Namespace) error
 }
 
 // RBACStore provides methods for managing RBAC roles and rules
@@ -398,17 +372,17 @@ type SilencedStore interface {
 	GetSilencedEntries(ctx context.Context) ([]*types.Silenced, error)
 
 	// GetSilencedEntriesByCheckName returns all entries for the given check
-	// within the ctx's organization and environment. A nil slice with no error is
+	// within the ctx's namespace. A nil slice with no error is
 	// returned if none were found.
 	GetSilencedEntriesByCheckName(ctx context.Context, check string) ([]*types.Silenced, error)
 
 	// GetSilencedEntriesByCheckName returns all entries for the given subscription
-	// within the ctx's organization and environment. A nil slice with no error is
+	// within the ctx's namespace. A nil slice with no error is
 	// returned if none were found.
 	GetSilencedEntriesBySubscription(ctx context.Context, subscription string) ([]*types.Silenced, error)
 
 	// GetSilencedEntryByID returns an entry using the given id and the
-	// organization and environment stored in ctx. The resulting entry is nil if
+	// namespace stored in ctx. The resulting entry is nil if
 	// none was found.
 	GetSilencedEntryByID(ctx context.Context, id string) (*types.Silenced, error)
 
@@ -492,6 +466,6 @@ type ExtensionRegistry interface {
 	// not exist, ErrNoExtension is returned.
 	GetExtension(ctx context.Context, name string) (*types.Extension, error)
 
-	// GetExtensions gets all the extensions for the organization in ctx.
+	// GetExtensions gets all the extensions for the namespace in ctx.
 	GetExtensions(ctx context.Context) ([]*types.Extension, error)
 }

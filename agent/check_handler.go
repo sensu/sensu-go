@@ -72,10 +72,9 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 
 	// Prepare log entry
 	fields := logrus.Fields{
-		"environment":  check.Environment,
-		"organization": check.Organization,
-		"check":        check.Name,
-		"assets":       check.RuntimeAssets,
+		"namespace": check.Namespace,
+		"check":     check.Name,
+		"assets":    check.RuntimeAssets,
 	}
 
 	// Fetch and install all assets required for check execution.
