@@ -19,8 +19,8 @@ func TestGetSilenced(t *testing.T) {
 		expectedEntries       []string
 	}{
 		{
-			name:                  "Sets the silenced attribute of an event",
-			event:                 types.FixtureEvent("foo", "check_cpu"),
+			name:  "Sets the silenced attribute of an event",
+			event: types.FixtureEvent("foo", "check_cpu"),
 			silencedSubscriptions: []*types.Silenced{},
 			silencedChecks: []*types.Silenced{
 				types.FixtureSilenced("entity:foo:check_cpu"),

@@ -74,12 +74,6 @@ func NewCheck(c *CheckConfig) *Check {
 		OutputMetricHandlers: c.OutputMetricHandlers,
 		EnvVars:              c.EnvVars,
 	}
-	// Unmarshal extended attributes into a different Check value, so that
-	// we don't accidentally corrupt any of the default values for Check.
-	// See https://github.com/sensu/sensu-go/issues/1732 for more information.
-	tmpCheck := Check{}
-	_ = dynamic.Unmarshal(c.ExtendedAttributes, &tmpCheck)
-	check.ExtendedAttributes = tmpCheck.ExtendedAttributes
 	return check
 }
 
@@ -143,11 +137,6 @@ func (c *Check) Validate() error {
 	return c.Subdue.Validate()
 }
 
-// UnmarshalJSON implements the json.Unmarshaler interface.
-func (c *Check) UnmarshalJSON(b []byte) error {
-	return dynamic.Unmarshal(b, c)
-}
-
 // MarshalJSON implements the json.Marshaler interface.
 func (c *Check) MarshalJSON() ([]byte, error) {
 	if c == nil {
@@ -160,12 +149,6 @@ func (c *Check) MarshalJSON() ([]byte, error) {
 		c.Handlers = []string{}
 	}
 
-	// Only use dynamic marshaling if there are dynamic attributes.
-	// Otherwise, use default json marshaling.
-	if len(c.ExtendedAttributes) > 0 {
-		return dynamic.Marshal(c)
-	}
-
 	type Clone Check
 	clone := &Clone{}
 	*clone = Clone(*c)
@@ -173,19 +156,13 @@ func (c *Check) MarshalJSON() ([]byte, error) {
 	return jsoniter.Marshal(clone)
 }
 
-// SetExtendedAttributes sets the serialized ExtendedAttributes of c.
-func (c *Check) SetExtendedAttributes(e []byte) {
-	c.ExtendedAttributes = e
-}
-
 // Get implements govaluate.Parameters
 func (c *Check) Get(name string) (interface{}, error) {
 	return dynamic.GetField(c, name)
 }
 
-// UnmarshalJSON implements the json.Unmarshaler interface.
-func (c *CheckConfig) UnmarshalJSON(b []byte) error {
-	return dynamic.Unmarshal(b, c)
+func (c *CheckConfig) Get(name string) (interface{}, error) {
+	return dynamic.GetField(c, name)
 }
 
 // MarshalJSON implements the json.Marshaler interface.
@@ -200,27 +177,11 @@ func (c *CheckConfig) MarshalJSON() ([]byte, error) {
 		c.Handlers = []string{}
 	}
 
-	// Only use dynamic marshaling if there are dynamic attributes.
-	// Otherwise, use default json marshaling.
-	if len(c.ExtendedAttributes) > 0 {
-		return dynamic.Marshal(c)
-	}
-
 	type Clone CheckConfig
 	clone := &Clone{}
 	*clone = Clone(*c)
 
 	return jsoniter.Marshal(clone)
-}
-
-// SetExtendedAttributes sets the serialized ExtendedAttributes of c.
-func (c *CheckConfig) SetExtendedAttributes(e []byte) {
-	c.ExtendedAttributes = e
-}
-
-// Get implements govaluate.Parameters
-func (c *CheckConfig) Get(name string) (interface{}, error) {
-	return dynamic.GetField(c, name)
 }
 
 // Validate returns an error if the check does not pass validation tests.

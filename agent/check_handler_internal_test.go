@@ -149,14 +149,13 @@ func TestHandleTokenSubstitution(t *testing.T) {
 
 	config, cleanup := FixtureConfig()
 	defer cleanup()
-	config.ExtendedAttributes = []byte(`{"team":"devops"}`)
 	config.AgentID = "TestTokenSubstitution"
 	agent := NewAgent(config)
 	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch
 
 	// check command with valid token substitution
-	checkConfig.Command = `echo {{ .ID }} {{ .Team }} {{ .Missing | default "defaultValue" }}`
+	checkConfig.Command = `echo {{ .ID }} {{ .Missing | default "defaultValue" }}`
 	checkConfig.Timeout = 10
 
 	payload, err := json.Marshal(request)
@@ -172,7 +171,7 @@ func TestHandleTokenSubstitution(t *testing.T) {
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.EqualValues(int32(0), event.Check.Status)
-	assert.Contains(event.Check.Output, "TestTokenSubstitution devops defaultValue")
+	assert.Contains(event.Check.Output, "TestTokenSubstitution defaultValue")
 }
 
 func TestHandleTokenSubstitutionNoKey(t *testing.T) {

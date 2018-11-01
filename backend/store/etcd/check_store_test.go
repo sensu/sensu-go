@@ -15,7 +15,6 @@ import (
 func TestCheckConfigStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		check := types.FixtureCheckConfig("check1")
-		check.SetExtendedAttributes([]byte(`{"foo":"bar"}`))
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, check.Namespace)
 
 		// We should receive an empty slice if no results were found
@@ -35,9 +34,6 @@ func TestCheckConfigStorage(t *testing.T) {
 		assert.Equal(t, check.Subscriptions, retrieved.Subscriptions)
 		assert.Equal(t, check.Command, retrieved.Command)
 		assert.Equal(t, check.Stdin, retrieved.Stdin)
-		ext, err := retrieved.Get("foo")
-		require.NoError(t, err)
-		assert.Equal(t, "bar", ext)
 
 		checks, err = store.GetCheckConfigs(ctx)
 		assert.NoError(t, err)

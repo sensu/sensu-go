@@ -63,8 +63,8 @@ type Config struct {
 // New creates a new Keepalived.
 func New(c Config, opts ...Option) (*Keepalived, error) {
 	k := &Keepalived{
-		store:                 c.Store,
-		bus:                   c.Bus,
+		store: c.Store,
+		bus:   c.Bus,
 		deregistrationHandler: c.DeregistrationHandler,
 		monitorFactory:        c.MonitorFactory,
 		keepaliveChan:         make(chan interface{}, 10),

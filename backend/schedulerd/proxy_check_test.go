@@ -38,29 +38,6 @@ func TestMatchEntities(t *testing.T) {
 			},
 		},
 		{
-			name:             "extended attribute",
-			entityAttributes: []string{`entity.Team == "dev"`},
-			entities: []*types.Entity{
-				&types.Entity{ExtendedAttributes: []byte(`{"Team": "dev"}`)},
-				&types.Entity{ExtendedAttributes: []byte(`{"Team": "ops"}`)},
-			},
-			want: []*types.Entity{
-				&types.Entity{ExtendedAttributes: []byte(`{"Team": "dev"}`)},
-			},
-		},
-		{
-			name:             "standard & extended attribute",
-			entityAttributes: []string{`entity.Deregister == false`, `entity.Team == "dev"`},
-			entities: []*types.Entity{
-				&types.Entity{Deregister: false, ExtendedAttributes: []byte(`{"Team": "dev"}`)},
-				&types.Entity{Deregister: true, ExtendedAttributes: []byte(`{"Team": "dev"}`)},
-				&types.Entity{Deregister: false, ExtendedAttributes: []byte(`{"Team": "ops"}`)},
-			},
-			want: []*types.Entity{
-				&types.Entity{Deregister: false, ExtendedAttributes: []byte(`{"Team": "dev"}`)},
-			},
-		},
-		{
 			name:             "nested standard attribute",
 			entityAttributes: []string{`entity.System.Hostname == "foo.local"`},
 			entities: []*types.Entity{
@@ -70,17 +47,6 @@ func TestMatchEntities(t *testing.T) {
 			},
 			want: []*types.Entity{
 				&types.Entity{ID: "foo", System: types.System{Hostname: "foo.local"}},
-			},
-		},
-		{
-			name:             "nested extended attribute",
-			entityAttributes: []string{`entity.Teams.Support == "dev"`},
-			entities: []*types.Entity{
-				&types.Entity{ExtendedAttributes: []byte(`{"Teams": {"Support": "dev"}}`)},
-				&types.Entity{ExtendedAttributes: []byte(`{"Teams": {"Support": "ops"}}`)},
-			},
-			want: []*types.Entity{
-				&types.Entity{ExtendedAttributes: []byte(`{"Teams": {"Support": "dev"}}`)},
 			},
 		},
 		{

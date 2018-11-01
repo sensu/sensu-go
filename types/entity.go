@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -42,16 +43,6 @@ func (e *Entity) Get(name string) (interface{}, error) {
 	return dynamic.GetField(e, name)
 }
 
-// SetExtendedAttributes sets the serialized ExtendedAttributes of the entity.
-func (e *Entity) SetExtendedAttributes(b []byte) {
-	e.ExtendedAttributes = b
-}
-
-// UnmarshalJSON implements the json.Unmarshaler interface.
-func (e *Entity) UnmarshalJSON(b []byte) error {
-	return dynamic.Unmarshal(b, e)
-}
-
 // MarshalJSON implements the json.Marshaler interface.
 func (e *Entity) MarshalJSON() ([]byte, error) {
 	// Redact the entity before marshalling the entity so we don't leak any
@@ -61,7 +52,10 @@ func (e *Entity) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	return dynamic.Marshal(redactedEntity)
+	type Clone Entity
+	var clone *Clone = (*Clone)(redactedEntity.(*Entity))
+
+	return json.Marshal(clone)
 }
 
 // GetEntitySubscription returns the entity subscription, using the format

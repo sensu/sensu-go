@@ -87,7 +87,7 @@ func translateToEvent(a *Agent, result v1.CheckResult, event *types.Event) error
 	check.Namespace = agentEntity.Namespace
 	// TODO(grepory): Determine how we scope annotations that are programmatically
 	// inserted into objects.
-	check.Annotations["extended.checks.sensu.io"] = string(result.GetExtendedAttributes())
+	// check.Annotations["extended.checks.sensu.io"] = string(result.GetExtendedAttributes())
 
 	// add config and check values to the 2.x event
 	event.Check = check
