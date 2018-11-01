@@ -16,12 +16,10 @@ import (
 func TestSilencedStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		silenced := types.FixtureSilenced("*:checkname")
-		silenced.Organization = "default"
-		silenced.Environment = "default"
+		silenced.Namespace = "default"
 		silenced.Subscription = "subscription"
 		silenced.ID = silenced.Subscription + ":" + silenced.Check
-		ctx := context.WithValue(context.Background(), types.OrganizationKey, silenced.Organization)
-		ctx = context.WithValue(ctx, types.EnvironmentKey, silenced.Environment)
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, silenced.Namespace)
 
 		// We should receive an empty slice if no results were found
 		silencedEntries, err := store.GetSilencedEntries(ctx)
@@ -89,8 +87,7 @@ func TestSilencedStorage(t *testing.T) {
 		assert.Nil(t, entry)
 
 		// Updating a silenced entry in a nonexistent org and env should not work
-		silenced.Organization = "missing"
-		silenced.Environment = "missing"
+		silenced.Namespace = "missing"
 		err = store.UpdateSilencedEntry(ctx, silenced)
 		assert.Error(t, err)
 
@@ -100,11 +97,9 @@ func TestSilencedStorage(t *testing.T) {
 func TestSilencedStorageWithExpire(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		silenced := types.FixtureSilenced("subscription:checkname")
-		silenced.Organization = "default"
-		silenced.Environment = "default"
+		silenced.Namespace = "default"
 		silenced.Expire = 15
-		ctx := context.WithValue(context.Background(), types.OrganizationKey, silenced.Organization)
-		ctx = context.WithValue(ctx, types.EnvironmentKey, silenced.Environment)
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, silenced.Namespace)
 
 		err := store.UpdateSilencedEntry(ctx, silenced)
 		if err != nil {
@@ -122,14 +117,12 @@ func TestSilencedStorageWithExpire(t *testing.T) {
 func TestSilencedStorageWithBegin(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		silenced := types.FixtureSilenced("subscription:checkname")
-		silenced.Organization = "default"
-		silenced.Environment = "default"
+		silenced.Namespace = "default"
 		// set a begin time in the future
 		silenced.Begin = time.Date(1970, 01, 01, 01, 00, 00, 00, time.UTC).Unix()
 		// current time is before the start time
 		currentTime := time.Date(1970, 01, 01, 00, 00, 00, 00, time.UTC).Unix()
-		ctx := context.WithValue(context.Background(), types.OrganizationKey, silenced.Organization)
-		ctx = context.WithValue(ctx, types.EnvironmentKey, silenced.Environment)
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, silenced.Namespace)
 
 		err := store.UpdateSilencedEntry(ctx, silenced)
 		if err != nil {
@@ -152,15 +145,13 @@ func TestSilencedStorageWithBegin(t *testing.T) {
 func TestSilencedStorageWithBeginAndExpire(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		silenced := types.FixtureSilenced("subscription:checkname")
-		silenced.Organization = "default"
-		silenced.Environment = "default"
+		silenced.Namespace = "default"
 		silenced.Expire = 15
 		currentTime := time.Now().UTC().Unix()
 		// set a begin time in the future
 		silenced.Begin = currentTime + 3600
 		// current time is before the start time
-		ctx := context.WithValue(context.Background(), types.OrganizationKey, silenced.Organization)
-		ctx = context.WithValue(ctx, types.EnvironmentKey, silenced.Environment)
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, silenced.Namespace)
 
 		err := store.UpdateSilencedEntry(ctx, silenced)
 		if err != nil {

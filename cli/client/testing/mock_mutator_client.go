@@ -27,7 +27,7 @@ func (c *MockClient) UpdateMutator(m *types.Mutator) error {
 }
 
 // ListMutators for use with mock lib
-func (c *MockClient) ListMutators(org string) ([]types.Mutator, error) {
-	args := c.Called(org)
+func (c *MockClient) ListMutators(namespace string) ([]types.Mutator, error) {
+	args := c.Called(namespace)
 	return args.Get(0).([]types.Mutator), args.Error(1)
 }

@@ -9,10 +9,10 @@ import (
 )
 
 // ListMutators fetches all mutators from the configured Sensu instance
-func (client *RestClient) ListMutators(org string) ([]types.Mutator, error) {
+func (client *RestClient) ListMutators(namespace string) ([]types.Mutator, error) {
 	var mutators []types.Mutator
 
-	res, err := client.R().Get("/mutators?org=" + url.QueryEscape(org))
+	res, err := client.R().Get("/mutators?namespace=" + url.QueryEscape(namespace))
 	if err != nil {
 		return mutators, err
 	}

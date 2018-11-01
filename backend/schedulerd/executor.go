@@ -28,16 +28,15 @@ type Executor interface {
 
 // CheckExecutor executes scheduled checks in the check scheduler
 type CheckExecutor struct {
-	bus          messaging.MessageBus
-	store        store.Store
-	roundRobin   *roundRobinScheduler
-	organization string
-	environment  string
+	bus        messaging.MessageBus
+	store      store.Store
+	roundRobin *roundRobinScheduler
+	namespace  string
 }
 
 // NewCheckExecutor creates a new check executor
-func NewCheckExecutor(bus messaging.MessageBus, roundRobin *roundRobinScheduler, org string, env string, store store.Store) *CheckExecutor {
-	return &CheckExecutor{bus: bus, roundRobin: roundRobin, organization: org, environment: env, store: store}
+func NewCheckExecutor(bus messaging.MessageBus, roundRobin *roundRobinScheduler, namespace string, store store.Store) *CheckExecutor {
+	return &CheckExecutor{bus: bus, roundRobin: roundRobin, namespace: namespace, store: store}
 }
 
 // ProcessCheck processes a check by publishing its proxy requests (if any)
@@ -67,8 +66,7 @@ func (c *CheckExecutor) execute(check *types.CheckConfig) error {
 	}
 
 	for _, sub := range check.Subscriptions {
-		org, env := check.Organization, check.Environment
-		topic := messaging.SubscriptionTopic(org, env, sub)
+		topic := messaging.SubscriptionTopic(check.Namespace, sub)
 		if check.RoundRobin {
 			msg := &roundRobinMessage{
 				subscription: topic,
@@ -242,7 +240,7 @@ func (a *AdhocRequestExecutor) execute(check *types.CheckConfig) error {
 	request.Config = check
 	var err error
 	for _, sub := range check.Subscriptions {
-		topic := messaging.SubscriptionTopic(check.Organization, check.Environment, sub)
+		topic := messaging.SubscriptionTopic(check.Namespace, sub)
 		logger.WithFields(logrus.Fields{
 			"check": check.Name,
 			"topic": topic,

@@ -57,7 +57,7 @@ func newScheduler(t *testing.T, ctx context.Context) *TestCheckScheduler {
 	assert.NoError(scheduler.msgBus.Start())
 
 	roundRobin := newRoundRobinScheduler(ctx, scheduler.msgBus)
-	scheduler.exec = NewCheckExecutor(scheduler.msgBus, roundRobin, "default", "default", store)
+	scheduler.exec = NewCheckExecutor(scheduler.msgBus, roundRobin, "default", store)
 
 	return scheduler
 }
@@ -74,7 +74,7 @@ func TestCheckSchedulerInterval(t *testing.T) {
 	check := scheduler.check
 	check.Subscriptions = []string{"subscription1"}
 
-	topic := messaging.SubscriptionTopic(check.Organization, check.Environment, "subscription1")
+	topic := messaging.SubscriptionTopic(check.Namespace, "subscription1")
 
 	sub, err := scheduler.msgBus.Subscribe(topic, "scheduler", scheduler)
 	if err != nil {
@@ -129,10 +129,9 @@ func TestCheckSubdueInterval(t *testing.T) {
 	}
 
 	topic := fmt.Sprintf(
-		"%s:%s:%s:subscription1",
+		"%s:%s:subscription1",
 		messaging.TopicSubscriptions,
-		check.Organization,
-		check.Environment,
+		check.Namespace,
 	)
 
 	subscription, err := scheduler.msgBus.Subscribe(topic, "scheduler", scheduler)
@@ -166,10 +165,9 @@ func TestCheckSchedulerCron(t *testing.T) {
 	check.Subscriptions = []string{"subscription1"}
 
 	topic := fmt.Sprintf(
-		"%s:%s:%s:subscription1",
+		"%s:%s:subscription1",
 		messaging.TopicSubscriptions,
-		check.Organization,
-		check.Environment,
+		check.Namespace,
 	)
 
 	subscription, err := scheduler.msgBus.Subscribe(topic, "scheduler", scheduler)
@@ -226,10 +224,9 @@ func TestCheckSubdueCron(t *testing.T) {
 	}
 
 	topic := fmt.Sprintf(
-		"%s:%s:%s:subscription1",
+		"%s:%s:subscription1",
 		messaging.TopicSubscriptions,
-		check.Organization,
-		check.Environment,
+		check.Namespace,
 	)
 
 	subscription, err := scheduler.msgBus.Subscribe(topic, "scheduler", scheduler)

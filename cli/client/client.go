@@ -47,16 +47,13 @@ func New(config config.Config) *RestClient {
 
 	// Check that Access-Token has not expired
 	restyInst.OnBeforeRequest(func(c *resty.Client, r *resty.Request) error {
-		// Pass the organization and environment as query parameters, except when
-		// we are creating or updating an object, since we will use the object
-		// attributes to determine the org & env
+		// Pass the namespace as query parameter, except when we are creating or
+		// updating an object, since we will use the object attributes to determine
+		// the namespace
 		if r.Method != http.MethodPost && r.Method != http.MethodPut && r.Method != http.MethodPatch {
-			if param := r.QueryParam.Get("env"); param == "" {
-				r.SetQueryParam("env", config.Environment())
-			}
 
-			if param := r.QueryParam.Get("org"); param == "" {
-				r.SetQueryParam("org", config.Organization())
+			if param := r.QueryParam.Get("namespace"); param == "" {
+				r.SetQueryParam("namespace", config.Namespace())
 			}
 		}
 

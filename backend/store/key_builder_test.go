@@ -19,8 +19,7 @@ func TestContextKeyBuilder(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	ctx = context.WithValue(ctx, types.OrganizationKey, "org")
-	ctx = context.WithValue(ctx, types.EnvironmentKey, "env")
+	ctx = context.WithValue(ctx, types.NamespaceKey, "acme")
 	builder := NewKeyBuilder("checks").WithContext(ctx)
-	assert.Equal(t, "/sensu.io/checks/org/env/check_name", builder.Build("check_name"))
+	assert.Equal(t, "/sensu.io/checks/acme/check_name", builder.Build("check_name"))
 }

@@ -32,29 +32,28 @@ type QueryViewerFieldResolver interface {
 	Viewer(p graphql.ResolveParams) (interface{}, error)
 }
 
-// QueryEnvironmentFieldResolverArgs contains arguments provided to environment when selected
-type QueryEnvironmentFieldResolverArgs struct {
-	Environment  string // Environment - self descriptive
-	Organization string // Organization - self descriptive
+// QueryNamespaceFieldResolverArgs contains arguments provided to namespace when selected
+type QueryNamespaceFieldResolverArgs struct {
+	Name string // Name - self descriptive
 }
 
-// QueryEnvironmentFieldResolverParams contains contextual info to resolve environment field
-type QueryEnvironmentFieldResolverParams struct {
+// QueryNamespaceFieldResolverParams contains contextual info to resolve namespace field
+type QueryNamespaceFieldResolverParams struct {
 	graphql.ResolveParams
-	Args QueryEnvironmentFieldResolverArgs
+	Args QueryNamespaceFieldResolverArgs
 }
 
-// QueryEnvironmentFieldResolver implement to resolve requests for the Query's environment field.
-type QueryEnvironmentFieldResolver interface {
-	// Environment implements response to request for environment field.
-	Environment(p QueryEnvironmentFieldResolverParams) (interface{}, error)
+// QueryNamespaceFieldResolver implement to resolve requests for the Query's namespace field.
+type QueryNamespaceFieldResolver interface {
+	// Namespace implements response to request for namespace field.
+	Namespace(p QueryNamespaceFieldResolverParams) (interface{}, error)
 }
 
 // QueryEventFieldResolverArgs contains arguments provided to event when selected
 type QueryEventFieldResolverArgs struct {
-	Ns     *NamespaceInput // Ns - self descriptive
-	Entity string          // Entity - self descriptive
-	Check  string          // Check - self descriptive
+	Namespace string // Namespace - self descriptive
+	Entity    string // Entity - self descriptive
+	Check     string // Check - self descriptive
 }
 
 // QueryEventFieldResolverParams contains contextual info to resolve event field
@@ -71,8 +70,8 @@ type QueryEventFieldResolver interface {
 
 // QueryEntityFieldResolverArgs contains arguments provided to entity when selected
 type QueryEntityFieldResolverArgs struct {
-	Ns   *NamespaceInput // Ns - self descriptive
-	Name string          // Name - self descriptive
+	Namespace string // Namespace - self descriptive
+	Name      string // Name - self descriptive
 }
 
 // QueryEntityFieldResolverParams contains contextual info to resolve entity field
@@ -89,8 +88,8 @@ type QueryEntityFieldResolver interface {
 
 // QueryCheckFieldResolverArgs contains arguments provided to check when selected
 type QueryCheckFieldResolverArgs struct {
-	Ns   *NamespaceInput // Ns - self descriptive
-	Name string          // Name - self descriptive
+	Namespace string // Namespace - self descriptive
+	Name      string // Name - self descriptive
 }
 
 // QueryCheckFieldResolverParams contains contextual info to resolve check field
@@ -185,7 +184,7 @@ type QueryNodeFieldResolver interface {
 //
 type QueryFieldResolvers interface {
 	QueryViewerFieldResolver
-	QueryEnvironmentFieldResolver
+	QueryNamespaceFieldResolver
 	QueryEventFieldResolver
 	QueryEntityFieldResolver
 	QueryCheckFieldResolver
@@ -245,8 +244,8 @@ func (_ QueryAliases) Viewer(p graphql.ResolveParams) (interface{}, error) {
 	return val, err
 }
 
-// Environment implements response to request for 'environment' field.
-func (_ QueryAliases) Environment(p QueryEnvironmentFieldResolverParams) (interface{}, error) {
+// Namespace implements response to request for 'namespace' field.
+func (_ QueryAliases) Namespace(p QueryNamespaceFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -289,16 +288,16 @@ func _ObjTypeQueryViewerHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
-func _ObjTypeQueryEnvironmentHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QueryEnvironmentFieldResolver)
+func _ObjTypeQueryNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(QueryNamespaceFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
-		frp := QueryEnvironmentFieldResolverParams{ResolveParams: p}
+		frp := QueryNamespaceFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
 
-		return resolver.Environment(frp)
+		return resolver.Namespace(frp)
 	}
 }
 
@@ -364,9 +363,9 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 						Description: "self descriptive",
 						Type:        graphql1.NewNonNull(graphql1.String),
 					},
-					"ns": &graphql1.ArgumentConfig{
+					"namespace": &graphql1.ArgumentConfig{
 						Description: "self descriptive",
-						Type:        graphql1.NewNonNull(graphql.InputType("NamespaceInput")),
+						Type:        graphql1.NewNonNull(graphql1.String),
 					},
 				},
 				DeprecationReason: "",
@@ -380,31 +379,15 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 						Description: "self descriptive",
 						Type:        graphql1.NewNonNull(graphql1.String),
 					},
-					"ns": &graphql1.ArgumentConfig{
+					"namespace": &graphql1.ArgumentConfig{
 						Description: "self descriptive",
-						Type:        graphql1.NewNonNull(graphql.InputType("NamespaceInput")),
+						Type:        graphql1.NewNonNull(graphql1.String),
 					},
 				},
 				DeprecationReason: "",
 				Description:       "Entity fetches the entity associated with the given set of arguments.",
 				Name:              "entity",
 				Type:              graphql.OutputType("Entity"),
-			},
-			"environment": &graphql1.Field{
-				Args: graphql1.FieldConfigArgument{
-					"environment": &graphql1.ArgumentConfig{
-						Description: "self descriptive",
-						Type:        graphql1.NewNonNull(graphql1.String),
-					},
-					"organization": &graphql1.ArgumentConfig{
-						Description: "self descriptive",
-						Type:        graphql1.NewNonNull(graphql1.String),
-					},
-				},
-				DeprecationReason: "",
-				Description:       "Environment fetches the environment associated with the given\norganization & environment arguments.",
-				Name:              "environment",
-				Type:              graphql.OutputType("Environment"),
 			},
 			"event": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
@@ -416,15 +399,25 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 						Description: "self descriptive",
 						Type:        graphql1.NewNonNull(graphql1.String),
 					},
-					"ns": &graphql1.ArgumentConfig{
+					"namespace": &graphql1.ArgumentConfig{
 						Description: "self descriptive",
-						Type:        graphql1.NewNonNull(graphql.InputType("NamespaceInput")),
+						Type:        graphql1.NewNonNull(graphql1.String),
 					},
 				},
 				DeprecationReason: "",
 				Description:       "Event fetches the event associated with the given set of arguments.",
 				Name:              "event",
 				Type:              graphql.OutputType("Event"),
+			},
+			"namespace": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{"name": &graphql1.ArgumentConfig{
+					Description: "self descriptive",
+					Type:        graphql1.NewNonNull(graphql1.String),
+				}},
+				DeprecationReason: "",
+				Description:       "Namespace fetches the namespace object associated with the given name.",
+				Name:              "namespace",
+				Type:              graphql.OutputType("Namespace"),
 			},
 			"node": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{"id": &graphql1.ArgumentConfig{
@@ -461,11 +454,11 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeQueryDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeQueryConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"check":       _ObjTypeQueryCheckHandler,
-		"entity":      _ObjTypeQueryEntityHandler,
-		"environment": _ObjTypeQueryEnvironmentHandler,
-		"event":       _ObjTypeQueryEventHandler,
-		"node":        _ObjTypeQueryNodeHandler,
-		"viewer":      _ObjTypeQueryViewerHandler,
+		"check":     _ObjTypeQueryCheckHandler,
+		"entity":    _ObjTypeQueryEntityHandler,
+		"event":     _ObjTypeQueryEventHandler,
+		"namespace": _ObjTypeQueryNamespaceHandler,
+		"node":      _ObjTypeQueryNodeHandler,
+		"viewer":    _ObjTypeQueryViewerHandler,
 	},
 }

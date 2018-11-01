@@ -25,7 +25,7 @@ func TestNewUserController(t *testing.T) {
 
 func TestUserQuery(t *testing.T) {
 	ctxWithAuthorizedViewer := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithPerms(types.RuleTypeUser, types.RulePermRead),
 	)
 
@@ -98,7 +98,7 @@ func TestUserQuery(t *testing.T) {
 
 func TestUserFind(t *testing.T) {
 	ctxWithAuthorizedViewer := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithPerms(types.RuleTypeUser, types.RulePermRead),
 	)
 
@@ -185,7 +185,7 @@ func TestUserFind(t *testing.T) {
 
 func TestUserCreateOrReplace(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(
 				types.RuleTypeUser,
@@ -195,7 +195,7 @@ func TestUserCreateOrReplace(t *testing.T) {
 		),
 	)
 	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeUser, types.RulePermCreate),
 		),
@@ -260,7 +260,7 @@ func TestUserCreateOrReplace(t *testing.T) {
 			// Mock store methods
 			store.On("UpdateUser", mock.Anything).Return(tc.createErr)
 			store.On("GetRoles", mock.Anything).Return([]*types.Role{
-				types.FixtureRole("default", "default", "default"),
+				types.FixtureRole("default", "default"),
 			}, nil)
 			store.
 				On("GetUser", mock.Anything, mock.Anything).
@@ -285,13 +285,13 @@ func TestUserCreateOrReplace(t *testing.T) {
 }
 func TestUserCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeUser, types.RulePermCreate),
 		),
 	)
 	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeUser, types.RulePermRead),
 		),
@@ -366,7 +366,7 @@ func TestUserCreate(t *testing.T) {
 			// Mock store methods
 			store.On("UpdateUser", mock.Anything).Return(tc.createErr)
 			store.On("GetRoles", mock.Anything).Return([]*types.Role{
-				types.FixtureRole("default", "default", "default"),
+				types.FixtureRole("default", "default"),
 			}, nil)
 			store.
 				On("GetUser", mock.Anything, mock.Anything).
@@ -392,13 +392,13 @@ func TestUserCreate(t *testing.T) {
 
 func TestUserUpdate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeUser, types.RulePermUpdate),
 		),
 	)
 	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeUser, types.RulePermRead),
 		),
@@ -485,7 +485,7 @@ func TestUserUpdate(t *testing.T) {
 			// Mock store methods
 			store.On("UpdateUser", mock.Anything).Return(tc.updateErr)
 			store.On("GetRoles", mock.Anything).Return([]*types.Role{
-				types.FixtureRole("default", "default", "default"),
+				types.FixtureRole("default", "default"),
 			}, nil)
 			store.
 				On("GetUser", mock.Anything, mock.Anything).
@@ -511,13 +511,13 @@ func TestUserUpdate(t *testing.T) {
 
 func TestUserDisable(t *testing.T) {
 	defaultCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeUser, types.RulePermDelete),
 		),
 	)
 	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithRules(
 			types.FixtureRuleWithPerms(types.RuleTypeUser, types.RulePermCreate),
 		),
@@ -611,11 +611,11 @@ func TestUserDisable(t *testing.T) {
 
 func TestUserEnable(t *testing.T) {
 	correctPermsCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithPerms(types.RuleTypeUser, types.RulePermUpdate),
 	)
 	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithOrgEnv("default", "default"),
+		testutil.ContextWithNamespace("default"),
 		testutil.ContextWithPerms(types.RuleTypeUser, types.RulePermDelete),
 	)
 
@@ -792,8 +792,8 @@ func TestUserAddRole(t *testing.T) {
 			// Mock store methods
 			store.On("UpdateUser", mock.Anything).Return(tc.updateErr).Once()
 			store.On("GetRoles", mock.Anything).Return([]*types.Role{
-				types.FixtureRole("default", "default", "default"),
-				types.FixtureRole("admin", "default", "default"),
+				types.FixtureRole("default", "default"),
+				types.FixtureRole("admin", "default"),
 			}, nil)
 			store.
 				On("GetUser", mock.Anything, mock.Anything).

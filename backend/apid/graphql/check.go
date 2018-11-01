@@ -52,11 +52,6 @@ func (r *checkCfgImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.CheckTranslator.EncodeToString(p.Source), nil
 }
 
-// Namespace implements response to request for 'namespace' field.
-func (r *checkCfgImpl) Namespace(p graphql.ResolveParams) (interface{}, error) {
-	return p.Source, nil
-}
-
 // ExtendedAttributes implements response to request for 'extendedAttributes' field.
 func (*checkCfgImpl) ExtendedAttributes(p graphql.ResolveParams) (interface{}, error) {
 	check := p.Source.(*types.CheckConfig)
@@ -179,9 +174,8 @@ func (r *checkImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 func (r *checkImpl) NodeID(p graphql.ResolveParams) (string, error) {
 	check := p.Source.(*types.Check)
 	config := types.CheckConfig{
-		Organization: check.Organization,
-		Environment:  check.Environment,
-		Name:         check.Name,
+		Namespace: check.Namespace,
+		Name:      check.Name,
 	}
 	return globalid.CheckTranslator.EncodeToString(&config), nil
 }

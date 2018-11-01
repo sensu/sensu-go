@@ -45,7 +45,7 @@ func (m *Rule) Reset()         { *m = Rule{} }
 func (m *Rule) String() string { return proto.CompactTextString(m) }
 func (*Rule) ProtoMessage()    {}
 func (*Rule) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rbac_ad8ad9494e199826, []int{0}
+	return fileDescriptor_rbac_92c53d9795ecd3f1, []int{0}
 }
 func (m *Rule) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -97,7 +97,9 @@ func (m *Rule) GetResourceNames() []string {
 
 // ClusterRole applies to all namespaces within a cluster.
 type ClusterRole struct {
-	Rules                []Rule   `protobuf:"bytes,1,rep,name=rules" json:"rules"`
+	Rules []Rule `protobuf:"bytes,1,rep,name=rules" json:"rules"`
+	// Name of the ClusterRole
+	Name                 string   `protobuf:"bytes,2,opt,name=name,proto3" json:"name"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -107,7 +109,7 @@ func (m *ClusterRole) Reset()         { *m = ClusterRole{} }
 func (m *ClusterRole) String() string { return proto.CompactTextString(m) }
 func (*ClusterRole) ProtoMessage()    {}
 func (*ClusterRole) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rbac_ad8ad9494e199826, []int{1}
+	return fileDescriptor_rbac_92c53d9795ecd3f1, []int{1}
 }
 func (m *ClusterRole) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -143,10 +145,20 @@ func (m *ClusterRole) GetRules() []Rule {
 	return nil
 }
 
+func (m *ClusterRole) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
 // Role applies only to a single namespace.
 type Role struct {
-	Rules                []Rule   `protobuf:"bytes,1,rep,name=rules" json:"rules"`
-	Namespace            string   `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace"`
+	Rules []Rule `protobuf:"bytes,1,rep,name=rules" json:"rules"`
+	// Namespace of the Role
+	Namespace string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace"`
+	// Name of the Role
+	Name                 string   `protobuf:"bytes,3,opt,name=name,proto3" json:"name"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -156,7 +168,7 @@ func (m *Role) Reset()         { *m = Role{} }
 func (m *Role) String() string { return proto.CompactTextString(m) }
 func (*Role) ProtoMessage()    {}
 func (*Role) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rbac_ad8ad9494e199826, []int{2}
+	return fileDescriptor_rbac_92c53d9795ecd3f1, []int{2}
 }
 func (m *Role) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -199,6 +211,13 @@ func (m *Role) GetNamespace() string {
 	return ""
 }
 
+func (m *Role) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
 // RoleRef maps groups to Roles or ClusterRoles.
 type RoleRef struct {
 	// Type of role being referenced.
@@ -214,7 +233,7 @@ func (m *RoleRef) Reset()         { *m = RoleRef{} }
 func (m *RoleRef) String() string { return proto.CompactTextString(m) }
 func (*RoleRef) ProtoMessage()    {}
 func (*RoleRef) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rbac_ad8ad9494e199826, []int{3}
+	return fileDescriptor_rbac_92c53d9795ecd3f1, []int{3}
 }
 func (m *RoleRef) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -271,7 +290,7 @@ func (m *Subject) Reset()         { *m = Subject{} }
 func (m *Subject) String() string { return proto.CompactTextString(m) }
 func (*Subject) ProtoMessage()    {}
 func (*Subject) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rbac_ad8ad9494e199826, []int{4}
+	return fileDescriptor_rbac_92c53d9795ecd3f1, []int{4}
 }
 func (m *Subject) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -320,7 +339,9 @@ type ClusterRoleBinding struct {
 	// Subjects holds references to the objects the ClusterRole applies to
 	Subjects []Subject `protobuf:"bytes,1,rep,name=subjects" json:"subjects"`
 	// RoleRef references a ClusterRole in the current namespace
-	RoleRef              RoleRef  `protobuf:"bytes,2,opt,name=role_ref,json=roleRef" json:"roleRef"`
+	RoleRef RoleRef `protobuf:"bytes,2,opt,name=role_ref,json=roleRef" json:"roleRef"`
+	// Name of the ClusterRoleBinding
+	Name                 string   `protobuf:"bytes,3,opt,name=name,proto3" json:"name"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -330,7 +351,7 @@ func (m *ClusterRoleBinding) Reset()         { *m = ClusterRoleBinding{} }
 func (m *ClusterRoleBinding) String() string { return proto.CompactTextString(m) }
 func (*ClusterRoleBinding) ProtoMessage()    {}
 func (*ClusterRoleBinding) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rbac_ad8ad9494e199826, []int{5}
+	return fileDescriptor_rbac_92c53d9795ecd3f1, []int{5}
 }
 func (m *ClusterRoleBinding) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -373,14 +394,24 @@ func (m *ClusterRoleBinding) GetRoleRef() RoleRef {
 	return RoleRef{}
 }
 
+func (m *ClusterRoleBinding) GetName() string {
+	if m != nil {
+		return m.Name
+	}
+	return ""
+}
+
 // RoleBinding grants the permissions defined in a Role referenced to a user or
 // a set of users
 type RoleBinding struct {
 	// Subjects holds references to the objects the Role applies to
 	Subjects []Subject `protobuf:"bytes,1,rep,name=subjects" json:"subjects"`
 	// RoleRef references a Role in the current namespace
-	RoleRef              RoleRef  `protobuf:"bytes,2,opt,name=role_ref,json=roleRef" json:"roleRef"`
-	Namespace            string   `protobuf:"bytes,3,opt,name=namespace,proto3" json:"namespace"`
+	RoleRef RoleRef `protobuf:"bytes,2,opt,name=role_ref,json=roleRef" json:"roleRef"`
+	// Namespace of the RoleBinding
+	Namespace string `protobuf:"bytes,3,opt,name=namespace,proto3" json:"namespace"`
+	// Name of the RoleBinding
+	Name                 string   `protobuf:"bytes,4,opt,name=name,proto3" json:"name"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -390,7 +421,7 @@ func (m *RoleBinding) Reset()         { *m = RoleBinding{} }
 func (m *RoleBinding) String() string { return proto.CompactTextString(m) }
 func (*RoleBinding) ProtoMessage()    {}
 func (*RoleBinding) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rbac_ad8ad9494e199826, []int{6}
+	return fileDescriptor_rbac_92c53d9795ecd3f1, []int{6}
 }
 func (m *RoleBinding) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -436,6 +467,13 @@ func (m *RoleBinding) GetRoleRef() RoleRef {
 func (m *RoleBinding) GetNamespace() string {
 	if m != nil {
 		return m.Namespace
+	}
+	return ""
+}
+
+func (m *RoleBinding) GetName() string {
+	if m != nil {
+		return m.Name
 	}
 	return ""
 }
@@ -524,6 +562,9 @@ func (this *ClusterRole) Equal(that interface{}) bool {
 			return false
 		}
 	}
+	if this.Name != that1.Name {
+		return false
+	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
@@ -557,6 +598,9 @@ func (this *Role) Equal(that interface{}) bool {
 		}
 	}
 	if this.Namespace != that1.Namespace {
+		return false
+	}
+	if this.Name != that1.Name {
 		return false
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
@@ -654,6 +698,9 @@ func (this *ClusterRoleBinding) Equal(that interface{}) bool {
 	if !this.RoleRef.Equal(&that1.RoleRef) {
 		return false
 	}
+	if this.Name != that1.Name {
+		return false
+	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
@@ -690,6 +737,9 @@ func (this *RoleBinding) Equal(that interface{}) bool {
 		return false
 	}
 	if this.Namespace != that1.Namespace {
+		return false
+	}
+	if this.Name != that1.Name {
 		return false
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
@@ -790,6 +840,12 @@ func (m *ClusterRole) MarshalTo(dAtA []byte) (int, error) {
 			i += n
 		}
 	}
+	if len(m.Name) > 0 {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintRbac(dAtA, i, uint64(len(m.Name)))
+		i += copy(dAtA[i:], m.Name)
+	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
@@ -828,6 +884,12 @@ func (m *Role) MarshalTo(dAtA []byte) (int, error) {
 		i++
 		i = encodeVarintRbac(dAtA, i, uint64(len(m.Namespace)))
 		i += copy(dAtA[i:], m.Namespace)
+	}
+	if len(m.Name) > 0 {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintRbac(dAtA, i, uint64(len(m.Name)))
+		i += copy(dAtA[i:], m.Name)
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -936,6 +998,12 @@ func (m *ClusterRoleBinding) MarshalTo(dAtA []byte) (int, error) {
 		return 0, err
 	}
 	i += n1
+	if len(m.Name) > 0 {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintRbac(dAtA, i, uint64(len(m.Name)))
+		i += copy(dAtA[i:], m.Name)
+	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
@@ -982,6 +1050,12 @@ func (m *RoleBinding) MarshalTo(dAtA []byte) (int, error) {
 		i++
 		i = encodeVarintRbac(dAtA, i, uint64(len(m.Namespace)))
 		i += copy(dAtA[i:], m.Namespace)
+	}
+	if len(m.Name) > 0 {
+		dAtA[i] = 0x22
+		i++
+		i = encodeVarintRbac(dAtA, i, uint64(len(m.Name)))
+		i += copy(dAtA[i:], m.Name)
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -1031,8 +1105,9 @@ func NewPopulatedClusterRole(r randyRbac, easy bool) *ClusterRole {
 			this.Rules[i] = *v5
 		}
 	}
+	this.Name = string(randStringRbac(r))
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedRbac(r, 2)
+		this.XXX_unrecognized = randUnrecognizedRbac(r, 3)
 	}
 	return this
 }
@@ -1048,8 +1123,9 @@ func NewPopulatedRole(r randyRbac, easy bool) *Role {
 		}
 	}
 	this.Namespace = string(randStringRbac(r))
+	this.Name = string(randStringRbac(r))
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedRbac(r, 3)
+		this.XXX_unrecognized = randUnrecognizedRbac(r, 4)
 	}
 	return this
 }
@@ -1086,8 +1162,9 @@ func NewPopulatedClusterRoleBinding(r randyRbac, easy bool) *ClusterRoleBinding 
 	}
 	v10 := NewPopulatedRoleRef(r, easy)
 	this.RoleRef = *v10
+	this.Name = string(randStringRbac(r))
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedRbac(r, 3)
+		this.XXX_unrecognized = randUnrecognizedRbac(r, 4)
 	}
 	return this
 }
@@ -1105,8 +1182,9 @@ func NewPopulatedRoleBinding(r randyRbac, easy bool) *RoleBinding {
 	v13 := NewPopulatedRoleRef(r, easy)
 	this.RoleRef = *v13
 	this.Namespace = string(randStringRbac(r))
+	this.Name = string(randStringRbac(r))
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedRbac(r, 4)
+		this.XXX_unrecognized = randUnrecognizedRbac(r, 5)
 	}
 	return this
 }
@@ -1219,6 +1297,10 @@ func (m *ClusterRole) Size() (n int) {
 			n += 1 + l + sovRbac(uint64(l))
 		}
 	}
+	l = len(m.Name)
+	if l > 0 {
+		n += 1 + l + sovRbac(uint64(l))
+	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
@@ -1235,6 +1317,10 @@ func (m *Role) Size() (n int) {
 		}
 	}
 	l = len(m.Namespace)
+	if l > 0 {
+		n += 1 + l + sovRbac(uint64(l))
+	}
+	l = len(m.Name)
 	if l > 0 {
 		n += 1 + l + sovRbac(uint64(l))
 	}
@@ -1289,6 +1375,10 @@ func (m *ClusterRoleBinding) Size() (n int) {
 	}
 	l = m.RoleRef.Size()
 	n += 1 + l + sovRbac(uint64(l))
+	l = len(m.Name)
+	if l > 0 {
+		n += 1 + l + sovRbac(uint64(l))
+	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
@@ -1307,6 +1397,10 @@ func (m *RoleBinding) Size() (n int) {
 	l = m.RoleRef.Size()
 	n += 1 + l + sovRbac(uint64(l))
 	l = len(m.Namespace)
+	if l > 0 {
+		n += 1 + l + sovRbac(uint64(l))
+	}
+	l = len(m.Name)
 	if l > 0 {
 		n += 1 + l + sovRbac(uint64(l))
 	}
@@ -1527,6 +1621,35 @@ func (m *ClusterRole) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRbac
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthRbac
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipRbac(dAtA[iNdEx:])
@@ -1637,6 +1760,35 @@ func (m *Role) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Namespace = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRbac
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthRbac
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -1968,6 +2120,35 @@ func (m *ClusterRoleBinding) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRbac
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthRbac
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipRbac(dAtA[iNdEx:])
@@ -2109,6 +2290,35 @@ func (m *RoleBinding) Unmarshal(dAtA []byte) error {
 			}
 			m.Namespace = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowRbac
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthRbac
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Name = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipRbac(dAtA[iNdEx:])
@@ -2236,35 +2446,36 @@ var (
 	ErrIntOverflowRbac   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("rbac.proto", fileDescriptor_rbac_ad8ad9494e199826) }
+func init() { proto.RegisterFile("rbac.proto", fileDescriptor_rbac_92c53d9795ecd3f1) }
 
-var fileDescriptor_rbac_ad8ad9494e199826 = []byte{
-	// 422 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x53, 0xbd, 0x6e, 0xdb, 0x30,
-	0x10, 0x36, 0xfd, 0x53, 0xdb, 0x14, 0xdc, 0xd6, 0x44, 0x07, 0xa1, 0x28, 0x24, 0x43, 0x5d, 0x0a,
-	0x14, 0x95, 0x81, 0x16, 0x28, 0x3a, 0x16, 0x2a, 0xbc, 0x76, 0x60, 0xb7, 0x2e, 0x86, 0x25, 0xd3,
-	0xaa, 0x6a, 0x59, 0x34, 0x48, 0x31, 0x40, 0x5e, 0x22, 0x73, 0x90, 0x27, 0xc8, 0x23, 0x64, 0xcc,
-	0xe8, 0x31, 0x4f, 0x20, 0x24, 0xca, 0xa6, 0x27, 0xc8, 0x18, 0xf0, 0x24, 0xf9, 0x27, 0x43, 0x32,
-	0x64, 0xc9, 0x72, 0xba, 0xef, 0x7e, 0xbe, 0xbb, 0xfb, 0x08, 0x61, 0x2c, 0xfc, 0x59, 0xe0, 0xae,
-	0x05, 0x4f, 0x39, 0x31, 0x24, 0x4b, 0xa4, 0x72, 0xd3, 0xe3, 0x35, 0x93, 0xef, 0xbf, 0x84, 0x51,
-	0xfa, 0x4f, 0xf9, 0x6e, 0xc0, 0x57, 0xe3, 0x90, 0x87, 0x7c, 0x0c, 0x35, 0xbe, 0x5a, 0x00, 0x02,
-	0x00, 0x5e, 0xd9, 0xeb, 0x9c, 0x20, 0xdc, 0xa6, 0x2a, 0x66, 0xc4, 0xc6, 0x9d, 0x23, 0x26, 0x7c,
-	0x69, 0xa2, 0x51, 0xeb, 0x53, 0xdf, 0xeb, 0x17, 0x99, 0x5d, 0x06, 0x68, 0xf9, 0x21, 0x9f, 0x71,
-	0x5f, 0x30, 0xc9, 0x95, 0x08, 0x98, 0x34, 0x9b, 0x50, 0x34, 0x28, 0x32, 0x7b, 0x17, 0xa4, 0x3b,
-	0x97, 0xfc, 0xc0, 0xaf, 0x6b, 0x30, 0x4d, 0x66, 0x2b, 0x26, 0xcd, 0x16, 0x74, 0x0c, 0x8b, 0xcc,
-	0x1e, 0xd4, 0x99, 0xdf, 0x3a, 0x41, 0x0f, 0xa1, 0x33, 0xc1, 0xc6, 0xaf, 0x58, 0xc9, 0x94, 0x09,
-	0xca, 0x63, 0x46, 0xbe, 0xe3, 0x8e, 0x50, 0x31, 0x2b, 0xd7, 0x32, 0xbe, 0x0e, 0xdd, 0xbd, 0x5b,
-	0x5d, 0xbd, 0xb8, 0x37, 0xd8, 0x64, 0x76, 0x43, 0x6f, 0x0b, 0x75, 0xb4, 0xfc, 0x38, 0x4b, 0xdc,
-	0x7e, 0x4e, 0xbf, 0xbe, 0x16, 0xf6, 0x5e, 0xcf, 0x02, 0x66, 0x36, 0x47, 0xa8, 0xbe, 0x76, 0x1b,
-	0xa4, 0x3b, 0xd7, 0x99, 0xe0, 0xae, 0x1e, 0x46, 0xd9, 0x82, 0x7c, 0xc0, 0x6d, 0xcd, 0x6d, 0x22,
-	0x68, 0xe9, 0x15, 0x99, 0x0d, 0x98, 0x82, 0xd5, 0x59, 0xdd, 0x55, 0x11, 0x42, 0x56, 0x63, 0x0a,
-	0x56, 0xd3, 0xfc, 0x51, 0xfe, 0x7f, 0x16, 0xa4, 0xba, 0x70, 0x19, 0x25, 0xf3, 0x7d, 0x1a, 0x8d,
-	0x29, 0xd8, 0x27, 0x68, 0xce, 0x10, 0x26, 0x7b, 0x12, 0x7a, 0x51, 0x32, 0x8f, 0x92, 0x90, 0x78,
-	0xb8, 0x27, 0x4b, 0xf6, 0x5a, 0x8c, 0x77, 0x07, 0x62, 0x54, 0xa3, 0xbd, 0xb7, 0x95, 0x1e, 0xdb,
-	0x6a, 0xba, 0xf5, 0xc8, 0x4f, 0xdc, 0x13, 0x3c, 0x66, 0x53, 0xc1, 0x16, 0x30, 0xfc, 0x21, 0x47,
-	0xa5, 0x82, 0xf7, 0xa6, 0xe2, 0xe8, 0x8a, 0x32, 0x40, 0x6b, 0xc7, 0xb9, 0x44, 0xd8, 0x78, 0x71,
-	0x5b, 0x1d, 0xbe, 0x76, 0xeb, 0xf1, 0xd7, 0xf6, 0x3e, 0xde, 0xdd, 0x58, 0xe8, 0x3c, 0xb7, 0xd0,
-	0x45, 0x6e, 0xa1, 0x4d, 0x6e, 0xa1, 0xab, 0xdc, 0x42, 0xd7, 0xb9, 0x85, 0x4e, 0x6f, 0xad, 0xc6,
-	0xdf, 0x0e, 0xcc, 0xf4, 0x5f, 0xc1, 0xef, 0xf5, 0xed, 0x3e, 0x00, 0x00, 0xff, 0xff, 0x41, 0x54,
-	0x2f, 0xbc, 0xa8, 0x03, 0x00, 0x00,
+var fileDescriptor_rbac_92c53d9795ecd3f1 = []byte{
+	// 437 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x53, 0xcd, 0x8a, 0xd4, 0x40,
+	0x10, 0xde, 0xde, 0x99, 0x71, 0x26, 0x15, 0x46, 0xdd, 0xc6, 0x43, 0x10, 0x49, 0x96, 0xf1, 0xb2,
+	0xb0, 0x98, 0x05, 0x05, 0xf1, 0x28, 0x2d, 0x7b, 0xf5, 0xd0, 0xde, 0xbc, 0x2c, 0x93, 0x6c, 0x4f,
+	0x8c, 0x66, 0xd3, 0x43, 0x77, 0x5a, 0xf0, 0x11, 0xbc, 0x78, 0xf6, 0x11, 0x7c, 0x84, 0x7d, 0x84,
+	0x3d, 0xfa, 0x04, 0x41, 0xe3, 0x2d, 0x4f, 0xe0, 0x51, 0xba, 0xf2, 0x37, 0x23, 0x03, 0x23, 0x78,
+	0xd9, 0x4b, 0xa5, 0xbe, 0xea, 0xaf, 0xab, 0xbe, 0xfa, 0xe8, 0x00, 0xa8, 0x68, 0x19, 0x87, 0x6b,
+	0x25, 0x0b, 0x49, 0x5d, 0x2d, 0x72, 0x6d, 0xc2, 0xe2, 0xd3, 0x5a, 0xe8, 0x87, 0x4f, 0x92, 0xb4,
+	0x78, 0x67, 0xa2, 0x30, 0x96, 0x57, 0x67, 0x89, 0x4c, 0xe4, 0x19, 0x72, 0x22, 0xb3, 0x42, 0x84,
+	0x00, 0xb3, 0xe6, 0xee, 0xe2, 0x0b, 0x81, 0x31, 0x37, 0x99, 0xa0, 0x01, 0x4c, 0x3e, 0x0a, 0x15,
+	0x69, 0x8f, 0x1c, 0x8f, 0x4e, 0x1c, 0xe6, 0xd4, 0x65, 0xd0, 0x14, 0x78, 0xf3, 0xa1, 0xa7, 0xe0,
+	0x28, 0xa1, 0xa5, 0x51, 0xb1, 0xd0, 0xde, 0x21, 0x92, 0xe6, 0x75, 0x19, 0x0c, 0x45, 0x3e, 0xa4,
+	0xf4, 0x05, 0xdc, 0xed, 0xc0, 0x45, 0xbe, 0xbc, 0x12, 0xda, 0x1b, 0xe1, 0x8d, 0xa3, 0xba, 0x0c,
+	0xe6, 0xdd, 0xc9, 0x6b, 0x7b, 0xc0, 0xb7, 0xe1, 0x22, 0x06, 0xf7, 0x55, 0x66, 0x74, 0x21, 0x14,
+	0x97, 0x99, 0xa0, 0xcf, 0x61, 0xa2, 0x4c, 0x26, 0x1a, 0x59, 0xee, 0xd3, 0xa3, 0x70, 0x63, 0xd7,
+	0xd0, 0x0a, 0x67, 0xf3, 0x9b, 0x32, 0x38, 0xb0, 0x6a, 0x91, 0xc7, 0x9b, 0x0f, 0x7d, 0x04, 0x63,
+	0x3b, 0xd7, 0x3b, 0x3c, 0x26, 0x27, 0x0e, 0x9b, 0xd5, 0x65, 0x80, 0x98, 0x63, 0x5c, 0x7c, 0xb6,
+	0x5b, 0xff, 0x4f, 0xfb, 0x53, 0x70, 0x70, 0xad, 0xf5, 0x32, 0xee, 0x66, 0xa0, 0x19, 0x7d, 0x91,
+	0x0f, 0x69, 0xaf, 0x65, 0xb4, 0x53, 0xcb, 0x39, 0x4c, 0xad, 0x14, 0x2e, 0x56, 0x96, 0x68, 0x27,
+	0x7b, 0x64, 0x20, 0x5a, 0xcc, 0x31, 0xee, 0x59, 0xe9, 0x1c, 0xa6, 0x6f, 0x4c, 0xf4, 0x5e, 0xc4,
+	0x85, 0x25, 0x7e, 0x48, 0xf3, 0xcb, 0xcd, 0x36, 0x16, 0x73, 0x8c, 0x7b, 0xda, 0x5c, 0x13, 0xa0,
+	0x1b, 0xfe, 0xb3, 0x34, 0xbf, 0x4c, 0xf3, 0x84, 0x32, 0x98, 0xe9, 0xa6, 0x7b, 0x67, 0xd5, 0x83,
+	0x2d, 0xab, 0xda, 0xd1, 0xec, 0x7e, 0xeb, 0x56, 0xcf, 0xe6, 0x7d, 0x46, 0x5f, 0xc2, 0x4c, 0xc9,
+	0x4c, 0x5c, 0x28, 0xb1, 0xc2, 0xe1, 0x7f, 0xf7, 0x68, 0x5d, 0x60, 0xf7, 0xda, 0x1e, 0x53, 0xd5,
+	0x14, 0x78, 0x97, 0xec, 0x31, 0xb2, 0x24, 0xe0, 0xde, 0x3e, 0xcd, 0x5b, 0x2f, 0x65, 0xf4, 0x8f,
+	0x2f, 0x65, 0xbc, 0x6b, 0x41, 0xf6, 0xf8, 0xf7, 0x4f, 0x9f, 0x7c, 0xab, 0x7c, 0x72, 0x5d, 0xf9,
+	0xe4, 0xa6, 0xf2, 0xc9, 0xf7, 0xca, 0x27, 0x3f, 0x2a, 0x9f, 0x7c, 0xfd, 0xe5, 0x1f, 0xbc, 0x9d,
+	0xa0, 0xa2, 0xe8, 0x0e, 0xfe, 0xd7, 0xcf, 0xfe, 0x04, 0x00, 0x00, 0xff, 0xff, 0x21, 0x5b, 0xb9,
+	0x2a, 0x21, 0x04, 0x00, 0x00,
 }

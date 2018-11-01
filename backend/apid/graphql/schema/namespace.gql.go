@@ -5,19 +5,180 @@ package schema
 import (
 	errors "errors"
 	graphql1 "github.com/graphql-go/graphql"
+	mapstructure "github.com/mitchellh/mapstructure"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// NamespaceEnvironmentFieldResolver implement to resolve requests for the Namespace's environment field.
-type NamespaceEnvironmentFieldResolver interface {
-	// Environment implements response to request for environment field.
-	Environment(p graphql.ResolveParams) (string, error)
+// NamespacedType Namespaced represents an object that belongs to a unique namespace.
+var NamespacedType = graphql.NewType("Namespaced", graphql.InterfaceKind)
+
+// RegisterNamespaced registers Namespaced object type with given service.
+func RegisterNamespaced(svc *graphql.Service, impl graphql.InterfaceTypeResolver) {
+	svc.RegisterInterface(_InterfaceTypeNamespacedDesc, impl)
+}
+func _InterfaceTypeNamespacedConfigFn() graphql1.InterfaceConfig {
+	return graphql1.InterfaceConfig{
+		Description: "Namespaced represents an object that belongs to a unique namespace.",
+		Fields: graphql1.Fields{"namespace": &graphql1.Field{
+			Args:              graphql1.FieldConfigArgument{},
+			DeprecationReason: "",
+			Description:       "The namespace the object belongs to.",
+			Name:              "namespace",
+			Type:              graphql1.NewNonNull(graphql1.String),
+		}},
+		Name: "Namespaced",
+		ResolveType: func(_ graphql1.ResolveTypeParams) *graphql1.Object {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see InterfaceTypeResolver.")
+		},
+	}
 }
 
-// NamespaceOrganizationFieldResolver implement to resolve requests for the Namespace's organization field.
-type NamespaceOrganizationFieldResolver interface {
-	// Organization implements response to request for organization field.
-	Organization(p graphql.ResolveParams) (string, error)
+// describe Namespaced's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _InterfaceTypeNamespacedDesc = graphql.InterfaceDesc{Config: _InterfaceTypeNamespacedConfigFn}
+
+// NamespaceIDFieldResolver implement to resolve requests for the Namespace's id field.
+type NamespaceIDFieldResolver interface {
+	// ID implements response to request for id field.
+	ID(p graphql.ResolveParams) (string, error)
+}
+
+// NamespaceNameFieldResolver implement to resolve requests for the Namespace's name field.
+type NamespaceNameFieldResolver interface {
+	// Name implements response to request for name field.
+	Name(p graphql.ResolveParams) (string, error)
+}
+
+// NamespaceChecksFieldResolverArgs contains arguments provided to checks when selected
+type NamespaceChecksFieldResolverArgs struct {
+	Offset  int            // Offset - self descriptive
+	Limit   int            // Limit adds optional limit to the number of entries returned.
+	OrderBy CheckListOrder // OrderBy adds optional order to the records retrieved.
+	Filter  string         // Filter reduces the set using the given Sensu Query Expression predicate.
+}
+
+// NamespaceChecksFieldResolverParams contains contextual info to resolve checks field
+type NamespaceChecksFieldResolverParams struct {
+	graphql.ResolveParams
+	Args NamespaceChecksFieldResolverArgs
+}
+
+// NamespaceChecksFieldResolver implement to resolve requests for the Namespace's checks field.
+type NamespaceChecksFieldResolver interface {
+	// Checks implements response to request for checks field.
+	Checks(p NamespaceChecksFieldResolverParams) (interface{}, error)
+}
+
+// NamespaceEntitiesFieldResolverArgs contains arguments provided to entities when selected
+type NamespaceEntitiesFieldResolverArgs struct {
+	Offset  int             // Offset - self descriptive
+	Limit   int             // Limit adds optional limit to the number of entries returned.
+	OrderBy EntityListOrder // OrderBy adds optional order to the records retrieved.
+	Filter  string          // Filter reduces the set using the given Sensu Query Expression predicate.
+}
+
+// NamespaceEntitiesFieldResolverParams contains contextual info to resolve entities field
+type NamespaceEntitiesFieldResolverParams struct {
+	graphql.ResolveParams
+	Args NamespaceEntitiesFieldResolverArgs
+}
+
+// NamespaceEntitiesFieldResolver implement to resolve requests for the Namespace's entities field.
+type NamespaceEntitiesFieldResolver interface {
+	// Entities implements response to request for entities field.
+	Entities(p NamespaceEntitiesFieldResolverParams) (interface{}, error)
+}
+
+// NamespaceEventsFieldResolverArgs contains arguments provided to events when selected
+type NamespaceEventsFieldResolverArgs struct {
+	Offset  int             // Offset - self descriptive
+	Limit   int             // Limit adds optional limit to the number of entries returned.
+	OrderBy EventsListOrder // OrderBy adds optional order to the records retrieved.
+	Filter  string          // Filter reduces the set using the given Sensu Query Expression predicate.
+}
+
+// NamespaceEventsFieldResolverParams contains contextual info to resolve events field
+type NamespaceEventsFieldResolverParams struct {
+	graphql.ResolveParams
+	Args NamespaceEventsFieldResolverArgs
+}
+
+// NamespaceEventsFieldResolver implement to resolve requests for the Namespace's events field.
+type NamespaceEventsFieldResolver interface {
+	// Events implements response to request for events field.
+	Events(p NamespaceEventsFieldResolverParams) (interface{}, error)
+}
+
+// NamespaceSilencesFieldResolverArgs contains arguments provided to silences when selected
+type NamespaceSilencesFieldResolverArgs struct {
+	Offset  int               // Offset - self descriptive
+	Limit   int               // Limit adds optional limit to the number of entries returned.
+	OrderBy SilencesListOrder // OrderBy adds optional order to the records retrieved.
+	Filter  string            // Filter reduces the set using the given Sensu Query Expression predicate.
+}
+
+// NamespaceSilencesFieldResolverParams contains contextual info to resolve silences field
+type NamespaceSilencesFieldResolverParams struct {
+	graphql.ResolveParams
+	Args NamespaceSilencesFieldResolverArgs
+}
+
+// NamespaceSilencesFieldResolver implement to resolve requests for the Namespace's silences field.
+type NamespaceSilencesFieldResolver interface {
+	// Silences implements response to request for silences field.
+	Silences(p NamespaceSilencesFieldResolverParams) (interface{}, error)
+}
+
+// NamespaceSubscriptionsFieldResolverArgs contains arguments provided to subscriptions when selected
+type NamespaceSubscriptionsFieldResolverArgs struct {
+	OmitEntity bool                 // OmitEntity - Omit entity subscriptions from set.
+	OrderBy    SubscriptionSetOrder // OrderBy adds optional order to the records retrieved.
+}
+
+// NamespaceSubscriptionsFieldResolverParams contains contextual info to resolve subscriptions field
+type NamespaceSubscriptionsFieldResolverParams struct {
+	graphql.ResolveParams
+	Args NamespaceSubscriptionsFieldResolverArgs
+}
+
+// NamespaceSubscriptionsFieldResolver implement to resolve requests for the Namespace's subscriptions field.
+type NamespaceSubscriptionsFieldResolver interface {
+	// Subscriptions implements response to request for subscriptions field.
+	Subscriptions(p NamespaceSubscriptionsFieldResolverParams) (interface{}, error)
+}
+
+// NamespaceCheckHistoryFieldResolverArgs contains arguments provided to checkHistory when selected
+type NamespaceCheckHistoryFieldResolverArgs struct {
+	Filter string // Filter reduces the set using the given Sensu Query Expression predicate.
+	Limit  int    // Limit adds optional limit to the number of entries returned.
+}
+
+// NamespaceCheckHistoryFieldResolverParams contains contextual info to resolve checkHistory field
+type NamespaceCheckHistoryFieldResolverParams struct {
+	graphql.ResolveParams
+	Args NamespaceCheckHistoryFieldResolverArgs
+}
+
+// NamespaceCheckHistoryFieldResolver implement to resolve requests for the Namespace's checkHistory field.
+type NamespaceCheckHistoryFieldResolver interface {
+	// CheckHistory implements response to request for checkHistory field.
+	CheckHistory(p NamespaceCheckHistoryFieldResolverParams) (interface{}, error)
+}
+
+// NamespaceIconIDFieldResolver implement to resolve requests for the Namespace's iconId field.
+type NamespaceIconIDFieldResolver interface {
+	// IconID implements response to request for iconId field.
+	IconID(p graphql.ResolveParams) (Icon, error)
+}
+
+// NamespaceColourIDFieldResolver implement to resolve requests for the Namespace's colourId field.
+type NamespaceColourIDFieldResolver interface {
+	// ColourID implements response to request for colourId field.
+	ColourID(p graphql.ResolveParams) (MutedColour, error)
 }
 
 //
@@ -82,8 +243,16 @@ type NamespaceOrganizationFieldResolver interface {
 //   }
 //
 type NamespaceFieldResolvers interface {
-	NamespaceEnvironmentFieldResolver
-	NamespaceOrganizationFieldResolver
+	NamespaceIDFieldResolver
+	NamespaceNameFieldResolver
+	NamespaceChecksFieldResolver
+	NamespaceEntitiesFieldResolver
+	NamespaceEventsFieldResolver
+	NamespaceSilencesFieldResolver
+	NamespaceSubscriptionsFieldResolver
+	NamespaceCheckHistoryFieldResolver
+	NamespaceIconIDFieldResolver
+	NamespaceColourIDFieldResolver
 }
 
 // NamespaceAliases implements all methods on NamespaceFieldResolvers interface by using reflection to
@@ -133,73 +302,394 @@ type NamespaceFieldResolvers interface {
 //
 type NamespaceAliases struct{}
 
-// Environment implements response to request for 'environment' field.
-func (_ NamespaceAliases) Environment(p graphql.ResolveParams) (string, error) {
+// ID implements response to request for 'id' field.
+func (_ NamespaceAliases) ID(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	ret, ok := val.(string)
 	if err != nil {
 		return ret, err
 	}
 	if !ok {
-		return ret, errors.New("unable to coerce value for field 'environment'")
+		return ret, errors.New("unable to coerce value for field 'id'")
 	}
 	return ret, err
 }
 
-// Organization implements response to request for 'organization' field.
-func (_ NamespaceAliases) Organization(p graphql.ResolveParams) (string, error) {
+// Name implements response to request for 'name' field.
+func (_ NamespaceAliases) Name(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	ret, ok := val.(string)
 	if err != nil {
 		return ret, err
 	}
 	if !ok {
-		return ret, errors.New("unable to coerce value for field 'organization'")
+		return ret, errors.New("unable to coerce value for field 'name'")
 	}
 	return ret, err
 }
 
-// NamespaceType Namespace represents the unique details describing where a resource is located.
+// Checks implements response to request for 'checks' field.
+func (_ NamespaceAliases) Checks(p NamespaceChecksFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Entities implements response to request for 'entities' field.
+func (_ NamespaceAliases) Entities(p NamespaceEntitiesFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Events implements response to request for 'events' field.
+func (_ NamespaceAliases) Events(p NamespaceEventsFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Silences implements response to request for 'silences' field.
+func (_ NamespaceAliases) Silences(p NamespaceSilencesFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Subscriptions implements response to request for 'subscriptions' field.
+func (_ NamespaceAliases) Subscriptions(p NamespaceSubscriptionsFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// CheckHistory implements response to request for 'checkHistory' field.
+func (_ NamespaceAliases) CheckHistory(p NamespaceCheckHistoryFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// IconID implements response to request for 'iconId' field.
+func (_ NamespaceAliases) IconID(p graphql.ResolveParams) (Icon, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := Icon(val.(string)), true
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'iconId'")
+	}
+	return ret, err
+}
+
+// ColourID implements response to request for 'colourId' field.
+func (_ NamespaceAliases) ColourID(p graphql.ResolveParams) (MutedColour, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := MutedColour(val.(string)), true
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'colourId'")
+	}
+	return ret, err
+}
+
+// NamespaceType Represents a virtual cluster
 var NamespaceType = graphql.NewType("Namespace", graphql.ObjectKind)
 
 // RegisterNamespace registers Namespace object type with given service.
 func RegisterNamespace(svc *graphql.Service, impl NamespaceFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeNamespaceDesc, impl)
 }
-func _ObjTypeNamespaceEnvironmentHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceEnvironmentFieldResolver)
+func _ObjTypeNamespaceIDHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(NamespaceIDFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Environment(frp)
+		return resolver.ID(frp)
 	}
 }
 
-func _ObjTypeNamespaceOrganizationHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceOrganizationFieldResolver)
+func _ObjTypeNamespaceNameHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(NamespaceNameFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Organization(frp)
+		return resolver.Name(frp)
+	}
+}
+
+func _ObjTypeNamespaceChecksHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(NamespaceChecksFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := NamespaceChecksFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Checks(frp)
+	}
+}
+
+func _ObjTypeNamespaceEntitiesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(NamespaceEntitiesFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := NamespaceEntitiesFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Entities(frp)
+	}
+}
+
+func _ObjTypeNamespaceEventsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(NamespaceEventsFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := NamespaceEventsFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Events(frp)
+	}
+}
+
+func _ObjTypeNamespaceSilencesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(NamespaceSilencesFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := NamespaceSilencesFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Silences(frp)
+	}
+}
+
+func _ObjTypeNamespaceSubscriptionsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(NamespaceSubscriptionsFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := NamespaceSubscriptionsFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Subscriptions(frp)
+	}
+}
+
+func _ObjTypeNamespaceCheckHistoryHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(NamespaceCheckHistoryFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := NamespaceCheckHistoryFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.CheckHistory(frp)
+	}
+}
+
+func _ObjTypeNamespaceIconIDHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(NamespaceIconIDFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+
+		val, err := resolver.IconID(frp)
+		return string(val), err
+	}
+}
+
+func _ObjTypeNamespaceColourIDHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(NamespaceColourIDFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+
+		val, err := resolver.ColourID(frp)
+		return string(val), err
 	}
 }
 
 func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
-		Description: "Namespace represents the unique details describing where a resource is located.",
+		Description: "Represents a virtual cluster",
 		Fields: graphql1.Fields{
-			"environment": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
+			"checkHistory": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"filter": &graphql1.ArgumentConfig{
+						DefaultValue: "",
+						Description:  "Filter reduces the set using the given Sensu Query Expression predicate.",
+						Type:         graphql1.String,
+					},
+					"limit": &graphql1.ArgumentConfig{
+						DefaultValue: 10000,
+						Description:  "Limit adds optional limit to the number of entries returned.",
+						Type:         graphql1.Int,
+					},
+				},
 				DeprecationReason: "",
-				Description:       "environment indicates to which env a check belongs to.",
-				Name:              "environment",
-				Type:              graphql1.String,
+				Description:       "checkHistory includes all persisted check execution results associated with\nthe environment. Unlike the Check type's history this field includes the most\nrecent result.",
+				Name:              "checkHistory",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("CheckHistory"))),
 			},
-			"organization": &graphql1.Field{
+			"checks": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"filter": &graphql1.ArgumentConfig{
+						DefaultValue: "",
+						Description:  "Filter reduces the set using the given Sensu Query Expression predicate.",
+						Type:         graphql1.String,
+					},
+					"limit": &graphql1.ArgumentConfig{
+						DefaultValue: 10,
+						Description:  "Limit adds optional limit to the number of entries returned.",
+						Type:         graphql1.Int,
+					},
+					"offset": &graphql1.ArgumentConfig{
+						DefaultValue: 0,
+						Description:  "self descriptive",
+						Type:         graphql1.Int,
+					},
+					"orderBy": &graphql1.ArgumentConfig{
+						DefaultValue: "NAME_DESC",
+						Description:  "OrderBy adds optional order to the records retrieved.",
+						Type:         graphql.InputType("CheckListOrder"),
+					},
+				},
+				DeprecationReason: "",
+				Description:       "All check configurations associated with the environment.",
+				Name:              "checks",
+				Type:              graphql1.NewNonNull(graphql.OutputType("CheckConfigConnection")),
+			},
+			"colourId": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "organization indicates to which org a check belongs to.",
-				Name:              "organization",
+				Description:       "ColourId. Experimental. Use graphical interfaces as symbolic reference to environment",
+				Name:              "colourId",
+				Type:              graphql1.NewNonNull(graphql.OutputType("MutedColour")),
+			},
+			"entities": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"filter": &graphql1.ArgumentConfig{
+						DefaultValue: "",
+						Description:  "Filter reduces the set using the given Sensu Query Expression predicate.",
+						Type:         graphql1.String,
+					},
+					"limit": &graphql1.ArgumentConfig{
+						DefaultValue: 10,
+						Description:  "Limit adds optional limit to the number of entries returned.",
+						Type:         graphql1.Int,
+					},
+					"offset": &graphql1.ArgumentConfig{
+						DefaultValue: 0,
+						Description:  "self descriptive",
+						Type:         graphql1.Int,
+					},
+					"orderBy": &graphql1.ArgumentConfig{
+						DefaultValue: "ID_DESC",
+						Description:  "OrderBy adds optional order to the records retrieved.",
+						Type:         graphql.InputType("EntityListOrder"),
+					},
+				},
+				DeprecationReason: "",
+				Description:       "All entities associated with the environment.",
+				Name:              "entities",
+				Type:              graphql1.NewNonNull(graphql.OutputType("EntityConnection")),
+			},
+			"events": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"filter": &graphql1.ArgumentConfig{
+						DefaultValue: "",
+						Description:  "Filter reduces the set using the given Sensu Query Expression predicate.",
+						Type:         graphql1.String,
+					},
+					"limit": &graphql1.ArgumentConfig{
+						DefaultValue: 10,
+						Description:  "Limit adds optional limit to the number of entries returned.",
+						Type:         graphql1.Int,
+					},
+					"offset": &graphql1.ArgumentConfig{
+						DefaultValue: 0,
+						Description:  "self descriptive",
+						Type:         graphql1.Int,
+					},
+					"orderBy": &graphql1.ArgumentConfig{
+						DefaultValue: "SEVERITY",
+						Description:  "OrderBy adds optional order to the records retrieved.",
+						Type:         graphql.InputType("EventsListOrder"),
+					},
+				},
+				DeprecationReason: "",
+				Description:       "All events associated with the environment.",
+				Name:              "events",
+				Type:              graphql1.NewNonNull(graphql.OutputType("EventConnection")),
+			},
+			"iconId": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "IconId. Experimental. Use graphical interfaces as symbolic reference to namespace",
+				Name:              "iconId",
+				Type:              graphql1.NewNonNull(graphql.OutputType("Icon")),
+			},
+			"id": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "The globally unique identifier of the check.",
+				Name:              "id",
+				Type:              graphql1.NewNonNull(graphql1.ID),
+			},
+			"name": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Name is the unique identifier for a namespace.",
+				Name:              "name",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
+			"silences": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"filter": &graphql1.ArgumentConfig{
+						DefaultValue: "",
+						Description:  "Filter reduces the set using the given Sensu Query Expression predicate.",
+						Type:         graphql1.String,
+					},
+					"limit": &graphql1.ArgumentConfig{
+						DefaultValue: 10,
+						Description:  "Limit adds optional limit to the number of entries returned.",
+						Type:         graphql1.Int,
+					},
+					"offset": &graphql1.ArgumentConfig{
+						DefaultValue: 0,
+						Description:  "self descriptive",
+						Type:         graphql1.Int,
+					},
+					"orderBy": &graphql1.ArgumentConfig{
+						DefaultValue: "ID_DESC",
+						Description:  "OrderBy adds optional order to the records retrieved.",
+						Type:         graphql.InputType("SilencesListOrder"),
+					},
+				},
+				DeprecationReason: "",
+				Description:       "All silences associated with the environment.",
+				Name:              "silences",
+				Type:              graphql1.NewNonNull(graphql.OutputType("SilencedConnection")),
+			},
+			"subscriptions": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"omitEntity": &graphql1.ArgumentConfig{
+						DefaultValue: false,
+						Description:  "Omit entity subscriptions from set.",
+						Type:         graphql1.Boolean,
+					},
+					"orderBy": &graphql1.ArgumentConfig{
+						DefaultValue: "OCCURRENCES",
+						Description:  "OrderBy adds optional order to the records retrieved.",
+						Type:         graphql.InputType("SubscriptionSetOrder"),
+					},
+				},
+				DeprecationReason: "",
+				Description:       "All subscriptions in use in the environment.",
+				Name:              "subscriptions",
+				Type:              graphql1.NewNonNull(graphql.OutputType("SubscriptionSet")),
+			},
 		},
-		Interfaces: []*graphql1.Interface{},
+		Interfaces: []*graphql1.Interface{
+			graphql.Interface("Node")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -216,48 +706,496 @@ func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeNamespaceDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeNamespaceConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"environment":  _ObjTypeNamespaceEnvironmentHandler,
-		"organization": _ObjTypeNamespaceOrganizationHandler,
+		"checkHistory":  _ObjTypeNamespaceCheckHistoryHandler,
+		"checks":        _ObjTypeNamespaceChecksHandler,
+		"colourId":      _ObjTypeNamespaceColourIDHandler,
+		"entities":      _ObjTypeNamespaceEntitiesHandler,
+		"events":        _ObjTypeNamespaceEventsHandler,
+		"iconId":        _ObjTypeNamespaceIconIDHandler,
+		"id":            _ObjTypeNamespaceIDHandler,
+		"name":          _ObjTypeNamespaceNameHandler,
+		"silences":      _ObjTypeNamespaceSilencesHandler,
+		"subscriptions": _ObjTypeNamespaceSubscriptionsHandler,
 	},
 }
 
-// EnvironmentNodeType Describes a node in an environment.
-var EnvironmentNodeType = graphql.NewType("EnvironmentNode", graphql.InterfaceKind)
+// SubscriptionSetOrder Describes ways in which a set of subscriptions can be ordered.
+type SubscriptionSetOrder string
 
-// RegisterEnvironmentNode registers EnvironmentNode object type with given service.
-func RegisterEnvironmentNode(svc *graphql.Service, impl graphql.InterfaceTypeResolver) {
-	svc.RegisterInterface(_InterfaceTypeEnvironmentNodeDesc, impl)
+// SubscriptionSetOrders holds enum values
+var SubscriptionSetOrders = _EnumTypeSubscriptionSetOrderValues{
+	ALPHA_ASC:   "ALPHA_ASC",
+	ALPHA_DESC:  "ALPHA_DESC",
+	OCCURRENCES: "OCCURRENCES",
 }
-func _InterfaceTypeEnvironmentNodeConfigFn() graphql1.InterfaceConfig {
-	return graphql1.InterfaceConfig{
-		Description: "Describes a node in an environment.",
-		Fields: graphql1.Fields{
-			"environment": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
+
+// SubscriptionSetOrderType Describes ways in which a set of subscriptions can be ordered.
+var SubscriptionSetOrderType = graphql.NewType("SubscriptionSetOrder", graphql.EnumKind)
+
+// RegisterSubscriptionSetOrder registers SubscriptionSetOrder object type with given service.
+func RegisterSubscriptionSetOrder(svc *graphql.Service) {
+	svc.RegisterEnum(_EnumTypeSubscriptionSetOrderDesc)
+}
+func _EnumTypeSubscriptionSetOrderConfigFn() graphql1.EnumConfig {
+	return graphql1.EnumConfig{
+		Description: "Describes ways in which a set of subscriptions can be ordered.",
+		Name:        "SubscriptionSetOrder",
+		Values: graphql1.EnumValueConfigMap{
+			"ALPHA_ASC": &graphql1.EnumValueConfig{
 				DeprecationReason: "",
-				Description:       "Environment indicates which env a silenced entry belongs to.",
-				Name:              "environment",
-				Type:              graphql.OutputType("Environment"),
+				Description:       "self descriptive",
+				Value:             "ALPHA_ASC",
 			},
-			"organization": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
+			"ALPHA_DESC": &graphql1.EnumValueConfig{
 				DeprecationReason: "",
-				Description:       "Organization indicates to which org a silenced entry belongs to.",
-				Name:              "organization",
-				Type:              graphql1.NewNonNull(graphql.OutputType("Organization")),
+				Description:       "self descriptive",
+				Value:             "ALPHA_DESC",
 			},
-		},
-		Name: "EnvironmentNode",
-		ResolveType: func(_ graphql1.ResolveTypeParams) *graphql1.Object {
-			// NOTE:
-			// Panic by default. Intent is that when Service is invoked, values of
-			// these fields are updated with instantiated resolvers. If these
-			// defaults are called it is most certainly programmer err.
-			// If you're see this comment then: 'Whoops! Sorry, my bad.'
-			panic("Unimplemented; see InterfaceTypeResolver.")
+			"OCCURRENCES": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "OCCURRENCES",
+			},
 		},
 	}
 }
 
-// describe EnvironmentNode's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _InterfaceTypeEnvironmentNodeDesc = graphql.InterfaceDesc{Config: _InterfaceTypeEnvironmentNodeConfigFn}
+// describe SubscriptionSetOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _EnumTypeSubscriptionSetOrderDesc = graphql.EnumDesc{Config: _EnumTypeSubscriptionSetOrderConfigFn}
+
+type _EnumTypeSubscriptionSetOrderValues struct {
+	// ALPHA_ASC - self descriptive
+	ALPHA_ASC SubscriptionSetOrder
+	// ALPHA_DESC - self descriptive
+	ALPHA_DESC SubscriptionSetOrder
+	// OCCURRENCES - self descriptive
+	OCCURRENCES SubscriptionSetOrder
+}
+
+// CheckListOrder Describes ways in which a list of checks can be ordered.
+type CheckListOrder string
+
+// CheckListOrders holds enum values
+var CheckListOrders = _EnumTypeCheckListOrderValues{
+	NAME:      "NAME",
+	NAME_DESC: "NAME_DESC",
+}
+
+// CheckListOrderType Describes ways in which a list of checks can be ordered.
+var CheckListOrderType = graphql.NewType("CheckListOrder", graphql.EnumKind)
+
+// RegisterCheckListOrder registers CheckListOrder object type with given service.
+func RegisterCheckListOrder(svc *graphql.Service) {
+	svc.RegisterEnum(_EnumTypeCheckListOrderDesc)
+}
+func _EnumTypeCheckListOrderConfigFn() graphql1.EnumConfig {
+	return graphql1.EnumConfig{
+		Description: "Describes ways in which a list of checks can be ordered.",
+		Name:        "CheckListOrder",
+		Values: graphql1.EnumValueConfigMap{
+			"NAME": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "NAME",
+			},
+			"NAME_DESC": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "NAME_DESC",
+			},
+		},
+	}
+}
+
+// describe CheckListOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _EnumTypeCheckListOrderDesc = graphql.EnumDesc{Config: _EnumTypeCheckListOrderConfigFn}
+
+type _EnumTypeCheckListOrderValues struct {
+	// NAME - self descriptive
+	NAME CheckListOrder
+	// NAME_DESC - self descriptive
+	NAME_DESC CheckListOrder
+}
+
+// EntityListOrder Describes ways in which a list of entities can be ordered.
+type EntityListOrder string
+
+// EntityListOrders holds enum values
+var EntityListOrders = _EnumTypeEntityListOrderValues{
+	ID:       "ID",
+	ID_DESC:  "ID_DESC",
+	LASTSEEN: "LASTSEEN",
+}
+
+// EntityListOrderType Describes ways in which a list of entities can be ordered.
+var EntityListOrderType = graphql.NewType("EntityListOrder", graphql.EnumKind)
+
+// RegisterEntityListOrder registers EntityListOrder object type with given service.
+func RegisterEntityListOrder(svc *graphql.Service) {
+	svc.RegisterEnum(_EnumTypeEntityListOrderDesc)
+}
+func _EnumTypeEntityListOrderConfigFn() graphql1.EnumConfig {
+	return graphql1.EnumConfig{
+		Description: "Describes ways in which a list of entities can be ordered.",
+		Name:        "EntityListOrder",
+		Values: graphql1.EnumValueConfigMap{
+			"ID": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ID",
+			},
+			"ID_DESC": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ID_DESC",
+			},
+			"LASTSEEN": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "LASTSEEN",
+			},
+		},
+	}
+}
+
+// describe EntityListOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _EnumTypeEntityListOrderDesc = graphql.EnumDesc{Config: _EnumTypeEntityListOrderConfigFn}
+
+type _EnumTypeEntityListOrderValues struct {
+	// ID - self descriptive
+	ID EntityListOrder
+	// ID_DESC - self descriptive
+	ID_DESC EntityListOrder
+	// LASTSEEN - self descriptive
+	LASTSEEN EntityListOrder
+}
+
+// EventsListOrder Describes ways in which a list of events can be ordered.
+type EventsListOrder string
+
+// EventsListOrders holds enum values
+var EventsListOrders = _EnumTypeEventsListOrderValues{
+	LASTOK:   "LASTOK",
+	NEWEST:   "NEWEST",
+	OLDEST:   "OLDEST",
+	SEVERITY: "SEVERITY",
+}
+
+// EventsListOrderType Describes ways in which a list of events can be ordered.
+var EventsListOrderType = graphql.NewType("EventsListOrder", graphql.EnumKind)
+
+// RegisterEventsListOrder registers EventsListOrder object type with given service.
+func RegisterEventsListOrder(svc *graphql.Service) {
+	svc.RegisterEnum(_EnumTypeEventsListOrderDesc)
+}
+func _EnumTypeEventsListOrderConfigFn() graphql1.EnumConfig {
+	return graphql1.EnumConfig{
+		Description: "Describes ways in which a list of events can be ordered.",
+		Name:        "EventsListOrder",
+		Values: graphql1.EnumValueConfigMap{
+			"LASTOK": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "LASTOK",
+			},
+			"NEWEST": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "NEWEST",
+			},
+			"OLDEST": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "OLDEST",
+			},
+			"SEVERITY": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "SEVERITY",
+			},
+		},
+	}
+}
+
+// describe EventsListOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _EnumTypeEventsListOrderDesc = graphql.EnumDesc{Config: _EnumTypeEventsListOrderConfigFn}
+
+type _EnumTypeEventsListOrderValues struct {
+	// LASTOK - self descriptive
+	LASTOK EventsListOrder
+	// NEWEST - self descriptive
+	NEWEST EventsListOrder
+	// OLDEST - self descriptive
+	OLDEST EventsListOrder
+	// SEVERITY - self descriptive
+	SEVERITY EventsListOrder
+}
+
+// SilencesListOrder Describes ways in which a list of silences can be ordered.
+type SilencesListOrder string
+
+// SilencesListOrders holds enum values
+var SilencesListOrders = _EnumTypeSilencesListOrderValues{
+	BEGIN:      "BEGIN",
+	BEGIN_DESC: "BEGIN_DESC",
+	ID:         "ID",
+	ID_DESC:    "ID_DESC",
+}
+
+// SilencesListOrderType Describes ways in which a list of silences can be ordered.
+var SilencesListOrderType = graphql.NewType("SilencesListOrder", graphql.EnumKind)
+
+// RegisterSilencesListOrder registers SilencesListOrder object type with given service.
+func RegisterSilencesListOrder(svc *graphql.Service) {
+	svc.RegisterEnum(_EnumTypeSilencesListOrderDesc)
+}
+func _EnumTypeSilencesListOrderConfigFn() graphql1.EnumConfig {
+	return graphql1.EnumConfig{
+		Description: "Describes ways in which a list of silences can be ordered.",
+		Name:        "SilencesListOrder",
+		Values: graphql1.EnumValueConfigMap{
+			"BEGIN": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "BEGIN",
+			},
+			"BEGIN_DESC": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "BEGIN_DESC",
+			},
+			"ID": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ID",
+			},
+			"ID_DESC": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ID_DESC",
+			},
+		},
+	}
+}
+
+// describe SilencesListOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _EnumTypeSilencesListOrderDesc = graphql.EnumDesc{Config: _EnumTypeSilencesListOrderConfigFn}
+
+type _EnumTypeSilencesListOrderValues struct {
+	// ID - self descriptive
+	ID SilencesListOrder
+	// ID_DESC - self descriptive
+	ID_DESC SilencesListOrder
+	// BEGIN - self descriptive
+	BEGIN SilencesListOrder
+	// BEGIN_DESC - self descriptive
+	BEGIN_DESC SilencesListOrder
+}
+
+// Icon Describes a graphical element that can be used to distinguish a resource.
+type Icon string
+
+// Icons holds enum values
+var Icons = _EnumTypeIconValues{
+	BRIEFCASE:  "BRIEFCASE",
+	DONUT:      "DONUT",
+	EMOTICON:   "EMOTICON",
+	ESPRESSO:   "ESPRESSO",
+	EXPLORE:    "EXPLORE",
+	FIRE:       "FIRE",
+	HALFHEART:  "HALFHEART",
+	HEART:      "HEART",
+	MUG:        "MUG",
+	POLYGON:    "POLYGON",
+	VISIBILITY: "VISIBILITY",
+}
+
+// IconType Describes a graphical element that can be used to distinguish a resource.
+var IconType = graphql.NewType("Icon", graphql.EnumKind)
+
+// RegisterIcon registers Icon object type with given service.
+func RegisterIcon(svc *graphql.Service) {
+	svc.RegisterEnum(_EnumTypeIconDesc)
+}
+func _EnumTypeIconConfigFn() graphql1.EnumConfig {
+	return graphql1.EnumConfig{
+		Description: "Describes a graphical element that can be used to distinguish a resource.",
+		Name:        "Icon",
+		Values: graphql1.EnumValueConfigMap{
+			"BRIEFCASE": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "BRIEFCASE",
+			},
+			"DONUT": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "DONUT",
+			},
+			"EMOTICON": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "EMOTICON",
+			},
+			"ESPRESSO": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ESPRESSO",
+			},
+			"EXPLORE": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "EXPLORE",
+			},
+			"FIRE": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "FIRE",
+			},
+			"HALFHEART": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "HALFHEART",
+			},
+			"HEART": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "HEART",
+			},
+			"MUG": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "MUG",
+			},
+			"POLYGON": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "POLYGON",
+			},
+			"VISIBILITY": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "VISIBILITY",
+			},
+		},
+	}
+}
+
+// describe Icon's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _EnumTypeIconDesc = graphql.EnumDesc{Config: _EnumTypeIconConfigFn}
+
+type _EnumTypeIconValues struct {
+	// BRIEFCASE - self descriptive
+	BRIEFCASE Icon
+	// DONUT - self descriptive
+	DONUT Icon
+	// EMOTICON - self descriptive
+	EMOTICON Icon
+	// ESPRESSO - self descriptive
+	ESPRESSO Icon
+	// EXPLORE - self descriptive
+	EXPLORE Icon
+	// FIRE - self descriptive
+	FIRE Icon
+	// HALFHEART - self descriptive
+	HALFHEART Icon
+	// HEART - self descriptive
+	HEART Icon
+	// MUG - self descriptive
+	MUG Icon
+	// POLYGON - self descriptive
+	POLYGON Icon
+	// VISIBILITY - self descriptive
+	VISIBILITY Icon
+}
+
+/*
+MutedColour Describes a color from a muted palette that can be used to distinguish a
+resource.
+*/
+type MutedColour string
+
+// MutedColours holds enum values
+var MutedColours = _EnumTypeMutedColourValues{
+	BLUE:   "BLUE",
+	GRAY:   "GRAY",
+	GREEN:  "GREEN",
+	ORANGE: "ORANGE",
+	PINK:   "PINK",
+	PURPLE: "PURPLE",
+	YELLOW: "YELLOW",
+}
+
+/*
+MutedColourType Describes a color from a muted palette that can be used to distinguish a
+resource.
+*/
+var MutedColourType = graphql.NewType("MutedColour", graphql.EnumKind)
+
+// RegisterMutedColour registers MutedColour object type with given service.
+func RegisterMutedColour(svc *graphql.Service) {
+	svc.RegisterEnum(_EnumTypeMutedColourDesc)
+}
+func _EnumTypeMutedColourConfigFn() graphql1.EnumConfig {
+	return graphql1.EnumConfig{
+		Description: "Describes a color from a muted palette that can be used to distinguish a\nresource.",
+		Name:        "MutedColour",
+		Values: graphql1.EnumValueConfigMap{
+			"BLUE": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "BLUE",
+			},
+			"GRAY": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "GRAY",
+			},
+			"GREEN": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "GREEN",
+			},
+			"ORANGE": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ORANGE",
+			},
+			"PINK": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "PINK",
+			},
+			"PURPLE": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "PURPLE",
+			},
+			"YELLOW": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "YELLOW",
+			},
+		},
+	}
+}
+
+// describe MutedColour's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _EnumTypeMutedColourDesc = graphql.EnumDesc{Config: _EnumTypeMutedColourConfigFn}
+
+type _EnumTypeMutedColourValues struct {
+	// BLUE - self descriptive
+	BLUE MutedColour
+	// GRAY - self descriptive
+	GRAY MutedColour
+	// GREEN - self descriptive
+	GREEN MutedColour
+	// ORANGE - self descriptive
+	ORANGE MutedColour
+	// PINK - self descriptive
+	PINK MutedColour
+	// PURPLE - self descriptive
+	PURPLE MutedColour
+	// YELLOW - self descriptive
+	YELLOW MutedColour
+}

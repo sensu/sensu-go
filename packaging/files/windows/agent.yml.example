@@ -3,8 +3,7 @@
 # agent configuration
 ##
 #id: ""
-#organization: "default"
-#environment: "default"
+#namespace: "default"
 #subscriptions: ""
 #backend-url:
 #  - "ws://127.0.0.1:8081"

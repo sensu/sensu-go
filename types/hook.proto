@@ -26,11 +26,8 @@ message HookConfig {
   // Stdin indicates if hook requests have stdin enabled
   bool stdin = 4 [(gogoproto.jsontag) = "stdin"];
 
-  // Environment indicates to which env a hook belongs to
-  string environment = 5;
-
-  // Organization indicates to which org a hook belongs to
-  string organization = 6;
+   // Namespace to which the hook belongs to
+   string namespace = 7;
 }
 
 // A Hook is a hook specification and optionally the results of the hook's

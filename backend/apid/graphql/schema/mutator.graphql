@@ -1,12 +1,12 @@
 """
 A Mutator is a mutator specification.
 """
-type Mutator implements Node {
+type Mutator implements Node, Namespaced {
   "The globally unique identifier of the record"
   id: ID!
 
   "Namespace in which this record resides"
-  namespace: Namespace!
+  namespace: String!
 
   "Name is the unique identifier for a mutator."
   name: String!

@@ -49,12 +49,8 @@ func (c *HookConfig) Validate() error {
 		return errors.New("hook timeout must be greater than 0")
 	}
 
-	if c.Environment == "" {
-		return errors.New("environment cannot be empty")
-	}
-
-	if c.Organization == "" {
-		return errors.New("organization must be set")
+	if c.Namespace == "" {
+		return errors.New("namespace must be set")
 	}
 
 	return nil
@@ -118,12 +114,11 @@ func FixtureHookConfig(id string) *HookConfig {
 	timeout := uint32(10)
 
 	return &HookConfig{
-		Name:         id,
-		Command:      "true",
-		Timeout:      timeout,
-		Stdin:        false,
-		Environment:  "default",
-		Organization: "default",
+		Name:      id,
+		Command:   "true",
+		Timeout:   timeout,
+		Stdin:     false,
+		Namespace: "default",
 	}
 }
 
