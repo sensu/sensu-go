@@ -10,7 +10,6 @@ import Dictionary, {
   DictionaryValue,
   DictionaryEntry,
 } from "/components/Dictionary";
-import { RelativeToCurrentDate } from "/components/RelativeDate";
 import CodeBlock from "/components/CodeBlock";
 import CodeHighlight from "/components/CodeHighlight/CodeHighlight";
 import Maybe from "/components/Maybe";
@@ -36,7 +35,6 @@ class EventDetailsSummary extends React.Component {
 
         name
         class
-        lastSeen
         subscriptions
       }
     `,
@@ -108,14 +106,6 @@ class EventDetailsSummary extends React.Component {
             <DictionaryEntry>
               <DictionaryKey>Platform</DictionaryKey>
               <DictionaryValue>{entity.system.platform}</DictionaryValue>
-            </DictionaryEntry>
-            <DictionaryEntry>
-              <DictionaryKey>Last Seen</DictionaryKey>
-              <DictionaryValue>
-                <Maybe value={entity.lastSeen} fallback="unknown">
-                  {val => <RelativeToCurrentDate dateTime={val} />}
-                </Maybe>
-              </DictionaryValue>
             </DictionaryEntry>
             <DictionaryEntry>
               <DictionaryKey>Subscriptions</DictionaryKey>
