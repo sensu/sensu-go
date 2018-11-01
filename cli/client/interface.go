@@ -154,9 +154,6 @@ type RoleAPIClient interface {
 	DeleteRole(string) error
 	FetchRole(string) (*types.Role, error)
 	ListRoles() ([]types.Role, error)
-
-	AddRule(role string, rule *types.Rule) error
-	RemoveRule(role string, ruleType string) error
 }
 
 // SilencedAPIClient client methods for silenced

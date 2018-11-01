@@ -20,21 +20,11 @@ func TestNewEntityController(t *testing.T) {
 
 	assert.NotNil(actions)
 	assert.Equal(store, actions.Store)
-	assert.NotNil(actions.Policy)
 }
 
 func TestEntityDestroy(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeEntity, types.RulePermDelete),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeEntity, types.RulePermCreate),
-		),
 	)
 
 	testCases := []struct {
@@ -80,14 +70,6 @@ func TestEntityDestroy(t *testing.T) {
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
 		},
-		{
-			name:            "no permission",
-			ctx:             wrongPermsCtx,
-			argument:        "entity1",
-			fetchResult:     types.FixtureEntity("entity1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -126,9 +108,6 @@ func TestEntityDestroy(t *testing.T) {
 func TestEntityFind(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeEntity, types.RulePermRead),
-		),
 	)
 
 	testCases := []struct {
@@ -159,16 +138,6 @@ func TestEntityFind(t *testing.T) {
 			ctx:             defaultCtx,
 			record:          nil,
 			argument:        "missing",
-			expected:        false,
-			expectedErrCode: NotFound,
-		},
-		{
-			name: "no read permission",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeEntity, types.RulePermCreate),
-			)),
-			record:          types.FixtureEntity("entity1"),
-			argument:        "entity1",
 			expected:        false,
 			expectedErrCode: NotFound,
 		},
@@ -203,9 +172,6 @@ func TestEntityFind(t *testing.T) {
 func TestEntityQuery(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeEntity, types.RulePermRead),
-		),
 	)
 
 	testCases := []struct {
@@ -234,18 +200,6 @@ func TestEntityQuery(t *testing.T) {
 			expectedLen: 2,
 			storeErr:    nil,
 			expectedErr: nil,
-		},
-		{
-			name: "with only create access",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeEntity, types.RulePermCreate),
-			)),
-			records: []*types.Entity{
-				types.FixtureEntity("entity1"),
-				types.FixtureEntity("entity2"),
-			},
-			expectedLen: 0,
-			storeErr:    nil,
 		},
 		{
 			name:        "store failure",
@@ -280,15 +234,6 @@ func TestEntityQuery(t *testing.T) {
 func TestEntityUpdate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeEntity, types.RulePermUpdate),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeEntity, types.RulePermRead),
-		),
 	)
 
 	badEntity := types.FixtureEntity("badentity")
@@ -338,14 +283,6 @@ func TestEntityUpdate(t *testing.T) {
 			expectedErrCode: InternalErr,
 		},
 		{
-			name:            "No permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureEntity("foo"),
-			fetchResult:     types.FixtureEntity("foo"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
-		{
 			name:            "Validation error",
 			ctx:             defaultCtx,
 			argument:        badEntity,
@@ -391,15 +328,6 @@ func TestEntityUpdate(t *testing.T) {
 func TestEntityCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeEntity, types.RulePermCreate),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeEntity, types.RulePermRead),
-		),
 	)
 
 	badEntity := types.FixtureEntity("badentity")
@@ -442,14 +370,6 @@ func TestEntityCreate(t *testing.T) {
 			fetchErr:        errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureEntity("foo"),
-			fetchResult:     nil,
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 		{
 			name:            "Validation error",
@@ -497,19 +417,6 @@ func TestEntityCreate(t *testing.T) {
 func TestEntityCreateOrReplace(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(
-				types.RuleTypeEntity,
-				types.RulePermCreate,
-				types.RulePermUpdate,
-			),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeEntity, types.RulePermRead),
-		),
 	)
 
 	badEntity := types.FixtureEntity("badentity")
@@ -539,14 +446,6 @@ func TestEntityCreateOrReplace(t *testing.T) {
 			ctx:         defaultCtx,
 			argument:    types.FixtureEntity("foo"),
 			fetchResult: types.FixtureEntity("foo"),
-		},
-		{
-			name:            "No permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureEntity("foo"),
-			fetchResult:     nil,
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 		{
 			name:            "Validation error",

@@ -3,7 +3,6 @@ package actions
 import (
 	"context"
 
-	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -16,15 +15,13 @@ var filterUpdateFields = []string{
 
 // EventFilterController allows querying EventFilters in bulk or by name.
 type EventFilterController struct {
-	Policy authorization.FilterPolicy
-	Store  store.EventFilterStore
+	Store store.EventFilterStore
 }
 
 // NewEventFilterController creates a new EventFilterController backed by store.
 func NewEventFilterController(store store.EventFilterStore) EventFilterController {
 	return EventFilterController{
-		Store:  store,
-		Policy: authorization.Filters,
+		Store: store,
 	}
 }
 
@@ -35,18 +32,12 @@ func NewEventFilterController(store store.EventFilterStore) EventFilterControlle
 func (c EventFilterController) Create(ctx context.Context, filter types.EventFilter) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &filter)
-	policy := c.Policy.WithContext(ctx)
 
 	// Check for existing
 	if m, err := c.Store.GetEventFilterByName(ctx, filter.Name); err != nil {
 		return NewError(InternalErr, err)
 	} else if m != nil {
 		return NewErrorf(AlreadyExistsErr, filter.Name)
-	}
-
-	// Verify permissions
-	if ok := policy.CanCreate(&filter); !ok {
-		return NewErrorf(PermissionDenied, "create")
 	}
 
 	// Validate
@@ -69,12 +60,6 @@ func (c EventFilterController) Create(ctx context.Context, filter types.EventFil
 func (c EventFilterController) CreateOrReplace(ctx context.Context, filter types.EventFilter) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &filter)
-	policy := c.Policy.WithContext(ctx)
-
-	// Verify permissions
-	if !(policy.CanCreate(&filter) && policy.CanUpdate(&filter)) {
-		return NewErrorf(PermissionDenied, "create")
-	}
 
 	// Validate
 	if err := filter.Validate(); err != nil {
@@ -96,7 +81,6 @@ func (c EventFilterController) CreateOrReplace(ctx context.Context, filter types
 func (c EventFilterController) Update(ctx context.Context, delta types.EventFilter) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &delta)
-	policy := c.Policy.WithContext(ctx)
 
 	// Check for existing
 	filter, err := c.Store.GetEventFilterByName(ctx, delta.Name)
@@ -104,11 +88,6 @@ func (c EventFilterController) Update(ctx context.Context, delta types.EventFilt
 		return NewError(InternalErr, err)
 	} else if filter == nil {
 		return NewErrorf(NotFound, delta.Name)
-	}
-
-	// Verify viewer can make change
-	if ok := policy.CanUpdate(filter); !ok {
-		return NewErrorf(PermissionDenied, "update")
 	}
 
 	// Update
@@ -134,7 +113,6 @@ func (c EventFilterController) Update(ctx context.Context, delta types.EventFilt
 // do not exist, or an internal error occurs while reading the underlying
 // store.
 func (c EventFilterController) Query(ctx context.Context) ([]*types.EventFilter, error) {
-	policy := c.Policy.WithContext(ctx)
 
 	// Fetch from store
 	filters, err := c.Store.GetEventFilters(ctx)
@@ -142,16 +120,7 @@ func (c EventFilterController) Query(ctx context.Context) ([]*types.EventFilter,
 		return nil, NewError(InternalErr, err)
 	}
 
-	result := make([]*types.EventFilter, 0, len(filters))
-
-	// Filter out those resources the viewer does not have access to view.
-	for _, m := range filters {
-		if ok := policy.CanRead(m); ok {
-			result = append(result, m)
-		}
-	}
-
-	return result, nil
+	return filters, nil
 }
 
 // Destroy destroys the named EventFilter.
@@ -162,13 +131,6 @@ func (c EventFilterController) Destroy(ctx context.Context, name string) error {
 	// Validate parameters
 	if name == "" {
 		return NewErrorf(InvalidArgument, "name is undefined")
-	}
-
-	policy := c.Policy.WithContext(ctx)
-
-	// Verify permissions
-	if ok := policy.CanDelete(); !ok {
-		return NewErrorf(PermissionDenied, "delete")
 	}
 
 	// Fetch from store
@@ -205,12 +167,6 @@ func (c EventFilterController) Find(ctx context.Context, name string) (*types.Ev
 	}
 
 	if result == nil {
-		return nil, NewErrorf(NotFound)
-	}
-
-	policy := c.Policy.WithContext(ctx)
-
-	if !policy.CanRead(result) {
 		return nil, NewErrorf(NotFound)
 	}
 

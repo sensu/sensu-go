@@ -20,15 +20,11 @@ func TestNewAssetController(t *testing.T) {
 
 	assert.NotNil(actions)
 	assert.Equal(store, actions.Store)
-	assert.NotNil(actions.Policy)
 }
 
 func TestAssetQuery(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeAsset, types.RulePermRead),
-		),
 	)
 
 	testCases := []struct {
@@ -57,18 +53,6 @@ func TestAssetQuery(t *testing.T) {
 			expectedLen: 2,
 			storeErr:    nil,
 			expectedErr: nil,
-		},
-		{
-			name: "With Only Create Access",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeAsset, types.RulePermCreate),
-			)),
-			records: []*types.Asset{
-				types.FixtureAsset("asset1"),
-				types.FixtureAsset("asset2"),
-			},
-			expectedLen: 0,
-			storeErr:    nil,
 		},
 		{
 			name:        "Store Failure",
@@ -103,15 +87,6 @@ func TestAssetQuery(t *testing.T) {
 func TestAssetFind(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeAsset, types.RulePermRead),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeAsset, types.RulePermCreate),
-		),
 	)
 
 	testCases := []struct {
@@ -140,14 +115,6 @@ func TestAssetFind(t *testing.T) {
 			name:            "Not Found",
 			ctx:             defaultCtx,
 			record:          nil,
-			argument:        "asset1",
-			expected:        false,
-			expectedErrCode: NotFound,
-		},
-		{
-			name:            "No Read Permission",
-			ctx:             wrongPermsCtx,
-			record:          types.FixtureAsset("asset1"),
 			argument:        "asset1",
 			expected:        false,
 			expectedErrCode: NotFound,
@@ -183,19 +150,6 @@ func TestAssetFind(t *testing.T) {
 func TestAssetCreateOrReplace(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(
-				types.RuleTypeAsset,
-				types.RulePermCreate,
-				types.RulePermUpdate,
-			),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeAsset, types.RulePermCreate),
-		),
 	)
 
 	badAsset := types.FixtureAsset("asset1")
@@ -230,13 +184,6 @@ func TestAssetCreateOrReplace(t *testing.T) {
 			createErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureAsset("asset1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 		{
 			name:            "Validation Error",
@@ -283,15 +230,6 @@ func TestAssetCreateOrReplace(t *testing.T) {
 func TestAssetCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeAsset, types.RulePermCreate),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeAsset, types.RulePermRead),
-		),
 	)
 
 	badAsset := types.FixtureAsset("asset1")
@@ -338,13 +276,6 @@ func TestAssetCreate(t *testing.T) {
 			expectedErrCode: InternalErr,
 		},
 		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureAsset("asset1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
-		{
 			name:            "Validation Error",
 			ctx:             defaultCtx,
 			argument:        badAsset,
@@ -389,15 +320,6 @@ func TestAssetCreate(t *testing.T) {
 func TestAssetUpdate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeAsset, types.RulePermUpdate),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeAsset, types.RulePermRead),
-		),
 	)
 
 	badAsset := types.FixtureAsset("asset1")
@@ -445,14 +367,6 @@ func TestAssetUpdate(t *testing.T) {
 			fetchErr:        errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureAsset("asset1"),
-			fetchResult:     types.FixtureAsset("asset1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 		{
 			name:            "Validation Error",

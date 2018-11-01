@@ -39,18 +39,6 @@ func SeedInitialData(store store.Store) (err error) {
 	}
 	logger.Info("seeding etcd store w/ intial data")
 
-	// Set admin role
-	if err := setupAdminRole(store); err != nil {
-		logger.WithError(err).Error("unable to setup admin role")
-		return err
-	}
-
-	// Set read-only role
-	if err := setupReadOnlyRole(store); err != nil {
-		logger.WithError(err).Error("unable to setup read-only role")
-		return err
-	}
-
 	// Admin user
 	if err := setupAdminUser(store); err != nil {
 		logger.WithError(err).Error("unable to setup admin user")
@@ -79,34 +67,6 @@ func SeedInitialData(store store.Store) (err error) {
 	return initializer.FlagAsInitialized()
 }
 
-func setupAdminRole(store store.Store) error {
-	return store.UpdateRole(
-		context.Background(),
-		&types.Role{
-			Name: "admin",
-			Rules: []types.Rule{{
-				Type:        types.RuleTypeAll,
-				Namespace:   types.NamespaceTypeAll,
-				Permissions: types.RuleAllPerms,
-			}},
-		},
-	)
-}
-
-func setupReadOnlyRole(store store.Store) error {
-	return store.UpdateRole(
-		context.Background(),
-		&types.Role{
-			Name: "read-only",
-			Rules: []types.Rule{{
-				Type:        types.RuleTypeAll,
-				Namespace:   types.NamespaceTypeAll,
-				Permissions: []string{types.RulePermRead},
-			}},
-		},
-	)
-}
-
 func setupDefaultNamespace(store store.Store) error {
 	return store.CreateNamespace(
 		context.Background(),
@@ -120,7 +80,6 @@ func setupAdminUser(store store.Store) error {
 	admin := &types.User{
 		Username: "admin",
 		Password: "P@ssw0rd!",
-		Roles:    []string{"admin"},
 	}
 
 	return store.CreateUser(admin)
@@ -131,7 +90,6 @@ func setupReadOnlyUser(store store.Store) error {
 	sensu := &types.User{
 		Username: "sensu",
 		Password: "sensu",
-		Roles:    []string{"read-only"},
 	}
 
 	return store.CreateUser(sensu)
@@ -142,7 +100,6 @@ func setupDefaultAgentUser(store store.Store) error {
 	agent := &types.User{
 		Username: "agent",
 		Password: "P@ssw0rd!",
-		Roles:    []string{"agent"},
 	}
 
 	return store.CreateUser(agent)

@@ -212,7 +212,7 @@ type roleNodeResolver struct {
 	controller actions.RoleController
 }
 
-func registerRoleNodeResolver(register relay.NodeRegister, store store.RBACStore) {
+func registerRoleNodeResolver(register relay.NodeRegister, store store.RoleStore) {
 	controller := actions.NewRoleController(store)
 	resolver := &roleNodeResolver{controller}
 	register.RegisterResolver(relay.NodeResolver{

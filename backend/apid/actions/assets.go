@@ -3,7 +3,6 @@ package actions
 import (
 	"context"
 
-	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -16,37 +15,25 @@ var assetUpdateFields = []string{
 
 // AssetController expose actions in which a viewer can perform.
 type AssetController struct {
-	Store  store.AssetStore
-	Policy authorization.AssetPolicy
+	Store store.AssetStore
 }
 
 // NewAssetController returns new AssetController
 func NewAssetController(store store.AssetStore) AssetController {
 	return AssetController{
-		Store:  store,
-		Policy: authorization.Assets,
+		Store: store,
 	}
 }
 
 // Query returns resources available to the viewer filter by given params.
 func (a AssetController) Query(ctx context.Context) ([]*types.Asset, error) {
-	abilities := a.Policy.WithContext(ctx)
-
 	// Fetch from store
 	results, serr := a.Store.GetAssets(ctx)
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}
 
-	// Filter out those resources the viewer does not have access to view.
-	resources := []*types.Asset{}
-	for _, result := range results {
-		if yes := abilities.CanRead(result); yes {
-			resources = append(resources, result)
-		}
-	}
-
-	return resources, nil
+	return results, nil
 }
 
 // Find returns resource associated with given parameters if available to the
@@ -63,31 +50,19 @@ func (a AssetController) Find(ctx context.Context, name string) (*types.Asset, e
 		return nil, NewError(InternalErr, serr)
 	}
 
-	// Verify user has permission to view
-	abilities := a.Policy.WithContext(ctx)
-	if result != nil && abilities.CanRead(result) {
-		return result, nil
-	}
-
-	return nil, NewErrorf(NotFound)
+	return result, nil
 }
 
 // Create instatiates, validates and persists new resource if viewer has access.
 func (a AssetController) Create(ctx context.Context, newAsset types.Asset) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &newAsset)
-	abilities := a.Policy.WithContext(ctx)
 
 	// Check for existing
 	if e, err := a.Store.GetAssetByName(ctx, newAsset.Name); err != nil {
 		return NewError(InternalErr, err)
 	} else if e != nil {
 		return NewErrorf(AlreadyExistsErr)
-	}
-
-	// Verify viewer can make change
-	if yes := abilities.CanCreate(); !yes {
-		return NewErrorf(PermissionDenied)
 	}
 
 	// Validate
@@ -107,7 +82,6 @@ func (a AssetController) Create(ctx context.Context, newAsset types.Asset) error
 func (a AssetController) Update(ctx context.Context, given types.Asset) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &given)
-	abilities := a.Policy.WithContext(ctx)
 
 	// Find existing asset
 	asset, err := a.Store.GetAssetByName(ctx, given.Name)
@@ -115,11 +89,6 @@ func (a AssetController) Update(ctx context.Context, given types.Asset) error {
 		return NewError(InternalErr, err)
 	} else if asset == nil {
 		return NewErrorf(NotFound)
-	}
-
-	// Verify viewer can make change
-	if yes := abilities.CanUpdate(); !yes {
-		return NewErrorf(PermissionDenied)
 	}
 
 	// Copy
@@ -142,12 +111,6 @@ func (a AssetController) Update(ctx context.Context, given types.Asset) error {
 func (a AssetController) CreateOrReplace(ctx context.Context, asset types.Asset) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &asset)
-	abilities := a.Policy.WithContext(ctx)
-
-	// Verify viewer can make change
-	if !(abilities.CanUpdate() && abilities.CanCreate()) {
-		return NewErrorf(PermissionDenied)
-	}
 
 	// Validate
 	if err := asset.Validate(); err != nil {

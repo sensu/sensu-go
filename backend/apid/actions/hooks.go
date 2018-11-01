@@ -3,7 +3,6 @@ package actions
 import (
 	"context"
 
-	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -17,15 +16,13 @@ var hookConfigUpdateFields = []string{
 
 // HookController exposes actions in which a viewer can perform.
 type HookController struct {
-	Store  store.HookConfigStore
-	Policy authorization.HookPolicy
+	Store store.HookConfigStore
 }
 
 // NewHookController returns new HookController
 func NewHookController(store store.HookConfigStore) HookController {
 	return HookController{
-		Store:  store,
-		Policy: authorization.Hooks,
+		Store: store,
 	}
 }
 
@@ -35,15 +32,6 @@ func (a HookController) Query(ctx context.Context) ([]*types.HookConfig, error) 
 	results, serr := a.Store.GetHookConfigs(ctx)
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
-	}
-
-	// Filter out those resources the viewer does not have access to view.
-	abilities := a.Policy.WithContext(ctx)
-	for i := 0; i < len(results); i++ {
-		if !abilities.CanRead(results[i]) {
-			results = append(results[:i], results[i+1:]...)
-			i--
-		}
 	}
 
 	return results, nil
@@ -58,31 +46,19 @@ func (a HookController) Find(ctx context.Context, name string) (*types.HookConfi
 		return nil, NewError(InternalErr, serr)
 	}
 
-	// Verify user has permission to view
-	abilities := a.Policy.WithContext(ctx)
-	if result != nil && abilities.CanRead(result) {
-		return result, nil
-	}
-
-	return nil, NewErrorf(NotFound)
+	return result, nil
 }
 
 // Create creates a Hook. If the Hook already exists, an error is returned.
 func (a HookController) Create(ctx context.Context, newHook types.HookConfig) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &newHook)
-	abilities := a.Policy.WithContext(ctx)
 
 	// Check for existing
 	if e, err := a.Store.GetHookConfigByName(ctx, newHook.Name); err != nil {
 		return NewError(InternalErr, err)
 	} else if e != nil {
 		return NewErrorf(AlreadyExistsErr)
-	}
-
-	// Verify viewer can make change
-	if yes := abilities.CanCreate(&newHook); !yes {
-		return NewErrorf(PermissionDenied)
 	}
 
 	// Validate
@@ -102,12 +78,6 @@ func (a HookController) Create(ctx context.Context, newHook types.HookConfig) er
 func (a HookController) CreateOrReplace(ctx context.Context, newHook types.HookConfig) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &newHook)
-	abilities := a.Policy.WithContext(ctx)
-
-	// Verify viewer can make change
-	if !(abilities.CanCreate(&newHook) && abilities.CanUpdate(&newHook)) {
-		return NewErrorf(PermissionDenied)
-	}
 
 	// Validate
 	if err := newHook.Validate(); err != nil {
@@ -126,7 +96,6 @@ func (a HookController) CreateOrReplace(ctx context.Context, newHook types.HookC
 func (a HookController) Update(ctx context.Context, given types.HookConfig) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &given)
-	abilities := a.Policy.WithContext(ctx)
 
 	// Find existing hook
 	hook, err := a.Store.GetHookConfigByName(ctx, given.Name)
@@ -134,11 +103,6 @@ func (a HookController) Update(ctx context.Context, given types.HookConfig) erro
 		return NewError(InternalErr, err)
 	} else if hook == nil {
 		return NewErrorf(NotFound)
-	}
-
-	// Verify viewer can make change
-	if yes := abilities.CanUpdate(hook); !yes {
-		return NewErrorf(PermissionDenied)
 	}
 
 	// Copy
@@ -159,13 +123,6 @@ func (a HookController) Update(ctx context.Context, given types.HookConfig) erro
 
 // Destroy removes a resource if viewer has access.
 func (a HookController) Destroy(ctx context.Context, name string) error {
-	abilities := a.Policy.WithContext(ctx)
-
-	// Verify user has permission
-	if yes := abilities.CanDelete(); !yes {
-		return NewErrorf(PermissionDenied)
-	}
-
 	// Fetch from store
 	result, serr := a.Store.GetHookConfigByName(ctx, name)
 	if serr != nil {

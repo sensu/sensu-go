@@ -16,7 +16,7 @@ type RolesRouter struct {
 }
 
 // NewRolesRouter instantiates new router for controlling check resources
-func NewRolesRouter(store store.RBACStore) *RolesRouter {
+func NewRolesRouter(store store.RoleStore) *RolesRouter {
 	return &RolesRouter{
 		controller: actions.NewRoleController(store),
 	}
@@ -30,10 +30,6 @@ func (r *RolesRouter) Mount(parent *mux.Router) {
 	routes.Post(r.create)
 	routes.Del(r.destroy)
 	routes.Put(r.createOrReplace)
-
-	// Custom
-	routes.Path("{id}/rules/{type}", r.addRule).Methods(http.MethodPut)
-	routes.Path("{id}/rules/{type}", r.rmRule).Methods(http.MethodDelete)
 }
 
 func (r *RolesRouter) list(req *http.Request) (interface{}, error) {
@@ -78,35 +74,5 @@ func (r *RolesRouter) destroy(req *http.Request) (interface{}, error) {
 		return nil, err
 	}
 	err = r.controller.Destroy(req.Context(), id)
-	return nil, err
-}
-
-func (r *RolesRouter) addRule(req *http.Request) (interface{}, error) {
-	cfg := types.Rule{}
-	if err := UnmarshalBody(req, &cfg); err != nil {
-		return nil, err
-	}
-
-	params := mux.Vars(req)
-	id, err := url.PathUnescape(params["id"])
-	if err != nil {
-		return nil, err
-	}
-	err = r.controller.AddRule(req.Context(), id, cfg)
-
-	return nil, err
-}
-
-func (r *RolesRouter) rmRule(req *http.Request) (interface{}, error) {
-	params := mux.Vars(req)
-	id, err := url.PathUnescape(params["id"])
-	if err != nil {
-		return nil, err
-	}
-	typ, err := url.PathUnescape(params["type"])
-	if err != nil {
-		return nil, err
-	}
-	err = r.controller.RemoveRule(req.Context(), id, typ)
 	return nil, err
 }

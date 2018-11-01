@@ -19,25 +19,11 @@ func TestNewMutatorController(t *testing.T) {
 	ctl := NewMutatorController(store)
 	assert.NotNil(ctl)
 	assert.Equal(store, ctl.Store)
-	assert.NotNil(ctl.Policy)
 }
 
 func TestMutatorCreateOrReplace(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(
-				types.RuleTypeMutator,
-				types.RulePermCreate,
-				types.RulePermUpdate,
-			),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermCreate),
-		),
 	)
 
 	badMut := types.FixtureMutator("bad")
@@ -64,13 +50,6 @@ func TestMutatorCreateOrReplace(t *testing.T) {
 			ctx:         defaultCtx,
 			argument:    types.FixtureMutator("sleepy"),
 			fetchResult: types.FixtureMutator("sleepy"),
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureMutator("sneezy"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 		{
 			name:            "Validation Error",
@@ -112,15 +91,6 @@ func TestMutatorCreateOrReplace(t *testing.T) {
 func TestMutatorCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermCreate),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermRead),
-		),
 	)
 
 	badMut := types.FixtureMutator("bad")
@@ -157,13 +127,6 @@ func TestMutatorCreate(t *testing.T) {
 			fetchErr:        errors.New("nein"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureMutator("sneezy"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 		{
 			name:            "Validation Error",
@@ -205,15 +168,6 @@ func TestMutatorCreate(t *testing.T) {
 func TestMutatorDestroy(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermDelete),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermCreate),
-		),
 	)
 
 	testCases := []struct {
@@ -259,14 +213,6 @@ func TestMutatorDestroy(t *testing.T) {
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
 		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			mutator:         "mutator1",
-			fetchResult:     types.FixtureMutator("mutator1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -305,15 +251,6 @@ func TestMutatorDestroy(t *testing.T) {
 func TestMutatorUpdate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermUpdate),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermRead),
-		),
 	)
 
 	badMutator := types.FixtureMutator("mutator1")
@@ -363,14 +300,6 @@ func TestMutatorUpdate(t *testing.T) {
 			expectedErrCode: InternalErr,
 		},
 		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureMutator("mutator1"),
-			fetchResult:     types.FixtureMutator("mutator1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
-		{
 			name:            "Validation Error",
 			ctx:             defaultCtx,
 			argument:        badMutator,
@@ -414,8 +343,7 @@ func TestMutatorUpdate(t *testing.T) {
 }
 
 func TestMutatorQuery(t *testing.T) {
-	readCtx := testutil.NewContext(testutil.ContextWithRules(
-		types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermRead)))
+	readCtx := context.Background()
 
 	tests := []struct {
 		name        string
@@ -441,19 +369,6 @@ func TestMutatorQuery(t *testing.T) {
 				types.FixtureMutator("bart"),
 			},
 			expectedLen: 2,
-			storeErr:    nil,
-			expectedErr: nil,
-		},
-		{
-			name: "No Params With Only Create Access",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermCreate),
-			)),
-			mutators: []*types.Mutator{
-				types.FixtureMutator("lisa"),
-				types.FixtureMutator("maggie"),
-			},
-			expectedLen: 0,
 			storeErr:    nil,
 			expectedErr: nil,
 		},
@@ -496,9 +411,7 @@ func TestMutatorQuery(t *testing.T) {
 }
 
 func TestMutatorFind(t *testing.T) {
-	readCtx := testutil.NewContext(testutil.ContextWithRules(
-		types.FixtureRuleWithPerms(types.RuleTypeMutator, types.RulePermRead),
-	))
+	readCtx := context.Background()
 
 	tests := []struct {
 		name            string
@@ -521,16 +434,6 @@ func TestMutatorFind(t *testing.T) {
 			ctx:             readCtx,
 			mutator:         nil,
 			argument:        "fox mulder",
-			expected:        false,
-			expectedErrCode: NotFound,
-		},
-		{
-			name: "No Read Permission",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermCreate),
-			)),
-			mutator:         types.FixtureMutator("troy maclure"),
-			argument:        "troy maclure",
 			expected:        false,
 			expectedErrCode: NotFound,
 		},

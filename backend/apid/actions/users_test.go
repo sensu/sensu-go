@@ -20,13 +20,11 @@ func TestNewUserController(t *testing.T) {
 
 	assert.NotNil(actions)
 	assert.Equal(store, actions.Store)
-	assert.NotNil(actions.Policy)
 }
 
 func TestUserQuery(t *testing.T) {
 	ctxWithAuthorizedViewer := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithPerms(types.RuleTypeUser, types.RulePermRead),
 	)
 
 	testCases := []struct {
@@ -54,18 +52,6 @@ func TestUserQuery(t *testing.T) {
 			expectedLen: 2,
 			storeErr:    nil,
 			expectedErr: nil,
-		},
-		{
-			name: "With Only Create Access",
-			ctx: testutil.NewContext(
-				testutil.ContextWithPerms(types.RuleTypeUser, types.RulePermCreate),
-			),
-			storedRecords: []*types.User{
-				types.FixtureUser("user1"),
-				types.FixtureUser("user2"),
-			},
-			expectedLen: 0,
-			storeErr:    nil,
 		},
 		{
 			name:        "Store Failure",
@@ -99,7 +85,6 @@ func TestUserQuery(t *testing.T) {
 func TestUserFind(t *testing.T) {
 	ctxWithAuthorizedViewer := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithPerms(types.RuleTypeUser, types.RulePermRead),
 	)
 
 	testCases := []struct {
@@ -140,21 +125,6 @@ func TestUserFind(t *testing.T) {
 			expected:        false,
 			expectedErrCode: NotFound,
 		},
-		{
-			name:            "No Read Permission",
-			ctx:             testutil.NewContext(testutil.ContextWithActor("user15")),
-			storedRecord:    types.FixtureUser("user1"),
-			argument:        "user1",
-			expected:        false,
-			expectedErrCode: NotFound,
-		},
-		{
-			name:         "Read Themselves Without Permissions",
-			ctx:          testutil.NewContext(testutil.ContextWithActor("user1")),
-			storedRecord: types.FixtureUser("user1"),
-			argument:     "user1",
-			expected:     true,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -186,19 +156,6 @@ func TestUserFind(t *testing.T) {
 func TestUserCreateOrReplace(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(
-				types.RuleTypeUser,
-				types.RulePermCreate,
-				types.RulePermUpdate,
-			),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeUser, types.RulePermCreate),
-		),
 	)
 
 	badUser := types.FixtureUser("user1")
@@ -235,13 +192,6 @@ func TestUserCreateOrReplace(t *testing.T) {
 			expectedErrCode: InternalErr,
 		},
 		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureUser("user1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
-		{
 			name:            "Validation Error",
 			ctx:             defaultCtx,
 			argument:        badUser,
@@ -259,9 +209,6 @@ func TestUserCreateOrReplace(t *testing.T) {
 
 			// Mock store methods
 			store.On("UpdateUser", mock.Anything).Return(tc.createErr)
-			store.On("GetRoles", mock.Anything).Return([]*types.Role{
-				types.FixtureRole("default", "default"),
-			}, nil)
 			store.
 				On("GetUser", mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
@@ -286,15 +233,6 @@ func TestUserCreateOrReplace(t *testing.T) {
 func TestUserCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeUser, types.RulePermCreate),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeUser, types.RulePermRead),
-		),
 	)
 
 	badUser := types.FixtureUser("user1")
@@ -332,21 +270,6 @@ func TestUserCreate(t *testing.T) {
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
 		},
-		// {
-		// 	name:            "Store Err on Fetch",
-		// 	ctx:             defaultCtx,
-		// 	argument:        types.FixtureUser("user1"),
-		// 	fetchErr:        errors.New("dunno"),
-		// 	expectedErr:     true,
-		// 	expectedErrCode: InternalErr,
-		// },
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureUser("user1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
 		{
 			name:            "Validation Error",
 			ctx:             defaultCtx,
@@ -365,9 +288,6 @@ func TestUserCreate(t *testing.T) {
 
 			// Mock store methods
 			store.On("UpdateUser", mock.Anything).Return(tc.createErr)
-			store.On("GetRoles", mock.Anything).Return([]*types.Role{
-				types.FixtureRole("default", "default"),
-			}, nil)
 			store.
 				On("GetUser", mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
@@ -393,15 +313,6 @@ func TestUserCreate(t *testing.T) {
 func TestUserUpdate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeUser, types.RulePermUpdate),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeUser, types.RulePermRead),
-		),
 	)
 
 	badUser := types.FixtureUser("user1")
@@ -441,30 +352,6 @@ func TestUserUpdate(t *testing.T) {
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
 		},
-		// {
-		// 	name:            "Store Err on Fetch",
-		// 	ctx:             defaultCtx,
-		// 	argument:        types.FixtureUser("user1"),
-		// 	fetchResult:     types.FixtureUser("user1"),
-		// 	fetchErr:        errors.New("dunno"),
-		// 	expectedErr:     true,
-		// 	expectedErrCode: InternalErr,
-		// },
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureUser("user1"),
-			fetchResult:     types.FixtureUser("user1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
-		{
-			name:        "Can Set Own Password",
-			ctx:         testutil.NewContext(testutil.ContextWithActor("user1")),
-			argument:    &types.User{Username: "user1", Password: "12345678"},
-			fetchResult: types.FixtureUser("user1"),
-			expectedErr: false,
-		},
 		{
 			name:            "Validation Error",
 			ctx:             defaultCtx,
@@ -484,9 +371,6 @@ func TestUserUpdate(t *testing.T) {
 
 			// Mock store methods
 			store.On("UpdateUser", mock.Anything).Return(tc.updateErr)
-			store.On("GetRoles", mock.Anything).Return([]*types.Role{
-				types.FixtureRole("default", "default"),
-			}, nil)
 			store.
 				On("GetUser", mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
@@ -512,15 +396,6 @@ func TestUserUpdate(t *testing.T) {
 func TestUserDisable(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeUser, types.RulePermDelete),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeUser, types.RulePermCreate),
-		),
 	)
 
 	testCases := []struct {
@@ -556,23 +431,6 @@ func TestUserDisable(t *testing.T) {
 			deleteErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		// {
-		// 	name:            "Store Err on Fetch",
-		// 	ctx:             defaultCtx,
-		// 	argument:        "user1",
-		// 	fetchResult:     types.FixtureUser("user1"),
-		// 	fetchErr:        errors.New("dunno"),
-		// 	expectedErr:     true,
-		// 	expectedErrCode: InternalErr,
-		// },
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        "user1",
-			fetchResult:     types.FixtureUser("user1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 	}
 
@@ -612,11 +470,6 @@ func TestUserDisable(t *testing.T) {
 func TestUserEnable(t *testing.T) {
 	correctPermsCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithPerms(types.RuleTypeUser, types.RulePermUpdate),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithPerms(types.RuleTypeUser, types.RulePermDelete),
 	)
 
 	disabledUser := func() *types.User {
@@ -659,23 +512,6 @@ func TestUserEnable(t *testing.T) {
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
 		},
-		// {
-		// 	name:            "Store Err on Fetch",
-		// 	ctx:             correctPermsCtx,
-		// 	argument:        "user1",
-		// 	fetchResult:     disabledUser(),
-		// 	fetchErr:        errors.New("dunno"),
-		// 	expectedErr:     true,
-		// 	expectedErrCode: InternalErr,
-		// },
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        "user1",
-			fetchResult:     disabledUser(),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -691,213 +527,6 @@ func TestUserEnable(t *testing.T) {
 
 			// Exec Query
 			err := actions.Enable(tc.ctx, tc.argument)
-
-			// Assertions
-			assert := assert.New(t)
-			if tc.expectedErr {
-				inferErr, ok := err.(Error)
-				if ok {
-					assert.Equal(tc.expectedErrCode, inferErr.Code)
-				} else {
-					assert.Error(err)
-					assert.FailNow("Given was not of type 'Error'")
-				}
-			} else {
-				assert.NoError(err)
-			}
-		})
-	}
-}
-
-func TestUserAddRole(t *testing.T) {
-	correctPermsCtx := testutil.NewContext(
-		testutil.ContextWithPerms(types.RuleTypeUser, types.RulePermUpdate),
-	)
-
-	testCases := []struct {
-		name            string
-		ctx             context.Context
-		nameArg         string
-		roleArg         string
-		fetchResult     *types.User
-		fetchErr        error
-		updateErr       error
-		expectedErr     bool
-		expectedErrCode ErrCode
-	}{
-		{
-			name:        "Add Role",
-			ctx:         correctPermsCtx,
-			nameArg:     "user1",
-			roleArg:     "admin",
-			fetchResult: types.FixtureUser("user1"),
-			expectedErr: false,
-		},
-		{
-			name:            "Does Not Exist",
-			ctx:             correctPermsCtx,
-			nameArg:         "user1",
-			roleArg:         "admin",
-			fetchResult:     nil,
-			expectedErr:     true,
-			expectedErrCode: NotFound,
-		},
-		{
-			name:            "Store Err on Update",
-			ctx:             correctPermsCtx,
-			nameArg:         "user1",
-			roleArg:         "admin",
-			fetchResult:     types.FixtureUser("user1"),
-			updateErr:       errors.New("dunno"),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
-		},
-		// {
-		// 	name:            "Store Err on Fetch",
-		// 	ctx:             correctPermsCtx,
-		// 	nameArg:         "user1",
-		// 	roleArg:         "admin",
-		// 	fetchResult:     types.FixtureUser("user1"),
-		// 	fetchErr:        errors.New("dunno"),
-		// 	expectedErr:     true,
-		// 	expectedErrCode: InternalErr,
-		// },
-		{
-			name:            "Validation Err",
-			ctx:             correctPermsCtx,
-			nameArg:         "user1",
-			roleArg:         "invalid-role",
-			fetchResult:     types.FixtureUser("user1"),
-			expectedErr:     true,
-			expectedErrCode: InvalidArgument,
-		},
-		{
-			name: "Bad Permissions",
-			ctx: testutil.NewContext(
-				testutil.ContextWithPerms(types.RuleTypeUser, types.RulePermDelete),
-			),
-			nameArg:         "user1",
-			roleArg:         "admin",
-			fetchResult:     types.FixtureUser("user1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
-	}
-
-	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
-		actions := NewUserController(store)
-
-		t.Run(tc.name, func(t *testing.T) {
-			// Mock store methods
-			store.On("UpdateUser", mock.Anything).Return(tc.updateErr).Once()
-			store.On("GetRoles", mock.Anything).Return([]*types.Role{
-				types.FixtureRole("default", "default"),
-				types.FixtureRole("admin", "default"),
-			}, nil)
-			store.
-				On("GetUser", mock.Anything, mock.Anything).
-				Return(tc.fetchResult, tc.fetchErr)
-
-			// Exec Query
-			err := actions.AddRole(tc.ctx, tc.nameArg, tc.roleArg)
-
-			// Assertions
-			assert := assert.New(t)
-			if tc.expectedErr {
-				inferErr, ok := err.(Error)
-				if ok {
-					assert.Equal(tc.expectedErrCode, inferErr.Code)
-				} else {
-					assert.Error(err)
-					assert.FailNow("Given was not of type 'Error'")
-				}
-			} else {
-				assert.NoError(err)
-			}
-		})
-	}
-}
-
-func TestUserRemoveRole(t *testing.T) {
-	correctPermsCtx := testutil.NewContext(
-		testutil.ContextWithPerms(types.RuleTypeUser, types.RulePermUpdate),
-	)
-
-	testCases := []struct {
-		name            string
-		ctx             context.Context
-		nameArg         string
-		roleArg         string
-		fetchResult     *types.User
-		fetchErr        error
-		updateErr       error
-		expectedErr     bool
-		expectedErrCode ErrCode
-	}{
-		{
-			name:        "Remove Role",
-			ctx:         correctPermsCtx,
-			nameArg:     "user1",
-			roleArg:     "admin",
-			fetchResult: types.FixtureUser("user1"),
-			expectedErr: false,
-		},
-		{
-			name:            "Does Not Exist",
-			ctx:             correctPermsCtx,
-			nameArg:         "user1",
-			roleArg:         "admin",
-			fetchResult:     nil,
-			expectedErr:     true,
-			expectedErrCode: NotFound,
-		},
-		{
-			name:            "Store Err on Update",
-			ctx:             correctPermsCtx,
-			nameArg:         "user1",
-			roleArg:         "admin",
-			fetchResult:     types.FixtureUser("user1"),
-			updateErr:       errors.New("dunno"),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
-		},
-		// {
-		// 	name:            "Store Err on Fetch",
-		// 	ctx:             correctPermsCtx,
-		// 	nameArg:         "user1",
-		// 	roleArg:         "admin",
-		// 	fetchResult:     types.FixtureUser("user1"),
-		// 	fetchErr:        errors.New("dunno"),
-		// 	expectedErr:     true,
-		// 	expectedErrCode: InternalErr,
-		// },
-		{
-			name: "Bad Permissions",
-			ctx: testutil.NewContext(
-				testutil.ContextWithPerms(types.RuleTypeUser, types.RulePermDelete),
-			),
-			nameArg:         "user1",
-			roleArg:         "admin",
-			fetchResult:     types.FixtureUser("user1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
-	}
-
-	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
-		actions := NewUserController(store)
-
-		t.Run(tc.name, func(t *testing.T) {
-			// Mock store methods
-			store.On("UpdateUser", mock.Anything).Return(tc.updateErr).Once()
-			store.
-				On("GetUser", mock.Anything, mock.Anything).
-				Return(tc.fetchResult, tc.fetchErr)
-
-			// Exec Query
-			err := actions.RemoveRole(tc.ctx, tc.nameArg, tc.roleArg)
 
 			// Assertions
 			assert := assert.New(t)

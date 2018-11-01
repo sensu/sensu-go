@@ -7,7 +7,6 @@ import (
 
 	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -22,14 +21,11 @@ func TestNewEventController(t *testing.T) {
 
 	assert.NotNil(eventController)
 	assert.Equal(store, eventController.Store)
-	assert.NotNil(eventController.Policy)
 	assert.Equal(bus, eventController.Bus)
 }
 
 func TestEventQuery(t *testing.T) {
-	defaultCtx := testutil.NewContext(testutil.ContextWithRules(
-		types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermRead),
-	))
+	defaultCtx := context.Background()
 
 	testCases := []struct {
 		name        string
@@ -57,19 +53,6 @@ func TestEventQuery(t *testing.T) {
 				types.FixtureEvent("entity2", "check2"),
 			},
 			expectedLen: 2,
-			storeErr:    nil,
-			expectedErr: nil,
-		},
-		{
-			name: "No Params With Only Create Access",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermCreate),
-			)),
-			events: []*types.Event{
-				types.FixtureEvent("entity1", "check1"),
-				types.FixtureEvent("entity2", "check2"),
-			},
-			expectedLen: 0,
 			storeErr:    nil,
 			expectedErr: nil,
 		},
@@ -118,9 +101,7 @@ func TestEventQuery(t *testing.T) {
 }
 
 func TestEventFind(t *testing.T) {
-	defaultCtx := testutil.NewContext(testutil.ContextWithRules(
-		types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermRead),
-	))
+	defaultCtx := context.Background()
 
 	testCases := []struct {
 		name            string
@@ -169,17 +150,6 @@ func TestEventFind(t *testing.T) {
 			expected:        false,
 			expectedErrCode: NotFound,
 		},
-		{
-			name: "No Read Permission",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermCreate),
-			)),
-			event:           types.FixtureEvent("entity1", "check1"),
-			entity:          "entity1",
-			check:           "check1",
-			expected:        false,
-			expectedErrCode: NotFound,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -210,9 +180,7 @@ func TestEventFind(t *testing.T) {
 }
 
 func TestEventDestroy(t *testing.T) {
-	defaultCtx := testutil.NewContext(testutil.ContextWithRules(
-		types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermDelete),
-	))
+	defaultCtx := context.Background()
 
 	testCases := []struct {
 		name            string
@@ -255,16 +223,6 @@ func TestEventDestroy(t *testing.T) {
 			check:           "check1",
 			expectedErrCode: NotFound,
 		},
-		{
-			name: "No Delete Permission",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermCreate),
-			)),
-			event:           types.FixtureEvent("entity1", "check1"),
-			entity:          "entity1",
-			check:           "check1",
-			expectedErrCode: NotFound,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -297,17 +255,7 @@ func TestEventDestroy(t *testing.T) {
 }
 
 func TestEventCreate(t *testing.T) {
-	defaultCtx := testutil.NewContext(
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermCreate),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermRead),
-		),
-	)
-
+	defaultCtx := context.Background()
 	badEvent := types.FixtureEvent("entity1", "check1")
 	badEvent.Check.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
 
@@ -351,13 +299,6 @@ func TestEventCreate(t *testing.T) {
 			fetchErr:        errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureEvent("entity1", "check1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 		{
 			name:            "Validation Error",
@@ -422,20 +363,7 @@ func TestEventCreate(t *testing.T) {
 }
 
 func TestEventCreateOrReplace(t *testing.T) {
-	defaultCtx := testutil.NewContext(
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(
-				types.RuleTypeEvent,
-				types.RulePermCreate,
-				types.RulePermUpdate,
-			),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermCreate),
-		),
-	)
+	defaultCtx := context.Background()
 
 	badEvent := types.FixtureEvent("entity1", "check1")
 	badEvent.Check.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
@@ -461,13 +389,6 @@ func TestEventCreateOrReplace(t *testing.T) {
 			ctx:         defaultCtx,
 			argument:    types.FixtureEvent("entity1", "check1"),
 			fetchResult: types.FixtureEvent("entity1", "check1"),
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureEvent("entity1", "check1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 		{
 			name:            "Validation Error",

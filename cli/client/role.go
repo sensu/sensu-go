@@ -78,33 +78,3 @@ func (client *RestClient) ListRoles() ([]types.Role, error) {
 	err = json.Unmarshal(res.Body(), &roles)
 	return roles, err
 }
-
-// AddRule adds new rule to existing role for configured Sensu instance
-func (client *RestClient) AddRule(roleName string, rule *types.Rule) error {
-	key := rolesPath(roleName, "rules", rule.Type)
-	res, err := client.R().SetBody(rule).Put(key)
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode() >= 400 {
-		return UnmarshalError(res)
-	}
-
-	return nil
-}
-
-// RemoveRule removes rule from existing role for configured Sensu instance
-func (client *RestClient) RemoveRule(name string, t string) error {
-	path := rolesPath(name, "rules", t)
-	res, err := client.R().Delete(path)
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode() >= 400 {
-		return UnmarshalError(res)
-	}
-
-	return nil
-}

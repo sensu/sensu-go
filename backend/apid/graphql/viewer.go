@@ -1,12 +1,13 @@
 package graphql
 
 import (
+	"errors"
+
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	"github.com/sensu/sensu-go/backend/authorization"
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
-	"github.com/sensu/sensu-go/types"
 )
 
 var _ schema.ViewerFieldResolvers = (*viewerImpl)(nil)
@@ -35,6 +36,10 @@ func (r *viewerImpl) Namespaces(p graphql.ResolveParams) (interface{}, error) {
 // User implements response to request for 'user' field.
 func (r *viewerImpl) User(p graphql.ResolveParams) (interface{}, error) {
 	ctx := p.Context
-	actor := ctx.Value(types.AuthorizationActorKey).(authorization.Actor)
-	return r.usersCtrl.Find(ctx, actor.Name)
+
+	if claims := jwt.GetClaimsFromContext(ctx); claims != nil {
+		return r.usersCtrl.Find(ctx, claims.Subject)
+	}
+
+	return nil, errors.New("user not found in context")
 }

@@ -78,19 +78,6 @@ func (s *Store) DeleteNamespace(ctx context.Context, name string) error {
 		}
 	}
 
-	// Validate that there are no roles referencing the namespace
-	roles, err := s.GetRoles(ctx)
-	if err != nil {
-		return err
-	}
-	for _, role := range roles {
-		for _, rule := range role.Rules {
-			if rule.Namespace == name {
-				return fmt.Errorf("namespace is not empty; role '%s' references it", role.Name)
-			}
-		}
-	}
-
 	// Delete the resource
 	resp, err := s.client.Delete(ctx, getNamespacePath(name), v3.WithPrefix())
 	if err != nil {

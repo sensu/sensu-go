@@ -4,8 +4,6 @@ import (
 	"testing"
 
 	"github.com/coreos/etcd/clientv3"
-	"github.com/sensu/sensu-go/testing/testutil"
-	"github.com/sensu/sensu-go/types"
 	"golang.org/x/net/context"
 )
 
@@ -30,61 +28,10 @@ func (mockCluster) MemberUpdate(context.Context, uint64, []string) (*clientv3.Me
 
 var _ clientv3.Cluster = mockCluster{}
 
-func TestMemberListNoPerm(t *testing.T) {
-	ctrl := NewClusterController(mockCluster{})
-	_, err := ctrl.MemberList(context.TODO())
-	if err == nil {
-		t.Fatal("expected error")
-	}
-	e := err.(Error)
-	if got, want := e.Code, PermissionDenied; got != want {
-		t.Errorf("bad error code: got %v, want %v", got, want)
-	}
-}
-
-func TestMemberAddNoPerm(t *testing.T) {
-	ctrl := NewClusterController(mockCluster{})
-	_, err := ctrl.MemberAdd(context.TODO(), []string{"foo"})
-	if err == nil {
-		t.Fatal("expected error")
-	}
-	e := err.(Error)
-	if got, want := e.Code, PermissionDenied; got != want {
-		t.Errorf("bad error code: got %v, want %v", got, want)
-	}
-}
-
-func TestMemberRemoveNoPerm(t *testing.T) {
-	ctrl := NewClusterController(mockCluster{})
-	_, err := ctrl.MemberRemove(context.TODO(), 1234)
-	if err == nil {
-		t.Fatal("expected error")
-	}
-	e := err.(Error)
-	if got, want := e.Code, PermissionDenied; got != want {
-		t.Errorf("bad error code: got %v, want %v", got, want)
-	}
-}
-
-func TestMemberUpdateNoPerm(t *testing.T) {
-	ctrl := NewClusterController(mockCluster{})
-	_, err := ctrl.MemberUpdate(context.TODO(), 1234, []string{"foo"})
-	if err == nil {
-		t.Fatal("expected error")
-	}
-	e := err.(Error)
-	if got, want := e.Code, PermissionDenied; got != want {
-		t.Errorf("bad error code: got %v, want %v", got, want)
-	}
-}
-
 func TestMemberList(t *testing.T) {
 	ctrl := NewClusterController(mockCluster{})
-	ctx := testutil.NewContext(
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeCluster, types.RuleAllPerms...)))
 
-	_, err := ctrl.MemberList(ctx)
+	_, err := ctrl.MemberList(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,11 +39,8 @@ func TestMemberList(t *testing.T) {
 
 func TestMemberAdd(t *testing.T) {
 	ctrl := NewClusterController(mockCluster{})
-	ctx := testutil.NewContext(
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeCluster, types.RuleAllPerms...)))
 
-	_, err := ctrl.MemberAdd(ctx, []string{"foo"})
+	_, err := ctrl.MemberAdd(context.Background(), []string{"foo"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -104,11 +48,8 @@ func TestMemberAdd(t *testing.T) {
 
 func TestMemberUpdate(t *testing.T) {
 	ctrl := NewClusterController(mockCluster{})
-	ctx := testutil.NewContext(
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeCluster, types.RuleAllPerms...)))
 
-	_, err := ctrl.MemberUpdate(ctx, 1234, []string{"foo"})
+	_, err := ctrl.MemberUpdate(context.Background(), 1234, []string{"foo"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -116,11 +57,8 @@ func TestMemberUpdate(t *testing.T) {
 
 func TestMemberRemove(t *testing.T) {
 	ctrl := NewClusterController(mockCluster{})
-	ctx := testutil.NewContext(
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeCluster, types.RuleAllPerms...)))
 
-	_, err := ctrl.MemberRemove(ctx, 1234)
+	_, err := ctrl.MemberRemove(context.Background(), 1234)
 	if err != nil {
 		t.Fatal(err)
 	}

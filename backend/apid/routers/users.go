@@ -33,8 +33,6 @@ func (r *UsersRouter) Mount(parent *mux.Router) {
 
 	// Custom
 	routes.Path("{id}/reinstate", r.reinstate).Methods(http.MethodPut)
-	routes.Path("{id}/roles/{role}", r.addRole).Methods(http.MethodPut)
-	routes.Path("{id}/roles/{role}", r.removeRole).Methods(http.MethodDelete)
 
 	// TODO: Remove?
 	routes.Path("{id}/password", r.updatePassword).Methods(http.MethodPut)
@@ -124,33 +122,5 @@ func (r *UsersRouter) updatePassword(req *http.Request) (interface{}, error) {
 	cfg := types.User{Username: id, Password: params["password"]}
 
 	err = r.controller.Update(req.Context(), cfg)
-	return nil, err
-}
-
-func (r *UsersRouter) addRole(req *http.Request) (interface{}, error) {
-	params := mux.Vars(req)
-	id, err := url.PathUnescape(params["id"])
-	if err != nil {
-		return nil, err
-	}
-	role, err := url.PathUnescape(params["role"])
-	if err != nil {
-		return nil, err
-	}
-	err = r.controller.AddRole(req.Context(), id, role)
-	return nil, err
-}
-
-func (r *UsersRouter) removeRole(req *http.Request) (interface{}, error) {
-	params := mux.Vars(req)
-	id, err := url.PathUnescape(params["id"])
-	if err != nil {
-		return nil, err
-	}
-	role, err := url.PathUnescape(params["role"])
-	if err != nil {
-		return nil, err
-	}
-	err = r.controller.RemoveRole(req.Context(), id, role)
 	return nil, err
 }
