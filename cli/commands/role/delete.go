@@ -21,27 +21,21 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				_ = cmd.Help()
 				return errors.New("invalid argument(s) received")
 			}
-
 			name := args[0]
-
 			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
 				if confirmed := helpers.ConfirmDelete(name); !confirmed {
 					fmt.Fprintln(cmd.OutOrStdout(), "Canceled")
 					return nil
 				}
 			}
-
 			err := cli.Client.DeleteRole(name)
 			if err != nil {
 				return err
 			}
-
 			_, err = fmt.Fprintln(cmd.OutOrStdout(), "Deleted")
 			return err
 		},
 	}
-
 	_ = cmd.Flags().Bool("skip-confirm", false, "skip interactive confirmation prompt")
-
 	return cmd
 }

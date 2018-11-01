@@ -25,15 +25,3 @@ func (c *MockClient) ListRoles() ([]types.Role, error) {
 	args := c.Called()
 	return args.Get(0).([]types.Role), args.Error(1)
 }
-
-// AddRule for use with mock lib
-func (c *MockClient) AddRule(role string, rule *types.Rule) error {
-	args := c.Called(role, rule)
-	return args.Error(0)
-}
-
-// RemoveRule for use with mock lib
-func (c *MockClient) RemoveRule(role string, ruleType string) error {
-	args := c.Called(role, ruleType)
-	return args.Error(0)
-}

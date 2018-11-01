@@ -80,6 +80,7 @@ func setupAdminUser(store store.Store) error {
 	admin := &types.User{
 		Username: "admin",
 		Password: "P@ssw0rd!",
+		Groups:   []string{"admin"},
 	}
 
 	return store.CreateUser(admin)
@@ -90,6 +91,7 @@ func setupReadOnlyUser(store store.Store) error {
 	sensu := &types.User{
 		Username: "sensu",
 		Password: "sensu",
+		Groups:   []string{"read-only"},
 	}
 
 	return store.CreateUser(sensu)
@@ -100,6 +102,7 @@ func setupDefaultAgentUser(store store.Store) error {
 	agent := &types.User{
 		Username: "agent",
 		Password: "P@ssw0rd!",
+		Groups:   []string{"agent"},
 	}
 
 	return store.CreateUser(agent)

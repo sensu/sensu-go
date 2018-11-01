@@ -10,54 +10,54 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestAddRoleCommand(t *testing.T) {
+func TestAddGroupCommand(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := test.NewMockCLI()
-	cmd := AddRoleCommand(cli)
+	cmd := AddGroupCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
-	assert.Regexp("add-role", cmd.Use)
-	assert.Regexp("add role", cmd.Short)
+	assert.Regexp("add-group", cmd.Use)
+	assert.Regexp("add group", cmd.Short)
 }
 
-func TestAddRoleCommandRunEClosureWithoutName(t *testing.T) {
+func TestAddGroupCommandRunEClosureWithoutName(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := test.NewMockCLI()
-	cmd := AddRoleCommand(cli)
+	cmd := AddGroupCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.Regexp("Usage", out) // usage should print out
 	assert.Error(err)
 }
 
-func TestAddRoleCommandRunEClosureWithFlags(t *testing.T) {
+func TestAddGroupCommandRunEClosureWithFlags(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("AddRoleToUser", "foo", "bar").Return(nil)
+	client.On("AddGroupToUser", "user", "group").Return(nil)
 
-	cmd := AddRoleCommand(cli)
-	out, err := test.RunCmd(cmd, []string{"foo", "bar"})
+	cmd := AddGroupCommand(cli)
+	out, err := test.RunCmd(cmd, []string{"user", "group"})
 
 	assert.Regexp("Added", out)
 	assert.Nil(err)
 }
 
-func TestAddRoleCommandRunEClosureWithServerErr(t *testing.T) {
+func TestAddGroupCommandRunEClosureWithServerErr(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("AddRoleToUser", "bar", "foo").Return(errors.New("oh noes"))
+	client.On("AddGroupToUser", "user", "group").Return(errors.New("failure"))
 
-	cmd := AddRoleCommand(cli)
-	out, err := test.RunCmd(cmd, []string{"bar", "foo"})
+	cmd := AddGroupCommand(cli)
+	out, err := test.RunCmd(cmd, []string{"user", "group"})
 
 	assert.Empty(out)
 	require.Error(t, err)
-	assert.Equal("oh noes", err.Error())
+	assert.Equal("failure", err.Error())
 }

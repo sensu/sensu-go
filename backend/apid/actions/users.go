@@ -149,6 +149,48 @@ func (a UserController) Enable(ctx context.Context, name string) error {
 	return err
 }
 
+// AddGroup adds a given group to a user
+func (a UserController) AddGroup(ctx context.Context, username string, group string) error {
+	return a.findAndUpdateUser(ctx, username, func(user *types.User) error {
+		var exists bool
+		for _, g := range user.Groups {
+			if g == group {
+				exists = true
+				break
+			}
+		}
+
+		if !exists {
+			user.Groups = append(user.Groups, group)
+		}
+
+		return nil
+	})
+}
+
+// RemoveGroup removes a group from a given user
+func (a UserController) RemoveGroup(ctx context.Context, username string, group string) error {
+	return a.findAndUpdateUser(ctx, username, func(user *types.User) error {
+		updatedGroups := []string{}
+		for _, g := range user.Groups {
+			if g != group {
+				updatedGroups = append(updatedGroups, g)
+			}
+		}
+
+		user.Groups = updatedGroups
+		return nil
+	})
+}
+
+// RemoveAllGroups removes all groups from a given user
+func (a UserController) RemoveAllGroups(ctx context.Context, username string) error {
+	return a.findAndUpdateUser(ctx, username, func(user *types.User) error {
+		user.Groups = []string{}
+		return nil
+	})
+}
+
 func (a UserController) findUser(ctx context.Context, name string) (*types.User, error) {
 	result, serr := a.Store.GetUser(ctx, name)
 	if serr != nil {

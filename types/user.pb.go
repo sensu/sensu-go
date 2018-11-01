@@ -27,8 +27,8 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 type User struct {
 	Username             string   `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
 	Password             string   `protobuf:"bytes,2,opt,name=password,proto3" json:"password,omitempty"`
-	Disabled             bool     `protobuf:"varint,4,opt,name=disabled,proto3" json:"disabled"`
 	Groups               []string `protobuf:"bytes,3,rep,name=groups" json:"groups,omitempty"`
+	Disabled             bool     `protobuf:"varint,4,opt,name=disabled,proto3" json:"disabled"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -38,7 +38,7 @@ func (m *User) Reset()         { *m = User{} }
 func (m *User) String() string { return proto.CompactTextString(m) }
 func (*User) ProtoMessage()    {}
 func (*User) Descriptor() ([]byte, []int) {
-	return fileDescriptor_user_b658b14d81b1bf3a, []int{0}
+	return fileDescriptor_user_18d7a36a169789f6, []int{0}
 }
 func (m *User) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -81,18 +81,18 @@ func (m *User) GetPassword() string {
 	return ""
 }
 
-func (m *User) GetDisabled() bool {
-	if m != nil {
-		return m.Disabled
-	}
-	return false
-}
-
 func (m *User) GetGroups() []string {
 	if m != nil {
 		return m.Groups
 	}
 	return nil
+}
+
+func (m *User) GetDisabled() bool {
+	if m != nil {
+		return m.Disabled
+	}
+	return false
 }
 
 func init() {
@@ -123,9 +123,6 @@ func (this *User) Equal(that interface{}) bool {
 	if this.Password != that1.Password {
 		return false
 	}
-	if this.Disabled != that1.Disabled {
-		return false
-	}
 	if len(this.Groups) != len(that1.Groups) {
 		return false
 	}
@@ -133,6 +130,9 @@ func (this *User) Equal(that interface{}) bool {
 		if this.Groups[i] != that1.Groups[i] {
 			return false
 		}
+	}
+	if this.Disabled != that1.Disabled {
+		return false
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
@@ -596,9 +596,9 @@ var (
 	ErrIntOverflowUser   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("user.proto", fileDescriptor_user_b658b14d81b1bf3a) }
+func init() { proto.RegisterFile("user.proto", fileDescriptor_user_18d7a36a169789f6) }
 
-var fileDescriptor_user_b658b14d81b1bf3a = []byte{
+var fileDescriptor_user_18d7a36a169789f6 = []byte{
 	// 211 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x2a, 0x2d, 0x4e, 0x2d,
 	0xd2, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2e, 0x4e, 0xcd, 0x2b, 0x2e, 0xd5, 0x2b, 0xa9,

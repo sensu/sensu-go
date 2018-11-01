@@ -10,54 +10,54 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestRemoveRoleCommand(t *testing.T) {
+func TestRemoveAllGroupsCommand(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := test.NewMockCLI()
-	cmd := RemoveRoleCommand(cli)
+	cmd := RemoveAllGroupsCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
-	assert.Regexp("remove-role", cmd.Use)
-	assert.Regexp("remove role", cmd.Short)
+	assert.Regexp("remove-groups", cmd.Use)
+	assert.Regexp("remove all the groups", cmd.Short)
 }
 
-func TestRemoveRoleCommandRunEClosureWithoutName(t *testing.T) {
+func TestRemoveAllGroupsCommandRunEClosureWithoutName(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := test.NewMockCLI()
-	cmd := RemoveRoleCommand(cli)
+	cmd := RemoveAllGroupsCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.Regexp("Usage", out) // usage should print out
 	assert.Error(err)
 }
 
-func TestRemoveRoleCommandRunEClosureWithFlags(t *testing.T) {
+func TestRemoveAllGroupsCommandRunEClosureWithFlags(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("RemoveRoleFromUser", "foo", "bar").Return(nil)
+	client.On("RemoveAllGroupsFromUser", "user").Return(nil)
 
-	cmd := RemoveRoleCommand(cli)
-	out, err := test.RunCmd(cmd, []string{"foo", "bar"})
+	cmd := RemoveAllGroupsCommand(cli)
+	out, err := test.RunCmd(cmd, []string{"user"})
 
 	assert.Regexp("Removed", out)
 	assert.Nil(err)
 }
 
-func TestRemoveRoleCommandRunEClosureWithServerErr(t *testing.T) {
+func TestRemoveAllGroupsCommandRunEClosureWithServerErr(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("RemoveRoleFromUser", "bar", "foo").Return(errors.New("oh noes"))
+	client.On("RemoveAllGroupsFromUser", "user").Return(errors.New("failure"))
 
-	cmd := RemoveRoleCommand(cli)
-	out, err := test.RunCmd(cmd, []string{"bar", "foo"})
+	cmd := RemoveAllGroupsCommand(cli)
+	out, err := test.RunCmd(cmd, []string{"user"})
 
 	assert.Empty(out)
 	require.Error(t, err)
-	assert.Equal("oh noes", err.Error())
+	assert.Equal("failure", err.Error())
 }
