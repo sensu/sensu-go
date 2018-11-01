@@ -32,11 +32,20 @@ message Rule {
 // ClusterRole applies to all namespaces within a cluster.
 message ClusterRole {
   repeated Rule rules = 1 [(gogoproto.jsontag) = "rules", (gogoproto.nullable) = false];
+
+  // Name of the ClusterRole
+  string name = 2 [(gogoproto.jsontag) = "name"];
 }
 
 // Role applies only to a single namespace.
 message Role {
   repeated Rule rules = 1 [(gogoproto.jsontag) = "rules", (gogoproto.nullable) = false];
+
+   // Namespace of the Role
+  string namespace = 2 [(gogoproto.jsontag) = "namespace"];
+
+  // Name of the Role
+  string name = 3 [(gogoproto.jsontag) = "name"];
 }
 
 // RoleRef maps groups to Roles or ClusterRoles.
@@ -64,6 +73,9 @@ message ClusterRoleBinding {
 
   // RoleRef references a ClusterRole in the current namespace
   RoleRef role_ref = 2 [(gogoproto.jsontag) = "roleRef", (gogoproto.nullable) = false];
+
+  // Name of the ClusterRoleBinding
+  string name = 3 [(gogoproto.jsontag) = "name"];
 }
 
 // RoleBinding grants the permissions defined in a Role referenced to a user or
@@ -74,4 +86,10 @@ message RoleBinding {
 
   // RoleRef references a Role in the current namespace
   RoleRef role_ref = 2 [(gogoproto.jsontag) = "roleRef", (gogoproto.nullable) = false];
+
+  // Namespace of the RoleBinding
+  string namespace = 3 [(gogoproto.jsontag) = "namespace"];
+
+  // Name of the RoleBinding
+  string name = 4 [(gogoproto.jsontag) = "name"];
 }

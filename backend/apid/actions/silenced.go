@@ -4,7 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/sensu/sensu-go/backend/authorization"
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
+
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -19,15 +20,13 @@ var silencedUpdateFields = []string{
 
 // SilencedController exposes actions in which a viewer can perform.
 type SilencedController struct {
-	Store  store.SilencedStore
-	Policy authorization.SilencedPolicy
+	Store store.SilencedStore
 }
 
 // NewSilencedController returns new SilencedController
 func NewSilencedController(store store.SilencedStore) SilencedController {
 	return SilencedController{
-		Store:  store,
-		Policy: authorization.Silenced,
+		Store: store,
 	}
 }
 
@@ -46,15 +45,6 @@ func (a SilencedController) Query(ctx context.Context, sub, check string) ([]*ty
 		return nil, NewError(InternalErr, serr)
 	}
 
-	// Filter out those resources the viewer does not have access to view.
-	abilities := a.Policy.WithContext(ctx)
-	for i := 0; i < len(results); i++ {
-		if !abilities.CanRead(results[i]) {
-			results = append(results[:i], results[i+1:]...)
-			i--
-		}
-	}
-
 	return results, nil
 }
 
@@ -67,20 +57,13 @@ func (a SilencedController) Find(ctx context.Context, id string) (*types.Silence
 		return nil, err
 	}
 
-	// Verify user has permission to view
-	abilities := a.Policy.WithContext(ctx)
-	if result != nil && abilities.CanRead(result) {
-		return result, nil
-	}
-
-	return nil, NewErrorf(NotFound)
+	return result, nil
 }
 
 // Create creates a new silenced entry. It returns an error if the entry already exists.
 func (a SilencedController) Create(ctx context.Context, newSilence *types.Silenced) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, newSilence)
-	abilities := a.Policy.WithContext(ctx)
 
 	// Populate newSilence.ID with the subscription and checkName. Substitute a
 	// splat if one of the values does not exist. If both values are empty, the
@@ -94,8 +77,8 @@ func (a SilencedController) Create(ctx context.Context, newSilence *types.Silenc
 
 	// Retrieve the subject of the JWT, which represents the logged on user, in
 	// order to set it as the creator of the silenced entry
-	if actor, ok := ctx.Value(types.AuthorizationActorKey).(authorization.Actor); ok {
-		newSilence.Creator = actor.Name
+	if claims := jwt.GetClaimsFromContext(ctx); claims != nil {
+		newSilence.Creator = claims.Subject
 	}
 
 	// Check for existing
@@ -103,11 +86,6 @@ func (a SilencedController) Create(ctx context.Context, newSilence *types.Silenc
 		return NewError(InternalErr, serr)
 	} else if e != nil {
 		return NewErrorf(AlreadyExistsErr)
-	}
-
-	// Verify viewer can make change
-	if yes := abilities.CanCreate(newSilence); !yes {
-		return NewErrorf(PermissionDenied)
 	}
 
 	// Validate
@@ -127,7 +105,6 @@ func (a SilencedController) Create(ctx context.Context, newSilence *types.Silenc
 func (a SilencedController) CreateOrReplace(ctx context.Context, newSilence types.Silenced) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &newSilence)
-	abilities := a.Policy.WithContext(ctx)
 
 	// Populate newSilence.ID with the subscription and checkName. Substitute a
 	// splat if one of the values does not exist. If both values are empty, the
@@ -141,13 +118,8 @@ func (a SilencedController) CreateOrReplace(ctx context.Context, newSilence type
 
 	// Retrieve the subject of the JWT, which represents the logged on user, in
 	// order to set it as the creator of the silenced entry
-	if actor, ok := ctx.Value(types.AuthorizationActorKey).(authorization.Actor); ok {
-		newSilence.Creator = actor.Name
-	}
-
-	// Verify viewer can make change
-	if !(abilities.CanCreate(&newSilence) && abilities.CanUpdate(&newSilence)) {
-		return NewErrorf(PermissionDenied)
+	if claims := jwt.GetClaimsFromContext(ctx); claims != nil {
+		newSilence.Creator = claims.Subject
 	}
 
 	// Validate
@@ -167,18 +139,12 @@ func (a SilencedController) CreateOrReplace(ctx context.Context, newSilence type
 func (a SilencedController) Update(ctx context.Context, given types.Silenced) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &given)
-	abilities := a.Policy.WithContext(ctx)
 
 	// Find existing silenced
 	// Fetch from store
 	silence, err := a.findSilencedEntry(ctx, given.ID)
 	if err != nil {
 		return err
-	}
-
-	// Verify viewer can make change
-	if yes := abilities.CanUpdate(silence); !yes {
-		return NewErrorf(PermissionDenied)
 	}
 
 	// Copy
@@ -194,13 +160,6 @@ func (a SilencedController) Update(ctx context.Context, given types.Silenced) er
 
 // Destroy removes a resource if viewer has access.
 func (a SilencedController) Destroy(ctx context.Context, id string) error {
-	abilities := a.Policy.WithContext(ctx)
-
-	// Verify user has permission
-	if yes := abilities.CanDelete(); !yes {
-		return NewErrorf(PermissionDenied)
-	}
-
 	// Fetch from store
 	result, serr := a.Store.GetSilencedEntryByID(ctx, id)
 	if serr != nil {

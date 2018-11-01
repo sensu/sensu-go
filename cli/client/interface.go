@@ -19,6 +19,7 @@ type APIClient interface {
 	HookAPIClient
 	MutatorAPIClient
 	NamespaceAPIClient
+	RoleAPIClient
 	UserAPIClient
 	SilencedAPIClient
 	GenericClient
@@ -147,6 +148,14 @@ type UserAPIClient interface {
 	RemoveAllGroupsFromUser(string) error
 	SetGroupsForUser(string, []string) error
 	UpdatePassword(string, string) error
+}
+
+// RoleAPIClient client methods for role
+type RoleAPIClient interface {
+	CreateRole(*types.Role) error
+	DeleteRole(string) error
+	FetchRole(string) (*types.Role, error)
+	ListRoles() ([]types.Role, error)
 }
 
 // SilencedAPIClient client methods for silenced

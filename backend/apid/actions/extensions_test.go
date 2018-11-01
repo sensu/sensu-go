@@ -20,15 +20,11 @@ func TestNewExtensionController(t *testing.T) {
 
 	assert.NotNil(actions)
 	assert.Equal(store, actions.Store)
-	assert.NotNil(actions.Policy)
 }
 
 func TestExtensionQuery(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeExtension, types.RulePermRead),
-		),
 	)
 
 	testCases := []struct {
@@ -57,18 +53,6 @@ func TestExtensionQuery(t *testing.T) {
 			expectedLen: 2,
 			storeErr:    nil,
 			expectedErr: nil,
-		},
-		{
-			name: "With Only Register Access",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeExtension, types.RulePermCreate),
-			)),
-			records: []*types.Extension{
-				types.FixtureExtension("extension1"),
-				types.FixtureExtension("extension2"),
-			},
-			expectedLen: 0,
-			storeErr:    nil,
 		},
 		{
 			name:        "Store Failure",
@@ -103,15 +87,6 @@ func TestExtensionQuery(t *testing.T) {
 func TestExtensionFind(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeExtension, types.RulePermRead),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeExtension, types.RulePermCreate),
-		),
 	)
 
 	testCases := []struct {
@@ -140,14 +115,6 @@ func TestExtensionFind(t *testing.T) {
 			name:            "Not Found",
 			ctx:             defaultCtx,
 			record:          nil,
-			argument:        "extension1",
-			expected:        false,
-			expectedErrCode: NotFound,
-		},
-		{
-			name:            "No Read Permission",
-			ctx:             wrongPermsCtx,
-			record:          types.FixtureExtension("extension1"),
 			argument:        "extension1",
 			expected:        false,
 			expectedErrCode: NotFound,
@@ -183,19 +150,6 @@ func TestExtensionFind(t *testing.T) {
 func TestExtensionRegister(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(
-				types.RuleTypeExtension,
-				types.RulePermCreate,
-				types.RulePermUpdate,
-			),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeExtension, types.RulePermCreate),
-		),
 	)
 
 	badExtension := types.FixtureExtension("extension1")
@@ -230,13 +184,6 @@ func TestExtensionRegister(t *testing.T) {
 			createErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureExtension("extension1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 		{
 			name:            "Validation Error",
@@ -283,18 +230,6 @@ func TestExtensionRegister(t *testing.T) {
 func TestExtensionCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(
-				types.RuleTypeExtension,
-				types.RulePermCreate,
-				types.RulePermUpdate),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeExtension, types.RulePermRead),
-		),
 	)
 
 	badExtension := types.FixtureExtension("extension1")
@@ -330,13 +265,6 @@ func TestExtensionCreate(t *testing.T) {
 			createErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureExtension("extension1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 		{
 			name:            "Validation Error",

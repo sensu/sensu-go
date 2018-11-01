@@ -98,8 +98,8 @@ type Store interface {
 	// NamespaceStore provides an interface for managing namespaces
 	NamespaceStore
 
-	// RBACStore provides an interface for managing RBAC roles and rules
-	RBACStore
+	// RoleStore provides an interface for managing roles
+	RoleStore
 
 	// SilencedStore provides an interface for managing silenced entries,
 	// consisting of entities, subscriptions and/or checks
@@ -344,18 +344,18 @@ type NamespaceStore interface {
 	UpdateNamespace(ctx context.Context, org *types.Namespace) error
 }
 
-// RBACStore provides methods for managing RBAC roles and rules
-type RBACStore interface {
-	// DeleteRoleByName deletes a role using the given name.
-	DeleteRoleByName(ctx context.Context, name string) error
+// RoleStore provides methods for managing RBAC roles and rules
+type RoleStore interface {
+	// DeleteRole deletes a role using the given name.
+	DeleteRole(ctx context.Context, name string) error
 
-	// GetRoleByName returns a role using the given name. The result is nil if
+	// GetRole returns a role using the given name. The result is nil if
 	// none was found.
-	GetRoleByName(ctx context.Context, name string) (*types.Role, error)
+	GetRole(ctx context.Context, name string) (*types.Role, error)
 
-	// GetRoles returns all roles. A nil slice with no error is returned if none
+	// ListRoles returns all roles. A nil slice with no error is returned if none
 	// were found.
-	GetRoles(context.Context) ([]*types.Role, error)
+	ListRoles(context.Context) ([]*types.Role, error)
 
 	// UpdateRole creates or updates a given role.
 	UpdateRole(ctx context.Context, role *types.Role) error

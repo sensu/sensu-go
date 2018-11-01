@@ -1,5 +1,11 @@
 package types
 
+import (
+	"errors"
+	"fmt"
+	"net/url"
+)
+
 const (
 	// ResourceAll represents all possible resources
 	ResourceAll = "*"
@@ -11,6 +17,129 @@ const (
 	// UserKind represents a user object in a subject
 	UserKind = "User"
 )
+
+// FixtureRule returns a partial rule
+func FixtureRule() *Rule {
+	return &Rule{
+		Verbs:     []string{VerbAll},
+		Resources: []string{ResourceAll},
+	}
+}
+
+// FixtureRole returns a partial role
+func FixtureRole(name, namespace string) *Role {
+	return &Role{
+		Name:      name,
+		Namespace: namespace,
+		Rules: []Rule{
+			*FixtureRule(),
+		},
+	}
+}
+
+// FixtureClusterRole returns a partial role
+func FixtureClusterRole(name string) *ClusterRole {
+	return &ClusterRole{
+		Name: name,
+		Rules: []Rule{
+			*FixtureRule(),
+		},
+	}
+}
+
+// Validate a ClusterRole
+func (r *ClusterRole) Validate() error {
+	if err := ValidateName(r.Name); err != nil {
+		return errors.New("the ClusterRole name " + err.Error())
+	}
+
+	if len(r.Rules) == 0 {
+		return errors.New("a ClusterRole must have at least one rule")
+	}
+
+	return nil
+}
+
+// URIPath returns the path component of a ClusterRole URI.
+func (r *ClusterRole) URIPath() string {
+	return fmt.Sprintf("/apis/rbac/v2/clusterroles/%s", url.PathEscape(r.Name))
+}
+
+// Validate a ClusterRoleBinding
+func (b *ClusterRoleBinding) Validate() error {
+	if err := ValidateName(b.Name); err != nil {
+		return errors.New("the ClusterRoleBinding name " + err.Error())
+	}
+
+	if b.RoleRef.Name == "" || b.RoleRef.Type == "" {
+		return errors.New("a ClusterRoleBinding needs a roleRef")
+	}
+
+	if len(b.Subjects) == 0 {
+		return errors.New("a ClusterRoleBinding must have at least one subject")
+	}
+
+	return nil
+}
+
+// URIPath returns the path component of a ClusterRole URI.
+func (b *ClusterRoleBinding) URIPath() string {
+	return fmt.Sprintf("/apis/rbac/v2/clusterrolebindings/%s", url.PathEscape(b.Name))
+}
+
+// Validate a Role
+func (r *Role) Validate() error {
+	if err := ValidateName(r.Name); err != nil {
+		return errors.New("the Role name " + err.Error())
+	}
+
+	if r.Namespace == "" {
+		return errors.New("the Role namespace must be set")
+	}
+
+	if len(r.Rules) == 0 {
+		return errors.New("a Role must have at least one rule")
+	}
+
+	return nil
+}
+
+// URIPath returns the path component of a Role URI.
+func (r *Role) URIPath() string {
+	return fmt.Sprintf("/apis/rbac/v2/namespaces/%s/roles/%s",
+		url.PathEscape(r.Namespace),
+		url.PathEscape(r.Name),
+	)
+}
+
+// Validate a RoleBinding
+func (b *RoleBinding) Validate() error {
+	if err := ValidateName(b.Name); err != nil {
+		return errors.New("the RoleBinding name " + err.Error())
+	}
+
+	if b.Namespace == "" {
+		return errors.New("the RoleBinding namespace must be set")
+	}
+
+	if b.RoleRef.Name == "" || b.RoleRef.Type == "" {
+		return errors.New("a RoleBinding needs a roleRef")
+	}
+
+	if len(b.Subjects) == 0 {
+		return errors.New("a RoleBinding must have at least one subject")
+	}
+
+	return nil
+}
+
+// URIPath returns the path component of a Role URI.
+func (b *RoleBinding) URIPath() string {
+	return fmt.Sprintf("/apis/rbac/v2/namespaces/%s/rolebindings/%s",
+		url.PathEscape(b.Namespace),
+		url.PathEscape(b.Name),
+	)
+}
 
 // ResourceMatches returns whether the specified requestedResource matches any
 // of the rule resources

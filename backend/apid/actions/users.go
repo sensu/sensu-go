@@ -1,12 +1,8 @@
 package actions
 
 import (
-	"fmt"
-	"strings"
-
 	"context"
 
-	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -15,16 +11,13 @@ import (
 type UserController struct {
 	Store interface {
 		store.UserStore
-		store.RBACStore
 	}
-	Policy authorization.UserPolicy
 }
 
 // NewUserController returns new UserController
 func NewUserController(store store.Store) UserController {
 	return UserController{
-		Store:  store,
-		Policy: authorization.Users,
+		Store: store,
 	}
 }
 
@@ -34,15 +27,6 @@ func (a UserController) Query(ctx context.Context) ([]*types.User, error) {
 	results, serr := a.Store.GetAllUsers()
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
-	}
-
-	// Filter out those resources the viewer does not have access to view.
-	abilities := a.Policy.WithContext(ctx)
-	for i := 0; i < len(results); i++ {
-		if !abilities.CanRead(results[i]) {
-			results = append(results[:i], results[i+1:]...)
-			i--
-		}
 	}
 
 	return results, nil
@@ -57,13 +41,7 @@ func (a UserController) Find(ctx context.Context, name string) (*types.User, err
 		return nil, serr
 	}
 
-	// Verify user has permission to view
-	abilities := a.Policy.WithContext(ctx)
-	if result != nil && abilities.CanRead(result) {
-		return result, nil
-	}
-
-	return nil, NewErrorf(NotFound)
+	return result, nil
 }
 
 // Create creates a new user. It returns an error if the user already exists.
@@ -73,12 +51,6 @@ func (a UserController) Create(ctx context.Context, newUser types.User) error {
 		return NewError(InternalErr, err)
 	} else if e != nil {
 		return NewErrorf(AlreadyExistsErr)
-	}
-
-	// Verify viewer can make change
-	abilities := a.Policy.WithContext(ctx)
-	if yes := abilities.CanCreate(); !yes {
-		return NewErrorf(PermissionDenied)
 	}
 
 	// Validate
@@ -101,12 +73,6 @@ func (a UserController) Create(ctx context.Context, newUser types.User) error {
 
 // CreateOrReplace creates or replaces a user.
 func (a UserController) CreateOrReplace(ctx context.Context, newUser types.User) error {
-	// Verify viewer can make change
-	abilities := a.Policy.WithContext(ctx)
-	if !(abilities.CanCreate() && abilities.CanUpdate(&newUser)) {
-		return NewErrorf(PermissionDenied)
-	}
-
 	// Validate
 	if err := newUser.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
@@ -133,20 +99,9 @@ func (a UserController) Update(ctx context.Context, given types.User) error {
 		return serr
 	}
 
-	// Setup authorization policy
-	abilities := a.Policy.WithContext(ctx)
-
 	// Copy & validate password if given
 	if given.Password != "" {
 		user.Password = given.Password
-
-		// Verify viewer can make change
-		if yes := abilities.CanChangePassword(user); !yes {
-			return NewErrorf(
-				PermissionDenied,
-				"insufficient access to update password",
-			)
-		}
 
 		// Validate password
 		if err := user.ValidatePassword(); err != nil {
@@ -166,12 +121,6 @@ func (a UserController) Disable(ctx context.Context, name string) error {
 		return serr
 	}
 
-	// Verify user has permission
-	abilities := a.Policy.WithContext(ctx)
-	if yes := abilities.CanDelete(result); !yes {
-		return NewErrorf(PermissionDenied)
-	}
-
 	// Disable
 	if !result.Disabled {
 		if serr := a.Store.DeleteUser(ctx, result); serr != nil {
@@ -184,17 +133,10 @@ func (a UserController) Disable(ctx context.Context, name string) error {
 
 // Enable disables user identified by given name if viewer has access.
 func (a UserController) Enable(ctx context.Context, name string) error {
-	abilities := a.Policy.WithContext(ctx)
-
 	// Fetch from store
 	result, serr := a.findUser(ctx, name)
 	if serr != nil {
 		return serr
-	}
-
-	// Verify user has permission
-	if yes := abilities.CanUpdate(result); !yes {
-		return NewErrorf(PermissionDenied)
 	}
 
 	// Re-enable

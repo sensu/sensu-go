@@ -19,25 +19,11 @@ func TestNewEventFilterController(t *testing.T) {
 	ctl := NewEventFilterController(store)
 	assert.NotNil(ctl)
 	assert.Equal(store, ctl.Store)
-	assert.NotNil(ctl.Policy)
 }
 
 func TestEventFilterCreateOrReplace(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(
-				types.RuleTypeEventFilter,
-				types.RulePermCreate,
-				types.RulePermUpdate,
-			),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeEventFilter, types.RulePermCreate),
-		),
 	)
 
 	badMut := types.FixtureEventFilter("bad")
@@ -64,13 +50,6 @@ func TestEventFilterCreateOrReplace(t *testing.T) {
 			ctx:         defaultCtx,
 			argument:    types.FixtureEventFilter("sleepy"),
 			fetchResult: types.FixtureEventFilter("sleepy"),
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureEventFilter("sneezy"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 		{
 			name:            "Validation Error",
@@ -112,15 +91,6 @@ func TestEventFilterCreateOrReplace(t *testing.T) {
 func TestEventFilterCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeEventFilter, types.RulePermCreate),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeEventFilter, types.RulePermRead),
-		),
 	)
 
 	badMut := types.FixtureEventFilter("bad")
@@ -157,13 +127,6 @@ func TestEventFilterCreate(t *testing.T) {
 			fetchErr:        errors.New("nein"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureEventFilter("sneezy"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 		{
 			name:            "Validation Error",
@@ -205,15 +168,6 @@ func TestEventFilterCreate(t *testing.T) {
 func TestEventFilterDestroy(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeEventFilter, types.RulePermDelete),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeEventFilter, types.RulePermCreate),
-		),
 	)
 
 	testCases := []struct {
@@ -259,14 +213,6 @@ func TestEventFilterDestroy(t *testing.T) {
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
 		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			filterName:      "filter1",
-			fetchResult:     types.FixtureEventFilter("filter1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -305,15 +251,6 @@ func TestEventFilterDestroy(t *testing.T) {
 func TestEventFilterUpdate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeEventFilter, types.RulePermUpdate),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeEventFilter, types.RulePermRead),
-		),
 	)
 
 	badEventFilter := types.FixtureEventFilter("filter1")
@@ -363,14 +300,6 @@ func TestEventFilterUpdate(t *testing.T) {
 			expectedErrCode: InternalErr,
 		},
 		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureEventFilter("filter1"),
-			fetchResult:     types.FixtureEventFilter("filter1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
-		{
 			name:            "Validation Error",
 			ctx:             defaultCtx,
 			argument:        badEventFilter,
@@ -414,8 +343,7 @@ func TestEventFilterUpdate(t *testing.T) {
 }
 
 func TestEventFilterQuery(t *testing.T) {
-	readCtx := testutil.NewContext(testutil.ContextWithRules(
-		types.FixtureRuleWithPerms(types.RuleTypeEventFilter, types.RulePermRead)))
+	readCtx := context.Background()
 
 	tests := []struct {
 		name        string
@@ -441,19 +369,6 @@ func TestEventFilterQuery(t *testing.T) {
 				types.FixtureEventFilter("bart"),
 			},
 			expectedLen: 2,
-			storeErr:    nil,
-			expectedErr: nil,
-		},
-		{
-			name: "Only Create Access",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeEventFilter, types.RulePermCreate),
-			)),
-			filters: []*types.EventFilter{
-				types.FixtureEventFilter("lisa"),
-				types.FixtureEventFilter("maggie"),
-			},
-			expectedLen: 0,
 			storeErr:    nil,
 			expectedErr: nil,
 		},
@@ -486,9 +401,7 @@ func TestEventFilterQuery(t *testing.T) {
 }
 
 func TestEventFilterFind(t *testing.T) {
-	readCtx := testutil.NewContext(testutil.ContextWithRules(
-		types.FixtureRuleWithPerms(types.RuleTypeEventFilter, types.RulePermRead),
-	))
+	readCtx := context.Background()
 
 	tests := []struct {
 		name            string
@@ -517,16 +430,6 @@ func TestEventFilterFind(t *testing.T) {
 			ctx:             readCtx,
 			filter:          nil,
 			filterName:      "fox mulder",
-			expected:        false,
-			expectedErrCode: NotFound,
-		},
-		{
-			name: "No Read Permission",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeEvent, types.RulePermCreate),
-			)),
-			filter:          types.FixtureEventFilter("troy maclure"),
-			filterName:      "troy maclure",
 			expected:        false,
 			expectedErrCode: NotFound,
 		},
