@@ -26,8 +26,3 @@ func NewStore(client *clientv3.Client, name string) *Store {
 
 	return store
 }
-
-// func (s *Store) get(ctx context.Context, path string, object interface{}) (interface{}, error) {
-
-// 	return nil, nil
-// }

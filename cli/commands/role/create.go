@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -22,16 +23,15 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			role := &types.Role{Name: args[0]}
+			if namespace := helpers.GetChangedStringValueFlag("namespace", cmd.Flags()); namespace != "" {
+				role.Namespace = namespace
+			} else {
+				role.Namespace = cli.Config.Namespace()
+			}
+
 			if err := role.Validate(); err != nil {
 				return err
 			}
-
-			opts := &roleOpts{}
-
-			opts.Namespace = cli.Config.Namespace()
-
-			opts.withFlags(cmd.Flags())
-			opts.Name = args[0]
 
 			if err := cli.Client.CreateRole(role); err != nil {
 				return err
