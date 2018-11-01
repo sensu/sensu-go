@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Adds links to view entities and checks from the events page.
 
 ### Fixed
+- Display appropriate fallback when an entity's lastSeen field is empty.
 - Silences List in web ui sorted by ascending order
 - Sorting button now works properly
 - Fixed unresponsive silencing entry form begin date input.
