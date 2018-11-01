@@ -30,7 +30,9 @@ class NamespaceLink extends React.PureComponent {
     return (
       <Route
         path="/:namespace"
-        render={({ match: { params } }) => this.renderLink(params.namespace, props)}
+        render={({ match: { params } }) =>
+          this.renderLink(params.namespace, props)
+        }
       />
     );
   }
