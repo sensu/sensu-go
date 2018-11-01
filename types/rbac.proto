@@ -37,6 +37,8 @@ message ClusterRole {
 // Role applies only to a single namespace.
 message Role {
   repeated Rule rules = 1 [(gogoproto.jsontag) = "rules", (gogoproto.nullable) = false];
+
+  string namespace = 2 [(gogoproto.jsontag) = "namespace"];
 }
 
 // RoleRef maps groups to Roles or ClusterRoles.
@@ -74,4 +76,6 @@ message RoleBinding {
 
   // RoleRef references a Role in the current namespace
   RoleRef role_ref = 2 [(gogoproto.jsontag) = "roleRef", (gogoproto.nullable) = false];
+
+  string namespace = 3 [(gogoproto.jsontag) = "namespace"];
 }
