@@ -32,8 +32,6 @@ func mapServiceErrCode(code actions.ErrCode) schema.ErrCode {
 		return schema.ErrCodes.ERR_NOT_FOUND
 	case actions.AlreadyExistsErr:
 		return schema.ErrCodes.ERR_ALREADY_EXISTS
-	case actions.PermissionDenied:
-		return schema.ErrCodes.ERR_PERMISSION_DENIED
 	case actions.InternalErr:
 		fallthrough
 	default:
