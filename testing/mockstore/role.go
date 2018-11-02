@@ -6,6 +6,18 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// CreateRole ...
+func (s *MockStore) CreateRole(ctx context.Context, role *types.Role) error {
+	args := s.Called(ctx, role)
+	return args.Error(0)
+}
+
+// CreateOrUpdateRole ...
+func (s *MockStore) CreateOrUpdateRole(ctx context.Context, role *types.Role) error {
+	args := s.Called(ctx, role)
+	return args.Error(0)
+}
+
 // DeleteRole ...
 func (s *MockStore) DeleteRole(ctx context.Context, name string) error {
 	args := s.Called(ctx, name)

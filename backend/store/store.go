@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -18,6 +19,44 @@ const (
 	// WatchDelete indicates that an object was deleted.
 	WatchDelete
 )
+
+// ErrDecode is returned when an object could not be decoded
+type ErrDecode struct {
+	Key string
+	Err error
+}
+
+func (e *ErrDecode) Error() string {
+	return fmt.Sprintf("could not decode the key %s: %s", e.Key, e.Err.Error())
+}
+
+// ErrEncore is returned when an object could not be decoded
+type ErrEncore struct {
+	Key string
+	Err error
+}
+
+func (e *ErrEncore) Error() string {
+	return fmt.Sprintf("could not encode the key %s: %s", e.Key, e.Err.Error())
+}
+
+// ErrNotFound is returned when a key is not found in the store
+type ErrNotFound struct {
+	Key string
+}
+
+func (e *ErrNotFound) Error() string {
+	return fmt.Sprintf("key %s not found", e.Key)
+}
+
+// ErrNotValid is returned when an object failed validation
+type ErrNotValid struct {
+	Err error
+}
+
+func (e *ErrNotValid) Error() string {
+	return fmt.Sprintf("resource is invalid: %s", e.Err.Error())
+}
 
 // WatchActionType indicates what type of change was made to an object in the store.
 type WatchActionType int
@@ -346,15 +385,20 @@ type NamespaceStore interface {
 
 // RoleStore provides methods for managing RBAC roles and rules
 type RoleStore interface {
+	// Create a given role
+	CreateRole(ctx context.Context, role *types.Role) error
+
+	// CreateOrUpdateRole overwrites the given role
+	CreateOrUpdateRole(ctx context.Context, role *types.Role) error
+
 	// DeleteRole deletes a role using the given name.
 	DeleteRole(ctx context.Context, name string) error
 
-	// GetRole returns a role using the given name. The result is nil if
-	// none was found.
+	// GetRole returns a role using the given name. An error is returned if no
+	// role was found
 	GetRole(ctx context.Context, name string) (*types.Role, error)
 
-	// ListRoles returns all roles. A nil slice with no error is returned if none
-	// were found.
+	// ListRoles returns all roles. An error is returned if no roles were found
 	ListRoles(context.Context) ([]*types.Role, error)
 
 	// UpdateRole creates or updates a given role.

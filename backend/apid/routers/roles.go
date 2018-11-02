@@ -32,21 +32,6 @@ func (r *RolesRouter) Mount(parent *mux.Router) {
 	routes.Put(r.createOrReplace)
 }
 
-func (r *RolesRouter) list(req *http.Request) (interface{}, error) {
-	records, err := r.controller.Query(req.Context())
-	return records, err
-}
-
-func (r *RolesRouter) find(req *http.Request) (interface{}, error) {
-	params := mux.Vars(req)
-	id, err := url.PathUnescape(params["id"])
-	if err != nil {
-		return nil, err
-	}
-	record, err := r.controller.Find(req.Context(), id)
-	return record, err
-}
-
 func (r *RolesRouter) create(req *http.Request) (interface{}, error) {
 	cfg := types.Role{}
 	if err := UnmarshalBody(req, &cfg); err != nil {
@@ -75,4 +60,19 @@ func (r *RolesRouter) destroy(req *http.Request) (interface{}, error) {
 	}
 	err = r.controller.Destroy(req.Context(), id)
 	return nil, err
+}
+
+func (r *RolesRouter) find(req *http.Request) (interface{}, error) {
+	params := mux.Vars(req)
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+	record, err := r.controller.Get(req.Context(), id)
+	return record, err
+}
+
+func (r *RolesRouter) list(req *http.Request) (interface{}, error) {
+	records, err := r.controller.List(req.Context())
+	return records, err
 }
