@@ -10,7 +10,6 @@ import (
 
 var (
 	clusterRoleBindingPathPrefix = "rbac/clusterrolebindings"
-	clusterRoleBindingKeyBuilder = store.NewKeyBuilder(clusterRoleBindingPathPrefix)
 )
 
 func getClusterRoleBindingPath(clusterRole *types.ClusterRoleBinding) string {
