@@ -54,7 +54,7 @@ func (s *Store) create(ctx context.Context, key, namespace string, object interf
 		return err
 	}
 	if !resp.Succeeded {
-		return fmt.Errorf("could not create the key %s", key)
+		return &store.ErrAlreadyExists{Key: key}
 	}
 
 	return nil

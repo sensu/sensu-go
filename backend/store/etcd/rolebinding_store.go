@@ -48,7 +48,7 @@ func (s *Store) GetRoleBinding(ctx context.Context, name string) (*types.RoleBin
 	return role, err
 }
 
-// ListRolesBinding ...
+// ListRolesBindings ...
 func (s *Store) ListRolesBindings(ctx context.Context) ([]*types.RoleBinding, error) {
 	roles := []*types.RoleBinding{}
 	err := s.list(ctx, getRoleBindingsPath, &roles)

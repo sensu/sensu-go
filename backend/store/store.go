@@ -20,6 +20,15 @@ const (
 	WatchDelete
 )
 
+// ErrAlreadyExists is returned when an object already exists
+type ErrAlreadyExists struct {
+	Key string
+}
+
+func (e *ErrAlreadyExists) Error() string {
+	return fmt.Sprintf("could not create the key %s", e.Key)
+}
+
 // ErrDecode is returned when an object could not be decoded
 type ErrDecode struct {
 	Key string
