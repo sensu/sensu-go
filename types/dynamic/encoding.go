@@ -2,9 +2,7 @@ package dynamic
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
-	"sort"
 	"sync"
 
 	jsoniter "github.com/json-iterator/go"
@@ -25,43 +23,6 @@ func init() {
 		w := make(map[string]*json.RawMessage, 32)
 		return &w
 	}
-}
-
-func encodeStructFields(v interface{}, s *jsoniter.Stream) ([]string, error) {
-	strukt := reflect.Indirect(reflect.ValueOf(v))
-	if !strukt.IsValid() {
-		// Zero value of a nil pointer, nothing to do.
-		return nil, nil
-	}
-	if kind := strukt.Kind(); kind != reflect.Struct {
-		return nil, fmt.Errorf("invalid type (want struct): %v", kind)
-	}
-
-	fieldsp := structFieldPool.Get().(*[]structField)
-	defer func() {
-		*fieldsp = (*fieldsp)[:0]
-		structFieldPool.Put(fieldsp)
-	}()
-
-	// populate fieldsp with structFields
-	getJSONFields(strukt, true, fieldsp)
-
-	fields := *fieldsp
-
-	sort.Slice(fields, func(i, j int) bool {
-		return fields[i].JSONName < fields[j].JSONName
-	})
-	fieldNames := make([]string, 0, len(fields))
-	for i, field := range fields {
-		if i > 0 {
-			s.WriteMore()
-		}
-		s.WriteObjectField(field.JSONName)
-		s.WriteVal(field.Value.Interface())
-		fieldNames = append(fieldNames, field.JSONName)
-	}
-
-	return fieldNames, nil
 }
 
 func lookupField(fields []structField, name string) (structField, bool) {
