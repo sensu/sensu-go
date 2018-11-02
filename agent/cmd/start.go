@@ -31,33 +31,32 @@ const (
 	// specified in backend urls
 	DefaultBackendPort = "8081"
 
-	flagAgentID                      = "id"
-	flagAPIHost                      = "api-host"
-	flagAPIPort                      = "api-port"
-	flagBackendURL                   = "backend-url"
-	flagCacheDir                     = "cache-dir"
-	flagConfigFile                   = "config-file"
-	flagDeregister                   = "deregister"
-	flagDeregistrationHandler        = "deregistration-handler"
-	deprecatedFlagExtendedAttributes = "custom-attributes"
-	flagExtendedAttributes           = "extended-attributes"
-	flagKeepaliveInterval            = "keepalive-interval"
-	flagKeepaliveTimeout             = "keepalive-timeout"
-	flagNamespace                    = "namespace"
-	flagPassword                     = "password"
-	flagRedact                       = "redact"
-	flagSocketHost                   = "socket-host"
-	flagSocketPort                   = "socket-port"
-	flagStatsdDisable                = "statsd-disable"
-	flagStatsdEventHandlers          = "statsd-event-handlers"
-	flagStatsdFlushInterval          = "statsd-flush-interval"
-	flagStatsdMetricsHost            = "statsd-metrics-host"
-	flagStatsdMetricsPort            = "statsd-metrics-port"
-	flagSubscriptions                = "subscriptions"
-	flagUser                         = "user"
-	flagDisableAPI                   = "disable-api"
-	flagDisableSockets               = "disable-sockets"
-	flagLogLevel                     = "log-level"
+	flagAgentID               = "id"
+	flagAPIHost               = "api-host"
+	flagAPIPort               = "api-port"
+	flagBackendURL            = "backend-url"
+	flagCacheDir              = "cache-dir"
+	flagConfigFile            = "config-file"
+	flagDeregister            = "deregister"
+	flagDeregistrationHandler = "deregistration-handler"
+	flagKeepaliveInterval     = "keepalive-interval"
+	flagKeepaliveTimeout      = "keepalive-timeout"
+	flagNamespace             = "namespace"
+	flagPassword              = "password"
+	flagRedact                = "redact"
+	flagSocketHost            = "socket-host"
+	flagSocketPort            = "socket-port"
+	flagStatsdDisable         = "statsd-disable"
+	flagStatsdEventHandlers   = "statsd-event-handlers"
+	flagStatsdFlushInterval   = "statsd-flush-interval"
+	flagStatsdMetricsHost     = "statsd-metrics-host"
+	flagStatsdMetricsPort     = "statsd-metrics-port"
+	flagSubscriptions         = "subscriptions"
+	flagUser                  = "user"
+	flagDisableAPI            = "disable-api"
+	flagDisableSockets        = "disable-sockets"
+	flagLogLevel              = "log-level"
+	flagLabels                = "labels"
 )
 
 func init() {
@@ -125,7 +124,6 @@ func newStartCommand() *cobra.Command {
 			cfg.CacheDir = viper.GetString(flagCacheDir)
 			cfg.Deregister = viper.GetBool(flagDeregister)
 			cfg.DeregistrationHandler = viper.GetString(flagDeregistrationHandler)
-			cfg.ExtendedAttributes = []byte(viper.GetString(flagExtendedAttributes))
 			cfg.KeepaliveInterval = uint32(viper.GetInt(flagKeepaliveInterval))
 			cfg.KeepaliveTimeout = uint32(viper.GetInt(flagKeepaliveTimeout))
 			cfg.Namespace = viper.GetString(flagNamespace)
@@ -137,6 +135,7 @@ func newStartCommand() *cobra.Command {
 			cfg.StatsdServer.Host = viper.GetString(flagStatsdMetricsHost)
 			cfg.StatsdServer.Port = viper.GetInt(flagStatsdMetricsPort)
 			cfg.StatsdServer.Handlers = viper.GetStringSlice(flagStatsdEventHandlers)
+			cfg.Labels = viper.GetStringMapString(flagLabels)
 			cfg.User = viper.GetString(flagUser)
 
 			agentID := viper.GetString(flagAgentID)
@@ -253,7 +252,6 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagAPIHost, viper.GetString(flagAPIHost), "address to bind the Sensu client HTTP API to")
 	cmd.Flags().String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
 	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "deregistration handler that should process the entity deregistration event.")
-	cmd.Flags().String(flagExtendedAttributes, viper.GetString(flagExtendedAttributes), "extended attributes to include in the agent entity in serialized json format (ex: {\"team\":\"ops\"})")
 	cmd.Flags().String(flagNamespace, viper.GetString(flagNamespace), "agent namespace")
 	cmd.Flags().String(flagPassword, viper.GetString(flagPassword), "agent password")
 	cmd.Flags().String(flagRedact, viper.GetString(flagRedact), "comma-delimited customized list of fields to redact")
@@ -270,6 +268,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().Bool(flagDisableAPI, viper.GetBool(flagDisableAPI), "disable the Agent HTTP API")
 	cmd.Flags().Bool(flagDisableSockets, viper.GetBool(flagDisableSockets), "disable the Agent TCP and UDP event sockets")
 	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
+	cmd.Flags().StringToString(flagLabels, viper.GetStringMapString(flagLabels), "entity labels map")
 
 	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc)
 
@@ -277,41 +276,11 @@ func newStartCommand() *cobra.Command {
 		setupErr = err
 	}
 
-	deprecatedConfigAttributes()
-	viper.RegisterAlias(deprecatedFlagExtendedAttributes, flagExtendedAttributes)
-
 	return cmd
 }
 
 func aliasNormalizeFunc(f *pflag.FlagSet, name string) pflag.NormalizedName {
-	// Wait until the command-line flags have been parsed
-	if !f.Parsed() {
-		return pflag.NormalizedName(name)
-	}
-
-	switch name {
-	case deprecatedFlagExtendedAttributes:
-		deprecatedFlagMessage(name, flagExtendedAttributes)
-		name = flagExtendedAttributes
-	}
 	return pflag.NormalizedName(name)
-}
-
-// Look up the deprecated attributes in our config file and print a warning
-// message if set
-func deprecatedConfigAttributes() {
-	attributes := map[string]string{
-		deprecatedFlagExtendedAttributes: flagExtendedAttributes,
-	}
-
-	for old, new := range attributes {
-		if viper.IsSet(old) {
-			logger.Warningf(
-				"config attribute %s has been deprecated, please use %s instead",
-				old, new,
-			)
-		}
-	}
 }
 
 func deprecatedFlagMessage(oldFlag, newFlag string) {

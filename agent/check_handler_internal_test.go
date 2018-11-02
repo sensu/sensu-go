@@ -183,7 +183,7 @@ func TestHandleTokenSubstitutionNoKey(t *testing.T) {
 
 	config, cleanup := FixtureConfig()
 	defer cleanup()
-	config.ExtendedAttributes = []byte(`{"team":"devops"}`)
+	config.Labels = map[string]string{"team": "devops"}
 	config.AgentID = "TestTokenSubstitution"
 	agent := NewAgent(config)
 	ch := make(chan *transport.Message, 1)

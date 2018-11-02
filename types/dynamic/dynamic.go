@@ -72,11 +72,41 @@ func GetField(v interface{}, name string) (interface{}, error) {
 	}
 	field := strukt.FieldByName(name)
 	if field.IsValid() {
-		rval := reflect.Indirect(field).Interface()
-		return rval, nil
+		field := reflect.Indirect(field)
+		if field.Kind() == reflect.Map {
+			return reflectMapToMapParameters(field), nil
+		}
+		return field.Interface(), nil
 	}
 
 	return nil, fmt.Errorf("missing field: %q", name)
+}
+
+// reflectMapToMapParameters turns a reflect.Map into a map[string]interface{}
+// that implements govaluate.Parameters. A custom datatype is used here instead
+// of govaluate.MapParameters, in order to avoid creating a package dependency
+// here.
+func reflectMapToMapParameters(v reflect.Value) interface{} {
+	result := make(mapParameters)
+	for _, key := range v.MapKeys() {
+		if key.Kind() != reflect.String {
+			// Fallback - if the map has a non-string key type, return the
+			// variable as-is.
+			return v.Interface()
+		}
+		result[key.Interface().(string)] = v.MapIndex(key).Interface()
+	}
+	return result
+}
+
+type mapParameters map[string]interface{}
+
+func (m mapParameters) Get(name string) (interface{}, error) {
+	v, ok := m[name]
+	if !ok {
+		return nil, fmt.Errorf("missing map key: %q", name)
+	}
+	return v, nil
 }
 
 // AnyParameters connects jsoniter.Any to govaluate.Parameters

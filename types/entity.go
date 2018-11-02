@@ -70,7 +70,9 @@ func FixtureEntity(id string) *Entity {
 		ID:            id,
 		Class:         "host",
 		Subscriptions: []string{"linux"},
-		Namespace:     "default",
+		ObjectMeta: ObjectMeta{
+			Namespace: "default",
+		},
 	}
 }
 

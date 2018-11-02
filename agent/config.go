@@ -65,14 +65,13 @@ type Config struct {
 	DeregistrationHandler string
 	// ExtendedAttributes contains any extended attributes passed to the agent on
 	// start
-	ExtendedAttributes []byte
-	// KeepaliveInterval is the interval, in seconds, when agents will send a
-	// keepalive to sensu-backend.
 	KeepaliveInterval uint32
 	// KeepaliveTimeout is the time after which a sensu-agent is considered dead
 	// by the backend. See DefaultKeepaliveTimeout in types package for default
 	// value.
 	KeepaliveTimeout uint32
+	// Labels are key-value pairs that users can provide to agent entities
+	Labels map[string]string
 	// Namespace sets the Agent's RBAC namespace identifier
 	Namespace string
 	// Password sets Agent's password
