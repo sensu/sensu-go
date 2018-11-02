@@ -29,6 +29,10 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				role.Namespace = cli.Config.Namespace()
 			}
 
+			role.Rules = []types.Rule{
+				types.FixtureRule(),
+			}
+
 			if err := role.Validate(); err != nil {
 				return err
 			}
