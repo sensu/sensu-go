@@ -39,13 +39,13 @@ func (e *ErrDecode) Error() string {
 	return fmt.Sprintf("could not decode the key %s: %s", e.Key, e.Err.Error())
 }
 
-// ErrEncore is returned when an object could not be decoded
-type ErrEncore struct {
+// ErrEncode is returned when an object could not be decoded
+type ErrEncode struct {
 	Key string
 	Err error
 }
 
-func (e *ErrEncore) Error() string {
+func (e *ErrEncode) Error() string {
 	return fmt.Sprintf("could not encode the key %s: %s", e.Key, e.Err.Error())
 }
 

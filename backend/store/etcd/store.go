@@ -37,7 +37,7 @@ func NewStore(client *clientv3.Client, name string) *Store {
 func (s *Store) create(ctx context.Context, key, namespace string, object interface{}) error {
 	bytes, err := json.Marshal(object)
 	if err != nil {
-		return &store.ErrEncore{Key: key, Err: err}
+		return &store.ErrEncode{Key: key, Err: err}
 	}
 
 	comparisons := []clientv3.Cmp{}
@@ -65,7 +65,7 @@ func (s *Store) create(ctx context.Context, key, namespace string, object interf
 func (s *Store) createOrUpdate(ctx context.Context, key, namespace string, object interface{}) error {
 	bytes, err := json.Marshal(object)
 	if err != nil {
-		return &store.ErrEncore{Key: key, Err: err}
+		return &store.ErrEncode{Key: key, Err: err}
 	}
 
 	comparisons := []clientv3.Cmp{}
@@ -174,7 +174,7 @@ func (s *Store) list(ctx context.Context, keyBuilder keyBuilderFn, objsPtr inter
 func (s *Store) update(ctx context.Context, key, namespace string, object interface{}) error {
 	bytes, err := json.Marshal(object)
 	if err != nil {
-		return &store.ErrEncore{Key: key, Err: err}
+		return &store.ErrEncode{Key: key, Err: err}
 	}
 
 	comparisons := []clientv3.Cmp{}
