@@ -24,8 +24,8 @@ func TestListCommandRunEClosureJSONFormat(t *testing.T) {
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	client.On("ListRoles").Return([]types.Role{
-		types.FixtureRole("one", "*"),
-		types.FixtureRole("two", "*"),
+		*types.FixtureRole("one", "*"),
+		*types.FixtureRole("two", "*"),
 	}, nil)
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -39,8 +39,8 @@ func TestListCommandRunEClosureTabularFormat(t *testing.T) {
 	config.On("Format").Return("")
 	client := cli.Client.(*client.MockClient)
 	client.On("ListRoles").Return([]types.Role{
-		types.FixtureRole("one", "*"),
-		types.FixtureRole("two", "*"),
+		*types.FixtureRole("one", "*"),
+		*types.FixtureRole("two", "*"),
 	}, nil)
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
