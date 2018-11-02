@@ -65,6 +65,42 @@ func (a AuthorizationAttributes) Then(next http.Handler) http.Handler {
 //
 // This middleware is here purely to support, old, pre-API versioning routes. It
 // should be removed when all the old routes are replaced by versioned ones.
+//
+// The expected path is one of the following:
+// /assets
+// /assets/{id}
+// /checks
+// /checks/{id}
+// /checks/{id}/execute
+// /checks/{id}/hooks/{type}
+// /checks/{id}/hooks/{type}/hook/{hook}
+// /cluster/members
+// /cluster/members/{id}
+// /entities
+// /entities/{id}
+// /filters
+// /filters/{id}
+// /events
+// /events/{entity}
+// /events/{entity}/{check}
+// /extensions
+// /extensions/{id}
+// /handlers
+// /handlers/{id}
+// /hooks
+// /hooks/{id}
+// /mutators
+// /mutators/{id}
+// /rbac/namespaces
+// /rbac/namespaces/{id}
+// /rbac/users
+// /rbac/users/{id}
+// /silenced
+// /silenced{id}
+// /silenced/subscriptions
+// /silenced/subscriptions/{subscription}
+// /silenced/checks
+// /silenced/checks/{check}
 type LegacyAuthorizationAttributes struct{}
 
 func (a LegacyAuthorizationAttributes) Then(next http.Handler) http.Handler {
