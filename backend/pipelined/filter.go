@@ -34,8 +34,6 @@ func evaluateEventFilterStatement(event *types.Event, statement string) bool {
 func evaluateEventFilter(event *types.Event, filter *types.EventFilter) bool {
 	fields := utillogging.EventFields(event, false)
 	fields["filter"] = filter.Name
-	fields["check"] = event.Check.Name
-	fields["entity_name"] = event.Entity.ID
 
 	if filter.When != nil {
 		inWindows, err := filter.When.InWindows(time.Now().UTC())
@@ -97,8 +95,6 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 	// Prepare the logging
 	fields := utillogging.EventFields(event, false)
 	fields["handler"] = handler.Name
-	fields["check"] = event.Check.Name
-	fields["entity_name"] = event.Entity.ID
 
 	// Iterate through all event filters, the event is filtered if
 	// a filter returns true.
