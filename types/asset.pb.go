@@ -31,8 +31,6 @@ type Asset struct {
 	URL string `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
 	// Sha512 is the SHA-512 checksum of the asset
 	Sha512 string `protobuf:"bytes,3,opt,name=sha512,proto3" json:"sha512,omitempty"`
-	// Metadata is a set of key value pair associated with the asset
-	Metadata map[string]string `protobuf:"bytes,4,rep,name=metadata" json:"metadata" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	// Filters are a collection of sensu queries, used by the system to determine
 	// if the asset should be installed. If more than one filter is present the
 	// queries are joined by the "AND" operator.
@@ -48,7 +46,7 @@ func (m *Asset) Reset()         { *m = Asset{} }
 func (m *Asset) String() string { return proto.CompactTextString(m) }
 func (*Asset) ProtoMessage()    {}
 func (*Asset) Descriptor() ([]byte, []int) {
-	return fileDescriptor_asset_ca8cffff8ba451f2, []int{0}
+	return fileDescriptor_asset_7871fce8cab8b9cc, []int{0}
 }
 func (m *Asset) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -98,13 +96,6 @@ func (m *Asset) GetSha512() string {
 	return ""
 }
 
-func (m *Asset) GetMetadata() map[string]string {
-	if m != nil {
-		return m.Metadata
-	}
-	return nil
-}
-
 func (m *Asset) GetFilters() []string {
 	if m != nil {
 		return m.Filters
@@ -121,7 +112,6 @@ func (m *Asset) GetNamespace() string {
 
 func init() {
 	proto.RegisterType((*Asset)(nil), "sensu.types.Asset")
-	proto.RegisterMapType((map[string]string)(nil), "sensu.types.Asset.MetadataEntry")
 }
 func (this *Asset) Equal(that interface{}) bool {
 	if that == nil {
@@ -150,14 +140,6 @@ func (this *Asset) Equal(that interface{}) bool {
 	}
 	if this.Sha512 != that1.Sha512 {
 		return false
-	}
-	if len(this.Metadata) != len(that1.Metadata) {
-		return false
-	}
-	for i := range this.Metadata {
-		if this.Metadata[i] != that1.Metadata[i] {
-			return false
-		}
 	}
 	if len(this.Filters) != len(that1.Filters) {
 		return false
@@ -208,23 +190,6 @@ func (m *Asset) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintAsset(dAtA, i, uint64(len(m.Sha512)))
 		i += copy(dAtA[i:], m.Sha512)
 	}
-	if len(m.Metadata) > 0 {
-		for k, _ := range m.Metadata {
-			dAtA[i] = 0x22
-			i++
-			v := m.Metadata[k]
-			mapSize := 1 + len(k) + sovAsset(uint64(len(k))) + 1 + len(v) + sovAsset(uint64(len(v)))
-			i = encodeVarintAsset(dAtA, i, uint64(mapSize))
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintAsset(dAtA, i, uint64(len(k)))
-			i += copy(dAtA[i:], k)
-			dAtA[i] = 0x12
-			i++
-			i = encodeVarintAsset(dAtA, i, uint64(len(v)))
-			i += copy(dAtA[i:], v)
-		}
-	}
 	if len(m.Filters) > 0 {
 		for _, s := range m.Filters {
 			dAtA[i] = 0x2a
@@ -266,16 +231,9 @@ func NewPopulatedAsset(r randyAsset, easy bool) *Asset {
 	this.Name = string(randStringAsset(r))
 	this.URL = string(randStringAsset(r))
 	this.Sha512 = string(randStringAsset(r))
-	if r.Intn(10) != 0 {
-		v1 := r.Intn(10)
-		this.Metadata = make(map[string]string)
-		for i := 0; i < v1; i++ {
-			this.Metadata[randStringAsset(r)] = randStringAsset(r)
-		}
-	}
-	v2 := r.Intn(10)
-	this.Filters = make([]string, v2)
-	for i := 0; i < v2; i++ {
+	v1 := r.Intn(10)
+	this.Filters = make([]string, v1)
+	for i := 0; i < v1; i++ {
 		this.Filters[i] = string(randStringAsset(r))
 	}
 	this.Namespace = string(randStringAsset(r))
@@ -304,9 +262,9 @@ func randUTF8RuneAsset(r randyAsset) rune {
 	return rune(ru + 61)
 }
 func randStringAsset(r randyAsset) string {
-	v3 := r.Intn(100)
-	tmps := make([]rune, v3)
-	for i := 0; i < v3; i++ {
+	v2 := r.Intn(100)
+	tmps := make([]rune, v2)
+	for i := 0; i < v2; i++ {
 		tmps[i] = randUTF8RuneAsset(r)
 	}
 	return string(tmps)
@@ -328,11 +286,11 @@ func randFieldAsset(dAtA []byte, r randyAsset, fieldNumber int, wire int) []byte
 	switch wire {
 	case 0:
 		dAtA = encodeVarintPopulateAsset(dAtA, uint64(key))
-		v4 := r.Int63()
+		v3 := r.Int63()
 		if r.Intn(2) == 0 {
-			v4 *= -1
+			v3 *= -1
 		}
-		dAtA = encodeVarintPopulateAsset(dAtA, uint64(v4))
+		dAtA = encodeVarintPopulateAsset(dAtA, uint64(v3))
 	case 1:
 		dAtA = encodeVarintPopulateAsset(dAtA, uint64(key))
 		dAtA = append(dAtA, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -371,14 +329,6 @@ func (m *Asset) Size() (n int) {
 	l = len(m.Sha512)
 	if l > 0 {
 		n += 1 + l + sovAsset(uint64(l))
-	}
-	if len(m.Metadata) > 0 {
-		for k, v := range m.Metadata {
-			_ = k
-			_ = v
-			mapEntrySize := 1 + len(k) + sovAsset(uint64(len(k))) + 1 + len(v) + sovAsset(uint64(len(v)))
-			n += mapEntrySize + 1 + sovAsset(uint64(mapEntrySize))
-		}
 	}
 	if len(m.Filters) > 0 {
 		for _, s := range m.Filters {
@@ -524,124 +474,6 @@ func (m *Asset) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Sha512 = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAsset
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return ErrInvalidLengthAsset
-			}
-			postIndex := iNdEx + msglen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.Metadata == nil {
-				m.Metadata = make(map[string]string)
-			}
-			var mapkey string
-			var mapvalue string
-			for iNdEx < postIndex {
-				entryPreIndex := iNdEx
-				var wire uint64
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return ErrIntOverflowAsset
-					}
-					if iNdEx >= l {
-						return io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					wire |= (uint64(b) & 0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				fieldNum := int32(wire >> 3)
-				if fieldNum == 1 {
-					var stringLenmapkey uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowAsset
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapkey |= (uint64(b) & 0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return ErrInvalidLengthAsset
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
-				} else if fieldNum == 2 {
-					var stringLenmapvalue uint64
-					for shift := uint(0); ; shift += 7 {
-						if shift >= 64 {
-							return ErrIntOverflowAsset
-						}
-						if iNdEx >= l {
-							return io.ErrUnexpectedEOF
-						}
-						b := dAtA[iNdEx]
-						iNdEx++
-						stringLenmapvalue |= (uint64(b) & 0x7F) << shift
-						if b < 0x80 {
-							break
-						}
-					}
-					intStringLenmapvalue := int(stringLenmapvalue)
-					if intStringLenmapvalue < 0 {
-						return ErrInvalidLengthAsset
-					}
-					postStringIndexmapvalue := iNdEx + intStringLenmapvalue
-					if postStringIndexmapvalue > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapvalue = string(dAtA[iNdEx:postStringIndexmapvalue])
-					iNdEx = postStringIndexmapvalue
-				} else {
-					iNdEx = entryPreIndex
-					skippy, err := skipAsset(dAtA[iNdEx:])
-					if err != nil {
-						return err
-					}
-					if skippy < 0 {
-						return ErrInvalidLengthAsset
-					}
-					if (iNdEx + skippy) > postIndex {
-						return io.ErrUnexpectedEOF
-					}
-					iNdEx += skippy
-				}
-			}
-			m.Metadata[mapkey] = mapvalue
 			iNdEx = postIndex
 		case 5:
 			if wireType != 2 {
@@ -828,28 +660,23 @@ var (
 	ErrIntOverflowAsset   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("asset.proto", fileDescriptor_asset_ca8cffff8ba451f2) }
+func init() { proto.RegisterFile("asset.proto", fileDescriptor_asset_7871fce8cab8b9cc) }
 
-var fileDescriptor_asset_ca8cffff8ba451f2 = []byte{
-	// 310 bytes of a gzipped FileDescriptorProto
+var fileDescriptor_asset_7871fce8cab8b9cc = []byte{
+	// 229 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4e, 0x2c, 0x2e, 0x4e,
 	0x2d, 0xd1, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2e, 0x4e, 0xcd, 0x2b, 0x2e, 0xd5, 0x2b,
 	0xa9, 0x2c, 0x48, 0x2d, 0x96, 0xd2, 0x4d, 0xcf, 0x2c, 0xc9, 0x28, 0x4d, 0xd2, 0x4b, 0xce, 0xcf,
 	0xd5, 0x4f, 0xcf, 0x4f, 0xcf, 0xd7, 0x07, 0xab, 0x49, 0x2a, 0x4d, 0x03, 0xf3, 0xc0, 0x1c, 0x30,
-	0x0b, 0xa2, 0x57, 0x69, 0x0a, 0x13, 0x17, 0xab, 0x23, 0xc8, 0x2c, 0x21, 0x21, 0x2e, 0x96, 0xbc,
+	0x0b, 0xa2, 0x57, 0x69, 0x32, 0x23, 0x17, 0xab, 0x23, 0xc8, 0x2c, 0x21, 0x21, 0x2e, 0x96, 0xbc,
 	0xc4, 0xdc, 0x54, 0x09, 0x46, 0x05, 0x46, 0x0d, 0xce, 0x20, 0x30, 0x5b, 0x48, 0x92, 0x8b, 0xb9,
 	0xb4, 0x28, 0x47, 0x82, 0x09, 0x24, 0xe4, 0xc4, 0xfe, 0xe8, 0x9e, 0x3c, 0x73, 0x68, 0x90, 0x4f,
 	0x10, 0x48, 0x4c, 0x48, 0x8c, 0x8b, 0xad, 0x38, 0x23, 0xd1, 0xd4, 0xd0, 0x48, 0x82, 0x19, 0xac,
-	0x01, 0xca, 0x13, 0x72, 0xe2, 0xe2, 0xc8, 0x4d, 0x2d, 0x49, 0x4c, 0x49, 0x2c, 0x49, 0x94, 0x60,
-	0x51, 0x60, 0xd6, 0xe0, 0x36, 0x52, 0xd0, 0x43, 0x72, 0x9f, 0x1e, 0xd8, 0x32, 0x3d, 0x5f, 0xa8,
-	0x12, 0xd7, 0xbc, 0x92, 0xa2, 0x4a, 0x27, 0x96, 0x13, 0xf7, 0xe4, 0x19, 0x82, 0xe0, 0xfa, 0x84,
-	0x54, 0xb9, 0xd8, 0xd3, 0x32, 0x73, 0x4a, 0x52, 0x8b, 0x8a, 0x25, 0x58, 0x15, 0x98, 0x35, 0x38,
-	0x9d, 0xb8, 0x5f, 0xdd, 0x93, 0x87, 0x09, 0x05, 0xc1, 0x18, 0x42, 0x32, 0x5c, 0x9c, 0x20, 0x57,
-	0x16, 0x17, 0x24, 0x26, 0xa7, 0x4a, 0xb0, 0x83, 0x5d, 0x81, 0x10, 0x90, 0xb2, 0xe6, 0xe2, 0x45,
-	0xb1, 0x45, 0x48, 0x80, 0x8b, 0x39, 0x3b, 0xb5, 0x12, 0xea, 0x3f, 0x10, 0x53, 0x48, 0x84, 0x8b,
-	0xb5, 0x2c, 0x31, 0xa7, 0x34, 0x15, 0xe2, 0xc1, 0x20, 0x08, 0xc7, 0x8a, 0xc9, 0x82, 0xd1, 0x49,
-	0xf9, 0xc7, 0x43, 0x39, 0xc6, 0x15, 0x8f, 0xe4, 0x18, 0x77, 0x3c, 0x92, 0x63, 0x3c, 0xf1, 0x48,
-	0x8e, 0xf1, 0xc2, 0x23, 0x39, 0xc6, 0x07, 0x8f, 0xe4, 0x18, 0x67, 0x3c, 0x96, 0x63, 0x88, 0x62,
-	0x05, 0x7b, 0x25, 0x89, 0x0d, 0x1c, 0x84, 0xc6, 0x80, 0x00, 0x00, 0x00, 0xff, 0xff, 0x96, 0x22,
-	0xc7, 0x51, 0x8d, 0x01, 0x00, 0x00,
+	0x01, 0xca, 0x13, 0x52, 0xe5, 0x62, 0x4f, 0xcb, 0xcc, 0x29, 0x49, 0x2d, 0x2a, 0x96, 0x60, 0x55,
+	0x60, 0xd6, 0xe0, 0x74, 0xe2, 0x7e, 0x75, 0x4f, 0x1e, 0x26, 0x14, 0x04, 0x63, 0x08, 0xc9, 0x70,
+	0x71, 0x82, 0x6c, 0x28, 0x2e, 0x48, 0x4c, 0x4e, 0x95, 0x60, 0x07, 0x9b, 0x80, 0x10, 0x70, 0x52,
+	0xfe, 0xf1, 0x50, 0x8e, 0x71, 0xc5, 0x23, 0x39, 0xc6, 0x1d, 0x8f, 0xe4, 0x18, 0x4f, 0x3c, 0x92,
+	0x63, 0xbc, 0xf0, 0x48, 0x8e, 0xf1, 0xc1, 0x23, 0x39, 0xc6, 0x19, 0x8f, 0xe5, 0x18, 0xa2, 0x58,
+	0xc1, 0x3e, 0x4d, 0x62, 0x03, 0xfb, 0xc0, 0x18, 0x10, 0x00, 0x00, 0xff, 0xff, 0x49, 0x02, 0x70,
+	0xe9, 0x0c, 0x01, 0x00, 0x00,
 }
