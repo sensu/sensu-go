@@ -161,12 +161,8 @@ func newStartCommand() *cobra.Command {
 			}
 
 			// Get a single or a list of subscriptions
-			subscriptions := viper.GetString(flagSubscriptions)
-			if subscriptions != "" {
-				cfg.Subscriptions = splitAndTrim(subscriptions)
-			} else {
-				cfg.Subscriptions = viper.GetStringSlice(flagSubscriptions)
-			}
+			subscriptions := viper.GetStringSlice(flagSubscriptions)
+			cfg.Subscriptions = subscriptions
 
 			sensuAgent := agent.NewAgent(cfg)
 			if err := sensuAgent.Run(); err != nil {
