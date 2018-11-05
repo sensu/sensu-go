@@ -2,6 +2,7 @@ package middlewares
 
 import (
 	"net/http"
+	"path"
 	"strings"
 
 	"github.com/gorilla/mux"
@@ -128,8 +129,7 @@ func (a LegacyAuthorizationAttributes) Then(next http.Handler) http.Handler {
 		attrs.APIGroup = "core"
 		attrs.APIVersion = "v2"
 
-		// In the legacy routes, a non-default namespace is passed as a URL
-		// query parameter like so: ?namespace=foo
+		// A non-default namespace is passed as a query parameter called "namespace"
 		namespace := r.URL.Query().Get("namespace")
 		if namespace == "" {
 			namespace = "default"
@@ -137,31 +137,52 @@ func (a LegacyAuthorizationAttributes) Then(next http.Handler) http.Handler {
 		attrs.Namespace = namespace
 
 		// The resource type is always the first element of the path, except for
-		// namespaces (/rbac/namespaces), users (/rbac/users) and cluster
-		// members (/cluster/members).
-		pathParts := strings.Split(r.URL.Path, "/")
+		// namespaces, users and cluster members.
+		fullPath := r.URL.Path
+		pathParts := strings.Split(strings.Trim(fullPath, "/"), "/")
+		attrs.Resource = pathParts[0]
 
-		switch pathParts[0] {
+		switch attrs.Resource {
 		case "cluster":
 			attrs.Resource = "cluster-members"
 		case "rbac":
 			if len(pathParts) >= 2 {
 				attrs.Resource = pathParts[1]
 			}
-		default:
-			attrs.Resource = pathParts[0]
 		}
 
-		// In the legacy routes, the resource name is always a route variable
-		// named "id", except for entities.
-		if attrs.Resource == "entities" {
-			attrs.ResourceName = vars["entity"]
-		} else {
-			attrs.ResourceName = vars["id"]
+		// Most resource names are identified by a route variable named "id".
+		// Other resources have snowflake paths; see their corresponding router
+		// and the expected paths above.
+		attrs.ResourceName = vars["id"]
+
+		switch attrs.Resource {
+		case "events":
+			attrs.ResourceName = path.Join(vars["entity"], vars["check"])
+		case "silenced":
+			if strings.HasPrefix(fullPath, "/silenced/checks") {
+				attrs.ResourceName = path.Join("checks", vars["check"])
+			} else if strings.HasPrefix(fullPath, "/silenced/subscriptions") {
+				attrs.ResourceName = path.Join("subscriptions", vars["subscription"])
+			}
 		}
 
-		if attrs.Verb == "get" && attrs.ResourceName == "" {
+		if attrs.Verb == "get" && (attrs.ResourceName == "" || isListable(attrs.Resource, attrs.ResourceName)) {
 			attrs.Verb = "list"
 		}
 	})
+}
+
+func isListable(kind, name string) bool {
+	// For /events, if the resource name doesn't contain a '/', we're listing
+	// /events/{entity} as opposed to getting /events/{entity}/{check}
+	if kind == "events" && !strings.ContainsRune(name, '/') {
+		return true
+	}
+
+	if kind == "silenced" && (name == "checks" || name == "subscriptions") {
+		return true
+	}
+
+	return false
 }
