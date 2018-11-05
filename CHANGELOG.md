@@ -26,6 +26,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Breaking Changes
 - Environments and organizations have been replaced with namespaces.
 - Removed unused asset metadata field.
+- Agent subscriptions are now specified in the config file as an array instead
+  instead of a comma-delimited list of strings.
 
 ## [2.0.0-beta.7-1] - 2018-10-26
 
