@@ -30,22 +30,28 @@ func evaluateEventFilterStatement(event *types.Event, statement string) bool {
 	return result
 }
 
-// Returns true if the event should be filtered.
+// Returns true if the event should be filtered/denied.
 func evaluateEventFilter(event *types.Event, filter *types.EventFilter) bool {
+	fields := utillogging.EventFields(event, false)
+	fields["filter"] = filter.Name
+	fields["check"] = event.Check.Name
+	fields["entity_name"] = event.Entity.ID
+
 	if filter.When != nil {
 		inWindows, err := filter.When.InWindows(time.Now().UTC())
 		if err != nil {
-			fields := utillogging.EventFields(event, false)
-			fields["filter"] = filter.Name
-			logger.WithFields(fields).Error(err)
+			logger.WithFields(fields).WithError(err).
+				Error("denying event - unable to determine if time is in specified window")
 			return false
 		}
 
 		if filter.Action == types.EventFilterActionAllow && !inWindows {
+			logger.WithFields(fields).Debug("denying event outside of filtering window")
 			return true
 		}
 
 		if filter.Action == types.EventFilterActionDeny && !inWindows {
+			logger.WithFields(fields).Debug("allowing event outside of filtering window")
 			return false
 		}
 	}
@@ -55,121 +61,123 @@ func evaluateEventFilter(event *types.Event, filter *types.EventFilter) bool {
 
 		// Allow - One of the statements did not match, filter the event
 		if filter.Action == types.EventFilterActionAllow && !match {
+			logger.WithFields(fields).Debug("denying event that does not match filter")
 			return true
 		}
 
 		// Deny - One of the statements did not match, do not filter the event
 		if filter.Action == types.EventFilterActionDeny && !match {
+			logger.WithFields(fields).Debug("allowing event that does not match filter")
 			return false
 		}
 	}
 
 	// Allow - All of the statements matched, do not filter the event
 	if filter.Action == types.EventFilterActionAllow {
+		logger.WithFields(fields).Debug("allowing event that matches filter")
 		return false
 	}
 
 	// Deny - All of the statements matched, filter the event
 	if filter.Action == types.EventFilterActionDeny {
+		logger.WithFields(fields).Debug("denying event that matches filter")
 		return true
 	}
 
 	// Something weird happened, let's not filter the event and log a warning message
-	fields := utillogging.EventFields(event, false)
-	fields["filter"] = filter.Name
 	logger.WithFields(fields).
-		Warn("pipelined not filtering event due to unhandled case")
+		Warn("not filtering event due to unhandled case")
 
 	return false
 }
 
 // filterEvent filters a Sensu event, determining if it will continue
-// through the Sensu pipeline.
+// through the Sensu pipeline. Returns true if the event should be filtered/denied.
 func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool {
 	// Prepare the logging
 	fields := utillogging.EventFields(event, false)
 	fields["handler"] = handler.Name
+	fields["check"] = event.Check.Name
+	fields["entity_name"] = event.Entity.ID
 
 	// Iterate through all event filters, the event is filtered if
 	// a filter returns true.
 	for _, filterName := range handler.Filters {
-		// Do not filter the event if it indicates an incident
-		// or incident resolution.
-		if filterName == "is_incident" {
+		fields["filter"] = filterName
+
+		switch filterName {
+		case "is_incident":
+			// Deny an event if it is neither an incident nor resolution.
 			if !event.IsIncident() && !event.IsResolution() {
+				logger.WithFields(fields).Debug("denying event that is not an incident/resolution")
 				return true
 			}
-
-			continue
-		}
-
-		// Do not filter the event if it has metrics.
-		if filterName == "has_metrics" {
+		case "has_metrics":
+			// Deny an event if it does not have metrics
 			if !event.HasMetrics() {
+				logger.WithFields(fields).Debug("denying event without metrics")
 				return true
 			}
-
-			continue
-		}
-
-		// Do not filter the event if it is not silenced.
-		if filterName == "not_silenced" {
+		case "not_silenced":
+			// Deny event that is silenced.
 			if event.IsSilenced() {
+				logger.WithFields(fields).Debug("denying event that is silenced")
 				return true
 			}
+		default:
+			// Retrieve the filter from the store with its name
+			ctx := types.SetContextFromResource(context.Background(), event.Entity)
+			filter, err := p.store.GetEventFilterByName(ctx, filterName)
+			if err != nil {
+				logger.WithFields(fields).WithError(err).
+					Warning("could not retrieve filter")
+				return false
+			}
 
-			continue
-		}
+			if filter != nil {
+				// Execute the filter, evaluating each of its
+				// statements against the event. The event is rejected
+				// if the product of all statements is true.
+				filtered := evaluateEventFilter(event, filter)
+				if filtered {
+					logger.WithFields(fields).Debug("denying event with custom filter")
+					return true
+				}
+				continue
+			}
 
-		// Retrieve the filter from the store with its name
-		ctx := types.SetContextFromResource(context.Background(), event.Entity)
-		filter, err := p.store.GetEventFilterByName(ctx, filterName)
-		if err != nil {
-			logger.WithFields(fields).WithError(err).
-				Warningf("could not retrieve the filter %s", filterName)
-			return false
-		}
+			// If the filter didn't exist, it might be an extension filter
+			ext, err := p.store.GetExtension(ctx, filterName)
+			if err != nil {
+				logger.WithFields(fields).WithError(err).
+					Warning("could not retrieve filter")
+				continue
+			}
 
-		if filter != nil {
-			// Execute the filter, evaluating each of its
-			// statements against the event. The event is rejected
-			// if the product of all statements is true.
-			filtered := evaluateEventFilter(event, filter)
+			executor, err := p.extensionExecutor(ext)
+			if err != nil {
+				logger.WithFields(fields).WithError(err).
+					Error("could not execute filter")
+				continue
+			}
+			defer func() {
+				if err := executor.Close(); err != nil {
+					logger.WithError(err).Debug("error closing grpc client")
+				}
+			}()
+			filtered, err := executor.FilterEvent(event)
+			if err != nil {
+				logger.WithFields(fields).WithError(err).
+					Error("could not execute filter")
+				continue
+			}
 			if filtered {
+				logger.WithFields(fields).Debug("denying event with custom filter extension")
 				return true
 			}
-			continue
-		}
-
-		// If the filter didn't exist, it might be an extension filter
-		ext, err := p.store.GetExtension(ctx, filterName)
-		if err != nil {
-			logger.WithFields(fields).WithError(err).
-				Warningf("could not retrieve the filter %s", filterName)
-			continue
-		}
-
-		executor, err := p.extensionExecutor(ext)
-		if err != nil {
-			logger.WithFields(fields).WithError(err).
-				Errorf("could not execute the filter %s", filterName)
-			continue
-		}
-		defer func() {
-			if err := executor.Close(); err != nil {
-				logger.WithError(err).Debug("error closing grpc client")
-			}
-		}()
-		filtered, err := executor.FilterEvent(event)
-		if err != nil {
-			logger.WithFields(fields).WithError(err).
-				Errorf("could not execute the filter %s", filterName)
-			continue
-		}
-		if filtered {
-			return true
 		}
 	}
 
+	logger.WithFields(fields).Debug("allowing event")
 	return false
 }
