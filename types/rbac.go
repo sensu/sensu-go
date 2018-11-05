@@ -19,8 +19,8 @@ const (
 )
 
 // FixtureRule returns a partial rule
-func FixtureRule() *Rule {
-	return &Rule{
+func FixtureRule() Rule {
+	return Rule{
 		Verbs:     []string{VerbAll},
 		Resources: []string{ResourceAll},
 	}
@@ -32,7 +32,7 @@ func FixtureRole(name, namespace string) *Role {
 		Name:      name,
 		Namespace: namespace,
 		Rules: []Rule{
-			*FixtureRule(),
+			FixtureRule(),
 		},
 	}
 }
@@ -42,7 +42,7 @@ func FixtureClusterRole(name string) *ClusterRole {
 	return &ClusterRole{
 		Name: name,
 		Rules: []Rule{
-			*FixtureRule(),
+			FixtureRule(),
 		},
 	}
 }

@@ -16,7 +16,7 @@ func TestCreateCommand(t *testing.T) {
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
 	assert.Regexp("create", cmd.Use)
-	assert.Regexp("roles", cmd.Short)
+	assert.Regexp("role", cmd.Short)
 }
 
 func TestCreateCommandRunEClosureMissingArgs(t *testing.T) {

@@ -224,7 +224,7 @@ func registerRoleNodeResolver(register relay.NodeRegister, store store.RoleStore
 
 func (f *roleNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
 	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.controller.Find(ctx, p.IDComponents.UniqueComponent())
+	record, err := f.controller.Get(ctx, p.IDComponents.UniqueComponent())
 	return handleControllerResults(record, err)
 }
 

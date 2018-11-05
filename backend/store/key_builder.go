@@ -12,7 +12,7 @@ const keySeparator = "/"
 // KeyBuilder builds multi-tenant resource keys.
 type KeyBuilder struct {
 	resourceName string
-	namespace    Namespace
+	namespace    string
 }
 
 // NewKeyBuilder creates a new KeyBuilder.
@@ -23,7 +23,7 @@ func NewKeyBuilder(resourceName string) KeyBuilder {
 
 // WithNamespace adds a namespace to a key.
 func (b KeyBuilder) WithNamespace(namespace string) KeyBuilder {
-	b.namespace = Namespace{Namespace: namespace}
+	b.namespace = namespace
 	return b
 }
 
@@ -35,6 +35,8 @@ func (b KeyBuilder) WithResource(r types.MultitenantResource) KeyBuilder {
 
 // WithContext adds a namespace from a context.
 func (b KeyBuilder) WithContext(ctx context.Context) KeyBuilder {
+	// TODO (Simon): Use the authorization attributes to get the namespace and
+	// remove the "namespace" middleware
 	b.namespace = NewNamespaceFromContext(ctx)
 	return b
 }
@@ -45,7 +47,7 @@ func (b KeyBuilder) Build(keys ...string) string {
 		[]string{
 			Root,
 			b.resourceName,
-			b.namespace.Namespace,
+			b.namespace,
 		},
 		keys...,
 	)
@@ -58,7 +60,7 @@ func (b KeyBuilder) Build(keys ...string) string {
 func (b KeyBuilder) BuildPrefix(keys ...string) string {
 	out := Root + keySeparator + b.resourceName
 
-	keys = append([]string{b.namespace.Namespace}, keys...)
+	keys = append([]string{b.namespace}, keys...)
 	for _, key := range keys {
 		// If we encounter a wildcard stop and return key
 		if key == WildcardValue {

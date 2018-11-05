@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -18,6 +19,53 @@ const (
 	// WatchDelete indicates that an object was deleted.
 	WatchDelete
 )
+
+// ErrAlreadyExists is returned when an object already exists
+type ErrAlreadyExists struct {
+	Key string
+}
+
+func (e *ErrAlreadyExists) Error() string {
+	return fmt.Sprintf("could not create the key %s", e.Key)
+}
+
+// ErrDecode is returned when an object could not be decoded
+type ErrDecode struct {
+	Key string
+	Err error
+}
+
+func (e *ErrDecode) Error() string {
+	return fmt.Sprintf("could not decode the key %s: %s", e.Key, e.Err.Error())
+}
+
+// ErrEncode is returned when an object could not be decoded
+type ErrEncode struct {
+	Key string
+	Err error
+}
+
+func (e *ErrEncode) Error() string {
+	return fmt.Sprintf("could not encode the key %s: %s", e.Key, e.Err.Error())
+}
+
+// ErrNotFound is returned when a key is not found in the store
+type ErrNotFound struct {
+	Key string
+}
+
+func (e *ErrNotFound) Error() string {
+	return fmt.Sprintf("key %s not found", e.Key)
+}
+
+// ErrNotValid is returned when an object failed validation
+type ErrNotValid struct {
+	Err error
+}
+
+func (e *ErrNotValid) Error() string {
+	return fmt.Sprintf("resource is invalid: %s", e.Err.Error())
+}
 
 // WatchActionType indicates what type of change was made to an object in the store.
 type WatchActionType int
@@ -182,6 +230,53 @@ type CheckConfigStore interface {
 	GetCheckConfigWatcher(ctx context.Context) <-chan WatchEventCheckConfig
 }
 
+// ClusterRoleBindingStore provides methods for managing RBAC cluster role
+// bindings
+type ClusterRoleBindingStore interface {
+	// Create a given cluster role binding
+	CreateClusterRoleBinding(ctx context.Context, clusterRoleBinding *types.ClusterRoleBinding) error
+
+	// CreateOrUpdateRole overwrites the given cluster role binding
+	CreateOrUpdateClusterRoleBinding(ctx context.Context, clusterRoleBinding *types.ClusterRoleBinding) error
+
+	// DeleteRole deletes a cluster role binding using the given name.
+	DeleteClusterRoleBinding(ctx context.Context, name string) error
+
+	// GetRole returns a cluster role binding using the given name. An error is
+	// returned if no binding was found
+	GetClusterRoleBinding(ctx context.Context, name string) (*types.ClusterRoleBinding, error)
+
+	// ListRoles returns all cluster role binding. An error is returned if no
+	// binding were found
+	ListClusterRoleBindings(context.Context) ([]*types.ClusterRoleBinding, error)
+
+	// UpdateRole creates or updates a given cluster role binding.
+	UpdateClusterRoleBinding(ctx context.Context, clusterRoleBinding *types.ClusterRoleBinding) error
+}
+
+// ClusterRoleStore provides methods for managing RBAC cluster roles and rules
+type ClusterRoleStore interface {
+	// Create a given cluster role
+	CreateClusterRole(ctx context.Context, clusterRole *types.ClusterRole) error
+
+	// CreateOrUpdateClusterRole overwrites the given cluster role
+	CreateOrUpdateClusterRole(ctx context.Context, clusterRole *types.ClusterRole) error
+
+	// DeleteClusterRole deletes a cluster role using the given name.
+	DeleteClusterRole(ctx context.Context, name string) error
+
+	// GetClusterRole returns a cluster role using the given name. An error is
+	// returned if no role was found
+	GetClusterRole(ctx context.Context, name string) (*types.ClusterRole, error)
+
+	// ListClusterRoles returns all cluster roles. An error is returned if no
+	// roles were found
+	ListClusterRoles(context.Context) ([]*types.ClusterRole, error)
+
+	// UpdateClusterRole creates or updates a given cluster role.
+	UpdateClusterRole(ctx context.Context, clusterRole *types.ClusterRole) error
+}
+
 // HookConfigStore provides methods for managing hooks configuration
 type HookConfigStore interface {
 	// DeleteHookConfigByName deletes a hook's configuration using the given name
@@ -344,17 +439,45 @@ type NamespaceStore interface {
 	UpdateNamespace(ctx context.Context, org *types.Namespace) error
 }
 
+// RoleBindingStore provides methods for managing RBAC role bindings
+type RoleBindingStore interface {
+	// Create a given role binding
+	CreateRoleBinding(ctx context.Context, roleBinding *types.RoleBinding) error
+
+	// CreateOrUpdateRole overwrites the given role binding
+	CreateOrUpdateRoleBinding(ctx context.Context, roleBinding *types.RoleBinding) error
+
+	// DeleteRole deletes a role binding using the given name.
+	DeleteRoleBinding(ctx context.Context, name string) error
+
+	// GetRole returns a role binding using the given name. An error is returned
+	// if no binding was found
+	GetRoleBinding(ctx context.Context, name string) (*types.RoleBinding, error)
+
+	// ListRoles returns all role binding. An error is returned if no binding were
+	// found
+	ListRoleBindings(context.Context) ([]*types.RoleBinding, error)
+
+	// UpdateRole creates or updates a given role binding.
+	UpdateRoleBinding(ctx context.Context, roleBinding *types.RoleBinding) error
+}
+
 // RoleStore provides methods for managing RBAC roles and rules
 type RoleStore interface {
+	// Create a given role
+	CreateRole(ctx context.Context, role *types.Role) error
+
+	// CreateOrUpdateRole overwrites the given role
+	CreateOrUpdateRole(ctx context.Context, role *types.Role) error
+
 	// DeleteRole deletes a role using the given name.
 	DeleteRole(ctx context.Context, name string) error
 
-	// GetRole returns a role using the given name. The result is nil if
-	// none was found.
+	// GetRole returns a role using the given name. An error is returned if no
+	// role was found
 	GetRole(ctx context.Context, name string) (*types.Role, error)
 
-	// ListRoles returns all roles. A nil slice with no error is returned if none
-	// were found.
+	// ListRoles returns all roles. An error is returned if no roles were found
 	ListRoles(context.Context) ([]*types.Role, error)
 
 	// UpdateRole creates or updates a given role.
