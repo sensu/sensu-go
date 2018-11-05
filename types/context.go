@@ -22,6 +22,9 @@ const (
 	RefreshTokenClaims
 	// RefreshTokenString contains the key name to retrieve the refresh token string
 	RefreshTokenString
+	// AuthorizationAttributesKey is the key name used to store authorization
+	// attributes extracted from a request
+	AuthorizationAttributesKey
 	// StoreKey contains the key name to retrieve the etcd store from within a context
 	StoreKey
 )

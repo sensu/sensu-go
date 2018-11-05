@@ -74,7 +74,8 @@ func New(c Config, opts ...Option) (*APId, error) {
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
 	registerUnauthenticatedResources(router, a.store)
 	registerAuthenticationResources(router, a.store)
-	registerRestrictedResources(router, a.store, a.queueGetter, a.bus, a.cluster)
+	registerRestrictedLegacyResources(router, a.store, a.queueGetter, a.bus, a.cluster)
+	registerRestrictedResources(router, a.store)
 
 	a.HTTPServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
@@ -177,10 +178,11 @@ func registerAuthenticationResources(router *mux.Router, store store.Store) {
 	)
 }
 
-func registerRestrictedResources(router *mux.Router, store store.Store, getter types.QueueGetter, bus messaging.MessageBus, cluster clientv3.Cluster) {
+func registerRestrictedLegacyResources(router *mux.Router, store store.Store, getter types.QueueGetter, bus messaging.MessageBus, cluster clientv3.Cluster) {
 	mountRouters(
 		NewSubrouter(
 			router.NewRoute(),
+			middlewares.LegacyAuthorizationAttributes{},
 			middlewares.SimpleLogger{},
 			middlewares.Namespace{},
 			middlewares.Authentication{},
@@ -198,11 +200,25 @@ func registerRestrictedResources(router *mux.Router, store store.Store, getter t
 		routers.NewHooksRouter(store),
 		routers.NewMutatorsRouter(store),
 		routers.NewNamespacesRouter(actions.NewNamespacesController(store)),
-		routers.NewRolesRouter(store),
 		routers.NewSilencedRouter(store),
 		routers.NewUsersRouter(store),
 		routers.NewExtensionsRouter(store),
 		routers.NewClusterRouter(actions.NewClusterController(cluster)),
+	)
+}
+
+func registerRestrictedResources(router *mux.Router, store store.Store) {
+	mountRouters(
+		NewSubrouter(
+			router.NewRoute(),
+			middlewares.AuthorizationAttributes{},
+			middlewares.SimpleLogger{},
+			middlewares.Authentication{},
+			middlewares.AllowList{Store: store},
+			middlewares.LimitRequest{},
+			middlewares.Edition{Name: version.Edition},
+		),
+		routers.NewRolesRouter(store),
 	)
 }
 
