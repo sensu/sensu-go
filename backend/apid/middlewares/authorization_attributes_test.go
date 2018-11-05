@@ -252,7 +252,7 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 				Namespace:    "default",
 				Resource:     "checks",
 				ResourceName: "foo",
-				Verb:         "post",
+				Verb:         "create",
 			},
 		},
 		{
@@ -269,7 +269,7 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 				Namespace:    "default",
 				Resource:     "checks",
 				ResourceName: "foo",
-				Verb:         "put",
+				Verb:         "update",
 			},
 		},
 		{
