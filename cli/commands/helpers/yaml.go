@@ -1,11 +1,12 @@
 package helpers
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 
 	"github.com/sensu/sensu-go/types"
-	yaml "gopkg.in/yaml.v2"
+	yaml "github.com/sensu/yaml"
 )
 
 // wrapper is used to get the precise yaml encoding behaviour we want
@@ -29,7 +30,9 @@ func wrapResource(r types.Resource) wrapper {
 func toMap(v interface{}) map[string]interface{} {
 	b, _ := json.Marshal(v)
 	result := map[string]interface{}{}
-	_ = json.Unmarshal(b, &result)
+	dec := json.NewDecoder(bytes.NewReader(b))
+	dec.UseNumber()
+	_ = dec.Decode(&result)
 	return result
 }
 
