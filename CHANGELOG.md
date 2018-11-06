@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Adds links to view entities and checks from the events page.
 - Added an agent/cmd package, migrated startup logic out of agent main
 - Improved debug logging in pipeline filtering.
+- Added links to view entities and checks from the events page.
 
 ### Fixed
 - Display appropriate fallback when an entity's lastSeen field is empty.
@@ -23,6 +24,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed a bug that would prevent some keepalive failures from occurring.
 - Improved event validation error messages.
 - Improved agent logging for statsd events.
+- To account for small amounts of drift, relative dates are now clamped if they
+  are slightly off.
 
 ### Breaking Changes
 - Environments and organizations have been replaced with namespaces.
