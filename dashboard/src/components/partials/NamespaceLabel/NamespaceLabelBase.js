@@ -39,13 +39,13 @@ class NamespaceLabelBase extends React.Component {
     return (
       <div className={classes.container}>
         <Typography className={classes.label} variant="subheading">
-          <span className={classes.lighter}>{nsComponents.shift()}</span>
-          {nsComponents.length > 0 && (
+          {nsComponents.length > 1 && (
             <React.Fragment>
+              <span className={classes.lighter}>{nsComponents.shift()}</span>
               {" - "}
-              <span className={classes.heavier}>{nsComponents.join("-")}</span>
             </React.Fragment>
           )}
+          <span className={classes.heavier}>{nsComponents.join("-")}</span>
         </Typography>
 
         <Icon icon={icon} colour={colour} />
