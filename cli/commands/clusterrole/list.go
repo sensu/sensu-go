@@ -1,4 +1,4 @@
-package role
+package clusterrole
 
 import (
 	"io"
@@ -11,15 +11,15 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// ListCommand defines a command to list roles
+// ListCommand list all roles
 func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "list",
-		Short:        "list roles",
+		Short:        "list cluster roles",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Fetch roles from API
-			results, err := cli.Client.ListRoles()
+			results, err := cli.Client.ListClusterRoles()
 			if err != nil {
 				return err
 			}
@@ -40,7 +40,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				role, ok := data.(types.Role)
+				role, ok := data.(types.ClusterRole)
 				if !ok {
 					return cli.TypeError
 				}
@@ -48,19 +48,9 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
-			Title: "Namespace",
-			CellTransformer: func(data interface{}) string {
-				role, ok := data.(types.Role)
-				if !ok {
-					return cli.TypeError
-				}
-				return role.Namespace
-			},
-		},
-		{
 			Title: "Rules",
 			CellTransformer: func(data interface{}) string {
-				role, ok := data.(types.Role)
+				role, ok := data.(types.ClusterRole)
 				if !ok {
 					return cli.TypeError
 				}

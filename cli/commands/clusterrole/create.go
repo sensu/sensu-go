@@ -1,20 +1,19 @@
-package role
+package clusterrole
 
 import (
 	"errors"
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
-	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
-// CreateCommand defines new command to create roles
+// CreateCommand defines new command to create a cluster role
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "create [NAME]",
-		Short:        "create a new role and assign a rule to it",
+		Short:        "create a new cluster role and assign a rule to it",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
@@ -22,12 +21,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return errors.New("a name is required")
 			}
 
-			role := &types.Role{Name: args[0]}
-			if namespace := helpers.GetChangedStringValueFlag("namespace", cmd.Flags()); namespace != "" {
-				role.Namespace = namespace
-			} else {
-				role.Namespace = cli.Config.Namespace()
-			}
+			clusterRole := &types.ClusterRole{Name: args[0]}
 
 			// Retrieve the rule from the flags
 			rule := types.Rule{}
@@ -56,13 +50,13 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 			rule.ResourceNames = resourceNames
 
-			// Assign the rule to our role and validate it
-			role.Rules = []types.Rule{rule}
-			if err := role.Validate(); err != nil {
+			// Assign the rule to our cluster role and validate it
+			clusterRole.Rules = []types.Rule{rule}
+			if err := clusterRole.Validate(); err != nil {
 				return err
 			}
 
-			if err := cli.Client.CreateRole(role); err != nil {
+			if err := cli.Client.CreateClusterRole(clusterRole); err != nil {
 				return err
 			}
 			_, err = fmt.Fprintln(cmd.OutOrStdout(), "Created")
