@@ -149,6 +149,9 @@ type Store interface {
 	// ClusterRoleStore provides an interface for managing cluster roles
 	ClusterRoleStore
 
+	// ClusterRoleBindingStore provides an interface for managing cluster role bindings
+	ClusterRoleBindingStore
+
 	// RoleStore provides an interface for managing roles
 	RoleStore
 
