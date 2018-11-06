@@ -7,7 +7,7 @@ class RelativeDate extends React.Component {
   static propTypes = {
     capitalize: PropTypes.bool,
     // When a direction is given the delta is clamped to the correct direction.
-    direction: PropTypes.oneOf("pending", "past", "any"),
+    direction: PropTypes.oneOf(["pending", "past", "any"]),
     // When a direction is given the delta is only clamped if the value is
     // within the given duration.
     clampClose: PropTypes.bool,
