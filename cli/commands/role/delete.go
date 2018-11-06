@@ -13,13 +13,13 @@ import (
 func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "delete [NAME]",
-		Short:        "delete role given name",
+		Short:        "delete a role with the given name",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If no name is present print out usage
 			if len(args) != 1 {
 				_ = cmd.Help()
-				return errors.New("invalid argument(s) received")
+				return errors.New("a role name is required")
 			}
 			name := args[0]
 			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {

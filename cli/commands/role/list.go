@@ -3,6 +3,7 @@ package role
 import (
 	"errors"
 	"io"
+	"strconv"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
@@ -49,6 +50,26 @@ func printToTable(results interface{}, writer io.Writer) {
 					return cli.TypeError
 				}
 				return role.Name
+			},
+		},
+		{
+			Title: "Namespace",
+			CellTransformer: func(data interface{}) string {
+				role, ok := data.(types.Role)
+				if !ok {
+					return cli.TypeError
+				}
+				return role.Namespace
+			},
+		},
+		{
+			Title: "Rules",
+			CellTransformer: func(data interface{}) string {
+				role, ok := data.(types.Role)
+				if !ok {
+					return cli.TypeError
+				}
+				return strconv.Itoa(len(role.Rules))
 			},
 		},
 	})

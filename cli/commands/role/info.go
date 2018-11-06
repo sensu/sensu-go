@@ -2,10 +2,14 @@ package role
 
 import (
 	"errors"
+	"fmt"
 	"io"
+	"strings"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/elements/table"
+	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -41,5 +45,50 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 }
 
 func printRulesToTable(v interface{}, io io.Writer) error {
+	queryResults, ok := v.(*types.Role)
+	if !ok {
+		return fmt.Errorf("%t is not a Role", v)
+	}
+	table := table.New([]*table.Column{
+		{
+			Title:       "Namespace",
+			ColumnStyle: table.PrimaryTextStyle,
+			CellTransformer: func(data interface{}) string {
+				return queryResults.Namespace
+			},
+		},
+		{
+			Title: "Verbs",
+			CellTransformer: func(data interface{}) string {
+				rule, ok := data.(types.Rule)
+				if !ok {
+					return cli.TypeError
+				}
+				return strings.Join(rule.Verbs, ",")
+			},
+		},
+		{
+			Title: "Resources",
+			CellTransformer: func(data interface{}) string {
+				rule, ok := data.(types.Rule)
+				if !ok {
+					return cli.TypeError
+				}
+				return strings.Join(rule.Resources, ",")
+			},
+		},
+		{
+			Title: "Resource Names",
+			CellTransformer: func(data interface{}) string {
+				rule, ok := data.(types.Rule)
+				if !ok {
+					return cli.TypeError
+				}
+				return strings.Join(rule.ResourceNames, ",")
+			},
+		},
+	})
+
+	table.Render(io, queryResults.Rules)
 	return nil
 }
