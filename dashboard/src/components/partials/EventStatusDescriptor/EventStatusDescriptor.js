@@ -6,7 +6,7 @@ import equals from "lodash/isEqual";
 import { RelativeToCurrentDate } from "/components/RelativeDate";
 
 function PastDateRelative(props) {
-  return <RelativeToCurrentDate clamp="only-past" {...props} />;
+  return <RelativeToCurrentDate direction="past" {...props} />;
 }
 
 class EventStatusDescriptor extends React.Component {

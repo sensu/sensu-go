@@ -26,7 +26,7 @@ class SilenceExpiration extends React.Component {
         <React.Fragment>
           Expires when <strong>resolved</strong> or{" "}
           <strong>
-            <RelativeToCurrentDate clamp="only-pending" dateTime={expires} />
+            <RelativeToCurrentDate direction="pending" dateTime={expires} />
           </strong>.
         </React.Fragment>
       );
@@ -41,7 +41,7 @@ class SilenceExpiration extends React.Component {
         <React.Fragment>
           Expires{" "}
           <strong>
-            <RelativeToCurrentDate clamp="only-pending" dateTime={expires} />
+            <RelativeToCurrentDate direction="pending" dateTime={expires} />
           </strong>.
         </React.Fragment>
       );

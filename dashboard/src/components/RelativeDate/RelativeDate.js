@@ -6,11 +6,12 @@ import Tooltip from "@material-ui/core/Tooltip";
 class RelativeDate extends React.Component {
   static propTypes = {
     capitalize: PropTypes.bool,
-    // Allows consumer to specify whether or not the delta should be clamped.
-    //   "only-pending" equivelant to clamp(delta, 0, math.Infinity)
-    //   "only-past" equivelant to clamp(delta, -math.Infinity, 0)
-    //   the default option "none" means delta will not be clamped
-    clamp: PropTypes.oneOf(["only-pending", "only-past", "none"]),
+    // When a direction is given the delta is clamped to the correct direction.
+    direction: PropTypes.oneOf("pending", "past", "any"),
+    // When a direction is given the delta is only clamped if the value is
+    // within the given duration.
+    clampClose: PropTypes.bool,
+    clampCloseDuration: PropTypes.number,
     dateTime: PropTypes.string.isRequired,
     precision: PropTypes.oneOf(["default", "seconds"]),
     // TODO: intl-relativeformat is out of date w/ specification
@@ -31,7 +32,9 @@ class RelativeDate extends React.Component {
 
   static defaultProps = {
     capitalize: false,
-    clamp: "none",
+    direction: "any",
+    clampClose: true,
+    clampCloseDuration: 5000,
     precision: "default",
     // TODO: intl-relativeformat is out of date w/ specification
     // style: "long",
@@ -63,7 +66,9 @@ class RelativeDate extends React.Component {
   render() {
     const {
       capitalize,
-      clamp,
+      clampClose,
+      clampCloseDuration,
+      direction,
       dateTime,
       precision,
       style,
@@ -76,10 +81,12 @@ class RelativeDate extends React.Component {
     const dateValue = new Date(dateTime);
 
     let delta = to - dateValue;
-    if (clamp === "only-past") {
-      delta = Math.max(delta, 0);
-    } else if (clamp === "only-pending") {
-      delta = Math.min(delta, 0);
+    if (!clampClose || clampCloseDuration > Math.abs(delta)) {
+      if (direction === "past") {
+        delta = Math.max(delta, 0);
+      } else if (direction === "pending") {
+        delta = Math.min(delta, 0);
+      }
     }
 
     let relativeDate;

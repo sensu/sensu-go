@@ -124,7 +124,7 @@ class EntityDetailsInformation extends React.PureComponent {
                     <Maybe value={entity.lastSeen} fallback="n/a">
                       {val => (
                         <RelativeToCurrentDate
-                          clamp="only-past"
+                          direction="past"
                           dateTime={val}
                         />
                       )}

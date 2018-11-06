@@ -101,7 +101,7 @@ class EventDetailsCheckResult extends React.PureComponent {
                       {val => (
                         <RelativeToCurrentDate
                           capitalize
-                          clamp="only-past"
+                          direction="past"
                           dateTime={val}
                         />
                       )}
