@@ -146,6 +146,9 @@ type Store interface {
 	// NamespaceStore provides an interface for managing namespaces
 	NamespaceStore
 
+	// ClusterRoleStore provides an interface for managing cluster roles
+	ClusterRoleStore
+
 	// RoleStore provides an interface for managing roles
 	RoleStore
 

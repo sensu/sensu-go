@@ -218,6 +218,7 @@ func registerRestrictedResources(router *mux.Router, store store.Store) {
 			middlewares.LimitRequest{},
 			middlewares.Edition{Name: version.Edition},
 		),
+		routers.NewClusterRolesRouter(store),
 		routers.NewRolesRouter(store),
 		routers.NewRoleBindingsRouter(store),
 	)
