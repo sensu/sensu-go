@@ -11,6 +11,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Assets are included on check details page.
 - Adds links to view entities and checks from the events page.
 - Added an agent/cmd package, migrated startup logic out of agent main
+- Improved debug logging in pipeline filtering.
 
 ### Fixed
 - Display appropriate fallback when an entity's lastSeen field is empty.
