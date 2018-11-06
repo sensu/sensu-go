@@ -12,40 +12,52 @@ const styles = theme => ({
     opacity: 0.9,
     display: "block",
   },
-  org: {
+  prefixLabel: {
     fontWeight: "lighter",
     fontSize: "0.75rem",
   },
-  envContainer: {
+  nameLabel: {
+    fontSize: "1.25rem",
+  },
+  nameContainer: {
     margin: "-6px 0 0",
     display: "flex",
     justifyContent: "space-between",
   },
-  env: { fontSize: "1.25rem" },
-  arrow: { color: theme.palette.primary.contrastText },
+  arrow: {
+    color: theme.palette.primary.contrastText,
+  },
 });
 
 class NamespaceSelectorBuilder extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
-    environment: PropTypes.object,
+    namespace: PropTypes.object,
   };
 
   static defaultProps = {
-    environment: null,
+    namespace: null,
   };
 
   render() {
-    const { classes, environment } = this.props;
+    const { classes, namespace } = this.props;
+
+    let [prefix, ...name] = namespace ? namespace.name.split("-") : [];
+    if (name.length === 0) {
+      name = prefix;
+      prefix = null;
+    } else {
+      name = name.join("-");
+    }
 
     return (
       <div className={classes.selectorContainer}>
-        <Typography className={classNames(classes.label, classes.org)}>
-          {environment && environment.organization.name}
+        <Typography className={classNames(classes.label, classes.prefixLabel)}>
+          {prefix || " "}
         </Typography>
-        <div className={classes.envContainer}>
-          <Typography className={classNames(classes.label, classes.env)}>
-            {environment && environment.name}
+        <div className={classes.nameContainer}>
+          <Typography className={classNames(classes.label, classes.nameLabel)}>
+            {name}
           </Typography>
           <span className={classes.arrow}>
             <ArrowIcon />

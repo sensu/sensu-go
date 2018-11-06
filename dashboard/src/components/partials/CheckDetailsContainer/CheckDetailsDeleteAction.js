@@ -25,23 +25,20 @@ class CheckDetailsDeleteAction extends React.PureComponent {
       fragment CheckDetailsDeleteAction_check on CheckConfig {
         id
         name
-        ns: namespace {
-          org: organization
-          env: environment
-        }
+        namespace
       }
     `,
   };
 
   deleteRecord = () => {
     const { client, check, history } = this.props;
-    const { id, ns } = check;
+    const { id, namespace } = check;
 
     // Send request
     deleteCheck(client, { id });
 
     // Optimistically redirect
-    history.replace(`/${ns.org}/${ns.env}/checks`);
+    history.replace(`/${namespace}/checks`);
   };
 
   render() {

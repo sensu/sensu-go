@@ -47,11 +47,8 @@ const createClient = () => {
   localStorageSync(
     client,
     gql`
-      query SyncLastEnvironmentQuery {
-        lastEnvironment @client {
-          organization
-          environment
-        }
+      query SyncLastNamespaceQuery {
+        lastNamespace @client
       }
     `,
     {

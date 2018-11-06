@@ -25,7 +25,7 @@ import EntitiesListItem from "./EntitiesListItem";
 class EntitiesList extends React.PureComponent {
   static propTypes = {
     client: PropTypes.object.isRequired,
-    environment: PropTypes.object,
+    namespace: PropTypes.object,
     loading: PropTypes.bool,
     order: PropTypes.string.isRequired,
     onChangeQuery: PropTypes.func.isRequired,
@@ -35,7 +35,7 @@ class EntitiesList extends React.PureComponent {
   };
 
   static defaultProps = {
-    environment: null,
+    namespace: null,
     loading: false,
     limit: undefined,
     offset: undefined,
@@ -43,8 +43,8 @@ class EntitiesList extends React.PureComponent {
   };
 
   static fragments = {
-    environment: gql`
-      fragment EntitiesList_environment on Environment {
+    namespace: gql`
+      fragment EntitiesList_namespace on Namespace {
         entities(
           limit: $limit
           offset: $offset
@@ -53,26 +53,25 @@ class EntitiesList extends React.PureComponent {
         ) @connection(key: "entities", filter: ["filter", "orderBy"]) {
           nodes {
             id
+            namespace
             deleted @client
-            ...EntitiesListItem_entity
+
             silences {
               ...ClearSilencedEntriesDialog_silence
             }
-            namespace {
-              organization
-              environment
-            }
+
+            ...EntitiesListItem_entity
           }
 
           pageInfo {
             ...Pagination_pageInfo
           }
         }
-        ...EntitiesListHeader_environment
+        ...EntitiesListHeader_namespace
       }
 
       ${ClearSilencesDialog.fragments.silence}
-      ${EntitiesListHeader.fragments.environment}
+      ${EntitiesListHeader.fragments.namespace}
       ${EntitiesListItem.fragments.entity}
       ${Pagination.fragments.pageInfo}
     `,
@@ -92,10 +91,7 @@ class EntitiesList extends React.PureComponent {
     const targets = entities
       .filter(entity => entity.silences.length === 0)
       .map(entity => ({
-        ns: {
-          environment: entity.namespace.environment,
-          organization: entity.namespace.organization,
-        },
+        namespace: entity.namespace,
         check: "*",
         subscription: `entity:${entity.name}`,
       }));
@@ -154,7 +150,7 @@ class EntitiesList extends React.PureComponent {
   render() {
     const { silence, unsilence } = this.state;
     const {
-      environment,
+      namespace,
       loading,
       onChangeQuery,
       limit,
@@ -163,8 +159,8 @@ class EntitiesList extends React.PureComponent {
       order,
     } = this.props;
 
-    const items = environment
-      ? environment.entities.nodes.filter(entity => !entity.deleted)
+    const items = namespace
+      ? namespace.entities.nodes.filter(entity => !entity.deleted)
       : [];
 
     return (
@@ -190,7 +186,7 @@ class EntitiesList extends React.PureComponent {
                 onClickSilence={() => this.silenceItems(selectedItems)}
                 onClickClearSilences={() => this.clearSilences(selectedItems)}
                 onChangeQuery={onChangeQuery}
-                environment={environment}
+                namespace={namespace}
                 order={order}
               />
 
@@ -201,7 +197,7 @@ class EntitiesList extends React.PureComponent {
               <Pagination
                 limit={limit}
                 offset={offset}
-                pageInfo={environment && environment.entities.pageInfo}
+                pageInfo={namespace && namespace.entities.pageInfo}
                 onChangeQuery={onChangeQuery}
               />
 

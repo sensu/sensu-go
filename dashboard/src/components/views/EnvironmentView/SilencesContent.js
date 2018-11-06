@@ -39,33 +39,32 @@ class SilencesContent extends React.Component {
 
   static query = gql`
     query EnvironmentViewSilencesContentQuery(
-      $environment: String!
-      $organization: String!
+      $namespace: String!
       $limit: Int
       $offset: Int
       $order: SilencesListOrder
       $filter: String
     ) {
-      environment(organization: $organization, environment: $environment) {
-        ...SilencesList_environment
+      namespace(name: $namespace) {
+        ...SilencesList_namespace
       }
     }
 
-    ${SilencesList.fragments.environment}
+    ${SilencesList.fragments.namespace}
   `;
 
   renderContent = renderProps => {
     const { match, queryParams, setQueryParams } = this.props;
     const { filter, limit, offset, order } = queryParams;
     const {
-      data: { environment } = {},
+      data: { namespace } = {},
       loading,
       aborted,
       refetch,
       poller,
     } = renderProps;
 
-    if (!environment && !loading && !aborted) {
+    if (!namespace && !loading && !aborted) {
       return <NotFound />;
     }
 
@@ -88,8 +87,8 @@ class SilencesContent extends React.Component {
               {newDialog.isOpen && (
                 <SilenceEntryDialog
                   values={{
+                    namespace: match.params.namespace,
                     props: {},
-                    ns: match.params,
                   }}
                   onClose={() => {
                     // TODO: Only refetch / poison list on success
@@ -108,9 +107,9 @@ class SilencesContent extends React.Component {
             offset={offset}
             order={order}
             onChangeQuery={setQueryParams}
-            environment={environment}
+            namespace={namespace}
             loading={
-              (loading && (!environment || !poller.isRunning())) || aborted
+              (loading && (!namespace || !poller.isRunning())) || aborted
             }
             refetch={refetch}
           />
