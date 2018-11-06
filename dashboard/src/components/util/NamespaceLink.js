@@ -17,7 +17,7 @@ class NamespaceLink extends React.PureComponent {
 
   renderLink = (namespace, props) => {
     const { component: Component, to, ...other } = props;
-    return <Component {...other} to={`/${namespace}/${to}`} />;
+    return <Component {...other} to={`/${namespace}${to}`} />;
   };
 
   render() {
