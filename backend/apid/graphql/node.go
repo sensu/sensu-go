@@ -30,7 +30,10 @@ func newNodeResolver(store store.Store, getter types.QueueGetter) *nodeResolver 
 	registerHandlerNodeResolver(register, store)
 	registerHookNodeResolver(register, store)
 	registerMutatorNodeResolver(register, store)
+	registerClusterRoleNodeResolver(register, store)
+	registerClusterRoleBindingNodeResolver(register, store)
 	registerRoleNodeResolver(register, store)
+	registerRoleBindingNodeResolver(register, store)
 	registerUserNodeResolver(register, store)
 	registerEventNodeResolver(register, store)
 	registerNamespaceNodeResolver(register, store)
@@ -206,6 +209,50 @@ func (f *mutatorNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, er
 	return handleControllerResults(record, err)
 }
 
+// cluster roles
+
+type clusterRoleNodeResolver struct {
+	controller actions.ClusterRoleController
+}
+
+func registerClusterRoleNodeResolver(register relay.NodeRegister, store store.ClusterRoleStore) {
+	controller := actions.NewClusterRoleController(store)
+	resolver := &clusterRoleNodeResolver{controller}
+	register.RegisterResolver(relay.NodeResolver{
+		ObjectType: schema.ClusterRoleType,
+		Translator: globalid.ClusterRoleTranslator,
+		Resolve:    resolver.fetch,
+	})
+}
+
+func (f *clusterRoleNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
+	ctx := setContextFromComponents(p.Context, p.IDComponents)
+	record, err := f.controller.Get(ctx, p.IDComponents.UniqueComponent())
+	return handleControllerResults(record, err)
+}
+
+// cluster role bindings
+
+type clusterRoleBindingNodeResolver struct {
+	controller actions.ClusterRoleBindingController
+}
+
+func registerClusterRoleBindingNodeResolver(register relay.NodeRegister, store store.ClusterRoleBindingStore) {
+	controller := actions.NewClusterRoleBindingController(store)
+	resolver := &clusterRoleBindingNodeResolver{controller}
+	register.RegisterResolver(relay.NodeResolver{
+		ObjectType: schema.ClusterRoleBindingType,
+		Translator: globalid.ClusterRoleBindingTranslator,
+		Resolve:    resolver.fetch,
+	})
+}
+
+func (f *clusterRoleBindingNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
+	ctx := setContextFromComponents(p.Context, p.IDComponents)
+	record, err := f.controller.Get(ctx, p.IDComponents.UniqueComponent())
+	return handleControllerResults(record, err)
+}
+
 // roles
 
 type roleNodeResolver struct {
@@ -223,6 +270,28 @@ func registerRoleNodeResolver(register relay.NodeRegister, store store.RoleStore
 }
 
 func (f *roleNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
+	ctx := setContextFromComponents(p.Context, p.IDComponents)
+	record, err := f.controller.Get(ctx, p.IDComponents.UniqueComponent())
+	return handleControllerResults(record, err)
+}
+
+// role bindings
+
+type roleBindingNodeResolver struct {
+	controller actions.RoleBindingController
+}
+
+func registerRoleBindingNodeResolver(register relay.NodeRegister, store store.RoleBindingStore) {
+	controller := actions.NewRoleBindingController(store)
+	resolver := &roleBindingNodeResolver{controller}
+	register.RegisterResolver(relay.NodeResolver{
+		ObjectType: schema.RoleBindingType,
+		Translator: globalid.RoleBindingTranslator,
+		Resolve:    resolver.fetch,
+	})
+}
+
+func (f *roleBindingNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
 	ctx := setContextFromComponents(p.Context, p.IDComponents)
 	record, err := f.controller.Get(ctx, p.IDComponents.UniqueComponent())
 	return handleControllerResults(record, err)

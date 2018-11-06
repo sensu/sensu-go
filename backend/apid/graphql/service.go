@@ -80,11 +80,16 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterTimeWindowWhen(svc, &schema.TimeWindowWhenAliases{})
 	schema.RegisterTimeWindowTimeRange(svc, &schema.TimeWindowTimeRangeAliases{})
 
+	// Register RBAC types
+	schema.RegisterClusterRole(svc, &schema.ClusterRoleAliases{})
+	schema.RegisterClusterRoleBinding(svc, &schema.ClusterRoleBindingAliases{})
+	schema.RegisterRole(svc, &schema.RoleAliases{})
+	schema.RegisterRoleBinding(svc, &schema.RoleBindingAliases{})
+	schema.RegisterRoleRef(svc, &schema.RoleRefAliases{})
+	schema.RegisterRule(svc, &schema.RuleAliases{})
+	schema.RegisterSubject(svc, &schema.SubjectAliases{})
+
 	// Register user types
-	schema.RegisterRole(svc, &roleImpl{})
-	schema.RegisterRule(svc, &ruleImpl{})
-	schema.RegisterRuleResource(svc)
-	schema.RegisterRulePermission(svc)
 	schema.RegisterUser(svc, &userImpl{})
 
 	// Register mutations
