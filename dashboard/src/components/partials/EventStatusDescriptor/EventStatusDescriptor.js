@@ -5,6 +5,10 @@ import equals from "lodash/isEqual";
 
 import { RelativeToCurrentDate } from "/components/RelativeDate";
 
+function PastDateRelative(props) {
+  return <RelativeToCurrentDate clamp="only-past" {...props} />;
+}
+
 class EventStatusDescriptor extends React.Component {
   static propTypes = {
     check: PropTypes.object,
@@ -46,7 +50,7 @@ class EventStatusDescriptor extends React.Component {
       <React.Fragment>
         Metric received
         <strong>
-          <RelativeToCurrentDate dateTime={event.timestamp} />
+          <PastDateRelative dateTime={event.timestamp} />
         </strong>.
       </React.Fragment>
     );
@@ -60,7 +64,7 @@ class EventStatusDescriptor extends React.Component {
       <React.Fragment>
         Last executed{" "}
         <strong>
-          <RelativeToCurrentDate dateTime={event.timestamp} />
+          <PastDateRelative dateTime={event.timestamp} />
         </strong>.
       </React.Fragment>
     );
@@ -75,7 +79,7 @@ class EventStatusDescriptor extends React.Component {
       <React.Fragment>
         Incident started{" "}
         <strong>
-          <RelativeToCurrentDate dateTime={check.lastOK} />
+          <PastDateRelative dateTime={check.lastOK} />
         </strong>
         {!compact && (
           <React.Fragment>
@@ -99,7 +103,7 @@ class EventStatusDescriptor extends React.Component {
       <React.Fragment>
         Starting{" "}
         <strong>
-          <RelativeToCurrentDate dateTime={check.lastOK} />
+          <PastDateRelative dateTime={check.lastOK} />
         </strong>
         {", "}
         event began returning unknown status code{" "}

@@ -36,7 +36,7 @@ class EntityStatusDescriptor extends React.PureComponent {
         The <strong>{entity.class}</strong> was last seen{" "}
         <strong>
           <Maybe value={entity.lastSeen} fallback="never">
-            {val => <RelativeToCurrentDate dateTime={val} />}
+            {val => <RelativeToCurrentDate direction="past" dateTime={val} />}
           </Maybe>
         </strong>.
       </React.Fragment>

@@ -99,7 +99,11 @@ class EventDetailsCheckResult extends React.PureComponent {
                   <DictionaryValue>
                     <Maybe value={check.lastOK} fallback="Never">
                       {val => (
-                        <RelativeToCurrentDate dateTime={val} capitalize />
+                        <RelativeToCurrentDate
+                          capitalize
+                          clamp="only-past"
+                          dateTime={val}
+                        />
                       )}
                     </Maybe>
                   </DictionaryValue>

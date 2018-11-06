@@ -6,6 +6,11 @@ import Tooltip from "@material-ui/core/Tooltip";
 class RelativeDate extends React.Component {
   static propTypes = {
     capitalize: PropTypes.bool,
+    // Allows consumer to specify whether or not the delta should be clamped.
+    //   "only-pending" equivelant to clamp(delta, 0, math.Infinity)
+    //   "only-past" equivelant to clamp(delta, -math.Infinity, 0)
+    //   the default option "none" means delta will not be clamped
+    clamp: PropTypes.oneOf(["only-pending", "only-past", "none"]),
     dateTime: PropTypes.string.isRequired,
     precision: PropTypes.oneOf(["default", "seconds"]),
     // TODO: intl-relativeformat is out of date w/ specification
@@ -26,6 +31,7 @@ class RelativeDate extends React.Component {
 
   static defaultProps = {
     capitalize: false,
+    clamp: "none",
     precision: "default",
     // TODO: intl-relativeformat is out of date w/ specification
     // style: "long",
@@ -56,8 +62,9 @@ class RelativeDate extends React.Component {
 
   render() {
     const {
-      dateTime,
       capitalize,
+      clamp,
+      dateTime,
       precision,
       style,
       to,
@@ -67,7 +74,13 @@ class RelativeDate extends React.Component {
 
     const formatter = new IntlRelativeFormat("en", { style });
     const dateValue = new Date(dateTime);
-    const delta = to - dateValue;
+
+    let delta = to - dateValue;
+    if (clamp === "only-past") {
+      delta = Math.max(delta, 0);
+    } else if (clamp === "only-pending") {
+      delta = Math.min(delta, 0);
+    }
 
     let relativeDate;
     if (Math.abs(delta) >= 60000 || precision === "seconds") {

@@ -122,7 +122,12 @@ class EntityDetailsInformation extends React.PureComponent {
                   <DictionaryKey>Last Seen</DictionaryKey>
                   <DictionaryValue>
                     <Maybe value={entity.lastSeen} fallback="n/a">
-                      {val => <RelativeToCurrentDate dateTime={val} />}
+                      {val => (
+                        <RelativeToCurrentDate
+                          clamp="only-past"
+                          dateTime={val}
+                        />
+                      )}
                     </Maybe>
                   </DictionaryValue>
                 </DictionaryEntry>
