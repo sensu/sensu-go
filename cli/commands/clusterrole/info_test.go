@@ -22,7 +22,7 @@ func TestInfoCommand(t *testing.T) {
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
 	assert.Regexp("info", cmd.Use)
-	assert.Regexp("show detailed role information", cmd.Short)
+	assert.Regexp("cluster role", cmd.Short)
 }
 
 func TestInfoCommandRunEWithError(t *testing.T) {
@@ -33,8 +33,8 @@ func TestInfoCommandRunEWithError(t *testing.T) {
 	config.On("Format").Return("none")
 
 	client := cli.Client.(*client.MockClient)
-	client.On("FetchRole", "abc").Return(
-		types.FixtureRole("abc", "default"),
+	client.On("FetchClusterRole", "abc").Return(
+		types.FixtureClusterRole("abc"),
 		errors.New("sadfa"),
 	)
 
@@ -53,8 +53,8 @@ func TestInfoCommandRunEClosure(t *testing.T) {
 	config.On("Format").Return("none")
 
 	client := cli.Client.(*client.MockClient)
-	client.On("FetchRole", "abc").Return(
-		types.FixtureRole("abc", "default"),
+	client.On("FetchClusterRole", "abc").Return(
+		types.FixtureClusterRole("abc"),
 		nil,
 	)
 
@@ -70,8 +70,8 @@ func TestInfoCommandRunEJSON(t *testing.T) {
 	cli := test.NewCLI()
 
 	client := cli.Client.(*client.MockClient)
-	client.On("FetchRole", "abc").Return(
-		types.FixtureRole("abc", "default"),
+	client.On("FetchClusterRole", "abc").Return(
+		types.FixtureClusterRole("abc"),
 		nil,
 	)
 
