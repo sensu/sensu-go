@@ -149,6 +149,9 @@ type Store interface {
 	// RoleStore provides an interface for managing roles
 	RoleStore
 
+	// RoleBindingStore provides an interface for managing role bindings
+	RoleBindingStore
+
 	// SilencedStore provides an interface for managing silenced entries,
 	// consisting of entities, subscriptions and/or checks
 	SilencedStore
