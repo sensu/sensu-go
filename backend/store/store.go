@@ -119,6 +119,13 @@ type Store interface {
 	// CheckConfigStore provides an interface for managing checks configuration
 	CheckConfigStore
 
+	// ClusterRoleBindingStore provides an interface for managing
+	// ClusterRoleBindings
+	ClusterRoleBindingStore
+
+	// ClusterRoleStore provides an interface for managing ClusterRoles
+	ClusterRoleStore
+
 	// EntityStore provides an interface for managing entities
 	EntityStore
 
@@ -146,7 +153,10 @@ type Store interface {
 	// NamespaceStore provides an interface for managing namespaces
 	NamespaceStore
 
-	// RoleStore provides an interface for managing roles
+	// RoleBindingStore provides an interface for managing RoleBindings
+	RoleBindingStore
+
+	// RoleStore provides an interface for managing Roles
 	RoleStore
 
 	// SilencedStore provides an interface for managing silenced entries,
