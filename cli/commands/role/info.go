@@ -18,7 +18,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "info [NAME]",
 		Aliases:      []string{"list-rules"}, // backward compatibility
-		Short:        "show detailed information about a role",
+		Short:        "show detailed information about a Role",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {

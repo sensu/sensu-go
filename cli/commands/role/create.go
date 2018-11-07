@@ -13,8 +13,8 @@ import (
 // CreateCommand defines new command to create roles
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create [NAME]",
-		Short:        "create a new role and assign a rule to it",
+		Use:          "create [NAME] --verb=VERBS --resource=RESOURCES [--resource-name=RESOURCE_NAMES]",
+		Short:        "create a new Role with a single rule",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
@@ -32,7 +32,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			// Retrieve the rule from the flags
 			rule := types.Rule{}
 
-			verbs, err := cmd.Flags().GetStringSlice("verbs")
+			verbs, err := cmd.Flags().GetStringSlice("verb")
 			if err != nil {
 				return err
 			}
@@ -41,7 +41,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 			rule.Verbs = verbs
 
-			resources, err := cmd.Flags().GetStringSlice("resources")
+			resources, err := cmd.Flags().GetStringSlice("resource")
 			if err != nil {
 				return err
 			}
@@ -50,7 +50,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 			rule.Resources = resources
 
-			resourceNames, err := cmd.Flags().GetStringSlice("resource-names")
+			resourceNames, err := cmd.Flags().GetStringSlice("resource-name")
 			if err != nil {
 				return err
 			}
@@ -70,14 +70,14 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
-	_ = cmd.Flags().StringSliceP("verbs", "v", []string{},
-		"list of verbs that apply to all of the listed resources for this rule",
+	_ = cmd.Flags().StringSliceP("verb", "v", []string{},
+		"verbs that apply to the resources contained in the rule",
 	)
-	_ = cmd.Flags().StringSliceP("resources", "r", []string{},
-		"list of resources that this rule applies to",
+	_ = cmd.Flags().StringSliceP("resource", "r", []string{},
+		"resources that the rule applies to",
 	)
-	_ = cmd.Flags().StringSliceP("resource-names", "n", []string{},
-		"optional list of resource names that the rule applies to",
+	_ = cmd.Flags().StringSliceP("resource-name", "n", []string{},
+		"optional resource names that the rule applies to",
 	)
 
 	return cmd

@@ -9,7 +9,7 @@ import (
 func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "role",
-		Short: "Manage roles",
+		Short: "Manage Roles",
 	}
 
 	// Add sub-commands

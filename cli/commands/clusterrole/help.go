@@ -8,8 +8,8 @@ import (
 // HelpCommand defines new parent
 func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "clusterrole",
-		Short: "Manage cluster roles",
+		Use:   "cluster-role",
+		Short: "Manage ClusterRoles",
 	}
 
 	// Add sub-commands

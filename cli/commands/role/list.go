@@ -15,7 +15,7 @@ import (
 func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "list",
-		Short:        "list roles",
+		Short:        "list Roles",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Fetch roles from API

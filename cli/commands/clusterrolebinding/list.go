@@ -1,7 +1,6 @@
 package clusterrolebinding
 
 import (
-	"fmt"
 	"io"
 	"strconv"
 
@@ -49,13 +48,13 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
-			Title: "Role",
+			Title: "ClusterRole",
 			CellTransformer: func(data interface{}) string {
 				clusterRoleBinding, ok := data.(types.ClusterRoleBinding)
 				if !ok {
 					return cli.TypeError
 				}
-				return fmt.Sprintf("%s (%s)", clusterRoleBinding.RoleRef.Name, clusterRoleBinding.RoleRef.Type)
+				return clusterRoleBinding.RoleRef.Name
 			},
 		},
 		{

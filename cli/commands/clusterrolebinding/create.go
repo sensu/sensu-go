@@ -12,8 +12,8 @@ import (
 // CreateCommand defines a new command to create a cluster role binding
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create [NAME]",
-		Short:        "create a new cluster role binding",
+		Use:          "create [NAME] --cluster-role=NAME [--user=username] [--group=groupname]",
+		Short:        "create a new ClusterRoleBinding for a particular ClusterRole",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
@@ -23,6 +23,48 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 			clusterRoleBinding := &types.ClusterRoleBinding{Name: args[0]}
 
+			clusterRole, err := cmd.Flags().GetString("cluster-role")
+			if err != nil {
+				return err
+			}
+			if clusterRole == "" {
+				return errors.New("a ClusterRole must be provided")
+			}
+			clusterRoleBinding.RoleRef = types.RoleRef{
+				Type: "ClusterRole",
+				Name: clusterRole,
+			}
+
+			groups, err := cmd.Flags().GetStringSlice("group")
+			if err != nil {
+				return err
+			}
+			users, err := cmd.Flags().GetStringSlice("user")
+			if err != nil {
+				return err
+			}
+			if len(groups) == 0 && len(users) == 0 {
+				return errors.New("at least one group or user must be provided")
+			}
+
+			// Create our subjects list
+			for _, group := range groups {
+				clusterRoleBinding.Subjects = append(clusterRoleBinding.Subjects,
+					types.Subject{
+						Kind: "Group",
+						Name: group,
+					},
+				)
+			}
+			for _, user := range users {
+				clusterRoleBinding.Subjects = append(clusterRoleBinding.Subjects,
+					types.Subject{
+						Kind: "User",
+						Name: user,
+					},
+				)
+			}
+
 			// Assign the rule to our role and valiate it
 			if err := clusterRoleBinding.Validate(); err != nil {
 				return err
@@ -31,10 +73,20 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			if err := cli.Client.CreateClusterRoleBinding(clusterRoleBinding); err != nil {
 				return err
 			}
-			_, err := fmt.Fprintln(cmd.OutOrStdout(), "Created")
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), "Created")
 			return err
 		},
 	}
+
+	_ = cmd.Flags().StringP("cluster-role", "c", "",
+		"the ClusterRole this ClusterRoleBinding should reference",
+	)
+	_ = cmd.Flags().StringSliceP("group", "g", []string{},
+		"groups to bind to the ClusterRole",
+	)
+	_ = cmd.Flags().StringSliceP("user", "u", []string{},
+		"users to bind to the ClusterRole",
+	)
 
 	return cmd
 }

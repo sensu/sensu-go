@@ -1,7 +1,6 @@
 package rolebinding
 
 import (
-	"fmt"
 	"io"
 	"strconv"
 
@@ -59,13 +58,29 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
+			Title: "ClusterRole",
+			CellTransformer: func(data interface{}) string {
+				roleBinding, ok := data.(types.RoleBinding)
+				if !ok {
+					return cli.TypeError
+				}
+				if roleBinding.RoleRef.Type == "ClusterRole" {
+					return roleBinding.RoleRef.Name
+				}
+				return ""
+			},
+		},
+		{
 			Title: "Role",
 			CellTransformer: func(data interface{}) string {
 				roleBinding, ok := data.(types.RoleBinding)
 				if !ok {
 					return cli.TypeError
 				}
-				return fmt.Sprintf("%s (%s)", roleBinding.RoleRef.Name, roleBinding.RoleRef.Type)
+				if roleBinding.RoleRef.Type == "Role" {
+					return roleBinding.RoleRef.Name
+				}
+				return ""
 			},
 		},
 		{
