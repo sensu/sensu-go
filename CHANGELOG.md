@@ -28,6 +28,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Improved event validation error messages.
 - Improved agent logging for statsd events.
 - Fixues issue with tooltip positioning.
+- Fixed bug with toolbar menus collapsing into the overflow menu
 
 ### Breaking Changes
 - Environments and organizations have been replaced with namespaces.
