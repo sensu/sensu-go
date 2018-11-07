@@ -91,7 +91,7 @@ required = [
 
 [[constraint]]
   name = "github.com/spf13/pflag"
-  version = "1.0.0"
+  version = "1.0.3"
 
 [[constraint]]
   name = "github.com/spf13/viper"
@@ -198,3 +198,11 @@ required = [
 [[constraint]]
   name = "go.etcd.io/bbolt"
   version = "1.3.0"
+
+[[constraint]]
+  name = "gopkg.in/yaml.v2"
+  version = "2.1.1"
+
+[[constraint]]
+  name = "github.com/sensu/yaml"
+  revision = "704b36ea12f40d32ffe6bd109c2ddc894af28dde"

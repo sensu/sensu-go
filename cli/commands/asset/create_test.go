@@ -84,7 +84,6 @@ func TestConfigureAsset(t *testing.T) {
 	assert := assert.New(t)
 
 	flags := &pflag.FlagSet{}
-	flags.StringSlice("metadata", []string{}, "")
 	flags.StringSlice("filter", []string{}, "")
 	flags.String("sha512", "25e01b962045f4f5b624c3e47e782bef65c6c82602524dc569a8431b76cc1f57639d267380a7ec49f70876339ae261704fc51ed2fc520513cf94bc45ed7f6e17", "")
 	flags.String("url", "http://lol", "")
@@ -101,18 +100,6 @@ func TestConfigureAsset(t *testing.T) {
 	assert.NotEmpty(errs)
 	assert.Empty(asset.Namespace)
 
-	// Valid Metadata
-	require.NoError(t, flags.Set("metadata", "One: Two"))
-	require.NoError(t, flags.Set("metadata", "  Three : Four "))
-	cfg = ConfigureAsset{Flags: flags, Args: []string{"ruby22"}, Namespace: "default"}
-	asset, errs = cfg.Configure()
-	assert.Empty(errs)
-	assert.Equal("ruby22", asset.Name)
-	assert.NotEmpty(asset.Metadata)
-	assert.Equal("Two", asset.Metadata["One"])
-
-	// Bad Metadata
-	require.NoError(t, flags.Set("metadata", "Five- Six"))
 	_, errs = cfg.Configure()
 	assert.NotEmpty(errs)
 }

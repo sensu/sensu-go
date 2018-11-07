@@ -10,6 +10,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Assets are included on check details page.
 - Adds links to view entities and checks from the events page.
+- Added an agent/cmd package, migrated startup logic out of agent main
+- Improved debug logging in pipeline filtering.
+- Add object metadata to entities (including labels).
+- Add filter query support for labels.
+- Add support for setting labels on agents with the command line.
+- The sensuctl tool now supports yaml.
 
 ### Fixed
 - Display appropriate fallback when an entity's lastSeen field is empty.
@@ -25,6 +31,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Breaking Changes
 - Environments and organizations have been replaced with namespaces.
+- Removed unused asset metadata field.
+- Agent subscriptions are now specified in the config file as an array instead
+  instead of a comma-delimited list of strings.
+- Extended attributes have been removed and replaced with labels. Labels are
+string-string key-value pairs.
 
 ## [2.0.0-beta.7-1] - 2018-10-26
 

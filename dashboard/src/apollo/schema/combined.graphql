@@ -23,12 +23,12 @@ directive @connection(key: String!, filter: [String!]) on FIELD
 """
 Asset defines an archive, an agent will install as a dependency for a check.
 """
-type Asset implements Node {
+type Asset implements Node & Namespaced {
   """The globally unique identifier of the record"""
   id: ID!
 
   """Namespace in which this record resides"""
-  namespace: Namespace!
+  namespace: String!
 
   """Name is the unique identifier for an asset"""
   name: String
@@ -233,12 +233,12 @@ type Check {
 }
 
 """CheckConfig is the specification of a check."""
-type CheckConfig implements Node {
+type CheckConfig implements Node & Namespaced {
   """The globally unique identifier of the check."""
   id: ID!
 
   """namespace in which this check resides"""
-  namespace: Namespace!
+  namespace: String!
 
   """name is the unique identifier for a check"""
   name: String!
@@ -413,6 +413,7 @@ type CheckHistory {
   executed: DateTime!
 }
 
+"""Describes ways in which a list of checks can be ordered."""
 enum CheckListOrder {
   NAME
   NAME_DESC
@@ -423,7 +424,7 @@ input CreateCheckInput {
   clientMutationId: String
 
   """namespace the resulting resource will belong to."""
-  ns: NamespaceInput = {organization: "default", environment: "default"}
+  namespace: String = "default"
 
   """name of the resulting check."""
   name: String!
@@ -445,7 +446,7 @@ input CreateSilenceInput {
   clientMutationId: String
 
   """namespace the resulting resource will belong to."""
-  ns: NamespaceInput = {organization: "default", environment: "default"}
+  namespace: String = "default"
 
   """check associated with the silenced entry; optional."""
   check: String
@@ -500,12 +501,12 @@ type Deregistration {
 Entity is the Entity supplying the event. The default Entity for any
 Event is the running Agent process--if the Event is sent by an Agent.
 """
-type Entity implements Node {
+type Entity implements Node & Namespaced {
   """The globally unique identifier of the record"""
   id: ID!
 
   """Namespace in which this record resides"""
-  namespace: Namespace!
+  namespace: String!
 
   """unique identifier for the entity"""
   name: String!
@@ -558,30 +559,354 @@ type EntityConnection {
   pageInfo: OffsetPageInfo!
 }
 
+"""Describes ways in which a list of entities can be ordered."""
 enum EntityListOrder {
   ID
   ID_DESC
   LASTSEEN
 }
 
-"""Environment represents a Sensu environment in RBAC"""
-type Environment implements Node {
+"""A terse description of an error."""
+enum ErrCode {
+  """
+  Indicates that some unrecoverable error occurred during execution of the
+  operation.
+  """
+  ERR_INTERNAL
+
+  """
+  Indicates that the record associated with the given field could not be found.
+  """
+  ERR_NOT_FOUND
+
+  """
+  Indicates that a record already exists and the operation could not be
+  completed.
+  """
+  ERR_ALREADY_EXISTS
+
+  """
+  Operation was canceled because the authorization token did not have sufficient
+  permissions.
+  """
+  ERR_PERMISSION_DENIED
+}
+
+"""
+Error describes a failed pre-condition or unexpected problem that occurred while
+processing the operation.
+"""
+interface Error {
+  """The field associated with the error."""
+  input: String
+
+  """A code concisely describing the error."""
+  code: ErrCode!
+}
+
+"""
+An Event is the encapsulating type sent across the Sensu websocket transport.
+"""
+type Event implements Node & Namespaced {
   """The globally unique identifier of the record."""
   id: ID!
 
-  """The description given to the environment."""
-  description: String
+  """namespace in which this record resides"""
+  namespace: String!
 
-  """name is the unique identifier for a organization."""
+  """Timestamp is the time in seconds since the Epoch."""
+  timestamp: DateTime!
+
+  """Entity describes the entity in which the event occurred."""
+  entity: Entity
+
+  """
+  Check describes the result of a check; if event is associated to check
+  execution.
+  """
+  check: Check
+
+  """
+  Hooks describes the results of multiple hooks; if event is associated to hook
+  execution.
+  """
+  hooks: [Hook!]
+
+  """isIncident determines if an event indicates an incident."""
+  isIncident: Boolean!
+
+  """
+  isNewIncident returns true if the event is an incident but it's previous
+  iteration was OK.
+  """
+  isNewIncident: Boolean!
+
+  """
+  isResolution returns true if an event has just transitions from an incident.
+  """
+  isResolution: Boolean!
+
+  """isSilenced determines if an event has any silenced entries."""
+  isSilenced: Boolean!
+
+  """Describes whether the event has been deleted from the system"""
+  deleted: Boolean!
+}
+
+"""A connection to a sequence of records."""
+type EventConnection {
+  nodes: [Event!]!
+  pageInfo: OffsetPageInfo!
+}
+
+"""Describes ways in which a list of events can be ordered."""
+enum EventsListOrder {
+  LASTOK
+  NEWEST
+  OLDEST
+  SEVERITY
+}
+
+input ExecuteCheckInput {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """Global ID of the check to update."""
+  id: ID!
+
+  """Subscriptions is an optional list of subscriptions to target."""
+  subscriptions: [String!] = []
+
+  """Reason is used to provide context to the adho request."""
+  reason: String = ""
+}
+
+type ExecuteCheckPayload {
+  """A unique identifier for the client performing the mutation."""
+  clientMutationId: String
+
+  """
+  Includes any failed preconditions or unrecoverable errors that occurred while
+  executing the mutation.
+  """
+  errors: [Error!]!
+}
+
+"""A Handler is a handler specification."""
+type Handler implements Node & Namespaced {
+  """The globally unique identifier of the record."""
+  id: ID!
+
+  """namespace in which this record resides"""
+  namespace: String!
+
+  """Name is the unique identifier for a handler."""
   name: String!
 
-  """
-  ColourId. Experimental. Use graphical interfaces as symbolic reference to environment
-  """
-  colourId: MutedColour!
+  """Type is the handler type, i.e. pipe."""
+  type: String!
 
-  """The organization the environment belongs to."""
-  organization: Organization!
+  """Command is the command to be executed for a pipe handler."""
+  command: String
+
+  """Timeout is the handler timeout in seconds."""
+  timeout: Int
+
+  """Socket contains configuration for a TCP or UDP handler."""
+  socket: HandlerSocket
+
+  """Mutator is the handler event data mutator."""
+  mutator: Mutator
+
+  """Handlers is a list of handler names for a handler set."""
+  handlers: [Handler!]
+
+  """
+  Filters is a list of filters name to evaluate before executing this handler
+  """
+  filters: [String!]!
+
+  """
+  EnvVars is a list of environment variables to use with command execution
+  """
+  envVars: [String!]!
+}
+
+"""HandlerSocket contains configuration for a TCP or UDP handler."""
+type HandlerSocket {
+  """Host is the socket peer address."""
+  host: String!
+
+  """Port is the socket peer port."""
+  port: Int
+}
+
+"""
+A Hook is a hook specification and optionally the results of the hook's
+execution.
+"""
+type Hook {
+  """Config is the specification of a hook"""
+  config: HookConfig
+
+  """Duration of execution"""
+  duration: Int
+
+  """Executed describes the time in which the hook request was executed"""
+  executed: Int
+
+  """Issued describes the time in which the hook request was issued"""
+  issued: Int
+
+  """Output from the execution of Command"""
+  output: String
+
+  """Status is the exit status code produced by the hook"""
+  status: Int
+}
+
+"""HookConfig is the specification of a hook"""
+type HookConfig implements Node & Namespaced {
+  """The globally unique identifier of the record"""
+  id: ID!
+
+  """Namespace in which this record resides"""
+  namespace: String!
+
+  """Name is the unique identifier for a hook"""
+  name: String!
+
+  """Command is the command to be executed"""
+  command: String
+
+  """Timeout is the timeout, in seconds, at which the hook has to run"""
+  timeout: Int
+
+  """Stdin indicates if hook requests have stdin enabled"""
+  stdin: Boolean!
+}
+
+type HookList {
+  """Hooks is the list of hooks for the check hook"""
+  hooks: [String!]!
+
+  """Type indicates the type or response code for the check hook"""
+  type: String!
+}
+
+"""
+Describes a graphical element that can be used to distinguish a resource.
+"""
+enum Icon {
+  BRIEFCASE
+  DONUT
+  EMOTICON
+  ESPRESSO
+  EXPLORE
+  FIRE
+  HALFHEART
+  HEART
+  MUG
+  POLYGON
+  VISIBILITY
+}
+
+"""
+The JSON type describes any arbitrary JSON compatible data.
+
+- Roughly equilevant to `union JSON = Int | Float | String | Boolean` however
+  can also be a map or list of arbitrary length.
+- Despite looking like an an object it's fields **cannot** be selected.
+"""
+scalar JSON
+
+"""The root query for implementing GraphQL mutations."""
+type Mutation {
+  """Creates a new check."""
+  createCheck(input: CreateCheckInput!): CreateCheckPayload
+
+  """Updates given check."""
+  updateCheck(input: UpdateCheckInput!): UpdateCheckPayload
+
+  """Updates given check."""
+  executeCheck(input: ExecuteCheckInput!): ExecuteCheckPayload
+
+  """Removes given check."""
+  deleteCheck(input: DeleteRecordInput!): DeleteRecordPayload
+
+  """Removes a given entity."""
+  deleteEntity(input: DeleteRecordInput!): DeleteRecordPayload
+
+  """Resolves an event."""
+  resolveEvent(input: ResolveEventInput!): ResolveEventPayload
+
+  """Deletes an event."""
+  deleteEvent(input: DeleteRecordInput!): DeleteRecordPayload
+
+  """Creates a silence."""
+  createSilence(input: CreateSilenceInput!): CreateSilencePayload
+
+  """Removes given silence."""
+  deleteSilence(input: DeleteRecordInput!): DeleteRecordPayload
+
+  """Create new authorization tokens."""
+  createTokens(username: String!, password: String!): Boolean
+
+  """Create new authorization tokens using refresh token."""
+  refreshTokens(notBefore: DateTime): RefreshTokensPayload!
+
+  """Invalidates authorization tokens."""
+  invalidateTokens: Boolean
+
+  """Flags authorization tokens as invalid."""
+  flagTokens: Boolean
+
+  """Stores given pair as user's last visited namespace."""
+  setLastNamespace(name: String!): Boolean
+}
+
+"""A Mutator is a mutator specification."""
+type Mutator implements Node & Namespaced {
+  """The globally unique identifier of the record"""
+  id: ID!
+
+  """Namespace in which this record resides"""
+  namespace: String!
+
+  """Name is the unique identifier for a mutator."""
+  name: String!
+
+  """Command is the command to be executed."""
+  command: String!
+
+  """Timeout is the command execution timeout in seconds."""
+  timeout: Int
+
+  """Env is a list of environment variables to use with command execution"""
+  envVars: [String!]
+}
+
+"""
+Describes a color from a muted palette that can be used to distinguish a
+resource.
+"""
+enum MutedColour {
+  BLUE
+  GRAY
+  GREEN
+  ORANGE
+  PINK
+  PURPLE
+  YELLOW
+}
+
+"""Represents a virtual cluster"""
+type Namespace implements Node {
+  """The globally unique identifier of the check."""
+  id: ID!
+
+  """Name is the unique identifier for a namespace."""
+  name: String!
 
   """All check configurations associated with the environment."""
   checks(
@@ -670,358 +995,22 @@ type Environment implements Node {
     """Limit adds optional limit to the number of entries returned."""
     limit: Int = 10000
   ): [CheckHistory]!
+
+  """
+  IconId. Experimental. Use graphical interfaces as symbolic reference to organization
+  """
+  iconId: Icon!
+
+  """
+  ColourId. Experimental. Use graphical interfaces as symbolic reference to environment
+  """
+  colourId: MutedColour!
 }
 
-"""Describes a node in an environment."""
-interface EnvironmentNode {
-  """Organization indicates to which org a silenced entry belongs to."""
-  organization: Organization!
-
-  """Environment indicates which env a silenced entry belongs to."""
-  environment: Environment
-}
-
-"""A terse description of an error."""
-enum ErrCode {
-  """
-  Indicates that some unrecoverable error occurred during execution of the
-  operation.
-  """
-  ERR_INTERNAL
-
-  """
-  Indicates that the record associated with the given field could not be found.
-  """
-  ERR_NOT_FOUND
-
-  """
-  Indicates that a record already exists and the operation could not be
-  completed.
-  """
-  ERR_ALREADY_EXISTS
-
-  """
-  Operation was canceled because the authorization token did not have sufficient
-  permissions.
-  """
-  ERR_PERMISSION_DENIED
-}
-
-"""
-Error describes a failed pre-condition or unexpected problem that occurred while
-processing the operation.
-"""
-interface Error {
-  """The field associated with the error."""
-  input: String
-
-  """A code concisely describing the error."""
-  code: ErrCode!
-}
-
-"""
-An Event is the encapsulating type sent across the Sensu websocket transport.
-"""
-type Event implements Node {
-  """The globally unique identifier of the record."""
-  id: ID!
-
-  """namespace in which this record resides"""
-  namespace: Namespace!
-
-  """Timestamp is the time in seconds since the Epoch."""
-  timestamp: DateTime!
-
-  """Entity describes the entity in which the event occurred."""
-  entity: Entity
-
-  """
-  Check describes the result of a check; if event is associated to check
-  execution.
-  """
-  check: Check
-
-  """
-  Hooks describes the results of multiple hooks; if event is associated to hook
-  execution.
-  """
-  hooks: [Hook!]
-
-  """isIncident determines if an event indicates an incident."""
-  isIncident: Boolean!
-
-  """
-  isNewIncident returns true if the event is an incident but it's previous
-  iteration was OK.
-  """
-  isNewIncident: Boolean!
-
-  """
-  isResolution returns true if an event has just transitions from an incident.
-  """
-  isResolution: Boolean!
-
-  """isSilenced determines if an event has any silenced entries."""
-  isSilenced: Boolean!
-
-  """Describes whether the event has been deleted from the system"""
-  deleted: Boolean!
-}
-
-"""A connection to a sequence of records."""
-type EventConnection {
-  nodes: [Event!]!
-  pageInfo: OffsetPageInfo!
-}
-
-enum EventsListOrder {
-  LASTOK
-  NEWEST
-  OLDEST
-  SEVERITY
-}
-
-input ExecuteCheckInput {
-  """A unique identifier for the client performing the mutation."""
-  clientMutationId: String
-
-  """Global ID of the check to update."""
-  id: ID!
-
-  """Subscriptions is an optional list of subscriptions to target."""
-  subscriptions: [String!] = []
-
-  """Reason is used to provide context to the adho request."""
-  reason: String = ""
-}
-
-type ExecuteCheckPayload {
-  """A unique identifier for the client performing the mutation."""
-  clientMutationId: String
-
-  """
-  Includes any failed preconditions or unrecoverable errors that occurred while
-  executing the mutation.
-  """
-  errors: [Error!]!
-}
-
-"""A Handler is a handler specification."""
-type Handler implements Node {
-  """The globally unique identifier of the record."""
-  id: ID!
-
-  """namespace in which this record resides"""
-  namespace: Namespace!
-
-  """Name is the unique identifier for a handler."""
-  name: String!
-
-  """Type is the handler type, i.e. pipe."""
-  type: String!
-
-  """Command is the command to be executed for a pipe handler."""
-  command: String
-
-  """Timeout is the handler timeout in seconds."""
-  timeout: Int
-
-  """Socket contains configuration for a TCP or UDP handler."""
-  socket: HandlerSocket
-
-  """Mutator is the handler event data mutator."""
-  mutator: Mutator
-
-  """Handlers is a list of handler names for a handler set."""
-  handlers: [Handler!]
-
-  """
-  Filters is a list of filters name to evaluate before executing this handler
-  """
-  filters: [String!]!
-
-  """
-  EnvVars is a list of environment variables to use with command execution
-  """
-  envVars: [String!]!
-}
-
-"""HandlerSocket contains configuration for a TCP or UDP handler."""
-type HandlerSocket {
-  """Host is the socket peer address."""
-  host: String!
-
-  """Port is the socket peer port."""
-  port: Int
-}
-
-"""
-A Hook is a hook specification and optionally the results of the hook's
-execution.
-"""
-type Hook {
-  """Config is the specification of a hook"""
-  config: HookConfig
-
-  """Duration of execution"""
-  duration: Int
-
-  """Executed describes the time in which the hook request was executed"""
-  executed: Int
-
-  """Issued describes the time in which the hook request was issued"""
-  issued: Int
-
-  """Output from the execution of Command"""
-  output: String
-
-  """Status is the exit status code produced by the hook"""
-  status: Int
-}
-
-"""HookConfig is the specification of a hook"""
-type HookConfig implements Node {
-  """The globally unique identifier of the record"""
-  id: ID!
-
-  """Namespace in which this record resides"""
-  namespace: Namespace!
-
-  """Name is the unique identifier for a hook"""
-  name: String!
-
-  """Command is the command to be executed"""
-  command: String
-
-  """Timeout is the timeout, in seconds, at which the hook has to run"""
-  timeout: Int
-
-  """Stdin indicates if hook requests have stdin enabled"""
-  stdin: Boolean!
-}
-
-type HookList {
-  """Hooks is the list of hooks for the check hook"""
-  hooks: [String!]!
-
-  """Type indicates the type or response code for the check hook"""
-  type: String!
-}
-
-enum Icon {
-  BRIEFCASE
-  DONUT
-  EMOTICON
-  ESPRESSO
-  EXPLORE
-  FIRE
-  HALFHEART
-  HEART
-  MUG
-  POLYGON
-  VISIBILITY
-}
-
-"""
-The JSON type describes any arbitrary JSON compatible data.
-
-- Roughly equilevant to `union JSON = Int | Float | String | Boolean` however
-  can also be a map or list of arbitrary length.
-- Despite looking like an an object it's fields **cannot** be selected.
-"""
-scalar JSON
-
-"""The root query for implementing GraphQL mutations."""
-type Mutation {
-  """Creates a new check."""
-  createCheck(input: CreateCheckInput!): CreateCheckPayload
-
-  """Updates given check."""
-  updateCheck(input: UpdateCheckInput!): UpdateCheckPayload
-
-  """Updates given check."""
-  executeCheck(input: ExecuteCheckInput!): ExecuteCheckPayload
-
-  """Removes given check."""
-  deleteCheck(input: DeleteRecordInput!): DeleteRecordPayload
-
-  """Removes a given entity."""
-  deleteEntity(input: DeleteRecordInput!): DeleteRecordPayload
-
-  """Resolves an event."""
-  resolveEvent(input: ResolveEventInput!): ResolveEventPayload
-
-  """Deletes an event."""
-  deleteEvent(input: DeleteRecordInput!): DeleteRecordPayload
-
-  """Creates a silence."""
-  createSilence(input: CreateSilenceInput!): CreateSilencePayload
-
-  """Removes given silence."""
-  deleteSilence(input: DeleteRecordInput!): DeleteRecordPayload
-
-  """Create new authorization tokens."""
-  createTokens(username: String!, password: String!): Boolean
-
-  """Create new authorization tokens using refresh token."""
-  refreshTokens(notBefore: DateTime): RefreshTokensPayload!
-
-  """Invalidates authorization tokens."""
-  invalidateTokens: Boolean
-
-  """Flags authorization tokens as invalid."""
-  flagTokens: Boolean
-
-  """Stores given pair as user's last visited environment."""
-  setLastEnvironment(organization: String!, environment: String!): Boolean
-}
-
-"""A Mutator is a mutator specification."""
-type Mutator implements Node {
-  """The globally unique identifier of the record"""
-  id: ID!
-
-  """Namespace in which this record resides"""
-  namespace: Namespace!
-
-  """Name is the unique identifier for a mutator."""
-  name: String!
-
-  """Command is the command to be executed."""
-  command: String!
-
-  """Timeout is the command execution timeout in seconds."""
-  timeout: Int
-
-  """Env is a list of environment variables to use with command execution"""
-  envVars: [String!]
-}
-
-enum MutedColour {
-  BLUE
-  GRAY
-  GREEN
-  ORANGE
-  PINK
-  PURPLE
-  YELLOW
-}
-
-"""
-Namespace represents the unique details describing where a resource is located.
-"""
-type Namespace {
-  """environment indicates to which env a check belongs to."""
-  environment: String
-
-  """organization indicates to which org a check belongs to."""
-  organization: String!
-}
-
-"""NamespaceInput refers to the namespace a resource may belong to."""
-input NamespaceInput {
-  organization: String!
-  environment: String
+"""Namespaced represents an object that belongs to a unique namespace."""
+interface Namespaced {
+  """The namespace the object belongs to."""
+  namespace: String!
 }
 
 """
@@ -1074,26 +1063,6 @@ type OffsetPageInfo {
   totalCount: Int!
 }
 
-"""Organization represents a Sensu organization in RBAC"""
-type Organization {
-  """The globally unique identifier of the check."""
-  id: ID!
-
-  """Description is more information for an organization."""
-  description: String
-
-  """Name is the unique identifier for an organization."""
-  name: String!
-
-  """Environments that belong to the organization"""
-  environments: [Environment!]!
-
-  """
-  IconId. Experimental. Use graphical interfaces as symbolic reference to organization
-  """
-  iconId: Icon!
-}
-
 """A ProxyRequests represents a request to execute a proxy check."""
 type ProxyRequests {
   """
@@ -1121,21 +1090,20 @@ type Query {
   viewer: Viewer
 
   """
-  Environment fetches the environment associated with the given
-  organization & environment arguments.
+  Namespace fetches the namespace object associated with the given name.
   """
-  environment(environment: String!, organization: String!): Environment
+  namespace(name: String!): Namespace
 
   """Event fetches the event associated with the given set of arguments."""
-  event(ns: NamespaceInput!, entity: String!, check: String): Event
+  event(namespace: String!, entity: String!, check: String): Event
 
   """Entity fetches the entity associated with the given set of arguments."""
-  entity(ns: NamespaceInput!, name: String!): Entity
+  entity(namespace: String!, name: String!): Entity
 
   """
   check fetches the check config associated with the given set of arguments.
   """
-  check(ns: NamespaceInput!, name: String!): CheckConfig
+  check(namespace: String!, name: String!): CheckConfig
 
   """Node fetches an object given its ID."""
   node(
@@ -1146,8 +1114,8 @@ type Query {
   """Describes state of authorization tokens"""
   auth: Auth
 
-  """The last environment that the client accessed."""
-  lastEnvironment: Namespace
+  """The last namespace that the client accessed."""
+  lastNamespace: String!
 }
 
 type RefreshTokensPayload {
@@ -1181,9 +1149,9 @@ type Role implements Node {
 }
 
 """Rule maps permissions to a given type"""
-type Rule {
+type Rule implements Namespaced {
   """namespace in which this record resides"""
-  namespace: Namespace!
+  namespace: String!
 
   """resource the permissions apply to"""
   type: RuleResource!
@@ -1213,9 +1181,12 @@ enum RuleResource {
 }
 
 """Silenced is the representation of a silence entry."""
-type Silenced implements Node & EnvironmentNode {
+type Silenced implements Node & Namespaced {
   """The globally unique identifier for the record."""
   id: ID!
+
+  """The namespace the object belongs to."""
+  namespace: String!
 
   """
   ID is the combination of subscription and check name (subscription:checkname)
@@ -1248,12 +1219,6 @@ type Silenced implements Node & EnvironmentNode {
   """
   subscription: String
 
-  """Organization indicates to which org a silenced entry belongs to."""
-  organization: Organization!
-
-  """Environment indicates which env a silenced entry belongs to."""
-  environment: Environment
-
   """Begin is a timestamp at which the silenced entry takes effect."""
   begin: DateTime
 
@@ -1284,6 +1249,7 @@ input SilenceInputs {
   expire: Int = -1
 }
 
+"""Describes ways in which a list of silences can be ordered."""
 enum SilencesListOrder {
   ID
   ID_DESC
@@ -1409,14 +1375,15 @@ type UpdateCheckPayload {
 type User {
   username: String!
   roles: [Role!]!
+  groups: [String!]!
   disabled: Boolean!
   hasPassword: Boolean!
 }
 
 """Describes a viewer of the system; generally an authenticated user."""
 type Viewer {
-  """All organizations the viewer has access to view."""
-  organizations: [Organization!]!
+  """All namespaces the viewer has access to view."""
+  namespaces: [Namespace!]!
 
   """User account associated with the viewer."""
   user: User

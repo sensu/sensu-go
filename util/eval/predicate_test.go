@@ -3,6 +3,7 @@ package eval
 import (
 	"testing"
 
+	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -164,4 +165,41 @@ func TestValidateStatements(t *testing.T) {
 	// Allowed modifier token
 	statements = []string{"10 + 2 > 0"}
 	assert.NoError(t, ValidateStatements(statements, false))
+}
+
+type meta struct {
+	Labels map[string]string `json:"labels"`
+	Slice  []string          `json:"slice"`
+}
+
+type labelParameters struct {
+	meta
+}
+
+func (p *labelParameters) Get(name string) (interface{}, error) {
+	return dynamic.GetField(p, name)
+}
+
+func TestLabelQueries(t *testing.T) {
+	params := labelParameters{
+		meta: meta{
+			Labels: map[string]string{
+				"foo": "bar",
+			},
+		},
+	}
+
+	predicate, err := NewPredicate(`labels.foo == "bar"`)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := predicate.Eval(&params)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !got {
+		t.Fatal("expression should evaluate to true")
+	}
 }

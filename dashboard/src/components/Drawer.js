@@ -22,18 +22,15 @@ import MenuIcon from "@material-ui/icons/Menu";
 import WandIcon from "/icons/Wand";
 import Wordmark from "/icons/SensuWordmark";
 
-import EnvironmentIcon from "/components/EnvironmentIcon";
 import DrawerButton from "/components/DrawerButton";
-import NamespaceSelector from "/components/NamespaceSelector";
+import NamespaceIcon from "/components/partials/NamespaceIcon";
+import NamespaceSelector from "/components/partials/NamespaceSelector";
 import Preferences from "/components/Preferences";
 import Loader from "/components/util/Loader";
 
 import invalidateTokens from "/mutations/invalidateTokens";
 
-const linkPath = (params, path) => {
-  const { organization, environment } = params;
-  return `/${organization}/${environment}/${path}`;
-};
+const linkPath = ({ namespace }, path) => `/${namespace}/${path}`;
 
 const styles = theme => ({
   paper: {
@@ -60,6 +57,7 @@ const styles = theme => ({
   namespaceSelector: {
     margin: "8px 0 -8px 0",
     width: "100%",
+    height: 56,
   },
   namespaceIcon: {
     margin: "24px 0 0 16px",
@@ -78,13 +76,13 @@ class Drawer extends React.Component {
     client: PropTypes.object.isRequired,
     classes: PropTypes.object.isRequired,
     viewer: PropTypes.object,
-    environment: PropTypes.object,
+    namespace: PropTypes.object,
     onToggle: PropTypes.func.isRequired,
     open: PropTypes.bool.isRequired,
     loading: PropTypes.bool,
   };
 
-  static defaultProps = { loading: false, viewer: null, environment: null };
+  static defaultProps = { loading: false, viewer: null, namespace: null };
 
   static fragments = {
     viewer: gql`
@@ -93,17 +91,17 @@ class Drawer extends React.Component {
       }
 
       ${NamespaceSelector.fragments.viewer}
-      ${NamespaceSelector.fragments.environment}
+      ${NamespaceSelector.fragments.namespace}
     `,
 
-    environment: gql`
-      fragment Drawer_environment on Environment {
-        ...EnvironmentIcon_environment
-        ...NamespaceSelector_environment
+    namespace: gql`
+      fragment Drawer_namespace on Namespace {
+        ...NamespaceIcon_namespace
+        ...NamespaceSelector_namespace
       }
 
-      ${NamespaceSelector.fragments.environment}
-      ${EnvironmentIcon.fragments.environment}
+      ${NamespaceSelector.fragments.namespace}
+      ${NamespaceIcon.fragments.namespace}
     `,
   };
 
@@ -116,7 +114,7 @@ class Drawer extends React.Component {
       client,
       loading,
       viewer,
-      environment,
+      namespace,
       open,
       onToggle,
       classes,
@@ -149,15 +147,15 @@ class Drawer extends React.Component {
                 </div>
                 <div className={classes.row}>
                   <div className={classes.namespaceIcon}>
-                    {environment && (
-                      <EnvironmentIcon environment={environment} size={36} />
+                    {namespace && (
+                      <NamespaceIcon namespace={namespace} size={36} />
                     )}
                   </div>
                 </div>
                 <div className={classes.row}>
                   <NamespaceSelector
                     viewer={viewer}
-                    environment={environment}
+                    namespace={namespace}
                     className={classes.namespaceSelector}
                     onChange={onToggle}
                   />
@@ -166,7 +164,7 @@ class Drawer extends React.Component {
             </div>
             <Divider />
             <Route
-              path="/:organization/:environment"
+              path="/:namespace"
               render={({ match: { params } }) => (
                 <List>
                   <DrawerButton

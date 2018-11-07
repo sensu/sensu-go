@@ -19,11 +19,7 @@ class CheckDetailsSilenceAction extends React.Component {
     check: gql`
       fragment CheckDetailsSilenceAction_check on CheckConfig {
         name
-        namespace {
-          organization
-          environment
-        }
-
+        namespace
         isSilenced
       }
     `,
@@ -44,12 +40,9 @@ class CheckDetailsSilenceAction extends React.Component {
         {isOpen && (
           <SilenceEntryDialog
             values={{
+              namespace: check.namespace,
               check: check.name,
               subscription: "*",
-              ns: {
-                organization: check.namespace.organization,
-                environment: check.namespace.environment,
-              },
             }}
             onClose={() => {
               this.props.onDone();

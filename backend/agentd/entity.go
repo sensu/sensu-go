@@ -34,8 +34,10 @@ func getProxyEntity(event *types.Event, s SessionStore) error {
 			entity = &types.Entity{
 				ID:            event.Check.ProxyEntityID,
 				Class:         types.EntityProxyClass,
-				Namespace:     event.Entity.Namespace,
 				Subscriptions: addEntitySubscription(event.Check.ProxyEntityID, []string{}),
+				ObjectMeta: types.ObjectMeta{
+					Namespace: event.Entity.Namespace,
+				},
 			}
 
 			if err := s.UpdateEntity(ctx, entity); err != nil {

@@ -59,12 +59,14 @@ func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
 
 	if entity.Deregistration.Handler != "" {
 		deregistrationCheck := &types.Check{
-			Name:          "deregistration",
+			ObjectMeta: types.ObjectMeta{
+				Name:      "deregistration",
+				Namespace: entity.Namespace,
+			},
 			Interval:      1,
 			Subscriptions: []string{""},
 			Command:       "",
 			Handlers:      []string{entity.Deregistration.Handler},
-			Namespace:     entity.Namespace,
 			Status:        1,
 		}
 

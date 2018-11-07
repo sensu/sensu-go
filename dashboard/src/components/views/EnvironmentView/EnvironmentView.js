@@ -7,7 +7,7 @@ import AppBar from "/components/AppBar";
 import AppLayout from "/components/AppLayout";
 import QuickNav from "/components/QuickNav";
 import Loader from "/components/util/Loader";
-import LastEnvironmentUpdater from "/components/util/LastEnvironmentUpdater";
+import LastNamespaceUpdater from "/components/util/LastNamespaceUpdater";
 import NotFoundView from "/components/views/NotFoundView";
 import Query from "/components/util/Query";
 
@@ -25,47 +25,41 @@ class EnvironmentView extends React.PureComponent {
   };
 
   static query = gql`
-    query EnvironmentViewQuery($environment: String!, $organization: String!) {
+    query EnvironmentViewQuery($namespace: String!) {
       viewer {
         ...AppBar_viewer
       }
 
-      environment(organization: $organization, environment: $environment) {
-        ...AppBar_environment
+      namespace(name: $namespace) {
+        ...AppBar_namespace
       }
     }
 
     ${AppBar.fragments.viewer}
-    ${AppBar.fragments.environment}
+    ${AppBar.fragments.namespace}
   `;
 
   render() {
     const { match } = this.props;
-
-    const namespace = {
-      organization: match.params.organization,
-      environment: match.params.environment,
-    };
+    const namespaceParam = match.params.namespace;
 
     return (
       <React.Fragment>
-        <Query query={EnvironmentView.query} variables={namespace}>
-          {({ data: { viewer, environment } = {}, loading, aborted }) => (
+        <Query
+          query={EnvironmentView.query}
+          variables={{ namespace: namespaceParam }}
+        >
+          {({ data: { viewer, namespace } = {}, loading, aborted }) => (
             <Loader loading={loading}>
               <AppLayout
                 topBar={
                   <AppBar
                     loading={loading || aborted}
-                    environment={environment}
+                    namespace={namespace}
                     viewer={viewer}
                   />
                 }
-                quickNav={
-                  <QuickNav
-                    organization={namespace.organization}
-                    environment={namespace.environment}
-                  />
-                }
+                quickNav={<QuickNav namespace={namespaceParam} />}
                 content={
                   <Switch>
                     <Route
@@ -112,10 +106,8 @@ class EnvironmentView extends React.PureComponent {
             </Loader>
           )}
         </Query>
-        <LastEnvironmentUpdater
-          organization={namespace.organization}
-          environment={namespace.environment}
-        />
+
+        <LastNamespaceUpdater namespace={namespaceParam} />
       </React.Fragment>
     );
   }

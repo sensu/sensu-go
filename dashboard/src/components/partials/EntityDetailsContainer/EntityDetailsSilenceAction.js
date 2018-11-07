@@ -18,12 +18,8 @@ class EntityDetailsSilenceAction extends React.Component {
   static fragments = {
     entity: gql`
       fragment EntityDetailsSilenceAction_entity on Entity {
-        namespace {
-          organization
-          environment
-        }
-
         name
+        namespace
         isSilenced
       }
     `,
@@ -45,11 +41,8 @@ class EntityDetailsSilenceAction extends React.Component {
           <SilenceEntryDialog
             values={{
               check: "*",
+              ns: entity.namespace,
               subscription: `entity:${entity.name}`,
-              ns: {
-                organization: entity.namespace.organization,
-                environment: entity.namespace.environment,
-              },
             }}
             onClose={() => {
               this.props.onDone();

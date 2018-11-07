@@ -38,13 +38,10 @@ class CheckListItem extends React.Component {
     check: gql`
       fragment ChecksListItem_check on CheckConfig {
         name
+        namespace
         command
         isSilenced
         publish
-        namespace {
-          organization
-          environment
-        }
         ...CheckSchedule_check
       }
 

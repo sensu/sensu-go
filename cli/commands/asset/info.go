@@ -49,10 +49,6 @@ func printToList(v interface{}, writer io.Writer) error {
 	if !ok {
 		return fmt.Errorf("%t is not an Asset", v)
 	}
-	var metadata []string
-	for k, v := range r.Metadata {
-		metadata = append(metadata, k+"="+v)
-	}
 
 	cfg := &list.Config{
 		Title: r.Name,
@@ -76,10 +72,6 @@ func printToList(v interface{}, writer io.Writer) error {
 			{
 				Label: "Filters",
 				Value: strings.Join(r.Filters, ", "),
-			},
-			{
-				Label: "Metadata",
-				Value: strings.Join(metadata, ", "),
 			},
 		},
 	}

@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "meta.proto";
 
 package sensu.types;
 
@@ -27,7 +28,7 @@ message Entity {
   bytes extended_attributes = 12 [(gogoproto.jsontag) = "-"];
   // Redact contains the fields to redact on the agent
   repeated string redact = 13;
-  string namespace = 14;
+  ObjectMeta metadata = 14 [(gogoproto.jsontag) = "metadata", (gogoproto.embed) = true, (gogoproto.nullable) = false];
 }
 
 // System contains information about the system that the Agent process

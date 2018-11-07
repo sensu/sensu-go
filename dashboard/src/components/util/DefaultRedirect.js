@@ -4,7 +4,7 @@ import { graphql } from "react-apollo";
 import gql from "graphql-tag";
 
 import SigninRedirect from "./SigninRedirect";
-import LastEnvironmentRedirect from "./LastEnvironmentRedirect";
+import LastNamespaceRedirect from "./LastNamespaceRedirect";
 
 const query = gql`
   query DefaultRedirectQuery {
@@ -24,7 +24,7 @@ class DefaultRedirect extends React.PureComponent {
     if (!this.props.data.auth.accessToken || this.props.data.auth.invalid) {
       return <SigninRedirect />;
     }
-    return <LastEnvironmentRedirect />;
+    return <LastNamespaceRedirect />;
   }
 }
 

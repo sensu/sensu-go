@@ -50,10 +50,7 @@ class EventListItem extends React.Component {
         entity {
           name
         }
-        namespace {
-          organization
-          environment
-        }
+        namespace
         ...EventStatusDescriptor_event
       }
 

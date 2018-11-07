@@ -195,7 +195,9 @@ func TestPipelinedFilter(t *testing.T) {
 					Silenced: tc.silenced,
 				},
 				Entity: &types.Entity{
-					Namespace: "default",
+					ObjectMeta: types.ObjectMeta{
+						Namespace: "default",
+					},
 				},
 				Metrics: tc.metrics,
 			}
@@ -217,7 +219,9 @@ func TestPipelinedWhenFilter(t *testing.T) {
 			Output: "bar",
 		},
 		Entity: &types.Entity{
-			Namespace: "default",
+			ObjectMeta: types.ObjectMeta{
+				Namespace: "default",
+			},
 		},
 	}
 

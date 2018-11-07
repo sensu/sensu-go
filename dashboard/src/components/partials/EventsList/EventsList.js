@@ -28,7 +28,9 @@ import EventsListItem from "./EventsListItem";
 class EventsContainer extends React.Component {
   static propTypes = {
     client: PropTypes.object.isRequired,
-    environment: PropTypes.shape({
+    namespace: PropTypes.shape({
+      checks: PropTypes.object,
+      entities: PropTypes.object,
       events: PropTypes.object,
     }),
     onChangeQuery: PropTypes.func.isRequired,
@@ -40,14 +42,14 @@ class EventsContainer extends React.Component {
 
   static defaultProps = {
     loading: false,
-    environment: null,
+    namespace: null,
     limit: undefined,
     offset: undefined,
   };
 
   static fragments = {
-    environment: gql`
-      fragment EventsList_environment on Environment {
+    namespace: gql`
+      fragment EventsList_namespace on Namespace {
         checks(limit: 1000) {
           nodes {
             name
@@ -68,12 +70,8 @@ class EventsContainer extends React.Component {
         ) @connection(key: "events", filter: ["filter", "orderBy"]) {
           nodes {
             id
+            namespace
             deleted @client
-
-            namespace {
-              environment
-              organization
-            }
 
             entity {
               name
@@ -96,11 +94,11 @@ class EventsContainer extends React.Component {
           }
         }
 
-        ...EventsListHeader_environment
+        ...EventsListHeader_namespace
       }
 
       ${ClearSilencesDialog.fragments.silence}
-      ${EventsListHeader.fragments.environment}
+      ${EventsListHeader.fragments.namespace}
       ${EventsListHeader.fragments.event}
       ${EventsListItem.fragments.event}
       ${Pagination.fragments.pageInfo}
@@ -143,10 +141,7 @@ class EventsContainer extends React.Component {
 
   silenceEvents = events => {
     const targets = events.map(event => ({
-      ns: {
-        environment: event.namespace.environment,
-        organization: event.namespace.organization,
-      },
+      namespace: event.namespace,
       subscription: `entity:${event.entity.name}`,
       check: event.check.name,
     }));
@@ -175,14 +170,11 @@ class EventsContainer extends React.Component {
   silenceEntity = event => {
     this.setState({
       silence: {
+        namespace: event.namespace,
         check: "*",
         subscription: `entity:${event.entity.name}`,
         props: {
           begin: null,
-        },
-        ns: {
-          environment: event.namespace.environment,
-          organization: event.namespace.organization,
         },
       },
     });
@@ -191,14 +183,11 @@ class EventsContainer extends React.Component {
   silenceCheck = event => {
     this.setState({
       silence: {
+        namespace: event.namespace,
         check: event.check.name,
         subscription: "*",
         props: {
           begin: null,
-        },
-        ns: {
-          environment: event.namespace.environment,
-          organization: event.namespace.organization,
         },
       },
     });
@@ -242,7 +231,7 @@ class EventsContainer extends React.Component {
   render() {
     const { silence, unsilence } = this.state;
     const {
-      environment,
+      namespace,
       loading,
       limit,
       offset,
@@ -250,8 +239,8 @@ class EventsContainer extends React.Component {
       refetch,
     } = this.props;
 
-    const items = environment
-      ? environment.events.nodes.filter(event => !event.deleted)
+    const items = namespace
+      ? namespace.events.nodes.filter(event => !event.deleted)
       : [];
 
     return (
@@ -272,7 +261,7 @@ class EventsContainer extends React.Component {
           <Paper>
             <Loader loading={loading}>
               <EventsListHeader
-                environment={environment}
+                namespace={namespace}
                 onClickSelect={toggleSelectedItems}
                 onClickClearSilences={() => this.clearSilences(selectedItems)}
                 onClickSilence={() => this.silenceEvents(selectedItems)}
@@ -300,7 +289,7 @@ class EventsContainer extends React.Component {
               <Pagination
                 limit={limit}
                 offset={offset}
-                pageInfo={environment && environment.events.pageInfo}
+                pageInfo={namespace && namespace.events.pageInfo}
                 onChangeQuery={onChangeQuery}
               />
 
