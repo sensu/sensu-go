@@ -27,6 +27,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed a bug that would prevent some keepalive failures from occurring.
 - Improved event validation error messages.
 - Improved agent logging for statsd events.
+- Fixues issue with tooltip positioning.
 
 ### Breaking Changes
 - Environments and organizations have been replaced with namespaces.
