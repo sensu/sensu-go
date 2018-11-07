@@ -65,6 +65,8 @@ var typeMap = map[string]interface{}{
 	"network":                &Network{},
 	"NetworkInterface":       &NetworkInterface{},
 	"network_interface":      &NetworkInterface{},
+	"ObjectMeta":             &ObjectMeta{},
+	"object_meta":            &ObjectMeta{},
 	"ProxyRequests":          &ProxyRequests{},
 	"proxy_requests":         &ProxyRequests{},
 	"Role":                   &Role{},

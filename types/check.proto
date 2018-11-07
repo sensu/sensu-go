@@ -3,6 +3,7 @@ syntax = "proto3";
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "asset.proto";
 import "hook.proto";
+import "meta.proto";
 import "time_window.proto";
 
 package sensu.types;
@@ -64,8 +65,6 @@ message CheckConfig {
   // the check. Sensu uses the same flap detection algorithm as Nagios.
   uint32 low_flap_threshold = 6 [(gogoproto.jsontag) = "low_flap_threshold"];
 
-  // Name is the unique identifier for a check.
-  string name = 7;
 
   // Publish indicates if check requests are published for the check
   bool publish = 9 [(gogoproto.jsontag) = "publish"];
@@ -118,8 +117,8 @@ message CheckConfig {
   // execution environment.
   repeated string env_vars = 24 [(gogoproto.jsontag) = "env_vars"];
 
-  // Namespace to which the check belongs to
-  string namespace = 25;
+  // Object metadata
+  ObjectMeta metadata = 26 [(gogoproto.jsontag) = "metadata", (gogoproto.embed) = true, (gogoproto.nullable) = false];
 }
 
 // A Check is a check specification and optionally the results of the check's
@@ -141,9 +140,6 @@ message Check {
   // LowFlapThreshold is the flap detection low threshold (% state change) for
   // the check. Sensu uses the same flap detection algorithm as Nagios.
   uint32 low_flap_threshold = 6 [(gogoproto.jsontag) = "low_flap_threshold"];
-
-  // Name is the unique identifier for a check.
-  string name = 7;
 
   // Publish indicates if check requests are published for the check
   bool publish = 9 [(gogoproto.jsontag) = "publish"];
@@ -233,8 +229,8 @@ message Check {
   // execution environment.
   repeated string env_vars = 37 [(gogoproto.jsontag) = "env_vars"];
 
-  // Namespace to which the check belongs to
-  string namespace = 38;
+   // Object metadata
+   ObjectMeta metadata = 38 [(gogoproto.jsontag) = "metadata", (gogoproto.embed) = true, (gogoproto.nullable) = false];
 
   // ExtendedAttributes store serialized arbitrary JSON-encoded data
   bytes ExtendedAttributes = 99 [(gogoproto.jsontag) = "-"];

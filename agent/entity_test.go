@@ -12,10 +12,9 @@ func TestGetAgentEntity(t *testing.T) {
 	assert := assert.New(t)
 
 	testCases := []struct {
-		name               string
-		agent              *Agent
-		expectedAgentID    string
-		extendedAttributes []byte
+		name            string
+		agent           *Agent
+		expectedAgentID string
 	}{
 		{
 			name: "The agent has no entity",
@@ -34,17 +33,6 @@ func TestGetAgentEntity(t *testing.T) {
 			},
 			expectedAgentID: "bar",
 		},
-		{
-			name: "The agent has extended attributes",
-			agent: &Agent{
-				config: &Config{
-					AgentID:            "baz",
-					ExtendedAttributes: []byte(`{"foo":"bar"}`),
-				},
-			},
-			expectedAgentID:    "baz",
-			extendedAttributes: []byte(`{"foo":"bar"}`),
-		},
 	}
 
 	for _, tc := range testCases {
@@ -54,7 +42,6 @@ func TestGetAgentEntity(t *testing.T) {
 
 			entity := tc.agent.getAgentEntity()
 			assert.Equal(tc.expectedAgentID, entity.ID)
-			assert.Equal(tc.extendedAttributes, entity.ExtendedAttributes)
 		})
 	}
 }

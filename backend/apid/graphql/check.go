@@ -189,8 +189,10 @@ func (r *checkImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 func (r *checkImpl) NodeID(p graphql.ResolveParams) (string, error) {
 	check := p.Source.(*types.Check)
 	config := types.CheckConfig{
-		Namespace: check.Namespace,
-		Name:      check.Name,
+		ObjectMeta: types.ObjectMeta{
+			Namespace: check.Namespace,
+			Name:      check.Name,
+		},
 	}
 	return globalid.CheckTranslator.EncodeToString(&config), nil
 }

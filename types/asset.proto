@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "meta.proto";
 
 package sensu.types;
 
@@ -14,9 +15,6 @@ option (gogoproto.testgen_all) = true;
 
 // Asset defines an asset agents install as a dependency for a check.
 message Asset {
-  // Name is the unique identifier for an asset
-  string name = 1;
-
   // URL is the location of the asset
   string url = 2 [(gogoproto.customname) = "URL"];
 
@@ -28,6 +26,6 @@ message Asset {
   // queries are joined by the "AND" operator.
   repeated string filters = 5 [(gogoproto.jsontag) = "filters"];
 
-  // Namespace to which the asset belongs to
-  string namespace = 7;
+  // Object metadata
+  ObjectMeta metadata = 8 [(gogoproto.embed) = true, (gogoproto.jsontag) = "metadata", (gogoproto.nullable) = false];
 }

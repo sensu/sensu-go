@@ -137,7 +137,9 @@ func TestSilencedBy(t *testing.T) {
 			name: "not silenced, silenced & client don't have a common subscription",
 			event: &types.Event{
 				Check: &types.Check{
-					Name:          "check_cpu",
+					ObjectMeta: types.ObjectMeta{
+						Name: "check_cpu",
+					},
 					Subscriptions: []string{"linux", "windows"},
 				},
 				Entity: &types.Entity{
@@ -154,7 +156,9 @@ func TestSilencedBy(t *testing.T) {
 			name: "silenced, silenced & client do have a common subscription",
 			event: &types.Event{
 				Check: &types.Check{
-					Name:          "check_cpu",
+					ObjectMeta: types.ObjectMeta{
+						Name: "check_cpu",
+					},
 					Subscriptions: []string{"linux", "windows"},
 				},
 				Entity: &types.Entity{

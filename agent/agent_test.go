@@ -4,6 +4,7 @@ package agent
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -153,9 +154,12 @@ func TestPeriodicKeepalive(t *testing.T) {
 }
 
 func TestKeepaliveLoggingRedaction(t *testing.T) {
-	done := make(chan struct{})
+	errors := make(chan error, 100)
 	server := transport.NewServer()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			close(errors)
+		}()
 		conn, err := server.Serve(w, r)
 		require.NoError(t, err)
 
@@ -171,14 +175,15 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 
 		// Make sure the ec2_access_key attribute is redacted, which indicates it was
 		// received as such in keepalives
-		i, _ := event.Entity.Get("ec2_access_key")
-		assert.Equal(t, dynamic.Redacted, i)
+		label := event.Entity.Labels["ec2_access_key"]
+		if got, want := label, dynamic.Redacted; got != want {
+			errors <- fmt.Errorf("%q != %q", got, want)
+		}
 
-		// Make sure the secret attribute is not redacted, because it was not
-		// specified in the redact configuration
-		i, _ = event.Entity.Get("secret")
-		assert.NotEqual(t, dynamic.Redacted, i)
-		done <- struct{}{}
+		label = event.Entity.Labels["secret"]
+		if got, want := label, dynamic.Redacted; got == want {
+			errors <- fmt.Errorf("secret was redacted")
+		}
 	}))
 	defer ts.Close()
 
@@ -187,7 +192,7 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 	cfg, cleanup := FixtureConfig()
 	defer cleanup()
 	cfg.AgentID = "TestLoggingRedaction"
-	cfg.ExtendedAttributes = []byte(`{"ec2_access_key": "P@ssw0rd!","secret": "P@ssw0rd!"}`)
+	cfg.Labels = map[string]string{"ec2_access_key": "P@ssw0rd!", "secret": "P@ssw0rd!"}
 	cfg.Redact = []string{"ec2_access_key"}
 	cfg.BackendURLs = []string{wsURL}
 	cfg.API.Port = 0
@@ -196,7 +201,11 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 	err := ta.Run()
 	require.NoError(t, err)
 	defer ta.Stop()
-	<-done
+	for err := range errors {
+		if err != nil {
+			t.Error(err)
+		}
+	}
 }
 
 func TestInvalidAgentID_GH2022(t *testing.T) {
