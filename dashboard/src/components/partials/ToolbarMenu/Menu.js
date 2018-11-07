@@ -40,8 +40,18 @@ class ToolbarMenu extends React.PureComponent {
   // that we are displaying as many buttons as possible.
   static getDerivedStateFromProps(props, state) {
     const ids = React.Children.map(props.children, child => child.props.id);
-    if (!shallowEqual(ids, state.ids)) {
-      return { ids, buttonsWidth: null };
+    const visibility = React.Children.map(
+      props.children,
+      child => child.props.visible,
+    );
+    if (
+      // if we add more props that this equation depends on
+      // we should really just rewrite shallowEqual and send these
+      // in a single array, but for now, it's fine
+      !shallowEqual(ids, state.ids) ||
+      !shallowEqual(visibility, state.visibility)
+    ) {
+      return { ids, visibility, buttonsWidth: null };
     }
     return null;
   }
@@ -49,6 +59,7 @@ class ToolbarMenu extends React.PureComponent {
   state = {
     // List of item ids
     ids: [],
+    visibility: [],
 
     // Width of buttons container
     buttonsWidth: null,
