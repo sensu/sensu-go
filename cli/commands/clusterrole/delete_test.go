@@ -1,4 +1,4 @@
-package role
+package clusterrole
 
 import (
 	"errors"
@@ -17,7 +17,7 @@ func TestDeleteCommand(t *testing.T) {
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
 	assert.Regexp("delete", cmd.Use)
-	assert.Regexp("Role", cmd.Short)
+	assert.Regexp("ClusterRole", cmd.Short)
 }
 func TestDeleteCommandRunEClosureWithoutName(t *testing.T) {
 	assert := assert.New(t)
@@ -32,7 +32,7 @@ func TestDeleteCommandRunEClosureWithFlags(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("DeleteRole", "foo").Return(nil)
+	client.On("DeleteClusterRole", "foo").Return(nil)
 	cmd := DeleteCommand(cli)
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 	out, err := test.RunCmd(cmd, []string{"foo"})
@@ -43,7 +43,7 @@ func TestDeleteCommandRunEClosureWithServerErr(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("DeleteRole", "bar").Return(errors.New("oh noes"))
+	client.On("DeleteClusterRole", "bar").Return(errors.New("oh noes"))
 	cmd := DeleteCommand(cli)
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 	out, err := test.RunCmd(cmd, []string{"bar"})

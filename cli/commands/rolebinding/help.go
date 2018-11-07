@@ -1,4 +1,4 @@
-package role
+package rolebinding
 
 import (
 	"github.com/sensu/sensu-go/cli"
@@ -8,8 +8,8 @@ import (
 // HelpCommand defines new parent
 func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "role",
-		Short: "Manage Roles",
+		Use:   "role-binding",
+		Short: "Manage role bindings",
 	}
 
 	// Add sub-commands

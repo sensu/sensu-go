@@ -1,4 +1,4 @@
-package role
+package clusterrole
 
 import (
 	"errors"
@@ -13,12 +13,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// InfoCommand defines new command to display detailed information about a role
+// InfoCommand defines new command to display detailed information about a
+// cluster role
 func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "info [NAME]",
-		Aliases:      []string{"list-rules"}, // backward compatibility
-		Short:        "show detailed information about a Role",
+		Short:        "show detailed information about a ClusterRole",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
@@ -27,7 +27,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Fetch roles from API
-			r, err := cli.Client.FetchRole(args[0])
+			r, err := cli.Client.FetchClusterRole(args[0])
 			if err != nil {
 				return err
 			}
@@ -45,18 +45,11 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 }
 
 func printRulesToTable(v interface{}, io io.Writer) error {
-	queryResults, ok := v.(*types.Role)
+	queryResults, ok := v.(*types.ClusterRole)
 	if !ok {
-		return fmt.Errorf("%t is not a Role", v)
+		return fmt.Errorf("%t is not a cluster role", v)
 	}
 	table := table.New([]*table.Column{
-		{
-			Title:       "Namespace",
-			ColumnStyle: table.PrimaryTextStyle,
-			CellTransformer: func(data interface{}) string {
-				return queryResults.Namespace
-			},
-		},
 		{
 			Title: "Verbs",
 			CellTransformer: func(data interface{}) string {
