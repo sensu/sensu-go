@@ -27,7 +27,6 @@ class ChecksList extends React.Component {
   static propTypes = {
     client: PropTypes.object.isRequired,
     editable: PropTypes.bool,
-    environment: PropTypes.shape({
     namespace: PropTypes.shape({
       checks: PropTypes.shape({
         nodes: PropTypes.array.isRequired,

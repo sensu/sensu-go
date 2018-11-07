@@ -28,15 +28,10 @@ import EventsListItem from "./EventsListItem";
 class EventsContainer extends React.Component {
   static propTypes = {
     client: PropTypes.object.isRequired,
-<<<<<<< HEAD
+    editable: PropTypes.bool,
     namespace: PropTypes.shape({
       checks: PropTypes.object,
       entities: PropTypes.object,
-=======
-    editable: PropTypes.bool,
-    environment: PropTypes.shape({
->>>>>>> 37a71d43... Only display list item toolbar on hover
-      events: PropTypes.object,
     }),
     onChangeQuery: PropTypes.func.isRequired,
     limit: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
@@ -47,12 +42,8 @@ class EventsContainer extends React.Component {
 
   static defaultProps = {
     loading: false,
-<<<<<<< HEAD
-    namespace: null,
-=======
     editable: true,
-    environment: null,
->>>>>>> 37a71d43... Only display list item toolbar on hover
+    namespace: null,
     limit: undefined,
     offset: undefined,
   };
@@ -253,14 +244,10 @@ class EventsContainer extends React.Component {
   render() {
     const { silence, unsilence } = this.state;
     const {
-<<<<<<< HEAD
-      namespace,
-=======
       editable,
-      environment,
->>>>>>> 37a71d43... Only display list item toolbar on hover
       loading,
       limit,
+      namespace,
       offset,
       onChangeQuery,
       refetch,
@@ -288,12 +275,8 @@ class EventsContainer extends React.Component {
           <Paper>
             <Loader loading={loading}>
               <EventsListHeader
-<<<<<<< HEAD
-                namespace={namespace}
-=======
                 editable={editable}
-                environment={environment}
->>>>>>> 37a71d43... Only display list item toolbar on hover
+                namespace={namespace}
                 onClickSelect={toggleSelectedItems}
                 onClickClearSilences={() => this.clearSilences(selectedItems)}
                 onClickSilence={() => this.silenceEvents(selectedItems)}
