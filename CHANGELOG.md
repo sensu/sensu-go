@@ -15,6 +15,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Add object metadata to entities (including labels).
 - Add filter query support for labels.
 - Add support for setting labels on agents with the command line.
+- The sensuctl tool now supports yaml.
 
 ### Fixed
 - Display appropriate fallback when an entity's lastSeen field is empty.
