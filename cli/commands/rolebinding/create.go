@@ -17,9 +17,9 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "create a new RoleBinding for a particular Role or ClusterRole",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 1 {
+			if err := helpers.VerifyName(args); err != nil {
 				_ = cmd.Help()
-				return errors.New("a name is required")
+				return err
 			}
 
 			roleBinding := &types.RoleBinding{Name: args[0]}

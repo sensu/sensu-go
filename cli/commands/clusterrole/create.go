@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -16,9 +17,9 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "create a new ClusterRole with a single rule",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 1 {
+			if err := helpers.VerifyName(args); err != nil {
 				_ = cmd.Help()
-				return errors.New("a name is required")
+				return err
 			}
 
 			clusterRole := &types.ClusterRole{Name: args[0]}
