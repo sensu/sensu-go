@@ -16,7 +16,7 @@ class ExecuteCheckStatusToast extends React.PureComponent {
     onClose: PropTypes.func.isRequired,
     checkName: PropTypes.string.isRequired,
     entityName: PropTypes.string,
-    namespace: PropTypes.object.isRequired,
+    namespace: PropTypes.string.isRequired,
   };
 
   static defaultProps = {
