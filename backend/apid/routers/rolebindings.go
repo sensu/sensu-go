@@ -24,7 +24,7 @@ func NewRoleBindingsRouter(store store.RoleBindingStore) *RoleBindingsRouter {
 
 // Mount the RoleBindingsRouter on the given parent Router
 func (r *RoleBindingsRouter) Mount(parent *mux.Router) {
-	routes := ResourceRoute{Router: parent, PathPrefix: "/apis/rbac/v2/rolebindings"}
+	routes := ResourceRoute{Router: parent, PathPrefix: "/apis/rbac/v2/namespaces/{namespace}/rolebindings"}
 	routes.GetAll(r.list)
 	routes.Get(r.find)
 	routes.Post(r.create)
