@@ -76,12 +76,6 @@ func (r *checkCfgImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{
 	return fetchHandlersWithNames(ctx, r.handlerCtrl, check.OutputMetricHandlers)
 }
 
-// ProxyEntityID implements response to request for 'proxyEntityId' field.
-func (r *checkCfgImpl) ProxyEntityID(p graphql.ResolveParams) (string, error) {
-	check := p.Source.(*types.CheckConfig)
-	return check.ProxyEntityName, nil
-}
-
 // IsSilenced implements response to request for 'isSilenced' field.
 func (r *checkCfgImpl) IsSilenced(p graphql.ResolveParams) (bool, error) {
 	check := p.Source.(*types.CheckConfig)
@@ -256,12 +250,6 @@ func (r *checkImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{}, 
 	check := p.Source.(*types.Check)
 	ctx := types.SetContextFromResource(p.Context, check)
 	return fetchHandlersWithNames(ctx, r.handlerCtrl, check.OutputMetricHandlers)
-}
-
-// ProxyEntityID implements response to request for 'proxyEntityId' field.
-func (r *checkImpl) ProxyEntityID(p graphql.ResolveParams) (string, error) {
-	check := p.Source.(*types.Check)
-	return check.ProxyEntityName, nil
 }
 
 // RuntimeAssets implements response to request for 'runtimeAssets' field.
