@@ -98,37 +98,13 @@ func (a *Agent) receiveMessages(out chan *transport.Message) {
 		m, err := a.conn.Receive()
 		if err != nil {
 			logger.WithError(err).Error("transport receive error")
-
-			// If we encountered a connection error, try to reconnect
-			if _, ok := err.(transport.ConnectionError); ok {
-				// The first step is to close the current websocket connection, which is
-				// no longer useful
-				if err := a.conn.Close(); err != nil {
-					logger.Debug(err)
-				}
-
-				// Now, we must attempt to reconnect to the backend, with exponential
-				// backoff
-				backoff := retry.ExponentialBackoff{
-					InitialDelayInterval: 500 * time.Millisecond,
-					MaxDelayInterval:     10 * time.Second,
-					MaxRetryAttempts:     0, // Unlimited attempts
-					Multiplier:           1.5,
-				}
-				if err := backoff.Retry(func(retry int) (bool, error) {
-					if err = a.conn.Reconnect(a.backendSelector.Select(), a.config.TLS, a.header); err != nil {
-						logger.WithError(err).Error("reconnection attempt failed")
-						return false, nil
-					}
-
-					// At this point, the attempt was successful
-					logger.Info("successfully reconnected")
-					return true, nil
-				}); err != nil {
-					logger.WithError(err).Fatal("could not reconnect to transport")
-				}
+			// The first step is to close the current websocket connection, which is
+			// no longer useful
+			if err := a.conn.Close(); err != nil {
+				logger.Debug(err)
 			}
 
+			a.connectWithBackoff()
 		}
 		out <- m
 	}
@@ -319,12 +295,7 @@ func (a *Agent) Run() error {
 		a.StartStatsd()
 	}
 
-	conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS, a.header)
-	if err != nil {
-		return err
-	}
-
-	a.conn = conn
+	a.connectWithBackoff()
 
 	// These are in separate goroutines so that they can, theoretically, be executing
 	// concurrently.
@@ -340,6 +311,33 @@ func (a *Agent) Run() error {
 	go a.sendKeepalivePeriodically()
 
 	return nil
+}
+
+func (a *Agent) connectWithBackoff() {
+	// Now, we must attempt to reconnect to the backend, with exponential
+	// backoff
+	backoff := retry.ExponentialBackoff{
+		InitialDelayInterval: 500 * time.Millisecond,
+		MaxDelayInterval:     10 * time.Second,
+		MaxRetryAttempts:     0, // Unlimited attempts
+		Multiplier:           1.5,
+	}
+
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS, a.header)
+		if err != nil {
+			logger.WithError(err).Error("reconnection attempt failed")
+			return false, nil
+		}
+
+		// At this point, the attempt was successful
+		logger.Info("successfully reconnected")
+
+		a.conn = conn
+		return true, nil
+	}); err != nil {
+		logger.WithError(err).Fatal("could not reconnect to transport")
+	}
 }
 
 // StartAPI starts the Agent HTTP API. After attempting to start the API, if the

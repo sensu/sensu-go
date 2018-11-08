@@ -143,12 +143,18 @@ func NewMessage(msgType string, payload []byte) *Message {
 // returning nil, because the connection _will_ be closed. Hay!
 func (t *WebSocketTransport) Close() error {
 	t.mutex.Lock()
+
 	defer func() {
 		// WriteMessage can annoyingly panic, because the websocket conn isn't safe
 		// for concurrent use. Recover here, and unlock the mutex.
 		_ = recover()
 		t.mutex.Unlock()
 	}()
+
+	if t.closed {
+		return nil
+	}
+
 	t.closed = true
 	return t.Connection.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseGoingAway, "bye"))
 }
@@ -192,36 +198,6 @@ func (t *WebSocketTransport) Receive() (*Message, error) {
 	msg.Type = msgType
 	msg.Payload = payload
 	return msg, nil
-}
-
-// Reconnect attempts to establish a new connection to the websocket backend. If
-// it's successful, it will replace the connection in the Transport client with
-// this new connection so it can be immediately used
-func (t *WebSocketTransport) Reconnect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.Header) error {
-	t.mutex.RLock()
-
-	// Verify that the connection has been marked as closed, otherwise return
-	// immediately
-	if !t.closed {
-		t.mutex.RUnlock()
-		return nil
-	}
-	t.mutex.RUnlock()
-
-	// Try to connect to the websocket backend
-	conn, err := connect(wsServerURL, tlsOpts, requestHeader)
-	if err != nil {
-		return err
-	}
-
-	// Replace the connection in the Transport cient with this new connection and
-	// mark it as ready to be used
-	t.mutex.Lock()
-	t.Connection = conn
-	t.closed = false
-	t.mutex.Unlock()
-
-	return nil
 }
 
 // Send a message over the websocket connection. If the connection has been
