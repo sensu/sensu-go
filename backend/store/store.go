@@ -146,8 +146,17 @@ type Store interface {
 	// NamespaceStore provides an interface for managing namespaces
 	NamespaceStore
 
+	// ClusterRoleStore provides an interface for managing cluster roles
+	ClusterRoleStore
+
+	// ClusterRoleBindingStore provides an interface for managing cluster role bindings
+	ClusterRoleBindingStore
+
 	// RoleStore provides an interface for managing roles
 	RoleStore
+
+	// RoleBindingStore provides an interface for managing role bindings
+	RoleBindingStore
 
 	// SilencedStore provides an interface for managing silenced entries,
 	// consisting of entities, subscriptions and/or checks

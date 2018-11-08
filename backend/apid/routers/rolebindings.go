@@ -10,21 +10,21 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// RolesRouter handles requests for Roles.
-type RolesRouter struct {
-	controller actions.RoleController
+// RoleBindingsRouter handles requests for RoleBindings.
+type RoleBindingsRouter struct {
+	controller actions.RoleBindingController
 }
 
-// NewRolesRouter instantiates a new router for Roles.
-func NewRolesRouter(store store.RoleStore) *RolesRouter {
-	return &RolesRouter{
-		controller: actions.NewRoleController(store),
+// NewRoleBindingsRouter instantiates a new router for RoleBindings.
+func NewRoleBindingsRouter(store store.RoleBindingStore) *RoleBindingsRouter {
+	return &RoleBindingsRouter{
+		controller: actions.NewRoleBindingController(store),
 	}
 }
 
-// Mount the RolesRouter on the given parent Router
-func (r *RolesRouter) Mount(parent *mux.Router) {
-	routes := ResourceRoute{Router: parent, PathPrefix: "/apis/rbac/v2/namespaces/{namespace}/roles"}
+// Mount the RoleBindingsRouter on the given parent Router
+func (r *RoleBindingsRouter) Mount(parent *mux.Router) {
+	routes := ResourceRoute{Router: parent, PathPrefix: "/apis/rbac/v2/namespaces/{namespace}/rolebindings"}
 	routes.GetAll(r.list)
 	routes.Get(r.find)
 	routes.Post(r.create)
@@ -32,8 +32,8 @@ func (r *RolesRouter) Mount(parent *mux.Router) {
 	routes.Put(r.createOrReplace)
 }
 
-func (r *RolesRouter) create(req *http.Request) (interface{}, error) {
-	obj := types.Role{}
+func (r *RoleBindingsRouter) create(req *http.Request) (interface{}, error) {
+	obj := types.RoleBinding{}
 
 	if err := UnmarshalBody(req, &obj); err != nil {
 		return nil, err
@@ -43,8 +43,8 @@ func (r *RolesRouter) create(req *http.Request) (interface{}, error) {
 	return obj, err
 }
 
-func (r *RolesRouter) createOrReplace(req *http.Request) (interface{}, error) {
-	obj := types.Role{}
+func (r *RoleBindingsRouter) createOrReplace(req *http.Request) (interface{}, error) {
+	obj := types.RoleBinding{}
 
 	if err := UnmarshalBody(req, &obj); err != nil {
 		return nil, err
@@ -54,7 +54,7 @@ func (r *RolesRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	return obj, err
 }
 
-func (r *RolesRouter) destroy(req *http.Request) (interface{}, error) {
+func (r *RoleBindingsRouter) destroy(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
 
 	id, err := url.PathUnescape(params["id"])
@@ -66,7 +66,7 @@ func (r *RolesRouter) destroy(req *http.Request) (interface{}, error) {
 	return nil, err
 }
 
-func (r *RolesRouter) find(req *http.Request) (interface{}, error) {
+func (r *RoleBindingsRouter) find(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
 
 	id, err := url.PathUnescape(params["id"])
@@ -78,7 +78,7 @@ func (r *RolesRouter) find(req *http.Request) (interface{}, error) {
 	return obj, err
 }
 
-func (r *RolesRouter) list(req *http.Request) (interface{}, error) {
+func (r *RoleBindingsRouter) list(req *http.Request) (interface{}, error) {
 	objs, err := r.controller.List(req.Context())
 	return objs, err
 }
