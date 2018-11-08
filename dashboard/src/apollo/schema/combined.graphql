@@ -510,7 +510,7 @@ type Entity implements Node & Namespaced {
 
   """unique identifier for the entity"""
   name: String!
-  class: String!
+  entityClass: String!
   system: System!
   subscriptions: [String!]
   lastSeen: DateTime

@@ -31,7 +31,7 @@ class EventDetailsSummary extends React.Component {
         }
 
         name
-        class
+        entityClass
         subscriptions
       }
     `,
@@ -98,7 +98,7 @@ class EventDetailsSummary extends React.Component {
             </DictionaryEntry>
             <DictionaryEntry>
               <DictionaryKey>Class</DictionaryKey>
-              <DictionaryValue>{entity.class}</DictionaryValue>
+              <DictionaryValue>{entity.entityClass}</DictionaryValue>
             </DictionaryEntry>
             <DictionaryEntry>
               <DictionaryKey>Platform</DictionaryKey>

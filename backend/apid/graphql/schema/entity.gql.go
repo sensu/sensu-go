@@ -28,10 +28,10 @@ type EntityNameFieldResolver interface {
 	Name(p graphql.ResolveParams) (string, error)
 }
 
-// EntityClassFieldResolver implement to resolve requests for the Entity's class field.
-type EntityClassFieldResolver interface {
-	// Class implements response to request for class field.
-	Class(p graphql.ResolveParams) (string, error)
+// EntityEntityClassFieldResolver implement to resolve requests for the Entity's entityClass field.
+type EntityEntityClassFieldResolver interface {
+	// EntityClass implements response to request for entityClass field.
+	EntityClass(p graphql.ResolveParams) (string, error)
 }
 
 // EntitySystemFieldResolver implement to resolve requests for the Entity's system field.
@@ -199,7 +199,7 @@ type EntityFieldResolvers interface {
 	EntityIDFieldResolver
 	EntityNamespaceFieldResolver
 	EntityNameFieldResolver
-	EntityClassFieldResolver
+	EntityEntityClassFieldResolver
 	EntitySystemFieldResolver
 	EntitySubscriptionsFieldResolver
 	EntityLastSeenFieldResolver
@@ -301,15 +301,15 @@ func (_ EntityAliases) Name(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
-// Class implements response to request for 'class' field.
-func (_ EntityAliases) Class(p graphql.ResolveParams) (string, error) {
+// EntityClass implements response to request for 'entityClass' field.
+func (_ EntityAliases) EntityClass(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	ret, ok := val.(string)
 	if err != nil {
 		return ret, err
 	}
 	if !ok {
-		return ret, errors.New("unable to coerce value for field 'class'")
+		return ret, errors.New("unable to coerce value for field 'entityClass'")
 	}
 	return ret, err
 }
@@ -472,10 +472,10 @@ func _ObjTypeEntityNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
-func _ObjTypeEntityClassHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EntityClassFieldResolver)
+func _ObjTypeEntityEntityClassHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityEntityClassFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Class(frp)
+		return resolver.EntityClass(frp)
 	}
 }
 
@@ -586,13 +586,6 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Entity is the Entity supplying the event. The default Entity for any\nEvent is the running Agent process--if the Event is sent by an Agent.",
 		Fields: graphql1.Fields{
-			"class": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "class",
-				Type:              graphql1.NewNonNull(graphql1.String),
-			},
 			"deregister": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -606,6 +599,13 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				Description:       "self descriptive",
 				Name:              "deregistration",
 				Type:              graphql1.NewNonNull(graphql.OutputType("Deregistration")),
+			},
+			"entityClass": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "entityClass",
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"events": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{"orderBy": &graphql1.ArgumentConfig{
@@ -733,9 +733,9 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeEntityConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"class":              _ObjTypeEntityClassHandler,
 		"deregister":         _ObjTypeEntityDeregisterHandler,
 		"deregistration":     _ObjTypeEntityDeregistrationHandler,
+		"entityClass":        _ObjTypeEntityEntityClassHandler,
 		"events":             _ObjTypeEntityEventsHandler,
 		"extendedAttributes": _ObjTypeEntityExtendedAttributesHandler,
 		"id":                 _ObjTypeEntityIDHandler,

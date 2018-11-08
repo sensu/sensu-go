@@ -41,7 +41,7 @@ class EntityDetailsInformation extends React.PureComponent {
     entity: gql`
       fragment EntityDetailsInformation_entity on Entity {
         name
-        class
+        entityClass
         subscriptions
         lastSeen
         status
@@ -97,7 +97,7 @@ class EntityDetailsInformation extends React.PureComponent {
             )}
           </Typography>
           <Typography variant="caption" paragraph>
-            Current state of the {entity.class}.
+            Current state of the {entity.entityClass}.
           </Typography>
           <Grid container spacing={0}>
             <Grid item xs={12} sm={6}>
@@ -154,7 +154,7 @@ class EntityDetailsInformation extends React.PureComponent {
               <Dictionary>
                 <DictionaryEntry>
                   <DictionaryKey>Class</DictionaryKey>
-                  <DictionaryValue>{entity.class}</DictionaryValue>
+                  <DictionaryValue>{entity.entityClass}</DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>
                   <DictionaryKey>Hostname</DictionaryKey>
