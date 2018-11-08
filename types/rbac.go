@@ -18,6 +18,21 @@ const (
 	UserKind = "User"
 )
 
+// CommonCoreResources represents the common "core" resources found in a
+// namespace
+var CommonCoreResources = []string{
+	"assets",
+	"checks",
+	"entities",
+	"extensions",
+	"events",
+	"filters",
+	"handlers",
+	"hooks",
+	"mutators",
+	"silenced",
+}
+
 // FixtureSubject creates a Subject for testing
 func FixtureSubject(kind, name string) Subject {
 	return Subject{
@@ -48,7 +63,7 @@ func FixtureRole(name, namespace string) *Role {
 // FixtureRoleRef creates a RoleRef for testing
 func FixtureRoleRef(kind, name string) RoleRef {
 	return RoleRef{
-		Type: kind,
+		Kind: kind,
 		Name: name,
 	}
 }
@@ -84,7 +99,7 @@ func FixtureClusterRoleBinding(name string) *ClusterRoleBinding {
 
 // Validate a ClusterRole
 func (r *ClusterRole) Validate() error {
-	if err := ValidateName(r.Name); err != nil {
+	if err := ValidateSubscriptionName(r.Name); err != nil {
 		return errors.New("the ClusterRole name " + err.Error())
 	}
 
@@ -102,11 +117,11 @@ func (r *ClusterRole) URIPath() string {
 
 // Validate a ClusterRoleBinding
 func (b *ClusterRoleBinding) Validate() error {
-	if err := ValidateName(b.Name); err != nil {
+	if err := ValidateSubscriptionName(b.Name); err != nil {
 		return errors.New("the ClusterRoleBinding name " + err.Error())
 	}
 
-	if b.RoleRef.Name == "" || b.RoleRef.Type == "" {
+	if b.RoleRef.Name == "" || b.RoleRef.Kind == "" {
 		return errors.New("a ClusterRoleBinding needs a roleRef")
 	}
 
@@ -124,7 +139,7 @@ func (b *ClusterRoleBinding) URIPath() string {
 
 // Validate a Role
 func (r *Role) Validate() error {
-	if err := ValidateName(r.Name); err != nil {
+	if err := ValidateSubscriptionName(r.Name); err != nil {
 		return errors.New("the Role name " + err.Error())
 	}
 
@@ -149,7 +164,7 @@ func (r *Role) URIPath() string {
 
 // Validate a RoleBinding
 func (b *RoleBinding) Validate() error {
-	if err := ValidateName(b.Name); err != nil {
+	if err := ValidateSubscriptionName(b.Name); err != nil {
 		return errors.New("the RoleBinding name " + err.Error())
 	}
 
@@ -157,7 +172,7 @@ func (b *RoleBinding) Validate() error {
 		return errors.New("the RoleBinding namespace must be set")
 	}
 
-	if b.RoleRef.Name == "" || b.RoleRef.Type == "" {
+	if b.RoleRef.Name == "" || b.RoleRef.Kind == "" {
 		return errors.New("a RoleBinding needs a roleRef")
 	}
 

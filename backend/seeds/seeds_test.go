@@ -35,8 +35,4 @@ func TestSeedInitialData(t *testing.T) {
 	defaultNamespace, err := st.GetNamespace(ctx, "default")
 	require.NoError(t, err)
 	assert.NotEmpty(t, defaultNamespace, "default namespace should be present after seed process")
-
-	sensu, err := st.GetUser(ctx, "sensu")
-	require.NoError(t, err)
-	assert.NotEmpty(t, sensu, "sensu user should be present after seed process")
 }
