@@ -21,8 +21,8 @@ var (
 
 // AccessToken creates a new access token and returns it in both JWT and
 // signed format, along with any error
-func AccessToken(username string) (*jwt.Token, string, error) {
-	claims, err := NewClaims(username)
+func AccessToken(user *types.User) (*jwt.Token, string, error) {
+	claims, err := NewClaims(user)
 	if err != nil {
 		return nil, "", err
 	}
@@ -39,7 +39,7 @@ func AccessToken(username string) (*jwt.Token, string, error) {
 }
 
 // NewClaims creates new claim based on username
-func NewClaims(username string) (*types.Claims, error) {
+func NewClaims(user *types.User) (*types.Claims, error) {
 	// Create a unique identifier for the token
 	jti, err := utilbytes.Random(16)
 	if err != nil {
@@ -50,8 +50,9 @@ func NewClaims(username string) (*types.Claims, error) {
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(defaultExpiration).Unix(),
 			Id:        hex.EncodeToString(jti),
-			Subject:   username,
+			Subject:   user.Username,
 		},
+		Groups: user.Groups,
 	}
 	return &claims, nil
 }
@@ -134,7 +135,7 @@ func parseToken(tokenString string) (*jwt.Token, error) {
 }
 
 // RefreshToken returns a refresh token for a specific user
-func RefreshToken(username string) (*jwt.Token, string, error) {
+func RefreshToken(user *types.User) (*jwt.Token, string, error) {
 	// Create a unique identifier for the token
 	jti, err := utilbytes.Random(16)
 	if err != nil {
@@ -144,8 +145,9 @@ func RefreshToken(username string) (*jwt.Token, string, error) {
 	claims := types.Claims{
 		StandardClaims: jwt.StandardClaims{
 			Id:      hex.EncodeToString(jti),
-			Subject: username,
+			Subject: user.Username,
 		},
+		Groups: user.Groups,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims)

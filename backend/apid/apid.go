@@ -14,6 +14,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/apid/routers"
+	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -187,6 +188,7 @@ func registerRestrictedLegacyResources(router *mux.Router, store store.Store, ge
 			middlewares.Namespace{},
 			middlewares.Authentication{},
 			middlewares.AllowList{Store: store},
+			middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: store}},
 			middlewares.LimitRequest{},
 			middlewares.Edition{Name: version.Edition},
 		),
