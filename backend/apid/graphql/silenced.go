@@ -67,9 +67,3 @@ func (r *silencedImpl) Expires(p graphql.ResolveParams) (*time.Time, error) {
 func (r *silencedImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.SilenceTranslator.EncodeToString(p.Source), nil
 }
-
-// StoreID implements response to request for 'storeId' field.
-func (r *silencedImpl) StoreID(p graphql.ResolveParams) (string, error) {
-	s := p.Source.(*types.Silenced)
-	return s.Name, nil
-}

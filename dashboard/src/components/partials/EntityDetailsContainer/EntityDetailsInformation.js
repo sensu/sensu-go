@@ -46,7 +46,7 @@ class EntityDetailsInformation extends React.PureComponent {
         lastSeen
         status
         silences {
-          storeId
+          name
         }
         user
         redact
@@ -114,7 +114,7 @@ class EntityDetailsInformation extends React.PureComponent {
                   <DictionaryEntry>
                     <DictionaryKey>Silenced By</DictionaryKey>
                     <DictionaryValue>
-                      {entity.silences.map(s => s.storeId).join(", ")}
+                      {entity.silences.map(s => s.name).join(", ")}
                     </DictionaryValue>
                   </DictionaryEntry>
                 )}

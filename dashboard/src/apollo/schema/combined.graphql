@@ -908,7 +908,7 @@ type Namespace implements Node {
   """Name is the unique identifier for a namespace."""
   name: String!
 
-  """All check configurations associated with the environment."""
+  """All check configurations associated with the namespace."""
   checks(
     offset: Int = 0
 
@@ -924,7 +924,7 @@ type Namespace implements Node {
     filter: String = ""
   ): CheckConfigConnection!
 
-  """All entities associated with the environment."""
+  """All entities associated with the namespace."""
   entities(
     offset: Int = 0
 
@@ -940,7 +940,7 @@ type Namespace implements Node {
     filter: String = ""
   ): EntityConnection!
 
-  """All events associated with the environment."""
+  """All events associated with the namespace."""
   events(
     offset: Int = 0
 
@@ -956,7 +956,7 @@ type Namespace implements Node {
     filter: String = ""
   ): EventConnection!
 
-  """All silences associated with the environment."""
+  """All silences associated with the namespace."""
   silences(
     offset: Int = 0
 
@@ -972,7 +972,7 @@ type Namespace implements Node {
     filter: String = ""
   ): SilencedConnection!
 
-  """All subscriptions in use in the environment."""
+  """All subscriptions in use in the namespace."""
   subscriptions(
     """Omit entity subscriptions from set."""
     omitEntity: Boolean = false
@@ -983,7 +983,7 @@ type Namespace implements Node {
 
   """
   checkHistory includes all persisted check execution results associated with
-  the environment. Unlike the Check type's history this field includes the most
+  the namespace. Unlike the Check type's history this field includes the most
   recent result.
   """
   checkHistory(
@@ -1002,7 +1002,7 @@ type Namespace implements Node {
   iconId: Icon!
 
   """
-  ColourId. Experimental. Use graphical interfaces as symbolic reference to environment
+  ColourId. Experimental. Use graphical interfaces as symbolic reference to namespace
   """
   colourId: MutedColour!
 }
@@ -1189,9 +1189,9 @@ type Silenced implements Node & Namespaced {
   namespace: String!
 
   """
-  ID is the combination of subscription and check name (subscription:checkname)
+  Name is the combination of subscription and check name (subscription:checkname)
   """
-  storeId: String!
+  name: String!
 
   """Expire is the number of seconds the entry will live"""
   expire: Int!
@@ -1375,7 +1375,6 @@ type UpdateCheckPayload {
 type User {
   username: String!
   roles: [Role!]!
-  groups: [String!]!
   disabled: Boolean!
   hasPassword: Boolean!
 }
