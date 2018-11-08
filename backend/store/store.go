@@ -67,6 +67,17 @@ func (e *ErrNotValid) Error() string {
 	return fmt.Sprintf("resource is invalid: %s", e.Err.Error())
 }
 
+// ErrInternal is returned when something generally bad happened while
+// interacting with the store. Other, more specific errors should preferably be
+// returned when appropriate.
+type ErrInternal struct {
+	Message string
+}
+
+func (e *ErrInternal) Error() string {
+	return fmt.Sprintf("internal error: %s", e.Message)
+}
+
 // WatchActionType indicates what type of change was made to an object in the store.
 type WatchActionType int
 

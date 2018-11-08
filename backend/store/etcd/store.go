@@ -92,8 +92,12 @@ func (s *Store) delete(ctx context.Context, key string) error {
 	if err != nil {
 		return err
 	}
-	if resp.Deleted != 1 {
-		return fmt.Errorf("could not delete the key %s", key)
+	if resp.Deleted == 0 {
+		return &store.ErrNotFound{Key: key}
+	} else if resp.Deleted > 1 {
+		return &store.ErrInternal{
+			Message: fmt.Sprintf("expected to delete exactly 1 key, deleted %d", resp.Deleted),
+		}
 	}
 
 	return nil
