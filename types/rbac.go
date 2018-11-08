@@ -210,7 +210,7 @@ func (r Rule) ResourceMatches(requestedResource string) bool {
 // ResourceNameMatches returns whether the specified requestedResourceName
 // matches any of the rule resources
 func (r Rule) ResourceNameMatches(requestedResourceName string) bool {
-	if len(requestedResourceName) == 0 {
+	if len(r.ResourceNames) == 0 {
 		return true
 	}
 

@@ -333,7 +333,7 @@ func TestRuleAllows(t *testing.T) {
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := ruleAllows(tc.attrs, tc.rule); got != tc.want {
+			if got, _ := ruleAllows(tc.attrs, tc.rule); got != tc.want {
 				t.Errorf("ruleAllows() = %v, want %v", got, tc.want)
 			}
 		})

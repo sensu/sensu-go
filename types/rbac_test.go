@@ -55,14 +55,14 @@ func TestRuleResourceNameMatches(t *testing.T) {
 		want                  bool
 	}{
 		{
-			name: "empty rule resources",
+			name: "rule allows all names",
 			requestedResourceName: "checks",
-			want: false,
+			want: true,
 		},
 		{
-			name:          "no name specified",
+			name:          "rule only allows a specific name none specified in req",
 			resourceNames: []string{"foo"},
-			want:          true,
+			want:          false,
 		},
 		{
 			name:                  "does not match",
