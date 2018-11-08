@@ -27,7 +27,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// GetDefaultAgentName returns the default agent ID
+// GetDefaultAgentName returns the default agent name
 func GetDefaultAgentName() string {
 	defaultAgentName, err := os.Hostname()
 	if err != nil {
@@ -311,7 +311,7 @@ func (a *Agent) Run() error {
 
 	// Fail the agent after startup if the id is invalid
 	if err := types.ValidateName(a.config.AgentName); err != nil {
-		return fmt.Errorf("invalid agent id: %v", err)
+		return fmt.Errorf("invalid agent name: %v", err)
 	}
 
 	// Start the statsd listener only if the agent configuration has it enabled

@@ -37,7 +37,7 @@ func TestSilencedStorage(t *testing.T) {
 		assert.NotNil(t, entries)
 		assert.Equal(t, 1, len(entries))
 
-		// Get silenced entry by id
+		// Get silenced entry by name
 		entry, err := store.GetSilencedEntryByName(ctx, silenced.Name)
 		assert.NoError(t, err)
 		assert.NotNil(t, entry)
@@ -61,7 +61,7 @@ func TestSilencedStorage(t *testing.T) {
 		err = store.UpdateSilencedEntry(ctx, silenced)
 		assert.NoError(t, err)
 
-		// Get silenced entry by id with "wildcard"
+		// Get silenced entry by name with "wildcard"
 		entry, err = store.GetSilencedEntryByName(ctx, silenced.Name)
 		assert.NoError(t, err)
 		assert.NotNil(t, entry)
@@ -69,7 +69,7 @@ func TestSilencedStorage(t *testing.T) {
 		// Entries without expirations should return -1
 		assert.Equal(t, int64(-1), entry.Expire)
 
-		// Delete silenced entry by id
+		// Delete silenced entry by name
 		err = store.DeleteSilencedEntryByName(ctx, silenced.Name)
 		assert.NoError(t, err)
 

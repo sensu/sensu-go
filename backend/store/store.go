@@ -212,17 +212,17 @@ type EntityStore interface {
 	// DeleteEntity deletes an entity using the given entity struct.
 	DeleteEntity(ctx context.Context, entity *types.Entity) error
 
-	// DeleteEntityByName deletes an entity using the given id and the
+	// DeleteEntityByName deletes an entity using the given name and the
 	// namespace stored in ctx.
-	DeleteEntityByName(ctx context.Context, id string) error
+	DeleteEntityByName(ctx context.Context, name string) error
 
 	// GetEntities returns all entities in the given ctx's namespace. A nil slice
 	// with no error is returned if none were found.
 	GetEntities(ctx context.Context) ([]*types.Entity, error)
 
-	// GetEntityByName returns an entity using the given id and the namespace stored
+	// GetEntityByName returns an entity using the given name and the namespace stored
 	// in ctx. The resulting entity is nil if none was found.
-	GetEntityByName(ctx context.Context, id string) (*types.Entity, error)
+	GetEntityByName(ctx context.Context, name string) (*types.Entity, error)
 
 	// UpdateEntity creates or updates a given entity.
 	UpdateEntity(ctx context.Context, entity *types.Entity) error

@@ -82,7 +82,7 @@ func TestTokenSubstitution(t *testing.T) {
 		{
 			name:            "extra escape character",
 			data:            map[string]interface{}{"Name": "foo", "Check": map[string]interface{}{"Name": "check_foo"}},
-			input:           types.CheckConfig{Command: `{{ .ID | default \"bar\" }}`},
+			input:           types.CheckConfig{Command: `{{ .Name | default \"bar\" }}`},
 			expectedCommand: "",
 			expectedError:   true,
 		},

@@ -29,13 +29,13 @@ func getSilencedPath(ctx context.Context, name string) string {
 	return silencedKeyBuilder.WithContext(ctx).Build(name)
 }
 
-// DeleteSilencedEntryByName a silenced entry by its id (subscription + checkname)
-func (s *Store) DeleteSilencedEntryByName(ctx context.Context, silencedID string) error {
-	if silencedID == "" {
-		return errors.New("must specify id")
+// DeleteSilencedEntryByName a silenced entry by its name (subscription + checkname)
+func (s *Store) DeleteSilencedEntryByName(ctx context.Context, silencedName string) error {
+	if silencedName == "" {
+		return errors.New("must specify name")
 	}
 
-	_, err := s.client.Delete(ctx, getSilencedPath(ctx, silencedID))
+	_, err := s.client.Delete(ctx, getSilencedPath(ctx, silencedName))
 	return err
 }
 
@@ -96,13 +96,13 @@ func (s *Store) GetSilencedEntriesByCheckName(ctx context.Context, checkName str
 	return silencedArray, nil
 }
 
-// GetSilencedEntryByName gets a silenced entry by id.
-func (s *Store) GetSilencedEntryByName(ctx context.Context, id string) (*types.Silenced, error) {
-	if id == "" {
-		return nil, errors.New("must specify id")
+// GetSilencedEntryByName gets a silenced entry by name.
+func (s *Store) GetSilencedEntryByName(ctx context.Context, name string) (*types.Silenced, error) {
+	if name == "" {
+		return nil, errors.New("must specify name")
 	}
 
-	resp, err := s.client.Get(ctx, getSilencedPath(ctx, id))
+	resp, err := s.client.Get(ctx, getSilencedPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}

@@ -27,7 +27,7 @@ type checkOpts struct {
 	RuntimeAssets        string `survey:"assets"`
 	Namespace            string
 	Publish              string `survey:"publish"`
-	ProxyEntityName      string `survey:"proxy-entity-id"`
+	ProxyEntityName      string `survey:"proxy-entity-name"`
 	Stdin                string `survey:"stdin"`
 	Timeout              string `survey:"timeout"`
 	TTL                  string `survey:"ttl"`
@@ -75,7 +75,7 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	opts.RuntimeAssets, _ = flags.GetString("runtime-assets")
 	publishBool, _ := flags.GetBool("publish")
 	opts.Publish = strconv.FormatBool(publishBool)
-	opts.ProxyEntityName, _ = flags.GetString("proxy-entity-id")
+	opts.ProxyEntityName, _ = flags.GetString("proxy-entity-name")
 	opts.Stdin, _ = flags.GetString("stdin")
 	opts.Timeout, _ = flags.GetString("timeout")
 	opts.TTL, _ = flags.GetString("ttl")

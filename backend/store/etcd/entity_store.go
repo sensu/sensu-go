@@ -23,8 +23,8 @@ func getEntityPath(entity *types.Entity) string {
 	return entityKeyBuilder.WithResource(entity).Build(entity.Name)
 }
 
-func getEntitiesPath(ctx context.Context, id string) string {
-	return entityKeyBuilder.WithContext(ctx).Build(id)
+func getEntitiesPath(ctx context.Context, name string) string {
+	return entityKeyBuilder.WithContext(ctx).Build(name)
 }
 
 // DeleteEntity deletes an Entity.
@@ -36,23 +36,23 @@ func (s *Store) DeleteEntity(ctx context.Context, e *types.Entity) error {
 	return err
 }
 
-// DeleteEntityByName deletes an Entity by its ID.
-func (s *Store) DeleteEntityByName(ctx context.Context, id string) error {
-	if id == "" {
-		return errors.New("must specify id")
+// DeleteEntityByName deletes an Entity by its name.
+func (s *Store) DeleteEntityByName(ctx context.Context, name string) error {
+	if name == "" {
+		return errors.New("must specify name")
 	}
 
-	_, err := s.client.Delete(ctx, getEntitiesPath(ctx, id))
+	_, err := s.client.Delete(ctx, getEntitiesPath(ctx, name))
 	return err
 }
 
-// GetEntityByName gets an Entity by ID.
-func (s *Store) GetEntityByName(ctx context.Context, id string) (*types.Entity, error) {
-	if id == "" {
-		return nil, errors.New("must specify id")
+// GetEntityByName gets an Entity by its name.
+func (s *Store) GetEntityByName(ctx context.Context, name string) (*types.Entity, error) {
+	if name == "" {
+		return nil, errors.New("must specify name")
 	}
 
-	resp, err := s.client.Get(ctx, getEntitiesPath(ctx, id), clientv3.WithLimit(1))
+	resp, err := s.client.Get(ctx, getEntitiesPath(ctx, name), clientv3.WithLimit(1))
 	if err != nil {
 		return nil, err
 	}

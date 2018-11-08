@@ -140,9 +140,9 @@ func newStartCommand() *cobra.Command {
 			cfg.Labels = viper.GetStringMapString(flagLabels)
 			cfg.User = viper.GetString(flagUser)
 
-			agentID := viper.GetString(flagAgentName)
-			if agentID != "" {
-				cfg.AgentName = agentID
+			agentName := viper.GetString(flagAgentName)
+			if agentName != "" {
+				cfg.AgentName = agentName
 			}
 
 			for _, backendURL := range viper.GetStringSlice(flagBackendURL) {
@@ -250,7 +250,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().Int(flagAPIPort, viper.GetInt(flagAPIPort), "port the Sensu client HTTP API listens on")
 	cmd.Flags().Int(flagKeepaliveInterval, viper.GetInt(flagKeepaliveInterval), "number of seconds to send between keepalive events")
 	cmd.Flags().Int(flagSocketPort, viper.GetInt(flagSocketPort), "port the Sensu client socket listens on")
-	cmd.Flags().String(flagAgentName, viper.GetString(flagAgentName), "agent ID (defaults to hostname)")
+	cmd.Flags().String(flagAgentName, viper.GetString(flagAgentName), "agent name (defaults to hostname)")
 	cmd.Flags().String(flagAPIHost, viper.GetString(flagAPIHost), "address to bind the Sensu client HTTP API to")
 	cmd.Flags().String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
 	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "deregistration handler that should process the entity deregistration event.")

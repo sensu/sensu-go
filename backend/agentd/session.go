@@ -206,7 +206,7 @@ func (s *Session) Start() (err error) {
 	go s.subPump()
 
 	namespace := s.cfg.Namespace
-	agentID := fmt.Sprintf("%s:%s", namespace, s.cfg.AgentName)
+	agentName := fmt.Sprintf("%s:%s", namespace, s.cfg.AgentName)
 
 	defer func() {
 		if err != nil {
@@ -222,7 +222,7 @@ func (s *Session) Start() (err error) {
 
 		topic := messaging.SubscriptionTopic(namespace, sub)
 		logger.WithField("topic", topic).Debug("subscribing to topic")
-		subscription, err := s.bus.Subscribe(topic, agentID, s)
+		subscription, err := s.bus.Subscribe(topic, agentName, s)
 		if err != nil {
 			logger.WithError(err).Error("error starting subscription")
 			return err

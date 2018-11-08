@@ -31,6 +31,9 @@ flatten embedded and non-embedded fields to the top level.
 - Improved agent logging for statsd events.
 - Fixues issue with tooltip positioning.
 
+### Changes
+- Deprecated the sensu-agent `--id` flag, `--name` should be used instead.
+
 ### Breaking Changes
 - Environments and organizations have been replaced with namespaces.
 - Removed unused asset metadata field.
@@ -683,7 +686,7 @@ check configuration
 (usage: --non-interactive or -n)
 - New function SetField in package dynamic, for setting fields on types
 supporting extended attributes.
-- Automatically append entity:entityName subscription for agent entities
+- Automatically append entity:entityID subscription for agent entities
 - Add silenced command to sensuctl for silencing checks and subscriptions.
 - Add healthz endpoint to agent api for checking agent liveness.
 - Add ability to pass JSON event data to check command STDIN.

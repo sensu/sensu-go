@@ -69,7 +69,8 @@ func translateToEvent(a *Agent, result v1.CheckResult, event *types.Event) error
 	} else {
 		event.Entity = &types.Entity{
 			ObjectMeta: types.ObjectMeta{
-				Name: result.Client,
+				Name:      result.Client,
+				Namespace: agentEntity.Namespace,
 			},
 			EntityClass: types.EntityProxyClass,
 		}

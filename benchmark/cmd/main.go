@@ -30,7 +30,7 @@ func main() {
 	i := 0
 
 	for i < *count {
-		id := uuid.New().String()
+		name := uuid.New().String()
 
 		cfg := agent.NewConfig()
 		cfg.API.Host = agent.DefaultAPIHost
@@ -46,7 +46,7 @@ func main() {
 		cfg.Socket.Port = agent.DefaultAPIPort
 		cfg.User = agent.DefaultUser
 		cfg.Subscriptions = []string{"default"}
-		cfg.AgentName = id
+		cfg.AgentName = name
 		cfg.BackendURLs = []string{fmt.Sprintf("ws://%s:%d", *backendHost, 8081)}
 
 		agent := agent.NewAgent(cfg)
