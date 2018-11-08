@@ -73,6 +73,15 @@ func FixtureClusterRole(name string) *ClusterRole {
 	}
 }
 
+// FixtureClusterRoleBinding creates a ClusterRoleBinding for testing
+func FixtureClusterRoleBinding(name string) *ClusterRoleBinding {
+	return &ClusterRoleBinding{
+		Name:     name,
+		Subjects: []Subject{FixtureSubject(UserKind, "username")},
+		RoleRef:  FixtureRoleRef("ClusterRole", "read-write"),
+	}
+}
+
 // Validate a ClusterRole
 func (r *ClusterRole) Validate() error {
 	if err := ValidateName(r.Name); err != nil {
