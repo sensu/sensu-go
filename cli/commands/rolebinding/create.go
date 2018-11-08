@@ -42,12 +42,12 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 			if clusterRole != "" {
 				roleBinding.RoleRef = types.RoleRef{
-					Type: "ClusterRole",
+					Kind: "ClusterRole",
 					Name: clusterRole,
 				}
 			} else if role != "" {
 				roleBinding.RoleRef = types.RoleRef{
-					Type: "Role",
+					Kind: "Role",
 					Name: role,
 				}
 			} else {

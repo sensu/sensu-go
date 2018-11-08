@@ -62,7 +62,7 @@ func printToList(v interface{}, writer io.Writer) error {
 				Value: roleBinding.Namespace,
 			},
 			{
-				Label: roleBinding.RoleRef.Type,
+				Label: roleBinding.RoleRef.Kind,
 				Value: roleBinding.RoleRef.Name,
 			},
 			// TODO (Simon) Create a row for each subject once the API is working

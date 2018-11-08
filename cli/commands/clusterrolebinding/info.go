@@ -45,7 +45,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 }
 
 func printToList(v interface{}, writer io.Writer) error {
-	clusterRoleBinding, ok := v.(*types.RoleBinding)
+	clusterRoleBinding, ok := v.(*types.ClusterRoleBinding)
 	if !ok {
 		return fmt.Errorf("%t is not a ClusterRoleBinding", v)
 	}
@@ -58,8 +58,8 @@ func printToList(v interface{}, writer io.Writer) error {
 				Value: clusterRoleBinding.Name,
 			},
 			{
-				Label: "Role",
-				Value: fmt.Sprintf("%s (%s)", clusterRoleBinding.RoleRef.Name, clusterRoleBinding.RoleRef.Type),
+				Label: "ClusterRole",
+				Value: clusterRoleBinding.RoleRef.Name,
 			},
 			// TODO (Simon) Create a row for each subject once the API is working
 			{

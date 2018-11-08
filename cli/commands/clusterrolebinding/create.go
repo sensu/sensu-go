@@ -32,7 +32,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return errors.New("a ClusterRole must be provided")
 			}
 			clusterRoleBinding.RoleRef = types.RoleRef{
-				Type: "ClusterRole",
+				Kind: "ClusterRole",
 				Name: clusterRole,
 			}
 
