@@ -16,19 +16,19 @@ option (gogoproto.testgen_all) = true;
 // Entity is the Entity supplying the event. The default Entity for any
 // Event is the running Agent process--if the Event is sent by an Agent.
 message Entity {
-  string id = 1 [(gogoproto.customname) = "ID"];
-  string class = 2;
-  System system = 3 [(gogoproto.nullable) = false];
-  repeated string subscriptions = 4 [(gogoproto.jsontag) = "subscriptions"];
-  int64 last_seen = 5 [(gogoproto.jsontag) = "last_seen"];
-  bool deregister = 6 [(gogoproto.jsontag) = "deregister"];
-  Deregistration deregistration = 7 [(gogoproto.nullable) = false];
-  string user = 11;
+  string entity_class = 1 [(gogoproto.jsontag) = "entity_class"];
+  System system = 2 [(gogoproto.nullable) = false];
+  repeated string subscriptions = 3 [(gogoproto.jsontag) = "subscriptions"];
+  int64 last_seen = 4 [(gogoproto.jsontag) = "last_seen"];
+  bool deregister = 5 [(gogoproto.jsontag) = "deregister"];
+  Deregistration deregistration = 6 [(gogoproto.nullable) = false];
+  string user = 7;
   // ExtendedAttributes store serialized arbitrary JSON-encoded data
-  bytes extended_attributes = 12 [(gogoproto.jsontag) = "-"];
+  bytes extended_attributes = 8 [(gogoproto.jsontag) = "-"];
   // Redact contains the fields to redact on the agent
-  repeated string redact = 13;
-  ObjectMeta metadata = 14 [(gogoproto.jsontag) = "metadata", (gogoproto.embed) = true, (gogoproto.nullable) = false];
+  repeated string redact = 9;
+  // Metadata contains the name, namespace, labels and annotations of the entity
+  ObjectMeta metadata = 10 [(gogoproto.jsontag) = "metadata", (gogoproto.embed) = true, (gogoproto.nullable) = false];
 }
 
 // System contains information about the system that the Agent process

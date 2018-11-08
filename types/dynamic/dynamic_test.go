@@ -70,6 +70,18 @@ type MyType struct {
 	Bar int    `json:"bar"`
 }
 
+type MyTypeEmbedded struct {
+	Foo         string `json:"foo"`
+	Bar         int    `json:"bar"`
+	Meta        `json:"meta"`
+	NotEmbedded Meta `json:"not-embed"`
+}
+
+type Meta struct {
+	Name      string `json:"name"`
+	Namespace string `json:"namespace"`
+}
+
 func (m *MyType) Get(name string) (interface{}, error) {
 	return GetField(m, name)
 }
@@ -156,6 +168,20 @@ func TestSynthesize(t *testing.T) {
 			expected: map[string]interface{}{
 				"Bar": 5,
 				"Foo": "bar",
+			},
+		},
+		{
+			name:  "embedded fields",
+			input: &MyTypeEmbedded{Foo: "bar", Bar: 5, Meta: Meta{Name: "baz", Namespace: "default"}, NotEmbedded: Meta{Name: "not-baz", Namespace: "not-default"}},
+			expected: map[string]interface{}{
+				"Bar":       5,
+				"Foo":       "bar",
+				"Name":      "baz",
+				"Namespace": "default",
+				"NotEmbedded": map[string]interface{}{
+					"Name":      "not-baz",
+					"Namespace": "not-default",
+				},
 			},
 		},
 	}

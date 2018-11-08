@@ -35,7 +35,7 @@ func FailingCheck(event *types.Event, mutated []byte) error {
 		log.Print("event does not contain check")
 		return nil
 	}
-	log.Printf("entity %q: %s is failing", event.Entity.ID, event.Check.Name)
+	log.Printf("entity %q: %s is failing", event.Entity.Name, event.Check.Name)
 	return nil
 }
 

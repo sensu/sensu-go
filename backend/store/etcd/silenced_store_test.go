@@ -18,7 +18,7 @@ func TestSilencedStorage(t *testing.T) {
 		silenced := types.FixtureSilenced("*:checkname")
 		silenced.Namespace = "default"
 		silenced.Subscription = "subscription"
-		silenced.ID = silenced.Subscription + ":" + silenced.Check
+		silenced.Name = silenced.Subscription + ":" + silenced.Check
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, silenced.Namespace)
 
 		// We should receive an empty slice if no results were found
@@ -38,7 +38,7 @@ func TestSilencedStorage(t *testing.T) {
 		assert.Equal(t, 1, len(entries))
 
 		// Get silenced entry by id
-		entry, err := store.GetSilencedEntryByID(ctx, silenced.ID)
+		entry, err := store.GetSilencedEntryByName(ctx, silenced.Name)
 		assert.NoError(t, err)
 		assert.NotNil(t, entry)
 		assert.Equal(t, silenced.Check, entry.Check)
@@ -57,20 +57,20 @@ func TestSilencedStorage(t *testing.T) {
 
 		// Update silenced entry to "wildcard"
 		silenced.Check = "*"
-		silenced.ID = silenced.Subscription + ":" + silenced.Check
+		silenced.Name = silenced.Subscription + ":" + silenced.Check
 		err = store.UpdateSilencedEntry(ctx, silenced)
 		assert.NoError(t, err)
 
 		// Get silenced entry by id with "wildcard"
-		entry, err = store.GetSilencedEntryByID(ctx, silenced.ID)
+		entry, err = store.GetSilencedEntryByName(ctx, silenced.Name)
 		assert.NoError(t, err)
 		assert.NotNil(t, entry)
-		assert.Equal(t, "subscription:*", entry.ID)
+		assert.Equal(t, "subscription:*", entry.Name)
 		// Entries without expirations should return -1
 		assert.Equal(t, int64(-1), entry.Expire)
 
 		// Delete silenced entry by id
-		err = store.DeleteSilencedEntryByID(ctx, silenced.ID)
+		err = store.DeleteSilencedEntryByName(ctx, silenced.Name)
 		assert.NoError(t, err)
 
 		// Update a silenced entry's expire time
@@ -82,7 +82,7 @@ func TestSilencedStorage(t *testing.T) {
 		time.Sleep(3 * time.Second)
 
 		// Check that the entry is deleted
-		entry, err = store.GetSilencedEntryByID(ctx, silenced.ID)
+		entry, err = store.GetSilencedEntryByName(ctx, silenced.Name)
 		assert.NoError(t, err)
 		assert.Nil(t, entry)
 
@@ -107,7 +107,7 @@ func TestSilencedStorageWithExpire(t *testing.T) {
 		}
 
 		// Get silenced entry and check that expire time is not zero
-		entry, err := store.GetSilencedEntryByID(ctx, silenced.ID)
+		entry, err := store.GetSilencedEntryByName(ctx, silenced.Name)
 		assert.NoError(t, err)
 		assert.NotNil(t, entry)
 		assert.NotZero(t, entry.Expire)
@@ -131,7 +131,7 @@ func TestSilencedStorageWithBegin(t *testing.T) {
 
 		// Get silenced entry and check that it is not yet ready to start
 		// silencing
-		entry, err := store.GetSilencedEntryByID(ctx, silenced.ID)
+		entry, err := store.GetSilencedEntryByName(ctx, silenced.Name)
 		assert.NoError(t, err)
 		require.NotNil(t, entry)
 		assert.False(t, entry.StartSilence(currentTime))
@@ -158,7 +158,7 @@ func TestSilencedStorageWithBeginAndExpire(t *testing.T) {
 			t.Fatalf("failed to update entry due to error: %s", err)
 		}
 
-		entry, err := store.GetSilencedEntryByID(ctx, silenced.ID)
+		entry, err := store.GetSilencedEntryByName(ctx, silenced.Name)
 		assert.NoError(t, err)
 		assert.NotNil(t, entry)
 		assert.False(t, entry.StartSilence(currentTime))

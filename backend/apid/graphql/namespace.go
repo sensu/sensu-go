@@ -157,10 +157,10 @@ func (r *namespaceImpl) Silences(p schema.NamespaceSilencesFieldResolverParams) 
 	case schema.SilencesListOrders.BEGIN:
 		sort.Sort(types.SortSilencedByBegin(filteredSilences))
 	case schema.SilencesListOrders.ID:
-		sort.Sort(sort.Reverse(types.SortSilencedByID(filteredSilences)))
+		sort.Sort(sort.Reverse(types.SortSilencedByName(filteredSilences)))
 	case schema.SilencesListOrders.ID_DESC:
 	default:
-		sort.Sort(types.SortSilencedByID(filteredSilences))
+		sort.Sort(types.SortSilencedByName(filteredSilences))
 	}
 
 	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(filteredSilences))

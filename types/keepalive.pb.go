@@ -23,13 +23,12 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-// A KeepaliveRecord is a tuple of an Entity ID and the time at which the
+// A KeepaliveRecord is a tuple of an entity name and the time at which the
 // entity's keepalive will next expire.
 type KeepaliveRecord struct {
-	EntityID string `protobuf:"bytes,3,opt,name=entity_id,json=entityId,proto3" json:"entity_id,omitempty"`
-	Time     int64  `protobuf:"varint,4,opt,name=time,proto3" json:"time"`
-	// Namespace to which the keepalive belongs to
-	Namespace            string   `protobuf:"bytes,5,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	// Metadata contains the name (of the entity), and namespace, labels and annotations of the keepalive record
+	ObjectMeta           `protobuf:"bytes,1,opt,name=metadata,embedded=metadata" json:"metadata"`
+	Time                 int64    `protobuf:"varint,2,opt,name=time,proto3" json:"time"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -39,7 +38,7 @@ func (m *KeepaliveRecord) Reset()         { *m = KeepaliveRecord{} }
 func (m *KeepaliveRecord) String() string { return proto.CompactTextString(m) }
 func (*KeepaliveRecord) ProtoMessage()    {}
 func (*KeepaliveRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_keepalive_a2a01d07f196aa9d, []int{0}
+	return fileDescriptor_keepalive_4b09651d70a2a5db, []int{0}
 }
 func (m *KeepaliveRecord) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -68,25 +67,11 @@ func (m *KeepaliveRecord) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_KeepaliveRecord proto.InternalMessageInfo
 
-func (m *KeepaliveRecord) GetEntityID() string {
-	if m != nil {
-		return m.EntityID
-	}
-	return ""
-}
-
 func (m *KeepaliveRecord) GetTime() int64 {
 	if m != nil {
 		return m.Time
 	}
 	return 0
-}
-
-func (m *KeepaliveRecord) GetNamespace() string {
-	if m != nil {
-		return m.Namespace
-	}
-	return ""
 }
 
 func init() {
@@ -111,13 +96,10 @@ func (this *KeepaliveRecord) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.EntityID != that1.EntityID {
+	if !this.ObjectMeta.Equal(&that1.ObjectMeta) {
 		return false
 	}
 	if this.Time != that1.Time {
-		return false
-	}
-	if this.Namespace != that1.Namespace {
 		return false
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
@@ -140,22 +122,18 @@ func (m *KeepaliveRecord) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.EntityID) > 0 {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintKeepalive(dAtA, i, uint64(len(m.EntityID)))
-		i += copy(dAtA[i:], m.EntityID)
+	dAtA[i] = 0xa
+	i++
+	i = encodeVarintKeepalive(dAtA, i, uint64(m.ObjectMeta.Size()))
+	n1, err := m.ObjectMeta.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
 	}
+	i += n1
 	if m.Time != 0 {
-		dAtA[i] = 0x20
+		dAtA[i] = 0x10
 		i++
 		i = encodeVarintKeepalive(dAtA, i, uint64(m.Time))
-	}
-	if len(m.Namespace) > 0 {
-		dAtA[i] = 0x2a
-		i++
-		i = encodeVarintKeepalive(dAtA, i, uint64(len(m.Namespace)))
-		i += copy(dAtA[i:], m.Namespace)
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -174,14 +152,14 @@ func encodeVarintKeepalive(dAtA []byte, offset int, v uint64) int {
 }
 func NewPopulatedKeepaliveRecord(r randyKeepalive, easy bool) *KeepaliveRecord {
 	this := &KeepaliveRecord{}
-	this.EntityID = string(randStringKeepalive(r))
+	v1 := NewPopulatedObjectMeta(r, easy)
+	this.ObjectMeta = *v1
 	this.Time = int64(r.Int63())
 	if r.Intn(2) == 0 {
 		this.Time *= -1
 	}
-	this.Namespace = string(randStringKeepalive(r))
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedKeepalive(r, 6)
+		this.XXX_unrecognized = randUnrecognizedKeepalive(r, 3)
 	}
 	return this
 }
@@ -205,9 +183,9 @@ func randUTF8RuneKeepalive(r randyKeepalive) rune {
 	return rune(ru + 61)
 }
 func randStringKeepalive(r randyKeepalive) string {
-	v1 := r.Intn(100)
-	tmps := make([]rune, v1)
-	for i := 0; i < v1; i++ {
+	v2 := r.Intn(100)
+	tmps := make([]rune, v2)
+	for i := 0; i < v2; i++ {
 		tmps[i] = randUTF8RuneKeepalive(r)
 	}
 	return string(tmps)
@@ -229,11 +207,11 @@ func randFieldKeepalive(dAtA []byte, r randyKeepalive, fieldNumber int, wire int
 	switch wire {
 	case 0:
 		dAtA = encodeVarintPopulateKeepalive(dAtA, uint64(key))
-		v2 := r.Int63()
+		v3 := r.Int63()
 		if r.Intn(2) == 0 {
-			v2 *= -1
+			v3 *= -1
 		}
-		dAtA = encodeVarintPopulateKeepalive(dAtA, uint64(v2))
+		dAtA = encodeVarintPopulateKeepalive(dAtA, uint64(v3))
 	case 1:
 		dAtA = encodeVarintPopulateKeepalive(dAtA, uint64(key))
 		dAtA = append(dAtA, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -261,16 +239,10 @@ func encodeVarintPopulateKeepalive(dAtA []byte, v uint64) []byte {
 func (m *KeepaliveRecord) Size() (n int) {
 	var l int
 	_ = l
-	l = len(m.EntityID)
-	if l > 0 {
-		n += 1 + l + sovKeepalive(uint64(l))
-	}
+	l = m.ObjectMeta.Size()
+	n += 1 + l + sovKeepalive(uint64(l))
 	if m.Time != 0 {
 		n += 1 + sovKeepalive(uint64(m.Time))
-	}
-	l = len(m.Namespace)
-	if l > 0 {
-		n += 1 + l + sovKeepalive(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -320,11 +292,11 @@ func (m *KeepaliveRecord) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: KeepaliveRecord: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		case 3:
+		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field EntityID", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ObjectMeta", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowKeepalive
@@ -334,22 +306,23 @@ func (m *KeepaliveRecord) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthKeepalive
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.EntityID = string(dAtA[iNdEx:postIndex])
+			if err := m.ObjectMeta.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
-		case 4:
+		case 2:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Time", wireType)
 			}
@@ -368,35 +341,6 @@ func (m *KeepaliveRecord) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowKeepalive
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthKeepalive
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Namespace = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipKeepalive(dAtA[iNdEx:])
@@ -524,22 +468,22 @@ var (
 	ErrIntOverflowKeepalive   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("keepalive.proto", fileDescriptor_keepalive_a2a01d07f196aa9d) }
+func init() { proto.RegisterFile("keepalive.proto", fileDescriptor_keepalive_4b09651d70a2a5db) }
 
-var fileDescriptor_keepalive_a2a01d07f196aa9d = []byte{
-	// 218 bytes of a gzipped FileDescriptorProto
+var fileDescriptor_keepalive_4b09651d70a2a5db = []byte{
+	// 221 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xcf, 0x4e, 0x4d, 0x2d,
 	0x48, 0xcc, 0xc9, 0x2c, 0x4b, 0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2e, 0x4e, 0xcd,
 	0x2b, 0x2e, 0xd5, 0x2b, 0xa9, 0x2c, 0x48, 0x2d, 0x96, 0xd2, 0x4d, 0xcf, 0x2c, 0xc9, 0x28, 0x4d,
 	0xd2, 0x4b, 0xce, 0xcf, 0xd5, 0x4f, 0xcf, 0x4f, 0xcf, 0xd7, 0x07, 0xab, 0x49, 0x2a, 0x4d, 0x03,
-	0xf3, 0xc0, 0x1c, 0x30, 0x0b, 0xa2, 0x57, 0xa9, 0x82, 0x8b, 0xdf, 0x1b, 0x66, 0x5c, 0x50, 0x6a,
-	0x72, 0x7e, 0x51, 0x8a, 0x90, 0x26, 0x17, 0x67, 0x6a, 0x5e, 0x49, 0x66, 0x49, 0x65, 0x7c, 0x66,
-	0x8a, 0x04, 0xb3, 0x02, 0xa3, 0x06, 0xa7, 0x13, 0xcf, 0xa3, 0x7b, 0xf2, 0x1c, 0xae, 0x60, 0x41,
-	0x4f, 0x97, 0x20, 0x0e, 0x88, 0xb4, 0x67, 0x8a, 0x90, 0x0c, 0x17, 0x4b, 0x49, 0x66, 0x6e, 0xaa,
-	0x04, 0x8b, 0x02, 0xa3, 0x06, 0xb3, 0x13, 0xc7, 0xab, 0x7b, 0xf2, 0x60, 0x7e, 0x10, 0x98, 0x14,
-	0x92, 0xe1, 0xe2, 0xcc, 0x4b, 0xcc, 0x4d, 0x2d, 0x2e, 0x48, 0x4c, 0x4e, 0x95, 0x60, 0x05, 0x19,
-	0x14, 0x84, 0x10, 0x70, 0x52, 0xfe, 0xf1, 0x50, 0x8e, 0x71, 0xc5, 0x23, 0x39, 0xc6, 0x1d, 0x8f,
-	0xe4, 0x18, 0x4f, 0x3c, 0x92, 0x63, 0xbc, 0xf0, 0x48, 0x8e, 0xf1, 0xc1, 0x23, 0x39, 0xc6, 0x19,
-	0x8f, 0xe5, 0x18, 0xa2, 0x58, 0xc1, 0xbe, 0x49, 0x62, 0x03, 0xbb, 0xd2, 0x18, 0x10, 0x00, 0x00,
-	0xff, 0xff, 0xe9, 0xe1, 0x8a, 0xb3, 0xf4, 0x00, 0x00, 0x00,
+	0xf3, 0xc0, 0x1c, 0x30, 0x0b, 0xa2, 0x57, 0x8a, 0x2b, 0x37, 0xb5, 0x24, 0x11, 0xc2, 0x56, 0xaa,
+	0xe2, 0xe2, 0xf7, 0x86, 0x19, 0x1d, 0x94, 0x9a, 0x9c, 0x5f, 0x94, 0x22, 0xe4, 0xc9, 0xc5, 0x01,
+	0x52, 0x90, 0x92, 0x58, 0x92, 0x28, 0xc1, 0xa8, 0xc0, 0xa8, 0xc1, 0x6d, 0x24, 0xae, 0x87, 0x64,
+	0x9b, 0x9e, 0x7f, 0x52, 0x56, 0x6a, 0x72, 0x89, 0x6f, 0x6a, 0x49, 0xa2, 0x93, 0xc8, 0x89, 0x7b,
+	0xf2, 0x0c, 0x17, 0xee, 0xc9, 0x33, 0xbe, 0xba, 0x27, 0x0f, 0xd7, 0x14, 0x04, 0x67, 0x09, 0xc9,
+	0x70, 0xb1, 0x94, 0x64, 0xe6, 0xa6, 0x4a, 0x30, 0x29, 0x30, 0x6a, 0x30, 0x3b, 0x71, 0xbc, 0xba,
+	0x27, 0x0f, 0xe6, 0x07, 0x81, 0x49, 0x27, 0xe5, 0x1f, 0x0f, 0xe5, 0x18, 0x57, 0x3c, 0x92, 0x63,
+	0xdc, 0xf1, 0x48, 0x8e, 0xf1, 0xc4, 0x23, 0x39, 0xc6, 0x0b, 0x8f, 0xe4, 0x18, 0x1f, 0x3c, 0x92,
+	0x63, 0x9c, 0xf1, 0x58, 0x8e, 0x21, 0x8a, 0x15, 0x6c, 0x5b, 0x12, 0x1b, 0xd8, 0x9d, 0xc6, 0x80,
+	0x00, 0x00, 0x00, 0xff, 0xff, 0x46, 0xef, 0xb6, 0x13, 0x02, 0x01, 0x00, 0x00,
 }

@@ -103,8 +103,8 @@ func printToList(v interface{}, writer io.Writer) error {
 				Value: strconv.FormatBool(r.Stdin),
 			},
 			{
-				Label: "Proxy Entity ID",
-				Value: r.ProxyEntityID,
+				Label: "Proxy Entity Name",
+				Value: r.ProxyEntityName,
 			},
 			{
 				Label: "Namespace",

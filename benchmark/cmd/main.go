@@ -46,7 +46,7 @@ func main() {
 		cfg.Socket.Port = agent.DefaultAPIPort
 		cfg.User = agent.DefaultUser
 		cfg.Subscriptions = []string{"default"}
-		cfg.AgentID = id
+		cfg.AgentName = id
 		cfg.BackendURLs = []string{fmt.Sprintf("ws://%s:%d", *backendHost, 8081)}
 
 		agent := agent.NewAgent(cfg)

@@ -27,7 +27,7 @@ type checkOpts struct {
 	RuntimeAssets        string `survey:"assets"`
 	Namespace            string
 	Publish              string `survey:"publish"`
-	ProxyEntityID        string `survey:"proxy-entity-id"`
+	ProxyEntityName      string `survey:"proxy-entity-id"`
 	Stdin                string `survey:"stdin"`
 	Timeout              string `survey:"timeout"`
 	TTL                  string `survey:"ttl"`
@@ -55,7 +55,7 @@ func (opts *checkOpts) withCheck(check *types.CheckConfig) {
 	opts.Subscriptions = strings.Join(check.Subscriptions, ",")
 	opts.Handlers = strings.Join(check.Handlers, ",")
 	opts.RuntimeAssets = strings.Join(check.RuntimeAssets, ",")
-	opts.ProxyEntityID = check.ProxyEntityID
+	opts.ProxyEntityName = check.ProxyEntityName
 	opts.Stdin = strconv.FormatBool(check.Stdin)
 	opts.Timeout = strconv.Itoa(int(check.Timeout))
 	opts.HighFlapThreshold = strconv.Itoa(int(check.HighFlapThreshold))
@@ -75,7 +75,7 @@ func (opts *checkOpts) withFlags(flags *pflag.FlagSet) {
 	opts.RuntimeAssets, _ = flags.GetString("runtime-assets")
 	publishBool, _ := flags.GetBool("publish")
 	opts.Publish = strconv.FormatBool(publishBool)
-	opts.ProxyEntityID, _ = flags.GetString("proxy-entity-id")
+	opts.ProxyEntityName, _ = flags.GetString("proxy-entity-id")
 	opts.Stdin, _ = flags.GetString("stdin")
 	opts.Timeout, _ = flags.GetString("timeout")
 	opts.TTL, _ = flags.GetString("ttl")
@@ -197,11 +197,11 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			},
 		},
 		{
-			Name: "proxy-entity-id",
+			Name: "proxy-entity-name",
 			Prompt: &survey.Input{
-				Message: "Check Proxy Entity ID:",
-				Default: opts.ProxyEntityID,
-				Help:    "the check's proxy entity id, used to create a proxy entity for an external resource",
+				Message: "Check Proxy Entity Name:",
+				Default: opts.ProxyEntityName,
+				Help:    "the check's proxy entity name, used to create a proxy entity for an external resource",
 			},
 		},
 		{
@@ -282,7 +282,7 @@ func (opts *checkOpts) Copy(check *types.CheckConfig) {
 	check.Handlers = helpers.SafeSplitCSV(opts.Handlers)
 	check.RuntimeAssets = helpers.SafeSplitCSV(opts.RuntimeAssets)
 	check.Publish, _ = strconv.ParseBool(opts.Publish)
-	check.ProxyEntityID = opts.ProxyEntityID
+	check.ProxyEntityName = opts.ProxyEntityName
 	check.Stdin = stdin
 	check.Timeout = uint32(timeout)
 	check.Ttl = int64(ttl)

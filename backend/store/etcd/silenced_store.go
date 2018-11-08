@@ -29,8 +29,8 @@ func getSilencedPath(ctx context.Context, name string) string {
 	return silencedKeyBuilder.WithContext(ctx).Build(name)
 }
 
-// DeleteSilencedEntryByID a silenced entry by its id (subscription + checkname)
-func (s *Store) DeleteSilencedEntryByID(ctx context.Context, silencedID string) error {
+// DeleteSilencedEntryByName a silenced entry by its id (subscription + checkname)
+func (s *Store) DeleteSilencedEntryByName(ctx context.Context, silencedID string) error {
 	if silencedID == "" {
 		return errors.New("must specify id")
 	}
@@ -96,8 +96,8 @@ func (s *Store) GetSilencedEntriesByCheckName(ctx context.Context, checkName str
 	return silencedArray, nil
 }
 
-// GetSilencedEntryByID gets a silenced entry by id.
-func (s *Store) GetSilencedEntryByID(ctx context.Context, id string) (*types.Silenced, error) {
+// GetSilencedEntryByName gets a silenced entry by id.
+func (s *Store) GetSilencedEntryByName(ctx context.Context, id string) (*types.Silenced, error) {
 	if id == "" {
 		return nil, errors.New("must specify id")
 	}
@@ -148,9 +148,9 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *types.Silence
 			return err
 		}
 
-		req = clientv3.OpPut(getSilencedPath(ctx, silenced.ID), string(silencedBytes), clientv3.WithLease(lease.ID))
+		req = clientv3.OpPut(getSilencedPath(ctx, silenced.Name), string(silencedBytes), clientv3.WithLease(lease.ID))
 	} else {
-		req = clientv3.OpPut(getSilencedPath(ctx, silenced.ID), string(silencedBytes))
+		req = clientv3.OpPut(getSilencedPath(ctx, silenced.Name), string(silencedBytes))
 	}
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
@@ -159,7 +159,7 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *types.Silence
 	if !res.Succeeded {
 		return fmt.Errorf(
 			"could not create the silenced entry %s in namespace %s",
-			silenced.ID,
+			silenced.Name,
 			silenced.Namespace,
 		)
 	}

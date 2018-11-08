@@ -25,18 +25,16 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // A Mutator is a mutator specification.
 type Mutator struct {
-	// Name is the unique identifier for a mutator.
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Metadata contains the name, namespace, labels and annotations of the mutator
+	ObjectMeta `protobuf:"bytes,1,opt,name=metadata,embedded=metadata" json:"metadata"`
 	// Command is the command to be executed.
 	Command string `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
 	// Timeout is the command execution timeout in seconds.
 	Timeout uint32 `protobuf:"varint,3,opt,name=timeout,proto3" json:"timeout"`
 	// Env is a list of environment variables to use with command execution
 	EnvVars []string `protobuf:"bytes,4,rep,name=env_vars,json=envVars" json:"env_vars"`
-	// Namespace to which the mutator belongs to
-	Namespace string `protobuf:"bytes,7,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	// RuntimeAssets are a list of assets required to execute a mutator.
-	RuntimeAssets        []string `protobuf:"bytes,8,rep,name=runtime_assets,json=runtimeAssets" json:"runtime_assets"`
+	RuntimeAssets        []string `protobuf:"bytes,5,rep,name=runtime_assets,json=runtimeAssets" json:"runtime_assets"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -46,7 +44,7 @@ func (m *Mutator) Reset()         { *m = Mutator{} }
 func (m *Mutator) String() string { return proto.CompactTextString(m) }
 func (*Mutator) ProtoMessage()    {}
 func (*Mutator) Descriptor() ([]byte, []int) {
-	return fileDescriptor_mutator_1720e36d87b7e68d, []int{0}
+	return fileDescriptor_mutator_8d695c59d412b00b, []int{0}
 }
 func (m *Mutator) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -75,13 +73,6 @@ func (m *Mutator) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Mutator proto.InternalMessageInfo
 
-func (m *Mutator) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
 func (m *Mutator) GetCommand() string {
 	if m != nil {
 		return m.Command
@@ -101,13 +92,6 @@ func (m *Mutator) GetEnvVars() []string {
 		return m.EnvVars
 	}
 	return nil
-}
-
-func (m *Mutator) GetNamespace() string {
-	if m != nil {
-		return m.Namespace
-	}
-	return ""
 }
 
 func (m *Mutator) GetRuntimeAssets() []string {
@@ -139,7 +123,7 @@ func (this *Mutator) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.Name != that1.Name {
+	if !this.ObjectMeta.Equal(&that1.ObjectMeta) {
 		return false
 	}
 	if this.Command != that1.Command {
@@ -155,9 +139,6 @@ func (this *Mutator) Equal(that interface{}) bool {
 		if this.EnvVars[i] != that1.EnvVars[i] {
 			return false
 		}
-	}
-	if this.Namespace != that1.Namespace {
-		return false
 	}
 	if len(this.RuntimeAssets) != len(that1.RuntimeAssets) {
 		return false
@@ -187,12 +168,14 @@ func (m *Mutator) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.Name) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintMutator(dAtA, i, uint64(len(m.Name)))
-		i += copy(dAtA[i:], m.Name)
+	dAtA[i] = 0xa
+	i++
+	i = encodeVarintMutator(dAtA, i, uint64(m.ObjectMeta.Size()))
+	n1, err := m.ObjectMeta.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
 	}
+	i += n1
 	if len(m.Command) > 0 {
 		dAtA[i] = 0x12
 		i++
@@ -219,15 +202,9 @@ func (m *Mutator) MarshalTo(dAtA []byte) (int, error) {
 			i += copy(dAtA[i:], s)
 		}
 	}
-	if len(m.Namespace) > 0 {
-		dAtA[i] = 0x3a
-		i++
-		i = encodeVarintMutator(dAtA, i, uint64(len(m.Namespace)))
-		i += copy(dAtA[i:], m.Namespace)
-	}
 	if len(m.RuntimeAssets) > 0 {
 		for _, s := range m.RuntimeAssets {
-			dAtA[i] = 0x42
+			dAtA[i] = 0x2a
 			i++
 			l = len(s)
 			for l >= 1<<7 {
@@ -257,22 +234,22 @@ func encodeVarintMutator(dAtA []byte, offset int, v uint64) int {
 }
 func NewPopulatedMutator(r randyMutator, easy bool) *Mutator {
 	this := &Mutator{}
-	this.Name = string(randStringMutator(r))
+	v1 := NewPopulatedObjectMeta(r, easy)
+	this.ObjectMeta = *v1
 	this.Command = string(randStringMutator(r))
 	this.Timeout = uint32(r.Uint32())
-	v1 := r.Intn(10)
-	this.EnvVars = make([]string, v1)
-	for i := 0; i < v1; i++ {
+	v2 := r.Intn(10)
+	this.EnvVars = make([]string, v2)
+	for i := 0; i < v2; i++ {
 		this.EnvVars[i] = string(randStringMutator(r))
 	}
-	this.Namespace = string(randStringMutator(r))
-	v2 := r.Intn(10)
-	this.RuntimeAssets = make([]string, v2)
-	for i := 0; i < v2; i++ {
+	v3 := r.Intn(10)
+	this.RuntimeAssets = make([]string, v3)
+	for i := 0; i < v3; i++ {
 		this.RuntimeAssets[i] = string(randStringMutator(r))
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedMutator(r, 9)
+		this.XXX_unrecognized = randUnrecognizedMutator(r, 6)
 	}
 	return this
 }
@@ -296,9 +273,9 @@ func randUTF8RuneMutator(r randyMutator) rune {
 	return rune(ru + 61)
 }
 func randStringMutator(r randyMutator) string {
-	v3 := r.Intn(100)
-	tmps := make([]rune, v3)
-	for i := 0; i < v3; i++ {
+	v4 := r.Intn(100)
+	tmps := make([]rune, v4)
+	for i := 0; i < v4; i++ {
 		tmps[i] = randUTF8RuneMutator(r)
 	}
 	return string(tmps)
@@ -320,11 +297,11 @@ func randFieldMutator(dAtA []byte, r randyMutator, fieldNumber int, wire int) []
 	switch wire {
 	case 0:
 		dAtA = encodeVarintPopulateMutator(dAtA, uint64(key))
-		v4 := r.Int63()
+		v5 := r.Int63()
 		if r.Intn(2) == 0 {
-			v4 *= -1
+			v5 *= -1
 		}
-		dAtA = encodeVarintPopulateMutator(dAtA, uint64(v4))
+		dAtA = encodeVarintPopulateMutator(dAtA, uint64(v5))
 	case 1:
 		dAtA = encodeVarintPopulateMutator(dAtA, uint64(key))
 		dAtA = append(dAtA, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -352,10 +329,8 @@ func encodeVarintPopulateMutator(dAtA []byte, v uint64) []byte {
 func (m *Mutator) Size() (n int) {
 	var l int
 	_ = l
-	l = len(m.Name)
-	if l > 0 {
-		n += 1 + l + sovMutator(uint64(l))
-	}
+	l = m.ObjectMeta.Size()
+	n += 1 + l + sovMutator(uint64(l))
 	l = len(m.Command)
 	if l > 0 {
 		n += 1 + l + sovMutator(uint64(l))
@@ -368,10 +343,6 @@ func (m *Mutator) Size() (n int) {
 			l = len(s)
 			n += 1 + l + sovMutator(uint64(l))
 		}
-	}
-	l = len(m.Namespace)
-	if l > 0 {
-		n += 1 + l + sovMutator(uint64(l))
 	}
 	if len(m.RuntimeAssets) > 0 {
 		for _, s := range m.RuntimeAssets {
@@ -429,9 +400,9 @@ func (m *Mutator) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ObjectMeta", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowMutator
@@ -441,20 +412,21 @@ func (m *Mutator) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthMutator
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Name = string(dAtA[iNdEx:postIndex])
+			if err := m.ObjectMeta.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -533,36 +505,7 @@ func (m *Mutator) Unmarshal(dAtA []byte) error {
 			}
 			m.EnvVars = append(m.EnvVars, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
-		case 7:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowMutator
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthMutator
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Namespace = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 8:
+		case 5:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field RuntimeAssets", wireType)
 			}
@@ -718,26 +661,27 @@ var (
 	ErrIntOverflowMutator   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("mutator.proto", fileDescriptor_mutator_1720e36d87b7e68d) }
+func init() { proto.RegisterFile("mutator.proto", fileDescriptor_mutator_8d695c59d412b00b) }
 
-var fileDescriptor_mutator_1720e36d87b7e68d = []byte{
-	// 275 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x5c, 0x90, 0x31, 0x4e, 0xc3, 0x30,
-	0x14, 0x86, 0x31, 0x2d, 0xa4, 0x71, 0x09, 0x83, 0x27, 0x0b, 0x21, 0x27, 0x02, 0x21, 0xb2, 0x90,
-	0x0e, 0x4c, 0x8c, 0x64, 0x67, 0xc9, 0xc0, 0xc0, 0x52, 0x39, 0xc1, 0x84, 0x0e, 0xb6, 0xa3, 0xd8,
-	0x8e, 0xc4, 0x4d, 0x38, 0x02, 0x47, 0xe0, 0x08, 0x8c, 0x9c, 0x20, 0x2a, 0x66, 0xcb, 0x09, 0x18,
-	0x51, 0x5f, 0x09, 0x48, 0x6c, 0xff, 0xf7, 0xd9, 0xef, 0x7f, 0xd2, 0xc3, 0x91, 0x74, 0x96, 0x5b,
-	0xdd, 0x66, 0x4d, 0xab, 0xad, 0x26, 0x73, 0x23, 0x94, 0x71, 0x99, 0x7d, 0x6a, 0x84, 0x39, 0xba,
-	0xa8, 0x57, 0xf6, 0xd1, 0x95, 0x59, 0xa5, 0xe5, 0xa2, 0xd6, 0xb5, 0x5e, 0xc0, 0x9f, 0xd2, 0x3d,
-	0x00, 0x01, 0x40, 0xda, 0xce, 0x9e, 0xac, 0x11, 0x0e, 0x6e, 0xb6, 0x6d, 0x84, 0xe0, 0xa9, 0xe2,
-	0x52, 0x50, 0x94, 0xa0, 0x34, 0x2c, 0x20, 0x13, 0x8a, 0x83, 0x4a, 0x4b, 0xc9, 0xd5, 0x3d, 0xdd,
-	0x05, 0x3d, 0x22, 0x39, 0xc3, 0x81, 0x5d, 0x49, 0xa1, 0x9d, 0xa5, 0x93, 0x04, 0xa5, 0x51, 0x3e,
-	0x1f, 0xfa, 0x78, 0x54, 0xc5, 0x18, 0xc8, 0x39, 0x9e, 0x09, 0xd5, 0x2d, 0x3b, 0xde, 0x1a, 0x3a,
-	0x4d, 0x26, 0x69, 0x98, 0x1f, 0x0c, 0x7d, 0xfc, 0xeb, 0x8a, 0x40, 0xa8, 0xee, 0x96, 0xb7, 0x86,
-	0x1c, 0xe3, 0x70, 0xb3, 0xd1, 0x34, 0xbc, 0x12, 0x34, 0x80, 0x5d, 0x7f, 0x82, 0x5c, 0xe1, 0xc3,
-	0xd6, 0xa9, 0x4d, 0xe9, 0x92, 0x1b, 0x23, 0xac, 0xa1, 0x33, 0x28, 0x23, 0x43, 0x1f, 0xff, 0x7b,
-	0x29, 0xa2, 0x1f, 0xbe, 0x06, 0xcc, 0x4f, 0xbf, 0x3e, 0x18, 0x7a, 0xf1, 0x0c, 0xbd, 0x7a, 0x86,
-	0xde, 0x3c, 0x43, 0xef, 0x9e, 0xa1, 0xb5, 0x67, 0xe8, 0xf9, 0x93, 0xed, 0xdc, 0xed, 0xc1, 0xd9,
-	0xca, 0x7d, 0x38, 0xc7, 0xe5, 0x77, 0x00, 0x00, 0x00, 0xff, 0xff, 0x7d, 0x18, 0x52, 0xe1, 0x5b,
-	0x01, 0x00, 0x00,
+var fileDescriptor_mutator_8d695c59d412b00b = []byte{
+	// 302 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x5c, 0x90, 0xb1, 0x4e, 0xc3, 0x30,
+	0x10, 0x86, 0x7b, 0x94, 0x92, 0xd6, 0xa5, 0x0c, 0x16, 0x12, 0x56, 0x07, 0x27, 0x02, 0x21, 0xb2,
+	0x90, 0x4a, 0x30, 0x31, 0x92, 0x8d, 0xa1, 0x42, 0xca, 0xc0, 0xc0, 0x52, 0x39, 0xad, 0x29, 0x45,
+	0x72, 0x5c, 0xc5, 0xe7, 0x4a, 0xbc, 0x09, 0x8f, 0xc0, 0x23, 0xf0, 0x08, 0x1d, 0xfb, 0x04, 0x11,
+	0x84, 0xad, 0x4f, 0x00, 0x1b, 0xaa, 0x43, 0x2a, 0xc4, 0xf6, 0x7d, 0x77, 0xf7, 0xfb, 0xe4, 0x23,
+	0x3d, 0x65, 0x51, 0xa0, 0xce, 0xa3, 0x79, 0xae, 0x51, 0xd3, 0xae, 0x91, 0x99, 0xb1, 0x11, 0x3e,
+	0xcf, 0xa5, 0xe9, 0x9f, 0x4f, 0x67, 0xf8, 0x68, 0xd3, 0x68, 0xac, 0xd5, 0x60, 0xaa, 0xa7, 0x7a,
+	0xe0, 0x66, 0x52, 0xfb, 0xe0, 0xcc, 0x89, 0xa3, 0x2a, 0xdb, 0x27, 0x4a, 0xa2, 0xa8, 0xf8, 0xf8,
+	0x1b, 0x88, 0x37, 0xac, 0x5e, 0xa6, 0x37, 0xa4, 0xbd, 0xe9, 0x4c, 0x04, 0x0a, 0x06, 0x01, 0x84,
+	0xdd, 0x8b, 0xa3, 0xe8, 0xcf, 0x9a, 0xe8, 0x36, 0x7d, 0x92, 0x63, 0x1c, 0x4a, 0x14, 0xf1, 0xe1,
+	0xb2, 0xf0, 0x1b, 0xab, 0xc2, 0x87, 0x75, 0xe1, 0x6f, 0x43, 0xc9, 0x96, 0x28, 0x23, 0xde, 0x58,
+	0x2b, 0x25, 0xb2, 0x09, 0xdb, 0x09, 0x20, 0xec, 0x24, 0xb5, 0xd2, 0x53, 0xe2, 0xe1, 0x4c, 0x49,
+	0x6d, 0x91, 0x35, 0x03, 0x08, 0x7b, 0x71, 0x77, 0x5d, 0xf8, 0x75, 0x29, 0xa9, 0x81, 0x9e, 0x91,
+	0xb6, 0xcc, 0x16, 0xa3, 0x85, 0xc8, 0x0d, 0xdb, 0x0d, 0x9a, 0x61, 0x27, 0xde, 0xdf, 0xac, 0xaa,
+	0x6b, 0x89, 0x27, 0xb3, 0xc5, 0x9d, 0xc8, 0x0d, 0xbd, 0x22, 0x07, 0xb9, 0xcd, 0x36, 0xb1, 0x91,
+	0x30, 0x46, 0xa2, 0x61, 0x2d, 0x37, 0x4e, 0xd7, 0x85, 0xff, 0xaf, 0x93, 0xf4, 0x7e, 0xfd, 0xda,
+	0x69, 0x7c, 0xf2, 0xf5, 0xc1, 0xe1, 0xb5, 0xe4, 0xf0, 0x56, 0x72, 0x58, 0x96, 0x1c, 0x56, 0x25,
+	0x87, 0xf7, 0x92, 0xc3, 0xcb, 0x27, 0x6f, 0xdc, 0xb7, 0xdc, 0xa7, 0xd3, 0x3d, 0x77, 0xa7, 0xcb,
+	0x9f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x2f, 0x52, 0x6c, 0xb9, 0x80, 0x01, 0x00, 0x00,
 }

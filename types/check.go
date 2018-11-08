@@ -61,7 +61,7 @@ func NewCheck(c *CheckConfig) *Check {
 		Publish:              c.Publish,
 		RuntimeAssets:        c.RuntimeAssets,
 		Subscriptions:        c.Subscriptions,
-		ProxyEntityID:        c.ProxyEntityID,
+		ProxyEntityName:      c.ProxyEntityName,
 		CheckHooks:           c.CheckHooks,
 		Stdin:                c.Stdin,
 		Subdue:               c.Subdue,
@@ -108,9 +108,9 @@ func (c *Check) Validate() error {
 
 	// The entity can be empty but can't contain invalid characters (only
 	// alphanumeric string)
-	if c.ProxyEntityID != "" {
-		if err := ValidateName(c.ProxyEntityID); err != nil {
-			return errors.New("proxy entity id " + err.Error())
+	if c.ProxyEntityName != "" {
+		if err := ValidateName(c.ProxyEntityName); err != nil {
+			return errors.New("proxy entity name " + err.Error())
 		}
 	}
 
@@ -161,6 +161,7 @@ func (c *Check) Get(name string) (interface{}, error) {
 	return dynamic.GetField(c, name)
 }
 
+// Get implements govaluate.Parameters
 func (c *CheckConfig) Get(name string) (interface{}, error) {
 	return dynamic.GetField(c, name)
 }
@@ -220,9 +221,9 @@ func (c *CheckConfig) Validate() error {
 
 	// The entity can be empty but can't contain invalid characters (only
 	// alphanumeric string)
-	if c.ProxyEntityID != "" {
-		if err := ValidateName(c.ProxyEntityID); err != nil {
-			return errors.New("proxy entity id " + err.Error())
+	if c.ProxyEntityName != "" {
+		if err := ValidateName(c.ProxyEntityName); err != nil {
+			return errors.New("proxy entity name " + err.Error())
 		}
 	}
 

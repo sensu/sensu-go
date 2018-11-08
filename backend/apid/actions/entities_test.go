@@ -99,10 +99,10 @@ func TestEntityDestroy(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("GetEntityByID", mock.Anything, mock.Anything).
+				On("GetEntityByName", mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
 			store.
-				On("DeleteEntityByID", mock.Anything, tc.argument).
+				On("DeleteEntityByName", mock.Anything, tc.argument).
 				Return(tc.deleteErr)
 
 			// Exec Query
@@ -183,7 +183,7 @@ func TestEntityFind(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("GetEntityByID", tc.ctx, mock.Anything, mock.Anything).
+				On("GetEntityByName", tc.ctx, mock.Anything, mock.Anything).
 				Return(tc.record, nil)
 
 			// Exec Query
@@ -292,7 +292,7 @@ func TestEntityUpdate(t *testing.T) {
 	)
 
 	badEntity := types.FixtureEntity("badentity")
-	badEntity.ID = ""
+	badEntity.Name = ""
 
 	testCases := []struct {
 		name            string
@@ -364,7 +364,7 @@ func TestEntityUpdate(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("GetEntityByID", mock.Anything, mock.Anything).
+				On("GetEntityByName", mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
 			store.
 				On("UpdateEntity", mock.Anything, mock.Anything).
@@ -403,7 +403,7 @@ func TestEntityCreate(t *testing.T) {
 	)
 
 	badEntity := types.FixtureEntity("badentity")
-	badEntity.ID = ""
+	badEntity.Name = ""
 
 	testCases := []struct {
 		name            string
@@ -470,7 +470,7 @@ func TestEntityCreate(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("GetEntityByID", mock.Anything, mock.Anything).
+				On("GetEntityByName", mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
 			store.
 				On("UpdateEntity", mock.Anything, mock.Anything).
@@ -513,7 +513,7 @@ func TestEntityCreateOrReplace(t *testing.T) {
 	)
 
 	badEntity := types.FixtureEntity("badentity")
-	badEntity.ID = ""
+	badEntity.Name = ""
 
 	testCases := []struct {
 		name            string
@@ -566,7 +566,7 @@ func TestEntityCreateOrReplace(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("GetEntityByID", mock.Anything, mock.Anything).
+				On("GetEntityByName", mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
 			store.
 				On("UpdateEntity", mock.Anything, mock.Anything).

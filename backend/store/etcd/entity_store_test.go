@@ -25,20 +25,20 @@ func TestEntityStorage(t *testing.T) {
 		err = store.UpdateEntity(ctx, entity)
 		assert.NoError(t, err)
 
-		retrieved, err := store.GetEntityByID(ctx, entity.ID)
+		retrieved, err := store.GetEntityByName(ctx, entity.Name)
 		require.NoError(t, err)
 		require.NotNil(t, retrieved)
-		assert.Equal(t, entity.ID, retrieved.ID)
+		assert.Equal(t, entity.Name, retrieved.Name)
 
 		entities, err = store.GetEntities(ctx)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(entities))
-		assert.Equal(t, entity.ID, entities[0].ID)
+		assert.Equal(t, entity.Name, entities[0].Name)
 
 		err = store.DeleteEntity(ctx, entity)
 		assert.NoError(t, err)
 
-		retrieved, err = store.GetEntityByID(ctx, entity.ID)
+		retrieved, err = store.GetEntityByName(ctx, entity.Name)
 		assert.Nil(t, retrieved)
 		assert.NoError(t, err)
 

@@ -25,27 +25,25 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // EventFilter is a filter specification.
 type EventFilter struct {
-	// Name is the unique identifier for a filter
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Metadata contains the name, namespace, labels and annotations of the filter
+	ObjectMeta `protobuf:"bytes,1,opt,name=metadata,embedded=metadata" json:"metadata"`
 	// Action specifies to allow/deny events to continue through the pipeline
 	Action string `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
 	// Statements is an array of boolean expressions that are &&'d together
 	// to determine if the event matches this filter.
 	Statements []string `protobuf:"bytes,3,rep,name=statements" json:"statements"`
 	// When indicates a TimeWindowWhen that a filter uses to filter by days & times
-	When *TimeWindowWhen `protobuf:"bytes,6,opt,name=when" json:"when,omitempty"`
-	// Namespace to which the filter belongs to
-	Namespace            string   `protobuf:"bytes,7,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	When                 *TimeWindowWhen `protobuf:"bytes,4,opt,name=when" json:"when,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
+	XXX_unrecognized     []byte          `json:"-"`
+	XXX_sizecache        int32           `json:"-"`
 }
 
 func (m *EventFilter) Reset()         { *m = EventFilter{} }
 func (m *EventFilter) String() string { return proto.CompactTextString(m) }
 func (*EventFilter) ProtoMessage()    {}
 func (*EventFilter) Descriptor() ([]byte, []int) {
-	return fileDescriptor_filter_442cafab8c46969c, []int{0}
+	return fileDescriptor_filter_baf7812fe87c51f2, []int{0}
 }
 func (m *EventFilter) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -74,13 +72,6 @@ func (m *EventFilter) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_EventFilter proto.InternalMessageInfo
 
-func (m *EventFilter) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
 func (m *EventFilter) GetAction() string {
 	if m != nil {
 		return m.Action
@@ -100,13 +91,6 @@ func (m *EventFilter) GetWhen() *TimeWindowWhen {
 		return m.When
 	}
 	return nil
-}
-
-func (m *EventFilter) GetNamespace() string {
-	if m != nil {
-		return m.Namespace
-	}
-	return ""
 }
 
 func init() {
@@ -131,7 +115,7 @@ func (this *EventFilter) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.Name != that1.Name {
+	if !this.ObjectMeta.Equal(&that1.ObjectMeta) {
 		return false
 	}
 	if this.Action != that1.Action {
@@ -146,9 +130,6 @@ func (this *EventFilter) Equal(that interface{}) bool {
 		}
 	}
 	if !this.When.Equal(that1.When) {
-		return false
-	}
-	if this.Namespace != that1.Namespace {
 		return false
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
@@ -171,12 +152,14 @@ func (m *EventFilter) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.Name) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintFilter(dAtA, i, uint64(len(m.Name)))
-		i += copy(dAtA[i:], m.Name)
+	dAtA[i] = 0xa
+	i++
+	i = encodeVarintFilter(dAtA, i, uint64(m.ObjectMeta.Size()))
+	n1, err := m.ObjectMeta.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
 	}
+	i += n1
 	if len(m.Action) > 0 {
 		dAtA[i] = 0x12
 		i++
@@ -199,20 +182,14 @@ func (m *EventFilter) MarshalTo(dAtA []byte) (int, error) {
 		}
 	}
 	if m.When != nil {
-		dAtA[i] = 0x32
+		dAtA[i] = 0x22
 		i++
 		i = encodeVarintFilter(dAtA, i, uint64(m.When.Size()))
-		n1, err := m.When.MarshalTo(dAtA[i:])
+		n2, err := m.When.MarshalTo(dAtA[i:])
 		if err != nil {
 			return 0, err
 		}
-		i += n1
-	}
-	if len(m.Namespace) > 0 {
-		dAtA[i] = 0x3a
-		i++
-		i = encodeVarintFilter(dAtA, i, uint64(len(m.Namespace)))
-		i += copy(dAtA[i:], m.Namespace)
+		i += n2
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -231,19 +208,19 @@ func encodeVarintFilter(dAtA []byte, offset int, v uint64) int {
 }
 func NewPopulatedEventFilter(r randyFilter, easy bool) *EventFilter {
 	this := &EventFilter{}
-	this.Name = string(randStringFilter(r))
+	v1 := NewPopulatedObjectMeta(r, easy)
+	this.ObjectMeta = *v1
 	this.Action = string(randStringFilter(r))
-	v1 := r.Intn(10)
-	this.Statements = make([]string, v1)
-	for i := 0; i < v1; i++ {
+	v2 := r.Intn(10)
+	this.Statements = make([]string, v2)
+	for i := 0; i < v2; i++ {
 		this.Statements[i] = string(randStringFilter(r))
 	}
 	if r.Intn(10) != 0 {
 		this.When = NewPopulatedTimeWindowWhen(r, easy)
 	}
-	this.Namespace = string(randStringFilter(r))
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedFilter(r, 8)
+		this.XXX_unrecognized = randUnrecognizedFilter(r, 5)
 	}
 	return this
 }
@@ -267,9 +244,9 @@ func randUTF8RuneFilter(r randyFilter) rune {
 	return rune(ru + 61)
 }
 func randStringFilter(r randyFilter) string {
-	v2 := r.Intn(100)
-	tmps := make([]rune, v2)
-	for i := 0; i < v2; i++ {
+	v3 := r.Intn(100)
+	tmps := make([]rune, v3)
+	for i := 0; i < v3; i++ {
 		tmps[i] = randUTF8RuneFilter(r)
 	}
 	return string(tmps)
@@ -291,11 +268,11 @@ func randFieldFilter(dAtA []byte, r randyFilter, fieldNumber int, wire int) []by
 	switch wire {
 	case 0:
 		dAtA = encodeVarintPopulateFilter(dAtA, uint64(key))
-		v3 := r.Int63()
+		v4 := r.Int63()
 		if r.Intn(2) == 0 {
-			v3 *= -1
+			v4 *= -1
 		}
-		dAtA = encodeVarintPopulateFilter(dAtA, uint64(v3))
+		dAtA = encodeVarintPopulateFilter(dAtA, uint64(v4))
 	case 1:
 		dAtA = encodeVarintPopulateFilter(dAtA, uint64(key))
 		dAtA = append(dAtA, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -323,10 +300,8 @@ func encodeVarintPopulateFilter(dAtA []byte, v uint64) []byte {
 func (m *EventFilter) Size() (n int) {
 	var l int
 	_ = l
-	l = len(m.Name)
-	if l > 0 {
-		n += 1 + l + sovFilter(uint64(l))
-	}
+	l = m.ObjectMeta.Size()
+	n += 1 + l + sovFilter(uint64(l))
 	l = len(m.Action)
 	if l > 0 {
 		n += 1 + l + sovFilter(uint64(l))
@@ -339,10 +314,6 @@ func (m *EventFilter) Size() (n int) {
 	}
 	if m.When != nil {
 		l = m.When.Size()
-		n += 1 + l + sovFilter(uint64(l))
-	}
-	l = len(m.Namespace)
-	if l > 0 {
 		n += 1 + l + sovFilter(uint64(l))
 	}
 	if m.XXX_unrecognized != nil {
@@ -395,9 +366,9 @@ func (m *EventFilter) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ObjectMeta", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowFilter
@@ -407,20 +378,21 @@ func (m *EventFilter) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthFilter
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Name = string(dAtA[iNdEx:postIndex])
+			if err := m.ObjectMeta.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -480,7 +452,7 @@ func (m *EventFilter) Unmarshal(dAtA []byte) error {
 			}
 			m.Statements = append(m.Statements, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
-		case 6:
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field When", wireType)
 			}
@@ -512,35 +484,6 @@ func (m *EventFilter) Unmarshal(dAtA []byte) error {
 			if err := m.When.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
-			iNdEx = postIndex
-		case 7:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowFilter
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthFilter
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Namespace = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -669,25 +612,26 @@ var (
 	ErrIntOverflowFilter   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("filter.proto", fileDescriptor_filter_442cafab8c46969c) }
+func init() { proto.RegisterFile("filter.proto", fileDescriptor_filter_baf7812fe87c51f2) }
 
-var fileDescriptor_filter_442cafab8c46969c = []byte{
-	// 265 bytes of a gzipped FileDescriptorProto
+var fileDescriptor_filter_baf7812fe87c51f2 = []byte{
+	// 287 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x49, 0xcb, 0xcc, 0x29,
 	0x49, 0x2d, 0xd2, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2e, 0x4e, 0xcd, 0x2b, 0x2e, 0xd5,
 	0x2b, 0xa9, 0x2c, 0x48, 0x2d, 0x96, 0xd2, 0x4d, 0xcf, 0x2c, 0xc9, 0x28, 0x4d, 0xd2, 0x4b, 0xce,
 	0xcf, 0xd5, 0x4f, 0xcf, 0x4f, 0xcf, 0xd7, 0x07, 0xab, 0x49, 0x2a, 0x4d, 0x03, 0xf3, 0xc0, 0x1c,
 	0x30, 0x0b, 0xa2, 0x57, 0x4a, 0xb0, 0x24, 0x33, 0x37, 0x35, 0xbe, 0x3c, 0x33, 0x2f, 0x25, 0xbf,
-	0x1c, 0x22, 0xa4, 0xb4, 0x83, 0x91, 0x8b, 0xdb, 0xb5, 0x2c, 0x35, 0xaf, 0xc4, 0x0d, 0x6c, 0x89,
-	0x90, 0x10, 0x17, 0x4b, 0x5e, 0x62, 0x6e, 0xaa, 0x04, 0xa3, 0x02, 0xa3, 0x06, 0x67, 0x10, 0x98,
-	0x2d, 0x24, 0xc6, 0xc5, 0x96, 0x98, 0x5c, 0x92, 0x99, 0x9f, 0x27, 0xc1, 0x04, 0x16, 0x85, 0xf2,
-	0x84, 0xf4, 0xb8, 0xb8, 0x8a, 0x4b, 0x12, 0x4b, 0x52, 0x73, 0x53, 0xf3, 0x4a, 0x8a, 0x25, 0x98,
-	0x15, 0x98, 0x35, 0x38, 0x9d, 0xf8, 0x5e, 0xdd, 0x93, 0x47, 0x12, 0x0d, 0x42, 0x62, 0x0b, 0xe9,
-	0x73, 0xb1, 0x94, 0x67, 0xa4, 0xe6, 0x49, 0xb0, 0x29, 0x30, 0x6a, 0x70, 0x1b, 0x49, 0xeb, 0x21,
-	0xf9, 0x44, 0x2f, 0x24, 0x33, 0x37, 0x35, 0x1c, 0xec, 0xb0, 0xf0, 0x8c, 0xd4, 0xbc, 0x20, 0xb0,
-	0x42, 0x21, 0x19, 0x2e, 0x4e, 0x90, 0x03, 0x8a, 0x0b, 0x12, 0x93, 0x53, 0x25, 0xd8, 0xc1, 0x76,
-	0x23, 0x04, 0x9c, 0x94, 0x7f, 0x3c, 0x94, 0x63, 0x5c, 0xf1, 0x48, 0x8e, 0x71, 0xc7, 0x23, 0x39,
-	0xc6, 0x13, 0x8f, 0xe4, 0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e, 0x71, 0xc6, 0x63,
-	0x39, 0x86, 0x28, 0x56, 0xb0, 0xb9, 0x49, 0x6c, 0x60, 0x6f, 0x1a, 0x03, 0x02, 0x00, 0x00, 0xff,
-	0xff, 0xcf, 0xd8, 0x51, 0xa3, 0x45, 0x01, 0x00, 0x00,
+	0x1c, 0x2a, 0xc4, 0x95, 0x9b, 0x5a, 0x92, 0x08, 0x61, 0x2b, 0x5d, 0x64, 0xe4, 0xe2, 0x76, 0x2d,
+	0x4b, 0xcd, 0x2b, 0x71, 0x03, 0x5b, 0x28, 0xe4, 0xc9, 0xc5, 0x01, 0x92, 0x4d, 0x49, 0x2c, 0x49,
+	0x94, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x36, 0x12, 0xd7, 0x43, 0xb2, 0x5d, 0xcf, 0x3f, 0x29, 0x2b,
+	0x35, 0xb9, 0xc4, 0x37, 0xb5, 0x24, 0xd1, 0x49, 0xe4, 0xc4, 0x3d, 0x79, 0x86, 0x0b, 0xf7, 0xe4,
+	0x19, 0x5f, 0xdd, 0x93, 0x87, 0x6b, 0x0a, 0x82, 0xb3, 0x84, 0xc4, 0xb8, 0xd8, 0x12, 0x93, 0x4b,
+	0x32, 0xf3, 0xf3, 0x24, 0x98, 0x14, 0x18, 0x35, 0x38, 0x83, 0xa0, 0x3c, 0x21, 0x3d, 0x2e, 0xae,
+	0xe2, 0x92, 0xc4, 0x92, 0xd4, 0xdc, 0xd4, 0xbc, 0x92, 0x62, 0x09, 0x66, 0x05, 0x66, 0x0d, 0x4e,
+	0x27, 0xbe, 0x57, 0xf7, 0xe4, 0x91, 0x44, 0x83, 0x90, 0xd8, 0x42, 0xfa, 0x5c, 0x2c, 0xe5, 0x19,
+	0xa9, 0x79, 0x12, 0x2c, 0x60, 0xe7, 0x48, 0xa3, 0x38, 0x27, 0x24, 0x33, 0x37, 0x35, 0x1c, 0xec,
+	0xb7, 0xf0, 0x8c, 0xd4, 0xbc, 0x20, 0xb0, 0x42, 0x27, 0xe5, 0x1f, 0x0f, 0xe5, 0x18, 0x57, 0x3c,
+	0x92, 0x63, 0xdc, 0xf1, 0x48, 0x8e, 0xf1, 0xc4, 0x23, 0x39, 0xc6, 0x0b, 0x8f, 0xe4, 0x18, 0x1f,
+	0x3c, 0x92, 0x63, 0x9c, 0xf1, 0x58, 0x8e, 0x21, 0x8a, 0x15, 0xac, 0x33, 0x89, 0x0d, 0xec, 0x7f,
+	0x63, 0x40, 0x00, 0x00, 0x00, 0xff, 0xff, 0xaa, 0xf4, 0xcf, 0x69, 0x6a, 0x01, 0x00, 0x00,
 }

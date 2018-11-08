@@ -19,10 +19,10 @@ const EventFlappingState = "flapping"
 const EventPassingState = "passing"
 
 // FixtureEvent returns a testing fixutre for an Event object.
-func FixtureEvent(entityID, checkID string) *Event {
+func FixtureEvent(entityName, checkID string) *Event {
 	return &Event{
 		Timestamp: time.Now().Unix(),
-		Entity:    FixtureEntity(entityID),
+		Entity:    FixtureEntity(entityName),
 		Check:     FixtureCheck(checkID),
 	}
 }
@@ -179,7 +179,7 @@ func EventsBySeverity(es []*Event) sort.Interface {
 	return &eventSorter{es, createCmpEvents(
 		cmpBySeverity,
 		cmpByLastOk,
-		cmpByEntityID,
+		cmpByEntityName,
 	)}
 }
 
@@ -205,17 +205,17 @@ func EventsByLastOk(es []*Event) sort.Interface {
 	return &eventSorter{es, createCmpEvents(
 		cmpByIncident,
 		cmpByLastOk,
-		cmpByEntityID,
+		cmpByEntityName,
 	)}
 }
 
-func cmpByEntityID(a, b *Event) int {
+func cmpByEntityName(a, b *Event) int {
 	ai, bi := "", ""
 	if a.Entity != nil {
-		ai = a.Entity.ID
+		ai = a.Entity.Name
 	}
 	if b.Entity != nil {
-		bi = b.Entity.ID
+		bi = b.Entity.Name
 	}
 
 	if ai == bi {
@@ -326,5 +326,5 @@ func (e *Event) URIPath() string {
 	if !e.HasCheck() {
 		return ""
 	}
-	return fmt.Sprintf("/events/%s/%s", url.PathEscape(e.Entity.ID), url.PathEscape(e.Check.Name))
+	return fmt.Sprintf("/events/%s/%s", url.PathEscape(e.Entity.Name), url.PathEscape(e.Check.Name))
 }

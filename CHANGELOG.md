@@ -16,6 +16,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Add filter query support for labels.
 - Add support for setting labels on agents with the command line.
 - The sensuctl tool now supports yaml.
+- Added functionality to the dynamic synthesize function, allowing it to
+flatten embedded and non-embedded fields to the top level.
 
 ### Fixed
 - Display appropriate fallback when an entity's lastSeen field is empty.
@@ -36,6 +38,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
   instead of a comma-delimited list of strings.
 - Extended attributes have been removed and replaced with labels. Labels are
 string-string key-value pairs.
+- Silenced `id`/`ID` field has changed to `name`/`Name`.
+- Entity `id`/`ID` field has changed to `name`/`Name`.
+- Entity `class`/`Class` field has changed to `entity_class`/`EntityClass`.
+- Check `proxy_entity_id`/`ProxyEntityID` field has changed to `proxy_entity_name`/`ProxyEntityName`.
+- Objects containing both a `name`/`Name` and `namespace`/`Namespace` field have been
+replaced with `metadata`/`ObjectMeta` (which contains both of those fields).
 
 ## [2.0.0-beta.7-1] - 2018-10-26
 
@@ -675,7 +683,7 @@ check configuration
 (usage: --non-interactive or -n)
 - New function SetField in package dynamic, for setting fields on types
 supporting extended attributes.
-- Automatically append entity:entityID subscription for agent entities
+- Automatically append entity:entityName subscription for agent entities
 - Add silenced command to sensuctl for silencing checks and subscriptions.
 - Add healthz endpoint to agent api for checking agent liveness.
 - Add ability to pass JSON event data to check command STDIN.

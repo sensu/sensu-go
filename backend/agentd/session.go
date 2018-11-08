@@ -55,7 +55,7 @@ func newSessionHandler(s *Session) *handler.MessageHandler {
 type SessionConfig struct {
 	Namespace     string
 	AgentAddr     string
-	AgentID       string
+	AgentName     string
 	User          string
 	Subscriptions []string
 }
@@ -75,7 +75,7 @@ func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.Messa
 
 	logger.WithFields(logrus.Fields{
 		"addr":          cfg.AgentAddr,
-		"id":            cfg.AgentID,
+		"id":            cfg.AgentName,
 		"subscriptions": cfg.Subscriptions,
 	}).Info("agent connected")
 
@@ -122,7 +122,7 @@ func (s *Session) recvPump() {
 			case transport.ConnectionError, transport.ClosedError:
 				logger.WithFields(logrus.Fields{
 					"addr":       s.cfg.AgentAddr,
-					"id":         s.cfg.AgentID,
+					"id":         s.cfg.AgentName,
 					"recv error": err.Error(),
 				}).Warn("stopping session")
 				return
@@ -206,7 +206,7 @@ func (s *Session) Start() (err error) {
 	go s.subPump()
 
 	namespace := s.cfg.Namespace
-	agentID := fmt.Sprintf("%s:%s", namespace, s.cfg.AgentID)
+	agentID := fmt.Sprintf("%s:%s", namespace, s.cfg.AgentName)
 
 	defer func() {
 		if err != nil {
@@ -264,7 +264,7 @@ func (s *Session) handleKeepalive(payload []byte) error {
 		return errors.New("keepalive contains invalid timestamp")
 	}
 
-	keepalive.Entity.Subscriptions = addEntitySubscription(keepalive.Entity.ID, keepalive.Entity.Subscriptions)
+	keepalive.Entity.Subscriptions = addEntitySubscription(keepalive.Entity.Name, keepalive.Entity.Subscriptions)
 
 	return s.bus.Publish(messaging.TopicKeepalive, keepalive)
 }
@@ -290,7 +290,7 @@ func (s *Session) handleEvent(payload []byte) error {
 	}
 
 	// Add the entity subscription to the subscriptions of this entity
-	event.Entity.Subscriptions = addEntitySubscription(event.Entity.ID, event.Entity.Subscriptions)
+	event.Entity.Subscriptions = addEntitySubscription(event.Entity.Name, event.Entity.Subscriptions)
 
 	return s.bus.Publish(messaging.TopicEventRaw, event)
 }

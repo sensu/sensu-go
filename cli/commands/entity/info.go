@@ -28,8 +28,8 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Fetch handlers from API
-			entityID := args[0]
-			r, err := cli.Client.FetchEntity(entityID)
+			entityName := args[0]
+			r, err := cli.Client.FetchEntity(entityName)
 			if err != nil {
 				return err
 			}
@@ -52,15 +52,15 @@ func printToList(v interface{}, writer io.Writer) error {
 		return fmt.Errorf("%t is not an Entity", v)
 	}
 	cfg := &list.Config{
-		Title: r.ID,
+		Title: r.Name,
 		Rows: []*list.Row{
 			{
-				Label: "ID",
-				Value: r.ID,
+				Label: "Name",
+				Value: r.Name,
 			},
 			{
-				Label: "Class",
-				Value: r.Class,
+				Label: "Entity Class",
+				Value: r.EntityClass,
 			},
 			{
 				Label: "Subscriptions",

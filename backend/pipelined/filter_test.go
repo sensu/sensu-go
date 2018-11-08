@@ -19,22 +19,30 @@ func TestPipelinedFilter(t *testing.T) {
 
 	// Mock the store responses
 	allowFilterBar := &types.EventFilter{
-		Name:       "allowFilterBar",
+		ObjectMeta: types.ObjectMeta{
+			Name: "allowFilterBar",
+		},
 		Action:     types.EventFilterActionAllow,
 		Statements: []string{`event.Check.Output == "bar"`},
 	}
 	allowFilterFoo := &types.EventFilter{
-		Name:       "allowFilterFoo",
+		ObjectMeta: types.ObjectMeta{
+			Name: "allowFilterFoo",
+		},
 		Action:     types.EventFilterActionAllow,
 		Statements: []string{`event.Check.Output == "foo"`},
 	}
 	denyFilterBar := &types.EventFilter{
-		Name:       "denyFilterBar",
+		ObjectMeta: types.ObjectMeta{
+			Name: "denyFilterBar",
+		},
 		Action:     types.EventFilterActionDeny,
 		Statements: []string{`event.Check.Output == "bar"`},
 	}
 	denyFilterFoo := &types.EventFilter{
-		Name:       "denyFilterFoo",
+		ObjectMeta: types.ObjectMeta{
+			Name: "denyFilterFoo",
+		},
 		Action:     types.EventFilterActionDeny,
 		Statements: []string{`event.Check.Output == "foo"`},
 	}
@@ -272,7 +280,9 @@ func TestPipelinedWhenFilter(t *testing.T) {
 			now := time.Now().UTC()
 
 			filter := &types.EventFilter{
-				Name:       tc.name,
+				ObjectMeta: types.ObjectMeta{
+					Name: tc.name,
+				},
 				Action:     tc.action,
 				Statements: []string{`event.Check.Output == "bar"`},
 			}

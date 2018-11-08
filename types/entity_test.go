@@ -14,11 +14,11 @@ func TestEntityValidate(t *testing.T) {
 
 	// Invalid ID
 	assert.Error(t, e.Validate())
-	e.ID = "foo"
+	e.Name = "foo"
 
 	// Invalid class
 	assert.Error(t, e.Validate())
-	e.Class = "agent"
+	e.EntityClass = "agent"
 
 	// Invalid namespace
 	assert.Error(t, e.Validate())
@@ -30,7 +30,7 @@ func TestEntityValidate(t *testing.T) {
 
 func TestFixtureEntityIsValid(t *testing.T) {
 	e := FixtureEntity("entity")
-	assert.Equal(t, "entity", e.ID)
+	assert.Equal(t, "entity", e.Name)
 	assert.NoError(t, e.Validate())
 }
 
@@ -38,7 +38,7 @@ func TestEntityGet(t *testing.T) {
 	e := FixtureEntity("myAgent")
 
 	// Find exported field
-	val, err := e.Get("ID")
+	val, err := e.Get("Name")
 	require.NoError(t, err)
 	assert.EqualValues(t, "myAgent", val)
 }
@@ -47,11 +47,11 @@ func TestEntityUnmarshal(t *testing.T) {
 	entity := Entity{}
 
 	// Unmarshal
-	err := json.Unmarshal([]byte(`{"id": "myAgent"}`), &entity)
+	err := json.Unmarshal([]byte(`{"metadata": {"name": "myAgent"}}`), &entity)
 	require.NoError(t, err)
 
 	// Existing exported fields were properly set
-	assert.Equal(t, "myAgent", entity.ID)
+	assert.Equal(t, "myAgent", entity.Name)
 }
 
 func TestEntityMarshal(t *testing.T) {

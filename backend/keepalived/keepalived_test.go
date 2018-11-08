@@ -90,14 +90,18 @@ func TestStartStop(t *testing.T) {
 			name: "Passing Keepalives",
 			records: []*types.KeepaliveRecord{
 				{
-					EntityID:  "entity1",
-					Namespace: "org",
-					Time:      0,
+					ObjectMeta: types.ObjectMeta{
+						Name:      "entity1",
+						Namespace: "org",
+					},
+					Time: 0,
 				},
 				{
-					EntityID:  "entity2",
-					Namespace: "org",
-					Time:      0,
+					ObjectMeta: types.ObjectMeta{
+						Name:      "entity2",
+						Namespace: "org",
+					},
+					Time: 0,
 				},
 			},
 			events: []*types.Event{
@@ -110,14 +114,18 @@ func TestStartStop(t *testing.T) {
 			name: "Failing Keepalives",
 			records: []*types.KeepaliveRecord{
 				{
-					EntityID:  "entity1",
-					Namespace: "org",
-					Time:      0,
+					ObjectMeta: types.ObjectMeta{
+						Name:      "entity1",
+						Namespace: "org",
+					},
+					Time: 0,
 				},
 				{
-					EntityID:  "entity2",
-					Namespace: "org",
-					Time:      0,
+					ObjectMeta: types.ObjectMeta{
+						Name:      "entity2",
+						Namespace: "org",
+					},
+					Time: 0,
 				},
 			},
 			events: []*types.Event{
@@ -137,7 +145,7 @@ func TestStartStop(t *testing.T) {
 
 			test.Store.On("GetFailingKeepalives", mock.Anything).Return(tc.records, nil)
 			for _, event := range tc.events {
-				test.Store.On("GetEventByEntityCheck", mock.Anything, event.Entity.ID, "keepalive").Return(event, nil)
+				test.Store.On("GetEventByEntityCheck", mock.Anything, event.Entity.Name, "keepalive").Return(event, nil)
 				if event.Check.Status != 0 {
 					test.Store.On("UpdateFailingKeepalive", mock.Anything, event.Entity, mock.AnythingOfType("int64")).Return(nil)
 				}
@@ -181,7 +189,7 @@ func (t testSubscriber) Receiver() chan<- interface{} {
 func TestProcessRegistration(t *testing.T) {
 	newEntityWithClass := func(class string) *types.Entity {
 		entity := types.FixtureEntity("agent1")
-		entity.Class = class
+		entity.EntityClass = class
 		return entity
 	}
 
@@ -230,7 +238,7 @@ func TestProcessRegistration(t *testing.T) {
 			keepalived, err := New(Config{Store: store, Bus: messageBus, MonitorFactory: fakeFactory})
 			require.NoError(t, err)
 
-			store.On("GetEntityByID", mock.Anything, "agent1").Return(tc.storeEntity, nil)
+			store.On("GetEntityByName", mock.Anything, "agent1").Return(tc.storeEntity, nil)
 			err = keepalived.handleEntityRegistration(tc.entity)
 			require.NoError(t, err)
 

@@ -31,7 +31,7 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			handler := &types.Handler{Name: name}
+			handler := &types.Handler{ObjectMeta: types.ObjectMeta{Name: name}}
 			err := cli.Client.DeleteHandler(handler)
 			if err != nil {
 				return err

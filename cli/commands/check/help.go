@@ -31,7 +31,7 @@ func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 		subcommands.RemoveHighFlapThresholdCommand(cli),
 		// cannot remove interval, use set-cron
 		subcommands.RemoveLowFlapThresholdCommand(cli),
-		subcommands.RemoveProxyEntityIDCommand(cli),
+		subcommands.RemoveProxyEntityNameCommand(cli),
 		subcommands.RemoveProxyRequestsCommand(cli),
 		// cannot remove publish, use set-publish
 		subcommands.RemoveRuntimeAssetsCommand(cli),
@@ -51,7 +51,7 @@ func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 		subcommands.SetHighFlapThresholdCommand(cli),
 		subcommands.SetIntervalCommand(cli),
 		subcommands.SetLowFlapThresholdCommand(cli),
-		subcommands.SetProxyEntityIDCommand(cli),
+		subcommands.SetProxyEntityNameCommand(cli),
 		subcommands.SetProxyRequestsCommand(cli),
 		subcommands.SetPublishCommand(cli),
 		subcommands.SetRuntimeAssetsCommand(cli),

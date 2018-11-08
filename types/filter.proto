@@ -2,6 +2,7 @@ syntax = "proto3";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "time_window.proto";
+import "meta.proto";
 
 package sensu.types;
 
@@ -15,8 +16,8 @@ option (gogoproto.testgen_all) = true;
 
 // EventFilter is a filter specification.
 message EventFilter {
-  // Name is the unique identifier for a filter
-  string name = 1;
+  // Metadata contains the name, namespace, labels and annotations of the filter
+  ObjectMeta metadata = 1 [(gogoproto.jsontag) = "metadata", (gogoproto.embed) = true, (gogoproto.nullable) = false];
 
   // Action specifies to allow/deny events to continue through the pipeline
   string action = 2;
@@ -26,8 +27,5 @@ message EventFilter {
   repeated string statements = 3 [(gogoproto.jsontag) = "statements"];
 
   // When indicates a TimeWindowWhen that a filter uses to filter by days & times
-  TimeWindowWhen when = 6;
-
-   // Namespace to which the filter belongs to
-   string namespace = 7;
+  TimeWindowWhen when = 4;
 }

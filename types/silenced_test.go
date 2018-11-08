@@ -15,8 +15,8 @@ func TestFixtureSilenced(t *testing.T) {
 	s.Reason = "test reason"
 	s.Namespace = "default"
 	assert.NotNil(t, s)
-	assert.NotNil(t, s.ID)
-	assert.Equal(t, "test_subscription:test_check", s.ID)
+	assert.NotNil(t, s.Name)
+	assert.Equal(t, "test_subscription:test_check", s.Name)
 	assert.NotNil(t, s.Expire)
 	assert.NotNil(t, s.ExpireOnResolve)
 	assert.NotNil(t, s.Expire)
@@ -62,7 +62,7 @@ func TestSortSilencedByID(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			sort.Sort(SortSilencedByID(tc.inRecords))
+			sort.Sort(SortSilencedByName(tc.inRecords))
 			assert.EqualValues(t, tc.expected, tc.inRecords)
 		})
 	}

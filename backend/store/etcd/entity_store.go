@@ -20,7 +20,7 @@ var (
 )
 
 func getEntityPath(entity *types.Entity) string {
-	return entityKeyBuilder.WithResource(entity).Build(entity.ID)
+	return entityKeyBuilder.WithResource(entity).Build(entity.Name)
 }
 
 func getEntitiesPath(ctx context.Context, id string) string {
@@ -36,8 +36,8 @@ func (s *Store) DeleteEntity(ctx context.Context, e *types.Entity) error {
 	return err
 }
 
-// DeleteEntityByID deletes an Entity by its ID.
-func (s *Store) DeleteEntityByID(ctx context.Context, id string) error {
+// DeleteEntityByName deletes an Entity by its ID.
+func (s *Store) DeleteEntityByName(ctx context.Context, id string) error {
 	if id == "" {
 		return errors.New("must specify id")
 	}
@@ -46,8 +46,8 @@ func (s *Store) DeleteEntityByID(ctx context.Context, id string) error {
 	return err
 }
 
-// GetEntityByID gets an Entity by ID.
-func (s *Store) GetEntityByID(ctx context.Context, id string) (*types.Entity, error) {
+// GetEntityByName gets an Entity by ID.
+func (s *Store) GetEntityByName(ctx context.Context, id string) (*types.Entity, error) {
 	if id == "" {
 		return nil, errors.New("must specify id")
 	}
@@ -111,7 +111,7 @@ func (s *Store) UpdateEntity(ctx context.Context, e *types.Entity) error {
 	if !res.Succeeded {
 		return fmt.Errorf(
 			"could not create the entity %s in namespace %s",
-			e.ID,
+			e.Name,
 			e.Namespace,
 		)
 	}

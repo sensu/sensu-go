@@ -51,7 +51,7 @@ func (*entityImpl) ID(p graphql.ResolveParams) (string, error) {
 // Name implements response to request for 'name' field.
 func (*entityImpl) Name(p graphql.ResolveParams) (string, error) {
 	entity := p.Source.(*types.Entity)
-	return entity.ID, nil
+	return entity.Name, nil
 }
 
 // ExtendedAttributes implements response to request for 'extendedAttributes' field.
@@ -72,7 +72,7 @@ func (r *entityImpl) Events(p schema.EntityEventsFieldResolverParams) (interface
 
 	// fetch
 	ctx := types.SetContextFromResource(p.Context, entity)
-	evs, err := r.eventQuerier.Query(ctx, entity.ID, "")
+	evs, err := r.eventQuerier.Query(ctx, entity.Name, "")
 	if err != nil {
 		return 0, err
 	}
@@ -96,7 +96,7 @@ func (r *entityImpl) Related(p schema.EntityRelatedFieldResolverParams) (interfa
 
 	// omit source
 	for i, en := range entities {
-		if en.ID != entity.ID {
+		if en.Name != entity.Name {
 			continue
 		}
 
@@ -118,8 +118,8 @@ func (r *entityImpl) Related(p schema.EntityRelatedFieldResolverParams) (interfa
 	scores := map[int]int{}
 	for i, en := range entities {
 		matched := strings.Intersect(
-			append(en.Subscriptions, en.Class, en.System.Platform),
-			append(entity.Subscriptions, entity.Class, entity.System.Platform),
+			append(en.Subscriptions, en.EntityClass, en.System.Platform),
+			append(entity.Subscriptions, entity.EntityClass, entity.System.Platform),
 		)
 		scores[i] = len(matched)
 	}
@@ -138,7 +138,7 @@ func (r *entityImpl) Status(p graphql.ResolveParams) (int, error) {
 
 	// fetch
 	ctx := types.SetContextFromResource(p.Context, entity)
-	evs, err := r.eventQuerier.Query(ctx, entity.ID, "")
+	evs, err := r.eventQuerier.Query(ctx, entity.Name, "")
 	if err != nil {
 		return 0, err
 	}
