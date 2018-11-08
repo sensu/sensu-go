@@ -15,7 +15,7 @@ import HoverController from "/components/controller/HoverController";
 import ResourceDetails from "/components/partials/ResourceDetails";
 import TableOverflowCell from "/components/partials/TableOverflowCell";
 import TableSelectableRow from "/components/partials/TableSelectableRow";
-import TableToolbarCell from "/components/partials/TableToolbarCell";
+import { FloatingTableToolbarCell } from "/components/partials/TableToolbarCell";
 
 import EntityStatusDescriptor from "/components/partials/EntityStatusDescriptor";
 import CheckStatusIcon from "/components/CheckStatusIcon";
@@ -62,12 +62,18 @@ class EntitiesListItem extends React.PureComponent {
   };
 
   render() {
-    const { editing, entity, selected, onChangeSelected } = this.props;
+    const {
+      editable,
+      editing,
+      entity,
+      selected,
+      onChangeSelected,
+    } = this.props;
 
     return (
       <HoverController onHover={this.props.onHover}>
         <TableSelectableRow selected={selected}>
-          {this.props.editable && (
+          {editable && (
             <TableCell padding="checkbox">
               <Checkbox
                 color="primary"
@@ -98,7 +104,10 @@ class EntitiesListItem extends React.PureComponent {
             />
           </TableOverflowCell>
 
-          <TableToolbarCell disabled={editing || !this.props.hovered}>
+          <FloatingTableToolbarCell
+            hovered={this.props.hovered}
+            disabled={!editable || editing}
+          >
             {() => (
               <ToolbarMenu>
                 <ToolbarMenu.Item id="silence" visible="never">
@@ -133,7 +142,7 @@ class EntitiesListItem extends React.PureComponent {
                 </ToolbarMenu.Item>
               </ToolbarMenu>
             )}
-          </TableToolbarCell>
+          </FloatingTableToolbarCell>
         </TableSelectableRow>
       </HoverController>
     );

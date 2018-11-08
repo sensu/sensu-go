@@ -16,7 +16,7 @@ import SilenceMenuItem from "/components/partials/ToolbarMenuItems/Silence";
 import TableCell from "@material-ui/core/TableCell";
 import TableOverflowCell from "/components/partials/TableOverflowCell";
 import TableSelectableRow from "/components/partials/TableSelectableRow";
-import TableToolbarCell from "/components/partials/TableToolbarCell";
+import { FloatingTableToolbarCell } from "/components/partials/TableToolbarCell";
 import ToolbarMenu from "/components/partials/ToolbarMenu";
 import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
 import UnpublishMenuItem from "/components/partials/ToolbarMenuItems/Unpublish";
@@ -56,12 +56,12 @@ class CheckListItem extends React.Component {
   };
 
   render() {
-    const { editing, check, selected, onChangeSelected } = this.props;
+    const { editable, editing, check, selected, onChangeSelected } = this.props;
 
     return (
       <HoverController onHover={this.props.onHover}>
         <TableSelectableRow selected={selected}>
-          {this.props.editable && (
+          {editable && (
             <TableCell padding="checkbox">
               <Checkbox
                 color="primary"
@@ -101,7 +101,10 @@ class CheckListItem extends React.Component {
             />
           </TableOverflowCell>
 
-          <TableToolbarCell disabled={editing || !this.props.hovered}>
+          <FloatingTableToolbarCell
+            hovered={this.props.hovered}
+            disabled={!editable || editing}
+          >
             {() => (
               <ToolbarMenu>
                 <ToolbarMenu.Item id="queue" visible="never">
@@ -141,7 +144,7 @@ class CheckListItem extends React.Component {
                 </ToolbarMenu.Item>
               </ToolbarMenu>
             )}
-          </TableToolbarCell>
+          </FloatingTableToolbarCell>
         </TableSelectableRow>
       </HoverController>
     );

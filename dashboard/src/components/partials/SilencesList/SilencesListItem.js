@@ -27,7 +27,7 @@ import Slide from "@material-ui/core/Slide";
 import TableCell from "@material-ui/core/TableCell";
 import TableOverflowCell from "/components/partials/TableOverflowCell";
 import TableSelectableRow from "/components/partials/TableSelectableRow";
-import TableToolbarCell from "/components/partials/TableToolbarCell";
+import { FloatingTableToolbarCell } from "/components/partials/TableToolbarCell";
 import ToolbarMenu from "/components/partials/ToolbarMenu";
 import Tooltip from "@material-ui/core/Tooltip";
 
@@ -85,12 +85,12 @@ class SilencesListItem extends React.Component {
   };
 
   render() {
-    const { editing, silence, selected, onClickSelect } = this.props;
+    const { editable, editing, silence, selected, onClickSelect } = this.props;
 
     return (
       <HoverController onHover={this.props.onHover}>
         <TableSelectableRow selected={selected}>
-          {this.props.editable && (
+          {editable && (
             <TableCell padding="checkbox">
               <Checkbox
                 checked={selected}
@@ -128,7 +128,10 @@ class SilencesListItem extends React.Component {
             </TableCell>
           </Hidden>
 
-          <TableToolbarCell disabled={editing || !this.props.hovered}>
+          <FloatingTableToolbarCell
+            hovered={this.props.hovered}
+            disabled={!editable || editing}
+          >
             {() => (
               <RightAlign>
                 {silence.reason && (
@@ -176,7 +179,7 @@ class SilencesListItem extends React.Component {
                 </ToolbarMenu>
               </RightAlign>
             )}
-          </TableToolbarCell>
+          </FloatingTableToolbarCell>
         </TableSelectableRow>
       </HoverController>
     );

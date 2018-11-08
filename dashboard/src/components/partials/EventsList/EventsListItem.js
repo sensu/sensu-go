@@ -17,7 +17,7 @@ import ToolbarMenu from "/components/partials/ToolbarMenu";
 import HoverController from "/components/controller/HoverController";
 import ResourceDetails from "/components/partials/ResourceDetails";
 import TableOverflowCell from "/components/partials/TableOverflowCell";
-import TableToolbarCell from "/components/partials/TableToolbarCell";
+import { FloatingTableToolbarCell } from "/components/partials/TableToolbarCell";
 import TableSelectableRow from "/components/partials/TableSelectableRow";
 
 import EventStatusDescriptor from "/components/partials/EventStatusDescriptor";
@@ -123,7 +123,10 @@ class EventListItem extends React.Component {
             />
           </TableOverflowCell>
 
-          <TableToolbarCell disabled={editing || !this.props.hovered}>
+          <FloatingTableToolbarCell
+            hovered={this.props.hovered}
+            disabled={!editable || editing}
+          >
             {() => (
               <ToolbarMenu>
                 <ToolbarMenu.Item id="resolve" visible="always">
@@ -186,7 +189,7 @@ class EventListItem extends React.Component {
                 </ToolbarMenu.Item>
               </ToolbarMenu>
             )}
-          </TableToolbarCell>
+          </FloatingTableToolbarCell>
         </TableSelectableRow>
       </HoverController>
     );

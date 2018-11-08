@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import classnames from "classnames";
 import { withStyles } from "@material-ui/core/styles";
 import TableCell from "@material-ui/core/TableCell";
 
@@ -11,12 +12,14 @@ const styles = theme => {
       position: "relative",
     },
     container: {
-      top: 0,
-      right: 0,
       display: "flex",
-      position: "absolute",
       paddingLeft: theme.spacing.unit * 1.5,
       paddingRight: theme.spacing.unit * 1.5,
+    },
+    floating: {
+      top: 0,
+      right: 0,
+      position: "absolute",
       backgroundColor: bgColor,
       boxShadow: `
         ${-theme.spacing.unit * 4}px
@@ -35,18 +38,29 @@ class TableToolbarCell extends React.Component {
     children: PropTypes.func.isRequired,
     classes: PropTypes.object.isRequired,
     disabled: PropTypes.bool,
+    floating: PropTypes.bool,
   };
 
   static defaultProps = {
     disabled: false,
+    floating: false,
+  };
+
+  renderCell = () => {
+    const children = this.props.children();
+    const containerClasses = classnames(this.props.classes.container, {
+      [this.props.classes.floating]: this.props.floating,
+    });
+
+    return <div className={containerClasses}>{children}</div>;
   };
 
   render() {
-    const { children, classes, disabled } = this.props;
+    const { classes, disabled } = this.props;
 
     return (
       <TableCell padding="none" className={classes.root}>
-        {!disabled && <div className={classes.container}>{children()}</div>}
+        {!disabled && this.renderCell()}
       </TableCell>
     );
   }
