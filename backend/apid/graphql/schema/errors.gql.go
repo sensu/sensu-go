@@ -4,7 +4,6 @@ package schema
 
 import (
 	errors "errors"
-
 	graphql1 "github.com/graphql-go/graphql"
 	graphql "github.com/sensu/sensu-go/graphql"
 )
@@ -309,9 +308,10 @@ type ErrCode string
 
 // ErrCodes holds enum values
 var ErrCodes = _EnumTypeErrCodeValues{
-	ERR_ALREADY_EXISTS: "ERR_ALREADY_EXISTS",
-	ERR_INTERNAL:       "ERR_INTERNAL",
-	ERR_NOT_FOUND:      "ERR_NOT_FOUND",
+	ERR_ALREADY_EXISTS:    "ERR_ALREADY_EXISTS",
+	ERR_INTERNAL:          "ERR_INTERNAL",
+	ERR_NOT_FOUND:         "ERR_NOT_FOUND",
+	ERR_PERMISSION_DENIED: "ERR_PERMISSION_DENIED",
 }
 
 // ErrCodeType A terse description of an error.
@@ -366,4 +366,9 @@ type _EnumTypeErrCodeValues struct {
 	   completed.
 	*/
 	ERR_ALREADY_EXISTS ErrCode
+	/*
+	   ERR_PERMISSION_DENIED - Operation was canceled because the authorization token did not have sufficient
+	   permissions.
+	*/
+	ERR_PERMISSION_DENIED ErrCode
 }

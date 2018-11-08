@@ -7,19 +7,20 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// RoleController exposes the Roles
+// RoleController exposes the Roles.
 type RoleController struct {
 	Store store.RoleStore
 }
 
-// NewRoleController initializes a RoleController
+// NewRoleController creates a new RolesController.
 func NewRoleController(store store.RoleStore) RoleController {
 	return RoleController{
 		Store: store,
 	}
 }
 
-// Create creates a new role. It returns an error if the role already exists.
+// Create creates a new role.
+// Returns an error if the role already exists.
 func (a RoleController) Create(ctx context.Context, role types.Role) error {
 	if err := a.Store.CreateRole(ctx, &role); err != nil {
 		switch err := err.(type) {
@@ -49,7 +50,7 @@ func (a RoleController) CreateOrReplace(ctx context.Context, role types.Role) er
 	return nil
 }
 
-// Destroy removes given role from the store.
+// Destroy removes the given role from the store.
 func (a RoleController) Destroy(ctx context.Context, name string) error {
 	if err := a.Store.DeleteRole(ctx, name); err != nil {
 		switch err := err.(type) {
@@ -63,7 +64,7 @@ func (a RoleController) Destroy(ctx context.Context, name string) error {
 	return nil
 }
 
-// Get the role with the given name
+// Get retrieves the role with the given name.
 func (a RoleController) Get(ctx context.Context, name string) (*types.Role, error) {
 	role, err := a.Store.GetRole(ctx, name)
 	if err != nil {
@@ -78,7 +79,7 @@ func (a RoleController) Get(ctx context.Context, name string) (*types.Role, erro
 	return role, nil
 }
 
-// List returns all available resources
+// List returns all available roles.
 func (a RoleController) List(ctx context.Context) ([]*types.Role, error) {
 	// Fetch from store
 	results, err := a.Store.ListRoles(ctx)
@@ -94,7 +95,7 @@ func (a RoleController) List(ctx context.Context) ([]*types.Role, error) {
 	return results, nil
 }
 
-// Update validates and persists changes to a resource
+// Update validates and persists changes to a role.
 func (a RoleController) Update(ctx context.Context, role types.Role) error {
 	if err := a.Store.UpdateRole(ctx, &role); err != nil {
 		switch err := err.(type) {

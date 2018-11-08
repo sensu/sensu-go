@@ -18,6 +18,14 @@ const (
 	UserKind = "User"
 )
 
+// FixtureSubject creates a Subject for testing
+func FixtureSubject(kind, name string) Subject {
+	return Subject{
+		Kind: kind,
+		Name: name,
+	}
+}
+
 // FixtureRule returns a partial rule
 func FixtureRule() Rule {
 	return Rule{
@@ -37,6 +45,24 @@ func FixtureRole(name, namespace string) *Role {
 	}
 }
 
+// FixtureRoleRef creates a RoleRef for testing
+func FixtureRoleRef(kind, name string) RoleRef {
+	return RoleRef{
+		Type: kind,
+		Name: name,
+	}
+}
+
+// FixtureRoleBinding creates a RoleBinding for testing
+func FixtureRoleBinding(name, namespace string) *RoleBinding {
+	return &RoleBinding{
+		Name:      name,
+		Namespace: namespace,
+		Subjects:  []Subject{FixtureSubject(UserKind, "username")},
+		RoleRef:   FixtureRoleRef("Role", "read-write"),
+	}
+}
+
 // FixtureClusterRole returns a partial role
 func FixtureClusterRole(name string) *ClusterRole {
 	return &ClusterRole{
@@ -44,6 +70,15 @@ func FixtureClusterRole(name string) *ClusterRole {
 		Rules: []Rule{
 			FixtureRule(),
 		},
+	}
+}
+
+// FixtureClusterRoleBinding creates a ClusterRoleBinding for testing
+func FixtureClusterRoleBinding(name string) *ClusterRoleBinding {
+	return &ClusterRoleBinding{
+		Name:     name,
+		Subjects: []Subject{FixtureSubject(UserKind, "username")},
+		RoleRef:  FixtureRoleRef("ClusterRole", "read-write"),
 	}
 }
 
