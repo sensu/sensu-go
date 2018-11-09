@@ -1,6 +1,7 @@
 package rbac
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -71,6 +72,7 @@ func TestAuthorize(t *testing.T) {
 				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
 					Return([]*types.ClusterRoleBinding{&types.ClusterRoleBinding{
 						RoleRef: types.RoleRef{
+							Kind: "ClusterRole",
 							Name: "admin",
 						},
 						Subjects: []types.Subject{
@@ -96,6 +98,7 @@ func TestAuthorize(t *testing.T) {
 				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
 					Return([]*types.ClusterRoleBinding{&types.ClusterRoleBinding{
 						RoleRef: types.RoleRef{
+							Kind: "ClusterRole",
 							Name: "admin",
 						},
 						Subjects: []types.Subject{
@@ -138,6 +141,7 @@ func TestAuthorize(t *testing.T) {
 				store.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
 					Return([]*types.RoleBinding{&types.RoleBinding{
 						RoleRef: types.RoleRef{
+							Kind: "Role",
 							Name: "admin",
 						},
 						Subjects: []types.Subject{
@@ -147,7 +151,8 @@ func TestAuthorize(t *testing.T) {
 				store.On("GetRole", mock.AnythingOfType("*context.emptyCtx"), "admin", mock.Anything).
 					Return(nil, nil)
 			},
-			want: false,
+			want:    false,
+			wantErr: true,
 		},
 		{
 			name: "GetRole store err",
@@ -163,6 +168,7 @@ func TestAuthorize(t *testing.T) {
 				store.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
 					Return([]*types.RoleBinding{&types.RoleBinding{
 						RoleRef: types.RoleRef{
+							Kind: "Role",
 							Name: "admin",
 						},
 						Subjects: []types.Subject{
@@ -192,6 +198,7 @@ func TestAuthorize(t *testing.T) {
 				store.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
 					Return([]*types.RoleBinding{&types.RoleBinding{
 						RoleRef: types.RoleRef{
+							Kind: "Role",
 							Name: "admin",
 						},
 						Subjects: []types.Subject{
@@ -218,7 +225,7 @@ func TestAuthorize(t *testing.T) {
 			}
 			tc.storeFunc(store)
 
-			got, err := a.Authorize(tc.attrs)
+			got, err := a.Authorize(context.Background(), tc.attrs)
 			if (err != nil) != tc.wantErr {
 				t.Errorf("Authorizer.Authorize() error = %v, wantErr %v", err, tc.wantErr)
 				return

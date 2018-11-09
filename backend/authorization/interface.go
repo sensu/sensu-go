@@ -10,7 +10,7 @@ import (
 // passed. It returns true if the request should be authorized, along with any
 // error encountered
 type Authorizer interface {
-	Authorize(attrs *Attributes) (bool, error)
+	Authorize(ctx context.Context, attrs *Attributes) (bool, error)
 }
 
 // Attributes represents all the information required by an authorizer to make

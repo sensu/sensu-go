@@ -38,7 +38,7 @@ func (a Authorization) Then(next http.Handler) http.Handler {
 			Groups:   claims.Groups,
 		}
 
-		authorized, err := a.Authorizer.Authorize(attrs)
+		authorized, err := a.Authorizer.Authorize(ctx, attrs)
 		if err != nil {
 			logger.WithError(err).Warning("unexpected error occurred during authorization")
 			http.Error(w, "unexpected error occurred during authorization", http.StatusInternalServerError)

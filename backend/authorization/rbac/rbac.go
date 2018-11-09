@@ -2,6 +2,7 @@ package rbac
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
@@ -16,12 +17,10 @@ type Authorizer struct {
 }
 
 // Authorize determines if a request is authorized based on its attributes
-func (a *Authorizer) Authorize(attrs *authorization.Attributes) (bool, error) {
-	ctx := context.Background()
-
+func (a *Authorizer) Authorize(ctx context.Context, attrs *authorization.Attributes) (bool, error) {
 	if attrs != nil {
 		logger = logger.WithFields(logrus.Fields{
-			"zz_debug": map[string]string{
+			"zz_request": map[string]string{
 				"apiGroup":     attrs.APIGroup,
 				"apiVersion":   attrs.APIVersion,
 				"namespace":    attrs.Namespace,
@@ -50,7 +49,6 @@ func (a *Authorizer) Authorize(attrs *authorization.Attributes) (bool, error) {
 	// Inspect each cluster role binding
 	for _, clusterRoleBinding := range clusterRoleBindings {
 		bindingName := clusterRoleBinding.Name
-		roleName := clusterRoleBinding.RoleRef.Name
 
 		// Verify if this cluster role binding matches our user
 		if !matchesUser(attrs.User, clusterRoleBinding.Subjects) {
@@ -58,22 +56,14 @@ func (a *Authorizer) Authorize(attrs *authorization.Attributes) (bool, error) {
 			continue
 		}
 
-		// Get the cluster role that matched our user
-		clusterRole, err := a.Store.GetClusterRole(ctx, roleName)
+		// Get the RoleRef that matched our user
+		rules, err := a.getRoleReferencerules(ctx, clusterRoleBinding.RoleRef)
 		if err != nil {
-			logger.WithError(err).Warningf(
-				"could not retrieve the ClusterRole %s", roleName,
-			)
 			return false, err
-		} else if clusterRole == nil {
-			logger.Warningf(
-				"ClusterRole %s is empty", roleName,
-			)
-			continue
 		}
 
-		// Loop through the cluster role rules
-		for _, rule := range clusterRole.Rules {
+		// Loop through the rules
+		for _, rule := range rules {
 			// Verify if this rule applies to our request
 			allowed, reason := ruleAllows(attrs, rule)
 			if allowed {
@@ -108,7 +98,6 @@ func (a *Authorizer) Authorize(attrs *authorization.Attributes) (bool, error) {
 		// Inspect each role binding
 		for _, roleBinding := range roleBindings {
 			bindingName := roleBinding.Name
-			roleName := roleBinding.RoleRef.Name
 
 			// Verify if this role binding matches our user
 			if !matchesUser(attrs.User, roleBinding.Subjects) {
@@ -116,22 +105,14 @@ func (a *Authorizer) Authorize(attrs *authorization.Attributes) (bool, error) {
 				continue
 			}
 
-			// Get the role that matched our user
-			role, err := a.Store.GetRole(ctx, roleName)
+			// Get the RoleRef that matched our user
+			rules, err := a.getRoleReferencerules(ctx, roleBinding.RoleRef)
 			if err != nil {
-				logger.WithError(err).Warningf(
-					"could not retrieve the Role %s", roleName,
-				)
 				return false, err
-			} else if role == nil {
-				logger.Warningf(
-					"Role %s is empty", roleName,
-				)
-				continue
 			}
 
-			// Loop through the role rules
-			for _, rule := range role.Rules {
+			// Loop through the rules
+			for _, rule := range rules {
 				// Verify if this rule applies to our request
 				allowed, reason := ruleAllows(attrs, rule)
 				if allowed {
@@ -149,6 +130,31 @@ func (a *Authorizer) Authorize(attrs *authorization.Attributes) (bool, error) {
 
 	logger.Debugf("unauthorized request")
 	return false, nil
+}
+
+func (a *Authorizer) getRoleReferencerules(ctx context.Context, roleRef types.RoleRef) ([]types.Rule, error) {
+	switch roleRef.Kind {
+	case "Role":
+		role, err := a.Store.GetRole(ctx, roleRef.Name)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve the Role %s: %s", roleRef.Name, err.Error())
+		} else if role == nil {
+			return nil, fmt.Errorf("the Role %s is invalid", roleRef.Name)
+		}
+		return role.Rules, nil
+
+	case "ClusterRole":
+		clusterRole, err := a.Store.GetClusterRole(ctx, roleRef.Name)
+		if err != nil {
+			return nil, fmt.Errorf("could not retrieve the ClusterRole %s: %s", roleRef.Name, err.Error())
+		} else if clusterRole == nil {
+			return nil, fmt.Errorf("the ClusterRole %s is invalid", roleRef.Name)
+		}
+		return clusterRole.Rules, nil
+
+	default:
+		return nil, fmt.Errorf("unsupported role reference kind: %s", roleRef.Kind)
+	}
 }
 
 // matchesUser returns whether any of the subjects matches the specified user
