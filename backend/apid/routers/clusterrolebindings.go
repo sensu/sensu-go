@@ -24,7 +24,10 @@ func NewClusterRoleBindingsRouter(store store.ClusterRoleBindingStore) *ClusterR
 
 // Mount the ClusterRoleBindingsRouter on the given parent Router
 func (r *ClusterRoleBindingsRouter) Mount(parent *mux.Router) {
-	routes := ResourceRoute{Router: parent, PathPrefix: "/apis/rbac/v2/clusterrolebindings"}
+	routes := ResourceRoute{
+		Router:     parent,
+		PathPrefix: "/apis/{group:rbac}/{version:v2}/{kind:clusterrolebindings}",
+	}
 	routes.GetAll(r.list)
 	routes.Get(r.find)
 	routes.Post(r.create)

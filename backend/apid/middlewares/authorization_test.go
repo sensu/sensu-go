@@ -177,7 +177,7 @@ func TestAuthorization(t *testing.T) {
 		},
 		//
 		// The admins group should grant all permissions on every resource within
-		// the namespace of the RoleBinding
+		// the RoleBinding's namespace
 		// RoleBinding: admin
 		// ClusterRole: admin
 		//
