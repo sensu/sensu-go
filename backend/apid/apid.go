@@ -183,11 +183,11 @@ func registerRestrictedLegacyResources(router *mux.Router, store store.Store, ge
 	mountRouters(
 		NewSubrouter(
 			router.NewRoute(),
-			middlewares.LegacyAuthorizationAttributes{},
 			middlewares.SimpleLogger{},
 			middlewares.Namespace{},
 			middlewares.Authentication{},
 			middlewares.AllowList{Store: store},
+			middlewares.LegacyAuthorizationAttributes{},
 			middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: store}},
 			middlewares.LimitRequest{},
 			middlewares.Edition{Name: version.Edition},
@@ -213,11 +213,11 @@ func registerRestrictedResources(router *mux.Router, store store.Store) {
 	mountRouters(
 		NewSubrouter(
 			router.NewRoute(),
-			middlewares.AuthorizationAttributes{},
 			middlewares.SimpleLogger{},
 			middlewares.Namespace{},
 			middlewares.Authentication{},
 			middlewares.AllowList{Store: store},
+			middlewares.AuthorizationAttributes{},
 			middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: store}},
 			middlewares.LimitRequest{},
 			middlewares.Edition{Name: version.Edition},
