@@ -41,7 +41,7 @@ func registerRoutes(a *Agent, r *mux.Router) {
 // If the backend connection is closed, it returns service unavailable.
 func healthz(connected func() bool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if connected() {
+		if !connected() {
 			w.WriteHeader(http.StatusServiceUnavailable)
 			_, _ = fmt.Fprint(w, "sensu backend unavailable")
 			return
