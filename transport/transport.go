@@ -4,11 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"net/http"
 	"sync"
 
 	"github.com/gorilla/websocket"
-	"github.com/sensu/sensu-go/types"
 )
 
 var (
@@ -101,9 +99,6 @@ type Transport interface {
 	// Receive is used to receive a message from the transport. It takes a context
 	// and blocks until the next message is received from the transport.
 	Receive() (*Message, error)
-
-	// Reconnect ...
-	Reconnect(string, *types.TLSOptions, http.Header) error
 
 	// Send is used to send a message over the transport. It takes a message type
 	// hint and a serialized payload. Send will block until the message has been

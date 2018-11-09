@@ -13,6 +13,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"sync/atomic"
 
 	time "github.com/echlebek/timeproxy"
 
@@ -45,7 +46,7 @@ type Agent struct {
 	backendSelector BackendSelector
 	cancel          context.CancelFunc
 	config          *Config
-	conn            transport.Transport
+	connected       int32
 	context         context.Context
 	entity          *types.Entity
 	executor        command.Executor
@@ -70,6 +71,7 @@ func NewAgent(config *Config) *Agent {
 		backendSelector: &RandomBackendSelector{Backends: config.BackendURLs},
 		cancel:          cancel,
 		context:         ctx,
+		connected:       0,
 		config:          config,
 		executor:        command.NewExecutor(),
 		handler:         handler.NewMessageHandler(),
@@ -92,88 +94,16 @@ func NewAgent(config *Config) *Agent {
 	return agent
 }
 
-func (a *Agent) receiveMessages(out chan *transport.Message) {
-	defer close(out)
-	for {
-		m, err := a.conn.Receive()
-		if err != nil {
-			logger.WithError(err).Error("transport receive error")
-			// The first step is to close the current websocket connection, which is
-			// no longer useful
-			if err := a.conn.Close(); err != nil {
-				logger.Debug(err)
-			}
-
-			a.connectWithBackoff()
-		}
-		out <- m
-	}
-}
-
-func (a *Agent) receivePump() {
-	logger.Info("connected - starting receivePump")
-
-	recvChan := make(chan *transport.Message)
-	go a.receiveMessages(recvChan)
-
-	for {
-		select {
-		case <-a.stopping:
-			return
-		case msg, ok := <-recvChan:
-			if msg == nil || !ok {
-				continue
-			}
-
-			logger.WithFields(logrus.Fields{
-				"type":    msg.Type,
-				"payload": string(msg.Payload),
-			}).Info("message received")
-			err := a.handler.Handle(msg.Type, msg.Payload)
-			if err != nil {
-				logger.WithError(err).Error("error handling message")
-			}
-		}
-	}
-}
-
 func (a *Agent) sendMessage(msgType string, payload []byte) {
 	logger.WithFields(logrus.Fields{
 		"type":    msgType,
 		"payload": string(payload),
 	}).Debug("sending message")
-	// blocks until message can be enqueued.
-	// TODO(greg): ring buffer?
 	msg := &transport.Message{
 		Type:    msgType,
 		Payload: payload,
 	}
 	a.sendq <- msg
-}
-
-func (a *Agent) sendPump() {
-	// The sendPump is actually responsible for shutting down the transport
-	// to prevent a race condition between it and something else trying
-	// to close the transport (which actually causes a write to the websocket
-	// connection.)
-	defer func() {
-		if err := a.conn.Close(); err != nil {
-			logger.Debug(err)
-		}
-	}()
-
-	logger.Info("connected - starting sendPump")
-
-	for {
-		select {
-		case msg := <-a.sendq:
-			if err := a.conn.Send(msg); err != nil {
-				logger.WithError(err).Warning("transport send error")
-			}
-		case <-a.stopping:
-			return
-		}
-	}
 }
 
 func (a *Agent) refreshSystemInfo() error {
@@ -295,49 +225,75 @@ func (a *Agent) Run() error {
 		a.StartStatsd()
 	}
 
-	a.connectWithBackoff()
-
-	// These are in separate goroutines so that they can, theoretically, be executing
-	// concurrently.
-	go a.sendPump()
-	go a.receivePump()
-
-	// Send an immediate keepalive once we've connected.
-	if err := a.sendKeepalive(); err != nil {
-		logger.WithError(err).Error("error sending keepalive")
-	}
-
+	go a.connectionManager()
 	go a.refreshSystemInfoPeriodically()
 	go a.sendKeepalivePeriodically()
 
 	return nil
 }
 
-func (a *Agent) connectWithBackoff() {
-	// Now, we must attempt to reconnect to the backend, with exponential
-	// backoff
-	backoff := retry.ExponentialBackoff{
-		InitialDelayInterval: 500 * time.Millisecond,
-		MaxDelayInterval:     10 * time.Second,
-		MaxRetryAttempts:     0, // Unlimited attempts
-		Multiplier:           1.5,
-	}
-
-	if err := backoff.Retry(func(retry int) (bool, error) {
-		conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS, a.header)
-		if err != nil {
-			logger.WithError(err).Error("reconnection attempt failed")
-			return false, nil
+func (a *Agent) connectionManager() {
+	for {
+		select {
+		case <-a.stopping:
+			return
+		default:
 		}
 
-		// At this point, the attempt was successful
-		logger.Info("successfully reconnected")
+		atomic.SwapInt32(&a.connected, 0)
+		conn := connectWithBackoff(a.backendSelector.Select(), a.config.TLS, a.header)
+		atomic.SwapInt32(&a.connected, 1)
 
-		a.conn = conn
-		return true, nil
-	}); err != nil {
-		logger.WithError(err).Fatal("could not reconnect to transport")
+		// Send an immediate keepalive once we've connected.
+		if err := a.sendKeepalive(); err != nil {
+			logger.WithError(err).Error("error sending keepalive")
+		}
+
+		done := make(chan struct{})
+
+		go func(conn transport.Transport, done chan struct{}) {
+			defer close(done)
+
+			for {
+				m, err := conn.Receive()
+				if err != nil {
+					logger.WithError(err).Error("transport receive error")
+					return
+				}
+
+				go func(msg *transport.Message) {
+					logger.WithFields(logrus.Fields{
+						"type":    msg.Type,
+						"payload": string(msg.Payload),
+					}).Info("message received")
+					err := a.handler.Handle(msg.Type, msg.Payload)
+					if err != nil {
+						logger.WithError(err).Error("error handling message")
+					}
+				}(m)
+			}
+		}(conn, done)
+
+	SEND:
+		for {
+			select {
+			case <-done:
+				break SEND
+			case <-a.stopping:
+				break
+			case msg := <-a.sendq:
+				if err := conn.Send(msg); err != nil {
+					logger.WithError(err).Error("error sending message over websocket")
+					break
+				}
+			}
+		}
 	}
+}
+
+// Connected returns true if the agent is connected to a backend.
+func (a *Agent) Connected() bool {
+	return a.connected == 1
 }
 
 // StartAPI starts the Agent HTTP API. After attempting to start the API, if the
@@ -402,4 +358,33 @@ func (a *Agent) StartStatsd() {
 			logger.WithError(err).Errorf("error with statsd server on address: %s, statsd listener will not run", a.statsdServer.MetricsAddr)
 		}
 	}()
+}
+
+func connectWithBackoff(url string, tlsOpts *types.TLSOptions, header http.Header) transport.Transport {
+	var conn transport.Transport
+
+	backoff := retry.ExponentialBackoff{
+		InitialDelayInterval: 500 * time.Millisecond,
+		MaxDelayInterval:     10 * time.Second,
+		MaxRetryAttempts:     0, // Unlimited attempts
+		Multiplier:           1.5,
+	}
+
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		c, err := transport.Connect(url, tlsOpts, header)
+		if err != nil {
+			logger.WithError(err).Error("reconnection attempt failed")
+			return false, nil
+		}
+
+		logger.Info("successfully connected")
+
+		conn = c
+
+		return true, nil
+	}); err != nil {
+		logger.WithError(err).Fatal("could not connect to transport")
+	}
+
+	return conn
 }
