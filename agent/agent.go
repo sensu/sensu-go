@@ -251,41 +251,45 @@ func (a *Agent) connectionManager() {
 
 		done := make(chan struct{})
 
-		go func(conn transport.Transport, done chan struct{}) {
-			defer close(done)
+		go receiveLoop(conn, a.handler, done)
+		sendLoop(conn, a.sendq, done, a.stopping)
+	}
+}
 
-			for {
-				m, err := conn.Receive()
-				if err != nil {
-					logger.WithError(err).Error("transport receive error")
-					return
-				}
+func receiveLoop(conn transport.Transport, handler *handler.MessageHandler, done chan struct{}) {
+	defer close(done)
 
-				go func(msg *transport.Message) {
-					logger.WithFields(logrus.Fields{
-						"type":    msg.Type,
-						"payload": string(msg.Payload),
-					}).Info("message received")
-					err := a.handler.Handle(msg.Type, msg.Payload)
-					if err != nil {
-						logger.WithError(err).Error("error handling message")
-					}
-				}(m)
+	for {
+		m, err := conn.Receive()
+		if err != nil {
+			logger.WithError(err).Error("transport receive error")
+			return
+		}
+
+		go func(msg *transport.Message) {
+			logger.WithFields(logrus.Fields{
+				"type":    msg.Type,
+				"payload": string(msg.Payload),
+			}).Info("message received")
+			err := handler.Handle(msg.Type, msg.Payload)
+			if err != nil {
+				logger.WithError(err).Error("error handling message")
 			}
-		}(conn, done)
+		}(m)
+	}
+}
 
-	SEND:
-		for {
-			select {
-			case <-done:
-				break SEND
-			case <-a.stopping:
-				break
-			case msg := <-a.sendq:
-				if err := conn.Send(msg); err != nil {
-					logger.WithError(err).Error("error sending message over websocket")
-					break
-				}
+func sendLoop(conn transport.Transport, sendq chan *transport.Message, done, stopping chan struct{}) {
+	for {
+		select {
+		case <-done:
+			return
+		case <-stopping:
+			return
+		case msg := <-sendq:
+			if err := conn.Send(msg); err != nil {
+				logger.WithError(err).Error("error sending message over websocket")
+				return
 			}
 		}
 	}
@@ -293,7 +297,7 @@ func (a *Agent) connectionManager() {
 
 // Connected returns true if the agent is connected to a backend.
 func (a *Agent) Connected() bool {
-	return a.connected == 1
+	return atomic.LoadInt32(&a.connected) == 1
 }
 
 // StartAPI starts the Agent HTTP API. After attempting to start the API, if the
