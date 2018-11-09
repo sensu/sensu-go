@@ -99,6 +99,39 @@ func seedStore(t *testing.T, store store.Store) {
 	if err := store.CreateRoleBinding(context.Background(), viewers); err != nil {
 		t.Fatal("Could not add the view RoleBinding")
 	}
+
+	fooViewerRole := &types.Role{
+		Name:      "foo-viewer",
+		Namespace: "default",
+		Rules: []types.Rule{
+			types.Rule{
+				Verbs:         []string{"get"},
+				Resources:     []string{"checks"},
+				ResourceNames: []string{"foo"},
+			},
+		},
+	}
+	if err := store.CreateRole(context.Background(), fooViewerRole); err != nil {
+		t.Fatal("Could not add the foo-viewer RoleBinding")
+	}
+
+	fooViewerRoleBinding := &types.RoleBinding{
+		Name:      "foo-viewer",
+		Namespace: "default",
+		RoleRef: types.RoleRef{
+			Kind: "Role",
+			Name: "foo-viewer",
+		},
+		Subjects: []types.Subject{
+			types.Subject{
+				Kind: "Group",
+				Name: "foo-viewers",
+			},
+		},
+	}
+	if err := store.CreateRoleBinding(context.Background(), fooViewerRoleBinding); err != nil {
+		t.Fatal("Could not add the foo-viewer RoleBinding")
+	}
 }
 
 func TestAuthorization(t *testing.T) {
@@ -447,6 +480,43 @@ func TestAuthorization(t *testing.T) {
 			method:              "POST",
 			url:                 "/events",
 			group:               "system:agents",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        200,
+		},
+		//
+		// The foo-viewers group only grant read access to a check named 'foo'
+		// RoleBinding: foo-viewer
+		// ClusterRole: foo-viewer
+		//
+		{
+			description:         "foo-viewers can't get an event",
+			method:              "GET",
+			url:                 "/events/foo/bar",
+			group:               "foo-viewers",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        403,
+		},
+		{
+			description:         "foo-viewers can't list checks",
+			method:              "GET",
+			url:                 "/checks",
+			group:               "foo-viewers",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        403,
+		},
+		{
+			description:         "foo-viewers can't update the foo check",
+			method:              "PUT",
+			url:                 "/checks/foo",
+			group:               "foo-viewers",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        403,
+		},
+		{
+			description:         "foo-viewers can view the foo check",
+			method:              "GET",
+			url:                 "/checks/foo",
+			group:               "foo-viewers",
 			attibutesMiddleware: LegacyAuthorizationAttributes{},
 			expectedCode:        200,
 		},
