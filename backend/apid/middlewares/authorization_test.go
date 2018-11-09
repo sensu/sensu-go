@@ -520,6 +520,44 @@ func TestAuthorization(t *testing.T) {
 			attibutesMiddleware: LegacyAuthorizationAttributes{},
 			expectedCode:        200,
 		},
+		//
+		// The system:users only grant the user access to view itself and update its
+		// password
+		// RoleBinding: system:user
+		// ClusterRole: system:user
+		//
+		{
+			description:         "system:users can't view another user",
+			method:              "GET",
+			url:                 "/rbac/users/bar",
+			group:               "system:users",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        403,
+		},
+		{
+			description:         "system:users can't modify another user password",
+			method:              "PUT",
+			url:                 "/rbac/users/bar/password",
+			group:               "system:users",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        403,
+		},
+		{
+			description:         "system:users can view themselves",
+			method:              "GET",
+			url:                 "/rbac/users/foo",
+			group:               "system:users",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        200,
+		},
+		{
+			description:         "system:users can modify their own user password",
+			method:              "PUT",
+			url:                 "/rbac/users/foo/password",
+			group:               "system:users",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        200,
+		},
 	}
 	for _, tt := range cases {
 		t.Run(tt.description, func(t *testing.T) {
@@ -555,6 +593,8 @@ func TestAuthorization(t *testing.T) {
 			router.PathPrefix("/apis/{group}/{version}/namespaces/{namespace}/{kind}").Handler(testHandler)
 			router.PathPrefix("/apis/{group}/{version}/{kind}/{name}").Handler(testHandler)
 			router.PathPrefix("/apis/{group}/{version}/{kind}").Handler(testHandler)
+			router.PathPrefix("/{prefix:rbac}/{resource}/{id}/{subresource}").Handler(testHandler)
+			router.PathPrefix("/{prefix:rbac}/{resource}/{id}").Handler(testHandler)
 			router.PathPrefix("/{kind}/{id}").Handler(testHandler)
 			router.PathPrefix("/").Handler(testHandler) // catch all for legacy routes
 			router.Use(namespaceMiddleware.Then, attributesMiddleware.Then, authorizationMiddleware.Then)

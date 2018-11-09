@@ -3,7 +3,6 @@ package middlewares
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"path"
 	"strings"
@@ -171,7 +170,6 @@ func (a LegacyAuthorizationAttributes) Then(next http.Handler) http.Handler {
 		// Most resource names are identified by a route variable named "id".
 		// Other resources have snowflake paths; see their corresponding router
 		// and the expected paths above.
-		fmt.Printf("%+v\n", vars)
 		attrs.ResourceName = vars["id"]
 
 		switch attrs.Resource {
@@ -191,7 +189,6 @@ func (a LegacyAuthorizationAttributes) Then(next http.Handler) http.Handler {
 
 		// Verify if the authenticated user is trying to access itself
 		if attrs.Resource == "users" && attrs.ResourceName == attrs.User.Username {
-			fmt.Println(vars["subresource"])
 			// Change the resource to LocalSelfUserResource if a user views itself
 			if attrs.Verb == "get" && vars["subresource"] == "" {
 				attrs.Resource = types.LocalSelfUserResource

@@ -61,7 +61,13 @@ func BasicAuthentication(next http.Handler, store AuthStore) http.Handler {
 			http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 			return
 		}
-		// TODO: eventually break out authroization details in context from jwt claims; in this method they are too tightly bound
+
+		// The user was authenticated against the local store, therefore add the
+		// system:user group so it can view itself and change its password
+		user.Groups = append(user.Groups, "system:user")
+
+		// TODO: eventually break out authroization details in context from jwt
+		// claims; in this method they are too tightly bound
 		claims, _ := jwt.NewClaims(user)
 		ctx := jwt.SetClaimsIntoContext(r, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))

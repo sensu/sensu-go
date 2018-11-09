@@ -95,8 +95,8 @@ func setupClusterRoleBindings(store store.Store) error {
 		return err
 	}
 
-	// The cluster-admin ClusterRoleBinding grants permission found in the
-	// cluster-admin ClusterRole to any user belonging to the cluster-admins group
+	// The system:agent ClusterRoleBinding grants permission found in the
+	// system-agent ClusterRole to any agents belonging to the system:agents group
 	systemAgent := &types.ClusterRoleBinding{
 		Name: "system:agent",
 		RoleRef: types.RoleRef{
@@ -114,7 +114,22 @@ func setupClusterRoleBindings(store store.Store) error {
 		return err
 	}
 
-	return nil
+	// The system:user ClusterRoleBinding grants permission found in the
+	// cluster-admin ClusterRole to any user belonging to the cluster-admins group
+	systemUser := &types.ClusterRoleBinding{
+		Name: "system:user",
+		RoleRef: types.RoleRef{
+			Kind: "ClusterRole",
+			Name: "system:user",
+		},
+		Subjects: []types.Subject{
+			types.Subject{
+				Kind: "Group",
+				Name: "system:users",
+			},
+		},
+	}
+	return store.CreateClusterRoleBinding(context.Background(), systemUser)
 }
 
 func setupClusterRoles(store store.Store) error {
@@ -209,14 +224,29 @@ func setupClusterRoles(store store.Store) error {
 		Name: "system:agent",
 		Rules: []types.Rule{
 			types.Rule{
-				Verbs: []string{types.VerbAll},
-				Resources: []string{
-					"events",
-				},
+				Verbs:     []string{types.VerbAll},
+				Resources: []string{"events"},
 			},
 		},
 	}
-	return store.CreateClusterRole(context.Background(), systemAgent)
+	if err := store.CreateClusterRole(context.Background(), systemAgent); err != nil {
+		return err
+	}
+
+	// The systemUser ClusterRole is used by local users and should not be
+	// modified by the users. Modification to his ClusterRole can result in
+	// non-functional Sensu users. It allows users to view themselves and change
+	// their own password
+	systemUser := &types.ClusterRole{
+		Name: "system:user",
+		Rules: []types.Rule{
+			types.Rule{
+				Verbs:     []string{"get", "update"},
+				Resources: []string{types.LocalSelfUserResource},
+			},
+		},
+	}
+	return store.CreateClusterRole(context.Background(), systemUser)
 }
 
 func setupUsers(store store.Store) error {
