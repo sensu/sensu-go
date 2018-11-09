@@ -13,24 +13,20 @@ import (
 	sensuJWT "github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/seeds"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestAuthorization(t *testing.T) {
-	// If required, uncomment the following comment to enable the tracing logs
-	logrus.SetLevel(logrus.TraceLevel)
+func seedStore(t *testing.T, store store.Store) {
+	t.Helper()
 
-	// Prepare the store
-	store, err := testutil.NewStoreInstance()
-	if err != nil {
-		t.Fatal("Could not initialize the store: ", err)
-	}
 	if err := seeds.SeedInitialData(store); err != nil {
 		t.Fatal("Could not seed the backend: ", err)
 	}
 
+	// Add custom resources for the tests
 	// Add a ClusterRoleBinding for the ClusteRole admin and assign the
 	// local-admins group
 	localAdmins := &types.ClusterRoleBinding{
@@ -67,6 +63,55 @@ func TestAuthorization(t *testing.T) {
 	if err := store.CreateRoleBinding(context.Background(), admins); err != nil {
 		t.Fatal("Could not add the admin RoleBinding")
 	}
+
+	editors := &types.RoleBinding{
+		Name:      "edit",
+		Namespace: "default",
+		RoleRef: types.RoleRef{
+			Kind: "ClusterRole",
+			Name: "edit",
+		},
+		Subjects: []types.Subject{
+			types.Subject{
+				Kind: "Group",
+				Name: "editors",
+			},
+		},
+	}
+	if err := store.CreateRoleBinding(context.Background(), editors); err != nil {
+		t.Fatal("Could not add the edit RoleBinding")
+	}
+
+	viewers := &types.RoleBinding{
+		Name:      "view",
+		Namespace: "default",
+		RoleRef: types.RoleRef{
+			Kind: "ClusterRole",
+			Name: "view",
+		},
+		Subjects: []types.Subject{
+			types.Subject{
+				Kind: "Group",
+				Name: "viewers",
+			},
+		},
+	}
+	if err := store.CreateRoleBinding(context.Background(), viewers); err != nil {
+		t.Fatal("Could not add the view RoleBinding")
+	}
+}
+
+func TestAuthorization(t *testing.T) {
+	// If required, uncomment the following comment to enable the tracing logs
+	logrus.SetLevel(logrus.TraceLevel)
+
+	// Prepare the store
+	// Use the default seeds
+	store, err := testutil.NewStoreInstance()
+	if err != nil {
+		t.Fatal("Could not initialize the store: ", err)
+	}
+	seedStore(t, store)
 
 	cases := []struct {
 		description         string
@@ -198,7 +243,7 @@ func TestAuthorization(t *testing.T) {
 			expectedCode:        403,
 		},
 		{
-			description:         "admins can't access resource of any namespaces",
+			description:         "admins can't access resource outside of their namespaces",
 			method:              "GET",
 			url:                 "/checks/check-cpu?namespace=acme",
 			group:               "admins",
@@ -226,6 +271,182 @@ func TestAuthorization(t *testing.T) {
 			method:              "GET",
 			url:                 "/checks/check-cpu?namespace=default",
 			group:               "admins",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        200,
+		},
+		//
+		// The editors group should grant read/write access to most objects in the
+		// RoleBinding's namespace, expected for Roles or RoleBindings RoleBinding:
+		// edit ClusterRole: edit
+		//
+		{
+			description:         "editors can't list ClusterRoles",
+			method:              "GET",
+			url:                 "/apis/rbac/v2/clusterroles",
+			group:               "editors",
+			attibutesMiddleware: AuthorizationAttributes{},
+			expectedCode:        403,
+		},
+		{
+			description:         "editors can't create namespaces",
+			method:              "POST",
+			url:                 "/rbac/namespaces",
+			group:               "editors",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        403,
+		},
+		{
+			description:         "editors can't access resource outside of their namespaces",
+			method:              "GET",
+			url:                 "/checks/check-cpu?namespace=acme",
+			group:               "editors",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        403,
+		},
+		{
+			description:         "editors can't create RoleBindings within their namespace",
+			method:              "POST",
+			url:                 "/apis/rbac/v2/namespaces/default/rolebindings",
+			group:               "editors",
+			attibutesMiddleware: AuthorizationAttributes{},
+			expectedCode:        403,
+		},
+		{
+			description:         "editors can list namespaces",
+			method:              "GET",
+			url:                 "/rbac/namespaces",
+			group:               "editors",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        200,
+		},
+		{
+			description:         "editors can access resource within their namespace",
+			method:              "GET",
+			url:                 "/checks/check-cpu?namespace=default",
+			group:               "editors",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        200,
+		},
+		//
+		// The viewers group only grant read access to most objects in the
+		// RoleBinding's namespace, expected for Roles or RoleBindings
+		// RoleBinding: view
+		// ClusterRole: view
+		//
+		{
+			description:         "viewers can't list ClusterRoles",
+			method:              "GET",
+			url:                 "/apis/rbac/v2/clusterroles",
+			group:               "viewers",
+			attibutesMiddleware: AuthorizationAttributes{},
+			expectedCode:        403,
+		},
+		{
+			description:         "viewers can't create namespaces",
+			method:              "POST",
+			url:                 "/rbac/namespaces",
+			group:               "viewers",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        403,
+		},
+		{
+			description:         "viewers can't access resource outside of their namespaces",
+			method:              "GET",
+			url:                 "/checks/check-cpu?namespace=acme",
+			group:               "viewers",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        403,
+		},
+		{
+			description:         "viewers can't create RoleBindings within their namespace",
+			method:              "POST",
+			url:                 "/apis/rbac/v2/namespaces/default/rolebindings",
+			group:               "viewers",
+			attibutesMiddleware: AuthorizationAttributes{},
+			expectedCode:        403,
+		},
+		{
+			description:         "viewers can't create resources within their namespace",
+			method:              "PUT",
+			url:                 "/checks/check-cpu?namespace=default",
+			group:               "viewers",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        403,
+		},
+		{
+			description:         "viewers can list namespaces",
+			method:              "GET",
+			url:                 "/rbac/namespaces",
+			group:               "viewers",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        200,
+		},
+		{
+			description:         "viewers can access resource within their namespace",
+			method:              "GET",
+			url:                 "/checks/check-cpu?namespace=default",
+			group:               "viewers",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        200,
+		},
+		//
+		// The system:agents group only grant read/write access to events
+		// RoleBinding: system:agent
+		// ClusterRole: system:agent
+		//
+		{
+			description:         "system:agents can't list ClusterRoles",
+			method:              "GET",
+			url:                 "/apis/rbac/v2/clusterroles",
+			group:               "system:agents",
+			attibutesMiddleware: AuthorizationAttributes{},
+			expectedCode:        403,
+		},
+		{
+			description:         "system:agents can't create namespaces",
+			method:              "POST",
+			url:                 "/rbac/namespaces",
+			group:               "system:agents",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        403,
+		},
+		{
+			description:         "system:agents can't access resource outside of their namespaces",
+			method:              "GET",
+			url:                 "/checks/check-cpu?namespace=acme",
+			group:               "system:agents",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        403,
+		},
+		{
+			description:         "system:agents can't create RoleBindings within their namespace",
+			method:              "POST",
+			url:                 "/apis/rbac/v2/namespaces/default/rolebindings",
+			group:               "system:agents",
+			attibutesMiddleware: AuthorizationAttributes{},
+			expectedCode:        403,
+		},
+		{
+			description:         "system:agents can't create any resources within their namespace",
+			method:              "PUT",
+			url:                 "/checks/check-cpu?namespace=default",
+			group:               "system:agents",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        403,
+		},
+		{
+			description:         "system:agents can't list namespaces",
+			method:              "GET",
+			url:                 "/rbac/namespaces",
+			group:               "system:agents",
+			attibutesMiddleware: LegacyAuthorizationAttributes{},
+			expectedCode:        403,
+		},
+		{
+			description:         "system:agents can create events",
+			method:              "POST",
+			url:                 "/events",
+			group:               "system:agents",
 			attibutesMiddleware: LegacyAuthorizationAttributes{},
 			expectedCode:        200,
 		},
