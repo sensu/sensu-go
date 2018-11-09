@@ -171,6 +171,7 @@ func (a LegacyAuthorizationAttributes) Then(next http.Handler) http.Handler {
 		// Most resource names are identified by a route variable named "id".
 		// Other resources have snowflake paths; see their corresponding router
 		// and the expected paths above.
+		fmt.Printf("%+v\n", vars)
 		attrs.ResourceName = vars["id"]
 
 		switch attrs.Resource {
