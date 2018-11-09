@@ -73,12 +73,12 @@ func TestHealthz(t *testing.T) {
 		{
 			"healthz returns success",
 			http.StatusOK,
-			0,
+			1,
 		},
 		{
 			"healthz returns failure",
 			http.StatusServiceUnavailable,
-			1,
+			0,
 		},
 	}
 

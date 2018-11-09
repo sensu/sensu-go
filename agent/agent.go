@@ -56,7 +56,6 @@ type Agent struct {
 	inProgressMu    *sync.Mutex
 	statsdServer    *statsd.Server
 	sendq           chan *transport.Message
-	stopped         chan struct{}
 	stopping        chan struct{}
 	systemInfo      *types.System
 	systemInfoMu    *sync.RWMutex
@@ -78,7 +77,6 @@ func NewAgent(config *Config) *Agent {
 		inProgress:      make(map[string]*types.CheckConfig),
 		inProgressMu:    &sync.Mutex{},
 		stopping:        make(chan struct{}),
-		stopped:         make(chan struct{}),
 		sendq:           make(chan *transport.Message, 10),
 		systemInfo:      &types.System{},
 		systemInfoMu:    &sync.RWMutex{},
@@ -285,6 +283,9 @@ func sendLoop(conn transport.Transport, sendq chan *transport.Message, done, sto
 		case <-done:
 			return
 		case <-stopping:
+			if err := conn.Close(); err != nil {
+				logger.WithError(err).Error("error closing websocket connection")
+			}
 			return
 		case msg := <-sendq:
 			if err := conn.Send(msg); err != nil {
