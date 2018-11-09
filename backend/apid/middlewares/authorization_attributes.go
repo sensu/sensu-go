@@ -1,12 +1,16 @@
 package middlewares
 
 import (
+	"context"
+	"errors"
 	"net/http"
 	"path"
 	"strings"
 
 	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authorization"
+	"github.com/sensu/sensu-go/types"
 )
 
 // AuthorizationAttributes is an HTTP middleware that populates a context for the
@@ -56,6 +60,12 @@ func (a AuthorizationAttributes) Then(next http.Handler) http.Handler {
 
 		if attrs.Verb == "get" && attrs.ResourceName == "" {
 			attrs.Verb = "list"
+		}
+
+		// Add the user to the attributes
+		if err := getUser(ctx, attrs); err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
 		}
 	})
 }
@@ -136,6 +146,12 @@ func (a LegacyAuthorizationAttributes) Then(next http.Handler) http.Handler {
 		}
 		attrs.Namespace = namespace
 
+		// Add the user to the attributes
+		if err := getUser(ctx, attrs); err != nil {
+			http.Error(w, err.Error(), http.StatusUnauthorized)
+			return
+		}
+
 		// The resource type is always the first element of the path, except for
 		// namespaces, users and cluster members.
 		fullPath := r.URL.Path
@@ -185,4 +201,20 @@ func isListable(kind, name string) bool {
 	}
 
 	return false
+}
+
+func getUser(ctx context.Context, attrs *authorization.Attributes) error {
+	// Get the claims from the request context
+	claims := jwt.GetClaimsFromContext(ctx)
+	if claims == nil {
+		return errors.New("no claims found in the request context")
+	}
+
+	// Add the user to our request info
+	attrs.User = types.User{
+		Username: claims.Subject,
+		Groups:   claims.Groups,
+	}
+
+	return nil
 }

@@ -555,6 +555,7 @@ func TestAuthorization(t *testing.T) {
 			router.PathPrefix("/apis/{group}/{version}/namespaces/{namespace}/{kind}").Handler(testHandler)
 			router.PathPrefix("/apis/{group}/{version}/{kind}/{name}").Handler(testHandler)
 			router.PathPrefix("/apis/{group}/{version}/{kind}").Handler(testHandler)
+			router.PathPrefix("/{kind}/{id}").Handler(testHandler)
 			router.PathPrefix("/").Handler(testHandler) // catch all for legacy routes
 			router.Use(namespaceMiddleware.Then, attributesMiddleware.Then, authorizationMiddleware.Then)
 
