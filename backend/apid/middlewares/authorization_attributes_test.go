@@ -5,32 +5,33 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/dgrijalva/jwt-go"
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/stretchr/testify/assert"
+
+	sensuJWT "github.com/sensu/sensu-go/backend/authentication/jwt"
+	"github.com/sensu/sensu-go/backend/authorization"
+	"github.com/sensu/sensu-go/types"
 )
 
 func TestAuthorizationAttributes(t *testing.T) {
 	cases := []struct {
 		description string
 		method      string
+		path        string
 		urlVars     map[string]string
 		expected    authorization.Attributes
 	}{
 		{
 			description: "GET /",
 			method:      "GET",
-			urlVars:     map[string]string{},
+			path:        "/",
 			expected:    authorization.Attributes{Verb: "list"},
 		},
 		{
 			description: "GET /apis/core/v1alpha1/namespaces",
 			method:      "GET",
-			urlVars: map[string]string{
-				"group":   "core",
-				"version": "v1alpha1",
-				"kind":    "namespaces",
-			},
+			path:        "/apis/core/v1alpha1/namespaces",
 			expected: authorization.Attributes{
 				APIGroup:   "core",
 				APIVersion: "v1alpha1",
@@ -41,12 +42,7 @@ func TestAuthorizationAttributes(t *testing.T) {
 		{
 			description: "GET /apis/core/v1alpha1/namespaces/default",
 			method:      "GET",
-			urlVars: map[string]string{
-				"group":   "core",
-				"version": "v1alpha1",
-				"kind":    "namespaces",
-				"name":    "default",
-			},
+			path:        "/apis/core/v1alpha1/namespaces/default",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v1alpha1",
@@ -58,12 +54,7 @@ func TestAuthorizationAttributes(t *testing.T) {
 		{
 			description: "GET /apis/core/v1alpha1/namespaces/default/checks",
 			method:      "GET",
-			urlVars: map[string]string{
-				"group":     "core",
-				"version":   "v1alpha1",
-				"namespace": "default",
-				"kind":      "checks",
-			},
+			path:        "/apis/core/v1alpha1/namespaces/default/checks",
 			expected: authorization.Attributes{
 				APIGroup:   "core",
 				APIVersion: "v1alpha1",
@@ -75,13 +66,7 @@ func TestAuthorizationAttributes(t *testing.T) {
 		{
 			description: "GET /apis/core/v1alpha1/namespaces/default/checks/check-cpu",
 			method:      "GET",
-			urlVars: map[string]string{
-				"group":     "core",
-				"version":   "v1alpha1",
-				"namespace": "default",
-				"kind":      "checks",
-				"name":      "check-cpu",
-			},
+			path:        "/apis/core/v1alpha1/namespaces/default/checks/check-cpu",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v1alpha1",
@@ -94,7 +79,7 @@ func TestAuthorizationAttributes(t *testing.T) {
 		{
 			description: "DELETE /foo",
 			method:      "DELETE",
-			urlVars:     map[string]string{},
+			path:        "/foo",
 			expected: authorization.Attributes{
 				Verb: "delete",
 			},
@@ -102,7 +87,7 @@ func TestAuthorizationAttributes(t *testing.T) {
 		{
 			description: "POST /foo",
 			method:      "POST",
-			urlVars:     map[string]string{},
+			path:        "/foo",
 			expected: authorization.Attributes{
 				Verb: "create",
 			},
@@ -110,7 +95,7 @@ func TestAuthorizationAttributes(t *testing.T) {
 		{
 			description: "PUT /foo",
 			method:      "PUT",
-			urlVars:     map[string]string{},
+			path:        "/foo",
 			expected: authorization.Attributes{
 				Verb: "update",
 			},
@@ -122,20 +107,35 @@ func TestAuthorizationAttributes(t *testing.T) {
 			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				attrs := authorization.GetAttributes(r.Context())
 				assert.NotNil(t, attrs)
+
+				// Inject our user in the expected attributes
+				tt.expected.User = types.User{Username: "admin"}
+
 				assert.Equal(t, &tt.expected, attrs)
 			})
-			middleware := AuthorizationAttributes{}
 
 			w := httptest.NewRecorder()
-			r, err := http.NewRequest(tt.method, "/", nil)
+
+			// Prepare the request
+			r, err := http.NewRequest(tt.method, tt.path, nil)
 			if err != nil {
 				t.Fatal("Couldn't create request: ", err)
 			}
+			claims := types.Claims{StandardClaims: jwt.StandardClaims{Subject: "admin"}}
+			ctx := sensuJWT.SetClaimsIntoContext(r, &claims)
 
-			r = mux.SetURLVars(r, tt.urlVars)
-			handler := middleware.Then(testHandler)
-			handler.ServeHTTP(w, r)
+			// Prepare the router
+			router := mux.NewRouter()
+			router.PathPrefix("/apis/{group}/{version}/namespaces/{namespace}/{kind}/{name}").Handler(testHandler)
+			router.PathPrefix("/apis/{group}/{version}/namespaces/{namespace}/{kind}").Handler(testHandler)
+			router.PathPrefix("/apis/{group}/{version}/{kind}/{name}").Handler(testHandler)
+			router.PathPrefix("/apis/{group}/{version}/{kind}").Handler(testHandler)
+			router.PathPrefix("/").Handler(testHandler) // catch all
+			middleware := AuthorizationAttributes{}
+			router.Use(middleware.Then)
 
+			// Serve the request
+			router.ServeHTTP(w, r.WithContext(ctx))
 			assert.Equal(t, http.StatusOK, w.Code)
 		})
 	}
@@ -146,14 +146,12 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 		description string
 		method      string
 		path        string
-		urlVars     map[string]string
 		expected    authorization.Attributes
 	}{
 		{
 			description: "GET /assets",
 			method:      "GET",
 			path:        "/assets",
-			urlVars:     map[string]string{},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -167,7 +165,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "GET /assets?namespace=foo",
 			method:      "GET",
 			path:        "/assets?namespace=foo",
-			urlVars:     map[string]string{},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -181,9 +178,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "GET /assets/foo",
 			method:      "GET",
 			path:        "/assets/foo",
-			urlVars: map[string]string{
-				"id": "foo",
-			},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -197,9 +191,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "GET /assets/foo?namespace=bar",
 			method:      "GET",
 			path:        "/assets/foo?namespace=bar",
-			urlVars: map[string]string{
-				"id": "foo",
-			},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -213,7 +204,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "GET /checks",
 			method:      "GET",
 			path:        "/checks",
-			urlVars:     map[string]string{},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -227,9 +217,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "GET /checks/foo",
 			method:      "GET",
 			path:        "/checks/foo",
-			urlVars: map[string]string{
-				"id": "foo",
-			},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -243,9 +230,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "POST /checks/foo/execute",
 			method:      "POST",
 			path:        "/checks/foo/execute",
-			urlVars: map[string]string{
-				"id": "foo",
-			},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -259,10 +243,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "PUT /checks/foo/hooks/bar",
 			method:      "PUT",
 			path:        "/checks/foo/hooks/bar",
-			urlVars: map[string]string{
-				"id":   "foo",
-				"type": "bar",
-			},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -276,11 +256,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "DELETE /checks/foo/hooks/bar/hook/baz",
 			method:      "DELETE",
 			path:        "/checks/foo/hooks/bar/hook/baz",
-			urlVars: map[string]string{
-				"id":   "foo",
-				"type": "bar",
-				"hook": "baz",
-			},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -294,7 +269,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "GET /cluster/members",
 			method:      "GET",
 			path:        "/cluster/members",
-			urlVars:     map[string]string{},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -308,9 +282,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "GET /cluster/members/foo",
 			method:      "GET",
 			path:        "/cluster/members/foo",
-			urlVars: map[string]string{
-				"id": "foo",
-			},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -324,7 +295,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "GET /events",
 			method:      "GET",
 			path:        "/events",
-			urlVars:     map[string]string{},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -338,9 +308,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "GET /events/entity_name",
 			method:      "GET",
 			path:        "/events/entity_name",
-			urlVars: map[string]string{
-				"entity": "entity_name",
-			},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -354,10 +321,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "GET /events/entity_name/check_name",
 			method:      "GET",
 			path:        "/events/entity_name/check_name",
-			urlVars: map[string]string{
-				"check":  "check_name",
-				"entity": "entity_name",
-			},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -371,7 +334,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "GET /rbac/namespaces",
 			method:      "GET",
 			path:        "/rbac/namespaces",
-			urlVars:     map[string]string{},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -385,9 +347,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "GET /rbac/namespaces/foo",
 			method:      "GET",
 			path:        "/rbac/namespaces/foo",
-			urlVars: map[string]string{
-				"id": "foo",
-			},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -401,7 +360,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "GET /rbac/users",
 			method:      "GET",
 			path:        "/rbac/users",
-			urlVars:     map[string]string{},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -415,9 +373,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "GET /rbac/users/foo",
 			method:      "GET",
 			path:        "/rbac/users/foo",
-			urlVars: map[string]string{
-				"id": "foo",
-			},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -431,7 +386,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "GET /silenced",
 			method:      "GET",
 			path:        "/silenced",
-			urlVars:     map[string]string{},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -445,9 +399,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "GET /silenced/foo",
 			method:      "GET",
 			path:        "/silenced/foo",
-			urlVars: map[string]string{
-				"id": "foo",
-			},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -461,7 +412,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "GET /silenced/checks",
 			method:      "GET",
 			path:        "/silenced/checks",
-			urlVars:     map[string]string{},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -475,9 +425,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "GET /silenced/checks/foo",
 			method:      "GET",
 			path:        "/silenced/checks/foo",
-			urlVars: map[string]string{
-				"check": "foo",
-			},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -491,7 +438,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "GET /silenced/subscriptions",
 			method:      "GET",
 			path:        "/silenced/subscriptions",
-			urlVars:     map[string]string{},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -505,9 +451,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			description: "GET /silenced/subscriptions/foo",
 			method:      "GET",
 			path:        "/silenced/subscriptions/foo",
-			urlVars: map[string]string{
-				"subscription": "foo",
-			},
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -517,6 +460,19 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 				Verb:         "get",
 			},
 		},
+		// {
+		// 	description: "GET /rbac/users/foo",
+		// 	method:      "GET",
+		// 	path:        "/rbac/users/foo",
+		// 	expected: authorization.Attributes{
+		// 		APIGroup:     "core",
+		// 		APIVersion:   "v2",
+		// 		Namespace:    "default",
+		// 		Resource:     "users",
+		// 		ResourceName: "admin",
+		// 		Verb:         "get",
+		// 	},
+		// },
 	}
 
 	for _, tt := range cases {
@@ -524,19 +480,41 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				attrs := authorization.GetAttributes(r.Context())
 				assert.NotNil(t, attrs)
+
+				// Inject our user in the expected attributes
+				tt.expected.User = types.User{Username: "admin"}
+
 				assert.Equal(t, &tt.expected, attrs)
 			})
-			middleware := LegacyAuthorizationAttributes{}
 
+			// Prepare our HTTP server
 			w := httptest.NewRecorder()
+
+			// Prepare our request
 			r, err := http.NewRequest(tt.method, tt.path, nil)
 			if err != nil {
 				t.Fatal("Couldn't create request: ", err)
 			}
+			claims := types.Claims{StandardClaims: jwt.StandardClaims{Subject: "admin"}}
+			ctx := sensuJWT.SetClaimsIntoContext(r, &claims)
 
-			r = mux.SetURLVars(r, tt.urlVars)
-			handler := middleware.Then(testHandler)
-			handler.ServeHTTP(w, r)
+			// Prepare the router
+			middleware := LegacyAuthorizationAttributes{}
+			router := mux.NewRouter()
+			router.PathPrefix("/{kind:events}/{entity}/{check}").Handler(testHandler)
+			router.PathPrefix("/{kind:events}/{entity}").Handler(testHandler)
+			router.PathPrefix("/{kind:silenced}/checks/{check}").Handler(testHandler)
+			router.PathPrefix("/{kind:silenced}/subscriptions/{subscription}").Handler(testHandler)
+			router.PathPrefix("/{kind:cluster}/{resource}/{id}").Handler(testHandler)
+			router.PathPrefix("/{kind:cluster}/{resource}").Handler(testHandler)
+			router.PathPrefix("/{prefix:rbac}/{resource}/{id}").Handler(testHandler)
+			router.PathPrefix("/{prefix:rbac}/{resource}").Handler(testHandler)
+			router.PathPrefix("/{kind}/{id}").Handler(testHandler)
+			router.PathPrefix("/").Handler(testHandler) // catch all for legacy routes
+			router.Use(middleware.Then)
+
+			// Serve the request
+			router.ServeHTTP(w, r.WithContext(ctx))
 
 			assert.Equal(t, http.StatusOK, w.Code)
 		})
