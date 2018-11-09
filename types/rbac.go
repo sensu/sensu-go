@@ -16,6 +16,10 @@ const (
 	GroupKind = "Group"
 	// UserKind represents a user object in a subject
 	UserKind = "User"
+
+	// LocalSelfUserResource represents a local user trying to view itself
+	// or change its password
+	LocalSelfUserResource = "localselfuser"
 )
 
 // CommonCoreResources represents the common "core" resources found in a

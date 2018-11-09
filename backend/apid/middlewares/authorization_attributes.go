@@ -3,6 +3,7 @@ package middlewares
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"path"
 	"strings"
@@ -185,6 +186,21 @@ func (a LegacyAuthorizationAttributes) Then(next http.Handler) http.Handler {
 
 		if attrs.Verb == "get" && (attrs.ResourceName == "" || isListable(attrs.Resource, attrs.ResourceName)) {
 			attrs.Verb = "list"
+		}
+
+		// Verify if the authenticated user is trying to access itself
+		if attrs.Resource == "users" && attrs.ResourceName == attrs.User.Username {
+			fmt.Println(vars["subresource"])
+			// Change the resource to LocalSelfUserResource if a user views itself
+			if attrs.Verb == "get" && vars["subresource"] == "" {
+				attrs.Resource = types.LocalSelfUserResource
+			}
+
+			// Change the resource to LocalSelfUserResource if a user tries to change
+			// its own password
+			if attrs.Verb == "update" && vars["subresource"] == "password" {
+				attrs.Resource = types.LocalSelfUserResource
+			}
 		}
 	})
 }

@@ -32,13 +32,13 @@ func (r *UsersRouter) Mount(parent *mux.Router) {
 	routes.Put(r.createOrReplace)
 
 	// Custom
-	routes.Path("{id}/reinstate", r.reinstate).Methods(http.MethodPut)
-	routes.Path("{id}/groups", r.removeAllGroups).Methods(http.MethodDelete)
-	routes.Path("{id}/groups/{group}", r.addGroup).Methods(http.MethodPut)
-	routes.Path("{id}/groups/{group}", r.removeGroup).Methods(http.MethodDelete)
+	routes.Path("{id}/{subresource:reinstate}", r.reinstate).Methods(http.MethodPut)
+	routes.Path("{id}/{subresource:groups}", r.removeAllGroups).Methods(http.MethodDelete)
+	routes.Path("{id}/{subresource:groups}/{group}", r.addGroup).Methods(http.MethodPut)
+	routes.Path("{id}/{subresource:groups}/{group}", r.removeGroup).Methods(http.MethodDelete)
 
 	// TODO: Remove?
-	routes.Path("{id}/password", r.updatePassword).Methods(http.MethodPut)
+	routes.Path("{id}/{subresource:password}", r.updatePassword).Methods(http.MethodPut)
 }
 
 func (r *UsersRouter) list(req *http.Request) (interface{}, error) {

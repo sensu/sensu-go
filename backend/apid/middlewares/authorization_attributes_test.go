@@ -460,19 +460,58 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 				Verb:         "get",
 			},
 		},
-		// {
-		// 	description: "GET /rbac/users/foo",
-		// 	method:      "GET",
-		// 	path:        "/rbac/users/foo",
-		// 	expected: authorization.Attributes{
-		// 		APIGroup:     "core",
-		// 		APIVersion:   "v2",
-		// 		Namespace:    "default",
-		// 		Resource:     "users",
-		// 		ResourceName: "admin",
-		// 		Verb:         "get",
-		// 	},
-		// },
+		{
+			description: "View another user",
+			method:      "GET",
+			path:        "/rbac/users/foo",
+			expected: authorization.Attributes{
+				APIGroup:     "core",
+				APIVersion:   "v2",
+				Namespace:    "default",
+				Resource:     "users",
+				ResourceName: "foo",
+				Verb:         "get",
+			},
+		},
+		{
+			description: "View itself",
+			method:      "GET",
+			path:        "/rbac/users/admin",
+			expected: authorization.Attributes{
+				APIGroup:     "core",
+				APIVersion:   "v2",
+				Namespace:    "default",
+				Resource:     types.LocalSelfUserResource,
+				ResourceName: "admin",
+				Verb:         "get",
+			},
+		},
+		{
+			description: "Update another user password",
+			method:      "PUT",
+			path:        "/rbac/users/foo/password",
+			expected: authorization.Attributes{
+				APIGroup:     "core",
+				APIVersion:   "v2",
+				Namespace:    "default",
+				Resource:     "users",
+				ResourceName: "foo",
+				Verb:         "update",
+			},
+		},
+		{
+			description: "Update its own password",
+			method:      "PUT",
+			path:        "/rbac/users/admin/password",
+			expected: authorization.Attributes{
+				APIGroup:     "core",
+				APIVersion:   "v2",
+				Namespace:    "default",
+				Resource:     types.LocalSelfUserResource,
+				ResourceName: "admin",
+				Verb:         "update",
+			},
+		},
 	}
 
 	for _, tt := range cases {
@@ -507,6 +546,7 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			router.PathPrefix("/{kind:silenced}/subscriptions/{subscription}").Handler(testHandler)
 			router.PathPrefix("/{kind:cluster}/{resource}/{id}").Handler(testHandler)
 			router.PathPrefix("/{kind:cluster}/{resource}").Handler(testHandler)
+			router.PathPrefix("/{prefix:rbac}/{resource}/{id}/{subresource}").Handler(testHandler)
 			router.PathPrefix("/{prefix:rbac}/{resource}/{id}").Handler(testHandler)
 			router.PathPrefix("/{prefix:rbac}/{resource}").Handler(testHandler)
 			router.PathPrefix("/{kind}/{id}").Handler(testHandler)
