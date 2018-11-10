@@ -68,17 +68,17 @@ func TestHealthz(t *testing.T) {
 	testCases := []struct {
 		desc             string
 		expectedResponse int
-		closeConn        int32
+		closed           bool
 	}{
 		{
 			"healthz returns success",
 			http.StatusOK,
-			1,
+			true,
 		},
 		{
 			"healthz returns failure",
 			http.StatusServiceUnavailable,
-			0,
+			false,
 		},
 	}
 
@@ -90,7 +90,7 @@ func TestHealthz(t *testing.T) {
 			config, cleanup := FixtureConfig()
 			defer cleanup()
 			agent := NewAgent(config)
-			agent.connected = tc.closeConn
+			agent.connected = tc.closed
 
 			r, err := http.NewRequest("GET", "/healthz", nil)
 			assert.NoError(t, err)

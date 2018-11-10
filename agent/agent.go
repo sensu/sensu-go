@@ -13,7 +13,6 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"sync/atomic"
 
 	time "github.com/echlebek/timeproxy"
 
@@ -46,7 +45,8 @@ type Agent struct {
 	backendSelector BackendSelector
 	cancel          context.CancelFunc
 	config          *Config
-	connected       int32
+	connected       bool
+	connectedMu     *sync.RWMutex
 	context         context.Context
 	entity          *types.Entity
 	executor        command.Executor
@@ -70,7 +70,8 @@ func NewAgent(config *Config) *Agent {
 		backendSelector: &RandomBackendSelector{Backends: config.BackendURLs},
 		cancel:          cancel,
 		context:         ctx,
-		connected:       0,
+		connected:       false,
+		connectedMu:     &sync.RWMutex{},
 		config:          config,
 		executor:        command.NewExecutor(),
 		handler:         handler.NewMessageHandler(),
@@ -238,9 +239,15 @@ func (a *Agent) connectionManager() {
 		default:
 		}
 
-		atomic.SwapInt32(&a.connected, 0)
+		a.connectedMu.Lock()
+		a.connected = false
+		a.connectedMu.Unlock()
+
 		conn := connectWithBackoff(a.backendSelector.Select(), a.config.TLS, a.header)
-		atomic.SwapInt32(&a.connected, 1)
+
+		a.connectedMu.Lock()
+		a.connected = true
+		a.connectedMu.Unlock()
 
 		// Send an immediate keepalive once we've connected.
 		if err := a.sendKeepalive(); err != nil {
@@ -298,7 +305,9 @@ func sendLoop(conn transport.Transport, sendq chan *transport.Message, done, sto
 
 // Connected returns true if the agent is connected to a backend.
 func (a *Agent) Connected() bool {
-	return atomic.LoadInt32(&a.connected) == 1
+	a.connectedMu.RLock()
+	defer a.connectedMu.RUnlock()
+	return a.connected
 }
 
 // StartAPI starts the Agent HTTP API. After attempting to start the API, if the
