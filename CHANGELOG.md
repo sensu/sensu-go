@@ -28,6 +28,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Improved event validation error messages.
 - Improved agent logging for statsd events.
 - Fixues issue with tooltip positioning.
+- The agent now reconnects to the backend if its first connection attempt
+  fails.
 
 ### Breaking Changes
 - Environments and organizations have been replaced with namespaces.
