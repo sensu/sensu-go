@@ -16,7 +16,7 @@ import (
 // InfoCommand defines new silenced info command
 func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "info [ID]",
+		Use:          "info [Name]",
 		Short:        "show detailed silenced information",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -25,11 +25,11 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 				return errors.New("invalid argument(s) received")
 			}
 
-			id, err := getID(cmd, args)
+			name, err := getName(cmd, args)
 			if err != nil {
 				return err
 			}
-			r, err := cli.Client.FetchSilenced(id)
+			r, err := cli.Client.FetchSilenced(name)
 			if err != nil {
 				return err
 			}
@@ -64,7 +64,7 @@ func printToList(v interface{}, writer io.Writer) error {
 		return fmt.Errorf("%t is not a Silenced", v)
 	}
 	cfg := &list.Config{
-		Title: r.ID,
+		Title: r.Name,
 		Rows: []*list.Row{
 			{
 				Label: "Expire",

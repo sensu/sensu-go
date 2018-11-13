@@ -15,7 +15,7 @@ const (
 )
 
 func getKeepalivePath(keepalivesPath string, entity *types.Entity) string {
-	return path.Join(keepalivesPath, entity.Namespace, entity.ID)
+	return path.Join(keepalivesPath, entity.Namespace, entity.Name)
 }
 
 // DeleteFailingKeepalive deletes a failing KeepaliveRecord.
@@ -65,7 +65,7 @@ func (s *Store) UpdateFailingKeepalive(ctx context.Context, entity *types.Entity
 	if !res.Succeeded {
 		return fmt.Errorf(
 			"could not create the keepalive for entity %s in namespace %s",
-			entity.ID,
+			entity.Name,
 			entity.Namespace,
 		)
 	}

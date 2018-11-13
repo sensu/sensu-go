@@ -17,7 +17,7 @@ func TestMatchEntities(t *testing.T) {
 	}{
 		{
 			name:             "standard string attribute",
-			entityAttributes: []string{`entity.ID == "entity1"`},
+			entityAttributes: []string{`entity.Name == "entity1"`},
 			entities: []*types.Entity{
 				types.FixtureEntity("entity1"),
 				types.FixtureEntity("entity2"),
@@ -42,31 +42,31 @@ func TestMatchEntities(t *testing.T) {
 			entityAttributes: []string{`entity.System.Hostname == "foo.local"`},
 			entities: []*types.Entity{
 				&types.Entity{System: types.System{Hostname: "localhost"}},
-				&types.Entity{ID: "foo"},
-				&types.Entity{ID: "foo", System: types.System{Hostname: "foo.local"}},
+				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "foo"}},
+				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "foo"}, System: types.System{Hostname: "foo.local"}},
 			},
 			want: []*types.Entity{
-				&types.Entity{ID: "foo", System: types.System{Hostname: "foo.local"}},
+				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "foo"}, System: types.System{Hostname: "foo.local"}},
 			},
 		},
 		{
 			name:             "multiple matches",
-			entityAttributes: []string{`entity.Class == "proxy"`},
+			entityAttributes: []string{`entity.EntityClass == "proxy"`},
 			entities: []*types.Entity{
-				&types.Entity{ID: "foo", Class: "proxy"},
-				&types.Entity{ID: "bar", Class: "agent"},
-				&types.Entity{ID: "baz", Class: "proxy"},
+				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "foo"}, EntityClass: "proxy"},
+				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "bar"}, EntityClass: "agent"},
+				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "baz"}, EntityClass: "proxy"},
 			},
 			want: []*types.Entity{
-				&types.Entity{ID: "foo", Class: "proxy"},
-				&types.Entity{ID: "baz", Class: "proxy"},
+				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "foo"}, EntityClass: "proxy"},
+				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "baz"}, EntityClass: "proxy"},
 			},
 		},
 		{
 			name:             "invalid expression",
 			entityAttributes: []string{`foo &&`},
 			entities: []*types.Entity{
-				&types.Entity{ID: "foo"},
+				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "foo"}},
 			},
 		},
 	}
@@ -139,5 +139,5 @@ func TestSubstituteProxyEntityTokens(t *testing.T) {
 	if err != nil {
 		assert.FailNow(err.Error())
 	}
-	assert.Equal(entity.ID, substitutedProxyEntityTokens.ProxyEntityID)
+	assert.Equal(entity.Name, substitutedProxyEntityTokens.ProxyEntityName)
 }

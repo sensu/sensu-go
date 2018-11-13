@@ -14,15 +14,15 @@ import (
 // CreateCommand allows a user to create a new entity
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create [ID]",
+		Use:          "create [NAME]",
 		Short:        "create a new entity",
 		SilenceUsage: true,
 		PreRun: func(cmd *cobra.Command, args []string) {
 			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 			if !isInteractive {
 				// Mark flags are required for bash-completions
-				_ = cmd.MarkFlagRequired("id")
-				_ = cmd.MarkFlagRequired("class")
+				_ = cmd.MarkFlagRequired("name")
+				_ = cmd.MarkFlagRequired("entity-class")
 			}
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -35,7 +35,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			opts := newEntityOpts()
 
 			if len(args) > 0 {
-				opts.ID = args[0]
+				opts.Name = args[0]
 			}
 
 			opts.Namespace = cli.Config.Namespace()
@@ -68,7 +68,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
-	_ = cmd.Flags().StringP("class", "c", "", "entity class, either proxy or agent")
+	_ = cmd.Flags().StringP("entity-class", "c", "", "entity class, either proxy or agent")
 	_ = cmd.Flags().StringP("subscriptions", "s", "", "comma separated list of subscriptions")
 	helpers.AddInteractiveFlag(cmd.Flags())
 	return cmd

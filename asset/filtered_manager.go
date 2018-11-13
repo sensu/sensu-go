@@ -26,7 +26,7 @@ type filteredManager struct {
 // Get fetches, verifies, and expands an asset, but only if it is filtered.
 func (f *filteredManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 	fields := logrus.Fields{
-		"entity":  f.entity.ID,
+		"entity":  f.entity.Name,
 		"asset":   asset.Name,
 		"filters": asset.Filters,
 	}

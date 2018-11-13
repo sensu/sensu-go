@@ -15,15 +15,15 @@ func TestGetProxyEntity(t *testing.T) {
 	assert := assert.New(t)
 
 	store := &mockstore.MockStore{}
-	store.On("GetEntityByID", mock.Anything, "bar").Return(types.FixtureEntity("bar"), nil)
+	store.On("GetEntityByName", mock.Anything, "bar").Return(types.FixtureEntity("bar"), nil)
 
 	var nilEntity *types.Entity
-	store.On("GetEntityByID", mock.Anything, "baz").Return(nilEntity, nil)
+	store.On("GetEntityByName", mock.Anything, "baz").Return(nilEntity, nil)
 	store.On("UpdateEntity", mock.Anything, mock.Anything).Once().Return(nil)
 
-	store.On("GetEntityByID", mock.Anything, "quux").Return(nilEntity, errors.New("error"))
+	store.On("GetEntityByName", mock.Anything, "quux").Return(nilEntity, errors.New("error"))
 
-	store.On("GetEntityByID", mock.Anything, "qux").Return(nilEntity, nil)
+	store.On("GetEntityByName", mock.Anything, "qux").Return(nilEntity, nil)
 	store.On("UpdateEntity", mock.Anything, mock.Anything).Once().Return(errors.New("error"))
 
 	testCases := []struct {
@@ -42,7 +42,7 @@ func TestGetProxyEntity(t *testing.T) {
 			name: "The event has a proxy entity with a corresponding entity",
 			event: &types.Event{
 				Check: &types.Check{
-					ProxyEntityID: "bar",
+					ProxyEntityName: "bar",
 				},
 				Entity: types.FixtureEntity("foo"),
 			},
@@ -53,7 +53,7 @@ func TestGetProxyEntity(t *testing.T) {
 			name: "The event has a proxy entity with no corresponding entity",
 			event: &types.Event{
 				Check: &types.Check{
-					ProxyEntityID: "baz",
+					ProxyEntityName: "baz",
 				},
 				Entity: types.FixtureEntity("foo"),
 			},
@@ -64,7 +64,7 @@ func TestGetProxyEntity(t *testing.T) {
 			name: "The proxy entity can't be queried",
 			event: &types.Event{
 				Check: &types.Check{
-					ProxyEntityID: "quux",
+					ProxyEntityName: "quux",
 				},
 				Entity: types.FixtureEntity("foo"),
 			},
@@ -74,7 +74,7 @@ func TestGetProxyEntity(t *testing.T) {
 			name: "The proxy entity can't be created",
 			event: &types.Event{
 				Check: &types.Check{
-					ProxyEntityID: "qux",
+					ProxyEntityName: "qux",
 				},
 				Entity: types.FixtureEntity("foo"),
 			},
@@ -88,7 +88,7 @@ func TestGetProxyEntity(t *testing.T) {
 			testutil.CompareError(err, tc.expectedError, t)
 
 			if tc.expectedEntity != "" {
-				assert.Equal(tc.expectedEntity, tc.event.Entity.ID)
+				assert.Equal(tc.expectedEntity, tc.event.Entity.Name)
 			}
 		})
 	}

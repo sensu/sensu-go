@@ -43,9 +43,9 @@ func TestEntityTypeRelatedField(t *testing.T) {
 func TestEntityTypeStatusField(t *testing.T) {
 	entity := types.FixtureEntity("en")
 	mock := mockEventQuerier{els: []*types.Event{
-		types.FixtureEvent("a", entity.ID),
-		types.FixtureEvent("b", entity.ID),
-		types.FixtureEvent("c", entity.ID),
+		types.FixtureEvent("a", entity.Name),
+		types.FixtureEvent("b", entity.Name),
+		types.FixtureEvent("c", entity.Name),
 	}}
 
 	// params
@@ -59,7 +59,7 @@ func TestEntityTypeStatusField(t *testing.T) {
 	assert.Equal(t, 0, st)
 
 	// Add failing event
-	failingEv := types.FixtureEvent("a", entity.ID)
+	failingEv := types.FixtureEvent("a", entity.Name)
 	failingEv.Check.Status = 2
 	mock.els = append(mock.els, failingEv)
 
@@ -88,9 +88,9 @@ func TestEntityTypeLastSeenField(t *testing.T) {
 func TestEntityTypeEventsField(t *testing.T) {
 	entity := types.FixtureEntity("en")
 	mock := mockEventQuerier{els: []*types.Event{
-		types.FixtureEvent("a", entity.ID),
-		types.FixtureEvent("b", entity.ID),
-		types.FixtureEvent("c", entity.ID),
+		types.FixtureEvent("a", entity.Name),
+		types.FixtureEvent("b", entity.Name),
+		types.FixtureEvent("c", entity.Name),
 	}}
 
 	// params

@@ -79,7 +79,7 @@ func (r *checkCfgImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{
 // ProxyEntityID implements response to request for 'proxyEntityId' field.
 func (r *checkCfgImpl) ProxyEntityID(p graphql.ResolveParams) (string, error) {
 	check := p.Source.(*types.CheckConfig)
-	return check.ProxyEntityID, nil
+	return check.ProxyEntityName, nil
 }
 
 // IsSilenced implements response to request for 'isSilenced' field.
@@ -261,7 +261,7 @@ func (r *checkImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{}, 
 // ProxyEntityID implements response to request for 'proxyEntityId' field.
 func (r *checkImpl) ProxyEntityID(p graphql.ResolveParams) (string, error) {
 	check := p.Source.(*types.Check)
-	return check.ProxyEntityID, nil
+	return check.ProxyEntityName, nil
 }
 
 // RuntimeAssets implements response to request for 'runtimeAssets' field.
@@ -279,7 +279,7 @@ func fetchCheckSilences(ctx context.Context, ctrl silenceQuerier, check silencea
 	}
 
 	for _, sl := range sls {
-		if strings.InArray(sl.ID, check.GetSilenced()) {
+		if strings.InArray(sl.Name, check.GetSilenced()) {
 			matched = append(matched, sl)
 		}
 	}

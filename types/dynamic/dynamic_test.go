@@ -70,6 +70,20 @@ type MyType struct {
 	Bar int    `json:"bar"`
 }
 
+type MyTypeEmbedded struct {
+	Foo         string `json:"foo"`
+	Bar         int    `json:"bar"`
+	NotEmbedded Meta   `json:"not-embed"`
+	Meta        `json:"meta"`
+}
+
+type Meta struct {
+	Name        string            `json:"name"`
+	Namespace   string            `json:"namespace"`
+	Labels      map[string]string `json:"labels"`
+	Annotations map[string]string `json:"annotations"`
+}
+
 func (m *MyType) Get(name string) (interface{}, error) {
 	return GetField(m, name)
 }
@@ -156,6 +170,44 @@ func TestSynthesize(t *testing.T) {
 			expected: map[string]interface{}{
 				"Bar": 5,
 				"Foo": "bar",
+			},
+		},
+		{
+			name: "embedded fields",
+			input: &MyTypeEmbedded{
+				Foo: "bar",
+				Bar: 5,
+				Meta: Meta{
+					Name:        "baz",
+					Namespace:   "default",
+					Labels:      map[string]string{"Hi": "hello"},
+					Annotations: map[string]string{"One": "1", "Two": "2"},
+				},
+				NotEmbedded: Meta{
+					Name:        "not-baz",
+					Namespace:   "not-default",
+					Labels:      map[string]string{},
+					Annotations: map[string]string{},
+				},
+			},
+			expected: map[string]interface{}{
+				"Bar":       5,
+				"Foo":       "bar",
+				"Name":      "baz",
+				"Namespace": "default",
+				"Labels": map[string]string{
+					"Hi": "hello",
+				},
+				"Annotations": map[string]string{
+					"One": "1",
+					"Two": "2",
+				},
+				"NotEmbedded": map[string]interface{}{
+					"Name":        "not-baz",
+					"Namespace":   "not-default",
+					"Labels":      map[string]string{},
+					"Annotations": map[string]string{},
+				},
 			},
 		},
 	}

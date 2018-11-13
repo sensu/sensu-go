@@ -74,20 +74,24 @@ func (f *EventFilter) Update(from *EventFilter, fields ...string) error {
 // FixtureEventFilter returns a Filter fixture for testing.
 func FixtureEventFilter(name string) *EventFilter {
 	return &EventFilter{
-		Name:       name,
 		Action:     EventFilterActionAllow,
 		Statements: []string{"event.Check.Team == 'ops'"},
-		Namespace:  "default",
+		ObjectMeta: ObjectMeta{
+			Namespace: "default",
+			Name:      name,
+		},
 	}
 }
 
 // FixtureDenyEventFilter returns a Filter fixture for testing.
 func FixtureDenyEventFilter(name string) *EventFilter {
 	return &EventFilter{
-		Name:       name,
 		Action:     EventFilterActionDeny,
 		Statements: []string{"event.Check.Team == 'ops'"},
-		Namespace:  "default",
+		ObjectMeta: ObjectMeta{
+			Namespace: "default",
+			Name:      name,
+		},
 	}
 }
 

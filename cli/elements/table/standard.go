@@ -47,7 +47,7 @@ type Table struct {
 //       ColumnStyle: table.PrimaryTextStyle,	            // Make each row blue
 //       CellTransformer: func(data interface{}) string {
 //         event, _ := data.(types.Event)
-//         return event.Entity.ID                         // Called for each row
+//         return event.Entity.Name                         // Called for each row
 //       }
 //     },
 //     // ...

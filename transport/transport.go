@@ -28,8 +28,8 @@ const (
 	// MessageTypeEvent is the message type string for events.
 	MessageTypeEvent = "event"
 
-	// HeaderKeyAgentID is the HTTP request header specifying the Agent ID
-	HeaderKeyAgentID = "Sensu-AgentID"
+	// HeaderKeyAgentName is the HTTP request header specifying the Agent name
+	HeaderKeyAgentName = "Sensu-AgentName"
 
 	// HeaderKeyNamespace is the HTTP request header specifying the Agent Namespace
 	HeaderKeyNamespace = "Sensu-Namespace"

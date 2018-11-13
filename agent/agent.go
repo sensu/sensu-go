@@ -27,15 +27,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// GetDefaultAgentID returns the default agent ID
-func GetDefaultAgentID() string {
-	defaultAgentID, err := os.Hostname()
+// GetDefaultAgentName returns the default agent name
+func GetDefaultAgentName() string {
+	defaultAgentName, err := os.Hostname()
 	if err != nil {
 		logger.WithError(err).Error("error getting hostname")
 		// TODO(greg): wat do?
-		defaultAgentID = "unidentified-sensu-agent"
+		defaultAgentName = "unidentified-sensu-agent"
 	}
-	return defaultAgentID
+	return defaultAgentName
 }
 
 // An Agent receives and acts on messages from a Sensu Backend.
@@ -182,7 +182,7 @@ func (a *Agent) sendKeepalivePeriodically() {
 
 func (a *Agent) buildTransportHeaderMap() http.Header {
 	header := http.Header{}
-	header.Set(transport.HeaderKeyAgentID, a.config.AgentID)
+	header.Set(transport.HeaderKeyAgentName, a.config.AgentName)
 	header.Set(transport.HeaderKeyNamespace, a.config.Namespace)
 	header.Set(transport.HeaderKeyUser, a.config.User)
 	header.Set(transport.HeaderKeySubscriptions, strings.Join(a.config.Subscriptions, ","))
@@ -215,8 +215,8 @@ func (a *Agent) Run() error {
 	a.header.Set("Authorization", "Basic "+userCredentials)
 
 	// Fail the agent after startup if the id is invalid
-	if err := types.ValidateName(a.config.AgentID); err != nil {
-		return fmt.Errorf("invalid agent id: %v", err)
+	if err := types.ValidateName(a.config.AgentName); err != nil {
+		return fmt.Errorf("invalid agent name: %v", err)
 	}
 
 	// Start the statsd listener only if the agent configuration has it enabled

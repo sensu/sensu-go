@@ -30,9 +30,11 @@ func runRegister(client client.APIClient, namespace string) func(*cobra.Command,
 		url := args[1]
 
 		extension := types.Extension{
-			Namespace: namespace,
-			Name:      name,
-			URL:       url,
+			ObjectMeta: types.ObjectMeta{
+				Namespace: namespace,
+				Name:      name,
+			},
+			URL: url,
 		}
 
 		if err := extension.Validate(); err != nil {
