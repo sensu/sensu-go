@@ -43,7 +43,7 @@ message Handler {
   repeated string env_vars = 9 [(gogoproto.jsontag) = "env_vars"];
 
   // RuntimeAssets are a list of assets required to execute a handler.
-  repeated string runtime_assets = 10 [(gogoproto.jsontag) = "runtime_assets"];
+  repeated string runtime_assets = 13 [(gogoproto.jsontag) = "runtime_assets"];
 }
 
 // HandlerSocket contains configuration for a TCP or UDP handler.

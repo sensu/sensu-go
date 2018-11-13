@@ -28,5 +28,5 @@ message Mutator {
   repeated string env_vars = 4 [(gogoproto.jsontag) = "env_vars"];
 
   // RuntimeAssets are a list of assets required to execute a mutator.
-  repeated string runtime_assets = 5 [(gogoproto.jsontag) = "runtime_assets"];
+  repeated string runtime_assets = 8 [(gogoproto.jsontag) = "runtime_assets"];
 }

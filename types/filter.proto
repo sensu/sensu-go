@@ -27,5 +27,5 @@ message EventFilter {
   repeated string statements = 3 [(gogoproto.jsontag) = "statements"];
 
   // When indicates a TimeWindowWhen that a filter uses to filter by days & times
-  TimeWindowWhen when = 4;
+  TimeWindowWhen when = 6;
 }

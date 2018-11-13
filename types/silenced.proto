@@ -38,5 +38,5 @@ message Silenced {
   string subscription = 7 [(gogoproto.nullable) = true];
 
   // Begin is a timestamp at which the silenced entry takes effect.
-  int64 begin = 8 [(gogoproto.jsontag) = "begin"];
+  int64 begin = 10 [(gogoproto.jsontag) = "begin"];
 }
