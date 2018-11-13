@@ -49,12 +49,27 @@ func (s *Store) create(ctx context.Context, key, namespace string, object interf
 	comparisons = append(comparisons, keyNotFound(key))
 
 	req := clientv3.OpPut(key, string(bytes))
-	resp, err := s.client.Txn(ctx).If(comparisons...).Then(req).Commit()
+	resp, err := s.client.Txn(ctx).If(comparisons...).Then(req).Else(
+		getNamespace(namespace), getKey(key),
+	).Commit()
 	if err != nil {
 		return err
 	}
 	if !resp.Succeeded {
-		return &store.ErrAlreadyExists{Key: key}
+		// Check if the namespace was missing
+		if len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
+			return &store.ErrNamespaceMissing{Namespace: namespace}
+		}
+
+		// Check if the key already exists
+		if len(resp.Responses[1].GetResponseRange().Kvs) != 0 {
+			return &store.ErrAlreadyExists{Key: key}
+		}
+
+		// Unknown error
+		return &store.ErrInternal{
+			Message: fmt.Sprintf("could not create the key %s", key),
+		}
 	}
 
 	return nil
@@ -80,7 +95,7 @@ func (s *Store) createOrUpdate(ctx context.Context, key, namespace string, objec
 		return err
 	}
 	if !resp.Succeeded {
-		return fmt.Errorf("could not create the key %s", key)
+		return &store.ErrNamespaceMissing{Namespace: namespace}
 	}
 
 	return nil
@@ -190,15 +205,38 @@ func (s *Store) update(ctx context.Context, key, namespace string, object interf
 	comparisons = append(comparisons, keyFound(key))
 
 	req := clientv3.OpPut(key, string(bytes))
-	resp, err := s.client.Txn(ctx).If(comparisons...).Then(req).Commit()
+	resp, err := s.client.Txn(ctx).If(comparisons...).Then(req).Else(
+		getNamespace(namespace), getKey(key),
+	).Commit()
 	if err != nil {
 		return err
 	}
 	if !resp.Succeeded {
-		return fmt.Errorf("could not update the key %s", key)
+		// Check if the namespace was missing
+		if len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
+			return &store.ErrNamespaceMissing{Namespace: namespace}
+		}
+
+		// Check if the key was missing
+		if len(resp.Responses[1].GetResponseRange().Kvs) != 0 {
+			return &store.ErrNotFound{Key: key}
+		}
+
+		// Unknown error
+		return &store.ErrInternal{
+			Message: fmt.Sprintf("could not update the key %s", key),
+		}
 	}
 
 	return nil
+}
+
+func getKey(key string) clientv3.Op {
+	return clientv3.OpGet(key)
+}
+
+func getNamespace(namespace string) clientv3.Op {
+	return getKey(getNamespacePath(namespace))
 }
 
 func keyFound(key string) clientv3.Cmp {

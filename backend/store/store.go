@@ -49,6 +49,16 @@ func (e *ErrEncode) Error() string {
 	return fmt.Sprintf("could not encode the key %s: %s", e.Key, e.Err.Error())
 }
 
+// ErrNamespaceMissing is returned when the user tries to manipulate a resource
+// within a namespaces that does not exist
+type ErrNamespaceMissing struct {
+	Namespace string
+}
+
+func (e *ErrNamespaceMissing) Error() string {
+	return fmt.Sprintf("the namespace %s does not exist", e.Namespace)
+}
+
 // ErrNotFound is returned when a key is not found in the store
 type ErrNotFound struct {
 	Key string
