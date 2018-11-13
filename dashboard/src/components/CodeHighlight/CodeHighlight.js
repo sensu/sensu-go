@@ -32,7 +32,7 @@ class CodeHighlight extends React.Component {
 
   static getDerivedStateFromProps(props, state) {
     if (props.code !== state.code) {
-      return { code: props.code, result: props.code };
+      return { code: props.code, result: props.code, processed: false };
     }
     return null;
   }
@@ -40,6 +40,7 @@ class CodeHighlight extends React.Component {
   state = {
     code: this.props.code,
     result: this.props.code,
+    processed: false,
   };
 
   componentDidMount() {
@@ -47,7 +48,7 @@ class CodeHighlight extends React.Component {
   }
 
   componentDidUpdate() {
-    if (this.props.code === this.state.result) {
+    if (!this.state.processed) {
       this.update();
     }
   }
@@ -59,7 +60,7 @@ class CodeHighlight extends React.Component {
   update = () => {
     postMessage([this.props.language, this.props.code], result => {
       if (!this.unmounted) {
-        this.setState({ result });
+        this.setState({ result, processed: true });
       }
     });
   };

@@ -32,6 +32,7 @@ flatten embedded and non-embedded fields to the top level.
 - Fixues issue with tooltip positioning.
 - The agent now reconnects to the backend if its first connection attempt
   fails.
+- Avoid infinite loop when code cannot be highlighted.
 
 ### Changes
 - Deprecated the sensu-agent `--id` flag, `--name` should be used instead.
