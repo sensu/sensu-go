@@ -51,6 +51,23 @@ func (client *RestClient) DisableUser(username string) error {
 	return nil
 }
 
+// FetchUser retrieve the given user
+func (client *RestClient) FetchUser(username string) (*types.User, error) {
+	user := &types.User{}
+	res, err := client.R().Get("/rbac/users/" + url.PathEscape(username))
+
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode() >= 400 {
+		return nil, UnmarshalError(res)
+	}
+
+	err = json.Unmarshal(res.Body(), user)
+	return user, err
+}
+
 // ListUsers fetches all users from configured Sensu instance
 func (client *RestClient) ListUsers() ([]types.User, error) {
 	var users []types.User
