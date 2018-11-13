@@ -10,10 +10,11 @@ import (
 )
 
 type filterOpts struct {
-	Action     string `survey:"action"`
-	Name       string `survey:"name"`
-	Namespace  string
-	Statements string `survey:"statements"`
+	Action        string `survey:"action"`
+	Name          string `survey:"name"`
+	Namespace     string `survey:"namespace"`
+	Statements    string `survey:"statements"`
+	RuntimeAssets string `survey:"runtimeAssets"`
 }
 
 func newFilterOpts() *filterOpts {
@@ -62,6 +63,13 @@ func (opts *filterOpts) administerQuestionnaire(editing bool) error {
 			},
 			Validate: survey.Required,
 		},
+		{
+			Name: "runtimeAssets",
+			Prompt: &survey.Input{
+				Message: "Runtime Assets",
+				Default: "",
+			},
+		},
 	}...)
 
 	return survey.Ask(qs, opts)
@@ -72,6 +80,7 @@ func (opts *filterOpts) Copy(filter *types.EventFilter) {
 	filter.Name = opts.Name
 	filter.Namespace = opts.Namespace
 	filter.Statements = helpers.SafeSplitCSV(opts.Statements)
+	filter.RuntimeAssets = helpers.SafeSplitCSV(opts.RuntimeAssets)
 }
 
 func (opts *filterOpts) withFilter(filter *types.EventFilter) {
@@ -79,6 +88,7 @@ func (opts *filterOpts) withFilter(filter *types.EventFilter) {
 	opts.Namespace = filter.Namespace
 	opts.Action = filter.Action
 	opts.Statements = strings.Join(filter.Statements, ",")
+	opts.RuntimeAssets = strings.Join(filter.RuntimeAssets, ",")
 }
 
 func (opts *filterOpts) withFlags(flags *pflag.FlagSet) {

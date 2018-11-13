@@ -28,4 +28,8 @@ message EventFilter {
 
   // When indicates a TimeWindowWhen that a filter uses to filter by days & times
   TimeWindowWhen when = 6;
+
+  // Runtime assets are Sensu assets that contain javascript libraries. They
+  // are evaluated within the execution context.
+  repeated string runtime_assets = 8 [(gogoproto.jsontag) = "runtime_assets"];
 }

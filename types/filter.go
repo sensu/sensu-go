@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/sensu/sensu-go/util/eval"
+	"github.com/sensu/sensu-go/js"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
 )
 
@@ -42,7 +42,7 @@ func (f *EventFilter) Validate() error {
 		return errors.New("filter must have one or more statements")
 	}
 
-	if err := eval.ValidateStatements(f.Statements, false); err != nil {
+	if err := js.ParseExpressions(f.Statements); err != nil {
 		return err
 	}
 

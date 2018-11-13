@@ -9,8 +9,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/robfig/cron"
-	"github.com/sensu/sensu-go/types/dynamic"
-	"github.com/sensu/sensu-go/util/eval"
+	"github.com/sensu/sensu-go/js"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
 )
 
@@ -156,16 +155,6 @@ func (c *Check) MarshalJSON() ([]byte, error) {
 	return jsoniter.Marshal(clone)
 }
 
-// Get implements govaluate.Parameters
-func (c *Check) Get(name string) (interface{}, error) {
-	return dynamic.GetField(c, name)
-}
-
-// Get implements govaluate.Parameters
-func (c *CheckConfig) Get(name string) (interface{}, error) {
-	return dynamic.GetField(c, name)
-}
-
 // MarshalJSON implements the json.Marshaler interface.
 func (c *CheckConfig) MarshalJSON() ([]byte, error) {
 	if c == nil {
@@ -260,7 +249,7 @@ func (p *ProxyRequests) Validate() error {
 		return errors.New("proxy request splay coverage must be greater than 0 if splay is enabled")
 	}
 
-	return eval.ValidateStatements(p.EntityAttributes, false)
+	return js.ParseExpressions(p.EntityAttributes)
 }
 
 // ValidateOutputMetricFormat returns an error if the string is not a valid metric

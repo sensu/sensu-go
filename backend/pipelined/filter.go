@@ -5,35 +5,27 @@ import (
 	"context"
 	"time"
 
+	"github.com/sensu/sensu-go/asset"
+	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/util/eval"
+	"github.com/sensu/sensu-go/types/dynamic"
 	utillogging "github.com/sensu/sensu-go/util/logging"
 )
 
-func evaluateEventFilterStatement(event *types.Event, statement string) bool {
+func evaluateJSFilter(event interface{}, expr string, assets asset.RuntimeAssetSet) bool {
 	parameters := map[string]interface{}{"event": event}
-	result, err := eval.EvaluatePredicate(statement, parameters)
+	result, err := js.Evaluate(expr, parameters, assets)
 	if err != nil {
-		fields := utillogging.EventFields(event, false)
-		fields["statement"] = statement
-		if _, ok := err.(eval.SyntaxError); ok {
-			// Errors during execution are typically due to missing attrs
-			logger.WithError(err).WithFields(fields).Error("syntax error")
-		} else if _, ok := err.(eval.TypeError); ok {
-			logger.WithError(err).WithFields(fields).Error("type error")
-		} else {
-			logger.WithError(err).WithFields(fields).Debug("missing attribute")
-		}
-		return false
+		logger.WithError(err).Error("error executing JS")
 	}
-
 	return result
 }
 
 // Returns true if the event should be filtered/denied.
-func evaluateEventFilter(event *types.Event, filter *types.EventFilter) bool {
+func evaluateEventFilter(event *types.Event, filter *types.EventFilter, assets asset.RuntimeAssetSet) bool {
 	fields := utillogging.EventFields(event, false)
 	fields["filter"] = filter.Name
+	fields["assets"] = filter.RuntimeAssets
 
 	if filter.When != nil {
 		inWindows, err := filter.When.InWindows(time.Now().UTC())
@@ -54,8 +46,10 @@ func evaluateEventFilter(event *types.Event, filter *types.EventFilter) bool {
 		}
 	}
 
+	synth := dynamic.Synthesize(event)
+
 	for _, statement := range filter.Statements {
-		match := evaluateEventFilterStatement(event, statement)
+		match := evaluateJSFilter(synth, statement, assets)
 
 		// Allow - One of the statements did not match, filter the event
 		if filter.Action == types.EventFilterActionAllow && !match {
@@ -134,7 +128,13 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 				// Execute the filter, evaluating each of its
 				// statements against the event. The event is rejected
 				// if the product of all statements is true.
-				filtered := evaluateEventFilter(event, filter)
+				ctx := types.SetContextFromResource(context.Background(), filter)
+				matchedAssets := asset.GetAssets(ctx, p.store, filter.RuntimeAssets)
+				assets, err := asset.GetAll(p.assetGetter, matchedAssets)
+				if err != nil {
+					logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for filter")
+				}
+				filtered := evaluateEventFilter(event, filter, assets)
 				if filtered {
 					logger.WithFields(fields).Debug("denying event with custom filter")
 					return true

@@ -145,29 +145,15 @@ func (e *Event) IsSilenced() bool {
 	return len(e.Check.Silenced) > 0
 }
 
-// Get implements govaluate.Parameters
-func (e *Event) Get(name string) (interface{}, error) {
-	switch name {
-	case "Timestamp":
-		return e.Timestamp, nil
-	case "Entity":
-		return e.Entity, nil
-	case "Check":
-		return e.Check, nil
-	case "Metrics":
-		return e.Metrics, nil
-	case "HasCheck":
-		return e.HasCheck(), nil
-	case "HasMetrics":
-		return e.HasMetrics(), nil
-	case "IsIncident":
-		return e.IsIncident(), nil
-	case "IsResolution":
-		return e.IsResolution(), nil
-	case "IsSilenced":
-		return e.IsSilenced(), nil
+// Implements dynamic.SynthesizeExtras
+func (e *Event) SynthesizeExtras() map[string]interface{} {
+	return map[string]interface{}{
+		"has_check":     e.HasCheck(),
+		"has_metrics":   e.HasMetrics(),
+		"is_incident":   e.IsIncident(),
+		"is_resolution": e.IsResolution(),
+		"is_silenced":   e.IsSilenced(),
 	}
-	return nil, errors.New("no parameter '" + name + "' found")
 }
 
 //
