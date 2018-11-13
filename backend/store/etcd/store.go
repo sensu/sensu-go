@@ -218,7 +218,7 @@ func (s *Store) update(ctx context.Context, key, namespace string, object interf
 		}
 
 		// Check if the key was missing
-		if len(resp.Responses[1].GetResponseRange().Kvs) != 0 {
+		if len(resp.Responses[1].GetResponseRange().Kvs) == 0 {
 			return &store.ErrNotFound{Key: key}
 		}
 
