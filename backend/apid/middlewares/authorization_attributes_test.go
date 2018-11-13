@@ -126,10 +126,10 @@ func TestAuthorizationAttributes(t *testing.T) {
 
 			// Prepare the router
 			router := mux.NewRouter()
-			router.PathPrefix("/apis/{group}/{version}/namespaces/{namespace}/{type}/{name}").Handler(testHandler)
-			router.PathPrefix("/apis/{group}/{version}/namespaces/{namespace}/{type}").Handler(testHandler)
-			router.PathPrefix("/apis/{group}/{version}/{type}/{name}").Handler(testHandler)
-			router.PathPrefix("/apis/{group}/{version}/{type}").Handler(testHandler)
+			router.PathPrefix("/apis/{group}/{version}/namespaces/{namespace}/{resource}/{name}").Handler(testHandler)
+			router.PathPrefix("/apis/{group}/{version}/namespaces/{namespace}/{resource}").Handler(testHandler)
+			router.PathPrefix("/apis/{group}/{version}/{resource}/{name}").Handler(testHandler)
+			router.PathPrefix("/apis/{group}/{version}/{resource}").Handler(testHandler)
 			router.PathPrefix("/").Handler(testHandler) // catch all
 			middleware := AuthorizationAttributes{}
 			router.Use(middleware.Then)
@@ -540,16 +540,16 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			// Prepare the router
 			middleware := LegacyAuthorizationAttributes{}
 			router := mux.NewRouter()
-			router.PathPrefix("/{type:events}/{entity}/{check}").Handler(testHandler)
-			router.PathPrefix("/{type:events}/{entity}").Handler(testHandler)
-			router.PathPrefix("/{type:silenced}/checks/{check}").Handler(testHandler)
-			router.PathPrefix("/{type:silenced}/subscriptions/{subscription}").Handler(testHandler)
-			router.PathPrefix("/{type:cluster}/{resource}/{id}").Handler(testHandler)
-			router.PathPrefix("/{type:cluster}/{resource}").Handler(testHandler)
+			router.PathPrefix("/{resource:events}/{entity}/{check}").Handler(testHandler)
+			router.PathPrefix("/{resource:events}/{entity}").Handler(testHandler)
+			router.PathPrefix("/{resource:silenced}/checks/{check}").Handler(testHandler)
+			router.PathPrefix("/{resource:silenced}/subscriptions/{subscription}").Handler(testHandler)
+			router.PathPrefix("/{prefix:cluster}/{resource}/{id}").Handler(testHandler)
+			router.PathPrefix("/{prefix:cluster}/{resource}").Handler(testHandler)
 			router.PathPrefix("/{prefix:rbac}/{resource}/{id}/{subresource}").Handler(testHandler)
 			router.PathPrefix("/{prefix:rbac}/{resource}/{id}").Handler(testHandler)
 			router.PathPrefix("/{prefix:rbac}/{resource}").Handler(testHandler)
-			router.PathPrefix("/{type}/{id}").Handler(testHandler)
+			router.PathPrefix("/{resource}/{id}").Handler(testHandler)
 			router.PathPrefix("/").Handler(testHandler) // catch all for legacy routes
 			router.Use(middleware.Then)
 

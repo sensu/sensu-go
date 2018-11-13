@@ -589,13 +589,13 @@ func TestAuthorization(t *testing.T) {
 
 			// Prepare the router
 			router := mux.NewRouter()
-			router.PathPrefix("/apis/{group}/{version}/namespaces/{namespace}/{type}/{name}").Handler(testHandler)
-			router.PathPrefix("/apis/{group}/{version}/namespaces/{namespace}/{type}").Handler(testHandler)
-			router.PathPrefix("/apis/{group}/{version}/{type}/{name}").Handler(testHandler)
-			router.PathPrefix("/apis/{group}/{version}/{type}").Handler(testHandler)
+			router.PathPrefix("/apis/{group}/{version}/namespaces/{namespace}/{resource}/{name}").Handler(testHandler)
+			router.PathPrefix("/apis/{group}/{version}/namespaces/{namespace}/{resource}").Handler(testHandler)
+			router.PathPrefix("/apis/{group}/{version}/{resource}/{name}").Handler(testHandler)
+			router.PathPrefix("/apis/{group}/{version}/{resource}").Handler(testHandler)
 			router.PathPrefix("/{prefix:rbac}/{resource}/{id}/{subresource}").Handler(testHandler)
 			router.PathPrefix("/{prefix:rbac}/{resource}/{id}").Handler(testHandler)
-			router.PathPrefix("/{type}/{id}").Handler(testHandler)
+			router.PathPrefix("/{resource}/{id}").Handler(testHandler)
 			router.PathPrefix("/").Handler(testHandler) // catch all for legacy routes
 			router.Use(namespaceMiddleware.Then, attributesMiddleware.Then, authorizationMiddleware.Then)
 
