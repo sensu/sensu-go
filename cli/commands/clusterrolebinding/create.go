@@ -32,7 +32,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return errors.New("a ClusterRole must be provided")
 			}
 			clusterRoleBinding.RoleRef = types.RoleRef{
-				Kind: "ClusterRole",
+				Type: "ClusterRole",
 				Name: clusterRole,
 			}
 
@@ -52,7 +52,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			for _, group := range groups {
 				clusterRoleBinding.Subjects = append(clusterRoleBinding.Subjects,
 					types.Subject{
-						Kind: "Group",
+						Type: "Group",
 						Name: group,
 					},
 				)
@@ -60,7 +60,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			for _, user := range users {
 				clusterRoleBinding.Subjects = append(clusterRoleBinding.Subjects,
 					types.Subject{
-						Kind: "User",
+						Type: "User",
 						Name: user,
 					},
 				)

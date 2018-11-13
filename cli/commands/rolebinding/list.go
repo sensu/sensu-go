@@ -64,7 +64,7 @@ func printToTable(results interface{}, writer io.Writer) {
 				if !ok {
 					return cli.TypeError
 				}
-				if roleBinding.RoleRef.Kind == "ClusterRole" {
+				if roleBinding.RoleRef.Type == "ClusterRole" {
 					return roleBinding.RoleRef.Name
 				}
 				return ""
@@ -77,7 +77,7 @@ func printToTable(results interface{}, writer io.Writer) {
 				if !ok {
 					return cli.TypeError
 				}
-				if roleBinding.RoleRef.Kind == "Role" {
+				if roleBinding.RoleRef.Type == "Role" {
 					return roleBinding.RoleRef.Name
 				}
 				return ""

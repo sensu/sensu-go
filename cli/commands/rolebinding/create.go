@@ -42,12 +42,12 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 
 			if clusterRole != "" {
 				roleBinding.RoleRef = types.RoleRef{
-					Kind: "ClusterRole",
+					Type: "ClusterRole",
 					Name: clusterRole,
 				}
 			} else if role != "" {
 				roleBinding.RoleRef = types.RoleRef{
-					Kind: "Role",
+					Type: "Role",
 					Name: role,
 				}
 			} else {
@@ -70,7 +70,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			for _, group := range groups {
 				roleBinding.Subjects = append(roleBinding.Subjects,
 					types.Subject{
-						Kind: "Group",
+						Type: "Group",
 						Name: group,
 					},
 				)
@@ -78,7 +78,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			for _, user := range users {
 				roleBinding.Subjects = append(roleBinding.Subjects,
 					types.Subject{
-						Kind: "User",
+						Type: "User",
 						Name: user,
 					},
 				)
