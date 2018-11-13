@@ -97,7 +97,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 				)
 			}
 
-			if _, err := cli.Client.FetchNamespace(answers.Namespace); err != nil {
+			if _, err := cli.Client.FetchUser(answers.Username); err != nil {
 				return err
 			}
 
