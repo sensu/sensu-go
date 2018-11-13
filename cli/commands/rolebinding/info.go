@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strconv"
+	"strings"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
@@ -50,6 +50,11 @@ func printToList(v interface{}, writer io.Writer) error {
 		return fmt.Errorf("%t is not a RoleBinding", v)
 	}
 
+	subjectNames := make([]string, 0)
+	for _, subject := range roleBinding.Subjects {
+		subjectNames = append(subjectNames, subject.Name)
+	}
+
 	cfg := &list.Config{
 		Title: fmt.Sprintf("%s/%s", roleBinding.Namespace, roleBinding.Name),
 		Rows: []*list.Row{
@@ -65,10 +70,9 @@ func printToList(v interface{}, writer io.Writer) error {
 				Label: roleBinding.RoleRef.Kind,
 				Value: roleBinding.RoleRef.Name,
 			},
-			// TODO (Simon) Create a row for each subject once the API is working
 			{
 				Label: "Subjects",
-				Value: strconv.Itoa(len(roleBinding.Subjects)),
+				Value: strings.Join(subjectNames, ", "),
 			},
 		},
 	}
