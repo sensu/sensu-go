@@ -50,8 +50,8 @@ const (
 
 // A Config specifies Agent configuration.
 type Config struct {
-	// AgentID is the entity ID for the running agent. Default is hostname.
-	AgentID string
+	// AgentName is the entity name for the running agent. Default is hostname.
+	AgentName string
 	// API contains the Sensu client HTTP API configuration
 	API *APIConfig
 	// BackendURLs is a list of URLs for the Sensu Backend. Default:
@@ -111,7 +111,7 @@ func FixtureConfig() (*Config, func()) {
 	cacheDir := filepath.Join(os.TempDir(), "sensu-agent-test")
 
 	c := &Config{
-		AgentID: GetDefaultAgentID(),
+		AgentName: GetDefaultAgentName(),
 		API: &APIConfig{
 			Host: DefaultAPIHost,
 			Port: DefaultAPIPort,

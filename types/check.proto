@@ -65,7 +65,6 @@ message CheckConfig {
   // the check. Sensu uses the same flap detection algorithm as Nagios.
   uint32 low_flap_threshold = 6 [(gogoproto.jsontag) = "low_flap_threshold"];
 
-
   // Publish indicates if check requests are published for the check
   bool publish = 9 [(gogoproto.jsontag) = "publish"];
 
@@ -79,7 +78,7 @@ message CheckConfig {
   bytes ExtendedAttributes = 12 [(gogoproto.jsontag) = "-"];
 
   // Sources indicates the name of the entity representing an external resource
-  string proxy_entity_id = 13 [(gogoproto.jsontag) = "proxy_entity_id", (gogoproto.customname) = "ProxyEntityID"];
+  string proxy_entity_name = 13 [(gogoproto.jsontag) = "proxy_entity_name", (gogoproto.customname) = "ProxyEntityName"];
 
   // CheckHooks is the list of check hooks for the check
   repeated HookList check_hooks = 14 [(gogoproto.jsontag) = "check_hooks", (gogoproto.nullable) = false];
@@ -117,7 +116,7 @@ message CheckConfig {
   // execution environment.
   repeated string env_vars = 24 [(gogoproto.jsontag) = "env_vars"];
 
-  // Object metadata
+  // Metadata contains the name, namespace, labels and annotations of the check
   ObjectMeta metadata = 26 [(gogoproto.jsontag) = "metadata", (gogoproto.embed) = true, (gogoproto.nullable) = false];
 }
 
@@ -151,7 +150,7 @@ message Check {
   repeated string subscriptions = 11 [(gogoproto.jsontag) = "subscriptions"];
 
   // Sources indicates the name of the entity representing an external resource
-  string proxy_entity_id = 13 [(gogoproto.jsontag) = "proxy_entity_id", (gogoproto.customname) = "ProxyEntityID"];
+  string proxy_entity_name = 13 [(gogoproto.jsontag) = "proxy_entity_name", (gogoproto.customname) = "ProxyEntityName"];
 
   // CheckHooks is the list of check hooks for the check
   repeated HookList check_hooks = 14 [(gogoproto.jsontag) = "check_hooks", (gogoproto.nullable) = false];
@@ -229,8 +228,8 @@ message Check {
   // execution environment.
   repeated string env_vars = 37 [(gogoproto.jsontag) = "env_vars"];
 
-   // Object metadata
-   ObjectMeta metadata = 38 [(gogoproto.jsontag) = "metadata", (gogoproto.embed) = true, (gogoproto.nullable) = false];
+  // Metadata contains the name, namespace, labels and annotations of the check
+  ObjectMeta metadata = 38 [(gogoproto.jsontag) = "metadata", (gogoproto.embed) = true, (gogoproto.nullable) = false];
 
   // ExtendedAttributes store serialized arbitrary JSON-encoded data
   bytes ExtendedAttributes = 99 [(gogoproto.jsontag) = "-"];

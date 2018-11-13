@@ -2,7 +2,7 @@
 ##
 # agent configuration
 ##
-#id: ""
+#name: ""
 #namespace: "default"
 #subscriptions: ""
 #backend-url:

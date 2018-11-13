@@ -110,15 +110,17 @@ func (h *HookList) UnmarshalJSON(b []byte) error {
 }
 
 // FixtureHookConfig returns a fixture for a HookConfig object.
-func FixtureHookConfig(id string) *HookConfig {
+func FixtureHookConfig(name string) *HookConfig {
 	timeout := uint32(10)
 
 	return &HookConfig{
-		Name:      id,
-		Command:   "true",
-		Timeout:   timeout,
-		Stdin:     false,
-		Namespace: "default",
+		Command: "true",
+		Timeout: timeout,
+		Stdin:   false,
+		ObjectMeta: ObjectMeta{
+			Namespace: "default",
+			Name:      name,
+		},
 	}
 }
 

@@ -153,6 +153,24 @@ func Synthesize(v interface{}) (map[string]interface{}, error) {
 			continue
 		}
 
+		// flatten embedded and non-embedded fields to the top level
+		if value.Field(i).Kind() == reflect.Struct {
+			fields, err := Synthesize(value.Field(i).Interface())
+			if err != nil {
+				return nil, fmt.Errorf("could not flatten embedded struct: %s", err)
+			}
+
+			if value.Type().Field(i).Anonymous {
+				for k, v := range fields {
+					out[k] = v
+				}
+			} else {
+				out[field.Name] = fields
+			}
+
+			continue
+		}
+
 		out[field.Name] = value.Field(i).Interface()
 	}
 

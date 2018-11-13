@@ -36,7 +36,7 @@ func TestSendLoop(t *testing.T) {
 		event := &types.Event{}
 		assert.NoError(t, json.Unmarshal(msg.Payload, event))
 		assert.NotNil(t, event.Entity)
-		assert.Equal(t, "agent", event.Entity.Class)
+		assert.Equal(t, "agent", event.Entity.EntityClass)
 		assert.NotEmpty(t, event.Entity.System)
 		done <- struct{}{}
 	}))
@@ -170,7 +170,7 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 		event := &types.Event{}
 		assert.NoError(t, json.Unmarshal(msg.Payload, event))
 		assert.NotNil(t, event.Entity)
-		assert.Equal(t, "agent", event.Entity.Class)
+		assert.Equal(t, "agent", event.Entity.EntityClass)
 		assert.NotEmpty(t, event.Entity.System)
 
 		// Make sure the ec2_access_key attribute is redacted, which indicates it was
@@ -191,7 +191,7 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 
 	cfg, cleanup := FixtureConfig()
 	defer cleanup()
-	cfg.AgentID = "TestLoggingRedaction"
+	cfg.AgentName = "TestLoggingRedaction"
 	cfg.Labels = map[string]string{"ec2_access_key": "P@ssw0rd!", "secret": "P@ssw0rd!"}
 	cfg.Redact = []string{"ec2_access_key"}
 	cfg.BackendURLs = []string{wsURL}
@@ -208,7 +208,7 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 	}
 }
 
-func TestInvalidAgentID_GH2022(t *testing.T) {
+func TestInvalidAgentName_GH2022(t *testing.T) {
 	server := transport.NewServer()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := server.Serve(w, r)
@@ -221,7 +221,7 @@ func TestInvalidAgentID_GH2022(t *testing.T) {
 
 	cfg, cleanup := FixtureConfig()
 	defer cleanup()
-	cfg.AgentID = "Test Agent"
+	cfg.AgentName = "Test Agent"
 	cfg.BackendURLs = []string{wsURL}
 	cfg.API.Port = 0
 	cfg.Socket.Port = 0

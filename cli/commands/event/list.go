@@ -62,7 +62,7 @@ func printToTable(results interface{}, writer io.Writer) {
 				if !ok {
 					return cli.TypeError
 				}
-				return event.Entity.ID
+				return event.Entity.Name
 			},
 		},
 		{

@@ -67,14 +67,14 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 func printToTable(results interface{}, writer io.Writer) {
 	table := table.New([]*table.Column{
 		{
-			Title:       "ID",
+			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
 				silenced, ok := data.(types.Silenced)
 				if !ok {
 					return cli.TypeError
 				}
-				return silenced.ID
+				return silenced.Name
 			},
 		},
 		{

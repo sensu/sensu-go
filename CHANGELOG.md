@@ -18,6 +18,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - The sensuctl tool now supports yaml.
 - Add support for `--all-namespaces` flag in `sensuctl extension list`
 subcommand.
+- Added functionality to the dynamic synthesize function, allowing it to
+flatten embedded and non-embedded fields to the top level.
 
 ### Fixed
 - Display appropriate fallback when an entity's lastSeen field is empty.
@@ -30,6 +32,12 @@ subcommand.
 - Improved event validation error messages.
 - Improved agent logging for statsd events.
 - Fixues issue with tooltip positioning.
+- The agent now reconnects to the backend if its first connection attempt
+  fails.
+- Avoid infinite loop when code cannot be highlighted.
+
+### Changes
+- Deprecated the sensu-agent `--id` flag, `--name` should be used instead.
 
 ### Breaking Changes
 - Environments and organizations have been replaced with namespaces.
@@ -38,6 +46,12 @@ subcommand.
   instead of a comma-delimited list of strings.
 - Extended attributes have been removed and replaced with labels. Labels are
 string-string key-value pairs.
+- Silenced `id`/`ID` field has changed to `name`/`Name`.
+- Entity `id`/`ID` field has changed to `name`/`Name`.
+- Entity `class`/`Class` field has changed to `entity_class`/`EntityClass`.
+- Check `proxy_entity_id`/`ProxyEntityID` field has changed to `proxy_entity_name`/`ProxyEntityName`.
+- Objects containing both a `name`/`Name` and `namespace`/`Namespace` field have been
+replaced with `metadata`/`ObjectMeta` (which contains both of those fields).
 
 ## [2.0.0-beta.7-1] - 2018-10-26
 

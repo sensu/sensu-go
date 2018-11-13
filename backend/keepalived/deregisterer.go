@@ -32,7 +32,7 @@ func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
 		return fmt.Errorf("error deleting entity in store: %s", err)
 	}
 
-	events, err := adapterPtr.Store.GetEventsByEntity(ctx, entity.ID)
+	events, err := adapterPtr.Store.GetEventsByEntity(ctx, entity.Name)
 	if err != nil {
 		return fmt.Errorf("error fetching events for entity: %s", err)
 	}
@@ -43,7 +43,7 @@ func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
 		}
 
 		if err := adapterPtr.Store.DeleteEventByEntityCheck(
-			ctx, entity.ID, event.Check.Name,
+			ctx, entity.Name, event.Check.Name,
 		); err != nil {
 			return fmt.Errorf("error deleting event for entity: %s", err)
 		}
@@ -78,6 +78,6 @@ func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
 		return adapterPtr.MessageBus.Publish(messaging.TopicEvent, deregistrationEvent)
 	}
 
-	logger.WithField("entity", entity.GetID()).Info("entity deregistered")
+	logger.WithField("entity", entity.GetName()).Info("entity deregistered")
 	return nil
 }

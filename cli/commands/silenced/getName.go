@@ -5,7 +5,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func getID(cmd *cobra.Command, args []string) (string, error) {
+func getName(cmd *cobra.Command, args []string) (string, error) {
 	if len(args) > 0 {
 		return args[0], nil
 	}
@@ -18,9 +18,9 @@ func getID(cmd *cobra.Command, args []string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	id, err := types.SilencedID(sub, check)
+	name, err := types.SilencedName(sub, check)
 	if err != nil {
-		id, err = askID("specify subscription, check, or both")
+		name, err = askName("specify subscription, check, or both")
 	}
-	return id, err
+	return name, err
 }

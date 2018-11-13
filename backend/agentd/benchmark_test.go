@@ -31,7 +31,7 @@ func BenchmarkSubPump(b *testing.B) {
 	).Return(&types.Namespace{}, nil)
 
 	cfg := SessionConfig{
-		AgentID:       "testing",
+		AgentName:     "testing",
 		Namespace:     "acme",
 		Subscriptions: []string{"testing"},
 	}

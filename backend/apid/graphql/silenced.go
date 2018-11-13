@@ -71,5 +71,5 @@ func (r *silencedImpl) ID(p graphql.ResolveParams) (string, error) {
 // StoreID implements response to request for 'storeId' field.
 func (r *silencedImpl) StoreID(p graphql.ResolveParams) (string, error) {
 	s := p.Source.(*types.Silenced)
-	return s.ID, nil
+	return s.Name, nil
 }

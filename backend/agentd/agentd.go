@@ -145,13 +145,13 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	cfg := SessionConfig{
 		AgentAddr:     r.RemoteAddr,
-		AgentID:       r.Header.Get(transport.HeaderKeyAgentID),
+		AgentName:     r.Header.Get(transport.HeaderKeyAgentName),
 		Namespace:     r.Header.Get(transport.HeaderKeyNamespace),
 		User:          r.Header.Get(transport.HeaderKeyUser),
 		Subscriptions: strings.Split(r.Header.Get(transport.HeaderKeySubscriptions), ","),
 	}
 
-	cfg.Subscriptions = addEntitySubscription(cfg.AgentID, cfg.Subscriptions)
+	cfg.Subscriptions = addEntitySubscription(cfg.AgentName, cfg.Subscriptions)
 
 	session, err := NewSession(cfg, transport.NewTransport(conn), a.bus, a.store)
 	if err != nil {

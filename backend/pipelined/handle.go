@@ -142,7 +142,9 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 				continue
 			}
 			handler = &types.Handler{
-				Name: extension.URL,
+				ObjectMeta: types.ObjectMeta{
+					Name: extension.URL,
+				},
 				Type: "grpc",
 			}
 		}
