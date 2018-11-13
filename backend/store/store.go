@@ -50,7 +50,7 @@ func (e *ErrEncode) Error() string {
 }
 
 // ErrNamespaceMissing is returned when the user tries to manipulate a resource
-// within a namespaces that does not exist
+// within a namespace that does not exist
 type ErrNamespaceMissing struct {
 	Namespace string
 }
