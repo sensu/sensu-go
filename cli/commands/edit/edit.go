@@ -16,8 +16,6 @@ import (
 // vi is the default editor!
 const defaultEditor = "vi"
 
-type unmarshalFunc func([]byte, interface{}) error
-
 func Command(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "edit [RESOURCE NAME] [KEY1] ... [KEYN]",
@@ -45,7 +43,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			fmt.Println(ctlArgs)
 			b, err := exec.Command("sensuctl", ctlArgs...).CombinedOutput()
 			if err != nil {
-				cmd.OutOrStdout().Write(b)
+				_, _ = cmd.OutOrStdout().Write(b)
 				return fmt.Errorf("couldn't get resource: %s", err)
 			}
 			tf, err := ioutil.TempFile("", "sensu-resource-*")
