@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"strconv"
+	"strings"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
@@ -50,6 +50,18 @@ func printToList(v interface{}, writer io.Writer) error {
 		return fmt.Errorf("%t is not a RoleBinding", v)
 	}
 
+	userNames := []string{}
+	groupNames := []string{}
+
+	for _, subject := range roleBinding.Subjects {
+		switch subject.Type {
+		case types.GroupType:
+			groupNames = append(groupNames, subject.Name)
+		case types.UserType:
+			userNames = append(userNames, subject.Name)
+		}
+	}
+
 	cfg := &list.Config{
 		Title: fmt.Sprintf("%s/%s", roleBinding.Namespace, roleBinding.Name),
 		Rows: []*list.Row{
@@ -65,12 +77,24 @@ func printToList(v interface{}, writer io.Writer) error {
 				Label: roleBinding.RoleRef.Type,
 				Value: roleBinding.RoleRef.Name,
 			},
-			// TODO (Simon) Create a row for each subject once the API is working
 			{
 				Label: "Subjects",
-				Value: strconv.Itoa(len(roleBinding.Subjects)),
 			},
 		},
+	}
+
+	if len(userNames) > 0 {
+		cfg.Rows = append(cfg.Rows, &list.Row{
+			Label: "  Users",
+			Value: strings.Join(userNames, ", "),
+		})
+	}
+
+	if len(groupNames) > 0 {
+		cfg.Rows = append(cfg.Rows, &list.Row{
+			Label: "  Groups",
+			Value: strings.Join(groupNames, ", "),
+		})
 	}
 
 	return list.Print(writer, cfg)
