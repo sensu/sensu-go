@@ -114,7 +114,13 @@ func Synthesize(v interface{}) interface{} {
 	value := reflect.Indirect(reflect.ValueOf(v))
 	switch value.Kind() {
 	case reflect.Struct:
-		return synthesizeStruct(v)
+		result := synthesizeStruct(value)
+		if m, ok := v.(SynthesizeExtras); ok {
+			for k, v := range m.SynthesizeExtras() {
+				result[k] = v
+			}
+		}
+		return result
 	case reflect.Slice, reflect.Array:
 		return synthesizeSlice(value)
 	case reflect.Map:
@@ -166,15 +172,9 @@ func synthesizeMap(value reflect.Value) interface{} {
 	return out
 }
 
-func synthesizeStruct(v interface{}) map[string]interface{} {
-	value := reflect.Indirect(reflect.ValueOf(v))
+func synthesizeStruct(value reflect.Value) map[string]interface{} {
 	numField := value.NumField()
 	out := make(map[string]interface{}, numField)
-	if m, ok := v.(SynthesizeExtras); ok {
-		for k, v := range m.SynthesizeExtras() {
-			out[k] = v
-		}
-	}
 	t := value.Type()
 	for i := 0; i < numField; i++ {
 		field := t.Field(i)
@@ -195,7 +195,7 @@ func synthesizeStruct(v interface{}) map[string]interface{} {
 		switch fieldValue.Kind() {
 		case reflect.Struct:
 			// Recursively convert all fields to synthesized values
-			fields := synthesizeStruct(fieldValue.Interface())
+			fields := synthesizeStruct(fieldValue)
 
 			// flatten embedded fields to the top level
 			if t.Field(i).Anonymous {
