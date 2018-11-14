@@ -18,3 +18,14 @@ func BenchmarkCheckEval(b *testing.B) {
 		_, _ = js.Evaluate("check.status == 0", params, nil)
 	}
 }
+
+func BenchmarkMetricsEval(b *testing.B) {
+	metrics := types.FixtureMetrics()
+	for i := 0; i < b.N; i++ {
+		synth := dynamic.Synthesize(metrics)
+		params := map[string]interface{}{
+			"metrics": synth,
+		}
+		_, _ = js.Evaluate("metrics.points.length > 0", params, nil)
+	}
+}
