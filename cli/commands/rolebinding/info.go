@@ -67,7 +67,7 @@ func printToList(v interface{}, writer io.Writer) error {
 				Value: roleBinding.Namespace,
 			},
 			{
-				Label: roleBinding.RoleRef.Kind,
+				Label: roleBinding.RoleRef.Type,
 				Value: roleBinding.RoleRef.Name,
 			},
 			{

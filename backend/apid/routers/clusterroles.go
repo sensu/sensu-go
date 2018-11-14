@@ -26,7 +26,7 @@ func NewClusterRolesRouter(store store.ClusterRoleStore) *ClusterRolesRouter {
 func (r *ClusterRolesRouter) Mount(parent *mux.Router) {
 	routes := ResourceRoute{
 		Router:     parent,
-		PathPrefix: "/apis/{group:rbac}/{version:v2}/{kind:clusterroles}",
+		PathPrefix: "/apis/{group:rbac}/{version:v2}/{resource:clusterroles}",
 	}
 	routes.GetAll(r.list)
 	routes.Get(r.find)

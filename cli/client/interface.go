@@ -161,6 +161,7 @@ type UserAPIClient interface {
 	AddGroupToUser(string, string) error
 	CreateUser(*types.User) error
 	DisableUser(string) error
+	FetchUser(string) (*types.User, error)
 	ListUsers() ([]types.User, error)
 	ReinstateUser(string) error
 	RemoveGroupFromUser(string, string) error

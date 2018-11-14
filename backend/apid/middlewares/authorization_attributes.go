@@ -24,8 +24,8 @@ type AuthorizationAttributes struct{}
 // The general, expected format of a path is one of the following:
 // /apis/{group}/{version}/namespaces, to create or list namespaces
 // /apis/{group}/{version}/namespaces/{name}
-// /apis/{group}/{version}/namespaces/{namespace}/{kind}
-// /apis/{group}/{version}/namespaces/{namespace}/{kind}/{name}
+// /apis/{group}/{version}/namespaces/{namespace}/{resource}
+// /apis/{group}/{version}/namespaces/{namespace}/{resource}/{name}
 //
 // This middleware tries to fill in as many fields as it can in the
 // authorization.Attributes struct added to the context, but there is no
@@ -55,7 +55,7 @@ func (a AuthorizationAttributes) Then(next http.Handler) http.Handler {
 		attrs.APIGroup = vars["group"]
 		attrs.APIVersion = vars["version"]
 		attrs.Namespace = vars["namespace"]
-		attrs.Resource = vars["kind"]
+		attrs.Resource = vars["resource"]
 		attrs.ResourceName = vars["name"]
 
 		if attrs.Verb == "get" && attrs.ResourceName == "" {
@@ -203,14 +203,14 @@ func (a LegacyAuthorizationAttributes) Then(next http.Handler) http.Handler {
 	})
 }
 
-func isListable(kind, name string) bool {
+func isListable(resourceType, name string) bool {
 	// For /events, if the resource name doesn't contain a '/', we're listing
 	// /events/{entity} as opposed to getting /events/{entity}/{check}
-	if kind == "events" && !strings.ContainsRune(name, '/') {
+	if resourceType == "events" && !strings.ContainsRune(name, '/') {
 		return true
 	}
 
-	if kind == "silenced" && (name == "checks" || name == "subscriptions") {
+	if resourceType == "silenced" && (name == "checks" || name == "subscriptions") {
 		return true
 	}
 

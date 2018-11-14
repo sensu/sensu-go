@@ -12,10 +12,10 @@ const (
 	// VerbAll represents all possible verbs
 	VerbAll = "*"
 
-	// GroupKind represents a group object in a subject
-	GroupKind = "Group"
-	// UserKind represents a user object in a subject
-	UserKind = "User"
+	// GroupType represents a group object in a subject
+	GroupType = "Group"
+	// UserType represents a user object in a subject
+	UserType = "User"
 
 	// LocalSelfUserResource represents a local user trying to view itself
 	// or change its password
@@ -38,9 +38,9 @@ var CommonCoreResources = []string{
 }
 
 // FixtureSubject creates a Subject for testing
-func FixtureSubject(kind, name string) Subject {
+func FixtureSubject(subjectType, name string) Subject {
 	return Subject{
-		Kind: kind,
+		Type: subjectType,
 		Name: name,
 	}
 }
@@ -65,9 +65,9 @@ func FixtureRole(name, namespace string) *Role {
 }
 
 // FixtureRoleRef creates a RoleRef for testing
-func FixtureRoleRef(kind, name string) RoleRef {
+func FixtureRoleRef(roleType, name string) RoleRef {
 	return RoleRef{
-		Kind: kind,
+		Type: roleType,
 		Name: name,
 	}
 }
@@ -77,7 +77,7 @@ func FixtureRoleBinding(name, namespace string) *RoleBinding {
 	return &RoleBinding{
 		Name:      name,
 		Namespace: namespace,
-		Subjects:  []Subject{FixtureSubject(UserKind, "username")},
+		Subjects:  []Subject{FixtureSubject(UserType, "username")},
 		RoleRef:   FixtureRoleRef("Role", "read-write"),
 	}
 }
@@ -96,7 +96,7 @@ func FixtureClusterRole(name string) *ClusterRole {
 func FixtureClusterRoleBinding(name string) *ClusterRoleBinding {
 	return &ClusterRoleBinding{
 		Name:     name,
-		Subjects: []Subject{FixtureSubject(UserKind, "username")},
+		Subjects: []Subject{FixtureSubject(UserType, "username")},
 		RoleRef:  FixtureRoleRef("ClusterRole", "read-write"),
 	}
 }
@@ -125,7 +125,7 @@ func (b *ClusterRoleBinding) Validate() error {
 		return errors.New("the ClusterRoleBinding name " + err.Error())
 	}
 
-	if b.RoleRef.Name == "" || b.RoleRef.Kind == "" {
+	if b.RoleRef.Name == "" || b.RoleRef.Type == "" {
 		return errors.New("a ClusterRoleBinding needs a roleRef")
 	}
 
@@ -176,7 +176,7 @@ func (b *RoleBinding) Validate() error {
 		return errors.New("the RoleBinding namespace must be set")
 	}
 
-	if b.RoleRef.Name == "" || b.RoleRef.Kind == "" {
+	if b.RoleRef.Name == "" || b.RoleRef.Type == "" {
 		return errors.New("a RoleBinding needs a roleRef")
 	}
 

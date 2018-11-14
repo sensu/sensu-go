@@ -20,6 +20,12 @@ func (c *MockClient) DisableUser(username string) error {
 	return args.Error(0)
 }
 
+// FetchUser for use with mock lib
+func (c *MockClient) FetchUser(username string) (*types.User, error) {
+	args := c.Called(username)
+	return args.Get(0).(*types.User), args.Error(1)
+}
+
 // ListUsers for use with mock lib
 func (c *MockClient) ListUsers() ([]types.User, error) {
 	args := c.Called()
