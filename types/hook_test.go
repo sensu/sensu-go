@@ -20,10 +20,12 @@ func TestHookValidate(t *testing.T) {
 
 	// Valid with valid config
 	h.HookConfig = HookConfig{
-		Name:      "test",
-		Command:   "yes",
-		Timeout:   10,
-		Namespace: "default",
+		ObjectMeta: ObjectMeta{
+			Name:      "test",
+			Namespace: "default",
+		},
+		Command: "yes",
+		Timeout: 10,
 	}
 	assert.NoError(t, h.Validate())
 }
@@ -84,7 +86,7 @@ func TestFixtureHookIsValid(t *testing.T) {
 }
 
 func TestHookUnmarshal_GH1520(t *testing.T) {
-	b := []byte(`{"name":"foo","command":"ps aux","timeout":60,"namespace":"default"}`)
+	b := []byte(`{"metadata": {"name": "foo", "namespace":"default"},"command":"ps aux","timeout":60}`)
 	var h Hook
 	var err error
 	if err := json.Unmarshal(b, &h); err != nil {

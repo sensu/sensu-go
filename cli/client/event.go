@@ -70,7 +70,7 @@ func (client *RestClient) ResolveEvent(event *types.Event) error {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Put("/events/" + event.Entity.ID + "/" + event.Check.Name)
+	res, err := client.R().SetBody(bytes).Put("/events/" + event.Entity.Name + "/" + event.Check.Name)
 	if err != nil {
 		return err
 	}

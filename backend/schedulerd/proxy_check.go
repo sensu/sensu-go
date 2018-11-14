@@ -26,7 +26,7 @@ OUTER:
 			if err != nil {
 				fields := logrus.Fields{
 					"statement": statement,
-					"entity":    entity.ID,
+					"entity":    entity.Name,
 					"namespace": entity.Namespace,
 				}
 				// Only report an error if the expression's syntax is invalid
@@ -81,7 +81,7 @@ func substituteProxyEntityTokens(entity *types.Entity, check *types.CheckConfig)
 		return nil, fmt.Errorf("could not unmarshal the check: %s", err)
 	}
 
-	substitutedCheck.ProxyEntityID = entity.ID
+	substitutedCheck.ProxyEntityName = entity.Name
 	return substitutedCheck, nil
 }
 

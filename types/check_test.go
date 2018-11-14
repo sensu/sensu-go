@@ -98,19 +98,6 @@ func TestMergeWith(t *testing.T) {
 	assert.Equal(t, newCheck.Status, newCheck.History[20].Status)
 }
 
-func TestExtendedAttributes(t *testing.T) {
-	type getter interface {
-		Get(string) (interface{}, error)
-	}
-	check := FixtureCheck("chekov")
-	check.SetExtendedAttributes([]byte(`{"foo":{"bar":42,"baz":9001}}`))
-	g, err := check.Get("foo")
-	require.NoError(t, err)
-	v, err := g.(getter).Get("bar")
-	require.NoError(t, err)
-	require.Equal(t, 42.0, v)
-}
-
 func TestProxyRequestsValidate(t *testing.T) {
 	var p ProxyRequests
 
@@ -125,9 +112,9 @@ func TestProxyRequestsValidate(t *testing.T) {
 	p.SplayCoverage = 90
 
 	// Invalid entity attributes
-	p.EntityAttributes = []string{`entity.Class = "proxy"`}
+	p.EntityAttributes = []string{`entity.EntityClass = "proxy"`}
 	assert.Error(t, p.Validate())
-	p.EntityAttributes = []string{`entity.Class == "proxy"`}
+	p.EntityAttributes = []string{`entity.EntityClass == "proxy"`}
 
 	// Valid proxy request
 	assert.NoError(t, p.Validate())
@@ -336,11 +323,4 @@ func TestIsSubdued(t *testing.T) {
 			require.Equal(t, test.Want, check.IsSubdued())
 		})
 	}
-}
-
-func TestAliasedExtendedAttributeBehaviour_GH1732(t *testing.T) {
-	config := FixtureCheckConfig("foo")
-	config.SetExtendedAttributes([]byte(`{"status":5}`))
-	check := NewCheck(config)
-	require.Equal(t, uint32(0), check.Status)
 }

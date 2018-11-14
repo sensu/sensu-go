@@ -1,42 +1,30 @@
 package agent
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/types/dynamic"
 )
 
 func (a *Agent) getAgentEntity() *types.Entity {
 	if a.entity == nil {
 		e := &types.Entity{
-			Class:         types.EntityAgentClass,
+			EntityClass:   types.EntityAgentClass,
 			Deregister:    a.config.Deregister,
-			ID:            a.config.AgentID,
 			LastSeen:      time.Now().Unix(),
-			Namespace:     a.config.Namespace,
 			Redact:        a.config.Redact,
 			Subscriptions: a.config.Subscriptions,
 			User:          a.config.User,
+			ObjectMeta: types.ObjectMeta{
+				Name:      a.config.AgentName,
+				Namespace: a.config.Namespace,
+				Labels:    a.config.Labels,
+			},
 		}
 
 		if a.config.DeregistrationHandler != "" {
 			e.Deregistration = types.Deregistration{
 				Handler: a.config.DeregistrationHandler,
-			}
-		}
-
-		// Set any extended attributes in the entity
-		var attrMap map[string]interface{}
-		err := json.Unmarshal(a.config.ExtendedAttributes, &attrMap)
-		if err != nil {
-			logger.WithError(err)
-		}
-		for k, v := range attrMap {
-			err = dynamic.SetField(e, k, v)
-			if err != nil {
-				logger.WithError(err)
 			}
 		}
 
@@ -57,10 +45,10 @@ func (a *Agent) getAgentEntity() *types.Entity {
 func (a *Agent) getEntities(event *types.Event) {
 	// Verify if we have an entity in the event, and that it is different from the
 	// agent's entity
-	if event.Entity != nil && event.HasCheck() && event.Entity.ID != a.config.AgentID {
+	if event.Entity != nil && event.HasCheck() && event.Entity.Name != a.config.AgentName {
 		// Identify the event's source as the provided entity so it can be properly
 		// handled by the backend
-		event.Check.ProxyEntityID = event.Entity.ID
+		event.Check.ProxyEntityName = event.Entity.Name
 	}
 
 	// From this point we make sure that the agent's entity is used in the event

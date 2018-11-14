@@ -18,19 +18,6 @@ func (g generic) Validate() error {
 	return nil
 }
 
-func addExtendedAttrToWrapped(t *testing.T, wrapped Wrapper) []byte {
-	t.Helper()
-
-	b := mustMarshal(t, wrapped.Value)
-	generic := make(generic)
-	if err := json.Unmarshal(b, &generic); err != nil {
-		t.Fatal(err)
-	}
-	generic["unknown"] = &null
-
-	return mustMarshal(t, Wrapper{Type: wrapped.Type, Value: generic})
-}
-
 func mustMarshal(t *testing.T, value interface{}) []byte {
 	t.Helper()
 
@@ -45,14 +32,9 @@ func mustMarshal(t *testing.T, value interface{}) []byte {
 func TestUnmarshalBody(t *testing.T) {
 	var (
 		wrappedAsset = Wrapper{Type: "Asset", Value: FixtureAsset("bar")}
-		wrappedCheck = Wrapper{Type: "Check", Value: FixtureCheck("barbaz")}
 	)
 
 	wrappedAssetB := mustMarshal(t, wrappedAsset)
-	wrappedCheckB := mustMarshal(t, wrappedCheck)
-
-	badWrappedAssetB := addExtendedAttrToWrapped(t, wrappedAsset)
-	goodWrappedCheckB := addExtendedAttrToWrapped(t, wrappedCheck)
 
 	tests := []struct {
 		Name   string
@@ -64,22 +46,6 @@ func TestUnmarshalBody(t *testing.T) {
 			Name:  "wrapped regular type, no extras",
 			Body:  wrappedAssetB,
 			Value: &wrappedAsset,
-		},
-		{
-			Name:  "wrapped extended attributes type, no extras",
-			Body:  wrappedCheckB,
-			Value: &wrappedCheck,
-		},
-		{
-			Name:   "wrapped type with extras",
-			Body:   badWrappedAssetB,
-			Value:  &wrappedAsset,
-			ExpErr: true,
-		},
-		{
-			Name:  "wrapped extended attributes type, with extras",
-			Body:  goodWrappedCheckB,
-			Value: &wrappedCheck,
 		},
 	}
 

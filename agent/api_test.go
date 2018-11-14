@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/testing/mocktransport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -69,31 +68,29 @@ func TestHealthz(t *testing.T) {
 	testCases := []struct {
 		desc             string
 		expectedResponse int
-		closeConn        bool
+		closed           bool
 	}{
 		{
 			"healthz returns success",
 			http.StatusOK,
-			false,
+			true,
 		},
 		{
 			"healthz returns failure",
 			http.StatusServiceUnavailable,
-			true,
+			false,
 		},
 	}
 
 	for _, tc := range testCases {
 		testName := fmt.Sprintf("test agent %s", tc.desc)
-		transport := &mocktransport.MockTransport{}
 
 		t.Run(testName, func(t *testing.T) {
 			// need to figure out how to pass the mock transport into the agent
 			config, cleanup := FixtureConfig()
 			defer cleanup()
 			agent := NewAgent(config)
-			agent.conn = transport
-			transport.On("Closed").Return(tc.closeConn)
+			agent.connected = tc.closed
 
 			r, err := http.NewRequest("GET", "/healthz", nil)
 			assert.NoError(t, err)

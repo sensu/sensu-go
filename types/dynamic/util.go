@@ -8,15 +8,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 )
 
-func addressOfExtendedAttributes(v AttrGetter) *byte {
-	attrs := v.GetExtendedAttributes()
-	if len(attrs) == 0 {
-		return nil
-	}
-
-	return &attrs[0]
-}
-
 // extractNonPathValues finds all the values in any that do not correspond to
 // the path specified by parts.
 func extractNonPathValues(any jsoniter.Any, parts []string) map[string]interface{} {

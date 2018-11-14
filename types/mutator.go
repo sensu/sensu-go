@@ -45,9 +45,11 @@ func (m *Mutator) Update(from *Mutator, fields ...string) error {
 // FixtureMutator returns a Mutator fixture for testing.
 func FixtureMutator(name string) *Mutator {
 	return &Mutator{
-		Name:      name,
-		Command:   "command",
-		Namespace: "default",
+		Command: "command",
+		ObjectMeta: ObjectMeta{
+			Namespace: "default",
+			Name:      name,
+		},
 	}
 }
 

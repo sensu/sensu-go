@@ -31,33 +31,34 @@ const (
 	// specified in backend urls
 	DefaultBackendPort = "8081"
 
-	flagAgentID                      = "id"
-	flagAPIHost                      = "api-host"
-	flagAPIPort                      = "api-port"
-	flagBackendURL                   = "backend-url"
-	flagCacheDir                     = "cache-dir"
-	flagConfigFile                   = "config-file"
-	flagDeregister                   = "deregister"
-	flagDeregistrationHandler        = "deregistration-handler"
-	deprecatedFlagExtendedAttributes = "custom-attributes"
-	flagExtendedAttributes           = "extended-attributes"
-	flagKeepaliveInterval            = "keepalive-interval"
-	flagKeepaliveTimeout             = "keepalive-timeout"
-	flagNamespace                    = "namespace"
-	flagPassword                     = "password"
-	flagRedact                       = "redact"
-	flagSocketHost                   = "socket-host"
-	flagSocketPort                   = "socket-port"
-	flagStatsdDisable                = "statsd-disable"
-	flagStatsdEventHandlers          = "statsd-event-handlers"
-	flagStatsdFlushInterval          = "statsd-flush-interval"
-	flagStatsdMetricsHost            = "statsd-metrics-host"
-	flagStatsdMetricsPort            = "statsd-metrics-port"
-	flagSubscriptions                = "subscriptions"
-	flagUser                         = "user"
-	flagDisableAPI                   = "disable-api"
-	flagDisableSockets               = "disable-sockets"
-	flagLogLevel                     = "log-level"
+	flagAgentName             = "name"
+	flagAPIHost               = "api-host"
+	flagAPIPort               = "api-port"
+	flagBackendURL            = "backend-url"
+	flagCacheDir              = "cache-dir"
+	flagConfigFile            = "config-file"
+	flagDeregister            = "deregister"
+	flagDeregistrationHandler = "deregistration-handler"
+	flagKeepaliveInterval     = "keepalive-interval"
+	flagKeepaliveTimeout      = "keepalive-timeout"
+	flagNamespace             = "namespace"
+	flagPassword              = "password"
+	flagRedact                = "redact"
+	flagSocketHost            = "socket-host"
+	flagSocketPort            = "socket-port"
+	flagStatsdDisable         = "statsd-disable"
+	flagStatsdEventHandlers   = "statsd-event-handlers"
+	flagStatsdFlushInterval   = "statsd-flush-interval"
+	flagStatsdMetricsHost     = "statsd-metrics-host"
+	flagStatsdMetricsPort     = "statsd-metrics-port"
+	flagSubscriptions         = "subscriptions"
+	flagUser                  = "user"
+	flagDisableAPI            = "disable-api"
+	flagDisableSockets        = "disable-sockets"
+	flagLogLevel              = "log-level"
+	flagLabels                = "labels"
+
+	deprecatedFlagAgentID = "id"
 )
 
 func init() {
@@ -125,7 +126,6 @@ func newStartCommand() *cobra.Command {
 			cfg.CacheDir = viper.GetString(flagCacheDir)
 			cfg.Deregister = viper.GetBool(flagDeregister)
 			cfg.DeregistrationHandler = viper.GetString(flagDeregistrationHandler)
-			cfg.ExtendedAttributes = []byte(viper.GetString(flagExtendedAttributes))
 			cfg.KeepaliveInterval = uint32(viper.GetInt(flagKeepaliveInterval))
 			cfg.KeepaliveTimeout = uint32(viper.GetInt(flagKeepaliveTimeout))
 			cfg.Namespace = viper.GetString(flagNamespace)
@@ -137,11 +137,12 @@ func newStartCommand() *cobra.Command {
 			cfg.StatsdServer.Host = viper.GetString(flagStatsdMetricsHost)
 			cfg.StatsdServer.Port = viper.GetInt(flagStatsdMetricsPort)
 			cfg.StatsdServer.Handlers = viper.GetStringSlice(flagStatsdEventHandlers)
+			cfg.Labels = viper.GetStringMapString(flagLabels)
 			cfg.User = viper.GetString(flagUser)
 
-			agentID := viper.GetString(flagAgentID)
-			if agentID != "" {
-				cfg.AgentID = agentID
+			agentName := viper.GetString(flagAgentName)
+			if agentName != "" {
+				cfg.AgentName = agentName
 			}
 
 			for _, backendURL := range viper.GetStringSlice(flagBackendURL) {
@@ -215,7 +216,7 @@ func newStartCommand() *cobra.Command {
 	viper.SetConfigFile(configFilePath)
 
 	// Flag defaults
-	viper.SetDefault(flagAgentID, agent.GetDefaultAgentID())
+	viper.SetDefault(flagAgentName, agent.GetDefaultAgentName())
 	viper.SetDefault(flagAPIHost, agent.DefaultAPIHost)
 	viper.SetDefault(flagAPIPort, agent.DefaultAPIPort)
 	viper.SetDefault(flagBackendURL, []string{agent.DefaultBackendURL})
@@ -249,11 +250,10 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().Int(flagAPIPort, viper.GetInt(flagAPIPort), "port the Sensu client HTTP API listens on")
 	cmd.Flags().Int(flagKeepaliveInterval, viper.GetInt(flagKeepaliveInterval), "number of seconds to send between keepalive events")
 	cmd.Flags().Int(flagSocketPort, viper.GetInt(flagSocketPort), "port the Sensu client socket listens on")
-	cmd.Flags().String(flagAgentID, viper.GetString(flagAgentID), "agent ID (defaults to hostname)")
+	cmd.Flags().String(flagAgentName, viper.GetString(flagAgentName), "agent name (defaults to hostname)")
 	cmd.Flags().String(flagAPIHost, viper.GetString(flagAPIHost), "address to bind the Sensu client HTTP API to")
 	cmd.Flags().String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
 	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "deregistration handler that should process the entity deregistration event.")
-	cmd.Flags().String(flagExtendedAttributes, viper.GetString(flagExtendedAttributes), "extended attributes to include in the agent entity in serialized json format (ex: {\"team\":\"ops\"})")
 	cmd.Flags().String(flagNamespace, viper.GetString(flagNamespace), "agent namespace")
 	cmd.Flags().String(flagPassword, viper.GetString(flagPassword), "agent password")
 	cmd.Flags().String(flagRedact, viper.GetString(flagRedact), "comma-delimited customized list of fields to redact")
@@ -270,6 +270,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().Bool(flagDisableAPI, viper.GetBool(flagDisableAPI), "disable the Agent HTTP API")
 	cmd.Flags().Bool(flagDisableSockets, viper.GetBool(flagDisableSockets), "disable the Agent TCP and UDP event sockets")
 	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
+	cmd.Flags().StringToString(flagLabels, viper.GetStringMapString(flagLabels), "entity labels map")
 
 	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc)
 
@@ -278,7 +279,7 @@ func newStartCommand() *cobra.Command {
 	}
 
 	deprecatedConfigAttributes()
-	viper.RegisterAlias(deprecatedFlagExtendedAttributes, flagExtendedAttributes)
+	viper.RegisterAlias(deprecatedFlagAgentID, flagAgentName)
 
 	return cmd
 }
@@ -290,9 +291,9 @@ func aliasNormalizeFunc(f *pflag.FlagSet, name string) pflag.NormalizedName {
 	}
 
 	switch name {
-	case deprecatedFlagExtendedAttributes:
-		deprecatedFlagMessage(name, flagExtendedAttributes)
-		name = flagExtendedAttributes
+	case deprecatedFlagAgentID:
+		deprecatedFlagMessage(name, flagAgentName)
+		name = flagAgentName
 	}
 	return pflag.NormalizedName(name)
 }
@@ -301,7 +302,7 @@ func aliasNormalizeFunc(f *pflag.FlagSet, name string) pflag.NormalizedName {
 // message if set
 func deprecatedConfigAttributes() {
 	attributes := map[string]string{
-		deprecatedFlagExtendedAttributes: flagExtendedAttributes,
+		deprecatedFlagAgentID: flagAgentName,
 	}
 
 	for old, new := range attributes {

@@ -126,7 +126,7 @@ func TestBackendHTTPListener(t *testing.T) {
 			hdr := http.Header{
 				"Authorization":                  {"Basic " + userCredentials},
 				transport.HeaderKeyNamespace:     {"default"},
-				transport.HeaderKeyAgentID:       {"agent"},
+				transport.HeaderKeyAgentName:     {"agent"},
 				transport.HeaderKeySubscriptions: {},
 			}
 			client, err := transport.Connect(fmt.Sprintf("%s://127.0.0.1:%d/", tc.wsScheme, agentPort), tc.tls, hdr)

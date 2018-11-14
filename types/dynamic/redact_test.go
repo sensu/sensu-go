@@ -16,28 +16,10 @@ type RedactedType struct {
 	M   map[string]interface{} `json:",omitempty"`
 	Ptr *RedactedType          `json:",omitempty"`
 	S   string                 `json:",omitempty"`
-
-	Attrs []byte `json:",omitempty"`
-}
-
-func (r *RedactedType) GetExtendedAttributes() []byte {
-	return r.Attrs
-}
-
-func (r *RedactedType) SetExtendedAttributes(a []byte) {
-	r.Attrs = a
 }
 
 func (r *RedactedType) Get(name string) (interface{}, error) {
 	return GetField(r, name)
-}
-
-func (r *RedactedType) MarshalJSON() ([]byte, error) {
-	return Marshal(r)
-}
-
-func (r *RedactedType) UnmarshalJSON(p []byte) error {
-	return Unmarshal(p, r)
 }
 
 func TestRedact(t *testing.T) {
@@ -45,9 +27,9 @@ func TestRedact(t *testing.T) {
 
 	testCases := []struct {
 		name         string
-		input        Attributes
+		input        interface{}
 		redactFields []string
-		expected     Attributes
+		expected     interface{}
 	}{
 		{
 			name: "string field",
@@ -120,16 +102,6 @@ func TestRedact(t *testing.T) {
 			redactFields: []string{"ptr"},
 			expected: &RedactedType{
 				Ptr: nilRedactedType,
-			},
-		},
-		{
-			name: "extended attribute",
-			input: &RedactedType{
-				Attrs: []byte(`{"baz":"qux"}`),
-			},
-			redactFields: []string{"baz"},
-			expected: &RedactedType{
-				Attrs: []byte(`{"baz":"REDACTED"}`),
 			},
 		},
 		{

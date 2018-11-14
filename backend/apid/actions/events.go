@@ -26,19 +26,19 @@ func NewEventController(store store.EventStore, bus messaging.MessageBus) EventC
 }
 
 // Query returns resources available to the viewer filter by given params.
-func (a EventController) Query(ctx context.Context, entityID, checkName string) ([]*types.Event, error) {
+func (a EventController) Query(ctx context.Context, entityName, checkName string) ([]*types.Event, error) {
 	var results []*types.Event
 
 	// Fetch from store
 	var serr error
-	if entityID != "" && checkName != "" {
+	if entityName != "" && checkName != "" {
 		var result *types.Event
-		result, serr = a.Store.GetEventByEntityCheck(ctx, entityID, checkName)
+		result, serr = a.Store.GetEventByEntityCheck(ctx, entityName, checkName)
 		if result != nil {
 			results = append(results, result)
 		}
-	} else if entityID != "" {
-		results, serr = a.Store.GetEventsByEntity(ctx, entityID)
+	} else if entityName != "" {
+		results, serr = a.Store.GetEventsByEntity(ctx, entityName)
 	} else {
 		results, serr = a.Store.GetEvents(ctx)
 	}
@@ -127,7 +127,7 @@ func (a EventController) Create(ctx context.Context, event types.Event) error {
 		check := event.Check
 		entity := event.Entity
 
-		e, err := a.Store.GetEventByEntityCheck(ctx, entity.ID, check.Name)
+		e, err := a.Store.GetEventByEntityCheck(ctx, entity.Name, check.Name)
 		if err != nil {
 			return NewError(InternalErr, err)
 		} else if e != nil {

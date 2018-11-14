@@ -40,58 +40,74 @@ func TestHandlerValidate(t *testing.T) {
 		},
 		{
 			Handler: Handler{
-				Name: "foo",
+				ObjectMeta: ObjectMeta{
+					Name: "foo",
+				},
 			},
 			Error: "empty handler type",
 		},
 		{
 			Handler: Handler{
-				Name: "foo",
+				ObjectMeta: ObjectMeta{
+					Name: "foo",
+				},
 				Type: "pipe",
 			},
 			Error: "namespace must be set",
 		},
 		{
 			Handler: Handler{
-				Name:      "foo",
-				Type:      "pipe",
-				Namespace: "default",
+				ObjectMeta: ObjectMeta{
+					Name:      "foo",
+					Namespace: "default",
+				},
+				Type: "pipe",
 			},
 		},
 		{
 			Handler: Handler{
-				Name:      "foo",
-				Type:      "grpc",
-				Namespace: "default",
+				ObjectMeta: ObjectMeta{
+					Name:      "foo",
+					Namespace: "default",
+				},
+				Type: "grpc",
 			},
 		},
 		{
 			Handler: Handler{
-				Name:      "foo",
-				Type:      "grpc",
-				Namespace: "default",
+				ObjectMeta: ObjectMeta{
+					Name:      "foo",
+					Namespace: "default",
+				},
+				Type: "grpc",
 			},
 		},
 		{
 			Handler: Handler{
-				Name:      "foo",
-				Type:      "set",
-				Namespace: "default",
+				ObjectMeta: ObjectMeta{
+					Name:      "foo",
+					Namespace: "default",
+				},
+				Type: "set",
 			},
 		},
 		{
 			Handler: Handler{
-				Name:      "foo",
-				Type:      "tcp",
-				Namespace: "default",
+				ObjectMeta: ObjectMeta{
+					Name:      "foo",
+					Namespace: "default",
+				},
+				Type: "tcp",
 			},
 			Error: "tcp and udp handlers need a valid socket",
 		},
 		{
 			Handler: Handler{
-				Name:      "foo",
-				Type:      "tcp",
-				Namespace: "default",
+				ObjectMeta: ObjectMeta{
+					Name:      "foo",
+					Namespace: "default",
+				},
+				Type: "tcp",
 				Socket: &HandlerSocket{
 					Host: "localhost",
 				},
@@ -100,9 +116,11 @@ func TestHandlerValidate(t *testing.T) {
 		},
 		{
 			Handler: Handler{
-				Name:      "foo",
-				Type:      "tcp",
-				Namespace: "default",
+				ObjectMeta: ObjectMeta{
+					Name:      "foo",
+					Namespace: "default",
+				},
+				Type: "tcp",
 				Socket: &HandlerSocket{
 					Port: 1234,
 				},
@@ -111,9 +129,11 @@ func TestHandlerValidate(t *testing.T) {
 		},
 		{
 			Handler: Handler{
-				Name:      "foo",
-				Type:      "tcp",
-				Namespace: "default",
+				ObjectMeta: ObjectMeta{
+					Name:      "foo",
+					Namespace: "default",
+				},
+				Type: "tcp",
 				Socket: &HandlerSocket{
 					Host: "localhost",
 					Port: 1234,
@@ -122,9 +142,11 @@ func TestHandlerValidate(t *testing.T) {
 		},
 		{
 			Handler: Handler{
-				Name:      "foo",
-				Type:      "udp",
-				Namespace: "default",
+				ObjectMeta: ObjectMeta{
+					Name:      "foo",
+					Namespace: "default",
+				},
+				Type: "udp",
 				Socket: &HandlerSocket{
 					Host: "localhost",
 				},
@@ -133,9 +155,11 @@ func TestHandlerValidate(t *testing.T) {
 		},
 		{
 			Handler: Handler{
-				Name:      "foo",
-				Type:      "udp",
-				Namespace: "default",
+				ObjectMeta: ObjectMeta{
+					Name:      "foo",
+					Namespace: "default",
+				},
+				Type: "udp",
 				Socket: &HandlerSocket{
 					Port: 1234,
 				},
@@ -144,9 +168,11 @@ func TestHandlerValidate(t *testing.T) {
 		},
 		{
 			Handler: Handler{
-				Name:      "foo",
-				Type:      "udp",
-				Namespace: "default",
+				ObjectMeta: ObjectMeta{
+					Name:      "foo",
+					Namespace: "default",
+				},
+				Type: "udp",
 				Socket: &HandlerSocket{
 					Host: "localhost",
 					Port: 1234,
@@ -155,9 +181,11 @@ func TestHandlerValidate(t *testing.T) {
 		},
 		{
 			Handler: Handler{
-				Name:      "foo",
-				Type:      "magic",
-				Namespace: "default",
+				ObjectMeta: ObjectMeta{
+					Name:      "foo",
+					Namespace: "default",
+				},
+				Type: "magic",
 			},
 			Error: "unknown handler type: magic",
 		},

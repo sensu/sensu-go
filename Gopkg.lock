@@ -573,14 +573,6 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:16886567e49201f2bb97fc738dfe8097494764135a83b533fc020fcefe37d8fe"
-  name = "github.com/nightlyone/lockfile"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "6a197d5ea61168f2ac821de2b7f011b250904900"
-
-[[projects]]
-  branch = "master"
   digest = "1:aa661550b6c3acb268afa90706d7b96807b69e6bc0d01183648f8f473f1f243e"
   name = "github.com/nwaples/rardecode"
   packages = ["."]
@@ -712,6 +704,13 @@
   version = "v3.1.0"
 
 [[projects]]
+  digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
+  name = "github.com/sensu/yaml"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "704b36ea12f40d32ffe6bd109c2ddc894af28dde"
+
+[[projects]]
   digest = "1:267c6a4d9d69c5d14f4f233d364a59eaea299ea17b29dfe9be07ce5226c19899"
   name = "github.com/shirou/gopsutil"
   packages = [
@@ -801,12 +800,12 @@
   revision = "12bd96e66386c1960ab0f74ced1362f66f552f7b"
 
 [[projects]]
-  digest = "1:1b21a2b4058a779f290c7341cd93267492e0ecea6c8b54f64a4a5fd7ff131034"
+  digest = "1:c1b1102241e7f645bc8e0c22ae352e8f0dc6484b6cb4d132fa9f24174e0119e2"
   name = "github.com/spf13/pflag"
   packages = ["."]
   pruneopts = "UT"
-  revision = "e57e3eeb33f795204c1ca35f56c44f83227c6e66"
-  version = "v1.0.0"
+  revision = "298182f68c66c05229eb03ac171abe6e309ee79a"
+  version = "v1.0.3"
 
 [[projects]]
   digest = "1:f8e1a678a2571e265f4bf91a3e5e32aa6b1474a55cb0ea849750cc177b664d96"
@@ -1031,12 +1030,12 @@
   version = "v1.0.3"
 
 [[projects]]
-  branch = "v2"
-  digest = "1:6570992c02a2137a20be83990a979b6fe892e20ecdc6b756449989b2a7efb8ae"
+  digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
   pruneopts = "UT"
-  revision = "eb3733d160e74a9c7e442f435eb3bea458e1d19f"
+  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
+  version = "v2.2.1"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -1062,6 +1061,7 @@
     "github.com/echlebek/crock",
     "github.com/echlebek/timeproxy",
     "github.com/emicklei/proto",
+    "github.com/ghodss/yaml",
     "github.com/go-resty/resty",
     "github.com/gogo/protobuf/gogoproto",
     "github.com/gogo/protobuf/jsonpb",
@@ -1080,10 +1080,10 @@
     "github.com/mholt/archiver",
     "github.com/mitchellh/go-homedir",
     "github.com/mitchellh/mapstructure",
-    "github.com/nightlyone/lockfile",
     "github.com/olekukonko/tablewriter",
     "github.com/robfig/cron",
     "github.com/sensu/govaluate",
+    "github.com/sensu/yaml",
     "github.com/shirou/gopsutil/host",
     "github.com/shirou/gopsutil/net",
     "github.com/shirou/w32",

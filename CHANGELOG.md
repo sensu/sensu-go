@@ -12,6 +12,14 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added links to view entities and checks from the events page.
 - Added an agent/cmd package, migrated startup logic out of agent main
 - Improved debug logging in pipeline filtering.
+- Add object metadata to entities (including labels).
+- Add filter query support for labels.
+- Add support for setting labels on agents with the command line.
+- The sensuctl tool now supports yaml.
+- Add support for `--all-namespaces` flag in `sensuctl extension list`
+subcommand.
+- Added functionality to the dynamic synthesize function, allowing it to
+flatten embedded and non-embedded fields to the top level.
 
 ### Fixed
 - Display appropriate fallback when an entity's lastSeen field is empty.
@@ -25,12 +33,27 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Improved agent logging for statsd events.
 - To account for small amounts of drift, relative dates are now clamped if they
   are slightly off.
+- Fixues issue with tooltip positioning.
+- The agent now reconnects to the backend if its first connection attempt
+  fails.
+- Avoid infinite loop when code cannot be highlighted.
+
+### Changes
+- Deprecated the sensu-agent `--id` flag, `--name` should be used instead.
 
 ### Breaking Changes
 - Environments and organizations have been replaced with namespaces.
 - Removed unused asset metadata field.
 - Agent subscriptions are now specified in the config file as an array instead
   instead of a comma-delimited list of strings.
+- Extended attributes have been removed and replaced with labels. Labels are
+string-string key-value pairs.
+- Silenced `id`/`ID` field has changed to `name`/`Name`.
+- Entity `id`/`ID` field has changed to `name`/`Name`.
+- Entity `class`/`Class` field has changed to `entity_class`/`EntityClass`.
+- Check `proxy_entity_id`/`ProxyEntityID` field has changed to `proxy_entity_name`/`ProxyEntityName`.
+- Objects containing both a `name`/`Name` and `namespace`/`Namespace` field have been
+replaced with `metadata`/`ObjectMeta` (which contains both of those fields).
 
 ## [2.0.0-beta.7-1] - 2018-10-26
 

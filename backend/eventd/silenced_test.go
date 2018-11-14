@@ -137,11 +137,15 @@ func TestSilencedBy(t *testing.T) {
 			name: "not silenced, silenced & client don't have a common subscription",
 			event: &types.Event{
 				Check: &types.Check{
-					Name:          "check_cpu",
+					ObjectMeta: types.ObjectMeta{
+						Name: "check_cpu",
+					},
 					Subscriptions: []string{"linux", "windows"},
 				},
 				Entity: &types.Entity{
-					ID:            "foo",
+					ObjectMeta: types.ObjectMeta{
+						Name: "foo",
+					},
 					Subscriptions: []string{"linux"},
 				},
 			},
@@ -154,11 +158,15 @@ func TestSilencedBy(t *testing.T) {
 			name: "silenced, silenced & client do have a common subscription",
 			event: &types.Event{
 				Check: &types.Check{
-					Name:          "check_cpu",
+					ObjectMeta: types.ObjectMeta{
+						Name: "check_cpu",
+					},
 					Subscriptions: []string{"linux", "windows"},
 				},
 				Entity: &types.Entity{
-					ID:            "foo",
+					ObjectMeta: types.ObjectMeta{
+						Name: "foo",
+					},
 					Subscriptions: []string{"linux"},
 				},
 			},
@@ -231,18 +239,18 @@ func TestHandleExpireOnResolveEntries(t *testing.T) {
 			mockStore := &mockstore.MockStore{}
 
 			mockStore.On(
-				"GetSilencedEntryByID",
+				"GetSilencedEntryByName",
 				mock.Anything,
 				mock.Anything,
 			).Return(tc.silencedEntry, nil)
 
 			mockStore.On(
-				"DeleteSilencedEntryByID",
+				"DeleteSilencedEntryByName",
 				mock.Anything,
 				mock.Anything,
 			).Return(nil)
 
-			tc.event.Check.Silenced = []string{tc.silencedEntry.ID}
+			tc.event.Check.Silenced = []string{tc.silencedEntry.Name}
 
 			err := handleExpireOnResolveEntries(ctx, tc.event, mockStore)
 

@@ -243,7 +243,10 @@ func TestSuccessfulGetAsset(t *testing.T) {
 	}
 
 	a := &types.Asset{
-		Name:   "asset",
+		ObjectMeta: types.ObjectMeta{
+			Name:      "asset",
+			Namespace: "default",
+		},
 		Sha512: "sha",
 		URL:    "path",
 	}
