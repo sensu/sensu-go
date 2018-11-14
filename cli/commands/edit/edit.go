@@ -7,8 +7,10 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"strings"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/create"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/spf13/cobra"
@@ -19,9 +21,9 @@ const defaultEditor = "vi"
 
 func extension(format string) string {
 	switch format {
-	case "yaml":
+	case config.FormatYAML:
 		return "yaml"
-	case "wrapped-json", "json":
+	case config.FormatJSON, config.FormatWrappedJSON:
 		return "json"
 	default:
 		return "txt"
@@ -68,10 +70,11 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 			editorEnv := os.Getenv("EDITOR")
-			if editorEnv == "" {
+			if strings.TrimSpace(editorEnv) == "" {
 				editorEnv = defaultEditor
 			}
-			execCmd := exec.Command(editorEnv, tf.Name())
+			editorArgs := parseCommand(editorEnv)
+			execCmd := exec.Command(editorArgs[0], append(editorArgs[1:], tf.Name())...)
 			execCmd.Stdin = os.Stdin
 			execCmd.Stdout = os.Stdout
 			execCmd.Stderr = os.Stderr
@@ -106,4 +109,16 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 	helpers.AddFormatFlag(cmd.Flags())
 
 	return cmd
+}
+
+func parseCommand(cmd string) []string {
+	parts := strings.Split(cmd, " ")
+	result := []string{}
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if len(part) > 0 {
+			result = append(result, part)
+		}
+	}
+	return result
 }
