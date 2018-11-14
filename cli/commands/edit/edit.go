@@ -1,6 +1,7 @@
 package edit
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -16,9 +17,20 @@ import (
 // vi is the default editor!
 const defaultEditor = "vi"
 
+func extension(format string) string {
+	switch format {
+	case "yaml":
+		return "yaml"
+	case "wrapped-json", "json":
+		return "json"
+	default:
+		return "txt"
+	}
+}
+
 func Command(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "edit [RESOURCE NAME] [KEY1] ... [KEYN]",
+		Use:   "edit [RESOURCE TYPE] [KEY]...",
 		Short: "Edit resources interactively",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 2 {
@@ -40,17 +52,16 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			ctlArgs = append(ctlArgs, resourceKeyParams...)
 			ctlArgs = append(ctlArgs, "--format")
 			ctlArgs = append(ctlArgs, format)
-			fmt.Println(ctlArgs)
-			b, err := exec.Command("sensuctl", ctlArgs...).CombinedOutput()
+			originalBytes, err := exec.Command(os.Args[0], ctlArgs...).CombinedOutput()
 			if err != nil {
-				_, _ = cmd.OutOrStdout().Write(b)
+				_, _ = cmd.OutOrStdout().Write(originalBytes)
 				return fmt.Errorf("couldn't get resource: %s", err)
 			}
-			tf, err := ioutil.TempFile("", "sensu-resource-*")
+			tf, err := ioutil.TempFile("", fmt.Sprintf("sensu-resource.*.%s", extension(format)))
 			if err != nil {
 				return err
 			}
-			if _, err := tf.Write(b); err != nil {
+			if _, err := tf.Write(originalBytes); err != nil {
 				return err
 			}
 			if err := tf.Close(); err != nil {
@@ -67,11 +78,14 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			if err := execCmd.Run(); err != nil {
 				return err
 			}
-			tf, err = os.Open(tf.Name())
+			changedBytes, err := ioutil.ReadFile(tf.Name())
 			if err != nil {
 				return err
 			}
-			resources, err := create.ParseResources(tf)
+			if bytes.Equal(originalBytes, changedBytes) {
+				return nil
+			}
+			resources, err := create.ParseResources(bytes.NewReader(changedBytes))
 			if err != nil {
 				return err
 			}
