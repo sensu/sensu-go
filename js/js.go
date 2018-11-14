@@ -5,6 +5,7 @@ import (
 	"io"
 	"sync"
 
+	time "github.com/echlebek/timeproxy"
 	"github.com/robertkrimen/otto"
 	"github.com/robertkrimen/otto/parser"
 )
@@ -54,24 +55,62 @@ func newOttoVM(assets JavascriptAssets) (*otto.Otto, error) {
 		return vm, nil
 	}
 	vm = otto.New()
+	if err := addTimeFuncs(vm); err != nil {
+		return nil, err
+	}
 	if assets != nil {
-		scripts, err := assets.Scripts()
-		if err != nil {
+		if err := addAssets(vm, assets); err != nil {
 			return nil, err
-		}
-		defer func() {
-			for _, script := range scripts {
-				_ = script.Close()
-			}
-		}()
-		for name, script := range scripts {
-			if _, err := vm.Eval(script); err != nil {
-				return nil, fmt.Errorf("error evaluating %s: %s", name, err)
-			}
 		}
 	}
 	ottoCache.Init(key, vm)
 	return ottoCache.Acquire(key), nil
+}
+
+func addAssets(vm *otto.Otto, assets JavascriptAssets) error {
+	scripts, err := assets.Scripts()
+	if err != nil {
+		return err
+	}
+	defer func() {
+		for _, script := range scripts {
+			_ = script.Close()
+		}
+	}()
+	for name, script := range scripts {
+		if _, err := vm.Eval(script); err != nil {
+			return fmt.Errorf("error evaluating %s: %s", name, err)
+		}
+	}
+	return nil
+}
+
+func addTimeFuncs(vm *otto.Otto) error {
+	funcs := map[string]interface{}{
+		// hour returns the hour within the day
+		"hour": func(args ...interface{}) interface{} {
+			if len(args) == 0 {
+				return 0
+			}
+			t := time.Unix(toInt64(args[0]), 0).UTC()
+			return t.Hour()
+		},
+		// weekday returns the number representation of the day of the week, where
+		// Sunday = 0
+		"weekday": func(args ...interface{}) interface{} {
+			if len(args) == 0 {
+				return 0
+			}
+			t := time.Unix(toInt64(args[0]), 0).UTC()
+			return t.Weekday()
+		},
+	}
+	for k, v := range funcs {
+		if err := vm.Set(k, v); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func releaseOttoVM(vm *otto.Otto, assets JavascriptAssets) {
