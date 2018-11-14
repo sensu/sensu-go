@@ -19,7 +19,7 @@ var checkConfigUpdateFields = []string{
 	"Interval",
 	"Publish",
 	"RuntimeAssets",
-	"ProxyEntityID",
+	"ProxyEntityName",
 	"Stdin",
 	"Subscriptions",
 	"CheckHooks",

@@ -29,7 +29,7 @@ func getSilenced(ctx context.Context, event *types.Event, s store.Store) error {
 	}
 
 	// Retrieve silenced entries using the entity subscription
-	entitySubscription := types.GetEntitySubscription(event.Entity.ID)
+	entitySubscription := types.GetEntitySubscription(event.Entity.Name)
 	results, err := s.GetSilencedEntriesBySubscription(ctx, entitySubscription)
 	if err != nil {
 		return err
@@ -74,21 +74,21 @@ func silencedBy(event *types.Event, silencedEntries []*types.Silenced) []string 
 	for _, entry := range silencedEntries {
 
 		// Is this event silenced for all subscriptions? (e.g. *:check_cpu)
-		if entry.ID == fmt.Sprintf("*:%s", event.Check.Name) && entry.StartSilence(time.Now().Unix()) {
-			silencedBy = addToSilencedBy(entry.ID, silencedBy)
+		if entry.Name == fmt.Sprintf("*:%s", event.Check.Name) && entry.StartSilence(time.Now().Unix()) {
+			silencedBy = addToSilencedBy(entry.Name, silencedBy)
 			continue
 		}
 
 		// Is this event silenced by the entity subscription? (e.g. entity:id:*)
-		if entry.ID == fmt.Sprintf("%s:*", types.GetEntitySubscription(event.Entity.ID)) && entry.StartSilence(time.Now().Unix()) {
-			silencedBy = addToSilencedBy(entry.ID, silencedBy)
+		if entry.Name == fmt.Sprintf("%s:*", types.GetEntitySubscription(event.Entity.Name)) && entry.StartSilence(time.Now().Unix()) {
+			silencedBy = addToSilencedBy(entry.Name, silencedBy)
 			continue
 		}
 
 		// Is this event silenced for this particular entity? (e.g.
 		// entity:id:check_cpu)
-		if entry.ID == fmt.Sprintf("%s:%s", types.GetEntitySubscription(event.Entity.ID), event.Check.Name) && entry.StartSilence(time.Now().Unix()) {
-			silencedBy = addToSilencedBy(entry.ID, silencedBy)
+		if entry.Name == fmt.Sprintf("%s:%s", types.GetEntitySubscription(event.Entity.Name), event.Check.Name) && entry.StartSilence(time.Now().Unix()) {
+			silencedBy = addToSilencedBy(entry.Name, silencedBy)
 			continue
 		}
 
@@ -100,15 +100,15 @@ func silencedBy(event *types.Event, silencedEntries []*types.Silenced) []string 
 
 			// Is this event silenced by one of the check subscription? (e.g.
 			// load-balancer:*)
-			if entry.ID == fmt.Sprintf("%s:*", subscription) && entry.StartSilence(time.Now().Unix()) {
-				silencedBy = addToSilencedBy(entry.ID, silencedBy)
+			if entry.Name == fmt.Sprintf("%s:*", subscription) && entry.StartSilence(time.Now().Unix()) {
+				silencedBy = addToSilencedBy(entry.Name, silencedBy)
 				continue
 			}
 
 			// Is this event silenced by one of the check subscription for this
 			// particular check? (e.g. load-balancer:check_cpu)
-			if entry.ID == fmt.Sprintf("%s:%s", subscription, event.Check.Name) && entry.StartSilence(time.Now().Unix()) {
-				silencedBy = addToSilencedBy(entry.ID, silencedBy)
+			if entry.Name == fmt.Sprintf("%s:%s", subscription, event.Check.Name) && entry.StartSilence(time.Now().Unix()) {
+				silencedBy = addToSilencedBy(entry.Name, silencedBy)
 				continue
 			}
 		}
@@ -126,13 +126,13 @@ func handleExpireOnResolveEntries(ctx context.Context, event *types.Event, store
 	nonExpireOnResolveEntries := []string{}
 
 	for _, silencedID := range event.Check.Silenced {
-		silencedEntry, err := store.GetSilencedEntryByID(ctx, silencedID)
+		silencedEntry, err := store.GetSilencedEntryByName(ctx, silencedID)
 		if err != nil {
 			return err
 		}
 
 		if silencedEntry.ExpireOnResolve {
-			err := store.DeleteSilencedEntryByID(ctx, silencedID)
+			err := store.DeleteSilencedEntryByName(ctx, silencedID)
 			if err != nil {
 				return err
 			}

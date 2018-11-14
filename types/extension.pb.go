@@ -25,12 +25,10 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Extension is a registered sensu extension.
 type Extension struct {
-	// Name is the unique identifier for an extension.
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Metadata contains the name, namespace, labels and annotations of the extension
+	ObjectMeta `protobuf:"bytes,1,opt,name=metadata,embedded=metadata" json:"metadata"`
 	// URL is the URL of the gRPC service that implements the extension.
-	URL string `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
-	// Namespace to which the extension belongs to
-	Namespace            string   `protobuf:"bytes,4,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	URL                  string   `protobuf:"bytes,2,opt,name=url,proto3" json:"url,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -40,7 +38,7 @@ func (m *Extension) Reset()         { *m = Extension{} }
 func (m *Extension) String() string { return proto.CompactTextString(m) }
 func (*Extension) ProtoMessage()    {}
 func (*Extension) Descriptor() ([]byte, []int) {
-	return fileDescriptor_extension_49b6149995d6e5bd, []int{0}
+	return fileDescriptor_extension_81fe143336bffe5d, []int{0}
 }
 func (m *Extension) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -69,23 +67,9 @@ func (m *Extension) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_Extension proto.InternalMessageInfo
 
-func (m *Extension) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
-
 func (m *Extension) GetURL() string {
 	if m != nil {
 		return m.URL
-	}
-	return ""
-}
-
-func (m *Extension) GetNamespace() string {
-	if m != nil {
-		return m.Namespace
 	}
 	return ""
 }
@@ -112,13 +96,10 @@ func (this *Extension) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.Name != that1.Name {
+	if !this.ObjectMeta.Equal(&that1.ObjectMeta) {
 		return false
 	}
 	if this.URL != that1.URL {
-		return false
-	}
-	if this.Namespace != that1.Namespace {
 		return false
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
@@ -141,23 +122,19 @@ func (m *Extension) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.Name) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintExtension(dAtA, i, uint64(len(m.Name)))
-		i += copy(dAtA[i:], m.Name)
+	dAtA[i] = 0xa
+	i++
+	i = encodeVarintExtension(dAtA, i, uint64(m.ObjectMeta.Size()))
+	n1, err := m.ObjectMeta.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
 	}
+	i += n1
 	if len(m.URL) > 0 {
 		dAtA[i] = 0x12
 		i++
 		i = encodeVarintExtension(dAtA, i, uint64(len(m.URL)))
 		i += copy(dAtA[i:], m.URL)
-	}
-	if len(m.Namespace) > 0 {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintExtension(dAtA, i, uint64(len(m.Namespace)))
-		i += copy(dAtA[i:], m.Namespace)
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -176,11 +153,11 @@ func encodeVarintExtension(dAtA []byte, offset int, v uint64) int {
 }
 func NewPopulatedExtension(r randyExtension, easy bool) *Extension {
 	this := &Extension{}
-	this.Name = string(randStringExtension(r))
+	v1 := NewPopulatedObjectMeta(r, easy)
+	this.ObjectMeta = *v1
 	this.URL = string(randStringExtension(r))
-	this.Namespace = string(randStringExtension(r))
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedExtension(r, 5)
+		this.XXX_unrecognized = randUnrecognizedExtension(r, 3)
 	}
 	return this
 }
@@ -204,9 +181,9 @@ func randUTF8RuneExtension(r randyExtension) rune {
 	return rune(ru + 61)
 }
 func randStringExtension(r randyExtension) string {
-	v1 := r.Intn(100)
-	tmps := make([]rune, v1)
-	for i := 0; i < v1; i++ {
+	v2 := r.Intn(100)
+	tmps := make([]rune, v2)
+	for i := 0; i < v2; i++ {
 		tmps[i] = randUTF8RuneExtension(r)
 	}
 	return string(tmps)
@@ -228,11 +205,11 @@ func randFieldExtension(dAtA []byte, r randyExtension, fieldNumber int, wire int
 	switch wire {
 	case 0:
 		dAtA = encodeVarintPopulateExtension(dAtA, uint64(key))
-		v2 := r.Int63()
+		v3 := r.Int63()
 		if r.Intn(2) == 0 {
-			v2 *= -1
+			v3 *= -1
 		}
-		dAtA = encodeVarintPopulateExtension(dAtA, uint64(v2))
+		dAtA = encodeVarintPopulateExtension(dAtA, uint64(v3))
 	case 1:
 		dAtA = encodeVarintPopulateExtension(dAtA, uint64(key))
 		dAtA = append(dAtA, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -260,15 +237,9 @@ func encodeVarintPopulateExtension(dAtA []byte, v uint64) []byte {
 func (m *Extension) Size() (n int) {
 	var l int
 	_ = l
-	l = len(m.Name)
-	if l > 0 {
-		n += 1 + l + sovExtension(uint64(l))
-	}
+	l = m.ObjectMeta.Size()
+	n += 1 + l + sovExtension(uint64(l))
 	l = len(m.URL)
-	if l > 0 {
-		n += 1 + l + sovExtension(uint64(l))
-	}
-	l = len(m.Namespace)
 	if l > 0 {
 		n += 1 + l + sovExtension(uint64(l))
 	}
@@ -322,9 +293,9 @@ func (m *Extension) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field ObjectMeta", wireType)
 			}
-			var stringLen uint64
+			var msglen int
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowExtension
@@ -334,20 +305,21 @@ func (m *Extension) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				msglen |= (int(b) & 0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
+			if msglen < 0 {
 				return ErrInvalidLengthExtension
 			}
-			postIndex := iNdEx + intStringLen
+			postIndex := iNdEx + msglen
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Name = string(dAtA[iNdEx:postIndex])
+			if err := m.ObjectMeta.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -377,35 +349,6 @@ func (m *Extension) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.URL = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Namespace", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowExtension
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthExtension
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Namespace = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -534,20 +477,22 @@ var (
 	ErrIntOverflowExtension   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("extension.proto", fileDescriptor_extension_49b6149995d6e5bd) }
+func init() { proto.RegisterFile("extension.proto", fileDescriptor_extension_81fe143336bffe5d) }
 
-var fileDescriptor_extension_49b6149995d6e5bd = []byte{
-	// 189 bytes of a gzipped FileDescriptorProto
+var fileDescriptor_extension_81fe143336bffe5d = []byte{
+	// 216 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4f, 0xad, 0x28, 0x49,
 	0xcd, 0x2b, 0xce, 0xcc, 0xcf, 0xd3, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2e, 0x4e, 0xcd,
 	0x2b, 0x2e, 0xd5, 0x2b, 0xa9, 0x2c, 0x48, 0x2d, 0x96, 0xd2, 0x4d, 0xcf, 0x2c, 0xc9, 0x28, 0x4d,
 	0xd2, 0x4b, 0xce, 0xcf, 0xd5, 0x4f, 0xcf, 0x4f, 0xcf, 0xd7, 0x07, 0xab, 0x49, 0x2a, 0x4d, 0x03,
-	0xf3, 0xc0, 0x1c, 0x30, 0x0b, 0xa2, 0x57, 0x29, 0x82, 0x8b, 0xd3, 0x15, 0x66, 0x9c, 0x90, 0x10,
-	0x17, 0x4b, 0x5e, 0x62, 0x6e, 0xaa, 0x04, 0xa3, 0x02, 0xa3, 0x06, 0x67, 0x10, 0x98, 0x2d, 0x24,
-	0xc9, 0xc5, 0x5c, 0x5a, 0x94, 0x23, 0xc1, 0x04, 0x12, 0x72, 0x62, 0x7f, 0x74, 0x4f, 0x9e, 0x39,
-	0x34, 0xc8, 0x27, 0x08, 0x24, 0x26, 0x24, 0xc3, 0xc5, 0x09, 0x52, 0x52, 0x5c, 0x90, 0x98, 0x9c,
-	0x2a, 0xc1, 0x02, 0xd6, 0x83, 0x10, 0x70, 0x52, 0xfe, 0xf1, 0x50, 0x8e, 0x71, 0xc5, 0x23, 0x39,
-	0xc6, 0x1d, 0x8f, 0xe4, 0x18, 0x4f, 0x3c, 0x92, 0x63, 0xbc, 0xf0, 0x48, 0x8e, 0xf1, 0xc1, 0x23,
-	0x39, 0xc6, 0x19, 0x8f, 0xe5, 0x18, 0xa2, 0x58, 0xc1, 0xae, 0x4d, 0x62, 0x03, 0xbb, 0xc2, 0x18,
-	0x10, 0x00, 0x00, 0xff, 0xff, 0x4a, 0x06, 0x62, 0xab, 0xd4, 0x00, 0x00, 0x00,
+	0xf3, 0xc0, 0x1c, 0x30, 0x0b, 0xa2, 0x57, 0x8a, 0x2b, 0x37, 0xb5, 0x24, 0x11, 0xc2, 0x56, 0x2a,
+	0xe4, 0xe2, 0x74, 0x85, 0x19, 0x2d, 0xe4, 0xc9, 0xc5, 0x01, 0x92, 0x4a, 0x49, 0x2c, 0x49, 0x94,
+	0x60, 0x54, 0x60, 0xd4, 0xe0, 0x36, 0x12, 0xd7, 0x43, 0xb2, 0x47, 0xcf, 0x3f, 0x29, 0x2b, 0x35,
+	0xb9, 0xc4, 0x37, 0xb5, 0x24, 0xd1, 0x49, 0xe4, 0xc4, 0x3d, 0x79, 0x86, 0x0b, 0xf7, 0xe4, 0x19,
+	0x5f, 0xdd, 0x93, 0x87, 0x6b, 0x0a, 0x82, 0xb3, 0x84, 0x24, 0xb9, 0x98, 0x4b, 0x8b, 0x72, 0x24,
+	0x98, 0x14, 0x18, 0x35, 0x38, 0x9d, 0xd8, 0x1f, 0xdd, 0x93, 0x67, 0x0e, 0x0d, 0xf2, 0x09, 0x02,
+	0x89, 0x39, 0x29, 0xff, 0x78, 0x28, 0xc7, 0xb8, 0xe2, 0x91, 0x1c, 0xe3, 0x8e, 0x47, 0x72, 0x8c,
+	0x27, 0x1e, 0xc9, 0x31, 0x5e, 0x78, 0x24, 0xc7, 0xf8, 0xe0, 0x91, 0x1c, 0xe3, 0x8c, 0xc7, 0x72,
+	0x0c, 0x51, 0xac, 0x60, 0xab, 0x92, 0xd8, 0xc0, 0xce, 0x33, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff,
+	0xb3, 0x65, 0xa9, 0x28, 0xf9, 0x00, 0x00, 0x00,
 }

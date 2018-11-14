@@ -27,7 +27,7 @@ func NewEntityController(store store.EntityStore) EntityController {
 // Destroy removes a resource if viewer has access.
 func (c EntityController) Destroy(ctx context.Context, id string) error {
 	// Fetch from store
-	result, serr := c.Store.GetEntityByID(ctx, id)
+	result, serr := c.Store.GetEntityByName(ctx, id)
 	if serr != nil {
 		return NewError(InternalErr, serr)
 	} else if result == nil {
@@ -35,7 +35,7 @@ func (c EntityController) Destroy(ctx context.Context, id string) error {
 	}
 
 	// Remove from store
-	if err := c.Store.DeleteEntityByID(ctx, result.ID); err != nil {
+	if err := c.Store.DeleteEntityByName(ctx, result.Name); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -46,7 +46,7 @@ func (c EntityController) Destroy(ctx context.Context, id string) error {
 // viewer.
 func (c EntityController) Find(ctx context.Context, id string) (*types.Entity, error) {
 	// Fetch from store
-	result, serr := c.Store.GetEntityByID(ctx, id)
+	result, serr := c.Store.GetEntityByName(ctx, id)
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}
@@ -70,7 +70,7 @@ func (c EntityController) Create(ctx context.Context, entity types.Entity) error
 	ctx = addOrgEnvToContext(ctx, &entity)
 
 	// Check for an already existing resource
-	if e, err := c.Store.GetEntityByID(ctx, entity.ID); err != nil {
+	if e, err := c.Store.GetEntityByName(ctx, entity.Name); err != nil {
 		return NewError(InternalErr, err)
 	} else if e != nil {
 		return NewErrorf(AlreadyExistsErr)
@@ -114,7 +114,7 @@ func (c EntityController) Update(ctx context.Context, given types.Entity) error 
 	ctx = addOrgEnvToContext(ctx, &given)
 
 	// Find existing entity
-	entity, err := c.Store.GetEntityByID(ctx, given.ID)
+	entity, err := c.Store.GetEntityByName(ctx, given.Name)
 	if err != nil {
 		return NewError(InternalErr, err)
 	} else if entity == nil {

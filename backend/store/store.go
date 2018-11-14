@@ -337,17 +337,17 @@ type EntityStore interface {
 	// DeleteEntity deletes an entity using the given entity struct.
 	DeleteEntity(ctx context.Context, entity *types.Entity) error
 
-	// DeleteEntityByID deletes an entity using the given id and the
+	// DeleteEntityByName deletes an entity using the given name and the
 	// namespace stored in ctx.
-	DeleteEntityByID(ctx context.Context, id string) error
+	DeleteEntityByName(ctx context.Context, name string) error
 
 	// GetEntities returns all entities in the given ctx's namespace. A nil slice
 	// with no error is returned if none were found.
 	GetEntities(ctx context.Context) ([]*types.Entity, error)
 
-	// GetEntityByID returns an entity using the given id and the namespace stored
+	// GetEntityByName returns an entity using the given name and the namespace stored
 	// in ctx. The resulting entity is nil if none was found.
-	GetEntityByID(ctx context.Context, id string) (*types.Entity, error)
+	GetEntityByName(ctx context.Context, name string) (*types.Entity, error)
 
 	// UpdateEntity creates or updates a given entity.
 	UpdateEntity(ctx context.Context, entity *types.Entity) error
@@ -517,8 +517,8 @@ type RoleStore interface {
 // SilencedStore provides methods for managing silenced entries,
 // consisting of entities, subscriptions and/or checks
 type SilencedStore interface {
-	// DeleteSilencedEntryByID deletes an entry using the given id.
-	DeleteSilencedEntryByID(ctx context.Context, id string) error
+	// DeleteSilencedEntryByName deletes an entry using the given id.
+	DeleteSilencedEntryByName(ctx context.Context, id string) error
 
 	// GetSilencedEntries returns all entries. A nil slice with no error is
 	// returned if none were found.
@@ -534,10 +534,10 @@ type SilencedStore interface {
 	// returned if none were found.
 	GetSilencedEntriesBySubscription(ctx context.Context, subscription string) ([]*types.Silenced, error)
 
-	// GetSilencedEntryByID returns an entry using the given id and the
+	// GetSilencedEntryByName returns an entry using the given id and the
 	// namespace stored in ctx. The resulting entry is nil if
 	// none was found.
-	GetSilencedEntryByID(ctx context.Context, id string) (*types.Silenced, error)
+	GetSilencedEntryByName(ctx context.Context, id string) (*types.Silenced, error)
 
 	// UpdateHandler creates or updates a given entry.
 	UpdateSilencedEntry(ctx context.Context, entry *types.Silenced) error

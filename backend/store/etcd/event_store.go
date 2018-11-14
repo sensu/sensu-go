@@ -25,7 +25,7 @@ func getEventPath(event *types.Event) string {
 		EtcdRoot,
 		eventsPathPrefix,
 		event.Entity.Namespace,
-		event.Entity.ID,
+		event.Entity.Name,
 		event.Check.Name,
 	)
 }
@@ -40,13 +40,13 @@ func getEventsPath(ctx context.Context, entity string) string {
 	return eventKeyBuilder.WithContext(ctx).Build(entity)
 }
 
-// DeleteEventByEntityCheck deletes an event by entity ID and check ID.
-func (s *Store) DeleteEventByEntityCheck(ctx context.Context, entityID, checkID string) error {
-	if entityID == "" || checkID == "" {
-		return errors.New("must specify entity and check id")
+// DeleteEventByEntityCheck deletes an event by entity name and check name.
+func (s *Store) DeleteEventByEntityCheck(ctx context.Context, entityName, checkName string) error {
+	if entityName == "" || checkName == "" {
+		return errors.New("must specify entity and check name")
 	}
 
-	_, err := s.client.Delete(ctx, getEventWithCheckPath(ctx, entityID, checkID))
+	_, err := s.client.Delete(ctx, getEventWithCheckPath(ctx, entityName, checkName))
 	return err
 }
 
@@ -76,13 +76,13 @@ func (s *Store) GetEvents(ctx context.Context) ([]*types.Event, error) {
 	return eventsArray, nil
 }
 
-// GetEventsByEntity gets all events matching a given entity ID.
-func (s *Store) GetEventsByEntity(ctx context.Context, entityID string) ([]*types.Event, error) {
-	if entityID == "" {
-		return nil, errors.New("must specify entity id")
+// GetEventsByEntity gets all events matching a given entity name.
+func (s *Store) GetEventsByEntity(ctx context.Context, entityName string) ([]*types.Event, error) {
+	if entityName == "" {
+		return nil, errors.New("must specify entity name")
 	}
 
-	resp, err := s.client.Get(ctx, getEventsPath(ctx, entityID), clientv3.WithPrefix())
+	resp, err := s.client.Get(ctx, getEventsPath(ctx, entityName), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -104,13 +104,13 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityID string) ([]*type
 	return eventsArray, nil
 }
 
-// GetEventByEntityCheck gets an event by entity and check ID.
-func (s *Store) GetEventByEntityCheck(ctx context.Context, entityID, checkID string) (*types.Event, error) {
-	if entityID == "" || checkID == "" {
-		return nil, errors.New("must specify entity and check id")
+// GetEventByEntityCheck gets an event by entity and check name.
+func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName string) (*types.Event, error) {
+	if entityName == "" || checkName == "" {
+		return nil, errors.New("must specify entity and check name")
 	}
 
-	resp, err := s.client.Get(ctx, getEventWithCheckPath(ctx, entityID, checkID), clientv3.WithPrefix())
+	resp, err := s.client.Get(ctx, getEventWithCheckPath(ctx, entityName, checkName), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +157,7 @@ func (s *Store) UpdateEvent(ctx context.Context, event *types.Event) error {
 	if !res.Succeeded {
 		return fmt.Errorf(
 			"could not create the event %s/%s in namespace %s",
-			event.Entity.ID,
+			event.Entity.Name,
 			event.Check.Name,
 			event.Entity.Namespace,
 		)

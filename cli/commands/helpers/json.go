@@ -7,7 +7,6 @@ import (
 	"io"
 	"strings"
 
-	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -64,24 +63,4 @@ func PrintWrappedJSONList(r []types.Resource, io io.Writer) error {
 		}
 	}
 	return nil
-}
-
-// PrintFormatted prints the provided interface in the specified format.
-// flag overrides the cli config format if set
-func PrintFormatted(flag string, format string, v interface{}, w io.Writer, printToList func(interface{}, io.Writer) error) error {
-	if flag != "" {
-		format = flag
-	}
-	switch format {
-	case config.FormatJSON:
-		return PrintJSON(v, w)
-	case config.FormatWrappedJSON:
-		r, ok := v.(types.Resource)
-		if !ok {
-			return fmt.Errorf("%t is not a Resource", v)
-		}
-		return PrintWrappedJSON(r, w)
-	default:
-		return printToList(v, w)
-	}
 }

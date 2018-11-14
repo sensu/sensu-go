@@ -156,7 +156,7 @@ func TestSilencedFind(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("GetSilencedEntryByID", tc.ctx, mock.Anything, mock.Anything).
+				On("GetSilencedEntryByName", tc.ctx, mock.Anything, mock.Anything).
 				Return(tc.record, nil).Once()
 
 			// Exec Query
@@ -238,7 +238,7 @@ func TestSilencedCreateOrReplace(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("GetSilencedEntryByID", mock.Anything, mock.Anything).
+				On("GetSilencedEntryByName", mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
 			store.
 				On("UpdateSilencedEntry", mock.Anything, mock.Anything).
@@ -360,7 +360,7 @@ func TestSilencedCreate(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("GetSilencedEntryByID", mock.Anything, mock.Anything).
+				On("GetSilencedEntryByName", mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
 			store.
 				On("UpdateSilencedEntry", mock.Anything, mock.Anything).
@@ -372,7 +372,7 @@ func TestSilencedCreate(t *testing.T) {
 						_ = json.Unmarshal(bytes, &entry)
 
 						assert.Equal(tc.expectedCreator, entry.Creator)
-						assert.Equal(tc.expectedId, entry.ID)
+						assert.Equal(tc.expectedId, entry.Name)
 					}
 				})
 
@@ -451,7 +451,7 @@ func TestSilencedUpdate(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("GetSilencedEntryByID", mock.Anything, mock.Anything).
+				On("GetSilencedEntryByName", mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
 			store.
 				On("UpdateSilencedEntry", mock.Anything, mock.Anything).
@@ -531,10 +531,10 @@ func TestSilencedDestroy(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("GetSilencedEntryByID", mock.Anything, mock.Anything).
+				On("GetSilencedEntryByName", mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
 			store.
-				On("DeleteSilencedEntryByID", mock.Anything, mock.Anything).
+				On("DeleteSilencedEntryByName", mock.Anything, mock.Anything).
 				Return(tc.deleteErr).Once()
 
 			// Exec Query

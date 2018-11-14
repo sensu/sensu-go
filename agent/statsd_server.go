@@ -160,7 +160,7 @@ func (c Client) sendMetrics(points []*types.MetricPoint) (retErr error) {
 
 	logger.WithFields(logrus.Fields{
 		"metrics": event.Metrics,
-		"entity":  event.Entity.ID,
+		"entity":  event.Entity.Name,
 	}).Debug("sending statsd metrics")
 	c.agent.sendMessage(transport.MessageTypeEvent, msg)
 	return nil

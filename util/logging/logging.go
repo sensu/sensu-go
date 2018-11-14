@@ -14,15 +14,17 @@ func EventFields(event *types.Event, debug bool) map[string]interface{} {
 	}
 
 	fields := logrus.Fields{
-		"entity":    event.Entity.ID,
-		"namespace": event.Entity.Namespace,
+		"entity_name":      event.Entity.Name,
+		"entity_namespace": event.Entity.Namespace,
+	}
+
+	if event.HasCheck() {
+		fields["check_name"] = event.Check.Name
+		fields["check_namespace"] = event.Check.Namespace
 	}
 
 	if debug {
 		fields["timestamp"] = event.Timestamp
-		if event.HasCheck() {
-			fields["check"] = event.Check
-		}
 		if event.HasMetrics() {
 			fields["metrics"] = event.Metrics
 		}
@@ -33,12 +35,6 @@ func EventFields(event *types.Event, debug bool) map[string]interface{} {
 			fields["silenced"] = event.Silenced
 		}
 	} else {
-		// The event might not have a check if it's a metric so verify that before
-		// adding the check name
-		if event.HasCheck() {
-			fields["check"] = event.Check.Name
-		}
-
 		if event.HasMetrics() {
 			count := len(event.Metrics.Points)
 			fields["metric_count"] = count

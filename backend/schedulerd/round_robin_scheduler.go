@@ -70,7 +70,7 @@ func (r *roundRobinScheduler) Schedule(msg *roundRobinMessage) (*sync.WaitGroup,
 	return &msg.wg, nil
 }
 
-// logError logs errors and adds agentID and checkName as fields.
+// logError logs errors and adds agentName and checkName as fields.
 func (r *roundRobinScheduler) logError(err error, checkName string) {
 	logger.WithField("check", checkName).WithError(err).Error("error publishing round robin check request")
 }

@@ -13,11 +13,11 @@ const pollInterval = 1500; // 1.5s
 
 const query = gql`
   query EventDetailsContentQuery(
-    $ns: NamespaceInput!
+    $namespace: String!
     $check: String!
     $entity: String!
   ) {
-    event(ns: $ns, entity: $entity, check: $check) {
+    event(namespace: $namespace, entity: $entity, check: $check) {
       deleted @client
       ...EventDetailsContainer_event
     }
@@ -32,18 +32,12 @@ class EventDetailsContent extends React.PureComponent {
   };
 
   render() {
-    const { match } = this.props;
-    const ns = {
-      organization: match.params.organization,
-      environment: match.params.environment,
-    };
-
     return (
       <Query
         query={query}
         fetchPolicy="cache-and-network"
         pollInterval={pollInterval}
-        variables={{ ...match.params, ns }}
+        variables={this.props.match.params}
       >
         {({ data: { event } = {}, loading, aborted, poller }) => {
           if (!loading && !aborted && (!event || event.deleted)) {

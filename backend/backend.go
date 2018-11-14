@@ -355,9 +355,11 @@ func (b *Backend) Stop() {
 
 func (b *Backend) getBackendEntity(config *Config) *types.Entity {
 	entity := &types.Entity{
-		Class:  types.EntityBackendClass,
-		ID:     getDefaultBackendID(),
-		System: getSystemInfo(),
+		EntityClass: types.EntityBackendClass,
+		System:      getSystemInfo(),
+		ObjectMeta: types.ObjectMeta{
+			Name: getDefaultBackendID(),
+		},
 	}
 
 	if config.DeregistrationHandler != "" {

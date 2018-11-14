@@ -112,6 +112,12 @@ type CheckConfigPublishFieldResolver interface {
 	Publish(p graphql.ResolveParams) (bool, error)
 }
 
+// CheckConfigRuntimeAssetsFieldResolver implement to resolve requests for the CheckConfig's runtimeAssets field.
+type CheckConfigRuntimeAssetsFieldResolver interface {
+	// RuntimeAssets implements response to request for runtimeAssets field.
+	RuntimeAssets(p graphql.ResolveParams) (interface{}, error)
+}
+
 // CheckConfigRoundRobinFieldResolver implement to resolve requests for the CheckConfig's roundRobin field.
 type CheckConfigRoundRobinFieldResolver interface {
 	// RoundRobin implements response to request for roundRobin field.
@@ -245,6 +251,7 @@ type CheckConfigFieldResolvers interface {
 	CheckConfigProxyEntityIDFieldResolver
 	CheckConfigProxyRequestsFieldResolver
 	CheckConfigPublishFieldResolver
+	CheckConfigRuntimeAssetsFieldResolver
 	CheckConfigRoundRobinFieldResolver
 	CheckConfigIsSilencedFieldResolver
 	CheckConfigSilencesFieldResolver
@@ -489,6 +496,12 @@ func (_ CheckConfigAliases) Publish(p graphql.ResolveParams) (bool, error) {
 	return ret, err
 }
 
+// RuntimeAssets implements response to request for 'runtimeAssets' field.
+func (_ CheckConfigAliases) RuntimeAssets(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // RoundRobin implements response to request for 'roundRobin' field.
 func (_ CheckConfigAliases) RoundRobin(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -711,6 +724,13 @@ func _ObjTypeCheckConfigPublishHandler(impl interface{}) graphql1.FieldResolveFn
 	}
 }
 
+func _ObjTypeCheckConfigRuntimeAssetsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigRuntimeAssetsFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.RuntimeAssets(frp)
+	}
+}
+
 func _ObjTypeCheckConfigRoundRobinHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigRoundRobinFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -911,6 +931,13 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 				Name:              "roundRobin",
 				Type:              graphql1.NewNonNull(graphql1.Boolean),
 			},
+			"runtimeAssets": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "RuntimeAssets are a list of assets required to execute check.",
+				Name:              "runtimeAssets",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("Asset"))),
+			},
 			"silences": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -999,6 +1026,7 @@ var _ObjectTypeCheckConfigDesc = graphql.ObjectDesc{
 		"proxyRequests":        _ObjTypeCheckConfigProxyRequestsHandler,
 		"publish":              _ObjTypeCheckConfigPublishHandler,
 		"roundRobin":           _ObjTypeCheckConfigRoundRobinHandler,
+		"runtimeAssets":        _ObjTypeCheckConfigRuntimeAssetsHandler,
 		"silences":             _ObjTypeCheckConfigSilencesHandler,
 		"stdin":                _ObjTypeCheckConfigStdinHandler,
 		"subdue":               _ObjTypeCheckConfigSubdueHandler,

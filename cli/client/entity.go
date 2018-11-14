@@ -9,7 +9,7 @@ import (
 
 // DeleteEntity deletes given entitiy from the configured sensu instance
 func (client *RestClient) DeleteEntity(entity *types.Entity) (err error) {
-	_, err = client.R().Delete("/entities/" + entity.ID)
+	_, err = client.R().Delete("/entities/" + entity.Name)
 	return err
 }
 
@@ -53,7 +53,7 @@ func (client *RestClient) UpdateEntity(entity *types.Entity) (err error) {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Put("/entities/" + entity.ID)
+	res, err := client.R().SetBody(bytes).Put("/entities/" + entity.Name)
 	if err != nil {
 		return err
 	}

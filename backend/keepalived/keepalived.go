@@ -134,7 +134,7 @@ func (k *Keepalived) initFromStore() error {
 
 	for _, keepalive := range keepalives {
 		entityCtx := context.WithValue(context.TODO(), types.NamespaceKey, keepalive.Namespace)
-		event, err := k.store.GetEventByEntityCheck(entityCtx, keepalive.EntityID, "keepalive")
+		event, err := k.store.GetEventByEntityCheck(entityCtx, keepalive.Name, "keepalive")
 		if err != nil {
 			return err
 		}
@@ -160,7 +160,7 @@ func (k *Keepalived) initFromStore() error {
 		}
 
 		supervisor := k.monitorFactory(k)
-		err = supervisor.Monitor(context.TODO(), keepalive.EntityID, event, d)
+		err = supervisor.Monitor(context.TODO(), keepalive.Name, event, d)
 		if err != nil {
 			return err
 		}
@@ -216,7 +216,7 @@ func (k *Keepalived) processKeepalives() {
 		}
 
 		supervisor := k.monitorFactory(k)
-		if err := supervisor.Monitor(context.TODO(), entity.ID, event, timeout); err != nil {
+		if err := supervisor.Monitor(context.TODO(), entity.Name, event, timeout); err != nil {
 			logger.WithError(err).Error("error monitoring entity")
 		}
 
@@ -226,17 +226,18 @@ func (k *Keepalived) processKeepalives() {
 	}
 }
 
+// HandleError logs an error
 func (k *Keepalived) HandleError(err error) {
 	logger.WithError(err).Error(err)
 }
 
 func (k *Keepalived) handleEntityRegistration(entity *types.Entity) error {
-	if entity.Class != types.EntityAgentClass {
+	if entity.EntityClass != types.EntityAgentClass {
 		return nil
 	}
 
 	ctx := types.SetContextFromResource(context.Background(), entity)
-	fetchedEntity, err := k.store.GetEntityByID(ctx, entity.ID)
+	fetchedEntity, err := k.store.GetEntityByName(ctx, entity.Name)
 
 	if err != nil {
 		return err
@@ -259,13 +260,15 @@ func createKeepaliveEvent(rawEvent *types.Event) *types.Event {
 		}
 	}
 	keepaliveCheck := &types.Check{
-		Name:      KeepaliveCheckName,
-		Interval:  check.Interval,
-		Timeout:   check.Timeout,
-		Handlers:  []string{KeepaliveHandlerName},
-		Namespace: rawEvent.Entity.Namespace,
-		Executed:  time.Now().Unix(),
-		Issued:    time.Now().Unix(),
+		ObjectMeta: types.ObjectMeta{
+			Name:      KeepaliveCheckName,
+			Namespace: rawEvent.Entity.Namespace,
+		},
+		Interval: check.Interval,
+		Timeout:  check.Timeout,
+		Handlers: []string{KeepaliveHandlerName},
+		Executed: time.Now().Unix(),
+		Issued:   time.Now().Unix(),
 	}
 	keepaliveEvent := &types.Event{
 		Timestamp: time.Now().Unix(),
@@ -278,11 +281,13 @@ func createKeepaliveEvent(rawEvent *types.Event) *types.Event {
 
 func createRegistrationEvent(entity *types.Entity) *types.Event {
 	registrationCheck := &types.Check{
-		Name:      RegistrationCheckName,
-		Interval:  1,
-		Handlers:  []string{RegistrationHandlerName},
-		Namespace: entity.Namespace,
-		Status:    1,
+		ObjectMeta: types.ObjectMeta{
+			Name:      RegistrationCheckName,
+			Namespace: entity.Namespace,
+		},
+		Interval: 1,
+		Handlers: []string{RegistrationHandlerName},
+		Status:   1,
 	}
 	registrationEvent := &types.Event{
 		Timestamp: time.Now().Unix(),
@@ -340,7 +345,7 @@ func (k *Keepalived) HandleFailure(e *types.Event) error {
 		return err
 	}
 
-	logger.WithField("entity", entity.GetID()).Info("keepalive timed out, creating keepalive event for entity")
+	logger.WithField("entity", entity.GetName()).Info("keepalive timed out, creating keepalive event for entity")
 	timeout := time.Now().Unix() + int64(e.Check.Timeout)
 	return k.store.UpdateFailingKeepalive(ctx, entity, timeout)
 }

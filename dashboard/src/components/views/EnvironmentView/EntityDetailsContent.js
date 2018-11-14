@@ -12,8 +12,8 @@ import Query from "/components/util/Query";
 const pollInterval = 1500; // 1.5s
 
 const query = gql`
-  query EntityDetailsContentQuery($ns: NamespaceInput!, $name: String!) {
-    entity(ns: $ns, name: $name) {
+  query EntityDetailsContentQuery($namespace: String!, $name: String!) {
+    entity(namespace: $namespace, name: $name) {
       deleted @client
       ...EntityDetailsContainer_entity
     }
@@ -28,16 +28,12 @@ class EntityDetailsContent extends React.PureComponent {
   };
 
   render() {
-    const { match } = this.props;
-    const { organization, environment, ...params } = match.params;
-    const ns = { organization, environment };
-
     return (
       <Query
         query={query}
         fetchPolicy="cache-and-network"
         pollInterval={pollInterval}
-        variables={{ ...params, ns }}
+        variables={this.props.match.params}
       >
         {({ data: { entity } = {}, loading, aborted, poller, refetch }) => {
           if (!loading && !aborted && (!entity || entity.deleted)) {

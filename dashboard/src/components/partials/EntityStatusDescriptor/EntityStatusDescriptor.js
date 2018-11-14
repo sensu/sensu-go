@@ -1,6 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
+import capitalize from "lodash/capitalize";
 
 import Maybe from "/components/Maybe";
 import { RelativeToCurrentDate } from "/components/RelativeDate";
@@ -21,16 +22,23 @@ class EntityStatusDescriptor extends React.PureComponent {
 
   render() {
     const { entity } = this.props;
-    const lastSeen = (
-      <Maybe value={entity.lastSeen} fallback="never">
-        {val => <RelativeToCurrentDate dateTime={val} />}
-      </Maybe>
-    );
+
+    if (!entity.lastSeen && entity.class !== "agent") {
+      return (
+        <React.Fragment>
+          <strong>{capitalize(entity.class)}</strong> entity.
+        </React.Fragment>
+      );
+    }
 
     return (
       <React.Fragment>
         The <strong>{entity.class}</strong> was last seen{" "}
-        <strong>{lastSeen}</strong>.
+        <strong>
+          <Maybe value={entity.lastSeen} fallback="never">
+            {val => <RelativeToCurrentDate dateTime={val} />}
+          </Maybe>
+        </strong>.
       </React.Fragment>
     );
   }

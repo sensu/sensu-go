@@ -117,6 +117,22 @@ func TestCheckTypeSilencesField(t *testing.T) {
 	assert.Len(t, res, 1)
 }
 
+func TestCheckTypeRuntimeAssetsField(t *testing.T) {
+	check := types.FixtureCheck("my-check")
+	check.RuntimeAssets = []string{"one", "two"}
+	mock := mockAssetQuerier{els: []*types.Asset{
+		types.FixtureAsset("one"),
+		types.FixtureAsset("two"),
+		types.FixtureAsset("three"),
+	}}
+
+	// return associated silence
+	impl := &checkImpl{assetQuerier: mock}
+	res, err := impl.RuntimeAssets(graphql.ResolveParams{Source: check})
+	require.NoError(t, err)
+	assert.Len(t, res, 2)
+}
+
 func TestCheckConfigTypeIsSilencedField(t *testing.T) {
 	check := types.FixtureCheckConfig("my-check")
 	check.Subscriptions = []string{"unix"}
@@ -146,6 +162,22 @@ func TestCheckConfigTypeSilencesField(t *testing.T) {
 	// return associated silence
 	impl := &checkCfgImpl{silenceQuerier: mock}
 	res, err := impl.Silences(graphql.ResolveParams{Source: check})
+	require.NoError(t, err)
+	assert.Len(t, res, 2)
+}
+
+func TestCheckConfigTypeRuntimeAssetsField(t *testing.T) {
+	check := types.FixtureCheckConfig("my-check")
+	check.RuntimeAssets = []string{"one", "two"}
+	mock := mockAssetQuerier{els: []*types.Asset{
+		types.FixtureAsset("one"),
+		types.FixtureAsset("two"),
+		types.FixtureAsset("three"),
+	}}
+
+	// return associated silence
+	impl := &checkCfgImpl{assetQuerier: mock}
+	res, err := impl.RuntimeAssets(graphql.ResolveParams{Source: check})
 	require.NoError(t, err)
 	assert.Len(t, res, 2)
 }

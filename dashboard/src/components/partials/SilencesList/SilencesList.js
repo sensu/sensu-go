@@ -21,7 +21,7 @@ import ListItem from "./SilencesListItem";
 class SilencesList extends React.Component {
   static propTypes = {
     client: PropTypes.object.isRequired,
-    environment: PropTypes.shape({
+    namespace: PropTypes.shape({
       silences: PropTypes.shape({
         nodes: PropTypes.array.isRequired,
       }),
@@ -34,15 +34,15 @@ class SilencesList extends React.Component {
   };
 
   static defaultProps = {
-    environment: null,
+    namespace: null,
     loading: false,
     limit: undefined,
     offset: undefined,
   };
 
   static fragments = {
-    environment: gql`
-      fragment SilencesList_environment on Environment {
+    namespace: gql`
+      fragment SilencesList_namespace on Namespace {
         silences(
           limit: $limit
           offset: $offset
@@ -122,15 +122,16 @@ class SilencesList extends React.Component {
 
   render() {
     const {
-      environment,
+      namespace,
       loading,
       limit,
       offset,
       order,
       onChangeQuery,
     } = this.props;
-    const items = environment
-      ? environment.silences.nodes.filter(node => !node.deleted)
+
+    const items = namespace
+      ? namespace.silences.nodes.filter(node => !node.deleted)
       : [];
 
     return (
@@ -159,7 +160,7 @@ class SilencesList extends React.Component {
               <Pagination
                 limit={limit}
                 offset={offset}
-                pageInfo={environment && environment.silences.pageInfo}
+                pageInfo={namespace && namespace.silences.pageInfo}
                 onChangeQuery={onChangeQuery}
               />
 

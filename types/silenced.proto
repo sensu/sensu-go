@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "meta.proto";
 
 package sensu.types;
 
@@ -14,8 +15,8 @@ option (gogoproto.testgen_all) = true;
 
 // Silenced is the representation of a silence entry.
 message Silenced {
-  // ID is the combination of subscription and check name (subscription:checkname)
-  string id = 1 [(gogoproto.customname) = "ID"];
+  // Metadata contains the name, namespace, labels and annotations of the silenced
+  ObjectMeta metadata = 1 [(gogoproto.jsontag) = "metadata", (gogoproto.embed) = true, (gogoproto.nullable) = false];
 
   // Expire is the number of seconds the entry will live
   int64 expire = 2 [(gogoproto.nullable) = true, (gogoproto.jsontag) = "expire"];
@@ -38,7 +39,4 @@ message Silenced {
 
   // Begin is a timestamp at which the silenced entry takes effect.
   int64 begin = 10 [(gogoproto.jsontag) = "begin"];
-  
-  // Namespace to which the silenced entry belongs to
-  string namespace = 11;
 }

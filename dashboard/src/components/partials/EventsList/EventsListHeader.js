@@ -25,7 +25,7 @@ class EventsListHeader extends React.Component {
     onClickDelete: PropTypes.func.isRequired,
     selectedItems: PropTypes.array.isRequired,
     rowCount: PropTypes.number.isRequired,
-    environment: PropTypes.shape({
+    namespace: PropTypes.shape({
       checks: PropTypes.object,
       entities: PropTypes.object,
     }),
@@ -33,7 +33,7 @@ class EventsListHeader extends React.Component {
   };
 
   static defaultProps = {
-    environment: null,
+    namespace: null,
   };
 
   static fragments = {
@@ -44,8 +44,8 @@ class EventsListHeader extends React.Component {
         }
       }
     `,
-    environment: gql`
-      fragment EventsListHeader_environment on Environment {
+    namespace: gql`
+      fragment EventsListHeader_namespace on Namespace {
         checks(limit: 1000) {
           nodes {
             name
@@ -170,9 +170,9 @@ class EventsListHeader extends React.Component {
   };
 
   renderActions = () => {
-    const { environment: env } = this.props;
-    const entities = env ? env.entities.nodes.map(e => e.name) : [];
-    const checks = env ? env.checks.nodes.map(e => e.name) : [];
+    const { namespace: ns } = this.props;
+    const entities = ns ? ns.entities.nodes.map(e => e.name) : [];
+    const checks = ns ? ns.checks.nodes.map(e => e.name) : [];
 
     return (
       <ToolbarMenu.Autosizer>

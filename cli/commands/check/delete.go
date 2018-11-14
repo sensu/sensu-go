@@ -32,7 +32,8 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			check := &types.CheckConfig{Name: name}
+			check := &types.CheckConfig{}
+			check.Name = name
 
 			if namespace, _ := cmd.Flags().GetString("namespace"); namespace != "" {
 				check.Namespace = namespace

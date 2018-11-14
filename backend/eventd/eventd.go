@@ -157,7 +157,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	ctx := context.WithValue(context.Background(), types.NamespaceKey, event.Entity.Namespace)
 
 	prevEvent, err := e.store.GetEventByEntityCheck(
-		ctx, event.Entity.ID, event.Check.Name,
+		ctx, event.Entity.Name, event.Check.Name,
 	)
 	if err != nil {
 		return err
@@ -199,13 +199,13 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		// Reset the TTL monitor
 		var monitorKey string
 
-		// Typically we want the entity ID to be the thing we monitor, but if
+		// Typically we want the entity name to be the thing we monitor, but if
 		// it's a round robin check and there is no proxy entity, then just use
 		// the check name instead.
-		if event.Check.RoundRobin && event.Entity.Class != types.EntityProxyClass {
+		if event.Check.RoundRobin && event.Entity.EntityClass != types.EntityProxyClass {
 			monitorKey = event.Check.Name
 		} else {
-			monitorKey = event.Entity.ID
+			monitorKey = event.Entity.Name
 		}
 
 		timeout := int64(event.Check.Ttl)
@@ -277,7 +277,7 @@ func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *types.Event)
 	}
 
 	lastCheckResult, err := e.store.GetEventByEntityCheck(
-		ctx, event.Entity.ID, event.Check.Name,
+		ctx, event.Entity.Name, event.Check.Name,
 	)
 	if err != nil {
 		return nil, err

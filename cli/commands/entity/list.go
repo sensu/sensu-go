@@ -61,7 +61,7 @@ func printToTable(results interface{}, writer io.Writer) {
 				if !ok {
 					return cli.TypeError
 				}
-				return entity.ID
+				return entity.Name
 			},
 		},
 		{
@@ -71,7 +71,7 @@ func printToTable(results interface{}, writer io.Writer) {
 				if !ok {
 					return cli.TypeError
 				}
-				return entity.Class
+				return entity.EntityClass
 			},
 		},
 		{

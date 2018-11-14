@@ -27,19 +27,18 @@ class ChecksContent extends React.Component {
 
   static query = gql`
     query EnvironmentViewChecksContentQuery(
-      $environment: String!
-      $organization: String!
+      $namespace: String!
       $limit: Int
       $offset: Int
       $order: CheckListOrder
       $filter: String
     ) {
-      environment(organization: $organization, environment: $environment) {
-        ...ChecksList_environment
+      namespace(name: $namespace) {
+        ...ChecksList_namespace
       }
     }
 
-    ${ChecksList.fragments.environment}
+    ${ChecksList.fragments.namespace}
   `;
 
   renderContent = renderProps => {
@@ -47,13 +46,13 @@ class ChecksContent extends React.Component {
     const { limit, offset, filter } = queryParams;
     const {
       aborted,
-      data: { environment } = {},
+      data: { namespace } = {},
       loading,
       poller,
       refetch,
     } = renderProps;
 
-    if (!environment && !loading && !aborted) {
+    if (!namespace && !loading && !aborted) {
       return <NotFound />;
     }
 
@@ -76,9 +75,9 @@ class ChecksContent extends React.Component {
                 limit={limit}
                 offset={offset}
                 onChangeQuery={setQueryParams}
-                environment={environment}
+                namespace={namespace}
                 loading={
-                  (loading && (!environment || !poller.isRunning())) || aborted
+                  (loading && (!namespace || !poller.isRunning())) || aborted
                 }
                 refetch={refetch}
                 order={queryParams.order}
@@ -107,6 +106,7 @@ class ChecksContent extends React.Component {
     );
   }
 }
+
 const enhance = withQueryParams({
   keys: ["filter", "order", "offset", "limit"],
   defaults: {

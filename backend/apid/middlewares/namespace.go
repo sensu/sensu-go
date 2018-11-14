@@ -13,10 +13,9 @@ const (
 	defaultNamespace = "default"
 )
 
-// Namespace retrieves the namespace passed as a query parameter and validate
-// its existence against the data store and then add them to the request context
-type Namespace struct {
-}
+// Namespace retrieves the namespace passed as a query parameter and add it into
+// the context of the request
+type Namespace struct{}
 
 // Then middleware
 func (n Namespace) Then(next http.Handler) http.Handler {

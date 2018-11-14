@@ -69,7 +69,7 @@ func TestGoodSessionConfig(t *testing.T) {
 	).Return(&types.Namespace{}, nil)
 
 	cfg := SessionConfig{
-		AgentID:       "testing",
+		AgentName:     "testing",
 		Namespace:     "acme",
 		Subscriptions: []string{"testing"},
 	}

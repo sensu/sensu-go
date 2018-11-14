@@ -16,10 +16,12 @@ func TestMiddlewareLimits(t *testing.T) {
 	assert := assert.New(t)
 
 	goodCheck := &types.CheckConfig{
+		ObjectMeta: types.ObjectMeta{
+			Name:      "goodcheck",
+			Namespace: "default",
+		},
 		Command:       "true",
 		Interval:      30,
-		Name:          "goodcheck",
-		Namespace:     "default",
 		Publish:       true,
 		Subscriptions: []string{"system"},
 	}
@@ -27,10 +29,12 @@ func TestMiddlewareLimits(t *testing.T) {
 	maxCheck := make([]byte, 600000)
 	rand.Read(maxCheck)
 	badCheck := &types.CheckConfig{
+		ObjectMeta: types.ObjectMeta{
+			Name:      "badcheck",
+			Namespace: "default",
+		},
 		Command:       string(maxCheck),
 		Interval:      30,
-		Name:          "badcheck",
-		Namespace:     "default",
 		Publish:       true,
 		Subscriptions: []string{"system"},
 	}

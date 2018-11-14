@@ -82,7 +82,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	require.NoError(t, err)
 
 	assert.NotEmpty(out)
-	assert.Contains(out, "ID")              // heading
+	assert.Contains(out, "Name")            // heading
 	assert.Contains(out, "Expire")          // heading
 	assert.Contains(out, "ExpireOnResolve") // heading
 	assert.Contains(out, "Creator")         // heading

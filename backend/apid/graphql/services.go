@@ -6,6 +6,12 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// assets
+
+type assetQuerier interface {
+	Query(ctx context.Context) ([]*types.Asset, error)
+}
+
 // checks
 
 type checkCreator interface {

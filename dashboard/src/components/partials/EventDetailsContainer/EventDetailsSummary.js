@@ -10,7 +10,6 @@ import Dictionary, {
   DictionaryValue,
   DictionaryEntry,
 } from "/components/Dictionary";
-import { RelativeToCurrentDate } from "/components/RelativeDate";
 import CodeBlock from "/components/CodeBlock";
 import CodeHighlight from "/components/CodeHighlight/CodeHighlight";
 import Maybe from "/components/Maybe";
@@ -26,17 +25,13 @@ class EventDetailsSummary extends React.Component {
   static fragments = {
     entity: gql`
       fragment EventDetailsSummary_entity on Entity {
-        ns: namespace {
-          org: organization
-          env: environment
-        }
+        namespace
         system {
           platform
         }
 
         name
         class
-        lastSeen
         subscriptions
       }
     `,
@@ -55,7 +50,7 @@ class EventDetailsSummary extends React.Component {
 
   render() {
     const { entity: entityProp, check } = this.props;
-    const { ns, ...entity } = entityProp;
+    const { namespace, ...entity } = entityProp;
 
     return (
       <Card>
@@ -67,7 +62,7 @@ class EventDetailsSummary extends React.Component {
             <DictionaryEntry>
               <DictionaryKey>Check</DictionaryKey>
               <DictionaryValue>
-                <InlineLink to={`/${ns.org}/${ns.env}/checks/${check.name}`}>
+                <InlineLink to={`/${namespace}/checks/${check.name}`}>
                   {check.name}
                 </InlineLink>
               </DictionaryValue>
@@ -96,7 +91,7 @@ class EventDetailsSummary extends React.Component {
             <DictionaryEntry>
               <DictionaryKey>Entity</DictionaryKey>
               <DictionaryValue>
-                <InlineLink to={`/${ns.org}/${ns.env}/entities/${entity.name}`}>
+                <InlineLink to={`/${namespace}/entities/${entity.name}`}>
                   {entity.name}
                 </InlineLink>
               </DictionaryValue>
@@ -108,14 +103,6 @@ class EventDetailsSummary extends React.Component {
             <DictionaryEntry>
               <DictionaryKey>Platform</DictionaryKey>
               <DictionaryValue>{entity.system.platform}</DictionaryValue>
-            </DictionaryEntry>
-            <DictionaryEntry>
-              <DictionaryKey>Last Seen</DictionaryKey>
-              <DictionaryValue>
-                <Maybe value={entity.lastSeen} fallback="unknown">
-                  {val => <RelativeToCurrentDate dateTime={val} />}
-                </Maybe>
-              </DictionaryValue>
             </DictionaryEntry>
             <DictionaryEntry>
               <DictionaryKey>Subscriptions</DictionaryKey>

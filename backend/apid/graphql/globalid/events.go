@@ -91,13 +91,13 @@ func encodeEvent(event *types.Event) StandardComponents {
 	if event.HasCheck() {
 		components.resourceType = eventCheckType
 		components.uniqueComponent = encodeUniqueComponents(
-			event.Entity.ID,
+			event.Entity.Name,
 			event.Check.Name,
 		)
 	} else if event.HasMetrics() {
 		components.resourceType = eventMetricType
 		components.uniqueComponent = encodeUniqueComponents(
-			event.Entity.ID,
+			event.Entity.Name,
 			"1234", // event.Metrics.ID,
 		)
 	}

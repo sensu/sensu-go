@@ -33,6 +33,8 @@ type silenceableCheck interface {
 
 type checkCfgImpl struct {
 	schema.CheckConfigAliases
+
+	assetQuerier   assetQuerier
 	handlerCtrl    actions.HandlerController
 	silenceQuerier silenceQuerier
 }
@@ -40,8 +42,10 @@ type checkCfgImpl struct {
 func newCheckCfgImpl(store store.Store) *checkCfgImpl {
 	handlerCtrl := actions.NewHandlerController(store)
 	silenceCtrl := actions.NewSilencedController(store)
+	assetCtrl := actions.NewAssetController(store)
 
 	return &checkCfgImpl{
+		assetQuerier:   assetCtrl,
 		handlerCtrl:    handlerCtrl,
 		silenceQuerier: silenceCtrl,
 	}
@@ -75,7 +79,7 @@ func (r *checkCfgImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{
 // ProxyEntityID implements response to request for 'proxyEntityId' field.
 func (r *checkCfgImpl) ProxyEntityID(p graphql.ResolveParams) (string, error) {
 	check := p.Source.(*types.CheckConfig)
-	return check.ProxyEntityID, nil
+	return check.ProxyEntityName, nil
 }
 
 // IsSilenced implements response to request for 'isSilenced' field.
@@ -98,6 +102,13 @@ func (r *checkCfgImpl) Silences(p graphql.ResolveParams) (interface{}, error) {
 func (r *checkCfgImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
 	check := p.Source.(*types.CheckConfig)
 	return types.WrapResource(check), nil
+}
+
+// RuntimeAssets implements response to request for 'runtimeAssets' field.
+func (r *checkCfgImpl) RuntimeAssets(p graphql.ResolveParams) (interface{}, error) {
+	chk := p.Source.(*types.CheckConfig)
+	ctx := types.SetContextFromResource(p.Context, chk)
+	return fetchCheckAssets(ctx, r.assetQuerier, chk)
 }
 
 func fetchHandlersWithNames(ctx context.Context, ctrl actions.HandlerController, names []string) ([]*types.Handler, error) {
@@ -150,15 +161,19 @@ func (r *checkCfgImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 
 type checkImpl struct {
 	schema.CheckAliases
+
+	assetQuerier   assetQuerier
 	handlerCtrl    actions.HandlerController
 	silenceQuerier silenceQuerier
 }
 
 func newCheckImpl(store store.Store) *checkImpl {
+	assetCtrl := actions.NewAssetController(store)
 	handlerCtrl := actions.NewHandlerController(store)
 	silenceCtrl := actions.NewSilencedController(store)
 
 	return &checkImpl{
+		assetQuerier:   assetCtrl,
 		handlerCtrl:    handlerCtrl,
 		silenceQuerier: silenceCtrl,
 	}
@@ -174,8 +189,10 @@ func (r *checkImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 func (r *checkImpl) NodeID(p graphql.ResolveParams) (string, error) {
 	check := p.Source.(*types.Check)
 	config := types.CheckConfig{
-		Namespace: check.Namespace,
-		Name:      check.Name,
+		ObjectMeta: types.ObjectMeta{
+			Namespace: check.Namespace,
+			Name:      check.Name,
+		},
 	}
 	return globalid.CheckTranslator.EncodeToString(&config), nil
 }
@@ -244,7 +261,14 @@ func (r *checkImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{}, 
 // ProxyEntityID implements response to request for 'proxyEntityId' field.
 func (r *checkImpl) ProxyEntityID(p graphql.ResolveParams) (string, error) {
 	check := p.Source.(*types.Check)
-	return check.ProxyEntityID, nil
+	return check.ProxyEntityName, nil
+}
+
+// RuntimeAssets implements response to request for 'runtimeAssets' field.
+func (r *checkImpl) RuntimeAssets(p graphql.ResolveParams) (interface{}, error) {
+	chk := p.Source.(*types.Check)
+	ctx := types.SetContextFromResource(p.Context, chk)
+	return fetchCheckAssets(ctx, r.assetQuerier, chk)
 }
 
 func fetchCheckSilences(ctx context.Context, ctrl silenceQuerier, check silenceableCheck) ([]*types.Silenced, error) {
@@ -255,8 +279,30 @@ func fetchCheckSilences(ctx context.Context, ctrl silenceQuerier, check silencea
 	}
 
 	for _, sl := range sls {
-		if strings.InArray(sl.ID, check.GetSilenced()) {
+		if strings.InArray(sl.Name, check.GetSilenced()) {
 			matched = append(matched, sl)
+		}
+	}
+
+	return matched, nil
+}
+
+type assetGetter interface {
+	GetRuntimeAssets() []string
+}
+
+func fetchCheckAssets(ctx context.Context, ctrl assetQuerier, getter assetGetter) ([]*types.Asset, error) {
+	assets, err := ctrl.Query(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	relevantAssets := getter.GetRuntimeAssets()
+	matched := make([]*types.Asset, 0, len(relevantAssets))
+
+	for _, asset := range assets {
+		if strings.InArray(asset.Name, relevantAssets) {
+			matched = append(matched, asset)
 		}
 	}
 

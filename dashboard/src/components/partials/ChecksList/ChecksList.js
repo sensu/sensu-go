@@ -26,7 +26,7 @@ import ChecksListItem from "./ChecksListItem";
 class ChecksList extends React.Component {
   static propTypes = {
     client: PropTypes.object.isRequired,
-    environment: PropTypes.shape({
+    namespace: PropTypes.shape({
       checks: PropTypes.shape({
         nodes: PropTypes.array.isRequired,
       }),
@@ -41,15 +41,15 @@ class ChecksList extends React.Component {
   };
 
   static defaultProps = {
-    environment: null,
+    namespace: null,
     loading: false,
     limit: undefined,
     offset: undefined,
   };
 
   static fragments = {
-    environment: gql`
-      fragment ChecksList_environment on Environment {
+    namespace: gql`
+      fragment ChecksList_namespace on Namespace {
         checks(
           limit: $limit
           offset: $offset
@@ -60,10 +60,7 @@ class ChecksList extends React.Component {
             id
             deleted @client
             name
-            namespace {
-              environment
-              organization
-            }
+            namespace
             silences {
               storeId
               ...ClearSilencedEntriesDialog_silence
@@ -77,10 +74,10 @@ class ChecksList extends React.Component {
           }
         }
 
-        ...ChecksListHeader_environment
+        ...ChecksListHeader_namespace
       }
 
-      ${ChecksListHeader.fragments.environment}
+      ${ChecksListHeader.fragments.namespace}
       ${ChecksListItem.fragments.check}
       ${ClearSilencesDialog.fragments.silence}
       ${Pagination.fragments.pageInfo}
@@ -113,10 +110,7 @@ class ChecksList extends React.Component {
     const targets = checks
       .filter(check => check.silences.length === 0)
       .map(check => ({
-        ns: {
-          environment: check.namespace.environment,
-          organization: check.namespace.organization,
-        },
+        namespace: check.namespace,
         check: check.name,
       }));
 
@@ -207,7 +201,7 @@ class ChecksList extends React.Component {
   render() {
     const { silence, unsilence } = this.state;
     const {
-      environment,
+      namespace,
       loading,
       limit,
       offset,
@@ -216,8 +210,8 @@ class ChecksList extends React.Component {
       refetch,
     } = this.props;
 
-    const items = environment
-      ? environment.checks.nodes.filter(ch => !ch.deleted)
+    const items = namespace
+      ? namespace.checks.nodes.filter(ch => !ch.deleted)
       : [];
 
     return (
@@ -236,7 +230,7 @@ class ChecksList extends React.Component {
           <Paper>
             <Loader loading={loading}>
               <ChecksListHeader
-                environment={environment}
+                namespace={namespace}
                 onChangeQuery={onChangeQuery}
                 onClickClearSilences={() => this.clearSilences(selectedItems)}
                 onClickDelete={() => {
@@ -265,7 +259,7 @@ class ChecksList extends React.Component {
               <Pagination
                 limit={limit}
                 offset={offset}
-                pageInfo={environment && environment.checks.pageInfo}
+                pageInfo={namespace && namespace.checks.pageInfo}
                 onChangeQuery={onChangeQuery}
               />
 

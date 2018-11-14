@@ -12,38 +12,26 @@ func TestGetAgentEntity(t *testing.T) {
 	assert := assert.New(t)
 
 	testCases := []struct {
-		name               string
-		agent              *Agent
-		expectedAgentID    string
-		extendedAttributes []byte
+		name              string
+		agent             *Agent
+		expectedAgentName string
 	}{
 		{
 			name: "The agent has no entity",
 			agent: &Agent{
 				config: &Config{
-					AgentID:               "foo",
+					AgentName:             "foo",
 					DeregistrationHandler: "slack",
 				},
 			},
-			expectedAgentID: "foo",
+			expectedAgentName: "foo",
 		},
 		{
 			name: "The agent has an entity",
 			agent: &Agent{
 				entity: types.FixtureEntity("bar"),
 			},
-			expectedAgentID: "bar",
-		},
-		{
-			name: "The agent has extended attributes",
-			agent: &Agent{
-				config: &Config{
-					AgentID:            "baz",
-					ExtendedAttributes: []byte(`{"foo":"bar"}`),
-				},
-			},
-			expectedAgentID:    "baz",
-			extendedAttributes: []byte(`{"foo":"bar"}`),
+			expectedAgentName: "bar",
 		},
 	}
 
@@ -53,8 +41,7 @@ func TestGetAgentEntity(t *testing.T) {
 			tc.agent.systemInfoMu = &sync.RWMutex{}
 
 			entity := tc.agent.getAgentEntity()
-			assert.Equal(tc.expectedAgentID, entity.ID)
-			assert.Equal(tc.extendedAttributes, entity.ExtendedAttributes)
+			assert.Equal(tc.expectedAgentName, entity.Name)
 		})
 	}
 }
@@ -63,11 +50,11 @@ func TestGetEntities(t *testing.T) {
 	assert := assert.New(t)
 
 	testCases := []struct {
-		name            string
-		agent           *Agent
-		event           *types.Event
-		expectedAgentID string
-		expectedSource  string
+		name              string
+		agent             *Agent
+		event             *types.Event
+		expectedAgentName string
+		expectedSource    string
 	}{
 		{
 			name: "The provided event has no entity",
@@ -77,19 +64,19 @@ func TestGetEntities(t *testing.T) {
 			event: &types.Event{
 				Check: types.FixtureCheck("check_cpu"),
 			},
-			expectedAgentID: "foo",
-			expectedSource:  "",
+			expectedAgentName: "foo",
+			expectedSource:    "",
 		},
 		{
 			name: "The provided event has an entity",
 			agent: &Agent{
 				config: &Config{
-					AgentID: "agent_entity",
+					AgentName: "agent_entity",
 				},
 			},
-			event:           types.FixtureEvent("proxy_entity", "check_cpu"),
-			expectedAgentID: "agent_entity",
-			expectedSource:  "proxy_entity",
+			event:             types.FixtureEvent("proxy_entity", "check_cpu"),
+			expectedAgentName: "agent_entity",
+			expectedSource:    "proxy_entity",
 		},
 	}
 
@@ -99,8 +86,8 @@ func TestGetEntities(t *testing.T) {
 			tc.agent.systemInfoMu = &sync.RWMutex{}
 
 			tc.agent.getEntities(tc.event)
-			assert.Equal(tc.expectedAgentID, tc.event.Entity.ID)
-			assert.Equal(tc.expectedSource, tc.event.Check.ProxyEntityID)
+			assert.Equal(tc.expectedAgentName, tc.event.Entity.Name)
+			assert.Equal(tc.expectedSource, tc.event.Check.ProxyEntityName)
 		})
 	}
 }

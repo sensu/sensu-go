@@ -64,12 +64,15 @@ func translateToEvent(a *Agent, result v1.CheckResult, event *types.Event) error
 	}
 
 	agentEntity := a.getAgentEntity()
-	if result.Client == "" || result.Client == agentEntity.ID {
+	if result.Client == "" || result.Client == agentEntity.Name {
 		event.Entity = agentEntity
 	} else {
 		event.Entity = &types.Entity{
-			ID:    result.Client,
-			Class: types.EntityProxyClass,
+			ObjectMeta: types.ObjectMeta{
+				Name:      result.Client,
+				Namespace: agentEntity.Namespace,
+			},
+			EntityClass: types.EntityProxyClass,
 		}
 	}
 
@@ -78,13 +81,13 @@ func translateToEvent(a *Agent, result v1.CheckResult, event *types.Event) error
 		Command:       result.Command,
 		Subscriptions: result.Subscribers,
 		Interval:      result.Interval,
-		Name:          result.Name,
 		Issued:        result.Issued,
 		Executed:      result.Executed,
 		Duration:      result.Duration,
 		Output:        result.Output,
 	}
-	check.SetExtendedAttributes(result.GetExtendedAttributes())
+	check.Name = result.Name
+	check.Namespace = agentEntity.Namespace
 
 	// add config and check values to the 2.x event
 	event.Check = check

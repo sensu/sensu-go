@@ -31,7 +31,7 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			mutator := &types.Mutator{Name: name}
+			mutator := &types.Mutator{ObjectMeta: types.ObjectMeta{Name: name}}
 			err := cli.Client.DeleteMutator(mutator)
 			if err != nil {
 				return err
