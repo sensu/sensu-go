@@ -44,7 +44,7 @@ func TestFilteredManagerFilteredAsset(t *testing.T) {
 	mockGetter, entity, filteredManager := NewTestFilteredManager()
 
 	fixtureAsset := types.FixtureAsset("test-asset")
-	fixtureAsset.Filters = []string{fmt.Sprintf("entity.Name == '%s'", entity.Name)}
+	fixtureAsset.Filters = []string{fmt.Sprintf("entity.name == '%s'", entity.Name)}
 	actualAsset, err := filteredManager.Get(fixtureAsset)
 	assert.NoError(t, err)
 	assert.Equal(t, mockGetter.asset, actualAsset)
@@ -56,7 +56,7 @@ func TestFilteredManagerUnfilteredAsset(t *testing.T) {
 	mockGetter, _, filteredManager := NewTestFilteredManager()
 
 	fixtureAsset := types.FixtureAsset("test-asset")
-	fixtureAsset.Filters = []string{"entity.Name == 'foo'"}
+	fixtureAsset.Filters = []string{"entity.name == 'foo'"}
 	actualAsset, err := filteredManager.Get(fixtureAsset)
 	assert.NoError(t, err)
 	assert.Nil(t, actualAsset)
@@ -79,13 +79,13 @@ func TestIsFiltered(t *testing.T) {
 
 	// filtered is true, filter matches
 	fixtureAsset := types.FixtureAsset("test-asset")
-	fixtureAsset.Filters = []string{fmt.Sprintf("entity.Name == '%s'", entity.Name)}
+	fixtureAsset.Filters = []string{fmt.Sprintf("entity.name == '%s'", entity.Name)}
 	filtered, err := filteredManager.isFiltered(fixtureAsset)
 	assert.NoError(t, err)
 	assert.True(t, filtered)
 
 	// filtered is true, all filters match
-	fixtureAsset.Filters = []string{fmt.Sprintf("entity.Name == '%s'", entity.Name), "entity.EntityClass == 'host'"}
+	fixtureAsset.Filters = []string{fmt.Sprintf("entity.name == '%s'", entity.Name), "entity.entity_class == 'host'"}
 	filtered, err = filteredManager.isFiltered(fixtureAsset)
 	assert.NoError(t, err)
 	assert.True(t, filtered)
@@ -97,13 +97,13 @@ func TestIsFiltered(t *testing.T) {
 	assert.True(t, filtered)
 
 	// filtered is false, filter does not match
-	fixtureAsset.Filters = []string{"entity.Name == 'foo'"}
+	fixtureAsset.Filters = []string{"entity.name == 'foo'"}
 	filtered, err = filteredManager.isFiltered(fixtureAsset)
 	assert.NoError(t, err)
 	assert.False(t, filtered)
 
 	// filtered is false, all filters do not match
-	fixtureAsset.Filters = []string{"entity.Name == 'foo'", "entity.EntityClass == 'host'"}
+	fixtureAsset.Filters = []string{"entity.name == 'foo'", "entity.entity_class == 'host'"}
 	filtered, err = filteredManager.isFiltered(fixtureAsset)
 	assert.NoError(t, err)
 	assert.False(t, filtered)

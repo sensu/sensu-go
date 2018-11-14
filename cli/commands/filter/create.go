@@ -23,7 +23,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			if !isInteractive {
 				// Mark flags are required for bash-completions
 				_ = cmd.MarkFlagRequired("action")
-				_ = cmd.MarkFlagRequired("statements")
+				_ = cmd.MarkFlagRequired("expressions")
 			}
 		},
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -73,7 +73,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		"specifies whether events are passed through the filter or blocked by the "+
 			"filter. Allowed values: "+strings.Join(types.EventFilterAllActions, ", "),
 	)
-	cmd.Flags().StringP("statements", "s", "",
+	cmd.Flags().StringP("expressions", "s", "",
 		"comma separated list of boolean expressions that are evaluated to "+
 			"determine if the event matches this filter",
 	)

@@ -29,21 +29,24 @@ type EventFilter struct {
 	ObjectMeta `protobuf:"bytes,1,opt,name=metadata,embedded=metadata" json:"metadata"`
 	// Action specifies to allow/deny events to continue through the pipeline
 	Action string `protobuf:"bytes,2,opt,name=action,proto3" json:"action,omitempty"`
-	// Statements is an array of boolean expressions that are &&'d together
+	// Expressions is an array of boolean expressions that are &&'d together
 	// to determine if the event matches this filter.
-	Statements []string `protobuf:"bytes,3,rep,name=statements" json:"statements"`
+	Expressions []string `protobuf:"bytes,3,rep,name=expressions" json:"expressions"`
 	// When indicates a TimeWindowWhen that a filter uses to filter by days & times
-	When                 *TimeWindowWhen `protobuf:"bytes,6,opt,name=when" json:"when,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}        `json:"-"`
-	XXX_unrecognized     []byte          `json:"-"`
-	XXX_sizecache        int32           `json:"-"`
+	When *TimeWindowWhen `protobuf:"bytes,6,opt,name=when" json:"when,omitempty"`
+	// Runtime assets are Sensu assets that contain javascript libraries. They
+	// are evaluated within the execution context.
+	RuntimeAssets        []string `protobuf:"bytes,8,rep,name=runtime_assets,json=runtimeAssets" json:"runtime_assets"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
 func (m *EventFilter) Reset()         { *m = EventFilter{} }
 func (m *EventFilter) String() string { return proto.CompactTextString(m) }
 func (*EventFilter) ProtoMessage()    {}
 func (*EventFilter) Descriptor() ([]byte, []int) {
-	return fileDescriptor_filter_eee7a31152931dc1, []int{0}
+	return fileDescriptor_filter_4cd8c129e41c4f71, []int{0}
 }
 func (m *EventFilter) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -79,9 +82,9 @@ func (m *EventFilter) GetAction() string {
 	return ""
 }
 
-func (m *EventFilter) GetStatements() []string {
+func (m *EventFilter) GetExpressions() []string {
 	if m != nil {
-		return m.Statements
+		return m.Expressions
 	}
 	return nil
 }
@@ -89,6 +92,13 @@ func (m *EventFilter) GetStatements() []string {
 func (m *EventFilter) GetWhen() *TimeWindowWhen {
 	if m != nil {
 		return m.When
+	}
+	return nil
+}
+
+func (m *EventFilter) GetRuntimeAssets() []string {
+	if m != nil {
+		return m.RuntimeAssets
 	}
 	return nil
 }
@@ -121,16 +131,24 @@ func (this *EventFilter) Equal(that interface{}) bool {
 	if this.Action != that1.Action {
 		return false
 	}
-	if len(this.Statements) != len(that1.Statements) {
+	if len(this.Expressions) != len(that1.Expressions) {
 		return false
 	}
-	for i := range this.Statements {
-		if this.Statements[i] != that1.Statements[i] {
+	for i := range this.Expressions {
+		if this.Expressions[i] != that1.Expressions[i] {
 			return false
 		}
 	}
 	if !this.When.Equal(that1.When) {
 		return false
+	}
+	if len(this.RuntimeAssets) != len(that1.RuntimeAssets) {
+		return false
+	}
+	for i := range this.RuntimeAssets {
+		if this.RuntimeAssets[i] != that1.RuntimeAssets[i] {
+			return false
+		}
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
@@ -166,8 +184,8 @@ func (m *EventFilter) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintFilter(dAtA, i, uint64(len(m.Action)))
 		i += copy(dAtA[i:], m.Action)
 	}
-	if len(m.Statements) > 0 {
-		for _, s := range m.Statements {
+	if len(m.Expressions) > 0 {
+		for _, s := range m.Expressions {
 			dAtA[i] = 0x1a
 			i++
 			l = len(s)
@@ -191,6 +209,21 @@ func (m *EventFilter) MarshalTo(dAtA []byte) (int, error) {
 		}
 		i += n2
 	}
+	if len(m.RuntimeAssets) > 0 {
+		for _, s := range m.RuntimeAssets {
+			dAtA[i] = 0x42
+			i++
+			l = len(s)
+			for l >= 1<<7 {
+				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
+				l >>= 7
+				i++
+			}
+			dAtA[i] = uint8(l)
+			i++
+			i += copy(dAtA[i:], s)
+		}
+	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
@@ -212,15 +245,20 @@ func NewPopulatedEventFilter(r randyFilter, easy bool) *EventFilter {
 	this.ObjectMeta = *v1
 	this.Action = string(randStringFilter(r))
 	v2 := r.Intn(10)
-	this.Statements = make([]string, v2)
+	this.Expressions = make([]string, v2)
 	for i := 0; i < v2; i++ {
-		this.Statements[i] = string(randStringFilter(r))
+		this.Expressions[i] = string(randStringFilter(r))
 	}
 	if r.Intn(10) != 0 {
 		this.When = NewPopulatedTimeWindowWhen(r, easy)
 	}
+	v3 := r.Intn(10)
+	this.RuntimeAssets = make([]string, v3)
+	for i := 0; i < v3; i++ {
+		this.RuntimeAssets[i] = string(randStringFilter(r))
+	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedFilter(r, 7)
+		this.XXX_unrecognized = randUnrecognizedFilter(r, 9)
 	}
 	return this
 }
@@ -244,9 +282,9 @@ func randUTF8RuneFilter(r randyFilter) rune {
 	return rune(ru + 61)
 }
 func randStringFilter(r randyFilter) string {
-	v3 := r.Intn(100)
-	tmps := make([]rune, v3)
-	for i := 0; i < v3; i++ {
+	v4 := r.Intn(100)
+	tmps := make([]rune, v4)
+	for i := 0; i < v4; i++ {
 		tmps[i] = randUTF8RuneFilter(r)
 	}
 	return string(tmps)
@@ -268,11 +306,11 @@ func randFieldFilter(dAtA []byte, r randyFilter, fieldNumber int, wire int) []by
 	switch wire {
 	case 0:
 		dAtA = encodeVarintPopulateFilter(dAtA, uint64(key))
-		v4 := r.Int63()
+		v5 := r.Int63()
 		if r.Intn(2) == 0 {
-			v4 *= -1
+			v5 *= -1
 		}
-		dAtA = encodeVarintPopulateFilter(dAtA, uint64(v4))
+		dAtA = encodeVarintPopulateFilter(dAtA, uint64(v5))
 	case 1:
 		dAtA = encodeVarintPopulateFilter(dAtA, uint64(key))
 		dAtA = append(dAtA, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -306,8 +344,8 @@ func (m *EventFilter) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovFilter(uint64(l))
 	}
-	if len(m.Statements) > 0 {
-		for _, s := range m.Statements {
+	if len(m.Expressions) > 0 {
+		for _, s := range m.Expressions {
 			l = len(s)
 			n += 1 + l + sovFilter(uint64(l))
 		}
@@ -315,6 +353,12 @@ func (m *EventFilter) Size() (n int) {
 	if m.When != nil {
 		l = m.When.Size()
 		n += 1 + l + sovFilter(uint64(l))
+	}
+	if len(m.RuntimeAssets) > 0 {
+		for _, s := range m.RuntimeAssets {
+			l = len(s)
+			n += 1 + l + sovFilter(uint64(l))
+		}
 	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
@@ -425,7 +469,7 @@ func (m *EventFilter) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Statements", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Expressions", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -450,7 +494,7 @@ func (m *EventFilter) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Statements = append(m.Statements, string(dAtA[iNdEx:postIndex]))
+			m.Expressions = append(m.Expressions, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		case 6:
 			if wireType != 2 {
@@ -484,6 +528,35 @@ func (m *EventFilter) Unmarshal(dAtA []byte) error {
 			if err := m.When.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RuntimeAssets", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowFilter
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= (uint64(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthFilter
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.RuntimeAssets = append(m.RuntimeAssets, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -612,26 +685,28 @@ var (
 	ErrIntOverflowFilter   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("filter.proto", fileDescriptor_filter_eee7a31152931dc1) }
+func init() { proto.RegisterFile("filter.proto", fileDescriptor_filter_4cd8c129e41c4f71) }
 
-var fileDescriptor_filter_eee7a31152931dc1 = []byte{
-	// 287 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x49, 0xcb, 0xcc, 0x29,
-	0x49, 0x2d, 0xd2, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2e, 0x4e, 0xcd, 0x2b, 0x2e, 0xd5,
-	0x2b, 0xa9, 0x2c, 0x48, 0x2d, 0x96, 0xd2, 0x4d, 0xcf, 0x2c, 0xc9, 0x28, 0x4d, 0xd2, 0x4b, 0xce,
-	0xcf, 0xd5, 0x4f, 0xcf, 0x4f, 0xcf, 0xd7, 0x07, 0xab, 0x49, 0x2a, 0x4d, 0x03, 0xf3, 0xc0, 0x1c,
-	0x30, 0x0b, 0xa2, 0x57, 0x4a, 0xb0, 0x24, 0x33, 0x37, 0x35, 0xbe, 0x3c, 0x33, 0x2f, 0x25, 0xbf,
-	0x1c, 0x2a, 0xc4, 0x95, 0x9b, 0x5a, 0x92, 0x08, 0x61, 0x2b, 0x5d, 0x64, 0xe4, 0xe2, 0x76, 0x2d,
-	0x4b, 0xcd, 0x2b, 0x71, 0x03, 0x5b, 0x28, 0xe4, 0xc9, 0xc5, 0x01, 0x92, 0x4d, 0x49, 0x2c, 0x49,
-	0x94, 0x60, 0x54, 0x60, 0xd4, 0xe0, 0x36, 0x12, 0xd7, 0x43, 0xb2, 0x5d, 0xcf, 0x3f, 0x29, 0x2b,
-	0x35, 0xb9, 0xc4, 0x37, 0xb5, 0x24, 0xd1, 0x49, 0xe4, 0xc4, 0x3d, 0x79, 0x86, 0x0b, 0xf7, 0xe4,
-	0x19, 0x5f, 0xdd, 0x93, 0x87, 0x6b, 0x0a, 0x82, 0xb3, 0x84, 0xc4, 0xb8, 0xd8, 0x12, 0x93, 0x4b,
-	0x32, 0xf3, 0xf3, 0x24, 0x98, 0x14, 0x18, 0x35, 0x38, 0x83, 0xa0, 0x3c, 0x21, 0x3d, 0x2e, 0xae,
-	0xe2, 0x92, 0xc4, 0x92, 0xd4, 0xdc, 0xd4, 0xbc, 0x92, 0x62, 0x09, 0x66, 0x05, 0x66, 0x0d, 0x4e,
-	0x27, 0xbe, 0x57, 0xf7, 0xe4, 0x91, 0x44, 0x83, 0x90, 0xd8, 0x42, 0xfa, 0x5c, 0x2c, 0xe5, 0x19,
-	0xa9, 0x79, 0x12, 0x6c, 0x60, 0xe7, 0x48, 0xa3, 0x38, 0x27, 0x24, 0x33, 0x37, 0x35, 0x1c, 0xec,
-	0xb7, 0xf0, 0x8c, 0xd4, 0xbc, 0x20, 0xb0, 0x42, 0x27, 0xe5, 0x1f, 0x0f, 0xe5, 0x18, 0x57, 0x3c,
-	0x92, 0x63, 0xdc, 0xf1, 0x48, 0x8e, 0xf1, 0xc4, 0x23, 0x39, 0xc6, 0x0b, 0x8f, 0xe4, 0x18, 0x1f,
-	0x3c, 0x92, 0x63, 0x9c, 0xf1, 0x58, 0x8e, 0x21, 0x8a, 0x15, 0xac, 0x33, 0x89, 0x0d, 0xec, 0x7f,
-	0x63, 0x40, 0x00, 0x00, 0x00, 0xff, 0xff, 0xa8, 0x4d, 0xcc, 0x7e, 0x6a, 0x01, 0x00, 0x00,
+var fileDescriptor_filter_4cd8c129e41c4f71 = []byte{
+	// 319 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x5c, 0x90, 0xcf, 0x4a, 0x02, 0x51,
+	0x14, 0xc6, 0xbd, 0x5a, 0xa2, 0x77, 0xfa, 0x43, 0x97, 0xa8, 0xc1, 0xe0, 0x8e, 0xd4, 0xc6, 0x4d,
+	0x23, 0xd5, 0xaa, 0x65, 0x42, 0x41, 0x8b, 0x08, 0x86, 0x40, 0x68, 0x13, 0x33, 0x7a, 0xd4, 0x1b,
+	0xcd, 0xbd, 0x32, 0xf7, 0x4c, 0xd6, 0x53, 0xb4, 0xed, 0x11, 0x7a, 0x84, 0x1e, 0xc1, 0xa5, 0x4f,
+	0x30, 0xd4, 0xb4, 0xf3, 0x09, 0x5a, 0x46, 0x47, 0x11, 0x6b, 0xf7, 0xfd, 0xce, 0x1f, 0xbe, 0xf3,
+	0x1d, 0xbe, 0xd6, 0x53, 0x0f, 0x08, 0x89, 0x3f, 0x4c, 0x0c, 0x1a, 0xe1, 0x58, 0xd0, 0x36, 0xf5,
+	0xf1, 0x79, 0x08, 0xb6, 0x76, 0xd8, 0x57, 0x38, 0x48, 0x23, 0xbf, 0x63, 0xe2, 0x66, 0xdf, 0xf4,
+	0x4d, 0x93, 0x66, 0xa2, 0xb4, 0x47, 0x44, 0x40, 0x6a, 0xb6, 0x5b, 0xdb, 0x42, 0x15, 0xc3, 0xdd,
+	0x48, 0xe9, 0xae, 0x19, 0xcd, 0x4b, 0x3c, 0x06, 0x0c, 0x67, 0x7a, 0xff, 0xa5, 0xc8, 0x9d, 0xf3,
+	0x47, 0xd0, 0x78, 0x41, 0x86, 0xe2, 0x92, 0x57, 0x7e, 0xbb, 0xdd, 0x10, 0x43, 0x97, 0xd5, 0x59,
+	0xc3, 0x39, 0xde, 0xf5, 0x97, 0xdc, 0xfd, 0xeb, 0xe8, 0x1e, 0x3a, 0x78, 0x05, 0x18, 0xb6, 0xb6,
+	0xc7, 0x99, 0x57, 0x98, 0x64, 0x1e, 0x9b, 0x66, 0xde, 0x62, 0x29, 0x58, 0x28, 0xb1, 0xc3, 0xcb,
+	0x61, 0x07, 0x95, 0xd1, 0x6e, 0xb1, 0xce, 0x1a, 0xd5, 0x60, 0x4e, 0xe2, 0x88, 0x3b, 0xf0, 0x34,
+	0x4c, 0xc0, 0x5a, 0x65, 0xb4, 0x75, 0x4b, 0xf5, 0x52, 0xa3, 0xda, 0xda, 0x9c, 0x66, 0xde, 0x72,
+	0x39, 0x58, 0x06, 0xd1, 0xe4, 0x2b, 0xa3, 0x01, 0x68, 0xb7, 0x4c, 0x17, 0xed, 0xfd, 0xb9, 0xe8,
+	0x46, 0xc5, 0xd0, 0xa6, 0x78, 0xed, 0x01, 0xe8, 0x80, 0x06, 0xc5, 0x29, 0xdf, 0x48, 0x52, 0x4d,
+	0xd1, 0x43, 0x6b, 0x01, 0xad, 0x5b, 0x21, 0x1b, 0x31, 0xcd, 0xbc, 0x7f, 0x9d, 0x60, 0x7d, 0xce,
+	0x67, 0x84, 0xad, 0x83, 0xef, 0x4f, 0xc9, 0xde, 0x72, 0xc9, 0xde, 0x73, 0xc9, 0xc6, 0xb9, 0x64,
+	0x93, 0x5c, 0xb2, 0x8f, 0x5c, 0xb2, 0xd7, 0x2f, 0x59, 0xb8, 0x5d, 0x25, 0xd3, 0xa8, 0x4c, 0xdf,
+	0x3b, 0xf9, 0x09, 0x00, 0x00, 0xff, 0xff, 0xc7, 0xbd, 0xd0, 0x14, 0xa8, 0x01, 0x00, 0x00,
 }

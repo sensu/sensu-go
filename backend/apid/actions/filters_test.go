@@ -317,7 +317,7 @@ func TestEventFilterUpdate(t *testing.T) {
 	)
 
 	badEventFilter := types.FixtureEventFilter("filter1")
-	badEventFilter.Statements = nil
+	badEventFilter.Expressions = nil
 
 	testCases := []struct {
 		name            string

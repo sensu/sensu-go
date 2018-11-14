@@ -67,8 +67,8 @@ type boltDBAssetManager struct {
 // If a value is not returned, the asset is not installed or not installed
 // correctly. We then proceed to attempt asset installation.
 func (b *boltDBAssetManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
-	var localAsset *RuntimeAsset
 	key := []byte(asset.Sha512)
+	var localAsset *RuntimeAsset
 
 	// Concurrent calls to View are allowed, but a concurrent call that has
 	// has proceeded to Update below will block here.
@@ -94,6 +94,7 @@ func (b *boltDBAssetManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 
 	// Check to see if the view was successful.
 	if localAsset != nil {
+		localAsset.SHA512 = asset.Sha512
 		return localAsset, nil
 	}
 
@@ -146,6 +147,10 @@ func (b *boltDBAssetManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 		return bucket.Put(key, assetJSON)
 	}); err != nil {
 		return nil, err
+	}
+
+	if localAsset != nil {
+		localAsset.SHA512 = asset.Sha512
 	}
 
 	return localAsset, nil

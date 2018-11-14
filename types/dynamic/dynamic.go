@@ -5,9 +5,17 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
-
-	jsoniter "github.com/json-iterator/go"
 )
+
+// SynthesizeExtras is a type that wants to pass extra values to the Synthesize
+// function. The key-value pairs will be included as-is without inspection by
+// the Synthesize function. This is useful for populated synthesized values with
+// functions or computed values.
+type SynthesizeExtras interface {
+	// SynthesizeExtras returns a map of extra values to include when passing
+	// to Synthesize().
+	SynthesizeExtras() map[string]interface{}
+}
 
 // SetField inserts a value into v at path.
 //
@@ -83,11 +91,8 @@ func GetField(v interface{}, name string) (interface{}, error) {
 }
 
 // reflectMapToMapParameters turns a reflect.Map into a map[string]interface{}
-// that implements govaluate.Parameters. A custom datatype is used here instead
-// of govaluate.MapParameters, in order to avoid creating a package dependency
-// here.
 func reflectMapToMapParameters(v reflect.Value) interface{} {
-	result := make(mapParameters)
+	result := make(map[string]interface{})
 	for _, key := range v.MapKeys() {
 		if key.Kind() != reflect.String {
 			// Fallback - if the map has a non-string key type, return the
@@ -99,80 +104,119 @@ func reflectMapToMapParameters(v reflect.Value) interface{} {
 	return result
 }
 
-type mapParameters map[string]interface{}
-
-func (m mapParameters) Get(name string) (interface{}, error) {
-	v, ok := m[name]
-	if !ok {
-		return nil, fmt.Errorf("missing map key: %q", name)
-	}
-	return v, nil
-}
-
-// AnyParameters connects jsoniter.Any to govaluate.Parameters
-type AnyParameters struct {
-	any jsoniter.Any
-}
-
-// Get implements the govaluate.Parameters interface.
-func (p AnyParameters) Get(name string) (interface{}, error) {
-	any := p.any.Get(name)
-	if err := any.LastError(); err != nil {
-		return nil, err
-	}
-	switch any.ValueType() {
-	case jsoniter.InvalidValue:
-		return nil, fmt.Errorf("dynamic: %s", any.LastError())
-	case jsoniter.ObjectValue:
-		return AnyParameters{any: any}, any.LastError()
-	default:
-		return any.GetInterface(), any.LastError()
-	}
-
-}
-
-// Synthesize constructs a map[string]interface{} from its input using reflection.
-func Synthesize(v interface{}) (map[string]interface{}, error) {
-	out := map[string]interface{}{}
-
+// Synthesize recursively turns structs into map[string]interface{}
+// values. It works on most datatypes. Synthesize panics if it is
+// called on channels.
+//
+// Synthesize will use the json tag from struct fields to name map
+// keys, if the json tag is present.
+func Synthesize(v interface{}) interface{} {
 	value := reflect.Indirect(reflect.ValueOf(v))
-	t := value.Type()
-
-	if t.Kind() != reflect.Struct {
-		return nil, fmt.Errorf("expected a struct, received %s", t.Kind().String())
+	switch value.Kind() {
+	case reflect.Struct:
+		result := synthesizeStruct(value)
+		if m, ok := v.(SynthesizeExtras); ok {
+			for k, v := range m.SynthesizeExtras() {
+				result[k] = v
+			}
+		}
+		return result
+	case reflect.Slice, reflect.Array:
+		return synthesizeSlice(value)
+	case reflect.Map:
+		return synthesizeMap(value)
+	case reflect.Chan:
+		panic("can't synthesize channel")
+	case reflect.Invalid:
+		// We got passed a nil
+		return nil
+	default:
+		if value.CanInterface() {
+			return value.Interface()
+		}
+		return nil
 	}
+}
 
-	for i := 0; i < value.NumField(); i++ {
+func synthesizeSlice(value reflect.Value) interface{} {
+	length := value.Len()
+	slice := make([]interface{}, length)
+	for i := 0; i < length; i++ {
+		val := value.Index(i)
+		var elt interface{} = nil
+		if val.CanInterface() {
+			elt = val.Interface()
+		}
+		slice[i] = Synthesize(elt)
+	}
+	return slice
+}
+
+func synthesizeMap(value reflect.Value) interface{} {
+	typ := value.Type()
+	keyT := typ.Key()
+	if keyT.Kind() != reflect.String {
+		// Maps without string keys are not supported
+		return map[string]interface{}{}
+	}
+	length := value.Len()
+	out := make(map[string]interface{}, length)
+	for _, key := range value.MapKeys() {
+		val := value.MapIndex(key)
+		var elt interface{}
+		if val.CanInterface() {
+			elt = val.Interface()
+		}
+		out[key.Interface().(string)] = Synthesize(elt)
+	}
+	return out
+}
+
+func synthesizeStruct(value reflect.Value) map[string]interface{} {
+	numField := value.NumField()
+	out := make(map[string]interface{}, numField)
+	t := value.Type()
+	for i := 0; i < numField; i++ {
 		field := t.Field(i)
+		if field.PkgPath != "" {
+			// unexported fields are not included in the synthesis
+			continue
+		}
 		s := structField{Field: field}
-		_, omitEmpty := s.jsonFieldName()
+		fieldName, omitEmpty := s.jsonFieldName()
+		fieldValue := value.Field(i)
 
 		// Don't add empty/nil fields to the map if omitempty is specified
-		empty := isEmpty(value.Field(i))
+		empty := isEmpty(fieldValue)
 		if empty && omitEmpty {
 			continue
 		}
 
-		// flatten embedded and non-embedded fields to the top level
-		if value.Field(i).Kind() == reflect.Struct {
-			fields, err := Synthesize(value.Field(i).Interface())
-			if err != nil {
-				return nil, fmt.Errorf("could not flatten embedded struct: %s", err)
-			}
+		switch fieldValue.Kind() {
+		case reflect.Struct:
+			// Recursively convert all fields to synthesized values
+			fields := synthesizeStruct(fieldValue)
 
-			if value.Type().Field(i).Anonymous {
+			// flatten embedded fields to the top level
+			if t.Field(i).Anonymous {
 				for k, v := range fields {
 					out[k] = v
 				}
 			} else {
-				out[field.Name] = fields
+				out[fieldName] = fields
 			}
-
-			continue
+		case reflect.Slice, reflect.Array:
+			out[fieldName] = synthesizeSlice(fieldValue)
+		case reflect.Map:
+			out[fieldName] = synthesizeMap(fieldValue)
+		default:
+			if fieldValue.CanInterface() {
+				out[fieldName] = Synthesize(fieldValue.Interface())
+			} else {
+				out[fieldName] = nil
+			}
 		}
-
-		out[field.Name] = value.Field(i).Interface()
 	}
 
-	return out, nil
+	return out
 }

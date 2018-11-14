@@ -58,7 +58,7 @@ func TestPrepareHook(t *testing.T) {
 	assert.False(agent.prepareHook(hook))
 
 	// Valid check
-	hook.Command = "{{ .Name }}"
+	hook.Command = "{{ .name }}"
 	assert.True(agent.prepareHook(hook))
 }
 

@@ -20,6 +20,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 subcommand.
 - Added functionality to the dynamic synthesize function, allowing it to
 flatten embedded and non-embedded fields to the top level.
+- Added the sensuctl edit command.
+- Added javascript filtering.
+
+### Removed
+- Govaluate is no longer part of sensu-go.
 
 ### Fixed
 - Display appropriate fallback when an entity's lastSeen field is empty.
@@ -52,6 +57,10 @@ string-string key-value pairs.
 - Check `proxy_entity_id`/`ProxyEntityID` field has changed to `proxy_entity_name`/`ProxyEntityName`.
 - Objects containing both a `name`/`Name` and `namespace`/`Namespace` field have been
 replaced with `metadata`/`ObjectMeta` (which contains both of those fields).
+- Filter and token substitution variable names now match API naming. Most names
+that were previously UpperCased are now lower_cased.
+- Filter statements are now called expressions. Users should update their
+filter definitions to use this new naming.
 
 ## [2.0.0-beta.7-1] - 2018-10-26
 

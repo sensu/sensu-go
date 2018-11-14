@@ -74,13 +74,13 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
-			Title: "Statements",
+			Title: "Expressions",
 			CellTransformer: func(data interface{}) string {
 				filter, ok := data.(types.EventFilter)
 				if !ok {
 					return cli.TypeError
 				}
-				return strings.Join(filter.Statements, " && ")
+				return strings.Join(filter.Expressions, " && ")
 			},
 		},
 	})

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"reflect"
 	"sort"
 	"strings"
 )
@@ -85,16 +84,6 @@ func (s *Silenced) URIPath() string {
 		s.Name, _ = SilencedName(s.Subscription, s.Check)
 	}
 	return fmt.Sprintf("/silenced/%s", url.PathEscape(s.Name))
-}
-
-// Get implements govaluate.Parameters
-func (s *Silenced) Get(fname string) (interface{}, error) {
-	strukt := reflect.Indirect(reflect.ValueOf(s))
-	field := strukt.FieldByName(fname)
-	if field.IsValid() {
-		return reflect.Indirect(field).Interface(), nil
-	}
-	return nil, nil
 }
 
 // SortSilencedByPredicate can be used to sort a given collection using a given

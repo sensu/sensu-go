@@ -10,8 +10,9 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
+	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/util/eval"
+	"github.com/sensu/sensu-go/types/dynamic"
 	string_utils "github.com/sensu/sensu-go/util/strings"
 )
 
@@ -86,23 +87,21 @@ func (r *namespaceImpl) Checks(p schema.NamespaceChecksFieldResolverParams) (int
 	}
 
 	// apply filters
-	var filteredChecks []*types.CheckConfig
+	filteredChecks := records
 	filter := p.Args.Filter
 	if len(filter) > 0 {
-		predicate, err := eval.NewPredicate(filter)
-		if err != nil {
-			logger.WithError(err).Debug("error with given predicate")
-		} else {
-			for _, record := range records {
-				if matched, err := predicate.Eval(record); err != nil {
-					logger.WithError(err).Debug("unable to filter record")
-				} else if matched {
-					filteredChecks = append(filteredChecks, record)
-				}
+		filteredChecks = make([]*types.CheckConfig, 0, len(records))
+		for _, record := range records {
+			r := dynamic.Synthesize(record)
+			matched, err := js.Evaluate(filter, r, nil)
+			if err != nil {
+				logger.WithError(err).Debug("unable to filter record")
+				continue
+			}
+			if matched {
+				filteredChecks = append(filteredChecks, record)
 			}
 		}
-	} else {
-		filteredChecks = records
 	}
 
 	// sort records
@@ -131,23 +130,21 @@ func (r *namespaceImpl) Silences(p schema.NamespaceSilencesFieldResolverParams) 
 	}
 
 	// apply filters
-	var filteredSilences []*types.Silenced
+	filteredSilences := records
 	filter := p.Args.Filter
 	if len(filter) > 0 {
-		predicate, err := eval.NewPredicate(filter)
-		if err != nil {
-			logger.WithError(err).Debug("error with given predicate")
-		} else {
-			for _, r := range records {
-				if matched, err := predicate.Eval(r); err != nil {
-					logger.WithError(err).Debug("unable to filter record")
-				} else if matched {
-					filteredSilences = append(filteredSilences, r)
-				}
+		filteredSilences = make([]*types.Silenced, 0, len(records))
+		for _, r := range records {
+			rec := dynamic.Synthesize(r)
+			matched, err := js.Evaluate(filter, rec, nil)
+			if err != nil {
+				logger.WithError(err).Debug("unable to filter record")
+				continue
+			}
+			if matched {
+				filteredSilences = append(filteredSilences, r)
 			}
 		}
-	} else {
-		filteredSilences = records
 	}
 
 	// sort records
@@ -180,23 +177,22 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 	}
 
 	// apply filters
-	var filteredEntities []*types.Entity
 	filter := p.Args.Filter
+	filteredEntities := records
 	if len(filter) > 0 {
-		predicate, err := eval.NewPredicate(filter)
-		if err != nil {
-			logger.WithError(err).Debug("error with given predicate")
-		} else {
-			for _, event := range records {
-				if matched, err := predicate.Eval(event); err != nil {
-					logger.WithError(err).Debug("unable to filter record")
-				} else if matched {
-					filteredEntities = append(filteredEntities, event)
-				}
+		filteredEntities = make([]*types.Entity, 0, len(filteredEntities))
+		for _, event := range records {
+			r := dynamic.Synthesize(event)
+			matched, err := js.Evaluate(filter, r, nil)
+
+			if err != nil {
+				logger.WithError(err).Debug("unable to filter record")
+				continue
+			}
+			if matched {
+				filteredEntities = append(filteredEntities, event)
 			}
 		}
-	} else {
-		filteredEntities = records
 	}
 
 	// sort records
@@ -228,23 +224,21 @@ func (r *namespaceImpl) Events(p schema.NamespaceEventsFieldResolverParams) (int
 	}
 
 	// apply filters
-	var filteredEvents []*types.Event
 	filter := p.Args.Filter
+	filteredEvents := records
 	if len(filter) > 0 {
-		predicate, err := eval.NewPredicate(filter)
-		if err != nil {
-			logger.WithError(err).Debug("error with given predicate")
-		} else {
-			for _, event := range records {
-				if matched, err := predicate.Eval(event); err != nil {
-					logger.WithError(err).Debug("unable to filter event")
-				} else if matched {
-					filteredEvents = append(filteredEvents, event)
-				}
+		filteredEvents = make([]*types.Event, 0, len(records))
+		for _, event := range records {
+			r := dynamic.Synthesize(event)
+			matched, err := js.Evaluate(filter, r, nil)
+			if err != nil {
+				logger.WithError(err).Debug("unable to filter event")
+				continue
+			}
+			if matched {
+				filteredEvents = append(filteredEvents, event)
 			}
 		}
-	} else {
-		filteredEvents = records
 	}
 
 	// sort records

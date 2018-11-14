@@ -44,16 +44,6 @@ func TestValidator(t *testing.T) {
 	asset.URL = "file:///root/my_script.sh"
 	assert.Error(asset.Validate())
 
-	// Given asset with a filter that has a modifier token
-	asset = FixtureAsset("name")
-	asset.Filters = []string{"lol+1.0"}
-	assert.Error(asset.Validate())
-
-	// Given asset with a filter that has a modifier token
-	asset = FixtureAsset("name")
-	asset.Filters = []string{"!6!!6"}
-	assert.Error(asset.Validate())
-
 	// Given asset with valid filters
 	asset = FixtureAsset("name")
 	asset.Filters = []string{`entity.OS in ("macos", "linux")`}

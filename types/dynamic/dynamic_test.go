@@ -4,7 +4,6 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/sensu/govaluate"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -117,35 +116,6 @@ func TestGetField(t *testing.T) {
 	}
 }
 
-func TestQueryGovaluateSimple(t *testing.T) {
-	m := &MyType{
-		Bar: 5,
-	}
-
-	expr, err := govaluate.NewEvaluableExpression("bar == 5")
-	require.NoError(t, err)
-	require.NotNil(t, expr)
-
-	result, err := expr.Eval(m)
-	require.NoError(t, err)
-	require.Equal(t, true, result)
-}
-
-func BenchmarkQueryGovaluateSimple(b *testing.B) {
-	m := &MyType{
-		Bar: 5,
-	}
-
-	expr, err := govaluate.NewEvaluableExpression("bar == 5")
-	require.NoError(b, err)
-	require.NotNil(b, expr)
-	b.ResetTimer()
-
-	for i := 0; i < b.N; i++ {
-		_, _ = expr.Eval(m)
-	}
-}
-
 func TestSetFieldOnStructField(t *testing.T) {
 	var m MyType
 	err := SetField(&m, "foo", "hello, world!")
@@ -162,14 +132,14 @@ func TestSynthesize(t *testing.T) {
 		{
 			name:     "empty input",
 			input:    &MyType{},
-			expected: map[string]interface{}{"Bar": 0, "Foo": ""},
+			expected: map[string]interface{}{"bar": 0, "foo": ""},
 		},
 		{
 			name:  "standard fields",
 			input: &MyType{Foo: "bar", Bar: 5},
 			expected: map[string]interface{}{
-				"Bar": 5,
-				"Foo": "bar",
+				"bar": 5,
+				"foo": "bar",
 			},
 		},
 		{
@@ -191,22 +161,22 @@ func TestSynthesize(t *testing.T) {
 				},
 			},
 			expected: map[string]interface{}{
-				"Bar":       5,
-				"Foo":       "bar",
-				"Name":      "baz",
-				"Namespace": "default",
-				"Labels": map[string]string{
+				"bar":       5,
+				"foo":       "bar",
+				"name":      "baz",
+				"namespace": "default",
+				"labels": map[string]interface{}{
 					"Hi": "hello",
 				},
-				"Annotations": map[string]string{
+				"annotations": map[string]interface{}{
 					"One": "1",
 					"Two": "2",
 				},
-				"NotEmbedded": map[string]interface{}{
-					"Name":        "not-baz",
-					"Namespace":   "not-default",
-					"Labels":      map[string]string{},
-					"Annotations": map[string]string{},
+				"not-embed": map[string]interface{}{
+					"name":        "not-baz",
+					"namespace":   "not-default",
+					"labels":      map[string]interface{}{},
+					"annotations": map[string]interface{}{},
 				},
 			},
 		},
@@ -214,7 +184,7 @@ func TestSynthesize(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, _ := Synthesize(tc.input)
+			result := Synthesize(tc.input)
 			assert.Equal(t, tc.expected, reflect.ValueOf(result).Interface())
 		})
 	}

@@ -155,7 +155,7 @@ func TestHandleTokenSubstitution(t *testing.T) {
 	agent.sendq = ch
 
 	// check command with valid token substitution
-	checkConfig.Command = `echo {{ .Name }} {{ .Missing | default "defaultValue" }}`
+	checkConfig.Command = `echo {{ .name }} {{ .Missing | default "defaultValue" }}`
 	checkConfig.Timeout = 10
 
 	payload, err := json.Marshal(request)

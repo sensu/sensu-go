@@ -1,8 +1,9 @@
 package asset
 
 import (
+	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/util/eval"
+	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/sirupsen/logrus"
 )
 
@@ -52,11 +53,11 @@ func (f *filteredManager) isFiltered(asset *types.Asset) (bool, error) {
 		return true, nil
 	}
 
-	params := make(map[string]interface{}, 1)
-	params["entity"] = f.entity
+	synth := dynamic.Synthesize(f.entity)
+	params := map[string]interface{}{"entity": synth}
 
 	for _, filter := range asset.Filters {
-		result, err := eval.EvaluatePredicate(filter, params)
+		result, err := js.Evaluate(filter, params, nil)
 		if err != nil || !result {
 			return false, err
 		}

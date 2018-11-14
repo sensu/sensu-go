@@ -34,15 +34,6 @@ func TestFixtureEntityIsValid(t *testing.T) {
 	assert.NoError(t, e.Validate())
 }
 
-func TestEntityGet(t *testing.T) {
-	e := FixtureEntity("myAgent")
-
-	// Find exported field
-	val, err := e.Get("Name")
-	require.NoError(t, err)
-	assert.EqualValues(t, "myAgent", val)
-}
-
 func TestEntityUnmarshal(t *testing.T) {
 	entity := Entity{}
 

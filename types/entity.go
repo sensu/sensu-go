@@ -38,11 +38,6 @@ func (e *Entity) Validate() error {
 	return nil
 }
 
-// Get implements govaluate.Parameters
-func (e *Entity) Get(name string) (interface{}, error) {
-	return dynamic.GetField(e, name)
-}
-
 // MarshalJSON implements the json.Marshaler interface.
 func (e *Entity) MarshalJSON() ([]byte, error) {
 	// Redact the entity before marshalling the entity so we don't leak any

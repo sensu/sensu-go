@@ -44,7 +44,7 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("action", "allow"))
-	require.NoError(t, cmd.Flags().Set("statements", "10 > 0"))
+	require.NoError(t, cmd.Flags().Set("expressions", "10 > 0"))
 	out, err := test.RunCmd(cmd, []string{"can-holla"})
 
 	assert.Regexp("OK", out)
@@ -60,7 +60,7 @@ func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("action", "allow"))
-	require.NoError(t, cmd.Flags().Set("statements", "10 > 0"))
+	require.NoError(t, cmd.Flags().Set("expressions", "10 > 0"))
 	out, err := test.RunCmd(cmd, []string{"can-holla"})
 
 	assert.Empty(out)
