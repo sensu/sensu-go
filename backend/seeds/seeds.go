@@ -81,12 +81,12 @@ func setupClusterRoleBindings(store store.Store) error {
 	clusterAdmin := &types.ClusterRoleBinding{
 		Name: "cluster-admin",
 		RoleRef: types.RoleRef{
-			Kind: "ClusterRole",
+			Type: "ClusterRole",
 			Name: "cluster-admin",
 		},
 		Subjects: []types.Subject{
 			types.Subject{
-				Kind: "Group",
+				Type: "Group",
 				Name: "cluster-admins",
 			},
 		},
@@ -100,12 +100,12 @@ func setupClusterRoleBindings(store store.Store) error {
 	systemAgent := &types.ClusterRoleBinding{
 		Name: "system:agent",
 		RoleRef: types.RoleRef{
-			Kind: "ClusterRole",
+			Type: "ClusterRole",
 			Name: "system:agent",
 		},
 		Subjects: []types.Subject{
 			types.Subject{
-				Kind: "Group",
+				Type: "Group",
 				Name: "system:agents",
 			},
 		},
@@ -119,12 +119,12 @@ func setupClusterRoleBindings(store store.Store) error {
 	systemUser := &types.ClusterRoleBinding{
 		Name: "system:user",
 		RoleRef: types.RoleRef{
-			Kind: "ClusterRole",
+			Type: "ClusterRole",
 			Name: "system:user",
 		},
 		Subjects: []types.Subject{
 			types.Subject{
-				Kind: "Group",
+				Type: "Group",
 				Name: "system:users",
 			},
 		},

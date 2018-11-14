@@ -53,7 +53,7 @@ func TestAuthorize(t *testing.T) {
 				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
 					Return([]*types.ClusterRoleBinding{&types.ClusterRoleBinding{
 						Subjects: []types.Subject{
-							types.Subject{Kind: types.UserKind, Name: "bar"},
+							types.Subject{Type: types.UserType, Name: "bar"},
 						},
 					}}, nil)
 				store.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
@@ -72,11 +72,11 @@ func TestAuthorize(t *testing.T) {
 				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
 					Return([]*types.ClusterRoleBinding{&types.ClusterRoleBinding{
 						RoleRef: types.RoleRef{
-							Kind: "ClusterRole",
+							Type: "ClusterRole",
 							Name: "admin",
 						},
 						Subjects: []types.Subject{
-							types.Subject{Kind: types.UserKind, Name: "foo"},
+							types.Subject{Type: types.UserType, Name: "foo"},
 						},
 					}}, nil)
 				store.On("GetClusterRole", mock.AnythingOfType("*context.emptyCtx"), "admin", mock.Anything).
@@ -98,11 +98,11 @@ func TestAuthorize(t *testing.T) {
 				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
 					Return([]*types.ClusterRoleBinding{&types.ClusterRoleBinding{
 						RoleRef: types.RoleRef{
-							Kind: "ClusterRole",
+							Type: "ClusterRole",
 							Name: "admin",
 						},
 						Subjects: []types.Subject{
-							types.Subject{Kind: types.UserKind, Name: "foo"},
+							types.Subject{Type: types.UserType, Name: "foo"},
 						},
 					}}, nil)
 				store.On("GetClusterRole", mock.AnythingOfType("*context.emptyCtx"), "admin", mock.Anything).
@@ -141,11 +141,11 @@ func TestAuthorize(t *testing.T) {
 				store.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
 					Return([]*types.RoleBinding{&types.RoleBinding{
 						RoleRef: types.RoleRef{
-							Kind: "Role",
+							Type: "Role",
 							Name: "admin",
 						},
 						Subjects: []types.Subject{
-							types.Subject{Kind: types.UserKind, Name: "foo"},
+							types.Subject{Type: types.UserType, Name: "foo"},
 						},
 					}}, nil)
 				store.On("GetRole", mock.AnythingOfType("*context.emptyCtx"), "admin", mock.Anything).
@@ -168,11 +168,11 @@ func TestAuthorize(t *testing.T) {
 				store.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
 					Return([]*types.RoleBinding{&types.RoleBinding{
 						RoleRef: types.RoleRef{
-							Kind: "Role",
+							Type: "Role",
 							Name: "admin",
 						},
 						Subjects: []types.Subject{
-							types.Subject{Kind: types.UserKind, Name: "foo"},
+							types.Subject{Type: types.UserType, Name: "foo"},
 						},
 					}}, nil)
 				store.On("GetRole", mock.AnythingOfType("*context.emptyCtx"), "admin", mock.Anything).
@@ -198,11 +198,11 @@ func TestAuthorize(t *testing.T) {
 				store.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
 					Return([]*types.RoleBinding{&types.RoleBinding{
 						RoleRef: types.RoleRef{
-							Kind: "Role",
+							Type: "Role",
 							Name: "admin",
 						},
 						Subjects: []types.Subject{
-							types.Subject{Kind: types.UserKind, Name: "foo"},
+							types.Subject{Type: types.UserType, Name: "foo"},
 						},
 					}}, nil)
 				store.On("GetRole", mock.AnythingOfType("*context.emptyCtx"), "admin", mock.Anything).
@@ -248,8 +248,8 @@ func TestMatchesUser(t *testing.T) {
 			name: "not matching",
 			user: types.User{Username: "foo"},
 			subjects: []types.Subject{
-				types.Subject{Kind: types.UserKind, Name: "bar"},
-				types.Subject{Kind: types.GroupKind, Name: "foo"},
+				types.Subject{Type: types.UserType, Name: "bar"},
+				types.Subject{Type: types.GroupType, Name: "foo"},
 			},
 			want: false,
 		},
@@ -257,8 +257,8 @@ func TestMatchesUser(t *testing.T) {
 			name: "matching via username",
 			user: types.User{Username: "foo"},
 			subjects: []types.Subject{
-				types.Subject{Kind: types.UserKind, Name: "bar"},
-				types.Subject{Kind: types.UserKind, Name: "foo"},
+				types.Subject{Type: types.UserType, Name: "bar"},
+				types.Subject{Type: types.UserType, Name: "foo"},
 			},
 			want: true,
 		},
@@ -266,7 +266,7 @@ func TestMatchesUser(t *testing.T) {
 			name: "matching via group",
 			user: types.User{Username: "foo", Groups: []string{"acme"}},
 			subjects: []types.Subject{
-				types.Subject{Kind: types.GroupKind, Name: "acme"},
+				types.Subject{Type: types.GroupType, Name: "acme"},
 			},
 			want: true,
 		},

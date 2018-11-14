@@ -32,12 +32,12 @@ func seedStore(t *testing.T, store store.Store) {
 	localAdmins := &types.ClusterRoleBinding{
 		Name: "admin",
 		RoleRef: types.RoleRef{
-			Kind: "ClusterRole",
+			Type: "ClusterRole",
 			Name: "admin",
 		},
 		Subjects: []types.Subject{
 			types.Subject{
-				Kind: "Group",
+				Type: "Group",
 				Name: "local-admins",
 			},
 		},
@@ -50,12 +50,12 @@ func seedStore(t *testing.T, store store.Store) {
 		Name:      "admin",
 		Namespace: "default",
 		RoleRef: types.RoleRef{
-			Kind: "ClusterRole",
+			Type: "ClusterRole",
 			Name: "admin",
 		},
 		Subjects: []types.Subject{
 			types.Subject{
-				Kind: "Group",
+				Type: "Group",
 				Name: "admins",
 			},
 		},
@@ -68,12 +68,12 @@ func seedStore(t *testing.T, store store.Store) {
 		Name:      "edit",
 		Namespace: "default",
 		RoleRef: types.RoleRef{
-			Kind: "ClusterRole",
+			Type: "ClusterRole",
 			Name: "edit",
 		},
 		Subjects: []types.Subject{
 			types.Subject{
-				Kind: "Group",
+				Type: "Group",
 				Name: "editors",
 			},
 		},
@@ -86,12 +86,12 @@ func seedStore(t *testing.T, store store.Store) {
 		Name:      "view",
 		Namespace: "default",
 		RoleRef: types.RoleRef{
-			Kind: "ClusterRole",
+			Type: "ClusterRole",
 			Name: "view",
 		},
 		Subjects: []types.Subject{
 			types.Subject{
-				Kind: "Group",
+				Type: "Group",
 				Name: "viewers",
 			},
 		},
@@ -119,12 +119,12 @@ func seedStore(t *testing.T, store store.Store) {
 		Name:      "foo-viewer",
 		Namespace: "default",
 		RoleRef: types.RoleRef{
-			Kind: "Role",
+			Type: "Role",
 			Name: "foo-viewer",
 		},
 		Subjects: []types.Subject{
 			types.Subject{
-				Kind: "Group",
+				Type: "Group",
 				Name: "foo-viewers",
 			},
 		},
@@ -589,13 +589,13 @@ func TestAuthorization(t *testing.T) {
 
 			// Prepare the router
 			router := mux.NewRouter()
-			router.PathPrefix("/apis/{group}/{version}/namespaces/{namespace}/{kind}/{name}").Handler(testHandler)
-			router.PathPrefix("/apis/{group}/{version}/namespaces/{namespace}/{kind}").Handler(testHandler)
-			router.PathPrefix("/apis/{group}/{version}/{kind}/{name}").Handler(testHandler)
-			router.PathPrefix("/apis/{group}/{version}/{kind}").Handler(testHandler)
+			router.PathPrefix("/apis/{group}/{version}/namespaces/{namespace}/{resource}/{name}").Handler(testHandler)
+			router.PathPrefix("/apis/{group}/{version}/namespaces/{namespace}/{resource}").Handler(testHandler)
+			router.PathPrefix("/apis/{group}/{version}/{resource}/{name}").Handler(testHandler)
+			router.PathPrefix("/apis/{group}/{version}/{resource}").Handler(testHandler)
 			router.PathPrefix("/{prefix:rbac}/{resource}/{id}/{subresource}").Handler(testHandler)
 			router.PathPrefix("/{prefix:rbac}/{resource}/{id}").Handler(testHandler)
-			router.PathPrefix("/{kind}/{id}").Handler(testHandler)
+			router.PathPrefix("/{resource}/{id}").Handler(testHandler)
 			router.PathPrefix("/").Handler(testHandler) // catch all for legacy routes
 			router.Use(namespaceMiddleware.Then, attributesMiddleware.Then, authorizationMiddleware.Then)
 

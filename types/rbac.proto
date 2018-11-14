@@ -51,15 +51,15 @@ message Role {
 // RoleRef maps groups to Roles or ClusterRoles.
 message RoleRef {
   // Type of role being referenced.
-  string kind = 1 [(gogoproto.jsontag) = "kind"];
+  string type = 1 [(gogoproto.jsontag) = "type"];
 
   // Name of the resource being referenced
   string name = 2 [(gogoproto.jsontag) = "name"];
 }
 
 message Subject {
-  // Kind of object referenced (user or group)
-  string kind = 1 [(gogoproto.jsontag) = "kind"];
+  // Type of object referenced (user or group)
+  string type = 1 [(gogoproto.jsontag) = "type"];
 
   // Name of the referenced object
   string name = 2 [(gogoproto.jsontag) = "name"];

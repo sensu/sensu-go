@@ -133,7 +133,7 @@ func (a *Authorizer) Authorize(ctx context.Context, attrs *authorization.Attribu
 }
 
 func (a *Authorizer) getRoleReferencerules(ctx context.Context, roleRef types.RoleRef) ([]types.Rule, error) {
-	switch roleRef.Kind {
+	switch roleRef.Type {
 	case "Role":
 		role, err := a.Store.GetRole(ctx, roleRef.Name)
 		if err != nil {
@@ -153,20 +153,20 @@ func (a *Authorizer) getRoleReferencerules(ctx context.Context, roleRef types.Ro
 		return clusterRole.Rules, nil
 
 	default:
-		return nil, fmt.Errorf("unsupported role reference kind: %s", roleRef.Kind)
+		return nil, fmt.Errorf("unsupported role reference type: %s", roleRef.Type)
 	}
 }
 
 // matchesUser returns whether any of the subjects matches the specified user
 func matchesUser(user types.User, subjects []types.Subject) bool {
 	for _, subject := range subjects {
-		switch subject.Kind {
-		case types.UserKind:
+		switch subject.Type {
+		case types.UserType:
 			if user.Username == subject.Name {
 				return true
 			}
 
-		case types.GroupKind:
+		case types.GroupType:
 			for _, group := range user.Groups {
 				if group == subject.Name {
 					return true
