@@ -50,13 +50,15 @@ func printToList(v interface{}, writer io.Writer) error {
 		return fmt.Errorf("%t is not a RoleBinding", v)
 	}
 
-	groups := []string{}
-	users := []string{}
+	userNames := []string{}
+	groupNames := []string{}
+
 	for _, subject := range roleBinding.Subjects {
-		if strings.ToLower(subject.Type) == "group" {
-			groups = append(groups, subject.Name)
-		} else {
-			users = append(users, subject.Name)
+		switch subject.Type {
+		case types.GroupType:
+			groupNames = append(groupNames, subject.Name)
+		case types.UserType:
+			userNames = append(userNames, subject.Name)
 		}
 	}
 
@@ -75,20 +77,23 @@ func printToList(v interface{}, writer io.Writer) error {
 				Label: roleBinding.RoleRef.Type,
 				Value: roleBinding.RoleRef.Name,
 			},
+			{
+				Label: "Subjects",
+			},
 		},
 	}
 
-	// Add groups and users subjects if provided
-	if len(groups) > 0 {
+	if len(userNames) > 0 {
 		cfg.Rows = append(cfg.Rows, &list.Row{
-			Label: "Groups",
-			Value: strings.Join(groups, ", "),
+			Label: "  Users",
+			Value: strings.Join(userNames, ", "),
 		})
 	}
-	if len(users) > 0 {
+
+	if len(groupNames) > 0 {
 		cfg.Rows = append(cfg.Rows, &list.Row{
-			Label: "Users",
-			Value: strings.Join(users, ", "),
+			Label: "  Groups",
+			Value: strings.Join(groupNames, ", "),
 		})
 	}
 
