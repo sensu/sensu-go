@@ -16,6 +16,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Add filter query support for labels.
 - Add support for setting labels on agents with the command line.
 - The sensuctl tool now supports yaml.
+- Add support for `--all-namespaces` flag in `sensuctl extension list`
+subcommand.
 - Added functionality to the dynamic synthesize function, allowing it to
 flatten embedded and non-embedded fields to the top level.
 
