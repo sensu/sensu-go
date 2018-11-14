@@ -31,7 +31,7 @@ func TestEventFilterStorage(t *testing.T) {
 
 		assert.Equal(t, filter.Name, retrieved.Name)
 		assert.Equal(t, filter.Action, retrieved.Action)
-		assert.Equal(t, filter.Statements, retrieved.Statements)
+		assert.Equal(t, filter.Expressions, retrieved.Expressions)
 
 		filters, err = store.GetEventFilters(ctx)
 		require.NoError(t, err)

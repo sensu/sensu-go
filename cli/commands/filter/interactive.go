@@ -13,7 +13,7 @@ type filterOpts struct {
 	Action        string `survey:"action"`
 	Name          string `survey:"name"`
 	Namespace     string `survey:"namespace"`
-	Statements    string `survey:"statements"`
+	Expressions   string `survey:"expressions"`
 	RuntimeAssets string `survey:"runtimeAssets"`
 }
 
@@ -56,10 +56,10 @@ func (opts *filterOpts) administerQuestionnaire(editing bool) error {
 			Validate: survey.Required,
 		},
 		{
-			Name: "statements",
+			Name: "expressions",
 			Prompt: &survey.Input{
-				Message: "Statements (comma separated list):",
-				Default: opts.Statements,
+				Message: "Expressions (comma separated list):",
+				Default: opts.Expressions,
 			},
 			Validate: survey.Required,
 		},
@@ -79,7 +79,7 @@ func (opts *filterOpts) Copy(filter *types.EventFilter) {
 	filter.Action = opts.Action
 	filter.Name = opts.Name
 	filter.Namespace = opts.Namespace
-	filter.Statements = helpers.SafeSplitCSV(opts.Statements)
+	filter.Expressions = helpers.SafeSplitCSV(opts.Expressions)
 	filter.RuntimeAssets = helpers.SafeSplitCSV(opts.RuntimeAssets)
 }
 
@@ -87,13 +87,13 @@ func (opts *filterOpts) withFilter(filter *types.EventFilter) {
 	opts.Name = filter.Name
 	opts.Namespace = filter.Namespace
 	opts.Action = filter.Action
-	opts.Statements = strings.Join(filter.Statements, ",")
+	opts.Expressions = strings.Join(filter.Expressions, ",")
 	opts.RuntimeAssets = strings.Join(filter.RuntimeAssets, ",")
 }
 
 func (opts *filterOpts) withFlags(flags *pflag.FlagSet) {
 	opts.Action, _ = flags.GetString("action")
-	opts.Statements, _ = flags.GetString("statements")
+	opts.Expressions, _ = flags.GetString("expressions")
 
 	if namespace := helpers.GetChangedStringValueFlag("namespace", flags); namespace != "" {
 		opts.Namespace = namespace

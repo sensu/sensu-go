@@ -76,9 +76,9 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
-	assert.Contains(out, "Name")       // heading
-	assert.Contains(out, "Action")     // heading
-	assert.Contains(out, "Statements") // heading
+	assert.Contains(out, "Name")        // heading
+	assert.Contains(out, "Action")      // heading
+	assert.Contains(out, "Expressions") // heading
 	assert.Nil(err)
 }
 
@@ -104,7 +104,7 @@ func TestListCommandRunEClosureWithAlphaNumericChars(t *testing.T) {
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
 	filter := types.FixtureEventFilter("name-one")
-	filter.Statements = append(filter.Statements, "10 > 0")
+	filter.Expressions = append(filter.Expressions, "10 > 0")
 	client.On("ListFilters", "*").Return([]types.EventFilter{*filter}, nil)
 
 	cmd := ListCommand(cli)

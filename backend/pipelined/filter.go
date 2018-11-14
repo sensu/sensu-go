@@ -48,29 +48,29 @@ func evaluateEventFilter(event *types.Event, filter *types.EventFilter, assets a
 
 	synth := dynamic.Synthesize(event)
 
-	for _, statement := range filter.Statements {
-		match := evaluateJSFilter(synth, statement, assets)
+	for _, expression := range filter.Expressions {
+		match := evaluateJSFilter(synth, expression, assets)
 
-		// Allow - One of the statements did not match, filter the event
+		// Allow - One of the expressions did not match, filter the event
 		if filter.Action == types.EventFilterActionAllow && !match {
 			logger.WithFields(fields).Debug("denying event that does not match filter")
 			return true
 		}
 
-		// Deny - One of the statements did not match, do not filter the event
+		// Deny - One of the expressions did not match, do not filter the event
 		if filter.Action == types.EventFilterActionDeny && !match {
 			logger.WithFields(fields).Debug("allowing event that does not match filter")
 			return false
 		}
 	}
 
-	// Allow - All of the statements matched, do not filter the event
+	// Allow - All of the expressions matched, do not filter the event
 	if filter.Action == types.EventFilterActionAllow {
 		logger.WithFields(fields).Debug("allowing event that matches filter")
 		return false
 	}
 
-	// Deny - All of the statements matched, filter the event
+	// Deny - All of the expressions matched, filter the event
 	if filter.Action == types.EventFilterActionDeny {
 		logger.WithFields(fields).Debug("denying event that matches filter")
 		return true
@@ -126,8 +126,8 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 
 			if filter != nil {
 				// Execute the filter, evaluating each of its
-				// statements against the event. The event is rejected
-				// if the product of all statements is true.
+				// expressions against the event. The event is rejected
+				// if the product of all expressions is true.
 				ctx := types.SetContextFromResource(context.Background(), filter)
 				matchedAssets := asset.GetAssets(ctx, p.store, filter.RuntimeAssets)
 				assets, err := asset.GetAll(p.assetGetter, matchedAssets)

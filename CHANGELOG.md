@@ -56,6 +56,8 @@ string-string key-value pairs.
 replaced with `metadata`/`ObjectMeta` (which contains both of those fields).
 - Filter and token substitution variable names now match API naming. Most names
 that were previously UpperCased are now lower_cased.
+- Filter statements are now called expressions. Users should update their
+filter definitions to use this new naming.
 
 ## [2.0.0-beta.7-1] - 2018-10-26
 
