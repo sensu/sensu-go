@@ -190,7 +190,7 @@ class Drawer extends React.Component {
                   />
                   <DrawerButton
                     Icon={SilenceIcon}
-                    primary="Silenced"
+                    primary="Silences"
                     component={Link}
                     onClick={onToggle}
                     to={linkPath(params, "silences")}

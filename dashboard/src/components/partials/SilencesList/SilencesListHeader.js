@@ -1,8 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import ConfirmDelete from "/components/partials/ConfirmDelete";
-import DeleteMenuItem from "/components/partials/ToolbarMenuItems/Delete";
+import ConfirmUnsilence from "/components/partials/ConfirmUnsilence";
+import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
 import ListHeader from "/components/partials/ListHeader";
 import ListSortSelector from "/components/partials/ListSortSelector";
 import ToolbarMenu from "/components/partials/ToolbarMenu";
@@ -46,10 +46,14 @@ class SilencesListHeader extends React.PureComponent {
 
     return (
       <ToolbarMenu>
-        <ToolbarMenu.Item id="delete" visible="always">
-          <ConfirmDelete onSubmit={onClickDelete}>
-            {confirm => <DeleteMenuItem onClick={confirm.open} />}
-          </ConfirmDelete>
+        <ToolbarMenu.Item id="clearSilence" visible="always">
+          <ConfirmUnsilence
+            action="unsilence"
+            resources={this.props.selectedItems}
+            onSubmit={onClickDelete}
+          >
+            {confirm => <UnsilenceMenuItem onClick={confirm.open} />}
+          </ConfirmUnsilence>
         </ToolbarMenu.Item>
       </ToolbarMenu>
     );

@@ -7,8 +7,8 @@ import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
 import Checkbox from "@material-ui/core/Checkbox";
 import Chip from "@material-ui/core/Chip";
-import ConfirmDelete from "/components/partials/ConfirmDelete";
-import DeleteMenuItem from "/components/partials/ToolbarMenuItems/Delete";
+import ConfirmUnsilence from "/components/partials/ConfirmUnsilence";
+import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
@@ -153,12 +153,12 @@ class SilencesListItem extends React.Component {
 
             <ToolbarMenu>
               <ToolbarMenu.Item id="delete" visible="never">
-                <ConfirmDelete
+                <ConfirmUnsilence
                   identifier={silence.name}
                   onSubmit={this.props.onClickDelete}
                 >
-                  {dialog => <DeleteMenuItem onClick={dialog.open} />}
-                </ConfirmDelete>
+                  {dialog => <UnsilenceMenuItem onClick={dialog.open} />}
+                </ConfirmUnsilence>
               </ToolbarMenu.Item>
             </ToolbarMenu>
           </RightAlign>
