@@ -43,7 +43,7 @@ class EntitiesListHeader extends React.PureComponent {
   };
 
   updateFilter = val => {
-    const filter = `'${val}' IN Subscriptions`;
+    const filter = `subscriptions.indexOf("${val}") >= 0`;
     this.props.onChangeQuery({ filter });
   };
 

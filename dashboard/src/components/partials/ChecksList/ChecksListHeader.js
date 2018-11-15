@@ -53,7 +53,9 @@ class ChecksListHeader extends React.PureComponent {
   };
 
   updateFilter = val => {
-    this.props.onChangeQuery({ filter: `'${val}' IN Subscriptions` });
+    this.props.onChangeQuery({
+      filter: `subscriptions.indexOf("${val}") >= 0`,
+    });
   };
 
   renderActions = () => {
