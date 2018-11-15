@@ -149,7 +149,7 @@ class SilencesList extends React.Component {
                 selectedItems={selectedItems}
                 onChangeQuery={onChangeQuery}
                 onClickSelect={toggleSelectedItems}
-                onClickDelete={() => this.deleteItems(selectedItems)}
+                onClickDelete={this.deleteItems}
                 order={order}
               />
 

@@ -27,7 +27,10 @@ const styles = {
     margin: "20px 0",
     border: "1px solid grey",
     maxHeight: "150px",
-    overflow: "scroll",
+    overflowY: "scroll",
+    whiteSpace: "nowrap",
+    overflowX: "hidden",
+    textOverflow: "ellipsis",
   },
 };
 
@@ -108,7 +111,7 @@ class ConfirmUnsilenceDialog extends React.Component {
             </Button>
             <Button
               variant="raised"
-              onClick={this.props.onConfirm}
+              onClick={() => this.props.onConfirm(this.state.selectedItems)}
               color="primary"
             >
               Clear Silence
