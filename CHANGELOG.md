@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [2.0.0-beta.8-1] - 2018-11-15
+
 ### Added
 - Assets are included on check details page.
 - Adds links to view entities and checks from the events page.
