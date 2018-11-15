@@ -71,8 +71,8 @@ class ExecuteCheckStatusToast extends React.PureComponent {
                     component={NamespaceLink}
                     namespace={namespace}
                     to={`/events?filter=${encodeURIComponent(
-                      `Check.Name == '${checkName}'${
-                        entityName ? ` && Entity.ID == '${entityName}'` : ""
+                      `check.name === "${checkName}"${
+                        entityName ? ` && entity.name === "${entityName}"` : ""
                       }`,
                     )}`}
                   >

@@ -2,18 +2,26 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
-import StatusMenu from "/components/partials/StatusMenu";
-import ListHeader from "/components/partials/ListHeader";
-
 import ConfirmDelete from "/components/partials/ConfirmDelete";
 import DeleteMenuItem from "/components/partials/ToolbarMenuItems/Delete";
 import ExecuteMenuItem from "/components/partials/ToolbarMenuItems/QueueExecution";
+import ListHeader from "/components/partials/ListHeader";
 import ResolveMenuItem from "/components/partials/ToolbarMenuItems/Resolve";
 import Select, { Option } from "/components/partials/ToolbarMenuItems/Select";
 import SilenceMenuItem from "/components/partials/ToolbarMenuItems/Silence";
 import SubmenuItem from "/components/partials/ToolbarMenuItems/Submenu";
 import ToolbarMenu from "/components/partials/ToolbarMenu";
 import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
+
+import StatusMenu from "./StatusMenu";
+
+const filterMap = {
+  ok: "check.status === 0",
+  warning: "check.status === 1",
+  critical: "check.status === 2",
+  unknown: "check.status > 2",
+  incident: "check.status > 0",
+};
 
 class EventsListHeader extends React.Component {
   static propTypes = {
@@ -62,36 +70,35 @@ class EventsListHeader extends React.Component {
   };
 
   requeryEntity = newValue => {
-    this.props.onChangeQuery({ filter: `Entity.ID == '${newValue}'` });
+    this.props.onChangeQuery({ filter: `entity.name === "${newValue}"` });
   };
 
   requeryCheck = newValue => {
-    this.props.onChangeQuery({ filter: `Check.Name == '${newValue}'` });
+    this.props.onChangeQuery({ filter: `check.name === "${newValue}"` });
   };
 
   requeryHide = newValue => {
     if (newValue === "passing") {
-      this.props.onChangeQuery({ filter: `Check.Status != 0` });
+      this.props.onChangeQuery({ filter: `check.status !== 0` });
     } else if (newValue === "silenced") {
-      this.props.onChangeQuery({ filter: `!IsSilenced` });
+      this.props.onChangeQuery({ filter: `!is_silenced` });
     } else {
       throw new TypeError(`unknown value ${newValue}`);
     }
   };
 
   requeryStatus = newValue => {
-    if (Array.isArray(newValue)) {
-      if (newValue.length === 1) {
-        this.props.onChangeQuery({ filter: `Check.Status == ${newValue}` });
-      } else {
-        const val = newValue.join(",");
-        this.props.onChangeQuery({ filter: `Check.Status IN (${val})` });
-      }
-    } else if (newValue === "") {
+    if (newValue === "") {
       this.props.onChangeQuery(query => query.delete("filter"));
-    } else {
-      this.props.onChangeQuery({ filter: newValue });
+      return;
     }
+
+    const filter = filterMap[newValue];
+    if (!filter) {
+      throw new Error("received unexpected argument");
+    }
+
+    this.props.onChangeQuery({ filter });
   };
 
   updateSort = newValue => {
