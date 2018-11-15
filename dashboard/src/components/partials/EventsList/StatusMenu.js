@@ -28,34 +28,31 @@ class StatusMenu extends React.Component {
 
     return (
       <Menu anchorEl={anchorEl} className={className} onClose={onClose} open>
-        <MenuItem
-          key="incident"
-          onClick={() => onChange("HasCheck && IsIncident")}
-        >
+        <MenuItem key="incident" onClick={() => onChange("incident")}>
           <ListItemIcon>
             <ErrorHollow />
           </ListItemIcon>
           <ListItemText primary="Incident" />
         </MenuItem>
-        <MenuItem key="warning" onClick={() => onChange([1])}>
+        <MenuItem key="warning" onClick={() => onChange("warning")}>
           <ListItemIcon>
             <CheckStatusIcon statusCode={1} />
           </ListItemIcon>
           <ListItemText primary="Warning" />
         </MenuItem>
-        <MenuItem key="critical" onClick={() => onChange([2])}>
+        <MenuItem key="critical" onClick={() => onChange("critical")}>
           <ListItemIcon>
             <CheckStatusIcon statusCode={2} />
           </ListItemIcon>
           <ListItemText primary="Critical" />
         </MenuItem>
-        <MenuItem key="unknown" onClick={() => onChange([3])}>
+        <MenuItem key="unknown" onClick={() => onChange("warning")}>
           <ListItemIcon>
             <CheckStatusIcon statusCode={3} />
           </ListItemIcon>
           <ListItemText primary="Unknown" />
         </MenuItem>
-        <MenuItem key="passing" onClick={() => onChange([0])}>
+        <MenuItem key="passing" onClick={() => onChange("ok")}>
           <ListItemIcon>
             <CheckStatusIcon statusCode={0} />
           </ListItemIcon>
