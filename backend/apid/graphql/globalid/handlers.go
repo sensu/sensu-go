@@ -11,7 +11,7 @@ var handlerName = "handlers"
 // HandlerTranslator global ID resource
 var HandlerTranslator = commonTranslator{
 	name:       handlerName,
-	encodeFunc: standardEncoder(handlerName, "ID"),
+	encodeFunc: standardEncoder(handlerName, "Name"),
 	decodeFunc: standardDecoder,
 	isResponsibleFunc: func(record interface{}) bool {
 		_, ok := record.(*types.Handler)

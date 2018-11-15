@@ -11,7 +11,7 @@ var silenceName = "silences"
 // SilenceTranslator global ID resource
 var SilenceTranslator = commonTranslator{
 	name:       silenceName,
-	encodeFunc: standardEncoder(silenceName, "ID"),
+	encodeFunc: standardEncoder(silenceName, "Name"),
 	decodeFunc: standardDecoder,
 	isResponsibleFunc: func(record interface{}) bool {
 		_, ok := record.(*types.Silenced)
