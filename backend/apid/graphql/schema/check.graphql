@@ -59,8 +59,8 @@ type CheckConfig implements Node, Namespaced {
   """
   outputMetricHandlers: [Handler]!
 
-  "proxyEntityId indicates the name of the entity representing an external resource"
-  proxyEntityId: String
+  "proxyEntityName indicates the name of the entity representing an external resource"
+  proxyEntityName: String
 
   "proxyRequests represents a request to execute a proxy check."
   proxyRequests: ProxyRequests
@@ -180,8 +180,8 @@ type Check {
   """
   outputMetricHandlers: [Handler]!
 
-  "proxyEntityId indicates the name of the entity representing an external resource"
-  proxyEntityId: String
+  "proxyEntityName indicates the name of the entity representing an external resource"
+  proxyEntityName: String
 
   "proxyRequests represents a request to execute a proxy check."
   proxyRequests: ProxyRequests

@@ -7,7 +7,7 @@ const RESOURCE_EXISTS_ERROR =
 const fragment = gql`
   fragment CreateSilenceMutation_silence on Silenced {
     id
-    storeId
+    name
     expire
     expires
     expireOnResolve

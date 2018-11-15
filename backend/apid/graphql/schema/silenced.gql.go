@@ -21,10 +21,10 @@ type SilencedNamespaceFieldResolver interface {
 	Namespace(p graphql.ResolveParams) (string, error)
 }
 
-// SilencedStoreIDFieldResolver implement to resolve requests for the Silenced's storeId field.
-type SilencedStoreIDFieldResolver interface {
-	// StoreID implements response to request for storeId field.
-	StoreID(p graphql.ResolveParams) (string, error)
+// SilencedNameFieldResolver implement to resolve requests for the Silenced's name field.
+type SilencedNameFieldResolver interface {
+	// Name implements response to request for name field.
+	Name(p graphql.ResolveParams) (string, error)
 }
 
 // SilencedExpireFieldResolver implement to resolve requests for the Silenced's expire field.
@@ -139,7 +139,7 @@ type SilencedBeginFieldResolver interface {
 type SilencedFieldResolvers interface {
 	SilencedIDFieldResolver
 	SilencedNamespaceFieldResolver
-	SilencedStoreIDFieldResolver
+	SilencedNameFieldResolver
 	SilencedExpireFieldResolver
 	SilencedExpiresFieldResolver
 	SilencedExpireOnResolveFieldResolver
@@ -223,15 +223,15 @@ func (_ SilencedAliases) Namespace(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
-// StoreID implements response to request for 'storeId' field.
-func (_ SilencedAliases) StoreID(p graphql.ResolveParams) (string, error) {
+// Name implements response to request for 'name' field.
+func (_ SilencedAliases) Name(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	ret, ok := val.(string)
 	if err != nil {
 		return ret, err
 	}
 	if !ok {
-		return ret, errors.New("unable to coerce value for field 'storeId'")
+		return ret, errors.New("unable to coerce value for field 'name'")
 	}
 	return ret, err
 }
@@ -347,10 +347,10 @@ func _ObjTypeSilencedNamespaceHandler(impl interface{}) graphql1.FieldResolveFn 
 	}
 }
 
-func _ObjTypeSilencedStoreIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(SilencedStoreIDFieldResolver)
+func _ObjTypeSilencedNameHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SilencedNameFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.StoreID(frp)
+		return resolver.Name(frp)
 	}
 }
 
@@ -463,6 +463,13 @@ func _ObjectTypeSilencedConfigFn() graphql1.ObjectConfig {
 				Name:              "id",
 				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
+			"name": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Name is the combination of subscription and check name (subscription:checkname)",
+				Name:              "name",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
 			"namespace": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -476,13 +483,6 @@ func _ObjectTypeSilencedConfigFn() graphql1.ObjectConfig {
 				Description:       "Reason is used to provide context to the entry",
 				Name:              "reason",
 				Type:              graphql1.String,
-			},
-			"storeId": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "ID is the combination of subscription and check name (subscription:checkname)",
-				Name:              "storeId",
-				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"subscription": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -518,9 +518,9 @@ var _ObjectTypeSilencedDesc = graphql.ObjectDesc{
 		"expireOnResolve": _ObjTypeSilencedExpireOnResolveHandler,
 		"expires":         _ObjTypeSilencedExpiresHandler,
 		"id":              _ObjTypeSilencedIDHandler,
+		"name":            _ObjTypeSilencedNameHandler,
 		"namespace":       _ObjTypeSilencedNamespaceHandler,
 		"reason":          _ObjTypeSilencedReasonHandler,
-		"storeId":         _ObjTypeSilencedStoreIDHandler,
 		"subscription":    _ObjTypeSilencedSubscriptionHandler,
 	},
 }
