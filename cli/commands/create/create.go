@@ -60,20 +60,20 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			return err
 		}
 
-		resources, err := parseResources(in)
+		resources, err := ParseResources(in)
 		if err != nil {
 			return err
 		}
-		if err := validateResources(resources); err != nil {
+		if err := ValidateResources(resources); err != nil {
 			return err
 		}
-		return putResources(cli.Client, resources)
+		return PutResources(cli.Client, resources)
 	}
 }
 
 var jsonRe = regexp.MustCompile(`^(\s)*[\{\[]`)
 
-// parseResources is a rather heroic function that will parse any number of valid
+// ParseResources is a rather heroic function that will parse any number of valid
 // JSON or YAML resources. Since it attempts to be intelligent, it likely
 // contains bugs.
 //
@@ -83,7 +83,7 @@ var jsonRe = regexp.MustCompile(`^(\s)*[\{\[]`)
 // 3. If the stream is YAML, split it on '---' to support multiple yaml documents.
 // 3. Convert the YAML to JSON document-by-document.
 // 4. Unmarshal the JSON one resource at a time.
-func parseResources(in io.Reader) ([]types.Resource, error) {
+func ParseResources(in io.Reader) ([]types.Resource, error) {
 	var resources []types.Resource
 	b, err := ioutil.ReadAll(in)
 	if err != nil {
@@ -126,7 +126,7 @@ func parseResources(in io.Reader) ([]types.Resource, error) {
 	return resources, err
 }
 
-func validateResources(resources []types.Resource) error {
+func ValidateResources(resources []types.Resource) error {
 	var err error
 	errCount := 0
 	for i, resource := range resources {
@@ -152,7 +152,7 @@ func describeError(err error) {
 	fmt.Fprintf(os.Stderr, "error parsing resource (offset %d): %s\n", jsonErr.Offset, err)
 }
 
-func putResources(client client.GenericClient, resources []types.Resource) error {
+func PutResources(client client.GenericClient, resources []types.Resource) error {
 	for _, resource := range resources {
 		if err := client.PutResource(resource); err != nil {
 			return err

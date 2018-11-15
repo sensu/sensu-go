@@ -36,6 +36,8 @@ type Getter interface {
 type RuntimeAsset struct {
 	// Path is the absolute path to the asset's base directory.
 	Path string
+	// SHA512 is the hash of the asset tarball.
+	SHA512 string
 }
 
 // BinDir returns the full path to the asset's bin directory.

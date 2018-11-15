@@ -19,10 +19,10 @@ const EventFlappingState = "flapping"
 const EventPassingState = "passing"
 
 // FixtureEvent returns a testing fixutre for an Event object.
-func FixtureEvent(entityID, checkID string) *Event {
+func FixtureEvent(entityName, checkID string) *Event {
 	return &Event{
 		Timestamp: time.Now().Unix(),
-		Entity:    FixtureEntity(entityID),
+		Entity:    FixtureEntity(entityName),
 		Check:     FixtureCheck(checkID),
 	}
 }
@@ -145,29 +145,15 @@ func (e *Event) IsSilenced() bool {
 	return len(e.Check.Silenced) > 0
 }
 
-// Get implements govaluate.Parameters
-func (e *Event) Get(name string) (interface{}, error) {
-	switch name {
-	case "Timestamp":
-		return e.Timestamp, nil
-	case "Entity":
-		return e.Entity, nil
-	case "Check":
-		return e.Check, nil
-	case "Metrics":
-		return e.Metrics, nil
-	case "HasCheck":
-		return e.HasCheck(), nil
-	case "HasMetrics":
-		return e.HasMetrics(), nil
-	case "IsIncident":
-		return e.IsIncident(), nil
-	case "IsResolution":
-		return e.IsResolution(), nil
-	case "IsSilenced":
-		return e.IsSilenced(), nil
+// Implements dynamic.SynthesizeExtras
+func (e *Event) SynthesizeExtras() map[string]interface{} {
+	return map[string]interface{}{
+		"has_check":     e.HasCheck(),
+		"has_metrics":   e.HasMetrics(),
+		"is_incident":   e.IsIncident(),
+		"is_resolution": e.IsResolution(),
+		"is_silenced":   e.IsSilenced(),
 	}
-	return nil, errors.New("no parameter '" + name + "' found")
 }
 
 //
@@ -179,7 +165,7 @@ func EventsBySeverity(es []*Event) sort.Interface {
 	return &eventSorter{es, createCmpEvents(
 		cmpBySeverity,
 		cmpByLastOk,
-		cmpByEntityID,
+		cmpByEntityName,
 	)}
 }
 
@@ -205,17 +191,17 @@ func EventsByLastOk(es []*Event) sort.Interface {
 	return &eventSorter{es, createCmpEvents(
 		cmpByIncident,
 		cmpByLastOk,
-		cmpByEntityID,
+		cmpByEntityName,
 	)}
 }
 
-func cmpByEntityID(a, b *Event) int {
+func cmpByEntityName(a, b *Event) int {
 	ai, bi := "", ""
 	if a.Entity != nil {
-		ai = a.Entity.ID
+		ai = a.Entity.Name
 	}
 	if b.Entity != nil {
-		bi = b.Entity.ID
+		bi = b.Entity.Name
 	}
 
 	if ai == bi {
@@ -326,5 +312,5 @@ func (e *Event) URIPath() string {
 	if !e.HasCheck() {
 		return ""
 	}
-	return fmt.Sprintf("/events/%s/%s", url.PathEscape(e.Entity.ID), url.PathEscape(e.Check.Name))
+	return fmt.Sprintf("/events/%s/%s", url.PathEscape(e.Entity.Name), url.PathEscape(e.Check.Name))
 }

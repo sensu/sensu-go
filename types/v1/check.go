@@ -1,9 +1,5 @@
 package v1
 
-import (
-	"github.com/sensu/sensu-go/types/dynamic"
-)
-
 // CheckResult contains the 1.x compatible check result payload
 type CheckResult struct {
 	Client      string   `json:"client"`
@@ -16,9 +12,4 @@ type CheckResult struct {
 	Executed    int64    `json:"executed"`
 	Duration    float64  `json:"duration"`
 	Output      string   `json:"output"`
-}
-
-// Get implements govaluate.Parameters
-func (c *CheckResult) Get(name string) (interface{}, error) {
-	return dynamic.GetField(c, name)
 }

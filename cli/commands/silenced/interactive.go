@@ -137,12 +137,12 @@ func (o *silencedOpts) administerQuestionnaire(editing bool) error {
 	return nil
 }
 
-type silencedID struct {
+type silencedName struct {
 	Subscription string
 	Check        string
 }
 
-func askID(help string) (string, error) {
+func askName(help string) (string, error) {
 	questions := []*survey.Question{
 		{
 			Name: "Subscription",
@@ -160,11 +160,11 @@ func askID(help string) (string, error) {
 		},
 	}
 
-	var id silencedID
-	if err := survey.Ask(questions, &id); err != nil {
+	var name silencedName
+	if err := survey.Ask(questions, &name); err != nil {
 		return "", err
 	}
-	return types.SilencedID(id.Subscription, id.Check)
+	return types.SilencedName(name.Subscription, name.Check)
 }
 
 func toOpts(s *types.Silenced) *silencedOpts {

@@ -57,16 +57,20 @@ func printToList(v interface{}, writer io.Writer) error {
 				Value: filter.Name,
 			},
 			{
+				Label: "Namespace",
+				Value: filter.Namespace,
+			},
+			{
 				Label: "Action",
 				Value: filter.Action,
 			},
 			{
-				Label: "Statements",
-				Value: strings.Join(filter.Statements, " && "),
+				Label: "Expressions",
+				Value: strings.Join(filter.Expressions, " && "),
 			},
 			{
-				Label: "Namespace",
-				Value: filter.Namespace,
+				Label: "RuntimeAssets",
+				Value: strings.Join(filter.RuntimeAssets, ", "),
 			},
 		},
 	}

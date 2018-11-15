@@ -11,7 +11,7 @@ import (
 // UpdateCommand updates a given silenced entry
 func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "update [ID]",
+		Use:          "update [NAME]",
 		Short:        "update silenced entries",
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -19,12 +19,12 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 				_ = cmd.Help()
 				return errors.New("invalid argument(s) received")
 			}
-			id, err := getID(cmd, args)
+			name, err := getName(cmd, args)
 			if err != nil {
 				return err
 			}
 
-			silenced, err := cli.Client.FetchSilenced(id)
+			silenced, err := cli.Client.FetchSilenced(name)
 			if err != nil {
 				return err
 			}

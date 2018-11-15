@@ -82,10 +82,10 @@ func (a SilencedController) Create(ctx context.Context, newSilence *types.Silenc
 	ctx = addOrgEnvToContext(ctx, newSilence)
 	abilities := a.Policy.WithContext(ctx)
 
-	// Populate newSilence.ID with the subscription and checkName. Substitute a
+	// Populate newSilence.Name with the subscription and checkName. Substitute a
 	// splat if one of the values does not exist. If both values are empty, the
 	// validator will return an error when attempting to update it in the store.
-	newSilence.ID, _ = types.SilencedID(newSilence.Subscription, newSilence.Check)
+	newSilence.Name, _ = types.SilencedName(newSilence.Subscription, newSilence.Check)
 
 	// If begin timestamp was not already provided set it to the current time.
 	if newSilence.Begin == 0 {
@@ -99,7 +99,7 @@ func (a SilencedController) Create(ctx context.Context, newSilence *types.Silenc
 	}
 
 	// Check for existing
-	if e, serr := a.Store.GetSilencedEntryByID(ctx, newSilence.ID); serr != nil {
+	if e, serr := a.Store.GetSilencedEntryByName(ctx, newSilence.Name); serr != nil {
 		return NewError(InternalErr, serr)
 	} else if e != nil {
 		return NewErrorf(AlreadyExistsErr)
@@ -129,10 +129,10 @@ func (a SilencedController) CreateOrReplace(ctx context.Context, newSilence type
 	ctx = addOrgEnvToContext(ctx, &newSilence)
 	abilities := a.Policy.WithContext(ctx)
 
-	// Populate newSilence.ID with the subscription and checkName. Substitute a
+	// Populate newSilence.Name with the subscription and checkName. Substitute a
 	// splat if one of the values does not exist. If both values are empty, the
 	// validator will return an error when attempting to update it in the store.
-	newSilence.ID, _ = types.SilencedID(newSilence.Subscription, newSilence.Check)
+	newSilence.Name, _ = types.SilencedName(newSilence.Subscription, newSilence.Check)
 
 	// If begin timestamp was not already provided set it to the current time.
 	if newSilence.Begin == 0 {
@@ -171,7 +171,7 @@ func (a SilencedController) Update(ctx context.Context, given types.Silenced) er
 
 	// Find existing silenced
 	// Fetch from store
-	silence, err := a.findSilencedEntry(ctx, given.ID)
+	silence, err := a.findSilencedEntry(ctx, given.Name)
 	if err != nil {
 		return err
 	}
@@ -202,14 +202,14 @@ func (a SilencedController) Destroy(ctx context.Context, id string) error {
 	}
 
 	// Fetch from store
-	result, serr := a.Store.GetSilencedEntryByID(ctx, id)
+	result, serr := a.Store.GetSilencedEntryByName(ctx, id)
 	if serr != nil {
 		return NewError(InternalErr, serr)
 	} else if result == nil {
 		return NewErrorf(NotFound)
 	}
 
-	if err := a.Store.DeleteSilencedEntryByID(ctx, id); err != nil {
+	if err := a.Store.DeleteSilencedEntryByName(ctx, id); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -217,7 +217,7 @@ func (a SilencedController) Destroy(ctx context.Context, id string) error {
 }
 
 func (a SilencedController) findSilencedEntry(ctx context.Context, id string) (*types.Silenced, error) {
-	result, serr := a.Store.GetSilencedEntryByID(ctx, id)
+	result, serr := a.Store.GetSilencedEntryByName(ctx, id)
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}

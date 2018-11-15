@@ -33,7 +33,7 @@ type Asset struct {
 	// if the asset should be installed. If more than one filter is present the
 	// queries are joined by the "AND" operator.
 	Filters []string `protobuf:"bytes,5,rep,name=filters" json:"filters"`
-	// Object metadata
+	// Metadata contains the name, namespace, labels and annotations of the asset
 	ObjectMeta           `protobuf:"bytes,8,opt,name=metadata,embedded=metadata" json:"metadata"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -44,7 +44,7 @@ func (m *Asset) Reset()         { *m = Asset{} }
 func (m *Asset) String() string { return proto.CompactTextString(m) }
 func (*Asset) ProtoMessage()    {}
 func (*Asset) Descriptor() ([]byte, []int) {
-	return fileDescriptor_asset_a136c3cf0282c293, []int{0}
+	return fileDescriptor_asset_984fe6fcac3fa64b, []int{0}
 }
 func (m *Asset) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -603,9 +603,9 @@ var (
 	ErrIntOverflowAsset   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("asset.proto", fileDescriptor_asset_a136c3cf0282c293) }
+func init() { proto.RegisterFile("asset.proto", fileDescriptor_asset_984fe6fcac3fa64b) }
 
-var fileDescriptor_asset_a136c3cf0282c293 = []byte{
+var fileDescriptor_asset_984fe6fcac3fa64b = []byte{
 	// 257 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4e, 0x2c, 0x2e, 0x4e,
 	0x2d, 0xd1, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2e, 0x4e, 0xcd, 0x2b, 0x2e, 0xd5, 0x2b,

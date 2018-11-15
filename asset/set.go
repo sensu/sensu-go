@@ -2,7 +2,10 @@ package asset
 
 import (
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/sensu/sensu-go/types"
@@ -10,6 +13,37 @@ import (
 
 // RuntimeAssetSet is a set of runtime assets.
 type RuntimeAssetSet []*RuntimeAsset
+
+// Key gets a unique key for the RuntimeAssetSet.
+func (r RuntimeAssetSet) Key() string {
+	keys := make([]string, len(r))
+	for i := range r {
+		keys[i] = r[i].SHA512
+	}
+	sort.Strings(keys)
+	return strings.Join(keys, "")
+}
+
+// Scripts retrieves all the js files in the lib directory.
+func (r RuntimeAssetSet) Scripts() (map[string]io.ReadCloser, error) {
+	scripts := make(map[string]io.ReadCloser)
+	for _, asset := range r {
+		err := filepath.Walk(asset.LibDir(), func(path string, info os.FileInfo, err error) error {
+			if strings.HasSuffix(path, ".js") {
+				f, err := os.Open(path)
+				if err != nil {
+					return err
+				}
+				scripts[path] = f
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	return scripts, nil
+}
 
 // GetAll gets a list of assets with the provided getter.
 func GetAll(getter Getter, assets []types.Asset) (RuntimeAssetSet, error) {

@@ -31,7 +31,7 @@ const (
 	// specified in backend urls
 	DefaultBackendPort = "8081"
 
-	flagAgentID               = "id"
+	flagAgentName             = "name"
 	flagAPIHost               = "api-host"
 	flagAPIPort               = "api-port"
 	flagBackendURL            = "backend-url"
@@ -57,6 +57,8 @@ const (
 	flagDisableSockets        = "disable-sockets"
 	flagLogLevel              = "log-level"
 	flagLabels                = "labels"
+
+	deprecatedFlagAgentID = "id"
 )
 
 func init() {
@@ -138,9 +140,9 @@ func newStartCommand() *cobra.Command {
 			cfg.Labels = viper.GetStringMapString(flagLabels)
 			cfg.User = viper.GetString(flagUser)
 
-			agentID := viper.GetString(flagAgentID)
-			if agentID != "" {
-				cfg.AgentID = agentID
+			agentName := viper.GetString(flagAgentName)
+			if agentName != "" {
+				cfg.AgentName = agentName
 			}
 
 			for _, backendURL := range viper.GetStringSlice(flagBackendURL) {
@@ -214,7 +216,7 @@ func newStartCommand() *cobra.Command {
 	viper.SetConfigFile(configFilePath)
 
 	// Flag defaults
-	viper.SetDefault(flagAgentID, agent.GetDefaultAgentID())
+	viper.SetDefault(flagAgentName, agent.GetDefaultAgentName())
 	viper.SetDefault(flagAPIHost, agent.DefaultAPIHost)
 	viper.SetDefault(flagAPIPort, agent.DefaultAPIPort)
 	viper.SetDefault(flagBackendURL, []string{agent.DefaultBackendURL})
@@ -248,7 +250,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().Int(flagAPIPort, viper.GetInt(flagAPIPort), "port the Sensu client HTTP API listens on")
 	cmd.Flags().Int(flagKeepaliveInterval, viper.GetInt(flagKeepaliveInterval), "number of seconds to send between keepalive events")
 	cmd.Flags().Int(flagSocketPort, viper.GetInt(flagSocketPort), "port the Sensu client socket listens on")
-	cmd.Flags().String(flagAgentID, viper.GetString(flagAgentID), "agent ID (defaults to hostname)")
+	cmd.Flags().String(flagAgentName, viper.GetString(flagAgentName), "agent name (defaults to hostname)")
 	cmd.Flags().String(flagAPIHost, viper.GetString(flagAPIHost), "address to bind the Sensu client HTTP API to")
 	cmd.Flags().String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
 	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "deregistration handler that should process the entity deregistration event.")
@@ -276,11 +278,41 @@ func newStartCommand() *cobra.Command {
 		setupErr = err
 	}
 
+	deprecatedConfigAttributes()
+	viper.RegisterAlias(deprecatedFlagAgentID, flagAgentName)
+
 	return cmd
 }
 
 func aliasNormalizeFunc(f *pflag.FlagSet, name string) pflag.NormalizedName {
+	// Wait until the command-line flags have been parsed
+	if !f.Parsed() {
+		return pflag.NormalizedName(name)
+	}
+
+	switch name {
+	case deprecatedFlagAgentID:
+		deprecatedFlagMessage(name, flagAgentName)
+		name = flagAgentName
+	}
 	return pflag.NormalizedName(name)
+}
+
+// Look up the deprecated attributes in our config file and print a warning
+// message if set
+func deprecatedConfigAttributes() {
+	attributes := map[string]string{
+		deprecatedFlagAgentID: flagAgentName,
+	}
+
+	for old, new := range attributes {
+		if viper.IsSet(old) {
+			logger.Warningf(
+				"config attribute %s has been deprecated, please use %s instead",
+				old, new,
+			)
+		}
+	}
 }
 
 func deprecatedFlagMessage(oldFlag, newFlag string) {

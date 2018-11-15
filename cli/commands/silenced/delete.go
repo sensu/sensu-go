@@ -12,8 +12,8 @@ import (
 // DeleteCommand adds a command that allows user to delete silenceds
 func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "delete [ID]",
-		Short:        "delete silenced, optionally by ID",
+		Use:          "delete [NAME]",
+		Short:        "delete silenced, optionally by name",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// If pattern is wrong print out help
@@ -21,19 +21,19 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				_ = cmd.Help()
 				return errors.New("invalid argument(s) received")
 			}
-			id, err := getID(cmd, args)
+			name, err := getName(cmd, args)
 			if err != nil {
 				return err
 			}
 
 			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
-				if confirmed := helpers.ConfirmDelete(id); !confirmed {
+				if confirmed := helpers.ConfirmDelete(name); !confirmed {
 					fmt.Fprintln(cmd.OutOrStdout(), "Canceled")
 					return nil
 				}
 			}
 
-			if err := cli.Client.DeleteSilenced(id); err != nil {
+			if err := cli.Client.DeleteSilenced(name); err != nil {
 				return err
 			}
 

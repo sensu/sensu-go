@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/sensu/sensu-go/util/eval"
+	"github.com/sensu/sensu-go/js"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
 )
 
@@ -38,11 +38,11 @@ func (f *EventFilter) Validate() error {
 		return fmt.Errorf("action '%s' is not valid", f.Action)
 	}
 
-	if len(f.Statements) == 0 {
-		return errors.New("filter must have one or more statements")
+	if len(f.Expressions) == 0 {
+		return errors.New("filter must have one or more expressions")
 	}
 
-	if err := eval.ValidateStatements(f.Statements, false); err != nil {
+	if err := js.ParseExpressions(f.Expressions); err != nil {
 		return err
 	}
 
@@ -62,8 +62,10 @@ func (f *EventFilter) Update(from *EventFilter, fields ...string) error {
 			f.Action = from.Action
 		case "When":
 			f.When = from.When
-		case "Statements":
-			f.Statements = append(f.Statements[0:0], from.Statements...)
+		case "Expressions":
+			f.Expressions = append(f.Expressions[0:0], from.Expressions...)
+		case "RuntimeAssets":
+			f.RuntimeAssets = append(f.RuntimeAssets[0:0], from.RuntimeAssets...)
 		default:
 			return fmt.Errorf("unsupported field: %q", f)
 		}
@@ -74,20 +76,24 @@ func (f *EventFilter) Update(from *EventFilter, fields ...string) error {
 // FixtureEventFilter returns a Filter fixture for testing.
 func FixtureEventFilter(name string) *EventFilter {
 	return &EventFilter{
-		Name:       name,
-		Action:     EventFilterActionAllow,
-		Statements: []string{"event.Check.Team == 'ops'"},
-		Namespace:  "default",
+		Action:      EventFilterActionAllow,
+		Expressions: []string{"event.check.team == 'ops'"},
+		ObjectMeta: ObjectMeta{
+			Namespace: "default",
+			Name:      name,
+		},
 	}
 }
 
 // FixtureDenyEventFilter returns a Filter fixture for testing.
 func FixtureDenyEventFilter(name string) *EventFilter {
 	return &EventFilter{
-		Name:       name,
-		Action:     EventFilterActionDeny,
-		Statements: []string{"event.Check.Team == 'ops'"},
-		Namespace:  "default",
+		Action:      EventFilterActionDeny,
+		Expressions: []string{"event.check.team == 'ops'"},
+		ObjectMeta: ObjectMeta{
+			Namespace: "default",
+			Name:      name,
+		},
 	}
 }
 

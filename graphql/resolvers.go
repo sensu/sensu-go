@@ -172,6 +172,9 @@ func DefaultResolver(source interface{}, fieldName string) (interface{}, error) 
 			if checkTag("json") || checkTag("graphql") {
 				return valueField.Interface(), nil
 			}
+			if valueField.Kind() == reflect.Struct && typeField.Anonymous {
+				return DefaultResolver(valueField.Interface(), fieldName)
+			}
 			continue
 		}
 		return nil, nil

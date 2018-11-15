@@ -20,7 +20,7 @@ type testMonitorsHandler struct{}
 
 // create failure and error handlers for use with the monitor
 func (*testMonitorsHandler) HandleFailure(event *types.Event) error {
-	if event.Entity.ID == "entity" {
+	if event.Entity.Name == "entity" {
 		return nil
 	}
 	return errors.New("test failure handler error")

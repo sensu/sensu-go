@@ -12,8 +12,8 @@ func (s *MockStore) DeleteEntity(ctx context.Context, e *types.Entity) error {
 	return args.Error(0)
 }
 
-// DeleteEntityByID ...
-func (s *MockStore) DeleteEntityByID(ctx context.Context, id string) error {
+// DeleteEntityByName ...
+func (s *MockStore) DeleteEntityByName(ctx context.Context, id string) error {
 	args := s.Called(ctx, id)
 	return args.Error(0)
 }
@@ -24,8 +24,8 @@ func (s *MockStore) GetEntities(ctx context.Context) ([]*types.Entity, error) {
 	return args.Get(0).([]*types.Entity), args.Error(1)
 }
 
-// GetEntityByID ...
-func (s *MockStore) GetEntityByID(ctx context.Context, id string) (*types.Entity, error) {
+// GetEntityByName ...
+func (s *MockStore) GetEntityByName(ctx context.Context, id string) (*types.Entity, error) {
 	args := s.Called(ctx, id)
 	return args.Get(0).(*types.Entity), args.Error(1)
 }

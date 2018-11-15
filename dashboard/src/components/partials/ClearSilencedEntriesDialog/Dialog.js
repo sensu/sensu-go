@@ -62,7 +62,7 @@ class ClearSilencedEntriesDialog extends React.PureComponent {
 
         id
         deleted @client
-        storeId
+        name
         creator {
           username
         }
@@ -104,7 +104,7 @@ class ClearSilencedEntriesDialog extends React.PureComponent {
       </TableCell>
       <TableOverflowCell>
         <ResourceDetails
-          title={silence.storeId}
+          title={silence.name}
           details={<SilenceExpiration silence={silence} />}
         />
       </TableOverflowCell>
@@ -131,14 +131,14 @@ class ClearSilencedEntriesDialog extends React.PureComponent {
     const silences = Object.values(
       (silencesProp || [])
         .filter(sl => !sl.deleted)
-        .reduce((memo, sl) => Object.assign({ [sl.storeId]: sl }, memo), {}),
+        .reduce((memo, sl) => Object.assign({ [sl.name]: sl }, memo), {}),
     );
 
     return (
       <Dialog fullWidth fullScreen={fullScreen} open={open} onClose={close}>
         <ListController
           items={silences}
-          getItemKey={node => node.storeId}
+          getItemKey={node => node.name}
           renderEmptyState={this.renderEmpty}
           renderItem={this.renderListItem}
         >

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
-	"reflect"
 	"sort"
 	"strings"
 )
@@ -39,10 +38,10 @@ func (s *Silenced) StartSilence(currentTime int64) bool {
 }
 
 // FixtureSilenced returns a testing fixutre for a Silenced event struct.
-func FixtureSilenced(id string) *Silenced {
+func FixtureSilenced(name string) *Silenced {
 	var check, subscription string
 
-	parts := strings.Split(id, ":")
+	parts := strings.Split(name, ":")
 
 	if len(parts) == 2 {
 		check = parts[1]
@@ -51,20 +50,22 @@ func FixtureSilenced(id string) *Silenced {
 		check = parts[2]
 		subscription = strings.Join(parts[0:2], ":")
 	} else {
-		panic("invalid silenced ID")
+		panic("invalid silenced name")
 	}
 
 	return &Silenced{
-		ID:           id,
 		Check:        check,
 		Subscription: subscription,
-		Namespace:    "default",
+		ObjectMeta: ObjectMeta{
+			Namespace: "default",
+			Name:      name,
+		},
 	}
 }
 
-// SilencedID returns the canonical ID for a silenced entry. It returns non-nil
+// SilencedName returns the canonical name for a silenced entry. It returns non-nil
 // error if both subscription and check are empty strings.
-func SilencedID(subscription, check string) (string, error) {
+func SilencedName(subscription, check string) (string, error) {
 	if subscription == "" && check == "" {
 		return "", errors.New("no subscription or check specified")
 	}
@@ -79,20 +80,10 @@ func SilencedID(subscription, check string) (string, error) {
 
 // URIPath returns the path component of a Silenced URI.
 func (s *Silenced) URIPath() string {
-	if s.ID == "" {
-		s.ID, _ = SilencedID(s.Subscription, s.Check)
+	if s.Name == "" {
+		s.Name, _ = SilencedName(s.Subscription, s.Check)
 	}
-	return fmt.Sprintf("/silenced/%s", url.PathEscape(s.ID))
-}
-
-// Get implements govaluate.Parameters
-func (s *Silenced) Get(fname string) (interface{}, error) {
-	strukt := reflect.Indirect(reflect.ValueOf(s))
-	field := strukt.FieldByName(fname)
-	if field.IsValid() {
-		return reflect.Indirect(field).Interface(), nil
-	}
-	return nil, nil
+	return fmt.Sprintf("/silenced/%s", url.PathEscape(s.Name))
 }
 
 // SortSilencedByPredicate can be used to sort a given collection using a given
@@ -101,9 +92,9 @@ func SortSilencedByPredicate(es []*Silenced, fn func(a, b *Silenced) bool) sort.
 	return &silenceSorter{silences: es, byFn: fn}
 }
 
-// SortSilencedByID can be used to sort a given collection by their IDs.
-func SortSilencedByID(es []*Silenced) sort.Interface {
-	return SortSilencedByPredicate(es, func(a, b *Silenced) bool { return a.ID < b.ID })
+// SortSilencedByName can be used to sort a given collection by their names.
+func SortSilencedByName(es []*Silenced) sort.Interface {
+	return SortSilencedByPredicate(es, func(a, b *Silenced) bool { return a.Name < b.Name })
 }
 
 // SortSilencedByBegin can be used to sort a given collection by their begin

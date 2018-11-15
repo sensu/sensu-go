@@ -15,8 +15,8 @@ import (
 func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 	exec := &deleteExecutor{client: cli.Client}
 	cmd := &cobra.Command{
-		Use:          "delete [ID]",
-		Short:        "delete entity given ID",
+		Use:          "delete [NAME]",
+		Short:        "delete entity given name",
 		RunE:         exec.run,
 		SilenceUsage: true,
 	}
@@ -31,21 +31,21 @@ type deleteExecutor struct {
 }
 
 func (e *deleteExecutor) run(cmd *cobra.Command, args []string) error {
-	// If no ID was given print out usage
+	// If no Name was given print out usage
 	if len(args) != 1 {
 		_ = cmd.Help()
 		return errors.New("invalid argument(s) received")
 	}
-	id := args[0]
+	name := args[0]
 
 	if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
-		if confirmed := helpers.ConfirmDelete(id); !confirmed {
+		if confirmed := helpers.ConfirmDelete(name); !confirmed {
 			fmt.Fprintln(cmd.OutOrStdout(), "Canceled")
 			return nil
 		}
 	}
 
-	if err := e.deleteEntityByID(id); err != nil {
+	if err := e.deleteEntityByName(name); err != nil {
 		return err
 	}
 
@@ -53,9 +53,7 @@ func (e *deleteExecutor) run(cmd *cobra.Command, args []string) error {
 	return nil
 }
 
-func (e *deleteExecutor) deleteEntityByID(id string) (err error) {
-	entity := &types.Entity{ID: id}
-	err = e.client.DeleteEntity(entity)
-
-	return
+func (e *deleteExecutor) deleteEntityByName(name string) (err error) {
+	entity := &types.Entity{ObjectMeta: types.ObjectMeta{Name: name}}
+	return e.client.DeleteEntity(entity)
 }

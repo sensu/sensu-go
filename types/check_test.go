@@ -111,10 +111,7 @@ func TestProxyRequestsValidate(t *testing.T) {
 	assert.Error(t, p.Validate())
 	p.SplayCoverage = 90
 
-	// Invalid entity attributes
-	p.EntityAttributes = []string{`entity.Class = "proxy"`}
-	assert.Error(t, p.Validate())
-	p.EntityAttributes = []string{`entity.Class == "proxy"`}
+	p.EntityAttributes = []string{`entity.EntityClass == "proxy"`}
 
 	// Valid proxy request
 	assert.NoError(t, p.Validate())

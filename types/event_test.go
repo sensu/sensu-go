@@ -23,9 +23,9 @@ func TestEventValidate(t *testing.T) {
 	assert.Error(t, event.Validate())
 	event.Check.Name = "check"
 
-	event.Entity.ID = ""
+	event.Entity.Name = ""
 	assert.Error(t, event.Validate())
-	event.Entity.ID = "entity"
+	event.Entity.Name = "entity"
 
 	hook := FixtureHook("hook")
 	hook.Name = ""
@@ -212,7 +212,7 @@ func TestEventsBySeverity(t *testing.T) {
 	okOlderDiff := FixtureEvent("entity", "check")
 	okOlderDiff.Check.Status = 0 // ok
 	okOlderDiff.Check.LastOK = 7
-	okOlderDiff.Entity.ID = "zzz"
+	okOlderDiff.Entity.Name = "zzz"
 	noCheck := FixtureEvent("entity", "check")
 	noCheck.Check = nil
 
@@ -232,7 +232,7 @@ func TestEventsBySeverity(t *testing.T) {
 			expected: []*Event{ok, okOlder, okOlder},
 		},
 		{
-			name:     "Fallback to entity ID when severity is same",
+			name:     "Fallback to entity name when severity is same",
 			input:    []*Event{okOlderDiff, okOlder, ok, okOlder},
 			expected: []*Event{ok, okOlder, okOlder, okOlderDiff},
 		},
@@ -281,7 +281,7 @@ func TestEventsByLastOk(t *testing.T) {
 			expected: []*Event{incidentNewer, incident, okNewer, ok},
 		},
 		{
-			name:     "Fallback to entity ID when severity is same",
+			name:     "Fallback to entity name when severity is same",
 			input:    []*Event{ok, okNewer, okDiffEntity},
 			expected: []*Event{okNewer, okDiffEntity, ok},
 		},
@@ -327,28 +327,4 @@ func TestEventsByTimestamp(t *testing.T) {
 			assert.EqualValues(t, tc.expected, tc.inEvents)
 		})
 	}
-}
-
-func TestEventGet(t *testing.T) {
-	event := FixtureEvent("entity", "check")
-
-	r, err := event.Get("Timestamp")
-	assert.NoError(t, err)
-	assert.EqualValues(t, event.Timestamp, r)
-
-	r, err = event.Get("Entity")
-	assert.NoError(t, err)
-	assert.EqualValues(t, event.Entity, r)
-
-	r, err = event.Get("Check")
-	assert.NoError(t, err)
-	assert.EqualValues(t, event.Check, r)
-
-	r, err = event.Get("Metrics")
-	assert.NoError(t, err)
-	assert.EqualValues(t, event.Metrics, r)
-
-	r, err = event.Get("Non Existence")
-	assert.Error(t, err)
-	assert.Empty(t, event.Hooks, r)
 }
