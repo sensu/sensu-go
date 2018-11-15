@@ -81,7 +81,7 @@ class EventsListHeader extends React.Component {
     if (newValue === "passing") {
       this.props.onChangeQuery({ filter: `check.status !== 0` });
     } else if (newValue === "silenced") {
-      this.props.onChangeQuery({ filter: `check.silenced.length > 0` });
+      this.props.onChangeQuery({ filter: `!is_silenced` });
     } else {
       throw new TypeError(`unknown value ${newValue}`);
     }
