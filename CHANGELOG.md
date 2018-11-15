@@ -37,6 +37,7 @@ flatten embedded and non-embedded fields to the top level.
 - Improved event validation error messages.
 - Improved agent logging for statsd events.
 - Fixues issue with tooltip positioning.
+- Fixed bug with toolbar menus collapsing into the overflow menu
 - The agent now reconnects to the backend if its first connection attempt
   fails.
 - Avoid infinite loop when code cannot be highlighted.
