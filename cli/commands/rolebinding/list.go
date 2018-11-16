@@ -58,7 +58,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
-			Title: "ClusterRole",
+			Title: "Cluster Role",
 			CellTransformer: func(data interface{}) string {
 				roleBinding, ok := data.(types.RoleBinding)
 				if !ok {

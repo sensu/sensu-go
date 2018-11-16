@@ -14,7 +14,7 @@ import (
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "create [NAME] --cluster-role=NAME [--user=username] [--group=groupname]",
-		Short:        "create a new ClusterRoleBinding for a particular ClusterRole",
+		Short:        "create a new cluster role binding for a particular cluster role",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := helpers.VerifyName(args); err != nil {
@@ -80,13 +80,13 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	_ = cmd.Flags().StringP("cluster-role", "c", "",
-		"the ClusterRole this ClusterRoleBinding should reference",
+		"the cluster role this cluster role binding should reference",
 	)
 	_ = cmd.Flags().StringSliceP("group", "g", []string{},
-		"groups to bind to the ClusterRole",
+		"groups to bind to the cluster role",
 	)
 	_ = cmd.Flags().StringSliceP("user", "u", []string{},
-		"users to bind to the ClusterRole",
+		"users to bind to the cluster role",
 	)
 
 	return cmd

@@ -17,7 +17,7 @@ func TestDeleteCommand(t *testing.T) {
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
 	assert.Regexp("delete", cmd.Use)
-	assert.Regexp("ClusterRole", cmd.Short)
+	assert.Regexp("cluster role", cmd.Short)
 }
 func TestDeleteCommandRunEClosureWithoutName(t *testing.T) {
 	assert := assert.New(t)

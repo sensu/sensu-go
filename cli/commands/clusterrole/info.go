@@ -18,7 +18,7 @@ import (
 func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "info [NAME]",
-		Short:        "show detailed information about a ClusterRole",
+		Short:        "show detailed information about a cluster role",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {

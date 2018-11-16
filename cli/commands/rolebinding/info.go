@@ -47,7 +47,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 func printToList(v interface{}, writer io.Writer) error {
 	roleBinding, ok := v.(*types.RoleBinding)
 	if !ok {
-		return fmt.Errorf("%t is not a RoleBinding", v)
+		return fmt.Errorf("%t is not a role binding", v)
 	}
 
 	userNames := []string{}

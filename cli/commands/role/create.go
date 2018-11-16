@@ -14,7 +14,7 @@ import (
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "create [NAME] --verb=VERBS --resource=RESOURCES [--resource-name=RESOURCE_NAMES]",
-		Short:        "create a new Role with a single rule",
+		Short:        "create a new role with a single rule",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if err := helpers.VerifyName(args); err != nil {

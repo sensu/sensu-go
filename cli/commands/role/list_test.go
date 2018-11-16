@@ -17,7 +17,7 @@ func TestListCommand(t *testing.T) {
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
 	assert.Regexp("list", cmd.Use)
-	assert.Regexp("Roles", cmd.Short)
+	assert.Regexp("roles", cmd.Short)
 }
 func TestListCommandRunEClosureJSONFormat(t *testing.T) {
 	assert := assert.New(t)

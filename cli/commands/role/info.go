@@ -18,7 +18,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "info [NAME]",
 		Aliases:      []string{"list-rules"}, // backward compatibility
-		Short:        "show detailed information about a Role",
+		Short:        "show detailed information about a role",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
@@ -47,7 +47,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 func printRulesToTable(v interface{}, io io.Writer) error {
 	queryResults, ok := v.(*types.Role)
 	if !ok {
-		return fmt.Errorf("%t is not a Role", v)
+		return fmt.Errorf("%t is not a role", v)
 	}
 	table := table.New([]*table.Column{
 		{

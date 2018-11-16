@@ -22,7 +22,7 @@ func TestInfoCommand(t *testing.T) {
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
 	assert.Regexp("info", cmd.Use)
-	assert.Regexp("ClusterRole", cmd.Short)
+	assert.Regexp("cluster role", cmd.Short)
 }
 
 func TestInfoCommandRunEWithError(t *testing.T) {
