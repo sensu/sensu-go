@@ -209,6 +209,6 @@ func watchMon(ctx context.Context, cli *clientv3.Client, mon *monitor, failureHa
 		}
 	}()
 	leasesMu.Lock()
-	defer leasesMu.Unlock()
 	leasesToRevoke[mon.leaseID] = struct{}{}
+	leasesMu.Unlock()
 }
