@@ -318,7 +318,12 @@ func (r *Ring) Next(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("error initializing ring: %s", err)
 	}
 	r.wake()
-	watchResponse := <-r.watchChan
+	var watchResponse clientv3.WatchResponse
+	select {
+	case watchResponse = <-r.watchChan:
+	case <-ctx.Done():
+		return "", ctx.Err()
+	}
 	if watchResponse.Canceled {
 		r.initWatcher()
 		return r.Next(ctx)
