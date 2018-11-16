@@ -562,9 +562,7 @@ func TestAuthorization(t *testing.T) {
 	for _, tt := range cases {
 		t.Run(tt.description, func(t *testing.T) {
 			// testHandler is a catch-all handler that returns 200 OK
-			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				return
-			})
+			testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {})
 
 			// Prepare our HTTP server
 			w := httptest.NewRecorder()

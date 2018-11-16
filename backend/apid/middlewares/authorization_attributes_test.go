@@ -19,7 +19,6 @@ func TestAuthorizationAttributes(t *testing.T) {
 		description string
 		method      string
 		path        string
-		urlVars     map[string]string
 		expected    authorization.Attributes
 	}{
 		{

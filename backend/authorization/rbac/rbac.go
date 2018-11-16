@@ -39,7 +39,6 @@ func (a *Authorizer) Authorize(ctx context.Context, attrs *authorization.Attribu
 		case *store.ErrNotFound:
 			// No ClusterRoleBindings founds, let's continue with the RoleBindings
 			logger.WithError(err).Debug("no ClusterRoleBindings found")
-			break
 		default:
 			logger.WithError(err).Warning("could not retrieve the ClusterRoleBindings")
 			return false, err
@@ -88,7 +87,6 @@ func (a *Authorizer) Authorize(ctx context.Context, attrs *authorization.Attribu
 			case *store.ErrNotFound:
 				// No ClusterRoleBindings founds, let's continue with the RoleBindings
 				logger.WithError(err).Debug("no RoleBindings found")
-				break
 			default:
 				logger.WithError(err).Warning("could not retrieve the ClusterRoleBindings")
 				return false, err
