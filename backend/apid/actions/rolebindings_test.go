@@ -46,7 +46,7 @@ func TestRoleBindingCreate(t *testing.T) {
 			expectedErrCode: InvalidArgument,
 		},
 		{
-			name:            "Already existing",
+			name:            "Already exists",
 			ctx:             context.Background(),
 			argument:        types.FixtureRoleBinding("read-write", "default"),
 			storeErr:        &store.ErrAlreadyExists{},

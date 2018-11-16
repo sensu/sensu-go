@@ -46,7 +46,7 @@ func TestRoleCreate(t *testing.T) {
 			expectedErrCode: InvalidArgument,
 		},
 		{
-			name:            "Already existing",
+			name:            "Already exists",
 			ctx:             context.Background(),
 			argument:        types.FixtureRole("read-write", "default"),
 			storeErr:        &store.ErrAlreadyExists{},
