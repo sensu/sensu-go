@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Fixed several resource leaks in the check scheduler.
+
 ## [2.0.0-beta.8-1] - 2018-11-15
 
 ### Added

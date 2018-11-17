@@ -2,11 +2,14 @@ package monitor
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
+	"sync"
 	"syscall"
+	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
@@ -15,9 +18,32 @@ import (
 )
 
 var (
-	monitorPathPrefix = "monitors"
-	monitorKeyBuilder = store.NewKeyBuilder(monitorPathPrefix)
+	monitorPathPrefix     = "monitors"
+	monitorKeyBuilder     = store.NewKeyBuilder(monitorPathPrefix)
+	leasesToRevoke        = make(map[clientv3.LeaseID]struct{})
+	leasesMu              sync.Mutex
+	leasesOnce            sync.Once
+	packageClientDoNotUse *clientv3.Client
 )
+
+func init() {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	// TODO:(echlebek) get rid of this when we fix all of this stuff :)
+	go func() {
+		<-sigs
+
+		leasesMu.Lock()
+		defer leasesMu.Unlock()
+
+		for id := range leasesToRevoke {
+			// There is nothing useful we can do with the error.
+			// If the lease can't be revoked, it will expire later on.
+			_, _ = packageClientDoNotUse.Lease.Revoke(context.TODO(), id)
+		}
+	}()
+}
 
 // Supervisor provides a way to refresh a named monitor. It is a proxy for all
 // of the running monitors in the system.
@@ -53,6 +79,9 @@ type Factory func(Handler) Supervisor
 
 // NewEtcdSupervisor returns a new Supervisor backed by Etcd.
 func NewEtcdSupervisor(client *clientv3.Client, h Handler) *EtcdSupervisor {
+	leasesOnce.Do(func() {
+		packageClientDoNotUse = client
+	})
 	return &EtcdSupervisor{
 		client:         client,
 		failureHandler: h,
@@ -65,6 +94,9 @@ func NewEtcdSupervisor(client *clientv3.Client, h Handler) *EtcdSupervisor {
 // extended. If the monitor's ttl has changed, a new lease is created and the
 // key is updated with that new lease.
 func (m *EtcdSupervisor) Monitor(ctx context.Context, name string, event *types.Event, ttl int64) error {
+	if ttl == 0 {
+		return errors.New("monitor ttl cannot be 0")
+	}
 	key := monitorKeyBuilder.Build(name)
 	// try to get the monitor from the store
 	mon, err := m.getMonitor(ctx, key)
@@ -146,38 +178,37 @@ func (m *EtcdSupervisor) getMonitor(ctx context.Context, key string) (*monitor, 
 // is witnessed, it calls the provided HandleFailure func. If a PUT event is
 // witnessed, the watcher is stopped.
 func watchMon(ctx context.Context, cli *clientv3.Client, mon *monitor, failureHandler func(), shutdownHandler func()) {
+	if mon.ttl == 0 {
+		panic("zero-duration ttl")
+	}
+	ctx, cancel := context.WithCancel(ctx)
 	responseChan := cli.Watch(ctx, mon.key)
+	timer := time.NewTimer(time.Duration(mon.ttl) * time.Second)
 	go func() {
-		for wresp := range responseChan {
-			for _, ev := range wresp.Events {
-				if ev.Type == mvccpb.DELETE {
-					failureHandler()
-					return
+		defer timer.Stop()
+		defer cancel()
+		for {
+			select {
+			case wresp := <-responseChan:
+				for _, ev := range wresp.Events {
+					if ev.Type == mvccpb.DELETE {
+						failureHandler()
+						return
+					}
+					// if there is a PUT on the key, the lease has been extended,
+					// and we want to kill this watcher to avoid duplicate watchers.
+					if ev.Type == mvccpb.PUT {
+						shutdownHandler()
+						return
+					}
 				}
-				// if there is a PUT on the key, the lease has been extended,
-				// and we want to kill this watcher to avoid duplicate watchers.
-				if ev.Type == mvccpb.PUT {
-					shutdownHandler()
-					return
-				}
+			case <-timer.C:
+				failureHandler()
+				return
 			}
 		}
 	}()
-
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		sig := <-sigs
-
-		logger.Debugf("signal %s received, revoking lease for key %s",
-			sig.String(),
-			mon.key,
-		)
-
-		if _, err := cli.Lease.Revoke(ctx, mon.leaseID); err != nil {
-			logger.WithError(err).Warningf("could not revoke the lease %v for the key %s",
-				mon.leaseID, mon.key,
-			)
-		}
-	}()
+	leasesMu.Lock()
+	leasesToRevoke[mon.leaseID] = struct{}{}
+	leasesMu.Unlock()
 }
