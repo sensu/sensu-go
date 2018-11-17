@@ -142,7 +142,7 @@ func (b *WizardBus) Publish(topic string, msg interface{}) error {
 }
 
 // PublishDirect publishes a message to a single consumer.
-func (b *WizardBus) PublishDirect(topic string, msg interface{}) error {
+func (b *WizardBus) PublishDirect(ctx context.Context, topic string, msg interface{}) error {
 	if !b.running.Load().(bool) {
 		return errors.New("bus no longer running")
 	}
@@ -156,17 +156,17 @@ func (b *WizardBus) PublishDirect(topic string, msg interface{}) error {
 	}
 
 	if wt.ring == nil {
-		if err := b.makeRing(wt); err != nil {
+		if err := b.makeRing(ctx, wt); err != nil {
 			return err
 		}
 	}
 
-	return wt.SendRoundRobin(msg)
+	return wt.SendRoundRobin(ctx, msg)
 }
 
 // makeRing constructs a ring for a topic. rings are lazily constructed;
 // they are not created until the need for one is identified by a call to PublishDirect.
-func (b *WizardBus) makeRing(wt *wizardTopic) error {
+func (b *WizardBus) makeRing(ctx context.Context, wt *wizardTopic) error {
 	ring := b.ringGetter.GetRing(wt.id)
 
 	wt.RLock()
@@ -177,7 +177,7 @@ func (b *WizardBus) makeRing(wt *wizardTopic) error {
 	wt.RUnlock()
 
 	for _, id := range bindings {
-		if err := ring.Add(context.Background(), id); err != nil {
+		if err := ring.Add(ctx, id); err != nil {
 			return err
 		}
 	}

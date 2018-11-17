@@ -124,7 +124,7 @@ func TestGetMonitorExisting(t *testing.T) {
 	testMon := &monitor{
 		key:     "testGetMonitorExisting",
 		leaseID: 0,
-		ttl:     0,
+		ttl:     3600,
 	}
 	monitorSupervisor := NewEtcdSupervisor(client, handler)
 	_, err = client.Put(context.Background(), testMon.key, fmt.Sprintf("%d", testMon.ttl))
@@ -153,7 +153,7 @@ func TestWatchMonDelete(t *testing.T) {
 	mon := &monitor{
 		key:     "monitorTestDelete",
 		leaseID: 0,
-		ttl:     0,
+		ttl:     3600,
 	}
 	_, err = client.Put(context.Background(), mon.key, "test value")
 	require.NoError(t, err)
@@ -182,7 +182,7 @@ func TestWatchMonPut(t *testing.T) {
 	mon := &monitor{
 		key:     "monitorTestPut",
 		leaseID: 0,
-		ttl:     0,
+		ttl:     3600,
 	}
 
 	_, err = client.Put(context.Background(), mon.key, "test value")
