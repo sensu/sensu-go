@@ -76,3 +76,9 @@ func TestIntersect(t *testing.T) {
 	intr = Intersect(a, b)
 	assert.Equal(t, []string{}, intr)
 }
+
+func BenchmarkFoundInArray(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		FoundInArray("foo!BAR   baz", []string{"foo", "foobar", "FOO BAR", "foo bar baz", "foobarbaz"})
+	}
+}

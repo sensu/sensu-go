@@ -1,8 +1,12 @@
 package strings
 
-import (
-	"regexp"
-	"strings"
+import "strings"
+
+const (
+	numericStart    = 48
+	numericStop     = 57
+	lowerAlphaStart = 97
+	lowerAlphaStop  = 122
 )
 
 // InArray searches 'array' for 'item' string
@@ -12,13 +16,56 @@ func InArray(item string, array []string) bool {
 		return false
 	}
 
-	for _, element := range array {
-		if element == item {
+	for i := range array {
+		if array[i] == item {
 			return true
 		}
 	}
 
 	return false
+}
+
+func isDigit(r rune) bool {
+	return r >= numericStart && r <= numericStop
+}
+
+func isAlpha(r rune) bool {
+	return r >= lowerAlphaStart && r <= lowerAlphaStop
+}
+
+func alphaNumeric(s string) bool {
+	for _, r := range s {
+		if !(isDigit(r) || isAlpha(r)) {
+			return false
+		}
+	}
+	return true
+}
+
+func isNormalized(array []string) bool {
+	for i := range array {
+		if !alphaNumeric(array[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+func normalize(s string) string {
+	if alphaNumeric(s) {
+		return s
+	}
+	lowered := strings.ToLower(s)
+	if alphaNumeric(lowered) {
+		return lowered
+	}
+	trimmed := make([]rune, 0, len(lowered))
+	for _, r := range lowered {
+		if isAlpha(r) {
+			trimmed = append(trimmed, r)
+		}
+	}
+	return string(trimmed)
 }
 
 // FoundInArray searches array for item without distinguishing between uppercase
@@ -29,17 +76,10 @@ func FoundInArray(item string, array []string) bool {
 		return false
 	}
 
-	// Prepare our regex in order to remove all non-alphanumeric characters
-	r, err := regexp.Compile("[^a-zA-Z0-9]+")
-	if err != nil {
-		return false
-	}
+	item = normalize(item)
 
-	item = r.ReplaceAllString(strings.ToLower(item), "")
-
-	for _, element := range array {
-		element = r.ReplaceAllString(strings.ToLower(element), "")
-		if element == item {
+	for i := range array {
+		if normalize(array[i]) == item {
 			return true
 		}
 	}
