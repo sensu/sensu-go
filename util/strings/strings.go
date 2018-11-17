@@ -1,10 +1,11 @@
 package strings
 
-import "strings"
+import (
+	"strings"
+	"unicode"
+)
 
 const (
-	numericStart    = 48
-	numericStop     = 57
 	lowerAlphaStart = 97
 	lowerAlphaStop  = 122
 )
@@ -25,17 +26,13 @@ func InArray(item string, array []string) bool {
 	return false
 }
 
-func isDigit(r rune) bool {
-	return r >= numericStart && r <= numericStop
-}
-
 func isAlpha(r rune) bool {
 	return r >= lowerAlphaStart && r <= lowerAlphaStop
 }
 
 func alphaNumeric(s string) bool {
 	for _, r := range s {
-		if !(isDigit(r) || isAlpha(r)) {
+		if !(unicode.IsDigit(r) || isAlpha(r)) {
 			return false
 		}
 	}
