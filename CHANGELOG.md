@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Fixed several resource leaks in the check scheduler.
+- Fixed a bug in the dashboard where entities could not be silenced.
 
 ## [2.0.0-beta.8-1] - 2018-11-15
 
