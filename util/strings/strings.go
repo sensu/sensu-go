@@ -42,15 +42,6 @@ func alphaNumeric(s string) bool {
 	return true
 }
 
-func isNormalized(array []string) bool {
-	for i := range array {
-		if !alphaNumeric(array[i]) {
-			return false
-		}
-	}
-	return true
-}
-
 func normalize(s string) string {
 	if alphaNumeric(s) {
 		return s
