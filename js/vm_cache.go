@@ -68,8 +68,7 @@ func (c *vmCache) reap() {
 	defer c.Unlock()
 }
 
-// Acquire gets a VM from the cache. When the user is finished with it, it
-// should be returned to the cache with Release.
+// Acquire gets a VM from the cache. It is a copy of the cached value.
 func (c *vmCache) Acquire(key string) *otto.Otto {
 	c.Lock()
 	defer c.Unlock()
@@ -83,8 +82,7 @@ func (c *vmCache) Acquire(key string) *otto.Otto {
 	return val.vm.Copy()
 }
 
-// Init initializes the value in the cache, creating cacheMaxConcurrency copies
-// of it.
+// Init initializes the value in the cache.
 func (c *vmCache) Init(key string, vm *otto.Otto) {
 	c.Lock()
 	defer c.Unlock()
