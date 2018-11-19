@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"sort"
 
-	"github.com/sensu/sensu-go/types/dynamic"
+	utilstrings "github.com/sensu/sensu-go/util/strings"
 )
 
 const (
@@ -19,7 +19,14 @@ const (
 
 	// EntityBackendClass is the name of the class given to backend entities.
 	EntityBackendClass = "backend"
+
+	// Redacted is filled in for fields that contain sensitive information
+	Redacted = "REDACTED"
 )
+
+// DefaultRedactFields contains the default fields to redact
+var DefaultRedactFields = []string{"password", "passwd", "pass", "api_key",
+	"api_token", "access_key", "secret_key", "private_key", "secret"}
 
 // Validate returns an error if the entity is invalid.
 func (e *Entity) Validate() error {
@@ -38,17 +45,43 @@ func (e *Entity) Validate() error {
 	return nil
 }
 
+func redactMap(m map[string]string, redact []string) map[string]string {
+	if len(redact) == 0 {
+		redact = DefaultRedactFields
+	}
+	result := make(map[string]string, len(m))
+	for k, v := range m {
+		if utilstrings.FoundInArray(k, redact) {
+			result[k] = Redacted
+		} else {
+			result[k] = v
+		}
+	}
+	return result
+}
+
+// GetRedactedEntity redacts the entity according to the entity's Redact fields.
+// A redacted copy is returned. The copy contains pointers to the original's
+// memory, with different Labels and Annotations.
+func (e *Entity) GetRedactedEntity() *Entity {
+	if e == nil {
+		return nil
+	}
+	ent := &Entity{}
+	*ent = *e
+	ent.Annotations = redactMap(e.Annotations, e.Redact)
+	ent.Labels = redactMap(e.Labels, e.Redact)
+	return ent
+}
+
 // MarshalJSON implements the json.Marshaler interface.
 func (e *Entity) MarshalJSON() ([]byte, error) {
 	// Redact the entity before marshalling the entity so we don't leak any
 	// sensitive information
-	redactedEntity, err := dynamic.Redact(e, e.Redact...)
-	if err != nil {
-		return nil, err
-	}
+	e = e.GetRedactedEntity()
 
 	type Clone Entity
-	clone := (*Clone)(redactedEntity.(*Entity))
+	clone := (*Clone)(e)
 
 	return json.Marshal(clone)
 }

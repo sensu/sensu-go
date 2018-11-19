@@ -181,8 +181,8 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 	filteredEntities := records
 	if len(filter) > 0 {
 		filteredEntities = make([]*types.Entity, 0, len(filteredEntities))
-		for _, event := range records {
-			r := dynamic.Synthesize(event)
+		for _, entity := range records {
+			r := dynamic.Synthesize(entity.GetRedactedEntity())
 			matched, err := js.Evaluate(filter, r, nil)
 
 			if err != nil {
@@ -190,7 +190,7 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 				continue
 			}
 			if matched {
-				filteredEntities = append(filteredEntities, event)
+				filteredEntities = append(filteredEntities, entity)
 			}
 		}
 	}
