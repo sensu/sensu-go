@@ -67,6 +67,9 @@ func (e *Entity) GetRedactedEntity() *Entity {
 	if e == nil {
 		return nil
 	}
+	if e.Labels == nil && e.Annotations == nil {
+		return e
+	}
 	ent := &Entity{}
 	*ent = *e
 	ent.Annotations = redactMap(e.Annotations, e.Redact)
