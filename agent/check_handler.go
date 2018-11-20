@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/sensu/sensu-go/agent/transformers"
@@ -85,10 +86,10 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 		return
 	}
 
-	// Inject the dependenices into PATH, LD_LIBRARY_PATH & CPATH so that they are
-	// availabe when when the command is executed.
+	// Inject the dependencies into PATH, LD_LIBRARY_PATH & CPATH so that they
+	// are availabe when when the command is executed.
 	ex := command.ExecutionRequest{
-		Env:          append(assets.Env(), check.EnvVars...),
+		Env:          mergeEnvironments(assets.Env(), check.EnvVars),
 		Command:      checkConfig.Command,
 		Timeout:      int(checkConfig.Timeout),
 		InProgress:   a.inProgress,
@@ -222,4 +223,45 @@ func extractMetrics(event *types.Event) []*types.MetricPoint {
 	}
 
 	return transformer.Transform()
+}
+
+// mergeEnvironments merges env2 into env1, overwriting any existing variable
+// in env1, except for the "special" variables PATH, CPATH and LD_LIBRARY_PATH.
+// These variables are merged by prepending the value from env2 to the value in
+// env1, effectively giving priority to the value from env2.
+func mergeEnvironments(env1, env2 []string) []string {
+	toMap := func(s []string) map[string]string {
+		m := map[string]string{}
+
+		for _, v := range s {
+			split := strings.SplitN(v, "=", 2)
+			m[split[0]] = split[1]
+		}
+
+		return m
+	}
+
+	fromMap := func(m map[string]string) []string {
+		s := []string{}
+
+		for k, v := range m {
+			s = append(s, k+"="+v)
+		}
+
+		return s
+	}
+
+	e1 := toMap(env1)
+	e2 := toMap(env2)
+
+	for k, v := range e2 {
+		switch k {
+		case "PATH", "CPATH", "LD_LIBRARY_PATH":
+			e1[k] = strings.Join([]string{v, e1[k]}, ":")
+		default:
+			e1[k] = v
+		}
+	}
+
+	return fromMap(e1)
 }
