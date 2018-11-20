@@ -5,11 +5,8 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
-	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -20,45 +17,7 @@ var _ schema.MutationFieldResolvers = (*mutationsImpl)(nil)
 //
 
 type mutationsImpl struct {
-	checkCreator   checkCreator
-	checkDestroyer checkDestroyer
-	checkExecutor  checkExecutor
-	checkReplacer  interface {
-		checkFinder
-		checkReplacer
-	}
-
-	entityDestroyer entityDestroyer
-
-	eventFinder    eventFinder
-	eventReplacer  eventReplacer
-	eventDestroyer eventDestroyer
-
-	silenceCreator   silenceCreator
-	silenceDestroyer silenceDestroyer
-}
-
-func newMutationImpl(store store.Store, getter types.QueueGetter, bus messaging.MessageBus) *mutationsImpl {
-	eventCtrl := actions.NewEventController(store, bus)
-	checkCtrl := actions.NewCheckController(store, getter)
-	entityCtrl := actions.NewEntityController(store)
-	silenceCtrl := actions.NewSilencedController(store)
-
-	return &mutationsImpl{
-		checkCreator:   checkCtrl,
-		checkDestroyer: checkCtrl,
-		checkExecutor:  checkCtrl,
-		checkReplacer:  checkCtrl,
-
-		entityDestroyer: entityCtrl,
-
-		eventFinder:    eventCtrl,
-		eventReplacer:  eventCtrl,
-		eventDestroyer: eventCtrl,
-
-		silenceCreator:   silenceCtrl,
-		silenceDestroyer: silenceCtrl,
-	}
+	factory ClientFactory
 }
 
 type deleteRecordPayload struct {
@@ -82,7 +41,10 @@ func (r *mutationsImpl) CreateCheck(p schema.MutationCreateCheckFieldResolverPar
 		return nil, err
 	}
 
-	err := r.checkCreator.Create(p.Context, check)
+	ctx := contextWithNamespace(p.Context, inputs.Namespace)
+	client := r.factory.NewWithContext(ctx)
+
+	err := client.CreateCheck(&check)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +59,8 @@ func (r *mutationsImpl) UpdateCheck(p schema.MutationUpdateCheckFieldResolverPar
 	components, _ := globalid.Decode(p.Args.Input.ID)
 	ctx := setContextFromComponents(p.Context, components)
 
-	check, err := r.checkReplacer.Find(ctx, components.UniqueComponent())
+	client := r.factory.NewWithContext(ctx)
+	check, err := client.FetchCheck(components.UniqueComponent())
 	if err != nil {
 		return nil, err
 	}
@@ -107,7 +70,7 @@ func (r *mutationsImpl) UpdateCheck(p schema.MutationUpdateCheckFieldResolverPar
 		return nil, err
 	}
 
-	err = r.checkReplacer.CreateOrReplace(p.Context, *check)
+	err = client.UpdateCheck(check)
 	if err != nil {
 		return nil, err
 	}
@@ -122,7 +85,13 @@ func (r *mutationsImpl) DeleteCheck(p schema.MutationDeleteCheckFieldResolverPar
 	components, _ := globalid.Decode(p.Args.Input.ID)
 	ctx := setContextFromComponents(p.Context, components)
 
-	err := r.checkDestroyer.Destroy(ctx, components.UniqueComponent())
+	client := r.factory.NewWithContext(ctx)
+	check, err := client.FetchCheck(components.UniqueComponent())
+	if err != nil {
+		return nil, err
+	}
+
+	err = client.DeleteCheck(check)
 	if err != nil {
 		return nil, err
 	}
@@ -137,14 +106,18 @@ func (r *mutationsImpl) ExecuteCheck(p schema.MutationExecuteCheckFieldResolverP
 	components, _ := globalid.Decode(p.Args.Input.ID)
 	ctx := setContextFromComponents(p.Context, components)
 
-	check := components.UniqueComponent()
+	client := r.factory.NewWithContext(ctx)
+	check, err := client.FetchCheck(components.UniqueComponent())
+	if err != nil {
+		return nil, err
+	}
+
 	adhocReq := types.AdhocRequest{
-		Name:          check,
+		Name:          check.Name,
 		Subscriptions: p.Args.Input.Subscriptions,
 		Reason:        p.Args.Input.Reason,
 	}
-
-	err := r.checkExecutor.QueueAdhocRequest(ctx, check, &adhocReq)
+	err = client.ExecuteCheck(&adhocReq)
 	return map[string]interface{}{
 		"clientMutationId": p.Args.Input.ClientMutationID,
 		"errors":           wrapInputErrors("id", err),
@@ -177,7 +150,13 @@ func (r *mutationsImpl) DeleteEntity(p schema.MutationDeleteEntityFieldResolverP
 	components, _ := globalid.Decode(p.Args.Input.ID)
 	ctx := setContextFromComponents(p.Context, components)
 
-	err := r.entityDestroyer.Destroy(ctx, components.UniqueComponent())
+	client := r.factory.NewWithContext(ctx)
+	entity, err := client.FetchEntity(components.UniqueComponent())
+	if err != nil {
+		return nil, err
+	}
+
+	err = client.DeleteEntity(entity)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +178,9 @@ func (r *mutationsImpl) ResolveEvent(p schema.MutationResolveEventFieldResolverP
 	}
 
 	ctx := setContextFromComponents(p.Context, components)
-	event, err := r.eventFinder.Find(ctx, components.EntityName(), components.CheckName())
+	client := r.factory.NewWithContext(ctx)
+
+	event, err := client.FetchEvent(components.EntityName(), components.CheckName())
 	if err != nil {
 		return nil, err
 	}
@@ -209,7 +190,7 @@ func (r *mutationsImpl) ResolveEvent(p schema.MutationResolveEventFieldResolverP
 		event.Check.Output = "Resolved manually with " + p.Args.Input.Source
 		event.Timestamp = int64(time.Now().Unix())
 
-		err = r.eventReplacer.CreateOrReplace(ctx, *event)
+		err = client.UpdateEvent(event)
 		if err != nil {
 			return nil, err
 		}
@@ -229,7 +210,9 @@ func (r *mutationsImpl) DeleteEvent(p schema.MutationDeleteEventFieldResolverPar
 	}
 
 	ctx := setContextFromComponents(p.Context, components)
-	err = r.eventDestroyer.Destroy(ctx, components.EntityName(), components.CheckName())
+	client := r.factory.NewWithContext(ctx)
+
+	err = client.DeleteEvent(components.EntityName(), components.CheckName())
 	if err != nil {
 		return nil, err
 	}
@@ -269,7 +252,10 @@ func (r *mutationsImpl) CreateSilence(p schema.MutationCreateSilenceFieldResolve
 	silence.Namespace = inputs.Namespace
 	copySilenceInputs(&silence, inputs.Props)
 
-	err := r.silenceCreator.Create(p.Context, &silence)
+	ctx := contextWithNamespace(p.Context, inputs.Namespace)
+	client := r.factory.NewWithContext(ctx)
+
+	err := client.CreateSilenced(&silence)
 	if err != nil {
 		return nil, err
 	}
@@ -284,7 +270,8 @@ func (r *mutationsImpl) DeleteSilence(p schema.MutationDeleteSilenceFieldResolve
 	components, _ := globalid.Parse(p.Args.Input.ID)
 	ctx := setContextFromComponents(p.Context, components)
 
-	err := r.silenceDestroyer.Destroy(ctx, components.UniqueComponent())
+	client := r.factory.NewWithContext(ctx)
+	err := client.DeleteSilenced(components.UniqueComponent())
 	if err != nil {
 		return nil, err
 	}

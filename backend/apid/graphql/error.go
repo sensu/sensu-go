@@ -3,6 +3,7 @@ package graphql
 import (
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/graphql"
 )
 
@@ -17,7 +18,7 @@ type stdErr struct {
 func newStdErr(input string, err error) stdErr {
 	out := stdErr{code: schema.ErrCodes.ERR_INTERNAL, input: input}
 	switch terr := err.(type) {
-	case actions.Error: // TODO APIError
+	case client.APIError: // TODO APIError
 		out.message = terr.Message
 		out.code = mapServiceErrCode(terr.Code)
 	case error:
@@ -26,13 +27,13 @@ func newStdErr(input string, err error) stdErr {
 	return out
 }
 
-func mapServiceErrCode(code actions.ErrCode) schema.ErrCode {
+func mapServiceErrCode(code uint32) schema.ErrCode {
 	switch code {
-	case actions.NotFound:
+	case uint32(actions.NotFound):
 		return schema.ErrCodes.ERR_NOT_FOUND
-	case actions.AlreadyExistsErr:
+	case uint32(actions.AlreadyExistsErr):
 		return schema.ErrCodes.ERR_ALREADY_EXISTS
-	case actions.InternalErr:
+	case uint32(actions.InternalErr):
 		fallthrough
 	default:
 		return schema.ErrCodes.ERR_INTERNAL

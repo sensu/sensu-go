@@ -102,7 +102,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterUser(svc, &userImpl{})
 
 	// Register mutations
-	schema.RegisterMutation(svc, newMutationImpl(store, cfg.QueueGetter, cfg.Bus))
+	schema.RegisterMutation(svc, &mutationsImpl{factory: clientFactory})
 	schema.RegisterCheckConfigInputs(svc)
 	schema.RegisterCreateCheckInput(svc)
 	schema.RegisterCreateCheckPayload(svc, &checkMutationPayload{})
