@@ -37,7 +37,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterError(svc, nil)
 	schema.RegisterEvent(svc, &eventImpl{})
 	schema.RegisterEventsListOrder(svc)
-	schema.RegisterHandler(svc, newHandlerImpl(store))
+	schema.RegisterHandler(svc, newHandlerImpl(store, clientFactory))
 	schema.RegisterHandlerSocket(svc, &handlerSocketImpl{})
 	schema.RegisterIcon(svc)
 	schema.RegisterJSON(svc, jsonImpl{})
@@ -60,8 +60,8 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterViewer(svc, newViewerImpl(store))
 
 	// Register check types
-	schema.RegisterCheck(svc, newCheckImpl(store))
-	schema.RegisterCheckConfig(svc, newCheckCfgImpl(store))
+	schema.RegisterCheck(svc, &checkImpl{factory: clientFactory})
+	schema.RegisterCheckConfig(svc, &checkCfgImpl{factory: clientFactory})
 	schema.RegisterCheckConfigConnection(svc, &schema.CheckConfigConnectionAliases{})
 	schema.RegisterCheckHistory(svc, &checkHistoryImpl{})
 	schema.RegisterCheckListOrder(svc)

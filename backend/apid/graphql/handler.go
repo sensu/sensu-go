@@ -7,6 +7,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/util/strings"
 )
 
 var _ schema.HandlerFieldResolvers = (*handlerImpl)(nil)
@@ -20,12 +21,15 @@ type handlerImpl struct {
 	schema.HandlerAliases
 	handlerCtrl actions.HandlerController
 	mutatorCtrl actions.MutatorController
+	factory     ClientFactory
 }
 
-func newHandlerImpl(store store.Store) *handlerImpl {
+// TODO: Remove
+func newHandlerImpl(store store.Store, factory ClientFactory) *handlerImpl {
 	return &handlerImpl{
 		handlerCtrl: actions.NewHandlerController(store),
 		mutatorCtrl: actions.NewMutatorController(store),
+		factory:     factory,
 	}
 }
 
@@ -42,10 +46,11 @@ func (r *handlerImpl) Mutator(p graphql.ResolveParams) (interface{}, error) {
 
 // Handlers implements response to request for 'handlers' field.
 func (r *handlerImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
-	handler := p.Source.(*types.Handler)
-	ctx := types.SetContextFromResource(p.Context, handler)
-	handlers, err := fetchHandlersWithNames(ctx, r.handlerCtrl, handler.Handlers)
-	return handlers, err
+	src := p.Source.(*types.Handler)
+	client := r.factory.NewWithContext(p.Context)
+	return fetchHandlers(client, src.Namespace, func(obj *types.Handler) bool {
+		return strings.FoundInArray(obj.Name, src.Handlers)
+	})
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type
