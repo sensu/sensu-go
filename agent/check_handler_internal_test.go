@@ -370,6 +370,12 @@ func TestMergeEnvironments(t *testing.T) {
 			env2:     []string{"PATH=~/bin:~/.local/bin", "VAR2=VALUE2"},
 			expected: []string{"VAR1=VALUE1", "VAR2=VALUE2", "PATH=~/bin:~/.local/bin:/bin:/sbin"},
 		},
+		{
+			name:     "discard invalid environment variables",
+			env1:     []string{"VAR1", "VAR2=VALUE2", "garbagelol"},
+			env2:     []string{"VAR3="},
+			expected: []string{"VAR2=VALUE2", "VAR3="},
+		},
 	}
 
 	for _, tt := range cases {
