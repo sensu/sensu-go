@@ -10,6 +10,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - Assets and checks environments are now merged, with a preference given to the
   values coming from the check's environment.
+- Assets and handlers environments are now merged, with a preference given to the
+  values coming from the handler's environment.
+- Assets and mutators environments are now merged, with a preference given to the
+  values coming from the mutator's environment.
 
 ### Fixed
 - Fixed several resource leaks in the check scheduler.
