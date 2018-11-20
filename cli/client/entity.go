@@ -33,7 +33,7 @@ func (client *RestClient) FetchEntity(name string) (*types.Entity, error) {
 func (client *RestClient) ListEntities(namespace string) ([]types.Entity, error) {
 	var entities []types.Entity
 
-	res, err := client.R().Get("/entities?namespace=" + namespace)
+	res, err := client.R().SetQueryParam("namespace", namespace).Get("/entities")
 	if err != nil {
 		return entities, err
 	}

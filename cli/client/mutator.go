@@ -12,7 +12,7 @@ import (
 func (client *RestClient) ListMutators(namespace string) ([]types.Mutator, error) {
 	var mutators []types.Mutator
 
-	res, err := client.R().Get("/mutators?namespace=" + url.QueryEscape(namespace))
+	res, err := client.R().SetQueryParam("namespace", namespace).Get("/mutators")
 	if err != nil {
 		return mutators, err
 	}

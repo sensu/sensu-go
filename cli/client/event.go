@@ -34,7 +34,7 @@ func (client *RestClient) FetchEvent(entity, check string) (*types.Event, error)
 func (client *RestClient) ListEvents(namespace string) ([]types.Event, error) {
 	var events []types.Event
 
-	res, err := client.R().Get("/events?namespace=" + url.QueryEscape(namespace))
+	res, err := client.R().SetQueryParam("namespace", namespace).Get("/events")
 	if err != nil {
 		return events, err
 	}

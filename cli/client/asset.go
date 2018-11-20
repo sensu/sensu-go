@@ -12,7 +12,7 @@ import (
 func (client *RestClient) ListAssets(namespace string) ([]types.Asset, error) {
 	var assets []types.Asset
 
-	res, err := client.R().Get("/assets?namespace=" + namespace)
+	res, err := client.R().SetQueryParam("namespace", namespace).Get("/assets")
 	if err != nil {
 		return assets, err
 	}

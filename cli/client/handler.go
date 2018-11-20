@@ -12,7 +12,7 @@ import (
 func (client *RestClient) ListHandlers(namespace string) ([]types.Handler, error) {
 	var handlers []types.Handler
 
-	res, err := client.R().Get("/handlers?namespace=" + url.QueryEscape(namespace))
+	res, err := client.R().SetQueryParam("namespace", namespace).Get("/handlers")
 	if err != nil {
 		return handlers, err
 	}
