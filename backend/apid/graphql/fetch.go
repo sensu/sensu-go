@@ -102,6 +102,30 @@ func fetchHandlers(c client.APIClient, ns string, filter handlerPredicate) ([]*t
 	return relevant, nil
 }
 
+// namespaces
+
+type namespacePredicate func(*types.Namespace) bool
+
+func fetchNamespaces(c client.APIClient, filter namespacePredicate) ([]*types.Namespace, error) {
+	records, err := c.ListNamespaces()
+	relevant := make([]*types.Namespace, 0, len(records))
+	if err != nil {
+		return relevant, err
+	}
+
+	if filter == nil {
+		filter = func(*types.Namespace) bool { return true }
+	}
+
+	for _, record := range records {
+		if filter(&record) {
+			relevant = append(relevant, &record)
+		}
+	}
+
+	return relevant, nil
+}
+
 // silences
 
 type silencePredicate func(*types.Silenced) bool
