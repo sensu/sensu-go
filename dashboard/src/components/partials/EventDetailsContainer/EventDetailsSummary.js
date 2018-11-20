@@ -62,9 +62,13 @@ class EventDetailsSummary extends React.Component {
             <DictionaryEntry>
               <DictionaryKey>Check</DictionaryKey>
               <DictionaryValue>
-                <InlineLink to={`/${namespace}/checks/${check.name}`}>
-                  {check.name}
-                </InlineLink>
+                {check.name !== "keepalive" ? (
+                  <InlineLink to={`/${namespace}/checks/${check.name}`}>
+                    {check.name}
+                  </InlineLink>
+                ) : (
+                  check.name
+                )}
               </DictionaryValue>
             </DictionaryEntry>
             <DictionaryEntry>
