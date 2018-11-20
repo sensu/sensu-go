@@ -2,6 +2,7 @@ package graphql
 
 import "github.com/sensu/sensu-go/backend/apid/actions"
 
+// TODO Remove me; unused
 func handleControllerResults(record interface{}, err error) (interface{}, error) {
 	// If no error occurred simply return the record
 	if err == nil {

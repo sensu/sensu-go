@@ -128,7 +128,7 @@ func fetchSilenceds(c client.APIClient, ns string, filter silencePredicate) ([]*
 
 // When resolving a field, GraphQL does not consider the absence of a value an
 // error; as such we omit the error when the API client returns NotFound.
-func wrapFetch(resource interface{}, err error) (interface{}, error) {
+func handleFetchResult(resource interface{}, err error) (interface{}, error) {
 	if apiErr, ok := err.(client.APIError); ok {
 		if apiErr.Code == uint32(actions.NotFound) { // TODO: Reference error codes
 			return nil, nil

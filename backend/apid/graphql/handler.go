@@ -33,7 +33,7 @@ func (r *handlerImpl) Mutator(p graphql.ResolveParams) (interface{}, error) {
 	client := r.factory.NewWithContext(ctx)
 	res, err := client.FetchMutator(src.Mutator)
 
-	return wrapFetch(res, err)
+	return handleFetchResult(res, err)
 }
 
 // Handlers implements response to request for 'handlers' field.

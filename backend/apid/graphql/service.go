@@ -41,7 +41,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterHandlerSocket(svc, &handlerSocketImpl{})
 	schema.RegisterIcon(svc)
 	schema.RegisterJSON(svc, jsonImpl{})
-	schema.RegisterQuery(svc, newQueryImpl(store, nodeResolver, cfg.QueueGetter))
+	schema.RegisterQuery(svc, &queryImpl{nodeResolver: nodeResolver, factory: clientFactory})
 	schema.RegisterMutator(svc, &mutatorImpl{})
 	schema.RegisterMutedColour(svc)
 	schema.RegisterNode(svc, &nodeImpl{nodeResolver})
