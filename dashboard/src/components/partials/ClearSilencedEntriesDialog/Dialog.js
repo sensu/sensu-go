@@ -117,7 +117,7 @@ class ClearSilencedEntriesDialog extends React.PureComponent {
   renderEmpty = () => (
     <DialogContent>
       <DialogContentParagraph>
-        {`There doesn't seem to be anything here. This may can occur when
+        {`There doesn't seem to be anything here. This may occur when
         the silence(s) have already been cleared or have expired.`}
       </DialogContentParagraph>
     </DialogContent>
@@ -135,9 +135,16 @@ class ClearSilencedEntriesDialog extends React.PureComponent {
     );
 
     return (
-      <Dialog fullWidth fullScreen={fullScreen} open={open} onClose={close}>
+      <Dialog
+        fullWidth
+        fullScreen={fullScreen}
+        open={open}
+        onClose={close}
+        scroll="paper"
+      >
         <ListController
           items={silences}
+          confirmed={silences}
           getItemKey={node => node.name}
           renderEmptyState={this.renderEmpty}
           renderItem={this.renderListItem}

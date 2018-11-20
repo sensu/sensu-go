@@ -34,11 +34,14 @@ const setSelectedKeys = selectedKeys => state => ({
 });
 
 class ListController extends React.PureComponent {
-  static defaultProps = {
+  static propTypes = {
     renderItem: PropTypes.func.isRequired,
     renderEmptyState: PropTypes.func.isRequired,
     children: PropTypes.func.isRequired,
+    confirmed: PropTypes.array,
   };
+
+  static defaultProps = { confirmed: [] };
 
   state = {
     selectedKeys: [],
@@ -117,12 +120,15 @@ class ListController extends React.PureComponent {
       render,
       renderEmptyState,
     } = this.state;
+    const { confirmed } = this.props;
 
     return render({
       children: items.length
         ? items.map((item, i) => {
             const key = keys[i];
-            const selected = selectedKeys.includes(key);
+            // This works, however you can't unselect an item in the list if there's confirmed items passed in
+            const selected =
+              !confirmed.length > 0 ? selectedKeys.includes(key) : confirmed;
 
             return renderItem({
               key,
