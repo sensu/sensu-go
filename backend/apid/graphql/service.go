@@ -1,29 +1,38 @@
 package graphql
 
 import (
+	"context"
+
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 )
 
+type ClientFactory interface {
+	NewWithContext(ctx context.Context) client.APIClient
+}
+
 // ServiceConfig describes values required to instantiate service.
 type ServiceConfig struct {
-	Store       store.Store
-	Bus         messaging.MessageBus
-	QueueGetter types.QueueGetter
+	Store         store.Store
+	Bus           messaging.MessageBus
+	QueueGetter   types.QueueGetter
+	ClientFactory ClientFactory
 }
 
 // NewService instantiates new GraphQL service
 func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	svc := graphql.NewService()
 	store := cfg.Store
+	clientFactory := cfg.ClientFactory
 	nodeResolver := newNodeResolver(store, cfg.QueueGetter)
 
 	// Register types
 	schema.RegisterAsset(svc, &assetImpl{})
-	schema.RegisterNamespace(svc, newNamespaceImpl(store, cfg.QueueGetter))
+	schema.RegisterNamespace(svc, &namespaceImpl{factory: clientFactory})
 	schema.RegisterErrCode(svc)
 	schema.RegisterError(svc, nil)
 	schema.RegisterEvent(svc, &eventImpl{})

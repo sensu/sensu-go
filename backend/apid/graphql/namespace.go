@@ -5,10 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/types"
@@ -23,21 +21,7 @@ var _ schema.NamespaceFieldResolvers = (*namespaceImpl)(nil)
 //
 
 type namespaceImpl struct {
-	checksCtrl     actions.CheckController
-	entityCtrl     actions.EntityController
-	eventQuerier   eventQuerier
-	silenceQuerier silenceQuerier
-}
-
-func newNamespaceImpl(store store.Store, getter types.QueueGetter) *namespaceImpl {
-	eventsCtrl := actions.NewEventController(store, nil)
-	silenceCtrl := actions.NewSilencedController(store)
-	return &namespaceImpl{
-		checksCtrl:     actions.NewCheckController(store, getter),
-		entityCtrl:     actions.NewEntityController(store),
-		eventQuerier:   eventsCtrl,
-		silenceQuerier: silenceCtrl,
-	}
+	factory ClientFactory
 }
 
 // ID implements response to request for 'id' field.
@@ -81,13 +65,15 @@ func (r *namespaceImpl) Checks(p schema.NamespaceChecksFieldResolverParams) (int
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	nsp := p.Source.(*types.Namespace)
 	ctx := contextWithNamespace(p.Context, nsp.Name)
-	records, err := r.checksCtrl.Query(ctx)
+
+	client := r.factory.NewWithContext(ctx)
+	records, err := client.ListChecks(nsp.Name)
 	if err != nil {
 		return res, err
 	}
 
 	// apply filters
-	filteredChecks := records
+	var filteredChecks []*types.CheckConfig
 	filter := p.Args.Filter
 	if len(filter) > 0 {
 		filteredChecks = make([]*types.CheckConfig, 0, len(records))
@@ -99,7 +85,7 @@ func (r *namespaceImpl) Checks(p schema.NamespaceChecksFieldResolverParams) (int
 				continue
 			}
 			if matched {
-				filteredChecks = append(filteredChecks, record)
+				filteredChecks = append(filteredChecks, &record)
 			}
 		}
 	}
@@ -121,16 +107,17 @@ func (r *namespaceImpl) Checks(p schema.NamespaceChecksFieldResolverParams) (int
 func (r *namespaceImpl) Silences(p schema.NamespaceSilencesFieldResolverParams) (interface{}, error) {
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	nsp := p.Source.(*types.Namespace)
+	ctx := contextWithNamespace(p.Context, nsp.Name)
 
 	// finds all records
-	ctx := contextWithNamespace(p.Context, nsp.Name)
-	records, err := r.silenceQuerier.Query(ctx, "", "")
+	client := r.factory.NewWithContext(ctx)
+	records, err := client.ListSilenceds(nsp.Name, "", "")
 	if err != nil {
 		return nil, err
 	}
 
 	// apply filters
-	filteredSilences := records
+	var filteredSilences []*types.Silenced
 	filter := p.Args.Filter
 	if len(filter) > 0 {
 		filteredSilences = make([]*types.Silenced, 0, len(records))
@@ -142,7 +129,7 @@ func (r *namespaceImpl) Silences(p schema.NamespaceSilencesFieldResolverParams) 
 				continue
 			}
 			if matched {
-				filteredSilences = append(filteredSilences, r)
+				filteredSilences = append(filteredSilences, &r)
 			}
 		}
 	}
@@ -171,26 +158,29 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	nsp := p.Source.(*types.Namespace)
 	ctx := contextWithNamespace(p.Context, nsp.Name)
-	records, err := r.entityCtrl.Query(ctx)
+
+	client := r.factory.NewWithContext(ctx)
+	records, err := client.ListEntities(nsp.Name)
 	if err != nil {
 		return nil, err
 	}
 
 	// apply filters
 	filter := p.Args.Filter
-	filteredEntities := records
+	var filteredEntities []*types.Entity
 	if len(filter) > 0 {
 		filteredEntities = make([]*types.Entity, 0, len(filteredEntities))
-		for _, entity := range records {
-			r := dynamic.Synthesize(entity.GetRedactedEntity())
-			matched, err := js.Evaluate(filter, r, nil)
+		for i := range records {
+			record := records[i]
+			sr := dynamic.Synthesize(record.GetRedactedEntity())
+			matched, err := js.Evaluate(filter, sr, nil)
 
 			if err != nil {
 				logger.WithError(err).Debug("unable to filter record")
 				continue
 			}
 			if matched {
-				filteredEntities = append(filteredEntities, entity)
+				filteredEntities = append(filteredEntities, &record)
 			}
 		}
 	}
@@ -218,25 +208,27 @@ func (r *namespaceImpl) Events(p schema.NamespaceEventsFieldResolverParams) (int
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	nsp := p.Source.(*types.Namespace)
 	ctx := contextWithNamespace(p.Context, nsp.Name)
-	records, err := r.eventQuerier.Query(ctx, "", "")
+
+	client := r.factory.NewWithContext(ctx)
+	records, err := client.ListEvents(nsp.Name)
 	if err != nil {
 		return res, err
 	}
 
 	// apply filters
 	filter := p.Args.Filter
-	filteredEvents := records
+	var filteredEvents []*types.Event
 	if len(filter) > 0 {
 		filteredEvents = make([]*types.Event, 0, len(records))
-		for _, event := range records {
-			r := dynamic.Synthesize(event)
+		for _, record := range records {
+			r := dynamic.Synthesize(record)
 			matched, err := js.Evaluate(filter, r, nil)
 			if err != nil {
-				logger.WithError(err).Debug("unable to filter event")
+				logger.WithError(err).Debug("unable to filter record")
 				continue
 			}
 			if matched {
-				filteredEvents = append(filteredEvents, event)
+				filteredEvents = append(filteredEvents, &record)
 			}
 		}
 	}
@@ -255,7 +247,9 @@ func (r *namespaceImpl) Events(p schema.NamespaceEventsFieldResolverParams) (int
 func (r *namespaceImpl) CheckHistory(p schema.NamespaceCheckHistoryFieldResolverParams) (interface{}, error) {
 	nsp := p.Source.(*types.Namespace)
 	ctx := contextWithNamespace(p.Context, nsp.Name)
-	records, err := r.eventQuerier.Query(ctx, "", "")
+
+	client := r.factory.NewWithContext(ctx)
+	records, err := client.ListEvents(nsp.Name)
 	if err != nil {
 		return []types.CheckHistory{}, err
 	}
@@ -288,21 +282,22 @@ func (r *namespaceImpl) Subscriptions(p schema.NamespaceSubscriptionsFieldResolv
 	nsp := p.Source.(*types.Namespace)
 	ctx := contextWithNamespace(p.Context, nsp.Name)
 
-	entities, err := r.entityCtrl.Query(ctx)
+	client := r.factory.NewWithContext(ctx)
+	entities, err := client.ListEntities(nsp.Name)
 	if err != nil {
 		return set, err
 	}
 	for _, entity := range entities {
-		newSet := occurrencesOfSubscriptions(entity)
+		newSet := occurrencesOfSubscriptions(&entity)
 		set.Merge(newSet)
 	}
 
-	checks, err := r.checksCtrl.Query(ctx)
+	checks, err := client.ListChecks(nsp.Name)
 	if err != nil {
 		return set, err
 	}
 	for _, check := range checks {
-		newSet := occurrencesOfSubscriptions(check)
+		newSet := occurrencesOfSubscriptions(&check)
 		set.Merge(newSet)
 	}
 

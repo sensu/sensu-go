@@ -14,6 +14,9 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// TODO: Don't hardcode me
+const APIUrl = "https://localhost:8080"
+
 // GraphQLRouter handles requests for /events
 type GraphQLRouter struct {
 	service *graphqlservice.Service
@@ -21,10 +24,12 @@ type GraphQLRouter struct {
 
 // NewGraphQLRouter instantiates new events controller
 func NewGraphQLRouter(store store.Store, bus messaging.MessageBus, getter types.QueueGetter) *GraphQLRouter {
+	factory := restclient.NewFactory(APIUrl)
 	service, err := graphql.NewService(graphql.ServiceConfig{
-		Store:       store,
-		Bus:         bus,
-		QueueGetter: getter,
+		Store:         store,
+		Bus:           bus,
+		QueueGetter:   getter,
+		ClientFactory: factory,
 	})
 	if err != nil {
 		logger.WithError(err).Panic("unable to configure graphql service")
@@ -38,10 +43,10 @@ func (r *GraphQLRouter) Mount(parent *mux.Router) {
 }
 
 func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
+	// Setup context
 	ctx := req.Context()
-
-	// reset org & env keys to empty state so that all resources are queryable.
 	ctx = context.WithValue(ctx, types.NamespaceKey, "")
+	ctx = context.WithValue(ctx, types.AccessTokenString, jwt.ExtractBearerToken(r))
 
 	// Parse request body
 	var reqBody interface{}
@@ -49,6 +54,7 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
+	// If list parse each operation
 	var receivedList bool
 	var ops []map[string]interface{}
 	switch reqBody := reqBody.(type) {
@@ -65,6 +71,7 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 		return nil, errors.New("received unexpected request body")
 	}
 
+	// Execute each operation; maybe this could be done in parallel in the future.
 	results := make([]interface{}, 0, len(ops))
 	for _, op := range ops {
 		// Extract query and variables
