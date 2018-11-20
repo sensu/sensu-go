@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
@@ -271,6 +272,7 @@ func mergeEnvironments(env1, env2 []string) []string {
 		for k, v := range m {
 			s = append(s, k+"="+v)
 		}
+		sort.StringSlice(s).Sort()
 
 		return s
 	}
