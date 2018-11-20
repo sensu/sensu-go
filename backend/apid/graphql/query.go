@@ -41,7 +41,7 @@ func (r *queryImpl) Entity(p schema.QueryEntityFieldResolverParams) (interface{}
 	ctx := contextWithNamespace(p.Context, p.Args.Namespace)
 	client := r.factory.NewWithContext(ctx)
 	res, err := client.FetchEntity(p.Args.Name)
-	return handleControllerResults(res, err)
+	return handleFetchResult(res, err)
 }
 
 // Check implements response to request for 'check' field.
@@ -49,7 +49,7 @@ func (r *queryImpl) Check(p schema.QueryCheckFieldResolverParams) (interface{}, 
 	ctx := contextWithNamespace(p.Context, p.Args.Namespace)
 	client := r.factory.NewWithContext(ctx)
 	res, err := client.FetchCheck(p.Args.Name)
-	return handleControllerResults(res, err)
+	return handleFetchResult(res, err)
 }
 
 // Node implements response to request for 'node' field.

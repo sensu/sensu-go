@@ -67,7 +67,7 @@ func (client *RestClient) FetchHandler(name string) (*types.Handler, error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return nil, fmt.Errorf("%v", res.String())
+		return nil, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &handler)

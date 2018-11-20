@@ -4,13 +4,10 @@ import (
 	"context"
 	"errors"
 
-	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
-	"github.com/sensu/sensu-go/types"
 )
 
 //
@@ -21,22 +18,22 @@ type nodeResolver struct {
 	register relay.NodeRegister
 }
 
-func newNodeResolver(store store.Store, getter types.QueueGetter) *nodeResolver {
+func newNodeResolver(factory ClientFactory) *nodeResolver {
 	register := relay.NodeRegister{}
 
-	registerAssetNodeResolver(register, store)
-	registerCheckNodeResolver(register, store, getter)
-	registerEntityNodeResolver(register, store)
-	registerHandlerNodeResolver(register, store)
-	registerHookNodeResolver(register, store)
-	registerMutatorNodeResolver(register, store)
-	registerClusterRoleNodeResolver(register, store)
-	registerClusterRoleBindingNodeResolver(register, store)
-	registerRoleNodeResolver(register, store)
-	registerRoleBindingNodeResolver(register, store)
-	registerUserNodeResolver(register, store)
-	registerEventNodeResolver(register, store)
-	registerNamespaceNodeResolver(register, store)
+	registerAssetNodeResolver(register, factory)
+	registerCheckNodeResolver(register, factory)
+	registerEntityNodeResolver(register, factory)
+	registerHandlerNodeResolver(register, factory)
+	registerHookNodeResolver(register, factory)
+	registerMutatorNodeResolver(register, factory)
+	registerClusterRoleNodeResolver(register, factory)
+	registerClusterRoleBindingNodeResolver(register, factory)
+	registerRoleNodeResolver(register, factory)
+	registerRoleBindingNodeResolver(register, factory)
+	registerUserNodeResolver(register, factory)
+	registerEventNodeResolver(register, factory)
+	registerNamespaceNodeResolver(register, factory)
 
 	return &nodeResolver{register}
 }
@@ -80,12 +77,11 @@ func (r *nodeResolver) Find(ctx context.Context, id string, info graphql.Resolve
 // assets
 
 type assetNodeResolver struct {
-	controller actions.AssetController
+	factory ClientFactory
 }
 
-func registerAssetNodeResolver(register relay.NodeRegister, store store.AssetStore) {
-	controller := actions.NewAssetController(store)
-	resolver := &assetNodeResolver{controller}
+func registerAssetNodeResolver(register relay.NodeRegister, factory ClientFactory) {
+	resolver := &assetNodeResolver{factory}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.AssetType,
 		Translator: globalid.AssetTranslator,
@@ -95,19 +91,19 @@ func registerAssetNodeResolver(register relay.NodeRegister, store store.AssetSto
 
 func (f *assetNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
 	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.controller.Find(ctx, p.IDComponents.UniqueComponent())
-	return handleControllerResults(record, err)
+	client := f.factory.NewWithContext(ctx)
+	record, err := client.FetchAsset(p.IDComponents.UniqueComponent())
+	return handleFetchResult(record, err)
 }
 
 // checks
 
 type checkNodeResolver struct {
-	controller actions.CheckController
+	factory ClientFactory
 }
 
-func registerCheckNodeResolver(register relay.NodeRegister, store store.Store, getter types.QueueGetter) {
-	controller := actions.NewCheckController(store, getter)
-	resolver := &checkNodeResolver{controller}
+func registerCheckNodeResolver(register relay.NodeRegister, factory ClientFactory) {
+	resolver := &checkNodeResolver{factory}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.CheckConfigType,
 		Translator: globalid.CheckTranslator,
@@ -117,19 +113,19 @@ func registerCheckNodeResolver(register relay.NodeRegister, store store.Store, g
 
 func (f *checkNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
 	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.controller.Find(ctx, p.IDComponents.UniqueComponent())
-	return handleControllerResults(record, err)
+	client := f.factory.NewWithContext(ctx)
+	record, err := client.FetchCheck(p.IDComponents.UniqueComponent())
+	return handleFetchResult(record, err)
 }
 
 // entities
 
 type entityNodeResolver struct {
-	controller actions.EntityController
+	factory ClientFactory
 }
 
-func registerEntityNodeResolver(register relay.NodeRegister, store store.EntityStore) {
-	controller := actions.NewEntityController(store)
-	resolver := &entityNodeResolver{controller}
+func registerEntityNodeResolver(register relay.NodeRegister, factory ClientFactory) {
+	resolver := &entityNodeResolver{factory}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.EntityType,
 		Translator: globalid.EntityTranslator,
@@ -139,19 +135,19 @@ func registerEntityNodeResolver(register relay.NodeRegister, store store.EntityS
 
 func (f *entityNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
 	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.controller.Find(ctx, p.IDComponents.UniqueComponent())
-	return handleControllerResults(record, err)
+	client := f.factory.NewWithContext(ctx)
+	record, err := client.FetchEntity(p.IDComponents.UniqueComponent())
+	return handleFetchResult(record, err)
 }
 
 // handlers
 
 type handlerNodeResolver struct {
-	controller actions.HandlerController
+	factory ClientFactory
 }
 
-func registerHandlerNodeResolver(register relay.NodeRegister, store store.HandlerStore) {
-	controller := actions.NewHandlerController(store)
-	resolver := &handlerNodeResolver{controller}
+func registerHandlerNodeResolver(register relay.NodeRegister, factory ClientFactory) {
+	resolver := &handlerNodeResolver{factory}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.HandlerType,
 		Translator: globalid.HandlerTranslator,
@@ -161,19 +157,19 @@ func registerHandlerNodeResolver(register relay.NodeRegister, store store.Handle
 
 func (f *handlerNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
 	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.controller.Find(ctx, p.IDComponents.UniqueComponent())
-	return handleControllerResults(record, err)
+	client := f.factory.NewWithContext(ctx)
+	record, err := client.FetchHandler(p.IDComponents.UniqueComponent())
+	return handleFetchResult(record, err)
 }
 
 // hooks
 
 type hookNodeResolver struct {
-	controller actions.HookController
+	factory ClientFactory
 }
 
-func registerHookNodeResolver(register relay.NodeRegister, store store.HookConfigStore) {
-	controller := actions.NewHookController(store)
-	resolver := &hookNodeResolver{controller}
+func registerHookNodeResolver(register relay.NodeRegister, factory ClientFactory) {
+	resolver := &hookNodeResolver{factory}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.HookConfigType,
 		Translator: globalid.HookTranslator,
@@ -183,19 +179,19 @@ func registerHookNodeResolver(register relay.NodeRegister, store store.HookConfi
 
 func (f *hookNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
 	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.controller.Find(ctx, p.IDComponents.UniqueComponent())
-	return handleControllerResults(record, err)
+	client := f.factory.NewWithContext(ctx)
+	record, err := client.FetchHook(p.IDComponents.UniqueComponent())
+	return handleFetchResult(record, err)
 }
 
 // mutators
 
 type mutatorNodeResolver struct {
-	controller actions.MutatorController
+	factory ClientFactory
 }
 
-func registerMutatorNodeResolver(register relay.NodeRegister, store store.MutatorStore) {
-	controller := actions.NewMutatorController(store)
-	resolver := &mutatorNodeResolver{controller}
+func registerMutatorNodeResolver(register relay.NodeRegister, factory ClientFactory) {
+	resolver := &mutatorNodeResolver{factory}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.MutatorType,
 		Translator: globalid.MutatorTranslator,
@@ -205,19 +201,19 @@ func registerMutatorNodeResolver(register relay.NodeRegister, store store.Mutato
 
 func (f *mutatorNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
 	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.controller.Find(ctx, p.IDComponents.UniqueComponent())
-	return handleControllerResults(record, err)
+	client := f.factory.NewWithContext(ctx)
+	record, err := client.FetchMutator(p.IDComponents.UniqueComponent())
+	return handleFetchResult(record, err)
 }
 
 // cluster roles
 
 type clusterRoleNodeResolver struct {
-	controller actions.ClusterRoleController
+	factory ClientFactory
 }
 
-func registerClusterRoleNodeResolver(register relay.NodeRegister, store store.ClusterRoleStore) {
-	controller := actions.NewClusterRoleController(store)
-	resolver := &clusterRoleNodeResolver{controller}
+func registerClusterRoleNodeResolver(register relay.NodeRegister, factory ClientFactory) {
+	resolver := &clusterRoleNodeResolver{factory}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.ClusterRoleType,
 		Translator: globalid.ClusterRoleTranslator,
@@ -227,19 +223,19 @@ func registerClusterRoleNodeResolver(register relay.NodeRegister, store store.Cl
 
 func (f *clusterRoleNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
 	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.controller.Get(ctx, p.IDComponents.UniqueComponent())
-	return handleControllerResults(record, err)
+	client := f.factory.NewWithContext(ctx)
+	record, err := client.FetchClusterRole(p.IDComponents.UniqueComponent())
+	return handleFetchResult(record, err)
 }
 
 // cluster role bindings
 
 type clusterRoleBindingNodeResolver struct {
-	controller actions.ClusterRoleBindingController
+	factory ClientFactory
 }
 
-func registerClusterRoleBindingNodeResolver(register relay.NodeRegister, store store.ClusterRoleBindingStore) {
-	controller := actions.NewClusterRoleBindingController(store)
-	resolver := &clusterRoleBindingNodeResolver{controller}
+func registerClusterRoleBindingNodeResolver(register relay.NodeRegister, factory ClientFactory) {
+	resolver := &clusterRoleBindingNodeResolver{factory}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.ClusterRoleBindingType,
 		Translator: globalid.ClusterRoleBindingTranslator,
@@ -249,19 +245,19 @@ func registerClusterRoleBindingNodeResolver(register relay.NodeRegister, store s
 
 func (f *clusterRoleBindingNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
 	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.controller.Get(ctx, p.IDComponents.UniqueComponent())
-	return handleControllerResults(record, err)
+	client := f.factory.NewWithContext(ctx)
+	record, err := client.FetchClusterRoleBinding(p.IDComponents.UniqueComponent())
+	return handleFetchResult(record, err)
 }
 
 // roles
 
 type roleNodeResolver struct {
-	controller actions.RoleController
+	factory ClientFactory
 }
 
-func registerRoleNodeResolver(register relay.NodeRegister, store store.RoleStore) {
-	controller := actions.NewRoleController(store)
-	resolver := &roleNodeResolver{controller}
+func registerRoleNodeResolver(register relay.NodeRegister, factory ClientFactory) {
+	resolver := &roleNodeResolver{factory}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.RoleType,
 		Translator: globalid.RoleTranslator,
@@ -271,19 +267,19 @@ func registerRoleNodeResolver(register relay.NodeRegister, store store.RoleStore
 
 func (f *roleNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
 	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.controller.Get(ctx, p.IDComponents.UniqueComponent())
-	return handleControllerResults(record, err)
+	client := f.factory.NewWithContext(ctx)
+	record, err := client.FetchRole(p.IDComponents.UniqueComponent())
+	return handleFetchResult(record, err)
 }
 
 // role bindings
 
 type roleBindingNodeResolver struct {
-	controller actions.RoleBindingController
+	factory ClientFactory
 }
 
-func registerRoleBindingNodeResolver(register relay.NodeRegister, store store.RoleBindingStore) {
-	controller := actions.NewRoleBindingController(store)
-	resolver := &roleBindingNodeResolver{controller}
+func registerRoleBindingNodeResolver(register relay.NodeRegister, factory ClientFactory) {
+	resolver := &roleBindingNodeResolver{factory}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.RoleBindingType,
 		Translator: globalid.RoleBindingTranslator,
@@ -293,19 +289,19 @@ func registerRoleBindingNodeResolver(register relay.NodeRegister, store store.Ro
 
 func (f *roleBindingNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
 	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.controller.Get(ctx, p.IDComponents.UniqueComponent())
-	return handleControllerResults(record, err)
+	client := f.factory.NewWithContext(ctx)
+	record, err := client.FetchRoleBinding(p.IDComponents.UniqueComponent())
+	return handleFetchResult(record, err)
 }
 
 // user
 
 type userNodeResolver struct {
-	controller actions.UserController
+	factory ClientFactory
 }
 
-func registerUserNodeResolver(register relay.NodeRegister, store store.Store) {
-	controller := actions.NewUserController(store)
-	resolver := &userNodeResolver{controller}
+func registerUserNodeResolver(register relay.NodeRegister, factory ClientFactory) {
+	resolver := &userNodeResolver{factory}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.UserType,
 		Translator: globalid.UserTranslator,
@@ -315,19 +311,19 @@ func registerUserNodeResolver(register relay.NodeRegister, store store.Store) {
 
 func (f *userNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
 	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.controller.Find(ctx, p.IDComponents.UniqueComponent())
-	return handleControllerResults(record, err)
+	client := f.factory.NewWithContext(ctx)
+	record, err := client.FetchUser(p.IDComponents.UniqueComponent())
+	return handleFetchResult(record, err)
 }
 
 // events
 
 type eventNodeResolver struct {
-	controller actions.EventController
+	factory ClientFactory
 }
 
-func registerEventNodeResolver(register relay.NodeRegister, store store.Store) {
-	controller := actions.NewEventController(store, nil)
-	resolver := &eventNodeResolver{controller}
+func registerEventNodeResolver(register relay.NodeRegister, factory ClientFactory) {
+	resolver := &eventNodeResolver{factory}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.EventType,
 		Translator: globalid.EventTranslator,
@@ -342,19 +338,19 @@ func (f *eventNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, erro
 	}
 
 	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	record, err := f.controller.Find(ctx, evComponents.EntityName(), evComponents.CheckName())
-	return handleControllerResults(record, err)
+	client := f.factory.NewWithContext(ctx)
+	record, err := client.FetchEvent(evComponents.EntityName(), evComponents.CheckName())
+	return handleFetchResult(record, err)
 }
 
 // namespaces
 
 type namespaceNodeResolver struct {
-	controller actions.NamespacesController
+	factory ClientFactory
 }
 
-func registerNamespaceNodeResolver(register relay.NodeRegister, store store.Store) {
-	controller := actions.NewNamespacesController(store)
-	resolver := &namespaceNodeResolver{controller}
+func registerNamespaceNodeResolver(register relay.NodeRegister, factory ClientFactory) {
+	resolver := &namespaceNodeResolver{factory}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.NamespaceType,
 		Translator: globalid.NamespaceTranslator,
@@ -363,6 +359,7 @@ func registerNamespaceNodeResolver(register relay.NodeRegister, store store.Stor
 }
 
 func (f *namespaceNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
-	record, err := f.controller.Find(p.Context, p.IDComponents.UniqueComponent())
-	return handleControllerResults(record, err)
+	client := f.factory.NewWithContext(p.Context)
+	record, err := client.FetchNamespace(p.IDComponents.UniqueComponent())
+	return handleFetchResult(record, err)
 }
