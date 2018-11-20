@@ -29,8 +29,13 @@ func (c *ClientFactory) NewWithContext(ctx context.Context) client.APIClient {
 		accessToken = token
 	}
 
+	tokens := types.Tokens{
+		Access:    accessToken,
+		ExpiresAt: 10000000000000, // TODO
+	}
+
 	config := inmemory.New(c.url)
-	config.SaveTokens(&types.Tokens{Access: accessToken})
+	config.SaveTokens(&tokens)
 	config.SaveNamespace(types.ContextNamespace(ctx))
 
 	return client.New(config)

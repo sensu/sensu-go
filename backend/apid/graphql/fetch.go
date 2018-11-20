@@ -21,7 +21,8 @@ func fetchAssets(c client.APIClient, ns string, filter assetPredicate) ([]*types
 		filter = func(*types.Asset) bool { return true }
 	}
 
-	for _, record := range records {
+	for i := range records {
+		record := records[i]
 		if filter(&record) {
 			relevant = append(relevant, &record)
 		}
@@ -30,7 +31,32 @@ func fetchAssets(c client.APIClient, ns string, filter assetPredicate) ([]*types
 	return relevant, nil
 }
 
-// entitys
+// checks
+
+type checkPredicate func(*types.CheckConfig) bool
+
+func fetchChecks(c client.APIClient, ns string, filter checkPredicate) ([]*types.CheckConfig, error) {
+	records, err := c.ListChecks(ns)
+	relevant := make([]*types.CheckConfig, 0, len(records))
+	if err != nil {
+		return relevant, err
+	}
+
+	if filter == nil {
+		filter = func(*types.CheckConfig) bool { return true }
+	}
+
+	for i := range records {
+		record := records[i]
+		if filter(&record) {
+			relevant = append(relevant, &record)
+		}
+	}
+
+	return relevant, nil
+}
+
+// entities
 
 type entityPredicate func(*types.Entity) bool
 
@@ -45,7 +71,8 @@ func fetchEntities(c client.APIClient, ns string, filter entityPredicate) ([]*ty
 		filter = func(*types.Entity) bool { return true }
 	}
 
-	for _, record := range records {
+	for i := range records {
+		record := records[i]
 		if filter(&record) {
 			relevant = append(relevant, &record)
 		}
@@ -69,7 +96,8 @@ func fetchEvents(c client.APIClient, ns string, filter eventPredicate) ([]*types
 		filter = func(*types.Event) bool { return true }
 	}
 
-	for _, record := range records {
+	for i := range records {
+		record := records[i]
 		if filter(&record) {
 			relevant = append(relevant, &record)
 		}
@@ -93,7 +121,8 @@ func fetchHandlers(c client.APIClient, ns string, filter handlerPredicate) ([]*t
 		filter = func(*types.Handler) bool { return true }
 	}
 
-	for _, record := range records {
+	for i := range records {
+		record := records[i]
 		if filter(&record) {
 			relevant = append(relevant, &record)
 		}
@@ -117,7 +146,8 @@ func fetchNamespaces(c client.APIClient, filter namespacePredicate) ([]*types.Na
 		filter = func(*types.Namespace) bool { return true }
 	}
 
-	for _, record := range records {
+	for i := range records {
+		record := records[i]
 		if filter(&record) {
 			relevant = append(relevant, &record)
 		}
@@ -141,7 +171,8 @@ func fetchSilenceds(c client.APIClient, ns string, filter silencePredicate) ([]*
 		filter = func(*types.Silenced) bool { return true }
 	}
 
-	for _, record := range records {
+	for i := range records {
+		record := records[i]
 		if filter(&record) {
 			relevant = append(relevant, &record)
 		}
