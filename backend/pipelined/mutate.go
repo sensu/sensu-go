@@ -10,6 +10,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/util/environment"
 	utillogging "github.com/sensu/sensu-go/util/logging"
 	"github.com/sirupsen/logrus"
 )
@@ -142,7 +143,7 @@ func (p *Pipelined) pipeMutator(mutator *types.Mutator, event *types.Event) ([]b
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for mutator")
 		} else {
-			mutatorExec.Env = append(mutatorExec.Env, assets.Env()...)
+			mutatorExec.Env = environment.MergeEnvironments(assets.Env(), mutatorExec.Env)
 		}
 	}
 
