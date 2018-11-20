@@ -3,10 +3,8 @@ package graphql
 import (
 	"time"
 
-	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 )
@@ -19,20 +17,7 @@ var _ schema.SilencedFieldResolvers = (*silencedImpl)(nil)
 
 type silencedImpl struct {
 	schema.SilencedAliases
-	nsFinder    namespaceFinder
-	userFinder  userFinder
-	checkFinder checkFinder
-}
-
-func newSilencedImpl(store store.Store, queue types.QueueGetter) *silencedImpl {
-	nsCtrl := actions.NewNamespacesController(store)
-	userCtrl := actions.NewUserController(store)
-	checkCtrl := actions.NewCheckController(store, queue)
-	return &silencedImpl{
-		nsFinder:    nsCtrl,
-		userFinder:  userCtrl,
-		checkFinder: checkCtrl,
-	}
+	factory ClientFactory
 }
 
 // Begin implements response to request for 'begin' field.
@@ -43,15 +28,22 @@ func (r *silencedImpl) Begin(p graphql.ResolveParams) (*time.Time, error) {
 
 // Creator implements response to request for 'creator' field.
 func (r *silencedImpl) Creator(p graphql.ResolveParams) (interface{}, error) {
-	sil := p.Source.(*types.Silenced)
-	return handleControllerResults(r.userFinder.Find(p.Context, sil.Creator))
+	src := p.Source.(*types.Silenced)
+	ctx := contextWithNamespace(p.Context, src.Namespace)
+
+	client := r.factory.NewWithContext(ctx)
+	res, err := client.FetchUser(src.Creator)
+	return handleFetchResult(res, err)
 }
 
 // Check implements response to request for 'check' field.
 func (r *silencedImpl) Check(p graphql.ResolveParams) (interface{}, error) {
-	sil := p.Source.(*types.Silenced)
-	ctx := types.SetContextFromResource(p.Context, sil)
-	return handleControllerResults(r.checkFinder.Find(ctx, sil.Check))
+	src := p.Source.(*types.Silenced)
+	ctx := contextWithNamespace(p.Context, src.Namespace)
+
+	client := r.factory.NewWithContext(ctx)
+	res, err := client.FetchCheck(src.Check)
+	return handleFetchResult(res, err)
 }
 
 // Expires implements response to request for 'expires' field.

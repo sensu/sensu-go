@@ -50,7 +50,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterProxyRequests(svc, &schema.ProxyRequestsAliases{})
 	schema.RegisterResolveEventPayload(svc, &schema.ResolveEventPayloadAliases{})
 	schema.RegisterSchema(svc)
-	schema.RegisterSilenced(svc, newSilencedImpl(store, cfg.QueueGetter))
+	schema.RegisterSilenced(svc, &silencedImpl{factory: clientFactory})
 	schema.RegisterSilencedConnection(svc, &schema.SilencedConnectionAliases{})
 	schema.RegisterStandardError(svc, stdErrImpl{})
 	schema.RegisterSubscriptionSet(svc, subscriptionSetImpl{})
