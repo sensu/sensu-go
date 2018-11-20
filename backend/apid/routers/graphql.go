@@ -8,14 +8,11 @@ import (
 
 	"github.com/gorilla/mux"
 	graphql "github.com/sensu/sensu-go/backend/apid/graphql"
-	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/apid/graphql/restclient"
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	graphqlservice "github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 )
-
-// TODO: Don't hardcode me
-const APIUrl = "https://localhost:8080"
 
 // GraphQLRouter handles requests for /events
 type GraphQLRouter struct {
@@ -23,12 +20,9 @@ type GraphQLRouter struct {
 }
 
 // NewGraphQLRouter instantiates new events controller
-func NewGraphQLRouter(store store.Store, bus messaging.MessageBus, getter types.QueueGetter) *GraphQLRouter {
-	factory := restclient.NewFactory(APIUrl)
+func NewGraphQLRouter(apiURL string) *GraphQLRouter {
+	factory := restclient.NewClientFactory(apiURL)
 	service, err := graphql.NewService(graphql.ServiceConfig{
-		Store:         store,
-		Bus:           bus,
-		QueueGetter:   getter,
 		ClientFactory: factory,
 	})
 	if err != nil {
@@ -46,7 +40,7 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 	// Setup context
 	ctx := req.Context()
 	ctx = context.WithValue(ctx, types.NamespaceKey, "")
-	ctx = context.WithValue(ctx, types.AccessTokenString, jwt.ExtractBearerToken(r))
+	ctx = context.WithValue(ctx, types.AccessTokenString, jwt.ExtractBearerToken(req))
 
 	// Parse request body
 	var reqBody interface{}

@@ -75,15 +75,21 @@ func New(c Config, opts ...Option) (*APId, error) {
 		etcdClientTLSConfig: c.EtcdClientTLSConfig,
 	}
 
+	addr := fmt.Sprintf("%s:%d", a.Host, a.Port)
+	url := fmt.Sprintf("http://%s", addr)
+	if c.TLS != nil {
+		url = fmt.Sprintf("https://%s", addr)
+	}
+
 	router := mux.NewRouter().UseEncodedPath()
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
-	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig)
+	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig, url)
 	registerAuthenticationResources(router, a.store)
 	registerRestrictedLegacyResources(router, a.store, a.queueGetter, a.bus, a.cluster)
 	registerRestrictedResources(router, a.store)
 
 	a.HTTPServer = &http.Server{
-		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
+		Addr:         addr,
 		Handler:      router,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
@@ -160,8 +166,7 @@ func registerUnauthenticatedResources(
 	store store.Store,
 	cluster clientv3.Cluster,
 	etcdClientTLSConfig *tls.Config,
-	getter types.QueueGetter,
-	bus messaging.MessageBus,
+	url string,
 ) {
 	mountRouters(
 		NewSubrouter(
@@ -169,9 +174,9 @@ func registerUnauthenticatedResources(
 			middlewares.SimpleLogger{},
 			middlewares.LimitRequest{},
 			middlewares.Edition{Name: version.Edition},
-			routers.NewGraphQLRouter(store, bus, getter),
 		),
 		routers.NewHealthRouter(actions.NewHealthController(store, cluster, etcdClientTLSConfig)),
+		routers.NewGraphQLRouter(url),
 	)
 }
 

@@ -7,21 +7,10 @@ import (
 	"testing"
 
 	"github.com/graphql-go/graphql/testutil"
-	"github.com/sensu/sensu-go/testing/mockbus"
-	"github.com/sensu/sensu-go/testing/mockqueue"
-	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/stretchr/testify/mock"
 )
 
 func setupGraphQLRouter() *GraphQLRouter {
-	store := &mockstore.MockStore{}
-	queue := &mockqueue.MockQueue{}
-	bus := &mockbus.MockBus{}
-
-	getter := &mockqueue.Getter{}
-	getter.On("GetQueue", mock.Anything).Return(queue)
-
-	router := NewGraphQLRouter(store, bus, getter)
+	router := NewGraphQLRouter("test")
 	return router
 }
 
@@ -38,7 +27,7 @@ func setupRequest(method string, path string, payload interface{}) (*http.Reques
 }
 
 func TestHttpGraphQLRequest(t *testing.T) {
-	router := setupGraphQLRouter()
+	router := NewGraphQLRouter("http://localhost:8080")
 	body := map[string]interface{}{
 		"operationName": "intrsopection",
 		"query":         testutil.IntrospectionQuery,
@@ -55,7 +44,7 @@ func TestHttpGraphQLRequest(t *testing.T) {
 }
 
 func TestHttpGraphQLBatchRequest(t *testing.T) {
-	router := setupGraphQLRouter()
+	router := NewGraphQLRouter("http://localhost:8080")
 	body := []map[string]interface{}{
 		map[string]interface{}{
 			"operationName": "intrsopection",
