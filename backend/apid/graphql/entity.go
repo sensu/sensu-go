@@ -1,14 +1,11 @@
 package graphql
 
 import (
-	"context"
 	"sort"
 	"time"
 
-	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/strings"
@@ -26,21 +23,7 @@ var _ schema.DeregistrationFieldResolvers = (*deregistrationImpl)(nil)
 
 type entityImpl struct {
 	schema.EntityAliases
-	entityQuerier  entityQuerier
-	eventQuerier   eventQuerier
-	silenceQuerier silenceQuerier
-}
-
-func newEntityImpl(store store.Store) *entityImpl {
-	entityCtrl := actions.NewEntityController(store)
-	eventCtrl := actions.NewEventController(store, nil)
-	silenceCtrl := actions.NewSilencedController(store)
-
-	return &entityImpl{
-		entityQuerier:  entityCtrl,
-		eventQuerier:   eventCtrl,
-		silenceQuerier: silenceCtrl,
-	}
+	factory ClientFactory
 }
 
 // ID implements response to request for 'id' field.
@@ -62,13 +45,15 @@ func (r *entityImpl) LastSeen(p graphql.ResolveParams) (*time.Time, error) {
 
 // Events implements response to request for 'events' field.
 func (r *entityImpl) Events(p schema.EntityEventsFieldResolverParams) (interface{}, error) {
-	entity := p.Source.(*types.Entity)
+	src := p.Source.(*types.Entity)
+	client := r.factory.NewWithContext(p.Context)
 
 	// fetch
-	ctx := types.SetContextFromResource(p.Context, entity)
-	evs, err := r.eventQuerier.Query(ctx, entity.Name, "")
+	evs, err := fetchEvents(client, src.Namespace, func(obj *types.Event) bool {
+		return obj.Entity.Name == src.Name
+	})
 	if err != nil {
-		return 0, err
+		return evs, err
 	}
 
 	// sort records
@@ -80,32 +65,14 @@ func (r *entityImpl) Events(p schema.EntityEventsFieldResolverParams) (interface
 // Related implements response to request for 'related' field.
 func (r *entityImpl) Related(p schema.EntityRelatedFieldResolverParams) (interface{}, error) {
 	entity := p.Source.(*types.Entity)
+	client := r.factory.NewWithContext(p.Context)
 
-	// fetch
-	ctx := types.SetContextFromResource(p.Context, entity)
-	entities, err := r.entityQuerier.Query(ctx)
+	// fetch & omit source
+	entities, err := fetchEntities(client, entity.Namespace, func(obj *types.Entity) bool {
+		return obj.Name != entity.Name
+	})
 	if err != nil {
-		return []*types.Entity{}, err
-	}
-
-	// omit source
-	for i, en := range entities {
-		if en.Name != entity.Name {
-			continue
-		}
-
-		//
-		// - As we sort the result set in the next step we can safely remove the
-		//   source from the slice without preserving it's order.
-		// - Since we are dealing with a slice of pointers we explicilty set the
-		//   reference to the last element to nil to ensure it can be GC'd.
-		//
-		// https://github.com/golang/go/wiki/SliceTricks#delete-without-preserving-order
-		//
-		entities[i] = entities[len(entities)-1]
-		entities[len(entities)-1] = nil
-		entities = entities[:len(entities)-1]
-		break
+		return entities, nil
 	}
 
 	// sort
@@ -128,11 +95,13 @@ func (r *entityImpl) Related(p schema.EntityRelatedFieldResolverParams) (interfa
 
 // Status implements response to request for 'status' field.
 func (r *entityImpl) Status(p graphql.ResolveParams) (int, error) {
-	entity := p.Source.(*types.Entity)
+	src := p.Source.(*types.Entity)
+	client := r.factory.NewWithContext(p.Context)
 
 	// fetch
-	ctx := types.SetContextFromResource(p.Context, entity)
-	evs, err := r.eventQuerier.Query(ctx, entity.Name, "")
+	evs, err := fetchEvents(client, src.Namespace, func(obj *types.Event) bool {
+		return obj.Entity.Name == src.Name
+	})
 	if err != nil {
 		return 0, err
 	}
@@ -150,38 +119,31 @@ func (r *entityImpl) Status(p graphql.ResolveParams) (int, error) {
 
 // IsSilenced implements response to request for 'isSilenced' field.
 func (r *entityImpl) IsSilenced(p graphql.ResolveParams) (bool, error) {
-	entity := p.Source.(*types.Entity)
-	ctx := types.SetContextFromResource(p.Context, entity)
-	sls, err := fetchEntitySilencedEntries(ctx, r.silenceQuerier, entity)
+	src := p.Source.(*types.Entity)
+	client := r.factory.NewWithContext(p.Context)
+	sls, err := fetchSilenceds(client, src.Namespace, filterSilenceByEntity(src))
 	return len(sls) > 0, err
 }
 
 // Silences implements response to request for 'silences' field.
 func (r *entityImpl) Silences(p graphql.ResolveParams) (interface{}, error) {
-	entity := p.Source.(*types.Entity)
-	ctx := types.SetContextFromResource(p.Context, entity)
-	sls, err := fetchEntitySilencedEntries(ctx, r.silenceQuerier, entity)
+	src := p.Source.(*types.Entity)
+	client := r.factory.NewWithContext(p.Context)
+	sls, err := fetchSilenceds(client, src.Namespace, filterSilenceByEntity(src))
 	return sls, err
 }
 
-func fetchEntitySilencedEntries(ctx context.Context, ctrl silenceQuerier, entity *types.Entity) ([]*types.Silenced, error) {
-	sls, err := ctrl.Query(ctx, "", "")
-	matched := make([]*types.Silenced, 0, len(sls))
-	if err != nil {
-		return matched, err
-	}
-
+func filterSilenceByEntity(src *types.Entity) silencePredicate {
 	now := time.Now().Unix()
-	for _, sl := range sls {
-		if !(sl.Check == "" || sl.Check == "*") || !sl.StartSilence(now) {
-			continue
+	return func(obj *types.Silenced) bool {
+		if !(obj.Check == "" || obj.Check == "*") || !obj.StartSilence(now) {
+			return false
 		}
-		if strings.InArray(sl.Subscription, entity.Subscriptions) {
-			matched = append(matched, sl)
+		if strings.InArray(obj.Subscription, src.Subscriptions) {
+			return true
 		}
+		return false
 	}
-
-	return matched, nil
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type

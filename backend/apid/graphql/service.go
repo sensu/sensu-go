@@ -37,7 +37,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterError(svc, nil)
 	schema.RegisterEvent(svc, &eventImpl{})
 	schema.RegisterEventsListOrder(svc)
-	schema.RegisterHandler(svc, newHandlerImpl(store, clientFactory))
+	schema.RegisterHandler(svc, &handlerImpl{factory: clientFactory})
 	schema.RegisterHandlerSocket(svc, &handlerSocketImpl{})
 	schema.RegisterIcon(svc)
 	schema.RegisterJSON(svc, jsonImpl{})
@@ -67,7 +67,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterCheckListOrder(svc)
 
 	// Register entity types
-	schema.RegisterEntity(svc, newEntityImpl(store))
+	schema.RegisterEntity(svc, &entityImpl{factory: clientFactory})
 	schema.RegisterEntityConnection(svc, &schema.EntityConnectionAliases{})
 	schema.RegisterEntityListOrder(svc)
 	schema.RegisterDeregistration(svc, &deregistrationImpl{})

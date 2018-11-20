@@ -68,7 +68,7 @@ func (client *RestClient) FetchMutator(name string) (*types.Mutator, error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return mutator, fmt.Errorf("%v", res.String())
+		return mutator, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &mutator)

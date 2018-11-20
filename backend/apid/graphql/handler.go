@@ -1,10 +1,8 @@
 package graphql
 
 import (
-	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/strings"
@@ -19,18 +17,7 @@ var _ schema.HandlerSocketFieldResolvers = (*handlerSocketImpl)(nil)
 
 type handlerImpl struct {
 	schema.HandlerAliases
-	handlerCtrl actions.HandlerController
-	mutatorCtrl actions.MutatorController
-	factory     ClientFactory
-}
-
-// TODO: Remove
-func newHandlerImpl(store store.Store, factory ClientFactory) *handlerImpl {
-	return &handlerImpl{
-		handlerCtrl: actions.NewHandlerController(store),
-		mutatorCtrl: actions.NewMutatorController(store),
-		factory:     factory,
-	}
+	factory ClientFactory
 }
 
 // ID implements response to request for 'id' field.
@@ -40,8 +27,13 @@ func (*handlerImpl) ID(p graphql.ResolveParams) (string, error) {
 
 // Mutator implements response to request for 'mutator' field.
 func (r *handlerImpl) Mutator(p graphql.ResolveParams) (interface{}, error) {
-	handler := p.Source.(*types.Handler)
-	return r.mutatorCtrl.Find(p.Context, handler.Mutator)
+	src := p.Source.(*types.Handler)
+	ctx := types.SetContextFromResource(p.Context, src)
+
+	client := r.factory.NewWithContext(ctx)
+	res, err := client.FetchMutator(src.Mutator)
+
+	return wrapFetch(res, err)
 }
 
 // Handlers implements response to request for 'handlers' field.
