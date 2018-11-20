@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+- Assets and checks environments are now merged, with a preference given to the
+  values coming from the check's environment.
+
 ### Fixed
 - Fixed several resource leaks in the check scheduler.
 - Fixed a bug in the dashboard where entities could not be silenced.
