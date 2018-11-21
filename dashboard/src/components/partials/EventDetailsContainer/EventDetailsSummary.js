@@ -124,9 +124,8 @@ class EventDetailsSummary extends React.Component {
                 <CodeHighlight
                   language="bash"
                   code={`# Executed command\n$ ${check.command}`}
-                >
-                  {code => <code dangerouslySetInnerHTML={{ __html: code }} />}
-                </CodeHighlight>
+                  component="code"
+                />
               </CardContent>
             </CodeBlock>
           </React.Fragment>

@@ -45,7 +45,7 @@ class ConfirmDeleteDialog extends React.Component {
         <DialogTitle id={titleId}>Confirm</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you would like to permanantly delete{" "}
+            Are you sure you would like to permenantly delete{" "}
             <Highlight>{this.props.identifier}</Highlight>? This operation{" "}
             <Highlight>cannot</Highlight> be undone.
           </Typography>

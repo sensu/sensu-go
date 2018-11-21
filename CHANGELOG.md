@@ -29,6 +29,7 @@ found to have issues, and we are re-working the feature for a future release.
 - Fixed issue filtering by status on the events page
 - Fixed interactive operations on entities in the CLI
 - Removed rerun and check links for keepalives on event details page.
+- Web UI - Made silencing language more clear on Silences List page
 - Fixed a bug where resources from namespaces that share a common prefix, eg:
   "sensu" and "sensu-devel", could be listed together.
 

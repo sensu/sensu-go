@@ -7,8 +7,9 @@ import MenuItem from "./MenuItem";
 const enhance = compose(
   setDisplayName("ToolbarMenuItems.Silence"),
   defaultProps({
-    title: "Clear Silences",
-    titleCondensed: "Unsilence",
+    autoClose: false,
+    title: "Clear silence",
+    titleCondensed: "Clear silence",
     description: "Clear silences for target item(s).",
     icon: <UnsilenceIcon />,
   }),

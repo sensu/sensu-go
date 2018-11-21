@@ -70,6 +70,10 @@ class SilencesList extends React.Component {
     silence: null,
   };
 
+  // TODO, create something that exists similarily to
+  // the silencing on ChecksList. This method can set a dialog
+  // to appear, right now we just call the dialog in the
+  // children themselves.
   deleteItem = item => {
     this.deleteItems([item]);
   };
@@ -116,7 +120,6 @@ class SilencesList extends React.Component {
       silence={item}
       selected={selected}
       onClickSelect={setSelected}
-      onClickDelete={() => this.deleteItem(item)}
     />
   );
 
@@ -149,7 +152,6 @@ class SilencesList extends React.Component {
                 selectedItems={selectedItems}
                 onChangeQuery={onChangeQuery}
                 onClickSelect={toggleSelectedItems}
-                onClickDelete={() => this.deleteItems(selectedItems)}
                 order={order}
               />
 
