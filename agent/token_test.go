@@ -6,6 +6,7 @@ import (
 
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -48,7 +49,7 @@ func TestTokenSubstitution(t *testing.T) {
 		{
 			name:            "simple template",
 			data:            types.FixtureEntity("entity"),
-			input:           types.CheckConfig{Command: "{{ .Name }}"},
+			input:           types.CheckConfig{Command: "{{ .name }}"},
 			expectedCommand: "entity",
 			expectedError:   false,
 		},
@@ -89,17 +90,28 @@ func TestTokenSubstitution(t *testing.T) {
 		{
 			name: "multiple tokens and valid json",
 			data: types.FixtureEntity("entity"),
-			input: types.CheckConfig{Command: `{{ .Name }}; {{ "hello" }}; {{ .EntityClass }}`,
-				ProxyRequests: &types.ProxyRequests{EntityAttributes: []string{`entity.EntityClass == \"proxy\"`}},
+			input: types.CheckConfig{Command: `{{ .name }}; {{ "hello" }}; {{ .entity_class }}`,
+				ProxyRequests: &types.ProxyRequests{EntityAttributes: []string{`entity.entity_class == \"proxy\"`}},
 			},
 			expectedCommand: "entity; hello; host",
+			expectedError:   false,
+		},
+		{
+			name: "labels",
+			data: types.Check{
+				ObjectMeta: types.ObjectMeta{
+					Labels: map[string]string{"foo": "bar"},
+				},
+			},
+			input:           types.CheckConfig{Command: `echo {{ .labels.foo }}`},
+			expectedCommand: "echo bar",
 			expectedError:   false,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := TokenSubstitution(tc.data, tc.input)
+			result, err := TokenSubstitution(dynamic.Synthesize(tc.data), tc.input)
 			testutil.CompareError(err, tc.expectedError, t)
 
 			if !tc.expectedError {
