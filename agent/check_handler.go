@@ -13,6 +13,7 @@ import (
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/dynamic"
+	"github.com/sensu/sensu-go/util/environment"
 	"github.com/sirupsen/logrus"
 )
 
@@ -85,10 +86,10 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 		return
 	}
 
-	// Inject the dependenices into PATH, LD_LIBRARY_PATH & CPATH so that they are
-	// availabe when when the command is executed.
+	// Inject the dependencies into PATH, LD_LIBRARY_PATH & CPATH so that they
+	// are availabe when when the command is executed.
 	ex := command.ExecutionRequest{
-		Env:          append(assets.Env(), check.EnvVars...),
+		Env:          environment.MergeEnvironments(assets.Env(), check.EnvVars),
 		Command:      checkConfig.Command,
 		Timeout:      int(checkConfig.Timeout),
 		InProgress:   a.inProgress,
