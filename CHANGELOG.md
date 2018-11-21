@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Add the `etcd-advertise-client-urls` config attribute to sensu-backend
+
 ### Changed
 - Assets and checks environments are now merged, with a preference given to the
   values coming from the check's environment.
@@ -18,6 +21,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Fixed several resource leaks in the check scheduler.
 - Fixed a bug in the dashboard where entities could not be silenced.
+- Fix the `sensuctl cluster health` command.
 - Fixed issue filtering by status on the events page
 - Fixed interactive operations on entities in the CLI
 - Removed rerun and check links for keepalives on event details page.
