@@ -7,9 +7,13 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Add the `etcd-advertise-client-urls` config attribute to sensu-backend
+
 ### Fixed
 - Fixed several resource leaks in the check scheduler.
 - Fixed a bug in the dashboard where entities could not be silenced.
+- Fix the `sensuctl cluster health` command.
 
 ## [2.0.0-beta.8-1] - 2018-11-15
 
