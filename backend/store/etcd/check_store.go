@@ -38,7 +38,6 @@ func (s *Store) DeleteCheckConfigByName(ctx context.Context, name string) error 
 }
 
 // GetCheckConfigs returns check configurations for an (optional) namespace.
-// If org is the empty string, it returns all check configs.
 func (s *Store) GetCheckConfigs(ctx context.Context) ([]*types.CheckConfig, error) {
 	resp, err := query(ctx, s, getCheckConfigsPath)
 	if err != nil {
