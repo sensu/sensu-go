@@ -13,7 +13,6 @@ import (
 
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -176,12 +175,12 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 		// Make sure the ec2_access_key attribute is redacted, which indicates it was
 		// received as such in keepalives
 		label := event.Entity.Labels["ec2_access_key"]
-		if got, want := label, dynamic.Redacted; got != want {
+		if got, want := label, types.Redacted; got != want {
 			errors <- fmt.Errorf("%q != %q", got, want)
 		}
 
 		label = event.Entity.Labels["secret"]
-		if got, want := label, dynamic.Redacted; got == want {
+		if got, want := label, types.Redacted; got == want {
 			errors <- fmt.Errorf("secret was redacted")
 		}
 	}))

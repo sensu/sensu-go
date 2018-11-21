@@ -32,7 +32,7 @@ func (opts *entityOpts) withFlags(flags *pflag.FlagSet) {
 func (opts *entityOpts) administerQuestionnaire() error {
 	qs := []*survey.Question{
 		{
-			Name: "class",
+			Name: "entity-class",
 			Prompt: &survey.Input{
 				Message: "Entity Class:",
 				Default: opts.EntityClass,

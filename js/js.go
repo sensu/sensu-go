@@ -113,14 +113,6 @@ func addTimeFuncs(vm *otto.Otto) error {
 	return nil
 }
 
-func releaseOttoVM(vm *otto.Otto, assets JavascriptAssets) {
-	key := ""
-	if assets != nil {
-		key = assets.Key()
-	}
-	ottoCache.Release(key, vm)
-}
-
 // Evaluate evaluates the javascript expression with parameters applied.
 // If scripts is non-nil, then the scripts will be evaluated in the
 // expression's runtime context before the expression is evaluated.
@@ -129,13 +121,7 @@ func Evaluate(expr string, parameters interface{}, assets JavascriptAssets) (boo
 	if err != nil {
 		return false, err
 	}
-	defer releaseOttoVM(jsvm, assets)
 	if params, ok := parameters.(map[string]interface{}); ok {
-		defer func() {
-			for name := range params {
-				_ = jsvm.Set(name, otto.UndefinedValue())
-			}
-		}()
 		for name, value := range params {
 			if err := jsvm.Set(name, value); err != nil {
 				return false, err

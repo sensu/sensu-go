@@ -14,10 +14,6 @@ const (
 
 	// cacheReapInterval is the amount to sleep in the cache reaper
 	cacheReapInterval = time.Minute
-
-	// cacheMaxConcurrency is the maximum number of concurrent accesses
-	// available for a given key.
-	cacheMaxConcurrency = 8
 )
 
 // vmCache provides an internal mechanism for caching javascript contexts
@@ -31,13 +27,7 @@ type vmCache struct {
 
 type cacheValue struct {
 	lastRead int64
-	vms      chan *otto.Otto
-}
-
-func newCacheValue() *cacheValue {
-	return &cacheValue{
-		vms: make(chan *otto.Otto, cacheMaxConcurrency),
-	}
+	vm       *otto.Otto
 }
 
 func newVMCache() *vmCache {
@@ -78,8 +68,7 @@ func (c *vmCache) reap() {
 	defer c.Unlock()
 }
 
-// Acquire gets a VM from the cache. When the user is finished with it, it
-// should be returned to the cache with Release.
+// Acquire gets a VM from the cache. It is a copy of the cached value.
 func (c *vmCache) Acquire(key string) *otto.Otto {
 	c.Lock()
 	defer c.Unlock()
@@ -87,26 +76,16 @@ func (c *vmCache) Acquire(key string) *otto.Otto {
 	if !ok {
 		return nil
 	}
-	return <-val.vms
+	if val.vm == nil {
+		return nil
+	}
+	return val.vm.Copy()
 }
 
-// Init initializes the value in the cache, creating cacheMaxConcurrency copies
-// of it.
+// Init initializes the value in the cache.
 func (c *vmCache) Init(key string, vm *otto.Otto) {
 	c.Lock()
 	defer c.Unlock()
-	val := newCacheValue()
+	val := &cacheValue{lastRead: time.Now().Unix(), vm: vm}
 	c.vms[key] = val
-	// Fill the cache with copies of the VM
-	for i := 0; i < cacheMaxConcurrency; i++ {
-		val.vms <- vm.Copy()
-	}
-	val.lastRead = time.Now().Unix()
-}
-
-// Release returns a VM to the cache.
-func (c *vmCache) Release(key string, vm *otto.Otto) {
-	c.Lock()
-	defer c.Unlock()
-	c.vms[key].vms <- vm
 }
