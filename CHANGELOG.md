@@ -18,6 +18,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Fixed several resource leaks in the check scheduler.
 - Fixed a bug in the dashboard where entities could not be silenced.
+- Fixed issue filtering by status on the events page
 - Fixed interactive operations on entities in the CLI
 - Removed rerun and check links for keepalives on event details page.
 
