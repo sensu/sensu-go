@@ -15,7 +15,6 @@ import Checkbox from "@material-ui/core/Checkbox";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
-import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogContentParagraph from "/components/DialogContentParagraph";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import ListController from "/components/controller/ListController";
@@ -27,6 +26,7 @@ import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
 import TableOverflowCell from "/components/partials/TableOverflowCell";
 import TableSelectableRow from "/components/partials/TableSelectableRow";
+import Typography from "@material-ui/core/Typography";
 import withMobileDialog from "@material-ui/core/withMobileDialog";
 import deleteSilence from "/mutations/deleteSilence";
 
@@ -135,13 +135,7 @@ class ClearSilencedEntriesDialog extends React.PureComponent {
     );
 
     return (
-      <Dialog
-        fullWidth
-        fullScreen={fullScreen}
-        open={open}
-        onClose={close}
-        scroll="paper"
-      >
+      <Dialog fullWidth fullScreen={fullScreen} open={open} onClose={close}>
         <ListController
           items={silences}
           initialSelectedKeys={silences.map(silence => silence.name)}
@@ -152,11 +146,9 @@ class ClearSilencedEntriesDialog extends React.PureComponent {
           {({ children, selectedItems }) => (
             <Loader loading={submitting} passthrough>
               <DialogTitle>Clear Silencing Entries</DialogTitle>
-              <DialogContent style={{ paddingBottom: 8 }}>
-                <DialogContentText>
-                  Select all entries you would like to clear.
-                </DialogContentText>
-              </DialogContent>
+              <Typography style={{ paddingLeft: "24px" }}>
+                Select all entries you would like to clear.
+              </Typography>
               <DialogContent style={{ paddingLeft: 0, paddingRight: 0 }}>
                 <StyledTable>
                   <TableBody>{children}</TableBody>

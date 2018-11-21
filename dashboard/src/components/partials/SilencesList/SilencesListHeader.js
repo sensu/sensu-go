@@ -1,7 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import ConfirmUnsilence from "/components/partials/ConfirmUnsilence";
 import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
 import ListHeader from "/components/partials/ListHeader";
 import ListSortSelector from "/components/partials/ListSortSelector";
@@ -11,7 +10,6 @@ import ClearSilencesDialog from "/components/partials/ClearSilencedEntriesDialog
 class SilencesListHeader extends React.PureComponent {
   static propTypes = {
     onClickSelect: PropTypes.func.isRequired,
-    onClickDelete: PropTypes.func.isRequired,
     onChangeQuery: PropTypes.func.isRequired,
     order: PropTypes.string.isRequired,
     selectedItems: PropTypes.array,
