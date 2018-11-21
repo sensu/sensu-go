@@ -27,19 +27,21 @@ func NewClientFactory(url string) *ClientFactory {
 
 // NewWithContext takes a context and returns new REST API client
 func (c *ClientFactory) NewWithContext(ctx context.Context) client.APIClient {
-	var accessToken string
-	if token, ok := ctx.Value(types.AccessTokenString).(string); ok {
-		accessToken = token
-	}
-
-	tokens := types.Tokens{
-		Access:    accessToken,
-		ExpiresAt: defaultExpiry,
-	}
-
 	config := inmemory.New(c.url)
-	config.SaveTokens(&tokens)
-	config.SaveNamespace(types.ContextNamespace(ctx))
+	tokens := types.Tokens{ExpiresAt: defaultExpiry}
+	if token, ok := ctx.Value(types.AccessTokenString).(string); ok {
+		tokens.Access = token
+	}
+
+	// The inmemory client should /never/ return an err
+	if err := config.SaveTokens(&tokens); err != nil {
+		panic(err)
+	}
+
+	nsp := types.ContextNamespace(ctx)
+	if err := config.SaveNamespace(nsp); err != nil {
+		panic(err)
+	}
 
 	return client.New(config)
 }
