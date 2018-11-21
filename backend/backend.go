@@ -71,6 +71,7 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 	cfg.InitialCluster = config.EtcdInitialCluster
 	cfg.InitialClusterState = config.EtcdInitialClusterState
 	cfg.InitialAdvertisePeerURL = config.EtcdInitialAdvertisePeerURL
+	cfg.AdvertiseClientURL = config.EtcdAdvertiseClientURL
 	cfg.Name = config.EtcdName
 
 	// Etcd TLS config

@@ -46,6 +46,7 @@ type Config struct {
 	EtcdListenPeerURL           string
 	EtcdName                    string
 	NoEmbedEtcd                 bool
+	EtcdAdvertiseClientURL      string
 
 	// Etcd TLS configuration
 	EtcdClientTLSInfo etcd.TLSInfo

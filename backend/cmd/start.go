@@ -56,6 +56,7 @@ const (
 	deprecatedFlagEtcdNodeName                = "name"
 	flagEtcdNodeName                          = "etcd-name"
 	flagNoEmbedEtcd                           = "no-embed-etcd"
+	flagEtcdAdvertiseClientURL                = "etcd-advertise-client-urls"
 
 	// Etcd TLS flag constants
 	flagEtcdCertFile           = "etcd-cert-file"
@@ -74,9 +75,13 @@ const (
 	// defaultEtcdName is the default etcd member node name (single-node cluster
 	// only)
 	defaultEtcdName = "default"
-	// DefaultEtcdPeerURL is the default URL to listen for Etcd peers (single-node
+	// defaultEtcdPeerURL is the default URL to listen for Etcd peers (single-node
 	// cluster only)
 	defaultEtcdPeerURL = "http://127.0.0.1:2380"
+
+	// defaultEtcdAdvertiseClientURL is the default list of this member's client
+	// URLs to advertise to the rest of the cluster
+	defaultEtcdAdvertiseClientURL = "http://localhost:2379"
 
 	// Start command usage template
 	startUsageTemplate = `Usage:{{if .Runnable}}
@@ -151,6 +156,7 @@ func newStartCommand() *cobra.Command {
 				EtcdInitialClusterToken:     viper.GetString(flagEtcdInitialClusterToken),
 				EtcdName:                    viper.GetString(flagEtcdNodeName),
 				NoEmbedEtcd:                 viper.GetBool(flagNoEmbedEtcd),
+				EtcdAdvertiseClientURL:      viper.GetString(flagEtcdAdvertiseClientURL),
 			}
 
 			// Sensu APIs TLS config
@@ -264,6 +270,7 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagEtcdInitialClusterToken, "")
 	viper.SetDefault(flagEtcdNodeName, defaultEtcdName)
 	viper.SetDefault(flagNoEmbedEtcd, false)
+	viper.SetDefault(flagEtcdAdvertiseClientURL, defaultEtcdAdvertiseClientURL)
 
 	// Merge in config flag set so that it appears in command usage
 	cmd.Flags().AddFlagSet(configFlagSet)
@@ -302,6 +309,8 @@ func newStartCommand() *cobra.Command {
 	_ = cmd.Flags().SetAnnotation(flagEtcdNodeName, "categories", []string{"store"})
 	cmd.Flags().Bool(flagNoEmbedEtcd, viper.GetBool(flagNoEmbedEtcd), "don't embed etcd, use external etcd instead")
 	_ = cmd.Flags().SetAnnotation(flagNoEmbedEtcd, "categories", []string{"store"})
+	cmd.Flags().String(flagEtcdAdvertiseClientURL, viper.GetString(flagEtcdAdvertiseClientURL), "list of this member's client URLs to advertise to the rest of the cluster.")
+	_ = cmd.Flags().SetAnnotation(flagEtcdAdvertiseClientURL, "categories", []string{"store"})
 
 	// Etcd TLS flags
 	cmd.Flags().String(flagEtcdCertFile, viper.GetString(flagEtcdCertFile), "path to the client server TLS cert file")

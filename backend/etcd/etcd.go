@@ -42,6 +42,9 @@ const (
 	ClusterStateNew = "new"
 	// ClusterStateExisting specifies ths is an existing etcd cluster
 	ClusterStateExisting = "existing"
+	// AdvertiseClientURL specifies this member's client URLs to advertise to the
+	// rest of the cluster
+	AdvertiseClientURL = "http://localhost:2379"
 )
 
 func init() {
@@ -58,6 +61,7 @@ type Config struct {
 	InitialClusterState     string
 	InitialClusterToken     string
 	InitialAdvertisePeerURL string
+	AdvertiseClientURL      string
 
 	ClientTLSInfo TLSInfo
 	PeerTLSInfo   TLSInfo
@@ -76,6 +80,7 @@ func NewConfig() *Config {
 	c.InitialClusterState = ClusterStateNew
 	c.Name = DefaultNodeName
 	c.InitialAdvertisePeerURL = PeerListenURL
+	c.AdvertiseClientURL = AdvertiseClientURL
 
 	return c
 }
@@ -158,7 +163,12 @@ func NewEtcd(config *Config) (*Etcd, error) {
 		return nil, err
 	}
 
-	cfg.ACUrls = clientURLs
+	advertiseClientURL, err := url.Parse(config.AdvertiseClientURL)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg.ACUrls = []url.URL{*advertiseClientURL}
 	cfg.APUrls = []url.URL{*advertisePeerURL}
 	cfg.LCUrls = clientURLs
 	cfg.LPUrls = []url.URL{*listenPeerURL}
