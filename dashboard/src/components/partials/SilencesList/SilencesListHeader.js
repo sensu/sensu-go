@@ -42,26 +42,24 @@ class SilencesListHeader extends React.PureComponent {
     );
   };
 
-  renderBulkActions = () => {
-    return (
-      <ToolbarMenu>
-        <ToolbarMenu.Item id="clearSilence" visible="always">
-          <UnsilenceMenuItem
-            onClick={() => {
-              this.setState({ openDialog: true });
-            }}
-          />
-          <ClearSilencesDialog
-            silences={this.props.selectedItems}
-            open={this.state.openDialog}
-            close={() => this.setState({ openDialog: false })}
-            confirmed
-            scrollable
-          />
-        </ToolbarMenu.Item>
-      </ToolbarMenu>
-    );
-  };
+  renderBulkActions = () => (
+    <ToolbarMenu>
+      <ToolbarMenu.Item id="clearSilence" visible="always">
+        <UnsilenceMenuItem
+          onClick={() => {
+            this.setState({ openDialog: true });
+          }}
+        />
+        <ClearSilencesDialog
+          silences={this.props.selectedItems}
+          open={this.state.openDialog}
+          close={() => this.setState({ openDialog: false })}
+          confirmed
+          scrollable
+        />
+      </ToolbarMenu.Item>
+    </ToolbarMenu>
+  );
 
   render() {
     const { onClickSelect, selectedItems, rowCount } = this.props;
