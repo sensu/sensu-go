@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed a bug in the dashboard where entities could not be silenced.
 - Fixed interactive operations on entities in the CLI
 - Removed rerun and check links for keepalives on event details page.
+- Web UI - Made silencing language more clear on Silences List page
 
 ## [2.0.0-beta.8-1] - 2018-11-15
 
