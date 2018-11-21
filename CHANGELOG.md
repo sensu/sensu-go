@@ -9,6 +9,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Add the `etcd-advertise-client-urls` config attribute to sensu-backend
+### Removed
+- Check subdue functionality has been disabled. Users that have checks with
+subdues defined should delete and recreate the check. The subdue feature was
+found to have issues, and we are re-working the feature for a future release.
 
 ### Changed
 - Assets and checks environments are now merged, with a preference given to the
