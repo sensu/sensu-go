@@ -139,6 +139,8 @@ func filterCheckSubdue(resources []types.Resource) {
 			val.Subdue = nil
 		case *types.Check:
 			val.Subdue = nil
+		case *types.EventFilter:
+			val.When = nil
 		}
 	}
 }

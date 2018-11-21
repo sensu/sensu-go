@@ -13,6 +13,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Check subdue functionality has been disabled. Users that have checks with
 subdues defined should delete and recreate the check. The subdue feature was
 found to have issues, and we are re-working the feature for a future release.
+- Filter when functionality has been disabled. Users that have filters with
+'when' properties defined should delete and recreate the filter. Filter when
+uses the same facility as check subdue for handling time windows.
 
 ### Changed
 - Assets and checks environments are now merged, with a preference given to the
