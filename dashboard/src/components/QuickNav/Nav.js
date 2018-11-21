@@ -42,7 +42,7 @@ class QuickNav extends React.Component {
         <Button
           namespace={namespace}
           Icon={SilenceIcon}
-          caption="Silenced"
+          caption="Silences"
           to="silences"
         />
       </div>
