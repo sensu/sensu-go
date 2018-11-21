@@ -112,6 +112,7 @@ func (b *backendProcess) Start() error {
 		"--etcd-initial-cluster", b.EtcdInitialCluster,
 		"--etcd-initial-cluster-state", b.EtcdInitialClusterState,
 		"--etcd-name", b.EtcdName,
+		"--etcd-advertise-client-urls", b.EtcdClientURL,
 		"--etcd-initial-advertise-peer-urls", b.EtcdPeerURL,
 		"--etcd-initial-cluster-token", b.EtcdInitialClusterToken,
 		"--log-level", "warn",

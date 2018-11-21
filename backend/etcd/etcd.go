@@ -11,7 +11,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"net/url"
 	"os"
 	"path/filepath"
 	"time"
@@ -19,6 +18,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/embed"
 	"github.com/coreos/etcd/pkg/transport"
+	etcdTypes "github.com/coreos/etcd/pkg/types"
 	"github.com/coreos/pkg/capnslog"
 	"github.com/sensu/sensu-go/types"
 	"google.golang.org/grpc/grpclog"
@@ -27,24 +27,11 @@ import (
 const (
 	// StateDir is the base path for Sensu's local storage.
 	StateDir = "/var/lib/sensu"
+	// ClusterStateNew specifies this is a new etcd cluster
+	ClusterStateNew = "new"
 	// EtcdStartupTimeout is the amount of time we give the embedded Etcd Server
 	// to start.
 	EtcdStartupTimeout = 60 // seconds
-	// ClientListenURL is the default listen address for clients.
-	ClientListenURL = "http://127.0.0.1:2379"
-	// PeerListenURL is the default listen address for peers.
-	PeerListenURL = "http://127.0.0.1:2380"
-	// InitialCluster is the default initial cluster
-	InitialCluster = "default=http://127.0.0.1:2380"
-	// DefaultNodeName is the default name for this cluster member
-	DefaultNodeName = "default"
-	// ClusterStateNew specifies this is a new etcd cluster
-	ClusterStateNew = "new"
-	// ClusterStateExisting specifies ths is an existing etcd cluster
-	ClusterStateExisting = "existing"
-	// AdvertiseClientURL specifies this member's client URLs to advertise to the
-	// rest of the cluster
-	AdvertiseClientURL = "http://localhost:2379"
 )
 
 func init() {
@@ -53,15 +40,15 @@ func init() {
 
 // Config is a configuration for the embedded etcd
 type Config struct {
-	DataDir                 string
-	Name                    string // Cluster Member Name
-	ListenPeerURL           string
-	ListenClientURLs        []string
-	InitialCluster          string
-	InitialClusterState     string
-	InitialClusterToken     string
-	InitialAdvertisePeerURL string
-	AdvertiseClientURL      string
+	DataDir                  string
+	Name                     string // Cluster Member Name
+	AdvertiseClientURLs      []string
+	ListenPeerURLs           []string
+	ListenClientURLs         []string
+	InitialCluster           string
+	InitialClusterState      string
+	InitialClusterToken      string
+	InitialAdvertisePeerURLs []string
 
 	ClientTLSInfo TLSInfo
 	PeerTLSInfo   TLSInfo
@@ -74,13 +61,6 @@ type TLSInfo transport.TLSInfo
 func NewConfig() *Config {
 	c := &Config{}
 	c.DataDir = StateDir
-	c.ListenClientURLs = []string{ClientListenURL}
-	c.ListenPeerURL = PeerListenURL
-	c.InitialCluster = InitialCluster
-	c.InitialClusterState = ClusterStateNew
-	c.Name = DefaultNodeName
-	c.InitialAdvertisePeerURL = PeerListenURL
-	c.AdvertiseClientURL = AdvertiseClientURL
 
 	return c
 }
@@ -125,53 +105,52 @@ func (e *Etcd) BackendID() (result string) {
 // Callers should monitor the Err() channel for the running etcd--these are
 // terminal errors.
 func NewEtcd(config *Config) (*Etcd, error) {
-	cfg := embed.NewConfig()
+	// Parse the various URLs
+	var err error
+	var lcURLs etcdTypes.URLs
+	lcURLs, err = etcdTypes.NewURLs(config.ListenClientURLs)
+	if err != nil {
+		return nil, fmt.Errorf("invalid listen client urls: %s", err)
+	}
+	var acURLs etcdTypes.URLs
+	acURLs, err = etcdTypes.NewURLs(config.AdvertiseClientURLs)
+	if err != nil {
+		return nil, fmt.Errorf("invalid advertise client urls: %s", err)
+	}
+	var lpURLs etcdTypes.URLs
+	lpURLs, err = etcdTypes.NewURLs(config.ListenPeerURLs)
+	if err != nil {
+		return nil, fmt.Errorf("invalid listen peer urls: %s", err)
+	}
+	var apURLs etcdTypes.URLs
+	apURLs, err = etcdTypes.NewURLs(config.InitialAdvertisePeerURLs)
+	if err != nil {
+		return nil, fmt.Errorf("invalid initial advertise peer urls: %s", err)
+	}
 
+	cfg := embed.NewConfig()
 	cfg.Name = config.Name
 
-	cfgDir := filepath.Join(config.DataDir, "etcd", "data")
-	walDir := filepath.Join(config.DataDir, "etcd", "wal")
-	cfg.Dir = cfgDir
-	cfg.WalDir = walDir
-	if err := ensureDir(cfgDir); err != nil {
+	cfg.Dir = filepath.Join(config.DataDir, "etcd", "data")
+	cfg.WalDir = filepath.Join(config.DataDir, "etcd", "wal")
+	if err := ensureDir(cfg.Dir); err != nil {
 		return nil, err
 	}
-	if err := ensureDir(walDir); err != nil {
-		return nil, err
-	}
-
-	clientURLs := []url.URL{}
-	for _, u := range config.ListenClientURLs {
-		clientURL, err := url.Parse(u)
-		if err != nil {
-			return nil, err
-		}
-		clientURLs = append(clientURLs, *clientURL)
-	}
-
-	if len(clientURLs) == 0 {
-		return nil, errors.New("at least one client URL must be provided")
-	}
-
-	listenPeerURL, err := url.Parse(config.ListenPeerURL)
-	if err != nil {
+	if err := ensureDir(cfg.WalDir); err != nil {
 		return nil, err
 	}
 
-	advertisePeerURL, err := url.Parse(config.InitialAdvertisePeerURL)
-	if err != nil {
-		return nil, err
-	}
+	// Client config
+	cfg.ACUrls = acURLs
+	cfg.LCUrls = lcURLs
+	cfg.ClientTLSInfo = (transport.TLSInfo)(config.ClientTLSInfo)
 
-	advertiseClientURL, err := url.Parse(config.AdvertiseClientURL)
-	if err != nil {
-		return nil, err
-	}
+	// Peer config
+	cfg.APUrls = apURLs
+	cfg.LPUrls = lpURLs
+	cfg.PeerTLSInfo = (transport.TLSInfo)(config.PeerTLSInfo)
 
-	cfg.ACUrls = []url.URL{*advertiseClientURL}
-	cfg.APUrls = []url.URL{*advertisePeerURL}
-	cfg.LCUrls = clientURLs
-	cfg.LPUrls = []url.URL{*listenPeerURL}
+	// Cluster config
 	cfg.InitialClusterToken = config.InitialClusterToken
 	cfg.InitialCluster = config.InitialCluster
 	cfg.ClusterState = config.InitialClusterState
@@ -184,10 +163,6 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	cfg.AutoCompactionRetention = "1"
 	// Default to 4G etcd size. TODO: make this configurable.
 	cfg.QuotaBackendBytes = int64(4 * 1024 * 1024 * 1024)
-
-	// Etcd TLS config
-	cfg.ClientTLSInfo = (transport.TLSInfo)(config.ClientTLSInfo)
-	cfg.PeerTLSInfo = (transport.TLSInfo)(config.PeerTLSInfo)
 
 	capnslog.SetFormatter(NewLogrusFormatter())
 
@@ -204,7 +179,7 @@ func NewEtcd(config *Config) (*Etcd, error) {
 		return nil, fmt.Errorf("Etcd failed to start in %d seconds", EtcdStartupTimeout)
 	}
 
-	return &Etcd{cfg: config, etcd: e, clientURLs: config.ListenClientURLs}, nil
+	return &Etcd{cfg: config, etcd: e, clientURLs: config.AdvertiseClientURLs}, nil
 }
 
 // Name returns the configured name for Etcd.
@@ -260,7 +235,7 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 
 // Healthy returns Etcd status information.
 func (e *Etcd) Healthy() bool {
-	if len(e.cfg.ListenClientURLs) == 0 {
+	if len(e.cfg.AdvertiseClientURLs) == 0 {
 		return false
 	}
 	client, err := e.NewClient()
@@ -268,7 +243,7 @@ func (e *Etcd) Healthy() bool {
 		return false
 	}
 	mapi := clientv3.NewMaintenance(client)
-	_, err = mapi.Status(context.TODO(), e.cfg.ListenClientURLs[0])
+	_, err = mapi.Status(context.TODO(), e.cfg.AdvertiseClientURLs[0])
 	return err == nil
 }
 

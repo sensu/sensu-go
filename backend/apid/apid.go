@@ -2,6 +2,7 @@ package apid
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -28,16 +29,17 @@ type APId struct {
 	// Port is the port APId is running on.
 	Port int
 
-	stopping    chan struct{}
-	running     *atomic.Value
-	wg          *sync.WaitGroup
-	errChan     chan error
-	HTTPServer  *http.Server
-	bus         messaging.MessageBus
-	store       store.Store
-	queueGetter types.QueueGetter
-	tls         *types.TLSOptions
-	cluster     clientv3.Cluster
+	stopping            chan struct{}
+	running             *atomic.Value
+	wg                  *sync.WaitGroup
+	errChan             chan error
+	HTTPServer          *http.Server
+	bus                 messaging.MessageBus
+	store               store.Store
+	queueGetter         types.QueueGetter
+	tls                 *types.TLSOptions
+	cluster             clientv3.Cluster
+	etcdClientTLSConfig *tls.Config
 }
 
 // Option is a functional option.
@@ -45,34 +47,36 @@ type Option func(*APId) error
 
 // Config configures APId.
 type Config struct {
-	Host        string
-	Port        int
-	Bus         messaging.MessageBus
-	Store       store.Store
-	QueueGetter types.QueueGetter
-	TLS         *types.TLSOptions
-	Cluster     clientv3.Cluster
+	Host                string
+	Port                int
+	Bus                 messaging.MessageBus
+	Store               store.Store
+	QueueGetter         types.QueueGetter
+	TLS                 *types.TLSOptions
+	Cluster             clientv3.Cluster
+	EtcdClientTLSConfig *tls.Config
 }
 
 // New creates a new APId.
 func New(c Config, opts ...Option) (*APId, error) {
 	a := &APId{
-		Host:        c.Host,
-		Port:        c.Port,
-		store:       c.Store,
-		queueGetter: c.QueueGetter,
-		tls:         c.TLS,
-		bus:         c.Bus,
-		stopping:    make(chan struct{}, 1),
-		running:     &atomic.Value{},
-		wg:          &sync.WaitGroup{},
-		errChan:     make(chan error, 1),
-		cluster:     c.Cluster,
+		Host:                c.Host,
+		Port:                c.Port,
+		store:               c.Store,
+		queueGetter:         c.QueueGetter,
+		tls:                 c.TLS,
+		bus:                 c.Bus,
+		stopping:            make(chan struct{}, 1),
+		running:             &atomic.Value{},
+		wg:                  &sync.WaitGroup{},
+		errChan:             make(chan error, 1),
+		cluster:             c.Cluster,
+		etcdClientTLSConfig: c.EtcdClientTLSConfig,
 	}
 
 	router := mux.NewRouter().UseEncodedPath()
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
-	registerUnauthenticatedResources(router, a.store)
+	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig)
 	registerAuthenticationResources(router, a.store)
 	registerRestrictedResources(router, a.store, a.queueGetter, a.bus, a.cluster)
 
@@ -152,6 +156,8 @@ func (a *APId) Name() string {
 func registerUnauthenticatedResources(
 	router *mux.Router,
 	store store.Store,
+	cluster clientv3.Cluster,
+	etcdClientTLSConfig *tls.Config,
 ) {
 	mountRouters(
 		NewSubrouter(
@@ -160,7 +166,7 @@ func registerUnauthenticatedResources(
 			middlewares.LimitRequest{},
 			middlewares.Edition{Name: version.Edition},
 		),
-		routers.NewHealthRouter(actions.NewHealthController(store)),
+		routers.NewHealthRouter(actions.NewHealthController(store, cluster, etcdClientTLSConfig)),
 	)
 }
 

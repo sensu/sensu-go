@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"runtime/debug"
-	"strings"
 	"sync"
 	"time"
 
@@ -56,7 +55,7 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 		// Don't start up an embedded etcd, return a client that connects to an
 		// external etcd instead.
 		return clientv3.New(clientv3.Config{
-			Endpoints:   strings.Split(config.EtcdListenClientURL, ","),
+			Endpoints:   config.EtcdAdvertiseClientURLs,
 			DialTimeout: 5 * time.Second,
 			TLS:         tlsConfig,
 		})
@@ -66,12 +65,12 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 	// the Wizard bus, which requires etcd to be started.
 	cfg := etcd.NewConfig()
 	cfg.DataDir = config.StateDir
-	cfg.ListenClientURLs = strings.Split(config.EtcdListenClientURL, ",")
-	cfg.ListenPeerURL = config.EtcdListenPeerURL
+	cfg.ListenClientURLs = config.EtcdListenClientURLs
+	cfg.ListenPeerURLs = config.EtcdListenPeerURLs
 	cfg.InitialCluster = config.EtcdInitialCluster
 	cfg.InitialClusterState = config.EtcdInitialClusterState
-	cfg.InitialAdvertisePeerURL = config.EtcdInitialAdvertisePeerURL
-	cfg.AdvertiseClientURL = config.EtcdAdvertiseClientURL
+	cfg.InitialAdvertisePeerURLs = config.EtcdInitialAdvertisePeerURLs
+	cfg.AdvertiseClientURLs = config.EtcdAdvertiseClientURLs
 	cfg.Name = config.EtcdName
 
 	// Etcd TLS config
@@ -198,15 +197,23 @@ func Initialize(config *Config) (*Backend, error) {
 	}
 	b.Daemons = append(b.Daemons, keepalive)
 
+	// Prepare the etcd client TLS config
+	etcdClientTLSInfo := (transport.TLSInfo)(config.EtcdClientTLSInfo)
+	etcdClientTLSConfig, err := etcdClientTLSInfo.ClientConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize apid
 	api, err := apid.New(apid.Config{
-		Host:        config.APIHost,
-		Port:        config.APIPort,
-		Bus:         bus,
-		Store:       store,
-		QueueGetter: queueGetter,
-		TLS:         config.TLS,
-		Cluster:     clientv3.NewCluster(client),
+		Host:                config.APIHost,
+		Port:                config.APIPort,
+		Bus:                 bus,
+		Store:               store,
+		QueueGetter:         queueGetter,
+		TLS:                 config.TLS,
+		Cluster:             clientv3.NewCluster(client),
+		EtcdClientTLSConfig: etcdClientTLSConfig,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err)
