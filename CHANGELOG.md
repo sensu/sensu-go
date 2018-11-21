@@ -7,12 +7,31 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Add the `etcd-advertise-client-urls` config attribute to sensu-backend
+### Removed
+- Check subdue functionality has been disabled. Users that have checks with
+subdues defined should delete and recreate the check. The subdue feature was
+found to have issues, and we are re-working the feature for a future release.
+
+### Changed
+- Assets and checks environments are now merged, with a preference given to the
+  values coming from the check's environment.
+- Assets and handlers environments are now merged, with a preference given to the
+  values coming from the handler's environment.
+- Assets and mutators environments are now merged, with a preference given to the
+  values coming from the mutator's environment.
+
 ### Fixed
 - Fixed several resource leaks in the check scheduler.
 - Fixed a bug in the dashboard where entities could not be silenced.
+- Fix the `sensuctl cluster health` command.
+- Fixed issue filtering by status on the events page
 - Fixed interactive operations on entities in the CLI
 - Removed rerun and check links for keepalives on event details page.
 - Web UI - Made silencing language more clear on Silences List page
+- Fixed a bug where resources from namespaces that share a common prefix, eg:
+  "sensu" and "sensu-devel", could be listed together.
 
 ## [2.0.0-beta.8-1] - 2018-11-15
 

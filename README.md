@@ -1,4 +1,4 @@
-# Sensu 2.0
+# Sensu Go
 
 TravisCI: [![TravisCI Build Status](https://travis-ci.org/sensu/sensu-go.svg?branch=master)](https://travis-ci.org/sensu/sensu-go)
 
@@ -14,124 +14,21 @@ data. Sensu is extremely extensible and is commonly referred to as
 "the monitoring router".
 
 To learn more about Sensu, [please visit the
-website](https://sensu.io/).
+website](https://sensu.io/) and [read the documentation](https://docs.sensu.io/sensu-go/latest/).
 
-## What is Sensu 2.0?
+## What is Sensu Go?
 
-Sensu 2.0 is a complete rewrite of Sensu in Go, with new capabilities
+Sensu Go is a complete rewrite of Sensu in Go, with new capabilities
 and reduced operational overhead. It eliminates several sources of
 friction for new and experienced Sensu users.
 
 ## Installation
 
-Sensu 2.0 installer packages are available for a number of computing
+Sensu Go installer packages are available for a number of computing
 platforms (e.g. Debian/Ubuntu, RHEL/Centos, etc), but the easiest way
 to get started is with the official Docker image, sensu/sensu.
 
-Please note the following installation steps to get Sensu up and
-running on your local workstation with Docker.
-
-_NOTE: the following instructions are based on Docker Community
-Edition (CE), though they may be easily adapted for other container
-platforms. Please download and install Docker CE before proceeding._
-
-1. Start the Sensu 2.0 Backend process
-
-   ```
-   $ docker run -d --name sensu-backend \
-   -p 2380:2380 -p 3000:3000 -p 8080:8080 -p 8081:8081 \
-   sensu/sensu:2.0.0-beta.3 sensu-backend start
-   ```
-
-2. Start the Sensu 2.0 Agent process
-
-   ```
-   $ docker run -d --name sensu-agent --link sensu-backend \
-   sensu/sensu:2.0.0-beta.3 sensu-agent start \
-   --backend-url ws://sensu-backend:8081 \
-   --subscriptions workstation,docker
-   ```
-
-3. Download and install the Sensu 2.0 CLI tool
-
-   **On macOS**
-
-   ```
-   $ latest=$(curl -s https://storage.googleapis.com/sensu-binaries/latest.txt)
-
-   $ curl -LO https://storage.googleapis.com/sensu-binaries/$latest/darwin/amd64/sensuctl
-
-   $ chmod +x sensuctl
-
-   $ sudo mv sensuctl /usr/local/bin/
-   ```
-
-   **On Debian/Ubuntu Linux**
-
-   ```
-   $ curl -s \
-   https://packagecloud.io/install/repositories/sensu/nightly/script.deb.sh \
-   | sudo bash
-
-   $ sudo apt-get install sensu-cli
-   ```
-
-   **On RHEL/CentOS Linux**
-
-   ```
-   $ curl -s \
-   https://packagecloud.io/install/repositories/sensu/nightly/script.rpm.sh \
-   | sudo bash
-
-   $ sudo yum install sensu-cli
-   ```
-
-4. Configure the Sensu 2.0 CLI tool
-
-   ```
-   $ sensuctl configure
-   ? Sensu Backend URL: http://127.0.0.1:8080
-   ? Username: admin
-   ? Password: P@ssw0rd!
-   ? Namespace: default
-   ? Preferred output format: tabular
-   ```
-
-5. List Sensu 2.0 Entities
-
-   ```
-   $ sensuctl entity list
-   ```
-
-Congratulations! You now have a local Sensu 2.0 deployment!
-
-To learn more about Sensu 2.0 and what you can do with it, please
-check out the [official project documentation](https://docs.sensu.io/sensu-core/2.0/).
-
-## Getting Started
-
-Now that you have a [local Sensu 2.0 deployment up and
-running](#installation), it's time to configure your first Sensu
-monitoring check! Sensu checks are commands (or scripts) that allow
-you to monitor server resources, services, and application health, as
-well as collect & analyze metrics.
-
-1. Register a Sensu 2.0 Asset for the check executable
-
-   ```
-   $ sensuctl asset create check-plugins \
-   --url https://github.com/portertech/sensu-plugins-go/releases/download/0.0.1/sensu-check-plugins.tar.gz \
-   --sha512 4e6f621ebe652d3b0ba5d4dead8ddb2901ea03f846a1cb2e39ddb71b8d0daa83b54742671f179913ed6c350fc32446a22501339f60b8d4e0cdb6ade5ee77af16
-   ```
-
-2. Create a check to monitor Google via ICMP from your workstation
-
-   ```
-   $ sensuctl check create google \
-   --runtime-assets check-plugins \
-   --command "check-ping -h google.ca -P 80" \
-   --subscriptions workstation --interval 10 --timeout 5
-   ```
+See the [installation documentation](https://docs.sensu.io/sensu-go/latest/installation/install-sensu/) to get started.
 
 ## Contributing
 
