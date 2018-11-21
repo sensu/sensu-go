@@ -23,6 +23,9 @@ func evaluateJSFilter(event interface{}, expr string, assets asset.RuntimeAssetS
 
 // Returns true if the event should be filtered/denied.
 func evaluateEventFilter(event *types.Event, filter *types.EventFilter, assets asset.RuntimeAssetSet) bool {
+	// Redact the entity to avoid leaking sensitive information
+	event.Entity = event.Entity.GetRedactedEntity()
+
 	fields := utillogging.EventFields(event, false)
 	fields["filter"] = filter.Name
 	fields["assets"] = filter.RuntimeAssets

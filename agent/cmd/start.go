@@ -12,7 +12,6 @@ import (
 
 	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/util/url"
 	"github.com/sensu/sensu-go/version"
@@ -227,7 +226,7 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagKeepaliveTimeout, types.DefaultKeepaliveTimeout)
 	viper.SetDefault(flagNamespace, agent.DefaultNamespace)
 	viper.SetDefault(flagPassword, agent.DefaultPassword)
-	viper.SetDefault(flagRedact, dynamic.DefaultRedactFields)
+	viper.SetDefault(flagRedact, types.DefaultRedactFields)
 	viper.SetDefault(flagSocketHost, agent.DefaultSocketHost)
 	viper.SetDefault(flagSocketPort, agent.DefaultSocketPort)
 	viper.SetDefault(flagStatsdDisable, agent.DefaultStatsdDisable)

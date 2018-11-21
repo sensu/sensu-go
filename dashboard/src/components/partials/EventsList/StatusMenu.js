@@ -46,7 +46,7 @@ class StatusMenu extends React.Component {
           </ListItemIcon>
           <ListItemText primary="Critical" />
         </MenuItem>
-        <MenuItem key="unknown" onClick={() => onChange("warning")}>
+        <MenuItem key="unknown" onClick={() => onChange("unknown")}>
           <ListItemIcon>
             <CheckStatusIcon statusCode={3} />
           </ListItemIcon>
