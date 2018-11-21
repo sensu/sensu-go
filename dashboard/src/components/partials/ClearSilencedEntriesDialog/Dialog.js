@@ -146,7 +146,7 @@ class ClearSilencedEntriesDialog extends React.PureComponent {
           {({ children, selectedItems }) => (
             <Loader loading={submitting} passthrough>
               <DialogTitle>Clear Silencing Entries</DialogTitle>
-              <Typography style={{ paddingLeft: "24px" }}>
+              <Typography style={{ paddingLeft: "24px", paddingBottom: "8px" }}>
                 Select all entries you would like to clear.
               </Typography>
               <DialogContent style={{ paddingLeft: 0, paddingRight: 0 }}>

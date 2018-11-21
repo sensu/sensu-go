@@ -132,7 +132,6 @@ class ListController extends React.PureComponent {
       children: items.length
         ? items.map((item, i) => {
             const key = keys[i];
-            // This works, however you can't unselect an item in the list if there's confirmed items passed in
             const selected = selectedKeys.includes(key);
 
             return renderItem({
