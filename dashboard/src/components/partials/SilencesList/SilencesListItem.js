@@ -49,7 +49,7 @@ class SilencesListItem extends React.Component {
     silence: gql`
       fragment SilencesListItem_silence on Silenced {
         ...SilenceExpiration_silence
-        storeId
+        name
         begin
         reason
         creator {
@@ -91,7 +91,7 @@ class SilencesListItem extends React.Component {
         </TableCell>
         <TableOverflowCell>
           <ResourceDetails
-            title={<strong>{silence.storeId}</strong>}
+            title={<strong>{silence.name}</strong>}
             details={this.renderDetails()}
           />
         </TableOverflowCell>
@@ -154,7 +154,7 @@ class SilencesListItem extends React.Component {
             <ToolbarMenu>
               <ToolbarMenu.Item id="delete" visible="never">
                 <ConfirmDelete
-                  identifier={silence.storeId}
+                  identifier={silence.name}
                   onSubmit={this.props.onClickDelete}
                 >
                   {dialog => <DeleteMenuItem onClick={dialog.open} />}

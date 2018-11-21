@@ -6,6 +6,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/coreos/etcd/clientv3"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/sensu/sensu-go/backend/etcd"
@@ -29,7 +30,7 @@ func testWithEtcd(t *testing.T, f func(store.Store)) {
 	f(s)
 }
 
-func testWithEtcdStore(t *testing.T, f func(*Store)) {
+func testWithEtcdClient(t *testing.T, f func(store.Store, *clientv3.Client)) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 

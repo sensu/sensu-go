@@ -146,35 +146,8 @@ func DefaultResolver(source interface{}, fieldName string) (interface{}, error) 
 
 	// Struct
 	if sourceVal.Type().Kind() == reflect.Struct {
-		fieldName = strings.Title(fieldName)
-		for i := 0; i < sourceVal.NumField(); i++ {
-			valueField := sourceVal.Field(i)
-			typeField := sourceVal.Type().Field(i)
-			if typeField.Name == fieldName {
-				// If ptr and value is nil return nil
-				if valueField.Type().Kind() == reflect.Ptr && valueField.IsNil() {
-					return nil, nil
-				}
-				return valueField.Interface(), nil
-			}
-			tag := typeField.Tag
-			checkTag := func(tagName string) bool {
-				t := tag.Get(tagName)
-				tOptions := strings.Split(t, ",")
-				if len(tOptions) == 0 {
-					return false
-				}
-				if tOptions[0] != fieldName {
-					return false
-				}
-				return true
-			}
-			if checkTag("json") || checkTag("graphql") {
-				return valueField.Interface(), nil
-			}
-			continue
-		}
-		return nil, nil
+		_, val, err := findFieldInStruct(sourceVal, fieldName)
+		return val, err
 	}
 
 	// map[string]interface
@@ -193,6 +166,46 @@ func DefaultResolver(source interface{}, fieldName string) (interface{}, error) 
 
 	// last resort, return nil
 	return nil, nil
+}
+
+func findFieldInStruct(source reflect.Value, fieldName string) (bool, interface{}, error) {
+	for i := 0; i < source.NumField(); i++ {
+		fieldValue := source.Field(i)
+		fieldType := source.Type().Field(i)
+
+		if fieldType.Name == strings.Title(fieldName) {
+			// If ptr and value is nil return nil
+			if fieldValue.Type().Kind() == reflect.Ptr && fieldValue.IsNil() {
+				return true, nil, nil
+			}
+			return true, fieldValue.Interface(), nil
+		}
+
+		tag := fieldType.Tag
+		checkTag := func(tagName string) bool {
+			t := tag.Get(tagName)
+			tOptions := strings.Split(t, ",")
+			if len(tOptions) == 0 {
+				return false
+			}
+			if tOptions[0] != fieldName {
+				return false
+			}
+			return true
+		}
+		if checkTag("json") || checkTag("graphql") {
+			return true, fieldValue.Interface(), nil
+		}
+
+		if fieldValue.Kind() == reflect.Struct && fieldType.Anonymous {
+			if ok, val, err := findFieldInStruct(fieldValue, fieldName); ok {
+				return ok, val, err
+			}
+		}
+		continue
+	}
+
+	return false, nil, nil
 }
 
 type typeResolver interface {

@@ -8,8 +8,8 @@ type Silenced implements Node, Namespaced {
   "The namespace the object belongs to."
   namespace: String!
 
-  "ID is the combination of subscription and check name (subscription:checkname)"
-  storeId: String!
+  "Name is the combination of subscription and check name (subscription:checkname)"
+  name: String!
 
   "Expire is the number of seconds the entry will live"
   expire: Int!

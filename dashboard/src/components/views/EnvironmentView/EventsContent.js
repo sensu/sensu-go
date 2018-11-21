@@ -11,7 +11,7 @@ import Query from "/components/util/Query";
 import { withQueryParams } from "/components/QueryParams";
 
 // If none given default expression is used.
-const defaultExpression = "HasCheck";
+const defaultExpression = "has_check";
 
 // duration used when polling is enabled; set fairly high until we understand
 // the impact.

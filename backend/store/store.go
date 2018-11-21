@@ -2,9 +2,11 @@ package store
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 
+	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -414,7 +416,7 @@ type HandlerStore interface {
 
 // HealthStore provides methods for cluster health
 type HealthStore interface {
-	GetClusterHealth(ctx context.Context) *types.HealthResponse
+	GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, etcdClientTLSConfig *tls.Config) *types.HealthResponse
 }
 
 // KeepaliveStore provides methods for managing entities keepalives

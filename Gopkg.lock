@@ -697,19 +697,27 @@
   revision = "e645f4e5aaa8506fc71d6edbc5c4ff02c04c46f2"
 
 [[projects]]
+  branch = "master"
+  digest = "1:dbfe572cc258e5bcf54cb650a06d90edd0da04e42ca1ed909cc1d49f00011c63"
+  name = "github.com/robertkrimen/otto"
+  packages = [
+    ".",
+    "ast",
+    "dbg",
+    "file",
+    "parser",
+    "registry",
+    "token",
+  ]
+  pruneopts = "UT"
+  revision = "15f95af6e78dcd2030d8195a138bd88d4f403546"
+
+[[projects]]
   digest = "1:bffc9efe1d7783f54cb0003b57cb3c8fe49f56beb9859cf122be97504e854666"
   name = "github.com/robfig/cron"
   packages = ["."]
   pruneopts = "UT"
   revision = "2315d5715e36303a941d907f038da7f7c44c773b"
-
-[[projects]]
-  digest = "1:db6c297249f0dc1265b3ee06870f67d5fca0479d491c554c27e2b5e2bbd63fc6"
-  name = "github.com/sensu/govaluate"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "43cb04169dc67512be53aafaad8fbacf9fa3af9f"
-  version = "v3.1.0"
 
 [[projects]]
   digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
@@ -1036,6 +1044,17 @@
   version = "v1.0.3"
 
 [[projects]]
+  digest = "1:9935525a8c49b8434a0b0a54e1980e94a6fae73aaff45c5d33ba8dff69de123e"
+  name = "gopkg.in/sourcemap.v1"
+  packages = [
+    ".",
+    "base64vlq",
+  ]
+  pruneopts = "UT"
+  revision = "6e83acea0053641eff084973fee085f0c193c61a"
+  version = "v1.0.5"
+
+[[projects]]
   digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -1087,8 +1106,9 @@
     "github.com/mitchellh/go-homedir",
     "github.com/mitchellh/mapstructure",
     "github.com/olekukonko/tablewriter",
+    "github.com/robertkrimen/otto",
+    "github.com/robertkrimen/otto/parser",
     "github.com/robfig/cron",
-    "github.com/sensu/govaluate",
     "github.com/sensu/yaml",
     "github.com/shirou/gopsutil/host",
     "github.com/shirou/gopsutil/net",

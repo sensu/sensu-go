@@ -102,11 +102,7 @@ func (a *Agent) prepareHook(hookConfig *types.HookConfig) bool {
 
 	// Extract the extended attributes from the entity and combine them at the
 	// top-level so they can be easily accessed using token substitution
-	synthesizedEntity, err := dynamic.Synthesize(a.getAgentEntity())
-	if err != nil {
-		a.sendFailure(event, fmt.Errorf("could not synthesize the entity: %s", err))
-		return false
-	}
+	synthesizedEntity := dynamic.Synthesize(a.getAgentEntity())
 
 	// Substitute tokens within the check configuration with the synthesized
 	// entity

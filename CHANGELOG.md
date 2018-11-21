@@ -8,6 +8,33 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+- Add the `etcd-advertise-client-urls` config attribute to sensu-backend
+### Removed
+- Check subdue functionality has been disabled. Users that have checks with
+subdues defined should delete and recreate the check. The subdue feature was
+found to have issues, and we are re-working the feature for a future release.
+
+### Changed
+- Assets and checks environments are now merged, with a preference given to the
+  values coming from the check's environment.
+- Assets and handlers environments are now merged, with a preference given to the
+  values coming from the handler's environment.
+- Assets and mutators environments are now merged, with a preference given to the
+  values coming from the mutator's environment.
+
+### Fixed
+- Fixed several resource leaks in the check scheduler.
+- Fixed a bug in the dashboard where entities could not be silenced.
+- Fix the `sensuctl cluster health` command.
+- Fixed issue filtering by status on the events page
+- Fixed interactive operations on entities in the CLI
+- Removed rerun and check links for keepalives on event details page.
+- Fixed a bug where resources from namespaces that share a common prefix, eg:
+  "sensu" and "sensu-devel", could be listed together.
+
+## [2.0.0-beta.8-1] - 2018-11-15
+
+### Added
 - Assets are included on check details page.
 - Adds links to view entities and checks from the events page.
 - Added an agent/cmd package, migrated startup logic out of agent main
@@ -20,6 +47,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 subcommand.
 - Added functionality to the dynamic synthesize function, allowing it to
 flatten embedded and non-embedded fields to the top level.
+- Added the sensuctl edit command.
+- Added javascript filtering.
+
+### Removed
+- Govaluate is no longer part of sensu-go.
 
 ### Fixed
 - Display appropriate fallback when an entity's lastSeen field is empty.
@@ -32,6 +64,7 @@ flatten embedded and non-embedded fields to the top level.
 - Improved event validation error messages.
 - Improved agent logging for statsd events.
 - Fixues issue with tooltip positioning.
+- Fixed bug with toolbar menus collapsing into the overflow menu
 - The agent now reconnects to the backend if its first connection attempt
   fails.
 - Avoid infinite loop when code cannot be highlighted.
@@ -53,6 +86,10 @@ string-string key-value pairs.
 - Objects containing both a `name`/`Name` and `namespace`/`Namespace` field have been
 replaced with `metadata`/`ObjectMeta` (which contains both of those fields).
 - Role-based access control (RBAC) has been completely redesigned.
+- Filter and token substitution variable names now match API naming. Most names
+that were previously UpperCased are now lower_cased.
+- Filter statements are now called expressions. Users should update their
+filter definitions to use this new naming.
 
 ## [2.0.0-beta.7-1] - 2018-10-26
 

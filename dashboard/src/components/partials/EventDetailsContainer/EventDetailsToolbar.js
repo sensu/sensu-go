@@ -46,15 +46,17 @@ class EventDetailsToolbar extends React.Component {
               </ResolveAction>
             </ToolbarMenu.Item>
             <ToolbarMenu.Item id="re-run" visible="if-room">
-              <ReRunAction event={event}>
-                {run => (
-                  <QueueMenuItem
-                    title="Re-run Check"
-                    titleCondensed="Re-run"
-                    onClick={run}
-                  />
-                )}
-              </ReRunAction>
+              {event.check.name !== "keepalive" && (
+                <ReRunAction event={event}>
+                  {run => (
+                    <QueueMenuItem
+                      title="Re-run Check"
+                      titleCondensed="Re-run"
+                      onClick={run}
+                    />
+                  )}
+                </ReRunAction>
+              )}
             </ToolbarMenu.Item>
             <ToolbarMenu.Item id="delete" visible="never">
               <DeleteAction event={event}>

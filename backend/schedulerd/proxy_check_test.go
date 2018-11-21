@@ -17,7 +17,7 @@ func TestMatchEntities(t *testing.T) {
 	}{
 		{
 			name:             "standard string attribute",
-			entityAttributes: []string{`entity.Name == "entity1"`},
+			entityAttributes: []string{`entity.name == "entity1"`},
 			entities: []*types.Entity{
 				types.FixtureEntity("entity1"),
 				types.FixtureEntity("entity2"),
@@ -28,7 +28,7 @@ func TestMatchEntities(t *testing.T) {
 		},
 		{
 			name:             "standard bool attribute",
-			entityAttributes: []string{`entity.Deregister == false`},
+			entityAttributes: []string{`entity.deregister == false`},
 			entities: []*types.Entity{
 				&types.Entity{Deregister: false},
 				&types.Entity{Deregister: true},
@@ -39,7 +39,7 @@ func TestMatchEntities(t *testing.T) {
 		},
 		{
 			name:             "nested standard attribute",
-			entityAttributes: []string{`entity.System.Hostname == "foo.local"`},
+			entityAttributes: []string{`entity.system.hostname == "foo.local"`},
 			entities: []*types.Entity{
 				&types.Entity{System: types.System{Hostname: "localhost"}},
 				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "foo"}},
@@ -51,7 +51,7 @@ func TestMatchEntities(t *testing.T) {
 		},
 		{
 			name:             "multiple matches",
-			entityAttributes: []string{`entity.EntityClass == "proxy"`},
+			entityAttributes: []string{`entity.entity_class == "proxy"`},
 			entities: []*types.Entity{
 				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "foo"}, EntityClass: "proxy"},
 				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "bar"}, EntityClass: "agent"},

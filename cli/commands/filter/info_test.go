@@ -65,7 +65,8 @@ func TestShowCommandRunEClosureWithTable(t *testing.T) {
 	assert.NotEmpty(out)
 	assert.Contains(out, "Name")
 	assert.Contains(out, "Action")
-	assert.Contains(out, "Statements")
+	assert.Contains(out, "Expressions")
+	assert.Contains(out, "RuntimeAssets")
 	assert.Nil(err)
 }
 

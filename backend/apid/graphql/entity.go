@@ -48,12 +48,6 @@ func (*entityImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.EntityTranslator.EncodeToString(p.Source), nil
 }
 
-// Name implements response to request for 'name' field.
-func (*entityImpl) Name(p graphql.ResolveParams) (string, error) {
-	entity := p.Source.(*types.Entity)
-	return entity.Name, nil
-}
-
 // ExtendedAttributes implements response to request for 'extendedAttributes' field.
 func (*entityImpl) ExtendedAttributes(p graphql.ResolveParams) (interface{}, error) {
 	entity := p.Source.(*types.Entity)

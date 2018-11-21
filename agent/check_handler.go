@@ -13,6 +13,7 @@ import (
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/dynamic"
+	"github.com/sensu/sensu-go/util/environment"
 	"github.com/sirupsen/logrus"
 )
 
@@ -85,10 +86,10 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 		return
 	}
 
-	// Inject the dependenices into PATH, LD_LIBRARY_PATH & CPATH so that they are
-	// availabe when when the command is executed.
+	// Inject the dependencies into PATH, LD_LIBRARY_PATH & CPATH so that they
+	// are availabe when when the command is executed.
 	ex := command.ExecutionRequest{
-		Env:          append(assets.Env(), check.EnvVars...),
+		Env:          environment.MergeEnvironments(assets.Env(), check.EnvVars),
 		Command:      checkConfig.Command,
 		Timeout:      int(checkConfig.Timeout),
 		InProgress:   a.inProgress,
@@ -164,11 +165,7 @@ func (a *Agent) prepareCheck(cfg *types.CheckConfig) bool {
 
 	// Extract the extended attributes from the entity and combine them at the
 	// top-level so they can be easily accessed using token substitution
-	synthesizedEntity, err := dynamic.Synthesize(a.getAgentEntity())
-	if err != nil {
-		a.sendFailure(event, fmt.Errorf("could not synthesize the entity: %s", err))
-		return false
-	}
+	synthesizedEntity := dynamic.Synthesize(a.getAgentEntity())
 
 	// Substitute tokens within the check configuration with the synthesized
 	// entity

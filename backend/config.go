@@ -38,14 +38,15 @@ type Config struct {
 	DeregistrationHandler string
 
 	// Etcd configuration
-	EtcdInitialAdvertisePeerURL string
-	EtcdInitialClusterToken     string
-	EtcdInitialClusterState     string
-	EtcdInitialCluster          string
-	EtcdListenClientURL         string
-	EtcdListenPeerURL           string
-	EtcdName                    string
-	NoEmbedEtcd                 bool
+	EtcdAdvertiseClientURLs      []string
+	EtcdInitialAdvertisePeerURLs []string
+	EtcdInitialClusterToken      string
+	EtcdInitialClusterState      string
+	EtcdInitialCluster           string
+	EtcdListenClientURLs         []string
+	EtcdListenPeerURLs           []string
+	EtcdName                     string
+	NoEmbedEtcd                  bool
 
 	// Etcd TLS configuration
 	EtcdClientTLSInfo etcd.TLSInfo

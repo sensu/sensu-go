@@ -16,7 +16,7 @@ class ExecuteCheckStatusToast extends React.PureComponent {
     onClose: PropTypes.func.isRequired,
     checkName: PropTypes.string.isRequired,
     entityName: PropTypes.string,
-    namespace: PropTypes.object.isRequired,
+    namespace: PropTypes.string.isRequired,
   };
 
   static defaultProps = {
@@ -71,8 +71,8 @@ class ExecuteCheckStatusToast extends React.PureComponent {
                     component={NamespaceLink}
                     namespace={namespace}
                     to={`/events?filter=${encodeURIComponent(
-                      `Check.Name == '${checkName}'${
-                        entityName ? ` && Entity.ID == '${entityName}'` : ""
+                      `check.name === "${checkName}"${
+                        entityName ? ` && entity.name === "${entityName}"` : ""
                       }`,
                     )}`}
                   >

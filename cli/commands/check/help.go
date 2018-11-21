@@ -36,7 +36,10 @@ func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 		// cannot remove publish, use set-publish
 		subcommands.RemoveRuntimeAssetsCommand(cli),
 		// cannot remove stdin, use set-stdin
-		subcommands.RemoveSubdueCommand(cli),
+
+		// TODO: re-enable this after fixing check subdue
+		// subcommands.RemoveSubdueCommand(cli),
+
 		// cannot remove subscriptions, required field
 		subcommands.RemoveTTLCommand(cli),
 		subcommands.RemoveTimeoutCommand(cli),
@@ -56,7 +59,10 @@ func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 		subcommands.SetPublishCommand(cli),
 		subcommands.SetRuntimeAssetsCommand(cli),
 		subcommands.SetSTDINCommand(cli),
-		subcommands.SetSubdueCommand(cli),
+
+		// TODO: re-enable this after fixing check subdue
+		// subcommands.SetSubdueCommand(cli),
+
 		subcommands.SetSubscriptionsCommand(cli),
 		subcommands.SetTTLCommand(cli),
 		subcommands.SetTimeoutCommand(cli),

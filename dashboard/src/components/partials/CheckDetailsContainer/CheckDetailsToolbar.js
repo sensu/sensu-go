@@ -85,16 +85,18 @@ class CheckDetailsToolbar extends React.Component {
                 )}
               </ClearSilenceAction>
             </ToolbarMenu.Item>
-            <ToolbarMenu.Item id="publish" visible="if-room">
-              {!check.publish && (
-                <PublishAction check={check}>
-                  {handler => <PublishMenuItem onClick={handler} />}
-                </PublishAction>
-              )}
-              {check.publish && (
+            <ToolbarMenu.Item
+              id={check.publish ? "unpublish" : "publish"}
+              visible="if-room"
+            >
+              {check.publish ? (
                 <UnpublishAction check={check}>
                   {handler => <UnpublishMenuItem onClick={handler} />}
                 </UnpublishAction>
+              ) : (
+                <PublishAction check={check}>
+                  {handler => <PublishMenuItem onClick={handler} />}
+                </PublishAction>
               )}
             </ToolbarMenu.Item>
             <ToolbarMenu.Item id="delete" visible="never">

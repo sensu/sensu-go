@@ -28,11 +28,6 @@ required = [
   name = "github.com/AlecAivazis/survey"
   version = "1.4.1"
 
-# https://github.com/Knetic/govaluate/issues/61
-[[constraint]]
-  name = "github.com/sensu/govaluate"
-  version = "3.1.0"
-
 [[constraint]]
   name = "github.com/sirupsen/logrus"
   version = "1.2.0"
@@ -198,3 +193,7 @@ required = [
 [[constraint]]
   name = "github.com/sensu/yaml"
   revision = "704b36ea12f40d32ffe6bd109c2ddc894af28dde"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/robertkrimen/otto"

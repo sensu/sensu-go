@@ -6,9 +6,9 @@ import (
 
 	time "github.com/echlebek/timeproxy"
 	"github.com/sensu/sensu-go/agent"
+	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/dynamic"
-	"github.com/sensu/sensu-go/util/eval"
 	"github.com/sirupsen/logrus"
 )
 
@@ -19,24 +19,24 @@ func matchEntities(entities []*types.Entity, proxyRequest *types.ProxyRequests) 
 
 OUTER:
 	for _, entity := range entities {
-		for _, statement := range proxyRequest.EntityAttributes {
-			parameters := map[string]interface{}{"entity": entity}
+		synth := dynamic.Synthesize(entity)
+		for _, expression := range proxyRequest.EntityAttributes {
 
-			result, err := eval.EvaluatePredicate(statement, parameters)
+			parameters := map[string]interface{}{"entity": synth}
+
+			result, err := js.Evaluate(expression, parameters, nil)
 			if err != nil {
 				fields := logrus.Fields{
-					"statement": statement,
-					"entity":    entity.Name,
-					"namespace": entity.Namespace,
+					"expression": expression,
+					"entity":     entity.Name,
+					"namespace":  entity.Namespace,
 				}
 				// Only report an error if the expression's syntax is invalid
 				switch err.(type) {
-				case eval.SyntaxError:
+				case js.SyntaxError:
 					logger.WithFields(fields).WithError(err).Error("syntax error")
-				case eval.TypeError:
-					logger.WithFields(fields).WithError(err).Error("type error")
 				default:
-					logger.WithFields(fields).WithError(err).Debug("skipping statement")
+					logger.WithFields(fields).WithError(err).Debug("skipping expression")
 				}
 				// Skip to the next entity
 				continue OUTER
@@ -60,10 +60,7 @@ OUTER:
 func substituteProxyEntityTokens(entity *types.Entity, check *types.CheckConfig) (*types.CheckConfig, error) {
 	// Extract the extended attributes from the entity and combine them at the
 	// top-level so they can be easily accessed using token substitution
-	synthesizedEntity, err := dynamic.Synthesize(entity)
-	if err != nil {
-		return nil, fmt.Errorf("could not synthesize the entity: %s", err)
-	}
+	synthesizedEntity := dynamic.Synthesize(entity)
 
 	// Substitute tokens within the check configuration with the synthesized
 	// entity

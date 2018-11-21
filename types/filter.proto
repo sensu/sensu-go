@@ -22,10 +22,14 @@ message EventFilter {
   // Action specifies to allow/deny events to continue through the pipeline
   string action = 2;
 
-  // Statements is an array of boolean expressions that are &&'d together
+  // Expressions is an array of boolean expressions that are &&'d together
   // to determine if the event matches this filter.
-  repeated string statements = 3 [(gogoproto.jsontag) = "statements"];
+  repeated string expressions = 3 [(gogoproto.jsontag) = "expressions"];
 
   // When indicates a TimeWindowWhen that a filter uses to filter by days & times
   TimeWindowWhen when = 6;
+
+  // Runtime assets are Sensu assets that contain javascript libraries. They
+  // are evaluated within the execution context.
+  repeated string runtime_assets = 8 [(gogoproto.jsontag) = "runtime_assets"];
 }

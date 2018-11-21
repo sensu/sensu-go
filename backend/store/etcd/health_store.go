@@ -2,6 +2,7 @@ package etcd
 
 import (
 	"context"
+	"crypto/tls"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
@@ -10,14 +11,15 @@ import (
 )
 
 // GetClusterHealth retrieves the cluster health
-func (s *Store) GetClusterHealth(ctx context.Context) *types.HealthResponse {
+func (s *Store) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, etcdClientTLSConfig *tls.Config) *types.HealthResponse {
 	healthResponse := &types.HealthResponse{}
 
 	// Do a get op against every cluster member. Collect the  memberIDs and
 	// op errors into a response map, and return this map as etcd health
 	// information.
-	mList, err := s.client.MemberList(context.Background())
+	mList, err := cluster.MemberList(ctx)
 	if err != nil {
+		logger.WithError(err).Warning("could not get the cluster member list")
 		return healthResponse
 	}
 
@@ -30,6 +32,7 @@ func (s *Store) GetClusterHealth(ctx context.Context) *types.HealthResponse {
 		cli, cliErr := clientv3.New(clientv3.Config{
 			Endpoints:   member.ClientURLs,
 			DialTimeout: 5 * time.Second,
+			TLS:         etcdClientTLSConfig,
 		})
 
 		if cliErr != nil {

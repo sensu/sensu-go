@@ -9,7 +9,7 @@ import (
 	"path"
 	"regexp"
 
-	"github.com/sensu/sensu-go/util/eval"
+	"github.com/sensu/sensu-go/js"
 )
 
 // AssetNameRegexStr used to validate name of asset
@@ -49,8 +49,7 @@ func (a *Asset) Validate() error {
 		return errors.New("URL must be HTTP or HTTPS")
 	}
 
-	// Validate the statements and forbid govaluate's modifier tokens
-	return eval.ValidateStatements(a.Filters, true)
+	return js.ParseExpressions(a.Filters)
 }
 
 // ValidateAssetName validates that asset's name is valid

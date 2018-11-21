@@ -22,29 +22,29 @@ func TestPipelinedFilter(t *testing.T) {
 		ObjectMeta: types.ObjectMeta{
 			Name: "allowFilterBar",
 		},
-		Action:     types.EventFilterActionAllow,
-		Statements: []string{`event.Check.Output == "bar"`},
+		Action:      types.EventFilterActionAllow,
+		Expressions: []string{`event.check.output == "bar"`},
 	}
 	allowFilterFoo := &types.EventFilter{
 		ObjectMeta: types.ObjectMeta{
 			Name: "allowFilterFoo",
 		},
-		Action:     types.EventFilterActionAllow,
-		Statements: []string{`event.Check.Output == "foo"`},
+		Action:      types.EventFilterActionAllow,
+		Expressions: []string{`event.check.output == "foo"`},
 	}
 	denyFilterBar := &types.EventFilter{
 		ObjectMeta: types.ObjectMeta{
 			Name: "denyFilterBar",
 		},
-		Action:     types.EventFilterActionDeny,
-		Statements: []string{`event.Check.Output == "bar"`},
+		Action:      types.EventFilterActionDeny,
+		Expressions: []string{`event.check.output == "bar"`},
 	}
 	denyFilterFoo := &types.EventFilter{
 		ObjectMeta: types.ObjectMeta{
 			Name: "denyFilterFoo",
 		},
-		Action:     types.EventFilterActionDeny,
-		Statements: []string{`event.Check.Output == "foo"`},
+		Action:      types.EventFilterActionDeny,
+		Expressions: []string{`event.check.output == "foo"`},
 	}
 	store.On("GetEventFilterByName", mock.Anything, "allowFilterBar").Return(allowFilterBar, nil)
 	store.On("GetEventFilterByName", mock.Anything, "allowFilterFoo").Return(allowFilterFoo, nil)
@@ -283,8 +283,8 @@ func TestPipelinedWhenFilter(t *testing.T) {
 				ObjectMeta: types.ObjectMeta{
 					Name: tc.name,
 				},
-				Action:     tc.action,
-				Statements: []string{`event.Check.Output == "bar"`},
+				Action:      tc.action,
+				Expressions: []string{`event.check.output == "bar"`},
 			}
 
 			filter.When = &types.TimeWindowWhen{

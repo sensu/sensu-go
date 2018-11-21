@@ -10,7 +10,8 @@ import (
 var filterUpdateFields = []string{
 	"Action",
 	"When",
-	"Statements",
+	"Expressions",
+	"RuntimeAssets",
 }
 
 // EventFilterController allows querying EventFilters in bulk or by name.
