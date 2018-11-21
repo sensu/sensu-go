@@ -81,7 +81,6 @@ func (b KeyBuilder) BuildPrefix(keys ...string) string {
 		if key == "" {
 			continue
 		}
-		//
 		out = out + keySeparator + key
 	}
 
