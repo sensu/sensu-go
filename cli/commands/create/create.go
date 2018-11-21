@@ -123,7 +123,24 @@ func ParseResources(in io.Reader) ([]types.Resource, error) {
 			resources = append(resources, w.Value)
 		}
 	}
+
+	// TODO(echlebek): remove this
+	filterCheckSubdue(resources)
+
 	return resources, err
+}
+
+// filterCheckSubdue nils out any check subdue fields that are supplied.
+// TODO(echlebek): this is temporary; remove it after fixing check subdue.
+func filterCheckSubdue(resources []types.Resource) {
+	for i := range resources {
+		switch val := resources[i].(type) {
+		case *types.CheckConfig:
+			val.Subdue = nil
+		case *types.Check:
+			val.Subdue = nil
+		}
+	}
 }
 
 func ValidateResources(resources []types.Resource) error {
