@@ -92,13 +92,8 @@ func TestCheckTypeIsSilencedField(t *testing.T) {
 	check := types.FixtureCheck("my-check")
 	check.Silenced = []string{"unix:my-check"}
 
-	client, factory := client.NewClientFactory()
-	client.On("ListEvents", mock.Anything).Return([]*types.Silenced{
-		types.FixtureSilenced("unix:my-check"),
-	}, nil).Once()
-
 	// return associated silence
-	impl := &checkImpl{factory: factory}
+	impl := &checkImpl{}
 	res, err := impl.IsSilenced(graphql.ResolveParams{Source: check})
 	require.NoError(t, err)
 	assert.True(t, res)

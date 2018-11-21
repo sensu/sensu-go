@@ -25,7 +25,8 @@ func (r *viewerImpl) Namespaces(p graphql.ResolveParams) (interface{}, error) {
 // User implements response to request for 'user' field.
 func (r *viewerImpl) User(p graphql.ResolveParams) (interface{}, error) {
 	claims := jwt.GetClaimsFromContext(p.Context)
-	if claims != nil {
+	logger.WithField("claims", claims).Info("huh")
+	if claims == nil {
 		return nil, nil
 	}
 
