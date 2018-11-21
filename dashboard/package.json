@@ -19,7 +19,8 @@
     "lint": "npx eslint .",
     "spec": "node scripts test.js --env=jsdom",
     "test": "yarn build && yarn lint && yarn spec --coverage",
-    "update-schema": "node scripts updateSchema"
+    "update-schema": "node scripts updateSchema",
+    "flow": "npx flow"
   },
   "dependencies": {
     "@10xjs/date-input-controller": "0.1.6",
@@ -47,6 +48,7 @@
     "babel-plugin-transform-react-jsx-source": "^6.22.0",
     "babel-plugin-transform-react-remove-prop-types": "^0.4.13",
     "babel-preset-env": "^1.7.0",
+    "babel-preset-flow": "^6.23.0",
     "babel-preset-react": "^6.24.1",
     "bluebird": "^3.5.1",
     "bugnet": "^0.1.1",
@@ -79,6 +81,7 @@
     "esm": "3.0.31",
     "fbjs": "^1.0.0",
     "file-loader": "^1.1.11",
+    "flow-bin": "^0.86.0",
     "git-rev-sync": "^1.12.0",
     "glob": "^7.1.2",
     "graphql": "0.13.0",
