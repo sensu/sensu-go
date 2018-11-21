@@ -7,8 +7,8 @@ import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
 import Checkbox from "@material-ui/core/Checkbox";
 import Chip from "@material-ui/core/Chip";
-import ConfirmDelete from "/components/partials/ConfirmDelete";
-import DeleteMenuItem from "/components/partials/ToolbarMenuItems/Delete";
+import ClearSilencesDialog from "/components/partials/ClearSilencedEntriesDialog";
+import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
@@ -42,7 +42,6 @@ class SilencesListItem extends React.Component {
     silence: PropTypes.object.isRequired,
     selected: PropTypes.bool.isRequired,
     onClickSelect: PropTypes.func.isRequired,
-    onClickDelete: PropTypes.func.isRequired,
   };
 
   static fragments = {
@@ -60,6 +59,8 @@ class SilencesListItem extends React.Component {
       ${SilenceExpiration.fragments.silence}
     `,
   };
+
+  state = { openDialog: false };
 
   renderDetails = () => {
     const { silence } = this.props;
@@ -153,12 +154,16 @@ class SilencesListItem extends React.Component {
 
             <ToolbarMenu>
               <ToolbarMenu.Item id="delete" visible="never">
-                <ConfirmDelete
-                  identifier={silence.name}
-                  onSubmit={this.props.onClickDelete}
-                >
-                  {dialog => <DeleteMenuItem onClick={dialog.open} />}
-                </ConfirmDelete>
+                <UnsilenceMenuItem
+                  onClick={() => this.setState({ openDialog: true })}
+                />
+                <ClearSilencesDialog
+                  silences={[silence]}
+                  open={this.state.openDialog}
+                  close={() => this.setState({ openDialog: false })}
+                  confirmed
+                  scrollable
+                />
               </ToolbarMenu.Item>
             </ToolbarMenu>
           </RightAlign>

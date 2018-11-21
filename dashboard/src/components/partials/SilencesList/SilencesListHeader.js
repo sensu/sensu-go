@@ -1,16 +1,15 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import ConfirmDelete from "/components/partials/ConfirmDelete";
-import DeleteMenuItem from "/components/partials/ToolbarMenuItems/Delete";
+import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
 import ListHeader from "/components/partials/ListHeader";
 import ListSortSelector from "/components/partials/ListSortSelector";
 import ToolbarMenu from "/components/partials/ToolbarMenu";
+import ClearSilencesDialog from "/components/partials/ClearSilencedEntriesDialog";
 
 class SilencesListHeader extends React.PureComponent {
   static propTypes = {
     onClickSelect: PropTypes.func.isRequired,
-    onClickDelete: PropTypes.func.isRequired,
     onChangeQuery: PropTypes.func.isRequired,
     order: PropTypes.string.isRequired,
     selectedItems: PropTypes.array,
@@ -21,6 +20,8 @@ class SilencesListHeader extends React.PureComponent {
     rowCount: 0,
     selectedItems: [],
   };
+
+  state = { openDialog: false };
 
   renderActions = () => {
     const { onChangeQuery, order } = this.props;
@@ -41,19 +42,24 @@ class SilencesListHeader extends React.PureComponent {
     );
   };
 
-  renderBulkActions = () => {
-    const { onClickDelete } = this.props;
-
-    return (
-      <ToolbarMenu>
-        <ToolbarMenu.Item id="delete" visible="always">
-          <ConfirmDelete onSubmit={onClickDelete}>
-            {confirm => <DeleteMenuItem onClick={confirm.open} />}
-          </ConfirmDelete>
-        </ToolbarMenu.Item>
-      </ToolbarMenu>
-    );
-  };
+  renderBulkActions = () => (
+    <ToolbarMenu>
+      <ToolbarMenu.Item id="clearSilence" visible="always">
+        <UnsilenceMenuItem
+          onClick={() => {
+            this.setState({ openDialog: true });
+          }}
+        />
+        <ClearSilencesDialog
+          silences={this.props.selectedItems}
+          open={this.state.openDialog}
+          close={() => this.setState({ openDialog: false })}
+          confirmed
+          scrollable
+        />
+      </ToolbarMenu.Item>
+    </ToolbarMenu>
+  );
 
   render() {
     const { onClickSelect, selectedItems, rowCount } = this.props;

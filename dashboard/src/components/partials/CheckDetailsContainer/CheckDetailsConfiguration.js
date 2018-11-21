@@ -153,11 +153,11 @@ class CheckDetailsConfiguration extends React.PureComponent {
                 <DictionaryEntry>
                   <DictionaryKey>Command</DictionaryKey>
                   <DictionaryValue explicitRightMargin>
-                    <CodeHighlight language="bash" code={check.command}>
-                      {code => (
-                        <Code dangerouslySetInnerHTML={{ __html: code }} />
-                      )}
-                    </CodeHighlight>
+                    <CodeHighlight
+                      language="bash"
+                      code={check.command}
+                      component={Code}
+                    />
                   </DictionaryValue>
                 </DictionaryEntry>
 
@@ -272,11 +272,8 @@ class CheckDetailsConfiguration extends React.PureComponent {
                         <CodeHighlight
                           language="properties"
                           code={check.envVars.join("\n")}
-                        >
-                          {code => (
-                            <code dangerouslySetInnerHTML={{ __html: code }} />
-                          )}
-                        </CodeHighlight>
+                          component="code"
+                        />
                       </CodeBlock>
                     ) : (
                       "None"
@@ -364,9 +361,8 @@ class CheckDetailsConfiguration extends React.PureComponent {
                     null,
                     "\t",
                   )}`}
-                >
-                  {code => <code dangerouslySetInnerHTML={{ __html: code }} />}
-                </CodeHighlight>
+                  component="code"
+                />
               </CardContent>
             </CodeBlock>
           </React.Fragment>
