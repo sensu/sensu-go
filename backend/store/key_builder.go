@@ -49,7 +49,20 @@ func (b KeyBuilder) Build(keys ...string) string {
 		},
 		keys...,
 	)
-	return path.Join(items...)
+
+	key := path.Join(items...)
+
+	// In order to not inadvertently build a key that could list across
+	// namespaces, we need to make sure that we terminate the key with the key
+	// separator when a namespace is involved without a specific object name
+	// within it.
+	if b.namespace.Namespace != "" {
+		if len(keys) == 0 || keys[len(keys)-1] == "" {
+			key += keySeparator
+		}
+	}
+
+	return key
 }
 
 // BuildPrefix can be used when building a key that will be used to retrieve a collection of
@@ -68,6 +81,7 @@ func (b KeyBuilder) BuildPrefix(keys ...string) string {
 		if key == "" {
 			continue
 		}
+		//
 		out = out + keySeparator + key
 	}
 
