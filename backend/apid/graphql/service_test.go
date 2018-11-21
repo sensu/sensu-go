@@ -3,7 +3,7 @@ package graphql
 import (
 	"testing"
 
-	client "github.com/sensu/sensu-go/backend/apid/graphql/testing"
+	client "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

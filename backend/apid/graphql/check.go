@@ -14,16 +14,6 @@ var _ schema.CheckFieldResolvers = (*checkImpl)(nil)
 var _ schema.CheckConfigFieldResolvers = (*checkCfgImpl)(nil)
 var _ schema.CheckHistoryFieldResolvers = (*checkHistoryImpl)(nil)
 
-type namedCheck interface {
-	GetName() string
-	GetSubscriptions() []string
-}
-
-type silenceableCheck interface {
-	namedCheck
-	GetSilenced() []string
-}
-
 //
 // Implement CheckConfigFieldResolvers
 //

@@ -189,5 +189,8 @@ func handleFetchResult(resource interface{}, err error) (interface{}, error) {
 			return nil, nil
 		}
 	}
+	if err != nil {
+		return nil, err
+	}
 	return resource, err
 }

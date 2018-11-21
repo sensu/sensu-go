@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	graphql "github.com/sensu/sensu-go/backend/apid/graphql"
@@ -12,6 +13,10 @@ import (
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	graphqlservice "github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
+)
+
+var (
+	defaultExpiration = time.Millisecond * 2500
 )
 
 // GraphQLRouter handles requests for /events
@@ -40,7 +45,13 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 	// Setup context
 	ctx := req.Context()
 	ctx = context.WithValue(ctx, types.NamespaceKey, "")
-	ctx = context.WithValue(ctx, types.AccessTokenString, jwt.ExtractBearerToken(req))
+
+	// Create a short-lived access token for the duration of the request and lift
+	// it into the context.
+	accessToken := jwt.ExtractBearerToken(req)
+	if newToken, err := createShortLivedToken(accessToken); err == nil {
+		ctx = context.WithValue(ctx, types.AccessTokenString, newToken)
+	}
 
 	// Parse request body
 	var reqBody interface{}
@@ -86,4 +97,24 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 		return results, nil
 	}
 	return results[0], nil
+}
+
+func createShortLivedToken(token string) (string, error) {
+	accessToken, err := jwt.ValidateToken(token)
+	if accessToken == nil || err != nil {
+		return "", err
+	}
+
+	claims, err := jwt.GetClaims(accessToken)
+	if err != nil {
+		return "", err
+	}
+
+	claims.StandardClaims.ExpiresAt = time.Now().Add(defaultExpiration).Unix()
+	_, token, err = jwt.NewAccessTokenWithClaims(claims)
+	if err != nil {
+		return "", err
+	}
+
+	return token, err
 }

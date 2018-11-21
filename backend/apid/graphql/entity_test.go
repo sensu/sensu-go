@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
+	client "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	client "github.com/sensu/sensu-go/backend/apid/graphql/testing"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"

@@ -4,17 +4,16 @@ import (
 	"context"
 	"testing"
 
-	client "github.com/sensu/sensu-go/backend/apid/graphql/testing"
+	mockclient "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
-	clientlib "github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestViewerTypeEventField(t *testing.T) {
-	client, factory := client.NewClientFactory()
+func TestViewerTypeUserField(t *testing.T) {
+	client, factory := mockclient.NewClientFactory()
 	impl := viewerImpl{factory: factory}
 
 	user := types.FixtureUser("frankwest")
@@ -33,7 +32,7 @@ func TestViewerTypeEventField(t *testing.T) {
 	assert.NotEmpty(t, res)
 
 	// User not found for claim
-	client.On("FetchUser", user.Username).Return(user, clientlib.APIError{Code: 2}).Once()
+	client.On("FetchUser", user.Username).Return(user, mockclient.NotFound).Once()
 	res, err = impl.User(params)
 	require.NoError(t, err)
 	assert.Empty(t, res)
@@ -43,4 +42,18 @@ func TestViewerTypeEventField(t *testing.T) {
 	res, err = impl.User(params)
 	require.NoError(t, err)
 	assert.Empty(t, res)
+}
+
+func TestViewerTypeNamespacesField(t *testing.T) {
+	client, factory := mockclient.NewClientFactory()
+	impl := viewerImpl{factory: factory}
+
+	nsp := types.FixtureNamespace("sensu")
+	params := graphql.ResolveParams{}
+
+	// Success
+	client.On("ListNamespaces").Return([]types.Namespace{*nsp}, nil).Once()
+	res, err := impl.Namespaces(params)
+	require.NoError(t, err)
+	assert.NotEmpty(t, res)
 }

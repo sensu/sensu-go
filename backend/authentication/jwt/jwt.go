@@ -27,9 +27,13 @@ func AccessToken(user *types.User) (*jwt.Token, string, error) {
 		return nil, "", err
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return NewAccessTokenWithClaims(claims)
+}
 
-	// Sign the token as a string using the secret
+// NewAccessTokenWithClaims given claims, creates a new access token and returns
+// it in it's jwt and signed format.
+func NewAccessTokenWithClaims(claims *types.Claims) (*jwt.Token, string, error) {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(secret)
 	if err != nil {
 		return nil, "", err

@@ -8,6 +8,9 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// CRUFT: Avoid having the client error by setting expire in the far future
+const defaultExpiry = 2524636800000 // Jan 1, 2050
+
 // ClientFactory instantiates new copies of the REST API client
 type ClientFactory struct {
 	url string
@@ -31,7 +34,7 @@ func (c *ClientFactory) NewWithContext(ctx context.Context) client.APIClient {
 
 	tokens := types.Tokens{
 		Access:    accessToken,
-		ExpiresAt: 10000000000000, // TODO
+		ExpiresAt: defaultExpiry,
 	}
 
 	config := inmemory.New(c.url)
