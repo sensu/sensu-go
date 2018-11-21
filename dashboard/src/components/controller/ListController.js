@@ -35,16 +35,18 @@ const setSelectedKeys = selectedKeys => state => ({
 
 class ListController extends React.PureComponent {
   static propTypes = {
+    // disable warning cause we do actually use these
     renderItem: PropTypes.func.isRequired,
     renderEmptyState: PropTypes.func.isRequired,
     children: PropTypes.func.isRequired,
-    confirmed: PropTypes.array,
+    initialSelectedKeys: PropTypes.array,
+    items: PropTypes.array,
   };
 
-  static defaultProps = { confirmed: [] };
+  static defaultProps = { initialSelectedKeys: [], items: [] };
 
   state = {
-    selectedKeys: [],
+    selectedKeys: this.props.initialSelectedKeys,
     items: [],
     keys: [],
     getItemKey: undefined,
@@ -120,15 +122,13 @@ class ListController extends React.PureComponent {
       render,
       renderEmptyState,
     } = this.state;
-    const { confirmed } = this.props;
 
     return render({
       children: items.length
         ? items.map((item, i) => {
             const key = keys[i];
             // This works, however you can't unselect an item in the list if there's confirmed items passed in
-            const selected =
-              !confirmed.length > 0 ? selectedKeys.includes(key) : confirmed;
+            const selected = selectedKeys.includes(key);
 
             return renderItem({
               key,

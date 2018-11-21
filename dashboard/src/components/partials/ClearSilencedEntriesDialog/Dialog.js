@@ -144,7 +144,7 @@ class ClearSilencedEntriesDialog extends React.PureComponent {
       >
         <ListController
           items={silences}
-          confirmed={silences}
+          initialSelectedKeys={silences.map(silence => silence.name)}
           getItemKey={node => node.name}
           renderEmptyState={this.renderEmpty}
           renderItem={this.renderListItem}
