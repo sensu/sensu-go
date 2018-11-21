@@ -27,7 +27,11 @@ class CodeHighlight extends React.Component {
   static propTypes = {
     language: PropTypes.oneOf(["json", "bash", "properties"]).isRequired,
     code: PropTypes.string.isRequired,
-    children: PropTypes.func.isRequired,
+    component: PropTypes.oneOfType([PropTypes.func, PropTypes.string]),
+  };
+
+  static defaultProps = {
+    component: "code",
   };
 
   static getDerivedStateFromProps(props, state) {
@@ -66,7 +70,10 @@ class CodeHighlight extends React.Component {
   };
 
   render() {
-    return this.props.children(this.state.result);
+    const { component: Component } = this.props;
+    return (
+      <Component dangerouslySetInnerHTML={{ __html: this.state.result }} />
+    );
   }
 }
 

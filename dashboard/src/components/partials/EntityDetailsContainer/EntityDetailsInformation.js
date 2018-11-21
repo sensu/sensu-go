@@ -239,9 +239,8 @@ class EntityDetailsInformation extends React.PureComponent {
                 <CodeHighlight
                   language="json"
                   code={JSON.stringify(entity.extendedAttributes, null, "\t")}
-                >
-                  {code => <code dangerouslySetInnerHTML={{ __html: code }} />}
-                </CodeHighlight>
+                  component="code"
+                />
               </CardContent>
             </CodeBlock>
           </React.Fragment>

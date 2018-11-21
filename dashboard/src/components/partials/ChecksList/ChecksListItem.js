@@ -80,9 +80,11 @@ class CheckListItem extends React.Component {
             }
             details={
               <React.Fragment>
-                <CodeHighlight language="bash" code={check.command}>
-                  {code => <Code dangerouslySetInnerHTML={{ __html: code }} />}
-                </CodeHighlight>
+                <CodeHighlight
+                  language="bash"
+                  code={check.command}
+                  component={Code}
+                />
                 <br />
                 <CheckSchedule check={check} />
               </React.Fragment>
