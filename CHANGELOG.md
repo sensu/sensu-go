@@ -21,6 +21,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed issue filtering by status on the events page
 - Fixed interactive operations on entities in the CLI
 - Removed rerun and check links for keepalives on event details page.
+- Fixed a bug where resources from namespaces that share a common prefix, eg:
+  "sensu" and "sensu-devel", could be listed together.
 
 ## [2.0.0-beta.8-1] - 2018-11-15
 
