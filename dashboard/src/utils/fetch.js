@@ -1,33 +1,35 @@
+// @flow
+
 import {
-  NetworkError,
+  FailedError,
   ClientError,
   UnauthorizedError,
   ServerError,
 } from "/errors/FetchError";
 
-const doFetch = (path, config) =>
+const doFetch: typeof fetch = (input, config) =>
   // Wrap fetch call in bluebird promise to enable global rejection tracking
-  Promise.resolve(fetch(path, config)).then(
+  Promise.resolve(fetch(input, config)).then(
     response => {
       if (response.status < 200) {
-        throw new NetworkError(response.status, response.url, response);
+        throw new FailedError(response.status, input, response);
       }
 
       if (response.status >= 500) {
-        throw new ServerError(response);
+        throw new ServerError(response.status, input, response);
       }
 
       if (response.status >= 400) {
         if (response.status === 401) {
-          throw new UnauthorizedError(response);
+          throw new UnauthorizedError(response.status, input, response);
         }
-        throw new ClientError(response);
+        throw new ClientError(response.status, input, response);
       }
 
       return response;
     },
     error => {
-      throw new NetworkError(0, path, error);
+      throw new FailedError(0, input, null, error);
     },
   );
 

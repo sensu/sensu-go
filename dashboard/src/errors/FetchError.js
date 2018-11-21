@@ -1,37 +1,43 @@
+// @flow
+
 import ExtendableError from "es6-error";
 
 export default class FetchError extends ExtendableError {
-  constructor(status, url, response, error) {
-    super(`${response.status}`);
+  statusCode: number;
+  input: RequestInfo;
+  original: Error | null;
+  response: Response | null;
+
+  constructor(
+    status: number,
+    input: RequestInfo,
+    response: Response | null = null,
+    error: Error | null = null,
+  ) {
+    super(`${status}`);
 
     if (this.constructor === FetchError) {
       throw new TypeError("Can't initiate an abstract class.");
     }
 
     this.statusCode = status;
-    this.url = url;
+    this.input = input;
     this.response = response;
     this.original = error;
   }
 }
 
-export class ParseError extends FetchError {
-  constructor(response, error) {
-    super(response.status, response.url, undefined, error);
-  }
-}
-
-export class NetworkError extends FetchError {}
+export class FailedError extends FetchError {}
 
 export class ServerError extends FetchError {
-  constructor(response) {
-    super(response.status, response.url, response);
+  constructor(status: number, input: RequestInfo, response: ?Response) {
+    super(status, input, response, null);
   }
 }
 
 export class ClientError extends FetchError {
-  constructor(response) {
-    super(response.status, response.url, response);
+  constructor(status: number, input: RequestInfo, response: ?Response) {
+    super(status, input, response, null);
   }
 }
 
