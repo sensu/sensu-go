@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Add the `etcd-advertise-client-urls` config attribute to sensu-backend
+
 ### Changed
 - Assets and checks environments are now merged, with a preference given to the
   values coming from the check's environment.
