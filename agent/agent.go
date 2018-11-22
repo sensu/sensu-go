@@ -60,6 +60,7 @@ type Agent struct {
 	systemInfo      *types.System
 	systemInfoMu    *sync.RWMutex
 	wg              *sync.WaitGroup
+	keepalives      chan *transport.Message
 }
 
 // NewAgent creates a new Agent and returns a pointer to it.
@@ -79,6 +80,7 @@ func NewAgent(config *Config) *Agent {
 		inProgressMu:    &sync.Mutex{},
 		stopping:        make(chan struct{}),
 		sendq:           make(chan *transport.Message, 10),
+		keepalives:      make(chan *transport.Message, 1),
 		systemInfo:      &types.System{},
 		systemInfoMu:    &sync.RWMutex{},
 		wg:              &sync.WaitGroup{},
@@ -91,6 +93,18 @@ func NewAgent(config *Config) *Agent {
 	// of system info status.
 	_ = agent.refreshSystemInfo()
 	return agent
+}
+
+func (a *Agent) dispatchKeepalives() {
+	defer logger.Debug("shutting down keepalive dispatcher")
+	for {
+		select {
+		case msg := <-a.keepalives:
+			a.sendq <- msg
+		case <-a.stopping:
+			return
+		}
+	}
 }
 
 func (a *Agent) sendMessage(msgType string, payload []byte) {
@@ -119,6 +133,7 @@ func (a *Agent) refreshSystemInfo() error {
 }
 
 func (a *Agent) refreshSystemInfoPeriodically() {
+	defer logger.Debug("shutting down system info collector")
 	ticker := time.NewTicker(time.Duration(DefaultSystemInfoRefreshInterval) * time.Second)
 	defer ticker.Stop()
 
@@ -159,12 +174,19 @@ func (a *Agent) sendKeepalive() error {
 		return err
 	}
 	msg.Payload = msgBytes
-	a.sendq <- msg
+
+	// Don't block on sending - if there is already a keepalive waiting to be
+	// sent, we don't need to send another.
+	select {
+	case a.keepalives <- msg:
+	default:
+	}
 
 	return nil
 }
 
 func (a *Agent) sendKeepalivePeriodically() {
+	defer logger.Debug("shutting down keepalive worker")
 	ticker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
 	defer ticker.Stop()
 
@@ -227,11 +249,13 @@ func (a *Agent) Run() error {
 	go a.connectionManager()
 	go a.refreshSystemInfoPeriodically()
 	go a.sendKeepalivePeriodically()
+	go a.dispatchKeepalives()
 
 	return nil
 }
 
 func (a *Agent) connectionManager() {
+	defer logger.Debug("shutting down connection manager")
 	for {
 		select {
 		case <-a.stopping:
@@ -378,10 +402,9 @@ func connectWithBackoff(url string, tlsOpts *types.TLSOptions, header http.Heade
 	var conn transport.Transport
 
 	backoff := retry.ExponentialBackoff{
-		InitialDelayInterval: 500 * time.Millisecond,
+		InitialDelayInterval: time.Millisecond,
 		MaxDelayInterval:     10 * time.Second,
-		MaxRetryAttempts:     0, // Unlimited attempts
-		Multiplier:           1.5,
+		Multiplier:           10,
 	}
 
 	if err := backoff.Retry(func(retry int) (bool, error) {
