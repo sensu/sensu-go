@@ -18,7 +18,7 @@ type stdErr struct {
 func newStdErr(input string, err error) stdErr {
 	out := stdErr{code: schema.ErrCodes.ERR_INTERNAL, input: input}
 	switch terr := err.(type) {
-	case client.APIError: // TODO APIError
+	case client.APIError:
 		out.message = terr.Message
 		out.code = mapServiceErrCode(terr.Code)
 	case error:

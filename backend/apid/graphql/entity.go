@@ -53,7 +53,7 @@ func (r *entityImpl) Events(p schema.EntityEventsFieldResolverParams) (interface
 		return obj.Entity.Name == src.Name
 	})
 	if err != nil {
-		return evs, err
+		return []interface{}{}, err
 	}
 
 	// sort records
@@ -72,7 +72,7 @@ func (r *entityImpl) Related(p schema.EntityRelatedFieldResolverParams) (interfa
 		return obj.Name != entity.Name
 	})
 	if err != nil {
-		return entities, nil
+		return []interface{}{}, err
 	}
 
 	// sort

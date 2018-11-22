@@ -9,11 +9,6 @@ import (
 	"github.com/graphql-go/graphql/testutil"
 )
 
-func setupGraphQLRouter() *GraphQLRouter {
-	router := NewGraphQLRouter("test", nil, nil)
-	return router
-}
-
 func setupRequest(method string, path string, payload interface{}) (*http.Request, error) {
 	reqPayload, err := json.Marshal(payload)
 	if err != nil {
