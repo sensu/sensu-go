@@ -60,7 +60,6 @@ type Agent struct {
 	systemInfo      *types.System
 	systemInfoMu    *sync.RWMutex
 	wg              *sync.WaitGroup
-	keepalives      chan struct{}
 }
 
 // NewAgent creates a new Agent and returns a pointer to it.
@@ -80,7 +79,6 @@ func NewAgent(config *Config) *Agent {
 		inProgressMu:    &sync.Mutex{},
 		stopping:        make(chan struct{}),
 		sendq:           make(chan *transport.Message, 10),
-		keepalives:      make(chan struct{}, 1),
 		systemInfo:      &types.System{},
 		systemInfoMu:    &sync.RWMutex{},
 		wg:              &sync.WaitGroup{},
@@ -137,24 +135,6 @@ func (a *Agent) refreshSystemInfoPeriodically() {
 	}
 }
 
-func (a *Agent) sendKeepalivePeriodically() {
-	defer logger.Debug("shutting down keepalive worker")
-	ticker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			select {
-			case a.keepalives <- struct{}{}:
-			default:
-			}
-		case <-a.stopping:
-			return
-		}
-	}
-}
-
 func (a *Agent) buildTransportHeaderMap() http.Header {
 	header := http.Header{}
 	header.Set(transport.HeaderKeyAgentName, a.config.AgentName)
@@ -201,7 +181,6 @@ func (a *Agent) Run() error {
 
 	go a.connectionManager()
 	go a.refreshSystemInfoPeriodically()
-	go a.sendKeepalivePeriodically()
 
 	return nil
 }
@@ -256,6 +235,8 @@ func (a *Agent) receiveLoop(conn transport.Transport, done chan struct{}) {
 }
 
 func (a *Agent) sendLoop(conn transport.Transport, done chan struct{}) {
+	keepalive := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
+	defer keepalive.Stop()
 	for {
 		select {
 		case <-done:
@@ -270,7 +251,7 @@ func (a *Agent) sendLoop(conn transport.Transport, done chan struct{}) {
 				logger.WithError(err).Error("error sending message over websocket")
 				return
 			}
-		case <-a.keepalives:
+		case <-keepalive.C:
 			logger.Info("sending keepalive")
 			if err := conn.Send(a.newKeepalive()); err != nil {
 				logger.WithError(err).Error("error sending message over websocket")
