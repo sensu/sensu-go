@@ -75,15 +75,25 @@ func New(c Config, opts ...Option) (*APId, error) {
 		etcdClientTLSConfig: c.EtcdClientTLSConfig,
 	}
 
+	var tlsConfig *tls.Config
+	var err error
+	if c.TLS != nil {
+		tlsConfig, err = c.TLS.ToTLSConfig()
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	addr := fmt.Sprintf("%s:%d", a.Host, a.Port)
 	url := fmt.Sprintf("http://%s", addr)
-	if c.TLS != nil {
+	if tlsConfig != nil {
 		url = fmt.Sprintf("https://%s", addr)
 	}
 
 	router := mux.NewRouter().UseEncodedPath()
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
-	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig, url)
+	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig)
+	registerGraphQLService(router, a.store, url, tlsConfig)
 	registerAuthenticationResources(router, a.store)
 	registerRestrictedLegacyResources(router, a.store, a.queueGetter, a.bus, a.cluster)
 	registerRestrictedResources(router, a.store)
@@ -166,7 +176,6 @@ func registerUnauthenticatedResources(
 	store store.Store,
 	cluster clientv3.Cluster,
 	etcdClientTLSConfig *tls.Config,
-	url string,
 ) {
 	mountRouters(
 		NewSubrouter(
@@ -176,7 +185,21 @@ func registerUnauthenticatedResources(
 			middlewares.Edition{Name: version.Edition},
 		),
 		routers.NewHealthRouter(actions.NewHealthController(store, cluster, etcdClientTLSConfig)),
-		routers.NewGraphQLRouter(url),
+	)
+}
+
+func registerGraphQLService(router *mux.Router, store store.Store, url string, tls *tls.Config) {
+	mountRouters(
+		NewSubrouter(
+			router.NewRoute(),
+			middlewares.SimpleLogger{},
+			middlewares.LimitRequest{},
+			// Allow requests without an access token to continue
+			middlewares.Authentication{IgnoreUnauthorized: true},
+			middlewares.AllowList{Store: store, IgnoreMissingClaims: true},
+			middlewares.Edition{Name: version.Edition},
+		),
+		routers.NewGraphQLRouter(url, tls),
 	)
 }
 

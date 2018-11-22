@@ -140,8 +140,8 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
-		Store: store,
-		Bus:   bus,
+		Store:                   store,
+		Bus:                     bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 		AssetGetter:             assetGetter,
 	})
@@ -188,9 +188,9 @@ func Initialize(config *Config) (*Backend, error) {
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:            bus,
-		Store:          store,
-		MonitorFactory: monitor.EtcdFactory(client),
+		Bus:                   bus,
+		Store:                 store,
+		MonitorFactory:        monitor.EtcdFactory(client),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
@@ -222,6 +222,7 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize dashboardd
 	dashboard, err := dashboardd.New(dashboardd.Config{
+		APIHost: config.APIHost,
 		APIPort: config.APIPort,
 		Host:    config.DashboardHost,
 		Port:    config.DashboardPort,

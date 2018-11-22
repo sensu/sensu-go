@@ -19,17 +19,13 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const (
-	// APIHost represents the Sensu API's host
-	APIHost = "127.0.0.1"
-)
-
 // Config represents the dashboard configuration
 type Config struct {
 	Host string
 	Port int
 	TLS  *types.TLSOptions
 
+	APIHost string
 	APIPort int
 }
 
@@ -131,7 +127,7 @@ func (d *Dashboardd) Name() string {
 func httpRouter(d *Dashboardd) *mux.Router {
 	r := mux.NewRouter()
 
-	backendProxy, err := newBackendProxy(d.Config.APIPort, d.Config.TLS)
+	backendProxy, err := newBackendProxy(d.Config.APIHost, d.Config.APIPort, d.Config.TLS)
 	if err != nil {
 		d.errChan <- err
 	}
@@ -202,10 +198,10 @@ func noCacheHandler(next http.Handler) http.Handler {
 	})
 }
 
-func newBackendProxy(port int, TLS *types.TLSOptions) (*httputil.ReverseProxy, error) {
+func newBackendProxy(host string, port int, TLS *types.TLSOptions) (*httputil.ReverseProxy, error) {
 	// API gateway to Sensu API
 	target := &url.URL{
-		Host:   fmt.Sprintf("%s:%d", APIHost, port),
+		Host:   fmt.Sprintf("%s:%d", host, port),
 		Scheme: "http",
 	}
 

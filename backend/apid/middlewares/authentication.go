@@ -17,7 +17,11 @@ type AuthStore interface {
 }
 
 // Authentication is a HTTP middleware that enforces authentication
-type Authentication struct{}
+type Authentication struct {
+	// IgnoreUnauthorized configures the middleware to continue the handler chain
+	// in the case where an access token was not present.
+	IgnoreUnauthorized bool
+}
 
 // Then middleware
 func (a Authentication) Then(next http.Handler) http.Handler {
@@ -39,7 +43,9 @@ func (a Authentication) Then(next http.Handler) http.Handler {
 		}
 
 		// The user is not authenticated
-		http.Error(w, "Bad credentials given", http.StatusUnauthorized)
+		if !a.IgnoreUnauthorized {
+			http.Error(w, "Bad credentials given", http.StatusUnauthorized)
+		}
 	})
 }
 

@@ -2,6 +2,7 @@ package routers
 
 import (
 	"context"
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -25,8 +26,8 @@ type GraphQLRouter struct {
 }
 
 // NewGraphQLRouter instantiates new events controller
-func NewGraphQLRouter(apiURL string) *GraphQLRouter {
-	factory := restclient.NewClientFactory(apiURL)
+func NewGraphQLRouter(apiURL string, tls *tls.Config) *GraphQLRouter {
+	factory := restclient.NewClientFactory(apiURL, tls)
 	service, err := graphql.NewService(graphql.ServiceConfig{
 		ClientFactory: factory,
 	})

@@ -2,6 +2,7 @@ package restclient
 
 import (
 	"context"
+	"crypto/tls"
 
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/client/config/inmemory"
@@ -13,13 +14,15 @@ const defaultExpiry = 2524636800000 // Jan 1, 2050
 
 // ClientFactory instantiates new copies of the REST API client
 type ClientFactory struct {
-	url string
+	url       string
+	tlsConfig *tls.Config
 }
 
 // NewClientFactory instantiates new ClientFactory
-func NewClientFactory(url string) *ClientFactory {
+func NewClientFactory(url string, tlsConfig *tls.Config) *ClientFactory {
 	factory := ClientFactory{
-		url: url,
+		url:       url,
+		tlsConfig: tlsConfig,
 	}
 
 	return &factory
@@ -43,5 +46,8 @@ func (c *ClientFactory) NewWithContext(ctx context.Context) client.APIClient {
 		panic(err)
 	}
 
-	return client.New(config)
+	client := client.New(config)
+	client.SetTLSClientConfig(c.tlsConfig)
+
+	return client
 }
