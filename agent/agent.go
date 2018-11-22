@@ -60,7 +60,7 @@ type Agent struct {
 	systemInfo      *types.System
 	systemInfoMu    *sync.RWMutex
 	wg              *sync.WaitGroup
-	keepalives      chan *transport.Message
+	keepalives      chan struct{}
 }
 
 // NewAgent creates a new Agent and returns a pointer to it.
@@ -80,7 +80,7 @@ func NewAgent(config *Config) *Agent {
 		inProgressMu:    &sync.Mutex{},
 		stopping:        make(chan struct{}),
 		sendq:           make(chan *transport.Message, 10),
-		keepalives:      make(chan *transport.Message, 1),
+		keepalives:      make(chan struct{}, 1),
 		systemInfo:      &types.System{},
 		systemInfoMu:    &sync.RWMutex{},
 		wg:              &sync.WaitGroup{},
@@ -93,18 +93,6 @@ func NewAgent(config *Config) *Agent {
 	// of system info status.
 	_ = agent.refreshSystemInfo()
 	return agent
-}
-
-func (a *Agent) dispatchKeepalives() {
-	defer logger.Debug("shutting down keepalive dispatcher")
-	for {
-		select {
-		case msg := <-a.keepalives:
-			a.sendq <- msg
-		case <-a.stopping:
-			return
-		}
-	}
 }
 
 func (a *Agent) sendMessage(msgType string, payload []byte) {
@@ -149,42 +137,6 @@ func (a *Agent) refreshSystemInfoPeriodically() {
 	}
 }
 
-func (a *Agent) sendKeepalive() error {
-	logger.Info("sending keepalive")
-	msg := &transport.Message{
-		Type: transport.MessageTypeKeepalive,
-	}
-	keepalive := &types.Event{}
-
-	entity := a.getAgentEntity()
-
-	keepalive.Check = &types.Check{
-		ObjectMeta: types.ObjectMeta{
-			Name:      "keepalive",
-			Namespace: entity.Namespace,
-		},
-		Interval: a.config.KeepaliveInterval,
-		Timeout:  a.config.KeepaliveTimeout,
-	}
-	keepalive.Entity = a.getAgentEntity()
-	keepalive.Timestamp = time.Now().Unix()
-
-	msgBytes, err := json.Marshal(keepalive)
-	if err != nil {
-		return err
-	}
-	msg.Payload = msgBytes
-
-	// Don't block on sending - if there is already a keepalive waiting to be
-	// sent, we don't need to send another.
-	select {
-	case a.keepalives <- msg:
-	default:
-	}
-
-	return nil
-}
-
 func (a *Agent) sendKeepalivePeriodically() {
 	defer logger.Debug("shutting down keepalive worker")
 	ticker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
@@ -193,8 +145,9 @@ func (a *Agent) sendKeepalivePeriodically() {
 	for {
 		select {
 		case <-ticker.C:
-			if err := a.sendKeepalive(); err != nil {
-				logger.WithError(err).Error("failed sending keepalive")
+			select {
+			case a.keepalives <- struct{}{}:
+			default:
 			}
 		case <-a.stopping:
 			return
@@ -249,7 +202,6 @@ func (a *Agent) Run() error {
 	go a.connectionManager()
 	go a.refreshSystemInfoPeriodically()
 	go a.sendKeepalivePeriodically()
-	go a.dispatchKeepalives()
 
 	return nil
 }
@@ -273,19 +225,14 @@ func (a *Agent) connectionManager() {
 		a.connected = true
 		a.connectedMu.Unlock()
 
-		// Send an immediate keepalive once we've connected.
-		if err := a.sendKeepalive(); err != nil {
-			logger.WithError(err).Error("error sending keepalive")
-		}
-
 		done := make(chan struct{})
 
-		go receiveLoop(conn, a.handler, done)
-		sendLoop(conn, a.sendq, done, a.stopping)
+		go a.receiveLoop(conn, done)
+		a.sendLoop(conn, done)
 	}
 }
 
-func receiveLoop(conn transport.Transport, handler *handler.MessageHandler, done chan struct{}) {
+func (a *Agent) receiveLoop(conn transport.Transport, done chan struct{}) {
 	defer close(done)
 
 	for {
@@ -300,7 +247,7 @@ func receiveLoop(conn transport.Transport, handler *handler.MessageHandler, done
 				"type":    msg.Type,
 				"payload": string(msg.Payload),
 			}).Info("message received")
-			err := handler.Handle(msg.Type, msg.Payload)
+			err := a.handler.Handle(msg.Type, msg.Payload)
 			if err != nil {
 				logger.WithError(err).Error("error handling message")
 			}
@@ -308,23 +255,58 @@ func receiveLoop(conn transport.Transport, handler *handler.MessageHandler, done
 	}
 }
 
-func sendLoop(conn transport.Transport, sendq chan *transport.Message, done, stopping chan struct{}) {
+func (a *Agent) sendLoop(conn transport.Transport, done chan struct{}) {
 	for {
 		select {
 		case <-done:
 			return
-		case <-stopping:
+		case <-a.stopping:
 			if err := conn.Close(); err != nil {
 				logger.WithError(err).Error("error closing websocket connection")
 			}
 			return
-		case msg := <-sendq:
+		case msg := <-a.sendq:
 			if err := conn.Send(msg); err != nil {
+				logger.WithError(err).Error("error sending message over websocket")
+				return
+			}
+		case <-a.keepalives:
+			logger.Info("sending keepalive")
+			if err := conn.Send(a.newKeepalive()); err != nil {
 				logger.WithError(err).Error("error sending message over websocket")
 				return
 			}
 		}
 	}
+}
+
+func (a *Agent) newKeepalive() *transport.Message {
+	msg := &transport.Message{
+		Type: transport.MessageTypeKeepalive,
+	}
+	keepalive := &types.Event{}
+
+	entity := a.getAgentEntity()
+
+	keepalive.Check = &types.Check{
+		ObjectMeta: types.ObjectMeta{
+			Name:      "keepalive",
+			Namespace: entity.Namespace,
+		},
+		Interval: a.config.KeepaliveInterval,
+		Timeout:  a.config.KeepaliveTimeout,
+	}
+	keepalive.Entity = a.getAgentEntity()
+	keepalive.Timestamp = time.Now().Unix()
+
+	msgBytes, err := json.Marshal(keepalive)
+	if err != nil {
+		// unlikely that this will ever happen
+		logger.WithError(err).Error("error sending keepalive")
+	}
+	msg.Payload = msgBytes
+
+	return msg
 }
 
 // Connected returns true if the agent is connected to a backend.
