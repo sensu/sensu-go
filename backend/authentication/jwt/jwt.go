@@ -45,7 +45,7 @@ func NewAccessTokenWithClaims(claims *types.Claims) (*jwt.Token, string, error) 
 // NewClaims creates new claim based on username
 func NewClaims(user *types.User) (*types.Claims, error) {
 	// Create a unique identifier for the token
-	jti, err := utilbytes.Random(16)
+	jti, err := GenJTI()
 	if err != nil {
 		return nil, err
 	}
@@ -53,12 +53,21 @@ func NewClaims(user *types.User) (*types.Claims, error) {
 	claims := types.Claims{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(defaultExpiration).Unix(),
-			Id:        hex.EncodeToString(jti),
+			Id:        jti,
 			Subject:   user.Username,
 		},
 		Groups: user.Groups,
 	}
 	return &claims, nil
+}
+
+// GenJTI generates a new random JTI
+func GenJTI() (string, error) {
+	jti, err := utilbytes.Random(16)
+	if err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(jti), err
 }
 
 // GetClaims returns the claims from a token

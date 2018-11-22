@@ -12,29 +12,34 @@ import (
 	graphql "github.com/sensu/sensu-go/backend/apid/graphql"
 	"github.com/sensu/sensu-go/backend/apid/graphql/restclient"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
+	"github.com/sensu/sensu-go/backend/store"
 	graphqlservice "github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 )
 
 var (
-	defaultExpiration = time.Millisecond * 2500
+	defaultExpiration = time.Second * 30
 )
 
 // GraphQLRouter handles requests for /events
 type GraphQLRouter struct {
 	service *graphqlservice.Service
+	store   store.Store
 }
 
 // NewGraphQLRouter instantiates new events controller
-func NewGraphQLRouter(apiURL string, tls *tls.Config) *GraphQLRouter {
+func NewGraphQLRouter(apiURL string, tls *tls.Config, store store.Store) *GraphQLRouter {
 	factory := restclient.NewClientFactory(apiURL, tls)
-	service, err := graphql.NewService(graphql.ServiceConfig{
-		ClientFactory: factory,
-	})
+	service, err := graphql.NewService(graphql.ServiceConfig{ClientFactory: factory})
 	if err != nil {
 		logger.WithError(err).Panic("unable to configure graphql service")
 	}
-	return &GraphQLRouter{service}
+
+	router := GraphQLRouter{
+		service: service,
+		store:   store,
+	}
+	return &router
 }
 
 // Mount the GraphQLRouter to a parent Router
@@ -49,10 +54,12 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 
 	// Create a short-lived access token for the duration of the request and lift
 	// it into the context.
-	accessToken := jwt.ExtractBearerToken(req)
-	if newToken, err := createShortLivedToken(accessToken); err == nil {
-		ctx = context.WithValue(ctx, types.AccessTokenString, newToken)
+	ctx, teardown, err := contextWithTempAccessToken(ctx, r.store)
+	if err != nil {
+		logger.WithError(err).Info("unable to get temporary token for request")
+		return nil, err
 	}
+	defer teardown()
 
 	// Parse request body
 	var reqBody interface{}
@@ -100,22 +107,55 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 	return results[0], nil
 }
 
-func createShortLivedToken(token string) (string, error) {
-	accessToken, err := jwt.ValidateToken(token)
-	if accessToken == nil || err != nil {
-		return "", err
+func contextWithTempAccessToken(ctx context.Context, store store.Store) (context.Context, func(), error) {
+	// Create new token
+	claims, err := createTempToken(ctx)
+	if claims == nil || err != nil {
+		return ctx, noop, err
 	}
 
-	claims, err := jwt.GetClaims(accessToken)
+	// Add token to the allow list
+	remove, err := allowTempToken(store, claims)
 	if err != nil {
-		return "", err
+		return ctx, noop, err
 	}
 
-	claims.StandardClaims.ExpiresAt = time.Now().Add(defaultExpiration).Unix()
-	_, token, err = jwt.NewAccessTokenWithClaims(claims)
+	// Create access token from claims
+	_, token, err := jwt.NewAccessTokenWithClaims(claims)
 	if err != nil {
-		return "", err
+		return ctx, remove, err
 	}
 
-	return token, err
+	// Lift access token into the request context
+	ctx = context.WithValue(ctx, types.AccessTokenString, token)
+	return ctx, remove, nil
 }
+
+func createTempToken(ctx context.Context) (*types.Claims, error) {
+	claims := jwt.GetClaimsFromContext(ctx)
+	if claims == nil {
+		return nil, nil
+	}
+
+	jti, err := jwt.GenJTI()
+	if err != nil {
+		return nil, err
+	}
+
+	claims.StandardClaims.Id = jti
+	claims.StandardClaims.ExpiresAt = time.Now().Add(defaultExpiration).Unix()
+	return claims, nil
+}
+
+func allowTempToken(store store.Store, claims *types.Claims) (func(), error) {
+	if err := store.CreateToken(claims); err != nil {
+		return noop, err
+	}
+	return func() {
+		if err := store.DeleteTokens(claims.Subject, []string{claims.Id}); err != nil {
+			logger.WithError(err).Error("unable to remove token")
+		}
+	}, nil
+}
+
+func noop() {}

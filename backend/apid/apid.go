@@ -199,7 +199,7 @@ func registerGraphQLService(router *mux.Router, store store.Store, url string, t
 			middlewares.AllowList{Store: store, IgnoreMissingClaims: true},
 			middlewares.Edition{Name: version.Edition},
 		),
-		routers.NewGraphQLRouter(url, tls),
+		routers.NewGraphQLRouter(url, tls, store),
 	)
 }
 
