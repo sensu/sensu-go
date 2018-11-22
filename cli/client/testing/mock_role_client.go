@@ -21,7 +21,7 @@ func (c *MockClient) DeleteRole(name string) error {
 }
 
 // ListRoles ...
-func (c *MockClient) ListRoles() ([]types.Role, error) {
-	args := c.Called()
+func (c *MockClient) ListRoles(namespace string) ([]types.Role, error) {
+	args := c.Called(namespace)
 	return args.Get(0).([]types.Role), args.Error(1)
 }

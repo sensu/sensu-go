@@ -36,10 +36,10 @@ func (client *RestClient) FetchRole(name string) (*types.Role, error) {
 }
 
 // ListRoles within the namespace
-func (client *RestClient) ListRoles() ([]types.Role, error) {
+func (client *RestClient) ListRoles(namespace string) ([]types.Role, error) {
 	roles := []types.Role{}
 
-	if err := client.list(rolesPath(client.config.Namespace(), ""), &roles); err != nil {
+	if err := client.list(rolesPath(namespace, ""), &roles); err != nil {
 		return nil, err
 	}
 

@@ -175,7 +175,7 @@ type RoleAPIClient interface {
 	CreateRole(*types.Role) error
 	DeleteRole(string) error
 	FetchRole(string) (*types.Role, error)
-	ListRoles() ([]types.Role, error)
+	ListRoles(string) ([]types.Role, error)
 }
 
 // RoleBindingAPIClient client methods for role bindings
@@ -183,7 +183,7 @@ type RoleBindingAPIClient interface {
 	CreateRoleBinding(*types.RoleBinding) error
 	DeleteRoleBinding(string) error
 	FetchRoleBinding(string) (*types.RoleBinding, error)
-	ListRoleBindings() ([]types.RoleBinding, error)
+	ListRoleBindings(string) ([]types.RoleBinding, error)
 }
 
 // SilencedAPIClient client methods for silenced
