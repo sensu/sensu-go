@@ -195,7 +195,7 @@ func registerGraphQLService(router *mux.Router, store store.Store, url string, t
 			middlewares.SimpleLogger{},
 			middlewares.LimitRequest{},
 			// Allow requests without an access token to continue
-			middlewares.Authentication{IgnoreUnauthorized: true},
+			middlewares.Authentication{IgnoreUnauthorized: false},
 			middlewares.AllowList{Store: store, IgnoreMissingClaims: true},
 			middlewares.Edition{Name: version.Edition},
 		),
