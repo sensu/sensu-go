@@ -182,10 +182,11 @@ func fetchSilenceds(c client.APIClient, ns string, filter silencePredicate) ([]*
 }
 
 // When resolving a field, GraphQL does not consider the absence of a value an
-// error; as such we omit the error when the API client returns NotFound.
+// error; as such we omit the error when the API client returns NotFound or
+// Permission denied.
 func handleFetchResult(resource interface{}, err error) (interface{}, error) {
 	if apiErr, ok := err.(client.APIError); ok {
-		if apiErr.Code == uint32(actions.NotFound) { // TODO: Reference error codes
+		if apiErr.Code == uint32(actions.NotFound) || apiErr.Code == uint32(actions.PermissionDenied) {
 			return nil, nil
 		}
 	}

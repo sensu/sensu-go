@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/types"
 )
@@ -26,26 +27,30 @@ type Authentication struct {
 // Then middleware
 func (a Authentication) Then(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		tokenString := jwt.ExtractBearerToken(r)
 		if tokenString != "" {
 			token, err := jwt.ValidateToken(tokenString)
 			if err != nil {
 				logger.WithError(err).Warn("invalid token")
-				http.Error(w, "Invalid token given", http.StatusUnauthorized)
+				writeErr(w, actions.NewErrorf(actions.Unauthenticated, "invalid credentials"))
 				return
 			}
 
 			// Set the claims into the request context
-			ctx := jwt.SetClaimsIntoContext(r, token.Claims.(*types.Claims))
-
+			ctx = jwt.SetClaimsIntoContext(r, token.Claims.(*types.Claims))
 			next.ServeHTTP(w, r.WithContext(ctx))
+
 			return
 		}
 
 		// The user is not authenticated
-		if !a.IgnoreUnauthorized {
-			http.Error(w, "Bad credentials given", http.StatusUnauthorized)
+		if a.IgnoreUnauthorized {
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
 		}
+
+		writeErr(w, actions.NewErrorf(actions.Unauthenticated, "bad credentials"))
 	})
 }
 
@@ -54,17 +59,18 @@ func BasicAuthentication(next http.Handler, store AuthStore) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		username, password, ok := r.BasicAuth()
 		if !ok {
-			http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+			writeErr(w, actions.NewErrorf(actions.Unauthenticated, "missing credentials"))
 			return
 		}
 
 		// Authenticate against the provider
 		user, err := store.AuthenticateUser(r.Context(), username, password)
 		if err != nil {
-			logger.WithField(
-				"user", username,
-			).WithError(err).Error("invalid username and/or password")
-			http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+			logger.
+				WithField("user", username).
+				WithError(err).
+				Error("invalid username and/or password")
+			writeErr(w, actions.NewErrorf(actions.Unauthenticated, "bad credentials"))
 			return
 		}
 

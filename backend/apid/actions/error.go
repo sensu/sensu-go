@@ -28,6 +28,16 @@ const (
 	// AlreadyExistsErr means that a create operation failed because the given
 	// resource already exists in the system.
 	AlreadyExistsErr
+
+	// PermissionDenied means that the viewer does not have permission to perform
+	// the action they are attempting. Is not used when user is unauthenticated.
+	// Eg. if the viewer is trying to list all events but doesn't not have the
+	// approriate roles for the operation.
+	PermissionDenied
+
+	// Unauthenticated used when viewer is not authenticated but action requires
+	// viewer to be authenticated.
+	Unauthenticated
 )
 
 // Default error messages if not message is provided.
@@ -36,9 +46,12 @@ var standardErrorMessages = map[ErrCode]string{
 	InvalidArgument:  "invalid argument(s) received",
 	NotFound:         "not found",
 	AlreadyExistsErr: "resource already exists",
+	PermissionDenied: "unauthorized to perform action",
+	Unauthenticated:  "unauthenticated",
 }
 
 // Error describes an issue that ocurred while performing the action.
+// TODO: This should likely be moved to the types package.
 type Error struct {
 	// Code refers to predefined codes that describe type of error that occurred.
 	Code ErrCode
