@@ -27,12 +27,6 @@ func TestEventValidate(t *testing.T) {
 	assert.Error(t, event.Validate())
 	event.Entity.Name = "entity"
 
-	hook := FixtureHook("hook")
-	hook.Name = ""
-	event.Hooks = append(event.Hooks, hook)
-	assert.Error(t, event.Validate())
-	hook.Name = "hook"
-
 	assert.NoError(t, event.Validate())
 }
 

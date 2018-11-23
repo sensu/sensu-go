@@ -29,10 +29,4 @@ message Event {
 
   // Metrics ...
   Metrics metrics = 4 [(gogoproto.nullable) = true];
-
-  // Silenced is a list of silenced entry ids (subscription and check name)
-  repeated string silenced = 5 [(gogoproto.nullable) = true, deprecated = true];
-
-  // Hooks describes the results of multiple hooks; if event is associated to hook execution.
-  repeated Hook hooks = 6 [(gogoproto.nullable) = true, deprecated = true];
 }

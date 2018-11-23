@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/json"
 	"errors"
 	fmt "fmt"
 	"net/url"
@@ -27,50 +26,6 @@ func FixtureEvent(entityName, checkID string) *Event {
 	}
 }
 
-// UnmarshalJSON ...
-func (e *Event) UnmarshalJSON(b []byte) error {
-	// HACK HACK HACK
-	// This method is a compatibility shim that should be removed
-	// when we remove Silenceds and Hooks from Events
-	type Evt Event
-	var evt Evt
-	if err := json.Unmarshal(b, &evt); err != nil {
-		return err
-	}
-	if evt.Check == nil {
-		*e = Event(evt)
-		return nil
-	}
-	silenced := make(map[string]struct{})
-	for _, s := range append(evt.Silenced, evt.Check.Silenced...) {
-		silenced[s] = struct{}{}
-	}
-	newSilenced := make([]string, 0, len(silenced))
-	for s := range silenced {
-		newSilenced = append(newSilenced, s)
-	}
-	if len(newSilenced) > 0 {
-		evt.Check.Silenced = newSilenced
-	}
-	evt.Silenced = nil
-
-	hooks := make(map[*Hook]struct{})
-	for _, h := range append(evt.Hooks, evt.Check.Hooks...) {
-		hooks[h] = struct{}{}
-	}
-	newHooks := make([]*Hook, 0, len(hooks))
-	for h := range hooks {
-		newHooks = append(newHooks, h)
-	}
-	if len(newHooks) > 0 {
-		evt.Check.Hooks = newHooks
-	}
-	evt.Hooks = nil
-
-	*e = Event(evt)
-	return nil
-}
-
 // Validate returns an error if the event does not pass validation tests.
 func (e *Event) Validate() error {
 	if e.Entity == nil {
@@ -94,12 +49,6 @@ func (e *Event) Validate() error {
 	if e.HasMetrics() {
 		if err := e.Metrics.Validate(); err != nil {
 			return errors.New("metrics are invalid: " + err.Error())
-		}
-	}
-
-	for _, hook := range e.Hooks {
-		if err := hook.Validate(); err != nil {
-			return errors.New("hook is invalid: " + err.Error())
 		}
 	}
 
