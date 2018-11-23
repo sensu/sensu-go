@@ -49,6 +49,8 @@ func TestSendLoop(t *testing.T) {
 	cfg.API.Port = 0
 	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
+	mockTime.Start()
+	defer mockTime.Stop()
 	err := ta.Run()
 	require.NoError(t, err)
 	defer ta.Stop()
@@ -197,6 +199,8 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 	cfg.API.Port = 0
 	cfg.Socket.Port = 0
 	ta := NewAgent(cfg)
+	mockTime.Start()
+	defer mockTime.Stop()
 	err := ta.Run()
 	require.NoError(t, err)
 	defer ta.Stop()
