@@ -40,7 +40,7 @@ func (client *RestClient) ListRoleBindings(namespace string) ([]types.RoleBindin
 	roleBindings := []types.RoleBinding{}
 
 	if err := client.list(roleBindingsPath(namespace, ""), &roleBindings); err != nil {
-		return nil, err
+		return roleBindings, err
 	}
 
 	return roleBindings, nil

@@ -20,9 +20,10 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Fetch roles from API
 			results, err := cli.Client.ListClusterRoles()
-			if err != nil {
+			if err != nil && err.Error() != "not found" {
 				return err
 			}
+
 			// Print the results based on the user preferences
 			resources := []types.Resource{}
 			for i := range results {
@@ -31,6 +32,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			return helpers.Print(cmd, cli.Config.Format(), printToTable, resources, results)
 		},
 	}
+
 	helpers.AddFormatFlag(cmd.Flags())
 	return cmd
 }

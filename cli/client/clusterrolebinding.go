@@ -38,7 +38,7 @@ func (client *RestClient) ListClusterRoleBindings() ([]types.ClusterRoleBinding,
 	clusterRoleBindings := []types.ClusterRoleBinding{}
 
 	if err := client.list(clusterRoleBindingsBasePath, &clusterRoleBindings); err != nil {
-		return nil, err
+		return clusterRoleBindings, err
 	}
 
 	return clusterRoleBindings, nil

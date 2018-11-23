@@ -38,7 +38,7 @@ func (client *RestClient) ListClusterRoles() ([]types.ClusterRole, error) {
 	clusterRoles := []types.ClusterRole{}
 
 	if err := client.list(clusterRolesBasePath, &clusterRoles); err != nil {
-		return nil, err
+		return clusterRoles, err
 	}
 
 	return clusterRoles, nil
