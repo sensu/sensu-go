@@ -365,7 +365,7 @@ func connectWithBackoff(url string, tlsOpts *types.TLSOptions, header http.Heade
 	var conn transport.Transport
 
 	backoff := retry.ExponentialBackoff{
-		InitialDelayInterval: time.Millisecond,
+		InitialDelayInterval: 10 * time.Millisecond,
 		MaxDelayInterval:     10 * time.Second,
 		Multiplier:           10,
 	}
