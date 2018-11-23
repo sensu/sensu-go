@@ -5,6 +5,9 @@ import (
 	"path"
 )
 
+const coreAPIGroup = "core"
+const coreAPIVersion = "v2"
+
 func createBasePath(group, version, resType string) func(string, ...string) string {
 	baseComponents := []string{"/api", group, version}
 
