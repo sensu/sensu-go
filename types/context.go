@@ -7,11 +7,13 @@ type key int
 
 const (
 	// AuthorizationActorKey is the key name used to store a user's details within
-	// a context
+	// a context TODO: Remove
 	AuthorizationActorKey key = iota
 	// AuthorizationRoleKey is the key name used to store a user's roles within
 	// a context TODO: Remove
 	AuthorizationRoleKey
+	// AcceessTokenString is the key name used to retrieve the access token string
+	AccessTokenString
 	// AccessTokenClaims contains the key name to retrieve the access token claims
 	AccessTokenClaims
 	// ClaimsKey contains key name to retrieve the jwt claims from context

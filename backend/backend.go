@@ -222,6 +222,7 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize dashboardd
 	dashboard, err := dashboardd.New(dashboardd.Config{
+		APIHost: config.APIHost,
 		APIPort: config.APIPort,
 		Host:    config.DashboardHost,
 		Port:    config.DashboardPort,

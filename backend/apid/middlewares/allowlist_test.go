@@ -74,3 +74,18 @@ func TestAllowListNoTokenIntoContext(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 }
+
+func TestAllowListIgnoreMissingClaims(t *testing.T) {
+	store := &mockstore.MockStore{}
+
+	allow := AllowList{Store: store, IgnoreMissingClaims: true}
+	server := httptest.NewServer(allow.Then(testHandler()))
+	defer server.Close()
+
+	req, _ := http.NewRequest("GET", server.URL, nil)
+
+	// Perform the request with the middleware
+	res, err := http.DefaultClient.Do(req)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+}

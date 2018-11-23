@@ -60,3 +60,14 @@ func TestMiddlewareInvalidJWT(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 }
+
+func TestMiddlewareIgnoreUnauthorized(t *testing.T) {
+	mware := Authentication{IgnoreUnauthorized: true}
+	server := httptest.NewServer(mware.Then(testHandler()))
+	defer server.Close()
+
+	// No credentials passed
+	res, err := http.Get(server.URL)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
+}

@@ -16,10 +16,7 @@ func (client *RestClient) CreateFilter(filter *types.EventFilter) (err error) {
 		return err
 	}
 
-	res, err := client.R().
-		SetBody(bytes).
-		Post("/filters")
-
+	res, err := client.R().SetBody(bytes).Post("/filters")
 	if err != nil {
 		return err
 	}
@@ -66,7 +63,7 @@ func (client *RestClient) FetchFilter(name string) (*types.EventFilter, error) {
 // ListFilters fetches all filters from configured Sensu instance
 func (client *RestClient) ListFilters(namespace string) ([]types.EventFilter, error) {
 	var filters []types.EventFilter
-	res, err := client.R().Get("/filters?namespace=" + url.QueryEscape(namespace))
+	res, err := client.R().SetQueryParam("namespace", namespace).Get("/filters")
 	if err != nil {
 		return filters, err
 	}

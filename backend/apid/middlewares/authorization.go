@@ -3,6 +3,7 @@ package middlewares
 import (
 	"net/http"
 
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/authorization"
 )
 
@@ -19,18 +20,24 @@ func (a Authorization) Then(next http.Handler) http.Handler {
 		// Get the request info from context
 		attrs := authorization.GetAttributes(ctx)
 		if attrs == nil {
-			http.Error(w, "could not retrieve the request info", http.StatusInternalServerError)
+			writeErr(w, actions.NewErrorf(
+				actions.InternalErr,
+				"could not retrieve the request info",
+			))
 			return
 		}
 
 		authorized, err := a.Authorizer.Authorize(ctx, attrs)
 		if err != nil {
 			logger.WithError(err).Warning("unexpected error occurred during authorization")
-			http.Error(w, "unexpected error occurred during authorization", http.StatusInternalServerError)
+			writeErr(w, actions.NewErrorf(
+				actions.InternalErr,
+				"unexpected error occurred during authorization",
+			))
 			return
 		}
 		if !authorized {
-			http.Error(w, "Unauthorized", http.StatusForbidden)
+			writeErr(w, actions.NewErrorf(actions.PermissionDenied))
 			return
 		}
 

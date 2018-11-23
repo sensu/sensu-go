@@ -1,14 +1,11 @@
 package graphql
 
 import (
-	"context"
 	"time"
 
 	"github.com/graphql-go/graphql"
-	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/strings"
 )
@@ -17,38 +14,13 @@ var _ schema.CheckFieldResolvers = (*checkImpl)(nil)
 var _ schema.CheckConfigFieldResolvers = (*checkCfgImpl)(nil)
 var _ schema.CheckHistoryFieldResolvers = (*checkHistoryImpl)(nil)
 
-type namedCheck interface {
-	GetName() string
-	GetSubscriptions() []string
-}
-
-type silenceableCheck interface {
-	namedCheck
-	GetSilenced() []string
-}
-
 //
 // Implement CheckConfigFieldResolvers
 //
 
 type checkCfgImpl struct {
 	schema.CheckConfigAliases
-
-	assetQuerier   assetQuerier
-	handlerCtrl    actions.HandlerController
-	silenceQuerier silenceQuerier
-}
-
-func newCheckCfgImpl(store store.Store) *checkCfgImpl {
-	handlerCtrl := actions.NewHandlerController(store)
-	silenceCtrl := actions.NewSilencedController(store)
-	assetCtrl := actions.NewAssetController(store)
-
-	return &checkCfgImpl{
-		assetQuerier:   assetCtrl,
-		handlerCtrl:    handlerCtrl,
-		silenceQuerier: silenceCtrl,
-	}
+	factory ClientFactory
 }
 
 // ID implements response to request for 'id' field.
@@ -64,32 +36,58 @@ func (*checkCfgImpl) ExtendedAttributes(p graphql.ResolveParams) (interface{}, e
 
 // Handlers implements response to request for 'handlers' field.
 func (r *checkCfgImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
-	check := p.Source.(*types.CheckConfig)
-	ctx := types.SetContextFromResource(p.Context, check)
-	return fetchHandlersWithNames(ctx, r.handlerCtrl, check.Handlers)
+	src := p.Source.(*types.CheckConfig)
+	client := r.factory.NewWithContext(p.Context)
+	return fetchHandlers(client, src.Namespace, func(obj *types.Handler) bool {
+		return strings.FoundInArray(obj.Name, src.Handlers)
+	})
 }
 
 // OutputMetricHandlers implements response to request for 'outputMetricHandlers' field.
 func (r *checkCfgImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error) {
-	check := p.Source.(*types.CheckConfig)
-	ctx := types.SetContextFromResource(p.Context, check)
-	return fetchHandlersWithNames(ctx, r.handlerCtrl, check.OutputMetricHandlers)
+	src := p.Source.(*types.CheckConfig)
+	client := r.factory.NewWithContext(p.Context)
+	return fetchHandlers(client, src.Namespace, func(obj *types.Handler) bool {
+		return strings.FoundInArray(obj.Name, src.OutputMetricHandlers)
+	})
 }
 
 // IsSilenced implements response to request for 'isSilenced' field.
 func (r *checkCfgImpl) IsSilenced(p graphql.ResolveParams) (bool, error) {
-	check := p.Source.(*types.CheckConfig)
-	ctx := types.SetContextFromResource(p.Context, check)
-	sls, err := fetchCheckConfigSilences(ctx, r.silenceQuerier, check)
+	src := p.Source.(*types.CheckConfig)
+	client := r.factory.NewWithContext(p.Context)
+
+	now := time.Now().Unix()
+	sls, err := fetchSilenceds(client, src.Namespace, func(obj *types.Silenced) bool {
+		if !obj.StartSilence(now) {
+			return false
+		}
+		if (obj.Check == src.GetName() && (obj.Subscription == "" || obj.Subscription == "*")) ||
+			((obj.Check == "" || obj.Check == "*") && strings.InArray(obj.Subscription, src.GetSubscriptions())) {
+			return true
+		}
+		return false
+	})
+
 	return len(sls) > 0, err
 }
 
 // Silences implements response to request for 'silences' field.
 func (r *checkCfgImpl) Silences(p graphql.ResolveParams) (interface{}, error) {
-	check := p.Source.(*types.CheckConfig)
-	ctx := types.SetContextFromResource(p.Context, check)
-	sls, err := fetchCheckConfigSilences(ctx, r.silenceQuerier, check)
-	return sls, err
+	src := p.Source.(*types.CheckConfig)
+	client := r.factory.NewWithContext(p.Context)
+
+	now := time.Now().Unix()
+	return fetchSilenceds(client, src.Namespace, func(obj *types.Silenced) bool {
+		if !obj.StartSilence(now) {
+			return false
+		}
+		if (obj.Check == src.GetName() && (obj.Subscription == "" || obj.Subscription == "*")) ||
+			((obj.Check == "" || obj.Check == "*") && strings.InArray(obj.Subscription, src.GetSubscriptions())) {
+			return true
+		}
+		return false
+	})
 }
 
 // ToJSON implements response to request for 'toJSON' field.
@@ -100,47 +98,11 @@ func (r *checkCfgImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
 
 // RuntimeAssets implements response to request for 'runtimeAssets' field.
 func (r *checkCfgImpl) RuntimeAssets(p graphql.ResolveParams) (interface{}, error) {
-	chk := p.Source.(*types.CheckConfig)
-	ctx := types.SetContextFromResource(p.Context, chk)
-	return fetchCheckAssets(ctx, r.assetQuerier, chk)
-}
-
-func fetchHandlersWithNames(ctx context.Context, ctrl actions.HandlerController, names []string) ([]*types.Handler, error) {
-	handlers, err := ctrl.Query(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	// Filter out irrevelant handlers
-	relevantHandlers := handlers[:0]
-	for _, handler := range handlers {
-		if !strings.FoundInArray(handler.Name, names) {
-			continue
-		}
-		relevantHandlers = append(relevantHandlers, handler)
-	}
-	return relevantHandlers, nil
-}
-
-func fetchCheckConfigSilences(ctx context.Context, ctrl silenceQuerier, check namedCheck) ([]*types.Silenced, error) {
-	sls, err := ctrl.Query(ctx, "", "")
-	matched := make([]*types.Silenced, 0, len(sls))
-	if err != nil {
-		return []*types.Silenced{}, err
-	}
-
-	now := time.Now().Unix()
-	for _, sl := range sls {
-		if !sl.StartSilence(now) {
-			continue
-		}
-		if (sl.Check == check.GetName() && (sl.Subscription == "" || sl.Subscription == "*")) ||
-			((sl.Check == "" || sl.Check == "*") && strings.InArray(sl.Subscription, check.GetSubscriptions())) {
-			matched = append(matched, sl)
-		}
-	}
-
-	return matched, nil
+	src := p.Source.(*types.CheckConfig)
+	client := r.factory.NewWithContext(p.Context)
+	return fetchAssets(client, src.Namespace, func(obj *types.Asset) bool {
+		return strings.FoundInArray(obj.Name, src.RuntimeAssets)
+	})
 }
 
 // IsTypeOf is used to determine if a given value is associated with the Check type
@@ -155,22 +117,7 @@ func (r *checkCfgImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 
 type checkImpl struct {
 	schema.CheckAliases
-
-	assetQuerier   assetQuerier
-	handlerCtrl    actions.HandlerController
-	silenceQuerier silenceQuerier
-}
-
-func newCheckImpl(store store.Store) *checkImpl {
-	assetCtrl := actions.NewAssetController(store)
-	handlerCtrl := actions.NewHandlerController(store)
-	silenceCtrl := actions.NewSilencedController(store)
-
-	return &checkImpl{
-		assetQuerier:   assetCtrl,
-		handlerCtrl:    handlerCtrl,
-		silenceQuerier: silenceCtrl,
-	}
+	factory ClientFactory
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type
@@ -226,9 +173,11 @@ func (r *checkImpl) History(p schema.CheckHistoryFieldResolverParams) (interface
 
 // Handlers implements response to request for 'handlers' field.
 func (r *checkImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
-	check := p.Source.(*types.Check)
-	ctx := types.SetContextFromResource(p.Context, check)
-	return fetchHandlersWithNames(ctx, r.handlerCtrl, check.Handlers)
+	src := p.Source.(*types.Check)
+	client := r.factory.NewWithContext(p.Context)
+	return fetchHandlers(client, src.Namespace, func(obj *types.Handler) bool {
+		return strings.FoundInArray(obj.Name, src.Handlers)
+	})
 }
 
 // IsSilenced implements response to request for 'isSilenced' field.
@@ -239,62 +188,29 @@ func (r *checkImpl) IsSilenced(p graphql.ResolveParams) (bool, error) {
 
 // Silences implements response to request for 'silences' field.
 func (r *checkImpl) Silences(p graphql.ResolveParams) (interface{}, error) {
-	check := p.Source.(*types.Check)
-	ctx := types.SetContextFromResource(p.Context, check)
-	sls, err := fetchCheckSilences(ctx, r.silenceQuerier, check)
-	return sls, err
+	src := p.Source.(*types.Check)
+	client := r.factory.NewWithContext(p.Context)
+	return fetchSilenceds(client, src.Namespace, func(obj *types.Silenced) bool {
+		return strings.FoundInArray(obj.Name, src.Silenced)
+	})
 }
 
 // OutputMetricHandlers implements response to request for 'outputMetricHandlers' field.
 func (r *checkImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error) {
-	check := p.Source.(*types.Check)
-	ctx := types.SetContextFromResource(p.Context, check)
-	return fetchHandlersWithNames(ctx, r.handlerCtrl, check.OutputMetricHandlers)
+	src := p.Source.(*types.Check)
+	client := r.factory.NewWithContext(p.Context)
+	return fetchHandlers(client, src.Namespace, func(asset *types.Handler) bool {
+		return strings.FoundInArray(asset.Name, src.OutputMetricHandlers)
+	})
 }
 
 // RuntimeAssets implements response to request for 'runtimeAssets' field.
 func (r *checkImpl) RuntimeAssets(p graphql.ResolveParams) (interface{}, error) {
-	chk := p.Source.(*types.Check)
-	ctx := types.SetContextFromResource(p.Context, chk)
-	return fetchCheckAssets(ctx, r.assetQuerier, chk)
-}
-
-func fetchCheckSilences(ctx context.Context, ctrl silenceQuerier, check silenceableCheck) ([]*types.Silenced, error) {
-	sls, err := ctrl.Query(ctx, "", "")
-	matched := make([]*types.Silenced, 0, len(sls))
-	if err != nil {
-		return matched, err
-	}
-
-	for _, sl := range sls {
-		if strings.InArray(sl.Name, check.GetSilenced()) {
-			matched = append(matched, sl)
-		}
-	}
-
-	return matched, nil
-}
-
-type assetGetter interface {
-	GetRuntimeAssets() []string
-}
-
-func fetchCheckAssets(ctx context.Context, ctrl assetQuerier, getter assetGetter) ([]*types.Asset, error) {
-	assets, err := ctrl.Query(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	relevantAssets := getter.GetRuntimeAssets()
-	matched := make([]*types.Asset, 0, len(relevantAssets))
-
-	for _, asset := range assets {
-		if strings.InArray(asset.Name, relevantAssets) {
-			matched = append(matched, asset)
-		}
-	}
-
-	return matched, nil
+	src := p.Source.(*types.Check)
+	client := r.factory.NewWithContext(p.Context)
+	return fetchAssets(client, src.Namespace, func(obj *types.Asset) bool {
+		return strings.FoundInArray(obj.Name, src.RuntimeAssets)
+	})
 }
 
 //

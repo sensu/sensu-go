@@ -12,7 +12,7 @@ import (
 func (client *RestClient) ListAssets(namespace string) ([]types.Asset, error) {
 	var assets []types.Asset
 
-	res, err := client.R().Get("/assets?namespace=" + namespace)
+	res, err := client.R().SetQueryParam("namespace", namespace).Get("/assets")
 	if err != nil {
 		return assets, err
 	}
@@ -36,7 +36,7 @@ func (client *RestClient) FetchAsset(name string) (*types.Asset, error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return &asset, fmt.Errorf("GET %q: %s", assetPath, res.String())
+		return &asset, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &asset)

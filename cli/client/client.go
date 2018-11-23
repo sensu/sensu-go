@@ -1,6 +1,7 @@
 package client
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net/http"
@@ -144,6 +145,11 @@ func (client *RestClient) R() *resty.Request {
 	request := client.resty.R()
 
 	return request
+}
+
+// SetTLSClientConfig assigns client TLS config
+func (client *RestClient) SetTLSClientConfig(c *tls.Config) {
+	client.resty.SetTLSClientConfig(c)
 }
 
 // Reset client so that it reconfigure on next request

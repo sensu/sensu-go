@@ -64,7 +64,7 @@ type CheckAPIClient interface {
 	RemoveCheckHook(check *types.CheckConfig, checkHookType string, hookName string) error
 }
 
-// RoleAPIClient client methods for cluster roles
+// ClusterRoleAPIClient client methods for cluster roles
 type ClusterRoleAPIClient interface {
 	CreateClusterRole(*types.ClusterRole) error
 	DeleteClusterRole(string) error
@@ -105,6 +105,7 @@ type EventAPIClient interface {
 
 	// DeleteEvent deletes the event identified by entity, check.
 	DeleteEvent(entity, check string) error
+	UpdateEvent(*types.Event) error
 	ResolveEvent(*types.Event) error
 }
 
