@@ -20,7 +20,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Fetch role bindings from API
 			results, err := cli.Client.ListClusterRoleBindings()
-			if err != nil && err.Error() != "not found" {
+			if err != nil {
 				return err
 			}
 

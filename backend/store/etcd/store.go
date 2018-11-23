@@ -172,10 +172,6 @@ func (s *Store) list(ctx context.Context, keyBuilder keyBuilderFn, objsPtr inter
 		return err
 	}
 
-	if len(resp.Kvs) == 0 {
-		return &store.ErrNotFound{Key: key}
-	}
-
 	for _, kv := range resp.Kvs {
 		// Decode and append the value to v, which must be a slice.
 		obj := reflect.New(v.Type().Elem()).Interface()
