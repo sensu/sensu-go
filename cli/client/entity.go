@@ -2,7 +2,6 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -39,7 +38,7 @@ func (client *RestClient) ListEntities(namespace string) ([]types.Entity, error)
 	}
 
 	if res.StatusCode() >= 400 {
-		return entities, fmt.Errorf("%v", res.String())
+		return entities, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &entities)

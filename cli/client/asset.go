@@ -18,7 +18,7 @@ func (client *RestClient) ListAssets(namespace string) ([]types.Asset, error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return assets, fmt.Errorf("%v", res.String())
+		return assets, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &assets)
