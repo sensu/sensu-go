@@ -13,6 +13,6 @@ func init() {
 	// advance the mock time by 500ms every 10ms of real time, giving us a
 	// precision of about 500ms for the mock time.
 	mockTime.Resolution = 10 * time.Millisecond
-	mockTime.Multiplier = 500
+	mockTime.Multiplier = 50
 	time.TimeProxy = mockTime
 }
