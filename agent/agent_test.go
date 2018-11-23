@@ -9,7 +9,6 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -100,57 +99,6 @@ func TestReceiveLoop(t *testing.T) {
 	msgBytes, _ := json.Marshal(&testMessageType{"message"})
 	ta.sendMessage("testMessageType", msgBytes)
 	<-done
-	<-done
-}
-
-// TestPeriodicKeepalive checks that a running Agent sends its periodic
-// keepalive messages at the expected frequency, allowing for +/- 2s drift.
-func TestPeriodicKeepalive(t *testing.T) {
-	done := make(chan struct{})
-
-	cfg, cleanup := FixtureConfig()
-	defer cleanup()
-	server := transport.NewServer()
-
-	testKeepalive := func(w http.ResponseWriter, r *http.Request) {
-		conn, err := server.Serve(w, r)
-		require.NoError(t, err)
-
-		lastKeepalive := time.Time{}
-		keepaliveInterval := time.Duration(cfg.KeepaliveInterval) * time.Second
-
-		for keepaliveCount := 0; keepaliveCount < 10; keepaliveCount++ {
-			msg, err := conn.Receive()
-			assert.NoError(t, err)
-
-			if msg.Type == "keepalive" {
-				if keepaliveCount > 0 {
-					expected := lastKeepalive.Add(keepaliveInterval)
-					actual := mockTime.Now()
-					assert.WithinDuration(t, expected, actual, (2 * time.Second))
-				}
-				lastKeepalive = mockTime.Now()
-			}
-		}
-
-		conn.Close()
-		done <- struct{}{}
-	}
-
-	ts := httptest.NewServer(http.HandlerFunc(testKeepalive))
-	defer ts.Close()
-
-	wsURL := strings.Replace(ts.URL, "http", "ws", 1)
-	cfg.BackendURLs = []string{wsURL}
-
-	mockTime.Start()
-	defer mockTime.Stop()
-
-	ta := NewAgent(cfg)
-	err := ta.Run()
-	require.NoError(t, err)
-	defer ta.Stop()
-
 	<-done
 }
 
