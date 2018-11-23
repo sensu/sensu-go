@@ -5,7 +5,6 @@ import "github.com/sensu/sensu-go/types"
 //
 // Roles
 //
-
 var roleName = "roles"
 
 // RoleTranslator global ID resource

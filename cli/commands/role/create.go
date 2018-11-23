@@ -3,9 +3,9 @@ package role
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -13,51 +13,72 @@ import (
 // CreateCommand defines new command to create roles
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:          "create [NAME]",
-		Short:        "create new roles",
+		Use:          "create [NAME] --verb=VERBS --resource=RESOURCES [--resource-name=RESOURCE_NAMES]",
+		Short:        "create a new role with a single rule",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 1 {
+			if err := helpers.VerifyName(args); err != nil {
 				_ = cmd.Help()
-				return errors.New("invalid argument(s) received")
+				return err
 			}
 
+			role := &types.Role{Name: args[0]}
+			if namespace := helpers.GetChangedStringValueFlag("namespace", cmd.Flags()); namespace != "" {
+				role.Namespace = namespace
+			} else {
+				role.Namespace = cli.Config.Namespace()
+			}
+
+			// Retrieve the rule from the flags
 			rule := types.Rule{}
 
-			role := &types.Role{Name: args[0]}
+			verbs, err := cmd.Flags().GetStringSlice("verb")
+			if err != nil {
+				return err
+			}
+			if len(verbs) == 0 {
+				return errors.New("at least one verb must be provided")
+			}
+			rule.Verbs = verbs
+
+			resources, err := cmd.Flags().GetStringSlice("resource")
+			if err != nil {
+				return err
+			}
+			if len(resources) == 0 {
+				return errors.New("at least one resource must be provided")
+			}
+			rule.Resources = resources
+
+			resourceNames, err := cmd.Flags().GetStringSlice("resource-name")
+			if err != nil {
+				return err
+			}
+			rule.ResourceNames = resourceNames
+
+			// Assign the rule to our role and validate it
+			role.Rules = []types.Rule{rule}
 			if err := role.Validate(); err != nil {
 				return err
 			}
 
-			opts := &ruleOpts{}
-
-			opts.Namespace = cli.Config.Namespace()
-
-			opts.withFlags(cmd.Flags())
-			opts.Role = args[0]
-
-			opts.Copy(&rule)
-			if err := rule.Validate(); err != nil {
-				return err
-			}
-			role.Rules = append(role.Rules, rule)
-
 			if err := cli.Client.CreateRole(role); err != nil {
 				return err
 			}
-			_, err := fmt.Fprintln(cmd.OutOrStdout(), "Created")
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), "Created")
 			return err
 		},
 	}
 
-	_ = cmd.Flags().StringP("type", "t", "",
-		"type associated with the rule, "+
-			"allowed values: "+strings.Join(types.AllTypes, ", "),
+	_ = cmd.Flags().StringSliceP("verb", "v", []string{},
+		"verbs that apply to the resources contained in the rule",
 	)
-	_ = cmd.Flags().BoolP("create", "c", false, "create permission")
-	_ = cmd.Flags().BoolP("read", "r", false, "read permission")
-	_ = cmd.Flags().BoolP("update", "u", false, "update permission")
-	_ = cmd.Flags().BoolP("delete", "d", false, "delete permission")
+	_ = cmd.Flags().StringSliceP("resource", "r", []string{},
+		"resources that the rule applies to",
+	)
+	_ = cmd.Flags().StringSliceP("resource-name", "n", []string{},
+		"optional resource names that the rule applies to",
+	)
 
 	return cmd
 }

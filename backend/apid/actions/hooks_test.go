@@ -20,15 +20,11 @@ func TestNewHookController(t *testing.T) {
 
 	assert.NotNil(actions)
 	assert.Equal(store, actions.Store)
-	assert.NotNil(actions.Policy)
 }
 
 func TestHookQuery(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermRead),
-		),
 	)
 
 	testCases := []struct {
@@ -57,18 +53,6 @@ func TestHookQuery(t *testing.T) {
 			expectedLen: 2,
 			storeErr:    nil,
 			expectedErr: nil,
-		},
-		{
-			name: "With Only Create Access",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermCreate),
-			)),
-			records: []*types.HookConfig{
-				types.FixtureHookConfig("hook1"),
-				types.FixtureHookConfig("hook2"),
-			},
-			expectedLen: 0,
-			storeErr:    nil,
 		},
 		{
 			name:        "Store Failure",
@@ -103,9 +87,6 @@ func TestHookQuery(t *testing.T) {
 func TestHookFind(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermRead),
-		),
 	)
 
 	testCases := []struct {
@@ -136,16 +117,6 @@ func TestHookFind(t *testing.T) {
 			ctx:             defaultCtx,
 			record:          nil,
 			argument:        "missing",
-			expected:        false,
-			expectedErrCode: NotFound,
-		},
-		{
-			name: "No Read Permission",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermCreate),
-			)),
-			record:          types.FixtureHookConfig("hook1"),
-			argument:        "hook1",
 			expected:        false,
 			expectedErrCode: NotFound,
 		},
@@ -180,19 +151,6 @@ func TestHookFind(t *testing.T) {
 func TestHookCreateOrReplace(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(
-				types.RuleTypeHook,
-				types.RulePermCreate,
-				types.RulePermUpdate,
-			),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermCreate),
-		),
 	)
 
 	badHook := types.FixtureHookConfig("hook1")
@@ -227,13 +185,6 @@ func TestHookCreateOrReplace(t *testing.T) {
 			createErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureHookConfig("hook1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 		{
 			name:            "Validation Error",
@@ -280,15 +231,6 @@ func TestHookCreateOrReplace(t *testing.T) {
 func TestHookCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermCreate),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermRead),
-		),
 	)
 
 	badHook := types.FixtureHookConfig("hook1")
@@ -335,13 +277,6 @@ func TestHookCreate(t *testing.T) {
 			expectedErrCode: InternalErr,
 		},
 		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureHookConfig("hook1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
-		{
 			name:            "Validation Error",
 			ctx:             defaultCtx,
 			argument:        badHook,
@@ -386,15 +321,6 @@ func TestHookCreate(t *testing.T) {
 func TestHookUpdate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermUpdate),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermRead),
-		),
 	)
 
 	badHook := types.FixtureHookConfig("hook1")
@@ -444,14 +370,6 @@ func TestHookUpdate(t *testing.T) {
 			expectedErrCode: InternalErr,
 		},
 		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureHookConfig("hook1"),
-			fetchResult:     types.FixtureHookConfig("hook1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
-		{
 			name:            "Validation Error",
 			ctx:             defaultCtx,
 			argument:        badHook,
@@ -497,15 +415,6 @@ func TestHookUpdate(t *testing.T) {
 func TestHookDestroy(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermDelete),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeHook, types.RulePermCreate),
-		),
 	)
 
 	testCases := []struct {
@@ -550,14 +459,6 @@ func TestHookDestroy(t *testing.T) {
 			fetchErr:        errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        "hook1",
-			fetchResult:     types.FixtureHookConfig("hook1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 	}
 

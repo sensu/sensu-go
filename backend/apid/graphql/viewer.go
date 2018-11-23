@@ -1,12 +1,9 @@
 package graphql
 
 import (
-	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	"github.com/sensu/sensu-go/backend/authorization"
-	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/graphql"
-	"github.com/sensu/sensu-go/types"
 )
 
 var _ schema.ViewerFieldResolvers = (*viewerImpl)(nil)
@@ -16,25 +13,24 @@ var _ schema.ViewerFieldResolvers = (*viewerImpl)(nil)
 //
 
 type viewerImpl struct {
-	usersCtrl actions.UserController
-	nsCtrl    actions.NamespacesController
-}
-
-func newViewerImpl(store store.Store) *viewerImpl {
-	return &viewerImpl{
-		usersCtrl: actions.NewUserController(store),
-		nsCtrl:    actions.NewNamespacesController(store),
-	}
+	factory ClientFactory
 }
 
 // Namespaces implements response to request for 'namespaces' field.
 func (r *viewerImpl) Namespaces(p graphql.ResolveParams) (interface{}, error) {
-	return r.nsCtrl.Query(p.Context)
+	client := r.factory.NewWithContext(p.Context)
+	return fetchNamespaces(client, nil)
 }
 
 // User implements response to request for 'user' field.
 func (r *viewerImpl) User(p graphql.ResolveParams) (interface{}, error) {
-	ctx := p.Context
-	actor := ctx.Value(types.AuthorizationActorKey).(authorization.Actor)
-	return r.usersCtrl.Find(ctx, actor.Name)
+	claims := jwt.GetClaimsFromContext(p.Context)
+	logger.WithField("claims", claims).Info("huh")
+	if claims == nil {
+		return nil, nil
+	}
+
+	client := r.factory.NewWithContext(p.Context)
+	res, err := client.FetchUser(claims.Subject)
+	return handleFetchResult(res, err)
 }

@@ -55,13 +55,13 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
-			Title: "Roles",
+			Title: "Groups",
 			CellTransformer: func(data interface{}) string {
 				user, ok := data.(types.User)
 				if !ok {
 					return cli.TypeError
 				}
-				return strings.Join(user.Roles, ",")
+				return strings.Join(user.Groups, ",")
 			},
 		},
 		{

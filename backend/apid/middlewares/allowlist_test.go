@@ -8,12 +8,14 @@ import (
 
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/testing/mockstore"
+	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAllowList(t *testing.T) {
 	// Create a token
-	token, tokenString, _ := jwt.AccessToken("foo")
+	user := &types.User{Username: "foo"}
+	token, tokenString, _ := jwt.AccessToken(user)
 	claims, _ := jwt.GetClaims(token)
 
 	store := &mockstore.MockStore{}
@@ -36,7 +38,8 @@ func TestAllowList(t *testing.T) {
 
 func TestMissingTokenFromAllowList(t *testing.T) {
 	// Create a token
-	token, tokenString, _ := jwt.AccessToken("foo")
+	user := &types.User{Username: "foo"}
+	token, tokenString, _ := jwt.AccessToken(user)
 	claims, _ := jwt.GetClaims(token)
 
 	store := &mockstore.MockStore{}
@@ -70,4 +73,19 @@ func TestAllowListNoTokenIntoContext(t *testing.T) {
 	res, err := http.DefaultClient.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
+}
+
+func TestAllowListIgnoreMissingClaims(t *testing.T) {
+	store := &mockstore.MockStore{}
+
+	allow := AllowList{Store: store, IgnoreMissingClaims: true}
+	server := httptest.NewServer(allow.Then(testHandler()))
+	defer server.Close()
+
+	req, _ := http.NewRequest("GET", server.URL, nil)
+
+	// Perform the request with the middleware
+	res, err := http.DefaultClient.Do(req)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 }

@@ -7,141 +7,152 @@ import (
 )
 
 const (
-	// RuleTypeAll matches all actions
-	RuleTypeAll = "*"
+	// ResourceAll represents all possible resources
+	ResourceAll = "*"
+	// VerbAll represents all possible verbs
+	VerbAll = "*"
 
-	// RulePermCreate create action
-	RulePermCreate = "create"
+	// GroupType represents a group object in a subject
+	GroupType = "Group"
+	// UserType represents a user object in a subject
+	UserType = "User"
 
-	// RulePermRead read action
-	RulePermRead = "read"
-
-	// RulePermUpdate update action
-	RulePermUpdate = "update"
-
-	// RulePermDelete delete action
-	RulePermDelete = "delete"
-
-	// RuleTypeAsset access control for asset objects
-	RuleTypeAsset = "assets"
-
-	// RuleTypeCheck access control for check objects
-	RuleTypeCheck = "checks"
-
-	// RuleTypeCluster access control for cluster management
-	RuleTypeCluster = "cluster"
-
-	// RuleTypeEntity access control for entity objects
-	RuleTypeEntity = "entities"
-
-	// RuleTypeEvent access control for event objects
-	RuleTypeEvent = "events"
-
-	// RuleTypeEventFilter access control for filter objects
-	RuleTypeEventFilter = "filters"
-
-	// RuleTypeExtension access control for extension registry
-	RuleTypeExtension = "extensions"
-
-	// RuleTypeHandler access control for handler objects
-	RuleTypeHandler = "handlers"
-
-	// RuleTypeHook access control for hook objects
-	RuleTypeHook = "hooks"
-
-	// RuleTypeMutator access control for mutator objects
-	RuleTypeMutator = "mutators"
-
-	// RuleTypeNamespace access control for namespace objects
-	RuleTypeNamespace = "namespaces"
-
-	// RuleTypeRole access control for role objects
-	RuleTypeRole = "roles"
-
-	// RuleTypeSilenced access control for silenced objects
-	RuleTypeSilenced = "silenced"
-
-	// RuleTypeUser access control for user objects
-	RuleTypeUser = "users"
+	// LocalSelfUserResource represents a local user trying to view itself
+	// or change its password
+	LocalSelfUserResource = "localselfuser"
 )
 
-var (
-	// RuleAllPerms all actions
-	RuleAllPerms = []string{
-		RulePermCreate,
-		RulePermRead,
-		RulePermUpdate,
-		RulePermDelete,
+// CommonCoreResources represents the common "core" resources found in a
+// namespace
+var CommonCoreResources = []string{
+	"assets",
+	"checks",
+	"entities",
+	"extensions",
+	"events",
+	"filters",
+	"handlers",
+	"hooks",
+	"mutators",
+	"silenced",
+}
+
+// FixtureSubject creates a Subject for testing
+func FixtureSubject(subjectType, name string) Subject {
+	return Subject{
+		Type: subjectType,
+		Name: name,
+	}
+}
+
+// FixtureRule returns a partial rule
+func FixtureRule() Rule {
+	return Rule{
+		Verbs:     []string{VerbAll},
+		Resources: []string{ResourceAll},
+	}
+}
+
+// FixtureRole returns a partial role
+func FixtureRole(name, namespace string) *Role {
+	return &Role{
+		Name:      name,
+		Namespace: namespace,
+		Rules: []Rule{
+			FixtureRule(),
+		},
+	}
+}
+
+// FixtureRoleRef creates a RoleRef for testing
+func FixtureRoleRef(roleType, name string) RoleRef {
+	return RoleRef{
+		Type: roleType,
+		Name: name,
+	}
+}
+
+// FixtureRoleBinding creates a RoleBinding for testing
+func FixtureRoleBinding(name, namespace string) *RoleBinding {
+	return &RoleBinding{
+		Name:      name,
+		Namespace: namespace,
+		Subjects:  []Subject{FixtureSubject(UserType, "username")},
+		RoleRef:   FixtureRoleRef("Role", "read-write"),
+	}
+}
+
+// FixtureClusterRole returns a partial role
+func FixtureClusterRole(name string) *ClusterRole {
+	return &ClusterRole{
+		Name: name,
+		Rules: []Rule{
+			FixtureRule(),
+		},
+	}
+}
+
+// FixtureClusterRoleBinding creates a ClusterRoleBinding for testing
+func FixtureClusterRoleBinding(name string) *ClusterRoleBinding {
+	return &ClusterRoleBinding{
+		Name:     name,
+		Subjects: []Subject{FixtureSubject(UserType, "username")},
+		RoleRef:  FixtureRoleRef("ClusterRole", "read-write"),
+	}
+}
+
+// Validate a ClusterRole
+func (r *ClusterRole) Validate() error {
+	if err := ValidateSubscriptionName(r.Name); err != nil {
+		return errors.New("the ClusterRole name " + err.Error())
 	}
 
-	// AllTypes specifies all possible types
-	AllTypes = []string{
-		RuleTypeAll,
-		RuleTypeAsset,
-		RuleTypeCheck,
-		RuleTypeEntity,
-		RuleTypeEvent,
-		RuleTypeEventFilter,
-		RuleTypeExtension,
-		RuleTypeHandler,
-		RuleTypeHook,
-		RuleTypeMutator,
-		RuleTypeNamespace,
-		RuleTypeRole,
-		RuleTypeSilenced,
-		RuleTypeUser,
-	}
-)
-
-//
-// Validators
-
-// Validate returns an error if the rule is invalid.
-func (r *Rule) Validate() error {
-	if r.Type == "" {
-		return errors.New("type can't be empty")
-	}
-
-	if r.Namespace != "*" {
-		if err := ValidateNameStrict(r.Namespace); err != nil {
-			return errors.New("namespace " + err.Error())
-		}
-	}
-
-	if len(r.Permissions) == 0 {
-		return errors.New("permissions must have at least one permission")
-	}
-
-	for _, p := range r.Permissions {
-		switch p {
-		case RulePermCreate, RulePermRead, RulePermUpdate, RulePermDelete:
-		default:
-			return fmt.Errorf(
-				"permission '%s' is not valid - must be one of ['%s', '%s', '%s', '%s']",
-				p,
-				RulePermCreate,
-				RulePermRead,
-				RulePermUpdate,
-				RulePermDelete,
-			)
-		}
+	if len(r.Rules) == 0 {
+		return errors.New("a ClusterRole must have at least one rule")
 	}
 
 	return nil
 }
 
-// Validate returns an error if the role is invalid.
-func (r *Role) Validate() error {
-	if err := ValidateNameStrict(r.Name); err != nil {
-		return errors.New("name " + err.Error())
+// URIPath returns the path component of a ClusterRole URI.
+func (r *ClusterRole) URIPath() string {
+	return fmt.Sprintf("/apis/rbac/v2/clusterroles/%s", url.PathEscape(r.Name))
+}
+
+// Validate a ClusterRoleBinding
+func (b *ClusterRoleBinding) Validate() error {
+	if err := ValidateSubscriptionName(b.Name); err != nil {
+		return errors.New("the ClusterRoleBinding name " + err.Error())
 	}
 
-	for _, rule := range r.Rules {
-		if err := rule.Validate(); err != nil {
-			return fmt.Errorf("rule %s", err)
-		}
+	if b.RoleRef.Name == "" || b.RoleRef.Type == "" {
+		return errors.New("a ClusterRoleBinding needs a roleRef")
+	}
 
-		// TODO: Check for duplicate rule definitions?
+	if len(b.Subjects) == 0 {
+		return errors.New("a ClusterRoleBinding must have at least one subject")
+	}
+
+	return nil
+}
+
+// URIPath returns the path component of a ClusterRole URI.
+func (b *ClusterRoleBinding) URIPath() string {
+	return fmt.Sprintf("/apis/rbac/v2/clusterrolebindings/%s", url.PathEscape(b.Name))
+}
+
+// Validate a Role
+func (r *Role) Validate() error {
+	if err := ValidateSubscriptionName(r.Name); err != nil {
+		return errors.New("the Role name " + err.Error())
+	}
+
+	if r.Namespace == "" {
+		return errors.New("the Role namespace must be set")
+	}
+
+	if len(r.Rules) == 0 {
+		return errors.New("a Role must have at least one rule")
 	}
 
 	return nil
@@ -149,40 +160,85 @@ func (r *Role) Validate() error {
 
 // URIPath returns the path component of a Role URI.
 func (r *Role) URIPath() string {
-	return fmt.Sprintf("/rbac/roles/%s", url.PathEscape(r.Name))
+	return fmt.Sprintf("/apis/rbac/v2/namespaces/%s/roles/%s",
+		url.PathEscape(r.Namespace),
+		url.PathEscape(r.Name),
+	)
 }
 
-//
-// Fixtures
-
-// FixtureRule returns a partial rule
-func FixtureRule(namespace string) *Rule {
-	return &Rule{
-		Type:      RuleTypeAll,
-		Namespace: namespace,
-		Permissions: []string{
-			RulePermCreate,
-			RulePermRead,
-			RulePermUpdate,
-			RulePermDelete,
-		},
+// Validate a RoleBinding
+func (b *RoleBinding) Validate() error {
+	if err := ValidateSubscriptionName(b.Name); err != nil {
+		return errors.New("the RoleBinding name " + err.Error())
 	}
-}
 
-// FixtureRuleWithPerms returns a partial rule with perms applied
-func FixtureRuleWithPerms(T string, perms ...string) Rule {
-	rule := *FixtureRule("*")
-	rule.Type = T
-	rule.Permissions = perms
-	return rule
-}
-
-// FixtureRole returns a partial role
-func FixtureRole(name, namespace string) *Role {
-	return &Role{
-		Name: name,
-		Rules: []Rule{
-			*FixtureRule(namespace),
-		},
+	if b.Namespace == "" {
+		return errors.New("the RoleBinding namespace must be set")
 	}
+
+	if b.RoleRef.Name == "" || b.RoleRef.Type == "" {
+		return errors.New("a RoleBinding needs a roleRef")
+	}
+
+	if len(b.Subjects) == 0 {
+		return errors.New("a RoleBinding must have at least one subject")
+	}
+
+	return nil
+}
+
+// URIPath returns the path component of a Role URI.
+func (b *RoleBinding) URIPath() string {
+	return fmt.Sprintf("/apis/rbac/v2/namespaces/%s/rolebindings/%s",
+		url.PathEscape(b.Namespace),
+		url.PathEscape(b.Name),
+	)
+}
+
+// ResourceMatches returns whether the specified requestedResource matches any
+// of the rule resources
+func (r Rule) ResourceMatches(requestedResource string) bool {
+	for _, resource := range r.Resources {
+		if resource == ResourceAll {
+			return true
+		}
+
+		if resource == requestedResource {
+			return true
+		}
+	}
+
+	return false
+}
+
+// ResourceNameMatches returns whether the specified requestedResourceName
+// matches any of the rule resources
+func (r Rule) ResourceNameMatches(requestedResourceName string) bool {
+	if len(r.ResourceNames) == 0 {
+		return true
+	}
+
+	for _, name := range r.ResourceNames {
+		if name == requestedResourceName {
+			return true
+		}
+	}
+
+	return false
+}
+
+// VerbMatches returns whether the specified requestedVerb matches any of the
+// rule verbs
+func (r Rule) VerbMatches(requestedVerb string) bool {
+	for _, verb := range r.Verbs {
+		if verb == VerbAll {
+			return true
+		}
+
+		if verb == requestedVerb {
+			return true
+		}
+	}
+
+	return false
 }

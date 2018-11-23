@@ -5,9 +5,11 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
+	client "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestMutationTypeExecuteCheck(t *testing.T) {
@@ -15,7 +17,11 @@ func TestMutationTypeExecuteCheck(t *testing.T) {
 	params := schema.MutationExecuteCheckFieldResolverParams{}
 	params.Args.Input = &inputs
 
-	impl := mutationsImpl{checkExecutor: mockCheckExecutor{}}
+	check := types.FixtureCheckConfig("test")
+	client, factory := client.NewClientFactory()
+	client.On("FetchCheck", mock.Anything).Return(check, nil)
+	client.On("ExecuteCheck", mock.Anything).Return(nil).Once()
+	impl := mutationsImpl{factory: factory}
 
 	// Success
 	body, err := impl.ExecuteCheck(params)
@@ -23,7 +29,7 @@ func TestMutationTypeExecuteCheck(t *testing.T) {
 	assert.NotEmpty(t, body)
 
 	// Failure
-	impl.checkExecutor = mockCheckExecutor{err: errors.New("wow")}
+	client.On("ExecuteCheck", mock.Anything).Return(errors.New("test")).Once()
 	body, err = impl.ExecuteCheck(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, body)
@@ -42,46 +48,25 @@ func TestMutationTypeUpdateCheck(t *testing.T) {
 	}
 
 	check := types.FixtureCheckConfig("a")
-	impl := mutationsImpl{}
+	client, factory := client.NewClientFactory()
+	client.On("FetchCheck", mock.Anything).Return(check, nil).Once()
+	client.On("UpdateCheck", mock.Anything).Return(nil).Once()
 
 	// Success
-	mock := struct {
-		checkFinder
-		checkReplacer
-	}{
-		mockCheckFinder{record: check},
-		mockCheckReplacer{},
-	}
-
-	impl.checkReplacer = mock
+	impl := mutationsImpl{factory: factory}
 	body, err := impl.UpdateCheck(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, body)
 
 	// Failure - no check
-	mock = struct {
-		checkFinder
-		checkReplacer
-	}{
-		mockCheckFinder{err: errors.New("test")},
-		mockCheckReplacer{},
-	}
-	impl.checkReplacer = mock
-
+	client.On("FetchCheck", mock.Anything).Return(check, errors.New("404")).Once()
 	body, err = impl.UpdateCheck(params)
 	assert.Error(t, err)
 	assert.Empty(t, body)
 
 	// Failure - replace fails
-	mock = struct {
-		checkFinder
-		checkReplacer
-	}{
-		mockCheckFinder{record: check},
-		mockCheckReplacer{err: errors.New("test")},
-	}
-	impl.checkReplacer = mock
-
+	client.On("FetchCheck", mock.Anything).Return(check, nil).Once()
+	client.On("UpdateCheck", mock.Anything).Return(errors.New("fail")).Once()
 	body, err = impl.UpdateCheck(params)
 	assert.Error(t, err)
 	assert.Empty(t, body)
@@ -92,15 +77,19 @@ func TestMutationTypeDeleteEntityField(t *testing.T) {
 	params := schema.MutationDeleteEntityFieldResolverParams{}
 	params.Args.Input = &inputs
 
+	entity := types.FixtureEntity("abc")
+	client, factory := client.NewClientFactory()
+	impl := mutationsImpl{factory: factory}
+
 	// Success
-	impl := mutationsImpl{}
-	impl.entityDestroyer = mockEntityDestroyer{}
+	client.On("FetchEntity", mock.Anything).Return(entity, nil)
+	client.On("DeleteEntity", mock.Anything).Return(nil).Once()
 	body, err := impl.DeleteEntity(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, body)
 
 	// Failure
-	impl.entityDestroyer = mockEntityDestroyer{err: errors.New("wow")}
+	client.On("DeleteEntity", mock.Anything).Return(errors.New("fail")).Once()
 	body, err = impl.DeleteEntity(params)
 	assert.Error(t, err)
 	assert.Nil(t, body)
@@ -114,9 +103,11 @@ func TestMutationTypeDeleteEventField(t *testing.T) {
 	params := schema.MutationDeleteEventFieldResolverParams{}
 	params.Args.Input = &inputs
 
+	client, factory := client.NewClientFactory()
+	impl := mutationsImpl{factory: factory}
+
 	// Success
-	impl := mutationsImpl{}
-	impl.eventDestroyer = mockEventDestroyer{}
+	client.On("DeleteEvent", "a", "b").Return(nil).Once()
 	body, err := impl.DeleteEvent(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, body)
@@ -128,7 +119,7 @@ func TestMutationTypeDeleteEventField(t *testing.T) {
 	assert.Nil(t, body)
 
 	// Destroy failed
-	impl.eventDestroyer = mockEventDestroyer{err: errors.New("test")}
+	client.On("DeleteEvent", "a", "b").Return(errors.New("err")).Once()
 	body, err = impl.DeleteEvent(params)
 	assert.Error(t, err)
 	assert.Nil(t, body)
@@ -142,15 +133,17 @@ func TestMutationTypeCreateSilenceField(t *testing.T) {
 	params := schema.MutationCreateSilenceFieldResolverParams{}
 	params.Args.Input = &inputs
 
+	client, factory := client.NewClientFactory()
+	impl := mutationsImpl{factory: factory}
+
 	// Success
-	impl := mutationsImpl{}
-	impl.silenceCreator = mockSilenceCreator{}
+	client.On("CreateSilenced", mock.Anything).Return(nil).Once()
 	body, err := impl.CreateSilence(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, body)
 
 	// Failure
-	impl.silenceCreator = mockSilenceCreator{err: errors.New("wow")}
+	client.On("CreateSilenced", mock.Anything).Return(errors.New("test")).Once()
 	body, err = impl.CreateSilence(params)
 	assert.Error(t, err)
 	assert.Nil(t, body)
@@ -161,15 +154,17 @@ func TestMutationTypeDeleteSilenceField(t *testing.T) {
 	params := schema.MutationDeleteSilenceFieldResolverParams{}
 	params.Args.Input = &inputs
 
+	client, factory := client.NewClientFactory()
+	impl := mutationsImpl{factory: factory}
+
 	// Success
-	impl := mutationsImpl{}
-	impl.silenceDestroyer = mockSilenceDestroyer{}
+	client.On("DeleteSilenced", mock.Anything).Return(nil).Once()
 	body, err := impl.DeleteSilence(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, body)
 
 	// Failure
-	impl.silenceDestroyer = mockSilenceDestroyer{err: errors.New("wow")}
+	client.On("DeleteSilenced", mock.Anything).Return(errors.New("test")).Once()
 	body, err = impl.DeleteSilence(params)
 	assert.Error(t, err)
 	assert.Nil(t, body)

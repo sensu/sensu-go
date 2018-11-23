@@ -14,15 +14,15 @@ func (client *RestClient) DeleteEntity(entity *types.Entity) (err error) {
 }
 
 // FetchEntity fetches a specific entity
-func (client *RestClient) FetchEntity(ID string) (*types.Entity, error) {
+func (client *RestClient) FetchEntity(name string) (*types.Entity, error) {
 	var entity *types.Entity
-	res, err := client.R().Get("/entities/" + ID)
+	res, err := client.R().Get("/entities/" + name)
 	if err != nil {
 		return entity, err
 	}
 
 	if res.StatusCode() >= 400 {
-		return entity, fmt.Errorf("%v", res.String())
+		return entity, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &entity)
@@ -33,7 +33,7 @@ func (client *RestClient) FetchEntity(ID string) (*types.Entity, error) {
 func (client *RestClient) ListEntities(namespace string) ([]types.Entity, error) {
 	var entities []types.Entity
 
-	res, err := client.R().Get("/entities?namespace=" + namespace)
+	res, err := client.R().SetQueryParam("namespace", namespace).Get("/entities")
 	if err != nil {
 		return entities, err
 	}

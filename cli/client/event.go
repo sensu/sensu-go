@@ -34,7 +34,7 @@ func (client *RestClient) FetchEvent(entity, check string) (*types.Event, error)
 func (client *RestClient) ListEvents(namespace string) ([]types.Event, error) {
 	var events []types.Event
 
-	res, err := client.R().Get("/events?namespace=" + url.QueryEscape(namespace))
+	res, err := client.R().SetQueryParam("namespace", namespace).Get("/events")
 	if err != nil {
 		return events, err
 	}
@@ -59,12 +59,8 @@ func (client *RestClient) DeleteEvent(entity, check string) error {
 	return nil
 }
 
-// ResolveEvent resolves an event.
-func (client *RestClient) ResolveEvent(event *types.Event) error {
-	event.Check.Status = 0
-	event.Check.Output = "Resolved manually by sensuctl"
-	event.Timestamp = int64(time.Now().Unix())
-
+// UpdateEvent updates an event.
+func (client *RestClient) UpdateEvent(event *types.Event) error {
 	bytes, err := json.Marshal(event)
 	if err != nil {
 		return err
@@ -80,4 +76,12 @@ func (client *RestClient) ResolveEvent(event *types.Event) error {
 	}
 
 	return nil
+}
+
+// ResolveEvent resolves an event.
+func (client *RestClient) ResolveEvent(event *types.Event) error {
+	event.Check.Status = 0
+	event.Check.Output = "Resolved manually by sensuctl"
+	event.Timestamp = int64(time.Now().Unix())
+	return client.UpdateEvent(event)
 }

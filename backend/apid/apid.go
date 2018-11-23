@@ -15,6 +15,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/apid/routers"
+	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -74,14 +75,31 @@ func New(c Config, opts ...Option) (*APId, error) {
 		etcdClientTLSConfig: c.EtcdClientTLSConfig,
 	}
 
+	var tlsConfig *tls.Config
+	var err error
+	if c.TLS != nil {
+		tlsConfig, err = c.TLS.ToTLSConfig()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	addr := fmt.Sprintf("%s:%d", a.Host, a.Port)
+	url := fmt.Sprintf("http://%s", addr)
+	if tlsConfig != nil {
+		url = fmt.Sprintf("https://%s", addr)
+	}
+
 	router := mux.NewRouter().UseEncodedPath()
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
 	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig)
+	registerGraphQLService(router, a.store, url, tlsConfig)
 	registerAuthenticationResources(router, a.store)
-	registerRestrictedResources(router, a.store, a.queueGetter, a.bus, a.cluster)
+	registerRestrictedLegacyResources(router, a.store, a.queueGetter, a.bus, a.cluster)
+	registerRestrictedResources(router, a.store)
 
 	a.HTTPServer = &http.Server{
-		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
+		Addr:         addr,
 		Handler:      router,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
@@ -170,6 +188,21 @@ func registerUnauthenticatedResources(
 	)
 }
 
+func registerGraphQLService(router *mux.Router, store store.Store, url string, tls *tls.Config) {
+	mountRouters(
+		NewSubrouter(
+			router.NewRoute(),
+			middlewares.SimpleLogger{},
+			middlewares.LimitRequest{},
+			// Allow requests without an access token to continue
+			middlewares.Authentication{IgnoreUnauthorized: true},
+			middlewares.AllowList{Store: store, IgnoreMissingClaims: true},
+			middlewares.Edition{Name: version.Edition},
+		),
+		routers.NewGraphQLRouter(url, tls, store),
+	)
+}
+
 func registerAuthenticationResources(router *mux.Router, store store.Store) {
 	mountRouters(
 		NewSubrouter(
@@ -183,7 +216,7 @@ func registerAuthenticationResources(router *mux.Router, store store.Store) {
 	)
 }
 
-func registerRestrictedResources(router *mux.Router, store store.Store, getter types.QueueGetter, bus messaging.MessageBus, cluster clientv3.Cluster) {
+func registerRestrictedLegacyResources(router *mux.Router, store store.Store, getter types.QueueGetter, bus messaging.MessageBus, cluster clientv3.Cluster) {
 	mountRouters(
 		NewSubrouter(
 			router.NewRoute(),
@@ -191,7 +224,8 @@ func registerRestrictedResources(router *mux.Router, store store.Store, getter t
 			middlewares.Namespace{},
 			middlewares.Authentication{},
 			middlewares.AllowList{Store: store},
-			middlewares.Authorization{Store: store},
+			middlewares.LegacyAuthorizationAttributes{},
+			middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: store}},
 			middlewares.LimitRequest{},
 			middlewares.Edition{Name: version.Edition},
 		),
@@ -200,16 +234,34 @@ func registerRestrictedResources(router *mux.Router, store store.Store, getter t
 		routers.NewEntitiesRouter(store),
 		routers.NewEventFiltersRouter(store),
 		routers.NewEventsRouter(store, bus),
-		routers.NewGraphQLRouter(store, bus, getter),
 		routers.NewHandlersRouter(store),
 		routers.NewHooksRouter(store),
 		routers.NewMutatorsRouter(store),
 		routers.NewNamespacesRouter(actions.NewNamespacesController(store)),
-		routers.NewRolesRouter(store),
 		routers.NewSilencedRouter(store),
 		routers.NewUsersRouter(store),
 		routers.NewExtensionsRouter(store),
 		routers.NewClusterRouter(actions.NewClusterController(cluster)),
+	)
+}
+
+func registerRestrictedResources(router *mux.Router, store store.Store) {
+	mountRouters(
+		NewSubrouter(
+			router.NewRoute(),
+			middlewares.SimpleLogger{},
+			middlewares.Namespace{},
+			middlewares.Authentication{},
+			middlewares.AllowList{Store: store},
+			middlewares.AuthorizationAttributes{},
+			middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: store}},
+			middlewares.LimitRequest{},
+			middlewares.Edition{Name: version.Edition},
+		),
+		routers.NewClusterRolesRouter(store),
+		routers.NewClusterRoleBindingsRouter(store),
+		routers.NewRolesRouter(store),
+		routers.NewRoleBindingsRouter(store),
 	)
 }
 

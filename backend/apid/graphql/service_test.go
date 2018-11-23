@@ -3,15 +3,14 @@ package graphql
 import (
 	"testing"
 
-	"github.com/sensu/sensu-go/backend/queue"
-	"github.com/sensu/sensu-go/testing/mockstore"
+	client "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewServiceSmokeTest(t *testing.T) {
-	store := &mockstore.MockStore{}
-	svc, err := NewService(ServiceConfig{Store: store, QueueGetter: queue.NewMemoryGetter()})
+	_, factory := client.NewClientFactory()
+	svc, err := NewService(ServiceConfig{ClientFactory: factory})
 	require.NoError(t, err)
 	assert.NotEmpty(t, svc)
 }

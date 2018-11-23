@@ -2,61 +2,132 @@ package types
 
 import (
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
-func TestFixtureRule(t *testing.T) {
-	r := FixtureRule("dev")
-	assert.Equal(t, "*", r.Type)
-	assert.Equal(t, "dev", r.Namespace)
-	assert.Equal(t, []string{"create", "read", "update", "delete"}, r.Permissions)
+func TestRuleResourceMatches(t *testing.T) {
+	tests := []struct {
+		name              string
+		resources         []string
+		requestedResource string
+		want              bool
+	}{
+		{
+			name:              "empty rule resources",
+			requestedResource: "checks",
+			want:              false,
+		},
+		{
+			name:              "all resources",
+			resources:         []string{ResourceAll},
+			requestedResource: "checks",
+			want:              true,
+		},
+		{
+			name:              "does not match",
+			resources:         []string{"checks"},
+			requestedResource: "events",
+			want:              false,
+		},
+		{
+			name:              "matches",
+			resources:         []string{"checks", "events"},
+			requestedResource: "events",
+			want:              true,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			r := Rule{
+				Resources: tc.resources,
+			}
+			if got := r.ResourceMatches(tc.requestedResource); got != tc.want {
+				t.Errorf("Rule.ResourceMatches() = %v, want %v", got, tc.want)
+			}
+		})
+	}
 }
 
-func TestFixtureRole(t *testing.T) {
-	r := FixtureRole("foo", "dev")
-	assert.Equal(t, "foo", r.Name)
-	assert.NotEmpty(t, r.Rules)
+func TestRuleResourceNameMatches(t *testing.T) {
+	tests := []struct {
+		name                  string
+		resourceNames         []string
+		requestedResourceName string
+		want                  bool
+	}{
+		{
+			name: "rule allows all names",
+			requestedResourceName: "checks",
+			want: true,
+		},
+		{
+			name:          "rule only allows a specific name none specified in req",
+			resourceNames: []string{"foo"},
+			want:          false,
+		},
+		{
+			name:                  "does not match",
+			resourceNames:         []string{"foo"},
+			requestedResourceName: "bar",
+			want: false,
+		},
+		{
+			name:                  "matches",
+			resourceNames:         []string{"foo", "bar"},
+			requestedResourceName: "bar",
+			want: true,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			r := Rule{
+				ResourceNames: tc.resourceNames,
+			}
+			if got := r.ResourceNameMatches(tc.requestedResourceName); got != tc.want {
+				t.Errorf("Rule.ResourceNameMatches() = %v, want %v", got, tc.want)
+			}
+		})
+	}
 }
 
-func TestRuleValidate(t *testing.T) {
-	r := &Rule{Type: "battlestar"}
-
-	// Empty namespace
-	assert.Error(t, r.Validate())
-	r.Namespace = "dev"
-
-	// No permissions
-	assert.Error(t, r.Validate())
-	r.Permissions = []string{"docking"}
-
-	// Invalid permissions
-	assert.Error(t, r.Validate())
-	r.Permissions = []string{"create"}
-
-	// Valid params
-	assert.Equal(t, "battlestar", r.Type)
-	assert.Equal(t, "dev", r.Namespace)
-	assert.Equal(t, []string{"create"}, r.Permissions)
-	assert.NoError(t, r.Validate())
-
-	// Wildcard org
-	r.Namespace = NamespaceTypeAll
-	assert.NoError(t, r.Validate())
-}
-
-func TestRoleValidate(t *testing.T) {
-	r := FixtureRole("foo", "dev")
-
-	// Valid
-	assert.NoError(t, r.Validate())
-	assert.Equal(t, "foo", r.Name)
-
-	// Bad name
-	r.Name = "FOO/bar/10"
-	assert.Error(t, r.Validate())
-
-	// Bad rules
-	r.Rules = []Rule{{Type: "sdfadfsadsfasdf@##@$!@$"}}
-	assert.Error(t, r.Validate())
+func TestRuleVerbMatches(t *testing.T) {
+	tests := []struct {
+		name          string
+		verbs         []string
+		requestedVerb string
+		want          bool
+	}{
+		{
+			name:          "empty rule verbs",
+			requestedVerb: "get",
+			want:          false,
+		},
+		{
+			name:          "all verbs",
+			verbs:         []string{VerbAll},
+			requestedVerb: "get",
+			want:          true,
+		},
+		{
+			name:          "does not match",
+			verbs:         []string{"create"},
+			requestedVerb: "get",
+			want:          false,
+		},
+		{
+			name:          "matches",
+			verbs:         []string{"create", "get"},
+			requestedVerb: "get",
+			want:          true,
+		},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			r := Rule{
+				Verbs: tc.verbs,
+			}
+			if got := r.VerbMatches(tc.requestedVerb); got != tc.want {
+				t.Errorf("Rule.VerbMatches() = %v, want %v", got, tc.want)
+			}
+		})
+	}
 }

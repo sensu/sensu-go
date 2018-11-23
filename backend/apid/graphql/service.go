@@ -1,38 +1,41 @@
 package graphql
 
 import (
+	"context"
+
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/graphql"
-	"github.com/sensu/sensu-go/types"
 )
+
+// ClientFactory instantiates new instances of the REST API client
+type ClientFactory interface {
+	NewWithContext(ctx context.Context) client.APIClient
+}
 
 // ServiceConfig describes values required to instantiate service.
 type ServiceConfig struct {
-	Store       store.Store
-	Bus         messaging.MessageBus
-	QueueGetter types.QueueGetter
+	ClientFactory ClientFactory
 }
 
 // NewService instantiates new GraphQL service
 func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	svc := graphql.NewService()
-	store := cfg.Store
-	nodeResolver := newNodeResolver(store, cfg.QueueGetter)
+	clientFactory := cfg.ClientFactory
+	nodeResolver := newNodeResolver(clientFactory)
 
 	// Register types
 	schema.RegisterAsset(svc, &assetImpl{})
-	schema.RegisterNamespace(svc, newNamespaceImpl(store, cfg.QueueGetter))
+	schema.RegisterNamespace(svc, &namespaceImpl{factory: clientFactory})
 	schema.RegisterErrCode(svc)
 	schema.RegisterError(svc, nil)
 	schema.RegisterEvent(svc, &eventImpl{})
 	schema.RegisterEventsListOrder(svc)
-	schema.RegisterHandler(svc, newHandlerImpl(store))
+	schema.RegisterHandler(svc, &handlerImpl{factory: clientFactory})
 	schema.RegisterHandlerSocket(svc, &handlerSocketImpl{})
 	schema.RegisterIcon(svc)
 	schema.RegisterJSON(svc, jsonImpl{})
-	schema.RegisterQuery(svc, newQueryImpl(store, nodeResolver, cfg.QueueGetter))
+	schema.RegisterQuery(svc, &queryImpl{nodeResolver: nodeResolver, factory: clientFactory})
 	schema.RegisterMutator(svc, &mutatorImpl{})
 	schema.RegisterMutedColour(svc)
 	schema.RegisterNode(svc, &nodeImpl{nodeResolver})
@@ -41,24 +44,24 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterProxyRequests(svc, &schema.ProxyRequestsAliases{})
 	schema.RegisterResolveEventPayload(svc, &schema.ResolveEventPayloadAliases{})
 	schema.RegisterSchema(svc)
-	schema.RegisterSilenced(svc, newSilencedImpl(store, cfg.QueueGetter))
+	schema.RegisterSilenced(svc, &silencedImpl{factory: clientFactory})
 	schema.RegisterSilencedConnection(svc, &schema.SilencedConnectionAliases{})
 	schema.RegisterStandardError(svc, stdErrImpl{})
 	schema.RegisterSubscriptionSet(svc, subscriptionSetImpl{})
 	schema.RegisterSubscriptionSetOrder(svc)
 	schema.RegisterSubscriptionOccurences(svc, &schema.SubscriptionOccurencesAliases{})
 	schema.RegisterSilencesListOrder(svc)
-	schema.RegisterViewer(svc, newViewerImpl(store))
+	schema.RegisterViewer(svc, &viewerImpl{factory: clientFactory})
 
 	// Register check types
-	schema.RegisterCheck(svc, newCheckImpl(store))
-	schema.RegisterCheckConfig(svc, newCheckCfgImpl(store))
+	schema.RegisterCheck(svc, &checkImpl{factory: clientFactory})
+	schema.RegisterCheckConfig(svc, &checkCfgImpl{factory: clientFactory})
 	schema.RegisterCheckConfigConnection(svc, &schema.CheckConfigConnectionAliases{})
 	schema.RegisterCheckHistory(svc, &checkHistoryImpl{})
 	schema.RegisterCheckListOrder(svc)
 
 	// Register entity types
-	schema.RegisterEntity(svc, newEntityImpl(store))
+	schema.RegisterEntity(svc, &entityImpl{factory: clientFactory})
 	schema.RegisterEntityConnection(svc, &schema.EntityConnectionAliases{})
 	schema.RegisterEntityListOrder(svc)
 	schema.RegisterDeregistration(svc, &deregistrationImpl{})
@@ -80,15 +83,20 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterTimeWindowWhen(svc, &schema.TimeWindowWhenAliases{})
 	schema.RegisterTimeWindowTimeRange(svc, &schema.TimeWindowTimeRangeAliases{})
 
+	// Register RBAC types
+	schema.RegisterClusterRole(svc, &schema.ClusterRoleAliases{})
+	schema.RegisterClusterRoleBinding(svc, &schema.ClusterRoleBindingAliases{})
+	schema.RegisterRole(svc, &schema.RoleAliases{})
+	schema.RegisterRoleBinding(svc, &schema.RoleBindingAliases{})
+	schema.RegisterRoleRef(svc, &schema.RoleRefAliases{})
+	schema.RegisterRule(svc, &schema.RuleAliases{})
+	schema.RegisterSubject(svc, &schema.SubjectAliases{})
+
 	// Register user types
-	schema.RegisterRole(svc, &roleImpl{})
-	schema.RegisterRule(svc, &ruleImpl{})
-	schema.RegisterRuleResource(svc)
-	schema.RegisterRulePermission(svc)
 	schema.RegisterUser(svc, &userImpl{})
 
 	// Register mutations
-	schema.RegisterMutation(svc, newMutationImpl(store, cfg.QueueGetter, cfg.Bus))
+	schema.RegisterMutation(svc, &mutationsImpl{factory: clientFactory})
 	schema.RegisterCheckConfigInputs(svc)
 	schema.RegisterCreateCheckInput(svc)
 	schema.RegisterCreateCheckPayload(svc, &checkMutationPayload{})

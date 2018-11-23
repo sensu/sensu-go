@@ -89,10 +89,6 @@ func HTTPStatusFromCode(code actions.ErrCode) int {
 		return http.StatusNotFound
 	case actions.AlreadyExistsErr:
 		return http.StatusConflict
-	case actions.PermissionDenied:
-		return http.StatusUnauthorized
-	case actions.Unauthenticated:
-		return http.StatusUnauthorized
 	}
 
 	logger.WithField("code", code).Error("unknown error code")

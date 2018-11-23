@@ -5,7 +5,6 @@ import (
 
 	"context"
 
-	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
@@ -40,7 +39,6 @@ var (
 // CheckController exposes actions which a viewer can perform.
 type CheckController struct {
 	store      store.CheckConfigStore
-	policy     authorization.CheckPolicy
 	checkQueue types.Queue
 }
 
@@ -48,7 +46,6 @@ type CheckController struct {
 func NewCheckController(store store.CheckConfigStore, getter types.QueueGetter) CheckController {
 	return CheckController{
 		store:      store,
-		policy:     authorization.Checks,
 		checkQueue: getter.GetQueue(adhocQueueName),
 	}
 }
@@ -59,15 +56,6 @@ func (a CheckController) Query(ctx context.Context) ([]*types.CheckConfig, error
 	results, serr := a.store.GetCheckConfigs(ctx)
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
-	}
-
-	// Filter out those resources the viewer does not have access to view.
-	abilities := a.policy.WithContext(ctx)
-	for i := 0; i < len(results); i++ {
-		if !abilities.CanRead(results[i]) {
-			results = append(results[:i], results[i+1:]...)
-			i--
-		}
 	}
 
 	return results, nil
@@ -83,20 +71,13 @@ func (a CheckController) Find(ctx context.Context, name string) (*types.CheckCon
 		return nil, NewError(InternalErr, serr)
 	}
 
-	// Verify user has permission to view
-	abilities := a.policy.WithContext(ctx)
-	if result != nil && abilities.CanRead(result) {
-		return result, nil
-	}
-
-	return nil, NewErrorf(NotFound)
+	return result, nil
 }
 
 // Create instantiates, validates and persists new resource if viewer has access.
 func (a CheckController) Create(ctx context.Context, newCheck types.CheckConfig) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &newCheck)
-	abilities := a.policy.WithContext(ctx)
 
 	// Check for existing
 	if e, err := a.store.GetCheckConfigByName(ctx, newCheck.Name); err != nil {
@@ -108,11 +89,6 @@ func (a CheckController) Create(ctx context.Context, newCheck types.CheckConfig)
 	// Validate
 	if err := newCheck.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
-	}
-
-	// Verify viewer can make change
-	if yes := abilities.CanCreate(&newCheck); !yes {
-		return NewErrorf(PermissionDenied)
 	}
 
 	// Persist
@@ -127,12 +103,6 @@ func (a CheckController) Create(ctx context.Context, newCheck types.CheckConfig)
 func (a CheckController) CreateOrReplace(ctx context.Context, newCheck types.CheckConfig) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &newCheck)
-	abilities := a.policy.WithContext(ctx)
-
-	// Verify viewer can make change
-	if !(abilities.CanCreate(&newCheck) && abilities.CanUpdate(&newCheck)) {
-		return NewErrorf(PermissionDenied, "create/update")
-	}
 
 	// Validate
 	if err := newCheck.Validate(); err != nil {
@@ -151,7 +121,6 @@ func (a CheckController) CreateOrReplace(ctx context.Context, newCheck types.Che
 func (a CheckController) Update(ctx context.Context, given types.CheckConfig) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &given)
-	abilities := a.policy.WithContext(ctx)
 
 	// Find existing check
 	check, err := a.store.GetCheckConfigByName(ctx, given.Name)
@@ -159,11 +128,6 @@ func (a CheckController) Update(ctx context.Context, given types.CheckConfig) er
 		return NewError(InternalErr, err)
 	} else if check == nil {
 		return NewErrorf(NotFound)
-	}
-
-	// Verify viewer can make change
-	if yes := abilities.CanUpdate(check); !yes {
-		return NewErrorf(PermissionDenied)
 	}
 
 	// Copy
@@ -184,13 +148,6 @@ func (a CheckController) Update(ctx context.Context, given types.CheckConfig) er
 
 // Destroy removes a resource if viewer has access.
 func (a CheckController) Destroy(ctx context.Context, name string) error {
-	abilities := a.policy.WithContext(ctx)
-
-	// Verify user has permission
-	if yes := abilities.CanDelete(); !yes {
-		return NewErrorf(PermissionDenied)
-	}
-
 	// Fetch from store
 	result, serr := a.store.GetCheckConfigByName(ctx, name)
 	if serr != nil {
@@ -288,12 +245,6 @@ func (a CheckController) findAndUpdateCheckConfig(
 		return serr
 	}
 
-	// Verify viewer can make change
-	abilities := a.policy.WithContext(ctx)
-	if yes := abilities.CanUpdate(check); !yes {
-		return NewErrorf(PermissionDenied)
-	}
-
 	// Configure
 	if err := configureFn(check); err != nil {
 		return err
@@ -318,12 +269,6 @@ func (a CheckController) QueueAdhocRequest(ctx context.Context, name string, adh
 
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, checkConfig)
-	abilities := a.policy.WithContext(ctx)
-
-	// Verify viewer can make change
-	if yes := abilities.CanCreate(checkConfig); !yes {
-		return NewErrorf(PermissionDenied)
-	}
 
 	// if there are subscriptions, update the check with the provided subscriptions;
 	// otherwise, use what the check already has

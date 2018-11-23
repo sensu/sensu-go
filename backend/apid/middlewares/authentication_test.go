@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
+	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,7 +28,8 @@ func TestMiddlewareJWT(t *testing.T) {
 	defer server.Close()
 
 	// Valid JWT
-	_, tokenString, _ := jwt.AccessToken("foo")
+	user := &types.User{Username: "foo"}
+	_, tokenString, _ := jwt.AccessToken(user)
 
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", server.URL, nil)
@@ -57,4 +59,15 @@ func TestMiddlewareInvalidJWT(t *testing.T) {
 	res, err := client.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
+}
+
+func TestMiddlewareIgnoreUnauthorized(t *testing.T) {
+	mware := Authentication{IgnoreUnauthorized: true}
+	server := httptest.NewServer(mware.Then(testHandler()))
+	defer server.Close()
+
+	// No credentials passed
+	res, err := http.Get(server.URL)
+	assert.NoError(t, err)
+	assert.Equal(t, http.StatusOK, res.StatusCode)
 }

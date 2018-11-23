@@ -28,10 +28,6 @@ func TestSeedInitialData(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEmpty(t, admin, "admin user should be present after seed process")
 
-	adminRole, err := st.GetRoleByName(ctx, "admin")
-	require.NoError(t, err)
-	assert.NotEmpty(t, adminRole, "admin role should be present after seed process")
-
 	agent, err := st.GetUser(ctx, "agent")
 	require.NoError(t, err)
 	assert.NotEmpty(t, agent, "agent user should be present after seed process")
@@ -39,12 +35,4 @@ func TestSeedInitialData(t *testing.T) {
 	defaultNamespace, err := st.GetNamespace(ctx, "default")
 	require.NoError(t, err)
 	assert.NotEmpty(t, defaultNamespace, "default namespace should be present after seed process")
-
-	sensu, err := st.GetUser(ctx, "sensu")
-	require.NoError(t, err)
-	assert.NotEmpty(t, sensu, "sensu user should be present after seed process")
-
-	readOnlyRole, err := st.GetRoleByName(ctx, "read-only")
-	require.NoError(t, err)
-	assert.NotEmpty(t, readOnlyRole, "read-only role should be present after seed process")
 }

@@ -5,10 +5,12 @@ import (
 	"testing"
 	"time"
 
+	client "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -89,12 +91,9 @@ func TestCheckTypeNodeIDFieldImpl(t *testing.T) {
 func TestCheckTypeIsSilencedField(t *testing.T) {
 	check := types.FixtureCheck("my-check")
 	check.Silenced = []string{"unix:my-check"}
-	mock := mockSilenceQuerier{els: []*types.Silenced{
-		types.FixtureSilenced("unix:my-check"),
-	}}
 
 	// return associated silence
-	impl := &checkImpl{silenceQuerier: mock}
+	impl := &checkImpl{}
 	res, err := impl.IsSilenced(graphql.ResolveParams{Source: check})
 	require.NoError(t, err)
 	assert.True(t, res)
@@ -104,14 +103,16 @@ func TestCheckTypeSilencesField(t *testing.T) {
 	check := types.FixtureCheck("my-check")
 	check.Subscriptions = []string{"unix"}
 	check.Silenced = []string{"unix:my-check"}
-	mock := mockSilenceQuerier{els: []*types.Silenced{
-		types.FixtureSilenced("unix:my-check"),
-		types.FixtureSilenced("fred:my-check"),
-		types.FixtureSilenced("unix:not-my-check"),
-	}}
+
+	client, factory := client.NewClientFactory()
+	client.On("ListSilenceds", mock.Anything, "", "").Return([]types.Silenced{
+		*types.FixtureSilenced("unix:my-check"),
+		*types.FixtureSilenced("fred:my-check"),
+		*types.FixtureSilenced("unix:not-my-check"),
+	}, nil).Once()
 
 	// return associated silence
-	impl := &checkImpl{silenceQuerier: mock}
+	impl := &checkImpl{factory: factory}
 	res, err := impl.Silences(graphql.ResolveParams{Source: check})
 	require.NoError(t, err)
 	assert.Len(t, res, 1)
@@ -120,14 +121,16 @@ func TestCheckTypeSilencesField(t *testing.T) {
 func TestCheckTypeRuntimeAssetsField(t *testing.T) {
 	check := types.FixtureCheck("my-check")
 	check.RuntimeAssets = []string{"one", "two"}
-	mock := mockAssetQuerier{els: []*types.Asset{
-		types.FixtureAsset("one"),
-		types.FixtureAsset("two"),
-		types.FixtureAsset("three"),
-	}}
+
+	client, factory := client.NewClientFactory()
+	client.On("ListAssets", mock.Anything).Return([]types.Asset{
+		*types.FixtureAsset("one"),
+		*types.FixtureAsset("two"),
+		*types.FixtureAsset("three"),
+	}, nil).Once()
 
 	// return associated silence
-	impl := &checkImpl{assetQuerier: mock}
+	impl := &checkImpl{factory: factory}
 	res, err := impl.RuntimeAssets(graphql.ResolveParams{Source: check})
 	require.NoError(t, err)
 	assert.Len(t, res, 2)
@@ -136,12 +139,15 @@ func TestCheckTypeRuntimeAssetsField(t *testing.T) {
 func TestCheckConfigTypeIsSilencedField(t *testing.T) {
 	check := types.FixtureCheckConfig("my-check")
 	check.Subscriptions = []string{"unix"}
-	mock := mockSilenceQuerier{els: []*types.Silenced{
-		types.FixtureSilenced("*:my-check"),
-	}}
+
+	client, factory := client.NewClientFactory()
+	client.On("ListSilenceds", mock.Anything, "", "").Return([]types.Silenced{
+		*types.FixtureSilenced("*:my-check"),
+		*types.FixtureSilenced("unix:not-my-check"),
+	}, nil).Once()
 
 	// return associated silence
-	impl := &checkCfgImpl{silenceQuerier: mock}
+	impl := &checkCfgImpl{factory: factory}
 	res, err := impl.IsSilenced(graphql.ResolveParams{Source: check})
 	require.NoError(t, err)
 	assert.True(t, res)
@@ -150,17 +156,19 @@ func TestCheckConfigTypeIsSilencedField(t *testing.T) {
 func TestCheckConfigTypeSilencesField(t *testing.T) {
 	check := types.FixtureCheckConfig("my-check")
 	check.Subscriptions = []string{"unix"}
-	mock := mockSilenceQuerier{els: []*types.Silenced{
-		types.FixtureSilenced("*:my-check"),
-		types.FixtureSilenced("unix:*"),
-		types.FixtureSilenced("unix:my-check"),
-		types.FixtureSilenced("unix:different-check"),
-		types.FixtureSilenced("unrelated:my-check"),
-		types.FixtureSilenced("*:another-check"),
-	}}
+
+	client, factory := client.NewClientFactory()
+	client.On("ListSilenceds", mock.Anything, "", "").Return([]types.Silenced{
+		*types.FixtureSilenced("*:my-check"),
+		*types.FixtureSilenced("unix:*"),
+		*types.FixtureSilenced("unix:my-check"),
+		*types.FixtureSilenced("unix:different-check"),
+		*types.FixtureSilenced("unrelated:my-check"),
+		*types.FixtureSilenced("*:another-check"),
+	}, nil).Once()
 
 	// return associated silence
-	impl := &checkCfgImpl{silenceQuerier: mock}
+	impl := &checkCfgImpl{factory: factory}
 	res, err := impl.Silences(graphql.ResolveParams{Source: check})
 	require.NoError(t, err)
 	assert.Len(t, res, 2)
@@ -169,15 +177,89 @@ func TestCheckConfigTypeSilencesField(t *testing.T) {
 func TestCheckConfigTypeRuntimeAssetsField(t *testing.T) {
 	check := types.FixtureCheckConfig("my-check")
 	check.RuntimeAssets = []string{"one", "two"}
-	mock := mockAssetQuerier{els: []*types.Asset{
-		types.FixtureAsset("one"),
-		types.FixtureAsset("two"),
-		types.FixtureAsset("three"),
-	}}
+
+	client, factory := client.NewClientFactory()
+	client.On("ListAssets", mock.Anything).Return([]types.Asset{
+		*types.FixtureAsset("one"),
+		*types.FixtureAsset("two"),
+		*types.FixtureAsset("three"),
+	}, nil).Once()
 
 	// return associated silence
-	impl := &checkCfgImpl{assetQuerier: mock}
+	impl := &checkCfgImpl{factory: factory}
 	res, err := impl.RuntimeAssets(graphql.ResolveParams{Source: check})
+	require.NoError(t, err)
+	assert.Len(t, res, 2)
+}
+
+func TestCheckConfigTypeHandlersField(t *testing.T) {
+	check := types.FixtureCheckConfig("my-check")
+	check.Handlers = []string{"one", "two"}
+
+	client, factory := client.NewClientFactory()
+	impl := &checkCfgImpl{factory: factory}
+
+	// return associated silence
+	client.On("ListHandlers", mock.Anything).Return([]types.Handler{
+		*types.FixtureHandler("one"),
+		*types.FixtureHandler("two"),
+		*types.FixtureHandler("three"),
+	}, nil).Once()
+	res, err := impl.Handlers(graphql.ResolveParams{Source: check})
+	require.NoError(t, err)
+	assert.Len(t, res, 2)
+}
+
+func TestCheckTypeHandlersField(t *testing.T) {
+	check := types.FixtureCheck("my-check")
+	check.Handlers = []string{"one", "two"}
+
+	client, factory := client.NewClientFactory()
+	impl := &checkImpl{factory: factory}
+
+	// return associated silence
+	client.On("ListHandlers", mock.Anything).Return([]types.Handler{
+		*types.FixtureHandler("one"),
+		*types.FixtureHandler("two"),
+		*types.FixtureHandler("three"),
+	}, nil).Once()
+	res, err := impl.Handlers(graphql.ResolveParams{Source: check})
+	require.NoError(t, err)
+	assert.Len(t, res, 2)
+}
+
+func TestCheckConfigTypeOutputMetricHandlersField(t *testing.T) {
+	check := types.FixtureCheckConfig("my-check")
+	check.OutputMetricHandlers = []string{"one", "two"}
+
+	client, factory := client.NewClientFactory()
+	impl := &checkCfgImpl{factory: factory}
+
+	// return associated silence
+	client.On("ListHandlers", mock.Anything).Return([]types.Handler{
+		*types.FixtureHandler("one"),
+		*types.FixtureHandler("two"),
+		*types.FixtureHandler("three"),
+	}, nil).Once()
+	res, err := impl.OutputMetricHandlers(graphql.ResolveParams{Source: check})
+	require.NoError(t, err)
+	assert.Len(t, res, 2)
+}
+
+func TestCheckTypeOutputMetricHandlersField(t *testing.T) {
+	check := types.FixtureCheck("my-check")
+	check.OutputMetricHandlers = []string{"one", "two"}
+
+	client, factory := client.NewClientFactory()
+	impl := &checkImpl{factory: factory}
+
+	// return associated silence
+	client.On("ListHandlers", mock.Anything).Return([]types.Handler{
+		*types.FixtureHandler("one"),
+		*types.FixtureHandler("two"),
+		*types.FixtureHandler("three"),
+	}, nil).Once()
+	res, err := impl.OutputMetricHandlers(graphql.ResolveParams{Source: check})
 	require.NoError(t, err)
 	assert.Len(t, res, 2)
 }

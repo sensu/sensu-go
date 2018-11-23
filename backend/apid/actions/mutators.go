@@ -3,7 +3,6 @@ package actions
 import (
 	"context"
 
-	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -17,15 +16,13 @@ var mutatorUpdateFields = []string{
 
 // MutatorController allows querying mutators in bulk or by name.
 type MutatorController struct {
-	Store  store.MutatorStore
-	Policy authorization.MutatorPolicy
+	Store store.MutatorStore
 }
 
 // NewMutatorController creates a new MutatorController backed by store.
 func NewMutatorController(store store.MutatorStore) MutatorController {
 	return MutatorController{
-		Store:  store,
-		Policy: authorization.Mutators,
+		Store: store,
 	}
 }
 
@@ -36,18 +33,12 @@ func NewMutatorController(store store.MutatorStore) MutatorController {
 func (c MutatorController) Create(ctx context.Context, mut types.Mutator) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &mut)
-	policy := c.Policy.WithContext(ctx)
 
 	// Check for existing
 	if m, err := c.Store.GetMutatorByName(ctx, mut.Name); err != nil {
 		return NewError(InternalErr, err)
 	} else if m != nil {
 		return NewErrorf(AlreadyExistsErr, mut.Name)
-	}
-
-	// Verify permissions
-	if ok := policy.CanCreate(&mut); !ok {
-		return NewErrorf(PermissionDenied, "create")
 	}
 
 	// Validate
@@ -70,12 +61,6 @@ func (c MutatorController) Create(ctx context.Context, mut types.Mutator) error 
 func (c MutatorController) CreateOrReplace(ctx context.Context, mut types.Mutator) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &mut)
-	policy := c.Policy.WithContext(ctx)
-
-	// Verify permissions
-	if !(policy.CanCreate(&mut) && policy.CanUpdate(&mut)) {
-		return NewErrorf(PermissionDenied, "create/update")
-	}
 
 	// Validate
 	if err := mut.Validate(); err != nil {
@@ -97,7 +82,6 @@ func (c MutatorController) CreateOrReplace(ctx context.Context, mut types.Mutato
 func (c MutatorController) Update(ctx context.Context, delta types.Mutator) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &delta)
-	policy := c.Policy.WithContext(ctx)
 
 	// Check for existing
 	mut, err := c.Store.GetMutatorByName(ctx, delta.Name)
@@ -105,11 +89,6 @@ func (c MutatorController) Update(ctx context.Context, delta types.Mutator) erro
 		return NewError(InternalErr, err)
 	} else if mut == nil {
 		return NewErrorf(NotFound, delta.Name)
-	}
-
-	// Verify viewer can make change
-	if ok := policy.CanUpdate(mut); !ok {
-		return NewErrorf(PermissionDenied, "update")
 	}
 
 	// Update
@@ -135,24 +114,13 @@ func (c MutatorController) Update(ctx context.Context, delta types.Mutator) erro
 // do not exist, or an internal error occurs while reading the underlying
 // Store.
 func (c MutatorController) Query(ctx context.Context) ([]*types.Mutator, error) {
-	policy := c.Policy.WithContext(ctx)
-
 	// Fetch from store
 	mutators, err := c.Store.GetMutators(ctx)
 	if err != nil {
 		return nil, NewError(InternalErr, err)
 	}
 
-	result := make([]*types.Mutator, 0, len(mutators))
-
-	// Filter out those resources the viewer does not have access to view.
-	for _, m := range mutators {
-		if ok := policy.CanRead(m); ok {
-			result = append(result, m)
-		}
-	}
-
-	return result, nil
+	return mutators, nil
 }
 
 // Destroy destroys the named Mutator.
@@ -160,13 +128,6 @@ func (c MutatorController) Query(ctx context.Context) ([]*types.Mutator, error) 
 // do not exist, or an internal error occurs while updating the underlying
 // Store.
 func (c MutatorController) Destroy(ctx context.Context, name string) error {
-	policy := c.Policy.WithContext(ctx)
-
-	// Verify permissions
-	if ok := policy.CanDelete(); !ok {
-		return NewErrorf(PermissionDenied, "delete")
-	}
-
 	// Validate parameters
 	if name == "" {
 		return NewErrorf(InvalidArgument, "name is undefined")
@@ -201,12 +162,6 @@ func (c MutatorController) Find(ctx context.Context, name string) (*types.Mutato
 	}
 
 	if result == nil {
-		return nil, NewErrorf(NotFound)
-	}
-
-	policy := c.Policy.WithContext(ctx)
-
-	if !policy.CanRead(result) {
 		return nil, NewErrorf(NotFound)
 	}
 

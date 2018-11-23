@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -22,15 +21,13 @@ var updateFields = []string{
 
 // HandlerController exposes actions available for handlers
 type HandlerController struct {
-	Store  store.HandlerStore
-	Policy authorization.HandlerPolicy
+	Store store.HandlerStore
 }
 
 // NewHandlerController creates a new HandlerController backed by store.
 func NewHandlerController(store store.HandlerStore) HandlerController {
 	return HandlerController{
-		Store:  store,
-		Policy: authorization.Handlers,
+		Store: store,
 	}
 }
 
@@ -41,18 +38,12 @@ func NewHandlerController(store store.HandlerStore) HandlerController {
 func (c HandlerController) Create(ctx context.Context, handler types.Handler) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &handler)
-	abilities := c.Policy.WithContext(ctx)
 
 	// Check for existing
 	if m, err := c.Store.GetHandlerByName(ctx, handler.Name); err != nil {
 		return NewError(InternalErr, err)
 	} else if m != nil {
 		return NewErrorf(AlreadyExistsErr, handler.Name)
-	}
-
-	// Verify permissions
-	if ok := abilities.CanCreate(&handler); !ok {
-		return NewErrorf(PermissionDenied, "create")
 	}
 
 	// Validate
@@ -79,12 +70,6 @@ func (c HandlerController) Create(ctx context.Context, handler types.Handler) er
 func (c HandlerController) CreateOrReplace(ctx context.Context, handler types.Handler) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &handler)
-	abilities := c.Policy.WithContext(ctx)
-
-	// Verify permissions
-	if !(abilities.CanCreate(&handler) && abilities.CanUpdate(&handler)) {
-		return NewErrorf(PermissionDenied, "create/update")
-	}
 
 	// Validate
 	if err := handler.Validate(); err != nil {
@@ -105,13 +90,6 @@ func (c HandlerController) CreateOrReplace(ctx context.Context, handler types.Ha
 
 // Destroy removes a resource if viewer has access.
 func (c HandlerController) Destroy(ctx context.Context, name string) error {
-	abilities := c.Policy.WithContext(ctx)
-
-	// Verify user has permission
-	if yes := abilities.CanDelete(); !yes {
-		return NewErrorf(PermissionDenied)
-	}
-
 	// Fetch from store
 	result, serr := c.Store.GetHandlerByName(ctx, name)
 	if serr != nil {
@@ -137,13 +115,7 @@ func (c HandlerController) Find(ctx context.Context, name string) (*types.Handle
 		return nil, NewError(InternalErr, err)
 	}
 
-	// Verify user has permission to view
-	abilities := c.Policy.WithContext(ctx)
-	if result != nil && abilities.CanRead(result) {
-		return result, nil
-	}
-
-	return nil, NewErrorf(NotFound)
+	return result, nil
 }
 
 // Query returns resources available to the viewer
@@ -154,15 +126,6 @@ func (c HandlerController) Query(ctx context.Context) ([]*types.Handler, error) 
 		return nil, NewError(InternalErr, serr)
 	}
 
-	// Filter out those resources the viewer does not have access to view.
-	abilities := c.Policy.WithContext(ctx)
-	for i := 0; i < len(results); i++ {
-		if !abilities.CanRead(results[i]) {
-			results = append(results[:i], results[i+1:]...)
-			i--
-		}
-	}
-
 	return results, nil
 }
 
@@ -170,7 +133,6 @@ func (c HandlerController) Query(ctx context.Context) ([]*types.Handler, error) 
 func (c HandlerController) Update(ctx context.Context, newHandler types.Handler) error {
 	// Adjust context
 	ctx = addOrgEnvToContext(ctx, &newHandler)
-	abilities := c.Policy.WithContext(ctx)
 
 	// Find existing handler
 	handler, err := c.Store.GetHandlerByName(ctx, newHandler.Name)
@@ -178,11 +140,6 @@ func (c HandlerController) Update(ctx context.Context, newHandler types.Handler)
 		return NewError(InternalErr, err)
 	} else if handler == nil {
 		return NewErrorf(NotFound, newHandler.Name)
-	}
-
-	// Verify viewer can make change
-	if yes := abilities.CanUpdate(handler); !yes {
-		return NewErrorf(PermissionDenied, "update")
 	}
 
 	// Copy

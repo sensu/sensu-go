@@ -91,6 +91,7 @@ string-string key-value pairs.
 - Check `proxy_entity_id`/`ProxyEntityID` field has changed to `proxy_entity_name`/`ProxyEntityName`.
 - Objects containing both a `name`/`Name` and `namespace`/`Namespace` field have been
 replaced with `metadata`/`ObjectMeta` (which contains both of those fields).
+- Role-based access control (RBAC) has been completely redesigned.
 - Filter and token substitution variable names now match API naming. Most names
 that were previously UpperCased are now lower_cased.
 - Filter statements are now called expressions. Users should update their

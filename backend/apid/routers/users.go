@@ -32,12 +32,13 @@ func (r *UsersRouter) Mount(parent *mux.Router) {
 	routes.Put(r.createOrReplace)
 
 	// Custom
-	routes.Path("{id}/reinstate", r.reinstate).Methods(http.MethodPut)
-	routes.Path("{id}/roles/{role}", r.addRole).Methods(http.MethodPut)
-	routes.Path("{id}/roles/{role}", r.removeRole).Methods(http.MethodDelete)
+	routes.Path("{id}/{subresource:reinstate}", r.reinstate).Methods(http.MethodPut)
+	routes.Path("{id}/{subresource:groups}", r.removeAllGroups).Methods(http.MethodDelete)
+	routes.Path("{id}/{subresource:groups}/{group}", r.addGroup).Methods(http.MethodPut)
+	routes.Path("{id}/{subresource:groups}/{group}", r.removeGroup).Methods(http.MethodDelete)
 
 	// TODO: Remove?
-	routes.Path("{id}/password", r.updatePassword).Methods(http.MethodPut)
+	routes.Path("{id}/{subresource:password}", r.updatePassword).Methods(http.MethodPut)
 }
 
 func (r *UsersRouter) list(req *http.Request) (interface{}, error) {
@@ -127,30 +128,45 @@ func (r *UsersRouter) updatePassword(req *http.Request) (interface{}, error) {
 	return nil, err
 }
 
-func (r *UsersRouter) addRole(req *http.Request) (interface{}, error) {
+func (r *UsersRouter) addGroup(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
 	id, err := url.PathUnescape(params["id"])
 	if err != nil {
 		return nil, err
 	}
-	role, err := url.PathUnescape(params["role"])
+
+	group, err := url.PathUnescape(params["group"])
 	if err != nil {
 		return nil, err
 	}
-	err = r.controller.AddRole(req.Context(), id, role)
+
+	err = r.controller.AddGroup(req.Context(), id, group)
 	return nil, err
 }
 
-func (r *UsersRouter) removeRole(req *http.Request) (interface{}, error) {
+func (r *UsersRouter) removeGroup(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
 	id, err := url.PathUnescape(params["id"])
 	if err != nil {
 		return nil, err
 	}
-	role, err := url.PathUnescape(params["role"])
+
+	group, err := url.PathUnescape(params["group"])
 	if err != nil {
 		return nil, err
 	}
-	err = r.controller.RemoveRole(req.Context(), id, role)
+
+	err = r.controller.RemoveGroup(req.Context(), id, group)
+	return nil, err
+}
+
+func (r *UsersRouter) removeAllGroups(req *http.Request) (interface{}, error) {
+	params := mux.Vars(req)
+	id, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, err
+	}
+
+	err = r.controller.RemoveAllGroups(req.Context(), id)
 	return nil, err
 }

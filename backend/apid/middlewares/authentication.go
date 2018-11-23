@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/types"
 )
@@ -17,29 +18,39 @@ type AuthStore interface {
 }
 
 // Authentication is a HTTP middleware that enforces authentication
-type Authentication struct{}
+type Authentication struct {
+	// IgnoreUnauthorized configures the middleware to continue the handler chain
+	// in the case where an access token was not present.
+	IgnoreUnauthorized bool
+}
 
 // Then middleware
 func (a Authentication) Then(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		tokenString := jwt.ExtractBearerToken(r)
 		if tokenString != "" {
 			token, err := jwt.ValidateToken(tokenString)
 			if err != nil {
 				logger.WithError(err).Warn("invalid token")
-				http.Error(w, "Invalid token given", http.StatusUnauthorized)
+				writeErr(w, actions.NewErrorf(actions.Unauthenticated, "invalid credentials"))
 				return
 			}
 
 			// Set the claims into the request context
-			ctx := jwt.SetClaimsIntoContext(r, token.Claims.(*types.Claims))
-
+			ctx = jwt.SetClaimsIntoContext(r, token.Claims.(*types.Claims))
 			next.ServeHTTP(w, r.WithContext(ctx))
+
 			return
 		}
 
 		// The user is not authenticated
-		http.Error(w, "Bad credentials given", http.StatusUnauthorized)
+		if a.IgnoreUnauthorized {
+			next.ServeHTTP(w, r.WithContext(ctx))
+			return
+		}
+
+		writeErr(w, actions.NewErrorf(actions.Unauthenticated, "bad credentials"))
 	})
 }
 
@@ -48,21 +59,28 @@ func BasicAuthentication(next http.Handler, store AuthStore) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		username, password, ok := r.BasicAuth()
 		if !ok {
-			http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+			writeErr(w, actions.NewErrorf(actions.Unauthenticated, "missing credentials"))
 			return
 		}
 
 		// Authenticate against the provider
-		_, err := store.AuthenticateUser(r.Context(), username, password)
+		user, err := store.AuthenticateUser(r.Context(), username, password)
 		if err != nil {
-			logger.WithField(
-				"user", username,
-			).WithError(err).Error("invalid username and/or password")
-			http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+			logger.
+				WithField("user", username).
+				WithError(err).
+				Error("invalid username and/or password")
+			writeErr(w, actions.NewErrorf(actions.Unauthenticated, "bad credentials"))
 			return
 		}
-		// TODO: eventually break out authroization details in context from jwt claims; in this method they are too tightly bound
-		claims, _ := jwt.NewClaims(username)
+
+		// The user was authenticated against the local store, therefore add the
+		// system:user group so it can view itself and change its password
+		user.Groups = append(user.Groups, "system:user")
+
+		// TODO: eventually break out authroization details in context from jwt
+		// claims; in this method they are too tightly bound
+		claims, _ := jwt.NewClaims(user)
 		ctx := jwt.SetClaimsIntoContext(r, claims)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

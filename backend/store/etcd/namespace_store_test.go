@@ -52,7 +52,7 @@ func TestnamespaceStorage(t *testing.T) {
 		assert.Error(t, err)
 
 		// Delete an empty namespace
-		require.NoError(t, store.DeleteRoleByName(ctx, "1"))
+		require.NoError(t, store.DeleteRole(ctx, "1"))
 		err = store.DeleteNamespace(ctx, namespace.Name)
 		assert.NoError(t, err)
 
