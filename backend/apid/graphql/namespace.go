@@ -270,7 +270,7 @@ func (r *namespaceImpl) Subscriptions(p schema.NamespaceSubscriptionsFieldResolv
 	}
 	for i := range entities {
 		entity := entities[i]
-		newSet := occurrencesOfSubscriptions(&entity)
+		newSet := occurrencesOfSubscriptions(entity)
 		set.Merge(newSet)
 	}
 
@@ -280,7 +280,7 @@ func (r *namespaceImpl) Subscriptions(p schema.NamespaceSubscriptionsFieldResolv
 	}
 	for i := range checks {
 		check := checks[i]
-		newSet := occurrencesOfSubscriptions(&check)
+		newSet := occurrencesOfSubscriptions(check)
 		set.Merge(newSet)
 	}
 
