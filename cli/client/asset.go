@@ -8,11 +8,14 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+var assetsPath = createBasePath(coreAPIGroup, coreAPIVersion, "assets")
+
 // ListAssets fetches a list of asset resources from the backend
 func (client *RestClient) ListAssets(namespace string) ([]types.Asset, error) {
 	var assets []types.Asset
 
-	res, err := client.R().SetQueryParam("namespace", namespace).Get("/assets")
+	path := assetsPath(namespace)
+	res, err := client.R().Get(path)
 	if err != nil {
 		return assets, err
 	}
@@ -29,8 +32,8 @@ func (client *RestClient) ListAssets(namespace string) ([]types.Asset, error) {
 func (client *RestClient) FetchAsset(name string) (*types.Asset, error) {
 	var asset types.Asset
 
-	assetPath := fmt.Sprintf("/assets/%s", url.PathEscape(name))
-	res, err := client.R().Get(assetPath)
+	path := assetsPath(client.config.Namespace(), name)
+	res, err := client.R().Get(path)
 	if err != nil {
 		return &asset, fmt.Errorf("GET %q: %s", assetPath, err)
 	}
@@ -50,7 +53,8 @@ func (client *RestClient) CreateAsset(asset *types.Asset) error {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Post("/assets")
+	path := assetsPath(asset.Namespace)
+	res, err := client.R().SetBody(bytes).Post(path)
 	if err != nil {
 		return err
 	}
@@ -73,8 +77,8 @@ func (client *RestClient) UpdateAsset(asset *types.Asset) (err error) {
 		return err
 	}
 
-	assetPath := fmt.Sprintf("/assets/%s", url.PathEscape(asset.Name))
-	res, err := client.R().SetBody(bytes).Put(assetPath)
+	path := assetsPath(asset.Namespace, asset.Name)
+	res, err := client.R().SetBody(bytes).Put(path)
 	if err != nil {
 		return fmt.Errorf("PUT %q: %s", assetPath, err)
 	}
