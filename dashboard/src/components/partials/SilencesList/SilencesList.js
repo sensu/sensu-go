@@ -72,15 +72,11 @@ class SilencesList extends React.Component {
     openDialog: false,
   };
 
-  // TODO, create something that exists similarily to
-  // the silencing on ChecksList. This method can set a dialog
-  // to appear, right now we just call the dialog in the
-  // children themselves.
-
   clearSilences = () => {
     this.setState({ openDialog: true });
   };
 
+  // TODO: delete these
   deleteItem = item => {
     this.deleteItems([item]);
   };
@@ -126,6 +122,7 @@ class SilencesList extends React.Component {
       key={key}
       silence={item}
       selected={selected}
+      onClickClearSilences={this.clearSilences}
       onClickSelect={setSelected}
     />
   );
@@ -186,7 +183,10 @@ class SilencesList extends React.Component {
             <ClearSilencesDialog
               silences={selectedItems}
               open={this.state.openDialog}
-              close={() => this.setState({ openDialog: false })}
+              close={() => {
+                this.setState({ openDialog: false });
+                toggleSelectedItems();
+              }}
               confirmed
               scrollable
             />
