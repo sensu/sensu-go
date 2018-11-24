@@ -7,7 +7,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-var checksPath = createBasePath(coreAPIGroup, coreAPIVersion, "checks")
+var checksPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "checks")
 
 // CreateCheck creates new check on configured Sensu instance
 func (client *RestClient) CreateCheck(check *types.CheckConfig) (err error) {

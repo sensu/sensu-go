@@ -7,7 +7,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-var handlersPath = createBasePath(coreAPIGroup, coreAPIVersion, "handlers")
+var handlersPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "handlers")
 
 // ListHandlers fetches all handlers from configured Sensu instance
 func (client *RestClient) ListHandlers(namespace string) ([]types.Handler, error) {

@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateBasePath(t *testing.T) {
+func TestCreateNSBasePath(t *testing.T) {
 	testCases := []struct {
 		ins       []string
 		paths     []string
@@ -34,7 +34,7 @@ func TestCreateBasePath(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.out, func(t *testing.T) {
-			fn := createBasePath(tc.ins[0], tc.ins[1], tc.ins[2])
+			fn := createNSBasePath(tc.ins[0], tc.ins[1], tc.ins[2])
 			out := fn(tc.namespace, tc.paths...)
 			assert.Equal(t, tc.out, out)
 		})

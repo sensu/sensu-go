@@ -8,7 +8,16 @@ import (
 const coreAPIGroup = "core"
 const coreAPIVersion = "v2"
 
-func createBasePath(group, version, resType string) func(string, ...string) string {
+func createBasePath(group, version string, resType ...string) func(...string) string {
+	fn := createNSBasePath(group, version, resType...)
+
+	return func(components ...string) string {
+		// first arg "" represents that no namespace has been specified
+		return fn("", components...)
+	}
+}
+
+func createNSBasePath(group, version string, resType ...string) func(string, ...string) string {
 	baseComponents := []string{"/api", group, version}
 
 	return func(namespace string, pathComponents ...string) string {
@@ -21,7 +30,7 @@ func createBasePath(group, version, resType string) func(string, ...string) stri
 		}
 
 		// resource type
-		components = append(components, resType)
+		components = append(components, resType...)
 
 		// append given path components
 		for _, path := range pathComponents {

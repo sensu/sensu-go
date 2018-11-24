@@ -2,15 +2,16 @@ package client
 
 import (
 	"encoding/json"
-	"net/url"
 
 	"github.com/sensu/sensu-go/types"
 )
 
+var usersPath = createBasePath(coreAPIGroup, coreAPIVersion, "rbac", "users")
+
 // AddGroupToUser makes "username" a member of "group".
 func (client *RestClient) AddGroupToUser(username, group string) error {
-	username, group = url.PathEscape(username), url.PathEscape(group)
-	res, err := client.R().Put("/rbac/users/" + username + "/groups/" + group)
+	path := usersPath(username, "groups", group)
+	res, err := client.R().Put(path)
 	if err != nil {
 		return err
 	}
@@ -24,7 +25,8 @@ func (client *RestClient) AddGroupToUser(username, group string) error {
 
 // CreateUser creates new check on configured Sensu instance
 func (client *RestClient) CreateUser(user *types.User) error {
-	res, err := client.R().SetBody(user).Post("/rbac/users")
+	path := usersPath("")
+	res, err := client.R().SetBody(user).Post(path)
 	if err != nil {
 		return err
 	}
@@ -38,7 +40,8 @@ func (client *RestClient) CreateUser(user *types.User) error {
 
 // DisableUser disables a user on configured Sensu instance
 func (client *RestClient) DisableUser(username string) error {
-	res, err := client.R().Delete("/rbac/users/" + url.PathEscape(username))
+	path := usersPath(username)
+	res, err := client.R().Delete(path)
 
 	if err != nil {
 		return err
@@ -54,7 +57,8 @@ func (client *RestClient) DisableUser(username string) error {
 // FetchUser retrieve the given user
 func (client *RestClient) FetchUser(username string) (*types.User, error) {
 	user := &types.User{}
-	res, err := client.R().Get("/rbac/users/" + url.PathEscape(username))
+	path := usersPath(username)
+	res, err := client.R().Get(path)
 
 	if err != nil {
 		return nil, err
@@ -72,7 +76,8 @@ func (client *RestClient) FetchUser(username string) (*types.User, error) {
 func (client *RestClient) ListUsers() ([]types.User, error) {
 	var users []types.User
 
-	res, err := client.R().Get("/rbac/users")
+	path := usersPath()
+	res, err := client.R().Get(path)
 	if err != nil {
 		return users, err
 	}
@@ -86,8 +91,9 @@ func (client *RestClient) ListUsers() ([]types.User, error) {
 }
 
 // ReinstateUser reinstates a disabled user on configured Sensu instance
-func (client *RestClient) ReinstateUser(uname string) error {
-	res, err := client.R().Put("/rbac/users/" + url.PathEscape(uname) + "/reinstate")
+func (client *RestClient) ReinstateUser(username string) error {
+	path := usersPath(username, "reinstate")
+	res, err := client.R().Put(path)
 
 	if err != nil {
 		return err
@@ -102,8 +108,8 @@ func (client *RestClient) ReinstateUser(uname string) error {
 
 // RemoveGroupFromUser removes "username" from the given "group".
 func (client *RestClient) RemoveGroupFromUser(username, group string) error {
-	username, group = url.PathEscape(username), url.PathEscape(group)
-	res, err := client.R().Delete("/rbac/users/" + username + "/groups/" + group)
+	path := usersPath(username, "groups", group)
+	res, err := client.R().Delete(path)
 	if err != nil {
 		return err
 	}
@@ -117,9 +123,8 @@ func (client *RestClient) RemoveGroupFromUser(username, group string) error {
 
 // RemoveGroupsFromUser removes all the groups for "username".
 func (client *RestClient) RemoveAllGroupsFromUser(username string) error {
-	username = url.PathEscape(username)
-
-	res, err := client.R().Delete("/rbac/users/" + username + "/groups")
+	path := usersPath(username, "groups")
+	res, err := client.R().Delete(path)
 	if err != nil {
 		return err
 	}
@@ -133,8 +138,6 @@ func (client *RestClient) RemoveAllGroupsFromUser(username string) error {
 
 // SetGroupsForUser sets the groups for "username" to "groups".
 func (client *RestClient) SetGroupsForUser(username string, groups []string) error {
-	username = url.PathEscape(username)
-
 	// Note: Instead of the implementation below, we can have the backend
 	// support receiving a list of groups on /rbac/users/{username}/groups
 
@@ -145,7 +148,7 @@ func (client *RestClient) SetGroupsForUser(username string, groups []string) err
 
 	// Then add each group in the set one by one
 	for _, group := range groups {
-		if err := client.AddGroupToUser(username, url.PathEscape(group)); err != nil {
+		if err := client.AddGroupToUser(username, group); err != nil {
 			return err
 		}
 	}
@@ -160,9 +163,10 @@ func (client *RestClient) UpdatePassword(username, pwd string) error {
 		return err
 	}
 
+	path := usersPath(username, "password")
 	res, err := client.R().
 		SetBody(bytes).
-		Put("/rbac/users/" + url.PathEscape(username) + "/password")
+		Put(path)
 
 	if err != nil {
 		return err
