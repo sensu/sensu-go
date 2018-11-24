@@ -8,6 +8,8 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+var namespacesPath = createBasePath(coreAPIGroup, coreAPIVersion, "namespaces")
+
 // CreateNamespace creates new namespace on configured Sensu instance
 func (client *RestClient) CreateNamespace(namespace *types.Namespace) error {
 	bytes, err := json.Marshal(namespace)
@@ -15,9 +17,8 @@ func (client *RestClient) CreateNamespace(namespace *types.Namespace) error {
 		return err
 	}
 
-	res, err := client.R().
-		SetBody(bytes).
-		Post("/rbac/namespaces")
+	path := namespacesPath()
+	res, err := client.R().SetBody(bytes).Post(path)
 
 	if err != nil {
 		return err
@@ -37,7 +38,8 @@ func (client *RestClient) UpdateNamespace(namespace *types.Namespace) error {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Put("/rbac/namespaces/" + url.PathEscape(namespace.Name))
+	path := namespacesPath(namespace.Name)
+	res, err := client.R().SetBody(bytes).Put(path)
 	if err != nil {
 		return err
 	}
@@ -51,7 +53,8 @@ func (client *RestClient) UpdateNamespace(namespace *types.Namespace) error {
 
 // DeleteNamespace deletes an namespace on configured Sensu instance
 func (client *RestClient) DeleteNamespace(namespace string) error {
-	res, err := client.R().Delete("/rbac/namespaces/" + url.PathEscape(namespace))
+	path := namespacesPath(namespace.Name)
+	res, err := client.R().Delete(path)
 
 	if err != nil {
 		return err
@@ -68,7 +71,8 @@ func (client *RestClient) DeleteNamespace(namespace string) error {
 func (client *RestClient) ListNamespaces() ([]types.Namespace, error) {
 	var namespaces []types.Namespace
 
-	res, err := client.R().Get("/rbac/namespaces")
+	path := namespacesPath()
+	res, err := client.R().Get(path)
 	if err != nil {
 		return namespaces, err
 	}
@@ -85,7 +89,8 @@ func (client *RestClient) ListNamespaces() ([]types.Namespace, error) {
 func (client *RestClient) FetchNamespace(namespaceName string) (*types.Namespace, error) {
 	var namespace *types.Namespace
 
-	res, err := client.R().Get("/rbac/namespaces/" + url.PathEscape(namespaceName))
+	path := namespacesPath(namespaceName)
+	res, err := client.R().Get(path)
 	if err != nil {
 		return namespace, err
 	}
