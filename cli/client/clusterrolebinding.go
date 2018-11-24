@@ -1,9 +1,6 @@
 package client
 
 import (
-	"net/url"
-	"path"
-
 	"github.com/sensu/sensu-go/types"
 )
 

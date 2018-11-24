@@ -3,7 +3,6 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -35,7 +34,7 @@ func (client *RestClient) FetchAsset(name string) (*types.Asset, error) {
 	path := assetsPath(client.config.Namespace(), name)
 	res, err := client.R().Get(path)
 	if err != nil {
-		return &asset, fmt.Errorf("GET %q: %s", assetPath, err)
+		return &asset, fmt.Errorf("GET %q: %s", path, err)
 	}
 
 	if res.StatusCode() >= 400 {
@@ -80,11 +79,11 @@ func (client *RestClient) UpdateAsset(asset *types.Asset) (err error) {
 	path := assetsPath(asset.Namespace, asset.Name)
 	res, err := client.R().SetBody(bytes).Put(path)
 	if err != nil {
-		return fmt.Errorf("PUT %q: %s", assetPath, err)
+		return fmt.Errorf("PUT %q: %s", path, err)
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("PUT %q: %s", assetPath, res.String())
+		return fmt.Errorf("PUT %q: %s", path, res.String())
 	}
 
 	return nil
