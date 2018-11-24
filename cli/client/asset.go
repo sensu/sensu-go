@@ -8,7 +8,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-var assetsPath = createBasePath(coreAPIGroup, coreAPIVersion, "assets")
+var assetsPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "assets")
 
 // ListAssets fetches a list of asset resources from the backend
 func (client *RestClient) ListAssets(namespace string) ([]types.Asset, error) {
