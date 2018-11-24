@@ -2,22 +2,19 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
-	"net/url"
 	"time"
 
 	"github.com/sensu/sensu-go/types"
 )
 
-func eventPath(entity, check string) string {
-	const path = "/events/%s/%s"
-	return fmt.Sprintf(path, url.PathEscape(entity), url.PathEscape(check))
-}
+var eventsPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "events")
 
 // FetchEvent fetches a specific event
 func (client *RestClient) FetchEvent(entity, check string) (*types.Event, error) {
 	var event *types.Event
-	res, err := client.R().Get(eventPath(entity, check))
+
+	path := eventsPath(client.config.Namespace(), entity, check)
+	res, err := client.R().Get(path)
 	if err != nil {
 		return nil, err
 	}
@@ -34,7 +31,8 @@ func (client *RestClient) FetchEvent(entity, check string) (*types.Event, error)
 func (client *RestClient) ListEvents(namespace string) ([]types.Event, error) {
 	var events []types.Event
 
-	res, err := client.R().SetQueryParam("namespace", namespace).Get("/events")
+	path := eventsPath(namespace)
+	res, err := client.R().Get(path)
 	if err != nil {
 		return events, err
 	}
@@ -49,7 +47,8 @@ func (client *RestClient) ListEvents(namespace string) ([]types.Event, error) {
 
 // DeleteEvent deletes an event.
 func (client *RestClient) DeleteEvent(entity, check string) error {
-	res, err := client.R().Delete(eventPath(entity, check))
+	path := eventsPath(client.config.Namespace(), entity, check)
+	res, err := client.R().Delete(path)
 	if err != nil {
 		return err
 	}
@@ -66,7 +65,8 @@ func (client *RestClient) UpdateEvent(event *types.Event) error {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Put("/events/" + event.Entity.Name + "/" + event.Check.Name)
+	path := eventsPath(event.Check.Namespace, event.Entity.Name, event.Check.Name)
+	res, err := client.R().SetBody(bytes).Put(path)
 	if err != nil {
 		return err
 	}
