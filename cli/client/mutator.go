@@ -3,7 +3,6 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 
 	"github.com/sensu/sensu-go/types"
 )

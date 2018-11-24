@@ -3,7 +3,6 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -53,7 +52,7 @@ func (client *RestClient) UpdateNamespace(namespace *types.Namespace) error {
 
 // DeleteNamespace deletes an namespace on configured Sensu instance
 func (client *RestClient) DeleteNamespace(namespace string) error {
-	path := namespacesPath(namespace.Name)
+	path := namespacesPath(namespace)
 	res, err := client.R().Delete(path)
 
 	if err != nil {
