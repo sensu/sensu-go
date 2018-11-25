@@ -40,7 +40,7 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateCheck", mock.AnythingOfType("*types.CheckConfig")).Return(nil)
+	client.On("CreateCheck", mock.Anything).Return(nil)
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("command", "echo 'heyhey'"))
@@ -57,7 +57,7 @@ func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateCheck", mock.AnythingOfType("*types.CheckConfig")).Return(nil)
+	client.On("CreateCheck", mock.Anything).Return(nil)
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("command", "echo 'heyhey'"))
@@ -75,7 +75,7 @@ func TestCreateCommandRunEClosureWithDepsSTDIN(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateCheck", mock.AnythingOfType("*types.CheckConfig")).Return(nil)
+	client.On("CreateCheck", mock.Anything).Return(nil)
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("command", "echo 'heyhey'"))
@@ -94,7 +94,7 @@ func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateCheck", mock.AnythingOfType("*types.CheckConfig")).Return(errors.New("whoops"))
+	client.On("CreateCheck", mock.Anything).Return(errors.New("whoops"))
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("command", "echo 'heyhey'"))
@@ -112,7 +112,7 @@ func TestCreateCommandRunEClosureWithMissingRequiredFlags(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateCheck", mock.AnythingOfType("*types.CheckConfig")).Return(errors.New("error"))
+	client.On("CreateCheck", mock.Anything).Return(errors.New("error"))
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("interval", "5"))

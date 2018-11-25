@@ -40,7 +40,7 @@ func TestDeleteCommandRunEClosureMissingFlags(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("DeleteEntity", mock.AnythingOfType("*types.Entity")).Return(nil)
+	client.On("DeleteEntity", mock.Anything).Return(nil)
 
 	cmd := DeleteCommand(cli)
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
@@ -56,7 +56,7 @@ func TestDeleteCommandRunEClosureTooManyFlags(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("DeleteEntity", mock.AnythingOfType("*types.Entity")).Return(nil)
+	client.On("DeleteEntity", mock.Anything).Return(nil)
 
 	cmd := DeleteCommand(cli)
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
@@ -73,7 +73,7 @@ func TestDeleteCommandRunEClosureWithFlags(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("DeleteEntity", mock.AnythingOfType("*types.Entity")).Return(nil)
+	client.On("DeleteEntity", mock.Anything).Return(nil)
 
 	cmd := DeleteCommand(cli)
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
@@ -88,7 +88,7 @@ func TestDeleteCommandRunEClosureWithServerErr(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("DeleteEntity", mock.AnythingOfType("*types.Entity")).Return(errors.New("oh noes"))
+	client.On("DeleteEntity", mock.Anything).Return(errors.New("oh noes"))
 
 	cmd := DeleteCommand(cli)
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))

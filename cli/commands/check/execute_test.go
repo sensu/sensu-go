@@ -30,7 +30,7 @@ func TestExecuteCommandRunEClosureSuccess(t *testing.T) {
 	cli := test.NewMockCLI()
 
 	client := cli.Client.(*clientmock.MockClient)
-	client.On("ExecuteCheck", mock.AnythingOfType("*types.AdhocRequest")).Return(nil)
+	client.On("ExecuteCheck", mock.Anything).Return(nil)
 
 	config := cli.Config.(*clientmock.MockConfig)
 	user := &types.User{Username: "foo"}
@@ -51,7 +51,7 @@ func TestExecuteCommandRunEClosureServerErr(t *testing.T) {
 	cli := test.NewMockCLI()
 
 	client := cli.Client.(*clientmock.MockClient)
-	client.On("ExecuteCheck", mock.AnythingOfType("*types.AdhocRequest")).Return(errors.New("whoops"))
+	client.On("ExecuteCheck", mock.Anything).Return(errors.New("whoops"))
 
 	config := cli.Config.(*clientmock.MockConfig)
 	user := &types.User{Username: "foo"}

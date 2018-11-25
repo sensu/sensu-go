@@ -39,7 +39,7 @@ func TestCreateCommandRunEClosureWithFlags(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateHandler", mock.AnythingOfType("*types.Handler")).Return(nil)
+	client.On("CreateHandler", mock.Anything).Return(nil)
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("type", "pipe"))
@@ -58,7 +58,7 @@ func TestCreateCommandRunEClosureWithAPIErr(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateHandler", mock.AnythingOfType("*types.Handler")).Return(errors.New("nope"))
+	client.On("CreateHandler", mock.Anything).Return(errors.New("nope"))
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("type", "pipe"))

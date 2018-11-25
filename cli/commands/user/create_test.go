@@ -28,7 +28,7 @@ func TestListCommandRunEClosureWithArgs(t *testing.T) {
 	cli := test.NewMockCLI()
 
 	client := cli.Client.(*clientmock.MockClient)
-	client.On("CreateUser", mock.AnythingOfType("*types.User")).Return(nil)
+	client.On("CreateUser", mock.Anything).Return(nil)
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("password", "b0b"))
@@ -44,7 +44,7 @@ func TestListCommandRunEClosureServerErr(t *testing.T) {
 	cli := test.NewMockCLI()
 
 	client := cli.Client.(*clientmock.MockClient)
-	client.On("CreateUser", mock.AnythingOfType("*types.User")).Return(fmt.Errorf(""))
+	client.On("CreateUser", mock.Anything).Return(fmt.Errorf(""))
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("password", "b0b"))
@@ -60,7 +60,7 @@ func TestListCommandRunEClosureWithGroups(t *testing.T) {
 	cli := test.NewMockCLI()
 
 	client := cli.Client.(*clientmock.MockClient)
-	client.On("CreateUser", mock.AnythingOfType("*types.User")).Return(nil)
+	client.On("CreateUser", mock.Anything).Return(nil)
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("password", "b0b"))
