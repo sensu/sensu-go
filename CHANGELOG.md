@@ -38,6 +38,7 @@ uses the same facility as check subdue for handling time windows.
   "sensu" and "sensu-devel", could be listed together.
 - Fixed a bug in the agent where the agent would deadlock after a significant
 period of disconnection from the backend.
+- Fixed a bug where logging events without checks would cause a nil panic.
 
 ## [2.0.0-beta.8-1] - 2018-11-15
 
