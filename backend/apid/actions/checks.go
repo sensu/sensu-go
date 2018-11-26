@@ -70,6 +70,9 @@ func (a CheckController) Find(ctx context.Context, name string) (*types.CheckCon
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}
+	if result == nil {
+		return nil, NewErrorf(NotFound)
+	}
 
 	return result, nil
 }
@@ -112,35 +115,6 @@ func (a CheckController) CreateOrReplace(ctx context.Context, newCheck types.Che
 	// Persist
 	if err := a.store.UpdateCheckConfig(ctx, &newCheck); err != nil {
 		return NewError(InternalErr, err)
-	}
-
-	return nil
-}
-
-// Update validates and persists changes to a resource if viewer has access.
-func (a CheckController) Update(ctx context.Context, given types.CheckConfig) error {
-	// Adjust context
-	ctx = addOrgEnvToContext(ctx, &given)
-
-	// Find existing check
-	check, err := a.store.GetCheckConfigByName(ctx, given.Name)
-	if err != nil {
-		return NewError(InternalErr, err)
-	} else if check == nil {
-		return NewErrorf(NotFound)
-	}
-
-	// Copy
-	copyFields(check, &given, checkConfigUpdateFields...)
-
-	// Validate
-	if err := check.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-
-	// Persist Changes
-	if serr := a.store.UpdateCheckConfig(ctx, check); serr != nil {
-		return NewError(InternalErr, serr)
 	}
 
 	return nil

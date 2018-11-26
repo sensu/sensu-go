@@ -43,6 +43,9 @@ func (e ExtensionController) Find(ctx context.Context, name string) (*types.Exte
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}
+	if result == nil {
+		return nil, NewErrorf(NotFound)
+	}
 
 	return result, nil
 }

@@ -50,6 +50,9 @@ func (c EntityController) Find(ctx context.Context, id string) (*types.Entity, e
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}
+	if result == nil {
+		return nil, NewErrorf(NotFound)
+	}
 
 	return result, nil
 }
@@ -117,8 +120,6 @@ func (c EntityController) Update(ctx context.Context, given types.Entity) error 
 	entity, err := c.Store.GetEntityByName(ctx, given.Name)
 	if err != nil {
 		return NewError(InternalErr, err)
-	} else if entity == nil {
-		return NewErrorf(NotFound)
 	}
 
 	// Copy

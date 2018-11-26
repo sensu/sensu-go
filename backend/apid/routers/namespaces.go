@@ -15,7 +15,6 @@ type NamespacesController interface {
 	Find(ctx context.Context, name string) (*types.Namespace, error)
 	Create(ctx context.Context, newOrg types.Namespace) error
 	CreateOrReplace(ctx context.Context, newOrg types.Namespace) error
-	Update(ctx context.Context, given types.Namespace) error
 	Destroy(ctx context.Context, name string) error
 }
 

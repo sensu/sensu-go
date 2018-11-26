@@ -45,6 +45,9 @@ func (a HookController) Find(ctx context.Context, name string) (*types.HookConfi
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}
+	if result == nil {
+		return nil, NewErrorf(NotFound)
+	}
 
 	return result, nil
 }
@@ -87,35 +90,6 @@ func (a HookController) CreateOrReplace(ctx context.Context, newHook types.HookC
 	// Persist
 	if err := a.Store.UpdateHookConfig(ctx, &newHook); err != nil {
 		return NewError(InternalErr, err)
-	}
-
-	return nil
-}
-
-// Update validates and persists changes to a resource if viewer has access.
-func (a HookController) Update(ctx context.Context, given types.HookConfig) error {
-	// Adjust context
-	ctx = addOrgEnvToContext(ctx, &given)
-
-	// Find existing hook
-	hook, err := a.Store.GetHookConfigByName(ctx, given.Name)
-	if err != nil {
-		return NewError(InternalErr, err)
-	} else if hook == nil {
-		return NewErrorf(NotFound)
-	}
-
-	// Copy
-	copyFields(hook, &given, hookConfigUpdateFields...)
-
-	// Validate
-	if err := hook.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-
-	// Persist Changes
-	if serr := a.Store.UpdateHookConfig(ctx, hook); serr != nil {
-		return NewError(InternalErr, serr)
 	}
 
 	return nil

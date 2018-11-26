@@ -38,6 +38,9 @@ func (a NamespacesController) Find(ctx context.Context, name string) (*types.Nam
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}
+	if result == nil {
+		return nil, NewErrorf(NotFound)
+	}
 
 	return result, nil
 }
@@ -67,29 +70,6 @@ func (a NamespacesController) CreateOrReplace(ctx context.Context, namespace typ
 	// Persist
 	if err := a.Store.UpdateNamespace(ctx, &namespace); err != nil {
 		return NewError(InternalErr, err)
-	}
-
-	return nil
-}
-
-// Update validates and persists changes to a resource if viewer has access.
-func (a NamespacesController) Update(ctx context.Context, given types.Namespace) error {
-	// Find existing namespace
-	namespace, err := a.Store.GetNamespace(ctx, given.Name)
-	if err != nil {
-		return NewError(InternalErr, err)
-	} else if namespace == nil {
-		return NewErrorf(NotFound)
-	}
-
-	// Validate
-	if err := namespace.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-
-	// Persist Changes
-	if serr := a.Store.UpdateNamespace(ctx, namespace); serr != nil {
-		return NewError(InternalErr, serr)
 	}
 
 	return nil
