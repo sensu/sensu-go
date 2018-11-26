@@ -62,7 +62,7 @@ func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateSilenced", mock.AnythingOfType("*types.Silenced")).Return(nil)
+	client.On("CreateSilenced", mock.Anything).Return(nil)
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("reason", "just because"))
@@ -80,7 +80,7 @@ func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateSilenced", mock.AnythingOfType("*types.Silenced")).Return(errors.New("whoops"))
+	client.On("CreateSilenced", mock.Anything).Return(errors.New("whoops"))
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("reason", "just because"))
@@ -99,7 +99,7 @@ func TestCreateCommandRunEClosureWithMissingRequiredFlags(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateSilenced", mock.AnythingOfType("*types.Silenced")).Return(errors.New("error"))
+	client.On("CreateSilenced", mock.Anything).Return(errors.New("error"))
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("expire", "5"))

@@ -48,7 +48,7 @@ func TestLoginSuccessful(t *testing.T) {
 	a := &AuthenticationRouter{store}
 
 	user := types.FixtureUser("foo")
-	store.On("CreateToken", mock.AnythingOfType("*types.Claims")).Return(nil)
+	store.On("CreateToken", mock.Anything).Return(nil)
 	store.
 		On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").
 		Return(user, nil)
@@ -152,7 +152,7 @@ func TestTokenCannotWhitelistAccessToken(t *testing.T) {
 	user := &types.User{Username: "foo"}
 
 	// Mock calls to the store
-	store.On("CreateToken", mock.AnythingOfType("*types.Claims")).Return(fmt.Errorf("error"))
+	store.On("CreateToken", mock.Anything).Return(fmt.Errorf("error"))
 	store.On(
 		"DeleteTokens",
 		mock.AnythingOfType("string"),
@@ -186,7 +186,7 @@ func TestTokenSuccess(t *testing.T) {
 	user := &types.User{Username: "foo"}
 
 	// Mock calls to the store
-	store.On("CreateToken", mock.AnythingOfType("*types.Claims")).Return(nil)
+	store.On("CreateToken", mock.Anything).Return(nil)
 	store.On(
 		"DeleteTokens",
 		mock.AnythingOfType("string"),

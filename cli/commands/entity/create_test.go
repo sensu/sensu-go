@@ -39,7 +39,7 @@ func TestCreateCommandRunEClosureWithFlags(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateEntity", mock.AnythingOfType("*types.Entity")).Return(nil)
+	client.On("CreateEntity", mock.Anything).Return(nil)
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("entity-class", "agent"))
@@ -56,7 +56,7 @@ func TestCreateCommandRunEClosureWithAPIErr(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateEntity", mock.AnythingOfType("*types.Entity")).Return(errors.New("whoops"))
+	client.On("CreateEntity", mock.Anything).Return(errors.New("whoops"))
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("entity-class", "agent"))

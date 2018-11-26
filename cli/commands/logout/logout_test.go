@@ -19,7 +19,7 @@ func TestLogout(t *testing.T) {
 	client.On("Logout", "bar").Return(nil)
 
 	config := cli.Config.(*clienttest.MockConfig)
-	config.On("SaveTokens", mock.AnythingOfType("*types.Tokens")).Return(nil)
+	config.On("SaveTokens", mock.Anything).Return(nil)
 	tokens := types.FixtureTokens("foo", "bar")
 	config.On("Tokens").Return(tokens)
 
@@ -54,7 +54,7 @@ func TestLogoutServerConfigFile(t *testing.T) {
 
 	config := cli.Config.(*clienttest.MockConfig)
 	tokens := types.FixtureTokens("foo", "bar")
-	config.On("SaveTokens", mock.AnythingOfType("*types.Tokens")).Return(fmt.Errorf("error"))
+	config.On("SaveTokens", mock.Anything).Return(fmt.Errorf("error"))
 	config.On("Tokens").Return(tokens)
 
 	out, err := test.RunCmd(cmd, []string{"bar"})

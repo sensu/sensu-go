@@ -5,15 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 	"reflect"
+
+	"github.com/sensu/sensu-go/api/core/v2"
 )
 
 // Wrapper is a generic wrapper, with a type field for distinguishing its
 // contents.
 type Wrapper struct {
 	// Type is the fully-qualified type name, e.g.
-	// github.com/sensu/sensu-go/types.Check,
+	// github.com/sensu/sensu-go/v2.Check,
 	// OR, a short-hand name that assumes a package path of
-	// github.com/sensu/sensu-go/types.
+	// github.com/sensu/sensu-go/v2.
 	Type string `json:"type" yaml:"type"`
 
 	// Value is a valid Resource of concrete type Type.
@@ -32,7 +34,7 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 		return fmt.Errorf("error parsing spec: %s", err)
 	}
 	w.Type = wrapper.Type
-	resource, err := ResolveResource(wrapper.Type)
+	resource, err := v2.ResolveResource(wrapper.Type)
 	if err != nil {
 		return fmt.Errorf("error parsing spec: %s", err)
 	}

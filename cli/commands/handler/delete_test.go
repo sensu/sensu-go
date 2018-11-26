@@ -40,7 +40,7 @@ func TestDeleteCommandRunEClosureWithFlags(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("DeleteHandler", mock.AnythingOfType("*types.Handler")).Return(nil)
+	client.On("DeleteHandler", mock.Anything).Return(nil)
 
 	cmd := DeleteCommand(cli)
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
@@ -55,7 +55,7 @@ func TestDeleteCommandRunEClosureWithServerErr(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("DeleteHandler", mock.AnythingOfType("*types.Handler")).Return(errors.New("oh noes"))
+	client.On("DeleteHandler", mock.Anything).Return(errors.New("oh noes"))
 
 	cmd := DeleteCommand(cli)
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))

@@ -7,7 +7,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/api/core/v2"
 )
 
 // These values are baked into the sensu-agent and sensu-backend binaries
@@ -29,7 +29,7 @@ var (
 	BuildSHA string
 
 	// Edition stores the Sensu Edition of the current build (ex. core)
-	Edition = types.CoreEdition
+	Edition = v2.CoreEdition
 )
 
 var (

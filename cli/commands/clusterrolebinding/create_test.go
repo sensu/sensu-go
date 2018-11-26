@@ -38,7 +38,7 @@ func TestCreateCommandSubjects(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateClusterRoleBinding", mock.AnythingOfType("*types.ClusterRoleBinding")).Return(nil)
+	client.On("CreateClusterRoleBinding", mock.Anything).Return(nil)
 
 	// No user or group provided
 	cmd := CreateCommand(cli)

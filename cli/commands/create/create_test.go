@@ -85,9 +85,9 @@ var yamlResources = struct {
 func TestCreateCommand(t *testing.T) {
 	cli := cmdtesting.NewMockCLI()
 	client := cli.Client.(*mockclient.MockClient)
-	client.On("PutResource", mock.AnythingOfType("*types.Check")).Return(nil)
-	client.On("PutResource", mock.AnythingOfType("*types.Asset")).Return(nil)
-	client.On("PutResource", mock.AnythingOfType("*types.Hook")).Return(nil)
+	client.On("PutResource", mock.Anything).Return(nil)
+	client.On("PutResource", mock.Anything).Return(nil)
+	client.On("PutResource", mock.Anything).Return(nil)
 
 	cmd := CreateCommand(cli)
 	td, err := ioutil.TempDir("", "")
@@ -115,9 +115,9 @@ func TestCreateCommand(t *testing.T) {
 func TestCreateCommandYAML(t *testing.T) {
 	cli := cmdtesting.NewMockCLI()
 	client := cli.Client.(*mockclient.MockClient)
-	client.On("PutResource", mock.AnythingOfType("*types.Check")).Return(nil)
-	client.On("PutResource", mock.AnythingOfType("*types.Asset")).Return(nil)
-	client.On("PutResource", mock.AnythingOfType("*types.Hook")).Return(nil)
+	client.On("PutResource", mock.Anything).Return(nil)
+	client.On("PutResource", mock.Anything).Return(nil)
+	client.On("PutResource", mock.Anything).Return(nil)
 
 	cmd := CreateCommand(cli)
 	td, err := ioutil.TempDir("", "")

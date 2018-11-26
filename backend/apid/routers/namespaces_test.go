@@ -60,7 +60,7 @@ func TestPostNamespace(t *testing.T) {
 	client := new(http.Client)
 
 	org := types.FixtureNamespace("default")
-	controller.On("Create", mock.Anything, mock.AnythingOfType("types.Namespace")).Return(nil)
+	controller.On("Create", mock.Anything, mock.Anything).Return(nil)
 	b, _ := json.Marshal(org)
 	body := bytes.NewReader(b)
 	endpoint := "/rbac/namespaces"
@@ -88,7 +88,7 @@ func TestPutNamespace(t *testing.T) {
 
 	client := new(http.Client)
 
-	controller.On("CreateOrReplace", mock.Anything, mock.AnythingOfType("types.Namespace")).Return(nil)
+	controller.On("CreateOrReplace", mock.Anything, mock.Anything).Return(nil)
 	b, _ := json.Marshal(types.FixtureNamespace("default"))
 	body := bytes.NewReader(b)
 	endpoint := "/rbac/namespaces/default"
@@ -104,7 +104,7 @@ func TestPutNamespace(t *testing.T) {
 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
 	}
 
-	controller.AssertCalled(t, "CreateOrReplace", mock.Anything, mock.AnythingOfType("types.Namespace"))
+	controller.AssertCalled(t, "CreateOrReplace", mock.Anything, mock.Anything)
 }
 
 func TestGetNamespace(t *testing.T) {

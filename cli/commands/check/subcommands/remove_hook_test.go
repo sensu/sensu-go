@@ -39,7 +39,7 @@ func TestRemoveCheckHookCommandRunEClosureWithFlags(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("RemoveCheckHook", mock.AnythingOfType("*types.CheckConfig"), "non-zero", "hook1").Return(nil)
+	client.On("RemoveCheckHook", mock.Anything, "non-zero", "hook1").Return(nil)
 	client.On("FetchCheck", "name").Return(types.FixtureCheckConfig("name"), nil)
 
 	cmd := RemoveCheckHookCommand(cli)
@@ -54,7 +54,7 @@ func TestRemoveCheckHookCommandRunEClosureWithServerErr(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("RemoveCheckHook", mock.AnythingOfType("*types.CheckConfig"), "non-zero", "hook1").Return(errors.New("oh noes"))
+	client.On("RemoveCheckHook", mock.Anything, "non-zero", "hook1").Return(errors.New("oh noes"))
 	client.On("FetchCheck", "name").Return(types.FixtureCheckConfig("name"), nil)
 
 	cmd := RemoveCheckHookCommand(cli)
