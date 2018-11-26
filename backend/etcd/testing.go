@@ -25,11 +25,12 @@ func NewTestEtcd(t *testing.T) (*Etcd, func()) {
 
 	cfg := NewConfig()
 	cfg.DataDir = tmpDir
+	cfg.AdvertiseClientURLs = []string{clURL}
 	cfg.ListenClientURLs = []string{clURL}
-	cfg.ListenPeerURL = apURL
+	cfg.ListenPeerURLs = []string{apURL}
 	cfg.InitialCluster = initCluster
 	cfg.InitialClusterState = ClusterStateNew
-	cfg.InitialAdvertisePeerURL = apURL
+	cfg.InitialAdvertisePeerURLs = []string{apURL}
 	cfg.Name = "default"
 
 	e, err := NewEtcd(cfg)

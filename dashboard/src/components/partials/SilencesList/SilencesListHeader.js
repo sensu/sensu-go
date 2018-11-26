@@ -1,8 +1,7 @@
 import React from "react";
 import PropTypes from "prop-types";
 
-import ConfirmDelete from "/components/partials/ConfirmDelete";
-import DeleteMenuItem from "/components/partials/ToolbarMenuItems/Delete";
+import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
 import ListHeader from "/components/partials/ListHeader";
 import ListSortSelector from "/components/partials/ListSortSelector";
 import ToolbarMenu from "/components/partials/ToolbarMenu";
@@ -10,8 +9,8 @@ import ToolbarMenu from "/components/partials/ToolbarMenu";
 class SilencesListHeader extends React.PureComponent {
   static propTypes = {
     editable: PropTypes.bool.isRequired,
+    onClickClearSilences: PropTypes.func.isRequired,
     onClickSelect: PropTypes.func.isRequired,
-    onClickDelete: PropTypes.func.isRequired,
     onChangeQuery: PropTypes.func.isRequired,
     order: PropTypes.string.isRequired,
     selectedItems: PropTypes.array,
@@ -22,6 +21,8 @@ class SilencesListHeader extends React.PureComponent {
     rowCount: 0,
     selectedItems: [],
   };
+
+  state = { openDialog: false };
 
   renderActions = () => {
     const { onChangeQuery, order } = this.props;
@@ -42,19 +43,13 @@ class SilencesListHeader extends React.PureComponent {
     );
   };
 
-  renderBulkActions = () => {
-    const { onClickDelete } = this.props;
-
-    return (
-      <ToolbarMenu>
-        <ToolbarMenu.Item id="delete" visible="always">
-          <ConfirmDelete onSubmit={onClickDelete}>
-            {confirm => <DeleteMenuItem onClick={confirm.open} />}
-          </ConfirmDelete>
-        </ToolbarMenu.Item>
-      </ToolbarMenu>
-    );
-  };
+  renderBulkActions = () => (
+    <ToolbarMenu>
+      <ToolbarMenu.Item id="clearSilence" visible="always">
+        <UnsilenceMenuItem onClick={this.props.onClickClearSilences} />
+      </ToolbarMenu.Item>
+    </ToolbarMenu>
+  );
 
   render() {
     const { editable, onClickSelect, selectedItems, rowCount } = this.props;

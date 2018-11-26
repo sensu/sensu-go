@@ -41,7 +41,7 @@ class EntityDetailsSilenceAction extends React.Component {
           <SilenceEntryDialog
             values={{
               check: "*",
-              ns: entity.namespace,
+              namespace: entity.namespace,
               subscription: `entity:${entity.name}`,
             }}
             onClose={() => {

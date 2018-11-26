@@ -58,11 +58,11 @@ func printToList(v interface{}, writer io.Writer) error {
 	}
 
 	cfg := &list.Config{
-		Title: fmt.Sprintf("%s - %s", event.Entity.ID, event.Check.Name),
+		Title: fmt.Sprintf("%s - %s", event.Entity.Name, event.Check.Name),
 		Rows: []*list.Row{
 			{
 				Label: "Entity",
-				Value: event.Entity.ID,
+				Value: event.Entity.Name,
 			},
 			{
 				Label: "Check",

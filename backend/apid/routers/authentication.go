@@ -47,8 +47,11 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Add the 'system:users' group to this user
+	user.Groups = append(user.Groups, "system:users")
+
 	// Create the token and a signed version
-	token, tokenString, err := jwt.AccessToken(user.Username)
+	token, tokenString, err := jwt.AccessToken(user)
 	if err != nil {
 		err = fmt.Errorf("could not issue an access token: %s", err)
 		logger.WithField("user", username).Error(err)
@@ -65,7 +68,7 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	refreshToken, refreshTokenString, err := jwt.RefreshToken(user.Username)
+	refreshToken, refreshTokenString, err := jwt.RefreshToken(user)
 	if err != nil {
 		err = fmt.Errorf("could not issue a refresh token: %s", err)
 		logger.WithField("user", username).Error(err)
@@ -182,6 +185,21 @@ func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Update the user claims from the authentication provider
+	// TODO: support external directories
+	user, err := a.store.GetUser(r.Context(), refreshClaims.Subject)
+	if err != nil {
+		http.Error(w, "could not find the user", http.StatusInternalServerError)
+		return
+	}
+	if user == nil {
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		return
+	}
+
+	// Make sure to the 'system:users' group is present
+	user.Groups = append(user.Groups, "system:users")
+
 	// Remove the old access token from the access list
 	if err := a.store.DeleteTokens(accessClaims.Subject, []string{accessClaims.Id}); err != nil {
 		err = fmt.Errorf("could not remove the access token from the access list: %s", err)
@@ -191,7 +209,7 @@ func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Issue a new access token
-	accessToken, accessTokenString, err := jwt.AccessToken(refreshClaims.Subject)
+	accessToken, accessTokenString, err := jwt.AccessToken(user)
 	if err != nil {
 		err = fmt.Errorf("could not issue a new access token: %s", err)
 		logger.WithField("user", refreshClaims.Subject).Error(err)

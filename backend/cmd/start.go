@@ -41,21 +41,22 @@ const (
 	flagLogLevel              = "log-level"
 
 	// Etcd flag constants
-	deprecatedFlagEtcdClientURL               = "listen-client-urls"
-	flagEtcdClientURL                         = "etcd-listen-client-urls"
-	deprecatedFlagEtcdPeerURL                 = "listen-peer-urls"
-	flagEtcdPeerURL                           = "etcd-listen-peer-urls"
-	deprecatedFlagEtcdInitialCluster          = "initial-cluster"
-	flagEtcdInitialCluster                    = "etcd-initial-cluster"
-	deprecatedFlagEtcdInitialAdvertisePeerURL = "initial-advertise-peer-urls"
-	flagEtcdInitialAdvertisePeerURL           = "etcd-initial-advertise-peer-urls"
-	deprecatedFlagEtcdInitialClusterState     = "initial-cluster-state"
-	flagEtcdInitialClusterState               = "etcd-initial-cluster-state"
-	deprecatedFlagEtcdInitialClusterToken     = "initial-cluster-token"
-	flagEtcdInitialClusterToken               = "etcd-initial-cluster-token"
-	deprecatedFlagEtcdNodeName                = "name"
-	flagEtcdNodeName                          = "etcd-name"
-	flagNoEmbedEtcd                           = "no-embed-etcd"
+	deprecatedFlagEtcdClientURLs               = "listen-client-urls"
+	flagEtcdClientURLs                         = "etcd-listen-client-urls"
+	deprecatedFlagEtcdPeerURLs                 = "listen-peer-urls"
+	flagEtcdPeerURLs                           = "etcd-listen-peer-urls"
+	deprecatedFlagEtcdInitialCluster           = "initial-cluster"
+	flagEtcdInitialCluster                     = "etcd-initial-cluster"
+	deprecatedFlagEtcdInitialAdvertisePeerURLs = "initial-advertise-peer-urls"
+	flagEtcdInitialAdvertisePeerURLs           = "etcd-initial-advertise-peer-urls"
+	deprecatedFlagEtcdInitialClusterState      = "initial-cluster-state"
+	flagEtcdInitialClusterState                = "etcd-initial-cluster-state"
+	deprecatedFlagEtcdInitialClusterToken      = "initial-cluster-token"
+	flagEtcdInitialClusterToken                = "etcd-initial-cluster-token"
+	deprecatedFlagEtcdNodeName                 = "name"
+	flagEtcdNodeName                           = "etcd-name"
+	flagNoEmbedEtcd                            = "no-embed-etcd"
+	flagEtcdAdvertiseClientURLs                = "etcd-advertise-client-urls"
 
 	// Etcd TLS flag constants
 	flagEtcdCertFile           = "etcd-cert-file"
@@ -74,9 +75,13 @@ const (
 	// defaultEtcdName is the default etcd member node name (single-node cluster
 	// only)
 	defaultEtcdName = "default"
-	// DefaultEtcdPeerURL is the default URL to listen for Etcd peers (single-node
+	// defaultEtcdPeerURL is the default URL to listen for Etcd peers (single-node
 	// cluster only)
 	defaultEtcdPeerURL = "http://127.0.0.1:2380"
+
+	// defaultEtcdAdvertiseClientURL is the default list of this member's client
+	// URLs to advertise to the rest of the cluster
+	defaultEtcdAdvertiseClientURL = "http://localhost:2379"
 
 	// Start command usage template
 	startUsageTemplate = `Usage:{{if .Runnable}}
@@ -143,14 +148,15 @@ func newStartCommand() *cobra.Command {
 				CacheDir:              viper.GetString(flagCacheDir),
 				StateDir:              viper.GetString(flagStateDir),
 
-				EtcdListenClientURL:         viper.GetString(flagEtcdClientURL),
-				EtcdListenPeerURL:           viper.GetString(flagEtcdPeerURL),
-				EtcdInitialCluster:          viper.GetString(flagEtcdInitialCluster),
-				EtcdInitialClusterState:     viper.GetString(flagEtcdInitialClusterState),
-				EtcdInitialAdvertisePeerURL: viper.GetString(flagEtcdInitialAdvertisePeerURL),
-				EtcdInitialClusterToken:     viper.GetString(flagEtcdInitialClusterToken),
-				EtcdName:                    viper.GetString(flagEtcdNodeName),
-				NoEmbedEtcd:                 viper.GetBool(flagNoEmbedEtcd),
+				EtcdAdvertiseClientURLs:      viper.GetStringSlice(flagEtcdAdvertiseClientURLs),
+				EtcdListenClientURLs:         viper.GetStringSlice(flagEtcdClientURLs),
+				EtcdListenPeerURLs:           viper.GetStringSlice(flagEtcdPeerURLs),
+				EtcdInitialCluster:           viper.GetString(flagEtcdInitialCluster),
+				EtcdInitialClusterState:      viper.GetString(flagEtcdInitialClusterState),
+				EtcdInitialAdvertisePeerURLs: viper.GetStringSlice(flagEtcdInitialAdvertisePeerURLs),
+				EtcdInitialClusterToken:      viper.GetString(flagEtcdInitialClusterToken),
+				EtcdName:                     viper.GetString(flagEtcdNodeName),
+				NoEmbedEtcd:                  viper.GetBool(flagNoEmbedEtcd),
 			}
 
 			// Sensu APIs TLS config
@@ -211,7 +217,7 @@ func newStartCommand() *cobra.Command {
 
 			if viper.GetBool(flagDebug) {
 				go func() {
-					log.Println(http.ListenAndServe("localhost:6060", nil))
+					log.Println(http.ListenAndServe(":6060", nil))
 				}()
 			}
 
@@ -255,11 +261,12 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagLogLevel, "warn")
 
 	// Etcd defaults
-	viper.SetDefault(flagEtcdClientURL, defaultEtcdClientURL)
-	viper.SetDefault(flagEtcdPeerURL, defaultEtcdPeerURL)
+	viper.SetDefault(flagEtcdAdvertiseClientURLs, defaultEtcdAdvertiseClientURL)
+	viper.SetDefault(flagEtcdClientURLs, defaultEtcdClientURL)
+	viper.SetDefault(flagEtcdPeerURLs, defaultEtcdPeerURL)
 	viper.SetDefault(flagEtcdInitialCluster,
 		fmt.Sprintf("%s=%s", defaultEtcdName, defaultEtcdPeerURL))
-	viper.SetDefault(flagEtcdInitialAdvertisePeerURL, defaultEtcdPeerURL)
+	viper.SetDefault(flagEtcdInitialAdvertisePeerURLs, defaultEtcdPeerURL)
 	viper.SetDefault(flagEtcdInitialClusterState, etcd.ClusterStateNew)
 	viper.SetDefault(flagEtcdInitialClusterToken, "")
 	viper.SetDefault(flagEtcdNodeName, defaultEtcdName)
@@ -286,14 +293,16 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
 
 	// Etcd flags
-	cmd.Flags().String(flagEtcdClientURL, viper.GetString(flagEtcdClientURL), "list of URLs to listen on for client traffic")
-	_ = cmd.Flags().SetAnnotation(flagEtcdClientURL, "categories", []string{"store"})
-	cmd.Flags().String(flagEtcdPeerURL, viper.GetString(flagEtcdPeerURL), "list of URLs to listen on for peer traffic")
-	_ = cmd.Flags().SetAnnotation(flagEtcdPeerURL, "categories", []string{"store"})
+	cmd.Flags().StringSlice(flagEtcdAdvertiseClientURLs, viper.GetStringSlice(flagEtcdAdvertiseClientURLs), "list of this member's client URLs to advertise to the rest of the cluster.")
+	_ = cmd.Flags().SetAnnotation(flagEtcdAdvertiseClientURLs, "categories", []string{"store"})
+	cmd.Flags().StringSlice(flagEtcdClientURLs, viper.GetStringSlice(flagEtcdClientURLs), "list of URLs to listen on for client traffic")
+	_ = cmd.Flags().SetAnnotation(flagEtcdClientURLs, "categories", []string{"store"})
+	cmd.Flags().StringSlice(flagEtcdPeerURLs, viper.GetStringSlice(flagEtcdPeerURLs), "list of URLs to listen on for peer traffic")
+	_ = cmd.Flags().SetAnnotation(flagEtcdPeerURLs, "categories", []string{"store"})
 	cmd.Flags().String(flagEtcdInitialCluster, viper.GetString(flagEtcdInitialCluster), "initial cluster configuration for bootstrapping")
 	_ = cmd.Flags().SetAnnotation(flagEtcdInitialCluster, "categories", []string{"store"})
-	cmd.Flags().String(flagEtcdInitialAdvertisePeerURL, viper.GetString(flagEtcdInitialAdvertisePeerURL), "list of this member's peer URLs to advertise to the rest of the cluster")
-	_ = cmd.Flags().SetAnnotation(flagEtcdInitialAdvertisePeerURL, "categories", []string{"store"})
+	cmd.Flags().StringSlice(flagEtcdInitialAdvertisePeerURLs, viper.GetStringSlice(flagEtcdInitialAdvertisePeerURLs), "list of this member's peer URLs to advertise to the rest of the cluster")
+	_ = cmd.Flags().SetAnnotation(flagEtcdInitialAdvertisePeerURLs, "categories", []string{"store"})
 	cmd.Flags().String(flagEtcdInitialClusterState, viper.GetString(flagEtcdInitialClusterState), "initial cluster state (\"new\" or \"existing\")")
 	_ = cmd.Flags().SetAnnotation(flagEtcdInitialClusterState, "categories", []string{"store"})
 	cmd.Flags().String(flagEtcdInitialClusterToken, viper.GetString(flagEtcdInitialClusterToken), "initial cluster token for the etcd cluster during bootstrap")
@@ -333,13 +342,13 @@ func newStartCommand() *cobra.Command {
 	// aliases for older etcd attributes in config file to maintain backward
 	// compatiblity
 	deprecatedConfigAttributes()
-	viper.RegisterAlias(deprecatedFlagEtcdClientURL, flagEtcdClientURL)
-	viper.RegisterAlias(deprecatedFlagEtcdInitialAdvertisePeerURL, flagEtcdInitialAdvertisePeerURL)
+	viper.RegisterAlias(deprecatedFlagEtcdClientURLs, flagEtcdClientURLs)
+	viper.RegisterAlias(deprecatedFlagEtcdInitialAdvertisePeerURLs, flagEtcdInitialAdvertisePeerURLs)
 	viper.RegisterAlias(deprecatedFlagEtcdInitialCluster, flagEtcdInitialCluster)
 	viper.RegisterAlias(deprecatedFlagEtcdInitialClusterState, flagEtcdInitialClusterState)
 	viper.RegisterAlias(deprecatedFlagEtcdInitialClusterToken, flagEtcdInitialClusterToken)
 	viper.RegisterAlias(deprecatedFlagEtcdNodeName, flagEtcdNodeName)
-	viper.RegisterAlias(deprecatedFlagEtcdPeerURL, flagEtcdPeerURL)
+	viper.RegisterAlias(deprecatedFlagEtcdPeerURLs, flagEtcdPeerURLs)
 
 	// Use our custom template for the start command
 	cobra.AddTemplateFunc("categoryFlags", categoryFlags)
@@ -372,12 +381,12 @@ func aliasNormalizeFunc(f *pflag.FlagSet, name string) pflag.NormalizedName {
 	}
 
 	switch name {
-	case deprecatedFlagEtcdClientURL:
-		deprecatedFlagMessage(name, flagEtcdClientURL)
-		name = flagEtcdClientURL
-	case deprecatedFlagEtcdInitialAdvertisePeerURL:
-		deprecatedFlagMessage(name, flagEtcdInitialAdvertisePeerURL)
-		name = flagEtcdInitialAdvertisePeerURL
+	case deprecatedFlagEtcdClientURLs:
+		deprecatedFlagMessage(name, flagEtcdClientURLs)
+		name = flagEtcdClientURLs
+	case deprecatedFlagEtcdInitialAdvertisePeerURLs:
+		deprecatedFlagMessage(name, flagEtcdInitialAdvertisePeerURLs)
+		name = flagEtcdInitialAdvertisePeerURLs
 	case deprecatedFlagEtcdInitialCluster:
 		deprecatedFlagMessage(name, flagEtcdInitialCluster)
 		name = flagEtcdInitialCluster
@@ -390,9 +399,9 @@ func aliasNormalizeFunc(f *pflag.FlagSet, name string) pflag.NormalizedName {
 	case deprecatedFlagEtcdNodeName:
 		deprecatedFlagMessage(name, flagEtcdNodeName)
 		name = flagEtcdNodeName
-	case deprecatedFlagEtcdPeerURL:
-		deprecatedFlagMessage(name, flagEtcdPeerURL)
-		name = flagEtcdPeerURL
+	case deprecatedFlagEtcdPeerURLs:
+		deprecatedFlagMessage(name, flagEtcdPeerURLs)
+		name = flagEtcdPeerURLs
 	}
 	return pflag.NormalizedName(name)
 }
@@ -401,13 +410,13 @@ func aliasNormalizeFunc(f *pflag.FlagSet, name string) pflag.NormalizedName {
 // message if set
 func deprecatedConfigAttributes() {
 	attributes := map[string]string{
-		deprecatedFlagEtcdClientURL:               flagEtcdClientURL,
-		deprecatedFlagEtcdInitialAdvertisePeerURL: flagEtcdInitialAdvertisePeerURL,
-		deprecatedFlagEtcdInitialCluster:          flagEtcdInitialCluster,
-		deprecatedFlagEtcdInitialClusterState:     flagEtcdInitialClusterState,
-		deprecatedFlagEtcdInitialClusterToken:     flagEtcdInitialClusterToken,
-		deprecatedFlagEtcdNodeName:                flagEtcdNodeName,
-		deprecatedFlagEtcdPeerURL:                 flagEtcdPeerURL,
+		deprecatedFlagEtcdClientURLs:               flagEtcdClientURLs,
+		deprecatedFlagEtcdInitialAdvertisePeerURLs: flagEtcdInitialAdvertisePeerURLs,
+		deprecatedFlagEtcdInitialCluster:           flagEtcdInitialCluster,
+		deprecatedFlagEtcdInitialClusterState:      flagEtcdInitialClusterState,
+		deprecatedFlagEtcdInitialClusterToken:      flagEtcdInitialClusterToken,
+		deprecatedFlagEtcdNodeName:                 flagEtcdNodeName,
+		deprecatedFlagEtcdPeerURLs:                 flagEtcdPeerURLs,
 	}
 
 	for old, new := range attributes {

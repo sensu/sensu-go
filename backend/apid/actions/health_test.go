@@ -2,6 +2,7 @@ package actions
 
 import (
 	"context"
+	"crypto/tls"
 	"testing"
 
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -13,7 +14,7 @@ func TestNewHealthController(t *testing.T) {
 	assert := assert.New(t)
 
 	store := &mockstore.MockStore{}
-	actions := NewHealthController(store)
+	actions := NewHealthController(store, nil, nil)
 
 	assert.NotNil(actions)
 	assert.Equal(store, actions.store)
@@ -36,14 +37,14 @@ func TestGetClusterHealth(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		actions := NewHealthController(store)
+		actions := NewHealthController(store, nil, nil)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 			ctx := context.Background()
 
 			// Mock store methods
-			store.On("GetClusterHealth", ctx).Return(tc.response)
+			store.On("GetClusterHealth", ctx, nil, (*tls.Config)(nil)).Return(tc.response)
 
 			// Exec GetClusterHealth
 			response := actions.GetClusterHealth(ctx)

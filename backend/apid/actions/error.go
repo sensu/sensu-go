@@ -51,6 +51,7 @@ var standardErrorMessages = map[ErrCode]string{
 }
 
 // Error describes an issue that ocurred while performing the action.
+// TODO: This should likely be moved to the types package.
 type Error struct {
 	// Code refers to predefined codes that describe type of error that occurred.
 	Code ErrCode

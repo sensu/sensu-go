@@ -353,12 +353,12 @@
   version = "v1.1"
 
 [[projects]]
-  digest = "1:d2778c2263cff347923aed45ec8541f7795eb6230dfa54f58ffe505d79299e1d"
+  digest = "1:e73f5b0152105f18bc131fba127d9949305c8693f8a762588a82a48f61756f5f"
   name = "github.com/gorilla/mux"
   packages = ["."]
   pruneopts = "UT"
-  revision = "24fca303ac6da784b9e8269f724ddeb0b2eea5e7"
-  version = "v1.6.1"
+  revision = "e3702bed27f0d39777b0b37b664b6280e8ef8fbf"
+  version = "v1.6.2"
 
 [[projects]]
   digest = "1:43dd08a10854b2056e615d1b1d22ac94559d822e1f8b6fcc92c1a1057e85188e"
@@ -480,6 +480,14 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "f7279a603edee96fe7764d3de9c6ff8cf9970994"
+
+[[projects]]
+  digest = "1:0a69a1c0db3591fcefb47f115b224592c8dfa4368b7ba9fae509d5e16cdc95c8"
+  name = "github.com/konsorten/go-windows-terminal-sequences"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "5c8c8bd35d3832f5d134ae1e1e375b69a4d25242"
+  version = "v1.0.1"
 
 [[projects]]
   branch = "master"
@@ -689,19 +697,27 @@
   revision = "e645f4e5aaa8506fc71d6edbc5c4ff02c04c46f2"
 
 [[projects]]
+  branch = "master"
+  digest = "1:dbfe572cc258e5bcf54cb650a06d90edd0da04e42ca1ed909cc1d49f00011c63"
+  name = "github.com/robertkrimen/otto"
+  packages = [
+    ".",
+    "ast",
+    "dbg",
+    "file",
+    "parser",
+    "registry",
+    "token",
+  ]
+  pruneopts = "UT"
+  revision = "15f95af6e78dcd2030d8195a138bd88d4f403546"
+
+[[projects]]
   digest = "1:bffc9efe1d7783f54cb0003b57cb3c8fe49f56beb9859cf122be97504e854666"
   name = "github.com/robfig/cron"
   packages = ["."]
   pruneopts = "UT"
   revision = "2315d5715e36303a941d907f038da7f7c44c773b"
-
-[[projects]]
-  digest = "1:db6c297249f0dc1265b3ee06870f67d5fca0479d491c554c27e2b5e2bbd63fc6"
-  name = "github.com/sensu/govaluate"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "43cb04169dc67512be53aafaad8fbacf9fa3af9f"
-  version = "v3.1.0"
 
 [[projects]]
   digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
@@ -714,10 +730,8 @@
   digest = "1:267c6a4d9d69c5d14f4f233d364a59eaea299ea17b29dfe9be07ce5226c19899"
   name = "github.com/shirou/gopsutil"
   packages = [
-    "cpu",
     "host",
     "internal/common",
-    "mem",
     "net",
     "process",
   ]
@@ -750,12 +764,12 @@
   revision = "ffb13db8def02f545acc58bd288ec6057c2bbfb9"
 
 [[projects]]
-  digest = "1:9e9193aa51197513b3abcb108970d831fbcf40ef96aa845c4f03276e1fa316d2"
+  digest = "1:69b1cc331fca23d702bd72f860c6a647afd0aa9fcbc1d0659b1365e26546dd70"
   name = "github.com/sirupsen/logrus"
   packages = ["."]
   pruneopts = "UT"
-  revision = "c155da19408a8799da419ed3eeb0cb5db0ad5dbc"
-  version = "v1.0.5"
+  revision = "bcd833dfe83d3cebad139e4a29ed79cb2318bf95"
+  version = "v1.2.0"
 
 [[projects]]
   digest = "1:588973b21bdc46f8b9f94479026e3d6ea3836d48476fab8e6ed43b0204dc71f3"
@@ -1030,6 +1044,17 @@
   version = "v1.0.3"
 
 [[projects]]
+  digest = "1:9935525a8c49b8434a0b0a54e1980e94a6fae73aaff45c5d33ba8dff69de123e"
+  name = "gopkg.in/sourcemap.v1"
+  packages = [
+    ".",
+    "base64vlq",
+  ]
+  pruneopts = "UT"
+  revision = "6e83acea0053641eff084973fee085f0c193c61a"
+  version = "v1.0.5"
+
+[[projects]]
   digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
@@ -1081,8 +1106,9 @@
     "github.com/mitchellh/go-homedir",
     "github.com/mitchellh/mapstructure",
     "github.com/olekukonko/tablewriter",
+    "github.com/robertkrimen/otto",
+    "github.com/robertkrimen/otto/parser",
     "github.com/robfig/cron",
-    "github.com/sensu/govaluate",
     "github.com/sensu/yaml",
     "github.com/shirou/gopsutil/host",
     "github.com/shirou/gopsutil/net",

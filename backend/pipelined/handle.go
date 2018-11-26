@@ -13,6 +13,7 @@ import (
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/util/environment"
 	utillogging "github.com/sensu/sensu-go/util/logging"
 	"github.com/sirupsen/logrus"
 )
@@ -142,7 +143,9 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 				continue
 			}
 			handler = &types.Handler{
-				Name: extension.URL,
+				ObjectMeta: types.ObjectMeta{
+					Name: extension.URL,
+				},
 				Type: "grpc",
 			}
 		}
@@ -200,7 +203,7 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for handler")
 		} else {
-			handlerExec.Env = append(handlerExec.Env, assets.Env()...)
+			handlerExec.Env = environment.MergeEnvironments(assets.Env(), handlerExec.Env)
 		}
 	}
 

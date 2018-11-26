@@ -28,7 +28,7 @@ func TestSetCheckHooksCommandRunEClosureSucess(t *testing.T) {
 	cli := test.NewMockCLI()
 
 	client := cli.Client.(*clientmock.MockClient)
-	client.On("AddCheckHook", mock.AnythingOfType("*types.CheckConfig"), mock.AnythingOfType("*types.HookList")).Return(nil)
+	client.On("AddCheckHook", mock.Anything, mock.Anything).Return(nil)
 	client.On("FetchCheck", "name").Return(types.FixtureCheckConfig("name"), nil)
 
 	cmd := SetCheckHooksCommand(cli)
@@ -57,7 +57,7 @@ func TestSetCheckHooksCommandRunEClosureServerErr(t *testing.T) {
 	cli := test.NewMockCLI()
 
 	client := cli.Client.(*clientmock.MockClient)
-	client.On("AddCheckHook", mock.AnythingOfType("*types.CheckConfig"), mock.AnythingOfType("*types.checkHook")).Return(nil)
+	client.On("AddCheckHook", mock.Anything, mock.Anything).Return(nil)
 
 	cmd := SetCheckHooksCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"name"})

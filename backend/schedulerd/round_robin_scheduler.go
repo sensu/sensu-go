@@ -4,6 +4,7 @@ import (
 	"context"
 	"sync"
 
+	time "github.com/echlebek/timeproxy"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/types"
 )
@@ -53,7 +54,10 @@ func (r *roundRobinScheduler) loop() {
 // execute executes a round robin check request
 func (r *roundRobinScheduler) execute(msg *roundRobinMessage) {
 	defer msg.wg.Done()
-	if err := r.bus.PublishDirect(msg.subscription, msg.req); err != nil {
+	timeout := time.Second * time.Duration(msg.req.Config.Interval)
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	if err := r.bus.PublishDirect(ctx, msg.subscription, msg.req); err != nil {
 		r.logError(err, msg.req.Config.Name)
 	}
 }
@@ -70,7 +74,7 @@ func (r *roundRobinScheduler) Schedule(msg *roundRobinMessage) (*sync.WaitGroup,
 	return &msg.wg, nil
 }
 
-// logError logs errors and adds agentID and checkName as fields.
+// logError logs errors and adds agentName and checkName as fields.
 func (r *roundRobinScheduler) logError(err error, checkName string) {
 	logger.WithField("check", checkName).WithError(err).Error("error publishing round robin check request")
 }

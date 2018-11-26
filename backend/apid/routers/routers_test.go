@@ -5,9 +5,6 @@ import (
 	"io"
 	"net/http"
 	"testing"
-
-	"github.com/sensu/sensu-go/backend/authorization"
-	"github.com/sensu/sensu-go/types"
 )
 
 func newRequest(t *testing.T, method, endpoint string, body io.Reader) *http.Request {
@@ -16,18 +13,6 @@ func newRequest(t *testing.T, method, endpoint string, body io.Reader) *http.Req
 	if err != nil {
 		t.Fatal(err)
 	}
-	ctx := context.Background()
-	rules := []types.Rule{
-		types.Rule{
-			Type:        types.RuleTypeAll,
-			Namespace:   "*",
-			Permissions: types.RuleAllPerms,
-		},
-	}
-	actor := authorization.Actor{
-		Name:  "admin",
-		Rules: rules,
-	}
-	ctx = context.WithValue(ctx, types.AuthorizationActorKey, actor)
-	return req.WithContext(ctx)
+
+	return req.WithContext(context.Background())
 }

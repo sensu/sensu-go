@@ -2,7 +2,6 @@ package filter
 
 import (
 	"github.com/sensu/sensu-go/cli"
-	"github.com/sensu/sensu-go/cli/commands/filter/subcommands"
 	"github.com/spf13/cobra"
 )
 
@@ -21,8 +20,10 @@ func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 		ListCommand(cli),
 		UpdateCommand(cli),
 
-		subcommands.RemoveWhenCommand(cli),
-		subcommands.SetWhenCommand(cli),
+		// TODO:(echlebek): add these back when the time window facility works
+		// properly.
+		//subcommands.RemoveWhenCommand(cli),
+		//subcommands.SetWhenCommand(cli),
 	)
 
 	return cmd

@@ -5,9 +5,10 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -20,322 +21,45 @@ func TestNewRoleController(t *testing.T) {
 
 	assert.NotNil(actions)
 	assert.Equal(store, actions.Store)
-	assert.NotNil(actions.Policy)
-}
-
-func TestRoleQuery(t *testing.T) {
-	defaultCtx := testutil.NewContext(testutil.ContextWithPerms(
-		types.RuleTypeRole,
-		types.RulePermRead,
-	))
-	badCtx := testutil.NewContext(testutil.ContextWithPerms(
-		types.RuleTypeRole,
-		types.RulePermCreate,
-	))
-
-	testCases := []struct {
-		name         string
-		ctx          context.Context
-		storeRecords []*types.Role
-		storeErr     error
-		expectedLen  int
-		expectedErr  error
-	}{
-		{
-			name: "With Roles",
-			ctx:  defaultCtx,
-			storeRecords: []*types.Role{
-				simpleRoleFixture(),
-				simpleRoleFixture(),
-			},
-			expectedLen: 2,
-			storeErr:    nil,
-			expectedErr: nil,
-		},
-		{
-			name: "With Only Create Access",
-			ctx:  badCtx,
-			storeRecords: []*types.Role{
-				simpleRoleFixture(),
-				simpleRoleFixture(),
-			},
-			expectedLen: 0,
-			storeErr:    nil,
-		},
-		{
-			name:         "Store Failure",
-			ctx:          defaultCtx,
-			storeRecords: nil,
-			expectedLen:  0,
-			storeErr:     errors.New(""),
-			expectedErr:  NewError(InternalErr, errors.New("")),
-		},
-	}
-
-	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
-		actions := NewRoleController(store)
-
-		t.Run(tc.name, func(t *testing.T) {
-			assert := assert.New(t)
-
-			// Mock store methods
-			store.On("GetRoles", tc.ctx).Return(tc.storeRecords, tc.storeErr)
-
-			// Exec Query
-			results, err := actions.Query(tc.ctx)
-
-			// Assert
-			assert.EqualValues(tc.expectedErr, err)
-			assert.Len(results, tc.expectedLen)
-		})
-	}
-}
-
-func TestRoleFind(t *testing.T) {
-	defaultCtx := testutil.NewContext(testutil.ContextWithPerms(
-		types.RuleTypeRole,
-		types.RulePermRead,
-	))
-	badCtx := testutil.NewContext(testutil.ContextWithPerms(
-		types.RuleTypeRole,
-		types.RulePermCreate,
-	))
-
-	testCases := []struct {
-		name            string
-		ctx             context.Context
-		argument        string
-		storeRecord     *types.Role
-		storeErr        error
-		expected        bool
-		expectedErrCode ErrCode
-	}{
-		{
-			name:            "No argument given",
-			ctx:             defaultCtx,
-			argument:        "",
-			expected:        false,
-			expectedErrCode: NotFound,
-		},
-		{
-			name:            "Found",
-			ctx:             defaultCtx,
-			storeRecord:     simpleRoleFixture(),
-			argument:        "check1",
-			expected:        true,
-			expectedErrCode: 0,
-		},
-		{
-			name:            "Not Found",
-			ctx:             defaultCtx,
-			argument:        "missing",
-			expected:        false,
-			expectedErrCode: NotFound,
-		},
-		{
-			name:            "Store Err",
-			ctx:             defaultCtx,
-			argument:        "err",
-			storeErr:        errors.New("etcd caught fire"),
-			expected:        false,
-			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Read Permission",
-			ctx:             badCtx,
-			storeRecord:     simpleRoleFixture(),
-			argument:        "check1",
-			expected:        false,
-			expectedErrCode: NotFound,
-		},
-	}
-
-	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
-		actions := NewRoleController(store)
-
-		t.Run(tc.name, func(t *testing.T) {
-			assert := assert.New(t)
-
-			// Mock store methods
-			store.
-				On("GetRoleByName", tc.ctx, mock.Anything).
-				Return(tc.storeRecord, tc.storeErr)
-
-			// Exec Query
-			result, err := actions.Find(tc.ctx, tc.argument)
-
-			inferErr, ok := err.(Error)
-			if ok {
-				assert.Equal(tc.expectedErrCode, inferErr.Code)
-			} else {
-				assert.NoError(err)
-			}
-			assert.Equal(tc.expected, result != nil, "expects Find() to return a record")
-		})
-	}
-}
-
-func TestRoleCreateOrReplace(t *testing.T) {
-	defaultCtx := testutil.NewContext(testutil.ContextWithPerms(
-		types.RuleTypeRole,
-		types.RulePermCreate,
-		types.RulePermUpdate,
-	))
-	badCtx := testutil.NewContext(testutil.ContextWithPerms(
-		types.RuleTypeRole,
-		types.RulePermCreate,
-	))
-
-	badRole := simpleRoleFixture()
-	badRole.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
-
-	testCases := []struct {
-		name            string
-		ctx             context.Context
-		argument        *types.Role
-		fetchResult     *types.Role
-		fetchErr        error
-		createErr       error
-		expectedErr     bool
-		expectedErrCode ErrCode
-	}{
-		{
-			name:        "Created",
-			ctx:         defaultCtx,
-			argument:    simpleRoleFixture(),
-			expectedErr: false,
-		},
-		{
-			name:        "Already Exists",
-			ctx:         defaultCtx,
-			argument:    simpleRoleFixture(),
-			fetchResult: simpleRoleFixture(),
-		},
-		{
-			name:            "Store Err on Create",
-			ctx:             defaultCtx,
-			argument:        simpleRoleFixture(),
-			createErr:       errors.New("dunno"),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Permission",
-			ctx:             badCtx,
-			argument:        simpleRoleFixture(),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
-		{
-			name:            "Validation Error",
-			ctx:             defaultCtx,
-			argument:        badRole,
-			expectedErr:     true,
-			expectedErrCode: InvalidArgument,
-		},
-	}
-
-	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
-		actions := NewRoleController(store)
-
-		t.Run(tc.name, func(t *testing.T) {
-			assert := assert.New(t)
-
-			// Mock store methods
-			store.
-				On("GetRoleByName", mock.Anything, mock.Anything).
-				Return(tc.fetchResult, tc.fetchErr)
-			store.
-				On("UpdateRole", mock.Anything, mock.Anything).
-				Return(tc.createErr)
-
-			// Exec Query
-			err := actions.CreateOrReplace(tc.ctx, *tc.argument)
-
-			if tc.expectedErr {
-				inferErr, ok := err.(Error)
-				if ok {
-					assert.Equal(tc.expectedErrCode, inferErr.Code)
-				} else {
-					assert.Error(err)
-					assert.FailNow("Given was not of type 'Error'")
-				}
-			} else {
-				assert.NoError(err)
-			}
-		})
-	}
 }
 
 func TestRoleCreate(t *testing.T) {
-	defaultCtx := testutil.NewContext(testutil.ContextWithPerms(
-		types.RuleTypeRole,
-		types.RulePermCreate,
-	))
-	badCtx := testutil.NewContext(testutil.ContextWithPerms(
-		types.RuleTypeRole,
-		types.RulePermRead,
-	))
-
-	badRole := simpleRoleFixture()
-	badRole.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
-
 	testCases := []struct {
 		name            string
 		ctx             context.Context
 		argument        *types.Role
-		fetchResult     *types.Role
-		fetchErr        error
-		createErr       error
+		storeErr        error
 		expectedErr     bool
 		expectedErrCode ErrCode
 	}{
 		{
-			name:        "Created",
-			ctx:         defaultCtx,
-			argument:    simpleRoleFixture(),
-			expectedErr: false,
+			name:     "Create",
+			ctx:      context.Background(),
+			argument: types.FixtureRole("read-write", "default"),
 		},
 		{
-			name:            "Already Exists",
-			ctx:             defaultCtx,
-			argument:        simpleRoleFixture(),
-			fetchResult:     simpleRoleFixture(),
+			name:            "Invalid input",
+			ctx:             context.Background(),
+			argument:        types.FixtureRole("read-write", "default"),
+			storeErr:        &store.ErrNotValid{},
+			expectedErr:     true,
+			expectedErrCode: InvalidArgument,
+		},
+		{
+			name:            "Already exists",
+			ctx:             context.Background(),
+			argument:        types.FixtureRole("read-write", "default"),
+			storeErr:        &store.ErrAlreadyExists{},
 			expectedErr:     true,
 			expectedErrCode: AlreadyExistsErr,
 		},
 		{
-			name:            "Store Err on Create",
-			ctx:             defaultCtx,
-			argument:        simpleRoleFixture(),
-			createErr:       errors.New("dunno"),
+			name:            "Store error",
+			ctx:             context.Background(),
+			argument:        types.FixtureRole("read-write", "default"),
+			storeErr:        errors.New("some error"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "Store Err on Fetch",
-			ctx:             defaultCtx,
-			argument:        simpleRoleFixture(),
-			fetchErr:        errors.New("dunno"),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Permission",
-			ctx:             badCtx,
-			argument:        simpleRoleFixture(),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
-		{
-			name:            "Validation Error",
-			ctx:             defaultCtx,
-			argument:        badRole,
-			expectedErr:     true,
-			expectedErrCode: InvalidArgument,
 		},
 	}
 
@@ -346,15 +70,10 @@ func TestRoleCreate(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			// Mock store methods
 			store.
-				On("GetRoleByName", mock.Anything, mock.Anything).
-				Return(tc.fetchResult, tc.fetchErr)
-			store.
-				On("UpdateRole", mock.Anything, mock.Anything).
-				Return(tc.createErr)
+				On("CreateRole", mock.Anything, mock.Anything).
+				Return(tc.storeErr)
 
-			// Exec Query
 			err := actions.Create(tc.ctx, *tc.argument)
 
 			if tc.expectedErr {
@@ -363,7 +82,7 @@ func TestRoleCreate(t *testing.T) {
 					assert.Equal(tc.expectedErrCode, inferErr.Code)
 				} else {
 					assert.Error(err)
-					assert.FailNow("Given was not of type 'Error'")
+					assert.FailNow("Return value was not of type 'Error'")
 				}
 			} else {
 				assert.NoError(err)
@@ -372,192 +91,35 @@ func TestRoleCreate(t *testing.T) {
 	}
 }
 
-func TestRoleUpdate(t *testing.T) {
-	defaultCtx := testutil.NewContext(testutil.ContextWithPerms(
-		types.RuleTypeRole,
-		types.RulePermUpdate,
-	))
-	wrongPermsCtx := testutil.NewContext(testutil.ContextWithPerms(
-		types.RuleTypeRole,
-		types.RulePermRead,
-	))
-
-	badRole := simpleRoleFixture()
-	badRole.Rules[0].Permissions = []string{}
-
+func TestRoleCreateOrReplace(t *testing.T) {
 	testCases := []struct {
 		name            string
 		ctx             context.Context
 		argument        *types.Role
-		fetchResult     *types.Role
-		fetchErr        error
-		updateErr       error
+		storeErr        error
 		expectedErr     bool
 		expectedErrCode ErrCode
 	}{
 		{
-			name:        "Updated",
-			ctx:         defaultCtx,
-			argument:    simpleRoleFixture(),
-			fetchResult: simpleRoleFixture(),
-			expectedErr: false,
+			name:     "Create or update",
+			ctx:      context.Background(),
+			argument: types.FixtureRole("read-write", "default"),
 		},
 		{
-			name:            "Does Not Exist",
-			ctx:             defaultCtx,
-			argument:        simpleRoleFixture(),
-			fetchResult:     nil,
-			expectedErr:     true,
-			expectedErrCode: NotFound,
-		},
-		{
-			name:            "Store Err on Update",
-			ctx:             defaultCtx,
-			argument:        simpleRoleFixture(),
-			fetchResult:     simpleRoleFixture(),
-			updateErr:       errors.New("dunno"),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "Store Err on Fetch",
-			ctx:             defaultCtx,
-			argument:        simpleRoleFixture(),
-			fetchResult:     simpleRoleFixture(),
-			fetchErr:        errors.New("dunno"),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        simpleRoleFixture(),
-			fetchResult:     simpleRoleFixture(),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
-		{
-			name:            "Validation Error",
-			ctx:             defaultCtx,
-			argument:        badRole,
-			fetchResult:     simpleRoleFixture(),
+			name:            "Invalid input",
+			ctx:             context.Background(),
+			argument:        types.FixtureRole("read-write", "default"),
+			storeErr:        &store.ErrNotValid{},
 			expectedErr:     true,
 			expectedErrCode: InvalidArgument,
 		},
-	}
-
-	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
-		actions := NewRoleController(store)
-
-		t.Run(tc.name, func(t *testing.T) {
-			assert := assert.New(t)
-
-			// Mock store methods
-			store.
-				On("GetRoleByName", mock.Anything, tc.argument.Name).
-				Return(tc.fetchResult, tc.fetchErr)
-			store.
-				On("UpdateRole", mock.Anything, mock.Anything).
-				Return(tc.updateErr)
-
-			// Exec Query
-			err := actions.Update(tc.ctx, *tc.argument)
-
-			if tc.expectedErr {
-				inferErr, ok := err.(Error)
-				if ok {
-					assert.Equal(tc.expectedErrCode, inferErr.Code)
-				} else {
-					assert.Error(err)
-					assert.FailNow("Given was not of type 'Error'")
-				}
-			} else {
-				assert.NoError(err)
-			}
-		})
-	}
-}
-
-func TestRoleAddRule(t *testing.T) {
-	defaultCtx := testutil.NewContext(testutil.ContextWithPerms(
-		types.RuleTypeRole,
-		types.RulePermUpdate,
-	))
-	wrongPermsCtx := testutil.NewContext(testutil.ContextWithPerms(
-		types.RuleTypeRole,
-		types.RulePermRead,
-	))
-
-	simpleRule := func() types.Rule {
-		return types.FixtureRuleWithPerms("x", "create")
-	}
-
-	testCases := []struct {
-		name            string
-		ctx             context.Context
-		nameArg         string
-		ruleArg         types.Rule
-		fetchResult     *types.Role
-		fetchErr        error
-		updateErr       error
-		expectedErr     bool
-		expectedErrCode ErrCode
-	}{
 		{
-			name:        "Updated",
-			ctx:         defaultCtx,
-			nameArg:     "checks",
-			ruleArg:     simpleRule(),
-			fetchResult: simpleRoleFixture(),
-			expectedErr: false,
-		},
-		{
-			name:            "Does Not Exist",
-			ctx:             defaultCtx,
-			nameArg:         "checks",
-			ruleArg:         simpleRule(),
-			fetchResult:     nil,
-			expectedErr:     true,
-			expectedErrCode: NotFound,
-		},
-		{
-			name:            "Store Err on Update",
-			ctx:             defaultCtx,
-			nameArg:         "checks",
-			ruleArg:         simpleRule(),
-			fetchResult:     simpleRoleFixture(),
-			updateErr:       errors.New("dunno"),
+			name:            "Store error",
+			ctx:             context.Background(),
+			argument:        types.FixtureRole("read-write", "default"),
+			storeErr:        errors.New("some error"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "Store Err on Fetch",
-			ctx:             defaultCtx,
-			nameArg:         "checks",
-			ruleArg:         simpleRule(),
-			fetchResult:     simpleRoleFixture(),
-			fetchErr:        errors.New("dunno"),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			nameArg:         "checks",
-			ruleArg:         simpleRule(),
-			fetchResult:     simpleRoleFixture(),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
-		{
-			name:            "Validation Error",
-			ctx:             defaultCtx,
-			nameArg:         "checks",
-			ruleArg:         types.FixtureRuleWithPerms("x"), // No perms.
-			fetchResult:     simpleRoleFixture(),
-			expectedErr:     true,
-			expectedErrCode: InvalidArgument,
 		},
 	}
 
@@ -568,16 +130,11 @@ func TestRoleAddRule(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			// Mock store methods
 			store.
-				On("GetRoleByName", mock.Anything, tc.nameArg).
-				Return(tc.fetchResult, tc.fetchErr)
-			store.
-				On("UpdateRole", mock.Anything, mock.Anything).
-				Return(tc.updateErr)
+				On("CreateOrUpdateRole", mock.Anything, mock.Anything).
+				Return(tc.storeErr)
 
-			// Exec Query
-			err := actions.AddRule(tc.ctx, tc.nameArg, tc.ruleArg)
+			err := actions.CreateOrReplace(tc.ctx, *tc.argument)
 
 			if tc.expectedErr {
 				inferErr, ok := err.(Error)
@@ -585,118 +142,7 @@ func TestRoleAddRule(t *testing.T) {
 					assert.Equal(tc.expectedErrCode, inferErr.Code)
 				} else {
 					assert.Error(err)
-					assert.FailNow("Given was not of type 'Error'")
-				}
-			} else {
-				assert.NoError(err)
-			}
-		})
-	}
-}
-
-func TestRoleRemoveRule(t *testing.T) {
-	defaultCtx := testutil.NewContext(testutil.ContextWithPerms(
-		types.RuleTypeRole,
-		types.RulePermUpdate,
-	))
-	wrongPermsCtx := testutil.NewContext(testutil.ContextWithPerms(
-		types.RuleTypeRole,
-		types.RulePermRead,
-	))
-
-	simpleRole := func() *types.Role {
-		role := simpleRoleFixture()
-		role.Name = "checks"
-		role.Rules = []types.Rule{
-			types.FixtureRuleWithPerms("my-rule", "create"),
-		}
-		return role
-	}
-
-	testCases := []struct {
-		name            string
-		ctx             context.Context
-		nameArg         string
-		ruleArg         string
-		fetchResult     *types.Role
-		fetchErr        error
-		updateErr       error
-		expectedErr     bool
-		expectedErrCode ErrCode
-	}{
-		{
-			name:        "Updated",
-			ctx:         defaultCtx,
-			nameArg:     "checks",
-			ruleArg:     "my-rule",
-			fetchResult: simpleRole(),
-			expectedErr: false,
-		},
-		{
-			name:            "Does Not Exist",
-			ctx:             defaultCtx,
-			nameArg:         "checks",
-			ruleArg:         "my-rule",
-			fetchResult:     nil,
-			expectedErr:     true,
-			expectedErrCode: NotFound,
-		},
-		{
-			name:            "Store Err on Update",
-			ctx:             defaultCtx,
-			nameArg:         "checks",
-			ruleArg:         "my-rule",
-			fetchResult:     simpleRoleFixture(),
-			updateErr:       errors.New("dunno"),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "Store Err on Fetch",
-			ctx:             defaultCtx,
-			nameArg:         "checks",
-			ruleArg:         "my-rule",
-			fetchResult:     simpleRoleFixture(),
-			fetchErr:        errors.New("dunno"),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			nameArg:         "checks",
-			ruleArg:         "my-rule",
-			fetchResult:     simpleRoleFixture(),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
-	}
-
-	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
-		actions := NewRoleController(store)
-
-		t.Run(tc.name, func(t *testing.T) {
-			assert := assert.New(t)
-
-			// Mock store methods
-			store.
-				On("GetRoleByName", mock.Anything, tc.nameArg).
-				Return(tc.fetchResult, tc.fetchErr)
-			store.
-				On("UpdateRole", mock.Anything, mock.Anything).
-				Return(tc.updateErr)
-
-			// Exec Query
-			err := actions.RemoveRule(tc.ctx, tc.nameArg, tc.ruleArg)
-
-			if tc.expectedErr {
-				inferErr, ok := err.(Error)
-				if ok {
-					assert.Equal(tc.expectedErrCode, inferErr.Code)
-				} else {
-					assert.Error(err)
-					assert.FailNow("Given was not of type 'Error'")
+					assert.FailNow("Return value was not of type 'Error'")
 				}
 			} else {
 				assert.NoError(err)
@@ -706,65 +152,34 @@ func TestRoleRemoveRule(t *testing.T) {
 }
 
 func TestRoleDestroy(t *testing.T) {
-	defaultCtx := testutil.NewContext(testutil.ContextWithPerms(
-		types.RuleTypeRole,
-		types.RulePermDelete,
-	))
-	badCtx := testutil.NewContext(testutil.ContextWithPerms(
-		types.RuleTypeRole,
-		types.RulePermCreate,
-	))
-
 	testCases := []struct {
 		name            string
 		ctx             context.Context
 		argument        string
-		fetchResult     *types.Role
-		fetchErr        error
-		deleteErr       error
+		storeErr        error
 		expectedErr     bool
 		expectedErrCode ErrCode
 	}{
 		{
-			name:        "Deleted",
-			ctx:         defaultCtx,
-			argument:    "role1",
-			fetchResult: simpleRoleFixture(),
-			expectedErr: false,
+			name:     "Delete",
+			ctx:      context.Background(),
+			argument: "read-write",
 		},
 		{
-			name:            "Does Not Exist",
-			ctx:             defaultCtx,
-			argument:        "role1",
-			fetchResult:     nil,
+			name:            "Not found",
+			ctx:             context.Background(),
+			argument:        "read-write",
+			storeErr:        &store.ErrNotFound{},
 			expectedErr:     true,
 			expectedErrCode: NotFound,
 		},
 		{
-			name:            "Store Err on Delete",
-			ctx:             defaultCtx,
-			argument:        "role1",
-			fetchResult:     simpleRoleFixture(),
-			deleteErr:       errors.New("dunno"),
+			name:            "Store error",
+			ctx:             context.Background(),
+			argument:        "read-write",
+			storeErr:        errors.New("some error"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "Store Err on Fetch",
-			ctx:             defaultCtx,
-			argument:        "role1",
-			fetchResult:     simpleRoleFixture(),
-			fetchErr:        errors.New("dunno"),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Permission",
-			ctx:             badCtx,
-			argument:        "role1",
-			fetchResult:     simpleRoleFixture(),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 	}
 
@@ -775,15 +190,10 @@ func TestRoleDestroy(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			// Mock store methods
 			store.
-				On("GetRoleByName", mock.Anything, tc.argument).
-				Return(tc.fetchResult, tc.fetchErr)
-			store.
-				On("DeleteRoleByName", mock.Anything, mock.Anything).
-				Return(tc.deleteErr)
+				On("DeleteRole", mock.Anything, mock.Anything).
+				Return(tc.storeErr)
 
-			// Exec Query
 			err := actions.Destroy(tc.ctx, tc.argument)
 
 			if tc.expectedErr {
@@ -792,7 +202,7 @@ func TestRoleDestroy(t *testing.T) {
 					assert.Equal(tc.expectedErrCode, inferErr.Code)
 				} else {
 					assert.Error(err)
-					assert.FailNow("Given was not of type 'Error'")
+					assert.FailNow("Return value was not of type 'Error'")
 				}
 			} else {
 				assert.NoError(err)
@@ -801,6 +211,196 @@ func TestRoleDestroy(t *testing.T) {
 	}
 }
 
-func simpleRoleFixture() *types.Role {
-	return types.FixtureRole("a", "b")
+func TestRoleGet(t *testing.T) {
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		argument        string
+		storeErr        error
+		expectedResult  *types.Role
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:           "Get",
+			ctx:            context.Background(),
+			argument:       "read-write",
+			expectedResult: types.FixtureRole("read-write", "default"),
+		},
+		{
+			name:            "Not found",
+			ctx:             context.Background(),
+			argument:        "read-write",
+			storeErr:        &store.ErrNotFound{},
+			expectedErr:     true,
+			expectedErrCode: NotFound,
+		},
+		{
+			name:            "Store error",
+			ctx:             context.Background(),
+			argument:        "read-write",
+			storeErr:        errors.New("some error"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+	}
+
+	for _, tc := range testCases {
+		store := &mockstore.MockStore{}
+		actions := NewRoleController(store)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			store.
+				On("GetRole", mock.Anything, mock.Anything).
+				Return(tc.expectedResult, tc.storeErr)
+
+			result, err := actions.Get(tc.ctx, tc.argument)
+
+			if tc.expectedErr {
+				inferErr, ok := err.(Error)
+				if ok {
+					assert.Equal(tc.expectedErrCode, inferErr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Return value was not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+				assert.Equal(tc.expectedResult, result)
+			}
+		})
+	}
+}
+
+func TestRoleList(t *testing.T) {
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		storeErr        error
+		expectedResult  []*types.Role
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name: "List",
+			ctx:  context.Background(),
+			expectedResult: []*types.Role{
+				types.FixtureRole("read-write", "default"),
+				types.FixtureRole("read-only", "default"),
+				types.FixtureRole("sysadmin", "IT"),
+			},
+		},
+		{
+			name:            "Not found",
+			ctx:             context.Background(),
+			storeErr:        &store.ErrNotFound{},
+			expectedErr:     true,
+			expectedErrCode: NotFound,
+		},
+		{
+			name:            "Store error",
+			ctx:             context.Background(),
+			storeErr:        errors.New("some error"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+	}
+
+	for _, tc := range testCases {
+		store := &mockstore.MockStore{}
+		actions := NewRoleController(store)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			store.
+				On("ListRoles", mock.Anything).
+				Return(tc.expectedResult, tc.storeErr)
+
+			result, err := actions.List(tc.ctx)
+
+			if tc.expectedErr {
+				inferErr, ok := err.(Error)
+				if ok {
+					assert.Equal(tc.expectedErrCode, inferErr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Return value was not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+				assert.Equal(tc.expectedResult, result)
+			}
+		})
+	}
+}
+
+func TestRoleUpdate(t *testing.T) {
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		argument        *types.Role
+		storeErr        error
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name:     "Update",
+			ctx:      context.Background(),
+			argument: types.FixtureRole("read-write", "default"),
+		},
+		{
+			name:            "Not found",
+			ctx:             context.Background(),
+			argument:        types.FixtureRole("read-write", "default"),
+			storeErr:        &store.ErrNotFound{},
+			expectedErr:     true,
+			expectedErrCode: NotFound,
+		},
+		{
+			name:            "Invalid input",
+			ctx:             context.Background(),
+			argument:        types.FixtureRole("read-write", "default"),
+			storeErr:        &store.ErrNotValid{},
+			expectedErr:     true,
+			expectedErrCode: InvalidArgument,
+		},
+		{
+			name:            "Store error",
+			ctx:             context.Background(),
+			argument:        types.FixtureRole("read-write", "default"),
+			storeErr:        errors.New("some error"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+	}
+
+	for _, tc := range testCases {
+		store := &mockstore.MockStore{}
+		actions := NewRoleController(store)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			store.
+				On("UpdateRole", mock.Anything, mock.Anything).
+				Return(tc.storeErr)
+
+			err := actions.Update(tc.ctx, *tc.argument)
+
+			if tc.expectedErr {
+				inferErr, ok := err.(Error)
+				if ok {
+					assert.Equal(tc.expectedErrCode, inferErr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Return value was not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
 }

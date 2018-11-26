@@ -1,29 +1,31 @@
 package role
 
 import (
-	"errors"
 	"io"
+	"strconv"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
-// ListCommand defines new list events command
+// ListCommand defines a command to list roles
 func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "list",
 		Short:        "list roles",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) != 0 {
-				_ = cmd.Help()
-				return errors.New("invalid argument(s) received")
+			namespace := cli.Config.Namespace()
+			if ok, _ := cmd.Flags().GetBool(flags.AllNamespaces); ok {
+				namespace = types.NamespaceTypeAll
 			}
+
 			// Fetch roles from API
-			results, err := cli.Client.ListRoles()
+			results, err := cli.Client.ListRoles(namespace)
 			if err != nil {
 				return err
 			}
@@ -38,10 +40,10 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	helpers.AddFormatFlag(cmd.Flags())
+	helpers.AddAllNamespace(cmd.Flags())
 
 	return cmd
 }
-
 func printToTable(results interface{}, writer io.Writer) {
 	table := table.New([]*table.Column{
 		{
@@ -55,7 +57,26 @@ func printToTable(results interface{}, writer io.Writer) {
 				return role.Name
 			},
 		},
+		{
+			Title: "Namespace",
+			CellTransformer: func(data interface{}) string {
+				role, ok := data.(types.Role)
+				if !ok {
+					return cli.TypeError
+				}
+				return role.Namespace
+			},
+		},
+		{
+			Title: "Rules",
+			CellTransformer: func(data interface{}) string {
+				role, ok := data.(types.Role)
+				if !ok {
+					return cli.TypeError
+				}
+				return strconv.Itoa(len(role.Rules))
+			},
+		},
 	})
-
 	table.Render(writer, results)
 }

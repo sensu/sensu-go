@@ -12,7 +12,7 @@ import { withQueryParams } from "/components/QueryParams";
 import WithWidth from "/components/WithWidth";
 
 // If none given default expression is used.
-const defaultExpression = "HasCheck";
+const defaultExpression = "has_check";
 
 // duration used when polling is enabled; set fairly high until we understand
 // the impact.

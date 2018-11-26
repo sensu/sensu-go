@@ -123,12 +123,13 @@ class EventDetailsCheckResult extends React.PureComponent {
                 <DictionaryEntry>
                   <DictionaryKey>Check</DictionaryKey>
                   <DictionaryValue>
-                    <NamespaceLink
-                      component={InlineLink}
-                      to={`/checks/${check.name}`}
-                    >
-                      {check.name}
-                    </NamespaceLink>
+                    {check.name !== "keepalive" ? (
+                      <InlineLink to={`/checks/${check.name}`}>
+                        {check.name}
+                      </InlineLink>
+                    ) : (
+                      check.name
+                    )}
                   </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>

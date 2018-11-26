@@ -27,12 +27,16 @@ class CodeHighlight extends React.Component {
   static propTypes = {
     language: PropTypes.oneOf(["json", "bash", "properties"]).isRequired,
     code: PropTypes.string.isRequired,
-    children: PropTypes.func.isRequired,
+    component: PropTypes.oneOfType([PropTypes.func, PropTypes.string]),
+  };
+
+  static defaultProps = {
+    component: "code",
   };
 
   static getDerivedStateFromProps(props, state) {
     if (props.code !== state.code) {
-      return { code: props.code, result: props.code };
+      return { code: props.code, result: props.code, processed: false };
     }
     return null;
   }
@@ -40,6 +44,7 @@ class CodeHighlight extends React.Component {
   state = {
     code: this.props.code,
     result: this.props.code,
+    processed: false,
   };
 
   componentDidMount() {
@@ -47,7 +52,7 @@ class CodeHighlight extends React.Component {
   }
 
   componentDidUpdate() {
-    if (this.props.code === this.state.result) {
+    if (!this.state.processed) {
       this.update();
     }
   }
@@ -59,13 +64,16 @@ class CodeHighlight extends React.Component {
   update = () => {
     postMessage([this.props.language, this.props.code], result => {
       if (!this.unmounted) {
-        this.setState({ result });
+        this.setState({ result, processed: true });
       }
     });
   };
 
   render() {
-    return this.props.children(this.state.result);
+    const { component: Component } = this.props;
+    return (
+      <Component dangerouslySetInnerHTML={{ __html: this.state.result }} />
+    );
   }
 }
 

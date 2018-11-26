@@ -94,10 +94,10 @@ type CheckConfigOutputMetricHandlersFieldResolver interface {
 	OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error)
 }
 
-// CheckConfigProxyEntityIDFieldResolver implement to resolve requests for the CheckConfig's proxyEntityId field.
-type CheckConfigProxyEntityIDFieldResolver interface {
-	// ProxyEntityID implements response to request for proxyEntityId field.
-	ProxyEntityID(p graphql.ResolveParams) (string, error)
+// CheckConfigProxyEntityNameFieldResolver implement to resolve requests for the CheckConfig's proxyEntityName field.
+type CheckConfigProxyEntityNameFieldResolver interface {
+	// ProxyEntityName implements response to request for proxyEntityName field.
+	ProxyEntityName(p graphql.ResolveParams) (string, error)
 }
 
 // CheckConfigProxyRequestsFieldResolver implement to resolve requests for the CheckConfig's proxyRequests field.
@@ -248,7 +248,7 @@ type CheckConfigFieldResolvers interface {
 	CheckConfigLowFlapThresholdFieldResolver
 	CheckConfigOutputMetricFormatFieldResolver
 	CheckConfigOutputMetricHandlersFieldResolver
-	CheckConfigProxyEntityIDFieldResolver
+	CheckConfigProxyEntityNameFieldResolver
 	CheckConfigProxyRequestsFieldResolver
 	CheckConfigPublishFieldResolver
 	CheckConfigRuntimeAssetsFieldResolver
@@ -464,15 +464,15 @@ func (_ CheckConfigAliases) OutputMetricHandlers(p graphql.ResolveParams) (inter
 	return val, err
 }
 
-// ProxyEntityID implements response to request for 'proxyEntityId' field.
-func (_ CheckConfigAliases) ProxyEntityID(p graphql.ResolveParams) (string, error) {
+// ProxyEntityName implements response to request for 'proxyEntityName' field.
+func (_ CheckConfigAliases) ProxyEntityName(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	ret, ok := val.(string)
 	if err != nil {
 		return ret, err
 	}
 	if !ok {
-		return ret, errors.New("unable to coerce value for field 'proxyEntityId'")
+		return ret, errors.New("unable to coerce value for field 'proxyEntityName'")
 	}
 	return ret, err
 }
@@ -703,10 +703,10 @@ func _ObjTypeCheckConfigOutputMetricHandlersHandler(impl interface{}) graphql1.F
 	}
 }
 
-func _ObjTypeCheckConfigProxyEntityIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigProxyEntityIDFieldResolver)
+func _ObjTypeCheckConfigProxyEntityNameHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigProxyEntityNameFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.ProxyEntityID(frp)
+		return resolver.ProxyEntityName(frp)
 	}
 }
 
@@ -903,11 +903,11 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 				Name:              "outputMetricHandlers",
 				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("Handler"))),
 			},
-			"proxyEntityId": &graphql1.Field{
+			"proxyEntityName": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "proxyEntityId indicates the name of the entity representing an external resource",
-				Name:              "proxyEntityId",
+				Description:       "proxyEntityName indicates the name of the entity representing an external resource",
+				Name:              "proxyEntityName",
 				Type:              graphql1.String,
 			},
 			"proxyRequests": &graphql1.Field{
@@ -1022,7 +1022,7 @@ var _ObjectTypeCheckConfigDesc = graphql.ObjectDesc{
 		"namespace":            _ObjTypeCheckConfigNamespaceHandler,
 		"outputMetricFormat":   _ObjTypeCheckConfigOutputMetricFormatHandler,
 		"outputMetricHandlers": _ObjTypeCheckConfigOutputMetricHandlersHandler,
-		"proxyEntityId":        _ObjTypeCheckConfigProxyEntityIDHandler,
+		"proxyEntityName":      _ObjTypeCheckConfigProxyEntityNameHandler,
 		"proxyRequests":        _ObjTypeCheckConfigProxyRequestsHandler,
 		"publish":              _ObjTypeCheckConfigPublishHandler,
 		"roundRobin":           _ObjTypeCheckConfigRoundRobinHandler,
@@ -1520,10 +1520,10 @@ type CheckOutputMetricHandlersFieldResolver interface {
 	OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error)
 }
 
-// CheckProxyEntityIDFieldResolver implement to resolve requests for the Check's proxyEntityId field.
-type CheckProxyEntityIDFieldResolver interface {
-	// ProxyEntityID implements response to request for proxyEntityId field.
-	ProxyEntityID(p graphql.ResolveParams) (string, error)
+// CheckProxyEntityNameFieldResolver implement to resolve requests for the Check's proxyEntityName field.
+type CheckProxyEntityNameFieldResolver interface {
+	// ProxyEntityName implements response to request for proxyEntityName field.
+	ProxyEntityName(p graphql.ResolveParams) (string, error)
 }
 
 // CheckProxyRequestsFieldResolver implement to resolve requests for the Check's proxyRequests field.
@@ -1756,7 +1756,7 @@ type CheckFieldResolvers interface {
 	CheckLowFlapThresholdFieldResolver
 	CheckOutputMetricFormatFieldResolver
 	CheckOutputMetricHandlersFieldResolver
-	CheckProxyEntityIDFieldResolver
+	CheckProxyEntityNameFieldResolver
 	CheckProxyRequestsFieldResolver
 	CheckPublishFieldResolver
 	CheckRuntimeAssetsFieldResolver
@@ -1971,15 +1971,15 @@ func (_ CheckAliases) OutputMetricHandlers(p graphql.ResolveParams) (interface{}
 	return val, err
 }
 
-// ProxyEntityID implements response to request for 'proxyEntityId' field.
-func (_ CheckAliases) ProxyEntityID(p graphql.ResolveParams) (string, error) {
+// ProxyEntityName implements response to request for 'proxyEntityName' field.
+func (_ CheckAliases) ProxyEntityName(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	ret, ok := val.(string)
 	if err != nil {
 		return ret, err
 	}
 	if !ok {
-		return ret, errors.New("unable to coerce value for field 'proxyEntityId'")
+		return ret, errors.New("unable to coerce value for field 'proxyEntityName'")
 	}
 	return ret, err
 }
@@ -2355,10 +2355,10 @@ func _ObjTypeCheckOutputMetricHandlersHandler(impl interface{}) graphql1.FieldRe
 	}
 }
 
-func _ObjTypeCheckProxyEntityIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckProxyEntityIDFieldResolver)
+func _ObjTypeCheckProxyEntityNameHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckProxyEntityNameFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.ProxyEntityID(frp)
+		return resolver.ProxyEntityName(frp)
 	}
 }
 
@@ -2705,11 +2705,11 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Name:              "outputMetricHandlers",
 				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("Handler"))),
 			},
-			"proxyEntityId": &graphql1.Field{
+			"proxyEntityName": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "proxyEntityId indicates the name of the entity representing an external resource",
-				Name:              "proxyEntityId",
+				Description:       "proxyEntityName indicates the name of the entity representing an external resource",
+				Name:              "proxyEntityName",
 				Type:              graphql1.String,
 			},
 			"proxyRequests": &graphql1.Field{
@@ -2851,7 +2851,7 @@ var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 		"output":               _ObjTypeCheckOutputHandler,
 		"outputMetricFormat":   _ObjTypeCheckOutputMetricFormatHandler,
 		"outputMetricHandlers": _ObjTypeCheckOutputMetricHandlersHandler,
-		"proxyEntityId":        _ObjTypeCheckProxyEntityIDHandler,
+		"proxyEntityName":      _ObjTypeCheckProxyEntityNameHandler,
 		"proxyRequests":        _ObjTypeCheckProxyRequestsHandler,
 		"publish":              _ObjTypeCheckPublishHandler,
 		"roundRobin":           _ObjTypeCheckRoundRobinHandler,

@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestSetProxyEntityIDCommand(t *testing.T) {
+func TestSetProxyEntityNameCommand(t *testing.T) {
 	testCases := []struct {
 		testName       string
 		args           []string
@@ -48,7 +48,7 @@ func TestSetProxyEntityIDCommand(t *testing.T) {
 				mock.Anything,
 			).Return(tc.updateResponse)
 
-			cmd := SetProxyEntityIDCommand(cli)
+			cmd := SetProxyEntityNameCommand(cli)
 			out, err := test.RunCmd(cmd, tc.args)
 			if tc.expectError {
 				assert.Error(t, err)

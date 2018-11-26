@@ -12,7 +12,7 @@ import (
 func (client *RestClient) ListHandlers(namespace string) ([]types.Handler, error) {
 	var handlers []types.Handler
 
-	res, err := client.R().Get("/handlers?namespace=" + url.QueryEscape(namespace))
+	res, err := client.R().SetQueryParam("namespace", namespace).Get("/handlers")
 	if err != nil {
 		return handlers, err
 	}
@@ -67,7 +67,7 @@ func (client *RestClient) FetchHandler(name string) (*types.Handler, error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return nil, fmt.Errorf("%v", res.String())
+		return nil, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &handler)

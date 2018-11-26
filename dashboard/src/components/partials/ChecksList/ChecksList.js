@@ -64,7 +64,7 @@ class ChecksList extends React.Component {
             name
             namespace
             silences {
-              storeId
+              name
               ...ClearSilencedEntriesDialog_silence
             }
 

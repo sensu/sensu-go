@@ -82,23 +82,24 @@ func TestBackendHTTPListener(t *testing.T) {
 			}
 
 			b, err := Initialize(&Config{
-				AgentHost:                   "127.0.0.1",
-				AgentPort:                   agentPort,
-				APIHost:                     "127.0.0.1",
-				APIPort:                     apiPort,
-				DashboardHost:               "127.0.0.1",
-				DashboardPort:               dashboardPort,
-				StateDir:                    dataPath,
-				CacheDir:                    cachePath,
-				TLS:                         tc.tls,
-				EtcdListenClientURL:         clURL,
-				EtcdListenPeerURL:           apURL,
-				EtcdInitialCluster:          initCluster,
-				EtcdInitialClusterState:     etcd.ClusterStateNew,
-				EtcdInitialAdvertisePeerURL: apURL,
-				EtcdName:                    "default",
-				EtcdClientTLSInfo:           tlsInfo,
-				EtcdPeerTLSInfo:             tlsInfo,
+				AgentHost:     "127.0.0.1",
+				AgentPort:     agentPort,
+				APIHost:       "127.0.0.1",
+				APIPort:       apiPort,
+				DashboardHost: "127.0.0.1",
+				DashboardPort: dashboardPort,
+				StateDir:      dataPath,
+				CacheDir:      cachePath,
+				TLS:           tc.tls,
+				EtcdAdvertiseClientURLs:      []string{clURL},
+				EtcdListenClientURLs:         []string{clURL},
+				EtcdListenPeerURLs:           []string{apURL},
+				EtcdInitialCluster:           initCluster,
+				EtcdInitialClusterState:      etcd.ClusterStateNew,
+				EtcdInitialAdvertisePeerURLs: []string{apURL},
+				EtcdName:                     "default",
+				EtcdClientTLSInfo:            tlsInfo,
+				EtcdPeerTLSInfo:              tlsInfo,
 			})
 			assert.NoError(t, err)
 			if err != nil {
@@ -126,7 +127,7 @@ func TestBackendHTTPListener(t *testing.T) {
 			hdr := http.Header{
 				"Authorization":                  {"Basic " + userCredentials},
 				transport.HeaderKeyNamespace:     {"default"},
-				transport.HeaderKeyAgentID:       {"agent"},
+				transport.HeaderKeyAgentName:     {"agent"},
 				transport.HeaderKeySubscriptions: {},
 			}
 			client, err := transport.Connect(fmt.Sprintf("%s://127.0.0.1:%d/", tc.wsScheme, agentPort), tc.tls, hdr)

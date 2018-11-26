@@ -522,15 +522,6 @@
 		]
 	},
 	{
-		"project": "github.com/sensu/govaluate",
-		"licenses": [
-			{
-				"type": "MIT License",
-				"confidence": 1
-			}
-		]
-	},
-	{
 		"project": "github.com/sensu/sensu-go/agent",
 		"licenses": [
 			{

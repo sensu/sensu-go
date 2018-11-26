@@ -9,6 +9,7 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
@@ -22,7 +23,10 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		Short: "list extensions",
 		RunE:  runList(cli.Config.Format(), cli.Client, cli.Config.Namespace(), cli.Config.Format()),
 	}
+
+	helpers.AddAllNamespace(cmd.Flags())
 	helpers.AddFormatFlag(cmd.Flags())
+
 	return cmd
 }
 
@@ -32,6 +36,10 @@ func runList(config string, client client.APIClient, namespace, format string) f
 			_ = cmd.Help()
 			return errors.New("invalid arguments received")
 		}
+		if ok, _ := cmd.Flags().GetBool(flags.AllNamespaces); ok {
+			namespace = types.NamespaceTypeAll
+		}
+
 		extensions, err := client.ListExtensions(namespace)
 		if err != nil {
 			return err

@@ -6,8 +6,8 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// DeleteSilencedEntryByID ...
-func (s *MockStore) DeleteSilencedEntryByID(ctx context.Context, silencedID string) error {
+// DeleteSilencedEntryByName ...
+func (s *MockStore) DeleteSilencedEntryByName(ctx context.Context, silencedID string) error {
 	args := s.Called(ctx, silencedID)
 	return args.Error(0)
 }
@@ -18,8 +18,8 @@ func (s *MockStore) GetSilencedEntries(ctx context.Context) ([]*types.Silenced, 
 	return args.Get(0).([]*types.Silenced), args.Error(1)
 }
 
-// GetSilencedEntryByID ...
-func (s *MockStore) GetSilencedEntryByID(ctx context.Context, silencedID string) (*types.Silenced, error) {
+// GetSilencedEntryByName ...
+func (s *MockStore) GetSilencedEntryByName(ctx context.Context, silencedID string) (*types.Silenced, error) {
 	args := s.Called(ctx, silencedID)
 	return args.Get(0).(*types.Silenced), args.Error(1)
 }

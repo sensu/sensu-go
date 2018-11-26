@@ -64,12 +64,15 @@ func translateToEvent(a *Agent, result v1.CheckResult, event *types.Event) error
 	}
 
 	agentEntity := a.getAgentEntity()
-	if result.Client == "" || result.Client == agentEntity.ID {
+	if result.Client == "" || result.Client == agentEntity.Name {
 		event.Entity = agentEntity
 	} else {
 		event.Entity = &types.Entity{
-			ID:    result.Client,
-			Class: types.EntityProxyClass,
+			ObjectMeta: types.ObjectMeta{
+				Name:      result.Client,
+				Namespace: agentEntity.Namespace,
+			},
+			EntityClass: types.EntityProxyClass,
 		}
 	}
 

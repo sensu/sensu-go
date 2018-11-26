@@ -137,27 +137,3 @@ func sortAnys(m map[string]jsoniter.Any) []anyT {
 	})
 	return anys
 }
-
-// structField is an internal convenience type
-type structField struct {
-	Field     reflect.StructField
-	Value     reflect.Value
-	JSONName  string
-	OmitEmpty bool
-}
-
-func (s *structField) jsonFieldName() (string, bool) {
-	fieldName := s.Field.Name
-	tag, ok := s.Field.Tag.Lookup("json")
-	omitEmpty := false
-	if ok {
-		parts := strings.Split(tag, ",")
-		if len(parts[0]) > 0 {
-			fieldName = parts[0]
-		}
-		if len(parts) > 1 && parts[1] == "omitempty" {
-			omitEmpty = true
-		}
-	}
-	return fieldName, omitEmpty
-}

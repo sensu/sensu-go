@@ -43,12 +43,12 @@ func (t *wizardTopic) Send(msg interface{}) {
 // ring. In a distributed environment, SendDirect may send a message, or it
 // may not, depending if the next subscriber in the round-robin is bound to
 // the backend.
-func (t *wizardTopic) SendRoundRobin(msg interface{}) error {
+func (t *wizardTopic) SendRoundRobin(ctx context.Context, msg interface{}) error {
 	if t.ring == nil {
 		return errors.New("no ring for topic: " + t.id)
 	}
 
-	id, err := t.ring.Next(context.Background())
+	id, err := t.ring.Next(ctx)
 	if err != nil {
 		if err == ring.ErrNotOwner || err == ring.ErrEmptyRing {
 			return nil

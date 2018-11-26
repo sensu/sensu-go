@@ -1,6 +1,8 @@
 package mockbus
 
 import (
+	"context"
+
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/stretchr/testify/mock"
 )
@@ -53,7 +55,7 @@ func (m *MockBus) Publish(topic string, message interface{}) error {
 }
 
 // PublishDirect ...
-func (m *MockBus) PublishDirect(topic string, message interface{}) error {
-	args := m.Called(topic, message)
+func (m *MockBus) PublishDirect(ctx context.Context, topic string, message interface{}) error {
+	args := m.Called(ctx, topic, message)
 	return args.Error(0)
 }

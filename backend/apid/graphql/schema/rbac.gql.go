@@ -8,22 +8,22 @@ import (
 	graphql "github.com/sensu/sensu-go/graphql"
 )
 
-// RuleNamespaceFieldResolver implement to resolve requests for the Rule's namespace field.
-type RuleNamespaceFieldResolver interface {
-	// Namespace implements response to request for namespace field.
-	Namespace(p graphql.ResolveParams) (string, error)
+// RuleVerbsFieldResolver implement to resolve requests for the Rule's verbs field.
+type RuleVerbsFieldResolver interface {
+	// Verbs implements response to request for verbs field.
+	Verbs(p graphql.ResolveParams) ([]string, error)
 }
 
-// RuleTypeFieldResolver implement to resolve requests for the Rule's type field.
-type RuleTypeFieldResolver interface {
-	// Type implements response to request for type field.
-	Type(p graphql.ResolveParams) (RuleResource, error)
+// RuleResourcesFieldResolver implement to resolve requests for the Rule's resources field.
+type RuleResourcesFieldResolver interface {
+	// Resources implements response to request for resources field.
+	Resources(p graphql.ResolveParams) ([]string, error)
 }
 
-// RulePermissionsFieldResolver implement to resolve requests for the Rule's permissions field.
-type RulePermissionsFieldResolver interface {
-	// Permissions implements response to request for permissions field.
-	Permissions(p graphql.ResolveParams) (interface{}, error)
+// RuleResourceNamesFieldResolver implement to resolve requests for the Rule's resourceNames field.
+type RuleResourceNamesFieldResolver interface {
+	// ResourceNames implements response to request for resourceNames field.
+	ResourceNames(p graphql.ResolveParams) ([]string, error)
 }
 
 //
@@ -88,9 +88,9 @@ type RulePermissionsFieldResolver interface {
 //   }
 //
 type RuleFieldResolvers interface {
-	RuleNamespaceFieldResolver
-	RuleTypeFieldResolver
-	RulePermissionsFieldResolver
+	RuleVerbsFieldResolver
+	RuleResourcesFieldResolver
+	RuleResourceNamesFieldResolver
 }
 
 // RuleAliases implements all methods on RuleFieldResolvers interface by using reflection to
@@ -140,96 +140,100 @@ type RuleFieldResolvers interface {
 //
 type RuleAliases struct{}
 
-// Namespace implements response to request for 'namespace' field.
-func (_ RuleAliases) Namespace(p graphql.ResolveParams) (string, error) {
+// Verbs implements response to request for 'verbs' field.
+func (_ RuleAliases) Verbs(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := val.(string)
+	ret, ok := val.([]string)
 	if err != nil {
 		return ret, err
 	}
 	if !ok {
-		return ret, errors.New("unable to coerce value for field 'namespace'")
+		return ret, errors.New("unable to coerce value for field 'verbs'")
 	}
 	return ret, err
 }
 
-// Type implements response to request for 'type' field.
-func (_ RuleAliases) Type(p graphql.ResolveParams) (RuleResource, error) {
+// Resources implements response to request for 'resources' field.
+func (_ RuleAliases) Resources(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := RuleResource(val.(string)), true
+	ret, ok := val.([]string)
 	if err != nil {
 		return ret, err
 	}
 	if !ok {
-		return ret, errors.New("unable to coerce value for field 'type'")
+		return ret, errors.New("unable to coerce value for field 'resources'")
 	}
 	return ret, err
 }
 
-// Permissions implements response to request for 'permissions' field.
-func (_ RuleAliases) Permissions(p graphql.ResolveParams) (interface{}, error) {
+// ResourceNames implements response to request for 'resourceNames' field.
+func (_ RuleAliases) ResourceNames(p graphql.ResolveParams) ([]string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
+	ret, ok := val.([]string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'resourceNames'")
+	}
+	return ret, err
 }
 
-// RuleType Rule maps permissions to a given type
+// RuleType Rule holds information that describes an action that can be taken
 var RuleType = graphql.NewType("Rule", graphql.ObjectKind)
 
 // RegisterRule registers Rule object type with given service.
 func RegisterRule(svc *graphql.Service, impl RuleFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeRuleDesc, impl)
 }
-func _ObjTypeRuleNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RuleNamespaceFieldResolver)
+func _ObjTypeRuleVerbsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(RuleVerbsFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Namespace(frp)
+		return resolver.Verbs(frp)
 	}
 }
 
-func _ObjTypeRuleTypeHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RuleTypeFieldResolver)
+func _ObjTypeRuleResourcesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(RuleResourcesFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-
-		val, err := resolver.Type(frp)
-		return string(val), err
+		return resolver.Resources(frp)
 	}
 }
 
-func _ObjTypeRulePermissionsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RulePermissionsFieldResolver)
+func _ObjTypeRuleResourceNamesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(RuleResourceNamesFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Permissions(frp)
+		return resolver.ResourceNames(frp)
 	}
 }
 
 func _ObjectTypeRuleConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
-		Description: "Rule maps permissions to a given type",
+		Description: "Rule holds information that describes an action that can be taken",
 		Fields: graphql1.Fields{
-			"namespace": &graphql1.Field{
+			"resourceNames": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "namespace in which this record resides",
-				Name:              "namespace",
-				Type:              graphql1.NewNonNull(graphql1.String),
+				Description:       "ResourceNames is an optional list of resource names that the rule applies\nto.",
+				Name:              "resourceNames",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql1.String))),
 			},
-			"permissions": &graphql1.Field{
+			"resources": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "permissions",
-				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("RulePermission")))),
+				Description:       "Resources is a list of resources that this rule applies to. \"*\" represents\nall resources.",
+				Name:              "resources",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql1.String))),
 			},
-			"type": &graphql1.Field{
+			"verbs": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "resource the permissions apply to",
-				Name:              "type",
-				Type:              graphql1.NewNonNull(graphql.OutputType("RuleResource")),
+				Description:       "Verbs is a list of verbs that apply to all of the listed resources for this\nrule. These include \"get\", \"list\", \"watch\", \"create\", \"update\", \"delete\".\nTODO: add support for \"patch\" (this is expensive and should be delayed\nuntil a further release). TODO: add support for \"watch\" (via websockets)",
+				Name:              "verbs",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql1.String))),
 			},
 		},
-		Interfaces: []*graphql1.Interface{
-			graphql.Interface("Namespaced")},
+		Interfaces: []*graphql1.Interface{},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -246,28 +250,234 @@ func _ObjectTypeRuleConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeRuleDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeRuleConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"namespace":   _ObjTypeRuleNamespaceHandler,
-		"permissions": _ObjTypeRulePermissionsHandler,
-		"type":        _ObjTypeRuleTypeHandler,
+		"resourceNames": _ObjTypeRuleResourceNamesHandler,
+		"resources":     _ObjTypeRuleResourcesHandler,
+		"verbs":         _ObjTypeRuleVerbsHandler,
 	},
 }
 
-// RoleIDFieldResolver implement to resolve requests for the Role's id field.
-type RoleIDFieldResolver interface {
-	// ID implements response to request for id field.
-	ID(p graphql.ResolveParams) (string, error)
+// ClusterRoleRulesFieldResolver implement to resolve requests for the ClusterRole's rules field.
+type ClusterRoleRulesFieldResolver interface {
+	// Rules implements response to request for rules field.
+	Rules(p graphql.ResolveParams) (interface{}, error)
 }
 
-// RoleNameFieldResolver implement to resolve requests for the Role's name field.
-type RoleNameFieldResolver interface {
+// ClusterRoleNameFieldResolver implement to resolve requests for the ClusterRole's name field.
+type ClusterRoleNameFieldResolver interface {
 	// Name implements response to request for name field.
 	Name(p graphql.ResolveParams) (string, error)
+}
+
+//
+// ClusterRoleFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'ClusterRole' type.
+//
+// == Example SDL
+//
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
+//
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
+//
+// == Example generated interface
+//
+//   // DogResolver ...
+//   type DogFieldResolvers interface {
+//     DogNameFieldResolver
+//     DogBreedFieldResolver
+//
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//   }
+//
+// == Example implementation ...
+//
+//   // DogResolver implements DogFieldResolvers interface
+//   type DogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
+//
+//   // Name implements response to request for name field.
+//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     return dog.GetName()
+//   }
+//
+//   // Breed implements response to request for breed field.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+//     // ... implementation details ...
+//     _, ok := p.Value.(DogGetter)
+//     return ok
+//   }
+//
+type ClusterRoleFieldResolvers interface {
+	ClusterRoleRulesFieldResolver
+	ClusterRoleNameFieldResolver
+}
+
+// ClusterRoleAliases implements all methods on ClusterRoleFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+//
+type ClusterRoleAliases struct{}
+
+// Rules implements response to request for 'rules' field.
+func (_ ClusterRoleAliases) Rules(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Name implements response to request for 'name' field.
+func (_ ClusterRoleAliases) Name(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'name'")
+	}
+	return ret, err
+}
+
+// ClusterRoleType ClusterRole applies to all namespaces within a cluster.
+var ClusterRoleType = graphql.NewType("ClusterRole", graphql.ObjectKind)
+
+// RegisterClusterRole registers ClusterRole object type with given service.
+func RegisterClusterRole(svc *graphql.Service, impl ClusterRoleFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeClusterRoleDesc, impl)
+}
+func _ObjTypeClusterRoleRulesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ClusterRoleRulesFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Rules(frp)
+	}
+}
+
+func _ObjTypeClusterRoleNameHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ClusterRoleNameFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(frp)
+	}
+}
+
+func _ObjectTypeClusterRoleConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "ClusterRole applies to all namespaces within a cluster.",
+		Fields: graphql1.Fields{
+			"name": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Name of the ClusterRole",
+				Name:              "name",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"rules": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "rules",
+				Type:              graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Rule"))),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see ClusterRoleFieldResolvers.")
+		},
+		Name: "ClusterRole",
+	}
+}
+
+// describe ClusterRole's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeClusterRoleDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeClusterRoleConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"name":  _ObjTypeClusterRoleNameHandler,
+		"rules": _ObjTypeClusterRoleRulesHandler,
+	},
 }
 
 // RoleRulesFieldResolver implement to resolve requests for the Role's rules field.
 type RoleRulesFieldResolver interface {
 	// Rules implements response to request for rules field.
 	Rules(p graphql.ResolveParams) (interface{}, error)
+}
+
+// RoleNamespaceFieldResolver implement to resolve requests for the Role's namespace field.
+type RoleNamespaceFieldResolver interface {
+	// Namespace implements response to request for namespace field.
+	Namespace(p graphql.ResolveParams) (string, error)
+}
+
+// RoleNameFieldResolver implement to resolve requests for the Role's name field.
+type RoleNameFieldResolver interface {
+	// Name implements response to request for name field.
+	Name(p graphql.ResolveParams) (string, error)
 }
 
 //
@@ -332,9 +542,9 @@ type RoleRulesFieldResolver interface {
 //   }
 //
 type RoleFieldResolvers interface {
-	RoleIDFieldResolver
-	RoleNameFieldResolver
 	RoleRulesFieldResolver
+	RoleNamespaceFieldResolver
+	RoleNameFieldResolver
 }
 
 // RoleAliases implements all methods on RoleFieldResolvers interface by using reflection to
@@ -384,15 +594,21 @@ type RoleFieldResolvers interface {
 //
 type RoleAliases struct{}
 
-// ID implements response to request for 'id' field.
-func (_ RoleAliases) ID(p graphql.ResolveParams) (string, error) {
+// Rules implements response to request for 'rules' field.
+func (_ RoleAliases) Rules(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Namespace implements response to request for 'namespace' field.
+func (_ RoleAliases) Namespace(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	ret, ok := val.(string)
 	if err != nil {
 		return ret, err
 	}
 	if !ok {
-		return ret, errors.New("unable to coerce value for field 'id'")
+		return ret, errors.New("unable to coerce value for field 'namespace'")
 	}
 	return ret, err
 }
@@ -410,23 +626,24 @@ func (_ RoleAliases) Name(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
-// Rules implements response to request for 'rules' field.
-func (_ RoleAliases) Rules(p graphql.ResolveParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
-// RoleType Role describes set of rules
+// RoleType Role applies only to a single namespace.
 var RoleType = graphql.NewType("Role", graphql.ObjectKind)
 
 // RegisterRole registers Role object type with given service.
 func RegisterRole(svc *graphql.Service, impl RoleFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeRoleDesc, impl)
 }
-func _ObjTypeRoleIDHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RoleIDFieldResolver)
+func _ObjTypeRoleRulesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(RoleRulesFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.ID(frp)
+		return resolver.Rules(frp)
+	}
+}
+
+func _ObjTypeRoleNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(RoleNamespaceFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Namespace(frp)
 	}
 }
 
@@ -437,29 +654,22 @@ func _ObjTypeRoleNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
-func _ObjTypeRoleRulesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(RoleRulesFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Rules(frp)
-	}
-}
-
 func _ObjectTypeRoleConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
-		Description: "Role describes set of rules",
+		Description: "Role applies only to a single namespace.",
 		Fields: graphql1.Fields{
-			"id": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "id",
-				Type:              graphql1.NewNonNull(graphql1.ID),
-			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "self descriptive",
+				Description:       "Name of the Role",
 				Name:              "name",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"namespace": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Namespace of the Role",
+				Name:              "namespace",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"rules": &graphql1.Field{
@@ -467,11 +677,10 @@ func _ObjectTypeRoleConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "rules",
-				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Rule")))),
+				Type:              graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Rule"))),
 			},
 		},
-		Interfaces: []*graphql1.Interface{
-			graphql.Interface("Node")},
+		Interfaces: []*graphql1.Interface{},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -488,194 +697,943 @@ func _ObjectTypeRoleConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeRoleDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeRoleConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"id":    _ObjTypeRoleIDHandler,
-		"name":  _ObjTypeRoleNameHandler,
-		"rules": _ObjTypeRoleRulesHandler,
+		"name":      _ObjTypeRoleNameHandler,
+		"namespace": _ObjTypeRoleNamespaceHandler,
+		"rules":     _ObjTypeRoleRulesHandler,
 	},
 }
 
-// RuleResource self descriptive
-type RuleResource string
-
-// RuleResources holds enum values
-var RuleResources = _EnumTypeRuleResourceValues{
-	ALL:           "ALL",
-	ASSETS:        "ASSETS",
-	CHECKS:        "CHECKS",
-	ENTITIES:      "ENTITIES",
-	HANDLERS:      "HANDLERS",
-	HOOKS:         "HOOKS",
-	MUTATORS:      "MUTATORS",
-	ORGANIZATIONS: "ORGANIZATIONS",
-	ROLES:         "ROLES",
-	SILENCED:      "SILENCED",
-	USERS:         "USERS",
+// RoleRefTypeFieldResolver implement to resolve requests for the RoleRef's type field.
+type RoleRefTypeFieldResolver interface {
+	// Type implements response to request for type field.
+	Type(p graphql.ResolveParams) (string, error)
 }
 
-// RuleResourceType self descriptive
-var RuleResourceType = graphql.NewType("RuleResource", graphql.EnumKind)
-
-// RegisterRuleResource registers RuleResource object type with given service.
-func RegisterRuleResource(svc *graphql.Service) {
-	svc.RegisterEnum(_EnumTypeRuleResourceDesc)
+// RoleRefNameFieldResolver implement to resolve requests for the RoleRef's name field.
+type RoleRefNameFieldResolver interface {
+	// Name implements response to request for name field.
+	Name(p graphql.ResolveParams) (string, error)
 }
-func _EnumTypeRuleResourceConfigFn() graphql1.EnumConfig {
-	return graphql1.EnumConfig{
-		Description: "self descriptive",
-		Name:        "RuleResource",
-		Values: graphql1.EnumValueConfigMap{
-			"ALL": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "ALL",
-			},
-			"ASSETS": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "ASSETS",
-			},
-			"CHECKS": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "CHECKS",
-			},
-			"ENTITIES": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "ENTITIES",
-			},
-			"HANDLERS": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "HANDLERS",
-			},
-			"HOOKS": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "HOOKS",
-			},
-			"MUTATORS": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "MUTATORS",
-			},
-			"ORGANIZATIONS": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "ORGANIZATIONS",
-			},
-			"ROLES": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "ROLES",
-			},
-			"SILENCED": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "SILENCED",
-			},
-			"USERS": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "USERS",
-			},
-		},
+
+//
+// RoleRefFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'RoleRef' type.
+//
+// == Example SDL
+//
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
+//
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
+//
+// == Example generated interface
+//
+//   // DogResolver ...
+//   type DogFieldResolvers interface {
+//     DogNameFieldResolver
+//     DogBreedFieldResolver
+//
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//   }
+//
+// == Example implementation ...
+//
+//   // DogResolver implements DogFieldResolvers interface
+//   type DogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
+//
+//   // Name implements response to request for name field.
+//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     return dog.GetName()
+//   }
+//
+//   // Breed implements response to request for breed field.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+//     // ... implementation details ...
+//     _, ok := p.Value.(DogGetter)
+//     return ok
+//   }
+//
+type RoleRefFieldResolvers interface {
+	RoleRefTypeFieldResolver
+	RoleRefNameFieldResolver
+}
+
+// RoleRefAliases implements all methods on RoleRefFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+//
+type RoleRefAliases struct{}
+
+// Type implements response to request for 'type' field.
+func (_ RoleRefAliases) Type(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'type'")
+	}
+	return ret, err
+}
+
+// Name implements response to request for 'name' field.
+func (_ RoleRefAliases) Name(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'name'")
+	}
+	return ret, err
+}
+
+// RoleRefType RoleRef maps groups to Roles or ClusterRoles.
+var RoleRefType = graphql.NewType("RoleRef", graphql.ObjectKind)
+
+// RegisterRoleRef registers RoleRef object type with given service.
+func RegisterRoleRef(svc *graphql.Service, impl RoleRefFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeRoleRefDesc, impl)
+}
+func _ObjTypeRoleRefTypeHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(RoleRefTypeFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Type(frp)
 	}
 }
 
-// describe RuleResource's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _EnumTypeRuleResourceDesc = graphql.EnumDesc{Config: _EnumTypeRuleResourceConfigFn}
-
-type _EnumTypeRuleResourceValues struct {
-	// ALL - self descriptive
-	ALL RuleResource
-	// ASSETS - self descriptive
-	ASSETS RuleResource
-	// CHECKS - self descriptive
-	CHECKS RuleResource
-	// ENTITIES - self descriptive
-	ENTITIES RuleResource
-	// HANDLERS - self descriptive
-	HANDLERS RuleResource
-	// HOOKS - self descriptive
-	HOOKS RuleResource
-	// MUTATORS - self descriptive
-	MUTATORS RuleResource
-	// ORGANIZATIONS - self descriptive
-	ORGANIZATIONS RuleResource
-	// ROLES - self descriptive
-	ROLES RuleResource
-	// SILENCED - self descriptive
-	SILENCED RuleResource
-	// USERS - self descriptive
-	USERS RuleResource
-}
-
-// RulePermission self descriptive
-type RulePermission string
-
-// RulePermissions holds enum values
-var RulePermissions = _EnumTypeRulePermissionValues{
-	ALL:    "ALL",
-	CREATE: "CREATE",
-	DELETE: "DELETE",
-	READ:   "READ",
-	UPDATE: "UPDATE",
-}
-
-// RulePermissionType self descriptive
-var RulePermissionType = graphql.NewType("RulePermission", graphql.EnumKind)
-
-// RegisterRulePermission registers RulePermission object type with given service.
-func RegisterRulePermission(svc *graphql.Service) {
-	svc.RegisterEnum(_EnumTypeRulePermissionDesc)
-}
-func _EnumTypeRulePermissionConfigFn() graphql1.EnumConfig {
-	return graphql1.EnumConfig{
-		Description: "self descriptive",
-		Name:        "RulePermission",
-		Values: graphql1.EnumValueConfigMap{
-			"ALL": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "ALL",
-			},
-			"CREATE": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "CREATE",
-			},
-			"DELETE": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "DELETE",
-			},
-			"READ": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "READ",
-			},
-			"UPDATE": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "UPDATE",
-			},
-		},
+func _ObjTypeRoleRefNameHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(RoleRefNameFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(frp)
 	}
 }
 
-// describe RulePermission's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _EnumTypeRulePermissionDesc = graphql.EnumDesc{Config: _EnumTypeRulePermissionConfigFn}
+func _ObjectTypeRoleRefConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "RoleRef maps groups to Roles or ClusterRoles.",
+		Fields: graphql1.Fields{
+			"name": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Name of the resource being referenced",
+				Name:              "name",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"type": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Type of role being referenced.",
+				Name:              "type",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see RoleRefFieldResolvers.")
+		},
+		Name: "RoleRef",
+	}
+}
 
-type _EnumTypeRulePermissionValues struct {
-	// ALL - self descriptive
-	ALL RulePermission
-	// CREATE - self descriptive
-	CREATE RulePermission
-	// READ - self descriptive
-	READ RulePermission
-	// UPDATE - self descriptive
-	UPDATE RulePermission
-	// DELETE - self descriptive
-	DELETE RulePermission
+// describe RoleRef's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeRoleRefDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeRoleRefConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"name": _ObjTypeRoleRefNameHandler,
+		"type": _ObjTypeRoleRefTypeHandler,
+	},
+}
+
+// SubjectKindFieldResolver implement to resolve requests for the Subject's kind field.
+type SubjectKindFieldResolver interface {
+	// Kind implements response to request for kind field.
+	Kind(p graphql.ResolveParams) (string, error)
+}
+
+// SubjectNameFieldResolver implement to resolve requests for the Subject's name field.
+type SubjectNameFieldResolver interface {
+	// Name implements response to request for name field.
+	Name(p graphql.ResolveParams) (string, error)
+}
+
+//
+// SubjectFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'Subject' type.
+//
+// == Example SDL
+//
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
+//
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
+//
+// == Example generated interface
+//
+//   // DogResolver ...
+//   type DogFieldResolvers interface {
+//     DogNameFieldResolver
+//     DogBreedFieldResolver
+//
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//   }
+//
+// == Example implementation ...
+//
+//   // DogResolver implements DogFieldResolvers interface
+//   type DogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
+//
+//   // Name implements response to request for name field.
+//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     return dog.GetName()
+//   }
+//
+//   // Breed implements response to request for breed field.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+//     // ... implementation details ...
+//     _, ok := p.Value.(DogGetter)
+//     return ok
+//   }
+//
+type SubjectFieldResolvers interface {
+	SubjectKindFieldResolver
+	SubjectNameFieldResolver
+}
+
+// SubjectAliases implements all methods on SubjectFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+//
+type SubjectAliases struct{}
+
+// Kind implements response to request for 'kind' field.
+func (_ SubjectAliases) Kind(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'kind'")
+	}
+	return ret, err
+}
+
+// Name implements response to request for 'name' field.
+func (_ SubjectAliases) Name(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'name'")
+	}
+	return ret, err
+}
+
+// SubjectType self descriptive
+var SubjectType = graphql.NewType("Subject", graphql.ObjectKind)
+
+// RegisterSubject registers Subject object type with given service.
+func RegisterSubject(svc *graphql.Service, impl SubjectFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeSubjectDesc, impl)
+}
+func _ObjTypeSubjectKindHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SubjectKindFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Kind(frp)
+	}
+}
+
+func _ObjTypeSubjectNameHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SubjectNameFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(frp)
+	}
+}
+
+func _ObjectTypeSubjectConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "self descriptive",
+		Fields: graphql1.Fields{
+			"kind": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Kind of object referenced (user or group)",
+				Name:              "kind",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"name": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Name of the referenced object",
+				Name:              "name",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see SubjectFieldResolvers.")
+		},
+		Name: "Subject",
+	}
+}
+
+// describe Subject's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeSubjectDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeSubjectConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"kind": _ObjTypeSubjectKindHandler,
+		"name": _ObjTypeSubjectNameHandler,
+	},
+}
+
+// ClusterRoleBindingSubjectsFieldResolver implement to resolve requests for the ClusterRoleBinding's subjects field.
+type ClusterRoleBindingSubjectsFieldResolver interface {
+	// Subjects implements response to request for subjects field.
+	Subjects(p graphql.ResolveParams) (interface{}, error)
+}
+
+// ClusterRoleBindingRoleRefFieldResolver implement to resolve requests for the ClusterRoleBinding's roleRef field.
+type ClusterRoleBindingRoleRefFieldResolver interface {
+	// RoleRef implements response to request for roleRef field.
+	RoleRef(p graphql.ResolveParams) (interface{}, error)
+}
+
+// ClusterRoleBindingNameFieldResolver implement to resolve requests for the ClusterRoleBinding's name field.
+type ClusterRoleBindingNameFieldResolver interface {
+	// Name implements response to request for name field.
+	Name(p graphql.ResolveParams) (string, error)
+}
+
+//
+// ClusterRoleBindingFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'ClusterRoleBinding' type.
+//
+// == Example SDL
+//
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
+//
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
+//
+// == Example generated interface
+//
+//   // DogResolver ...
+//   type DogFieldResolvers interface {
+//     DogNameFieldResolver
+//     DogBreedFieldResolver
+//
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//   }
+//
+// == Example implementation ...
+//
+//   // DogResolver implements DogFieldResolvers interface
+//   type DogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
+//
+//   // Name implements response to request for name field.
+//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     return dog.GetName()
+//   }
+//
+//   // Breed implements response to request for breed field.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+//     // ... implementation details ...
+//     _, ok := p.Value.(DogGetter)
+//     return ok
+//   }
+//
+type ClusterRoleBindingFieldResolvers interface {
+	ClusterRoleBindingSubjectsFieldResolver
+	ClusterRoleBindingRoleRefFieldResolver
+	ClusterRoleBindingNameFieldResolver
+}
+
+// ClusterRoleBindingAliases implements all methods on ClusterRoleBindingFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+//
+type ClusterRoleBindingAliases struct{}
+
+// Subjects implements response to request for 'subjects' field.
+func (_ ClusterRoleBindingAliases) Subjects(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// RoleRef implements response to request for 'roleRef' field.
+func (_ ClusterRoleBindingAliases) RoleRef(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Name implements response to request for 'name' field.
+func (_ ClusterRoleBindingAliases) Name(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'name'")
+	}
+	return ret, err
+}
+
+/*
+ClusterRoleBindingType ClusterRoleBinding grants the permissions defined in a ClusterRole referenced
+to a user or a set of users
+*/
+var ClusterRoleBindingType = graphql.NewType("ClusterRoleBinding", graphql.ObjectKind)
+
+// RegisterClusterRoleBinding registers ClusterRoleBinding object type with given service.
+func RegisterClusterRoleBinding(svc *graphql.Service, impl ClusterRoleBindingFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeClusterRoleBindingDesc, impl)
+}
+func _ObjTypeClusterRoleBindingSubjectsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ClusterRoleBindingSubjectsFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Subjects(frp)
+	}
+}
+
+func _ObjTypeClusterRoleBindingRoleRefHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ClusterRoleBindingRoleRefFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.RoleRef(frp)
+	}
+}
+
+func _ObjTypeClusterRoleBindingNameHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ClusterRoleBindingNameFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(frp)
+	}
+}
+
+func _ObjectTypeClusterRoleBindingConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "ClusterRoleBinding grants the permissions defined in a ClusterRole referenced\nto a user or a set of users",
+		Fields: graphql1.Fields{
+			"name": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Name of the ClusterRoleBinding",
+				Name:              "name",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"roleRef": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "RoleRef references a ClusterRole in the current namespace",
+				Name:              "roleRef",
+				Type:              graphql.OutputType("RoleRef"),
+			},
+			"subjects": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Subjects holds references to the objects the ClusterRole applies to",
+				Name:              "subjects",
+				Type:              graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Subject"))),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see ClusterRoleBindingFieldResolvers.")
+		},
+		Name: "ClusterRoleBinding",
+	}
+}
+
+// describe ClusterRoleBinding's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeClusterRoleBindingDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeClusterRoleBindingConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"name":     _ObjTypeClusterRoleBindingNameHandler,
+		"roleRef":  _ObjTypeClusterRoleBindingRoleRefHandler,
+		"subjects": _ObjTypeClusterRoleBindingSubjectsHandler,
+	},
+}
+
+// RoleBindingSubjectsFieldResolver implement to resolve requests for the RoleBinding's subjects field.
+type RoleBindingSubjectsFieldResolver interface {
+	// Subjects implements response to request for subjects field.
+	Subjects(p graphql.ResolveParams) (interface{}, error)
+}
+
+// RoleBindingRoleRefFieldResolver implement to resolve requests for the RoleBinding's roleRef field.
+type RoleBindingRoleRefFieldResolver interface {
+	// RoleRef implements response to request for roleRef field.
+	RoleRef(p graphql.ResolveParams) (interface{}, error)
+}
+
+// RoleBindingNamespaceFieldResolver implement to resolve requests for the RoleBinding's namespace field.
+type RoleBindingNamespaceFieldResolver interface {
+	// Namespace implements response to request for namespace field.
+	Namespace(p graphql.ResolveParams) (string, error)
+}
+
+// RoleBindingNameFieldResolver implement to resolve requests for the RoleBinding's name field.
+type RoleBindingNameFieldResolver interface {
+	// Name implements response to request for name field.
+	Name(p graphql.ResolveParams) (string, error)
+}
+
+//
+// RoleBindingFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'RoleBinding' type.
+//
+// == Example SDL
+//
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
+//
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
+//
+// == Example generated interface
+//
+//   // DogResolver ...
+//   type DogFieldResolvers interface {
+//     DogNameFieldResolver
+//     DogBreedFieldResolver
+//
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//   }
+//
+// == Example implementation ...
+//
+//   // DogResolver implements DogFieldResolvers interface
+//   type DogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
+//
+//   // Name implements response to request for name field.
+//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     return dog.GetName()
+//   }
+//
+//   // Breed implements response to request for breed field.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+//     // ... implementation details ...
+//     _, ok := p.Value.(DogGetter)
+//     return ok
+//   }
+//
+type RoleBindingFieldResolvers interface {
+	RoleBindingSubjectsFieldResolver
+	RoleBindingRoleRefFieldResolver
+	RoleBindingNamespaceFieldResolver
+	RoleBindingNameFieldResolver
+}
+
+// RoleBindingAliases implements all methods on RoleBindingFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+//
+type RoleBindingAliases struct{}
+
+// Subjects implements response to request for 'subjects' field.
+func (_ RoleBindingAliases) Subjects(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// RoleRef implements response to request for 'roleRef' field.
+func (_ RoleBindingAliases) RoleRef(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Namespace implements response to request for 'namespace' field.
+func (_ RoleBindingAliases) Namespace(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'namespace'")
+	}
+	return ret, err
+}
+
+// Name implements response to request for 'name' field.
+func (_ RoleBindingAliases) Name(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'name'")
+	}
+	return ret, err
+}
+
+/*
+RoleBindingType RoleBinding grants the permissions defined in a Role referenced to a user or
+a set of users
+*/
+var RoleBindingType = graphql.NewType("RoleBinding", graphql.ObjectKind)
+
+// RegisterRoleBinding registers RoleBinding object type with given service.
+func RegisterRoleBinding(svc *graphql.Service, impl RoleBindingFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeRoleBindingDesc, impl)
+}
+func _ObjTypeRoleBindingSubjectsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(RoleBindingSubjectsFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Subjects(frp)
+	}
+}
+
+func _ObjTypeRoleBindingRoleRefHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(RoleBindingRoleRefFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.RoleRef(frp)
+	}
+}
+
+func _ObjTypeRoleBindingNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(RoleBindingNamespaceFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Namespace(frp)
+	}
+}
+
+func _ObjTypeRoleBindingNameHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(RoleBindingNameFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(frp)
+	}
+}
+
+func _ObjectTypeRoleBindingConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "RoleBinding grants the permissions defined in a Role referenced to a user or\na set of users",
+		Fields: graphql1.Fields{
+			"name": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Name of the RoleBinding",
+				Name:              "name",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"namespace": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Namespace of the RoleBinding",
+				Name:              "namespace",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"roleRef": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "RoleRef references a Role in the current namespace",
+				Name:              "roleRef",
+				Type:              graphql.OutputType("RoleRef"),
+			},
+			"subjects": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Subjects holds references to the objects the Role applies to",
+				Name:              "subjects",
+				Type:              graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Subject"))),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see RoleBindingFieldResolvers.")
+		},
+		Name: "RoleBinding",
+	}
+}
+
+// describe RoleBinding's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeRoleBindingDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeRoleBindingConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"name":      _ObjTypeRoleBindingNameHandler,
+		"namespace": _ObjTypeRoleBindingNamespaceHandler,
+		"roleRef":   _ObjTypeRoleBindingRoleRefHandler,
+		"subjects":  _ObjTypeRoleBindingSubjectsHandler,
+	},
 }

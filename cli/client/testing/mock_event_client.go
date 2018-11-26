@@ -20,6 +20,12 @@ func (c *MockClient) DeleteEvent(entity, check string) error {
 	return args.Error(0)
 }
 
+// UpdateEvent for use with mock lib
+func (c *MockClient) UpdateEvent(event *types.Event) error {
+	args := c.Called(event)
+	return args.Error(0)
+}
+
 // ResolveEvent for use with mock lib
 func (c *MockClient) ResolveEvent(event *types.Event) error {
 	args := c.Called(event)

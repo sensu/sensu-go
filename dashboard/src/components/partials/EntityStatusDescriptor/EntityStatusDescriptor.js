@@ -15,7 +15,7 @@ class EntityStatusDescriptor extends React.PureComponent {
     entity: gql`
       fragment EntityStatusDescriptor_entity on Entity {
         lastSeen
-        class
+        entityClass
       }
     `,
   };
@@ -23,17 +23,17 @@ class EntityStatusDescriptor extends React.PureComponent {
   render() {
     const { entity } = this.props;
 
-    if (!entity.lastSeen && entity.class !== "agent") {
+    if (!entity.lastSeen && entity.entityClass !== "agent") {
       return (
         <React.Fragment>
-          <strong>{capitalize(entity.class)}</strong> entity.
+          <strong>{capitalize(entity.entityClass)}</strong> entity.
         </React.Fragment>
       );
     }
 
     return (
       <React.Fragment>
-        The <strong>{entity.class}</strong> was last seen{" "}
+        The <strong>{entity.entityClass}</strong> was last seen{" "}
         <strong>
           <Maybe value={entity.lastSeen} fallback="never">
             {val => <RelativeToCurrentDate dateTime={val} />}

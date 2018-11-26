@@ -109,7 +109,7 @@ func TestPublishProxyCheckRequest(t *testing.T) {
 			res, ok := msg.(*types.CheckRequest)
 			assert.True(ok)
 			assert.Equal("check1", res.Config.Name)
-			assert.Equal("entity1", res.Config.ProxyEntityID)
+			assert.Equal("entity1", res.Config.ProxyEntityName)
 		}
 	}()
 
@@ -163,7 +163,7 @@ func TestPublishProxyCheckRequestsInterval(t *testing.T) {
 				res, ok := msg.(*types.CheckRequest)
 				assert.True(ok)
 				assert.Equal("check1", res.Config.Name)
-				assert.Equal(entityName, res.Config.ProxyEntityID)
+				assert.Equal(entityName, res.Config.ProxyEntityName)
 			}
 		}
 	}()
@@ -217,7 +217,7 @@ func TestPublishProxyCheckRequestsCron(t *testing.T) {
 				res, ok := msg.(*types.CheckRequest)
 				assert.True(ok)
 				assert.Equal("check1", res.Config.Name)
-				assert.Equal(entityName, res.Config.ProxyEntityID)
+				assert.Equal(entityName, res.Config.ProxyEntityName)
 			}
 		}
 	}()

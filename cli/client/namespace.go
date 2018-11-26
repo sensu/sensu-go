@@ -91,7 +91,7 @@ func (client *RestClient) FetchNamespace(namespaceName string) (*types.Namespace
 	}
 
 	if res.StatusCode() >= 400 {
-		return namespace, fmt.Errorf("error getting namespace: %v", res.String())
+		return namespace, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &namespace)

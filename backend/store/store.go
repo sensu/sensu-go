@@ -2,8 +2,11 @@ package store
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
+	"fmt"
 
+	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -18,6 +21,74 @@ const (
 	// WatchDelete indicates that an object was deleted.
 	WatchDelete
 )
+
+// ErrAlreadyExists is returned when an object already exists
+type ErrAlreadyExists struct {
+	Key string
+}
+
+func (e *ErrAlreadyExists) Error() string {
+	return fmt.Sprintf("could not create the key %s", e.Key)
+}
+
+// ErrDecode is returned when an object could not be decoded
+type ErrDecode struct {
+	Key string
+	Err error
+}
+
+func (e *ErrDecode) Error() string {
+	return fmt.Sprintf("could not decode the key %s: %s", e.Key, e.Err.Error())
+}
+
+// ErrEncode is returned when an object could not be decoded
+type ErrEncode struct {
+	Key string
+	Err error
+}
+
+func (e *ErrEncode) Error() string {
+	return fmt.Sprintf("could not encode the key %s: %s", e.Key, e.Err.Error())
+}
+
+// ErrNamespaceMissing is returned when the user tries to manipulate a resource
+// within a namespace that does not exist
+type ErrNamespaceMissing struct {
+	Namespace string
+}
+
+func (e *ErrNamespaceMissing) Error() string {
+	return fmt.Sprintf("the namespace %s does not exist", e.Namespace)
+}
+
+// ErrNotFound is returned when a key is not found in the store
+type ErrNotFound struct {
+	Key string
+}
+
+func (e *ErrNotFound) Error() string {
+	return fmt.Sprintf("key %s not found", e.Key)
+}
+
+// ErrNotValid is returned when an object failed validation
+type ErrNotValid struct {
+	Err error
+}
+
+func (e *ErrNotValid) Error() string {
+	return fmt.Sprintf("resource is invalid: %s", e.Err.Error())
+}
+
+// ErrInternal is returned when something generally bad happened while
+// interacting with the store. Other, more specific errors should preferably be
+// returned when appropriate.
+type ErrInternal struct {
+	Message string
+}
+
+func (e *ErrInternal) Error() string {
+	return fmt.Sprintf("internal error: %s", e.Message)
+}
 
 // WatchActionType indicates what type of change was made to an object in the store.
 type WatchActionType int
@@ -98,8 +169,17 @@ type Store interface {
 	// NamespaceStore provides an interface for managing namespaces
 	NamespaceStore
 
-	// RBACStore provides an interface for managing RBAC roles and rules
-	RBACStore
+	// ClusterRoleStore provides an interface for managing cluster roles
+	ClusterRoleStore
+
+	// ClusterRoleBindingStore provides an interface for managing cluster role bindings
+	ClusterRoleBindingStore
+
+	// RoleStore provides an interface for managing roles
+	RoleStore
+
+	// RoleBindingStore provides an interface for managing role bindings
+	RoleBindingStore
 
 	// SilencedStore provides an interface for managing silenced entries,
 	// consisting of entities, subscriptions and/or checks
@@ -182,6 +262,53 @@ type CheckConfigStore interface {
 	GetCheckConfigWatcher(ctx context.Context) <-chan WatchEventCheckConfig
 }
 
+// ClusterRoleBindingStore provides methods for managing RBAC cluster role
+// bindings
+type ClusterRoleBindingStore interface {
+	// Create a given cluster role binding
+	CreateClusterRoleBinding(ctx context.Context, clusterRoleBinding *types.ClusterRoleBinding) error
+
+	// CreateOrUpdateRole overwrites the given cluster role binding
+	CreateOrUpdateClusterRoleBinding(ctx context.Context, clusterRoleBinding *types.ClusterRoleBinding) error
+
+	// DeleteRole deletes a cluster role binding using the given name.
+	DeleteClusterRoleBinding(ctx context.Context, name string) error
+
+	// GetRole returns a cluster role binding using the given name. An error is
+	// returned if no binding was found
+	GetClusterRoleBinding(ctx context.Context, name string) (*types.ClusterRoleBinding, error)
+
+	// ListRoles returns all cluster role binding. An error is returned if no
+	// binding were found
+	ListClusterRoleBindings(context.Context) ([]*types.ClusterRoleBinding, error)
+
+	// UpdateRole creates or updates a given cluster role binding.
+	UpdateClusterRoleBinding(ctx context.Context, clusterRoleBinding *types.ClusterRoleBinding) error
+}
+
+// ClusterRoleStore provides methods for managing RBAC cluster roles and rules
+type ClusterRoleStore interface {
+	// Create a given cluster role
+	CreateClusterRole(ctx context.Context, clusterRole *types.ClusterRole) error
+
+	// CreateOrUpdateClusterRole overwrites the given cluster role
+	CreateOrUpdateClusterRole(ctx context.Context, clusterRole *types.ClusterRole) error
+
+	// DeleteClusterRole deletes a cluster role using the given name.
+	DeleteClusterRole(ctx context.Context, name string) error
+
+	// GetClusterRole returns a cluster role using the given name. An error is
+	// returned if no role was found
+	GetClusterRole(ctx context.Context, name string) (*types.ClusterRole, error)
+
+	// ListClusterRoles returns all cluster roles. An error is returned if no
+	// roles were found
+	ListClusterRoles(context.Context) ([]*types.ClusterRole, error)
+
+	// UpdateClusterRole creates or updates a given cluster role.
+	UpdateClusterRole(ctx context.Context, clusterRole *types.ClusterRole) error
+}
+
 // HookConfigStore provides methods for managing hooks configuration
 type HookConfigStore interface {
 	// DeleteHookConfigByName deletes a hook's configuration using the given name
@@ -212,17 +339,17 @@ type EntityStore interface {
 	// DeleteEntity deletes an entity using the given entity struct.
 	DeleteEntity(ctx context.Context, entity *types.Entity) error
 
-	// DeleteEntityByID deletes an entity using the given id and the
+	// DeleteEntityByName deletes an entity using the given name and the
 	// namespace stored in ctx.
-	DeleteEntityByID(ctx context.Context, id string) error
+	DeleteEntityByName(ctx context.Context, name string) error
 
 	// GetEntities returns all entities in the given ctx's namespace. A nil slice
 	// with no error is returned if none were found.
 	GetEntities(ctx context.Context) ([]*types.Entity, error)
 
-	// GetEntityByID returns an entity using the given id and the namespace stored
+	// GetEntityByName returns an entity using the given name and the namespace stored
 	// in ctx. The resulting entity is nil if none was found.
-	GetEntityByID(ctx context.Context, id string) (*types.Entity, error)
+	GetEntityByName(ctx context.Context, name string) (*types.Entity, error)
 
 	// UpdateEntity creates or updates a given entity.
 	UpdateEntity(ctx context.Context, entity *types.Entity) error
@@ -289,7 +416,7 @@ type HandlerStore interface {
 
 // HealthStore provides methods for cluster health
 type HealthStore interface {
-	GetClusterHealth(ctx context.Context) *types.HealthResponse
+	GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, etcdClientTLSConfig *tls.Config) *types.HealthResponse
 }
 
 // KeepaliveStore provides methods for managing entities keepalives
@@ -344,18 +471,46 @@ type NamespaceStore interface {
 	UpdateNamespace(ctx context.Context, org *types.Namespace) error
 }
 
-// RBACStore provides methods for managing RBAC roles and rules
-type RBACStore interface {
-	// DeleteRoleByName deletes a role using the given name.
-	DeleteRoleByName(ctx context.Context, name string) error
+// RoleBindingStore provides methods for managing RBAC role bindings
+type RoleBindingStore interface {
+	// Create a given role binding
+	CreateRoleBinding(ctx context.Context, roleBinding *types.RoleBinding) error
 
-	// GetRoleByName returns a role using the given name. The result is nil if
-	// none was found.
-	GetRoleByName(ctx context.Context, name string) (*types.Role, error)
+	// CreateOrUpdateRole overwrites the given role binding
+	CreateOrUpdateRoleBinding(ctx context.Context, roleBinding *types.RoleBinding) error
 
-	// GetRoles returns all roles. A nil slice with no error is returned if none
-	// were found.
-	GetRoles(context.Context) ([]*types.Role, error)
+	// DeleteRole deletes a role binding using the given name.
+	DeleteRoleBinding(ctx context.Context, name string) error
+
+	// GetRole returns a role binding using the given name. An error is returned
+	// if no binding was found
+	GetRoleBinding(ctx context.Context, name string) (*types.RoleBinding, error)
+
+	// ListRoles returns all role binding. An error is returned if no binding were
+	// found
+	ListRoleBindings(context.Context) ([]*types.RoleBinding, error)
+
+	// UpdateRole creates or updates a given role binding.
+	UpdateRoleBinding(ctx context.Context, roleBinding *types.RoleBinding) error
+}
+
+// RoleStore provides methods for managing RBAC roles and rules
+type RoleStore interface {
+	// Create a given role
+	CreateRole(ctx context.Context, role *types.Role) error
+
+	// CreateOrUpdateRole overwrites the given role
+	CreateOrUpdateRole(ctx context.Context, role *types.Role) error
+
+	// DeleteRole deletes a role using the given name.
+	DeleteRole(ctx context.Context, name string) error
+
+	// GetRole returns a role using the given name. An error is returned if no
+	// role was found
+	GetRole(ctx context.Context, name string) (*types.Role, error)
+
+	// ListRoles returns all roles. An error is returned if no roles were found
+	ListRoles(context.Context) ([]*types.Role, error)
 
 	// UpdateRole creates or updates a given role.
 	UpdateRole(ctx context.Context, role *types.Role) error
@@ -364,8 +519,8 @@ type RBACStore interface {
 // SilencedStore provides methods for managing silenced entries,
 // consisting of entities, subscriptions and/or checks
 type SilencedStore interface {
-	// DeleteSilencedEntryByID deletes an entry using the given id.
-	DeleteSilencedEntryByID(ctx context.Context, id string) error
+	// DeleteSilencedEntryByName deletes an entry using the given id.
+	DeleteSilencedEntryByName(ctx context.Context, id string) error
 
 	// GetSilencedEntries returns all entries. A nil slice with no error is
 	// returned if none were found.
@@ -381,10 +536,10 @@ type SilencedStore interface {
 	// returned if none were found.
 	GetSilencedEntriesBySubscription(ctx context.Context, subscription string) ([]*types.Silenced, error)
 
-	// GetSilencedEntryByID returns an entry using the given id and the
+	// GetSilencedEntryByName returns an entry using the given id and the
 	// namespace stored in ctx. The resulting entry is nil if
 	// none was found.
-	GetSilencedEntryByID(ctx context.Context, id string) (*types.Silenced, error)
+	GetSilencedEntryByName(ctx context.Context, id string) (*types.Silenced, error)
 
 	// UpdateHandler creates or updates a given entry.
 	UpdateSilencedEntry(ctx context.Context, entry *types.Silenced) error

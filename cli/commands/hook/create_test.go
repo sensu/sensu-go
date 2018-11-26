@@ -40,7 +40,7 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateHook", mock.AnythingOfType("*types.HookConfig")).Return(nil)
+	client.On("CreateHook", mock.Anything).Return(nil)
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("command", "echo 'heyhey'"))
@@ -55,7 +55,7 @@ func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateHook", mock.AnythingOfType("*types.HookConfig")).Return(errors.New("whoops"))
+	client.On("CreateHook", mock.Anything).Return(errors.New("whoops"))
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("command", "echo 'heyhey'"))

@@ -27,15 +27,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// GetDefaultAgentID returns the default agent ID
-func GetDefaultAgentID() string {
-	defaultAgentID, err := os.Hostname()
+// GetDefaultAgentName returns the default agent name
+func GetDefaultAgentName() string {
+	defaultAgentName, err := os.Hostname()
 	if err != nil {
 		logger.WithError(err).Error("error getting hostname")
 		// TODO(greg): wat do?
-		defaultAgentID = "unidentified-sensu-agent"
+		defaultAgentName = "unidentified-sensu-agent"
 	}
-	return defaultAgentID
+	return defaultAgentName
 }
 
 // An Agent receives and acts on messages from a Sensu Backend.
@@ -45,7 +45,8 @@ type Agent struct {
 	backendSelector BackendSelector
 	cancel          context.CancelFunc
 	config          *Config
-	conn            transport.Transport
+	connected       bool
+	connectedMu     *sync.RWMutex
 	context         context.Context
 	entity          *types.Entity
 	executor        command.Executor
@@ -55,7 +56,6 @@ type Agent struct {
 	inProgressMu    *sync.Mutex
 	statsdServer    *statsd.Server
 	sendq           chan *transport.Message
-	stopped         chan struct{}
 	stopping        chan struct{}
 	systemInfo      *types.System
 	systemInfoMu    *sync.RWMutex
@@ -70,13 +70,14 @@ func NewAgent(config *Config) *Agent {
 		backendSelector: &RandomBackendSelector{Backends: config.BackendURLs},
 		cancel:          cancel,
 		context:         ctx,
+		connected:       false,
+		connectedMu:     &sync.RWMutex{},
 		config:          config,
 		executor:        command.NewExecutor(),
 		handler:         handler.NewMessageHandler(),
 		inProgress:      make(map[string]*types.CheckConfig),
 		inProgressMu:    &sync.Mutex{},
 		stopping:        make(chan struct{}),
-		stopped:         make(chan struct{}),
 		sendq:           make(chan *transport.Message, 10),
 		systemInfo:      &types.System{},
 		systemInfoMu:    &sync.RWMutex{},
@@ -92,112 +93,16 @@ func NewAgent(config *Config) *Agent {
 	return agent
 }
 
-func (a *Agent) receiveMessages(out chan *transport.Message) {
-	defer close(out)
-	for {
-		m, err := a.conn.Receive()
-		if err != nil {
-			logger.WithError(err).Error("transport receive error")
-
-			// If we encountered a connection error, try to reconnect
-			if _, ok := err.(transport.ConnectionError); ok {
-				// The first step is to close the current websocket connection, which is
-				// no longer useful
-				if err := a.conn.Close(); err != nil {
-					logger.Debug(err)
-				}
-
-				// Now, we must attempt to reconnect to the backend, with exponential
-				// backoff
-				backoff := retry.ExponentialBackoff{
-					InitialDelayInterval: 500 * time.Millisecond,
-					MaxDelayInterval:     10 * time.Second,
-					MaxRetryAttempts:     0, // Unlimited attempts
-					Multiplier:           1.5,
-				}
-				if err := backoff.Retry(func(retry int) (bool, error) {
-					if err = a.conn.Reconnect(a.backendSelector.Select(), a.config.TLS, a.header); err != nil {
-						logger.WithError(err).Error("reconnection attempt failed")
-						return false, nil
-					}
-
-					// At this point, the attempt was successful
-					logger.Info("successfully reconnected")
-					return true, nil
-				}); err != nil {
-					logger.WithError(err).Fatal("could not reconnect to transport")
-				}
-			}
-
-		}
-		out <- m
-	}
-}
-
-func (a *Agent) receivePump() {
-	logger.Info("connected - starting receivePump")
-
-	recvChan := make(chan *transport.Message)
-	go a.receiveMessages(recvChan)
-
-	for {
-		select {
-		case <-a.stopping:
-			return
-		case msg, ok := <-recvChan:
-			if msg == nil || !ok {
-				continue
-			}
-
-			logger.WithFields(logrus.Fields{
-				"type":    msg.Type,
-				"payload": string(msg.Payload),
-			}).Info("message received")
-			err := a.handler.Handle(msg.Type, msg.Payload)
-			if err != nil {
-				logger.WithError(err).Error("error handling message")
-			}
-		}
-	}
-}
-
 func (a *Agent) sendMessage(msgType string, payload []byte) {
 	logger.WithFields(logrus.Fields{
 		"type":    msgType,
 		"payload": string(payload),
 	}).Debug("sending message")
-	// blocks until message can be enqueued.
-	// TODO(greg): ring buffer?
 	msg := &transport.Message{
 		Type:    msgType,
 		Payload: payload,
 	}
 	a.sendq <- msg
-}
-
-func (a *Agent) sendPump() {
-	// The sendPump is actually responsible for shutting down the transport
-	// to prevent a race condition between it and something else trying
-	// to close the transport (which actually causes a write to the websocket
-	// connection.)
-	defer func() {
-		if err := a.conn.Close(); err != nil {
-			logger.Debug(err)
-		}
-	}()
-
-	logger.Info("connected - starting sendPump")
-
-	for {
-		select {
-		case msg := <-a.sendq:
-			if err := a.conn.Send(msg); err != nil {
-				logger.WithError(err).Warning("transport send error")
-			}
-		case <-a.stopping:
-			return
-		}
-	}
 }
 
 func (a *Agent) refreshSystemInfo() error {
@@ -214,6 +119,7 @@ func (a *Agent) refreshSystemInfo() error {
 }
 
 func (a *Agent) refreshSystemInfoPeriodically() {
+	defer logger.Debug("shutting down system info collector")
 	ticker := time.NewTicker(time.Duration(DefaultSystemInfoRefreshInterval) * time.Second)
 	defer ticker.Stop()
 
@@ -229,55 +135,9 @@ func (a *Agent) refreshSystemInfoPeriodically() {
 	}
 }
 
-func (a *Agent) sendKeepalive() error {
-	logger.Info("sending keepalive")
-	msg := &transport.Message{
-		Type: transport.MessageTypeKeepalive,
-	}
-	keepalive := &types.Event{}
-
-	entity := a.getAgentEntity()
-
-	keepalive.Check = &types.Check{
-		ObjectMeta: types.ObjectMeta{
-			Name:      "keepalive",
-			Namespace: entity.Namespace,
-		},
-		Interval: a.config.KeepaliveInterval,
-		Timeout:  a.config.KeepaliveTimeout,
-	}
-	keepalive.Entity = a.getAgentEntity()
-	keepalive.Timestamp = time.Now().Unix()
-
-	msgBytes, err := json.Marshal(keepalive)
-	if err != nil {
-		return err
-	}
-	msg.Payload = msgBytes
-	a.sendq <- msg
-
-	return nil
-}
-
-func (a *Agent) sendKeepalivePeriodically() {
-	ticker := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			if err := a.sendKeepalive(); err != nil {
-				logger.WithError(err).Error("failed sending keepalive")
-			}
-		case <-a.stopping:
-			return
-		}
-	}
-}
-
 func (a *Agent) buildTransportHeaderMap() http.Header {
 	header := http.Header{}
-	header.Set(transport.HeaderKeyAgentID, a.config.AgentID)
+	header.Set(transport.HeaderKeyAgentName, a.config.AgentName)
 	header.Set(transport.HeaderKeyNamespace, a.config.Namespace)
 	header.Set(transport.HeaderKeyUser, a.config.User)
 	header.Set(transport.HeaderKeySubscriptions, strings.Join(a.config.Subscriptions, ","))
@@ -310,8 +170,8 @@ func (a *Agent) Run() error {
 	a.header.Set("Authorization", "Basic "+userCredentials)
 
 	// Fail the agent after startup if the id is invalid
-	if err := types.ValidateName(a.config.AgentID); err != nil {
-		return fmt.Errorf("invalid agent id: %v", err)
+	if err := types.ValidateName(a.config.AgentName); err != nil {
+		return fmt.Errorf("invalid agent name: %v", err)
 	}
 
 	// Start the statsd listener only if the agent configuration has it enabled
@@ -319,27 +179,127 @@ func (a *Agent) Run() error {
 		a.StartStatsd()
 	}
 
-	conn, err := transport.Connect(a.backendSelector.Select(), a.config.TLS, a.header)
-	if err != nil {
-		return err
-	}
-
-	a.conn = conn
-
-	// These are in separate goroutines so that they can, theoretically, be executing
-	// concurrently.
-	go a.sendPump()
-	go a.receivePump()
-
-	// Send an immediate keepalive once we've connected.
-	if err := a.sendKeepalive(); err != nil {
-		logger.WithError(err).Error("error sending keepalive")
-	}
-
+	go a.connectionManager()
 	go a.refreshSystemInfoPeriodically()
-	go a.sendKeepalivePeriodically()
 
 	return nil
+}
+
+func (a *Agent) connectionManager() {
+	defer logger.Debug("shutting down connection manager")
+	for {
+		select {
+		case <-a.stopping:
+			return
+		default:
+		}
+
+		a.connectedMu.Lock()
+		a.connected = false
+		a.connectedMu.Unlock()
+
+		conn := connectWithBackoff(a.backendSelector.Select(), a.config.TLS, a.header)
+
+		a.connectedMu.Lock()
+		a.connected = true
+		a.connectedMu.Unlock()
+
+		done := make(chan struct{})
+
+		go a.receiveLoop(conn, done)
+		a.sendLoop(conn, done)
+	}
+}
+
+func (a *Agent) receiveLoop(conn transport.Transport, done chan struct{}) {
+	defer close(done)
+
+	for {
+		m, err := conn.Receive()
+		if err != nil {
+			logger.WithError(err).Error("transport receive error")
+			return
+		}
+
+		go func(msg *transport.Message) {
+			logger.WithFields(logrus.Fields{
+				"type":    msg.Type,
+				"payload": string(msg.Payload),
+			}).Info("message received")
+			err := a.handler.Handle(msg.Type, msg.Payload)
+			if err != nil {
+				logger.WithError(err).Error("error handling message")
+			}
+		}(m)
+	}
+}
+
+func (a *Agent) sendLoop(conn transport.Transport, done chan struct{}) {
+	keepalive := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
+	defer keepalive.Stop()
+	logger.Info("sending keepalive")
+	if err := conn.Send(a.newKeepalive()); err != nil {
+		logger.WithError(err).Error("error sending message over websocket")
+		return
+	}
+	for {
+		select {
+		case <-done:
+			return
+		case <-a.stopping:
+			if err := conn.Close(); err != nil {
+				logger.WithError(err).Error("error closing websocket connection")
+			}
+			return
+		case msg := <-a.sendq:
+			if err := conn.Send(msg); err != nil {
+				logger.WithError(err).Error("error sending message over websocket")
+				return
+			}
+		case <-keepalive.C:
+			logger.Info("sending keepalive")
+			if err := conn.Send(a.newKeepalive()); err != nil {
+				logger.WithError(err).Error("error sending message over websocket")
+				return
+			}
+		}
+	}
+}
+
+func (a *Agent) newKeepalive() *transport.Message {
+	msg := &transport.Message{
+		Type: transport.MessageTypeKeepalive,
+	}
+	keepalive := &types.Event{}
+
+	entity := a.getAgentEntity()
+
+	keepalive.Check = &types.Check{
+		ObjectMeta: types.ObjectMeta{
+			Name:      "keepalive",
+			Namespace: entity.Namespace,
+		},
+		Interval: a.config.KeepaliveInterval,
+		Timeout:  a.config.KeepaliveTimeout,
+	}
+	keepalive.Entity = a.getAgentEntity()
+	keepalive.Timestamp = time.Now().Unix()
+
+	msgBytes, err := json.Marshal(keepalive)
+	if err != nil {
+		// unlikely that this will ever happen
+		logger.WithError(err).Error("error sending keepalive")
+	}
+	msg.Payload = msgBytes
+
+	return msg
+}
+
+// Connected returns true if the agent is connected to a backend.
+func (a *Agent) Connected() bool {
+	a.connectedMu.RLock()
+	defer a.connectedMu.RUnlock()
+	return a.connected
 }
 
 // StartAPI starts the Agent HTTP API. After attempting to start the API, if the
@@ -404,4 +364,32 @@ func (a *Agent) StartStatsd() {
 			logger.WithError(err).Errorf("error with statsd server on address: %s, statsd listener will not run", a.statsdServer.MetricsAddr)
 		}
 	}()
+}
+
+func connectWithBackoff(url string, tlsOpts *types.TLSOptions, header http.Header) transport.Transport {
+	var conn transport.Transport
+
+	backoff := retry.ExponentialBackoff{
+		InitialDelayInterval: 10 * time.Millisecond,
+		MaxDelayInterval:     10 * time.Second,
+		Multiplier:           10,
+	}
+
+	if err := backoff.Retry(func(retry int) (bool, error) {
+		c, err := transport.Connect(url, tlsOpts, header)
+		if err != nil {
+			logger.WithError(err).Error("reconnection attempt failed")
+			return false, nil
+		}
+
+		logger.Info("successfully connected")
+
+		conn = c
+
+		return true, nil
+	}); err != nil {
+		logger.WithError(err).Fatal("could not connect to transport")
+	}
+
+	return conn
 }

@@ -14,7 +14,7 @@ func TestRoundRobinScheduler(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	bus := mockbus.MockBus{}
-	bus.On("PublishDirect", "ramen-vending-machine", mock.Anything).Return(nil)
+	bus.On("PublishDirect", mock.Anything, "ramen-vending-machine", mock.Anything).Return(nil)
 	sched := newRoundRobinScheduler(ctx, &bus)
 	msg := &roundRobinMessage{
 		req:          types.FixtureCheckRequest("foo"),
@@ -23,5 +23,5 @@ func TestRoundRobinScheduler(t *testing.T) {
 	wg, err := sched.Schedule(msg)
 	require.NoError(t, err)
 	wg.Wait()
-	bus.AssertCalled(t, "PublishDirect", "ramen-vending-machine", msg.req)
+	bus.AssertCalled(t, "PublishDirect", mock.Anything, "ramen-vending-machine", msg.req)
 }

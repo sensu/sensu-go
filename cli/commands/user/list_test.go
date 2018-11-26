@@ -70,7 +70,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 
 	assert.NotEmpty(out)
 	assert.Contains(out, "Username")
-	assert.Contains(out, "Roles")
+	assert.Contains(out, "Groups")
 	assert.Contains(out, "Enabled")
 	assert.Contains(out, "one")
 	assert.Contains(out, "two")

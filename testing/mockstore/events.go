@@ -7,8 +7,8 @@ import (
 )
 
 // DeleteEventByEntityCheck ...
-func (s *MockStore) DeleteEventByEntityCheck(ctx context.Context, entityID, checkID string) error {
-	args := s.Called(ctx, entityID, checkID)
+func (s *MockStore) DeleteEventByEntityCheck(ctx context.Context, entityName, checkID string) error {
+	args := s.Called(ctx, entityName, checkID)
 	return args.Error(0)
 }
 
@@ -19,14 +19,14 @@ func (s *MockStore) GetEvents(ctx context.Context) ([]*types.Event, error) {
 }
 
 // GetEventsByEntity ...
-func (s *MockStore) GetEventsByEntity(ctx context.Context, entityID string) ([]*types.Event, error) {
-	args := s.Called(ctx, entityID)
+func (s *MockStore) GetEventsByEntity(ctx context.Context, entityName string) ([]*types.Event, error) {
+	args := s.Called(ctx, entityName)
 	return args.Get(0).([]*types.Event), args.Error(1)
 }
 
 // GetEventByEntityCheck ...
-func (s *MockStore) GetEventByEntityCheck(ctx context.Context, entityID, checkID string) (*types.Event, error) {
-	args := s.Called(ctx, entityID, checkID)
+func (s *MockStore) GetEventByEntityCheck(ctx context.Context, entityName, checkID string) (*types.Event, error) {
+	args := s.Called(ctx, entityName, checkID)
 	return args.Get(0).(*types.Event), args.Error(1)
 }
 

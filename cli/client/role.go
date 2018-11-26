@@ -1,110 +1,47 @@
 package client
 
 import (
-	"encoding/json"
+	"fmt"
 	"net/url"
 	"path"
 
 	"github.com/sensu/sensu-go/types"
 )
 
-const rolesBasePath = "/rbac/roles"
+const rolesBasePath = "/apis/rbac/v2/namespaces/%s/roles"
 
-func rolesPath(ext ...string) string {
-	parts := ext
-	for i := range parts {
-		parts[i] = url.PathEscape(parts[i])
-	}
-	return path.Join(append([]string{rolesBasePath}, parts...)...)
+func rolesPath(namespace, name string) string {
+	name = url.PathEscape(name)
+	namespace = url.PathEscape(namespace)
+	return path.Join(fmt.Sprintf(rolesBasePath, namespace), name)
 }
 
-// CreateRole creates new role on configured Sensu instance
+// CreateRole with the given role
 func (client *RestClient) CreateRole(role *types.Role) error {
-	res, err := client.R().SetBody(role).Post(rolesBasePath)
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode() >= 400 {
-		return UnmarshalError(res)
-	}
-
-	return nil
+	return client.post(rolesPath(role.Namespace, ""), role)
 }
 
-// DeleteRole deletes a role on configured Sensu instance
+// DeleteRole with the given name
 func (client *RestClient) DeleteRole(name string) error {
-	res, err := client.R().Delete(rolesPath(name))
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode() >= 400 {
-		return UnmarshalError(res)
-	}
-
-	return nil
+	return client.delete(rolesPath(client.config.Namespace(), name))
 }
 
-// FetchRole fetches role from configured Sensu instance
+// FetchRole with the given name
 func (client *RestClient) FetchRole(name string) (*types.Role, error) {
-	var role types.Role
-
-	res, cerr := client.R().SetResult(&role).Get(rolesPath(name))
-	if cerr != nil {
-		return nil, cerr
+	role := &types.Role{}
+	if err := client.get(rolesPath(client.config.Namespace(), name), role); err != nil {
+		return nil, err
 	}
-
-	if res.StatusCode() >= 400 {
-		return nil, UnmarshalError(res)
-	}
-
-	return &role, nil
+	return role, nil
 }
 
-// ListRoles fetches all roles from configured Sensu instance
-func (client *RestClient) ListRoles() ([]types.Role, error) {
-	var roles []types.Role
+// ListRoles lists the roles within the given namespace.
+func (client *RestClient) ListRoles(namespace string) ([]types.Role, error) {
+	roles := []types.Role{}
 
-	res, err := client.R().Get("/rbac/roles")
-	if err != nil {
+	if err := client.list(rolesPath(namespace, ""), &roles); err != nil {
 		return roles, err
 	}
 
-	if res.StatusCode() >= 400 {
-		return roles, UnmarshalError(res)
-	}
-
-	err = json.Unmarshal(res.Body(), &roles)
-	return roles, err
-}
-
-// AddRule adds new rule to existing role for configured Sensu instance
-func (client *RestClient) AddRule(roleName string, rule *types.Rule) error {
-	key := rolesPath(roleName, "rules", rule.Type)
-	res, err := client.R().SetBody(rule).Put(key)
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode() >= 400 {
-		return UnmarshalError(res)
-	}
-
-	return nil
-}
-
-// RemoveRule removes rule from existing role for configured Sensu instance
-func (client *RestClient) RemoveRule(name string, t string) error {
-	path := rolesPath(name, "rules", t)
-	res, err := client.R().Delete(path)
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode() >= 400 {
-		return UnmarshalError(res)
-	}
-
-	return nil
+	return roles, nil
 }

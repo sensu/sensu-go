@@ -39,7 +39,7 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateMutator", mock.AnythingOfType("*types.Mutator")).Return(nil)
+	client.On("CreateMutator", mock.Anything).Return(nil)
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("command", "echo 'I like turtles'"))
@@ -56,7 +56,7 @@ func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("CreateMutator", mock.AnythingOfType("*types.Mutator")).Return(errors.New("whoops"))
+	client.On("CreateMutator", mock.Anything).Return(errors.New("whoops"))
 
 	cmd := CreateCommand(cli)
 	require.NoError(t, cmd.Flags().Set("command", "echo 'I like turtles'"))

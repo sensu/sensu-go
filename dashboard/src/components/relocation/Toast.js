@@ -208,12 +208,13 @@ class Toast extends React.PureComponent {
               onEnd={onClose}
               paused={mouseOver}
             >
-              {showAgeIndicator &&
-                (progress => (
-                  <CircularProgress width={4} value={progress} opacity={0.5}>
-                    {closeButton}
-                  </CircularProgress>
-                ))}
+              {showAgeIndicator
+                ? progress => (
+                    <CircularProgress width={4} value={progress} opacity={0.5}>
+                      {closeButton}
+                    </CircularProgress>
+                  )
+                : null}
             </Timer>
           )}
           {(!showAgeIndicator || !maxAge) && closeButton}

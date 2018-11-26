@@ -19,21 +19,11 @@ func TestNewHandlerController(t *testing.T) {
 	ctl := NewHandlerController(store)
 	assert.NotNil(ctl)
 	assert.Equal(store, ctl.Store)
-	assert.NotNil(ctl.Policy)
 }
 
 func TestHandlerCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeHandler, types.RulePermCreate),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeHandler, types.RulePermRead),
-		),
 	)
 
 	badHandler := types.FixtureHandler("bad")
@@ -70,13 +60,6 @@ func TestHandlerCreate(t *testing.T) {
 			fetchErr:        errors.New("nein"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureHandler("foo"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 		{
 			name:            "Validation Error",
@@ -118,19 +101,6 @@ func TestHandlerCreate(t *testing.T) {
 func TestHandlerCreateOrReplace(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(
-				types.RuleTypeHandler,
-				types.RulePermCreate,
-				types.RulePermUpdate,
-			),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeHandler, types.RulePermCreate),
-		),
 	)
 
 	badHandler := types.FixtureHandler("bad")
@@ -160,13 +130,6 @@ func TestHandlerCreateOrReplace(t *testing.T) {
 			ctx:         defaultCtx,
 			argument:    types.FixtureHandler("foo"),
 			fetchResult: types.FixtureHandler("foo"),
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureHandler("foo"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 		{
 			name:            "Validation Error",
@@ -215,15 +178,6 @@ func TestHandlerCreateOrReplace(t *testing.T) {
 func TestHandlerDestroy(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeHandler, types.RulePermDelete),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeHandler, types.RulePermCreate),
-		),
 	)
 
 	testCases := []struct {
@@ -269,14 +223,6 @@ func TestHandlerDestroy(t *testing.T) {
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
 		},
-		{
-			name:            "no permission",
-			ctx:             wrongPermsCtx,
-			argument:        "handler1",
-			fetchResult:     types.FixtureHandler("handler1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -313,9 +259,7 @@ func TestHandlerDestroy(t *testing.T) {
 }
 
 func TestHandlerFind(t *testing.T) {
-	readCtx := testutil.NewContext(testutil.ContextWithRules(
-		types.FixtureRuleWithPerms(types.RuleTypeHandler, types.RulePermRead),
-	))
+	readCtx := context.Background()
 
 	tests := []struct {
 		name            string
@@ -348,16 +292,6 @@ func TestHandlerFind(t *testing.T) {
 			expected:        false,
 			expectedErrCode: NotFound,
 		},
-		{
-			name: "no read permission",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeHandler, types.RulePermCreate),
-			)),
-			handler:         types.FixtureHandler("foo"),
-			argument:        "foo",
-			expected:        false,
-			expectedErrCode: NotFound,
-		},
 	}
 
 	for _, test := range tests {
@@ -382,8 +316,7 @@ func TestHandlerFind(t *testing.T) {
 }
 
 func TestHandlerQuery(t *testing.T) {
-	readCtx := testutil.NewContext(testutil.ContextWithRules(
-		types.FixtureRuleWithPerms(types.RuleTypeHandler, types.RulePermRead)))
+	readCtx := context.Background()
 
 	tests := []struct {
 		name        string
@@ -409,19 +342,6 @@ func TestHandlerQuery(t *testing.T) {
 				types.FixtureHandler("bar"),
 			},
 			expectedLen: 2,
-			storeErr:    nil,
-			expectedErr: nil,
-		},
-		{
-			name: "no params with only create access",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeHandler, types.RulePermCreate),
-			)),
-			handlers: []*types.Handler{
-				types.FixtureHandler("foo"),
-				types.FixtureHandler("bar"),
-			},
-			expectedLen: 0,
 			storeErr:    nil,
 			expectedErr: nil,
 		},
@@ -466,15 +386,6 @@ func TestHandlerQuery(t *testing.T) {
 func TestHandlerUpdate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeHandler, types.RulePermUpdate),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeHandler, types.RulePermRead),
-		),
 	)
 
 	badHandler := types.FixtureHandler("handler1")
@@ -522,14 +433,6 @@ func TestHandlerUpdate(t *testing.T) {
 			fetchErr:        errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "no permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureHandler("handler2"),
-			fetchResult:     types.FixtureHandler("handler2"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 		{
 			name:            "validation error",

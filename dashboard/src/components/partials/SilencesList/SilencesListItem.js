@@ -7,8 +7,7 @@ import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
 import Checkbox from "@material-ui/core/Checkbox";
 import Chip from "@material-ui/core/Chip";
-import ConfirmDelete from "/components/partials/ConfirmDelete";
-import DeleteMenuItem from "/components/partials/ToolbarMenuItems/Delete";
+import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
@@ -47,15 +46,15 @@ class SilencesListItem extends React.Component {
     hovered: PropTypes.bool.isRequired,
     onHover: PropTypes.func.isRequired,
     selected: PropTypes.bool.isRequired,
+    onClickClearSilences: PropTypes.func.isRequired,
     onClickSelect: PropTypes.func.isRequired,
-    onClickDelete: PropTypes.func.isRequired,
   };
 
   static fragments = {
     silence: gql`
       fragment SilencesListItem_silence on Silenced {
         ...SilenceExpiration_silence
-        storeId
+        name
         begin
         reason
         creator {
@@ -101,13 +100,14 @@ class SilencesListItem extends React.Component {
 
           <TableOverflowCell>
             <ResourceDetails
-              title={<strong>{silence.storeId}</strong>}
+              title={<strong>{silence.name}</strong>}
               details={this.renderDetails()}
             />
           </TableOverflowCell>
 
           <Hidden only="xs">
             <TableCell
+              padding="none"
               style={{
                 // TODO: magic number
                 paddingTop: 8, // one spacing unit
@@ -169,12 +169,9 @@ class SilencesListItem extends React.Component {
 
                 <ToolbarMenu>
                   <ToolbarMenu.Item id="delete" visible="never">
-                    <ConfirmDelete
-                      identifier={silence.storeId}
-                      onSubmit={this.props.onClickDelete}
-                    >
-                      {dialog => <DeleteMenuItem onClick={dialog.open} />}
-                    </ConfirmDelete>
+                    <UnsilenceMenuItem
+                      onClick={this.props.onClickClearSilences}
+                    />
                   </ToolbarMenu.Item>
                 </ToolbarMenu>
               </RightAlign>

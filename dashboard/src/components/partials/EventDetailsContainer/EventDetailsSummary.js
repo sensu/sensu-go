@@ -31,7 +31,7 @@ class EventDetailsSummary extends React.Component {
         }
 
         name
-        class
+        entityClass
         subscriptions
       }
     `,
@@ -62,9 +62,13 @@ class EventDetailsSummary extends React.Component {
             <DictionaryEntry>
               <DictionaryKey>Check</DictionaryKey>
               <DictionaryValue>
-                <InlineLink to={`/${namespace}/checks/${check.name}`}>
-                  {check.name}
-                </InlineLink>
+                {check.name !== "keepalive" ? (
+                  <InlineLink to={`/${namespace}/checks/${check.name}`}>
+                    {check.name}
+                  </InlineLink>
+                ) : (
+                  check.name
+                )}
               </DictionaryValue>
             </DictionaryEntry>
             <DictionaryEntry>
@@ -98,7 +102,7 @@ class EventDetailsSummary extends React.Component {
             </DictionaryEntry>
             <DictionaryEntry>
               <DictionaryKey>Class</DictionaryKey>
-              <DictionaryValue>{entity.class}</DictionaryValue>
+              <DictionaryValue>{entity.entityClass}</DictionaryValue>
             </DictionaryEntry>
             <DictionaryEntry>
               <DictionaryKey>Platform</DictionaryKey>
@@ -120,9 +124,8 @@ class EventDetailsSummary extends React.Component {
                 <CodeHighlight
                   language="bash"
                   code={`# Executed command\n$ ${check.command}`}
-                >
-                  {code => <code dangerouslySetInnerHTML={{ __html: code }} />}
-                </CodeHighlight>
+                  component="code"
+                />
               </CardContent>
             </CodeBlock>
           </React.Fragment>

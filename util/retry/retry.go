@@ -10,15 +10,19 @@ import (
 type ExponentialBackoff struct {
 	// InitialDelayInterval represents the initial amount of time of sleep
 	InitialDelayInterval time.Duration
+
 	// MaxDelayInterval represents the maximal amount of time of sleep between
 	// retries
 	MaxDelayInterval time.Duration
+
 	// MaxElapsedTime represents the maximal amount of time allowed to retry. A
 	// value of zero signifies no limit
 	MaxElapsedTime time.Duration
+
 	// MaxRetryAttempts is the maximal number of retries before exiting with
 	// an error. A value of zero signifies unlimited retry attemps
 	MaxRetryAttempts int
+
 	// Multiplier is used to increment the current interval by multiplying it with
 	// this multiplier
 	Multiplier float64
@@ -51,6 +55,9 @@ func (b *ExponentialBackoff) Retry(fn Func) error {
 			}
 
 			// Sleep for the determined duration
+			if b.MaxDelayInterval > 0 && wait > b.MaxDelayInterval {
+				wait = b.MaxDelayInterval
+			}
 			time.Sleep(wait)
 
 			// Exponentially increase that sleep duration

@@ -6,8 +6,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/dgrijalva/jwt-go"
+
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -21,13 +22,10 @@ func TestNewSilencedController(t *testing.T) {
 
 	assert.NotNil(actions)
 	assert.Equal(store, actions.Store)
-	assert.NotNil(actions.Policy)
 }
 
 func TestSilencedQuery(t *testing.T) {
-	defaultCtx := testutil.NewContext(
-		testutil.ContextWithPerms(types.RuleTypeSilenced, types.RulePermRead),
-	)
+	defaultCtx := context.Background()
 
 	testCases := []struct {
 		name         string
@@ -82,18 +80,6 @@ func TestSilencedQuery(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name: "With Only Create Access",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeSilenced, types.RulePermCreate),
-			)),
-			storeRecords: []*types.Silenced{
-				types.FixtureSilenced("*:silence1"),
-				types.FixtureSilenced("*:silence2"),
-			},
-			expectedLen: 0,
-			storeErr:    nil,
-		},
-		{
 			name:         "Store Failure",
 			ctx:          defaultCtx,
 			storeRecords: nil,
@@ -126,9 +112,7 @@ func TestSilencedQuery(t *testing.T) {
 }
 
 func TestSilencedFind(t *testing.T) {
-	defaultCtx := testutil.NewContext(
-		testutil.ContextWithPerms(types.RuleTypeSilenced, types.RulePermRead),
-	)
+	defaultCtx := context.Background()
 
 	testCases := []struct {
 		name            string
@@ -161,17 +145,6 @@ func TestSilencedFind(t *testing.T) {
 			expected:        false,
 			expectedErrCode: NotFound,
 		},
-		{
-			name: "No Read Permission",
-			ctx: testutil.NewContext(testutil.ContextWithPerms(
-				types.RuleTypeSilenced,
-				types.RulePermCreate,
-			)),
-			record:          types.FixtureSilenced("*:silence1"),
-			argument:        "silence1",
-			expected:        false,
-			expectedErrCode: NotFound,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -183,7 +156,7 @@ func TestSilencedFind(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("GetSilencedEntryByID", tc.ctx, mock.Anything, mock.Anything).
+				On("GetSilencedEntryByName", tc.ctx, mock.Anything, mock.Anything).
 				Return(tc.record, nil).Once()
 
 			// Exec Query
@@ -201,20 +174,10 @@ func TestSilencedFind(t *testing.T) {
 }
 
 func TestSilencedCreateOrReplace(t *testing.T) {
-	defaultCtx := testutil.NewContext(
-		testutil.ContextWithPerms(
-			types.RuleTypeSilenced,
-			types.RulePermCreate,
-			types.RulePermUpdate,
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithPerms(types.RuleTypeSilenced, types.RulePermCreate),
-	)
-	actorCtx := testutil.NewContext(
-		testutil.ContextWithActor("actorID", types.FixtureRuleWithPerms(
-			types.RuleTypeSilenced, types.RulePermCreate, types.RulePermUpdate)),
-	)
+	defaultCtx := context.Background()
+
+	claims := &types.Claims{StandardClaims: jwt.StandardClaims{Subject: "foo"}}
+	jwtCtx := context.WithValue(context.Background(), types.ClaimsKey, claims)
 
 	badSilence := types.FixtureSilenced("*:silence1")
 	badSilence.Check = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
@@ -251,13 +214,6 @@ func TestSilencedCreateOrReplace(t *testing.T) {
 			expectedErrCode: InternalErr,
 		},
 		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureSilenced("*:silence1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
-		{
 			name:            "Validation Error",
 			ctx:             defaultCtx,
 			argument:        badSilence,
@@ -266,10 +222,10 @@ func TestSilencedCreateOrReplace(t *testing.T) {
 		},
 		{
 			name:            "Creator",
-			ctx:             actorCtx,
+			ctx:             jwtCtx,
 			argument:        types.FixtureSilenced("*:silence1"),
 			expectedErr:     false,
-			expectedCreator: "actorID",
+			expectedCreator: "foo",
 		},
 	}
 
@@ -282,7 +238,7 @@ func TestSilencedCreateOrReplace(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("GetSilencedEntryByID", mock.Anything, mock.Anything).
+				On("GetSilencedEntryByName", mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
 			store.
 				On("UpdateSilencedEntry", mock.Anything, mock.Anything).
@@ -315,15 +271,10 @@ func TestSilencedCreateOrReplace(t *testing.T) {
 	}
 }
 func TestSilencedCreate(t *testing.T) {
-	defaultCtx := testutil.NewContext(
-		testutil.ContextWithPerms(types.RuleTypeSilenced, types.RulePermCreate),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithPerms(types.RuleTypeSilenced, types.RulePermRead),
-	)
-	actorCtx := testutil.NewContext(
-		testutil.ContextWithActor("actorID", types.FixtureRuleWithPerms(types.RuleTypeSilenced, types.RulePermCreate)),
-	)
+	defaultCtx := context.Background()
+
+	claims := &types.Claims{StandardClaims: jwt.StandardClaims{Subject: "foo"}}
+	jwtCtx := context.WithValue(context.Background(), types.ClaimsKey, claims)
 
 	badSilence := types.FixtureSilenced("*:silence1")
 	badSilence.Check = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
@@ -375,14 +326,6 @@ func TestSilencedCreate(t *testing.T) {
 			expectedId:      "*:silence1",
 		},
 		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureSilenced("*:silence1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-			expectedId:      "*:silence1",
-		},
-		{
 			name:            "Validation Error",
 			ctx:             defaultCtx,
 			argument:        badSilence,
@@ -392,18 +335,18 @@ func TestSilencedCreate(t *testing.T) {
 		},
 		{
 			name:            "Creator",
-			ctx:             actorCtx,
+			ctx:             jwtCtx,
 			argument:        types.FixtureSilenced("*:silence1"),
 			expectedErr:     false,
-			expectedCreator: "actorID",
+			expectedCreator: "foo",
 			expectedId:      "*:silence1",
 		},
 		{
 			name:            "Other Id",
-			ctx:             actorCtx,
+			ctx:             jwtCtx,
 			argument:        types.FixtureSilenced("unix:*"),
 			expectedErr:     false,
-			expectedCreator: "actorID",
+			expectedCreator: "foo",
 			expectedId:      "unix:*",
 		},
 	}
@@ -417,7 +360,7 @@ func TestSilencedCreate(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("GetSilencedEntryByID", mock.Anything, mock.Anything).
+				On("GetSilencedEntryByName", mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
 			store.
 				On("UpdateSilencedEntry", mock.Anything, mock.Anything).
@@ -429,7 +372,7 @@ func TestSilencedCreate(t *testing.T) {
 						_ = json.Unmarshal(bytes, &entry)
 
 						assert.Equal(tc.expectedCreator, entry.Creator)
-						assert.Equal(tc.expectedId, entry.ID)
+						assert.Equal(tc.expectedId, entry.Name)
 					}
 				})
 
@@ -452,12 +395,7 @@ func TestSilencedCreate(t *testing.T) {
 }
 
 func TestSilencedUpdate(t *testing.T) {
-	defaultCtx := testutil.NewContext(
-		testutil.ContextWithPerms(types.RuleTypeSilenced, types.RulePermUpdate),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithPerms(types.RuleTypeSilenced, types.RulePermRead),
-	)
+	defaultCtx := context.Background()
 
 	testCases := []struct {
 		name            string
@@ -502,14 +440,6 @@ func TestSilencedUpdate(t *testing.T) {
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
 		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureSilenced("*:silence1"),
-			fetchResult:     types.FixtureSilenced("*:silence1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -521,7 +451,7 @@ func TestSilencedUpdate(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("GetSilencedEntryByID", mock.Anything, mock.Anything).
+				On("GetSilencedEntryByName", mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
 			store.
 				On("UpdateSilencedEntry", mock.Anything, mock.Anything).
@@ -546,12 +476,7 @@ func TestSilencedUpdate(t *testing.T) {
 }
 
 func TestSilencedDestroy(t *testing.T) {
-	defaultCtx := testutil.NewContext(
-		testutil.ContextWithPerms(types.RuleTypeSilenced, types.RulePermDelete),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithPerms(types.RuleTypeSilenced, types.RulePermCreate),
-	)
+	defaultCtx := context.Background()
 
 	testCases := []struct {
 		name            string
@@ -595,13 +520,6 @@ func TestSilencedDestroy(t *testing.T) {
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
 		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			id:              "i-424242:*",
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -613,10 +531,10 @@ func TestSilencedDestroy(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("GetSilencedEntryByID", mock.Anything, mock.Anything).
+				On("GetSilencedEntryByName", mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
 			store.
-				On("DeleteSilencedEntryByID", mock.Anything, mock.Anything).
+				On("DeleteSilencedEntryByName", mock.Anything, mock.Anything).
 				Return(tc.deleteErr).Once()
 
 			// Exec Query

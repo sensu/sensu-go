@@ -22,15 +22,11 @@ func TestNewCheckController(t *testing.T) {
 
 	assert.NotNil(actions)
 	assert.Equal(store, actions.store)
-	assert.NotNil(actions.policy)
 }
 
 func TestCheckQuery(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermRead),
-		),
 	)
 
 	testCases := []struct {
@@ -59,18 +55,6 @@ func TestCheckQuery(t *testing.T) {
 			expectedLen: 2,
 			storeErr:    nil,
 			expectedErr: nil,
-		},
-		{
-			name: "With Only Create Access",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermCreate),
-			)),
-			records: []*types.CheckConfig{
-				types.FixtureCheckConfig("check1"),
-				types.FixtureCheckConfig("check2"),
-			},
-			expectedLen: 0,
-			storeErr:    nil,
 		},
 		{
 			name:        "Store Failure",
@@ -105,9 +89,6 @@ func TestCheckQuery(t *testing.T) {
 func TestCheckFind(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermRead),
-		),
 	)
 
 	testCases := []struct {
@@ -138,16 +119,6 @@ func TestCheckFind(t *testing.T) {
 			ctx:             defaultCtx,
 			record:          nil,
 			argument:        "missing",
-			expected:        false,
-			expectedErrCode: NotFound,
-		},
-		{
-			name: "No Read Permission",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermCreate),
-			)),
-			record:          types.FixtureCheckConfig("check1"),
-			argument:        "check1",
 			expected:        false,
 			expectedErrCode: NotFound,
 		},
@@ -182,15 +153,6 @@ func TestCheckFind(t *testing.T) {
 func TestCheckCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermCreate),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermRead),
-		),
 	)
 
 	badCheck := types.FixtureCheckConfig("check1")
@@ -237,13 +199,6 @@ func TestCheckCreate(t *testing.T) {
 			expectedErrCode: InternalErr,
 		},
 		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureCheckConfig("check1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
-		{
 			name:            "Validation Error",
 			ctx:             defaultCtx,
 			argument:        badCheck,
@@ -288,19 +243,6 @@ func TestCheckCreate(t *testing.T) {
 func TestCheckCreateOrReplace(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(
-				types.RuleTypeCheck,
-				types.RulePermCreate,
-				types.RulePermUpdate,
-			),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermCreate),
-		),
 	)
 
 	badCheck := types.FixtureCheckConfig("check1")
@@ -335,13 +277,6 @@ func TestCheckCreateOrReplace(t *testing.T) {
 			createErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureCheckConfig("check1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 		{
 			name:            "Validation Error",
@@ -388,15 +323,6 @@ func TestCheckCreateOrReplace(t *testing.T) {
 func TestCheckUpdate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermUpdate),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermRead),
-		),
 	)
 
 	badCheck := types.FixtureCheckConfig("check1")
@@ -446,14 +372,6 @@ func TestCheckUpdate(t *testing.T) {
 			expectedErrCode: InternalErr,
 		},
 		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureCheckConfig("check1"),
-			fetchResult:     types.FixtureCheckConfig("check1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
-		{
 			name:            "Validation Error",
 			ctx:             defaultCtx,
 			argument:        badCheck,
@@ -499,15 +417,6 @@ func TestCheckUpdate(t *testing.T) {
 func TestCheckDestroy(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermDelete),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermCreate),
-		),
 	)
 
 	testCases := []struct {
@@ -553,14 +462,6 @@ func TestCheckDestroy(t *testing.T) {
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
 		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        "check1",
-			fetchResult:     types.FixtureCheckConfig("check1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
 	}
 
 	for _, tc := range testCases {
@@ -599,15 +500,6 @@ func TestCheckDestroy(t *testing.T) {
 func TestCheckAdhoc(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermCreate, types.RulePermRead),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermRead),
-		),
 	)
 
 	badCheck := types.FixtureCheckConfig("check1")
@@ -633,17 +525,6 @@ func TestCheckAdhoc(t *testing.T) {
 			fetchErr:    nil,
 			queueErr:    nil,
 			expectedErr: false,
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureAdhocRequest("check2", []string{"subscription1", "subscription2"}),
-			fetchResult:     types.FixtureCheckConfig("check2"),
-			checkName:       "check2",
-			fetchErr:        nil,
-			queueErr:        nil,
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 	}
 

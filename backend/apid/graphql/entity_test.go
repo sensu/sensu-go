@@ -1,39 +1,33 @@
 package graphql
 
 import (
-	"context"
 	"testing"
 	"time"
 
+	client "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
-type mockEntityQuerier struct {
-	els []*types.Entity
-	err error
-}
-
-func (e mockEntityQuerier) Query(ctx context.Context) ([]*types.Entity, error) {
-	return e.els, e.err
-}
-
 func TestEntityTypeRelatedField(t *testing.T) {
 	source := types.FixtureEntity("c")
-	mockCtrl := mockEntityQuerier{els: []*types.Entity{
-		source,
-		types.FixtureEntity("a"),
-		types.FixtureEntity("b"),
-	}}
+
+	client, factory := client.NewClientFactory()
+	client.On("ListEntities", mock.Anything).Return([]types.Entity{
+		*source,
+		*types.FixtureEntity("a"),
+		*types.FixtureEntity("b"),
+	}, nil).Once()
 
 	params := schema.EntityRelatedFieldResolverParams{}
 	params.Source = source
 	params.Args.Limit = 10
 
-	impl := entityImpl{entityQuerier: mockCtrl}
+	impl := entityImpl{factory: factory}
 	res, err := impl.Related(params)
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
@@ -42,29 +36,33 @@ func TestEntityTypeRelatedField(t *testing.T) {
 
 func TestEntityTypeStatusField(t *testing.T) {
 	entity := types.FixtureEntity("en")
-	mock := mockEventQuerier{els: []*types.Event{
-		types.FixtureEvent("a", entity.ID),
-		types.FixtureEvent("b", entity.ID),
-		types.FixtureEvent("c", entity.ID),
-	}}
+
+	client, factory := client.NewClientFactory()
+	client.On("ListEvents", mock.Anything).Return([]types.Event{
+		*types.FixtureEvent(entity.Name, "a"),
+		*types.FixtureEvent(entity.Name, "b"),
+		*types.FixtureEvent(entity.Name, "c"),
+	}, nil).Once()
 
 	// params
 	params := graphql.ResolveParams{}
 	params.Source = entity
 
 	// exit status: 0
-	impl := &entityImpl{eventQuerier: mock}
+	impl := &entityImpl{factory: factory}
 	st, err := impl.Status(params)
 	require.NoError(t, err)
 	assert.Equal(t, 0, st)
 
 	// Add failing event
-	failingEv := types.FixtureEvent("a", entity.ID)
+	failingEv := types.FixtureEvent(entity.Name, "bad")
 	failingEv.Check.Status = 2
-	mock.els = append(mock.els, failingEv)
+	client.On("ListEvents", mock.Anything).Return([]types.Event{
+		*types.FixtureEvent(entity.Name, "a"),
+		*failingEv,
+	}, nil).Once()
 
 	// exit status: 2
-	impl = &entityImpl{eventQuerier: mock}
 	st, err = impl.Status(params)
 	require.NoError(t, err)
 	assert.Equal(t, 2, st)
@@ -87,18 +85,20 @@ func TestEntityTypeLastSeenField(t *testing.T) {
 
 func TestEntityTypeEventsField(t *testing.T) {
 	entity := types.FixtureEntity("en")
-	mock := mockEventQuerier{els: []*types.Event{
-		types.FixtureEvent("a", entity.ID),
-		types.FixtureEvent("b", entity.ID),
-		types.FixtureEvent("c", entity.ID),
-	}}
+
+	client, factory := client.NewClientFactory()
+	client.On("ListEvents", mock.Anything).Return([]types.Event{
+		*types.FixtureEvent(entity.Name, "a"),
+		*types.FixtureEvent(entity.Name, "b"),
+		*types.FixtureEvent(entity.Name, "c"),
+	}, nil).Once()
 
 	// params
 	params := schema.EntityEventsFieldResolverParams{}
 	params.Source = entity
 
 	// return all events
-	impl := &entityImpl{eventQuerier: mock}
+	impl := &entityImpl{factory: factory}
 	evs, err := impl.Events(params)
 	require.NoError(t, err)
 	assert.Len(t, evs, 3)
@@ -107,15 +107,17 @@ func TestEntityTypeEventsField(t *testing.T) {
 func TestEntityTypeSilencesField(t *testing.T) {
 	entity := types.FixtureEntity("en")
 	entity.Subscriptions = []string{"entity:en", "unix", "www"}
-	mock := mockSilenceQuerier{els: []*types.Silenced{
-		types.FixtureSilenced("entity:en:*"),
-		types.FixtureSilenced("www:*"),
-		types.FixtureSilenced("unix:my-check"),
-		types.FixtureSilenced("entity:unrelated:*"),
-	}}
+
+	client, factory := client.NewClientFactory()
+	client.On("ListSilenceds", mock.Anything, "", "").Return([]types.Silenced{
+		*types.FixtureSilenced("entity:en:*"),
+		*types.FixtureSilenced("www:*"),
+		*types.FixtureSilenced("unix:my-check"),
+		*types.FixtureSilenced("entity:unrelated:*"),
+	}, nil).Once()
 
 	// return associated silence
-	impl := &entityImpl{silenceQuerier: mock}
+	impl := &entityImpl{factory: factory}
 	evs, err := impl.Silences(graphql.ResolveParams{Source: entity})
 	require.NoError(t, err)
 	assert.Len(t, evs, 2)
@@ -124,14 +126,16 @@ func TestEntityTypeSilencesField(t *testing.T) {
 func TestEntityTypeIsSilencedField(t *testing.T) {
 	entity := types.FixtureEntity("en")
 	entity.Subscriptions = []string{"entity:en", "ou"}
-	mock := mockSilenceQuerier{els: []*types.Silenced{
-		types.FixtureSilenced("entity:en:*"),
-		types.FixtureSilenced("ou:my-check"),
-		types.FixtureSilenced("entity:unrelated:*"),
-	}}
+
+	client, factory := client.NewClientFactory()
+	client.On("ListSilenceds", mock.Anything, "", "").Return([]types.Silenced{
+		*types.FixtureSilenced("entity:en:*"),
+		*types.FixtureSilenced("ou:my-check"),
+		*types.FixtureSilenced("entity:unrelated:*"),
+	}, nil).Once()
 
 	// return associated silence
-	impl := &entityImpl{silenceQuerier: mock}
+	impl := &entityImpl{factory: factory}
 	res, err := impl.IsSilenced(graphql.ResolveParams{Source: entity})
 	require.NoError(t, err)
 	assert.True(t, res)

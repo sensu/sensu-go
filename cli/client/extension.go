@@ -12,7 +12,7 @@ import (
 func (client *RestClient) ListExtensions(namespace string) ([]types.Extension, error) {
 	var extensions []types.Extension
 
-	res, err := client.R().Get("/extensions?namespace=" + namespace)
+	res, err := client.R().SetQueryParam("namespace", namespace).Get("/extensions")
 	if err != nil {
 		return extensions, err
 	}

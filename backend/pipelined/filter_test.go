@@ -19,24 +19,32 @@ func TestPipelinedFilter(t *testing.T) {
 
 	// Mock the store responses
 	allowFilterBar := &types.EventFilter{
-		Name:       "allowFilterBar",
-		Action:     types.EventFilterActionAllow,
-		Statements: []string{`event.Check.Output == "bar"`},
+		ObjectMeta: types.ObjectMeta{
+			Name: "allowFilterBar",
+		},
+		Action:      types.EventFilterActionAllow,
+		Expressions: []string{`event.check.output == "bar"`},
 	}
 	allowFilterFoo := &types.EventFilter{
-		Name:       "allowFilterFoo",
-		Action:     types.EventFilterActionAllow,
-		Statements: []string{`event.Check.Output == "foo"`},
+		ObjectMeta: types.ObjectMeta{
+			Name: "allowFilterFoo",
+		},
+		Action:      types.EventFilterActionAllow,
+		Expressions: []string{`event.check.output == "foo"`},
 	}
 	denyFilterBar := &types.EventFilter{
-		Name:       "denyFilterBar",
-		Action:     types.EventFilterActionDeny,
-		Statements: []string{`event.Check.Output == "bar"`},
+		ObjectMeta: types.ObjectMeta{
+			Name: "denyFilterBar",
+		},
+		Action:      types.EventFilterActionDeny,
+		Expressions: []string{`event.check.output == "bar"`},
 	}
 	denyFilterFoo := &types.EventFilter{
-		Name:       "denyFilterFoo",
-		Action:     types.EventFilterActionDeny,
-		Statements: []string{`event.Check.Output == "foo"`},
+		ObjectMeta: types.ObjectMeta{
+			Name: "denyFilterFoo",
+		},
+		Action:      types.EventFilterActionDeny,
+		Expressions: []string{`event.check.output == "foo"`},
 	}
 	store.On("GetEventFilterByName", mock.Anything, "allowFilterBar").Return(allowFilterBar, nil)
 	store.On("GetEventFilterByName", mock.Anything, "allowFilterFoo").Return(allowFilterFoo, nil)
@@ -272,9 +280,11 @@ func TestPipelinedWhenFilter(t *testing.T) {
 			now := time.Now().UTC()
 
 			filter := &types.EventFilter{
-				Name:       tc.name,
-				Action:     tc.action,
-				Statements: []string{`event.Check.Output == "bar"`},
+				ObjectMeta: types.ObjectMeta{
+					Name: tc.name,
+				},
+				Action:      tc.action,
+				Expressions: []string{`event.check.output == "bar"`},
 			}
 
 			filter.When = &types.TimeWindowWhen{

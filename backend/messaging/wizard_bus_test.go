@@ -1,6 +1,7 @@
 package messaging
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"testing"
@@ -142,7 +143,7 @@ func TestPublishDirect(t *testing.T) {
 		_, err := bus.Subscribe("topic", id, ch)
 		require.NoError(t, err)
 	}
-	require.NoError(t, bus.PublishDirect("topic", "hello, world"))
+	require.NoError(t, bus.PublishDirect(context.TODO(), "topic", "hello, world"))
 	select {
 	case msg := <-subscribers["a"].Channel:
 		assert.Equal(t, msg, "hello, world")

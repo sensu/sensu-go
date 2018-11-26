@@ -76,7 +76,7 @@ func TestPostCheck(t *testing.T) {
 	client := new(http.Client)
 
 	check := types.FixtureCheckConfig("check1")
-	controller.On("Create", mock.Anything, mock.AnythingOfType("types.CheckConfig")).Return(nil)
+	controller.On("Create", mock.Anything, mock.Anything).Return(nil)
 	b, _ := json.Marshal(check)
 	body := bytes.NewReader(b)
 	endpoint := "/checks"
@@ -104,7 +104,7 @@ func TestPutCheck(t *testing.T) {
 
 	client := new(http.Client)
 
-	controller.On("CreateOrReplace", mock.Anything, mock.AnythingOfType("types.CheckConfig")).Return(nil)
+	controller.On("CreateOrReplace", mock.Anything, mock.Anything).Return(nil)
 	b, _ := json.Marshal(types.FixtureCheckConfig("check1"))
 	body := bytes.NewReader(b)
 	endpoint := "/checks/check1"
@@ -120,7 +120,7 @@ func TestPutCheck(t *testing.T) {
 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
 	}
 
-	controller.AssertCalled(t, "CreateOrReplace", mock.Anything, mock.AnythingOfType("types.CheckConfig"))
+	controller.AssertCalled(t, "CreateOrReplace", mock.Anything, mock.Anything)
 }
 
 func TestGetCheck(t *testing.T) {
@@ -195,7 +195,7 @@ func TestPutCheckHook(t *testing.T) {
 	client := new(http.Client)
 
 	fixture := types.FixtureHookList("hook1")
-	controller.On("AddCheckHook", mock.Anything, mock.Anything, mock.AnythingOfType("types.HookList")).Return(nil)
+	controller.On("AddCheckHook", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	b, _ := json.Marshal(fixture)
 	body := bytes.NewReader(b)
 	endpoint := "/checks/check1/hooks/non-zero"
@@ -211,7 +211,7 @@ func TestPutCheckHook(t *testing.T) {
 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
 	}
 
-	controller.AssertCalled(t, "AddCheckHook", mock.Anything, mock.Anything, mock.AnythingOfType("types.HookList"))
+	controller.AssertCalled(t, "AddCheckHook", mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestDeleteCheckHook(t *testing.T) {
@@ -240,9 +240,6 @@ func TestDeleteCheckHook(t *testing.T) {
 func TestHttpApiChecksAdhocRequest(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeCheck, types.RulePermCreate, types.RulePermRead),
-		),
 	)
 
 	store := &mockstore.MockStore{}

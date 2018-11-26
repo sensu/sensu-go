@@ -20,15 +20,11 @@ func TestNewNamespacesController(t *testing.T) {
 
 	assert.NotNil(actions)
 	assert.Equal(store, actions.Store)
-	assert.NotNil(actions.Policy)
 }
 
 func TestNamespacesQuery(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeNamespace, types.RulePermRead),
-		),
 	)
 
 	testCases := []struct {
@@ -48,18 +44,6 @@ func TestNamespacesQuery(t *testing.T) {
 			expectedLen: 1,
 			storeErr:    nil,
 			expectedErr: nil,
-		},
-		{
-			name: "With Only Create Access",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeNamespace, types.RulePermCreate),
-			)),
-			records: []*types.Namespace{
-				types.FixtureNamespace("org1"),
-				types.FixtureNamespace("org2"),
-			},
-			expectedLen: 0,
-			storeErr:    nil,
 		},
 		{
 			name:        "Store Failure",
@@ -93,9 +77,6 @@ func TestNamespacesQuery(t *testing.T) {
 func TestNamespacesFind(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeNamespace, types.RulePermRead),
-		),
 	)
 
 	testCases := []struct {
@@ -125,16 +106,6 @@ func TestNamespacesFind(t *testing.T) {
 			name:            "Not Found",
 			ctx:             defaultCtx,
 			record:          nil,
-			argument:        "org1",
-			expected:        false,
-			expectedErrCode: NotFound,
-		},
-		{
-			name: "No Read Permission",
-			ctx: testutil.NewContext(testutil.ContextWithRules(
-				types.FixtureRuleWithPerms(types.RuleTypeNamespace, types.RulePermCreate),
-			)),
-			record:          types.FixtureNamespace("org1"),
 			argument:        "org1",
 			expected:        false,
 			expectedErrCode: NotFound,
@@ -170,19 +141,6 @@ func TestNamespacesFind(t *testing.T) {
 func TestNamespacesCreateOrReplace(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(
-				types.RuleTypeNamespace,
-				types.RulePermCreate,
-				types.RulePermUpdate,
-			),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeNamespace, types.RulePermCreate),
-		),
 	)
 
 	badOrg := types.FixtureNamespace("org1")
@@ -217,13 +175,6 @@ func TestNamespacesCreateOrReplace(t *testing.T) {
 			createErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureNamespace("org1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 		{
 			name:            "Validation Error",
@@ -270,15 +221,6 @@ func TestNamespacesCreateOrReplace(t *testing.T) {
 func TestNamespacesCreate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeNamespace, types.RulePermCreate),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeNamespace, types.RulePermRead),
-		),
 	)
 
 	badOrg := types.FixtureNamespace("org1")
@@ -305,13 +247,6 @@ func TestNamespacesCreate(t *testing.T) {
 			createErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureNamespace("org1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 		{
 			name:            "Validation Error",
@@ -355,15 +290,6 @@ func TestNamespacesCreate(t *testing.T) {
 func TestNamespacesUpdate(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeNamespace, types.RulePermUpdate),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeNamespace, types.RulePermRead),
-		),
 	)
 
 	testCases := []struct {
@@ -409,15 +335,6 @@ func TestNamespacesUpdate(t *testing.T) {
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
 		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        types.FixtureNamespace("org1"),
-			fetchResult:     types.FixtureNamespace("org1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
-		},
-
 		{
 			name:            "Validation Error",
 			ctx:             defaultCtx,
@@ -465,15 +382,6 @@ func TestNamespacesUpdate(t *testing.T) {
 func TestNamespacesDestroy(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeNamespace, types.RulePermDelete),
-		),
-	)
-	wrongPermsCtx := testutil.NewContext(
-		testutil.ContextWithNamespace("default"),
-		testutil.ContextWithRules(
-			types.FixtureRuleWithPerms(types.RuleTypeNamespace, types.RulePermCreate),
-		),
 	)
 
 	testCases := []struct {
@@ -518,14 +426,6 @@ func TestNamespacesDestroy(t *testing.T) {
 			fetchErr:        errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "No Permission",
-			ctx:             wrongPermsCtx,
-			argument:        "org1",
-			fetchResult:     types.FixtureNamespace("org1"),
-			expectedErr:     true,
-			expectedErrCode: PermissionDenied,
 		},
 	}
 

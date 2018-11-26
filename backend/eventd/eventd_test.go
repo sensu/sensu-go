@@ -48,7 +48,7 @@ func TestEventHandling(t *testing.T) {
 		"entity",
 		"check",
 	).Return(nilEvent, nil)
-	mockStore.On("UpdateEvent", mock.AnythingOfType("*types.Event")).Return(nil)
+	mockStore.On("UpdateEvent", mock.Anything).Return(nil)
 
 	// No silenced entries
 	mockStore.On(
@@ -65,7 +65,7 @@ func TestEventHandling(t *testing.T) {
 	err = e.Stop()
 	assert.NoError(t, err)
 
-	mockStore.AssertCalled(t, "UpdateEvent", mock.AnythingOfType("*types.Event"))
+	mockStore.AssertCalled(t, "UpdateEvent", mock.Anything)
 
 	assert.Equal(t, int64(1), event.Check.Occurrences)
 
@@ -114,7 +114,7 @@ func TestEventMonitor(t *testing.T) {
 		"entity",
 		"check",
 	).Return(nilEvent, nil)
-	mockStore.On("UpdateEvent", mock.AnythingOfType("*types.Event")).Return(nil)
+	mockStore.On("UpdateEvent", mock.Anything).Return(nil)
 
 	// No silenced entries
 	mockStore.On(

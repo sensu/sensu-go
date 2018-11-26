@@ -47,14 +47,15 @@ func NewStoreInstance() (*IntegrationTestStore, error) {
 	}
 
 	cfg := etcd.NewConfig()
+	cfg.Name = "default"
 	cfg.DataDir = tmpDir
-
-	peerURL := fmt.Sprintf("http://127.0.0.1:%d", p[1])
+	cfg.InitialClusterState = etcd.ClusterStateNew
 
 	cfg.ListenClientURLs = []string{fmt.Sprintf("http://127.0.0.1:%d", p[0])}
-	cfg.ListenPeerURL = peerURL
+	cfg.ListenPeerURLs = []string{fmt.Sprintf("http://127.0.0.1:%d", p[1])}
 	cfg.InitialCluster = fmt.Sprintf("default=http://127.0.0.1:%d", p[1])
-	cfg.InitialAdvertisePeerURL = peerURL
+	cfg.AdvertiseClientURLs = cfg.ListenClientURLs
+	cfg.InitialAdvertisePeerURLs = cfg.ListenPeerURLs
 	e, err := etcd.NewEtcd(cfg)
 	if err != nil {
 		removeTmp()
