@@ -5,6 +5,8 @@ import ResizeObserver from "react-resize-observer";
 import { withStyles } from "@material-ui/core/styles";
 
 import { Well } from "/components/relocation/Relocation";
+import { TOAST } from "/components/relocation/types";
+
 import UnmountObserver from "/components/util/UnmountObserver";
 
 const styles = theme => ({
@@ -65,41 +67,40 @@ class ToastWell extends React.PureComponent {
     const { heights } = this.state;
 
     return (
-      <React.Fragment>
-        <Well>
-          {({ elements }) => {
-            // TODO: Filter toasts from other element types.
-            const visibleElements = elements.slice(-20);
+      <Well>
+        {({ elements }) => {
+          const visibleElements = elements
+            .filter(({ props }) => props.type === TOAST)
+            .slice(-20);
 
-            return (
-              <Transition
-                native
-                keys={visibleElements.map(element => element.id)}
-                from={{ opacity: 1, height: 0 }}
-                update={id => ({ opacity: 1, height: heights[id] || 0 })}
-                leave={{ opacity: 0, height: 0 }}
-                config={{ tension: 210, friction: 20 }}
-              >
-                {visibleElements.map(({ id, props, remove }) => style => (
-                  <animated.div style={style} className={classes.toast}>
-                    <div style={{ position: "relative" }}>
-                      <ResizeObserver
-                        onResize={rect => this.handleToastSize(id, rect)}
-                      />
-                      <UnmountObserver
-                        onUnmount={() => this.handleToastUnmount(id)}
-                      />
-                      <div className={classes.toastPadding}>
-                        {props.render({ id, remove })}
-                      </div>
+          return (
+            <Transition
+              native
+              keys={visibleElements.map(element => element.id)}
+              from={{ opacity: 1, height: 0 }}
+              update={id => ({ opacity: 1, height: heights[id] || 0 })}
+              leave={{ opacity: 0, height: 0 }}
+              config={{ tension: 210, friction: 20 }}
+            >
+              {visibleElements.map(({ id, props, remove }) => style => (
+                <animated.div style={style} className={classes.toast}>
+                  <div style={{ position: "relative" }}>
+                    <ResizeObserver
+                      onResize={rect => this.handleToastSize(id, rect)}
+                    />
+                    <UnmountObserver
+                      onUnmount={() => this.handleToastUnmount(id)}
+                    />
+                    <div className={classes.toastPadding}>
+                      {props.render({ id, remove })}
                     </div>
-                  </animated.div>
-                ))}
-              </Transition>
-            );
-          }}
-        </Well>
-      </React.Fragment>
+                  </div>
+                </animated.div>
+              ))}
+            </Transition>
+          );
+        }}
+      </Well>
     );
   }
 }

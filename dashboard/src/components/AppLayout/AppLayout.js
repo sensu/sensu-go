@@ -4,6 +4,7 @@ import { withStyles } from "@material-ui/core/styles";
 import ResizeObserver from "react-resize-observer";
 
 import ToastWell from "/components/relocation/ToastWell";
+import BannerWell from "/components/relocation/BannerWell";
 
 import MobileFullWidthContent from "./MobileFullWidthContent";
 import Context from "./Context";
@@ -32,10 +33,6 @@ const styles = theme => ({
     },
   },
 
-  topBarObserver: {
-    position: "relative",
-  },
-
   quickNavContainer: {
     position: "relative",
   },
@@ -54,15 +51,14 @@ const styles = theme => ({
     },
   },
 
-  alertContainer: {
+  topBar: {
     position: "relative",
+    zIndex: 1,
   },
 
-  alert: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    height: 0,
+  banner: {
+    position: "relative",
+    zIndex: 0,
   },
 
   contentContainer: {
@@ -125,14 +121,12 @@ class AppLayout extends React.PureComponent {
     topBar: PropTypes.node,
     quickNav: PropTypes.node,
     content: PropTypes.node,
-    alert: PropTypes.node,
   };
 
   static defaultProps = {
     topBar: undefined,
     quickNav: undefined,
     content: undefined,
-    alert: undefined,
   };
 
   static MobileFullWidthContent = MobileFullWidthContent;
@@ -151,7 +145,7 @@ class AppLayout extends React.PureComponent {
   };
 
   render() {
-    const { classes, topBar, quickNav, content, alert } = this.props;
+    const { classes, topBar, quickNav, content } = this.props;
 
     const contentOffset =
       CSS && CSS.supports && CSS.supports("position: sticky")
@@ -162,15 +156,13 @@ class AppLayout extends React.PureComponent {
       <Context.Provider value={this.state}>
         <div className={classes.root}>
           <div className={classes.topBarContainer}>
-            <div className={classes.topBarObserver}>
-              <ResizeObserver onResize={this.handleTopBarResize} />
-              {topBar}
+            <ResizeObserver onResize={this.handleTopBarResize} />
+            <div className={classes.topBar}>{topBar}</div>
+            <div className={classes.banner}>
+              <BannerWell />
             </div>
             <div className={classes.quickNavContainer}>
               <div className={classes.quickNav}>{quickNav}</div>
-            </div>
-            <div className={classes.alertContainer}>
-              <div className={classes.alert}>{alert}</div>
             </div>
           </div>
           <div style={{ height: contentOffset }} />
