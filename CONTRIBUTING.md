@@ -166,8 +166,8 @@ Examples:
 
 ## Development
 
-Sensu is written in Go, and targets the latest stable release of the Go
-compiler. To work on Sensu, you will need the latest release of Go.
+Sensu is written in Go, and targets the 1.10.x branch of the compiler and
+toolchain. When working on Sensu, you should use this version of Go.
 
 [Go installation instructions](https://golang.org/doc/install)
 
@@ -197,7 +197,7 @@ Once you make a change to any `*.proto` file within the **types** package, you w
 
 Sensu uses [golang/dep](https://github.com/golang/dep) for managing its
 dependencies. You will need to install the latest stable version of dep in
-order to install Sensu's dependencies.
+order to modify Sensu's dependencies.
 
 [Dep releases](https://github.com/golang/dep/releases)
 
@@ -289,28 +289,8 @@ to avoid building the web UI.
 
 ## Testing
 
-Install dependencies:
-
-```shell
-./build.sh deps
-```
-
 Run test suites:
 
 ```shell
-./build.sh ci
-```
-
-Run end-to-end tests:
-
-```shell
-./build.sh e2e
-
-To run a specific test:
-
-./build.sh e2e -run TestRBAC
-
-To prevent tests from running in parallel:
-
-./build.sh e2e -parallel 1
+./build.sh
 ```
