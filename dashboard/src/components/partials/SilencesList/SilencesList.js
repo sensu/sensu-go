@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 import gql from "graphql-tag";
 import { withApollo } from "react-apollo";
 
+import ClearSilencesDialog from "/components/partials/ClearSilencedEntriesDialog";
 import Paper from "@material-ui/core/Paper";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
@@ -13,14 +14,12 @@ import Loader from "/components/util/Loader";
 import ListController from "/components/controller/ListController";
 import Pagination from "/components/partials/Pagination";
 import SilenceEntryDialog from "/components/partials/SilenceEntryDialog";
-import deleteSilence from "/mutations/deleteSilence";
 
 import ListHeader from "./SilencesListHeader";
 import ListItem from "./SilencesListItem";
 
 class SilencesList extends React.Component {
   static propTypes = {
-    client: PropTypes.object.isRequired,
     namespace: PropTypes.shape({
       silences: PropTypes.shape({
         nodes: PropTypes.array.isRequired,
@@ -53,6 +52,7 @@ class SilencesList extends React.Component {
             id
             deleted @client
             ...SilencesListItem_silence
+            ...ClearSilencedEntriesDialog_silence
           }
 
           pageInfo {
@@ -62,25 +62,20 @@ class SilencesList extends React.Component {
       }
 
       ${Pagination.fragments.pageInfo}
+      ${ClearSilencesDialog.fragments.silence}
       ${ListItem.fragments.silence}
     `,
   };
 
   state = {
     silence: null,
+    openClearDialog: false,
+    selectedItems: [],
   };
 
-  // TODO, create something that exists similarily to
-  // the silencing on ChecksList. This method can set a dialog
-  // to appear, right now we just call the dialog in the
-  // children themselves.
-  deleteItem = item => {
-    this.deleteItems([item]);
-  };
-
-  deleteItems = items => {
-    const { client } = this.props;
-    items.forEach(item => deleteSilence(client, item));
+  openSilenceDialog = targets => {
+    this.setState({ openClearDialog: true });
+    this.setState({ selectedItems: targets });
   };
 
   _handleChangeSort = val => {
@@ -119,6 +114,10 @@ class SilencesList extends React.Component {
       key={key}
       silence={item}
       selected={selected}
+      onClickClearSilences={() => {
+        this.openSilenceDialog([item]);
+        setSelected([item]);
+      }}
       onClickSelect={setSelected}
     />
   );
@@ -145,35 +144,50 @@ class SilencesList extends React.Component {
         renderItem={this.renderItem}
       >
         {({ children, selectedItems, toggleSelectedItems }) => (
-          <Paper>
-            <Loader loading={loading}>
-              <ListHeader
-                rowCount={children.length || 0}
-                selectedItems={selectedItems}
-                onChangeQuery={onChangeQuery}
-                onClickSelect={toggleSelectedItems}
-                order={order}
-              />
-
-              <Table>
-                <TableBody>{children}</TableBody>
-              </Table>
-
-              <Pagination
-                limit={limit}
-                offset={offset}
-                pageInfo={namespace && namespace.silences.pageInfo}
-                onChangeQuery={onChangeQuery}
-              />
-
-              {this.state.silence && (
-                <SilenceEntryDialog
-                  values={this.state.silence}
-                  onClose={() => this.setState({ silence: null })}
+          <React.Fragment>
+            <Paper>
+              <Loader loading={loading}>
+                <ListHeader
+                  rowCount={children.length || 0}
+                  selectedItems={selectedItems}
+                  onChangeQuery={onChangeQuery}
+                  onClickSelect={toggleSelectedItems}
+                  onClickClearSilences={() =>
+                    this.openSilenceDialog(selectedItems)
+                  }
+                  order={order}
                 />
-              )}
-            </Loader>
-          </Paper>
+
+                <Table>
+                  <TableBody>{children}</TableBody>
+                </Table>
+
+                <Pagination
+                  limit={limit}
+                  offset={offset}
+                  pageInfo={namespace && namespace.silences.pageInfo}
+                  onChangeQuery={onChangeQuery}
+                />
+
+                {this.state.silence && (
+                  <SilenceEntryDialog
+                    values={this.state.silence}
+                    onClose={() => this.setState({ silence: null })}
+                  />
+                )}
+              </Loader>
+            </Paper>
+            <ClearSilencesDialog
+              silences={this.state.selectedItems}
+              open={this.state.openClearDialog}
+              close={() => {
+                this.setState({ openClearDialog: false });
+                toggleSelectedItems();
+              }}
+              confirmed
+              scrollable
+            />
+          </React.Fragment>
         )}
       </ListController>
     );

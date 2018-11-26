@@ -7,7 +7,6 @@ import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
 import Checkbox from "@material-ui/core/Checkbox";
 import Chip from "@material-ui/core/Chip";
-import ClearSilencesDialog from "/components/partials/ClearSilencedEntriesDialog";
 import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
@@ -41,6 +40,7 @@ class SilencesListItem extends React.Component {
   static propTypes = {
     silence: PropTypes.object.isRequired,
     selected: PropTypes.bool.isRequired,
+    onClickClearSilences: PropTypes.func.isRequired,
     onClickSelect: PropTypes.func.isRequired,
   };
 
@@ -59,8 +59,6 @@ class SilencesListItem extends React.Component {
       ${SilenceExpiration.fragments.silence}
     `,
   };
-
-  state = { openDialog: false };
 
   renderDetails = () => {
     const { silence } = this.props;
@@ -154,16 +152,7 @@ class SilencesListItem extends React.Component {
 
             <ToolbarMenu>
               <ToolbarMenu.Item id="delete" visible="never">
-                <UnsilenceMenuItem
-                  onClick={() => this.setState({ openDialog: true })}
-                />
-                <ClearSilencesDialog
-                  silences={[silence]}
-                  open={this.state.openDialog}
-                  close={() => this.setState({ openDialog: false })}
-                  confirmed
-                  scrollable
-                />
+                <UnsilenceMenuItem onClick={this.props.onClickClearSilences} />
               </ToolbarMenu.Item>
             </ToolbarMenu>
           </RightAlign>
