@@ -51,6 +51,7 @@ class SilencesList extends React.Component {
           nodes {
             id
             deleted @client
+            ...SilencesListItem_silence
             ...ClearSilencedEntriesDialog_silence
           }
 
@@ -61,8 +62,8 @@ class SilencesList extends React.Component {
       }
 
       ${Pagination.fragments.pageInfo}
-      ${ListItem.fragments.silence}
       ${ClearSilencesDialog.fragments.silence}
+      ${ListItem.fragments.silence}
     `,
   };
 
