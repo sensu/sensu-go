@@ -7,7 +7,7 @@ import (
 	"reflect"
 )
 
-// typeMap is used to dynamically look up data v2 from strings.
+// typeMap is used to dynamically look up data types from strings.
 var typeMap = map[string]interface{}{
 	"AdhocRequest":           &AdhocRequest{},
 	"adhoc_request":          &AdhocRequest{},

@@ -73,7 +73,7 @@ func (h *HookList) Validate() error {
 
 	if !(CheckHookRegex.MatchString(h.Type) || isSeverity(h.Type)) {
 		return errors.New(
-			"valid check hook v2 are \"0\"-\"255\", \"ok\", \"warning\", \"critical\", \"unknown\", and \"non-zero\"",
+			"valid check hook types are \"0\"-\"255\", \"ok\", \"warning\", \"critical\", \"unknown\", and \"non-zero\"",
 		)
 	}
 

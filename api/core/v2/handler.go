@@ -12,7 +12,7 @@ const (
 	HandlerPipeType = "pipe"
 
 	// HandlerSetType represents handlers that groups event handlers, making it
-	// easy to manage groups of actions that should be executed for certain v2
+	// easy to manage groups of actions that should be executed for certain types
 	// of events.
 	HandlerSetType = "set"
 
