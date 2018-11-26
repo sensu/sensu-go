@@ -95,7 +95,9 @@ class CheckListItem extends React.Component {
         <TableCell padding="checkbox">
           <ToolbarMenu>
             <ToolbarMenu.Item id="queue" visible="never">
-              <QueueMenuItem onClick={this.props.onClickExecute} />
+              {check.name !== "keepalive" && (
+                <QueueMenuItem onClick={this.props.onClickExecute} />
+              )}
             </ToolbarMenu.Item>
             <ToolbarMenu.Item id="silence" visible="never">
               <SilenceMenuItem
