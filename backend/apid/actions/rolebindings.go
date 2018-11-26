@@ -94,19 +94,3 @@ func (a RoleBindingController) List(ctx context.Context) ([]*types.RoleBinding, 
 
 	return results, nil
 }
-
-// Update validates and persists changes to a role binding.
-func (a RoleBindingController) Update(ctx context.Context, role types.RoleBinding) error {
-	if err := a.Store.UpdateRoleBinding(ctx, &role); err != nil {
-		switch err := err.(type) {
-		case *store.ErrNotFound:
-			return NewErrorf(NotFound)
-		case *store.ErrNotValid:
-			return NewErrorf(InvalidArgument)
-		default:
-			return NewError(InternalErr, err)
-		}
-	}
-
-	return nil
-}
