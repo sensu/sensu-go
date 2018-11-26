@@ -14,14 +14,12 @@ import Loader from "/components/util/Loader";
 import ListController from "/components/controller/ListController";
 import Pagination from "/components/partials/Pagination";
 import SilenceEntryDialog from "/components/partials/SilenceEntryDialog";
-import deleteSilence from "/mutations/deleteSilence";
 
 import ListHeader from "./SilencesListHeader";
 import ListItem from "./SilencesListItem";
 
 class SilencesList extends React.Component {
   static propTypes = {
-    client: PropTypes.object.isRequired,
     namespace: PropTypes.shape({
       silences: PropTypes.shape({
         nodes: PropTypes.array.isRequired,
