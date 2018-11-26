@@ -70,20 +70,12 @@ class SilencesList extends React.Component {
   state = {
     silence: null,
     openDialog: false,
+    selectedItems: [],
   };
 
-  clearSilences = () => {
+  openSilenceDialog = targets => {
     this.setState({ openDialog: true });
-  };
-
-  // TODO: delete these
-  deleteItem = item => {
-    this.deleteItems([item]);
-  };
-
-  deleteItems = items => {
-    const { client } = this.props;
-    items.forEach(item => deleteSilence(client, item));
+    this.setState({ selectedItems: targets });
   };
 
   _handleChangeSort = val => {
@@ -122,7 +114,10 @@ class SilencesList extends React.Component {
       key={key}
       silence={item}
       selected={selected}
-      onClickClearSilences={this.clearSilences}
+      onClickClearSilences={() => {
+        this.openSilenceDialog([item]);
+        setSelected([item]);
+      }}
       onClickSelect={setSelected}
     />
   );
@@ -157,7 +152,9 @@ class SilencesList extends React.Component {
                   selectedItems={selectedItems}
                   onChangeQuery={onChangeQuery}
                   onClickSelect={toggleSelectedItems}
-                  onClickClearSilences={this.clearSilences}
+                  onClickClearSilences={() =>
+                    this.openSilenceDialog(selectedItems)
+                  }
                   order={order}
                 />
 
@@ -181,7 +178,7 @@ class SilencesList extends React.Component {
               </Loader>
             </Paper>
             <ClearSilencesDialog
-              silences={selectedItems}
+              silences={this.state.selectedItems}
               open={this.state.openDialog}
               close={() => {
                 this.setState({ openDialog: false });
