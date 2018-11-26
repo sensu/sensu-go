@@ -140,7 +140,7 @@ func (client *RestClient) AddCheckHook(check *types.CheckConfig, checkHook *type
 // RemoveCheckHook removes an association between an existing hook and an existing check
 func (client *RestClient) RemoveCheckHook(check *types.CheckConfig, checkHookType string, hookName string) error {
 	path := checksPath(check.Namespace, check.Name, "hooks", checkHookType, "hook", hookName)
-	res, err := client.R().SetQueryParam("namespace", check.Namespace).Delete(path)
+	res, err := client.R().Delete(path)
 	if err != nil {
 		return err
 	}
