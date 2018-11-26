@@ -110,30 +110,3 @@ func (c EntityController) CreateOrReplace(ctx context.Context, entity types.Enti
 
 	return nil
 }
-
-// Update validates and persists changes to a resource if viewer has access.
-func (c EntityController) Update(ctx context.Context, given types.Entity) error {
-	// Adjust context
-	ctx = addOrgEnvToContext(ctx, &given)
-
-	// Find existing entity
-	entity, err := c.Store.GetEntityByName(ctx, given.Name)
-	if err != nil {
-		return NewError(InternalErr, err)
-	}
-
-	// Copy
-	copyFields(entity, &given, entityUpdateFields...)
-
-	// Validate
-	if err := entity.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-
-	// Persist Changes
-	if serr := c.Store.UpdateEntity(ctx, entity); serr != nil {
-		return NewError(InternalErr, serr)
-	}
-
-	return nil
-}
