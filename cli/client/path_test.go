@@ -25,6 +25,11 @@ func TestCreateNSBasePath(t *testing.T) {
 			out:   "/api/core/v1/checks",
 		},
 		{
+			ins:   []string{"core", "v1", "rbac", "rules"},
+			paths: []string{},
+			out:   "/api/core/v1/rbac/rules",
+		},
+		{
 			ins:       []string{"enterprise", "v7", "distributed-ledgers"},
 			paths:     []string{"😂"},
 			namespace: "sensu-devel",
@@ -34,7 +39,7 @@ func TestCreateNSBasePath(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.out, func(t *testing.T) {
-			fn := createNSBasePath(tc.ins[0], tc.ins[1], tc.ins[2])
+			fn := createNSBasePath(tc.ins[0], tc.ins[1], tc.ins[2:]...)
 			out := fn(tc.namespace, tc.paths...)
 			assert.Equal(t, tc.out, out)
 		})
