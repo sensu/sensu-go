@@ -3,16 +3,18 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 
 	"github.com/sensu/sensu-go/types"
 )
+
+var mutatorsPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "mutators")
 
 // ListMutators fetches all mutators from the configured Sensu instance
 func (client *RestClient) ListMutators(namespace string) ([]types.Mutator, error) {
 	var mutators []types.Mutator
 
-	res, err := client.R().SetQueryParam("namespace", namespace).Get("/mutators")
+	path := mutatorsPath(namespace)
+	res, err := client.R().Get(path)
 	if err != nil {
 		return mutators, err
 	}
@@ -30,9 +32,10 @@ func (client *RestClient) CreateMutator(mutator *types.Mutator) (err error) {
 	bytes, err := json.Marshal(mutator)
 	if err != nil {
 		return err
-
 	}
-	res, err := client.R().SetBody(bytes).Post("/mutators")
+
+	path := mutatorsPath(mutator.Namespace)
+	res, err := client.R().SetBody(bytes).Post(path)
 	if err != nil {
 		return err
 
@@ -46,7 +49,8 @@ func (client *RestClient) CreateMutator(mutator *types.Mutator) (err error) {
 
 // DeleteMutator deletes the given mutator from the configured Sensu instance
 func (client *RestClient) DeleteMutator(mutator *types.Mutator) (err error) {
-	res, err := client.R().Delete("/mutators/" + url.PathEscape(mutator.Name))
+	path := mutatorsPath(mutator.Namespace, mutator.Name)
+	res, err := client.R().Delete(path)
 	if err != nil {
 		return err
 	}
@@ -62,7 +66,8 @@ func (client *RestClient) DeleteMutator(mutator *types.Mutator) (err error) {
 func (client *RestClient) FetchMutator(name string) (*types.Mutator, error) {
 	var mutator *types.Mutator
 
-	res, err := client.R().Get("/mutators/" + url.PathEscape(name))
+	path := mutatorsPath(client.config.Namespace(), mutator.Name)
+	res, err := client.R().Get(path)
 	if err != nil {
 		return mutator, err
 	}
@@ -82,7 +87,8 @@ func (client *RestClient) UpdateMutator(mutator *types.Mutator) (err error) {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Put("/mutators/" + url.PathEscape(mutator.Name))
+	path := mutatorsPath(mutator.Namespace, mutator.Name)
+	res, err := client.R().SetBody(bytes).Put(path)
 	if err != nil {
 		return err
 	}

@@ -7,16 +7,21 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+var entitiesPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "entities")
+
 // DeleteEntity deletes given entitiy from the configured sensu instance
 func (client *RestClient) DeleteEntity(entity *types.Entity) (err error) {
-	_, err = client.R().Delete("/entities/" + entity.Name)
+	path := entitiesPath(entity.Namespace, entity.Name)
+	_, err = client.R().Delete(path)
 	return err
 }
 
 // FetchEntity fetches a specific entity
 func (client *RestClient) FetchEntity(name string) (*types.Entity, error) {
 	var entity *types.Entity
-	res, err := client.R().Get("/entities/" + name)
+
+	path := entitiesPath(client.config.Namespace(), entity.Name)
+	res, err := client.R().Get(path)
 	if err != nil {
 		return entity, err
 	}
@@ -33,7 +38,8 @@ func (client *RestClient) FetchEntity(name string) (*types.Entity, error) {
 func (client *RestClient) ListEntities(namespace string) ([]types.Entity, error) {
 	var entities []types.Entity
 
-	res, err := client.R().SetQueryParam("namespace", namespace).Get("/entities")
+	path := entitiesPath(namespace)
+	res, err := client.R().Get(path)
 	if err != nil {
 		return entities, err
 	}
@@ -53,7 +59,8 @@ func (client *RestClient) UpdateEntity(entity *types.Entity) (err error) {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Put("/entities/" + entity.Name)
+	path := entitiesPath(entity.Namespace, entity.Name)
+	res, err := client.R().SetBody(bytes).Put(path)
 	if err != nil {
 		return err
 	}
@@ -72,7 +79,8 @@ func (client *RestClient) CreateEntity(entity *types.Entity) (err error) {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Post("/entities")
+	path := entitiesPath(entity.Namespace, entity.Name)
+	res, err := client.R().SetBody(bytes).Post(path)
 	if err != nil {
 		return err
 	}

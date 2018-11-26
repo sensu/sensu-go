@@ -3,21 +3,11 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
-	"path"
 
 	"github.com/sensu/sensu-go/types"
 )
 
-const checksBasePath = "/checks"
-
-func checksPath(ext ...string) string {
-	parts := ext
-	for i := range parts {
-		parts[i] = url.PathEscape(parts[i])
-	}
-	return path.Join(append([]string{checksBasePath}, parts...)...)
-}
+var checksPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "checks")
 
 // CreateCheck creates new check on configured Sensu instance
 func (client *RestClient) CreateCheck(check *types.CheckConfig) (err error) {
@@ -26,7 +16,8 @@ func (client *RestClient) CreateCheck(check *types.CheckConfig) (err error) {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Post("/checks")
+	path := checksPath(check.Namespace)
+	res, err := client.R().SetBody(bytes).Post(path)
 	if err != nil {
 		return err
 	}
@@ -45,8 +36,8 @@ func (client *RestClient) UpdateCheck(check *types.CheckConfig) (err error) {
 		return err
 	}
 
-	checkPath := fmt.Sprintf("/checks/%s", url.PathEscape(check.Name))
-	res, err := client.R().SetBody(bytes).Put(checkPath)
+	path := checksPath(check.Namespace, check.Name)
+	res, err := client.R().SetBody(bytes).Put(path)
 	if err != nil {
 		return err
 	}
@@ -60,7 +51,8 @@ func (client *RestClient) UpdateCheck(check *types.CheckConfig) (err error) {
 
 // DeleteCheck deletes check from configured Sensu instance
 func (client *RestClient) DeleteCheck(check *types.CheckConfig) error {
-	res, err := client.R().Delete("/checks/" + url.PathEscape(check.Name))
+	path := checksPath(client.config.Namespace(), check.Name)
+	res, err := client.R().Delete(path)
 
 	if err != nil {
 		return err
@@ -80,11 +72,8 @@ func (client *RestClient) ExecuteCheck(req *types.AdhocRequest) error {
 		return err
 	}
 
-	checkPath := fmt.Sprintf("/checks/%s/execute", url.PathEscape(req.Name))
-	res, err := client.R().
-		SetQueryParam("namespace", client.config.Namespace()).
-		SetBody(bytes).
-		Post(checkPath)
+	path := checksPath(client.config.Namespace(), req.Name, "execute")
+	res, err := client.R().SetBody(bytes).Post(path)
 
 	if err != nil {
 		return err
@@ -101,10 +90,10 @@ func (client *RestClient) ExecuteCheck(req *types.AdhocRequest) error {
 func (client *RestClient) FetchCheck(name string) (*types.CheckConfig, error) {
 	var check *types.CheckConfig
 
-	checkPath := fmt.Sprintf("/checks/%s", url.PathEscape(name))
-	res, err := client.R().Get(checkPath)
+	path := checksPath(client.config.Namespace(), name)
+	res, err := client.R().Get(path)
 	if err != nil {
-		return nil, fmt.Errorf("GET %q: %s", checkPath, err)
+		return nil, fmt.Errorf("GET %q: %s", path, err)
 	}
 
 	if res.StatusCode() >= 400 {
@@ -118,7 +107,9 @@ func (client *RestClient) FetchCheck(name string) (*types.CheckConfig, error) {
 // ListChecks fetches all checks from configured Sensu instance
 func (client *RestClient) ListChecks(namespace string) ([]types.CheckConfig, error) {
 	var checks []types.CheckConfig
-	res, err := client.R().SetQueryParam("namespace", namespace).Get("/checks")
+
+	path := checksPath(namespace)
+	res, err := client.R().Get(path)
 	if err != nil {
 		return checks, err
 	}
@@ -133,8 +124,8 @@ func (client *RestClient) ListChecks(namespace string) ([]types.CheckConfig, err
 
 // AddCheckHook associates an existing hook with an existing check
 func (client *RestClient) AddCheckHook(check *types.CheckConfig, checkHook *types.HookList) error {
-	key := checksPath(check.Name, "hooks", checkHook.Type)
-	res, err := client.R().SetQueryParam("namespace", check.Namespace).SetBody(checkHook).Put(key)
+	path := checksPath(check.Namespace, check.Name, "hooks", checkHook.Type)
+	res, err := client.R().SetBody(checkHook).Put(path)
 	if err != nil {
 		return err
 	}
@@ -148,8 +139,8 @@ func (client *RestClient) AddCheckHook(check *types.CheckConfig, checkHook *type
 
 // RemoveCheckHook removes an association between an existing hook and an existing check
 func (client *RestClient) RemoveCheckHook(check *types.CheckConfig, checkHookType string, hookName string) error {
-	path := checksPath(check.Name, "hooks", checkHookType, "hook", hookName)
-	res, err := client.R().SetQueryParam("namespace", check.Namespace).Delete(path)
+	path := checksPath(check.Namespace, check.Name, "hooks", checkHookType, "hook", hookName)
+	res, err := client.R().Delete(path)
 	if err != nil {
 		return err
 	}
