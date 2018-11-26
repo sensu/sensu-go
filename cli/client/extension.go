@@ -8,11 +8,14 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+var extPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "extensions")
+
 // ListExtensions retrieves a list of extension resources from the backend
 func (client *RestClient) ListExtensions(namespace string) ([]types.Extension, error) {
 	var extensions []types.Extension
 
-	res, err := client.R().SetQueryParam("namespace", namespace).Get("/extensions")
+	path := extPath(namespace)
+	res, err := client.R().Get(path)
 	if err != nil {
 		return extensions, err
 	}
@@ -27,8 +30,8 @@ func (client *RestClient) ListExtensions(namespace string) ([]types.Extension, e
 
 // DeregisterExtension deregisters an extension resource from the backend
 func (client *RestClient) DeregisterExtension(name, namespace string) error {
-	extensionPath := fmt.Sprintf("/extensions/%s?namespace=%s", url.PathEscape(name), url.PathEscape(namespace))
-	res, err := client.R().Delete(extensionPath)
+	path := extPath(namespace, name)
+	res, err := client.R().Delete(path)
 	if err != nil {
 		return fmt.Errorf("DELETE %q: %s", extensionPath, err)
 	}
@@ -47,8 +50,8 @@ func (client *RestClient) RegisterExtension(extension *types.Extension) error {
 		return err
 	}
 
-	extensionPath := fmt.Sprintf("/extensions/%s", url.PathEscape(extension.Name))
-	res, err := client.R().SetBody(bytes).Put(extensionPath)
+	path := extPath(extension.Namespace, extension.Name)
+	res, err := client.R().SetBody(bytes).Put(path)
 	if err != nil {
 		return fmt.Errorf("PUT %q: %s", extensionPath, err)
 	}
