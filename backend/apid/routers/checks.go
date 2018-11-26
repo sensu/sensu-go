@@ -61,6 +61,13 @@ func (r *ChecksRouter) list(req *http.Request) (interface{}, error) {
 	return records, err
 }
 
+func (r *ChecksRouter) listAllNamespaces(req *http.Request) (interface{}, error) {
+	// Make sure the request context is empty so we query across all namespaces
+	ctx := context.WithValue(req.Context(), types.NamespaceKey, "")
+
+	return r.list(req.WithContext(ctx))
+}
+
 func (r *ChecksRouter) find(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
 	id, err := url.PathUnescape(params["id"])

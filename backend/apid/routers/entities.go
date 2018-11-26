@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 
@@ -58,6 +59,13 @@ func (r *EntitiesRouter) find(req *http.Request) (interface{}, error) {
 func (r *EntitiesRouter) list(req *http.Request) (interface{}, error) {
 	records, err := r.controller.Query(req.Context())
 	return records, err
+}
+
+func (r *EntitiesRouter) listAllNamespaces(req *http.Request) (interface{}, error) {
+	// Make sure the request context is empty so we query across all namespaces
+	ctx := context.WithValue(req.Context(), types.NamespaceKey, "")
+
+	return r.list(req.WithContext(ctx))
 }
 
 func (r *EntitiesRouter) create(req *http.Request) (interface{}, error) {

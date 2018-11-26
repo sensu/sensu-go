@@ -37,7 +37,7 @@ func (s *Store) DeleteMutatorByName(ctx context.Context, name string) error {
 // GetMutators gets the list of mutators for an (optional) namespace. If org is
 // the empty string, GetMutators returns all mutators for all orgs.
 func (s *Store) GetMutators(ctx context.Context) ([]*types.Mutator, error) {
-	resp, err := query(ctx, s, getMutatorsPath)
+	resp, err := s.client.Get(ctx, getMutatorsPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}

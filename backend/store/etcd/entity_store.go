@@ -70,7 +70,7 @@ func (s *Store) GetEntityByName(ctx context.Context, name string) (*types.Entity
 // GetEntities takes an optional org argument, an empty string will return
 // all entities.
 func (s *Store) GetEntities(ctx context.Context) ([]*types.Entity, error) {
-	resp, err := query(ctx, s, getEntitiesPath)
+	resp, err := s.client.Get(ctx, getEntitiesPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}

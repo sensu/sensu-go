@@ -9,7 +9,6 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 const (
@@ -155,12 +154,6 @@ func (s *Store) list(ctx context.Context, keyBuilder keyBuilderFn, objsPtr inter
 		return fmt.Errorf("expected slice, but got %s", v.Elem().Kind())
 	}
 	v = v.Elem()
-
-	// Support "*" as a wildcard for namespaces
-	if namespace := types.ContextNamespace(ctx); namespace == types.NamespaceTypeAll {
-		// Remove the namespace from the context if we had a wildcard
-		ctx = context.WithValue(ctx, types.NamespaceKey, "")
-	}
 
 	opts := []clientv3.OpOption{
 		clientv3.WithPrefix(),

@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 
@@ -42,6 +43,13 @@ func (r *SilencedRouter) Mount(parent *mux.Router) {
 func (r *SilencedRouter) list(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
 	return r.controller.Query(req.Context(), params["subscription"], params["check"])
+}
+
+func (r *SilencedRouter) listAllNamespaces(req *http.Request) (interface{}, error) {
+	// Make sure the request context is empty so we query across all namespaces
+	ctx := context.WithValue(req.Context(), types.NamespaceKey, "")
+
+	return r.list(req.WithContext(ctx))
 }
 
 func (r *SilencedRouter) find(req *http.Request) (interface{}, error) {

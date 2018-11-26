@@ -40,7 +40,7 @@ func (s *Store) DeleteHookConfigByName(ctx context.Context, name string) error {
 // GetHookConfigs returns hook configurations for an (optional) namespace.
 // If org is the empty string, it returns all hook configs.
 func (s *Store) GetHookConfigs(ctx context.Context) ([]*types.HookConfig, error) {
-	resp, err := query(ctx, s, getHookConfigsPath)
+	resp, err := s.client.Get(ctx, getHookConfigsPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}

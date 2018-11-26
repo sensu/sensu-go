@@ -41,7 +41,7 @@ func (s *Store) DeleteSilencedEntryByName(ctx context.Context, silencedName stri
 
 // GetSilencedEntries gets all silenced entries.
 func (s *Store) GetSilencedEntries(ctx context.Context) ([]*types.Silenced, error) {
-	resp, err := query(ctx, s, getSilencedPath)
+	resp, err := s.client.Get(ctx, getSilencedPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}

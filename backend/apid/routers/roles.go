@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 
@@ -84,4 +85,11 @@ func (r *RolesRouter) find(req *http.Request) (interface{}, error) {
 func (r *RolesRouter) list(req *http.Request) (interface{}, error) {
 	objs, err := r.controller.List(req.Context())
 	return objs, err
+}
+
+func (r *RolesRouter) listAllNamespaces(req *http.Request) (interface{}, error) {
+	// Make sure the request context is empty so we query across all namespaces
+	ctx := context.WithValue(req.Context(), types.NamespaceKey, "")
+
+	return r.list(req.WithContext(ctx))
 }
