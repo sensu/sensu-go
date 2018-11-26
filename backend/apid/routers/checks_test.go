@@ -30,10 +30,6 @@ func (m *mockCheckController) CreateOrReplace(ctx context.Context, check types.C
 	return m.Called(ctx, check).Error(0)
 }
 
-func (m *mockCheckController) Update(ctx context.Context, check types.CheckConfig) error {
-	return m.Called(ctx, check).Error(0)
-}
-
 func (m *mockCheckController) Query(ctx context.Context) ([]*types.CheckConfig, error) {
 	args := m.Called(ctx)
 	return args.Get(0).([]*types.CheckConfig), args.Error(1)

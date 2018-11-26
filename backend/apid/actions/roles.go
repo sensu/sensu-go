@@ -94,19 +94,3 @@ func (a RoleController) List(ctx context.Context) ([]*types.Role, error) {
 
 	return results, nil
 }
-
-// Update validates and persists changes to a role.
-func (a RoleController) Update(ctx context.Context, role types.Role) error {
-	if err := a.Store.UpdateRole(ctx, &role); err != nil {
-		switch err := err.(type) {
-		case *store.ErrNotFound:
-			return NewErrorf(NotFound)
-		case *store.ErrNotValid:
-			return NewErrorf(InvalidArgument)
-		default:
-			return NewError(InternalErr, err)
-		}
-	}
-
-	return nil
-}

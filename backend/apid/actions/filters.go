@@ -75,40 +75,6 @@ func (c EventFilterController) CreateOrReplace(ctx context.Context, filter types
 	return nil
 }
 
-// Update updates a Filter.
-// It returns non-nil error if the new Filter is invalid, create permissions
-// do not exist, or an internal error occurs while updating the underlying
-// store.
-func (c EventFilterController) Update(ctx context.Context, delta types.EventFilter) error {
-	// Adjust context
-	ctx = addOrgEnvToContext(ctx, &delta)
-
-	// Check for existing
-	filter, err := c.Store.GetEventFilterByName(ctx, delta.Name)
-	if err != nil {
-		return NewError(InternalErr, err)
-	} else if filter == nil {
-		return NewErrorf(NotFound, delta.Name)
-	}
-
-	// Update
-	if err := filter.Update(&delta, filterUpdateFields...); err != nil {
-		return NewError(InternalErr, err)
-	}
-
-	// Validate
-	if err := filter.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-
-	// Persist
-	if err := c.Store.UpdateEventFilter(ctx, filter); err != nil {
-		return NewError(InternalErr, err)
-	}
-
-	return nil
-}
-
 // Query returns resources available to the viewer filter by given params.
 // It returns non-nil error if the params are invalid, read permissions
 // do not exist, or an internal error occurs while reading the underlying

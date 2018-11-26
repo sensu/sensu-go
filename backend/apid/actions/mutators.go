@@ -75,40 +75,6 @@ func (c MutatorController) CreateOrReplace(ctx context.Context, mut types.Mutato
 	return nil
 }
 
-// Update updates a mutator.
-// It returns non-nil error if the new mutator is invalid, create permissions
-// do not exist, or an internal error occurs while updating the underlying
-// Store.
-func (c MutatorController) Update(ctx context.Context, delta types.Mutator) error {
-	// Adjust context
-	ctx = addOrgEnvToContext(ctx, &delta)
-
-	// Check for existing
-	mut, err := c.Store.GetMutatorByName(ctx, delta.Name)
-	if err != nil {
-		return NewError(InternalErr, err)
-	} else if mut == nil {
-		return NewErrorf(NotFound, delta.Name)
-	}
-
-	// Update
-	if err := mut.Update(&delta, mutatorUpdateFields...); err != nil {
-		return NewError(InternalErr, err)
-	}
-
-	// Validate
-	if err := mut.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-
-	// Persist
-	if err := c.Store.UpdateMutator(ctx, mut); err != nil {
-		return NewError(InternalErr, err)
-	}
-
-	return nil
-}
-
 // Query returns resources available to the viewer filter by given params.
 // It returns non-nil error if the params are invalid, read permissions
 // do not exist, or an internal error occurs while reading the underlying

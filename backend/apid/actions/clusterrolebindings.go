@@ -94,19 +94,3 @@ func (a ClusterRoleBindingController) List(ctx context.Context) ([]*types.Cluste
 
 	return results, nil
 }
-
-// Update validates and persists changes to a cluster role binding.
-func (a ClusterRoleBindingController) Update(ctx context.Context, role types.ClusterRoleBinding) error {
-	if err := a.Store.UpdateClusterRoleBinding(ctx, &role); err != nil {
-		switch err := err.(type) {
-		case *store.ErrNotFound:
-			return NewErrorf(NotFound)
-		case *store.ErrNotValid:
-			return NewErrorf(InvalidArgument)
-		default:
-			return NewError(InternalErr, err)
-		}
-	}
-
-	return nil
-}

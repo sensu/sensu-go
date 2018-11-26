@@ -56,6 +56,9 @@ func (a SilencedController) Find(ctx context.Context, id string) (*types.Silence
 	if err != nil {
 		return nil, err
 	}
+	if result == nil {
+		return nil, NewErrorf(NotFound)
+	}
 
 	return result, nil
 }
@@ -130,29 +133,6 @@ func (a SilencedController) CreateOrReplace(ctx context.Context, newSilence type
 	// Persist
 	if err := a.Store.UpdateSilencedEntry(ctx, &newSilence); err != nil {
 		return NewError(InternalErr, err)
-	}
-
-	return nil
-}
-
-// Update validates and persists changes to a resource if viewer has access.
-func (a SilencedController) Update(ctx context.Context, given types.Silenced) error {
-	// Adjust context
-	ctx = addOrgEnvToContext(ctx, &given)
-
-	// Find existing silenced
-	// Fetch from store
-	silence, err := a.findSilencedEntry(ctx, given.Name)
-	if err != nil {
-		return err
-	}
-
-	// Copy
-	copyFields(silence, &given, silencedUpdateFields...)
-
-	// Persist Changes
-	if serr := a.Store.UpdateSilencedEntry(ctx, silence); serr != nil {
-		return NewError(InternalErr, serr)
 	}
 
 	return nil

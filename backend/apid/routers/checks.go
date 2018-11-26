@@ -15,7 +15,6 @@ import (
 type CheckController interface {
 	Create(context.Context, types.CheckConfig) error
 	CreateOrReplace(context.Context, types.CheckConfig) error
-	Update(context.Context, types.CheckConfig) error
 	Query(context.Context) ([]*types.CheckConfig, error)
 	Find(context.Context, string) (*types.CheckConfig, error)
 	Destroy(context.Context, string) error
