@@ -3,7 +3,6 @@ package client
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -33,11 +32,11 @@ func (client *RestClient) DeregisterExtension(name, namespace string) error {
 	path := extPath(namespace, name)
 	res, err := client.R().Delete(path)
 	if err != nil {
-		return fmt.Errorf("DELETE %q: %s", extensionPath, err)
+		return fmt.Errorf("DELETE %q: %s", path, err)
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("DELETE %q: %s", extensionPath, res.String())
+		return fmt.Errorf("DELETE %q: %s", path, res.String())
 	}
 
 	return nil
@@ -53,11 +52,11 @@ func (client *RestClient) RegisterExtension(extension *types.Extension) error {
 	path := extPath(extension.Namespace, extension.Name)
 	res, err := client.R().SetBody(bytes).Put(path)
 	if err != nil {
-		return fmt.Errorf("PUT %q: %s", extensionPath, err)
+		return fmt.Errorf("PUT %q: %s", path, err)
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("PUT %q: %s", extensionPath, res.String())
+		return fmt.Errorf("PUT %q: %s", path, res.String())
 	}
 
 	return nil
