@@ -26,10 +26,6 @@ func (m *mockOrgController) CreateOrReplace(ctx context.Context, org types.Names
 	return m.Called(ctx, org).Error(0)
 }
 
-func (m *mockOrgController) Update(ctx context.Context, org types.Namespace) error {
-	return m.Called(ctx, org).Error(0)
-}
-
 func (m *mockOrgController) Query(ctx context.Context) ([]*types.Namespace, error) {
 	args := m.Called(ctx)
 	return args.Get(0).([]*types.Namespace), args.Error(1)
