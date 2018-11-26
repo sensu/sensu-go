@@ -69,12 +69,12 @@ class SilencesList extends React.Component {
 
   state = {
     silence: null,
-    openDialog: false,
+    openClearDialog: false,
     selectedItems: [],
   };
 
   openSilenceDialog = targets => {
-    this.setState({ openDialog: true });
+    this.setState({ openClearDialog: true });
     this.setState({ selectedItems: targets });
   };
 
@@ -179,9 +179,9 @@ class SilencesList extends React.Component {
             </Paper>
             <ClearSilencesDialog
               silences={this.state.selectedItems}
-              open={this.state.openDialog}
+              open={this.state.openClearDialog}
               close={() => {
-                this.setState({ openDialog: false });
+                this.setState({ openClearDialog: false });
                 toggleSelectedItems();
               }}
               confirmed
