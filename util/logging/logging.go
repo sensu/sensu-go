@@ -28,11 +28,9 @@ func EventFields(event *types.Event, debug bool) map[string]interface{} {
 		if event.HasMetrics() {
 			fields["metrics"] = event.Metrics
 		}
-		if event.Hooks != nil {
-			fields["hooks"] = event.Hooks
-		}
-		if event.Silenced != nil {
-			fields["silenced"] = event.Silenced
+		if event.HasCheck() {
+			fields["hooks"] = event.Check.Hooks
+			fields["silenced"] = event.Check.Silenced
 		}
 	} else {
 		if event.HasMetrics() {
