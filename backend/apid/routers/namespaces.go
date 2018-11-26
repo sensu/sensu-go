@@ -32,7 +32,10 @@ func NewNamespacesRouter(ctrl NamespacesController) *NamespacesRouter {
 
 // Mount the NamespacesRouter to a parent Router
 func (r *NamespacesRouter) Mount(parent *mux.Router) {
-	routes := ResourceRoute{Router: parent, PathPrefix: "/rbac/namespaces"}
+	routes := ResourceRoute{
+		Router:     parent,
+		PathPrefix: "/{resource:namespaces}",
+	}
 	routes.GetAll(r.list)
 	routes.Get(r.find)
 	routes.Post(r.create)

@@ -25,7 +25,10 @@ func NewEventsRouter(store store.EventStore, bus messaging.MessageBus) *EventsRo
 
 // Mount the EventsRouter to a parent Router
 func (r *EventsRouter) Mount(parent *mux.Router) {
-	routes := ResourceRoute{Router: parent, PathPrefix: "/events"}
+	routes := ResourceRoute{
+		Router:     parent,
+		PathPrefix: "/namespaces/{namespace}/{resource:events}",
+	}
 	routes.GetAll(r.list)
 	routes.Path("{entity}", r.listByEntity).Methods(http.MethodGet)
 	routes.Path("{entity}/{check}", r.find).Methods(http.MethodGet)

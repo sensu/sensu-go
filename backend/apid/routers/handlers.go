@@ -24,7 +24,10 @@ func NewHandlersRouter(store store.HandlerStore) *HandlersRouter {
 
 // Mount the HandlersRouter to a parent Router
 func (r *HandlersRouter) Mount(parent *mux.Router) {
-	routes := ResourceRoute{Router: parent, PathPrefix: "/handlers"}
+	routes := ResourceRoute{
+		Router:     parent,
+		PathPrefix: "/namespaces/{namespace}/{resource:handlers}",
+	}
 	routes.Post(r.create)
 	routes.Del(r.destroy)
 	routes.GetAll(r.list)

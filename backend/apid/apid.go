@@ -95,8 +95,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig)
 	registerGraphQLService(router, a.store, url, tlsConfig)
 	registerAuthenticationResources(router, a.store)
-	registerRestrictedLegacyResources(router, a.store, a.queueGetter, a.bus, a.cluster)
-	registerRestrictedResources(router, a.store)
+	registerRestrictedResources(router, a.store, a.queueGetter, a.bus, a.cluster)
 
 	a.HTTPServer = &http.Server{
 		Addr:         addr,
@@ -216,39 +215,11 @@ func registerAuthenticationResources(router *mux.Router, store store.Store) {
 	)
 }
 
-func registerRestrictedLegacyResources(router *mux.Router, store store.Store, getter types.QueueGetter, bus messaging.MessageBus, cluster clientv3.Cluster) {
+func registerRestrictedResources(router *mux.Router, store store.Store, getter types.QueueGetter, bus messaging.MessageBus, cluster clientv3.Cluster) {
 	mountRouters(
 		NewSubrouter(
-			router.NewRoute(),
-			middlewares.SimpleLogger{},
-			middlewares.Namespace{},
-			middlewares.Authentication{},
-			middlewares.AllowList{Store: store},
-			middlewares.LegacyAuthorizationAttributes{},
-			middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: store}},
-			middlewares.LimitRequest{},
-			middlewares.Edition{Name: version.Edition},
-		),
-		routers.NewAssetRouter(store),
-		routers.NewChecksRouter(actions.NewCheckController(store, getter)),
-		routers.NewEntitiesRouter(store),
-		routers.NewEventFiltersRouter(store),
-		routers.NewEventsRouter(store, bus),
-		routers.NewHandlersRouter(store),
-		routers.NewHooksRouter(store),
-		routers.NewMutatorsRouter(store),
-		routers.NewNamespacesRouter(actions.NewNamespacesController(store)),
-		routers.NewSilencedRouter(store),
-		routers.NewUsersRouter(store),
-		routers.NewExtensionsRouter(store),
-		routers.NewClusterRouter(actions.NewClusterController(cluster)),
-	)
-}
-
-func registerRestrictedResources(router *mux.Router, store store.Store) {
-	mountRouters(
-		NewSubrouter(
-			router.NewRoute(),
+			router.NewRoute().
+				PathPrefix("/api/{group:core}/{version:v2}/"),
 			middlewares.SimpleLogger{},
 			middlewares.Namespace{},
 			middlewares.Authentication{},
@@ -258,10 +229,23 @@ func registerRestrictedResources(router *mux.Router, store store.Store) {
 			middlewares.LimitRequest{},
 			middlewares.Edition{Name: version.Edition},
 		),
+		routers.NewAssetRouter(store),
+		routers.NewChecksRouter(actions.NewCheckController(store, getter)),
 		routers.NewClusterRolesRouter(store),
 		routers.NewClusterRoleBindingsRouter(store),
+		routers.NewClusterRouter(actions.NewClusterController(cluster)),
+		routers.NewEntitiesRouter(store),
+		routers.NewEventFiltersRouter(store),
+		routers.NewEventsRouter(store, bus),
+		routers.NewExtensionsRouter(store),
+		routers.NewHandlersRouter(store),
+		routers.NewHooksRouter(store),
+		routers.NewMutatorsRouter(store),
+		routers.NewNamespacesRouter(actions.NewNamespacesController(store)),
 		routers.NewRolesRouter(store),
 		routers.NewRoleBindingsRouter(store),
+		routers.NewSilencedRouter(store),
+		routers.NewUsersRouter(store),
 	)
 }
 

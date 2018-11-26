@@ -24,7 +24,10 @@ func NewSilencedRouter(store store.Store) *SilencedRouter {
 
 // Mount the SilencedRouter to a parent Router
 func (r *SilencedRouter) Mount(parent *mux.Router) {
-	routes := ResourceRoute{Router: parent, PathPrefix: "/silenced"}
+	routes := ResourceRoute{
+		Router:     parent,
+		PathPrefix: "/namespaces/{namespace}/{resource:silenced}",
+	}
 	routes.GetAll(r.list)
 	routes.Get(r.find)
 	routes.Post(r.create)
