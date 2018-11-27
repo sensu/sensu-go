@@ -108,7 +108,10 @@ class CheckListItem extends React.Component {
             {() => (
               <ToolbarMenu>
                 <ToolbarMenu.Item id="queue" visible="never">
-                  <QueueMenuItem onClick={this.props.onClickExecute} />
+                  <QueueMenuItem
+                    disabled={check.name !== "keepalive"}
+                    onClick={this.props.onClickExecute}
+                  />
                 </ToolbarMenu.Item>
                 <ToolbarMenu.Item id="silence" visible="never">
                   <SilenceMenuItem
@@ -132,6 +135,7 @@ class CheckListItem extends React.Component {
                 ) : (
                   <ToolbarMenu.Item id="unpublish" visible="never">
                     <UnpublishMenuItem
+                      delete
                       description="Unpublish check"
                       onClick={() => this.props.onClickSetPublish(false)}
                     />

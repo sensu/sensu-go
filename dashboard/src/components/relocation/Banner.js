@@ -30,30 +30,28 @@ export const styles = theme => {
   const backgroundColor = emphasize(theme.palette.background.default, emphasis);
 
   return {
-    /* Styles applied to the root element. */
     root: {
       position: "relative",
-      overflow: "hidden",
       color: theme.palette.getContrastText(backgroundColor),
       backgroundColor,
       display: "flex",
       alignItems: "center",
-      [theme.breakpoints.up("md")]: {
-        width: 400,
-        borderRadius: theme.shape.borderRadius,
-      },
       [theme.breakpoints.down("sm")]: {
         flexGrow: 1,
       },
-    },
-    progress: {
-      position: "absolute",
-      top: 0,
-      left: 0,
-      right: 0,
+
+      "&::before": {
+        content: "''",
+        display: "block",
+        position: "absolute",
+        height: 200,
+        bottom: "100%",
+        left: 0,
+        right: 0,
+        backgroundColor,
+      },
     },
 
-    /* Styles applied to the message wrapper element. */
     message: {
       paddingTop: 14,
       paddingBottom: 14,
@@ -70,7 +68,7 @@ export const styles = theme => {
         fontWeight: 600,
       },
     },
-    /* Styles applied to the action wrapper element if `action` is provided. */
+
     action: {
       display: "flex",
       alignItems: "center",
@@ -88,15 +86,27 @@ export const styles = theme => {
 
     success: {
       backgroundColor: green[600],
+      "&::before": {
+        backgroundColor: green[600],
+      },
     },
     error: {
       backgroundColor: theme.palette.error.dark,
+      "&::before": {
+        backgroundColor: theme.palette.error.dark,
+      },
     },
     info: {
       backgroundColor: theme.palette.primary.dark,
+      "&::before": {
+        backgroundColor: theme.palette.primary.dark,
+      },
     },
     warning: {
       backgroundColor: amber[700],
+      "&::before": {
+        backgroundColor: amber[700],
+      },
     },
     icon: {
       fontSize: 20,
@@ -109,7 +119,7 @@ export const styles = theme => {
   };
 };
 
-class Toast extends React.PureComponent {
+class Banner extends React.PureComponent {
   static propTypes = {
     classes: PropTypes.object.isRequired,
     message: PropTypes.node,
@@ -117,20 +127,18 @@ class Toast extends React.PureComponent {
     onClose: PropTypes.func.isRequired,
     maxAge: PropTypes.number,
     showAgeIndicator: PropTypes.bool,
-    progress: PropTypes.node,
   };
 
   static defaultProps = {
     maxAge: 0,
     variant: undefined,
     message: undefined,
-    progress: undefined,
     showAgeIndicator: false,
   };
 
   state = { mouseOver: false };
 
-  id = `Toast-${uniqueId()}`;
+  id = `Banner-${uniqueId()}`;
 
   _handleMouseOver = () => {
     this.setState(state => {
@@ -160,7 +168,6 @@ class Toast extends React.PureComponent {
       variant,
       maxAge,
       showAgeIndicator,
-      progress: progressBar,
     } = this.props;
 
     const { mouseOver } = this.state;
@@ -189,13 +196,12 @@ class Toast extends React.PureComponent {
         }}
         role="alertdialog"
         square
-        elevation={6}
+        elevation={3}
         className={classNames(classes.root, classes[variant])}
         aria-describedby={messageId}
         onMouseOver={this._handleMouseOver}
         onMouseLeave={this._handleMouseLeave}
       >
-        <div className={classes.progress}>{progressBar}</div>
         <div id={messageId} className={classes.message}>
           {Icon && <Icon className={classes.variantIcon} />}
           {message}
@@ -214,7 +220,7 @@ class Toast extends React.PureComponent {
                       {closeButton}
                     </CircularProgress>
                   )
-                : null}
+                : undefined}
             </Timer>
           )}
           {(!showAgeIndicator || !maxAge) && closeButton}
@@ -224,4 +230,4 @@ class Toast extends React.PureComponent {
   }
 }
 
-export default withStyles(styles)(Toast);
+export default withStyles(styles)(Banner);
