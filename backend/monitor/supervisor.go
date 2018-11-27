@@ -2,7 +2,6 @@ package monitor
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
 	"os/signal"
@@ -94,9 +93,6 @@ func NewEtcdSupervisor(client *clientv3.Client, h Handler) *EtcdSupervisor {
 // extended. If the monitor's ttl has changed, a new lease is created and the
 // key is updated with that new lease.
 func (m *EtcdSupervisor) Monitor(ctx context.Context, name string, event *types.Event, ttl int64) error {
-	if ttl == 0 {
-		return errors.New("monitor ttl cannot be 0")
-	}
 	key := monitorKeyBuilder.Build(name)
 	// try to get the monitor from the store
 	mon, err := m.getMonitor(ctx, key)
@@ -106,12 +102,12 @@ func (m *EtcdSupervisor) Monitor(ctx context.Context, name string, event *types.
 	// if it exists and the ttl matches the original ttl of the lease, extend its
 	// lease with keep-alive.
 	if mon != nil && mon.ttl == ttl {
-		logger.Debugf("a lease for the key %s already exists, extending lease %v", key, mon.leaseID)
+		logger.Debugf("a lease for the key %s already exists, extending lease %x", key, mon.leaseID)
 		_, kaerr := m.client.KeepAliveOnce(ctx, mon.leaseID)
 		if kaerr == nil {
 			return kaerr
 		}
-		logger.WithError(kaerr).Errorf("unable to extend lease %v, creating new lease for the key %s", mon.leaseID, key)
+		logger.WithError(kaerr).Errorf("unable to extend lease %x, creating new lease for the key %s", mon.leaseID, key)
 	}
 
 	// If the ttls do not match or the monitor doesn't exist, create a new lease
@@ -178,14 +174,15 @@ func (m *EtcdSupervisor) getMonitor(ctx context.Context, key string) (*monitor, 
 // is witnessed, it calls the provided HandleFailure func. If a PUT event is
 // witnessed, the watcher is stopped.
 func watchMon(ctx context.Context, cli *clientv3.Client, mon *monitor, failureHandler func(), shutdownHandler func()) {
-	if mon.ttl == 0 {
-		panic("zero-duration ttl")
-	}
 	ctx, cancel := context.WithCancel(ctx)
 	responseChan := cli.Watch(ctx, mon.key)
 	timer := time.NewTimer(time.Duration(mon.ttl) * time.Second)
 	go func() {
-		defer timer.Stop()
+		defer func() {
+			if !timer.Stop() {
+				<-timer.C
+			}
+		}()
 		defer cancel()
 		for {
 			select {
@@ -195,14 +192,17 @@ func watchMon(ctx context.Context, cli *clientv3.Client, mon *monitor, failureHa
 						failureHandler()
 						return
 					}
+
 					// if there is a PUT on the key, the lease has been extended,
 					// and we want to kill this watcher to avoid duplicate watchers.
 					if ev.Type == mvccpb.PUT {
+						logger.Debugf("monitor for lease (%x) received put", mon.leaseID)
 						shutdownHandler()
 						return
 					}
 				}
 			case <-timer.C:
+				logger.Debugf("monitor for lease (%x) timed out", mon.leaseID)
 				failureHandler()
 				return
 			}
