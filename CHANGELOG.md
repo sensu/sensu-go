@@ -39,6 +39,7 @@ uses the same facility as check subdue for handling time windows.
 - Fixed a bug in the agent where the agent would deadlock after a significant
 period of disconnection from the backend.
 - Fixed a bug where logging events without checks would cause a nil panic.
+- Removed the ability to rerun keepalives on the events list page
 
 ## [2.0.0-beta.8-1] - 2018-11-15
 
