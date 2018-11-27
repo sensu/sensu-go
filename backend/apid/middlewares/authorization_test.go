@@ -284,14 +284,6 @@ func TestAuthorization(t *testing.T) {
 			expectedCode:        403,
 		},
 		{
-			description:         "admins can list namespaces",
-			method:              "GET",
-			url:                 "/api/core/v2/namespaces",
-			group:               "admins",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
-		},
-		{
 			description:         "admins can create RoleBindings within their namespace",
 			method:              "POST",
 			url:                 "/api/core/v2/namespaces/default/rolebindings",
@@ -343,14 +335,6 @@ func TestAuthorization(t *testing.T) {
 			group:               "editors",
 			attibutesMiddleware: AuthorizationAttributes{},
 			expectedCode:        403,
-		},
-		{
-			description:         "editors can list namespaces",
-			method:              "GET",
-			url:                 "/api/core/v2/namespaces",
-			group:               "editors",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
 		},
 		{
 			description:         "editors can access resource within their namespace",
@@ -405,14 +389,6 @@ func TestAuthorization(t *testing.T) {
 			group:               "viewers",
 			attibutesMiddleware: AuthorizationAttributes{},
 			expectedCode:        403,
-		},
-		{
-			description:         "viewers can list namespaces",
-			method:              "GET",
-			url:                 "/api/core/v2/namespaces",
-			group:               "viewers",
-			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        200,
 		},
 		{
 			description:         "viewers can access resource within their namespace",

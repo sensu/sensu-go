@@ -34,7 +34,6 @@ func TestAuthorizationAttributes(t *testing.T) {
 			expected: authorization.Attributes{
 				APIGroup:   "core",
 				APIVersion: "v1alpha1",
-				Namespace:  "default",
 				Resource:   "namespaces",
 				Verb:       "list",
 			},
@@ -46,7 +45,6 @@ func TestAuthorizationAttributes(t *testing.T) {
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v1alpha1",
-				Namespace:    "default",
 				Resource:     "namespaces",
 				ResourceName: "default",
 				Verb:         "get",
@@ -338,7 +336,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
-				Namespace:    "default",
 				Resource:     "namespaces",
 				ResourceName: "",
 				Verb:         "list",
@@ -351,7 +348,6 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
-				Namespace:    "default",
 				Resource:     "namespaces",
 				ResourceName: "foo",
 				Verb:         "get",

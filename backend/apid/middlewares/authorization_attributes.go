@@ -57,14 +57,6 @@ func (a AuthorizationAttributes) Then(next http.Handler) http.Handler {
 		attrs.Resource = vars["resource"]
 		attrs.ResourceName = vars["id"]
 
-		// Namespaces actually belong to the "default" namespace?
-		// Not forcing the namespace to "default" for namespaces leads to
-		// authorization failures.
-		// TODO: investigate
-		if attrs.Resource == "namespaces" {
-			attrs.Namespace = "default"
-		}
-
 		// TODO: we can probably get rid of this special case by reworking the
 		// cluster router.
 		if attrs.Resource == "cluster" {
