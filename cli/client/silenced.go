@@ -54,7 +54,7 @@ func (client *RestClient) ListSilenceds(namespace, sub, check string) ([]types.S
 		}
 		return []types.Silenced{*silenced}, nil
 	}
-	path := ""
+	path := silencedPath(namespace)
 	if sub != "" {
 		path = silencedPath(namespace, "subscriptions", sub)
 	} else if check != "" {
