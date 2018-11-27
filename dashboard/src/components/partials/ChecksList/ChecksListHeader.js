@@ -96,12 +96,11 @@ class ChecksListHeader extends React.PureComponent {
     return (
       <ToolbarMenu>
         <ToolbarMenu.Item id="queue" visible="always">
-          {selectedKeepalives.length === 0 && (
-            <QueueMenuItem
-              onClick={this.props.onClickExecute}
-              description="Queue an adhoc execution of the selected checks."
-            />
-          )}
+          <QueueMenuItem
+            disabled={selectedKeepalives.length !== 0}
+            onClick={this.props.onClickExecute}
+            description="Queue an adhoc execution of the selected checks."
+          />
         </ToolbarMenu.Item>
         <ToolbarMenu.Item
           id="silence"

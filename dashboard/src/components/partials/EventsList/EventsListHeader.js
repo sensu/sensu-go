@@ -126,14 +126,13 @@ class EventsListHeader extends React.Component {
         </ToolbarMenu.Item>
 
         <ToolbarMenu.Item id="re-run" visible="if-room">
-          {selectedKeepalives.length === 0 && (
-            <ExecuteMenuItem
-              title="Re-run Checks"
-              titleCondensed="Re-run"
-              description="Queue adhoc check executions for selected event(s)."
-              onClick={this.props.onClickRerun}
-            />
-          )}
+          <ExecuteMenuItem
+            disabled={selectedKeepalives.length !== 0}
+            title="Re-run Checks"
+            titleCondensed="Re-run"
+            description="Queue adhoc check executions for selected event(s)."
+            onClick={this.props.onClickRerun}
+          />
         </ToolbarMenu.Item>
 
         <ToolbarMenu.Item
