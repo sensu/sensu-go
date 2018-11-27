@@ -115,12 +115,14 @@ class EventListItem extends React.Component {
               <ResolveMenuItem onClick={this.props.onClickResolve} />
             </ToolbarMenu.Item>
             <ToolbarMenu.Item id="re-run" visible="never">
-              <QueueMenuItem
-                title="Re-run Check"
-                onClick={this.props.onClickRerun}
-              />
+              {event.check.name !== "keepalive" && (
+                <QueueMenuItem
+                  title="Re-run Check"
+                  onClick={this.props.onClickRerun}
+                />
+              )}
             </ToolbarMenu.Item>
-            <ToolbarMenu.Item id="re-run" visible="never">
+            <ToolbarMenu.Item id="silence" visible="never">
               <Select
                 disabled={event.isSilenced}
                 icon={<SilenceIcon />}
@@ -140,13 +142,13 @@ class EventListItem extends React.Component {
                 <Option value="both">Both</Option>
               </Select>
             </ToolbarMenu.Item>
-            <ToolbarMenu.Item id="re-run" visible="never">
+            <ToolbarMenu.Item id="unsilence" visible="never">
               <UnsilenceMenuItem
                 disabled={!event.isSilenced}
                 onClick={this.props.onClickClearSilences}
               />
             </ToolbarMenu.Item>
-            <ToolbarMenu.Item id="re-run" visible="never">
+            <ToolbarMenu.Item id="delete" visible="never">
               {menu => (
                 <ConfirmDelete
                   onSubmit={() => {

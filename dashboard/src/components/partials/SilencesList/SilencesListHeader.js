@@ -5,10 +5,10 @@ import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
 import ListHeader from "/components/partials/ListHeader";
 import ListSortSelector from "/components/partials/ListSortSelector";
 import ToolbarMenu from "/components/partials/ToolbarMenu";
-import ClearSilencesDialog from "/components/partials/ClearSilencedEntriesDialog";
 
 class SilencesListHeader extends React.PureComponent {
   static propTypes = {
+    onClickClearSilences: PropTypes.func.isRequired,
     onClickSelect: PropTypes.func.isRequired,
     onChangeQuery: PropTypes.func.isRequired,
     order: PropTypes.string.isRequired,
@@ -45,18 +45,7 @@ class SilencesListHeader extends React.PureComponent {
   renderBulkActions = () => (
     <ToolbarMenu>
       <ToolbarMenu.Item id="clearSilence" visible="always">
-        <UnsilenceMenuItem
-          onClick={() => {
-            this.setState({ openDialog: true });
-          }}
-        />
-        <ClearSilencesDialog
-          silences={this.props.selectedItems}
-          open={this.state.openDialog}
-          close={() => this.setState({ openDialog: false })}
-          confirmed
-          scrollable
-        />
+        <UnsilenceMenuItem onClick={this.props.onClickClearSilences} />
       </ToolbarMenu.Item>
     </ToolbarMenu>
   );
