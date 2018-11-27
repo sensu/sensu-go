@@ -11,7 +11,9 @@ var entitiesPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "entities")
 
 // DeleteEntity deletes given entitiy from the configured sensu instance
 func (client *RestClient) DeleteEntity(entity *types.Entity) (err error) {
-	path := entitiesPath(entity.Namespace, entity.Name)
+	fmt.Println(entity)
+	path := entitiesPath(client.config.Namespace(), entity.Name)
+	fmt.Println(path)
 	_, err = client.R().Delete(path)
 	return err
 }

@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -42,6 +43,7 @@ func (r *EntitiesRouter) destroy(req *http.Request) (interface{}, error) {
 		return nil, err
 	}
 	err = r.controller.Destroy(req.Context(), id)
+	fmt.Println(err)
 	return nil, err
 }
 
