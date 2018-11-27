@@ -118,6 +118,19 @@ class ListController extends React.PureComponent {
     this.setState(setSelectedKeys(selectedKeys));
   };
 
+  setHovered = key => ev => {
+    this.setState(state => {
+      if (ev.hovered === true) {
+        if (state.hoveredKey !== key) {
+          return { hoveredKey: key };
+        }
+      } else if (state.hoveredKey === key) {
+        return { hoveredKey: null };
+      }
+      return null;
+    });
+  };
+
   render() {
     const {
       items,
@@ -139,6 +152,9 @@ class ListController extends React.PureComponent {
               item,
               selected,
               setSelected: keySelected => this.setKeySelected(key, keySelected),
+              hovered: this.state.hoveredKey === key,
+              setHovered: this.setHovered(key),
+              selectedCount: selectedKeys.length > 0,
               toggleSelected: () => this.setKeySelected(key, !selected),
             });
           })

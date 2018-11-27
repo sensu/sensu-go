@@ -113,6 +113,7 @@
     "react-dev-utils": "^5.0.1",
     "react-dom": "^16.4.2",
     "react-event-listener": "^0.6.3",
+    "react-media": "^1.8.0",
     "react-redux": "^5.0.6",
     "react-resize-observer": "^1.1.0",
     "react-router-dom": "^4.2.2",

@@ -10,6 +10,7 @@ import NotFound from "/components/partials/NotFound";
 import Query from "/components/util/Query";
 import ToastConnector from "/components/relocation/ToastConnector";
 import { withQueryParams } from "/components/QueryParams";
+import WithWidth from "/components/WithWidth";
 
 // duration used when polling is enabled; set fairly high until we understand
 // the impact.
@@ -71,18 +72,24 @@ class ChecksContent extends React.Component {
         <AppLayout.MobileFullWidthContent>
           <ToastConnector>
             {({ addToast }) => (
-              <ChecksList
-                limit={limit}
-                offset={offset}
-                onChangeQuery={setQueryParams}
-                namespace={namespace}
-                loading={
-                  (loading && (!namespace || !poller.isRunning())) || aborted
-                }
-                refetch={refetch}
-                order={queryParams.order}
-                addToast={addToast}
-              />
+              <WithWidth>
+                {({ width }) => (
+                  <ChecksList
+                    editable={width !== "xs"}
+                    limit={limit}
+                    offset={offset}
+                    onChangeQuery={setQueryParams}
+                    namespace={namespace}
+                    loading={
+                      (loading && (!namespace || !poller.isRunning())) ||
+                      aborted
+                    }
+                    refetch={refetch}
+                    order={queryParams.order}
+                    addToast={addToast}
+                  />
+                )}
+              </WithWidth>
             )}
           </ToastConnector>
         </AppLayout.MobileFullWidthContent>

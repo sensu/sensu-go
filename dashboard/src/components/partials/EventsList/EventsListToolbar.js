@@ -17,8 +17,12 @@ class EventsListToolbar extends React.PureComponent {
     query: "",
   };
 
+  reset = ev => {
+    this.props.onClickReset(ev);
+  };
+
   render() {
-    const { onChangeQuery, onClickReset, query } = this.props;
+    const { onChangeQuery, query } = this.props;
 
     return (
       <ListToolbar
@@ -35,7 +39,7 @@ class EventsListToolbar extends React.PureComponent {
               id="reset-query"
               visible={collapsed ? "never" : "if-room"}
             >
-              <ResetMenuItem onClick={onClickReset} />
+              <ResetMenuItem onClick={this.reset} />
             </ToolbarMenu.Item>
           </ToolbarMenu>
         )}

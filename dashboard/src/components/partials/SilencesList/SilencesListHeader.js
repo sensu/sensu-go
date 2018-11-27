@@ -8,6 +8,7 @@ import ToolbarMenu from "/components/partials/ToolbarMenu";
 
 class SilencesListHeader extends React.PureComponent {
   static propTypes = {
+    editable: PropTypes.bool.isRequired,
     onClickClearSilences: PropTypes.func.isRequired,
     onClickSelect: PropTypes.func.isRequired,
     onChangeQuery: PropTypes.func.isRequired,
@@ -51,11 +52,12 @@ class SilencesListHeader extends React.PureComponent {
   );
 
   render() {
-    const { onClickSelect, selectedItems, rowCount } = this.props;
+    const { editable, onClickSelect, selectedItems, rowCount } = this.props;
 
     return (
       <ListHeader
         sticky
+        editable={editable}
         selectedCount={selectedItems.length}
         onClickSelect={onClickSelect}
         renderActions={this.renderActions}

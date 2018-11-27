@@ -20,22 +20,24 @@ import ListItem from "./SilencesListItem";
 
 class SilencesList extends React.Component {
   static propTypes = {
+    editable: PropTypes.bool,
+    loading: PropTypes.bool,
+    limit: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     namespace: PropTypes.shape({
       silences: PropTypes.shape({
         nodes: PropTypes.array.isRequired,
       }),
     }),
-    loading: PropTypes.bool,
-    onChangeQuery: PropTypes.func.isRequired,
-    limit: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
     offset: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    onChangeQuery: PropTypes.func.isRequired,
     order: PropTypes.string.isRequired,
   };
 
   static defaultProps = {
-    namespace: null,
+    editable: false,
     loading: false,
     limit: undefined,
+    namespace: null,
     offset: undefined,
   };
 
@@ -109,10 +111,22 @@ class SilencesList extends React.Component {
     );
   };
 
-  renderItem = ({ key, item, selected, setSelected }) => (
+  renderItem = ({
+    key,
+    item,
+    hovered,
+    setHovered,
+    selectedCount,
+    selected,
+    setSelected,
+  }) => (
     <ListItem
       key={key}
+      editable={this.props.editable}
+      editing={selectedCount > 0}
       silence={item}
+      hovered={hovered}
+      onHover={setHovered}
       selected={selected}
       onClickClearSilences={() => {
         this.openSilenceDialog([item]);
@@ -124,9 +138,10 @@ class SilencesList extends React.Component {
 
   render() {
     const {
-      namespace,
+      editable,
       loading,
       limit,
+      namespace,
       offset,
       order,
       onChangeQuery,
@@ -148,6 +163,7 @@ class SilencesList extends React.Component {
             <Paper>
               <Loader loading={loading}>
                 <ListHeader
+                  editable={editable}
                   rowCount={children.length || 0}
                   selectedItems={selectedItems}
                   onChangeQuery={onChangeQuery}

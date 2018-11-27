@@ -21,13 +21,6 @@ const styles = theme => {
     root: {
       verticalAlign: "top",
       transition: transitionOut,
-
-      // hover
-      // https://material.io/guidelines/components/data-tables.html#data-tables-interaction
-      "&:hover": {
-        backgroundColor: theme.palette.action.hover,
-        transition: transitionIn,
-      },
     },
     // selected
     // https://material.io/guidelines/components/data-tables.html#data-tables-interaction
