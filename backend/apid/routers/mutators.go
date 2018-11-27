@@ -24,7 +24,10 @@ func NewMutatorsRouter(store store.MutatorStore) *MutatorsRouter {
 
 // Mount the MutatorsRouter to a parent Router
 func (r *MutatorsRouter) Mount(parent *mux.Router) {
-	routes := ResourceRoute{Router: parent, PathPrefix: "/mutators"}
+	routes := ResourceRoute{
+		Router:     parent,
+		PathPrefix: "/namespaces/{namespace}/{resource:mutators}",
+	}
 	routes.GetAll(r.list)
 	routes.Get(r.find)
 	routes.Post(r.create)

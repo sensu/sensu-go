@@ -26,7 +26,7 @@ func NewRolesRouter(store store.RoleStore) *RolesRouter {
 func (r *RolesRouter) Mount(parent *mux.Router) {
 	routes := ResourceRoute{
 		Router:     parent,
-		PathPrefix: "/apis/{group:rbac}/{version:v2}/namespaces/{namespace}/{resources:roles}",
+		PathPrefix: "/namespaces/{namespace}/{resource:roles}",
 	}
 	routes.GetAll(r.list)
 	routes.Get(r.find)

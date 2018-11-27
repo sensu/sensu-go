@@ -24,7 +24,10 @@ func NewHooksRouter(store store.HookConfigStore) *HooksRouter {
 
 // Mount the HooksRouter to a parent Router
 func (r *HooksRouter) Mount(parent *mux.Router) {
-	routes := ResourceRoute{Router: parent, PathPrefix: "/hooks"}
+	routes := ResourceRoute{
+		Router:     parent,
+		PathPrefix: "/namespaces/{namespace}/{resource:hooks}",
+	}
 	routes.GetAll(r.list)
 	routes.Get(r.find)
 	routes.Post(r.create)
