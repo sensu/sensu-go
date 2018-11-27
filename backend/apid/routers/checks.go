@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"path"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -52,7 +53,7 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 	routes.Path("{id}/hooks/{type}/hook/{hook}", r.removeCheckHook).Methods(http.MethodDelete)
 
 	// handlefunc returns a custom status and response
-	parent.HandleFunc("/checks/{id}/execute", r.adhocRequest).Methods(http.MethodPost)
+	parent.HandleFunc(path.Join(routes.PathPrefix, "{id}/execute"), r.adhocRequest).Methods(http.MethodPost)
 }
 
 func (r *ChecksRouter) list(req *http.Request) (interface{}, error) {
