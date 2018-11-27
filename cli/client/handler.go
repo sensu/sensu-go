@@ -49,7 +49,7 @@ func (client *RestClient) CreateHandler(handler *types.Handler) (err error) {
 
 // DeleteHandler deletes given handler from the configured Sensu instance
 func (client *RestClient) DeleteHandler(handler *types.Handler) (err error) {
-	path := handlersPath(handler.Namespace, handler.Name)
+	path := handlersPath(client.config.Namespace(), handler.Name)
 	res, err := client.R().Delete(path)
 	if err != nil {
 		return err
