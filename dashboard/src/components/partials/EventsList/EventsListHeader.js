@@ -110,12 +110,12 @@ class EventsListHeader extends React.Component {
     const { selectedItems } = this.props;
     const selectedCount = selectedItems.length;
     const selectedSilenced = selectedItems.filter(ev => ev.check.isSilenced);
+    const selectedNonKeepalives = selectedItems.filter(
+      ev => ev.check.name !== "keepalive",
+    );
 
     const allSelectedSilenced = selectedSilenced.length === selectedCount;
     const allSelectedUnsilenced = selectedSilenced.length === 0;
-    const selectedKeepalives = selectedItems.filter(
-      ev => ev.check.name === "keepalive",
-    );
 
     return (
       <ToolbarMenu>
@@ -128,7 +128,7 @@ class EventsListHeader extends React.Component {
 
         <ToolbarMenu.Item id="re-run" visible="if-room">
           <ExecuteMenuItem
-            disabled={selectedKeepalives.length !== 0}
+            disabled={selectedNonKeepalives.length === 0}
             title="Re-run Checks"
             titleCondensed="Re-run"
             description="Queue adhoc check executions for selected event(s)."

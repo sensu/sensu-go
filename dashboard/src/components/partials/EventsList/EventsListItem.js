@@ -139,7 +139,7 @@ class EventListItem extends React.Component {
                 </ToolbarMenu.Item>
                 <ToolbarMenu.Item id="re-run" visible="never">
                   <QueueMenuItem
-                    disabled={event.check.name !== "keepalive"}
+                    disabled={event.check.name === "keepalive"}
                     title="Re-run Check"
                     onClick={this.props.onClickRerun}
                   />

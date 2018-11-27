@@ -86,19 +86,20 @@ class ChecksListHeader extends React.PureComponent {
 
     const selectedCount = selectedItems.length;
     const selectedSilenced = selectedItems.filter(en => en.silences.length > 0);
+    const selectedPublished = selectedItems.filter(ch => ch.publish === true);
+    const selectedNonKeepalives = selectedItems.filter(
+      ch => ch.name !== "keepalive",
+    );
+
     const allSelectedSilenced = selectedSilenced.length === selectedCount;
     const allSelectedUnsilenced = selectedSilenced.length === 0;
-    const selectedPublished = selectedItems.filter(ch => ch.publish === true);
     const published = selectedCount === selectedPublished.length;
-    const selectedKeepalives = selectedItems.filter(
-      ch => ch.name === "keepalive",
-    );
 
     return (
       <ToolbarMenu>
         <ToolbarMenu.Item id="queue" visible="always">
           <QueueMenuItem
-            disabled={selectedKeepalives.length !== 0}
+            disabled={selectedNonKeepalives.length === 0}
             onClick={this.props.onClickExecute}
             description="Queue an adhoc execution of the selected checks."
           />

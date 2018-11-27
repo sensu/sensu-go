@@ -109,7 +109,7 @@ class CheckListItem extends React.Component {
               <ToolbarMenu>
                 <ToolbarMenu.Item id="queue" visible="never">
                   <QueueMenuItem
-                    disabled={check.name !== "keepalive"}
+                    disabled={check.name === "keepalive"}
                     onClick={this.props.onClickExecute}
                   />
                 </ToolbarMenu.Item>
