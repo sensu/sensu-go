@@ -419,6 +419,29 @@ enum CheckListOrder {
   NAME_DESC
 }
 
+"""ClusterRole applies to all namespaces within a cluster."""
+type ClusterRole {
+  rules: [Rule!]
+
+  """Name of the ClusterRole"""
+  name: String!
+}
+
+"""
+ClusterRoleBinding grants the permissions defined in a ClusterRole referenced
+to a user or a set of users
+"""
+type ClusterRoleBinding {
+  """Subjects holds references to the objects the ClusterRole applies to"""
+  subjects: [Subject!]
+
+  """RoleRef references a ClusterRole in the current namespace"""
+  roleRef: RoleRef
+
+  """Name of the ClusterRoleBinding"""
+  name: String!
+}
+
 input CreateCheckInput {
   """A unique identifier for the client performing the mutation."""
   clientMutationId: String
@@ -820,6 +843,14 @@ The JSON type describes any arbitrary JSON compatible data.
 """
 scalar JSON
 
+type LocalNetwork {
+  """The current online state of the client."""
+  offline: Boolean!
+
+  """If the client is offline and trying to retry the connection."""
+  retry: Boolean!
+}
+
 """The root query for implementing GraphQL mutations."""
 type Mutation {
   """Creates a new check."""
@@ -1116,6 +1147,9 @@ type Query {
 
   """The last namespace that the client accessed."""
   lastNamespace: String!
+
+  """The networking state of the client"""
+  localNetwork: LocalNetwork
 }
 
 type RefreshTokensPayload {
@@ -1141,43 +1175,65 @@ type ResolveEventPayload {
   event: Event!
 }
 
-"""Role describes set of rules"""
-type Role implements Node {
-  id: ID!
-  name: String!
-  rules: [Rule!]!
-}
+"""Role applies only to a single namespace."""
+type Role {
+  rules: [Rule!]
 
-"""Rule maps permissions to a given type"""
-type Rule implements Namespaced {
-  """namespace in which this record resides"""
+  """Namespace of the Role"""
   namespace: String!
 
-  """resource the permissions apply to"""
-  type: RuleResource!
-  permissions: [RulePermission!]!
+  """Name of the Role"""
+  name: String!
 }
 
-enum RulePermission {
-  ALL
-  CREATE
-  READ
-  UPDATE
-  DELETE
+"""
+RoleBinding grants the permissions defined in a Role referenced to a user or
+a set of users
+"""
+type RoleBinding {
+  """Subjects holds references to the objects the Role applies to"""
+  subjects: [Subject!]
+
+  """RoleRef references a Role in the current namespace"""
+  roleRef: RoleRef
+
+  """Namespace of the RoleBinding"""
+  namespace: String!
+
+  """Name of the RoleBinding"""
+  name: String!
 }
 
-enum RuleResource {
-  ALL
-  ASSETS
-  CHECKS
-  ENTITIES
-  HANDLERS
-  HOOKS
-  MUTATORS
-  ORGANIZATIONS
-  ROLES
-  SILENCED
-  USERS
+"""RoleRef maps groups to Roles or ClusterRoles."""
+type RoleRef {
+  """Type of role being referenced."""
+  type: String!
+
+  """Name of the resource being referenced"""
+  name: String!
+}
+
+"""Rule holds information that describes an action that can be taken"""
+type Rule {
+  """
+  Verbs is a list of verbs that apply to all of the listed resources for this
+  rule. These include "get", "list", "watch", "create", "update", "delete".
+  TODO: add support for "patch" (this is expensive and should be delayed
+  until a further release). TODO: add support for "watch" (via websockets)
+  """
+  verbs: [String!]!
+
+  """
+  Resources is a list of resources that this rule applies to. "*" represents
+  all resources.
+  """
+  resources: [String!]!
+
+  """
+  ResourceNames is an optional list of resource names that the rule applies
+  to.
+  """
+  resourceNames: [String!]!
 }
 
 """Silenced is the representation of a silence entry."""
@@ -1266,6 +1322,14 @@ type StandardError implements Error {
 
   """Message describing the error."""
   message: String!
+}
+
+type Subject {
+  """Kind of object referenced (user or group)"""
+  kind: String!
+
+  """Name of the referenced object"""
+  name: String!
 }
 
 """
@@ -1374,7 +1438,7 @@ type UpdateCheckPayload {
 """User describes an operator in the system"""
 type User {
   username: String!
-  roles: [Role!]!
+  groups: [String!]!
   disabled: Boolean!
   hasPassword: Boolean!
 }

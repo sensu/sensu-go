@@ -29,6 +29,17 @@ extend type Query {
 
   "The last namespace that the client accessed."
   lastNamespace: String!
+
+  "The networking state of the client"
+  localNetwork: LocalNetwork
+}
+
+type LocalNetwork {
+  "The current online state of the client."
+  offline: Boolean!
+
+  "If the client is offline and trying to retry the connection."
+  retry: Boolean!
 }
 
 extend type Mutation {
