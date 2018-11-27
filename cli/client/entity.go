@@ -20,7 +20,7 @@ func (client *RestClient) DeleteEntity(entity *types.Entity) (err error) {
 func (client *RestClient) FetchEntity(name string) (*types.Entity, error) {
 	var entity *types.Entity
 
-	path := entitiesPath(client.config.Namespace(), entity.Name)
+	path := entitiesPath(client.config.Namespace(), name)
 	res, err := client.R().Get(path)
 	if err != nil {
 		return entity, err
