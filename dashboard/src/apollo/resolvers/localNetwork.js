@@ -8,8 +8,27 @@ export default {
   },
   resolvers: {
     Mutation: {
-      retryLocalNetwork: () => null,
-      setLocalNetworkOffline: () => null,
+      retryLocalNetwork: () => (_, { cache }) => {
+        const data = {
+          localNetwork: {
+            __typename: "LocalNetwork",
+            retry: true,
+          },
+        };
+        cache.writeData(data);
+        return null;
+      },
+      setLocalNetworkOffline: (_, { offline }, { cache }) => {
+        const data = {
+          localNetwork: {
+            __typename: "LocalNetwork",
+            offline,
+            retry: false,
+          },
+        };
+        cache.writeData(data);
+        return null;
+      },
     },
   },
 };
