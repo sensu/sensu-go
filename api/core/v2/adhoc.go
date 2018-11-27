@@ -17,7 +17,10 @@ func (a *AdhocRequest) Validate() error {
 // FixtureAdhocRequest returns a testing fixture for an AdhocRequest struct.
 func FixtureAdhocRequest(name string, subscriptions []string) *AdhocRequest {
 	return &AdhocRequest{
-		Name:          name,
+		ObjectMeta: ObjectMeta{
+			Name:      name,
+			Namespace: "default",
+		},
 		Subscriptions: subscriptions,
 	}
 }
