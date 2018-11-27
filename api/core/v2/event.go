@@ -20,10 +20,16 @@ const EventPassingState = "passing"
 // FixtureEvent returns a testing fixutre for an Event object.
 func FixtureEvent(entityName, checkID string) *Event {
 	return &Event{
-		Timestamp: time.Now().Unix(),
-		Entity:    FixtureEntity(entityName),
-		Check:     FixtureCheck(checkID),
+		ObjectMeta: NewObjectMeta("", "default"),
+		Timestamp:  time.Now().Unix(),
+		Entity:     FixtureEntity(entityName),
+		Check:      FixtureCheck(checkID),
 	}
+}
+
+// NewEvent creates a new Event.
+func NewEvent(meta ObjectMeta) *Event {
+	return &Event{ObjectMeta: meta}
 }
 
 // Validate returns an error if the event does not pass validation tests.
@@ -50,6 +56,10 @@ func (e *Event) Validate() error {
 		if err := e.Metrics.Validate(); err != nil {
 			return errors.New("metrics are invalid: " + err.Error())
 		}
+	}
+
+	if e.Name != "" {
+		return errors.New("events cannot be named")
 	}
 
 	return nil

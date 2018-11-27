@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
@@ -22,7 +23,11 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			clusterRoleBinding := &types.ClusterRoleBinding{Name: args[0]}
+			clusterRoleBinding := &types.ClusterRoleBinding{
+				ObjectMeta: v2.ObjectMeta{
+					Name: args[0],
+				},
+			}
 
 			clusterRole, err := cmd.Flags().GetString("cluster-role")
 			if err != nil {

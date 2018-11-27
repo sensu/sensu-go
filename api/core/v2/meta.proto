@@ -16,23 +16,33 @@ option (gogoproto.testgen_all) = true;
 message ObjectMeta {
     // Name must be unique within a namespace. Name is primarily intended for creation
 	// idempotence and configuration definition.
-    string name = 1 [(gogoproto.jsontag) = "name"];
+    string name = 1 [(gogoproto.jsontag) = "name,omitempty", (gogoproto.moretags) = "yaml: \"name,omitempty\""];
 
     // Namespace defines a logical grouping of objects within which each object name must
     // be unique. 
-    string namespace = 2 [(gogoproto.jsontag) = "namespace"];
+    string namespace = 2 [(gogoproto.jsontag) = "namespace,omitempty", (gogoproto.moretags) = "yaml: \"namespace,omitempty\""];
 
     // Map of string keys and values that can be used to organize and categorize
     // (scope and select) objects. May also be used in filters and token 
     // substitution.
     // TODO: Link to Sensu documentation.
     // More info: http://kubernetes.io/docs/user-guide/labels
-    map<string, string> labels = 3 [(gogoproto.jsontag) = "labels"];
+    map<string, string> labels = 3 [(gogoproto.jsontag) = "labels,omitempty", (gogoproto.moretags) = "yaml: \",labels,omitempty\""];
 
     // Annotations is an unstructured key value map stored with a resource that may be
     // set by external tools to store and retrieve arbitrary metadata. They are not
     // queryable and should be preserved when modifying objects.
     // TODO: Link to Sensu documentation.
     // More info: http://kubernetes.io/docs/user-guide/annotations
-    map<string, string> annotations = 4 [(gogoproto.jsontag) = "annotations"];
+    map<string, string> annotations = 4 [(gogoproto.jsontag) = "annotations,omitempty", (gogoproto.moretags) = "yaml: \"annotations,omitempty\""];
+
+}
+
+// TypeMeta is information that can be used to resolve a data type
+message TypeMeta {
+	// Type is the type name of the data type
+	string Type = 1 [(gogoproto.jsontag) = "type", (gogoproto.moretags) = "yaml: \"type,omitempty\""];
+
+	// APIVersion is the APIVersion of the data type
+    string APIVersion = 2 [(gogoproto.jsontag) = "api_version", (gogoproto.moretags) = "yaml: \"api_version,omitempty\""];
 }

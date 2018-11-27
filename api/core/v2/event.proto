@@ -4,7 +4,7 @@ import "github.com/gogo/protobuf/gogoproto/gogo.proto";
 import "entity.proto";
 import "check.proto";
 import "metrics.proto";
-import "hook.proto";
+import "meta.proto";
 
 package sensu.core.v2;
 
@@ -18,6 +18,9 @@ option (gogoproto.testgen_all) = true;
 
 // An Event is the encapsulating type sent across the Sensu websocket transport.
 message Event {
+  option (gogoproto.face) = true;
+  option (gogoproto.goproto_getters) = false;
+
   // Timestamp is the time in seconds since the Epoch.
   int64 timestamp = 1;
 
@@ -27,6 +30,9 @@ message Event {
   // Check describes the result of a check; if event is associated to check execution.
   Check check = 3 [(gogoproto.nullable) = true];
 
-  // Metrics ...
+  // Metrics are zero or more Sensu metrics
   Metrics metrics = 4 [(gogoproto.nullable) = true];
+
+  // Metadata contains name, namespace, labels and annotations
+  ObjectMeta metadata = 5 [(gogoproto.embed) = true, (gogoproto.jsontag) = "metadata", (gogoproto.nullable) = false];
 }

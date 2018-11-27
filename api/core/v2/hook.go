@@ -114,13 +114,10 @@ func FixtureHookConfig(name string) *HookConfig {
 	timeout := uint32(10)
 
 	return &HookConfig{
-		Command: "true",
-		Timeout: timeout,
-		Stdin:   false,
-		ObjectMeta: ObjectMeta{
-			Namespace: "default",
-			Name:      name,
-		},
+		Command:    "true",
+		Timeout:    timeout,
+		Stdin:      false,
+		ObjectMeta: NewObjectMeta(name, "default"),
 	}
 }
 

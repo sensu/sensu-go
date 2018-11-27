@@ -17,12 +17,12 @@ import (
 	time "github.com/echlebek/timeproxy"
 
 	"github.com/atlassian/gostatsd/pkg/statsd"
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/transport"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/retry"
 	"github.com/sirupsen/logrus"
 )
@@ -48,16 +48,16 @@ type Agent struct {
 	connected       bool
 	connectedMu     *sync.RWMutex
 	context         context.Context
-	entity          *types.Entity
+	entity          *v2.Entity
 	executor        command.Executor
 	handler         *handler.MessageHandler
 	header          http.Header
-	inProgress      map[string]*types.CheckConfig
+	inProgress      map[string]*v2.CheckConfig
 	inProgressMu    *sync.Mutex
 	statsdServer    *statsd.Server
 	sendq           chan *transport.Message
 	stopping        chan struct{}
-	systemInfo      *types.System
+	systemInfo      *v2.System
 	systemInfoMu    *sync.RWMutex
 	wg              *sync.WaitGroup
 }
@@ -75,17 +75,17 @@ func NewAgent(config *Config) *Agent {
 		config:          config,
 		executor:        command.NewExecutor(),
 		handler:         handler.NewMessageHandler(),
-		inProgress:      make(map[string]*types.CheckConfig),
+		inProgress:      make(map[string]*v2.CheckConfig),
 		inProgressMu:    &sync.Mutex{},
 		stopping:        make(chan struct{}),
 		sendq:           make(chan *transport.Message, 10),
-		systemInfo:      &types.System{},
+		systemInfo:      &v2.System{},
 		systemInfoMu:    &sync.RWMutex{},
 		wg:              &sync.WaitGroup{},
 	}
 
 	agent.statsdServer = NewStatsdServer(agent)
-	agent.handler.AddHandler(types.CheckRequestType, agent.handleCheck)
+	agent.handler.AddHandler(v2.CheckRequestType, agent.handleCheck)
 
 	// We don't check for errors here and let the agent get created regardless
 	// of system info status.
@@ -170,7 +170,7 @@ func (a *Agent) Run() error {
 	a.header.Set("Authorization", "Basic "+userCredentials)
 
 	// Fail the agent after startup if the id is invalid
-	if err := types.ValidateName(a.config.AgentName); err != nil {
+	if err := v2.ValidateName(a.config.AgentName); err != nil {
 		return fmt.Errorf("invalid agent name: %v", err)
 	}
 
@@ -270,17 +270,16 @@ func (a *Agent) newKeepalive() *transport.Message {
 	msg := &transport.Message{
 		Type: transport.MessageTypeKeepalive,
 	}
-	keepalive := &types.Event{}
-
 	entity := a.getAgentEntity()
 
-	keepalive.Check = &types.Check{
-		ObjectMeta: types.ObjectMeta{
-			Name:      "keepalive",
-			Namespace: entity.Namespace,
-		},
-		Interval: a.config.KeepaliveInterval,
-		Timeout:  a.config.KeepaliveTimeout,
+	keepalive := &v2.Event{
+		ObjectMeta: v2.NewObjectMeta("", entity.Namespace),
+	}
+
+	keepalive.Check = &v2.Check{
+		ObjectMeta: v2.NewObjectMeta("keepalive", entity.Namespace),
+		Interval:   a.config.KeepaliveInterval,
+		Timeout:    a.config.KeepaliveTimeout,
 	}
 	keepalive.Entity = a.getAgentEntity()
 	keepalive.Timestamp = time.Now().Unix()
@@ -366,7 +365,7 @@ func (a *Agent) StartStatsd() {
 	}()
 }
 
-func connectWithBackoff(url string, tlsOpts *types.TLSOptions, header http.Header) transport.Transport {
+func connectWithBackoff(url string, tlsOpts *v2.TLSOptions, header http.Header) transport.Transport {
 	var conn transport.Transport
 
 	backoff := retry.ExponentialBackoff{

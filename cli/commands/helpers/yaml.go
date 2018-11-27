@@ -11,15 +11,21 @@ import (
 
 // wrapper is used to get the precise yaml encoding behaviour we want
 type wrapper struct {
-	Type string                 `yaml:"type"`
-	Spec map[string]interface{} `yaml:"spec"`
+	Type       string                 `json:"type" yaml:"type"`
+	APIVersion string                 `json:"api_version" yaml:"api_version"`
+	ObjectMeta map[string]interface{} `json:"metadata" yaml:"metadata"`
+	Spec       map[string]interface{} `json:"spec" yaml:"spec"`
 }
 
 func wrapResource(r types.Resource) wrapper {
 	wrapped := types.WrapResource(r)
+	value := toMap(wrapped.Value)
+	delete(value, "metadata")
 	w := wrapper{
-		Type: wrapped.Type,
-		Spec: toMap(wrapped.Value),
+		Type:       wrapped.Type,
+		APIVersion: wrapped.APIVersion,
+		ObjectMeta: toMap(wrapped.ObjectMeta),
+		Spec:       value,
 	}
 	return w
 }

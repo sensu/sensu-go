@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/agent/transformers"
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/transport"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/sensu/sensu-go/util/environment"
 	"github.com/sirupsen/logrus"
@@ -19,7 +19,7 @@ import (
 
 // TODO(greg): At some point, we're going to need max parallelism.
 func (a *Agent) handleCheck(payload []byte) error {
-	request := &types.CheckRequest{}
+	request := &v2.CheckRequest{}
 	if err := json.Unmarshal(payload, request); err != nil {
 		return err
 	} else if request == nil {
@@ -49,7 +49,7 @@ func (a *Agent) handleCheck(payload []byte) error {
 	return nil
 }
 
-func (a *Agent) executeCheck(request *types.CheckRequest) {
+func (a *Agent) executeCheck(request *v2.CheckRequest) {
 	a.inProgressMu.Lock()
 	a.inProgress[request.Config.Name] = request.Config
 	a.inProgressMu.Unlock()
@@ -64,10 +64,13 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 	checkHooks := request.Hooks
 
 	// Instantiate Event
-	check := types.NewCheck(checkConfig)
+	check := v2.NewCheck(checkConfig)
 	check.Executed = time.Now().Unix()
 	check.Issued = request.Issued
-	event := &types.Event{
+	event := &v2.Event{
+		ObjectMeta: v2.ObjectMeta{
+			Namespace: check.Namespace,
+		},
 		Check: check,
 	}
 
@@ -126,7 +129,7 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 
 	// Instantiate metrics in the event if the check is attempting to extract metrics
 	if check.OutputMetricFormat != "" || len(check.OutputMetricHandlers) != 0 {
-		event.Metrics = &types.Metrics{}
+		event.Metrics = &v2.Metrics{}
 	}
 
 	if check.OutputMetricFormat != "" {
@@ -149,12 +152,13 @@ func (a *Agent) executeCheck(request *types.CheckRequest) {
 // prepareCheck prepares a check before its execution by validating the
 // configuration and performing token substitution. A boolean value is returned,
 // indicathing whether the check should be executed or not
-func (a *Agent) prepareCheck(cfg *types.CheckConfig) bool {
+func (a *Agent) prepareCheck(cfg *v2.CheckConfig) bool {
 	// Instantiate an event in case of failure
-	check := types.NewCheck(cfg)
+	check := v2.NewCheck(cfg)
 	check.Executed = time.Now().Unix()
-	event := &types.Event{
-		Check: check,
+	event := &v2.Event{
+		ObjectMeta: v2.NewObjectMeta("", check.Namespace),
+		Check:      check,
 	}
 
 	// Validate that the given check is valid.
@@ -186,7 +190,7 @@ func (a *Agent) prepareCheck(cfg *types.CheckConfig) bool {
 	return true
 }
 
-func (a *Agent) sendFailure(event *types.Event, err error) {
+func (a *Agent) sendFailure(event *v2.Event, err error) {
 	event.Check.Output = err.Error()
 	event.Check.Status = 3
 	event.Entity = a.getAgentEntity()
@@ -199,17 +203,17 @@ func (a *Agent) sendFailure(event *types.Event, err error) {
 	}
 }
 
-func extractMetrics(event *types.Event) []*types.MetricPoint {
+func extractMetrics(event *v2.Event) []*v2.MetricPoint {
 	var transformer Transformer
 	var err error
 	switch event.Check.OutputMetricFormat {
-	case types.GraphiteOutputMetricFormat:
+	case v2.GraphiteOutputMetricFormat:
 		transformer, err = transformers.ParseGraphite(event.Check.Output)
-	case types.InfluxDBOutputMetricFormat:
+	case v2.InfluxDBOutputMetricFormat:
 		transformer, err = transformers.ParseInflux(event.Check.Output)
-	case types.NagiosOutputMetricFormat:
+	case v2.NagiosOutputMetricFormat:
 		transformer, err = transformers.ParseNagios(event)
-	case types.OpenTSDBOutputMetricFormat:
+	case v2.OpenTSDBOutputMetricFormat:
 		transformer, err = transformers.ParseOpenTSDB(event.Check.Output)
 	}
 
