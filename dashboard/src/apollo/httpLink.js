@@ -8,8 +8,6 @@ const mutation = gql`
   }
 `;
 
-// TODO: Likely have some logic for when we would like to attempt retry?
-
 const httpLink = ({ getClient }) =>
   new HttpLink({
     uri: "/graphql",

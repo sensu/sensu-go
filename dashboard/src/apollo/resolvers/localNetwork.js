@@ -1,3 +1,8 @@
+// @flow
+import type { ApolloCache } from "react-apollo";
+
+type Context = { cache: ApolloCache<mixed> };
+
 export default {
   defaults: {
     localNetwork: {
@@ -8,17 +13,21 @@ export default {
   },
   resolvers: {
     Mutation: {
-      retryLocalNetwork: () => (_, { cache }) => {
+      retryLocalNetwork: () => (_: mixed, args: mixed, { cache }: Context) => {
         const data = {
           localNetwork: {
             __typename: "LocalNetwork",
             retry: true,
           },
         };
-        cache.writeData(data);
+        cache.writeData({ data });
         return null;
       },
-      setLocalNetworkOffline: (_, { offline }, { cache }) => {
+      setLocalNetworkOffline: (
+        _: mixed,
+        { offline }: { offline: Boolean },
+        { cache }: Context,
+      ) => {
         const data = {
           localNetwork: {
             __typename: "LocalNetwork",
@@ -26,7 +35,7 @@ export default {
             retry: false,
           },
         };
-        cache.writeData(data);
+        cache.writeData({ data });
         return null;
       },
     },
