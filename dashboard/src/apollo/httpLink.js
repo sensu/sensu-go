@@ -26,7 +26,6 @@ const httpLink = ({ getClient }) =>
             mutation,
             variables: { offline: error instanceof FailedError },
           });
-
           throw error;
         },
       ),

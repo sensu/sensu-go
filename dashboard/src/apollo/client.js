@@ -75,9 +75,20 @@ const createClient = () => {
   localStorageSync(
     client,
     gql`
-      query SynclocalNetworkQuery {
+      query SyncLocalNetworkQuery {
         localNetwork @client {
           offline
+          retry
+        }
+      }
+    `,
+  );
+
+  localStorageSync(
+    client,
+    gql`
+      query SyncRetryQuery {
+        localNetwork @client {
           retry
         }
       }
