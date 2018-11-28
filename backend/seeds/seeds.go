@@ -115,7 +115,7 @@ func setupClusterRoleBindings(store store.Store) error {
 	}
 
 	// The system:user ClusterRoleBinding grants permission found in the
-	// cluster-admin ClusterRole to any user belonging to the cluster-admins group
+	// system:user ClusterRole to any user belonging to the system:users group
 	systemUser := &types.ClusterRoleBinding{
 		Name: "system:user",
 		RoleRef: types.RoleRef{
@@ -243,6 +243,12 @@ func setupClusterRoles(store store.Store) error {
 			types.Rule{
 				Verbs:     []string{"get", "update"},
 				Resources: []string{types.LocalSelfUserResource},
+			},
+			types.Rule{
+				Verbs: []string{"get", "list"},
+				Resources: []string{
+					"namespaces",
+				},
 			},
 		},
 	}
