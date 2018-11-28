@@ -245,8 +245,10 @@ func setupClusterRoles(store store.Store) error {
 				Resources: []string{types.LocalSelfUserResource},
 			},
 			types.Rule{
-				Verbs:     []string{"list"},
-				Resources: []string{"namespaces"},
+				Verbs: []string{"get", "list"},
+				Resources: []string{
+					"namespaces",
+				},
 			},
 		},
 	}
