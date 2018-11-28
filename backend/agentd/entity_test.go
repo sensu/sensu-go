@@ -42,9 +42,7 @@ func TestGetProxyEntity(t *testing.T) {
 		{
 			name: "The event has a proxy entity with a corresponding entity",
 			event: &types.Event{
-				ObjectMeta: v2.ObjectMeta{
-					Namespace: "default",
-				},
+				ObjectMeta: v2.NewObjectMeta("", "default"),
 				Check: &types.Check{
 					ProxyEntityName: "bar",
 				},
@@ -56,9 +54,7 @@ func TestGetProxyEntity(t *testing.T) {
 		{
 			name: "The event has a proxy entity with no corresponding entity",
 			event: &types.Event{
-				ObjectMeta: v2.ObjectMeta{
-					Namespace: "default",
-				},
+				ObjectMeta: v2.NewObjectMeta("", "default"),
 				Check: &types.Check{
 					ProxyEntityName: "baz",
 				},
@@ -70,9 +66,7 @@ func TestGetProxyEntity(t *testing.T) {
 		{
 			name: "The proxy entity can't be queried",
 			event: &types.Event{
-				ObjectMeta: v2.ObjectMeta{
-					Namespace: "default",
-				},
+				ObjectMeta: v2.NewObjectMeta("", "default"),
 				Check: &types.Check{
 					ProxyEntityName: "quux",
 				},
@@ -83,9 +77,7 @@ func TestGetProxyEntity(t *testing.T) {
 		{
 			name: "The proxy entity can't be created",
 			event: &types.Event{
-				ObjectMeta: v2.ObjectMeta{
-					Namespace: "default",
-				},
+				ObjectMeta: v2.NewObjectMeta("", "default"),
 				Check: &types.Check{
 					ProxyEntityName: "qux",
 				},
