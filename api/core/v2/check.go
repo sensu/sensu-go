@@ -73,6 +73,12 @@ func NewCheck(c *CheckConfig) *Check {
 		OutputMetricHandlers: c.OutputMetricHandlers,
 		EnvVars:              c.EnvVars,
 	}
+	if check.Labels == nil {
+		check.Labels = make(map[string]string)
+	}
+	if check.Annotations == nil {
+		check.Annotations = make(map[string]string)
+	}
 	return check
 }
 
@@ -153,6 +159,11 @@ func (c *Check) MarshalJSON() ([]byte, error) {
 	*clone = Clone(*c)
 
 	return jsoniter.Marshal(clone)
+}
+
+// NewCheckConfig creates a new CheckConfig.
+func NewCheckConfig(meta ObjectMeta) *CheckConfig {
+	return &CheckConfig{ObjectMeta: meta}
 }
 
 // MarshalJSON implements the json.Marshaler interface.
@@ -315,10 +326,7 @@ func FixtureCheckConfig(id string) *CheckConfig {
 	timeout := uint32(0)
 
 	check := &CheckConfig{
-		ObjectMeta: ObjectMeta{
-			Name:      id,
-			Namespace: "default",
-		},
+		ObjectMeta:           NewObjectMeta(id, "default"),
 		Interval:             interval,
 		Subscriptions:        []string{"linux"},
 		Command:              "command",

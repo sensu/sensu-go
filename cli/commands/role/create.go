@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -22,15 +22,14 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			role := &types.Role{Name: args[0]}
-			if namespace := helpers.GetChangedStringValueFlag("namespace", cmd.Flags()); namespace != "" {
-				role.Namespace = namespace
-			} else {
-				role.Namespace = cli.Config.Namespace()
+			var namespace string
+			if namespace = helpers.GetChangedStringValueFlag("namespace", cmd.Flags()); namespace == "" {
+				namespace = cli.Config.Namespace()
 			}
+			role := v2.NewRole(v2.NewObjectMeta(args[0], namespace))
 
 			// Retrieve the rule from the flags
-			rule := types.Rule{}
+			rule := v2.Rule{}
 
 			verbs, err := cmd.Flags().GetStringSlice("verb")
 			if err != nil {
@@ -57,7 +56,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			rule.ResourceNames = resourceNames
 
 			// Assign the rule to our role and validate it
-			role.Rules = []types.Rule{rule}
+			role.Rules = []v2.Rule{rule}
 			if err := role.Validate(); err != nil {
 				return err
 			}

@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -22,12 +22,11 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			roleBinding := &types.RoleBinding{Name: args[0]}
-			if namespace := helpers.GetChangedStringValueFlag("namespace", cmd.Flags()); namespace != "" {
-				roleBinding.Namespace = namespace
-			} else {
-				roleBinding.Namespace = cli.Config.Namespace()
+			var namespace string
+			if namespace = helpers.GetChangedStringValueFlag("namespace", cmd.Flags()); namespace == "" {
+				namespace = cli.Config.Namespace()
 			}
+			roleBinding := v2.NewRoleBinding(v2.NewObjectMeta(args[0], namespace))
 
 			// Determine if a Role or ClusterRole was provided and assign it to our
 			// RoleBinding
@@ -41,12 +40,12 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			if clusterRole != "" {
-				roleBinding.RoleRef = types.RoleRef{
+				roleBinding.RoleRef = v2.RoleRef{
 					Type: "ClusterRole",
 					Name: clusterRole,
 				}
 			} else if role != "" {
-				roleBinding.RoleRef = types.RoleRef{
+				roleBinding.RoleRef = v2.RoleRef{
 					Type: "Role",
 					Name: role,
 				}
@@ -69,7 +68,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			// Create our subjects list
 			for _, group := range groups {
 				roleBinding.Subjects = append(roleBinding.Subjects,
-					types.Subject{
+					v2.Subject{
 						Type: "Group",
 						Name: group,
 					},
@@ -77,7 +76,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 			for _, user := range users {
 				roleBinding.Subjects = append(roleBinding.Subjects,
-					types.Subject{
+					v2.Subject{
 						Type: "User",
 						Name: user,
 					},

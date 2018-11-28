@@ -28,6 +28,11 @@ const (
 	HandlerGRPCType = "grpc"
 )
 
+// NewHandler creates a new Handler.
+func NewHandler(meta ObjectMeta) *Handler {
+	return &Handler{ObjectMeta: meta}
+}
+
 // Validate returns an error if the handler does not pass validation tests.
 func (h *Handler) Validate() error {
 	if err := ValidateName(h.Name); err != nil {
@@ -77,12 +82,9 @@ func (s *HandlerSocket) Validate() error {
 // FixtureHandler returns a Handler fixture for testing.
 func FixtureHandler(name string) *Handler {
 	return &Handler{
-		Type:    HandlerPipeType,
-		Command: "command",
-		ObjectMeta: ObjectMeta{
-			Namespace: "default",
-			Name:      name,
-		},
+		Type:       HandlerPipeType,
+		Command:    "command",
+		ObjectMeta: NewObjectMeta(name, "default"),
 	}
 }
 

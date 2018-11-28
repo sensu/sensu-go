@@ -35,6 +35,7 @@ type (
 	NetworkInterface    = v2.NetworkInterface
 	ObjectMeta          = v2.ObjectMeta
 	ProxyRequests       = v2.ProxyRequests
+	Resource            = v2.Resource
 	Role                = v2.Role
 	RoleBinding         = v2.RoleBinding
 	RoleRef             = v2.RoleRef
@@ -47,6 +48,7 @@ type (
 	TimeWindowTimeRange = v2.TimeWindowTimeRange
 	TimeWindowWhen      = v2.TimeWindowWhen
 	Tokens              = v2.Tokens
+	TypeMeta            = v2.TypeMeta
 	User                = v2.User
 )
 

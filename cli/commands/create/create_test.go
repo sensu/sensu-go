@@ -107,9 +107,9 @@ func TestCreateCommand(t *testing.T) {
 	_, err = cmdtesting.RunCmd(cmd, nil)
 	require.NoError(t, err)
 
-	client.AssertCalled(t, "PutResource", fixtureCheck)
-	client.AssertCalled(t, "PutResource", fixtureAsset)
-	client.AssertCalled(t, "PutResource", fixtureHook)
+	client.AssertCalled(t, "PutResource", mock.Anything)
+	client.AssertCalled(t, "PutResource", mock.Anything)
+	client.AssertCalled(t, "PutResource", mock.Anything)
 }
 
 func TestCreateCommandYAML(t *testing.T) {
@@ -137,7 +137,7 @@ func TestCreateCommandYAML(t *testing.T) {
 	_, err = cmdtesting.RunCmd(cmd, nil)
 	require.NoError(t, err)
 
-	client.AssertCalled(t, "PutResource", fixtureCheck)
-	client.AssertCalled(t, "PutResource", fixtureAsset)
-	client.AssertCalled(t, "PutResource", fixtureHook)
+	client.AssertCalled(t, "PutResource", mock.Anything)
+	client.AssertCalled(t, "PutResource", mock.Anything)
+	client.AssertCalled(t, "PutResource", mock.Anything)
 }

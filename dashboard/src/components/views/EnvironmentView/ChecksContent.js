@@ -48,10 +48,12 @@ class ChecksContent extends React.Component {
     const {
       aborted,
       data: { namespace } = {},
-      loading,
-      poller,
+      networkStatus,
       refetch,
     } = renderProps;
+
+    // see: https://github.com/apollographql/apollo-client/blob/master/packages/apollo-client/src/core/networkStatus.ts
+    const loading = networkStatus < 6;
 
     if (!namespace && !loading && !aborted) {
       return <NotFound />;
@@ -80,10 +82,7 @@ class ChecksContent extends React.Component {
                     offset={offset}
                     onChangeQuery={setQueryParams}
                     namespace={namespace}
-                    loading={
-                      (loading && (!namespace || !poller.isRunning())) ||
-                      aborted
-                    }
+                    loading={(loading && !namespace) || aborted}
                     refetch={refetch}
                     order={queryParams.order}
                     addToast={addToast}
