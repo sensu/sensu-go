@@ -28,6 +28,11 @@ var (
 	}
 )
 
+// NewEventFilter creates a new EventFilter.
+func NewEventFilter(meta ObjectMeta) *EventFilter {
+	return &EventFilter{ObjectMeta: meta}
+}
+
 // Validate returns an error if the filter does not pass validation tests.
 func (f *EventFilter) Validate() error {
 	if err := ValidateName(f.Name); err != nil {
@@ -78,10 +83,7 @@ func FixtureEventFilter(name string) *EventFilter {
 	return &EventFilter{
 		Action:      EventFilterActionAllow,
 		Expressions: []string{"event.check.team == 'ops'"},
-		ObjectMeta: ObjectMeta{
-			Namespace: "default",
-			Name:      name,
-		},
+		ObjectMeta:  NewObjectMeta(name, "default"),
 	}
 }
 

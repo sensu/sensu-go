@@ -45,6 +45,11 @@ func (e *Entity) Validate() error {
 	return nil
 }
 
+// NewEntity creates a new Entity.
+func NewEntity(meta ObjectMeta) *Entity {
+	return &Entity{ObjectMeta: meta}
+}
+
 func redactMap(m map[string]string, redact []string) map[string]string {
 	if len(redact) == 0 {
 		redact = DefaultRedactFields

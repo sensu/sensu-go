@@ -30,3 +30,8 @@ func FixtureNamespace(name string) *Namespace {
 func (n *Namespace) URIPath() string {
 	return fmt.Sprintf("/api/core/v2/namespaces/%s", url.PathEscape(n.Name))
 }
+
+// GetObjectMeta only exists here to fulfil the requirements of Resource
+func (n *Namespace) GetObjectMeta() ObjectMeta {
+	return ObjectMeta{}
+}

@@ -54,6 +54,12 @@ func (s *Store) GetCheckConfigs(ctx context.Context) ([]*types.CheckConfig, erro
 		if err != nil {
 			return nil, err
 		}
+		if check.Labels == nil {
+			check.Labels = make(map[string]string)
+		}
+		if check.Annotations == nil {
+			check.Annotations = make(map[string]string)
+		}
 		checksArray[i] = check
 	}
 
@@ -78,6 +84,12 @@ func (s *Store) GetCheckConfigByName(ctx context.Context, name string) (*types.C
 	check := &types.CheckConfig{}
 	if err := json.Unmarshal(checkBytes, check); err != nil {
 		return nil, err
+	}
+	if check.Labels == nil {
+		check.Labels = make(map[string]string)
+	}
+	if check.Annotations == nil {
+		check.Annotations = make(map[string]string)
 	}
 
 	return check, nil

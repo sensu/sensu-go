@@ -3,11 +3,14 @@ package agent
 import (
 	"time"
 
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
 func (a *Agent) getAgentEntity() *types.Entity {
 	if a.entity == nil {
+		meta := v2.NewObjectMeta(a.config.AgentName, a.config.Namespace)
+		meta.Labels = a.config.Labels
 		e := &types.Entity{
 			EntityClass:   types.EntityAgentClass,
 			Deregister:    a.config.Deregister,
@@ -15,11 +18,7 @@ func (a *Agent) getAgentEntity() *types.Entity {
 			Redact:        a.config.Redact,
 			Subscriptions: a.config.Subscriptions,
 			User:          a.config.User,
-			ObjectMeta: types.ObjectMeta{
-				Name:      a.config.AgentName,
-				Namespace: a.config.Namespace,
-				Labels:    a.config.Labels,
-			},
+			ObjectMeta:    meta,
 		}
 
 		if a.config.DeregistrationHandler != "" {

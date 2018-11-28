@@ -7,4 +7,7 @@ type Resource interface {
 
 	// Validate checks if the fields in the resource are valid.
 	Validate() error
+
+	// GetObjectMeta returns the object metadata for the resource.
+	GetObjectMeta() ObjectMeta
 }

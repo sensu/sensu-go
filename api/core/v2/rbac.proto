@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "meta.proto";
 
 package sensu.core.v2;
 
@@ -26,26 +27,29 @@ message Rule {
 
   // ResourceNames is an optional list of resource names that the rule applies
   // to.
-  repeated string resource_names = 3 [(gogoproto.jsontag) = "resourceNames"];
+  repeated string resource_names = 3 [(gogoproto.jsontag) = "resource_names"];
 }
 
 // ClusterRole applies to all namespaces within a cluster.
 message ClusterRole {
+  option (gogoproto.face) = true;
+  option (gogoproto.goproto_getters) = false;
+
   repeated Rule rules = 1 [(gogoproto.jsontag) = "rules", (gogoproto.nullable) = false];
 
-  // Name of the ClusterRole
-  string name = 2 [(gogoproto.jsontag) = "name"];
+  // Metadata contains name, namespace, labels and annotations
+  ObjectMeta metadata = 3 [(gogoproto.embed) = true, (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.nullable) = false];
 }
 
 // Role applies only to a single namespace.
 message Role {
+  option (gogoproto.face) = true;
+  option (gogoproto.goproto_getters) = false;
+
   repeated Rule rules = 1 [(gogoproto.jsontag) = "rules", (gogoproto.nullable) = false];
 
-   // Namespace of the Role
-  string namespace = 2 [(gogoproto.jsontag) = "namespace"];
-
-  // Name of the Role
-  string name = 3 [(gogoproto.jsontag) = "name"];
+  // Metadata contains name, namespace, labels and annotations
+  ObjectMeta metadata = 4 [(gogoproto.embed) = true, (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.nullable) = false];
 }
 
 // RoleRef maps groups to Roles or ClusterRoles.
@@ -68,28 +72,31 @@ message Subject {
 // ClusterRoleBinding grants the permissions defined in a ClusterRole referenced
 // to a user or a set of users
 message ClusterRoleBinding {
+  option (gogoproto.face) = true;
+  option (gogoproto.goproto_getters) = false;
+
   // Subjects holds references to the objects the ClusterRole applies to
   repeated Subject subjects = 1 [(gogoproto.jsontag) = "subjects", (gogoproto.nullable) = false];
 
   // RoleRef references a ClusterRole in the current namespace
-  RoleRef role_ref = 2 [(gogoproto.jsontag) = "roleRef", (gogoproto.nullable) = false];
+  RoleRef role_ref = 2 [(gogoproto.jsontag) = "role_ref", (gogoproto.nullable) = false];
 
-  // Name of the ClusterRoleBinding
-  string name = 3 [(gogoproto.jsontag) = "name"];
+  // Metadata contains name, namespace, labels and annotations
+  ObjectMeta metadata = 4 [(gogoproto.embed) = true, (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.nullable) = false];
 }
 
 // RoleBinding grants the permissions defined in a Role referenced to a user or
 // a set of users
 message RoleBinding {
+  option (gogoproto.face) = true;
+  option (gogoproto.goproto_getters) = false;
+
   // Subjects holds references to the objects the Role applies to
   repeated Subject subjects = 1 [(gogoproto.jsontag) = "subjects", (gogoproto.nullable) = false];
 
   // RoleRef references a Role in the current namespace
-  RoleRef role_ref = 2 [(gogoproto.jsontag) = "roleRef", (gogoproto.nullable) = false];
+  RoleRef role_ref = 2 [(gogoproto.jsontag) = "role_ref", (gogoproto.nullable) = false];
 
-  // Namespace of the RoleBinding
-  string namespace = 3 [(gogoproto.jsontag) = "namespace"];
-
-  // Name of the RoleBinding
-  string name = 4 [(gogoproto.jsontag) = "name"];
+  // Metadata contains name, namespace, labels and annotations
+  ObjectMeta metadata = 5 [(gogoproto.embed) = true, (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.nullable) = false];
 }

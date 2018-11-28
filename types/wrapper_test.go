@@ -2,8 +2,10 @@ package types
 
 import (
 	"encoding/json"
-	"fmt"
+	"reflect"
 	"testing"
+
+	"github.com/sensu/sensu-go/api/core/v2"
 )
 
 var null = json.RawMessage("null")
@@ -30,8 +32,21 @@ func mustMarshal(t *testing.T, value interface{}) []byte {
 }
 
 func TestUnmarshalBody(t *testing.T) {
+	asset := FixtureAsset("bar")
+	asset.Labels["foo"] = "bar"
 	var (
-		wrappedAsset = Wrapper{Type: "Asset", Value: FixtureAsset("bar")}
+		wrappedAsset = Wrapper{
+			TypeMeta: v2.TypeMeta{
+				Type:       "Asset",
+				APIVersion: "core/v2",
+			},
+			ObjectMeta: ObjectMeta{
+				Labels: map[string]string{
+					"bar": "baz",
+				},
+			},
+			Value: FixtureAsset("bar"),
+		}
 	)
 
 	wrappedAssetB := mustMarshal(t, wrappedAsset)
@@ -57,8 +72,17 @@ func TestUnmarshalBody(t *testing.T) {
 			}
 			if err == nil && test.ExpErr {
 				t.Fatal("expected an error")
-				fmt.Println(string(test.Body))
 			}
 		})
+	}
+}
+
+func TestWrapResourceObjectMeta(t *testing.T) {
+	check := FixtureCheck("foo")
+	check.Labels["asdf"] = "asdf"
+
+	wrapped := WrapResource(check)
+	if !reflect.DeepEqual(wrapped.ObjectMeta, check.ObjectMeta) {
+		t.Fatal("objectmeta not equal")
 	}
 }

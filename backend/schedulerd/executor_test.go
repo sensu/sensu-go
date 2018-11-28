@@ -32,6 +32,11 @@ func TestAdhocExecutor(t *testing.T) {
 	assert.NoError(t, newAdhocExec.bus.Start())
 
 	goodCheck := types.FixtureCheckConfig("goodCheck")
+
+	// set labels and annotations to nil to avoid value comparison issues
+	goodCheck.Labels = nil
+	goodCheck.Annotations = nil
+
 	goodCheck.Subscriptions = []string{"subscription1"}
 
 	goodCheckRequest := &types.CheckRequest{}

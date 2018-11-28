@@ -10,6 +10,8 @@ import _ "github.com/gogo/protobuf/gogoproto"
 
 import bytes "bytes"
 
+import github_com_golang_protobuf_proto "github.com/golang/protobuf/proto"
+
 import io "io"
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -31,8 +33,10 @@ type Event struct {
 	Entity *Entity `protobuf:"bytes,2,opt,name=entity" json:"entity,omitempty"`
 	// Check describes the result of a check; if event is associated to check execution.
 	Check *Check `protobuf:"bytes,3,opt,name=check" json:"check,omitempty"`
-	// Metrics ...
-	Metrics              *Metrics `protobuf:"bytes,4,opt,name=metrics" json:"metrics,omitempty"`
+	// Metrics are zero or more Sensu metrics
+	Metrics *Metrics `protobuf:"bytes,4,opt,name=metrics" json:"metrics,omitempty"`
+	// Metadata contains name, namespace, labels and annotations
+	ObjectMeta           `protobuf:"bytes,5,opt,name=metadata,embedded=metadata" json:"metadata"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -42,7 +46,7 @@ func (m *Event) Reset()         { *m = Event{} }
 func (m *Event) String() string { return proto.CompactTextString(m) }
 func (*Event) ProtoMessage()    {}
 func (*Event) Descriptor() ([]byte, []int) {
-	return fileDescriptor_event_72fb34c61a6b97f2, []int{0}
+	return fileDescriptor_event_fcfefa27a9f87fc7, []int{0}
 }
 func (m *Event) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -70,34 +74,6 @@ func (m *Event) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_Event proto.InternalMessageInfo
-
-func (m *Event) GetTimestamp() int64 {
-	if m != nil {
-		return m.Timestamp
-	}
-	return 0
-}
-
-func (m *Event) GetEntity() *Entity {
-	if m != nil {
-		return m.Entity
-	}
-	return nil
-}
-
-func (m *Event) GetCheck() *Check {
-	if m != nil {
-		return m.Check
-	}
-	return nil
-}
-
-func (m *Event) GetMetrics() *Metrics {
-	if m != nil {
-		return m.Metrics
-	}
-	return nil
-}
 
 func init() {
 	proto.RegisterType((*Event)(nil), "sensu.core.v2.Event")
@@ -133,11 +109,62 @@ func (this *Event) Equal(that interface{}) bool {
 	if !this.Metrics.Equal(that1.Metrics) {
 		return false
 	}
+	if !this.ObjectMeta.Equal(&that1.ObjectMeta) {
+		return false
+	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
 	}
 	return true
 }
+
+type EventFace interface {
+	Proto() github_com_golang_protobuf_proto.Message
+	GetTimestamp() int64
+	GetEntity() *Entity
+	GetCheck() *Check
+	GetMetrics() *Metrics
+	GetObjectMeta() ObjectMeta
+}
+
+func (this *Event) Proto() github_com_golang_protobuf_proto.Message {
+	return this
+}
+
+func (this *Event) TestProto() github_com_golang_protobuf_proto.Message {
+	return NewEventFromFace(this)
+}
+
+func (this *Event) GetTimestamp() int64 {
+	return this.Timestamp
+}
+
+func (this *Event) GetEntity() *Entity {
+	return this.Entity
+}
+
+func (this *Event) GetCheck() *Check {
+	return this.Check
+}
+
+func (this *Event) GetMetrics() *Metrics {
+	return this.Metrics
+}
+
+func (this *Event) GetObjectMeta() ObjectMeta {
+	return this.ObjectMeta
+}
+
+func NewEventFromFace(that EventFace) *Event {
+	this := &Event{}
+	this.Timestamp = that.GetTimestamp()
+	this.Entity = that.GetEntity()
+	this.Check = that.GetCheck()
+	this.Metrics = that.GetMetrics()
+	this.ObjectMeta = that.GetObjectMeta()
+	return this
+}
+
 func (m *Event) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -188,6 +215,14 @@ func (m *Event) MarshalTo(dAtA []byte) (int, error) {
 		}
 		i += n3
 	}
+	dAtA[i] = 0x2a
+	i++
+	i = encodeVarintEvent(dAtA, i, uint64(m.ObjectMeta.Size()))
+	n4, err := m.ObjectMeta.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n4
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
@@ -218,8 +253,10 @@ func NewPopulatedEvent(r randyEvent, easy bool) *Event {
 	if r.Intn(10) != 0 {
 		this.Metrics = NewPopulatedMetrics(r, easy)
 	}
+	v1 := NewPopulatedObjectMeta(r, easy)
+	this.ObjectMeta = *v1
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedEvent(r, 5)
+		this.XXX_unrecognized = randUnrecognizedEvent(r, 6)
 	}
 	return this
 }
@@ -243,9 +280,9 @@ func randUTF8RuneEvent(r randyEvent) rune {
 	return rune(ru + 61)
 }
 func randStringEvent(r randyEvent) string {
-	v1 := r.Intn(100)
-	tmps := make([]rune, v1)
-	for i := 0; i < v1; i++ {
+	v2 := r.Intn(100)
+	tmps := make([]rune, v2)
+	for i := 0; i < v2; i++ {
 		tmps[i] = randUTF8RuneEvent(r)
 	}
 	return string(tmps)
@@ -267,11 +304,11 @@ func randFieldEvent(dAtA []byte, r randyEvent, fieldNumber int, wire int) []byte
 	switch wire {
 	case 0:
 		dAtA = encodeVarintPopulateEvent(dAtA, uint64(key))
-		v2 := r.Int63()
+		v3 := r.Int63()
 		if r.Intn(2) == 0 {
-			v2 *= -1
+			v3 *= -1
 		}
-		dAtA = encodeVarintPopulateEvent(dAtA, uint64(v2))
+		dAtA = encodeVarintPopulateEvent(dAtA, uint64(v3))
 	case 1:
 		dAtA = encodeVarintPopulateEvent(dAtA, uint64(key))
 		dAtA = append(dAtA, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -314,6 +351,8 @@ func (m *Event) Size() (n int) {
 		l = m.Metrics.Size()
 		n += 1 + l + sovEvent(uint64(l))
 	}
+	l = m.ObjectMeta.Size()
+	n += 1 + l + sovEvent(uint64(l))
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
@@ -480,6 +519,36 @@ func (m *Event) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ObjectMeta", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEvent
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthEvent
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ObjectMeta.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipEvent(dAtA[iNdEx:])
@@ -607,25 +676,28 @@ var (
 	ErrIntOverflowEvent   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("event.proto", fileDescriptor_event_72fb34c61a6b97f2) }
+func init() { proto.RegisterFile("event.proto", fileDescriptor_event_fcfefa27a9f87fc7) }
 
-var fileDescriptor_event_72fb34c61a6b97f2 = []byte{
-	// 258 bytes of a gzipped FileDescriptorProto
+var fileDescriptor_event_fcfefa27a9f87fc7 = []byte{
+	// 315 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4e, 0x2d, 0x4b, 0xcd,
 	0x2b, 0xd1, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2d, 0x4e, 0xcd, 0x2b, 0x2e, 0xd5, 0x4b,
 	0xce, 0x2f, 0x4a, 0xd5, 0x2b, 0x33, 0x92, 0xd2, 0x4d, 0xcf, 0x2c, 0xc9, 0x28, 0x4d, 0xd2, 0x4b,
 	0xce, 0xcf, 0xd5, 0x4f, 0xcf, 0x4f, 0xcf, 0xd7, 0x07, 0xab, 0x4a, 0x2a, 0x4d, 0x03, 0xf3, 0xc0,
 	0x1c, 0x30, 0x0b, 0xa2, 0x5b, 0x8a, 0x27, 0x35, 0xaf, 0x24, 0xb3, 0xa4, 0x12, 0xca, 0xe3, 0x4e,
 	0xce, 0x48, 0x4d, 0xce, 0x86, 0x72, 0x78, 0x73, 0x53, 0x4b, 0x8a, 0x32, 0x93, 0x8b, 0xa1, 0x5c,
-	0xae, 0x8c, 0xfc, 0x7c, 0xa8, 0x94, 0xd2, 0x11, 0x46, 0x2e, 0x56, 0x57, 0x90, 0x1b, 0x84, 0x64,
-	0xb8, 0x38, 0x4b, 0x32, 0x73, 0x53, 0x8b, 0x4b, 0x12, 0x73, 0x0b, 0x24, 0x18, 0x15, 0x18, 0x35,
-	0x98, 0x83, 0x10, 0x02, 0x42, 0xc6, 0x5c, 0x6c, 0x10, 0xf3, 0x25, 0x98, 0x14, 0x18, 0x35, 0xb8,
-	0x8d, 0x44, 0xf5, 0x50, 0x1c, 0xab, 0xe7, 0x0a, 0x96, 0x74, 0x62, 0x39, 0x71, 0x4f, 0x9e, 0x31,
-	0x08, 0xaa, 0x54, 0xc8, 0x80, 0x8b, 0x15, 0xec, 0x0c, 0x09, 0x66, 0xb0, 0x1e, 0x11, 0x34, 0x3d,
-	0xce, 0x20, 0x39, 0xa8, 0x16, 0x88, 0x42, 0x21, 0x33, 0x2e, 0x76, 0xa8, 0x5b, 0x25, 0x58, 0xc0,
-	0x7a, 0xc4, 0xd0, 0xf4, 0xf8, 0x42, 0x64, 0xa1, 0xba, 0x60, 0x8a, 0x9d, 0x14, 0x7e, 0x3c, 0x94,
-	0x63, 0x5c, 0xf1, 0x48, 0x8e, 0x71, 0xc7, 0x23, 0x39, 0xc6, 0x13, 0x8f, 0xe4, 0x18, 0x2f, 0x3c,
-	0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e, 0x71, 0xc6, 0x63, 0x39, 0x86, 0x28, 0xa6, 0x32, 0xa3, 0x24,
-	0x36, 0xb0, 0x7f, 0x8d, 0x01, 0x01, 0x00, 0x00, 0xff, 0xff, 0x6e, 0x1f, 0x49, 0xe3, 0x72, 0x01,
-	0x00, 0x00,
+	0xae, 0xdc, 0xd4, 0x92, 0x44, 0x08, 0x5b, 0x69, 0x36, 0x13, 0x17, 0xab, 0x2b, 0xc8, 0x0d, 0x42,
+	0x32, 0x5c, 0x9c, 0x25, 0x99, 0xb9, 0xa9, 0xc5, 0x25, 0x89, 0xb9, 0x05, 0x12, 0x8c, 0x0a, 0x8c,
+	0x1a, 0xcc, 0x41, 0x08, 0x01, 0x21, 0x63, 0x2e, 0x36, 0x88, 0xf9, 0x12, 0x4c, 0x0a, 0x8c, 0x1a,
+	0xdc, 0x46, 0xa2, 0x7a, 0x28, 0x8e, 0xd5, 0x73, 0x05, 0x4b, 0x3a, 0xb1, 0x9c, 0xb8, 0x27, 0xcf,
+	0x18, 0x04, 0x55, 0x2a, 0x64, 0xc0, 0xc5, 0x0a, 0x76, 0x86, 0x04, 0x33, 0x58, 0x8f, 0x08, 0x9a,
+	0x1e, 0x67, 0x90, 0x1c, 0x54, 0x0b, 0x44, 0xa1, 0x90, 0x19, 0x17, 0x3b, 0xd4, 0xad, 0x12, 0x2c,
+	0x60, 0x3d, 0x62, 0x68, 0x7a, 0x7c, 0x21, 0xb2, 0x50, 0x5d, 0x30, 0xc5, 0x42, 0xde, 0x5c, 0x1c,
+	0x20, 0x4f, 0xa5, 0x24, 0x96, 0x24, 0x4a, 0xb0, 0x82, 0x35, 0x4a, 0xa2, 0x69, 0xf4, 0x4f, 0xca,
+	0x4a, 0x4d, 0x2e, 0xf1, 0x4d, 0x2d, 0x49, 0x74, 0x12, 0x39, 0x71, 0x4f, 0x9e, 0xe1, 0xc2, 0x3d,
+	0x79, 0xc6, 0x57, 0xf7, 0xe4, 0xe1, 0xda, 0x82, 0xe0, 0x2c, 0x2b, 0x8e, 0x8e, 0x05, 0xf2, 0x0c,
+	0x2b, 0x16, 0xc8, 0x33, 0x3a, 0x29, 0xfc, 0x78, 0x28, 0xc7, 0xb8, 0xe2, 0x91, 0x1c, 0xe3, 0x8e,
+	0x47, 0x72, 0x8c, 0x27, 0x1e, 0xc9, 0x31, 0x5e, 0x78, 0x24, 0xc7, 0xf8, 0xe0, 0x91, 0x1c, 0xe3,
+	0x8c, 0xc7, 0x72, 0x0c, 0x51, 0x4c, 0x65, 0x46, 0x49, 0x6c, 0xe0, 0x60, 0x34, 0x06, 0x04, 0x00,
+	0x00, 0xff, 0xff, 0xb4, 0x21, 0x82, 0xf3, 0xc9, 0x01, 0x00, 0x00,
 }

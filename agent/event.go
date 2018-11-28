@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types/v1"
 )
 
 // prepareEvent accepts a partial or complete event and tries to add any missing
 // attributes so it can pass validation. An error is returned if it still can't
 // pass validation after all these changes
-func prepareEvent(a *Agent, event *types.Event) error {
+func prepareEvent(a *Agent, event *v2.Event) error {
 	if event == nil {
 		return fmt.Errorf("an event must be provided")
 	}
@@ -54,7 +54,7 @@ func prepareEvent(a *Agent, event *types.Event) error {
 
 // translateToEvent accepts a 1.x compatible check result
 // and attempts to translate it to a 2.x event
-func translateToEvent(a *Agent, result v1.CheckResult, event *types.Event) error {
+func translateToEvent(a *Agent, result v1.CheckResult, event *v2.Event) error {
 	if result.Name == "" {
 		return fmt.Errorf("a check name must be provided")
 	}
@@ -67,16 +67,14 @@ func translateToEvent(a *Agent, result v1.CheckResult, event *types.Event) error
 	if result.Client == "" || result.Client == agentEntity.Name {
 		event.Entity = agentEntity
 	} else {
-		event.Entity = &types.Entity{
-			ObjectMeta: types.ObjectMeta{
-				Name:      result.Client,
-				Namespace: agentEntity.Namespace,
-			},
-			EntityClass: types.EntityProxyClass,
+		event.Entity = &v2.Entity{
+			ObjectMeta:  v2.NewObjectMeta(result.Client, agentEntity.Namespace),
+			EntityClass: v2.EntityProxyClass,
 		}
 	}
 
-	check := &types.Check{
+	check := &v2.Check{
+		ObjectMeta:    v2.NewObjectMeta(result.Name, agentEntity.Namespace),
 		Status:        result.Status,
 		Command:       result.Command,
 		Subscriptions: result.Subscribers,
@@ -86,8 +84,6 @@ func translateToEvent(a *Agent, result v1.CheckResult, event *types.Event) error
 		Duration:      result.Duration,
 		Output:        result.Output,
 	}
-	check.Name = result.Name
-	check.Namespace = agentEntity.Namespace
 
 	// add config and check values to the 2.x event
 	event.Check = check
