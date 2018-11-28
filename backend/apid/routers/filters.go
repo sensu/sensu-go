@@ -29,7 +29,7 @@ func (r *EventFiltersRouter) Mount(parent *mux.Router) {
 		Router:     parent,
 		PathPrefix: "/namespaces/{namespace}/{resource:filters}",
 	}
-	routes.GetAll(r.list)
+	routes.List(r.list)
 	routes.Get(r.find)
 	routes.Post(r.create)
 	routes.Del(r.destroy)

@@ -31,7 +31,7 @@ func (r *HandlersRouter) Mount(parent *mux.Router) {
 	}
 	routes.Post(r.create)
 	routes.Del(r.destroy)
-	routes.GetAll(r.list)
+	routes.List(r.list)
 	routes.Get(r.find)
 	routes.Put(r.createOrReplace)
 }

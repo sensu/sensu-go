@@ -132,8 +132,8 @@ type actionHandlerFunc func(r *http.Request) (interface{}, error)
 // ResourceRoute mounts resources in a convetional RESTful manner.
 //
 //   routes := ResourceRoute{PathPrefix: "checks", Router: ...}
-//   routes.GetAll(myIndexAction) // given action is mounted at GET /checks
 //   routes.Get(myShowAction)     // given action is mounted at GET /checks/:id
+//   routes.List(myIndexAction) 	// given action is mounted at GET /checks
 //   routes.Put(myCreateAction)   // given action is mounted at PUT /checks/:id
 //   routes.Patch(myUpdateAction) // given action is mounted at PATCH /checks/:id
 //   routes.Post(myCreateAction)  // given action is mounted at POST /checks
@@ -145,14 +145,14 @@ type ResourceRoute struct {
 	PathPrefix string
 }
 
-// GetAll reads all
-func (r *ResourceRoute) GetAll(fn actionHandlerFunc) *mux.Route {
-	return r.Path("", fn).Methods(http.MethodGet)
-}
-
 // Get reads
 func (r *ResourceRoute) Get(fn actionHandlerFunc) *mux.Route {
 	return r.Path("{id}", fn).Methods(http.MethodGet)
+}
+
+// List resources
+func (r *ResourceRoute) List(fn actionHandlerFunc) *mux.Route {
+	return r.Path("", fn).Methods(http.MethodGet)
 }
 
 // Post creates

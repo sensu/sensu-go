@@ -162,7 +162,7 @@ func TestDeleteCheck(t *testing.T) {
 	}
 }
 
-func TestGetAllChecks(t *testing.T) {
+func TestListChecks(t *testing.T) {
 	controller, server := newCheckTest(t)
 	defer server.Close()
 
