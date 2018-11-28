@@ -20,21 +20,16 @@ type Namespace struct{}
 // Then middleware
 func (n Namespace) Then(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
 		vars := mux.Vars(r)
 
 		// Check if we have a namespace path variable
 		namespace, err := url.PathUnescape(vars["namespace"])
-		if err != nil || namespace == "" {
-			// Check if we have a namespace query parameter
-			if namespace = r.URL.Query().Get("namespace"); namespace == "" {
-				// No namespace found anywhere, use the default value
-				namespace = defaultNamespace
-			}
+		if err == nil && namespace != "" {
+			// Inject the namespace into the context of the request
+			ctx = context.WithValue(ctx, types.NamespaceKey, namespace)
 		}
 
-		// Inject the namespace into the context of the request
-		ctx := r.Context()
-		ctx = context.WithValue(ctx, types.NamespaceKey, namespace)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
