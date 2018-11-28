@@ -1,7 +1,6 @@
 package routers
 
 import (
-	"context"
 	"net/http"
 	"net/url"
 
@@ -32,7 +31,7 @@ func (r *AssetsRouter) Mount(parent *mux.Router) {
 
 	routes.Get(r.find)
 	routes.List(r.list)
-	routes.ListAllNamespaces(r.listAllNamespaces, "/{resource:assets}")
+	routes.ListAllNamespaces(r.list, "/{resource:assets}")
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
 }
@@ -40,13 +39,6 @@ func (r *AssetsRouter) Mount(parent *mux.Router) {
 func (r *AssetsRouter) list(req *http.Request) (interface{}, error) {
 	records, err := r.controller.Query(req.Context())
 	return records, err
-}
-
-func (r *AssetsRouter) listAllNamespaces(req *http.Request) (interface{}, error) {
-	// Make sure the request context is empty so we query across all namespaces
-	ctx := context.WithValue(req.Context(), types.NamespaceKey, "")
-
-	return r.list(req.WithContext(ctx))
 }
 
 func (r *AssetsRouter) find(req *http.Request) (interface{}, error) {

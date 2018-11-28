@@ -1,7 +1,6 @@
 package routers
 
 import (
-	"context"
 	"net/http"
 	"net/url"
 
@@ -33,7 +32,7 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 
 	routes.Post(r.create)
 	routes.List(r.list)
-	routes.ListAllNamespaces(r.listAllNamespaces, "/{resource:events}")
+	routes.ListAllNamespaces(r.list, "/{resource:events}")
 	routes.Path("{entity}", r.listByEntity).Methods(http.MethodGet)
 	routes.Path("{entity}/{check}", r.find).Methods(http.MethodGet)
 	routes.Path("{entity}/{check}", r.destroy).Methods(http.MethodDelete)
@@ -43,13 +42,6 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 func (r *EventsRouter) list(req *http.Request) (interface{}, error) {
 	records, err := r.controller.Query(req.Context(), "", "")
 	return records, err
-}
-
-func (r *EventsRouter) listAllNamespaces(req *http.Request) (interface{}, error) {
-	// Make sure the request context is empty so we query across all namespaces
-	ctx := context.WithValue(req.Context(), types.NamespaceKey, "")
-
-	return r.list(req.WithContext(ctx))
 }
 
 func (r *EventsRouter) listByEntity(req *http.Request) (interface{}, error) {

@@ -1,7 +1,6 @@
 package routers
 
 import (
-	"context"
 	"net/http"
 	"net/url"
 
@@ -33,7 +32,7 @@ func (r *RoleBindingsRouter) Mount(parent *mux.Router) {
 	routes.Del(r.destroy)
 	routes.Get(r.find)
 	routes.List(r.list)
-	routes.ListAllNamespaces(r.listAllNamespaces, "/{resource:rolebindings}")
+	routes.ListAllNamespaces(r.list, "/{resource:rolebindings}")
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
 }
@@ -87,11 +86,4 @@ func (r *RoleBindingsRouter) find(req *http.Request) (interface{}, error) {
 func (r *RoleBindingsRouter) list(req *http.Request) (interface{}, error) {
 	objs, err := r.controller.List(req.Context())
 	return objs, err
-}
-
-func (r *RoleBindingsRouter) listAllNamespaces(req *http.Request) (interface{}, error) {
-	// Make sure the request context is empty so we query across all namespaces
-	ctx := context.WithValue(req.Context(), types.NamespaceKey, "")
-
-	return r.list(req.WithContext(ctx))
 }

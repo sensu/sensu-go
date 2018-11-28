@@ -1,7 +1,6 @@
 package routers
 
 import (
-	"context"
 	"net/http"
 	"net/url"
 
@@ -33,7 +32,7 @@ func (r *HandlersRouter) Mount(parent *mux.Router) {
 	routes.Del(r.destroy)
 	routes.Get(r.find)
 	routes.List(r.list)
-	routes.ListAllNamespaces(r.listAllNamespaces, "/{resource:handlers}")
+	routes.ListAllNamespaces(r.list, "/{resource:handlers}")
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
 }
@@ -76,11 +75,4 @@ func (r *HandlersRouter) find(req *http.Request) (interface{}, error) {
 
 func (r *HandlersRouter) list(req *http.Request) (interface{}, error) {
 	return r.controller.Query(req.Context())
-}
-
-func (r *HandlersRouter) listAllNamespaces(req *http.Request) (interface{}, error) {
-	// Make sure the request context is empty so we query across all namespaces
-	ctx := context.WithValue(req.Context(), types.NamespaceKey, "")
-
-	return r.list(req.WithContext(ctx))
 }

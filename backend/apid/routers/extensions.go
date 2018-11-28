@@ -1,7 +1,6 @@
 package routers
 
 import (
-	"context"
 	"net/http"
 	"net/url"
 
@@ -33,20 +32,13 @@ func (r *ExtensionsRouter) Mount(parent *mux.Router) {
 	routes.Del(r.deregister)
 	routes.Get(r.find)
 	routes.List(r.list)
-	routes.ListAllNamespaces(r.listAllNamespaces, "/{resource:extensions}")
+	routes.ListAllNamespaces(r.list, "/{resource:extensions}")
 	routes.Put(r.register)
 }
 
 func (r *ExtensionsRouter) list(req *http.Request) (interface{}, error) {
 	records, err := r.controller.Query(req.Context())
 	return records, err
-}
-
-func (r *ExtensionsRouter) listAllNamespaces(req *http.Request) (interface{}, error) {
-	// Make sure the request context is empty so we query across all namespaces
-	ctx := context.WithValue(req.Context(), types.NamespaceKey, "")
-
-	return r.list(req.WithContext(ctx))
 }
 
 func (r *ExtensionsRouter) find(req *http.Request) (interface{}, error) {
