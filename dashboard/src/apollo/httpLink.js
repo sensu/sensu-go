@@ -1,5 +1,6 @@
 import { BatchHttpLink as HttpLink } from "apollo-link-batch-http";
 import doFetch from "/utils/fetch";
+import { FailedError } from "/errors/FetchError";
 import gql from "graphql-tag";
 
 const mutation = gql`
@@ -23,7 +24,7 @@ const httpLink = ({ getClient }) =>
         error => {
           getClient().mutate({
             mutation,
-            variables: { offline: true },
+            variables: { offline: error.instanceOf(FailedError) },
           });
 
           throw error;
