@@ -26,6 +26,7 @@ import ChecksListItem from "./ChecksListItem";
 class ChecksList extends React.Component {
   static propTypes = {
     client: PropTypes.object.isRequired,
+    editable: PropTypes.bool,
     namespace: PropTypes.shape({
       checks: PropTypes.shape({
         nodes: PropTypes.array.isRequired,
@@ -41,6 +42,7 @@ class ChecksList extends React.Component {
   };
 
   static defaultProps = {
+    editable: true,
     namespace: null,
     loading: false,
     limit: undefined,
@@ -184,10 +186,22 @@ class ChecksList extends React.Component {
     );
   };
 
-  renderCheck = ({ key, item: check, selected, setSelected }) => (
+  renderCheck = ({
+    key,
+    item: check,
+    hovered,
+    setHovered,
+    selectedCount,
+    selected,
+    setSelected,
+  }) => (
     <ChecksListItem
       key={key}
+      editable={this.props.editable}
+      editing={selectedCount > 0}
       check={check}
+      hovered={hovered}
+      onHover={this.props.editable ? setHovered : () => null}
       selected={selected}
       onChangeSelected={setSelected}
       onClickClearSilences={() => this.clearSilences([check])}
@@ -201,9 +215,10 @@ class ChecksList extends React.Component {
   render() {
     const { silence, unsilence } = this.state;
     const {
-      namespace,
+      editable,
       loading,
       limit,
+      namespace,
       offset,
       order,
       onChangeQuery,
@@ -230,6 +245,7 @@ class ChecksList extends React.Component {
           <Paper>
             <Loader loading={loading}>
               <ChecksListHeader
+                editable={editable}
                 namespace={namespace}
                 onChangeQuery={onChangeQuery}
                 onClickClearSilences={() => this.clearSilences(selectedItems)}

@@ -13,15 +13,16 @@ import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
 
 class EntitiesListHeader extends React.PureComponent {
   static propTypes = {
+    editable: PropTypes.bool.isRequired,
     namespace: PropTypes.object,
     onChangeQuery: PropTypes.func.isRequired,
     onClickClearSilences: PropTypes.func.isRequired,
     onClickDelete: PropTypes.func.isRequired,
     onClickSelect: PropTypes.func.isRequired,
     onClickSilence: PropTypes.func.isRequired,
+    order: PropTypes.string.isRequired,
     rowCount: PropTypes.number.isRequired,
     selectedItems: PropTypes.array.isRequired,
-    order: PropTypes.string.isRequired,
   };
 
   static defaultProps = {
@@ -127,12 +128,13 @@ class EntitiesListHeader extends React.PureComponent {
   };
 
   render() {
-    const { onClickSelect, selectedItems, rowCount } = this.props;
+    const { editable, onClickSelect, selectedItems, rowCount } = this.props;
     const selectedCount = selectedItems.length;
 
     return (
       <ListHeader
         sticky
+        editable={editable}
         selectedCount={selectedCount}
         rowCount={rowCount}
         onClickSelect={onClickSelect}

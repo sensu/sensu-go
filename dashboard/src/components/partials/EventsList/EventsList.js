@@ -28,10 +28,10 @@ import EventsListItem from "./EventsListItem";
 class EventsContainer extends React.Component {
   static propTypes = {
     client: PropTypes.object.isRequired,
+    editable: PropTypes.bool,
     namespace: PropTypes.shape({
       checks: PropTypes.object,
       entities: PropTypes.object,
-      events: PropTypes.object,
     }),
     onChangeQuery: PropTypes.func.isRequired,
     limit: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
@@ -42,6 +42,7 @@ class EventsContainer extends React.Component {
 
   static defaultProps = {
     loading: false,
+    editable: true,
     namespace: null,
     limit: undefined,
     offset: undefined,
@@ -212,28 +213,41 @@ class EventsContainer extends React.Component {
     );
   };
 
-  renderEvent = ({ key, item: event, selected, setSelected }) => (
+  renderEvent = ({
+    key,
+    item,
+    selectedCount,
+    hovered,
+    setHovered,
+    selected,
+    setSelected,
+  }) => (
     <EventsListItem
       key={key}
-      event={event}
+      event={item}
+      editable={this.props.editable}
+      editing={selectedCount > 0}
       selected={selected}
       onChangeSelected={setSelected}
-      onClickClearSilences={() => this.clearSilences([event])}
-      onClickSilencePair={() => this.silenceEvents([event])}
-      onClickSilenceEntity={() => this.silenceEntity(event)}
-      onClickSilenceCheck={() => this.silenceCheck(event)}
-      onClickResolve={() => this.resolveEvents([event])}
-      onClickRerun={() => this.executeCheck([event])}
-      onClickDelete={() => this.deleteEvents([event])}
+      hovered={hovered}
+      onHover={this.props.editable ? setHovered : () => null}
+      onClickClearSilences={() => this.clearSilences([item])}
+      onClickSilencePair={() => this.silenceEvents([item])}
+      onClickSilenceEntity={() => this.silenceEntity(item)}
+      onClickSilenceCheck={() => this.silenceCheck(item)}
+      onClickResolve={() => this.resolveEvents([item])}
+      onClickRerun={() => this.executeCheck([item])}
+      onClickDelete={() => this.deleteEvents([item])}
     />
   );
 
   render() {
     const { silence, unsilence } = this.state;
     const {
-      namespace,
+      editable,
       loading,
       limit,
+      namespace,
       offset,
       onChangeQuery,
       refetch,
@@ -261,6 +275,7 @@ class EventsContainer extends React.Component {
           <Paper>
             <Loader loading={loading}>
               <EventsListHeader
+                editable={editable}
                 namespace={namespace}
                 onClickSelect={toggleSelectedItems}
                 onClickClearSilences={() => this.clearSilences(selectedItems)}

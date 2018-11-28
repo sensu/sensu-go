@@ -25,8 +25,9 @@ import EntitiesListItem from "./EntitiesListItem";
 class EntitiesList extends React.PureComponent {
   static propTypes = {
     client: PropTypes.object.isRequired,
-    namespace: PropTypes.object,
+    editable: PropTypes.bool,
     loading: PropTypes.bool,
+    namespace: PropTypes.object,
     order: PropTypes.string.isRequired,
     onChangeQuery: PropTypes.func.isRequired,
     limit: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
@@ -35,9 +36,10 @@ class EntitiesList extends React.PureComponent {
   };
 
   static defaultProps = {
-    namespace: null,
+    editable: false,
     loading: false,
     limit: undefined,
+    namespace: null,
     offset: undefined,
     refetch: () => null,
   };
@@ -135,10 +137,22 @@ class EntitiesList extends React.PureComponent {
     );
   };
 
-  renderEntity = ({ key, item: entity, selected, setSelected }) => (
+  renderEntity = ({
+    key,
+    item: entity,
+    hovered,
+    setHovered,
+    selectedCount,
+    selected,
+    setSelected,
+  }) => (
     <EntitiesListItem
       key={key}
+      editable={this.props.editable}
+      editing={selectedCount > 0}
       entity={entity}
+      hovered={hovered}
+      onHover={this.props.editable ? setHovered : () => null}
       selected={selected}
       onChangeSelected={setSelected}
       onClickDelete={() => this.deleteEntities([entity])}
@@ -150,10 +164,11 @@ class EntitiesList extends React.PureComponent {
   render() {
     const { silence, unsilence } = this.state;
     const {
-      namespace,
+      editable,
       loading,
       onChangeQuery,
       limit,
+      namespace,
       offset,
       refetch,
       order,
@@ -179,6 +194,7 @@ class EntitiesList extends React.PureComponent {
           <Paper>
             <Loader loading={loading}>
               <EntitiesListHeader
+                editable={editable}
                 selectedItems={selectedItems}
                 rowCount={children.length || 0}
                 onClickSelect={toggleSelectedItems}

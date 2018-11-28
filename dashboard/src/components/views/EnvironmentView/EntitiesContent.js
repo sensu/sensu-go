@@ -9,6 +9,7 @@ import ListToolbar from "/components/partials/EntitiesList/EntitiesListToolbar";
 import NotFound from "/components/partials/NotFound";
 import Query from "/components/util/Query";
 import { withQueryParams } from "/components/QueryParams";
+import WithWidth from "/components/WithWidth";
 
 // duration used when polling is enabled; set fairly high until we understand
 // the impact.
@@ -68,17 +69,22 @@ class EntitiesContent extends React.PureComponent {
         </Content>
 
         <AppLayout.MobileFullWidthContent>
-          <EntitiesList
-            limit={limit}
-            offset={offset}
-            loading={
-              (loading && (!namespace || !poller.isRunning())) || aborted
-            }
-            onChangeQuery={setQueryParams}
-            namespace={namespace}
-            refetch={refetch}
-            order={order}
-          />
+          <WithWidth>
+            {({ width }) => (
+              <EntitiesList
+                editable={width !== "xs"}
+                limit={limit}
+                offset={offset}
+                loading={
+                  (loading && (!namespace || !poller.isRunning())) || aborted
+                }
+                onChangeQuery={setQueryParams}
+                namespace={namespace}
+                refetch={refetch}
+                order={order}
+              />
+            )}
+          </WithWidth>
         </AppLayout.MobileFullWidthContent>
       </div>
     );

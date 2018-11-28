@@ -24,14 +24,14 @@ var _ = math.Inf
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 type AdhocRequest struct {
-	// Name is the name of the requested adhoc check.
-	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"check"`
 	// Subscriptions is the list of entity subscriptions.
 	Subscriptions []string `protobuf:"bytes,2,rep,name=subscriptions" json:"subscriptions,omitempty"`
 	// Creator is the author of the adhoc request.
 	Creator string `protobuf:"bytes,3,opt,name=creator,proto3" json:"creator,omitempty"`
 	// Reason is used to provide context to the request.
-	Reason               string   `protobuf:"bytes,4,opt,name=reason,proto3" json:"reason,omitempty"`
+	Reason string `protobuf:"bytes,4,opt,name=reason,proto3" json:"reason,omitempty"`
+	// Metadata contains the name, namespace, labels and annotations of the AdhocCheck
+	ObjectMeta           `protobuf:"bytes,5,opt,name=metadata,embedded=metadata" json:"metadata"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -41,7 +41,7 @@ func (m *AdhocRequest) Reset()         { *m = AdhocRequest{} }
 func (m *AdhocRequest) String() string { return proto.CompactTextString(m) }
 func (*AdhocRequest) ProtoMessage()    {}
 func (*AdhocRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_adhoc_26e68bb0d5a712c1, []int{0}
+	return fileDescriptor_adhoc_28b67ffaa32ba8a4, []int{0}
 }
 func (m *AdhocRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -69,13 +69,6 @@ func (m *AdhocRequest) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_AdhocRequest proto.InternalMessageInfo
-
-func (m *AdhocRequest) GetName() string {
-	if m != nil {
-		return m.Name
-	}
-	return ""
-}
 
 func (m *AdhocRequest) GetSubscriptions() []string {
 	if m != nil {
@@ -120,9 +113,6 @@ func (this *AdhocRequest) Equal(that interface{}) bool {
 	} else if this == nil {
 		return false
 	}
-	if this.Name != that1.Name {
-		return false
-	}
 	if len(this.Subscriptions) != len(that1.Subscriptions) {
 		return false
 	}
@@ -135,6 +125,9 @@ func (this *AdhocRequest) Equal(that interface{}) bool {
 		return false
 	}
 	if this.Reason != that1.Reason {
+		return false
+	}
+	if !this.ObjectMeta.Equal(&that1.ObjectMeta) {
 		return false
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
@@ -157,12 +150,6 @@ func (m *AdhocRequest) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if len(m.Name) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintAdhoc(dAtA, i, uint64(len(m.Name)))
-		i += copy(dAtA[i:], m.Name)
-	}
 	if len(m.Subscriptions) > 0 {
 		for _, s := range m.Subscriptions {
 			dAtA[i] = 0x12
@@ -190,6 +177,14 @@ func (m *AdhocRequest) MarshalTo(dAtA []byte) (int, error) {
 		i = encodeVarintAdhoc(dAtA, i, uint64(len(m.Reason)))
 		i += copy(dAtA[i:], m.Reason)
 	}
+	dAtA[i] = 0x2a
+	i++
+	i = encodeVarintAdhoc(dAtA, i, uint64(m.ObjectMeta.Size()))
+	n1, err := m.ObjectMeta.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n1
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
@@ -207,7 +202,6 @@ func encodeVarintAdhoc(dAtA []byte, offset int, v uint64) int {
 }
 func NewPopulatedAdhocRequest(r randyAdhoc, easy bool) *AdhocRequest {
 	this := &AdhocRequest{}
-	this.Name = string(randStringAdhoc(r))
 	v1 := r.Intn(10)
 	this.Subscriptions = make([]string, v1)
 	for i := 0; i < v1; i++ {
@@ -215,8 +209,10 @@ func NewPopulatedAdhocRequest(r randyAdhoc, easy bool) *AdhocRequest {
 	}
 	this.Creator = string(randStringAdhoc(r))
 	this.Reason = string(randStringAdhoc(r))
+	v2 := NewPopulatedObjectMeta(r, easy)
+	this.ObjectMeta = *v2
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedAdhoc(r, 5)
+		this.XXX_unrecognized = randUnrecognizedAdhoc(r, 6)
 	}
 	return this
 }
@@ -240,9 +236,9 @@ func randUTF8RuneAdhoc(r randyAdhoc) rune {
 	return rune(ru + 61)
 }
 func randStringAdhoc(r randyAdhoc) string {
-	v2 := r.Intn(100)
-	tmps := make([]rune, v2)
-	for i := 0; i < v2; i++ {
+	v3 := r.Intn(100)
+	tmps := make([]rune, v3)
+	for i := 0; i < v3; i++ {
 		tmps[i] = randUTF8RuneAdhoc(r)
 	}
 	return string(tmps)
@@ -264,11 +260,11 @@ func randFieldAdhoc(dAtA []byte, r randyAdhoc, fieldNumber int, wire int) []byte
 	switch wire {
 	case 0:
 		dAtA = encodeVarintPopulateAdhoc(dAtA, uint64(key))
-		v3 := r.Int63()
+		v4 := r.Int63()
 		if r.Intn(2) == 0 {
-			v3 *= -1
+			v4 *= -1
 		}
-		dAtA = encodeVarintPopulateAdhoc(dAtA, uint64(v3))
+		dAtA = encodeVarintPopulateAdhoc(dAtA, uint64(v4))
 	case 1:
 		dAtA = encodeVarintPopulateAdhoc(dAtA, uint64(key))
 		dAtA = append(dAtA, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -296,10 +292,6 @@ func encodeVarintPopulateAdhoc(dAtA []byte, v uint64) []byte {
 func (m *AdhocRequest) Size() (n int) {
 	var l int
 	_ = l
-	l = len(m.Name)
-	if l > 0 {
-		n += 1 + l + sovAdhoc(uint64(l))
-	}
 	if len(m.Subscriptions) > 0 {
 		for _, s := range m.Subscriptions {
 			l = len(s)
@@ -314,6 +306,8 @@ func (m *AdhocRequest) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovAdhoc(uint64(l))
 	}
+	l = m.ObjectMeta.Size()
+	n += 1 + l + sovAdhoc(uint64(l))
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
@@ -362,35 +356,6 @@ func (m *AdhocRequest) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: AdhocRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowAdhoc
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthAdhoc
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Name = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Subscriptions", wireType)
@@ -477,6 +442,36 @@ func (m *AdhocRequest) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Reason = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ObjectMeta", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowAdhoc
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= (int(b) & 0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthAdhoc
+			}
+			postIndex := iNdEx + msglen
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if err := m.ObjectMeta.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -605,23 +600,25 @@ var (
 	ErrIntOverflowAdhoc   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("adhoc.proto", fileDescriptor_adhoc_26e68bb0d5a712c1) }
+func init() { proto.RegisterFile("adhoc.proto", fileDescriptor_adhoc_28b67ffaa32ba8a4) }
 
-var fileDescriptor_adhoc_26e68bb0d5a712c1 = []byte{
-	// 234 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x4e, 0x4c, 0xc9, 0xc8,
-	0x4f, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2d, 0x4e, 0xcd, 0x2b, 0x2e, 0xd5, 0x4b,
-	0xce, 0x2f, 0x4a, 0xd5, 0x2b, 0x33, 0x92, 0xd2, 0x4d, 0xcf, 0x2c, 0xc9, 0x28, 0x4d, 0xd2, 0x4b,
-	0xce, 0xcf, 0xd5, 0x4f, 0xcf, 0x4f, 0xcf, 0xd7, 0x07, 0xab, 0x4a, 0x2a, 0x4d, 0x03, 0xf3, 0xc0,
-	0x1c, 0x30, 0x0b, 0xa2, 0x5b, 0x69, 0x3a, 0x23, 0x17, 0x8f, 0x23, 0xc8, 0xb4, 0xa0, 0xd4, 0xc2,
-	0xd2, 0xd4, 0xe2, 0x12, 0x21, 0x59, 0x2e, 0x96, 0xbc, 0xc4, 0xdc, 0x54, 0x09, 0x46, 0x05, 0x46,
-	0x0d, 0x4e, 0x27, 0xce, 0x57, 0xf7, 0xe4, 0x59, 0x93, 0x33, 0x52, 0x93, 0xb3, 0x83, 0xc0, 0xc2,
-	0x42, 0x5a, 0x5c, 0xbc, 0xc5, 0xa5, 0x49, 0xc5, 0xc9, 0x45, 0x99, 0x05, 0x25, 0x99, 0xf9, 0x79,
-	0xc5, 0x12, 0x4c, 0x0a, 0xcc, 0x1a, 0x9c, 0x4e, 0x2c, 0x27, 0xee, 0xc9, 0x33, 0x06, 0xa1, 0x4a,
-	0x09, 0xc9, 0x71, 0xb1, 0x27, 0x17, 0xa5, 0x26, 0x96, 0xe4, 0x17, 0x49, 0x30, 0x83, 0x4d, 0x83,
-	0xa8, 0x82, 0x09, 0x0a, 0xc9, 0x70, 0xb1, 0x15, 0xa5, 0x26, 0x16, 0xe7, 0xe7, 0x49, 0xb0, 0x20,
-	0x49, 0x43, 0xc5, 0x9c, 0x14, 0x7e, 0x3c, 0x94, 0x63, 0x5c, 0xf1, 0x48, 0x8e, 0x71, 0xc7, 0x23,
-	0x39, 0xc6, 0x13, 0x8f, 0xe4, 0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c, 0xf0, 0x48, 0x8e, 0x71, 0xc6,
-	0x63, 0x39, 0x86, 0x28, 0xa6, 0x32, 0xa3, 0x24, 0x36, 0xb0, 0x17, 0x8c, 0x01, 0x01, 0x00, 0x00,
-	0xff, 0xff, 0xc3, 0x64, 0x38, 0x90, 0x0f, 0x01, 0x00, 0x00,
+var fileDescriptor_adhoc_28b67ffaa32ba8a4 = []byte{
+	// 264 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x54, 0x4f, 0x4d, 0x4a, 0xc3, 0x40,
+	0x14, 0xee, 0x6b, 0x6b, 0xd5, 0xa9, 0xdd, 0x04, 0x17, 0xb1, 0xc8, 0x24, 0xb8, 0x2a, 0x82, 0x53,
+	0x88, 0x27, 0x30, 0x5b, 0x11, 0x21, 0x4b, 0x77, 0x93, 0xe9, 0x98, 0x46, 0x68, 0x5e, 0x9d, 0x9f,
+	0x9e, 0xc5, 0x23, 0x78, 0x04, 0x2f, 0x20, 0x64, 0xd9, 0x13, 0x04, 0x1d, 0x77, 0x9e, 0xc0, 0xa5,
+	0x74, 0xaa, 0xa1, 0xdd, 0x7d, 0xbf, 0x8f, 0xf7, 0x91, 0x21, 0x9f, 0xcd, 0x51, 0xb0, 0xa5, 0x42,
+	0x83, 0xc1, 0x48, 0xcb, 0x4a, 0x5b, 0x26, 0x50, 0x49, 0xb6, 0x4a, 0xc6, 0x57, 0x45, 0x69, 0xe6,
+	0x36, 0x67, 0x02, 0x17, 0xd3, 0x02, 0x0b, 0x9c, 0xfa, 0x54, 0x6e, 0x1f, 0x3d, 0xf3, 0xc4, 0xa3,
+	0x6d, 0x7b, 0x4c, 0x16, 0xd2, 0xf0, 0x2d, 0xbe, 0x78, 0x07, 0x72, 0x72, 0xb3, 0xb9, 0x9c, 0xc9,
+	0x67, 0x2b, 0xb5, 0x09, 0x2e, 0xc9, 0x48, 0xdb, 0x5c, 0x0b, 0x55, 0x2e, 0x4d, 0x89, 0x95, 0x0e,
+	0xbb, 0x71, 0x6f, 0x72, 0x9c, 0xf6, 0xeb, 0x26, 0x82, 0x6c, 0xdf, 0x0a, 0x28, 0x39, 0x14, 0x4a,
+	0x72, 0x83, 0x2a, 0xec, 0xc5, 0xd0, 0xa6, 0xfe, 0xc5, 0xe0, 0x9c, 0x0c, 0x94, 0xe4, 0x1a, 0xab,
+	0xb0, 0xbf, 0x63, 0xff, 0x69, 0xc1, 0x2d, 0x39, 0xda, 0x3c, 0x32, 0xe3, 0x86, 0x87, 0x07, 0x31,
+	0x4c, 0x86, 0xc9, 0x19, 0xdb, 0xdb, 0xc5, 0xee, 0xf3, 0x27, 0x29, 0xcc, 0x9d, 0x34, 0x3c, 0x3d,
+	0xad, 0x9b, 0xa8, 0xb3, 0x6e, 0x22, 0xf8, 0x6e, 0xa2, 0xb6, 0x96, 0xb5, 0x28, 0x8d, 0x7f, 0x3e,
+	0x29, 0xbc, 0x3a, 0x0a, 0x6f, 0x8e, 0x42, 0xed, 0x28, 0xac, 0x1d, 0x85, 0x0f, 0x47, 0xe1, 0xe5,
+	0x8b, 0x76, 0x1e, 0xba, 0xab, 0x24, 0x1f, 0xf8, 0xc1, 0xd7, 0xbf, 0x01, 0x00, 0x00, 0xff, 0xff,
+	0xa0, 0x78, 0xca, 0x9c, 0x49, 0x01, 0x00, 0x00,
 }

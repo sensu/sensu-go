@@ -113,7 +113,7 @@ func (r *mutationsImpl) ExecuteCheck(p schema.MutationExecuteCheckFieldResolverP
 	}
 
 	adhocReq := types.AdhocRequest{
-		Name:          check.Name,
+		ObjectMeta:    check.ObjectMeta,
 		Subscriptions: p.Args.Input.Subscriptions,
 		Reason:        p.Args.Input.Reason,
 	}

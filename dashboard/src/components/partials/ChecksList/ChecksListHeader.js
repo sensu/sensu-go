@@ -16,6 +16,7 @@ import QueueMenuItem from "/components/partials/ToolbarMenuItems/QueueExecution"
 
 class ChecksListHeader extends React.PureComponent {
   static propTypes = {
+    editable: PropTypes.bool.isRequired,
     namespace: PropTypes.object,
     onChangeQuery: PropTypes.func.isRequired,
     onClickClearSilences: PropTypes.func.isRequired,
@@ -85,19 +86,20 @@ class ChecksListHeader extends React.PureComponent {
 
     const selectedCount = selectedItems.length;
     const selectedSilenced = selectedItems.filter(en => en.silences.length > 0);
+    const selectedPublished = selectedItems.filter(ch => ch.publish === true);
+    const selectedNonKeepalives = selectedItems.filter(
+      ch => ch.name !== "keepalive",
+    );
+
     const allSelectedSilenced = selectedSilenced.length === selectedCount;
     const allSelectedUnsilenced = selectedSilenced.length === 0;
-    const selectedPublished = selectedItems.filter(ch => ch.publish === true);
     const published = selectedCount === selectedPublished.length;
-    const selectedKeepalives = selectedItems.filter(
-      ch => ch.name === "keepalive",
-    );
 
     return (
       <ToolbarMenu>
         <ToolbarMenu.Item id="queue" visible="always">
           <QueueMenuItem
-            disabled={selectedKeepalives.length !== 0}
+            disabled={selectedNonKeepalives.length === 0}
             onClick={this.props.onClickExecute}
             description="Queue an adhoc execution of the selected checks."
           />
@@ -155,13 +157,18 @@ class ChecksListHeader extends React.PureComponent {
   };
 
   render() {
-    const { selectedItems, toggleSelectedItems, rowCount } = this.props;
-    const selectedCount = selectedItems.length;
+    const {
+      editable,
+      selectedItems,
+      toggleSelectedItems,
+      rowCount,
+    } = this.props;
 
     return (
       <ListHeader
         sticky
-        selectedCount={selectedCount}
+        editable={editable}
+        selectedCount={selectedItems.length}
         rowCount={rowCount}
         onClickSelect={toggleSelectedItems}
         renderActions={this.renderActions}

@@ -4,7 +4,7 @@ import { withStyles } from "@material-ui/core/styles";
 
 import TableCell from "@material-ui/core/TableCell";
 
-const styles = () => ({
+const styles = theme => ({
   root: {
     width: "100%",
     maxWidth: 0,
@@ -13,6 +13,10 @@ const styles = () => ({
       whiteSpace: "nowrap",
       textOverflow: "ellipsis",
       overflow: "hidden",
+    },
+
+    "&:first-child": {
+      paddingLeft: theme.spacing.unit * 2.5,
     },
   },
 });
