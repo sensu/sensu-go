@@ -113,19 +113,3 @@ func TestUserStorage(t *testing.T) {
 		assert.Equal(t, 2, len(users))
 	})
 }
-
-func TestCheckPassword(t *testing.T) {
-	hash := "$2a$10$iyYyGmveS9dcYp5DHMbOm.LShX806vB0ClzoPyt1TIgkZ9KQ62cOO"
-	password := "P@ssw0rd!"
-
-	assert.False(t, checkPassword(hash, "foo"))
-	assert.True(t, checkPassword(hash, password))
-}
-
-func TestHashPassword(t *testing.T) {
-	password := "P@ssw0rd!"
-
-	hash, err := hashPassword(password)
-	assert.NotEqual(t, password, hash)
-	assert.NoError(t, err)
-}
