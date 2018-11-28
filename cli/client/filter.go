@@ -75,7 +75,7 @@ func (client *RestClient) ListFilters(namespace string) ([]types.EventFilter, er
 	}
 
 	if res.StatusCode() >= 400 {
-		return filters, fmt.Errorf("%v", res.String())
+		return filters, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &filters)

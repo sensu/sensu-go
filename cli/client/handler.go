@@ -20,7 +20,7 @@ func (client *RestClient) ListHandlers(namespace string) ([]types.Handler, error
 	}
 
 	if res.StatusCode() >= 400 {
-		return handlers, fmt.Errorf("%v", res.String())
+		return handlers, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &handlers)
