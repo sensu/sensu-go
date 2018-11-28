@@ -894,6 +894,12 @@ type Mutation {
 
   """Stores given pair as user's last visited namespace."""
   setLastNamespace(name: String!): Boolean
+
+  """Flag to allow us to retry a connection"""
+  retryLocalNetwork: Boolean
+
+  """Flags the client as being offline or online"""
+  setLocalNetworkOffline(offline: Boolean!): Boolean
 }
 
 """A Mutator is a mutator specification."""

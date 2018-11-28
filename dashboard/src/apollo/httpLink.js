@@ -1,10 +1,36 @@
 import { BatchHttpLink as HttpLink } from "apollo-link-batch-http";
 import doFetch from "/utils/fetch";
+import gql from "graphql-tag";
 
-const httpLink = () =>
+const mutation = gql`
+  mutation SetLocalNetworkOfflineMutation($offline: Boolean!) {
+    setLocalNetworkOffline(offline: $offline) @client
+  }
+`;
+
+// TODO: Likely have some logic for when we would like to attempt retry?
+
+const httpLink = ({ getClient }) =>
   new HttpLink({
     uri: "/graphql",
-    fetch: doFetch,
+    fetch: (url, init) =>
+      doFetch(url, init).then(
+        response => {
+          getClient().mutate({
+            mutation,
+            variables: { offline: true },
+          });
+          return response;
+        },
+        error => {
+          getClient().mutate({
+            mutation,
+            variables: { offline: false },
+          });
+
+          throw error;
+        },
+      ),
     credentials: "same-origin",
     batchMax: 25,
     batchInterval: 3,
