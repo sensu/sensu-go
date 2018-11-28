@@ -24,7 +24,7 @@ const httpLink = ({ getClient }) =>
         error => {
           getClient().mutate({
             mutation,
-            variables: { offline: error.instanceOf(FailedError) },
+            variables: { offline: error instanceof FailedError },
           });
 
           throw error;
