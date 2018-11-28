@@ -125,6 +125,10 @@ func (a UserController) Update(ctx context.Context, given types.User) error {
 		user.Password = hash
 	}
 
+	// Update fields
+	user.Groups = given.Groups
+	user.Disabled = given.Disabled
+
 	// Persist Changes
 	return a.updateUser(ctx, user)
 }
