@@ -261,5 +261,5 @@ func (e *Event) URIPath() string {
 	if !e.HasCheck() {
 		return ""
 	}
-	return fmt.Sprintf("/events/%s/%s", url.PathEscape(e.Entity.Name), url.PathEscape(e.Check.Name))
+	return fmt.Sprintf("/api/core/v2/namespaces/%s/events/%s/%s", url.PathEscape(e.Entity.Namespace), url.PathEscape(e.Entity.Name), url.PathEscape(e.Check.Name))
 }

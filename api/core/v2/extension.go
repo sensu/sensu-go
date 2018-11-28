@@ -22,7 +22,7 @@ func (e *Extension) Validate() error {
 
 // URIPath returns the path component of an Extension URI.
 func (e *Extension) URIPath() string {
-	return fmt.Sprintf("/extensions/%s", url.PathEscape(e.Name))
+	return fmt.Sprintf("/api/core/v2/namespaces/%s/extensions/%s", url.PathEscape(e.Namespace), url.PathEscape(e.Name))
 }
 
 // FixtureExtension given a name returns a valid extension for use in tests

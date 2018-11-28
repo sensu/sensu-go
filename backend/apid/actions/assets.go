@@ -49,6 +49,9 @@ func (a AssetController) Find(ctx context.Context, name string) (*types.Asset, e
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}
+	if result == nil {
+		return nil, NewErrorf(NotFound)
+	}
 
 	return result, nil
 }
@@ -73,35 +76,6 @@ func (a AssetController) Create(ctx context.Context, newAsset types.Asset) error
 	// Persist
 	if err := a.Store.UpdateAsset(ctx, &newAsset); err != nil {
 		return NewError(InternalErr, err)
-	}
-
-	return nil
-}
-
-// Update validates and persists changes to a resource if viewer has access.
-func (a AssetController) Update(ctx context.Context, given types.Asset) error {
-	// Adjust context
-	ctx = addOrgEnvToContext(ctx, &given)
-
-	// Find existing asset
-	asset, err := a.Store.GetAssetByName(ctx, given.Name)
-	if err != nil {
-		return NewError(InternalErr, err)
-	} else if asset == nil {
-		return NewErrorf(NotFound)
-	}
-
-	// Copy
-	copyFields(asset, &given, assetUpdateFields...)
-
-	// Validate
-	if err := asset.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-
-	// Persist Changes
-	if serr := a.Store.UpdateAsset(ctx, asset); serr != nil {
-		return NewError(InternalErr, serr)
 	}
 
 	return nil

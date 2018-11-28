@@ -1,22 +1,14 @@
 package client
 
 import (
-	"net/url"
-	"path"
-
 	"github.com/sensu/sensu-go/types"
 )
 
-const clusterRolesBasePath = "/apis/rbac/v2/clusterroles"
-
-func clusterRolesPath(name string) string {
-	name = url.PathEscape(name)
-	return path.Join(clusterRolesBasePath, name)
-}
+var clusterRolesPath = createBasePath(coreAPIGroup, coreAPIVersion, "clusterroles")
 
 // CreateClusterRole with the given cluster role
 func (client *RestClient) CreateClusterRole(clusterRole *types.ClusterRole) error {
-	return client.post(clusterRolesBasePath, clusterRole)
+	return client.post(clusterRolesPath(), clusterRole)
 }
 
 // DeleteClusterRole with the given name
@@ -37,7 +29,7 @@ func (client *RestClient) FetchClusterRole(name string) (*types.ClusterRole, err
 func (client *RestClient) ListClusterRoles() ([]types.ClusterRole, error) {
 	clusterRoles := []types.ClusterRole{}
 
-	if err := client.list(clusterRolesBasePath, &clusterRoles); err != nil {
+	if err := client.list(clusterRolesPath(), &clusterRoles); err != nil {
 		return clusterRoles, err
 	}
 

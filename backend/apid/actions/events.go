@@ -59,6 +59,9 @@ func (a EventController) Find(ctx context.Context, entity, check string) (*types
 	if err != nil {
 		return nil, NewError(InternalErr, err)
 	}
+	if result == nil {
+		return nil, NewErrorf(NotFound)
+	}
 
 	return result, nil
 }

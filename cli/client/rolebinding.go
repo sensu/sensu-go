@@ -1,24 +1,14 @@
 package client
 
 import (
-	"fmt"
-	"net/url"
-	"path"
-
 	"github.com/sensu/sensu-go/types"
 )
 
-const roleBindingsBasePath = "/apis/rbac/v2/namespaces/%s/rolebindings"
-
-func roleBindingsPath(namespace, name string) string {
-	name = url.PathEscape(name)
-	namespace = url.PathEscape(namespace)
-	return path.Join(fmt.Sprintf(roleBindingsBasePath, namespace), name)
-}
+var roleBindingsPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "rolebindings")
 
 // CreateRoleBinding with the given role binding
 func (client *RestClient) CreateRoleBinding(roleBinding *types.RoleBinding) error {
-	return client.post(roleBindingsPath(roleBinding.Namespace, ""), roleBinding)
+	return client.post(roleBindingsPath(roleBinding.Namespace), roleBinding)
 }
 
 // DeleteRoleBinding with the given name
@@ -39,7 +29,7 @@ func (client *RestClient) FetchRoleBinding(name string) (*types.RoleBinding, err
 func (client *RestClient) ListRoleBindings(namespace string) ([]types.RoleBinding, error) {
 	roleBindings := []types.RoleBinding{}
 
-	if err := client.list(roleBindingsPath(namespace, ""), &roleBindings); err != nil {
+	if err := client.list(roleBindingsPath(namespace), &roleBindings); err != nil {
 		return roleBindings, err
 	}
 

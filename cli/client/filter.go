@@ -4,10 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"net/url"
 
 	"github.com/sensu/sensu-go/types"
 )
+
+var filtersPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "filters")
 
 // CreateFilter creates a new filter on configured Sensu instance
 func (client *RestClient) CreateFilter(filter *types.EventFilter) (err error) {
@@ -16,7 +17,8 @@ func (client *RestClient) CreateFilter(filter *types.EventFilter) (err error) {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Post("/filters")
+	path := filtersPath(client.config.Namespace())
+	res, err := client.R().SetBody(bytes).Post(path)
 	if err != nil {
 		return err
 	}
@@ -30,7 +32,8 @@ func (client *RestClient) CreateFilter(filter *types.EventFilter) (err error) {
 
 // DeleteFilter deletes a filter from configured Sensu instance
 func (client *RestClient) DeleteFilter(filter *types.EventFilter) error {
-	res, err := client.R().Delete("/filters/" + url.PathEscape(filter.Name))
+	path := filtersPath(filter.Namespace, filter.Name)
+	res, err := client.R().Delete(path)
 
 	if err != nil {
 		return err
@@ -47,7 +50,8 @@ func (client *RestClient) DeleteFilter(filter *types.EventFilter) error {
 func (client *RestClient) FetchFilter(name string) (*types.EventFilter, error) {
 	var filter *types.EventFilter
 
-	res, err := client.R().Get("/filters/" + url.PathEscape(name))
+	path := filtersPath(client.config.Namespace(), name)
+	res, err := client.R().Get(path)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +67,9 @@ func (client *RestClient) FetchFilter(name string) (*types.EventFilter, error) {
 // ListFilters fetches all filters from configured Sensu instance
 func (client *RestClient) ListFilters(namespace string) ([]types.EventFilter, error) {
 	var filters []types.EventFilter
-	res, err := client.R().SetQueryParam("namespace", namespace).Get("/filters")
+
+	path := filtersPath(namespace)
+	res, err := client.R().Get(path)
 	if err != nil {
 		return filters, err
 	}
@@ -82,7 +88,9 @@ func (client *RestClient) UpdateFilter(f *types.EventFilter) error {
 	if err != nil {
 		return err
 	}
-	resp, err := client.R().SetBody(b).Put(fmt.Sprintf("/filters/%s", url.PathEscape(f.Name)))
+
+	path := filtersPath(f.Namespace, f.Name)
+	resp, err := client.R().SetBody(b).Put(path)
 	if err != nil {
 		return err
 	}

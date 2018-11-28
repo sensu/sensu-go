@@ -99,5 +99,5 @@ func FixtureDenyEventFilter(name string) *EventFilter {
 
 // URIPath returns the path component of a Filter URI.
 func (f *EventFilter) URIPath() string {
-	return fmt.Sprintf("/filters/%s", url.PathEscape(f.Name))
+	return fmt.Sprintf("/api/core/v2/namespaces/%s/filters/%s", url.PathEscape(f.Namespace), url.PathEscape(f.Name))
 }

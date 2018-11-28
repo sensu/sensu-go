@@ -83,7 +83,7 @@ func (s *Silenced) URIPath() string {
 	if s.Name == "" {
 		s.Name, _ = SilencedName(s.Subscription, s.Check)
 	}
-	return fmt.Sprintf("/silenced/%s", url.PathEscape(s.Name))
+	return fmt.Sprintf("/api/core/v2/namespaces/%s/silenced/%s", url.PathEscape(s.Namespace), url.PathEscape(s.Name))
 }
 
 // SortSilencedByPredicate can be used to sort a given collection using a given

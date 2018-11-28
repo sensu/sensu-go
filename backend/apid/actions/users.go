@@ -40,6 +40,9 @@ func (a UserController) Find(ctx context.Context, name string) (*types.User, err
 	if serr != nil {
 		return nil, serr
 	}
+	if result == nil {
+		return nil, NewErrorf(NotFound)
+	}
 
 	return result, nil
 }

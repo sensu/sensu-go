@@ -24,7 +24,10 @@ func NewEventFiltersRouter(store store.EventFilterStore) *EventFiltersRouter {
 
 // Mount the EventFiltersRouter to a parent Router
 func (r *EventFiltersRouter) Mount(parent *mux.Router) {
-	routes := ResourceRoute{Router: parent, PathPrefix: "/filters"}
+	routes := ResourceRoute{
+		Router:     parent,
+		PathPrefix: "/namespaces/{namespace}/{resource:filters}",
+	}
 	routes.GetAll(r.list)
 	routes.Get(r.find)
 	routes.Post(r.create)

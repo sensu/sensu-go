@@ -114,6 +114,9 @@ func (c HandlerController) Find(ctx context.Context, name string) (*types.Handle
 	if err != nil {
 		return nil, NewError(InternalErr, err)
 	}
+	if result == nil {
+		return nil, NewErrorf(NotFound)
+	}
 
 	return result, nil
 }
@@ -127,33 +130,4 @@ func (c HandlerController) Query(ctx context.Context) ([]*types.Handler, error) 
 	}
 
 	return results, nil
-}
-
-// Update validates and persists changes to a resource if viewer has access.
-func (c HandlerController) Update(ctx context.Context, newHandler types.Handler) error {
-	// Adjust context
-	ctx = addOrgEnvToContext(ctx, &newHandler)
-
-	// Find existing handler
-	handler, err := c.Store.GetHandlerByName(ctx, newHandler.Name)
-	if err != nil {
-		return NewError(InternalErr, err)
-	} else if handler == nil {
-		return NewErrorf(NotFound, newHandler.Name)
-	}
-
-	// Copy
-	copyFields(handler, &newHandler, updateFields...)
-
-	// Validate
-	if err := handler.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-
-	// Persist Changes
-	if serr := c.Store.UpdateHandler(ctx, handler); serr != nil {
-		return NewError(InternalErr, serr)
-	}
-
-	return nil
 }

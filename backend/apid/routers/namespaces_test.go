@@ -26,10 +26,6 @@ func (m *mockOrgController) CreateOrReplace(ctx context.Context, org types.Names
 	return m.Called(ctx, org).Error(0)
 }
 
-func (m *mockOrgController) Update(ctx context.Context, org types.Namespace) error {
-	return m.Called(ctx, org).Error(0)
-}
-
 func (m *mockOrgController) Query(ctx context.Context) ([]*types.Namespace, error) {
 	args := m.Called(ctx)
 	return args.Get(0).([]*types.Namespace), args.Error(1)
@@ -63,7 +59,7 @@ func TestPostNamespace(t *testing.T) {
 	controller.On("Create", mock.Anything, mock.Anything).Return(nil)
 	b, _ := json.Marshal(org)
 	body := bytes.NewReader(b)
-	endpoint := "/rbac/namespaces"
+	endpoint := "/namespaces"
 	req := newRequest(t, http.MethodPost, server.URL+endpoint, body)
 
 	resp, err := client.Do(req)
@@ -91,7 +87,7 @@ func TestPutNamespace(t *testing.T) {
 	controller.On("CreateOrReplace", mock.Anything, mock.Anything).Return(nil)
 	b, _ := json.Marshal(types.FixtureNamespace("default"))
 	body := bytes.NewReader(b)
-	endpoint := "/rbac/namespaces/default"
+	endpoint := "/namespaces/default"
 	req := newRequest(t, http.MethodPut, server.URL+endpoint, body)
 
 	resp, err := client.Do(req)
@@ -115,7 +111,7 @@ func TestGetNamespace(t *testing.T) {
 
 	fixture := types.FixtureNamespace("default")
 	controller.On("Find", mock.Anything, "default").Return(fixture, nil)
-	endpoint := "/rbac/namespaces/default"
+	endpoint := "/namespaces/default"
 	req := newRequest(t, http.MethodGet, server.URL+endpoint, nil)
 
 	resp, err := client.Do(req)
@@ -136,7 +132,7 @@ func TestDeleteNamespace(t *testing.T) {
 	client := new(http.Client)
 
 	controller.On("Destroy", mock.Anything, "default").Return(nil)
-	endpoint := "/rbac/namespaces/default"
+	endpoint := "/namespaces/default"
 	req := newRequest(t, http.MethodDelete, server.URL+endpoint, nil)
 
 	resp, err := client.Do(req)
@@ -158,7 +154,7 @@ func TestGetAllNamespaces(t *testing.T) {
 
 	fixtures := []*types.Namespace{types.FixtureNamespace("default")}
 	controller.On("Query", mock.Anything).Return(fixtures, nil)
-	endpoint := "/rbac/namespaces"
+	endpoint := "/namespaces"
 	req := newRequest(t, http.MethodGet, server.URL+endpoint, nil)
 
 	resp, err := client.Do(req)

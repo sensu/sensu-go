@@ -28,9 +28,9 @@ func TestAuthorizationAttributes(t *testing.T) {
 			expected:    authorization.Attributes{Verb: "list"},
 		},
 		{
-			description: "GET /apis/core/v1alpha1/namespaces",
+			description: "GET /api/core/v1alpha1/namespaces",
 			method:      "GET",
-			path:        "/apis/core/v1alpha1/namespaces",
+			path:        "/api/core/v1alpha1/namespaces",
 			expected: authorization.Attributes{
 				APIGroup:   "core",
 				APIVersion: "v1alpha1",
@@ -39,9 +39,9 @@ func TestAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "GET /apis/core/v1alpha1/namespaces/default",
+			description: "GET /api/core/v1alpha1/namespaces/default",
 			method:      "GET",
-			path:        "/apis/core/v1alpha1/namespaces/default",
+			path:        "/api/core/v1alpha1/namespaces/default",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v1alpha1",
@@ -51,9 +51,9 @@ func TestAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "GET /apis/core/v1alpha1/namespaces/default/checks",
+			description: "GET /api/core/v1alpha1/namespaces/default/checks",
 			method:      "GET",
-			path:        "/apis/core/v1alpha1/namespaces/default/checks",
+			path:        "/api/core/v1alpha1/namespaces/default/checks",
 			expected: authorization.Attributes{
 				APIGroup:   "core",
 				APIVersion: "v1alpha1",
@@ -63,9 +63,9 @@ func TestAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "GET /apis/core/v1alpha1/namespaces/default/checks/check-cpu",
+			description: "GET /api/core/v1alpha1/namespaces/default/checks/check-cpu",
 			method:      "GET",
-			path:        "/apis/core/v1alpha1/namespaces/default/checks/check-cpu",
+			path:        "/api/core/v1alpha1/namespaces/default/checks/check-cpu",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v1alpha1",
@@ -125,10 +125,10 @@ func TestAuthorizationAttributes(t *testing.T) {
 
 			// Prepare the router
 			router := mux.NewRouter()
-			router.PathPrefix("/apis/{group}/{version}/namespaces/{namespace}/{resource}/{name}").Handler(testHandler)
-			router.PathPrefix("/apis/{group}/{version}/namespaces/{namespace}/{resource}").Handler(testHandler)
-			router.PathPrefix("/apis/{group}/{version}/{resource}/{name}").Handler(testHandler)
-			router.PathPrefix("/apis/{group}/{version}/{resource}").Handler(testHandler)
+			router.PathPrefix("/api/{group}/{version}/namespaces/{namespace}/{resource}/{id}").Handler(testHandler)
+			router.PathPrefix("/api/{group}/{version}/namespaces/{namespace}/{resource}").Handler(testHandler)
+			router.PathPrefix("/api/{group}/{version}/{resource}/{id}").Handler(testHandler)
+			router.PathPrefix("/api/{group}/{version}/{resource}").Handler(testHandler)
 			router.PathPrefix("/").Handler(testHandler) // catch all
 			middleware := AuthorizationAttributes{}
 			router.Use(middleware.Then)
@@ -148,9 +148,9 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 		expected    authorization.Attributes
 	}{
 		{
-			description: "GET /assets",
+			description: "GET /api/core/v2/namespaces/default/assets",
 			method:      "GET",
-			path:        "/assets",
+			path:        "/api/core/v2/namespaces/default/assets",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -161,9 +161,9 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "GET /assets?namespace=foo",
+			description: "GET /api/core/v2/namespaces/foo/assets",
 			method:      "GET",
-			path:        "/assets?namespace=foo",
+			path:        "/api/core/v2/namespaces/foo/assets",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -174,9 +174,9 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "GET /assets/foo",
+			description: "GET /api/core/v2/namespaces/default/assets/foo",
 			method:      "GET",
-			path:        "/assets/foo",
+			path:        "/api/core/v2/namespaces/default/assets/foo",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -187,9 +187,9 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "GET /assets/foo?namespace=bar",
+			description: "GET /api/core/v2/namespaces/bar/assets/foo",
 			method:      "GET",
-			path:        "/assets/foo?namespace=bar",
+			path:        "/api/core/v2/namespaces/bar/assets/foo",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -200,9 +200,9 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "GET /checks",
+			description: "GET /api/core/v2/namespaces/default/checks",
 			method:      "GET",
-			path:        "/checks",
+			path:        "/api/core/v2/namespaces/default/checks",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -213,9 +213,9 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "GET /checks/foo",
+			description: "GET /api/core/v2/namespaces/default/checks/foo",
 			method:      "GET",
-			path:        "/checks/foo",
+			path:        "/api/core/v2/namespaces/default/checks/foo",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -226,9 +226,9 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "POST /checks/foo/execute",
+			description: "POST /api/core/v2/namespaces/default/checks/foo/execute",
 			method:      "POST",
-			path:        "/checks/foo/execute",
+			path:        "/api/core/v2/namespaces/default/checks/foo/execute",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -239,9 +239,9 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "PUT /checks/foo/hooks/bar",
+			description: "PUT /api/core/v2/namespaces/default/checks/foo/hooks/bar",
 			method:      "PUT",
-			path:        "/checks/foo/hooks/bar",
+			path:        "/api/core/v2/namespaces/default/checks/foo/hooks/bar",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -252,9 +252,9 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "DELETE /checks/foo/hooks/bar/hook/baz",
+			description: "DELETE /api/core/v2/namespaces/default/checks/foo/hooks/bar/hook/baz",
 			method:      "DELETE",
-			path:        "/checks/foo/hooks/bar/hook/baz",
+			path:        "/api/core/v2/namespaces/default/checks/foo/hooks/bar/hook/baz",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -265,9 +265,9 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "GET /cluster/members",
+			description: "GET /api/core/v2/namespaces/default/cluster/members",
 			method:      "GET",
-			path:        "/cluster/members",
+			path:        "/api/core/v2/namespaces/default/cluster/members",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -278,9 +278,9 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "GET /cluster/members/foo",
+			description: "GET /api/core/v2/namespaces/default/cluster/members/foo",
 			method:      "GET",
-			path:        "/cluster/members/foo",
+			path:        "/api/core/v2/namespaces/default/cluster/members/foo",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -291,9 +291,9 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "GET /events",
+			description: "GET /api/core/v2/namespaces/default/events",
 			method:      "GET",
-			path:        "/events",
+			path:        "/api/core/v2/namespaces/default/events",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -304,9 +304,9 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "GET /events/entity_name",
+			description: "GET /api/core/v2/namespaces/default/events/entity_name",
 			method:      "GET",
-			path:        "/events/entity_name",
+			path:        "/api/core/v2/namespaces/default/events/entity_name",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -317,9 +317,9 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "GET /events/entity_name/check_name",
+			description: "GET /api/core/v2/namespaces/default/events/entity_name/check_name",
 			method:      "GET",
-			path:        "/events/entity_name/check_name",
+			path:        "/api/core/v2/namespaces/default/events/entity_name/check_name",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -330,61 +330,59 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "GET /rbac/namespaces",
+			description: "GET /api/core/v2/namespaces",
 			method:      "GET",
-			path:        "/rbac/namespaces",
+			path:        "/api/core/v2/namespaces",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
-				Namespace:    "default",
 				Resource:     "namespaces",
 				ResourceName: "",
 				Verb:         "list",
 			},
 		},
 		{
-			description: "GET /rbac/namespaces/foo",
+			description: "GET /api/core/v2/namespaces/foo",
 			method:      "GET",
-			path:        "/rbac/namespaces/foo",
+			path:        "/api/core/v2/namespaces/foo",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
-				Namespace:    "default",
 				Resource:     "namespaces",
 				ResourceName: "foo",
 				Verb:         "get",
 			},
 		},
 		{
-			description: "GET /rbac/users",
+			description: "GET /api/core/v2/users",
 			method:      "GET",
-			path:        "/rbac/users",
+			path:        "/api/core/v2/users",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
-				Namespace:    "default",
+				Namespace:    "",
 				Resource:     "users",
 				ResourceName: "",
 				Verb:         "list",
 			},
 		},
 		{
-			description: "GET /rbac/users/foo",
+			description: "GET /api/core/v2/users/foo",
 			method:      "GET",
-			path:        "/rbac/users/foo",
+			path:        "/api/core/v2/users/foo",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
-				Namespace:    "default",
+				Namespace:    "",
 				Resource:     "users",
 				ResourceName: "foo",
 				Verb:         "get",
 			},
 		},
 		{
-			description: "GET /silenced",
+			description: "GET /api/core/v2/namespaces/default/silenced",
 			method:      "GET",
-			path:        "/silenced",
+			path:        "/api/core/v2/namespaces/default/silenced",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -395,9 +393,9 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "GET /silenced/foo",
+			description: "GET /api/core/v2/namespaces/default/silenced/foo",
 			method:      "GET",
-			path:        "/silenced/foo",
+			path:        "/api/core/v2/namespaces/default/silenced/foo",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -408,9 +406,9 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "GET /silenced/checks",
+			description: "GET /api/core/v2/namespaces/default/silenced/checks",
 			method:      "GET",
-			path:        "/silenced/checks",
+			path:        "/api/core/v2/namespaces/default/silenced/checks",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -421,9 +419,9 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "GET /silenced/checks/foo",
+			description: "GET /api/core/v2/namespaces/default/silenced/checks/foo",
 			method:      "GET",
-			path:        "/silenced/checks/foo",
+			path:        "/api/core/v2/namespaces/default/silenced/checks/foo",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -434,9 +432,9 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "GET /silenced/subscriptions",
+			description: "GET /api/core/v2/namespaces/default/silenced/subscriptions",
 			method:      "GET",
-			path:        "/silenced/subscriptions",
+			path:        "/api/core/v2/namespaces/default/silenced/subscriptions",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -447,9 +445,9 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			},
 		},
 		{
-			description: "GET /silenced/subscriptions/foo",
+			description: "GET /api/core/v2/namespaces/default/silenced/subscriptions/foo",
 			method:      "GET",
-			path:        "/silenced/subscriptions/foo",
+			path:        "/api/core/v2/namespaces/default/silenced/subscriptions/foo",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -462,11 +460,11 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 		{
 			description: "View another user",
 			method:      "GET",
-			path:        "/rbac/users/foo",
+			path:        "/api/core/v2/users/foo",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
-				Namespace:    "default",
+				Namespace:    "",
 				Resource:     "users",
 				ResourceName: "foo",
 				Verb:         "get",
@@ -475,11 +473,11 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 		{
 			description: "View itself",
 			method:      "GET",
-			path:        "/rbac/users/admin",
+			path:        "/api/core/v2/users/admin",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
-				Namespace:    "default",
+				Namespace:    "",
 				Resource:     types.LocalSelfUserResource,
 				ResourceName: "admin",
 				Verb:         "get",
@@ -488,11 +486,11 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 		{
 			description: "Update another user password",
 			method:      "PUT",
-			path:        "/rbac/users/foo/password",
+			path:        "/api/core/v2/users/foo/password",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
-				Namespace:    "default",
+				Namespace:    "",
 				Resource:     "users",
 				ResourceName: "foo",
 				Verb:         "update",
@@ -501,11 +499,11 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 		{
 			description: "Update its own password",
 			method:      "PUT",
-			path:        "/rbac/users/admin/password",
+			path:        "/api/core/v2/users/admin/password",
 			expected: authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
-				Namespace:    "default",
+				Namespace:    "",
 				Resource:     types.LocalSelfUserResource,
 				ResourceName: "admin",
 				Verb:         "update",
@@ -537,19 +535,20 @@ func TestLegacyAuthorizationAttributes(t *testing.T) {
 			ctx := sensuJWT.SetClaimsIntoContext(r, &claims)
 
 			// Prepare the router
-			middleware := LegacyAuthorizationAttributes{}
+			middleware := AuthorizationAttributes{}
 			router := mux.NewRouter()
-			router.PathPrefix("/{resource:events}/{entity}/{check}").Handler(testHandler)
-			router.PathPrefix("/{resource:events}/{entity}").Handler(testHandler)
-			router.PathPrefix("/{resource:silenced}/checks/{check}").Handler(testHandler)
-			router.PathPrefix("/{resource:silenced}/subscriptions/{subscription}").Handler(testHandler)
-			router.PathPrefix("/{prefix:cluster}/{resource}/{id}").Handler(testHandler)
-			router.PathPrefix("/{prefix:cluster}/{resource}").Handler(testHandler)
-			router.PathPrefix("/{prefix:rbac}/{resource}/{id}/{subresource}").Handler(testHandler)
-			router.PathPrefix("/{prefix:rbac}/{resource}/{id}").Handler(testHandler)
-			router.PathPrefix("/{prefix:rbac}/{resource}").Handler(testHandler)
-			router.PathPrefix("/{resource}/{id}").Handler(testHandler)
-			router.PathPrefix("/").Handler(testHandler) // catch all for legacy routes
+			router.PathPrefix("/api/{group}/{version}/namespaces/{namespace}/{resource:cluster}/members/{id}").Handler(testHandler)
+			router.PathPrefix("/api/{group}/{version}/namespaces/{namespace}/{resource:cluster}/members").Handler(testHandler)
+			router.PathPrefix("/api/{group}/{version}/namespaces/{namespace}/{resource:events}/{entity}/{check}").Handler(testHandler)
+			router.PathPrefix("/api/{group}/{version}/namespaces/{namespace}/{resource:events}/{entity}").Handler(testHandler)
+			router.PathPrefix("/api/{group}/{version}/namespaces/{namespace}/{resource:silenced}/checks/{check}").Handler(testHandler)
+			router.PathPrefix("/api/{group}/{version}/namespaces/{namespace}/{resource:silenced}/subscriptions/{subscription}").Handler(testHandler)
+			router.PathPrefix("/api/{group}/{version}/namespaces/{namespace}/{resource}/{id}").Handler(testHandler)
+			router.PathPrefix("/api/{group}/{version}/namespaces/{namespace}/{resource}").Handler(testHandler)
+			router.PathPrefix("/api/{group}/{version}/{resource}/{id}/{subresource}").Handler(testHandler)
+			router.PathPrefix("/api/{group}/{version}/{resource}/{id}").Handler(testHandler)
+			router.PathPrefix("/api/{group}/{version}/{resource}").Handler(testHandler)
+			router.PathPrefix("/").Handler(testHandler) // catch all
 			router.Use(middleware.Then)
 
 			// Serve the request

@@ -24,7 +24,10 @@ func NewUsersRouter(store store.Store) *UsersRouter {
 
 // Mount the UsersRouter to a parent Router
 func (r *UsersRouter) Mount(parent *mux.Router) {
-	routes := ResourceRoute{Router: parent, PathPrefix: "/rbac/users"}
+	routes := ResourceRoute{
+		Router:     parent,
+		PathPrefix: "/{resource:users}",
+	}
 	routes.GetAll(r.list)
 	routes.Get(r.find)
 	routes.Post(r.create)

@@ -2,10 +2,11 @@ package client
 
 import (
 	"encoding/json"
-	"net/url"
 
 	"github.com/sensu/sensu-go/types"
 )
+
+var hooksPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "hooks")
 
 // CreateHook creates new hook on configured Sensu instance
 func (client *RestClient) CreateHook(hook *types.HookConfig) (err error) {
@@ -14,7 +15,8 @@ func (client *RestClient) CreateHook(hook *types.HookConfig) (err error) {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Post("/hooks")
+	path := hooksPath(hook.Namespace)
+	res, err := client.R().SetBody(bytes).Post(path)
 	if err != nil {
 		return err
 	}
@@ -33,7 +35,8 @@ func (client *RestClient) UpdateHook(hook *types.HookConfig) (err error) {
 		return err
 	}
 
-	res, err := client.R().SetBody(bytes).Put("/hooks/" + url.PathEscape(hook.Name))
+	path := hooksPath(hook.Namespace, hook.Name)
+	res, err := client.R().SetBody(bytes).Put(path)
 	if err != nil {
 		return err
 	}
@@ -47,7 +50,8 @@ func (client *RestClient) UpdateHook(hook *types.HookConfig) (err error) {
 
 // DeleteHook deletes hook from configured Sensu instance
 func (client *RestClient) DeleteHook(hook *types.HookConfig) error {
-	res, err := client.R().Delete("/hooks/" + url.PathEscape(hook.Name))
+	path := hooksPath(hook.Namespace, hook.Name)
+	res, err := client.R().Delete(path)
 
 	if err != nil {
 		return err
@@ -64,7 +68,8 @@ func (client *RestClient) DeleteHook(hook *types.HookConfig) error {
 func (client *RestClient) FetchHook(name string) (*types.HookConfig, error) {
 	var hook *types.HookConfig
 
-	res, err := client.R().Get("/hooks/" + url.PathEscape(name))
+	path := hooksPath(client.config.Namespace(), name)
+	res, err := client.R().Get(path)
 	if err != nil {
 		return nil, err
 	}
@@ -80,7 +85,9 @@ func (client *RestClient) FetchHook(name string) (*types.HookConfig, error) {
 // ListHooks fetches all hooks from configured Sensu instance
 func (client *RestClient) ListHooks(namespace string) ([]types.HookConfig, error) {
 	var hooks []types.HookConfig
-	res, err := client.R().SetQueryParam("namespace", namespace).Get("/hooks")
+
+	path := hooksPath(namespace)
+	res, err := client.R().Get(path)
 	if err != nil {
 		return hooks, err
 	}

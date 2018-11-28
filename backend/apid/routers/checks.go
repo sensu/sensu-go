@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"path"
 	"time"
 
 	"github.com/gorilla/mux"
@@ -15,7 +16,6 @@ import (
 type CheckController interface {
 	Create(context.Context, types.CheckConfig) error
 	CreateOrReplace(context.Context, types.CheckConfig) error
-	Update(context.Context, types.CheckConfig) error
 	Query(context.Context) ([]*types.CheckConfig, error)
 	Find(context.Context, string) (*types.CheckConfig, error)
 	Destroy(context.Context, string) error
@@ -38,7 +38,10 @@ func NewChecksRouter(ctrl CheckController) *ChecksRouter {
 
 // Mount the ChecksRouter to a parent Router
 func (r *ChecksRouter) Mount(parent *mux.Router) {
-	routes := ResourceRoute{Router: parent, PathPrefix: "/checks"}
+	routes := ResourceRoute{
+		Router:     parent,
+		PathPrefix: "/namespaces/{namespace}/{resource:checks}",
+	}
 	routes.GetAll(r.list)
 	routes.Get(r.find)
 	routes.Post(r.create)
@@ -50,7 +53,7 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 	routes.Path("{id}/hooks/{type}/hook/{hook}", r.removeCheckHook).Methods(http.MethodDelete)
 
 	// handlefunc returns a custom status and response
-	parent.HandleFunc("/checks/{id}/execute", r.adhocRequest).Methods(http.MethodPost)
+	parent.HandleFunc(path.Join(routes.PathPrefix, "{id}/execute"), r.adhocRequest).Methods(http.MethodPost)
 }
 
 func (r *ChecksRouter) list(req *http.Request) (interface{}, error) {

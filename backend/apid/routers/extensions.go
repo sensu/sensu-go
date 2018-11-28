@@ -24,7 +24,10 @@ func NewExtensionsRouter(store store.ExtensionRegistry) *ExtensionsRouter {
 
 // Mount the ExtensionsRouter to a parent Router
 func (r *ExtensionsRouter) Mount(parent *mux.Router) {
-	routes := ResourceRoute{Router: parent, PathPrefix: "/extensions"}
+	routes := ResourceRoute{
+		Router:     parent,
+		PathPrefix: "/namespaces/{namespace}/{resource:extensions}",
+	}
 	routes.GetAll(r.list)
 	routes.Get(r.find)
 	routes.Put(r.register)

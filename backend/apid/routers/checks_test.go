@@ -30,10 +30,6 @@ func (m *mockCheckController) CreateOrReplace(ctx context.Context, check types.C
 	return m.Called(ctx, check).Error(0)
 }
 
-func (m *mockCheckController) Update(ctx context.Context, check types.CheckConfig) error {
-	return m.Called(ctx, check).Error(0)
-}
-
 func (m *mockCheckController) Query(ctx context.Context) ([]*types.CheckConfig, error) {
 	args := m.Called(ctx)
 	return args.Get(0).([]*types.CheckConfig), args.Error(1)
@@ -79,7 +75,7 @@ func TestPostCheck(t *testing.T) {
 	controller.On("Create", mock.Anything, mock.Anything).Return(nil)
 	b, _ := json.Marshal(check)
 	body := bytes.NewReader(b)
-	endpoint := "/checks"
+	endpoint := "/namespaces/default/checks"
 	req := newRequest(t, http.MethodPost, server.URL+endpoint, body)
 
 	resp, err := client.Do(req)
@@ -107,7 +103,7 @@ func TestPutCheck(t *testing.T) {
 	controller.On("CreateOrReplace", mock.Anything, mock.Anything).Return(nil)
 	b, _ := json.Marshal(types.FixtureCheckConfig("check1"))
 	body := bytes.NewReader(b)
-	endpoint := "/checks/check1"
+	endpoint := "/namespaces/default/checks/check1"
 	req := newRequest(t, http.MethodPut, server.URL+endpoint, body)
 
 	resp, err := client.Do(req)
@@ -131,7 +127,7 @@ func TestGetCheck(t *testing.T) {
 
 	fixture := types.FixtureCheckConfig("check1")
 	controller.On("Find", mock.Anything, "check1").Return(fixture, nil)
-	endpoint := "/checks/check1"
+	endpoint := "/namespaces/default/checks/check1"
 	req := newRequest(t, http.MethodGet, server.URL+endpoint, nil)
 
 	resp, err := client.Do(req)
@@ -152,7 +148,7 @@ func TestDeleteCheck(t *testing.T) {
 	client := new(http.Client)
 
 	controller.On("Destroy", mock.Anything, "check1").Return(nil)
-	endpoint := "/checks/check1"
+	endpoint := "/namespaces/default/checks/check1"
 	req := newRequest(t, http.MethodDelete, server.URL+endpoint, nil)
 
 	resp, err := client.Do(req)
@@ -174,7 +170,7 @@ func TestGetAllChecks(t *testing.T) {
 
 	fixtures := []*types.CheckConfig{types.FixtureCheckConfig("check1")}
 	controller.On("Query", mock.Anything).Return(fixtures, nil)
-	endpoint := "/checks"
+	endpoint := "/namespaces/default/checks"
 	req := newRequest(t, http.MethodGet, server.URL+endpoint, nil)
 
 	resp, err := client.Do(req)
@@ -198,7 +194,7 @@ func TestPutCheckHook(t *testing.T) {
 	controller.On("AddCheckHook", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 	b, _ := json.Marshal(fixture)
 	body := bytes.NewReader(b)
-	endpoint := "/checks/check1/hooks/non-zero"
+	endpoint := "/namespaces/default/checks/check1/hooks/non-zero"
 	req := newRequest(t, http.MethodPut, server.URL+endpoint, body)
 
 	resp, err := client.Do(req)
@@ -221,7 +217,7 @@ func TestDeleteCheckHook(t *testing.T) {
 	client := new(http.Client)
 
 	controller.On("RemoveCheckHook", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
-	endpoint := "/checks/check1/hooks/non-zero/hook/hook1"
+	endpoint := "/namespaces/default/checks/check1/hooks/non-zero/hook/hook1"
 	req := newRequest(t, http.MethodDelete, server.URL+endpoint, nil)
 
 	resp, err := client.Do(req)
