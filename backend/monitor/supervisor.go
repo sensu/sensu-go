@@ -93,7 +93,7 @@ func NewEtcdSupervisor(client *clientv3.Client, h Handler) *EtcdSupervisor {
 // extended. If the monitor's ttl has changed, a new lease is created and the
 // key is updated with that new lease.
 func (m *EtcdSupervisor) Monitor(ctx context.Context, name string, event *types.Event, ttl int64) error {
-	key := monitorKeyBuilder.Build(name)
+	key := monitorKeyBuilder.WithNamespace(event.Entity.Namespace).Build(name)
 	// try to get the monitor from the store
 	mon, err := m.getMonitor(ctx, key)
 	if err != nil {
