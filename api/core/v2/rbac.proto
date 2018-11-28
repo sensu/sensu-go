@@ -79,7 +79,7 @@ message ClusterRoleBinding {
   repeated Subject subjects = 1 [(gogoproto.jsontag) = "subjects", (gogoproto.nullable) = false];
 
   // RoleRef references a ClusterRole in the current namespace
-  RoleRef role_ref = 2 [(gogoproto.jsontag) = "roleRef", (gogoproto.nullable) = false];
+  RoleRef role_ref = 2 [(gogoproto.jsontag) = "role_ref", (gogoproto.nullable) = false];
 
   // Metadata contains name, namespace, labels and annotations
   ObjectMeta metadata = 4 [(gogoproto.embed) = true, (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.nullable) = false];
@@ -95,7 +95,7 @@ message RoleBinding {
   repeated Subject subjects = 1 [(gogoproto.jsontag) = "subjects", (gogoproto.nullable) = false];
 
   // RoleRef references a Role in the current namespace
-  RoleRef role_ref = 2 [(gogoproto.jsontag) = "roleRef", (gogoproto.nullable) = false];
+  RoleRef role_ref = 2 [(gogoproto.jsontag) = "role_ref", (gogoproto.nullable) = false];
 
   // Metadata contains name, namespace, labels and annotations
   ObjectMeta metadata = 5 [(gogoproto.embed) = true, (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.nullable) = false];
