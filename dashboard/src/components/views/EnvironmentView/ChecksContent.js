@@ -45,7 +45,15 @@ class ChecksContent extends React.Component {
   renderContent = renderProps => {
     const { queryParams, setQueryParams } = this.props;
     const { limit, offset, filter } = queryParams;
-    const { aborted, data: { namespace } = {}, loading, refetch } = renderProps;
+    const {
+      aborted,
+      data: { namespace } = {},
+      networkStatus,
+      refetch,
+    } = renderProps;
+
+    // see: https://github.com/apollographql/apollo-client/blob/master/packages/apollo-client/src/core/networkStatus.ts
+    const loading = networkStatus < 6;
 
     if (!namespace && !loading && !aborted) {
       return <NotFound />;

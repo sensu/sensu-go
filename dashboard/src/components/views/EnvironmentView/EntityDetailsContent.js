@@ -35,7 +35,10 @@ class EntityDetailsContent extends React.PureComponent {
         pollInterval={pollInterval}
         variables={this.props.match.params}
       >
-        {({ data: { entity } = {}, loading, aborted, refetch }) => {
+        {({ data: { entity } = {}, networkStatus, aborted, refetch }) => {
+          // see: https://github.com/apollographql/apollo-client/blob/master/packages/apollo-client/src/core/networkStatus.ts
+          const loading = networkStatus < 6;
+
           if (!loading && !aborted && (!entity || entity.deleted)) {
             return <NotFound />;
           }

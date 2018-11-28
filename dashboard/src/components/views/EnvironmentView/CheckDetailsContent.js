@@ -33,7 +33,16 @@ class CheckDetailsContent extends React.PureComponent {
         fetchPolicy="cache-and-network"
         variables={this.props.match.params}
       >
-        {({ aborted, client, data: { check } = {}, loading, refetch }) => {
+        {({
+          aborted,
+          client,
+          data: { check } = {},
+          networkStatus,
+          refetch,
+        }) => {
+          // see: https://github.com/apollographql/apollo-client/blob/master/packages/apollo-client/src/core/networkStatus.ts
+          const loading = networkStatus < 6;
+
           if (!loading && !aborted && (!check || check.deleted)) {
             return <NotFound />;
           }

@@ -53,7 +53,15 @@ class EventsContent extends React.Component {
   renderContent = renderProps => {
     const { queryParams, setQueryParams } = this.props;
     const { filter, limit, offset } = queryParams;
-    const { data: { namespace } = {}, loading, aborted, refetch } = renderProps;
+    const {
+      data: { namespace } = {},
+      networkStatus,
+      aborted,
+      refetch,
+    } = renderProps;
+
+    // see: https://github.com/apollographql/apollo-client/blob/master/packages/apollo-client/src/core/networkStatus.ts
+    const loading = networkStatus < 6;
 
     if (!namespace && !loading && !aborted) {
       return <NotFound />;
