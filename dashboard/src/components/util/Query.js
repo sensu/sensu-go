@@ -16,7 +16,7 @@ import shallowEqual from "fbjs/lib/shallowEqual";
 
 import QueryAbortedError from "/errors/QueryAbortedError";
 
-type ObserbableMethods = {
+type ObservableMethods = {
   fetchMore: () => void,
   refetch: () => void,
   startPolling: () => void,
@@ -40,7 +40,7 @@ type State = {
   networkStatus: NetworkStatus,
   observable: ObservableQuery<mixed>,
   props: Props,
-} & ObserbableMethods;
+} & ObservableMethods;
 
 const modifiableWatchQueryOptionsHaveChanged = (
   a: WatchQueryOptions,
