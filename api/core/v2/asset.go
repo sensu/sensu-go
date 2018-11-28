@@ -95,5 +95,5 @@ func FixtureAsset(name string) *Asset {
 
 // URIPath returns the path component of a Asset URI.
 func (a *Asset) URIPath() string {
-	return fmt.Sprintf("/assets/%s", url.PathEscape(a.Name))
+	return fmt.Sprintf("/api/core/v2/namespaces/%s/assets/%s", url.PathEscape(a.Namespace), url.PathEscape(a.Name))
 }

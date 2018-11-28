@@ -28,5 +28,5 @@ func FixtureNamespace(name string) *Namespace {
 
 // URIPath returns the path component of a Namespace URI.
 func (n *Namespace) URIPath() string {
-	return fmt.Sprintf("/rbac/namespaces/%s", url.PathEscape(n.Name))
+	return fmt.Sprintf("/api/core/v2/namespaces/%s", url.PathEscape(n.Name))
 }

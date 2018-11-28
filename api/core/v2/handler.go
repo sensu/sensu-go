@@ -106,5 +106,5 @@ func FixtureSetHandler(name string, handlers ...string) *Handler {
 
 // URIPath returns the path component of a Handler URI.
 func (h *Handler) URIPath() string {
-	return fmt.Sprintf("/handlers/%s", url.PathEscape(h.Name))
+	return fmt.Sprintf("/api/core/v2/namespaces/%s/handlers/%s", url.PathEscape(h.Namespace), url.PathEscape(h.Name))
 }

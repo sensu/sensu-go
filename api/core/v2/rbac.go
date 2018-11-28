@@ -116,7 +116,7 @@ func (r *ClusterRole) Validate() error {
 
 // URIPath returns the path component of a ClusterRole URI.
 func (r *ClusterRole) URIPath() string {
-	return fmt.Sprintf("/apis/rbac/v2/clusterroles/%s", url.PathEscape(r.Name))
+	return fmt.Sprintf("/api/core/v2/clusterroles/%s", url.PathEscape(r.Name))
 }
 
 // Validate a ClusterRoleBinding
@@ -138,7 +138,7 @@ func (b *ClusterRoleBinding) Validate() error {
 
 // URIPath returns the path component of a ClusterRole URI.
 func (b *ClusterRoleBinding) URIPath() string {
-	return fmt.Sprintf("/apis/rbac/v2/clusterrolebindings/%s", url.PathEscape(b.Name))
+	return fmt.Sprintf("/api/core/v2/clusterrolebindings/%s", url.PathEscape(b.Name))
 }
 
 // Validate a Role
@@ -160,7 +160,7 @@ func (r *Role) Validate() error {
 
 // URIPath returns the path component of a Role URI.
 func (r *Role) URIPath() string {
-	return fmt.Sprintf("/apis/rbac/v2/namespaces/%s/roles/%s",
+	return fmt.Sprintf("/api/core/v2/namespaces/%s/roles/%s",
 		url.PathEscape(r.Namespace),
 		url.PathEscape(r.Name),
 	)
@@ -189,7 +189,7 @@ func (b *RoleBinding) Validate() error {
 
 // URIPath returns the path component of a Role URI.
 func (b *RoleBinding) URIPath() string {
-	return fmt.Sprintf("/apis/rbac/v2/namespaces/%s/rolebindings/%s",
+	return fmt.Sprintf("/api/core/v2/namespaces/%s/rolebindings/%s",
 		url.PathEscape(b.Namespace),
 		url.PathEscape(b.Name),
 	)

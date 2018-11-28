@@ -109,7 +109,7 @@ func FixtureEntity(name string) *Entity {
 
 // URIPath returns the path component of a Entity URI.
 func (e *Entity) URIPath() string {
-	return fmt.Sprintf("/entities/%s", url.PathEscape(e.Name))
+	return fmt.Sprintf("/api/core/v2/namespaces/%s/entities/%s", url.PathEscape(e.Namespace), url.PathEscape(e.Name))
 }
 
 //

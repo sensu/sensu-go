@@ -3,6 +3,7 @@ package v2
 import (
 	"errors"
 	fmt "fmt"
+	"net/url"
 )
 
 // FixtureUser returns a testing fixture for an Entity object.
@@ -34,4 +35,9 @@ func (u *User) ValidatePassword() error {
 	}
 
 	return nil
+}
+
+// URIPath is the URI path component to a user.
+func (u *User) URIPath() string {
+	return fmt.Sprintf("/api/core/v2/users/%s", url.PathEscape(u.Username))
 }

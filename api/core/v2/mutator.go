@@ -55,5 +55,5 @@ func FixtureMutator(name string) *Mutator {
 
 // URIPath returns the path component of a Mutator URI.
 func (m *Mutator) URIPath() string {
-	return fmt.Sprintf("/mutators/%s", url.PathEscape(m.Name))
+	return fmt.Sprintf("/api/core/v2/namespaces/%s/mutators/%s", url.PathEscape(m.Namespace), url.PathEscape(m.Name))
 }

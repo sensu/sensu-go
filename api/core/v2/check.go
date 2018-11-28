@@ -370,12 +370,12 @@ func FixtureProxyRequests(splay bool) *ProxyRequests {
 
 // URIPath returns the path component of a Check URI.
 func (c *Check) URIPath() string {
-	return fmt.Sprintf("/checks/%s", url.PathEscape(c.Name))
+	return fmt.Sprintf("/api/core/v2/namespaces/%s/checks/%s", url.PathEscape(c.Namespace), url.PathEscape(c.Name))
 }
 
 // URIPath returns the path component of a CheckConfig URI.
 func (c *CheckConfig) URIPath() string {
-	return fmt.Sprintf("/checks/%s", url.PathEscape(c.Name))
+	return fmt.Sprintf("/api/core/v2/namespaces/%s/checks/%s", url.PathEscape(c.Namespace), url.PathEscape(c.Name))
 }
 
 //

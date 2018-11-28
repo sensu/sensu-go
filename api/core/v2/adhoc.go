@@ -27,5 +27,5 @@ func FixtureAdhocRequest(name string, subscriptions []string) *AdhocRequest {
 
 // URIPath is the URI path component to the adhoc request.
 func (a *AdhocRequest) URIPath() string {
-	return fmt.Sprintf("/checks/%s/execute", url.PathEscape(a.Name))
+	return fmt.Sprintf("/api/core/v2/namespaces/%s/checks/%s/execute", url.PathEscape(a.Namespace), url.PathEscape(a.Name))
 }
