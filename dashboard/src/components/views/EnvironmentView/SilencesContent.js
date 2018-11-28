@@ -57,13 +57,7 @@ class SilencesContent extends React.Component {
   renderContent = renderProps => {
     const { match, queryParams, setQueryParams } = this.props;
     const { filter, limit, offset, order } = queryParams;
-    const {
-      data: { namespace } = {},
-      loading,
-      aborted,
-      refetch,
-      poller,
-    } = renderProps;
+    const { data: { namespace } = {}, loading, aborted, refetch } = renderProps;
 
     if (!namespace && !loading && !aborted) {
       return <NotFound />;
@@ -112,9 +106,7 @@ class SilencesContent extends React.Component {
                 order={order}
                 onChangeQuery={setQueryParams}
                 namespace={namespace}
-                loading={
-                  (loading && (!namespace || !poller.isRunning())) || aborted
-                }
+                loading={(loading && !namespace) || aborted}
                 refetch={refetch}
               />
             )}

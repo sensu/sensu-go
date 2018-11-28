@@ -33,14 +33,7 @@ class CheckDetailsContent extends React.PureComponent {
         fetchPolicy="cache-and-network"
         variables={this.props.match.params}
       >
-        {({
-          aborted,
-          client,
-          data: { check } = {},
-          loading,
-          poller,
-          refetch,
-        }) => {
+        {({ aborted, client, data: { check } = {}, loading, refetch }) => {
           if (!loading && !aborted && (!check || check.deleted)) {
             return <NotFound />;
           }
@@ -49,7 +42,7 @@ class CheckDetailsContent extends React.PureComponent {
             <CheckDetailsContainer
               client={client}
               check={check}
-              loading={(loading && !poller.isRunning()) || aborted}
+              loading={loading || aborted}
               refetch={refetch}
             />
           );

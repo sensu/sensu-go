@@ -45,13 +45,7 @@ class ChecksContent extends React.Component {
   renderContent = renderProps => {
     const { queryParams, setQueryParams } = this.props;
     const { limit, offset, filter } = queryParams;
-    const {
-      aborted,
-      data: { namespace } = {},
-      loading,
-      poller,
-      refetch,
-    } = renderProps;
+    const { aborted, data: { namespace } = {}, loading, refetch } = renderProps;
 
     if (!namespace && !loading && !aborted) {
       return <NotFound />;
@@ -80,10 +74,7 @@ class ChecksContent extends React.Component {
                     offset={offset}
                     onChangeQuery={setQueryParams}
                     namespace={namespace}
-                    loading={
-                      (loading && (!namespace || !poller.isRunning())) ||
-                      aborted
-                    }
+                    loading={(loading && !namespace) || aborted}
                     refetch={refetch}
                     order={queryParams.order}
                     addToast={addToast}

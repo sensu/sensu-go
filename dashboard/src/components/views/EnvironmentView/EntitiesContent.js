@@ -46,13 +46,7 @@ class EntitiesContent extends React.PureComponent {
   renderContent = renderProps => {
     const { queryParams, setQueryParams } = this.props;
     const { filter, limit, offset, order } = queryParams;
-    const {
-      data: { namespace } = {},
-      loading,
-      aborted,
-      refetch,
-      poller,
-    } = renderProps;
+    const { data: { namespace } = {}, loading, aborted, refetch } = renderProps;
 
     if (!namespace && !loading && !aborted) {
       return <NotFound />;
@@ -75,9 +69,7 @@ class EntitiesContent extends React.PureComponent {
                 editable={width !== "xs"}
                 limit={limit}
                 offset={offset}
-                loading={
-                  (loading && (!namespace || !poller.isRunning())) || aborted
-                }
+            loading={(loading && !namespace) || aborted}
                 onChangeQuery={setQueryParams}
                 namespace={namespace}
                 refetch={refetch}

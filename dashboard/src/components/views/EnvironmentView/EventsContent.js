@@ -53,13 +53,7 @@ class EventsContent extends React.Component {
   renderContent = renderProps => {
     const { queryParams, setQueryParams } = this.props;
     const { filter, limit, offset } = queryParams;
-    const {
-      data: { namespace } = {},
-      loading,
-      aborted,
-      poller,
-      refetch,
-    } = renderProps;
+    const { data: { namespace } = {}, loading, aborted, refetch } = renderProps;
 
     if (!namespace && !loading && !aborted) {
       return <NotFound />;
@@ -86,9 +80,7 @@ class EventsContent extends React.Component {
                 offset={offset}
                 onChangeQuery={setQueryParams}
                 namespace={namespace}
-                loading={
-                  (loading && (!namespace || !poller.isRunning())) || aborted
-                }
+                loading={(loading && !namespace) || aborted}
                 refetch={refetch}
               />
             )}

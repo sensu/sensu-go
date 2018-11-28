@@ -39,17 +39,12 @@ class EventDetailsContent extends React.PureComponent {
         pollInterval={pollInterval}
         variables={this.props.match.params}
       >
-        {({ data: { event } = {}, loading, aborted, poller }) => {
+        {({ data: { event } = {}, loading, aborted }) => {
           if (!loading && !aborted && (!event || event.deleted)) {
             return <NotFound />;
           }
 
-          return (
-            <Container
-              event={event}
-              loading={(loading && !poller.isRunning()) || !!aborted}
-            />
-          );
+          return <Container event={event} loading={loading || !!aborted} />;
         }}
       </Query>
     );
