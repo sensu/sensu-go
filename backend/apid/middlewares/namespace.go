@@ -9,10 +9,6 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-const (
-	defaultNamespace = "default"
-)
-
 // Namespace retrieves the namespace passed as a query parameter and add it into
 // the context of the request
 type Namespace struct{}
