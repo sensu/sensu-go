@@ -198,7 +198,7 @@ func TestList(t *testing.T) {
 
 		// We should have 3 objects when listing through all namespaces
 		list = []*genericObject{}
-		ctx = context.WithValue(context.Background(), types.NamespaceKey, "*")
+		ctx = context.WithValue(context.Background(), types.NamespaceKey, "")
 		require.NoError(t, store.list(ctx, getGenericObjectsPath, &list))
 		assert.Len(t, list, 3)
 	})
