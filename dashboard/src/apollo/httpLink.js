@@ -16,14 +16,14 @@ const httpLink = ({ getClient }) =>
         response => {
           getClient().mutate({
             mutation,
-            variables: { offline: true },
+            variables: { offline: false },
           });
           return response;
         },
         error => {
           getClient().mutate({
             mutation,
-            variables: { offline: false },
+            variables: { offline: true },
           });
 
           throw error;
