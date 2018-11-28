@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 
+	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -66,6 +67,13 @@ func (a UserController) Create(ctx context.Context, newUser types.User) error {
 		return NewError(InvalidArgument, err)
 	}
 
+	// Create password digest
+	hash, err := bcrypt.HashPassword(newUser.Password)
+	if err != nil {
+		return NewError(InternalErr, err)
+	}
+	newUser.Password = hash
+
 	// Persist
 	if err := a.Store.UpdateUser(&newUser); err != nil {
 		return NewError(InternalErr, err)
@@ -104,12 +112,17 @@ func (a UserController) Update(ctx context.Context, given types.User) error {
 
 	// Copy & validate password if given
 	if given.Password != "" {
-		user.Password = given.Password
-
 		// Validate password
-		if err := user.ValidatePassword(); err != nil {
+		if err := given.ValidatePassword(); err != nil {
 			return NewError(InvalidArgument, err)
 		}
+
+		// Create password digest
+		hash, err := bcrypt.HashPassword(given.Password)
+		if err != nil {
+			return NewError(InternalErr, err)
+		}
+		user.Password = hash
 	}
 
 	// Persist Changes
