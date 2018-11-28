@@ -29,9 +29,11 @@ func (r *EntitiesRouter) Mount(parent *mux.Router) {
 		Router:     parent,
 		PathPrefix: "/namespaces/{namespace}/{resource:entities}",
 	}
-	routes.List(r.list)
-	routes.Get(r.find)
+
 	routes.Del(r.destroy)
+	routes.Get(r.find)
+	routes.List(r.list)
+	routes.ListAllNamespaces(r.listAllNamespaces, "/{resource:entities}")
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
 }

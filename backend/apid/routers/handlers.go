@@ -29,10 +29,12 @@ func (r *HandlersRouter) Mount(parent *mux.Router) {
 		Router:     parent,
 		PathPrefix: "/namespaces/{namespace}/{resource:handlers}",
 	}
-	routes.Post(r.create)
+
 	routes.Del(r.destroy)
-	routes.List(r.list)
 	routes.Get(r.find)
+	routes.List(r.list)
+	routes.ListAllNamespaces(r.listAllNamespaces, "/{resource:handlers}")
+	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
 }
 

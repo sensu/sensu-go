@@ -6,8 +6,9 @@ import (
 )
 
 const (
-	// NamespaceTypeAll matches all actions
-	NamespaceTypeAll = "*"
+	// NamespaceTypeAll represents an empty namespace, used to represent a request
+	// across all namespaces
+	NamespaceTypeAll = ""
 )
 
 // Validate returns an error if the namespace does not pass validation tests

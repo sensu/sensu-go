@@ -29,8 +29,10 @@ func (r *AssetsRouter) Mount(parent *mux.Router) {
 		Router:     parent,
 		PathPrefix: "/namespaces/{namespace}/{resource:assets}",
 	}
-	routes.List(r.list)
+
 	routes.Get(r.find)
+	routes.List(r.list)
+	routes.ListAllNamespaces(r.listAllNamespaces, "/{resource:assets}")
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
 }

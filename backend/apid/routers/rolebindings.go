@@ -29,10 +29,12 @@ func (r *RoleBindingsRouter) Mount(parent *mux.Router) {
 		Router:     parent,
 		PathPrefix: "/namespaces/{namespace}/{resource:rolebindings}",
 	}
-	routes.List(r.list)
-	routes.Get(r.find)
-	routes.Post(r.create)
+
 	routes.Del(r.destroy)
+	routes.Get(r.find)
+	routes.List(r.list)
+	routes.ListAllNamespaces(r.listAllNamespaces, "/{resource:rolebindings}")
+	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
 }
 

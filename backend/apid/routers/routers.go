@@ -11,7 +11,7 @@ import (
 )
 
 type errorBody struct {
-	Message string `json:"error"`
+	Message string `json:"message"`
 	Code    uint32 `json:"code"`
 }
 
@@ -42,7 +42,7 @@ func respondWith(w http.ResponseWriter, resources interface{}) {
 
 // writeError writes error response in JSON format.
 func writeError(w http.ResponseWriter, err error) {
-	const fallback = `{"error": "failed to marshal error message"}`
+	const fallback = `{"message": "failed to marshal error message"}`
 
 	errBody := errorBody{}
 	st := http.StatusInternalServerError
@@ -153,6 +153,11 @@ func (r *ResourceRoute) Get(fn actionHandlerFunc) *mux.Route {
 // List resources
 func (r *ResourceRoute) List(fn actionHandlerFunc) *mux.Route {
 	return r.Path("", fn).Methods(http.MethodGet)
+}
+
+// ListAllNamespaces return all resources across all namespaces
+func (r *ResourceRoute) ListAllNamespaces(fn actionHandlerFunc, path string) *mux.Route {
+	return handleAction(r.Router, path, fn)
 }
 
 // Post creates
