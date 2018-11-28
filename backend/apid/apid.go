@@ -196,8 +196,12 @@ func registerGraphQLService(router *mux.Router, store store.Store, url string, t
 			middlewares.LimitRequest{},
 			// TODO: Currently the web app relies on receiving a 401 to determine if
 			//       a user is not authenticated. However, in the future we should
-			//       allow requests without an access token to continue so that the
-			//       schema can be queried without authorization.
+			//       allow requests without an access token to continue so that
+			//       unauthenticated clients can still fetch the schema. Useful for
+			//       implementing tools like GraphiQL.
+			//
+			//       https://github.com/graphql/graphiql
+			//       https://graphql.org/learn/introspection/
 			middlewares.Authentication{IgnoreUnauthorized: false},
 			middlewares.AllowList{Store: store, IgnoreMissingClaims: true},
 			middlewares.Edition{Name: version.Edition},
