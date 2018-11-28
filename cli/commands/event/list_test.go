@@ -49,7 +49,7 @@ func TestListCommandRunEClosureWithAllNamespaces(t *testing.T) {
 	assert := assert.New(t)
 	cli := newConfiguredCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEvents", "*").Return([]types.Event{
+	client.On("ListEvents", "").Return([]types.Event{
 		*types.FixtureEvent("1", "something"),
 	}, nil)
 

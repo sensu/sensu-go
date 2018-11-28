@@ -50,7 +50,7 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListChecks", "*").Return([]types.CheckConfig{
+	client.On("ListChecks", "").Return([]types.CheckConfig{
 		*types.FixtureCheckConfig("name-one"),
 	}, nil)
 
@@ -111,7 +111,7 @@ func TestListCommandRunEClosureWithAlphaNumericChars(t *testing.T) {
 	client := cli.Client.(*client.MockClient)
 	checkConfig := types.FixtureCheckConfig("name-one")
 	checkConfig.Command = "echo foo && exit 1"
-	client.On("ListChecks", "*").Return([]types.CheckConfig{
+	client.On("ListChecks", "").Return([]types.CheckConfig{
 		*checkConfig,
 	}, nil)
 

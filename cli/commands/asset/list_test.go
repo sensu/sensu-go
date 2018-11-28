@@ -53,7 +53,7 @@ func TestListCommandRunEClosureWithAllNamespaces(t *testing.T) {
 	config.On("Format").Return("none")
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListAssets", "*").Return([]types.Asset{
+	client.On("ListAssets", "").Return([]types.Asset{
 		*types.FixtureAsset("one"),
 	}, nil)
 

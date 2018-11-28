@@ -50,7 +50,7 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListMutators", "*").Return([]types.Mutator{
+	client.On("ListMutators", "").Return([]types.Mutator{
 		*types.FixtureMutator("name-one"),
 	}, nil)
 
@@ -105,7 +105,7 @@ func TestListCommandRunEClosureWithAlphaNumericChars(t *testing.T) {
 	client := cli.Client.(*client.MockClient)
 	mutator := types.FixtureMutator("name-one")
 	mutator.Command = "echo foo && exit 1"
-	client.On("ListMutators", "*").Return([]types.Mutator{*mutator}, nil)
+	client.On("ListMutators", "").Return([]types.Mutator{*mutator}, nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))
