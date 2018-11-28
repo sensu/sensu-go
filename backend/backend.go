@@ -10,6 +10,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/pkg/transport"
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
@@ -29,7 +30,6 @@ import (
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/system"
-	"github.com/sensu/sensu-go/types"
 )
 
 // Backend represents the backend server, which is used to hold the datastore
@@ -362,17 +362,15 @@ func (b *Backend) Stop() {
 	<-b.done
 }
 
-func (b *Backend) getBackendEntity(config *Config) *types.Entity {
-	entity := &types.Entity{
-		EntityClass: types.EntityBackendClass,
+func (b *Backend) getBackendEntity(config *Config) *v2.Entity {
+	entity := &v2.Entity{
+		EntityClass: v2.EntityBackendClass,
 		System:      getSystemInfo(),
-		ObjectMeta: types.ObjectMeta{
-			Name: getDefaultBackendID(),
-		},
+		ObjectMeta:  v2.NewObjectMeta(getDefaultBackendID(), ""),
 	}
 
 	if config.DeregistrationHandler != "" {
-		entity.Deregistration = types.Deregistration{
+		entity.Deregistration = v2.Deregistration{
 			Handler: config.DeregistrationHandler,
 		}
 	}
@@ -391,7 +389,7 @@ func getDefaultBackendID() string {
 }
 
 // getSystemInfo returns the system info of the backend
-func getSystemInfo() types.System {
+func getSystemInfo() v2.System {
 	info, err := system.Info()
 	if err != nil {
 		logger.WithError(err).Error("error getting system info")

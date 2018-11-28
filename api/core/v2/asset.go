@@ -85,15 +85,19 @@ func FixtureAsset(name string) *Asset {
 	hash := hex.EncodeToString(bytes)
 
 	asset := &Asset{
-		Sha512: "25e01b962045f4f5b624c3e47e782bef65c6c82602524dc569a8431b76cc1f57639d267380a7ec49f70876339ae261704fc51ed2fc520513cf94bc45ed7f6e17",
-		URL:    "https://localhost/" + hash + ".zip",
+		ObjectMeta: NewObjectMeta(name, "default"),
+		Sha512:     "25e01b962045f4f5b624c3e47e782bef65c6c82602524dc569a8431b76cc1f57639d267380a7ec49f70876339ae261704fc51ed2fc520513cf94bc45ed7f6e17",
+		URL:        "https://localhost/" + hash + ".zip",
 	}
-	asset.Name = name
-	asset.Namespace = "default"
 	return asset
 }
 
 // URIPath returns the path component of a Asset URI.
 func (a *Asset) URIPath() string {
 	return fmt.Sprintf("/api/core/v2/namespaces/%s/assets/%s", url.PathEscape(a.Namespace), url.PathEscape(a.Name))
+}
+
+// NewAsset creates a new Asset.
+func NewAsset(meta ObjectMeta) *Asset {
+	return &Asset{ObjectMeta: meta}
 }

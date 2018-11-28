@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"path"
 	"reflect"
+	"strings"
 
 	"github.com/sensu/sensu-go/api/core/v2"
 )
@@ -12,29 +14,39 @@ import (
 // Wrapper is a generic wrapper, with a type field for distinguishing its
 // contents.
 type Wrapper struct {
-	// Type is the fully-qualified type name, e.g.
-	// github.com/sensu/sensu-go/v2.Check,
-	// OR, a short-hand name that assumes a package path of
-	// github.com/sensu/sensu-go/v2.
-	Type string `json:"type" yaml:"type"`
+	TypeMeta
+
+	ObjectMeta ObjectMeta `json:"metadata,omitempty" yaml:"metadata,omitempty"`
 
 	// Value is a valid Resource of concrete type Type.
 	Value Resource `json:"spec" yaml:"spec"`
 }
 
 type rawWrapper struct {
-	Type  string           `json:"type"`
-	Value *json.RawMessage `json:"spec"`
+	TypeMeta
+	ObjectMeta ObjectMeta       `json:"metadata" yaml:"metadata"`
+	Value      *json.RawMessage `json:"spec" yaml:"spec"`
 }
 
-// UnmarshalJSON ...
+var packageMap = map[string]func(string) (Resource, error){
+	"core/v2": v2.ResolveResource,
+}
+
+// UnmarshalJSON implements json.Unmarshaler
 func (w *Wrapper) UnmarshalJSON(b []byte) error {
 	var wrapper rawWrapper
 	if err := json.Unmarshal(b, &wrapper); err != nil {
 		return fmt.Errorf("error parsing spec: %s", err)
 	}
-	w.Type = wrapper.Type
-	resource, err := v2.ResolveResource(wrapper.Type)
+	w.TypeMeta = wrapper.TypeMeta
+	if w.APIVersion == "" {
+		w.APIVersion = "core/v2"
+	}
+	resolver, ok := packageMap[w.TypeMeta.APIVersion]
+	if !ok {
+		return fmt.Errorf("invalid API version: %s", w.TypeMeta.APIVersion)
+	}
+	resource, err := resolver(w.TypeMeta.Type)
 	if err != nil {
 		return fmt.Errorf("error parsing spec: %s", err)
 	}
@@ -46,15 +58,65 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 	if err := dec.Decode(&resource); err != nil {
 		return err
 	}
+	if _, ok := resource.(*Namespace); ok {
+		// Special case for Namespace
+		w.Value = resource
+		return nil
+	}
+	outerMeta := wrapper.ObjectMeta
+	innerMeta := resource.GetObjectMeta()
+	if outerMeta.Namespace != "" {
+		innerMeta.Namespace = outerMeta.Namespace
+	}
+	if outerMeta.Name != "" {
+		innerMeta.Name = outerMeta.Name
+	}
+	for k, v := range outerMeta.Labels {
+		if innerMeta.Labels == nil {
+			innerMeta.Labels = make(map[string]string)
+		}
+		innerMeta.Labels[k] = v
+	}
+	for k, v := range outerMeta.Annotations {
+		if innerMeta.Annotations == nil {
+			innerMeta.Annotations = make(map[string]string)
+		}
+		innerMeta.Annotations[k] = v
+	}
+	val := reflect.Indirect(reflect.ValueOf(resource))
+	objectMeta := val.FieldByName("ObjectMeta")
+	if objectMeta.Kind() == reflect.Invalid {
+		// The resource doesn't have an ObjectMeta field - this is expected
+		// for Namespace, or other types that have no ObjectMeta field but
+		// do implement a GetObjectMeta method.
+		return nil
+	}
+	val.FieldByName("ObjectMeta").Set(reflect.ValueOf(innerMeta))
 	w.Value = resource
 	return nil
 }
 
-// WrapResource uses reflection on a Resource to wrap it in a Wrapper
+// WrapResource wraps a Resource in a Wrapper that contains TypeMeta and
+// ObjectMeta.
 func WrapResource(r Resource) Wrapper {
-	name := reflect.Indirect(reflect.ValueOf(r)).Type().Name()
+	typ := reflect.Indirect(reflect.ValueOf(r)).Type()
 	return Wrapper{
-		Type:  name,
-		Value: r,
+		TypeMeta: TypeMeta{
+			Type:       typ.Name(),
+			APIVersion: apiVersion(typ.PkgPath()),
+		},
+		ObjectMeta: r.GetObjectMeta(),
+		Value:      r,
 	}
+}
+
+func apiVersion(version string) string {
+	parts := strings.Split(version, "/")
+	if len(parts) == 0 {
+		return ""
+	}
+	if len(parts) == 1 {
+		return parts[0]
+	}
+	return path.Join(parts[len(parts)-2], parts[len(parts)-1])
 }

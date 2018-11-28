@@ -97,6 +97,8 @@ var typeMap = map[string]interface{}{
 	"time_window_when":       &TimeWindowWhen{},
 	"Tokens":                 &Tokens{},
 	"tokens":                 &Tokens{},
+	"TypeMeta":               &TypeMeta{},
+	"type_meta":              &TypeMeta{},
 	"User":                   &User{},
 	"user":                   &User{},
 }

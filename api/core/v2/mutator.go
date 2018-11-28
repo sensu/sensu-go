@@ -6,6 +6,11 @@ import (
 	"net/url"
 )
 
+// NewMutator creates a new Mutator.
+func NewMutator(meta ObjectMeta) *Mutator {
+	return &Mutator{ObjectMeta: meta}
+}
+
 // Validate returns an error if the mutator does not pass validation tests.
 func (m *Mutator) Validate() error {
 	if err := ValidateName(m.Name); err != nil {
@@ -45,11 +50,8 @@ func (m *Mutator) Update(from *Mutator, fields ...string) error {
 // FixtureMutator returns a Mutator fixture for testing.
 func FixtureMutator(name string) *Mutator {
 	return &Mutator{
-		Command: "command",
-		ObjectMeta: ObjectMeta{
-			Namespace: "default",
-			Name:      name,
-		},
+		Command:    "command",
+		ObjectMeta: NewObjectMeta(name, "default"),
 	}
 }
 

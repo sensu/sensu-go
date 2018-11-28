@@ -11,6 +11,7 @@ services:
       - "8080:8080"
       - "8081:8081"
       - "6060:6060"
+      - "3000:3000"
   backend2:
     image: sensu/sensu:master
     command: sensu-backend start --etcd-listen-client-urls http://0.0.0.0:2379 --etcd-name backend2 --etcd-initial-cluster backend1=http://backend1:2380,backend2=http://backend2:2380,backend3=http://backend3:2380 --etcd-initial-cluster-state new --etcd-initial-advertise-peer-urls http://backend2:2380 --state-dir /var/lib/sensu/etcd2 --etcd-listen-peer-urls http://0.0.0.0:2380 --log-level debug

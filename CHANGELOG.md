@@ -9,6 +9,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Add the `etcd-advertise-client-urls` config attribute to sensu-backend
+- Support for multiple API versions added to sensuctl create
+- Support for metadata added to wrapped resources (yaml, wrapped-json)
+
 ### Removed
 - Check subdue functionality has been disabled. Users that have checks with
 subdues defined should delete and recreate the check. The subdue feature was
@@ -25,6 +28,8 @@ uses the same facility as check subdue for handling time windows.
   values coming from the handler's environment.
 - Assets and mutators environments are now merged, with a preference given to the
   values coming from the mutator's environment.
+- Metadata from wrappers and resources is now merged, with a preference given to
+the values coming from the wrapper. Labels and annotations are deep-merged.
 
 ### Fixed
 - Fixed several resource leaks in the check scheduler.

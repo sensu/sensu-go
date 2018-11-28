@@ -28,10 +28,11 @@ func (e *Extension) URIPath() string {
 // FixtureExtension given a name returns a valid extension for use in tests
 func FixtureExtension(name string) *Extension {
 	return &Extension{
-		URL: "https://localhost:8080",
-		ObjectMeta: ObjectMeta{
-			Namespace: "default",
-			Name:      name,
-		},
+		URL:        "https://localhost:8080",
+		ObjectMeta: NewObjectMeta(name, "default"),
 	}
+}
+
+func NewExtension(meta ObjectMeta) *Extension {
+	return &Extension{ObjectMeta: meta}
 }

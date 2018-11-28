@@ -33,10 +33,7 @@ func TestPrintWrappedJSON(t *testing.T) {
 	check := types.FixtureCheckConfig("check")
 	check.Command = "echo foo >> output.txt"
 
-	w := types.Wrapper{
-		Type:  "CheckConfig",
-		Value: check,
-	}
+	w := wrapResource(check)
 	output, err := json.Marshal(w)
 	assert.NoError(err)
 
@@ -51,14 +48,9 @@ func TestPrintWrappedJSONList(t *testing.T) {
 	check1 := types.FixtureCheckConfig("check1")
 	check2 := types.FixtureCheckConfig("check2")
 
-	w1 := types.Wrapper{
-		Type:  "CheckConfig",
-		Value: check1,
-	}
-	w2 := types.Wrapper{
-		Type:  "CheckConfig",
-		Value: check2,
-	}
+	w1 := wrapResource(check1)
+	w2 := wrapResource(check2)
+
 	output1, err := json.Marshal(w1)
 	assert.NoError(err)
 	output2, err := json.Marshal(w2)
@@ -78,10 +70,7 @@ func TestPrintFormatted(t *testing.T) {
 
 	check := types.FixtureCheckConfig("check")
 
-	w := types.Wrapper{
-		Type:  "CheckConfig",
-		Value: check,
-	}
+	w := wrapResource(check)
 
 	// test wrapped-json format
 	output, err := json.Marshal(w)

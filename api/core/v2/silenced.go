@@ -8,6 +8,11 @@ import (
 	"strings"
 )
 
+// NewSilenced creates a new Silenced entry.
+func NewSilenced(meta ObjectMeta) *Silenced {
+	return &Silenced{ObjectMeta: meta}
+}
+
 // Validate returns an error if the CheckName and Subscription fields are not
 // provided.
 func (s *Silenced) Validate() error {
@@ -56,10 +61,7 @@ func FixtureSilenced(name string) *Silenced {
 	return &Silenced{
 		Check:        check,
 		Subscription: subscription,
-		ObjectMeta: ObjectMeta{
-			Namespace: "default",
-			Name:      name,
-		},
+		ObjectMeta:   NewObjectMeta(name, "default"),
 	}
 }
 

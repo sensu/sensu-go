@@ -230,7 +230,7 @@ func (r *namespaceImpl) CheckHistory(p schema.NamespaceCheckHistoryFieldResolver
 	ctx := contextWithNamespace(p.Context, nsp.Name)
 
 	client := r.factory.NewWithContext(ctx)
-	records, err := client.ListEvents(nsp.Name)
+	records, err := fetchEvents(client, nsp.Name, nil)
 	if err != nil {
 		return []types.CheckHistory{}, err
 	}
@@ -264,23 +264,23 @@ func (r *namespaceImpl) Subscriptions(p schema.NamespaceSubscriptionsFieldResolv
 	ctx := contextWithNamespace(p.Context, nsp.Name)
 
 	client := r.factory.NewWithContext(ctx)
-	entities, err := client.ListEntities(nsp.Name)
+	entities, err := fetchEntities(client, nsp.Name, nil)
 	if err != nil {
 		return set, err
 	}
 	for i := range entities {
 		entity := entities[i]
-		newSet := occurrencesOfSubscriptions(&entity)
+		newSet := occurrencesOfSubscriptions(entity)
 		set.Merge(newSet)
 	}
 
-	checks, err := client.ListChecks(nsp.Name)
+	checks, err := fetchChecks(client, nsp.Name, nil)
 	if err != nil {
 		return set, err
 	}
 	for i := range checks {
 		check := checks[i]
-		newSet := occurrencesOfSubscriptions(&check)
+		newSet := occurrencesOfSubscriptions(check)
 		set.Merge(newSet)
 	}
 

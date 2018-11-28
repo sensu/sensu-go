@@ -59,11 +59,13 @@ class SilencesContent extends React.Component {
     const { filter, limit, offset, order } = queryParams;
     const {
       data: { namespace } = {},
-      loading,
+      networkStatus,
       aborted,
       refetch,
-      poller,
     } = renderProps;
+
+    // see: https://github.com/apollographql/apollo-client/blob/master/packages/apollo-client/src/core/networkStatus.ts
+    const loading = networkStatus < 6;
 
     if (!namespace && !loading && !aborted) {
       return <NotFound />;
@@ -112,9 +114,7 @@ class SilencesContent extends React.Component {
                 order={order}
                 onChangeQuery={setQueryParams}
                 namespace={namespace}
-                loading={
-                  (loading && (!namespace || !poller.isRunning())) || aborted
-                }
+                loading={(loading && !namespace) || aborted}
                 refetch={refetch}
               />
             )}
