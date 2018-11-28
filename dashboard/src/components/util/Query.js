@@ -1,323 +1,195 @@
+// @flow
 /* eslint-disable react/no-unused-prop-types */
+/* eslint-disable react/sort-comp */
+/* eslint-disable react/no-multi-comp */
 
-import React from "react";
-import PropTypes from "prop-types";
-import { ApolloError } from "apollo-client";
-import { withApollo } from "react-apollo";
+import * as React from "react";
+import { ApolloError, withApollo } from "react-apollo";
+import type {
+  ObservableQuery,
+  ApolloClient,
+  WatchQueryOptions,
+  NetworkStatus,
+  ApolloQueryResult,
+} from "react-apollo";
 import shallowEqual from "fbjs/lib/shallowEqual";
-import equal from "lodash/isEqual";
 
 import QueryAbortedError from "/errors/QueryAbortedError";
 
-const extractQueryOpts = props => {
-  const {
-    variables,
-    pollInterval,
-    fetchPolicy,
-    errorPolicy,
-    notifyOnNetworkStatusChange,
-    query,
-  } = props;
-
-  return {
-    variables,
-    pollInterval,
-    query,
-    fetchPolicy,
-    errorPolicy,
-    notifyOnNetworkStatusChange,
-    context: {},
-  };
+type ObservableMethods = {
+  fetchMore: () => void,
+  refetch: () => void,
+  startPolling: () => void,
+  stopPolling: () => void,
+  subscribeToMore: () => void,
+  updateQuery: () => void,
 };
 
-class Poller {
-  constructor(observable, interval) {
-    this._observable = observable;
-    this._interval = interval;
-    this._running = interval > 0;
-  }
+type Props = {
+  client: ApolloClient<mixed>,
+  // eslint-disable-next-line no-use-before-define
+  children: State => React.Node,
+  onError: Error => void,
+} & WatchQueryOptions;
 
-  isRunning() {
-    return this._running;
-  }
+type State = {
+  aborted: boolean,
+  data: mixed | null, // TODO: Infer data type from query
+  error: Error | null,
+  loading: boolean,
+  networkStatus: NetworkStatus,
+  observable: ObservableQuery<mixed>,
+  props: Props,
+} & ObservableMethods;
 
-  getInterval() {
-    return this._interval;
-  }
+const modifiableWatchQueryOptionsHaveChanged = (
+  a: WatchQueryOptions,
+  b: WatchQueryOptions,
+) =>
+  a.pollInterval !== b.pollInterval ||
+  a.fetchPolicy !== b.fetchPolicy ||
+  a.errorPolicy !== b.errorPolicy ||
+  a.fetchResults !== b.fetchResults ||
+  a.notifyOnNetworkStatusChange !== b.notifyOnNetworkStatusChange ||
+  !shallowEqual(a.variables, b.variables);
 
-  setInterval(newInterval) {
-    if (newInterval === this._interval) {
-      return;
-    }
+const extractQueryOptions = (
+  props: WatchQueryOptions,
+): $Shape<WatchQueryOptions> => ({
+  variables: props.variables,
+  pollInterval: props.pollInterval,
+  query: props.query,
+  fetchPolicy: props.fetchPolicy,
+  errorPolicy: props.errorPolicy,
+  notifyOnNetworkStatusChange: props.notifyOnNetworkStatusChange,
+});
 
-    if (newInterval > 0) {
-      this.start(newInterval);
-    } else {
-      this._interval = newInterval;
-      this.stop();
-    }
-  }
-
-  start(newInterval = null) {
-    if (this._running && newInterval) {
-      this.setInterval(newInterval);
-    } else if (!this._running) {
-      this._interval = newInterval || this._interval;
-      this._running = true;
-
-      this._observable.startPolling(this._interval);
-    }
-  }
-
-  stop() {
-    this._running = false;
-    this._observable.stopPolling();
-  }
-
-  toggle(newInterval = null) {
-    if (this._running) {
-      this.stop();
-    } else {
-      this.start(newInterval);
-    }
-  }
-}
-
-//
-// Drop in replacement for react-apollo's Query component.
-//
-// Differs from official implementation by:
-//
-// - reflecting the value last emitted by the configured watcher instead of
-//   firing a forceUpdate and relying the observer's currentResult. By doing so,
-//   given data should be more consistent (see apollographql/apollo-client#3947)
-//   and should be slightly more efficient by not having to reselect the same
-//   data from the cache on each render.
-// - allows us to handle error's however we perfer.
-//
-class Query extends React.PureComponent {
-  static propTypes = {
-    // Provided by withApollo
-    client: PropTypes.object.isRequired,
-    children: PropTypes.func.isRequired,
-    errorPolicy: PropTypes.oneOf(["none", "ignore", "all"]),
-    fetchPolicy: PropTypes.oneOf([
-      "cache-first",
-      "cache-and-network",
-      "network-only",
-      "cache-only",
-      "no-cache",
-      "standby",
-    ]),
-    notifyOnNetworkStatusChange: PropTypes.bool,
-    onComplete: PropTypes.func,
-    onError: PropTypes.func.isRequired,
-    pollInterval: PropTypes.number,
-    query: PropTypes.object.isRequired,
-    variables: PropTypes.object,
-  };
-
+class Query extends React.PureComponent<Props, State> {
   static defaultProps = {
-    errorPolicy: "all",
-    fetchPolicy: "cache-and-network",
-    notifyOnNetworkStatusChange: false,
-    onComplete: () => null,
-    onError(error) {
+    variables: {},
+    pollInterval: 0,
+    children: () => {},
+    onError: (error: Error) => {
       throw error;
     },
-    pollInterval: 0,
-    variables: {},
   };
 
-  static getDerivedStateFromProps(props, state) {
-    const nextState = {};
+  subscription: { unsubscribe(): void } | null = null;
 
-    const queryOpts = extractQueryOpts(props);
-    if (!shallowEqual(queryOpts, state.queryOpts)) {
-      nextState.queryOpts = queryOpts;
-    }
-
-    // If client changed we need to tear everything and observe new client
-    if (props.client !== state.client) {
-      nextState.observable = props.client.watchQuery(queryOpts);
-      nextState.poller = new Poller(nextState.observable, props.pollInterval);
-      return nextState;
-    }
-
-    // If query options change by client did not apply new set of options
-    if (nextState.queryOpts) {
-      state.observable.setOptions(queryOpts);
-    }
-
-    // If the polling interval was updated do update poller.
-    if (props.pollInterval !== state.poller.getInterval()) {
-      state.poller.setInterval(props.pollInterval);
-    }
-
-    if (Object.keys(nextState).length === 0) {
+  static getDerivedStateFromProps(props: Props, state: State | null) {
+    if (state !== null && state.props === props) {
       return null;
     }
-    return nextState;
+
+    if (
+      state === null ||
+      state.props.client !== props.client ||
+      state.props.query !== props.query
+    ) {
+      const observable: ObservableQuery<mixed> = props.client.watchQuery(
+        extractQueryOptions(props),
+      );
+
+      // retrieve the result of the query from the local cache
+      const { data, loading, networkStatus } = observable.currentResult();
+
+      return {
+        props,
+        observable,
+        data,
+        loading,
+        networkStatus,
+        refetch: observable.refetch.bind(observable),
+        fetchMore: observable.fetchMore.bind(observable),
+        updateQuery: observable.updateQuery.bind(observable),
+        startPolling: observable.startPolling.bind(observable),
+        stopPolling: observable.stopPolling.bind(observable),
+        subscribeToMore: observable.subscribeToMore.bind(observable),
+      };
+    }
+
+    if (state && modifiableWatchQueryOptionsHaveChanged(state.props, props)) {
+      state.observable.setOptions(extractQueryOptions(props));
+    }
+
+    // Changes to `metadata` and `context` props are ignored.
+
+    return { props };
   }
 
-  constructor(props) {
-    super(props);
+  subscribe() {
+    if (this.subscription) {
+      throw new Error("Cannot subscribe. Currently subscribed.");
+    }
 
-    // Setup query observable
-    const queryOpts = extractQueryOpts(props);
-    const observable = props.client.watchQuery(queryOpts);
-    const poller = new Poller(observable, props.pollInterval);
+    this.subscription = this.state.observable.subscribe({
+      next: this.onNext,
+      error: this.onError,
+    });
+  }
 
-    // Fetch current state of query
-    const { data, loading, networkStatus } = observable.currentResult();
+  unsubscribe() {
+    if (!this.subscription) {
+      throw new Error("Cannot unsubscribe. Not currently subscribed");
+    }
 
-    // Add initial data and observable to the component's state
-    this.state = {
-      client: props.client,
+    this.subscription.unsubscribe();
+    this.subscription = null;
+  }
+
+  onNext = ({
+    data,
+    errors,
+    loading,
+    networkStatus /* stale */,
+  }: ApolloQueryResult<mixed>) => {
+    let error = null;
+
+    if (errors && errors.length > 0) {
+      error = new ApolloError({ graphQLErrors: errors });
+    }
+
+    this.setState((state: State) => ({
+      ...state,
+      aborted: false,
+      error,
       data,
       loading,
-      observable,
       networkStatus,
-      poller,
-      queryOpts,
-    };
-  }
+    }));
+
+    if (error) {
+      this.props.onError(error);
+    }
+  };
+
+  onError = (error: Error) => {
+    // flowlint-next-line unclear-type: off
+    if (!((error: Object).networkError instanceof QueryAbortedError)) {
+      this.setState({ error });
+      this.props.onError(error);
+    } else {
+      this.setState({ aborted: true, error: null });
+    }
+  };
 
   componentDidMount() {
     this.subscribe();
   }
 
-  componentDidUpdate() {
-    this.subscribe();
+  componentDidUpdate(previousProps: Props, previousState: State) {
+    if (this.state.observable !== previousState.observable) {
+      this.unsubscribe();
+      this.subscribe();
+    }
   }
 
   componentWillUnmount() {
-    this.disconnect();
+    this.unsubscribe();
   }
 
-  subscribe = () => {
-    const { observable } = this.state;
-
-    // We only want to subscribe if a subscription has not already been setup
-    if (this.query && this.query.observable === observable) {
-      return;
-    }
-
-    // Ensure that the old subscription is torn down
-    if (this.query) {
-      this.query.subscription.unsubscribe();
-    }
-
-    const subscription = observable.subscribe({
-      next: result => {
-        // if any errors are present in the response throw
-        if (result.errors && result.errors.length > 0) {
-          throw new ApolloError({ graphQLErrors: result.errors });
-        }
-
-        this.setState(state => {
-          let nextState = {
-            error: result.error,
-            loading: result.loading,
-            networkStatus: result.networkStatus,
-          };
-          const prevState = {
-            error: state.error,
-            loading: state.loading,
-            networkStatus: state.networkStatus,
-          };
-
-          if (shallowEqual(nextState, prevState)) {
-            nextState = {};
-          }
-
-          // Only update reference if deep compare fails; can enable
-          // optimizations in downstream components.
-          if (!equal(result.data, state.data)) {
-            // NOTE: maybe this behaviour should be opt-out?
-            nextState.data = result.data;
-          }
-
-          if (Object.keys(nextState).length === 0) {
-            return null;
-          }
-          return nextState;
-        });
-      },
-      error: error => {
-        this.resubscribeToQuery();
-
-        // Reimplemented from react-apollo
-        // https://github.com/apollographql/react-apollo/blob/master/src/Query.tsx#L320-L321
-        // eslint-disable-next-line no-prototype-builtins
-        if (!error.hasOwnProperty("graphQLErrors")) {
-          throw error;
-        } else if (!(error.networkError instanceof QueryAbortedError)) {
-          this.props.onError(error);
-        }
-      },
-    });
-
-    this.query = {
-      observable,
-      subscription,
-    };
-  };
-
-  resubscribeToQuery = () => {
-    this.disconnect();
-
-    //
-    // Reimplemented from react-apollo
-    // https://github.com/apollographql/react-apollo/blob/master/src/Query.tsx#L340-L343
-    //
-    // If lastError is set, the observable will immediately
-    // send it, causing the stream to terminate on initialization.
-    // We clear everything here and restore it afterward to
-    // make sure the new subscription sticks.
-    //
-    const lastError = this.query.observable.getLastError();
-    const lastResult = this.query.observable.getLastResult();
-    this.query.observable.resetLastResults();
-    this.subscribe();
-    Object.assign(this.query.observable, { lastError, lastResult });
-  };
-
-  disconnect = () => {
-    if (this.query) {
-      this.query.subscription.unsubscribe();
-    }
-  };
-
   render() {
-    const { client } = this.props;
-    const { data, loading, networkStatus, observable, poller } = this.state;
-
-    let error = this.state.error;
-    let aborted = false;
-    if (error && error.networkError instanceof QueryAbortedError) {
-      error = undefined;
-      aborted = true;
-    }
-
-    return this.props.children({
-      client,
-      data,
-      loading,
-      networkStatus,
-      poller,
-      error,
-      aborted,
-
-      // TODO: Move into state?
-      variables: observable.variables,
-      refetch: observable.refetch.bind(observable),
-      fetchMore: observable.fetchMore.bind(observable),
-      updateQuery: observable.updateQuery.bind(observable),
-      startPolling: observable.startPolling.bind(observable),
-      stopPolling: observable.stopPolling.bind(observable),
-      subscribeToMore: observable.subscribeToMore.bind(observable),
-    });
+    return this.props.children(this.state);
   }
 }
 

@@ -37,10 +37,12 @@ class CheckDetailsContent extends React.PureComponent {
           aborted,
           client,
           data: { check } = {},
-          loading,
-          poller,
+          networkStatus,
           refetch,
         }) => {
+          // see: https://github.com/apollographql/apollo-client/blob/master/packages/apollo-client/src/core/networkStatus.ts
+          const loading = networkStatus < 6;
+
           if (!loading && !aborted && (!check || check.deleted)) {
             return <NotFound />;
           }
@@ -49,7 +51,7 @@ class CheckDetailsContent extends React.PureComponent {
             <CheckDetailsContainer
               client={client}
               check={check}
-              loading={(loading && !poller.isRunning()) || aborted}
+              loading={loading || aborted}
               refetch={refetch}
             />
           );

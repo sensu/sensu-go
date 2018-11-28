@@ -55,11 +55,13 @@ class EventsContent extends React.Component {
     const { filter, limit, offset } = queryParams;
     const {
       data: { namespace } = {},
-      loading,
+      networkStatus,
       aborted,
-      poller,
       refetch,
     } = renderProps;
+
+    // see: https://github.com/apollographql/apollo-client/blob/master/packages/apollo-client/src/core/networkStatus.ts
+    const loading = networkStatus < 6;
 
     if (!namespace && !loading && !aborted) {
       return <NotFound />;
@@ -86,9 +88,7 @@ class EventsContent extends React.Component {
                 offset={offset}
                 onChangeQuery={setQueryParams}
                 namespace={namespace}
-                loading={
-                  (loading && (!namespace || !poller.isRunning())) || aborted
-                }
+                loading={(loading && !namespace) || aborted}
                 refetch={refetch}
               />
             )}
