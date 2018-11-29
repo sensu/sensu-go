@@ -251,11 +251,11 @@ class Query extends React.PureComponent<Props, State> {
 
   onError = (error: Error) => {
     // flowlint-next-line unclear-type: off
-    if (!((error: Object).networkError instanceof QueryAbortedError)) {
+    if ((error: Object).networkError instanceof QueryAbortedError) {
+      this.setState({ aborted: true, error: null });
+    } else {
       this.setState({ error });
       this.props.onError(error);
-    } else {
-      this.setState({ aborted: true, error: null });
     }
   };
 
