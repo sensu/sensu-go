@@ -3,6 +3,8 @@ import PropTypes from "prop-types";
 import { Switch, Route, Redirect } from "react-router-dom";
 import gql from "graphql-tag";
 
+import { FailedError } from "/errors/FetchError";
+
 import AppBar from "/components/AppBar";
 import AppLayout from "/components/AppLayout";
 import QuickNav from "/components/QuickNav";
@@ -48,6 +50,13 @@ class EnvironmentView extends React.PureComponent {
         <Query
           query={EnvironmentView.query}
           variables={{ namespace: namespaceParam }}
+          onError={error => {
+            if (error.networkError instanceof FailedError) {
+              return;
+            }
+
+            throw error;
+          }}
         >
           {({ data: { viewer, namespace } = {}, loading, aborted }) => (
             <Loader loading={loading}>
