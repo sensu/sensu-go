@@ -13,6 +13,7 @@ import { withStyles } from "@material-ui/core/styles";
 import { emphasize } from "@material-ui/core/styles/colorManipulator";
 import Paper from "@material-ui/core/Paper";
 import Typography from "@material-ui/core/Typography";
+import Button from "@material-ui/core/Button";
 
 import uniqueId from "/utils/uniqueId";
 import Timer from "/components/util/Timer";
@@ -124,16 +125,21 @@ class Banner extends React.PureComponent {
     classes: PropTypes.object.isRequired,
     message: PropTypes.node,
     variant: PropTypes.oneOf(Object.keys(icons)),
-    onClose: PropTypes.func.isRequired,
+    onClose: PropTypes.func,
     maxAge: PropTypes.number,
     showAgeIndicator: PropTypes.bool,
+    buttonMessage: PropTypes.string,
+    buttonAction: PropTypes.func,
   };
 
   static defaultProps = {
     maxAge: 0,
     variant: undefined,
     message: undefined,
+    onClose: null,
     showAgeIndicator: false,
+    buttonMessage: null,
+    buttonAction: null,
   };
 
   state = { mouseOver: false };
@@ -168,6 +174,8 @@ class Banner extends React.PureComponent {
       variant,
       maxAge,
       showAgeIndicator,
+      buttonMessage,
+      buttonAction,
     } = this.props;
 
     const { mouseOver } = this.state;
@@ -223,7 +231,14 @@ class Banner extends React.PureComponent {
                 : undefined}
             </Timer>
           )}
-          {(!showAgeIndicator || !maxAge) && closeButton}
+          {(!showAgeIndicator || !maxAge) &&
+            buttonMessage === null &&
+            closeButton}
+          {buttonMessage && (
+            <Button color="inherit" onClick={buttonAction}>
+              {buttonMessage}
+            </Button>
+          )}
         </div>
       </Paper>
     );
