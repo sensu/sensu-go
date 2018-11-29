@@ -125,9 +125,14 @@ func (r *UsersRouter) updatePassword(req *http.Request) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	cfg := types.User{Username: id, Password: params["password"]}
 
-	err = r.controller.Update(req.Context(), cfg)
+	record, err := r.controller.Find(req.Context(), id)
+	if err != nil {
+		return nil, err
+	}
+
+	record.Password = params["password"]
+	err = r.controller.Update(req.Context(), *record)
 	return nil, err
 }
 
