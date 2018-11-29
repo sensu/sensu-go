@@ -32,16 +32,17 @@ class SinkConnector extends React.PureComponent {
     addChild: PropTypes.func.isRequired,
     updateChild: PropTypes.func.isRequired,
     removeChild: PropTypes.func.isRequired,
+    children: PropTypes.any.isRequired,
   };
 
   id = uniqueId();
 
   componentDidMount() {
-    this.props.addChild(this.id, this.props);
+    this.props.addChild(this.id, this.props.children);
   }
 
   componentDidUpdate() {
-    this.props.updateChild(this.id, this.props);
+    this.props.updateChild(this.id, this.props.children);
   }
 
   componentWillUnmount() {
@@ -150,6 +151,10 @@ export class Provider extends React.PureComponent {
 }
 
 export class Sink extends React.PureComponent {
+  static propTypes = {
+    children: PropTypes.any.isRequired,
+  };
+
   render() {
     return (
       <Context.Consumer>
@@ -158,8 +163,9 @@ export class Sink extends React.PureComponent {
             addChild={addChild}
             updateChild={updateChild}
             removeChild={removeChild}
-            props={this.props}
-          />
+          >
+            {this.props.children}
+          </SinkConnector>
         )}
       </Context.Consumer>
     );
