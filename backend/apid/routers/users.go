@@ -132,7 +132,7 @@ func (r *UsersRouter) updatePassword(req *http.Request) (interface{}, error) {
 	}
 
 	record.Password = params["password"]
-	err = r.controller.Update(req.Context(), *record)
+	err = r.controller.CreateOrReplace(req.Context(), *record)
 	return nil, err
 }
 
