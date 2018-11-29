@@ -20,6 +20,7 @@ found to have issues, and we are re-working the feature for a future release.
 'when' properties defined should delete and recreate the filter. Filter when
 uses the same facility as check subdue for handling time windows.
 - Removed event.Hooks and event.Silenced deprecated fields
+- Extensions have been removed until we have time to revisit the feature.
 
 ### Changed
 - Assets and checks environments are now merged, with a preference given to the
