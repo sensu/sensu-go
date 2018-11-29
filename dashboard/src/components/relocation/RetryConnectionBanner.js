@@ -1,25 +1,35 @@
 import React from "react";
 import PropTypes from "prop-types";
-import { withApollo } from "react-apollo";
+import gql from "graphql-tag";
+import { withApollo, graphql } from "react-apollo";
 import Button from "@material-ui/core/Button";
 import Banner from "./Banner";
 import retryLocalNetwork from "../../mutations/retryLocalNetwork";
 
 class RetryConnectionBanner extends React.PureComponent {
-  static propTypes = { client: PropTypes.object.isRequired };
+  static propTypes = {
+    client: PropTypes.object.isRequired,
+    data: PropTypes.object.isRequired,
+  };
 
   retryConnection = () => {
-    console.log("this is running");
     retryLocalNetwork(this.props.client);
   };
 
   render() {
+    const { data } = this.props;
     return (
       <Banner
-        message="You've lost network connection."
+        // TODO: make message better by linking to a troubleshooting guide
+        // or use NetworkInformation API: https://developer.mozilla.org/en-US/docs/Web/API/NetworkInformation
+        message="You've lost network connection. Check your network connection or the server."
         variant="warning"
         actions={
-          <Button color="inherit" onClick={() => this.retryConnection()}>
+          <Button
+            color="inherit"
+            onClick={() => this.retryConnection()}
+            disabled={data.localNetwork.offline}
+          >
             reconnect
           </Button>
         }
@@ -28,4 +38,10 @@ class RetryConnectionBanner extends React.PureComponent {
   }
 }
 
-export default withApollo(RetryConnectionBanner);
+export default graphql(gql`
+  query RetryConnectionBannerQuery {
+    localNetwork @client {
+      retry
+    }
+  }
+`)(withApollo(RetryConnectionBanner));
