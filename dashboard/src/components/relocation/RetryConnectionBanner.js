@@ -28,7 +28,7 @@ class RetryConnectionBanner extends React.PureComponent {
           <Button
             color="inherit"
             onClick={() => this.retryConnection()}
-            disabled={data.localNetwork.offline}
+            disabled={data.localNetwork.retry}
           >
             reconnect
           </Button>
