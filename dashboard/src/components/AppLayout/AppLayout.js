@@ -5,7 +5,6 @@ import ResizeObserver from "react-resize-observer";
 
 import ToastWell from "/components/relocation/ToastWell";
 import BannerWell from "/components/relocation/BannerWell";
-import RetryConnectionBanner from "/components/relocation/RetryConnectionBanner";
 
 import MobileFullWidthContent from "./MobileFullWidthContent";
 import Context from "./Context";
@@ -160,7 +159,6 @@ class AppLayout extends React.PureComponent {
             <ResizeObserver onResize={this.handleTopBarResize} />
             <div className={classes.topBar}>{topBar}</div>
             <div className={classes.banner}>
-              <RetryConnectionBanner />
               <BannerWell />
             </div>
             <div className={classes.quickNavContainer}>
