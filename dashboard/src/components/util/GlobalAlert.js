@@ -11,14 +11,6 @@ class GlobalAlert extends React.PureComponent {
     data: PropTypes.object.isRequired,
   };
 
-  static defaultProps = {
-    data: {
-      localNetwork: {
-        offline: true,
-      },
-    },
-  };
-
   render() {
     const { data } = this.props;
 
