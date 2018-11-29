@@ -37,8 +37,8 @@ func (r *UsersRouter) Mount(parent *mux.Router) {
 	// Custom
 	routes.Path("{id}/{subresource:reinstate}", r.reinstate).Methods(http.MethodPut)
 	routes.Path("{id}/{subresource:groups}", r.removeAllGroups).Methods(http.MethodDelete)
-	routes.Path("{id}/{subresource:groups}/{group}", r.addGroup).Methods(http.MethodPut)
-	routes.Path("{id}/{subresource:groups}/{group}", r.removeGroup).Methods(http.MethodDelete)
+	routes.Path("{id}/{subresource:groups}/{user-group-name}", r.addGroup).Methods(http.MethodPut)
+	routes.Path("{id}/{subresource:groups}/{user-group-name}", r.removeGroup).Methods(http.MethodDelete)
 
 	// TODO: Remove?
 	routes.Path("{id}/{subresource:password}", r.updatePassword).Methods(http.MethodPut)
@@ -138,7 +138,7 @@ func (r *UsersRouter) addGroup(req *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
-	group, err := url.PathUnescape(params["group"])
+	group, err := url.PathUnescape(params["user-group-name"])
 	if err != nil {
 		return nil, err
 	}
@@ -154,7 +154,7 @@ func (r *UsersRouter) removeGroup(req *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
-	group, err := url.PathUnescape(params["group"])
+	group, err := url.PathUnescape(params["user-group-name"])
 	if err != nil {
 		return nil, err
 	}

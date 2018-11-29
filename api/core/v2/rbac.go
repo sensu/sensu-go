@@ -56,8 +56,7 @@ func FixtureRule() Rule {
 // FixtureRole returns a partial role
 func FixtureRole(name, namespace string) *Role {
 	return &Role{
-		Name:      name,
-		Namespace: namespace,
+		ObjectMeta: NewObjectMeta(name, namespace),
 		Rules: []Rule{
 			FixtureRule(),
 		},
@@ -75,17 +74,16 @@ func FixtureRoleRef(roleType, name string) RoleRef {
 // FixtureRoleBinding creates a RoleBinding for testing
 func FixtureRoleBinding(name, namespace string) *RoleBinding {
 	return &RoleBinding{
-		Name:      name,
-		Namespace: namespace,
-		Subjects:  []Subject{FixtureSubject(UserType, "username")},
-		RoleRef:   FixtureRoleRef("Role", "read-write"),
+		ObjectMeta: NewObjectMeta(name, namespace),
+		Subjects:   []Subject{FixtureSubject(UserType, "username")},
+		RoleRef:    FixtureRoleRef("Role", "read-write"),
 	}
 }
 
 // FixtureClusterRole returns a partial role
 func FixtureClusterRole(name string) *ClusterRole {
 	return &ClusterRole{
-		Name: name,
+		ObjectMeta: NewObjectMeta(name, ""),
 		Rules: []Rule{
 			FixtureRule(),
 		},
@@ -95,9 +93,9 @@ func FixtureClusterRole(name string) *ClusterRole {
 // FixtureClusterRoleBinding creates a ClusterRoleBinding for testing
 func FixtureClusterRoleBinding(name string) *ClusterRoleBinding {
 	return &ClusterRoleBinding{
-		Name:     name,
-		Subjects: []Subject{FixtureSubject(UserType, "username")},
-		RoleRef:  FixtureRoleRef("ClusterRole", "read-write"),
+		ObjectMeta: NewObjectMeta(name, ""),
+		Subjects:   []Subject{FixtureSubject(UserType, "username")},
+		RoleRef:    FixtureRoleRef("ClusterRole", "read-write"),
 	}
 }
 
@@ -109,6 +107,10 @@ func (r *ClusterRole) Validate() error {
 
 	if len(r.Rules) == 0 {
 		return errors.New("a ClusterRole must have at least one rule")
+	}
+
+	if r.Namespace != "" {
+		return errors.New("ClusterRole cannot have a namespace")
 	}
 
 	return nil
@@ -131,6 +133,10 @@ func (b *ClusterRoleBinding) Validate() error {
 
 	if len(b.Subjects) == 0 {
 		return errors.New("a ClusterRoleBinding must have at least one subject")
+	}
+
+	if b.Namespace != "" {
+		return errors.New("ClusterRoleBinding cannot have a namespace")
 	}
 
 	return nil
@@ -241,4 +247,14 @@ func (r Rule) VerbMatches(requestedVerb string) bool {
 	}
 
 	return false
+}
+
+// NewRole creates a new Role.
+func NewRole(meta ObjectMeta) *Role {
+	return &Role{ObjectMeta: meta}
+}
+
+// NewRoleBinding creates a new RoleBinding.
+func NewRoleBinding(meta ObjectMeta) *RoleBinding {
+	return &RoleBinding{ObjectMeta: meta}
 }

@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/api/core/v2"
 	sensuJWT "github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/seeds"
@@ -30,7 +31,7 @@ func seedStore(t *testing.T, store store.Store) {
 	// Add a ClusterRoleBinding for the ClusteRole admin and assign the
 	// local-admins group
 	localAdmins := &types.ClusterRoleBinding{
-		Name: "admin",
+		ObjectMeta: v2.NewObjectMeta("admin", ""),
 		RoleRef: types.RoleRef{
 			Type: "ClusterRole",
 			Name: "admin",
@@ -47,8 +48,7 @@ func seedStore(t *testing.T, store store.Store) {
 	}
 
 	admins := &types.RoleBinding{
-		Name:      "admin",
-		Namespace: "default",
+		ObjectMeta: v2.NewObjectMeta("admin", "default"),
 		RoleRef: types.RoleRef{
 			Type: "ClusterRole",
 			Name: "admin",
@@ -65,8 +65,7 @@ func seedStore(t *testing.T, store store.Store) {
 	}
 
 	editors := &types.RoleBinding{
-		Name:      "edit",
-		Namespace: "default",
+		ObjectMeta: v2.NewObjectMeta("edit", "default"),
 		RoleRef: types.RoleRef{
 			Type: "ClusterRole",
 			Name: "edit",
@@ -83,8 +82,7 @@ func seedStore(t *testing.T, store store.Store) {
 	}
 
 	viewers := &types.RoleBinding{
-		Name:      "view",
-		Namespace: "default",
+		ObjectMeta: v2.NewObjectMeta("view", "default"),
 		RoleRef: types.RoleRef{
 			Type: "ClusterRole",
 			Name: "view",
@@ -101,8 +99,7 @@ func seedStore(t *testing.T, store store.Store) {
 	}
 
 	fooViewerRole := &types.Role{
-		Name:      "foo-viewer",
-		Namespace: "default",
+		ObjectMeta: v2.NewObjectMeta("foo-viewer", "default"),
 		Rules: []types.Rule{
 			types.Rule{
 				Verbs:         []string{"get"},
@@ -116,8 +113,7 @@ func seedStore(t *testing.T, store store.Store) {
 	}
 
 	fooViewerRoleBinding := &types.RoleBinding{
-		Name:      "foo-viewer",
-		Namespace: "default",
+		ObjectMeta: v2.NewObjectMeta("foo-viewer", "default"),
 		RoleRef: types.RoleRef{
 			Type: "Role",
 			Name: "foo-viewer",

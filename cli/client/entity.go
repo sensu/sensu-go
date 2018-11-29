@@ -2,7 +2,6 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -11,9 +10,7 @@ var entitiesPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "entities")
 
 // DeleteEntity deletes given entitiy from the configured sensu instance
 func (client *RestClient) DeleteEntity(entity *types.Entity) (err error) {
-	fmt.Println(entity)
 	path := entitiesPath(client.config.Namespace(), entity.Name)
-	fmt.Println(path)
 	_, err = client.R().Delete(path)
 	return err
 }
@@ -47,7 +44,7 @@ func (client *RestClient) ListEntities(namespace string) ([]types.Entity, error)
 	}
 
 	if res.StatusCode() >= 400 {
-		return entities, fmt.Errorf("%v", res.String())
+		return entities, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &entities)

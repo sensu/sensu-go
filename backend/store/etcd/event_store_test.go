@@ -4,6 +4,7 @@ package etcd
 
 import (
 	"context"
+	"reflect"
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/store"
@@ -17,22 +18,31 @@ func TestEventStorage(t *testing.T) {
 		event := types.FixtureEvent("entity1", "check1")
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, event.Entity.Namespace)
 
+		// Set these to nil in order to avoid comparison issues between {} and nil
+		event.Check.Labels = nil
+		event.Check.Annotations = nil
+
 		// We should receive an empty slice if no results were found
 		events, err := store.GetEvents(ctx)
 		assert.NoError(t, err)
 		assert.NotNil(t, events)
+		assert.Equal(t, len(events), 0)
 
 		err = store.UpdateEvent(ctx, event)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		newEv, err := store.GetEventByEntityCheck(ctx, "entity1", "check1")
-		assert.NoError(t, err)
-		assert.EqualValues(t, event, newEv)
+		require.NoError(t, err)
+		if got, want := newEv, event; !reflect.DeepEqual(got, want) {
+			t.Errorf("bad event: got %#v, want %#v", got.Check, want.Check)
+		}
 
 		events, err = store.GetEvents(ctx)
 		require.NoError(t, err)
 		require.Equal(t, 1, len(events))
-		assert.EqualValues(t, event, events[0])
+		if got, want := events[0], event; !reflect.DeepEqual(got, want) {
+			t.Errorf("bad event: got %v, want %v", got.Check, want.Check)
+		}
 
 		// Get all events with wildcards
 		ctx = context.WithValue(ctx, types.NamespaceKey, types.NamespaceTypeAll)
@@ -64,7 +74,9 @@ func TestEventStorage(t *testing.T) {
 		events, err = store.GetEventsByEntity(ctx, "entity1")
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(events))
-		assert.EqualValues(t, event, events[0])
+		if got, want := events[0], event; !reflect.DeepEqual(got, want) {
+			t.Errorf("bad event: got %v, want %v", got, want)
+		}
 
 		assert.NoError(t, store.DeleteEventByEntityCheck(ctx, "entity1", "check1"))
 		newEv, err = store.GetEventByEntityCheck(ctx, "entity1", "check1")

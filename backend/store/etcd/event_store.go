@@ -69,6 +69,12 @@ func (s *Store) GetEvents(ctx context.Context) ([]*types.Event, error) {
 		if err != nil {
 			return nil, err
 		}
+		if event.Labels == nil {
+			event.Labels = make(map[string]string)
+		}
+		if event.Annotations == nil {
+			event.Annotations = make(map[string]string)
+		}
 
 		eventsArray = append(eventsArray, event)
 	}
@@ -98,6 +104,12 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string) ([]*ty
 		if err != nil {
 			return nil, err
 		}
+		if event.Labels == nil {
+			event.Labels = make(map[string]string)
+		}
+		if event.Annotations == nil {
+			event.Annotations = make(map[string]string)
+		}
 		eventsArray[i] = event
 	}
 
@@ -122,6 +134,12 @@ func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName
 	event := &types.Event{}
 	if err := json.Unmarshal(eventBytes, event); err != nil {
 		return nil, err
+	}
+	if event.Labels == nil {
+		event.Labels = make(map[string]string)
+	}
+	if event.Annotations == nil {
+		event.Annotations = make(map[string]string)
 	}
 
 	return event, nil

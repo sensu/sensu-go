@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -54,6 +54,6 @@ func (e *deleteExecutor) run(cmd *cobra.Command, args []string) error {
 }
 
 func (e *deleteExecutor) deleteEntityByName(name string) (err error) {
-	entity := &types.Entity{ObjectMeta: types.ObjectMeta{Name: name}}
+	entity := &v2.Entity{ObjectMeta: v2.NewObjectMeta(name, "")}
 	return e.client.DeleteEntity(entity)
 }

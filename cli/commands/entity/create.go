@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -49,8 +49,8 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Apply given arguments to entity
-			entity := types.Entity{}
-			opts.copy(&entity)
+			entity := v2.NewEntity(v2.NewObjectMeta("", ""))
+			opts.copy(entity)
 
 			if err := entity.Validate(); err != nil {
 				if !isInteractive {
@@ -59,7 +59,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			if err := cli.Client.CreateEntity(&entity); err != nil {
+			if err := cli.Client.CreateEntity(entity); err != nil {
 				return err
 			}
 

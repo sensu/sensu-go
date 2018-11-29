@@ -56,6 +56,12 @@ func (s *Store) GetAssets(ctx context.Context) ([]*types.Asset, error) {
 		if err != nil {
 			return nil, err
 		}
+		if asset.Labels == nil {
+			asset.Labels = make(map[string]string)
+		}
+		if asset.Annotations == nil {
+			asset.Annotations = make(map[string]string)
+		}
 		assetArray[i] = asset
 	}
 
@@ -80,6 +86,12 @@ func (s *Store) GetAssetByName(ctx context.Context, name string) (*types.Asset, 
 	asset := &types.Asset{}
 	if err := json.Unmarshal(assetBytes, asset); err != nil {
 		return nil, err
+	}
+	if asset.Labels == nil {
+		asset.Labels = make(map[string]string)
+	}
+	if asset.Annotations == nil {
+		asset.Annotations = make(map[string]string)
 	}
 
 	return asset, nil

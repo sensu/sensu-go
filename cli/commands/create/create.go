@@ -91,6 +91,7 @@ func ParseResources(in io.Reader) ([]types.Resource, error) {
 	}
 	// Support concatenated yaml documents separated by '---'
 	array := bytes.Split(b, []byte("\n---\n"))
+	count := 0
 	for _, b := range array {
 		var jsonBytes []byte
 		if jsonRe.Match(b) {
@@ -117,10 +118,11 @@ func ParseResources(in io.Reader) ([]types.Resource, error) {
 					err = errors.New("too many errors")
 					break
 				}
-				describeError(rerr)
+				describeError(count, rerr)
 				errCount++
 			}
 			resources = append(resources, w.Value)
+			count++
 		}
 	}
 
@@ -149,6 +151,11 @@ func ValidateResources(resources []types.Resource) error {
 	var err error
 	errCount := 0
 	for i, resource := range resources {
+		if resource == nil {
+			errCount++
+			fmt.Fprintf(os.Stderr, "error validating resource %d: resource is nil\n", i)
+			continue
+		}
 		if verr := resource.Validate(); verr != nil {
 			errCount++
 			fmt.Fprintf(os.Stderr, "error validating resource %d (%s): %s\n", i, resource.URIPath(), verr)
@@ -162,13 +169,13 @@ func ValidateResources(resources []types.Resource) error {
 	return err
 }
 
-func describeError(err error) {
+func describeError(index int, err error) {
 	jsonErr, ok := err.(*json.UnmarshalTypeError)
 	if !ok {
-		fmt.Fprintln(os.Stderr, err)
+		fmt.Fprintf(os.Stderr, "resource %d: %s\n", index, err)
 		return
 	}
-	fmt.Fprintf(os.Stderr, "error parsing resource (offset %d): %s\n", jsonErr.Offset, err)
+	fmt.Fprintf(os.Stderr, "resource %d: (offset %d): %s\n", index, jsonErr.Offset, err)
 }
 
 func PutResources(client client.GenericClient, resources []types.Resource) error {
