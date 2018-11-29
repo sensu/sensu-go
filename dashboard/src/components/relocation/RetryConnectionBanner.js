@@ -15,11 +15,10 @@ class RetryConnectionBanner extends React.PureComponent {
   render() {
     return (
       <Banner
-        // eslint-disable-next-line
         message="You've lost network connection."
         variant="warning"
         actions={
-          <Button color="inherit" onClick={this.retryConnection()}>
+          <Button color="inherit" onClick={() => this.retryConnection()}>
             reconnect
           </Button>
         }
