@@ -15,10 +15,10 @@ const httpLink = ({ getClient }) =>
     fetch: (url, init) =>
       doFetch(url, init).then(
         response => {
-          /* getClient().mutate({
+          getClient().mutate({
             mutation,
             variables: { offline: false },
-          }); */
+          });
           return response;
         },
         error => {

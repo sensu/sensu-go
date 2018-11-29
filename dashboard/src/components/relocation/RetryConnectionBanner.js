@@ -9,6 +9,7 @@ class RetryConnectionBanner extends React.PureComponent {
   static propTypes = { client: PropTypes.object.isRequired };
 
   retryConnection = () => {
+    console.log("this is running");
     retryLocalNetwork(this.props.client);
   };
 
