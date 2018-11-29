@@ -1,17 +1,15 @@
 import React from "react";
-import gql from "graphql-tag";
-import InlineLink from "/components/InlineLink";
+import PropTypes from "prop-types";
+import { withApollo } from "react-apollo";
+import Button from "@material-ui/core/Button";
 import Banner from "./Banner";
-
-const mutation = gql`
-  mutation RetryLocalNetworkMutation {
-    retryLocalNetwork(retry: true) @client
-  }
-`;
+import retryLocalNetwork from "../../mutations/retryLocalNetwork";
 
 class RetryConnectionBanner extends React.PureComponent {
+  static propTypes = { client: PropTypes.object.isRequired };
+
   retryConnection = () => {
-    console.log("It worked");
+    retryLocalNetwork(this.props.client);
   };
 
   render() {
@@ -20,11 +18,14 @@ class RetryConnectionBanner extends React.PureComponent {
         // eslint-disable-next-line
         message="You've lost network connection."
         variant="warning"
-        buttonMessage="Retry Connection"
-        buttonAction={this.retryConnection}
+        actions={
+          <Button color="inherit" onClick={this.retryConnection()}>
+            reconnect
+          </Button>
+        }
       />
     );
   }
 }
 
-export default RetryConnectionBanner;
+export default withApollo(RetryConnectionBanner);
