@@ -10,6 +10,7 @@ import AppThemeProvider from "/components/AppThemeProvider";
 import ResetStyles from "/components/ResetStyles";
 import ThemeStyles from "/components/ThemeStyles";
 
+import GlobalAlert from "/components/util/GlobalAlert";
 import AuthenticatedRoute from "/components/util/AuthenticatedRoute";
 import UnauthenticatedRoute from "/components/util/UnauthenticatedRoute";
 import AuthInvalidRoute from "/components/util/AuthInvalidRoute";
@@ -61,6 +62,7 @@ class AppRoot extends React.PureComponent {
               </Switch>
               <ResetStyles />
               <ThemeStyles />
+              <GlobalAlert />
             </AppThemeProvider>
           </ApolloProvider>
         </Provider>
