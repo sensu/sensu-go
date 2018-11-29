@@ -8,7 +8,6 @@ import (
 	"strconv"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
@@ -176,13 +175,10 @@ func (m *EtcdSupervisor) getMonitor(ctx context.Context, key string) (*monitor, 
 func watchMon(ctx context.Context, cli *clientv3.Client, mon *monitor, failureHandler func(), shutdownHandler func()) {
 	ctx, cancel := context.WithCancel(ctx)
 	responseChan := cli.Watch(ctx, mon.key)
-	timer := time.NewTimer(time.Duration(mon.ttl) * time.Second)
+	leasesMu.Lock()
+	leasesToRevoke[mon.leaseID] = struct{}{}
+	leasesMu.Unlock()
 	go func() {
-		defer func() {
-			if !timer.Stop() {
-				<-timer.C
-			}
-		}()
 		defer cancel()
 		for {
 			select {
@@ -201,14 +197,7 @@ func watchMon(ctx context.Context, cli *clientv3.Client, mon *monitor, failureHa
 						return
 					}
 				}
-			case <-timer.C:
-				logger.Debugf("monitor for lease (%x) timed out", mon.leaseID)
-				failureHandler()
-				return
 			}
 		}
 	}()
-	leasesMu.Lock()
-	leasesToRevoke[mon.leaseID] = struct{}{}
-	leasesMu.Unlock()
 }
