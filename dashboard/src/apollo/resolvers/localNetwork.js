@@ -13,7 +13,7 @@ export default {
   },
   resolvers: {
     Mutation: {
-      retryLocalNetwork: () => (_: mixed, args: mixed, { cache }: Context) => {
+      retryLocalNetwork: (_: mixed, args: mixed, { cache }: Context) => {
         const data = {
           localNetwork: {
             __typename: "LocalNetwork",
