@@ -124,17 +124,11 @@ build_agent() {
 }
 
 build_backend() {
-    build_dashboard $@
     build_command backend $@
 }
 
 build_cli() {
     build_command cli $@
-}
-
-build_dashboard() {
-    echo "Building web UI"
-    GOOS=$HOST_GOOS GOARCH=$HOST_GOARCH go generate $@ ./dashboard
 }
 
 build_command () {
@@ -219,9 +213,6 @@ docker_commands () {
 docker_build() {
     local build_sha=$(git rev-parse HEAD)
     local ext=$@
-
-    # When publishing image, ensure that we can bundle the web UI.
-    build_dashboard $ext
 
     for cmd in agent backend cli; do
         echo "Building $cmd for linux-amd64"

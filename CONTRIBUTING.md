@@ -82,7 +82,7 @@ after this with `git push -f`. -- Thanks Chef!
 
 ## Changelog
 
-The Sensu [Changelog](CHANGELOG.md) is based on the Sensu Community 
+The Sensu [Changelog](CHANGELOG.md) is based on the Sensu Community
 [Changelog guidelines](https://github.com/sensu-plugins/community/blob/master/HOW_WE_CHANGELOG.md).
 
 All new changes go underneath the _Unreleased_ heading at the top of the Changelog.
@@ -277,14 +277,6 @@ Each product can built separately, with one of the following:
 ./build.sh build_agent
 ./build.sh build_backend
 ./build.sh build_cli
-```
-
-By default the web UI is built along side and bundled into the backend, as this
-can be a time intensive process, we provide an escape hatch. Use the `dev` tag
-to avoid building the web UI.
-
-```sh
-./build.sh build_backend -tags dev
 ```
 
 ## Testing
