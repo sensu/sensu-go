@@ -57,6 +57,11 @@ func (a UserController) Create(ctx context.Context, newUser types.User) error {
 		return NewErrorf(AlreadyExistsErr)
 	}
 
+	return a.CreateOrReplace(ctx, newUser)
+}
+
+// CreateOrReplace creates or replaces a user.
+func (a UserController) CreateOrReplace(ctx context.Context, newUser types.User) error {
 	// Validate
 	if err := newUser.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
@@ -80,57 +85,6 @@ func (a UserController) Create(ctx context.Context, newUser types.User) error {
 	}
 
 	return nil
-}
-
-// CreateOrReplace creates or replaces a user.
-func (a UserController) CreateOrReplace(ctx context.Context, newUser types.User) error {
-	// Validate
-	if err := newUser.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-
-	// Validate password
-	if err := newUser.ValidatePassword(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-
-	// Persist
-	if err := a.Store.UpdateUser(&newUser); err != nil {
-		return NewError(InternalErr, err)
-	}
-
-	return nil
-}
-
-// Update validates and persists changes to a resource if viewer has access.
-func (a UserController) Update(ctx context.Context, given types.User) error {
-	// Find existing user
-	user, serr := a.findUser(ctx, given.Username)
-	if serr != nil {
-		return serr
-	}
-
-	// Copy & validate password if given
-	if given.Password != "" {
-		// Validate password
-		if err := given.ValidatePassword(); err != nil {
-			return NewError(InvalidArgument, err)
-		}
-
-		// Create password digest
-		hash, err := bcrypt.HashPassword(given.Password)
-		if err != nil {
-			return NewError(InternalErr, err)
-		}
-		user.Password = hash
-	}
-
-	// Update fields
-	user.Groups = given.Groups
-	user.Disabled = given.Disabled
-
-	// Persist Changes
-	return a.updateUser(ctx, user)
 }
 
 // Disable disables user identified by given name if viewer has access.
