@@ -11,6 +11,9 @@ import (
 )
 
 func TestRoundRobinScheduler(t *testing.T) {
+	// TODO: Revisit https://github.com/sensu/sensu-go/issues/2431 is resolved.
+	t.Skip()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	bus := mockbus.MockBus{}
