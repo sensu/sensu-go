@@ -47,7 +47,7 @@ func TestListCommandRunEClosureWithAllNamespaces(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListHandlers", "*").Return([]types.Handler{
+	client.On("ListHandlers", "").Return([]types.Handler{
 		*types.FixtureHandler("one"),
 	}, nil)
 

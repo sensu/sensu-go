@@ -45,7 +45,7 @@ func (s *Store) DeleteEventFilterByName(ctx context.Context, name string) error 
 // GetEventFilters gets the list of filters for an (optional) namespace. Passing
 // the empty string as the org will return all filters.
 func (s *Store) GetEventFilters(ctx context.Context) ([]*types.EventFilter, error) {
-	resp, err := query(ctx, s, getEventFiltersPath)
+	resp, err := s.client.Get(ctx, getEventFiltersPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}

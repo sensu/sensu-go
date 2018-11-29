@@ -50,7 +50,7 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListFilters", "*").Return([]types.EventFilter{
+	client.On("ListFilters", "").Return([]types.EventFilter{
 		*types.FixtureEventFilter("name-one"),
 	}, nil)
 
@@ -105,7 +105,7 @@ func TestListCommandRunEClosureWithAlphaNumericChars(t *testing.T) {
 	client := cli.Client.(*client.MockClient)
 	filter := types.FixtureEventFilter("name-one")
 	filter.Expressions = append(filter.Expressions, "10 > 0")
-	client.On("ListFilters", "*").Return([]types.EventFilter{*filter}, nil)
+	client.On("ListFilters", "").Return([]types.EventFilter{*filter}, nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))

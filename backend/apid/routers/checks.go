@@ -42,10 +42,12 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 		Router:     parent,
 		PathPrefix: "/namespaces/{namespace}/{resource:checks}",
 	}
-	routes.GetAll(r.list)
-	routes.Get(r.find)
-	routes.Post(r.create)
+
 	routes.Del(r.destroy)
+	routes.Get(r.find)
+	routes.List(r.list)
+	routes.ListAllNamespaces(r.list, "/{resource:checks}")
+	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
 
 	// Custom

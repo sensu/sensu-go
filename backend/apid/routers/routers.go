@@ -11,7 +11,7 @@ import (
 )
 
 type errorBody struct {
-	Message string `json:"error"`
+	Message string `json:"message"`
 	Code    uint32 `json:"code"`
 }
 
@@ -42,7 +42,7 @@ func respondWith(w http.ResponseWriter, resources interface{}) {
 
 // writeError writes error response in JSON format.
 func writeError(w http.ResponseWriter, err error) {
-	const fallback = `{"error": "failed to marshal error message"}`
+	const fallback = `{"message": "failed to marshal error message"}`
 
 	errBody := errorBody{}
 	st := http.StatusInternalServerError
@@ -132,8 +132,8 @@ type actionHandlerFunc func(r *http.Request) (interface{}, error)
 // ResourceRoute mounts resources in a convetional RESTful manner.
 //
 //   routes := ResourceRoute{PathPrefix: "checks", Router: ...}
-//   routes.GetAll(myIndexAction) // given action is mounted at GET /checks
 //   routes.Get(myShowAction)     // given action is mounted at GET /checks/:id
+//   routes.List(myIndexAction) 	// given action is mounted at GET /checks
 //   routes.Put(myCreateAction)   // given action is mounted at PUT /checks/:id
 //   routes.Patch(myUpdateAction) // given action is mounted at PATCH /checks/:id
 //   routes.Post(myCreateAction)  // given action is mounted at POST /checks
@@ -145,14 +145,19 @@ type ResourceRoute struct {
 	PathPrefix string
 }
 
-// GetAll reads all
-func (r *ResourceRoute) GetAll(fn actionHandlerFunc) *mux.Route {
-	return r.Path("", fn).Methods(http.MethodGet)
-}
-
 // Get reads
 func (r *ResourceRoute) Get(fn actionHandlerFunc) *mux.Route {
 	return r.Path("{id}", fn).Methods(http.MethodGet)
+}
+
+// List resources
+func (r *ResourceRoute) List(fn actionHandlerFunc) *mux.Route {
+	return r.Path("", fn).Methods(http.MethodGet)
+}
+
+// ListAllNamespaces return all resources across all namespaces
+func (r *ResourceRoute) ListAllNamespaces(fn actionHandlerFunc, path string) *mux.Route {
+	return handleAction(r.Router, path, fn)
 }
 
 // Post creates

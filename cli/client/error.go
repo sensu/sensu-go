@@ -8,7 +8,7 @@ import (
 
 // APIError describes an error message returned by the REST API
 type APIError struct {
-	Message string `json:"error"`
+	Message string `json:"message"`
 	Code    uint32 `json:"code,omitempty"`
 }
 

@@ -29,12 +29,14 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 		Router:     parent,
 		PathPrefix: "/namespaces/{namespace}/{resource:events}",
 	}
-	routes.GetAll(r.list)
+
+	routes.Post(r.create)
+	routes.List(r.list)
+	routes.ListAllNamespaces(r.list, "/{resource:events}")
 	routes.Path("{entity}", r.listByEntity).Methods(http.MethodGet)
 	routes.Path("{entity}/{check}", r.find).Methods(http.MethodGet)
 	routes.Path("{entity}/{check}", r.destroy).Methods(http.MethodDelete)
 	routes.Path("{entity}/{check}", r.createOrReplace).Methods(http.MethodPut)
-	routes.Post(r.create)
 }
 
 func (r *EventsRouter) list(req *http.Request) (interface{}, error) {

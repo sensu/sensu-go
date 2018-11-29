@@ -35,8 +35,6 @@ func (b KeyBuilder) WithResource(r types.MultitenantResource) KeyBuilder {
 
 // WithContext adds a namespace from a context.
 func (b KeyBuilder) WithContext(ctx context.Context) KeyBuilder {
-	// TODO (Simon): Use the authorization attributes to get the namespace and
-	// remove the "namespace" middleware
 	b.namespace = NewNamespaceFromContext(ctx)
 	return b
 }

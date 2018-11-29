@@ -6,8 +6,8 @@ import "context"
 type key int
 
 const (
-	// AcceessTokenString is the key name used to retrieve the access token string
-	AccessTokenString = iota
+	// AccessTokenString is the key name used to retrieve the access token string
+	AccessTokenString key = iota
 
 	// AccessTokenClaims contains the key name to retrieve the access token claims
 	AccessTokenClaims

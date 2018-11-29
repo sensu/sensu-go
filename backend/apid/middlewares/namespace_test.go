@@ -22,13 +22,7 @@ func TestNamespaceMiddlware(t *testing.T) {
 			description: "No query param or path variable",
 			method:      "GET",
 			url:         "/",
-			expected:    "default",
-		},
-		{
-			description: "Query param",
-			method:      "GET",
-			url:         "/?namespace=acme",
-			expected:    "acme",
+			expected:    "",
 		},
 		{
 			description: "Path variable",

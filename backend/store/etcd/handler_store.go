@@ -37,7 +37,7 @@ func (s *Store) DeleteHandlerByName(ctx context.Context, name string) error {
 // GetHandlers gets the list of handlers for an (optional) namespace. Passing
 // the empty string as the org will return all handlers.
 func (s *Store) GetHandlers(ctx context.Context) ([]*types.Handler, error) {
-	resp, err := query(ctx, s, getHandlersPath)
+	resp, err := s.client.Get(ctx, getHandlersPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}

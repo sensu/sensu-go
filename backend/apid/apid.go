@@ -116,7 +116,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
 	resp := map[string]interface{}{
-		"error": "not found", "code": actions.NotFound,
+		"message": "not found", "code": actions.NotFound,
 	}
 	_ = json.NewEncoder(w).Encode(resp)
 }

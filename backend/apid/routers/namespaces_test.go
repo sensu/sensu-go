@@ -146,7 +146,7 @@ func TestDeleteNamespace(t *testing.T) {
 	}
 }
 
-func TestGetAllNamespaces(t *testing.T) {
+func TestListNamespaces(t *testing.T) {
 	controller, server := newOrgTest(t)
 	defer server.Close()
 

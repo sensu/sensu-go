@@ -49,7 +49,7 @@ func TestListCommandRunEClosureWithAllNamespaces(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEntities", "*").Return([]types.Entity{
+	client.On("ListEntities", "").Return([]types.Entity{
 		*types.FixtureEntity("name-two"),
 	}, nil)
 

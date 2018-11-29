@@ -41,7 +41,7 @@ func (s *Store) DeleteAssetByName(ctx context.Context, name string) error {
 
 // GetAssets fetches all assets from the store
 func (s *Store) GetAssets(ctx context.Context) ([]*types.Asset, error) {
-	resp, err := query(ctx, s, getAssetsPath)
+	resp, err := s.client.Get(ctx, getAssetsPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}

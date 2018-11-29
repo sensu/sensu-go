@@ -82,7 +82,7 @@ func (s *Store) GetExtension(ctx context.Context, name string) (*types.Extension
 
 // GetExtensions gets an extension
 func (s *Store) GetExtensions(ctx context.Context) ([]*types.Extension, error) {
-	resp, err := query(ctx, s, getExtensionPath)
+	resp, err := s.client.Get(ctx, getExtensionPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}

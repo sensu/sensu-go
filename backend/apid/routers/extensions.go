@@ -28,10 +28,12 @@ func (r *ExtensionsRouter) Mount(parent *mux.Router) {
 		Router:     parent,
 		PathPrefix: "/namespaces/{namespace}/{resource:extensions}",
 	}
-	routes.GetAll(r.list)
-	routes.Get(r.find)
-	routes.Put(r.register)
+
 	routes.Del(r.deregister)
+	routes.Get(r.find)
+	routes.List(r.list)
+	routes.ListAllNamespaces(r.list, "/{resource:extensions}")
+	routes.Put(r.register)
 }
 
 func (r *ExtensionsRouter) list(req *http.Request) (interface{}, error) {
