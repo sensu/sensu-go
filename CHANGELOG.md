@@ -48,6 +48,7 @@ period of disconnection from the backend.
 - Removed the ability to rerun keepalives on the events list page
 - A panic in keepalive/check ttl monitors causing a panic.
 - Monitors are now properly namespaced in etcd.
+- Updating a users groups will no longer corrupt their password
 
 ## [2.0.0-beta.8-1] - 2018-11-15
 

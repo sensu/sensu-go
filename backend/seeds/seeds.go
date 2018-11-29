@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -257,9 +258,14 @@ func setupClusterRoles(store store.Store) error {
 }
 
 func setupUsers(store store.Store) error {
+	hash, err := bcrypt.HashPassword("P@ssw0rd!")
+	if err != nil {
+		return err
+	}
+
 	admin := &types.User{
 		Username: "admin",
-		Password: "P@ssw0rd!",
+		Password: hash,
 		Groups:   []string{"cluster-admins"},
 	}
 	if err := store.CreateUser(admin); err != nil {
@@ -268,7 +274,7 @@ func setupUsers(store store.Store) error {
 
 	agent := &types.User{
 		Username: "agent",
-		Password: "P@ssw0rd!",
+		Password: hash,
 		Groups:   []string{"system:agents"},
 	}
 	return store.CreateUser(agent)

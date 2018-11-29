@@ -5,9 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"golang.org/x/crypto/bcrypt"
-
 	"github.com/coreos/etcd/clientv3"
+	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -28,7 +27,7 @@ func (s *Store) AuthenticateUser(ctx context.Context, username, password string)
 		return nil, fmt.Errorf("User %s is disabled", username)
 	}
 
-	ok := checkPassword(user.Password, password)
+	ok := bcrypt.CheckPassword(user.Password, password)
 	if !ok {
 		return nil, fmt.Errorf("Wrong password for user %s", username)
 	}
@@ -38,13 +37,6 @@ func (s *Store) AuthenticateUser(ctx context.Context, username, password string)
 
 // CreateUser creates a new user
 func (s *Store) CreateUser(u *types.User) error {
-	// Hash the password
-	hash, err := hashPassword(u.Password)
-	if err != nil {
-		return err
-	}
-	u.Password = hash
-
 	userBytes, err := json.Marshal(u)
 	if err != nil {
 		return err
@@ -171,13 +163,6 @@ func (s *Store) GetAllUsers() ([]*types.User, error) {
 
 // UpdateUser updates a User.
 func (s *Store) UpdateUser(u *types.User) error {
-	// Hash the password
-	hash, err := hashPassword(u.Password)
-	if err != nil {
-		return err
-	}
-	u.Password = hash
-
 	bytes, err := json.Marshal(u)
 	if err != nil {
 		return err
@@ -185,14 +170,4 @@ func (s *Store) UpdateUser(u *types.User) error {
 
 	_, err = s.client.Put(context.TODO(), getUserPath(u.Username), string(bytes))
 	return err
-}
-
-func checkPassword(hash, password string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
-	return err == nil
-}
-
-func hashPassword(password string) (string, error) {
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	return string(hash), err
 }

@@ -7,15 +7,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestUserStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		password := "P@ssw0rd!"
+		passwordDigest, err := bcrypt.HashPassword(password)
+		require.NoError(t, err)
+
 		ctx, cancel := context.WithDeadline(
 			context.Background(),
 			time.Now().Add(20*time.Second),
@@ -28,14 +33,14 @@ func TestUserStorage(t *testing.T) {
 		assert.Empty(t, users)
 
 		user := types.FixtureUser("foo")
-		user.Password = password
+		user.Password = passwordDigest
 		err = store.CreateUser(user)
 		assert.NoError(t, err)
 
-		// The password should be hashed
+		// The user should be fetchable
 		result, err := store.GetUser(ctx, "foo")
 		assert.NoError(t, err)
-		assert.NotEqual(t, password, result.Password)
+		assert.NotNil(t, result)
 
 		// Successful authentication
 		_, err = store.AuthenticateUser(ctx, "foo", password)
@@ -50,7 +55,7 @@ func TestUserStorage(t *testing.T) {
 		assert.Error(t, err)
 
 		mockedUser := types.FixtureUser("bar")
-		mockedUser.Password = password
+		mockedUser.Password = passwordDigest
 		err = store.UpdateUser(mockedUser)
 		assert.NoError(t, err)
 
@@ -112,20 +117,4 @@ func TestUserStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 2, len(users))
 	})
-}
-
-func TestCheckPassword(t *testing.T) {
-	hash := "$2a$10$iyYyGmveS9dcYp5DHMbOm.LShX806vB0ClzoPyt1TIgkZ9KQ62cOO"
-	password := "P@ssw0rd!"
-
-	assert.False(t, checkPassword(hash, "foo"))
-	assert.True(t, checkPassword(hash, password))
-}
-
-func TestHashPassword(t *testing.T) {
-	password := "P@ssw0rd!"
-
-	hash, err := hashPassword(password)
-	assert.NotEqual(t, password, hash)
-	assert.NoError(t, err)
 }
