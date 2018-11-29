@@ -2,6 +2,7 @@ package schedulerd
 
 import (
 	"context"
+	"errors"
 	"sync"
 
 	time "github.com/echlebek/timeproxy"
@@ -66,12 +67,15 @@ func (r *roundRobinScheduler) execute(msg *roundRobinMessage) {
 // Schedule returns a sync.WaitGroup that the caller can wait on to know
 // when scheduling is completed.
 func (r *roundRobinScheduler) Schedule(msg *roundRobinMessage) (*sync.WaitGroup, error) {
-	if err := r.ctx.Err(); err != nil {
-		return nil, err
-	}
-	msg.wg.Add(1)
-	r.messages <- msg
-	return &msg.wg, nil
+	/*
+		if err := r.ctx.Err(); err != nil {
+			return nil, err
+		}
+		msg.wg.Add(1)
+		r.messages <- msg
+		return &msg.wg, nil
+	*/
+	return nil, errors.New("roundrobin scheduling is currently unsupported, see https://github.com/sensu/sensu-go/issues/2444")
 }
 
 // logError logs errors and adds agentName and checkName as fields.

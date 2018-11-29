@@ -30,6 +30,7 @@ uses the same facility as check subdue for handling time windows.
   values coming from the mutator's environment.
 - Metadata from wrappers and resources is now merged, with a preference given to
 the values coming from the wrapper. Labels and annotations are deep-merged.
+- Round-robin scheduling has been temporarily disabled.
 
 ### Fixed
 - Fixed several resource leaks in the check scheduler.
