@@ -181,7 +181,7 @@ func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 	if _, err := a.store.GetToken(refreshClaims.Subject, refreshClaims.Id); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
-			http.Error(w, "could not retrieve the refresh token string", http.StatusBadRequest)
+			http.Error(w, "refresh token is no longer valid", http.StatusUnauthorized)
 			return
 		default:
 			err = fmt.Errorf("the refresh token is not authorized: %s", err)
