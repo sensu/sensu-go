@@ -133,6 +133,14 @@ func newStartCommand() *cobra.Command {
 				return setupErr
 			}
 
+			// Make sure the deprecated API flags are no longer used
+			if host := viper.GetString(deprecatedFlagAPIHost); host != "[::]" {
+				logger.Fatalf("Flag --%s has been deprecated, please use --%s instead", deprecatedFlagAPIHost, flagAPIListenAddress)
+			}
+			if port := viper.GetInt(deprecatedFlagAPIPort); port != 8080 {
+				logger.Fatalf("Flag --%s has been deprecated, please use --%s instead", deprecatedFlagAPIPort, flagAPIListenAddress)
+			}
+
 			level, err := logrus.ParseLevel(viper.GetString(flagLogLevel))
 			if err != nil {
 				return err
@@ -249,6 +257,8 @@ func newStartCommand() *cobra.Command {
 	// Flag defaults
 	viper.SetDefault(flagAgentHost, "[::]")
 	viper.SetDefault(flagAgentPort, 8081)
+	viper.SetDefault(deprecatedFlagAPIHost, "[::]")
+	viper.SetDefault(deprecatedFlagAPIPort, 8080)
 	viper.SetDefault(flagAPIListenAddress, "[::]:8080")
 	viper.SetDefault(flagAPIURL, "http://localhost:8080")
 	viper.SetDefault(flagDashboardHost, "[::]")
@@ -332,9 +342,12 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagEtcdPeerTrustedCAFile, viper.GetString(flagEtcdPeerTrustedCAFile), "path to the peer server TLS trusted CA file")
 	_ = cmd.Flags().SetAnnotation(flagEtcdPeerTrustedCAFile, "categories", []string{"store"})
 
-	// Deprecated flags without backward compatiblity
+	// Make sure some deprecated flags are no longer used
 	cmd.Flags().String(deprecatedFlagAPIHost, viper.GetString(deprecatedFlagAPIHost), "http api listener host")
 	cmd.Flags().Int(deprecatedFlagAPIPort, viper.GetInt(deprecatedFlagAPIPort), "http api port")
+	_ = cmd.Flags().MarkHidden(deprecatedFlagAPIHost)
+	_ = cmd.Flags().MarkHidden(deprecatedFlagAPIPort)
+
 	_ = cmd.Flags().MarkDeprecated(deprecatedFlagAPIHost, fmt.Sprintf("please use --%s instead", flagAPIListenAddress))
 	_ = cmd.Flags().MarkDeprecated(deprecatedFlagAPIPort, fmt.Sprintf("please use --%s instead", flagAPIListenAddress))
 
