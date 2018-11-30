@@ -34,8 +34,6 @@ export const styles = theme => {
       position: "relative",
       color: theme.palette.getContrastText(backgroundColor),
       backgroundColor,
-      display: "flex",
-      alignItems: "center",
       [theme.breakpoints.down("sm")]: {
         flexGrow: 1,
       },
@@ -52,10 +50,27 @@ export const styles = theme => {
       },
     },
 
+    content: {
+      display: "flex",
+      alignItems: "center",
+
+      marginLeft: "auto",
+      marginRight: "auto",
+
+      maxWidth: 1224,
+
+      paddingLeft: theme.spacing.unit,
+      paddingRight: theme.spacing.unit,
+
+      [theme.breakpoints.up("md")]: {
+        paddingLeft: 80,
+        paddingRight: 80,
+      },
+    },
+
     message: {
       paddingTop: 14,
       paddingBottom: 14,
-      paddingLeft: 24,
 
       display: "flex",
       alignItems: "center",
@@ -76,8 +91,6 @@ export const styles = theme => {
       paddingTop: 6,
       paddingBottom: 6,
       paddingLeft: 24,
-      paddingRight: 16,
-      marginRight: -8,
 
       [theme.breakpoints.down("md")]: {
         marginRight: "env(safe-area-inset-right)",
@@ -123,8 +136,9 @@ class Banner extends React.PureComponent {
   static propTypes = {
     classes: PropTypes.object.isRequired,
     message: PropTypes.node,
+    actions: PropTypes.node,
     variant: PropTypes.oneOf(Object.keys(icons)),
-    onClose: PropTypes.func.isRequired,
+    onClose: PropTypes.func,
     maxAge: PropTypes.number,
     showAgeIndicator: PropTypes.bool,
   };
@@ -133,7 +147,9 @@ class Banner extends React.PureComponent {
     maxAge: 0,
     variant: undefined,
     message: undefined,
+    actions: undefined,
     showAgeIndicator: false,
+    onClose: undefined,
   };
 
   state = { mouseOver: false };
@@ -164,6 +180,7 @@ class Banner extends React.PureComponent {
     const {
       classes,
       message,
+      actions,
       onClose,
       variant,
       maxAge,
@@ -176,7 +193,7 @@ class Banner extends React.PureComponent {
 
     const messageId = `${this.id}-message`;
 
-    const closeButton = (
+    const closeButton = onClose ? (
       <IconButton
         key="close"
         aria-label="Close"
@@ -186,6 +203,8 @@ class Banner extends React.PureComponent {
       >
         <CloseIcon className={classes.icon} />
       </IconButton>
+    ) : (
+      undefined
     );
 
     return (
@@ -202,28 +221,36 @@ class Banner extends React.PureComponent {
         onMouseOver={this._handleMouseOver}
         onMouseLeave={this._handleMouseLeave}
       >
-        <div id={messageId} className={classes.message}>
-          {Icon && <Icon className={classes.variantIcon} />}
-          {message}
-        </div>
-        <div className={classes.action}>
-          {!!maxAge && (
-            <Timer
-              key={closeButton.props.key}
-              delay={maxAge}
-              onEnd={onClose}
-              paused={mouseOver}
-            >
-              {showAgeIndicator
-                ? progress => (
-                    <CircularProgress width={4} value={progress} opacity={0.5}>
-                      {closeButton}
-                    </CircularProgress>
-                  )
-                : undefined}
-            </Timer>
-          )}
-          {(!showAgeIndicator || !maxAge) && closeButton}
+        <div className={classes.content}>
+          <div id={messageId} className={classes.message}>
+            {Icon && <Icon className={classes.variantIcon} />}
+            {message}
+          </div>
+          <div className={classes.action}>
+            {actions}
+            {!!maxAge &&
+              closeButton && (
+                <Timer
+                  key={closeButton.props.key}
+                  delay={maxAge}
+                  onEnd={onClose}
+                  paused={mouseOver}
+                >
+                  {showAgeIndicator
+                    ? progress => (
+                        <CircularProgress
+                          width={4}
+                          value={progress}
+                          opacity={0.5}
+                        >
+                          {closeButton}
+                        </CircularProgress>
+                      )
+                    : undefined}
+                </Timer>
+              )}
+            {(!showAgeIndicator || !maxAge) && closeButton}
+          </div>
         </div>
       </Paper>
     );
