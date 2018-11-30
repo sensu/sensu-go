@@ -13,7 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Add the `etcd-advertise-client-urls` config attribute to sensu-backend
 - Support for multiple API versions added to sensuctl create
 - Support for metadata added to wrapped resources (yaml, wrapped-json)
-- Added the backend configurationa attributes `api-listen-address` & `api-url`.
+- Added the backend configuration attributes `api-listen-address` & `api-url`.
 
 ### Removed
 - Check subdue functionality has been disabled. Users that have checks with
