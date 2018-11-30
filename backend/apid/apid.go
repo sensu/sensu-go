@@ -70,6 +70,8 @@ func New(c Config, opts ...Option) (*APId, error) {
 	var tlsConfig *tls.Config
 	var err error
 	if c.TLS != nil {
+		// TODO(palourde): We should avoid using the loopback interface
+		c.TLS.InsecureSkipVerify = true
 		tlsConfig, err = c.TLS.ToTLSConfig()
 		if err != nil {
 			return nil, err

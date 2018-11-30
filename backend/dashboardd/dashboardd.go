@@ -224,7 +224,8 @@ func newBackendProxy(APIURL string, TLS *types.TLSOptions) (*httputil.ReversePro
 		if err != nil {
 			return nil, err
 		}
-		cfg.InsecureSkipVerify = true // skip host verification on loopback interface
+		// TODO(palourde): We should avoid using the loopback interface
+		cfg.InsecureSkipVerify = true
 		transport.TLSClientConfig = cfg
 	}
 
