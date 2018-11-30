@@ -26,8 +26,10 @@ const (
 	flagConfigFile            = "config-file"
 	flagAgentHost             = "agent-host"
 	flagAgentPort             = "agent-port"
-	flagAPIHost               = "api-host"
-	flagAPIPort               = "api-port"
+	deprecatedFlagAPIHost     = "api-host"
+	deprecatedFlagAPIPort     = "api-port"
+	flagAPIListenAddress      = "api-listen-address"
+	flagAPIURL                = "api-url"
 	flagDashboardHost         = "dashboard-host"
 	flagDashboardPort         = "dashboard-port"
 	flagDeregistrationHandler = "deregistration-handler"
@@ -131,6 +133,14 @@ func newStartCommand() *cobra.Command {
 				return setupErr
 			}
 
+			// Make sure the deprecated API flags are no longer used
+			if host := viper.GetString(deprecatedFlagAPIHost); host != "[::]" {
+				logger.Fatalf("Flag --%s has been deprecated, please use --%s instead", deprecatedFlagAPIHost, flagAPIListenAddress)
+			}
+			if port := viper.GetInt(deprecatedFlagAPIPort); port != 8080 {
+				logger.Fatalf("Flag --%s has been deprecated, please use --%s instead", deprecatedFlagAPIPort, flagAPIListenAddress)
+			}
+
 			level, err := logrus.ParseLevel(viper.GetString(flagLogLevel))
 			if err != nil {
 				return err
@@ -140,8 +150,8 @@ func newStartCommand() *cobra.Command {
 			cfg := &backend.Config{
 				AgentHost:             viper.GetString(flagAgentHost),
 				AgentPort:             viper.GetInt(flagAgentPort),
-				APIHost:               viper.GetString(flagAPIHost),
-				APIPort:               viper.GetInt(flagAPIPort),
+				APIListenAddress:      viper.GetString(flagAPIListenAddress),
+				APIURL:                viper.GetString(flagAPIURL),
 				DashboardHost:         viper.GetString(flagDashboardHost),
 				DashboardPort:         viper.GetInt(flagDashboardPort),
 				DeregistrationHandler: viper.GetString(flagDeregistrationHandler),
@@ -247,8 +257,10 @@ func newStartCommand() *cobra.Command {
 	// Flag defaults
 	viper.SetDefault(flagAgentHost, "[::]")
 	viper.SetDefault(flagAgentPort, 8081)
-	viper.SetDefault(flagAPIHost, "[::]")
-	viper.SetDefault(flagAPIPort, 8080)
+	viper.SetDefault(deprecatedFlagAPIHost, "[::]")
+	viper.SetDefault(deprecatedFlagAPIPort, 8080)
+	viper.SetDefault(flagAPIListenAddress, "[::]:8080")
+	viper.SetDefault(flagAPIURL, "http://localhost:8080")
 	viper.SetDefault(flagDashboardHost, "[::]")
 	viper.SetDefault(flagDashboardPort, 3000)
 	viper.SetDefault(flagDeregistrationHandler, "")
@@ -278,8 +290,8 @@ func newStartCommand() *cobra.Command {
 	// Main Flags
 	cmd.Flags().String(flagAgentHost, viper.GetString(flagAgentHost), "agent listener host")
 	cmd.Flags().Int(flagAgentPort, viper.GetInt(flagAgentPort), "agent listener port")
-	cmd.Flags().String(flagAPIHost, viper.GetString(flagAPIHost), "http api listener host")
-	cmd.Flags().Int(flagAPIPort, viper.GetInt(flagAPIPort), "http api port")
+	cmd.Flags().String(flagAPIListenAddress, viper.GetString(flagAPIListenAddress), "address to listen on for api traffic")
+	cmd.Flags().String(flagAPIURL, viper.GetString(flagAPIURL), "url of the api to connect to")
 	cmd.Flags().String(flagDashboardHost, viper.GetString(flagDashboardHost), "dashboard listener host")
 	cmd.Flags().Int(flagDashboardPort, viper.GetInt(flagDashboardPort), "dashboard listener port")
 	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "default deregistration handler")
@@ -329,6 +341,15 @@ func newStartCommand() *cobra.Command {
 	_ = cmd.Flags().SetAnnotation(flagEtcdPeerClientCertAuth, "categories", []string{"store"})
 	cmd.Flags().String(flagEtcdPeerTrustedCAFile, viper.GetString(flagEtcdPeerTrustedCAFile), "path to the peer server TLS trusted CA file")
 	_ = cmd.Flags().SetAnnotation(flagEtcdPeerTrustedCAFile, "categories", []string{"store"})
+
+	// Make sure some deprecated flags are no longer used
+	cmd.Flags().String(deprecatedFlagAPIHost, viper.GetString(deprecatedFlagAPIHost), "http api listener host")
+	cmd.Flags().Int(deprecatedFlagAPIPort, viper.GetInt(deprecatedFlagAPIPort), "http api port")
+	_ = cmd.Flags().MarkHidden(deprecatedFlagAPIHost)
+	_ = cmd.Flags().MarkHidden(deprecatedFlagAPIPort)
+
+	_ = cmd.Flags().MarkDeprecated(deprecatedFlagAPIHost, fmt.Sprintf("please use --%s instead", flagAPIListenAddress))
+	_ = cmd.Flags().MarkDeprecated(deprecatedFlagAPIPort, fmt.Sprintf("please use --%s instead", flagAPIListenAddress))
 
 	// Mark the old etcd flags as deprecated and maintain backward compability
 	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc)

@@ -196,17 +196,6 @@ function integration_test_commands
     }
 }
 
-function e2e_commands
-{
-    echo "Running e2e tests..."
-
-    go test $REPO_PATH/testing/e2e
-    If ($LASTEXITCODE -ne 0) {
-        echo "e2e testing failed..."
-        exit 1
-    }
-}
-
 function wait_for_appveyor_jobs {
     if ($env:APPVEYOR_JOB_NUMBER -ne 1) { return }
 
@@ -277,10 +266,6 @@ ElseIf ($cmd -eq "build_cli") {
 ElseIf ($cmd -eq "docker") {
     # no-op for now
 }
-ElseIf ($cmd -eq "e2e") {
-    build_commands
-    e2e_commands
-}
 ElseIf ($cmd -eq "lint") {
     linter_commands
 }
@@ -311,5 +296,4 @@ Else {
     unit_test_commands
     integration_test_commands
     build_commands
-    e2e_commands
 }

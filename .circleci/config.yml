@@ -77,7 +77,6 @@ jobs:
       # Run tests
       - run: ./build.sh unit
       - run: ./build.sh integration
-      - run: ./build.sh e2e
 
       # Upload test logs
       - run: $SENSU_RELEASE_REPO/collect-circle-log.sh $CIRCLE_WORKING_DIRECTORY/out log-test.txt

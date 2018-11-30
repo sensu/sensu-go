@@ -13,8 +13,8 @@ state-dir: "/var/lib/sensu"
 ##
 # api configuration
 ##
-#api-host: "[::]" # listen on all IPv4 and IPv6 addresses
-#api-port: 8080
+#api-listen-address: "[::]:8080" # listen on all IPv4 and IPv6 addresses
+#api-url: "http://localhost:8080"
 
 ##
 # ssl configuration

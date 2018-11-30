@@ -206,8 +206,8 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize apid
 	api, err := apid.New(apid.Config{
-		Host:                config.APIHost,
-		Port:                config.APIPort,
+		ListenAddress:       config.APIListenAddress,
+		URL:                 config.APIURL,
 		Bus:                 bus,
 		Store:               store,
 		QueueGetter:         queueGetter,
@@ -222,11 +222,10 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize dashboardd
 	dashboard, err := dashboardd.New(dashboardd.Config{
-		APIHost: config.APIHost,
-		APIPort: config.APIPort,
-		Host:    config.DashboardHost,
-		Port:    config.DashboardPort,
-		TLS:     config.TLS,
+		APIURL: config.APIURL,
+		Host:   config.DashboardHost,
+		Port:   config.DashboardPort,
+		TLS:    config.TLS,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", dashboard.Name(), err)
