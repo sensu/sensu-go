@@ -179,10 +179,16 @@ func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 
 	// Make sure the refresh token is authorized in the access list
 	if _, err := a.store.GetToken(refreshClaims.Subject, refreshClaims.Id); err != nil {
-		err = fmt.Errorf("the refresh token is not authorized: %s", err)
-		logger.WithField("user", refreshClaims.Subject).Error(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
+		switch err := err.(type) {
+		case *store.ErrNotFound:
+			http.Error(w, "could not retrieve the refresh token string", http.StatusBadRequest)
+			return
+		default:
+			err = fmt.Errorf("the refresh token is not authorized: %s", err)
+			logger.WithField("user", refreshClaims.Subject).Error(err)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	// Update the user claims from the authentication provider
