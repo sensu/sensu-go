@@ -190,11 +190,6 @@ integration_test_commands () {
     fi
 }
 
-e2e_commands () {
-    echo "Running e2e tests..."
-    go test ${REPO_PATH}/testing/e2e $@
-}
-
 docker_commands () {
     local cmd=$1
 
@@ -337,13 +332,6 @@ case "$cmd" in
     "docker")
         docker_commands "${@:2}"
         ;;
-    "e2e")
-        # Accepts specific test name. E.g.: ./build.sh e2e -run TestAgentKeepalives
-        build_command agent
-        build_command backend
-        build_command cli
-        e2e_commands "${@:2}"
-        ;;
     "lint")
         linter_commands
         ;;
@@ -363,6 +351,5 @@ case "$cmd" in
         unit_test_commands
         integration_test_commands
         build_commands
-        e2e_commands
         ;;
 esac
