@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### [5.0.0] - 2018-10-30
+
 ### Added
 - Add the `etcd-advertise-client-urls` config attribute to sensu-backend
 - Support for multiple API versions added to sensuctl create
