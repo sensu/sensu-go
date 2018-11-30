@@ -24,12 +24,6 @@ import (
 
 // APId is the backend HTTP API.
 type APId struct {
-	// Host is the host APId is running on.
-	Host string
-
-	// Port is the port APId is running on.
-	Port int
-
 	stopping            chan struct{}
 	running             *atomic.Value
 	wg                  *sync.WaitGroup
@@ -48,8 +42,8 @@ type Option func(*APId) error
 
 // Config configures APId.
 type Config struct {
-	Host                string
-	Port                int
+	ListenAddress       string
+	URL                 string
 	Bus                 messaging.MessageBus
 	Store               store.Store
 	QueueGetter         types.QueueGetter
@@ -61,8 +55,6 @@ type Config struct {
 // New creates a new APId.
 func New(c Config, opts ...Option) (*APId, error) {
 	a := &APId{
-		Host:                c.Host,
-		Port:                c.Port,
 		store:               c.Store,
 		queueGetter:         c.QueueGetter,
 		tls:                 c.TLS,
@@ -84,21 +76,15 @@ func New(c Config, opts ...Option) (*APId, error) {
 		}
 	}
 
-	addr := fmt.Sprintf("%s:%d", a.Host, a.Port)
-	url := fmt.Sprintf("http://%s", addr)
-	if tlsConfig != nil {
-		url = fmt.Sprintf("https://%s", addr)
-	}
-
 	router := mux.NewRouter().UseEncodedPath()
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
 	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig)
-	registerGraphQLService(router, a.store, url, tlsConfig)
+	registerGraphQLService(router, a.store, c.URL, tlsConfig)
 	registerAuthenticationResources(router, a.store)
 	registerRestrictedResources(router, a.store, a.queueGetter, a.bus, a.cluster)
 
 	a.HTTPServer = &http.Server{
-		Addr:         addr,
+		Addr:         c.ListenAddress,
 		Handler:      router,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
