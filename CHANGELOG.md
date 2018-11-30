@@ -7,12 +7,13 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
-### [5.0.0] - 2018-10-30
+### [5.0.0] - 2018-11-30
 
 ### Added
 - Add the `etcd-advertise-client-urls` config attribute to sensu-backend
 - Support for multiple API versions added to sensuctl create
 - Support for metadata added to wrapped resources (yaml, wrapped-json)
+- Added the backend configurationa attributes `api-listen-address` & `api-url`.
 
 ### Removed
 - Check subdue functionality has been disabled. Users that have checks with
@@ -34,6 +35,8 @@ uses the same facility as check subdue for handling time windows.
 - Metadata from wrappers and resources is now merged, with a preference given to
 the values coming from the wrapper. Labels and annotations are deep-merged.
 - Round-robin scheduling has been temporarily disabled.
+- The dashboard now uses the `api-url` configuration attribute to connect to the
+API.
 
 ### Fixed
 - Fixed several resource leaks in the check scheduler.
@@ -52,6 +55,10 @@ period of disconnection from the backend.
 - A panic in keepalive/check ttl monitors causing a panic.
 - Monitors are now properly namespaced in etcd.
 - Updating a users groups will no longer corrupt their password
+
+### Breaking Changes
+- The backend configuration attributes `api-host` & `api-port` have been
+replaced with `api-listen-address`.
 
 ## [2.0.0-beta.8-1] - 2018-11-15
 
