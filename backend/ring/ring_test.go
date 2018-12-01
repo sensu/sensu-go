@@ -11,12 +11,6 @@ import (
 	"github.com/sensu/sensu-go/backend/etcd"
 )
 
-func noError(t *testing.T, err error) {
-	if err != nil {
-		t.Fatal(err)
-	}
-}
-
 func TestAdd(t *testing.T) {
 	t.Parallel()
 
@@ -24,11 +18,15 @@ func TestAdd(t *testing.T) {
 	defer cleanup()
 
 	client, err := e.NewClient()
-	noError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer client.Close()
 
 	ring := EtcdGetter{Client: client, BackendID: "TestAdd"}.GetRing("testadd")
-	noError(t, ring.Add(context.Background(), "foo"))
+	if err := ring.Add(context.Background(), "foo"); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestRemove(t *testing.T) {
@@ -38,12 +36,18 @@ func TestRemove(t *testing.T) {
 	defer cleanup()
 
 	client, err := e.NewClient()
-	noError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer client.Close()
 
 	ring := EtcdGetter{Client: client, BackendID: "TestRemove"}.GetRing("testremove")
-	noError(t, ring.Add(context.Background(), "foo"))
-	noError(t, ring.Remove(context.Background(), "foo"))
+	if err := ring.Add(context.Background(), "foo"); err != nil {
+		t.Fatal(err)
+	}
+	if err := ring.Remove(context.Background(), "foo"); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestNext(t *testing.T) {
@@ -53,21 +57,27 @@ func TestNext(t *testing.T) {
 	defer cleanup()
 
 	client, err := e.NewClient()
-	noError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer client.Close()
 
 	ring := EtcdGetter{Client: client, BackendID: "TestNext"}.GetRing("testnext")
 
 	items := []string{"foo", "bar", "baz"}
 	for _, item := range items {
-		noError(t, ring.Add(context.Background(), item))
+		if err := ring.Add(context.Background(), item); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	var got []string
 
 	for i := 0; i < 9; i++ {
 		item, err := ring.Next(context.Background())
-		noError(t, err)
+		if err != nil {
+			t.Fatal(err)
+		}
 		got = append(got, item)
 	}
 
@@ -78,7 +88,9 @@ func TestNext(t *testing.T) {
 		t.Fatalf("bad values: got %v, want %v", got, want)
 	}
 
-	noError(t, ring.Remove(context.Background(), "bar"))
+	if err := ring.Remove(context.Background(), "bar"); err != nil {
+		t.Fatal(err)
+	}
 
 	newItems := []string{"foo", "baz"}
 	want = want[:0]
@@ -90,7 +102,9 @@ func TestNext(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		item, err := ring.Next(context.Background())
-		noError(t, err)
+		if err != nil {
+			t.Fatal(err)
+		}
 		got = append(got, item)
 	}
 
@@ -106,7 +120,9 @@ func TestErrorOnNext(t *testing.T) {
 	defer cleanup()
 
 	client, err := e.NewClient()
-	noError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer client.Close()
 
 	getterA := EtcdGetter{Client: client, BackendID: "TestErrorOnNextA"}
@@ -116,8 +132,12 @@ func TestErrorOnNext(t *testing.T) {
 	r1 := getterA.GetRing("blocknext")
 	r2 := getterB.GetRing("blocknext")
 
-	noError(t, r1.Add(context.Background(), "foo"))
-	noError(t, r2.Add(context.Background(), "bar"))
+	if err := r1.Add(context.Background(), "foo"); err != nil {
+		t.Fatal(err)
+	}
+	if err := r2.Add(context.Background(), "bar"); err != nil {
+		t.Fatal(err)
+	}
 
 	_, err = r2.Next(context.Background())
 	if err != ErrNotOwner {
@@ -125,13 +145,17 @@ func TestErrorOnNext(t *testing.T) {
 	}
 
 	value, err := r1.Next(context.Background())
-	noError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if got, want := value, "foo"; got != want {
 		t.Fatalf("bad values: got %q, want %q", got, want)
 	}
 
 	value, err = r2.Next(context.Background())
-	noError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	if got, want := value, "bar"; got != want {
 		t.Fatalf("bad values: got %q, want %q", got, want)
 	}
@@ -149,7 +173,9 @@ func TestTransferOwnership(t *testing.T) {
 	defer cleanup()
 
 	client, err := e.NewClient()
-	noError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer client.Close()
 
 	getter := EtcdGetter{Client: client, BackendID: "TestTransferOwner"}
@@ -158,11 +184,17 @@ func TestTransferOwnership(t *testing.T) {
 	r2 := getter.GetRing("testtransfer")
 	r2.(*Ring).backendID = "something-else-entirely"
 
-	noError(t, r1.Add(context.Background(), "foo"))
-	noError(t, r2.Add(context.Background(), "foo"))
+	if err := r1.Add(context.Background(), "foo"); err != nil {
+		t.Fatal(err)
+	}
+	if err := r2.Add(context.Background(), "foo"); err != nil {
+		t.Fatal(err)
+	}
 
 	value, err := r2.Next(context.Background())
-	noError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	if got, want := value, "foo"; got != want {
 		t.Fatalf("bad values: got %q, want %q", got, want)
@@ -180,7 +212,9 @@ func TestErrNotOwner(t *testing.T) {
 	defer cleanup()
 
 	client, err := e.NewClient()
-	noError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer client.Close()
 
 	getter := EtcdGetter{Client: client, BackendID: "TestErrNotOwner"}
@@ -189,7 +223,9 @@ func TestErrNotOwner(t *testing.T) {
 	r2 := getter.GetRing("testerrnotowner")
 	r2.(*Ring).backendID = "something-else-entirely"
 
-	noError(t, r1.Add(context.Background(), "foo"))
+	if err := r1.Add(context.Background(), "foo"); err != nil {
+		t.Fatal(err)
+	}
 	if got, want := r2.Remove(context.Background(), "foo"), ErrNotOwner; got != want {
 		t.Fatalf("bad error: got %v, want %v", got, want)
 	}
@@ -202,7 +238,9 @@ func TestExpire(t *testing.T) {
 	defer cleanup()
 
 	client, err := e.NewClient()
-	noError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	defer client.Close()
 
 	ring := EtcdGetter{Client: client, BackendID: "TestExpire"}.GetRing("testexpire").(*Ring)
@@ -224,5 +262,64 @@ func TestExpire(t *testing.T) {
 	_, err = ring.Next(context.Background())
 	if got, want := err, ErrEmptyRing; got != want {
 		t.Fatalf("bad error: got %v, want %v", got, want)
+	}
+}
+
+func TestAddToEmptyRing(t *testing.T) {
+	t.Parallel()
+
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+
+	client, err := e.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Close()
+
+	ring := EtcdGetter{Client: client, BackendID: "TestAddToEmptyRing"}.GetRing("test_add_to_empty_ring")
+
+	items := []string{"foo", "bar"}
+	for _, item := range items {
+		if err := ring.Add(context.Background(), item); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	for _, item := range items {
+		got, err := ring.Next(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := item; got != want {
+			t.Fatalf("bad values: got %q, want %q", got, want)
+		}
+	}
+
+	for _, item := range items {
+		if err := ring.Remove(context.Background(), item); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	_, err = ring.Next(context.Background())
+	if got, want := err, ErrEmptyRing; got != want {
+		t.Fatalf("bad error: got %v, want %v", got, want)
+	}
+
+	for _, item := range items {
+		if err := ring.Add(context.Background(), item); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	for _, item := range items {
+		got, err := ring.Next(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := item; got != want {
+			t.Fatalf("bad values: got %q, want %q", got, want)
+		}
 	}
 }
