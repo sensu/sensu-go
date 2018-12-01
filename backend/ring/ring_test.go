@@ -4,13 +4,18 @@ package ring
 
 import (
 	"context"
+	"reflect"
 	"testing"
 	"time"
 
 	"github.com/sensu/sensu-go/backend/etcd"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
+
+func noError(t *testing.T, err error) {
+	if err != nil {
+		t.Fatal(err)
+	}
+}
 
 func TestAdd(t *testing.T) {
 	t.Parallel()
@@ -19,12 +24,11 @@ func TestAdd(t *testing.T) {
 	defer cleanup()
 
 	client, err := e.NewClient()
-	require.NoError(t, err)
+	noError(t, err)
 	defer client.Close()
 
 	ring := EtcdGetter{Client: client, BackendID: "TestAdd"}.GetRing("testadd")
-	err = ring.Add(context.Background(), "foo")
-	assert.NoError(t, err)
+	noError(t, ring.Add(context.Background(), "foo"))
 }
 
 func TestRemove(t *testing.T) {
@@ -34,12 +38,12 @@ func TestRemove(t *testing.T) {
 	defer cleanup()
 
 	client, err := e.NewClient()
-	require.NoError(t, err)
+	noError(t, err)
 	defer client.Close()
 
 	ring := EtcdGetter{Client: client, BackendID: "TestRemove"}.GetRing("testremove")
-	require.NoError(t, ring.Add(context.Background(), "foo"))
-	require.NoError(t, ring.Remove(context.Background(), "foo"))
+	noError(t, ring.Add(context.Background(), "foo"))
+	noError(t, ring.Remove(context.Background(), "foo"))
 }
 
 func TestNext(t *testing.T) {
@@ -49,30 +53,32 @@ func TestNext(t *testing.T) {
 	defer cleanup()
 
 	client, err := e.NewClient()
-	require.NoError(t, err)
+	noError(t, err)
 	defer client.Close()
 
 	ring := EtcdGetter{Client: client, BackendID: "TestNext"}.GetRing("testnext")
 
 	items := []string{"foo", "bar", "baz"}
 	for _, item := range items {
-		require.NoError(t, ring.Add(context.Background(), item))
+		noError(t, ring.Add(context.Background(), item))
 	}
 
 	var got []string
 
 	for i := 0; i < 9; i++ {
 		item, err := ring.Next(context.Background())
-		require.NoError(t, err)
+		noError(t, err)
 		got = append(got, item)
 	}
 
 	want := append(items, items...)
 	want = append(want, items...)
 
-	assert.Equal(t, want, got)
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("bad values: got %v, want %v", got, want)
+	}
 
-	require.NoError(t, ring.Remove(context.Background(), "bar"))
+	noError(t, ring.Remove(context.Background(), "bar"))
 
 	newItems := []string{"foo", "baz"}
 	want = want[:0]
@@ -84,11 +90,13 @@ func TestNext(t *testing.T) {
 
 	for i := 0; i < 10; i++ {
 		item, err := ring.Next(context.Background())
-		require.NoError(t, err)
+		noError(t, err)
 		got = append(got, item)
 	}
 
-	assert.Equal(t, want, got)
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("bad values: got %v, want %v", got, want)
+	}
 }
 
 func TestErrorOnNext(t *testing.T) {
@@ -98,7 +106,7 @@ func TestErrorOnNext(t *testing.T) {
 	defer cleanup()
 
 	client, err := e.NewClient()
-	require.NoError(t, err)
+	noError(t, err)
 	defer client.Close()
 
 	getterA := EtcdGetter{Client: client, BackendID: "TestErrorOnNextA"}
@@ -108,8 +116,8 @@ func TestErrorOnNext(t *testing.T) {
 	r1 := getterA.GetRing("blocknext")
 	r2 := getterB.GetRing("blocknext")
 
-	require.NoError(t, r1.Add(context.Background(), "foo"))
-	require.NoError(t, r2.Add(context.Background(), "bar"))
+	noError(t, r1.Add(context.Background(), "foo"))
+	noError(t, r2.Add(context.Background(), "bar"))
 
 	_, err = r2.Next(context.Background())
 	if err != ErrNotOwner {
@@ -117,12 +125,16 @@ func TestErrorOnNext(t *testing.T) {
 	}
 
 	value, err := r1.Next(context.Background())
-	require.NoError(t, err)
-	assert.Equal(t, "foo", value)
+	noError(t, err)
+	if got, want := value, "foo"; got != want {
+		t.Fatalf("bad values: got %q, want %q", got, want)
+	}
 
 	value, err = r2.Next(context.Background())
-	require.NoError(t, err)
-	assert.Equal(t, "bar", value)
+	noError(t, err)
+	if got, want := value, "bar"; got != want {
+		t.Fatalf("bad values: got %q, want %q", got, want)
+	}
 
 	_, err = r1.Next(context.Background())
 	if err != ErrNotOwner {
@@ -137,7 +149,7 @@ func TestTransferOwnership(t *testing.T) {
 	defer cleanup()
 
 	client, err := e.NewClient()
-	require.NoError(t, err)
+	noError(t, err)
 	defer client.Close()
 
 	getter := EtcdGetter{Client: client, BackendID: "TestTransferOwner"}
@@ -146,12 +158,15 @@ func TestTransferOwnership(t *testing.T) {
 	r2 := getter.GetRing("testtransfer")
 	r2.(*Ring).backendID = "something-else-entirely"
 
-	require.NoError(t, r1.Add(context.Background(), "foo"))
-	require.NoError(t, r2.Add(context.Background(), "foo"))
+	noError(t, r1.Add(context.Background(), "foo"))
+	noError(t, r2.Add(context.Background(), "foo"))
 
 	value, err := r2.Next(context.Background())
-	require.NoError(t, err)
-	assert.Equal(t, "foo", value)
+	noError(t, err)
+
+	if got, want := value, "foo"; got != want {
+		t.Fatalf("bad values: got %q, want %q", got, want)
+	}
 
 	if _, err := r1.Next(context.Background()); err != ErrNotOwner {
 		t.Fatalf("wanted ErrNotOwner, got %v", err)
@@ -165,7 +180,7 @@ func TestErrNotOwner(t *testing.T) {
 	defer cleanup()
 
 	client, err := e.NewClient()
-	require.NoError(t, err)
+	noError(t, err)
 	defer client.Close()
 
 	getter := EtcdGetter{Client: client, BackendID: "TestErrNotOwner"}
@@ -174,8 +189,10 @@ func TestErrNotOwner(t *testing.T) {
 	r2 := getter.GetRing("testerrnotowner")
 	r2.(*Ring).backendID = "something-else-entirely"
 
-	require.NoError(t, r1.Add(context.Background(), "foo"))
-	assert.Equal(t, ErrNotOwner, r2.Remove(context.Background(), "foo"))
+	noError(t, r1.Add(context.Background(), "foo"))
+	if got, want := r2.Remove(context.Background(), "foo"), ErrNotOwner; got != want {
+		t.Fatalf("bad error: got %v, want %v", got, want)
+	}
 }
 
 func TestExpire(t *testing.T) {
@@ -185,7 +202,7 @@ func TestExpire(t *testing.T) {
 	defer cleanup()
 
 	client, err := e.NewClient()
-	require.NoError(t, err)
+	noError(t, err)
 	defer client.Close()
 
 	ring := EtcdGetter{Client: client, BackendID: "TestExpire"}.GetRing("testexpire").(*Ring)
@@ -205,5 +222,7 @@ func TestExpire(t *testing.T) {
 	time.Sleep(time.Second * 5)
 
 	_, err = ring.Next(context.Background())
-	assert.Equal(t, ErrEmptyRing, err)
+	if got, want := err, ErrEmptyRing; got != want {
+		t.Fatalf("bad error: got %v, want %v", got, want)
+	}
 }
