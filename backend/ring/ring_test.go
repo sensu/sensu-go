@@ -323,3 +323,51 @@ func TestAddToEmptyRing(t *testing.T) {
 		}
 	}
 }
+
+func TestAddToRingWhenValueExists(t *testing.T) {
+	t.Parallel()
+
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+
+	client, err := e.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Close()
+
+	ring := EtcdGetter{Client: client, BackendID: "TestAddWhenValueExists"}.GetRing("test_add_when_value_exists")
+
+	items := []string{"foo", "bar"}
+	for _, item := range items {
+		if err := ring.Add(context.Background(), item); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	for _, item := range items {
+		got, err := ring.Next(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := item; got != want {
+			t.Fatalf("bad values: got %q, want %q", got, want)
+		}
+	}
+
+	for _, item := range items {
+		if err := ring.Add(context.Background(), item); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	for _, item := range items {
+		got, err := ring.Next(context.Background())
+		if err != nil {
+			t.Fatal(err)
+		}
+		if want := item; got != want {
+			t.Fatalf("bad values: got %q, want %q", got, want)
+		}
+	}
+}
