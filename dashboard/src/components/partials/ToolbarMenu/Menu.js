@@ -92,8 +92,8 @@ class ToolbarMenu extends React.PureComponent {
     });
   };
 
-  handleWindowResize = debounce(ev => {
-    const newWidth = ev.currentTarget.innerWidth;
+  handleWindowResize = debounce(currentTarget => {
+    const newWidth = currentTarget.innerWidth;
     const oldWidth = this.windowWidth || 0;
 
     // If the window grew in size and the toolbar menu isn't configured to fill
@@ -187,7 +187,10 @@ class ToolbarMenu extends React.PureComponent {
     if (!this.props.width) {
       return (
         <React.Fragment>
-          <EventListener target="window" onResize={this.handleWindowResize} />
+          <EventListener
+            target="window"
+            onResize={ev => this.handleWindowResize(ev.currentTarget)}
+          />
           {items}
         </React.Fragment>
       );
