@@ -10,8 +10,8 @@ import (
 	"testing"
 
 	"github.com/coreos/etcd/clientv3"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +19,7 @@ import (
 type testMonitorsHandler struct{}
 
 // create failure and error handlers for use with the monitor
-func (*testMonitorsHandler) HandleFailure(event *types.Event) error {
+func (*testMonitorsHandler) HandleFailure(event *corev2.Event) error {
 	if event.Entity.Name == "entity" {
 		return nil
 	}
@@ -39,6 +39,7 @@ func putKeyWithLease(cli *clientv3.Client, key string, ttl int64) error {
 
 // TestMonitorNew
 func TestMonitorNew(t *testing.T) {
+	t.Parallel()
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
@@ -46,16 +47,17 @@ func TestMonitorNew(t *testing.T) {
 	defer client.Close()
 
 	monitorName := "testMonitorNew"
-	testEvent := types.FixtureEvent("entity", "testCheck")
+	testEvent := corev2.FixtureEvent("entity", "testCheck")
 
 	handler := &testMonitorsHandler{}
-	monitorSupervisor := NewEtcdSupervisor(client, handler)
+	monitorSupervisor := NewEtcdSupervisor(client, handler, "TestMonitorNew")
 	err = monitorSupervisor.Monitor(context.Background(), monitorName, testEvent, 15)
 	require.NoError(t, err)
 
 }
 
 func TestMonitorExisting(t *testing.T) {
+	t.Parallel()
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
@@ -64,10 +66,10 @@ func TestMonitorExisting(t *testing.T) {
 
 	monitorName := "testMonitorExisting"
 	monitorPath := monitorKeyBuilder.Build(monitorName)
-	testEvent := types.FixtureEvent("entity", "testCheck")
+	testEvent := corev2.FixtureEvent("entity", "testCheck")
 
 	handler := &testMonitorsHandler{}
-	monitorSupervisor := NewEtcdSupervisor(client, handler)
+	monitorSupervisor := NewEtcdSupervisor(client, handler, "TestMonitorExisting")
 
 	err = putKeyWithLease(client, monitorPath, 15)
 	require.NoError(t, err)
@@ -77,6 +79,7 @@ func TestMonitorExisting(t *testing.T) {
 }
 
 func TestMonitorNewTTL(t *testing.T) {
+	t.Parallel()
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
@@ -85,10 +88,10 @@ func TestMonitorNewTTL(t *testing.T) {
 
 	monitorName := "testMonitorNewTTL"
 	monitorPath := monitorKeyBuilder.Build(monitorName)
-	testEvent := types.FixtureEvent("entity", "testCheck")
+	testEvent := corev2.FixtureEvent("entity", "testCheck")
 
 	handler := &testMonitorsHandler{}
-	monitorSupervisor := NewEtcdSupervisor(client, handler)
+	monitorSupervisor := NewEtcdSupervisor(client, handler, "TestMonitorNewTTL")
 
 	err = putKeyWithLease(client, monitorPath, 15)
 	require.NoError(t, err)
@@ -100,6 +103,7 @@ func TestMonitorNewTTL(t *testing.T) {
 }
 
 func TestGetMonitorNone(t *testing.T) {
+	t.Parallel()
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
@@ -107,13 +111,14 @@ func TestGetMonitorNone(t *testing.T) {
 	defer client.Close()
 
 	handler := &testMonitorsHandler{}
-	monitorSupervisor := NewEtcdSupervisor(client, handler)
+	monitorSupervisor := NewEtcdSupervisor(client, handler, "TestGetMonitorNone")
 	mon, err := monitorSupervisor.getMonitor(context.Background(), "testGetMonitorNone")
 	require.NoError(t, err)
 	assert.Nil(t, mon)
 }
 
 func TestGetMonitorExisting(t *testing.T) {
+	t.Parallel()
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
@@ -126,7 +131,7 @@ func TestGetMonitorExisting(t *testing.T) {
 		leaseID: 0,
 		ttl:     3600,
 	}
-	monitorSupervisor := NewEtcdSupervisor(client, handler)
+	monitorSupervisor := NewEtcdSupervisor(client, handler, "TestGetMonitorExisting")
 	_, err = client.Put(context.Background(), testMon.key, fmt.Sprintf("%d", testMon.ttl))
 	require.NoError(t, err)
 
@@ -138,6 +143,7 @@ func TestGetMonitorExisting(t *testing.T) {
 // TestWatchMonDelete uses a wait group to monitor the state of watchMon. The
 // test passes if the failure handler is called, which closes the wait group.
 func TestWatchMonDelete(t *testing.T) {
+	t.Parallel()
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()
@@ -167,6 +173,7 @@ func TestWatchMonDelete(t *testing.T) {
 // TestWatchMonPut uses a wait group to monitor the state of watchMon. The
 // test passes if the failure handler is called, which closes the wait group.
 func TestWatchMonPut(t *testing.T) {
+	t.Parallel()
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 	client, err := e.NewClient()

@@ -154,7 +154,7 @@ func Initialize(config *Config) (*Backend, error) {
 	event, err := eventd.New(eventd.Config{
 		Store:          store,
 		Bus:            bus,
-		MonitorFactory: monitor.EtcdFactory(client),
+		MonitorFactory: monitor.EtcdFactory(client, "eventd"),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", event.Name(), err)
@@ -190,7 +190,7 @@ func Initialize(config *Config) (*Backend, error) {
 		DeregistrationHandler: config.DeregistrationHandler,
 		Bus:            bus,
 		Store:          store,
-		MonitorFactory: monitor.EtcdFactory(client),
+		MonitorFactory: monitor.EtcdFactory(client, "keepalived"),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)

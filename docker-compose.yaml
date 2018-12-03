@@ -34,7 +34,7 @@ services:
       - "28081:8081"
   agent1:
     image: sensu/sensu:master
-    command: sensu-agent start --backend-url ws://backend1:8081 --subscriptions test --log-level debug
+    command: sensu-agent start --backend-url ws://backend1:8081 --subscriptions metrics,misc,roundrobin,proxy --log-level debug --keepalive-interval 5 --keepalive-timeout 10
     hostname: agent1
     restart: always
     depends_on:
@@ -43,7 +43,7 @@ services:
       - backend3
   agent2:
     image: sensu/sensu:master
-    command: sensu-agent start --backend-url ws://backend2:8081 --subscriptions test --log-level debug
+    command: sensu-agent start --backend-url ws://backend2:8081 --subscriptions schedules,rbac,roundrobin,proxy --log-level debug --keepalive-interval 5 --keepalive-timeout 10
     hostname: agent2
     restart: always
     depends_on:
@@ -52,7 +52,7 @@ services:
       - backend3
   agent3:
     image: sensu/sensu:master
-    command: sensu-agent start --backend-url ws://backend3:8081 --subscriptions test --log-level debug
+    command: sensu-agent start --backend-url ws://backend3:8081 --subscriptions rbac,roundrobin --log-level debug --namespace devops --keepalive-interval 5 --keepalive-timeout 10
     hostname: agent3
     restart: always
     depends_on:

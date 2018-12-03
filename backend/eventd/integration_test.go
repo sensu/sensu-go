@@ -5,13 +5,13 @@ package eventd
 import (
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/sensu/sensu-go/testing/mockring"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -33,7 +33,7 @@ func TestEventdMonitor(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	monFac := monitor.EtcdFactory(client)
+	monFac := monitor.EtcdFactory(client, "TestEventdMonitor")
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
 		RingGetter: &mockring.Getter{},
@@ -70,7 +70,7 @@ func TestEventdMonitor(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 
-	event := types.FixtureEvent("entity1", "check1")
+	event := corev2.FixtureEvent("entity1", "check1")
 	event.Check.Interval = 1
 	event.Check.Ttl = 2
 
@@ -83,7 +83,7 @@ func TestEventdMonitor(t *testing.T) {
 		assert.FailNow(t, "failed to pull message off eventChan")
 	}
 
-	okEvent, ok := msg.(*types.Event)
+	okEvent, ok := msg.(*corev2.Event)
 	if !ok {
 		assert.FailNow(t, "message type was not an event")
 	}
@@ -93,7 +93,7 @@ func TestEventdMonitor(t *testing.T) {
 	if !ok {
 		assert.FailNow(t, "failed to pull message off eventChan")
 	}
-	warnEvent, ok := msg.(*types.Event)
+	warnEvent, ok := msg.(*corev2.Event)
 	if !ok {
 		assert.FailNow(t, "message type was not an event")
 	}
