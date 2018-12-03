@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Adds feedback when rerunning check[s] in the web app
+
 ### [5.0.0] - 2018-11-30
 
 ### Added
