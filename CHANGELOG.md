@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Fixed a web-ui bug causing the app to crash on window resize in FireFox
+
 ### [5.0.0] - 2018-11-30
 
 ### Added
