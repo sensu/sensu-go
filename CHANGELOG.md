@@ -55,6 +55,9 @@ period of disconnection from the backend.
 - A panic in keepalive/check ttl monitors causing a panic.
 - Monitors are now properly namespaced in etcd.
 - Updating a users groups will no longer corrupt their password
+- Fixed a bug where keepalive failures could be influenced by check TTL
+successes, and vice versa.
+- Fixed a bug where check TTL events were not formed correctly.
 
 ### Breaking Changes
 - The backend configuration attributes `api-host` & `api-port` have been

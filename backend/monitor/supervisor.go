@@ -11,8 +11,8 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 var (
@@ -47,7 +47,7 @@ func init() {
 // of the running monitors in the system.
 type Supervisor interface {
 	// Monitor starts a new monitor or resets an existing monitor.
-	Monitor(ctx context.Context, id string, event *types.Event, ttl int64) error
+	Monitor(ctx context.Context, id string, event *corev2.Event, ttl int64) error
 }
 
 // EtcdSupervisor is an etcd backend monitor supervisor based on leased keys.
@@ -57,6 +57,7 @@ type EtcdSupervisor struct {
 	failureHandler FailureHandler
 	errorHandler   ErrorHandler
 	client         *clientv3.Client
+	prefix         string
 }
 
 type monitor struct {
@@ -66,9 +67,9 @@ type monitor struct {
 }
 
 // EtcdFactory returns a Factory bound to an etcd client
-func EtcdFactory(c *clientv3.Client) Factory {
+func EtcdFactory(c *clientv3.Client, prefix string) Factory {
 	return func(h Handler) Supervisor {
-		return NewEtcdSupervisor(c, h)
+		return NewEtcdSupervisor(c, h, prefix)
 	}
 }
 
@@ -76,7 +77,7 @@ func EtcdFactory(c *clientv3.Client) Factory {
 type Factory func(Handler) Supervisor
 
 // NewEtcdSupervisor returns a new Supervisor backed by Etcd.
-func NewEtcdSupervisor(client *clientv3.Client, h Handler) *EtcdSupervisor {
+func NewEtcdSupervisor(client *clientv3.Client, h Handler, prefix string) *EtcdSupervisor {
 	leasesOnce.Do(func() {
 		packageClientDoNotUse = client
 	})
@@ -84,6 +85,7 @@ func NewEtcdSupervisor(client *clientv3.Client, h Handler) *EtcdSupervisor {
 		client:         client,
 		failureHandler: h,
 		errorHandler:   h,
+		prefix:         prefix,
 	}
 }
 
@@ -91,8 +93,8 @@ func NewEtcdSupervisor(client *clientv3.Client, h Handler) *EtcdSupervisor {
 // If no monitor exists, one is created. If a monitor exists, its lease ttl is
 // extended. If the monitor's ttl has changed, a new lease is created and the
 // key is updated with that new lease.
-func (m *EtcdSupervisor) Monitor(ctx context.Context, name string, event *types.Event, ttl int64) error {
-	key := monitorKeyBuilder.WithNamespace(event.Entity.Namespace).Build(name)
+func (m *EtcdSupervisor) Monitor(ctx context.Context, name string, event *corev2.Event, ttl int64) error {
+	key := monitorKeyBuilder.WithNamespace(event.Entity.Namespace).Build(m.prefix, name)
 	// try to get the monitor from the store
 	mon, err := m.getMonitor(ctx, key)
 	if err != nil {

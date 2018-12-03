@@ -206,6 +206,9 @@ docker_commands () {
 }
 
 docker_build() {
+    # install sensuctl to make sure it's current with the docker build
+    go install ./cmd/sensuctl
+
     local build_sha=$(git rev-parse HEAD)
     local ext=$@
 
