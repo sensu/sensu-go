@@ -55,6 +55,7 @@ period of disconnection from the backend.
 - A panic in keepalive/check ttl monitors causing a panic.
 - Monitors are now properly namespaced in etcd.
 - Updating a users groups will no longer corrupt their password
+- Prevent empty error messages in sensuctl.
 
 ### Breaking Changes
 - The backend configuration attributes `api-host` & `api-port` have been
