@@ -69,7 +69,7 @@ class ToolbarMenu extends React.PureComponent {
   };
 
   componentWillUnmount() {
-    this.handleWindowResize.clear();
+    this.updateButtonsWidth.clear();
   }
 
   handleOverflowButtonResize = rect => {
@@ -92,7 +92,11 @@ class ToolbarMenu extends React.PureComponent {
     });
   };
 
-  handleWindowResize = debounce(currentTarget => {
+  handleWindowResize = event => {
+    this.updateButtonsWidth(event.currentTarget);
+  };
+
+  updateButtonsWidth = debounce(currentTarget => {
     const newWidth = currentTarget.innerWidth;
     const oldWidth = this.windowWidth || 0;
 
@@ -187,10 +191,7 @@ class ToolbarMenu extends React.PureComponent {
     if (!this.props.width) {
       return (
         <React.Fragment>
-          <EventListener
-            target="window"
-            onResize={ev => this.handleWindowResize(ev.currentTarget)}
-          />
+          <EventListener target="window" onResize={this.handleWindowResize} />
           {items}
         </React.Fragment>
       );
