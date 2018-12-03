@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Fixed a web-ui bug causing the app to crash on window resize in FireFox
+
 ### [5.0.0] - 2018-11-30
 
 ### Added
@@ -56,6 +59,9 @@ period of disconnection from the backend.
 - Monitors are now properly namespaced in etcd.
 - Updating a users groups will no longer corrupt their password
 - Prevent empty error messages in sensuctl.
+- Fixed a bug where keepalive failures could be influenced by check TTL
+successes, and vice versa.
+- Fixed a bug where check TTL events were not formed correctly.
 
 ### Breaking Changes
 - The backend configuration attributes `api-host` & `api-port` have been

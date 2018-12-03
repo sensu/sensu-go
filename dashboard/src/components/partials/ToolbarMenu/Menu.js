@@ -69,7 +69,7 @@ class ToolbarMenu extends React.PureComponent {
   };
 
   componentWillUnmount() {
-    this.handleWindowResize.clear();
+    this.updateButtonsWidth.clear();
   }
 
   handleOverflowButtonResize = rect => {
@@ -92,8 +92,12 @@ class ToolbarMenu extends React.PureComponent {
     });
   };
 
-  handleWindowResize = debounce(ev => {
-    const newWidth = ev.currentTarget.innerWidth;
+  handleWindowResize = event => {
+    this.updateButtonsWidth(event.currentTarget);
+  };
+
+  updateButtonsWidth = debounce(currentTarget => {
+    const newWidth = currentTarget.innerWidth;
     const oldWidth = this.windowWidth || 0;
 
     // If the window grew in size and the toolbar menu isn't configured to fill
