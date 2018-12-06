@@ -265,7 +265,7 @@ func TestExpire(t *testing.T) {
 	}
 }
 
-func TestAddToEmptyRing(t *testing.T) {
+func TestAddToEmptyRingAfterDelete(t *testing.T) {
 	t.Parallel()
 
 	e, cleanup := etcd.NewTestEtcd(t)
@@ -277,7 +277,7 @@ func TestAddToEmptyRing(t *testing.T) {
 	}
 	defer client.Close()
 
-	ring := EtcdGetter{Client: client, BackendID: "TestAddToEmptyRing"}.GetRing("test_add_to_empty_ring")
+	ring := EtcdGetter{Client: client, BackendID: "TestAddToEmptyRingAfterDelete"}.GetRing("test_add_to_empty_ring_after_delete")
 
 	items := []string{"foo", "bar"}
 	for _, item := range items {
@@ -369,5 +369,39 @@ func TestAddToRingWhenValueExists(t *testing.T) {
 		if want := item; got != want {
 			t.Fatalf("bad values: got %q, want %q", got, want)
 		}
+	}
+}
+
+func TestSwapRingOwnership(t *testing.T) {
+	t.Parallel()
+
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+
+	client, err := e.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Close()
+
+	ringA := EtcdGetter{Client: client, BackendID: "TestSwapRingOwnerA"}.GetRing("test_swap_owner")
+	ringB := EtcdGetter{Client: client, BackendID: "TestSwapRingOwnerB"}.GetRing("test_swap_owner")
+
+	if err := ringA.Add(context.Background(), "foo"); err != nil {
+		t.Fatal(err)
+	}
+	if err := ringB.Add(context.Background(), "bar"); err != nil {
+		t.Fatal(err)
+	}
+
+	if got, err := ringA.Next(context.Background()); err != nil {
+		t.Fatal(err)
+	} else if want := "foo"; got != want {
+		t.Fatalf("bad value: got %q, want %q", got, want)
+	}
+	if got, err := ringB.Next(context.Background()); err != nil {
+		t.Fatal(err)
+	} else if want := "foo"; got != want {
+		t.Fatalf("bad value: got %q, want %q", got, want)
 	}
 }
