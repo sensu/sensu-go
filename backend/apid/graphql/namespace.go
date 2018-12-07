@@ -131,9 +131,9 @@ func (r *namespaceImpl) Silences(p schema.NamespaceSilencesFieldResolverParams) 
 		sort.Sort(sort.Reverse(types.SortSilencedByBegin(records)))
 	case schema.SilencesListOrders.BEGIN:
 		sort.Sort(types.SortSilencedByBegin(records))
-	case schema.SilencesListOrders.ID:
-		sort.Sort(sort.Reverse(types.SortSilencedByName(records)))
 	case schema.SilencesListOrders.ID_DESC:
+		sort.Sort(sort.Reverse(types.SortSilencedByName(records)))
+	case schema.SilencesListOrders.ID:
 	default:
 		sort.Sort(types.SortSilencedByName(records))
 	}

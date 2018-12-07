@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Silences List in web ui sorted by ascending order; defaults to descending
+- Reduces shuffling of items as events list updates
+
 ### [5.0.0] - 2018-11-30
 
 ### Added
