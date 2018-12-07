@@ -65,6 +65,7 @@ period of disconnection from the backend.
 - Fixed a bug where keepalive failures could be influenced by check TTL
 successes, and vice versa.
 - Fixed a bug where check TTL events were not formed correctly.
+- Fixed a web-ui bug causing the app to crash on window resize in FireFox
 
 ### Breaking Changes
 - The backend configuration attributes `api-host` & `api-port` have been
