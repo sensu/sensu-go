@@ -19,6 +19,7 @@ import ListController from "/components/controller/ListController";
 import Pagination from "/components/partials/Pagination";
 import SilenceEntryDialog from "/components/partials/SilenceEntryDialog";
 import ClearSilencesDialog from "/components/partials/ClearSilencedEntriesDialog";
+import ExecuteCheckStatusToast from "/components/relocation/ExecuteCheckStatusToast";
 
 import { TableListEmptyState } from "/components/TableList";
 
@@ -27,6 +28,7 @@ import EventsListItem from "./EventsListItem";
 
 class EventsContainer extends React.Component {
   static propTypes = {
+    addToast: PropTypes.func.isRequired,
     client: PropTypes.object.isRequired,
     editable: PropTypes.bool,
     namespace: PropTypes.shape({
@@ -125,10 +127,19 @@ class EventsContainer extends React.Component {
     const { client } = this.props;
 
     events.forEach(({ check, entity }) => {
-      executeCheck(client, {
+      const promise = executeCheck(client, {
         id: check.nodeId,
         subscriptions: [`entity:${entity.name}`],
       });
+
+      this.props.addToast(({ remove }) => (
+        <ExecuteCheckStatusToast
+          onClose={remove}
+          mutation={promise}
+          checkName={check.name}
+          namespace={check.namespace}
+        />
+      ));
     });
   };
 
