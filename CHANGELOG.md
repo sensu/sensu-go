@@ -10,6 +10,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - Added --etcd-advertise-client-urls options to docker-compose.yaml sensu-backend start command
 
+### Fixed
+- Silences List in web ui sorted by ascending order; defaults to descending
+- Reduces shuffling of items as events list updates
+
 ### [5.0.0] - 2018-11-30
 
 ### Added
@@ -17,6 +21,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Support for multiple API versions added to sensuctl create
 - Support for metadata added to wrapped resources (yaml, wrapped-json)
 - Added the backend configuration attributes `api-listen-address` & `api-url`.
+- Adds feedback when rerunning check[s] in the web app
 
 ### Removed
 - Check subdue functionality has been disabled. Users that have checks with

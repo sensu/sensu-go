@@ -5,9 +5,14 @@
 
 // Jest enzyme plugin
 import "jest-enzyme";
+import { configure as configureEnzyme } from "enzyme";
+import Adapter from "enzyme-adapter-react-16";
 
 // Mock localStorage
 import "jest-localstorage-mock";
+
+// Configure enzyme
+configureEnzyme({ adapter: new Adapter() });
 
 // Mock what-wg/fetch
 global.fetch = require("jest-fetch-mock");

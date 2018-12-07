@@ -9,6 +9,7 @@ import ListToolbar from "/components/partials/EventsList/EventsListToolbar";
 import NotFound from "/components/partials/NotFound";
 import Query from "/components/util/Query";
 import { withQueryParams } from "/components/QueryParams";
+import ToastConnector from "/components/relocation/ToastConnector";
 import WithWidth from "/components/WithWidth";
 
 // If none given default expression is used.
@@ -80,19 +81,24 @@ class EventsContent extends React.Component {
         </Content>
 
         <AppLayout.MobileFullWidthContent>
-          <WithWidth>
-            {({ width }) => (
-              <EventsList
-                editable={width !== "xs"}
-                limit={limit}
-                offset={offset}
-                onChangeQuery={setQueryParams}
-                namespace={namespace}
-                loading={(loading && !namespace) || aborted}
-                refetch={refetch}
-              />
+          <ToastConnector>
+            {({ addToast }) => (
+              <WithWidth>
+                {({ width }) => (
+                  <EventsList
+                    addToast={addToast}
+                    editable={width !== "xs"}
+                    limit={limit}
+                    offset={offset}
+                    onChangeQuery={setQueryParams}
+                    namespace={namespace}
+                    loading={(loading && !namespace) || aborted}
+                    refetch={refetch}
+                  />
+                )}
+              </WithWidth>
             )}
-          </WithWidth>
+          </ToastConnector>
         </AppLayout.MobileFullWidthContent>
       </div>
     );
