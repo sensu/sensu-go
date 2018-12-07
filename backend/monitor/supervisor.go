@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
@@ -129,11 +130,25 @@ func (m *EtcdSupervisor) Monitor(ctx context.Context, name string, event *corev2
 		return err
 	}
 
-	failureFunc := func() {
+	failureFunc := func(ctx context.Context, ttl int64) {
 		logger.Infof("monitor timed out, for %s, handling failure", key)
 		err := m.failureHandler.HandleFailure(event)
 		if err != nil {
 			m.errorHandler.HandleError(err)
+		}
+		// Emit a failing keepalive event until the context is canceled
+		ticker := time.NewTicker(time.Duration(ttl) * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				err := m.failureHandler.HandleFailure(event)
+				if err != nil {
+					m.errorHandler.HandleError(err)
+				}
+			}
 		}
 	}
 
@@ -174,7 +189,7 @@ func (m *EtcdSupervisor) getMonitor(ctx context.Context, key string) (*monitor, 
 // watchMon takes a monitor key and watches for etcd ops. If a DELETE event
 // is witnessed, it calls the provided HandleFailure func. If a PUT event is
 // witnessed, the watcher is stopped.
-func watchMon(ctx context.Context, cli *clientv3.Client, mon *monitor, failureHandler func(), shutdownHandler func()) {
+func watchMon(ctx context.Context, cli *clientv3.Client, mon *monitor, failureHandler func(context.Context, int64), shutdownHandler func()) {
 	ctx, cancel := context.WithCancel(ctx)
 	responseChan := cli.Watch(ctx, mon.key)
 	leasesMu.Lock()
@@ -182,19 +197,20 @@ func watchMon(ctx context.Context, cli *clientv3.Client, mon *monitor, failureHa
 	leasesMu.Unlock()
 	go func() {
 		defer cancel()
+		ctx, cancelHandler := context.WithCancel(context.Background())
 		for {
 			select {
 			case wresp := <-responseChan:
 				for _, ev := range wresp.Events {
 					if ev.Type == mvccpb.DELETE {
-						failureHandler()
-						return
+						go failureHandler(ctx, mon.ttl)
 					}
 
 					// if there is a PUT on the key, the lease has been extended,
 					// and we want to kill this watcher to avoid duplicate watchers.
 					if ev.Type == mvccpb.PUT {
 						logger.Debugf("monitor for lease (%x) received put", mon.leaseID)
+						cancelHandler()
 						shutdownHandler()
 						return
 					}
