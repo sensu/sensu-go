@@ -2,6 +2,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
+import { FailedError } from "/errors/FetchError";
+
 import Query from "/components/util/Query";
 
 import NotFound from "/components/partials/NotFound";
@@ -38,6 +40,13 @@ class EventDetailsContent extends React.PureComponent {
         fetchPolicy="cache-and-network"
         pollInterval={pollInterval}
         variables={this.props.match.params}
+        onError={error => {
+          if (error.networkError instanceof FailedError) {
+            return;
+          }
+
+          throw error;
+        }}
       >
         {({ data: { event } = {}, networkStatus, aborted }) => {
           // see: https://github.com/apollographql/apollo-client/blob/master/packages/apollo-client/src/core/networkStatus.ts

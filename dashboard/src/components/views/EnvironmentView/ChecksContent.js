@@ -2,6 +2,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
+import { FailedError } from "/errors/FetchError";
+
 import AppLayout from "/components/AppLayout";
 import ChecksList from "/components/partials/ChecksList";
 import Content from "/components/Content";
@@ -106,6 +108,13 @@ class ChecksContent extends React.Component {
         fetchPolicy="cache-and-network"
         pollInterval={pollInterval}
         variables={variables}
+        onError={error => {
+          if (error.networkError instanceof FailedError) {
+            return;
+          }
+
+          throw error;
+        }}
       >
         {this.renderContent}
       </Query>
