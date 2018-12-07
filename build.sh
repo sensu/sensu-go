@@ -326,7 +326,6 @@ case "$cmd" in
         ;;
     "dashboard-ci")
         test_dashboard
-        ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
         ;;
     "deploy")
         check_deploy
