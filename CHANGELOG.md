@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+- Added --etcd-advertise-client-urls options to docker-compose.yaml sensu-backend start command
+
 ### Fixed
 - Silences List in web ui sorted by ascending order; defaults to descending
 - Reduces shuffling of items as events list updates
