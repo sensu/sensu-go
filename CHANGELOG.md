@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Prevent a panic when using an external etcd cluster.
+
 ### [5.0.0] - 2018-11-30
 
 ### Added
