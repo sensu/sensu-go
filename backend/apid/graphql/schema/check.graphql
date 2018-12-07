@@ -223,7 +223,7 @@ type Check {
   state: String!
 
   "Status is the exit status code produced by the check"
-  status: Int!
+  status: Uint!
 
   """
   TotalStateChange indicates the total state change percentage for the
