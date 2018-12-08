@@ -53,3 +53,51 @@ var _ScalarTypeJSONDesc = graphql.ScalarDesc{Config: func() graphql1.ScalarConfi
 		},
 	}
 }}
+
+/*
+UintType ... Uint The Uint scalar type represents a unsigned 32 bit integer. Response formats that
+support an unsigned 32‐bit integer or a number type should use that type to
+represent this scalar.
+
+**NOTE:** As numbers are represented as double-precision floating point numbers
+in Javascript the largest possible value is 2^53. As such 32 bit is used as the
+lowest common denominator.
+*/
+var UintType = graphql.NewType("Uint", graphql.ScalarKind)
+
+// RegisterUint registers Uint object type with given service.
+func RegisterUint(svc *graphql.Service, impl graphql.ScalarResolver) {
+	svc.RegisterScalar(_ScalarTypeUintDesc, impl)
+}
+
+// describe Uint's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ScalarTypeUintDesc = graphql.ScalarDesc{Config: func() graphql1.ScalarConfig {
+	return graphql1.ScalarConfig{
+		Description: "The Uint scalar type represents a unsigned 32 bit integer. Response formats that\nsupport an unsigned 32‐bit integer or a number type should use that type to\nrepresent this scalar.\n\n**NOTE:** As numbers are represented as double-precision floating point numbers\nin Javascript the largest possible value is 2^53. As such 32 bit is used as the\nlowest common denominator.",
+		Name:        "Uint",
+		ParseLiteral: func(_ ast.Value) interface{} {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see ScalarResolver.")
+		},
+		ParseValue: func(_ interface{}) interface{} {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see ScalarResolver.")
+		},
+		Serialize: func(_ interface{}) interface{} {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see ScalarResolver.")
+		},
+	}
+}}

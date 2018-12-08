@@ -14,6 +14,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Prevent a panic when using an external etcd cluster.
 - Silences List in web ui sorted by ascending order; defaults to descending
 - Reduces shuffling of items as events list updates
+- Fixed error in UI where status value could not be coerced
 
 ### [5.0.0] - 2018-11-30
 
