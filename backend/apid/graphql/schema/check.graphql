@@ -282,7 +282,7 @@ CheckHistory is a record of a check execution and its status
 """
 type CheckHistory {
   "Status is the exit status code produced by the check."
-  status: Int!
+  status: Uint!
 
   "Executed describes the time in which the check request was executed"
   executed: DateTime!

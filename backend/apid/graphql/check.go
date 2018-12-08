@@ -220,9 +220,9 @@ func (r *checkImpl) RuntimeAssets(p graphql.ResolveParams) (interface{}, error) 
 type checkHistoryImpl struct{}
 
 // Status implements response to request for 'status' field.
-func (r *checkHistoryImpl) Status(p graphql.ResolveParams) (int, error) {
+func (r *checkHistoryImpl) Status(p graphql.ResolveParams) (interface{}, error) {
 	h := p.Source.(types.CheckHistory)
-	return int(h.Status), nil
+	return h.Status, nil
 }
 
 // Executed implements response to request for 'executed' field.

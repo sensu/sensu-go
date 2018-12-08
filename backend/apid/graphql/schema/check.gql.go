@@ -1618,7 +1618,7 @@ type CheckStateFieldResolver interface {
 // CheckStatusFieldResolver implement to resolve requests for the Check's status field.
 type CheckStatusFieldResolver interface {
 	// Status implements response to request for status field.
-	Status(p graphql.ResolveParams) (int, error)
+	Status(p graphql.ResolveParams) (interface{}, error)
 }
 
 // CheckTotalStateChangeFieldResolver implement to resolve requests for the Check's totalStateChange field.
@@ -2126,16 +2126,9 @@ func (_ CheckAliases) State(p graphql.ResolveParams) (string, error) {
 }
 
 // Status implements response to request for 'status' field.
-func (_ CheckAliases) Status(p graphql.ResolveParams) (int, error) {
+func (_ CheckAliases) Status(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := graphql1.Int.ParseValue(val).(int)
-	if err != nil {
-		return ret, err
-	}
-	if !ok {
-		return ret, errors.New("unable to coerce value for field 'status'")
-	}
-	return ret, err
+	return val, err
 }
 
 // TotalStateChange implements response to request for 'totalStateChange' field.
@@ -2766,7 +2759,7 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Status is the exit status code produced by the check",
 				Name:              "status",
-				Type:              graphql1.NewNonNull(graphql1.Int),
+				Type:              graphql1.NewNonNull(graphql.OutputType("Uint")),
 			},
 			"stdin": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -2872,7 +2865,7 @@ var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 // CheckHistoryStatusFieldResolver implement to resolve requests for the CheckHistory's status field.
 type CheckHistoryStatusFieldResolver interface {
 	// Status implements response to request for status field.
-	Status(p graphql.ResolveParams) (int, error)
+	Status(p graphql.ResolveParams) (interface{}, error)
 }
 
 // CheckHistoryExecutedFieldResolver implement to resolve requests for the CheckHistory's executed field.
@@ -2995,16 +2988,9 @@ type CheckHistoryFieldResolvers interface {
 type CheckHistoryAliases struct{}
 
 // Status implements response to request for 'status' field.
-func (_ CheckHistoryAliases) Status(p graphql.ResolveParams) (int, error) {
+func (_ CheckHistoryAliases) Status(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := graphql1.Int.ParseValue(val).(int)
-	if err != nil {
-		return ret, err
-	}
-	if !ok {
-		return ret, errors.New("unable to coerce value for field 'status'")
-	}
-	return ret, err
+	return val, err
 }
 
 // Executed implements response to request for 'executed' field.
@@ -3057,7 +3043,7 @@ func _ObjectTypeCheckHistoryConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Status is the exit status code produced by the check.",
 				Name:              "status",
-				Type:              graphql1.NewNonNull(graphql1.Int),
+				Type:              graphql1.NewNonNull(graphql.OutputType("Uint")),
 			},
 		},
 		Interfaces: []*graphql1.Interface{},
