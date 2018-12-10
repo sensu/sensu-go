@@ -15,6 +15,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Silences List in web ui sorted by ascending order; defaults to descending
 - Reduces shuffling of items as events list updates
 - Fixed error in UI where status value could not be coerced
+- Fixed API endpoint used by the CLI to create hooks via the 'sensuctl create'
+  command. It's now possible to create objects of type 'Hook' with this command
+  again.
 
 ### [5.0.0] - 2018-11-30
 
