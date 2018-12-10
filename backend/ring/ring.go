@@ -235,7 +235,7 @@ func (r *Ring) Remove(ctx context.Context, value string) error {
 	for {
 		if err := ctx.Err(); err != nil {
 			// The context was cancelled by the caller
-			return err
+			return fmt.Errorf("couldn't remove item from ring: %s", err)
 		}
 		// Check for the ownership assertion first
 		resp, err := r.client.Get(ctx, path.Join(r.assertionPrefix, value))
@@ -322,7 +322,7 @@ func (r *Ring) Next(ctx context.Context) (string, error) {
 	select {
 	case watchResponse = <-r.watchChan:
 	case <-ctx.Done():
-		return "", ctx.Err()
+		return "", fmt.Errorf("error getting next ring item: %s", ctx.Err())
 	}
 	if watchResponse.Canceled {
 		r.initWatcher()
