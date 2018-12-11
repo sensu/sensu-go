@@ -19,6 +19,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Ensure environment variables are joined with a semicolon on Windows
 - Command arguments are no longer needlessly escaped on Windows
 - Backend environments are now included in handler & mutator execution requests.
+- Firefox status icons not fully rendering 
 
 ### [5.0.0] - 2018-11-30
 
