@@ -78,7 +78,3 @@ func fromMap(m map[string]string) []string {
 
 	return s
 }
-
-func coerceKey(s string) string {
-	return s
-}
