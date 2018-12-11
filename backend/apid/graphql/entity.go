@@ -94,7 +94,7 @@ func (r *entityImpl) Related(p schema.EntityRelatedFieldResolverParams) (interfa
 }
 
 // Status implements response to request for 'status' field.
-func (r *entityImpl) Status(p graphql.ResolveParams) (int, error) {
+func (r *entityImpl) Status(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*types.Entity)
 	client := r.factory.NewWithContext(p.Context)
 
@@ -114,7 +114,7 @@ func (r *entityImpl) Status(p graphql.ResolveParams) (int, error) {
 		}
 		st = maxUint32(ev.Check.Status, st)
 	}
-	return int(st), nil
+	return st, nil
 }
 
 // IsSilenced implements response to request for 'isSilenced' field.
