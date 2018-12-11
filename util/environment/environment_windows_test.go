@@ -32,7 +32,7 @@ func TestMergeEnvironments(t *testing.T) {
 			name:     "complex example",
 			env1:     []string{"VAR1=VALUE1", "PATH=/bin;/sbin"},
 			env2:     []string{"PATH=~/bin;~/.local/bin", "VAR2=VALUE2"},
-			expected: []string{"VAR1=VALUE1", "VAR2=VALUE2", "PATH=~/bin;~/.local/bin;/bin:/sbin"},
+			expected: []string{"VAR1=VALUE1", "VAR2=VALUE2", "PATH=~/bin;~/.local/bin;/bin;/sbin"},
 		},
 	}
 
