@@ -13,8 +13,8 @@ var pathListSeparator = string(os.PathListSeparator)
 // "special" variables PATH, CPATH and LD_LIBRARY_PATH.
 //
 // The "special" variables PATH, CPATH and LD_LIBRARY_PATH are merged by
-// prepending the value from env2 to the value in env1, effectively giving
-// priority to the value from env2.
+// prepending the values from right to those in left, effectively giving
+// priority to the values from right.
 //
 // The expected format for an environment variable definition is VAR=VALUE. Any
 // malformed environment variable definition will be discarded by the merge.
@@ -55,7 +55,9 @@ func toMap(s []string) map[string]string {
 				m[split[0]] = ""
 			}
 		case 2:
-			// On Windows environment variables can be mixed case, eg. Path or PATH.
+			// When fetching environment variables on Windows the variables can be in
+			// mixed case, eg. Path or PATH.
+			// https://docs.microsoft.com/en-us/dotnet/api/system.environment.getenvironmentvariable?view=netframework-4.7.2
 			key := strings.ToUpper(split[0])
 			// A proper VAR=VALUE definiton
 			m[key] = split[1]
