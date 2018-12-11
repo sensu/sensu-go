@@ -1,5 +1,3 @@
-// +build !windows
-
 package environment
 
 import (
@@ -91,13 +89,6 @@ func TestMergeEnvironments(t *testing.T) {
 			env2:     []string{mkList("CPATH", "c", "d"), "VAR1=one"},
 			env3:     []string{mkList("CPATH", "a", "b")},
 			expected: []string{mkList("CPATH", "a", "b", "c", "d", "e", "f"), "VAR1=one"},
-		},
-		{
-			name:     "mixed case",
-			env1:     []string{"VAR1=VALUE1"},
-			env2:     []string{"VAR2=VALUE2"},
-			env3:     []string{"Var1=VALUE3", "Var2=VALUE4"},
-			expected: []string{"VAR1=VALUE1", "VAR2=VALUE2", "Var1=VALUE3", "Var2=VALUE4"},
 		},
 	}
 
