@@ -1,6 +1,6 @@
-// +build windows
-
 package environment
+
+import "strings"
 
 // On Windows, environment variables are case-insensitive; to avoid conflicts we
 // coerce all keys to UPPER CASE.
