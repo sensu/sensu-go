@@ -55,9 +55,7 @@ func toMap(s []string) map[string]string {
 				m[split[0]] = ""
 			}
 		case 2:
-			// When fetching environment variables on Windows the variables can be in
-			// mixed case, eg. Path or PATH.
-			// https://docs.microsoft.com/en-us/dotnet/api/system.environment.getenvironmentvariable?view=netframework-4.7.2
+			// See _windows.go
 			key := strings.ToUpper(split[0])
 			// A proper VAR=VALUE definiton
 			m[key] = split[1]
@@ -78,5 +76,9 @@ func fromMap(m map[string]string) []string {
 	}
 	sort.StringSlice(s).Sort()
 
+	return s
+}
+
+func coerceKey(s string) string {
 	return s
 }
