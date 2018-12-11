@@ -5,6 +5,7 @@ package command
 import (
 	"context"
 	"os/exec"
+	"strings"
 	"syscall"
 )
 
