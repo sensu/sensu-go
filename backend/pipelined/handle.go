@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"os"
 	"time"
 
 	"github.com/sensu/sensu-go/asset"
@@ -179,10 +180,13 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 // pipeHandler fork/executes a child process for a Sensu pipe handler
 // command and writes the mutated eventData to it via STDIN.
 func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*command.ExecutionResponse, error) {
+	// Prepare environment variables
+	env := environment.MergeEnvironments(os.Environ(), handler.EnvVars)
+
 	handlerExec := command.ExecutionRequest{}
 	handlerExec.Command = handler.Command
 	handlerExec.Timeout = int(handler.Timeout)
-	handlerExec.Env = handler.EnvVars
+	handlerExec.Env = env
 	handlerExec.Input = string(eventData[:])
 
 	// Prepare log entry
@@ -203,7 +207,7 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for handler")
 		} else {
-			handlerExec.Env = environment.MergeEnvironments(assets.Env(), handlerExec.Env)
+			handlerExec.Env = environment.MergeEnvironments(os.Environ(), assets.Env(), handler.EnvVars)
 		}
 	}
 
