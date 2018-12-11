@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Makes platform complaint list of values
+// Makes platform compliant list of values
 func mkList(key string, s ...string) string {
 	val := strings.Join(s, string(os.PathListSeparator))
 	return fmt.Sprintf("%s=%s", key, val)
