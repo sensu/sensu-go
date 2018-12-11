@@ -55,8 +55,10 @@ func toMap(s []string) map[string]string {
 				m[split[0]] = ""
 			}
 		case 2:
+			// On Windows environment variables can be mixed case, eg. Path or PATH.
+			key := strings.ToUpper(split[0])
 			// A proper VAR=VALUE definiton
-			m[split[0]] = split[1]
+			m[key] = split[1]
 		default:
 			// Anything else is considered malformed and ignored
 			break

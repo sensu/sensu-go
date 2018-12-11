@@ -29,10 +29,24 @@ func TestMergeEnvironments(t *testing.T) {
 			expected: []string{"PATH=a;b;c;d"},
 		},
 		{
+			name:     "multiple",
+			env1:     []string{"PATH=e:f"},
+			env2:     []string{"PATH=c:d"},
+			env3:     []string{"PATH=a:b"},
+			expected: []string{"PATH=a;b;c;d;e;f"},
+		},
+		{
 			name:     "complex example",
 			env1:     []string{"VAR1=VALUE1", "PATH=/bin;/sbin"},
 			env2:     []string{"PATH=~/bin;~/.local/bin", "VAR2=VALUE2"},
 			expected: []string{"VAR1=VALUE1", "VAR2=VALUE2", "PATH=~/bin;~/.local/bin;/bin;/sbin"},
+		},
+		{
+			name:     "mixed case",
+			env1:     []string{"VAR1=VALUE1", "PATH=/bin;/sbin"},
+			env2:     []string{"Path=~/bin;~/.local/bin", "VAR2=VALUE2"},
+			env3:     []string{"Var1=VALUE3", "Var2=VALUE4"},
+			expected: []string{"VAR1=VALUE3", "VAR2=VALUE4", "PATH=~/bin;~/.local/bin;/bin;/sbin"},
 		},
 	}
 
