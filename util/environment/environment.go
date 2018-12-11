@@ -1,9 +1,12 @@
 package environment
 
 import (
+	"os"
 	"sort"
 	"strings"
 )
+
+var pathSeparator = string(os.PathListSeparator)
 
 // MergeEnvironments merges one or more sets of environment variables,
 // overwriting any existing variable in the preceding set, except for the
@@ -23,7 +26,7 @@ func MergeEnvironments(ea []string, es ...[]string) []string {
 		for k, v := range env {
 			switch k {
 			case "PATH", "CPATH", "LD_LIBRARY_PATH":
-				envs[k] = strings.Join([]string{v, envs[k]}, ":")
+				envs[k] = strings.Join([]string{v, envs[k]}, pathSeparator)
 			default:
 				envs[k] = v
 			}

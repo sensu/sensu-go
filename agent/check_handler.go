@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"syscall"
 	"time"
 
 	"github.com/sensu/sensu-go/agent/transformers"
