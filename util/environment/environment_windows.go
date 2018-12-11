@@ -1,3 +1,5 @@
+// +build windows
+
 package environment
 
 // On Windows, environment variables are case-insensitive; to avoid conflicts we

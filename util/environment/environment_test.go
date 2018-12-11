@@ -97,7 +97,7 @@ func TestMergeEnvironments(t *testing.T) {
 			env1:     []string{"VAR1=VALUE1"},
 			env2:     []string{"VAR2=VALUE2"},
 			env3:     []string{"Var1=VALUE3", "Var2=VALUE4"},
-			expected: []string{"VAR1=VALUE3", "VAR2=VALUE4"},
+			expected: []string{"VAR1=VALUE1", "VAR2=VALUE2", "Var1=VALUE3", "Var2=VALUE4"},
 		},
 	}
 

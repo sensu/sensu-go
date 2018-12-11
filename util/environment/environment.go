@@ -56,7 +56,7 @@ func toMap(s []string) map[string]string {
 			}
 		case 2:
 			// See _windows.go
-			key := strings.ToUpper(split[0])
+			key := coerceKey(split[0])
 			// A proper VAR=VALUE definiton
 			m[key] = split[1]
 		default:
