@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"strings"
 
 	"github.com/coreos/etcd/clientv3"
 )
@@ -73,4 +74,27 @@ func Sequence(kv clientv3.KV, key string) (result string, err error) {
 	}
 
 	return buf.String(), nil
+}
+
+// SequenceUint64 is like Sequence but returns its result as a uint64.
+func SequenceUint64(kv clientv3.KV, key string) (uint64, error) {
+	val, err := Sequence(kv, key)
+	if err != nil {
+		return 0, err
+	}
+	var result uint64
+	if err := binary.Read(strings.NewReader(val), binary.BigEndian, &result); err != nil {
+		return 0, fmt.Errorf("sequence error: %s", err)
+	}
+	return result, nil
+}
+
+// SetSequence sets a key to a particular sequence value.
+func SetSequence(kv clientv3.KV, key string, value uint64) error {
+	buf := new(bytes.Buffer)
+	if err := binary.Write(buf, binary.BigEndian, value); err != nil {
+		return fmt.Errorf("couldn't set sequence: %s", err)
+	}
+	_, err := kv.Put(context.Background(), key, buf.String())
+	return err
 }

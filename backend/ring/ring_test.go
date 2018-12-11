@@ -23,7 +23,7 @@ func TestAdd(t *testing.T) {
 	}
 	defer client.Close()
 
-	ring := EtcdGetter{Client: client, BackendID: "TestAdd"}.GetRing("testadd")
+	ring := EtcdGetter{Client: client, ClientID: "TestAdd"}.GetRing("testadd")
 	if err := ring.Add(context.Background(), "foo"); err != nil {
 		t.Fatal(err)
 	}
@@ -41,7 +41,7 @@ func TestRemove(t *testing.T) {
 	}
 	defer client.Close()
 
-	ring := EtcdGetter{Client: client, BackendID: "TestRemove"}.GetRing("testremove")
+	ring := EtcdGetter{Client: client, ClientID: "TestRemove"}.GetRing("testremove")
 	if err := ring.Add(context.Background(), "foo"); err != nil {
 		t.Fatal(err)
 	}
@@ -62,7 +62,7 @@ func TestNext(t *testing.T) {
 	}
 	defer client.Close()
 
-	ring := EtcdGetter{Client: client, BackendID: "TestNext"}.GetRing("testnext")
+	ring := EtcdGetter{Client: client, ClientID: "TestNext"}.GetRing("testnext")
 
 	items := []string{"foo", "bar", "baz"}
 	for _, item := range items {
@@ -125,9 +125,9 @@ func TestErrorOnNext(t *testing.T) {
 	}
 	defer client.Close()
 
-	getterA := EtcdGetter{Client: client, BackendID: "TestErrorOnNextA"}
+	getterA := EtcdGetter{Client: client, ClientID: "TestErrorOnNextA"}
 
-	getterB := EtcdGetter{Client: client, BackendID: "TestErrorOnNextB"}
+	getterB := EtcdGetter{Client: client, ClientID: "TestErrorOnNextB"}
 
 	r1 := getterA.GetRing("blocknext")
 	r2 := getterB.GetRing("blocknext")
@@ -139,17 +139,16 @@ func TestErrorOnNext(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = r2.Next(context.Background())
-	if err != ErrNotOwner {
-		t.Fatalf("wanted ErrNotOwner, got %v", err)
-	}
-
 	value, err := r1.Next(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
 	if got, want := value, "foo"; got != want {
 		t.Fatalf("bad values: got %q, want %q", got, want)
+	}
+	_, err = r2.Next(context.Background())
+	if err != ErrNotOwner {
+		t.Fatalf("wanted ErrNotOwner, got %v", err)
 	}
 
 	value, err = r2.Next(context.Background())
@@ -178,11 +177,11 @@ func TestTransferOwnership(t *testing.T) {
 	}
 	defer client.Close()
 
-	getter := EtcdGetter{Client: client, BackendID: "TestTransferOwner"}
+	getterA := EtcdGetter{Client: client, ClientID: "TestTransferOwnerA"}
+	getterB := EtcdGetter{Client: client, ClientID: "TestTransferOwnerB"}
 
-	r1 := getter.GetRing("testtransfer")
-	r2 := getter.GetRing("testtransfer")
-	r2.(*Ring).backendID = "something-else-entirely"
+	r1 := getterA.GetRing("testtransfer")
+	r2 := getterB.GetRing("testtransfer")
 
 	if err := r1.Add(context.Background(), "foo"); err != nil {
 		t.Fatal(err)
@@ -217,11 +216,11 @@ func TestErrNotOwner(t *testing.T) {
 	}
 	defer client.Close()
 
-	getter := EtcdGetter{Client: client, BackendID: "TestErrNotOwner"}
+	getter := EtcdGetter{Client: client, ClientID: "TestErrNotOwner"}
 
 	r1 := getter.GetRing("testerrnotowner")
 	r2 := getter.GetRing("testerrnotowner")
-	r2.(*Ring).backendID = "something-else-entirely"
+	r2.(*Ring).clientID = "something-else-entirely"
 
 	if err := r1.Add(context.Background(), "foo"); err != nil {
 		t.Fatal(err)
@@ -243,7 +242,7 @@ func TestExpire(t *testing.T) {
 	}
 	defer client.Close()
 
-	ring := EtcdGetter{Client: client, BackendID: "TestExpire"}.GetRing("testexpire").(*Ring)
+	ring := EtcdGetter{Client: client, ClientID: "TestExpire"}.GetRing("testexpire").(*Ring)
 	ring.leaseTimeout = 1
 
 	if err := ring.Add(context.Background(), "foo"); err != nil {
@@ -277,7 +276,7 @@ func TestAddToEmptyRingAfterDelete(t *testing.T) {
 	}
 	defer client.Close()
 
-	ring := EtcdGetter{Client: client, BackendID: "TestAddToEmptyRingAfterDelete"}.GetRing("test_add_to_empty_ring_after_delete")
+	ring := EtcdGetter{Client: client, ClientID: "TestAddToEmptyRingAfterDelete"}.GetRing("test_add_to_empty_ring_after_delete")
 
 	items := []string{"foo", "bar"}
 	for _, item := range items {
@@ -336,7 +335,7 @@ func TestAddToRingWhenValueExists(t *testing.T) {
 	}
 	defer client.Close()
 
-	ring := EtcdGetter{Client: client, BackendID: "TestAddWhenValueExists"}.GetRing("test_add_when_value_exists")
+	ring := EtcdGetter{Client: client, ClientID: "TestAddWhenValueExists"}.GetRing("test_add_when_value_exists")
 
 	items := []string{"foo", "bar"}
 	for _, item := range items {
@@ -372,7 +371,7 @@ func TestAddToRingWhenValueExists(t *testing.T) {
 	}
 }
 
-func TestSwapRingOwnership(t *testing.T) {
+func TestProblematicSequenceOfNexts(t *testing.T) {
 	t.Parallel()
 
 	e, cleanup := etcd.NewTestEtcd(t)
@@ -384,8 +383,8 @@ func TestSwapRingOwnership(t *testing.T) {
 	}
 	defer client.Close()
 
-	ringA := EtcdGetter{Client: client, BackendID: "TestSwapRingOwnerA"}.GetRing("test_swap_owner")
-	ringB := EtcdGetter{Client: client, BackendID: "TestSwapRingOwnerB"}.GetRing("test_swap_owner")
+	ringA := EtcdGetter{Client: client, ClientID: "TestProblematicSequenceA"}.GetRing("test_prob_seq")
+	ringB := EtcdGetter{Client: client, ClientID: "TestProblematicSequenceB"}.GetRing("test_prob_seq")
 
 	if err := ringA.Add(context.Background(), "foo"); err != nil {
 		t.Fatal(err)
@@ -393,15 +392,37 @@ func TestSwapRingOwnership(t *testing.T) {
 	if err := ringB.Add(context.Background(), "bar"); err != nil {
 		t.Fatal(err)
 	}
-
 	if got, err := ringA.Next(context.Background()); err != nil {
 		t.Fatal(err)
 	} else if want := "foo"; got != want {
 		t.Fatalf("bad value: got %q, want %q", got, want)
 	}
+	if _, err := ringB.Next(context.Background()); err != ErrNotOwner {
+		t.Fatalf("expected ErrNotOwner, got %v", err)
+	}
 	if got, err := ringB.Next(context.Background()); err != nil {
+		t.Fatal(err)
+	} else if want := "bar"; got != want {
+		t.Fatalf("bad value: got %q, want %q", got, want)
+	}
+	if _, err := ringA.Next(context.Background()); err != ErrNotOwner {
+		t.Fatalf("bad error: got %v, want ErrNotOwner", err)
+	}
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		// ringB must now wait until ringA calls Next
+		_, _ = ringB.Next(context.Background())
+	}()
+	// The call to ringA.Next should unblock ringB.Next
+	if got, err := ringA.Next(context.Background()); err != nil {
 		t.Fatal(err)
 	} else if want := "foo"; got != want {
 		t.Fatalf("bad value: got %q, want %q", got, want)
+	}
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("test timed out")
 	}
 }

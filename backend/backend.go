@@ -124,7 +124,7 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize the bus
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: ring.EtcdGetter{Client: b.Client, BackendID: fmt.Sprintf("%x", backendID.GetBackendID())},
+		RingGetter: ring.EtcdGetter{Client: b.Client, ClientID: fmt.Sprintf("%x", backendID.GetBackendID())},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", bus.Name(), err)
