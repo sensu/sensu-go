@@ -89,10 +89,13 @@ func (a *Agent) executeCheck(request *v2.CheckRequest) {
 		return
 	}
 
+	// Prepare environment variables
+	env := environment.MergeEnvironments(syscall.Environ(), assets.Env(), check.EnvVars)
+
 	// Inject the dependencies into PATH, LD_LIBRARY_PATH & CPATH so that they
 	// are availabe when when the command is executed.
 	ex := command.ExecutionRequest{
-		Env:          environment.MergeEnvironments(assets.Env(), check.EnvVars),
+		Env:          env,
 		Command:      checkConfig.Command,
 		Timeout:      int(checkConfig.Timeout),
 		InProgress:   a.inProgress,

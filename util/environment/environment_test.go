@@ -11,6 +11,7 @@ func TestMergeEnvironments(t *testing.T) {
 		name     string
 		env1     []string
 		env2     []string
+		env3     []string
 		expected []string
 	}{
 		{
@@ -73,11 +74,18 @@ func TestMergeEnvironments(t *testing.T) {
 			env2:     []string{"VAR3="},
 			expected: []string{"VAR2=VALUE2", "VAR3="},
 		},
+		{
+			name:     "more than two sets of variables",
+			env1:     []string{"CPATH=e:f", "VAR1=two"},
+			env2:     []string{"CPATH=c:d", "VAR1=one"},
+			env3:     []string{"CPATH=a:b"},
+			expected: []string{"CPATH=a:b:c:d:e:f", "VAR1=one"},
+		},
 	}
 
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			result := MergeEnvironments(tt.env1, tt.env2)
+			result := MergeEnvironments(tt.env1, tt.env2, tt.env3)
 			assert.ElementsMatch(t, result, tt.expected)
 		})
 	}
