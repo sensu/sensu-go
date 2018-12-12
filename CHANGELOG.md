@@ -9,6 +9,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Listing an empty set of assets now correctly returns [] instead of null.
+- Fixed API endpoint used by the CLI to create hooks via the 'sensuctl create'
+  command. It's now possible to create objects of type 'Hook' with this command
+  again.
 
 ### [5.0.1] - 2018-12-12
 
