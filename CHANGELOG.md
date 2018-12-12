@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### [5.0.1] - 2018-12-12
+
 ### Changed
 - Added --etcd-advertise-client-urls options to docker-compose.yaml sensu-backend start command
 
