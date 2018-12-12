@@ -26,7 +26,7 @@ type Entity implements Node, Namespaced {
   Status represents the MAX status of all events associated with the entity. If
   no events are present value is 0.
   """
-  status: Int!
+  status: Uint!
 
   "Related returns a sorted list of like entities from the same environment."
   related(limit: Int = 10): [Entity]!

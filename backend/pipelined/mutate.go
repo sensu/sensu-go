@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"os"
 
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/store"
@@ -113,10 +114,13 @@ func (p *Pipelined) onlyCheckOutputMutator(event *types.Event) []byte {
 // STDIN, and captures the command output (STDOUT/ERR) to be used as
 // the mutated event data for a Sensu event handler.
 func (p *Pipelined) pipeMutator(mutator *types.Mutator, event *types.Event) ([]byte, error) {
+	// Prepare environment variables
+	env := environment.MergeEnvironments(os.Environ(), mutator.EnvVars)
+
 	mutatorExec := command.ExecutionRequest{}
 	mutatorExec.Command = mutator.Command
 	mutatorExec.Timeout = int(mutator.Timeout)
-	mutatorExec.Env = mutator.EnvVars
+	mutatorExec.Env = env
 
 	eventData, err := json.Marshal(event)
 	if err != nil {
@@ -143,7 +147,7 @@ func (p *Pipelined) pipeMutator(mutator *types.Mutator, event *types.Event) ([]b
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for mutator")
 		} else {
-			mutatorExec.Env = environment.MergeEnvironments(assets.Env(), mutatorExec.Env)
+			mutatorExec.Env = environment.MergeEnvironments(os.Environ(), assets.Env(), mutator.EnvVars)
 		}
 	}
 
