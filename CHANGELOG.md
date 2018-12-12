@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Listing an empty set of assets now correctly returns [] instead of null.
+
 ### [5.0.1] - 2018-12-12
 
 ### Changed
