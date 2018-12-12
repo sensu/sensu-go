@@ -7,6 +7,15 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Listing an empty set of assets now correctly returns [] instead of null.
+- Fixed API endpoint used by the CLI to create hooks via the 'sensuctl create'
+  command. It's now possible to create objects of type 'Hook' with this command
+  again.
+- Firefox status icons not fully rendering 
+
+### [5.0.1] - 2018-12-12
+
 ### Changed
 - Added --etcd-advertise-client-urls options to docker-compose.yaml sensu-backend start command
 
@@ -19,7 +28,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Ensure environment variables are joined with a semicolon on Windows
 - Command arguments are no longer needlessly escaped on Windows
 - Backend environments are now included in handler & mutator execution requests.
-- Firefox status icons not fully rendering 
 
 ### [5.0.0] - 2018-11-30
 
