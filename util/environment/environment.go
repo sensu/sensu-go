@@ -1,33 +1,39 @@
 package environment
 
 import (
+	"os"
 	"sort"
 	"strings"
 )
 
-// MergeEnvironments merges env2 into env1, overwriting any existing variable
-// in env1, except for the "special" variables PATH, CPATH and LD_LIBRARY_PATH.
+var pathListSeparator = string(os.PathListSeparator)
+
+// MergeEnvironments merges one or more sets of environment variables,
+// overwriting any existing variable in the preceding set, except for the
+// "special" variables PATH, CPATH and LD_LIBRARY_PATH.
 //
 // The "special" variables PATH, CPATH and LD_LIBRARY_PATH are merged by
-// prepending the value from env2 to the value in env1, effectively giving
-// priority to the value from env2.
+// prepending the values from right to those in left, effectively giving
+// priority to the values from right.
 //
 // The expected format for an environment variable definition is VAR=VALUE. Any
 // malformed environment variable definition will be discarded by the merge.
-func MergeEnvironments(env1, env2 []string) []string {
-	e1 := toMap(env1)
-	e2 := toMap(env2)
+func MergeEnvironments(ea []string, es ...[]string) []string {
+	envs := toMap(ea)
 
-	for k, v := range e2 {
-		switch k {
-		case "PATH", "CPATH", "LD_LIBRARY_PATH":
-			e1[k] = strings.Join([]string{v, e1[k]}, ":")
-		default:
-			e1[k] = v
+	for i := range es {
+		env := toMap(es[i])
+		for k, v := range env {
+			switch k {
+			case "PATH", "CPATH", "LD_LIBRARY_PATH":
+				envs[k] = strings.Join([]string{v, envs[k]}, pathListSeparator)
+			default:
+				envs[k] = v
+			}
 		}
 	}
 
-	return fromMap(e1)
+	return fromMap(envs)
 }
 
 func toMap(s []string) map[string]string {
@@ -49,8 +55,10 @@ func toMap(s []string) map[string]string {
 				m[split[0]] = ""
 			}
 		case 2:
+			// See _windows.go
+			key := coerceKey(split[0])
 			// A proper VAR=VALUE definiton
-			m[split[0]] = split[1]
+			m[key] = split[1]
 		default:
 			// Anything else is considered malformed and ignored
 			break

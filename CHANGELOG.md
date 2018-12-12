@@ -7,6 +7,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Listing an empty set of assets now correctly returns [] instead of null.
+
+### [5.0.1] - 2018-12-12
+
 ### Changed
 - Added --etcd-advertise-client-urls options to docker-compose.yaml sensu-backend start command
 
@@ -15,7 +20,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Silences List in web ui sorted by ascending order; defaults to descending
 - Reduces shuffling of items as events list updates
 - Fixed error in UI where status value could not be coerced
-- Listing an empty set of assets now correctly returns [] instead of null.
+- Copy local environment variables into execution context when running checks
+- Ensure environment variables are joined with a semicolon on Windows
+- Command arguments are no longer needlessly escaped on Windows
+- Backend environments are now included in handler & mutator execution requests.
 
 ### [5.0.0] - 2018-11-30
 
