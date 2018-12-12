@@ -140,6 +140,7 @@ func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionReque
 				escapeZombie(&execution)
 			}
 		})
+		defer timer.Stop()
 	}
 
 	if err := cmd.Start(); err != nil {

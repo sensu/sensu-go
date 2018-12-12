@@ -258,6 +258,8 @@ func TestEventsByLastOk(t *testing.T) {
 	okNewer.Check.LastOK = 1
 	okDiffEntity := FixtureEvent("abba", "check")
 	okDiffEntity.Check.Status = 0 // ok
+	okDiffCheck := FixtureEvent("abba", "0bba")
+	okDiffCheck.Check.Status = 0 // ok
 
 	testCases := []struct {
 		name     string
@@ -275,9 +277,9 @@ func TestEventsByLastOk(t *testing.T) {
 			expected: []*Event{incidentNewer, incident, okNewer, ok},
 		},
 		{
-			name:     "Fallback to entity name when severity is same",
-			input:    []*Event{ok, okNewer, okDiffEntity},
-			expected: []*Event{okNewer, okDiffEntity, ok},
+			name:     "Fallback to entity & check name when severity is same",
+			input:    []*Event{ok, okNewer, okDiffCheck, okDiffEntity},
+			expected: []*Event{okNewer, okDiffCheck, okDiffEntity, ok},
 		},
 	}
 

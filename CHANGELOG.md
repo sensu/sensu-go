@@ -9,6 +9,26 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Keepalive and check TTL failure events now fire continuously until resolved.
+- Listing an empty set of assets now correctly returns [] instead of null.
+- Fixed API endpoint used by the CLI to create hooks via the 'sensuctl create'
+  command. It's now possible to create objects of type 'Hook' with this command
+  again.
+- Firefox status icons not fully rendering 
+
+### [5.0.1] - 2018-12-12
+
+### Changed
+- Added --etcd-advertise-client-urls options to docker-compose.yaml sensu-backend start command
+
+### Fixed
+- Prevent a panic when using an external etcd cluster.
+- Silences List in web ui sorted by ascending order; defaults to descending
+- Reduces shuffling of items as events list updates
+- Fixed error in UI where status value could not be coerced
+- Copy local environment variables into execution context when running checks
+- Ensure environment variables are joined with a semicolon on Windows
+- Command arguments are no longer needlessly escaped on Windows
+- Backend environments are now included in handler & mutator execution requests.
 
 ### [5.0.0] - 2018-11-30
 
@@ -17,6 +37,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Support for multiple API versions added to sensuctl create
 - Support for metadata added to wrapped resources (yaml, wrapped-json)
 - Added the backend configuration attributes `api-listen-address` & `api-url`.
+- Adds feedback when rerunning check[s] in the web app
 
 ### Removed
 - Check subdue functionality has been disabled. Users that have checks with

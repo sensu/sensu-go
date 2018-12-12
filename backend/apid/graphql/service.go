@@ -51,6 +51,7 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterSubscriptionSetOrder(svc)
 	schema.RegisterSubscriptionOccurences(svc, &schema.SubscriptionOccurencesAliases{})
 	schema.RegisterSilencesListOrder(svc)
+	schema.RegisterUint(svc, unsignedIntegerImpl{})
 	schema.RegisterViewer(svc, &viewerImpl{factory: clientFactory})
 
 	// Register check types

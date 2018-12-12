@@ -46,7 +46,7 @@ func (s *Store) GetAssets(ctx context.Context) ([]*types.Asset, error) {
 		return nil, err
 	}
 	if len(resp.Kvs) == 0 {
-		return nil, nil
+		return []*types.Asset{}, nil
 	}
 
 	assetArray := make([]*types.Asset, len(resp.Kvs))
