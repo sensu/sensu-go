@@ -8,6 +8,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Fixed
+- Keepalive and check TTL failure events now fire continuously until resolved.
 - Listing an empty set of assets now correctly returns [] instead of null.
 - Fixed API endpoint used by the CLI to create hooks via the 'sensuctl create'
   command. It's now possible to create objects of type 'Hook' with this command
