@@ -328,6 +328,6 @@ func deprecatedConfigAttributes() {
 }
 
 func deprecatedFlagMessage(oldFlag, newFlag string) {
-	logger.Warningf("sensu-agent flag --%s has been deprecated, please use --%s instead",
+	logger.Warningf("flag --%s has been deprecated, please use --%s instead",
 		oldFlag, newFlag)
 }
