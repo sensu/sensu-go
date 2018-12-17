@@ -26,7 +26,7 @@ import (
 
 const (
 	// StateDir is the base path for Sensu's local storage.
-	StateDir = "/var/lib/sensu"
+	StateDir = "/var/lib/sensu/sensu-backend"
 	// ClusterStateNew specifies this is a new etcd cluster
 	ClusterStateNew = "new"
 	// EtcdStartupTimeout is the amount of time we give the embedded Etcd Server
