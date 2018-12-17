@@ -299,8 +299,8 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().StringP(flagStateDir, "d", viper.GetString(flagStateDir), "path to sensu state storage")
 	cmd.Flags().String(flagCertFile, viper.GetString(flagCertFile), "TLS certificate in PEM format")
 	cmd.Flags().String(flagKeyFile, viper.GetString(flagKeyFile), "TLS certificate key in PEM format")
-	cmd.Flags().String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS certificate authority in PEM format")
-	cmd.Flags().Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification")
+	cmd.Flags().String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format")
+	cmd.Flags().Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")
 	cmd.Flags().Bool(flagDebug, false, "enable debugging and profiling features")
 	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
 
