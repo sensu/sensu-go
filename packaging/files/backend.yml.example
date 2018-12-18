@@ -2,7 +2,7 @@
 ##
 # general configuration
 ##
-state-dir: "/var/lib/sensu"
+state-dir: "/var/lib/sensu/sensu-backend"
 
 ##
 # agent configuration
