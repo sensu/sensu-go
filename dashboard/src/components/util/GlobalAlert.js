@@ -16,11 +16,12 @@ class GlobalAlert extends React.PureComponent {
 
     return (
       <React.Fragment>
-        {data.localNetwork.offline && (
-          <BannerSink>
-            <Banner variant="warning" message="offline" />
-          </BannerSink>
-        )}
+        {data.localNetwork &&
+          data.localNetwork.offline && (
+            <BannerSink>
+              <Banner variant="warning" message="offline" />
+            </BannerSink>
+          )}
       </React.Fragment>
     );
   }
