@@ -12,6 +12,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
+	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 )
@@ -130,14 +131,24 @@ func (m *EtcdSupervisor) Monitor(ctx context.Context, name string, event *corev2
 		return err
 	}
 
-	failureFunc := func(ctx context.Context, ttl int64) {
+	failureFunc := func(ctx context.Context) {
+		interval := int64(0)
+		if event.HasCheck() {
+			// This should be the case most of the time
+			interval = int64(event.Check.Interval)
+		}
+		if interval == 0 {
+			// This can happen when monitoring an event that does not have a
+			// check, an unexpected but possible scenario.
+			interval = agent.DefaultKeepaliveInterval
+		}
 		logger.Infof("monitor timed out, for %s, handling failure", key)
 		err := m.failureHandler.HandleFailure(event)
 		if err != nil {
 			m.errorHandler.HandleError(err)
 		}
 		// Emit a failing keepalive event until the context is canceled
-		ticker := time.NewTicker(time.Duration(ttl) * time.Second)
+		ticker := time.NewTicker(time.Duration(interval) * time.Second)
 		defer ticker.Stop()
 		for {
 			select {
@@ -189,7 +200,7 @@ func (m *EtcdSupervisor) getMonitor(ctx context.Context, key string) (*monitor, 
 // watchMon takes a monitor key and watches for etcd ops. If a DELETE event
 // is witnessed, it calls the provided HandleFailure func. If a PUT event is
 // witnessed, the watcher is stopped.
-func watchMon(ctx context.Context, cli *clientv3.Client, mon *monitor, failureHandler func(context.Context, int64), shutdownHandler func()) {
+func watchMon(ctx context.Context, cli *clientv3.Client, mon *monitor, failureHandler func(context.Context), shutdownHandler func()) {
 	ctx, cancel := context.WithCancel(ctx)
 	responseChan := cli.Watch(ctx, mon.key)
 	leasesMu.Lock()
@@ -203,7 +214,7 @@ func watchMon(ctx context.Context, cli *clientv3.Client, mon *monitor, failureHa
 			case wresp := <-responseChan:
 				for _, ev := range wresp.Events {
 					if ev.Type == mvccpb.DELETE {
-						go failureHandler(ctx, mon.ttl)
+						go failureHandler(ctx)
 					}
 
 					// if there is a PUT on the key, the lease has been extended,

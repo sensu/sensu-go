@@ -153,7 +153,7 @@ func TestWatchMonDelete(t *testing.T) {
 
 	failWait := &sync.WaitGroup{}
 
-	testFailureHandler := func(context.Context, int64) {
+	testFailureHandler := func(context.Context) {
 		failWait.Done()
 	}
 
