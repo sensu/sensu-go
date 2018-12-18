@@ -265,7 +265,7 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagDashboardPort, 3000)
 	viper.SetDefault(flagDeregistrationHandler, "")
 	viper.SetDefault(flagCacheDir, path.SystemCacheDir("sensu-backend"))
-	viper.SetDefault(flagStateDir, path.SystemDataDir())
+	viper.SetDefault(flagStateDir, path.SystemDataDir("sensu-backend"))
 	viper.SetDefault(flagCertFile, "")
 	viper.SetDefault(flagKeyFile, "")
 	viper.SetDefault(flagTrustedCAFile, "")

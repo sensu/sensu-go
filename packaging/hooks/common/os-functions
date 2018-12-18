@@ -60,7 +60,7 @@ config_dir()
 
 data_dir()
 {
-    echo "/var/lib/sensu"
+    echo "/var/lib/sensu/sensu-backend"
 }
 
 log_dir()

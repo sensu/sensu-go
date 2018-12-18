@@ -45,12 +45,12 @@ func SystemCacheDir(exeName string) string {
 }
 
 // SystemDataDir returns the path to the data (state) directory based on the runtime OS
-func SystemDataDir() string {
+func SystemDataDir(exeName string) string {
 	switch runtime.GOOS {
 	case windows:
-		return filepath.Join(windowsProgramDataPath(), "sensu", "data")
+		return filepath.Join(windowsProgramDataPath(), "sensu", "data", exeName)
 	default:
-		return filepath.Join("/var/lib/sensu")
+		return filepath.Join("/var/lib/sensu", exeName)
 	}
 }
 

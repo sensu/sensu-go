@@ -21,12 +21,11 @@ import (
 	etcdTypes "github.com/coreos/etcd/pkg/types"
 	"github.com/coreos/pkg/capnslog"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/util/path"
 	"google.golang.org/grpc/grpclog"
 )
 
 const (
-	// StateDir is the base path for Sensu's local storage.
-	StateDir = "/var/lib/sensu"
 	// ClusterStateNew specifies this is a new etcd cluster
 	ClusterStateNew = "new"
 	// EtcdStartupTimeout is the amount of time we give the embedded Etcd Server
@@ -60,7 +59,7 @@ type TLSInfo transport.TLSInfo
 // NewConfig returns a pointer to an initialized Config object with defaults.
 func NewConfig() *Config {
 	c := &Config{}
-	c.DataDir = StateDir
+	c.DataDir = path.SystemCacheDir("sensu-backend")
 
 	return c
 }
