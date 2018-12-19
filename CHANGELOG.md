@@ -7,10 +7,16 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.1.0] - 2018-12-18
+
 ### Added
 - Support for the trusted-ca-file and insecure-skip-tls-verify flags in
   sensu-agent. These flags have the same meaning and use as their sensu-backend
   counterparts.
+
+### Changed
+- Default location for sensu-backend data has changed from /var/lib/sensu to
+  /var/lib/sensu/sensu-backend. See release notes for more information.
 
 ### Fixed
 - Keepalive and check TTL failure events now fire continuously until resolved.
@@ -20,7 +26,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
   again.
 - Firefox status icons not fully rendering
 
-### [5.0.1] - 2018-12-12
+## [5.0.1] - 2018-12-12
 
 ### Changed
 - Added --etcd-advertise-client-urls options to docker-compose.yaml sensu-backend start command
@@ -35,7 +41,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Command arguments are no longer needlessly escaped on Windows
 - Backend environments are now included in handler & mutator execution requests.
 
-### [5.0.0] - 2018-11-30
+## [5.0.0] - 2018-11-30
 
 ### Added
 - Add the `etcd-advertise-client-urls` config attribute to sensu-backend
