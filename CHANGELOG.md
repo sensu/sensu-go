@@ -14,6 +14,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
   sensu-agent. These flags have the same meaning and use as their sensu-backend
   counterparts.
 
+### Changed
+- Default location for sensu-backend data has changed from /var/lib/sensu to
+  /var/lib/sensu/sensu-backend. See release notes for more information.
+
 ### Fixed
 - Keepalive and check TTL failure events now fire continuously until resolved.
 - Listing an empty set of assets now correctly returns [] instead of null.
