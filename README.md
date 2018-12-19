@@ -46,3 +46,17 @@ See the [installation documentation](https://docs.sensu.io/sensu-go/latest/insta
 For guidelines on how to contribute to this project, how to hack on Sensu, and
 information about what we require from project contributors, please see
 [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Sensu is and always will be open source, and we continue to highly
+value community contribution. The packages we’re releasing for new
+versions are from our Enterprise repo; Sensu Go is the upstream for
+Sensu Enterprise (as they’d say in the Go community: Sensu Go is
+vendored into the Sensu Enterprise Go repo). We encourage you to
+download new versions, as the functionality will be identical to what
+you find in the public repo, and access to the enterprise-only
+features can be unlocked with a license key. Because these releases
+are in our Enterprise repo, there may be times that you don’t see the
+actual work being done on an issue you open, but that doesn’t mean
+we’re not working on it! Our team is committed to updating progress on
+open issues in the sensu-go repo, even if that work is being done in
+our Enterprise repo.
