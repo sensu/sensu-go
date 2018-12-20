@@ -1,0 +1,41 @@
+#
+# IMPORTANT:
+#
+#   The JSON type is defined /purely/ as a means of returning arbitrary
+#   user-defined data. It should only ever be used as a last resort where a set
+#   of data cannot be possibly be described by the GraphQL's type system.
+#
+#   Please, please, please do not use it unless it is absolutely unavoidable.
+#
+
+"""
+The JSON type describes any arbitrary JSON compatible data.
+
+- Roughly equilevant to `union JSON = Int | Float | String | Boolean` however
+  can also be a map or list of arbitrary length.
+- Despite looking like an an object it's fields **cannot** be selected.
+
+"""
+scalar JSON
+
+"""
+The Uint scalar type represents a unsigned 32 bit integer. Response formats that
+support an unsigned 32‐bit integer or a number type should use that type to
+represent this scalar.
+
+**NOTE:** As numbers are represented as double-precision floating point numbers
+in Javascript the largest possible value is 2^53. As such 32 bit is used as the
+lowest common denominator.
+"""
+scalar Uint
+
+# """
+# A big number represents a number that is too large to be coerced by one of the
+# existing numeric types. Response formats that support 64 bit [signed/unsigned]
+# integers, floats and complex types should use the most approriate to represent
+# this scalar.
+#
+# To support the most languages possible, numbers are always coerced into a
+# string.
+# """
+# scalar BigNum

@@ -78,7 +78,7 @@ func (client *RestClient) CreateEntity(entity *types.Entity) (err error) {
 		return err
 	}
 
-	path := entitiesPath(entity.Namespace, entity.Name)
+	path := entitiesPath(entity.Namespace)
 	res, err := client.R().SetBody(bytes).Post(path)
 	if err != nil {
 		return err

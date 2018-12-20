@@ -27,8 +27,8 @@ type Config struct {
 	AgentPort int
 
 	// Apid Configuration
-	APIHost string
-	APIPort int
+	APIListenAddress string
+	APIURL           string
 
 	// Dashboardd Configuration
 	DashboardHost string

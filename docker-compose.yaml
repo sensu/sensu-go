@@ -2,7 +2,7 @@ version: '3'
 services:
   backend1:
     image: sensu/sensu:master
-    command: sensu-backend start --etcd-listen-client-urls http://0.0.0.0:2379 --etcd-name backend1 --etcd-initial-cluster backend1=http://backend1:2380,backend2=http://backend2:2380,backend3=http://backend3:2380 --etcd-initial-cluster-state new --etcd-initial-advertise-peer-urls http://backend1:2380 --state-dir /var/lib/sensu/etcd1 --etcd-listen-peer-urls http://0.0.0.0:2380 --log-level debug --debug
+    command: sensu-backend start --etcd-listen-client-urls http://0.0.0.0:2379 --etcd-name backend1 --etcd-advertise-client-urls http://backend1:2379 --etcd-initial-cluster backend1=http://backend1:2380,backend2=http://backend2:2380,backend3=http://backend3:2380 --etcd-initial-cluster-state new --etcd-initial-advertise-peer-urls http://backend1:2380 --state-dir /var/lib/sensu/sensu-backend/etcd1 --etcd-listen-peer-urls http://0.0.0.0:2380 --log-level debug --debug
     hostname: backend1
     restart: always
     ports:
@@ -14,7 +14,7 @@ services:
       - "3000:3000"
   backend2:
     image: sensu/sensu:master
-    command: sensu-backend start --etcd-listen-client-urls http://0.0.0.0:2379 --etcd-name backend2 --etcd-initial-cluster backend1=http://backend1:2380,backend2=http://backend2:2380,backend3=http://backend3:2380 --etcd-initial-cluster-state new --etcd-initial-advertise-peer-urls http://backend2:2380 --state-dir /var/lib/sensu/etcd2 --etcd-listen-peer-urls http://0.0.0.0:2380 --log-level debug
+    command: sensu-backend start --etcd-listen-client-urls http://0.0.0.0:2379 --etcd-name backend2 --etcd-advertise-client-urls http://backend2:2379 --etcd-initial-cluster backend1=http://backend1:2380,backend2=http://backend2:2380,backend3=http://backend3:2380 --etcd-initial-cluster-state new --etcd-initial-advertise-peer-urls http://backend2:2380 --state-dir /var/lib/sensu/sensu-backend/etcd2 --etcd-listen-peer-urls http://0.0.0.0:2380 --log-level debug
     hostname: backend2
     restart: always
     ports:
@@ -24,7 +24,7 @@ services:
       - "18081:8081"
   backend3:
     image: sensu/sensu:master
-    command: sensu-backend start --etcd-listen-client-urls http://0.0.0.0:2379 --name backend3 --etcd-initial-cluster backend1=http://backend1:2380,backend2=http://backend2:2380,backend3=http://backend3:2380 --etcd-initial-cluster-state new --etcd-initial-advertise-peer-urls http://backend3:2380 --state-dir /var/lib/sensu/etcd3 --etcd-listen-peer-urls http://0.0.0.0:2380 --log-level debug
+    command: sensu-backend start --etcd-listen-client-urls http://0.0.0.0:2379 --name backend3 --etcd-advertise-client-urls http://backend3:2379 --etcd-initial-cluster backend1=http://backend1:2380,backend2=http://backend2:2380,backend3=http://backend3:2380 --etcd-initial-cluster-state new --etcd-initial-advertise-peer-urls http://backend3:2380 --state-dir /var/lib/sensu/sensu-backend/etcd3 --etcd-listen-peer-urls http://0.0.0.0:2380 --log-level debug
     hostname: backend3
     restart: always
     ports:
@@ -34,7 +34,7 @@ services:
       - "28081:8081"
   agent1:
     image: sensu/sensu:master
-    command: sensu-agent start --backend-url ws://backend1:8081 --subscriptions test --log-level debug
+    command: sensu-agent start --backend-url ws://backend1:8081 --subscriptions metrics,misc,roundrobin,proxy --log-level debug --keepalive-interval 5 --keepalive-timeout 10
     hostname: agent1
     restart: always
     depends_on:
@@ -43,7 +43,7 @@ services:
       - backend3
   agent2:
     image: sensu/sensu:master
-    command: sensu-agent start --backend-url ws://backend2:8081 --subscriptions test --log-level debug
+    command: sensu-agent start --backend-url ws://backend2:8081 --subscriptions schedules,rbac,roundrobin,proxy --log-level debug --keepalive-interval 5 --keepalive-timeout 10
     hostname: agent2
     restart: always
     depends_on:
@@ -52,7 +52,7 @@ services:
       - backend3
   agent3:
     image: sensu/sensu:master
-    command: sensu-agent start --backend-url ws://backend3:8081 --subscriptions test --log-level debug
+    command: sensu-agent start --backend-url ws://backend3:8081 --subscriptions rbac,roundrobin --log-level debug --namespace devops --keepalive-interval 5 --keepalive-timeout 10
     hostname: agent3
     restart: always
     depends_on:

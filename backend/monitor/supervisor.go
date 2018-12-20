@@ -8,11 +8,13 @@ import (
 	"strconv"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
+	"github.com/sensu/sensu-go/agent"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 var (
@@ -47,7 +49,7 @@ func init() {
 // of the running monitors in the system.
 type Supervisor interface {
 	// Monitor starts a new monitor or resets an existing monitor.
-	Monitor(ctx context.Context, id string, event *types.Event, ttl int64) error
+	Monitor(ctx context.Context, id string, event *corev2.Event, ttl int64) error
 }
 
 // EtcdSupervisor is an etcd backend monitor supervisor based on leased keys.
@@ -57,6 +59,7 @@ type EtcdSupervisor struct {
 	failureHandler FailureHandler
 	errorHandler   ErrorHandler
 	client         *clientv3.Client
+	prefix         string
 }
 
 type monitor struct {
@@ -66,9 +69,9 @@ type monitor struct {
 }
 
 // EtcdFactory returns a Factory bound to an etcd client
-func EtcdFactory(c *clientv3.Client) Factory {
+func EtcdFactory(c *clientv3.Client, prefix string) Factory {
 	return func(h Handler) Supervisor {
-		return NewEtcdSupervisor(c, h)
+		return NewEtcdSupervisor(c, h, prefix)
 	}
 }
 
@@ -76,7 +79,7 @@ func EtcdFactory(c *clientv3.Client) Factory {
 type Factory func(Handler) Supervisor
 
 // NewEtcdSupervisor returns a new Supervisor backed by Etcd.
-func NewEtcdSupervisor(client *clientv3.Client, h Handler) *EtcdSupervisor {
+func NewEtcdSupervisor(client *clientv3.Client, h Handler, prefix string) *EtcdSupervisor {
 	leasesOnce.Do(func() {
 		packageClientDoNotUse = client
 	})
@@ -84,6 +87,7 @@ func NewEtcdSupervisor(client *clientv3.Client, h Handler) *EtcdSupervisor {
 		client:         client,
 		failureHandler: h,
 		errorHandler:   h,
+		prefix:         prefix,
 	}
 }
 
@@ -91,8 +95,8 @@ func NewEtcdSupervisor(client *clientv3.Client, h Handler) *EtcdSupervisor {
 // If no monitor exists, one is created. If a monitor exists, its lease ttl is
 // extended. If the monitor's ttl has changed, a new lease is created and the
 // key is updated with that new lease.
-func (m *EtcdSupervisor) Monitor(ctx context.Context, name string, event *types.Event, ttl int64) error {
-	key := monitorKeyBuilder.WithNamespace(event.Entity.Namespace).Build(name)
+func (m *EtcdSupervisor) Monitor(ctx context.Context, name string, event *corev2.Event, ttl int64) error {
+	key := monitorKeyBuilder.WithNamespace(event.Entity.Namespace).Build(m.prefix, name)
 	// try to get the monitor from the store
 	mon, err := m.getMonitor(ctx, key)
 	if err != nil {
@@ -127,11 +131,35 @@ func (m *EtcdSupervisor) Monitor(ctx context.Context, name string, event *types.
 		return err
 	}
 
-	failureFunc := func() {
+	failureFunc := func(ctx context.Context) {
+		interval := int64(0)
+		if event.HasCheck() {
+			// This should be the case most of the time
+			interval = int64(event.Check.Interval)
+		}
+		if interval == 0 {
+			// This can happen when monitoring an event that does not have a
+			// check, an unexpected but possible scenario.
+			interval = agent.DefaultKeepaliveInterval
+		}
 		logger.Infof("monitor timed out, for %s, handling failure", key)
 		err := m.failureHandler.HandleFailure(event)
 		if err != nil {
 			m.errorHandler.HandleError(err)
+		}
+		// Emit a failing keepalive event until the context is canceled
+		ticker := time.NewTicker(time.Duration(interval) * time.Second)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				err := m.failureHandler.HandleFailure(event)
+				if err != nil {
+					m.errorHandler.HandleError(err)
+				}
+			}
 		}
 	}
 
@@ -172,7 +200,7 @@ func (m *EtcdSupervisor) getMonitor(ctx context.Context, key string) (*monitor, 
 // watchMon takes a monitor key and watches for etcd ops. If a DELETE event
 // is witnessed, it calls the provided HandleFailure func. If a PUT event is
 // witnessed, the watcher is stopped.
-func watchMon(ctx context.Context, cli *clientv3.Client, mon *monitor, failureHandler func(), shutdownHandler func()) {
+func watchMon(ctx context.Context, cli *clientv3.Client, mon *monitor, failureHandler func(context.Context), shutdownHandler func()) {
 	ctx, cancel := context.WithCancel(ctx)
 	responseChan := cli.Watch(ctx, mon.key)
 	leasesMu.Lock()
@@ -180,19 +208,20 @@ func watchMon(ctx context.Context, cli *clientv3.Client, mon *monitor, failureHa
 	leasesMu.Unlock()
 	go func() {
 		defer cancel()
+		ctx, cancelHandler := context.WithCancel(context.Background())
 		for {
 			select {
 			case wresp := <-responseChan:
 				for _, ev := range wresp.Events {
 					if ev.Type == mvccpb.DELETE {
-						failureHandler()
-						return
+						go failureHandler(ctx)
 					}
 
 					// if there is a PUT on the key, the lease has been extended,
 					// and we want to kill this watcher to avoid duplicate watchers.
 					if ev.Type == mvccpb.PUT {
 						logger.Debugf("monitor for lease (%x) received put", mon.leaseID)
+						cancelHandler()
 						shutdownHandler()
 						return
 					}

@@ -57,6 +57,10 @@ const (
 	flagLogLevel              = "log-level"
 	flagLabels                = "labels"
 
+	// TLS flags
+	flagTrustedCAFile         = "trusted-ca-file"
+	flagInsecureSkipTLSVerify = "insecure-skip-tls-verify"
+
 	deprecatedFlagAgentID = "id"
 )
 
@@ -138,6 +142,11 @@ func newStartCommand() *cobra.Command {
 			cfg.StatsdServer.Handlers = viper.GetStringSlice(flagStatsdEventHandlers)
 			cfg.Labels = viper.GetStringMapString(flagLabels)
 			cfg.User = viper.GetString(flagUser)
+
+			// TLS configuration
+			cfg.TLS = &types.TLSOptions{}
+			cfg.TLS.TrustedCAFile = viper.GetString(flagTrustedCAFile)
+			cfg.TLS.InsecureSkipVerify = viper.GetBool(flagInsecureSkipTLSVerify)
 
 			agentName := viper.GetString(flagAgentName)
 			if agentName != "" {
@@ -238,6 +247,8 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagUser, agent.DefaultUser)
 	viper.SetDefault(flagDisableAPI, false)
 	viper.SetDefault(flagDisableSockets, false)
+	viper.SetDefault(flagTrustedCAFile, "")
+	viper.SetDefault(flagInsecureSkipTLSVerify, false)
 	viper.SetDefault(flagLogLevel, "warn")
 
 	// Merge in config flag set so that it appears in command usage
@@ -268,6 +279,8 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().Uint32(flagKeepaliveTimeout, uint32(viper.GetInt(flagKeepaliveTimeout)), "number of seconds until agent is considered dead by backend")
 	cmd.Flags().Bool(flagDisableAPI, viper.GetBool(flagDisableAPI), "disable the Agent HTTP API")
 	cmd.Flags().Bool(flagDisableSockets, viper.GetBool(flagDisableSockets), "disable the Agent TCP and UDP event sockets")
+	cmd.Flags().String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format")
+	cmd.Flags().Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")
 	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
 	cmd.Flags().StringToString(flagLabels, viper.GetStringMapString(flagLabels), "entity labels map")
 
@@ -315,6 +328,6 @@ func deprecatedConfigAttributes() {
 }
 
 func deprecatedFlagMessage(oldFlag, newFlag string) {
-	logger.Warningf("sensu-agent flag --%s has been deprecated, please use --%s instead",
+	logger.Warningf("flag --%s has been deprecated, please use --%s instead",
 		oldFlag, newFlag)
 }

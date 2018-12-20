@@ -52,7 +52,7 @@ func TestEntityTypeStatusField(t *testing.T) {
 	impl := &entityImpl{factory: factory}
 	st, err := impl.Status(params)
 	require.NoError(t, err)
-	assert.Equal(t, 0, st)
+	assert.EqualValues(t, 0, st)
 
 	// Add failing event
 	failingEv := types.FixtureEvent(entity.Name, "bad")
@@ -65,7 +65,7 @@ func TestEntityTypeStatusField(t *testing.T) {
 	// exit status: 2
 	st, err = impl.Status(params)
 	require.NoError(t, err)
-	assert.Equal(t, 2, st)
+	assert.EqualValues(t, 2, st)
 }
 
 func TestEntityTypeLastSeenField(t *testing.T) {

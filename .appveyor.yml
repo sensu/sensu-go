@@ -13,20 +13,10 @@ environment:
   GOVERSION: 1.10.2
 
   matrix:
-    - GOARCH: 386
-      TEST_SUITE: unit
-      MSI_BUILDER: true
-      TIME_OUT_MINS: 30
-      APPVEYOR_API_TOKEN:
-        secure: 9DEZNCLW186SbfhAzXCPXh8TfOFysY56bW32dSpTWlQ=
     - GOARCH: amd64
       TEST_SUITE: unit
-    - GOARCH: 386
-      TEST_SUITE: integration
     - GOARCH: amd64
       TEST_SUITE: integration
-    - GOARCH: amd64
-      TEST_SUITE: e2e
 
 install:
   - rmdir c:\go /s /q

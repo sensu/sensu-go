@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/sensu/sensu-go/testing/mockring"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -55,7 +55,7 @@ func TestKeepaliveMonitor(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 
-	mFac := monitor.EtcdFactory(client)
+	mFac := monitor.EtcdFactory(client, "TestKeepaliveMonitor")
 
 	k, err := New(Config{Store: store, Bus: bus, MonitorFactory: mFac})
 	require.NoError(t, err)
@@ -64,10 +64,10 @@ func TestKeepaliveMonitor(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 
-	entity := types.FixtureEntity("entity1")
+	entity := corev2.FixtureEntity("entity1")
 
-	keepalive := &types.Event{
-		Check:     &types.Check{Timeout: 1},
+	keepalive := &corev2.Event{
+		Check:     &corev2.Check{Timeout: 1},
 		Entity:    entity,
 		Timestamp: time.Now().Unix(),
 	}
@@ -81,7 +81,7 @@ func TestKeepaliveMonitor(t *testing.T) {
 		assert.FailNow(t, "failed to pull message off eventChan")
 	}
 
-	okEvent, ok := msg.(*types.Event)
+	okEvent, ok := msg.(*corev2.Event)
 	if !ok {
 		assert.FailNow(t, "message type was not an event")
 	}
@@ -91,7 +91,7 @@ func TestKeepaliveMonitor(t *testing.T) {
 	if !ok {
 		assert.FailNow(t, "failed to pull message off eventChan")
 	}
-	warnEvent, ok := msg.(*types.Event)
+	warnEvent, ok := msg.(*corev2.Event)
 	if !ok {
 		assert.FailNow(t, "message type was not an event")
 	}

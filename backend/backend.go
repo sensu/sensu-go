@@ -35,6 +35,7 @@ import (
 // Backend represents the backend server, which is used to hold the datastore
 // and coordinating the daemons
 type Backend struct {
+	Client  *clientv3.Client
 	Daemons []daemon.Daemon
 	Etcd    *etcd.Etcd
 	Store   store.Store
@@ -94,35 +95,36 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 // backend. The daemons will later be started according to their position in the
 // b.Daemons list, and stopped in reverse order
 func Initialize(config *Config) (*Backend, error) {
+	var err error
 	// Initialize a Backend struct
 	b := &Backend{}
 
 	b.done = make(chan struct{})
 	b.ctx, b.cancel = context.WithCancel(context.Background())
 
-	client, err := newClient(config, b)
+	b.Client, err = newClient(config, b)
 	if err != nil {
 		return nil, err
 	}
 
 	// Initialize the store, which lives on top of etcd
 	logger.Debug("Initializing store...")
-	store := etcdstore.NewStore(client, config.EtcdName)
+	store := etcdstore.NewStore(b.Client, config.EtcdName)
 	if err = seeds.SeedInitialData(store); err != nil {
 		return nil, fmt.Errorf("error initializing the store: %s", err)
 	}
 	logger.Debug("Done initializing store")
 
 	logger.Debug("Registering backend...")
-	backendID := etcd.NewBackendIDGetter(b.ctx, client)
+	backendID := etcd.NewBackendIDGetter(b.ctx, b.Client)
 	logger.Debug("Done registering backend.")
 
 	// Initialize an etcd getter
-	queueGetter := queue.EtcdGetter{Client: client, BackendIDGetter: backendID}
+	queueGetter := queue.EtcdGetter{Client: b.Client, BackendIDGetter: backendID}
 
 	// Initialize the bus
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: ring.EtcdGetter{Client: client, BackendID: fmt.Sprintf("%x", backendID.GetBackendID())},
+		RingGetter: ring.EtcdGetter{Client: b.Client, BackendID: fmt.Sprintf("%x", backendID.GetBackendID())},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", bus.Name(), err)
@@ -154,7 +156,7 @@ func Initialize(config *Config) (*Backend, error) {
 	event, err := eventd.New(eventd.Config{
 		Store:          store,
 		Bus:            bus,
-		MonitorFactory: monitor.EtcdFactory(client),
+		MonitorFactory: monitor.EtcdFactory(b.Client, "eventd"),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", event.Name(), err)
@@ -190,7 +192,7 @@ func Initialize(config *Config) (*Backend, error) {
 		DeregistrationHandler: config.DeregistrationHandler,
 		Bus:            bus,
 		Store:          store,
-		MonitorFactory: monitor.EtcdFactory(client),
+		MonitorFactory: monitor.EtcdFactory(b.Client, "keepalived"),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
@@ -206,13 +208,13 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize apid
 	api, err := apid.New(apid.Config{
-		Host:                config.APIHost,
-		Port:                config.APIPort,
+		ListenAddress:       config.APIListenAddress,
+		URL:                 config.APIURL,
 		Bus:                 bus,
 		Store:               store,
 		QueueGetter:         queueGetter,
 		TLS:                 config.TLS,
-		Cluster:             clientv3.NewCluster(client),
+		Cluster:             clientv3.NewCluster(b.Client),
 		EtcdClientTLSConfig: etcdClientTLSConfig,
 	})
 	if err != nil {
@@ -222,11 +224,10 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize dashboardd
 	dashboard, err := dashboardd.New(dashboardd.Config{
-		APIHost: config.APIHost,
-		APIPort: config.APIPort,
-		Host:    config.DashboardHost,
-		Port:    config.DashboardPort,
-		TLS:     config.TLS,
+		APIURL: config.APIURL,
+		Host:   config.DashboardHost,
+		Port:   config.DashboardPort,
+		TLS:    config.TLS,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", dashboard.Name(), err)

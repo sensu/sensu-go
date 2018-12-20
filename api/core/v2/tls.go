@@ -52,7 +52,10 @@ func (t *TLSOptions) ToTLSConfig() (*tls.Config, error) {
 		}
 
 		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCert)
+		if !caCertPool.AppendCertsFromPEM(caCert) {
+			return nil, fmt.Errorf("No certificates could be parsed out of %s",
+				t.TrustedCAFile)
+		}
 		tlsConfig.RootCAs = caCertPool
 	}
 

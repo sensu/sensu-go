@@ -7,10 +7,10 @@ import (
 	"sync"
 	"time"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -138,7 +138,7 @@ func (e *Eventd) HandleError(err error) {
 }
 
 func (e *Eventd) handleMessage(msg interface{}) error {
-	event, ok := msg.(*types.Event)
+	event, ok := msg.(*corev2.Event)
 	if !ok {
 		return errors.New("received non-Event on event channel")
 	}
@@ -154,7 +154,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		return e.bus.Publish(messaging.TopicEvent, event)
 	}
 
-	ctx := context.WithValue(context.Background(), types.NamespaceKey, event.Entity.Namespace)
+	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 
 	prevEvent, err := e.store.GetEventByEntityCheck(
 		ctx, event.Entity.Name, event.Check.Name,
@@ -202,7 +202,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		// Typically we want the entity name to be the thing we monitor, but if
 		// it's a round robin check and there is no proxy entity, then just use
 		// the check name instead.
-		if event.Check.RoundRobin && event.Entity.EntityClass != types.EntityProxyClass {
+		if event.Check.RoundRobin && event.Entity.EntityClass != corev2.EntityProxyClass {
 			monitorKey = event.Check.Name
 		} else {
 			monitorKey = event.Entity.Name
@@ -221,7 +221,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	return e.bus.Publish(messaging.TopicEvent, event)
 }
 
-func updateOccurrences(event *types.Event) {
+func updateOccurrences(event *corev2.Event) {
 	if !event.HasCheck() {
 		return
 	}
@@ -242,8 +242,8 @@ func updateOccurrences(event *types.Event) {
 }
 
 // HandleUpdate updates the event in the store and publishes it to TopicEvent.
-func (e *Eventd) HandleUpdate(event *types.Event) error {
-	ctx := context.WithValue(context.Background(), types.NamespaceKey, event.Entity.Namespace)
+func (e *Eventd) HandleUpdate(event *corev2.Event) error {
+	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 
 	err := e.store.UpdateEvent(ctx, event)
 	if err != nil {
@@ -255,9 +255,9 @@ func (e *Eventd) HandleUpdate(event *types.Event) error {
 
 // HandleFailure creates a check event with a warn status and publishes it to
 // TopicEvent.
-func (e *Eventd) HandleFailure(event *types.Event) error {
+func (e *Eventd) HandleFailure(event *corev2.Event) error {
 	entity := event.Entity
-	ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
+	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, entity.Namespace)
 
 	failedCheckEvent, err := e.createFailedCheckEvent(ctx, event)
 	if err != nil {
@@ -271,25 +271,32 @@ func (e *Eventd) HandleFailure(event *types.Event) error {
 	return e.bus.Publish(messaging.TopicEvent, failedCheckEvent)
 }
 
-func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *types.Event) (*types.Event, error) {
+func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *corev2.Event) (*corev2.Event, error) {
 	if !event.HasCheck() {
 		return nil, errors.New("event does not contain a check")
 	}
 
-	lastCheckResult, err := e.store.GetEventByEntityCheck(
+	event, err := e.store.GetEventByEntityCheck(
 		ctx, event.Entity.Name, event.Check.Name,
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	output := fmt.Sprintf("Last check execution was %d seconds ago", time.Now().Unix()-lastCheckResult.Check.Executed)
+	check := corev2.NewCheck(corev2.NewCheckConfigFromFace(event.Check))
+	output := fmt.Sprintf("Last check execution was %d seconds ago", time.Now().Unix()-event.Check.Executed)
 
-	lastCheckResult.Check.Output = output
-	lastCheckResult.Check.Status = 1
-	lastCheckResult.Timestamp = time.Now().Unix()
+	check.Output = output
+	check.Status = 1
+	check.State = corev2.EventFailingState
+	check.Executed = time.Now().Unix()
 
-	return lastCheckResult, nil
+	check.MergeWith(event.Check)
+
+	event.Timestamp = time.Now().Unix()
+	event.Check = check
+
+	return event, nil
 }
 
 // Stop eventd.

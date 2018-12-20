@@ -124,7 +124,7 @@ func EventsBySeverity(es []*Event) sort.Interface {
 	return &eventSorter{es, createCmpEvents(
 		cmpBySeverity,
 		cmpByLastOk,
-		cmpByEntityName,
+		cmpByUniqueComponents,
 	)}
 }
 
@@ -150,17 +150,23 @@ func EventsByLastOk(es []*Event) sort.Interface {
 	return &eventSorter{es, createCmpEvents(
 		cmpByIncident,
 		cmpByLastOk,
-		cmpByEntityName,
+		cmpByUniqueComponents,
 	)}
 }
 
-func cmpByEntityName(a, b *Event) int {
+func cmpByUniqueComponents(a, b *Event) int {
 	ai, bi := "", ""
 	if a.Entity != nil {
-		ai = a.Entity.Name
+		ai += a.Entity.Name
+	}
+	if a.Check != nil {
+		ai += a.Check.Name
 	}
 	if b.Entity != nil {
 		bi = b.Entity.Name
+	}
+	if b.Check != nil {
+		bi += b.Check.Name
 	}
 
 	if ai == bi {

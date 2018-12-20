@@ -7,12 +7,48 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
-### [5.0.0] - 2018-10-30
+## [5.1.0] - 2018-12-18
+
+### Added
+- Support for the trusted-ca-file and insecure-skip-tls-verify flags in
+  sensu-agent. These flags have the same meaning and use as their sensu-backend
+  counterparts.
+
+### Changed
+- Default location for sensu-backend data has changed from /var/lib/sensu to
+  /var/lib/sensu/sensu-backend. See release notes for more information.
+
+### Fixed
+- Keepalive and check TTL failure events now fire continuously until resolved.
+- Listing an empty set of assets now correctly returns [] instead of null.
+- Fixed API endpoint used by the CLI to create hooks via the 'sensuctl create'
+  command. It's now possible to create objects of type 'Hook' with this command
+  again.
+- Firefox status icons not fully rendering
+
+## [5.0.1] - 2018-12-12
+
+### Changed
+- Added --etcd-advertise-client-urls options to docker-compose.yaml sensu-backend start command
+
+### Fixed
+- Prevent a panic when using an external etcd cluster.
+- Silences List in web ui sorted by ascending order; defaults to descending
+- Reduces shuffling of items as events list updates
+- Fixed error in UI where status value could not be coerced
+- Copy local environment variables into execution context when running checks
+- Ensure environment variables are joined with a semicolon on Windows
+- Command arguments are no longer needlessly escaped on Windows
+- Backend environments are now included in handler & mutator execution requests.
+
+## [5.0.0] - 2018-11-30
 
 ### Added
 - Add the `etcd-advertise-client-urls` config attribute to sensu-backend
 - Support for multiple API versions added to sensuctl create
 - Support for metadata added to wrapped resources (yaml, wrapped-json)
+- Added the backend configuration attributes `api-listen-address` & `api-url`.
+- Adds feedback when rerunning check[s] in the web app
 
 ### Removed
 - Check subdue functionality has been disabled. Users that have checks with
@@ -34,6 +70,8 @@ uses the same facility as check subdue for handling time windows.
 - Metadata from wrappers and resources is now merged, with a preference given to
 the values coming from the wrapper. Labels and annotations are deep-merged.
 - Round-robin scheduling has been temporarily disabled.
+- The dashboard now uses the `api-url` configuration attribute to connect to the
+API.
 
 ### Fixed
 - Fixed several resource leaks in the check scheduler.
@@ -52,6 +90,15 @@ period of disconnection from the backend.
 - A panic in keepalive/check ttl monitors causing a panic.
 - Monitors are now properly namespaced in etcd.
 - Updating a users groups will no longer corrupt their password
+- Prevent empty error messages in sensuctl.
+- Fixed a bug where keepalive failures could be influenced by check TTL
+successes, and vice versa.
+- Fixed a bug where check TTL events were not formed correctly.
+- Fixed a web-ui bug causing the app to crash on window resize in FireFox
+
+### Breaking Changes
+- The backend configuration attributes `api-host` & `api-port` have been
+replaced with `api-listen-address`.
 
 ## [2.0.0-beta.8-1] - 2018-11-15
 

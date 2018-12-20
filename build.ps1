@@ -49,9 +49,6 @@ function cmd_name_map([string]$cmd)
 {
     switch ($cmd)
     {
-        "backend" {
-            return "sensu-backend"
-        }
         "agent" {
             return "sensu-agent"
         }
@@ -112,7 +109,7 @@ function build_commands
 {
     echo "Running build..."
 
-    ForEach ($bin in "agent","backend","cli") {
+    ForEach ($bin in "agent","cli") {
         build_command $bin
     }
 }
@@ -120,12 +117,6 @@ function build_commands
 function build_agent
 {
     build_command "agent"
-}
-
-function build_backend
-{
-    build_dashboard
-    build_command "backend"
 }
 
 function build_cli
@@ -178,7 +169,7 @@ function unit_test_commands
 {
     echo "Running unit tests..."
 
-    go test -timeout=60s $(go list ./... | Select-String -pattern "scripts", "testing", "vendor" -notMatch)
+    go test -timeout=60s $(go list ./... | Select-String -pattern "scripts", "testing", "vendor", "backend" -notMatch)
     If ($LASTEXITCODE -ne 0) {
         echo "Unit testing failed..."
         exit 1
@@ -189,20 +180,9 @@ function integration_test_commands
 {
     echo "Running integration tests..."
 
-    go test -timeout=200s -tags=integration $(go list ./... | Select-String -pattern "scripts", "testing", "vendor" -notMatch)
+    go test -timeout=200s -tags=integration github.com/sensu/sensu-go/agent/...
     If ($LASTEXITCODE -ne 0) {
         echo "Integration testing failed..."
-        exit 1
-    }
-}
-
-function e2e_commands
-{
-    echo "Running e2e tests..."
-
-    go test $REPO_PATH/testing/e2e
-    If ($LASTEXITCODE -ne 0) {
-        echo "e2e testing failed..."
         exit 1
     }
 }
@@ -268,18 +248,11 @@ If ($cmd -eq "build") {
 ElseIf ($cmd -eq "build_agent") {
     build_command "agent"
 }
-ElseIf ($cmd -eq "build_backend") {
-    build_command "backend"
-}
 ElseIf ($cmd -eq "build_cli") {
     build_command "cli"
 }
 ElseIf ($cmd -eq "docker") {
     # no-op for now
-}
-ElseIf ($cmd -eq "e2e") {
-    build_commands
-    e2e_commands
 }
 ElseIf ($cmd -eq "lint") {
     linter_commands
@@ -298,18 +271,13 @@ ElseIf ($cmd -eq "wait_for_appveyor_jobs") {
         $env:GOARCH = "amd64"
         build_command "agent"
 
-        $env:GOARCH = "386"
-        build_command "agent"
-
         wait_for_appveyor_jobs
 
         build_package "agent" "x64"
-        build_package "agent" "x86"
     }
 }
 Else {
     unit_test_commands
     integration_test_commands
     build_commands
-    e2e_commands
 }
