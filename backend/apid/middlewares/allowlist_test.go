@@ -59,7 +59,7 @@ func TestMissingTokenFromAllowList(t *testing.T) {
 	// Perform the request with the middleware
 	res, err := http.DefaultClient.Do(req)
 	assert.NoError(t, err)
-	assert.Equal(t, res.StatusCode, http.StatusUnauthorized)
+	assert.Equal(t, http.StatusUnauthorized, res.StatusCode)
 }
 
 func TestAllowListNoTokenIntoContext(t *testing.T) {
