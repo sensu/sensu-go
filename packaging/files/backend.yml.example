@@ -29,7 +29,6 @@ state-dir: "/var/lib/sensu/sensu-backend"
 ##
 #etcd-listen-client-urls: ""
 #etcd-listen-peer-urls: ""
-#etcd-advertise-client-urls: "http://localhost:2379"
 #etcd-initial-cluster: ""
 #etcd-initial-advertise-peer-urls: ""
 #etcd-initial-cluster-state: ""
