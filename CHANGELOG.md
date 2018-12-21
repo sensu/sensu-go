@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Fixed a bug where `sensuctl edit` was not removing the temp file it created.
+
 ## [5.1.0] - 2018-12-18
 
 ### Added

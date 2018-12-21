@@ -63,6 +63,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			defer os.Remove(tf.Name())
 			if _, err := tf.Write(originalBytes); err != nil {
 				return err
 			}
