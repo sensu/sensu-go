@@ -24,7 +24,6 @@ type Executor interface {
 	publishProxyCheckRequests(entities []*types.Entity, check *types.CheckConfig) error
 	execute(check *types.CheckConfig) error
 	buildRequest(check *types.CheckConfig) (*types.CheckRequest, error)
-	getStore() store.Store
 }
 
 // CheckExecutor executes scheduled checks in the check scheduler
@@ -94,11 +93,7 @@ func (c *CheckExecutor) execute(check *types.CheckConfig) error {
 }
 
 func (c *CheckExecutor) buildRequest(check *types.CheckConfig) (*types.CheckRequest, error) {
-	return buildRequest(c, check)
-}
-
-func (c *CheckExecutor) getStore() store.Store {
-	return c.store
+	return buildRequest(c, check, c.store)
 }
 
 func assetIsRelevant(asset *types.Asset, check *types.CheckConfig) bool {
@@ -224,16 +219,12 @@ func (a *AdhocRequestExecutor) execute(check *types.CheckConfig) error {
 }
 
 func (a *AdhocRequestExecutor) buildRequest(check *types.CheckConfig) (*types.CheckRequest, error) {
-	request, err := buildRequest(a, check)
+	request, err := buildRequest(a, check, a.store)
 	if err != nil {
 		return request, err
 	}
 	request.Issued = time.Now().Unix()
 	return request, nil
-}
-
-func (a *AdhocRequestExecutor) getStore() store.Store {
-	return a.store
 }
 
 func publishProxyCheckRequests(e Executor, entities []*types.Entity, check *types.CheckConfig) error {
@@ -280,7 +271,7 @@ func processCheck(ctx context.Context, executor Executor, check *types.CheckConf
 	return nil
 }
 
-func buildRequest(executor Executor, check *types.CheckConfig) (*types.CheckRequest, error) {
+func buildRequest(executor Executor, check *types.CheckConfig, store store.Store) (*types.CheckRequest, error) {
 	request := &types.CheckRequest{}
 	request.Config = check
 
@@ -290,7 +281,7 @@ func buildRequest(executor Executor, check *types.CheckConfig) (*types.CheckRequ
 	// the check in the first place.
 	if len(check.RuntimeAssets) != 0 {
 		// Explode assets; get assets & filter out those that are irrelevant
-		assets, err := executor.getStore().GetAssets(ctx)
+		assets, err := store.GetAssets(ctx)
 		if err != nil {
 			return nil, err
 		}
@@ -306,7 +297,7 @@ func buildRequest(executor Executor, check *types.CheckConfig) (*types.CheckRequ
 	// the check in the first place.
 	if len(check.CheckHooks) != 0 {
 		// Explode hooks; get hooks & filter out those that are irrelevant
-		hooks, err := executor.getStore().GetHookConfigs(ctx)
+		hooks, err := store.GetHookConfigs(ctx)
 		if err != nil {
 			return nil, err
 		}
