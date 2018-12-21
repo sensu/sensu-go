@@ -93,7 +93,7 @@ func (c *CheckExecutor) execute(check *types.CheckConfig) error {
 }
 
 func (c *CheckExecutor) buildRequest(check *types.CheckConfig) (*types.CheckRequest, error) {
-	return buildRequest(c, check, c.store)
+	return buildRequest(check, c.store)
 }
 
 func assetIsRelevant(asset *types.Asset, check *types.CheckConfig) bool {
@@ -219,12 +219,7 @@ func (a *AdhocRequestExecutor) execute(check *types.CheckConfig) error {
 }
 
 func (a *AdhocRequestExecutor) buildRequest(check *types.CheckConfig) (*types.CheckRequest, error) {
-	request, err := buildRequest(a, check, a.store)
-	if err != nil {
-		return request, err
-	}
-	request.Issued = time.Now().Unix()
-	return request, nil
+	return buildRequest(check, a.store)
 }
 
 func publishProxyCheckRequests(e Executor, entities []*types.Entity, check *types.CheckConfig) error {
@@ -271,7 +266,7 @@ func processCheck(ctx context.Context, executor Executor, check *types.CheckConf
 	return nil
 }
 
-func buildRequest(executor Executor, check *types.CheckConfig, store store.Store) (*types.CheckRequest, error) {
+func buildRequest(check *types.CheckConfig, store store.Store) (*types.CheckRequest, error) {
 	request := &types.CheckRequest{}
 	request.Config = check
 
