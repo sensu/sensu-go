@@ -35,7 +35,7 @@ func TestListCommandRunEClosureWithArgs(t *testing.T) {
 
 	out, err := test.RunCmd(cmd, []string{"bob"})
 
-	assert.Contains(out, "Created")
+	assert.Contains(out, "OK")
 	assert.NoError(err)
 }
 
@@ -68,7 +68,7 @@ func TestListCommandRunEClosureWithGroups(t *testing.T) {
 
 	out, err := test.RunCmd(cmd, []string{"bob"})
 
-	assert.Contains(out, "Created")
+	assert.Contains(out, "OK")
 	assert.NoError(err)
 }
 

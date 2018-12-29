@@ -47,6 +47,9 @@ authentication provider.
 - Improved logging for errors in proxy check requests.
 - Updated Go version from 1.10 to 1.11.4.
 - Changed keepalive event to include check.outputé
+### Changed
+- Confirmation messages for sensuctl commands, returning OK instead of Created,
+  Deleted, Updated.
 
 ### Fixed
 - Fixed a bug where `sensuctl edit` was not removing the temp file it created.

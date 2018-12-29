@@ -33,7 +33,7 @@ func MemberUpdateCommand(cli *cli.SensuCli) *cobra.Command {
 				return fmt.Errorf("error updating cluster member: %s", err)
 			}
 
-			fmt.Fprintf(cmd.OutOrStdout(), "Updated member with ID %x in cluster\n", id)
+			fmt.Fprintf(cmd.OutOrStdout(), "OK")
 			return nil
 		},
 	}

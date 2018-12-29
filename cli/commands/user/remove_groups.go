@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// RemoveGroupsCommand adds a command that allows admins to remove all the groups for a user.
+// RemoveAllGroupsCommand adds a command that allows admins to remove all the groups for a user.
 func RemoveAllGroupsCommand(cli *cli.SensuCli) *cobra.Command {
 	return &cobra.Command{
 		Use:          "remove-groups USERNAME",
@@ -26,7 +26,7 @@ func RemoveAllGroupsCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			_, err := fmt.Fprintln(cmd.OutOrStdout(), "Removed")
+			_, err := fmt.Fprintln(cmd.OutOrStdout(), "OK")
 			return err
 		},
 	}

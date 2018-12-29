@@ -95,7 +95,7 @@ func SetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Updated")
+			fmt.Fprintln(cmd.OutOrStdout(), "OK")
 			return nil
 		},
 	}

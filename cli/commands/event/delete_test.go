@@ -31,7 +31,7 @@ func TestDeleteCommandRunEClosure(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{"foo", "check_foo"})
 
 	assert.NotEmpty(t, out)
-	assert.Contains(t, out, "Deleted")
+	assert.Contains(t, out, "OK")
 	assert.Nil(t, err)
 }
 

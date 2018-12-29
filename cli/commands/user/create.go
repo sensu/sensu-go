@@ -66,7 +66,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			_, err = fmt.Fprintln(cmd.OutOrStdout(), "Created")
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), "OK")
 			return err
 		},
 	}

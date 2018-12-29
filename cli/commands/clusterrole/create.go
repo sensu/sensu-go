@@ -65,7 +65,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			if err := cli.Client.CreateClusterRole(clusterRole); err != nil {
 				return err
 			}
-			_, err = fmt.Fprintln(cmd.OutOrStdout(), "Created")
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), "OK")
 			return err
 		},
 	}

@@ -105,6 +105,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 				)
 			}
 
+			fmt.Fprintln(cmd.OutOrStdout(), "OK")
 			return nil
 		},
 		Annotations: map[string]string{

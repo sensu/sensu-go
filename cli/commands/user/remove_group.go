@@ -27,7 +27,7 @@ func RemoveGroupCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			_, err := fmt.Fprintln(cmd.OutOrStdout(), "Removed")
+			_, err := fmt.Fprintln(cmd.OutOrStdout(), "OK")
 			return err
 		},
 	}

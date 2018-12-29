@@ -27,7 +27,7 @@ func AddGroupCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			_, err := fmt.Fprintln(cmd.OutOrStdout(), "Added")
+			_, err := fmt.Fprintln(cmd.OutOrStdout(), "OK")
 			return err
 		},
 	}

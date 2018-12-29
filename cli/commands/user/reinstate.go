@@ -27,7 +27,7 @@ func ReinstateCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Reinstated")
+			fmt.Fprintln(cmd.OutOrStdout(), "OK")
 			return nil
 		},
 	}
