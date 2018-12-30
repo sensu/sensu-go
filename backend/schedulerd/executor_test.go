@@ -81,7 +81,7 @@ func TestPublishProxyCheckRequest(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newScheduler(t, ctx)
+	scheduler := newScheduler(t, ctx, "check")
 
 	entity := types.FixtureEntity("entity1")
 	check := scheduler.check
@@ -129,7 +129,7 @@ func TestPublishProxyCheckRequestsInterval(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newScheduler(t, ctx)
+	scheduler := newScheduler(t, ctx, "check")
 
 	entity1 := types.FixtureEntity("entity1")
 	entity2 := types.FixtureEntity("entity2")
@@ -184,7 +184,7 @@ func TestPublishProxyCheckRequestsCron(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newScheduler(t, ctx)
+	scheduler := newScheduler(t, ctx, "check")
 
 	entity1 := types.FixtureEntity("entity1")
 	entity2 := types.FixtureEntity("entity2")
@@ -238,7 +238,7 @@ func TestCheckBuildRequestInterval(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newScheduler(t, ctx)
+	scheduler := newScheduler(t, ctx, "check")
 
 	check := scheduler.check
 	request, err := scheduler.exec.buildRequest(check)
@@ -273,7 +273,43 @@ func TestCheckBuildRequestCron(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newScheduler(t, ctx)
+	scheduler := newScheduler(t, ctx, "check")
+
+	check := scheduler.check
+	check.Cron = "* * * * *"
+
+	request, err := scheduler.exec.buildRequest(check)
+	require.NoError(t, err)
+	assert.NotNil(request)
+	assert.NotNil(request.Config)
+	assert.NotNil(request.Assets)
+	assert.NotEmpty(request.Assets)
+	assert.Len(request.Assets, 1)
+	assert.NotNil(request.Hooks)
+	assert.NotEmpty(request.Hooks)
+	assert.Len(request.Hooks, 1)
+
+	check.RuntimeAssets = []string{}
+	check.CheckHooks = []types.HookList{}
+	request, err = scheduler.exec.buildRequest(check)
+	require.NoError(t, err)
+	assert.NotNil(request)
+	assert.NotNil(request.Config)
+	assert.Empty(request.Assets)
+	assert.Empty(request.Hooks)
+
+	assert.NoError(scheduler.msgBus.Stop())
+}
+
+func TestCheckBuildRequestAdhoc_GH2201(t *testing.T) {
+	t.Parallel()
+
+	assert := assert.New(t)
+
+	// Start a scheduler
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	scheduler := newScheduler(t, ctx, "adhoc")
 
 	check := scheduler.check
 	check.Cron = "* * * * *"

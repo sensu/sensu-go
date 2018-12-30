@@ -93,46 +93,7 @@ func (c *CheckExecutor) execute(check *types.CheckConfig) error {
 }
 
 func (c *CheckExecutor) buildRequest(check *types.CheckConfig) (*types.CheckRequest, error) {
-	request := &types.CheckRequest{}
-	request.Config = check
-
-	ctx := types.SetContextFromResource(context.Background(), check)
-
-	// Guard against iterating over assets if there are no assets associated with
-	// the check in the first place.
-	if len(check.RuntimeAssets) != 0 {
-		// Explode assets; get assets & filter out those that are irrelevant
-		assets, err := c.store.GetAssets(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, asset := range assets {
-			if assetIsRelevant(asset, check) {
-				request.Assets = append(request.Assets, *asset)
-			}
-		}
-	}
-
-	// Guard against iterating over hooks if there are no hooks associated with
-	// the check in the first place.
-	if len(check.CheckHooks) != 0 {
-		// Explode hooks; get hooks & filter out those that are irrelevant
-		hooks, err := c.store.GetHookConfigs(ctx)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, hook := range hooks {
-			if hookIsRelevant(hook, check) {
-				request.Hooks = append(request.Hooks, *hook)
-			}
-		}
-	}
-
-	request.Issued = time.Now().Unix()
-
-	return request, nil
+	return buildRequest(check, c.store)
 }
 
 func assetIsRelevant(asset *types.Asset, check *types.CheckConfig) bool {
@@ -236,9 +197,12 @@ func (a *AdhocRequestExecutor) publishProxyCheckRequests(entities []*types.Entit
 }
 
 func (a *AdhocRequestExecutor) execute(check *types.CheckConfig) error {
-	request, _ := a.buildRequest(check)
-	request.Config = check
 	var err error
+	request, err := a.buildRequest(check)
+	if err != nil {
+		return err
+	}
+
 	for _, sub := range check.Subscriptions {
 		topic := messaging.SubscriptionTopic(check.Namespace, sub)
 		logger.WithFields(logrus.Fields{
@@ -255,7 +219,7 @@ func (a *AdhocRequestExecutor) execute(check *types.CheckConfig) error {
 }
 
 func (a *AdhocRequestExecutor) buildRequest(check *types.CheckConfig) (*types.CheckRequest, error) {
-	return &types.CheckRequest{Issued: time.Now().Unix()}, nil
+	return buildRequest(check, a.store)
 }
 
 func publishProxyCheckRequests(e Executor, entities []*types.Entity, check *types.CheckConfig) error {
@@ -300,4 +264,47 @@ func processCheck(ctx context.Context, executor Executor, check *types.CheckConf
 		return executor.execute(check)
 	}
 	return nil
+}
+
+func buildRequest(check *types.CheckConfig, store store.Store) (*types.CheckRequest, error) {
+	request := &types.CheckRequest{}
+	request.Config = check
+
+	ctx := types.SetContextFromResource(context.Background(), check)
+
+	// Guard against iterating over assets if there are no assets associated with
+	// the check in the first place.
+	if len(check.RuntimeAssets) != 0 {
+		// Explode assets; get assets & filter out those that are irrelevant
+		assets, err := store.GetAssets(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, asset := range assets {
+			if assetIsRelevant(asset, check) {
+				request.Assets = append(request.Assets, *asset)
+			}
+		}
+	}
+
+	// Guard against iterating over hooks if there are no hooks associated with
+	// the check in the first place.
+	if len(check.CheckHooks) != 0 {
+		// Explode hooks; get hooks & filter out those that are irrelevant
+		hooks, err := store.GetHookConfigs(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, hook := range hooks {
+			if hookIsRelevant(hook, check) {
+				request.Hooks = append(request.Hooks, *hook)
+			}
+		}
+	}
+
+	request.Issued = time.Now().Unix()
+
+	return request, nil
 }
