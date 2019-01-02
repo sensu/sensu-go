@@ -28,6 +28,26 @@ const (
 	Dead State = 1
 )
 
+// Interface specifies the interface for liveness
+type Interface interface {
+	// Alive is an assertion that an entity is alive.
+	Alive(ctx context.Context, key string, ttl int64) error
+
+	// Dead is an assertion that an entity is dead. Dead is useful for
+	// registering entities that are known to be dead, but not yet tracked.
+	Dead(ctx context.Context, key string, ttl int64) error
+}
+
+// Factory is a function that can deliver an Interface
+type Factory func(name string, dead, alive EventFunc, logger *logrus.Logger) Interface
+
+// EtcdFactory returns a Factory that uses an etcd client
+func EtcdFactory(client *clientv3.Client) Factory {
+	return Factory(func(name string, dead, alive EventFunc, logger *logrus.Logger) Interface {
+		return NewSwitchSet(client, name, dead, alive, logger)
+	})
+}
+
 // SwitchSet is a set of switches that get flipped on life and death events
 // for entities. On life and death events, callback functions that are
 // reigstered on NewSwitchSet are started as new goroutines.
