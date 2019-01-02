@@ -50,8 +50,10 @@ type SwitchSet struct {
 }
 
 // EventFunc is a function that can be used by a SwitchSet to handle events.
-// The previous state of the switch will be passed to the function.
-type EventFunc func(key string, prev State)
+// The previous state of the switch will be passed to the function, as well as
+// the ModRevision of the etcd key. The revision can be used to synchronize
+// clients, if need be.
+type EventFunc func(key string, prev State, revision int64)
 
 // NewSwitchSet creates a new SwitchSet. It will use an etcd prefix of
 // path.Join(SwitchPrefix, name). The dead and live callbacks will be called
@@ -178,7 +180,7 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 	case mvccpb.DELETE:
 		// The entity has expired. Replace it with a new entity
 		// to keep the events firing
-		go t.notifyDead(strings.TrimPrefix(key, t.prefix+"/"), prevState)
+		go t.notifyDead(strings.TrimPrefix(key, t.prefix+"/"), prevState, event.Kv.ModRevision)
 		t.logger.Infof("key expired: %s, ttl: %d", key, ttl)
 
 		// If the key doesn't exist, the version will be 0. This is done to
@@ -222,7 +224,7 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 		if ttl > 0 {
 			// A positive TTL indicates the entity is alive
 			t.logger.Infof("%s alive: %d", key, ttl)
-			go t.notifyAlive(strings.TrimPrefix(key, t.prefix+"/"), prevState)
+			go t.notifyAlive(strings.TrimPrefix(key, t.prefix+"/"), prevState, event.Kv.ModRevision)
 		}
 	}
 }

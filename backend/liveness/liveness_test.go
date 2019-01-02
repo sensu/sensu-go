@@ -34,7 +34,7 @@ func TestSwitchSet(t *testing.T) {
 	results := make(map[string][]int)
 
 	// This callback gets executed when the entity dies
-	expired := func(key string, prev State) {
+	expired := func(key string, prev State, revision int64) {
 		mu.Lock()
 		defer mu.Unlock()
 		results[key] = append(results[key], 1)
@@ -42,7 +42,7 @@ func TestSwitchSet(t *testing.T) {
 	}
 
 	// This callback gets executed when the entity asserts its liveness
-	alive := func(key string, prev State) {
+	alive := func(key string, prev State, revision int64) {
 		mu.Lock()
 		defer mu.Unlock()
 		results[key] = append(results[key], 0)
@@ -96,7 +96,7 @@ func TestDead(t *testing.T) {
 	results := make(map[string][]int)
 
 	// This callback gets executed when the entity dies
-	expired := func(key string, prev State) {
+	expired := func(key string, prev State, revision int64) {
 		mu.Lock()
 		defer mu.Unlock()
 		results[key] = append(results[key], 1)
@@ -104,7 +104,7 @@ func TestDead(t *testing.T) {
 	}
 
 	// This callback gets executed when the entity asserts its liveness
-	alive := func(key string, prev State) {
+	alive := func(key string, prev State, revision int64) {
 		mu.Lock()
 		defer mu.Unlock()
 		results[key] = append(results[key], 0)
