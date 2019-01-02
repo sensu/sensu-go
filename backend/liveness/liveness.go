@@ -39,11 +39,11 @@ type Interface interface {
 }
 
 // Factory is a function that can deliver an Interface
-type Factory func(name string, dead, alive EventFunc, logger *logrus.Logger) Interface
+type Factory func(name string, dead, alive EventFunc, logger logrus.FieldLogger) Interface
 
 // EtcdFactory returns a Factory that uses an etcd client
 func EtcdFactory(client *clientv3.Client) Factory {
-	return Factory(func(name string, dead, alive EventFunc, logger *logrus.Logger) Interface {
+	return Factory(func(name string, dead, alive EventFunc, logger logrus.FieldLogger) Interface {
 		return NewSwitchSet(client, name, dead, alive, logger)
 	})
 }
@@ -66,7 +66,7 @@ type SwitchSet struct {
 	prefix      string
 	notifyDead  EventFunc
 	notifyAlive EventFunc
-	logger      *logrus.Logger
+	logger      logrus.FieldLogger
 }
 
 // EventFunc is a function that can be used by a SwitchSet to handle events.
@@ -78,7 +78,7 @@ type EventFunc func(key string, prev State, revision int64)
 // NewSwitchSet creates a new SwitchSet. It will use an etcd prefix of
 // path.Join(SwitchPrefix, name). The dead and live callbacks will be called
 // on all life and death events.
-func NewSwitchSet(client *clientv3.Client, name string, dead, alive EventFunc, logger *logrus.Logger) *SwitchSet {
+func NewSwitchSet(client *clientv3.Client, name string, dead, alive EventFunc, logger logrus.FieldLogger) *SwitchSet {
 	return &SwitchSet{
 		client:      client,
 		prefix:      path.Join(SwitchPrefix, name),
