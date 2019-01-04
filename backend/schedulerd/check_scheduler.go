@@ -2,6 +2,7 @@ package schedulerd
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
@@ -18,29 +19,25 @@ const (
 
 // A CheckScheduler schedules checks to be executed on a timer
 type CheckScheduler struct {
-	checkName      string
-	checkNamespace string
-	checkInterval  uint32
-	checkCron      string
-	lastCronState  string
-	store          store.Store
-	bus            messaging.MessageBus
-	logger         *logrus.Entry
-	ctx            context.Context
-	cancel         context.CancelFunc
-	interrupt      chan struct{}
+	lastIntervalState uint32
+	lastCronState     string
+	check             *types.CheckConfig
+	store             store.Store
+	bus               messaging.MessageBus
+	logger            *logrus.Entry
+	ctx               context.Context
+	cancel            context.CancelFunc
+	interrupt         chan struct{}
 }
 
 func NewCheckScheduler(store store.Store, bus messaging.MessageBus, check *types.CheckConfig, ctx context.Context) *CheckScheduler {
 	sched := &CheckScheduler{
-		store:          store,
-		bus:            bus,
-		checkName:      check.Name,
-		checkNamespace: check.Namespace,
-		checkInterval:  check.Interval,
-		checkCron:      check.Cron,
-		lastCronState:  check.Cron,
-		interrupt:      make(chan struct{}),
+		store:             store,
+		bus:               bus,
+		check:             check,
+		lastIntervalState: check.Interval,
+		lastCronState:     check.Cron,
+		interrupt:         make(chan struct{}),
 		logger: logger.WithFields(logrus.Fields{
 			"name":      check.Name,
 			"namespace": check.Namespace,
@@ -51,61 +48,24 @@ func NewCheckScheduler(store store.Store, bus messaging.MessageBus, check *types
 	return sched
 }
 
-func (s *CheckScheduler) toggleCron(check *types.CheckConfig) (stateChanged bool) {
-	lastCron := s.lastCronState
-	cron := check.Cron
-	if (lastCron != "" && cron == "") || (lastCron == "" && cron != "") {
-		// Update the CheckScheduler with current check state and last cron state
-		s.lastCronState = cron
-		s.checkCron = cron
-		s.checkInterval = check.Interval
-		return true
-	}
-	return false
-}
-
-func (s *CheckScheduler) schedule(timer CheckTimer, executor *CheckExecutor) (restart bool) {
-	check, err := s.store.GetCheckConfigByName(s.ctx, s.checkName)
-	if err != nil {
+func (s *CheckScheduler) schedule(timer CheckTimer, executor *CheckExecutor) {
+	if err := s.refreshCheckFromStore(); err != nil {
 		s.logger.WithError(err).Error("unable to retrieve check in check scheduler")
-		return false
+		return
 	}
 
-	// The check has been deleted
-	if check == nil {
-		s.logger.Info("check is no longer in state")
-		return false
-	}
+	defer s.resetTimer(timer)
 
-	// Indicates a state change from cron to interval or interval to cron
-	if s.toggleCron(check) {
-		s.logger.Info("check schedule type has changed")
-		return true
-	}
-
-	// Update the CheckScheduler with the last cron state
-	s.lastCronState = check.Cron
-
-	if check.IsSubdued() {
+	if s.check.IsSubdued() {
 		s.logger.Debug("check is subdued")
-		// Reset the timer so the check is scheduled again for the next
-		// interval, since it might no longer be subdued
-		timer.SetDuration(check.Cron, uint(check.Interval))
-		timer.Next()
-		return false
+		return
 	}
 
 	s.logger.Debug("check is not subdued")
 
-	// Reset timer
-	timer.SetDuration(check.Cron, uint(check.Interval))
-	timer.Next()
-
-	if err := executor.processCheck(s.ctx, check); err != nil {
+	if err := executor.processCheck(s.ctx, s.check); err != nil {
 		logger.Error(err)
 	}
-
-	return false
 }
 
 // Start starts the CheckScheduler. It always returns nil error.
@@ -116,7 +76,7 @@ func (s *CheckScheduler) Start() error {
 
 func (s *CheckScheduler) mode() schedulerMode {
 	// cron scheduling mode
-	if s.checkCron != "" {
+	if s.check.Cron != "" {
 		return cronMode
 	}
 	return intervalMode
@@ -128,14 +88,14 @@ func (s *CheckScheduler) start() {
 	switch s.mode() {
 	case cronMode:
 		s.logger.Info("starting new cron scheduler")
-		timer = NewCronTimer(s.checkName, s.checkCron)
+		timer = NewCronTimer(s.check.Name, s.check.Cron)
 	default:
 		s.logger.Info("starting new interval scheduler")
-		timer = NewIntervalTimer(s.checkName, uint(s.checkInterval))
+		timer = NewIntervalTimer(s.check.Name, uint(s.check.Interval))
 	}
 
 	executor := NewCheckExecutor(
-		s.bus, newRoundRobinScheduler(s.ctx, s.bus), s.checkNamespace, s.store)
+		s.bus, newRoundRobinScheduler(s.ctx, s.bus), s.check.Namespace, s.store)
 
 	timer.Start()
 
@@ -145,18 +105,25 @@ func (s *CheckScheduler) start() {
 			timer.Stop()
 			return
 		case <-s.interrupt:
+			if err := s.refreshCheckFromStore(); err != nil {
+				s.logger.WithError(err).Error("unable to retrieve check in check scheduler")
+				return
+			}
+			// if a schedule change is detected, restart the timer
+			if s.toggleSchedule() {
+				timer.Stop()
+				defer s.Start()
+				return
+			}
+			continue
 		case <-timer.C():
 		}
-		restart := s.schedule(timer, executor)
-		if restart {
-			timer.Stop()
-			defer s.Start()
-			return
-		}
+		s.schedule(timer, executor)
 	}
 }
 
-// Interrupt causes the scheduler to immediately fire and ignore the timer.
+// Interrupt causes the scheduler to immediately fetch the check to determine if a timer reset is required.
+// It is called when the check watcher detects an update to the check.
 func (s *CheckScheduler) Interrupt() {
 	s.interrupt <- struct{}{}
 }
@@ -167,4 +134,40 @@ func (s *CheckScheduler) Stop() error {
 	s.cancel()
 
 	return nil
+}
+
+func (s *CheckScheduler) refreshCheckFromStore() error {
+	check, err := s.store.GetCheckConfigByName(s.ctx, s.check.Name)
+	if err != nil {
+		return err
+	}
+	if check == nil {
+		return fmt.Errorf("check %s is no longer in state", s.check.Name)
+	}
+	s.check = check
+	return nil
+}
+
+// Indicates a state change in the schedule, and if a timer needs to be reset.
+func (s *CheckScheduler) toggleSchedule() (stateChanged bool) {
+	defer s.setLastState()
+
+	if (s.lastIntervalState != s.check.Interval) || (s.lastCronState != s.check.Cron) {
+		s.logger.Info("check schedule has changed")
+		return true
+	}
+	s.logger.Info("check schedule has not changed")
+	return false
+}
+
+// Update the CheckScheduler with the last schedule states
+func (s *CheckScheduler) setLastState() {
+	s.lastCronState = s.check.Cron
+	s.lastIntervalState = s.check.Interval
+}
+
+// Reset timer
+func (s *CheckScheduler) resetTimer(timer CheckTimer) {
+	timer.SetDuration(s.check.Cron, uint(s.check.Interval))
+	timer.Next()
 }

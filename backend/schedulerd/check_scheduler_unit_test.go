@@ -4,32 +4,65 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestToggleCron(t *testing.T) {
-	sched := &CheckScheduler{}
-
-	// In this case, cron variables are not set and there is no side-effect
+func TestToggleSchedule(t *testing.T) {
 	check := types.FixtureCheckConfig("foobar")
-	check.Cron = ""
-	check.Interval = 5
-	assert.False(t, sched.toggleCron(check))
-	assert.Equal(t, uint32(0), sched.checkInterval)
-	assert.Equal(t, sched.checkCron, "")
-	assert.Equal(t, sched.lastCronState, "")
+	sched := &CheckScheduler{
+		check:             check,
+		lastCronState:     check.Cron,
+		lastIntervalState: check.Interval,
+		logger:            logger.WithFields(logrus.Fields{}),
+	}
 
-	// In this case, cron variables are set
-	check.Cron = "* * * * *"
-	check.Interval = 5
-	assert.True(t, sched.toggleCron(check))
-	assert.Equal(t, uint32(5), sched.checkInterval)
-	assert.Equal(t, "* * * * *", sched.checkCron)
+	// no state change
+	assert.False(t, sched.toggleSchedule())
+	assert.Equal(t, uint32(60), sched.check.Interval)
+	assert.Equal(t, uint32(60), sched.lastIntervalState)
+	assert.Equal(t, "", sched.check.Cron)
+	assert.Equal(t, "", sched.lastCronState)
+
+	// interval -> interval change
+	sched.check.Interval = 30
+	assert.True(t, sched.toggleSchedule())
+	assert.Equal(t, uint32(30), sched.check.Interval)
+	assert.Equal(t, uint32(30), sched.lastIntervalState)
+	assert.Equal(t, "", sched.check.Cron)
+	assert.Equal(t, "", sched.lastCronState)
+
+	// interval -> cron change
+	sched.check.Interval = 0
+	sched.check.Cron = "* * * * *"
+	assert.True(t, sched.toggleSchedule())
+	assert.Equal(t, uint32(0), sched.check.Interval)
+	assert.Equal(t, uint32(0), sched.lastIntervalState)
+	assert.Equal(t, "* * * * *", sched.check.Cron)
 	assert.Equal(t, "* * * * *", sched.lastCronState)
 
-	// In this case, cron variables are not set and there is no side-effect
-	check.Cron = "1 * * * *"
-	assert.False(t, sched.toggleCron(check))
-	assert.Equal(t, "* * * * *", sched.checkCron)
-	assert.Equal(t, "* * * * *", sched.lastCronState)
+	// cron -> cron change
+	sched.check.Interval = 0
+	sched.check.Cron = "*/2 * * * *"
+	assert.True(t, sched.toggleSchedule())
+	assert.Equal(t, uint32(0), sched.check.Interval)
+	assert.Equal(t, uint32(0), sched.lastIntervalState)
+	assert.Equal(t, "*/2 * * * *", sched.check.Cron)
+	assert.Equal(t, "*/2 * * * *", sched.lastCronState)
+
+	// cron -> interval change
+	sched.check.Interval = 60
+	sched.check.Cron = ""
+	assert.True(t, sched.toggleSchedule())
+	assert.Equal(t, uint32(60), sched.check.Interval)
+	assert.Equal(t, uint32(60), sched.lastIntervalState)
+	assert.Equal(t, "", sched.check.Cron)
+	assert.Equal(t, "", sched.lastCronState)
+
+	// no state change
+	assert.False(t, sched.toggleSchedule())
+	assert.Equal(t, uint32(60), sched.check.Interval)
+	assert.Equal(t, uint32(60), sched.lastIntervalState)
+	assert.Equal(t, "", sched.check.Cron)
+	assert.Equal(t, "", sched.lastCronState)
 }
