@@ -2,14 +2,19 @@ package keepalived
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"path"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/sensu/sensu-go/agent"
+	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -46,7 +51,7 @@ type Keepalived struct {
 	keepaliveChan         chan interface{}
 	subscription          messaging.Subscription
 	errChan               chan error
-	monitorFactory        monitor.Factory
+	livenessFactory       liveness.Factory
 }
 
 // Option is a functional option.
@@ -56,7 +61,7 @@ type Option func(*Keepalived) error
 type Config struct {
 	Store                 store.Store
 	Bus                   messaging.MessageBus
-	MonitorFactory        monitor.Factory
+	LivenessFactory       liveness.Factory
 	DeregistrationHandler string
 }
 
@@ -66,7 +71,7 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 		store: c.Store,
 		bus:   c.Bus,
 		deregistrationHandler: c.DeregistrationHandler,
-		monitorFactory:        c.MonitorFactory,
+		livenessFactory:       c.LivenessFactory,
 		keepaliveChan:         make(chan interface{}, 10),
 		handlerCount:          DefaultHandlerCount,
 		mu:                    &sync.Mutex{},
@@ -94,7 +99,7 @@ func (k *Keepalived) Start() error {
 	}
 
 	k.subscription = sub
-	if err := k.initFromStore(); err != nil {
+	if err := k.initFromStore(context.Background()); err != nil {
 		_ = sub.Cancel()
 		return err
 	}
@@ -125,12 +130,14 @@ func (k *Keepalived) Name() string {
 	return "keepalived"
 }
 
-func (k *Keepalived) initFromStore() error {
+func (k *Keepalived) initFromStore(ctx context.Context) error {
 	// For which clients were we previously alerting?
 	keepalives, err := k.store.GetFailingKeepalives(context.TODO())
 	if err != nil {
 		return err
 	}
+
+	switches := k.livenessFactory(k.Name(), k.dead, k.alive, logger)
 
 	for _, keepalive := range keepalives {
 		entityCtx := context.WithValue(context.TODO(), types.NamespaceKey, keepalive.Namespace)
@@ -144,25 +151,20 @@ func (k *Keepalived) initFromStore() error {
 			continue
 		}
 
+		if !event.HasCheck() {
+			logger.WithFields(logrus.Fields{"event": event}).Error("keepalive event malformed")
+			continue
+		}
+
 		// if another backend picked it up, it will be passing.
-		if event.HasCheck() {
-			if event.Check.Status == 0 {
-				continue
-			}
+		if event.Check.Status == 0 {
+			continue
 		}
 
-		// Recreate the monitor with a time offset calculated from the keepalive
-		// entry timestamp minus the current time.
-		d := int64(keepalive.Time) - time.Now().Unix()
+		ttl := int64(event.Check.Timeout)
 
-		if d < 0 {
-			d = 0
-		}
-
-		supervisor := k.monitorFactory(k)
-		err = supervisor.Monitor(context.TODO(), keepalive.Name, event, d)
-		if err != nil {
-			return err
+		if err := switches.Dead(ctx, keepalive.Name, ttl); err != nil {
+			return fmt.Errorf("error initializing keepalive %q: %s", keepalive.Name, err)
 		}
 	}
 
@@ -174,17 +176,19 @@ func (k *Keepalived) startWorkers() {
 	k.wg.Add(k.handlerCount)
 
 	for i := 0; i < k.handlerCount; i++ {
-		go k.processKeepalives()
+		go k.processKeepalives(context.Background())
 	}
 }
 
-func (k *Keepalived) processKeepalives() {
+func (k *Keepalived) processKeepalives(ctx context.Context) {
 	defer k.wg.Done()
 
 	var (
 		event *types.Event
 		ok    bool
 	)
+
+	switches := k.livenessFactory(k.Name(), k.alive, k.dead, logger)
 
 	for msg := range k.keepaliveChan {
 		event, ok = msg.(*types.Event)
@@ -210,14 +214,16 @@ func (k *Keepalived) processKeepalives() {
 
 		// Retrieve the keepalive timeout or use a default value in case an older
 		// agent version was used, since entity.KeepaliveTimeout no longer exist
-		timeout := int64(types.DefaultKeepaliveTimeout)
+		ttl := int64(types.DefaultKeepaliveTimeout)
 		if event.Check != nil {
-			timeout = int64(event.Check.Timeout)
+			ttl = int64(event.Check.Timeout)
 		}
 
-		supervisor := k.monitorFactory(k)
-		if err := supervisor.Monitor(context.TODO(), entity.Name, event, timeout); err != nil {
-			logger.WithError(err).Error("error monitoring entity")
+		key := path.Join(entity.Namespace, entity.Name)
+
+		if err := switches.Alive(ctx, key, ttl); err != nil {
+			logger.WithError(err).Errorf("error on switch %q", key)
+			continue
 		}
 
 		if err := k.handleUpdate(event); err != nil {
@@ -298,6 +304,96 @@ func createRegistrationEvent(entity *types.Entity) *types.Event {
 	return registrationEvent
 }
 
+func (k *Keepalived) alive(key string, prev liveness.State, leader bool) {
+	lager := logger.WithFields(logrus.Fields{
+		"status":          liveness.Alive.String(),
+		"previous_status": prev.String()})
+
+	namespace, name, err := parseKey(key)
+	if err != nil {
+		lager.Error(err)
+		return
+	}
+
+	lager = lager.WithFields(logrus.Fields{"entity": name, "namespace": namespace})
+	lager.Info("entity is alive")
+}
+
+func (k *Keepalived) dead(key string, prev liveness.State, leader bool) {
+	lager := logger.WithFields(logrus.Fields{
+		"status":          liveness.Dead.String(),
+		"previous_status": prev.String()})
+
+	namespace, name, err := parseKey(key)
+	if err != nil {
+		lager.Error(err)
+		return
+	}
+
+	lager = lager.WithFields(logrus.Fields{"entity": name, "namespace": namespace})
+	lager.Warn("keepalive timed out")
+
+	if !leader {
+		// If this client isn't the one that flipped the keepalive switch,
+		// don't do anything further.
+		return
+	}
+
+	ctx := store.NamespaceContext(context.Background(), namespace)
+
+	entity, err := k.store.GetEntityByName(ctx, name)
+	if err != nil {
+		lager.WithError(err).Error("error while reading entity")
+		return
+	}
+
+	if entity == nil {
+		lager.Error("entity could not be read")
+		return
+	}
+
+	deregisterer := &Deregistration{
+		Store:      k.store,
+		MessageBus: k.bus,
+	}
+
+	if entity.Deregister {
+		if err := deregisterer.Deregister(entity); err != nil {
+			lager.WithError(err).Error("error deregistering entity")
+		}
+		return
+	}
+
+	currentEvent, err := k.store.GetEventByEntityCheck(ctx, name, "keepalive")
+	if err != nil {
+		lager.WithError(err).Error("error while reading event")
+		return
+	}
+
+	// this is a real keepalive event, emit it.
+	event := createKeepaliveEvent(currentEvent)
+	event.Check.Status = 1
+
+	if err := k.bus.Publish(messaging.TopicEventRaw, event); err != nil {
+		lager.WithError(err).Error("error publishing event")
+		return
+	}
+
+	expiration := time.Now().Unix() + int64(event.Check.Timeout)
+
+	if err := k.store.UpdateFailingKeepalive(ctx, entity, expiration); err != nil {
+		lager.WithError(err).Error("error updating keepalive")
+	}
+}
+
+func parseKey(key string) (namespace, name string, err error) {
+	parts := strings.Split(key, "/")
+	if len(parts) != 2 {
+		return "", "", errors.New("bad key")
+	}
+	return parts[0], parts[1], nil
+}
+
 // handleUpdate sets the entity's last seen time and publishes an OK check event
 // to the message bus.
 func (k *Keepalived) handleUpdate(e *types.Event) error {
@@ -318,34 +414,4 @@ func (k *Keepalived) handleUpdate(e *types.Event) error {
 	event.Check.Status = 0
 
 	return k.bus.Publish(messaging.TopicEventRaw, event)
-}
-
-// HandleFailure checks if the entity should be deregistered, and emits a
-// keepalive event if the entity is still valid.
-func (k *Keepalived) HandleFailure(e *types.Event) error {
-	// Note, we don't want to use the e parameter here as we're
-	// constructing a new event instead.
-	entity := e.Entity
-	ctx := types.SetContextFromResource(context.Background(), entity)
-
-	deregisterer := &Deregistration{
-		Store:      k.store,
-		MessageBus: k.bus,
-	}
-	// if the entity is supposed to be deregistered, do so.
-	if entity.Deregister {
-		return deregisterer.Deregister(entity)
-	}
-
-	// this is a real keepalive event, emit it.
-	event := createKeepaliveEvent(e)
-	event.Check.Status = 1
-
-	if err := k.bus.Publish(messaging.TopicEventRaw, event); err != nil {
-		return err
-	}
-
-	logger.WithField("entity", entity.GetName()).Info("keepalive timed out, creating keepalive event for entity")
-	timeout := time.Now().Unix() + int64(e.Check.Timeout)
-	return k.store.UpdateFailingKeepalive(ctx, entity, timeout)
 }

@@ -3,14 +3,16 @@
 package keepalived
 
 import (
+	"context"
 	"testing"
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
+	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/backend/seeds"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/stretchr/testify/assert"
@@ -46,6 +48,9 @@ func TestKeepaliveMonitor(t *testing.T) {
 	}
 	defer subscription.Cancel()
 
+	entity := corev2.FixtureEntity("entity1")
+	ctx := store.NamespaceContext(context.Background(), entity.Namespace)
+
 	store, err := testutil.NewStoreInstance()
 	if err != nil {
 		assert.FailNow(t, err.Error())
@@ -55,21 +60,34 @@ func TestKeepaliveMonitor(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 
-	mFac := monitor.EtcdFactory(client, "TestKeepaliveMonitor")
+	if err := store.UpdateEntity(ctx, entity); err != nil {
+		t.Fatal(err)
+	}
 
-	k, err := New(Config{Store: store, Bus: bus, MonitorFactory: mFac})
+	keepalive := &corev2.Event{
+		Check: &corev2.Check{
+			ObjectMeta: corev2.ObjectMeta{
+				Name:      "keepalive",
+				Namespace: "default",
+			},
+			Interval: 1,
+			Timeout:  5,
+		},
+		Entity:    entity,
+		Timestamp: time.Now().Unix(),
+	}
+
+	if err := store.UpdateEvent(ctx, keepalive); err != nil {
+		t.Fatal(err)
+	}
+
+	factory := liveness.EtcdFactory(context.Background(), client)
+
+	k, err := New(Config{Store: store, Bus: bus, LivenessFactory: factory})
 	require.NoError(t, err)
 
 	if err := k.Start(); err != nil {
 		assert.FailNow(t, err.Error())
-	}
-
-	entity := corev2.FixtureEntity("entity1")
-
-	keepalive := &corev2.Event{
-		Check:     &corev2.Check{Timeout: 1},
-		Entity:    entity,
-		Timestamp: time.Now().Unix(),
 	}
 
 	if err := bus.Publish(messaging.TopicKeepalive, keepalive); err != nil {

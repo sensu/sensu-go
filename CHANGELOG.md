@@ -13,6 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed a bug where check updates would cause the check to immediately fire.
 - Fixed a bug where a bad line in check output would abort metric extraction.
 An error is now logged instead, and extraction continues after a bad line is encountered.
+- Keepalive events will now continue to fire after cluster restarts.
 
 ## [5.1.0] - 2018-12-18
 
