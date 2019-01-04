@@ -68,10 +68,9 @@ func (s *CheckScheduler) schedule(timer CheckTimer, executor *CheckExecutor) {
 	}
 }
 
-// Start starts the CheckScheduler. It always returns nil error.
-func (s *CheckScheduler) Start() error {
+// Start starts the CheckScheduler.
+func (s *CheckScheduler) Start() {
 	go s.start()
-	return nil
 }
 
 func (s *CheckScheduler) mode() schedulerMode {
@@ -112,11 +111,8 @@ func (s *CheckScheduler) start() {
 			// if a schedule change is detected, restart the timer
 			if s.toggleSchedule() {
 				timer.Stop()
-				defer func() {
-					if err := s.Start(); err != nil {
-						s.logger.Error(err)
-					}
-				}()
+				defer s.Start()
+				return
 			}
 			continue
 		case <-timer.C():

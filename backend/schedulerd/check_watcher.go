@@ -49,9 +49,7 @@ func (c *CheckWatcher) startScheduler(check *types.CheckConfig) error {
 	scheduler := NewCheckScheduler(c.store, c.bus, check, c.ctx)
 
 	// Start scheduling check
-	if err := scheduler.Start(); err != nil {
-		return err
-	}
+	scheduler.Start()
 
 	// Register new check scheduler
 	c.items[key] = scheduler

@@ -101,7 +101,7 @@ func TestCheckSchedulerInterval(t *testing.T) {
 		wg.Done()
 	}()
 
-	assert.NoError(scheduler.scheduler.Start())
+	scheduler.scheduler.Start()
 	mockTime.Start()
 	wg.Wait()
 	mockTime.Stop()
@@ -149,7 +149,7 @@ func TestCheckSubdueInterval(t *testing.T) {
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
-	assert.NoError(scheduler.scheduler.Start())
+	scheduler.scheduler.Start()
 	mockTime.Set(mockTime.Now().Add(2 * time.Second))
 	assert.NoError(scheduler.scheduler.Stop())
 
@@ -195,7 +195,7 @@ func TestCheckSchedulerCron(t *testing.T) {
 		wg.Done()
 	}()
 
-	assert.NoError(scheduler.scheduler.Start())
+	scheduler.scheduler.Start()
 	mockTime.Start()
 	wg.Wait()
 	mockTime.Stop()
@@ -244,7 +244,7 @@ func TestCheckSubdueCron(t *testing.T) {
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
-	assert.NoError(scheduler.scheduler.Start())
+	scheduler.scheduler.Start()
 	mockTime.Set(mockTime.Now().Add(10 * time.Second))
 	assert.NoError(scheduler.scheduler.Stop())
 
