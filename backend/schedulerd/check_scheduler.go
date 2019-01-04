@@ -113,8 +113,7 @@ func (s *CheckScheduler) start() {
 			if s.toggleSchedule() {
 				timer.Stop()
 				defer func() {
-					err := s.Start()
-					if err != nil {
+					if err := s.Start(); err != nil {
 						s.logger.Error(err)
 					}
 				}()
