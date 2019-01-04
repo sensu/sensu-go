@@ -94,13 +94,20 @@ type SwitchSet struct {
 	notifyDead  EventFunc
 	notifyAlive EventFunc
 	logger      logrus.FieldLogger
+
+	// This channel serializes events so that their execution ordering is
+	// as expected, without causing undue blocking in the main monitoring
+	// loop.
+	events chan func()
 }
 
 // EventFunc is a function that can be used by a SwitchSet to handle events.
-// The previous state of the switch will be passed to the function, as well as
-// the ModRevision of the etcd key. The revision can be used to synchronize
-// clients, if need be.
-type EventFunc func(key string, prev State, revision int64)
+// The previous state of the switch will be passed to the function.
+//
+// For "dead" EventFuncs, the leader flag can be used to determine if the
+// client that flipped the switch is our client. For "alive" EventFuncs,
+// this parameter is always false.
+type EventFunc func(key string, prev State, leader bool)
 
 // NewSwitchSet creates a new SwitchSet. It will use an etcd prefix of
 // path.Join(SwitchPrefix, name). The dead and live callbacks will be called
@@ -112,6 +119,7 @@ func NewSwitchSet(client *clientv3.Client, name string, dead, alive EventFunc, l
 		notifyDead:  dead,
 		notifyAlive: alive,
 		logger:      logger,
+		events:      make(chan func(), 512),
 	}
 }
 
@@ -192,9 +200,15 @@ func (t *SwitchSet) getTTLFromEvent(event *clientv3.Event) (int64, State) {
 func (t *SwitchSet) monitor(ctx context.Context) {
 	wc := t.client.Watch(ctx, t.prefix, clientv3.WithPrefix(), clientv3.WithPrevKV())
 	go func() {
+		for event := range t.events {
+			event()
+		}
+	}()
+	go func() {
 		for {
 			select {
 			case <-ctx.Done():
+				close(t.events)
 				return
 			case resp := <-wc:
 				if err := resp.Err(); err != nil {
@@ -229,8 +243,7 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 	case mvccpb.DELETE:
 		// The entity has expired. Replace it with a new entity
 		// to keep the events firing
-		go t.notifyDead(strings.TrimPrefix(key, t.prefix+"/"), prevState, event.Kv.ModRevision)
-		t.logger.Infof("key expired: %s, ttl: %d", key, ttl)
+		t.logger.WithFields(logrus.Fields{"key": key, "ttl": ttl}).Debug("key expired")
 
 		// If the key doesn't exist, the version will be 0. This is done to
 		// prevent other clients from performing the same operation
@@ -248,7 +261,7 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 			ttl = -ttl
 		}
 
-		t.logger.Infof("creating a lease for %s with TTL %d", key, leaseTTL)
+		t.logger.Debugf("creating a lease for %s with TTL %d", key, leaseTTL)
 		lease, err := t.client.Grant(ctx, leaseTTL)
 		if err != nil {
 			t.logger.WithError(err).Errorf("error while granting lease for %s", key)
@@ -258,9 +271,13 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 		// Store a negative value for the TTL to indicate that the
 		// entity is not alive.
 		put := clientv3.OpPut(key, fmt.Sprintf("%x", ttl), clientv3.WithLease(lease.ID))
-		_, err = t.client.Txn(ctx).If(cmp).Then(put).Commit()
+		resp, err := t.client.Txn(ctx).If(cmp).Then(put).Commit()
 		if err != nil {
 			t.logger.WithError(err).Errorf("error commiting keepalive tx for %s", key)
+			return
+		}
+		t.events <- func() {
+			t.notifyDead(strings.TrimPrefix(key, t.prefix+"/"), prevState, resp.Succeeded)
 		}
 
 	case mvccpb.PUT:
@@ -272,8 +289,10 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 		}
 		if ttl > 0 {
 			// A positive TTL indicates the entity is alive
-			t.logger.Infof("%s alive: %d", key, ttl)
-			go t.notifyAlive(strings.TrimPrefix(key, t.prefix+"/"), prevState, event.Kv.ModRevision)
+			t.logger.Debugf("%s alive: %d", key, ttl)
+			t.events <- func() {
+				t.notifyAlive(strings.TrimPrefix(key, t.prefix+"/"), prevState, false)
+			}
 		}
 	}
 }
