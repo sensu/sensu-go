@@ -5,10 +5,16 @@ import (
 	"fmt"
 	"path"
 	"strings"
+	"sync"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/sirupsen/logrus"
+)
+
+var (
+	switches = make(map[string]Interface, 0)
+	switchMu sync.Mutex
 )
 
 // All switchset entities are tracked under path.Join(SwitchPrefix, toggleName, key)
@@ -28,6 +34,17 @@ const (
 	Dead State = 1
 )
 
+func (s State) String() string {
+	switch s {
+	case 0:
+		return "alive"
+	case 1:
+		return "dead"
+	default:
+		return "heisenberg"
+	}
+}
+
 // Interface specifies the interface for liveness
 type Interface interface {
 	// Alive is an assertion that an entity is alive.
@@ -41,10 +58,20 @@ type Interface interface {
 // Factory is a function that can deliver an Interface
 type Factory func(name string, dead, alive EventFunc, logger logrus.FieldLogger) Interface
 
-// EtcdFactory returns a Factory that uses an etcd client
-func EtcdFactory(client *clientv3.Client) Factory {
+// EtcdFactory returns a Factory that uses an etcd client. The Interface is
+// cached after the first instantiation, and the EventFuncs and logger cannot
+// be changed later.
+func EtcdFactory(ctx context.Context, client *clientv3.Client) Factory {
 	return Factory(func(name string, dead, alive EventFunc, logger logrus.FieldLogger) Interface {
-		return NewSwitchSet(client, name, dead, alive, logger)
+		switchMu.Lock()
+		defer switchMu.Unlock()
+		_, ok := switches[name]
+		if !ok {
+			ss := NewSwitchSet(client, name, dead, alive, logger)
+			ss.monitor(ctx)
+			switches[name] = ss
+		}
+		return switches[name]
 	})
 }
 
@@ -160,24 +187,26 @@ func (t *SwitchSet) getTTLFromEvent(event *clientv3.Event) (int64, State) {
 	return -FallbackTTL, prevState
 }
 
-// Monitor starts a goroutine that monitors the SwitchSet prefix for key PUT
+// monitor starts a goroutine that monitors the SwitchSet prefix for key PUT
 // and DELETE events.
-func (t *SwitchSet) Monitor(ctx context.Context) {
+func (t *SwitchSet) monitor(ctx context.Context) {
 	wc := t.client.Watch(ctx, t.prefix, clientv3.WithPrefix(), clientv3.WithPrevKV())
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case resp := <-wc:
-			if err := resp.Err(); err != nil {
-				t.logger.WithError(err).Error("error monitoring toggles")
-				continue
-			}
-			for _, event := range resp.Events {
-				t.handleEvent(ctx, event)
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case resp := <-wc:
+				if err := resp.Err(); err != nil {
+					t.logger.WithError(err).Error("error monitoring toggles")
+					continue
+				}
+				for _, event := range resp.Events {
+					t.handleEvent(ctx, event)
+				}
 			}
 		}
-	}
+	}()
 }
 
 // handleEvent handles a watch event, either DELETE or PUT.

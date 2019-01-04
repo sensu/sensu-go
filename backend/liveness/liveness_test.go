@@ -50,7 +50,7 @@ func TestSwitchSet(t *testing.T) {
 	}
 
 	toggle := NewSwitchSet(client, "test", expired, alive, logger)
-	go toggle.Monitor(ctx)
+	go toggle.monitor(ctx)
 
 	// the [0, 0, 0, 1] sequences
 	deadWG.Add(1)
@@ -112,7 +112,7 @@ func TestDead(t *testing.T) {
 	}
 
 	toggle := NewSwitchSet(client, "test", expired, alive, logger)
-	go toggle.Monitor(ctx)
+	go toggle.monitor(ctx)
 
 	deadWG.Add(3)
 	if err := toggle.Dead(ctx, "entity1", 5); err != nil {
