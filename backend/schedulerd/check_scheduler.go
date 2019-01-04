@@ -112,8 +112,12 @@ func (s *CheckScheduler) start() {
 			// if a schedule change is detected, restart the timer
 			if s.toggleSchedule() {
 				timer.Stop()
-				defer s.Start()
-				return
+				defer func() {
+					err := s.Start()
+					if err != nil {
+						s.logger.Error(err)
+					}
+				}()
 			}
 			continue
 		case <-timer.C():
