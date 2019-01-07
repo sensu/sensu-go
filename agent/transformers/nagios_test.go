@@ -10,10 +10,9 @@ import (
 
 func TestParseNagios(t *testing.T) {
 	testCases := []struct {
-		name    string
-		event   *types.Event
-		want    NagiosList
-		wantErr bool
+		name  string
+		event *types.Event
+		want  NagiosList
 	}{
 		{
 			name: "no perfdata metric",
@@ -22,8 +21,7 @@ func TestParseNagios(t *testing.T) {
 					Output: "PING ok - Packet loss = 0%, RTA = 0.80 ms",
 				},
 			},
-			want:    NagiosList(nil),
-			wantErr: true,
+			want: NagiosList(nil),
 		},
 		{
 			name: "single perfdata metric",
@@ -40,7 +38,6 @@ func TestParseNagios(t *testing.T) {
 					Timestamp: 12345,
 				},
 			},
-			wantErr: false,
 		},
 		{
 			name: "single perfdata metric with newline",
@@ -57,7 +54,6 @@ func TestParseNagios(t *testing.T) {
 					Timestamp: 12345,
 				},
 			},
-			wantErr: false,
 		},
 		{
 			name: "multiple perfdata metrics",
@@ -79,7 +75,22 @@ func TestParseNagios(t *testing.T) {
 					Timestamp: 12345,
 				},
 			},
-			wantErr: false,
+		},
+		{
+			name: "GH_2511",
+			event: &types.Event{
+				Check: &types.Check{
+					Executed: 12345,
+					Output:   "PING ok - Packet loss = 0%, RTA = 0.80 ms | percent_packet_loss=0, foo",
+				},
+			},
+			want: NagiosList{
+				Nagios{
+					Label:     "percent_packet_loss",
+					Value:     0.0,
+					Timestamp: 12345,
+				},
+			},
 		},
 		{
 			name: "invalid perfdata format",
@@ -88,8 +99,7 @@ func TestParseNagios(t *testing.T) {
 					Output: "PING ok - Packet loss = 0%, RTA = 0.80 ms | percent_packet_loss",
 				},
 			},
-			want:    NagiosList(nil),
-			wantErr: true,
+			want: NagiosList(nil),
 		},
 		{
 			name: "invalid perfdata value",
@@ -98,8 +108,7 @@ func TestParseNagios(t *testing.T) {
 					Output: "PING ok - Packet loss = 0%, RTA = 0.80 ms | percent_packet_loss=a",
 				},
 			},
-			want:    NagiosList(nil),
-			wantErr: true,
+			want: NagiosList(nil),
 		},
 		{
 			name: "bug #2021",
@@ -131,10 +140,7 @@ func TestParseNagios(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := ParseNagios(tc.event)
-			if (err != nil) != tc.wantErr {
-				t.Fatalf("ParseNagios() error = %v, wantErr %v", err, tc.wantErr)
-			}
+			got := ParseNagios(tc.event)
 			if !assert.Equal(t, tc.want, got) {
 				t.Fatalf("ParseNagios() = %v, want %v", got, tc.want)
 			}
@@ -177,10 +183,9 @@ func TestTransformNagios(t *testing.T) {
 
 func TestParseAndTransformNagios(t *testing.T) {
 	testCases := []struct {
-		name    string
-		event   *types.Event
-		want    []*types.MetricPoint
-		wantErr bool
+		name  string
+		event *types.Event
+		want  []*types.MetricPoint
 	}{
 		{
 			name: "happy path",
@@ -198,18 +203,29 @@ func TestParseAndTransformNagios(t *testing.T) {
 					Tags:      []*types.MetricTag{},
 				},
 			},
-			wantErr: false,
+		},
+		{
+			name: "GH_2511",
+			event: &types.Event{
+				Check: &types.Check{
+					Executed: 123456789,
+					Output:   "PING ok - Packet loss = 0% foo | percent_packet_loss=0 foo",
+				},
+			},
+			want: []*types.MetricPoint{
+				{
+					Name:      "percent_packet_loss",
+					Value:     0,
+					Timestamp: 123456789,
+					Tags:      []*types.MetricTag{},
+				},
+			},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			transformer, err := ParseNagios(tc.event)
-			if (err != nil) != tc.wantErr {
-				t.Errorf("ParseNagios() error = %v, wantErr %v", err, tc.wantErr)
-				return
-			}
-
+			transformer := ParseNagios(tc.event)
 			got := transformer.Transform()
 			if !reflect.DeepEqual(got, tc.want) {
 				t.Errorf("ParseNagios() = %v, want %v", got, tc.want)

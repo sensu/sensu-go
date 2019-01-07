@@ -1,12 +1,12 @@
 package transformers
 
 import (
-	"errors"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/sensu/sensu-go/types"
+	"github.com/sirupsen/logrus"
 )
 
 // InfluxList contains a list of Influx values
@@ -39,15 +39,24 @@ func (i InfluxList) Transform() []*types.MetricPoint {
 }
 
 // ParseInflux parses an influx db line protocol string into an Influx struct
-func ParseInflux(metric string) (InfluxList, error) {
+func ParseInflux(event *types.Event) InfluxList {
 	var influxList InfluxList
-	metric = strings.TrimSpace(metric)
+	fields := logrus.Fields{
+		"namespace": event.Check.Namespace,
+		"check":     event.Check.Name,
+	}
+
+	metric := strings.TrimSpace(event.Check.Output)
 	lines := strings.Split(metric, "\n")
-	for _, line := range lines {
+
+OUTER:
+	for l, line := range lines {
+		fields["line"] = l
 		i := Influx{}
 		args := strings.Split(line, " ")
 		if len(args) != 3 && len(args) != 2 {
-			return InfluxList{}, errors.New("influxdb line format requires 2 arguments with a 3rd (optional) timestamp")
+			logger.WithFields(fields).WithError(ErrMetricExtraction).Error("influxdb line format requires 2 arguments with a 3rd (optional) timestamp")
+			continue
 		}
 
 		measurementTag := strings.Split(args[0], ",")
@@ -60,7 +69,8 @@ func ParseInflux(metric string) (InfluxList, error) {
 				if i != 0 {
 					ts := strings.Split(tagSet, "=")
 					if len(ts) != 2 {
-						return InfluxList{}, errors.New("metric tag set is invalid, must contain a key=value pair")
+						logger.WithFields(fields).WithError(ErrMetricExtraction).Error("metric tag set is invalid, must contain a key=value pair")
+						continue OUTER
 					}
 					tag := &types.MetricTag{
 						Name:  ts[0],
@@ -77,11 +87,13 @@ func ParseInflux(metric string) (InfluxList, error) {
 		for _, fieldSet := range fieldSets {
 			fs := strings.Split(fieldSet, "=")
 			if len(fs) != 2 {
-				return InfluxList{}, errors.New("metric field set is invalid, must contain a key=value pair")
+				logger.WithFields(fields).WithError(ErrMetricExtraction).Error("metric field set is invalid, must contain a key=value pair")
+				continue OUTER
 			}
 			f, err := strconv.ParseFloat(fs[1], 64)
 			if err != nil {
-				return InfluxList{}, errors.New("metric field value is invalid, must be a float")
+				logger.WithFields(fields).WithError(ErrMetricExtraction).Errorf("metric field value is invalid, must be a float: %s", fs[1])
+				continue OUTER
 			}
 			field := &Field{
 				Key:   fs[0],
@@ -98,7 +110,8 @@ func ParseInflux(metric string) (InfluxList, error) {
 			}
 			t, err := strconv.ParseInt(timestamp, 10, 64)
 			if err != nil {
-				return InfluxList{}, errors.New("metric timestamp is invalid, third argument must be an int")
+				logger.WithFields(fields).WithError(ErrMetricExtraction).Errorf("metric timestamp is invalid, third argument must be an int: %s", timestamp)
+				continue
 			}
 			i.Timestamp = t
 		} else {
@@ -107,5 +120,5 @@ func ParseInflux(metric string) (InfluxList, error) {
 		influxList = append(influxList, i)
 	}
 
-	return influxList, nil
+	return influxList
 }

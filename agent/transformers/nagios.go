@@ -1,13 +1,12 @@
 package transformers
 
 import (
-	"errors"
-	"fmt"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/sensu/sensu-go/types"
+	"github.com/sirupsen/logrus"
 )
 
 // NagiosList contains a list of Nagios metrics
@@ -36,17 +35,18 @@ func (n NagiosList) Transform() []*types.MetricPoint {
 }
 
 // ParseNagios parses a Nagios perfdata string into a slice of Nagios struct
-func ParseNagios(event *types.Event) (NagiosList, error) {
-	nagiosList := NagiosList{}
-
-	if !event.HasCheck() {
-		return nil, errors.New("event must contain a check to parse and extract metrics")
+func ParseNagios(event *types.Event) NagiosList {
+	var nagiosList NagiosList
+	fields := logrus.Fields{
+		"namespace": event.Check.Namespace,
+		"check":     event.Check.Name,
 	}
 
 	// Ensure we have some perfdata metrics and not only human-readable text
 	output := strings.Split(event.Check.Output, "|")
 	if len(output) != 2 {
-		return nil, errors.New("nagios perfdata format requires at least one performance data metric")
+		logger.WithFields(fields).WithError(ErrMetricExtraction).Error("nagios perfdata format requires at least one performance data metric")
+		return nagiosList
 	}
 
 	// Fetch the perfdata and remove leading & trailing whitespaces
@@ -56,7 +56,8 @@ func ParseNagios(event *types.Event) (NagiosList, error) {
 	metrics := strings.Split(perfdata, " ")
 
 	// Create a Nagios metric for each perfdata metrics
-	for _, metric := range metrics {
+	for m, metric := range metrics {
+		fields["metric"] = m
 		if metric = strings.TrimSpace(metric); len(metric) == 0 {
 			// the token was just whitespace, ignore it
 			continue
@@ -65,7 +66,8 @@ func ParseNagios(event *types.Event) (NagiosList, error) {
 		parts := strings.Split(metric, ";")
 		parts = strings.Split(parts[0], "=")
 		if len(parts) != 2 {
-			return nil, fmt.Errorf("invalid nagios perfdata metric: %q", metric)
+			logger.WithFields(fields).WithError(ErrMetricExtraction).Errorf("invalid nagios perfdata metric: %q", metric)
+			continue
 		}
 
 		// Make sure we don't have any whitespace in our label
@@ -78,7 +80,8 @@ func ParseNagios(event *types.Event) (NagiosList, error) {
 		// Parse the value as a float64
 		value, err := strconv.ParseFloat(strValue, 64)
 		if err != nil {
-			return nil, fmt.Errorf("invalid nagios perfdata metric value: %q", parts[1])
+			logger.WithFields(fields).WithError(ErrMetricExtraction).Errorf("invalid nagios perfdata metric value: %q", parts[1])
+			continue
 		}
 
 		// Add this metric to our list
@@ -90,5 +93,5 @@ func ParseNagios(event *types.Event) (NagiosList, error) {
 		nagiosList = append(nagiosList, n)
 	}
 
-	return nagiosList, nil
+	return nagiosList
 }

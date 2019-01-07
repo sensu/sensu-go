@@ -13,7 +13,6 @@ func TestParseGraphite(t *testing.T) {
 	testCases := []struct {
 		metric         string
 		expectedFormat GraphiteList
-		expectedErr    bool
 	}{
 		{
 			metric: "metric.value 1 123456789",
@@ -24,7 +23,6 @@ func TestParseGraphite(t *testing.T) {
 					Timestamp: 123456789,
 				},
 			},
-			expectedErr: false,
 		},
 		{
 			metric: "metric.value 1 123456789\n",
@@ -35,7 +33,6 @@ func TestParseGraphite(t *testing.T) {
 					Timestamp: 123456789,
 				},
 			},
-			expectedErr: false,
 		},
 		{
 			metric: "metric.value 1 123456789\nmetric.value 0 0",
@@ -51,38 +48,40 @@ func TestParseGraphite(t *testing.T) {
 					Timestamp: 0,
 				},
 			},
-			expectedErr: false,
+		},
+		{
+			metric: "metric.value 1 123456789\nfoo",
+			expectedFormat: GraphiteList{
+				{
+					Path:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+				},
+			},
 		},
 		{
 			metric:         "",
-			expectedFormat: GraphiteList{},
-			expectedErr:    true,
+			expectedFormat: GraphiteList(nil),
 		},
 		{
 			metric:         "foo bar",
-			expectedFormat: GraphiteList{},
-			expectedErr:    true,
+			expectedFormat: GraphiteList(nil),
 		},
 		{
 			metric:         "metric.value one 123456789",
-			expectedFormat: GraphiteList{},
-			expectedErr:    true,
+			expectedFormat: GraphiteList(nil),
 		},
 		{
 			metric:         "metric.value 1 noon",
-			expectedFormat: GraphiteList{},
-			expectedErr:    true,
+			expectedFormat: GraphiteList(nil),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.metric, func(t *testing.T) {
-			graphite, err := ParseGraphite(tc.metric)
-			if tc.expectedErr {
-				assert.Error(err)
-			} else {
-				assert.NoError(err)
-			}
+			event := types.FixtureEvent("test", "test")
+			event.Check.Output = tc.metric
+			graphite := ParseGraphite(event)
 			assert.Equal(tc.expectedFormat, graphite)
 		})
 	}
@@ -190,7 +189,6 @@ func TestParseAndTransformGraphite(t *testing.T) {
 	testCases := []struct {
 		metric         string
 		expectedFormat []*types.MetricPoint
-		expectedErr    bool
 	}{
 		{
 			metric: "metric.value 1 123456789",
@@ -202,7 +200,6 @@ func TestParseAndTransformGraphite(t *testing.T) {
 					Tags:      []*types.MetricTag{},
 				},
 			},
-			expectedErr: false,
 		},
 		{
 			metric: "metric.value 0 0\n",
@@ -214,7 +211,6 @@ func TestParseAndTransformGraphite(t *testing.T) {
 					Tags:      []*types.MetricTag{},
 				},
 			},
-			expectedErr: false,
 		},
 		{
 			metric: "metric.value 1 123456789\nmetric.value 0 0",
@@ -232,36 +228,43 @@ func TestParseAndTransformGraphite(t *testing.T) {
 					Tags:      []*types.MetricTag{},
 				},
 			},
-			expectedErr: false,
 		},
 		{
-			metric:      "",
-			expectedErr: true,
+			metric: "metric.value 1 123456789\nfoo",
+			expectedFormat: []*types.MetricPoint{
+				{
+					Name:      "metric.value",
+					Value:     1,
+					Timestamp: 123456789,
+					Tags:      []*types.MetricTag{},
+				},
+			},
 		},
 		{
-			metric:      "foo bar",
-			expectedErr: true,
+			metric:         "",
+			expectedFormat: []*types.MetricPoint(nil),
 		},
 		{
-			metric:      "metric.value one 123456789",
-			expectedErr: true,
+			metric:         "foo bar",
+			expectedFormat: []*types.MetricPoint(nil),
 		},
 		{
-			metric:      "metric.value 1 noon",
-			expectedErr: true,
+			metric:         "metric.value one 123456789",
+			expectedFormat: []*types.MetricPoint(nil),
+		},
+		{
+			metric:         "metric.value 1 noon",
+			expectedFormat: []*types.MetricPoint(nil),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.metric, func(t *testing.T) {
-			graphite, err := ParseGraphite(tc.metric)
-			if tc.expectedErr {
-				assert.Error(err)
-			} else {
-				assert.NoError(err)
-				mp := graphite.Transform()
-				assert.Equal(tc.expectedFormat, mp)
-			}
+			event := types.FixtureEvent("test", "test")
+			event.Check.Output = tc.metric
+			graphite := ParseGraphite(event)
+			mp := graphite.Transform()
+			assert.Equal(tc.expectedFormat, mp)
 		})
 	}
 }
