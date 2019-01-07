@@ -1,3 +1,5 @@
+// +build integration
+
 package liveness
 
 import (
@@ -29,8 +31,8 @@ func TestSwitchSet(t *testing.T) {
 	defer cancel()
 
 	var mu sync.Mutex
-	var aliveWG sync.WaitGroup
-	var deadWG sync.WaitGroup
+	aliveC := make(chan struct{})
+	deadC := make(chan struct{})
 	results := make(map[string][]int)
 
 	// This callback gets executed when the entity dies
@@ -38,7 +40,7 @@ func TestSwitchSet(t *testing.T) {
 		mu.Lock()
 		defer mu.Unlock()
 		results[key] = append(results[key], int(Dead))
-		deadWG.Done()
+		deadC <- struct{}{}
 	}
 
 	// This callback gets executed when the entity asserts its liveness
@@ -46,31 +48,31 @@ func TestSwitchSet(t *testing.T) {
 		mu.Lock()
 		defer mu.Unlock()
 		results[key] = append(results[key], int(Alive))
-		aliveWG.Done()
+		aliveC <- struct{}{}
 	}
 
 	toggle := NewSwitchSet(client, "test", expired, alive, logger)
 	go toggle.monitor(ctx)
 
 	// the [0, 0, 0, 1] sequences
-	deadWG.Add(1)
-	aliveWG.Add(3)
 	for i := 0; i < 3; i++ {
 		if err := toggle.Alive(ctx, "entity1", 5); err != nil {
 			t.Fatal(err)
 		}
 	}
-	aliveWG.Wait()
-	deadWG.Wait()
+	for i := 0; i < 3; i++ {
+		<-aliveC
+	}
+	<-deadC
 
 	// The subsequent [0, 1, 1, 1] sequence
-	deadWG.Add(3)
-	aliveWG.Add(1)
 	if err := toggle.Alive(ctx, "entity1", 5); err != nil {
 		t.Fatal(err)
 	}
-	aliveWG.Wait()
-	deadWG.Wait()
+	<-aliveC
+	for i := 0; i < 3; i++ {
+		<-deadC
+	}
 
 	mu.Lock()
 	if got, want := results["entity1"], []int{0, 0, 0, 1, 0, 1, 1, 1}; !reflect.DeepEqual(got, want) {
@@ -91,16 +93,16 @@ func TestDead(t *testing.T) {
 	defer cancel()
 
 	var mu sync.Mutex
-	var aliveWG sync.WaitGroup
-	var deadWG sync.WaitGroup
 	results := make(map[string][]int)
+	aliveC := make(chan struct{})
+	deadC := make(chan struct{})
 
 	// This callback gets executed when the entity dies
 	expired := func(key string, prev State, leader bool) {
 		mu.Lock()
 		defer mu.Unlock()
 		results[key] = append(results[key], int(Dead))
-		deadWG.Done()
+		deadC <- struct{}{}
 	}
 
 	// This callback gets executed when the entity asserts its liveness
@@ -108,18 +110,18 @@ func TestDead(t *testing.T) {
 		mu.Lock()
 		defer mu.Unlock()
 		results[key] = append(results[key], int(Alive))
-		aliveWG.Done()
+		aliveC <- struct{}{}
 	}
 
 	toggle := NewSwitchSet(client, "test", expired, alive, logger)
 	go toggle.monitor(ctx)
 
-	deadWG.Add(3)
 	if err := toggle.Dead(ctx, "entity1", 5); err != nil {
 		t.Fatal(err)
 	}
-
-	deadWG.Wait()
+	for i := 0; i < 3; i++ {
+		<-deadC
+	}
 
 	mu.Lock()
 	if got, want := results["entity1"], []int{1, 1, 1}; !reflect.DeepEqual(got, want) {
