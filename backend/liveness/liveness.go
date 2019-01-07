@@ -127,11 +127,12 @@ func (t *SwitchSet) ping(ctx context.Context, key string, ttl int64, alive bool)
 	if ttl < FallbackTTL {
 		return fmt.Errorf("bad ttl: %d is less than the minimum value of %d", ttl, FallbackTTL)
 	}
+	putVal := ttl
 	if !alive {
-		ttl = -ttl
+		putVal = -putVal
 	}
 	key = path.Join(t.prefix, key)
-	val := fmt.Sprintf("%x", ttl)
+	val := fmt.Sprintf("%x", putVal)
 	lease, err := t.client.Grant(ctx, ttl)
 	if err != nil {
 		return err
