@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	switches = make(map[string]Interface, 0)
+	switches = make(map[string]Interface)
 	switchMu sync.Mutex
 )
 
@@ -36,9 +36,9 @@ const (
 
 func (s State) String() string {
 	switch s {
-	case 0:
+	case Alive:
 		return "alive"
-	case 1:
+	case Dead:
 		return "dead"
 	default:
 		return "heisenberg"
@@ -77,7 +77,7 @@ func EtcdFactory(ctx context.Context, client *clientv3.Client) Factory {
 
 // SwitchSet is a set of switches that get flipped on life and death events
 // for entities. On life and death events, callback functions that are
-// reigstered on NewSwitchSet are started as new goroutines.
+// registered on NewSwitchSet are started as new goroutines.
 //
 // The SwitchSet uses the Alive method to both register members of the set,
 // and to assert their liveness once registered. After its first call to

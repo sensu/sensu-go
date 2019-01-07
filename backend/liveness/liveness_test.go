@@ -37,7 +37,7 @@ func TestSwitchSet(t *testing.T) {
 	expired := func(key string, prev State, leader bool) {
 		mu.Lock()
 		defer mu.Unlock()
-		results[key] = append(results[key], 1)
+		results[key] = append(results[key], int(Dead))
 		deadWG.Done()
 	}
 
@@ -45,7 +45,7 @@ func TestSwitchSet(t *testing.T) {
 	alive := func(key string, prev State, leader bool) {
 		mu.Lock()
 		defer mu.Unlock()
-		results[key] = append(results[key], 0)
+		results[key] = append(results[key], int(Alive))
 		aliveWG.Done()
 	}
 
@@ -99,7 +99,7 @@ func TestDead(t *testing.T) {
 	expired := func(key string, prev State, leader bool) {
 		mu.Lock()
 		defer mu.Unlock()
-		results[key] = append(results[key], 1)
+		results[key] = append(results[key], int(Dead))
 		deadWG.Done()
 	}
 
@@ -107,7 +107,7 @@ func TestDead(t *testing.T) {
 	alive := func(key string, prev State, leader bool) {
 		mu.Lock()
 		defer mu.Unlock()
-		results[key] = append(results[key], 0)
+		results[key] = append(results[key], int(Alive))
 		aliveWG.Done()
 	}
 
