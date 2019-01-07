@@ -157,9 +157,7 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	// Every 5 minutes, we will prune all values in etcd to only their latest
 	// revision.
 	cfg.AutoCompactionMode = "revision"
-	// This has to stay in ns until https://github.com/coreos/etcd/issues/9337
-	// is resolved.
-	cfg.AutoCompactionRetention = "1"
+	cfg.AutoCompactionRetention = "2"
 	// Default to 4G etcd size. TODO: make this configurable.
 	cfg.QuotaBackendBytes = int64(4 * 1024 * 1024 * 1024)
 
