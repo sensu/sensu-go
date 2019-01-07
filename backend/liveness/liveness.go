@@ -132,7 +132,7 @@ func (t *SwitchSet) ping(ctx context.Context, key string, ttl int64, alive bool)
 		putVal = -putVal
 	}
 	key = path.Join(t.prefix, key)
-	val := fmt.Sprintf("%x", putVal)
+	val := fmt.Sprintf("%d", putVal)
 	lease, err := t.client.Grant(ctx, ttl)
 	if err != nil {
 		return err
@@ -175,7 +175,7 @@ func (t *SwitchSet) getTTLFromEvent(event *clientv3.Event) (int64, State) {
 		prevState State
 	)
 	if event.PrevKv != nil && len(event.PrevKv.Value) > 0 {
-		fmt.Sscanf(string(event.PrevKv.Value), "%x", &prev)
+		fmt.Sscanf(string(event.PrevKv.Value), "%d", &prev)
 	}
 	if prev > 0 {
 		prevState = Alive
@@ -184,12 +184,12 @@ func (t *SwitchSet) getTTLFromEvent(event *clientv3.Event) (int64, State) {
 	}
 	if len(event.Kv.Value) > 0 {
 		// A put has resulted in this event, and the TTL is stored here
-		fmt.Sscanf(string(event.Kv.Value), "%x", &ttl)
+		fmt.Sscanf(string(event.Kv.Value), "%d", &ttl)
 		return ttl, prevState
 	}
 	if event.PrevKv != nil && len(event.PrevKv.Value) > 0 {
 		// The previous revision contains the TTL
-		fmt.Sscanf(string(event.PrevKv.Value), "%x", &ttl)
+		fmt.Sscanf(string(event.PrevKv.Value), "%d", &ttl)
 		return ttl, prevState
 	}
 	t.logger.Errorf("using fallback TTL for %q", string(event.Kv.Key))
@@ -271,7 +271,7 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 
 		// Store a negative value for the TTL to indicate that the
 		// entity is not alive.
-		put := clientv3.OpPut(key, fmt.Sprintf("%x", ttl), clientv3.WithLease(lease.ID))
+		put := clientv3.OpPut(key, fmt.Sprintf("%d", ttl), clientv3.WithLease(lease.ID))
 		resp, err := t.client.Txn(ctx).If(cmp).Then(put).Commit()
 		if err != nil {
 			t.logger.WithError(err).Errorf("error commiting keepalive tx for %s", key)
