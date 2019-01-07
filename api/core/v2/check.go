@@ -104,6 +104,9 @@ func (c *Check) Validate() error {
 	if c.Ttl > 0 && c.Ttl <= int64(c.Interval) {
 		return errors.New("ttl must be greater than check interval")
 	}
+	if c.Ttl > 0 && c.Ttl < 5 {
+		return errors.New("minimum ttl is 5 seconds")
+	}
 
 	for _, assetName := range c.RuntimeAssets {
 		if err := ValidateAssetName(assetName); err != nil {

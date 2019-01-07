@@ -173,6 +173,9 @@ func (a *Agent) Run() error {
 	if err := v2.ValidateName(a.config.AgentName); err != nil {
 		return fmt.Errorf("invalid agent name: %v", err)
 	}
+	if timeout := a.config.KeepaliveTimeout; timeout > 0 && timeout < 5 {
+		return fmt.Errorf("bad keepalive timeout: %d (minimum value is 5 seconds)", timeout)
+	}
 
 	// Start the statsd listener only if the agent configuration has it enabled
 	if !a.config.StatsdServer.Disable {
