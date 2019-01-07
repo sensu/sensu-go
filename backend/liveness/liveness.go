@@ -41,7 +41,7 @@ func (s State) String() string {
 	case Dead:
 		return "dead"
 	default:
-		return "heisenberg"
+		return fmt.Sprintf("invalid<%d>", s)
 	}
 }
 
