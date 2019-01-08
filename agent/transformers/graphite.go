@@ -1,11 +1,11 @@
 package transformers
 
 import (
-	"errors"
 	"strconv"
 	"strings"
 
 	"github.com/sensu/sensu-go/types"
+	"github.com/sirupsen/logrus"
 )
 
 // GraphiteList contains a list of Graphite values
@@ -35,32 +35,42 @@ func (g GraphiteList) Transform() []*types.MetricPoint {
 }
 
 // ParseGraphite parses a graphite plain text string into a Graphite struct
-func ParseGraphite(metric string) (GraphiteList, error) {
-	var graphites GraphiteList
-	metric = strings.TrimSpace(metric)
+func ParseGraphite(event *types.Event) GraphiteList {
+	var graphiteList GraphiteList
+	fields := logrus.Fields{
+		"namespace": event.Check.Namespace,
+		"check":     event.Check.Name,
+	}
+
+	metric := strings.TrimSpace(event.Check.Output)
 	lines := strings.Split(metric, "\n")
-	for _, line := range lines {
+
+	for l, line := range lines {
+		fields["line"] = l
 		g := Graphite{}
 		args := strings.Split(line, " ")
 		if len(args) != 3 {
-			return GraphiteList{}, errors.New("graphite plain text format requires exactly 3 arguments")
+			logger.WithFields(fields).WithError(ErrMetricExtraction).Error("graphite plain text format requires exactly 3 arguments")
+			continue
 		}
 
 		g.Path = args[0]
 
 		f, err := strconv.ParseFloat(args[1], 64)
 		if err != nil {
-			return GraphiteList{}, errors.New("metric value is invalid, second argument must be a float")
+			logger.WithFields(fields).WithError(ErrMetricExtraction).Errorf("metric value is invalid, second argument must be a float: %s", args[1])
+			continue
 		}
 		g.Value = f
 
 		i, err := strconv.ParseInt(args[2], 10, 64)
 		if err != nil {
-			return GraphiteList{}, errors.New("metric timestamp is invalid, third argument must be an int")
+			logger.WithFields(fields).WithError(ErrMetricExtraction).Errorf("metric timestamp is invalid, third argument must be an int: %s", args[2])
+			continue
 		}
 		g.Timestamp = i
-		graphites = append(graphites, g)
+		graphiteList = append(graphiteList, g)
 	}
 
-	return graphites, nil
+	return graphiteList
 }
