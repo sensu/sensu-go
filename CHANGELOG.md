@@ -6,6 +6,8 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Changed
+- Changed keepalive event to include check.output
 
 ### Fixed
 - Fixed a bug where `sensuctl edit` was not removing the temp file it created.
