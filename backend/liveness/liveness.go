@@ -3,6 +3,7 @@ package liveness
 import (
 	"context"
 	"fmt"
+	"math"
 	"path"
 	"strings"
 	"sync"
@@ -32,6 +33,9 @@ const (
 
 	// The Dead state is 1
 	Dead State = 1
+
+	// If a key is marked as buried, it is slated to be deleted
+	buried = "buried"
 )
 
 func (s State) String() string {
@@ -53,6 +57,9 @@ type Interface interface {
 	// Dead is an assertion that an entity is dead. Dead is useful for
 	// registering entities that are known to be dead, but not yet tracked.
 	Dead(ctx context.Context, key string, ttl int64) error
+
+	// Bury forgets an entity exists
+	Bury(ctx context.Context, key string) error
 }
 
 // Factory is a function that can deliver an Interface
@@ -123,6 +130,20 @@ func NewSwitchSet(client *clientv3.Client, name string, dead, alive EventFunc, l
 	}
 }
 
+// Bury buries a live or dead switch. The switch will no longer
+// or callbacks.
+func (t *SwitchSet) Bury(ctx context.Context, key string) error {
+	key = path.Join(t.prefix, key)
+	if _, err := t.client.Put(ctx, key, buried); err != nil {
+		return fmt.Errorf("error burying switch: %s", err)
+	}
+	if _, err := t.client.Delete(ctx, key); err != nil {
+		return fmt.Errorf("error burying switch: %s", err)
+	}
+
+	return nil
+}
+
 func (t *SwitchSet) ping(ctx context.Context, key string, ttl int64, alive bool) error {
 	if ttl < FallbackTTL {
 		return fmt.Errorf("bad ttl: %d is less than the minimum value of %d", ttl, FallbackTTL)
@@ -167,6 +188,16 @@ func (t *SwitchSet) Alive(ctx context.Context, key string, ttl int64) error {
 // and no registration will occur.
 func (t *SwitchSet) Dead(ctx context.Context, key string, ttl int64) error {
 	return t.ping(ctx, key, ttl, false)
+}
+
+func isBuried(event *clientv3.Event) bool {
+	if event.Kv != nil && len(event.Kv.Value) > 0 {
+		return string(event.Kv.Value) == buried
+	}
+	if event.PrevKv != nil {
+		return string(event.PrevKv.Value) == buried
+	}
+	return false
 }
 
 func (t *SwitchSet) getTTLFromEvent(event *clientv3.Event) (int64, State) {
@@ -238,6 +269,10 @@ func (t *SwitchSet) monitor(ctx context.Context) {
 // negative value, then it is ignored, as it is only an undead entity being
 // replaced by another undead entity.
 func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
+	if isBuried(event) {
+		// The event was buried - we don't need to handle it
+		return
+	}
 	ttl, prevState := t.getTTLFromEvent(event)
 	key := string(event.Kv.Key)
 	switch event.Type {
@@ -288,7 +323,7 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 			t.logger.Errorf("bad PUT for %s: TTL is 0", key)
 			return
 		}
-		if ttl > 0 {
+		if ttl > 0 && ttl != math.MaxInt64 {
 			// A positive TTL indicates the entity is alive
 			t.logger.Debugf("%s alive: %d", key, ttl)
 			t.events <- func() {

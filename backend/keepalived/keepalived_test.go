@@ -34,11 +34,15 @@ func (k *keepalivedTest) Receiver() chan<- interface{} {
 type fakeLivenessInterface struct {
 }
 
-func (f fakeLivenessInterface) Alive(context.Context, string, int64) error {
+func (fakeLivenessInterface) Alive(context.Context, string, int64) error {
 	return nil
 }
 
-func (f fakeLivenessInterface) Dead(context.Context, string, int64) error {
+func (fakeLivenessInterface) Dead(context.Context, string, int64) error {
+	return nil
+}
+
+func (fakeLivenessInterface) Bury(context.Context, string) error {
 	return nil
 }
 
