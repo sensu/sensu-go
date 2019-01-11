@@ -157,12 +157,6 @@ func (a *Agent) buildTransportHeaderMap() http.Header {
 // 8. Start sending periodic keepalives.
 // 9. Start the API server, shutdown the agent if doing so fails.
 func (a *Agent) Run() error {
-	var err error
-	assetManager := asset.NewManager(a.config.CacheDir, a.getAgentEntity(), a.stopping, a.wg)
-	a.assetGetter, err = assetManager.StartAssetManager()
-	if err != nil {
-		return err
-	}
 
 	userCredentials := fmt.Sprintf("%s:%s", a.config.User, a.config.Password)
 	userCredentials = base64.StdEncoding.EncodeToString([]byte(userCredentials))
@@ -173,8 +167,15 @@ func (a *Agent) Run() error {
 	if err := v2.ValidateName(a.config.AgentName); err != nil {
 		return fmt.Errorf("invalid agent name: %v", err)
 	}
-	if timeout := a.config.KeepaliveTimeout; timeout > 0 && timeout < 5 {
+	if timeout := a.config.KeepaliveTimeout; timeout < 5 {
 		return fmt.Errorf("bad keepalive timeout: %d (minimum value is 5 seconds)", timeout)
+	}
+
+	var err error
+	assetManager := asset.NewManager(a.config.CacheDir, a.getAgentEntity(), a.stopping, a.wg)
+	a.assetGetter, err = assetManager.StartAssetManager()
+	if err != nil {
+		return err
 	}
 
 	// Start the statsd listener only if the agent configuration has it enabled
