@@ -2,6 +2,7 @@ package dashboardd
 
 import (
 	"compress/gzip"
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -98,19 +99,16 @@ func (d *Dashboardd) Start() error {
 
 // Stop dashboardd.
 func (d *Dashboardd) Stop() error {
-	if err := d.httpServer.Shutdown(nil); err != nil {
-		// failure/timeout shutting down the server gracefully
-		logger.WithError(err).Error("failed to shutdown http server gracefully - forcing shutdown")
-		if closeErr := d.httpServer.Close(); closeErr != nil {
-			logger.WithError(closeErr).Error("failed to shutdown http server forcefully")
-		}
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := d.httpServer.Shutdown(ctx)
 
 	close(d.stopping)
 	d.wg.Wait()
 	close(d.errChan)
 
-	return nil
+	return err
 }
 
 // Err returns a channel to listen for terminal errors on.
