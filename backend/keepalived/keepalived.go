@@ -361,6 +361,10 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) {
 		if err := deregisterer.Deregister(entity); err != nil {
 			lager.WithError(err).Error("error deregistering entity")
 		}
+		switches := k.livenessFactory(k.Name(), k.dead, k.alive, logger)
+		if err := switches.Bury(context.TODO(), key); err != nil {
+			lager.WithError(err).Error("error registering entity")
+		}
 		return
 	}
 
