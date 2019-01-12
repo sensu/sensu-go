@@ -46,7 +46,7 @@ func TestDeleteCommandRunEClosureMissingFlags(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 	out, err := test.RunCmd(cmd, []string{})
 
-	assert.NotContains(out, "OK")
+	assert.NotContains(out, "Deleted")
 	assert.Contains(out, "Usage")
 	assert.Error(err)
 }
@@ -63,7 +63,7 @@ func TestDeleteCommandRunEClosureTooManyFlags(t *testing.T) {
 
 	out, err := test.RunCmd(cmd, []string{"one", "two"})
 
-	assert.NotContains(out, "OK")
+	assert.NotContains(out, "Deleted")
 	assert.Contains(out, "Usage")
 	assert.Error(err)
 }
@@ -79,7 +79,7 @@ func TestDeleteCommandRunEClosureWithFlags(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 	out, err := test.RunCmd(cmd, []string{"my-ID"})
 
-	assert.Regexp("OK", out)
+	assert.Regexp("Deleted", out)
 	assert.Nil(err)
 }
 

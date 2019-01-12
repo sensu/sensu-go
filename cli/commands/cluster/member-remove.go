@@ -30,7 +30,7 @@ func MemberRemoveCommand(cli *cli.SensuCli) *cobra.Command {
 			if _, err := cli.Client.MemberRemove(id); err != nil {
 				return fmt.Errorf("error removing cluster member: %s", err)
 			}
-			fmt.Fprintln(cmd.OutOrStdout(), "OK")
+			fmt.Fprintf(cmd.OutOrStdout(), "Removed member %x from cluster\n", id)
 			return nil
 		},
 	}

@@ -52,5 +52,5 @@ func TestCommandRunEClosureWithFlags(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("url", "http://127.0.0.1:8080"))
 	out, err := test.RunCmd(cmd, []string{})
 	assert.NoError(err)
-	assert.Regexp("OK", out)
+	assert.Empty(out)
 }

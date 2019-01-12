@@ -41,5 +41,5 @@ func TestSetPasswordCommandRunEClosure(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("new-password", "my-new-password"))
 	out, err := test.RunCmd(cmd, []string{"my-username"})
 	assert.NoError(err)
-	assert.Regexp("OK", out)
+	assert.Regexp("Updated", out)
 }

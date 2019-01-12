@@ -43,7 +43,7 @@ func TestSetGroupsCommandRunEClosureWithFlags(t *testing.T) {
 	cmd := SetGroupsCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"user", "group1,group2,group3"})
 
-	assert.Regexp("OK", out)
+	assert.Regexp("Set", out)
 	assert.Nil(err)
 }
 

@@ -47,5 +47,5 @@ func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{"my-role"})
 
 	assert.NoError(err)
-	assert.Regexp("OK", out)
+	assert.Regexp("Created", out)
 }

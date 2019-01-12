@@ -49,7 +49,7 @@ func (e *deleteExecutor) run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	fmt.Fprintln(cmd.OutOrStdout(), "OK")
+	fmt.Fprintln(cmd.OutOrStdout(), "Deleted")
 	return nil
 }
 

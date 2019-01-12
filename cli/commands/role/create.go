@@ -64,7 +64,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			if err := cli.Client.CreateRole(role); err != nil {
 				return err
 			}
-			_, err = fmt.Fprintln(cmd.OutOrStdout(), "OK")
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), "Created")
 			return err
 		},
 	}

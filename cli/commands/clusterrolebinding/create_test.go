@@ -52,7 +52,7 @@ func TestCreateCommandSubjects(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("user", "foo"))
 	out, err := test.RunCmd(cmd, []string{"admin"})
 	assert.NoError(err)
-	assert.Regexp("OK", out)
+	assert.Regexp("Created", out)
 
 	// A group was provided
 	cmd = CreateCommand(cli)
@@ -60,5 +60,5 @@ func TestCreateCommandSubjects(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("group", "bar"))
 	out, err = test.RunCmd(cmd, []string{"admin"})
 	assert.NoError(err)
-	assert.Regexp("OK", out)
+	assert.Regexp("Created", out)
 }

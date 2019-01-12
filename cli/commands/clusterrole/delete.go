@@ -32,7 +32,7 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			_, err = fmt.Fprintln(cmd.OutOrStdout(), "OK")
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), "Deleted")
 			return err
 		},
 	}

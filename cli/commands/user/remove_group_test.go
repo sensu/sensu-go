@@ -43,7 +43,7 @@ func TestRemoveGroupCommandRunEClosureWithFlags(t *testing.T) {
 	cmd := RemoveGroupCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"user", "group"})
 
-	assert.Regexp("OK", out)
+	assert.Regexp("Removed", out)
 	assert.Nil(err)
 }
 

@@ -31,6 +31,6 @@ func TestCreateCommandRunEClosure(t *testing.T) {
 	cmd := CreateCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"foo"})
 
-	assert.Regexp("OK", out)
+	assert.Regexp("Created", out)
 	assert.NoError(err)
 }

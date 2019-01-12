@@ -52,7 +52,7 @@ func TestCreateCommandRoleRef(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("user", "foo"))
 	out, err := test.RunCmd(cmd, []string{"admin"})
 	assert.NoError(err)
-	assert.Regexp("OK", out)
+	assert.Regexp("Created", out)
 
 	// Role and ClusterRole both provided
 	cmd = CreateCommand(cli)
@@ -80,7 +80,7 @@ func TestCreateCommandSubjects(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("user", "foo"))
 	out, err := test.RunCmd(cmd, []string{"admin"})
 	assert.NoError(err)
-	assert.Regexp("OK", out)
+	assert.Regexp("Created", out)
 
 	// A group was provided
 	cmd = CreateCommand(cli)

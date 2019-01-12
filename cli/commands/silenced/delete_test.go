@@ -53,7 +53,7 @@ func TestDeleteCommandRunEClosureWithFlags(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{"foo:bar"})
 
 	require.NoError(t, err)
-	assert.Regexp("OK", out)
+	assert.Regexp("Deleted", out)
 }
 
 func TestDeleteCommandRunEClosureWithServerErr(t *testing.T) {

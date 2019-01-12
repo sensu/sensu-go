@@ -43,7 +43,7 @@ func TestReinstateCommandRunEClosureWithFlags(t *testing.T) {
 	cmd := ReinstateCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"foo"})
 
-	assert.Regexp("OK", out)
+	assert.Regexp("Reinstated", out)
 	assert.Nil(err)
 }
 

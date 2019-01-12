@@ -48,8 +48,8 @@ authentication provider.
 - Updated Go version from 1.10 to 1.11.4.
 - Changed keepalive event to include check.outputé
 ### Changed
-- Confirmation messages for sensuctl commands, returning OK instead of Created,
-  Deleted, Updated.
+- Confirmation messages for sensuctl commands. Created,
+  Deleted and Updated instead of OK.
 
 ### Fixed
 - Fixed a bug where `sensuctl edit` was not removing the temp file it created.
