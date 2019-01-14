@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -17,7 +18,7 @@ import (
 
 func main() {
 	count := flag.Int("agent-count", 1000, "number of concurrent simulated agents")
-	backendHost := flag.String("backend-host", "localhost", "backend hostname")
+	backendHost := flag.String("backend-host", "localhost", "backend hostnames, comma separated")
 
 	flag.Parse()
 
@@ -26,16 +27,19 @@ func main() {
 		agents []*agent.Agent
 	)
 
+	backends := strings.Split(*backendHost, ",")
+
 	agents = make([]*agent.Agent, *count)
 	i := 0
 
 	for i < *count {
 		name := uuid.New().String()
+		backend := backends[i%len(backends)]
 
 		cfg := agent.NewConfig()
 		cfg.API.Host = agent.DefaultAPIHost
 		cfg.API.Port = agent.DefaultAPIPort
-		cfg.CacheDir = path.SystemCacheDir("sensu-agent")
+		cfg.CacheDir = path.SystemCacheDir(fmt.Sprintf("sensu-agent-%s", name))
 		cfg.Deregister = true
 		cfg.DeregistrationHandler = ""
 		cfg.KeepaliveInterval = agent.DefaultKeepaliveInterval
@@ -47,7 +51,7 @@ func main() {
 		cfg.User = agent.DefaultUser
 		cfg.Subscriptions = []string{"default"}
 		cfg.AgentName = name
-		cfg.BackendURLs = []string{fmt.Sprintf("ws://%s:%d", *backendHost, 8081)}
+		cfg.BackendURLs = []string{fmt.Sprintf("ws://%s:%d", backend, 8081)}
 
 		agent := agent.NewAgent(cfg)
 		if err := agent.Run(); err != nil {

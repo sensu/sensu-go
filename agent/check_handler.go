@@ -209,24 +209,24 @@ func (a *Agent) sendFailure(event *v2.Event, err error) {
 
 func extractMetrics(event *v2.Event) []*v2.MetricPoint {
 	var transformer Transformer
-	var err error
-	switch event.Check.OutputMetricFormat {
-	case v2.GraphiteOutputMetricFormat:
-		transformer, err = transformers.ParseGraphite(event.Check.Output)
-	case v2.InfluxDBOutputMetricFormat:
-		transformer, err = transformers.ParseInflux(event.Check.Output)
-	case v2.NagiosOutputMetricFormat:
-		transformer, err = transformers.ParseNagios(event)
-	case v2.OpenTSDBOutputMetricFormat:
-		transformer, err = transformers.ParseOpenTSDB(event.Check.Output)
-	}
-
-	if err != nil {
-		logger.WithError(err).Error("unable to extract metric from check output")
+	if !event.HasCheck() {
+		logger.WithError(transformers.ErrMetricExtraction).Error("event must contain a check to parse and extract metrics")
 		return nil
 	}
+
+	switch event.Check.OutputMetricFormat {
+	case v2.GraphiteOutputMetricFormat:
+		transformer = transformers.ParseGraphite(event)
+	case v2.InfluxDBOutputMetricFormat:
+		transformer = transformers.ParseInflux(event)
+	case v2.NagiosOutputMetricFormat:
+		transformer = transformers.ParseNagios(event)
+	case v2.OpenTSDBOutputMetricFormat:
+		transformer = transformers.ParseOpenTSDB(event)
+	}
+
 	if transformer == nil {
-		logger.WithField("format", event.Check.OutputMetricFormat).Error("output metric format is not supported")
+		logger.WithField("format", event.Check.OutputMetricFormat).WithError(transformers.ErrMetricExtraction).Error("output metric format is not supported")
 		return nil
 	}
 

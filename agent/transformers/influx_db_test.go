@@ -13,7 +13,6 @@ func TestParseInflux(t *testing.T) {
 	testCases := []struct {
 		metric           string
 		expectedFormat   InfluxList
-		expectedErr      bool
 		timeInconclusive bool
 	}{
 		{
@@ -44,7 +43,6 @@ func TestParseInflux(t *testing.T) {
 					Timestamp: 1465839830,
 				},
 			},
-			expectedErr: false,
 		},
 		{
 			metric: "weather,location=us-midwest,season=summer temperature=82,humidity=30 1465839830100400200\nweather temperature=82 1465839830100400200\n",
@@ -85,7 +83,35 @@ func TestParseInflux(t *testing.T) {
 					Timestamp: 1465839830,
 				},
 			},
-			expectedErr: false,
+		},
+		{
+			metric: "weather,location=us-midwest,season=summer temperature=82,humidity=30 1465839830100400200\nfoo\n",
+			expectedFormat: InfluxList{
+				{
+					Measurement: "weather",
+					TagSet: []*types.MetricTag{
+						{
+							Name:  "location",
+							Value: "us-midwest",
+						},
+						{
+							Name:  "season",
+							Value: "summer",
+						},
+					},
+					FieldSet: []*Field{
+						{
+							Key:   "temperature",
+							Value: 82,
+						},
+						{
+							Key:   "humidity",
+							Value: 30,
+						},
+					},
+					Timestamp: 1465839830,
+				},
+			},
 		},
 		{
 			metric: "weather temperature=82 1465839830100400200",
@@ -102,43 +128,34 @@ func TestParseInflux(t *testing.T) {
 					Timestamp: 1465839830,
 				},
 			},
-			expectedErr: false,
 		},
 		{
 			metric:           "weather temperature=82",
 			timeInconclusive: true,
-			expectedErr:      false,
 		},
 		{
 			metric:         "weather temperature=82 12345 blah",
-			expectedFormat: InfluxList{},
-			expectedErr:    true,
+			expectedFormat: InfluxList(nil),
 		},
 		{
 			metric:         "weather,location temperature= 1465839830100400200",
-			expectedFormat: InfluxList{},
-			expectedErr:    true,
+			expectedFormat: InfluxList(nil),
 		},
 		{
 			metric:         "",
-			expectedFormat: InfluxList{},
-			expectedErr:    true,
+			expectedFormat: InfluxList(nil),
 		},
 		{
 			metric:         "foo bar baz",
-			expectedFormat: InfluxList{},
-			expectedErr:    true,
+			expectedFormat: InfluxList(nil),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.metric, func(t *testing.T) {
-			graphite, err := ParseInflux(tc.metric)
-			if tc.expectedErr {
-				assert.Error(err)
-			} else {
-				assert.NoError(err)
-			}
+			event := types.FixtureEvent("test", "test")
+			event.Check.Output = tc.metric
+			graphite := ParseInflux(event)
 			if !tc.timeInconclusive {
 				assert.Equal(tc.expectedFormat, graphite)
 			}
@@ -240,7 +257,6 @@ func TestParseAndTransformInflux(t *testing.T) {
 	testCases := []struct {
 		metric           string
 		expectedFormat   []*types.MetricPoint
-		expectedErr      bool
 		timeInconclusive bool
 	}{
 		{
@@ -277,7 +293,23 @@ func TestParseAndTransformInflux(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: false,
+		},
+		{
+			metric: "weather temperature=82,humidity=30 1465839830100400200\nfoo",
+			expectedFormat: []*types.MetricPoint{
+				{
+					Name:      "weather.temperature",
+					Value:     82,
+					Timestamp: 1465839830,
+					Tags:      []*types.MetricTag{},
+				},
+				{
+					Name:      "weather.humidity",
+					Value:     30,
+					Timestamp: 1465839830,
+					Tags:      []*types.MetricTag{},
+				},
+			},
 		},
 		{
 			metric: "weather,location=us-midwest,season=summer temperature=82 1465839830100400200\nweather,location=us-midwest,season=summer humidity=30 1465839830100400200",
@@ -313,7 +345,6 @@ func TestParseAndTransformInflux(t *testing.T) {
 					},
 				},
 			},
-			expectedErr: false,
 		},
 		{
 			metric: "metric value=0 0\n",
@@ -325,42 +356,37 @@ func TestParseAndTransformInflux(t *testing.T) {
 					Tags:      []*types.MetricTag{},
 				},
 			},
-			expectedErr: false,
 		},
 		{
 			metric:           "weather temperature=82",
 			timeInconclusive: true,
-			expectedErr:      false,
 		},
 		{
-			metric:      "weather temperature=82 12345 blah",
-			expectedErr: true,
+			metric:         "weather temperature=82 12345 blah",
+			expectedFormat: []*types.MetricPoint(nil),
 		},
 		{
-			metric:      "weather,location temperature= 1465839830100400200",
-			expectedErr: true,
+			metric:         "weather,location temperature= 1465839830100400200",
+			expectedFormat: []*types.MetricPoint(nil),
 		},
 		{
-			metric:      "",
-			expectedErr: true,
+			metric:         "",
+			expectedFormat: []*types.MetricPoint(nil),
 		},
 		{
-			metric:      "foo bar baz",
-			expectedErr: true,
+			metric:         "foo bar baz",
+			expectedFormat: []*types.MetricPoint(nil),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.metric, func(t *testing.T) {
-			influx, err := ParseInflux(tc.metric)
-			if tc.expectedErr {
-				assert.Error(err)
-			} else {
-				assert.NoError(err)
-				mp := influx.Transform()
-				if !tc.timeInconclusive {
-					assert.Equal(tc.expectedFormat, mp)
-				}
+			event := types.FixtureEvent("test", "test")
+			event.Check.Output = tc.metric
+			influx := ParseInflux(event)
+			mp := influx.Transform()
+			if !tc.timeInconclusive {
+				assert.Equal(tc.expectedFormat, mp)
 			}
 		})
 	}

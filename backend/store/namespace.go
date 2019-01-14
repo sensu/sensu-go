@@ -22,6 +22,11 @@ func NewNamespaceFromContext(ctx context.Context) string {
 	return ""
 }
 
+// NamespaceContext returns a context populated with the provided namespace.
+func NamespaceContext(ctx context.Context, namespace string) context.Context {
+	return context.WithValue(ctx, types.NamespaceKey, namespace)
+}
+
 // NewNamespaceFromResource creates a new Namespace from a MultitenantResource.
 func NewNamespaceFromResource(resource types.MultitenantResource) string {
 	return resource.GetNamespace()
