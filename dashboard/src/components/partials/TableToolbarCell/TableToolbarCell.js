@@ -10,6 +10,7 @@ const styles = theme => {
   return {
     root: {
       position: "relative",
+      color: theme.palette.text.primary,
     },
     container: {
       display: "flex",
