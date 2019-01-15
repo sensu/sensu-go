@@ -36,7 +36,6 @@ class OverflowButton extends React.PureComponent {
         aria-label="More options"
         aria-owns={idx}
         aria-haspopup="true"
-        color="inherit"
         onClick={onClick}
         className={active ? classes.active : ""}
       >

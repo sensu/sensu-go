@@ -19,7 +19,7 @@ class MenuItem extends React.PureComponent {
 
   static defaultProps = {
     collapsed: false,
-    color: "inherit",
+    color: "unset",
     description: null,
     icon: null,
     onClick: () => null,
