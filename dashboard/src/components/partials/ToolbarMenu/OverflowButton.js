@@ -7,7 +7,7 @@ import KebabIcon from "/icons/Kebab";
 import IconButton from "@material-ui/core/IconButton";
 
 const styles = theme => ({
-  root: {},
+  root: { color: theme.palette.text.secondary },
   active: {
     backgroundColor: fade(
       theme.palette.action.active,
