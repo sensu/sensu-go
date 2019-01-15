@@ -7,7 +7,7 @@ import KebabIcon from "/icons/Kebab";
 import IconButton from "@material-ui/core/IconButton";
 
 const styles = theme => ({
-  root: { color: theme.palette.text.secondary },
+  root: {},
   active: {
     backgroundColor: fade(
       theme.palette.action.active,
@@ -36,6 +36,7 @@ class OverflowButton extends React.PureComponent {
         aria-label="More options"
         aria-owns={idx}
         aria-haspopup="true"
+        color="inherit"
         onClick={onClick}
         className={active ? classes.active : ""}
       >
