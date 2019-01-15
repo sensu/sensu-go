@@ -114,4 +114,29 @@ func TestKeepaliveMonitor(t *testing.T) {
 		assert.FailNow(t, "message type was not an event")
 	}
 	assert.Equal(t, uint32(1), warnEvent.Check.Status)
+
+	// Make the entity ephemeral, so that the absence of keepalives leads to its
+	// deregistration and no keepalive failure events.
+	entity.Deregister = true
+	if err := store.UpdateEntity(ctx, entity); err != nil {
+		t.Fatal(err)
+	}
+
+	// We shouldn't see any keepalive failures after waiting for at least
+	// keepalive.Interval + keepalive.Timeout.
+	timer := time.NewTimer(time.Duration(keepalive.Check.Interval+keepalive.Check.Timeout) * time.Second)
+	select {
+	case <-eventChan:
+		assert.FailNow(t, "unexpected event received")
+	case <-timer.C:
+	}
+
+	// Check that the entity has indeed been deregistered
+	result, err := store.GetEntityByName(ctx, entity.Name)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result != nil {
+		assert.FailNow(t, "entity did not get deregistered")
+	}
 }
