@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -44,8 +45,8 @@ func TestRefreshTokenNoRefreshToken(t *testing.T) {
 	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
-	user := &types.User{Username: "foo"}
-	_, tokenString, _ := jwt.AccessToken(user)
+	claims := v2.FixtureClaims("foo", nil)
+	_, tokenString, _ := jwt.AccessToken(claims)
 
 	req, _ := http.NewRequest(http.MethodPost, server.URL, nil)
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
@@ -67,8 +68,8 @@ func TestRefreshTokenInvalidRefreshToken(t *testing.T) {
 	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
-	user := &types.User{Username: "foo"}
-	_, tokenString, _ := jwt.AccessToken(user)
+	claims := v2.FixtureClaims("foo", nil)
+	_, tokenString, _ := jwt.AccessToken(claims)
 	refreshTokenString := "foobar"
 	body := &types.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
@@ -86,10 +87,10 @@ func TestRefreshTokenMismatchingSub(t *testing.T) {
 	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
-	user1 := &types.User{Username: "foo"}
-	user2 := &types.User{Username: "bar"}
-	_, tokenString, _ := jwt.AccessToken(user1)
-	_, refreshTokenString, _ := jwt.RefreshToken(user2)
+	fooClaims := v2.FixtureClaims("foo", nil)
+	barClaims := v2.FixtureClaims("bar", nil)
+	_, tokenString, _ := jwt.AccessToken(fooClaims)
+	_, refreshTokenString, _ := jwt.RefreshToken(barClaims)
 
 	body := &types.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
@@ -122,9 +123,9 @@ func TestRefreshTokenSuccess(t *testing.T) {
 	))
 	defer server.Close()
 
-	user := &types.User{Username: "foo"}
-	_, tokenString, _ := jwt.AccessToken(user)
-	_, refreshTokenString, _ := jwt.RefreshToken(user)
+	claims := v2.FixtureClaims("foo", nil)
+	_, tokenString, _ := jwt.AccessToken(claims)
+	_, refreshTokenString, _ := jwt.RefreshToken(claims)
 	body := &types.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
 

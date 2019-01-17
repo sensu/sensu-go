@@ -8,6 +8,7 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/echlebek/crock"
 	time "github.com/echlebek/timeproxy"
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -22,9 +23,9 @@ func init() {
 
 func TestAccessToken(t *testing.T) {
 	secret = []byte("foobar")
-	user := &types.User{Username: "foo"}
+	claims := &v2.Claims{StandardClaims: jwt.StandardClaims{Subject: "foo"}}
 
-	_, tokenString, err := AccessToken(user)
+	_, tokenString, err := AccessToken(claims)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, tokenString)
 
@@ -32,33 +33,32 @@ func TestAccessToken(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, token)
 
-	claims, _ := token.Claims.(*types.Claims)
-	assert.Equal(t, user.Username, claims.Subject)
-	assert.NotEmpty(t, claims.Id)
-	assert.NotZero(t, claims.ExpiresAt)
+	tokenClaims, _ := token.Claims.(*types.Claims)
+	assert.Equal(t, claims.Subject, tokenClaims.Subject)
+	assert.NotEmpty(t, tokenClaims.Id)
+	assert.NotZero(t, tokenClaims.ExpiresAt)
 }
 
 func TestClaimsContext(t *testing.T) {
-	user := &types.User{Username: "foo"}
-	token, _, _ := AccessToken(user)
+	claims := &v2.Claims{StandardClaims: jwt.StandardClaims{Subject: "foo"}}
 
 	r, _ := http.NewRequest("GET", "/foo", nil)
+	ctx := SetClaimsIntoContext(r, claims)
 
-	ctx := SetClaimsIntoContext(r, token.Claims.(*types.Claims))
-	claims := GetClaimsFromContext(ctx)
-	assert.Equal(t, user.Username, claims.Subject)
+	tokenClaims := GetClaimsFromContext(ctx)
+	assert.Equal(t, claims.Subject, tokenClaims.Subject)
 }
 
 func TestGetClaims(t *testing.T) {
-	user := &types.User{Username: "foo"}
-	token, _, _ := AccessToken(user)
+	claims := &v2.Claims{StandardClaims: jwt.StandardClaims{Subject: "foo"}}
+	token, _, _ := AccessToken(claims)
 
 	_, err := GetClaims(token)
 	assert.NoError(t, err)
 }
 
 func TestExtractBearerToken(t *testing.T) {
-	user := &types.User{Username: "foo"}
+	claims := &v2.Claims{StandardClaims: jwt.StandardClaims{Subject: "foo"}}
 
 	// No bearer token
 	r, _ := http.NewRequest("GET", "/foo", nil)
@@ -68,7 +68,7 @@ func TestExtractBearerToken(t *testing.T) {
 
 	// Valid bearer token
 	r, _ = http.NewRequest("GET", "/foo", nil)
-	_, tokenString, _ := AccessToken(user)
+	_, tokenString, _ := AccessToken(claims)
 	r.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
 	token = ExtractBearerToken(r)
 
@@ -109,23 +109,23 @@ func TestInitSecretEtcdError(t *testing.T) {
 
 func TestRefreshToken(t *testing.T) {
 	secret = []byte("foobar")
-	user := &types.User{Username: "foo"}
-	_, tokenString, err := RefreshToken(user)
+	claims := &v2.Claims{StandardClaims: jwt.StandardClaims{Subject: "foo"}}
+	_, tokenString, err := RefreshToken(claims)
 	assert.NoError(t, err)
 
 	token, err := ValidateToken(tokenString)
 	assert.NoError(t, err)
 	assert.NotNil(t, token)
 
-	claims, _ := token.Claims.(*types.Claims)
-	assert.Equal(t, user.Username, claims.Subject)
-	assert.NotEmpty(t, claims.Id)
+	tokenClaims, _ := token.Claims.(*types.Claims)
+	assert.Equal(t, claims.Subject, tokenClaims.Subject)
+	assert.NotEmpty(t, tokenClaims.Id)
 }
 
 func TestValidateTokenError(t *testing.T) {
 	// Create an expired token
-	user := &types.User{Username: "foo"}
-	_, tokenString, _ := AccessToken(user)
+	claims := &v2.Claims{StandardClaims: jwt.StandardClaims{Subject: "foo"}}
+	_, tokenString, _ := AccessToken(claims)
 
 	// Assert that the token is currently valid
 	_, err := ValidateToken(tokenString)
@@ -141,8 +141,8 @@ func TestValidateTokenError(t *testing.T) {
 // token but otherwise valid
 func TestValidateExpiredToken(t *testing.T) {
 	// Create an expired token
-	user := &types.User{Username: "foo"}
-	_, tokenString, _ := AccessToken(user)
+	claims := &v2.Claims{StandardClaims: jwt.StandardClaims{Subject: "foo"}}
+	_, tokenString, _ := AccessToken(claims)
 
 	// Wait for the token to expire
 	testTime.Set(time.Now().Add(defaultExpiration + time.Second))
@@ -151,9 +151,9 @@ func TestValidateExpiredToken(t *testing.T) {
 }
 
 func TestValidateExpiredTokenActive(t *testing.T) {
-	user := &types.User{Username: "foo"}
+	claims := &v2.Claims{StandardClaims: jwt.StandardClaims{Subject: "foo"}}
 
-	_, tokenString, err := AccessToken(user)
+	_, tokenString, err := AccessToken(claims)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, tokenString)
 
@@ -165,8 +165,8 @@ func TestValidateExpiredTokenActive(t *testing.T) {
 func TestValidateExpiredTokenInvalid(t *testing.T) {
 	// Create an expired token
 	secret = []byte("foobar")
-	user := &types.User{Username: "foo"}
-	_, tokenString, _ := AccessToken(user)
+	claims := &v2.Claims{StandardClaims: jwt.StandardClaims{Subject: "foo"}}
+	_, tokenString, _ := AccessToken(claims)
 
 	// The token will expire
 	testTime.Set(time.Now().Add(defaultExpiration + time.Second))

@@ -9,8 +9,12 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
+	"github.com/sensu/sensu-go/backend/authentication/providers"
+	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -19,7 +23,7 @@ import (
 
 func TestLoginNoCredentials(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationRouter{store}
+	a := authenticationRouter(store)
 
 	req, _ := http.NewRequest(http.MethodGet, "/auth", nil)
 
@@ -29,7 +33,7 @@ func TestLoginNoCredentials(t *testing.T) {
 
 func TestLoginInvalidCredentials(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationRouter{store}
+	a := authenticationRouter(store)
 
 	user := types.FixtureUser("foo")
 	store.
@@ -45,10 +49,10 @@ func TestLoginInvalidCredentials(t *testing.T) {
 
 func TestLoginSuccessful(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationRouter{store}
+	a := authenticationRouter(store)
 
 	user := types.FixtureUser("foo")
-	store.On("CreateToken", mock.Anything).Return(nil)
+	store.On("AllowTokens", mock.AnythingOfType("[]*jwt.Token")).Return(nil)
 	store.
 		On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").
 		Return(user, nil)
@@ -72,18 +76,15 @@ func TestLoginSuccessful(t *testing.T) {
 
 func TestLogoutNotWhitelisted(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationRouter{store}
+	a := authenticationRouter(store)
 
 	// Mock calls to the store
-	store.On(
-		"DeleteTokens",
-		mock.AnythingOfType("string"),
-		mock.AnythingOfType("[]string"),
-	).Return(fmt.Errorf("error"))
+	store.On("RevokeTokens", mock.AnythingOfType("[]*v2.Claims")).Return(fmt.Errorf("error"))
 
-	user := &types.User{Username: "foo"}
-	_, tokenString, _ := jwt.AccessToken(user)
-	_, refreshTokenString, _ := jwt.RefreshToken(user)
+	claims := v2.FixtureClaims("foo", nil)
+	_, tokenString, _ := jwt.AccessToken(claims)
+	refreshClaims := &v2.Claims{StandardClaims: v2.StandardClaims(claims.Subject)}
+	_, refreshTokenString, _ := jwt.RefreshToken(refreshClaims)
 	body := &types.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
 
@@ -96,18 +97,15 @@ func TestLogoutNotWhitelisted(t *testing.T) {
 
 func TestLogoutSuccess(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationRouter{store}
+	a := authenticationRouter(store)
 
 	// Mock calls to the store
-	store.On(
-		"DeleteTokens",
-		mock.AnythingOfType("string"),
-		mock.AnythingOfType("[]string"),
-	).Return(nil)
+	store.On("RevokeTokens", mock.AnythingOfType("[]*v2.Claims")).Return(nil)
 
-	user := &types.User{Username: "foo"}
-	_, tokenString, _ := jwt.AccessToken(user)
-	_, refreshTokenString, _ := jwt.RefreshToken(user)
+	claims := v2.FixtureClaims("foo", nil)
+	_, tokenString, _ := jwt.AccessToken(claims)
+	refreshClaims := &v2.Claims{StandardClaims: v2.StandardClaims(claims.Subject)}
+	_, refreshTokenString, _ := jwt.RefreshToken(refreshClaims)
 	body := &types.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
 
@@ -120,7 +118,7 @@ func TestLogoutSuccess(t *testing.T) {
 
 func TestTokenRefreshTokenNotWhitelisted(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationRouter{store}
+	a := authenticationRouter(store)
 	user := &types.User{Username: "foo"}
 
 	// Mock calls to the store
@@ -134,8 +132,10 @@ func TestTokenRefreshTokenNotWhitelisted(t *testing.T) {
 		mock.AnythingOfType("string"),
 	).Return(user, nil)
 
-	_, tokenString, _ := jwt.AccessToken(user)
-	_, refreshTokenString, _ := jwt.RefreshToken(user)
+	claims := v2.FixtureClaims("foo", nil)
+	_, tokenString, _ := jwt.AccessToken(claims)
+	refreshClaims := &v2.Claims{StandardClaims: v2.StandardClaims(claims.Subject)}
+	_, refreshTokenString, _ := jwt.RefreshToken(refreshClaims)
 	body := &types.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
 
@@ -143,33 +143,28 @@ func TestTokenRefreshTokenNotWhitelisted(t *testing.T) {
 	req.Header.Add("Authorization", fmt.Sprintf("Bearer %s", tokenString))
 	res := processRequestWithRefreshToken(a, req)
 
-	assert.Equal(t, http.StatusInternalServerError, res.Code)
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
 }
 
 func TestTokenCannotWhitelistAccessToken(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationRouter{store}
+	a := authenticationRouter(store)
 	user := &types.User{Username: "foo"}
 
 	// Mock calls to the store
-	store.On("CreateToken", mock.Anything).Return(fmt.Errorf("error"))
-	store.On(
-		"DeleteTokens",
-		mock.AnythingOfType("string"),
-		mock.AnythingOfType("[]string"),
-	).Return(nil)
-	store.On(
-		"GetToken",
-		mock.AnythingOfType("string"),
-		mock.AnythingOfType("string"),
+	store.On("AllowTokens", mock.AnythingOfType("[]*jwt.Token")).Return(fmt.Errorf("error"))
+	store.On("RevokeTokens", mock.AnythingOfType("[]*v2.Claims")).Return(nil)
+	store.On("GetToken",
+		mock.AnythingOfType("string"), mock.AnythingOfType("string"),
 	).Return(&types.Claims{}, nil)
 	store.On("GetUser",
-		mock.AnythingOfType("*context.valueCtx"),
-		mock.AnythingOfType("string"),
+		mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("string"),
 	).Return(user, nil)
 
-	_, tokenString, _ := jwt.AccessToken(user)
-	_, refreshTokenString, _ := jwt.RefreshToken(user)
+	claims := v2.FixtureClaims("foo", nil)
+	_, tokenString, _ := jwt.AccessToken(claims)
+	refreshClaims := &v2.Claims{StandardClaims: v2.StandardClaims(claims.Subject)}
+	_, refreshTokenString, _ := jwt.RefreshToken(refreshClaims)
 	body := &types.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
 
@@ -182,28 +177,23 @@ func TestTokenCannotWhitelistAccessToken(t *testing.T) {
 
 func TestTokenSuccess(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationRouter{store}
+	a := authenticationRouter(store)
 	user := &types.User{Username: "foo"}
 
 	// Mock calls to the store
-	store.On("CreateToken", mock.Anything).Return(nil)
-	store.On(
-		"DeleteTokens",
-		mock.AnythingOfType("string"),
-		mock.AnythingOfType("[]string"),
-	).Return(nil)
-	store.On(
-		"GetToken",
-		mock.AnythingOfType("string"),
-		mock.AnythingOfType("string"),
+	store.On("AllowTokens", mock.AnythingOfType("[]*jwt.Token")).Return(nil)
+	store.On("RevokeTokens", mock.AnythingOfType("[]*v2.Claims")).Return(nil)
+	store.On("GetToken",
+		mock.AnythingOfType("string"), mock.AnythingOfType("string"),
 	).Return(&types.Claims{}, nil)
 	store.On("GetUser",
-		mock.AnythingOfType("*context.valueCtx"),
-		mock.AnythingOfType("string"),
+		mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("string"),
 	).Return(user, nil)
 
-	_, tokenString, _ := jwt.AccessToken(user)
-	_, refreshTokenString, _ := jwt.RefreshToken(user)
+	claims := v2.FixtureClaims("foo", nil)
+	_, tokenString, _ := jwt.AccessToken(claims)
+	refreshClaims := &v2.Claims{StandardClaims: v2.StandardClaims(claims.Subject)}
+	_, refreshTokenString, _ := jwt.RefreshToken(refreshClaims)
 	body := &types.Tokens{Refresh: refreshTokenString}
 	payload, _ := json.Marshal(body)
 
@@ -223,6 +213,13 @@ func TestTokenSuccess(t *testing.T) {
 	assert.NotEqual(t, tokenString, response.Access)
 	assert.NotZero(t, response.ExpiresAt)
 	assert.NotEmpty(t, response.Refresh)
+}
+
+func authenticationRouter(store store.Store) *AuthenticationRouter {
+	authenticator := &providers.Authenticator{}
+	provider := &basic.Provider{Store: store}
+	authenticator.AddProvider(provider)
+	return &AuthenticationRouter{store: store, authenticator: authenticator}
 }
 
 func processRequestWithRefreshToken(

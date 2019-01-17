@@ -34,8 +34,8 @@ func (m AllowList) Then(next http.Handler) http.Handler {
 		// Validate that the JWT is authorized
 		if _, err := m.Store.GetToken(claims.Subject, claims.Id); err != nil {
 			logger.WithFields(logrus.Fields{
-				"user":         claims.Subject,
-				"access token": claims.Id,
+				"token_id": claims.Id,
+				"user":     claims.Subject,
 			}).WithError(err).Error("access token is not authorized")
 			http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 			return

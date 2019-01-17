@@ -18,3 +18,13 @@ type Daemon interface {
 	// Name returns the name of the daemon
 	Name() string
 }
+
+// Get returns the daemon with the provided name
+func Get(daemons []Daemon, name string) Daemon {
+	for _, daemon := range daemons {
+		if daemon.Name() == name {
+			return daemon
+		}
+	}
+	return nil
+}
