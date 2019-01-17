@@ -10,7 +10,6 @@ const styles = theme => {
   return {
     root: {
       position: "relative",
-      color: theme.palette.text.primary,
     },
     container: {
       display: "flex",
@@ -60,7 +59,7 @@ class TableToolbarCell extends React.Component {
     const { classes, disabled } = this.props;
 
     return (
-      <TableCell padding="none" className={classes.root}>
+      <TableCell padding="none" className={classes.root} {...this.props}>
         {!disabled && this.renderCell()}
       </TableCell>
     );

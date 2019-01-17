@@ -133,14 +133,13 @@ class EventListItem extends React.Component {
                   <ResolveMenuItem
                     iconOnly
                     disabled={event.status === 0}
-                    description="Resolve event."
                     onClick={this.props.onClickResolve}
                   />
                 </ToolbarMenu.Item>
                 <ToolbarMenu.Item id="re-run" visible="never">
                   <QueueMenuItem
+                    iconOnly
                     disabled={event.check.name === "keepalive"}
-                    title="Re-run Check"
                     onClick={this.props.onClickRerun}
                   />
                 </ToolbarMenu.Item>
