@@ -6,7 +6,6 @@ import Media from "react-media";
 import TableToolbarCell from "./TableToolbarCell";
 
 const styles = theme => ({
-  root: {},
   soft: {
     color: theme.palette.text.secondary,
   },
