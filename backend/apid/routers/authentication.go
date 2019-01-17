@@ -118,7 +118,7 @@ func (a *AuthenticationRouter) logout(w http.ResponseWriter, r *http.Request) {
 
 	// Remove the access & refresh tokens from the access list
 	if err := a.store.RevokeTokens(accessClaims, refreshClaims); err != nil {
-		logger.WithField("user", refreshClaims.Subject).Errorf(
+		logger.WithError(err).WithField("user", refreshClaims.Subject).Errorf(
 			"could not revoke tokens IDs %q & %q", accessClaims.Id, refreshClaims.Id,
 		)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
