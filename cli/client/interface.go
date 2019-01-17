@@ -39,6 +39,7 @@ type GenericClient interface {
 // AuthenticationAPIClient client methods for authenticating
 type AuthenticationAPIClient interface {
 	CreateAccessToken(url string, userid string, secret string) (*types.Tokens, error)
+	TestCreds(userid string, secret string) error
 	Logout(token string) error
 	RefreshAccessToken(refreshToken string) (*types.Tokens, error)
 }

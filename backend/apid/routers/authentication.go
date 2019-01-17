@@ -24,6 +24,7 @@ func NewAuthenticationRouter(store store.Store) *AuthenticationRouter {
 // Mount the authentication routes on given mux.Router.
 func (a *AuthenticationRouter) Mount(r *mux.Router) {
 	r.HandleFunc("/auth", a.login).Methods(http.MethodGet)
+	r.HandleFunc("/auth/test", a.test).Methods(http.MethodGet)
 	r.HandleFunc("/auth/token", a.token).Methods(http.MethodPost)
 	r.HandleFunc("/auth/logout", a.logout).Methods(http.MethodPost)
 }
@@ -116,6 +117,26 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	_, _ = fmt.Fprint(w, string(resBytes))
+}
+
+// test provides minimal username and password validation
+func (a *AuthenticationRouter) test(w http.ResponseWriter, r *http.Request) {
+	// Check for credentials provided in the Authorization header
+	username, password, ok := r.BasicAuth()
+	if !ok {
+		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Authenticate against the provider
+	_, err := a.store.AuthenticateUser(r.Context(), username, password)
+	if err != nil {
+		logger.WithField(
+			"user", username,
+		).WithError(err).Error("invalid username and/or password")
+		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		return
+	}
 }
 
 // logout handles the logout flow

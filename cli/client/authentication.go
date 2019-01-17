@@ -35,6 +35,24 @@ func (client *RestClient) CreateAccessToken(url, userid, password string) (*type
 	return &tokens, err
 }
 
+// TestCreds checks if the provided User credentials are valid
+func (client *RestClient) TestCreds(userid, password string) error {
+	client.ClearAuthToken()
+
+	res, err := client.R().SetBasicAuth(userid, password).Get("/auth/test")
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() == 401 {
+		return errors.New(string(res.Body()))
+	} else if res.StatusCode() >= 400 {
+		return errors.New("Received an unexpected response from the API")
+	}
+
+	return nil
+}
+
 // Logout performs a logout of the configured user
 func (client *RestClient) Logout(token string) error {
 	res, err := client.R().
