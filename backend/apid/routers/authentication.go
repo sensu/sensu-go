@@ -44,7 +44,8 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 	// Authenticate against the provider
 	claims, err := a.authenticator.Authenticate(r.Context(), username, password)
 	if err != nil {
-		logger.WithField("user", username).Error("invalid username and/or password")
+		logger.WithError(err).WithField("user", username).
+			Error("invalid username and/or password")
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}
