@@ -37,3 +37,11 @@ Read any documentation that relates to the change you're making. If it needs
 updating, update it and file a PR. The PR should be linked to this PR
 or the original issue.
 -->
+
+## Does this change require a new test case?
+
+<!--
+For features and bugfixes, it probably does. Contributors should describe the end user steps to validate the change.
+Engineering should add the test case to the TestRail test plan, and write an automated Rspec test, if applicable.
+The corresponding sensu-go-qa-crucible PR or issue should be linked here.
+-->
