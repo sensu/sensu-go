@@ -138,7 +138,6 @@ class EventListItem extends React.Component {
                 </ToolbarMenu.Item>
                 <ToolbarMenu.Item id="re-run" visible="never">
                   <QueueMenuItem
-                    iconOnly
                     disabled={event.check.name === "keepalive"}
                     onClick={this.props.onClickRerun}
                   />
