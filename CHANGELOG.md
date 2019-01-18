@@ -14,6 +14,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed a bug where a bad line in check output would abort metric extraction.
 An error is now logged instead, and extraction continues after a bad line is encountered.
 - Fixed a panic in the dashboardd shutdown routine.
+- Fixed a bug where deleting a non-existent entity with sensuctl would not return an error.
 
 ### Changed
 - Improved logging for errors in proxy check requests.
