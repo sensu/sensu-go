@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"crypto/tls"
 	"os"
 
 	"github.com/sensu/sensu-go/cli/client"
@@ -29,6 +30,12 @@ type SensuCli struct {
 func New(flags *pflag.FlagSet) *SensuCli {
 	conf := basic.Load(flags)
 	client := client.New(conf)
+
+	tlsConfig := tls.Config{}
+	tlsConfig.InsecureSkipVerify = conf.InsecureSkipTLSVerify
+
+	client.SetTLSClientConfig(&tlsConfig)
+
 	logger := logrus.WithFields(logrus.Fields{
 		"component": "cli-client",
 	})
