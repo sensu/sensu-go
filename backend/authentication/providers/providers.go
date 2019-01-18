@@ -35,7 +35,7 @@ func (a *Authenticator) Authenticate(ctx context.Context, username, password str
 
 	for _, provider := range a.providers {
 		claims, err := provider.Authenticate(ctx, username, password)
-		if err != nil {
+		if err != nil || claims == nil {
 			logger.WithError(err).Debugf(
 				"could not authenticate with provider %q", provider.Type(),
 			)
