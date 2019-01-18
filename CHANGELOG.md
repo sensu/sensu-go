@@ -18,7 +18,7 @@ An error is now logged instead, and extraction continues after a bad line is enc
 
 ### Changed
 - Improved logging for errors in proxy check requests.
-- Updated Go version from 1.10 to 1.11.
+- Updated Go version from 1.10 to 1.11.4.
 
 ## [5.1.0] - 2018-12-18
 
