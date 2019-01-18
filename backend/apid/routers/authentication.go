@@ -126,7 +126,6 @@ func (a *AuthenticationRouter) test(w http.ResponseWriter, r *http.Request) {
 		"user", username,
 	).WithError(err).Info("invalid username and/or password")
 	http.Error(w, "Request unauthorized", http.StatusUnauthorized)
-	return
 }
 
 // logout handles the logout flow
