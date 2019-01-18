@@ -24,6 +24,7 @@ jobs:
   build:
     <<: *sensu_go_build_env
 
+    parallelism: 2
     steps:
       - checkout
 
@@ -60,6 +61,7 @@ jobs:
   test:
     <<: *sensu_go_build_env
     resource_class: medium+
+    parallelism: 2
     steps:
       - attach_workspace:
           # Must be absolute path or relative path from working_directory
