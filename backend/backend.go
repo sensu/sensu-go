@@ -14,6 +14,8 @@ import (
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
+	"github.com/sensu/sensu-go/backend/authentication/providers"
+	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
 	"github.com/sensu/sensu-go/backend/daemon"
 	"github.com/sensu/sensu-go/backend/dashboardd"
 	"github.com/sensu/sensu-go/backend/etcd"
@@ -206,6 +208,11 @@ func Initialize(config *Config) (*Backend, error) {
 		return nil, err
 	}
 
+	// Prepare the authentication providers
+	authenticator := &providers.Authenticator{}
+	basic := &basic.Provider{Store: store}
+	authenticator.AddProvider(basic)
+
 	// Initialize apid
 	api, err := apid.New(apid.Config{
 		ListenAddress:       config.APIListenAddress,
@@ -216,6 +223,7 @@ func Initialize(config *Config) (*Backend, error) {
 		TLS:                 config.TLS,
 		Cluster:             clientv3.NewCluster(b.Client),
 		EtcdClientTLSConfig: etcdClientTLSConfig,
+		Authenticator:       authenticator,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err)

@@ -2,8 +2,12 @@ package routers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
+
+	"github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/authentication/providers"
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
@@ -13,12 +17,13 @@ import (
 
 // AuthenticationRouter handles authentication related requests
 type AuthenticationRouter struct {
-	store store.Store
+	store         store.Store
+	authenticator *providers.Authenticator
 }
 
 // NewAuthenticationRouter instantiates new router.
-func NewAuthenticationRouter(store store.Store) *AuthenticationRouter {
-	return &AuthenticationRouter{store: store}
+func NewAuthenticationRouter(store store.Store, authenticator *providers.Authenticator) *AuthenticationRouter {
+	return &AuthenticationRouter{store: store, authenticator: authenticator}
 }
 
 // Mount the authentication routes on given mux.Router.
@@ -34,69 +39,45 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 	// Check for credentials provided in the Authorization header
 	username, password, ok := r.BasicAuth()
 	if !ok {
-		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}
 
 	// Authenticate against the provider
-	user, err := a.store.AuthenticateUser(r.Context(), username, password)
+	claims, err := a.authenticator.Authenticate(r.Context(), username, password)
 	if err != nil {
-		logger.WithField(
-			"user", username,
-		).WithError(err).Error("invalid username and/or password")
-		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		logger.WithError(err).WithField("user", username).
+			Error("invalid username and/or password")
+		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}
+
+	logger = logger.WithField("user", claims.Subject)
 
 	// Add the 'system:users' group to this user
-	user.Groups = append(user.Groups, "system:users")
+	claims.Groups = append(claims.Groups, "system:users")
 
-	// Create the token and a signed version
-	token, tokenString, err := jwt.AccessToken(user)
+	// Create an access token and its signed version
+	token, tokenString, err := jwt.AccessToken(claims)
 	if err != nil {
-		err = fmt.Errorf("could not issue an access token: %s", err)
-		logger.WithField("user", username).Error(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.WithError(err).Error("could not issue an access token")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	// Retrieve the claims because we later need the expiration
-	claims, err := jwt.GetClaims(token)
+	// Create a refresh token and its signed version
+	refreshClaims := &v2.Claims{StandardClaims: v2.StandardClaims(claims.Subject)}
+	refreshToken, refreshTokenString, err := jwt.RefreshToken(refreshClaims)
 	if err != nil {
-		err = fmt.Errorf("could not get the access token claims: %s", err)
-		logger.WithField("user", username).Error(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.WithError(err).Error("could not issue a refresh token")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	refreshToken, refreshTokenString, err := jwt.RefreshToken(user)
-	if err != nil {
-		err = fmt.Errorf("could not issue a refresh token: %s", err)
-		logger.WithField("user", username).Error(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	refreshClaims, err := jwt.GetClaims(refreshToken)
-	if err != nil {
-		err = fmt.Errorf("could not get the refresh token claims: %s", err)
-		logger.WithField("user", username).Error(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// store the access and refresh tokens in the access list
-	if err = a.store.CreateToken(claims); err != nil {
-		err = fmt.Errorf("could not add the access token to the access list: %s", err)
-		logger.WithField("user", username).Error(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	if err = a.store.CreateToken(refreshClaims); err != nil {
-		err = fmt.Errorf("could not add the refresh token to the access list: %s", err)
-		logger.WithField("user", username).Error(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	// Add the tokens in the access list
+	if err := a.store.AllowTokens(token, refreshToken); err != nil {
+		logger.WithError(err).Error("could not add tokens to the access list")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
@@ -109,9 +90,8 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 
 	resBytes, err := json.Marshal(response)
 	if err != nil {
-		err = fmt.Errorf("could not not marshal response: %s", err)
-		logger.WithField("user", username).Error(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.WithError(err).Error("could not encode response body")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
@@ -128,15 +108,24 @@ func (a *AuthenticationRouter) test(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Authenticate against the provider
-	_, err := a.store.AuthenticateUser(r.Context(), username, password)
-	if err != nil {
-		logger.WithField(
-			"user", username,
-		).WithError(err).Error("invalid username and/or password")
-		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
-		return
+	// Authenticate against the basic provider
+	var err error
+	providers := a.authenticator.Providers()
+
+	if basic, ok := providers["basic/default"]; ok {
+		_, err = basic.Authenticate(r.Context(), username, password)
+		if err == nil {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+	} else {
+		err = errors.New("basic provider is disabled")
 	}
+
+	logger.WithField(
+		"user", username,
+	).WithError(err).Info("invalid username and/or password")
+	http.Error(w, "Request unauthorized", http.StatusUnauthorized)
 }
 
 // logout handles the logout flow
@@ -145,56 +134,58 @@ func (a *AuthenticationRouter) logout(w http.ResponseWriter, r *http.Request) {
 
 	// Get the access token claims
 	if value := r.Context().Value(types.AccessTokenClaims); value != nil {
-		accessClaims = value.(*types.Claims)
+		accessClaims = value.(*v2.Claims)
 	} else {
-		http.Error(w, "could not retrieve the access token claims", http.StatusBadRequest)
+		http.Error(w, "invalid access token", http.StatusBadRequest)
 		return
 	}
 
 	// Get the refresh token claims
 	if value := r.Context().Value(types.RefreshTokenClaims); value != nil {
-		refreshClaims = value.(*types.Claims)
+		refreshClaims = value.(*v2.Claims)
 	} else {
-		http.Error(w, "could not retrieve the refresh token claims", http.StatusBadRequest)
+		http.Error(w, "invalid refresh token", http.StatusBadRequest)
 		return
 	}
 
 	// Remove the access & refresh tokens from the access list
-	tokensToRemove := []string{accessClaims.Id, refreshClaims.Id}
-	if err := a.store.DeleteTokens(refreshClaims.Subject, tokensToRemove); err != nil {
-		err = fmt.Errorf("could not remove the access and refresh tokens from the access list: %s", err)
-		logger.WithField("user", refreshClaims.Subject).Error(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err := a.store.RevokeTokens(accessClaims, refreshClaims); err != nil {
+		logger.WithError(err).WithField("user", refreshClaims.Subject).Errorf(
+			"could not revoke tokens IDs %q & %q", accessClaims.Id, refreshClaims.Id,
+		)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 }
 
 // token handles logic for issuing new access tokens
 func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
-	var accessClaims, refreshClaims *types.Claims
+	var accessClaims, refreshClaims *v2.Claims
 
 	// Get the access token claims
-	if value := r.Context().Value(types.AccessTokenClaims); value != nil {
-		accessClaims = value.(*types.Claims)
+	if value := r.Context().Value(v2.AccessTokenClaims); value != nil {
+		accessClaims = value.(*v2.Claims)
 	} else {
-		http.Error(w, "could not retrieve the access token claims", http.StatusBadRequest)
+		http.Error(w, "invalid access token", http.StatusBadRequest)
 		return
 	}
 
+	logger = logger.WithField("user", accessClaims.Subject)
+
 	// Get the refresh token claims
-	if value := r.Context().Value(types.RefreshTokenClaims); value != nil {
-		refreshClaims = value.(*types.Claims)
+	if value := r.Context().Value(v2.RefreshTokenClaims); value != nil {
+		refreshClaims = value.(*v2.Claims)
 	} else {
-		http.Error(w, "could not retrieve the refresh token claims", http.StatusBadRequest)
+		http.Error(w, "invalid refresh token", http.StatusBadRequest)
 		return
 	}
 
 	// Get the refresh token string
-	var refreshString string
-	if value := r.Context().Value(types.RefreshTokenString); value != nil {
-		refreshString = value.(string)
+	var refreshTokenString string
+	if value := r.Context().Value(v2.RefreshTokenString); value != nil {
+		refreshTokenString = value.(string)
 	} else {
-		http.Error(w, "could not retrieve the refresh token string", http.StatusBadRequest)
+		http.Error(w, "invalid refresh token", http.StatusBadRequest)
 		return
 	}
 
@@ -202,62 +193,52 @@ func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 	if _, err := a.store.GetToken(refreshClaims.Subject, refreshClaims.Id); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
-			http.Error(w, "refresh token is no longer valid", http.StatusUnauthorized)
+			logger.WithError(err).Infof("refresh token ID %q is unauthorized", refreshClaims.Id)
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		default:
-			err = fmt.Errorf("the refresh token is not authorized: %s", err)
-			logger.WithField("user", refreshClaims.Subject).Error(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
+			logger.WithError(err).Infof("unexpected error while authorizing refresh token ID %q", refreshClaims.Id)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 			return
 		}
 	}
 
-	// Update the user claims from the authentication provider
-	// TODO: support external directories
-	user, err := a.store.GetUser(r.Context(), refreshClaims.Subject)
-	if err != nil {
-		http.Error(w, "could not find the user", http.StatusInternalServerError)
+	// Revoke the old access token from the access list
+	if err := a.store.RevokeTokens(accessClaims); err != nil {
+		logger.WithError(err).Errorf("could not revoke access token ID %q", accessClaims.Id)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
-	if user == nil {
+
+	// Ensure backward compatibility by filling the provider claims if missing
+	if accessClaims.Provider.ProviderID == "" || accessClaims.Provider.UserID == "" {
+		accessClaims.Provider.ProviderID = "basic/default"
+		accessClaims.Provider.UserID = accessClaims.Subject
+	}
+
+	// Refresh the user claims
+	claims, err := a.authenticator.Refresh(r.Context(), accessClaims.Provider)
+	if err != nil {
+		logger.WithError(err).Error("could not refresh user claims")
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 		return
 	}
 
-	// Make sure to the 'system:users' group is present
-	user.Groups = append(user.Groups, "system:users")
-
-	// Remove the old access token from the access list
-	if err := a.store.DeleteTokens(accessClaims.Subject, []string{accessClaims.Id}); err != nil {
-		err = fmt.Errorf("could not remove the access token from the access list: %s", err)
-		logger.WithField("user", refreshClaims.Subject).Error(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
+	// Ensure the 'system:users' group is present
+	claims.Groups = append(claims.Groups, "system:users")
 
 	// Issue a new access token
-	accessToken, accessTokenString, err := jwt.AccessToken(user)
+	accessToken, accessTokenString, err := jwt.AccessToken(claims)
 	if err != nil {
-		err = fmt.Errorf("could not issue a new access token: %s", err)
-		logger.WithField("user", refreshClaims.Subject).Error(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	// Retrieve the claims because we later need the expiration
-	accessClaims, err = jwt.GetClaims(accessToken)
-	if err != nil {
-		err = fmt.Errorf("could not issue a new access token: %s", err)
-		logger.WithField("user", refreshClaims.Subject).Error(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.WithError(err).Error("could not issue a new access token")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	// store the new access token in the access list
-	if err = a.store.CreateToken(accessClaims); err != nil {
-		err = fmt.Errorf("could not add the new access token to the access list: %s", err)
-		logger.WithField("user", refreshClaims.Subject).Error(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	if err = a.store.AllowTokens(accessToken); err != nil {
+		logger.WithError(err).Errorf("could not allow new access token %q", claims.Id)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
@@ -265,14 +246,13 @@ func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 	response := &types.Tokens{
 		Access:    accessTokenString,
 		ExpiresAt: accessClaims.ExpiresAt,
-		Refresh:   refreshString,
+		Refresh:   refreshTokenString,
 	}
 
 	resBytes, err := json.Marshal(response)
 	if err != nil {
-		err = fmt.Errorf("could not not marshal response: %s", err)
-		logger.WithField("user", refreshClaims.Subject).Error(err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		logger.WithError(err).Error("could not encode response body")
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 

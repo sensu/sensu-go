@@ -34,16 +34,16 @@ func (m AllowList) Then(next http.Handler) http.Handler {
 
 		// Validate that the JWT is authorized
 		if _, err := m.Store.GetToken(claims.Subject, claims.Id); err != nil {
-			logEntry := logger.WithFields(logrus.Fields{
-				"user":         claims.Subject,
-				"access token": claims.Id,
+			logger = logger.WithFields(logrus.Fields{
+				"token_id": claims.Id,
+				"user":     claims.Subject,
 			})
 			switch err := err.(type) {
 			case *store.ErrNotFound:
-				logEntry.WithError(err).Info("access token is not authorized")
+				logger.WithError(err).Info("access token is unauthorized")
 				writeErr(w, actions.NewErrorf(actions.Unauthenticated))
 			default:
-				logEntry.Error(err)
+				logger.WithError(err).Error("unexpected error occurred during authorization")
 				writeErr(w, actions.NewErrorf(
 					actions.InternalErr,
 					"unexpected error occurred during authorization",

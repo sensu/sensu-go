@@ -7,6 +7,13 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Added the notion of authentication providers.
+
+### Changed
+- Refactoring of the internal authentication mechanism into a `basic`
+authentication provider.
+
 ### Fixed
 - Fixed a bug where `sensuctl edit` was not removing the temp file it created.
 - Fixed a bug where adhoc checks were not retrieving asset dependencies.

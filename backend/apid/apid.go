@@ -10,6 +10,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/sensu/sensu-go/backend/authentication/providers"
+
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/actions"
@@ -24,11 +26,13 @@ import (
 
 // APId is the backend HTTP API.
 type APId struct {
+	Authenticator *providers.Authenticator
+	HTTPServer    *http.Server
+
 	stopping            chan struct{}
 	running             *atomic.Value
 	wg                  *sync.WaitGroup
 	errChan             chan error
-	HTTPServer          *http.Server
 	bus                 messaging.MessageBus
 	store               store.Store
 	queueGetter         types.QueueGetter
@@ -50,6 +54,7 @@ type Config struct {
 	TLS                 *types.TLSOptions
 	Cluster             clientv3.Cluster
 	EtcdClientTLSConfig *tls.Config
+	Authenticator       *providers.Authenticator
 }
 
 // New creates a new APId.
@@ -65,6 +70,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 		errChan:             make(chan error, 1),
 		cluster:             c.Cluster,
 		etcdClientTLSConfig: c.EtcdClientTLSConfig,
+		Authenticator:       c.Authenticator,
 	}
 
 	var tlsConfig *tls.Config
@@ -82,7 +88,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
 	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig)
 	registerGraphQLService(router, a.store, c.URL, tlsConfig)
-	registerAuthenticationResources(router, a.store)
+	registerAuthenticationResources(router, a.store, a.Authenticator)
 	registerRestrictedResources(router, a.store, a.queueGetter, a.bus, a.cluster)
 
 	a.HTTPServer = &http.Server{
@@ -197,7 +203,7 @@ func registerGraphQLService(router *mux.Router, store store.Store, url string, t
 	)
 }
 
-func registerAuthenticationResources(router *mux.Router, store store.Store) {
+func registerAuthenticationResources(router *mux.Router, store store.Store, authenticator *providers.Authenticator) {
 	mountRouters(
 		NewSubrouter(
 			router.NewRoute(),
@@ -206,7 +212,7 @@ func registerAuthenticationResources(router *mux.Router, store store.Store) {
 			middlewares.LimitRequest{},
 			middlewares.Edition{Name: version.Edition},
 		),
-		routers.NewAuthenticationRouter(store),
+		routers.NewAuthenticationRouter(store, authenticator),
 	)
 }
 

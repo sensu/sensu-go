@@ -7,6 +7,8 @@ import (
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
+	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -547,12 +549,12 @@ type SilencedStore interface {
 
 // TokenStore provides methods for managing the JWT access list
 type TokenStore interface {
-	// CreateToken creates a new entry in the JWT access list with the given claims.
-	CreateToken(claims *types.Claims) error
+	// AllowTokens adds the provided tokens to the JWT access list
+	AllowTokens(tokens ...*jwt.Token) error
 
-	// DeleteTokens deletes one or multiple given tokens, belonging to the same
-	// given subject.
-	DeleteTokens(subject string, tokens []string) error
+	// RevokeTokens removes tokens using the provided claims from the JWT access
+	// list
+	RevokeTokens(claims ...*v2.Claims) error
 
 	// GetToken returns the claims of a given token ID, belonging to the given
 	// subject. An error is returned if no claims were found.
