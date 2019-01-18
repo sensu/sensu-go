@@ -246,6 +246,10 @@ func publishProxyCheckRequests(e Executor, entities []*types.Entity, check *type
 }
 
 func processCheck(ctx context.Context, executor Executor, check *types.CheckConfig) error {
+	fields := logrus.Fields{
+		"check":     check.Name,
+		"namespace": check.Namespace,
+	}
 	if check.ProxyRequests != nil {
 		// get entities by namespace
 		entities, err := executor.getEntities(ctx)
@@ -255,10 +259,10 @@ func processCheck(ctx context.Context, executor Executor, check *types.CheckConf
 		// publish proxy requests on matching entities
 		if matchedEntities := matchEntities(entities, check.ProxyRequests); len(matchedEntities) != 0 {
 			if err := executor.publishProxyCheckRequests(matchedEntities, check); err != nil {
-				logger.Error(err)
+				logger.WithFields(fields).WithError(err).Error("error publishing proxy check requests")
 			}
 		} else {
-			logger.Info("no matching entities, check will not be published")
+			logger.WithFields(fields).Info("no matching entities, check will not be published")
 		}
 	} else {
 		return executor.execute(check)

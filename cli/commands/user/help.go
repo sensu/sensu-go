@@ -23,6 +23,7 @@ func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 		RemoveAllGroupsCommand(cli),
 		SetGroupsCommand(cli),
 		SetPasswordCommand(cli),
+		TestCredsCommand(cli),
 	)
 
 	return cmd

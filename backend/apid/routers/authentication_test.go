@@ -74,6 +74,48 @@ func TestLoginSuccessful(t *testing.T) {
 	assert.NotEmpty(t, response.Refresh)
 }
 
+func TestTestNoCredentials(t *testing.T) {
+	store := &mockstore.MockStore{}
+	a := &AuthenticationRouter{store}
+
+	req, _ := http.NewRequest(http.MethodGet, "/auth/test", nil)
+
+	res := processRequest(a, req)
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
+}
+
+func TestTestInvalidCredentials(t *testing.T) {
+	store := &mockstore.MockStore{}
+	a := &AuthenticationRouter{store}
+
+	user := types.FixtureUser("foo")
+	store.
+		On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").
+		Return(user, fmt.Errorf("error"))
+
+	req, _ := http.NewRequest(http.MethodGet, "/auth/test", nil)
+	req.SetBasicAuth("foo", "P@ssw0rd!")
+
+	res := processRequest(a, req)
+	assert.Equal(t, http.StatusUnauthorized, res.Code)
+}
+
+func TestTestSuccessful(t *testing.T) {
+	store := &mockstore.MockStore{}
+	a := &AuthenticationRouter{store}
+
+	user := types.FixtureUser("foo")
+	store.
+		On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").
+		Return(user, nil)
+
+	req, _ := http.NewRequest(http.MethodGet, "/auth/test", nil)
+	req.SetBasicAuth("foo", "P@ssw0rd!")
+
+	res := processRequest(a, req)
+	assert.Equal(t, http.StatusOK, res.Code)
+}
+
 func TestLogoutNotWhitelisted(t *testing.T) {
 	store := &mockstore.MockStore{}
 	a := authenticationRouter(store)

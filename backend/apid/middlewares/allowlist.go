@@ -5,6 +5,7 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 )
@@ -26,18 +27,28 @@ func (m AllowList) Then(next http.Handler) http.Handler {
 			if m.IgnoreMissingClaims {
 				next.ServeHTTP(w, r)
 			} else {
-				http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+				writeErr(w, actions.NewErrorf(actions.Unauthenticated))
 			}
 			return
 		}
 
 		// Validate that the JWT is authorized
 		if _, err := m.Store.GetToken(claims.Subject, claims.Id); err != nil {
-			logger.WithFields(logrus.Fields{
+			logger = logger.WithFields(logrus.Fields{
 				"token_id": claims.Id,
 				"user":     claims.Subject,
-			}).WithError(err).Error("access token is not authorized")
-			http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+			})
+			switch err := err.(type) {
+			case *store.ErrNotFound:
+				logger.WithError(err).Info("access token is unauthorized")
+				writeErr(w, actions.NewErrorf(actions.Unauthenticated))
+			default:
+				logger.WithError(err).Error("unexpected error occurred during authorization")
+				writeErr(w, actions.NewErrorf(
+					actions.InternalErr,
+					"unexpected error occurred during authorization",
+				))
+			}
 			return
 		}
 

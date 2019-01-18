@@ -28,6 +28,7 @@ func NewAuthenticationRouter(store store.Store, authenticator *providers.Authent
 // Mount the authentication routes on given mux.Router.
 func (a *AuthenticationRouter) Mount(r *mux.Router) {
 	r.HandleFunc("/auth", a.login).Methods(http.MethodGet)
+	r.HandleFunc("/auth/test", a.test).Methods(http.MethodGet)
 	r.HandleFunc("/auth/token", a.token).Methods(http.MethodPost)
 	r.HandleFunc("/auth/logout", a.logout).Methods(http.MethodPost)
 }
@@ -97,6 +98,26 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 	_, _ = fmt.Fprint(w, string(resBytes))
 }
 
+// test provides minimal username and password validation
+func (a *AuthenticationRouter) test(w http.ResponseWriter, r *http.Request) {
+	// Check for credentials provided in the Authorization header
+	username, password, ok := r.BasicAuth()
+	if !ok {
+		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	// Authenticate against the provider
+	_, err := a.store.AuthenticateUser(r.Context(), username, password)
+	if err != nil {
+		logger.WithField(
+			"user", username,
+		).WithError(err).Error("invalid username and/or password")
+		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+		return
+	}
+}
+
 // logout handles the logout flow
 func (a *AuthenticationRouter) logout(w http.ResponseWriter, r *http.Request) {
 	var accessClaims, refreshClaims *types.Claims
@@ -160,9 +181,16 @@ func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 
 	// Make sure the refresh token is authorized in the access list
 	if _, err := a.store.GetToken(refreshClaims.Subject, refreshClaims.Id); err != nil {
-		logger.WithError(err).Infof("refresh token ID %q is unauthorized", refreshClaims.Id)
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-		return
+		switch err := err.(type) {
+		case *store.ErrNotFound:
+			logger.WithError(err).Infof("refresh token ID %q is unauthorized", refreshClaims.Id)
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		default:
+			logger.WithError(err).Infof("unexpected error while authorizing refresh token ID %q", refreshClaims.Id)
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			return
+		}
 	}
 
 	// Revoke the old access token from the access list

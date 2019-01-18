@@ -22,6 +22,9 @@ authentication provider.
 An error is now logged instead, and extraction continues after a bad line is encountered.
 - Fixed a panic in the dashboardd shutdown routine.
 
+### Changed
+- Improved logging for errors in proxy check requests.
+
 ## [5.1.0] - 2018-12-18
 
 ### Added

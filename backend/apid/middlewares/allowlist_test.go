@@ -8,6 +8,7 @@ import (
 
 	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/assert"
 )
@@ -40,8 +41,9 @@ func TestMissingTokenFromAllowList(t *testing.T) {
 	claims := v2.FixtureClaims("bar", nil)
 	_, tokenString, _ := jwt.AccessToken(claims)
 
+	sErr := &store.ErrNotFound{}
 	store := &mockstore.MockStore{}
-	store.On("GetToken", claims.Subject, claims.Id).Return(claims, fmt.Errorf("error"))
+	store.On("GetToken", claims.Subject, claims.Id).Return(claims, sErr)
 
 	auth := Authentication{}
 	allow := AllowList{Store: store}
