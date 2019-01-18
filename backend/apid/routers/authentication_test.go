@@ -14,7 +14,7 @@ import (
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authentication/providers"
 	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
-	"github.com/sensu/sensu-go/backend/store"
+	realStore "github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -76,7 +76,7 @@ func TestLoginSuccessful(t *testing.T) {
 
 func TestTestNoCredentials(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationRouter{store}
+	a := authenticationRouter(store)
 
 	req, _ := http.NewRequest(http.MethodGet, "/auth/test", nil)
 
@@ -86,7 +86,7 @@ func TestTestNoCredentials(t *testing.T) {
 
 func TestTestInvalidCredentials(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationRouter{store}
+	a := authenticationRouter(store)
 
 	user := types.FixtureUser("foo")
 	store.
@@ -102,7 +102,7 @@ func TestTestInvalidCredentials(t *testing.T) {
 
 func TestTestSuccessful(t *testing.T) {
 	store := &mockstore.MockStore{}
-	a := &AuthenticationRouter{store}
+	a := authenticationRouter(store)
 
 	user := types.FixtureUser("foo")
 	store.
@@ -168,7 +168,7 @@ func TestTokenRefreshTokenNotWhitelisted(t *testing.T) {
 		"GetToken",
 		mock.AnythingOfType("string"),
 		mock.AnythingOfType("string"),
-	).Return(&types.Claims{}, fmt.Errorf("error"))
+	).Return(&types.Claims{}, &realStore.ErrNotFound{})
 	store.On("GetUser",
 		mock.AnythingOfType("*context.valueCtx"),
 		mock.AnythingOfType("string"),
@@ -257,7 +257,7 @@ func TestTokenSuccess(t *testing.T) {
 	assert.NotEmpty(t, response.Refresh)
 }
 
-func authenticationRouter(store store.Store) *AuthenticationRouter {
+func authenticationRouter(store realStore.Store) *AuthenticationRouter {
 	authenticator := &providers.Authenticator{}
 	provider := &basic.Provider{Store: store}
 	authenticator.AddProvider(provider)

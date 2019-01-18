@@ -2,6 +2,7 @@ package routers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -107,15 +108,25 @@ func (a *AuthenticationRouter) test(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Authenticate against the provider
-	_, err := a.store.AuthenticateUser(r.Context(), username, password)
-	if err != nil {
-		logger.WithField(
-			"user", username,
-		).WithError(err).Error("invalid username and/or password")
-		http.Error(w, "Request unauthorized", http.StatusUnauthorized)
-		return
+	// Authenticate against the basic provider
+	var err error
+	providers := a.authenticator.Providers()
+
+	if basic, ok := providers["basic/default"]; ok {
+		_, err = basic.Authenticate(r.Context(), username, password)
+		if err == nil {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+	} else {
+		err = errors.New("basic provider is disabled")
 	}
+
+	logger.WithField(
+		"user", username,
+	).WithError(err).Info("invalid username and/or password")
+	http.Error(w, "Request unauthorized", http.StatusUnauthorized)
+	return
 }
 
 // logout handles the logout flow
