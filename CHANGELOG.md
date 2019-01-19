@@ -11,9 +11,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added the notion of authentication providers.
 
 ### Changed
+- Improved logging for errors in proxy check requests.
+- Updated Go version from 1.10 to 1.11.4.
 - Refactoring of the internal authentication mechanism into a `basic`
 authentication provider.
 - Modified private generic store methods as public functions.
+- Removed unused workflow `rel_build_and_test` in CircleCI config.
 
 ### Fixed
 - Fixed a bug where `sensuctl edit` was not removing the temp file it created.
@@ -23,10 +26,6 @@ authentication provider.
 An error is now logged instead, and extraction continues after a bad line is encountered.
 - Fixed a panic in the dashboardd shutdown routine.
 - Fixed a bug where deleting a non-existent entity with sensuctl would not return an error.
-
-### Changed
-- Improved logging for errors in proxy check requests.
-- Updated Go version from 1.10 to 1.11.4.
 
 ## [5.1.0] - 2018-12-18
 
