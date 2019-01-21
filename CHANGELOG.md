@@ -21,6 +21,7 @@ authentication provider.
 - Fixed a bug where check updates would cause the check to immediately fire.
 - Fixed a bug where a bad line in check output would abort metric extraction.
 An error is now logged instead, and extraction continues after a bad line is encountered.
+- Keepalive events will now continue to fire after cluster restarts.
 - Fixed a panic in the dashboardd shutdown routine.
 - Fixed a bug where deleting a non-existent entity with sensuctl would not return an error.
 
