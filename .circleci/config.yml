@@ -18,12 +18,13 @@ sensu_go_build_env: &sensu_go_build_env
 
   working_directory: /go/src/github.com/sensu/sensu-go
   docker:
-    - image: circleci/golang:1.10
+    - image: circleci/golang:1.11.4
 
 jobs:
   build:
     <<: *sensu_go_build_env
 
+    parallelism: 2
     steps:
       - checkout
 
@@ -43,8 +44,7 @@ jobs:
       - run: sudo $CIRCLE_WORKING_DIRECTORY/build/ci/circle-ci-setup.sh
       - run: $SENSU_RELEASE_REPO/install-awscli.sh
 
-      # *Now* get to initial linting
-      - run: GOFMT=/usr/local/go/bin/gofmt ./build/ci/gofmt-linting-check.sh
+      # Make packages
       - run: make
 
       # Post packages to S3
@@ -60,7 +60,8 @@ jobs:
 
   test:
     <<: *sensu_go_build_env
-    resource_class: medium+
+    resource_class: large
+    parallelism: 2
     steps:
       - attach_workspace:
           # Must be absolute path or relative path from working_directory

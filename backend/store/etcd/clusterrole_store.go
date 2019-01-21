@@ -25,7 +25,7 @@ func (s *Store) CreateClusterRole(ctx context.Context, clusterRole *types.Cluste
 	if err := clusterRole.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
-	return s.create(ctx, getClusterRolePath(clusterRole), "", clusterRole)
+	return Create(ctx, s.client, getClusterRolePath(clusterRole), "", clusterRole)
 }
 
 // CreateOrUpdateClusterRole ...
@@ -33,25 +33,25 @@ func (s *Store) CreateOrUpdateClusterRole(ctx context.Context, clusterRole *type
 	if err := clusterRole.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
-	return s.createOrUpdate(ctx, getClusterRolePath(clusterRole), "", clusterRole)
+	return CreateOrUpdate(ctx, s.client, getClusterRolePath(clusterRole), "", clusterRole)
 }
 
 // DeleteClusterRole ...
 func (s *Store) DeleteClusterRole(ctx context.Context, name string) error {
-	return s.delete(ctx, getClusterRolesPath(ctx, name))
+	return Delete(ctx, s.client, getClusterRolesPath(ctx, name))
 }
 
 // GetClusterRole ...
 func (s *Store) GetClusterRole(ctx context.Context, name string) (*types.ClusterRole, error) {
 	clusterRole := &types.ClusterRole{}
-	err := s.get(ctx, getClusterRolesPath(ctx, name), clusterRole)
+	err := Get(ctx, s.client, getClusterRolesPath(ctx, name), clusterRole)
 	return clusterRole, err
 }
 
 // ListClusterRoles ...
 func (s *Store) ListClusterRoles(ctx context.Context) ([]*types.ClusterRole, error) {
 	clusterRoles := []*types.ClusterRole{}
-	err := s.list(ctx, getClusterRolesPath, &clusterRoles)
+	err := List(ctx, s.client, getClusterRolesPath, &clusterRoles)
 	return clusterRoles, err
 }
 
@@ -60,5 +60,5 @@ func (s *Store) UpdateClusterRole(ctx context.Context, clusterRole *types.Cluste
 	if err := clusterRole.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
-	return s.update(ctx, getClusterRolePath(clusterRole), "", clusterRole)
+	return Update(ctx, s.client, getClusterRolePath(clusterRole), "", clusterRole)
 }

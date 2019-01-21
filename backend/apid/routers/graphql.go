@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/api/core/v2"
 	graphql "github.com/sensu/sensu-go/backend/apid/graphql"
 	"github.com/sensu/sensu-go/backend/apid/graphql/restclient"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
@@ -109,53 +110,31 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 
 func contextWithTempAccessToken(ctx context.Context, store store.Store) (context.Context, func(), error) {
 	// Create new token
-	claims, err := createTempToken(ctx)
-	if claims == nil || err != nil {
+	claims := jwt.GetClaimsFromContext(ctx)
+	if claims == nil {
+		return ctx, noop, nil
+	}
+
+	// Create an access token from claims
+	token, tokenString, err := jwt.AccessToken(claims)
+	if err != nil {
 		return ctx, noop, err
 	}
 
 	// Add token to the allow list
-	remove, err := allowTempToken(store, claims)
-	if err != nil {
+	if err := store.AllowTokens(token); err != nil {
 		return ctx, noop, err
 	}
 
-	// Create access token from claims
-	_, token, err := jwt.NewAccessTokenWithClaims(claims)
-	if err != nil {
-		return ctx, remove, err
+	revokeFn := func() {
+		if err := store.RevokeTokens(claims); err != nil {
+			logger.WithError(err).Error("unable to remove token")
+		}
 	}
 
 	// Lift access token into the request context
-	ctx = context.WithValue(ctx, types.AccessTokenString, token)
-	return ctx, remove, nil
-}
-
-func createTempToken(ctx context.Context) (*types.Claims, error) {
-	claims := jwt.GetClaimsFromContext(ctx)
-	if claims == nil {
-		return nil, nil
-	}
-
-	jti, err := jwt.GenJTI()
-	if err != nil {
-		return nil, err
-	}
-
-	claims.StandardClaims.Id = jti
-	claims.StandardClaims.ExpiresAt = time.Now().Add(defaultExpiration).Unix()
-	return claims, nil
-}
-
-func allowTempToken(store store.Store, claims *types.Claims) (func(), error) {
-	if err := store.CreateToken(claims); err != nil {
-		return noop, err
-	}
-	return func() {
-		if err := store.DeleteTokens(claims.Subject, []string{claims.Id}); err != nil {
-			logger.WithError(err).Error("unable to remove token")
-		}
-	}, nil
+	ctx = context.WithValue(ctx, v2.AccessTokenString, tokenString)
+	return ctx, revokeFn, nil
 }
 
 func noop() {}

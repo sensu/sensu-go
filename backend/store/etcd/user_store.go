@@ -18,18 +18,18 @@ func getUserPath(id string) string {
 func (s *Store) AuthenticateUser(ctx context.Context, username, password string) (*types.User, error) {
 	user, err := s.GetUser(ctx, username)
 	if user == nil {
-		return nil, fmt.Errorf("User %s does not exist", username)
+		return nil, fmt.Errorf("user %s does not exist", username)
 	} else if err != nil {
 		return nil, err
 	}
 
 	if user.Disabled {
-		return nil, fmt.Errorf("User %s is disabled", username)
+		return nil, fmt.Errorf("user %s is disabled", username)
 	}
 
 	ok := bcrypt.CheckPassword(user.Password, password)
 	if !ok {
-		return nil, fmt.Errorf("Wrong password for user %s", username)
+		return nil, fmt.Errorf("wrong password for user %s", username)
 	}
 
 	return user, nil

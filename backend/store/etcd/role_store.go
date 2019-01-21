@@ -25,7 +25,7 @@ func (s *Store) CreateRole(ctx context.Context, role *types.Role) error {
 	if err := role.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
-	return s.create(ctx, getRolePath(role), role.Namespace, role)
+	return Create(ctx, s.client, getRolePath(role), role.Namespace, role)
 }
 
 // CreateOrUpdateRole ...
@@ -33,25 +33,25 @@ func (s *Store) CreateOrUpdateRole(ctx context.Context, role *types.Role) error 
 	if err := role.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
-	return s.createOrUpdate(ctx, getRolePath(role), role.Namespace, role)
+	return CreateOrUpdate(ctx, s.client, getRolePath(role), role.Namespace, role)
 }
 
 // DeleteRole ...
 func (s *Store) DeleteRole(ctx context.Context, name string) error {
-	return s.delete(ctx, getRolesPath(ctx, name))
+	return Delete(ctx, s.client, getRolesPath(ctx, name))
 }
 
 // GetRole ...
 func (s *Store) GetRole(ctx context.Context, name string) (*types.Role, error) {
 	role := &types.Role{}
-	err := s.get(ctx, getRolesPath(ctx, name), role)
+	err := Get(ctx, s.client, getRolesPath(ctx, name), role)
 	return role, err
 }
 
 // ListRoles ...
 func (s *Store) ListRoles(ctx context.Context) ([]*types.Role, error) {
 	roles := []*types.Role{}
-	err := s.list(ctx, getRolesPath, &roles)
+	err := List(ctx, s.client, getRolesPath, &roles)
 	return roles, err
 }
 
@@ -60,5 +60,5 @@ func (s *Store) UpdateRole(ctx context.Context, role *types.Role) error {
 	if err := role.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
-	return s.update(ctx, getRolePath(role), role.Namespace, role)
+	return Update(ctx, s.client, getRolePath(role), role.Namespace, role)
 }
