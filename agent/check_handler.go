@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/sensu/sensu-go/agent/transformers"
@@ -29,29 +30,36 @@ func (a *Agent) handleCheck(payload []byte) error {
 
 	// only schedule check execution if its not already in progress
 	// ** check hooks are part of a checks execution
-	a.inProgressMu.Lock()
-	_, in := a.inProgress[checkKey(request)]
-	a.inProgressMu.Unlock()
-	if !in {
-		logger.Info("scheduling check execution: ", request.Config.Name)
-
-		if ok := a.prepareCheck(request.Config); !ok {
-			// An error occured during the preparation of the check and the error has
-			// been sent back to the server. At this point we should not execute the
-			// check and wait for the next check request
-			return nil
-		}
-
-		go a.executeCheck(request)
-	} else {
+	if a.checkInProgress(request) {
 		return fmt.Errorf("check execution still in progress: %s", request.Config.Name)
 	}
+	logger.Info("scheduling check execution: ", request.Config.Name)
+
+	if ok := a.prepareCheck(request.Config); !ok {
+		// An error occured during the preparation of the check and the error has
+		// been sent back to the server. At this point we should not execute the
+		// check and wait for the next check request
+		return nil
+	}
+
+	go a.executeCheck(request)
 
 	return nil
 }
 
+func (a *Agent) checkInProgress(req *v2.CheckRequest) bool {
+	a.inProgressMu.Lock()
+	defer a.inProgressMu.Unlock()
+	_, ok := a.inProgress[checkKey(req)]
+	return ok
+}
+
 func checkKey(request *v2.CheckRequest) string {
-	return request.Config.Name
+	parts := []string{request.Config.Name}
+	if len(request.Config.ProxyEntityName) > 0 {
+		parts = append(parts, request.Config.ProxyEntityName)
+	}
+	return strings.Join(parts, "/")
 }
 
 func (a *Agent) executeCheck(request *v2.CheckRequest) {

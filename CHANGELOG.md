@@ -40,6 +40,8 @@ An error is now logged instead, and extraction continues after a bad line is enc
 - Fixed a bug where deleting a non-existent entity with sensuctl would not return an error.
 - Web UI - toolbar menu buttons now switch with dark theme.
 - Web UI - some buttons easier to see with dark theme.
+- Agents will now take proxy entity names into consideration when guarding
+against duplicate check requests.
 
 ### Changed
 - Improved logging for errors in proxy check requests.
