@@ -36,6 +36,12 @@ An error is now logged instead, and extraction continues after a bad line is enc
 - Fixed a bug where deleting a non-existent entity with sensuctl would not return an error.
 - Web UI - toolbar menu buttons now switch with dark theme.
 - Web UI - some buttons easier to see with dark theme.
+- Check TTL failure events are now much more reliable, and will persist even
+in the presence cluster member failures and cluster restarts.
+
+### Changed
+- Improved logging for errors in proxy check requests.
+- Updated Go version from 1.10 to 1.11.4.
 
 ## [5.1.0] - 2018-12-18
 
