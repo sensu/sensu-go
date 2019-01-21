@@ -32,6 +32,7 @@ type Config struct {
 type Cluster struct {
 	APIUrl                string `json:"api-url"`
 	Edition               string `json:"edition"`
+	TrustedCAFile         string `json:"trusted-ca-file"`
 	InsecureSkipTLSVerify bool   `json:"insecure-skip-tls-verify"`
 	*types.Tokens
 }
@@ -96,6 +97,10 @@ func (c *Config) flags(flags *pflag.FlagSet) {
 
 	if value, err := flags.GetBool("insecure-skip-tls-verify"); err == nil {
 		c.Cluster.InsecureSkipTLSVerify = value
+	}
+
+	if value, err := flags.GetString("trusted-ca-file"); err == nil {
+		c.Cluster.TrustedCAFile = value
 	}
 }
 

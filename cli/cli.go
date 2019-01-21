@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"os"
 
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/client/config/basic"
@@ -30,15 +31,27 @@ type SensuCli struct {
 func New(flags *pflag.FlagSet) *SensuCli {
 	conf := basic.Load(flags)
 	client := client.New(conf)
-
-	tlsConfig := tls.Config{}
-	tlsConfig.InsecureSkipVerify = conf.InsecureSkipTLSVerify
-
-	client.SetTLSClientConfig(&tlsConfig)
-
 	logger := logrus.WithFields(logrus.Fields{
 		"component": "cli-client",
 	})
+
+	tlsConfig := tls.Config{}
+
+	if conf.TrustedCAFile != "" {
+		caCertPool, err := v2.LoadCACerts(conf.TrustedCAFile)
+		if err != nil {
+			logger.Warn(err)
+			logger.Warn("Trying to use the system's default CA certificates")
+		}
+		tlsConfig.RootCAs = caCertPool
+	}
+
+	tlsConfig.InsecureSkipVerify = conf.InsecureSkipTLSVerify
+
+	tlsConfig.BuildNameToCertificate()
+	tlsConfig.CipherSuites = v2.DefaultCipherSuites
+
+	client.SetTLSClientConfig(&tlsConfig)
 
 	return &SensuCli{
 		Client: client,
