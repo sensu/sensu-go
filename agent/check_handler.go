@@ -30,7 +30,7 @@ func (a *Agent) handleCheck(payload []byte) error {
 	// only schedule check execution if its not already in progress
 	// ** check hooks are part of a checks execution
 	a.inProgressMu.Lock()
-	_, in := a.inProgress[request.Config.Name]
+	_, in := a.inProgress[checkKey(request)]
 	a.inProgressMu.Unlock()
 	if !in {
 		logger.Info("scheduling check execution: ", request.Config.Name)
@@ -50,9 +50,13 @@ func (a *Agent) handleCheck(payload []byte) error {
 	return nil
 }
 
+func checkKey(request *v2.CheckRequest) string {
+	return request.Config.Name
+}
+
 func (a *Agent) executeCheck(request *v2.CheckRequest) {
 	a.inProgressMu.Lock()
-	a.inProgress[request.Config.Name] = request.Config
+	a.inProgress[checkKey(request)] = request.Config
 	a.inProgressMu.Unlock()
 	defer func() {
 		a.inProgressMu.Lock()

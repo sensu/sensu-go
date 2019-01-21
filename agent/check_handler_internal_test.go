@@ -8,8 +8,8 @@ import (
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/testing/mockexecutor"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/transport"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -18,9 +18,9 @@ import (
 func TestHandleCheck(t *testing.T) {
 	assert := assert.New(t)
 
-	checkConfig := types.FixtureCheckConfig("check")
+	checkConfig := corev2.FixtureCheckConfig("check")
 
-	request := &types.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
+	request := &corev2.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
 	payload, err := json.Marshal(request)
 	if err != nil {
 		assert.FailNow("error marshaling check request")
@@ -38,22 +38,69 @@ func TestHandleCheck(t *testing.T) {
 
 	// check is already in progress, it shouldn't execute
 	agent.inProgressMu.Lock()
-	agent.inProgress[request.Config.Name] = request.Config
+	agent.inProgress[checkKey(request)] = request.Config
 	agent.inProgressMu.Unlock()
 	assert.Error(agent.handleCheck(payload))
 
 	// check is not in progress, it should execute
 	agent.inProgressMu.Lock()
-	delete(agent.inProgress, request.Config.Name)
+	delete(agent.inProgress, checkKey(request))
 	agent.inProgressMu.Unlock()
 	assert.NoError(agent.handleCheck(payload))
+}
+
+func TestHandleProxyCheck(t *testing.T) {
+	checkA := corev2.FixtureCheckConfig("check")
+	checkA.ProxyEntityName = "A"
+
+	checkB := corev2.FixtureCheckConfig("check")
+	checkB.ProxyEntityName = "B"
+
+	reqA := &corev2.CheckRequest{Config: checkA, Issued: time.Now().Unix()}
+	reqB := &corev2.CheckRequest{Config: checkB, Issued: time.Now().Unix()}
+
+	payloadA, _ := json.Marshal(reqA)
+	payloadB, _ := json.Marshal(reqB)
+
+	config, cleanup := FixtureConfig()
+	defer cleanup()
+
+	agent := NewAgent(config)
+	ex := &mockexecutor.MockExecutor{}
+	agent.executor = ex
+	execution := command.FixtureExecutionResponse(0, "")
+	ex.On("Execute", mock.Anything, mock.Anything).Return(execution, nil)
+	agent.sendq = make(chan *transport.Message, 5)
+
+	// simulate checkA executing
+	agent.inProgressMu.Lock()
+	agent.inProgress[checkKey(reqA)] = reqA.Config
+	agent.inProgressMu.Unlock()
+
+	// check B should execute without error
+	if err := agent.handleCheck(payloadB); err != nil {
+		t.Fatal(err)
+	}
+
+	// check A should not execute - in progress
+	if err := agent.handleCheck(payloadA); err == nil {
+		t.Fatal("expected a non-nil error")
+	}
+
+	// After removing A from in-progress, it should execute without error
+	agent.inProgressMu.Lock()
+	delete(agent.inProgress, checkKey(reqA))
+	agent.inProgressMu.Unlock()
+	if err := agent.handleCheck(payloadA); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestExecuteCheck(t *testing.T) {
 	assert := assert.New(t)
 
-	checkConfig := types.FixtureCheckConfig("check")
-	request := &types.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
+	checkConfig := corev2.FixtureCheckConfig("check")
+	request := &corev2.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
 	checkConfig.Stdin = true
 
 	config, cleanup := FixtureConfig()
@@ -69,7 +116,7 @@ func TestExecuteCheck(t *testing.T) {
 	agent.executeCheck(request)
 	msg := <-ch
 
-	event := &types.Event{}
+	event := &corev2.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.Equal(uint32(0), event.Check.Status)
@@ -79,7 +126,7 @@ func TestExecuteCheck(t *testing.T) {
 	agent.executeCheck(request)
 	msg = <-ch
 
-	event = &types.Event{}
+	event = &corev2.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.Equal(uint32(1), event.Check.Status)
@@ -90,7 +137,7 @@ func TestExecuteCheck(t *testing.T) {
 	agent.executeCheck(request)
 	msg = <-ch
 
-	event = &types.Event{}
+	event = &corev2.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.Equal(uint32(127), event.Check.Status)
@@ -102,7 +149,7 @@ func TestExecuteCheck(t *testing.T) {
 	agent.executeCheck(request)
 	msg = <-ch
 
-	event = &types.Event{}
+	event = &corev2.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.Equal(uint32(2), event.Check.Status)
@@ -115,17 +162,17 @@ func TestExecuteCheck(t *testing.T) {
 	agent.executeCheck(request)
 	msg = <-ch
 
-	event = &types.Event{}
+	event = &corev2.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.False(event.HasMetrics())
 
-	checkConfig.OutputMetricFormat = types.GraphiteOutputMetricFormat
+	checkConfig.OutputMetricFormat = corev2.GraphiteOutputMetricFormat
 	ex.On("Execute", mock.Anything, mock.Anything).Return(execution, nil)
 	agent.executeCheck(request)
 	msg = <-ch
 
-	event = &types.Event{}
+	event = &corev2.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.True(event.HasMetrics())
@@ -143,8 +190,8 @@ func TestExecuteCheck(t *testing.T) {
 func TestHandleTokenSubstitution(t *testing.T) {
 	assert := assert.New(t)
 
-	checkConfig := types.FixtureCheckConfig("check")
-	request := &types.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
+	checkConfig := corev2.FixtureCheckConfig("check")
+	request := &corev2.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
 	checkConfig.Stdin = true
 
 	config, cleanup := FixtureConfig()
@@ -167,7 +214,7 @@ func TestHandleTokenSubstitution(t *testing.T) {
 
 	msg := <-ch
 
-	event := &types.Event{}
+	event := &corev2.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.EqualValues(int32(0), event.Check.Status)
@@ -177,8 +224,8 @@ func TestHandleTokenSubstitution(t *testing.T) {
 func TestHandleTokenSubstitutionNoKey(t *testing.T) {
 	assert := assert.New(t)
 
-	checkConfig := types.FixtureCheckConfig("check")
-	request := &types.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
+	checkConfig := corev2.FixtureCheckConfig("check")
+	request := &corev2.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
 	checkConfig.Stdin = true
 
 	config, cleanup := FixtureConfig()
@@ -201,7 +248,7 @@ func TestHandleTokenSubstitutionNoKey(t *testing.T) {
 
 	msg := <-ch
 
-	event := &types.Event{}
+	event := &corev2.Event{}
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.Contains(event.Check.Output, "has no entry for key")
@@ -215,7 +262,7 @@ func TestPrepareCheck(t *testing.T) {
 	agent := NewAgent(config)
 
 	// Invalid check
-	check := types.FixtureCheckConfig("check")
+	check := corev2.FixtureCheckConfig("check")
 	check.Interval = 0
 	assert.False(agent.prepareCheck(check))
 
@@ -229,14 +276,14 @@ func TestExtractMetrics(t *testing.T) {
 
 	testCases := []struct {
 		name            string
-		event           *types.Event
+		event           *corev2.Event
 		metricFormat    string
-		expectedMetrics []*types.MetricPoint
+		expectedMetrics []*corev2.MetricPoint
 	}{
 		{
 			name: "invalid output metric format",
-			event: &types.Event{
-				Check: &types.Check{
+			event: &corev2.Event{
+				Check: &corev2.Check{
 					Output: "metric.value 1 123456789",
 				},
 			},
@@ -245,57 +292,57 @@ func TestExtractMetrics(t *testing.T) {
 		},
 		{
 			name: "valid extraction graphite",
-			event: &types.Event{
-				Check: &types.Check{
+			event: &corev2.Event{
+				Check: &corev2.Check{
 					Output: "metric.value 1 123456789",
 				},
 			},
-			metricFormat: types.GraphiteOutputMetricFormat,
-			expectedMetrics: []*types.MetricPoint{
+			metricFormat: corev2.GraphiteOutputMetricFormat,
+			expectedMetrics: []*corev2.MetricPoint{
 				{
 					Name:      "metric.value",
 					Value:     1,
 					Timestamp: 123456789,
-					Tags:      []*types.MetricTag{},
+					Tags:      []*corev2.MetricTag{},
 				},
 			},
 		},
 		{
 			name: "invalid extraction graphite",
-			event: &types.Event{
-				Check: &types.Check{
+			event: &corev2.Event{
+				Check: &corev2.Check{
 					Output: "metric.value 1 foo",
 				},
 			},
-			metricFormat:    types.GraphiteOutputMetricFormat,
+			metricFormat:    corev2.GraphiteOutputMetricFormat,
 			expectedMetrics: nil,
 		},
 		{
 			name: "valid nagios extraction",
-			event: &types.Event{
-				Check: &types.Check{
+			event: &corev2.Event{
+				Check: &corev2.Check{
 					Executed: 123456789,
 					Output:   "PING ok - Packet loss = 0% | percent_packet_loss=0",
 				},
 			},
-			metricFormat: types.NagiosOutputMetricFormat,
-			expectedMetrics: []*types.MetricPoint{
+			metricFormat: corev2.NagiosOutputMetricFormat,
+			expectedMetrics: []*corev2.MetricPoint{
 				{
 					Name:      "percent_packet_loss",
 					Value:     0,
 					Timestamp: 123456789,
-					Tags:      []*types.MetricTag{},
+					Tags:      []*corev2.MetricTag{},
 				},
 			},
 		},
 		{
 			name: "invalid nagios extraction",
-			event: &types.Event{
-				Check: &types.Check{
+			event: &corev2.Event{
+				Check: &corev2.Check{
 					Output: "PING ok - Packet loss = 0%",
 				},
 			},
-			metricFormat:    types.NagiosOutputMetricFormat,
+			metricFormat:    corev2.NagiosOutputMetricFormat,
 			expectedMetrics: nil,
 		},
 	}
