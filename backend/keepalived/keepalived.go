@@ -2,7 +2,6 @@ package keepalived
 
 import (
 	"context"
-	"fmt"
 	"errors"
 	"fmt"
 	"path"
@@ -330,9 +329,6 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) {
 		lager.Error(err)
 		return
 	}
-	event := createKeepaliveEvent(e)
-	event.Check.Status = 0
-	event.Check.Output = fmt.Sprintf("Keepalive last sent from %s at %s", entity.Name, time.Unix(entity.LastSeen, 0).String())
 
 	lager = lager.WithFields(logrus.Fields{"entity": name, "namespace": namespace})
 	lager.Warn("keepalive timed out")
@@ -421,6 +417,7 @@ func (k *Keepalived) handleUpdate(e *types.Event) error {
 	}
 	event := createKeepaliveEvent(e)
 	event.Check.Status = 0
+	event.Check.Output = fmt.Sprintf("Keepalive last sent from %s at %s", entity.Name, time.Unix(entity.LastSeen, 0).String())
 
 	return k.bus.Publish(messaging.TopicEventRaw, event)
 }
