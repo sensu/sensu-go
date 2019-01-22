@@ -25,7 +25,7 @@ func (s *Store) CreateRoleBinding(ctx context.Context, roleBinding *types.RoleBi
 	if err := roleBinding.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
-	return s.create(ctx, getRoleBindingPath(roleBinding), roleBinding.Namespace, roleBinding)
+	return Create(ctx, s.client, getRoleBindingPath(roleBinding), roleBinding.Namespace, roleBinding)
 }
 
 // CreateOrUpdateRoleBinding ...
@@ -33,25 +33,25 @@ func (s *Store) CreateOrUpdateRoleBinding(ctx context.Context, roleBinding *type
 	if err := roleBinding.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
-	return s.createOrUpdate(ctx, getRoleBindingPath(roleBinding), roleBinding.Namespace, roleBinding)
+	return CreateOrUpdate(ctx, s.client, getRoleBindingPath(roleBinding), roleBinding.Namespace, roleBinding)
 }
 
 // DeleteRoleBinding ...
 func (s *Store) DeleteRoleBinding(ctx context.Context, name string) error {
-	return s.delete(ctx, getRoleBindingsPath(ctx, name))
+	return Delete(ctx, s.client, getRoleBindingsPath(ctx, name))
 }
 
 // GetRoleBinding ...
 func (s *Store) GetRoleBinding(ctx context.Context, name string) (*types.RoleBinding, error) {
 	role := &types.RoleBinding{}
-	err := s.get(ctx, getRoleBindingsPath(ctx, name), role)
+	err := Get(ctx, s.client, getRoleBindingsPath(ctx, name), role)
 	return role, err
 }
 
 // ListRoleBindings ...
 func (s *Store) ListRoleBindings(ctx context.Context) ([]*types.RoleBinding, error) {
 	roles := []*types.RoleBinding{}
-	err := s.list(ctx, getRoleBindingsPath, &roles)
+	err := List(ctx, s.client, getRoleBindingsPath, &roles)
 	return roles, err
 }
 
@@ -60,5 +60,5 @@ func (s *Store) UpdateRoleBinding(ctx context.Context, roleBinding *types.RoleBi
 	if err := roleBinding.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
-	return s.update(ctx, getRoleBindingPath(roleBinding), roleBinding.Namespace, roleBinding)
+	return Update(ctx, s.client, getRoleBindingPath(roleBinding), roleBinding.Namespace, roleBinding)
 }

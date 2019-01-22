@@ -5,21 +5,20 @@ package etcd
 import (
 	"testing"
 
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestTokensStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
-		// Generate a dummy access token
-		user := &types.User{Username: "foo"}
-		token, _, _ := jwt.AccessToken(user)
-		claims, _ := jwt.GetClaims(token)
+		// Generate dummy claims
+		claims := v2.FixtureClaims("foo", nil)
+		token, _, _ := jwt.AccessToken(claims)
 
-		// Store the access token
-		err := store.CreateToken(claims)
+		// Add the token
+		err := store.AllowTokens(token)
 		assert.NoError(t, err)
 
 		// Retrieve the stored token
@@ -27,8 +26,8 @@ func TestTokensStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, result)
 
-		// Delete the stored token
-		err = store.DeleteTokens(claims.Subject, []string{claims.Id})
+		// Revoke the token
+		err = store.RevokeTokens(claims)
 		assert.NoError(t, err)
 		_, err = store.GetToken(claims.Subject, claims.Id)
 		assert.Error(t, err)

@@ -14,11 +14,14 @@ import (
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
+	"github.com/sensu/sensu-go/backend/authentication/providers"
+	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
 	"github.com/sensu/sensu-go/backend/daemon"
 	"github.com/sensu/sensu-go/backend/dashboardd"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/eventd"
 	"github.com/sensu/sensu-go/backend/keepalived"
+	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/backend/pipelined"
@@ -190,9 +193,9 @@ func Initialize(config *Config) (*Backend, error) {
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:            bus,
-		Store:          store,
-		MonitorFactory: monitor.EtcdFactory(b.Client, "keepalived"),
+		Bus:             bus,
+		Store:           store,
+		LivenessFactory: liveness.EtcdFactory(context.TODO(), b.Client),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
@@ -206,6 +209,11 @@ func Initialize(config *Config) (*Backend, error) {
 		return nil, err
 	}
 
+	// Prepare the authentication providers
+	authenticator := &providers.Authenticator{}
+	basic := &basic.Provider{Store: store}
+	authenticator.AddProvider(basic)
+
 	// Initialize apid
 	api, err := apid.New(apid.Config{
 		ListenAddress:       config.APIListenAddress,
@@ -216,6 +224,7 @@ func Initialize(config *Config) (*Backend, error) {
 		TLS:                 config.TLS,
 		Cluster:             clientv3.NewCluster(b.Client),
 		EtcdClientTLSConfig: etcdClientTLSConfig,
+		Authenticator:       authenticator,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err)

@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sirupsen/logrus"
@@ -128,4 +129,40 @@ func TestDead(t *testing.T) {
 		t.Errorf("bad results: got %v, want %v", got, want)
 	}
 	mu.Unlock()
+}
+
+func TestBury(t *testing.T) {
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+
+	client, err := e.NewClient()
+	require.NoError(t, err)
+	defer client.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// This callback gets executed when the entity dies
+	expired := func(key string, prev State, leader bool) {
+		t.Fatal("should never be called")
+	}
+
+	// This callback gets executed when the entity asserts its liveness
+	alive := func(key string, prev State, leader bool) {
+		t.Fatal("should never be called")
+	}
+
+	toggle := NewSwitchSet(client, "test", expired, alive, logger)
+	go toggle.monitor(ctx)
+
+	if err := toggle.Dead(ctx, "entity1", 5); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := toggle.Bury(ctx, "entity1"); err != nil {
+		t.Fatal(err)
+	}
+
+	// Ensure that key expiration doesn't occur
+	time.Sleep(5 * time.Second)
 }

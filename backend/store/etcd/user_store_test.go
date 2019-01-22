@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
@@ -75,13 +76,12 @@ func TestUserStorage(t *testing.T) {
 		assert.Equal(t, 2, len(users))
 
 		// Generate a token for the bar user
-		barUser := &types.User{Username: "bar"}
-		token, _, _ := jwt.AccessToken(barUser)
-		claims, _ := jwt.GetClaims(token)
-		err = store.CreateToken(claims)
+		claims := v2.FixtureClaims("bar", nil)
+		token, _, _ := jwt.AccessToken(claims)
+		err = store.AllowTokens(token)
 		assert.NoError(t, err)
 
-		// Disable a user a user that does not exist
+		// Disable a user that does not exist
 		err = store.DeleteUser(ctx, &types.User{Username: "Frankieie"})
 		assert.NoError(t, err)
 

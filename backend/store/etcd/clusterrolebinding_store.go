@@ -25,7 +25,7 @@ func (s *Store) CreateClusterRoleBinding(ctx context.Context, clusterRoleBinding
 	if err := clusterRoleBinding.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
-	return s.create(ctx, getClusterRoleBindingPath(clusterRoleBinding), "", clusterRoleBinding)
+	return Create(ctx, s.client, getClusterRoleBindingPath(clusterRoleBinding), "", clusterRoleBinding)
 }
 
 // CreateOrUpdateClusterRoleBinding ...
@@ -33,25 +33,25 @@ func (s *Store) CreateOrUpdateClusterRoleBinding(ctx context.Context, clusterRol
 	if err := clusterRoleBinding.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
-	return s.createOrUpdate(ctx, getClusterRoleBindingPath(clusterRoleBinding), "", clusterRoleBinding)
+	return CreateOrUpdate(ctx, s.client, getClusterRoleBindingPath(clusterRoleBinding), "", clusterRoleBinding)
 }
 
 // DeleteClusterRoleBinding ...
 func (s *Store) DeleteClusterRoleBinding(ctx context.Context, name string) error {
-	return s.delete(ctx, getClusterRoleBindingsPath(ctx, name))
+	return Delete(ctx, s.client, getClusterRoleBindingsPath(ctx, name))
 }
 
 // GetClusterRoleBinding ...
 func (s *Store) GetClusterRoleBinding(ctx context.Context, name string) (*types.ClusterRoleBinding, error) {
 	role := &types.ClusterRoleBinding{}
-	err := s.get(ctx, getClusterRoleBindingsPath(ctx, name), role)
+	err := Get(ctx, s.client, getClusterRoleBindingsPath(ctx, name), role)
 	return role, err
 }
 
 // ListClusterRoleBindings ...
 func (s *Store) ListClusterRoleBindings(ctx context.Context) ([]*types.ClusterRoleBinding, error) {
 	roles := []*types.ClusterRoleBinding{}
-	err := s.list(ctx, getClusterRoleBindingsPath, &roles)
+	err := List(ctx, s.client, getClusterRoleBindingsPath, &roles)
 	return roles, err
 }
 
@@ -60,5 +60,5 @@ func (s *Store) UpdateClusterRoleBinding(ctx context.Context, clusterRoleBinding
 	if err := clusterRoleBinding.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
-	return s.update(ctx, getClusterRoleBindingPath(clusterRoleBinding), "", clusterRoleBinding)
+	return Update(ctx, s.client, getClusterRoleBindingPath(clusterRoleBinding), "", clusterRoleBinding)
 }

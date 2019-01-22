@@ -4,11 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -30,19 +31,27 @@ func (k *keepalivedTest) Receiver() chan<- interface{} {
 	return k.receiver
 }
 
-type fakeMonitorSupervisor struct {
+type fakeLivenessInterface struct {
 }
 
-func (f fakeMonitorSupervisor) Monitor(context.Context, string, *types.Event, int64) error {
+func (fakeLivenessInterface) Alive(context.Context, string, int64) error {
 	return nil
 }
 
-func fakeFactory(monitor.Handler) monitor.Supervisor {
-	return fakeMonitorSupervisor{}
+func (fakeLivenessInterface) Dead(context.Context, string, int64) error {
+	return nil
+}
+
+func (fakeLivenessInterface) Bury(context.Context, string) error {
+	return nil
 }
 
 // type assertion
-var _ monitor.Supervisor = fakeMonitorSupervisor{}
+var _ liveness.Interface = fakeLivenessInterface{}
+
+func fakeFactory(name string, dead, alive liveness.EventFunc, logger logrus.FieldLogger) liveness.Interface {
+	return fakeLivenessInterface{}
+}
 
 func newKeepalivedTest(t *testing.T) *keepalivedTest {
 	store := &mockstore.MockStore{}
@@ -51,7 +60,7 @@ func newKeepalivedTest(t *testing.T) *keepalivedTest {
 		RingGetter: &mockring.Getter{},
 	})
 	require.NoError(t, err)
-	k, err := New(Config{Store: store, Bus: bus, MonitorFactory: fakeFactory})
+	k, err := New(Config{Store: store, Bus: bus, LivenessFactory: fakeFactory})
 	require.NoError(t, err)
 	test := &keepalivedTest{
 		MessageBus:   bus,
@@ -235,7 +244,7 @@ func TestProcessRegistration(t *testing.T) {
 			subscription, err := messageBus.Subscribe(messaging.TopicEvent, "testSubscriber", tsub)
 			require.NoError(t, err)
 
-			keepalived, err := New(Config{Store: store, Bus: messageBus, MonitorFactory: fakeFactory})
+			keepalived, err := New(Config{Store: store, Bus: messageBus, LivenessFactory: fakeFactory})
 			require.NoError(t, err)
 
 			store.On("GetEntityByName", mock.Anything, "agent1").Return(tc.storeEntity, nil)
