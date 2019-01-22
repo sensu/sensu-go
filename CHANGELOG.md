@@ -9,6 +9,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Added the notion of authentication providers.
+- Added support for the following TLS related options to `sensuctl`:
+  `--trusted-ca-file`, `--insecure-skip-tls-verify`, `--cert-file` and
+  `--key-file`. These options have the same meaning as their `sensu-backend` and
+  `sensu-agent` counterparts.
 
 ### Changed
 - Refactoring of the internal authentication mechanism into a `basic`
