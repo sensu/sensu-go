@@ -91,3 +91,22 @@ func (a *Authenticator) Providers() map[string]Provider {
 
 	return a.providers
 }
+
+// RemoveProvider removes the provider with the given ID from the list of
+// configued providers
+func (a *Authenticator) RemoveProvider(id string) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	if _, ok := a.providers[id]; !ok {
+		return fmt.Errorf("provider %q is not configured, could not remove it", id)
+	}
+
+	// Make sure at least two providers are enabled so there's still one remaining
+	if len(a.providers) == 1 {
+		return fmt.Errorf("provider %q is the only provider configured, could not remove it ", id)
+	}
+
+	delete(a.providers, id)
+	return nil
+}
