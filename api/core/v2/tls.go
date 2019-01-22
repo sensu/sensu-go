@@ -29,6 +29,15 @@ var DefaultCipherSuites = []uint16{
 }
 
 // ToTLSConfig outputs a tls.Config from TLSOptions
+//
+// NOTE(ccressent): I'm in favour of deprecating this function:
+// - it forces the CA cert bundle to be only used by the client side of the TLS
+//   connection (see tls.Config.RootCAs vs tls.Config.ClientCAs).
+// - its error message assumes the provided certificate is to be used by the
+//   client side of the TLS connection.
+//
+// I suggest the functionality of ToTLSConfig() be split into smaller, more
+// composable functions and getting rid of the TLSOption type altogether.
 func (t *TLSOptions) ToTLSConfig() (*tls.Config, error) {
 	tlsConfig := tls.Config{}
 	tlsConfig.InsecureSkipVerify = t.InsecureSkipVerify
