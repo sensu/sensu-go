@@ -6,6 +6,8 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+### Changed
+- Changed keepalive event to include check.output
 
 ### Added
 - Added the notion of authentication providers.
