@@ -72,7 +72,7 @@ class Button extends React.PureComponent {
     let button;
     if (iconOnly) {
       button = (
-        <IconButton ref={iconRef} {...props}>
+        <IconButton ref={iconRef} color={color} {...props}>
           {iconProp}
         </IconButton>
       );
