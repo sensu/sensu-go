@@ -36,7 +36,7 @@ func loadAssetsBatchFn(client client.APIClient) dataloader.BatchFunc {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
 			records, err := client.ListAssets(key.String())
-			result := &dataloader.Result{records, handleListErr(err)}
+			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
 		return results
@@ -65,7 +65,7 @@ func loadCheckConfigsBatchFn(client client.APIClient) dataloader.BatchFunc {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
 			records, err := client.ListChecks(key.String())
-			result := &dataloader.Result{records, handleListErr(err)}
+			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
 		return results
@@ -94,7 +94,7 @@ func loadEntitiesBatchFn(client client.APIClient) dataloader.BatchFunc {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
 			records, err := client.ListEntities(key.String())
-			result := &dataloader.Result{records, handleListErr(err)}
+			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
 		return results

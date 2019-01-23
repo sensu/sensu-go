@@ -89,23 +89,6 @@ func filterHandlers(records []types.Handler, filterFn handlerPredicate) []*types
 	return relevant
 }
 
-// namespaces
-
-type namespacePredicate func(*types.Namespace) bool
-
-func filterNamespaces(records []types.Namespace, filterFn namespacePredicate) []*types.Namespace {
-	relevant := make([]*types.Namespace, 0, len(records))
-
-	for i := range records {
-		record := records[i]
-		if filterFn(&record) {
-			relevant = append(relevant, &record)
-		}
-	}
-
-	return relevant
-}
-
 // silences
 
 type silencePredicate func(*types.Silenced) bool
