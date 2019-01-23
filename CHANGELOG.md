@@ -7,8 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
-## [5.1.1] - 2019-01-24
 ### Changed
+- Removed unused workflow `rel_build_and_test` in CircleCI config.
+
+## [5.1.1] - 2019-01-24
 
 ### Added
 - Added the notion of authentication providers.
@@ -19,7 +21,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Refactoring of the internal authentication mechanism into a `basic`
 authentication provider.
 - Modified private generic store methods as public functions.
-- Removed unused workflow `rel_build_and_test` in CircleCI config.
 - Improved logging for errors in proxy check requests.
 - Updated Go version from 1.10 to 1.11.4.
 - Changed keepalive event to include check.outputé
