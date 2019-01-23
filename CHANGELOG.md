@@ -10,6 +10,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - Removed unused workflow `rel_build_and_test` in CircleCI config.
 
+### Fixed
+- Fixed a bug where `sensuctl version` required configuration files to exist.
+
 ## [5.1.1] - 2019-01-24
 
 ### Added
