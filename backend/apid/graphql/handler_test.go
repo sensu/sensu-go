@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"context"
 	"testing"
 
 	client "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
@@ -15,8 +16,12 @@ func TestHandlerTypeHandlersField(t *testing.T) {
 	handler := types.FixtureHandler("my-handler")
 	handler.Handlers = []string{"one", "two"}
 
-	client, factory := client.NewClientFactory()
-	impl := &handlerImpl{factory: factory}
+	client, _ := client.NewClientFactory()
+	impl := &handlerImpl{}
+
+	params := graphql.ResolveParams{}
+	params.Context = contextWithLoadersNoCache(context.TODO(), client)
+	params.Source = handler
 
 	// Success
 	client.On("ListHandlers", mock.Anything).Return([]types.Handler{
@@ -24,7 +29,8 @@ func TestHandlerTypeHandlersField(t *testing.T) {
 		*types.FixtureHandler("two"),
 		*types.FixtureHandler("three"),
 	}, nil).Once()
-	res, err := impl.Handlers(graphql.ResolveParams{Source: handler})
+
+	res, err := impl.Handlers(params)
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 }

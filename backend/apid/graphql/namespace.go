@@ -67,8 +67,12 @@ func (r *namespaceImpl) Checks(p schema.NamespaceChecksFieldResolverParams) (int
 
 	// finds all records
 	filter := p.Args.Filter
-	client := r.factory.NewWithContext(p.Context)
-	records, err := fetchChecks(client, nsp.Name, func(obj *types.CheckConfig) bool {
+	results, err := loadCheckConfigs(p.Context, nsp.Name)
+	if err != nil {
+		return res, err
+	}
+
+	records := filterChecks(results, func(obj *types.CheckConfig) bool {
 		if filter == "" {
 			return true
 		}
@@ -104,10 +108,15 @@ func (r *namespaceImpl) Silences(p schema.NamespaceSilencesFieldResolverParams) 
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	nsp := p.Source.(*types.Namespace)
 
-	// fetch relevant
+	// fetch
+	results, err := loadSilenceds(p.Context, nsp.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	// filter relevant
 	filter := p.Args.Filter
-	client := r.factory.NewWithContext(p.Context)
-	records, err := fetchSilenceds(client, nsp.Name, func(obj *types.Silenced) bool {
+	records := filterSilenceds(results, func(obj *types.Silenced) bool {
 		if filter == "" {
 			return true
 		}
@@ -121,9 +130,6 @@ func (r *namespaceImpl) Silences(p schema.NamespaceSilencesFieldResolverParams) 
 		}
 		return false
 	})
-	if err != nil {
-		return nil, err
-	}
 
 	// sort records
 	switch p.Args.OrderBy {
@@ -149,10 +155,15 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	nsp := p.Source.(*types.Namespace)
 
-	// fetch relevant
+	// fetch
+	results, err := loadEntities(p.Context, nsp.Name)
+	if err != nil {
+		return nil, err
+	}
+
+	// filter relevant
 	filter := p.Args.Filter
-	client := r.factory.NewWithContext(p.Context)
-	records, err := fetchEntities(client, nsp.Name, func(obj *types.Entity) bool {
+	records := filterEntities(results, func(obj *types.Entity) bool {
 		if filter == "" {
 			return true
 		}
@@ -166,9 +177,6 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 		}
 		return false
 	})
-	if err != nil {
-		return nil, err
-	}
 
 	// sort records
 	switch p.Args.OrderBy {
@@ -193,10 +201,15 @@ func (r *namespaceImpl) Events(p schema.NamespaceEventsFieldResolverParams) (int
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
 	nsp := p.Source.(*types.Namespace)
 
+	// fetch
+	results, err := loadEvents(p.Context, nsp.Name)
+	if err != nil {
+		return res, err
+	}
+
 	// fetch relevant
 	filter := p.Args.Filter
-	client := r.factory.NewWithContext(p.Context)
-	records, err := fetchEvents(client, nsp.Name, func(obj *types.Event) bool {
+	records := filterEvents(results, func(obj *types.Event) bool {
 		if filter == "" {
 			return true
 		}
@@ -210,9 +223,6 @@ func (r *namespaceImpl) Events(p schema.NamespaceEventsFieldResolverParams) (int
 		}
 		return false
 	})
-	if err != nil {
-		return res, err
-	}
 
 	// sort records
 	sortEvents(records, p.Args.OrderBy)
@@ -229,8 +239,8 @@ func (r *namespaceImpl) CheckHistory(p schema.NamespaceCheckHistoryFieldResolver
 	nsp := p.Source.(*types.Namespace)
 	ctx := contextWithNamespace(p.Context, nsp.Name)
 
-	client := r.factory.NewWithContext(ctx)
-	records, err := fetchEvents(client, nsp.Name, nil)
+	// Fetch all events
+	records, err := loadEvents(ctx, nsp.Name)
 	if err != nil {
 		return []types.CheckHistory{}, err
 	}
@@ -263,24 +273,24 @@ func (r *namespaceImpl) Subscriptions(p schema.NamespaceSubscriptionsFieldResolv
 	nsp := p.Source.(*types.Namespace)
 	ctx := contextWithNamespace(p.Context, nsp.Name)
 
-	client := r.factory.NewWithContext(ctx)
-	entities, err := fetchEntities(client, nsp.Name, nil)
+	// fetch
+	entities, err := loadEntities(ctx, nsp.Name)
 	if err != nil {
 		return set, err
 	}
+
 	for i := range entities {
 		entity := entities[i]
-		newSet := occurrencesOfSubscriptions(entity)
+		newSet := occurrencesOfSubscriptions(&entity)
 		set.Merge(newSet)
 	}
 
-	checks, err := fetchChecks(client, nsp.Name, nil)
+	checks, err := loadCheckConfigs(p.Context, nsp.Name)
 	if err != nil {
 		return set, err
 	}
-	for i := range checks {
-		check := checks[i]
-		newSet := occurrencesOfSubscriptions(check)
+	for _, check := range checks {
+		newSet := occurrencesOfSubscriptions(&check)
 		set.Merge(newSet)
 	}
 

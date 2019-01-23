@@ -39,10 +39,11 @@ func (r *handlerImpl) Mutator(p graphql.ResolveParams) (interface{}, error) {
 // Handlers implements response to request for 'handlers' field.
 func (r *handlerImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*types.Handler)
-	client := r.factory.NewWithContext(p.Context)
-	return fetchHandlers(client, src.Namespace, func(obj *types.Handler) bool {
+	results, err := loadHandlers(p.Context, src.Namespace)
+	records := filterHandlers(results, func(obj *types.Handler) bool {
 		return strings.FoundInArray(obj.Name, src.Handlers)
 	})
+	return records, err
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type

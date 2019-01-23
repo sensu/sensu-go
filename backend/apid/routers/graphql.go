@@ -14,7 +14,6 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/restclient"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
-	graphqlservice "github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -24,7 +23,7 @@ var (
 
 // GraphQLRouter handles requests for /events
 type GraphQLRouter struct {
-	service *graphqlservice.Service
+	service *graphql.Service
 	store   store.Store
 }
 
