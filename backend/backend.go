@@ -158,7 +158,7 @@ func Initialize(config *Config) (*Backend, error) {
 	event, err := eventd.New(eventd.Config{
 		Store:           store,
 		Bus:             bus,
-		LivenessFactory: liveness.EtcdFactory(context.TODO(), b.Client),
+		LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", event.Name(), err)
@@ -194,7 +194,7 @@ func Initialize(config *Config) (*Backend, error) {
 		DeregistrationHandler: config.DeregistrationHandler,
 		Bus:             bus,
 		Store:           store,
-		LivenessFactory: liveness.EtcdFactory(context.TODO(), b.Client),
+		LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
