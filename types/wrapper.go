@@ -28,7 +28,8 @@ type rawWrapper struct {
 	Value      *json.RawMessage `json:"spec" yaml:"spec"`
 }
 
-var packageMap = map[string]func(string) (Resource, error){
+// PackageMap contains a list of packages with their Resource Resolver func
+var PackageMap = map[string]func(string) (Resource, error){
 	"core/v2": v2.ResolveResource,
 }
 
@@ -42,7 +43,7 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 	if w.APIVersion == "" {
 		w.APIVersion = "core/v2"
 	}
-	resolver, ok := packageMap[w.TypeMeta.APIVersion]
+	resolver, ok := PackageMap[w.TypeMeta.APIVersion]
 	if !ok {
 		return fmt.Errorf("invalid API version: %s", w.TypeMeta.APIVersion)
 	}
