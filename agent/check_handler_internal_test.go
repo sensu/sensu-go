@@ -11,7 +11,6 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -32,7 +31,7 @@ func TestHandleCheck(t *testing.T) {
 	ex := &mockexecutor.MockExecutor{}
 	agent.executor = ex
 	execution := command.FixtureExecutionResponse(0, "")
-	ex.On("Execute", mock.Anything, mock.Anything).Return(execution, nil)
+	ex.Return(execution, nil)
 	ch := make(chan *transport.Message, 5)
 	agent.sendq = ch
 
@@ -69,7 +68,7 @@ func TestHandleProxyCheck(t *testing.T) {
 	ex := &mockexecutor.MockExecutor{}
 	agent.executor = ex
 	execution := command.FixtureExecutionResponse(0, "")
-	ex.On("Execute", mock.Anything, mock.Anything).Return(execution, nil)
+	ex.Return(execution, nil)
 	agent.sendq = make(chan *transport.Message, 5)
 
 	// simulate checkA executing
@@ -111,7 +110,7 @@ func TestExecuteCheck(t *testing.T) {
 	ex := &mockexecutor.MockExecutor{}
 	agent.executor = ex
 	execution := command.FixtureExecutionResponse(0, "")
-	ex.On("Execute", mock.Anything, mock.Anything).Return(execution, nil)
+	ex.Return(execution, nil)
 
 	agent.executeCheck(request)
 	msg := <-ch
@@ -158,7 +157,7 @@ func TestExecuteCheck(t *testing.T) {
 	checkConfig.OutputMetricFormat = ""
 	execution.Status = 0
 	execution.Output = "metric.foo 1 123456789\nmetric.bar 2 987654321"
-	ex.On("Execute", mock.Anything, mock.Anything).Return(execution, nil)
+	ex.Return(execution, nil)
 	agent.executeCheck(request)
 	msg = <-ch
 
@@ -168,7 +167,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.False(event.HasMetrics())
 
 	checkConfig.OutputMetricFormat = corev2.GraphiteOutputMetricFormat
-	ex.On("Execute", mock.Anything, mock.Anything).Return(execution, nil)
+	ex.Return(execution, nil)
 	agent.executeCheck(request)
 	msg = <-ch
 
