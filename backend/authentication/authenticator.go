@@ -20,6 +20,10 @@ func (a *Authenticator) Authenticate(ctx context.Context, username, password str
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
+	// TODO(palourde): The Go runtime randomizes map iteration order so the
+	// providers resolution order might vary on each authentication, and
+	// consequently provoke weird behavior if the same username/password
+	// combinaison exists in multiple providers.
 	for _, provider := range a.providers {
 		claims, err := provider.Authenticate(ctx, username, password)
 		if err != nil || claims == nil {
@@ -32,6 +36,8 @@ func (a *Authenticator) Authenticate(ctx context.Context, username, password str
 		return claims, nil
 	}
 
+	// TODO(palourde): We might want to return a more meaningful and actionnable
+	// error message, but we don't want to leak sensitive information.
 	return nil, errors.New("authentication failed")
 }
 
@@ -42,6 +48,7 @@ func (a *Authenticator) Refresh(ctx context.Context, claims v2.ProviderClaims) (
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
+	// Retrieve the right provider with the provider ID specified in the claims
 	if provider, ok := a.providers[claims.ProviderID]; ok {
 		user, err := provider.Refresh(ctx, claims)
 		if err != nil {
