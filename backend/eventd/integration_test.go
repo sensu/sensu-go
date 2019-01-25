@@ -3,12 +3,13 @@
 package eventd
 
 import (
+	"context"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
+	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/sensu/sensu-go/testing/mockring"
@@ -33,7 +34,7 @@ func TestEventdMonitor(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	monFac := monitor.EtcdFactory(client, "TestEventdMonitor")
+	livenessFactory := liveness.EtcdFactory(context.Background(), client)
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
 		RingGetter: &mockring.Getter{},
@@ -63,7 +64,7 @@ func TestEventdMonitor(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 
-	e, err := New(Config{Store: store, Bus: bus, MonitorFactory: monFac})
+	e, err := New(Config{Store: store, Bus: bus, LivenessFactory: livenessFactory})
 	require.NoError(t, err)
 
 	if err := e.Start(); err != nil {

@@ -97,19 +97,3 @@ workflows:
           filters:
             tags:
               ignore: /.*/
-  rel_build_and_test:
-    jobs:
-      - build:
-          filters:
-            tags:
-              only: /^\d\.\d\.\d\-beta.\d+.+/
-            branches:
-              ignore: /.*/
-      - test:
-          requires:
-            - build
-          filters:
-            tags:
-              only: /^\d\.\d\.\d\-beta.\d+.+/
-            branches:
-              ignore: /.*/

@@ -5,11 +5,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -23,7 +24,11 @@ func TestEventHandling(t *testing.T) {
 	require.NoError(t, bus.Start())
 
 	mockStore := &mockstore.MockStore{}
-	e, err := New(Config{Store: mockStore, Bus: bus})
+	e, err := New(Config{
+		Store:           mockStore,
+		Bus:             bus,
+		LivenessFactory: fakeFactory,
+	})
 	require.NoError(t, err)
 	e.handlerCount = 5
 
@@ -74,15 +79,23 @@ func TestEventHandling(t *testing.T) {
 	assert.Equal(t, event.Timestamp, event.Check.LastOK)
 }
 
-type fakeMonitorSupervisor struct {
+type fakeSwitchSet struct {
 }
 
-func (f fakeMonitorSupervisor) Monitor(context.Context, string, *types.Event, int64) error {
+func (fakeSwitchSet) Alive(context.Context, string, int64) error {
 	return nil
 }
 
-func fakeFactory(monitor.Handler) monitor.Supervisor {
-	return fakeMonitorSupervisor{}
+func (fakeSwitchSet) Dead(context.Context, string, int64) error {
+	return nil
+}
+
+func (fakeSwitchSet) Bury(context.Context, string) error {
+	return nil
+}
+
+func fakeFactory(name string, dead, alive liveness.EventFunc, logger logrus.FieldLogger) liveness.Interface {
+	return fakeSwitchSet{}
 }
 
 func TestEventMonitor(t *testing.T) {
@@ -97,7 +110,7 @@ func TestEventMonitor(t *testing.T) {
 	require.NoError(t, err)
 	e.handlerCount = 5
 
-	e.monitorFactory = fakeFactory
+	e.livenessFactory = fakeFactory
 
 	require.NoError(t, e.Start())
 

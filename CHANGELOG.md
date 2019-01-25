@@ -6,16 +6,28 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
 ### Changed
-- Changed keepalive event to include check.output
+- Removed unused workflow `rel_build_and_test` in CircleCI config.
+
+### Fixed
+- Check TTL failure events are now much more reliable, and will persist even
+in the presence cluster member failures and cluster restarts.
+
+## [5.1.1] - 2019-01-24
 
 ### Added
 - Added the notion of authentication providers.
 
 ### Changed
+- Improved logging for errors in proxy check requests.
+- Updated Go version from 1.10 to 1.11.4.
 - Refactoring of the internal authentication mechanism into a `basic`
 authentication provider.
 - Modified private generic store methods as public functions.
+- Improved logging for errors in proxy check requests.
+- Updated Go version from 1.10 to 1.11.4.
+- Changed keepalive event to include check.outputé
 
 ### Fixed
 - Fixed a bug where `sensuctl edit` was not removing the temp file it created.
@@ -26,8 +38,8 @@ An error is now logged instead, and extraction continues after a bad line is enc
 - Keepalive events will now continue to fire after cluster restarts.
 - Fixed a panic in the dashboardd shutdown routine.
 - Fixed a bug where deleting a non-existent entity with sensuctl would not return an error.
-- Web UI - toolbar menu buttons now switch with dark theme
-- Web UI - some buttons easier to see with dark theme
+- Web UI - toolbar menu buttons now switch with dark theme.
+- Web UI - some buttons easier to see with dark theme.
 
 ### Changed
 - Improved logging for errors in proxy check requests.
