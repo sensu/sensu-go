@@ -2,7 +2,7 @@ package v2
 
 import (
 	"context"
-	fmt "fmt"
+	"fmt"
 )
 
 // Provider represents an abstracted authentication provider
