@@ -1,4 +1,4 @@
-package providers
+package authentication
 
 import (
 	"context"
@@ -9,23 +9,10 @@ import (
 	"github.com/sensu/sensu-go/api/core/v2"
 )
 
-// Provider represents an abstracted authentication provider
-type Provider interface {
-	Authenticate(ctx context.Context, username, password string) (*v2.Claims, error)
-	GetName() string
-	Refresh(ctx context.Context, providerClaims v2.ProviderClaims) (*v2.Claims, error)
-	Type() string
-}
-
-// ID returns a unique identifier for a given provider
-func ID(p Provider) string {
-	return fmt.Sprintf("%s/%s", p.Type(), p.GetName())
-}
-
 // Authenticator contains the list of authentication providers
 type Authenticator struct {
 	mu        sync.RWMutex
-	providers map[string]Provider
+	providers map[string]v2.Provider
 }
 
 // Authenticate with the configured authentication providers
@@ -72,20 +59,20 @@ func (a *Authenticator) Refresh(ctx context.Context, claims v2.ProviderClaims) (
 }
 
 // AddProvider adds a provided provider to the list of configured providers
-func (a *Authenticator) AddProvider(provider Provider) {
+func (a *Authenticator) AddProvider(provider v2.Provider) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
 	// Make sure the providers map is not nil
 	if a.providers == nil {
-		a.providers = map[string]Provider{}
+		a.providers = map[string]v2.Provider{}
 	}
 
-	a.providers[ID(provider)] = provider
+	a.providers[v2.ProviderID(provider)] = provider
 }
 
 // Providers returns the configured providers
-func (a *Authenticator) Providers() map[string]Provider {
+func (a *Authenticator) Providers() map[string]v2.Provider {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 

@@ -11,8 +11,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
+	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
-	"github.com/sensu/sensu-go/backend/authentication/providers"
 	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
 	realStore "github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -258,7 +258,7 @@ func TestTokenSuccess(t *testing.T) {
 }
 
 func authenticationRouter(store realStore.Store) *AuthenticationRouter {
-	authenticator := &providers.Authenticator{}
+	authenticator := &authentication.Authenticator{}
 	provider := &basic.Provider{Store: store}
 	authenticator.AddProvider(provider)
 	return &AuthenticationRouter{store: store, authenticator: authenticator}

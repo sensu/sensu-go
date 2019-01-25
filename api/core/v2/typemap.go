@@ -90,7 +90,7 @@ var typeMap = map[string]interface{}{
 	"System":                 &System{},
 	"system":                 &System{},
 	"TLSOptions":             &TLSOptions{},
-	"t_l_s_options":          &TLSOptions{},
+	"tls_options":            &TLSOptions{},
 	"TimeWindowDays":         &TimeWindowDays{},
 	"time_window_days":       &TimeWindowDays{},
 	"TimeWindowTimeRange":    &TimeWindowTimeRange{},

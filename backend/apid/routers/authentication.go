@@ -7,9 +7,9 @@ import (
 	"net/http"
 
 	"github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/authentication/providers"
 
 	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -18,11 +18,11 @@ import (
 // AuthenticationRouter handles authentication related requests
 type AuthenticationRouter struct {
 	store         store.Store
-	authenticator *providers.Authenticator
+	authenticator *authentication.Authenticator
 }
 
 // NewAuthenticationRouter instantiates new router.
-func NewAuthenticationRouter(store store.Store, authenticator *providers.Authenticator) *AuthenticationRouter {
+func NewAuthenticationRouter(store store.Store, authenticator *authentication.Authenticator) *AuthenticationRouter {
 	return &AuthenticationRouter{store: store, authenticator: authenticator}
 }
 

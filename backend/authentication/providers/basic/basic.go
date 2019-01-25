@@ -7,7 +7,6 @@ import (
 
 	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
-	"github.com/sensu/sensu-go/backend/authentication/providers"
 	"github.com/sensu/sensu-go/backend/store"
 )
 
@@ -62,8 +61,8 @@ func (p *Provider) Refresh(ctx context.Context, providerClaims v2.ProviderClaims
 	return claims, nil
 }
 
-// GetName returns the provider name
-func (p *Provider) GetName() string {
+// Name returns the provider name
+func (p *Provider) Name() string {
 	return "default"
 }
 
@@ -74,7 +73,7 @@ func (p *Provider) Type() string {
 
 func (p *Provider) claims(username string) v2.ProviderClaims {
 	return v2.ProviderClaims{
-		ProviderID: providers.ID(p),
+		ProviderID: v2.ProviderID(p),
 		UserID:     username,
 	}
 }

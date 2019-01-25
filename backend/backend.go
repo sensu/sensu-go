@@ -14,7 +14,7 @@ import (
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
-	"github.com/sensu/sensu-go/backend/authentication/providers"
+	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
 	"github.com/sensu/sensu-go/backend/daemon"
 	"github.com/sensu/sensu-go/backend/dashboardd"
@@ -144,8 +144,8 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
-		Store: store,
-		Bus:   bus,
+		Store:                   store,
+		Bus:                     bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 		AssetGetter:             assetGetter,
 	})
@@ -192,9 +192,9 @@ func Initialize(config *Config) (*Backend, error) {
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:            bus,
-		Store:          store,
-		MonitorFactory: monitor.EtcdFactory(b.Client, "keepalived"),
+		Bus:                   bus,
+		Store:                 store,
+		MonitorFactory:        monitor.EtcdFactory(b.Client, "keepalived"),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
@@ -209,7 +209,7 @@ func Initialize(config *Config) (*Backend, error) {
 	}
 
 	// Prepare the authentication providers
-	authenticator := &providers.Authenticator{}
+	authenticator := &authentication.Authenticator{}
 	basic := &basic.Provider{Store: store}
 	authenticator.AddProvider(basic)
 
