@@ -123,7 +123,7 @@ func loadEventsBatchFn(client client.APIClient) dataloader.BatchFunc {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
 			records, err := client.ListEvents(key.String())
-			result := &dataloader.Result{records, handleListErr(err)}
+			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
 		return results
@@ -152,7 +152,7 @@ func loadHandlersBatchFn(client client.APIClient) dataloader.BatchFunc {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
 			records, err := client.ListHandlers(key.String())
-			result := &dataloader.Result{records, handleListErr(err)}
+			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
 		return results
@@ -181,7 +181,7 @@ func loadNamespacesBatchFn(client client.APIClient) dataloader.BatchFunc {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for range keys {
 			records, err := client.ListNamespaces()
-			result := &dataloader.Result{records, handleListErr(err)}
+			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
 		return results
@@ -210,7 +210,7 @@ func loadSilencedsBatchFn(client client.APIClient) dataloader.BatchFunc {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
 			records, err := client.ListSilenceds(key.String(), "", "")
-			result := &dataloader.Result{records, handleListErr(err)}
+			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
 		return results
