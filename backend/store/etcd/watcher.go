@@ -135,7 +135,7 @@ func (w *watcher) startWatching(wg *sync.WaitGroup) {
 	// When we reach this point, the etcd watcher chan is broken and no errors
 	// were sent via the channel and this watcher wasn't stopped, so we need to
 	// notify the main thread so other goroutine are exited too
-	w.errChan <- errors.New("etcd watcher channel wasd unexpectedly closed")
+	w.errChan <- errors.New("etcd watcher channel was unexpectedly closed")
 }
 
 // processEvent handles incoming etcd event transmitted via eventChan,
@@ -167,13 +167,6 @@ func (w *watcher) processEvent(wg *sync.WaitGroup) {
 		case <-w.ctx.Done():
 			return
 		}
-	}
-}
-
-func (w *watcher) error(err error) {
-	select {
-	case w.errChan <- err:
-	case <-w.ctx.Done():
 	}
 }
 
