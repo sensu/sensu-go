@@ -210,7 +210,10 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Prepare the authentication providers
 	authenticator := &authentication.Authenticator{}
-	basic := &basic.Provider{Store: store}
+	basic := &basic.Provider{
+		ObjectMeta: v2.ObjectMeta{Name: "default"},
+		Store:      store,
+	}
 	authenticator.AddProvider(basic)
 
 	// Initialize apid
