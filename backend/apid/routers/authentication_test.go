@@ -259,7 +259,7 @@ func TestTokenSuccess(t *testing.T) {
 
 func authenticationRouter(store realStore.Store) *AuthenticationRouter {
 	authenticator := &authentication.Authenticator{}
-	provider := &basic.Provider{Store: store}
+	provider := &basic.Provider{Store: store, ObjectMeta: v2.ObjectMeta{Name: "default"}}
 	authenticator.AddProvider(provider)
 	return &AuthenticationRouter{store: store, authenticator: authenticator}
 }
