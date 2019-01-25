@@ -7,12 +7,19 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Added a generic watcher in the store.
+- Added `RemoveProvider` method to authenticator.
+
 ### Changed
 - Removed unused workflow `rel_build_and_test` in CircleCI config.
+- Moved the `Provider` interface to `api/core/v2` package.
+- Moved the `Authenticator` interface to `backend/authentication` package.
 
 ### Fixed
 - Check TTL failure events are now much more reliable, and will persist even
 in the presence cluster member failures and cluster restarts.
+- Fix snakeCase version of keys in typeMap for acronyms.
 
 ## [5.1.1] - 2019-01-24
 

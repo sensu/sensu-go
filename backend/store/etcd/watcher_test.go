@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"reflect"
 	"sync"
 	"testing"
@@ -16,17 +15,12 @@ import (
 	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sirupsen/logrus"
 )
 
 const timeout = 10
 
 func TestWatcher(t *testing.T) {
 	testWithEtcdClient(t, func(s store.Store, client *clientv3.Client) {
-		// TODO(palourde): Remove logrus output
-		logrus.SetOutput(os.Stdout)
-		logrus.SetLevel(logrus.DebugLevel)
-
 		// Generate a fixture check
 		check := v2.FixtureCheckConfig("foo")
 		check.Annotations["channel"] = "#monitoring"
