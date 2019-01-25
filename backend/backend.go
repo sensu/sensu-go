@@ -21,8 +21,8 @@ import (
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/eventd"
 	"github.com/sensu/sensu-go/backend/keepalived"
+	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/backend/pipelined"
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/ring"
@@ -156,9 +156,9 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize eventd
 	event, err := eventd.New(eventd.Config{
-		Store:          store,
-		Bus:            bus,
-		MonitorFactory: monitor.EtcdFactory(b.Client, "eventd"),
+		Store:           store,
+		Bus:             bus,
+		LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", event.Name(), err)
@@ -194,7 +194,7 @@ func Initialize(config *Config) (*Backend, error) {
 		DeregistrationHandler: config.DeregistrationHandler,
 		Bus:                   bus,
 		Store:                 store,
-		MonitorFactory:        monitor.EtcdFactory(b.Client, "keepalived"),
+		LivenessFactory:       liveness.EtcdFactory(b.ctx, b.Client),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)

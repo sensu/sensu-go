@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path"
+	"strings"
 	"sync"
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sirupsen/logrus"
 )
@@ -28,16 +30,16 @@ var (
 
 // Eventd handles incoming sensu events and stores them in etcd.
 type Eventd struct {
-	store          store.Store
-	bus            messaging.MessageBus
-	handlerCount   int
-	monitorFactory monitor.Factory
-	eventChan      chan interface{}
-	subscription   messaging.Subscription
-	errChan        chan error
-	mu             *sync.Mutex
-	shutdownChan   chan struct{}
-	wg             *sync.WaitGroup
+	store           store.Store
+	bus             messaging.MessageBus
+	handlerCount    int
+	livenessFactory liveness.Factory
+	eventChan       chan interface{}
+	subscription    messaging.Subscription
+	errChan         chan error
+	mu              *sync.Mutex
+	shutdownChan    chan struct{}
+	wg              *sync.WaitGroup
 }
 
 // Option is a functional option.
@@ -45,23 +47,23 @@ type Option func(*Eventd) error
 
 // Config configures Eventd
 type Config struct {
-	Store          store.Store
-	Bus            messaging.MessageBus
-	MonitorFactory monitor.Factory
+	Store           store.Store
+	Bus             messaging.MessageBus
+	LivenessFactory liveness.Factory
 }
 
 // New creates a new Eventd.
 func New(c Config, opts ...Option) (*Eventd, error) {
 	e := &Eventd{
-		store:          c.Store,
-		bus:            c.Bus,
-		handlerCount:   10,
-		monitorFactory: c.MonitorFactory,
-		errChan:        make(chan error, 1),
-		shutdownChan:   make(chan struct{}, 1),
-		eventChan:      make(chan interface{}, 100),
-		wg:             &sync.WaitGroup{},
-		mu:             &sync.Mutex{},
+		store:           c.Store,
+		bus:             c.Bus,
+		handlerCount:    10,
+		livenessFactory: c.LivenessFactory,
+		errChan:         make(chan error, 1),
+		shutdownChan:    make(chan struct{}, 1),
+		eventChan:       make(chan interface{}, 100),
+		wg:              &sync.WaitGroup{},
+		mu:              &sync.Mutex{},
 	}
 	for _, o := range opts {
 		if err := o(e); err != nil {
@@ -137,6 +139,17 @@ func (e *Eventd) HandleError(err error) {
 	logger.WithError(err).Error("error monitoring event")
 }
 
+// eventKey creates a key to identify the event for liveness monitoring
+func eventKey(event *corev2.Event) string {
+	// Typically we want the entity name to be the thing we monitor, but if
+	// it's a round robin check, and there is no proxy entity, then use
+	// the check name instead.
+	if event.Check.RoundRobin && event.Entity.EntityClass != corev2.EntityProxyClass {
+		return path.Join(event.Check.Namespace, event.Check.Name)
+	}
+	return path.Join(event.Entity.Namespace, event.Check.Name, event.Entity.Name)
+}
+
 func (e *Eventd) handleMessage(msg interface{}) error {
 	event, ok := msg.(*corev2.Event)
 	if !ok {
@@ -195,30 +208,88 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		return err
 	}
 
+	switches := e.livenessFactory("eventd", e.dead, e.alive, logger)
+	switchKey := eventKey(event)
+
 	if event.Check.Ttl > 0 {
-		// Reset the TTL monitor
-		var monitorKey string
-
-		// Typically we want the entity name to be the thing we monitor, but if
-		// it's a round robin check and there is no proxy entity, then just use
-		// the check name instead.
-		if event.Check.RoundRobin && event.Entity.EntityClass != corev2.EntityProxyClass {
-			monitorKey = event.Check.Name
-		} else {
-			monitorKey = event.Entity.Name
-		}
-
+		// Reset the switch
 		timeout := int64(event.Check.Ttl)
-		supervisor := e.monitorFactory(e)
-		err := supervisor.Monitor(context.TODO(), monitorKey, event, timeout)
-		if err == nil {
-			// HandleUpdate also publishes the event
-			err = e.HandleUpdate(event)
+		if err := switches.Alive(context.TODO(), switchKey, timeout); err != nil {
+			return err
 		}
-		return err
+		return e.handleUpdate(event)
+	} else {
+		if err := switches.Bury(context.TODO(), switchKey); err != nil {
+			// It's better to publish the event even if this fails, so
+			// don't return the error here.
+			logger.WithError(err).Error("error burying switch")
+		}
 	}
 
 	return e.bus.Publish(messaging.TopicEvent, event)
+}
+
+func (e *Eventd) alive(key string, prev liveness.State, leader bool) {
+	lager := logger.WithFields(logrus.Fields{
+		"status":          liveness.Alive.String(),
+		"previous_status": prev.String()})
+
+	namespace, check, entity, err := parseKey(key)
+	if err != nil {
+		lager.Error(err)
+		return
+	}
+
+	lager = lager.WithFields(logrus.Fields{
+		"check":     check,
+		"entity":    entity,
+		"namespace": namespace})
+
+	lager.Info("check TTL reset")
+}
+
+func (e *Eventd) dead(key string, prev liveness.State, leader bool) {
+	lager := logger.WithFields(logrus.Fields{
+		"status":          liveness.Dead.String(),
+		"previous_status": prev.String()})
+
+	namespace, check, entity, err := parseKey(key)
+	if err != nil {
+		lager.Error(err)
+		return
+	}
+
+	lager = lager.WithFields(logrus.Fields{
+		"check":     check,
+		"entity":    entity,
+		"namespace": namespace})
+
+	lager.Warn("check TTL expired")
+
+	// NOTE: To support check TTL for round robin scheduling, load all events
+	// here, filter by check, and update all events involved in the round robin
+	if entity == "" {
+		lager.Error("round robin check TTL not supported")
+		return
+	}
+
+	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, namespace)
+	event, err := e.store.GetEventByEntityCheck(ctx, entity, check)
+	if err != nil {
+		lager.WithError(err).Error("can't handle check TTL failure")
+		return
+	}
+
+	if event == nil {
+		lager.Error("event is nil")
+		return
+	}
+
+	if leader {
+		if err := e.handleFailure(event); err != nil {
+			lager.WithError(err).Error("can't handle check TTL failure")
+		}
+	}
 }
 
 func updateOccurrences(event *corev2.Event) {
@@ -241,8 +312,19 @@ func updateOccurrences(event *corev2.Event) {
 	}
 }
 
-// HandleUpdate updates the event in the store and publishes it to TopicEvent.
-func (e *Eventd) HandleUpdate(event *corev2.Event) error {
+func parseKey(key string) (namespace, check, entity string, err error) {
+	parts := strings.Split(key, "/")
+	if len(parts) == 2 {
+		return parts[0], parts[1], "", nil
+	}
+	if len(parts) == 3 {
+		return parts[0], parts[1], parts[2], nil
+	}
+	return "", "", "", errors.New("bad key")
+}
+
+// handleUpdate updates the event in the store and publishes it to TopicEvent.
+func (e *Eventd) handleUpdate(event *corev2.Event) error {
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 
 	err := e.store.UpdateEvent(ctx, event)
@@ -253,9 +335,9 @@ func (e *Eventd) HandleUpdate(event *corev2.Event) error {
 	return e.bus.Publish(messaging.TopicEvent, event)
 }
 
-// HandleFailure creates a check event with a warn status and publishes it to
+// handleFailure creates a check event with a warn status and publishes it to
 // TopicEvent.
-func (e *Eventd) HandleFailure(event *corev2.Event) error {
+func (e *Eventd) handleFailure(event *corev2.Event) error {
 	entity := event.Entity
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, entity.Namespace)
 

@@ -30,10 +30,13 @@ func getEventPath(event *types.Event) string {
 	)
 }
 
-func getEventWithCheckPath(ctx context.Context, entity, check string) string {
+func getEventWithCheckPath(ctx context.Context, entity, check string) (string, error) {
 	namespace := types.ContextNamespace(ctx)
+	if namespace == "" {
+		return "", errors.New("namespace missing from context")
+	}
 
-	return path.Join(EtcdRoot, eventsPathPrefix, namespace, entity, check)
+	return path.Join(EtcdRoot, eventsPathPrefix, namespace, entity, check), nil
 }
 
 func getEventsPath(ctx context.Context, entity string) string {
@@ -46,7 +49,12 @@ func (s *Store) DeleteEventByEntityCheck(ctx context.Context, entityName, checkN
 		return errors.New("must specify entity and check name")
 	}
 
-	_, err := s.client.Delete(ctx, getEventWithCheckPath(ctx, entityName, checkName))
+	path, err := getEventWithCheckPath(ctx, entityName, checkName)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.client.Delete(ctx, path)
 	return err
 }
 
@@ -122,7 +130,12 @@ func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName
 		return nil, errors.New("must specify entity and check name")
 	}
 
-	resp, err := s.client.Get(ctx, getEventWithCheckPath(ctx, entityName, checkName), clientv3.WithPrefix())
+	path, err := getEventWithCheckPath(ctx, entityName, checkName)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := s.client.Get(ctx, path, clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
