@@ -25,7 +25,7 @@ func TestEntityTypeRelatedField(t *testing.T) {
 	}, nil).Once()
 
 	params := schema.EntityRelatedFieldResolverParams{}
-	params.Context = contextWithLoaders(context.TODO(), client)
+	params.Context = contextWithLoaders(context.Background(), client)
 	params.Source = source
 	params.Args.Limit = 10
 
@@ -49,7 +49,7 @@ func TestEntityTypeStatusField(t *testing.T) {
 
 	// params
 	params := graphql.ResolveParams{}
-	params.Context = contextWithLoadersNoCache(context.TODO(), client)
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
 	params.Source = entity
 
 	// exit status: 0
@@ -67,7 +67,7 @@ func TestEntityTypeStatusField(t *testing.T) {
 	}, nil).Once()
 
 	// exit status: 2
-	// params.Context = contextWithLoaders(context.TODO(), client)
+	// params.Context = contextWithLoaders(context.Background(), client)
 	st, err = impl.Status(params)
 	require.NoError(t, err)
 	assert.EqualValues(t, 2, st)
@@ -100,7 +100,7 @@ func TestEntityTypeEventsField(t *testing.T) {
 
 	// params
 	params := schema.EntityEventsFieldResolverParams{}
-	params.Context = contextWithLoadersNoCache(context.TODO(), client)
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
 	params.Source = entity
 
 	// return all events
@@ -124,7 +124,7 @@ func TestEntityTypeSilencesField(t *testing.T) {
 
 	impl := &entityImpl{}
 	params := graphql.ResolveParams{}
-	params.Context = contextWithLoadersNoCache(context.TODO(), client)
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
 	params.Source = entity
 
 	// return associated silence
@@ -146,7 +146,7 @@ func TestEntityTypeIsSilencedField(t *testing.T) {
 
 	impl := &entityImpl{}
 	params := graphql.ResolveParams{}
-	params.Context = contextWithLoadersNoCache(context.TODO(), client)
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
 	params.Source = entity
 
 	// return associated silence

@@ -20,7 +20,7 @@ func TestHandlerTypeHandlersField(t *testing.T) {
 	impl := &handlerImpl{}
 
 	params := graphql.ResolveParams{}
-	params.Context = contextWithLoadersNoCache(context.TODO(), client)
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
 	params.Source = handler
 
 	// Success

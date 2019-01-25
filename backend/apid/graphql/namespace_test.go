@@ -34,7 +34,7 @@ func TestNamespaceTypeCheckHistoryField(t *testing.T) {
 
 	// Params
 	params := schema.NamespaceCheckHistoryFieldResolverParams{}
-	params.Context = contextWithLoadersNoCache(context.TODO(), client)
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
 	params.Source = &types.Namespace{Name: "sensu"}
 
 	// limit: 30
@@ -62,7 +62,7 @@ func TestNamespaceTypeSilencesField(t *testing.T) {
 
 	impl := &namespaceImpl{}
 	params := schema.NamespaceSilencesFieldResolverParams{}
-	params.Context = contextWithLoadersNoCache(context.TODO(), client)
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
 	params.Source = types.FixtureNamespace("xxx")
 
 	// Success

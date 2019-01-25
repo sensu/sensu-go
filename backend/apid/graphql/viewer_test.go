@@ -50,7 +50,7 @@ func TestViewerTypeNamespacesField(t *testing.T) {
 	client, _ := mockclient.NewClientFactory()
 
 	params := graphql.ResolveParams{}
-	params.Context = contextWithLoadersNoCache(context.TODO(), client)
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
 
 	// Success
 	client.On("ListNamespaces").Return([]types.Namespace{*nsp}, nil).Once()

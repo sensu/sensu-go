@@ -114,7 +114,7 @@ func TestCheckTypeSilencesField(t *testing.T) {
 
 	impl := &checkImpl{}
 	params := graphql.ResolveParams{}
-	params.Context = contextWithLoadersNoCache(context.TODO(), client)
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
 	params.Source = check
 
 	// return associated silence
@@ -136,7 +136,7 @@ func TestCheckTypeRuntimeAssetsField(t *testing.T) {
 
 	// return associated silence
 	impl := &checkImpl{}
-	ctx := contextWithLoaders(context.TODO(), client)
+	ctx := contextWithLoaders(context.Background(), client)
 	res, err := impl.RuntimeAssets(graphql.ResolveParams{Source: check, Context: ctx})
 	require.NoError(t, err)
 	assert.Len(t, res, 2)
@@ -154,7 +154,7 @@ func TestCheckConfigTypeIsSilencedField(t *testing.T) {
 
 	impl := &checkCfgImpl{}
 	params := graphql.ResolveParams{}
-	params.Context = contextWithLoadersNoCache(context.TODO(), client)
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
 	params.Source = check
 
 	// return associated silence
@@ -179,7 +179,7 @@ func TestCheckConfigTypeSilencesField(t *testing.T) {
 
 	impl := &checkCfgImpl{}
 	params := graphql.ResolveParams{}
-	params.Context = contextWithLoadersNoCache(context.TODO(), client)
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
 	params.Source = check
 
 	// return associated silence
@@ -201,7 +201,7 @@ func TestCheckConfigTypeRuntimeAssetsField(t *testing.T) {
 
 	// return associated silence
 	impl := &checkCfgImpl{}
-	ctx := contextWithLoaders(context.TODO(), client)
+	ctx := contextWithLoaders(context.Background(), client)
 	res, err := impl.RuntimeAssets(graphql.ResolveParams{Source: check, Context: ctx})
 	require.NoError(t, err)
 	assert.Len(t, res, 2)
@@ -215,7 +215,7 @@ func TestCheckConfigTypeHandlersField(t *testing.T) {
 	impl := &checkCfgImpl{}
 
 	params := graphql.ResolveParams{}
-	params.Context = contextWithLoadersNoCache(context.TODO(), client)
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
 	params.Source = check
 
 	// return associated silence
@@ -238,7 +238,7 @@ func TestCheckTypeHandlersField(t *testing.T) {
 	impl := &checkImpl{}
 
 	params := graphql.ResolveParams{}
-	params.Context = contextWithLoadersNoCache(context.TODO(), client)
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
 	params.Source = check
 
 	// return associated silence
@@ -261,7 +261,7 @@ func TestCheckConfigTypeOutputMetricHandlersField(t *testing.T) {
 	impl := &checkCfgImpl{}
 
 	params := graphql.ResolveParams{}
-	params.Context = contextWithLoadersNoCache(context.TODO(), client)
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
 	params.Source = check
 
 	// return associated silence
@@ -284,7 +284,7 @@ func TestCheckTypeOutputMetricHandlersField(t *testing.T) {
 	impl := &checkImpl{}
 
 	params := graphql.ResolveParams{}
-	params.Context = contextWithLoadersNoCache(context.TODO(), client)
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
 	params.Source = check
 
 	// return associated silence
