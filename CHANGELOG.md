@@ -9,9 +9,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Added support for the following TLS related options to `sensuctl`:
-  `--trusted-ca-file`, `--insecure-skip-tls-verify`, `--cert-file` and
-  `--key-file`. These options have the same meaning as their `sensu-backend` and
-  `sensu-agent` counterparts.
+`--trusted-ca-file` and `--insecure-skip-tls-verify`. This allows sensuctl
+users to use a self-signed certificate without adding it to the operating
+system's CA store, either by explicitly trusting the signer, or by disabling
+TLS hostname verification.
 
 ### Changed
 - Removed unused workflow `rel_build_and_test` in CircleCI config.
