@@ -34,7 +34,7 @@ var packageMap = map[string]func(string) (Resource, error){
 	"core/v2": v2.ResolveResource,
 }
 
-var packageMapMu = &sync.Mutex{}
+var packageMapMu = &sync.RWMutex{}
 
 // UnmarshalJSON implements json.Unmarshaler
 func (w *Wrapper) UnmarshalJSON(b []byte) error {
@@ -46,6 +46,10 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 	if w.APIVersion == "" {
 		w.APIVersion = "core/v2"
 	}
+
+	// Guard read access to packageMap
+	packageMapMu.RLock()
+	defer packageMapMu.RUnlock()
 	resolver, ok := packageMap[w.TypeMeta.APIVersion]
 	if !ok {
 		return fmt.Errorf("invalid API version: %s", w.TypeMeta.APIVersion)

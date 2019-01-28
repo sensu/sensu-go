@@ -10,7 +10,9 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
-// watcher implements the store.Watcher interface
+// watcher implements the store.Watcher interface rather than clientv3.Watcher,
+// so the channel returned by the Watch method only provides a single event at a
+// time instead of a list of events, and the events are ready to be consumed
 type watcher struct {
 	client     *clientv3.Client
 	cancel     context.CancelFunc
