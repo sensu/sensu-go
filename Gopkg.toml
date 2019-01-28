@@ -197,3 +197,7 @@ required = [
 [[constraint]]
   branch = "master"
   name = "github.com/robertkrimen/otto"
+
+[[constraint]]
+  name = "github.com/graph-gophers/dataloader"
+  version = "5.0.0"

@@ -4,6 +4,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/graphql"
+	"github.com/sensu/sensu-go/types"
 )
 
 var _ schema.ViewerFieldResolvers = (*viewerImpl)(nil)
@@ -18,14 +19,17 @@ type viewerImpl struct {
 
 // Namespaces implements response to request for 'namespaces' field.
 func (r *viewerImpl) Namespaces(p graphql.ResolveParams) (interface{}, error) {
-	client := r.factory.NewWithContext(p.Context)
-	return fetchNamespaces(client, nil)
+	results, err := loadNamespaces(p.Context)
+	records := make([]*types.Namespace, len(results))
+	for i := range results {
+		records[i] = &results[i]
+	}
+	return records, err
 }
 
 // User implements response to request for 'user' field.
 func (r *viewerImpl) User(p graphql.ResolveParams) (interface{}, error) {
 	claims := jwt.GetClaimsFromContext(p.Context)
-	logger.WithField("claims", claims).Info("huh")
 	if claims == nil {
 		return nil, nil
 	}

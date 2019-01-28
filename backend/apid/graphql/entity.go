@@ -46,65 +46,70 @@ func (r *entityImpl) LastSeen(p graphql.ResolveParams) (*time.Time, error) {
 // Events implements response to request for 'events' field.
 func (r *entityImpl) Events(p schema.EntityEventsFieldResolverParams) (interface{}, error) {
 	src := p.Source.(*types.Entity)
-	client := r.factory.NewWithContext(p.Context)
 
 	// fetch
-	evs, err := fetchEvents(client, src.Namespace, func(obj *types.Event) bool {
-		return obj.Entity.Name == src.Name
-	})
+	results, err := loadEvents(p.Context, src.Namespace)
 	if err != nil {
 		return []interface{}{}, err
 	}
 
-	// sort records
-	sortEvents(evs, p.Args.OrderBy)
+	// filter
+	records := filterEvents(results, func(obj *types.Event) bool {
+		return obj.Entity.Name == src.Name
+	})
 
-	return evs, nil
+	// sort records
+	sortEvents(records, p.Args.OrderBy)
+
+	return records, nil
 }
 
 // Related implements response to request for 'related' field.
 func (r *entityImpl) Related(p schema.EntityRelatedFieldResolverParams) (interface{}, error) {
+	// fetch
 	entity := p.Source.(*types.Entity)
-	client := r.factory.NewWithContext(p.Context)
-
-	// fetch & omit source
-	entities, err := fetchEntities(client, entity.Namespace, func(obj *types.Entity) bool {
-		return obj.Name != entity.Name
-	})
+	results, err := loadEntities(p.Context, entity.Namespace)
 	if err != nil {
 		return []interface{}{}, err
 	}
 
+	// omit self
+	records := filterEntities(results, func(obj *types.Entity) bool {
+		return obj.Name != entity.Name
+	})
+
 	// sort
 	scores := map[int]int{}
-	for i, en := range entities {
+	for i, en := range records {
 		matched := strings.Intersect(
 			append(en.Subscriptions, en.EntityClass, en.System.Platform),
 			append(entity.Subscriptions, entity.EntityClass, entity.System.Platform),
 		)
 		scores[i] = len(matched)
 	}
-	sort.Slice(entities, func(i, j int) bool {
+	sort.Slice(records, func(i, j int) bool {
 		return scores[i] > scores[j]
 	})
 
 	// limit
-	limit := clampInt(p.Args.Limit, 0, len(entities))
-	return entities[0:limit], nil
+	limit := clampInt(p.Args.Limit, 0, len(records))
+	return records[0:limit], nil
 }
 
 // Status implements response to request for 'status' field.
 func (r *entityImpl) Status(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*types.Entity)
-	client := r.factory.NewWithContext(p.Context)
 
 	// fetch
-	evs, err := fetchEvents(client, src.Namespace, func(obj *types.Event) bool {
-		return obj.Entity.Name == src.Name
-	})
+	results, err := loadEvents(p.Context, src.Namespace)
 	if err != nil {
 		return 0, err
 	}
+
+	// filter events associated w/ entity
+	evs := filterEvents(results, func(obj *types.Event) bool {
+		return obj.Entity.Name == src.Name
+	})
 
 	// find MAX value
 	var st uint32
@@ -120,17 +125,17 @@ func (r *entityImpl) Status(p graphql.ResolveParams) (interface{}, error) {
 // IsSilenced implements response to request for 'isSilenced' field.
 func (r *entityImpl) IsSilenced(p graphql.ResolveParams) (bool, error) {
 	src := p.Source.(*types.Entity)
-	client := r.factory.NewWithContext(p.Context)
-	sls, err := fetchSilenceds(client, src.Namespace, filterSilenceByEntity(src))
-	return len(sls) > 0, err
+	results, err := loadSilenceds(p.Context, src.Namespace)
+	records := filterSilenceds(results, filterSilenceByEntity(src))
+	return len(records) > 0, err
 }
 
 // Silences implements response to request for 'silences' field.
 func (r *entityImpl) Silences(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*types.Entity)
-	client := r.factory.NewWithContext(p.Context)
-	sls, err := fetchSilenceds(client, src.Namespace, filterSilenceByEntity(src))
-	return sls, err
+	results, err := loadSilenceds(p.Context, src.Namespace)
+	records := filterSilenceds(results, filterSilenceByEntity(src))
+	return records, err
 }
 
 func filterSilenceByEntity(src *types.Entity) silencePredicate {
