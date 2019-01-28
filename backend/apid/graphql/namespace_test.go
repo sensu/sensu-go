@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -15,25 +16,26 @@ import (
 
 func TestNamespaceTypeColourID(t *testing.T) {
 	impl := &namespaceImpl{}
-	nsp := types.Namespace{Name: "pink"}
+	nsp := types.Namespace{Name: "sensu"}
 
 	colour, err := impl.ColourID(graphql.ResolveParams{Source: &nsp})
 	assert.NoError(t, err)
-	assert.Equal(t, string(colour), "BLUE")
+	assert.Equal(t, string(colour), "ORANGE")
 }
 
 func TestNamespaceTypeCheckHistoryField(t *testing.T) {
-	client, factory := client.NewClientFactory()
-	client.On("ListEvents", mock.Anything).Return([]types.Event{
+	client, _ := client.NewClientFactory()
+	client.On("ListEvents", "sensu").Return([]types.Event{
 		*types.FixtureEvent("a", "b"),
 		*types.FixtureEvent("b", "c"),
 		*types.FixtureEvent("c", "d"),
 	}, nil).Once()
-	impl := &namespaceImpl{factory}
+	impl := &namespaceImpl{}
 
 	// Params
 	params := schema.NamespaceCheckHistoryFieldResolverParams{}
-	params.Source = &types.Namespace{Name: "pink"}
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
+	params.Source = &types.Namespace{Name: "sensu"}
 
 	// limit: 30
 	params.Args.Limit = 30
@@ -51,16 +53,16 @@ func TestNamespaceTypeCheckHistoryField(t *testing.T) {
 }
 
 func TestNamespaceTypeSilencesField(t *testing.T) {
-	client, factory := client.NewClientFactory()
+	client, _ := client.NewClientFactory()
 	client.On("ListSilenceds", mock.Anything, "", "").Return([]types.Silenced{
 		*types.FixtureSilenced("a:b"),
 		*types.FixtureSilenced("b:c"),
 		*types.FixtureSilenced("c:d"),
 	}, nil).Once()
-	impl := &namespaceImpl{factory}
 
-	// Params
+	impl := &namespaceImpl{}
 	params := schema.NamespaceSilencesFieldResolverParams{}
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
 	params.Source = types.FixtureNamespace("xxx")
 
 	// Success

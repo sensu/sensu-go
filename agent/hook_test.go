@@ -9,7 +9,6 @@ import (
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestExecuteHook(t *testing.T) {
@@ -26,7 +25,7 @@ func TestExecuteHook(t *testing.T) {
 	ex := &mockexecutor.MockExecutor{}
 	agent.executor = ex
 	execution := command.FixtureExecutionResponse(0, "")
-	ex.On("Execute", mock.Anything, mock.Anything).Return(execution, nil)
+	ex.Return(execution, nil)
 
 	hook := agent.executeHook(hookConfig, "check")
 

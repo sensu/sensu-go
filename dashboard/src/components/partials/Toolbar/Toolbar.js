@@ -12,11 +12,12 @@ const Fill = createStyledComponent({
   }),
 });
 
-const styles = () => ({
+const styles = theme => ({
   root: {
     display: "flex",
     flex: "1 1 100%",
     alignItems: "center",
+    color: theme.palette.text.secondary,
   },
 });
 

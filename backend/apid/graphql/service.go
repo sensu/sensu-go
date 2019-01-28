@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 
+	gql "github.com/graphql-go/graphql"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/graphql"
@@ -18,10 +19,17 @@ type ServiceConfig struct {
 	ClientFactory ClientFactory
 }
 
+// Service describes the Sensu GraphQL service capable of handling queries.
+type Service struct {
+	target  *graphql.Service
+	factory ClientFactory
+}
+
 // NewService instantiates new GraphQL service
-func NewService(cfg ServiceConfig) (*graphql.Service, error) {
+func NewService(cfg ServiceConfig) (*Service, error) {
 	svc := graphql.NewService()
 	clientFactory := cfg.ClientFactory
+	wrapper := Service{target: svc, factory: clientFactory}
 	nodeResolver := newNodeResolver(clientFactory)
 
 	// Register types
@@ -113,5 +121,19 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterUpdateCheckPayload(svc, &checkMutationPayload{})
 
 	err := svc.Regenerate()
-	return svc, err
+	return &wrapper, err
+}
+
+// Do executes given query string and variables
+func (svc *Service) Do(
+	ctx context.Context,
+	q string,
+	vars map[string]interface{},
+) *gql.Result {
+	// Instantiate loaders and lift them into the context
+	client := svc.factory.NewWithContext(ctx)
+	qryCtx := contextWithLoaders(ctx, client)
+
+	// Execute query inside context
+	return svc.target.Do(qryCtx, q, vars)
 }
