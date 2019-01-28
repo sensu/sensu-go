@@ -30,40 +30,54 @@ var DefaultCipherSuites = []uint16{
 
 // ToTLSConfig outputs a tls.Config from TLSOptions
 //
-// NOTE(ccressent): I'm in favour of deprecating this function:
-// - it forces the CA cert bundle to be only used by the client side of the TLS
-//   connection (see tls.Config.RootCAs vs tls.Config.ClientCAs).
-// - its error message assumes the provided certificate is to be used by the
-//   client side of the TLS connection.
-//
-// I suggest the functionality of ToTLSConfig() be split into smaller, more
-// composable functions and getting rid of the TLSOption type altogether.
+// ToTLSConfig should only be used for server TLS configuration.
 func (t *TLSOptions) ToTLSConfig() (*tls.Config, error) {
-	tlsConfig := tls.Config{}
-	tlsConfig.InsecureSkipVerify = t.InsecureSkipVerify
+	cfg := tls.Config{}
 
 	if t.CertFile != "" || t.KeyFile != "" {
 		cert, err := tls.LoadX509KeyPair(t.CertFile, t.KeyFile)
 		if err != nil {
-			// do something with the error
 			return nil, fmt.Errorf("Error loading tls client certificate: %s", err)
 		}
 
-		tlsConfig.Certificates = []tls.Certificate{cert}
+		cfg.Certificates = []tls.Certificate{cert}
 	}
+
+	cfg.BuildNameToCertificate()
+	cfg.CipherSuites = DefaultCipherSuites
+
+	// Tell the server to prefer its cipher suite ordering over what the client
+	// prefers.
+	cfg.PreferServerCipherSuites = true
+
+	return &cfg, nil
+}
+
+// ToTLSClientConfig is like ToTLSConfig but intended for TLS client config.
+func (t *TLSOptions) ToTLSClientConfig() (*tls.Config, error) {
+	cfg := tls.Config{}
+	cfg.InsecureSkipVerify = t.InsecureSkipVerify
 
 	if t.TrustedCAFile != "" {
 		caCertPool, err := LoadCACerts(t.TrustedCAFile)
 		if err != nil {
 			return nil, err
 		}
-		tlsConfig.RootCAs = caCertPool
+		cfg.RootCAs = caCertPool
 	}
 
-	tlsConfig.BuildNameToCertificate()
-	tlsConfig.CipherSuites = DefaultCipherSuites
+	if t.CertFile != "" || t.KeyFile != "" {
+		cert, err := tls.LoadX509KeyPair(t.CertFile, t.KeyFile)
+		if err != nil {
+			return nil, fmt.Errorf("Error loading tls client certificate: %s", err)
+		}
 
-	return &tlsConfig, nil
+		cfg.Certificates = []tls.Certificate{cert}
+	}
+
+	cfg.CipherSuites = DefaultCipherSuites
+
+	return &cfg, nil
 }
 
 // LoadCACerts takes the path to a certificate bundle file in PEM format and try
