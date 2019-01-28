@@ -10,7 +10,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/sensu/sensu-go/backend/authentication/providers"
+	"github.com/sensu/sensu-go/backend/authentication"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gorilla/mux"
@@ -26,7 +26,7 @@ import (
 
 // APId is the backend HTTP API.
 type APId struct {
-	Authenticator *providers.Authenticator
+	Authenticator *authentication.Authenticator
 	HTTPServer    *http.Server
 
 	stopping            chan struct{}
@@ -54,7 +54,7 @@ type Config struct {
 	TLS                 *types.TLSOptions
 	Cluster             clientv3.Cluster
 	EtcdClientTLSConfig *tls.Config
-	Authenticator       *providers.Authenticator
+	Authenticator       *authentication.Authenticator
 }
 
 // New creates a new APId.
@@ -203,7 +203,7 @@ func registerGraphQLService(router *mux.Router, store store.Store, url string, t
 	)
 }
 
-func registerAuthenticationResources(router *mux.Router, store store.Store, authenticator *providers.Authenticator) {
+func registerAuthenticationResources(router *mux.Router, store store.Store, authenticator *authentication.Authenticator) {
 	mountRouters(
 		NewSubrouter(
 			router.NewRoute(),
