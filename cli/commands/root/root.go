@@ -28,8 +28,6 @@ func Command() *cobra.Command {
 	// Global flags
 	cmd.PersistentFlags().String("api-url", "", "host URL of Sensu installation")
 	cmd.PersistentFlags().String("trusted-ca-file", "", "TLS CA certificate bundle in PEM format")
-	cmd.PersistentFlags().String("cert-file", "", "TLS certificate in PEM format")
-	cmd.PersistentFlags().String("key-file", "", "TLS certificate key in PEM format")
 	cmd.PersistentFlags().Bool("insecure-skip-tls-verify", false, "skip TLS certificate verification (not recommended!)")
 	cmd.PersistentFlags().String("config-dir", path.UserConfigDir("sensuctl"), "path to directory containing configuration files")
 	cmd.PersistentFlags().String("cache-dir", path.UserCacheDir("sensuctl"), "path to directory containing cache & temporary files")

@@ -46,14 +46,6 @@ func New(flags *pflag.FlagSet) *SensuCli {
 		tlsConfig.RootCAs = caCertPool
 	}
 
-	if conf.CertFile != "" && conf.KeyFile != "" {
-		cert, err := tls.LoadX509KeyPair(conf.CertFile, conf.KeyFile)
-		if err != nil {
-			logger.Errorf("Couldn't load certificate: %s", err)
-		}
-		tlsConfig.Certificates = []tls.Certificate{cert}
-	}
-
 	tlsConfig.InsecureSkipVerify = conf.InsecureSkipTLSVerify
 
 	tlsConfig.BuildNameToCertificate()
