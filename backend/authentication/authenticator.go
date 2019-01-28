@@ -83,7 +83,14 @@ func (a *Authenticator) Providers() map[string]corev2.AuthProvider {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
-	return a.providers
+	// Create a new map and copy the authenticator providers into it in order to
+	// prevent race conditions
+	providers := make(map[string]corev2.AuthProvider, len(a.providers))
+	for k, v := range a.providers {
+		providers[k] = v
+	}
+
+	return providers
 }
 
 // RemoveProvider removes the provider with the given ID from the list of

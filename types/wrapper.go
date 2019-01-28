@@ -7,6 +7,7 @@ import (
 	"path"
 	"reflect"
 	"strings"
+	"sync"
 
 	"github.com/sensu/sensu-go/api/core/v2"
 )
@@ -29,9 +30,11 @@ type rawWrapper struct {
 }
 
 // PackageMap contains a list of packages with their Resource Resolver func
-var PackageMap = map[string]func(string) (Resource, error){
+var packageMap = map[string]func(string) (Resource, error){
 	"core/v2": v2.ResolveResource,
 }
+
+var packageMapMu = &sync.Mutex{}
 
 // UnmarshalJSON implements json.Unmarshaler
 func (w *Wrapper) UnmarshalJSON(b []byte) error {
@@ -43,7 +46,7 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 	if w.APIVersion == "" {
 		w.APIVersion = "core/v2"
 	}
-	resolver, ok := PackageMap[w.TypeMeta.APIVersion]
+	resolver, ok := packageMap[w.TypeMeta.APIVersion]
 	if !ok {
 		return fmt.Errorf("invalid API version: %s", w.TypeMeta.APIVersion)
 	}
@@ -109,6 +112,13 @@ func WrapResource(r Resource) Wrapper {
 		ObjectMeta: r.GetObjectMeta(),
 		Value:      r,
 	}
+}
+
+// RegisterTypeResolver adds a package to packageMap with its resolver
+func RegisterTypeResolver(key string, resolver func(string) (Resource, error)) {
+	packageMapMu.Lock()
+	defer packageMapMu.Unlock()
+	packageMap[key] = resolver
 }
 
 func apiVersion(version string) string {
