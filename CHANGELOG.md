@@ -7,6 +7,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Added support for the following TLS related options to `sensuctl`:
+  `--trusted-ca-file`, `--insecure-skip-tls-verify`, `--cert-file` and
+  `--key-file`. These options have the same meaning as their `sensu-backend` and
+  `sensu-agent` counterparts.
+
 ### Changed
 - Removed unused workflow `rel_build_and_test` in CircleCI config.
 
@@ -18,10 +24,6 @@ in the presence cluster member failures and cluster restarts.
 
 ### Added
 - Added the notion of authentication providers.
-- Added support for the following TLS related options to `sensuctl`:
-  `--trusted-ca-file`, `--insecure-skip-tls-verify`, `--cert-file` and
-  `--key-file`. These options have the same meaning as their `sensu-backend` and
-  `sensu-agent` counterparts.
 
 ### Changed
 - Improved logging for errors in proxy check requests.
