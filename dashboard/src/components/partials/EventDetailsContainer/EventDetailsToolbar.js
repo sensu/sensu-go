@@ -14,11 +14,16 @@ import DeleteAction from "./EventDetailsDeleteAction";
 import ResolveAction from "./EventDetailsResolveAction";
 import ReRunAction from "./EventDetailsReRunAction";
 import SilenceAction from "./EventDetailsSilenceAction";
-import UnsilenceAction from "./EventDetailsUnsilenceAction";
+import ClearSilenceAction from "./EventDetailsClearSilenceAction";
 
 class EventDetailsToolbar extends React.Component {
   static propTypes = {
     event: PropTypes.object.isRequired,
+    refetch: PropTypes.func.isRequired,
+  };
+
+  static defaultProps = {
+    refetch: () => null,
   };
 
   static fragments = {
@@ -28,7 +33,7 @@ class EventDetailsToolbar extends React.Component {
         ...EventDetailsResolveAction_event
         ...EventDetailsReRunAction_event
         ...EventDetailsSilenceAction_event
-        ...EventDetailsUnsilenceAction_event
+        ...EventDetailsClearSilenceAction_event
 
         check {
           silenced
@@ -39,12 +44,12 @@ class EventDetailsToolbar extends React.Component {
       ${ResolveAction.fragments.event}
       ${ReRunAction.fragments.event}
       ${SilenceAction.fragments.event}
-      ${UnsilenceAction.fragments.event}
+      ${ClearSilenceAction.fragments.event}
     `,
   };
 
   render() {
-    const { event } = this.props;
+    const { event, refetch } = this.props;
 
     return (
       <Toolbar
@@ -73,12 +78,12 @@ class EventDetailsToolbar extends React.Component {
             <ToolbarMenu.Item id="silence" visible="if-room">
               {event.check.silenced.length === 0 ? (
                 <SilenceAction event={event}>
-                  {run => (
-                    <SilenceMenuItem
-                      onClick={run}
-                    />
-                  )}
+                  {({ open }) => <SilenceMenuItem onClick={open} />}
                 </SilenceAction>
+              ) : (
+                <ClearSilenceAction event={event} onDone={refetch}>
+                  {({ open }) => <UnsilenceMenuItem onClick={open} />}
+                </ClearSilenceAction>
               )}
             </ToolbarMenu.Item>
             <ToolbarMenu.Item id="delete" visible="never">

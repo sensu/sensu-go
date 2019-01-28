@@ -3,24 +3,25 @@ import PropTypes from "prop-types";
 import gql from "graphql-tag";
 import ClearSilencedEntriesDialog from "/components/partials/ClearSilencedEntriesDialog";
 
-class CheckDetailsClearSilenceAction extends React.PureComponent {
+class EventDetailsClearSilenceAction extends React.PureComponent {
   static propTypes = {
-    check: PropTypes.object,
+    event: PropTypes.object,
     children: PropTypes.func.isRequired,
     onDone: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
-    check: null,
+    event: null,
   };
 
   static fragments = {
-    check: gql`
-      fragment CheckDetailsClearSilenceAction_check on CheckConfig {
-        id
-        isSilenced
-        silences {
-          ...ClearSilencedEntriesDialog_silence
+    event: gql`
+      fragment EventDetailsClearSilenceAction_event on Event {
+        check {
+          silenced
+          silences {
+            ...ClearSilencedEntriesDialog_silence
+          }
         }
       }
 
@@ -31,17 +32,17 @@ class CheckDetailsClearSilenceAction extends React.PureComponent {
   state = { isOpen: false };
 
   render() {
-    const { check, children } = this.props;
+    const { event, children } = this.props;
     const { isOpen } = this.state;
 
     const open = () => this.setState({ isOpen: true });
-    const canOpen = !check.isSilenced;
+    const canOpen = event.check.silenced.length > 0;
 
     return (
       <React.Fragment>
         {children({ canOpen, open })}
         <ClearSilencedEntriesDialog
-          silences={check.silences}
+          silences={event.check.silences}
           open={isOpen}
           close={() => {
             this.props.onDone();
@@ -53,4 +54,4 @@ class CheckDetailsClearSilenceAction extends React.PureComponent {
   }
 }
 
-export default CheckDetailsClearSilenceAction;
+export default EventDetailsClearSilenceAction;
