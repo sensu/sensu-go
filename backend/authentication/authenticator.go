@@ -6,17 +6,17 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 // Authenticator contains the list of authentication providers
 type Authenticator struct {
 	mu        sync.RWMutex
-	providers map[string]v2.Provider
+	providers map[string]corev2.AuthProvider
 }
 
 // Authenticate with the configured authentication providers
-func (a *Authenticator) Authenticate(ctx context.Context, username, password string) (*v2.Claims, error) {
+func (a *Authenticator) Authenticate(ctx context.Context, username, password string) (*corev2.Claims, error) {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
@@ -44,7 +44,7 @@ func (a *Authenticator) Authenticate(ctx context.Context, username, password str
 // Refresh is called when a new access token is requested with a refresh token.
 // The provider should attempt to update the user identity to reflect any changes
 // since the access token was last refreshed
-func (a *Authenticator) Refresh(ctx context.Context, claims v2.ProviderClaims) (*v2.Claims, error) {
+func (a *Authenticator) Refresh(ctx context.Context, claims corev2.AuthProviderClaims) (*corev2.Claims, error) {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
@@ -66,20 +66,20 @@ func (a *Authenticator) Refresh(ctx context.Context, claims v2.ProviderClaims) (
 }
 
 // AddProvider adds a provided provider to the list of configured providers
-func (a *Authenticator) AddProvider(provider v2.Provider) {
+func (a *Authenticator) AddProvider(provider corev2.AuthProvider) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
 	// Make sure the providers map is not nil
 	if a.providers == nil {
-		a.providers = map[string]v2.Provider{}
+		a.providers = map[string]corev2.AuthProvider{}
 	}
 
-	a.providers[v2.ProviderID(provider)] = provider
+	a.providers[corev2.AuthProviderID(provider)] = provider
 }
 
 // Providers returns the configured providers
-func (a *Authenticator) Providers() map[string]v2.Provider {
+func (a *Authenticator) Providers() map[string]corev2.AuthProvider {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 

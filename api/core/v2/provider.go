@@ -5,15 +5,15 @@ import (
 	"fmt"
 )
 
-// Provider represents an abstracted authentication provider
-type Provider interface {
+// AuthProvider represents an abstracted authentication provider
+type AuthProvider interface {
 	Authenticate(ctx context.Context, username, password string) (*Claims, error)
 	Name() string
-	Refresh(ctx context.Context, providerClaims ProviderClaims) (*Claims, error)
+	Refresh(ctx context.Context, providerClaims AuthProviderClaims) (*Claims, error)
 	Type() string
 }
 
-// ProviderID returns a unique identifier for a given provider
-func ProviderID(p Provider) string {
+// AuthProviderID returns a unique identifier for a given auth provider
+func AuthProviderID(p AuthProvider) string {
 	return fmt.Sprintf("%s/%s", p.Type(), p.Name())
 }

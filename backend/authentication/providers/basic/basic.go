@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 )
@@ -19,11 +19,11 @@ type Provider struct {
 	Store store.Store
 
 	// ObjectMeta contains the name, namespace, labels and annotations
-	v2.ObjectMeta `json:"metadata"`
+	corev2.ObjectMeta `json:"metadata"`
 }
 
 // Authenticate a user, with the provided credentials, against the Sensu store
-func (p *Provider) Authenticate(ctx context.Context, username, password string) (*v2.Claims, error) {
+func (p *Provider) Authenticate(ctx context.Context, username, password string) (*corev2.Claims, error) {
 	if username == "" || password == "" {
 		return nil, errors.New("the username and the password must not be empty")
 	}
@@ -45,7 +45,7 @@ func (p *Provider) Authenticate(ctx context.Context, username, password string) 
 }
 
 // Refresh the claims of a user
-func (p *Provider) Refresh(ctx context.Context, providerClaims v2.ProviderClaims) (*v2.Claims, error) {
+func (p *Provider) Refresh(ctx context.Context, providerClaims corev2.AuthProviderClaims) (*corev2.Claims, error) {
 	user, err := p.Store.GetUser(ctx, providerClaims.UserID)
 	if err != nil {
 		return nil, err
@@ -66,7 +66,7 @@ func (p *Provider) Refresh(ctx context.Context, providerClaims v2.ProviderClaims
 }
 
 // GetObjectMeta returns the provider metadata
-func (p *Provider) GetObjectMeta() v2.ObjectMeta {
+func (p *Provider) GetObjectMeta() corev2.ObjectMeta {
 	return p.ObjectMeta
 }
 
@@ -94,9 +94,9 @@ func (p *Provider) Validate() error {
 	return nil
 }
 
-func (p *Provider) claims(username string) v2.ProviderClaims {
-	return v2.ProviderClaims{
-		ProviderID: v2.ProviderID(p),
+func (p *Provider) claims(username string) corev2.AuthProviderClaims {
+	return corev2.AuthProviderClaims{
+		ProviderID: corev2.AuthProviderID(p),
 		UserID:     username,
 	}
 }
