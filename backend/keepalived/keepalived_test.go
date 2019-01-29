@@ -279,6 +279,9 @@ func TestDeadCallbackNoEntity(t *testing.T) {
 	messageBus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
 		RingGetter: &mockring.Getter{},
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	if err := messageBus.Start(); err != nil {
 		t.Fatal(err)
 	}
@@ -304,6 +307,9 @@ func TestDeadCallbackNoEvent(t *testing.T) {
 	messageBus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
 		RingGetter: &mockring.Getter{},
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	if err := messageBus.Start(); err != nil {
 		t.Fatal(err)
 	}
