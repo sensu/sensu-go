@@ -20,6 +20,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Check TTL failure events are now much more reliable, and will persist even
 in the presence cluster member failures and cluster restarts.
 - Fix snakeCase version of keys in typeMap for acronyms.
+- Fixed a bug in keepalive processing that could result in a crash.
 
 ## [5.1.1] - 2019-01-24
 
