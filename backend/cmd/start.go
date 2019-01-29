@@ -191,7 +191,9 @@ func newStartCommand() *cobra.Command {
 					emptyFlags = append(emptyFlags, flagKeyFile)
 				}
 
-				return fmt.Errorf("missing the following cert flags: %s", emptyFlags)
+				if len(emptyFlags) > 0 {
+					return fmt.Errorf("missing the following cert flags: %s", emptyFlags)
+				}
 			}
 
 			// Etcd TLS config
