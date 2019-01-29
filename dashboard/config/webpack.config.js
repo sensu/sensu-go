@@ -2,7 +2,6 @@ import fs from "fs";
 import path from "path";
 import webpack from "webpack";
 import HtmlWebpackPlugin from "html-webpack-plugin";
-import SWPrecacheWebpackPlugin from "sw-precache-webpack-plugin";
 import eslintFormatter from "react-dev-utils/eslintFormatter";
 import CaseSensitivePathsPlugin from "case-sensitive-paths-webpack-plugin";
 import CleanPlugin from "clean-webpack-plugin";
@@ -214,22 +213,6 @@ export default () => {
           new webpack.NamedModulesPlugin(),
           new webpack.HotModuleReplacementPlugin(),
           new CaseSensitivePathsPlugin(),
-        ],
-      )
-      .concat(
-        isProduction && [
-          new SWPrecacheWebpackPlugin({
-            // If a URL is already hashed by Webpack, then there is no concern
-            // about it being stale, and the cache-busting can be skipped.
-            dontCacheBustUrlsMatching: /\.\w{8}\./,
-            filename: "service-worker.js",
-            minify: true,
-            logger: () => {},
-            // For unknown URLs, fallback to the index page
-            navigateFallback: `/index.html`,
-            // Don't precache sourcemaps (they're large) and build asset manifest:
-            staticFileGlobsIgnorePatterns: [/\.map$/],
-          }),
         ],
       )
       .filter(Boolean),
