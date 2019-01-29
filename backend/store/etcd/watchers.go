@@ -79,49 +79,6 @@ func (s *Store) GetCheckConfigWatcher(ctx context.Context) <-chan store.WatchEve
 	return ch
 }
 
-// GetAssetWatcher returns a channel that emits WatchEventAsset structs notifying
-// the caller that an Asset was updated. If the watcher runs into a terminal error
-// or the context passed is cancelled, then the channel will be closed. The caller must
-// restart the watcher, if needed.
-func (s *Store) GetAssetWatcher(ctx context.Context) <-chan store.WatchEventAsset {
-	ch := make(chan store.WatchEventAsset)
-
-	go func() {
-		watcher := clientv3.NewWatcher(s.client)
-		watcherChan := watcher.Watch(ctx, assetKeyBuilder.Build(""), clientv3.WithPrefix(), clientv3.WithCreatedNotify())
-		defer close(ch)
-
-		var (
-			watchEvent store.WatchEventAsset
-			action     store.WatchActionType
-			asset      *types.Asset
-		)
-
-		for watchResponse := range watcherChan {
-			for _, event := range watchResponse.Events {
-				action = GetWatcherAction(event)
-				if action == store.WatchUnknown {
-					logger.Error("unknown etcd watch action: ", event.Type.String())
-				}
-
-				asset = &types.Asset{}
-				if err := json.Unmarshal(event.Kv.Value, asset); err != nil {
-					logger.WithField("key", event.Kv.Key).WithError(err).Error("unable to unmarshal check config from key")
-				}
-
-				watchEvent = store.WatchEventAsset{
-					Action: action,
-					Asset:  asset,
-				}
-
-				ch <- watchEvent
-			}
-		}
-	}()
-
-	return ch
-}
-
 // GetHookConfigWatcher returns a channel that emits WatchEventHookConfig structs notifying
 // the caller that a HookConfig was updated. If the watcher runs into a terminal error
 // or the context passed is cancelled, then the channel will be closed. The caller must

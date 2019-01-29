@@ -3,7 +3,6 @@ package mockstore
 import (
 	"context"
 
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -29,10 +28,4 @@ func (s *MockStore) GetAssetByName(ctx context.Context, name string) (*types.Ass
 func (s *MockStore) UpdateAsset(ctx context.Context, asset *types.Asset) error {
 	args := s.Called(ctx, asset)
 	return args.Error(0)
-}
-
-// GetAssetWatcher ...
-func (s *MockStore) GetAssetWatcher(ctx context.Context) <-chan store.WatchEventAsset {
-	args := s.Called(ctx)
-	return args.Get(0).(<-chan store.WatchEventAsset)
 }
