@@ -190,9 +190,6 @@ func newStartCommand() *cobra.Command {
 				if keyFile == "" {
 					emptyFlags = append(emptyFlags, flagKeyFile)
 				}
-				if trustedCAFile == "" {
-					emptyFlags = append(emptyFlags, flagTrustedCAFile)
-				}
 
 				return fmt.Errorf("missing the following cert flags: %s", emptyFlags)
 			}
