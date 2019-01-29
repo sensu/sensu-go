@@ -95,7 +95,7 @@ func (c *Config) flags(flags *pflag.FlagSet) {
 		c.Cluster.APIUrl = value
 	}
 
-	if value, err := flags.GetBool("insecure-skip-tls-verify"); err == nil && value != false {
+	if value, err := flags.GetBool("insecure-skip-tls-verify"); err == nil && value {
 		c.Cluster.InsecureSkipTLSVerify = value
 	}
 
