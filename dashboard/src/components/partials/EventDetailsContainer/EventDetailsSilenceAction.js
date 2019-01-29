@@ -19,9 +19,9 @@ class EventDetailsSilenceAction extends React.Component {
     event: gql`
       fragment EventDetailsSilenceAction_event on Event {
         namespace
+        isSilenced
         check {
           name
-          silenced
         }
         entity {
           name
@@ -36,7 +36,7 @@ class EventDetailsSilenceAction extends React.Component {
     const { event } = this.props;
     const { isOpen } = this.state;
 
-    const canOpen = event.check.silenced.length === 0;
+    const canOpen = event.isSilenced;
     const open = () => this.setState({ isOpen: true });
 
     return (

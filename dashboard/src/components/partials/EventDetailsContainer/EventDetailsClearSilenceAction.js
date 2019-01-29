@@ -17,11 +17,8 @@ class EventDetailsClearSilenceAction extends React.PureComponent {
   static fragments = {
     event: gql`
       fragment EventDetailsClearSilenceAction_event on Event {
-        check {
-          silenced
-          silences {
-            ...ClearSilencedEntriesDialog_silence
-          }
+        silences {
+          ...ClearSilencedEntriesDialog_silence
         }
       }
 
@@ -36,13 +33,13 @@ class EventDetailsClearSilenceAction extends React.PureComponent {
     const { isOpen } = this.state;
 
     const open = () => this.setState({ isOpen: true });
-    const canOpen = event.check.silenced.length > 0;
+    const canOpen = event.silences.length > 0;
 
     return (
       <React.Fragment>
         {children({ canOpen, open })}
         <ClearSilencedEntriesDialog
-          silences={event.check.silences}
+          silences={event.silences}
           open={isOpen}
           close={() => {
             this.props.onDone();

@@ -34,10 +34,7 @@ class EventDetailsToolbar extends React.Component {
         ...EventDetailsReRunAction_event
         ...EventDetailsSilenceAction_event
         ...EventDetailsClearSilenceAction_event
-
-        check {
-          silenced
-        }
+        isSilenced
       }
 
       ${DeleteAction.fragments.event}
@@ -75,16 +72,26 @@ class EventDetailsToolbar extends React.Component {
                 </ReRunAction>
               )}
             </ToolbarMenu.Item>
-            <ToolbarMenu.Item id="silence" visible="if-room">
-              {event.check.silenced.length === 0 ? (
-                <SilenceAction event={event}>
-                  {({ open }) => <SilenceMenuItem onClick={open} />}
-                </SilenceAction>
-              ) : (
-                <ClearSilenceAction event={event} onDone={refetch}>
-                  {({ open }) => <UnsilenceMenuItem onClick={open} />}
-                </ClearSilenceAction>
-              )}
+            <ToolbarMenu.Item
+              id="silence"
+              visible={event.isSilenced ? "never" : "if-room"}
+            >
+              <SilenceAction event={event} onDone={refetch}>
+                {menu => <SilenceMenuItem onClick={menu.open} />}
+              </SilenceAction>
+            </ToolbarMenu.Item>
+            <ToolbarMenu.Item
+              id="unsilence"
+              visible={event.isSilenced ? "if-room" : "never"}
+            >
+              <ClearSilenceAction event={event} onDone={refetch}>
+                {menu => (
+                  <UnsilenceMenuItem
+                    onClick={menu.open}
+                    disabled={!menu.canOpen}
+                  />
+                )}
+              </ClearSilenceAction>
             </ToolbarMenu.Item>
             <ToolbarMenu.Item id="delete" visible="never">
               <DeleteAction event={event}>

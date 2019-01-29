@@ -59,6 +59,7 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterSubscriptionSetOrder(svc)
 	schema.RegisterSubscriptionOccurences(svc, &schema.SubscriptionOccurencesAliases{})
 	schema.RegisterSilencesListOrder(svc)
+	schema.RegisterSilenceable(svc, nil)
 	schema.RegisterUint(svc, unsignedIntegerImpl{})
 	schema.RegisterViewer(svc, &viewerImpl{factory: clientFactory})
 

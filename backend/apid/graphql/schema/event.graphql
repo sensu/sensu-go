@@ -38,6 +38,11 @@ type Event implements Node, Namespaced, Silenceable {
   "isResolution returns true if an event has just transitions from an incident."
   isResolution: Boolean!
 
+  """
+  wasSilenced reflects whether the event was silenced when passing through the pipeline.
+  """
+  wasSilenced: Boolean!
+
   "isSilenced determines if an event has any silenced entries."
   isSilenced: Boolean!
 
