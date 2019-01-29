@@ -175,7 +175,7 @@ func newStartCommand() *cobra.Command {
 			trustedCAFile := viper.GetString(flagTrustedCAFile)
 			insecureSkipTLSVerify := viper.GetBool(flagInsecureSkipTLSVerify)
 
-			if certFile != "" && keyFile != "" && trustedCAFile != "" {
+			if certFile != "" && keyFile != "" {
 				cfg.TLS = &types.TLSOptions{
 					CertFile:           certFile,
 					KeyFile:            keyFile,
