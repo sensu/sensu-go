@@ -95,11 +95,11 @@ func (c *Config) flags(flags *pflag.FlagSet) {
 		c.Cluster.APIUrl = value
 	}
 
-	if value, err := flags.GetBool("insecure-skip-tls-verify"); err == nil {
+	if value, err := flags.GetBool("insecure-skip-tls-verify"); err == nil && value != false {
 		c.Cluster.InsecureSkipTLSVerify = value
 	}
 
-	if value, err := flags.GetString("trusted-ca-file"); err == nil {
+	if value, err := flags.GetString("trusted-ca-file"); err == nil && value != "" {
 		c.Cluster.TrustedCAFile = value
 	}
 }
