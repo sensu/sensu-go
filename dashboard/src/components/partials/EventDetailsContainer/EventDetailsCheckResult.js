@@ -144,7 +144,7 @@ class EventDetailsCheckResult extends React.PureComponent {
                   <DictionaryValue>
                     <NamespaceLink
                       component={InlineLink}
-                      namepsace={entity.namespace}
+                      namespace={entity.namespace}
                       to={`/entities/${entity.name}`}
                     >
                       {entity.name}

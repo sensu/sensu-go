@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
+import ClearSilenceAction from "/components/partials/ClearSilenceAction";
 import DeleteMenuItem from "/components/partials/ToolbarMenuItems/Delete";
 import PublishMenuItem from "/components/partials/ToolbarMenuItems/Publish";
 import SilenceMenuItem from "/components/partials/ToolbarMenuItems/Silence";
@@ -16,7 +17,6 @@ import ExecuteAction from "./CheckDetailsExecuteAction";
 import PublishAction from "./CheckDetailsPublishAction";
 import UnpublishAction from "./CheckDetailsUnpublishAction";
 import SilenceAction from "./CheckDetailsSilenceAction";
-import ClearSilenceAction from "./CheckDetailsClearSilenceAction";
 
 class CheckDetailsToolbar extends React.Component {
   static propTypes = {
@@ -37,13 +37,13 @@ class CheckDetailsToolbar extends React.Component {
         ...CheckDetailsDeleteAction_check
         ...CheckDetailsExecuteAction_check
         ...CheckDetailsSilenceAction_check
-        ...CheckDetailsClearSilenceAction_check
+        ...ClearSilenceAction_record
       }
 
       ${DeleteAction.fragments.check}
       ${ExecuteAction.fragments.check}
       ${SilenceAction.fragments.check}
-      ${ClearSilenceAction.fragments.check}
+      ${ClearSilenceAction.fragments.record}
     `,
   };
 
@@ -76,11 +76,11 @@ class CheckDetailsToolbar extends React.Component {
               id="unsilence"
               visible={check.isSilenced ? "if-room" : "never"}
             >
-              <ClearSilenceAction check={check} onDone={refetch}>
+              <ClearSilenceAction record={check} onDone={refetch}>
                 {dialog => (
                   <UnsilenceMenuItem
                     onClick={dialog.open}
-                    disabled={dialog.canOpen}
+                    disabled={!dialog.canOpen}
                   />
                 )}
               </ClearSilenceAction>

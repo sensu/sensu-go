@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
+import ClearSilenceAction from "/components/partials/ClearSilenceAction";
 import DeleteMenuItem from "/components/partials/ToolbarMenuItems/Delete";
 import QueueMenuItem from "/components/partials/ToolbarMenuItems/QueueExecution";
 import ResolveMenuItem from "/components/partials/ToolbarMenuItems/Resolve";
@@ -14,7 +15,6 @@ import DeleteAction from "./EventDetailsDeleteAction";
 import ResolveAction from "./EventDetailsResolveAction";
 import ReRunAction from "./EventDetailsReRunAction";
 import SilenceAction from "./EventDetailsSilenceAction";
-import ClearSilenceAction from "./EventDetailsClearSilenceAction";
 
 class EventDetailsToolbar extends React.Component {
   static propTypes = {
@@ -33,7 +33,7 @@ class EventDetailsToolbar extends React.Component {
         ...EventDetailsResolveAction_event
         ...EventDetailsReRunAction_event
         ...EventDetailsSilenceAction_event
-        ...EventDetailsClearSilenceAction_event
+        ...ClearSilenceAction_record
         isSilenced
       }
 
@@ -41,7 +41,7 @@ class EventDetailsToolbar extends React.Component {
       ${ResolveAction.fragments.event}
       ${ReRunAction.fragments.event}
       ${SilenceAction.fragments.event}
-      ${ClearSilenceAction.fragments.event}
+      ${ClearSilenceAction.fragments.record}
     `,
   };
 
@@ -84,7 +84,7 @@ class EventDetailsToolbar extends React.Component {
               id="unsilence"
               visible={event.isSilenced ? "if-room" : "never"}
             >
-              <ClearSilenceAction event={event} onDone={refetch}>
+              <ClearSilenceAction record={event} onDone={refetch}>
                 {menu => (
                   <UnsilenceMenuItem
                     onClick={menu.open}
