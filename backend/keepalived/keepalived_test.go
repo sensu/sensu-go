@@ -8,11 +8,12 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 type mockDeregisterer struct {
@@ -78,15 +79,15 @@ func (k *keepalivedTest) Dispose(t *testing.T) {
 }
 
 func TestStartStop(t *testing.T) {
-	failingEvent := func(e *types.Event) *types.Event {
+	failingEvent := func(e *corev2.Event) *corev2.Event {
 		e.Check.Status = 1
 		return e
 	}
 
 	tt := []struct {
 		name     string
-		records  []*types.KeepaliveRecord
-		events   []*types.Event
+		records  []*corev2.KeepaliveRecord
+		events   []*corev2.Event
 		monitors int
 	}{
 		{
@@ -97,49 +98,49 @@ func TestStartStop(t *testing.T) {
 		},
 		{
 			name: "Passing Keepalives",
-			records: []*types.KeepaliveRecord{
+			records: []*corev2.KeepaliveRecord{
 				{
-					ObjectMeta: types.ObjectMeta{
+					ObjectMeta: corev2.ObjectMeta{
 						Name:      "entity1",
 						Namespace: "org",
 					},
 					Time: 0,
 				},
 				{
-					ObjectMeta: types.ObjectMeta{
+					ObjectMeta: corev2.ObjectMeta{
 						Name:      "entity2",
 						Namespace: "org",
 					},
 					Time: 0,
 				},
 			},
-			events: []*types.Event{
-				types.FixtureEvent("entity1", "keepalive"),
-				types.FixtureEvent("entity2", "keepalive"),
+			events: []*corev2.Event{
+				corev2.FixtureEvent("entity1", "keepalive"),
+				corev2.FixtureEvent("entity2", "keepalive"),
 			},
 			monitors: 0,
 		},
 		{
 			name: "Failing Keepalives",
-			records: []*types.KeepaliveRecord{
+			records: []*corev2.KeepaliveRecord{
 				{
-					ObjectMeta: types.ObjectMeta{
+					ObjectMeta: corev2.ObjectMeta{
 						Name:      "entity1",
 						Namespace: "org",
 					},
 					Time: 0,
 				},
 				{
-					ObjectMeta: types.ObjectMeta{
+					ObjectMeta: corev2.ObjectMeta{
 						Name:      "entity2",
 						Namespace: "org",
 					},
 					Time: 0,
 				},
 			},
-			events: []*types.Event{
-				failingEvent(types.FixtureEvent("entity1", "keepalive")),
-				failingEvent(types.FixtureEvent("entity2", "keepalive")),
+			events: []*corev2.Event{
+				failingEvent(corev2.FixtureEvent("entity1", "keepalive")),
+				failingEvent(corev2.FixtureEvent("entity2", "keepalive")),
 			},
 			monitors: 2,
 		},
@@ -175,9 +176,9 @@ func TestStartStop(t *testing.T) {
 
 func TestEventProcessing(t *testing.T) {
 	test := newKeepalivedTest(t)
-	test.Store.On("GetFailingKeepalives", mock.Anything).Return([]*types.KeepaliveRecord{}, nil)
+	test.Store.On("GetFailingKeepalives", mock.Anything).Return([]*corev2.KeepaliveRecord{}, nil)
 	require.NoError(t, test.Keepalived.Start())
-	event := types.FixtureEvent("entity", "keepalive")
+	event := corev2.FixtureEvent("entity", "keepalive")
 	event.Check.Status = 1
 
 	test.Store.On("UpdateEntity", mock.Anything, event.Entity).Return(nil)
@@ -196,16 +197,16 @@ func (t testSubscriber) Receiver() chan<- interface{} {
 }
 
 func TestProcessRegistration(t *testing.T) {
-	newEntityWithClass := func(class string) *types.Entity {
-		entity := types.FixtureEntity("agent1")
+	newEntityWithClass := func(class string) *corev2.Entity {
+		entity := corev2.FixtureEntity("agent1")
 		entity.EntityClass = class
 		return entity
 	}
 
 	tt := []struct {
 		name        string
-		entity      *types.Entity
-		storeEntity *types.Entity
+		entity      *corev2.Entity
+		storeEntity *corev2.Entity
 		expectedLen int
 	}{
 		{
@@ -258,7 +259,7 @@ func TestProcessRegistration(t *testing.T) {
 }
 
 func TestCreateKeepaliveEvent(t *testing.T) {
-	event := types.FixtureEvent("entity1", "keepalive")
+	event := corev2.FixtureEvent("entity1", "keepalive")
 	keepaliveEvent := createKeepaliveEvent(event)
 	assert.Equal(t, "keepalive", keepaliveEvent.Check.Name)
 	assert.Equal(t, uint32(60), keepaliveEvent.Check.Interval)
@@ -271,4 +272,55 @@ func TestCreateKeepaliveEvent(t *testing.T) {
 	assert.Equal(t, "keepalive", keepaliveEvent.Check.Name)
 	assert.Equal(t, uint32(20), keepaliveEvent.Check.Interval)
 	assert.Equal(t, uint32(120), keepaliveEvent.Check.Timeout)
+}
+
+func TestDeadCallbackNoEntity(t *testing.T) {
+	// Make sure the dead callback doesn't crash when entity is missing
+	messageBus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
+		RingGetter: &mockring.Getter{},
+	})
+	if err := messageBus.Start(); err != nil {
+		t.Fatal(err)
+	}
+	tsub := testSubscriber{
+		ch: make(chan interface{}, 1),
+	}
+	if _, err := messageBus.Subscribe(messaging.TopicEvent, "testSubscriber", tsub); err != nil {
+		t.Fatal(err)
+	}
+	store := &mockstore.MockStore{}
+	keepalived, err := New(Config{Store: store, Bus: messageBus, LivenessFactory: fakeFactory})
+	if err != nil {
+		t.Fatal(err)
+	}
+	store.On("GetEntityByName", mock.Anything, mock.Anything).Return((*corev2.Entity)(nil), nil)
+
+	// Smoke test - just want to make sure there is no panic
+	keepalived.dead("default/testSubscriber", liveness.Alive, true)
+}
+
+func TestDeadCallbackNoEvent(t *testing.T) {
+	// Make sure the dead callback doesn't crash when entity is missing
+	messageBus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
+		RingGetter: &mockring.Getter{},
+	})
+	if err := messageBus.Start(); err != nil {
+		t.Fatal(err)
+	}
+	tsub := testSubscriber{
+		ch: make(chan interface{}, 1),
+	}
+	if _, err := messageBus.Subscribe(messaging.TopicEvent, "testSubscriber", tsub); err != nil {
+		t.Fatal(err)
+	}
+	store := &mockstore.MockStore{}
+	keepalived, err := New(Config{Store: store, Bus: messageBus, LivenessFactory: fakeFactory})
+	if err != nil {
+		t.Fatal(err)
+	}
+	store.On("GetEntityByName", mock.Anything, mock.Anything).Return(corev2.FixtureEntity("foo"), nil)
+	store.On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).Return((*corev2.Event)(nil), nil)
+
+	// Smoke test - just want to make sure there is no panic
+	keepalived.dead("default/testSubscriber", liveness.Alive, true)
 }
