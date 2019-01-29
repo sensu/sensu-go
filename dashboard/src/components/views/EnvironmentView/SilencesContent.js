@@ -14,6 +14,8 @@ import SilenceEntryDialog from "/components/partials/SilenceEntryDialog";
 import { withQueryParams } from "/components/QueryParams";
 import WithWidth from "/components/WithWidth";
 
+import { pollingDuration } from "/constants/polling";
+
 const WithDialogState = toRenderProps(
   withStateHandlers(
     { isOpen: false },
@@ -23,10 +25,6 @@ const WithDialogState = toRenderProps(
     },
   ),
 );
-
-// duration used when polling is enabled; set fairly high until we understand
-// the impact.
-const pollInterval = 2500; // 2.5s
 
 class SilencesContent extends React.Component {
   static propTypes = {
@@ -132,7 +130,7 @@ class SilencesContent extends React.Component {
       <Query
         query={SilencesContent.query}
         fetchPolicy="cache-and-network"
-        pollInterval={pollInterval}
+        pollInterval={pollingDuration.short}
         variables={variables}
       >
         {this.renderContent}

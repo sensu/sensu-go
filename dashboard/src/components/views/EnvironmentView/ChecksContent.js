@@ -12,9 +12,7 @@ import ToastConnector from "/components/relocation/ToastConnector";
 import { withQueryParams } from "/components/QueryParams";
 import WithWidth from "/components/WithWidth";
 
-// duration used when polling is enabled; set fairly high until we understand
-// the impact.
-const pollInterval = 2500; // 2.5s
+import { pollingDuration } from "/constants/polling";
 
 class ChecksContent extends React.Component {
   static propTypes = {
@@ -104,7 +102,7 @@ class ChecksContent extends React.Component {
       <Query
         query={ChecksContent.query}
         fetchPolicy="cache-and-network"
-        pollInterval={pollInterval}
+        pollInterval={pollingDuration.short}
         variables={variables}
       >
         {this.renderContent}
