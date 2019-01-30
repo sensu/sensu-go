@@ -23,9 +23,6 @@ jobs:
           # Must be absolute path or relative path from working_directory
           at: /go
 
-      # Install CI provider deps
-      - run: sudo $CIRCLE_WORKING_DIRECTORY/build/ci/circle-ci-setup.sh
-
       # Run tests
       - run: ./build.sh unit
       - run: ./build.sh integration
