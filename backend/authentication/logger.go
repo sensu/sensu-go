@@ -1,7 +1,7 @@
-package providers
+package authentication
 
 import "github.com/sirupsen/logrus"
 
 var logger = logrus.WithFields(logrus.Fields{
-	"component": "auth.providers",
+	"component": "authentication",
 })
