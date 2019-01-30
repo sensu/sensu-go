@@ -204,7 +204,7 @@ func TestExecuteCheckDiscardOutput(t *testing.T) {
 	execution := command.FixtureExecutionResponse(0, output)
 	ex.Return(execution, nil)
 
-	agent.executeCheck(request)
+	agent.executeCheck(request, agent.getAgentEntity())
 	msg := <-ch
 
 	event := &corev2.Event{}
@@ -218,7 +218,7 @@ func TestExecuteCheckDiscardOutput(t *testing.T) {
 
 	request.Config.DiscardOutput = true
 
-	agent.executeCheck(request)
+	agent.executeCheck(request, agent.getAgentEntity())
 	msg = <-ch
 
 	if err := json.Unmarshal(msg.Payload, event); err != nil {
