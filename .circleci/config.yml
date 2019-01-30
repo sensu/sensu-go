@@ -30,8 +30,6 @@ workflows:
   run_the_tests:
     jobs:
       - test:
-          requires:
-            - build
           filters:
             tags:
               ignore: /.*/
