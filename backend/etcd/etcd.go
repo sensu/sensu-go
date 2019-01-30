@@ -207,7 +207,7 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 	}
 
 	// Translate our TLS options to a *tls.Config
-	tlsConfig, err := tlsOptions.ToTLSConfig()
+	tlsConfig, err := tlsOptions.ToTLSClientConfig()
 	if err != nil {
 		return nil, err
 	}
