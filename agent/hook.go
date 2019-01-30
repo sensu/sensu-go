@@ -22,6 +22,7 @@ func (a *Agent) ExecuteHooks(request *types.CheckRequest, status int) []*types.H
 			// run all the hooks of that type
 			for _, hookName := range hookList.Hooks {
 				hookConfig := getHookConfig(hookName, request.Hooks)
+				origCommand := hookConfig.Command
 				if ok := a.prepareHook(hookConfig); !ok {
 					// An error occured during the preparation of the hook and the error
 					// has been sent back to the server. At this point we should not
@@ -33,6 +34,9 @@ func (a *Agent) ExecuteHooks(request *types.CheckRequest, status int) []*types.H
 				in := hookInList(hookConfig.Name, executedHooks)
 				if !in {
 					hook := a.executeHook(hookConfig, request.Config.Name)
+					// To guard against publishing sensitive/redacted client attribute values
+					// the original command value is reinstated.
+					hook.Command = origCommand
 					executedHooks = append(executedHooks, hook)
 				}
 			}

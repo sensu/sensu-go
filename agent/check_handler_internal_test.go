@@ -113,7 +113,8 @@ func TestExecuteCheck(t *testing.T) {
 	execution := command.FixtureExecutionResponse(0, "")
 	ex.Return(execution, nil)
 
-	agent.executeCheck(request)
+	entity := agent.getAgentEntity()
+	agent.executeCheck(request, entity)
 	msg := <-ch
 
 	event := &corev2.Event{}
@@ -123,7 +124,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.False(event.HasMetrics())
 
 	execution.Status = 1
-	agent.executeCheck(request)
+	agent.executeCheck(request, entity)
 	msg = <-ch
 
 	event = &corev2.Event{}
@@ -134,7 +135,7 @@ func TestExecuteCheck(t *testing.T) {
 
 	execution.Status = 127
 	execution.Output = "command not found"
-	agent.executeCheck(request)
+	agent.executeCheck(request, entity)
 	msg = <-ch
 
 	event = &corev2.Event{}
@@ -146,7 +147,7 @@ func TestExecuteCheck(t *testing.T) {
 
 	execution.Status = 2
 	execution.Output = ""
-	agent.executeCheck(request)
+	agent.executeCheck(request, entity)
 	msg = <-ch
 
 	event = &corev2.Event{}
@@ -159,7 +160,7 @@ func TestExecuteCheck(t *testing.T) {
 	execution.Status = 0
 	execution.Output = "metric.foo 1 123456789\nmetric.bar 2 987654321"
 	ex.Return(execution, nil)
-	agent.executeCheck(request)
+	agent.executeCheck(request, entity)
 	msg = <-ch
 
 	event = &corev2.Event{}
@@ -169,7 +170,7 @@ func TestExecuteCheck(t *testing.T) {
 
 	checkConfig.OutputMetricFormat = corev2.GraphiteOutputMetricFormat
 	ex.Return(execution, nil)
-	agent.executeCheck(request)
+	agent.executeCheck(request, entity)
 	msg = <-ch
 
 	event = &corev2.Event{}
@@ -262,6 +263,7 @@ func TestHandleTokenSubstitution(t *testing.T) {
 	assert.NotZero(event.Timestamp)
 	assert.EqualValues(int32(0), event.Check.Status)
 	assert.Contains(event.Check.Output, "TestTokenSubstitution defaultValue")
+	assert.Contains(event.Check.Command, checkConfig.Command) // command should not include substitutions
 }
 
 func TestHandleTokenSubstitutionNoKey(t *testing.T) {
@@ -295,23 +297,22 @@ func TestHandleTokenSubstitutionNoKey(t *testing.T) {
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.Contains(event.Check.Output, "has no entry for key")
+	assert.Contains(event.Check.Command, checkConfig.Command)
 }
 
 func TestPrepareCheck(t *testing.T) {
-	assert := assert.New(t)
-
 	config, cleanup := FixtureConfig()
 	defer cleanup()
 	agent := NewAgent(config)
 
-	// Invalid check
+	// Substitute
+	entity := agent.getAgentEntity()
+	entity.Labels = map[string]string{"foo": "bar"}
 	check := corev2.FixtureCheckConfig("check")
-	check.Interval = 0
-	assert.False(agent.prepareCheck(check))
-
-	// Valid check
-	check.Interval = 60
-	assert.True(agent.prepareCheck(check))
+	check.Command = "echo {{ .labels.foo }}"
+	err := prepareCheck(check, entity)
+	require.NoError(t, err)
+	assert.Equal(t, check.Command, "echo bar")
 }
 
 func TestExtractMetrics(t *testing.T) {

@@ -3,6 +3,7 @@ package version
 import (
 	"fmt"
 
+	"github.com/sensu/sensu-go/cli/commands/hooks"
 	"github.com/sensu/sensu-go/version"
 	"github.com/spf13/cobra"
 )
@@ -18,6 +19,9 @@ func Command() *cobra.Command {
 				version.BuildSHA,
 				version.BuildDate,
 			)
+		},
+		Annotations: map[string]string{
+			hooks.ConfigurationRequirement: hooks.ConfigurationNotRequired,
 		},
 	}
 }

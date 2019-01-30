@@ -1,7 +1,7 @@
 """
 An Event is the encapsulating type sent across the Sensu websocket transport.
 """
-type Event implements Node, Namespaced {
+type Event implements Node, Namespaced, Silenceable {
   "The globally unique identifier of the record."
   id: ID!
 
@@ -38,8 +38,16 @@ type Event implements Node, Namespaced {
   "isResolution returns true if an event has just transitions from an incident."
   isResolution: Boolean!
 
+  """
+  wasSilenced reflects whether the event was silenced when passing through the pipeline.
+  """
+  wasSilenced: Boolean!
+
   "isSilenced determines if an event has any silenced entries."
   isSilenced: Boolean!
+
+  "all current silences matching the check and entity's subscriptions."
+  silences: [Silenced!]!
 
   # TODO: Implement silences
   # "Silenced is a list of silenced entry ids (subscription and check name)"

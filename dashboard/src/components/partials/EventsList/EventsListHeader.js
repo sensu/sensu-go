@@ -48,9 +48,7 @@ class EventsListHeader extends React.Component {
   static fragments = {
     event: gql`
       fragment EventsListHeader_event on Event {
-        check {
-          isSilenced
-        }
+        isSilenced
       }
     `,
     namespace: gql`
@@ -109,7 +107,7 @@ class EventsListHeader extends React.Component {
   renderBulkActions = () => {
     const { selectedItems } = this.props;
     const selectedCount = selectedItems.length;
-    const selectedSilenced = selectedItems.filter(ev => ev.check.isSilenced);
+    const selectedSilenced = selectedItems.filter(ev => ev.isSilenced);
     const selectedNonKeepalives = selectedItems.filter(
       ev => ev.check.name !== "keepalive",
     );

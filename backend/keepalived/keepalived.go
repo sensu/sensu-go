@@ -348,7 +348,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) {
 	}
 
 	if entity == nil {
-		lager.Error("entity could not be read")
+		lager.Error("entity not found")
 		return
 	}
 
@@ -371,6 +371,10 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) {
 	currentEvent, err := k.store.GetEventByEntityCheck(ctx, name, "keepalive")
 	if err != nil {
 		lager.WithError(err).Error("error while reading event")
+		return
+	}
+	if currentEvent == nil {
+		lager.Error("keepalive event not found")
 		return
 	}
 

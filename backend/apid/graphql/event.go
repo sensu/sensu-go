@@ -66,10 +66,27 @@ func (r *eventImpl) IsResolution(p graphql.ResolveParams) (bool, error) {
 	return event.IsResolution(), nil
 }
 
-// IsSilenced implements response to request for 'isSilenced' field.
-func (r *eventImpl) IsSilenced(p graphql.ResolveParams) (bool, error) {
+// WasSilenced implements response to request for 'wasSilenced' field.
+func (r *eventImpl) WasSilenced(p graphql.ResolveParams) (bool, error) {
 	event := p.Source.(*types.Event)
 	return event.IsSilenced(), nil
+}
+
+// IsSilenced implements response to request for 'isSilenced' field.
+func (r *eventImpl) IsSilenced(p graphql.ResolveParams) (bool, error) {
+	src := p.Source.(*types.Event)
+	results, err := loadSilenceds(p.Context, src.Namespace)
+	records := filterSilenceds(results, src.IsSilencedBy)
+	return len(records) > 0, err
+}
+
+// Silences implements response to request for 'silences' field.
+func (r *eventImpl) Silences(p graphql.ResolveParams) (interface{}, error) {
+	src := p.Source.(*types.Event)
+	results, err := loadSilenceds(p.Context, src.Namespace)
+	records := filterSilenceds(results, src.IsSilencedBy)
+
+	return records, err
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type

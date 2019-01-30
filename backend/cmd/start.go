@@ -175,7 +175,7 @@ func newStartCommand() *cobra.Command {
 			trustedCAFile := viper.GetString(flagTrustedCAFile)
 			insecureSkipTLSVerify := viper.GetBool(flagInsecureSkipTLSVerify)
 
-			if certFile != "" && keyFile != "" && trustedCAFile != "" {
+			if certFile != "" && keyFile != "" {
 				cfg.TLS = &types.TLSOptions{
 					CertFile:           certFile,
 					KeyFile:            keyFile,
@@ -190,11 +190,10 @@ func newStartCommand() *cobra.Command {
 				if keyFile == "" {
 					emptyFlags = append(emptyFlags, flagKeyFile)
 				}
-				if trustedCAFile == "" {
-					emptyFlags = append(emptyFlags, flagTrustedCAFile)
-				}
 
-				return fmt.Errorf("missing the following cert flags: %s", emptyFlags)
+				if len(emptyFlags) > 0 {
+					return fmt.Errorf("missing the following cert flags: %s", emptyFlags)
+				}
 			}
 
 			// Etcd TLS config

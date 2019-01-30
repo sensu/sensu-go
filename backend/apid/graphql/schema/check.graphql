@@ -1,7 +1,7 @@
 """
 CheckConfig is the specification of a check.
 """
-type CheckConfig implements Node, Namespaced {
+type CheckConfig implements Node, Namespaced, Silenceable {
   "The globally unique identifier of the check."
   id: ID!
 
@@ -125,7 +125,7 @@ type CheckConfigEdge {
 A Check is a check specification and optionally the results of the check's
 execution.
 """
-type Check {
+type Check implements Silenceable {
   "id of the check's configuration"
   nodeId: ID!
 
