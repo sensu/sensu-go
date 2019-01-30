@@ -139,6 +139,16 @@ message CheckConfig {
 	(gogoproto.embed) = true,
 	(gogoproto.nullable) = false
     ];
+
+    // MaxOutputSize is the maximum size in bytes that will be stored for check
+    // output. If check output is larger than MaxOutputSize, it will be
+    // truncated when stored. Filters, mutators, and handlers will still have
+    // access to the full check output at the time the event occurs.
+    int64 max_output_size = 27;
+
+    // DiscardOutput causes agents to discard check output. No check output is
+    // written to the backend, but metrics extraction is still performed.
+    bool discard_output = 28;
 }
 
 // A Check is a check specification and optionally the results of the check's
@@ -278,6 +288,16 @@ message Check {
 	(gogoproto.embed) = true,
 	(gogoproto.nullable) = false
     ];
+
+    // MaxOutputSize is the maximum size in bytes that will be stored for check
+    // output. If check output is larger than MaxOutputSize, it will be
+    // truncated when stored. Filters, mutators, and handlers will still have
+    // access to the full check output at the time the event occurs.
+    int64 max_output_size = 39;
+
+    // DiscardOutput causes agents to discard check output. No check output is
+    // written to the backend, but metrics extraction is still performed.
+    bool discard_output = 40;
 
     // ExtendedAttributes store serialized arbitrary JSON-encoded data
     bytes ExtendedAttributes = 99 [(gogoproto.jsontag) = "-"];
