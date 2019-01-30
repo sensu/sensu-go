@@ -156,6 +156,12 @@ func (a *Agent) executeCheck(request *v2.CheckRequest) {
 		event.Metrics.Handlers = check.OutputMetricHandlers
 	}
 
+	// The check requested that we discard its output before writing back
+	// the result.
+	if event.Check.DiscardOutput {
+		event.Check.Output = ""
+	}
+
 	msg, err := json.Marshal(event)
 	if err != nil {
 		logger.WithError(err).Error("error marshaling check result")
