@@ -27,6 +27,9 @@ in the presence cluster member failures and cluster restarts.
 - Fix snakeCase version of keys in typeMap for acronyms.
 - Pin childprocess to v0.9.0 in CircleCI so fpm can be installed.
 
+### Fixed
+- Fixed a bug where `sensuctl version` required configuration files to exist.
+
 ## [5.1.1] - 2019-01-24
 
 ### Added
