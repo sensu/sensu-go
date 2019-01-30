@@ -14,6 +14,10 @@ sensu_go_build_env: &sensu_go_build_env
     - image: circleci/golang:1.11.4
 
 jobs:
+  build:
+    <<: *sensu_go_build_env
+    steps:
+      - checkout
   test:
     <<: *sensu_go_build_env
     resource_class: large
