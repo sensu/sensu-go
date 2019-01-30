@@ -218,6 +218,7 @@ func TestHandleTokenSubstitution(t *testing.T) {
 	assert.NotZero(event.Timestamp)
 	assert.EqualValues(int32(0), event.Check.Status)
 	assert.Contains(event.Check.Output, "TestTokenSubstitution defaultValue")
+	assert.Contains(event.Check.Command, checkConfig.Command) // command should not include substitutions
 }
 
 func TestHandleTokenSubstitutionNoKey(t *testing.T) {
@@ -251,23 +252,21 @@ func TestHandleTokenSubstitutionNoKey(t *testing.T) {
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.Contains(event.Check.Output, "has no entry for key")
+	assert.Contains(event.Check.Command, checkConfig.Command)
 }
 
 func TestPrepareCheck(t *testing.T) {
-	assert := assert.New(t)
-
 	config, cleanup := FixtureConfig()
 	defer cleanup()
 	agent := NewAgent(config)
 
-	// Invalid check
+	// Substitute
+	entity := agent.getAgentEntity()
+	entity.Labels = map[string]string{"foo": "bar"}
 	check := corev2.FixtureCheckConfig("check")
-	check.Interval = 0
-	assert.False(agent.prepareCheck(check))
-
-	// Valid check
-	check.Interval = 60
-	assert.True(agent.prepareCheck(check))
+	check.Command = "echo {{ .labels.foo }}"
+	prepareCheck(check, entity)
+	assert.Equal(t, check.Command, "echo bar")
 }
 
 func TestExtractMetrics(t *testing.T) {

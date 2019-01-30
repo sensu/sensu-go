@@ -28,20 +28,30 @@ func (a *Agent) handleCheck(payload []byte) error {
 		return errors.New("given check configuration appears invalid")
 	}
 
+	checkConfig := request.Config
+	sendFailure := func(err error) {
+		check := v2.NewCheck(checkConfig)
+		check.Executed = time.Now().Unix()
+		event := &v2.Event{
+			ObjectMeta: v2.NewObjectMeta("", check.Namespace),
+			Check:      check,
+		}
+		a.sendFailure(event, err)
+	}
+
 	// only schedule check execution if its not already in progress
 	// ** check hooks are part of a checks execution
 	if a.checkInProgress(request) {
-		return fmt.Errorf("check execution still in progress: %s", request.Config.Name)
+		return fmt.Errorf("check execution still in progress: %s", checkConfig.Name)
 	}
-	logger.Info("scheduling check execution: ", request.Config.Name)
 
-	if ok := a.prepareCheck(request.Config); !ok {
-		// An error occured during the preparation of the check and the error has
-		// been sent back to the server. At this point we should not execute the
-		// check and wait for the next check request
+	// Validate that the given check is valid.
+	if err := request.Config.Validate(); err != nil {
+		sendFailure(fmt.Errorf("given check is invalid: %s", err))
 		return nil
 	}
 
+	logger.Info("scheduling check execution: ", checkConfig.Name)
 	go a.executeCheck(request)
 
 	return nil
@@ -76,16 +86,32 @@ func (a *Agent) executeCheck(request *v2.CheckRequest) {
 	checkAssets := request.Assets
 	checkHooks := request.Hooks
 
-	// Instantiate Event
-	check := v2.NewCheck(checkConfig)
-	check.Executed = time.Now().Unix()
-	check.Issued = request.Issued
-	event := &v2.Event{
-		ObjectMeta: v2.ObjectMeta{
-			Namespace: check.Namespace,
-		},
-		Check: check,
+	// Before token subsitution we retain copies of command and hooks
+	origCommand := checkConfig.Command
+	createEvent := func() *v2.Event {
+		event := &v2.Event{}
+		event.Namespace = checkConfig.Namespace
+		event.Check = v2.NewCheck(checkConfig)
+		event.Check.Executed = time.Now().Unix()
+		event.Check.Issued = request.Issued
+
+		// To guard against publishing sensitive/redacted client attribute values
+		// the original command value is reinstated.
+		event.Check.Command = origCommand
+
+		return event
 	}
+
+	// Prepare Check
+	err := prepareCheck(checkConfig, a.getAgentEntity())
+	if err != nil {
+		a.sendFailure(createEvent(), fmt.Errorf("error preparing check: %s", err))
+		return
+	}
+
+	// Instantiate event
+	event := createEvent()
+	check := event.Check
 
 	// Prepare log entry
 	fields := logrus.Fields{
@@ -103,7 +129,7 @@ func (a *Agent) executeCheck(request *v2.CheckRequest) {
 	}
 
 	// Prepare environment variables
-	env := environment.MergeEnvironments(os.Environ(), assets.Env(), check.EnvVars)
+	env := environment.MergeEnvironments(os.Environ(), assets.Env(), checkConfig.EnvVars)
 
 	// Inject the dependencies into PATH, LD_LIBRARY_PATH & CPATH so that they
 	// are availabe when when the command is executed.
@@ -165,45 +191,28 @@ func (a *Agent) executeCheck(request *v2.CheckRequest) {
 	a.sendMessage(transport.MessageTypeEvent, msg)
 }
 
-// prepareCheck prepares a check before its execution by validating the
-// configuration and performing token substitution. A boolean value is returned,
-// indicathing whether the check should be executed or not
-func (a *Agent) prepareCheck(cfg *v2.CheckConfig) bool {
-	// Instantiate an event in case of failure
-	check := v2.NewCheck(cfg)
-	check.Executed = time.Now().Unix()
-	event := &v2.Event{
-		ObjectMeta: v2.NewObjectMeta("", check.Namespace),
-		Check:      check,
-	}
-
-	// Validate that the given check is valid.
-	if err := check.Validate(); err != nil {
-		a.sendFailure(event, fmt.Errorf("given check is invalid: %s", err))
-		return false
-	}
-
+// prepareCheck prepares a check before its execution by performing token
+// substitution.
+func prepareCheck(cfg *v2.CheckConfig, entity *v2.Entity) error {
 	// Extract the extended attributes from the entity and combine them at the
 	// top-level so they can be easily accessed using token substitution
-	synthesizedEntity := dynamic.Synthesize(a.getAgentEntity())
+	synthesizedEntity := dynamic.Synthesize(entity)
 
 	// Substitute tokens within the check configuration with the synthesized
 	// entity
 	checkBytes, err := TokenSubstitution(synthesizedEntity, cfg)
 	if err != nil {
-		a.sendFailure(event, err)
-		return false
+		return err
 	}
 
 	// Unmarshal the check configuration obtained after the token substitution
 	// back into the check config struct
 	err = json.Unmarshal(checkBytes, cfg)
 	if err != nil {
-		a.sendFailure(event, fmt.Errorf("could not unmarshal the check: %s", err))
-		return false
+		return fmt.Errorf("could not unmarshal the check: %s", err)
 	}
 
-	return true
+	return nil
 }
 
 func (a *Agent) sendFailure(event *v2.Event, err error) {
