@@ -25,7 +25,8 @@ func TestEnvVars(t *testing.T) {
 	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch
 
-	agent.executeCheck(request)
+	entity := agent.getAgentEntity()
+	agent.executeCheck(request, entity)
 	msg := <-ch
 	event := &types.Event{}
 	assert.NoError(t, json.Unmarshal(msg.Payload, event))
