@@ -52,7 +52,9 @@ func (a *Agent) handleCheck(payload []byte) error {
 	}
 
 	logger.Info("scheduling check execution: ", checkConfig.Name)
-	go a.executeCheck(request)
+
+	entity := a.getAgentEntity()
+	go a.executeCheck(request, entity)
 
 	return nil
 }
@@ -72,7 +74,7 @@ func checkKey(request *v2.CheckRequest) string {
 	return strings.Join(parts, "/")
 }
 
-func (a *Agent) executeCheck(request *v2.CheckRequest) {
+func (a *Agent) executeCheck(request *v2.CheckRequest, entity *v2.Entity) {
 	a.inProgressMu.Lock()
 	a.inProgress[checkKey(request)] = request.Config
 	a.inProgressMu.Unlock()
@@ -103,7 +105,7 @@ func (a *Agent) executeCheck(request *v2.CheckRequest) {
 	}
 
 	// Prepare Check
-	err := prepareCheck(checkConfig, a.getAgentEntity())
+	err := prepareCheck(checkConfig, entity)
 	if err != nil {
 		a.sendFailure(createEvent(), fmt.Errorf("error preparing check: %s", err))
 		return

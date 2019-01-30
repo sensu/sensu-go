@@ -112,7 +112,8 @@ func TestExecuteCheck(t *testing.T) {
 	execution := command.FixtureExecutionResponse(0, "")
 	ex.Return(execution, nil)
 
-	agent.executeCheck(request)
+	entity := agent.getAgentEntity()
+	agent.executeCheck(request, entity)
 	msg := <-ch
 
 	event := &corev2.Event{}
@@ -122,7 +123,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.False(event.HasMetrics())
 
 	execution.Status = 1
-	agent.executeCheck(request)
+	agent.executeCheck(request, entity)
 	msg = <-ch
 
 	event = &corev2.Event{}
@@ -133,7 +134,7 @@ func TestExecuteCheck(t *testing.T) {
 
 	execution.Status = 127
 	execution.Output = "command not found"
-	agent.executeCheck(request)
+	agent.executeCheck(request, entity)
 	msg = <-ch
 
 	event = &corev2.Event{}
@@ -145,7 +146,7 @@ func TestExecuteCheck(t *testing.T) {
 
 	execution.Status = 2
 	execution.Output = ""
-	agent.executeCheck(request)
+	agent.executeCheck(request, entity)
 	msg = <-ch
 
 	event = &corev2.Event{}
@@ -158,7 +159,7 @@ func TestExecuteCheck(t *testing.T) {
 	execution.Status = 0
 	execution.Output = "metric.foo 1 123456789\nmetric.bar 2 987654321"
 	ex.Return(execution, nil)
-	agent.executeCheck(request)
+	agent.executeCheck(request, entity)
 	msg = <-ch
 
 	event = &corev2.Event{}
@@ -168,7 +169,7 @@ func TestExecuteCheck(t *testing.T) {
 
 	checkConfig.OutputMetricFormat = corev2.GraphiteOutputMetricFormat
 	ex.Return(execution, nil)
-	agent.executeCheck(request)
+	agent.executeCheck(request, entity)
 	msg = <-ch
 
 	event = &corev2.Event{}
