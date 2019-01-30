@@ -4,7 +4,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-var clusterRoleBindingsPath = createBasePath(coreAPIGroup, coreAPIVersion, "clusterrolebindings")
+var clusterRoleBindingsPath = CreateBasePath(coreAPIGroup, coreAPIVersion, "clusterrolebindings")
 
 // CreateClusterRoleBinding with the given cluster role binding
 func (client *RestClient) CreateClusterRoleBinding(clusterRoleBinding *types.ClusterRoleBinding) error {
