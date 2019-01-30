@@ -10,6 +10,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Added a generic watcher in the store.
 - Added `RemoveProvider` method to authenticator.
+- Check output truncation support has been added. Check output can be truncated
+by adjusting the max_output_size and discard_output properties.
 
 ### Changed
 - Removed unused workflow `rel_build_and_test` in CircleCI config.
