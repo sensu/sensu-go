@@ -301,6 +301,10 @@ func (e *Event) SilencedBy(entries []*Silenced) []*Silenced {
 
 // IsSilencedBy returns true if given silence will silence the event.
 func (e *Event) IsSilencedBy(entry *Silenced) bool {
+	if !e.HasCheck() {
+		return false
+	}
+
 	// Make sure the silence has started
 	now := time.Now().Unix()
 	if !entry.StartSilence(now) {
