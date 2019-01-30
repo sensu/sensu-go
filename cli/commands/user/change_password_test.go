@@ -3,14 +3,13 @@ package user
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSetPasswordCommand(t *testing.T) {
@@ -32,9 +31,9 @@ func TestSetPasswordCommandRunEClosure(t *testing.T) {
 	clientMock := cli.Client.(*client.MockClient)
 	configMock := cli.Config.(*client.MockConfig)
 	clientMock.On("UpdatePassword", mock.Anything, mock.Anything).Return(nil)
-	user := &types.User{Username: "foo"}
-	_, accessToken, _ := jwt.AccessToken(user)
-	configMock.On("Tokens").Return(&types.Tokens{Access: accessToken})
+	claims := v2.FixtureClaims("foo", nil)
+	_, tokenString, _ := jwt.AccessToken(claims)
+	configMock.On("Tokens").Return(&v2.Tokens{Access: tokenString})
 
 	cmd := SetPasswordCommand(cli)
 	require.NoError(t, cmd.Flags().Set("interactive", "false"))
