@@ -49,7 +49,7 @@ func TestSetWhenCommand(t *testing.T) {
 		{[]string{"foo"}, false, "", errors.New("error"), nil, "", true},
 		{[]string{"bar"}, false, "", nil, errors.New("error"), "", true},
 		{[]string{"filter1"}, false, "", nil, nil, "", true},
-		{[]string{"filter1"}, false, timeWindowsJSON, nil, nil, "Set", false},
+		{[]string{"filter1"}, false, timeWindowsJSON, nil, nil, "Updated", false},
 		{[]string{"filter1"}, false, "invalidjson", nil, nil, "", true},
 		{[]string{"filter1"}, true, timeWindowsJSON, nil, nil, "", false},
 	}
