@@ -83,9 +83,10 @@ class EventsContainer extends React.Component {
             check {
               nodeId
               name
-              silences {
-                ...ClearSilencedEntriesDialog_silence
-              }
+            }
+
+            silences {
+              ...ClearSilencedEntriesDialog_silence
             }
 
             ...EventsListHeader_event
@@ -146,8 +147,8 @@ class EventsContainer extends React.Component {
   clearSilences = items => {
     this.setState({
       unsilence: items
-        .filter(item => item.check.silences.length > 0)
-        .reduce((memo, item) => [...memo, ...item.check.silences], []),
+        .filter(item => item.silences.length > 0)
+        .reduce((memo, item) => [...memo, ...item.silences], []),
     });
   };
 

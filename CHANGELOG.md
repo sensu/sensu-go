@@ -15,6 +15,7 @@ system's CA store, either by explicitly trusting the signer, or by disabling
 TLS hostname verification.
 - Added a generic watcher in the store.
 - Added `RemoveProvider` method to authenticator.
+- Added ability to silence/unsilence from the event details page.
 
 ### Changed
 - Removed unused workflow `rel_build_and_test` in CircleCI config.

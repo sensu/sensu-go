@@ -15,10 +15,12 @@ class EventDetailsContainer extends React.Component {
   static propTypes = {
     event: PropTypes.object,
     loading: PropTypes.bool.isRequired,
+    refetch: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
     event: null,
+    refetch: () => null,
   };
 
   static fragments = {
@@ -28,6 +30,7 @@ class EventDetailsContainer extends React.Component {
         timestamp
         deleted @client
         ...EventDetailsToolbar_event
+        ...EventDetailsCheckResult_event
 
         check {
           ...EventDetailsCheckResult_check
@@ -40,6 +43,7 @@ class EventDetailsContainer extends React.Component {
         }
       }
 
+      ${CheckResult.fragments.event}
       ${CheckResult.fragments.check}
       ${CheckResult.fragments.entity}
       ${RelatedEntitiesCard.fragments.entity}
@@ -50,18 +54,22 @@ class EventDetailsContainer extends React.Component {
   };
 
   render() {
-    const { event, loading } = this.props;
+    const { event, loading, refetch } = this.props;
 
     return (
       <Loader loading={loading} passthrough>
         {event && (
           <React.Fragment>
             <Content marginBottom>
-              <Toolbar event={event} />
+              <Toolbar event={event} refetch={refetch} />
             </Content>
             <Grid container spacing={16}>
               <Grid item xs={12}>
-                <CheckResult check={event.check} entity={event.entity} />
+                <CheckResult
+                  event={event}
+                  check={event.check}
+                  entity={event.entity}
+                />
               </Grid>
               <Grid item xs={12} md={6}>
                 <RelatedEntitiesCard entity={event.entity} />

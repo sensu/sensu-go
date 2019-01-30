@@ -33,9 +33,15 @@ class EventDetailsCheckResult extends React.PureComponent {
   static propTypes = {
     check: PropTypes.object.isRequired,
     entity: PropTypes.object.isRequired,
+    event: PropTypes.object.isRequired,
   };
 
   static fragments = {
+    event: gql`
+      fragment EventDetailsCheckResult_event on Event {
+        isSilenced
+      }
+    `,
     check: gql`
       fragment EventDetailsCheckResult_check on Check {
         status
@@ -53,12 +59,13 @@ class EventDetailsCheckResult extends React.PureComponent {
     entity: gql`
       fragment EventDetailsCheckResult_entity on Entity {
         name
+        namespace
       }
     `,
   };
 
   render() {
-    const { check, entity } = this.props;
+    const { event, check, entity } = this.props;
     const statusCode = check.status;
     const status = statusCodeToId(check.status);
     const formatter = new Intl.NumberFormat("en-US");
@@ -69,7 +76,7 @@ class EventDetailsCheckResult extends React.PureComponent {
         <CardContent>
           <Typography variant="headline" paragraph>
             Check Result
-            {check.silenced.length > 0 && (
+            {event.isSilenced && (
               <Tooltip title="Silenced">
                 <SilencedIcon style={{ float: "right" }} />
               </Tooltip>
@@ -137,6 +144,7 @@ class EventDetailsCheckResult extends React.PureComponent {
                   <DictionaryValue>
                     <NamespaceLink
                       component={InlineLink}
+                      namespace={entity.namespace}
                       to={`/entities/${entity.name}`}
                     >
                       {entity.name}

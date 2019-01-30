@@ -70,7 +70,7 @@ type Auth {
 A Check is a check specification and optionally the results of the check's
 execution.
 """
-type Check {
+type Check implements Silenceable {
   """id of the check's configuration"""
   nodeId: ID!
 
@@ -178,7 +178,7 @@ type Check {
   state: String!
 
   """Status is the exit status code produced by the check"""
-  status: Int!
+  status: Uint!
 
   """
   TotalStateChange indicates the total state change percentage for the
@@ -233,7 +233,7 @@ type Check {
 }
 
 """CheckConfig is the specification of a check."""
-type CheckConfig implements Node & Namespaced {
+type CheckConfig implements Node & Namespaced & Silenceable {
   """The globally unique identifier of the check."""
   id: ID!
 
@@ -407,7 +407,7 @@ input CheckConfigInputs {
 """CheckHistory is a record of a check execution and its status"""
 type CheckHistory {
   """Status is the exit status code produced by the check."""
-  status: Int!
+  status: Uint!
 
   """Executed describes the time in which the check request was executed"""
   executed: DateTime!
@@ -417,6 +417,29 @@ type CheckHistory {
 enum CheckListOrder {
   NAME
   NAME_DESC
+}
+
+"""ClusterRole applies to all namespaces within a cluster."""
+type ClusterRole {
+  rules: [Rule!]
+
+  """Name of the ClusterRole"""
+  name: String!
+}
+
+"""
+ClusterRoleBinding grants the permissions defined in a ClusterRole referenced
+to a user or a set of users
+"""
+type ClusterRoleBinding {
+  """Subjects holds references to the objects the ClusterRole applies to"""
+  subjects: [Subject!]
+
+  """RoleRef references a ClusterRole in the current namespace"""
+  roleRef: RoleRef
+
+  """Name of the ClusterRoleBinding"""
+  name: String!
 }
 
 input CreateCheckInput {
@@ -501,7 +524,7 @@ type Deregistration {
 Entity is the Entity supplying the event. The default Entity for any
 Event is the running Agent process--if the Event is sent by an Agent.
 """
-type Entity implements Node & Namespaced {
+type Entity implements Node & Namespaced & Silenceable {
   """The globally unique identifier of the record"""
   id: ID!
 
@@ -525,7 +548,7 @@ type Entity implements Node & Namespaced {
   Status represents the MAX status of all events associated with the entity. If
   no events are present value is 0.
   """
-  status: Int!
+  status: Uint!
 
   """
   Related returns a sorted list of like entities from the same environment.
@@ -607,7 +630,7 @@ interface Error {
 """
 An Event is the encapsulating type sent across the Sensu websocket transport.
 """
-type Event implements Node & Namespaced {
+type Event implements Node & Namespaced & Silenceable {
   """The globally unique identifier of the record."""
   id: ID!
 
@@ -646,8 +669,16 @@ type Event implements Node & Namespaced {
   """
   isResolution: Boolean!
 
+  """
+  wasSilenced reflects whether the event was silenced when passing through the pipeline.
+  """
+  wasSilenced: Boolean!
+
   """isSilenced determines if an event has any silenced entries."""
   isSilenced: Boolean!
+
+  """all current silences matching the check and entity's subscriptions."""
+  silences: [Silenced!]!
 
   """Describes whether the event has been deleted from the system"""
   deleted: Boolean!
@@ -1141,43 +1172,71 @@ type ResolveEventPayload {
   event: Event!
 }
 
-"""Role describes set of rules"""
-type Role implements Node {
-  id: ID!
-  name: String!
-  rules: [Rule!]!
-}
+"""Role applies only to a single namespace."""
+type Role {
+  rules: [Rule!]
 
-"""Rule maps permissions to a given type"""
-type Rule implements Namespaced {
-  """namespace in which this record resides"""
+  """Namespace of the Role"""
   namespace: String!
 
-  """resource the permissions apply to"""
-  type: RuleResource!
-  permissions: [RulePermission!]!
+  """Name of the Role"""
+  name: String!
 }
 
-enum RulePermission {
-  ALL
-  CREATE
-  READ
-  UPDATE
-  DELETE
+"""
+RoleBinding grants the permissions defined in a Role referenced to a user or
+a set of users
+"""
+type RoleBinding {
+  """Subjects holds references to the objects the Role applies to"""
+  subjects: [Subject!]
+
+  """RoleRef references a Role in the current namespace"""
+  roleRef: RoleRef
+
+  """Namespace of the RoleBinding"""
+  namespace: String!
+
+  """Name of the RoleBinding"""
+  name: String!
 }
 
-enum RuleResource {
-  ALL
-  ASSETS
-  CHECKS
-  ENTITIES
-  HANDLERS
-  HOOKS
-  MUTATORS
-  ORGANIZATIONS
-  ROLES
-  SILENCED
-  USERS
+"""RoleRef maps groups to Roles or ClusterRoles."""
+type RoleRef {
+  """Type of role being referenced."""
+  type: String!
+
+  """Name of the resource being referenced"""
+  name: String!
+}
+
+"""Rule holds information that describes an action that can be taken"""
+type Rule {
+  """
+  Verbs is a list of verbs that apply to all of the listed resources for this
+  rule. These include "get", "list", "watch", "create", "update", "delete".
+  TODO: add support for "patch" (this is expensive and should be delayed
+  until a further release). TODO: add support for "watch" (via websockets)
+  """
+  verbs: [String!]!
+
+  """
+  Resources is a list of resources that this rule applies to. "*" represents
+  all resources.
+  """
+  resources: [String!]!
+
+  """
+  ResourceNames is an optional list of resource names that the rule applies
+  to.
+  """
+  resourceNames: [String!]!
+}
+
+"""Silenceable describes resources that can be silenced"""
+interface Silenceable {
+  isSilenced: Boolean!
+  silences: [Silenced!]!
 }
 
 """Silenced is the representation of a silence entry."""
@@ -1268,6 +1327,14 @@ type StandardError implements Error {
   message: String!
 }
 
+type Subject {
+  """Kind of object referenced (user or group)"""
+  kind: String!
+
+  """Name of the referenced object"""
+  name: String!
+}
+
 """
 SubscriptionOccurences describes the number of occurrences of a subscription.
 """
@@ -1352,6 +1419,17 @@ type TimeWindowWhen {
   days: TimeWindowDays
 }
 
+"""
+The Uint scalar type represents a unsigned 32 bit integer. Response formats that
+support an unsigned 32‐bit integer or a number type should use that type to
+represent this scalar.
+
+**NOTE:** As numbers are represented as double-precision floating point numbers
+in Javascript the largest possible value is 2^53. As such 32 bit is used as the
+lowest common denominator.
+"""
+scalar Uint
+
 input UpdateCheckInput {
   """A unique identifier for the client performing the mutation."""
   clientMutationId: String
@@ -1374,7 +1452,7 @@ type UpdateCheckPayload {
 """User describes an operator in the system"""
 type User {
   username: String!
-  roles: [Role!]!
+  groups: [String!]!
   disabled: Boolean!
   hasPassword: Boolean!
 }

@@ -17,7 +17,7 @@ const defaultExpression = "has_check";
 
 // duration used when polling is enabled; set fairly high until we understand
 // the impact.
-const pollInterval = 2500; // 2.5s
+const pollInterval = 5000; // 5s
 
 class EventsContent extends React.Component {
   static propTypes = {

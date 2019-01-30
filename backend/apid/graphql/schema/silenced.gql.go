@@ -723,3 +723,44 @@ var _ObjectTypeSilencedConnectionDesc = graphql.ObjectDesc{
 		"pageInfo": _ObjTypeSilencedConnectionPageInfoHandler,
 	},
 }
+
+// SilenceableType Silenceable describes resources that can be silenced
+var SilenceableType = graphql.NewType("Silenceable", graphql.InterfaceKind)
+
+// RegisterSilenceable registers Silenceable object type with given service.
+func RegisterSilenceable(svc *graphql.Service, impl graphql.InterfaceTypeResolver) {
+	svc.RegisterInterface(_InterfaceTypeSilenceableDesc, impl)
+}
+func _InterfaceTypeSilenceableConfigFn() graphql1.InterfaceConfig {
+	return graphql1.InterfaceConfig{
+		Description: "Silenceable describes resources that can be silenced",
+		Fields: graphql1.Fields{
+			"isSilenced": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "isSilenced",
+				Type:              graphql1.NewNonNull(graphql1.Boolean),
+			},
+			"silences": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "silences",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Silenced")))),
+			},
+		},
+		Name: "Silenceable",
+		ResolveType: func(_ graphql1.ResolveTypeParams) *graphql1.Object {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see InterfaceTypeResolver.")
+		},
+	}
+}
+
+// describe Silenceable's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _InterfaceTypeSilenceableDesc = graphql.InterfaceDesc{Config: _InterfaceTypeSilenceableConfigFn}
