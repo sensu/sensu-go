@@ -21,6 +21,7 @@ TLS hostname verification.
 - Removed unused workflow `rel_build_and_test` in CircleCI config.
 - Moved the `Provider` interface to `api/core/v2` package.
 - Moved the `Authenticator` interface to `backend/authentication` package.
+- Updated confirmation messages for sensuctl commands: `Created`, `Deleted` and `Updated` instead of `OK`.
 
 ### Fixed
 - Check TTL failure events are now much more reliable, and will persist even
@@ -46,10 +47,7 @@ authentication provider.
 - Modified private generic store methods as public functions.
 - Improved logging for errors in proxy check requests.
 - Updated Go version from 1.10 to 1.11.4.
-- Changed keepalive event to include check.outputé
-### Changed
-- Confirmation messages for sensuctl commands. Created,
-  Deleted and Updated instead of OK.
+- Changed keepalive event to include check.output
 
 ### Fixed
 - Fixed a bug where `sensuctl edit` was not removing the temp file it created.
