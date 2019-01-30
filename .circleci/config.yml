@@ -14,21 +14,12 @@ sensu_go_build_env: &sensu_go_build_env
     - image: circleci/golang:1.11.4
 
 jobs:
-  build:
-    <<: *sensu_go_build_env
-    steps:
-      - checkout
-      - persist_to_workspace:
-          root: /go
-          paths:
-            - src/github.com/sensu
   test:
     <<: *sensu_go_build_env
     resource_class: large
     parallelism: 2
     steps:
-      - attach_workspace:
-          at: /go
+      - checkout
 
       # Run tests
       - run: ./build.sh unit
@@ -36,12 +27,8 @@ jobs:
 
 workflows:
   version: 2
-  build_and_test:
+  test:
     jobs:
-      - build:
-          filters:
-            tags:
-              ignore: /.*/
       - test:
           requires:
             - build
