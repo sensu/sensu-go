@@ -2,6 +2,7 @@ package agent
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -184,6 +185,49 @@ func TestExecuteCheck(t *testing.T) {
 	assert.Equal(float64(2), metric1.Value)
 	assert.Equal("metric.bar", metric1.Name)
 	assert.Equal(int64(987654321), metric1.Timestamp)
+}
+
+func TestExecuteCheckDiscardOutput(t *testing.T) {
+	checkConfig := corev2.FixtureCheckConfig("check")
+	request := &corev2.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
+	checkConfig.Stdin = true
+
+	config, cleanup := FixtureConfig()
+	defer cleanup()
+	agent := NewAgent(config)
+	ch := make(chan *transport.Message, 1)
+	agent.sendq = ch
+	ex := &mockexecutor.MockExecutor{}
+	agent.executor = ex
+	output := "Here is some output"
+	execution := command.FixtureExecutionResponse(0, output)
+	ex.Return(execution, nil)
+
+	agent.executeCheck(request)
+	msg := <-ch
+
+	event := &corev2.Event{}
+	if err := json.Unmarshal(msg.Payload, event); err != nil {
+		t.Fatal(err)
+	}
+
+	if got, want := event.Check.Output, output; got != want {
+		t.Fatal("check output incorrectly discarded")
+	}
+
+	request.Config.DiscardOutput = true
+
+	agent.executeCheck(request)
+	msg = <-ch
+
+	if err := json.Unmarshal(msg.Payload, event); err != nil {
+		t.Fatal(err)
+	}
+
+	if got, want := event.Check.Output, ""; got != want {
+		fmt.Println(got)
+		t.Fatal("check output not discarded")
+	}
 }
 
 func TestHandleTokenSubstitution(t *testing.T) {

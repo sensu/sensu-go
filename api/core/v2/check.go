@@ -72,6 +72,8 @@ func NewCheck(c *CheckConfig) *Check {
 		OutputMetricFormat:   c.OutputMetricFormat,
 		OutputMetricHandlers: c.OutputMetricHandlers,
 		EnvVars:              c.EnvVars,
+		DiscardOutput:        c.DiscardOutput,
+		MaxOutputSize:        c.MaxOutputSize,
 	}
 	if check.Labels == nil {
 		check.Labels = make(map[string]string)
