@@ -17,5 +17,6 @@ curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
 echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
 apt-get update
 apt-get install yarn
+gem install childprocess -v 0.9.0
 gem install --no-ri --no-rdoc fpm
 apt-get clean
