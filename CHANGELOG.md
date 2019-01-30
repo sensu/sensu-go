@@ -26,6 +26,7 @@ TLS hostname verification.
 in the presence cluster member failures and cluster restarts.
 - Fix snakeCase version of keys in typeMap for acronyms.
 - Pin childprocess to v0.9.0 in CircleCI so fpm can be installed.
+- Substitutions applied to command & hooks are now omitted from events.
 
 ## [5.1.1] - 2019-01-24
 
