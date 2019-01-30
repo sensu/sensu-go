@@ -86,7 +86,7 @@ func (a *Agent) executeCheck(request *v2.CheckRequest) {
 	checkAssets := request.Assets
 	checkHooks := request.Hooks
 
-	// Before token subsitution we retain copies of command and hooks
+	// Before token subsitution we retain copy of the command
 	origCommand := checkConfig.Command
 	createEvent := func() *v2.Event {
 		event := &v2.Event{}
