@@ -49,7 +49,7 @@ func TestSetSubdueCommand(t *testing.T) {
 		{[]string{"foo"}, false, "", errors.New("error"), nil, "", true},
 		{[]string{"bar"}, false, "", nil, errors.New("error"), "", true},
 		{[]string{"check1"}, false, "", nil, nil, "", true},
-		{[]string{"check1"}, false, subdueJSON, nil, nil, "OK", false},
+		{[]string{"check1"}, false, subdueJSON, nil, nil, "Set", false},
 		{[]string{"check1"}, false, "invalidjson", nil, nil, "", true},
 		{[]string{"check1"}, true, subdueJSON, nil, nil, "", false},
 	}

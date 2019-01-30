@@ -44,7 +44,7 @@ func TestRegisterCommandRunEClosureWithAllFlags(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{"frobber", "http://localhost"})
 	require.NoError(t, err)
 
-	assert.Regexp("OK", out)
+	assert.Regexp("Registered", out)
 }
 
 func TestRegisterCommandRunEClosureWithServerErr(t *testing.T) {
