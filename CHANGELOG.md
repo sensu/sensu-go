@@ -16,6 +16,7 @@ TLS hostname verification.
 - Added a generic watcher in the store.
 - Added `RemoveProvider` method to authenticator.
 - Added ability to silence/unsilence from the event details page.
+- Web UI - platform version displays on the entity details page.
 
 ### Changed
 - Removed unused workflow `rel_build_and_test` in CircleCI config.
