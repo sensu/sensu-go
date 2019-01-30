@@ -8,6 +8,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+- Added support for the following TLS related options to `sensuctl`:
+`--trusted-ca-file` and `--insecure-skip-tls-verify`. This allows sensuctl
+users to use a self-signed certificate without adding it to the operating
+system's CA store, either by explicitly trusting the signer, or by disabling
+TLS hostname verification.
 - Added a generic watcher in the store.
 - Added `RemoveProvider` method to authenticator.
 
@@ -20,6 +25,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Check TTL failure events are now much more reliable, and will persist even
 in the presence cluster member failures and cluster restarts.
 - Fix snakeCase version of keys in typeMap for acronyms.
+- Pin childprocess to v0.9.0 in CircleCI so fpm can be installed.
 
 ## [5.1.1] - 2019-01-24
 
