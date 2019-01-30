@@ -27,7 +27,7 @@ jobs:
 
 workflows:
   version: 2
-  test:
+  run_the_tests:
     jobs:
       - test:
           requires:
