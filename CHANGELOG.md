@@ -26,6 +26,7 @@ TLS hostname verification.
 - Check TTL failure events are now much more reliable, and will persist even
 in the presence cluster member failures and cluster restarts.
 - Fix snakeCase version of keys in typeMap for acronyms.
+- Fixed a bug in keepalive processing that could result in a crash.
 - Pin childprocess to v0.9.0 in CircleCI so fpm can be installed.
 - Substitutions applied to command & hooks are now omitted from events.
 
