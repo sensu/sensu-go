@@ -144,6 +144,10 @@ func (c *Check) Validate() error {
 		return err
 	}
 
+	if c.MaxOutputSize < 0 {
+		return fmt.Errorf("MaxOutputSize must be >= 0")
+	}
+
 	return c.Subdue.Validate()
 }
 
