@@ -18,6 +18,10 @@ jobs:
     <<: *sensu_go_build_env
     steps:
       - checkout
+      - persist_to_workspace:
+          root: /go
+          paths:
+            - src/github.com/sensu
   test:
     <<: *sensu_go_build_env
     resource_class: large
