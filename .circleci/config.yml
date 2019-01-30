@@ -19,10 +19,6 @@ jobs:
     resource_class: large
     parallelism: 2
     steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: /go
-
       # Run tests
       - run: ./build.sh unit
       - run: ./build.sh integration
