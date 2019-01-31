@@ -46,7 +46,7 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("command", "echo 'heyhey'"))
 	out, err := test.RunCmd(cmd, []string{"can-holla"})
 
-	assert.Regexp("OK", out)
+	assert.Regexp("Created", out)
 	assert.Nil(err)
 }
 

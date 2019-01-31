@@ -48,7 +48,7 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{"ruby22"})
 	require.NoError(t, err)
 
-	assert.Regexp("OK", out)
+	assert.Regexp("Created", out)
 }
 
 func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {

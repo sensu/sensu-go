@@ -23,7 +23,7 @@ func TestRemoveOutputMetricFormatCommand(t *testing.T) {
 		{[]string{}, nil, nil, "Usage", true},
 		{[]string{"foo"}, errors.New("error"), nil, "", true},
 		{[]string{"bar"}, nil, errors.New("error"), "", true},
-		{[]string{"check1"}, nil, nil, "OK", false},
+		{[]string{"check1"}, nil, nil, "Removed", false},
 	}
 
 	for i, test := range tests {

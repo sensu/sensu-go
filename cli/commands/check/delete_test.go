@@ -48,7 +48,7 @@ func TestDeleteCommandRunEClosureWithFlags(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 	out, err := test.RunCmd(cmd, []string{"my-check"})
 
-	assert.Regexp("OK", out)
+	assert.Regexp("Deleted", out)
 	assert.Nil(err)
 }
 

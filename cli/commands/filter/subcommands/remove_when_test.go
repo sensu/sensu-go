@@ -23,7 +23,7 @@ func TestRemoveWhenCommand(t *testing.T) {
 		{[]string{}, nil, nil, "Usage", true},
 		{[]string{"foo"}, errors.New("error"), nil, "", true},
 		{[]string{"bar"}, nil, errors.New("error"), "", true},
-		{[]string{"filter1"}, nil, nil, "OK", false},
+		{[]string{"filter1"}, nil, nil, "Removed", false},
 	}
 
 	for i, test := range tests {
