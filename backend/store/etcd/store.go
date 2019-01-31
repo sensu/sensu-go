@@ -56,7 +56,7 @@ func Create(ctx context.Context, client *clientv3.Client, key, namespace string,
 	}
 	if !resp.Succeeded {
 		// Check if the namespace was missing
-		if len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
+		if namespace != "" && len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
 			return &store.ErrNamespaceMissing{Namespace: namespace}
 		}
 
@@ -94,7 +94,15 @@ func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace
 		return err
 	}
 	if !resp.Succeeded {
-		return &store.ErrNamespaceMissing{Namespace: namespace}
+		// Check if the namespace was missing
+		if namespace != "" && len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
+			return &store.ErrNamespaceMissing{Namespace: namespace}
+		}
+
+		// Unknown error
+		return &store.ErrInternal{
+			Message: fmt.Sprintf("could not update the key %s", key),
+		}
 	}
 
 	return nil
@@ -202,7 +210,7 @@ func Update(ctx context.Context, client *clientv3.Client, key, namespace string,
 	}
 	if !resp.Succeeded {
 		// Check if the namespace was missing
-		if len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
+		if namespace != "" && len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
 			return &store.ErrNamespaceMissing{Namespace: namespace}
 		}
 
