@@ -1,7 +1,5 @@
 # Sensu Go
 
-TravisCI: [![TravisCI Build Status](https://travis-ci.org/sensu/sensu-go.svg?branch=master)](https://travis-ci.org/sensu/sensu-go)
-
 CircleCI: [![CircleCI Build Status](https://circleci.com/gh/sensu/sensu-go/tree/master.svg?style=svg)](https://circleci.com/gh/sensu/sensu-go/tree/master)
 
 Sensu is an open source monitoring tool for ephemeral infrastructure
