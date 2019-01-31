@@ -9,7 +9,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 )
 
-var clusterMembersPath = createBasePath(coreAPIGroup, coreAPIVersion, "cluster", "members")
+var clusterMembersPath = CreateBasePath(coreAPIGroup, coreAPIVersion, "cluster", "members")
 
 func (c *RestClient) MemberList() (*clientv3.MemberListResponse, error) {
 	path := clusterMembersPath()

@@ -13,6 +13,25 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestEventStorageMaxOutputSize(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		event := types.FixtureEvent("entity1", "check1")
+		event.Check.Output = "VERY LONG"
+		event.Check.MaxOutputSize = 4
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, event.Entity.Namespace)
+		if err := store.UpdateEvent(ctx, event); err != nil {
+			t.Fatal(err)
+		}
+		event, err := store.GetEventByEntityCheck(ctx, "entity1", "check1")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, want := event.Check.Output, "VERY"; got != want {
+			t.Fatalf("bad check output: got %q, want %q", got, want)
+		}
+	})
+}
+
 func TestEventStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		event := types.FixtureEvent("entity1", "check1")

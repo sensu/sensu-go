@@ -196,7 +196,7 @@ func escapeZombie(ex *ExecutionRequest) {
 // FixtureExecutionResponse returns an Execution for use in testing
 func FixtureExecutionResponse(status int, output string) *ExecutionResponse {
 	return &ExecutionResponse{
-		Output:   "",
+		Output:   output,
 		Status:   0,
 		Duration: 1,
 	}

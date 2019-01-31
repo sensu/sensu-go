@@ -15,6 +15,8 @@ system's CA store, either by explicitly trusting the signer, or by disabling
 TLS hostname verification.
 - Added a generic watcher in the store.
 - Added `RemoveProvider` method to authenticator.
+- Check output truncation support has been added. Check output can be truncated
+by adjusting the max_output_size and discard_output properties.
 - Added ability to silence/unsilence from the event details page.
 
 ### Changed
@@ -22,6 +24,7 @@ TLS hostname verification.
 - Moved the `Provider` interface to `api/core/v2` package.
 - Moved the `Authenticator` interface to `backend/authentication` package.
 - Updated confirmation messages for sensuctl commands: `Created`, `Deleted` and `Updated` instead of `OK`.
+- Exported some functions and methods in the CLI client.
 
 ### Fixed
 - Check TTL failure events are now much more reliable, and will persist even

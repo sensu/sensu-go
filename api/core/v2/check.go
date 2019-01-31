@@ -72,6 +72,8 @@ func NewCheck(c *CheckConfig) *Check {
 		OutputMetricFormat:   c.OutputMetricFormat,
 		OutputMetricHandlers: c.OutputMetricHandlers,
 		EnvVars:              c.EnvVars,
+		DiscardOutput:        c.DiscardOutput,
+		MaxOutputSize:        c.MaxOutputSize,
 	}
 	if check.Labels == nil {
 		check.Labels = make(map[string]string)
@@ -140,6 +142,10 @@ func (c *Check) Validate() error {
 
 	if err := ValidateEnvVars(c.EnvVars); err != nil {
 		return err
+	}
+
+	if c.MaxOutputSize < 0 {
+		return fmt.Errorf("MaxOutputSize must be >= 0")
 	}
 
 	return c.Subdue.Validate()
