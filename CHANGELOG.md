@@ -33,6 +33,7 @@ in the presence cluster member failures and cluster restarts.
 - Fixed a bug in keepalive processing that could result in a crash.
 - Pin childprocess to v0.9.0 in CircleCI so fpm can be installed.
 - Substitutions applied to command & hooks are now omitted from events.
+- Fixes a bug where generic store methods assumed a namespace was provided for non-namespaced resources.
 
 ### Fixed
 - Fixed a bug where `sensuctl version` required configuration files to exist.

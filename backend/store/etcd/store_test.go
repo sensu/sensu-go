@@ -71,20 +71,46 @@ func (g *genericObject) GetNamespace() string {
 }
 
 func TestCreate(t *testing.T) {
-	testWithEtcdStore(t, func(store *Store) {
+	testWithEtcdStore(t, func(s *Store) {
 		// Creating a namespaced key that does not exist should work
 		obj := &genericObject{}
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
-		err := Create(ctx, store.client, "/default/foo", "default", obj)
+		err := Create(ctx, s.client, "/default/foo", "default", obj)
 		assert.NoError(t, err)
 
-		// Creating this same key should return an error
-		err = Create(ctx, store.client, "/default/foo", "default", obj)
-		assert.Error(t, err)
+		// Creating this same key should return an error that it already exist
+		err = Create(ctx, s.client, "/default/foo", "default", obj)
+		switch err := err.(type) {
+		case *store.ErrAlreadyExists:
+			break
+		default:
+			t.Errorf("Expected error ErrAlreadyExists, received %v", err)
+		}
+
+		// Creating a namespaced key in a missing namespace should return an error
+		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
+		err = Create(ctx, s.client, "/acme/foo", "acme", obj)
+		switch err := err.(type) {
+		case *store.ErrNamespaceMissing:
+			break
+		default:
+			t.Errorf("Expected error ErrNamespaceMissing, received %v", err)
+		}
 
 		// We should also be able to create a global object
-		err = Create(ctx, store.client, "/foo", "", obj)
+		ctx = context.WithValue(context.Background(), types.NamespaceKey, "")
+		err = Create(ctx, s.client, "/foo", "", obj)
 		assert.NoError(t, err)
+
+		// Creating this same key should return an error that it already exists, and
+		// not that the namespace is missing
+		err = Create(ctx, s.client, "/foo", "", obj)
+		switch err := err.(type) {
+		case *store.ErrAlreadyExists:
+			break
+		default:
+			t.Errorf("Expected error ErrAlreadyExists, received %v", err)
+		}
 	})
 }
 
