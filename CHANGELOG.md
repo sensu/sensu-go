@@ -23,6 +23,7 @@ by adjusting the max_output_size and discard_output properties.
 - Removed unused workflow `rel_build_and_test` in CircleCI config.
 - Moved the `Provider` interface to `api/core/v2` package.
 - Moved the `Authenticator` interface to `backend/authentication` package.
+- Exported some functions and methods in the CLI client.
 
 ### Fixed
 - Check TTL failure events are now much more reliable, and will persist even

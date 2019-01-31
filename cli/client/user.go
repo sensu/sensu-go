@@ -6,7 +6,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-var usersPath = createBasePath(coreAPIGroup, coreAPIVersion, "users")
+var usersPath = CreateBasePath(coreAPIGroup, coreAPIVersion, "users")
 
 // AddGroupToUser makes "username" a member of "group".
 func (client *RestClient) AddGroupToUser(username, group string) error {
