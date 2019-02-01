@@ -42,7 +42,7 @@ type GenericClient interface {
 	Post(path string, obj interface{}) error
 
 	// PutResource puts a resource according to its URIPath.
-	PutResource(types.Resource) error
+	PutResource(types.Wrapper) error
 }
 
 // AuthenticationAPIClient client methods for authenticating
