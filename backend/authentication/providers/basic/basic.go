@@ -82,7 +82,7 @@ func (p *Provider) Type() string {
 
 // URIPath returns the path component of the basic provider
 func (p *Provider) URIPath() string {
-	return fmt.Sprintf("/api/core/v2/providers/%s/%s",
+	return fmt.Sprintf("/api/core/v2/auth-providers/%s/%s",
 		url.PathEscape(Type),
 		url.PathEscape(p.Name()),
 	)
