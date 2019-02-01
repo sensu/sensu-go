@@ -146,12 +146,12 @@ func Get(ctx context.Context, client *clientv3.Client, key string, object interf
 	return nil
 }
 
-// keyBuilderFn represents a generic key builder function
-type keyBuilderFn func(context.Context, string) string
+// KeyBuilderFn represents a generic key builder function
+type KeyBuilderFn func(context.Context, string) string
 
-// list retrieves all keys from storage under the provided prefix key, while
+// List retrieves all keys from storage under the provided prefix key, while
 // supporting all namespaces, and deserialize it into objsPtr.
-func List(ctx context.Context, client *clientv3.Client, keyBuilder keyBuilderFn, objsPtr interface{}) error {
+func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn, objsPtr interface{}) error {
 	// Make sure the interface is a pointer, and that the element at this address
 	// is a slice.
 	v := reflect.ValueOf(objsPtr)
