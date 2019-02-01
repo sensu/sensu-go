@@ -173,7 +173,10 @@ class EntityDetailsInformation extends React.PureComponent {
                   <DictionaryValue>
                     <Maybe value={system.platform} fallback="n/a">
                       {() =>
-                        [system.platform, system.platformFamily]
+                        [
+                          `${system.platform} ${system.platformVersion}`,
+                          system.platformFamily,
+                        ]
                           .reduce(
                             (memo, val) => (val ? [...memo, val] : memo),
                             [],

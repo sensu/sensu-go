@@ -18,6 +18,7 @@ TLS hostname verification.
 - Check output truncation support has been added. Check output can be truncated
 by adjusting the max_output_size and discard_output properties.
 - Added ability to silence/unsilence from the event details page.
+- Web UI - platform version displays on the entity details page.
 
 ### Changed
 - Removed unused workflow `rel_build_and_test` in CircleCI config.
