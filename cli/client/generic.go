@@ -71,10 +71,10 @@ func (client *RestClient) PutResource(r types.Wrapper) error {
 	// itself
 	var bytes []byte
 	var err error
-	if r.APIVersion == "enterprise/v2" {
-		bytes, err = json.Marshal(r)
-	} else {
+	if r.APIVersion == "core/v2" {
 		bytes, err = json.Marshal(r.Value)
+	} else {
+		bytes, err = json.Marshal(r)
 	}
 	if err != nil {
 		return err
