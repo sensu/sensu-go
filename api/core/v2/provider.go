@@ -2,7 +2,6 @@ package v2
 
 import (
 	"context"
-	"fmt"
 )
 
 // AuthProvider represents an abstracted authentication provider
@@ -22,9 +21,4 @@ type AuthProvider interface {
 	URIPath() string
 	// Validate checks if the fields in the provider are valid
 	Validate() error
-}
-
-// AuthProviderID returns a unique identifier for a given auth provider
-func AuthProviderID(p AuthProvider) string {
-	return fmt.Sprintf("%s/%s", p.Type(), p.Name())
 }

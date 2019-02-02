@@ -82,21 +82,20 @@ func (p *Provider) Type() string {
 
 // URIPath returns the path component of the basic provider
 func (p *Provider) URIPath() string {
-	return fmt.Sprintf("/api/core/v2/auth-providers/%s/%s",
-		url.PathEscape(Type),
+	return fmt.Sprintf("/api/authentication/v2/auth-providers/%s",
 		url.PathEscape(p.Name()),
 	)
 }
 
 // Validate validates the basic provider configuration
 func (p *Provider) Validate() error {
-	//TODO(palourde): Implement this!
+	p.ObjectMeta.Name = Type
 	return nil
 }
 
 func (p *Provider) claims(username string) corev2.AuthProviderClaims {
 	return corev2.AuthProviderClaims{
-		ProviderID: corev2.AuthProviderID(p),
+		ProviderID: p.Name(),
 		UserID:     username,
 	}
 }
