@@ -64,13 +64,23 @@ func (client *RestClient) Post(path string, obj interface{}) error {
 }
 
 // PutResource ...
-func (client *RestClient) PutResource(r types.Resource) error {
-	path := r.URIPath()
-	b, err := json.Marshal(r)
+func (client *RestClient) PutResource(r types.Wrapper) error {
+	path := r.Value.URIPath()
+
+	// Determine if we should send the wrapped resource or only the resource
+	// itself
+	var bytes []byte
+	var err error
+	if r.APIVersion == "core/v2" {
+		bytes, err = json.Marshal(r.Value)
+	} else {
+		bytes, err = json.Marshal(r)
+	}
 	if err != nil {
 		return err
 	}
-	res, err := client.R().SetBody(b).Put(path)
+
+	res, err := client.R().SetBody(bytes).Put(path)
 	if err != nil {
 		return fmt.Errorf("PUT %q: %s", path, err)
 	}

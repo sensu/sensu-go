@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
@@ -80,23 +79,20 @@ func (p *Provider) Type() string {
 	return Type
 }
 
-// URIPath returns the path component of the basic provider
+// URIPath returns the path component of the basic provider. Not implemented
 func (p *Provider) URIPath() string {
-	return fmt.Sprintf("/api/core/v2/auth-providers/%s/%s",
-		url.PathEscape(Type),
-		url.PathEscape(p.Name()),
-	)
+	return ""
 }
 
 // Validate validates the basic provider configuration
 func (p *Provider) Validate() error {
-	//TODO(palourde): Implement this!
+	p.ObjectMeta.Name = Type
 	return nil
 }
 
 func (p *Provider) claims(username string) corev2.AuthProviderClaims {
 	return corev2.AuthProviderClaims{
-		ProviderID: corev2.AuthProviderID(p),
+		ProviderID: p.Name(),
 		UserID:     username,
 	}
 }

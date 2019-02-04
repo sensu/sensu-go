@@ -27,7 +27,7 @@ func (c *MockClient) Post(path string, obj interface{}) error {
 }
 
 // PutResource ...
-func (c *MockClient) PutResource(r types.Resource) error {
+func (c *MockClient) PutResource(r types.Wrapper) error {
 	args := c.Called(r)
 	return args.Error(0)
 }

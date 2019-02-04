@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
+	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -112,7 +113,7 @@ func (a *AuthenticationRouter) test(w http.ResponseWriter, r *http.Request) {
 	var err error
 	providers := a.authenticator.Providers()
 
-	if basic, ok := providers["basic/default"]; ok {
+	if basic, ok := providers[basic.Type]; ok {
 		_, err = basic.Authenticate(r.Context(), username, password)
 		if err == nil {
 			w.WriteHeader(http.StatusOK)
@@ -212,8 +213,14 @@ func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 
 	// Ensure backward compatibility by filling the provider claims if missing
 	if accessClaims.Provider.ProviderID == "" || accessClaims.Provider.UserID == "" {
-		accessClaims.Provider.ProviderID = "basic/default"
+		accessClaims.Provider.ProviderID = basic.Type
 		accessClaims.Provider.UserID = accessClaims.Subject
+	}
+
+	// Ensure backward compatibility with Sensu Go 5.1.1, since the provider type
+	// was used in the provider ID
+	if accessClaims.Provider.ProviderID == "basic/default" {
+		accessClaims.Provider.ProviderID = basic.Type
 	}
 
 	// Refresh the user claims

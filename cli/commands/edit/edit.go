@@ -102,7 +102,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			if err := create.PutResources(cli.Client, resources); err != nil {
 				return err
 			}
-			fmt.Fprintf(cmd.OutOrStdout(), "Updated %s\n", resources[0].URIPath())
+			fmt.Fprintf(cmd.OutOrStdout(), "Updated %s\n", resources[0].Value.URIPath())
 			return nil
 		},
 	}
