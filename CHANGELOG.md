@@ -21,6 +21,7 @@ by adjusting the max_output_size and discard_output properties.
 - Added support for wrapped resources in the API with `sensuctl create` &
 `sensuctl edit`.
 - Web UI - platform version displays on the entity details page.
+- Web UI - display deregistration config on the entity details page.
 
 ### Changed
 - Removed unused workflow `rel_build_and_test` in CircleCI config.
