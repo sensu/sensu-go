@@ -18,13 +18,17 @@ TLS hostname verification.
 - Check output truncation support has been added. Check output can be truncated
 by adjusting the max_output_size and discard_output properties.
 - Added ability to silence/unsilence from the event details page.
+- Added support for wrapped resources in the API with `sensuctl create` &
+`sensuctl edit`.
 
 ### Changed
 - Removed unused workflow `rel_build_and_test` in CircleCI config.
 - Moved the `Provider` interface to `api/core/v2` package.
 - Moved the `Authenticator` interface to `backend/authentication` package.
-- Updated confirmation messages for sensuctl commands: `Created`, `Deleted` and `Updated` instead of `OK`.
+- Updated confirmation messages for sensuctl commands: `Created`, `Deleted` and
+`Updated` instead of `OK`.
 - Exported some functions and methods in the CLI client.
+- The API authenticator now identifies providers by their name only.
 
 ### Fixed
 - Check TTL failure events are now much more reliable, and will persist even
