@@ -83,8 +83,8 @@ var jsonRe = regexp.MustCompile(`^(\s)*[\{\[]`)
 // 3. If the stream is YAML, split it on '---' to support multiple yaml documents.
 // 3. Convert the YAML to JSON document-by-document.
 // 4. Unmarshal the JSON one resource at a time.
-func ParseResources(in io.Reader) ([]types.Resource, error) {
-	var resources []types.Resource
+func ParseResources(in io.Reader) ([]types.Wrapper, error) {
+	var resources []types.Wrapper
 	b, err := ioutil.ReadAll(in)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing resources: %s", err)
@@ -121,7 +121,7 @@ func ParseResources(in io.Reader) ([]types.Resource, error) {
 				describeError(count, rerr)
 				errCount++
 			}
-			resources = append(resources, w.Value)
+			resources = append(resources, w)
 			count++
 		}
 	}
@@ -134,9 +134,9 @@ func ParseResources(in io.Reader) ([]types.Resource, error) {
 
 // filterCheckSubdue nils out any check subdue fields that are supplied.
 // TODO(echlebek): this is temporary; remove it after fixing check subdue.
-func filterCheckSubdue(resources []types.Resource) {
+func filterCheckSubdue(resources []types.Wrapper) {
 	for i := range resources {
-		switch val := resources[i].(type) {
+		switch val := resources[i].Value.(type) {
 		case *types.CheckConfig:
 			val.Subdue = nil
 		case *types.Check:
@@ -147,10 +147,11 @@ func filterCheckSubdue(resources []types.Resource) {
 	}
 }
 
-func ValidateResources(resources []types.Resource) error {
+func ValidateResources(resources []types.Wrapper) error {
 	var err error
 	errCount := 0
-	for i, resource := range resources {
+	for i, r := range resources {
+		resource := r.Value
 		if resource == nil {
 			errCount++
 			fmt.Fprintf(os.Stderr, "error validating resource %d: resource is nil\n", i)
@@ -178,7 +179,7 @@ func describeError(index int, err error) {
 	fmt.Fprintf(os.Stderr, "resource %d: (offset %d): %s\n", index, jsonErr.Offset, err)
 }
 
-func PutResources(client client.GenericClient, resources []types.Resource) error {
+func PutResources(client client.GenericClient, resources []types.Wrapper) error {
 	for _, resource := range resources {
 		if err := client.PutResource(resource); err != nil {
 			return err

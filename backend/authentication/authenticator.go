@@ -75,7 +75,7 @@ func (a *Authenticator) AddProvider(provider corev2.AuthProvider) {
 		a.providers = map[string]corev2.AuthProvider{}
 	}
 
-	a.providers[corev2.AuthProviderID(provider)] = provider
+	a.providers[provider.Name()] = provider
 }
 
 // Providers returns the configured providers
@@ -93,21 +93,21 @@ func (a *Authenticator) Providers() map[string]corev2.AuthProvider {
 	return providers
 }
 
-// RemoveProvider removes the provider with the given ID from the list of
+// RemoveProvider removes the provider with the given name from the list of
 // configued providers
-func (a *Authenticator) RemoveProvider(id string) error {
+func (a *Authenticator) RemoveProvider(name string) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
-	if _, ok := a.providers[id]; !ok {
-		return fmt.Errorf("provider %q is not configured, could not remove it", id)
+	if _, ok := a.providers[name]; !ok {
+		return fmt.Errorf("provider %q is not configured, could not remove it", name)
 	}
 
 	// Make sure at least two providers are enabled so there's still one remaining
 	if len(a.providers) == 1 {
-		return fmt.Errorf("provider %q is the only provider configured, could not remove it ", id)
+		return fmt.Errorf("provider %q is the only provider configured, could not remove it ", name)
 	}
 
-	delete(a.providers, id)
+	delete(a.providers, name)
 	return nil
 }

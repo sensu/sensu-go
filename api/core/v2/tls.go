@@ -8,7 +8,7 @@ import (
 )
 
 // Go default cipher suite minus 3DES
-var defaultCipherSuites = []uint16{
+var DefaultCipherSuites = []uint16{
 	tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
 	tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
 	tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
@@ -29,39 +29,69 @@ var defaultCipherSuites = []uint16{
 }
 
 // ToTLSConfig outputs a tls.Config from TLSOptions
+//
+// ToTLSConfig should only be used for server TLS configuration.
 func (t *TLSOptions) ToTLSConfig() (*tls.Config, error) {
-	tlsConfig := tls.Config{}
-	tlsConfig.InsecureSkipVerify = t.InsecureSkipVerify
+	cfg := tls.Config{}
 
-	// Client cert
 	if t.CertFile != "" || t.KeyFile != "" {
 		cert, err := tls.LoadX509KeyPair(t.CertFile, t.KeyFile)
 		if err != nil {
-			// do something with the error
 			return nil, fmt.Errorf("Error loading tls client certificate: %s", err)
 		}
 
-		tlsConfig.Certificates = []tls.Certificate{cert}
+		cfg.Certificates = []tls.Certificate{cert}
 	}
 
-	// CA Cert
+	cfg.BuildNameToCertificate()
+	cfg.CipherSuites = DefaultCipherSuites
+
+	// Tell the server to prefer its cipher suite ordering over what the client
+	// prefers.
+	cfg.PreferServerCipherSuites = true
+
+	return &cfg, nil
+}
+
+// ToTLSClientConfig is like ToTLSConfig but intended for TLS client config.
+func (t *TLSOptions) ToTLSClientConfig() (*tls.Config, error) {
+	cfg := tls.Config{}
+	cfg.InsecureSkipVerify = t.InsecureSkipVerify
+
 	if t.TrustedCAFile != "" {
-		caCert, err := ioutil.ReadFile(t.TrustedCAFile)
+		caCertPool, err := LoadCACerts(t.TrustedCAFile)
 		if err != nil {
-			return nil, fmt.Errorf("Error loading tls CA cert: %s", err)
+			return nil, err
 		}
-
-		caCertPool := x509.NewCertPool()
-		if !caCertPool.AppendCertsFromPEM(caCert) {
-			return nil, fmt.Errorf("No certificates could be parsed out of %s",
-				t.TrustedCAFile)
-		}
-		tlsConfig.RootCAs = caCertPool
+		cfg.RootCAs = caCertPool
 	}
 
-	tlsConfig.BuildNameToCertificate()
+	if t.CertFile != "" || t.KeyFile != "" {
+		cert, err := tls.LoadX509KeyPair(t.CertFile, t.KeyFile)
+		if err != nil {
+			return nil, fmt.Errorf("Error loading tls client certificate: %s", err)
+		}
 
-	tlsConfig.CipherSuites = defaultCipherSuites
+		cfg.Certificates = []tls.Certificate{cert}
+	}
 
-	return &tlsConfig, nil
+	cfg.CipherSuites = DefaultCipherSuites
+
+	return &cfg, nil
+}
+
+// LoadCACerts takes the path to a certificate bundle file in PEM format and try
+// to create a x509.CertPool out of it.
+func LoadCACerts(path string) (*x509.CertPool, error) {
+	caCerts, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("Error reading CA file: %s", err)
+	}
+
+	caCertPool := x509.NewCertPool()
+	if !caCertPool.AppendCertsFromPEM(caCerts) {
+		return nil, fmt.Errorf("No certificates could be parsed out of %s", err)
+	}
+
+	return caCertPool, nil
 }

@@ -47,7 +47,7 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("env-vars", "key1=val1,key2=val2"))
 	out, err := test.RunCmd(cmd, []string{"can-holla"})
 
-	assert.Regexp("OK", out)
+	assert.Regexp("Created", out)
 	assert.Nil(err)
 }
 

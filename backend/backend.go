@@ -211,7 +211,7 @@ func Initialize(config *Config) (*Backend, error) {
 	// Prepare the authentication providers
 	authenticator := &authentication.Authenticator{}
 	basic := &basic.Provider{
-		ObjectMeta: v2.ObjectMeta{Name: "default"},
+		ObjectMeta: v2.ObjectMeta{Name: basic.Type},
 		Store:      store,
 	}
 	authenticator.AddProvider(basic)

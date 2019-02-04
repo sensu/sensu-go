@@ -7,7 +7,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-var namespacesPath = createBasePath(coreAPIGroup, coreAPIVersion, "namespaces")
+var namespacesPath = CreateBasePath(coreAPIGroup, coreAPIVersion, "namespaces")
 
 // CreateNamespace creates new namespace on configured Sensu instance
 func (client *RestClient) CreateNamespace(namespace *types.Namespace) error {

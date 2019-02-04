@@ -30,7 +30,7 @@ func SetFormatCommand(cli *cli.SensuCli) *cobra.Command {
 				)
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "OK")
+			fmt.Fprintln(cmd.OutOrStdout(), "Updated")
 			return nil
 		},
 		Annotations: map[string]string{

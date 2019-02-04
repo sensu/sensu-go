@@ -45,7 +45,7 @@ func runRegister(client client.APIClient, namespace string) func(*cobra.Command,
 			return err
 		}
 
-		fmt.Fprintln(cmd.OutOrStdout(), "OK")
+		fmt.Fprintln(cmd.OutOrStdout(), "Registered")
 		return nil
 	}
 }

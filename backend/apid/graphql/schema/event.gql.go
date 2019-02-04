@@ -63,10 +63,22 @@ type EventIsResolutionFieldResolver interface {
 	IsResolution(p graphql.ResolveParams) (bool, error)
 }
 
+// EventWasSilencedFieldResolver implement to resolve requests for the Event's wasSilenced field.
+type EventWasSilencedFieldResolver interface {
+	// WasSilenced implements response to request for wasSilenced field.
+	WasSilenced(p graphql.ResolveParams) (bool, error)
+}
+
 // EventIsSilencedFieldResolver implement to resolve requests for the Event's isSilenced field.
 type EventIsSilencedFieldResolver interface {
 	// IsSilenced implements response to request for isSilenced field.
 	IsSilenced(p graphql.ResolveParams) (bool, error)
+}
+
+// EventSilencesFieldResolver implement to resolve requests for the Event's silences field.
+type EventSilencesFieldResolver interface {
+	// Silences implements response to request for silences field.
+	Silences(p graphql.ResolveParams) (interface{}, error)
 }
 
 //
@@ -140,7 +152,9 @@ type EventFieldResolvers interface {
 	EventIsIncidentFieldResolver
 	EventIsNewIncidentFieldResolver
 	EventIsResolutionFieldResolver
+	EventWasSilencedFieldResolver
 	EventIsSilencedFieldResolver
+	EventSilencesFieldResolver
 }
 
 // EventAliases implements all methods on EventFieldResolvers interface by using reflection to
@@ -286,6 +300,19 @@ func (_ EventAliases) IsResolution(p graphql.ResolveParams) (bool, error) {
 	return ret, err
 }
 
+// WasSilenced implements response to request for 'wasSilenced' field.
+func (_ EventAliases) WasSilenced(p graphql.ResolveParams) (bool, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'wasSilenced'")
+	}
+	return ret, err
+}
+
 // IsSilenced implements response to request for 'isSilenced' field.
 func (_ EventAliases) IsSilenced(p graphql.ResolveParams) (bool, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -297,6 +324,12 @@ func (_ EventAliases) IsSilenced(p graphql.ResolveParams) (bool, error) {
 		return ret, errors.New("unable to coerce value for field 'isSilenced'")
 	}
 	return ret, err
+}
+
+// Silences implements response to request for 'silences' field.
+func (_ EventAliases) Silences(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
 }
 
 // EventType An Event is the encapsulating type sent across the Sensu websocket transport.
@@ -369,10 +402,24 @@ func _ObjTypeEventIsResolutionHandler(impl interface{}) graphql1.FieldResolveFn 
 	}
 }
 
+func _ObjTypeEventWasSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EventWasSilencedFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.WasSilenced(frp)
+	}
+}
+
 func _ObjTypeEventIsSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EventIsSilencedFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.IsSilenced(frp)
+	}
+}
+
+func _ObjTypeEventSilencesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EventSilencesFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Silences(frp)
 	}
 }
 
@@ -443,6 +490,13 @@ func _ObjectTypeEventConfigFn() graphql1.ObjectConfig {
 				Name:              "namespace",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
+			"silences": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "all current silences matching the check and entity's subscriptions.",
+				Name:              "silences",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Silenced")))),
+			},
 			"timestamp": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -450,10 +504,18 @@ func _ObjectTypeEventConfigFn() graphql1.ObjectConfig {
 				Name:              "timestamp",
 				Type:              graphql1.NewNonNull(graphql1.DateTime),
 			},
+			"wasSilenced": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "wasSilenced reflects whether the event was silenced when passing through the pipeline.",
+				Name:              "wasSilenced",
+				Type:              graphql1.NewNonNull(graphql1.Boolean),
+			},
 		},
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node"),
-			graphql.Interface("Namespaced")},
+			graphql.Interface("Namespaced"),
+			graphql.Interface("Silenceable")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -479,7 +541,9 @@ var _ObjectTypeEventDesc = graphql.ObjectDesc{
 		"isResolution":  _ObjTypeEventIsResolutionHandler,
 		"isSilenced":    _ObjTypeEventIsSilencedHandler,
 		"namespace":     _ObjTypeEventNamespaceHandler,
+		"silences":      _ObjTypeEventSilencesHandler,
 		"timestamp":     _ObjTypeEventTimestampHandler,
+		"wasSilenced":   _ObjTypeEventWasSilencedHandler,
 	},
 }
 

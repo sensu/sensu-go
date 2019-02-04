@@ -37,7 +37,7 @@ class EventDetailsContent extends React.PureComponent {
         pollInterval={pollingDuration.short}
         variables={this.props.match.params}
       >
-        {({ data: { event } = {}, networkStatus, aborted }) => {
+        {({ aborted, data: { event } = {}, networkStatus, refetch }) => {
           // see: https://github.com/apollographql/apollo-client/blob/master/packages/apollo-client/src/core/networkStatus.ts
           const loading = networkStatus < 6;
 
@@ -45,7 +45,13 @@ class EventDetailsContent extends React.PureComponent {
             return <NotFound />;
           }
 
-          return <Container event={event} loading={loading || !!aborted} />;
+          return (
+            <Container
+              event={event}
+              loading={loading || !!aborted}
+              refetch={refetch}
+            />
+          );
         }}
       </Query>
     );

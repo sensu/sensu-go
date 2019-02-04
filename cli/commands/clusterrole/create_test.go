@@ -3,6 +3,10 @@ package clusterrole
 import (
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
+	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/stretchr/testify/assert"
 )
@@ -29,4 +33,19 @@ func TestCreateCommandRunEClosureMissingArgs(t *testing.T) {
 	// Print help usage
 	assert.NotEmpty(out)
 	assert.Error(err)
+}
+
+func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
+	assert := assert.New(t)
+	cli := test.NewMockCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("CreateClusterRole", mock.Anything).Return(nil)
+
+	cmd := CreateCommand(cli)
+	require.NoError(t, cmd.Flags().Set("verb", "list"))
+	require.NoError(t, cmd.Flags().Set("resource", "events"))
+	out, err := test.RunCmd(cmd, []string{"my-role"})
+
+	assert.NoError(err)
+	assert.Regexp("Created", out)
 }

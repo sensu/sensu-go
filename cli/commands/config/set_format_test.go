@@ -49,7 +49,7 @@ func TestSetFormatExec(t *testing.T) {
 	config.On("SaveFormat", "json").Return(nil)
 
 	out, err := test.RunCmd(cmd, []string{"json"})
-	assert.Equal(out, "OK\n")
+	assert.Equal(out, "Updated\n")
 	assert.Nil(err, "Should not produce any errors")
 }
 

@@ -21,7 +21,7 @@ func connect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.H
 	dialer := websocket.DefaultDialer
 
 	if tlsOpts != nil {
-		dialer.TLSClientConfig, err = tlsOpts.ToTLSConfig()
+		dialer.TLSClientConfig, err = tlsOpts.ToTLSClientConfig()
 		if err != nil {
 			return nil, err
 		}

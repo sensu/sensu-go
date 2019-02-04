@@ -54,7 +54,7 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("begin", "Jan 02 2006 3:04PM MST"))
 	out, err := test.RunCmd(cmd, []string{})
 	require.NoError(t, err)
-	assert.Regexp("OK", out)
+	assert.Regexp("Created", out)
 }
 
 func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
@@ -72,7 +72,7 @@ func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
 
 	out, err := test.RunCmd(cmd, []string{})
 	require.NoError(t, err)
-	assert.Regexp("OK", out)
+	assert.Regexp("Created", out)
 }
 
 func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {

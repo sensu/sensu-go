@@ -29,7 +29,7 @@ func runDeregister(client client.APIClient, namespace string) func(*cobra.Comman
 			return err
 		}
 
-		fmt.Fprintln(cmd.OutOrStdout(), "OK")
+		fmt.Fprintln(cmd.OutOrStdout(), "Deregistered")
 		return nil
 	}
 }

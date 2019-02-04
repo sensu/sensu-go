@@ -1,12 +1,15 @@
 package graphql
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
+	client "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -48,4 +51,53 @@ func TestEventTypeIsNewIncidentFieldImpl(t *testing.T) {
 			assert.Equal(t, res, tc.expectedResult)
 		})
 	}
+}
+
+func TestEventTypeIsSilencedField(t *testing.T) {
+	event := types.FixtureEvent("my-entity", "my-check")
+	event.Check.Subscriptions = []string{"unix"}
+
+	client, _ := client.NewClientFactory()
+	client.On("ListSilenceds", mock.Anything, "", "").Return([]types.Silenced{
+		*types.FixtureSilenced("*:my-check"),
+		*types.FixtureSilenced("unix:not-my-check"),
+		*types.FixtureSilenced("entity:my-entity:*"),
+	}, nil).Once()
+
+	impl := &eventImpl{}
+	params := graphql.ResolveParams{}
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
+	params.Source = event
+
+	// return associated silence
+	res, err := impl.IsSilenced(params)
+	require.NoError(t, err)
+	assert.True(t, res)
+}
+
+func TestEventTypeSilencesField(t *testing.T) {
+	event := types.FixtureEvent("my-entity", "my-check")
+	event.Check.Subscriptions = []string{"unix"}
+	event.Entity.Subscriptions = []string{"unix"}
+
+	client, _ := client.NewClientFactory()
+	client.On("ListSilenceds", mock.Anything, "", "").Return([]types.Silenced{
+		*types.FixtureSilenced("*:my-check"),                    // match
+		*types.FixtureSilenced("unix:my-check"),                 // match
+		*types.FixtureSilenced("unix:not-my-check"),             // not match
+		*types.FixtureSilenced("entity:my-entity:*"),            // match
+		*types.FixtureSilenced("entity:my-entity:my-check"),     // match
+		*types.FixtureSilenced("entity:my-entity:not-my-check"), // not match
+		*types.FixtureSilenced("not-my-subscription:*"),         // not match
+	}, nil).Once()
+
+	impl := &eventImpl{}
+	params := graphql.ResolveParams{}
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
+	params.Source = event
+
+	// return associated silence
+	res, err := impl.Silences(params)
+	require.NoError(t, err)
+	assert.Len(t, res, 4)
 }

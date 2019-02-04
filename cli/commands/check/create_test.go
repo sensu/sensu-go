@@ -49,7 +49,7 @@ func TestCreateCommandRunEClosureWithAllFlags(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{"can-holla"})
 	require.NoError(t, err)
 
-	assert.Regexp("OK", out)
+	assert.Regexp("Created", out)
 }
 
 func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
@@ -67,7 +67,7 @@ func TestCreateCommandRunEClosureWithDeps(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{"can-holla"})
 	require.NoError(t, err)
 
-	assert.Regexp("OK", out)
+	assert.Regexp("Created", out)
 }
 
 func TestCreateCommandRunEClosureWithDepsSTDIN(t *testing.T) {
@@ -86,7 +86,7 @@ func TestCreateCommandRunEClosureWithDepsSTDIN(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{"can-holla"})
 	require.NoError(t, err)
 
-	assert.Regexp("OK", out)
+	assert.Regexp("Created", out)
 }
 
 func TestCreateCommandRunEClosureWithServerErr(t *testing.T) {

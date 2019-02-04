@@ -2,6 +2,7 @@ package agent
 
 import (
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -112,7 +113,8 @@ func TestExecuteCheck(t *testing.T) {
 	execution := command.FixtureExecutionResponse(0, "")
 	ex.Return(execution, nil)
 
-	agent.executeCheck(request)
+	entity := agent.getAgentEntity()
+	agent.executeCheck(request, entity)
 	msg := <-ch
 
 	event := &corev2.Event{}
@@ -122,7 +124,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.False(event.HasMetrics())
 
 	execution.Status = 1
-	agent.executeCheck(request)
+	agent.executeCheck(request, entity)
 	msg = <-ch
 
 	event = &corev2.Event{}
@@ -133,7 +135,7 @@ func TestExecuteCheck(t *testing.T) {
 
 	execution.Status = 127
 	execution.Output = "command not found"
-	agent.executeCheck(request)
+	agent.executeCheck(request, entity)
 	msg = <-ch
 
 	event = &corev2.Event{}
@@ -145,7 +147,7 @@ func TestExecuteCheck(t *testing.T) {
 
 	execution.Status = 2
 	execution.Output = ""
-	agent.executeCheck(request)
+	agent.executeCheck(request, entity)
 	msg = <-ch
 
 	event = &corev2.Event{}
@@ -158,7 +160,7 @@ func TestExecuteCheck(t *testing.T) {
 	execution.Status = 0
 	execution.Output = "metric.foo 1 123456789\nmetric.bar 2 987654321"
 	ex.Return(execution, nil)
-	agent.executeCheck(request)
+	agent.executeCheck(request, entity)
 	msg = <-ch
 
 	event = &corev2.Event{}
@@ -168,7 +170,7 @@ func TestExecuteCheck(t *testing.T) {
 
 	checkConfig.OutputMetricFormat = corev2.GraphiteOutputMetricFormat
 	ex.Return(execution, nil)
-	agent.executeCheck(request)
+	agent.executeCheck(request, entity)
 	msg = <-ch
 
 	event = &corev2.Event{}
@@ -184,6 +186,49 @@ func TestExecuteCheck(t *testing.T) {
 	assert.Equal(float64(2), metric1.Value)
 	assert.Equal("metric.bar", metric1.Name)
 	assert.Equal(int64(987654321), metric1.Timestamp)
+}
+
+func TestExecuteCheckDiscardOutput(t *testing.T) {
+	checkConfig := corev2.FixtureCheckConfig("check")
+	request := &corev2.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
+	checkConfig.Stdin = true
+
+	config, cleanup := FixtureConfig()
+	defer cleanup()
+	agent := NewAgent(config)
+	ch := make(chan *transport.Message, 1)
+	agent.sendq = ch
+	ex := &mockexecutor.MockExecutor{}
+	agent.executor = ex
+	output := "Here is some output"
+	execution := command.FixtureExecutionResponse(0, output)
+	ex.Return(execution, nil)
+
+	agent.executeCheck(request, agent.getAgentEntity())
+	msg := <-ch
+
+	event := &corev2.Event{}
+	if err := json.Unmarshal(msg.Payload, event); err != nil {
+		t.Fatal(err)
+	}
+
+	if got, want := event.Check.Output, output; got != want {
+		t.Fatal("check output incorrectly discarded")
+	}
+
+	request.Config.DiscardOutput = true
+
+	agent.executeCheck(request, agent.getAgentEntity())
+	msg = <-ch
+
+	if err := json.Unmarshal(msg.Payload, event); err != nil {
+		t.Fatal(err)
+	}
+
+	if got, want := event.Check.Output, ""; got != want {
+		fmt.Println(got)
+		t.Fatal("check output not discarded")
+	}
 }
 
 func TestHandleTokenSubstitution(t *testing.T) {
@@ -218,6 +263,7 @@ func TestHandleTokenSubstitution(t *testing.T) {
 	assert.NotZero(event.Timestamp)
 	assert.EqualValues(int32(0), event.Check.Status)
 	assert.Contains(event.Check.Output, "TestTokenSubstitution defaultValue")
+	assert.Contains(event.Check.Command, checkConfig.Command) // command should not include substitutions
 }
 
 func TestHandleTokenSubstitutionNoKey(t *testing.T) {
@@ -251,23 +297,22 @@ func TestHandleTokenSubstitutionNoKey(t *testing.T) {
 	assert.NoError(json.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.Contains(event.Check.Output, "has no entry for key")
+	assert.Contains(event.Check.Command, checkConfig.Command)
 }
 
 func TestPrepareCheck(t *testing.T) {
-	assert := assert.New(t)
-
 	config, cleanup := FixtureConfig()
 	defer cleanup()
 	agent := NewAgent(config)
 
-	// Invalid check
+	// Substitute
+	entity := agent.getAgentEntity()
+	entity.Labels = map[string]string{"foo": "bar"}
 	check := corev2.FixtureCheckConfig("check")
-	check.Interval = 0
-	assert.False(agent.prepareCheck(check))
-
-	// Valid check
-	check.Interval = 60
-	assert.True(agent.prepareCheck(check))
+	check.Command = "echo {{ .labels.foo }}"
+	err := prepareCheck(check, entity)
+	require.NoError(t, err)
+	assert.Equal(t, check.Command, "echo bar")
 }
 
 func TestExtractMetrics(t *testing.T) {

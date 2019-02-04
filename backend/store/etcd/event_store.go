@@ -172,6 +172,11 @@ func (s *Store) UpdateEvent(ctx context.Context, event *types.Event) error {
 		return err
 	}
 
+	// Truncate check output if the output is larger than MaxOutputSize
+	if size := event.Check.MaxOutputSize; size > 0 && int64(len(event.Check.Output)) > size {
+		event.Check.Output = event.Check.Output[:size]
+	}
+
 	// update the history
 	// marshal the new event and store it.
 	eventBytes, err := json.Marshal(event)

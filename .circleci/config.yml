@@ -9,91 +9,27 @@ sensu_go_build_env: &sensu_go_build_env
   #### expecting it in the form of
   ####   /go/src/github.com/circleci/go-tool
   ####   /go/src/bitbucket.org/circleci/go-tool
-  environment:
-    # Hard-coding this for now.
-    - SENSU_BUILD_ITERATION: 1
-    - SENSU_RELEASE_REPO: /go/sensu-release
-    - SECURE_VARIABLES_PLAINTEXT_FILE: /go/build-tmp/secure-variables.plain
-    - BUILD_TMP: /go/build-tmp
-
   working_directory: /go/src/github.com/sensu/sensu-go
   docker:
     - image: circleci/golang:1.11.4
 
 jobs:
-  build:
-    <<: *sensu_go_build_env
-
-    parallelism: 2
-    steps:
-      - checkout
-
-      # Clone the sensu-release repo
-      - add_ssh_keys:
-          fingerprints:
-            - f0:2b:79:fb:d8:c1:69:93:78:33:86:9f:31:f3:4e:51
-      - run: mkdir -pv $BUILD_TMP
-      - run: git clone git@github.com:sensu/sensu-release $SENSU_RELEASE_REPO
-      - run: cd $SENSU_RELEASE_REPO && git rev-parse --short HEAD
-
-      # Decrypt+setup secure variables
-      - run: $SENSU_RELEASE_REPO/decrypt-secure-variables.sh $SENSU_RELEASE_REPO/secure-variables.enc CIRCLECI_SECURE_VARS_PASSWORD $SECURE_VARIABLES_PLAINTEXT_FILE
-      - run: cat $SECURE_VARIABLES_PLAINTEXT_FILE >> $BASH_ENV
-
-      # Install CI provider deps
-      - run: sudo $CIRCLE_WORKING_DIRECTORY/build/ci/circle-ci-setup.sh
-      - run: $SENSU_RELEASE_REPO/install-awscli.sh
-
-      # Make packages
-      - run: make
-
-      # Post packages to S3
-      - run: $SENSU_RELEASE_REPO/collect-circle-log.sh $CIRCLE_WORKING_DIRECTORY/out log-build.txt
-      - run: $SENSU_RELEASE_REPO/post-packages-s3.sh $CIRCLE_WORKING_DIRECTORY/out
-
-      - persist_to_workspace:
-          root: /go
-          paths:
-            - src/github.com/sensu
-            - sensu-release
-            - build-tmp
-
   test:
     <<: *sensu_go_build_env
     resource_class: large
     parallelism: 2
     steps:
-      - attach_workspace:
-          # Must be absolute path or relative path from working_directory
-          at: /go
-
-      # Set up items in the test container that we still need
-      - run: cat $SECURE_VARIABLES_PLAINTEXT_FILE >> $BASH_ENV
-      - run: $SENSU_RELEASE_REPO/install-awscli.sh
-
-      # Clean out the "out" directory from the build workspace run
-      - run: rm -rf $CIRCLE_WORKING_DIRECTORY/out
-      - run: mkdir -pv $CIRCLE_WORKING_DIRECTORY/out
+      - checkout
 
       # Run tests
       - run: ./build.sh unit
       - run: ./build.sh integration
 
-      # Upload test logs
-      - run: $SENSU_RELEASE_REPO/collect-circle-log.sh $CIRCLE_WORKING_DIRECTORY/out log-test.txt
-      - run: $SENSU_RELEASE_REPO/post-packages-s3.sh $CIRCLE_WORKING_DIRECTORY/out
-
 workflows:
   version: 2
-  build_and_test:
+  run_the_tests:
     jobs:
-      - build:
-          filters:
-            tags:
-              ignore: /.*/
       - test:
-          requires:
-            - build
           filters:
             tags:
               ignore: /.*/

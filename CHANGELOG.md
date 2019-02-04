@@ -8,18 +8,40 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+- Added support for the following TLS related options to `sensuctl`:
+`--trusted-ca-file` and `--insecure-skip-tls-verify`. This allows sensuctl
+users to use a self-signed certificate without adding it to the operating
+system's CA store, either by explicitly trusting the signer, or by disabling
+TLS hostname verification.
 - Added a generic watcher in the store.
 - Added `RemoveProvider` method to authenticator.
+- Check output truncation support has been added. Check output can be truncated
+by adjusting the max_output_size and discard_output properties.
+- Added ability to silence/unsilence from the event details page.
+- Added support for wrapped resources in the API with `sensuctl create` &
+`sensuctl edit`.
+- Web UI - platform version displays on the entity details page.
 
 ### Changed
 - Removed unused workflow `rel_build_and_test` in CircleCI config.
 - Moved the `Provider` interface to `api/core/v2` package.
 - Moved the `Authenticator` interface to `backend/authentication` package.
+- Updated confirmation messages for sensuctl commands: `Created`, `Deleted` and
+`Updated` instead of `OK`.
+- Exported some functions and methods in the CLI client.
+- The API authenticator now identifies providers by their name only.
 
 ### Fixed
 - Check TTL failure events are now much more reliable, and will persist even
 in the presence cluster member failures and cluster restarts.
 - Fix snakeCase version of keys in typeMap for acronyms.
+- Fixed a bug in keepalive processing that could result in a crash.
+- Pin childprocess to v0.9.0 in CircleCI so fpm can be installed.
+- Substitutions applied to command & hooks are now omitted from events.
+- Fixes a bug where generic store methods assumed a namespace was provided for non-namespaced resources.
+
+### Fixed
+- Fixed a bug where `sensuctl version` required configuration files to exist.
 
 ## [5.1.1] - 2019-01-24
 
@@ -34,7 +56,7 @@ authentication provider.
 - Modified private generic store methods as public functions.
 - Improved logging for errors in proxy check requests.
 - Updated Go version from 1.10 to 1.11.4.
-- Changed keepalive event to include check.outputé
+- Changed keepalive event to include check.output
 
 ### Fixed
 - Fixed a bug where `sensuctl edit` was not removing the temp file it created.

@@ -44,3 +44,9 @@ type SilencedConnection {
   nodes: [Silenced!]!
   pageInfo: OffsetPageInfo!
 }
+
+"Silenceable describes resources that can be silenced"
+interface Silenceable {
+  isSilenced: Boolean!
+  silences: [Silenced!]!
+}

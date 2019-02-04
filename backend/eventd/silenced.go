@@ -2,8 +2,6 @@ package eventd
 
 import (
 	"context"
-	"fmt"
-	"time"
 
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -64,57 +62,12 @@ func getSilenced(ctx context.Context, event *types.Event, s store.Store) error {
 // silencedBy determines which of the given silenced entries silenced a given
 // event and return a list of silenced entry IDs
 func silencedBy(event *types.Event, silencedEntries []*types.Silenced) []string {
-	silencedBy := []string{}
-	if !event.HasCheck() {
-		return silencedBy
+	silencedBy := event.SilencedBy(silencedEntries)
+	names := make([]string, 0, len(silencedBy))
+	for _, entry := range silencedBy {
+		names = addToSilencedBy(entry.Name, names)
 	}
-
-	// Loop through every silenced entries in order to determine if it applies to
-	// the given event
-	for _, entry := range silencedEntries {
-
-		// Is this event silenced for all subscriptions? (e.g. *:check_cpu)
-		if entry.Name == fmt.Sprintf("*:%s", event.Check.Name) && entry.StartSilence(time.Now().Unix()) {
-			silencedBy = addToSilencedBy(entry.Name, silencedBy)
-			continue
-		}
-
-		// Is this event silenced by the entity subscription? (e.g. entity:id:*)
-		if entry.Name == fmt.Sprintf("%s:*", types.GetEntitySubscription(event.Entity.Name)) && entry.StartSilence(time.Now().Unix()) {
-			silencedBy = addToSilencedBy(entry.Name, silencedBy)
-			continue
-		}
-
-		// Is this event silenced for this particular entity? (e.g.
-		// entity:id:check_cpu)
-		if entry.Name == fmt.Sprintf("%s:%s", types.GetEntitySubscription(event.Entity.Name), event.Check.Name) && entry.StartSilence(time.Now().Unix()) {
-			silencedBy = addToSilencedBy(entry.Name, silencedBy)
-			continue
-		}
-
-		for _, subscription := range event.Check.Subscriptions {
-			// Make sure the entity is subscribed to this specific subscription
-			if !stringsutil.InArray(subscription, event.Entity.Subscriptions) {
-				continue
-			}
-
-			// Is this event silenced by one of the check subscription? (e.g.
-			// load-balancer:*)
-			if entry.Name == fmt.Sprintf("%s:*", subscription) && entry.StartSilence(time.Now().Unix()) {
-				silencedBy = addToSilencedBy(entry.Name, silencedBy)
-				continue
-			}
-
-			// Is this event silenced by one of the check subscription for this
-			// particular check? (e.g. load-balancer:check_cpu)
-			if entry.Name == fmt.Sprintf("%s:%s", subscription, event.Check.Name) && entry.StartSilence(time.Now().Unix()) {
-				silencedBy = addToSilencedBy(entry.Name, silencedBy)
-				continue
-			}
-		}
-	}
-
-	return silencedBy
+	return names
 }
 
 func handleExpireOnResolveEntries(ctx context.Context, event *types.Event, store store.Store) error {

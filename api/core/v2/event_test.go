@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"sort"
 	"testing"
+	time "time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -321,6 +322,256 @@ func TestEventsByTimestamp(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			sort.Sort(EventsByTimestamp(tc.inEvents, tc.inDir))
 			assert.EqualValues(t, tc.expected, tc.inEvents)
+		})
+	}
+}
+
+func TestSilencedBy(t *testing.T) {
+	testCases := []struct {
+		name            string
+		event           *Event
+		entries         []*Silenced
+		expectedEntries []*Silenced
+	}{
+		{
+			name:            "no entries",
+			event:           FixtureEvent("foo", "check_cpu"),
+			entries:         []*Silenced{},
+			expectedEntries: []*Silenced{},
+		},
+		{
+			name:  "not silenced",
+			event: FixtureEvent("foo", "check_cpu"),
+			entries: []*Silenced{
+				FixtureSilenced("entity:foo:check_mem"),
+				FixtureSilenced("entity:bar:*"),
+				FixtureSilenced("foo:check_cpu"),
+				FixtureSilenced("foo:*"),
+				FixtureSilenced("*:check_mem"),
+			},
+			expectedEntries: []*Silenced{},
+		},
+		{
+			name:  "silenced by check",
+			event: FixtureEvent("foo", "check_cpu"),
+			entries: []*Silenced{
+				FixtureSilenced("*:check_cpu"),
+			},
+			expectedEntries: []*Silenced{
+				FixtureSilenced("*:check_cpu"),
+			},
+		},
+		{
+			name:  "silenced by entity subscription",
+			event: FixtureEvent("foo", "check_cpu"),
+			entries: []*Silenced{
+				FixtureSilenced("entity:foo:*"),
+			},
+			expectedEntries: []*Silenced{
+				FixtureSilenced("entity:foo:*"),
+			},
+		},
+		{
+			name:  "silenced by entity's check subscription",
+			event: FixtureEvent("foo", "check_cpu"),
+			entries: []*Silenced{
+				FixtureSilenced("entity:foo:check_cpu"),
+			},
+			expectedEntries: []*Silenced{
+				FixtureSilenced("entity:foo:check_cpu"),
+			},
+		},
+		{
+			name:  "silenced by check subscription",
+			event: FixtureEvent("foo", "check_cpu"), // has a linux subscription
+			entries: []*Silenced{
+				FixtureSilenced("linux:*"),
+			},
+			expectedEntries: []*Silenced{
+				FixtureSilenced("linux:*"),
+			},
+		},
+		{
+			name:  "silenced by subscription with check",
+			event: FixtureEvent("foo", "check_cpu"), // has a linux subscription
+			entries: []*Silenced{
+				FixtureSilenced("linux:check_cpu"),
+			},
+			expectedEntries: []*Silenced{
+				FixtureSilenced("linux:check_cpu"),
+			},
+		},
+		{
+			name:  "silenced by multiple entries",
+			event: FixtureEvent("foo", "check_cpu"), // has a linux subscription
+			entries: []*Silenced{
+				FixtureSilenced("entity:foo:*"),
+				FixtureSilenced("linux:check_cpu"),
+			},
+			expectedEntries: []*Silenced{
+				FixtureSilenced("entity:foo:*"),
+				FixtureSilenced("linux:check_cpu"),
+			},
+		},
+		{
+			name: "not silenced, silenced & client don't have a common subscription",
+			event: &Event{
+				Check: &Check{
+					ObjectMeta: ObjectMeta{
+						Name: "check_cpu",
+					},
+					Subscriptions: []string{"linux", "windows"},
+				},
+				Entity: &Entity{
+					ObjectMeta: ObjectMeta{
+						Name: "foo",
+					},
+					Subscriptions: []string{"linux"},
+				},
+			},
+			entries: []*Silenced{
+				FixtureSilenced("windows:check_cpu"),
+			},
+			expectedEntries: []*Silenced{},
+		},
+		{
+			name: "silenced, silenced & client do have a common subscription",
+			event: &Event{
+				Check: &Check{
+					ObjectMeta: ObjectMeta{
+						Name: "check_cpu",
+					},
+					Subscriptions: []string{"linux", "windows"},
+				},
+				Entity: &Entity{
+					ObjectMeta: ObjectMeta{
+						Name: "foo",
+					},
+					Subscriptions: []string{"linux"},
+				},
+			},
+			entries: []*Silenced{
+				FixtureSilenced("linux:check_cpu"),
+			},
+			expectedEntries: []*Silenced{
+				FixtureSilenced("linux:check_cpu"),
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.event.SilencedBy(tc.entries)
+			assert.EqualValues(t, tc.expectedEntries, result)
+		})
+	}
+}
+
+func TestIsSilencedBy(t *testing.T) {
+	testCases := []struct {
+		name           string
+		event          *Event
+		silence        *Silenced
+		expectedResult bool
+	}{
+		{
+			name:  "silence has not started",
+			event: FixtureEvent("foo", "check_cpu"),
+			silence: &Silenced{
+				ObjectMeta: ObjectMeta{
+					Name: "*:check_cpu",
+				},
+				Begin: time.Now().Add(1 * time.Hour).Unix(),
+			},
+			expectedResult: false,
+		},
+		{
+			name:           "check matches w/ wildcard subscription",
+			event:          FixtureEvent("foo", "check_cpu"),
+			silence:        FixtureSilenced("*:check_cpu"),
+			expectedResult: true,
+		},
+		{
+			name:           "entity subscription matches w/ wildcard check",
+			event:          FixtureEvent("foo", "check_cpu"),
+			silence:        FixtureSilenced("entity:foo:*"),
+			expectedResult: true,
+		},
+		{
+			name:           "entity subscription and check match",
+			event:          FixtureEvent("foo", "check_cpu"),
+			silence:        FixtureSilenced("entity:foo:check_cpu"),
+			expectedResult: true,
+		},
+		{
+			name: "subscription matches",
+			event: &Event{
+				Check: &Check{
+					ObjectMeta: ObjectMeta{
+						Name: "check_cpu",
+					},
+					Subscriptions: []string{"unix"},
+				},
+				Entity: &Entity{
+					ObjectMeta: ObjectMeta{
+						Name: "foo",
+					},
+					Subscriptions: []string{"unix"},
+				},
+			},
+			silence:        FixtureSilenced("unix:check_cpu"),
+			expectedResult: true,
+		},
+		{
+			name: "subscription does not match",
+			event: &Event{
+				Check: &Check{
+					ObjectMeta: ObjectMeta{
+						Name: "check_cpu",
+					},
+					Subscriptions: []string{"unix"},
+				},
+				Entity: &Entity{
+					ObjectMeta: ObjectMeta{
+						Name: "foo",
+					},
+					Subscriptions: []string{"unix"},
+				},
+			},
+			silence:        FixtureSilenced("windows:check_cpu"),
+			expectedResult: false,
+		},
+		{
+			name: "entity subscription doesn't match",
+			event: &Event{
+				Check: &Check{
+					ObjectMeta: ObjectMeta{
+						Name: "check_cpu",
+					},
+					Subscriptions: []string{"unix"},
+				},
+				Entity: &Entity{
+					ObjectMeta: ObjectMeta{
+						Name: "foo",
+					},
+					Subscriptions: []string{"windows"},
+				},
+			},
+			silence:        FixtureSilenced("check:check_cpu"),
+			expectedResult: false,
+		},
+		{
+			name:           "check does not match",
+			event:          FixtureEvent("foo", "check_mem"),
+			silence:        FixtureSilenced("*:check_cpu"),
+			expectedResult: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := tc.event.IsSilencedBy(tc.silence)
+			assert.EqualValues(t, tc.expectedResult, result)
 		})
 	}
 }
