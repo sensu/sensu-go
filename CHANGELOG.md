@@ -22,6 +22,7 @@ by adjusting the max_output_size and discard_output properties.
 `sensuctl edit`.
 - Web UI - platform version displays on the entity details page.
 - Web UI - include proxy request configuration on check details page.
+- Web UI - display deregistration config on the entity details page.
 
 ### Changed
 - Removed unused workflow `rel_build_and_test` in CircleCI config.
@@ -40,9 +41,11 @@ in the presence cluster member failures and cluster restarts.
 - Pin childprocess to v0.9.0 in CircleCI so fpm can be installed.
 - Substitutions applied to command & hooks are now omitted from events.
 - Fixes a bug where generic store methods assumed a namespace was provided for non-namespaced resources.
-
-### Fixed
+- Keepalive and check TTL database state is now properly garbage-collected on
+entity deletion.
 - Fixed a bug where `sensuctl version` required configuration files to exist.
+- Updates the copy on the confirm disable dialog to accurately reflect the
+operation.
 
 ## [5.1.1] - 2019-01-24
 
