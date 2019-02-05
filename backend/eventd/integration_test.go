@@ -13,6 +13,7 @@ import (
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/sensu/sensu-go/testing/mockring"
+	otherTestutil "github.com/sensu/sensu-go/testing/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -74,6 +75,12 @@ func TestEventdMonitor(t *testing.T) {
 	event := corev2.FixtureEvent("entity1", "check1")
 	event.Check.Interval = 1
 	event.Check.Ttl = 5
+
+	ctx := otherTestutil.ContextWithNamespace("default")(context.Background())
+
+	if err := store.UpdateEntity(ctx, event.Entity); err != nil {
+		t.Fatal(err)
+	}
 
 	if err := bus.Publish(messaging.TopicEventRaw, event); err != nil {
 		assert.FailNow(t, "failed to publish event to TopicEventRaw")

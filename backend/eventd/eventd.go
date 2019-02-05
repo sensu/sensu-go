@@ -219,6 +219,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		}
 		return e.handleUpdate(event)
 	} else {
+		// The check TTL has been disabled, there is no longer a need to track it
 		if err := switches.Bury(context.TODO(), switchKey); err != nil {
 			// It's better to publish the event even if this fails, so
 			// don't return the error here.
@@ -229,7 +230,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	return e.bus.Publish(messaging.TopicEvent, event)
 }
 
-func (e *Eventd) alive(key string, prev liveness.State, leader bool) {
+func (e *Eventd) alive(key string, prev liveness.State, leader bool) (bury bool) {
 	lager := logger.WithFields(logrus.Fields{
 		"status":          liveness.Alive.String(),
 		"previous_status": prev.String()})
@@ -237,7 +238,7 @@ func (e *Eventd) alive(key string, prev liveness.State, leader bool) {
 	namespace, check, entity, err := parseKey(key)
 	if err != nil {
 		lager.Error(err)
-		return
+		return false
 	}
 
 	lager = lager.WithFields(logrus.Fields{
@@ -246,9 +247,11 @@ func (e *Eventd) alive(key string, prev liveness.State, leader bool) {
 		"namespace": namespace})
 
 	lager.Info("check TTL reset")
+
+	return false
 }
 
-func (e *Eventd) dead(key string, prev liveness.State, leader bool) {
+func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) {
 	lager := logger.WithFields(logrus.Fields{
 		"status":          liveness.Dead.String(),
 		"previous_status": prev.String()})
@@ -256,7 +259,7 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) {
 	namespace, check, entity, err := parseKey(key)
 	if err != nil {
 		lager.Error(err)
-		return
+		return false
 	}
 
 	lager = lager.WithFields(logrus.Fields{
@@ -270,19 +273,27 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) {
 	// here, filter by check, and update all events involved in the round robin
 	if entity == "" {
 		lager.Error("round robin check TTL not supported")
-		return
+		return false
 	}
 
-	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, namespace)
+	ctx := store.NamespaceContext(context.Background(), namespace)
+
+	// The entity has been deleted, and so there is no reason to track check
+	// TTL for it anymore.
+	if ent, err := e.store.GetEntityByName(ctx, entity); err == nil && ent == nil {
+		return true
+	}
+
 	event, err := e.store.GetEventByEntityCheck(ctx, entity, check)
 	if err != nil {
 		lager.WithError(err).Error("can't handle check TTL failure")
-		return
+		return false
 	}
 
 	if event == nil {
+		// The user deleted the check event but not the entity
 		lager.Error("event is nil")
-		return
+		return false
 	}
 
 	if leader {
@@ -290,6 +301,8 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) {
 			lager.WithError(err).Error("can't handle check TTL failure")
 		}
 	}
+
+	return false
 }
 
 func updateOccurrences(event *corev2.Event) {
