@@ -238,7 +238,7 @@ class CheckDetailsConfiguration extends React.PureComponent {
 
                 <DictionaryEntry fullWidth={!!check.proxyRequests}>
                   <DictionaryKey>Proxy Requests</DictionaryKey>
-                  <DictionaryValue>
+                  <DictionaryValue explicitRightMargin>
                     <Maybe value={check.proxyRequests} fallback="None">
                       {val => (
                         <CodeBlock>
