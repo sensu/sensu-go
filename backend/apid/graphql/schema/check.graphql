@@ -11,8 +11,8 @@ type CheckConfig implements Node, Namespaced, Silenceable, HasMetadata {
   "name is the unique identifier for a check"
   name: String!
 
-  "metadata..."
-  meta: ObjectMeta!
+  "metadata contains name, namespace, labels and annotations of the record"
+  metadata: ObjectMeta!
 
   "command is the command to be executed."
   command: String!
@@ -128,12 +128,15 @@ type CheckConfigEdge {
 A Check is a check specification and optionally the results of the check's
 execution.
 """
-type Check implements Silenceable {
+type Check implements Silenceable, HasMetadata {
   "id of the check's configuration"
   nodeId: ID!
 
   "name is the unique identifier for a check"
   name: String!
+
+  "metadata contains name, namespace, labels and annotations of the record"
+  metadata: ObjectMeta!
 
   "command is the command to be executed."
   command: String!

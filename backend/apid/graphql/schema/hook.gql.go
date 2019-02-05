@@ -26,6 +26,12 @@ type HookConfigNameFieldResolver interface {
 	Name(p graphql.ResolveParams) (string, error)
 }
 
+// HookConfigMetadataFieldResolver implement to resolve requests for the HookConfig's metadata field.
+type HookConfigMetadataFieldResolver interface {
+	// Metadata implements response to request for metadata field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+}
+
 // HookConfigCommandFieldResolver implement to resolve requests for the HookConfig's command field.
 type HookConfigCommandFieldResolver interface {
 	// Command implements response to request for command field.
@@ -109,6 +115,7 @@ type HookConfigFieldResolvers interface {
 	HookConfigIDFieldResolver
 	HookConfigNamespaceFieldResolver
 	HookConfigNameFieldResolver
+	HookConfigMetadataFieldResolver
 	HookConfigCommandFieldResolver
 	HookConfigTimeoutFieldResolver
 	HookConfigStdinFieldResolver
@@ -200,6 +207,12 @@ func (_ HookConfigAliases) Name(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
+// Metadata implements response to request for 'metadata' field.
+func (_ HookConfigAliases) Metadata(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // Command implements response to request for 'command' field.
 func (_ HookConfigAliases) Command(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -267,6 +280,13 @@ func _ObjTypeHookConfigNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeHookConfigMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(HookConfigMetadataFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Metadata(frp)
+	}
+}
+
 func _ObjTypeHookConfigCommandHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HookConfigCommandFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -306,6 +326,13 @@ func _ObjectTypeHookConfigConfigFn() graphql1.ObjectConfig {
 				Name:              "id",
 				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
+			"metadata": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "metadata contains name, namespace, labels and annotations of the record",
+				Name:              "metadata",
+				Type:              graphql1.NewNonNull(graphql.OutputType("ObjectMeta")),
+			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -337,7 +364,8 @@ func _ObjectTypeHookConfigConfigFn() graphql1.ObjectConfig {
 		},
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node"),
-			graphql.Interface("Namespaced")},
+			graphql.Interface("Namespaced"),
+			graphql.Interface("HasMetadata")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -356,6 +384,7 @@ var _ObjectTypeHookConfigDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"command":   _ObjTypeHookConfigCommandHandler,
 		"id":        _ObjTypeHookConfigIDHandler,
+		"metadata":  _ObjTypeHookConfigMetadataHandler,
 		"name":      _ObjTypeHookConfigNameHandler,
 		"namespace": _ObjTypeHookConfigNamespaceHandler,
 		"stdin":     _ObjTypeHookConfigStdinHandler,
