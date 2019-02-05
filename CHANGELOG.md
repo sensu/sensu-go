@@ -39,9 +39,9 @@ in the presence cluster member failures and cluster restarts.
 - Pin childprocess to v0.9.0 in CircleCI so fpm can be installed.
 - Substitutions applied to command & hooks are now omitted from events.
 - Fixes a bug where generic store methods assumed a namespace was provided for non-namespaced resources.
-
-### Fixed
 - Fixed a bug where `sensuctl version` required configuration files to exist.
+- Updates the copy on the confirm disable dialog to accurately reflect the
+operation.
 
 ## [5.1.1] - 2019-01-24
 
