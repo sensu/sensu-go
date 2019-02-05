@@ -37,19 +37,21 @@ func TestSwitchSet(t *testing.T) {
 	results := make(map[string][]int)
 
 	// This callback gets executed when the entity dies
-	expired := func(key string, prev State, leader bool) {
+	expired := func(key string, prev State, leader bool) bool {
 		mu.Lock()
 		defer mu.Unlock()
 		results[key] = append(results[key], int(Dead))
 		deadC <- struct{}{}
+		return false
 	}
 
 	// This callback gets executed when the entity asserts its liveness
-	alive := func(key string, prev State, leader bool) {
+	alive := func(key string, prev State, leader bool) bool {
 		mu.Lock()
 		defer mu.Unlock()
 		results[key] = append(results[key], int(Alive))
 		aliveC <- struct{}{}
+		return false
 	}
 
 	toggle := NewSwitchSet(client, "test", expired, alive, logger)
@@ -99,19 +101,21 @@ func TestDead(t *testing.T) {
 	deadC := make(chan struct{})
 
 	// This callback gets executed when the entity dies
-	expired := func(key string, prev State, leader bool) {
+	expired := func(key string, prev State, leader bool) bool {
 		mu.Lock()
 		defer mu.Unlock()
 		results[key] = append(results[key], int(Dead))
 		deadC <- struct{}{}
+		return false
 	}
 
 	// This callback gets executed when the entity asserts its liveness
-	alive := func(key string, prev State, leader bool) {
+	alive := func(key string, prev State, leader bool) bool {
 		mu.Lock()
 		defer mu.Unlock()
 		results[key] = append(results[key], int(Alive))
 		aliveC <- struct{}{}
+		return false
 	}
 
 	toggle := NewSwitchSet(client, "test", expired, alive, logger)
@@ -143,13 +147,15 @@ func TestBury(t *testing.T) {
 	defer cancel()
 
 	// This callback gets executed when the entity dies
-	expired := func(key string, prev State, leader bool) {
+	expired := func(key string, prev State, leader bool) bool {
 		t.Fatal("should never be called")
+		return false
 	}
 
 	// This callback gets executed when the entity asserts its liveness
-	alive := func(key string, prev State, leader bool) {
+	alive := func(key string, prev State, leader bool) bool {
 		t.Fatal("should never be called")
+		return false
 	}
 
 	toggle := NewSwitchSet(client, "test", expired, alive, logger)
@@ -164,5 +170,43 @@ func TestBury(t *testing.T) {
 	}
 
 	// Ensure that key expiration doesn't occur
-	time.Sleep(5 * time.Second)
+	time.Sleep(6 * time.Second)
+}
+
+func TestBuryOnCallback(t *testing.T) {
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+
+	client, err := e.NewClient()
+	require.NoError(t, err)
+	defer client.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// This callback gets executed when the entity dies
+	expired := func(key string, prev State, leader bool) bool {
+		if prev == Dead {
+			t.Fatal("should not have been called")
+		}
+		return true
+	}
+
+	// This callback gets executed when the entity asserts its liveness
+	alive := func(key string, prev State, leader bool) bool {
+		if prev != Dead {
+			t.Fatal("bad previous state")
+		}
+		return true
+	}
+
+	toggle := NewSwitchSet(client, "test", expired, alive, logger)
+	go toggle.monitor(ctx)
+
+	if err := toggle.Alive(ctx, "entity1", 5); err != nil {
+		t.Fatal(err)
+	}
+
+	// Ensure that the expired callback never fires
+	time.Sleep(6 * time.Second)
 }

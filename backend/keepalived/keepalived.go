@@ -304,7 +304,7 @@ func createRegistrationEvent(entity *types.Entity) *types.Event {
 	return registrationEvent
 }
 
-func (k *Keepalived) alive(key string, prev liveness.State, leader bool) {
+func (k *Keepalived) alive(key string, prev liveness.State, leader bool) bool {
 	lager := logger.WithFields(logrus.Fields{
 		"status":          liveness.Alive.String(),
 		"previous_status": prev.String()})
@@ -312,14 +312,15 @@ func (k *Keepalived) alive(key string, prev liveness.State, leader bool) {
 	namespace, name, err := parseKey(key)
 	if err != nil {
 		lager.Error(err)
-		return
+		return false
 	}
 
 	lager = lager.WithFields(logrus.Fields{"entity": name, "namespace": namespace})
 	lager.Info("entity is alive")
+	return false
 }
 
-func (k *Keepalived) dead(key string, prev liveness.State, leader bool) {
+func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 	lager := logger.WithFields(logrus.Fields{
 		"status":          liveness.Dead.String(),
 		"previous_status": prev.String()})
@@ -327,7 +328,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) {
 	namespace, name, err := parseKey(key)
 	if err != nil {
 		lager.Error(err)
-		return
+		return false
 	}
 
 	lager = lager.WithFields(logrus.Fields{"entity": name, "namespace": namespace})
@@ -336,7 +337,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) {
 	if !leader {
 		// If this client isn't the one that flipped the keepalive switch,
 		// don't do anything further.
-		return
+		return false
 	}
 
 	ctx := store.NamespaceContext(context.Background(), namespace)
@@ -344,12 +345,13 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) {
 	entity, err := k.store.GetEntityByName(ctx, name)
 	if err != nil {
 		lager.WithError(err).Error("error while reading entity")
-		return
+		return false
 	}
 
 	if entity == nil {
-		lager.Error("entity not found")
-		return
+		// The entity has been deleted, there is no longer a need to
+		// track keepalives for it.
+		return true
 	}
 
 	deregisterer := &Deregistration{
@@ -361,21 +363,17 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) {
 		if err := deregisterer.Deregister(entity); err != nil {
 			lager.WithError(err).Error("error deregistering entity")
 		}
-		switches := k.livenessFactory(k.Name(), k.dead, k.alive, logger)
-		if err := switches.Bury(context.TODO(), key); err != nil {
-			lager.WithError(err).Error("error registering entity")
-		}
-		return
+		return true
 	}
 
 	currentEvent, err := k.store.GetEventByEntityCheck(ctx, name, "keepalive")
 	if err != nil {
 		lager.WithError(err).Error("error while reading event")
-		return
+		return false
 	}
 	if currentEvent == nil {
 		lager.Error("keepalive event not found")
-		return
+		return false
 	}
 
 	// this is a real keepalive event, emit it.
@@ -385,7 +383,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) {
 
 	if err := k.bus.Publish(messaging.TopicEventRaw, event); err != nil {
 		lager.WithError(err).Error("error publishing event")
-		return
+		return false
 	}
 
 	expiration := time.Now().Unix() + int64(event.Check.Timeout)
@@ -393,6 +391,8 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) {
 	if err := k.store.UpdateFailingKeepalive(ctx, entity, expiration); err != nil {
 		lager.WithError(err).Error("error updating keepalive")
 	}
+
+	return false
 }
 
 func parseKey(key string) (namespace, name string, err error) {

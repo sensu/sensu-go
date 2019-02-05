@@ -105,7 +105,7 @@ type SwitchSet struct {
 	// This channel serializes events so that their execution ordering is
 	// as expected, without causing undue blocking in the main monitoring
 	// loop.
-	events chan func()
+	events chan func() (key string, bury bool)
 }
 
 // EventFunc is a function that can be used by a SwitchSet to handle events.
@@ -114,7 +114,11 @@ type SwitchSet struct {
 // For "dead" EventFuncs, the leader flag can be used to determine if the
 // client that flipped the switch is our client. For "alive" EventFuncs,
 // this parameter is always false.
-type EventFunc func(key string, prev State, leader bool)
+//
+// The EventFunc should return whether or not to bury the switch. If bury is
+// true, then the key associated with the EventFunc will be buried and no
+// further events will occur for this key.
+type EventFunc func(key string, prev State, leader bool) (bury bool)
 
 // NewSwitchSet creates a new SwitchSet. It will use an etcd prefix of
 // path.Join(SwitchPrefix, name). The dead and live callbacks will be called
@@ -126,7 +130,7 @@ func NewSwitchSet(client *clientv3.Client, name string, dead, alive EventFunc, l
 		notifyDead:  dead,
 		notifyAlive: alive,
 		logger:      logger,
-		events:      make(chan func(), 512),
+		events:      make(chan func() (string, bool), 512),
 	}
 }
 
@@ -233,7 +237,11 @@ func (t *SwitchSet) monitor(ctx context.Context) {
 	wc := t.client.Watch(ctx, t.prefix, clientv3.WithPrefix(), clientv3.WithPrevKV())
 	go func() {
 		for event := range t.events {
-			event()
+			if key, bury := event(); bury {
+				if err := t.Bury(context.Background(), path.Base(key)); err != nil {
+					t.logger.WithError(err).Errorf("error burying %q", key)
+				}
+			}
 		}
 	}()
 	go func() {
@@ -312,8 +320,8 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 			t.logger.WithError(err).Errorf("error commiting keepalive tx for %s", key)
 			return
 		}
-		t.events <- func() {
-			t.notifyDead(strings.TrimPrefix(key, t.prefix+"/"), prevState, resp.Succeeded)
+		t.events <- func() (string, bool) {
+			return key, t.notifyDead(strings.TrimPrefix(key, t.prefix+"/"), prevState, resp.Succeeded)
 		}
 
 	case mvccpb.PUT:
@@ -326,8 +334,8 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 		if ttl > 0 && ttl != math.MaxInt64 {
 			// A positive TTL indicates the entity is alive
 			t.logger.Debugf("%s alive: %d", key, ttl)
-			t.events <- func() {
-				t.notifyAlive(strings.TrimPrefix(key, t.prefix+"/"), prevState, false)
+			t.events <- func() (string, bool) {
+				return key, t.notifyAlive(strings.TrimPrefix(key, t.prefix+"/"), prevState, false)
 			}
 		}
 	}
