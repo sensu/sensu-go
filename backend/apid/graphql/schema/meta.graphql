@@ -1,0 +1,25 @@
+"""
+The KVPairString type respresents a name-value relationship where the value is
+always a string.
+"""
+type KVPairString {
+  key: String!
+  val: String!
+}
+
+"""
+ObjectMeta is metadata all persisted objects have.
+"""
+type ObjectMeta {
+  name: String!
+  namespace: String!
+  labels: [KVPairString!]
+  annotations: [KVPairString!]
+}
+
+"""
+HasMetadata describes objects that have metadata.
+"""
+interface HasMetadata {
+  meta: ObjectMeta!
+}

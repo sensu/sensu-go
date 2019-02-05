@@ -1,7 +1,7 @@
 """
 CheckConfig is the specification of a check.
 """
-type CheckConfig implements Node, Namespaced, Silenceable {
+type CheckConfig implements Node, Namespaced, Silenceable, HasMetadata {
   "The globally unique identifier of the check."
   id: ID!
 
@@ -10,6 +10,9 @@ type CheckConfig implements Node, Namespaced, Silenceable {
 
   "name is the unique identifier for a check"
   name: String!
+
+  "metadata..."
+  meta: ObjectMeta!
 
   "command is the command to be executed."
   command: String!
