@@ -24,7 +24,8 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 
 			username := args[0]
 			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
-				if confirmed := helpers.ConfirmDelete(username); !confirmed {
+				dialog := helpers.ConfirmDestructiveOp{Op: "disable", Type: "user"}
+				if ok, err := dialog.Ask(username); !ok || err != nil {
 					fmt.Fprintln(cmd.OutOrStdout(), "Canceled")
 					return nil
 				}

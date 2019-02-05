@@ -41,9 +41,9 @@ in the presence cluster member failures and cluster restarts.
 - Fixes a bug where generic store methods assumed a namespace was provided for non-namespaced resources.
 - Keepalive and check TTL database state is now properly garbage-collected on
 entity deletion.
-
-### Fixed
 - Fixed a bug where `sensuctl version` required configuration files to exist.
+- Updates the copy on the confirm disable dialog to accurately reflect the
+operation.
 
 ## [5.1.1] - 2019-01-24
 
