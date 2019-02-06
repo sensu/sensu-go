@@ -73,12 +73,12 @@ func New(c Config, opts ...Option) (*APId, error) {
 		Authenticator:       c.Authenticator,
 	}
 
-	var tlsConfig *tls.Config
+	var tlsClientConfig *tls.Config
 	var err error
 	if c.TLS != nil {
 		// TODO(palourde): We should avoid using the loopback interface
 		c.TLS.InsecureSkipVerify = true
-		tlsConfig, err = c.TLS.ToTLSConfig()
+		tlsClientConfig, err = c.TLS.ToTLSClientConfig()
 		if err != nil {
 			return nil, err
 		}
@@ -87,7 +87,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	router := mux.NewRouter().UseEncodedPath()
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
 	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig)
-	registerGraphQLService(router, a.store, c.URL, tlsConfig)
+	registerGraphQLService(router, a.store, c.URL, tlsClientConfig)
 	registerAuthenticationResources(router, a.store, a.Authenticator)
 	registerRestrictedResources(router, a.store, a.queueGetter, a.bus, a.cluster)
 
