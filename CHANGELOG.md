@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.2.0] - 2019-02-06
+
 ### Added
 - Added support for the following TLS related options to `sensuctl`:
 `--trusted-ca-file` and `--insecure-skip-tls-verify`. This allows sensuctl
