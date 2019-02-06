@@ -39,6 +39,16 @@ class EntityDetailsInformation extends React.PureComponent {
     entity: gql`
       fragment EntityDetailsInformation_entity on Entity {
         name
+        metadata {
+          annotations {
+            key
+            val
+          }
+          labels {
+            key
+            val
+          }
+        }
         entityClass
         subscriptions
         lastSeen
@@ -52,7 +62,6 @@ class EntityDetailsInformation extends React.PureComponent {
         deregistration {
           handler
         }
-
         system {
           arch
           os
@@ -60,7 +69,6 @@ class EntityDetailsInformation extends React.PureComponent {
           platform
           platformFamily
           platformVersion
-
           network {
             interfaces {
               name
@@ -177,6 +185,27 @@ class EntityDetailsInformation extends React.PureComponent {
                     ) : (
                       "—"
                     )}
+                  </DictionaryValue>
+                </DictionaryEntry>
+              </Dictionary>
+            </Grid>
+          </Grid>
+        </CardContent>
+        <Divider />
+        <CardContent>
+          <Grid container spacing={0}>
+            <Grid item xs={12} sm={6}>
+              <Dictionary>
+                <DictionaryEntry>
+                  <DictionaryKey>Labels</DictionaryKey>
+                  // TODO: make little label components // component for how to
+                  display these labels
+                  <DictionaryValue>{entity.metadata.labels}</DictionaryValue>
+                </DictionaryEntry>
+                <DictionaryEntry>
+                  <DictionaryKey>Annotations</DictionaryKey>
+                  <DictionaryValue>
+                    {entity.metadata.annotations}
                   </DictionaryValue>
                 </DictionaryEntry>
               </Dictionary>

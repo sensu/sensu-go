@@ -503,11 +503,11 @@ func RegisterHasMetadata(svc *graphql.Service, impl graphql.InterfaceTypeResolve
 func _InterfaceTypeHasMetadataConfigFn() graphql1.InterfaceConfig {
 	return graphql1.InterfaceConfig{
 		Description: "HasMetadata describes objects that have metadata.",
-		Fields: graphql1.Fields{"meta": &graphql1.Field{
+		Fields: graphql1.Fields{"metadata": &graphql1.Field{
 			Args:              graphql1.FieldConfigArgument{},
 			DeprecationReason: "",
 			Description:       "self descriptive",
-			Name:              "meta",
+			Name:              "metadata",
 			Type:              graphql1.NewNonNull(graphql.OutputType("ObjectMeta")),
 		}},
 		Name: "HasMetadata",
