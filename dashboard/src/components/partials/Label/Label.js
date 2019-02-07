@@ -11,7 +11,8 @@ const styles = theme => ({
     borderRadius: theme.spacing.unit / 2,
     background: emphasize(theme.palette.background.paper, 0.05),
     color: emphasize(theme.palette.text.primary, 0.22),
-    display: "inline-block",
+    display: "inline",
+    lineHeight: 1.3,
   },
   value: {
     color: theme.palette.text.primary,

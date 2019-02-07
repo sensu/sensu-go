@@ -155,7 +155,6 @@ class CheckDetailsConfiguration extends React.PureComponent {
           <Typography variant="caption" paragraph>
             Defines when, where and how a check is executed.
           </Typography>
-
           <Grid container spacing={0}>
             <Grid item xs={12} sm={6}>
               <Dictionary>
@@ -164,53 +163,6 @@ class CheckDetailsConfiguration extends React.PureComponent {
                   <DictionaryValue>{check.name}</DictionaryValue>
                 </DictionaryEntry>
 
-                <DictionaryEntry>
-                  <DictionaryKey>Labels</DictionaryKey>
-                  <DictionaryValue>
-                    <Maybe value={check.metadata.labels} fallback="None">
-                      {val =>
-                        val.map(pair => [
-                          <Label name={pair.key} value={pair.val} />,
-                          " ",
-                        ])
-                      }
-                    </Maybe>
-                  </DictionaryValue>
-                </DictionaryEntry>
-              </Dictionary>
-            </Grid>
-
-            <Grid item xs={12} sm={6}>
-              <Dictionary>
-                <DictionaryEntry>
-                  <DictionaryKey>Namespace</DictionaryKey>
-                  <DictionaryValue>{check.namespace}</DictionaryValue>
-                </DictionaryEntry>
-
-                <DictionaryEntry>
-                  <DictionaryKey>Annotations</DictionaryKey>
-                  <DictionaryValue>
-                    <Maybe value={check.metadata.annotations} fallback="None">
-                      {val =>
-                        val.map(pair => [
-                          <Label name={pair.key} value={pair.val} />,
-                          " ",
-                        ])
-                      }
-                    </Maybe>
-                  </DictionaryValue>
-                </DictionaryEntry>
-              </Dictionary>
-            </Grid>
-          </Grid>
-        </CardContent>
-
-        <Divider />
-
-        <CardContent>
-          <Grid container spacing={0}>
-            <Grid item xs={12} sm={6}>
-              <Dictionary>
                 <DictionaryEntry>
                   <DictionaryKey>Command</DictionaryKey>
                   <DictionaryValue explicitRightMargin>
@@ -355,6 +307,43 @@ class CheckDetailsConfiguration extends React.PureComponent {
                     ) : (
                       "None"
                     )}
+                  </DictionaryValue>
+                </DictionaryEntry>
+              </Dictionary>
+            </Grid>
+          </Grid>
+        </CardContent>
+
+        <Divider />
+
+        <CardContent>
+          <Grid container spacing={0}>
+            <Grid item xs={12} sm={6}>
+              <Dictionary>
+                <DictionaryEntry>
+                  <DictionaryKey>Labels</DictionaryKey>
+                  <DictionaryValue>
+                    <Maybe value={check.metadata.labels} fallback="None">
+                      {val =>
+                        val.map(pair => [
+                          <Label name={pair.key} value={pair.val} />,
+                          " ",
+                        ])
+                      }
+                    </Maybe>
+                  </DictionaryValue>
+                </DictionaryEntry>
+                <DictionaryEntry>
+                  <DictionaryKey>Annotations</DictionaryKey>
+                  <DictionaryValue>
+                    <Maybe value={check.metadata.annotations} fallback="None">
+                      {val =>
+                        val.map(pair => [
+                          <Label name={pair.key} value={pair.val} />,
+                          " ",
+                        ])
+                      }
+                    </Maybe>
                   </DictionaryValue>
                 </DictionaryEntry>
               </Dictionary>
