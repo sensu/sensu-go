@@ -7,7 +7,7 @@ import { emphasize } from "@material-ui/core/styles/colorManipulator";
 const styles = theme => ({
   root: {
     borderRadius: theme.spacing.unit / 2,
-    padding: `${theme.spacing.unit / 4}px ${theme.spacing.unit / 2}px`,
+    padding: `${theme.spacing.unit / 8}px ${theme.spacing.unit / 2}px`,
     background: emphasize(theme.palette.background.paper, 0.05),
     color: emphasize(theme.palette.text.primary, 0.22),
     display: "inline",
