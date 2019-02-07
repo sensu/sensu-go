@@ -21,7 +21,7 @@ import { RelativeToCurrentDate } from "/components/RelativeDate";
 import StatusIcon from "/components/CheckStatusIcon";
 import SilencedIcon from "/icons/Silence";
 import Tooltip from "@material-ui/core/Tooltip";
-import Label from "/components/partials/Label";
+import LabelsAnnotationsCell from "/components/partials/LabelsAnnotationsCell";
 
 const Strong = withStyles(() => ({
   root: {
@@ -40,16 +40,6 @@ class EntityDetailsInformation extends React.PureComponent {
     entity: gql`
       fragment EntityDetailsInformation_entity on Entity {
         name
-        metadata {
-          annotations {
-            key
-            val
-          }
-          labels {
-            key
-            val
-          }
-        }
         entityClass
         subscriptions
         lastSeen
@@ -78,7 +68,9 @@ class EntityDetailsInformation extends React.PureComponent {
             }
           }
         }
+        ...LabelsAnnotationsCell_entity
       }
+      ${LabelsAnnotationsCell.fragments.entity}
     `,
   };
 
@@ -193,33 +185,7 @@ class EntityDetailsInformation extends React.PureComponent {
           </Grid>
         </CardContent>
         <Divider />
-        <CardContent>
-          <Grid container spacing={0}>
-            <Grid item xs={12} sm={6}>
-              <Dictionary>
-                <DictionaryEntry>
-                  <DictionaryKey>Labels</DictionaryKey>
-                  <DictionaryValue>
-                    <Maybe value={check.metadata.labels} fallback="None">
-                      {val =>
-                        val.map(pair => [
-                          <Label name={pair.key} value={pair.val} />,
-                          " ",
-                        ])
-                      }
-                    </Maybe>
-                  </DictionaryValue>
-                </DictionaryEntry>
-                <DictionaryEntry>
-                  <DictionaryKey>Annotations</DictionaryKey>
-                  <DictionaryValue>
-                    {entity.metadata.annotations}
-                  </DictionaryValue>
-                </DictionaryEntry>
-              </Dictionary>
-            </Grid>
-          </Grid>
-        </CardContent>
+        <LabelsAnnotationsCell entity={entity} />
         <Divider />
         <CardContent>
           <Grid container spacing={0}>

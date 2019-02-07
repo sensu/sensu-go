@@ -21,7 +21,7 @@ import CodeHighlight from "/components/CodeHighlight/CodeHighlight";
 import SilencedIcon from "/icons/Silence";
 import Typography from "@material-ui/core/Typography";
 import Tooltip from "@material-ui/core/Tooltip";
-import Label from "/components/partials/Label";
+import LabelsAnnotationsCell from "/components/partials/LabelsAnnotationsCell";
 
 class CheckDetailsConfiguration extends React.PureComponent {
   static propTypes = {
@@ -79,17 +79,9 @@ class CheckDetailsConfiguration extends React.PureComponent {
         envVars
         extendedAttributes
 
-        metadata {
-          labels {
-            key
-            val
-          }
-          annotations {
-            key
-            val
-          }
-        }
+        ...LabelsAnnotationsCell_check
       }
+      ${LabelsAnnotationsCell.fragments.check}
     `,
   };
 
@@ -315,42 +307,7 @@ class CheckDetailsConfiguration extends React.PureComponent {
         </CardContent>
 
         <Divider />
-
-        <CardContent>
-          <Grid container spacing={0}>
-            <Grid item xs={12} sm={6}>
-              <Dictionary>
-                <DictionaryEntry>
-                  <DictionaryKey>Labels</DictionaryKey>
-                  <DictionaryValue>
-                    <Maybe value={check.metadata.labels} fallback="None">
-                      {val =>
-                        val.map(pair => [
-                          <Label name={pair.key} value={pair.val} />,
-                          " ",
-                        ])
-                      }
-                    </Maybe>
-                  </DictionaryValue>
-                </DictionaryEntry>
-                <DictionaryEntry>
-                  <DictionaryKey>Annotations</DictionaryKey>
-                  <DictionaryValue>
-                    <Maybe value={check.metadata.annotations} fallback="None">
-                      {val =>
-                        val.map(pair => [
-                          <Label name={pair.key} value={pair.val} />,
-                          " ",
-                        ])
-                      }
-                    </Maybe>
-                  </DictionaryValue>
-                </DictionaryEntry>
-              </Dictionary>
-            </Grid>
-          </Grid>
-        </CardContent>
-
+        <LabelsAnnotationsCell check={check} />
         <Divider />
 
         <CardContent>
