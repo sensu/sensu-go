@@ -15,6 +15,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Fixed a regression in the agent that would not allow proxy checks to be
 run for subsequent executions.
+### Added
+- Web UI - support for labels and annotations
 
 ## [5.2.0] - 2019-02-06
 
