@@ -18,7 +18,7 @@ class Maybe extends React.Component {
   render() {
     const { children, fallback, value } = this.props;
 
-    if (value) {
+    if (value && value.length > 0) {
       return children ? children(value) : value;
     }
     return fallback;

@@ -66,7 +66,7 @@ class LabelsAnnotationsCell extends React.PureComponent {
             <Dictionary>
               <DictionaryEntry>
                 <DictionaryKey>Labels</DictionaryKey>
-                <DictionaryValue>
+                <DictionaryValue explicitRightMargin>
                   <Maybe value={object.metadata.labels} fallback="None">
                     {val =>
                       val.map(pair => [
@@ -77,6 +77,10 @@ class LabelsAnnotationsCell extends React.PureComponent {
                   </Maybe>
                 </DictionaryValue>
               </DictionaryEntry>
+            </Dictionary>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Dictionary>
               <DictionaryEntry>
                 <DictionaryKey>Annotations</DictionaryKey>
                 <DictionaryValue>
