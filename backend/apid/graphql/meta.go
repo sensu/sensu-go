@@ -1,6 +1,8 @@
 package graphql
 
 import (
+	"sort"
+
 	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
@@ -16,6 +18,12 @@ type objectMetaImpl struct {
 	schema.ObjectMetaAliases
 }
 
+// KVPairString pair of values&
+type KVPairString struct {
+	Key string
+	Val string
+}
+
 // Labels implements response to request for 'labels' field.
 func (r *objectMetaImpl) Labels(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(v2.ObjectMeta)
@@ -28,13 +36,14 @@ func (r *objectMetaImpl) Annotations(p graphql.ResolveParams) (interface{}, erro
 	return makeKVPairString(src.Annotations), nil
 }
 
-func makeKVPairString(m map[string]string) []map[string]string {
-	pairs := make([]map[string]string, 0, len(m))
+func makeKVPairString(m map[string]string) []KVPairString {
+	pairs := make([]KVPairString, 0, len(m))
 	for key, val := range m {
-		pair := make(map[string]string, 2)
-		pair["key"] = key
-		pair["val"] = val
+		pair := KVPairString{Key: key, Val: val}
 		pairs = append(pairs, pair)
 	}
+	sort.Slice(pairs, func(i, j int) bool {
+		return pairs[i].Key < pairs[j].Key
+	})
 	return pairs
 }

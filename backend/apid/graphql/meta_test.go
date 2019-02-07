@@ -23,8 +23,8 @@ func TestObjectMetaTypeLabelsField(t *testing.T) {
 	res, err := impl.Labels(params)
 	require.NoError(t, err)
 	assert.Len(t, res, 2)
-	assert.Contains(t, res, map[string]string{"key": "bob", "val": "builder"})
-	assert.Contains(t, res, map[string]string{"key": "fort", "val": "knox"})
+	assert.Contains(t, res, KVPairString{Key: "bob", Val: "builder"})
+	assert.Contains(t, res, KVPairString{Key: "fort", Val: "knox"})
 }
 
 func TestObjectMetaTypeAnnotationsField(t *testing.T) {
@@ -41,6 +41,6 @@ func TestObjectMetaTypeAnnotationsField(t *testing.T) {
 	res, err := impl.Annotations(params)
 	require.NoError(t, err)
 	assert.Len(t, res, 2)
-	assert.Contains(t, res, map[string]string{"key": "jeff", "val": "gertsman"})
-	assert.Contains(t, res, map[string]string{"key": "brad", "val": "shoemaker"})
+	assert.Contains(t, res, KVPairString{Key: "jeff", Val: "gertsman"})
+	assert.Contains(t, res, KVPairString{Key: "brad", Val: "shoemaker"})
 }
