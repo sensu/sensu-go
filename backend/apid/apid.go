@@ -73,12 +73,17 @@ func New(c Config, opts ...Option) (*APId, error) {
 		Authenticator:       c.Authenticator,
 	}
 
-	var tlsClientConfig *tls.Config
+	var tlsServerConfig, tlsClientConfig *tls.Config
 	var err error
 	if c.TLS != nil {
+		tlsServerConfig, err = c.TLS.ToServerTLSConfig()
+		if err != nil {
+			return nil, err
+		}
+
 		// TODO(palourde): We should avoid using the loopback interface
 		c.TLS.InsecureSkipVerify = true
-		tlsClientConfig, err = c.TLS.ToTLSClientConfig()
+		tlsClientConfig, err = c.TLS.ToClientTLSConfig()
 		if err != nil {
 			return nil, err
 		}
@@ -96,7 +101,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 		Handler:      router,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
-		TLSConfig:    tlsConfig,
+		TLSConfig:    tlsServerConfig,
 	}
 
 	for _, o := range opts {
@@ -125,7 +130,8 @@ func (a *APId) Start() error {
 		defer a.wg.Done()
 		var err error
 		if a.tls != nil {
-			err = a.HTTPServer.ListenAndServeTLS(a.tls.CertFile, a.tls.KeyFile)
+			// TLS configuration comes from ToServerTLSConfig
+			err = a.HTTPServer.ListenAndServeTLS("", "")
 		} else {
 			err = a.HTTPServer.ListenAndServe()
 		}

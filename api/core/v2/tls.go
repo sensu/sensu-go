@@ -1,6 +1,3 @@
-// +build go1.8
-// enforce go 1.8+ just so we can support stronger TLS settings (X25519 curve and chacha_poly suites)
-
 package v2
 
 import (
@@ -29,46 +26,42 @@ var (
 	// curve reference: http://safecurves.cr.yp.to/
 	tlsCurvePreferences = []tls.CurveID{
 		// this curve is a non-NIST curve with no NSA influence. Prefer this over all others!
-		// this curve required go 1.8+
 		tls.X25519,
-		// These curves are provided by NIST; prefer in descending order
-		tls.CurveP521,
+		// These curves are provided by NIST; optimal order
 		tls.CurveP384,
 		tls.CurveP256,
+		tls.CurveP521,
 	}
 )
 
-// ToTLSConfig outputs a tls.Config from TLSOptions
-//
-// ToTLSConfig should only be used for server TLS configuration.
-func (t *TLSOptions) ToTLSConfig() (*tls.Config, error) {
+// ToServerTLSConfig should only be used for server TLS configuration. outputs a tls.Config from TLSOptions
+func (t *TLSOptions) ToServerTLSConfig() (*tls.Config, error) {
 	cfg := tls.Config{}
 
 	if t.CertFile != "" || t.KeyFile != "" {
 		cert, err := tls.LoadX509KeyPair(t.CertFile, t.KeyFile)
 		if err != nil {
-			return nil, fmt.Errorf("Error loading tls client certificate: %s", err)
+			return nil, fmt.Errorf("Error loading tls server certificate: %s", err)
 		}
 
 		cfg.Certificates = []tls.Certificate{cert}
 	}
 
+	// useful when we present multiple certificates
 	cfg.BuildNameToCertificate()
 
 	// apply hardened TLS settings
 	cfg.MinVersion = tlsMinVersion
 	cfg.CurvePreferences = tlsCurvePreferences
 	cfg.CipherSuites = DefaultCipherSuites
-
-	// Tell the server to prefer its cipher suite ordering over what the client
-	// prefers.
+	// Tell the server to prefer it's own cipher suite ordering over the client's preferred ordering
 	cfg.PreferServerCipherSuites = true
 
 	return &cfg, nil
 }
 
-// ToTLSClientConfig is like ToTLSConfig but intended for TLS client config.
-func (t *TLSOptions) ToTLSClientConfig() (*tls.Config, error) {
+// ToClientTLSConfig is like ToServerTLSConfig but intended for TLS client config.
+func (t *TLSOptions) ToClientTLSConfig() (*tls.Config, error) {
 	cfg := tls.Config{}
 	cfg.InsecureSkipVerify = t.InsecureSkipVerify
 
@@ -77,6 +70,10 @@ func (t *TLSOptions) ToTLSClientConfig() (*tls.Config, error) {
 		if err != nil {
 			return nil, err
 		}
+		// TODO(gbolo): we need an option to first load the system root CAs, then append the user specified CA(s).
+		// In this current form, our client will ONLY trust the specified CA(s).
+		// This may be desired by the user, but if this client config is used for a variety of endpoints,
+		// then perhaps the user should decide if they want system roots enabled or not.
 		cfg.RootCAs = caCertPool
 	}
 
@@ -89,6 +86,9 @@ func (t *TLSOptions) ToTLSClientConfig() (*tls.Config, error) {
 		cfg.Certificates = []tls.Certificate{cert}
 	}
 
+	// apply hardened TLS settings
+	cfg.MinVersion = tlsMinVersion
+	cfg.CurvePreferences = tlsCurvePreferences
 	cfg.CipherSuites = DefaultCipherSuites
 
 	return &cfg, nil
@@ -101,7 +101,6 @@ func LoadCACerts(path string) (*x509.CertPool, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Error reading CA file: %s", err)
 	}
-
 	caCertPool := x509.NewCertPool()
 	if !caCertPool.AppendCertsFromPEM(caCerts) {
 		return nil, fmt.Errorf("No certificates could be parsed out of %s", err)

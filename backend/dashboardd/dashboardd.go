@@ -218,7 +218,7 @@ func newBackendProxy(APIURL string, TLS *types.TLSOptions) (*httputil.ReversePro
 
 	// Configure TLS
 	if TLS != nil {
-		cfg, err := TLS.ToTLSConfig()
+		cfg, err := TLS.ToServerTLSConfig()
 		if err != nil {
 			return nil, err
 		}

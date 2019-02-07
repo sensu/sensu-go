@@ -172,8 +172,11 @@ func newStartCommand() *cobra.Command {
 			// Sensu APIs TLS config
 			certFile := viper.GetString(flagCertFile)
 			keyFile := viper.GetString(flagKeyFile)
-			trustedCAFile := viper.GetString(flagTrustedCAFile)
 			insecureSkipTLSVerify := viper.GetBool(flagInsecureSkipTLSVerify)
+			// TODO(gbolo): trustedCAFile will be useful in the future when TLS mutual auth is supported.
+			// Not used for backend right now, but leaving it here for now since it appears
+			// that it is being used for etcd client config
+			trustedCAFile := viper.GetString(flagTrustedCAFile)
 
 			if certFile != "" && keyFile != "" {
 				cfg.TLS = &types.TLSOptions{
@@ -181,18 +184,6 @@ func newStartCommand() *cobra.Command {
 					KeyFile:            keyFile,
 					TrustedCAFile:      trustedCAFile,
 					InsecureSkipVerify: insecureSkipTLSVerify,
-				}
-			} else if certFile != "" || keyFile != "" || trustedCAFile != "" {
-				emptyFlags := []string{}
-				if certFile == "" {
-					emptyFlags = append(emptyFlags, flagCertFile)
-				}
-				if keyFile == "" {
-					emptyFlags = append(emptyFlags, flagKeyFile)
-				}
-
-				if len(emptyFlags) > 0 {
-					return fmt.Errorf("missing the following cert flags: %s", emptyFlags)
 				}
 			}
 
@@ -298,7 +289,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().StringP(flagStateDir, "d", viper.GetString(flagStateDir), "path to sensu state storage")
 	cmd.Flags().String(flagCertFile, viper.GetString(flagCertFile), "TLS certificate in PEM format")
 	cmd.Flags().String(flagKeyFile, viper.GetString(flagKeyFile), "TLS certificate key in PEM format")
-	cmd.Flags().String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format")
+	cmd.Flags().String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format used for etcd client (mutual TLS)")
 	cmd.Flags().Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")
 	cmd.Flags().Bool(flagDebug, false, "enable debugging and profiling features")
 	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
