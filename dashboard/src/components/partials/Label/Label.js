@@ -6,13 +6,12 @@ import { emphasize } from "@material-ui/core/styles/colorManipulator";
 
 const styles = theme => ({
   root: {
-    paddingLeft: theme.spacing.unit / 2,
-    paddingRight: theme.spacing.unit / 2,
     borderRadius: theme.spacing.unit / 2,
+    padding: `${theme.spacing.unit / 4}px ${theme.spacing.unit / 2}px`,
     background: emphasize(theme.palette.background.paper, 0.05),
     color: emphasize(theme.palette.text.primary, 0.22),
-    display: "inline-block",
-    lineHeight: 1.3,
+    display: "inline",
+    whiteSpace: "nowrap",
   },
   value: {
     color: theme.palette.text.primary,
