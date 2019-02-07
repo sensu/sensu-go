@@ -1,3 +1,6 @@
+// +build go1.8
+// enforce go 1.8+ just so we can support stronger TLS settings (X25519 curve and chacha_poly suites)
+
 package v2
 
 import (
@@ -7,26 +10,33 @@ import (
 	"io/ioutil"
 )
 
-// Go default cipher suite minus 3DES
-var DefaultCipherSuites = []uint16{
-	tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
-	tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
-	tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-	tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-	tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-	tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-	tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
-	tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-	tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
-	tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-	tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-	tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-	tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
-	tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
-	tls.TLS_RSA_WITH_AES_128_CBC_SHA256,
-	tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-	tls.TLS_RSA_WITH_AES_256_CBC_SHA,
-}
+var (
+	// PCI compliance as of Jun 30, 2018: anything under TLS 1.1 must be disabled
+	// we bump this up to TLS 1.2 so we can support the best possible ciphers
+	tlsMinVersion = uint16(tls.VersionTLS12)
+	// disable CBC suites (Lucky13 attack) this means TLS 1.1 can't work (no GCM)
+	// additionally, we should only use perfect forward secrecy ciphers
+	DefaultCipherSuites = []uint16{
+		tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		// these ciphers require go 1.8+
+		tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+		tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+	}
+	// optimal EC curve preference
+	// curve reference: http://safecurves.cr.yp.to/
+	tlsCurvePreferences = []tls.CurveID{
+		// this curve is a non-NIST curve with no NSA influence. Prefer this over all others!
+		// this curve required go 1.8+
+		tls.X25519,
+		// These curves are provided by NIST; prefer in descending order
+		tls.CurveP521,
+		tls.CurveP384,
+		tls.CurveP256,
+	}
+)
 
 // ToTLSConfig outputs a tls.Config from TLSOptions
 //
@@ -44,6 +54,10 @@ func (t *TLSOptions) ToTLSConfig() (*tls.Config, error) {
 	}
 
 	cfg.BuildNameToCertificate()
+
+	// apply hardened TLS settings
+	cfg.MinVersion = tlsMinVersion
+	cfg.CurvePreferences = tlsCurvePreferences
 	cfg.CipherSuites = DefaultCipherSuites
 
 	// Tell the server to prefer its cipher suite ordering over what the client

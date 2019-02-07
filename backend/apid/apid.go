@@ -96,6 +96,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 		Handler:      router,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
+		TLSConfig:    tlsConfig,
 	}
 
 	for _, o := range opts {
