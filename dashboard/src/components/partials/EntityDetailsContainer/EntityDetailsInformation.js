@@ -21,14 +21,15 @@ import { RelativeToCurrentDate } from "/components/RelativeDate";
 import StatusIcon from "/components/CheckStatusIcon";
 import SilencedIcon from "/icons/Silence";
 import Tooltip from "@material-ui/core/Tooltip";
+import Label from "/components/partials/Label";
 
-const Strong = withStyles({
+const Strong = withStyles(() => ({
   root: {
     color: "inherit",
     fontSize: "inherit",
     fontWeight: 500,
   },
-})(Typography);
+}))(Typography);
 
 class EntityDetailsInformation extends React.PureComponent {
   static propTypes = {
@@ -198,9 +199,16 @@ class EntityDetailsInformation extends React.PureComponent {
               <Dictionary>
                 <DictionaryEntry>
                   <DictionaryKey>Labels</DictionaryKey>
-                  // TODO: make little label components // component for how to
-                  display these labels
-                  <DictionaryValue>{entity.metadata.labels}</DictionaryValue>
+                  <DictionaryValue>
+                    <Maybe value={check.metadata.labels} fallback="None">
+                      {val =>
+                        val.map(pair => [
+                          <Label name={pair.key} value={pair.val} />,
+                          " ",
+                        ])
+                      }
+                    </Maybe>
+                  </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>
                   <DictionaryKey>Annotations</DictionaryKey>
