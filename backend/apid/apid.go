@@ -81,9 +81,15 @@ func New(c Config, opts ...Option) (*APId, error) {
 			return nil, err
 		}
 
-		// TODO(palourde): We should avoid using the loopback interface
-		c.TLS.InsecureSkipVerify = true
-		tlsClientConfig, err = c.TLS.ToClientTLSConfig()
+		// TODO(gbolo): since the backend does not yet support mutual TLS
+		// this client does not need a cert and key. Once we do support
+		// mutual TLS we need new options for client cert and key
+		cTLSOptions := types.TLSOptions{
+			TrustedCAFile: c.TLS.TrustedCAFile,
+			// TODO(palourde): We should avoid using the loopback interface
+			InsecureSkipVerify: true,
+		}
+		tlsClientConfig, err = cTLSOptions.ToClientTLSConfig()
 		if err != nil {
 			return nil, err
 		}
