@@ -49,6 +49,65 @@ func TestHandleCheck(t *testing.T) {
 	assert.NoError(agent.handleCheck(payload))
 }
 
+func TestCheckInProgress_GH2704(t *testing.T) {
+	assert := assert.New(t)
+
+	checkConfig := corev2.FixtureCheckConfig("normal-check")
+	request := &corev2.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
+	key := checkKey(request)
+	assert.Equal("normal-check", key)
+
+	config, cleanup := FixtureConfig()
+	defer cleanup()
+	agent := NewAgent(config)
+
+	agent.addInProgress(request)
+	agent.inProgressMu.Lock()
+	val, ok := agent.inProgress[key]
+	agent.inProgressMu.Unlock()
+	assert.True(ok)
+	assert.True(agent.checkInProgress(request))
+	assert.Equal(request.Config, val)
+
+	agent.removeInProgress(request)
+	agent.inProgressMu.Lock()
+	val, ok = agent.inProgress[key]
+	agent.inProgressMu.Unlock()
+	assert.False(ok)
+	assert.False(agent.checkInProgress(request))
+	assert.Empty(val)
+}
+
+func TestProxyCheckInProgress_GH2704(t *testing.T) {
+	assert := assert.New(t)
+
+	checkConfig := corev2.FixtureCheckConfig("proxy-check")
+	checkConfig.ProxyEntityName = "proxy-entity"
+	request := &corev2.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
+	key := checkKey(request)
+	assert.Equal("proxy-check/proxy-entity", key)
+
+	config, cleanup := FixtureConfig()
+	defer cleanup()
+	agent := NewAgent(config)
+
+	agent.addInProgress(request)
+	agent.inProgressMu.Lock()
+	val, ok := agent.inProgress[key]
+	agent.inProgressMu.Unlock()
+	assert.True(ok)
+	assert.True(agent.checkInProgress(request))
+	assert.Equal(request.Config, val)
+
+	agent.removeInProgress(request)
+	agent.inProgressMu.Lock()
+	val, ok = agent.inProgress[key]
+	agent.inProgressMu.Unlock()
+	assert.False(ok)
+	assert.False(agent.checkInProgress(request))
+	assert.Empty(val)
+}
+
 func TestHandleProxyCheck(t *testing.T) {
 	checkA := corev2.FixtureCheckConfig("check")
 	checkA.ProxyEntityName = "A"

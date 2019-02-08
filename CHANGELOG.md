@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Fixed a regression in the agent that would not allow proxy checks to be
+run for subsequent executions.
+
 ## [5.2.0] - 2019-02-06
 
 ### Added

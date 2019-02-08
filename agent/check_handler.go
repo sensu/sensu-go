@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/agent/transformers"
-	"github.com/sensu/sensu-go/api/core/v2"
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/transport"
@@ -74,15 +74,21 @@ func checkKey(request *v2.CheckRequest) string {
 	return strings.Join(parts, "/")
 }
 
-func (a *Agent) executeCheck(request *v2.CheckRequest, entity *v2.Entity) {
+func (a *Agent) addInProgress(request *v2.CheckRequest) {
 	a.inProgressMu.Lock()
 	a.inProgress[checkKey(request)] = request.Config
 	a.inProgressMu.Unlock()
-	defer func() {
-		a.inProgressMu.Lock()
-		delete(a.inProgress, request.Config.Name)
-		a.inProgressMu.Unlock()
-	}()
+}
+
+func (a *Agent) removeInProgress(request *v2.CheckRequest) {
+	a.inProgressMu.Lock()
+	delete(a.inProgress, checkKey(request))
+	a.inProgressMu.Unlock()
+}
+
+func (a *Agent) executeCheck(request *v2.CheckRequest, entity *v2.Entity) {
+	a.addInProgress(request)
+	defer a.removeInProgress(request)
 
 	checkConfig := request.Config
 	checkAssets := request.Assets
