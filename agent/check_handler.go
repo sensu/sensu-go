@@ -80,7 +80,7 @@ func (a *Agent) executeCheck(request *v2.CheckRequest, entity *v2.Entity) {
 	a.inProgressMu.Unlock()
 	defer func() {
 		a.inProgressMu.Lock()
-		delete(a.inProgress, request.Config.Name)
+		delete(a.inProgress, checkKey(request))
 		a.inProgressMu.Unlock()
 	}()
 
