@@ -1,7 +1,7 @@
 package agent
 
 import (
-	"time"
+	time "github.com/echlebek/timeproxy"
 
 	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"

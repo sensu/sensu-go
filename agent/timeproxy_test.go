@@ -5,7 +5,7 @@ import (
 	time "github.com/echlebek/timeproxy"
 )
 
-var mockTime = crock.NewTime(time.Unix(0, 0))
+var mockTime = crock.NewTime(time.Unix(1257894000, 0))
 
 func init() {
 	// Resolution and Multiplier make the mock time advance every `Resolution`

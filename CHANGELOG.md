@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Check results sent via the agent socket now support handlers.
+
 ## [5.2.0] - 2019-02-06
 
 ### Added

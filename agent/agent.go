@@ -46,7 +46,7 @@ type Agent struct {
 	cancel          context.CancelFunc
 	config          *Config
 	connected       bool
-	connectedMu     *sync.RWMutex
+	connectedMu     sync.RWMutex
 	context         context.Context
 	entity          *v2.Entity
 	executor        command.Executor
@@ -58,8 +58,8 @@ type Agent struct {
 	sendq           chan *transport.Message
 	stopping        chan struct{}
 	systemInfo      *v2.System
-	systemInfoMu    *sync.RWMutex
-	wg              *sync.WaitGroup
+	systemInfoMu    sync.RWMutex
+	wg              sync.WaitGroup
 }
 
 // NewAgent creates a new Agent and returns a pointer to it.
@@ -71,7 +71,6 @@ func NewAgent(config *Config) *Agent {
 		cancel:          cancel,
 		context:         ctx,
 		connected:       false,
-		connectedMu:     &sync.RWMutex{},
 		config:          config,
 		executor:        command.NewExecutor(),
 		handler:         handler.NewMessageHandler(),
@@ -80,8 +79,6 @@ func NewAgent(config *Config) *Agent {
 		stopping:        make(chan struct{}),
 		sendq:           make(chan *transport.Message, 10),
 		systemInfo:      &v2.System{},
-		systemInfoMu:    &sync.RWMutex{},
-		wg:              &sync.WaitGroup{},
 	}
 
 	agent.statsdServer = NewStatsdServer(agent)
@@ -172,7 +169,7 @@ func (a *Agent) Run() error {
 	}
 
 	var err error
-	assetManager := asset.NewManager(a.config.CacheDir, a.getAgentEntity(), a.stopping, a.wg)
+	assetManager := asset.NewManager(a.config.CacheDir, a.getAgentEntity(), a.stopping, &a.wg)
 	a.assetGetter, err = assetManager.StartAssetManager()
 	if err != nil {
 		return err

@@ -3,10 +3,11 @@ package v2
 import (
 	"errors"
 	fmt "fmt"
-	stringsutil "github.com/sensu/sensu-go/util/strings"
 	"net/url"
 	"sort"
 	"time"
+
+	stringsutil "github.com/sensu/sensu-go/util/strings"
 )
 
 // EventFailingState indicates failing check result status
