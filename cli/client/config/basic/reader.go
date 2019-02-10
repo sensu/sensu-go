@@ -10,6 +10,11 @@ func (c *Config) APIUrl() string {
 	return c.Cluster.APIUrl
 }
 
+// CAFile returns the trusted CA File
+func (c *Config) CAFile() string {
+	return c.Cluster.TrustedCAFile
+}
+
 // Edition returns the active cluster edition. Defaults to core
 func (c *Config) Edition() string {
 	if c.Cluster.Edition == "" {

@@ -6,8 +6,8 @@ import (
 
 	"github.com/AlecAivazis/survey"
 	"github.com/sensu/sensu-go/cli"
-	config "github.com/sensu/sensu-go/cli/client/config"
-	hooks "github.com/sensu/sensu-go/cli/commands/hooks"
+	"github.com/sensu/sensu-go/cli/client/config"
+	"github.com/sensu/sensu-go/cli/commands/hooks"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 )
@@ -60,6 +60,15 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 
 			// Write new API URL to disk
 			if err = cli.Config.SaveAPIUrl(answers.URL); err != nil {
+				fmt.Fprintln(cmd.OutOrStderr())
+				return fmt.Errorf(
+					"unable to write new configuration file with error: %s",
+					err,
+				)
+			}
+
+			// Write Trusted CA File to disk
+			if err = cli.Config.SaveCAFile(cli.Config.CAFile()); err != nil {
 				fmt.Fprintln(cmd.OutOrStderr())
 				return fmt.Errorf(
 					"unable to write new configuration file with error: %s",

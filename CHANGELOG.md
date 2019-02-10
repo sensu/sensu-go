@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- `sensuctl configure` now persists the value of the flag `--trusted-ca-file` to configuration on disk.
+
 ## [5.2.0] - 2019-02-06
 
 ### Added

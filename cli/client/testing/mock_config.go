@@ -19,6 +19,12 @@ func (m *MockConfig) APIUrl() string {
 	return args.String(0)
 }
 
+// CAFile mocks the Trusted-CA-File config
+func (m *MockConfig) CAFile() string {
+	args := m.Called()
+	return args.String(0)
+}
+
 // Edition mocks the cluster edition
 func (m *MockConfig) Edition() string {
 	args := m.Called()
@@ -40,6 +46,12 @@ func (m *MockConfig) Namespace() string {
 // SaveAPIUrl mocks saving the API URL
 func (m *MockConfig) SaveAPIUrl(url string) error {
 	args := m.Called(url)
+	return args.Error(0)
+}
+
+// SaveCAFile mocks saving the Trusted-CA-File
+func (m *MockConfig) SaveCAFile(CAFile string) error {
+	args := m.Called(CAFile)
 	return args.Error(0)
 }
 

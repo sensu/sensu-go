@@ -37,6 +37,7 @@ type Config interface {
 // Read contains all methods related to reading configuration
 type Read interface {
 	APIUrl() string
+	CAFile() string
 	Edition() string
 	Format() string
 	Namespace() string
@@ -46,6 +47,7 @@ type Read interface {
 // Write contains all methods related to setting and writting configuration
 type Write interface {
 	SaveAPIUrl(string) error
+	SaveCAFile(string) error
 	SaveEdition(string) error
 	SaveFormat(string) error
 	SaveNamespace(string) error

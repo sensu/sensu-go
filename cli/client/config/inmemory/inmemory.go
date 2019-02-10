@@ -8,6 +8,7 @@ import (
 // Config describes details associated with making requests
 type Config struct {
 	url       string
+	cafile    string
 	edition   string
 	format    string
 	namespace string
@@ -18,6 +19,7 @@ type Config struct {
 func New(url string) *Config {
 	config := Config{
 		url:       url,
+		cafile:    "",
 		edition:   config.DefaultEdition,
 		format:    config.FormatJSON,
 		namespace: config.DefaultNamespace,
@@ -29,6 +31,11 @@ func New(url string) *Config {
 // APIUrl describes the URL where the API can be found
 func (c *Config) APIUrl() string {
 	return c.url
+}
+
+// CAFile describes the location of Trusted CA File
+func (c *Config) CAFile() string {
+	return c.cafile
 }
 
 // Edition describes the edition of the Sensu product
@@ -54,6 +61,12 @@ func (c *Config) Tokens() *types.Tokens {
 // SaveAPIUrl updates the current value
 func (c *Config) SaveAPIUrl(val string) error {
 	c.url = val
+	return nil
+}
+
+// SaveCAFile updates the current value
+func (c *Config) SaveCAFile(val string) error {
+	c.cafile = val
 	return nil
 }
 

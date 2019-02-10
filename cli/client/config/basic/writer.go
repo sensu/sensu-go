@@ -16,6 +16,13 @@ func (c *Config) SaveAPIUrl(url string) error {
 	return write(c.Cluster, filepath.Join(c.path, clusterFilename))
 }
 
+// SaveCAFile saves the Trusted CA File into a configuration file
+func (c *Config) SaveCAFile(CAFile string) error {
+	c.Cluster.TrustedCAFile = CAFile
+
+	return write(c.Cluster, filepath.Join(c.path, clusterFilename))
+}
+
 // SaveEdition saves the Sensu edition to a configuration file
 func (c *Config) SaveEdition(edition string) error {
 	c.Cluster.Edition = edition

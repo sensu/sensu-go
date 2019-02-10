@@ -21,6 +21,7 @@ func TestCommand(t *testing.T) {
 	mockConfig := cli.Config.(*client.MockConfig)
 	mockConfig.On("Format").Return(config.DefaultFormat)
 	mockConfig.On("APIUrl").Return("http://127.0.0.1:8080")
+	mockConfig.On("CAFile").Return("")
 
 	cmd := Command(cli)
 
@@ -37,8 +38,10 @@ func TestCommandRunEClosureWithFlags(t *testing.T) {
 	mockClient := cli.Client.(*client.MockClient)
 	mockConfig := cli.Config.(*client.MockConfig)
 	mockConfig.On("APIUrl").Return("http://127.0.0.1:8080")
+	mockConfig.On("CAFile").Return("")
 	mockConfig.On("Format").Return(config.DefaultFormat)
 	mockConfig.On("SaveAPIUrl", mock.Anything).Return(nil)
+	mockConfig.On("SaveCAFile", mock.Anything).Return(nil)
 	mockClient.On("CreateAccessToken", mock.Anything, mock.Anything, mock.Anything).Return(&types.Tokens{}, nil)
 	mockConfig.On("SaveTokens", mock.Anything).Return(nil)
 	mockConfig.On("SaveFormat", mock.Anything).Return(nil)
