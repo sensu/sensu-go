@@ -45,6 +45,9 @@ type Entity implements Node, Namespaced, Silenceable {
 
   "Extended attributes includes arbitrary user-defined data"
   extendedAttributes: JSON!
+
+  "Labels includes all label values in the entity, as a map[string]string"
+  labels: JSON!
 }
 
 "A connection to a sequence of records."

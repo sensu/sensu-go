@@ -134,6 +134,12 @@ type EntityExtendedAttributesFieldResolver interface {
 	ExtendedAttributes(p graphql.ResolveParams) (interface{}, error)
 }
 
+// EntityLabelsFieldResolver implement to resolve requests for the Entity's labels field.
+type EntityLabelsFieldResolver interface {
+	// Labels implements response to request for labels field.
+	Labels(p graphql.ResolveParams) (interface{}, error)
+}
+
 //
 // EntityFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Entity' type.
@@ -213,6 +219,7 @@ type EntityFieldResolvers interface {
 	EntityIsSilencedFieldResolver
 	EntitySilencesFieldResolver
 	EntityExtendedAttributesFieldResolver
+	EntityLabelsFieldResolver
 }
 
 // EntityAliases implements all methods on EntityFieldResolvers interface by using reflection to
@@ -434,6 +441,12 @@ func (_ EntityAliases) ExtendedAttributes(p graphql.ResolveParams) (interface{},
 	return val, err
 }
 
+// Labels implements response to request for 'labels' field.
+func (_ EntityAliases) Labels(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 /*
 EntityType Entity is the Entity supplying the event. The default Entity for any
 Event is the running Agent process--if the Event is sent by an Agent.
@@ -575,6 +588,13 @@ func _ObjTypeEntityExtendedAttributesHandler(impl interface{}) graphql1.FieldRes
 	}
 }
 
+func _ObjTypeEntityLabelsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityLabelsFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Labels(frp)
+	}
+}
+
 func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Entity is the Entity supplying the event. The default Entity for any\nEvent is the running Agent process--if the Event is sent by an Agent.",
@@ -631,6 +651,13 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				Description:       "isSilenced return true if the entity has any silences associated with it.",
 				Name:              "isSilenced",
 				Type:              graphql1.NewNonNull(graphql1.Boolean),
+			},
+			"labels": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Labels includes all label values in the entity, as a map[string]string",
+				Name:              "labels",
+				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
 			},
 			"lastSeen": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -734,6 +761,7 @@ var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 		"extendedAttributes": _ObjTypeEntityExtendedAttributesHandler,
 		"id":                 _ObjTypeEntityIDHandler,
 		"isSilenced":         _ObjTypeEntityIsSilencedHandler,
+		"labels":             _ObjTypeEntityLabelsHandler,
 		"lastSeen":           _ObjTypeEntityLastSeenHandler,
 		"name":               _ObjTypeEntityNameHandler,
 		"namespace":          _ObjTypeEntityNamespaceHandler,
