@@ -2,6 +2,9 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
+import { withStyles } from "@material-ui/core/styles";
+import Code from "/components/CodeBlock";
+import CodeHighlight from "/components/CodeHighlight/CodeHighlight";
 import CardContent from "@material-ui/core/CardContent";
 import Dictionary, {
   DictionaryKey,
@@ -12,8 +15,15 @@ import Grid from "@material-ui/core/Grid";
 import Maybe from "/components/Maybe";
 import Label from "/components/partials/Label";
 
+const styles = () => ({
+  override: {
+    width: "25%",
+  },
+});
+
 class LabelsAnnotationsCell extends React.PureComponent {
   static propTypes = {
+    classes: PropTypes.object.isRequired,
     entity: PropTypes.object,
     check: PropTypes.object,
   };
@@ -55,17 +65,19 @@ class LabelsAnnotationsCell extends React.PureComponent {
   };
 
   render() {
-    const { check, entity } = this.props;
+    const { check, classes, entity } = this.props;
 
     const object = check || entity;
 
     return (
       <CardContent>
         <Grid container spacing={0}>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={12}>
             <Dictionary>
               <DictionaryEntry>
-                <DictionaryKey>Labels</DictionaryKey>
+                <DictionaryKey className={classes.override}>
+                  Labels
+                </DictionaryKey>
                 <DictionaryValue explicitRightMargin>
                   <Maybe value={object.metadata.labels} fallback="None">
                     {val =>
@@ -79,19 +91,21 @@ class LabelsAnnotationsCell extends React.PureComponent {
               </DictionaryEntry>
             </Dictionary>
           </Grid>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={12}>
             <Dictionary>
               <DictionaryEntry>
-                <DictionaryKey>Annotations</DictionaryKey>
+                <DictionaryKey className={classes.override}>
+                  Annotations
+                </DictionaryKey>
                 <DictionaryValue>
-                  <Maybe value={object.metadata.annotations} fallback="None">
-                    {val =>
-                      val.map(pair => [
-                        <Label name={pair.key} value={pair.val} />,
-                        " ",
-                      ])
-                    }
-                  </Maybe>
+                  <Code>
+                    {console.log(object.metadata.annotations)}
+                    <CodeHighlight
+                      code={object.metadata.annotations}
+                      language="bash"
+                      component="code"
+                    />
+                  </Code>
                 </DictionaryValue>
               </DictionaryEntry>
             </Dictionary>
@@ -102,4 +116,4 @@ class LabelsAnnotationsCell extends React.PureComponent {
   }
 }
 
-export default LabelsAnnotationsCell;
+export default withStyles(styles)(LabelsAnnotationsCell);
