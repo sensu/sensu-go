@@ -173,9 +173,8 @@ func newStartCommand() *cobra.Command {
 			certFile := viper.GetString(flagCertFile)
 			keyFile := viper.GetString(flagKeyFile)
 			insecureSkipTLSVerify := viper.GetBool(flagInsecureSkipTLSVerify)
-			// TODO(gbolo): trustedCAFile will be useful in the future when TLS mutual auth is supported.
-			// Not used for backend right now, but leaving it here for now since it appears
-			// that it is being used for etcd client config
+			// TODO(ccressent gbolo): issue #2548
+			// Eventually this should be changed: --insecure-skip-tls-verify --etcd-insecure-skip-tls-verify
 			trustedCAFile := viper.GetString(flagTrustedCAFile)
 
 			if certFile != "" && keyFile != "" {
@@ -185,6 +184,10 @@ func newStartCommand() *cobra.Command {
 					TrustedCAFile:      trustedCAFile,
 					InsecureSkipVerify: insecureSkipTLSVerify,
 				}
+			} else if certFile == "" && keyFile != "" {
+				return fmt.Errorf("tls configuration error, missing flag: --%s", flagCertFile)
+			} else if certFile != "" && keyFile == "" {
+				return fmt.Errorf("tls configuration error, missing flag: --%s", flagKeyFile)
 			}
 
 			// Etcd TLS config

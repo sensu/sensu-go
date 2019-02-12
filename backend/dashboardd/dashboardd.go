@@ -52,11 +52,19 @@ func New(cfg Config, opts ...Option) (*Dashboardd, error) {
 		wg:       &sync.WaitGroup{},
 		errChan:  make(chan error, 1),
 	}
+
+	// prepare server TLS config
+	tlsServerConfig, err := cfg.TLS.ToServerTLSConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	d.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", d.Host, d.Port),
 		Handler:      httpRouter(d),
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
+		TLSConfig:    tlsServerConfig,
 	}
 	for _, o := range opts {
 		if err := o(d); err != nil {
@@ -85,7 +93,8 @@ func (d *Dashboardd) Start() error {
 		var err error
 		TLS := d.Config.TLS
 		if TLS != nil {
-			err = d.httpServer.ListenAndServeTLS(TLS.CertFile, TLS.KeyFile)
+			// TLS configuration comes from ToServerTLSConfig
+			err = d.httpServer.ListenAndServeTLS("", "")
 		} else {
 			err = d.httpServer.ListenAndServe()
 		}

@@ -73,6 +73,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 		Authenticator:       c.Authenticator,
 	}
 
+	// prepare TLS configs (both server and client)
 	var tlsServerConfig, tlsClientConfig *tls.Config
 	var err error
 	if c.TLS != nil {

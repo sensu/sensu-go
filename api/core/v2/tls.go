@@ -37,9 +37,8 @@ var (
 // ToServerTLSConfig should only be used for server TLS configuration. outputs a tls.Config from TLSOptions
 func (t *TLSOptions) ToServerTLSConfig() (*tls.Config, error) {
 	cfg := tls.Config{}
-
-	if t.CertFile != "" || t.KeyFile != "" {
-		cert, err := tls.LoadX509KeyPair(t.CertFile, t.KeyFile)
+	if t.GetCertFile() != "" && t.GetKeyFile() != "" {
+		cert, err := tls.LoadX509KeyPair(t.GetCertFile(), t.GetKeyFile())
 		if err != nil {
 			return nil, fmt.Errorf("Error loading tls server certificate: %s", err)
 		}
@@ -70,15 +69,12 @@ func (t *TLSOptions) ToClientTLSConfig() (*tls.Config, error) {
 		if err != nil {
 			return nil, err
 		}
-		// TODO(gbolo): we need an option to first load the system root CAs, then append the user specified CA(s).
-		// In this current form, our client will ONLY trust the specified CA(s).
-		// This may be desired by the user, but if this client config is used for a variety of endpoints,
-		// then perhaps the user should decide if they want system roots enabled or not.
+		// client trust store should ONLY consist of specified CAs
 		cfg.RootCAs = caCertPool
 	}
 
-	if t.CertFile != "" || t.KeyFile != "" {
-		cert, err := tls.LoadX509KeyPair(t.CertFile, t.KeyFile)
+	if t.GetCertFile() != "" && t.GetKeyFile() != "" {
+		cert, err := tls.LoadX509KeyPair(t.GetCertFile(), t.GetKeyFile())
 		if err != nil {
 			return nil, fmt.Errorf("Error loading tls client certificate: %s", err)
 		}
