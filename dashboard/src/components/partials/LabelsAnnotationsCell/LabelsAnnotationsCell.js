@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
 import { withStyles } from "@material-ui/core/styles";
-import Code from "/components/CodeBlock";
+import CodeBlock from "/components/CodeBlock";
 import CodeHighlight from "/components/CodeHighlight/CodeHighlight";
 import CardContent from "@material-ui/core/CardContent";
 import Dictionary, {
@@ -18,6 +18,9 @@ import Label from "/components/partials/Label";
 const styles = () => ({
   override: {
     width: "25%",
+  },
+  fullWidth: {
+    width: "100%",
   },
 });
 
@@ -97,15 +100,25 @@ class LabelsAnnotationsCell extends React.PureComponent {
                 <DictionaryKey className={classes.override}>
                   Annotations
                 </DictionaryKey>
-                <DictionaryValue>
-                  <Code>
-                    {console.log(object.metadata.annotations)}
-                    <CodeHighlight
-                      code={object.metadata.annotations}
-                      language="bash"
-                      component="code"
-                    />
-                  </Code>
+                <DictionaryValue
+                  scrollableContent
+                  className={classes.fullWidth}
+                >
+                  {object.metadata.annotations.length > 0 ? (
+                    <CodeBlock>
+                      <CodeHighlight
+                        language="json"
+                        code={JSON.stringify(
+                          object.metadata.annotations,
+                          null,
+                          "\t",
+                        )}
+                        component="code"
+                      />
+                    </CodeBlock>
+                  ) : (
+                    "None"
+                  )}
                 </DictionaryValue>
               </DictionaryEntry>
             </Dictionary>
