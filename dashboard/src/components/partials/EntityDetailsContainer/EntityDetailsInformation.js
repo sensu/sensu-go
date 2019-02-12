@@ -185,8 +185,6 @@ class EntityDetailsInformation extends React.PureComponent {
           </Grid>
         </CardContent>
         <Divider />
-        <LabelsAnnotationsCell entity={entity} />
-        <Divider />
         <CardContent>
           <Grid container spacing={0}>
             <Grid item xs={12} sm={6}>
@@ -277,6 +275,8 @@ class EntityDetailsInformation extends React.PureComponent {
             )}
           </Grid>
         </CardContent>
+        <Divider />
+        <LabelsAnnotationsCell entity={entity} />
       </Card>
     );
   }
