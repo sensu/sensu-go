@@ -75,10 +75,12 @@ class LabelsAnnotationsCell extends React.PureComponent {
     const annotations = Object.keys(object.metadata.annotations).reduce(
       (anno, key) => {
         try {
+          // eslint-disable-next-line
           anno[object.metadata.annotations[key].key] = JSON.parse(
             object.metadata.annotations[key].val,
           );
         } catch (e) {
+          // eslint-disable-next-line
           anno[object.metadata.annotations[key].key] =
             object.metadata.annotations[key].val;
         }
