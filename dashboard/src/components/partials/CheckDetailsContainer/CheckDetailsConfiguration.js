@@ -65,8 +65,9 @@ class CheckDetailsConfiguration extends React.PureComponent {
 
         proxyEntityName
         proxyRequests {
-          entityAttributes
           splay
+          splayCoverage
+          entityAttributes
         }
 
         assets: runtimeAssets {
@@ -75,7 +76,6 @@ class CheckDetailsConfiguration extends React.PureComponent {
         }
 
         envVars
-        extendedAttributes
       }
     `,
   };
@@ -236,11 +236,27 @@ class CheckDetailsConfiguration extends React.PureComponent {
                   </DictionaryValue>
                 </DictionaryEntry>
 
-                <DictionaryEntry>
+                <DictionaryEntry fullWidth={!!check.proxyRequests}>
                   <DictionaryKey>Proxy Requests</DictionaryKey>
-                  <DictionaryValue>
+                  <DictionaryValue explicitRightMargin>
                     <Maybe value={check.proxyRequests} fallback="None">
-                      {val => JSON.stringify(val)}
+                      {val => (
+                        <CodeBlock>
+                          <CodeHighlight
+                            language="json"
+                            code={JSON.stringify(
+                              {
+                                entity_attributes: val.entityAttributes,
+                                splay: val.splay,
+                                splay_coverage: val.splayCoverage,
+                              },
+                              null,
+                              "  ",
+                            )}
+                            component="code"
+                          />
+                        </CodeBlock>
+                      )}
                     </Maybe>
                   </DictionaryValue>
                 </DictionaryEntry>
@@ -264,9 +280,9 @@ class CheckDetailsConfiguration extends React.PureComponent {
                   </DictionaryValue>
                 </DictionaryEntry>
 
-                <DictionaryEntry>
+                <DictionaryEntry fullWidth={check.envVars.length > 0}>
                   <DictionaryKey>ENV Vars</DictionaryKey>
-                  <DictionaryValue scrollableContent>
+                  <DictionaryValue>
                     {check.envVars.length > 0 ? (
                       <CodeBlock>
                         <CodeHighlight
@@ -348,25 +364,6 @@ class CheckDetailsConfiguration extends React.PureComponent {
             </Grid>
           </Grid>
         </CardContent>
-
-        {Object.keys(check.extendedAttributes).length > 0 && (
-          <React.Fragment>
-            <Divider />
-            <CodeBlock>
-              <CardContent>
-                <CodeHighlight
-                  language="json"
-                  code={`# Extra\n\n${JSON.stringify(
-                    check.extendedAttributes,
-                    null,
-                    "\t",
-                  )}`}
-                  component="code"
-                />
-              </CardContent>
-            </CodeBlock>
-          </React.Fragment>
-        )}
       </Card>
     );
   }

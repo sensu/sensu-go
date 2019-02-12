@@ -3,15 +3,18 @@ import PropTypes from "prop-types";
 import classnames from "classnames";
 import { withStyles } from "@material-ui/core/styles";
 import Typography from "@material-ui/core/Typography";
+import DictionaryEntry from "./DictionaryEntry";
 
 const styles = theme => ({
   root: {
     display: "table-cell",
-    paddingLeft: theme.spacing.unit,
     userSelect: "text",
   },
   limit: {
     maxWidth: "60%",
+  },
+  padding: {
+    paddingLeft: theme.spacing.unit,
   },
   scrollableContent: { display: "inline-grid" },
   explicitRightMargin: { paddingRight: "24px" },
@@ -34,7 +37,7 @@ class DictionaryValue extends React.Component {
     scrollableContent: false,
   };
 
-  render() {
+  renderCell = ({ fullWidth }) => {
     const {
       className: classNameProp,
       classes,
@@ -48,6 +51,7 @@ class DictionaryValue extends React.Component {
       [classes.limit]: constrain,
       [classes.explicitRightMargin]: explicitRightMargin,
       [classes.scrollableContent]: scrollableContent,
+      [classes.padding]: !fullWidth,
     });
 
     return (
@@ -55,10 +59,19 @@ class DictionaryValue extends React.Component {
         component="td"
         variant="body1"
         className={className}
+        colSpan={fullWidth ? 2 : 1}
         {...props}
       >
         {children}
       </Typography>
+    );
+  };
+
+  render() {
+    return (
+      <DictionaryEntry.Context>
+        {contextProps => this.renderCell(contextProps)}
+      </DictionaryEntry.Context>
     );
   }
 }
