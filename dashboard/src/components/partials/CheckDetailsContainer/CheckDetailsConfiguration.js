@@ -307,8 +307,6 @@ class CheckDetailsConfiguration extends React.PureComponent {
         </CardContent>
 
         <Divider />
-        <LabelsAnnotationsCell check={check} />
-        <Divider />
 
         <CardContent>
           <Grid container spacing={0}>
@@ -371,6 +369,9 @@ class CheckDetailsConfiguration extends React.PureComponent {
             </Grid>
           </Grid>
         </CardContent>
+
+        <Divider />
+        <LabelsAnnotationsCell check={check} />
       </Card>
     );
   }

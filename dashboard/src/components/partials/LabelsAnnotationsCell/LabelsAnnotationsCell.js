@@ -72,6 +72,21 @@ class LabelsAnnotationsCell extends React.PureComponent {
 
     const object = check || entity;
 
+    const annotations = Object.keys(object.metadata.annotations).reduce(
+      (anno, key) => {
+        try {
+          anno[object.metadata.annotations[key].key] = JSON.parse(
+            object.metadata.annotations[key].val,
+          );
+        } catch (e) {
+          anno[object.metadata.annotations[key].key] =
+            object.metadata.annotations[key].val;
+        }
+        return anno;
+      },
+      {},
+    );
+
     return (
       <CardContent>
         <Grid container spacing={0}>
@@ -100,19 +115,12 @@ class LabelsAnnotationsCell extends React.PureComponent {
                 <DictionaryKey className={classes.override}>
                   Annotations
                 </DictionaryKey>
-                <DictionaryValue
-                  scrollableContent
-                  className={classes.fullWidth}
-                >
+                <DictionaryValue className={classes.fullWidth}>
                   {object.metadata.annotations.length > 0 ? (
                     <CodeBlock>
                       <CodeHighlight
                         language="json"
-                        code={JSON.stringify(
-                          object.metadata.annotations,
-                          null,
-                          "\t",
-                        )}
+                        code={JSON.stringify(annotations, null, "\t")}
                         component="code"
                       />
                     </CodeBlock>
