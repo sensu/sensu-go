@@ -1,0 +1,6 @@
+- fixed all known TLS vulnerabilities affecting the backend server:
+    - TLS min version increased to 1.2
+    - Removed ALL but perfect-forward-secrecy ciphers
+- removed requirement of specifying `--trusted-ca-file` when using TLS on backend
+- prevented backend from loading server TLS configuration for http client
+- enforced uniform TLS configuration for all three backend components (apid, agentd, dashboardd)
