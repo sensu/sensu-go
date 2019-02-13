@@ -7,9 +7,7 @@ import Loader from "/components/util/Loader";
 import NotFound from "/components/partials/NotFound";
 import Query from "/components/util/Query";
 
-// duration used when polling is enabled; set fairly high until we understand
-// the impact.
-const pollInterval = 1500; // 1.5s
+import { pollingDuration } from "/constants/polling";
 
 const query = gql`
   query EntityDetailsContentQuery($namespace: String!, $name: String!) {
@@ -32,7 +30,7 @@ class EntityDetailsContent extends React.PureComponent {
       <Query
         query={query}
         fetchPolicy="cache-and-network"
-        pollInterval={pollInterval}
+        pollInterval={pollingDuration.short}
         variables={this.props.match.params}
       >
         {({ data: { entity } = {}, networkStatus, aborted, refetch }) => {

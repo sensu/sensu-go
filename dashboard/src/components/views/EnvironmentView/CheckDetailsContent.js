@@ -6,9 +6,7 @@ import Query from "/components/util/Query";
 import NotFound from "/components/partials/NotFound";
 import CheckDetailsContainer from "/components/partials/CheckDetailsContainer";
 
-// duration used when polling is enabled; set fairly high until we understand
-// the impact.
-const pollInterval = 1500; // 1.5s
+import { pollingDuration } from "/constants/polling";
 
 const query = gql`
   query CheckDetailsContentQuery($namespace: String!, $name: String!) {
@@ -29,7 +27,7 @@ class CheckDetailsContent extends React.PureComponent {
     return (
       <Query
         query={query}
-        pollInterval={pollInterval}
+        pollInterval={pollingDuration.short}
         fetchPolicy="cache-and-network"
         variables={this.props.match.params}
       >
