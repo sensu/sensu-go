@@ -77,11 +77,12 @@ class CheckDetailsConfiguration extends React.PureComponent {
         }
 
         envVars
-        extendedAttributes
 
-        ...LabelsAnnotationsCell_check
+        metadata {
+          ...LabelsAnnotationsCell_objectmeta
+        }
       }
-      ${LabelsAnnotationsCell.fragments.check}
+      ${LabelsAnnotationsCell.fragments.objectmeta}
     `,
   };
 

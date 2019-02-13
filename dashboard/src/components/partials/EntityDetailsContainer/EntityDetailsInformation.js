@@ -68,9 +68,12 @@ class EntityDetailsInformation extends React.PureComponent {
             }
           }
         }
-        ...LabelsAnnotationsCell_entity
+
+        metadata {
+          ...LabelsAnnotationsCell_objectmeta
+        }
       }
-      ${LabelsAnnotationsCell.fragments.entity}
+      ${LabelsAnnotationsCell.fragments.objectmeta}
     `,
   };
 

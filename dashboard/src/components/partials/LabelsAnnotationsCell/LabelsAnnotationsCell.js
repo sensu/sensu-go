@@ -37,31 +37,15 @@ class LabelsAnnotationsCell extends React.PureComponent {
   };
 
   static fragments = {
-    check: gql`
-      fragment LabelsAnnotationsCell_check on CheckConfig {
-        metadata {
-          labels {
-            key
-            val
-          }
-          annotations {
-            key
-            val
-          }
+    objectmeta: gql`
+      fragment LabelsAnnotationsCell_objectmeta on ObjectMeta {
+        labels {
+          key
+          val
         }
-      }
-    `,
-    entity: gql`
-      fragment LabelsAnnotationsCell_entity on Entity {
-        metadata {
-          labels {
-            key
-            val
-          }
-          annotations {
-            key
-            val
-          }
+        annotations {
+          key
+          val
         }
       }
     `,
