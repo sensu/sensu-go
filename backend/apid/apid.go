@@ -73,12 +73,24 @@ func New(c Config, opts ...Option) (*APId, error) {
 		Authenticator:       c.Authenticator,
 	}
 
-	var tlsClientConfig *tls.Config
+	// prepare TLS configs (both server and client)
+	var tlsServerConfig, tlsClientConfig *tls.Config
 	var err error
 	if c.TLS != nil {
-		// TODO(palourde): We should avoid using the loopback interface
-		c.TLS.InsecureSkipVerify = true
-		tlsClientConfig, err = c.TLS.ToTLSClientConfig()
+		tlsServerConfig, err = c.TLS.ToServerTLSConfig()
+		if err != nil {
+			return nil, err
+		}
+
+		// TODO(gbolo): since the backend does not yet support mutual TLS
+		// this client does not need a cert and key. Once we do support
+		// mutual TLS we need new options for client cert and key
+		cTLSOptions := types.TLSOptions{
+			TrustedCAFile: c.TLS.TrustedCAFile,
+			// TODO(palourde): We should avoid using the loopback interface
+			InsecureSkipVerify: true,
+		}
+		tlsClientConfig, err = cTLSOptions.ToClientTLSConfig()
 		if err != nil {
 			return nil, err
 		}
@@ -96,6 +108,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 		Handler:      router,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
+		TLSConfig:    tlsServerConfig,
 	}
 
 	for _, o := range opts {
@@ -124,7 +137,8 @@ func (a *APId) Start() error {
 		defer a.wg.Done()
 		var err error
 		if a.tls != nil {
-			err = a.HTTPServer.ListenAndServeTLS(a.tls.CertFile, a.tls.KeyFile)
+			// TLS configuration comes from ToServerTLSConfig
+			err = a.HTTPServer.ListenAndServeTLS("", "")
 		} else {
 			err = a.HTTPServer.ListenAndServe()
 		}
