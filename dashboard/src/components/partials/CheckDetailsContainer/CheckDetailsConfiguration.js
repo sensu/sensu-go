@@ -21,6 +21,7 @@ import CodeHighlight from "/components/CodeHighlight/CodeHighlight";
 import SilencedIcon from "/icons/Silence";
 import Typography from "@material-ui/core/Typography";
 import Tooltip from "@material-ui/core/Tooltip";
+import LabelsAnnotationsCell from "/components/partials/LabelsAnnotationsCell";
 
 class CheckDetailsConfiguration extends React.PureComponent {
   static propTypes = {
@@ -76,7 +77,12 @@ class CheckDetailsConfiguration extends React.PureComponent {
         }
 
         envVars
+
+        metadata {
+          ...LabelsAnnotationsCell_objectmeta
+        }
       }
+      ${LabelsAnnotationsCell.fragments.objectmeta}
     `,
   };
 
@@ -364,6 +370,9 @@ class CheckDetailsConfiguration extends React.PureComponent {
             </Grid>
           </Grid>
         </CardContent>
+
+        <Divider />
+        <LabelsAnnotationsCell check={check} />
       </Card>
     );
   }

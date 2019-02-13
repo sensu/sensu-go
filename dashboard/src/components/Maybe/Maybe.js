@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+import isEmpty from "lodash/isEmpty";
 
 class Maybe extends React.Component {
   static propTypes = {
@@ -18,7 +19,7 @@ class Maybe extends React.Component {
   render() {
     const { children, fallback, value } = this.props;
 
-    if (value) {
+    if (value && !isEmpty(value)) {
       return children ? children(value) : value;
     }
     return fallback;

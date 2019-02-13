@@ -1,7 +1,7 @@
 """
 Asset defines an archive, an agent will install as a dependency for a check.
 """
-type Asset implements Node, Namespaced {
+type Asset implements Node, Namespaced, HasMetadata {
   "The globally unique identifier of the record"
   id: ID!
 
@@ -10,6 +10,9 @@ type Asset implements Node, Namespaced {
 
   "Name is the unique identifier for an asset"
   name: String
+
+  "metadata contains name, namespace, labels and annotations of the record"
+  metadata: ObjectMeta!
 
   "URL is the location of the asset"
   url: String

@@ -21,14 +21,15 @@ import { RelativeToCurrentDate } from "/components/RelativeDate";
 import StatusIcon from "/components/CheckStatusIcon";
 import SilencedIcon from "/icons/Silence";
 import Tooltip from "@material-ui/core/Tooltip";
+import LabelsAnnotationsCell from "/components/partials/LabelsAnnotationsCell";
 
-const Strong = withStyles({
+const Strong = withStyles(() => ({
   root: {
     color: "inherit",
     fontSize: "inherit",
     fontWeight: 500,
   },
-})(Typography);
+}))(Typography);
 
 class EntityDetailsInformation extends React.PureComponent {
   static propTypes = {
@@ -52,7 +53,6 @@ class EntityDetailsInformation extends React.PureComponent {
         deregistration {
           handler
         }
-
         system {
           arch
           os
@@ -60,7 +60,6 @@ class EntityDetailsInformation extends React.PureComponent {
           platform
           platformFamily
           platformVersion
-
           network {
             interfaces {
               name
@@ -69,7 +68,12 @@ class EntityDetailsInformation extends React.PureComponent {
             }
           }
         }
+
+        metadata {
+          ...LabelsAnnotationsCell_objectmeta
+        }
       }
+      ${LabelsAnnotationsCell.fragments.objectmeta}
     `,
   };
 
@@ -274,6 +278,8 @@ class EntityDetailsInformation extends React.PureComponent {
             )}
           </Grid>
         </CardContent>
+        <Divider />
+        <LabelsAnnotationsCell entity={entity} />
       </Card>
     );
   }

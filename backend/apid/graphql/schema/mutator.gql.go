@@ -26,6 +26,12 @@ type MutatorNameFieldResolver interface {
 	Name(p graphql.ResolveParams) (string, error)
 }
 
+// MutatorMetadataFieldResolver implement to resolve requests for the Mutator's metadata field.
+type MutatorMetadataFieldResolver interface {
+	// Metadata implements response to request for metadata field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+}
+
 // MutatorCommandFieldResolver implement to resolve requests for the Mutator's command field.
 type MutatorCommandFieldResolver interface {
 	// Command implements response to request for command field.
@@ -109,6 +115,7 @@ type MutatorFieldResolvers interface {
 	MutatorIDFieldResolver
 	MutatorNamespaceFieldResolver
 	MutatorNameFieldResolver
+	MutatorMetadataFieldResolver
 	MutatorCommandFieldResolver
 	MutatorTimeoutFieldResolver
 	MutatorEnvVarsFieldResolver
@@ -200,6 +207,12 @@ func (_ MutatorAliases) Name(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
+// Metadata implements response to request for 'metadata' field.
+func (_ MutatorAliases) Metadata(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // Command implements response to request for 'command' field.
 func (_ MutatorAliases) Command(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -267,6 +280,13 @@ func _ObjTypeMutatorNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeMutatorMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(MutatorMetadataFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Metadata(frp)
+	}
+}
+
 func _ObjTypeMutatorCommandHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(MutatorCommandFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -313,6 +333,13 @@ func _ObjectTypeMutatorConfigFn() graphql1.ObjectConfig {
 				Name:              "id",
 				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
+			"metadata": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "metadata contains name, namespace, labels and annotations of the record",
+				Name:              "metadata",
+				Type:              graphql1.NewNonNull(graphql.OutputType("ObjectMeta")),
+			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -337,7 +364,8 @@ func _ObjectTypeMutatorConfigFn() graphql1.ObjectConfig {
 		},
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node"),
-			graphql.Interface("Namespaced")},
+			graphql.Interface("Namespaced"),
+			graphql.Interface("HasMetadata")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -357,6 +385,7 @@ var _ObjectTypeMutatorDesc = graphql.ObjectDesc{
 		"command":   _ObjTypeMutatorCommandHandler,
 		"envVars":   _ObjTypeMutatorEnvVarsHandler,
 		"id":        _ObjTypeMutatorIDHandler,
+		"metadata":  _ObjTypeMutatorMetadataHandler,
 		"name":      _ObjTypeMutatorNameHandler,
 		"namespace": _ObjTypeMutatorNamespaceHandler,
 		"timeout":   _ObjTypeMutatorTimeoutHandler,
