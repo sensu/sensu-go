@@ -32,6 +32,8 @@ const (
 	flagAPIURL                = "api-url"
 	flagDashboardHost         = "dashboard-host"
 	flagDashboardPort         = "dashboard-port"
+	flagDashboardCertFile     = "dashboard-cert-file"
+	flagDashboardKeyFile      = "dashboard-key-file"
 	flagDeregistrationHandler = "deregistration-handler"
 	flagCacheDir              = "cache-dir"
 	flagStateDir              = "state-dir"
@@ -154,6 +156,8 @@ func newStartCommand() *cobra.Command {
 				APIURL:                viper.GetString(flagAPIURL),
 				DashboardHost:         viper.GetString(flagDashboardHost),
 				DashboardPort:         viper.GetInt(flagDashboardPort),
+				DashboardTLSCertFile:  viper.GetString(flagDashboardCertFile),
+				DashboardTLSKeyFile:   viper.GetString(flagDashboardKeyFile),
 				DeregistrationHandler: viper.GetString(flagDeregistrationHandler),
 				CacheDir:              viper.GetString(flagCacheDir),
 				StateDir:              viper.GetString(flagStateDir),
@@ -256,6 +260,8 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagAPIURL, "http://localhost:8080")
 	viper.SetDefault(flagDashboardHost, "[::]")
 	viper.SetDefault(flagDashboardPort, 3000)
+	viper.SetDefault(flagDashboardCertFile, "")
+	viper.SetDefault(flagDashboardKeyFile, "")
 	viper.SetDefault(flagDeregistrationHandler, "")
 	viper.SetDefault(flagCacheDir, path.SystemCacheDir("sensu-backend"))
 	viper.SetDefault(flagStateDir, path.SystemDataDir("sensu-backend"))
@@ -287,6 +293,8 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagAPIURL, viper.GetString(flagAPIURL), "url of the api to connect to")
 	cmd.Flags().String(flagDashboardHost, viper.GetString(flagDashboardHost), "dashboard listener host")
 	cmd.Flags().Int(flagDashboardPort, viper.GetInt(flagDashboardPort), "dashboard listener port")
+	cmd.Flags().String(flagDashboardCertFile, viper.GetString(flagDashboardCertFile), "dashboard TLS certificate in PEM format")
+	cmd.Flags().String(flagDashboardKeyFile, viper.GetString(flagDashboardKeyFile), "dashboard TLS certificate key in PEM format")
 	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "default deregistration handler")
 	cmd.Flags().String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
 	cmd.Flags().StringP(flagStateDir, "d", viper.GetString(flagStateDir), "path to sensu state storage")

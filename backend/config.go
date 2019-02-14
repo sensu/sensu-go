@@ -31,8 +31,10 @@ type Config struct {
 	APIURL           string
 
 	// Dashboardd Configuration
-	DashboardHost string
-	DashboardPort int
+	DashboardHost        string
+	DashboardPort        int
+	DashboardTLSCertFile string
+	DashboardTLSKeyFile  string
 
 	// Pipelined Configuration
 	DeregistrationHandler string
