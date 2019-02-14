@@ -38,10 +38,11 @@ updating, update it and file a PR. The PR should be linked to this PR
 or the original issue.
 -->
 
-## Does this change require a new test case?
+## How did you verify this change?
 
 <!--
-For features and bugfixes, it probably does. Contributors should describe the end user steps to validate the change.
-Engineering should add the test case to the TestRail test plan, and write an automated Rspec test, if applicable.
+Aside from unit/integration tests, please describe the e2e steps to verify this change.
+
+Eng@Sensu: Add the test case to the TestRail QA plan, and write an automated Rspec test, if applicable.
 The corresponding sensu-go-qa-crucible PR or issue should be linked here.
 -->
