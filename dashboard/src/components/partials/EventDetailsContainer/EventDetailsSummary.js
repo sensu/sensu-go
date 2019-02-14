@@ -56,49 +56,8 @@ class EventDetailsSummary extends React.Component {
       <Card>
         <CardContent>
           <Typography variant="headline" paragraph>
-            Config Summary
+            Entity Summary
           </Typography>
-          <Dictionary>
-            <DictionaryEntry>
-              <DictionaryKey>Check</DictionaryKey>
-              <DictionaryValue>
-                {check.name !== "keepalive" ? (
-                  <InlineLink to={`/${namespace}/checks/${check.name}`}>
-                    {check.name}
-                  </InlineLink>
-                ) : (
-                  check.name
-                )}
-              </DictionaryValue>
-            </DictionaryEntry>
-            <DictionaryEntry>
-              <DictionaryKey>Schedule</DictionaryKey>
-              <DictionaryValue>
-                <Maybe value={check.cron} fallback={`${check.interval}s`}>
-                  {cron => <CronDescriptor capitalize expression={cron} />}
-                </Maybe>
-              </DictionaryValue>
-            </DictionaryEntry>
-            <DictionaryEntry>
-              <DictionaryKey>Timeout</DictionaryKey>
-              <DictionaryValue>{check.timeout}s</DictionaryValue>
-            </DictionaryEntry>
-            <DictionaryEntry>
-              <DictionaryKey>TTL</DictionaryKey>
-              <DictionaryValue>{check.ttl}s</DictionaryValue>
-            </DictionaryEntry>
-            <DictionaryEntry>
-              <DictionaryKey>Subscriptions</DictionaryKey>
-              <DictionaryValue>
-                {check.subscriptions.length > 0
-                  ? check.subscriptions.join(", ")
-                  : "none"}
-              </DictionaryValue>
-            </DictionaryEntry>
-          </Dictionary>
-        </CardContent>
-        <Divider />
-        <CardContent>
           <Dictionary>
             <DictionaryEntry>
               <DictionaryKey>Entity</DictionaryKey>
@@ -124,20 +83,6 @@ class EventDetailsSummary extends React.Component {
             </DictionaryEntry>
           </Dictionary>
         </CardContent>
-        {check.command && (
-          <React.Fragment>
-            <Divider />
-            <CodeBlock>
-              <CardContent>
-                <CodeHighlight
-                  language="bash"
-                  code={`# Executed command\n$ ${check.command}`}
-                  component="code"
-                />
-              </CardContent>
-            </CodeBlock>
-          </React.Fragment>
-        )}
       </Card>
     );
   }

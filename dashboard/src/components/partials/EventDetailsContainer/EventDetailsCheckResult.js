@@ -21,13 +21,17 @@ import {
 } from "/components/DateFormatter";
 import Duration from "/components/Duration";
 import StatusIcon from "/components/CheckStatusIcon";
-import CodeBlock from "/components/CodeBlock";
 import Maybe from "/components/Maybe";
 import SilencedIcon from "/icons/Silence";
 import Tooltip from "@material-ui/core/Tooltip";
-
+import CronDescriptor from "/components/partials/CronDescriptor";
 import NamespaceLink from "/components/util/NamespaceLink";
 import InlineLink from "/components/InlineLink";
+import List from "@material-ui/core/List";
+import CodeBlock from "/components/CodeBlock";
+import Code from "/components/Code";
+import CodeHighlight from "/components/CodeHighlight/CodeHighlight";
+import ListItem, { ListItemTitle } from "/components/DetailedListItem";
 
 class EventDetailsCheckResult extends React.PureComponent {
   static propTypes = {
@@ -54,6 +58,30 @@ class EventDetailsCheckResult extends React.PureComponent {
         duration
         output
         silenced
+        command
+        subscriptions
+        stdin
+        highFlapThreshold
+        lowFlapThreshold
+        interval
+        cron
+        timeout
+        ttl
+        roundRobin
+        handlers {
+          name
+        }
+        checkHooks {
+          hooks
+        }
+        assets: runtimeAssets {
+          id
+          name
+        }
+        outputMetricFormat
+        outputMetricHandlers {
+          name
+        }
       }
     `,
     entity: gql`
@@ -62,6 +90,39 @@ class EventDetailsCheckResult extends React.PureComponent {
         namespace
       }
     `,
+  };
+
+  renderHooks() {
+    const { checkHooks } = this.props.check;
+    const hooks = Object.values(
+      checkHooks.reduce(
+        (h, list) =>
+          list.hooks.reduce((j, val) => Object.assign(j, { [val]: val }), h),
+        {},
+      ),
+    );
+
+    return this.renderList(hooks);
+  }
+
+  renderAssets = () => {
+    const { assets } = this.props.check;
+    return this.renderList(assets.map(asset => asset.name));
+  };
+
+  renderList = items => {
+    if (items.length === 0) {
+      return "—";
+    }
+    return (
+      <List disablePadding>
+        {items.map(item => (
+          <ListItem key={item}>
+            <ListItemTitle>{item}</ListItemTitle>
+          </ListItem>
+        ))}
+      </List>
+    );
   };
 
   render() {
@@ -192,8 +253,169 @@ class EventDetailsCheckResult extends React.PureComponent {
                 Check did not write to STDOUT.
               </Typography>
             </CardContent>
+            <Divider />
           </React.Fragment>
         )}
+        <CardContent>
+          <Typography variant="headline" paragraph>
+            Check Configuration Summary
+          </Typography>
+          <Grid container spacing={0}>
+            <Grid item xs={12} sm={6}>
+              <Dictionary>
+                <DictionaryEntry>
+                  <DictionaryKey>Check</DictionaryKey>
+                  <DictionaryValue>{check.name}</DictionaryValue>
+                </DictionaryEntry>
+                <DictionaryEntry>
+                  <DictionaryKey>Command</DictionaryKey>
+                  <DictionaryValue explicitRightMargin>
+                    <CodeHighlight
+                      language="bash"
+                      code={check.command}
+                      component={Code}
+                    />
+                  </DictionaryValue>
+                </DictionaryEntry>
+                <DictionaryEntry>
+                  <DictionaryKey>Subscriptions</DictionaryKey>
+                  <DictionaryValue>
+                    {check.subscriptions.length > 0 ? (
+                      <List disablePadding>
+                        {check.subscriptions.map(subscription => (
+                          <ListItem key={subscription}>
+                            <ListItemTitle>{subscription}</ListItemTitle>
+                          </ListItem>
+                        ))}
+                      </List>
+                    ) : (
+                      "—"
+                    )}
+                  </DictionaryValue>
+                </DictionaryEntry>
+              </Dictionary>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Dictionary>
+                <DictionaryEntry>
+                  <DictionaryKey>Schedule</DictionaryKey>
+                  <DictionaryValue>
+                    <Maybe value={check.cron} fallback={`${check.interval}s`}>
+                      {cron => <CronDescriptor capitalize expression={cron} />}
+                    </Maybe>
+                  </DictionaryValue>
+                </DictionaryEntry>
+                <DictionaryEntry>
+                  <DictionaryKey>Round Robin</DictionaryKey>
+                  <DictionaryValue>
+                    {check.roundRobin ? "Yes" : "No"}
+                  </DictionaryValue>
+                </DictionaryEntry>
+              </Dictionary>
+            </Grid>
+          </Grid>
+        </CardContent>
+        <Divider />
+        <CardContent>
+          <Grid container spacing={0}>
+            <Grid item xs={12} sm={6}>
+              <Dictionary>
+                <DictionaryEntry>
+                  <DictionaryKey>Timeout</DictionaryKey>
+                  <DictionaryValue>
+                    <Maybe value={check.timeout} fallback="Never">
+                      {timeout => `${timeout}s`}
+                    </Maybe>
+                  </DictionaryValue>
+                </DictionaryEntry>
+                <DictionaryEntry>
+                  <DictionaryKey>TTL</DictionaryKey>
+                  <DictionaryValue>
+                    <Maybe value={check.ttl} fallback="Forever">
+                      {ttl => `${ttl}s`}
+                    </Maybe>
+                  </DictionaryValue>
+                </DictionaryEntry>
+              </Dictionary>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Dictionary>
+                <DictionaryEntry>
+                  <DictionaryKey>Flap Threshold</DictionaryKey>
+                  <DictionaryValue>
+                    High: {check.highFlapThreshold} Low:{" "}
+                    {check.lowFlapThreshold}
+                  </DictionaryValue>
+                </DictionaryEntry>
+                <DictionaryEntry>
+                  <DictionaryKey>Accepts STDIN?</DictionaryKey>
+                  <DictionaryValue>
+                    {check.stdin ? "Yes" : "No"}
+                  </DictionaryValue>
+                </DictionaryEntry>
+              </Dictionary>
+            </Grid>
+          </Grid>
+        </CardContent>
+        <Divider />
+        <CardContent>
+          <Grid container spacing={0}>
+            <Grid item xs={12} sm={6}>
+              <Dictionary>
+                <DictionaryEntry>
+                  <DictionaryKey>Handlers</DictionaryKey>
+                  <DictionaryValue>
+                    {check.handlers.length > 0 ? (
+                      <List disablePadding>
+                        {check.handlers.map(handler => (
+                          <ListItem key={handler.name}>
+                            <ListItemTitle>{handler.name}</ListItemTitle>
+                          </ListItem>
+                        ))}
+                      </List>
+                    ) : (
+                      "—"
+                    )}
+                  </DictionaryValue>
+                </DictionaryEntry>
+                <DictionaryEntry>
+                  <DictionaryKey>Hooks</DictionaryKey>
+                  <DictionaryValue>{this.renderHooks()}</DictionaryValue>
+                </DictionaryEntry>
+                <DictionaryEntry>
+                  <DictionaryKey>Assets</DictionaryKey>
+                  <DictionaryValue>{this.renderAssets()}</DictionaryValue>
+                </DictionaryEntry>
+              </Dictionary>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Dictionary>
+                <DictionaryEntry>
+                  <DictionaryKey>Metric Format</DictionaryKey>
+                  <DictionaryValue>
+                    <Maybe value={check.outputMetricFormat} fallback="None" />
+                  </DictionaryValue>
+                </DictionaryEntry>
+                <DictionaryEntry>
+                  <DictionaryKey>Metric Handlers</DictionaryKey>
+                  <DictionaryValue>
+                    {check.outputMetricHandlers.length > 0 ? (
+                      <List disablePadding>
+                        {check.outputMetricHandlers.map(handler => (
+                          <ListItem key={handler.name}>
+                            <ListItemTitle>{handler.name}</ListItemTitle>
+                          </ListItem>
+                        ))}
+                      </List>
+                    ) : (
+                      "—"
+                    )}
+                  </DictionaryValue>
+                </DictionaryEntry>
+              </Dictionary>
+            </Grid>
+          </Grid>
+        </CardContent>
       </Card>
     );
   }
