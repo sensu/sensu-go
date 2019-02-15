@@ -1,7 +1,7 @@
 """
 Silenced is the representation of a silence entry.
 """
-type Silenced implements Node, Namespaced {
+type Silenced implements Node, Namespaced, HasMetadata {
   "The globally unique identifier for the record."
   id: ID!
 
@@ -10,6 +10,9 @@ type Silenced implements Node, Namespaced {
 
   "Name is the combination of subscription and check name (subscription:checkname)"
   name: String!
+
+  "metadata contains name, namespace, labels and annotations of the record"
+  metadata: ObjectMeta!
 
   "Expire is the number of seconds the entry will live"
   expire: Int!

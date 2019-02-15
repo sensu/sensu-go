@@ -28,6 +28,12 @@ type CheckConfigNameFieldResolver interface {
 	Name(p graphql.ResolveParams) (string, error)
 }
 
+// CheckConfigMetadataFieldResolver implement to resolve requests for the CheckConfig's metadata field.
+type CheckConfigMetadataFieldResolver interface {
+	// Metadata implements response to request for metadata field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+}
+
 // CheckConfigCommandFieldResolver implement to resolve requests for the CheckConfig's command field.
 type CheckConfigCommandFieldResolver interface {
 	// Command implements response to request for command field.
@@ -237,6 +243,7 @@ type CheckConfigFieldResolvers interface {
 	CheckConfigIDFieldResolver
 	CheckConfigNamespaceFieldResolver
 	CheckConfigNameFieldResolver
+	CheckConfigMetadataFieldResolver
 	CheckConfigCommandFieldResolver
 	CheckConfigCheckHooksFieldResolver
 	CheckConfigCronFieldResolver
@@ -347,6 +354,12 @@ func (_ CheckConfigAliases) Name(p graphql.ResolveParams) (string, error) {
 		return ret, errors.New("unable to coerce value for field 'name'")
 	}
 	return ret, err
+}
+
+// Metadata implements response to request for 'metadata' field.
+func (_ CheckConfigAliases) Metadata(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
 }
 
 // Command implements response to request for 'command' field.
@@ -626,6 +639,13 @@ func _ObjTypeCheckConfigNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeCheckConfigMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckConfigMetadataFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Metadata(frp)
+	}
+}
+
 func _ObjTypeCheckConfigCommandHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigCommandFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -875,6 +895,13 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 				Name:              "lowFlapThreshold",
 				Type:              graphql1.Int,
 			},
+			"metadata": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "metadata contains name, namespace, labels and annotations of the record",
+				Name:              "metadata",
+				Type:              graphql1.NewNonNull(graphql.OutputType("ObjectMeta")),
+			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -991,7 +1018,8 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node"),
 			graphql.Interface("Namespaced"),
-			graphql.Interface("Silenceable")},
+			graphql.Interface("Silenceable"),
+			graphql.Interface("HasMetadata")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -1019,6 +1047,7 @@ var _ObjectTypeCheckConfigDesc = graphql.ObjectDesc{
 		"interval":             _ObjTypeCheckConfigIntervalHandler,
 		"isSilenced":           _ObjTypeCheckConfigIsSilencedHandler,
 		"lowFlapThreshold":     _ObjTypeCheckConfigLowFlapThresholdHandler,
+		"metadata":             _ObjTypeCheckConfigMetadataHandler,
 		"name":                 _ObjTypeCheckConfigNameHandler,
 		"namespace":            _ObjTypeCheckConfigNamespaceHandler,
 		"outputMetricFormat":   _ObjTypeCheckConfigOutputMetricFormatHandler,
@@ -1455,6 +1484,12 @@ type CheckNameFieldResolver interface {
 	Name(p graphql.ResolveParams) (string, error)
 }
 
+// CheckMetadataFieldResolver implement to resolve requests for the Check's metadata field.
+type CheckMetadataFieldResolver interface {
+	// Metadata implements response to request for metadata field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+}
+
 // CheckCommandFieldResolver implement to resolve requests for the Check's command field.
 type CheckCommandFieldResolver interface {
 	// Command implements response to request for command field.
@@ -1746,6 +1781,7 @@ type CheckTtlFieldResolver interface {
 type CheckFieldResolvers interface {
 	CheckNodeIDFieldResolver
 	CheckNameFieldResolver
+	CheckMetadataFieldResolver
 	CheckCommandFieldResolver
 	CheckCheckHooksFieldResolver
 	CheckEnvVarsFieldResolver
@@ -1855,6 +1891,12 @@ func (_ CheckAliases) Name(p graphql.ResolveParams) (string, error) {
 		return ret, errors.New("unable to coerce value for field 'name'")
 	}
 	return ret, err
+}
+
+// Metadata implements response to request for 'metadata' field.
+func (_ CheckAliases) Metadata(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
 }
 
 // Command implements response to request for 'command' field.
@@ -2272,6 +2314,13 @@ func _ObjTypeCheckNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeCheckMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckMetadataFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Metadata(frp)
+	}
+}
+
 func _ObjTypeCheckCommandHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckCommandFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -2650,6 +2699,13 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Name:              "lowFlapThreshold",
 				Type:              graphql1.Int,
 			},
+			"metadata": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "metadata contains name, namespace, labels and annotations of the record",
+				Name:              "metadata",
+				Type:              graphql1.NewNonNull(graphql.OutputType("ObjectMeta")),
+			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -2806,7 +2862,8 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 			},
 		},
 		Interfaces: []*graphql1.Interface{
-			graphql.Interface("Silenceable")},
+			graphql.Interface("Silenceable"),
+			graphql.Interface("HasMetadata")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -2839,6 +2896,7 @@ var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 		"issued":               _ObjTypeCheckIssuedHandler,
 		"lastOK":               _ObjTypeCheckLastOKHandler,
 		"lowFlapThreshold":     _ObjTypeCheckLowFlapThresholdHandler,
+		"metadata":             _ObjTypeCheckMetadataHandler,
 		"name":                 _ObjTypeCheckNameHandler,
 		"nodeId":               _ObjTypeCheckNodeIDHandler,
 		"occurrences":          _ObjTypeCheckOccurrencesHandler,

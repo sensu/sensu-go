@@ -23,7 +23,7 @@ directive @connection(key: String!, filter: [String!]) on FIELD
 """
 Asset defines an archive, an agent will install as a dependency for a check.
 """
-type Asset implements Node & Namespaced {
+type Asset implements Node & Namespaced & HasMetadata {
   """The globally unique identifier of the record"""
   id: ID!
 
@@ -32,6 +32,11 @@ type Asset implements Node & Namespaced {
 
   """Name is the unique identifier for an asset"""
   name: String
+
+  """
+  metadata contains name, namespace, labels and annotations of the record
+  """
+  metadata: ObjectMeta!
 
   """URL is the location of the asset"""
   url: String
@@ -70,12 +75,17 @@ type Auth {
 A Check is a check specification and optionally the results of the check's
 execution.
 """
-type Check implements Silenceable {
+type Check implements Silenceable & HasMetadata {
   """id of the check's configuration"""
   nodeId: ID!
 
   """name is the unique identifier for a check"""
   name: String!
+
+  """
+  metadata contains name, namespace, labels and annotations of the record
+  """
+  metadata: ObjectMeta!
 
   """command is the command to be executed."""
   command: String!
@@ -233,7 +243,7 @@ type Check implements Silenceable {
 }
 
 """CheckConfig is the specification of a check."""
-type CheckConfig implements Node & Namespaced & Silenceable {
+type CheckConfig implements Node & Namespaced & Silenceable & HasMetadata {
   """The globally unique identifier of the check."""
   id: ID!
 
@@ -242,6 +252,11 @@ type CheckConfig implements Node & Namespaced & Silenceable {
 
   """name is the unique identifier for a check"""
   name: String!
+
+  """
+  metadata contains name, namespace, labels and annotations of the record
+  """
+  metadata: ObjectMeta!
 
   """command is the command to be executed."""
   command: String!
@@ -524,12 +539,17 @@ type Deregistration {
 Entity is the Entity supplying the event. The default Entity for any
 Event is the running Agent process--if the Event is sent by an Agent.
 """
-type Entity implements Node & Namespaced & Silenceable {
+type Entity implements Node & Namespaced & Silenceable & HasMetadata {
   """The globally unique identifier of the record"""
   id: ID!
 
   """Namespace in which this record resides"""
   namespace: String!
+
+  """
+  metadata contains name, namespace, labels and annotations of the record
+  """
+  metadata: ObjectMeta!
 
   """unique identifier for the entity"""
   name: String!
@@ -630,12 +650,17 @@ interface Error {
 """
 An Event is the encapsulating type sent across the Sensu websocket transport.
 """
-type Event implements Node & Namespaced & Silenceable {
+type Event implements Node & Namespaced & Silenceable & HasMetadata {
   """The globally unique identifier of the record."""
   id: ID!
 
   """namespace in which this record resides"""
   namespace: String!
+
+  """
+  metadata contains name, namespace, labels and annotations of the record
+  """
+  metadata: ObjectMeta!
 
   """Timestamp is the time in seconds since the Epoch."""
   timestamp: DateTime!
@@ -724,7 +749,7 @@ type ExecuteCheckPayload {
 }
 
 """A Handler is a handler specification."""
-type Handler implements Node & Namespaced {
+type Handler implements Node & Namespaced & HasMetadata {
   """The globally unique identifier of the record."""
   id: ID!
 
@@ -733,6 +758,11 @@ type Handler implements Node & Namespaced {
 
   """Name is the unique identifier for a handler."""
   name: String!
+
+  """
+  metadata contains name, namespace, labels and annotations of the record
+  """
+  metadata: ObjectMeta!
 
   """Type is the handler type, i.e. pipe."""
   type: String!
@@ -772,6 +802,11 @@ type HandlerSocket {
   port: Int
 }
 
+"""HasMetadata describes objects that have metadata."""
+interface HasMetadata {
+  metadata: ObjectMeta!
+}
+
 """
 A Hook is a hook specification and optionally the results of the hook's
 execution.
@@ -797,7 +832,7 @@ type Hook {
 }
 
 """HookConfig is the specification of a hook"""
-type HookConfig implements Node & Namespaced {
+type HookConfig implements Node & Namespaced & HasMetadata {
   """The globally unique identifier of the record"""
   id: ID!
 
@@ -806,6 +841,11 @@ type HookConfig implements Node & Namespaced {
 
   """Name is the unique identifier for a hook"""
   name: String!
+
+  """
+  metadata contains name, namespace, labels and annotations of the record
+  """
+  metadata: ObjectMeta!
 
   """Command is the command to be executed"""
   command: String
@@ -850,6 +890,15 @@ The JSON type describes any arbitrary JSON compatible data.
 - Despite looking like an an object it's fields **cannot** be selected.
 """
 scalar JSON
+
+"""
+The KVPairString type respresents a name-value relationship where the value is
+always a string.
+"""
+type KVPairString {
+  key: String!
+  val: String!
+}
 
 """The root query for implementing GraphQL mutations."""
 type Mutation {
@@ -897,7 +946,7 @@ type Mutation {
 }
 
 """A Mutator is a mutator specification."""
-type Mutator implements Node & Namespaced {
+type Mutator implements Node & Namespaced & HasMetadata {
   """The globally unique identifier of the record"""
   id: ID!
 
@@ -906,6 +955,11 @@ type Mutator implements Node & Namespaced {
 
   """Name is the unique identifier for a mutator."""
   name: String!
+
+  """
+  metadata contains name, namespace, labels and annotations of the record
+  """
+  metadata: ObjectMeta!
 
   """Command is the command to be executed."""
   command: String!
@@ -1074,6 +1128,14 @@ interface Node {
   id: ID!
 }
 
+"""ObjectMeta is metadata all persisted objects have."""
+type ObjectMeta {
+  name: String!
+  namespace: String!
+  labels: [KVPairString!]
+  annotations: [KVPairString!]
+}
+
 """Information about the current page."""
 type OffsetPageInfo {
   """When paginating forward, are there more items?"""
@@ -1240,7 +1302,7 @@ interface Silenceable {
 }
 
 """Silenced is the representation of a silence entry."""
-type Silenced implements Node & Namespaced {
+type Silenced implements Node & Namespaced & HasMetadata {
   """The globally unique identifier for the record."""
   id: ID!
 
@@ -1251,6 +1313,11 @@ type Silenced implements Node & Namespaced {
   Name is the combination of subscription and check name (subscription:checkname)
   """
   name: String!
+
+  """
+  metadata contains name, namespace, labels and annotations of the record
+  """
+  metadata: ObjectMeta!
 
   """Expire is the number of seconds the entry will live"""
   expire: Int!

@@ -1,7 +1,7 @@
 """
 A Mutator is a mutator specification.
 """
-type Mutator implements Node, Namespaced {
+type Mutator implements Node, Namespaced, HasMetadata {
   "The globally unique identifier of the record"
   id: ID!
 
@@ -10,6 +10,9 @@ type Mutator implements Node, Namespaced {
 
   "Name is the unique identifier for a mutator."
   name: String!
+
+  "metadata contains name, namespace, labels and annotations of the record"
+  metadata: ObjectMeta!
 
   "Command is the command to be executed."
   command: String!

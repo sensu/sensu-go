@@ -8,8 +8,15 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Fixed
+- Check results sent via the agent socket now support handlers.
+
+## [5.2.1] - 2019-02-11
+
+### Fixed
 - Fixed a regression in the agent that would not allow proxy checks to be
 run for subsequent executions.
+### Added
+- Web UI - support for labels and annotations
 
 ## [5.2.0] - 2019-02-06
 
@@ -27,6 +34,7 @@ by adjusting the max_output_size and discard_output properties.
 - Added support for wrapped resources in the API with `sensuctl create` &
 `sensuctl edit`.
 - Web UI - platform version displays on the entity details page.
+- Web UI - include proxy request configuration on check details page.
 - Web UI - display deregistration config on the entity details page.
 
 ### Changed

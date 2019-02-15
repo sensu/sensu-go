@@ -7,9 +7,7 @@ import Query from "/components/util/Query";
 import NotFound from "/components/partials/NotFound";
 import Container from "/components/partials/EventDetailsContainer";
 
-// duration used when polling is enabled; set fairly high until we understand
-// the impact.
-const pollInterval = 1500; // 1.5s
+import { pollingDuration } from "/constants/polling";
 
 const query = gql`
   query EventDetailsContentQuery(
@@ -36,7 +34,7 @@ class EventDetailsContent extends React.PureComponent {
       <Query
         query={query}
         fetchPolicy="cache-and-network"
-        pollInterval={pollInterval}
+        pollInterval={pollingDuration.short}
         variables={this.props.match.params}
       >
         {({ aborted, data: { event } = {}, networkStatus, refetch }) => {
