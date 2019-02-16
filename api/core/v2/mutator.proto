@@ -30,6 +30,10 @@ message Mutator {
   // Env is a list of environment variables to use with command execution
   repeated string env_vars = 4 [(gogoproto.jsontag) = "env_vars"];
 
+  // Persist sets whether the mutation should be persisted to the store as well as passed to
+  // the handler in the pipeline.
+  bool persist = 5 [(gogoproto.jsontag) = "persist"];
+
   // RuntimeAssets are a list of assets required to execute a mutator.
   repeated string runtime_assets = 8 [(gogoproto.jsontag) = "runtime_assets"];
 }

@@ -82,6 +82,16 @@ func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]b
 		return nil, err
 	}
 
+	if mutator.Persist {
+		modifiedEvent := &types.Event{}
+		err := json.Unmarshal(eventData, modifiedEvent)
+		if err != nil {
+			logger.WithFields(fields).WithError(err).Error("failed to unmarshal the mutated event")
+			return nil, err
+		}
+		p.store.UpdateEvent(ctx, modifiedEvent)
+	}
+
 	return eventData, nil
 }
 

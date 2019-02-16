@@ -38,6 +38,8 @@ func (m *Mutator) Update(from *Mutator, fields ...string) error {
 			m.Timeout = from.Timeout
 		case "EnvVars":
 			m.EnvVars = append(m.EnvVars[0:0], from.EnvVars...)
+		case "Persist":
+			m.Persist = from.Persist
 		case "RuntimeAssets":
 			m.RuntimeAssets = append(m.RuntimeAssets[0:0], from.RuntimeAssets...)
 		default:
