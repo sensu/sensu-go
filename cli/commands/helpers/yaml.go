@@ -66,5 +66,25 @@ func PrintYAML(v interface{}, w io.Writer) (err error) {
 	if r, ok := v.(types.Resource); ok {
 		v = wrapResource(r)
 	}
+
+	// Since User does not meet the Resource interface (no ObjectMeta), we need
+	// to implement it as its own special case.
+	if users, ok := v.([]types.User); ok {
+		if len(users) == 0 {
+			close = false
+			return nil
+		}
+		for _, r := range users {
+			if err := enc.Encode(toMap(r)); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+
+	if r, ok := v.(types.User); ok {
+		v = toMap(r)
+	}
+
 	return enc.Encode(v)
 }
