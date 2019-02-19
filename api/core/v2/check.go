@@ -62,6 +62,7 @@ func NewCheck(c *CheckConfig) *Check {
 		Subscriptions:        c.Subscriptions,
 		ProxyEntityName:      c.ProxyEntityName,
 		CheckHooks:           c.CheckHooks,
+		GroupBy:              c.GroupBy,
 		Stdin:                c.Stdin,
 		Subdue:               c.Subdue,
 		Cron:                 c.Cron,

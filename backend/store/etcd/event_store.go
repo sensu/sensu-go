@@ -25,6 +25,13 @@ func getEventPath(event *types.Event) string {
 		EtcdRoot,
 		eventsPathPrefix,
 		event.Entity.Namespace,
+		getEventKey(event),
+	)
+}
+
+func getEventKey(event *types.Event) string {
+	// TODO use the Check.GroupBy field values to build this instead.
+	return path.Join(
 		event.Entity.Name,
 		event.Check.Name,
 	)
@@ -192,9 +199,8 @@ func (s *Store) UpdateEvent(ctx context.Context, event *types.Event) error {
 	}
 	if !res.Succeeded {
 		return fmt.Errorf(
-			"could not create the event %s/%s in namespace %s",
-			event.Entity.Name,
-			event.Check.Name,
+			"could not create the event %s in namespace %s",
+			getEventKey(event),
 			event.Entity.Namespace,
 		)
 	}

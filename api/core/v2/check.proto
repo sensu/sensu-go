@@ -149,6 +149,10 @@ message CheckConfig {
     // DiscardOutput causes agents to discard check output. No check output is
     // written to the backend, but metrics extraction is still performed.
     bool discard_output = 28;
+
+    // GroupBy is the check fields used to group events for this check.
+    // Defaults to legacy Sensu behavior of grouping by check name and hostname.
+    CheckKey group_by = 29 [(gogoproto.jsontag) = "group_by"];
 }
 
 // A Check is a check specification and optionally the results of the check's
@@ -299,6 +303,10 @@ message Check {
     // written to the backend, but metrics extraction is still performed.
     bool discard_output = 40;
 
+    // GroupBy is the check fields used to group events for this check.
+    // Defaults to legacy Sensu behavior of grouping by check name and hostname.
+    CheckKey group_by = 41 [(gogoproto.jsontag) = "group_by"];
+
     // ExtendedAttributes store serialized arbitrary JSON-encoded data
     bytes ExtendedAttributes = 99 [(gogoproto.jsontag) = "-"];
 }
@@ -310,4 +318,23 @@ message CheckHistory {
 
     // Executed describes the time in which the check request was executed
     int64 executed = 2 [(gogoproto.jsontag) = "executed"];
+}
+
+// CheckKey is a set of attributes and labels that are used to group events for a given check.
+// The uniqueness of all of these attributes combined is what makes up the grouping key.
+message CheckKey {
+    // Name sets whether to group by check name.
+    bool name = 1 [(gogoproto.jsontag) = "name"];
+
+    // Hostname sets whether to group by hostname.
+    bool hostname = 2 [(gogoproto.jsontag) = "hostname"];
+
+    // Check labels to group by.
+    repeated string check_labels = 3 [(gogoproto.jsontag) = "check_labels"];
+
+    // Entity labels to group by.
+    repeated string entity_labels = 4 [(gogoproto.jsontag) = "entity_labels"];
+
+    // Event labels to group by.
+    repeated string event_labels = 5 [(gogoproto.jsontag) = "event_labels"];
 }
