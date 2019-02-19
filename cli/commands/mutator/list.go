@@ -76,6 +76,20 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
+			Title:       "Persist",
+			ColumnStyle: table.PrimaryTextStyle,
+			CellTransformer: func(data interface{}) string {
+				mutator, ok := data.(types.Mutator)
+				if !ok {
+					return cli.TypeError
+				}
+				if mutator.Persist {
+					return "True"
+				}
+				return "False"
+			},
+		},
+		{
 			Title:       "Environment Variables",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {

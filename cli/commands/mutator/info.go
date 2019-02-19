@@ -62,6 +62,10 @@ func printToList(v interface{}, writer io.Writer) error {
 				Value: mutator.Command,
 			},
 			{
+				Label: "Persist",
+				Value: strings.ToTitle(fmt.Sprintf("%t", mutator.Persist)),
+			},
+			{
 				Label: "Timeout",
 				Value: strconv.FormatUint(uint64(mutator.Timeout), 10),
 			},
