@@ -1,7 +1,9 @@
 package user
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 
 	client "github.com/sensu/sensu-go/cli/client/testing"
@@ -54,6 +56,8 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 	assert.Error(err)
 }
 
+// TODO(ccressent): Combine all those output format tests into 1 test with
+// subtests, to at least share the common initialization code.
 func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewCLI()
@@ -76,4 +80,64 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert.Contains(out, "two")
 	assert.Contains(out, "true")
 	assert.NoError(err)
+}
+
+func TestListCommandRunEClosureWithJSONOutput(t *testing.T) {
+	assert := assert.New(t)
+	cli := test.NewCLI()
+
+	testUsers := []types.User{
+		*types.FixtureUser("user1"),
+		*types.FixtureUser("user2"),
+	}
+
+	expected, err := json.Marshal(testUsers)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	client := cli.Client.(*client.MockClient)
+	client.On("ListUsers").Return(testUsers, nil)
+
+	cmd := ListCommand(cli)
+	require.NoError(t, cmd.Flags().Set("format", "json"))
+	out, err := test.RunCmd(cmd, []string{})
+
+	assert.NoError(err)
+	assert.NotEmpty(out)
+	assert.JSONEq(string(expected), out)
+}
+
+func TestListCommandRunEClosureWithWrappedJSONOutput(t *testing.T) {
+	// User does not meet the Resource interface (no ObjectMeta), so the
+	// "wrapped-json" output for it should be the exact same as the "json"
+	// output.
+	TestListCommandRunEClosureWithJSONOutput(t)
+}
+
+func TestListCommandRunEClosureWithYAMLOutput(t *testing.T) {
+	assert := assert.New(t)
+	cli := test.NewCLI()
+
+	testUsers := []types.User{
+		*types.FixtureUser("user1"),
+		*types.FixtureUser("user2"),
+	}
+
+	client := cli.Client.(*client.MockClient)
+	client.On("ListUsers").Return(testUsers, nil)
+
+	cmd := ListCommand(cli)
+	require.NoError(t, cmd.Flags().Set("format", "yaml"))
+	out, err := test.RunCmd(cmd, []string{})
+	fmt.Println(out)
+
+	assert.NoError(err)
+	assert.NotEmpty(out)
+	assert.Contains(out, "username")
+	assert.Contains(out, "groups")
+	assert.Contains(out, "disabled")
+	assert.Contains(out, "user1")
+	assert.Contains(out, "user2")
+	assert.Contains(out, "false")
 }
