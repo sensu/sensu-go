@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"sort"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
@@ -30,11 +31,58 @@ func getEventPath(event *types.Event) string {
 }
 
 func getEventKey(event *types.Event) string {
-	// TODO use the Check.GroupBy field values to build this instead.
-	return path.Join(
-		event.Entity.Name,
-		event.Check.Name,
-	)
+	pathComponents := []string{}
+	sortSkip := 0
+
+	// Default to legacy behavior when Check.GroupBy is omitted
+	if event.Check.GroupBy == nil {
+		pathComponents = append(pathComponents, event.Entity.Name, event.Check.Name)
+		sortSkip = 2
+		goto join
+	}
+
+	if event.Check.GroupBy.Hostname {
+		pathComponents = append(pathComponents, event.Entity.Name)
+		sortSkip += 1
+	}
+	if event.Check.GroupBy.Name {
+		pathComponents = append(pathComponents, event.Check.Name)
+		sortSkip += 1
+	}
+
+	// The order of the elements in this struct are important. Changing them will break existing
+	// store events.
+	for _, group := range []struct {
+		labels  map[string]string
+		prefix  string
+		include []string
+	}{
+		{
+			labels:  event.Check.Labels,
+			prefix:  "check",
+			include: event.Check.GroupBy.CheckLabels,
+		},
+		{
+			labels:  event.Entity.Labels,
+			prefix:  "entity",
+			include: event.Check.GroupBy.EntityLabels,
+		},
+		{
+			labels:  event.Labels,
+			prefix:  "event",
+			include: event.Check.GroupBy.EventLabels,
+		},
+	} {
+		for _, key := range group.include {
+			pathComponents = append(pathComponents, fmt.Sprintf("%s:%s:%s", group.prefix, key, group.labels[key]))
+		}
+	}
+
+join:
+	// Exclude the name and hostname if they are present
+	sort.Strings(pathComponents[sortSkip:])
+
+	return path.Join(pathComponents...)
 }
 
 func getEventWithCheckPath(ctx context.Context, entity, check string) (string, error) {
