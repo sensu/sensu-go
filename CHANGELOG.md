@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Check results sent via the agent socket now support handlers.
+- `sensuctl user list` can now output yaml and wrapped-json
 
 ## [5.2.1] - 2019-02-11
 
