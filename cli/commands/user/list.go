@@ -24,14 +24,20 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 				_ = cmd.Help()
 				return errors.New("invalid argument(s) received")
 			}
+
 			// Fetch users from API
 			results, err := cli.Client.ListUsers()
 			if err != nil {
 				return err
 			}
 
+			resources := []types.Resource{}
+			for i := range results {
+				resources = append(resources, &results[i])
+			}
+
 			// Print the results based on the user preferences
-			return helpers.Print(cmd, cli.Config.Format(), printToTable, nil, results)
+			return helpers.Print(cmd, cli.Config.Format(), printToTable, resources, results)
 		},
 	}
 
