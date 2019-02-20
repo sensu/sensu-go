@@ -3,7 +3,6 @@ package user
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"testing"
 
 	client "github.com/sensu/sensu-go/cli/client/testing"
@@ -130,7 +129,6 @@ func TestListCommandRunEClosureWithYAMLOutput(t *testing.T) {
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "yaml"))
 	out, err := test.RunCmd(cmd, []string{})
-	fmt.Println(out)
 
 	assert.NoError(err)
 	assert.NotEmpty(out)
