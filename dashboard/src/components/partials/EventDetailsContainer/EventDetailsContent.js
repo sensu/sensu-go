@@ -78,10 +78,10 @@ class EventDetailsContainer extends React.Component {
                   entity={event.entity}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={5}>
                 <RelatedEntitiesCard entity={event.entity} />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={7}>
                 <Summary entity={event.entity} />
               </Grid>
             </Grid>
