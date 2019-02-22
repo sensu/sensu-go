@@ -26,6 +26,12 @@ type AssetNameFieldResolver interface {
 	Name(p graphql.ResolveParams) (string, error)
 }
 
+// AssetMetadataFieldResolver implement to resolve requests for the Asset's metadata field.
+type AssetMetadataFieldResolver interface {
+	// Metadata implements response to request for metadata field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+}
+
 // AssetUrlFieldResolver implement to resolve requests for the Asset's url field.
 type AssetUrlFieldResolver interface {
 	// Url implements response to request for url field.
@@ -109,6 +115,7 @@ type AssetFieldResolvers interface {
 	AssetIDFieldResolver
 	AssetNamespaceFieldResolver
 	AssetNameFieldResolver
+	AssetMetadataFieldResolver
 	AssetUrlFieldResolver
 	AssetSha512FieldResolver
 	AssetFiltersFieldResolver
@@ -200,6 +207,12 @@ func (_ AssetAliases) Name(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
+// Metadata implements response to request for 'metadata' field.
+func (_ AssetAliases) Metadata(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // Url implements response to request for 'url' field.
 func (_ AssetAliases) Url(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -267,6 +280,13 @@ func _ObjTypeAssetNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeAssetMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(AssetMetadataFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Metadata(frp)
+	}
+}
+
 func _ObjTypeAssetUrlHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(AssetUrlFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -306,6 +326,13 @@ func _ObjectTypeAssetConfigFn() graphql1.ObjectConfig {
 				Name:              "id",
 				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
+			"metadata": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "metadata contains name, namespace, labels and annotations of the record",
+				Name:              "metadata",
+				Type:              graphql1.NewNonNull(graphql.OutputType("ObjectMeta")),
+			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -337,7 +364,8 @@ func _ObjectTypeAssetConfigFn() graphql1.ObjectConfig {
 		},
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node"),
-			graphql.Interface("Namespaced")},
+			graphql.Interface("Namespaced"),
+			graphql.Interface("HasMetadata")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -356,6 +384,7 @@ var _ObjectTypeAssetDesc = graphql.ObjectDesc{
 	FieldHandlers: map[string]graphql.FieldHandler{
 		"filters":   _ObjTypeAssetFiltersHandler,
 		"id":        _ObjTypeAssetIDHandler,
+		"metadata":  _ObjTypeAssetMetadataHandler,
 		"name":      _ObjTypeAssetNameHandler,
 		"namespace": _ObjTypeAssetNamespaceHandler,
 		"sha512":    _ObjTypeAssetSha512Handler,

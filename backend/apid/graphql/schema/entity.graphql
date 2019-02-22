@@ -2,12 +2,15 @@
 Entity is the Entity supplying the event. The default Entity for any
 Event is the running Agent process--if the Event is sent by an Agent.
 """
-type Entity implements Node, Namespaced, Silenceable {
+type Entity implements Node, Namespaced, Silenceable, HasMetadata {
   "The globally unique identifier of the record"
   id: ID!
 
   "Namespace in which this record resides"
   namespace: String!
+
+  "metadata contains name, namespace, labels and annotations of the record"
+  metadata: ObjectMeta!
 
   "unique identifier for the entity"
   name: String!

@@ -1,7 +1,7 @@
 """
 HookConfig is the specification of a hook
 """
-type HookConfig implements Node, Namespaced {
+type HookConfig implements Node, Namespaced, HasMetadata {
   "The globally unique identifier of the record"
   id: ID!
 
@@ -10,6 +10,9 @@ type HookConfig implements Node, Namespaced {
 
   "Name is the unique identifier for a hook"
   name: String!
+
+  "metadata contains name, namespace, labels and annotations of the record"
+  metadata: ObjectMeta!
 
   "Command is the command to be executed"
   command: String

@@ -21,6 +21,12 @@ type EventNamespaceFieldResolver interface {
 	Namespace(p graphql.ResolveParams) (string, error)
 }
 
+// EventMetadataFieldResolver implement to resolve requests for the Event's metadata field.
+type EventMetadataFieldResolver interface {
+	// Metadata implements response to request for metadata field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+}
+
 // EventTimestampFieldResolver implement to resolve requests for the Event's timestamp field.
 type EventTimestampFieldResolver interface {
 	// Timestamp implements response to request for timestamp field.
@@ -145,6 +151,7 @@ type EventSilencesFieldResolver interface {
 type EventFieldResolvers interface {
 	EventIDFieldResolver
 	EventNamespaceFieldResolver
+	EventMetadataFieldResolver
 	EventTimestampFieldResolver
 	EventEntityFieldResolver
 	EventCheckFieldResolver
@@ -228,6 +235,12 @@ func (_ EventAliases) Namespace(p graphql.ResolveParams) (string, error) {
 		return ret, errors.New("unable to coerce value for field 'namespace'")
 	}
 	return ret, err
+}
+
+// Metadata implements response to request for 'metadata' field.
+func (_ EventAliases) Metadata(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
 }
 
 // Timestamp implements response to request for 'timestamp' field.
@@ -350,6 +363,13 @@ func _ObjTypeEventNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EventNamespaceFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Namespace(frp)
+	}
+}
+
+func _ObjTypeEventMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EventMetadataFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Metadata(frp)
 	}
 }
 
@@ -483,6 +503,13 @@ func _ObjectTypeEventConfigFn() graphql1.ObjectConfig {
 				Name:              "isSilenced",
 				Type:              graphql1.NewNonNull(graphql1.Boolean),
 			},
+			"metadata": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "metadata contains name, namespace, labels and annotations of the record",
+				Name:              "metadata",
+				Type:              graphql1.NewNonNull(graphql.OutputType("ObjectMeta")),
+			},
 			"namespace": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -515,7 +542,8 @@ func _ObjectTypeEventConfigFn() graphql1.ObjectConfig {
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node"),
 			graphql.Interface("Namespaced"),
-			graphql.Interface("Silenceable")},
+			graphql.Interface("Silenceable"),
+			graphql.Interface("HasMetadata")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -540,6 +568,7 @@ var _ObjectTypeEventDesc = graphql.ObjectDesc{
 		"isNewIncident": _ObjTypeEventIsNewIncidentHandler,
 		"isResolution":  _ObjTypeEventIsResolutionHandler,
 		"isSilenced":    _ObjTypeEventIsSilencedHandler,
+		"metadata":      _ObjTypeEventMetadataHandler,
 		"namespace":     _ObjTypeEventNamespaceHandler,
 		"silences":      _ObjTypeEventSilencesHandler,
 		"timestamp":     _ObjTypeEventTimestampHandler,

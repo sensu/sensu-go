@@ -27,6 +27,12 @@ type SilencedNameFieldResolver interface {
 	Name(p graphql.ResolveParams) (string, error)
 }
 
+// SilencedMetadataFieldResolver implement to resolve requests for the Silenced's metadata field.
+type SilencedMetadataFieldResolver interface {
+	// Metadata implements response to request for metadata field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+}
+
 // SilencedExpireFieldResolver implement to resolve requests for the Silenced's expire field.
 type SilencedExpireFieldResolver interface {
 	// Expire implements response to request for expire field.
@@ -140,6 +146,7 @@ type SilencedFieldResolvers interface {
 	SilencedIDFieldResolver
 	SilencedNamespaceFieldResolver
 	SilencedNameFieldResolver
+	SilencedMetadataFieldResolver
 	SilencedExpireFieldResolver
 	SilencedExpiresFieldResolver
 	SilencedExpireOnResolveFieldResolver
@@ -234,6 +241,12 @@ func (_ SilencedAliases) Name(p graphql.ResolveParams) (string, error) {
 		return ret, errors.New("unable to coerce value for field 'name'")
 	}
 	return ret, err
+}
+
+// Metadata implements response to request for 'metadata' field.
+func (_ SilencedAliases) Metadata(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
 }
 
 // Expire implements response to request for 'expire' field.
@@ -354,6 +367,13 @@ func _ObjTypeSilencedNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeSilencedMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SilencedMetadataFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Metadata(frp)
+	}
+}
+
 func _ObjTypeSilencedExpireHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(SilencedExpireFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -463,6 +483,13 @@ func _ObjectTypeSilencedConfigFn() graphql1.ObjectConfig {
 				Name:              "id",
 				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
+			"metadata": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "metadata contains name, namespace, labels and annotations of the record",
+				Name:              "metadata",
+				Type:              graphql1.NewNonNull(graphql.OutputType("ObjectMeta")),
+			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -494,7 +521,8 @@ func _ObjectTypeSilencedConfigFn() graphql1.ObjectConfig {
 		},
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node"),
-			graphql.Interface("Namespaced")},
+			graphql.Interface("Namespaced"),
+			graphql.Interface("HasMetadata")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -518,6 +546,7 @@ var _ObjectTypeSilencedDesc = graphql.ObjectDesc{
 		"expireOnResolve": _ObjTypeSilencedExpireOnResolveHandler,
 		"expires":         _ObjTypeSilencedExpiresHandler,
 		"id":              _ObjTypeSilencedIDHandler,
+		"metadata":        _ObjTypeSilencedMetadataHandler,
 		"name":            _ObjTypeSilencedNameHandler,
 		"namespace":       _ObjTypeSilencedNamespaceHandler,
 		"reason":          _ObjTypeSilencedReasonHandler,
