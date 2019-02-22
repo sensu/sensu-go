@@ -10,6 +10,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Check results sent via the agent socket now support handlers.
 
+### Added
+- Additional additional check config and entity information to event details page.
+
 ## [5.2.1] - 2019-02-11
 
 ### Fixed
