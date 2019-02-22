@@ -48,7 +48,7 @@ const styles = theme => ({
   expand: { color: theme.palette.text.secondary },
 });
 
-class EventDetailsCheckResult extends React.PureComponent {
+class EventDetailsCheckSummary extends React.PureComponent {
   static propTypes = {
     check: PropTypes.object.isRequired,
     entity: PropTypes.object.isRequired,
@@ -58,12 +58,12 @@ class EventDetailsCheckResult extends React.PureComponent {
 
   static fragments = {
     event: gql`
-      fragment EventDetailsCheckResult_event on Event {
+      fragment EventDetailsCheckSummary_event on Event {
         isSilenced
       }
     `,
     check: gql`
-      fragment EventDetailsCheckResult_check on Check {
+      fragment EventDetailsCheckSummary_check on Check {
         status
         lastOK
         occurrences
@@ -83,7 +83,6 @@ class EventDetailsCheckResult extends React.PureComponent {
         cron
         timeout
         ttl
-        state
         totalStateChange
         roundRobin
         handlers {
@@ -103,7 +102,7 @@ class EventDetailsCheckResult extends React.PureComponent {
       }
     `,
     entity: gql`
-      fragment EventDetailsCheckResult_entity on Entity {
+      fragment EventDetailsCheckSummary_entity on Entity {
         name
         namespace
       }
@@ -455,4 +454,4 @@ class EventDetailsCheckResult extends React.PureComponent {
   }
 }
 
-export default withStyles(styles)(EventDetailsCheckResult);
+export default withStyles(styles)(EventDetailsCheckSummary);

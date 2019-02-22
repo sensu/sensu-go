@@ -40,7 +40,7 @@ const styles = theme => ({
   expand: { color: theme.palette.text.secondary },
 });
 
-class EventDetailsSummary extends React.Component {
+class EventDetailsEntitySummary extends React.Component {
   static propTypes = {
     classes: PropTypes.object.isRequired,
     entity: PropTypes.object.isRequired,
@@ -48,7 +48,7 @@ class EventDetailsSummary extends React.Component {
 
   static fragments = {
     entity: gql`
-      fragment EventDetailsSummary_entity on Entity {
+      fragment EventDetailsEntitySummary_entity on Entity {
         name
         entityClass
         subscriptions
@@ -301,4 +301,4 @@ class EventDetailsSummary extends React.Component {
   }
 }
 
-export default withStyles(styles)(EventDetailsSummary);
+export default withStyles(styles)(EventDetailsEntitySummary);

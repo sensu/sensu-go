@@ -6,11 +6,10 @@ import Content from "/components/Content";
 import Grid from "@material-ui/core/Grid";
 import Loader from "/components/util/Loader";
 import RelatedEntitiesCard from "/components/partials/RelatedEntitiesCard";
-import EntityDetailsInformation from "/components/partials/EntityDetailsContainer/EntityDetailsInformation";
 
-import CheckResult from "./EventDetailsCheckResult";
+import CheckResult from "./EventDetailsCheckSummary";
 import Toolbar from "./EventDetailsToolbar";
-import Summary from "./EventDetailsSummary";
+import EntitySummary from "./EventDetailsEntitySummary";
 
 class EventDetailsContainer extends React.Component {
   static propTypes = {
@@ -31,16 +30,15 @@ class EventDetailsContainer extends React.Component {
         timestamp
         deleted @client
         ...EventDetailsToolbar_event
-        ...EventDetailsCheckResult_event
+        ...EventDetailsCheckSummary_event
 
         check {
-          ...EventDetailsCheckResult_check
+          ...EventDetailsCheckSummary_check
         }
         entity {
-          ...EventDetailsCheckResult_entity
+          ...EventDetailsCheckSummary_entity
           ...RelatedEntitiesCard_entity
-          ...EventDetailsSummary_entity
-          ...EntityDetailsInformation_entity
+          ...EventDetailsEntitySummary_entity
         }
       }
 
@@ -48,8 +46,7 @@ class EventDetailsContainer extends React.Component {
       ${CheckResult.fragments.check}
       ${CheckResult.fragments.entity}
       ${RelatedEntitiesCard.fragments.entity}
-      ${EntityDetailsInformation.fragments.entity}
-      ${Summary.fragments.entity}
+      ${EntitySummary.fragments.entity}
       ${Toolbar.fragments.event}
     `,
   };
@@ -76,7 +73,7 @@ class EventDetailsContainer extends React.Component {
                 <RelatedEntitiesCard entity={event.entity} />
               </Grid>
               <Grid item xs={12} md={7}>
-                <Summary entity={event.entity} />
+                <EntitySummary entity={event.entity} />
               </Grid>
             </Grid>
           </React.Fragment>
