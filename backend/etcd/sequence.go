@@ -74,3 +74,50 @@ func Sequence(kv clientv3.KV, key string) (result string, err error) {
 
 	return buf.String(), nil
 }
+
+// Sequences is like Sequence, but returns a slice of sequences whose length is
+// equal to values.
+func Sequences(ctx context.Context, kv clientv3.KV, key string, values int) ([]string, error) {
+	// Get the current key, or initialize it to be the first item key
+	exists := clientv3.Compare(clientv3.Value(key), ">", string(initialItemKey))
+	put := clientv3.OpPut(key, string(initialItemKey))
+	get := clientv3.OpGet(key)
+
+	resp, err := kv.Txn(context.Background()).If(exists).Then(get).Else(put, get).Commit()
+	if err != nil {
+		return nil, fmt.Errorf("sequence error: %s", err)
+	}
+
+	respIdx := len(resp.Responses) - 1
+	value := resp.Responses[respIdx].GetResponseRange().Kvs[0].Value
+
+	// decode the key into an integer
+	var n uint64
+	if err := binary.Read(bytes.NewReader(value), binary.BigEndian, &n); err != nil {
+		return nil, fmt.Errorf("sequence error: %s", err)
+	}
+
+	var buf *bytes.Buffer
+	result := make([]string, values)
+	for i := range result {
+		buf = new(bytes.Buffer)
+		if err := binary.Write(buf, binary.BigEndian, n+1); err != nil {
+			return nil, fmt.Errorf("sequence error: %s", err)
+		}
+		result[i] = buf.String()
+		n++
+	}
+
+	notModified := clientv3.Compare(clientv3.Value(key), "=", string(value))
+	put = clientv3.OpPut(key, buf.String())
+
+	resp, err = kv.Txn(context.Background()).If(notModified).Then(put).Commit()
+	if err != nil {
+		return nil, fmt.Errorf("sequence error: %s", err)
+	}
+	if !resp.Succeeded {
+		return Sequences(ctx, kv, key, values)
+	}
+
+	return result, nil
+}

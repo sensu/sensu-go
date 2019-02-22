@@ -25,12 +25,6 @@ const (
 	EventClosing
 )
 
-var nextInRingOps = []clientv3.OpOption{
-	clientv3.WithPrefix(),
-	clientv3.WithLimit(1),
-	clientv3.WithSort(clientv3.SortByValue, clientv3.SortAscend),
-}
-
 func (e EventType) String() string {
 	switch e {
 	case EventAdd:
@@ -56,8 +50,9 @@ type Event struct {
 	// Type is the type of the event.
 	Type EventType
 
-	// Value is the ring item associated with the event.
-	Value string
+	// Values are the ring items associated with the event. For trigger events,
+	// the length of Values will be equal to the results per interval.
+	Values []string
 
 	// Err is any error that occurred while processing the event.
 	Err error
@@ -203,7 +198,7 @@ func (r *Ring) Remove(ctx context.Context, value string) error {
 
 	if resp.Succeeded {
 		// The item was going to be the next ring item, so advance the ring
-		if err := r.advanceRing(ctx, nil); err != nil {
+		if _, err := r.advanceRing(ctx, nil, 1); err != nil {
 			return err
 		}
 	}
@@ -219,9 +214,13 @@ func (r *Ring) Remove(ctx context.Context, value string) error {
 //
 // If the context is canceled, EventClosing will be sent on the channel, and it
 // will be closed.
-func (r *Ring) Watch(ctx context.Context) <-chan Event {
+//
+// The values parameter controls how many ring values the event will contain.
+// If the requested number of values is greater than the number of items in
+// the values will contain repetitions in order to satisfy the request.
+func (r *Ring) Watch(ctx context.Context, values int) <-chan Event {
 	c := make(chan Event, 1)
-	r.startWatchers(ctx, c)
+	r.startWatchers(ctx, c, values)
 	return c
 }
 
@@ -271,12 +270,13 @@ func (r *Ring) ensureActiveTrigger(ctx context.Context) error {
 	if has, err := r.hasTrigger(ctx); err != nil {
 		return err
 	} else if !has {
-		return r.advanceRing(ctx, nil)
+		_, err := r.advanceRing(ctx, nil, 1)
+		return err
 	}
 	return nil
 }
 
-func (r *Ring) startWatchers(ctx context.Context, ch chan<- Event) {
+func (r *Ring) startWatchers(ctx context.Context, ch chan<- Event, values int) {
 	itemsC := r.client.Watch(ctx, r.itemPrefix, clientv3.WithPrefix())
 	nextC := r.client.Watch(ctx, r.triggerPrefix, clientv3.WithPrefix(), clientv3.WithFilterPut())
 	if err := r.ensureActiveTrigger(ctx); err != nil {
@@ -302,7 +302,7 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan<- Event) {
 					notifyError(ch, err)
 					continue
 				}
-				r.handleRingTrigger(ctx, ch, response)
+				r.handleRingTrigger(ctx, ch, response, values)
 			}
 		}
 	}()
@@ -312,15 +312,20 @@ func notifyClosing(ch chan<- Event) {
 	ch <- Event{Type: EventClosing}
 }
 
-func (r *Ring) nextInRing(ctx context.Context) (*mvccpb.KeyValue, error) {
-	resp, err := r.client.Get(ctx, r.itemPrefix, nextInRingOps...)
+func nextInRingOps(n int) []clientv3.OpOption {
+	return []clientv3.OpOption{
+		clientv3.WithPrefix(),
+		clientv3.WithLimit(int64(n)),
+		clientv3.WithSort(clientv3.SortByValue, clientv3.SortAscend),
+	}
+}
+
+func (r *Ring) nextInRing(ctx context.Context, n int) ([]*mvccpb.KeyValue, error) {
+	resp, err := r.client.Get(ctx, r.itemPrefix, nextInRingOps(n)...)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't get next item in ring: %s", err)
 	}
-	if len(resp.Kvs) == 0 {
-		return nil, nil
-	}
-	return resp.Kvs[0], nil
+	return resp.Kvs, nil
 }
 
 func (r *Ring) bumpSequence(ctx context.Context, value string) error {
@@ -335,16 +340,35 @@ func (r *Ring) bumpSequence(ctx context.Context, value string) error {
 	return nil
 }
 
-func (r *Ring) advanceRing(ctx context.Context, prev *mvccpb.KeyValue) error {
-	if prev != nil {
-		if err := r.bumpSequence(ctx, path.Base(string(prev.Key))); err != nil {
-			return err
-		}
+func getSequenceOps(items []*mvccpb.KeyValue, seqs []string) ([]clientv3.Op, []clientv3.Cmp) {
+	if len(items) != len(seqs) {
+		panic("sanity check failed")
 	}
+	var ops []clientv3.Op
+	var cmps []clientv3.Cmp
+	for i, kv := range items {
+		key := string(kv.Key)
+		cmps = append(cmps, clientv3.Compare(clientv3.Version(key), "=", kv.Version))
+		ops = append(ops, clientv3.OpPut(key, seqs[i]))
+	}
+	return ops, cmps
+}
 
+func repeatKVs(kvs []*mvccpb.KeyValue, items int) []*mvccpb.KeyValue {
+	result := make([]*mvccpb.KeyValue, 0, items)
+	for i := 0; i < (items / len(kvs)); i++ {
+		result = append(result, kvs...)
+	}
+	for i := 0; i < (items % len(kvs)); i++ {
+		result = append(result, kvs[i])
+	}
+	return result
+}
+
+func (r *Ring) advanceRing(ctx context.Context, prevKv *mvccpb.KeyValue, numValues int) ([]*mvccpb.KeyValue, error) {
 	lease, err := r.grant(ctx)
 	if err != nil {
-		return fmt.Errorf("couldn't advance ring: %s", err)
+		return nil, fmt.Errorf("couldn't advance ring: %s", err)
 	}
 
 	txnSuccess := false
@@ -354,38 +378,76 @@ func (r *Ring) advanceRing(ctx context.Context, prev *mvccpb.KeyValue) error {
 		}
 	}()
 
-	item, err := r.nextInRing(ctx)
+	items, err := r.nextInRing(ctx, numValues+1)
 	if err != nil {
-		return fmt.Errorf("couldn't advance ring: %s", err)
+		return nil, fmt.Errorf("couldn't advance ring: %s", err)
 	}
 
-	if item == nil {
-		// The ring is now empty
-		return nil
+	fmt.Println("len items", len(items))
+
+	if len(items) == 0 {
+		// The ring is empty
+		return nil, nil
 	}
 
-	nextValue := path.Base(string(item.Key))
+	if len(items) == 1 {
+		// Ring with only one item, need to repeat the item for the next round
+		items = append(items, items...)
+	}
+
+	totalItems := len(items)
+	repeatItems := repeatKVs(items, numValues)
+	truncItems := repeatItems[len(repeatItems)-numValues:]
+
+	if prevKv != nil && path.Base(string(prevKv.Key)) != path.Base(string(items[0].Key)) {
+		// Another client has already advanced the ring, there is no need to
+		// continue.
+		return repeatItems, nil
+	}
+
+	seqs, err := etcd.Sequences(ctx, r.client, r.keySeqKey, numValues)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't advance ring: %s", err)
+	}
+
+	if len(seqs) > totalItems {
+		seqs = seqs[len(seqs)-totalItems:]
+	}
+
+	if len(seqs) != totalItems-1 {
+		fmt.Println(len(seqs), totalItems-1)
+		panic("len(seqs) != totalItems-1")
+	}
+
+	fmt.Println("len truncItems", len(truncItems))
+	sequenceOps, sequenceCmps := getSequenceOps(truncItems, seqs)
+
+	nextValue := path.Base(string(items[len(items)-1].Key))
 	triggerKey := path.Join(r.triggerPrefix, nextValue)
 	triggerOp := clientv3.OpPut(triggerKey, "", clientv3.WithLease(lease.ID))
 	triggerCmp := clientv3.Compare(clientv3.Version(triggerKey), "=", 0)
 
-	resp, err := r.client.Txn(ctx).If(triggerCmp).Then(triggerOp).Commit()
+	ops := append(sequenceOps, triggerOp)
+	cmps := append(sequenceCmps, triggerCmp)
+
+	resp, err := r.client.Txn(ctx).If(cmps...).Then(ops...).Commit()
 	if err != nil {
-		return fmt.Errorf("couldn't advance ring: %s", err)
+		return nil, fmt.Errorf("couldn't advance ring: %s", err)
 	}
 
 	// Captured by the deferred function
 	txnSuccess = resp.Succeeded
 
-	return nil
+	return repeatItems, nil
 }
 
-func (r *Ring) handleRingTrigger(ctx context.Context, ch chan<- Event, response clientv3.WatchResponse) {
+func (r *Ring) handleRingTrigger(ctx context.Context, ch chan<- Event, response clientv3.WatchResponse, values int) {
 	for _, event := range response.Events {
-		notifyTrigger(ch, event)
-		if err := r.advanceRing(ctx, event.Kv); err != nil {
+		items, err := r.advanceRing(ctx, event.Kv, values)
+		if err != nil {
 			notifyError(ch, err)
 		}
+		notifyTrigger(ch, items)
 	}
 }
 
@@ -407,23 +469,27 @@ func notifyAddRemove(ch chan<- Event, response clientv3.WatchResponse) {
 			eventType = EventAdd
 		}
 		ch <- Event{
-			Type:  eventType,
-			Value: path.Base(string(event.Kv.Key)),
+			Type:   eventType,
+			Values: []string{path.Base(string(event.Kv.Key))},
 		}
 	}
 }
 
 // notifyTrigger sents EventTrigger events to the channel
-func notifyTrigger(ch chan<- Event, event *clientv3.Event) {
-	if event.Kv == nil {
+func notifyTrigger(ch chan<- Event, items []*mvccpb.KeyValue) {
+	if len(items) == 0 {
 		ch <- Event{
-			Err: errors.New("nil Kv from next ring watcher"),
+			Err: errors.New("trigger without items"),
 		}
 		return
 	}
+	values := make([]string, len(items))
+	for i := range values {
+		values[i] = path.Base(string(items[i].Key))
+	}
 	ch <- Event{
-		Type:  EventTrigger,
-		Value: path.Base(string(event.Kv.Key)),
+		Type:   EventTrigger,
+		Values: values,
 	}
 }
 

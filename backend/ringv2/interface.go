@@ -13,7 +13,12 @@ type Interface interface {
 	// Watch returns a channel that will receive all events that occur in the
 	// ring. The events will be one of the defined EventTypes. When the given
 	// context is canceled, the watcher will terminate.
-	Watch(context.Context) <-chan Event
+	//
+	// The items parameter controls the number of values that will be in the
+	// events. If there are fewer items in the ring than the requested items,
+	// then the events will contain repetitions in order to satisfy the number
+	// of items requested.
+	Watch(ctx context.Context, items int) <-chan Event
 
 	// SetInterval sets the ring's interval. After setting the interval,
 	// future trigger events will occur at least the interval seconds apart.

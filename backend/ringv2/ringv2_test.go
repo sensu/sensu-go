@@ -114,7 +114,7 @@ func TestWatchAddRemove(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	wc := ring.Watch(ctx)
+	wc := ring.Watch(ctx, 1)
 
 	if err := ring.Add(ctx, "foo"); err != nil {
 		t.Fatal(err)
@@ -123,8 +123,8 @@ func TestWatchAddRemove(t *testing.T) {
 	got := <-wc
 
 	want := Event{
-		Type:  EventAdd,
-		Value: "foo",
+		Type:   EventAdd,
+		Values: []string{"foo"},
 	}
 
 	if !reflect.DeepEqual(got, want) {
@@ -138,8 +138,8 @@ func TestWatchAddRemove(t *testing.T) {
 	got = <-wc
 
 	want = Event{
-		Type:  EventRemove,
-		Value: "foo",
+		Type:   EventRemove,
+		Values: []string{"foo"},
 	}
 
 	if !reflect.DeepEqual(got, want) {
@@ -173,7 +173,7 @@ func TestWatchTrigger(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	wc := ring.Watch(ctx)
+	wc := ring.Watch(ctx, 1)
 
 	if err := ring.Add(ctx, "foo"); err != nil {
 		t.Fatal(err)
@@ -185,8 +185,8 @@ func TestWatchTrigger(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		got := <-wc
 		want := Event{
-			Type:  EventTrigger,
-			Value: "foo",
+			Type:   EventTrigger,
+			Values: []string{"foo"},
 		}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("bad event: got %v, want %v", got, want)
@@ -214,7 +214,7 @@ func TestRingOrdering(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	wc := ring.Watch(ctx)
+	wc := ring.Watch(ctx, 1)
 
 	items := []string{
 		"mulder", "scully", "skinner",
@@ -240,8 +240,8 @@ func TestRingOrdering(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		got := <-wc
 		want := Event{
-			Type:  EventTrigger,
-			Value: items[i%len(items)],
+			Type:   EventTrigger,
+			Values: []string{items[i%len(items)]},
 		}
 		if !reflect.DeepEqual(got, want) {
 			t.Fatalf("bad event: got %v, want %v", got, want)
@@ -270,9 +270,9 @@ func TestConcurrentRingOrdering(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	wc1 := ring.Watch(ctx)
-	wc2 := ring.Watch(ctx)
-	wc3 := ring.Watch(ctx)
+	wc1 := ring.Watch(ctx, 1)
+	wc2 := ring.Watch(ctx, 1)
+	wc3 := ring.Watch(ctx, 1)
 
 	items := []string{
 		"mulder", "scully", "skinner",
@@ -296,8 +296,8 @@ func TestConcurrentRingOrdering(t *testing.T) {
 			got := <-wc
 
 			want := Event{
-				Type:  EventAdd,
-				Value: items[i],
+				Type:   EventAdd,
+				Values: []string{items[i]},
 			}
 
 			if !reflect.DeepEqual(got, want) {
@@ -322,11 +322,11 @@ func TestConcurrentRingOrdering(t *testing.T) {
 	wg.Wait()
 
 	exp := []Event{
-		{Type: EventTrigger, Value: "mulder"},
-		{Type: EventTrigger, Value: "scully"},
-		{Type: EventTrigger, Value: "skinner"},
-		{Type: EventTrigger, Value: "mulder"},
-		{Type: EventTrigger, Value: "scully"},
+		{Type: EventTrigger, Values: []string{"mulder"}},
+		{Type: EventTrigger, Values: []string{"scully"}},
+		{Type: EventTrigger, Values: []string{"skinner"}},
+		{Type: EventTrigger, Values: []string{"mulder"}},
+		{Type: EventTrigger, Values: []string{"scully"}},
 	}
 
 	for i := range events {
@@ -366,18 +366,18 @@ func eventTest(t *testing.T, want []Event) {
 		t.Fatal(err)
 	}
 
-	wc := ring.Watch(ctx)
+	wc := ring.Watch(ctx, 1)
 
 	var got []Event
 
 	for _, event := range want {
 		switch event.Type {
 		case EventAdd:
-			if err := ring.Add(ctx, event.Value); err != nil {
+			if err := ring.Add(ctx, event.Values[0]); err != nil {
 				t.Fatal(err)
 			}
 		case EventRemove:
-			if err := ring.Remove(ctx, event.Value); err != nil {
+			if err := ring.Remove(ctx, event.Values[0]); err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -391,25 +391,25 @@ func eventTest(t *testing.T, want []Event) {
 
 func TestRemoveNextTrigger(t *testing.T) {
 	eventTest(t, []Event{
-		{Type: EventAdd, Value: "mulder"},
-		{Type: EventAdd, Value: "scully"},
-		{Type: EventAdd, Value: "skinner"},
-		{Type: EventTrigger, Value: "mulder"},
-		{Type: EventTrigger, Value: "scully"},
-		{Type: EventRemove, Value: "skinner"},
-		{Type: EventTrigger, Value: "mulder"},
+		{Type: EventAdd, Values: []string{"mulder"}},
+		{Type: EventAdd, Values: []string{"scully"}},
+		{Type: EventAdd, Values: []string{"skinner"}},
+		{Type: EventTrigger, Values: []string{"mulder"}},
+		{Type: EventTrigger, Values: []string{"scully"}},
+		{Type: EventRemove, Values: []string{"skinner"}},
+		{Type: EventTrigger, Values: []string{"mulder"}},
 	})
 }
 
 func TestWatchAndAddAfter(t *testing.T) {
 	eventTest(t, []Event{
-		{Type: EventAdd, Value: "byers"},
-		{Type: EventAdd, Value: "frohike"},
-		{Type: EventTrigger, Value: "byers"},
-		{Type: EventAdd, Value: "langly"},
-		{Type: EventTrigger, Value: "frohike"},
-		{Type: EventTrigger, Value: "byers"},
-		{Type: EventTrigger, Value: "langly"},
+		{Type: EventAdd, Values: []string{"byers"}},
+		{Type: EventAdd, Values: []string{"frohike"}},
+		{Type: EventTrigger, Values: []string{"byers"}},
+		{Type: EventAdd, Values: []string{"langly"}},
+		{Type: EventTrigger, Values: []string{"frohike"}},
+		{Type: EventTrigger, Values: []string{"byers"}},
+		{Type: EventTrigger, Values: []string{"langly"}},
 	})
 }
 
@@ -438,10 +438,10 @@ func TestWatchAfterAdd(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	wc := ring.Watch(ctx)
+	wc := ring.Watch(ctx, 1)
 
 	got := <-wc
-	want := Event{Type: EventTrigger, Value: "fowley"}
+	want := Event{Type: EventTrigger, Values: []string{"fowley"}}
 
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("bad event: got %v, want %v", got, want)
@@ -469,7 +469,7 @@ func GetSetInterval(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	wc := ring.Watch(ctx)
+	wc := ring.Watch(ctx, 1)
 
 	if err := ring.Add(ctx, "covarrubias"); err != nil {
 		t.Fatal(err)
@@ -518,7 +518,7 @@ func TestLeaseExpiryWithNoWatcher(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	wc := ring.Watch(ctx)
+	wc := ring.Watch(ctx, 1)
 
 	customCtx, customCancel := context.WithCancel(context.Background())
 	defer customCancel()
@@ -537,12 +537,58 @@ func TestLeaseExpiryWithNoWatcher(t *testing.T) {
 
 	<-triggerWatch
 
-	wc = ring.Watch(customCtx)
+	wc = ring.Watch(customCtx, 1)
 
 	got := <-wc
-	want := Event{Type: EventTrigger, Value: "cgb"}
+	want := Event{Type: EventTrigger, Values: []string{"cgb"}}
 
 	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("bad event: got %v, want %v", got, want)
+	}
+}
+
+func TestMultipleItems(t *testing.T) {
+	t.Parallel()
+
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+
+	client, err := e.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Close()
+
+	ring := New(client, t.Name())
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	if err := ring.SetInterval(ctx, 5); err != nil {
+		t.Fatal(err)
+	}
+
+	wc := ring.Watch(ctx, 3)
+
+	items := []string{"mulder", "scully", "skinner", "frohike", "byers"}
+
+	for _, item := range items {
+		if err := ring.Add(ctx, item); err != nil {
+			t.Fatal(err)
+		}
+		// drain add event
+		<-wc
+	}
+
+	event := <-wc
+
+	if got, want := event.Values, []string{"mulder", "scully", "skinner"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("bad values: got %v, want %v", got, want)
+	}
+
+	event = <-wc
+
+	if got, want := event.Values, []string{"frohike", "byers", "mulder"}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("bad values: got %v, want %v", got, want)
 	}
 }
