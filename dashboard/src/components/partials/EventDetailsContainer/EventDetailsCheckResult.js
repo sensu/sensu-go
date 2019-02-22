@@ -83,6 +83,8 @@ class EventDetailsCheckResult extends React.PureComponent {
         cron
         timeout
         ttl
+        state
+        totalStateChange
         roundRobin
         handlers {
           name
@@ -170,6 +172,14 @@ class EventDetailsCheckResult extends React.PureComponent {
                     ({statusCode})
                   </DictionaryValue>
                 </DictionaryEntry>
+                <DictionaryEntry>
+                  <DictionaryKey>Total State Change</DictionaryKey>
+                  <DictionaryValue>
+                    {entity.totalStateChange || 0}
+                    {"%"}
+                  </DictionaryValue>
+                </DictionaryEntry>
+
                 {check.silenced.length > 0 && (
                   <DictionaryEntry>
                     <DictionaryKey>Silenced By</DictionaryKey>
@@ -367,6 +377,16 @@ class EventDetailsCheckResult extends React.PureComponent {
                 </Grid>
                 <Grid item xs={12} sm={6}>
                   <Dictionary>
+                    <DictionaryEntry>
+                      <DictionaryKey>STDIN</DictionaryKey>
+                      <DictionaryValue>
+                        <CodeHighlight
+                          language="bash"
+                          component={Code}
+                          code={check.stdin || false}
+                        />
+                      </DictionaryValue>
+                    </DictionaryEntry>
                     <DictionaryEntry>
                       <DictionaryKey>Schedule</DictionaryKey>
                       <DictionaryValue>

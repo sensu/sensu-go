@@ -7,12 +7,6 @@ import Grid from "@material-ui/core/Grid";
 import Loader from "/components/util/Loader";
 import RelatedEntitiesCard from "/components/partials/RelatedEntitiesCard";
 import EntityDetailsInformation from "/components/partials/EntityDetailsContainer/EntityDetailsInformation";
-import ExpansionPanel from "@material-ui/core/ExpansionPanel";
-import ExpansionPanelSummary from "@material-ui/core/ExpansionPanelSummary";
-import ExpansionPanelDetails from "@material-ui/core/ExpansionPanelDetails";
-import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
-import Typography from "@material-ui/core/Typography";
-import Card from "@material-ui/core/Card";
 
 import CheckResult from "./EventDetailsCheckResult";
 import Toolbar from "./EventDetailsToolbar";
