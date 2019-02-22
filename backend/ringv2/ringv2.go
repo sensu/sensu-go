@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
@@ -89,17 +88,6 @@ func New(client *clientv3.Client, storePath string) *Ring {
 		keySeqKey:     path.Join(storePath, "seq"),
 		intervalKey:   path.Join(storePath, "interval"),
 		triggerPrefix: path.Join(storePath, "triggers"),
-	}
-}
-
-// dump is for debugging
-func (r *Ring) dump(ctx context.Context, w io.Writer) {
-	resp, err := r.client.Get(ctx, path.Dir(r.itemPrefix), clientv3.WithPrefix())
-	if err != nil {
-		panic(err)
-	}
-	for _, kv := range resp.Kvs {
-		fmt.Fprintf(w, "%s: %s (%x)\n", string(kv.Key), string(kv.Value), kv.Value)
 	}
 }
 
@@ -328,22 +316,7 @@ func (r *Ring) nextInRing(ctx context.Context, n int) ([]*mvccpb.KeyValue, error
 	return resp.Kvs, nil
 }
 
-func (r *Ring) bumpSequence(ctx context.Context, value string) error {
-	seq, err := etcd.Sequence(r.client, r.keySeqKey)
-	if err != nil {
-		return fmt.Errorf("couldn't advance ring: %s", err)
-	}
-	key := path.Join(r.itemPrefix, value)
-	if _, err := r.client.Put(ctx, key, seq); err != nil {
-		return fmt.Errorf("couldn't advance ring: %s", err)
-	}
-	return nil
-}
-
 func getSequenceOps(items []*mvccpb.KeyValue, seqs []string) ([]clientv3.Op, []clientv3.Cmp) {
-	if len(items) != len(seqs) {
-		panic("sanity check failed")
-	}
 	var ops []clientv3.Op
 	var cmps []clientv3.Cmp
 	for i, kv := range items {
@@ -383,8 +356,6 @@ func (r *Ring) advanceRing(ctx context.Context, prevKv *mvccpb.KeyValue, numValu
 		return nil, fmt.Errorf("couldn't advance ring: %s", err)
 	}
 
-	fmt.Println("len items", len(items))
-
 	if len(items) == 0 {
 		// The ring is empty
 		return nil, nil
@@ -414,12 +385,6 @@ func (r *Ring) advanceRing(ctx context.Context, prevKv *mvccpb.KeyValue, numValu
 		seqs = seqs[len(seqs)-totalItems:]
 	}
 
-	if len(seqs) != totalItems-1 {
-		fmt.Println(len(seqs), totalItems-1)
-		panic("len(seqs) != totalItems-1")
-	}
-
-	fmt.Println("len truncItems", len(truncItems))
 	sequenceOps, sequenceCmps := getSequenceOps(truncItems, seqs)
 
 	nextValue := path.Base(string(items[len(items)-1].Key))
