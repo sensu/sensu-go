@@ -38,13 +38,14 @@ import ExpansionPanel from "@material-ui/core/ExpansionPanel";
 import ExpansionPanelSummary from "@material-ui/core/ExpansionPanelSummary";
 import ExpansionPanelDetails from "@material-ui/core/ExpansionPanelDetails";
 
-const styles = () => ({
+const styles = theme => ({
   alignmentFix: {
     boxSizing: "border-box",
   },
   fullWidth: {
     width: "100%",
   },
+  expand: { color: theme.palette.text.secondary },
 });
 
 class EventDetailsCheckResult extends React.PureComponent {
@@ -269,12 +270,11 @@ class EventDetailsCheckResult extends React.PureComponent {
                 Check did not write to STDOUT.
               </Typography>
             </CardContent>
-            <Divider />
           </React.Fragment>
         )}
         <ExpansionPanel>
           <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="button">
+            <Typography variant="button" className={classes.expand}>
               Check Configuration Summary
             </Typography>
           </ExpansionPanelSummary>

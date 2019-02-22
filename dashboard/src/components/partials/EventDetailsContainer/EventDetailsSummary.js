@@ -3,15 +3,12 @@ import PropTypes from "prop-types";
 import gql from "graphql-tag";
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
-import CronDescriptor from "/components/partials/CronDescriptor";
 import Divider from "@material-ui/core/Divider";
 import Dictionary, {
   DictionaryKey,
   DictionaryValue,
   DictionaryEntry,
 } from "/components/Dictionary";
-import CodeBlock from "/components/CodeBlock";
-import CodeHighlight from "/components/CodeHighlight/CodeHighlight";
 import Maybe from "/components/Maybe";
 import InlineLink from "/components/InlineLink";
 import Typography from "@material-ui/core/Typography";
@@ -19,8 +16,6 @@ import Tooltip from "@material-ui/core/Tooltip";
 import SilencedIcon from "/icons/Silence";
 import Grid from "@material-ui/core/Grid";
 import StatusIcon from "/components/CheckStatusIcon";
-import List from "@material-ui/core/List";
-import ListItem, { ListItemTitle } from "/components/DetailedListItem";
 import ExpandMoreIcon from "@material-ui/icons/ExpandMore";
 import ExpansionPanel from "@material-ui/core/ExpansionPanel";
 import ExpansionPanelSummary from "@material-ui/core/ExpansionPanelSummary";
@@ -37,16 +32,16 @@ const Strong = withStyles(() => ({
   },
 }))(Typography);
 
-const styles = () => ({
+const styles = theme => ({
   smaller: { width: "20%" },
   fullWidth: {
     width: "100%",
   },
+  expand: { color: theme.palette.text.secondary },
 });
 
 class EventDetailsSummary extends React.Component {
   static propTypes = {
-    check: PropTypes.object.isRequired,
     classes: PropTypes.object.isRequired,
     entity: PropTypes.object.isRequired,
   };
@@ -167,7 +162,9 @@ class EventDetailsSummary extends React.Component {
         </CardContent>
         <ExpansionPanel>
           <ExpansionPanelSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography variant="button">More</Typography>
+            <Typography variant="button" className={classes.expand}>
+              More
+            </Typography>
           </ExpansionPanelSummary>
           <ExpansionPanelDetails>
             <Grid container spacing={0}>
