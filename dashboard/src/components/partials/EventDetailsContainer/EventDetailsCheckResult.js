@@ -284,6 +284,20 @@ class EventDetailsCheckResult extends React.PureComponent {
                 <Grid item xs={12} sm={6}>
                   <Dictionary>
                     <DictionaryEntry>
+                      <DictionaryKey>Check</DictionaryKey>
+                      <DictionaryValue>
+                        {check.name !== "keepalive" ? (
+                          <InlineLink
+                            to={`/${entity.namespace}/checks/${check.name}`}
+                          >
+                            {check.name}
+                          </InlineLink>
+                        ) : (
+                          check.name
+                        )}
+                      </DictionaryValue>
+                    </DictionaryEntry>
+                    <DictionaryEntry>
                       <DictionaryKey>Command</DictionaryKey>
                       <DictionaryValue explicitRightMargin>
                         <CodeHighlight
