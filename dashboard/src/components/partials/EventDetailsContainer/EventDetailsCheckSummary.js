@@ -382,7 +382,7 @@ class EventDetailsCheckSummary extends React.PureComponent {
                         <CodeHighlight
                           language="bash"
                           component={Code}
-                          code={check.stdin || false}
+                          code={check.stdin || "false"}
                         />
                       </DictionaryValue>
                     </DictionaryEntry>

@@ -246,7 +246,7 @@ class EventDetailsEntitySummary extends React.Component {
               // interfaces.
               intr.mac &&
               intr.addresses.length > 0 && (
-                <ExpansionPanelDetails>
+                <ExpansionPanelDetails key={intr.name}>
                   <Grid item xs={12} sm={6}>
                     <Dictionary>
                       <DictionaryEntry>
