@@ -37,7 +37,7 @@ export default {
       },
       setLocalNetworkOffline: (
         _: mixed,
-        { offline }: { offline: Boolean },
+        { offline }: { offline: boolean },
         { cache }: Context,
       ) => {
         setOffline(cache, offline);
