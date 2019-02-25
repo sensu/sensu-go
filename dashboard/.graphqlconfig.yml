@@ -1,1 +1,1 @@
-schemaPath: './src/apollo/schema/combined.graphql'
+schemaPath: "./src/schema/combined.graphql"

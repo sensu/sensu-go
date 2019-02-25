@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover">
+
+    <!-- generic -->
+    <link rel="icon" href="${require('./favicon-32.png')}" sizes="32x32">
+    <link rel="icon" href="${require('./favicon-180.png')}" sizes="180x180">
+    <link rel="icon" href="${require('./favicon-196.png')}" sizes="196x196">
+
+    <!-- Android -->
+    <link rel="shortcut icon" href="${require('./favicon-196.png')}">
+
+    <!-- iOS -->
+    <link rel="apple-touch-icon" href="${require('./touch-icon-iphone.png')}" sizes="180x180">
+
+    <!-- https://developer.apple.com/library/content/documentation/AppleApplications/Reference/SafariWebContent/ConfiguringWebApplications/ConfiguringWebApplications.html -->
+    <link rel="mask-icon" href="${require('./pinnedtab.svg')}" color="#97C673">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="format-detection" content="telephone=no">
+
+    <!-- https://developers.google.com/web/fundamentals/engage-and-retain/web-app-manifest/ -->
+    <meta name="theme-color" content="#2D3555">
+    <link rel="manifest" href="${require('./manifest.macro.js')}">
+
+    <!-- Windows 8.1 + IE11 and above -->
+    <meta name="msapplication-config" content="${require('./browserconfig.macro.js')}" />
+
+    <title>Sensu</title>
+  </head>
+  <body>
+    <noscript>
+      You need to enable JavaScript to run this app.
+    </noscript>
+    <div id="root" class="root"></div>
+  </body>
+</html>

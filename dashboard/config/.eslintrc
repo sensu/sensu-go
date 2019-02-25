@@ -1,0 +1,6 @@
+env:
+  node: true
+globals:
+  require: false
+rules:
+  global-require: 0

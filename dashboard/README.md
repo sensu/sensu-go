@@ -49,7 +49,7 @@
 ### Running Locally
 
 1. Ensure that you have a local instance of the backend running.
-1. `yarn start` to start the development server.
+1. `yarn build && yarn start` to start the development server.
 1. A browser window should open with the web application. If not, open
    `http://localhost:3000` in your browser of choice.
 
