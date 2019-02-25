@@ -3,6 +3,18 @@ import type { ApolloCache } from "react-apollo";
 
 type Context = { cache: ApolloCache<mixed> };
 
+export const setOffline = (cache: ApolloCache<mixed>, offline: boolean) => {
+  const data = {
+    localNetwork: {
+      __typename: "LocalNetwork",
+      offline,
+      retry: false,
+    },
+  };
+
+  cache.writeData({ data });
+};
+
 export default {
   defaults: {
     localNetwork: {
@@ -28,14 +40,7 @@ export default {
         { offline }: { offline: Boolean },
         { cache }: Context,
       ) => {
-        const data = {
-          localNetwork: {
-            __typename: "LocalNetwork",
-            offline,
-            retry: false,
-          },
-        };
-        cache.writeData({ data });
+        setOffline(cache, offline);
         return null;
       },
     },
