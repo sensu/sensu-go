@@ -4,7 +4,7 @@ import { graphql } from "react-apollo";
 import gql from "graphql-tag";
 
 import BannerSink from "/components/relocation/BannerSink";
-import Banner from "/components/relocation/Banner";
+import RetryConnectionBanner from "/components/relocation/RetryConnectionBanner";
 
 class GlobalAlert extends React.PureComponent {
   static propTypes = {
@@ -19,7 +19,7 @@ class GlobalAlert extends React.PureComponent {
         {data.localNetwork &&
           data.localNetwork.offline && (
             <BannerSink>
-              <Banner variant="warning" message="offline" />
+              <RetryConnectionBanner />
             </BannerSink>
           )}
       </React.Fragment>

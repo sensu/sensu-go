@@ -22,7 +22,7 @@ class RetryConnectionBanner extends React.PureComponent {
       <Banner
         // TODO: make message better by linking to a troubleshooting guide
         // or use NetworkInformation API: https://developer.mozilla.org/en-US/docs/Web/API/NetworkInformation
-        message="You've lost network connection. Check your network connection or the server."
+        message="You are offline. Live updates are currently disabled."
         variant="warning"
         actions={
           <Button

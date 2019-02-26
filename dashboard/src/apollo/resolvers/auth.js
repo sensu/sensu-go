@@ -65,7 +65,6 @@ export default {
           password,
         }).then(
           handleTokens(cache, "CreateTokensMutation"),
-
           handleError(cache, "CreateTokensMutation"),
         ),
 
