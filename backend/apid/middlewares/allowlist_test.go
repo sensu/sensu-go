@@ -6,17 +6,17 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestAllowList(t *testing.T) {
 	// Create a token
-	user := &types.User{Username: "foo"}
-	token, tokenString, _ := jwt.AccessToken(user)
-	claims, _ := jwt.GetClaims(token)
+	claims := v2.FixtureClaims("foo", nil)
+	_, tokenString, _ := jwt.AccessToken(claims)
 
 	store := &mockstore.MockStore{}
 	store.On("GetToken", claims.Subject, claims.Id).Return(claims, nil)
@@ -38,12 +38,12 @@ func TestAllowList(t *testing.T) {
 
 func TestMissingTokenFromAllowList(t *testing.T) {
 	// Create a token
-	user := &types.User{Username: "foo"}
-	token, tokenString, _ := jwt.AccessToken(user)
-	claims, _ := jwt.GetClaims(token)
+	claims := v2.FixtureClaims("bar", nil)
+	_, tokenString, _ := jwt.AccessToken(claims)
 
+	sErr := &store.ErrNotFound{}
 	store := &mockstore.MockStore{}
-	store.On("GetToken", claims.Subject, claims.Id).Return(claims, fmt.Errorf("error"))
+	store.On("GetToken", claims.Subject, claims.Id).Return(claims, sErr)
 
 	auth := Authentication{}
 	allow := AllowList{Store: store}

@@ -2,7 +2,8 @@ package agent
 
 import (
 	"fmt"
-	"time"
+
+	time "github.com/echlebek/timeproxy"
 
 	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types/v1"
@@ -73,6 +74,11 @@ func translateToEvent(a *Agent, result v1.CheckResult, event *v2.Event) error {
 		}
 	}
 
+	handlers := result.Handlers
+	if len(handlers) == 0 && result.Handler != "" {
+		handlers = append(handlers, result.Handler)
+	}
+
 	check := &v2.Check{
 		ObjectMeta:    v2.NewObjectMeta(result.Name, agentEntity.Namespace),
 		Status:        result.Status,
@@ -83,6 +89,7 @@ func translateToEvent(a *Agent, result v1.CheckResult, event *v2.Event) error {
 		Executed:      result.Executed,
 		Duration:      result.Duration,
 		Output:        result.Output,
+		Handlers:      handlers,
 	}
 
 	// add config and check values to the 2.x event

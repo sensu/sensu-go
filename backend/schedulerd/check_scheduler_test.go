@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
@@ -18,7 +19,7 @@ import (
 
 type TestCheckScheduler struct {
 	check     *types.CheckConfig
-	exec      *CheckExecutor
+	exec      Executor
 	msgBus    *messaging.WizardBus
 	scheduler *CheckScheduler
 	channel   chan interface{}
@@ -28,7 +29,7 @@ func (tcs *TestCheckScheduler) Receiver() chan<- interface{} {
 	return tcs.channel
 }
 
-func newScheduler(t *testing.T, ctx context.Context) *TestCheckScheduler {
+func newScheduler(t *testing.T, ctx context.Context, executor string) *TestCheckScheduler {
 	t.Helper()
 
 	assert := assert.New(t)
@@ -56,8 +57,13 @@ func newScheduler(t *testing.T, ctx context.Context) *TestCheckScheduler {
 
 	assert.NoError(scheduler.msgBus.Start())
 
-	roundRobin := newRoundRobinScheduler(ctx, scheduler.msgBus)
-	scheduler.exec = NewCheckExecutor(scheduler.msgBus, roundRobin, "default", store)
+	switch executor {
+	case "adhoc":
+		scheduler.exec = NewAdhocRequestExecutor(ctx, store, &queue.Memory{}, scheduler.msgBus)
+	default:
+		roundRobin := newRoundRobinScheduler(ctx, scheduler.msgBus)
+		scheduler.exec = NewCheckExecutor(scheduler.msgBus, roundRobin, "default", store)
+	}
 
 	return scheduler
 }
@@ -68,7 +74,7 @@ func TestCheckSchedulerInterval(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newScheduler(t, ctx)
+	scheduler := newScheduler(t, ctx, "check")
 
 	// Set interval to smallest valid value
 	check := scheduler.check
@@ -95,7 +101,7 @@ func TestCheckSchedulerInterval(t *testing.T) {
 		wg.Done()
 	}()
 
-	assert.NoError(scheduler.scheduler.Start())
+	scheduler.scheduler.Start()
 	mockTime.Start()
 	wg.Wait()
 	mockTime.Stop()
@@ -108,7 +114,7 @@ func TestCheckSubdueInterval(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newScheduler(t, ctx)
+	scheduler := newScheduler(t, ctx, "check")
 
 	// Set interval to smallest valid value
 	check := scheduler.check
@@ -143,7 +149,7 @@ func TestCheckSubdueInterval(t *testing.T) {
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
-	assert.NoError(scheduler.scheduler.Start())
+	scheduler.scheduler.Start()
 	mockTime.Set(mockTime.Now().Add(2 * time.Second))
 	assert.NoError(scheduler.scheduler.Stop())
 
@@ -157,7 +163,7 @@ func TestCheckSchedulerCron(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newScheduler(t, ctx)
+	scheduler := newScheduler(t, ctx, "check")
 
 	// Set interval to smallest valid value
 	check := scheduler.check
@@ -189,7 +195,7 @@ func TestCheckSchedulerCron(t *testing.T) {
 		wg.Done()
 	}()
 
-	assert.NoError(scheduler.scheduler.Start())
+	scheduler.scheduler.Start()
 	mockTime.Start()
 	wg.Wait()
 	mockTime.Stop()
@@ -202,7 +208,7 @@ func TestCheckSubdueCron(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newScheduler(t, ctx)
+	scheduler := newScheduler(t, ctx, "check")
 
 	// Set interval to smallest valid value
 	check := scheduler.check
@@ -238,7 +244,7 @@ func TestCheckSubdueCron(t *testing.T) {
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
-	assert.NoError(scheduler.scheduler.Start())
+	scheduler.scheduler.Start()
 	mockTime.Set(mockTime.Now().Add(10 * time.Second))
 	assert.NoError(scheduler.scheduler.Stop())
 

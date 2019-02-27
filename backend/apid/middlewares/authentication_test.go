@@ -6,8 +6,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -28,8 +28,8 @@ func TestMiddlewareJWT(t *testing.T) {
 	defer server.Close()
 
 	// Valid JWT
-	user := &types.User{Username: "foo"}
-	_, tokenString, _ := jwt.AccessToken(user)
+	claims := v2.FixtureClaims("foo", nil)
+	_, tokenString, _ := jwt.AccessToken(claims)
 
 	client := &http.Client{}
 	req, _ := http.NewRequest("GET", server.URL, nil)

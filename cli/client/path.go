@@ -8,7 +8,7 @@ import (
 const coreAPIGroup = "core"
 const coreAPIVersion = "v2"
 
-func createBasePath(group, version string, resType ...string) func(...string) string {
+func CreateBasePath(group, version string, resType ...string) func(...string) string {
 	fn := createNSBasePath(group, version, resType...)
 
 	return func(components ...string) string {

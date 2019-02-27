@@ -7,58 +7,100 @@ import (
 	"io/ioutil"
 )
 
-// Go default cipher suite minus 3DES
-var defaultCipherSuites = []uint16{
-	tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
-	tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
-	tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-	tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
-	tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-	tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
-	tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
-	tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-	tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256,
-	tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
-	tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-	tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
-	tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
-	tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
-	tls.TLS_RSA_WITH_AES_128_CBC_SHA256,
-	tls.TLS_RSA_WITH_AES_128_CBC_SHA,
-	tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+var (
+	// PCI compliance as of Jun 30, 2018: anything under TLS 1.1 must be disabled
+	// we bump this up to TLS 1.2 so we can support the best possible ciphers
+	tlsMinVersion = uint16(tls.VersionTLS12)
+	// disable CBC suites (Lucky13 attack) this means TLS 1.1 can't work (no GCM)
+	// additionally, we should only use perfect forward secrecy ciphers
+	DefaultCipherSuites = []uint16{
+		tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+		tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+		tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+		// these ciphers require go 1.8+
+		tls.TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
+		tls.TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,
+	}
+	// optimal EC curve preference
+	// curve reference: http://safecurves.cr.yp.to/
+	tlsCurvePreferences = []tls.CurveID{
+		// this curve is a non-NIST curve with no NSA influence. Prefer this over all others!
+		tls.X25519,
+		// These curves are provided by NIST; optimal order
+		tls.CurveP384,
+		tls.CurveP256,
+		tls.CurveP521,
+	}
+)
+
+// ToServerTLSConfig should only be used for server TLS configuration. outputs a tls.Config from TLSOptions
+func (t *TLSOptions) ToServerTLSConfig() (*tls.Config, error) {
+	cfg := tls.Config{}
+	if t.GetCertFile() != "" && t.GetKeyFile() != "" {
+		cert, err := tls.LoadX509KeyPair(t.GetCertFile(), t.GetKeyFile())
+		if err != nil {
+			return nil, fmt.Errorf("Error loading tls server certificate: %s", err)
+		}
+
+		cfg.Certificates = []tls.Certificate{cert}
+	}
+
+	// useful when we present multiple certificates
+	cfg.BuildNameToCertificate()
+
+	// apply hardened TLS settings
+	cfg.MinVersion = tlsMinVersion
+	cfg.CurvePreferences = tlsCurvePreferences
+	cfg.CipherSuites = DefaultCipherSuites
+	// Tell the server to prefer it's own cipher suite ordering over the client's preferred ordering
+	cfg.PreferServerCipherSuites = true
+
+	return &cfg, nil
 }
 
-// ToTLSConfig outputs a tls.Config from TLSOptions
-func (t *TLSOptions) ToTLSConfig() (*tls.Config, error) {
-	tlsConfig := tls.Config{}
-	tlsConfig.InsecureSkipVerify = t.InsecureSkipVerify
+// ToClientTLSConfig is like ToServerTLSConfig but intended for TLS client config.
+func (t *TLSOptions) ToClientTLSConfig() (*tls.Config, error) {
+	cfg := tls.Config{}
+	cfg.InsecureSkipVerify = t.InsecureSkipVerify
 
-	// Client cert
-	if t.CertFile != "" || t.KeyFile != "" {
-		cert, err := tls.LoadX509KeyPair(t.CertFile, t.KeyFile)
+	if t.TrustedCAFile != "" {
+		caCertPool, err := LoadCACerts(t.TrustedCAFile)
 		if err != nil {
-			// do something with the error
+			return nil, err
+		}
+		// client trust store should ONLY consist of specified CAs
+		cfg.RootCAs = caCertPool
+	}
+
+	if t.GetCertFile() != "" && t.GetKeyFile() != "" {
+		cert, err := tls.LoadX509KeyPair(t.GetCertFile(), t.GetKeyFile())
+		if err != nil {
 			return nil, fmt.Errorf("Error loading tls client certificate: %s", err)
 		}
 
-		tlsConfig.Certificates = []tls.Certificate{cert}
+		cfg.Certificates = []tls.Certificate{cert}
 	}
 
-	// CA Cert
-	if t.TrustedCAFile != "" {
-		caCert, err := ioutil.ReadFile(t.TrustedCAFile)
-		if err != nil {
-			return nil, fmt.Errorf("Error loading tls CA cert: %s", err)
-		}
+	// apply hardened TLS settings
+	cfg.MinVersion = tlsMinVersion
+	cfg.CurvePreferences = tlsCurvePreferences
+	cfg.CipherSuites = DefaultCipherSuites
 
-		caCertPool := x509.NewCertPool()
-		caCertPool.AppendCertsFromPEM(caCert)
-		tlsConfig.RootCAs = caCertPool
+	return &cfg, nil
+}
+
+// LoadCACerts takes the path to a certificate bundle file in PEM format and try
+// to create a x509.CertPool out of it.
+func LoadCACerts(path string) (*x509.CertPool, error) {
+	caCerts, err := ioutil.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("Error reading CA file: %s", err)
+	}
+	caCertPool := x509.NewCertPool()
+	if !caCertPool.AppendCertsFromPEM(caCerts) {
+		return nil, fmt.Errorf("No certificates could be parsed out of %s", err)
 	}
 
-	tlsConfig.BuildNameToCertificate()
-
-	tlsConfig.CipherSuites = defaultCipherSuites
-
-	return &tlsConfig, nil
+	return caCertPool, nil
 }

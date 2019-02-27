@@ -26,6 +26,12 @@ type HandlerNameFieldResolver interface {
 	Name(p graphql.ResolveParams) (string, error)
 }
 
+// HandlerMetadataFieldResolver implement to resolve requests for the Handler's metadata field.
+type HandlerMetadataFieldResolver interface {
+	// Metadata implements response to request for metadata field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+}
+
 // HandlerTypeFieldResolver implement to resolve requests for the Handler's type field.
 type HandlerTypeFieldResolver interface {
 	// Type implements response to request for type field.
@@ -139,6 +145,7 @@ type HandlerFieldResolvers interface {
 	HandlerIDFieldResolver
 	HandlerNamespaceFieldResolver
 	HandlerNameFieldResolver
+	HandlerMetadataFieldResolver
 	HandlerTypeFieldResolver
 	HandlerCommandFieldResolver
 	HandlerTimeoutFieldResolver
@@ -233,6 +240,12 @@ func (_ HandlerAliases) Name(p graphql.ResolveParams) (string, error) {
 		return ret, errors.New("unable to coerce value for field 'name'")
 	}
 	return ret, err
+}
+
+// Metadata implements response to request for 'metadata' field.
+func (_ HandlerAliases) Metadata(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
 }
 
 // Type implements response to request for 'type' field.
@@ -346,6 +359,13 @@ func _ObjTypeHandlerNameHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeHandlerMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(HandlerMetadataFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Metadata(frp)
+	}
+}
+
 func _ObjTypeHandlerTypeHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(HandlerTypeFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -441,6 +461,13 @@ func _ObjectTypeHandlerConfigFn() graphql1.ObjectConfig {
 				Name:              "id",
 				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
+			"metadata": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "metadata contains name, namespace, labels and annotations of the record",
+				Name:              "metadata",
+				Type:              graphql1.NewNonNull(graphql.OutputType("ObjectMeta")),
+			},
 			"mutator": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -486,7 +513,8 @@ func _ObjectTypeHandlerConfigFn() graphql1.ObjectConfig {
 		},
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node"),
-			graphql.Interface("Namespaced")},
+			graphql.Interface("Namespaced"),
+			graphql.Interface("HasMetadata")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -508,6 +536,7 @@ var _ObjectTypeHandlerDesc = graphql.ObjectDesc{
 		"filters":   _ObjTypeHandlerFiltersHandler,
 		"handlers":  _ObjTypeHandlerHandlersHandler,
 		"id":        _ObjTypeHandlerIDHandler,
+		"metadata":  _ObjTypeHandlerMetadataHandler,
 		"mutator":   _ObjTypeHandlerMutatorHandler,
 		"name":      _ObjTypeHandlerNameHandler,
 		"namespace": _ObjTypeHandlerNamespaceHandler,

@@ -43,3 +43,6 @@ gcs-service-account.json
 *.wixpdb
 *.msi
 version-bin
+
+# editors
+.idea

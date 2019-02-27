@@ -37,28 +37,30 @@ func (*checkCfgImpl) ExtendedAttributes(p graphql.ResolveParams) (interface{}, e
 // Handlers implements response to request for 'handlers' field.
 func (r *checkCfgImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*types.CheckConfig)
-	client := r.factory.NewWithContext(p.Context)
-	return fetchHandlers(client, src.Namespace, func(obj *types.Handler) bool {
+	results, err := loadHandlers(p.Context, src.Namespace)
+	records := filterHandlers(results, func(obj *types.Handler) bool {
 		return strings.FoundInArray(obj.Name, src.Handlers)
 	})
+	return records, err
 }
 
 // OutputMetricHandlers implements response to request for 'outputMetricHandlers' field.
 func (r *checkCfgImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*types.CheckConfig)
-	client := r.factory.NewWithContext(p.Context)
-	return fetchHandlers(client, src.Namespace, func(obj *types.Handler) bool {
+	results, err := loadHandlers(p.Context, src.Namespace)
+	records := filterHandlers(results, func(obj *types.Handler) bool {
 		return strings.FoundInArray(obj.Name, src.OutputMetricHandlers)
 	})
+	return records, err
 }
 
 // IsSilenced implements response to request for 'isSilenced' field.
 func (r *checkCfgImpl) IsSilenced(p graphql.ResolveParams) (bool, error) {
 	src := p.Source.(*types.CheckConfig)
-	client := r.factory.NewWithContext(p.Context)
-
 	now := time.Now().Unix()
-	sls, err := fetchSilenceds(client, src.Namespace, func(obj *types.Silenced) bool {
+
+	results, err := loadSilenceds(p.Context, src.Namespace)
+	records := filterSilenceds(results, func(obj *types.Silenced) bool {
 		if !obj.StartSilence(now) {
 			return false
 		}
@@ -68,17 +70,16 @@ func (r *checkCfgImpl) IsSilenced(p graphql.ResolveParams) (bool, error) {
 		}
 		return false
 	})
-
-	return len(sls) > 0, err
+	return len(records) > 0, err
 }
 
 // Silences implements response to request for 'silences' field.
 func (r *checkCfgImpl) Silences(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*types.CheckConfig)
-	client := r.factory.NewWithContext(p.Context)
-
 	now := time.Now().Unix()
-	return fetchSilenceds(client, src.Namespace, func(obj *types.Silenced) bool {
+
+	results, err := loadSilenceds(p.Context, src.Namespace)
+	records := filterSilenceds(results, func(obj *types.Silenced) bool {
 		if !obj.StartSilence(now) {
 			return false
 		}
@@ -88,6 +89,8 @@ func (r *checkCfgImpl) Silences(p graphql.ResolveParams) (interface{}, error) {
 		}
 		return false
 	})
+
+	return records, err
 }
 
 // ToJSON implements response to request for 'toJSON' field.
@@ -99,10 +102,11 @@ func (r *checkCfgImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
 // RuntimeAssets implements response to request for 'runtimeAssets' field.
 func (r *checkCfgImpl) RuntimeAssets(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*types.CheckConfig)
-	client := r.factory.NewWithContext(p.Context)
-	return fetchAssets(client, src.Namespace, func(obj *types.Asset) bool {
+	records, err := loadAssets(p.Context, src.Namespace)
+	results := filterAssets(records, func(obj *types.Asset) bool {
 		return strings.FoundInArray(obj.Name, src.RuntimeAssets)
 	})
+	return results, err
 }
 
 // IsTypeOf is used to determine if a given value is associated with the Check type
@@ -174,10 +178,11 @@ func (r *checkImpl) History(p schema.CheckHistoryFieldResolverParams) (interface
 // Handlers implements response to request for 'handlers' field.
 func (r *checkImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*types.Check)
-	client := r.factory.NewWithContext(p.Context)
-	return fetchHandlers(client, src.Namespace, func(obj *types.Handler) bool {
+	results, err := loadHandlers(p.Context, src.Namespace)
+	records := filterHandlers(results, func(obj *types.Handler) bool {
 		return strings.FoundInArray(obj.Name, src.Handlers)
 	})
+	return records, err
 }
 
 // IsSilenced implements response to request for 'isSilenced' field.
@@ -189,28 +194,31 @@ func (r *checkImpl) IsSilenced(p graphql.ResolveParams) (bool, error) {
 // Silences implements response to request for 'silences' field.
 func (r *checkImpl) Silences(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*types.Check)
-	client := r.factory.NewWithContext(p.Context)
-	return fetchSilenceds(client, src.Namespace, func(obj *types.Silenced) bool {
+	results, err := loadSilenceds(p.Context, src.Namespace)
+	records := filterSilenceds(results, func(obj *types.Silenced) bool {
 		return strings.FoundInArray(obj.Name, src.Silenced)
 	})
+	return records, err
 }
 
 // OutputMetricHandlers implements response to request for 'outputMetricHandlers' field.
 func (r *checkImpl) OutputMetricHandlers(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*types.Check)
-	client := r.factory.NewWithContext(p.Context)
-	return fetchHandlers(client, src.Namespace, func(asset *types.Handler) bool {
-		return strings.FoundInArray(asset.Name, src.OutputMetricHandlers)
+	results, err := loadHandlers(p.Context, src.Namespace)
+	records := filterHandlers(results, func(obj *types.Handler) bool {
+		return strings.FoundInArray(obj.Name, src.OutputMetricHandlers)
 	})
+	return records, err
 }
 
 // RuntimeAssets implements response to request for 'runtimeAssets' field.
 func (r *checkImpl) RuntimeAssets(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*types.Check)
-	client := r.factory.NewWithContext(p.Context)
-	return fetchAssets(client, src.Namespace, func(obj *types.Asset) bool {
+	records, err := loadAssets(p.Context, src.Namespace)
+	results := filterAssets(records, func(obj *types.Asset) bool {
 		return strings.FoundInArray(obj.Name, src.RuntimeAssets)
 	})
+	return results, err
 }
 
 //
@@ -220,9 +228,9 @@ func (r *checkImpl) RuntimeAssets(p graphql.ResolveParams) (interface{}, error) 
 type checkHistoryImpl struct{}
 
 // Status implements response to request for 'status' field.
-func (r *checkHistoryImpl) Status(p graphql.ResolveParams) (int, error) {
+func (r *checkHistoryImpl) Status(p graphql.ResolveParams) (interface{}, error) {
 	h := p.Source.(types.CheckHistory)
-	return int(h.Status), nil
+	return h.Status, nil
 }
 
 // Executed implements response to request for 'executed' field.

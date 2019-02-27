@@ -1,7 +1,7 @@
 """
 CheckConfig is the specification of a check.
 """
-type CheckConfig implements Node, Namespaced {
+type CheckConfig implements Node, Namespaced, Silenceable, HasMetadata {
   "The globally unique identifier of the check."
   id: ID!
 
@@ -10,6 +10,9 @@ type CheckConfig implements Node, Namespaced {
 
   "name is the unique identifier for a check"
   name: String!
+
+  "metadata contains name, namespace, labels and annotations of the record"
+  metadata: ObjectMeta!
 
   "command is the command to be executed."
   command: String!
@@ -125,12 +128,15 @@ type CheckConfigEdge {
 A Check is a check specification and optionally the results of the check's
 execution.
 """
-type Check {
+type Check implements Silenceable, HasMetadata {
   "id of the check's configuration"
   nodeId: ID!
 
   "name is the unique identifier for a check"
   name: String!
+
+  "metadata contains name, namespace, labels and annotations of the record"
+  metadata: ObjectMeta!
 
   "command is the command to be executed."
   command: String!
@@ -223,7 +229,7 @@ type Check {
   state: String!
 
   "Status is the exit status code produced by the check"
-  status: Int!
+  status: Uint!
 
   """
   TotalStateChange indicates the total state change percentage for the
@@ -282,7 +288,7 @@ CheckHistory is a record of a check execution and its status
 """
 type CheckHistory {
   "Status is the exit status code produced by the check."
-  status: Int!
+  status: Uint!
 
   "Executed describes the time in which the check request was executed"
   executed: DateTime!

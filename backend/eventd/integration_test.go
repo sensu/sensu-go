@@ -3,15 +3,17 @@
 package eventd
 
 import (
+	"context"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
+	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/monitor"
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/sensu/sensu-go/testing/mockring"
-	"github.com/sensu/sensu-go/types"
+	otherTestutil "github.com/sensu/sensu-go/testing/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -33,7 +35,7 @@ func TestEventdMonitor(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	monFac := monitor.EtcdFactory(client)
+	livenessFactory := liveness.EtcdFactory(context.Background(), client)
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
 		RingGetter: &mockring.Getter{},
@@ -63,16 +65,22 @@ func TestEventdMonitor(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 
-	e, err := New(Config{Store: store, Bus: bus, MonitorFactory: monFac})
+	e, err := New(Config{Store: store, Bus: bus, LivenessFactory: livenessFactory})
 	require.NoError(t, err)
 
 	if err := e.Start(); err != nil {
 		assert.FailNow(t, err.Error())
 	}
 
-	event := types.FixtureEvent("entity1", "check1")
+	event := corev2.FixtureEvent("entity1", "check1")
 	event.Check.Interval = 1
-	event.Check.Ttl = 2
+	event.Check.Ttl = 5
+
+	ctx := otherTestutil.ContextWithNamespace("default")(context.Background())
+
+	if err := store.UpdateEntity(ctx, event.Entity); err != nil {
+		t.Fatal(err)
+	}
 
 	if err := bus.Publish(messaging.TopicEventRaw, event); err != nil {
 		assert.FailNow(t, "failed to publish event to TopicEventRaw")
@@ -83,7 +91,7 @@ func TestEventdMonitor(t *testing.T) {
 		assert.FailNow(t, "failed to pull message off eventChan")
 	}
 
-	okEvent, ok := msg.(*types.Event)
+	okEvent, ok := msg.(*corev2.Event)
 	if !ok {
 		assert.FailNow(t, "message type was not an event")
 	}
@@ -93,7 +101,7 @@ func TestEventdMonitor(t *testing.T) {
 	if !ok {
 		assert.FailNow(t, "failed to pull message off eventChan")
 	}
-	warnEvent, ok := msg.(*types.Event)
+	warnEvent, ok := msg.(*corev2.Event)
 	if !ok {
 		assert.FailNow(t, "message type was not an event")
 	}

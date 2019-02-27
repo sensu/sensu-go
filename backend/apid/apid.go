@@ -10,6 +10,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/sensu/sensu-go/backend/authentication"
+
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/actions"
@@ -24,17 +26,13 @@ import (
 
 // APId is the backend HTTP API.
 type APId struct {
-	// Host is the host APId is running on.
-	Host string
-
-	// Port is the port APId is running on.
-	Port int
+	Authenticator *authentication.Authenticator
+	HTTPServer    *http.Server
 
 	stopping            chan struct{}
 	running             *atomic.Value
 	wg                  *sync.WaitGroup
 	errChan             chan error
-	HTTPServer          *http.Server
 	bus                 messaging.MessageBus
 	store               store.Store
 	queueGetter         types.QueueGetter
@@ -48,21 +46,20 @@ type Option func(*APId) error
 
 // Config configures APId.
 type Config struct {
-	Host                string
-	Port                int
+	ListenAddress       string
+	URL                 string
 	Bus                 messaging.MessageBus
 	Store               store.Store
 	QueueGetter         types.QueueGetter
 	TLS                 *types.TLSOptions
 	Cluster             clientv3.Cluster
 	EtcdClientTLSConfig *tls.Config
+	Authenticator       *authentication.Authenticator
 }
 
 // New creates a new APId.
 func New(c Config, opts ...Option) (*APId, error) {
 	a := &APId{
-		Host:                c.Host,
-		Port:                c.Port,
 		store:               c.Store,
 		queueGetter:         c.QueueGetter,
 		tls:                 c.TLS,
@@ -73,35 +70,45 @@ func New(c Config, opts ...Option) (*APId, error) {
 		errChan:             make(chan error, 1),
 		cluster:             c.Cluster,
 		etcdClientTLSConfig: c.EtcdClientTLSConfig,
+		Authenticator:       c.Authenticator,
 	}
 
-	var tlsConfig *tls.Config
+	// prepare TLS configs (both server and client)
+	var tlsServerConfig, tlsClientConfig *tls.Config
 	var err error
 	if c.TLS != nil {
-		tlsConfig, err = c.TLS.ToTLSConfig()
+		tlsServerConfig, err = c.TLS.ToServerTLSConfig()
+		if err != nil {
+			return nil, err
+		}
+
+		// TODO(gbolo): since the backend does not yet support mutual TLS
+		// this client does not need a cert and key. Once we do support
+		// mutual TLS we need new options for client cert and key
+		cTLSOptions := types.TLSOptions{
+			TrustedCAFile: c.TLS.TrustedCAFile,
+			// TODO(palourde): We should avoid using the loopback interface
+			InsecureSkipVerify: true,
+		}
+		tlsClientConfig, err = cTLSOptions.ToClientTLSConfig()
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	addr := fmt.Sprintf("%s:%d", a.Host, a.Port)
-	url := fmt.Sprintf("http://%s", addr)
-	if tlsConfig != nil {
-		url = fmt.Sprintf("https://%s", addr)
-	}
-
 	router := mux.NewRouter().UseEncodedPath()
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
 	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig)
-	registerGraphQLService(router, a.store, url, tlsConfig)
-	registerAuthenticationResources(router, a.store)
+	registerGraphQLService(router, a.store, c.URL, tlsClientConfig)
+	registerAuthenticationResources(router, a.store, a.Authenticator)
 	registerRestrictedResources(router, a.store, a.queueGetter, a.bus, a.cluster)
 
 	a.HTTPServer = &http.Server{
-		Addr:         addr,
+		Addr:         c.ListenAddress,
 		Handler:      router,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
+		TLSConfig:    tlsServerConfig,
 	}
 
 	for _, o := range opts {
@@ -130,7 +137,8 @@ func (a *APId) Start() error {
 		defer a.wg.Done()
 		var err error
 		if a.tls != nil {
-			err = a.HTTPServer.ListenAndServeTLS(a.tls.CertFile, a.tls.KeyFile)
+			// TLS configuration comes from ToServerTLSConfig
+			err = a.HTTPServer.ListenAndServeTLS("", "")
 		} else {
 			err = a.HTTPServer.ListenAndServe()
 		}
@@ -209,7 +217,7 @@ func registerGraphQLService(router *mux.Router, store store.Store, url string, t
 	)
 }
 
-func registerAuthenticationResources(router *mux.Router, store store.Store) {
+func registerAuthenticationResources(router *mux.Router, store store.Store, authenticator *authentication.Authenticator) {
 	mountRouters(
 		NewSubrouter(
 			router.NewRoute(),
@@ -218,7 +226,7 @@ func registerAuthenticationResources(router *mux.Router, store store.Store) {
 			middlewares.LimitRequest{},
 			middlewares.Edition{Name: version.Edition},
 		),
-		routers.NewAuthenticationRouter(store),
+		routers.NewAuthenticationRouter(store, authenticator),
 	)
 }
 

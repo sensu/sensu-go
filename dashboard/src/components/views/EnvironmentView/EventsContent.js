@@ -11,14 +11,13 @@ import ListToolbar from "/components/partials/EventsList/EventsListToolbar";
 import NotFound from "/components/partials/NotFound";
 import Query from "/components/util/Query";
 import { withQueryParams } from "/components/QueryParams";
+import ToastConnector from "/components/relocation/ToastConnector";
 import WithWidth from "/components/WithWidth";
+
+import { pollingDuration } from "/constants/polling";
 
 // If none given default expression is used.
 const defaultExpression = "has_check";
-
-// duration used when polling is enabled; set fairly high until we understand
-// the impact.
-const pollInterval = 2500; // 2.5s
 
 class EventsContent extends React.Component {
   static propTypes = {
@@ -82,19 +81,24 @@ class EventsContent extends React.Component {
         </Content>
 
         <AppLayout.MobileFullWidthContent>
-          <WithWidth>
-            {({ width }) => (
-              <EventsList
-                editable={width !== "xs"}
-                limit={limit}
-                offset={offset}
-                onChangeQuery={setQueryParams}
-                namespace={namespace}
-                loading={(loading && !namespace) || aborted}
-                refetch={refetch}
-              />
+          <ToastConnector>
+            {({ addToast }) => (
+              <WithWidth>
+                {({ width }) => (
+                  <EventsList
+                    addToast={addToast}
+                    editable={width !== "xs"}
+                    limit={limit}
+                    offset={offset}
+                    onChangeQuery={setQueryParams}
+                    namespace={namespace}
+                    loading={(loading && !namespace) || aborted}
+                    refetch={refetch}
+                  />
+                )}
+              </WithWidth>
             )}
-          </WithWidth>
+          </ToastConnector>
         </AppLayout.MobileFullWidthContent>
       </div>
     );
@@ -108,7 +112,7 @@ class EventsContent extends React.Component {
       <Query
         query={EventsContent.query}
         fetchPolicy="cache-and-network"
-        pollInterval={pollInterval}
+        pollInterval={pollingDuration.short}
         variables={variables}
         onError={error => {
           if (error.networkError instanceof FailedError) {

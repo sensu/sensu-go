@@ -82,17 +82,9 @@ build_binary () {
 
     local outfile="target/${goos}-${goarch}/${cmd_name}"
 
-    local build_date=$(date +"%Y-%m-%dT%H:%M:%S%z")
-    local build_sha=$(git rev-parse HEAD)
-
-    local version_pkg="github.com/sensu/sensu-go/version"
-    local ldflags=" -X $version_pkg.Version=${version}"
-    local ldflags+=" -X $version_pkg.PreReleaseIdentifier=${prerelease}"
-    local ldflags+=" -X $version_pkg.BuildDate=${build_date}"
-    local ldflags+=" -X $version_pkg.BuildSHA=${build_sha}"
     local main_pkg="cmd/${cmd_name}"
 
-    CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch go build -ldflags "${ldflags}" $ext -o $outfile ${REPO_PATH}/${main_pkg}
+    CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch go build $ext -o $outfile ${REPO_PATH}/${main_pkg}
 
     echo $outfile
 }
@@ -124,17 +116,11 @@ build_agent() {
 }
 
 build_backend() {
-    build_dashboard $@
     build_command backend $@
 }
 
 build_cli() {
     build_command cli $@
-}
-
-build_dashboard() {
-    echo "Building web UI"
-    GOOS=$HOST_GOOS GOARCH=$HOST_GOARCH go generate $@ ./dashboard
 }
 
 build_command () {
@@ -196,32 +182,22 @@ integration_test_commands () {
     fi
 }
 
-e2e_commands () {
-    echo "Running e2e tests..."
-    go test ${REPO_PATH}/testing/e2e $@
-}
-
 docker_commands () {
     local cmd=$1
 
     if [ "$cmd" == "build" ]; then
         docker_build ${@:2}
-    elif [ "$cmd" == "push" ]; then
-        docker_push ${@:2}
-    elif [ "$cmd" == "deploy" ]; then
-        docker_build
-        docker_push ${@:2}
     else
         docker_commands build $@
     fi
 }
 
 docker_build() {
+    # install sensuctl to make sure it's current with the docker build
+    go install ./cmd/sensuctl
+
     local build_sha=$(git rev-parse HEAD)
     local ext=$@
-
-    # When publishing image, ensure that we can bundle the web UI.
-    build_dashboard $ext
 
     for cmd in agent backend cli; do
         echo "Building $cmd for linux-amd64"
@@ -231,39 +207,6 @@ docker_build() {
 
     # build the docker image with master tag
     docker build --label build.sha=${build_sha} -t sensu/sensu:master .
-}
-
-docker_push() {
-    local release=$1
-    local version=$(echo sensu/sensu:$($VERSION_CMD -v))
-    local version_iteration=$(echo sensu/sensu:$($VERSION_CMD -v).$($VERSION_CMD -i))
-
-    # ensure we are authenticated
-    docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-
-    # push master - tags and pushes latest master docker build only
-    if [ "$release" == "master" ]; then
-        docker push sensu/sensu:master
-        exit 0
-    fi
-
-    if [ "$release" == "nightly" ]; then
-        docker tag sensu/sensu:master sensu/sensu:nightly
-        docker push sensu/sensu:nightly
-        exit 0
-    fi
-
-    # if versioned release push to 'latest' tag
-    if [ "$release" == "versioned" ]; then
-        docker tag sensu/sensu:master sensu/sensu:latest
-        docker push sensu/sensu:latest
-    fi
-
-    # push current revision
-    docker tag sensu/sensu:master $version_iteration
-    docker push $version_iteration
-    docker tag $version_iteration $version
-    docker push $version
 }
 
 test_dashboard() {
@@ -285,40 +228,6 @@ prompt_confirm() {
     esac
 }
 
-check_deploy() {
-    echo "Checking..."
-
-    # Prompt for confirmation if deploying outside Travis
-    if [[ -z "${TRAVIS}" || "${TRAVIS}" != true ]]; then
-        prompt_confirm "You are trying to deploy outside of Travis. Are you sure?" || exit 0
-    fi
-}
-
-deploy() {
-    local release=$1
-
-    echo "Deploying..."
-
-    # Authenticate to Google Cloud and deploy binaries
-    if [[ "${release}" != "nightly" ]]; then
-        openssl aes-256-cbc -K $encrypted_abd14401c428_key -iv $encrypted_abd14401c428_iv -in gcs-service-account.json.enc -out gcs-service-account.json -d
-        gcloud auth activate-service-account --key-file=gcs-service-account.json
-        ./build-gcs-release.sh
-    fi
-
-    # Deploy system packages to PackageCloud
-    make clean
-    docker login -u="$DOCKER_USERNAME" -p="$DOCKER_PASSWORD"
-    docker pull sensu/sensu-go-build
-    docker run -it -e SENSU_BUILD_ITERATION=$SENSU_BUILD_ITERATION -e CI=$CI -v `pwd`:/go/src/github.com/sensu/sensu-go sensu/sensu-go-build
-    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go -e PACKAGECLOUD_TOKEN="$PACKAGECLOUD_TOKEN" -e SENSU_BUILD_ITERATION=$SENSU_BUILD_ITERATION -e CI=$CI sensu/sensu-go-build publish_travis
-    docker run -it -v `pwd`:/go/src/github.com/sensu/sensu-go sensu/sensu-go-build clean
-
-    # Deploy Docker images to the Docker Hub
-    docker_build
-    docker_push $release
-}
-
 case "$cmd" in
     "build")
         build_commands "${@:2}"
@@ -337,21 +246,9 @@ case "$cmd" in
         ;;
     "dashboard-ci")
         test_dashboard
-        ./codecov.sh -t $CODECOV_TOKEN -cF javascript -s dashboard
-        ;;
-    "deploy")
-        check_deploy
-        deploy "${@:2}"
         ;;
     "docker")
         docker_commands "${@:2}"
-        ;;
-    "e2e")
-        # Accepts specific test name. E.g.: ./build.sh e2e -run TestAgentKeepalives
-        build_command agent
-        build_command backend
-        build_command cli
-        e2e_commands "${@:2}"
         ;;
     "lint")
         linter_commands
@@ -372,6 +269,5 @@ case "$cmd" in
         unit_test_commands
         integration_test_commands
         build_commands
-        e2e_commands
         ;;
 esac

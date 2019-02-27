@@ -8,18 +8,18 @@ var roleBindingsPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "rolebindi
 
 // CreateRoleBinding with the given role binding
 func (client *RestClient) CreateRoleBinding(roleBinding *types.RoleBinding) error {
-	return client.post(roleBindingsPath(roleBinding.Namespace), roleBinding)
+	return client.Post(roleBindingsPath(roleBinding.Namespace), roleBinding)
 }
 
 // DeleteRoleBinding with the given name
 func (client *RestClient) DeleteRoleBinding(name string) error {
-	return client.delete(roleBindingsPath(client.config.Namespace(), name))
+	return client.Delete(roleBindingsPath(client.config.Namespace(), name))
 }
 
 // FetchRoleBinding with the given name
 func (client *RestClient) FetchRoleBinding(name string) (*types.RoleBinding, error) {
 	roleBinding := &types.RoleBinding{}
-	if err := client.get(roleBindingsPath(client.config.Namespace(), name), roleBinding); err != nil {
+	if err := client.Get(roleBindingsPath(client.config.Namespace(), name), roleBinding); err != nil {
 		return nil, err
 	}
 	return roleBinding, nil
@@ -29,7 +29,7 @@ func (client *RestClient) FetchRoleBinding(name string) (*types.RoleBinding, err
 func (client *RestClient) ListRoleBindings(namespace string) ([]types.RoleBinding, error) {
 	roleBindings := []types.RoleBinding{}
 
-	if err := client.list(roleBindingsPath(namespace), &roleBindings); err != nil {
+	if err := client.List(roleBindingsPath(namespace), &roleBindings); err != nil {
 		return roleBindings, err
 	}
 

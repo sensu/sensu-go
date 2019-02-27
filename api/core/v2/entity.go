@@ -109,6 +109,9 @@ func FixtureEntity(name string) *Entity {
 			Namespace: "default",
 			Name:      name,
 		},
+		System: System{
+			Arch: "amd64",
+		},
 	}
 }
 

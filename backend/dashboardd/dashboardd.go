@@ -2,6 +2,7 @@ package dashboardd
 
 import (
 	"compress/gzip"
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -25,8 +26,7 @@ type Config struct {
 	Port int
 	TLS  *types.TLSOptions
 
-	APIHost string
-	APIPort int
+	APIURL string
 }
 
 // Dashboardd represents the dashboard daemon
@@ -52,11 +52,19 @@ func New(cfg Config, opts ...Option) (*Dashboardd, error) {
 		wg:       &sync.WaitGroup{},
 		errChan:  make(chan error, 1),
 	}
+
+	// prepare server TLS config
+	tlsServerConfig, err := cfg.TLS.ToServerTLSConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	d.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", d.Host, d.Port),
 		Handler:      httpRouter(d),
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
+		TLSConfig:    tlsServerConfig,
 	}
 	for _, o := range opts {
 		if err := o(d); err != nil {
@@ -85,7 +93,8 @@ func (d *Dashboardd) Start() error {
 		var err error
 		TLS := d.Config.TLS
 		if TLS != nil {
-			err = d.httpServer.ListenAndServeTLS(TLS.CertFile, TLS.KeyFile)
+			// TLS configuration comes from ToServerTLSConfig
+			err = d.httpServer.ListenAndServeTLS("", "")
 		} else {
 			err = d.httpServer.ListenAndServe()
 		}
@@ -99,19 +108,16 @@ func (d *Dashboardd) Start() error {
 
 // Stop dashboardd.
 func (d *Dashboardd) Stop() error {
-	if err := d.httpServer.Shutdown(nil); err != nil {
-		// failure/timeout shutting down the server gracefully
-		logger.WithError(err).Error("failed to shutdown http server gracefully - forcing shutdown")
-		if closeErr := d.httpServer.Close(); closeErr != nil {
-			logger.WithError(closeErr).Error("failed to shutdown http server forcefully")
-		}
-	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	err := d.httpServer.Shutdown(ctx)
 
 	close(d.stopping)
 	d.wg.Wait()
 	close(d.errChan)
 
-	return nil
+	return err
 }
 
 // Err returns a channel to listen for terminal errors on.
@@ -127,7 +133,7 @@ func (d *Dashboardd) Name() string {
 func httpRouter(d *Dashboardd) *mux.Router {
 	r := mux.NewRouter()
 
-	backendProxy, err := newBackendProxy(d.Config.APIHost, d.Config.APIPort, d.Config.TLS)
+	backendProxy, err := newBackendProxy(d.Config.APIURL, d.Config.TLS)
 	if err != nil {
 		d.errChan <- err
 	}
@@ -198,11 +204,11 @@ func noCacheHandler(next http.Handler) http.Handler {
 	})
 }
 
-func newBackendProxy(host string, port int, TLS *types.TLSOptions) (*httputil.ReverseProxy, error) {
+func newBackendProxy(APIURL string, TLS *types.TLSOptions) (*httputil.ReverseProxy, error) {
 	// API gateway to Sensu API
-	target := &url.URL{
-		Host:   fmt.Sprintf("%s:%d", host, port),
-		Scheme: "http",
+	target, err := url.Parse(APIURL)
+	if err != nil {
+		return nil, err
 	}
 
 	// Copy of values from http.DefaultTransport
@@ -221,13 +227,12 @@ func newBackendProxy(host string, port int, TLS *types.TLSOptions) (*httputil.Re
 
 	// Configure TLS
 	if TLS != nil {
-		target.Scheme = "https"
-
-		cfg, err := TLS.ToTLSConfig()
+		cfg, err := TLS.ToServerTLSConfig()
 		if err != nil {
 			return nil, err
 		}
-		cfg.InsecureSkipVerify = true // skip host verification on loopback interface
+		// TODO(palourde): We should avoid using the loopback interface
+		cfg.InsecureSkipVerify = true
 		transport.TLSClientConfig = cfg
 	}
 

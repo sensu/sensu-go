@@ -1,9 +1,0 @@
-#!/bin/sh
-<%= (common_files || "").split(",").inject("") { |res, f| res + File.read(File.join(prefix, f)) + "\n" } %>
-
-case "$1" in
-    1) # initial install
-	;;
-    2) # upgrade
-	;;
-esac

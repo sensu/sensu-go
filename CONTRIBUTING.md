@@ -17,6 +17,20 @@ branch to base your changes on, and so on.
 1. Push your feature branch (`git push origin my-new-feature`)
 1. Create a Pull Request as appropriate based on the issue discussion
 
+Sensu is and always will be open source, and we continue to highly
+value community contribution. The packages we’re releasing for new
+versions are from our Enterprise repo; Sensu Go is the upstream for
+Sensu Enterprise (as they’d say in the Go community: Sensu Go is
+vendored into the Sensu Enterprise Go repo). We encourage you to
+download new versions, as the functionality will be identical to what
+you find in the public repo, and access to the enterprise-only
+features can be unlocked with a license key. Because these releases
+are in our Enterprise repo, there may be times that you don’t see the
+actual work being done on an issue you open, but that doesn’t mean
+we’re not working on it! Our team is committed to updating progress on
+open issues in the sensu-go repo, even if that work is being done in
+our Enterprise repo.
+
 ## DCO
 
 To make a good faith effort to ensure the criteria of the MIT License
@@ -82,7 +96,7 @@ after this with `git push -f`. -- Thanks Chef!
 
 ## Changelog
 
-The Sensu [Changelog](CHANGELOG.md) is based on the Sensu Community 
+The Sensu [Changelog](CHANGELOG.md) is based on the Sensu Community
 [Changelog guidelines](https://github.com/sensu-plugins/community/blob/master/HOW_WE_CHANGELOG.md).
 
 All new changes go underneath the _Unreleased_ heading at the top of the Changelog.
@@ -277,14 +291,6 @@ Each product can built separately, with one of the following:
 ./build.sh build_agent
 ./build.sh build_backend
 ./build.sh build_cli
-```
-
-By default the web UI is built along side and bundled into the backend, as this
-can be a time intensive process, we provide an escape hatch. Use the `dev` tag
-to avoid building the web UI.
-
-```sh
-./build.sh build_backend -tags dev
 ```
 
 ## Testing

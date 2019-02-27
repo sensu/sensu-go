@@ -42,7 +42,7 @@ func TestDeregisterCommandRunEClosureWithFlags(t *testing.T) {
 	cmd := DeregisterCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"my-extension"})
 
-	assert.Regexp("OK", out)
+	assert.Regexp("Deregistered", out)
 	assert.Nil(err)
 }
 

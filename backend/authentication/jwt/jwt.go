@@ -9,6 +9,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	time "github.com/echlebek/timeproxy"
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	utilbytes "github.com/sensu/sensu-go/util/bytes"
@@ -21,18 +22,17 @@ var (
 
 // AccessToken creates a new access token and returns it in both JWT and
 // signed format, along with any error
-func AccessToken(user *types.User) (*jwt.Token, string, error) {
-	claims, err := NewClaims(user)
+func AccessToken(claims *v2.Claims) (*jwt.Token, string, error) {
+	// Create a unique identifier for the token
+	jti, err := GenJTI()
 	if err != nil {
 		return nil, "", err
 	}
+	claims.Id = jti
 
-	return NewAccessTokenWithClaims(claims)
-}
+	// Add an expiration to the token
+	claims.ExpiresAt = time.Now().Add(defaultExpiration).Unix()
 
-// NewAccessTokenWithClaims given claims, creates a new access token and returns
-// it in it's jwt and signed format.
-func NewAccessTokenWithClaims(claims *types.Claims) (*jwt.Token, string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	tokenString, err := token.SignedString(secret)
 	if err != nil {
@@ -43,14 +43,14 @@ func NewAccessTokenWithClaims(claims *types.Claims) (*jwt.Token, string, error) 
 }
 
 // NewClaims creates new claim based on username
-func NewClaims(user *types.User) (*types.Claims, error) {
+func NewClaims(user *v2.User) (*v2.Claims, error) {
 	// Create a unique identifier for the token
 	jti, err := GenJTI()
 	if err != nil {
 		return nil, err
 	}
 
-	claims := types.Claims{
+	claims := &v2.Claims{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(defaultExpiration).Unix(),
 			Id:        jti,
@@ -58,7 +58,7 @@ func NewClaims(user *types.User) (*types.Claims, error) {
 		},
 		Groups: user.Groups,
 	}
-	return &claims, nil
+	return claims, nil
 }
 
 // GenJTI generates a new random JTI
@@ -71,8 +71,8 @@ func GenJTI() (string, error) {
 }
 
 // GetClaims returns the claims from a token
-func GetClaims(token *jwt.Token) (*types.Claims, error) {
-	if claims, ok := token.Claims.(*types.Claims); ok {
+func GetClaims(token *jwt.Token) (*v2.Claims, error) {
+	if claims, ok := token.Claims.(*v2.Claims); ok {
 		return claims, nil
 	}
 
@@ -80,9 +80,9 @@ func GetClaims(token *jwt.Token) (*types.Claims, error) {
 }
 
 // GetClaimsFromContext retrieves the JWT claims from the request context
-func GetClaimsFromContext(ctx context.Context) *types.Claims {
-	if value := ctx.Value(types.ClaimsKey); value != nil {
-		claims, ok := value.(*types.Claims)
+func GetClaimsFromContext(ctx context.Context) *v2.Claims {
+	if value := ctx.Value(v2.ClaimsKey); value != nil {
+		claims, ok := value.(*v2.Claims)
 		if !ok {
 			return nil
 		}
@@ -148,22 +148,15 @@ func parseToken(tokenString string) (*jwt.Token, error) {
 }
 
 // RefreshToken returns a refresh token for a specific user
-func RefreshToken(user *types.User) (*jwt.Token, string, error) {
+func RefreshToken(claims *v2.Claims) (*jwt.Token, string, error) {
 	// Create a unique identifier for the token
-	jti, err := utilbytes.Random(16)
+	jti, err := GenJTI()
 	if err != nil {
 		return nil, "", err
 	}
+	claims.Id = jti
 
-	claims := types.Claims{
-		StandardClaims: jwt.StandardClaims{
-			Id:      hex.EncodeToString(jti),
-			Subject: user.Username,
-		},
-		Groups: user.Groups,
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, &claims)
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	// Sign the token as a string using the secret
 	tokenString, err := token.SignedString(secret)
@@ -176,8 +169,8 @@ func RefreshToken(user *types.User) (*jwt.Token, string, error) {
 
 // SetClaimsIntoContext adds the token claims into the request context for
 // easier consumption later
-func SetClaimsIntoContext(r *http.Request, claims *types.Claims) context.Context {
-	return context.WithValue(r.Context(), types.ClaimsKey, claims)
+func SetClaimsIntoContext(r *http.Request, claims *v2.Claims) context.Context {
+	return context.WithValue(r.Context(), v2.ClaimsKey, claims)
 }
 
 // ValidateExpiredToken verifies that the provided token is valid, even if
@@ -188,7 +181,7 @@ func ValidateExpiredToken(tokenString string) (*jwt.Token, error) {
 		return nil, err
 	}
 
-	if _, ok := token.Claims.(*types.Claims); ok {
+	if _, ok := token.Claims.(*v2.Claims); ok {
 		if token.Valid {
 			return token, nil
 		}

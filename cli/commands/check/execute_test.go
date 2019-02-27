@@ -4,6 +4,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	clientmock "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
@@ -33,8 +34,8 @@ func TestExecuteCommandRunEClosureSuccess(t *testing.T) {
 	client.On("ExecuteCheck", mock.Anything).Return(nil)
 
 	config := cli.Config.(*clientmock.MockConfig)
-	user := &types.User{Username: "foo"}
-	_, accessToken, _ := jwt.AccessToken(user)
+	claims := v2.FixtureClaims("foo", nil)
+	_, accessToken, _ := jwt.AccessToken(claims)
 	config.On("Tokens").Return(&types.Tokens{Access: accessToken})
 
 	cmd := ExecuteCommand(cli)
@@ -54,8 +55,8 @@ func TestExecuteCommandRunEClosureServerErr(t *testing.T) {
 	client.On("ExecuteCheck", mock.Anything).Return(errors.New("whoops"))
 
 	config := cli.Config.(*clientmock.MockConfig)
-	user := &types.User{Username: "foo"}
-	_, accessToken, _ := jwt.AccessToken(user)
+	claims := v2.FixtureClaims("foo", nil)
+	_, accessToken, _ := jwt.AccessToken(claims)
 	config.On("Tokens").Return(&types.Tokens{Access: accessToken})
 
 	cmd := ExecuteCommand(cli)

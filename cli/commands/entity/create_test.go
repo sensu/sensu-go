@@ -46,7 +46,7 @@ func TestCreateCommandRunEClosureWithFlags(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("subscriptions", "test"))
 	out, err := test.RunCmd(cmd, []string{"test-handler"})
 
-	assert.Regexp("OK", out)
+	assert.Regexp("Created", out)
 	assert.Nil(err)
 
 }

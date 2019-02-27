@@ -32,8 +32,8 @@ func NewStore(client *clientv3.Client, name string) *Store {
 	return store
 }
 
-// Create a key given with the serialized object.
-func (s *Store) create(ctx context.Context, key, namespace string, object interface{}) error {
+// Create the given key with the serialized object.
+func Create(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
 	bytes, err := json.Marshal(object)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
@@ -48,7 +48,7 @@ func (s *Store) create(ctx context.Context, key, namespace string, object interf
 	comparisons = append(comparisons, keyNotFound(key))
 
 	req := clientv3.OpPut(key, string(bytes))
-	resp, err := s.client.Txn(ctx).If(comparisons...).Then(req).Else(
+	resp, err := client.Txn(ctx).If(comparisons...).Then(req).Else(
 		getNamespace(namespace), getKey(key),
 	).Commit()
 	if err != nil {
@@ -56,7 +56,7 @@ func (s *Store) create(ctx context.Context, key, namespace string, object interf
 	}
 	if !resp.Succeeded {
 		// Check if the namespace was missing
-		if len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
+		if namespace != "" && len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
 			return &store.ErrNamespaceMissing{Namespace: namespace}
 		}
 
@@ -76,7 +76,7 @@ func (s *Store) create(ctx context.Context, key, namespace string, object interf
 
 // CreateOrUpdate writes the given key with the serialized object, regarless of
 // its current existence
-func (s *Store) createOrUpdate(ctx context.Context, key, namespace string, object interface{}) error {
+func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
 	bytes, err := json.Marshal(object)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
@@ -89,20 +89,28 @@ func (s *Store) createOrUpdate(ctx context.Context, key, namespace string, objec
 	}
 
 	req := clientv3.OpPut(key, string(bytes))
-	resp, err := s.client.Txn(ctx).If(comparisons...).Then(req).Commit()
+	resp, err := client.Txn(ctx).If(comparisons...).Then(req).Commit()
 	if err != nil {
 		return err
 	}
 	if !resp.Succeeded {
-		return &store.ErrNamespaceMissing{Namespace: namespace}
+		// Check if the namespace was missing
+		if namespace != "" && len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
+			return &store.ErrNamespaceMissing{Namespace: namespace}
+		}
+
+		// Unknown error
+		return &store.ErrInternal{
+			Message: fmt.Sprintf("could not update the key %s", key),
+		}
 	}
 
 	return nil
 }
 
-// delete the given key
-func (s *Store) delete(ctx context.Context, key string) error {
-	resp, err := s.client.Delete(ctx, key)
+// Delete the given key
+func Delete(ctx context.Context, client *clientv3.Client, key string) error {
+	resp, err := client.Delete(ctx, key)
 	if err != nil {
 		return err
 	}
@@ -117,10 +125,10 @@ func (s *Store) delete(ctx context.Context, key string) error {
 	return nil
 }
 
-// get retrieves an object with the given key
-func (s *Store) get(ctx context.Context, key string, object interface{}) error {
+// Get retrieves an object with the given key
+func Get(ctx context.Context, client *clientv3.Client, key string, object interface{}) error {
 	// Fetch the key from the store
-	resp, err := s.client.Get(ctx, key, clientv3.WithLimit(1))
+	resp, err := client.Get(ctx, key, clientv3.WithLimit(1))
 	if err != nil {
 		return err
 	}
@@ -138,12 +146,12 @@ func (s *Store) get(ctx context.Context, key string, object interface{}) error {
 	return nil
 }
 
-// keyBuilderFn represents a generic key builder function
-type keyBuilderFn func(context.Context, string) string
+// KeyBuilderFn represents a generic key builder function
+type KeyBuilderFn func(context.Context, string) string
 
-// list retrieves all keys from storage under the provided prefix key, while
+// List retrieves all keys from storage under the provided prefix key, while
 // supporting all namespaces, and deserialize it into objsPtr.
-func (s *Store) list(ctx context.Context, keyBuilder keyBuilderFn, objsPtr interface{}) error {
+func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn, objsPtr interface{}) error {
 	// Make sure the interface is a pointer, and that the element at this address
 	// is a slice.
 	v := reflect.ValueOf(objsPtr)
@@ -160,7 +168,7 @@ func (s *Store) list(ctx context.Context, keyBuilder keyBuilderFn, objsPtr inter
 	}
 
 	key := keyBuilder(ctx, "")
-	resp, err := s.client.Get(ctx, key, opts...)
+	resp, err := client.Get(ctx, key, opts...)
 	if err != nil {
 		return err
 	}
@@ -179,7 +187,7 @@ func (s *Store) list(ctx context.Context, keyBuilder keyBuilderFn, objsPtr inter
 }
 
 // Update a key given with the serialized object.
-func (s *Store) update(ctx context.Context, key, namespace string, object interface{}) error {
+func Update(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
 	bytes, err := json.Marshal(object)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
@@ -194,7 +202,7 @@ func (s *Store) update(ctx context.Context, key, namespace string, object interf
 	comparisons = append(comparisons, keyFound(key))
 
 	req := clientv3.OpPut(key, string(bytes))
-	resp, err := s.client.Txn(ctx).If(comparisons...).Then(req).Else(
+	resp, err := client.Txn(ctx).If(comparisons...).Then(req).Else(
 		getNamespace(namespace), getKey(key),
 	).Commit()
 	if err != nil {
@@ -202,7 +210,7 @@ func (s *Store) update(ctx context.Context, key, namespace string, object interf
 	}
 	if !resp.Succeeded {
 		// Check if the namespace was missing
-		if len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
+		if namespace != "" && len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
 			return &store.ErrNamespaceMissing{Namespace: namespace}
 		}
 

@@ -56,7 +56,7 @@ class EventDetailsSummary extends React.Component {
       <Card>
         <CardContent>
           <Typography variant="headline" paragraph>
-            Check Summary
+            Config Summary
           </Typography>
           <Dictionary>
             <DictionaryEntry>
@@ -86,6 +86,14 @@ class EventDetailsSummary extends React.Component {
             <DictionaryEntry>
               <DictionaryKey>TTL</DictionaryKey>
               <DictionaryValue>{check.ttl}s</DictionaryValue>
+            </DictionaryEntry>
+            <DictionaryEntry>
+              <DictionaryKey>Subscriptions</DictionaryKey>
+              <DictionaryValue>
+                {check.subscriptions.length > 0
+                  ? check.subscriptions.join(", ")
+                  : "none"}
+              </DictionaryValue>
             </DictionaryEntry>
           </Dictionary>
         </CardContent>

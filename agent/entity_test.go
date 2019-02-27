@@ -1,7 +1,6 @@
 package agent
 
 import (
-	"sync"
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
@@ -38,7 +37,6 @@ func TestGetAgentEntity(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.agent.systemInfo = &types.System{}
-			tc.agent.systemInfoMu = &sync.RWMutex{}
 
 			entity := tc.agent.getAgentEntity()
 			assert.Equal(tc.expectedAgentName, entity.Name)
@@ -83,7 +81,6 @@ func TestGetEntities(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.agent.systemInfo = &types.System{}
-			tc.agent.systemInfoMu = &sync.RWMutex{}
 
 			tc.agent.getEntities(tc.event)
 			assert.Equal(tc.expectedAgentName, tc.event.Entity.Name)

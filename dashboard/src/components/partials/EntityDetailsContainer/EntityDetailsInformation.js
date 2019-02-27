@@ -17,20 +17,19 @@ import Dictionary, {
 import List from "@material-ui/core/List";
 import ListItem, { ListItemTitle } from "/components/DetailedListItem";
 import Maybe from "/components/Maybe";
-import CodeBlock from "/components/CodeBlock";
-import CodeHighlight from "/components/CodeHighlight/CodeHighlight";
 import { RelativeToCurrentDate } from "/components/RelativeDate";
 import StatusIcon from "/components/CheckStatusIcon";
 import SilencedIcon from "/icons/Silence";
 import Tooltip from "@material-ui/core/Tooltip";
+import LabelsAnnotationsCell from "/components/partials/LabelsAnnotationsCell";
 
-const Strong = withStyles({
+const Strong = withStyles(() => ({
   root: {
     color: "inherit",
     fontSize: "inherit",
     fontWeight: 500,
   },
-})(Typography);
+}))(Typography);
 
 class EntityDetailsInformation extends React.PureComponent {
   static propTypes = {
@@ -50,12 +49,10 @@ class EntityDetailsInformation extends React.PureComponent {
         }
         user
         redact
-        extendedAttributes
         deregister
         deregistration {
           handler
         }
-
         system {
           arch
           os
@@ -63,7 +60,6 @@ class EntityDetailsInformation extends React.PureComponent {
           platform
           platformFamily
           platformVersion
-
           network {
             interfaces {
               name
@@ -72,7 +68,12 @@ class EntityDetailsInformation extends React.PureComponent {
             }
           }
         }
+
+        metadata {
+          ...LabelsAnnotationsCell_objectmeta
+        }
       }
+      ${LabelsAnnotationsCell.fragments.objectmeta}
     `,
   };
 
@@ -127,12 +128,6 @@ class EntityDetailsInformation extends React.PureComponent {
                   </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>
-                  <DictionaryKey>User</DictionaryKey>
-                  <DictionaryValue>
-                    <Maybe value={entity.user} fallback="n/a" />
-                  </DictionaryValue>
-                </DictionaryEntry>
-                <DictionaryEntry>
                   <DictionaryKey>Subscriptions</DictionaryKey>
                   <DictionaryValue>
                     {entity.subscriptions.length > 0 ? (
@@ -153,6 +148,51 @@ class EntityDetailsInformation extends React.PureComponent {
             <Grid item xs={12} sm={6}>
               <Dictionary>
                 <DictionaryEntry>
+                  <DictionaryKey>User</DictionaryKey>
+                  <DictionaryValue>
+                    <Maybe value={entity.user} fallback="—" />
+                  </DictionaryValue>
+                </DictionaryEntry>
+                <DictionaryEntry>
+                  <DictionaryKey>Deregister</DictionaryKey>
+                  <DictionaryValue>
+                    {entity.deregister ? "yes" : "no"}
+                  </DictionaryValue>
+                </DictionaryEntry>
+                <DictionaryEntry>
+                  <DictionaryKey>Deregistration Handler</DictionaryKey>
+                  <DictionaryValue>
+                    <Maybe value={system.deregistration} fallback="—">
+                      {config => config.handler}
+                    </Maybe>
+                  </DictionaryValue>
+                </DictionaryEntry>
+                <DictionaryEntry>
+                  <DictionaryKey>Redacted Keys</DictionaryKey>
+                  <DictionaryValue>
+                    {entity.redact.length > 0 ? (
+                      <List disablePadding>
+                        {entity.redact.map(key => (
+                          <ListItem key={key}>
+                            <ListItemTitle>{key}</ListItemTitle>
+                          </ListItem>
+                        ))}
+                      </List>
+                    ) : (
+                      "—"
+                    )}
+                  </DictionaryValue>
+                </DictionaryEntry>
+              </Dictionary>
+            </Grid>
+          </Grid>
+        </CardContent>
+        <Divider />
+        <CardContent>
+          <Grid container spacing={0}>
+            <Grid item xs={12} sm={6}>
+              <Dictionary>
+                <DictionaryEntry>
                   <DictionaryKey>Class</DictionaryKey>
                   <DictionaryValue>{entity.entityClass}</DictionaryValue>
                 </DictionaryEntry>
@@ -162,6 +202,10 @@ class EntityDetailsInformation extends React.PureComponent {
                     <Maybe value={system.hostname} fallback="n/a" />
                   </DictionaryValue>
                 </DictionaryEntry>
+              </Dictionary>
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Dictionary>
                 <DictionaryEntry>
                   <DictionaryKey>OS</DictionaryKey>
                   <DictionaryValue>
@@ -173,7 +217,10 @@ class EntityDetailsInformation extends React.PureComponent {
                   <DictionaryValue>
                     <Maybe value={system.platform} fallback="n/a">
                       {() =>
-                        [system.platform, system.platformFamily]
+                        [
+                          `${system.platform} ${system.platformVersion}`,
+                          system.platformFamily,
+                        ]
                           .reduce(
                             (memo, val) => (val ? [...memo, val] : memo),
                             [],
@@ -206,7 +253,7 @@ class EntityDetailsInformation extends React.PureComponent {
                   <Grid item xs={12} sm={6} key={intr.name}>
                     <Dictionary>
                       <DictionaryEntry>
-                        <DictionaryKey>&nbsp;</DictionaryKey>
+                        <DictionaryKey>Adapter</DictionaryKey>
                         <DictionaryValue>
                           <Strong>{intr.name}</Strong>
                         </DictionaryValue>
@@ -231,20 +278,8 @@ class EntityDetailsInformation extends React.PureComponent {
             )}
           </Grid>
         </CardContent>
-        {Object.keys(entity.extendedAttributes).length > 0 && (
-          <React.Fragment>
-            <Divider />
-            <CodeBlock>
-              <CardContent>
-                <CodeHighlight
-                  language="json"
-                  code={JSON.stringify(entity.extendedAttributes, null, "\t")}
-                  component="code"
-                />
-              </CardContent>
-            </CodeBlock>
-          </React.Fragment>
-        )}
+        <Divider />
+        <LabelsAnnotationsCell entity={entity} />
       </Card>
     );
   }

@@ -21,12 +21,11 @@ import (
 	etcdTypes "github.com/coreos/etcd/pkg/types"
 	"github.com/coreos/pkg/capnslog"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/util/path"
 	"google.golang.org/grpc/grpclog"
 )
 
 const (
-	// StateDir is the base path for Sensu's local storage.
-	StateDir = "/var/lib/sensu"
 	// ClusterStateNew specifies this is a new etcd cluster
 	ClusterStateNew = "new"
 	// EtcdStartupTimeout is the amount of time we give the embedded Etcd Server
@@ -60,7 +59,7 @@ type TLSInfo transport.TLSInfo
 // NewConfig returns a pointer to an initialized Config object with defaults.
 func NewConfig() *Config {
 	c := &Config{}
-	c.DataDir = StateDir
+	c.DataDir = path.SystemCacheDir("sensu-backend")
 
 	return c
 }
@@ -158,9 +157,7 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	// Every 5 minutes, we will prune all values in etcd to only their latest
 	// revision.
 	cfg.AutoCompactionMode = "revision"
-	// This has to stay in ns until https://github.com/coreos/etcd/issues/9337
-	// is resolved.
-	cfg.AutoCompactionRetention = "1"
+	cfg.AutoCompactionRetention = "2"
 	// Default to 4G etcd size. TODO: make this configurable.
 	cfg.QuotaBackendBytes = int64(4 * 1024 * 1024 * 1024)
 
@@ -210,7 +207,7 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 	}
 
 	// Translate our TLS options to a *tls.Config
-	tlsConfig, err := tlsOptions.ToTLSConfig()
+	tlsConfig, err := tlsOptions.ToClientTLSConfig()
 	if err != nil {
 		return nil, err
 	}

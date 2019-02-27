@@ -8,7 +8,7 @@ const httpLink = ({ getClient }) =>
     // client is initialized - hence this meaty wrapper around `fetch`.
     fetch: (...args) => fetch(getClient().cache)(...args),
     credentials: "same-origin",
-    batchMax: 25,
+    batchMax: 10,
     batchInterval: 3,
   });
 

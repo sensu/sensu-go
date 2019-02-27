@@ -84,6 +84,18 @@ func TestIsFiltered(t *testing.T) {
 	assert.NoError(t, err)
 	assert.True(t, filtered)
 
+	// filtered is true, filter matches
+	fixtureAsset.Filters = []string{fmt.Sprintf("entity.system.arch == '%s'", entity.System.Arch)}
+	filtered, err = filteredManager.isFiltered(fixtureAsset)
+	assert.NoError(t, err)
+	assert.True(t, filtered)
+
+	// filtered is false, filter does not match
+	fixtureAsset.Filters = []string{fmt.Sprintf("entity.system.arch == '%s'", "foo")}
+	filtered, err = filteredManager.isFiltered(fixtureAsset)
+	assert.NoError(t, err)
+	assert.False(t, filtered)
+
 	// filtered is true, all filters match
 	fixtureAsset.Filters = []string{fmt.Sprintf("entity.name == '%s'", entity.Name), "entity.entity_class == 'host'"}
 	filtered, err = filteredManager.isFiltered(fixtureAsset)

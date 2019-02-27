@@ -30,7 +30,7 @@ func TestSetProxyRequestsCommand(t *testing.T) {
 		{[]string{"foo"}, false, "", errors.New("error"), nil, "", true},
 		{[]string{"bar"}, false, "", nil, errors.New("error"), "", true},
 		{[]string{"check1"}, false, "", nil, nil, "", true},
-		{[]string{"check1"}, false, proxyJSON, nil, nil, "OK", false},
+		{[]string{"check1"}, false, proxyJSON, nil, nil, "Updated", false},
 		{[]string{"check1"}, false, "invalidjson", nil, nil, "", true},
 		{[]string{"check1"}, true, proxyJSON, nil, nil, "", false},
 		{[]string{"check1"}, true, invalidProxyJSON, nil, nil, "", true},

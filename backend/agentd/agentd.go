@@ -72,12 +72,20 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		wg:       &sync.WaitGroup{},
 		errChan:  make(chan error, 1),
 	}
+
+	// prepare server TLS config
+	tlsServerConfig, err := c.TLS.ToServerTLSConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	handler := middlewares.BasicAuthentication(http.HandlerFunc(a.webSocketHandler), a.store)
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
 		Handler:      handler,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
+		TLSConfig:    tlsServerConfig,
 	}
 	for _, o := range opts {
 		if err := o(a); err != nil {
@@ -96,7 +104,8 @@ func (a *Agentd) Start() error {
 		defer a.wg.Done()
 		var err error
 		if a.tls != nil {
-			err = a.httpServer.ListenAndServeTLS(a.tls.CertFile, a.tls.KeyFile)
+			// TLS configuration comes from ToServerTLSConfig
+			err = a.httpServer.ListenAndServeTLS("", "")
 		} else {
 			err = a.httpServer.ListenAndServe()
 		}

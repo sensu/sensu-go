@@ -32,13 +32,23 @@ type APIClient interface {
 
 // GenericClient exposes generic resource methods.
 type GenericClient interface {
+	// Delete deletes the key with the given path
+	Delete(path string) error
+	// Get retrieves the key at the given path and stores it into obj
+	Get(path string, obj interface{}) error
+	// List retrieves all keys with the given path prefix and stores them into objs
+	List(path string, objs interface{}) error
+	// Post creates the given obj at the specified path
+	Post(path string, obj interface{}) error
+
 	// PutResource puts a resource according to its URIPath.
-	PutResource(types.Resource) error
+	PutResource(types.Wrapper) error
 }
 
 // AuthenticationAPIClient client methods for authenticating
 type AuthenticationAPIClient interface {
 	CreateAccessToken(url string, userid string, secret string) (*types.Tokens, error)
+	TestCreds(userid string, secret string) error
 	Logout(token string) error
 	RefreshAccessToken(refreshToken string) (*types.Tokens, error)
 }

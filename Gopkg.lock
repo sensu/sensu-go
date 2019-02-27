@@ -369,6 +369,14 @@
   version = "v1.2.0"
 
 [[projects]]
+  digest = "1:5e4935cc8119106bd57106538ef40f98a69b801e43c98b6bba24354604d5883f"
+  name = "github.com/graph-gophers/dataloader"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "78139374585c29dcb97b8f33089ed11959e4be59"
+  version = "v5"
+
+[[projects]]
   branch = "master"
   digest = "1:c17385a7e543b99c90231882a4a4ce20d07832ee03ab59fdd06ff2ab72ff878c"
   name = "github.com/graphql-go/graphql"
@@ -1076,8 +1084,8 @@
     "github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes",
     "github.com/coreos/etcd/etcdserver/etcdserverpb",
     "github.com/coreos/etcd/mvcc/mvccpb",
-    "github.com/coreos/etcd/pkg/fileutil",
     "github.com/coreos/etcd/pkg/transport",
+    "github.com/coreos/etcd/pkg/types",
     "github.com/coreos/etcd/store",
     "github.com/coreos/pkg/capnslog",
     "github.com/dave/jennifer/jen",
@@ -1094,6 +1102,7 @@
     "github.com/google/uuid",
     "github.com/gorilla/mux",
     "github.com/gorilla/websocket",
+    "github.com/graph-gophers/dataloader",
     "github.com/graphql-go/graphql",
     "github.com/graphql-go/graphql/gqlerrors",
     "github.com/graphql-go/graphql/language/ast",

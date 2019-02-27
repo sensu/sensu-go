@@ -72,6 +72,8 @@ func NewCheck(c *CheckConfig) *Check {
 		OutputMetricFormat:   c.OutputMetricFormat,
 		OutputMetricHandlers: c.OutputMetricHandlers,
 		EnvVars:              c.EnvVars,
+		DiscardOutput:        c.DiscardOutput,
+		MaxOutputSize:        c.MaxOutputSize,
 	}
 	if check.Labels == nil {
 		check.Labels = make(map[string]string)
@@ -103,6 +105,9 @@ func (c *Check) Validate() error {
 
 	if c.Ttl > 0 && c.Ttl <= int64(c.Interval) {
 		return errors.New("ttl must be greater than check interval")
+	}
+	if c.Ttl > 0 && c.Ttl < 5 {
+		return errors.New("minimum ttl is 5 seconds")
 	}
 
 	for _, assetName := range c.RuntimeAssets {
@@ -137,6 +142,10 @@ func (c *Check) Validate() error {
 
 	if err := ValidateEnvVars(c.EnvVars); err != nil {
 		return err
+	}
+
+	if c.MaxOutputSize < 0 {
+		return fmt.Errorf("MaxOutputSize must be >= 0")
 	}
 
 	return c.Subdue.Validate()

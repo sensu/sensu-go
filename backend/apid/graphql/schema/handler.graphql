@@ -1,7 +1,7 @@
 """
 A Handler is a handler specification.
 """
-type Handler implements Node, Namespaced {
+type Handler implements Node, Namespaced, HasMetadata {
   "The globally unique identifier of the record."
   id: ID!
 
@@ -10,6 +10,9 @@ type Handler implements Node, Namespaced {
 
   "Name is the unique identifier for a handler."
   name: String!
+
+  "metadata contains name, namespace, labels and annotations of the record"
+  metadata: ObjectMeta!
 
   "Type is the handler type, i.e. pipe."
   type: String!

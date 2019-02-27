@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
+import ClearSilenceAction from "/components/partials/ClearSilenceAction";
 import DeleteMenuItem from "/components/partials/ToolbarMenuItems/Delete";
 import SilenceMenuItem from "/components/partials/ToolbarMenuItems/Silence";
 import Toolbar from "/components/partials/Toolbar";
@@ -10,7 +11,6 @@ import UnsilenceMenuItem from "/components/partials/ToolbarMenuItems/Unsilence";
 
 import DeleteAction from "./EntityDetailsDeleteAction";
 import SilenceAction from "./EntityDetailsSilenceAction";
-import ClearSilenceAction from "./EntityDetailsClearSilenceAction";
 
 class EntityDetailsToolbar extends React.Component {
   static propTypes = {
@@ -25,12 +25,12 @@ class EntityDetailsToolbar extends React.Component {
 
         ...EntityDetailsDeleteAction_entity
         ...EntityDetailsSilenceAction_entity
-        ...EntityDetailsClearSilenceAction_entity
+        ...ClearSilenceAction_record
       }
 
       ${DeleteAction.fragments.entity}
       ${SilenceAction.fragments.entity}
-      ${ClearSilenceAction.fragments.entity}
+      ${ClearSilenceAction.fragments.record}
     `,
   };
 
@@ -59,10 +59,10 @@ class EntityDetailsToolbar extends React.Component {
               id="unsilence"
               visible={entity.isSilenced ? "if-room" : "never"}
             >
-              <ClearSilenceAction entity={entity} onDone={refetch}>
+              <ClearSilenceAction record={entity} onDone={refetch}>
                 {dialog => (
                   <UnsilenceMenuItem
-                    disabled={dialog.canOpen}
+                    disabled={!dialog.canOpen}
                     onClick={dialog.open}
                   />
                 )}

@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 
+	gql "github.com/graphql-go/graphql"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/graphql"
@@ -18,10 +19,17 @@ type ServiceConfig struct {
 	ClientFactory ClientFactory
 }
 
+// Service describes the Sensu GraphQL service capable of handling queries.
+type Service struct {
+	target  *graphql.Service
+	factory ClientFactory
+}
+
 // NewService instantiates new GraphQL service
-func NewService(cfg ServiceConfig) (*graphql.Service, error) {
+func NewService(cfg ServiceConfig) (*Service, error) {
 	svc := graphql.NewService()
 	clientFactory := cfg.ClientFactory
+	wrapper := Service{target: svc, factory: clientFactory}
 	nodeResolver := newNodeResolver(clientFactory)
 
 	// Register types
@@ -33,13 +41,16 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterEventsListOrder(svc)
 	schema.RegisterHandler(svc, &handlerImpl{factory: clientFactory})
 	schema.RegisterHandlerSocket(svc, &handlerSocketImpl{})
+	schema.RegisterHasMetadata(svc, nil)
 	schema.RegisterIcon(svc)
 	schema.RegisterJSON(svc, jsonImpl{})
+	schema.RegisterKVPairString(svc, &schema.KVPairStringAliases{})
 	schema.RegisterQuery(svc, &queryImpl{nodeResolver: nodeResolver, factory: clientFactory})
 	schema.RegisterMutator(svc, &mutatorImpl{})
 	schema.RegisterMutedColour(svc)
 	schema.RegisterNode(svc, &nodeImpl{nodeResolver})
 	schema.RegisterNamespaced(svc, nil)
+	schema.RegisterObjectMeta(svc, &objectMetaImpl{})
 	schema.RegisterOffsetPageInfo(svc, &offsetPageInfoImpl{})
 	schema.RegisterProxyRequests(svc, &schema.ProxyRequestsAliases{})
 	schema.RegisterResolveEventPayload(svc, &schema.ResolveEventPayloadAliases{})
@@ -51,6 +62,8 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterSubscriptionSetOrder(svc)
 	schema.RegisterSubscriptionOccurences(svc, &schema.SubscriptionOccurencesAliases{})
 	schema.RegisterSilencesListOrder(svc)
+	schema.RegisterSilenceable(svc, nil)
+	schema.RegisterUint(svc, unsignedIntegerImpl{})
 	schema.RegisterViewer(svc, &viewerImpl{factory: clientFactory})
 
 	// Register check types
@@ -112,5 +125,19 @@ func NewService(cfg ServiceConfig) (*graphql.Service, error) {
 	schema.RegisterUpdateCheckPayload(svc, &checkMutationPayload{})
 
 	err := svc.Regenerate()
-	return svc, err
+	return &wrapper, err
+}
+
+// Do executes given query string and variables
+func (svc *Service) Do(
+	ctx context.Context,
+	q string,
+	vars map[string]interface{},
+) *gql.Result {
+	// Instantiate loaders and lift them into the context
+	client := svc.factory.NewWithContext(ctx)
+	qryCtx := contextWithLoaders(ctx, client)
+
+	// Execute query inside context
+	return svc.target.Do(qryCtx, q, vars)
 }

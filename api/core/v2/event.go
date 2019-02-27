@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"sort"
 	"time"
+
+	stringsutil "github.com/sensu/sensu-go/util/strings"
 )
 
 // EventFailingState indicates failing check result status
@@ -124,7 +126,7 @@ func EventsBySeverity(es []*Event) sort.Interface {
 	return &eventSorter{es, createCmpEvents(
 		cmpBySeverity,
 		cmpByLastOk,
-		cmpByEntityName,
+		cmpByUniqueComponents,
 	)}
 }
 
@@ -150,17 +152,23 @@ func EventsByLastOk(es []*Event) sort.Interface {
 	return &eventSorter{es, createCmpEvents(
 		cmpByIncident,
 		cmpByLastOk,
-		cmpByEntityName,
+		cmpByUniqueComponents,
 	)}
 }
 
-func cmpByEntityName(a, b *Event) int {
+func cmpByUniqueComponents(a, b *Event) int {
 	ai, bi := "", ""
 	if a.Entity != nil {
-		ai = a.Entity.Name
+		ai += a.Entity.Name
+	}
+	if a.Check != nil {
+		ai += a.Check.Name
 	}
 	if b.Entity != nil {
 		bi = b.Entity.Name
+	}
+	if b.Check != nil {
+		bi += b.Check.Name
 	}
 
 	if ai == bi {
@@ -272,4 +280,72 @@ func (e *Event) URIPath() string {
 		return ""
 	}
 	return fmt.Sprintf("/api/core/v2/namespaces/%s/events/%s/%s", url.PathEscape(e.Entity.Namespace), url.PathEscape(e.Entity.Name), url.PathEscape(e.Check.Name))
+}
+
+// SilencedBy returns the subset of given silences, that silence the event.
+func (e *Event) SilencedBy(entries []*Silenced) []*Silenced {
+	silencedBy := make([]*Silenced, 0, len(entries))
+	if !e.HasCheck() {
+		return silencedBy
+	}
+
+	// Loop through every silenced entries in order to determine if it applies to
+	// the given event
+	for _, entry := range entries {
+		if e.IsSilencedBy(entry) {
+			silencedBy = append(silencedBy, entry)
+		}
+	}
+
+	return silencedBy
+}
+
+// IsSilencedBy returns true if given silence will silence the event.
+func (e *Event) IsSilencedBy(entry *Silenced) bool {
+	if !e.HasCheck() {
+		return false
+	}
+
+	// Make sure the silence has started
+	now := time.Now().Unix()
+	if !entry.StartSilence(now) {
+		return false
+	}
+
+	// Is this event silenced for all subscriptions? (e.g. *:check_cpu)
+	if entry.Name == fmt.Sprintf("*:%s", e.Check.Name) {
+		return true
+	}
+
+	// Is this event silenced by the entity subscription? (e.g. entity:id:*)
+	if entry.Name == fmt.Sprintf("%s:*", GetEntitySubscription(e.Entity.Name)) {
+		return true
+	}
+
+	// Is this event silenced for this particular entity? (e.g.
+	// entity:id:check_cpu)
+	if entry.Name == fmt.Sprintf("%s:%s", GetEntitySubscription(e.Entity.Name), e.Check.Name) {
+		return true
+	}
+
+	for _, subscription := range e.Check.Subscriptions {
+		// Make sure the entity is subscribed to this specific subscription
+		if !stringsutil.InArray(subscription, e.Entity.Subscriptions) {
+			continue
+		}
+
+		// Is this event silenced by one of the check subscription? (e.g.
+		// load-balancer:*)
+		if entry.Name == fmt.Sprintf("%s:*", subscription) {
+			return true
+		}
+
+		// Is this event silenced by one of the check subscription for this
+		// particular check? (e.g. load-balancer:check_cpu)
+		if entry.Name == fmt.Sprintf("%s:%s", subscription, e.Check.Name) {
+			return true
+		}
+	}
+
+	return false
 }

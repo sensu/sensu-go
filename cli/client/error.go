@@ -2,6 +2,7 @@ package client
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/go-resty/resty"
 )
@@ -21,7 +22,12 @@ func (a APIError) Error() string {
 func UnmarshalError(res *resty.Response) error {
 	var apiErr APIError
 	if err := json.Unmarshal(res.Body(), &apiErr); err != nil {
-		apiErr.Message = string(res.Body())
+		if len(res.Body()) > 0 {
+			apiErr.Message = string(res.Body())
+		} else {
+			apiErr.Message = fmt.Sprintf("the API returned: %s", res.Status())
+		}
 	}
+
 	return apiErr
 }

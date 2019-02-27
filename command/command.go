@@ -140,6 +140,7 @@ func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionReque
 				escapeZombie(&execution)
 			}
 		})
+		defer timer.Stop()
 	}
 
 	if err := cmd.Start(); err != nil {
@@ -195,7 +196,7 @@ func escapeZombie(ex *ExecutionRequest) {
 // FixtureExecutionResponse returns an Execution for use in testing
 func FixtureExecutionResponse(status int, output string) *ExecutionResponse {
 	return &ExecutionResponse{
-		Output:   "",
+		Output:   output,
 		Status:   0,
 		Duration: 1,
 	}

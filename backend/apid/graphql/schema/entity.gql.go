@@ -22,6 +22,12 @@ type EntityNamespaceFieldResolver interface {
 	Namespace(p graphql.ResolveParams) (string, error)
 }
 
+// EntityMetadataFieldResolver implement to resolve requests for the Entity's metadata field.
+type EntityMetadataFieldResolver interface {
+	// Metadata implements response to request for metadata field.
+	Metadata(p graphql.ResolveParams) (interface{}, error)
+}
+
 // EntityNameFieldResolver implement to resolve requests for the Entity's name field.
 type EntityNameFieldResolver interface {
 	// Name implements response to request for name field.
@@ -79,7 +85,7 @@ type EntityRedactFieldResolver interface {
 // EntityStatusFieldResolver implement to resolve requests for the Entity's status field.
 type EntityStatusFieldResolver interface {
 	// Status implements response to request for status field.
-	Status(p graphql.ResolveParams) (int, error)
+	Status(p graphql.ResolveParams) (interface{}, error)
 }
 
 // EntityRelatedFieldResolverArgs contains arguments provided to related when selected
@@ -198,6 +204,7 @@ type EntityExtendedAttributesFieldResolver interface {
 type EntityFieldResolvers interface {
 	EntityIDFieldResolver
 	EntityNamespaceFieldResolver
+	EntityMetadataFieldResolver
 	EntityNameFieldResolver
 	EntityEntityClassFieldResolver
 	EntitySystemFieldResolver
@@ -286,6 +293,12 @@ func (_ EntityAliases) Namespace(p graphql.ResolveParams) (string, error) {
 		return ret, errors.New("unable to coerce value for field 'namespace'")
 	}
 	return ret, err
+}
+
+// Metadata implements response to request for 'metadata' field.
+func (_ EntityAliases) Metadata(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
 }
 
 // Name implements response to request for 'name' field.
@@ -392,16 +405,9 @@ func (_ EntityAliases) Redact(p graphql.ResolveParams) ([]string, error) {
 }
 
 // Status implements response to request for 'status' field.
-func (_ EntityAliases) Status(p graphql.ResolveParams) (int, error) {
+func (_ EntityAliases) Status(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret, ok := graphql1.Int.ParseValue(val).(int)
-	if err != nil {
-		return ret, err
-	}
-	if !ok {
-		return ret, errors.New("unable to coerce value for field 'status'")
-	}
-	return ret, err
+	return val, err
 }
 
 // Related implements response to request for 'related' field.
@@ -462,6 +468,13 @@ func _ObjTypeEntityNamespaceHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EntityNamespaceFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
 		return resolver.Namespace(frp)
+	}
+}
+
+func _ObjTypeEntityMetadataHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityMetadataFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Metadata(frp)
 	}
 }
 
@@ -646,6 +659,13 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				Name:              "lastSeen",
 				Type:              graphql1.DateTime,
 			},
+			"metadata": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "metadata contains name, namespace, labels and annotations of the record",
+				Name:              "metadata",
+				Type:              graphql1.NewNonNull(graphql.OutputType("ObjectMeta")),
+			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -690,7 +710,7 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Status represents the MAX status of all events associated with the entity. If\nno events are present value is 0.",
 				Name:              "status",
-				Type:              graphql1.NewNonNull(graphql1.Int),
+				Type:              graphql1.NewNonNull(graphql.OutputType("Uint")),
 			},
 			"subscriptions": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -716,7 +736,9 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 		},
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node"),
-			graphql.Interface("Namespaced")},
+			graphql.Interface("Namespaced"),
+			graphql.Interface("Silenceable"),
+			graphql.Interface("HasMetadata")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -741,6 +763,7 @@ var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 		"id":                 _ObjTypeEntityIDHandler,
 		"isSilenced":         _ObjTypeEntityIsSilencedHandler,
 		"lastSeen":           _ObjTypeEntityLastSeenHandler,
+		"metadata":           _ObjTypeEntityMetadataHandler,
 		"name":               _ObjTypeEntityNameHandler,
 		"namespace":          _ObjTypeEntityNamespaceHandler,
 		"redact":             _ObjTypeEntityRedactHandler,

@@ -7,10 +7,134 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Check results sent via the agent socket now support handlers.
+
+## [5.2.1] - 2019-02-11
+
+### Fixed
+- Fixed a regression in the agent that would not allow proxy checks to be
+run for subsequent executions.
+### Added
+- Web UI - support for labels and annotations
+
+## [5.2.0] - 2019-02-06
+
+### Added
+- Added support for the following TLS related options to `sensuctl`:
+`--trusted-ca-file` and `--insecure-skip-tls-verify`. This allows sensuctl
+users to use a self-signed certificate without adding it to the operating
+system's CA store, either by explicitly trusting the signer, or by disabling
+TLS hostname verification.
+- Added a generic watcher in the store.
+- Added `RemoveProvider` method to authenticator.
+- Check output truncation support has been added. Check output can be truncated
+by adjusting the max_output_size and discard_output properties.
+- Added ability to silence/unsilence from the event details page.
+- Added support for wrapped resources in the API with `sensuctl create` &
+`sensuctl edit`.
+- Web UI - platform version displays on the entity details page.
+- Web UI - include proxy request configuration on check details page.
+- Web UI - display deregistration config on the entity details page.
+
+### Changed
+- Removed unused workflow `rel_build_and_test` in CircleCI config.
+- Moved the `Provider` interface to `api/core/v2` package.
+- Moved the `Authenticator` interface to `backend/authentication` package.
+- Updated confirmation messages for sensuctl commands: `Created`, `Deleted` and
+`Updated` instead of `OK`.
+- Exported some functions and methods in the CLI client.
+- The API authenticator now identifies providers by their name only.
+
+### Fixed
+- Check TTL failure events are now much more reliable, and will persist even
+in the presence cluster member failures and cluster restarts.
+- Fix snakeCase version of keys in typeMap for acronyms.
+- Fixed a bug in keepalive processing that could result in a crash.
+- Pin childprocess to v0.9.0 in CircleCI so fpm can be installed.
+- Substitutions applied to command & hooks are now omitted from events.
+- Fixes a bug where generic store methods assumed a namespace was provided for non-namespaced resources.
+- Keepalive and check TTL database state is now properly garbage-collected on
+entity deletion.
+- Fixed a bug where `sensuctl version` required configuration files to exist.
+- Updates the copy on the confirm disable dialog to accurately reflect the
+operation.
+
+## [5.1.1] - 2019-01-24
+
+### Added
+- Added the notion of authentication providers.
+
+### Changed
+- Improved logging for errors in proxy check requests.
+- Updated Go version from 1.10 to 1.11.4.
+- Refactoring of the internal authentication mechanism into a `basic`
+authentication provider.
+- Modified private generic store methods as public functions.
+- Improved logging for errors in proxy check requests.
+- Updated Go version from 1.10 to 1.11.4.
+- Changed keepalive event to include check.output
+
+### Fixed
+- Fixed a bug where `sensuctl edit` was not removing the temp file it created.
+- Fixed a bug where adhoc checks were not retrieving asset dependencies.
+- Fixed a bug where check updates would cause the check to immediately fire.
+- Fixed a bug where a bad line in check output would abort metric extraction.
+An error is now logged instead, and extraction continues after a bad line is encountered.
+- Keepalive events will now continue to fire after cluster restarts.
+- Fixed a panic in the dashboardd shutdown routine.
+- Fixed a bug where deleting a non-existent entity with sensuctl would not return an error.
+- Web UI - toolbar menu buttons now switch with dark theme.
+- Web UI - some buttons easier to see with dark theme.
+- Agents will now take proxy entity names into consideration when guarding
+against duplicate check requests.
+
+### Changed
+- Improved logging for errors in proxy check requests.
+- Updated Go version from 1.10 to 1.11.4.
+
+## [5.1.0] - 2018-12-18
+
+### Added
+- Support for the trusted-ca-file and insecure-skip-tls-verify flags in
+  sensu-agent. These flags have the same meaning and use as their sensu-backend
+  counterparts.
+
+### Changed
+- Default location for sensu-backend data has changed from /var/lib/sensu to
+  /var/lib/sensu/sensu-backend. See release notes for more information.
+
+### Fixed
+- Keepalive and check TTL failure events now fire continuously until resolved.
+- Listing an empty set of assets now correctly returns [] instead of null.
+- Fixed API endpoint used by the CLI to create hooks via the 'sensuctl create'
+  command. It's now possible to create objects of type 'Hook' with this command
+  again.
+- Firefox status icons not fully rendering
+
+## [5.0.1] - 2018-12-12
+
+### Changed
+- Added --etcd-advertise-client-urls options to docker-compose.yaml sensu-backend start command
+
+### Fixed
+- Prevent a panic when using an external etcd cluster.
+- Silences List in web ui sorted by ascending order; defaults to descending
+- Reduces shuffling of items as events list updates
+- Fixed error in UI where status value could not be coerced
+- Copy local environment variables into execution context when running checks
+- Ensure environment variables are joined with a semicolon on Windows
+- Command arguments are no longer needlessly escaped on Windows
+- Backend environments are now included in handler & mutator execution requests.
+
+## [5.0.0] - 2018-11-30
+
 ### Added
 - Add the `etcd-advertise-client-urls` config attribute to sensu-backend
 - Support for multiple API versions added to sensuctl create
 - Support for metadata added to wrapped resources (yaml, wrapped-json)
+- Added the backend configuration attributes `api-listen-address` & `api-url`.
+- Adds feedback when rerunning check[s] in the web app
 
 ### Removed
 - Check subdue functionality has been disabled. Users that have checks with
@@ -32,6 +156,8 @@ uses the same facility as check subdue for handling time windows.
 - Metadata from wrappers and resources is now merged, with a preference given to
 the values coming from the wrapper. Labels and annotations are deep-merged.
 - Round-robin scheduling has been temporarily disabled.
+- The dashboard now uses the `api-url` configuration attribute to connect to the
+API.
 
 ### Fixed
 - Fixed several resource leaks in the check scheduler.
@@ -50,6 +176,15 @@ period of disconnection from the backend.
 - A panic in keepalive/check ttl monitors causing a panic.
 - Monitors are now properly namespaced in etcd.
 - Updating a users groups will no longer corrupt their password
+- Prevent empty error messages in sensuctl.
+- Fixed a bug where keepalive failures could be influenced by check TTL
+successes, and vice versa.
+- Fixed a bug where check TTL events were not formed correctly.
+- Fixed a web-ui bug causing the app to crash on window resize in FireFox
+
+### Breaking Changes
+- The backend configuration attributes `api-host` & `api-port` have been
+replaced with `api-listen-address`.
 
 ## [2.0.0-beta.8-1] - 2018-11-15
 

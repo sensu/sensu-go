@@ -37,3 +37,12 @@ Read any documentation that relates to the change you're making. If it needs
 updating, update it and file a PR. The PR should be linked to this PR
 or the original issue.
 -->
+
+## How did you verify this change?
+
+<!--
+Aside from unit/integration tests, please describe the e2e steps to verify this change.
+
+Eng@Sensu: Add the test case to the TestRail QA plan, and write an automated Rspec test, if applicable.
+The corresponding sensu-go-qa-crucible PR or issue should be linked here.
+-->
