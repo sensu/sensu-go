@@ -115,11 +115,11 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	_ = cmd.Flags().BoolP("non-interactive", "n", false, "do not administer interactive questionnaire")
-	_ = cmd.Flags().StringP("url", "", cli.Config.APIUrl(), "the sensu backend url")
+	_ = cmd.Flags().StringP("url", "", config.DefaultAPIURL, "the sensu backend url")
 	_ = cmd.Flags().StringP("username", "", "", "username")
 	_ = cmd.Flags().StringP("password", "", "", "password")
-	_ = cmd.Flags().StringP("format", "", cli.Config.Format(), "preferred output format")
-	_ = cmd.Flags().StringP("namespace", "", cli.Config.Namespace(), "namespace")
+	_ = cmd.Flags().StringP("format", "", config.FormatTabular, "preferred output format")
+	_ = cmd.Flags().StringP("namespace", "", config.DefaultNamespace, "namespace")
 
 	return cmd
 }

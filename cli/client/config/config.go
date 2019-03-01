@@ -8,6 +8,9 @@ const (
 	// DefaultEdition is the default Sensu edition
 	DefaultEdition = types.CoreEdition
 
+	// DefaultAPIURL represents the default API URL.
+	DefaultAPIURL = "http://localhost:8080"
+
 	// DefaultNamespace represents the default namespace
 	DefaultNamespace = "default"
 
