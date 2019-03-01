@@ -1,11 +1,15 @@
 package ringv2
 
-import "context"
+import (
+	"context"
+
+	"github.com/robfig/cron"
+)
 
 // Interface specifies the interface of a ring.
 type Interface interface {
 	// Add adds a value to the ring.
-	Add(context.Context, string) error
+	Add(ctx context.Context, value string, keepalive int64) error
 
 	// Remove removes a value from the ring.
 	Remove(context.Context, string) error
@@ -23,4 +27,7 @@ type Interface interface {
 	// SetInterval sets the ring's interval. After setting the interval,
 	// future trigger events will occur at least the interval seconds apart.
 	SetInterval(ctx context.Context, seconds int64) error
+
+	// SetCron sets the cron schedule. It causes SetInterval to have no effect.
+	SetCron(cron.Schedule)
 }

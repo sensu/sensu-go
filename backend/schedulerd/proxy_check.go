@@ -82,11 +82,11 @@ func substituteProxyEntityTokens(entity *types.Entity, check *types.CheckConfig)
 	return substitutedCheck, nil
 }
 
-// calculateSplayInterval calculates how many seconds between publishing proxy
+// calculateSplayInterval calculates the duration between publishing proxy
 // requests to each individual entity (based on a configurable splay %)
-func calculateSplayInterval(check *types.CheckConfig, numEntities float64) (float64, error) {
+func calculateSplayInterval(check *types.CheckConfig, numEntities int) (time.Duration, error) {
 	var err error
-	next := time.Duration(time.Second * time.Duration(check.Interval))
+	next := time.Second * time.Duration(check.Interval)
 	if check.Cron != "" {
 		if next, err = NextCronTime(time.Now(), check.Cron); err != nil {
 			return 0, err
@@ -96,6 +96,7 @@ func calculateSplayInterval(check *types.CheckConfig, numEntities float64) (floa
 	if splayCoverage == 0 {
 		splayCoverage = types.DefaultSplayCoverage
 	}
-	splay := next.Seconds() * (splayCoverage / 100.0) / numEntities
+	timeSlice := splayCoverage / 100.0 / float64(numEntities)
+	splay := time.Duration(float64(next) * timeSlice)
 	return splay, nil
 }

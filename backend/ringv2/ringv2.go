@@ -5,10 +5,13 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"sync/atomic"
+	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
-	"github.com/sensu/sensu-go/backend/etcd"
+	"github.com/robfig/cron"
+	"github.com/sensu/sensu-go/backend/store"
 )
 
 var _ Interface = &Ring{}
@@ -43,6 +46,11 @@ func (e EventType) String() string {
 
 const MinInterval = 5
 
+// Path returns the canonical path to a ring.
+func Path(namespace, subscription string) string {
+	return store.NewKeyBuilder("rings").WithNamespace(namespace).Build(subscription)
+}
+
 // Event represents an event that occurred in a ring. The event can originate
 // from any ring client.
 type Event struct {
@@ -66,28 +74,30 @@ type Ring struct {
 	// in order to find the least-valued item.
 	itemPrefix string
 
-	// keySeqKey is the key that points to the current sequence number of the
-	// ring. The sequence number is used to compute new keys within the ring
-	// prefix.
-	keySeqKey string
-
 	// intervalKey is the key that the TTL for ring items is stored at
 	intervalKey string
 
-	// triggerPrefix is the prefix that triggers are stored under. triggers are
-	// leased keys that are used to notify the ring clients about which item is
-	// next.
-	triggerPrefix string
+	// interval is the TTL for ring triggers
+	interval int64
+
+	// triggerKey is the key that contains ring triggers
+	triggerKey string
+
+	// watchCtr counts the number of open watchers
+	watchCtr int64
+
+	// cron is a cron schedule
+	cron cron.Schedule
 }
 
 // New creates a new Ring.
 func New(client *clientv3.Client, storePath string) *Ring {
 	return &Ring{
-		client:        client,
-		itemPrefix:    path.Join(storePath, "items"),
-		keySeqKey:     path.Join(storePath, "seq"),
-		intervalKey:   path.Join(storePath, "interval"),
-		triggerPrefix: path.Join(storePath, "triggers"),
+		client:      client,
+		itemPrefix:  path.Join(storePath, "items"),
+		intervalKey: path.Join(storePath, "interval"),
+		triggerKey:  path.Join(storePath, "trigger"),
+		interval:    5,
 	}
 }
 
@@ -104,17 +114,19 @@ func (r *Ring) IsEmpty(ctx context.Context) (bool, error) {
 }
 
 func (r *Ring) grant(ctx context.Context) (*clientv3.LeaseGrantResponse, error) {
-	interval, err := r.getInterval(ctx)
-	if err != nil {
-		return nil, err
-	}
+	interval := r.getInterval()
 	lease, err := r.client.Grant(ctx, interval)
 	return lease, err
 }
 
-// Add adds a new value to the ring. If the value already exists, it will not
-// be disturbed.
-func (r *Ring) Add(ctx context.Context, value string) error {
+// Add adds a new value to the ring. If the value already exists, its keepalive
+// will be reset. Values that are not kept alive will expire and be removed
+// from the ring.
+func (r *Ring) Add(ctx context.Context, value string, keepalive int64) (rerr error) {
+	if keepalive < 5 {
+		return fmt.Errorf("couldn't add %q to ring: keepalive must be >5s", value)
+	}
+
 	itemKey := path.Join(r.itemPrefix, value)
 
 	getresp, err := r.client.Get(ctx, itemKey)
@@ -122,41 +134,45 @@ func (r *Ring) Add(ctx context.Context, value string) error {
 		return fmt.Errorf("couldn't add %q to ring: %s", value, err)
 	}
 
-	if len(getresp.Kvs) > 0 && len(getresp.Kvs[0].Value) > 0 {
+	if len(getresp.Kvs) > 0 && getresp.Kvs[0].Version > 0 {
+		leaseID := clientv3.LeaseID(getresp.Kvs[0].Lease)
+		if leaseID == 0 {
+			goto NEWLEASE
+		}
 		// Item already exists
-		return nil
+		resp, err := r.client.KeepAliveOnce(ctx, leaseID)
+		if err != nil {
+			// error most likely due to lease not existing
+			goto NEWLEASE
+		}
+		if resp.TTL == keepalive {
+			// We can return early since the TTL is as requested.
+			return nil
+		}
+		// The TTL is different than the requested keepalive, so revoke the
+		// lease and create a new one afterwards.
+		_, _ = r.client.Revoke(ctx, leaseID)
 	}
+NEWLEASE:
 
-	seq, err := etcd.Sequence(r.client, r.keySeqKey)
+	lease, err := r.client.Grant(ctx, keepalive)
 	if err != nil {
 		return fmt.Errorf("couldn't add %q to ring: %s", value, err)
 	}
+	defer func() {
+		if rerr != nil && lease != nil {
+			_, _ = r.client.Revoke(ctx, lease.ID)
+		}
+	}()
 
-	cmps := []clientv3.Cmp{clientv3.Compare(clientv3.Version(itemKey), "=", 0)}
-	ops := []clientv3.Op{clientv3.OpPut(itemKey, seq)}
-	var lease *clientv3.LeaseGrantResponse
-	if empty, err := r.IsEmpty(ctx); err != nil {
+	if _, err := r.client.Put(ctx, itemKey, "", clientv3.WithLease(lease.ID)); err != nil {
 		return fmt.Errorf("couldn't add %q to ring: %s", value, err)
-	} else if empty {
-		lease, err = r.grant(ctx)
-		if err != nil {
+	}
+
+	if atomic.LoadInt64(&r.watchCtr) > 0 {
+		if err := r.ensureActiveTrigger(ctx); err != nil {
 			return fmt.Errorf("couldn't add %q to ring: %s", value, err)
 		}
-		triggerKey := path.Join(r.triggerPrefix, value)
-		ops = append(ops, clientv3.OpPut(triggerKey, "", clientv3.WithLease(lease.ID)))
-		cmps = append(cmps, clientv3.Compare(clientv3.Version(r.triggerPrefix), "=", 0).WithPrefix())
-	}
-
-	resp, err := r.client.Txn(ctx).If(cmps...).Then(ops...).Commit()
-
-	if err != nil {
-		return fmt.Errorf("couldn't add %q to ring: %s", value, err)
-	}
-
-	if !resp.Succeeded && lease != nil {
-		// The item was concurrently added by another client, get rid of this
-		// lease.
-		_, _ = r.client.Revoke(ctx, lease.ID)
 	}
 
 	return nil
@@ -166,28 +182,19 @@ func (r *Ring) Add(ctx context.Context, value string) error {
 // happens.
 func (r *Ring) Remove(ctx context.Context, value string) error {
 	itemKey := path.Join(r.itemPrefix, value)
-	itemCmp := clientv3.Compare(clientv3.Version(itemKey), ">", 0)
 	itemOp := clientv3.OpDelete(itemKey)
 
-	_, err := r.client.Txn(ctx).If(itemCmp).Then(itemOp).Commit()
+	triggerCmp := clientv3.Compare(clientv3.Value(r.triggerKey), "=", value)
+	triggerOp := clientv3.OpDelete(r.triggerKey)
+
+	resp, err := r.client.Txn(ctx).If(triggerCmp).Then(itemOp, triggerOp).Else(itemOp).Commit()
 	if err != nil {
 		return fmt.Errorf("couldn't delete %q from ring: %s", value, err)
 	}
 
-	// Determine if the item we're removing is next up to be triggered
-	triggerKey := path.Join(r.triggerPrefix, value)
-	triggerCmp := clientv3.Compare(clientv3.Version(triggerKey), ">", 0)
-	triggerOp := clientv3.OpDelete(triggerKey)
-
-	resp, err := r.client.Txn(ctx).If(triggerCmp).Then(triggerOp).Commit()
-	if err != nil {
-		return fmt.Errorf("couldn't delete %q from ring: %s", value, err)
-	}
-
-	if resp.Succeeded {
-		// The item was going to be the next ring item, so advance the ring
-		if _, err := r.advanceRing(ctx, nil, 1); err != nil {
-			return err
+	if resp.Succeeded && atomic.LoadInt64(&r.watchCtr) > 0 {
+		if err := r.ensureActiveTrigger(ctx); err != nil {
+			return fmt.Errorf("fatal ring error: %s", err)
 		}
 	}
 
@@ -209,22 +216,17 @@ func (r *Ring) Remove(ctx context.Context, value string) error {
 func (r *Ring) Watch(ctx context.Context, values int) <-chan Event {
 	c := make(chan Event, 1)
 	r.startWatchers(ctx, c, values)
+	atomic.AddInt64(&r.watchCtr, 1)
 	return c
 }
 
-func (r *Ring) getInterval(ctx context.Context) (int64, error) {
-	resp, err := r.client.Get(ctx, r.intervalKey)
-	if err != nil {
-		return 0, err
+func (r *Ring) getInterval() int64 {
+	if r.cron != nil {
+		now := time.Now()
+		interval := int64(r.cron.Next(now).Sub(now) / time.Second)
+		return interval
 	}
-	if len(resp.Kvs) == 0 {
-		return 0, fmt.Errorf("ring: nil interval value at %s", r.intervalKey)
-	}
-	var result int64
-	if _, err := fmt.Sscanf(string(resp.Kvs[0].Value), "%d", &result); err != nil {
-		return 0, fmt.Errorf("ring: bad interval value at %s", r.intervalKey)
-	}
-	return result, nil
+	return r.interval
 }
 
 // SetInterval sets the interval between trigger events. It returns an error if
@@ -233,40 +235,72 @@ func (r *Ring) SetInterval(ctx context.Context, seconds int64) error {
 	if seconds < MinInterval {
 		return fmt.Errorf("bad interval: got %ds, minimum value is %ds", seconds, MinInterval)
 	}
-	value := fmt.Sprintf("%d", seconds)
-	_, err := r.client.Put(ctx, r.intervalKey, value)
-	if err != nil {
-		return fmt.Errorf("error setting TTL: %s", err)
-	}
+	//r.SetCron(nil)
+	//value := fmt.Sprintf("%d", seconds)
+	//_, err := r.client.Put(ctx, r.intervalKey, value)
+	//if err != nil {
+	//	return fmt.Errorf("error setting TTL: %s", err)
+	//}
+	r.interval = seconds
 	return nil
 }
 
-func (r *Ring) hasTrigger(ctx context.Context) (bool, error) {
-	resp, err := r.client.Get(ctx, r.triggerPrefix, clientv3.WithPrefix(), clientv3.WithLimit(1))
+// SetCron sets a cron schedule instead of an interval.
+func (r *Ring) SetCron(schedule cron.Schedule) {
+	r.cron = schedule
+}
+
+// hasTrigger returns whether the ring has an active trigger. If the ring
+// does not have an active trigger, the first lexical key in the ring will
+// be returned in the string return value.
+func (r *Ring) hasTrigger(ctx context.Context) (bool, string, error) {
+	getTrigger := clientv3.OpGet(r.triggerKey)
+	getFirst := clientv3.OpGet(r.itemPrefix, clientv3.WithPrefix(), clientv3.WithLimit(1))
+	resp, err := r.client.Txn(ctx).Then(getTrigger, getFirst).Commit()
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
-	return len(resp.Kvs) > 0, nil
+	if got := len(resp.Responses); got != 2 {
+		return false, "", fmt.Errorf("bad response length: got %d, want 2", got)
+	}
+	triggerResp := resp.Responses[0].GetResponseRange()
+	valueResp := resp.Responses[1].GetResponseRange()
+	if len(triggerResp.Kvs) == 0 || len(triggerResp.Kvs[0].Value) == 0 {
+		value := ""
+		if len(valueResp.Kvs) > 0 {
+			value = string(valueResp.Kvs[0].Key)
+		}
+		return false, value, nil
+	}
+	return true, "", nil
 }
 
 func (r *Ring) ensureActiveTrigger(ctx context.Context) error {
-	if empty, err := r.IsEmpty(ctx); err != nil {
+	has, next, err := r.hasTrigger(ctx)
+	if err != nil {
 		return err
-	} else if empty {
+	}
+	if has || next == "" {
 		return nil
 	}
-	if has, err := r.hasTrigger(ctx); err != nil {
-		return err
-	} else if !has {
-		_, err := r.advanceRing(ctx, nil, 1)
+	lease, err := r.grant(ctx)
+	if err != nil {
 		return err
 	}
-	return nil
+	nextValue := path.Base(next)
+	triggerOp := clientv3.OpPut(r.triggerKey, nextValue, clientv3.WithLease(lease.ID))
+	triggerCmp := clientv3.Compare(clientv3.Version(r.triggerKey), "=", 0)
+
+	resp, err := r.client.Txn(ctx).If(triggerCmp).Then(triggerOp).Commit()
+	if !resp.Succeeded {
+		_, _ = r.client.Revoke(ctx, lease.ID)
+	}
+	return err
 }
 
 func (r *Ring) startWatchers(ctx context.Context, ch chan<- Event, values int) {
 	itemsC := r.client.Watch(ctx, r.itemPrefix, clientv3.WithPrefix())
-	nextC := r.client.Watch(ctx, r.triggerPrefix, clientv3.WithPrefix(), clientv3.WithFilterPut())
+	nextC := r.client.Watch(ctx, r.triggerKey, clientv3.WithFilterPut(), clientv3.WithPrevKV())
 	if err := r.ensureActiveTrigger(ctx); err != nil {
 		notifyError(ch, fmt.Errorf("error while starting ring watcher: %s", err))
 		notifyClosing(ch)
@@ -278,6 +312,7 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan<- Event, values int) {
 			case <-ctx.Done():
 				notifyClosing(ch)
 				close(ch)
+				atomic.AddInt64(&r.watchCtr, -1)
 				return
 			case response := <-itemsC:
 				if err := response.Err(); err != nil {
@@ -300,31 +335,36 @@ func notifyClosing(ch chan<- Event) {
 	ch <- Event{Type: EventClosing}
 }
 
-func nextInRingOps(n int) []clientv3.OpOption {
-	return []clientv3.OpOption{
-		clientv3.WithPrefix(),
-		clientv3.WithLimit(int64(n)),
-		clientv3.WithSort(clientv3.SortByValue, clientv3.SortAscend),
+func (r *Ring) nextInRing(ctx context.Context, prevKv *mvccpb.KeyValue, n int64) ([]*mvccpb.KeyValue, error) {
+	opts := []clientv3.OpOption{clientv3.WithLimit(n)}
+	var key string
+	if prevKv == nil {
+		key = r.itemPrefix
+		opts = append(opts, clientv3.WithPrefix())
+	} else {
+		value := string(prevKv.Value)
+		key = path.Join(r.itemPrefix, value)
+		end := path.Join(r.itemPrefix, string([]byte{0xFF}))
+		opts = append(opts, clientv3.WithFromKey())
+		opts = append(opts, clientv3.WithRange(end))
 	}
-}
-
-func (r *Ring) nextInRing(ctx context.Context, n int) ([]*mvccpb.KeyValue, error) {
-	resp, err := r.client.Get(ctx, r.itemPrefix, nextInRingOps(n)...)
+	resp, err := r.client.Get(ctx, key, opts...)
 	if err != nil {
-		return nil, fmt.Errorf("couldn't get next item in ring: %s", err)
+		return nil, fmt.Errorf("couldn't get next item(s) in ring: %s", err)
 	}
-	return resp.Kvs, nil
-}
-
-func getSequenceOps(items []*mvccpb.KeyValue, seqs []string) ([]clientv3.Op, []clientv3.Cmp) {
-	var ops []clientv3.Op
-	var cmps []clientv3.Cmp
-	for i, kv := range items {
-		key := string(kv.Key)
-		cmps = append(cmps, clientv3.Compare(clientv3.Version(key), "=", kv.Version))
-		ops = append(ops, clientv3.OpPut(key, seqs[i]))
+	result := resp.Kvs
+	if len(result) == 0 {
+		return nil, nil
 	}
-	return ops, cmps
+	if int64(len(result)) < n {
+		m := n - int64(len(result))
+		resp, err := r.client.Get(ctx, r.itemPrefix, clientv3.WithPrefix(), clientv3.WithLimit(m))
+		if err != nil {
+			return nil, fmt.Errorf("couldn't get next item(s) in ring: %s", err)
+		}
+		result = append(result, resp.Kvs...)
+	}
+	return result, nil
 }
 
 func repeatKVs(kvs []*mvccpb.KeyValue, items int) []*mvccpb.KeyValue {
@@ -351,7 +391,7 @@ func (r *Ring) advanceRing(ctx context.Context, prevKv *mvccpb.KeyValue, numValu
 		}
 	}()
 
-	items, err := r.nextInRing(ctx, numValues+1)
+	items, err := r.nextInRing(ctx, prevKv, int64(numValues)+1)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't advance ring: %s", err)
 	}
@@ -361,41 +401,20 @@ func (r *Ring) advanceRing(ctx context.Context, prevKv *mvccpb.KeyValue, numValu
 		return nil, nil
 	}
 
-	if len(items) == 1 {
-		// Ring with only one item, need to repeat the item for the next round
-		items = append(items, items...)
-	}
-
-	totalItems := len(items)
+	nextItem := items[len(items)-1]
 	repeatItems := repeatKVs(items, numValues)
-	truncItems := repeatItems[len(repeatItems)-numValues:]
-
-	if prevKv != nil && path.Base(string(prevKv.Key)) != path.Base(string(items[0].Key)) {
-		// Another client has already advanced the ring, there is no need to
-		// continue.
-		return repeatItems, nil
+	if len(items) < numValues+1 {
+		// There are fewer items than requested values
+		nextItem = items[0]
+	} else {
+		items = items[:len(items)-1]
 	}
 
-	seqs, err := etcd.Sequences(ctx, r.client, r.keySeqKey, numValues)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't advance ring: %s", err)
-	}
+	nextValue := path.Base(string(nextItem.Key))
+	triggerOp := clientv3.OpPut(r.triggerKey, nextValue, clientv3.WithLease(lease.ID))
+	triggerCmp := clientv3.Compare(clientv3.Version(r.triggerKey), "=", 0)
 
-	if len(seqs) > totalItems {
-		seqs = seqs[len(seqs)-totalItems:]
-	}
-
-	sequenceOps, sequenceCmps := getSequenceOps(truncItems, seqs)
-
-	nextValue := path.Base(string(items[len(items)-1].Key))
-	triggerKey := path.Join(r.triggerPrefix, nextValue)
-	triggerOp := clientv3.OpPut(triggerKey, "", clientv3.WithLease(lease.ID))
-	triggerCmp := clientv3.Compare(clientv3.Version(triggerKey), "=", 0)
-
-	ops := append(sequenceOps, triggerOp)
-	cmps := append(sequenceCmps, triggerCmp)
-
-	resp, err := r.client.Txn(ctx).If(cmps...).Then(ops...).Commit()
+	resp, err := r.client.Txn(ctx).If(triggerCmp).Then(triggerOp).Commit()
 	if err != nil {
 		return nil, fmt.Errorf("couldn't advance ring: %s", err)
 	}
@@ -408,11 +427,15 @@ func (r *Ring) advanceRing(ctx context.Context, prevKv *mvccpb.KeyValue, numValu
 
 func (r *Ring) handleRingTrigger(ctx context.Context, ch chan<- Event, response clientv3.WatchResponse, values int) {
 	for _, event := range response.Events {
-		items, err := r.advanceRing(ctx, event.Kv, values)
+		items, err := r.advanceRing(ctx, event.PrevKv, values)
 		if err != nil {
 			notifyError(ch, err)
 		}
-		notifyTrigger(ch, items)
+		if len(items) > 0 {
+			// When the ring trigger was deleted by the Remove() method, the
+			// items will be empty.
+			notifyTrigger(ch, items)
+		}
 	}
 }
 
@@ -452,10 +475,11 @@ func notifyTrigger(ch chan<- Event, items []*mvccpb.KeyValue) {
 	for i := range values {
 		values[i] = path.Base(string(items[i].Key))
 	}
-	ch <- Event{
+	event := Event{
 		Type:   EventTrigger,
 		Values: values,
 	}
+	ch <- event
 }
 
 // notifyError sends EventError events to the channel

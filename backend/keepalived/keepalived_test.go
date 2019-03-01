@@ -6,7 +6,6 @@ import (
 
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -57,9 +56,7 @@ func fakeFactory(name string, dead, alive liveness.EventFunc, logger logrus.Fiel
 func newKeepalivedTest(t *testing.T) *keepalivedTest {
 	store := &mockstore.MockStore{}
 	deregisterer := &mockDeregisterer{}
-	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: &mockring.Getter{},
-	})
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	k, err := New(Config{Store: store, Bus: bus, LivenessFactory: fakeFactory})
 	require.NoError(t, err)
@@ -231,9 +228,7 @@ func TestProcessRegistration(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			messageBus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-				RingGetter: &mockring.Getter{},
-			})
+			messageBus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 			require.NoError(t, err)
 			require.NoError(t, messageBus.Start())
 
@@ -276,9 +271,7 @@ func TestCreateKeepaliveEvent(t *testing.T) {
 
 func TestDeadCallbackNoEntity(t *testing.T) {
 	// Make sure the dead callback doesn't crash when entity is missing
-	messageBus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: &mockring.Getter{},
-	})
+	messageBus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -304,9 +297,7 @@ func TestDeadCallbackNoEntity(t *testing.T) {
 
 func TestDeadCallbackNoEvent(t *testing.T) {
 	// Make sure the dead callback doesn't crash when entity is missing
-	messageBus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: &mockring.Getter{},
-	})
+	messageBus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	if err != nil {
 		t.Fatal(err)
 	}

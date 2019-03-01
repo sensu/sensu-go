@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -55,9 +54,7 @@ func TestGoodSessionConfig(t *testing.T) {
 		sendCh: make(chan *transport.Message, 10),
 	}
 
-	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: &mockring.Getter{},
-	})
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	require.NoError(t, bus.Start())
 
@@ -83,9 +80,7 @@ func TestBadSessionConfig(t *testing.T) {
 		sendCh: make(chan *transport.Message, 10),
 	}
 
-	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: &mockring.Getter{},
-	})
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	require.NoError(t, bus.Start())
 

@@ -30,12 +30,15 @@ func TestSequence(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	seqA, err := Sequence(client, "/sensu.io/foobars/seq")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	seqA, err := Sequence(ctx, client, "/sensu.io/foobars/seq")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	seqB, err := Sequence(client, "/sensu.io/foobars/seq")
+	seqB, err := Sequence(ctx, client, "/sensu.io/foobars/seq")
 	if err != nil {
 		t.Fatal(err)
 	}

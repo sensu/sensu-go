@@ -143,7 +143,7 @@ func (r *Ring) advance() error {
 	delOp := clientv3.OpDelete(key)
 
 	// Place the value at the tail of the ring
-	seq, err := etcd.Sequence(r.kv, r.keySeqKey)
+	seq, err := etcd.Sequence(context.Background(), r.kv, r.keySeqKey)
 	if err != nil {
 		return fmt.Errorf("error getting next ring item: %s", err)
 	}
@@ -199,7 +199,7 @@ func (r *Ring) Add(ctx context.Context, value string) error {
 		if err := ctx.Err(); err != nil {
 			return fmt.Errorf("couldn't add item to ring: %s", err)
 		}
-		seq, err := etcd.Sequence(r.kv, r.keySeqKey)
+		seq, err := etcd.Sequence(ctx, r.kv, r.keySeqKey)
 		if err != nil {
 			return fmt.Errorf("couldn't add item to ring: %s", err)
 		}
