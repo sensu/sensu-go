@@ -138,6 +138,7 @@ func (s *RoundRobinIntervalScheduler) handleEvent(executor *CheckExecutor, event
 	case ringv2.EventTrigger:
 		// The ring has produced a trigger for the entity, and a check should
 		// be executed.
+		s.logger.WithFields(logrus.Fields{"agents": event.Values}).Info("executing round robin check on agents")
 		s.schedule(executor, proxyEntities, event.Values)
 
 	case ringv2.EventClosing:

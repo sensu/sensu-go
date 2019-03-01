@@ -141,15 +141,19 @@ func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) 
 		}
 	case store.WatchUpdate:
 		// Interrupt the check scheduler, causing the check to execute and the timer to be reset.
+		logger.Info("check configs updated")
 		sched, ok := c.items[key]
 		if !ok {
+			logger.Info("starting new scheduler")
 			if err := c.startScheduler(check); err != nil {
 				logger.WithError(err).Error("unable to start check scheduler")
 			}
 		}
 		if sched.Type() == GetSchedulerType(check) {
+			logger.Info("restarting scheduler")
 			sched.Interrupt(check)
 		} else {
+			logger.Info("stopping existing scheduler, starting new scheduler")
 			sched.Stop()
 			if err := c.startScheduler(check); err != nil {
 				logger.WithError(err).Error("unable to start check scheduler")
