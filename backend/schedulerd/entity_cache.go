@@ -136,7 +136,7 @@ func (e *EntityCache) start(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case event := <-e.watcher:
-			if event.Entity.EntityClass == corev2.EntityProxyClass {
+			if event.Action == store.WatchDelete || event.Entity.EntityClass == corev2.EntityProxyClass {
 				// Only consider proxy entity updates
 				e.updates = append(e.updates, event)
 			}

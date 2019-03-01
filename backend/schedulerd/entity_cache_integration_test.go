@@ -36,6 +36,7 @@ func TestEntityCacheIntegration(t *testing.T) {
 	for i := 0; i < 9; i++ {
 		fixture := corev2.FixtureEntity(fmt.Sprintf("%d", i))
 		fixture.Name = fmt.Sprintf("%d", i)
+		fixture.EntityClass = corev2.EntityProxyClass
 		fixtures = append(fixtures, fixture)
 		if err := store.UpdateEntity(ctx, fixture); err != nil {
 			t.Fatal(err)
@@ -52,6 +53,7 @@ func TestEntityCacheIntegration(t *testing.T) {
 		fixture := corev2.FixtureEntity(fmt.Sprintf("%d", i))
 		fixture.Name = fmt.Sprintf("%d", i)
 		fixture.Namespace = "other"
+		fixture.EntityClass = corev2.EntityProxyClass
 		otherFixtures = append(otherFixtures, fixture)
 		if err := store.UpdateEntity(ctx, fixture); err != nil {
 			t.Fatal(err)
@@ -80,10 +82,8 @@ func TestEntityCacheIntegration(t *testing.T) {
 		t.Fatal("bad entities")
 	}
 
-	// create an updateNotifier so that we can sync properly
-
 	newEntity := corev2.FixtureEntity("new")
-
+	newEntity.EntityClass = corev2.EntityProxyClass
 	if err := store.UpdateEntity(ctx, newEntity); err != nil {
 		t.Fatal(err)
 	}

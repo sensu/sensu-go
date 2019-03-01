@@ -281,6 +281,7 @@ func (r *Ring) ensureActiveTrigger(ctx context.Context) error {
 		return err
 	}
 	if has || next == "" {
+		// if next == "", there are no ring items
 		return nil
 	}
 	lease, err := r.grant(ctx)
