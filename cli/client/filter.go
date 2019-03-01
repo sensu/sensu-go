@@ -32,7 +32,7 @@ func (client *RestClient) CreateFilter(filter *types.EventFilter) (err error) {
 
 // DeleteFilter deletes a filter from configured Sensu instance
 func (client *RestClient) DeleteFilter(filter *types.EventFilter) error {
-	path := filtersPath(filter.Namespace, filter.Name)
+	path := filtersPath(client.config.Namespace(), filter.Name)
 	res, err := client.R().Delete(path)
 
 	if err != nil {

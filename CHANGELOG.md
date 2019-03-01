@@ -9,6 +9,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Check results sent via the agent socket now support handlers.
+- Fixed a bug in `sensuctl` where handlers and filters would only be deleted
+from the default namespace, unless a `--namespace` flag was specified.
 
 ## [5.2.1] - 2019-02-11
 

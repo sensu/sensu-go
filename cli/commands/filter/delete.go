@@ -32,7 +32,8 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			filter := &types.EventFilter{ObjectMeta: types.ObjectMeta{Name: name}}
+			filter := &types.EventFilter{}
+			filter.Name = name
 
 			if namespace, _ := cmd.Flags().GetString("namespace"); namespace != "" {
 				filter.Namespace = namespace

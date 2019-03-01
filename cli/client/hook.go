@@ -50,7 +50,7 @@ func (client *RestClient) UpdateHook(hook *types.HookConfig) (err error) {
 
 // DeleteHook deletes hook from configured Sensu instance
 func (client *RestClient) DeleteHook(hook *types.HookConfig) error {
-	path := hooksPath(hook.Namespace, hook.Name)
+	path := hooksPath(client.config.Namespace(), hook.Name)
 	res, err := client.R().Delete(path)
 
 	if err != nil {
