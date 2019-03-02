@@ -48,6 +48,7 @@ func (c *CheckWatcher) startScheduler(check *types.CheckConfig) error {
 	key := concatUniqueKey(check.Name, check.Namespace)
 	if existing := c.items[key]; existing != nil {
 		if existing.Type() == GetSchedulerType(check) {
+			logger.Error("scheduler already exists")
 			return nil
 		} else {
 			if err := existing.Stop(); err != nil {

@@ -235,12 +235,7 @@ func (r *Ring) SetInterval(ctx context.Context, seconds int64) error {
 	if seconds < MinInterval {
 		return fmt.Errorf("bad interval: got %ds, minimum value is %ds", seconds, MinInterval)
 	}
-	//r.SetCron(nil)
-	//value := fmt.Sprintf("%d", seconds)
-	//_, err := r.client.Put(ctx, r.intervalKey, value)
-	//if err != nil {
-	//	return fmt.Errorf("error setting TTL: %s", err)
-	//}
+	r.SetCron(nil)
 	r.interval = seconds
 	return nil
 }

@@ -26,7 +26,7 @@ func NewPool(client *clientv3.Client) *Pool {
 
 type ringProxy struct {
 	ring *Ring
-	ch   <-chan Event
+	ch   *<-chan Event
 	sync.Mutex
 }
 
@@ -53,9 +53,16 @@ func (r *ringProxy) Watch(ctx context.Context, n int) <-chan Event {
 	r.Lock()
 	defer r.Unlock()
 	if r.ch == nil {
-		r.ch = r.ring.Watch(ctx, n)
+		wc := r.ring.Watch(ctx, n)
+		r.ch = &wc
+		go func() {
+			<-ctx.Done()
+			r.Lock()
+			defer r.Unlock()
+			r.ch = nil
+		}()
 	}
-	return r.ch
+	return *r.ch
 }
 
 // Get gets a ring from the pool.
