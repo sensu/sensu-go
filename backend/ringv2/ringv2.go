@@ -229,6 +229,9 @@ func (r *Ring) getInterval() int64 {
 	if r.cron != nil {
 		now := time.Now()
 		interval := int64(r.cron.Next(now).Sub(now) / time.Second)
+		if interval < MinInterval {
+			interval = int64(r.cron.Next(now.Add((time.Duration(interval)*time.Second)+1)).Sub(now) / time.Second)
+		}
 		return interval
 	}
 	return r.interval
