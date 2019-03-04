@@ -167,16 +167,6 @@ func (e *EntityCache) GetEntities(namespace string) []*corev2.Entity {
 	return cache[start:stop]
 }
 
-func entityEQ(x, y *corev2.Entity) bool {
-	if x == nil || y == nil {
-		return false
-	}
-	if x.Namespace != y.Namespace {
-		return false
-	}
-	return x.Name == y.Name
-}
-
 func (e *EntityCache) updateCache() {
 	for _, event := range e.updates {
 		entity := event.Entity

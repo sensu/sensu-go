@@ -155,7 +155,9 @@ func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) 
 			sched.Interrupt(check)
 		} else {
 			logger.Info("stopping existing scheduler, starting new scheduler")
-			sched.Stop()
+			if err := sched.Stop(); err != nil {
+				logger.WithError(err).Error("error stopping check scheduler")
+			}
 			if err := c.startScheduler(check); err != nil {
 				logger.WithError(err).Error("unable to start check scheduler")
 			}

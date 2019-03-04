@@ -414,8 +414,6 @@ func (r *Ring) advanceRing(ctx context.Context, prevKv *mvccpb.KeyValue, numValu
 	if len(items) < numValues+1 {
 		// There are fewer items than requested values
 		nextItem = items[0]
-	} else {
-		items = items[:len(items)-1]
 	}
 
 	nextValue := path.Base(string(nextItem.Key))
