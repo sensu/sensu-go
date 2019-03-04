@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Check results sent via the agent socket now support handlers.
+- Fixed bug with how long commands were displayed on check details page.
 
 ### Added
 - Additional additional check config and entity information to event details page.
