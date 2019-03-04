@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/sensu/sensu-go/asset"
@@ -180,8 +181,17 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 // pipeHandler fork/executes a child process for a Sensu pipe handler
 // command and writes the mutated eventData to it via STDIN.
 func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*command.ExecutionResponse, error) {
+	// Create environment variables for Handler annotations.
+	annotationsEnv := []string{}
+	for key, value := range handler.Annotations {
+		r := strings.NewReplacer(".", "_", "/", "_", "-", "_", " ", "_")
+		key = r.Replace(key)
+		envVar := fmt.Sprintf("%s=%s", strings.ToUpper(key), value)
+		annotationsEnv = append(annotationsEnv, envVar)
+	}
+
 	// Prepare environment variables
-	env := environment.MergeEnvironments(os.Environ(), handler.EnvVars)
+	env := environment.MergeEnvironments(os.Environ(), handler.EnvVars, annotationsEnv)
 
 	handlerExec := command.ExecutionRequest{}
 	handlerExec.Command = handler.Command
@@ -207,7 +217,7 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for handler")
 		} else {
-			handlerExec.Env = environment.MergeEnvironments(os.Environ(), assets.Env(), handler.EnvVars)
+			handlerExec.Env = environment.MergeEnvironments(os.Environ(), assets.Env(), handler.EnvVars, annotationsEnv)
 		}
 	}
 

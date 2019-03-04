@@ -160,6 +160,7 @@ func TestPipelinedPipeHandler(t *testing.T) {
 
 	handler := types.FakeHandlerCommand("cat")
 	handler.Type = "pipe"
+	handler.Annotations["sensu.io/plugins/foo"] = "bar"
 
 	event := &types.Event{}
 	eventData, _ := json.Marshal(event)

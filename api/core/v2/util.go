@@ -16,6 +16,12 @@ func FakeHandlerCommand(command string, args ...string) *Handler {
 	env := []string{"GO_WANT_HELPER_HANDLER_PROCESS=1"}
 
 	handler := &Handler{
+		ObjectMeta: ObjectMeta{
+			Namespace:   "default",
+			Name:        "fake",
+			Labels:      make(map[string]string),
+			Annotations: make(map[string]string),
+		},
 		Command: trimmedCmd,
 		EnvVars: env,
 	}
