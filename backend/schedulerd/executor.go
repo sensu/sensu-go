@@ -268,7 +268,6 @@ func processCheck(ctx context.Context, executor Executor, check *types.CheckConf
 		if err != nil {
 			return err
 		}
-		fmt.Println("ENTITIES", len(entities))
 		// publish proxy requests on matching entities
 		if matchedEntities := matchEntities(entities, check.ProxyRequests); len(matchedEntities) != 0 {
 			if err := executor.publishProxyCheckRequests(matchedEntities, check); err != nil {
