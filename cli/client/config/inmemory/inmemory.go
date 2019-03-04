@@ -8,7 +8,6 @@ import (
 // Config describes details associated with making requests
 type Config struct {
 	url       string
-	edition   string
 	format    string
 	namespace string
 	tokens    *types.Tokens
@@ -18,7 +17,6 @@ type Config struct {
 func New(url string) *Config {
 	config := Config{
 		url:       url,
-		edition:   config.DefaultEdition,
 		format:    config.FormatJSON,
 		namespace: config.DefaultNamespace,
 	}
@@ -29,11 +27,6 @@ func New(url string) *Config {
 // APIUrl describes the URL where the API can be found
 func (c *Config) APIUrl() string {
 	return c.url
-}
-
-// Edition describes the edition of the Sensu product
-func (c *Config) Edition() string {
-	return c.edition
 }
 
 // Format describes the expected output from the client
@@ -54,12 +47,6 @@ func (c *Config) Tokens() *types.Tokens {
 // SaveAPIUrl updates the current value
 func (c *Config) SaveAPIUrl(val string) error {
 	c.url = val
-	return nil
-}
-
-// SaveEdition updates the current value
-func (c *Config) SaveEdition(val string) error {
-	c.edition = val
 	return nil
 }
 

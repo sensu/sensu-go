@@ -45,20 +45,6 @@ func TestSaveAPIUrl(t *testing.T) {
 	assert.Equal(t, url, config.APIUrl())
 }
 
-func TestSaveEdition(t *testing.T) {
-	dir, cleanup := tmpDir(t)
-	defer cleanup()
-
-	// Set flags
-	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
-	flags.String("config-dir", dir, "")
-
-	config := Load(flags)
-
-	require.NoError(t, config.SaveEdition(types.CoreEdition))
-	assert.Equal(t, types.CoreEdition, config.Edition())
-}
-
 func TestSaveFormat(t *testing.T) {
 	dir, cleanup := tmpDir(t)
 	defer cleanup()

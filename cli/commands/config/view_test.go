@@ -5,7 +5,6 @@ import (
 
 	clienttest "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -17,7 +16,6 @@ func TestViewCommand(t *testing.T) {
 
 	config := cli.Config.(*clienttest.MockConfig)
 	config.On("APIUrl").Return("http://127.0.0.1:8080")
-	config.On("Edition").Return(types.CoreEdition)
 	config.On("Format").Return("none")
 
 	assert.NotNil(cmd, "cmd should be returned")
@@ -34,7 +32,6 @@ func TestViewExec(t *testing.T) {
 
 	config := cli.Config.(*clienttest.MockConfig)
 	config.On("APIUrl").Return("http://127.0.0.1:8080")
-	config.On("Edition").Return(types.CoreEdition)
 	config.On("Format").Return("none")
 
 	out, err := test.RunCmd(cmd, []string{"default"})

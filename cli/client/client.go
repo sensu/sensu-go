@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-resty/resty"
 	"github.com/sensu/sensu-go/cli/client/config"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 )
 
@@ -100,23 +99,6 @@ func New(config config.Config) *RestClient {
 		client.expiredToken = false
 
 		c.SetAuthToken(tokens.Access)
-
-		return nil
-	})
-
-	// Verify the Sensu edition and update the sensuctl configuration if required
-	restyInst.OnAfterResponse(func(c *resty.Client, resp *resty.Response) error {
-		// Retrieve the Sensu edition from the response header
-		headerEdition := resp.Header().Get(types.EditionHeader)
-		if headerEdition == "" {
-			return nil
-		}
-
-		// Verify if the edition from the header differs from the configured one
-		if headerEdition != config.Edition() {
-			// Update the configured edition in sensuctl
-			return config.SaveEdition(headerEdition)
-		}
 
 		return nil
 	})
