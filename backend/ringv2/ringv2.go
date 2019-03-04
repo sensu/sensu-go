@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -88,6 +89,8 @@ type Ring struct {
 
 	// cron is a cron schedule
 	cron cron.Schedule
+
+	mu sync.Mutex
 }
 
 // New creates a new Ring.
@@ -221,6 +224,8 @@ func (r *Ring) Watch(ctx context.Context, values int) <-chan Event {
 }
 
 func (r *Ring) getInterval() int64 {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	if r.cron != nil {
 		now := time.Now()
 		interval := int64(r.cron.Next(now).Sub(now) / time.Second)
@@ -232,16 +237,20 @@ func (r *Ring) getInterval() int64 {
 // SetInterval sets the interval between trigger events. It returns an error if
 // the interval is less than MinInterval, or if there was an error from etcd.
 func (r *Ring) SetInterval(ctx context.Context, seconds int64) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	if seconds < MinInterval {
 		return fmt.Errorf("bad interval: got %ds, minimum value is %ds", seconds, MinInterval)
 	}
-	r.SetCron(nil)
+	r.cron = nil
 	r.interval = seconds
 	return nil
 }
 
 // SetCron sets a cron schedule instead of an interval.
 func (r *Ring) SetCron(schedule cron.Schedule) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
 	r.cron = schedule
 }
 
