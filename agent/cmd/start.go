@@ -94,14 +94,6 @@ func newVersionCommand() *cobra.Command {
 	return cmd
 }
 
-func splitAndTrim(s string) []string {
-	r := strings.Split(s, ",")
-	for i := range r {
-		r[i] = strings.TrimSpace(r[i])
-	}
-	return r
-}
-
 func newStartCommand() *cobra.Command {
 	var setupErr error
 
