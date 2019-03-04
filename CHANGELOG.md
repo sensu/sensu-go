@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - `sensuctl user list` can now output yaml and wrapped-json
 - Fixed bug with how long commands were displayed on check details page.
 - Web - Fixes issue where timeout value was not displayed.
+- Fixed bug with how long commands were displayed on check details page.
 
 ### Added
 - Additional additional check config and entity information to event details page.
