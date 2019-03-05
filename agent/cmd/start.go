@@ -94,14 +94,6 @@ func newVersionCommand() *cobra.Command {
 	return cmd
 }
 
-func splitAndTrim(s string) []string {
-	r := strings.Split(s, ",")
-	for i := range r {
-		r[i] = strings.TrimSpace(r[i])
-	}
-	return r
-}
-
 func newStartCommand() *cobra.Command {
 	var setupErr error
 
@@ -161,17 +153,8 @@ func newStartCommand() *cobra.Command {
 				cfg.BackendURLs = append(cfg.BackendURLs, newURL)
 			}
 
-			// Get a single or a list of redact fields
-			redact := viper.GetString(flagRedact)
-			if redact != "" {
-				cfg.Redact = splitAndTrim(redact)
-			} else {
-				cfg.Redact = viper.GetStringSlice(flagRedact)
-			}
-
-			// Get a single or a list of subscriptions
-			subscriptions := viper.GetStringSlice(flagSubscriptions)
-			cfg.Subscriptions = subscriptions
+			cfg.Redact = viper.GetStringSlice(flagRedact)
+			cfg.Subscriptions = viper.GetStringSlice(flagSubscriptions)
 
 			sensuAgent := agent.NewAgent(cfg)
 			if err := sensuAgent.Run(); err != nil {
@@ -266,14 +249,14 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "deregistration handler that should process the entity deregistration event.")
 	cmd.Flags().String(flagNamespace, viper.GetString(flagNamespace), "agent namespace")
 	cmd.Flags().String(flagPassword, viper.GetString(flagPassword), "agent password")
-	cmd.Flags().String(flagRedact, viper.GetString(flagRedact), "comma-delimited customized list of fields to redact")
+	cmd.Flags().StringSlice(flagRedact, viper.GetStringSlice(flagRedact), "comma-delimited customized list of fields to redact")
 	cmd.Flags().String(flagSocketHost, viper.GetString(flagSocketHost), "address to bind the Sensu client socket to")
 	cmd.Flags().Bool(flagStatsdDisable, viper.GetBool(flagStatsdDisable), "disables the statsd listener and metrics server")
-	cmd.Flags().StringSlice(flagStatsdEventHandlers, viper.GetStringSlice(flagStatsdEventHandlers), "comma-delimited list of event handlers for statsd metrics")
+	cmd.Flags().StringSlice(flagStatsdEventHandlers, viper.GetStringSlice(flagStatsdEventHandlers), "event handlers for statsd metrics, one per flag")
 	cmd.Flags().Int(flagStatsdFlushInterval, viper.GetInt(flagStatsdFlushInterval), "number of seconds between statsd flush")
 	cmd.Flags().String(flagStatsdMetricsHost, viper.GetString(flagStatsdMetricsHost), "address used for the statsd metrics server")
 	cmd.Flags().Int(flagStatsdMetricsPort, viper.GetInt(flagStatsdMetricsPort), "port used for the statsd metrics server")
-	cmd.Flags().String(flagSubscriptions, viper.GetString(flagSubscriptions), "comma-delimited list of agent subscriptions")
+	cmd.Flags().StringSlice(flagSubscriptions, viper.GetStringSlice(flagSubscriptions), "comma-delimited list of agent subscriptions")
 	cmd.Flags().String(flagUser, viper.GetString(flagUser), "agent user")
 	cmd.Flags().StringSlice(flagBackendURL, viper.GetStringSlice(flagBackendURL), "ws/wss URL of Sensu backend server (to specify multiple backends use this flag multiple times)")
 	cmd.Flags().Uint32(flagKeepaliveTimeout, uint32(viper.GetInt(flagKeepaliveTimeout)), "number of seconds until agent is considered dead by backend")

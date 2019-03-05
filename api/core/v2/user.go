@@ -41,3 +41,8 @@ func (u *User) ValidatePassword() error {
 func (u *User) URIPath() string {
 	return fmt.Sprintf("/api/core/v2/users/%s", url.PathEscape(u.Username))
 }
+
+// GetObjectMeta is a dummy implementation to meet the Resource interface.
+func (u *User) GetObjectMeta() ObjectMeta {
+	return ObjectMeta{}
+}
