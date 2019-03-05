@@ -2,7 +2,11 @@ package schedulerd
 
 import corev2 "github.com/sensu/sensu-go/api/core/v2"
 
-// Scheduler is the abstract interface of a scheduler.
+// Scheduler is a check scheduler. It is responsible for determining the
+// scheduling interval of a check, given a particular configuration.
+// After Start(), the scheduler is active and will continue to schedule a
+// check according to its schedule. When Interrupt is called, the schedule
+// will be recalculated.
 type Scheduler interface {
 	// Start stops the scheduler.
 	Start()
