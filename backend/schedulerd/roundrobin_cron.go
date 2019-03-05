@@ -181,10 +181,10 @@ func (s *RoundRobinCronScheduler) toggleSchedule() (stateChanged bool) {
 	defer s.setLastState()
 
 	if s.lastCronState != s.check.Cron {
-		s.logger.Info("interval schedule has changed")
+		s.logger.Info("cron schedule has changed")
 		return true
 	}
-	s.logger.Info("check schedule has not changed")
+	s.logger.Info("cron schedule has not changed")
 	return false
 }
 

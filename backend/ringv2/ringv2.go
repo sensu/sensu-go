@@ -228,9 +228,11 @@ func (r *Ring) getInterval() int64 {
 	defer r.mu.Unlock()
 	if r.cron != nil {
 		now := time.Now()
-		interval := int64(r.cron.Next(now).Sub(now) / time.Second)
-		if interval < MinInterval {
-			interval = int64(r.cron.Next(now.Add((time.Duration(interval)*time.Second)+1)).Sub(now) / time.Second)
+		// Add 1s to the interval to deal with the effects of truncation
+		interval := int64(r.cron.Next(now).Sub(now)/time.Second) + 1
+		for interval < MinInterval {
+			now = now.Add(time.Second)
+			interval = int64(r.cron.Next(now).Sub(now)/time.Second) + 1
 		}
 		return interval
 	}
@@ -387,18 +389,6 @@ func repeatKVs(kvs []*mvccpb.KeyValue, items int) []*mvccpb.KeyValue {
 }
 
 func (r *Ring) advanceRing(ctx context.Context, prevKv *mvccpb.KeyValue, numValues int) ([]*mvccpb.KeyValue, error) {
-	lease, err := r.grant(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("couldn't advance ring: %s", err)
-	}
-
-	txnSuccess := false
-	defer func() {
-		if !txnSuccess {
-			_, _ = r.client.Revoke(ctx, lease.ID)
-		}
-	}()
-
 	items, err := r.nextInRing(ctx, prevKv, int64(numValues)+1)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't advance ring: %s", err)
@@ -415,6 +405,18 @@ func (r *Ring) advanceRing(ctx context.Context, prevKv *mvccpb.KeyValue, numValu
 		// There are fewer items than requested values
 		nextItem = items[0]
 	}
+
+	lease, err := r.grant(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't advance ring: %s", err)
+	}
+
+	txnSuccess := false
+	defer func() {
+		if !txnSuccess {
+			_, _ = r.client.Revoke(ctx, lease.ID)
+		}
+	}()
 
 	nextValue := path.Base(string(nextItem.Key))
 	triggerOp := clientv3.OpPut(r.triggerKey, nextValue, clientv3.WithLease(lease.ID))
