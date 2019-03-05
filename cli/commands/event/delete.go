@@ -32,7 +32,12 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			err := cli.Client.DeleteEvent(entity, check)
+			namespace := cli.Config.Namespace()
+			if namespaceFlag, _ := cmd.Flags().GetString("namespace"); namespaceFlag != "" {
+				namespace = namespaceFlag
+			}
+
+			err := cli.Client.DeleteEvent(namespace, entity, check)
 			if err != nil {
 				return err
 			}

@@ -48,18 +48,8 @@ func (client *RestClient) CreateMutator(mutator *types.Mutator) (err error) {
 }
 
 // DeleteMutator deletes the given mutator from the configured Sensu instance
-func (client *RestClient) DeleteMutator(mutator *types.Mutator) (err error) {
-	path := mutatorsPath(client.config.Namespace(), mutator.Name)
-	res, err := client.R().Delete(path)
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode() >= 400 {
-		return fmt.Errorf("%v", res.String())
-	}
-
-	return nil
+func (client *RestClient) DeleteMutator(namespace, name string) (err error) {
+	return client.Delete(mutatorsPath(namespace, name))
 }
 
 // FetchMutator fetches a specific handler from the configured Sensu instance
