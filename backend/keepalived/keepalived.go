@@ -451,7 +451,7 @@ func (k *Keepalived) handleUpdate(e *types.Event) error {
 			ring := k.ringPool.Get(ringv2.Path(entity.Namespace, sub))
 			if e.Check.Timeout == 0 {
 				// This should never happen but guards against a crash
-				e.Check.Timeout = agent.DefaultKeepaliveTimeout
+				e.Check.Timeout = corev2.DefaultKeepaliveTimeout
 			}
 			if err := ring.Add(ctx, entity.Name, int64(e.Check.Timeout)); err != nil {
 				lager := logger.WithFields(logrus.Fields{
