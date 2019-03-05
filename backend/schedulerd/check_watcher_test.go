@@ -39,9 +39,10 @@ func TestCheckWatcherSmoke(t *testing.T) {
 	watcher := NewCheckWatcher(ctx, bus, st, nil, &EntityCache{})
 	require.NoError(t, watcher.Start())
 
-	checkA.Interval = 5
+	checkAA := types.FixtureCheckConfig("a")
+	checkAA.Interval = 5
 	watcherChan <- store.WatchEventCheckConfig{
-		CheckConfig: checkA,
+		CheckConfig: checkAA,
 		Action:      store.WatchUpdate,
 	}
 
@@ -52,7 +53,7 @@ func TestCheckWatcherSmoke(t *testing.T) {
 	}
 
 	watcherChan <- store.WatchEventCheckConfig{
-		CheckConfig: checkA,
+		CheckConfig: checkAA,
 		Action:      store.WatchDelete,
 	}
 
