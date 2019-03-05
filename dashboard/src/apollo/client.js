@@ -40,7 +40,7 @@ const createClient = () => {
       introspectionLink(),
       stateLink({ cache }),
       authLink({ getClient }),
-      httpLink(),
+      httpLink({ getClient }),
     ]),
   });
 

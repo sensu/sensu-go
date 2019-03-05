@@ -33,24 +33,57 @@ export const when = (...args) => {
   };
 };
 
+// Define, but lazily instantiate the memoization cache in order to be sure that
+// any necessary polyfills have been installed prior to instantiation.
 let cache;
 
+/*
+ * Promise-compatible memoization utility
+ *
+ * This utility is helpful in the situation where the consumers of an async
+ * function don't want to be concerned about the expense of the underlying
+ * operation (e.g. a network request), and want to be able to call the function
+ * indiscriminately whenever a result is needed (possibly continuously).
+ *
+ * For example, consider a function that sends a fetch request whose result can
+ * be considered deterministic for a given set of parameters over the duration
+ * of the request (i.e. the result may be different at some time in the future,
+ * but over short durations the result will be the same).
+ *
+ * A standard memoization approach would cache the return value of the request
+ * indefinitely, all subsequent requests would return the original response.
+ *
+ * This approach instead clears the cached return value immediately when the
+ * async operation resolves. Subsequent calls will result in new invocations of
+ * the wrapped function. This has the effect of serializing a parallel sequence
+ * of async requests by combining them.
+ */
 export const memoize = (promiseCreator, keyCreator) => (...args) => {
   if (!cache) {
     cache = new WeakMap();
   }
 
-  let map = cache.get(promiseCreator);
+  // Calculate the map key for the current function arguments.
   const key = keyCreator(...args);
+
+  // The `cache` WeakMap associates a wrapped function to a map of argument-
+  // derived key - returned promise value - pairs.
+  let map = cache.get(promiseCreator);
 
   if (!map) {
     map = new Map();
     cache.set(promiseCreator, map);
   } else if (map.has(key)) {
+    // If the map for the current function has a value for the key derived from
+    // the current arguments, return that value.
     return map.get(key);
   }
 
+  // No cached value currently exists, call the wrapped function.
   const promise = promiseCreator(...args).then(
+    // Delete the cached value for the key derived from the current arguments
+    // when the promise resolves (or throws). Return (or throw) the result in
+    // to make this operation transparent to the caller.
     result => {
       map.delete(key);
       return result;
@@ -61,6 +94,7 @@ export const memoize = (promiseCreator, keyCreator) => (...args) => {
     },
   );
 
+  // Store the current value for the key derived from the current arguments.
   map.set(key, promise);
 
   return promise;

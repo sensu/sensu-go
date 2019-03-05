@@ -29,6 +29,17 @@ extend type Query {
 
   "The last namespace that the client accessed."
   lastNamespace: String!
+
+  "The networking state of the client"
+  localNetwork: LocalNetwork
+}
+
+type LocalNetwork {
+  "The current online state of the client."
+  offline: Boolean!
+
+  "If the client is offline and trying to retry the connection."
+  retry: Boolean!
 }
 
 extend type Mutation {
@@ -52,6 +63,15 @@ extend type Mutation {
 
   "Stores given pair as user's last visited namespace."
   setLastNamespace(name: String!): Boolean
+
+  #
+  # LocalNetwork
+
+  "Flag to allow us to retry a connection"
+  retryLocalNetwork: Boolean
+
+  "Flags the client as being offline or online"
+  setLocalNetworkOffline(offline: Boolean!): Boolean
 }
 
 type Auth {
