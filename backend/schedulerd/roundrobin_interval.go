@@ -189,7 +189,7 @@ func (s *RoundRobinIntervalScheduler) toggleSchedule() (stateChanged bool) {
 	defer s.setLastState()
 
 	if s.lastIntervalState != s.check.Interval {
-		s.logger.Debug("interval schedule has changed")
+		s.logger.Debug("schedule has changed")
 		return true
 	}
 	if !reflect.DeepEqual(s.lastSubscriptionsState, s.check.Subscriptions) {

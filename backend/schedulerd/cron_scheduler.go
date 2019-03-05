@@ -107,7 +107,7 @@ func (s *CronScheduler) toggleSchedule() (stateChanged bool) {
 		return true
 	}
 
-	s.logger.Debug("cron schedule unchanged")
+	s.logger.Debug("schedule unchanged")
 	return false
 }
 
