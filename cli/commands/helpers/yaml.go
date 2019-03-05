@@ -66,5 +66,6 @@ func PrintYAML(v interface{}, w io.Writer) (err error) {
 	if r, ok := v.(types.Resource); ok {
 		v = wrapResource(r)
 	}
+
 	return enc.Encode(v)
 }

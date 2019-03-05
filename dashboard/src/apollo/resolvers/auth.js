@@ -60,9 +60,11 @@ export default {
   resolvers: {
     Mutation: {
       createTokens: (_, { username, password }, { cache }) =>
-        createTokens({ username, password }).then(
+        createTokens(cache, {
+          username,
+          password,
+        }).then(
           handleTokens(cache, "CreateTokensMutation"),
-
           handleError(cache, "CreateTokensMutation"),
         ),
 
@@ -87,7 +89,7 @@ export default {
           };
         }
 
-        return refreshTokens(result.auth).then(
+        return refreshTokens(cache, result.auth).then(
           handleTokens(cache, "RefreshTokensMutation"),
           handleError(cache, "RefreshTokensMutation"),
         );
@@ -99,7 +101,7 @@ export default {
         // Reset all data in the client cache.
         cache.reset();
 
-        return invalidateTokens(result.auth).then(
+        return invalidateTokens(cache, result.auth).then(
           handleTokens(cache, "InvalidateTokensMutation"),
         );
       },

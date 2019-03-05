@@ -4,6 +4,8 @@ import gql from "graphql-tag";
 import withStateHandlers from "recompose/withStateHandlers";
 import toRenderProps from "recompose/toRenderProps";
 
+import { FailedError } from "/errors/FetchError";
+
 import AppLayout from "/components/AppLayout";
 import Content from "/components/Content";
 import NotFound from "/components/partials/NotFound";
@@ -132,6 +134,13 @@ class SilencesContent extends React.Component {
         fetchPolicy="cache-and-network"
         pollInterval={pollingDuration.short}
         variables={variables}
+        onError={error => {
+          if (error.networkError instanceof FailedError) {
+            return;
+          }
+
+          throw error;
+        }}
       >
         {this.renderContent}
       </Query>

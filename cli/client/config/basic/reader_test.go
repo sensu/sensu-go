@@ -13,14 +13,6 @@ func TestAPIUrl(t *testing.T) {
 	assert.Equal(t, conf.Cluster.APIUrl, conf.APIUrl())
 }
 
-func TestEdition(t *testing.T) {
-	conf := &Config{Cluster: Cluster{Edition: types.CoreEdition}}
-	assert.Equal(t, types.CoreEdition, conf.Edition())
-
-	conf.Cluster.Edition = ""
-	assert.Equal(t, types.CoreEdition, conf.Edition())
-}
-
 func TestFormat(t *testing.T) {
 	conf := &Config{Profile: Profile{Format: "json"}}
 	assert.Equal(t, conf.Profile.Format, conf.Format())

@@ -5,9 +5,6 @@ import (
 )
 
 const (
-	// DefaultEdition is the default Sensu edition
-	DefaultEdition = types.CoreEdition
-
 	// DefaultAPIURL represents the default API URL.
 	DefaultAPIURL = "http://localhost:8080"
 
@@ -40,7 +37,6 @@ type Config interface {
 // Read contains all methods related to reading configuration
 type Read interface {
 	APIUrl() string
-	Edition() string
 	Format() string
 	Namespace() string
 	Tokens() *types.Tokens
@@ -49,7 +45,6 @@ type Read interface {
 // Write contains all methods related to setting and writting configuration
 type Write interface {
 	SaveAPIUrl(string) error
-	SaveEdition(string) error
 	SaveFormat(string) error
 	SaveNamespace(string) error
 	SaveTokens(*types.Tokens) error

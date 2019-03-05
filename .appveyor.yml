@@ -10,7 +10,7 @@ image:
 
 environment:
   GOPATH: c:\gopath
-  GOVERSION: 1.10.2
+  GOVERSION: 1.11.5
 
   matrix:
     - GOARCH: amd64

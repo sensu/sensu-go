@@ -2,6 +2,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
+import { FailedError } from "/errors/FetchError";
+
 import Query from "/components/util/Query";
 import NotFound from "/components/partials/NotFound";
 import CheckDetailsContainer from "/components/partials/CheckDetailsContainer";
@@ -30,6 +32,13 @@ class CheckDetailsContent extends React.PureComponent {
         pollInterval={pollingDuration.short}
         fetchPolicy="cache-and-network"
         variables={this.props.match.params}
+        onError={error => {
+          if (error.networkError instanceof FailedError) {
+            return;
+          }
+
+          throw error;
+        }}
       >
         {({
           aborted,

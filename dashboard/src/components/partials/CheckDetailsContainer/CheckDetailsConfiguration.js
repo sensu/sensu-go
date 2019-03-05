@@ -4,7 +4,6 @@ import gql from "graphql-tag";
 
 import Card from "@material-ui/core/Card";
 import CardContent from "@material-ui/core/CardContent";
-import Code from "/components/Code";
 import CronDescriptor from "/components/partials/CronDescriptor";
 import Dictionary, {
   DictionaryKey,
@@ -159,11 +158,13 @@ class CheckDetailsConfiguration extends React.PureComponent {
                 <DictionaryEntry>
                   <DictionaryKey>Command</DictionaryKey>
                   <DictionaryValue explicitRightMargin>
-                    <CodeHighlight
-                      language="bash"
-                      code={check.command}
-                      component={Code}
-                    />
+                    <CodeBlock>
+                      <CodeHighlight
+                        language="bash"
+                        code={check.command}
+                        component="code"
+                      />
+                    </CodeBlock>
                   </DictionaryValue>
                 </DictionaryEntry>
 

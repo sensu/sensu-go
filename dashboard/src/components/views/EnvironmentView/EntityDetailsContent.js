@@ -2,6 +2,8 @@ import React from "react";
 import PropTypes from "prop-types";
 import gql from "graphql-tag";
 
+import { FailedError } from "/errors/FetchError";
+
 import EntityDetailsContainer from "/components/partials/EntityDetailsContainer";
 import Loader from "/components/util/Loader";
 import NotFound from "/components/partials/NotFound";
@@ -32,6 +34,13 @@ class EntityDetailsContent extends React.PureComponent {
         fetchPolicy="cache-and-network"
         pollInterval={pollingDuration.short}
         variables={this.props.match.params}
+        onError={error => {
+          if (error.networkError instanceof FailedError) {
+            return;
+          }
+
+          throw error;
+        }}
       >
         {({ data: { entity } = {}, networkStatus, aborted, refetch }) => {
           // see: https://github.com/apollographql/apollo-client/blob/master/packages/apollo-client/src/core/networkStatus.ts
