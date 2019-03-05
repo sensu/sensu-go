@@ -284,10 +284,7 @@ func processCheck(ctx context.Context, executor Executor, check *types.CheckConf
 
 func processRoundRobinCheck(ctx context.Context, executor *CheckExecutor, check *corev2.CheckConfig, proxyEntities []*corev2.Entity, agentEntities []string) error {
 	if check.ProxyRequests != nil {
-		err := publishRoundRobinProxyCheckRequests(executor, check, proxyEntities, agentEntities)
-		if err != nil {
-			return err
-		}
+		return publishRoundRobinProxyCheckRequests(executor, check, proxyEntities, agentEntities)
 	} else {
 		for _, entity := range agentEntities {
 			if err := executor.executeOnEntity(check, entity); err != nil {
@@ -308,7 +305,7 @@ func publishRoundRobinProxyCheckRequests(executor *CheckExecutor, check *corev2.
 	}
 
 	for i, proxyEntity := range proxyEntities {
-		time.Sleep(splay)
+		now := time.Now()
 		agentEntity := agentEntities[i]
 		substitutedCheck, err := substituteProxyEntityTokens(proxyEntity, check)
 		if err != nil {
@@ -317,6 +314,7 @@ func publishRoundRobinProxyCheckRequests(executor *CheckExecutor, check *corev2.
 		if err := executor.executeOnEntity(substitutedCheck, agentEntity); err != nil {
 			return err
 		}
+		time.Sleep(splay - time.Now().Sub(now))
 	}
 	return nil
 }
