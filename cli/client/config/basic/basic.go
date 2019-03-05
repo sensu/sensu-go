@@ -31,7 +31,6 @@ type Config struct {
 // Cluster contains the Sensu cluster access information
 type Cluster struct {
 	APIUrl                string `json:"api-url"`
-	Edition               string `json:"edition"`
 	TrustedCAFile         string `json:"trusted-ca-file"`
 	InsecureSkipTLSVerify bool   `json:"insecure-skip-tls-verify"`
 	*types.Tokens
