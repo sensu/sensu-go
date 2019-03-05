@@ -33,12 +33,18 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			if err := cli.Client.DeleteSilenced(name); err != nil {
+			namespace := cli.Config.Namespace()
+			if namespaceFlag, _ := cmd.Flags().GetString("namespace"); namespaceFlag != "" {
+				namespace = namespaceFlag
+			}
+
+			err = cli.Client.DeleteSilenced(namespace, name)
+			if err != nil {
 				return err
 			}
 
-			_, _ = fmt.Fprintln(cmd.OutOrStdout(), "Deleted")
-			return nil
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), "Deleted")
+			return err
 		},
 	}
 

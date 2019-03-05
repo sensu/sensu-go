@@ -49,19 +49,8 @@ func (client *RestClient) UpdateHook(hook *types.HookConfig) (err error) {
 }
 
 // DeleteHook deletes hook from configured Sensu instance
-func (client *RestClient) DeleteHook(hook *types.HookConfig) error {
-	path := hooksPath(client.config.Namespace(), hook.Name)
-	res, err := client.R().Delete(path)
-
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode() >= 400 {
-		return UnmarshalError(res)
-	}
-
-	return nil
+func (client *RestClient) DeleteHook(namespace, name string) error {
+	return client.Delete(hooksPath(namespace, name))
 }
 
 // FetchHook fetches a specific hook
