@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	time "github.com/echlebek/timeproxy"
+	"github.com/robfig/cron"
 	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/types"
@@ -85,11 +86,19 @@ func substituteProxyEntityTokens(entity *types.Entity, check *types.CheckConfig)
 // calculateSplayInterval calculates the duration between publishing proxy
 // requests to each individual entity (based on a configurable splay %)
 func calculateSplayInterval(check *types.CheckConfig, numEntities int) (time.Duration, error) {
-	var err error
 	next := time.Second * time.Duration(check.Interval)
 	if check.Cron != "" {
-		if next, err = NextCronTime(time.Now(), check.Cron); err != nil {
+		schedule, err := cron.ParseStandard(check.Cron)
+		if err != nil {
 			return 0, err
+		}
+		now := time.Now()
+		then := schedule.Next(now)
+		next = then.Sub(now)
+		if next < 5*time.Second {
+			now = time.Now().Add(next + time.Second)
+			then = schedule.Next(now)
+			next = then.Sub(now)
 		}
 	}
 	splayCoverage := float64(check.ProxyRequests.SplayCoverage)

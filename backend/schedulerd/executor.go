@@ -314,7 +314,8 @@ func publishRoundRobinProxyCheckRequests(executor *CheckExecutor, check *corev2.
 		if err := executor.executeOnEntity(substitutedCheck, agentEntity); err != nil {
 			return err
 		}
-		time.Sleep(splay - time.Now().Sub(now))
+		dreamtime := splay - time.Now().Sub(now)
+		time.Sleep(dreamtime)
 	}
 	return nil
 }
