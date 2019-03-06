@@ -1,12 +1,9 @@
 package messaging
 
 import (
-	"context"
 	"errors"
 	"sync"
 	"sync/atomic"
-
-	"github.com/sensu/sensu-go/types"
 )
 
 // WizardBus is a message bus.
@@ -18,17 +15,14 @@ import (
 // message types over a single topic, however, as we do not want to introduce
 // a dependency on reflection to determine the type of the received interface{}.
 type WizardBus struct {
-	running    atomic.Value
-	topicsMu   sync.RWMutex
-	topics     map[string]*wizardTopic
-	errchan    chan error
-	ringGetter types.RingGetter
+	running  atomic.Value
+	topicsMu sync.RWMutex
+	topics   map[string]*wizardTopic
+	errchan  chan error
 }
 
 // WizardBusConfig configures a WizardBus
-type WizardBusConfig struct {
-	RingGetter types.RingGetter
-}
+type WizardBusConfig struct{}
 
 // WizardOption is a functional option.
 type WizardOption func(*WizardBus) error
@@ -36,9 +30,8 @@ type WizardOption func(*WizardBus) error
 // NewWizardBus creates a new WizardBus.
 func NewWizardBus(cfg WizardBusConfig, opts ...WizardOption) (*WizardBus, error) {
 	bus := &WizardBus{
-		errchan:    make(chan error, 1),
-		topics:     make(map[string]*wizardTopic),
-		ringGetter: cfg.RingGetter,
+		errchan: make(chan error, 1),
+		topics:  make(map[string]*wizardTopic),
 	}
 	for _, opt := range opts {
 		if err := opt(bus); err != nil {
@@ -137,51 +130,6 @@ func (b *WizardBus) Publish(topic string, msg interface{}) error {
 	if ok {
 		wTopic.Send(msg)
 	}
-
-	return nil
-}
-
-// PublishDirect publishes a message to a single consumer.
-func (b *WizardBus) PublishDirect(ctx context.Context, topic string, msg interface{}) error {
-	if !b.running.Load().(bool) {
-		return errors.New("bus no longer running")
-	}
-
-	b.topicsMu.RLock()
-	wt, ok := b.topics[topic]
-	b.topicsMu.RUnlock()
-
-	if !ok {
-		return nil
-	}
-
-	if wt.ring == nil {
-		if err := b.makeRing(ctx, wt); err != nil {
-			return err
-		}
-	}
-
-	return wt.SendRoundRobin(ctx, msg)
-}
-
-// makeRing constructs a ring for a topic. rings are lazily constructed;
-// they are not created until the need for one is identified by a call to PublishDirect.
-func (b *WizardBus) makeRing(ctx context.Context, wt *wizardTopic) error {
-	ring := b.ringGetter.GetRing(wt.id)
-
-	wt.RLock()
-	bindings := make([]string, 0, len(wt.bindings))
-	for id := range wt.bindings {
-		bindings = append(bindings, id)
-	}
-	wt.RUnlock()
-
-	for _, id := range bindings {
-		if err := ring.Add(ctx, id); err != nil {
-			return err
-		}
-	}
-	wt.ring = ring
 
 	return nil
 }

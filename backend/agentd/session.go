@@ -8,6 +8,7 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
@@ -38,6 +39,9 @@ type Session struct {
 	sendq        chan *transport.Message
 	checkChannel chan interface{}
 	bus          messaging.MessageBus
+	ringPool     *ringv2.Pool
+	ctx          context.Context
+	cancel       context.CancelFunc
 
 	subscriptions chan messaging.Subscription
 }
@@ -58,6 +62,7 @@ type SessionConfig struct {
 	AgentName     string
 	User          string
 	Subscriptions []string
+	RingPool      *ringv2.Pool
 }
 
 // NewSession creates a new Session object given the triple of a transport
@@ -66,7 +71,7 @@ type SessionConfig struct {
 // encounters a receive error.
 func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store Store) (*Session, error) {
 	// Validate the agent namespace
-	ctx := context.TODO()
+	ctx, cancel := context.WithCancel(context.Background())
 	if _, err := store.GetNamespace(ctx, cfg.Namespace); err != nil {
 		return nil, fmt.Errorf(
 			"could not retrieve the namespace '%s': %s", cfg.Namespace, err.Error(),
@@ -89,6 +94,9 @@ func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.Messa
 		store:         store,
 		bus:           bus,
 		subscriptions: make(chan messaging.Subscription, len(cfg.Subscriptions)),
+		ctx:           ctx,
+		cancel:        cancel,
+		ringPool:      cfg.RingPool,
 	}
 	s.handler = newSessionHandler(s)
 	return s, nil
@@ -237,6 +245,7 @@ func (s *Session) Start() (err error) {
 // Stop a running session. This will cause the send and receive loops to
 // shutdown. Blocks until the session has shutdown.
 func (s *Session) Stop() {
+	defer s.cancel()
 	close(s.stopping)
 	s.wg.Wait()
 
@@ -246,6 +255,13 @@ func (s *Session) Stop() {
 		}
 	}
 	close(s.checkChannel)
+	for _, sub := range s.cfg.Subscriptions {
+		ring := s.ringPool.Get(ringv2.Path(s.cfg.Namespace, sub))
+		logger.Info("removing agent from ring")
+		if err := ring.Remove(s.ctx, s.cfg.AgentName); err != nil {
+			logger.WithError(err).Error("unable to remove agent from ring")
+		}
+	}
 }
 
 func (s *Session) handleKeepalive(payload []byte) error {

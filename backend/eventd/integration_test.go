@@ -12,7 +12,6 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
-	"github.com/sensu/sensu-go/testing/mockring"
 	otherTestutil "github.com/sensu/sensu-go/testing/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,9 +36,7 @@ func TestEventdMonitor(t *testing.T) {
 
 	livenessFactory := liveness.EtcdFactory(context.Background(), client)
 
-	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: &mockring.Getter{},
-	})
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 
 	if err := bus.Start(); err != nil {

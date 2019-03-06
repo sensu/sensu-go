@@ -1,15 +1,12 @@
 package messaging
 
 import (
-	"context"
 	"fmt"
 	"math/rand"
 	"testing"
 	"time"
 
-	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -22,9 +19,7 @@ func (c channelSubscriber) Receiver() chan<- interface{} {
 }
 
 func TestWizardBus(t *testing.T) {
-	b, err := NewWizardBus(WizardBusConfig{
-		RingGetter: &mockring.Getter{},
-	})
+	b, err := NewWizardBus(WizardBusConfig{})
 	require.NoError(t, err)
 	require.NoError(t, b.Start())
 
@@ -102,9 +97,7 @@ func BenchmarkSubscribe(b *testing.B) {
 	rand.Seed(time.Now().UnixNano())
 
 	for _, tc := range testCases {
-		bus, _ := NewWizardBus(WizardBusConfig{
-			RingGetter: &mockring.Getter{},
-		})
+		bus, _ := NewWizardBus(WizardBusConfig{})
 		_ = bus.Start()
 		b.Run(fmt.Sprintf("%d subscribers", tc), func(b *testing.B) {
 			b.SetParallelism(tc)
@@ -121,58 +114,8 @@ func BenchmarkSubscribe(b *testing.B) {
 	}
 }
 
-func TestPublishDirect(t *testing.T) {
-	ring := &mockring.Ring{}
-	ring.On("Add", mock.Anything, mock.Anything).Return(nil)
-	ring.On("Next", mock.Anything).Return("a", nil)
-	getter := &mockring.Getter{"topic": ring}
-	bus, err := NewWizardBus(WizardBusConfig{
-		RingGetter: getter,
-	})
-	require.NoError(t, err)
-
-	require.NoError(t, bus.Start())
-	defer bus.Stop()
-
-	subscribers := map[string]channelSubscriber{
-		"a": channelSubscriber{make(chan interface{}, 1)},
-		"b": channelSubscriber{make(chan interface{}, 1)},
-		"c": channelSubscriber{make(chan interface{}, 1)},
-	}
-	for id, ch := range subscribers {
-		_, err := bus.Subscribe("topic", id, ch)
-		require.NoError(t, err)
-	}
-	require.NoError(t, bus.PublishDirect(context.TODO(), "topic", "hello, world"))
-	select {
-	case msg := <-subscribers["a"].Channel:
-		assert.Equal(t, msg, "hello, world")
-	case <-subscribers["b"].Channel:
-		t.Error("got message on b")
-	case <-subscribers["c"].Channel:
-		t.Error("got message on c")
-	default:
-		t.Error("no message sent")
-	}
-	select {
-	case <-subscribers["a"].Channel:
-		t.Error("got message on a")
-	case <-subscribers["b"].Channel:
-		t.Error("got message on b")
-	case <-subscribers["c"].Channel:
-		t.Error("got message on c")
-	default:
-	}
-}
-
 func TestBug1407(t *testing.T) {
-	ring := &mockring.Ring{}
-	ring.On("Add", mock.Anything, mock.Anything).Return(nil)
-	ring.On("Next", mock.Anything).Return("a", nil)
-	getter := &mockring.Getter{"topic": ring}
-	bus, err := NewWizardBus(WizardBusConfig{
-		RingGetter: getter,
-	})
+	bus, err := NewWizardBus(WizardBusConfig{})
 	require.NoError(t, err)
 
 	require.NoError(t, bus.Start())

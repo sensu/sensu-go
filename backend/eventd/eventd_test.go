@@ -7,7 +7,6 @@ import (
 
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
@@ -17,9 +16,7 @@ import (
 )
 
 func TestEventHandling(t *testing.T) {
-	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: &mockring.Getter{},
-	})
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	require.NoError(t, bus.Start())
 
@@ -99,9 +96,7 @@ func fakeFactory(name string, dead, alive liveness.EventFunc, logger logrus.Fiel
 }
 
 func TestEventMonitor(t *testing.T) {
-	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: &mockring.Getter{},
-	})
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	require.NoError(t, bus.Start())
 

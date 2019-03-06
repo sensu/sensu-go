@@ -9,6 +9,6 @@ var mockTime = crock.NewTime(time.Unix(0, 0))
 
 func init() {
 	mockTime.Resolution = time.Millisecond
-	mockTime.Multiplier = 1000
+	mockTime.Multiplier = 100
 	time.TimeProxy = mockTime
 }

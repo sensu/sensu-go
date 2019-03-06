@@ -11,7 +11,6 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
-	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -23,11 +22,9 @@ func TestAdhocExecutor(t *testing.T) {
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
-	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: &mockring.Getter{},
-	})
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
-	newAdhocExec := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus)
+	newAdhocExec := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus, &EntityCache{})
 	defer newAdhocExec.Stop()
 	assert.NoError(t, newAdhocExec.bus.Start())
 
@@ -81,7 +78,7 @@ func TestPublishProxyCheckRequest(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newScheduler(t, ctx, "check")
+	scheduler := newIntervalScheduler(t, ctx, "check")
 
 	entity := types.FixtureEntity("entity1")
 	check := scheduler.check
@@ -129,7 +126,7 @@ func TestPublishProxyCheckRequestsInterval(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newScheduler(t, ctx, "check")
+	scheduler := newIntervalScheduler(t, ctx, "check")
 
 	entity1 := types.FixtureEntity("entity1")
 	entity2 := types.FixtureEntity("entity2")
@@ -184,7 +181,7 @@ func TestPublishProxyCheckRequestsCron(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newScheduler(t, ctx, "check")
+	scheduler := newCronScheduler(t, ctx, "check")
 
 	entity1 := types.FixtureEntity("entity1")
 	entity2 := types.FixtureEntity("entity2")
@@ -238,7 +235,7 @@ func TestCheckBuildRequestInterval(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newScheduler(t, ctx, "check")
+	scheduler := newIntervalScheduler(t, ctx, "check")
 
 	check := scheduler.check
 	request, err := scheduler.exec.buildRequest(check)
@@ -273,7 +270,7 @@ func TestCheckBuildRequestCron(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newScheduler(t, ctx, "check")
+	scheduler := newCronScheduler(t, ctx, "check")
 
 	check := scheduler.check
 	check.Cron = "* * * * *"
@@ -309,7 +306,7 @@ func TestCheckBuildRequestAdhoc_GH2201(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newScheduler(t, ctx, "adhoc")
+	scheduler := newIntervalScheduler(t, ctx, "adhoc")
 
 	check := scheduler.check
 	check.Cron = "* * * * *"

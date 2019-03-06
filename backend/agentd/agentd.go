@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -45,15 +46,17 @@ type Agentd struct {
 	store      Store
 	bus        messaging.MessageBus
 	tls        *types.TLSOptions
+	ringPool   *ringv2.Pool
 }
 
 // Config configures an Agentd.
 type Config struct {
-	Host  string
-	Port  int
-	Bus   messaging.MessageBus
-	Store store.Store
-	TLS   *types.TLSOptions
+	Host     string
+	Port     int
+	Bus      messaging.MessageBus
+	Store    store.Store
+	TLS      *types.TLSOptions
+	RingPool *ringv2.Pool
 }
 
 // Option is a functional option.
@@ -71,6 +74,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		running:  &atomic.Value{},
 		wg:       &sync.WaitGroup{},
 		errChan:  make(chan error, 1),
+		ringPool: c.RingPool,
 	}
 
 	// prepare server TLS config
@@ -158,6 +162,7 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 		Namespace:     r.Header.Get(transport.HeaderKeyNamespace),
 		User:          r.Header.Get(transport.HeaderKeyUser),
 		Subscriptions: strings.Split(r.Header.Get(transport.HeaderKeySubscriptions), ","),
+		RingPool:      a.ringPool,
 	}
 
 	cfg.Subscriptions = addEntitySubscription(cfg.AgentName, cfg.Subscriptions)
