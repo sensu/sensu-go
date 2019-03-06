@@ -39,7 +39,10 @@ func TestTransportSendReceive(t *testing.T) {
 	assert.NoError(t, err)
 	msgBytes, err := json.Marshal(testMessage)
 	assert.NoError(t, err)
-	err = clientTransport.Send(&Message{"testMessageType", msgBytes})
+	err = clientTransport.Send(&Message{
+		Type:    "testMessageType",
+		Payload: msgBytes,
+	})
 	assert.NoError(t, err)
 
 	<-done
@@ -64,7 +67,10 @@ func TestClosedWebsocket(t *testing.T) {
 	_, err = clientTransport.Receive()
 	assert.IsType(t, ClosedError{}, err)
 
-	err = clientTransport.Send(&Message{"testMessageType", []byte{}})
+	err = clientTransport.Send(&Message{
+		Type:    "testMessageType",
+		Payload: []byte{}},
+	)
 	assert.IsType(t, ClosedError{}, err)
 
 	_, err = clientTransport.Receive()
@@ -122,4 +128,41 @@ func BenchmarkEncode32k(b *testing.B) {
 
 func BenchmarkEncode128k(b *testing.B) {
 	benchmarkEncode(128*1024, b)
+}
+
+func TestTransportOnError(t *testing.T) {
+	done := make(chan struct{}, 1)
+
+	server := NewServer()
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		transport, err := server.Serve(w, r)
+		assert.NoError(t, err)
+		require.NoError(t, transport.Close())
+		done <- struct{}{}
+	}))
+	defer ts.Close()
+
+	clientTransport, err := Connect(strings.Replace(ts.URL, "http", "ws", 1), nil, nil)
+	assert.NoError(t, err)
+	<-done
+
+	// At this point we should receive a connection closed message.
+	_, err = clientTransport.Receive()
+	assert.IsType(t, ClosedError{}, err)
+
+	var closureExecuted bool
+
+	msg := &Message{
+		Type:    "testMessageType",
+		Payload: nil,
+		OnError: func(err error) {
+			closureExecuted = true
+		},
+	}
+
+	err = clientTransport.Send(msg)
+	assert.IsType(t, ClosedError{}, err)
+	if !closureExecuted {
+		t.Fatal("closure never executed")
+	}
 }
