@@ -11,13 +11,13 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Additional additional check config and entity information to event details page.
-- fixed all known TLS vulnerabilities affecting the backend server:
+- Fixed all known TLS vulnerabilities affecting the backend server:
     - TLS min version increased to 1.2
     - Removed ALL but perfect-forward-secrecy ciphers
-- removed requirement of specifying `--trusted-ca-file` when using TLS on backend
-- prevented backend from loading server TLS configuration for http client
-- enforced uniform TLS configuration for all three backend components (apid, agentd, dashboardd)
-- set http client timeout to 15 seconds for sensuctl
+- Removed requirement of specifying `--trusted-ca-file` when using TLS on backend
+- Prevented backend from loading server TLS configuration for http client
+- Enforced uniform TLS configuration for all three backend components (apid, agentd, dashboardd)
+- Set http client timeout to 15 seconds for sensuctl
 - Round robin scheduling is now fully functional.
 - Web UI offline state detection and and alert banner.
 
