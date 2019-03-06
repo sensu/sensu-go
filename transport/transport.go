@@ -89,9 +89,9 @@ type Message struct {
 	// Payload is the serialized message.
 	Payload []byte
 
-	// OnError is a callback that, if non-nil, is executed when an error occurs
-	// during message transmission.
-	OnError func(error)
+	// SendCallback is a callback that is executed after a Send operation.
+	// The error value of Send is passed to the callback.
+	SendCallback func(error)
 }
 
 // The Transport interface defines the set of methods available to a connection
@@ -208,8 +208,8 @@ func (t *WebSocketTransport) Receive() (*Message, error) {
 func (t *WebSocketTransport) Send(m *Message) (err error) {
 	defer msgPool.Put(m)
 	defer func() {
-		if err != nil && m.OnError != nil {
-			m.OnError(err)
+		if m.SendCallback != nil {
+			m.SendCallback(err)
 		}
 	}()
 	t.mutex.RLock()

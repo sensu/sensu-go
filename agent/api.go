@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -50,6 +51,31 @@ func healthz(connected func() bool) http.HandlerFunc {
 	}
 }
 
+func (a *Agent) handleAPIQueue(ctx context.Context) {
+	for {
+		message, err := a.apiQueue.Receive(ctx)
+		if err != nil {
+			if ctx.Err() != nil {
+				return
+			}
+			logger.WithError(err).Error("error receiving message from queue")
+			continue
+		}
+		msg := &transport.Message{
+			Type:    transport.MessageTypeEvent,
+			Payload: message.Body,
+			SendCallback: func(err error) {
+				if err != nil {
+					_ = message.Nack(true)
+				} else {
+					_ = message.Ack()
+				}
+			},
+		}
+		a.sendMessage2(msg)
+	}
+}
+
 // addEvent accepts an event and send it to the backend over the event channel
 func addEvent(a *Agent) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -68,14 +94,18 @@ func addEvent(a *Agent) http.HandlerFunc {
 			return
 		}
 
-		msg, err := json.Marshal(event)
+		payload, err := json.Marshal(event)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("error marshaling check result: %s", err), http.StatusInternalServerError)
 			return
 		}
 
-		a.sendMessage(transport.MessageTypeEvent, msg)
+		if _, err := a.apiQueue.Send(payload); err != nil {
+			logger.WithError(err).Error("error queueing message")
+			http.Error(w, "error queueing message", http.StatusInternalServerError)
+			return
+		}
 
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(http.StatusAccepted)
 	}
 }

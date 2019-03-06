@@ -14,6 +14,8 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/boltdb/bolt"
+	"github.com/echlebek/lasr"
 	time "github.com/echlebek/timeproxy"
 
 	"github.com/atlassian/gostatsd/pkg/statsd"
@@ -60,6 +62,8 @@ type Agent struct {
 	systemInfo      *v2.System
 	systemInfoMu    sync.RWMutex
 	wg              sync.WaitGroup
+	db              *bolt.DB
+	apiQueue        *lasr.Q
 }
 
 // NewAgent creates a new Agent and returns a pointer to it.
@@ -99,6 +103,14 @@ func (a *Agent) sendMessage(msgType string, payload []byte) {
 		Type:    msgType,
 		Payload: payload,
 	}
+	a.sendq <- msg
+}
+
+func (a *Agent) sendMessage2(msg *transport.Message) {
+	logger.WithFields(logrus.Fields{
+		"type":    msg.Type,
+		"payload": string(msg.Payload),
+	}).Debug("sending message")
 	a.sendq <- msg
 }
 
@@ -154,7 +166,15 @@ func (a *Agent) buildTransportHeaderMap() http.Header {
 // 8. Start sending periodic keepalives.
 // 9. Start the API server, shutdown the agent if doing so fails.
 func (a *Agent) Run() error {
-
+	var err error
+	a.db, err = bolt.Open("apiQueue.db", 0600, nil)
+	if err != nil {
+		return err
+	}
+	a.apiQueue, err = lasr.NewQ(a.db, "voldemort")
+	if err != nil {
+		return err
+	}
 	userCredentials := fmt.Sprintf("%s:%s", a.config.User, a.config.Password)
 	userCredentials = base64.StdEncoding.EncodeToString([]byte(userCredentials))
 	a.header = a.buildTransportHeaderMap()
@@ -168,7 +188,6 @@ func (a *Agent) Run() error {
 		return fmt.Errorf("bad keepalive timeout: %d (minimum value is 5 seconds)", timeout)
 	}
 
-	var err error
 	assetManager := asset.NewManager(a.config.CacheDir, a.getAgentEntity(), a.stopping, &a.wg)
 	a.assetGetter, err = assetManager.StartAssetManager()
 	if err != nil {
@@ -182,6 +201,7 @@ func (a *Agent) Run() error {
 
 	go a.connectionManager()
 	go a.refreshSystemInfoPeriodically()
+	go a.handleAPIQueue(a.context)
 
 	return nil
 }
@@ -351,6 +371,9 @@ func (a *Agent) StartSocketListeners() {
 func (a *Agent) Stop() {
 	a.cancel()
 	close(a.stopping)
+	if err := a.db.Close(); err != nil {
+		logger.WithError(err).Error("error closing API queue")
+	}
 	a.wg.Wait()
 }
 
