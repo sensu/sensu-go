@@ -3,7 +3,6 @@
 package ringv2
 
 import (
-	"context"
 	"reflect"
 	"testing"
 
@@ -32,11 +31,5 @@ func TestPool(t *testing.T) {
 
 	if got, want := pool.Get("bar"), fooRing; reflect.DeepEqual(got, want) {
 		t.Fatal("rings should not be equal")
-	}
-
-	ch := fooRing.Watch(context.Background(), 1)
-
-	if got, want := fooRing.Watch(context.Background(), 1), ch; !reflect.DeepEqual(got, want) {
-		t.Fatal("watchers should be equal")
 	}
 }
