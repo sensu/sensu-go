@@ -10,7 +10,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## [5.3.0] - 2019-03-07
 
 ### Added
-- Additional additional check config and entity information to event details page.
+- Added additional check config and entity information to event details page.
 - Fixed all known TLS vulnerabilities affecting the backend server:
     - TLS min version increased to 1.2
     - Removed ALL but perfect-forward-secrecy ciphers
