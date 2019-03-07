@@ -85,6 +85,13 @@ class EntityDetailsInformation extends React.PureComponent {
     const statusCode = entity.status;
     const status = statusCodeToId(statusCode);
 
+    // Only display network interfaces that have a MAC address at
+    // this time. This avoids displaying the loopback and tunnel
+    // interfaces.
+    const networkInterfaces = system.network.interfaces.filter(
+      intr => intr.mac && intr.addresses.length > 0,
+    );
+
     return (
       <Card>
         <CardHighlight color={status} />
@@ -240,44 +247,39 @@ class EntityDetailsInformation extends React.PureComponent {
             </Grid>
           </Grid>
         </CardContent>
-        <Divider />
-        <CardContent>
-          <Grid container spacing={0}>
-            {system.network.interfaces.map(
-              intr =>
-                // Only display network interfaces that have a MAC address at
-                // this time. This avoids displaying the loopback and tunnel
-                // interfaces.
-                intr.mac &&
-                intr.addresses.length > 0 && (
-                  <Grid item xs={12} sm={6} key={intr.name}>
-                    <Dictionary>
-                      <DictionaryEntry>
-                        <DictionaryKey>Adapter</DictionaryKey>
-                        <DictionaryValue>
-                          <Strong>{intr.name}</Strong>
-                        </DictionaryValue>
+        <Maybe value={networkInterfaces}>
+          <Divider />
+          <CardContent>
+            <Grid container spacing={0}>
+              {networkInterfaces.map(intr => (
+                <Grid item xs={12} sm={6} key={intr.name}>
+                  <Dictionary>
+                    <DictionaryEntry>
+                      <DictionaryKey>Adapter</DictionaryKey>
+                      <DictionaryValue>
+                        <Strong>{intr.name}</Strong>
+                      </DictionaryValue>
+                    </DictionaryEntry>
+                    <DictionaryEntry>
+                      <DictionaryKey>MAC</DictionaryKey>
+                      <DictionaryValue>
+                        <Maybe value={intr.mac} fallback={"n/a"} />
+                      </DictionaryValue>
+                    </DictionaryEntry>
+                    {intr.addresses.map((address, i) => (
+                      <DictionaryEntry key={address}>
+                        <DictionaryKey>
+                          {i === 0 ? "IP Address" : <span>&nbsp;</span>}
+                        </DictionaryKey>
+                        <DictionaryValue>{address}</DictionaryValue>
                       </DictionaryEntry>
-                      <DictionaryEntry>
-                        <DictionaryKey>MAC</DictionaryKey>
-                        <DictionaryValue>
-                          <Maybe value={intr.mac} fallback={"n/a"} />
-                        </DictionaryValue>
-                      </DictionaryEntry>
-                      {intr.addresses.map((address, i) => (
-                        <DictionaryEntry key={address}>
-                          <DictionaryKey>
-                            {i === 0 ? "IP Address" : <span>&nbsp;</span>}
-                          </DictionaryKey>
-                          <DictionaryValue>{address}</DictionaryValue>
-                        </DictionaryEntry>
-                      ))}
-                    </Dictionary>
-                  </Grid>
-                ),
-            )}
-          </Grid>
-        </CardContent>
+                    ))}
+                  </Dictionary>
+                </Grid>
+              ))}
+            </Grid>
+          </CardContent>
+        </Maybe>
         <Divider />
         <LabelsAnnotationsCell entity={entity} />
       </Card>

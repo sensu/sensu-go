@@ -11,6 +11,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Check results sent via the agent socket now support handlers.
 - `sensuctl user list` can now output yaml and wrapped-json
 - Fixed bug with how long commands were displayed on check details page.
+- Web - Fixes issue where timeout value was not displayed.
 
 ### Added
 - Additional additional check config and entity information to event details page.
