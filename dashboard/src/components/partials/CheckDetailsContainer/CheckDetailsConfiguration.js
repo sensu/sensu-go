@@ -161,15 +161,9 @@ class CheckDetailsConfiguration extends React.PureComponent {
                 </DictionaryEntry>
 
                 <DictionaryEntry>
-                  <DictionaryKey>Command</DictionaryKey>
-                  <DictionaryValue explicitRightMargin>
-                    <CodeBlock>
-                      <CodeHighlight
-                        language="bash"
-                        code={check.command}
-                        component="code"
-                      />
-                    </CodeBlock>
+                  <DictionaryKey>Published?</DictionaryKey>
+                  <DictionaryValue>
+                    {check.publish ? "Yes" : "No"}
                   </DictionaryValue>
                 </DictionaryEntry>
 
@@ -195,9 +189,15 @@ class CheckDetailsConfiguration extends React.PureComponent {
             <Grid item xs={12} sm={6}>
               <Dictionary>
                 <DictionaryEntry>
-                  <DictionaryKey>Published?</DictionaryKey>
-                  <DictionaryValue>
-                    {check.publish ? "Yes" : "No"}
+                  <DictionaryKey>Command</DictionaryKey>
+                  <DictionaryValue scrollableContent>
+                    <CodeBlock>
+                      <CodeHighlight
+                        language="bash"
+                        code={check.command}
+                        component="code"
+                      />
+                    </CodeBlock>
                   </DictionaryValue>
                 </DictionaryEntry>
 
