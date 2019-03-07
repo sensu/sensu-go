@@ -378,7 +378,9 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, va
 				}
 				watcher.handleRingTrigger(ctx, ch, response)
 			case <-watcher.notifier:
-				watcher.ensureActiveTrigger(ctx)
+				if err := watcher.ensureActiveTrigger(ctx); err != nil {
+					notifyError(ch, err)
+				}
 			}
 		}
 	}()
