@@ -70,11 +70,6 @@ func (s *RoundRobinIntervalScheduler) updateRings() {
 	}
 	for _, sub := range s.check.Subscriptions {
 		key := ringv2.Path(s.check.Namespace, sub)
-		ring := s.ringPool.Get(key)
-		if err := ring.SetInterval(s.ctx, int64(s.check.Interval)); err != nil {
-			s.logger.WithError(err).Error("error scheduling check")
-			continue
-		}
 		if val, ok := s.cancels[key]; ok {
 			// The watcher already exists
 			if len(proxyEntities) > 0 && val.AgentEntitiesRequest != agentEntitiesRequest {
@@ -88,7 +83,8 @@ func (s *RoundRobinIntervalScheduler) updateRings() {
 		}
 		// Create a new watcher
 		ctx, cancel := context.WithCancel(s.ctx)
-		wc := ring.Watch(ctx, agentEntitiesRequest)
+		ring := s.ringPool.Get(key)
+		wc := ring.Watch(ctx, s.check.Name, agentEntitiesRequest, int(s.check.Interval), s.check.Cron)
 		val := ringCancel{Cancel: cancel, AgentEntitiesRequest: agentEntitiesRequest}
 		go s.handleEvents(s.executor, wc, proxyEntities)
 		newCancels[key] = val

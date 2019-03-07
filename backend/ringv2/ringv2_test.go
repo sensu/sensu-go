@@ -34,10 +34,6 @@ func TestAdd(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	if err := ring.SetInterval(ctx, 5); err != nil {
-		t.Fatal(err)
-	}
-
 	if err := ring.Add(ctx, "foo", 600); err != nil {
 		t.Fatal(err)
 	}
@@ -60,15 +56,11 @@ func TestRemove(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	if err := ring.SetInterval(ctx, 5); err != nil {
+	if err := ring.Add(ctx, "foo", 600); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := ring.Add(context.TODO(), "foo", 600); err != nil {
-		t.Fatal(err)
-	}
-
-	if err := ring.Remove(context.TODO(), "foo"); err != nil {
+	if err := ring.Remove(ctx, "foo"); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -90,11 +82,7 @@ func TestWatchAddRemove(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	if err := ring.SetInterval(ctx, 5); err != nil {
-		t.Fatal(err)
-	}
-
-	wc := ring.Watch(ctx, 1)
+	wc := ring.Watch(ctx, "test", 1, 5, "")
 
 	if err := ring.Add(ctx, "foo", 600); err != nil {
 		t.Fatal(err)
@@ -149,11 +137,7 @@ func TestWatchTrigger(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	if err := ring.SetInterval(ctx, 5); err != nil {
-		t.Fatal(err)
-	}
-
-	wc := ring.Watch(ctx, 1)
+	wc := ring.Watch(ctx, "test", 1, 5, "")
 
 	if err := ring.Add(ctx, "foo", 600); err != nil {
 		t.Fatal(err)
@@ -190,11 +174,7 @@ func TestRingOrdering(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	if err := ring.SetInterval(ctx, 5); err != nil {
-		t.Fatal(err)
-	}
-
-	wc := ring.Watch(ctx, 1)
+	wc := ring.Watch(ctx, "test", 1, 5, "")
 
 	items := []string{
 		"mulder", "scully", "skinner",
@@ -246,13 +226,9 @@ func TestConcurrentRingOrdering(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	if err := ring.SetInterval(ctx, 5); err != nil {
-		t.Fatal(err)
-	}
-
-	wc1 := ring.Watch(ctx, 1)
-	wc2 := ring.Watch(ctx, 1)
-	wc3 := ring.Watch(ctx, 1)
+	wc1 := ring.Watch(ctx, "test1", 1, 5, "")
+	wc2 := ring.Watch(ctx, "test2", 1, 5, "")
+	wc3 := ring.Watch(ctx, "test3", 1, 5, "")
 
 	items := []string{
 		"mulder", "scully", "skinner",
@@ -342,11 +318,7 @@ func eventTest(t *testing.T, want []Event) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	if err := ring.SetInterval(ctx, 5); err != nil {
-		t.Fatal(err)
-	}
-
-	wc := ring.Watch(ctx, 1)
+	wc := ring.Watch(ctx, "test", 1, 5, "")
 
 	var got []Event
 
@@ -410,15 +382,11 @@ func TestWatchAfterAdd(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	if err := ring.SetInterval(ctx, 5); err != nil {
-		t.Fatal(err)
-	}
-
 	if err := ring.Add(ctx, "fowley", 600); err != nil {
 		t.Fatal(err)
 	}
 
-	wc := ring.Watch(ctx, 1)
+	wc := ring.Watch(ctx, "test", 1, 5, "")
 
 	got := <-wc
 	want := Event{Type: EventTrigger, Values: []string{"fowley"}}
@@ -445,11 +413,7 @@ func GetSetInterval(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	if err := ring.SetInterval(ctx, 5); err != nil {
-		t.Fatal(err)
-	}
-
-	wc := ring.Watch(ctx, 1)
+	wc := ring.Watch(ctx, "test", 1, 5, "")
 
 	if err := ring.Add(ctx, "covarrubias", 600); err != nil {
 		t.Fatal(err)
@@ -459,10 +423,6 @@ func GetSetInterval(t *testing.T) {
 	<-wc
 
 	start := time.Now()
-
-	if err := ring.SetInterval(ctx, 10); err != nil {
-		t.Fatal(err)
-	}
 
 	// drain trigger event
 	<-wc
@@ -490,11 +450,7 @@ func TestMultipleItems(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	if err := ring.SetInterval(ctx, 5); err != nil {
-		t.Fatal(err)
-	}
-
-	wc := ring.Watch(ctx, 3)
+	wc := ring.Watch(ctx, "test", 3, 5, "")
 
 	items := []string{"byers", "frohike", "mulder", "scully", "skinner"}
 

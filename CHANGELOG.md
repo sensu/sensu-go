@@ -32,6 +32,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed a bug where agent entity subscriptions would be communicated to the
   backend incorrectly. Due to the scheduler using the subscriptions from the
   HTTP header, this does not have any effect on scheduling.
+- Web - Fixes issue where timeout value was not displayed.
+- Fixed bug with how long commands were displayed on check details page.
 
 ### Removed
 - Removed the concept of "edition" and the edition header.
