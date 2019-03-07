@@ -15,8 +15,6 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
-var _ Interface = &Ring{}
-
 // EventType is an enum that describes the type of event received by watchers.
 type EventType int
 
@@ -75,14 +73,11 @@ type Ring struct {
 	// in order to find the least-valued item.
 	itemPrefix string
 
-	// intervalKey is the key that the TTL for ring items is stored at
-	intervalKey string
-
 	// interval is the TTL for ring triggers
-	interval int64
+	interval int
 
-	// triggerKey is the key that contains ring triggers
-	triggerKey string
+	// triggerPrefix is the prefix that contains ring triggers
+	triggerPrefix string
 
 	// watchCtr counts the number of open watchers
 	watchCtr int64
@@ -90,17 +85,66 @@ type Ring struct {
 	// cron is a cron schedule
 	cron cron.Schedule
 
+	// watchers is the set of active watchers
+	watchers map[watcherKey]*watcher
+
 	mu sync.Mutex
+}
+
+type watcherKey struct {
+	name     string
+	values   int
+	interval int
+	cron     string
+}
+
+func (w *watcher) triggerKey() string {
+	interval := w.watcherKey.cron
+	if interval == "" {
+		interval = fmt.Sprintf("%d", w.interval)
+	}
+	return path.Join(w.ring.triggerPrefix, w.name, fmt.Sprintf("%d", w.values), interval)
+}
+
+type watcher struct {
+	watcherKey
+	notifier chan struct{}
+	ring     *Ring
+	cron     cron.Schedule
+	events   <-chan Event
+}
+
+func newWatcher(ring *Ring, ch <-chan Event, name string, values, interval int, schedule string) (*watcher, error) {
+	var sched cron.Schedule
+	if schedule != "" {
+		var err error
+		sched, err = cron.ParseStandard(schedule)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &watcher{
+		watcherKey: watcherKey{
+			name:     name,
+			values:   values,
+			cron:     schedule,
+			interval: interval,
+		},
+		notifier: make(chan struct{}, 10),
+		ring:     ring,
+		cron:     sched,
+		events:   ch,
+	}, nil
 }
 
 // New creates a new Ring.
 func New(client *clientv3.Client, storePath string) *Ring {
 	return &Ring{
-		client:      client,
-		itemPrefix:  path.Join(storePath, "items"),
-		intervalKey: path.Join(storePath, "interval"),
-		triggerKey:  path.Join(storePath, "trigger"),
-		interval:    5,
+		client:        client,
+		itemPrefix:    path.Join(storePath, "items"),
+		triggerPrefix: path.Join(storePath, "triggers"),
+		interval:      5,
+		watchers:      make(map[watcherKey]*watcher),
 	}
 }
 
@@ -116,9 +160,9 @@ func (r *Ring) IsEmpty(ctx context.Context) (bool, error) {
 	return len(resp.Kvs) == 0, nil
 }
 
-func (r *Ring) grant(ctx context.Context) (*clientv3.LeaseGrantResponse, error) {
-	interval := r.getInterval()
-	lease, err := r.client.Grant(ctx, interval)
+func (w *watcher) grant(ctx context.Context) (*clientv3.LeaseGrantResponse, error) {
+	interval := w.getInterval()
+	lease, err := w.ring.client.Grant(ctx, int64(interval))
 	return lease, err
 }
 
@@ -172,40 +216,29 @@ NEWLEASE:
 		return fmt.Errorf("couldn't add %q to ring: %s", value, err)
 	}
 
-	if atomic.LoadInt64(&r.watchCtr) > 0 {
-		if err := r.ensureActiveTrigger(ctx); err != nil {
-			return fmt.Errorf("couldn't add %q to ring: %s", value, err)
-		}
-	}
+	r.notifyWatchers()
 
 	return nil
+}
+
+func (r *Ring) notifyWatchers() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, watcher := range r.watchers {
+		watcher.notifier <- struct{}{}
+	}
 }
 
 // Remove removes a value from the list. If the value does not exist, nothing
 // happens.
 func (r *Ring) Remove(ctx context.Context, value string) error {
-	itemKey := path.Join(r.itemPrefix, value)
-	itemOp := clientv3.OpDelete(itemKey)
-
-	triggerCmp := clientv3.Compare(clientv3.Value(r.triggerKey), "=", value)
-	triggerOp := clientv3.OpDelete(r.triggerKey)
-
-	resp, err := r.client.Txn(ctx).If(triggerCmp).Then(itemOp, triggerOp).Else(itemOp).Commit()
-	if err != nil {
-		return fmt.Errorf("couldn't delete %q from ring: %s", value, err)
-	}
-
-	if resp.Succeeded && atomic.LoadInt64(&r.watchCtr) > 0 {
-		if err := r.ensureActiveTrigger(ctx); err != nil {
-			return fmt.Errorf("fatal ring error: %s", err)
-		}
-	}
-
-	return nil
+	_, err := r.client.Delete(ctx, path.Join(r.itemPrefix, value))
+	return err
 }
 
 // Watch watches the ring for events. The events are sent on the channel that
-// is returned.
+// is returned. For each interval duration in seconds, one or more values will
+// be delivered, if there are any values in the ring.
 //
 // If the underlying etcd watcher fails, then the Event will contain a non-nil
 // error.
@@ -213,59 +246,54 @@ func (r *Ring) Remove(ctx context.Context, value string) error {
 // If the context is canceled, EventClosing will be sent on the channel, and it
 // will be closed.
 //
+// The name parameter specifies the name of the watch. Watchers should use
+// unique names when requesting different numbers of values.
+//
+// The interval parameter sets the interval at which ring items will be
+// delivered, in seconds.
+//
+// If the cron parameter is not the empty string, the interval parameter will
+// be ignored, and the watcher will deliver values according to the cron
+// schedule.
+//
 // The values parameter controls how many ring values the event will contain.
 // If the requested number of values is greater than the number of items in
 // the values will contain repetitions in order to satisfy the request.
-func (r *Ring) Watch(ctx context.Context, values int) <-chan Event {
+func (r *Ring) Watch(ctx context.Context, name string, values, interval int, cron string) <-chan Event {
+	key := watcherKey{name: name, values: values, interval: interval, cron: cron}
+	r.mu.Lock()
+	w, ok := r.watchers[key]
+	r.mu.Unlock()
+	if ok {
+		return w.events
+	}
 	c := make(chan Event, 1)
-	r.startWatchers(ctx, c, values)
+	r.startWatchers(ctx, c, name, values, interval, cron)
 	atomic.AddInt64(&r.watchCtr, 1)
 	return c
 }
 
-func (r *Ring) getInterval() int64 {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	if r.cron != nil {
+func (w *watcher) getInterval() int {
+	if w.cron != nil {
 		now := time.Now()
 		// Add 1s to the interval to deal with the effects of truncation
-		interval := int64(r.cron.Next(now).Sub(now)/time.Second) + 1
+		interval := int(w.cron.Next(now).Sub(now)/time.Second) + 1
 		for interval < MinInterval {
 			now = now.Add(time.Second)
-			interval = int64(r.cron.Next(now).Sub(now)/time.Second) + 1
+			interval = int(w.cron.Next(now).Sub(now)/time.Second) + 1
 		}
 		return interval
 	}
-	return r.interval
-}
-
-// SetInterval sets the interval between trigger events. It returns an error if
-// the interval is less than MinInterval, or if there was an error from etcd.
-func (r *Ring) SetInterval(ctx context.Context, seconds int64) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	if seconds < MinInterval {
-		return fmt.Errorf("bad interval: got %ds, minimum value is %ds", seconds, MinInterval)
-	}
-	r.cron = nil
-	r.interval = seconds
-	return nil
-}
-
-// SetCron sets a cron schedule instead of an interval.
-func (r *Ring) SetCron(schedule cron.Schedule) {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.cron = schedule
+	return w.interval
 }
 
 // hasTrigger returns whether the ring has an active trigger. If the ring
 // does not have an active trigger, the first lexical key in the ring will
 // be returned in the string return value.
-func (r *Ring) hasTrigger(ctx context.Context) (bool, string, error) {
-	getTrigger := clientv3.OpGet(r.triggerKey)
-	getFirst := clientv3.OpGet(r.itemPrefix, clientv3.WithPrefix(), clientv3.WithLimit(1))
-	resp, err := r.client.Txn(ctx).Then(getTrigger, getFirst).Commit()
+func (w *watcher) hasTrigger(ctx context.Context) (bool, string, error) {
+	getTrigger := clientv3.OpGet(w.triggerKey())
+	getFirst := clientv3.OpGet(w.ring.itemPrefix, clientv3.WithPrefix(), clientv3.WithLimit(1))
+	resp, err := w.ring.client.Txn(ctx).Then(getTrigger, getFirst).Commit()
 	if err != nil {
 		return false, "", err
 	}
@@ -284,8 +312,8 @@ func (r *Ring) hasTrigger(ctx context.Context) (bool, string, error) {
 	return true, "", nil
 }
 
-func (r *Ring) ensureActiveTrigger(ctx context.Context) error {
-	has, next, err := r.hasTrigger(ctx)
+func (w *watcher) ensureActiveTrigger(ctx context.Context) error {
+	has, next, err := w.hasTrigger(ctx)
 	if err != nil {
 		return err
 	}
@@ -293,25 +321,36 @@ func (r *Ring) ensureActiveTrigger(ctx context.Context) error {
 		// if next == "", there are no ring items
 		return nil
 	}
-	lease, err := r.grant(ctx)
+	lease, err := w.grant(ctx)
 	if err != nil {
 		return err
 	}
 	nextValue := path.Base(next)
-	triggerOp := clientv3.OpPut(r.triggerKey, nextValue, clientv3.WithLease(lease.ID))
-	triggerCmp := clientv3.Compare(clientv3.Version(r.triggerKey), "=", 0)
+	triggerOp := clientv3.OpPut(w.triggerKey(), nextValue, clientv3.WithLease(lease.ID))
+	triggerCmp := clientv3.Compare(clientv3.Version(w.triggerKey()), "=", 0)
 
-	resp, err := r.client.Txn(ctx).If(triggerCmp).Then(triggerOp).Commit()
+	resp, err := w.ring.client.Txn(ctx).If(triggerCmp).Then(triggerOp).Commit()
 	if !resp.Succeeded {
-		_, _ = r.client.Revoke(ctx, lease.ID)
+		_, _ = w.ring.client.Revoke(ctx, lease.ID)
 	}
 	return err
 }
 
-func (r *Ring) startWatchers(ctx context.Context, ch chan<- Event, values int) {
+func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, values, interval int, cron string) {
+	watcher, err := newWatcher(r, ch, name, values, interval, cron)
+	if err != nil {
+		notifyError(ch, err)
+		notifyClosing(ch)
+		close(ch)
+		return
+	}
 	itemsC := r.client.Watch(ctx, r.itemPrefix, clientv3.WithPrefix())
-	nextC := r.client.Watch(ctx, r.triggerKey, clientv3.WithFilterPut(), clientv3.WithPrevKV())
-	if err := r.ensureActiveTrigger(ctx); err != nil {
+	nextC := r.client.Watch(ctx, watcher.triggerKey(), clientv3.WithFilterPut(), clientv3.WithPrevKV())
+	r.mu.Lock()
+	r.watchers[watcher.watcherKey] = watcher
+	r.mu.Unlock()
+	if err := watcher.ensureActiveTrigger(ctx); err != nil {
+		panic(err)
 		notifyError(ch, fmt.Errorf("error while starting ring watcher: %s", err))
 		notifyClosing(ch)
 		return
@@ -322,7 +361,9 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan<- Event, values int) {
 			case <-ctx.Done():
 				notifyClosing(ch)
 				close(ch)
-				atomic.AddInt64(&r.watchCtr, -1)
+				r.mu.Lock()
+				delete(r.watchers, watcher.watcherKey)
+				r.mu.Unlock()
 				return
 			case response := <-itemsC:
 				if err := response.Err(); err != nil {
@@ -335,7 +376,9 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan<- Event, values int) {
 					notifyError(ch, err)
 					continue
 				}
-				r.handleRingTrigger(ctx, ch, response, values)
+				watcher.handleRingTrigger(ctx, ch, response)
+			case <-watcher.notifier:
+				watcher.ensureActiveTrigger(ctx)
 			}
 		}
 	}()
@@ -363,8 +406,12 @@ func (r *Ring) nextInRing(ctx context.Context, prevKv *mvccpb.KeyValue, n int64)
 		return nil, fmt.Errorf("couldn't get next item(s) in ring: %s", err)
 	}
 	result := resp.Kvs
-	if len(result) == 0 {
+	if len(result) == 0 && prevKv == nil {
 		return nil, nil
+	} else if len(result) == 0 {
+		// If a delete occurred and it corresponded to the trigger, need to try
+		// again with nil prevKv
+		return r.nextInRing(ctx, nil, n)
 	}
 	if int64(len(result)) < n {
 		m := n - int64(len(result))
@@ -388,8 +435,8 @@ func repeatKVs(kvs []*mvccpb.KeyValue, items int) []*mvccpb.KeyValue {
 	return result
 }
 
-func (r *Ring) advanceRing(ctx context.Context, prevKv *mvccpb.KeyValue, numValues int) ([]*mvccpb.KeyValue, error) {
-	items, err := r.nextInRing(ctx, prevKv, int64(numValues)+1)
+func (w *watcher) advanceRing(ctx context.Context, prevKv *mvccpb.KeyValue) ([]*mvccpb.KeyValue, error) {
+	items, err := w.ring.nextInRing(ctx, prevKv, int64(w.values)+1)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't advance ring: %s", err)
 	}
@@ -400,13 +447,13 @@ func (r *Ring) advanceRing(ctx context.Context, prevKv *mvccpb.KeyValue, numValu
 	}
 
 	nextItem := items[len(items)-1]
-	repeatItems := repeatKVs(items, numValues)
-	if len(items) < numValues+1 {
+	repeatItems := repeatKVs(items, w.values)
+	if len(items) < w.values+1 {
 		// There are fewer items than requested values
 		nextItem = items[0]
 	}
 
-	lease, err := r.grant(ctx)
+	lease, err := w.grant(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't advance ring: %s", err)
 	}
@@ -414,15 +461,15 @@ func (r *Ring) advanceRing(ctx context.Context, prevKv *mvccpb.KeyValue, numValu
 	txnSuccess := false
 	defer func() {
 		if !txnSuccess {
-			_, _ = r.client.Revoke(ctx, lease.ID)
+			_, _ = w.ring.client.Revoke(ctx, lease.ID)
 		}
 	}()
 
 	nextValue := path.Base(string(nextItem.Key))
-	triggerOp := clientv3.OpPut(r.triggerKey, nextValue, clientv3.WithLease(lease.ID))
-	triggerCmp := clientv3.Compare(clientv3.Version(r.triggerKey), "=", 0)
+	triggerOp := clientv3.OpPut(w.triggerKey(), nextValue, clientv3.WithLease(lease.ID))
+	triggerCmp := clientv3.Compare(clientv3.Version(w.triggerKey()), "=", 0)
 
-	resp, err := r.client.Txn(ctx).If(triggerCmp).Then(triggerOp).Commit()
+	resp, err := w.ring.client.Txn(ctx).If(triggerCmp).Then(triggerOp).Commit()
 	if err != nil {
 		return nil, fmt.Errorf("couldn't advance ring: %s", err)
 	}
@@ -433,9 +480,9 @@ func (r *Ring) advanceRing(ctx context.Context, prevKv *mvccpb.KeyValue, numValu
 	return repeatItems, nil
 }
 
-func (r *Ring) handleRingTrigger(ctx context.Context, ch chan<- Event, response clientv3.WatchResponse, values int) {
+func (w *watcher) handleRingTrigger(ctx context.Context, ch chan<- Event, response clientv3.WatchResponse) {
 	for _, event := range response.Events {
-		items, err := r.advanceRing(ctx, event.PrevKv, values)
+		items, err := w.advanceRing(ctx, event.PrevKv)
 		if err != nil {
 			notifyError(ch, err)
 		}
