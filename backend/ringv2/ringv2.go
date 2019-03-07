@@ -350,7 +350,6 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, va
 	r.watchers[watcher.watcherKey] = watcher
 	r.mu.Unlock()
 	if err := watcher.ensureActiveTrigger(ctx); err != nil {
-		panic(err)
 		notifyError(ch, fmt.Errorf("error while starting ring watcher: %s", err))
 		notifyClosing(ch)
 		return
