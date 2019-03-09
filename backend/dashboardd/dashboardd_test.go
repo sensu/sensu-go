@@ -7,11 +7,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDashboardRouter(t *testing.T) {
-	dashboard := Dashboardd{}
-	router := httpRouter(&dashboard)
+	dashboard, err := New(Config{})
+	require.NoError(t, err)
+
+	router := httpRouter(dashboard)
 
 	testCases := []struct {
 		path string
@@ -20,6 +23,8 @@ func TestDashboardRouter(t *testing.T) {
 		{"/favicon.ico", http.StatusOK},
 		{"/manifest.json", http.StatusOK},
 		{"/asset-manifest.json", http.StatusOK},
+		{"/asset-info.json", http.StatusOK},
+		{"/static/doesnt-exist.js", http.StatusNotFound},
 	}
 
 	for _, tc := range testCases {

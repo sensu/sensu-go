@@ -3,18 +3,19 @@ package dashboardd
 import (
 	"compress/gzip"
 	"context"
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/NYTimes/gziphandler"
 	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/backend/dashboardd/asset"
 	"github.com/sensu/sensu-go/dashboard"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
@@ -39,6 +40,7 @@ type Dashboardd struct {
 	logger     *logrus.Entry
 
 	Config
+	Assets *asset.Collection
 }
 
 // Option is a functional option.
@@ -56,6 +58,11 @@ func New(cfg Config, opts ...Option) (*Dashboardd, error) {
 			"component", "dashboard",
 		),
 	}
+
+	// load assets
+	collection := asset.NewCollection()
+	collection.Extend(dashboard.Assets)
+	d.Assets = collection
 
 	// prepare server TLS config
 	tlsServerConfig, err := cfg.TLS.ToServerTLSConfig()
@@ -134,20 +141,6 @@ func httpRouter(d *Dashboardd) *mux.Router {
 		d.errChan <- err
 	}
 
-	// Proxy endpoints
-	r.PathPrefix("/auth").Handler(backendProxy)
-	r.PathPrefix("/graphql").Handler(backendProxy)
-
-	// Serve assets
-	r.PathPrefix("/").Handler(assetsHandler())
-
-	return r
-}
-
-func assetsHandler() http.Handler {
-	fs := dashboard.Assets
-	handler := http.FileServer(fs)
-
 	// Gzip content
 	gziphandler, err := gziphandler.NewGzipLevelAndMinSize(
 		gzip.DefaultCompression,
@@ -156,47 +149,46 @@ func assetsHandler() http.Handler {
 	if err != nil {
 		panic(err)
 	}
-	handler = gziphandler(handler)
 
-	// Set proper headers
-	immutableHandler := immutableHandler(handler)
-	noCacheHandler := noCacheHandler(handler)
+	// Proxy endpoints
+	r.PathPrefix("/auth").Handler(backendProxy)
+	r.PathPrefix("/graphql").Handler(gziphandler(backendProxy))
 
+	// Expose Asset Info
+	r.PathPrefix("/asset-info.json").Handler(gziphandler(listAssetsHandler(d.Assets, d.logger)))
+
+	// Serve assets
+	r.PathPrefix("/static").Handler(staticHandler(d.Assets))
+	r.PathPrefix("/").Handler(rootHandler(d.Assets))
+
+	return r
+}
+
+func staticHandler(fs http.FileSystem) http.Handler {
+	handler := http.FileServer(fs)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// set cache-control header to allow client to cache file indefinitely.
+		// https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching#Freshness
+		// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control#Revalidation_and_reloading
+		w.Header().Set("cache-control", "max-age=31536000, immutable")
+		handler.ServeHTTP(w, r)
+	})
+}
+
+func rootHandler(fs http.FileSystem) http.Handler {
+	handler := http.FileServer(fs)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Fallback to index if path didn't match an asset
 		if f, _ := fs.Open(r.URL.Path); f == nil {
 			r.URL.Path = "/"
 		}
 
-		// wrap all static assets in a the immutable handler so that they are not
-		// needless revalidated when the client refreshes.
-		if strings.HasPrefix(r.URL.Path, "/static") {
-			immutableHandler.ServeHTTP(w, r)
-		} else {
-			noCacheHandler.ServeHTTP(w, r)
-		}
-	})
-}
-
-// immutableHandler sets the proper headers to allow client to cache file
-// indefinitely.
-// https://developer.mozilla.org/en-US/docs/Web/HTTP/Caching#Freshness
-// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Cache-Control#Revalidation_and_reloading
-func immutableHandler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("cache-control", "max-age=31536000, immutable")
-		next.ServeHTTP(w, r)
-	})
-}
-
-// noCacheHandler sets the proper headers to prevent any sort of caching for the
-// index.html file, served as /
-func noCacheHandler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Sets the proper headers to prevent any sort of caching for the non-static
+		// files such as the index and manifest.
 		w.Header().Set("cache-control", "no-cache, no-store, must-revalidate")
 		w.Header().Set("pragma", "no-cache")
 		w.Header().Set("expires", "0")
-		next.ServeHTTP(w, r)
+		handler.ServeHTTP(w, r)
 	})
 }
 
@@ -235,4 +227,62 @@ func newBackendProxy(aurl string, tlsOpts *types.TLSOptions) (*httputil.ReverseP
 	proxy := httputil.NewSingleHostReverseProxy(target)
 	proxy.Transport = transport
 	return proxy, nil
+}
+
+type Path struct {
+	Name    string
+	IsDir   bool
+	ModTime time.Time
+	Size    int64
+}
+
+func listAssetsHandler(fs http.FileSystem, logger *logrus.Entry) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Derive contents of assets collection
+		paths, err := asset.ListContents(fs, "/")
+		if err != nil {
+			logger.WithError(err).Error("unable to list assets")
+			writeError(w)
+			return
+		}
+
+		// Sanatize
+		out := []Path{}
+		for _, path := range paths {
+			out = append(out, Path{
+				Name:    path.Name,
+				IsDir:   path.IsDir(),
+				ModTime: path.ModTime(),
+				Size:    path.Size(),
+			})
+		}
+
+		// Write
+		if err = writeJSON(w, out); err != nil {
+			logger.WithError(err).Error("unable to write assets")
+			writeError(w)
+		}
+	})
+}
+
+func writeJSON(w http.ResponseWriter, d interface{}) error {
+	// Headers
+	w.Header().Set("Content-Type", "application/json")
+
+	// Marshal
+	bytes, err := json.Marshal(d)
+	if err != nil {
+		return err
+	}
+
+	// Write
+	_, err = w.Write(bytes)
+	return err
+}
+
+func writeError(w http.ResponseWriter) {
+	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(500)
+	_, _ = w.Write([]byte("{}"))
 }
