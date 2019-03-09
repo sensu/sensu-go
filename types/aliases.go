@@ -58,7 +58,7 @@ type (
 )
 
 const (
-	// AcceessTokenString is the key name used to retrieve the access token string
+	// AccessTokenString is the key name used to retrieve the access token string
 	AccessTokenString = v2.AccessTokenString
 
 	// AccessTokenClaims contains the key name to retrieve the access token claims
@@ -69,6 +69,12 @@ const (
 
 	// NamespaceKey contains the key name to retrieve the namespace from context
 	NamespaceKey = v2.NamespaceKey
+
+	// PageContinueKey contains the continue token used in pagination
+	PageContinueKey = v2.PageContinueKey
+
+	// PageSizeKey contains the page size used in pagination
+	PageSizeKey = v2.PageSizeKey
 
 	// RefreshTokenClaims contains the key name to retrieve the refresh token claims
 	RefreshTokenClaims = v2.RefreshTokenClaims

@@ -30,6 +30,12 @@ const (
 
 	// StoreKey contains the key name to retrieve the etcd store from within a context
 	StoreKey
+
+	// PageContinueKey contains the continue token used in pagination
+	PageContinueKey
+
+	// PageSizeKey contains the page size used in pagination
+	PageSizeKey
 )
 
 // ContextNamespace returns the namespace injected in the context
