@@ -36,6 +36,7 @@ type Dashboardd struct {
 	wg         *sync.WaitGroup
 	errChan    chan error
 	httpServer *http.Server
+	logger     *logrus.Entry
 
 	Config
 }
@@ -51,6 +52,9 @@ func New(cfg Config, opts ...Option) (*Dashboardd, error) {
 		running:  &atomic.Value{},
 		wg:       &sync.WaitGroup{},
 		errChan:  make(chan error, 1),
+		logger: logrus.WithField(
+			"component", "dashboard",
+		),
 	}
 
 	// prepare server TLS config
@@ -75,17 +79,9 @@ func New(cfg Config, opts ...Option) (*Dashboardd, error) {
 	return d, nil
 }
 
-var logger *logrus.Entry
-
-func init() {
-	logger = logrus.WithFields(logrus.Fields{
-		"component": "dashboard",
-	})
-}
-
 // Start dashboardd
 func (d *Dashboardd) Start() error {
-	logger.Info("starting dashboardd on address: ", d.httpServer.Addr)
+	d.logger.Info("starting dashboardd on address: ", d.httpServer.Addr)
 	d.wg.Add(1)
 
 	go func() {
@@ -204,9 +200,9 @@ func noCacheHandler(next http.Handler) http.Handler {
 	})
 }
 
-func newBackendProxy(APIURL string, TLS *types.TLSOptions) (*httputil.ReverseProxy, error) {
+func newBackendProxy(aurl string, tlsOpts *types.TLSOptions) (*httputil.ReverseProxy, error) {
 	// API gateway to Sensu API
-	target, err := url.Parse(APIURL)
+	target, err := url.Parse(aurl)
 	if err != nil {
 		return nil, err
 	}
@@ -226,8 +222,8 @@ func newBackendProxy(APIURL string, TLS *types.TLSOptions) (*httputil.ReversePro
 	}
 
 	// Configure TLS
-	if TLS != nil {
-		cfg, err := TLS.ToServerTLSConfig()
+	if tlsOpts != nil {
+		cfg, err := tlsOpts.ToServerTLSConfig()
 		if err != nil {
 			return nil, err
 		}
