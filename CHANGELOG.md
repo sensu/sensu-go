@@ -7,7 +7,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
-## [5.3.0] - 2019-03-07
+## [5.3.0] - 2019-03-11
 
 ### Added
 - Added additional check config and entity information to event details page.
