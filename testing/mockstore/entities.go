@@ -3,6 +3,7 @@ package mockstore
 import (
 	"context"
 
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -34,4 +35,10 @@ func (s *MockStore) GetEntityByName(ctx context.Context, id string) (*types.Enti
 func (s *MockStore) UpdateEntity(ctx context.Context, e *types.Entity) error {
 	args := s.Called(ctx, e)
 	return args.Error(0)
+}
+
+// GetEntityWatcher
+func (s *MockStore) GetEntityWatcher(ctx context.Context) <-chan store.WatchEventEntity {
+	args := s.Called(ctx)
+	return args.Get(0).(<-chan store.WatchEventEntity)
 }

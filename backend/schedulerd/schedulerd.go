@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -19,6 +20,8 @@ type Schedulerd struct {
 	ctx                  context.Context
 	cancel               context.CancelFunc
 	errChan              chan error
+	ringPool             *ringv2.Pool
+	entityCache          *EntityCache
 }
 
 // Option is a functional option.
@@ -28,6 +31,7 @@ type Option func(*Schedulerd) error
 type Config struct {
 	Store       store.Store
 	QueueGetter types.QueueGetter
+	RingPool    *ringv2.Pool
 	Bus         messaging.MessageBus
 }
 
@@ -38,10 +42,16 @@ func New(c Config, opts ...Option) (*Schedulerd, error) {
 		queueGetter: c.QueueGetter,
 		bus:         c.Bus,
 		errChan:     make(chan error, 1),
+		ringPool:    c.RingPool,
 	}
 	s.ctx, s.cancel = context.WithCancel(context.Background())
-	s.checkWatcher = NewCheckWatcher(c.Bus, c.Store, s.ctx)
-	s.adhocRequestExecutor = NewAdhocRequestExecutor(s.ctx, s.store, s.queueGetter.GetQueue(adhocQueueName), s.bus)
+	cache, err := NewEntityCache(s.ctx, s.store)
+	if err != nil {
+		return nil, err
+	}
+	s.entityCache = cache
+	s.checkWatcher = NewCheckWatcher(s.ctx, c.Bus, c.Store, c.RingPool, cache)
+	s.adhocRequestExecutor = NewAdhocRequestExecutor(s.ctx, s.store, s.queueGetter.GetQueue(adhocQueueName), s.bus, s.entityCache)
 
 	for _, o := range opts {
 		if err := o(s); err != nil {

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -16,9 +15,7 @@ func BenchmarkSubPump(b *testing.B) {
 		sendCh: make(chan *transport.Message, 10),
 	}
 
-	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: &mockring.Getter{},
-	})
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	if err != nil {
 		b.Fatal(err)
 	}

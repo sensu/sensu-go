@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"sync"
 	"testing"
-
-	"github.com/sensu/sensu-go/testing/mockring"
 )
 
 func BenchmarkWizardBusPublish(b *testing.B) {
@@ -37,9 +35,7 @@ func BenchmarkWizardBusPublish(b *testing.B) {
 
 	for _, tc := range tt {
 		b.Run(fmt.Sprintf("%d-clients", tc), func(b *testing.B) {
-			bus, _ := NewWizardBus(WizardBusConfig{
-				RingGetter: &mockring.Getter{},
-			})
+			bus, _ := NewWizardBus(WizardBusConfig{})
 			_ = bus.Start()
 
 			wg := &sync.WaitGroup{}

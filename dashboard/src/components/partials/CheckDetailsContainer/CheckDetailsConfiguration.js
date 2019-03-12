@@ -11,6 +11,7 @@ import Dictionary, {
   DictionaryEntry,
 } from "/components/Dictionary";
 import Divider from "@material-ui/core/Divider";
+import Duration from "/components/Duration";
 import Grid from "@material-ui/core/Grid";
 import List from "@material-ui/core/List";
 import ListItem, { ListItemTitle } from "/components/DetailedListItem";
@@ -89,7 +90,11 @@ class CheckDetailsConfiguration extends React.PureComponent {
     const { interval, cron } = this.props.check;
 
     if (interval > 0) {
-      return `Every ${interval}s`;
+      return (
+        <React.Fragment>
+          Every <Duration duration={interval * 1000} />
+        </React.Fragment>
+      );
     } else if (cron && cron.length > 0) {
       return <CronDescriptor capitalize expression={cron} />;
     }
@@ -156,15 +161,9 @@ class CheckDetailsConfiguration extends React.PureComponent {
                 </DictionaryEntry>
 
                 <DictionaryEntry>
-                  <DictionaryKey>Command</DictionaryKey>
-                  <DictionaryValue explicitRightMargin>
-                    <CodeBlock>
-                      <CodeHighlight
-                        language="bash"
-                        code={check.command}
-                        component="code"
-                      />
-                    </CodeBlock>
+                  <DictionaryKey>Published?</DictionaryKey>
+                  <DictionaryValue>
+                    {check.publish ? "Yes" : "No"}
                   </DictionaryValue>
                 </DictionaryEntry>
 
@@ -190,9 +189,15 @@ class CheckDetailsConfiguration extends React.PureComponent {
             <Grid item xs={12} sm={6}>
               <Dictionary>
                 <DictionaryEntry>
-                  <DictionaryKey>Published?</DictionaryKey>
-                  <DictionaryValue>
-                    {check.publish ? "Yes" : "No"}
+                  <DictionaryKey>Command</DictionaryKey>
+                  <DictionaryValue scrollableContent>
+                    <CodeBlock>
+                      <CodeHighlight
+                        language="bash"
+                        code={check.command}
+                        component="code"
+                      />
+                    </CodeBlock>
                   </DictionaryValue>
                 </DictionaryEntry>
 
@@ -222,7 +227,7 @@ class CheckDetailsConfiguration extends React.PureComponent {
                   <DictionaryKey>Timeout</DictionaryKey>
                   <DictionaryValue>
                     <Maybe value={check.timeout} fallback="Never">
-                      {timeout => `${timeout}s`}
+                      {val => <Duration duration={val * 1000} />}
                     </Maybe>
                   </DictionaryValue>
                 </DictionaryEntry>

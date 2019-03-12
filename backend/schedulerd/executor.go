@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	time "github.com/echlebek/timeproxy"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -28,15 +29,15 @@ type Executor interface {
 
 // CheckExecutor executes scheduled checks in the check scheduler
 type CheckExecutor struct {
-	bus        messaging.MessageBus
-	store      store.Store
-	roundRobin *roundRobinScheduler
-	namespace  string
+	bus         messaging.MessageBus
+	store       store.Store
+	namespace   string
+	entityCache *EntityCache
 }
 
 // NewCheckExecutor creates a new check executor
-func NewCheckExecutor(bus messaging.MessageBus, roundRobin *roundRobinScheduler, namespace string, store store.Store) *CheckExecutor {
-	return &CheckExecutor{bus: bus, roundRobin: roundRobin, namespace: namespace, store: store}
+func NewCheckExecutor(bus messaging.MessageBus, namespace string, store store.Store, cache *EntityCache) *CheckExecutor {
+	return &CheckExecutor{bus: bus, namespace: namespace, store: store, entityCache: cache}
 }
 
 // ProcessCheck processes a check by publishing its proxy requests (if any)
@@ -46,7 +47,7 @@ func (c *CheckExecutor) processCheck(ctx context.Context, check *types.CheckConf
 }
 
 func (c *CheckExecutor) getEntities(ctx context.Context) ([]*types.Entity, error) {
-	return c.store.GetEntities(ctx)
+	return c.entityCache.GetEntities(store.NewNamespaceFromContext(ctx)), nil
 }
 
 func (c *CheckExecutor) publishProxyCheckRequests(entities []*types.Entity, check *types.CheckConfig) error {
@@ -67,17 +68,6 @@ func (c *CheckExecutor) execute(check *types.CheckConfig) error {
 
 	for _, sub := range check.Subscriptions {
 		topic := messaging.SubscriptionTopic(check.Namespace, sub)
-		if check.RoundRobin {
-			msg := &roundRobinMessage{
-				subscription: topic,
-				req:          request,
-			}
-			_, err = c.roundRobin.Schedule(msg)
-			if err != nil {
-				logger.WithError(err).Error("error scheduling round robin request")
-			}
-			continue
-		}
 		logger.WithFields(logrus.Fields{
 			"check": check.Name,
 			"topic": topic,
@@ -90,6 +80,27 @@ func (c *CheckExecutor) execute(check *types.CheckConfig) error {
 	}
 
 	return err
+}
+
+func (c *CheckExecutor) executeOnEntity(check *corev2.CheckConfig, entity string) error {
+	// Ensure the check is configured to publish check requests
+	if !check.Publish {
+		return nil
+	}
+
+	var err error
+	request, err := c.buildRequest(check)
+	if err != nil {
+		return err
+	}
+
+	topic := messaging.SubscriptionTopic(check.Namespace, fmt.Sprintf("entity:%s", entity))
+	logger.WithFields(logrus.Fields{
+		"check": check.Name,
+		"topic": topic,
+	}).Debug("sending check request")
+
+	return c.bus.Publish(topic, request)
 }
 
 func (c *CheckExecutor) buildRequest(check *types.CheckConfig) (*types.CheckRequest, error) {
@@ -127,17 +138,19 @@ type AdhocRequestExecutor struct {
 	ctx            context.Context
 	cancel         context.CancelFunc
 	listenQueueErr chan error
+	entityCache    *EntityCache
 }
 
 // NewAdhocRequestExecutor returns a new AdhocRequestExecutor.
-func NewAdhocRequestExecutor(ctx context.Context, store store.Store, queue types.Queue, bus messaging.MessageBus) *AdhocRequestExecutor {
+func NewAdhocRequestExecutor(ctx context.Context, store store.Store, queue types.Queue, bus messaging.MessageBus, cache *EntityCache) *AdhocRequestExecutor {
 	ctx, cancel := context.WithCancel(ctx)
 	executor := &AdhocRequestExecutor{
-		adhocQueue: queue,
-		store:      store,
-		bus:        bus,
-		ctx:        ctx,
-		cancel:     cancel,
+		adhocQueue:  queue,
+		store:       store,
+		bus:         bus,
+		ctx:         ctx,
+		cancel:      cancel,
+		entityCache: cache,
 	}
 	go executor.listenQueue(ctx)
 	return executor
@@ -189,7 +202,7 @@ func (a *AdhocRequestExecutor) processCheck(ctx context.Context, check *types.Ch
 }
 
 func (a *AdhocRequestExecutor) getEntities(ctx context.Context) ([]*types.Entity, error) {
-	return a.store.GetEntities(ctx)
+	return a.entityCache.GetEntities(store.NewNamespaceFromContext(ctx)), nil
 }
 
 func (a *AdhocRequestExecutor) publishProxyCheckRequests(entities []*types.Entity, check *types.CheckConfig) error {
@@ -223,17 +236,16 @@ func (a *AdhocRequestExecutor) buildRequest(check *types.CheckConfig) (*types.Ch
 }
 
 func publishProxyCheckRequests(e Executor, entities []*types.Entity, check *types.CheckConfig) error {
-	var err error
-	splay := float64(0)
-	numEntities := float64(len(entities))
+	var splay time.Duration
 	if check.ProxyRequests.Splay {
-		if splay, err = calculateSplayInterval(check, numEntities); err != nil {
+		var err error
+		if splay, err = calculateSplayInterval(check, len(entities)); err != nil {
 			return err
 		}
 	}
 
 	for _, entity := range entities {
-		time.Sleep(time.Duration(time.Millisecond * time.Duration(splay*1000)))
+		time.Sleep(splay)
 		substitutedCheck, err := substituteProxyEntityTokens(entity, check)
 		if err != nil {
 			return err
@@ -262,10 +274,48 @@ func processCheck(ctx context.Context, executor Executor, check *types.CheckConf
 				logger.WithFields(fields).WithError(err).Error("error publishing proxy check requests")
 			}
 		} else {
-			logger.WithFields(fields).Info("no matching entities, check will not be published")
+			logger.WithFields(fields).Warn("no matching entities, check will not be published")
 		}
 	} else {
 		return executor.execute(check)
+	}
+	return nil
+}
+
+func processRoundRobinCheck(ctx context.Context, executor *CheckExecutor, check *corev2.CheckConfig, proxyEntities []*corev2.Entity, agentEntities []string) error {
+	if check.ProxyRequests != nil {
+		return publishRoundRobinProxyCheckRequests(executor, check, proxyEntities, agentEntities)
+	} else {
+		for _, entity := range agentEntities {
+			if err := executor.executeOnEntity(check, entity); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func publishRoundRobinProxyCheckRequests(executor *CheckExecutor, check *corev2.CheckConfig, proxyEntities []*corev2.Entity, agentEntities []string) error {
+	var splay time.Duration
+	if check.ProxyRequests.Splay {
+		var err error
+		if splay, err = calculateSplayInterval(check, len(proxyEntities)); err != nil {
+			return err
+		}
+	}
+
+	for i, proxyEntity := range proxyEntities {
+		now := time.Now()
+		agentEntity := agentEntities[i]
+		substitutedCheck, err := substituteProxyEntityTokens(proxyEntity, check)
+		if err != nil {
+			return err
+		}
+		if err := executor.executeOnEntity(substitutedCheck, agentEntity); err != nil {
+			return err
+		}
+		dreamtime := splay - time.Now().Sub(now)
+		time.Sleep(dreamtime)
 	}
 	return nil
 }

@@ -6,26 +6,31 @@ import (
 	"sync"
 
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
 // CheckWatcher manages all the check schedulers
 type CheckWatcher struct {
-	items map[string]*CheckScheduler
-	store store.Store
-	bus   messaging.MessageBus
-	mu    sync.Mutex
-	ctx   context.Context
+	items       map[string]Scheduler
+	store       store.Store
+	bus         messaging.MessageBus
+	mu          sync.Mutex
+	ctx         context.Context
+	ringPool    *ringv2.Pool
+	entityCache *EntityCache
 }
 
 // NewCheckWatcher creates a new ScheduleManager.
-func NewCheckWatcher(msgBus messaging.MessageBus, store store.Store, ctx context.Context) *CheckWatcher {
+func NewCheckWatcher(ctx context.Context, msgBus messaging.MessageBus, store store.Store, pool *ringv2.Pool, cache *EntityCache) *CheckWatcher {
 	watcher := &CheckWatcher{
-		store: store,
-		items: make(map[string]*CheckScheduler),
-		bus:   msgBus,
-		ctx:   ctx,
+		store:       store,
+		items:       make(map[string]Scheduler),
+		bus:         msgBus,
+		ctx:         ctx,
+		ringPool:    pool,
+		entityCache: cache,
 	}
 
 	return watcher
@@ -42,11 +47,31 @@ func (c *CheckWatcher) startScheduler(check *types.CheckConfig) error {
 	// their internal state with any changes that occur to their associated check.
 	key := concatUniqueKey(check.Name, check.Namespace)
 	if existing := c.items[key]; existing != nil {
-		return nil
+		if existing.Type() == GetSchedulerType(check) {
+			logger.Error("scheduler already exists")
+			return nil
+		} else {
+			if err := existing.Stop(); err != nil {
+				return err
+			}
+		}
 	}
 
-	// Create new scheduler & start it
-	scheduler := NewCheckScheduler(c.store, c.bus, check, c.ctx)
+	var scheduler Scheduler
+
+	switch GetSchedulerType(check) {
+	case IntervalType:
+		scheduler = NewIntervalScheduler(c.ctx, c.store, c.bus, check, c.entityCache)
+	case CronType:
+		scheduler = NewCronScheduler(c.ctx, c.store, c.bus, check, c.entityCache)
+	case RoundRobinIntervalType:
+		scheduler = NewRoundRobinIntervalScheduler(c.ctx, c.store, c.bus, c.ringPool, check, c.entityCache)
+	case RoundRobinCronType:
+		scheduler = NewRoundRobinCronScheduler(c.ctx, c.store, c.bus, c.ringPool, check, c.entityCache)
+	default:
+		logger.Error("bad scheduler type, falling back to interval scheduler")
+		scheduler = NewIntervalScheduler(c.ctx, c.store, c.bus, check, c.entityCache)
+	}
 
 	// Start scheduling check
 	scheduler.Start()
@@ -117,9 +142,25 @@ func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) 
 		}
 	case store.WatchUpdate:
 		// Interrupt the check scheduler, causing the check to execute and the timer to be reset.
+		logger.Info("check configs updated")
 		sched, ok := c.items[key]
-		if ok {
-			sched.Interrupt()
+		if !ok {
+			logger.Info("starting new scheduler")
+			if err := c.startScheduler(check); err != nil {
+				logger.WithError(err).Error("unable to start check scheduler")
+			}
+		}
+		if sched.Type() == GetSchedulerType(check) {
+			logger.Info("restarting scheduler")
+			sched.Interrupt(check)
+		} else {
+			logger.Info("stopping existing scheduler, starting new scheduler")
+			if err := sched.Stop(); err != nil {
+				logger.WithError(err).Error("error stopping check scheduler")
+			}
+			if err := c.startScheduler(check); err != nil {
+				logger.WithError(err).Error("unable to start check scheduler")
+			}
 		}
 	case store.WatchDelete:
 		// Call stop on the scheduler.
