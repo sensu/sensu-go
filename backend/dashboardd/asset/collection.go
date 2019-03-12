@@ -77,7 +77,7 @@ func makeVDir(fss []http.FileSystem, path string) (*Dir, error) {
 		if dir.name == "" {
 			dir.name = stat.Name()
 		}
-		if entries, _ := f.Readdir(500); entries != nil {
+		if entries, _ := f.Readdir(-1); entries != nil {
 			dir.entries = append(entries, dir.entries...)
 		}
 		if stat.ModTime().After(dir.modTime) {
