@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
@@ -175,6 +176,12 @@ func (s *Store) UpdateEvent(ctx context.Context, event *types.Event) error {
 	// Truncate check output if the output is larger than MaxOutputSize
 	if size := event.Check.MaxOutputSize; size > 0 && int64(len(event.Check.Output)) > size {
 		event.Check.Output = event.Check.Output[:size]
+	}
+
+	if event.Timestamp == 0 {
+		// If the event is being created for the first time, it may not include
+		// a timestamp. Use the current time.
+		event.Timestamp = time.Now().Unix()
 	}
 
 	// update the history
