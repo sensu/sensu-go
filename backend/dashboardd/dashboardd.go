@@ -246,7 +246,7 @@ func listAssetsHandler(fs http.FileSystem, logger *logrus.Entry) http.Handler {
 			return
 		}
 
-		// Sanatize
+		// Sanitize
 		out := []Path{}
 		for _, path := range paths {
 			out = append(out, Path{
