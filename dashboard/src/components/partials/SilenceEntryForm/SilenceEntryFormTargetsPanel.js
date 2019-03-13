@@ -42,15 +42,13 @@ class SilenceEntryFormTargetsPanel extends React.PureComponent {
                   <TableRow key={`${target.subscription}:${target.check}`}>
                     <TableCell>
                       {target.check || "*"}
-                      {error &&
-                        error[i] &&
-                        error[i].check && (
-                          <div>
-                            <Typography color="error">
-                              {formatError(error[i].check)}
-                            </Typography>
-                          </div>
-                        )}
+                      {error && error[i] && error[i].check && (
+                        <div>
+                          <Typography color="error">
+                            {formatError(error[i].check)}
+                          </Typography>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell>{target.subscription || "*"}</TableCell>
                   </TableRow>

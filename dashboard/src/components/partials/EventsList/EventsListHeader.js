@@ -197,13 +197,17 @@ class EventsListHeader extends React.Component {
 
             <ToolbarMenu.Item id="filter-by-entity" visible="if-room">
               <Select title="Entity" onChange={this.requeryEntity}>
-                {entities.map(name => <Option key={name} value={name} />)}
+                {entities.map(name => (
+                  <Option key={name} value={name} />
+                ))}
               </Select>
             </ToolbarMenu.Item>
 
             <ToolbarMenu.Item id="filter-by-check" visible="if-room">
               <Select title="Check" onChange={this.requeryCheck}>
-                {checks.map(name => <Option key={name} value={name} />)}
+                {checks.map(name => (
+                  <Option key={name} value={name} />
+                ))}
               </Select>
             </ToolbarMenu.Item>
 

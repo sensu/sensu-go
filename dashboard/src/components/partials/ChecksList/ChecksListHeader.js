@@ -67,7 +67,9 @@ class ChecksListHeader extends React.PureComponent {
       <ToolbarMenu>
         <ToolbarMenu.Item id="filter-by-subscription" visible="if-room">
           <Select title="Subscription" onChange={this.updateFilter}>
-            {subscriptions.map(val => <Option key={val} value={val} />)}
+            {subscriptions.map(val => (
+              <Option key={val} value={val} />
+            ))}
           </Select>
         </ToolbarMenu.Item>
         <ToolbarMenu.Item id="sort" visible="if-room">

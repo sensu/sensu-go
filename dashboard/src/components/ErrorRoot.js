@@ -85,23 +85,23 @@ const issueLink = ({ name, message, frames, componentStack }) => {
 **Web UI Stack Trace:**
 
 ${frames
-    .slice(0, 15)
-    .map(
-      ({ functionName, url, source }) =>
-        `at \`${functionName}\` (${url ? `[${source}](${url})` : source})`,
-    )
-    .join("\n")}
+  .slice(0, 15)
+  .map(
+    ({ functionName, url, source }) =>
+      `at \`${functionName}\` (${url ? `[${source}](${url})` : source})`,
+  )
+  .join("\n")}
 ${
-    componentStack
-      ? `
+  componentStack
+    ? `
 
 
 Component Stack:
 
 ${"```"}${componentStack.replace(/^ {4}/gm, "")}
 ${"```"}`
-      : ""
-  }
+    : ""
+}
 
 ## Your Environment
 <!--- Include as many relevant details about the environment you experienced the bug in -->
@@ -236,13 +236,15 @@ class ErrorRoot extends React.PureComponent {
                 {frames.map((frame, index) => (
                   // eslint-disable-next-line react/no-array-index-key
                   <div key={index}>
-                    {"   "}at {frame.functionName} ({frame.url ? (
+                    {"   "}at {frame.functionName} (
+                    {frame.url ? (
                       <a href={frame.url} target="_blank">
                         {frame.source}
                       </a>
                     ) : (
                       frame.source
-                    )})
+                    )}
+                    )
                   </div>
                 ))}
               </div>
