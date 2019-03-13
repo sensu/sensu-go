@@ -122,8 +122,7 @@ class EventDetailsEntitySummary extends React.Component {
                   </DictionaryKey>
                   <DictionaryValue className={classes.fullWidth}>
                     <StatusIcon inline small statusCode={statusCode} />{" "}
-                    {`${status} `}
-                    ({statusCode})
+                    {`${status} `}({statusCode})
                   </DictionaryValue>
                 </DictionaryEntry>
                 {entity.silences.length > 0 && (

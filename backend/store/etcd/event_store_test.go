@@ -9,6 +9,7 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -120,16 +121,35 @@ func TestDinnaeStoreMetrics(t *testing.T) {
 		event.Metrics = &corev2.Metrics{
 			Handlers: []string{"metrix"},
 		}
-
 		if err := store.UpdateEvent(ctx, event); err != nil {
 			t.Fatal(err)
 		}
-
 		if event, err := store.GetEventByEntityCheck(ctx, event.Entity.Name, event.Check.Name); err != nil {
+
 			t.Fatal(err)
 		} else if event.Metrics != nil {
 			t.Fatal("expected nil metrics")
 		}
 	})
+}
 
+func TestUpdateEventWithZeroTimestamp_GH2636(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		event := types.FixtureEvent("entity1", "check1")
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, event.Entity.Namespace)
+		event.Timestamp = 0
+
+		if err := store.UpdateEvent(ctx, event); err != nil {
+			t.Fatal(err)
+		}
+
+		storedEvent, err := store.GetEventByEntityCheck(ctx, event.Entity.Name, event.Check.Name)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if storedEvent.Timestamp == 0 {
+			t.Fatal("expected non-zero timestamp")
+		}
+	})
 }

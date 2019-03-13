@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
@@ -187,6 +188,12 @@ func (s *Store) UpdateEvent(ctx context.Context, event *types.Event) error {
 		check := *event.Check
 		check.Output = check.Output[:size]
 		event.Check = &check
+	}
+
+	if event.Timestamp == 0 {
+		// If the event is being created for the first time, it may not include
+		// a timestamp. Use the current time.
+		event.Timestamp = time.Now().Unix()
 	}
 
 	// update the history

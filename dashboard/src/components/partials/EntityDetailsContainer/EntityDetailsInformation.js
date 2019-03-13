@@ -114,8 +114,7 @@ class EntityDetailsInformation extends React.PureComponent {
                   <DictionaryKey>Status</DictionaryKey>
                   <DictionaryValue>
                     <StatusIcon inline small statusCode={statusCode} />{" "}
-                    {`${status} `}
-                    ({statusCode})
+                    {`${status} `}({statusCode})
                   </DictionaryValue>
                 </DictionaryEntry>
                 {entity.silences.length > 0 && (

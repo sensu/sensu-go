@@ -41,10 +41,9 @@ class SilenceEntryFormCheckPanel extends React.PureComponent {
               margin="normal"
               error={!!formatError(error)}
               InputProps={{
-                endAdornment: initialValue &&
-                  dirty && (
-                    <ResetAdornment onClick={() => setValue(initialValue)} />
-                  ),
+                endAdornment: initialValue && dirty && (
+                  <ResetAdornment onClick={() => setValue(initialValue)} />
+                ),
               }}
               {...input}
             />

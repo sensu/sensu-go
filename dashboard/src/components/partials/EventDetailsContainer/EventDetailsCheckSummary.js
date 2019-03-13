@@ -167,8 +167,7 @@ class EventDetailsCheckSummary extends React.PureComponent {
                   <DictionaryKey>Status</DictionaryKey>
                   <DictionaryValue>
                     <StatusIcon inline small statusCode={statusCode} />{" "}
-                    {`${status} `}
-                    ({statusCode})
+                    {`${status} `}({statusCode})
                   </DictionaryValue>
                 </DictionaryEntry>
                 <DictionaryEntry>
@@ -307,12 +306,12 @@ class EventDetailsCheckSummary extends React.PureComponent {
                       </DictionaryValue>
                     </DictionaryEntry>
                     <DictionaryEntry>
-                      <DictionaryKey>Command</DictionaryKey>
-                      <DictionaryValue explicitRightMargin>
+                      <DictionaryKey>STDIN</DictionaryKey>
+                      <DictionaryValue>
                         <CodeHighlight
                           language="bash"
-                          code={check.command}
                           component={Code}
+                          code={check.stdin || "false"}
                         />
                       </DictionaryValue>
                     </DictionaryEntry>
@@ -377,13 +376,19 @@ class EventDetailsCheckSummary extends React.PureComponent {
                 <Grid item xs={12} sm={6}>
                   <Dictionary>
                     <DictionaryEntry>
-                      <DictionaryKey>STDIN</DictionaryKey>
-                      <DictionaryValue>
-                        <CodeHighlight
-                          language="bash"
-                          component={Code}
-                          code={check.stdin || "false"}
-                        />
+                      <DictionaryKey>Command</DictionaryKey>
+                      <DictionaryValue scrollableContent>
+                        {check.command ? (
+                          <CodeBlock>
+                            <CodeHighlight
+                              language="bash"
+                              code={check.command}
+                              component="code"
+                            />
+                          </CodeBlock>
+                        ) : (
+                          "—"
+                        )}
                       </DictionaryValue>
                     </DictionaryEntry>
                     <DictionaryEntry>
