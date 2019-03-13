@@ -107,6 +107,7 @@ class SilenceEntryDialog extends React.PureComponent {
   }
 }
 
-export default compose(withApollo, withMobileDialog({ breakpoint: "xs" }))(
-  SilenceEntryDialog,
-);
+export default compose(
+  withApollo,
+  withMobileDialog({ breakpoint: "xs" }),
+)(SilenceEntryDialog);

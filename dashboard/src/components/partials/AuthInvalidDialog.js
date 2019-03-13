@@ -46,6 +46,7 @@ class AuthInvalidDialog extends React.PureComponent {
   }
 }
 
-export default compose(withMobileDialog({ breakpoint: "xs" }), withApollo)(
-  AuthInvalidDialog,
-);
+export default compose(
+  withMobileDialog({ breakpoint: "xs" }),
+  withApollo,
+)(AuthInvalidDialog);

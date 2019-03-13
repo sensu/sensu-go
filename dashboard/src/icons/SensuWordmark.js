@@ -38,7 +38,10 @@ class Icon extends React.Component {
   }
 }
 
-const EnhancedIcon = compose(pure, withStyles(Icon.styles))(Icon);
+const EnhancedIcon = compose(
+  pure,
+  withStyles(Icon.styles),
+)(Icon);
 EnhancedIcon.muiName = "SvgIcon";
 
 export default EnhancedIcon;
