@@ -75,7 +75,8 @@ class SilencesListItem extends React.Component {
           Takes effect{" "}
           <strong>
             <RelativeToCurrentDate dateTime={silence.begin} />
-          </strong>.
+          </strong>
+          .
         </React.Fragment>
       );
     }
