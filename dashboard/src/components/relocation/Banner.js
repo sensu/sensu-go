@@ -228,27 +228,26 @@ class Banner extends React.PureComponent {
           </div>
           <div className={classes.action}>
             {actions}
-            {!!maxAge &&
-              closeButton && (
-                <Timer
-                  key={closeButton.props.key}
-                  delay={maxAge}
-                  onEnd={onClose}
-                  paused={mouseOver}
-                >
-                  {showAgeIndicator
-                    ? progress => (
-                        <CircularProgress
-                          width={4}
-                          value={progress}
-                          opacity={0.5}
-                        >
-                          {closeButton}
-                        </CircularProgress>
-                      )
-                    : undefined}
-                </Timer>
-              )}
+            {!!maxAge && closeButton && (
+              <Timer
+                key={closeButton.props.key}
+                delay={maxAge}
+                onEnd={onClose}
+                paused={mouseOver}
+              >
+                {showAgeIndicator
+                  ? progress => (
+                      <CircularProgress
+                        width={4}
+                        value={progress}
+                        opacity={0.5}
+                      >
+                        {closeButton}
+                      </CircularProgress>
+                    )
+                  : undefined}
+              </Timer>
+            )}
             {(!showAgeIndicator || !maxAge) && closeButton}
           </div>
         </div>
