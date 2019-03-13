@@ -19,7 +19,7 @@ const EventFlappingState = "flapping"
 // EventPassingState indicates successful check result status
 const EventPassingState = "passing"
 
-// FixtureEvent returns a testing fixutre for an Event object.
+// FixtureEvent returns a testing fixture for an Event object.
 func FixtureEvent(entityName, checkID string) *Event {
 	return &Event{
 		ObjectMeta: NewObjectMeta("", "default"),

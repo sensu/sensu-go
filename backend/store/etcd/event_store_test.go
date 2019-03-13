@@ -4,6 +4,7 @@ package etcd
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -152,4 +153,306 @@ func TestUpdateEventWithZeroTimestamp_GH2636(t *testing.T) {
 			t.Fatal("expected non-zero timestamp")
 		}
 	})
+}
+
+func TestGetEventsPagination(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		// Create a "testing" namespace in the store
+		testingNS := types.FixtureNamespace("testing")
+		store.UpdateNamespace(context.Background(), testingNS)
+
+		// Add 42 objects in the store: 21 in the "default" namespace and 21 in
+		// the "testing" namespace
+		for i := 1; i <= 21; i++ {
+			// We force the entity and check number to be 2 digits
+			// "wide" in order to have a "natural" order: 01, 02, ...
+			// instead of 1, 11, ...
+			entityName := fmt.Sprintf("entity%.2d", i)
+			checkName := fmt.Sprintf("check%.2d", i)
+
+			event := types.FixtureEvent(entityName, checkName)
+			event.Name = fmt.Sprintf("%s/%s", entityName, checkName)
+
+			if err := store.UpdateEvent(context.Background(), event); err != nil {
+				t.Fatal(err)
+			}
+
+			event.Namespace = "testing"
+			event.Entity.Namespace = "testing"
+
+			if err := store.UpdateEvent(context.Background(), event); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		// Test that we can retrieve all 42 objects in 8 pages of 5 items
+		// and a final page of 2 items, in the expected order: 01 through 21 in
+		// namespace "default" then 01 through 21 in namespace "testing"
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, types.PageSizeKey, 5)
+
+		// Check the first 8 pages of 5 items each
+		for i := 0; i < 8; i++ {
+			events, err := store.GetEvents(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if len(events) != 5 {
+				t.Fatalf("Expected page %d to have 5 items, got %d", i, len(events))
+			}
+
+			offset := i * 5
+			for j, event := range events {
+				n := ((offset + j) % 21) + 1
+				expected := fmt.Sprintf("entity%.2d/check%.2d", n, n)
+
+				if event.Name != expected {
+					t.Fatalf("Expected %s, got %s (%s)", expected, event.Name, event.Namespace)
+				}
+			}
+
+			lastItem := events[len(events)-1]
+			continueKey := fmt.Sprintf("/%s/%s/%s0", lastItem.Namespace, lastItem.Entity.Name, lastItem.Check.Name)
+			ctx = context.WithValue(ctx, types.PageContinueKey, continueKey)
+		}
+
+		// Check the last page (2 items)
+		events, err := store.GetEvents(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(events) != 2 {
+			t.Fatalf("Expected a page with 2 items, got %d", len(events))
+		}
+
+		offset := 40
+		for j, event := range events {
+			n := ((offset + j) % 21) + 1
+			expected := fmt.Sprintf("entity%.2d/check%.2d", n, n)
+
+			if event.Name != expected {
+				t.Fatalf("Expected %s, got %s", expected, event.Name)
+			}
+		}
+
+		// Test that we can limit the query to the "default" namespace
+		// This is to make sure that the don't "escape" the namespace when there
+		// are more entities stored in a namespace after "default".
+		ctx = context.Background()
+		ctx = context.WithValue(ctx, types.PageContinueKey, "")
+		ctx = context.WithValue(ctx, types.PageSizeKey, 10)
+		ctx = context.WithValue(ctx, types.NamespaceKey, "default")
+		t.Run("through default namespace", func(t *testing.T) {
+			testPagination(t, ctx, store, 21)
+		})
+
+		// Test that we can limit the query to the "testing" namespace
+		ctx = context.Background()
+		ctx = context.WithValue(ctx, types.PageContinueKey, "")
+		ctx = context.WithValue(ctx, types.PageSizeKey, 10)
+		ctx = context.WithValue(ctx, types.NamespaceKey, "testing")
+		t.Run("through testing namespace", func(t *testing.T) {
+			testPagination(t, ctx, store, 21)
+		})
+
+		// Test with limit=1
+		ctx = context.Background()
+		ctx = context.WithValue(ctx, types.PageSizeKey, 1)
+
+		for i := 0; i < 42; i++ {
+			events, err := store.GetEvents(ctx)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if len(events) != 1 {
+				t.Fatalf("Expected page %d to have 1 items, got %d", i, len(events))
+			}
+
+			offset := i * 1
+			for j, event := range events {
+				n := ((offset + j) % 21) + 1
+				expected := fmt.Sprintf("entity%.2d/check%.2d", n, n)
+
+				if event.Name != expected {
+					t.Fatalf("Expected %s, got %s (%s)", expected, event.Name, event.Namespace)
+				}
+			}
+
+			lastItem := events[len(events)-1]
+			continueKey := fmt.Sprintf("/%s/%s/%s0", lastItem.Namespace, lastItem.Entity.Name, lastItem.Check.Name)
+			ctx = context.WithValue(ctx, types.PageContinueKey, continueKey)
+		}
+
+		// TODO: Add test with limit > setSize
+	})
+}
+
+func testPagination(t *testing.T, ctx context.Context, etcd store.Store, setSize int) {
+	pageSize := store.PageSizeFromContext(ctx)
+
+	nFullPages := setSize / pageSize
+	nLeftovers := setSize % pageSize
+
+	for i := 0; i < nFullPages; i++ {
+		events, err := etcd.GetEvents(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(events) != pageSize {
+			t.Fatalf("Expected page %d to have %d items but got %d", i, pageSize, len(events))
+		}
+
+		offset := i * pageSize
+		for j, event := range events {
+			n := ((offset + j) % setSize) + 1
+			expected := fmt.Sprintf("entity%.2d/check%.2d", n, n)
+
+			if event.Name != expected {
+				t.Fatalf("Expected %s, got %s (namespace=%s)", expected, event.Name, event.Namespace)
+			}
+		}
+
+		lastItem := events[len(events)-1]
+		continueKey := fmt.Sprintf("%s/%s\x00", lastItem.Entity.Name, lastItem.Check.Name)
+		ctx = context.WithValue(ctx, types.PageContinueKey, continueKey)
+	}
+
+	// Check the last page, supposed to hold nLeftovers items
+	events, err := etcd.GetEvents(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(events) != nLeftovers {
+		t.Fatalf("Expected last page with %d items, got %d", nLeftovers, len(events))
+	}
+
+	offset := pageSize * nFullPages
+	for j, event := range events {
+		n := ((offset + j) % setSize) + 1
+		expected := fmt.Sprintf("entity%.2d/check%.2d", n, n)
+
+		if event.Name != expected {
+			t.Fatalf("Expected %s, got %s", expected, event.Name)
+		}
+	}
+}
+
+func TestGetEventsByEntityPagination(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		// Create a "testing" namespace in the store
+		testingNS := types.FixtureNamespace("testing")
+		store.UpdateNamespace(context.Background(), testingNS)
+
+		// Add 42 objects in the store: 21 checks for entity1 in the "default"
+		// namespace and 21 checks for "entity1" in the "testing" namespace
+		for i := 1; i <= 21; i++ {
+			// We force the entity and check number to be 2 digits
+			// "wide" in order to have a "natural" order: 01, 02, ...
+			// instead of 1, 11, ...
+			checkName := fmt.Sprintf("check%.2d", i)
+
+			event := types.FixtureEvent("entity1", checkName)
+			event.Name = fmt.Sprintf("entity1/%s", checkName)
+
+			if err := store.UpdateEvent(context.Background(), event); err != nil {
+				t.Fatal(err)
+			}
+
+			event.Namespace = "testing"
+			event.Entity.Namespace = "testing"
+
+			if err := store.UpdateEvent(context.Background(), event); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, types.PageContinueKey, "")
+		ctx = context.WithValue(ctx, types.PageSizeKey, 10)
+		ctx = context.WithValue(ctx, types.NamespaceKey, "default")
+		t.Run("entity1 in default namespace", func(t *testing.T) {
+			testGetEventsByEntityPagination(t, store, 21, ctx, "entity1")
+		})
+
+		ctx = context.Background()
+		ctx = context.WithValue(ctx, types.PageContinueKey, "")
+		ctx = context.WithValue(ctx, types.PageSizeKey, 10)
+		ctx = context.WithValue(ctx, types.NamespaceKey, "testing")
+		t.Run("entity1 in testing namespace", func(t *testing.T) {
+			testGetEventsByEntityPagination(t, store, 21, ctx, "entity1")
+		})
+
+		ctx = context.Background()
+		ctx = context.WithValue(ctx, types.PageContinueKey, "")
+		ctx = context.WithValue(ctx, types.PageSizeKey, 1)
+		ctx = context.WithValue(ctx, types.NamespaceKey, "default")
+		t.Run("page size equals one", func(t *testing.T) {
+			testGetEventsByEntityPagination(t, store, 21, ctx, "entity1")
+		})
+
+		ctx = context.Background()
+		ctx = context.WithValue(ctx, types.PageContinueKey, "")
+		ctx = context.WithValue(ctx, types.PageSizeKey, 1337)
+		ctx = context.WithValue(ctx, types.NamespaceKey, "default")
+		t.Run("page size bigger than set size", func(t *testing.T) {
+			testGetEventsByEntityPagination(t, store, 21, ctx, "entity1")
+		})
+	})
+}
+
+func testGetEventsByEntityPagination(t *testing.T, etcd store.Store, setSize int, ctx context.Context, entityName string) {
+	pageSize := store.PageSizeFromContext(ctx)
+
+	nFullPages := setSize / pageSize
+	nLeftovers := setSize % pageSize
+
+	for i := 0; i < nFullPages; i++ {
+		events, err := etcd.GetEventsByEntity(ctx, entityName)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(events) != pageSize {
+			t.Fatalf("Expected page %d to have %d items but got %d", i, pageSize, len(events))
+		}
+
+		offset := i * pageSize
+		for j, event := range events {
+			n := ((offset + j) % setSize) + 1
+			expected := fmt.Sprintf("%s/check%.2d", entityName, n)
+
+			if event.Name != expected {
+				t.Fatalf("Expected %s, got %s", expected, event.Name)
+			}
+		}
+
+		lastItem := events[len(events)-1]
+		continueKey := fmt.Sprintf("%s\x00", lastItem.Check.Name)
+		ctx = context.WithValue(ctx, types.PageContinueKey, continueKey)
+	}
+
+	// Check the last page, supposed to hold nLeftovers items
+	events, err := etcd.GetEventsByEntity(ctx, entityName)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(events) != nLeftovers {
+		t.Fatalf("Expected last page with %d items, got %d", nLeftovers, len(events))
+	}
+
+	offset := pageSize * nFullPages
+	for j, event := range events {
+		n := ((offset + j) % setSize) + 1
+		expected := fmt.Sprintf("%s/check%.2d", entityName, n)
+
+		if event.Name != expected {
+			t.Fatalf("Expected %s, got %s", expected, event.Name)
+		}
+	}
 }

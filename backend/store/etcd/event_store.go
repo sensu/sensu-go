@@ -62,7 +62,17 @@ func (s *Store) DeleteEventByEntityCheck(ctx context.Context, entityName, checkN
 // GetEvents returns the events for an (optional) namespace. If namespace is the
 // empty string, GetEvents returns all events for all namespaces.
 func (s *Store) GetEvents(ctx context.Context) ([]*types.Event, error) {
-	resp, err := s.client.Get(ctx, getEventsPath(ctx, ""), clientv3.WithPrefix())
+	opts := []clientv3.OpOption{
+		clientv3.WithLimit(int64(store.PageSizeFromContext(ctx))),
+	}
+
+	keyPrefix := getEventsPath(ctx, "")
+	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
+	opts = append(opts, clientv3.WithRange(rangeEnd))
+
+	continueKey := store.PageContinueFromContext(ctx)
+
+	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueKey), opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +107,17 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string) ([]*ty
 		return nil, errors.New("must specify entity name")
 	}
 
-	resp, err := s.client.Get(ctx, getEventsPath(ctx, entityName), clientv3.WithPrefix())
+	opts := []clientv3.OpOption{
+		clientv3.WithLimit(int64(store.PageSizeFromContext(ctx))),
+	}
+
+	keyPrefix := getEventsPath(ctx, entityName)
+	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
+	opts = append(opts, clientv3.WithRange(rangeEnd))
+
+	continueKey := store.PageContinueFromContext(ctx)
+
+	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueKey), opts...)
 	if err != nil {
 		return nil, err
 	}
