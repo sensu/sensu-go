@@ -5,9 +5,6 @@ import (
 )
 
 const (
-	// DefaultAPIURL represents the default API URL.
-	DefaultAPIURL = "http://localhost:8080"
-
 	// DefaultNamespace represents the default namespace
 	DefaultNamespace = "default"
 
