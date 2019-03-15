@@ -39,7 +39,7 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 	routes.Path("{entity}/{check}", r.createOrReplace).Methods(http.MethodPut)
 }
 
-func (r *EventsRouter) list(req *http.Request) (interface{}, error) {
+func (r *EventsRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
 	records, err := r.controller.Query(req.Context(), "", "")
 	return records, err
 }

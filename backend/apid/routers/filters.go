@@ -37,7 +37,7 @@ func (r *EventFiltersRouter) Mount(parent *mux.Router) {
 	routes.Put(r.createOrReplace)
 }
 
-func (r *EventFiltersRouter) list(req *http.Request) (interface{}, error) {
+func (r *EventFiltersRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
 	return r.controller.Query(req.Context())
 }
 

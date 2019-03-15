@@ -36,7 +36,7 @@ func (r *AssetsRouter) Mount(parent *mux.Router) {
 	routes.Put(r.createOrReplace)
 }
 
-func (r *AssetsRouter) list(req *http.Request) (interface{}, error) {
+func (r *AssetsRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
 	records, err := r.controller.Query(req.Context())
 	return records, err
 }

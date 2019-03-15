@@ -44,7 +44,7 @@ func (r *UsersRouter) Mount(parent *mux.Router) {
 	routes.Path("{id}/{subresource:password}", r.updatePassword).Methods(http.MethodPut)
 }
 
-func (r *UsersRouter) list(req *http.Request) (interface{}, error) {
+func (r *UsersRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
 	records, err := r.controller.Query(req.Context())
 
 	// Obfustace users password

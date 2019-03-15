@@ -37,7 +37,7 @@ func (r *HooksRouter) Mount(parent *mux.Router) {
 	routes.Put(r.createOrReplace)
 }
 
-func (r *HooksRouter) list(req *http.Request) (interface{}, error) {
+func (r *HooksRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
 	records, err := r.controller.Query(req.Context())
 	return records, err
 }

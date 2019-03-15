@@ -57,7 +57,7 @@ func (r *EntitiesRouter) find(req *http.Request) (interface{}, error) {
 	return record, err
 }
 
-func (r *EntitiesRouter) list(req *http.Request) (interface{}, error) {
+func (r *EntitiesRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
 	records, err := r.controller.Query(req.Context())
 	return records, err
 }
