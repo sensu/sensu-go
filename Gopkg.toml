@@ -21,6 +21,10 @@ required = [
   unused-packages = false
 
 [[prune.project]]
+  name="github.com/prometheus/client_golang"
+  unused-packages = false
+
+[[prune.project]]
   name = "github.com/golang/protobuf"
   unused-packages = false
 

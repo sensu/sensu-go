@@ -14,6 +14,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/apid/routers"
@@ -97,6 +98,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 
 	router := mux.NewRouter().UseEncodedPath()
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
+	router.Handle("/metrics", promhttp.Handler())
 	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig)
 	registerGraphQLService(router, a.store, c.URL, tlsClientConfig)
 	registerAuthenticationResources(router, a.store, a.Authenticator)
