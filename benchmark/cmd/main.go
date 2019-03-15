@@ -53,9 +53,12 @@ func main() {
 		cfg.AgentName = name
 		cfg.BackendURLs = []string{fmt.Sprintf("ws://%s:%d", backend, 8081)}
 
-		agent := agent.NewAgent(cfg)
+		agent, err := agent.NewAgent(cfg)
+		if err != nil {
+			log.Fatal(err)
+		}
 		if err := agent.Run(); err != nil {
-			log.Print(err)
+			log.Fatal(err)
 			continue
 		}
 		agents[i] = agent

@@ -1,8 +1,8 @@
 package agent
 
 import (
+	"io/ioutil"
 	"os"
-	"path/filepath"
 	"time"
 
 	"github.com/sensu/sensu-go/types"
@@ -108,7 +108,10 @@ type SocketConfig struct {
 // FixtureConfig provides a new Config object initialized with defaults for use
 // in tests, as well as a cleanup function to call at the end of the test.
 func FixtureConfig() (*Config, func()) {
-	cacheDir := filepath.Join(os.TempDir(), "sensu-agent-test")
+	cacheDir, err := ioutil.TempDir("", "")
+	if err != nil {
+		panic(err)
+	}
 
 	c := &Config{
 		AgentName: GetDefaultAgentName(),

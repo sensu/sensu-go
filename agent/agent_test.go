@@ -47,10 +47,13 @@ func TestSendLoop(t *testing.T) {
 	cfg.BackendURLs = []string{wsURL}
 	cfg.API.Port = 0
 	cfg.Socket.Port = 0
-	ta := NewAgent(cfg)
+	ta, err := NewAgent(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
 	mockTime.Start()
 	defer mockTime.Stop()
-	err := ta.Run()
+	err = ta.Run()
 	require.NoError(t, err)
 	defer ta.Stop()
 	<-done
@@ -84,7 +87,10 @@ func TestReceiveLoop(t *testing.T) {
 	cfg.BackendURLs = []string{wsURL}
 	cfg.API.Port = 0
 	cfg.Socket.Port = 0
-	ta := NewAgent(cfg)
+	ta, err := NewAgent(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
 	ta.handler.AddHandler("testMessageType", func(payload []byte) error {
 		msg := &testMessageType{}
 		err := json.Unmarshal(payload, msg)
@@ -93,7 +99,7 @@ func TestReceiveLoop(t *testing.T) {
 		done <- struct{}{}
 		return nil
 	})
-	err := ta.Run()
+	err = ta.Run()
 	require.NoError(t, err)
 	defer ta.Stop()
 	msgBytes, _ := json.Marshal(&testMessageType{"message"})
@@ -146,10 +152,13 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 	cfg.BackendURLs = []string{wsURL}
 	cfg.API.Port = 0
 	cfg.Socket.Port = 0
-	ta := NewAgent(cfg)
+	ta, err := NewAgent(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
 	mockTime.Start()
 	defer mockTime.Stop()
-	err := ta.Run()
+	err = ta.Run()
 	require.NoError(t, err)
 	defer ta.Stop()
 	for err := range errors {
@@ -176,8 +185,11 @@ func TestInvalidAgentName_GH2022(t *testing.T) {
 	cfg.BackendURLs = []string{wsURL}
 	cfg.API.Port = 0
 	cfg.Socket.Port = 0
-	ta := NewAgent(cfg)
-	err := ta.Run()
+	ta, err := NewAgent(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = ta.Run()
 	require.Error(t, err)
 	defer ta.Stop()
 }

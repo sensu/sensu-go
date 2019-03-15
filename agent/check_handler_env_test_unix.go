@@ -21,7 +21,10 @@ func TestEnvVars(t *testing.T) {
 
 	config, cleanup := FixtureConfig()
 	defer cleanup()
-	agent := NewAgent(config)
+	agent, err := NewAgent(config)
+	if err != nil {
+		t.Fatal(err)
+	}
 	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch
 

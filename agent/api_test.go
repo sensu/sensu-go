@@ -34,12 +34,12 @@ func TestAddEvent(t *testing.T) {
 			types.Event{
 				Check: types.FixtureCheck("check_foo"),
 			},
-			http.StatusCreated,
+			http.StatusAccepted,
 		},
 		{
 			"with a proper event",
 			types.FixtureEvent("foo", "check_foo"),
-			http.StatusCreated,
+			http.StatusAccepted,
 		},
 	}
 
@@ -48,7 +48,10 @@ func TestAddEvent(t *testing.T) {
 		t.Run(testName, func(t *testing.T) {
 			config, cleanup := FixtureConfig()
 			defer cleanup()
-			agent := NewAgent(config)
+			agent, err := NewAgent(config)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			encoded, _ := json.Marshal(tc.event)
 			r, err := http.NewRequest("POST", "/events", bytes.NewBuffer(encoded))
@@ -89,7 +92,10 @@ func TestHealthz(t *testing.T) {
 			// need to figure out how to pass the mock transport into the agent
 			config, cleanup := FixtureConfig()
 			defer cleanup()
-			agent := NewAgent(config)
+			agent, err := NewAgent(config)
+			if err != nil {
+				t.Fatal(err)
+			}
 			agent.connected = tc.closed
 
 			r, err := http.NewRequest("GET", "/healthz", nil)

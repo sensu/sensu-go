@@ -156,7 +156,10 @@ func newStartCommand() *cobra.Command {
 			cfg.Redact = viper.GetStringSlice(flagRedact)
 			cfg.Subscriptions = viper.GetStringSlice(flagSubscriptions)
 
-			sensuAgent := agent.NewAgent(cfg)
+			sensuAgent, err := agent.NewAgent(cfg)
+			if err != nil {
+				return err
+			}
 			if err := sensuAgent.Run(); err != nil {
 				return err
 			}
