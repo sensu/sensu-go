@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -26,6 +27,14 @@ var (
 	logger = logrus.WithFields(logrus.Fields{
 		"component": ComponentName,
 	})
+
+	eventsProcessed = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "sensu_go_events_processed",
+			Help: "The total number of processed events",
+		},
+		[]string{"status"},
+	)
 )
 
 // Eventd handles incoming sensu events and stores them in etcd.
@@ -70,6 +79,7 @@ func New(c Config, opts ...Option) (*Eventd, error) {
 			return nil, err
 		}
 	}
+	prometheus.MustRegister(eventsProcessed)
 	return e, nil
 }
 
@@ -226,6 +236,8 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 			logger.WithError(err).Error("error burying switch")
 		}
 	}
+
+	eventsProcessed.WithLabelValues("success").Inc()
 
 	return e.bus.Publish(messaging.TopicEvent, event)
 }
