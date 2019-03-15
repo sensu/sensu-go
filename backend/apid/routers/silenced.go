@@ -37,11 +37,11 @@ func (r *SilencedRouter) Mount(parent *mux.Router) {
 	routes.Put(r.createOrReplace)
 
 	// Custom
-	routes.Path("subscriptions/{subscription}", r.list).Methods(http.MethodGet)
-	routes.Path("checks/{check}", r.list).Methods(http.MethodGet)
+	routes.Router.HandleFunc("subscriptions/{subscriptions}", listHandler(r.list)).Methods(http.MethodGet)
+	routes.Router.HandleFunc("checks/{check}", listHandler(r.list)).Methods(http.MethodGet)
 }
 
-func (r *SilencedRouter) list(req *http.Request) (interface{}, error) {
+func (r *SilencedRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
 	return r.controller.Query(req.Context(), params["subscription"], params["check"])
 }

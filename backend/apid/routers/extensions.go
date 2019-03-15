@@ -36,7 +36,7 @@ func (r *ExtensionsRouter) Mount(parent *mux.Router) {
 	routes.Put(r.register)
 }
 
-func (r *ExtensionsRouter) list(req *http.Request) (interface{}, error) {
+func (r *ExtensionsRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
 	records, err := r.controller.Query(req.Context())
 	return records, err
 }

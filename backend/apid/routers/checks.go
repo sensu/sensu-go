@@ -58,7 +58,7 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 	parent.HandleFunc(path.Join(routes.PathPrefix, "{id}/execute"), r.adhocRequest).Methods(http.MethodPost)
 }
 
-func (r *ChecksRouter) list(req *http.Request) (interface{}, error) {
+func (r *ChecksRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
 	records, err := r.controller.Query(req.Context())
 	return records, err
 }

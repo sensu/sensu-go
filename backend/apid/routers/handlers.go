@@ -73,6 +73,6 @@ func (r *HandlersRouter) find(req *http.Request) (interface{}, error) {
 	return r.controller.Find(req.Context(), id)
 }
 
-func (r *HandlersRouter) list(req *http.Request) (interface{}, error) {
+func (r *HandlersRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
 	return r.controller.Query(req.Context())
 }

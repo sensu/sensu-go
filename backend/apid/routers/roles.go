@@ -83,7 +83,7 @@ func (r *RolesRouter) find(req *http.Request) (interface{}, error) {
 	return obj, err
 }
 
-func (r *RolesRouter) list(req *http.Request) (interface{}, error) {
+func (r *RolesRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
 	objs, err := r.controller.List(req.Context())
 	return objs, err
 }

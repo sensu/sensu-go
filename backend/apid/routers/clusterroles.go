@@ -81,7 +81,7 @@ func (r *ClusterRolesRouter) find(req *http.Request) (interface{}, error) {
 	return obj, err
 }
 
-func (r *ClusterRolesRouter) list(req *http.Request) (interface{}, error) {
+func (r *ClusterRolesRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
 	objs, err := r.controller.List(req.Context())
 	return objs, err
 }
