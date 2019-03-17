@@ -5,7 +5,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/boltdb/bolt"
+	bolt "github.com/coreos/bbolt"
 )
 
 // Send sends a message to Q. When send completes with nil error, the message
@@ -15,6 +15,7 @@ func (q *Q) Send(message []byte) (ID, error) {
 		return nil, ErrQClosed
 	}
 	var id ID
+	q.mu.RLock()
 	err := q.db.Update(func(tx *bolt.Tx) (err error) {
 		id, err = q.nextSequence(tx)
 		if err != nil {
@@ -22,6 +23,7 @@ func (q *Q) Send(message []byte) (ID, error) {
 		}
 		return q.send(id, message, tx)
 	})
+	q.mu.RUnlock()
 	if err == nil {
 		q.waker.Wake()
 	}

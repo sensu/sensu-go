@@ -14,9 +14,9 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/boltdb/bolt"
-	"github.com/echlebek/lasr"
+	bolt "github.com/coreos/bbolt"
 	time "github.com/echlebek/timeproxy"
+	"github.com/sensu/lasr"
 
 	"github.com/atlassian/gostatsd/pkg/statsd"
 	"github.com/sensu/sensu-go/api/core/v2"

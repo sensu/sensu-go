@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/boltdb/bolt"
-	"github.com/echlebek/lasr"
+	bolt "github.com/coreos/bbolt"
+	"github.com/sensu/lasr"
 )
 
 func newQueue(path string) (*lasr.Q, error) {

@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/boltdb/bolt"
+	bolt "github.com/coreos/bbolt"
 )
 
 // Q is a persistent message queue. Its methods are goroutine-safe.
@@ -21,6 +21,7 @@ type Q struct {
 	inFlight    sync.WaitGroup
 	waker       *waker
 	optsApplied bool
+	mu          sync.RWMutex
 }
 
 type bucketKeys struct {
@@ -62,7 +63,8 @@ func (q *Q) String() string {
 	return fmt.Sprintf("Q{Name: %q}", string(q.name))
 }
 
-// NewQ creates a new Q.
+// NewQ creates a new Q. Only one queue should be created in a given bolt db,
+// unless compaction is disabled.
 func NewQ(db *bolt.DB, name string, options ...Option) (*Q, error) {
 	bName := []byte(name)
 	closed := make(chan struct{})
@@ -100,6 +102,8 @@ func (q *Q) init() error {
 }
 
 func (q *Q) equilibrate() error {
+	q.mu.RLock()
+	defer q.mu.RUnlock()
 	return q.db.Update(func(tx *bolt.Tx) error {
 		bucket, err := q.bucket(tx, q.keys.ready)
 		if err != nil {

@@ -1,6 +1,8 @@
 package lasr
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // Options can be passed to NewQ.
 type Option func(q *Q) error

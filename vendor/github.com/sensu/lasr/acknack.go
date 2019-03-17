@@ -3,10 +3,12 @@ package lasr
 import (
 	"sync/atomic"
 
-	"github.com/boltdb/bolt"
+	bolt "github.com/coreos/bbolt"
 )
 
 func (q *Q) ack(id []byte) error {
+	q.mu.RLock()
+	defer q.mu.RUnlock()
 	var wake bool
 	err := q.db.Update(func(tx *bolt.Tx) error {
 		var err error
@@ -30,6 +32,8 @@ func (q *Q) ack(id []byte) error {
 }
 
 func (q *Q) nack(id []byte, retry bool) error {
+	q.mu.RLock()
+	defer q.mu.RUnlock()
 	var wake bool
 	err := q.db.Update(func(tx *bolt.Tx) (rerr error) {
 		bucket, err := q.bucket(tx, q.keys.unacked)

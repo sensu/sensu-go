@@ -205,3 +205,7 @@ required = [
 [[constraint]]
   branch = "master"
   name = "github.com/echlebek/lasr"
+
+[[constraint]]
+  name = "github.com/sensu/lasr"
+  version = "1.0.0"
