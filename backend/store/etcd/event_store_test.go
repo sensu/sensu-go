@@ -114,7 +114,7 @@ func TestEventStorage(t *testing.T) {
 	})
 }
 
-func TestDinnaeStoreMetrics(t *testing.T) {
+func TestDoNotStoreMetrics(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		event := corev2.FixtureEvent("entity1", "check1")
 		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
