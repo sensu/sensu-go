@@ -276,8 +276,12 @@ func writeJSON(w http.ResponseWriter, d interface{}) error {
 	}
 
 	// Write
-	_, err = w.Write(bytes)
-	return err
+	if _, err = w.Write(bytes); err != nil {
+		// If we receive an err here it is most likely because the client has
+		// disconnected.
+		// https://github.com/sensu/sensu-go/pull/2786#discussion_r265258086
+	}
+	return nil
 }
 
 func writeError(w http.ResponseWriter) {
