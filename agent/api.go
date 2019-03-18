@@ -72,7 +72,7 @@ func (a *Agent) handleAPIQueue(ctx context.Context) {
 				}
 			},
 		}
-		a.sendMessage2(msg)
+		a.sendMessage(msg)
 	}
 }
 

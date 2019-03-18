@@ -100,19 +100,7 @@ func NewAgent(config *Config) (*Agent, error) {
 	return agent, nil
 }
 
-func (a *Agent) sendMessage(msgType string, payload []byte) {
-	logger.WithFields(logrus.Fields{
-		"type":    msgType,
-		"payload": string(payload),
-	}).Debug("sending message")
-	msg := &transport.Message{
-		Type:    msgType,
-		Payload: payload,
-	}
-	a.sendq <- msg
-}
-
-func (a *Agent) sendMessage2(msg *transport.Message) {
+func (a *Agent) sendMessage(msg *transport.Message) {
 	logger.WithFields(logrus.Fields{
 		"type":    msg.Type,
 		"payload": string(msg.Payload),

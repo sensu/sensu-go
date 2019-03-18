@@ -103,7 +103,8 @@ func TestReceiveLoop(t *testing.T) {
 	require.NoError(t, err)
 	defer ta.Stop()
 	msgBytes, _ := json.Marshal(&testMessageType{"message"})
-	ta.sendMessage("testMessageType", msgBytes)
+	tm := &transport.Message{Payload: msgBytes, Type: tm}
+	ta.sendMessage(tm)
 	<-done
 	<-done
 }
