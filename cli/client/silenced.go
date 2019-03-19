@@ -29,16 +29,8 @@ func (client *RestClient) CreateSilenced(silenced *types.Silenced) error {
 }
 
 // DeleteSilenced deletes a silenced entry.
-func (client *RestClient) DeleteSilenced(id string) error {
-	path := silencedPath(client.config.Namespace(), id)
-	res, err := client.R().Delete(path)
-	if err != nil {
-		return err
-	}
-	if res.StatusCode() >= 400 {
-		return UnmarshalError(res)
-	}
-	return nil
+func (client *RestClient) DeleteSilenced(namespace, name string) error {
+	return client.Delete(silencedPath(namespace, name))
 }
 
 // ListSilenceds fetches all silenced entries from configured Sensu instance

@@ -22,16 +22,20 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				return errors.New("a role name is required")
 			}
 			name := args[0]
+			namespace := cli.Config.Namespace()
+
 			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
 				if confirmed := helpers.ConfirmDelete(name); !confirmed {
 					_, err := fmt.Fprintln(cmd.OutOrStdout(), "Canceled")
 					return err
 				}
 			}
-			err := cli.Client.DeleteRole(name)
+
+			err := cli.Client.DeleteRole(namespace, name)
 			if err != nil {
 				return err
 			}
+
 			_, err = fmt.Fprintln(cmd.OutOrStdout(), "Deleted")
 			return err
 		},

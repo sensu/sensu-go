@@ -15,8 +15,8 @@ func (c *MockClient) UpdateSilenced(silenced *types.Silenced) error {
 }
 
 // DeleteSilenced for use with mock lib
-func (c *MockClient) DeleteSilenced(id string) error {
-	args := c.Called(id)
+func (c *MockClient) DeleteSilenced(namespace, name string) error {
+	args := c.Called(namespace, name)
 	return args.Error(0)
 }
 
