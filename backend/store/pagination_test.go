@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 func TestPageSizeFromContext(t *testing.T) {
@@ -20,7 +20,7 @@ func TestPageSizeFromContext(t *testing.T) {
 		},
 		{
 			description: "it returns the page size set in the context",
-			ctx:         context.WithValue(context.Background(), types.PageSizeKey, 500),
+			ctx:         context.WithValue(context.Background(), corev2.PageSizeKey, 500),
 			expected:    500,
 		},
 	}
@@ -49,7 +49,7 @@ func TestPageContinueFromContext(t *testing.T) {
 		},
 		{
 			description: "it returns the continue token set in the context",
-			ctx:         context.WithValue(context.Background(), types.PageContinueKey, "sartre"),
+			ctx:         context.WithValue(context.Background(), corev2.PageContinueKey, "sartre"),
 			expected:    "sartre",
 		},
 	}

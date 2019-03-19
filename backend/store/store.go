@@ -8,8 +8,9 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	jwt "github.com/dgrijalva/jwt-go"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 // ErrAlreadyExists is returned when an object already exists
@@ -96,7 +97,7 @@ type WatchEventHookConfig struct {
 
 // WatchEventEntity is a notification that the entity store has been updated.
 type WatchEventEntity struct {
-	Entity *v2.Entity
+	Entity *corev2.Entity
 	Action WatchActionType
 }
 
@@ -339,7 +340,7 @@ type EventStore interface {
 	// value returned by GetEvents, nextContinueToken, is a potential "continue
 	// token" that lets the caller continue paginating in subsequent calls. If that
 	// new token is "", the last page is already being returned.
-	GetEvents(ctx context.Context, pageSize int64, continueToken string) (events []*types.Event, nextContinueToken string, err error)
+	GetEvents(ctx context.Context, pageSize int64, continueToken string) (events []*corev2.Event, nextContinueToken string, err error)
 
 	// GetEventsByEntity returns all events for the given entity within the ctx's
 	// namespace. A nil slice with no error is returned if none were found.
@@ -524,10 +525,10 @@ type SilencedStore interface {
 // TessenConfigStore provides methods for managing the Tessen configuration
 type TessenConfigStore interface {
 	// CreateOrUpdateTessenConfig creates or updates the tessen configuration
-	CreateOrUpdateTessenConfig(context.Context, *v2.TessenConfig) error
+	CreateOrUpdateTessenConfig(context.Context, *corev2.TessenConfig) error
 
 	// GetTessenConfig gets the tessen configuration
-	GetTessenConfig(context.Context) (*v2.TessenConfig, error)
+	GetTessenConfig(context.Context) (*corev2.TessenConfig, error)
 }
 
 // TokenStore provides methods for managing the JWT access list
@@ -537,7 +538,7 @@ type TokenStore interface {
 
 	// RevokeTokens removes tokens using the provided claims from the JWT access
 	// list
-	RevokeTokens(claims ...*v2.Claims) error
+	RevokeTokens(claims ...*corev2.Claims) error
 
 	// GetToken returns the claims of a given token ID, belonging to the given
 	// subject. An error is returned if no claims were found.

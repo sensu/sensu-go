@@ -10,9 +10,10 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 func TestEventStorageMaxOutputSize(t *testing.T) {
@@ -136,8 +137,8 @@ func TestDoNotStoreMetrics(t *testing.T) {
 
 func TestUpdateEventWithZeroTimestamp_GH2636(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
-		event := types.FixtureEvent("entity1", "check1")
-		ctx := context.WithValue(context.Background(), types.NamespaceKey, event.Entity.Namespace)
+		event := corev2.FixtureEvent("entity1", "check1")
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 		event.Timestamp = 0
 
 		if err := store.UpdateEvent(ctx, event); err != nil {
@@ -158,7 +159,7 @@ func TestUpdateEventWithZeroTimestamp_GH2636(t *testing.T) {
 func TestGetEventsPagination(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		// Create a "testing" namespace in the store
-		testingNS := types.FixtureNamespace("testing")
+		testingNS := corev2.FixtureNamespace("testing")
 		store.UpdateNamespace(context.Background(), testingNS)
 
 		// Add 42 objects in the store: 21 in the "default" namespace and 21 in
@@ -170,7 +171,7 @@ func TestGetEventsPagination(t *testing.T) {
 			entityName := fmt.Sprintf("entity%.2d", i)
 			checkName := fmt.Sprintf("check%.2d", i)
 
-			event := types.FixtureEvent(entityName, checkName)
+			event := corev2.FixtureEvent(entityName, checkName)
 			event.Name = fmt.Sprintf("%s/%s", entityName, checkName)
 
 			if err := store.UpdateEvent(context.Background(), event); err != nil {
@@ -243,14 +244,14 @@ func TestGetEventsPagination(t *testing.T) {
 		// This is to make sure that the don't "escape" the namespace when there
 		// are more entities stored in a namespace after "default".
 		ctx = context.Background()
-		ctx = context.WithValue(ctx, types.NamespaceKey, "default")
+		ctx = context.WithValue(ctx, corev2.NamespaceKey, "default")
 		t.Run("through default namespace", func(t *testing.T) {
 			testPagination(t, ctx, store, 10, 21)
 		})
 
 		// Test that we can limit the query to the "testing" namespace
 		ctx = context.Background()
-		ctx = context.WithValue(ctx, types.NamespaceKey, "testing")
+		ctx = context.WithValue(ctx, corev2.NamespaceKey, "testing")
 		t.Run("through testing namespace", func(t *testing.T) {
 			testPagination(t, ctx, store, 10, 21)
 		})
@@ -343,7 +344,7 @@ func testPagination(t *testing.T, ctx context.Context, etcd store.Store, pageSiz
 func TestGetEventsByEntityPagination(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		// Create a "testing" namespace in the store
-		testingNS := types.FixtureNamespace("testing")
+		testingNS := corev2.FixtureNamespace("testing")
 		store.UpdateNamespace(context.Background(), testingNS)
 
 		// Add 42 objects in the store: 21 checks for entity1 in the "default"
@@ -354,7 +355,7 @@ func TestGetEventsByEntityPagination(t *testing.T) {
 			// instead of 1, 11, ...
 			checkName := fmt.Sprintf("check%.2d", i)
 
-			event := types.FixtureEvent("entity1", checkName)
+			event := corev2.FixtureEvent("entity1", checkName)
 			event.Name = fmt.Sprintf("entity1/%s", checkName)
 
 			if err := store.UpdateEvent(context.Background(), event); err != nil {
@@ -370,33 +371,33 @@ func TestGetEventsByEntityPagination(t *testing.T) {
 		}
 
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, types.PageContinueKey, "")
-		ctx = context.WithValue(ctx, types.PageSizeKey, 10)
-		ctx = context.WithValue(ctx, types.NamespaceKey, "default")
+		ctx = context.WithValue(ctx, corev2.PageContinueKey, "")
+		ctx = context.WithValue(ctx, corev2.PageSizeKey, 10)
+		ctx = context.WithValue(ctx, corev2.NamespaceKey, "default")
 		t.Run("entity1 in default namespace", func(t *testing.T) {
 			testGetEventsByEntityPagination(t, store, 21, ctx, "entity1")
 		})
 
 		ctx = context.Background()
-		ctx = context.WithValue(ctx, types.PageContinueKey, "")
-		ctx = context.WithValue(ctx, types.PageSizeKey, 10)
-		ctx = context.WithValue(ctx, types.NamespaceKey, "testing")
+		ctx = context.WithValue(ctx, corev2.PageContinueKey, "")
+		ctx = context.WithValue(ctx, corev2.PageSizeKey, 10)
+		ctx = context.WithValue(ctx, corev2.NamespaceKey, "testing")
 		t.Run("entity1 in testing namespace", func(t *testing.T) {
 			testGetEventsByEntityPagination(t, store, 21, ctx, "entity1")
 		})
 
 		ctx = context.Background()
-		ctx = context.WithValue(ctx, types.PageContinueKey, "")
-		ctx = context.WithValue(ctx, types.PageSizeKey, 1)
-		ctx = context.WithValue(ctx, types.NamespaceKey, "default")
+		ctx = context.WithValue(ctx, corev2.PageContinueKey, "")
+		ctx = context.WithValue(ctx, corev2.PageSizeKey, 1)
+		ctx = context.WithValue(ctx, corev2.NamespaceKey, "default")
 		t.Run("page size equals one", func(t *testing.T) {
 			testGetEventsByEntityPagination(t, store, 21, ctx, "entity1")
 		})
 
 		ctx = context.Background()
-		ctx = context.WithValue(ctx, types.PageContinueKey, "")
-		ctx = context.WithValue(ctx, types.PageSizeKey, 1337)
-		ctx = context.WithValue(ctx, types.NamespaceKey, "default")
+		ctx = context.WithValue(ctx, corev2.PageContinueKey, "")
+		ctx = context.WithValue(ctx, corev2.PageSizeKey, 1337)
+		ctx = context.WithValue(ctx, corev2.NamespaceKey, "default")
 		t.Run("page size bigger than set size", func(t *testing.T) {
 			testGetEventsByEntityPagination(t, store, 21, ctx, "entity1")
 		})
@@ -431,7 +432,7 @@ func testGetEventsByEntityPagination(t *testing.T, etcd store.Store, setSize int
 
 		lastItem := events[len(events)-1]
 		continueKey := fmt.Sprintf("%s\x00", lastItem.Check.Name)
-		ctx = context.WithValue(ctx, types.PageContinueKey, continueKey)
+		ctx = context.WithValue(ctx, corev2.PageContinueKey, continueKey)
 	}
 
 	// Check the last page, supposed to hold nLeftovers items

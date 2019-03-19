@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 func TestPaginationMiddleware(t *testing.T) {
@@ -73,12 +73,12 @@ func TestPaginationMiddleware(t *testing.T) {
 				var limit int
 				var continueToken string
 
-				if value := r.Context().Value(types.PageSizeKey); value != nil {
+				if value := r.Context().Value(corev2.PageSizeKey); value != nil {
 					limit = value.(int)
 				}
 				assert.Equal(t, tt.expectedLimit, limit)
 
-				if value := r.Context().Value(types.PageContinueKey); value != nil {
+				if value := r.Context().Value(corev2.PageContinueKey); value != nil {
 					continueToken = value.(string)
 				}
 				assert.Equal(t, tt.expectedContinueToken, continueToken)

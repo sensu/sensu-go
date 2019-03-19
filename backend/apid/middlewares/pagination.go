@@ -8,7 +8,7 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 // Pagination retrieves the "limit" and "continue" query parameters and add them
@@ -24,13 +24,13 @@ func (p Pagination) Then(next http.Handler) http.Handler {
 		if err != nil {
 			limit = 0
 		}
-		ctx = context.WithValue(ctx, types.PageSizeKey, limit)
+		ctx = context.WithValue(ctx, corev2.PageSizeKey, limit)
 
 		continueToken, err := url.PathUnescape(vars["continue"])
 		if err != nil {
 			continueToken = ""
 		}
-		ctx = context.WithValue(ctx, types.PageContinueKey, continueToken)
+		ctx = context.WithValue(ctx, corev2.PageContinueKey, continueToken)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
