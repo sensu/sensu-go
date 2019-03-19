@@ -147,12 +147,8 @@ func (r *mutationsImpl) DeleteEntity(p schema.MutationDeleteEntityFieldResolverP
 	ctx := setContextFromComponents(p.Context, components)
 
 	client := r.factory.NewWithContext(ctx)
-	_, err := client.FetchEntity(components.UniqueComponent())
-	if err != nil {
-		return nil, err
-	}
 
-	err = client.DeleteEntity(components.Namespace(), components.UniqueComponent())
+	err := client.DeleteEntity(components.Namespace(), components.UniqueComponent())
 	if err != nil {
 		return nil, err
 	}
