@@ -22,16 +22,13 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				return errors.New("a role binding name is required")
 			}
 			name := args[0]
+			namespace := cli.Config.Namespace()
+
 			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
 				if confirmed := helpers.ConfirmDelete(name); !confirmed {
 					_, err := fmt.Fprintln(cmd.OutOrStdout(), "Canceled")
 					return err
 				}
-			}
-
-			namespace := cli.Config.Namespace()
-			if namespaceFlag, _ := cmd.Flags().GetString("namespace"); namespaceFlag != "" {
-				namespace = namespaceFlag
 			}
 
 			err := cli.Client.DeleteRoleBinding(namespace, name)

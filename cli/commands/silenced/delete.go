@@ -25,17 +25,13 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			namespace := cli.Config.Namespace()
 
 			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
 				if confirmed := helpers.ConfirmDelete(name); !confirmed {
 					fmt.Fprintln(cmd.OutOrStdout(), "Canceled")
 					return nil
 				}
-			}
-
-			namespace := cli.Config.Namespace()
-			if namespaceFlag, _ := cmd.Flags().GetString("namespace"); namespaceFlag != "" {
-				namespace = namespaceFlag
 			}
 
 			err = cli.Client.DeleteSilenced(namespace, name)
