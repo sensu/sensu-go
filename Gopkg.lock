@@ -1071,6 +1071,30 @@
   revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
   version = "v2.2.1"
 
+[[projects]]
+  branch = "master"
+  digest = "1:632a2cf3f3f719b58efe2c588eea1de0ecdde63bf978e351265dea9d1cf71253"
+  name = "k8s.io/apimachinery"
+  packages = [
+    "pkg/fields",
+    "pkg/labels",
+    "pkg/selection",
+    "pkg/util/errors",
+    "pkg/util/sets",
+    "pkg/util/validation",
+    "pkg/util/validation/field",
+  ]
+  pruneopts = "UT"
+  revision = "c9defaaddf6f05ecb2dd115c1bed600265501daf"
+
+[[projects]]
+  digest = "1:72fd56341405f53c745377e0ebc4abeff87f1a048e0eea6568a20212650f5a82"
+  name = "k8s.io/klog"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "71442cd4037d612096940ceb0f3fec3f7fff66e0"
+  version = "v0.2.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
@@ -1140,6 +1164,9 @@
     "google.golang.org/grpc/grpclog",
     "gopkg.in/h2non/filetype.v1",
     "gopkg.in/h2non/filetype.v1/types",
+    "k8s.io/apimachinery/pkg/fields",
+    "k8s.io/apimachinery/pkg/labels",
+    "k8s.io/apimachinery/pkg/selection",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

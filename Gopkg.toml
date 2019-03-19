@@ -201,3 +201,7 @@ required = [
 [[constraint]]
   name = "github.com/graph-gophers/dataloader"
   version = "5.0.0"
+
+[[constraint]]
+  branch = "master"
+  name = "k8s.io/apimachinery"
