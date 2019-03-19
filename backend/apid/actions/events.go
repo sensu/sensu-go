@@ -27,9 +27,8 @@ func NewEventController(store store.EventStore, bus messaging.MessageBus) EventC
 func (a EventController) Query(ctx context.Context, entityName, checkName string) ([]*corev2.Event, error) {
 	var results []*corev2.Event
 
-	// TODO(ccressent): move those 2 functions out of the store package
-	pageSize := store.PageSizeFromContext(ctx)
-	continueToken := store.PageContinueFromContext(ctx)
+	pageSize := corev2.PageSizeFromContext(ctx)
+	continueToken := corev2.PageContinueFromContext(ctx)
 
 	// Fetch from store
 	var serr error

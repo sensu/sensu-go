@@ -1,10 +1,8 @@
-package store
+package v2
 
 import (
 	"context"
 	"testing"
-
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 func TestPageSizeFromContext(t *testing.T) {
@@ -20,7 +18,7 @@ func TestPageSizeFromContext(t *testing.T) {
 		},
 		{
 			description: "it returns the page size set in the context",
-			ctx:         context.WithValue(context.Background(), corev2.PageSizeKey, 500),
+			ctx:         context.WithValue(context.Background(), PageSizeKey, 500),
 			expected:    500,
 		},
 	}
@@ -49,7 +47,7 @@ func TestPageContinueFromContext(t *testing.T) {
 		},
 		{
 			description: "it returns the continue token set in the context",
-			ctx:         context.WithValue(context.Background(), corev2.PageContinueKey, "sartre"),
+			ctx:         context.WithValue(context.Background(), PageContinueKey, "sartre"),
 			expected:    "sartre",
 		},
 	}

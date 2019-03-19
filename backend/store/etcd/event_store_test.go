@@ -405,7 +405,7 @@ func TestGetEventsByEntityPagination(t *testing.T) {
 }
 
 func testGetEventsByEntityPagination(t *testing.T, etcd store.Store, setSize int, ctx context.Context, entityName string) {
-	pageSize := store.PageSizeFromContext(ctx)
+	pageSize := corev2.PageSizeFromContext(ctx)
 
 	nFullPages := setSize / pageSize
 	nLeftovers := setSize % pageSize

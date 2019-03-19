@@ -118,14 +118,14 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string) ([]*co
 	}
 
 	opts := []clientv3.OpOption{
-		clientv3.WithLimit(int64(store.PageSizeFromContext(ctx))),
+		clientv3.WithLimit(int64(corev2.PageSizeFromContext(ctx))),
 	}
 
 	keyPrefix := getEventsPath(ctx, entityName)
 	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
 	opts = append(opts, clientv3.WithRange(rangeEnd))
 
-	continueKey := store.PageContinueFromContext(ctx)
+	continueKey := corev2.PageContinueFromContext(ctx)
 
 	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueKey), opts...)
 	if err != nil {

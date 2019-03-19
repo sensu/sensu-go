@@ -45,3 +45,21 @@ func ContextNamespace(ctx context.Context) string {
 	}
 	return ""
 }
+
+// PageSizeFromContext returns the page size stored in the given context, if
+// any. Returns 0 if none is found, typically meaning "unlimited" page size.
+func PageSizeFromContext(ctx context.Context) int {
+	if value := ctx.Value(PageSizeKey); value != nil {
+		return value.(int)
+	}
+	return 0
+}
+
+// PageContinueFromContext returns the continue token stored in the given
+// context, if any. Returns "" if none is found.
+func PageContinueFromContext(ctx context.Context) string {
+	if value := ctx.Value(PageContinueKey); value != nil {
+		return value.(string)
+	}
+	return ""
+}
