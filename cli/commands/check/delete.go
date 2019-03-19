@@ -6,7 +6,6 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -32,20 +31,18 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			check := &types.CheckConfig{}
-			check.Name = name
-
-			if namespace, _ := cmd.Flags().GetString("namespace"); namespace != "" {
-				check.Namespace = namespace
+			namespace := cli.Config.Namespace()
+			if namespaceFlag, _ := cmd.Flags().GetString("namespace"); namespaceFlag != "" {
+				namespace = namespaceFlag
 			}
 
-			err := cli.Client.DeleteCheck(check)
+			err := cli.Client.DeleteCheck(namespace, name)
 			if err != nil {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Deleted")
-			return nil
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), "Deleted")
+			return err
 		},
 	}
 

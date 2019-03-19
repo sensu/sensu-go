@@ -10,6 +10,7 @@ import AppThemeProvider from "/components/AppThemeProvider";
 import ResetStyles from "/components/ResetStyles";
 import ThemeStyles from "/components/ThemeStyles";
 
+import GlobalAlert from "/components/util/GlobalAlert";
 import AuthenticatedRoute from "/components/util/AuthenticatedRoute";
 import UnauthenticatedRoute from "/components/util/UnauthenticatedRoute";
 import AuthInvalidRoute from "/components/util/AuthInvalidRoute";
@@ -61,6 +62,7 @@ class AppRoot extends React.PureComponent {
               </Switch>
               <ResetStyles />
               <ThemeStyles />
+              <GlobalAlert />
             </AppThemeProvider>
           </ApolloProvider>
         </Provider>
@@ -71,4 +73,7 @@ class AppRoot extends React.PureComponent {
 
 // AppRoot is composed with `withRouter` here to prevent "Update Blocking"
 // see: reacttraining.com/react-router/web/guides/dealing-with-update-blocking
-export default compose(withStyles(AppRoot.styles), withRouter)(AppRoot);
+export default compose(
+  withStyles(AppRoot.styles),
+  withRouter,
+)(AppRoot);

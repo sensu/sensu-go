@@ -7,8 +7,42 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.3.0] - 2019-03-11
+
+### Added
+- Added additional check config and entity information to event details page.
+- Fixed all known TLS vulnerabilities affecting the backend server:
+    - TLS min version increased to 1.2
+    - Removed ALL but perfect-forward-secrecy ciphers
+- Removed requirement of specifying `--trusted-ca-file` when using TLS on backend
+- Prevented backend from loading server TLS configuration for http client
+- Enforced uniform TLS configuration for all three backend components (apid, agentd, dashboardd)
+- Set http client timeout to 15 seconds for sensuctl
+- Round robin scheduling is now fully functional.
+- Web UI offline state detection and and alert banner.
+
+### Changed
+- Asset downloading now uses buffered I/O.
+## Fixed
+- Commands wrap on the event details page and will display "-" if there is no command (keepalives)
+
+## [5.3.0] - 2019-03-11
+
 ### Fixed
 - Check results sent via the agent socket now support handlers.
+- `sensuctl user list` can now output yaml and wrapped-json
+- Fixed bug with how long commands were displayed on check details page.
+- Assets downloads no longer specify a client timeout.
+- Fixed a bug where agent entity subscriptions would be communicated to the
+  backend incorrectly. Due to the scheduler using the subscriptions from the
+  HTTP header, this does not have any effect on scheduling.
+- Web - Fixes issue where timeout value was not displayed.
+- Fixed bug with how long commands were displayed on check details page.
+
+### Removed
+- Removed the concept of "edition" and the edition header.
+- Fixed a bug in `sensuctl` where handlers and filters would only be deleted
+from the default namespace, unless a `--namespace` flag was specified.
 
 ## [5.2.1] - 2019-02-11
 

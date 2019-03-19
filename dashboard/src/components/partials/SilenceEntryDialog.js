@@ -70,7 +70,8 @@ class SilenceEntryDialog extends React.PureComponent {
                   <StyledDialogContentText>
                     Create a silencing entry to temporarily prevent check result
                     handlers from being triggered. A full reference to check
-                    silencing is available on the Sensu docs site.<br />
+                    silencing is available on the Sensu docs site.
+                    <br />
                     <a
                       href="https://docs.sensu.io/sensu-core/2.0/reference/silencing/"
                       target="_docs"
@@ -107,6 +108,7 @@ class SilenceEntryDialog extends React.PureComponent {
   }
 }
 
-export default compose(withApollo, withMobileDialog({ breakpoint: "xs" }))(
-  SilenceEntryDialog,
-);
+export default compose(
+  withApollo,
+  withMobileDialog({ breakpoint: "xs" }),
+)(SilenceEntryDialog);

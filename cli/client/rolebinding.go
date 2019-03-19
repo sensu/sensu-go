@@ -12,8 +12,8 @@ func (client *RestClient) CreateRoleBinding(roleBinding *types.RoleBinding) erro
 }
 
 // DeleteRoleBinding with the given name
-func (client *RestClient) DeleteRoleBinding(name string) error {
-	return client.Delete(roleBindingsPath(client.config.Namespace(), name))
+func (client *RestClient) DeleteRoleBinding(namespace, name string) error {
+	return client.Delete(roleBindingsPath(namespace, name))
 }
 
 // FetchRoleBinding with the given name

@@ -8,7 +8,6 @@ import (
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/testing/mockring"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/mock"
@@ -17,11 +16,8 @@ import (
 
 func TestCheckWatcherSmoke(t *testing.T) {
 	st := &mockstore.MockStore{}
-	ringGetter := &mockring.Getter{}
 
-	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: ringGetter,
-	})
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	require.NoError(t, bus.Start())
 	defer bus.Stop()
@@ -40,12 +36,13 @@ func TestCheckWatcherSmoke(t *testing.T) {
 	watcherChan := make(chan store.WatchEventCheckConfig)
 	st.On("GetCheckConfigWatcher", mock.Anything).Return((<-chan store.WatchEventCheckConfig)(watcherChan), nil)
 
-	watcher := NewCheckWatcher(bus, st, ctx)
+	watcher := NewCheckWatcher(ctx, bus, st, nil, &EntityCache{})
 	require.NoError(t, watcher.Start())
 
-	checkA.Interval = 5
+	checkAA := types.FixtureCheckConfig("a")
+	checkAA.Interval = 5
 	watcherChan <- store.WatchEventCheckConfig{
-		CheckConfig: checkA,
+		CheckConfig: checkAA,
 		Action:      store.WatchUpdate,
 	}
 
@@ -56,7 +53,7 @@ func TestCheckWatcherSmoke(t *testing.T) {
 	}
 
 	watcherChan <- store.WatchEventCheckConfig{
-		CheckConfig: checkA,
+		CheckConfig: checkAA,
 		Action:      store.WatchDelete,
 	}
 

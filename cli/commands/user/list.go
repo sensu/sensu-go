@@ -24,15 +24,20 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 				_ = cmd.Help()
 				return errors.New("invalid argument(s) received")
 			}
+
 			// Fetch users from API
 			results, err := cli.Client.ListUsers()
 			if err != nil {
 				return err
 			}
 
+			resources := []types.Resource{}
+			for i := range results {
+				resources = append(resources, &results[i])
+			}
+
 			// Print the results based on the user preferences
-			// User is not a Resource (does not implement URIPath()) so wrapped-json format is not supported
-			return helpers.Print(cmd, cli.Config.Format(), printToTable, []types.Resource{}, results)
+			return helpers.Print(cmd, cli.Config.Format(), printToTable, resources, results)
 		},
 	}
 

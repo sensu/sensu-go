@@ -31,7 +31,6 @@ type Config struct {
 // Cluster contains the Sensu cluster access information
 type Cluster struct {
 	APIUrl                string `json:"api-url"`
-	Edition               string `json:"edition"`
 	TrustedCAFile         string `json:"trusted-ca-file"`
 	InsecureSkipTLSVerify bool   `json:"insecure-skip-tls-verify"`
 	*types.Tokens
@@ -49,12 +48,21 @@ func Load(flags *pflag.FlagSet) *Config {
 
 	// Retrieve the path of the configuration directory
 	if flags != nil {
-		// NOTE:
+		// When Load() is called, some sub-command local flags, such as
+		// --format, are not registered yet and this leads to "unknown flags"
+		// errors being returned by cobra. Such an error can throw off the cobra
+		// parser, leading to all the flags appearing after the offending,
+		// supposedly unknown flag to be ignored.
 		//
-		// We have a significant order of operations problem where, we need
-		// the flags parsed to get the current config file, however, we need the
-		// values from the config file to properly set up the flags.
-		flags.SetOutput(ioutil.Discard)
+		// For now, we just ignore such "unknown flags" errors in order not to
+		// potentially ignore other flags as a side effect. cobra will still store
+		// the name/value of all the flags, even if they are registered later.
+		//
+		// Unfortunately, a (rather big) refactor of the CLI is probably the
+		// only way to get around that. Such a refactor would involve completely
+		// reordering the way we define commands, load the configuration files
+		// and override properties with command line flags.
+		flags.ParseErrorsWhitelist = pflag.ParseErrorsWhitelist{UnknownFlags: true}
 		_ = flags.Parse(os.Args[1:])
 
 		if value, err := flags.GetString("config-dir"); err == nil && value != "" {

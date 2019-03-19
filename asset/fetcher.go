@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -25,9 +26,7 @@ type urlGetter func(string) (io.ReadCloser, error)
 
 // Get the target URL and return an io.ReadCloser
 func httpGet(url string) (io.ReadCloser, error) {
-	client := &http.Client{Timeout: defaultHTTPGetTimeout}
-
-	resp, err := client.Get(url)
+	resp, err := http.Get(url)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching asset: %s", err)
 	}
@@ -58,8 +57,12 @@ func (h *httpFetcher) Fetch(url string) (*os.File, error) {
 		return nil, fmt.Errorf("can't open tmp file for asset")
 	}
 
-	if _, err = io.Copy(tmpFile, resp); err != nil {
+	buffered := bufio.NewWriter(tmpFile)
+	if _, err = io.Copy(buffered, resp); err != nil {
 		return nil, fmt.Errorf("error downloading asset")
+	}
+	if err := buffered.Flush(); err != nil {
+		return nil, fmt.Errorf("error downloading asset: %s", err)
 	}
 
 	if err := tmpFile.Sync(); err != nil {

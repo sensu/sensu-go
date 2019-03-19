@@ -7,9 +7,9 @@ import Grid from "@material-ui/core/Grid";
 import Loader from "/components/util/Loader";
 import RelatedEntitiesCard from "/components/partials/RelatedEntitiesCard";
 
-import CheckResult from "./EventDetailsCheckResult";
+import CheckResult from "./EventDetailsCheckSummary";
 import Toolbar from "./EventDetailsToolbar";
-import Summary from "./EventDetailsSummary";
+import EntitySummary from "./EventDetailsEntitySummary";
 
 class EventDetailsContainer extends React.Component {
   static propTypes = {
@@ -30,16 +30,15 @@ class EventDetailsContainer extends React.Component {
         timestamp
         deleted @client
         ...EventDetailsToolbar_event
-        ...EventDetailsCheckResult_event
+        ...EventDetailsCheckSummary_event
 
         check {
-          ...EventDetailsCheckResult_check
-          ...EventDetailsSummary_check
+          ...EventDetailsCheckSummary_check
         }
         entity {
-          ...EventDetailsCheckResult_entity
+          ...EventDetailsCheckSummary_entity
           ...RelatedEntitiesCard_entity
-          ...EventDetailsSummary_entity
+          ...EventDetailsEntitySummary_entity
         }
       }
 
@@ -47,8 +46,7 @@ class EventDetailsContainer extends React.Component {
       ${CheckResult.fragments.check}
       ${CheckResult.fragments.entity}
       ${RelatedEntitiesCard.fragments.entity}
-      ${Summary.fragments.check}
-      ${Summary.fragments.entity}
+      ${EntitySummary.fragments.entity}
       ${Toolbar.fragments.event}
     `,
   };
@@ -71,11 +69,11 @@ class EventDetailsContainer extends React.Component {
                   entity={event.entity}
                 />
               </Grid>
-              <Grid item xs={12} md={6}>
+              <Grid item xs={12} md={5}>
                 <RelatedEntitiesCard entity={event.entity} />
               </Grid>
-              <Grid item xs={12} md={6}>
-                <Summary check={event.check} entity={event.entity} />
+              <Grid item xs={12} md={7}>
+                <EntitySummary entity={event.entity} />
               </Grid>
             </Grid>
           </React.Fragment>

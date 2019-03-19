@@ -25,7 +25,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/pipelined"
 	"github.com/sensu/sensu-go/backend/queue"
-	"github.com/sensu/sensu-go/backend/ring"
+	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/schedulerd"
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store"
@@ -125,9 +125,7 @@ func Initialize(config *Config) (*Backend, error) {
 	queueGetter := queue.EtcdGetter{Client: b.Client, BackendIDGetter: backendID}
 
 	// Initialize the bus
-	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{
-		RingGetter: ring.EtcdGetter{Client: b.Client, BackendID: fmt.Sprintf("%x", backendID.GetBackendID())},
-	})
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", bus.Name(), err)
 	}
@@ -144,8 +142,8 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
-		Store:                   store,
-		Bus:                     bus,
+		Store: store,
+		Bus:   bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 		AssetGetter:             assetGetter,
 	})
@@ -165,11 +163,14 @@ func Initialize(config *Config) (*Backend, error) {
 	}
 	b.Daemons = append(b.Daemons, event)
 
+	ringPool := ringv2.NewPool(b.Client)
+
 	// Initialize schedulerd
 	scheduler, err := schedulerd.New(schedulerd.Config{
 		Store:       store,
 		Bus:         bus,
 		QueueGetter: queueGetter,
+		RingPool:    ringPool,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", scheduler.Name(), err)
@@ -178,11 +179,12 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize agentd
 	agent, err := agentd.New(agentd.Config{
-		Host:  config.AgentHost,
-		Port:  config.AgentPort,
-		Bus:   bus,
-		Store: store,
-		TLS:   config.TLS,
+		Host:     config.AgentHost,
+		Port:     config.AgentPort,
+		Bus:      bus,
+		Store:    store,
+		TLS:      config.TLS,
+		RingPool: ringPool,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)
@@ -192,9 +194,10 @@ func Initialize(config *Config) (*Backend, error) {
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:                   bus,
-		Store:                 store,
-		LivenessFactory:       liveness.EtcdFactory(b.ctx, b.Client),
+		Bus:             bus,
+		Store:           store,
+		LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
+		RingPool:        ringPool,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)

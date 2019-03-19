@@ -3,10 +3,22 @@
 package etcd
 
 import (
+	"bytes"
+	"context"
 	"encoding/binary"
+	"reflect"
 	"strings"
 	"testing"
 )
+
+func str(a uint64) string {
+	buf := new(bytes.Buffer)
+	if err := binary.Write(buf, binary.BigEndian, a); err != nil {
+		// Should never happen
+		panic(err)
+	}
+	return buf.String()
+}
 
 // this is little more than a smoke test, it could use improvement
 func TestSequence(t *testing.T) {
@@ -18,12 +30,15 @@ func TestSequence(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	seqA, err := Sequence(client, "/sensu.io/foobars/seq")
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	seqA, err := Sequence(ctx, client, "/sensu.io/foobars/seq")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	seqB, err := Sequence(client, "/sensu.io/foobars/seq")
+	seqB, err := Sequence(ctx, client, "/sensu.io/foobars/seq")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,4 +59,33 @@ func TestSequence(t *testing.T) {
 	if got, want := n2, uint64(2); got != want {
 		t.Errorf("bad id: got %d, want %d", got, want)
 	}
+}
+
+func TestSequences(t *testing.T) {
+	e, cleanup := NewTestEtcd(t)
+	defer cleanup()
+
+	client, err := e.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	got, err := Sequences(context.TODO(), client, "/sensu.io/foobars/seq", 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if want := []string{str(1), str(2), str(3), str(4), str(5)}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("bad sequences: got %v, want %v", got, want)
+	}
+
+	got, err = Sequences(context.TODO(), client, "/sensu.io/foobars/seq", 3)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if want := []string{str(6), str(7), str(8)}; !reflect.DeepEqual(got, want) {
+		t.Fatalf("bad sequences: got %v, want %v", got, want)
+	}
+
 }

@@ -31,19 +31,8 @@ func (client *RestClient) CreateFilter(filter *types.EventFilter) (err error) {
 }
 
 // DeleteFilter deletes a filter from configured Sensu instance
-func (client *RestClient) DeleteFilter(filter *types.EventFilter) error {
-	path := filtersPath(filter.Namespace, filter.Name)
-	res, err := client.R().Delete(path)
-
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode() >= 400 {
-		return fmt.Errorf("%v", res.String())
-	}
-
-	return nil
+func (client *RestClient) DeleteFilter(namespace, name string) error {
+	return client.Delete(filtersPath(namespace, name))
 }
 
 // FetchFilter fetches a specific check

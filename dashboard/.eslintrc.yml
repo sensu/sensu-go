@@ -3,6 +3,7 @@ extends:
   - plugin:jsx-a11y/recommended
   - airbnb
   - prettier
+  - prettier/react
 plugins:
   - import
   - jsx-a11y

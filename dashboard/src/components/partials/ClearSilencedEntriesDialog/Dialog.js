@@ -176,5 +176,8 @@ class ClearSilencedEntriesDialog extends React.PureComponent {
   }
 }
 
-const enhancer = compose(withApollo, withMobileDialog({ breakpoint: "xs" }));
+const enhancer = compose(
+  withApollo,
+  withMobileDialog({ breakpoint: "xs" }),
+);
 export default hoistStatics(enhancer)(ClearSilencedEntriesDialog);

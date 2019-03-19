@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	time "github.com/echlebek/timeproxy"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -102,20 +103,20 @@ func TestSplayCalculation(t *testing.T) {
 	// 10s * 90% / 3 = 3
 	check.Interval = 10
 	splay, err := calculateSplayInterval(check, 3)
-	assert.Equal(float64(3), splay)
+	assert.Equal(3*time.Second, splay)
 	assert.Nil(err)
 
 	// 20s * 50% / 5 = 2
 	check.Interval = 20
 	check.ProxyRequests.SplayCoverage = 50
 	splay, err = calculateSplayInterval(check, 5)
-	assert.Equal(float64(2), splay)
+	assert.Equal(2*time.Second, splay)
 	assert.Nil(err)
 
 	// invalid cron string
 	check.Cron = "invalid"
 	splay, err = calculateSplayInterval(check, 5)
-	assert.Equal(float64(0), splay)
+	assert.Equal(time.Duration(0), splay)
 	assert.NotNil(err)
 
 	// at most, 60s from current time * 50% / 2 = 15
@@ -123,7 +124,7 @@ func TestSplayCalculation(t *testing.T) {
 	// largest splay calculation will be 15
 	check.Cron = "* * * * *"
 	splay, err = calculateSplayInterval(check, 2)
-	assert.True(splay >= 0 && splay <= 15)
+	assert.True(splay >= 0 && splay <= 15*time.Second)
 	assert.Nil(err)
 }
 

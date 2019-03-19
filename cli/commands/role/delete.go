@@ -28,10 +28,17 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 					return err
 				}
 			}
-			err := cli.Client.DeleteRole(name)
+
+			namespace := cli.Config.Namespace()
+			if namespaceFlag, _ := cmd.Flags().GetString("namespace"); namespaceFlag != "" {
+				namespace = namespaceFlag
+			}
+
+			err := cli.Client.DeleteRole(namespace, name)
 			if err != nil {
 				return err
 			}
+
 			_, err = fmt.Fprintln(cmd.OutOrStdout(), "Deleted")
 			return err
 		},

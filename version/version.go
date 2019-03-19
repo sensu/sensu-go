@@ -6,8 +6,6 @@ import (
 	"os"
 	"regexp"
 	"strings"
-
-	"github.com/sensu/sensu-go/api/core/v2"
 )
 
 // These values are baked into the sensu-agent and sensu-backend binaries
@@ -27,9 +25,6 @@ var (
 	// BuildSHA stores the git sha of the build
 	// (e.g. 8673bed0a9705083987b9ecbbc1cc0758df13dd2)
 	BuildSHA string
-
-	// Edition stores the Sensu Edition of the current build (ex. core)
-	Edition = v2.CoreEdition
 )
 
 var (

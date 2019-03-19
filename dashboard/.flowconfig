@@ -7,6 +7,10 @@ all=error
 [libs]
 flow-typed
 
+[ignore]
+.*/node_modules/graphql/.*/.*\.js\.flow$
+.*/node_modules/graphql-tag/.*\.flow\.js$
+
 [options]
 emoji=true
 include_warnings=true

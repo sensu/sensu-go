@@ -56,7 +56,9 @@ class EntitiesListHeader extends React.PureComponent {
       <ToolbarMenu>
         <ToolbarMenu.Item id="filter-by-subscriptions" visible="if-room">
           <Select title="Subscription" onChange={this.updateFilter}>
-            {subs.map(v => <Option key={v} value={v} />)}
+            {subs.map(v => (
+              <Option key={v} value={v} />
+            ))}
           </Select>
         </ToolbarMenu.Item>
         <ToolbarMenu.Item id="sort" visible="always">

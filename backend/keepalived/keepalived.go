@@ -10,8 +10,10 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/agent"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
@@ -52,6 +54,7 @@ type Keepalived struct {
 	subscription          messaging.Subscription
 	errChan               chan error
 	livenessFactory       liveness.Factory
+	ringPool              *ringv2.Pool
 }
 
 // Option is a functional option.
@@ -63,6 +66,7 @@ type Config struct {
 	Bus                   messaging.MessageBus
 	LivenessFactory       liveness.Factory
 	DeregistrationHandler string
+	RingPool              *ringv2.Pool
 }
 
 // New creates a new Keepalived.
@@ -76,6 +80,7 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 		handlerCount:          DefaultHandlerCount,
 		mu:                    &sync.Mutex{},
 		errChan:               make(chan error, 1),
+		ringPool:              c.RingPool,
 	}
 	for _, o := range opts {
 		if err := o(k); err != nil {
@@ -316,7 +321,7 @@ func (k *Keepalived) alive(key string, prev liveness.State, leader bool) bool {
 	}
 
 	lager = lager.WithFields(logrus.Fields{"entity": name, "namespace": namespace})
-	lager.Info("entity is alive")
+	lager.Debug("entity is alive")
 	return false
 }
 
@@ -390,6 +395,19 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 
 	if err := k.store.UpdateFailingKeepalive(ctx, entity, expiration); err != nil {
 		lager.WithError(err).Error("error updating keepalive")
+		return false
+	}
+
+	if entity.EntityClass != corev2.EntityAgentClass {
+		return false
+	}
+
+	for _, sub := range entity.Subscriptions {
+		ring := k.ringPool.Get(ringv2.Path(namespace, sub))
+		if err := ring.Remove(ctx, name); err != nil {
+			lager := lager.WithFields(logrus.Fields{"subscription": sub})
+			lager.WithError(err).Error("error removing entity from ring")
+		}
 	}
 
 	return false
@@ -422,6 +440,29 @@ func (k *Keepalived) handleUpdate(e *types.Event) error {
 	event := createKeepaliveEvent(e)
 	event.Check.Status = 0
 	event.Check.Output = fmt.Sprintf("Keepalive last sent from %s at %s", entity.Name, time.Unix(entity.LastSeen, 0).String())
+
+	if entity.EntityClass == corev2.EntityAgentClass {
+		// Refresh the rings that the entity is involved in
+		for _, sub := range entity.Subscriptions {
+			if strings.HasPrefix(sub, "entity:") {
+				// Entity subscriptions don't get rings
+				continue
+			}
+			ring := k.ringPool.Get(ringv2.Path(entity.Namespace, sub))
+			if e.Check.Timeout == 0 {
+				// This should never happen but guards against a crash
+				e.Check.Timeout = corev2.DefaultKeepaliveTimeout
+			}
+			if err := ring.Add(ctx, entity.Name, int64(e.Check.Timeout)); err != nil {
+				lager := logger.WithFields(logrus.Fields{
+					"entity":       entity.Name,
+					"namespace":    entity.Namespace,
+					"subscription": sub,
+				})
+				lager.WithError(err).Error("error adding entity to ring")
+			}
+		}
+	}
 
 	return k.bus.Publish(messaging.TopicEventRaw, event)
 }
