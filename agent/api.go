@@ -81,7 +81,7 @@ func (a *Agent) handleAPIQueue(ctx context.Context) {
 			timer.Reset(time.Second)
 			msg := &transport.Message{
 				Type:    transport.MessageTypeEvent,
-				Payload: message.Body,
+				Payload: decompressMessage(message.Body),
 				SendCallback: func(err error) {
 					if err != nil {
 						_ = message.Nack(true)
@@ -132,7 +132,7 @@ func addEvent(a *Agent) http.HandlerFunc {
 			return
 		}
 
-		if _, err := a.apiQueue.Send(payload); err != nil {
+		if _, err := a.apiQueue.Send(compressMessage(payload)); err != nil {
 			logger.WithError(err).Error("error queueing message")
 			http.Error(w, "error queueing message", http.StatusInternalServerError)
 			return

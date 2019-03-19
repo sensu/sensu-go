@@ -1,7 +1,10 @@
 package agent
 
 import (
+	"bytes"
+	"compress/gzip"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -19,4 +22,24 @@ func newQueue(path string) (*lasr.Q, error) {
 		return nil, fmt.Errorf("error creating api queue: %s", err)
 	}
 	return lasr.NewQ(db, "api-buffer")
+}
+
+func compressMessage(message []byte) []byte {
+	buf := new(bytes.Buffer)
+	src := bytes.NewReader(message)
+	dst := gzip.NewWriter(buf)
+	_, _ = io.Copy(dst, src)
+	_ = dst.Close()
+	return buf.Bytes()
+}
+
+func decompressMessage(message []byte) []byte {
+	dst := new(bytes.Buffer)
+	src, _ := gzip.NewReader(bytes.NewReader(message))
+	defer src.Close()
+	_, err := io.Copy(dst, src)
+	if err != nil {
+		panic(err)
+	}
+	return dst.Bytes()
 }
