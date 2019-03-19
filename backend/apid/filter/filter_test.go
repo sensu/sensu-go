@@ -16,13 +16,24 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 )
 
+// Tweak this number as required
+const eventsCount = 1000000
+
+var events = make([]*v2.Event, eventsCount)
+
+func init() {
+	for i := 0; i < eventsCount; i++ {
+		rand.Seed(time.Now().UnixNano())
+		checkName := fmt.Sprintf("check%d", rand.Intn((1000/2)-1)+1)
+		events[i] = v2.FixtureEvent("foo", checkName)
+	}
+}
+
 func BenchmarkOtto(b *testing.B) {
 	filter := "event.check.name == 'check42'"
 
 	for i := 0; i < b.N; i++ {
-		rand.Seed(time.Now().UnixNano())
-		checkName := fmt.Sprintf("check%d", rand.Intn((1000/2)-1)+1)
-		event := v2.FixtureEvent("foo", checkName)
+		event := events[i]
 
 		synth := dynamic.Synthesize(event)
 		parameters := map[string]interface{}{"event": synth}
@@ -32,9 +43,8 @@ func BenchmarkOtto(b *testing.B) {
 
 func BenchmarkLabelSelector(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		rand.Seed(time.Now().UnixNano())
-		checkName := fmt.Sprintf("check%d", rand.Intn((1000/2)-1)+1)
-		event := v2.FixtureEvent("foo", checkName)
+		event := events[i]
+
 		event.Labels["check"] = event.Check.ObjectMeta.Name
 		event.Labels["entity"] = event.Entity.ObjectMeta.Name
 		event.Labels["status"] = string(event.Check.Status)
@@ -49,9 +59,45 @@ func BenchmarkLabelSelector(b *testing.B) {
 
 func BenchmarkFieldSelector(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		rand.Seed(time.Now().UnixNano())
-		checkName := fmt.Sprintf("check%d", rand.Intn((1000/2)-1)+1)
-		event := v2.FixtureEvent("foo", checkName)
+		event := events[i]
+
+		fieldSet := eventsField(event)
+		selector, _ := fields.ParseSelector("event.check.name=check42")
+		_ = selector.Matches(fieldSet)
+	}
+}
+
+func TestDurationOtto(t *testing.T) {
+	filter := "event.check.name == 'check42'"
+
+	for i := 0; i < eventsCount; i++ {
+		event := events[i]
+
+		synth := dynamic.Synthesize(event)
+		parameters := map[string]interface{}{"event": synth}
+		_, _ = js.Evaluate(filter, parameters, nil)
+	}
+}
+
+func TestDurationLabelSelector(t *testing.T) {
+	for i := 0; i < eventsCount; i++ {
+		event := events[i]
+
+		event.Labels["check"] = event.Check.ObjectMeta.Name
+		event.Labels["entity"] = event.Entity.ObjectMeta.Name
+		event.Labels["status"] = string(event.Check.Status)
+		// TODO: figure out how to deal with lists
+		//event.Labels["subscriptions"] = strings.Join(event.Check.Subscriptions, ",")
+
+		labelSet := labels.Set(event.Labels)
+		requirement, _ := labels.NewRequirement("check", selection.Equals, []string{"check42"})
+		_ = requirement.Matches(labelSet)
+	}
+}
+
+func TestDurationFieldSelector(t *testing.T) {
+	for i := 0; i < eventsCount; i++ {
+		event := events[i]
 
 		fieldSet := eventsField(event)
 		selector, _ := fields.ParseSelector("event.check.name=check42")
