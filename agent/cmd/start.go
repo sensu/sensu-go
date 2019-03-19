@@ -19,6 +19,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"golang.org/x/time/rate"
 )
 
 var (
@@ -38,6 +39,8 @@ const (
 	flagConfigFile            = "config-file"
 	flagDeregister            = "deregister"
 	flagDeregistrationHandler = "deregistration-handler"
+	flagEventsRateLimit       = "events-rate-limit"
+	flagEventsBurstLimit      = "events-burst-limit"
 	flagKeepaliveInterval     = "keepalive-interval"
 	flagKeepaliveTimeout      = "keepalive-timeout"
 	flagNamespace             = "namespace"
@@ -121,6 +124,8 @@ func newStartCommand() *cobra.Command {
 			cfg.CacheDir = viper.GetString(flagCacheDir)
 			cfg.Deregister = viper.GetBool(flagDeregister)
 			cfg.DeregistrationHandler = viper.GetString(flagDeregistrationHandler)
+			cfg.EventsAPIRateLimit = rate.Limit(viper.GetFloat64(flagEventsRateLimit))
+			cfg.EventsAPIBurstLimit = viper.GetInt(flagEventsBurstLimit)
 			cfg.KeepaliveInterval = uint32(viper.GetInt(flagKeepaliveInterval))
 			cfg.KeepaliveTimeout = uint32(viper.GetInt(flagKeepaliveTimeout))
 			cfg.Namespace = viper.GetString(flagNamespace)
@@ -217,6 +222,8 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagCacheDir, path.SystemCacheDir("sensu-agent"))
 	viper.SetDefault(flagDeregister, false)
 	viper.SetDefault(flagDeregistrationHandler, "")
+	viper.SetDefault(flagEventsRateLimit, agent.DefaultEventsAPIRateLimit)
+	viper.SetDefault(flagEventsBurstLimit, agent.DefaultEventsAPIBurstLimit)
 	viper.SetDefault(flagKeepaliveInterval, agent.DefaultKeepaliveInterval)
 	viper.SetDefault(flagKeepaliveTimeout, types.DefaultKeepaliveTimeout)
 	viper.SetDefault(flagNamespace, agent.DefaultNamespace)
@@ -250,6 +257,8 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().String(flagAPIHost, viper.GetString(flagAPIHost), "address to bind the Sensu client HTTP API to")
 	cmd.Flags().String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
 	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "deregistration handler that should process the entity deregistration event.")
+	cmd.Flags().Float64(flagEventsRateLimit, viper.GetFloat64(flagEventsRateLimit), "maximum number of events transmitted to the backend through the /events api")
+	cmd.Flags().Int(flagEventsBurstLimit, viper.GetInt(flagEventsBurstLimit), "/events api burst limit")
 	cmd.Flags().String(flagNamespace, viper.GetString(flagNamespace), "agent namespace")
 	cmd.Flags().String(flagPassword, viper.GetString(flagPassword), "agent password")
 	cmd.Flags().StringSlice(flagRedact, viper.GetStringSlice(flagRedact), "comma-delimited customized list of fields to redact")

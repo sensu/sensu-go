@@ -241,33 +241,34 @@ func (a *Agent) receiveLoop(conn transport.Transport, done chan struct{}) {
 	}
 }
 
-func (a *Agent) sendLoop(conn transport.Transport, done chan struct{}) {
+func (a *Agent) sendLoop(conn transport.Transport, done chan struct{}) error {
 	keepalive := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
 	defer keepalive.Stop()
 	logger.Info("sending keepalive")
 	if err := conn.Send(a.newKeepalive()); err != nil {
 		logger.WithError(err).Error("error sending message over websocket")
-		return
+		return err
 	}
 	for {
 		select {
 		case <-done:
-			return
+			return nil
 		case <-a.stopping:
 			if err := conn.Close(); err != nil {
 				logger.WithError(err).Error("error closing websocket connection")
+				return err
 			}
-			return
+			return nil
 		case msg := <-a.sendq:
 			if err := conn.Send(msg); err != nil {
 				logger.WithError(err).Error("error sending message over websocket")
-				return
+				return err
 			}
 		case <-keepalive.C:
 			logger.Info("sending keepalive")
 			if err := conn.Send(a.newKeepalive()); err != nil {
 				logger.WithError(err).Error("error sending message over websocket")
-				return
+				return err
 			}
 		}
 	}

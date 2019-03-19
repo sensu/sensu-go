@@ -11,6 +11,7 @@ import (
 	"github.com/sensu/lasr"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
+	"golang.org/x/time/rate"
 )
 
 // APIConfig contains the API configuration
@@ -55,7 +56,12 @@ func healthz(connected func() bool) http.HandlerFunc {
 func (a *Agent) handleAPIQueue(ctx context.Context) {
 	ch := make(chan *lasr.Message, 1)
 	go func() {
+		limiter := rate.NewLimiter(a.config.EventsAPIRateLimit, a.config.EventsAPIBurstLimit)
 		for {
+			if err := limiter.Wait(ctx); err != nil {
+				// context canceled
+				return
+			}
 			message, err := a.apiQueue.Receive(ctx)
 			if err != nil {
 				if ctx.Err() != nil {
@@ -68,17 +74,25 @@ func (a *Agent) handleAPIQueue(ctx context.Context) {
 			ch <- message
 		}
 	}()
-	timer := time.NewTimer(time.Second)
+	timerDuration := time.Second
+	if a.config.EventsAPIRateLimit > 0 && a.config.EventsAPIRateLimit < 2 {
+		// Lengthen the timer duration to account for the very low rate of events
+		timerDuration = time.Duration(float64(time.Second)/float64(a.config.EventsAPIRateLimit)) * 2
+	}
+	timer := time.NewTimer(timerDuration)
 	defer timer.Stop()
 	compacted := true
 	for {
 		select {
-		case message := <-ch:
+		case message, ok := <-ch:
+			if !ok {
+				return
+			}
 			compacted = false
 			if !timer.Stop() {
 				<-timer.C
 			}
-			timer.Reset(time.Second)
+			timer.Reset(timerDuration)
 			msg := &transport.Message{
 				Type:    transport.MessageTypeEvent,
 				Payload: decompressMessage(message.Body),
@@ -103,7 +117,7 @@ func (a *Agent) handleAPIQueue(ctx context.Context) {
 				logger.Info("compacted api queue")
 				compacted = true
 			}
-			timer.Reset(time.Second)
+			timer.Reset(timerDuration)
 		}
 	}
 }
