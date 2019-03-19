@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/sensu/lasr"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 )
@@ -52,27 +53,58 @@ func healthz(connected func() bool) http.HandlerFunc {
 }
 
 func (a *Agent) handleAPIQueue(ctx context.Context) {
-	for {
-		message, err := a.apiQueue.Receive(ctx)
-		if err != nil {
-			if ctx.Err() != nil {
-				return
-			}
-			logger.WithError(err).Error("error receiving message from queue")
-			continue
-		}
-		msg := &transport.Message{
-			Type:    transport.MessageTypeEvent,
-			Payload: message.Body,
-			SendCallback: func(err error) {
-				if err != nil {
-					_ = message.Nack(true)
-				} else {
-					_ = message.Ack()
+	ch := make(chan *lasr.Message, 1)
+	go func() {
+		for {
+			message, err := a.apiQueue.Receive(ctx)
+			if err != nil {
+				if ctx.Err() != nil {
+					close(ch)
+					return
 				}
-			},
+				logger.WithError(err).Error("error receiving message from queue")
+				continue
+			}
+			ch <- message
 		}
-		a.sendMessage(msg)
+	}()
+	timer := time.NewTimer(time.Second)
+	defer timer.Stop()
+	compacted := true
+	for {
+		select {
+		case message := <-ch:
+			compacted = false
+			if !timer.Stop() {
+				<-timer.C
+			}
+			timer.Reset(time.Second)
+			msg := &transport.Message{
+				Type:    transport.MessageTypeEvent,
+				Payload: message.Body,
+				SendCallback: func(err error) {
+					if err != nil {
+						_ = message.Nack(true)
+					} else {
+						_ = message.Ack()
+					}
+				},
+			}
+			a.sendMessage(msg)
+		case <-ctx.Done():
+			return
+		case <-timer.C:
+			if compacted {
+				continue
+			}
+			if err := a.apiQueue.Compact(); err != nil {
+				logger.WithError(err).Error("error compacting api queue")
+			} else {
+				logger.Info("compacted api queue")
+				compacted = true
+			}
+			timer.Reset(time.Second)
+		}
 	}
 }
 
