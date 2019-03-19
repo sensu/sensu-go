@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// DeleteCommand adds a command that allows user to delete checks
+// DeleteCommand adds a command that allows user to delete entities
 func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "delete [NAME]",
