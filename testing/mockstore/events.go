@@ -13,9 +13,9 @@ func (s *MockStore) DeleteEventByEntityCheck(ctx context.Context, entityName, ch
 }
 
 // GetEvents ...
-func (s *MockStore) GetEvents(ctx context.Context) ([]*types.Event, error) {
-	args := s.Called(ctx)
-	return args.Get(0).([]*types.Event), args.Error(1)
+func (s *MockStore) GetEvents(ctx context.Context, pageSize int64, continueToken string) ([]*types.Event, string, error) {
+	args := s.Called(ctx, pageSize, continueToken)
+	return args.Get(0).([]*types.Event), args.String(1), args.Error(2)
 }
 
 // GetEventsByEntity ...

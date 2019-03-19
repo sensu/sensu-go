@@ -87,7 +87,9 @@ func TestEventQuery(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("GetEvents", tc.ctx).Return(tc.events, tc.storeErr)
+			store.On("GetEvents", tc.ctx, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+				Return(tc.events, "", tc.storeErr)
+
 			store.On("GetEventsByEntity", tc.ctx, mock.Anything).Return(tc.events, tc.storeErr)
 
 			// Exec Query
