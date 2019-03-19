@@ -333,7 +333,13 @@ type EventStore interface {
 
 	// GetEvents returns all events in the given ctx's namespace. A nil slice with
 	// no error is returned if none were found.
-	GetEvents(ctx context.Context) ([]*types.Event, error)
+	//
+	// To get paginated results, the pageSize argument should be strictly positive.
+	// continueToken lets one continue paginating from the given token. The second
+	// value returned by GetEvents, nextContinueToken, is a potential "continue
+	// token" that lets the caller continue paginating in subsequent calls. If that
+	// new token is "", the last page is already being returned.
+	GetEvents(ctx context.Context, pageSize int64, continueToken string) (events []*types.Event, nextContinueToken string, err error)
 
 	// GetEventsByEntity returns all events for the given entity within the ctx's
 	// namespace. A nil slice with no error is returned if none were found.

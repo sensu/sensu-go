@@ -44,7 +44,7 @@ func TestEventStorage(t *testing.T) {
 		event.Check.Annotations = nil
 
 		// We should receive an empty slice if no results were found
-		events, err := store.GetEvents(ctx)
+		events, _, err := store.GetEvents(ctx, 0, "")
 		assert.NoError(t, err)
 		assert.NotNil(t, events)
 		assert.Equal(t, len(events), 0)
@@ -58,7 +58,7 @@ func TestEventStorage(t *testing.T) {
 			t.Errorf("bad event: got %#v, want %#v", got.Check, want.Check)
 		}
 
-		events, err = store.GetEvents(ctx)
+		events, _, err = store.GetEvents(ctx, 0, "")
 		require.NoError(t, err)
 		require.Equal(t, 1, len(events))
 		if got, want := events[0], event; !reflect.DeepEqual(got, want) {
@@ -67,13 +67,13 @@ func TestEventStorage(t *testing.T) {
 
 		// Get all events with wildcards
 		ctx = context.WithValue(ctx, corev2.NamespaceKey, corev2.NamespaceTypeAll)
-		events, err = store.GetEvents(ctx)
+		events, _, err = store.GetEvents(ctx, 0, "")
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(events))
 
 		// Get all events from a missing namespace
 		ctx = context.WithValue(ctx, corev2.NamespaceKey, "acme")
-		events, err = store.GetEvents(ctx)
+		events, _, err = store.GetEvents(ctx, 0, "")
 		require.NoError(t, err)
 		require.Equal(t, 0, len(events))
 
@@ -189,11 +189,11 @@ func TestGetEventsPagination(t *testing.T) {
 		// and a final page of 2 items, in the expected order: 01 through 21 in
 		// namespace "default" then 01 through 21 in namespace "testing"
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, types.PageSizeKey, 5)
+		pageSize := 5
+		continueToken := ""
 
-		// Check the first 8 pages of 5 items each
 		for i := 0; i < 8; i++ {
-			events, err := store.GetEvents(ctx)
+			events, nextContinueToken, err := store.GetEvents(ctx, int64(pageSize), continueToken)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -212,19 +212,21 @@ func TestGetEventsPagination(t *testing.T) {
 				}
 			}
 
-			lastItem := events[len(events)-1]
-			continueKey := fmt.Sprintf("/%s/%s/%s0", lastItem.Namespace, lastItem.Entity.Name, lastItem.Check.Name)
-			ctx = context.WithValue(ctx, types.PageContinueKey, continueKey)
+			continueToken = nextContinueToken
 		}
 
 		// Check the last page (2 items)
-		events, err := store.GetEvents(ctx)
+		events, nextContinueToken, err := store.GetEvents(ctx, int64(pageSize), continueToken)
 		if err != nil {
 			t.Fatal(err)
 		}
 
 		if len(events) != 2 {
 			t.Fatalf("Expected a page with 2 items, got %d", len(events))
+		}
+
+		if nextContinueToken != "" {
+			t.Fatalf("Expected next continue token to be \"\", got %s", nextContinueToken)
 		}
 
 		offset := 40
@@ -241,28 +243,25 @@ func TestGetEventsPagination(t *testing.T) {
 		// This is to make sure that the don't "escape" the namespace when there
 		// are more entities stored in a namespace after "default".
 		ctx = context.Background()
-		ctx = context.WithValue(ctx, types.PageContinueKey, "")
-		ctx = context.WithValue(ctx, types.PageSizeKey, 10)
 		ctx = context.WithValue(ctx, types.NamespaceKey, "default")
 		t.Run("through default namespace", func(t *testing.T) {
-			testPagination(t, ctx, store, 21)
+			testPagination(t, ctx, store, 10, 21)
 		})
 
 		// Test that we can limit the query to the "testing" namespace
 		ctx = context.Background()
-		ctx = context.WithValue(ctx, types.PageContinueKey, "")
-		ctx = context.WithValue(ctx, types.PageSizeKey, 10)
 		ctx = context.WithValue(ctx, types.NamespaceKey, "testing")
 		t.Run("through testing namespace", func(t *testing.T) {
-			testPagination(t, ctx, store, 21)
+			testPagination(t, ctx, store, 10, 21)
 		})
 
 		// Test with limit=1
 		ctx = context.Background()
-		ctx = context.WithValue(ctx, types.PageSizeKey, 1)
+		pageSize = 1
+		continueToken = ""
 
 		for i := 0; i < 42; i++ {
-			events, err := store.GetEvents(ctx)
+			events, nextContinueToken, err := store.GetEvents(ctx, int64(pageSize), continueToken)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -281,23 +280,20 @@ func TestGetEventsPagination(t *testing.T) {
 				}
 			}
 
-			lastItem := events[len(events)-1]
-			continueKey := fmt.Sprintf("/%s/%s/%s0", lastItem.Namespace, lastItem.Entity.Name, lastItem.Check.Name)
-			ctx = context.WithValue(ctx, types.PageContinueKey, continueKey)
+			continueToken = nextContinueToken
 		}
 
 		// TODO: Add test with limit > setSize
 	})
 }
 
-func testPagination(t *testing.T, ctx context.Context, etcd store.Store, setSize int) {
-	pageSize := store.PageSizeFromContext(ctx)
-
+func testPagination(t *testing.T, ctx context.Context, etcd store.Store, pageSize, setSize int) {
 	nFullPages := setSize / pageSize
 	nLeftovers := setSize % pageSize
 
+	continueToken := ""
 	for i := 0; i < nFullPages; i++ {
-		events, err := etcd.GetEvents(ctx)
+		events, nextContinueToken, err := etcd.GetEvents(ctx, int64(pageSize), continueToken)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -316,19 +312,21 @@ func testPagination(t *testing.T, ctx context.Context, etcd store.Store, setSize
 			}
 		}
 
-		lastItem := events[len(events)-1]
-		continueKey := fmt.Sprintf("%s/%s\x00", lastItem.Entity.Name, lastItem.Check.Name)
-		ctx = context.WithValue(ctx, types.PageContinueKey, continueKey)
+		continueToken = nextContinueToken
 	}
 
 	// Check the last page, supposed to hold nLeftovers items
-	events, err := etcd.GetEvents(ctx)
+	events, nextContinueToken, err := etcd.GetEvents(ctx, int64(pageSize), continueToken)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	if len(events) != nLeftovers {
 		t.Fatalf("Expected last page with %d items, got %d", nLeftovers, len(events))
+	}
+
+	if nextContinueToken != "" {
+		t.Fatalf("Expected next continue token to be \"\", got %s", nextContinueToken)
 	}
 
 	offset := pageSize * nFullPages

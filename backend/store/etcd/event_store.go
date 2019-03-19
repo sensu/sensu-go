@@ -61,32 +61,29 @@ func (s *Store) DeleteEventByEntityCheck(ctx context.Context, entityName, checkN
 
 // GetEvents returns the events for an (optional) namespace. If namespace is the
 // empty string, GetEvents returns all events for all namespaces.
-func (s *Store) GetEvents(ctx context.Context) ([]*types.Event, error) {
+func (s *Store) GetEvents(ctx context.Context, pageSize int64, continueToken string) (events []*types.Event, nextContinueToken string, err error) {
 	opts := []clientv3.OpOption{
-		clientv3.WithLimit(int64(store.PageSizeFromContext(ctx))),
+		clientv3.WithLimit(pageSize),
 	}
 
 	keyPrefix := getEventsPath(ctx, "")
 	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
 	opts = append(opts, clientv3.WithRange(rangeEnd))
 
-	continueKey := store.PageContinueFromContext(ctx)
-
-	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueKey), opts...)
+	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueToken), opts...)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	if len(resp.Kvs) == 0 {
-		return []*types.Event{}, nil
+		return []*types.Event{}, "", nil
 	}
 
-	var eventsArray []*types.Event
 	for _, kv := range resp.Kvs {
 		event := &types.Event{}
 		err = json.Unmarshal(kv.Value, event)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 		if event.Labels == nil {
 			event.Labels = make(map[string]string)
@@ -95,10 +92,22 @@ func (s *Store) GetEvents(ctx context.Context) ([]*types.Event, error) {
 			event.Annotations = make(map[string]string)
 		}
 
-		eventsArray = append(eventsArray, event)
+		events = append(events, event)
 	}
 
-	return eventsArray, nil
+	if resp.Count > pageSize {
+		ns := store.NewNamespaceFromContext(ctx)
+		lastEvent := events[len(events)-1]
+
+		// TODO(ccressent): This can surely be simplified
+		if ns == "" {
+			nextContinueToken = "/" + lastEvent.Namespace + "/" + lastEvent.Entity.Name + "/" + lastEvent.Check.Name + "\x00"
+		} else {
+			nextContinueToken = lastEvent.Entity.Name + "/" + lastEvent.Check.Name + "\x00"
+		}
+	}
+
+	return events, nextContinueToken, nil
 }
 
 // GetEventsByEntity gets all events matching a given entity name.

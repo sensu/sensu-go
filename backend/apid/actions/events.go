@@ -26,6 +26,10 @@ func NewEventController(store store.EventStore, bus messaging.MessageBus) EventC
 func (a EventController) Query(ctx context.Context, entityName, checkName string) ([]*types.Event, error) {
 	var results []*types.Event
 
+	// TODO(ccressent): move those 2 functions out of the store package
+	pageSize := store.PageSizeFromContext(ctx)
+	continueToken := store.PageContinueFromContext(ctx)
+
 	// Fetch from store
 	var serr error
 	if entityName != "" && checkName != "" {
@@ -37,7 +41,7 @@ func (a EventController) Query(ctx context.Context, entityName, checkName string
 	} else if entityName != "" {
 		results, serr = a.Store.GetEventsByEntity(ctx, entityName)
 	} else {
-		results, serr = a.Store.GetEvents(ctx)
+		results, _, serr = a.Store.GetEvents(ctx, int64(pageSize), continueToken)
 	}
 
 	if serr != nil {
