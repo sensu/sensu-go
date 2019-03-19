@@ -19,6 +19,7 @@ import DialogContentParagraph from "/components/DialogContentParagraph";
 import DialogTitle from "@material-ui/core/DialogTitle";
 import ListController from "/components/controller/ListController";
 import Loader from "/components/util/Loader";
+import Maybe from "/components/Maybe";
 import ResourceDetails from "/components/partials/ResourceDetails";
 import SilenceExpiration from "/components/partials/SilenceExpiration";
 import Table from "@material-ui/core/Table";
@@ -109,7 +110,9 @@ class ClearSilencedEntriesDialog extends React.PureComponent {
         />
       </TableOverflowCell>
       <TableCell>
-        <ResourceDetails title={silence.creator.username} />
+        <ResourceDetails
+          title={<Maybe value={silence.creator}>{u => u.username}</Maybe>}
+        />
       </TableCell>
     </TableSelectableRow>
   );

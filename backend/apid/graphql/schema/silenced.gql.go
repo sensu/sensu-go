@@ -453,7 +453,7 @@ func _ObjectTypeSilencedConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Creator is the author of the silenced entry",
 				Name:              "creator",
-				Type:              graphql1.NewNonNull(graphql.OutputType("User")),
+				Type:              graphql.OutputType("User"),
 			},
 			"expire": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
