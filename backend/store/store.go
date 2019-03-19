@@ -344,7 +344,7 @@ type EventStore interface {
 
 	// GetEventsByEntity returns all events for the given entity within the ctx's
 	// namespace. A nil slice with no error is returned if none were found.
-	GetEventsByEntity(ctx context.Context, entity string) ([]*types.Event, error)
+	GetEventsByEntity(ctx context.Context, entity string, pageSize int64, continueToken string) (events []*corev2.Event, nextContinueToken string, err error)
 
 	// GetEventByEntityCheck returns an event using the given entity and check,
 	// within the namespace stored in ctx. The resulting event

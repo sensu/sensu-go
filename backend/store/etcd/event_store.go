@@ -112,36 +112,33 @@ func (s *Store) GetEvents(ctx context.Context, pageSize int64, continueToken str
 }
 
 // GetEventsByEntity gets all events matching a given entity name.
-func (s *Store) GetEventsByEntity(ctx context.Context, entityName string) ([]*corev2.Event, error) {
+func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pageSize int64, continueToken string) (events []*corev2.Event, nextContinueToken string, err error) {
 	if entityName == "" {
-		return nil, errors.New("must specify entity name")
+		return nil, "", errors.New("must specify entity name")
 	}
 
 	opts := []clientv3.OpOption{
-		clientv3.WithLimit(int64(corev2.PageSizeFromContext(ctx))),
+		clientv3.WithLimit(pageSize),
 	}
 
 	keyPrefix := getEventsPath(ctx, entityName)
 	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
 	opts = append(opts, clientv3.WithRange(rangeEnd))
 
-	continueKey := corev2.PageContinueFromContext(ctx)
-
-	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueKey), opts...)
+	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueToken), opts...)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	if len(resp.Kvs) == 0 {
-		return nil, nil
+		return nil, "", nil
 	}
 
-	eventsArray := make([]*corev2.Event, len(resp.Kvs))
-	for i, kv := range resp.Kvs {
+	for _, kv := range resp.Kvs {
 		event := &corev2.Event{}
 		err = json.Unmarshal(kv.Value, event)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 		if event.Labels == nil {
 			event.Labels = make(map[string]string)
@@ -149,10 +146,16 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string) ([]*co
 		if event.Annotations == nil {
 			event.Annotations = make(map[string]string)
 		}
-		eventsArray[i] = event
+
+		events = append(events, event)
 	}
 
-	return eventsArray, nil
+	if resp.Count > pageSize {
+		lastEvent := events[len(events)-1]
+		nextContinueToken = lastEvent.Check.Name + "\x00"
+	}
+
+	return events, nextContinueToken, nil
 }
 
 // GetEventByEntityCheck gets an event by entity and check name.

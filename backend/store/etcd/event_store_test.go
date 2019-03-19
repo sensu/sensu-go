@@ -93,7 +93,7 @@ func TestEventStorage(t *testing.T) {
 		assert.Nil(t, newEv)
 		assert.Nil(t, err)
 
-		events, err = store.GetEventsByEntity(ctx, "entity1")
+		events, _, err = store.GetEventsByEntity(ctx, "entity1", 0, "")
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(events))
 		if got, want := events[0], event; !reflect.DeepEqual(got, want) {
@@ -317,26 +317,28 @@ func testPagination(t *testing.T, ctx context.Context, etcd store.Store, pageSiz
 	}
 
 	// Check the last page, supposed to hold nLeftovers items
-	events, nextContinueToken, err := etcd.GetEvents(ctx, int64(pageSize), continueToken)
-	if err != nil {
-		t.Fatal(err)
-	}
+	if nLeftovers > 0 {
+		events, nextContinueToken, err := etcd.GetEvents(ctx, int64(pageSize), continueToken)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	if len(events) != nLeftovers {
-		t.Fatalf("Expected last page with %d items, got %d", nLeftovers, len(events))
-	}
+		if len(events) != nLeftovers {
+			t.Fatalf("Expected last page with %d items, got %d", nLeftovers, len(events))
+		}
 
-	if nextContinueToken != "" {
-		t.Fatalf("Expected next continue token to be \"\", got %s", nextContinueToken)
-	}
+		if nextContinueToken != "" {
+			t.Fatalf("Expected next continue token to be \"\", got %s", nextContinueToken)
+		}
 
-	offset := pageSize * nFullPages
-	for j, event := range events {
-		n := ((offset + j) % setSize) + 1
-		expected := fmt.Sprintf("entity%.2d/check%.2d", n, n)
+		offset := pageSize * nFullPages
+		for j, event := range events {
+			n := ((offset + j) % setSize) + 1
+			expected := fmt.Sprintf("entity%.2d/check%.2d", n, n)
 
-		if event.Name != expected {
-			t.Fatalf("Expected %s, got %s", expected, event.Name)
+			if event.Name != expected {
+				t.Fatalf("Expected %s, got %s", expected, event.Name)
+			}
 		}
 	}
 }
@@ -371,47 +373,38 @@ func TestGetEventsByEntityPagination(t *testing.T) {
 		}
 
 		ctx := context.Background()
-		ctx = context.WithValue(ctx, corev2.PageContinueKey, "")
-		ctx = context.WithValue(ctx, corev2.PageSizeKey, 10)
 		ctx = context.WithValue(ctx, corev2.NamespaceKey, "default")
 		t.Run("entity1 in default namespace", func(t *testing.T) {
-			testGetEventsByEntityPagination(t, store, 21, ctx, "entity1")
+			testGetEventsByEntityPagination(t, ctx, store, 10, 21, "entity1")
 		})
 
 		ctx = context.Background()
-		ctx = context.WithValue(ctx, corev2.PageContinueKey, "")
-		ctx = context.WithValue(ctx, corev2.PageSizeKey, 10)
 		ctx = context.WithValue(ctx, corev2.NamespaceKey, "testing")
 		t.Run("entity1 in testing namespace", func(t *testing.T) {
-			testGetEventsByEntityPagination(t, store, 21, ctx, "entity1")
+			testGetEventsByEntityPagination(t, ctx, store, 10, 21, "entity1")
 		})
 
 		ctx = context.Background()
-		ctx = context.WithValue(ctx, corev2.PageContinueKey, "")
-		ctx = context.WithValue(ctx, corev2.PageSizeKey, 1)
 		ctx = context.WithValue(ctx, corev2.NamespaceKey, "default")
 		t.Run("page size equals one", func(t *testing.T) {
-			testGetEventsByEntityPagination(t, store, 21, ctx, "entity1")
+			testGetEventsByEntityPagination(t, ctx, store, 1, 21, "entity1")
 		})
 
 		ctx = context.Background()
-		ctx = context.WithValue(ctx, corev2.PageContinueKey, "")
-		ctx = context.WithValue(ctx, corev2.PageSizeKey, 1337)
 		ctx = context.WithValue(ctx, corev2.NamespaceKey, "default")
 		t.Run("page size bigger than set size", func(t *testing.T) {
-			testGetEventsByEntityPagination(t, store, 21, ctx, "entity1")
+			testGetEventsByEntityPagination(t, ctx, store, 1337, 21, "entity1")
 		})
 	})
 }
 
-func testGetEventsByEntityPagination(t *testing.T, etcd store.Store, setSize int, ctx context.Context, entityName string) {
-	pageSize := corev2.PageSizeFromContext(ctx)
-
+func testGetEventsByEntityPagination(t *testing.T, ctx context.Context, etcd store.Store, pageSize, setSize int, entityName string) {
 	nFullPages := setSize / pageSize
 	nLeftovers := setSize % pageSize
 
+	continueToken := ""
 	for i := 0; i < nFullPages; i++ {
-		events, err := etcd.GetEventsByEntity(ctx, entityName)
+		events, nextContinueToken, err := etcd.GetEventsByEntity(ctx, entityName, int64(pageSize), continueToken)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -430,28 +423,35 @@ func testGetEventsByEntityPagination(t *testing.T, etcd store.Store, setSize int
 			}
 		}
 
-		lastItem := events[len(events)-1]
-		continueKey := fmt.Sprintf("%s\x00", lastItem.Check.Name)
-		ctx = context.WithValue(ctx, corev2.PageContinueKey, continueKey)
+		continueToken = nextContinueToken
 	}
 
 	// Check the last page, supposed to hold nLeftovers items
-	events, err := etcd.GetEventsByEntity(ctx, entityName)
-	if err != nil {
-		t.Fatal(err)
-	}
+	if nLeftovers > 0 {
+		events, nextContinueToken, err := etcd.GetEventsByEntity(ctx, entityName, int64(pageSize), continueToken)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-	if len(events) != nLeftovers {
-		t.Fatalf("Expected last page with %d items, got %d", nLeftovers, len(events))
-	}
+		if len(events) != nLeftovers {
+			fmt.Println("continueToken:", continueToken)
+			fmt.Println("nextContinueToken", nextContinueToken)
+			fmt.Println(events)
+			t.Fatalf("Expected last page with %d items, got %d", nLeftovers, len(events))
+		}
 
-	offset := pageSize * nFullPages
-	for j, event := range events {
-		n := ((offset + j) % setSize) + 1
-		expected := fmt.Sprintf("%s/check%.2d", entityName, n)
+		if nextContinueToken != "" {
+			t.Fatalf("Expected next continue token to be \"\", got %s", nextContinueToken)
+		}
 
-		if event.Name != expected {
-			t.Fatalf("Expected %s, got %s", expected, event.Name)
+		offset := pageSize * nFullPages
+		for j, event := range events {
+			n := ((offset + j) % setSize) + 1
+			expected := fmt.Sprintf("%s/check%.2d", entityName, n)
+
+			if event.Name != expected {
+				t.Fatalf("Expected %s, got %s", expected, event.Name)
+			}
 		}
 	}
 }

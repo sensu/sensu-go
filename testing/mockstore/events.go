@@ -19,9 +19,9 @@ func (s *MockStore) GetEvents(ctx context.Context, pageSize int64, continueToken
 }
 
 // GetEventsByEntity ...
-func (s *MockStore) GetEventsByEntity(ctx context.Context, entityName string) ([]*corev2.Event, error) {
-	args := s.Called(ctx, entityName)
-	return args.Get(0).([]*corev2.Event), args.Error(1)
+func (s *MockStore) GetEventsByEntity(ctx context.Context, entityName string, pageSize int64, continueToken string) ([]*corev2.Event, string, error) {
+	args := s.Called(ctx, entityName, pageSize, continueToken)
+	return args.Get(0).([]*corev2.Event), args.String(1), args.Error(2)
 }
 
 // GetEventByEntityCheck ...

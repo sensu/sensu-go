@@ -39,7 +39,7 @@ func (a EventController) Query(ctx context.Context, entityName, checkName string
 			results = append(results, result)
 		}
 	} else if entityName != "" {
-		results, serr = a.Store.GetEventsByEntity(ctx, entityName)
+		results, _, serr = a.Store.GetEventsByEntity(ctx, entityName, int64(pageSize), continueToken)
 	} else {
 		results, _, serr = a.Store.GetEvents(ctx, int64(pageSize), continueToken)
 	}
