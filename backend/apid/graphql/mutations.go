@@ -86,12 +86,8 @@ func (r *mutationsImpl) DeleteCheck(p schema.MutationDeleteCheckFieldResolverPar
 	ctx := setContextFromComponents(p.Context, components)
 
 	client := r.factory.NewWithContext(ctx)
-	_, err := client.FetchCheck(components.UniqueComponent())
-	if err != nil {
-		return nil, err
-	}
 
-	err = client.DeleteCheck(components.Namespace(), components.UniqueComponent())
+	err := client.DeleteCheck(components.Namespace(), components.UniqueComponent())
 	if err != nil {
 		return nil, err
 	}
