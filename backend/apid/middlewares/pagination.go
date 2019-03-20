@@ -6,8 +6,6 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/gorilla/mux"
-
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
@@ -18,15 +16,14 @@ type Pagination struct{}
 func (p Pagination) Then(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		vars := mux.Vars(r)
 
-		limit, err := strconv.Atoi(vars["limit"])
+		limit, err := strconv.Atoi(r.FormValue("limit"))
 		if err != nil {
 			limit = 0
 		}
 		ctx = context.WithValue(ctx, corev2.PageSizeKey, limit)
 
-		continueToken, err := url.PathUnescape(vars["continue"])
+		continueToken, err := url.PathUnescape(r.FormValue("continue"))
 		if err != nil {
 			continueToken = ""
 		}

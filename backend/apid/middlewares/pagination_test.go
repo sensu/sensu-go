@@ -5,7 +5,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -14,54 +13,43 @@ import (
 func TestPaginationMiddleware(t *testing.T) {
 	cases := []struct {
 		description           string
-		urlVars               map[string]string
+		queryParams           string
 		expectedLimit         int
 		expectedContinueToken string
 	}{
 		{
 			description:           "No query parameters",
-			urlVars:               map[string]string{},
+			queryParams:           "",
 			expectedLimit:         0,
 			expectedContinueToken: "",
 		},
 		{
-			description: "Only limit used",
-			urlVars: map[string]string{
-				"limit": "100",
-			},
+			description:           "Only limit used",
+			queryParams:           "?limit=100",
 			expectedLimit:         100,
 			expectedContinueToken: "",
 		},
 		{
-			description: "Only continue used",
-			urlVars: map[string]string{
-				"continue": "camus",
-			},
+			description:           "Only continue used",
+			queryParams:           "?continue=camus",
 			expectedLimit:         0,
 			expectedContinueToken: "camus",
 		},
 		{
-			description: "Both limit and continue used",
-			urlVars: map[string]string{
-				"limit":    "42",
-				"continue": "sartre",
-			},
+			description:           "Both limit and continue used",
+			queryParams:           "?limit=42&continue=sartre",
 			expectedLimit:         42,
 			expectedContinueToken: "sartre",
 		},
 		{
-			description: "Invalid limit",
-			urlVars: map[string]string{
-				"limit": "sandwich",
-			},
+			description:           "Invalid limit",
+			queryParams:           "?limit=sandwich",
 			expectedLimit:         0,
 			expectedContinueToken: "",
 		},
 		{
-			description: "Invalid continue",
-			urlVars: map[string]string{
-				"continue": "cake%QQ",
-			},
+			description:           "Invalid continue",
+			queryParams:           "?continue=cake%QQ",
 			expectedLimit:         0,
 			expectedContinueToken: "",
 		},
@@ -87,12 +75,11 @@ func TestPaginationMiddleware(t *testing.T) {
 			middleware := Pagination{}
 
 			w := httptest.NewRecorder()
-			r, err := http.NewRequest("GET", "/", nil)
+			r, err := http.NewRequest("GET", "/"+tt.queryParams, nil)
 			if err != nil {
 				t.Fatal("Couldn't create request: ", err)
 			}
 
-			r = mux.SetURLVars(r, tt.urlVars)
 			handler := middleware.Then(testHandler)
 			handler.ServeHTTP(w, r)
 
