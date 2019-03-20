@@ -9,7 +9,6 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	jwt "github.com/dgrijalva/jwt-go"
 	v2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/tessen"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -519,10 +518,10 @@ type SilencedStore interface {
 // TessenConfigStore provides methods for managing the Tessen configuration
 type TessenConfigStore interface {
 	// CreateOrUpdateTessenConfig creates or updates the tessen configuration
-	CreateOrUpdateTessenConfig(context.Context, *tessen.Config) error
+	CreateOrUpdateTessenConfig(context.Context, *v2.TessenConfig) error
 
 	// GetTessenConfig gets the tessen configuration
-	GetTessenConfig(context.Context) (*tessen.Config, error)
+	GetTessenConfig(context.Context) (*v2.TessenConfig, error)
 }
 
 // TokenStore provides methods for managing the JWT access list

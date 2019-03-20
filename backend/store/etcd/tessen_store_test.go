@@ -6,8 +6,8 @@ import (
 	"context"
 	"testing"
 
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/tessen"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,7 +21,7 @@ func TestTessenStorage(t *testing.T) {
 		assert.Empty(t, config)
 
 		// We should not receive an error if the tessen config is valid
-		config = &tessen.Config{
+		config = &v2.TessenConfig{
 			OptOut: true,
 		}
 		err = store.CreateOrUpdateTessenConfig(ctx, config)
@@ -34,7 +34,7 @@ func TestTessenStorage(t *testing.T) {
 		assert.True(t, config.OptOut)
 
 		// We should not receive an error if the tessen config is valid
-		config = &tessen.Config{}
+		config = &v2.TessenConfig{}
 		err = store.CreateOrUpdateTessenConfig(ctx, config)
 		assert.NoError(t, err)
 

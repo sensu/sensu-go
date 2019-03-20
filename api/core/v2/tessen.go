@@ -1,4 +1,4 @@
-package tessen
+package v2
 
 import (
 	"fmt"
@@ -13,12 +13,10 @@ const (
 
 	// DefaultTessenFrequency is the default frequency at which tessen will phone home
 	DefaultTessenFrequency = 1
-)
 
-// Config is the tessen configuration
-type Config struct {
-	OptOut bool `json:"opt_out"`
-}
+	// TessenPath is the store and api path for tessen
+	TessenPath = "/tessen"
+)
 
 // ValidateFrequency returns an error if the tessen frequency is not within the upper and lower bound limits
 func ValidateFrequency(freq uint32) error {
@@ -28,7 +26,22 @@ func ValidateFrequency(freq uint32) error {
 	return nil
 }
 
-// DefaultConfig returns the default tessen configuration
-func DefaultConfig() *Config {
-	return &Config{}
+// DefaultTessenConfig returns the default tessen configuration
+func DefaultTessenConfig() *TessenConfig {
+	return &TessenConfig{}
+}
+
+// URIPath returns the path component of a TessenConfig URI.
+func (t *TessenConfig) URIPath() string {
+	return fmt.Sprintf("/api/core/v2%s", TessenPath)
+}
+
+// Validate validates the TessenConfig.
+func (t *TessenConfig) Validate() error {
+	return nil
+}
+
+// GetObjectMeta only exists here to fulfil the requirements of Resource
+func (t *TessenConfig) GetObjectMeta() ObjectMeta {
+	return ObjectMeta{}
 }

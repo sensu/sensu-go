@@ -5,13 +5,13 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/backend/tessen"
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 // TessenController represents the controller needs of the TessenRouter.
 type TessenController interface {
-	CreateOrUpdate(context.Context, *tessen.Config) error
-	Get(context.Context) (*tessen.Config, error)
+	CreateOrUpdate(context.Context, *v2.TessenConfig) error
+	Get(context.Context) (*v2.TessenConfig, error)
 }
 
 // TessenRouter handles requests for /tessen.
@@ -30,7 +30,7 @@ func NewTessenRouter(ctrl TessenController) *TessenRouter {
 func (r *TessenRouter) Mount(parent *mux.Router) {
 	routes := ResourceRoute{
 		Router:     parent,
-		PathPrefix: "/tessen",
+		PathPrefix: v2.TessenPath,
 	}
 
 	routes.Path("", r.get).Methods(http.MethodGet)
@@ -38,7 +38,7 @@ func (r *TessenRouter) Mount(parent *mux.Router) {
 }
 
 func (r *TessenRouter) createOrUpdate(req *http.Request) (interface{}, error) {
-	obj := &tessen.Config{}
+	obj := &v2.TessenConfig{}
 	if err := UnmarshalBody(req, &obj); err != nil {
 		return nil, err
 	}

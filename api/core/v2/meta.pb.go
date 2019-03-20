@@ -23,7 +23,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-// A Metrics is an event metrics payload specification.
+// ObjectMeta is metadata all persisted objects have.
 type ObjectMeta struct {
 	// Name must be unique within a namespace. Name is primarily intended for creation
 	// idempotence and configuration definition.
@@ -52,7 +52,7 @@ func (m *ObjectMeta) Reset()         { *m = ObjectMeta{} }
 func (m *ObjectMeta) String() string { return proto.CompactTextString(m) }
 func (*ObjectMeta) ProtoMessage()    {}
 func (*ObjectMeta) Descriptor() ([]byte, []int) {
-	return fileDescriptor_meta_9919e94a8761b94f, []int{0}
+	return fileDescriptor_meta_a11b32e5727f1d35, []int{0}
 }
 func (m *ObjectMeta) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -124,7 +124,7 @@ func (m *TypeMeta) Reset()         { *m = TypeMeta{} }
 func (m *TypeMeta) String() string { return proto.CompactTextString(m) }
 func (*TypeMeta) ProtoMessage()    {}
 func (*TypeMeta) Descriptor() ([]byte, []int) {
-	return fileDescriptor_meta_9919e94a8761b94f, []int{1}
+	return fileDescriptor_meta_a11b32e5727f1d35, []int{1}
 }
 func (m *TypeMeta) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -1086,9 +1086,9 @@ var (
 	ErrIntOverflowMeta   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("meta.proto", fileDescriptor_meta_9919e94a8761b94f) }
+func init() { proto.RegisterFile("meta.proto", fileDescriptor_meta_a11b32e5727f1d35) }
 
-var fileDescriptor_meta_9919e94a8761b94f = []byte{
+var fileDescriptor_meta_a11b32e5727f1d35 = []byte{
 	// 439 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x52, 0xbd, 0xaa, 0xd4, 0x40,
 	0x14, 0x76, 0x76, 0xe3, 0xc5, 0x7b, 0x82, 0xb2, 0x8c, 0x3f, 0xc4, 0x15, 0x93, 0x30, 0x20, 0x5c,

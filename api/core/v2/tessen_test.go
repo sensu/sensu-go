@@ -1,4 +1,4 @@
-package tessen
+package v2
 
 import (
 	"testing"
