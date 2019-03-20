@@ -24,6 +24,7 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			// Delete event via API
 			entity := args[0]
 			check := args[1]
+			namespace := cli.Config.Namespace()
 
 			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
 				if confirmed := helpers.ConfirmDelete(fmt.Sprintf("%s/%s", entity, check)); !confirmed {
@@ -32,7 +33,7 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			err := cli.Client.DeleteEvent(entity, check)
+			err := cli.Client.DeleteEvent(namespace, entity, check)
 			if err != nil {
 				return err
 			}

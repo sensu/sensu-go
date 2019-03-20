@@ -46,16 +46,8 @@ func (client *RestClient) ListEvents(namespace string) ([]types.Event, error) {
 }
 
 // DeleteEvent deletes an event.
-func (client *RestClient) DeleteEvent(entity, check string) error {
-	path := eventsPath(client.config.Namespace(), entity, check)
-	res, err := client.R().Delete(path)
-	if err != nil {
-		return err
-	}
-	if res.StatusCode() >= 400 {
-		return UnmarshalError(res)
-	}
-	return nil
+func (client *RestClient) DeleteEvent(namespace, entity, check string) error {
+	return client.Delete(eventsPath(namespace, entity, check))
 }
 
 // UpdateEvent updates an event.

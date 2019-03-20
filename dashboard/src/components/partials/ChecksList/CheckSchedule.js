@@ -45,7 +45,8 @@ class CheckSchedule extends React.Component {
               {check.subscriptions.length === 1
                 ? "subscription"
                 : "subscriptions"}
-            </strong>.
+            </strong>
+            .
           </span>
         )}
         {!check.publish && (

@@ -6,7 +6,6 @@ import (
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -24,6 +23,8 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			name := args[0]
+			namespace := cli.Config.Namespace()
+
 			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
 				if confirmed := helpers.ConfirmDelete(name); !confirmed {
 					fmt.Fprintln(cmd.OutOrStdout(), "Canceled")
@@ -31,14 +32,13 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			handler := &types.Handler{ObjectMeta: types.ObjectMeta{Name: name}}
-			err := cli.Client.DeleteHandler(handler)
+			err := cli.Client.DeleteHandler(namespace, name)
 			if err != nil {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Deleted")
-			return nil
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), "Deleted")
+			return err
 		},
 	}
 

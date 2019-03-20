@@ -59,5 +59,8 @@ class EventDetailsReRunAction extends React.PureComponent {
   }
 }
 
-const enhancer = compose(withApollo, withRouter);
+const enhancer = compose(
+  withApollo,
+  withRouter,
+);
 export default enhancer(EventDetailsReRunAction);

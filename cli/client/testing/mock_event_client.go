@@ -15,8 +15,8 @@ func (c *MockClient) ListEvents(namespace string) ([]types.Event, error) {
 }
 
 // DeleteEvent for use with mock lib
-func (c *MockClient) DeleteEvent(entity, check string) error {
-	args := c.Called(entity, check)
+func (c *MockClient) DeleteEvent(namespace, entity, check string) error {
+	args := c.Called(namespace, entity, check)
 	return args.Error(0)
 }
 

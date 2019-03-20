@@ -31,6 +31,15 @@ func TestEventValidate(t *testing.T) {
 	assert.NoError(t, event.Validate())
 }
 
+func TestEventValidateNoTimestamp(t *testing.T) {
+	// Events without a timestamp are valid
+	event := FixtureEvent("entity", "check")
+	event.Timestamp = 0
+	if err := event.Validate(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestMarshalJSON(t *testing.T) {
 	event := FixtureEvent("entity", "check")
 	_, err := json.Marshal(event)

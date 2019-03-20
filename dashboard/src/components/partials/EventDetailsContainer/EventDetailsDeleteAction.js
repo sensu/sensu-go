@@ -49,5 +49,8 @@ class EventDetailsDeleteAction extends React.PureComponent {
   }
 }
 
-const enhancer = compose(withRouter, withApollo);
+const enhancer = compose(
+  withRouter,
+  withApollo,
+);
 export default enhancer(EventDetailsDeleteAction);

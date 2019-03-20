@@ -191,13 +191,17 @@ class CheckDetailsConfiguration extends React.PureComponent {
                 <DictionaryEntry>
                   <DictionaryKey>Command</DictionaryKey>
                   <DictionaryValue scrollableContent>
-                    <CodeBlock>
-                      <CodeHighlight
-                        language="bash"
-                        code={check.command}
-                        component="code"
-                      />
-                    </CodeBlock>
+                    {check.command ? (
+                      <CodeBlock>
+                        <CodeHighlight
+                          language="bash"
+                          code={check.command}
+                          component="code"
+                        />
+                      </CodeBlock>
+                    ) : (
+                      "—"
+                    )}
                   </DictionaryValue>
                 </DictionaryEntry>
 

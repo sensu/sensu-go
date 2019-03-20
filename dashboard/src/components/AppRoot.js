@@ -73,4 +73,7 @@ class AppRoot extends React.PureComponent {
 
 // AppRoot is composed with `withRouter` here to prevent "Update Blocking"
 // see: reacttraining.com/react-router/web/guides/dealing-with-update-blocking
-export default compose(withStyles(AppRoot.styles), withRouter)(AppRoot);
+export default compose(
+  withStyles(AppRoot.styles),
+  withRouter,
+)(AppRoot);

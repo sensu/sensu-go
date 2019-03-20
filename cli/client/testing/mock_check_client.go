@@ -15,8 +15,8 @@ func (c *MockClient) UpdateCheck(check *types.CheckConfig) error {
 }
 
 // DeleteCheck for use with mock lib
-func (c *MockClient) DeleteCheck(check *types.CheckConfig) error {
-	args := c.Called(check)
+func (c *MockClient) DeleteCheck(namespace, name string) error {
+	args := c.Called(namespace, name)
 	return args.Error(0)
 }
 

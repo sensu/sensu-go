@@ -124,5 +124,8 @@ class SignInView extends React.Component {
   }
 }
 
-const enhance = compose(withApollo, withMobileDialog({ breakpoint: "xs" }));
+const enhance = compose(
+  withApollo,
+  withMobileDialog({ breakpoint: "xs" }),
+);
 export default enhance(SignInView);

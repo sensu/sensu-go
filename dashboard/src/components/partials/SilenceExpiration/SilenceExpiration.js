@@ -27,7 +27,8 @@ class SilenceExpiration extends React.Component {
           Expires when <strong>resolved</strong> or{" "}
           <strong>
             <RelativeToCurrentDate dateTime={expires} />
-          </strong>.
+          </strong>
+          .
         </React.Fragment>
       );
     } else if (expireOnResolve) {
@@ -42,7 +43,8 @@ class SilenceExpiration extends React.Component {
           Expires{" "}
           <strong>
             <RelativeToCurrentDate dateTime={expires} />
-          </strong>.
+          </strong>
+          .
         </React.Fragment>
       );
     }

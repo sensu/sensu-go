@@ -233,4 +233,7 @@ class Drawer extends React.Component {
   }
 }
 
-export default compose(withStyles(styles), withApollo)(Drawer);
+export default compose(
+  withStyles(styles),
+  withApollo,
+)(Drawer);

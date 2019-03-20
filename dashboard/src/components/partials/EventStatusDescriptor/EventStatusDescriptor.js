@@ -47,7 +47,8 @@ class EventStatusDescriptor extends React.Component {
         Metric received
         <strong>
           <RelativeToCurrentDate dateTime={event.timestamp} />
-        </strong>.
+        </strong>
+        .
       </React.Fragment>
     );
   }
@@ -61,7 +62,8 @@ class EventStatusDescriptor extends React.Component {
         Last executed{" "}
         <strong>
           <RelativeToCurrentDate dateTime={event.timestamp} />
-        </strong>.
+        </strong>
+        .
       </React.Fragment>
     );
   }

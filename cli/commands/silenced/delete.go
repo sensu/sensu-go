@@ -25,6 +25,7 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 			if err != nil {
 				return err
 			}
+			namespace := cli.Config.Namespace()
 
 			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
 				if confirmed := helpers.ConfirmDelete(name); !confirmed {
@@ -33,12 +34,13 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			if err := cli.Client.DeleteSilenced(name); err != nil {
+			err = cli.Client.DeleteSilenced(namespace, name)
+			if err != nil {
 				return err
 			}
 
-			_, _ = fmt.Fprintln(cmd.OutOrStdout(), "Deleted")
-			return nil
+			_, err = fmt.Fprintln(cmd.OutOrStdout(), "Deleted")
+			return err
 		},
 	}
 
