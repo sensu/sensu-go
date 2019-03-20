@@ -250,10 +250,6 @@ func Initialize(config *Config) (*Backend, error) {
 			dashboardTLSConfig.CertFile = config.DashboardTLSCertFile
 			dashboardTLSConfig.KeyFile = config.DashboardTLSKeyFile
 		}
-	} else {
-		// important for this to be nil, since there's
-		// a nil check on dashboardd Start()
-		dashboardTLSConfig = nil
 	}
 	dashboard, err := dashboardd.New(dashboardd.Config{
 		APIURL: config.APIURL,
