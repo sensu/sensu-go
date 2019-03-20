@@ -13,7 +13,7 @@ import (
 )
 
 func newQueue(path string) (*lasr.Q, error) {
-	if err := os.MkdirAll(path, 0644); err != nil {
+	if err := os.MkdirAll(path, 0744|os.ModeDir); err != nil {
 		return nil, fmt.Errorf("error creating api queue: %s", err)
 	}
 	queuePath := filepath.Join(path, "queue.db")
@@ -21,7 +21,13 @@ func newQueue(path string) (*lasr.Q, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error creating api queue: %s", err)
 	}
-	return lasr.NewQ(db, "api-buffer")
+	queue, err := lasr.NewQ(db, "api-buffer")
+	if err != nil {
+		return nil, fmt.Errorf("error creating api queue: %s", err)
+	}
+	logger.Info("compacting api queue")
+	defer logger.Info("finished api queue compaction")
+	return queue, queue.Compact()
 }
 
 func compressMessage(message []byte) []byte {

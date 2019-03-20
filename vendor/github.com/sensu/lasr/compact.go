@@ -2,8 +2,8 @@ package lasr
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
+	"path/filepath"
 
 	bolt "github.com/coreos/bbolt"
 )
@@ -17,12 +17,8 @@ import (
 // should be aware that any other queues relying on the database may be
 // invalidated.
 func (q *Q) Compact() (rerr error) {
-	tf, err := ioutil.TempFile("", "")
-	if err != nil {
-		return fmt.Errorf("error compacting queue: %s", err)
-	}
-	_ = tf.Close()
-	newDB, err := bolt.Open(tf.Name(), 0644, nil)
+	tempPath := filepath.Join(filepath.Dir(q.db.Path()), ".lasr.temp.db")
+	newDB, err := bolt.Open(tempPath, 0644, nil)
 	if err != nil {
 		return fmt.Errorf("error compacting queue: %s", err)
 	}
@@ -35,11 +31,10 @@ func (q *Q) Compact() (rerr error) {
 	if err := q.db.Close(); err != nil {
 		return fmt.Errorf("error compacting queue: %s", err)
 	}
-	tempName := newDB.Path()
 	if err := newDB.Close(); err != nil {
 		return fmt.Errorf("error compacting queue: %s", err)
 	}
-	if err := os.Rename(tempName, dbPath); err != nil {
+	if err := os.Rename(tempPath, dbPath); err != nil {
 		return fmt.Errorf("error compacting queue: %s", err)
 	}
 	q.db, err = bolt.Open(dbPath, 0644, nil)

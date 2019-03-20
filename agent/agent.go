@@ -104,7 +104,7 @@ func (a *Agent) sendMessage(msg *transport.Message) {
 	logger.WithFields(logrus.Fields{
 		"type":    msg.Type,
 		"payload": string(msg.Payload),
-	}).Debug("sending message")
+	}).Info("sending message")
 	a.sendq <- msg
 }
 
@@ -260,6 +260,7 @@ func (a *Agent) sendLoop(conn transport.Transport, done chan struct{}) error {
 			}
 			return nil
 		case msg := <-a.sendq:
+			logger.Info("sending event")
 			if err := conn.Send(msg); err != nil {
 				logger.WithError(err).Error("error sending message over websocket")
 				return err

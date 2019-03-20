@@ -187,7 +187,7 @@ func newStartCommand() *cobra.Command {
 				defer wg.Done()
 				sig := <-sigs
 				logger.Info("signal received: ", sig)
-				sensuAgent.Stop()
+				// sensuAgent.Stop()
 			}()
 
 			wg.Wait()

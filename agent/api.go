@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"time"
 
@@ -56,7 +57,11 @@ func healthz(connected func() bool) http.HandlerFunc {
 func (a *Agent) handleAPIQueue(ctx context.Context) {
 	ch := make(chan *lasr.Message, 1)
 	go func() {
-		limiter := rate.NewLimiter(a.config.EventsAPIRateLimit, a.config.EventsAPIBurstLimit)
+		limit := a.config.EventsAPIRateLimit
+		if limit == 0 {
+			limit = rate.Limit(math.Inf(1))
+		}
+		limiter := rate.NewLimiter(limit, a.config.EventsAPIBurstLimit)
 		for {
 			if err := limiter.Wait(ctx); err != nil {
 				// context canceled
@@ -74,32 +79,21 @@ func (a *Agent) handleAPIQueue(ctx context.Context) {
 			ch <- message
 		}
 	}()
-	timerDuration := time.Second
-	if a.config.EventsAPIRateLimit > 0 && a.config.EventsAPIRateLimit < 2 {
-		// Lengthen the timer duration to account for the very low rate of events
-		timerDuration = time.Duration(float64(time.Second)/float64(a.config.EventsAPIRateLimit)) * 2
-	}
-	timer := time.NewTimer(timerDuration)
-	defer timer.Stop()
-	compacted := true
 	for {
 		select {
 		case message, ok := <-ch:
 			if !ok {
 				return
 			}
-			compacted = false
-			if !timer.Stop() {
-				<-timer.C
-			}
-			timer.Reset(timerDuration)
 			msg := &transport.Message{
 				Type:    transport.MessageTypeEvent,
 				Payload: decompressMessage(message.Body),
 				SendCallback: func(err error) {
 					if err != nil {
+						logger.WithError(err).Error("couldn't send queued message, retrying")
 						_ = message.Nack(true)
 					} else {
+						logger.Info("queued message sent")
 						_ = message.Ack()
 					}
 				},
@@ -107,17 +101,6 @@ func (a *Agent) handleAPIQueue(ctx context.Context) {
 			a.sendMessage(msg)
 		case <-ctx.Done():
 			return
-		case <-timer.C:
-			if compacted {
-				continue
-			}
-			if err := a.apiQueue.Compact(); err != nil {
-				logger.WithError(err).Error("error compacting api queue")
-			} else {
-				logger.Info("compacted api queue")
-				compacted = true
-			}
-			timer.Reset(timerDuration)
 		}
 	}
 }

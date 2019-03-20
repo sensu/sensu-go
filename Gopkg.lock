@@ -728,12 +728,12 @@
   revision = "2315d5715e36303a941d907f038da7f7c44c773b"
 
 [[projects]]
-  digest = "1:58fd2e57f10ca1863900cef0db7ff616b84805cf5a52ea51d86d2d3f2e889fef"
+  digest = "1:43b1b31daa7a2387c2b04bfa8c738b675334ca087c584c14285c8f9688c7d545"
   name = "github.com/sensu/lasr"
   packages = ["."]
   pruneopts = "UT"
-  revision = "0aaec5206f37272d26a1baf1d706b35b45840fa2"
-  version = "v1.1.0"
+  revision = "dd6eb31392827b98efb58f1fa1917e59bb081e46"
+  version = "v1.1.1"
 
 [[projects]]
   digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
