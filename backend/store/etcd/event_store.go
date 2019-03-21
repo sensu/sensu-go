@@ -97,12 +97,22 @@ func (s *Store) GetEvents(ctx context.Context, pageSize int64, continueToken str
 	}
 
 	if resp.Count > pageSize {
-		ns := store.NewNamespaceFromContext(ctx)
+		queriedNamespace := store.NewNamespaceFromContext(ctx)
 		lastEvent := events[len(events)-1]
 
 		// TODO(ccressent): This can surely be simplified
-		if ns == "" {
-			nextContinueToken = "/" + lastEvent.Namespace + "/" + lastEvent.Entity.Name + "/" + lastEvent.Check.Name + "\x00"
+		if queriedNamespace == "" {
+			// Workaround for sensu-go#2465: keepalive events do not always have
+			// their namespace filled in, which would break the construction of
+			// nextContinueToken below. To accommodate for that, when
+			// constructing the continue token, whevener an event has a
+			// namespace of "" we construct the continue token using its
+			// entity's namespace instead.
+			lastEventNamespace := lastEvent.Namespace
+			if lastEventNamespace == "" {
+				lastEventNamespace = lastEvent.Entity.Namespace
+			}
+			nextContinueToken = "/" + lastEventNamespace + "/" + lastEvent.Entity.Name + "/" + lastEvent.Check.Name + "\x00"
 		} else {
 			nextContinueToken = lastEvent.Entity.Name + "/" + lastEvent.Check.Name + "\x00"
 		}
