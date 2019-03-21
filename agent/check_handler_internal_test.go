@@ -28,7 +28,10 @@ func TestHandleCheck(t *testing.T) {
 
 	config, cleanup := FixtureConfig()
 	defer cleanup()
-	agent := NewAgent(config)
+	agent, err := NewAgent(config)
+	if err != nil {
+		t.Fatal(err)
+	}
 	ex := &mockexecutor.MockExecutor{}
 	agent.executor = ex
 	execution := command.FixtureExecutionResponse(0, "")
@@ -59,7 +62,10 @@ func TestCheckInProgress_GH2704(t *testing.T) {
 
 	config, cleanup := FixtureConfig()
 	defer cleanup()
-	agent := NewAgent(config)
+	agent, err := NewAgent(config)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	agent.addInProgress(request)
 	agent.inProgressMu.Lock()
@@ -89,7 +95,10 @@ func TestProxyCheckInProgress_GH2704(t *testing.T) {
 
 	config, cleanup := FixtureConfig()
 	defer cleanup()
-	agent := NewAgent(config)
+	agent, err := NewAgent(config)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	agent.addInProgress(request)
 	agent.inProgressMu.Lock()
@@ -124,7 +133,10 @@ func TestHandleProxyCheck(t *testing.T) {
 	config, cleanup := FixtureConfig()
 	defer cleanup()
 
-	agent := NewAgent(config)
+	agent, err := NewAgent(config)
+	if err != nil {
+		t.Fatal(err)
+	}
 	ex := &mockexecutor.MockExecutor{}
 	agent.executor = ex
 	execution := command.FixtureExecutionResponse(0, "")
@@ -164,7 +176,10 @@ func TestExecuteCheck(t *testing.T) {
 
 	config, cleanup := FixtureConfig()
 	defer cleanup()
-	agent := NewAgent(config)
+	agent, err := NewAgent(config)
+	if err != nil {
+		t.Fatal(err)
+	}
 	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch
 	ex := &mockexecutor.MockExecutor{}
@@ -254,7 +269,10 @@ func TestExecuteCheckDiscardOutput(t *testing.T) {
 
 	config, cleanup := FixtureConfig()
 	defer cleanup()
-	agent := NewAgent(config)
+	agent, err := NewAgent(config)
+	if err != nil {
+		t.Fatal(err)
+	}
 	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch
 	ex := &mockexecutor.MockExecutor{}
@@ -300,7 +318,10 @@ func TestHandleTokenSubstitution(t *testing.T) {
 	config, cleanup := FixtureConfig()
 	defer cleanup()
 	config.AgentName = "TestTokenSubstitution"
-	agent := NewAgent(config)
+	agent, err := NewAgent(config)
+	if err != nil {
+		t.Fatal(err)
+	}
 	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch
 
@@ -336,7 +357,10 @@ func TestHandleTokenSubstitutionNoKey(t *testing.T) {
 	defer cleanup()
 	config.Labels = map[string]string{"team": "devops"}
 	config.AgentName = "TestTokenSubstitution"
-	agent := NewAgent(config)
+	agent, err := NewAgent(config)
+	if err != nil {
+		t.Fatal(err)
+	}
 	ch := make(chan *transport.Message, 1)
 	agent.sendq = ch
 
@@ -362,14 +386,17 @@ func TestHandleTokenSubstitutionNoKey(t *testing.T) {
 func TestPrepareCheck(t *testing.T) {
 	config, cleanup := FixtureConfig()
 	defer cleanup()
-	agent := NewAgent(config)
+	agent, err := NewAgent(config)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// Substitute
 	entity := agent.getAgentEntity()
 	entity.Labels = map[string]string{"foo": "bar"}
 	check := corev2.FixtureCheckConfig("check")
 	check.Command = "echo {{ .labels.foo }}"
-	err := prepareCheck(check, entity)
+	err = prepareCheck(check, entity)
 	require.NoError(t, err)
 	assert.Equal(t, check.Command, "echo bar")
 }

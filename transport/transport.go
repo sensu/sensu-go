@@ -83,8 +83,15 @@ func Decode(payload []byte) (string, []byte, error) {
 // A Message is a tuple of a message type (i.e. channel) and a byte-array
 // payload to be sent across the transport.
 type Message struct {
-	Type    string
+	// Type is the type of the message (event, etc)
+	Type string
+
+	// Payload is the serialized message.
 	Payload []byte
+
+	// SendCallback is a callback that is executed after a Send operation.
+	// The error value of Send is passed to the callback.
+	SendCallback func(error)
 }
 
 // The Transport interface defines the set of methods available to a connection
@@ -198,8 +205,13 @@ func (t *WebSocketTransport) Receive() (*Message, error) {
 // Send a message over the websocket connection. If the connection has been
 // closed, returns a ClosedError. Returns a ConnectionError if the websocket
 // connection returns an error while sending, but the connection is still open.
-func (t *WebSocketTransport) Send(m *Message) error {
+func (t *WebSocketTransport) Send(m *Message) (err error) {
 	defer msgPool.Put(m)
+	defer func() {
+		if m.SendCallback != nil {
+			m.SendCallback(err)
+		}
+	}()
 	t.mutex.RLock()
 	if t.closed {
 		t.mutex.RUnlock()
@@ -208,8 +220,7 @@ func (t *WebSocketTransport) Send(m *Message) error {
 	t.mutex.RUnlock()
 
 	msg := Encode(m.Type, m.Payload)
-	err := t.Connection.WriteMessage(websocket.BinaryMessage, msg)
-	if err != nil {
+	if err := t.Connection.WriteMessage(websocket.BinaryMessage, msg); err != nil {
 		// If we get _any_ error, let's just considered the connection closed,
 		// because it's _really_ hard to figure out what errors from the
 		// websocket library are terminal and which aren't. So, abandon all

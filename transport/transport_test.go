@@ -39,7 +39,10 @@ func TestTransportSendReceive(t *testing.T) {
 	assert.NoError(t, err)
 	msgBytes, err := json.Marshal(testMessage)
 	assert.NoError(t, err)
-	err = clientTransport.Send(&Message{"testMessageType", msgBytes})
+	err = clientTransport.Send(&Message{
+		Type:    "testMessageType",
+		Payload: msgBytes,
+	})
 	assert.NoError(t, err)
 
 	<-done
@@ -64,7 +67,10 @@ func TestClosedWebsocket(t *testing.T) {
 	_, err = clientTransport.Receive()
 	assert.IsType(t, ClosedError{}, err)
 
-	err = clientTransport.Send(&Message{"testMessageType", []byte{}})
+	err = clientTransport.Send(&Message{
+		Type:    "testMessageType",
+		Payload: []byte{}},
+	)
 	assert.IsType(t, ClosedError{}, err)
 
 	_, err = clientTransport.Receive()

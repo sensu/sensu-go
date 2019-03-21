@@ -19,7 +19,10 @@ func TestHandleTCPMessages(t *testing.T) {
 	defer cleanup()
 	// Assign a random port to the socket to avoid overlaps
 	cfg.Socket.Port = 0
-	ta := NewAgent(cfg)
+	ta, err := NewAgent(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	addr, _, err := ta.createListenSockets()
 	assert.NoError(err)
@@ -66,7 +69,10 @@ func TestHandleUDPMessages(t *testing.T) {
 	defer cleanup()
 	// Assign a random port to the socket to avoid overlaps
 	cfg.Socket.Port = 0
-	ta := NewAgent(cfg)
+	ta, err := NewAgent(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	_, addr, err := ta.createListenSockets()
 	assert.NoError(err)
@@ -113,7 +119,10 @@ func TestMultiWriteTimeoutTCP(t *testing.T) {
 	defer cleanup()
 	// Assign a random port to the socket to avoid overlaps
 	cfg.Socket.Port = 0
-	ta := NewAgent(cfg)
+	ta, err := NewAgent(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	addr, _, err := ta.createListenSockets()
 	assert.NoError(err)
@@ -154,7 +163,10 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 	defer cleanup()
 	// Assign a random port to the socket to avoid overlaps
 	cfg.Socket.Port = 0
-	ta := NewAgent(cfg)
+	ta, err := NewAgent(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	addr, _, err := ta.createListenSockets()
 	assert.NoError(err)
@@ -199,7 +211,10 @@ func TestReceivePingTCP(t *testing.T) {
 	defer cleanup()
 	// Assign a random port to the socket to avoid overlaps
 	cfg.Socket.Port = 0
-	ta := NewAgent(cfg)
+	ta, err := NewAgent(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	addr, _, err := ta.createListenSockets()
 	assert.NoError(err)
