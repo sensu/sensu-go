@@ -116,18 +116,20 @@ class SilencesListItem extends React.Component {
                 paddingTop: 8, // one spacing unit
               }}
             >
-              <Chip
-                avatar={
-                  <Avatar>
-                    <FaceIcon />
-                  </Avatar>
-                }
-                label={silence.creator.username}
-                style={{
-                  // TODO: ideally have Chip scale to current fontSize(?)
-                  transform: "scale(0.87)",
-                }}
-              />
+              <Maybe value={silence.creator}>
+                <Chip
+                  avatar={
+                    <Avatar>
+                      <FaceIcon />
+                    </Avatar>
+                  }
+                  label={silence.creator.username}
+                  style={{
+                    // TODO: ideally have Chip scale to current fontSize(?)
+                    transform: "scale(0.87)",
+                  }}
+                />
+              </Maybe>
             </TableCell>
           </Hidden>
 
