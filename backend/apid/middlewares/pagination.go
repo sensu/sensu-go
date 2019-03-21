@@ -2,8 +2,8 @@ package middlewares
 
 import (
 	"context"
+	"encoding/base64"
 	"net/http"
-	"net/url"
 	"strconv"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -23,9 +23,11 @@ func (p Pagination) Then(next http.Handler) http.Handler {
 		}
 		ctx = context.WithValue(ctx, corev2.PageSizeKey, limit)
 
-		continueToken, err := url.PathUnescape(r.FormValue("continue"))
-		if err != nil {
-			continueToken = ""
+		// Decode the continue token with base64url (RFC 4648), without padding
+		continueToken := ""
+		decodedContinueToken, err := base64.RawURLEncoding.DecodeString(r.FormValue("continue"))
+		if err == nil {
+			continueToken = string(decodedContinueToken)
 		}
 		ctx = context.WithValue(ctx, corev2.PageContinueKey, continueToken)
 

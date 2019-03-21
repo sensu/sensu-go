@@ -94,7 +94,7 @@ func TestEventQuery(t *testing.T) {
 				Return(tc.events, "", tc.storeErr)
 
 			// Exec Query
-			results, err := eventController.Query(tc.ctx, tc.entity, tc.check)
+			results, _, err := eventController.Query(tc.ctx, tc.entity, tc.check)
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)

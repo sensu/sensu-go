@@ -31,13 +31,13 @@ func TestPaginationMiddleware(t *testing.T) {
 		},
 		{
 			description:           "Only continue used",
-			queryParams:           "?continue=camus",
+			queryParams:           "?continue=Y2FtdXM",
 			expectedLimit:         0,
 			expectedContinueToken: "camus",
 		},
 		{
 			description:           "Both limit and continue used",
-			queryParams:           "?limit=42&continue=sartre",
+			queryParams:           "?limit=42&continue=c2FydHJl",
 			expectedLimit:         42,
 			expectedContinueToken: "sartre",
 		},

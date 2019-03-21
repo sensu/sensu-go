@@ -2,6 +2,7 @@ package actions
 
 import (
 	"context"
+	"encoding/base64"
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
@@ -24,8 +25,9 @@ func NewEventController(store store.EventStore, bus messaging.MessageBus) EventC
 }
 
 // Query returns resources available to the viewer filter by given params.
-func (a EventController) Query(ctx context.Context, entityName, checkName string) ([]*corev2.Event, error) {
+func (a EventController) Query(ctx context.Context, entityName, checkName string) ([]*corev2.Event, string, error) {
 	var results []*corev2.Event
+	var nextContinueToken string
 
 	pageSize := corev2.PageSizeFromContext(ctx)
 	continueToken := corev2.PageContinueFromContext(ctx)
@@ -39,16 +41,19 @@ func (a EventController) Query(ctx context.Context, entityName, checkName string
 			results = append(results, result)
 		}
 	} else if entityName != "" {
-		results, _, serr = a.Store.GetEventsByEntity(ctx, entityName, int64(pageSize), continueToken)
+		results, nextContinueToken, serr = a.Store.GetEventsByEntity(ctx, entityName, int64(pageSize), continueToken)
 	} else {
-		results, _, serr = a.Store.GetEvents(ctx, int64(pageSize), continueToken)
+		results, nextContinueToken, serr = a.Store.GetEvents(ctx, int64(pageSize), continueToken)
 	}
 
 	if serr != nil {
-		return nil, NewError(InternalErr, serr)
+		return nil, "", NewError(InternalErr, serr)
 	}
 
-	return results, nil
+	// Encode the continue token with base64url (RFC 4648), without padding
+	encodedNextContinueToken := base64.RawURLEncoding.EncodeToString([]byte(nextContinueToken))
+
+	return results, encodedNextContinueToken, nil
 }
 
 // Find returns resource associated with given parameters if available to the
