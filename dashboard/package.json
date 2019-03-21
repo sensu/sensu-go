@@ -191,6 +191,7 @@
   "resolutions": {
     "graphql": "0.13.0",
     "graphql-config/**/graphql": "0.13.0",
-    "graphql-import/**/graphql": "0.13.0"
+    "graphql-import/**/graphql": "0.13.0",
+    "js-yaml": "^3.13.0"
   }
 }
