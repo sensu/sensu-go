@@ -214,7 +214,7 @@ type CheckConfigStore interface {
 	// GetCheckConfigs returns all checks configurations in the given ctx's
 	// namespace. A nil slice with no error is returned if none
 	// were found.
-	GetCheckConfigs(ctx context.Context) ([]*types.CheckConfig, error)
+	GetCheckConfigs(ctx context.Context, pageSize int64, continueToken string) (checks []*types.CheckConfig, nextContinueToken string, err error)
 
 	// GetCheckConfigByName returns a check's configuration using the given name
 	// and the namespace stored in ctx. The resulting check is
