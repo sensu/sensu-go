@@ -8,8 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
-	bolt "github.com/coreos/bbolt"
 	"github.com/sensu/lasr"
+	bolt "go.etcd.io/bbolt"
 )
 
 func newQueue(path string) (*lasr.Q, error) {
@@ -43,9 +43,9 @@ func decompressMessage(message []byte) []byte {
 	dst := new(bytes.Buffer)
 	src, _ := gzip.NewReader(bytes.NewReader(message))
 	defer src.Close()
-	_, err := io.Copy(dst, src)
+	_, _ = io.Copy(dst, src)
 	if err != nil {
-		panic(err)
+		return nil
 	}
 	return dst.Bytes()
 }

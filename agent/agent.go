@@ -14,7 +14,6 @@ import (
 	"strings"
 	"sync"
 
-	bolt "github.com/coreos/bbolt"
 	time "github.com/echlebek/timeproxy"
 	"github.com/sensu/lasr"
 
@@ -62,7 +61,6 @@ type Agent struct {
 	systemInfo      *v2.System
 	systemInfoMu    sync.RWMutex
 	wg              sync.WaitGroup
-	db              *bolt.DB
 	apiQueue        *lasr.Q
 }
 
