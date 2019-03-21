@@ -79,7 +79,8 @@ func New(c Config, opts ...Option) (*Eventd, error) {
 			return nil, err
 		}
 	}
-	prometheus.Register(eventsProcessed)
+
+	_ = prometheus.Register(eventsProcessed)
 
 	return e, nil
 }
