@@ -9,6 +9,8 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 // EventsRouter handles requests for /events
@@ -44,7 +46,7 @@ func (r *EventsRouter) list(w http.ResponseWriter, req *http.Request) (interface
 	records, continueToken, err := r.controller.Query(req.Context(), "", "")
 
 	if continueToken != "" {
-		w.Header().Set("X-Sensu-Continue", continueToken)
+		w.Header().Set(corev2.PaginationContinueHeader, continueToken)
 	}
 
 	return records, err
@@ -56,7 +58,7 @@ func (r *EventsRouter) listByEntity(w http.ResponseWriter, req *http.Request) (i
 	records, continueToken, err := r.controller.Query(req.Context(), entity, "")
 
 	if continueToken != "" {
-		w.Header().Set("X-Sensu-Continue", continueToken)
+		w.Header().Set(corev2.PaginationContinueHeader, continueToken)
 	}
 
 	return records, err
