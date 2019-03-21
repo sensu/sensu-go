@@ -17,8 +17,8 @@ func (c *MockClient) CreateHandler(h *types.Handler) error {
 }
 
 // DeleteHandler for use with mock package
-func (c *MockClient) DeleteHandler(h *types.Handler) error {
-	args := c.Called(h)
+func (c *MockClient) DeleteHandler(namespace, name string) error {
+	args := c.Called(namespace, name)
 	return args.Error(0)
 }
 

@@ -162,7 +162,11 @@ func (c Client) sendMetrics(points []*types.MetricPoint) (retErr error) {
 		"metrics": event.Metrics,
 		"entity":  event.Entity.Name,
 	}).Debug("sending statsd metrics")
-	c.agent.sendMessage(transport.MessageTypeEvent, msg)
+	tm := &transport.Message{
+		Type:    transport.MessageTypeEvent,
+		Payload: msg,
+	}
+	c.agent.sendMessage(tm)
 	return nil
 }
 

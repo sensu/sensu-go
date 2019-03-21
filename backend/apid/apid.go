@@ -257,6 +257,7 @@ func registerRestrictedResources(router *mux.Router, store store.Store, getter t
 		routers.NewRolesRouter(store),
 		routers.NewRoleBindingsRouter(store),
 		routers.NewSilencedRouter(store),
+		routers.NewTessenRouter(actions.NewTessenController(store)),
 		routers.NewUsersRouter(store),
 	)
 }

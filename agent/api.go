@@ -1,15 +1,19 @@
 package agent
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"net/http"
 	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/sensu/lasr"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
+	"golang.org/x/time/rate"
 )
 
 // APIConfig contains the API configuration
@@ -52,6 +56,57 @@ func healthz(connected func() bool) http.HandlerFunc {
 	}
 }
 
+func (a *Agent) handleAPIQueue(ctx context.Context) {
+	ch := make(chan *lasr.Message, 1)
+	go func() {
+		limit := a.config.EventsAPIRateLimit
+		if limit == 0 {
+			limit = rate.Limit(math.Inf(1))
+		}
+		limiter := rate.NewLimiter(limit, a.config.EventsAPIBurstLimit)
+		for {
+			if err := limiter.Wait(ctx); err != nil {
+				// context canceled
+				return
+			}
+			message, err := a.apiQueue.Receive(ctx)
+			if err != nil {
+				if ctx.Err() != nil {
+					close(ch)
+					return
+				}
+				logger.WithError(err).Error("error receiving message from queue")
+				continue
+			}
+			ch <- message
+		}
+	}()
+	for {
+		select {
+		case message, ok := <-ch:
+			if !ok {
+				return
+			}
+			msg := &transport.Message{
+				Type:    transport.MessageTypeEvent,
+				Payload: decompressMessage(message.Body),
+				SendCallback: func(err error) {
+					if err != nil {
+						logger.WithError(err).Error("couldn't send queued message, retrying")
+						_ = message.Nack(true)
+					} else {
+						logger.Info("queued message sent")
+						_ = message.Ack()
+					}
+				},
+			}
+			a.sendMessage(msg)
+		case <-ctx.Done():
+			return
+		}
+	}
+}
+
 // addEvent accepts an event and send it to the backend over the event channel
 func addEvent(a *Agent) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -70,14 +125,18 @@ func addEvent(a *Agent) http.HandlerFunc {
 			return
 		}
 
-		msg, err := json.Marshal(event)
+		payload, err := json.Marshal(event)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("error marshaling check result: %s", err), http.StatusInternalServerError)
 			return
 		}
 
-		a.sendMessage(transport.MessageTypeEvent, msg)
+		if _, err := a.apiQueue.Send(compressMessage(payload)); err != nil {
+			logger.WithError(err).Error("error queueing message")
+			http.Error(w, "error queueing message", http.StatusInternalServerError)
+			return
+		}
 
-		w.WriteHeader(http.StatusCreated)
+		w.WriteHeader(http.StatusAccepted)
 	}
 }

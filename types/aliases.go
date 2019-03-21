@@ -1,6 +1,6 @@
 package types
 
-import "github.com/sensu/sensu-go/api/core/v2"
+import v2 "github.com/sensu/sensu-go/api/core/v2"
 
 type (
 	AdhocRequest        = v2.AdhocRequest

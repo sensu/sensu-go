@@ -17,10 +17,6 @@ import (
 
 // CreateCommand adds command that allows user to create new assets
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
-	exec := &CreateExecutor{
-		Client:    cli.Client,
-		Namespace: cli.Config.Namespace(),
-	}
 	cmd := &cobra.Command{
 		Use:   "create [NAME]",
 		Short: "create new assets",
@@ -32,7 +28,14 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 				_ = cmd.MarkFlagRequired("url")
 			}
 		},
-		RunE: exec.Run,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			executor := &CreateExecutor{
+				Client:    cli.Client,
+				Namespace: cli.Config.Namespace(),
+			}
+
+			return executor.Run(cmd, args)
+		},
 	}
 
 	_ = cmd.Flags().StringP("sha512", "", "", "SHA-512 checksum of the asset's archive")

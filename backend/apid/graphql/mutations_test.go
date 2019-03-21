@@ -83,13 +83,13 @@ func TestMutationTypeDeleteEntityField(t *testing.T) {
 
 	// Success
 	client.On("FetchEntity", mock.Anything).Return(entity, nil)
-	client.On("DeleteEntity", mock.Anything).Return(nil).Once()
+	client.On("DeleteEntity", mock.Anything, mock.Anything).Return(nil).Once()
 	body, err := impl.DeleteEntity(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, body)
 
 	// Failure
-	client.On("DeleteEntity", mock.Anything).Return(errors.New("fail")).Once()
+	client.On("DeleteEntity", mock.Anything, mock.Anything).Return(errors.New("fail")).Once()
 	body, err = impl.DeleteEntity(params)
 	assert.Error(t, err)
 	assert.Nil(t, body)
@@ -107,7 +107,7 @@ func TestMutationTypeDeleteEventField(t *testing.T) {
 	impl := mutationsImpl{factory: factory}
 
 	// Success
-	client.On("DeleteEvent", "a", "b").Return(nil).Once()
+	client.On("DeleteEvent", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	body, err := impl.DeleteEvent(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, body)
@@ -119,7 +119,7 @@ func TestMutationTypeDeleteEventField(t *testing.T) {
 	assert.Nil(t, body)
 
 	// Destroy failed
-	client.On("DeleteEvent", "a", "b").Return(errors.New("err")).Once()
+	client.On("DeleteEvent", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("err")).Once()
 	body, err = impl.DeleteEvent(params)
 	assert.Error(t, err)
 	assert.Nil(t, body)
@@ -158,13 +158,13 @@ func TestMutationTypeDeleteSilenceField(t *testing.T) {
 	impl := mutationsImpl{factory: factory}
 
 	// Success
-	client.On("DeleteSilenced", mock.Anything).Return(nil).Once()
+	client.On("DeleteSilenced", mock.Anything, mock.Anything).Return(nil).Once()
 	body, err := impl.DeleteSilence(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, body)
 
 	// Failure
-	client.On("DeleteSilenced", mock.Anything).Return(errors.New("test")).Once()
+	client.On("DeleteSilenced", mock.Anything, mock.Anything).Return(errors.New("test")).Once()
 	body, err = impl.DeleteSilence(params)
 	assert.Error(t, err)
 	assert.Nil(t, body)

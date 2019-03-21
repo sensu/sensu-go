@@ -202,7 +202,11 @@ func (a *Agent) executeCheck(request *v2.CheckRequest, entity *v2.Entity) {
 		return
 	}
 
-	a.sendMessage(transport.MessageTypeEvent, msg)
+	tm := &transport.Message{
+		Type:    transport.MessageTypeEvent,
+		Payload: msg,
+	}
+	a.sendMessage(tm)
 }
 
 // prepareCheck prepares a check before its execution by performing token
@@ -238,7 +242,11 @@ func (a *Agent) sendFailure(event *v2.Event, err error) {
 	if msg, err := json.Marshal(event); err != nil {
 		logger.WithError(err).Error("error marshaling check failure")
 	} else {
-		a.sendMessage(transport.MessageTypeEvent, msg)
+		tm := &transport.Message{
+			Type:    transport.MessageTypeEvent,
+			Payload: msg,
+		}
+		a.sendMessage(tm)
 	}
 }
 

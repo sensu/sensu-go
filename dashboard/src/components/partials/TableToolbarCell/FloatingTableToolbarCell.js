@@ -1,3 +1,5 @@
+/* eslint-disable react/no-unused-prop-types */
+
 import React from "react";
 import PropTypes from "prop-types";
 
@@ -13,8 +15,6 @@ const styles = theme => ({
 
 class FloatingTableToolbarCell extends React.Component {
   static propTypes = {
-    // the linter isn't smart enough to see we use this
-    // eslint-disable-next-line
     classes: PropTypes.object.isRequired,
     disabled: PropTypes.bool,
     hovered: PropTypes.bool,

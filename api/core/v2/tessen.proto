@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "meta.proto";
+
+package sensu.core.v2;
+
+option go_package = "v2";
+option (gogoproto.populate_all) = true;
+option (gogoproto.equal_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// TessenConfig is the representation of a tessen configuration.
+message TessenConfig {
+  option (gogoproto.face) = true;
+  option (gogoproto.goproto_getters) = false;
+
+  // OptOut is the opt-out status of the tessen configuration
+  bool opt_out = 1 [(gogoproto.jsontag) = "opt_out"];
+}
