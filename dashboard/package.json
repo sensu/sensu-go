@@ -116,7 +116,7 @@
     "jest-localstorage-mock": "^2.2.0",
     "killable": "^1.0.0",
     "loader-utils": "^1.2.3",
-    "lodash": "^4.17.0",
+    "lodash": "^4.17.11",
     "modernizr": "^3.6.0",
     "prettier": "^1.16.4",
     "prop-types": "^15.6.0",
