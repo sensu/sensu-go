@@ -15,6 +15,18 @@ type errorBody struct {
 	Code    uint32 `json:"code"`
 }
 
+// FilterFunc ...
+type FilterFunc func(w http.ResponseWriter, r *http.Request, resources interface{}) error
+
+// Filter ...
+var Filter FilterFunc
+
+func init() {
+	Filter = func(w http.ResponseWriter, r *http.Request, resources interface{}) error {
+		return nil
+	}
+}
+
 // respondWith given writer and resource, marshal to JSON and write response.
 func respondWith(w http.ResponseWriter, resources interface{}) {
 	// Set content-type to JSON
@@ -133,6 +145,8 @@ func listHandler(fn listHandlerFunc) http.HandlerFunc {
 			writeError(w, err)
 			return
 		}
+
+		_ = Filter(w, r, records)
 
 		respondWith(w, records)
 	}
