@@ -434,9 +434,6 @@ func testGetEventsByEntityPagination(t *testing.T, ctx context.Context, etcd sto
 		}
 
 		if len(events) != nLeftovers {
-			fmt.Println("continueToken:", continueToken)
-			fmt.Println("nextContinueToken", nextContinueToken)
-			fmt.Println(events)
 			t.Fatalf("Expected last page with %d items, got %d", nLeftovers, len(events))
 		}
 
