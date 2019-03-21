@@ -5,10 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path"
 
 	"github.com/coreos/etcd/clientv3"
-	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 const (
@@ -19,7 +21,7 @@ var (
 	entityKeyBuilder = store.NewKeyBuilder(entityPathPrefix)
 )
 
-func getEntityPath(entity *v2.Entity) string {
+func getEntityPath(entity *corev2.Entity) string {
 	return entityKeyBuilder.WithResource(entity).Build(entity.Name)
 }
 
@@ -28,7 +30,7 @@ func getEntitiesPath(ctx context.Context, name string) string {
 }
 
 // DeleteEntity deletes an Entity.
-func (s *Store) DeleteEntity(ctx context.Context, e *v2.Entity) error {
+func (s *Store) DeleteEntity(ctx context.Context, e *corev2.Entity) error {
 	if err := e.Validate(); err != nil {
 		return err
 	}
@@ -47,7 +49,7 @@ func (s *Store) DeleteEntityByName(ctx context.Context, name string) error {
 }
 
 // GetEntityByName gets an Entity by its name.
-func (s *Store) GetEntityByName(ctx context.Context, name string) (*v2.Entity, error) {
+func (s *Store) GetEntityByName(ctx context.Context, name string) (*corev2.Entity, error) {
 	if name == "" {
 		return nil, errors.New("must specify name")
 	}
@@ -59,7 +61,7 @@ func (s *Store) GetEntityByName(ctx context.Context, name string) (*v2.Entity, e
 	if len(resp.Kvs) != 1 {
 		return nil, nil
 	}
-	entity := &v2.Entity{}
+	entity := &corev2.Entity{}
 	err = json.Unmarshal(resp.Kvs[0].Value, entity)
 	if err != nil {
 		return nil, err
@@ -73,23 +75,29 @@ func (s *Store) GetEntityByName(ctx context.Context, name string) (*v2.Entity, e
 	return entity, nil
 }
 
-// GetEntities takes an optional org argument, an empty string will return
-// all entities.
-func (s *Store) GetEntities(ctx context.Context) ([]*v2.Entity, error) {
-	resp, err := s.client.Get(ctx, getEntitiesPath(ctx, ""), clientv3.WithPrefix())
-	if err != nil {
-		return nil, err
-	}
-	if len(resp.Kvs) == 0 {
-		return []*v2.Entity{}, nil
+// GetEntities returns the entities for the namespace in the supplied context.
+func (s *Store) GetEntities(ctx context.Context, pageSize int64, continueToken string) (entities []*corev2.Entity, nextContinueToken string, err error) {
+	opts := []clientv3.OpOption{
+		clientv3.WithLimit(pageSize),
 	}
 
-	earr := make([]*v2.Entity, len(resp.Kvs))
-	for i, kv := range resp.Kvs {
-		entity := &v2.Entity{}
+	keyPrefix := getEntitiesPath(ctx, "")
+	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
+	opts = append(opts, clientv3.WithRange(rangeEnd))
+
+	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueToken), opts...)
+	if err != nil {
+		return nil, "", err
+	}
+	if len(resp.Kvs) == 0 {
+		return []*corev2.Entity{}, "", nil
+	}
+
+	for _, kv := range resp.Kvs {
+		entity := &corev2.Entity{}
 		err = json.Unmarshal(kv.Value, entity)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 		if entity.Labels == nil {
 			entity.Labels = make(map[string]string)
@@ -97,14 +105,20 @@ func (s *Store) GetEntities(ctx context.Context) ([]*v2.Entity, error) {
 		if entity.Annotations == nil {
 			entity.Annotations = make(map[string]string)
 		}
-		earr[i] = entity
+
+		entities = append(entities, entity)
 	}
 
-	return earr, nil
+	if pageSize != 0 && resp.Count > pageSize {
+		lastEntity := entities[len(entities)-1]
+		nextContinueToken = lastEntity.Name + "\x00"
+	}
+
+	return entities, nextContinueToken, nil
 }
 
 // UpdateEntity updates an Entity.
-func (s *Store) UpdateEntity(ctx context.Context, e *v2.Entity) error {
+func (s *Store) UpdateEntity(ctx context.Context, e *corev2.Entity) error {
 	if err := e.Validate(); err != nil {
 		return err
 	}

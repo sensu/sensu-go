@@ -314,7 +314,7 @@ type EntityStore interface {
 
 	// GetEntities returns all entities in the given ctx's namespace. A nil slice
 	// with no error is returned if none were found.
-	GetEntities(ctx context.Context) ([]*types.Entity, error)
+	GetEntities(ctx context.Context, pageSize int64, continueToken string) (entities []*types.Entity, nextContinueToken string, err error)
 
 	// GetEntityByName returns an entity using the given name and the namespace stored
 	// in ctx. The resulting entity is nil if none was found.
