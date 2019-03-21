@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	bolt "github.com/coreos/bbolt"
+	bolt "go.etcd.io/bbolt"
 )
 
 // Q is a persistent message queue. Its methods are goroutine-safe.

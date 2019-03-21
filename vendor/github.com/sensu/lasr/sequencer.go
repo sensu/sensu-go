@@ -1,6 +1,6 @@
 package lasr
 
-import bolt "github.com/coreos/bbolt"
+import bolt "go.etcd.io/bbolt"
 
 // Sequencer returns an ID with each call to NextSequence and any error
 // that occurred.

@@ -1,6 +1,6 @@
 package lasr
 
-import bolt "github.com/coreos/bbolt"
+import bolt "go.etcd.io/bbolt"
 
 // Wait causes a message to wait for other messages to Ack, before entering the
 // Ready state.

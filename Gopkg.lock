@@ -728,12 +728,12 @@
   revision = "2315d5715e36303a941d907f038da7f7c44c773b"
 
 [[projects]]
-  digest = "1:43b1b31daa7a2387c2b04bfa8c738b675334ca087c584c14285c8f9688c7d545"
+  digest = "1:55f03143250f57c5674f514c2cbacfe08fa6366a55741e0ec7f3fac1c1ce92bb"
   name = "github.com/sensu/lasr"
   packages = ["."]
   pruneopts = "UT"
-  revision = "dd6eb31392827b98efb58f1fa1917e59bb081e46"
-  version = "v1.1.1"
+  revision = "ef89d3cc501cf1dc3ef065b60c9fbfa11e823967"
+  version = "v1.2.0"
 
 [[projects]]
   digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
@@ -922,12 +922,12 @@
   version = "0.0.1"
 
 [[projects]]
-  digest = "1:c28625428387b63dd7154eb857f51e700465cfbf7c06f619e71f2da33cefe47e"
+  digest = "1:5f7414cf41466d4b4dd7ec52b2cd3e481e08cfd11e7e24fef730c0e483e88bb1"
   name = "go.etcd.io/bbolt"
   packages = ["."]
   pruneopts = "UT"
-  revision = "583e8937c61f1af6513608ccc75c97b6abdf4ff9"
-  version = "v1.3.0"
+  revision = "63597a96ec0ad9e6d43c3fc81e809909e0237461"
+  version = "v1.3.2"
 
 [[projects]]
   branch = "master"
@@ -1089,7 +1089,6 @@
     "github.com/NYTimes/gziphandler",
     "github.com/atlassian/gostatsd",
     "github.com/atlassian/gostatsd/pkg/statsd",
-    "github.com/coreos/bbolt",
     "github.com/coreos/etcd/clientv3",
     "github.com/coreos/etcd/clientv3/concurrency",
     "github.com/coreos/etcd/embed",

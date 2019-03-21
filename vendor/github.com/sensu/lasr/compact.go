@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	bolt "github.com/coreos/bbolt"
+	bolt "go.etcd.io/bbolt"
 )
 
 // Compact performs compaction on the queue. All messages will be copied from
@@ -18,7 +18,7 @@ import (
 // invalidated.
 func (q *Q) Compact() (rerr error) {
 	tempPath := filepath.Join(filepath.Dir(q.db.Path()), ".lasr.temp.db")
-	newDB, err := bolt.Open(tempPath, 0644, nil)
+	newDB, err := bolt.Open(tempPath, 0600, nil)
 	if err != nil {
 		return fmt.Errorf("error compacting queue: %s", err)
 	}

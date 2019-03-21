@@ -3,7 +3,7 @@ package lasr
 import (
 	"sync/atomic"
 
-	bolt "github.com/coreos/bbolt"
+	bolt "go.etcd.io/bbolt"
 )
 
 func (q *Q) ack(id []byte) error {

@@ -43,7 +43,7 @@ func decompressMessage(message []byte) []byte {
 	dst := new(bytes.Buffer)
 	src, _ := gzip.NewReader(bytes.NewReader(message))
 	defer src.Close()
-	_, _ = io.Copy(dst, src)
+	_, err := io.Copy(dst, src)
 	if err != nil {
 		return nil
 	}
