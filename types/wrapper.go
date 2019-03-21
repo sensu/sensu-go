@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/sensu/sensu-go/api/core/v2"
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 // Wrapper is a generic wrapper, with a type field for distinguishing its
@@ -97,6 +97,7 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 		// The resource doesn't have an ObjectMeta field - this is expected
 		// for Namespace, or other types that have no ObjectMeta field but
 		// do implement a GetObjectMeta method.
+		w.Value = resource
 		return nil
 	}
 	val.FieldByName("ObjectMeta").Set(reflect.ValueOf(innerMeta))
