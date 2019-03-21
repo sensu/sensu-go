@@ -182,7 +182,7 @@ type AssetStore interface {
 
 	// GetAssets returns all assets in the given ctx's namespace. A nil
 	// slice with no error is returned if none were found.
-	GetAssets(ctx context.Context) ([]*types.Asset, error)
+	GetAssets(ctx context.Context, pageSize int64, continueToken string) (assets []*types.Asset, nextContinueToken string, err error)
 
 	// GetAssetByName returns an asset using the given name and the namespace
 	// stored in ctx. The resulting asset is nil if none was found.

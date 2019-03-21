@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
@@ -40,21 +41,28 @@ func (s *Store) DeleteAssetByName(ctx context.Context, name string) error {
 }
 
 // GetAssets fetches all assets from the store
-func (s *Store) GetAssets(ctx context.Context) ([]*types.Asset, error) {
-	resp, err := s.client.Get(ctx, getAssetsPath(ctx, ""), clientv3.WithPrefix())
-	if err != nil {
-		return nil, err
-	}
-	if len(resp.Kvs) == 0 {
-		return []*types.Asset{}, nil
+func (s *Store) GetAssets(ctx context.Context, pageSize int64, continueToken string) (assets []*types.Asset, nextContinueToken string, err error) {
+	opts := []clientv3.OpOption{
+		clientv3.WithLimit(pageSize),
 	}
 
-	assetArray := make([]*types.Asset, len(resp.Kvs))
-	for i, kv := range resp.Kvs {
+	keyPrefix := getAssetsPath(ctx, "")
+	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
+	opts = append(opts, clientv3.WithRange(rangeEnd))
+
+	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueToken), opts...)
+	if err != nil {
+		return nil, "", err
+	}
+	if len(resp.Kvs) == 0 {
+		return []*types.Asset{}, "", nil
+	}
+
+	for _, kv := range resp.Kvs {
 		asset := &types.Asset{}
 		err = json.Unmarshal(kv.Value, asset)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 		if asset.Labels == nil {
 			asset.Labels = make(map[string]string)
@@ -62,10 +70,16 @@ func (s *Store) GetAssets(ctx context.Context) ([]*types.Asset, error) {
 		if asset.Annotations == nil {
 			asset.Annotations = make(map[string]string)
 		}
-		assetArray[i] = asset
+
+		assets = append(assets, asset)
 	}
 
-	return assetArray, nil
+	if pageSize != 0 && resp.Count > pageSize {
+		lastAsset := assets[len(assets)-1]
+		nextContinueToken = lastAsset.Name + "\x00"
+	}
+
+	return assets, nextContinueToken, nil
 }
 
 // GetAssetByName gets an Asset by name.
