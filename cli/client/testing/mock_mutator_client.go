@@ -9,8 +9,8 @@ func (c *MockClient) CreateMutator(m *types.Mutator) error {
 }
 
 // DeleteMutator for use with mock package
-func (c *MockClient) DeleteMutator(m *types.Mutator) error {
-	args := c.Called(m)
+func (c *MockClient) DeleteMutator(namespace, name string) error {
+	args := c.Called(namespace, name)
 	return args.Error(0)
 }
 

@@ -59,3 +59,13 @@ func (c *Confirm) Ask() (bool, error) {
 
 	return confirmation, nil
 }
+
+// ConfirmOptOut confirm an opt-out operation before it is completed.
+func ConfirmOptOut() bool {
+	c := &Confirm{
+		Message: "Are you sure you would like to opt-out of tessen? We'd hate to see you go!",
+		Default: false,
+	}
+	ok, _ := c.Ask()
+	return ok
+}

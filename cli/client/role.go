@@ -12,8 +12,8 @@ func (client *RestClient) CreateRole(role *types.Role) error {
 }
 
 // DeleteRole with the given name
-func (client *RestClient) DeleteRole(name string) error {
-	return client.Delete(rolesPath(client.config.Namespace(), name))
+func (client *RestClient) DeleteRole(namespace, name string) error {
+	return client.Delete(rolesPath(namespace, name))
 }
 
 // FetchRole with the given name

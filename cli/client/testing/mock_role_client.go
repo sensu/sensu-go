@@ -15,8 +15,8 @@ func (c *MockClient) FetchRole(name string) (*types.Role, error) {
 }
 
 // DeleteRole ...
-func (c *MockClient) DeleteRole(name string) error {
-	args := c.Called(name)
+func (c *MockClient) DeleteRole(namespace, name string) error {
+	args := c.Called(namespace, name)
 	return args.Error(0)
 }
 

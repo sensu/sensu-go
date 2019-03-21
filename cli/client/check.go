@@ -50,19 +50,8 @@ func (client *RestClient) UpdateCheck(check *types.CheckConfig) (err error) {
 }
 
 // DeleteCheck deletes check from configured Sensu instance
-func (client *RestClient) DeleteCheck(check *types.CheckConfig) error {
-	path := checksPath(client.config.Namespace(), check.Name)
-	res, err := client.R().Delete(path)
-
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode() >= 400 {
-		return UnmarshalError(res)
-	}
-
-	return nil
+func (client *RestClient) DeleteCheck(namespace, name string) error {
+	return client.Delete(checksPath(namespace, name))
 }
 
 // ExecuteCheck sends an execution request with the provided adhoc request

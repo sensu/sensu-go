@@ -17,6 +17,7 @@ import FaceIcon from "@material-ui/icons/Face";
 import Hidden from "@material-ui/core/Hidden";
 import HoverController from "/components/controller/HoverController";
 import IconButton from "@material-ui/core/IconButton";
+import Maybe from "/components/Maybe";
 import ModalController from "/components/controller/ModalController";
 import NotesIcon from "@material-ui/icons/Notes";
 import { RelativeToCurrentDate } from "/components/RelativeDate";
@@ -114,18 +115,20 @@ class SilencesListItem extends React.Component {
                 paddingTop: 8, // one spacing unit
               }}
             >
-              <Chip
-                avatar={
-                  <Avatar>
-                    <FaceIcon />
-                  </Avatar>
-                }
-                label={silence.creator.username}
-                style={{
-                  // TODO: ideally have Chip scale to current fontSize(?)
-                  transform: "scale(0.87)",
-                }}
-              />
+              <Maybe value={silence.creator}>
+                <Chip
+                  avatar={
+                    <Avatar>
+                      <FaceIcon />
+                    </Avatar>
+                  }
+                  label={silence.creator.username}
+                  style={{
+                    // TODO: ideally have Chip scale to current fontSize(?)
+                    transform: "scale(0.87)",
+                  }}
+                />
+              </Maybe>
             </TableCell>
           </Hidden>
 

@@ -15,8 +15,8 @@ func (c *MockClient) FetchRoleBinding(name string) (*types.RoleBinding, error) {
 }
 
 // DeleteRoleBinding ...
-func (c *MockClient) DeleteRoleBinding(name string) error {
-	args := c.Called(name)
+func (c *MockClient) DeleteRoleBinding(namespace, name string) error {
+	args := c.Called(namespace, name)
 	return args.Error(0)
 }
 

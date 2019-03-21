@@ -40,6 +40,8 @@ type GenericClient interface {
 	List(path string, objs interface{}) error
 	// Post creates the given obj at the specified path
 	Post(path string, obj interface{}) error
+	// Put creates the given obj at the specified path
+	Put(path string, obj interface{}) error
 
 	// PutResource puts a resource according to its URIPath.
 	PutResource(types.Wrapper) error
@@ -64,7 +66,7 @@ type AssetAPIClient interface {
 // CheckAPIClient client methods for checks
 type CheckAPIClient interface {
 	CreateCheck(*types.CheckConfig) error
-	DeleteCheck(*types.CheckConfig) error
+	DeleteCheck(string, string) error
 	ExecuteCheck(*types.AdhocRequest) error
 	FetchCheck(string) (*types.CheckConfig, error)
 	ListChecks(string) ([]types.CheckConfig, error)
@@ -93,7 +95,7 @@ type ClusterRoleBindingAPIClient interface {
 // EntityAPIClient client methods for entities
 type EntityAPIClient interface {
 	CreateEntity(entity *types.Entity) error
-	DeleteEntity(entity *types.Entity) error
+	DeleteEntity(string, string) error
 	FetchEntity(ID string) (*types.Entity, error)
 	ListEntities(string) ([]types.Entity, error)
 	UpdateEntity(entity *types.Entity) error
@@ -102,7 +104,7 @@ type EntityAPIClient interface {
 // FilterAPIClient client methods for filters
 type FilterAPIClient interface {
 	CreateFilter(*types.EventFilter) error
-	DeleteFilter(*types.EventFilter) error
+	DeleteFilter(string, string) error
 	FetchFilter(string) (*types.EventFilter, error)
 	ListFilters(string) ([]types.EventFilter, error)
 	UpdateFilter(*types.EventFilter) error
@@ -114,7 +116,7 @@ type EventAPIClient interface {
 	ListEvents(string) ([]types.Event, error)
 
 	// DeleteEvent deletes the event identified by entity, check.
-	DeleteEvent(entity, check string) error
+	DeleteEvent(namespace, entity, check string) error
 	UpdateEvent(*types.Event) error
 	ResolveEvent(*types.Event) error
 }
@@ -129,7 +131,7 @@ type ExtensionAPIClient interface {
 // HandlerAPIClient client methods for handlers
 type HandlerAPIClient interface {
 	CreateHandler(*types.Handler) error
-	DeleteHandler(*types.Handler) error
+	DeleteHandler(string, string) error
 	ListHandlers(string) ([]types.Handler, error)
 	FetchHandler(string) (*types.Handler, error)
 	UpdateHandler(*types.Handler) error
@@ -144,7 +146,7 @@ type HealthAPIClient interface {
 type HookAPIClient interface {
 	CreateHook(*types.HookConfig) error
 	UpdateHook(*types.HookConfig) error
-	DeleteHook(*types.HookConfig) error
+	DeleteHook(string, string) error
 	FetchHook(string) (*types.HookConfig, error)
 	ListHooks(string) ([]types.HookConfig, error)
 }
@@ -153,7 +155,7 @@ type HookAPIClient interface {
 type MutatorAPIClient interface {
 	CreateMutator(*types.Mutator) error
 	ListMutators(string) ([]types.Mutator, error)
-	DeleteMutator(*types.Mutator) error
+	DeleteMutator(string, string) error
 	FetchMutator(string) (*types.Mutator, error)
 	UpdateMutator(*types.Mutator) error
 }
@@ -184,7 +186,7 @@ type UserAPIClient interface {
 // RoleAPIClient client methods for roles
 type RoleAPIClient interface {
 	CreateRole(*types.Role) error
-	DeleteRole(string) error
+	DeleteRole(string, string) error
 	FetchRole(string) (*types.Role, error)
 	ListRoles(string) ([]types.Role, error)
 }
@@ -192,7 +194,7 @@ type RoleAPIClient interface {
 // RoleBindingAPIClient client methods for role bindings
 type RoleBindingAPIClient interface {
 	CreateRoleBinding(*types.RoleBinding) error
-	DeleteRoleBinding(string) error
+	DeleteRoleBinding(string, string) error
 	FetchRoleBinding(string) (*types.RoleBinding, error)
 	ListRoleBindings(string) ([]types.RoleBinding, error)
 }
@@ -203,7 +205,7 @@ type SilencedAPIClient interface {
 	CreateSilenced(*types.Silenced) error
 
 	// DeleteSilenced deletes an existing silenced entry given its ID.
-	DeleteSilenced(id string) error
+	DeleteSilenced(namespace string, name string) error
 
 	// ListSilenceds lists all silenced entries, optionally constraining by
 	// subscription or check.

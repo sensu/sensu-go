@@ -161,7 +161,7 @@ func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName
 
 // UpdateEvent updates an event.
 func (s *Store) UpdateEvent(ctx context.Context, event *types.Event) error {
-	if event.Check == nil {
+	if event == nil || event.Check == nil {
 		return errors.New("event has no check")
 	}
 
@@ -173,9 +173,21 @@ func (s *Store) UpdateEvent(ctx context.Context, event *types.Event) error {
 		return err
 	}
 
+	if event.HasMetrics() {
+		// Taking pains to not modify our input, set metrics to nil so they are
+		// not persisted.
+		newEvent := *event
+		event = &newEvent
+		event.Metrics = nil
+	}
+
 	// Truncate check output if the output is larger than MaxOutputSize
 	if size := event.Check.MaxOutputSize; size > 0 && int64(len(event.Check.Output)) > size {
-		event.Check.Output = event.Check.Output[:size]
+		// Taking pains to not modify our input, set a bound on the check
+		// output size.
+		check := *event.Check
+		check.Output = check.Output[:size]
+		event.Check = &check
 	}
 
 	if event.Timestamp == 0 {

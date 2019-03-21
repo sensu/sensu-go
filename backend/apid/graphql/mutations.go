@@ -86,12 +86,8 @@ func (r *mutationsImpl) DeleteCheck(p schema.MutationDeleteCheckFieldResolverPar
 	ctx := setContextFromComponents(p.Context, components)
 
 	client := r.factory.NewWithContext(ctx)
-	check, err := client.FetchCheck(components.UniqueComponent())
-	if err != nil {
-		return nil, err
-	}
 
-	err = client.DeleteCheck(check)
+	err := client.DeleteCheck(components.Namespace(), components.UniqueComponent())
 	if err != nil {
 		return nil, err
 	}
@@ -151,12 +147,8 @@ func (r *mutationsImpl) DeleteEntity(p schema.MutationDeleteEntityFieldResolverP
 	ctx := setContextFromComponents(p.Context, components)
 
 	client := r.factory.NewWithContext(ctx)
-	entity, err := client.FetchEntity(components.UniqueComponent())
-	if err != nil {
-		return nil, err
-	}
 
-	err = client.DeleteEntity(entity)
+	err := client.DeleteEntity(components.Namespace(), components.UniqueComponent())
 	if err != nil {
 		return nil, err
 	}
@@ -212,7 +204,7 @@ func (r *mutationsImpl) DeleteEvent(p schema.MutationDeleteEventFieldResolverPar
 	ctx := setContextFromComponents(p.Context, components)
 	client := r.factory.NewWithContext(ctx)
 
-	err = client.DeleteEvent(components.EntityName(), components.CheckName())
+	err = client.DeleteEvent(components.Namespace(), components.EntityName(), components.CheckName())
 	if err != nil {
 		return nil, err
 	}
@@ -271,7 +263,7 @@ func (r *mutationsImpl) DeleteSilence(p schema.MutationDeleteSilenceFieldResolve
 	ctx := setContextFromComponents(p.Context, components)
 
 	client := r.factory.NewWithContext(ctx)
-	err := client.DeleteSilenced(components.UniqueComponent())
+	err := client.DeleteSilenced(components.Namespace(), components.UniqueComponent())
 	if err != nil {
 		return nil, err
 	}
