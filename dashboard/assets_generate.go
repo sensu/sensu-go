@@ -54,7 +54,7 @@ func main() {
 }
 
 func boxAssets(path string) {
-	dir := http.Dir(filepath.Join(buildDir, path))
+	dir := http.Dir(filepath.Join(buildDir, path, "public"))
 	err := vfsgen.Generate(dir, vfsgen.Options{
 		Filename:     filenamePrefix + path + ".go",
 		PackageName:  "dashboard",
