@@ -1,64 +1,82 @@
 {
   "presets": [
-    ["babel-preset-env", {
-      "targets": {
-        // React parses on ie 9, so we should too.
-        "ie": 9,
-      },
-      // Disable polyfill transforms.
-      "useBuiltIns": false,
-      // Do not transform es6 modules, required for webpack "tree shaking".
-      "modules": false,
-    }],
-    "babel-preset-react",
-    "babel-preset-flow",
+    [
+      "@babel/preset-env",
+      {
+        "targets": {
+          "ie": "11"
+        },
+        // Disable polyfill transforms.
+        "useBuiltIns": false,
+        // Do not transform es6 modules, required for webpack "tree shaking".
+        "modules": false
+      }
+    ],
+    "@babel/preset-react",
+    "@babel/preset-flow"
   ],
   "plugins": [
-    "syntax-dynamic-import",
-    "transform-es2015-destructuring",
-    ["transform-class-properties", {
-      "loose": true,
-    }],
-    ["transform-object-rest-spread", {
-      "useBuiltIns": true,
-    }],
-    ["transform-react-jsx", {
-      "useBuiltIns": true,
-    }],
-    ["module-resolver", {
-      "alias": {
-        "": "./src",
-      },
-    }],
+    "@babel/plugin-syntax-dynamic-import",
+    "@babel/plugin-transform-destructuring",
+    [
+      "@babel/plugin-proposal-class-properties",
+      {
+        "loose": true
+      }
+    ],
+    [
+      "@babel/plugin-proposal-object-rest-spread",
+      {
+        "useBuiltIns": true
+      }
+    ],
+    [
+      "@babel/plugin-transform-react-jsx",
+      {
+        "useBuiltIns": true
+      }
+    ],
+    [
+      "module-resolver",
+      {
+        "alias": {
+          "": "./src"
+        }
+      }
+    ]
   ],
   "env": {
     "development": {
       "plugins": [
-        // These plugins can be removed after migrating to @babel/preset-react 7
-        // with the `development` option set.
-        "transform-react-jsx-source",
-        "transform-react-jsx-self",
-      ],
+        // "@babel/plugin-transform-react-jsx-source",
+        // "@babel/plugin-transform-react-jsx-self"
+      ]
     },
     "test": {
       "presets": [
-        ["babel-preset-env", {
-          "targets": {
-            "node": "current",
-          },
-          // Disable polyfill transforms.
-          "useBuiltIns": false,
-          // Transform modules to CJS for node runtime.
-          "modules": "commonjs",
-        }]
-      ],
+        [
+          "@babel/preset-env",
+          {
+            "targets": {
+              "node": "current"
+            },
+            // Disable polyfill transforms.
+            "useBuiltIns": false,
+            // Transform modules to CJS for node runtime.
+            "modules": "commonjs"
+          }
+        ]
+      ]
     },
     "production": {
       "plugins": [
-        ["transform-react-remove-prop-types", {
-          "removeImport": true,
-        }],
-      ],
-    },
+        [
+          "transform-react-remove-prop-types",
+          {
+            "removeImport": true
+          }
+        ]
+      ]
+    }
   }
 }
