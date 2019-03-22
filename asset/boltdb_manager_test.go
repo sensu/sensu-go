@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -17,7 +18,7 @@ type mockFetcher struct {
 	pass bool
 }
 
-func (m *mockFetcher) Fetch(string) (*os.File, error) {
+func (m *mockFetcher) Fetch(context.Context, string) (*os.File, error) {
 	if m.pass {
 		return ioutil.TempFile(os.TempDir(), "boltdb_manager_test_fetcher")
 	}
@@ -93,7 +94,7 @@ func TestGetExistingAsset(t *testing.T) {
 		db: db,
 	}
 
-	fetchedAsset, err := manager.Get(a)
+	fetchedAsset, err := manager.Get(context.TODO(), a)
 	if err != nil {
 		t.Logf("expected no error getting asset, got: %v", err)
 		t.Failed()
@@ -130,7 +131,7 @@ func TestGetNonexistentAsset(t *testing.T) {
 		URL: "nonexistent.tar",
 	}
 
-	runtimeAsset, err := manager.Get(a)
+	runtimeAsset, err := manager.Get(context.TODO(), a)
 	if runtimeAsset != nil {
 		t.Logf("expected nil runtime asset, got %v", runtimeAsset)
 		t.Failed()
@@ -168,7 +169,7 @@ func TestGetInvalidAsset(t *testing.T) {
 		URL: "",
 	}
 
-	runtimeAsset, err := manager.Get(a)
+	runtimeAsset, err := manager.Get(context.TODO(), a)
 	if runtimeAsset != nil {
 		t.Logf("expected nil runtime asset, got %v", runtimeAsset)
 		t.Failed()
@@ -207,7 +208,7 @@ func TestFailedExpand(t *testing.T) {
 		URL: "",
 	}
 
-	runtimeAsset, err := manager.Get(a)
+	runtimeAsset, err := manager.Get(context.TODO(), a)
 	if runtimeAsset != nil {
 		t.Logf("expected nil runtime asset, got %v", runtimeAsset)
 		t.Fail()
@@ -251,7 +252,7 @@ func TestSuccessfulGetAsset(t *testing.T) {
 		URL:    "path",
 	}
 
-	runtimeAsset, err := manager.Get(a)
+	runtimeAsset, err := manager.Get(context.TODO(), a)
 	if err != nil {
 		t.Logf("expected no error, got: %v", err)
 		t.Fail()
@@ -270,7 +271,7 @@ func TestSuccessfulGetAsset(t *testing.T) {
 		t.Fail()
 	}
 
-	runtimeAsset, err = manager.Get(a)
+	runtimeAsset, err = manager.Get(context.TODO(), a)
 	if err != nil {
 		t.Logf("expected not to receive error, got: %v", err)
 		t.Fail()

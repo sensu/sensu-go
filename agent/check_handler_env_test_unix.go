@@ -3,6 +3,7 @@
 package agent
 
 import (
+	"context"
 	"encoding/json"
 	"testing"
 	"time"
@@ -29,7 +30,7 @@ func TestEnvVars(t *testing.T) {
 	agent.sendq = ch
 
 	entity := agent.getAgentEntity()
-	agent.executeCheck(request, entity)
+	agent.executeCheck(context.Background(), request, entity)
 	msg := <-ch
 	event := &types.Event{}
 	assert.NoError(t, json.Unmarshal(msg.Payload, event))

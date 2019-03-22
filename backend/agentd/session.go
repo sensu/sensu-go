@@ -118,6 +118,10 @@ func (s *Session) recvPump() {
 		}
 	}()
 
+	// TODO(eric): replace s.stopping with a context and use it here
+	ctx, cancel := context.WithCancel(context.TODO())
+	defer cancel()
+
 	for {
 		select {
 		case <-s.stopping:
@@ -139,7 +143,7 @@ func (s *Session) recvPump() {
 				continue
 			}
 		}
-		if err := s.handler.Handle(msg.Type, msg.Payload); err != nil {
+		if err := s.handler.Handle(ctx, msg.Type, msg.Payload); err != nil {
 			logger.WithError(err).WithFields(logrus.Fields{
 				"type":    msg.Type,
 				"payload": string(msg.Payload)}).Error("error handling message")
@@ -264,7 +268,7 @@ func (s *Session) Stop() {
 	}
 }
 
-func (s *Session) handleKeepalive(payload []byte) error {
+func (s *Session) handleKeepalive(ctx context.Context, payload []byte) error {
 	keepalive := &types.Event{}
 	err := json.Unmarshal(payload, keepalive)
 	if err != nil {
@@ -285,7 +289,7 @@ func (s *Session) handleKeepalive(payload []byte) error {
 	return s.bus.Publish(messaging.TopicKeepalive, keepalive)
 }
 
-func (s *Session) handleEvent(payload []byte) error {
+func (s *Session) handleEvent(ctx context.Context, payload []byte) error {
 	// Decode the payload to an event
 	event := &types.Event{}
 	if err := json.Unmarshal(payload, event); err != nil {

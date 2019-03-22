@@ -3,6 +3,7 @@
 package agent
 
 import (
+	"context"
 	"encoding/json"
 	"net"
 	"testing"
@@ -159,7 +160,7 @@ func TestReceiveMetrics(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	go ta.StartStatsd()
+	go ta.StartStatsd(context.TODO())
 	// Give the server a second to start up
 	time.Sleep(time.Second * 1)
 

@@ -2,6 +2,7 @@ package agent
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"net"
 	"testing"
@@ -24,7 +25,9 @@ func TestHandleTCPMessages(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	addr, _, err := ta.createListenSockets()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	addr, _, err := ta.createListenSockets(ctx)
 	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
@@ -59,7 +62,6 @@ func TestHandleTCPMessages(t *testing.T) {
 	assert.NotNil(event.Entity)
 	assert.Equal("app_01", event.Check.Name)
 	assert.Equal(uint32(0), event.Check.Status)
-	ta.Stop()
 }
 
 func TestHandleUDPMessages(t *testing.T) {
@@ -74,7 +76,10 @@ func TestHandleUDPMessages(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, addr, err := ta.createListenSockets()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	_, addr, err := ta.createListenSockets(ctx)
 	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
@@ -109,7 +114,6 @@ func TestHandleUDPMessages(t *testing.T) {
 	assert.NotNil(event.Entity)
 	assert.Equal("app_01", event.Check.Name)
 	assert.Equal(uint32(0), event.Check.Status)
-	ta.Stop()
 }
 
 func TestMultiWriteTimeoutTCP(t *testing.T) {
@@ -124,7 +128,10 @@ func TestMultiWriteTimeoutTCP(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	addr, _, err := ta.createListenSockets()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	addr, _, err := ta.createListenSockets(ctx)
 	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
@@ -153,7 +160,6 @@ func TestMultiWriteTimeoutTCP(t *testing.T) {
 	}
 	assert.Equal("invalid", string(readData[:numBytes]))
 	require.NoError(t, tcpClient.Close())
-	ta.Stop()
 }
 
 func TestReceiveMultiWriteTCP(t *testing.T) {
@@ -167,8 +173,9 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	addr, _, err := ta.createListenSockets()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	addr, _, err := ta.createListenSockets(ctx)
 	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
@@ -200,8 +207,6 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 	assert.NotNil(event.Entity)
 	assert.Equal("app_01", event.Check.Name)
 	assert.Equal(uint32(0), event.Check.Status)
-
-	ta.Stop()
 }
 
 func TestReceivePingTCP(t *testing.T) {
@@ -215,8 +220,9 @@ func TestReceivePingTCP(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	addr, _, err := ta.createListenSockets()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	addr, _, err := ta.createListenSockets(ctx)
 	assert.NoError(err)
 	if err != nil {
 		assert.FailNow("createListenSockets() failed to run")
@@ -240,5 +246,4 @@ func TestReceivePingTCP(t *testing.T) {
 	numBytes, err := tcpClient.Read(readData)
 	require.NoError(t, err)
 	assert.Equal("pong", string(readData[:numBytes]))
-	ta.Stop()
 }

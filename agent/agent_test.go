@@ -3,6 +3,7 @@
 package agent
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -21,7 +22,9 @@ type testMessageType struct {
 }
 
 func TestSendLoop(t *testing.T) {
-	done := make(chan struct{})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	server := transport.NewServer()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := server.Serve(w, r)
@@ -36,7 +39,7 @@ func TestSendLoop(t *testing.T) {
 		assert.NotNil(t, event.Entity)
 		assert.Equal(t, "agent", event.Entity.EntityClass)
 		assert.NotEmpty(t, event.Entity.System)
-		done <- struct{}{}
+		cancel()
 	}))
 	defer ts.Close()
 
@@ -53,17 +56,16 @@ func TestSendLoop(t *testing.T) {
 	}
 	mockTime.Start()
 	defer mockTime.Stop()
-	err = ta.Run()
+	err = ta.Run(ctx)
 	require.NoError(t, err)
-	defer ta.Stop()
-	<-done
 }
 
 func TestReceiveLoop(t *testing.T) {
 	testMessage := &testMessageType{"message"}
 
-	done := make(chan struct{})
 	server := transport.NewServer()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		conn, err := server.Serve(w, r)
 		require.NoError(t, err)
@@ -77,7 +79,7 @@ func TestReceiveLoop(t *testing.T) {
 		}
 		err = conn.Send(tm)
 		assert.NoError(t, err)
-		done <- struct{}{}
+		cancel()
 	}))
 	defer ts.Close()
 
@@ -91,31 +93,30 @@ func TestReceiveLoop(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	ta.handler.AddHandler("testMessageType", func(payload []byte) error {
+	ta.handler.AddHandler("testMessageType", func(ctx context.Context, payload []byte) error {
 		msg := &testMessageType{}
 		err := json.Unmarshal(payload, msg)
 		assert.NoError(t, err)
 		assert.Equal(t, testMessage.Data, msg.Data)
-		done <- struct{}{}
+		cancel()
 		return nil
 	})
-	err = ta.Run()
-	require.NoError(t, err)
-	defer ta.Stop()
 	msgBytes, _ := json.Marshal(&testMessageType{"message"})
 	tm := &transport.Message{Payload: msgBytes, Type: "testMessageType"}
 	ta.sendMessage(tm)
-	<-done
-	<-done
+	err = ta.Run(ctx)
+	require.NoError(t, err)
 }
 
 func TestKeepaliveLoggingRedaction(t *testing.T) {
 	errors := make(chan error, 100)
 	server := transport.NewServer()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		defer func() {
-			close(errors)
-		}()
+		if err := ctx.Err(); err != nil {
+			return
+		}
 		conn, err := server.Serve(w, r)
 		require.NoError(t, err)
 
@@ -140,6 +141,8 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 		if got, want := label, types.Redacted; got == want {
 			errors <- fmt.Errorf("secret was redacted")
 		}
+
+		cancel()
 	}))
 	defer ts.Close()
 
@@ -159,9 +162,8 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 	}
 	mockTime.Start()
 	defer mockTime.Stop()
-	err = ta.Run()
-	require.NoError(t, err)
-	defer ta.Stop()
+	err = ta.Run(ctx)
+	close(errors)
 	for err := range errors {
 		if err != nil {
 			t.Error(err)
@@ -190,7 +192,6 @@ func TestInvalidAgentName_GH2022(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = ta.Run()
+	err = ta.Run(context.Background())
 	require.Error(t, err)
-	defer ta.Stop()
 }

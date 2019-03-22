@@ -1,6 +1,7 @@
 package retry
 
 import (
+	"context"
 	"errors"
 	"math/rand"
 	"time"
@@ -8,6 +9,10 @@ import (
 
 // ExponentialBackoff contains the configuration for exponential backoff
 type ExponentialBackoff struct {
+	// If Ctx is canceled, the retry method will terminate early with the
+	// error from Ctx.Err().
+	Ctx context.Context
+
 	// InitialDelayInterval represents the initial amount of time of sleep
 	InitialDelayInterval time.Duration
 
@@ -46,6 +51,10 @@ var ErrMaxElapsedTime = errors.New("maximal elapsed time reached")
 // the maximal number of retries is reached
 func (b *ExponentialBackoff) Retry(fn Func) error {
 	wait := b.InitialDelayInterval
+	ctx := context.Background()
+	if b.Ctx != nil {
+		ctx = b.Ctx
+	}
 
 	for i := 0; i < b.MaxRetryAttempts || b.MaxRetryAttempts == 0; i++ {
 		if i != 0 {
@@ -58,7 +67,12 @@ func (b *ExponentialBackoff) Retry(fn Func) error {
 			if b.MaxDelayInterval > 0 && wait > b.MaxDelayInterval {
 				wait = b.MaxDelayInterval
 			}
-			time.Sleep(wait)
+
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(wait):
+			}
 
 			// Exponentially increase that sleep duration
 			wait = time.Duration(float64(wait) * b.Multiplier)

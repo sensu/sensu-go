@@ -92,6 +92,12 @@ type Config struct {
 	// DeregistrationHandler specifies a single deregistration handler
 	DeregistrationHandler string
 
+	// DisableAPI disables the events API
+	DisableAPI bool
+
+	// DisableSockets disables the event sockets
+	DisableSockets bool
+
 	// EventsAPIRateLimit is the maximum number of events per second that will
 	// be transmitted to the backend from the events API
 	EventsAPIRateLimit rate.Limit

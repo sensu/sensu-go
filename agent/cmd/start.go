@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -165,18 +166,9 @@ func newStartCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if err := sensuAgent.Run(); err != nil {
-				return err
-			}
 
-			if !viper.GetBool(flagDisableAPI) {
-				sensuAgent.StartAPI()
-			}
-
-			if !viper.GetBool(flagDisableSockets) {
-				sensuAgent.StartSocketListeners()
-			}
-
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
 			sigs := make(chan os.Signal, 1)
 			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
@@ -187,11 +179,18 @@ func newStartCommand() *cobra.Command {
 				defer wg.Done()
 				sig := <-sigs
 				logger.Info("signal received: ", sig)
-				sensuAgent.Stop()
+				cancel()
 			}()
 
-			wg.Wait()
-			return nil
+			if !viper.GetBool(flagDisableAPI) {
+				sensuAgent.StartAPI(ctx)
+			}
+
+			if !viper.GetBool(flagDisableSockets) {
+				sensuAgent.StartSocketListeners(ctx)
+			}
+
+			return sensuAgent.Run(ctx)
 		},
 	}
 

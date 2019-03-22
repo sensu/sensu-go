@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -46,10 +47,10 @@ func (r RuntimeAssetSet) Scripts() (map[string]io.ReadCloser, error) {
 }
 
 // GetAll gets a list of assets with the provided getter.
-func GetAll(getter Getter, assets []types.Asset) (RuntimeAssetSet, error) {
+func GetAll(ctx context.Context, getter Getter, assets []types.Asset) (RuntimeAssetSet, error) {
 	runtimeAssets := make([]*RuntimeAsset, 0, len(assets))
 	for _, asset := range assets {
-		runtimeAsset, err := getter.Get(&asset)
+		runtimeAsset, err := getter.Get(ctx, &asset)
 		if err != nil {
 			return nil, err
 		}

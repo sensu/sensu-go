@@ -3,6 +3,7 @@ package agent
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"net"
@@ -20,7 +21,7 @@ var (
 
 // createListenSockets UDP and TCP socket listeners on port 3030 for external check
 // events.
-func (a *Agent) createListenSockets() (string, string, error) {
+func (a *Agent) createListenSockets(ctx context.Context) (string, string, error) {
 	// we have two listeners that we want to shut down before agent.Stop() returns.
 	a.wg.Add(2)
 
@@ -37,7 +38,7 @@ func (a *Agent) createListenSockets() (string, string, error) {
 		return "", "", err
 	}
 	logger.Info("starting UDP listener on address: ", addr)
-	go a.handleUDPMessages(udpListen)
+	go a.handleUDPMessages(ctx, udpListen)
 
 	// Setup TCP socket listener
 	TCPServerAddr, err := net.ResolveTCPAddr("tcp", addr)
@@ -53,11 +54,9 @@ func (a *Agent) createListenSockets() (string, string, error) {
 
 	// we have to monitor the stopping channel out of band, otherwise
 	// the tcpListen.Accept() loop will never return.
-	var isListenerClosed bool
 	go func() {
-		<-a.stopping
+		<-ctx.Done()
 		logger.Debug("TCP listener stopped")
-		isListenerClosed = true
 		if err := tcpListen.Close(); err != nil {
 			logger.Debug(err)
 		}
@@ -72,7 +71,7 @@ func (a *Agent) createListenSockets() (string, string, error) {
 			conn, err := tcpListen.Accept()
 			if err != nil {
 				// Only log the error if the listener was not properly stopped by us
-				if !isListenerClosed {
+				if ctx.Err() != nil {
 					logger.WithError(err).Error("error accepting TCP connection")
 				}
 				if err := tcpListen.Close(); err != nil {
@@ -184,11 +183,11 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 // Deserialization failures will be logged at the ERROR level by the
 // Sensu agent, but the sender of the invalid data will not be
 // notified.
-func (a *Agent) handleUDPMessages(c net.PacketConn) {
+func (a *Agent) handleUDPMessages(ctx context.Context, c net.PacketConn) {
 	var buf [1500]byte
 
 	go func() {
-		<-a.stopping
+		<-ctx.Done()
 		if err := c.Close(); err != nil {
 			logger.Debug(err)
 		}
@@ -199,7 +198,7 @@ func (a *Agent) handleUDPMessages(c net.PacketConn) {
 	for {
 		bytesRead, _, err := c.ReadFrom(buf[0:])
 		select {
-		case <-a.stopping:
+		case <-ctx.Done():
 			logger.Debug("UDP listener stopped")
 			return
 		default:

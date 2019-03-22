@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -16,7 +17,7 @@ type MockGetter struct {
 }
 
 // Get satisfies the asset.Getter interface
-func (m *MockGetter) Get(*types.Asset) (*RuntimeAsset, error) {
+func (m *MockGetter) Get(context.Context, *types.Asset) (*RuntimeAsset, error) {
 	m.getCalled = true
 	return m.asset, m.err
 }
@@ -33,7 +34,7 @@ func NewTestFilteredManager() (*MockGetter, *types.Entity, *filteredManager) {
 func TestFilteredManagerCallsGetter(t *testing.T) {
 	mockGetter, _, filteredManager := NewTestFilteredManager()
 
-	actualAsset, err := filteredManager.Get(types.FixtureAsset("test-asset"))
+	actualAsset, err := filteredManager.Get(context.TODO(), types.FixtureAsset("test-asset"))
 	assert.NoError(t, err)
 	assert.Equal(t, mockGetter.asset, actualAsset)
 	assert.True(t, mockGetter.getCalled)
@@ -45,7 +46,7 @@ func TestFilteredManagerFilteredAsset(t *testing.T) {
 
 	fixtureAsset := types.FixtureAsset("test-asset")
 	fixtureAsset.Filters = []string{fmt.Sprintf("entity.name == '%s'", entity.Name)}
-	actualAsset, err := filteredManager.Get(fixtureAsset)
+	actualAsset, err := filteredManager.Get(context.TODO(), fixtureAsset)
 	assert.NoError(t, err)
 	assert.Equal(t, mockGetter.asset, actualAsset)
 	assert.True(t, mockGetter.getCalled)
@@ -57,7 +58,7 @@ func TestFilteredManagerUnfilteredAsset(t *testing.T) {
 
 	fixtureAsset := types.FixtureAsset("test-asset")
 	fixtureAsset.Filters = []string{"entity.name == 'foo'"}
-	actualAsset, err := filteredManager.Get(fixtureAsset)
+	actualAsset, err := filteredManager.Get(context.TODO(), fixtureAsset)
 	assert.NoError(t, err)
 	assert.Nil(t, actualAsset)
 	assert.False(t, mockGetter.getCalled)
@@ -68,7 +69,7 @@ func TestFilteredManagerError(t *testing.T) {
 	mockGetter, _, filteredManager := NewTestFilteredManager()
 	mockGetter.err = errors.New("TestFilteredManagerError")
 
-	_, err := filteredManager.Get(types.FixtureAsset("test-asset"))
+	_, err := filteredManager.Get(context.TODO(), types.FixtureAsset("test-asset"))
 	assert.Error(t, err)
 	assert.True(t, mockGetter.getCalled)
 }

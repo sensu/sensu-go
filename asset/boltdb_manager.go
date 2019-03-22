@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -66,7 +67,7 @@ type boltDBAssetManager struct {
 //
 // If a value is not returned, the asset is not installed or not installed
 // correctly. We then proceed to attempt asset installation.
-func (b *boltDBAssetManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
+func (b *boltDBAssetManager) Get(ctx context.Context, asset *types.Asset) (*RuntimeAsset, error) {
 	key := []byte(asset.Sha512)
 	var localAsset *RuntimeAsset
 
@@ -117,7 +118,7 @@ func (b *boltDBAssetManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 		}
 
 		// install the asset
-		tmpFile, err := b.fetcher.Fetch(asset.URL)
+		tmpFile, err := b.fetcher.Fetch(ctx, asset.URL)
 		if err != nil {
 			return err
 		}

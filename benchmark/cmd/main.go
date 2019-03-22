@@ -1,13 +1,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"strings"
-	"sync"
 	"syscall"
 
 	"github.com/google/uuid"
@@ -22,17 +22,12 @@ func main() {
 
 	flag.Parse()
 
-	var (
-		wg     sync.WaitGroup
-		agents []*agent.Agent
-	)
-
 	backends := strings.Split(*backendHost, ",")
 
-	agents = make([]*agent.Agent, *count)
-	i := 0
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
-	for i < *count {
+	for i := 0; i < *count; i++ {
 		name := uuid.New().String()
 		backend := backends[i%len(backends)]
 
@@ -57,25 +52,14 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		if err := agent.Run(); err != nil {
+		if err := agent.Run(ctx); err != nil {
 			log.Fatal(err)
 			continue
 		}
-		agents[i] = agent
-		wg.Add(1)
-		i++
 	}
 
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 
-	go func() {
-		<-sigs
-		for _, agent := range agents {
-			agent.Stop()
-			wg.Done()
-		}
-	}()
-
-	wg.Wait()
+	<-sigs
 }

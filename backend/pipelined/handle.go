@@ -203,7 +203,7 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 		ctx := types.SetContextFromResource(context.Background(), handler)
 		matchedAssets := asset.GetAssets(ctx, p.store, handler.RuntimeAssets)
 
-		assets, err := asset.GetAll(p.assetGetter, matchedAssets)
+		assets, err := asset.GetAll(context.TODO(), p.assetGetter, matchedAssets)
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for handler")
 		} else {

@@ -20,7 +20,7 @@ import (
 )
 
 // TODO(greg): At some point, we're going to need max parallelism.
-func (a *Agent) handleCheck(payload []byte) error {
+func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
 	request := &v2.CheckRequest{}
 	if err := json.Unmarshal(payload, request); err != nil {
 		return err
@@ -54,7 +54,7 @@ func (a *Agent) handleCheck(payload []byte) error {
 	logger.Info("scheduling check execution: ", checkConfig.Name)
 
 	entity := a.getAgentEntity()
-	go a.executeCheck(request, entity)
+	go a.executeCheck(ctx, request, entity)
 
 	return nil
 }
@@ -86,7 +86,7 @@ func (a *Agent) removeInProgress(request *v2.CheckRequest) {
 	a.inProgressMu.Unlock()
 }
 
-func (a *Agent) executeCheck(request *v2.CheckRequest, entity *v2.Entity) {
+func (a *Agent) executeCheck(ctx context.Context, request *v2.CheckRequest, entity *v2.Entity) {
 	a.addInProgress(request)
 	defer a.removeInProgress(request)
 
@@ -130,7 +130,7 @@ func (a *Agent) executeCheck(request *v2.CheckRequest, entity *v2.Entity) {
 
 	// Fetch and install all assets required for check execution.
 	logger.WithFields(fields).Debug("fetching assets for check")
-	assets, err := asset.GetAll(a.assetGetter, checkAssets)
+	assets, err := asset.GetAll(ctx, a.assetGetter, checkAssets)
 	if err != nil {
 		a.sendFailure(event, fmt.Errorf("error getting assets for event: %s", err))
 		return

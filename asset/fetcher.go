@@ -2,10 +2,12 @@ package asset
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"os"
 	"time"
 )
@@ -18,15 +20,26 @@ var (
 // A Fetcher fetches a file from the specified source and returns an *os.File
 // with the contents of the file found at source.
 type Fetcher interface {
-	Fetch(source string) (*os.File, error)
+	Fetch(ctx context.Context, source string) (*os.File, error)
 }
 
 // URLGetter gets all content at the specified URL.
-type urlGetter func(string) (io.ReadCloser, error)
+type urlGetter func(context.Context, string) (io.ReadCloser, error)
 
 // Get the target URL and return an io.ReadCloser
-func httpGet(url string) (io.ReadCloser, error) {
-	resp, err := http.Get(url)
+func httpGet(ctx context.Context, path string) (io.ReadCloser, error) {
+	parsedURL, err := url.Parse(path)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching asset: %s", err)
+	}
+
+	req := (&http.Request{
+		Method: http.MethodGet,
+		URL:    parsedURL,
+	}).WithContext(ctx)
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("error fetching asset: %s", err)
 	}
@@ -41,12 +54,12 @@ type httpFetcher struct {
 
 // Fetch the file found at the specified url, and return the file or an
 // error indicating why the fetch failed.
-func (h *httpFetcher) Fetch(url string) (*os.File, error) {
+func (h *httpFetcher) Fetch(ctx context.Context, url string) (*os.File, error) {
 	if h.URLGetter == nil {
 		h.URLGetter = httpGet
 	}
 
-	resp, err := h.URLGetter(url)
+	resp, err := h.URLGetter(ctx, url)
 	if err != nil {
 		return nil, err
 	}
