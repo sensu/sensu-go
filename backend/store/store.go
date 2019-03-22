@@ -363,7 +363,7 @@ type EventFilterStore interface {
 
 	// GetEventFilters returns all filters in the given ctx's namespace. A nil
 	// slice with no error is returned if none were found.
-	GetEventFilters(ctx context.Context) ([]*types.EventFilter, error)
+	GetEventFilters(ctx context.Context, pageSize int64, continueToken string) (filters []*types.EventFilter, newContinueToken string, err error)
 
 	// GetEventFilterByName returns a filter using the given name and the
 	// namespace stored in ctx. The resulting filter is nil if none was found.
