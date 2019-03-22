@@ -17,6 +17,8 @@ const getBundleAssets = (stats, chunk) =>
     .filter(name => /\.js$/.test(name))
     .map(name => ({
       filepath: path.join(root, stats.outputPath, name),
+      outputPath: path.join(".", "static", "js"),
+      publicPath: path.join("/", "static", "js"),
     }));
 
 export default makeConfig({
