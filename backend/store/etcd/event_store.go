@@ -96,7 +96,7 @@ func (s *Store) GetEvents(ctx context.Context, pageSize int64, continueToken str
 		events = append(events, event)
 	}
 
-	if resp.Count > pageSize {
+	if pageSize != 0 && resp.Count > pageSize {
 		queriedNamespace := store.NewNamespaceFromContext(ctx)
 		lastEvent := events[len(events)-1]
 
@@ -160,7 +160,7 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pageSi
 		events = append(events, event)
 	}
 
-	if resp.Count > pageSize {
+	if pageSize != 0 && resp.Count > pageSize {
 		lastEvent := events[len(events)-1]
 		nextContinueToken = lastEvent.Check.Name + "\x00"
 	}

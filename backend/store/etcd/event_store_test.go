@@ -45,10 +45,11 @@ func TestEventStorage(t *testing.T) {
 		event.Check.Annotations = nil
 
 		// We should receive an empty slice if no results were found
-		events, _, err := store.GetEvents(ctx, 0, "")
+		events, continueToken, err := store.GetEvents(ctx, 0, "")
 		assert.NoError(t, err)
 		assert.NotNil(t, events)
 		assert.Equal(t, len(events), 0)
+		assert.Empty(t, continueToken)
 
 		err = store.UpdateEvent(ctx, event)
 		require.NoError(t, err)
@@ -59,24 +60,27 @@ func TestEventStorage(t *testing.T) {
 			t.Errorf("bad event: got %#v, want %#v", got.Check, want.Check)
 		}
 
-		events, _, err = store.GetEvents(ctx, 0, "")
+		events, continueToken, err = store.GetEvents(ctx, 0, "")
 		require.NoError(t, err)
 		require.Equal(t, 1, len(events))
+		require.Empty(t, continueToken)
 		if got, want := events[0], event; !reflect.DeepEqual(got, want) {
 			t.Errorf("bad event: got %v, want %v", got.Check, want.Check)
 		}
 
 		// Get all events with wildcards
 		ctx = context.WithValue(ctx, corev2.NamespaceKey, corev2.NamespaceTypeAll)
-		events, _, err = store.GetEvents(ctx, 0, "")
+		events, continueToken, err = store.GetEvents(ctx, 0, "")
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(events))
+		assert.Empty(t, continueToken)
 
 		// Get all events from a missing namespace
 		ctx = context.WithValue(ctx, corev2.NamespaceKey, "acme")
-		events, _, err = store.GetEvents(ctx, 0, "")
+		events, continueToken, err = store.GetEvents(ctx, 0, "")
 		require.NoError(t, err)
 		require.Equal(t, 0, len(events))
+		require.Empty(t, continueToken)
 
 		// Set back the context
 		ctx = context.WithValue(ctx, corev2.NamespaceKey, event.Entity.Namespace)
@@ -93,9 +97,10 @@ func TestEventStorage(t *testing.T) {
 		assert.Nil(t, newEv)
 		assert.Nil(t, err)
 
-		events, _, err = store.GetEventsByEntity(ctx, "entity1", 0, "")
+		events, continueToken, err = store.GetEventsByEntity(ctx, "entity1", 0, "")
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(events))
+		assert.Empty(t, continueToken)
 		if got, want := events[0], event; !reflect.DeepEqual(got, want) {
 			t.Errorf("bad event: got %v, want %v", got, want)
 		}
