@@ -608,5 +608,5 @@ type ExtensionRegistry interface {
 	GetExtension(ctx context.Context, name string) (*types.Extension, error)
 
 	// GetExtensions gets all the extensions for the namespace in ctx.
-	GetExtensions(ctx context.Context) ([]*types.Extension, error)
+	GetExtensions(ctx context.Context, pageSize int64, continueToken string) (extensions []*types.Extension, newContinueToken string, err error)
 }

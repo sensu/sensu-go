@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 const (
@@ -81,24 +84,37 @@ func (s *Store) GetExtension(ctx context.Context, name string) (*types.Extension
 }
 
 // GetExtensions gets an extension
-func (s *Store) GetExtensions(ctx context.Context) ([]*types.Extension, error) {
-	resp, err := s.client.Get(ctx, getExtensionPath(ctx, ""), clientv3.WithPrefix())
+func (s *Store) GetExtensions(ctx context.Context, pageSize int64, continueToken string) (extensions []*corev2.Extension, newContinueToken string, err error) {
+	opts := []clientv3.OpOption{
+		clientv3.WithLimit(pageSize),
+	}
+
+	keyPrefix := getExtensionPath(ctx, "")
+	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
+	opts = append(opts, clientv3.WithRange(rangeEnd))
+
+	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueToken), opts...)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	if len(resp.Kvs) == 0 {
-		return nil, nil
+		return nil, "", nil
 	}
 
-	extensions := make([]*types.Extension, len(resp.Kvs))
-	for i, kv := range resp.Kvs {
-		var ext types.Extension
-		if err := json.Unmarshal(kv.Value, &ext); err != nil {
-			return nil, err
+	for _, kv := range resp.Kvs {
+		var extension corev2.Extension
+		if err := json.Unmarshal(kv.Value, &extension); err != nil {
+			return nil, "", err
 		}
-		extensions[i] = &ext
+
+		extensions = append(extensions, &extension)
 	}
 
-	return extensions, nil
+	if pageSize != 0 && resp.Count > pageSize {
+		lastExtension := extensions[len(extensions)-1]
+		newContinueToken = lastExtension.Name + "\x00"
+	}
+
+	return extensions, newContinueToken, nil
 }
