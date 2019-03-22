@@ -375,7 +375,7 @@ func TestHandlerQuery(t *testing.T) {
 			// Mock store methods
 			store.On("GetHandlers", test.ctx).Return(test.handlers, test.storeErr)
 
-			results, err := ctl.Query(test.ctx)
+			results, _, err := ctl.Query(test.ctx)
 
 			assert.EqualValues(test.expectedErr, err)
 			assert.Len(results, test.expectedLen)

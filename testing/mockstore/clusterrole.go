@@ -36,9 +36,9 @@ func (s *MockStore) GetClusterRole(ctx context.Context, name string) (*types.Clu
 }
 
 // ListClusterRoles ...
-func (s *MockStore) ListClusterRoles(ctx context.Context) ([]*types.ClusterRole, error) {
-	args := s.Called(ctx)
-	return args.Get(0).([]*types.ClusterRole), args.Error(1)
+func (s *MockStore) ListClusterRoles(ctx context.Context, pageSize int64, continueToken string) ([]*types.ClusterRole, string, error) {
+	args := s.Called(ctx, pageSize, continueToken)
+	return args.Get(0).([]*types.ClusterRole), args.String(1), args.Error(2)
 }
 
 // UpdateClusterRole ...

@@ -13,9 +13,9 @@ func (s *MockStore) DeleteEventFilterByName(ctx context.Context, name string) er
 }
 
 // GetEventFilters ...
-func (s *MockStore) GetEventFilters(ctx context.Context) ([]*types.EventFilter, error) {
-	args := s.Called(ctx)
-	return args.Get(0).([]*types.EventFilter), args.Error(1)
+func (s *MockStore) GetEventFilters(ctx context.Context, pageSize int64, continueToken string) ([]*types.EventFilter, string, error) {
+	args := s.Called(ctx, pageSize, continueToken)
+	return args.Get(0).([]*types.EventFilter), args.String(1), args.Error(2)
 }
 
 // GetEventFilterByName ...

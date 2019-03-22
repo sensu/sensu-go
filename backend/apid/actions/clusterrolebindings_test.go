@@ -319,7 +319,7 @@ func TestClusterRoleBindingList(t *testing.T) {
 				On("ListClusterRoleBindings", mock.Anything).
 				Return(tc.expectedResult, tc.storeErr)
 
-			result, err := actions.List(tc.ctx)
+			result, _, err := actions.List(tc.ctx)
 
 			if tc.expectedErr {
 				inferErr, ok := err.(Error)

@@ -319,7 +319,7 @@ func TestRoleList(t *testing.T) {
 				On("ListRoles", mock.Anything).
 				Return(tc.expectedResult, tc.storeErr)
 
-			result, err := actions.List(tc.ctx)
+			result, _, err := actions.List(tc.ctx)
 
 			if tc.expectedErr {
 				inferErr, ok := err.(Error)

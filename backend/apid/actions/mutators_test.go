@@ -308,7 +308,7 @@ func TestMutatorQuery(t *testing.T) {
 			// Mock store methods
 			store.On("GetMutators", test.ctx).Return(test.mutators, test.storeErr)
 
-			results, err := ctl.Query(test.ctx)
+			results, _, err := ctl.Query(test.ctx)
 
 			assert.EqualValues(test.expectedErr, err)
 			assert.Len(results, test.expectedLen)

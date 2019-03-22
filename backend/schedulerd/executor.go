@@ -330,7 +330,7 @@ func buildRequest(check *types.CheckConfig, store store.Store) (*types.CheckRequ
 	// the check in the first place.
 	if len(check.RuntimeAssets) != 0 {
 		// Explode assets; get assets & filter out those that are irrelevant
-		assets, err := store.GetAssets(ctx)
+		assets, _, err := store.GetAssets(ctx, 0, "")
 		if err != nil {
 			return nil, err
 		}
@@ -346,7 +346,7 @@ func buildRequest(check *types.CheckConfig, store store.Store) (*types.CheckRequ
 	// the check in the first place.
 	if len(check.CheckHooks) != 0 {
 		// Explode hooks; get hooks & filter out those that are irrelevant
-		hooks, err := store.GetHookConfigs(ctx)
+		hooks, _, err := store.GetHookConfigs(ctx, 0, "")
 		if err != nil {
 			return nil, err
 		}

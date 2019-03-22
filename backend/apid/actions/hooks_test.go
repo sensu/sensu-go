@@ -75,7 +75,7 @@ func TestHookQuery(t *testing.T) {
 			store.On("GetHookConfigs", tc.ctx).Return(tc.records, tc.storeErr)
 
 			// Exec Query
-			results, err := actions.Query(tc.ctx)
+			results, _, err := actions.Query(tc.ctx)
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)

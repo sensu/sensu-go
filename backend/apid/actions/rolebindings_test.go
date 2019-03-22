@@ -319,7 +319,7 @@ func TestRoleBindingList(t *testing.T) {
 				On("ListRoleBindings", mock.Anything).
 				Return(tc.expectedResult, tc.storeErr)
 
-			result, err := actions.List(tc.ctx)
+			result, _, err := actions.List(tc.ctx)
 
 			if tc.expectedErr {
 				inferErr, ok := err.(Error)
