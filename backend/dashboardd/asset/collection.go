@@ -61,6 +61,7 @@ func (a *Collection) Open(path string) (http.File, error) {
 // make virtual directory from collection of filesystems
 func makeVDir(fss []http.FileSystem, path string) (*Dir, error) {
 	dir := &Dir{}
+	dir.entries = map[string]os.FileInfo{}
 	dir.DirInfo = &DirInfo{}
 	for _, fs := range fss {
 		f, err := fs.Open(path)
@@ -77,8 +78,10 @@ func makeVDir(fss []http.FileSystem, path string) (*Dir, error) {
 		if dir.name == "" {
 			dir.name = stat.Name()
 		}
-		if entries, _ := f.Readdir(-1); entries != nil {
-			dir.entries = append(entries, dir.entries...)
+		if es, _ := f.Readdir(-1); es != nil {
+			for _, e := range es {
+				dir.entries[e.Name()] = e
+			}
 		}
 		if stat.ModTime().After(dir.modTime) {
 			dir.modTime = stat.ModTime()
@@ -110,7 +113,7 @@ func (d *DirInfo) Sys() interface{}   { return nil }
 type Dir struct {
 	*DirInfo
 	pos     int // Position within entries for Seek and Readdir.
-	entries []os.FileInfo
+	entries map[string]os.FileInfo
 }
 
 func (d *Dir) Seek(offset int64, whence int) (int64, error) {
@@ -122,15 +125,24 @@ func (d *Dir) Seek(offset int64, whence int) (int64, error) {
 }
 
 func (d *Dir) Readdir(count int) ([]os.FileInfo, error) {
-	if d.pos >= len(d.entries) && count > 0 {
+	entries := d.entryValues()
+	if d.pos >= len(entries) && count > 0 {
 		return nil, io.EOF
 	}
-	if count <= 0 || count > len(d.entries)-d.pos {
-		count = len(d.entries) - d.pos
+	if count <= 0 || count > len(entries)-d.pos {
+		count = len(entries) - d.pos
 	}
-	e := d.entries[d.pos : d.pos+count]
+	e := entries[d.pos : d.pos+count]
 	d.pos += count
 	return e, nil
+}
+
+func (d *Dir) entryValues() []os.FileInfo {
+	vals := make([]os.FileInfo, 0, len(d.entries))
+	for _, val := range d.entries {
+		vals = append(vals, val)
+	}
+	return vals
 }
 
 func isNotFound(err error) bool {
