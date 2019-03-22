@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 var (
@@ -34,28 +37,40 @@ func (s *Store) DeleteMutatorByName(ctx context.Context, name string) error {
 	return err
 }
 
-// GetMutators gets the list of mutators for an (optional) namespace. If org is
-// the empty string, GetMutators returns all mutators for all orgs.
-func (s *Store) GetMutators(ctx context.Context) ([]*types.Mutator, error) {
-	resp, err := s.client.Get(ctx, getMutatorsPath(ctx, ""), clientv3.WithPrefix())
+// GetMutators gets the list of mutators for a namespace.
+func (s *Store) GetMutators(ctx context.Context, pageSize int64, continueToken string) (mutators []*corev2.Mutator, newContinueToken string, err error) {
+	opts := []clientv3.OpOption{
+		clientv3.WithLimit(pageSize),
+	}
+
+	keyPrefix := getMutatorsPath(ctx, "")
+	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
+	opts = append(opts, clientv3.WithRange(rangeEnd))
+
+	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueToken), opts...)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	if len(resp.Kvs) == 0 {
-		return []*types.Mutator{}, nil
+		return []*corev2.Mutator{}, "", nil
 	}
 
-	mutatorsArray := make([]*types.Mutator, len(resp.Kvs))
-	for i, kv := range resp.Kvs {
-		mutator := &types.Mutator{}
+	for _, kv := range resp.Kvs {
+		mutator := &corev2.Mutator{}
 		err = json.Unmarshal(kv.Value, mutator)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
-		mutatorsArray[i] = mutator
+
+		mutators = append(mutators, mutator)
 	}
 
-	return mutatorsArray, nil
+	if pageSize != 0 && resp.Count > pageSize {
+		lastMutator := mutators[len(mutators)-1]
+		newContinueToken = lastMutator.Name + "\x00"
+	}
+
+	return mutators, newContinueToken, nil
 }
 
 // GetMutatorByName gets a Mutator by name.

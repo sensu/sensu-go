@@ -417,7 +417,7 @@ type MutatorStore interface {
 
 	// GetMutators returns all mutators in the given ctx's namespace. A nil slice
 	// with no error is returned if none were found.
-	GetMutators(ctx context.Context) ([]*types.Mutator, error)
+	GetMutators(ctx context.Context, pageSize int64, continueToken string) (mutators []*types.Mutator, newContinueToken string, err error)
 
 	// GetMutatorByName returns a mutator using the given name and the
 	// namespace stored in ctx. The resulting mutator is nil if
