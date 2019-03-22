@@ -19,4 +19,3 @@ import "./SigninRedirect";
 import "./Timer";
 import "./UnauthenticatedRoute";
 import "./UnmountObserver";
-import "./index";

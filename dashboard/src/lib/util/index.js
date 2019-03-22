@@ -1,5 +1,3 @@
-/* eslint-disable import/no-self-import */
-
 import "./array";
 import "./authAPI";
 import "./buildInfo";

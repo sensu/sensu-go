@@ -75,7 +75,7 @@
     "connect-history-api-fallback": "^1.6.0",
     "core-js": "^2.5.6",
     "cronstrue": "^1.31.0",
-    "css-loader": "^1.0.0",
+    "css-loader": "^2.0.0",
     "debounce": "^1.2.0",
     "deepmerge": "^2.0.1",
     "enzyme": "^3.9.0",
@@ -162,7 +162,9 @@
     "setupFiles": [
       "regenerator-runtime/runtime"
     ],
-    "setupTestFrameworkScriptFile": "<rootDir>/src/setupTests.js",
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/setupTests.js"
+    ],
     "testMatch": [
       "<rootDir>/src/**/__tests__/**/*.js?(x)",
       "<rootDir>/src/**/?(*.)(spec|test).js?(x)"
