@@ -18,6 +18,7 @@
     "url": "https://github.com/sensu/sensu-go/"
   },
   "scripts": {
+    "audit-deps": "node scripts audit-deps",
     "check-version": "node scripts check-yarn-version",
     "prettier": "./node_modules/.bin/prettier --write '**/*.js'",
     "build:vendor": "./node_modules/.bin/webpack -r esm --config config/vendor.webpack.config.js",
@@ -67,7 +68,7 @@
     "bluebird": "^3.5.1",
     "bugnet": "^0.1.1",
     "case-sensitive-paths-webpack-plugin": "^2.1.2",
-    "chalk": "^2.4.1",
+    "chalk": "^2.4.2",
     "classnames": "^2.2.5",
     "clean-webpack-plugin": "^0.1.19",
     "compression": "^1.7.4",
