@@ -79,9 +79,7 @@ func makeVDir(fss []http.FileSystem, path string) (*Dir, error) {
 			dir.name = stat.Name()
 		}
 		if es, _ := f.Readdir(-1); es != nil {
-			for _, e := range es {
-				dir.entries[e.Name()] = e
-			}
+			dir.addEntries(es)
 		}
 		if stat.ModTime().After(dir.modTime) {
 			dir.modTime = stat.ModTime()
@@ -135,6 +133,12 @@ func (d *Dir) Readdir(count int) ([]os.FileInfo, error) {
 	e := entries[d.pos : d.pos+count]
 	d.pos += count
 	return e, nil
+}
+
+func (d *Dir) addEntries(fs []os.FileInfo) {
+	for _, f := range fs {
+		d.entries[f.Name()] = f
+	}
 }
 
 func (d *Dir) entryValues() []os.FileInfo {
