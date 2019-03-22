@@ -86,7 +86,7 @@
     "eslint-config-airbnb": "^15.1.0",
     "eslint-config-prettier": "^4.1.0",
     "eslint-config-react-app": "^2.1.0",
-    "eslint-import-resolver-babel-module": "^4.0.0",
+    "eslint-import-resolver-babel-module": "^5.0.0",
     "eslint-loader": "^2.0.0",
     "eslint-plugin-flowtype": "^2.46.3",
     "eslint-plugin-graphql": "^2.1.1",
@@ -193,6 +193,7 @@
     "graphql": "0.13.0",
     "graphql-config/**/graphql": "0.13.0",
     "graphql-import/**/graphql": "0.13.0",
-    "js-yaml": "^3.13.0"
+    "js-yaml": "^3.13.0",
+    "loader-utils": "^1.2.3"
   }
 }
