@@ -67,6 +67,7 @@ func boxAssets(path string) {
 
 func mustRunCmd(pro string, args ...string) {
 	cmd := exec.Command(pro, args...)
+	cmd.Env = append(os.Environ(), "NODE_ENV=production")
 	cmdStr := strings.Join(append([]string{pro}, args...), " ")
 
 	fmt.Printf("Running '%s'\n", cmdStr)
