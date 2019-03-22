@@ -7,6 +7,9 @@ import { StatsWriterPlugin } from "webpack-stats-plugin";
 
 const root = fs.realpathSync(process.cwd());
 
+const jsPath = path.join("static", "js");
+const mediaPath = path.join("static", "media");
+
 export default ({
   // Include a hash of each file's content in its name unless running a
   // development build. This ensures browser caches are automatically invalided
@@ -49,8 +52,8 @@ export default ({
   devtool: process.env.NODE_ENV === "development" ? "eval" : false,
 
   output: {
-    filename: `${contentHashName}.js`,
-    chunkFilename: `${chunkHashName}.js`,
+    filename: path.join(jsPath, `${contentHashName}.js`),
+    chunkFilename: path.join(jsPath, `${chunkHashName}.js`),
     library: chunkHashName,
     pathinfo: process.env.NODE_ENV === "development",
     ...output,
@@ -105,7 +108,7 @@ export default ({
             test: /\.worker\.js$/,
             loader: "worker-loader",
             options: {
-              name: `${contentHashName}.js`,
+              name: path.join(jsPath, `${contentHashName}.js`),
             },
           },
           {
@@ -115,7 +118,7 @@ export default ({
               {
                 loader: require.resolve("./macroLoader"),
                 options: {
-                  filename: `${fileLoaderHashName}.[ext]`,
+                  filename: path.join(mediaPath, `${fileLoaderHashName}.[ext]`),
                 },
               },
               // Value-loader is the source of any Tapable deprecation
@@ -135,7 +138,7 @@ export default ({
             loader: require.resolve("file-loader"),
             exclude: [/\.js$/, /\.html$/, /\.json$/],
             options: {
-              name: `${fileLoaderHashName}.[ext]`,
+              name: path.join(mediaPath, `${fileLoaderHashName}.[ext]`),
             },
           },
           {
