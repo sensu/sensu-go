@@ -34,6 +34,7 @@ class ToolbarMenu extends React.PureComponent {
   };
 
   static Autosizer = Autosizer;
+
   static Item = MenuItem;
 
   // If the menu items change poison the buttons container's width, to ensure
@@ -68,6 +69,19 @@ class ToolbarMenu extends React.PureComponent {
     overflowButtonWidth: 48,
   };
 
+  updateButtonsWidth = debounce(currentTarget => {
+    const newWidth = currentTarget.innerWidth;
+    const oldWidth = this.windowWidth || 0;
+
+    // If the window grew in size and the toolbar menu isn't configured to fill
+    // the entire space we try rendering all the items again.
+    if (!this.props.width && newWidth > oldWidth) {
+      this.setState({ buttonsWidth: null }); // synchronous
+    }
+
+    this.windowWidth = newWidth;
+  }, windowResizeInterval);
+
   componentWillUnmount() {
     this.updateButtonsWidth.clear();
   }
@@ -95,19 +109,6 @@ class ToolbarMenu extends React.PureComponent {
   handleWindowResize = event => {
     this.updateButtonsWidth(event.currentTarget);
   };
-
-  updateButtonsWidth = debounce(currentTarget => {
-    const newWidth = currentTarget.innerWidth;
-    const oldWidth = this.windowWidth || 0;
-
-    // If the window grew in size and the toolbar menu isn't configured to fill
-    // the entire space we try rendering all the items again.
-    if (!this.props.width && newWidth > oldWidth) {
-      this.setState({ buttonsWidth: null }); // synchronous
-    }
-
-    this.windowWidth = newWidth;
-  }, windowResizeInterval);
 
   buttonsWidth = () => {
     const { width } = this.props;

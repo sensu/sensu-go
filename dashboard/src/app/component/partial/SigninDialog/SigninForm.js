@@ -40,7 +40,7 @@ class SignInForm extends React.Component {
 
     const changeField = (name, val) =>
       this.setState({
-        authError: null,
+        // authError: null, // TODO: unused
         [name]: val,
       });
     const handleUsername = ev => changeField("username", ev.target.value);

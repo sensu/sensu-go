@@ -93,6 +93,10 @@ class Loader extends React.PureComponent {
     }
   }
 
+  componentWillUnmount() {
+    clearTimeout(this._timeout);
+  }
+
   _handleRect = rect => {
     const top = Math.max(0, -rect.top);
     const left = Math.max(0, -rect.left);
@@ -119,10 +123,6 @@ class Loader extends React.PureComponent {
     if (this.state.visible) {
       this.setState({ visible: false });
     }
-  }
-
-  componentWillUnmount() {
-    clearTimeout(this._timeout);
   }
 
   render() {

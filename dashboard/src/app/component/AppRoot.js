@@ -27,11 +27,9 @@ import AuthInvalidDialog from "/app/component/partial/AuthInvalidDialog";
 
 class AppRoot extends React.PureComponent {
   static propTypes = {
-    reduxStore: PropTypes.object.isRequired,
     apolloClient: PropTypes.object.isRequired,
+    reduxStore: PropTypes.object.isRequired,
   };
-
-  static defaultProps = { children: null };
 
   render() {
     const { reduxStore, apolloClient } = this.props;

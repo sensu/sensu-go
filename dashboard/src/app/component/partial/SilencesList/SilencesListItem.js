@@ -21,6 +21,7 @@ import TableCell from "@material-ui/core/TableCell";
 import Tooltip from "@material-ui/core/Tooltip";
 
 import HoverController from "/lib/component/controller/HoverController";
+import Maybe from "/lib/component/util/Maybe";
 import ModalController from "/lib/component/controller/ModalController";
 import { RelativeToCurrentDate } from "/lib/component/base/RelativeDate";
 
@@ -163,7 +164,7 @@ class SilencesListItem extends React.Component {
                     )}
                   >
                     {({ open }) => (
-                      <Tooltip title={"Reason"}>
+                      <Tooltip title="Reason">
                         <IconButton onClick={open}>
                           <NotesIcon />
                         </IconButton>

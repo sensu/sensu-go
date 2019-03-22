@@ -14,6 +14,7 @@ class ModalController extends React.Component {
   open = () => {
     this.setState({ modalOpen: true });
   };
+
   close = () => {
     this.setState({ modalOpen: false });
   };

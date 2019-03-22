@@ -12,8 +12,15 @@ plugins:
   - react
 env:
   browser: true
+parser: babel-eslint
+parserOptions:
+  ecmaVersion: 2018
+  sourceType: 'module'
+  ecmaFeatures:
+    jsx: true
 globals:
   IntlRelativeFormat: false
+  isNaN: false
 settings:
   import/resolver:
     babel-module:
@@ -46,7 +53,16 @@ rules:
   # babel-plugin-module-resolver aliases absolute paths to the src directory
   import/no-absolute-path: 0
 
+  # ...
+  react/destructuring-assignment: 0
+  prefer-destructuring: 0
   import/prefer-default-export: 0
+
+  # Conflicts with macros
+  import/named: 0
+
+  # Conflicts with toasts, may re-enable later
+  jsx-a11y/mouse-events-have-key-events: 0
 
   # https://github.com/apollographql/eslint-plugin-graphql
   graphql/template-strings:

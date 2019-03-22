@@ -24,6 +24,7 @@ class ExecuteCheckStatusToast extends React.PureComponent {
   };
 
   state = { loading: true };
+
   _willUnmount = false;
 
   componentDidMount() {

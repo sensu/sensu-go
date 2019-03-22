@@ -54,9 +54,11 @@ class QueryParams extends React.Component {
   shouldComponentUpdate(nextProps) {
     if (this.props.children !== nextProps.children) {
       return true;
-    } else if (this.props.location.pathname !== nextProps.location.pathname) {
+    }
+    if (this.props.location.pathname !== nextProps.location.pathname) {
       return true;
-    } else if (this.props.location.search !== nextProps.location.search) {
+    }
+    if (this.props.location.search !== nextProps.location.search) {
       return true;
     }
     return false;

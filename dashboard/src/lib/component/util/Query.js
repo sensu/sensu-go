@@ -2,6 +2,8 @@
 /* eslint-disable react/no-unused-prop-types */
 /* eslint-disable react/sort-comp */
 /* eslint-disable react/no-multi-comp */
+/* eslint-disable react/require-default-props */
+/* eslint-disable react/default-props-match-prop-types */
 
 import * as React from "react";
 import { ApolloError } from "apollo-client";
@@ -114,6 +116,7 @@ class Query extends React.PureComponent<Props, State> {
   };
 
   subscription: { unsubscribe(): void } | null = null;
+
   localSubscription: { unsubscribe(): void } | null = null;
 
   static getDerivedStateFromProps(props: Props, state: State | null) {

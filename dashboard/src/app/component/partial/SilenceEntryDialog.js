@@ -36,8 +36,6 @@ class SilenceEntryDialog extends React.PureComponent {
 
   static defaultProps = {
     onClose: undefined,
-    onSubmit: undefined,
-    onSubmitSuccess: undefined,
     values: {},
   };
 

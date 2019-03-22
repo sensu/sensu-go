@@ -1,4 +1,4 @@
-/* eslint-disable import/no-webpack-loader-syntax, import/extensions */
+/* eslint-disable import/no-webpack-loader-syntax, import/extensions, import/no-unresolved */
 
 import { buildASTSchema, execute, parse } from "graphql";
 import rawSchema from "!!raw-loader!./combined.graphql";

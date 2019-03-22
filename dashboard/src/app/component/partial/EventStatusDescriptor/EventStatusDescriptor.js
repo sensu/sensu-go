@@ -32,11 +32,11 @@ class EventStatusDescriptor extends React.Component {
     `,
   };
 
+  numFormatter = new Intl.NumberFormat();
+
   shouldComponentUpdate(props) {
     return !equals(this.props, props);
   }
-
-  numFormatter = new Intl.NumberFormat();
 
   // Metric received X minutes ago.
   renderMetricDescription() {

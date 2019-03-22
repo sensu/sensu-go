@@ -31,13 +31,15 @@ class SilenceExpiration extends React.Component {
           .
         </React.Fragment>
       );
-    } else if (expireOnResolve) {
+    }
+    if (expireOnResolve) {
       return (
         <React.Fragment>
           Expires when <strong>resolved</strong>.
         </React.Fragment>
       );
-    } else if (expires) {
+    }
+    if (expires) {
       return (
         <React.Fragment>
           Expires{" "}

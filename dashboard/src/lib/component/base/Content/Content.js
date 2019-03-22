@@ -23,7 +23,6 @@ class Content extends React.PureComponent {
 
   static defaultProps = {
     className: "",
-    container: false,
     marginBottom: false,
   };
 

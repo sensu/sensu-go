@@ -12,9 +12,11 @@ const unknown = "unknown";
 export function statusCodeToId(st) {
   if (st === 0) {
     return success;
-  } else if (st === 1) {
+  }
+  if (st === 1) {
     return warning;
-  } else if (st === 2) {
+  }
+  if (st === 2) {
     return critical;
   }
   return unknown;

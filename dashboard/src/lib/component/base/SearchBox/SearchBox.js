@@ -100,10 +100,6 @@ class SearchBox extends React.Component {
     }
   }
 
-  resetState() {
-    this.setState(defaultState);
-  }
-
   clearFilter = () => {
     this.resetState();
     this.props.onSearch("");
@@ -131,6 +127,10 @@ class SearchBox extends React.Component {
   handleBlur = () => {
     this.setState({ focus: false });
   };
+
+  resetState() {
+    this.setState(defaultState);
+  }
 
   render() {
     const {

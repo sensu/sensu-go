@@ -18,7 +18,7 @@ class EntitiesListHeader extends React.PureComponent {
     onChangeQuery: PropTypes.func.isRequired,
     onClickClearSilences: PropTypes.func.isRequired,
     onClickDelete: PropTypes.func.isRequired,
-    onClickSelect: PropTypes.func.isRequired,
+    onClickSelect: PropTypes.func,
     onClickSilence: PropTypes.func.isRequired,
     order: PropTypes.string.isRequired,
     rowCount: PropTypes.number.isRequired,
@@ -27,9 +27,6 @@ class EntitiesListHeader extends React.PureComponent {
 
   static defaultProps = {
     onClickSelect: () => {},
-    onChangeFilter: () => {},
-    onChangeSort: () => {},
-    onSubmitDelete: () => {},
     namespace: undefined,
   };
 

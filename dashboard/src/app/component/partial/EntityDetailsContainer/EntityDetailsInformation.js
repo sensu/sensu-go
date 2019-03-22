@@ -264,7 +264,7 @@ class EntityDetailsInformation extends React.PureComponent {
                     <DictionaryEntry>
                       <DictionaryKey>MAC</DictionaryKey>
                       <DictionaryValue>
-                        <Maybe value={intr.mac} fallback={"n/a"} />
+                        <Maybe value={intr.mac} fallback="n/a" />
                       </DictionaryValue>
                     </DictionaryEntry>
                     {intr.addresses.map((address, i) => (

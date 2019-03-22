@@ -189,15 +189,15 @@ class ErrorRoot extends React.PureComponent {
 
   componentDidMount() {
     StackTrace.fromError(this.state).then(frames => {
-      this.setState({
+      this.setState(state => ({
         frames: frames
           .map((frame, i) => ({
             ...frame,
-            functionName: this.state.frames[i].functionName,
+            functionName: state.frames[i].functionName,
             fileName: frame.fileName.replace(window.location.origin, ""),
           }))
           .map(formatFrame),
-      });
+      }));
     });
   }
 
@@ -238,7 +238,11 @@ class ErrorRoot extends React.PureComponent {
                   <div key={index}>
                     {"   "}at {frame.functionName} (
                     {frame.url ? (
-                      <a href={frame.url} target="_blank">
+                      <a
+                        href={frame.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         {frame.source}
                       </a>
                     ) : (
@@ -276,7 +280,11 @@ class ErrorRoot extends React.PureComponent {
               </div>
             )}
             {"\n\n"}
-            <a href={issueLink(this.state)} target="_blank">
+            <a
+              href={issueLink(this.state)}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               submit new issue
             </a>{" "}
             (populated with current error details)

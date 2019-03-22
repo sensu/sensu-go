@@ -18,14 +18,16 @@ class Duration extends React.PureComponent {
       // ex. 892ms
       const formatter = this.numberFormatter({ maximumFractionDigits: 0 });
       return `${formatter.format(duration)}ms`;
-    } else if (duration < 10000) {
+    }
+    if (duration < 10000) {
       // ex. 8.02s
       const formatter = this.numberFormatter({
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       });
       return `${formatter.format(duration / 1000)}s`;
-    } else if (duration < 60000) {
+    }
+    if (duration < 60000) {
       // ex. 15.2s
       const formatter = this.numberFormatter({
         minimumFractionDigits: 1,

@@ -78,7 +78,7 @@ class SilenceEntryFormSchedulePanel extends React.PureComponent {
       >
         {({ setValue, input, composeInput }) => (
           <Panel
-            title={"Schedule"}
+            title="Schedule"
             summary={
               input.value === null ? (
                 "begin immediately"

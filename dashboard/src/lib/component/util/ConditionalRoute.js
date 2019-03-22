@@ -7,6 +7,7 @@ class ConditionalRoute extends React.PureComponent {
     ...Route.propTypes,
     component: PropTypes.func,
     render: PropTypes.func,
+    redirectPath: PropTypes.string,
     active: PropTypes.bool,
 
     fallbackRender: PropTypes.func,

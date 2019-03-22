@@ -16,7 +16,7 @@ class EventDetailsContainer extends React.Component {
   static propTypes = {
     event: PropTypes.object,
     loading: PropTypes.bool.isRequired,
-    refetch: PropTypes.func.isRequired,
+    refetch: PropTypes.func,
   };
 
   static defaultProps = {

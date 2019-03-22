@@ -12,7 +12,7 @@ class Submenu extends React.Component {
 
   static propTypes = {
     autoClose: PropTypes.bool,
-    renderMenu: PropTypes.func.isRequired,
+    renderMenu: PropTypes.func,
   };
 
   static defaultProps = {
