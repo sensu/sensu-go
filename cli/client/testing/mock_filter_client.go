@@ -9,8 +9,8 @@ func (c *MockClient) CreateFilter(filter *types.EventFilter) error {
 }
 
 // DeleteFilter for use with mock lib
-func (c *MockClient) DeleteFilter(filter *types.EventFilter) error {
-	args := c.Called(filter)
+func (c *MockClient) DeleteFilter(namespace, name string) error {
+	args := c.Called(namespace, name)
 	return args.Error(0)
 }
 

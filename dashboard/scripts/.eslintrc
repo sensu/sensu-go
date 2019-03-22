@@ -1,3 +1,5 @@
 rules:
   no-console: 0
   import/first: 0
+env:
+  node: true

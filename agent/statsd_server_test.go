@@ -154,7 +154,10 @@ func TestReceiveMetrics(t *testing.T) {
 	cfg, cleanup := FixtureConfig()
 	defer cleanup()
 	cfg.StatsdServer.FlushInterval = 1
-	ta := NewAgent(cfg)
+	ta, err := NewAgent(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	go ta.StartStatsd()
 	// Give the server a second to start up

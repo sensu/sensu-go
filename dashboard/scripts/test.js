@@ -1,4 +1,4 @@
-import "./exceptionHandler";
+import "./util/exceptionHandler";
 
 import jest from "jest";
 

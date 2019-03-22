@@ -52,18 +52,7 @@ func (client *RestClient) UpdateNamespace(namespace *types.Namespace) error {
 
 // DeleteNamespace deletes an namespace on configured Sensu instance
 func (client *RestClient) DeleteNamespace(namespace string) error {
-	path := namespacesPath(namespace)
-	res, err := client.R().Delete(path)
-
-	if err != nil {
-		return err
-	}
-
-	if res.StatusCode() >= 400 {
-		return fmt.Errorf("%v", res.String())
-	}
-
-	return nil
+	return client.Delete(namespacesPath(namespace))
 }
 
 // ListNamespaces fetches all namespaces from configured Sensu instance

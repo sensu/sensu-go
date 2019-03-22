@@ -78,7 +78,7 @@ required = [
 
 [[constraint]]
   name = "github.com/spf13/cobra"
-  revision = "fd32f09af19efc9b1279c54e0d8ed23f66232a15"
+  version = "0.0.3"
 
 [[constraint]]
   name = "github.com/spf13/pflag"
@@ -188,7 +188,7 @@ required = [
 
 [[constraint]]
   name = "go.etcd.io/bbolt"
-  version = "1.3.0"
+  version = "1.3.2"
 
 [[constraint]]
   name = "github.com/sensu/yaml"
@@ -201,3 +201,7 @@ required = [
 [[constraint]]
   name = "github.com/graph-gophers/dataloader"
   version = "5.0.0"
+
+[[constraint]]
+  name = "github.com/sensu/lasr"
+  version = "1.2.0"

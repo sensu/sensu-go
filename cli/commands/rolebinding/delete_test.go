@@ -6,6 +6,7 @@ import (
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -31,7 +32,7 @@ func TestDeleteCommandRunEClosureWithFlags(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("DeleteRoleBinding", "foo").Return(nil)
+	client.On("DeleteRoleBinding", mock.Anything, mock.Anything).Return(nil)
 	cmd := DeleteCommand(cli)
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 	out, err := test.RunCmd(cmd, []string{"foo"})

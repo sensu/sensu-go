@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	time "github.com/echlebek/timeproxy"
+	"github.com/sensu/lasr"
 
 	"github.com/atlassian/gostatsd/pkg/statsd"
 	"github.com/sensu/sensu-go/api/core/v2"
@@ -60,10 +61,12 @@ type Agent struct {
 	systemInfo      *v2.System
 	systemInfoMu    sync.RWMutex
 	wg              sync.WaitGroup
+	apiQueue        *lasr.Q
 }
 
-// NewAgent creates a new Agent and returns a pointer to it.
-func NewAgent(config *Config) *Agent {
+// NewAgent creates a new Agent. It returns non-nil error if there is any error
+// when creating the config.CacheDir.
+func NewAgent(config *Config) (*Agent, error) {
 	ctx := context.TODO()
 	ctx, cancel := context.WithCancel(ctx)
 	agent := &Agent{
@@ -87,18 +90,19 @@ func NewAgent(config *Config) *Agent {
 	// We don't check for errors here and let the agent get created regardless
 	// of system info status.
 	_ = agent.refreshSystemInfo()
-	return agent
+	var err error
+	agent.apiQueue, err = newQueue(config.CacheDir)
+	if err != nil {
+		return nil, fmt.Errorf("error creating agent: %s", err)
+	}
+	return agent, nil
 }
 
-func (a *Agent) sendMessage(msgType string, payload []byte) {
+func (a *Agent) sendMessage(msg *transport.Message) {
 	logger.WithFields(logrus.Fields{
-		"type":    msgType,
-		"payload": string(payload),
-	}).Debug("sending message")
-	msg := &transport.Message{
-		Type:    msgType,
-		Payload: payload,
-	}
+		"type":    msg.Type,
+		"payload": string(msg.Payload),
+	}).Info("sending message")
 	a.sendq <- msg
 }
 
@@ -154,7 +158,6 @@ func (a *Agent) buildTransportHeaderMap() http.Header {
 // 8. Start sending periodic keepalives.
 // 9. Start the API server, shutdown the agent if doing so fails.
 func (a *Agent) Run() error {
-
 	userCredentials := fmt.Sprintf("%s:%s", a.config.User, a.config.Password)
 	userCredentials = base64.StdEncoding.EncodeToString([]byte(userCredentials))
 	a.header = a.buildTransportHeaderMap()
@@ -168,8 +171,8 @@ func (a *Agent) Run() error {
 		return fmt.Errorf("bad keepalive timeout: %d (minimum value is 5 seconds)", timeout)
 	}
 
-	var err error
 	assetManager := asset.NewManager(a.config.CacheDir, a.getAgentEntity(), a.stopping, &a.wg)
+	var err error
 	a.assetGetter, err = assetManager.StartAssetManager()
 	if err != nil {
 		return err
@@ -182,6 +185,7 @@ func (a *Agent) Run() error {
 
 	go a.connectionManager()
 	go a.refreshSystemInfoPeriodically()
+	go a.handleAPIQueue(a.context)
 
 	return nil
 }
@@ -235,33 +239,35 @@ func (a *Agent) receiveLoop(conn transport.Transport, done chan struct{}) {
 	}
 }
 
-func (a *Agent) sendLoop(conn transport.Transport, done chan struct{}) {
+func (a *Agent) sendLoop(conn transport.Transport, done chan struct{}) error {
 	keepalive := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
 	defer keepalive.Stop()
 	logger.Info("sending keepalive")
 	if err := conn.Send(a.newKeepalive()); err != nil {
 		logger.WithError(err).Error("error sending message over websocket")
-		return
+		return err
 	}
 	for {
 		select {
 		case <-done:
-			return
+			return nil
 		case <-a.stopping:
 			if err := conn.Close(); err != nil {
 				logger.WithError(err).Error("error closing websocket connection")
+				return err
 			}
-			return
+			return nil
 		case msg := <-a.sendq:
+			logger.Info("sending event")
 			if err := conn.Send(msg); err != nil {
 				logger.WithError(err).Error("error sending message over websocket")
-				return
+				return err
 			}
 		case <-keepalive.C:
 			logger.Info("sending keepalive")
 			if err := conn.Send(a.newKeepalive()); err != nil {
 				logger.WithError(err).Error("error sending message over websocket")
-				return
+				return err
 			}
 		}
 	}
@@ -351,6 +357,9 @@ func (a *Agent) StartSocketListeners() {
 func (a *Agent) Stop() {
 	a.cancel()
 	close(a.stopping)
+	if err := a.apiQueue.Close(); err != nil {
+		logger.WithError(err).Error("error closing API queue")
+	}
 	a.wg.Wait()
 }
 

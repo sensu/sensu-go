@@ -15,8 +15,8 @@ func (c *MockClient) FetchEntity(ID string) (*types.Entity, error) {
 }
 
 // DeleteEntity for use with mock lib
-func (c *MockClient) DeleteEntity(entity *types.Entity) error {
-	args := c.Called(entity)
+func (c *MockClient) DeleteEntity(namespace, name string) error {
+	args := c.Called(namespace, name)
 	return args.Error(0)
 }
 

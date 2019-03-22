@@ -91,6 +91,8 @@ var typeMap = map[string]interface{}{
 	"system":                 &System{},
 	"TLSOptions":             &TLSOptions{},
 	"tls_options":            &TLSOptions{},
+	"TessenConfig":           &TessenConfig{},
+	"tessen_config":          &TessenConfig{},
 	"TimeWindowDays":         &TimeWindowDays{},
 	"time_window_days":       &TimeWindowDays{},
 	"TimeWindowTimeRange":    &TimeWindowTimeRange{},

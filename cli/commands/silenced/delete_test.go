@@ -16,7 +16,7 @@ func TestDeleteCommand(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("DeleteSilenced", mock.AnythingOfType("string")).Return(nil)
+	client.On("DeleteSilenced", mock.Anything, mock.Anything).Return(nil)
 	cmd := DeleteCommand(cli)
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 
@@ -31,7 +31,7 @@ func TestDeleteCommandRunEClosureWithoutName(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("DeleteSilenced", mock.AnythingOfType("string")).Return(nil)
+	client.On("DeleteSilenced", mock.Anything, mock.Anything).Return(nil)
 	cmd := DeleteCommand(cli)
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
 	require.NoError(t, cmd.Flags().Set("subscription", "nytimes"))
@@ -46,7 +46,7 @@ func TestDeleteCommandRunEClosureWithFlags(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("DeleteSilenced", mock.AnythingOfType("string")).Return(nil)
+	client.On("DeleteSilenced", mock.Anything, mock.Anything).Return(nil)
 
 	cmd := DeleteCommand(cli)
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
@@ -61,7 +61,7 @@ func TestDeleteCommandRunEClosureWithServerErr(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("DeleteSilenced", mock.AnythingOfType("string")).Return(errors.New("oh noes"))
+	client.On("DeleteSilenced", mock.Anything, mock.Anything).Return(errors.New("oh noes"))
 
 	cmd := DeleteCommand(cli)
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))

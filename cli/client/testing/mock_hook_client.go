@@ -15,8 +15,8 @@ func (c *MockClient) UpdateHook(hook *types.HookConfig) error {
 }
 
 // DeleteHook for use with mock lib
-func (c *MockClient) DeleteHook(hook *types.HookConfig) error {
-	args := c.Called(hook)
+func (c *MockClient) DeleteHook(namespace, name string) error {
+	args := c.Called(namespace, name)
 	return args.Error(0)
 }
 

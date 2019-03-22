@@ -165,7 +165,11 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 			return
 		}
 
-		a.sendMessage(transport.MessageTypeEvent, payload)
+		tm := &transport.Message{
+			Type:    transport.MessageTypeEvent,
+			Payload: payload,
+		}
+		a.sendMessage(tm)
 		_, _ = c.Write([]byte("ok"))
 		return
 	}
@@ -241,7 +245,11 @@ func (a *Agent) handleUDPMessages(c net.PacketConn) {
 			if err != nil {
 				return
 			}
-			a.sendMessage(transport.MessageTypeEvent, payload)
+			tm := &transport.Message{
+				Type:    transport.MessageTypeEvent,
+				Payload: payload,
+			}
+			a.sendMessage(tm)
 		}
 
 	}

@@ -7,6 +7,7 @@ import (
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -23,7 +24,7 @@ func TestDeleteCommand(t *testing.T) {
 func TestDeleteCommandRunEClosure(t *testing.T) {
 	cli := test.NewMockCLI()
 	cli.Client.(*client.MockClient).
-		On("DeleteEvent", "foo", "check_foo").
+		On("DeleteEvent", mock.Anything, mock.Anything, mock.Anything).
 		Return(nil)
 
 	cmd := DeleteCommand(cli)
@@ -48,7 +49,7 @@ func TestDeleteCommandRunMissingArgs(t *testing.T) {
 func TestDeleteCommandRunEClosureWithErr(t *testing.T) {
 	cli := test.NewMockCLI()
 	cli.Client.(*client.MockClient).
-		On("DeleteEvent", "foo", "check_foo").
+		On("DeleteEvent", mock.Anything, mock.Anything, mock.Anything).
 		Return(fmt.Errorf("error"))
 
 	cmd := DeleteCommand(cli)
