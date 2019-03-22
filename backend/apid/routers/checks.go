@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -16,7 +17,7 @@ import (
 type CheckController interface {
 	Create(context.Context, types.CheckConfig) error
 	CreateOrReplace(context.Context, types.CheckConfig) error
-	Query(context.Context) ([]*types.CheckConfig, error)
+	Query(context.Context) ([]*types.CheckConfig, string, error)
 	Find(context.Context, string) (*types.CheckConfig, error)
 	Destroy(context.Context, string) error
 	AddCheckHook(context.Context, string, types.HookList) error
@@ -59,7 +60,12 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 }
 
 func (r *ChecksRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
-	records, err := r.controller.Query(req.Context())
+	records, continueToken, err := r.controller.Query(req.Context())
+
+	if continueToken != "" {
+		w.Header().Set(corev2.PaginationContinueHeader, continueToken)
+	}
+
 	return records, err
 }
 

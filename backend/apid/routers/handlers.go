@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -74,5 +75,11 @@ func (r *HandlersRouter) find(req *http.Request) (interface{}, error) {
 }
 
 func (r *HandlersRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
-	return r.controller.Query(req.Context())
+	records, continueToken, err := r.controller.Query(req.Context())
+
+	if continueToken != "" {
+		w.Header().Set(corev2.PaginationContinueHeader, continueToken)
+	}
+
+	return records, err
 }

@@ -2,9 +2,12 @@ package actions
 
 import (
 	"context"
+	"encoding/base64"
 
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 // assetUpdateFields whitelists fields allowed to be updated for Assets
@@ -26,14 +29,20 @@ func NewAssetController(store store.AssetStore) AssetController {
 }
 
 // Query returns resources available to the viewer filter by given params.
-func (a AssetController) Query(ctx context.Context) ([]*types.Asset, error) {
+func (a AssetController) Query(ctx context.Context) ([]*corev2.Asset, string, error) {
+	pageSize := corev2.PageSizeFromContext(ctx)
+	continueToken := corev2.PageContinueFromContext(ctx)
+
 	// Fetch from store
-	results, serr := a.Store.GetAssets(ctx)
+	results, newContinueToken, serr := a.Store.GetAssets(ctx, int64(pageSize), continueToken)
 	if serr != nil {
-		return nil, NewError(InternalErr, serr)
+		return nil, "", NewError(InternalErr, serr)
 	}
 
-	return results, nil
+	// Encode the continue token with base64url (RFC 4648), without padding
+	encodedNewContinueToken := base64.RawURLEncoding.EncodeToString([]byte(newContinueToken))
+
+	return results, encodedNewContinueToken, nil
 }
 
 // Find returns resource associated with given parameters if available to the

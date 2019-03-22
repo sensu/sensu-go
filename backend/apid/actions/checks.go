@@ -1,10 +1,12 @@
 package actions
 
 import (
+	"encoding/base64"
 	"encoding/json"
 
 	"context"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
@@ -51,14 +53,20 @@ func NewCheckController(store store.CheckConfigStore, getter types.QueueGetter) 
 }
 
 // Query returns resources available to the viewer.
-func (a CheckController) Query(ctx context.Context) ([]*types.CheckConfig, error) {
+func (a CheckController) Query(ctx context.Context) ([]*types.CheckConfig, string, error) {
+	pageSize := corev2.PageSizeFromContext(ctx)
+	continueToken := corev2.PageContinueFromContext(ctx)
+
 	// Fetch from store
-	results, serr := a.store.GetCheckConfigs(ctx)
+	results, newContinueToken, serr := a.store.GetCheckConfigs(ctx, int64(pageSize), continueToken)
 	if serr != nil {
-		return nil, NewError(InternalErr, serr)
+		return nil, "", NewError(InternalErr, serr)
 	}
 
-	return results, nil
+	// Encode the continue token with base64url (RFC 4648), without padding
+	encodedNewContinueToken := base64.RawURLEncoding.EncodeToString([]byte(newContinueToken))
+
+	return results, encodedNewContinueToken, nil
 }
 
 // Find returns resource associated with given parameters if available to the

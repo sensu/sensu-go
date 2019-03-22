@@ -2,8 +2,10 @@ package actions
 
 import (
 	"context"
+	"encoding/base64"
 	"errors"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -122,12 +124,18 @@ func (c HandlerController) Find(ctx context.Context, name string) (*types.Handle
 }
 
 // Query returns resources available to the viewer
-func (c HandlerController) Query(ctx context.Context) ([]*types.Handler, error) {
+func (c HandlerController) Query(ctx context.Context) ([]*types.Handler, string, error) {
+	pageSize := corev2.PageSizeFromContext(ctx)
+	continueToken := corev2.PageContinueFromContext(ctx)
+
 	// Fetch from store
-	results, serr := c.Store.GetHandlers(ctx)
+	results, newContinueToken, serr := c.Store.GetHandlers(ctx, int64(pageSize), continueToken)
 	if serr != nil {
-		return nil, NewError(InternalErr, serr)
+		return nil, "", NewError(InternalErr, serr)
 	}
 
-	return results, nil
+	// Encode the continue token with base64url (RFC 4648), without padding
+	encodedNewContinueToken := base64.RawURLEncoding.EncodeToString([]byte(newContinueToken))
+
+	return results, encodedNewContinueToken, nil
 }

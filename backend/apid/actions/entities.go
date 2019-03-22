@@ -2,7 +2,9 @@ package actions
 
 import (
 	"context"
+	"encoding/base64"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -58,14 +60,20 @@ func (c EntityController) Find(ctx context.Context, id string) (*types.Entity, e
 }
 
 // Query returns resources available to the viewer.
-func (c EntityController) Query(ctx context.Context) ([]*types.Entity, error) {
+func (c EntityController) Query(ctx context.Context) ([]*types.Entity, string, error) {
+	pageSize := corev2.PageSizeFromContext(ctx)
+	continueToken := corev2.PageContinueFromContext(ctx)
+
 	// Fetch from store
-	results, serr := c.Store.GetEntities(ctx)
+	results, newContinueToken, serr := c.Store.GetEntities(ctx, int64(pageSize), continueToken)
 	if serr != nil {
-		return nil, NewError(InternalErr, serr)
+		return nil, "", NewError(InternalErr, serr)
 	}
 
-	return results, nil
+	// Encode the continue token with base64url (RFC 4648), without padding
+	encodedNewContinueToken := base64.RawURLEncoding.EncodeToString([]byte(newContinueToken))
+
+	return results, encodedNewContinueToken, nil
 }
 
 // Create instatiates, validates and persists new resource if viewer has access.
