@@ -287,7 +287,7 @@ type HookConfigStore interface {
 	// GetHookConfigs returns all hooks configurations in the given ctx's
 	// namespace. A nil slice with no error is returned if none
 	// were found.
-	GetHookConfigs(ctx context.Context) ([]*types.HookConfig, error)
+	GetHookConfigs(ctx context.Context, pageSize int64, continueToken string) (hooks []*types.HookConfig, newContinueToken string, err error)
 
 	// GetHookConfigByName returns a hook's configuration using the given name and
 	// the namespace stored in ctx. The resulting hook is nil if none was found.
