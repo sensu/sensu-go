@@ -1,83 +1,61 @@
-import chalk from "chalk";
-import compress from "koa-compress";
-import connect from "koa-connect";
+import path from "path";
+import fs from "fs";
+
 import historyFallback from "connect-history-api-fallback";
 import http from "http";
 import killable from "killable";
-import Koa from "koa";
-import koaWebpack from "koa-webpack";
+import express from "express";
+import compression from "compression";
 import proxy from "http-proxy-middleware";
 
-import "./exceptionHandler";
-import assertEnv from "./assertEnv";
-import { loading } from "./log";
-import createCompiler from "./createCompiler";
-import getConfig from "../config/webpack.config";
+import "./util/exceptionHandler";
 
-process.env.NODE_ENV = process.env.NODE_ENV || "development";
-assertEnv();
-
+const root = fs.realpathSync(process.cwd());
 const proxyPaths = ["/auth", "/graphql"];
 const port = parseInt(process.env.PORT, 10) || 3001;
-const hotPort = parseInt(process.env.HOT_PORT, 10) || port + 1;
 
-const config = getConfig();
+const staticAssets = express.Router();
 
-const compiler = createCompiler(config);
+staticAssets.use(express.static(path.join(root, "build/vendor/public")));
+staticAssets.use(express.static(path.join(root, "build/lib/public")));
+staticAssets.use(express.static(path.join(root, "build/app/public")));
 
-let compiled = false;
-compiler.hooks.done.tap("serve", stats => {
-  const { errors } = stats.toJson({});
+const app = express();
+app.use(compression());
 
-  if (!compiled && !errors.length) {
-    compiled = true;
-    console.log();
-    console.log(
-      `You can now visit the app in your browser`,
-      chalk.gray(`visit http://localhost:${port}`),
-    );
-  }
-});
-
-const app = new Koa();
-
-const webpackMiddleware = koaWebpack({
-  compiler,
-  dev: {
-    publicPath: config.output.publicPath,
-    logLevel: "silent",
-  },
-  hot: process.env.NODE_ENV === "development" && {
-    port: hotPort,
-    logLevel: "silent",
-  },
-});
-
-app.use(compress());
 app.use(
-  connect(
-    proxy(proxyPaths, {
-      target: "http://localhost:8080",
-      logLevel: "silent",
-    }),
-  ),
+  proxy(proxyPaths, {
+    target: "http://localhost:8080",
+    logLevel: "silent",
+  }),
 );
-app.use(connect(historyFallback()));
-app.use(webpackMiddleware);
 
-const server = killable(http.createServer(app.callback()));
+app.use(staticAssets);
+
+app.use(
+  historyFallback({
+    verbose: true,
+    disableDotRule: true,
+  }),
+);
+
+app.use(staticAssets);
+
+const server = killable(http.createServer(app));
 
 server.on("error", error => {
   throw error;
+});
+
+server.on("listening", () => {
+  console.log("listening on", server.address().port);
 });
 
 server.listen(port);
 
 ["SIGINT", "SIGTERM"].forEach(sig => {
   process.on(sig, () => {
-    loading.stop(true);
     console.info(`Process Ended via ${sig}`);
     server.kill();
-    webpackMiddleware.close(() => process.exit(0));
   });
 });
