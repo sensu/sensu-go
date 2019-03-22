@@ -3,22 +3,27 @@ import PropTypes from "prop-types";
 import classnames from "classnames";
 import { withStyles } from "@material-ui/core/styles";
 
-const styles = theme => ({
-  root: {
-    verticalAlign: "bottom",
-  },
-  leftAligned: {
-    marginLeft: -4,
-    paddingRight: theme.spacing.unit,
-  },
-  rightAligned: {
-    marginRight: -4,
-    paddingLeft: theme.spacing.unit,
-  },
-  icon: {
-    fontSize: 20,
-  },
-});
+const styles = theme => {
+  const padding = theme.spacing.unit;
+  const margin = (padding / 2) * -1;
+
+  return {
+    root: {
+      verticalAlign: "sub",
+    },
+    leftAligned: {
+      marginLeft: margin,
+      paddingRight: padding,
+    },
+    rightAligned: {
+      marginRight: margin,
+      paddingLeft: padding,
+    },
+    icon: {
+      fontSize: "1rem",
+    },
+  };
+};
 
 class ButtonIcon extends React.PureComponent {
   static propTypes = {

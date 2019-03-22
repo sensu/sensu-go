@@ -82,7 +82,7 @@ class Preferences extends React.Component {
             <IconButton color="inherit" onClick={onClose} aria-label="Close">
               <CloseIcon />
             </IconButton>
-            <Typography variant="title" color="inherit">
+            <Typography variant="h6" color="inherit">
               Preferences
             </Typography>
           </Toolbar>

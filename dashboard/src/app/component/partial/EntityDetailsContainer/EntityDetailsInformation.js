@@ -98,7 +98,7 @@ class EntityDetailsInformation extends React.PureComponent {
       <Card>
         <CardHighlight color={status} />
         <CardContent>
-          <Typography variant="headline">
+          <Typography variant="h5">
             {entity.name}
             {entity.silences.length > 0 && (
               <Tooltip title="Silenced">

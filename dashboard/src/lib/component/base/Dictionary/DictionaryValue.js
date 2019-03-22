@@ -57,7 +57,7 @@ class DictionaryValue extends React.Component {
     return (
       <Typography
         component="td"
-        variant="body1"
+        variant="body2"
         className={className}
         colSpan={fullWidth ? 2 : 1}
         {...props}

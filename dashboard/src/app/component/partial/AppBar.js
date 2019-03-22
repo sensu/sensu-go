@@ -91,7 +91,7 @@ class AppBar extends React.Component {
               </IconButton>
               <Typography
                 className={classes.title}
-                variant="title"
+                variant="h6"
                 color="inherit"
                 noWrap
               >

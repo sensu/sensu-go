@@ -69,7 +69,7 @@ class NotFound extends React.PureComponent {
             xs={12}
             sm={6}
             className={classes.graphic}
-            variant="headline"
+            variant="h5"
           >
             <p>
               <span role="img" aria-label="ship">
@@ -82,10 +82,10 @@ class NotFound extends React.PureComponent {
             </p>
           </Typography>
           <Grid item xs={12} sm={6}>
-            <Typography className={classes.headline} variant="headline">
+            <Typography className={classes.headline} variant="h5">
               404
             </Typography>
-            <Typography className={classes.body} variant="subheading">
+            <Typography className={classes.body} variant="subtitle1">
               The page you requested was not found.{" "}
               <a href="#back" onClick={() => window.history.back()}>
                 Go back

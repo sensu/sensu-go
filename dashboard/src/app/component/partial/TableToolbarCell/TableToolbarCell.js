@@ -37,29 +37,41 @@ class TableToolbarCell extends React.Component {
   static propTypes = {
     children: PropTypes.func.isRequired,
     classes: PropTypes.object.isRequired,
+    className: PropTypes.string,
     disabled: PropTypes.bool,
     floating: PropTypes.bool,
   };
 
   static defaultProps = {
+    className: undefined,
     disabled: false,
     floating: false,
   };
 
   renderCell = () => {
-    const children = this.props.children();
-    const containerClasses = classnames(this.props.classes.container, {
-      [this.props.classes.floating]: this.props.floating,
+    const { children: childrenProp, classes, floating } = this.props;
+    const className = classnames(classes.container, {
+      [classes.floating]: floating,
     });
 
-    return <div className={containerClasses}>{children}</div>;
+    return <div className={className}>{childrenProp()}</div>;
   };
 
   render() {
-    const { classes, disabled } = this.props;
+    const {
+      classes,
+      className: classNameProp,
+      disabled,
+      floating,
+      ...props
+    } = this.props;
 
     return (
-      <TableCell padding="none" className={classes.root} {...this.props}>
+      <TableCell
+        padding="none"
+        className={classnames(classes.root, classNameProp)}
+        {...props}
+      >
         {!disabled && this.renderCell()}
       </TableCell>
     );

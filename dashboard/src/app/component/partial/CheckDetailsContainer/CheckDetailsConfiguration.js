@@ -144,7 +144,7 @@ class CheckDetailsConfiguration extends React.PureComponent {
     return (
       <Card>
         <CardContent>
-          <Typography variant="headline">
+          <Typography variant="h5">
             {check.isSilenced > 0 && (
               <Tooltip title="Silenced">
                 <SilencedIcon style={{ float: "right" }} />

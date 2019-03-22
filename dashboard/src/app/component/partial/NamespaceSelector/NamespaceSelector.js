@@ -9,14 +9,14 @@ import Button from "@material-ui/core/ButtonBase";
 import NamespaceSelectorBuilder from "./NamespaceSelectorBuilder";
 import NamespaceSelectorMenu from "./NamespaceSelectorMenu";
 
-const styles = {
+const styles = () => ({
   button: {
     width: "100%",
     padding: "8px 16px 8px 16px",
     display: "block",
     textAlign: "left",
   },
-};
+});
 
 class NamespaceSelector extends React.Component {
   static propTypes = {

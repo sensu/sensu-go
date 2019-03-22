@@ -30,7 +30,7 @@ class DetailedListItemSubtitle extends React.Component {
 
     return (
       <Typography
-        variant="body1"
+        variant="body2"
         color="textSecondary"
         className={className}
         {...props}

@@ -74,7 +74,7 @@ class RelatedEntitiesCard extends React.Component {
     return (
       <Card>
         <CardContent>
-          <Typography variant="headline" paragraph>
+          <Typography variant="h5" paragraph>
             Related Entities
           </Typography>
           <List disablePadding>{this.renderItems()}</List>

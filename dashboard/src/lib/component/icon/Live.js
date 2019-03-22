@@ -8,7 +8,7 @@ import SvgIcon from "@material-ui/core/SvgIcon";
 const duration = 500;
 const outDuration = 100;
 
-const styles = {
+const styles = () => ({
   root: {},
   inactive: {
     "& $radio": {
@@ -71,7 +71,7 @@ const styles = {
       fillOpacity: 0.5,
     },
   },
-};
+});
 
 class Icon extends React.PureComponent {
   static propTypes = {
