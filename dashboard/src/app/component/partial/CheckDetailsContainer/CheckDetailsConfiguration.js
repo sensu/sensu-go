@@ -97,7 +97,8 @@ class CheckDetailsConfiguration extends React.PureComponent {
           Every <Duration duration={interval * 1000} />
         </React.Fragment>
       );
-    } else if (cron && cron.length > 0) {
+    }
+    if (cron && cron.length > 0) {
       return <CronDescriptor capitalize expression={cron} />;
     }
     return "Never";

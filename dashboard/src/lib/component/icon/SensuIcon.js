@@ -8,7 +8,6 @@ class SensuIcon extends React.PureComponent {
   };
 
   static defaultProps = {
-    className: "",
     viewBox: "0 0 268 268",
   };
 

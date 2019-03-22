@@ -75,7 +75,7 @@ export default {
       refreshTokens: (_, { notBefore = null }, { cache }) => {
         const result = cache.readQuery({ query });
 
-        if (notBefore !== null && isNaN(new Date(notBefore))) {
+        if (notBefore !== null && Number.isNaN(new Date(notBefore))) {
           throw new TypeError(
             "invalid `notBefore` variable. Expected DateTime",
           );

@@ -13,6 +13,8 @@ class OverflowMenu extends React.Component {
     onClose: PropTypes.func.isRequired,
   };
 
+  menuListRef = null;
+
   componentDidMount() {
     this.focus();
   }
@@ -55,8 +57,6 @@ class OverflowMenu extends React.Component {
       }
     }
   };
-
-  menuListRef = null;
 
   render() {
     const { id, anchorEl, children, onClose } = this.props;

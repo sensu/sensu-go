@@ -125,14 +125,14 @@ class ChecksListHeader extends React.PureComponent {
           />
         </ToolbarMenu.Item>
         {!published ? (
-          <ToolbarMenu.Item id="publish" visible={"if-room"}>
+          <ToolbarMenu.Item id="publish" visible="if-room">
             <PublishMenuItem
               description="Publish selected checks."
               onClick={() => this.props.onClickSetPublish(true)}
             />
           </ToolbarMenu.Item>
         ) : (
-          <ToolbarMenu.Item id="unpublish" visible={"if-room"}>
+          <ToolbarMenu.Item id="unpublish" visible="if-room">
             <UnpublishMenuItem
               description="Unpublish selected checks."
               onClick={() => this.props.onClickSetPublish(false)}

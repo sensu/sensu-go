@@ -8,7 +8,8 @@ const initialState = {
 function themeReducer(state = initialState.theme, action) {
   if (action.type === "@@storage/CHANGED") {
     return action.payload.theme || state;
-  } else if (action.type === "theme/CHANGE") {
+  }
+  if (action.type === "theme/CHANGE") {
     return action.payload.theme;
   }
   return state;
@@ -20,7 +21,8 @@ function darkModeReducer(state = initialState.dark, action) {
       return state;
     }
     return action.payload.dark;
-  } else if (action.type === "theme/TOGGLE_DARK_MODE") {
+  }
+  if (action.type === "theme/TOGGLE_DARK_MODE") {
     return !state;
   }
   return state;

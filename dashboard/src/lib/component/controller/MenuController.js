@@ -9,12 +9,12 @@ class MenuController extends React.Component {
     renderMenu: PropTypes.func.isRequired,
   };
 
+  _menuAnchorRef = React.createRef();
+
   constructor(props) {
     super(props);
     this._id = getNextId();
   }
-
-  _menuAnchorRef = React.createRef();
 
   render() {
     const { children, renderMenu } = this.props;

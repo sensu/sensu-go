@@ -1,7 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom";
 
-import ErrorRoot from "/lib/component/ErrorRoot";
+import ErrorRoot from "/lib/component/root/ErrorRoot";
 
 let lastError;
 let rootElement;

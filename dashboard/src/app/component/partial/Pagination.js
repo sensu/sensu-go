@@ -58,11 +58,11 @@ class Pagination extends React.PureComponent {
     const limit = parseInt(rawLimit, 10);
     const offset = parseInt(rawOffset, 10);
 
-    if (isNaN(limit)) {
+    if (Number.isNaN(limit)) {
       throw new TypeError(`Expected numeric limit. Received ${rawLimit}`);
     }
 
-    if (isNaN(offset)) {
+    if (Number.isNaN(offset)) {
       throw new TypeError(`Expected numeric offset. Received ${rawOffset}`);
     }
 

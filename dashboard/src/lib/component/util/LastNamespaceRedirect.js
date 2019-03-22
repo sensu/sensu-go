@@ -34,7 +34,7 @@ class LastNamespaceRedirect extends React.PureComponent {
     }
 
     if (data.viewer && data.viewer.namespaces.length === 0) {
-      return <Redirect to={"/default"} />;
+      return <Redirect to="/default" />;
     }
 
     const firstSpace = data.viewer.namespaces[0];

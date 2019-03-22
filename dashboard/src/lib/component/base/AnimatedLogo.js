@@ -47,7 +47,7 @@ class AnimatedLogo extends React.PureComponent {
         style={style}
         width={size}
         height={size}
-        viewBox={`0 0 100 100`}
+        viewBox="0 0 100 100"
         fill="none"
       >
         <defs>

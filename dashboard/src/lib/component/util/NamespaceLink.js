@@ -7,7 +7,7 @@ class NamespaceLink extends React.PureComponent {
     ...Link.PropTypes,
     component: PropTypes.func,
     to: PropTypes.string.isRequired,
-    namespace: PropTypes.string.isRequired,
+    namespace: PropTypes.string,
   };
 
   static defaultProps = {

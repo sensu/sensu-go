@@ -9,6 +9,7 @@ class DrawerButton extends React.Component {
     ...ListItem.propTypes,
     Icon: PropTypes.func.isRequired,
     primary: PropTypes.string.isRequired,
+    component: PropTypes.func,
   };
 
   static defaultProps = {

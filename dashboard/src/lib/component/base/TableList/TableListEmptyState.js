@@ -34,7 +34,6 @@ export class TableListItem extends React.Component {
   };
 
   static defaultProps = {
-    className: "",
     secondary: null,
     loading: false,
   };

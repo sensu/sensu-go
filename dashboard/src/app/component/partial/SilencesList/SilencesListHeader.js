@@ -22,8 +22,6 @@ class SilencesListHeader extends React.PureComponent {
     selectedItems: [],
   };
 
-  state = { openDialog: false };
-
   renderActions = () => {
     const { onChangeQuery, order } = this.props;
 

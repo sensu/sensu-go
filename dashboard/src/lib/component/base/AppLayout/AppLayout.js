@@ -130,6 +130,7 @@ class AppLayout extends React.PureComponent {
   };
 
   static MobileFullWidthContent = MobileFullWidthContent;
+
   static Context = Context;
 
   state = { topBarHeight: 0 };

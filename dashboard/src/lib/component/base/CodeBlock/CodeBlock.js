@@ -42,7 +42,6 @@ class CodeBlock extends React.Component {
     component: "pre",
     className: "",
     scaleFont: true,
-    highlight: null,
   };
 
   render() {

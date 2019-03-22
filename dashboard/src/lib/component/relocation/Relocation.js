@@ -1,5 +1,6 @@
 /* eslint-disable react/no-multi-comp */
 /* eslint-disable react/sort-comp */
+/* eslint-disable react/no-unused-state */
 
 import React from "react";
 import PropTypes from "prop-types";

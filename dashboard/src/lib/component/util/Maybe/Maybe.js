@@ -36,7 +36,8 @@ class Maybe extends React.Component {
     if (isTruthy(value)) {
       if (typeof children === "function") {
         return children ? children(value) : value;
-      } else if (children) {
+      }
+      if (children) {
         return children;
       }
       return value;

@@ -4,8 +4,11 @@ import ExtendableError from "es6-error";
 
 export default class FetchError extends ExtendableError {
   statusCode: number;
+
   input: RequestInfo;
+
   original: Error | null;
+
   response: Response | null;
 
   constructor(

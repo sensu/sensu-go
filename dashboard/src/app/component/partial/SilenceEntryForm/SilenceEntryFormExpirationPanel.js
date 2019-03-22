@@ -114,7 +114,7 @@ export default compose(
     path: "props.expire",
     parse(value) {
       const number = parseInt(value, 10);
-      return isNaN(number) ? -1 : number;
+      return Number.isNaN(number) ? -1 : number;
     },
     format(value) {
       if (value === undefined || value === null || value === -1) {

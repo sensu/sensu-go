@@ -1,4 +1,4 @@
-/* eslint-disable import/no-webpack-loader-syntax, import/extensions */
+/* eslint-disable import/no-webpack-loader-syntax, import/extensions, import/no-unresolved */
 
 /**
  * Emits results of introspection query using combined server and client

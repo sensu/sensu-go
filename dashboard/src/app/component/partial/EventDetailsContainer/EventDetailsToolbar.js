@@ -19,7 +19,7 @@ import SilenceAction from "./EventDetailsSilenceAction";
 class EventDetailsToolbar extends React.Component {
   static propTypes = {
     event: PropTypes.object.isRequired,
-    refetch: PropTypes.func.isRequired,
+    refetch: PropTypes.func,
   };
 
   static defaultProps = {
