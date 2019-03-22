@@ -381,7 +381,7 @@ type HandlerStore interface {
 
 	// GetHandlers returns all handlers in the given ctx's namespace. A nil slice
 	// with no error is returned if none were found.
-	GetHandlers(ctx context.Context) ([]*types.Handler, error)
+	GetHandlers(ctx context.Context, pageSize int64, continueToken string) (handlers []*types.Handler, newContinueToken string, err error)
 
 	// GetHandlerByName returns a handler using the given name and the namespace
 	// stored in ctx. The resulting handler is nil if none was found.
