@@ -4,15 +4,18 @@ package etcd
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
-	"github.com/stretchr/testify/require"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 func testWithEtcd(t *testing.T, f func(store.Store)) {
@@ -213,21 +216,138 @@ func TestList(t *testing.T) {
 		// We should have 1 object when listing keys under the default namespace
 		list := []*genericObject{}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "default")
-		require.NoError(t, List(ctx, store.client, getGenericObjectsPath, &list))
+		continueToken, err := List(ctx, store.client, getGenericObjectsPath, &list, 0, "")
+		require.NoError(t, err)
 		assert.Len(t, list, 1)
+		assert.Empty(t, continueToken)
 
 		// We should have 2 objects when listing keys under the acme namespace
 		list = []*genericObject{}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
-		require.NoError(t, List(ctx, store.client, getGenericObjectsPath, &list))
+		continueToken, err = List(ctx, store.client, getGenericObjectsPath, &list, 0, "")
+		require.NoError(t, err)
 		assert.Len(t, list, 2)
+		assert.Empty(t, continueToken)
 
 		// We should have 3 objects when listing through all namespaces
 		list = []*genericObject{}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "")
-		require.NoError(t, List(ctx, store.client, getGenericObjectsPath, &list))
+		continueToken, err = List(ctx, store.client, getGenericObjectsPath, &list, 0, "")
+		require.NoError(t, err)
 		assert.Len(t, list, 3)
+		assert.Empty(t, continueToken)
 	})
+}
+
+func TestListPagination(t *testing.T) {
+	testWithEtcdStore(t, func(store *Store) {
+		// Create a "testing" namespace in the store
+		if err := store.CreateNamespace(context.Background(), types.FixtureNamespace("testing")); err != nil {
+			t.Fatal(err)
+		}
+
+		// Add 42 objects in the store: 21 in the "default" namespace and 21 in
+		// the "testing" namespace
+		for i := 1; i <= 21; i++ {
+			// We force the object name to be 2 digits "wide" in order to
+			// have a "natural" lexicographic order: 01, 02, ... instead of 1,
+			// 11, ...
+			objectName := fmt.Sprintf("%.2d", i)
+			object := &genericObject{Name: objectName, Namespace: "default"}
+
+			ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
+			if err := Create(ctx, store.client, getGenericObjectPath(object), "default", object); err != nil {
+				t.Fatal(err)
+			}
+
+			object.Namespace = "testing"
+			ctx = context.WithValue(context.Background(), types.NamespaceKey, "testing")
+			if err := Create(ctx, store.client, getGenericObjectPath(object), "testing", object); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		ctx := context.Background()
+		ctx = context.WithValue(ctx, corev2.NamespaceKey, "default")
+		t.Run("objects in default namespace", func(t *testing.T) {
+			testListPagination(t, ctx, store, 10, 21)
+		})
+
+		ctx = context.Background()
+		ctx = context.WithValue(ctx, corev2.NamespaceKey, "testing")
+		t.Run("objects in testing namespace", func(t *testing.T) {
+			testListPagination(t, ctx, store, 10, 21)
+		})
+
+		ctx = context.Background()
+		ctx = context.WithValue(ctx, corev2.NamespaceKey, "default")
+		t.Run("page size equals one", func(t *testing.T) {
+			testListPagination(t, ctx, store, 10, 21)
+		})
+
+		ctx = context.Background()
+		ctx = context.WithValue(ctx, corev2.NamespaceKey, "default")
+		t.Run("page size bigger than set size", func(t *testing.T) {
+			testListPagination(t, ctx, store, 1337, 21)
+		})
+	})
+}
+
+func testListPagination(t *testing.T, ctx context.Context, store *Store, pageSize, setSize int) {
+	nFullPages := setSize / pageSize
+	nLeftovers := setSize % pageSize
+
+	continueToken := ""
+	for i := 0; i < nFullPages; i++ {
+		objects := []*genericObject{}
+		nextContinueToken, err := List(ctx, store.client, getGenericObjectsPath, &objects, int64(pageSize), continueToken)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(objects) != pageSize {
+			t.Fatalf("Expected page %d to have %d objects but got %d", i, pageSize, len(objects))
+		}
+
+		offset := i * pageSize
+		for j, object := range objects {
+			n := ((offset + j) % setSize) + 1
+			expected := fmt.Sprintf("%.2d", n)
+
+			if object.Name != expected {
+				t.Fatalf("Expected %s, got %s", expected, object.Name)
+			}
+		}
+
+		continueToken = nextContinueToken
+	}
+
+	// Check the last page, supposed to hold nLeftovers objects
+	if nLeftovers > 0 {
+		objects := []*genericObject{}
+		nextContinueToken, err := List(ctx, store.client, getGenericObjectsPath, &objects, int64(pageSize), continueToken)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(objects) != nLeftovers {
+			t.Fatalf("Expected last page with %d objects, got %d", nLeftovers, len(objects))
+		}
+
+		if nextContinueToken != "" {
+			t.Fatalf("Expected next continue token to be \"\", got %s", nextContinueToken)
+		}
+
+		offset := pageSize * nFullPages
+		for j, object := range objects {
+			n := ((offset + j) % setSize) + 1
+			expected := fmt.Sprintf("%.2d", n)
+
+			if object.Name != expected {
+				t.Fatalf("Expected %s, got %s", expected, object.Name)
+			}
+		}
+	}
 }
 
 func TestUpdate(t *testing.T) {

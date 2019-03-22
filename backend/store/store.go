@@ -249,7 +249,7 @@ type ClusterRoleBindingStore interface {
 
 	// ListRoles returns all cluster role binding. An error is returned if no
 	// binding were found
-	ListClusterRoleBindings(context.Context) ([]*types.ClusterRoleBinding, error)
+	ListClusterRoleBindings(ctx context.Context, pageSize int64, continueToken string) (clusterRoleBindings []*types.ClusterRoleBinding, nextContinueToken string, err error)
 
 	// UpdateRole creates or updates a given cluster role binding.
 	UpdateClusterRoleBinding(ctx context.Context, clusterRoleBinding *types.ClusterRoleBinding) error
@@ -272,7 +272,7 @@ type ClusterRoleStore interface {
 
 	// ListClusterRoles returns all cluster roles. An error is returned if no
 	// roles were found
-	ListClusterRoles(context.Context) ([]*types.ClusterRole, error)
+	ListClusterRoles(ctx context.Context, pageSize int64, continueToken string) (clusterRoles []*types.ClusterRole, nextContinueToken string, err error)
 
 	// UpdateClusterRole creates or updates a given cluster role.
 	UpdateClusterRole(ctx context.Context, clusterRole *types.ClusterRole) error
@@ -465,7 +465,7 @@ type RoleBindingStore interface {
 
 	// ListRoles returns all role binding. An error is returned if no binding were
 	// found
-	ListRoleBindings(context.Context) ([]*types.RoleBinding, error)
+	ListRoleBindings(ctx context.Context, pageSize int64, continueToke string) (roleBindings []*types.RoleBinding, nextContinueToken string, err error)
 
 	// UpdateRole creates or updates a given role binding.
 	UpdateRoleBinding(ctx context.Context, roleBinding *types.RoleBinding) error
@@ -487,7 +487,7 @@ type RoleStore interface {
 	GetRole(ctx context.Context, name string) (*types.Role, error)
 
 	// ListRoles returns all roles. An error is returned if no roles were found
-	ListRoles(context.Context) ([]*types.Role, error)
+	ListRoles(ctx context.Context, pageSize int64, continueToken string) (roles []*types.Role, nextContinueToken string, err error)
 
 	// UpdateRole creates or updates a given role.
 	UpdateRole(ctx context.Context, role *types.Role) error

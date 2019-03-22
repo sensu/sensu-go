@@ -49,10 +49,10 @@ func (s *Store) GetRoleBinding(ctx context.Context, name string) (*types.RoleBin
 }
 
 // ListRoleBindings ...
-func (s *Store) ListRoleBindings(ctx context.Context) ([]*types.RoleBinding, error) {
+func (s *Store) ListRoleBindings(ctx context.Context, pageSize int64, continueToken string) ([]*types.RoleBinding, string, error) {
 	roles := []*types.RoleBinding{}
-	err := List(ctx, s.client, getRoleBindingsPath, &roles)
-	return roles, err
+	nextContinueToken, err := List(ctx, s.client, getRoleBindingsPath, &roles, pageSize, continueToken)
+	return roles, nextContinueToken, err
 }
 
 // UpdateRoleBinding ...
