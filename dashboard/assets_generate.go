@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/mgutz/ansi"
+	"github.com/sensu/sensu-go/backend/dashboardd/asset"
 	"github.com/shurcooL/vfsgen"
 )
 
@@ -47,18 +48,17 @@ func main() {
 	// install web ui depedencies
 	mustRunCmd("yarn", "build")
 
-	// box bundled assets
-	boxAssets("app")
-	boxAssets("lib")
-	boxAssets("vendor")
-}
+	// combine bundled assets
+	collection := asset.NewCollection()
+	collection.Extend(http.Dir(filepath.Join(buildDir, "app", "public")))
+	collection.Extend(http.Dir(filepath.Join(buildDir, "lib", "public")))
+	collection.Extend(http.Dir(filepath.Join(buildDir, "vendor", "public")))
 
-func boxAssets(path string) {
-	dir := http.Dir(filepath.Join(buildDir, path, "public"))
-	err := vfsgen.Generate(dir, vfsgen.Options{
-		Filename:     filenamePrefix + path + ".go",
+	// box bundled assets
+	err := vfsgen.Generate(collection, vfsgen.Options{
+		Filename:     filenamePrefix + "oss" + ".go",
 		PackageName:  "dashboard",
-		VariableName: path,
+		VariableName: "OSS",
 	})
 	if err != nil {
 		log.Fatalln(err)

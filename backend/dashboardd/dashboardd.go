@@ -61,7 +61,7 @@ func New(cfg Config, opts ...Option) (*Dashboardd, error) {
 
 	// load assets
 	collection := asset.NewCollection()
-	collection.Extend(dashboard.Assets)
+	collection.Extend(dashboard.OSS)
 	d.Assets = collection
 
 	// prepare server TLS config
