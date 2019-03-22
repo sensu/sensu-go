@@ -16,4 +16,4 @@ type BackendHandshake struct{}
 
 // PaginationContinueHeader is the name of the header used by the API to return
 // a potential continue token when paginating.
-const PaginationContinueHeader = "X-Sensu-Continue"
+const PaginationContinueHeader = "Sensu-Continue"
