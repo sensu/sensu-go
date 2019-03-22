@@ -175,12 +175,14 @@ func TestEntityQuery(t *testing.T) {
 	)
 
 	testCases := []struct {
-		name        string
-		ctx         context.Context
-		records     []*types.Entity
-		expectedLen int
-		storeErr    error
-		expectedErr error
+		name                  string
+		ctx                   context.Context
+		records               []*types.Entity
+		storeErr              error
+		continueToken         string
+		expectedLen           int
+		expectedContinueToken string
+		expectedErr           error
 	}{
 		{
 			name:        "no results",
@@ -209,6 +211,28 @@ func TestEntityQuery(t *testing.T) {
 			storeErr:    errors.New(""),
 			expectedErr: NewError(InternalErr, errors.New("")),
 		},
+		{
+			name: "no continue token",
+			ctx:  defaultCtx,
+			records: []*types.Entity{
+				types.FixtureEntity("entity1"),
+				types.FixtureEntity("entity2"),
+			},
+			continueToken:         "",
+			expectedLen:           2,
+			expectedContinueToken: "",
+		},
+		{
+			name: "base64url encode continue token",
+			ctx:  defaultCtx,
+			records: []*types.Entity{
+				types.FixtureEntity("entity1"),
+				types.FixtureEntity("entity2"),
+			},
+			continueToken:         "Albert Camus",
+			expectedLen:           2,
+			expectedContinueToken: "QWxiZXJ0IENhbXVz",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -219,13 +243,15 @@ func TestEntityQuery(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("GetEntities", tc.ctx).Return(tc.records, tc.storeErr)
+			store.On("GetEntities", tc.ctx, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+				Return(tc.records, tc.continueToken, tc.storeErr)
 
 			// Exec Query
-			results, _, err := actions.Query(tc.ctx)
+			results, continueToken, err := actions.Query(tc.ctx)
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)
+			assert.EqualValues(tc.expectedContinueToken, continueToken)
 			assert.Len(results, tc.expectedLen)
 		})
 	}

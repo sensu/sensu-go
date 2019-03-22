@@ -319,12 +319,14 @@ func TestHandlerQuery(t *testing.T) {
 	readCtx := context.Background()
 
 	tests := []struct {
-		name        string
-		ctx         context.Context
-		handlers    []*types.Handler
-		expectedLen int
-		storeErr    error
-		expectedErr error
+		name                  string
+		ctx                   context.Context
+		handlers              []*types.Handler
+		storeErr              error
+		continueToken         string
+		expectedLen           int
+		expectedContinueToken string
+		expectedErr           error
 	}{
 		{
 			name:        "no params, no handlers",
@@ -363,6 +365,28 @@ func TestHandlerQuery(t *testing.T) {
 			storeErr:    errors.New(""),
 			expectedErr: NewError(InternalErr, errors.New("")),
 		},
+		{
+			name: "no continue token",
+			ctx:  readCtx,
+			handlers: []*types.Handler{
+				types.FixtureHandler("handler1"),
+				types.FixtureHandler("handler2"),
+			},
+			continueToken:         "",
+			expectedLen:           2,
+			expectedContinueToken: "",
+		},
+		{
+			name: "base64url encode continue token",
+			ctx:  readCtx,
+			handlers: []*types.Handler{
+				types.FixtureHandler("handler1"),
+				types.FixtureHandler("handler2"),
+			},
+			continueToken:         "Albert Camus",
+			expectedLen:           2,
+			expectedContinueToken: "QWxiZXJ0IENhbXVz",
+		},
 	}
 
 	for _, test := range tests {
@@ -373,11 +397,13 @@ func TestHandlerQuery(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("GetHandlers", test.ctx).Return(test.handlers, test.storeErr)
+			store.On("GetHandlers", test.ctx, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+				Return(test.handlers, test.continueToken, test.storeErr)
 
-			results, _, err := ctl.Query(test.ctx)
+			results, continueToken, err := ctl.Query(test.ctx)
 
 			assert.EqualValues(test.expectedErr, err)
+			assert.EqualValues(test.expectedContinueToken, continueToken)
 			assert.Len(results, test.expectedLen)
 		})
 	}

@@ -276,12 +276,14 @@ func TestRoleBindingGet(t *testing.T) {
 
 func TestRoleBindingList(t *testing.T) {
 	testCases := []struct {
-		name            string
-		ctx             context.Context
-		storeErr        error
-		expectedResult  []*types.RoleBinding
-		expectedErr     bool
-		expectedErrCode ErrCode
+		name                  string
+		ctx                   context.Context
+		storeErr              error
+		continueToken         string
+		expectedResult        []*types.RoleBinding
+		expectedContinueToken string
+		expectedErr           bool
+		expectedErrCode       ErrCode
 	}{
 		{
 			name: "List",
@@ -306,6 +308,24 @@ func TestRoleBindingList(t *testing.T) {
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
 		},
+		{
+			name: "no continue token",
+			ctx:  context.Background(),
+			expectedResult: []*types.RoleBinding{
+				types.FixtureRoleBinding("roleBinding1", "default"),
+			},
+			continueToken:         "",
+			expectedContinueToken: "",
+		},
+		{
+			name: "base64url encode continue token",
+			ctx:  context.Background(),
+			expectedResult: []*types.RoleBinding{
+				types.FixtureRoleBinding("roleBinding1", "default"),
+			},
+			continueToken:         "Albert Camus",
+			expectedContinueToken: "QWxiZXJ0IENhbXVz",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -316,10 +336,10 @@ func TestRoleBindingList(t *testing.T) {
 			assert := assert.New(t)
 
 			store.
-				On("ListRoleBindings", mock.Anything).
-				Return(tc.expectedResult, tc.storeErr)
+				On("ListRoleBindings", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+				Return(tc.expectedResult, tc.continueToken, tc.storeErr)
 
-			result, _, err := actions.List(tc.ctx)
+			result, continueToken, err := actions.List(tc.ctx)
 
 			if tc.expectedErr {
 				inferErr, ok := err.(Error)
@@ -332,6 +352,7 @@ func TestRoleBindingList(t *testing.T) {
 			} else {
 				assert.NoError(err)
 				assert.Equal(tc.expectedResult, result)
+				assert.Equal(tc.expectedContinueToken, continueToken)
 			}
 		})
 	}

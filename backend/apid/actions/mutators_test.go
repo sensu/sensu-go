@@ -252,12 +252,14 @@ func TestMutatorQuery(t *testing.T) {
 	readCtx := context.Background()
 
 	tests := []struct {
-		name        string
-		ctx         context.Context
-		mutators    []*types.Mutator
-		expectedLen int
-		storeErr    error
-		expectedErr error
+		name                  string
+		ctx                   context.Context
+		mutators              []*types.Mutator
+		storeErr              error
+		continueToken         string
+		expectedLen           int
+		expectedContinueToken string
+		expectedErr           error
 	}{
 		{
 			name:        "No Params, No Mutators",
@@ -296,6 +298,28 @@ func TestMutatorQuery(t *testing.T) {
 			storeErr:    errors.New(""),
 			expectedErr: NewError(InternalErr, errors.New("")),
 		},
+		{
+			name: "no continue token",
+			ctx:  readCtx,
+			mutators: []*types.Mutator{
+				types.FixtureMutator("mutator1"),
+				types.FixtureMutator("mutator2"),
+			},
+			continueToken:         "",
+			expectedLen:           2,
+			expectedContinueToken: "",
+		},
+		{
+			name: "base64url encode continue token",
+			ctx:  readCtx,
+			mutators: []*types.Mutator{
+				types.FixtureMutator("mutator1"),
+				types.FixtureMutator("mutator2"),
+			},
+			continueToken:         "Albert Camus",
+			expectedLen:           2,
+			expectedContinueToken: "QWxiZXJ0IENhbXVz",
+		},
 	}
 
 	for _, test := range tests {
@@ -306,11 +330,13 @@ func TestMutatorQuery(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("GetMutators", test.ctx).Return(test.mutators, test.storeErr)
+			store.On("GetMutators", test.ctx, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+				Return(test.mutators, test.continueToken, test.storeErr)
 
-			results, _, err := ctl.Query(test.ctx)
+			results, continueToken, err := ctl.Query(test.ctx)
 
 			assert.EqualValues(test.expectedErr, err)
+			assert.EqualValues(test.expectedContinueToken, continueToken)
 			assert.Len(results, test.expectedLen)
 		})
 	}

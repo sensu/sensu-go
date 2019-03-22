@@ -276,12 +276,14 @@ func TestClusterRoleBindingGet(t *testing.T) {
 
 func TestClusterRoleBindingList(t *testing.T) {
 	testCases := []struct {
-		name            string
-		ctx             context.Context
-		storeErr        error
-		expectedResult  []*types.ClusterRoleBinding
-		expectedErr     bool
-		expectedErrCode ErrCode
+		name                  string
+		ctx                   context.Context
+		storeErr              error
+		continueToken         string
+		expectedResult        []*types.ClusterRoleBinding
+		expectedContinueToken string
+		expectedErr           bool
+		expectedErrCode       ErrCode
 	}{
 		{
 			name: "List",
@@ -306,6 +308,26 @@ func TestClusterRoleBindingList(t *testing.T) {
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
 		},
+		{
+			name: "no continue token",
+			ctx:  context.Background(),
+			expectedResult: []*types.ClusterRoleBinding{
+				types.FixtureClusterRoleBinding("clusterRoleBinding1"),
+				types.FixtureClusterRoleBinding("clusterRoleBinding2"),
+			},
+			continueToken:         "",
+			expectedContinueToken: "",
+		},
+		{
+			name: "base64url encode continue token",
+			ctx:  context.Background(),
+			expectedResult: []*types.ClusterRoleBinding{
+				types.FixtureClusterRoleBinding("clusterRoleBinding1"),
+				types.FixtureClusterRoleBinding("clusterRoleBinding2"),
+			},
+			continueToken:         "Albert Camus",
+			expectedContinueToken: "QWxiZXJ0IENhbXVz",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -316,10 +338,10 @@ func TestClusterRoleBindingList(t *testing.T) {
 			assert := assert.New(t)
 
 			store.
-				On("ListClusterRoleBindings", mock.Anything).
-				Return(tc.expectedResult, tc.storeErr)
+				On("ListClusterRoleBindings", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+				Return(tc.expectedResult, tc.continueToken, tc.storeErr)
 
-			result, _, err := actions.List(tc.ctx)
+			result, continueToken, err := actions.List(tc.ctx)
 
 			if tc.expectedErr {
 				inferErr, ok := err.(Error)
@@ -332,6 +354,7 @@ func TestClusterRoleBindingList(t *testing.T) {
 			} else {
 				assert.NoError(err)
 				assert.Equal(tc.expectedResult, result)
+				assert.Equal(tc.expectedContinueToken, continueToken)
 			}
 		})
 	}

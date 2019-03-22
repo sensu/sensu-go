@@ -30,9 +30,9 @@ func (m *mockCheckController) CreateOrReplace(ctx context.Context, check types.C
 	return m.Called(ctx, check).Error(0)
 }
 
-func (m *mockCheckController) Query(ctx context.Context) ([]*types.CheckConfig, error) {
+func (m *mockCheckController) Query(ctx context.Context) ([]*types.CheckConfig, string, error) {
 	args := m.Called(ctx)
-	return args.Get(0).([]*types.CheckConfig), args.Error(1)
+	return args.Get(0).([]*types.CheckConfig), args.String(1), args.Error(2)
 }
 
 func (m *mockCheckController) Find(ctx context.Context, check string) (*types.CheckConfig, error) {
@@ -169,7 +169,7 @@ func TestListChecks(t *testing.T) {
 	client := new(http.Client)
 
 	fixtures := []*types.CheckConfig{types.FixtureCheckConfig("check1")}
-	controller.On("Query", mock.Anything).Return(fixtures, nil)
+	controller.On("Query", mock.Anything).Return(fixtures, "", nil)
 	endpoint := "/namespaces/default/checks"
 	req := newRequest(t, http.MethodGet, server.URL+endpoint, nil)
 
