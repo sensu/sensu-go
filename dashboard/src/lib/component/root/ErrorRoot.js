@@ -216,7 +216,7 @@ class ErrorRoot extends React.PureComponent {
       <Dialog open>
         <Title>
           <Icon />
-          <Typography variant="title" color="inherit">
+          <Typography variant="h6" color="inherit">
             Something went wrong
           </Typography>
         </Title>

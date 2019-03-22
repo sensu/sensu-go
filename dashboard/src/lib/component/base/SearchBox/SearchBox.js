@@ -156,7 +156,7 @@ class SearchBox extends React.Component {
         </div>
         <Typography
           component="div"
-          variant="body1"
+          variant="body2"
           className={classes.inputContainer}
         >
           <SearchInput

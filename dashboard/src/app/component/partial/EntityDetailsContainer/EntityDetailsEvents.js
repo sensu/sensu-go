@@ -90,7 +90,7 @@ class EntityDetailsEvents extends React.PureComponent {
     return (
       <Card>
         <CardContent>
-          <Typography variant="headline" paragraph>
+          <Typography variant="h5" paragraph>
             Events
           </Typography>
           <List disablePadding>{this._renderItems()}</List>

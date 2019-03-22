@@ -34,7 +34,7 @@ class PlaceholderCard extends React.Component {
     return (
       <Typography
         component={Card}
-        variant="body1"
+        variant="body2"
         className={className}
         {...props}
       >

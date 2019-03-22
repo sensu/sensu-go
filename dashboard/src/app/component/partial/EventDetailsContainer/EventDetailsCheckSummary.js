@@ -154,7 +154,7 @@ class EventDetailsCheckSummary extends React.PureComponent {
       <Card>
         <CardHighlight color={status} />
         <CardContent>
-          <Typography variant="headline" paragraph>
+          <Typography variant="h5" paragraph>
             Check Result
             {event.isSilenced && (
               <Tooltip title="Silenced">

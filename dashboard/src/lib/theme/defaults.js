@@ -29,6 +29,9 @@ const defaults = {
       monospace: {
         fontFamily: mono,
       },
+
+      // https://material-ui.com/style/typography/#migration-to-typography-v2
+      useNextVariants: true,
     };
   },
   overrides: {

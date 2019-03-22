@@ -29,7 +29,7 @@ class DetailedListItemTitle extends React.Component {
     const className = classnames(classnames.root, { [classes.inset]: inset });
 
     return (
-      <Typography variant="body1" className={className} {...props}>
+      <Typography variant="body2" className={className} {...props}>
         {children}
       </Typography>
     );

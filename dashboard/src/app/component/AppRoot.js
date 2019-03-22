@@ -3,7 +3,6 @@ import PropTypes from "prop-types";
 import { compose } from "recompose";
 import { Provider } from "react-redux";
 import { ApolloProvider } from "react-apollo";
-import { withStyles } from "@material-ui/core/styles";
 import { Switch, Route, withRouter } from "react-router-dom";
 
 import AppThemeProvider from "/lib/component/base/AppThemeProvider";
@@ -71,7 +70,4 @@ class AppRoot extends React.PureComponent {
 
 // AppRoot is composed with `withRouter` here to prevent "Update Blocking"
 // see: reacttraining.com/react-router/web/guides/dealing-with-update-blocking
-export default compose(
-  withStyles(AppRoot.styles),
-  withRouter,
-)(AppRoot);
+export default compose(withRouter)(AppRoot);

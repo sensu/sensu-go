@@ -96,7 +96,7 @@ class EventDetailsEntitySummary extends React.Component {
     return (
       <Card>
         <CardContent>
-          <Typography variant="headline" paragraph>
+          <Typography variant="h5" paragraph>
             Entity Summary
             {entity.silences.length > 0 && (
               <Tooltip title="Silenced">

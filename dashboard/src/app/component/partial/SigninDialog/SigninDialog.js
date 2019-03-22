@@ -109,8 +109,8 @@ class SignInView extends React.Component {
             <Logo />
           </Branding>
           <Headline>
-            <Typography variant="headline">Sign in</Typography>
-            <Typography variant="subheading">
+            <Typography variant="h5">Sign in</Typography>
+            <Typography variant="subtitle1">
               with your Sensu Account
             </Typography>
           </Headline>

@@ -3,11 +3,11 @@ import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
 import SvgIcon from "@material-ui/core/SvgIcon";
 
-const styles = {
+const styles = () => ({
   root: {
     stopColor: "currentColor",
   },
-};
+});
 
 class Icon extends React.PureComponent {
   static propTypes = {

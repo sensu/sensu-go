@@ -38,7 +38,7 @@ class NamespaceLabelBase extends React.Component {
 
     return (
       <div className={classes.container}>
-        <Typography className={classes.label} variant="subheading">
+        <Typography className={classes.label} variant="subtitle1">
           {nsComponents.length > 1 && (
             <React.Fragment>
               <span className={classes.lighter}>{nsComponents.shift()}</span>
