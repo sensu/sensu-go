@@ -234,21 +234,20 @@ func Initialize(config *Config) (*Backend, error) {
 	}
 	b.Daemons = append(b.Daemons, api)
 
-	// Initialize dashboardd
+	// Initialize dashboardd TLS config
 	var dashboardTLSConfig *types.TLSOptions
-	if config.TLS != nil {
-		// dashboardd TLS config defaults to the same as the apid
-		dashboardTLSConfig = &types.TLSOptions{
-			CertFile:           config.TLS.GetCertFile(),
-			KeyFile:            config.TLS.GetKeyFile(),
-			TrustedCAFile:      config.TLS.GetTrustedCAFile(),
-			InsecureSkipVerify: config.TLS.GetInsecureSkipVerify(),
-		}
 
-		// override the TLS cert/key if user specified them
-		if config.DashboardTLSCertFile != "" && config.DashboardTLSKeyFile != "" {
-			dashboardTLSConfig.CertFile = config.DashboardTLSCertFile
-			dashboardTLSConfig.KeyFile = config.DashboardTLSKeyFile
+	// Always use dashboard tls options when they are specified
+	if config.DashboardTLSCertFile != "" && config.DashboardTLSKeyFile != "" {
+		dashboardTLSConfig = &types.TLSOptions{
+			CertFile: config.DashboardTLSCertFile,
+			KeyFile:  config.DashboardTLSKeyFile,
+		}
+	} else if config.TLS != nil {
+		// use apid tls config if no dashboard tls options are specified
+		dashboardTLSConfig = &types.TLSOptions{
+			CertFile: config.TLS.GetCertFile(),
+			KeyFile:  config.TLS.GetKeyFile(),
 		}
 	}
 	dashboard, err := dashboardd.New(dashboardd.Config{
