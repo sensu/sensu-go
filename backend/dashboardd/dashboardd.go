@@ -155,7 +155,7 @@ func httpRouter(d *Dashboardd) *mux.Router {
 	r.PathPrefix("/graphql").Handler(gziphandler(backendProxy))
 
 	// Expose Asset Info
-	r.PathPrefix("/asset-info.json").Handler(gziphandler(listAssetsHandler(d.Assets, d.logger)))
+	r.PathPrefix("/index.json").Handler(gziphandler(listAssetsHandler(d.Assets, d.logger)))
 
 	// Serve assets
 	r.PathPrefix("/static").Handler(staticHandler(d.Assets))
