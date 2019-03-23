@@ -60,7 +60,7 @@ func (m *mockUserController) RemoveAllGroups(ctx context.Context, name string) e
 	return m.Called(ctx, name).Error(0)
 }
 
-func newUserTest(t *testing.T) (*mockUserController, *httptest.Server) {
+func newUserTest() (*mockUserController, *httptest.Server) {
 	ctrl := &mockUserController{}
 	routes := &UsersRouter{controller: ctrl}
 	router := mux.NewRouter()
@@ -70,7 +70,7 @@ func newUserTest(t *testing.T) (*mockUserController, *httptest.Server) {
 }
 
 func TestGetUser(t *testing.T) {
-	ctrl, server := newUserTest(t)
+	ctrl, server := newUserTest()
 	defer server.Close()
 
 	endpoint := "/users"
