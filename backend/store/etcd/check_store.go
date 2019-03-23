@@ -74,7 +74,7 @@ func (s *Store) GetCheckConfigs(ctx context.Context, pageSize int64, continueTok
 
 	if pageSize != 0 && resp.Count > pageSize {
 		lastCheck := checks[len(checks)-1]
-		nextContinueToken = lastCheck.Name + "\x00"
+		nextContinueToken = computeContinueToken(ctx, lastCheck)
 	}
 
 	return checks, nextContinueToken, nil

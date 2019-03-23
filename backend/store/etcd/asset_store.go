@@ -76,7 +76,7 @@ func (s *Store) GetAssets(ctx context.Context, pageSize int64, continueToken str
 
 	if pageSize != 0 && resp.Count > pageSize {
 		lastAsset := assets[len(assets)-1]
-		nextContinueToken = lastAsset.Name + "\x00"
+		nextContinueToken = computeContinueToken(ctx, lastAsset)
 	}
 
 	return assets, nextContinueToken, nil

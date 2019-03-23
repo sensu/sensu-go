@@ -73,6 +73,18 @@ func (g *genericObject) GetNamespace() string {
 	return g.Namespace
 }
 
+func (g *genericObject) URIPath() string {
+	return ""
+}
+
+func (g *genericObject) Validate() error {
+	return nil
+}
+
+func (g *genericObject) GetObjectMeta() corev2.ObjectMeta {
+	return corev2.NewObjectMeta(g.Name, g.Namespace)
+}
+
 func TestCreate(t *testing.T) {
 	testWithEtcdStore(t, func(s *Store) {
 		// Creating a namespaced key that does not exist should work

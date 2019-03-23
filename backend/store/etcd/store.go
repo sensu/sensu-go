@@ -9,6 +9,8 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 const (
@@ -188,9 +190,8 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 
 	nextContinueToken := ""
 	if pageSize != 0 && resp.Count > pageSize {
-		lastObject := v.Index(v.Len() - 1)
-		lastObjectName := lastObject.Elem().FieldByName("Name").String()
-		nextContinueToken = lastObjectName + "\x00"
+		lastObject := v.Index(v.Len() - 1).Interface().(corev2.Resource)
+		nextContinueToken = computeContinueToken(ctx, lastObject)
 	}
 
 	return nextContinueToken, nil
@@ -260,4 +261,17 @@ func keyNotFound(key string) clientv3.Cmp {
 
 func namespaceFound(namespace string) clientv3.Cmp {
 	return keyFound(getNamespacePath(namespace))
+}
+
+func computeContinueToken(ctx context.Context, r corev2.Resource) (token string) {
+	objMeta := r.GetObjectMeta()
+	queriedNamespace := store.NewNamespaceFromContext(ctx)
+
+	if queriedNamespace == "" {
+		token = path.Join(objMeta.Namespace, objMeta.Name) + "\x00"
+	} else {
+		token = objMeta.Name + "\x00"
+	}
+
+	return
 }

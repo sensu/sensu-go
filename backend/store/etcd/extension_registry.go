@@ -113,7 +113,7 @@ func (s *Store) GetExtensions(ctx context.Context, pageSize int64, continueToken
 
 	if pageSize != 0 && resp.Count > pageSize {
 		lastExtension := extensions[len(extensions)-1]
-		newContinueToken = lastExtension.Name + "\x00"
+		newContinueToken = computeContinueToken(ctx, lastExtension)
 	}
 
 	return extensions, newContinueToken, nil

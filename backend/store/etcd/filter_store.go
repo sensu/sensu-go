@@ -73,7 +73,7 @@ func (s *Store) GetEventFilters(ctx context.Context, pageSize int64, continueTok
 
 	if pageSize != 0 && resp.Count > pageSize {
 		lastFilter := filters[len(filters)-1]
-		newContinueToken = lastFilter.Name + "\x00"
+		newContinueToken = computeContinueToken(ctx, lastFilter)
 	}
 
 	return filters, newContinueToken, nil

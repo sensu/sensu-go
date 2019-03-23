@@ -111,7 +111,7 @@ func (s *Store) GetEntities(ctx context.Context, pageSize int64, continueToken s
 
 	if pageSize != 0 && resp.Count > pageSize {
 		lastEntity := entities[len(entities)-1]
-		nextContinueToken = lastEntity.Name + "\x00"
+		nextContinueToken = computeContinueToken(ctx, lastEntity)
 	}
 
 	return entities, nextContinueToken, nil

@@ -67,7 +67,7 @@ func (s *Store) GetMutators(ctx context.Context, pageSize int64, continueToken s
 
 	if pageSize != 0 && resp.Count > pageSize {
 		lastMutator := mutators[len(mutators)-1]
-		newContinueToken = lastMutator.Name + "\x00"
+		newContinueToken = computeContinueToken(ctx, lastMutator)
 	}
 
 	return mutators, newContinueToken, nil

@@ -70,7 +70,7 @@ func (s *Store) GetHookConfigs(ctx context.Context, pageSize int64, continueToke
 
 	if pageSize != 0 && resp.Count > pageSize {
 		lastHook := hooks[len(hooks)-1]
-		newContinueToken = lastHook.Name + "\x00"
+		newContinueToken = computeContinueToken(ctx, lastHook)
 	}
 
 	return hooks, newContinueToken, nil

@@ -65,7 +65,7 @@ func (s *Store) GetHandlers(ctx context.Context, pageSize int64, continueToken s
 
 	if pageSize != 0 && resp.Count > pageSize {
 		lastHandler := handlers[len(handlers)-1]
-		newContinueToken = lastHandler.Name + "\x00"
+		newContinueToken = computeContinueToken(ctx, lastHandler)
 	}
 
 	return handlers, newContinueToken, nil
