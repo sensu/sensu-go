@@ -63,7 +63,7 @@ func (r *UsersRouter) find(req *http.Request) (interface{}, error) {
 	}
 	record, err := r.controller.Find(req.Context(), id)
 
-	// Obfustace users password
+	// Obfuscate users password
 	if record != nil {
 		record.Password = ""
 	}
