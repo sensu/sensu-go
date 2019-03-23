@@ -92,7 +92,7 @@ func TestGetCheckConfigsPagination(t *testing.T) {
 		ctx = context.Background()
 		ctx = context.WithValue(ctx, corev2.NamespaceKey, "default")
 		t.Run("page size equals one", func(t *testing.T) {
-			testGetCheckConfigsPagination(t, ctx, store, 10, 21)
+			testGetCheckConfigsPagination(t, ctx, store, 1, 21)
 		})
 
 		ctx = context.Background()
