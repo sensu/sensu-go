@@ -70,24 +70,43 @@ func newUserTest() (*mockUserController, *httptest.Server) {
 }
 
 func TestGetUser(t *testing.T) {
-	ctrl, server := newUserTest()
-	defer server.Close()
-
+	fixture := types.FixtureUser("fred")
 	endpoint := "/users"
 	client := &http.Client{}
 
-	// User found
-	user := types.FixtureUser("A")
-	ctrl.On("Find", mock.Anything, "A").Return(user, nil).Once()
-	req := newRequest(t, http.MethodGet, server.URL+path.Join(endpoint, "A"), nil)
-	res, err := client.Do(req)
-	require.NoError(t, err)
-	assert.Equal(t, 200, res.StatusCode)
+	testCases := []struct {
+		path       string
+		setup      func(ctrl *mockUserController)
+		statusCode int
+	}{
+		{
+			path: path.Join(endpoint, fixture.Username),
+			setup: func(ctrl *mockUserController) {
+				ctrl.On("Find", mock.Anything, mock.Anything).Return(fixture, nil)
+			},
+			statusCode: 200,
+		},
+		{
+			path: path.Join(endpoint, "bob"),
+			setup: func(ctrl *mockUserController) {
+				err := actions.NewErrorf(actions.NotFound)
+				ctrl.On("Find", mock.Anything, mock.Anything).Return(nil, err)
+			},
+			statusCode: 404,
+		},
+	}
 
-	// Not found
-	ctrl.On("Find", mock.Anything, "B").Return(nil, actions.NewErrorf(actions.NotFound)).Once()
-	req = newRequest(t, http.MethodGet, server.URL+path.Join(endpoint, "B"), nil)
-	res, err = client.Do(req)
-	require.NoError(t, err)
-	assert.Equal(t, 404, res.StatusCode)
+	for _, tc := range testCases {
+		t.Run(tc.path, func(t *testing.T) {
+			ctrl, server := newUserTest()
+			defer server.Close()
+
+			tc.setup(ctrl)
+
+			req := newRequest(t, http.MethodGet, server.URL+tc.path, nil)
+			res, err := client.Do(req)
+			require.NoError(t, err)
+			assert.Equal(t, tc.statusCode, res.StatusCode)
+		})
+	}
 }
