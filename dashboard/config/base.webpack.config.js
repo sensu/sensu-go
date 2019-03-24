@@ -49,7 +49,7 @@ export default ({
   mode: process.env.NODE_ENV,
   entry,
 
-  devtool: process.env.NODE_ENV === "development" ? "eval" : false,
+  devtool: process.env.NODE_ENV === "development" ? "source-map" : false,
 
   output: {
     filename: path.join(jsPath, `${contentHashName}.js`),
@@ -88,16 +88,6 @@ export default ({
   module: {
     strictExportPresence: true,
     rules: [
-      {
-        enforce: "pre",
-        test: /\.js$/,
-        include: path.resolve(root, "node_modules"),
-        exclude: [path.resolve(root, "node_modules/apollo-client")],
-        loader: require.resolve("source-map-loader"),
-        options: {
-          includeModulePaths: true,
-        },
-      },
       {
         oneOf: [
           {
@@ -199,7 +189,6 @@ export default ({
     .concat(
       process.env.NODE_ENV === "development" && [
         new CaseSensitivePathsPlugin(),
-        new webpack.HotModuleReplacementPlugin(),
       ],
     )
     .concat(plugins)

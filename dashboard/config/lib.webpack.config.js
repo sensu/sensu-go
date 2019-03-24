@@ -19,6 +19,7 @@ const libConfig = makeConfig({
   output: {
     path: path.join(outputPath, "public"),
     publicPath: "/",
+    devtoolNamespace: "lib",
   },
 
   optimization: {

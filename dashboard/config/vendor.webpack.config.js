@@ -31,6 +31,7 @@ const vendorConfig = makeConfig({
   output: {
     path: path.join(outputPath, "public"),
     publicPath: "/",
+    devtoolNamespace: "vendor",
   },
 
   optimization: {

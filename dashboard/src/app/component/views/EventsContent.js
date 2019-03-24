@@ -80,7 +80,6 @@ class EventsContent extends React.Component {
             query={filter}
           />
         </Content>
-
         <AppLayout.MobileFullWidthContent>
           <ToastConnector>
             {({ addToast }) => (
