@@ -45,7 +45,6 @@ type Agent struct {
 	api             *http.Server
 	assetGetter     asset.Getter
 	backendSelector BackendSelector
-	cancel          context.CancelFunc
 	config          *Config
 	connected       bool
 	connectedMu     sync.RWMutex
