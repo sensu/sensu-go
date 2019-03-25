@@ -105,7 +105,7 @@ export default ({
             test: /\.macro\.js$/,
             include: [
               path.join(root, "src"),
-              path.join(root, "node_modules/@sensu/web-ui/src"),
+              path.join(root, "node_modules/@sensuapp/web/src"),
             ],
             loaders: [
               {
@@ -123,13 +123,13 @@ export default ({
             test: /\.(mjs|js|jsx)$/,
             include: [
               path.join(root, "src"),
-              path.join(root, "node_modules/@sensu/web-ui/src"),
+              path.join(root, "node_modules/@sensuapp/web/src"),
             ],
             loader: require.resolve("babel-loader"),
             options: {
               babelrcRoots: [
                 root,
-                path.join(root, "node_modules/@sensu/web-ui"),
+                path.join(root, "node_modules/@sensuapp/web"),
               ],
               cacheDirectory: process.env.NODE_ENV === "development",
             },
