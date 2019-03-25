@@ -127,6 +127,10 @@ export default ({
             ],
             loader: require.resolve("babel-loader"),
             options: {
+              babelrcRoots: [
+                root,
+                path.join(root, "node_modules/@sensu/web-ui"),
+              ],
               cacheDirectory: process.env.NODE_ENV === "development",
             },
           },
