@@ -103,7 +103,10 @@ export default ({
           },
           {
             test: /\.macro\.js$/,
-            exclude: path.resolve(root, "node_modules"),
+            include: [
+              path.join(root, "src"),
+              path.join(root, "node_modules/@sensu/web-ui"),
+            ],
             loaders: [
               {
                 loader: require.resolve("./macroLoader"),
@@ -118,7 +121,10 @@ export default ({
           },
           {
             test: /\.(js|jsx)$/,
-            exclude: path.resolve(root, "node_modules"),
+            include: [
+              path.join(root, "src"),
+              path.join(root, "node_modules/@sensu/web-ui"),
+            ],
             loader: require.resolve("babel-loader"),
             options: {
               cacheDirectory: process.env.NODE_ENV === "development",
