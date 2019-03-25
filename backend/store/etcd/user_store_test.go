@@ -4,16 +4,19 @@ package etcd
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
-	"github.com/sensu/sensu-go/api/core/v2"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 func TestUserStorage(t *testing.T) {
@@ -76,7 +79,7 @@ func TestUserStorage(t *testing.T) {
 		assert.Equal(t, 2, len(users))
 
 		// Generate a token for the bar user
-		claims := v2.FixtureClaims("bar", nil)
+		claims := corev2.FixtureClaims("bar", nil)
 		token, _, _ := jwt.AccessToken(claims)
 		err = store.AllowTokens(token)
 		assert.NoError(t, err)
@@ -113,8 +116,92 @@ func TestUserStorage(t *testing.T) {
 		assert.Equal(t, 1, len(users))
 
 		// Disabled user should appear when fetching all users
-		users, err = store.GetAllUsers()
+		users, _, err = store.GetAllUsers(0, "")
 		assert.NoError(t, err)
 		assert.Equal(t, 2, len(users))
 	})
+}
+
+func TestGetAllUsersPagination(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		for i := 1; i <= 21; i++ {
+			// We force the object name to be 2 digits "wide" in order to
+			// have a "natural" lexicographic order: 01, 02, ... instead of 1,
+			// 11, ...
+			objectName := fmt.Sprintf("%.2d", i)
+			object := corev2.FixtureUser(objectName)
+
+			if err := store.CreateUser(object); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		ctx := context.Background()
+		t.Run("paginate through users", func(t *testing.T) {
+			testGetAllUsersPagination(t, ctx, store, 10, 21)
+		})
+
+		t.Run("page size equals one", func(t *testing.T) {
+			testGetAllUsersPagination(t, ctx, store, 1, 21)
+		})
+
+		t.Run("page size bigger than set size", func(t *testing.T) {
+			testGetAllUsersPagination(t, ctx, store, 1337, 21)
+		})
+	})
+}
+
+func testGetAllUsersPagination(t *testing.T, ctx context.Context, etcd store.Store, pageSize, setSize int) {
+	nFullPages := setSize / pageSize
+	nLeftovers := setSize % pageSize
+
+	continueToken := ""
+	for i := 0; i < nFullPages; i++ {
+		objects, nextContinueToken, err := etcd.GetAllUsers(int64(pageSize), continueToken)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(objects) != pageSize {
+			t.Fatalf("Expected page %d to have %d objects but got %d", i, pageSize, len(objects))
+		}
+
+		offset := i * pageSize
+		for j, object := range objects {
+			n := ((offset + j) % setSize) + 1
+			expected := fmt.Sprintf("%.2d", n)
+
+			if object.Username != expected {
+				t.Fatalf("Expected %s, got %s", expected, object.Username)
+			}
+		}
+
+		continueToken = nextContinueToken
+	}
+
+	// Check the last page, supposed to hold nLeftovers objects
+	if nLeftovers > 0 {
+		objects, nextContinueToken, err := etcd.GetAllUsers(int64(pageSize), continueToken)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(objects) != nLeftovers {
+			t.Fatalf("Expected last page with %d objects, got %d", nLeftovers, len(objects))
+		}
+
+		if nextContinueToken != "" {
+			t.Fatalf("Expected next continue token to be \"\", got %s", nextContinueToken)
+		}
+
+		offset := pageSize * nFullPages
+		for j, object := range objects {
+			n := ((offset + j) % setSize) + 1
+			expected := fmt.Sprintf("%.2d", n)
+
+			if object.Username != expected {
+				t.Fatalf("Expected %s, got %s", expected, object.Username)
+			}
+		}
+	}
 }

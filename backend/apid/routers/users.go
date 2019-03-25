@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -45,11 +46,15 @@ func (r *UsersRouter) Mount(parent *mux.Router) {
 }
 
 func (r *UsersRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
-	records, err := r.controller.Query(req.Context())
+	records, continueToken, err := r.controller.Query(req.Context())
 
 	// Obfustace users password
 	for i := range records {
 		records[i].Password = ""
+	}
+
+	if continueToken != "" {
+		w.Header().Set(corev2.PaginationContinueHeader, continueToken)
 	}
 
 	return records, err

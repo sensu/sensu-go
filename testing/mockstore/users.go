@@ -40,9 +40,9 @@ func (s *MockStore) GetUsers() ([]*types.User, error) {
 }
 
 // GetAllUsers ...
-func (s *MockStore) GetAllUsers() ([]*types.User, error) {
-	args := s.Called()
-	return args.Get(0).([]*types.User), args.Error(1)
+func (s *MockStore) GetAllUsers(pageSize int64, continueToken string) ([]*types.User, string, error) {
+	args := s.Called(pageSize, continueToken)
+	return args.Get(0).([]*types.User), args.String(1), args.Error(2)
 }
 
 // UpdateUser ...

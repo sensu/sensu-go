@@ -567,7 +567,7 @@ type UserStore interface {
 
 	// GetUsers returns all users, including the disabled ones. A nil slice with
 	// no error is  returned if none were found.
-	GetAllUsers() ([]*types.User, error)
+	GetAllUsers(pageSize int64, continueToken string) (users []*types.User, newContinueToken string, err error)
 
 	// UpdateHandler updates a given user.
 	UpdateUser(user *types.User) error

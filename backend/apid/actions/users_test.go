@@ -28,12 +28,14 @@ func TestUserQuery(t *testing.T) {
 	)
 
 	testCases := []struct {
-		name          string
-		ctx           context.Context
-		storedRecords []*types.User
-		storeErr      error
-		expectedLen   int
-		expectedErr   error
+		name                  string
+		ctx                   context.Context
+		storedRecords         []*types.User
+		storeErr              error
+		continueToken         string
+		expectedLen           int
+		expectedContinueToken string
+		expectedErr           error
 	}{
 		{
 			name:        "No Users",
@@ -60,6 +62,28 @@ func TestUserQuery(t *testing.T) {
 			storeErr:    errors.New(""),
 			expectedErr: NewError(InternalErr, errors.New("")),
 		},
+		{
+			name: "no continue token",
+			ctx:  ctxWithAuthorizedViewer,
+			storedRecords: []*types.User{
+				types.FixtureUser("user1"),
+				types.FixtureUser("user2"),
+			},
+			continueToken:         "",
+			expectedLen:           2,
+			expectedContinueToken: "",
+		},
+		{
+			name: "base64url encode continue token",
+			ctx:  ctxWithAuthorizedViewer,
+			storedRecords: []*types.User{
+				types.FixtureUser("user1"),
+				types.FixtureUser("user2"),
+			},
+			continueToken:         "Albert Camus",
+			expectedLen:           2,
+			expectedContinueToken: "QWxiZXJ0IENhbXVz",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -70,13 +94,15 @@ func TestUserQuery(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("GetAllUsers").Return(tc.storedRecords, tc.storeErr)
+			store.On("GetAllUsers", mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+				Return(tc.storedRecords, tc.continueToken, tc.storeErr)
 
 			// Exec Query
-			results, err := actions.Query(tc.ctx)
+			results, continueToken, err := actions.Query(tc.ctx)
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)
+			assert.EqualValues(tc.expectedContinueToken, continueToken)
 			assert.Len(results, tc.expectedLen)
 		})
 	}
