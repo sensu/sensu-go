@@ -103,7 +103,10 @@ export default ({
           },
           {
             test: /\.macro\.js$/,
-            exclude: path.resolve(root, "node_modules"),
+            include: [
+              path.join(root, "src"),
+              path.join(root, "node_modules/@sensuapp/web/src"),
+            ],
             loaders: [
               {
                 loader: require.resolve("./macroLoader"),
@@ -117,16 +120,23 @@ export default ({
             ],
           },
           {
-            test: /\.(js|jsx)$/,
-            exclude: path.resolve(root, "node_modules"),
+            test: /\.(mjs|js|jsx)$/,
+            include: [
+              path.join(root, "src"),
+              path.join(root, "node_modules/@sensuapp/web/src"),
+            ],
             loader: require.resolve("babel-loader"),
             options: {
+              babelrcRoots: [
+                root,
+                path.join(root, "node_modules/@sensuapp/web"),
+              ],
               cacheDirectory: process.env.NODE_ENV === "development",
             },
           },
           {
             loader: require.resolve("file-loader"),
-            exclude: [/\.js$/, /\.html$/, /\.json$/],
+            exclude: [/\.js$/, /\.mjs$/, /\.html$/, /\.json$/],
             options: {
               name: path.join(mediaPath, `${fileLoaderHashName}.[ext]`),
             },

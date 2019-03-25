@@ -3,10 +3,16 @@
   "version": "0.1.0",
   "private": true,
   "files": [
-    "build",
+    "build/lib",
+    "build/lib-dev",
+    "build/vendor",
+    "build/vendor-dev",
     "config",
     "scripts",
-    "src"
+    "src",
+    ".eslintrc.yml",
+    ".babelrc",
+    "babel.config.js"
   ],
   "engines": {
     "node": ">= 8",
@@ -18,22 +24,23 @@
     "url": "https://github.com/sensu/sensu-go/"
   },
   "scripts": {
-    "audit-deps": "node scripts audit-deps",
-    "check-version": "node scripts check-yarn-version",
-    "prettier": "./node_modules/.bin/prettier --write '**/*.js'",
-    "build:vendor": "./node_modules/.bin/webpack -r esm --config config/vendor.webpack.config.js",
-    "build:lib": "./node_modules/.bin/webpack -r esm --config config/lib.webpack.config.js",
-    "build:app": "./node_modules/.bin/webpack -r esm --config config/app.webpack.config.js",
-    "build": "yarn build:vendor && yarn build:lib && yarn build:app && yarn build:pack",
-    "build:pack": "yarn pack --filename dashboard.tgz",
     "analyze": "./node_modules/.bin/webpack-bundle-analyzer stats.json -s gzip",
-    "lint": "./node_modules/.bin/eslint .",
-    "spec": "node scripts test.js --env=jsdom",
-    "test": "yarn check-version && yarn build && yarn lint && yarn spec --coverage",
-    "update-schema": "node scripts update-schema",
-    "flow": "./node_modules/.bin/flow",
+    "audit-deps": "node scripts audit-deps",
+    "build": "NODE_ENV=production yarn build:vendor && NODE_ENV=production yarn build:lib && NODE_ENV=production yarn build:app",
+    "build:app": "./node_modules/.bin/webpack -r esm --config config/app.webpack.config.js",
+    "build:lib": "./node_modules/.bin/webpack -r esm --config config/lib.webpack.config.js",
+    "build:pack": "yarn pack --filename dashboard.tgz",
+    "build:package": "NODE_ENV=development yarn build:vendor && NODE_ENV=production yarn build:vendor && NODE_ENV=development yarn build:lib && NODE_ENV=production yarn build:lib && yarn build:app && yarn build:pack",
+    "build:vendor": "./node_modules/.bin/webpack -r esm --config config/vendor.webpack.config.js",
+    "check-version": "node scripts check-yarn-version",
     "dev-server": "node scripts serve",
-    "start": "NODE_ENV=development yarn build:vendor && NODE_ENV=development yarn dev-server"
+    "flow": "./node_modules/.bin/flow",
+    "lint": "./node_modules/.bin/eslint .",
+    "prettier": "./node_modules/.bin/prettier --write '**/*.js'",
+    "spec": "node scripts test.js --env=jsdom",
+    "start": "NODE_ENV=development yarn build:vendor && NODE_ENV=development yarn dev-server",
+    "test": "yarn check-version && yarn build && yarn lint && yarn spec --coverage",
+    "update-schema": "node scripts update-schema"
   },
   "dependencies": {
     "@10xjs/date-input-controller": "0.1.6",

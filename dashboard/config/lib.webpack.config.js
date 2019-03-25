@@ -7,7 +7,15 @@ import CleanPlugin from "clean-webpack-plugin";
 import makeConfig from "./base.webpack.config";
 
 const root = fs.realpathSync(process.cwd());
-const outputPath = path.join(root, "build/lib");
+const outputPath =
+  process.env.NODE_ENV === "development"
+    ? path.join(root, "build/lib-dev")
+    : path.join(root, "build/lib");
+
+const vendorPath = path.join(
+  root,
+  process.env.NODE_ENV === "development" ? "build/vendor-dev" : "build/vendor",
+);
 
 const libConfig = makeConfig({
   name: "lib",
@@ -31,7 +39,7 @@ const libConfig = makeConfig({
   plugins: [
     new CleanPlugin(outputPath, { root }),
     new webpack.DllReferencePlugin({
-      manifest: path.join(root, "build/vendor/dll.json"),
+      manifest: path.join(vendorPath, "dll.json"),
     }),
   ],
 });
