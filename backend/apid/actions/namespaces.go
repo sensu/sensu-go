@@ -2,7 +2,9 @@ package actions
 
 import (
 	"context"
+	"encoding/base64"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -20,14 +22,20 @@ func NewNamespacesController(store store.NamespaceStore) NamespacesController {
 }
 
 // Query returns resources available to the viewer filter by given params.
-func (a NamespacesController) Query(ctx context.Context) ([]*types.Namespace, error) {
+func (a NamespacesController) Query(ctx context.Context) ([]*types.Namespace, string, error) {
+	pageSize := corev2.PageSizeFromContext(ctx)
+	continueToken := corev2.PageContinueFromContext(ctx)
+
 	// Fetch from store
-	results, serr := a.Store.ListNamespaces(ctx)
+	results, newContinueToken, serr := a.Store.ListNamespaces(ctx, int64(pageSize), continueToken)
 	if serr != nil {
-		return nil, NewError(InternalErr, serr)
+		return nil, "", NewError(InternalErr, serr)
 	}
 
-	return results, nil
+	// Encode the continue token with base64url (RFC 4648), without padding
+	encodedNewContinueToken := base64.RawURLEncoding.EncodeToString([]byte(newContinueToken))
+
+	return results, encodedNewContinueToken, nil
 }
 
 // Find returns resource associated with given parameters if available to the

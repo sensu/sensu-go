@@ -26,9 +26,9 @@ func (m *mockOrgController) CreateOrReplace(ctx context.Context, org types.Names
 	return m.Called(ctx, org).Error(0)
 }
 
-func (m *mockOrgController) Query(ctx context.Context) ([]*types.Namespace, error) {
+func (m *mockOrgController) Query(ctx context.Context) ([]*types.Namespace, string, error) {
 	args := m.Called(ctx)
-	return args.Get(0).([]*types.Namespace), args.Error(1)
+	return args.Get(0).([]*types.Namespace), args.String(1), args.Error(2)
 }
 
 func (m *mockOrgController) Find(ctx context.Context, org string) (*types.Namespace, error) {
@@ -153,7 +153,7 @@ func TestListNamespaces(t *testing.T) {
 	client := new(http.Client)
 
 	fixtures := []*types.Namespace{types.FixtureNamespace("default")}
-	controller.On("Query", mock.Anything).Return(fixtures, nil)
+	controller.On("Query", mock.Anything).Return(fixtures, "", nil)
 	endpoint := "/namespaces"
 	req := newRequest(t, http.MethodGet, server.URL+endpoint, nil)
 

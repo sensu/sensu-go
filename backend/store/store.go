@@ -438,7 +438,7 @@ type NamespaceStore interface {
 
 	// ListNamespaces returns all namespaces. A nil slice with no error is
 	// returned if none were found.
-	ListNamespaces(ctx context.Context) ([]*types.Namespace, error)
+	ListNamespaces(ctx context.Context, pageSize int64, continueToken string) (namespaces []*types.Namespace, newContinueToken string, err error)
 
 	// GetNamespace returns a namespace using the given name. The
 	// result is nil if none was found.
