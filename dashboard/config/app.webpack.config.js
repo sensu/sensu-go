@@ -1,3 +1,4 @@
+/* eslint-disable import/no-dynamic-require */
 import fs from "fs";
 import path from "path";
 import webpack from "webpack";
@@ -10,6 +11,15 @@ import makeConfig from "./base.webpack.config";
 
 const root = fs.realpathSync(process.cwd());
 const outputPath = path.join(root, "build/app");
+
+const vendorPath = path.join(
+  root,
+  process.env.NODE_ENV === "development" ? "build/vendor-dev" : "build/vendor",
+);
+const libPath = path.join(
+  root,
+  process.env.NODE_ENV === "development" ? "build/lib-dev" : "build/lib",
+);
 
 const getBundleAssets = (stats, chunk) =>
   []
@@ -56,20 +66,21 @@ export default makeConfig({
     }),
 
     new webpack.DllReferencePlugin({
-      manifest: path.join(root, "build/vendor/dll.json"),
+      manifest: path.join(vendorPath, "dll.json"),
     }),
     new AddAssetHtmlPlugin([
-      // eslint-disable-next-line import/no-unresolved
-      ...getBundleAssets(require("../build/vendor/stats.json"), "vendor"),
+      ...getBundleAssets(
+        require(path.join(vendorPath, "stats.json")),
+        "vendor",
+      ),
     ]),
   ].concat(
     process.env.NODE_ENV !== "development" && [
       new webpack.DllReferencePlugin({
-        manifest: path.join(root, "build/lib/dll.json"),
+        manifest: path.join(libPath, "dll.json"),
       }),
       new AddAssetHtmlPlugin([
-        // eslint-disable-next-line import/no-unresolved
-        ...getBundleAssets(require("../build/lib/stats.json"), "vendor"),
+        ...getBundleAssets(require(path.join(libPath, "stats.json")), "lib"),
       ]),
     ],
   ),

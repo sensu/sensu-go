@@ -7,7 +7,10 @@ import CleanPlugin from "clean-webpack-plugin";
 import makeConfig from "./base.webpack.config";
 
 const root = fs.realpathSync(process.cwd());
-const outputPath = path.join(root, "build/vendor");
+const outputPath =
+  process.env.NODE_ENV === "development"
+    ? path.join(root, "build/vendor-dev")
+    : path.join(root, "build/vendor");
 
 const vendorConfig = makeConfig({
   name: "vendor",
