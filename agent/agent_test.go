@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/sensu/sensu-go/transport"
@@ -26,20 +27,26 @@ func TestSendLoop(t *testing.T) {
 	defer cancel()
 
 	server := transport.NewServer()
+	var once sync.Once
+	var wg sync.WaitGroup
+	wg.Add(1)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		conn, err := server.Serve(w, r)
-		require.NoError(t, err)
+		once.Do(func() {
+			defer wg.Done()
+			conn, err := server.Serve(w, r)
+			require.NoError(t, err)
 
-		msg, err := conn.Receive()
-		assert.NoError(t, err)
-		assert.Equal(t, "keepalive", msg.Type)
+			msg, err := conn.Receive()
+			assert.NoError(t, err)
+			assert.Equal(t, "keepalive", msg.Type)
 
-		event := &types.Event{}
-		assert.NoError(t, json.Unmarshal(msg.Payload, event))
-		assert.NotNil(t, event.Entity)
-		assert.Equal(t, "agent", event.Entity.EntityClass)
-		assert.NotEmpty(t, event.Entity.System)
-		cancel()
+			event := &types.Event{}
+			assert.NoError(t, json.Unmarshal(msg.Payload, event))
+			assert.NotNil(t, event.Entity)
+			assert.Equal(t, "agent", event.Entity.EntityClass)
+			assert.NotEmpty(t, event.Entity.System)
+			cancel()
+		})
 	}))
 	defer ts.Close()
 
@@ -58,6 +65,7 @@ func TestSendLoop(t *testing.T) {
 	defer mockTime.Stop()
 	err = ta.Run(ctx)
 	require.NoError(t, err)
+	wg.Wait()
 }
 
 func TestReceiveLoop(t *testing.T) {
@@ -66,20 +74,25 @@ func TestReceiveLoop(t *testing.T) {
 	server := transport.NewServer()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	var wg sync.WaitGroup
+	wg.Add(1)
+	var once sync.Once
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		conn, err := server.Serve(w, r)
-		require.NoError(t, err)
+		once.Do(func() {
+			conn, err := server.Serve(w, r)
+			require.NoError(t, err)
 
-		msgBytes, err := json.Marshal(testMessage)
-		assert.NoError(t, err)
+			msgBytes, err := json.Marshal(testMessage)
+			assert.NoError(t, err)
 
-		tm := &transport.Message{
-			Type:    "testMessageType",
-			Payload: msgBytes,
-		}
-		err = conn.Send(tm)
-		assert.NoError(t, err)
-		cancel()
+			tm := &transport.Message{
+				Type:    "testMessageType",
+				Payload: msgBytes,
+			}
+			err = conn.Send(tm)
+			assert.NoError(t, err)
+			cancel()
+		})
 	}))
 	defer ts.Close()
 
@@ -113,36 +126,42 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 	server := transport.NewServer()
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
+	var once sync.Once
+	var wg sync.WaitGroup
+	wg.Add(1)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if err := ctx.Err(); err != nil {
-			return
-		}
-		conn, err := server.Serve(w, r)
-		require.NoError(t, err)
+		once.Do(func() {
+			defer wg.Done()
+			if err := ctx.Err(); err != nil {
+				return
+			}
+			conn, err := server.Serve(w, r)
+			require.NoError(t, err)
 
-		msg, err := conn.Receive()
-		assert.NoError(t, err)
-		assert.Equal(t, "keepalive", msg.Type)
+			msg, err := conn.Receive()
+			assert.NoError(t, err)
+			assert.Equal(t, "keepalive", msg.Type)
 
-		event := &types.Event{}
-		assert.NoError(t, json.Unmarshal(msg.Payload, event))
-		assert.NotNil(t, event.Entity)
-		assert.Equal(t, "agent", event.Entity.EntityClass)
-		assert.NotEmpty(t, event.Entity.System)
+			event := &types.Event{}
+			assert.NoError(t, json.Unmarshal(msg.Payload, event))
+			assert.NotNil(t, event.Entity)
+			assert.Equal(t, "agent", event.Entity.EntityClass)
+			assert.NotEmpty(t, event.Entity.System)
 
-		// Make sure the ec2_access_key attribute is redacted, which indicates it was
-		// received as such in keepalives
-		label := event.Entity.Labels["ec2_access_key"]
-		if got, want := label, types.Redacted; got != want {
-			errors <- fmt.Errorf("%q != %q", got, want)
-		}
+			// Make sure the ec2_access_key attribute is redacted, which indicates it was
+			// received as such in keepalives
+			label := event.Entity.Labels["ec2_access_key"]
+			if got, want := label, types.Redacted; got != want {
+				errors <- fmt.Errorf("%q != %q", got, want)
+			}
 
-		label = event.Entity.Labels["secret"]
-		if got, want := label, types.Redacted; got == want {
-			errors <- fmt.Errorf("secret was redacted")
-		}
+			label = event.Entity.Labels["secret"]
+			if got, want := label, types.Redacted; got == want {
+				errors <- fmt.Errorf("secret was redacted")
+			}
 
-		cancel()
+			cancel()
+		})
 	}))
 	defer ts.Close()
 
