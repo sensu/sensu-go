@@ -110,9 +110,7 @@ class SignInView extends React.Component {
           </Branding>
           <Headline>
             <Typography variant="h5">Sign in</Typography>
-            <Typography variant="subtitle1">
-              with your Sensu Account
-            </Typography>
+            <Typography variant="subtitle1">with your Sensu Account</Typography>
           </Headline>
           <Form
             disabled={loading}
