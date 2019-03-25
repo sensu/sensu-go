@@ -6,7 +6,9 @@
     "build",
     "config",
     "scripts",
-    "src"
+    "src",
+    ".eslintrc.yml",
+    ".babelrc"
   ],
   "engines": {
     "node": ">= 8",
