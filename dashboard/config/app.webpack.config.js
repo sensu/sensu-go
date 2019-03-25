@@ -37,13 +37,6 @@ export default makeConfig({
   plugins: [
     new CleanPlugin(outputPath, { root }),
 
-    new webpack.DllReferencePlugin({
-      manifest: path.join(root, "build/vendor/dll.json"),
-    }),
-
-    new webpack.DllReferencePlugin({
-      manifest: path.join(root, "build/lib/dll.json"),
-    }),
     // Generates an `index.html` file with the <script> injected.
     new HtmlWebpackPlugin({
       inject: true,
@@ -62,11 +55,22 @@ export default makeConfig({
       },
     }),
 
+    new webpack.DllReferencePlugin({
+      manifest: path.join(root, "build/vendor/dll.json"),
+    }),
     new AddAssetHtmlPlugin([
       // eslint-disable-next-line import/no-unresolved
       ...getBundleAssets(require("../build/vendor/stats.json"), "vendor"),
-      // eslint-disable-next-line import/no-unresolved
-      ...getBundleAssets(require("../build/lib/stats.json"), "lib"),
     ]),
-  ],
+  ].concat(
+    process.env.NODE_ENV !== "development" && [
+      new webpack.DllReferencePlugin({
+        manifest: path.join(root, "build/lib/dll.json"),
+      }),
+      new AddAssetHtmlPlugin([
+        // eslint-disable-next-line import/no-unresolved
+        ...getBundleAssets(require("../build/lib/stats.json"), "vendor"),
+      ]),
+    ],
+  ),
 });

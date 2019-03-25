@@ -33,7 +33,7 @@
     "update-schema": "node scripts update-schema",
     "flow": "./node_modules/.bin/flow",
     "dev-server": "node scripts serve",
-    "start": "NODE_ENV=development yarn build:vendor && NODE_ENV=development yarn build:lib && NODE_ENV=development yarn dev-server"
+    "start": "NODE_ENV=development yarn build:vendor && NODE_ENV=development yarn dev-server"
   },
   "dependencies": {
     "@10xjs/date-input-controller": "0.1.6",
