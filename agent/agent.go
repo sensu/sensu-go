@@ -197,7 +197,7 @@ func (a *Agent) connectionManager(ctx context.Context) {
 		a.connected = false
 		a.connectedMu.Unlock()
 
-		conn, err := connectWithBackoff(ctx, a.backendSelector.Select(), a.config.TLS, a.header)
+		conn, err := connectWithBackoff(ctx, a.backendSelector, a.config.TLS, a.header)
 		if err != nil {
 			if err == ctx.Err() {
 				return
@@ -362,7 +362,7 @@ func (a *Agent) StartStatsd(ctx context.Context) {
 	}()
 }
 
-func connectWithBackoff(ctx context.Context, url string, tlsOpts *v2.TLSOptions, header http.Header) (transport.Transport, error) {
+func connectWithBackoff(ctx context.Context, selector BackendSelector, tlsOpts *v2.TLSOptions, header http.Header) (transport.Transport, error) {
 	var conn transport.Transport
 
 	backoff := retry.ExponentialBackoff{
@@ -373,6 +373,7 @@ func connectWithBackoff(ctx context.Context, url string, tlsOpts *v2.TLSOptions,
 	}
 
 	err := backoff.Retry(func(retry int) (bool, error) {
+		url := selector.Select()
 		c, err := transport.Connect(url, tlsOpts, header)
 		if err != nil {
 			logger.WithError(err).Error("reconnection attempt failed")
