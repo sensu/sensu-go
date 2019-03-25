@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -32,11 +33,11 @@ func TestFetchExistingAsset(t *testing.T) {
 	localAssetPath := getFixturePath(assetName)
 
 	fetcher := &httpFetcher{
-		URLGetter: func(path string) (io.ReadCloser, error) {
+		URLGetter: func(ctx context.Context, path string) (io.ReadCloser, error) {
 			return os.Open(path)
 		},
 	}
-	f, err := fetcher.Fetch(localAssetPath)
+	f, err := fetcher.Fetch(context.TODO(), localAssetPath)
 	if err != nil {
 		t.Logf("expected no error, got: %v", err)
 		t.FailNow()

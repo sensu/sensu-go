@@ -1,6 +1,7 @@
 package asset_test
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -15,7 +16,7 @@ import (
 
 type localFetcher struct{}
 
-func (f *localFetcher) Fetch(path string) (*os.File, error) {
+func (f *localFetcher) Fetch(ctx context.Context, path string) (*os.File, error) {
 	return os.Open(path)
 }
 
@@ -88,7 +89,7 @@ func TestBoltDBManager(t *testing.T) {
 		t.Fail()
 	}
 
-	runtimeAsset, err := getter.Get(fixtureAsset)
+	runtimeAsset, err := getter.Get(context.TODO(), fixtureAsset)
 	if err != nil {
 		t.Logf("error getting runtime asset, expected nil: %v", err)
 		t.Fail()

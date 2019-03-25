@@ -143,7 +143,7 @@ func (p *Pipelined) pipeMutator(mutator *types.Mutator, event *types.Event) ([]b
 		ctx := types.SetContextFromResource(context.Background(), mutator)
 		matchedAssets := asset.GetAssets(ctx, p.store, mutator.RuntimeAssets)
 
-		assets, err := asset.GetAll(p.assetGetter, matchedAssets)
+		assets, err := asset.GetAll(context.TODO(), p.assetGetter, matchedAssets)
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for mutator")
 		} else {

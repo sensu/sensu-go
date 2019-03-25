@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"sync"
@@ -22,17 +23,16 @@ type Manager struct {
 }
 
 // NewManager ...
-func NewManager(cacheDir string, entity *types.Entity, stopping chan struct{}, wg *sync.WaitGroup) *Manager {
+func NewManager(cacheDir string, entity *types.Entity, wg *sync.WaitGroup) *Manager {
 	return &Manager{
 		cacheDir: cacheDir,
 		entity:   entity,
-		stopping: stopping,
 		wg:       wg,
 	}
 }
 
 // StartAssetManager starts the asset manager for a backend or agent.
-func (m *Manager) StartAssetManager() (Getter, error) {
+func (m *Manager) StartAssetManager(ctx context.Context) (Getter, error) {
 	// create agent cache directory if it doesn't already exist
 	if err := os.MkdirAll(m.cacheDir, 0755); err != nil {
 		return nil, err
@@ -47,11 +47,11 @@ func (m *Manager) StartAssetManager() (Getter, error) {
 
 	m.wg.Add(1)
 	go func() {
-		<-m.stopping
+		defer m.wg.Done()
+		<-ctx.Done()
 		if err := db.Close(); err != nil {
 			logger.Debug(err)
 		}
-		m.wg.Done()
 	}()
 	boltDBGetter := NewBoltDBGetter(
 		db, m.cacheDir, nil, nil, nil)

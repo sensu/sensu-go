@@ -134,8 +134,8 @@ func Initialize(config *Config) (*Backend, error) {
 	// Initialize asset manager
 	backendEntity := b.getBackendEntity(config)
 	logger.WithField("entity", backendEntity).Info("backend entity information")
-	assetManager := asset.NewManager(config.CacheDir, backendEntity, make(chan struct{}), &sync.WaitGroup{})
-	assetGetter, err := assetManager.StartAssetManager()
+	assetManager := asset.NewManager(config.CacheDir, backendEntity, &sync.WaitGroup{})
+	assetGetter, err := assetManager.StartAssetManager(b.ctx)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing asset manager: %s", err)
 	}

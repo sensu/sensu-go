@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"testing"
@@ -43,13 +44,13 @@ func TestHandleCheck(t *testing.T) {
 	agent.inProgressMu.Lock()
 	agent.inProgress[checkKey(request)] = request.Config
 	agent.inProgressMu.Unlock()
-	assert.Error(agent.handleCheck(payload))
+	assert.Error(agent.handleCheck(context.TODO(), payload))
 
 	// check is not in progress, it should execute
 	agent.inProgressMu.Lock()
 	delete(agent.inProgress, checkKey(request))
 	agent.inProgressMu.Unlock()
-	assert.NoError(agent.handleCheck(payload))
+	assert.NoError(agent.handleCheck(context.TODO(), payload))
 }
 
 func TestCheckInProgress_GH2704(t *testing.T) {
@@ -149,12 +150,12 @@ func TestHandleProxyCheck(t *testing.T) {
 	agent.inProgressMu.Unlock()
 
 	// check B should execute without error
-	if err := agent.handleCheck(payloadB); err != nil {
+	if err := agent.handleCheck(context.TODO(), payloadB); err != nil {
 		t.Fatal(err)
 	}
 
 	// check A should not execute - in progress
-	if err := agent.handleCheck(payloadA); err == nil {
+	if err := agent.handleCheck(context.TODO(), payloadA); err == nil {
 		t.Fatal("expected a non-nil error")
 	}
 
@@ -162,7 +163,7 @@ func TestHandleProxyCheck(t *testing.T) {
 	agent.inProgressMu.Lock()
 	delete(agent.inProgress, checkKey(reqA))
 	agent.inProgressMu.Unlock()
-	if err := agent.handleCheck(payloadA); err != nil {
+	if err := agent.handleCheck(context.TODO(), payloadA); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -188,7 +189,7 @@ func TestExecuteCheck(t *testing.T) {
 	ex.Return(execution, nil)
 
 	entity := agent.getAgentEntity()
-	agent.executeCheck(request, entity)
+	agent.executeCheck(context.TODO(), request, entity)
 	msg := <-ch
 
 	event := &corev2.Event{}
@@ -198,7 +199,7 @@ func TestExecuteCheck(t *testing.T) {
 	assert.False(event.HasMetrics())
 
 	execution.Status = 1
-	agent.executeCheck(request, entity)
+	agent.executeCheck(context.TODO(), request, entity)
 	msg = <-ch
 
 	event = &corev2.Event{}
@@ -209,7 +210,7 @@ func TestExecuteCheck(t *testing.T) {
 
 	execution.Status = 127
 	execution.Output = "command not found"
-	agent.executeCheck(request, entity)
+	agent.executeCheck(context.TODO(), request, entity)
 	msg = <-ch
 
 	event = &corev2.Event{}
@@ -221,7 +222,7 @@ func TestExecuteCheck(t *testing.T) {
 
 	execution.Status = 2
 	execution.Output = ""
-	agent.executeCheck(request, entity)
+	agent.executeCheck(context.TODO(), request, entity)
 	msg = <-ch
 
 	event = &corev2.Event{}
@@ -234,7 +235,7 @@ func TestExecuteCheck(t *testing.T) {
 	execution.Status = 0
 	execution.Output = "metric.foo 1 123456789\nmetric.bar 2 987654321"
 	ex.Return(execution, nil)
-	agent.executeCheck(request, entity)
+	agent.executeCheck(context.TODO(), request, entity)
 	msg = <-ch
 
 	event = &corev2.Event{}
@@ -244,7 +245,7 @@ func TestExecuteCheck(t *testing.T) {
 
 	checkConfig.OutputMetricFormat = corev2.GraphiteOutputMetricFormat
 	ex.Return(execution, nil)
-	agent.executeCheck(request, entity)
+	agent.executeCheck(context.TODO(), request, entity)
 	msg = <-ch
 
 	event = &corev2.Event{}
@@ -281,7 +282,7 @@ func TestExecuteCheckDiscardOutput(t *testing.T) {
 	execution := command.FixtureExecutionResponse(0, output)
 	ex.Return(execution, nil)
 
-	agent.executeCheck(request, agent.getAgentEntity())
+	agent.executeCheck(context.TODO(), request, agent.getAgentEntity())
 	msg := <-ch
 
 	event := &corev2.Event{}
@@ -295,7 +296,7 @@ func TestExecuteCheckDiscardOutput(t *testing.T) {
 
 	request.Config.DiscardOutput = true
 
-	agent.executeCheck(request, agent.getAgentEntity())
+	agent.executeCheck(context.TODO(), request, agent.getAgentEntity())
 	msg = <-ch
 
 	if err := json.Unmarshal(msg.Payload, event); err != nil {
@@ -334,7 +335,7 @@ func TestHandleTokenSubstitution(t *testing.T) {
 		assert.FailNow("error marshaling check request")
 	}
 
-	require.NoError(t, agent.handleCheck(payload))
+	require.NoError(t, agent.handleCheck(context.TODO(), payload))
 
 	msg := <-ch
 
@@ -372,7 +373,7 @@ func TestHandleTokenSubstitutionNoKey(t *testing.T) {
 		assert.FailNow("error marshaling check request")
 	}
 
-	require.NoError(t, agent.handleCheck(payload))
+	require.NoError(t, agent.handleCheck(context.TODO(), payload))
 
 	msg := <-ch
 

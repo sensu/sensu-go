@@ -133,7 +133,7 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 				// if the product of all expressions is true.
 				ctx := types.SetContextFromResource(context.Background(), filter)
 				matchedAssets := asset.GetAssets(ctx, p.store, filter.RuntimeAssets)
-				assets, err := asset.GetAll(p.assetGetter, matchedAssets)
+				assets, err := asset.GetAll(context.TODO(), p.assetGetter, matchedAssets)
 				if err != nil {
 					logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for filter")
 				}

@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -32,7 +33,7 @@ type mockGetter struct {
 	err error
 }
 
-func (m *mockGetter) Get(asset *types.Asset) (*RuntimeAsset, error) {
+func (m *mockGetter) Get(ctx context.Context, asset *types.Asset) (*RuntimeAsset, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -51,11 +52,11 @@ func TestGetAll(t *testing.T) {
 	mockGetter := mockGetter{}
 	expectedRuntimeAssets := RuntimeAssetSet{}
 	for _, asset := range assets {
-		runtimeAsset, _ := mockGetter.Get(&asset)
+		runtimeAsset, _ := mockGetter.Get(context.TODO(), &asset)
 		expectedRuntimeAssets = append(expectedRuntimeAssets, runtimeAsset)
 	}
 
-	actualRuntimeAssets, err := GetAll(&mockGetter, assets)
+	actualRuntimeAssets, err := GetAll(context.TODO(), &mockGetter, assets)
 	assert.NoError(t, err)
 	assert.Equal(t, expectedRuntimeAssets, actualRuntimeAssets)
 }
@@ -66,7 +67,7 @@ func TestGetAllError(t *testing.T) {
 	mockGetter := mockGetter{err: errors.New("test error")}
 	expectedRuntimeAssets := (RuntimeAssetSet)(nil)
 
-	actualRuntimeAssets, err := GetAll(&mockGetter, assets)
+	actualRuntimeAssets, err := GetAll(context.TODO(), &mockGetter, assets)
 	assert.Error(t, err)
 	assert.Equal(t, expectedRuntimeAssets, actualRuntimeAssets)
 }
@@ -77,7 +78,7 @@ func TestGetAllFilterNil(t *testing.T) {
 	assets[1].Name = "nil"
 	mockGetter := mockGetter{}
 
-	actualRuntimeAssets, err := GetAll(&mockGetter, assets)
+	actualRuntimeAssets, err := GetAll(context.TODO(), &mockGetter, assets)
 	assert.NoError(t, err)
 	assert.NotContains(t, actualRuntimeAssets, nil)
 }

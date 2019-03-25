@@ -1,13 +1,14 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"sync"
 )
 
 // MessageHandlerFunc is a function accepting a byte array message payload
 // that returns an optional error.
-type MessageHandlerFunc func(payload []byte) error
+type MessageHandlerFunc func(ctx context.Context, payload []byte) error
 
 // A MessageHandler is responsible for routing messages of a set of types to
 // their associated handler functions.
@@ -49,11 +50,11 @@ func (h *MessageHandler) AddHandler(msgType string, handlerFunc MessageHandlerFu
 // Handle is used to dispatch a message of msgType type with a byte-array
 // payload. This will return an error if the handler function returns an error
 // or if there is no handler for a given message type.
-func (h *MessageHandler) Handle(msgType string, payload []byte) error {
+func (h *MessageHandler) Handle(ctx context.Context, msgType string, payload []byte) error {
 	handleFunc, err := h.getHandlerFor(msgType)
 	if err != nil {
 		return err
 	}
 
-	return handleFunc(payload)
+	return handleFunc(ctx, payload)
 }

@@ -1,6 +1,8 @@
 package asset
 
 import (
+	"context"
+
 	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/dynamic"
@@ -25,7 +27,7 @@ type filteredManager struct {
 }
 
 // Get fetches, verifies, and expands an asset, but only if it is filtered.
-func (f *filteredManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
+func (f *filteredManager) Get(ctx context.Context, asset *types.Asset) (*RuntimeAsset, error) {
 	fields := logrus.Fields{
 		"entity":  f.entity.Name,
 		"asset":   asset.Name,
@@ -43,7 +45,7 @@ func (f *filteredManager) Get(asset *types.Asset) (*RuntimeAsset, error) {
 	}
 
 	logger.WithFields(fields).Debug("entity filtered, installing asset")
-	return f.getter.Get(asset)
+	return f.getter.Get(ctx, asset)
 }
 
 // isFiltered evaluates the given asset's filters and returns true if all of
