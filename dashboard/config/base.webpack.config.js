@@ -105,7 +105,7 @@ export default ({
             test: /\.macro\.js$/,
             include: [
               path.join(root, "src"),
-              path.join(root, "node_modules/@sensu/web-ui"),
+              path.join(root, "node_modules/@sensu/web-ui/src"),
             ],
             loaders: [
               {
@@ -120,10 +120,10 @@ export default ({
             ],
           },
           {
-            test: /\.(js|jsx)$/,
+            test: /\.(mjs|js|jsx)$/,
             include: [
               path.join(root, "src"),
-              path.join(root, "node_modules/@sensu/web-ui"),
+              path.join(root, "node_modules/@sensu/web-ui/src"),
             ],
             loader: require.resolve("babel-loader"),
             options: {
@@ -136,7 +136,7 @@ export default ({
           },
           {
             loader: require.resolve("file-loader"),
-            exclude: [/\.js$/, /\.html$/, /\.json$/],
+            exclude: [/\.js$/, /\.mjs$/, /\.html$/, /\.json$/],
             options: {
               name: path.join(mediaPath, `${fileLoaderHashName}.[ext]`),
             },
