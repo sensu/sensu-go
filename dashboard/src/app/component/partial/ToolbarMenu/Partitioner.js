@@ -4,6 +4,8 @@ import { shallowEqual } from "/lib/util/array";
 
 import MenuItem from "./Item";
 
+const MenuItemType = <MenuItem />.type;
+
 // Return given set of menu items and a width return map describing which items
 // are visible and which items should be collapsed.
 const partitionItems = ({ items, itemWidths, width: widthProp }) => {
@@ -61,7 +63,7 @@ class Partitioner extends React.Component {
     // Ensure children are menu items
     if (process.env.NODE_ENV !== "production") {
       React.Children.toArray(props.items).forEach(child => {
-        if (child.type !== MenuItem) {
+        if (child.type !== MenuItemType) {
           throw new Error(
             "A partitioned toolbar's children must be of type ToolbarMenu.Item",
           );
