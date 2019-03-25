@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 
@@ -10,9 +11,22 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// UsersController represents the controller needs of the UsersRouter.
+type UserController interface {
+	Query(ctx context.Context) ([]*types.User, error)
+	Find(ctx context.Context, name string) (*types.User, error)
+	Create(ctx context.Context, newUser types.User) error
+	CreateOrReplace(ctx context.Context, newOrg types.User) error
+	Disable(ctx context.Context, name string) error
+	Enable(ctx context.Context, name string) error
+	AddGroup(ctx context.Context, name string, group string) error
+	RemoveGroup(ctx context.Context, name string, group string) error
+	RemoveAllGroups(ctx context.Context, name string) error
+}
+
 // UsersRouter handles requests for /users
 type UsersRouter struct {
-	controller actions.UserController
+	controller UserController
 }
 
 // NewUsersRouter instantiates new router for controlling user resources
@@ -63,8 +77,10 @@ func (r *UsersRouter) find(req *http.Request) (interface{}, error) {
 	}
 	record, err := r.controller.Find(req.Context(), id)
 
-	// Obfustace users password
-	record.Password = ""
+	// Obfuscate users password
+	if record != nil {
+		record.Password = ""
+	}
 	return record, err
 }
 

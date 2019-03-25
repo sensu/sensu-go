@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Commands wrap on the event details page and will display "-" if there is no command (keepalives)
+
 ## [5.3.0] - 2019-03-11
 
 ### Added
@@ -23,10 +26,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - Asset downloading now uses buffered I/O.
-## Fixed
-- Commands wrap on the event details page and will display "-" if there is no command (keepalives)
-
-## [5.3.0] - 2019-03-11
 
 ### Fixed
 - Check results sent via the agent socket now support handlers.
