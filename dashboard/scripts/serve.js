@@ -30,7 +30,10 @@ app.use(
 );
 
 app.use(express.static(path.join(root, "build/vendor/public")));
-app.use(express.static(path.join(root, "build/lib/public")));
+
+if (process.env.NODE_ENV !== "development") {
+  app.use(express.static(path.join(root, "build/lib/public")));
+}
 
 app.use(historyFallback());
 
