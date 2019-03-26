@@ -2,7 +2,6 @@ package actions
 
 import (
 	"context"
-	"encoding/base64"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
@@ -16,20 +15,20 @@ var entityUpdateFields = []string{
 
 // EntityController exposes actions in which a viewer can perform.
 type EntityController struct {
-	Store store.EntityStore
+	store store.EntityStore
 }
 
 // NewEntityController returns new EntityController
 func NewEntityController(store store.EntityStore) EntityController {
 	return EntityController{
-		Store: store,
+		store: store,
 	}
 }
 
 // Destroy removes a resource if viewer has access.
 func (c EntityController) Destroy(ctx context.Context, id string) error {
 	// Fetch from store
-	result, serr := c.Store.GetEntityByName(ctx, id)
+	result, serr := c.store.GetEntityByName(ctx, id)
 	if serr != nil {
 		return NewError(InternalErr, serr)
 	} else if result == nil {
@@ -37,7 +36,7 @@ func (c EntityController) Destroy(ctx context.Context, id string) error {
 	}
 
 	// Remove from store
-	if err := c.Store.DeleteEntityByName(ctx, result.Name); err != nil {
+	if err := c.store.DeleteEntityByName(ctx, result.Name); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -48,7 +47,7 @@ func (c EntityController) Destroy(ctx context.Context, id string) error {
 // viewer.
 func (c EntityController) Find(ctx context.Context, id string) (*types.Entity, error) {
 	// Fetch from store
-	result, serr := c.Store.GetEntityByName(ctx, id)
+	result, serr := c.store.GetEntityByName(ctx, id)
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}
@@ -59,21 +58,20 @@ func (c EntityController) Find(ctx context.Context, id string) (*types.Entity, e
 	return result, nil
 }
 
-// Query returns resources available to the viewer.
-func (c EntityController) Query(ctx context.Context) ([]*types.Entity, string, error) {
-	pageSize := corev2.PageSizeFromContext(ctx)
-	continueToken := corev2.PageContinueFromContext(ctx)
-
+// List returns resources available to the viewer.
+func (c EntityController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
 	// Fetch from store
-	results, newContinueToken, serr := c.Store.GetEntities(ctx, int64(pageSize), continueToken)
-	if serr != nil {
-		return nil, "", NewError(InternalErr, serr)
+	results, err := c.store.GetEntities(ctx, pred)
+	if err != nil {
+		return nil, NewError(InternalErr, err)
 	}
 
-	// Encode the continue token with base64url (RFC 4648), without padding
-	encodedNewContinueToken := base64.RawURLEncoding.EncodeToString([]byte(newContinueToken))
+	resources := make([]corev2.Resource, len(results))
+	for i, v := range results {
+		resources[i] = corev2.Resource(v)
+	}
 
-	return results, encodedNewContinueToken, nil
+	return resources, nil
 }
 
 // Create instatiates, validates and persists new resource if viewer has access.
@@ -81,7 +79,7 @@ func (c EntityController) Create(ctx context.Context, entity types.Entity) error
 	ctx = addOrgEnvToContext(ctx, &entity)
 
 	// Check for an already existing resource
-	if e, err := c.Store.GetEntityByName(ctx, entity.Name); err != nil {
+	if e, err := c.store.GetEntityByName(ctx, entity.Name); err != nil {
 		return NewError(InternalErr, err)
 	} else if e != nil {
 		return NewErrorf(AlreadyExistsErr)
@@ -93,7 +91,7 @@ func (c EntityController) Create(ctx context.Context, entity types.Entity) error
 	}
 
 	// Persist the resource in the store
-	if err := c.Store.UpdateEntity(ctx, &entity); err != nil {
+	if err := c.store.UpdateEntity(ctx, &entity); err != nil {
 		return NewError(InternalErr, err)
 	}
 	return nil
@@ -112,7 +110,7 @@ func (c EntityController) CreateOrReplace(ctx context.Context, entity types.Enti
 	}
 
 	// Persist Changes
-	if serr := c.Store.UpdateEntity(ctx, &entity); serr != nil {
+	if serr := c.store.UpdateEntity(ctx, &entity); serr != nil {
 		return NewError(InternalErr, serr)
 	}
 

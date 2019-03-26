@@ -20,7 +20,7 @@ func TestNewRoleController(t *testing.T) {
 	actions := NewRoleController(store)
 
 	assert.NotNil(actions)
-	assert.Equal(store, actions.Store)
+	assert.Equal(store, actions.store)
 }
 
 func TestRoleCreate(t *testing.T) {
@@ -276,84 +276,53 @@ func TestRoleGet(t *testing.T) {
 
 func TestRoleList(t *testing.T) {
 	testCases := []struct {
-		name                  string
-		ctx                   context.Context
-		storeErr              error
-		continueToken         string
-		expectedResult        []*types.Role
-		expectedContinueToken string
-		expectedErr           bool
-		expectedErrCode       ErrCode
+		name          string
+		ctx           context.Context
+		storeErr      error
+		continueToken string
+		records       []*types.Role
+		expectedLen   int
+		expectedErr   error
 	}{
 		{
 			name: "List",
 			ctx:  context.Background(),
-			expectedResult: []*types.Role{
+			records: []*types.Role{
 				types.FixtureRole("read-write", "default"),
 				types.FixtureRole("read-only", "default"),
 				types.FixtureRole("sysadmin", "IT"),
 			},
+			expectedLen: 3,
 		},
 		{
-			name:            "Not found",
-			ctx:             context.Background(),
-			storeErr:        &store.ErrNotFound{},
-			expectedErr:     true,
-			expectedErrCode: NotFound,
-		},
-		{
-			name:            "Store error",
-			ctx:             context.Background(),
-			storeErr:        errors.New("some error"),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
-		},
-		{
-			name: "no continue token",
+			name: "Not found",
 			ctx:  context.Background(),
-			expectedResult: []*types.Role{
-				types.FixtureRole("role1", "default"),
-			},
-			continueToken:         "",
-			expectedContinueToken: "",
 		},
 		{
-			name: "base64url encode continue token",
-			ctx:  context.Background(),
-			expectedResult: []*types.Role{
-				types.FixtureRole("role1", "default"),
-			},
-			continueToken:         "Albert Camus",
-			expectedContinueToken: "QWxiZXJ0IENhbXVz",
+			name:        "Store error",
+			ctx:         context.Background(),
+			storeErr:    errors.New("some error"),
+			expectedErr: NewError(InternalErr, errors.New("some error")),
 		},
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
-		actions := NewRoleController(store)
+		s := &mockstore.MockStore{}
+		actions := NewRoleController(s)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			store.
-				On("ListRoles", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
-				Return(tc.expectedResult, tc.continueToken, tc.storeErr)
+			// Mock store methods
+			pred := &store.SelectionPredicate{}
+			s.On("ListRoles", tc.ctx, pred).Return(tc.records, tc.storeErr)
 
-			result, continueToken, err := actions.List(tc.ctx)
+			// Exec Query
+			results, err := actions.List(tc.ctx, pred)
 
-			if tc.expectedErr {
-				inferErr, ok := err.(Error)
-				if ok {
-					assert.Equal(tc.expectedErrCode, inferErr.Code)
-				} else {
-					assert.Error(err)
-					assert.FailNow("Return value was not of type 'Error'")
-				}
-			} else {
-				assert.NoError(err)
-				assert.Equal(tc.expectedResult, result)
-				assert.Equal(tc.expectedContinueToken, continueToken)
-			}
+			// Assert
+			assert.EqualValues(tc.expectedErr, err)
+			assert.Len(results, tc.expectedLen)
 		})
 	}
 }

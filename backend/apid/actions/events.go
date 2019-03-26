@@ -2,7 +2,6 @@ package actions
 
 import (
 	"context"
-	"encoding/base64"
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
@@ -12,49 +11,72 @@ import (
 
 // EventController expose actions in which a viewer can perform.
 type EventController struct {
-	Store store.EventStore
-	Bus   messaging.MessageBus
+	store store.EventStore
+	bus   messaging.MessageBus
 }
 
 // NewEventController returns new EventController
 func NewEventController(store store.EventStore, bus messaging.MessageBus) EventController {
 	return EventController{
-		Store: store,
-		Bus:   bus,
+		store: store,
+		bus:   bus,
 	}
 }
 
 // Query returns resources available to the viewer filter by given params.
-func (a EventController) Query(ctx context.Context, entityName, checkName string) ([]*corev2.Event, string, error) {
+func (a EventController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
 	var results []*corev2.Event
-	var nextContinueToken string
-
-	pageSize := corev2.PageSizeFromContext(ctx)
-	continueToken := corev2.PageContinueFromContext(ctx)
+	var err error
 
 	// Fetch from store
-	var serr error
-	if entityName != "" && checkName != "" {
-		var result *corev2.Event
-		result, serr = a.Store.GetEventByEntityCheck(ctx, entityName, checkName)
-		if result != nil {
-			results = append(results, result)
-		}
-	} else if entityName != "" {
-		results, nextContinueToken, serr = a.Store.GetEventsByEntity(ctx, entityName, int64(pageSize), continueToken)
+	if pred.Suffix != "" {
+		results, err = a.store.GetEventsByEntity(ctx, pred.Suffix, pred)
 	} else {
-		results, nextContinueToken, serr = a.Store.GetEvents(ctx, int64(pageSize), continueToken)
+		results, err = a.store.GetEvents(ctx, pred)
 	}
 
-	if serr != nil {
-		return nil, "", NewError(InternalErr, serr)
+	if err != nil {
+		return nil, NewError(InternalErr, err)
 	}
 
-	// Encode the continue token with base64url (RFC 4648), without padding
-	encodedNextContinueToken := base64.RawURLEncoding.EncodeToString([]byte(nextContinueToken))
+	resources := make([]corev2.Resource, len(results))
+	for i, v := range results {
+		resources[i] = corev2.Resource(v)
+	}
 
-	return results, encodedNextContinueToken, nil
+	return resources, nil
 }
+
+// func (a EventController) Query(ctx context.Context, entityName, checkName string) ([]*corev2.Event, string, error) {
+// 	var results []*corev2.Event
+// 	var nextContinueToken string
+
+// 	pageSize := corev2.PageSizeFromContext(ctx)
+// 	continueToken := corev2.PageContinueFromContext(ctx)
+
+// 	// Fetch from store
+// 	var serr error
+// 	if entityName != "" && checkName != "" {
+// 		var result *corev2.Event
+// 		result, serr = a.store.GetEventByEntityCheck(ctx, entityName, checkName)
+// 		if result != nil {
+// 			results = append(results, result)
+// 		}
+// 	} else if entityName != "" {
+// 		results, nextContinueToken, serr = a.store.GetEventsByEntity(ctx, entityName, int64(pageSize), continueToken)
+// 	} else {
+// 		results, nextContinueToken, serr = a.store.GetEvents(ctx, int64(pageSize), continueToken)
+// 	}
+
+// 	if serr != nil {
+// 		return nil, "", NewError(InternalErr, serr)
+// 	}
+
+// 	// Encode the continue token with base64url (RFC 4648), without padding
+// 	encodedNextContinueToken := base64.RawURLEncoding.EncodeToString([]byte(nextContinueToken))
+
+// 	return results, encodedNextContinueToken, nil
+// }
 
 // Find returns resource associated with given parameters if available to the
 // viewer.
@@ -64,7 +86,7 @@ func (a EventController) Find(ctx context.Context, entity, check string) (*corev
 		return nil, NewErrorf(InvalidArgument, "Find() requires both an entity and a check")
 	}
 
-	result, err := a.Store.GetEventByEntityCheck(ctx, entity, check)
+	result, err := a.store.GetEventByEntityCheck(ctx, entity, check)
 	if err != nil {
 		return nil, NewError(InternalErr, err)
 	}
@@ -82,13 +104,13 @@ func (a EventController) Destroy(ctx context.Context, entity, check string) erro
 		return NewErrorf(InvalidArgument, "Destroy() requires both an entity and a check")
 	}
 
-	result, err := a.Store.GetEventByEntityCheck(ctx, entity, check)
+	result, err := a.store.GetEventByEntityCheck(ctx, entity, check)
 	if err != nil {
 		return NewError(InternalErr, err)
 	}
 
 	if result != nil {
-		err := a.Store.DeleteEventByEntityCheck(ctx, entity, check)
+		err := a.store.DeleteEventByEntityCheck(ctx, entity, check)
 		if err != nil {
 			return NewError(InternalErr, err)
 		}
@@ -110,7 +132,7 @@ func (a EventController) Create(ctx context.Context, event corev2.Event) error {
 		check := event.Check
 		entity := event.Entity
 
-		e, err := a.Store.GetEventByEntityCheck(ctx, entity.Name, check.Name)
+		e, err := a.store.GetEventByEntityCheck(ctx, entity.Name, check.Name)
 		if err != nil {
 			return NewError(InternalErr, err)
 		} else if e != nil {
@@ -119,7 +141,7 @@ func (a EventController) Create(ctx context.Context, event corev2.Event) error {
 	}
 
 	// Publish to event pipeline
-	if err := a.Bus.Publish(messaging.TopicEventRaw, &event); err != nil {
+	if err := a.bus.Publish(messaging.TopicEventRaw, &event); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -134,7 +156,7 @@ func (a EventController) CreateOrReplace(ctx context.Context, event corev2.Event
 	}
 
 	// Publish to event pipeline
-	if err := a.Bus.Publish(messaging.TopicEventRaw, &event); err != nil {
+	if err := a.bus.Publish(messaging.TopicEventRaw, &event); err != nil {
 		return NewError(InternalErr, err)
 	}
 

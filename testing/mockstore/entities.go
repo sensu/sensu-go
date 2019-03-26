@@ -20,9 +20,9 @@ func (s *MockStore) DeleteEntityByName(ctx context.Context, id string) error {
 }
 
 // GetEntities ...
-func (s *MockStore) GetEntities(ctx context.Context, pageSize int64, continueToken string) ([]*types.Entity, string, error) {
-	args := s.Called(ctx, pageSize, continueToken)
-	return args.Get(0).([]*types.Entity), args.String(1), args.Error(2)
+func (s *MockStore) GetEntities(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Entity, error) {
+	args := s.Called(ctx, pred)
+	return args.Get(0).([]*types.Entity), args.Error(1)
 }
 
 // GetEntityByName ...

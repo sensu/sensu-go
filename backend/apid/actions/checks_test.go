@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/queue"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockqueue"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/testutil"
@@ -24,7 +25,7 @@ func TestNewCheckController(t *testing.T) {
 	assert.Equal(store, actions.store)
 }
 
-func TestCheckQuery(t *testing.T) {
+func TestCheckList(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
 	)
@@ -66,47 +67,24 @@ func TestCheckQuery(t *testing.T) {
 			storeErr:    errors.New(""),
 			expectedErr: NewError(InternalErr, errors.New("")),
 		},
-		{
-			name: "no continue token",
-			ctx:  defaultCtx,
-			records: []*types.CheckConfig{
-				types.FixtureCheckConfig("checkConfig1"),
-				types.FixtureCheckConfig("checkConfig2"),
-			},
-			continueToken:         "",
-			expectedLen:           2,
-			expectedContinueToken: "",
-		},
-		{
-			name: "base64url encode continue token",
-			ctx:  defaultCtx,
-			records: []*types.CheckConfig{
-				types.FixtureCheckConfig("checkConfig1"),
-				types.FixtureCheckConfig("checkConfig2"),
-			},
-			continueToken:         "Albert Camus",
-			expectedLen:           2,
-			expectedContinueToken: "QWxiZXJ0IENhbXVz",
-		},
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
-		actions := NewCheckController(store, queue.NewMemoryGetter())
+		s := &mockstore.MockStore{}
+		actions := NewCheckController(s, queue.NewMemoryGetter())
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("GetCheckConfigs", tc.ctx, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
-				Return(tc.records, tc.continueToken, tc.storeErr)
+			pred := &store.SelectionPredicate{}
+			s.On("GetCheckConfigs", tc.ctx, pred).Return(tc.records, tc.storeErr)
 
 			// Exec Query
-			results, continueToken, err := actions.Query(tc.ctx)
+			results, err := actions.List(tc.ctx, pred)
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)
-			assert.EqualValues(tc.expectedContinueToken, continueToken)
 			assert.Len(results, tc.expectedLen)
 		})
 	}

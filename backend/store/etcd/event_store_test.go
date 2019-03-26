@@ -35,87 +35,88 @@ func TestEventStorageMaxOutputSize(t *testing.T) {
 }
 
 func TestEventStorage(t *testing.T) {
-	testWithEtcd(t, func(store store.Store) {
+	testWithEtcd(t, func(s store.Store) {
 		event := corev2.FixtureEvent("entity1", "check1")
 		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
+		pred := &store.SelectionPredicate{}
 
 		// Set these to nil in order to avoid comparison issues between {} and nil
 		event.Check.Labels = nil
 		event.Check.Annotations = nil
 
 		// We should receive an empty slice if no results were found
-		events, continueToken, err := store.GetEvents(ctx, 0, "")
+		events, err := s.GetEvents(ctx, pred)
 		assert.NoError(t, err)
 		assert.NotNil(t, events)
 		assert.Equal(t, len(events), 0)
-		assert.Empty(t, continueToken)
+		assert.Empty(t, pred.Continue)
 
-		err = store.UpdateEvent(ctx, event)
+		err = s.UpdateEvent(ctx, event)
 		require.NoError(t, err)
 
-		newEv, err := store.GetEventByEntityCheck(ctx, "entity1", "check1")
+		newEv, err := s.GetEventByEntityCheck(ctx, "entity1", "check1")
 		require.NoError(t, err)
 		if got, want := newEv, event; !reflect.DeepEqual(got, want) {
 			t.Errorf("bad event: got %#v, want %#v", got.Check, want.Check)
 		}
 
-		events, continueToken, err = store.GetEvents(ctx, 0, "")
+		events, err = s.GetEvents(ctx, pred)
 		require.NoError(t, err)
 		require.Equal(t, 1, len(events))
-		require.Empty(t, continueToken)
+		require.Empty(t, pred.Continue)
 		if got, want := events[0], event; !reflect.DeepEqual(got, want) {
 			t.Errorf("bad event: got %v, want %v", got.Check, want.Check)
 		}
 
 		// Get all events with wildcards
 		ctx = context.WithValue(ctx, corev2.NamespaceKey, corev2.NamespaceTypeAll)
-		events, continueToken, err = store.GetEvents(ctx, 0, "")
+		events, err = s.GetEvents(ctx, pred)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(events))
-		assert.Empty(t, continueToken)
+		assert.Empty(t, pred.Continue)
 
 		// Get all events from a missing namespace
 		ctx = context.WithValue(ctx, corev2.NamespaceKey, "acme")
-		events, continueToken, err = store.GetEvents(ctx, 0, "")
+		events, err = s.GetEvents(ctx, pred)
 		require.NoError(t, err)
 		require.Equal(t, 0, len(events))
-		require.Empty(t, continueToken)
+		require.Empty(t, pred.Continue)
 
 		// Set back the context
 		ctx = context.WithValue(ctx, corev2.NamespaceKey, event.Entity.Namespace)
 
-		newEv, err = store.GetEventByEntityCheck(ctx, "", "foo")
+		newEv, err = s.GetEventByEntityCheck(ctx, "", "foo")
 		assert.Nil(t, newEv)
 		assert.Error(t, err)
 
-		newEv, err = store.GetEventByEntityCheck(ctx, "foo", "")
+		newEv, err = s.GetEventByEntityCheck(ctx, "foo", "")
 		assert.Nil(t, newEv)
 		assert.Error(t, err)
 
-		newEv, err = store.GetEventByEntityCheck(ctx, "foo", "foo")
+		newEv, err = s.GetEventByEntityCheck(ctx, "foo", "foo")
 		assert.Nil(t, newEv)
 		assert.Nil(t, err)
 
-		events, continueToken, err = store.GetEventsByEntity(ctx, "entity1", 0, "")
+		events, err = s.GetEventsByEntity(ctx, "entity1", pred)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(events))
-		assert.Empty(t, continueToken)
+		assert.Empty(t, pred.Continue)
 		if got, want := events[0], event; !reflect.DeepEqual(got, want) {
 			t.Errorf("bad event: got %v, want %v", got, want)
 		}
 
-		assert.NoError(t, store.DeleteEventByEntityCheck(ctx, "entity1", "check1"))
-		newEv, err = store.GetEventByEntityCheck(ctx, "entity1", "check1")
+		assert.NoError(t, s.DeleteEventByEntityCheck(ctx, "entity1", "check1"))
+		newEv, err = s.GetEventByEntityCheck(ctx, "entity1", "check1")
 		assert.Nil(t, newEv)
 		assert.NoError(t, err)
 
-		assert.Error(t, store.DeleteEventByEntityCheck(ctx, "", ""))
-		assert.Error(t, store.DeleteEventByEntityCheck(ctx, "", "foo"))
-		assert.Error(t, store.DeleteEventByEntityCheck(ctx, "foo", ""))
+		assert.Error(t, s.DeleteEventByEntityCheck(ctx, "", ""))
+		assert.Error(t, s.DeleteEventByEntityCheck(ctx, "", "foo"))
+		assert.Error(t, s.DeleteEventByEntityCheck(ctx, "foo", ""))
 
 		// Updating an event in a nonexistent org and env should not work
 		event.Entity.Namespace = "missing"
-		err = store.UpdateEvent(ctx, event)
+		err = s.UpdateEvent(ctx, event)
 		assert.Error(t, err)
 	})
 }
@@ -161,10 +162,10 @@ func TestUpdateEventWithZeroTimestamp_GH2636(t *testing.T) {
 }
 
 func TestGetEventsPagination(t *testing.T) {
-	testWithEtcd(t, func(store store.Store) {
+	testWithEtcd(t, func(s store.Store) {
 		// Create a "testing" namespace in the store
 		testingNS := corev2.FixtureNamespace("testing")
-		store.UpdateNamespace(context.Background(), testingNS)
+		s.UpdateNamespace(context.Background(), testingNS)
 
 		// Add 42 objects in the store: 21 in the "default" namespace and 21 in
 		// the "testing" namespace
@@ -178,14 +179,14 @@ func TestGetEventsPagination(t *testing.T) {
 			event := corev2.FixtureEvent(entityName, checkName)
 			event.Name = fmt.Sprintf("%s/%s", entityName, checkName)
 
-			if err := store.UpdateEvent(context.Background(), event); err != nil {
+			if err := s.UpdateEvent(context.Background(), event); err != nil {
 				t.Fatal(err)
 			}
 
 			event.Namespace = "testing"
 			event.Entity.Namespace = "testing"
 
-			if err := store.UpdateEvent(context.Background(), event); err != nil {
+			if err := s.UpdateEvent(context.Background(), event); err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -194,11 +195,10 @@ func TestGetEventsPagination(t *testing.T) {
 		// and a final page of 2 items, in the expected order: 01 through 21 in
 		// namespace "default" then 01 through 21 in namespace "testing"
 		ctx := context.Background()
-		pageSize := 5
-		continueToken := ""
+		pred := &store.SelectionPredicate{Limit: 5}
 
 		for i := 0; i < 8; i++ {
-			events, nextContinueToken, err := store.GetEvents(ctx, int64(pageSize), continueToken)
+			events, err := s.GetEvents(ctx, pred)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -216,12 +216,10 @@ func TestGetEventsPagination(t *testing.T) {
 					t.Fatalf("Expected %s, got %s (%s)", expected, event.Name, event.Namespace)
 				}
 			}
-
-			continueToken = nextContinueToken
 		}
 
 		// Check the last page (2 items)
-		events, nextContinueToken, err := store.GetEvents(ctx, int64(pageSize), continueToken)
+		events, err := s.GetEvents(ctx, pred)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -230,8 +228,8 @@ func TestGetEventsPagination(t *testing.T) {
 			t.Fatalf("Expected a page with 2 items, got %d", len(events))
 		}
 
-		if nextContinueToken != "" {
-			t.Fatalf("Expected next continue token to be \"\", got %s", nextContinueToken)
+		if pred.Continue != "" {
+			t.Fatalf("Expected next continue token to be \"\", got %s", pred.Continue)
 		}
 
 		offset := 40
@@ -250,23 +248,22 @@ func TestGetEventsPagination(t *testing.T) {
 		ctx = context.Background()
 		ctx = context.WithValue(ctx, corev2.NamespaceKey, "default")
 		t.Run("through default namespace", func(t *testing.T) {
-			testPagination(t, ctx, store, 10, 21)
+			testPagination(t, ctx, s, 10, 21)
 		})
 
 		// Test that we can limit the query to the "testing" namespace
 		ctx = context.Background()
 		ctx = context.WithValue(ctx, corev2.NamespaceKey, "testing")
 		t.Run("through testing namespace", func(t *testing.T) {
-			testPagination(t, ctx, store, 10, 21)
+			testPagination(t, ctx, s, 10, 21)
 		})
 
 		// Test with limit=1
 		ctx = context.Background()
-		pageSize = 1
-		continueToken = ""
+		pred = &store.SelectionPredicate{Limit: 1}
 
 		for i := 0; i < 42; i++ {
-			events, nextContinueToken, err := store.GetEvents(ctx, int64(pageSize), continueToken)
+			events, err := s.GetEvents(ctx, pred)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -284,8 +281,6 @@ func TestGetEventsPagination(t *testing.T) {
 					t.Fatalf("Expected %s, got %s (%s)", expected, event.Name, event.Namespace)
 				}
 			}
-
-			continueToken = nextContinueToken
 		}
 
 		// TODO: Add test with limit > setSize
@@ -293,12 +288,12 @@ func TestGetEventsPagination(t *testing.T) {
 }
 
 func testPagination(t *testing.T, ctx context.Context, etcd store.Store, pageSize, setSize int) {
+	pred := &store.SelectionPredicate{Limit: int64(pageSize)}
 	nFullPages := setSize / pageSize
 	nLeftovers := setSize % pageSize
 
-	continueToken := ""
 	for i := 0; i < nFullPages; i++ {
-		events, nextContinueToken, err := etcd.GetEvents(ctx, int64(pageSize), continueToken)
+		events, err := etcd.GetEvents(ctx, pred)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -316,13 +311,11 @@ func testPagination(t *testing.T, ctx context.Context, etcd store.Store, pageSiz
 				t.Fatalf("Expected %s, got %s (namespace=%s)", expected, event.Name, event.Namespace)
 			}
 		}
-
-		continueToken = nextContinueToken
 	}
 
 	// Check the last page, supposed to hold nLeftovers items
 	if nLeftovers > 0 {
-		events, nextContinueToken, err := etcd.GetEvents(ctx, int64(pageSize), continueToken)
+		events, err := etcd.GetEvents(ctx, pred)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -331,8 +324,8 @@ func testPagination(t *testing.T, ctx context.Context, etcd store.Store, pageSiz
 			t.Fatalf("Expected last page with %d items, got %d", nLeftovers, len(events))
 		}
 
-		if nextContinueToken != "" {
-			t.Fatalf("Expected next continue token to be \"\", got %s", nextContinueToken)
+		if pred.Continue != "" {
+			t.Fatalf("Expected next continue token to be \"\", got %s", pred.Continue)
 		}
 
 		offset := pageSize * nFullPages
@@ -403,12 +396,12 @@ func TestGetEventsByEntityPagination(t *testing.T) {
 }
 
 func testGetEventsByEntityPagination(t *testing.T, ctx context.Context, etcd store.Store, pageSize, setSize int, entityName string) {
+	pred := &store.SelectionPredicate{Limit: int64(pageSize)}
 	nFullPages := setSize / pageSize
 	nLeftovers := setSize % pageSize
 
-	continueToken := ""
 	for i := 0; i < nFullPages; i++ {
-		events, nextContinueToken, err := etcd.GetEventsByEntity(ctx, entityName, int64(pageSize), continueToken)
+		events, err := etcd.GetEventsByEntity(ctx, entityName, pred)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -426,13 +419,11 @@ func testGetEventsByEntityPagination(t *testing.T, ctx context.Context, etcd sto
 				t.Fatalf("Expected %s, got %s", expected, event.Name)
 			}
 		}
-
-		continueToken = nextContinueToken
 	}
 
 	// Check the last page, supposed to hold nLeftovers items
 	if nLeftovers > 0 {
-		events, nextContinueToken, err := etcd.GetEventsByEntity(ctx, entityName, int64(pageSize), continueToken)
+		events, err := etcd.GetEventsByEntity(ctx, entityName, pred)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -441,8 +432,8 @@ func testGetEventsByEntityPagination(t *testing.T, ctx context.Context, etcd sto
 			t.Fatalf("Expected last page with %d items, got %d", nLeftovers, len(events))
 		}
 
-		if nextContinueToken != "" {
-			t.Fatalf("Expected next continue token to be \"\", got %s", nextContinueToken)
+		if pred.Continue != "" {
+			t.Fatalf("Expected next continue token to be \"\", got %s", pred.Continue)
 		}
 
 		offset := pageSize * nFullPages

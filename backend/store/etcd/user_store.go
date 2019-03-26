@@ -8,11 +8,18 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
+const usersPathPrefix = "users"
+
 func getUserPath(id string) string {
-	return fmt.Sprintf("%s/users/%s", EtcdRoot, id)
+	return path.Join(store.Root, usersPathPrefix, id)
+}
+
+func getUsersPath(ctx context.Context, id string) string {
+	return path.Join(store.Root, usersPathPrefix, id)
 }
 
 // AuthenticateUser authenticates a User by username and password.
@@ -122,7 +129,7 @@ func (s *Store) GetUser(ctx context.Context, username string) (*types.User, erro
 
 // GetUsers retrieves all enabled users
 func (s *Store) GetUsers() ([]*types.User, error) {
-	allUsers, _, err := s.GetAllUsers(0, "")
+	allUsers, err := s.GetAllUsers(&store.SelectionPredicate{})
 	if err != nil {
 		return allUsers, err
 	}
@@ -139,40 +146,10 @@ func (s *Store) GetUsers() ([]*types.User, error) {
 }
 
 // GetAllUsers retrieves all users
-func (s *Store) GetAllUsers(pageSize int64, continueToken string) (users []*types.User, newContinueToken string, err error) {
-	opts := []clientv3.OpOption{
-		clientv3.WithLimit(pageSize),
-	}
-
-	keyPrefix := getUserPath("")
-	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
-	opts = append(opts, clientv3.WithRange(rangeEnd))
-
-	resp, err := s.client.Get(context.Background(), path.Join(keyPrefix, continueToken), opts...)
-	if err != nil {
-		return nil, "", err
-	}
-
-	if len(resp.Kvs) == 0 {
-		return []*types.User{}, "", nil
-	}
-
-	for _, kv := range resp.Kvs {
-		user := &types.User{}
-		err = json.Unmarshal(kv.Value, user)
-		if err != nil {
-			return nil, "", err
-		}
-
-		users = append(users, user)
-	}
-
-	if pageSize != 0 && resp.Count > pageSize {
-		lastUser := users[len(users)-1]
-		newContinueToken = lastUser.Username + "\x00"
-	}
-
-	return users, newContinueToken, nil
+func (s *Store) GetAllUsers(pred *store.SelectionPredicate) ([]*types.User, error) {
+	users := []*types.User{}
+	err := List(context.Background(), s.client, getUsersPath, &users, pred)
+	return users, err
 }
 
 // UpdateUser updates a User.

@@ -84,7 +84,7 @@ func (c *CheckWatcher) startScheduler(check *types.CheckConfig) error {
 // Start starts the CheckWatcher.
 func (c *CheckWatcher) Start() error {
 	// for each check
-	checkConfigs, _, err := c.store.GetCheckConfigs(c.ctx, 0, "")
+	checkConfigs, err := c.store.GetCheckConfigs(c.ctx, &store.SelectionPredicate{})
 	if err != nil {
 		return err
 	}

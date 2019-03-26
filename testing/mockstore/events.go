@@ -4,6 +4,7 @@ import (
 	"context"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/store"
 )
 
 // DeleteEventByEntityCheck ...
@@ -13,15 +14,15 @@ func (s *MockStore) DeleteEventByEntityCheck(ctx context.Context, entityName, ch
 }
 
 // GetEvents ...
-func (s *MockStore) GetEvents(ctx context.Context, pageSize int64, continueToken string) ([]*corev2.Event, string, error) {
-	args := s.Called(ctx, pageSize, continueToken)
-	return args.Get(0).([]*corev2.Event), args.String(1), args.Error(2)
+func (s *MockStore) GetEvents(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
+	args := s.Called(ctx, pred)
+	return args.Get(0).([]*corev2.Event), args.Error(1)
 }
 
 // GetEventsByEntity ...
-func (s *MockStore) GetEventsByEntity(ctx context.Context, entityName string, pageSize int64, continueToken string) ([]*corev2.Event, string, error) {
-	args := s.Called(ctx, entityName, pageSize, continueToken)
-	return args.Get(0).([]*corev2.Event), args.String(1), args.Error(2)
+func (s *MockStore) GetEventsByEntity(ctx context.Context, entityName string, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
+	args := s.Called(ctx, entityName, pred)
+	return args.Get(0).([]*corev2.Event), args.Error(1)
 }
 
 // GetEventByEntityCheck ...

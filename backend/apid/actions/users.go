@@ -2,7 +2,6 @@ package actions
 
 import (
 	"context"
-	"encoding/base64"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
@@ -12,33 +11,30 @@ import (
 
 // UserController exposes actions in which a viewer can perform.
 type UserController struct {
-	Store interface {
-		store.UserStore
-	}
+	store store.UserStore
 }
 
 // NewUserController returns new UserController
 func NewUserController(store store.Store) UserController {
 	return UserController{
-		Store: store,
+		store: store,
 	}
 }
 
 // Query returns resources available to the viewer filter by given params.
-func (a UserController) Query(ctx context.Context) ([]*types.User, string, error) {
-	pageSize := corev2.PageSizeFromContext(ctx)
-	continueToken := corev2.PageContinueFromContext(ctx)
-
+func (a UserController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
 	// Fetch from store
-	results, newContinueToken, serr := a.Store.GetAllUsers(int64(pageSize), continueToken)
-	if serr != nil {
-		return nil, "", NewError(InternalErr, serr)
+	results, err := a.store.GetAllUsers(pred)
+	if err != nil {
+		return nil, NewError(InternalErr, err)
 	}
 
-	// Encode the continue token with base64url (RFC 4648), without padding
-	encodedNewContinueToken := base64.RawURLEncoding.EncodeToString([]byte(newContinueToken))
+	resources := make([]corev2.Resource, len(results))
+	for i, v := range results {
+		resources[i] = corev2.Resource(v)
+	}
 
-	return results, encodedNewContinueToken, nil
+	return resources, nil
 }
 
 // Find returns resource associated with given parameters if available to the
@@ -59,7 +55,7 @@ func (a UserController) Find(ctx context.Context, name string) (*types.User, err
 // Create creates a new user. It returns an error if the user already exists.
 func (a UserController) Create(ctx context.Context, newUser types.User) error {
 	// Check for existing
-	if e, err := a.Store.GetUser(ctx, newUser.Username); err != nil {
+	if e, err := a.store.GetUser(ctx, newUser.Username); err != nil {
 		return NewError(InternalErr, err)
 	} else if e != nil {
 		return NewErrorf(AlreadyExistsErr)
@@ -88,7 +84,7 @@ func (a UserController) CreateOrReplace(ctx context.Context, newUser types.User)
 	newUser.Password = hash
 
 	// Persist
-	if err := a.Store.UpdateUser(&newUser); err != nil {
+	if err := a.store.UpdateUser(&newUser); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -105,7 +101,7 @@ func (a UserController) Disable(ctx context.Context, name string) error {
 
 	// Disable
 	if !result.Disabled {
-		if serr := a.Store.DeleteUser(ctx, result); serr != nil {
+		if serr := a.store.DeleteUser(ctx, result); serr != nil {
 			return NewError(InternalErr, serr)
 		}
 	}
@@ -174,7 +170,7 @@ func (a UserController) RemoveAllGroups(ctx context.Context, username string) er
 }
 
 func (a UserController) findUser(ctx context.Context, name string) (*types.User, error) {
-	result, serr := a.Store.GetUser(ctx, name)
+	result, serr := a.store.GetUser(ctx, name)
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	} else if result == nil {
@@ -185,7 +181,7 @@ func (a UserController) findUser(ctx context.Context, name string) (*types.User,
 }
 
 func (a UserController) updateUser(ctx context.Context, user *types.User) error {
-	if err := a.Store.UpdateUser(user); err != nil {
+	if err := a.store.UpdateUser(user); err != nil {
 		return NewError(InternalErr, err)
 	}
 

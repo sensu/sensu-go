@@ -2,7 +2,6 @@ package actions
 
 import (
 	"context"
-	"encoding/base64"
 	"errors"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -23,13 +22,13 @@ var updateFields = []string{
 
 // HandlerController exposes actions available for handlers
 type HandlerController struct {
-	Store store.HandlerStore
+	store store.HandlerStore
 }
 
 // NewHandlerController creates a new HandlerController backed by store.
 func NewHandlerController(store store.HandlerStore) HandlerController {
 	return HandlerController{
-		Store: store,
+		store: store,
 	}
 }
 
@@ -42,7 +41,7 @@ func (c HandlerController) Create(ctx context.Context, handler types.Handler) er
 	ctx = addOrgEnvToContext(ctx, &handler)
 
 	// Check for existing
-	if m, err := c.Store.GetHandlerByName(ctx, handler.Name); err != nil {
+	if m, err := c.store.GetHandlerByName(ctx, handler.Name); err != nil {
 		return NewError(InternalErr, err)
 	} else if m != nil {
 		return NewErrorf(AlreadyExistsErr, handler.Name)
@@ -58,7 +57,7 @@ func (c HandlerController) Create(ctx context.Context, handler types.Handler) er
 	}
 
 	// Persist
-	if err := c.Store.UpdateHandler(ctx, &handler); err != nil {
+	if err := c.store.UpdateHandler(ctx, &handler); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -83,7 +82,7 @@ func (c HandlerController) CreateOrReplace(ctx context.Context, handler types.Ha
 	}
 
 	// Persist
-	if err := c.Store.UpdateHandler(ctx, &handler); err != nil {
+	if err := c.store.UpdateHandler(ctx, &handler); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -93,7 +92,7 @@ func (c HandlerController) CreateOrReplace(ctx context.Context, handler types.Ha
 // Destroy removes a resource if viewer has access.
 func (c HandlerController) Destroy(ctx context.Context, name string) error {
 	// Fetch from store
-	result, serr := c.Store.GetHandlerByName(ctx, name)
+	result, serr := c.store.GetHandlerByName(ctx, name)
 	if serr != nil {
 		return NewError(InternalErr, serr)
 	} else if result == nil {
@@ -101,7 +100,7 @@ func (c HandlerController) Destroy(ctx context.Context, name string) error {
 	}
 
 	// Remove from store
-	if err := c.Store.DeleteHandlerByName(ctx, result.Name); err != nil {
+	if err := c.store.DeleteHandlerByName(ctx, result.Name); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -112,7 +111,7 @@ func (c HandlerController) Destroy(ctx context.Context, name string) error {
 // viewer.
 func (c HandlerController) Find(ctx context.Context, name string) (*types.Handler, error) {
 	// Fetch from store
-	result, err := c.Store.GetHandlerByName(ctx, name)
+	result, err := c.store.GetHandlerByName(ctx, name)
 	if err != nil {
 		return nil, NewError(InternalErr, err)
 	}
@@ -123,19 +122,17 @@ func (c HandlerController) Find(ctx context.Context, name string) (*types.Handle
 	return result, nil
 }
 
-// Query returns resources available to the viewer
-func (c HandlerController) Query(ctx context.Context) ([]*types.Handler, string, error) {
-	pageSize := corev2.PageSizeFromContext(ctx)
-	continueToken := corev2.PageContinueFromContext(ctx)
-
+// List returns resources available to the viewer
+func (c HandlerController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
 	// Fetch from store
-	results, newContinueToken, serr := c.Store.GetHandlers(ctx, int64(pageSize), continueToken)
-	if serr != nil {
-		return nil, "", NewError(InternalErr, serr)
+	results, err := c.store.GetHandlers(ctx, pred)
+	if err != nil {
+		return nil, NewError(InternalErr, err)
+	}
+	resources := make([]corev2.Resource, len(results))
+	for i, v := range results {
+		resources[i] = corev2.Resource(v)
 	}
 
-	// Encode the continue token with base64url (RFC 4648), without padding
-	encodedNewContinueToken := base64.RawURLEncoding.EncodeToString([]byte(newContinueToken))
-
-	return results, encodedNewContinueToken, nil
+	return resources, nil
 }

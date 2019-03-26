@@ -3,6 +3,7 @@ package mockstore
 import (
 	"context"
 
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -13,9 +14,9 @@ func (s *MockStore) DeleteMutatorByName(ctx context.Context, name string) error 
 }
 
 // GetMutators ...
-func (s *MockStore) GetMutators(ctx context.Context, pageSize int64, continueToken string) ([]*types.Mutator, string, error) {
-	args := s.Called(ctx, pageSize, continueToken)
-	return args.Get(0).([]*types.Mutator), args.String(1), args.Error(2)
+func (s *MockStore) GetMutators(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Mutator, error) {
+	args := s.Called(ctx, pred)
+	return args.Get(0).([]*types.Mutator), args.Error(1)
 }
 
 // GetMutatorByName ...

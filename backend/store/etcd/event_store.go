@@ -62,29 +62,30 @@ func (s *Store) DeleteEventByEntityCheck(ctx context.Context, entityName, checkN
 
 // GetEvents returns the events for an (optional) namespace. If namespace is the
 // empty string, GetEvents returns all events for all namespaces.
-func (s *Store) GetEvents(ctx context.Context, pageSize int64, continueToken string) (events []*corev2.Event, nextContinueToken string, err error) {
+func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
 	opts := []clientv3.OpOption{
-		clientv3.WithLimit(pageSize),
+		clientv3.WithLimit(pred.Limit),
 	}
 
 	keyPrefix := getEventsPath(ctx, "")
 	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
 	opts = append(opts, clientv3.WithRange(rangeEnd))
 
-	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueToken), opts...)
+	resp, err := s.client.Get(ctx, path.Join(keyPrefix, pred.Continue), opts...)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	if len(resp.Kvs) == 0 {
-		return []*corev2.Event{}, "", nil
+		return []*corev2.Event{}, nil
 	}
 
+	events := []*corev2.Event{}
 	for _, kv := range resp.Kvs {
 		event := &corev2.Event{}
 		err = json.Unmarshal(kv.Value, event)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 		if event.Labels == nil {
 			event.Labels = make(map[string]string)
@@ -96,7 +97,7 @@ func (s *Store) GetEvents(ctx context.Context, pageSize int64, continueToken str
 		events = append(events, event)
 	}
 
-	if pageSize != 0 && resp.Count > pageSize {
+	if pred.Limit != 0 && resp.Count > pred.Limit {
 		queriedNamespace := store.NewNamespaceFromContext(ctx)
 		lastEvent := events[len(events)-1]
 
@@ -104,7 +105,7 @@ func (s *Store) GetEvents(ctx context.Context, pageSize int64, continueToken str
 		if queriedNamespace == "" {
 			// Workaround for sensu-go#2465: keepalive events do not always have
 			// their namespace filled in, which would break the construction of
-			// nextContinueToken below. To accommodate for that, when
+			// continue token below. To accommodate for that, when
 			// constructing the continue token, whevener an event has a
 			// namespace of "" we construct the continue token using its
 			// entity's namespace instead.
@@ -112,43 +113,46 @@ func (s *Store) GetEvents(ctx context.Context, pageSize int64, continueToken str
 			if lastEventNamespace == "" {
 				lastEventNamespace = lastEvent.Entity.Namespace
 			}
-			nextContinueToken = "/" + lastEventNamespace + "/" + lastEvent.Entity.Name + "/" + lastEvent.Check.Name + "\x00"
+			pred.Continue = "/" + lastEventNamespace + "/" + lastEvent.Entity.Name + "/" + lastEvent.Check.Name + "\x00"
 		} else {
-			nextContinueToken = lastEvent.Entity.Name + "/" + lastEvent.Check.Name + "\x00"
+			pred.Continue = lastEvent.Entity.Name + "/" + lastEvent.Check.Name + "\x00"
 		}
+	} else {
+		pred.Continue = ""
 	}
 
-	return events, nextContinueToken, nil
+	return events, nil
 }
 
 // GetEventsByEntity gets all events matching a given entity name.
-func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pageSize int64, continueToken string) (events []*corev2.Event, nextContinueToken string, err error) {
+func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
 	if entityName == "" {
-		return nil, "", errors.New("must specify entity name")
+		return nil, errors.New("must specify entity name")
 	}
 
 	opts := []clientv3.OpOption{
-		clientv3.WithLimit(pageSize),
+		clientv3.WithLimit(pred.Limit),
 	}
 
 	keyPrefix := getEventsPath(ctx, entityName)
 	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
 	opts = append(opts, clientv3.WithRange(rangeEnd))
 
-	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueToken), opts...)
+	resp, err := s.client.Get(ctx, path.Join(keyPrefix, pred.Continue), opts...)
 	if err != nil {
-		return nil, "", err
+		return nil, err
 	}
 
 	if len(resp.Kvs) == 0 {
-		return nil, "", nil
+		return nil, nil
 	}
 
+	events := []*corev2.Event{}
 	for _, kv := range resp.Kvs {
 		event := &corev2.Event{}
 		err = json.Unmarshal(kv.Value, event)
 		if err != nil {
-			return nil, "", err
+			return nil, err
 		}
 		if event.Labels == nil {
 			event.Labels = make(map[string]string)
@@ -160,12 +164,14 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pageSi
 		events = append(events, event)
 	}
 
-	if pageSize != 0 && resp.Count > pageSize {
+	if pred.Limit != 0 && resp.Count > pred.Limit {
 		lastEvent := events[len(events)-1]
-		nextContinueToken = lastEvent.Check.Name + "\x00"
+		pred.Continue = lastEvent.Check.Name + "\x00"
+	} else {
+		pred.Continue = ""
 	}
 
-	return events, nextContinueToken, nil
+	return events, nil
 }
 
 // GetEventByEntityCheck gets an event by entity and check name.

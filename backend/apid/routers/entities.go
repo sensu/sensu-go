@@ -5,7 +5,6 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -32,8 +31,8 @@ func (r *EntitiesRouter) Mount(parent *mux.Router) {
 
 	routes.Del(r.destroy)
 	routes.Get(r.find)
-	routes.List(r.list)
-	routes.ListAllNamespaces(r.list, "/{resource:entities}")
+	routes.List(r.controller.List)
+	routes.ListAllNamespaces(r.controller.List, "/{resource:entities}")
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
 }
@@ -56,16 +55,6 @@ func (r *EntitiesRouter) find(req *http.Request) (interface{}, error) {
 	}
 	record, err := r.controller.Find(req.Context(), id)
 	return record, err
-}
-
-func (r *EntitiesRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
-	records, continueToken, err := r.controller.Query(req.Context())
-
-	if continueToken != "" {
-		w.Header().Set(corev2.PaginationContinueHeader, continueToken)
-	}
-
-	return records, err
 }
 
 func (r *EntitiesRouter) create(req *http.Request) (interface{}, error) {

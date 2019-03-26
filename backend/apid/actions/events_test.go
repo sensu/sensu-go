@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
@@ -20,24 +21,22 @@ func TestNewEventController(t *testing.T) {
 	eventController := NewEventController(store, bus)
 
 	assert.NotNil(eventController)
-	assert.Equal(store, eventController.Store)
-	assert.Equal(bus, eventController.Bus)
+	assert.Equal(store, eventController.store)
+	assert.Equal(bus, eventController.bus)
 }
 
-func TestEventQuery(t *testing.T) {
+func TestEventList(t *testing.T) {
 	defaultCtx := context.Background()
 
 	testCases := []struct {
-		name                  string
-		ctx                   context.Context
-		events                []*types.Event
-		entity                string
-		check                 string
-		continueToken         string
-		storeErr              error
-		expectedLen           int
-		expectedContinueToken string
-		expectedErr           error
+		name        string
+		ctx         context.Context
+		events      []*types.Event
+		entity      string
+		check       string
+		storeErr    error
+		expectedLen int
+		expectedErr error
 	}{
 		{
 			name:        "No Params No Events",
@@ -70,7 +69,7 @@ func TestEventQuery(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name:        "Store Failure",
+			name:        "store Failure",
 			ctx:         defaultCtx,
 			events:      nil,
 			entity:      "entity1",
@@ -78,51 +77,28 @@ func TestEventQuery(t *testing.T) {
 			storeErr:    errors.New(""),
 			expectedErr: NewError(InternalErr, errors.New("")),
 		},
-		{
-			name: "no continue token",
-			ctx:  defaultCtx,
-			events: []*types.Event{
-				types.FixtureEvent("entity1", "check1"),
-				types.FixtureEvent("entity2", "check2"),
-			},
-			expectedLen:           2,
-			continueToken:         "",
-			expectedContinueToken: "",
-		},
-		{
-			name: "base64url encode continue token",
-			ctx:  defaultCtx,
-			events: []*types.Event{
-				types.FixtureEvent("entity1", "check1"),
-				types.FixtureEvent("entity2", "check2"),
-			},
-			expectedLen:           2,
-			continueToken:         "Albert Camus",
-			expectedContinueToken: "QWxiZXJ0IENhbXVz",
-		},
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
+		s := &mockstore.MockStore{}
 		bus := &mockbus.MockBus{}
-		eventController := NewEventController(store, bus)
+		eventController := NewEventController(s, bus)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("GetEvents", tc.ctx, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
-				Return(tc.events, tc.continueToken, tc.storeErr)
+			pred := &store.SelectionPredicate{}
+			s.On("GetEvents", tc.ctx, pred).Return(tc.events, tc.storeErr)
 
-			store.On("GetEventsByEntity", tc.ctx, mock.AnythingOfType("string"), mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
-				Return(tc.events, tc.continueToken, tc.storeErr)
+			s.On("GetEventsByEntity", tc.ctx, mock.AnythingOfType("string"), pred).
+				Return(tc.events, tc.storeErr)
 
 			// Exec Query
-			results, continueToken, err := eventController.Query(tc.ctx, tc.entity, tc.check)
+			results, err := eventController.List(tc.ctx, pred)
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)
-			assert.EqualValues(tc.expectedContinueToken, continueToken)
 			assert.Len(results, tc.expectedLen)
 		})
 	}
@@ -321,7 +297,7 @@ func TestEventCreate(t *testing.T) {
 			expectedErrCode: AlreadyExistsErr,
 		},
 		{
-			name:            "Store Err on Fetch",
+			name:            "store Err on Fetch",
 			ctx:             defaultCtx,
 			argument:        types.FixtureEvent("entity1", "check1"),
 			fetchErr:        errors.New("dunno"),

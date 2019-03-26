@@ -9,7 +9,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/store"
+
 	"github.com/gorilla/mux"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/testing/mockqueue"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -30,9 +33,9 @@ func (m *mockCheckController) CreateOrReplace(ctx context.Context, check types.C
 	return m.Called(ctx, check).Error(0)
 }
 
-func (m *mockCheckController) Query(ctx context.Context) ([]*types.CheckConfig, string, error) {
-	args := m.Called(ctx)
-	return args.Get(0).([]*types.CheckConfig), args.String(1), args.Error(2)
+func (m *mockCheckController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
+	args := m.Called(ctx, pred)
+	return args.Get(0).([]corev2.Resource), args.Error(1)
 }
 
 func (m *mockCheckController) Find(ctx context.Context, check string) (*types.CheckConfig, error) {
@@ -168,8 +171,8 @@ func TestListChecks(t *testing.T) {
 
 	client := new(http.Client)
 
-	fixtures := []*types.CheckConfig{types.FixtureCheckConfig("check1")}
-	controller.On("Query", mock.Anything).Return(fixtures, "", nil)
+	fixtures := []corev2.Resource{types.FixtureCheckConfig("check1")}
+	controller.On("List", mock.Anything, &store.SelectionPredicate{}).Return(fixtures, nil)
 	endpoint := "/namespaces/default/checks"
 	req := newRequest(t, http.MethodGet, server.URL+endpoint, nil)
 
