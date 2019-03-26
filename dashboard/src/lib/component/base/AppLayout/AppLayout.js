@@ -2,6 +2,7 @@ import React from "react";
 import PropTypes from "prop-types";
 import { withStyles } from "@material-ui/core/styles";
 import ResizeObserver from "react-resize-observer";
+import classnames from "classnames";
 
 import ToastWell from "/lib/component/relocation/ToastWell";
 import BannerWell from "/lib/component/relocation/BannerWell";
@@ -74,17 +75,20 @@ const styles = theme => ({
     flexDirection: "column",
     alignItems: "stretch",
 
+    maxWidth: "100%",
+
     marginLeft: "auto",
     marginRight: "auto",
-
-    maxWidth: 1224,
 
     paddingLeft: theme.spacing.unit,
     paddingRight: theme.spacing.unit,
 
     paddingTop: 16,
     paddingBottom: 24,
+  },
 
+  contentMaxWidth: {
+    maxWidth: 1224,
     [theme.breakpoints.up("md")]: {
       // align with quick nav container
       paddingTop: 24,
@@ -121,12 +125,14 @@ class AppLayout extends React.PureComponent {
     topBar: PropTypes.node,
     quickNav: PropTypes.node,
     content: PropTypes.node,
+    fullWidth: PropTypes.bool,
   };
 
   static defaultProps = {
     topBar: undefined,
     quickNav: undefined,
     content: undefined,
+    fullWidth: false,
   };
 
   static MobileFullWidthContent = MobileFullWidthContent;
@@ -146,7 +152,7 @@ class AppLayout extends React.PureComponent {
   };
 
   render() {
-    const { classes, topBar, quickNav, content } = this.props;
+    const { classes, topBar, quickNav, content, fullWidth } = this.props;
 
     const contentOffset =
       CSS && CSS.supports && CSS.supports("position: sticky")
@@ -162,13 +168,21 @@ class AppLayout extends React.PureComponent {
             <div className={classes.banner}>
               <BannerWell />
             </div>
-            <div className={classes.quickNavContainer}>
-              <div className={classes.quickNav}>{quickNav}</div>
-            </div>
+            {!fullWidth && (
+              <div className={classes.quickNavContainer}>
+                <div className={classes.quickNav}>{quickNav}</div>
+              </div>
+            )}
           </div>
           <div style={{ height: contentOffset }} />
           <div className={classes.contentContainer}>
-            <div className={classes.content}>{content}</div>
+            <div
+              className={classnames(classes.content, {
+                [classes.contentMaxWidth]: !fullWidth,
+              })}
+            >
+              {content}
+            </div>
           </div>
           <div className={classes.toastContainer}>
             <div className={classes.toast}>
