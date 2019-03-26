@@ -32,6 +32,7 @@ import (
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/system"
+	"github.com/sensu/sensu-go/types"
 )
 
 // Backend represents the backend server, which is used to hold the datastore
@@ -236,12 +237,27 @@ func Initialize(config *Config) (*Backend, error) {
 	}
 	b.Daemons = append(b.Daemons, api)
 
-	// Initialize dashboardd
+	// Initialize dashboardd TLS config
+	var dashboardTLSConfig *types.TLSOptions
+
+	// Always use dashboard tls options when they are specified
+	if config.DashboardTLSCertFile != "" && config.DashboardTLSKeyFile != "" {
+		dashboardTLSConfig = &types.TLSOptions{
+			CertFile: config.DashboardTLSCertFile,
+			KeyFile:  config.DashboardTLSKeyFile,
+		}
+	} else if config.TLS != nil {
+		// use apid tls config if no dashboard tls options are specified
+		dashboardTLSConfig = &types.TLSOptions{
+			CertFile: config.TLS.GetCertFile(),
+			KeyFile:  config.TLS.GetKeyFile(),
+		}
+	}
 	dashboard, err := dashboardd.New(dashboardd.Config{
 		APIURL: config.APIURL,
 		Host:   config.DashboardHost,
 		Port:   config.DashboardPort,
-		TLS:    config.TLS,
+		TLS:    dashboardTLSConfig,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", dashboard.Name(), err)
