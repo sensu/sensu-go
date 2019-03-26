@@ -7,8 +7,42 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.4.0] - 2019-03-27
+
+### Added
+- Add support for pagination to the API
+- Add two new flags for `backend` daemon to optionally allow for separate TLS
+  cert/key for dashboard. the flags are: `--dashboard-cert-file` and
+  `--dashboard-key-file`. The dashboard will use the same TLS config of the API
+  unless these new flags are specified.
+- Added notion of asset collections to dashboard daemon
+- Added a store for Tessen opt-in/opt-out configuration.
+- Added /tessen GET and PUT endpoints to the API.
+- Added queueing to the agent /events API
+
+### Changed
+- [Web] Updated dependencies that had warnings
+- [Web] updated dependency babel to ^7.4
+- [Web] updated UI library to ^3.8
+
 ### Fixed
-- Commands wrap on the event details page and will display "-" if there is no command (keepalives)
+- Fixed a bug in `sensuctl` where global/persistent flags, such as `--namespace`
+  and `--config-dir`, would get ignored if they were passed after a sub-command
+  local flag, such as `--format`.
+- Fixed a bug in `sensuctl` where handlers and filters would only be deleted
+  from the default namespace, unless a `--namespace` flag was specified.
+- Fixed a bug where events could be stored without a timestamp.
+- Fixed a bug where metrics could be persisted to etcd in some cases.
+- Fixed a bug where agents would sometimes refuse to terminate on SIGTERM and
+  SIGINT.
+- Fixed a bug where agents would always try to reconnect to the same backend,
+  even when multiple backends were specified. Agents will now try to connect to
+  other backends, in pseudorandom fashion.
+- [Web] avoids crash when the creator of a check is inaccessible.
+- [Api] Respond with 404 from the users endpoint when user for given name cannot
+  be found.
+- Commands wrap on the event details page and will display "-" if there is no
+  command (keepalives)
 
 ## [5.3.0] - 2019-03-11
 
