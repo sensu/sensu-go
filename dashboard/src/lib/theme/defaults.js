@@ -10,8 +10,8 @@ const defaults = {
   typography: () => {
     // Prefer 'Display' for larger fonts
     // https://developer.apple.com/ios/human-interface-guidelines/visual-design/typography/
-    const title = `"SF Pro Display", "Roboto", "Helvetica", "Arial", sans-serif`;
-    const body = `"SF Pro Text", "Roboto", "Helvetica", "Arial", sans-serif`;
+    const title = `"SF Pro Display", "Segoe UI Light", "Roboto", "Helvetica", "Arial", sans-serif`;
+    const body = `"SF Pro Text", "Segoe UI", "Roboto", "Helvetica", "Arial", sans-serif`;
     const mono = `"SFMono-Regular", Consolas, "Liberation Mono", Menlo,Courier, monospace`;
 
     return {
