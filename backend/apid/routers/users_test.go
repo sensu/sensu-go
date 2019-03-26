@@ -27,9 +27,9 @@ func (m *mockUserController) CreateOrReplace(ctx context.Context, name types.Use
 	return m.Called(ctx, name).Error(0)
 }
 
-func (m *mockUserController) Query(ctx context.Context) ([]*types.User, error) {
+func (m *mockUserController) Query(ctx context.Context) ([]*types.User, string, error) {
 	args := m.Called(ctx)
-	return args.Get(0).([]*types.User), args.Error(1)
+	return args.Get(0).([]*types.User), args.String(1), args.Error(2)
 }
 
 func (m *mockUserController) Find(ctx context.Context, name string) (*types.User, error) {
