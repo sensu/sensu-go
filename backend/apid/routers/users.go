@@ -14,7 +14,7 @@ import (
 
 // UsersController represents the controller needs of the UsersRouter.
 type UserController interface {
-	Query(ctx context.Context) ([]*types.User, error)
+	Query(ctx context.Context) ([]*types.User, string, error)
 	Find(ctx context.Context, name string) (*types.User, error)
 	Create(ctx context.Context, newUser types.User) error
 	CreateOrReplace(ctx context.Context, newOrg types.User) error
