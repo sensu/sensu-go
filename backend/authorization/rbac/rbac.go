@@ -33,7 +33,7 @@ func (a *Authorizer) Authorize(ctx context.Context, attrs *authorization.Attribu
 	}
 
 	// Get cluster roles binding
-	clusterRoleBindings, err := a.Store.ListClusterRoleBindings(ctx)
+	clusterRoleBindings, _, err := a.Store.ListClusterRoleBindings(ctx, 0, "")
 	if err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
@@ -81,7 +81,7 @@ func (a *Authorizer) Authorize(ctx context.Context, attrs *authorization.Attribu
 	// First, make sure we have a namespace
 	if len(attrs.Namespace) > 0 {
 		// Get roles binding
-		roleBindings, err := a.Store.ListRoleBindings(ctx)
+		roleBindings, _, err := a.Store.ListRoleBindings(ctx, 0, "")
 		if err != nil {
 			switch err := err.(type) {
 			case *store.ErrNotFound:

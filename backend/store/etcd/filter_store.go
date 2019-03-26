@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
@@ -42,28 +43,40 @@ func (s *Store) DeleteEventFilterByName(ctx context.Context, name string) error 
 	return nil
 }
 
-// GetEventFilters gets the list of filters for an (optional) namespace. Passing
-// the empty string as the org will return all filters.
-func (s *Store) GetEventFilters(ctx context.Context) ([]*types.EventFilter, error) {
-	resp, err := s.client.Get(ctx, getEventFiltersPath(ctx, ""), clientv3.WithPrefix())
-	if err != nil {
-		return nil, err
-	}
-	if len(resp.Kvs) == 0 {
-		return []*types.EventFilter{}, nil
+// GetEventFilters gets the list of filters for a namespace.
+func (s *Store) GetEventFilters(ctx context.Context, pageSize int64, continueToken string) (filters []*types.EventFilter, newContinueToken string, err error) {
+	opts := []clientv3.OpOption{
+		clientv3.WithLimit(pageSize),
 	}
 
-	filtersArray := make([]*types.EventFilter, len(resp.Kvs))
-	for i, kv := range resp.Kvs {
+	keyPrefix := getEventFiltersPath(ctx, "")
+	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
+	opts = append(opts, clientv3.WithRange(rangeEnd))
+
+	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueToken), opts...)
+	if err != nil {
+		return nil, "", err
+	}
+	if len(resp.Kvs) == 0 {
+		return []*types.EventFilter{}, "", nil
+	}
+
+	for _, kv := range resp.Kvs {
 		filter := &types.EventFilter{}
 		err = json.Unmarshal(kv.Value, filter)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
-		filtersArray[i] = filter
+
+		filters = append(filters, filter)
 	}
 
-	return filtersArray, nil
+	if pageSize != 0 && resp.Count > pageSize {
+		lastFilter := filters[len(filters)-1]
+		newContinueToken = computeContinueToken(ctx, lastFilter)
+	}
+
+	return filters, newContinueToken, nil
 }
 
 // GetEventFilterByName gets an EventFilter by name.

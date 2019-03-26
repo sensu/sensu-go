@@ -13,9 +13,9 @@ func (s *MockStore) DeleteMutatorByName(ctx context.Context, name string) error 
 }
 
 // GetMutators ...
-func (s *MockStore) GetMutators(ctx context.Context) ([]*types.Mutator, error) {
-	args := s.Called(ctx)
-	return args.Get(0).([]*types.Mutator), args.Error(1)
+func (s *MockStore) GetMutators(ctx context.Context, pageSize int64, continueToken string) ([]*types.Mutator, string, error) {
+	args := s.Called(ctx, pageSize, continueToken)
+	return args.Get(0).([]*types.Mutator), args.String(1), args.Error(2)
 }
 
 // GetMutatorByName ...

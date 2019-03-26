@@ -28,14 +28,16 @@ func TestEventQuery(t *testing.T) {
 	defaultCtx := context.Background()
 
 	testCases := []struct {
-		name        string
-		ctx         context.Context
-		events      []*types.Event
-		entity      string
-		check       string
-		expectedLen int
-		storeErr    error
-		expectedErr error
+		name                  string
+		ctx                   context.Context
+		events                []*types.Event
+		entity                string
+		check                 string
+		continueToken         string
+		storeErr              error
+		expectedLen           int
+		expectedContinueToken string
+		expectedErr           error
 	}{
 		{
 			name:        "No Params No Events",
@@ -76,6 +78,28 @@ func TestEventQuery(t *testing.T) {
 			storeErr:    errors.New(""),
 			expectedErr: NewError(InternalErr, errors.New("")),
 		},
+		{
+			name: "no continue token",
+			ctx:  defaultCtx,
+			events: []*types.Event{
+				types.FixtureEvent("entity1", "check1"),
+				types.FixtureEvent("entity2", "check2"),
+			},
+			expectedLen:           2,
+			continueToken:         "",
+			expectedContinueToken: "",
+		},
+		{
+			name: "base64url encode continue token",
+			ctx:  defaultCtx,
+			events: []*types.Event{
+				types.FixtureEvent("entity1", "check1"),
+				types.FixtureEvent("entity2", "check2"),
+			},
+			expectedLen:           2,
+			continueToken:         "Albert Camus",
+			expectedContinueToken: "QWxiZXJ0IENhbXVz",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -87,14 +111,18 @@ func TestEventQuery(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("GetEvents", tc.ctx).Return(tc.events, tc.storeErr)
-			store.On("GetEventsByEntity", tc.ctx, mock.Anything).Return(tc.events, tc.storeErr)
+			store.On("GetEvents", tc.ctx, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+				Return(tc.events, tc.continueToken, tc.storeErr)
+
+			store.On("GetEventsByEntity", tc.ctx, mock.AnythingOfType("string"), mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+				Return(tc.events, tc.continueToken, tc.storeErr)
 
 			// Exec Query
-			results, err := eventController.Query(tc.ctx, tc.entity, tc.check)
+			results, continueToken, err := eventController.Query(tc.ctx, tc.entity, tc.check)
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)
+			assert.EqualValues(tc.expectedContinueToken, continueToken)
 			assert.Len(results, tc.expectedLen)
 		})
 	}

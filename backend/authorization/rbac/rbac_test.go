@@ -26,18 +26,18 @@ func TestAuthorize(t *testing.T) {
 			name:  "no bindings",
 			attrs: &authorization.Attributes{Namespace: "acme"},
 			storeFunc: func(store *mockstore.MockStore) {
-				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
-					Return(nilClusterRoleBindings, nil)
-				store.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
-					Return(nilRoleBindings, nil)
+				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+					Return(nilClusterRoleBindings, "", nil)
+				store.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+					Return(nilRoleBindings, "", nil)
 			},
 			want: false,
 		},
 		{
 			name: "ClusterRoleBindings store err",
 			storeFunc: func(store *mockstore.MockStore) {
-				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
-					Return(nilClusterRoleBindings, errors.New("error"))
+				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+					Return(nilClusterRoleBindings, "", errors.New("error"))
 			},
 			wantErr: true,
 		},
@@ -50,14 +50,14 @@ func TestAuthorize(t *testing.T) {
 				},
 			},
 			storeFunc: func(store *mockstore.MockStore) {
-				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
+				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
 					Return([]*types.ClusterRoleBinding{&types.ClusterRoleBinding{
 						Subjects: []types.Subject{
 							types.Subject{Type: types.UserType, Name: "bar"},
 						},
-					}}, nil)
-				store.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
-					Return(nilRoleBindings, nil)
+					}}, "", nil)
+				store.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+					Return(nilRoleBindings, "", nil)
 			},
 			want: false,
 		},
@@ -69,7 +69,7 @@ func TestAuthorize(t *testing.T) {
 				},
 			},
 			storeFunc: func(store *mockstore.MockStore) {
-				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
+				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
 					Return([]*types.ClusterRoleBinding{&types.ClusterRoleBinding{
 						RoleRef: types.RoleRef{
 							Type: "ClusterRole",
@@ -78,7 +78,7 @@ func TestAuthorize(t *testing.T) {
 						Subjects: []types.Subject{
 							types.Subject{Type: types.UserType, Name: "foo"},
 						},
-					}}, nil)
+					}}, "", nil)
 				store.On("GetClusterRole", mock.AnythingOfType("*context.emptyCtx"), "admin", mock.Anything).
 					Return(nil, errors.New("error"))
 			},
@@ -95,7 +95,7 @@ func TestAuthorize(t *testing.T) {
 				},
 			},
 			storeFunc: func(store *mockstore.MockStore) {
-				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
+				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
 					Return([]*types.ClusterRoleBinding{&types.ClusterRoleBinding{
 						RoleRef: types.RoleRef{
 							Type: "ClusterRole",
@@ -104,7 +104,7 @@ func TestAuthorize(t *testing.T) {
 						Subjects: []types.Subject{
 							types.Subject{Type: types.UserType, Name: "foo"},
 						},
-					}}, nil)
+					}}, "", nil)
 				store.On("GetClusterRole", mock.AnythingOfType("*context.emptyCtx"), "admin", mock.Anything).
 					Return(&types.ClusterRole{Rules: []types.Rule{
 						types.Rule{
@@ -120,10 +120,10 @@ func TestAuthorize(t *testing.T) {
 			name:  "RoleBindings store err",
 			attrs: &authorization.Attributes{Namespace: "acme"},
 			storeFunc: func(store *mockstore.MockStore) {
-				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
-					Return(nilClusterRoleBindings, nil)
-				store.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
-					Return(nilRoleBindings, errors.New("error"))
+				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+					Return(nilClusterRoleBindings, "", nil)
+				store.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+					Return(nilRoleBindings, "", errors.New("error"))
 			},
 			wantErr: true,
 		},
@@ -136,9 +136,9 @@ func TestAuthorize(t *testing.T) {
 				},
 			},
 			storeFunc: func(store *mockstore.MockStore) {
-				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
-					Return(nilClusterRoleBindings, nil)
-				store.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
+				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+					Return(nilClusterRoleBindings, "", nil)
+				store.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
 					Return([]*types.RoleBinding{&types.RoleBinding{
 						RoleRef: types.RoleRef{
 							Type: "Role",
@@ -147,7 +147,7 @@ func TestAuthorize(t *testing.T) {
 						Subjects: []types.Subject{
 							types.Subject{Type: types.UserType, Name: "foo"},
 						},
-					}}, nil)
+					}}, "", nil)
 				store.On("GetRole", mock.AnythingOfType("*context.emptyCtx"), "admin", mock.Anything).
 					Return(nil, nil)
 			},
@@ -163,9 +163,9 @@ func TestAuthorize(t *testing.T) {
 				},
 			},
 			storeFunc: func(store *mockstore.MockStore) {
-				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
-					Return(nilClusterRoleBindings, nil)
-				store.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
+				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+					Return(nilClusterRoleBindings, "", nil)
+				store.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
 					Return([]*types.RoleBinding{&types.RoleBinding{
 						RoleRef: types.RoleRef{
 							Type: "Role",
@@ -174,7 +174,7 @@ func TestAuthorize(t *testing.T) {
 						Subjects: []types.Subject{
 							types.Subject{Type: types.UserType, Name: "foo"},
 						},
-					}}, nil)
+					}}, "", nil)
 				store.On("GetRole", mock.AnythingOfType("*context.emptyCtx"), "admin", mock.Anything).
 					Return(nil, errors.New("error"))
 			},
@@ -192,10 +192,10 @@ func TestAuthorize(t *testing.T) {
 				ResourceName: "check-cpu",
 			},
 			storeFunc: func(store *mockstore.MockStore) {
-				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
-					Return(nilClusterRoleBindings, nil)
+				store.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+					Return(nilClusterRoleBindings, "", nil)
 
-				store.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx")).
+				store.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx"), mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
 					Return([]*types.RoleBinding{&types.RoleBinding{
 						RoleRef: types.RoleRef{
 							Type: "Role",
@@ -204,7 +204,7 @@ func TestAuthorize(t *testing.T) {
 						Subjects: []types.Subject{
 							types.Subject{Type: types.UserType, Name: "foo"},
 						},
-					}}, nil)
+					}}, "", nil)
 				store.On("GetRole", mock.AnythingOfType("*context.emptyCtx"), "admin", mock.Anything).
 					Return(&types.Role{Rules: []types.Rule{
 						types.Rule{

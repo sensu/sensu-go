@@ -9,6 +9,8 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 const (
@@ -151,39 +153,48 @@ type KeyBuilderFn func(context.Context, string) string
 
 // List retrieves all keys from storage under the provided prefix key, while
 // supporting all namespaces, and deserialize it into objsPtr.
-func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn, objsPtr interface{}) error {
+func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn, objsPtr interface{}, pageSize int64, continueToken string) (string, error) {
 	// Make sure the interface is a pointer, and that the element at this address
 	// is a slice.
 	v := reflect.ValueOf(objsPtr)
 	if v.Kind() != reflect.Ptr {
-		return fmt.Errorf("expected pointer, but got %v type", v.Type())
+		return "", fmt.Errorf("expected pointer, but got %v type", v.Type())
 	}
 	if v.Elem().Kind() != reflect.Slice {
-		return fmt.Errorf("expected slice, but got %s", v.Elem().Kind())
+		return "", fmt.Errorf("expected slice, but got %s", v.Elem().Kind())
 	}
 	v = v.Elem()
 
 	opts := []clientv3.OpOption{
-		clientv3.WithPrefix(),
+		clientv3.WithLimit(pageSize),
 	}
 
 	key := keyBuilder(ctx, "")
-	resp, err := client.Get(ctx, key, opts...)
+	rangeEnd := clientv3.GetPrefixRangeEnd(key)
+	opts = append(opts, clientv3.WithRange(rangeEnd))
+
+	resp, err := client.Get(ctx, path.Join(key, continueToken), opts...)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	for _, kv := range resp.Kvs {
 		// Decode and append the value to v, which must be a slice.
 		obj := reflect.New(v.Type().Elem()).Interface()
 		if err := json.Unmarshal(kv.Value, obj); err != nil {
-			return &store.ErrDecode{Key: key, Err: err}
+			return "", &store.ErrDecode{Key: key, Err: err}
 		}
 
 		v.Set(reflect.Append(v, reflect.ValueOf(obj).Elem()))
 	}
 
-	return nil
+	nextContinueToken := ""
+	if pageSize != 0 && resp.Count > pageSize {
+		lastObject := v.Index(v.Len() - 1).Interface().(corev2.Resource)
+		nextContinueToken = computeContinueToken(ctx, lastObject)
+	}
+
+	return nextContinueToken, nil
 }
 
 // Update a key given with the serialized object.
@@ -250,4 +261,17 @@ func keyNotFound(key string) clientv3.Cmp {
 
 func namespaceFound(namespace string) clientv3.Cmp {
 	return keyFound(getNamespacePath(namespace))
+}
+
+func computeContinueToken(ctx context.Context, r corev2.Resource) (token string) {
+	objMeta := r.GetObjectMeta()
+	queriedNamespace := store.NewNamespaceFromContext(ctx)
+
+	if queriedNamespace == "" {
+		token = path.Join(objMeta.Namespace, objMeta.Name) + "\x00"
+	} else {
+		token = objMeta.Name + "\x00"
+	}
+
+	return
 }

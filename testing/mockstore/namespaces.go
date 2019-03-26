@@ -19,9 +19,9 @@ func (s *MockStore) DeleteNamespace(ctx context.Context, name string) error {
 }
 
 // ListNamespaces ...
-func (s *MockStore) ListNamespaces(ctx context.Context) ([]*types.Namespace, error) {
-	args := s.Called(ctx)
-	return args.Get(0).([]*types.Namespace), args.Error(1)
+func (s *MockStore) ListNamespaces(ctx context.Context, pageSize int64, continueToken string) ([]*types.Namespace, string, error) {
+	args := s.Called(ctx, pageSize, continueToken)
+	return args.Get(0).([]*types.Namespace), args.String(1), args.Error(2)
 }
 
 // GetNamespace ...

@@ -126,14 +126,27 @@ func actionHandler(action actionHandlerFunc) http.HandlerFunc {
 	}
 }
 
+func listHandler(fn listHandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		records, err := fn(w, r)
+		if err != nil {
+			writeError(w, err)
+			return
+		}
+
+		respondWith(w, records)
+	}
+}
+
 type actionHandlerFunc func(r *http.Request) (interface{}, error)
+type listHandlerFunc func(w http.ResponseWriter, req *http.Request) (interface{}, error)
 
 //
 // ResourceRoute mounts resources in a convetional RESTful manner.
 //
 //   routes := ResourceRoute{PathPrefix: "checks", Router: ...}
 //   routes.Get(myShowAction)     // given action is mounted at GET /checks/:id
-//   routes.List(myIndexAction) 	// given action is mounted at GET /checks
+//   routes.List(myIndexAction)   // given action is mounted at GET /checks
 //   routes.Put(myCreateAction)   // given action is mounted at PUT /checks/:id
 //   routes.Patch(myUpdateAction) // given action is mounted at PATCH /checks/:id
 //   routes.Post(myCreateAction)  // given action is mounted at POST /checks
@@ -151,13 +164,13 @@ func (r *ResourceRoute) Get(fn actionHandlerFunc) *mux.Route {
 }
 
 // List resources
-func (r *ResourceRoute) List(fn actionHandlerFunc) *mux.Route {
-	return r.Path("", fn).Methods(http.MethodGet)
+func (r *ResourceRoute) List(fn listHandlerFunc) *mux.Route {
+	return r.Router.HandleFunc(r.PathPrefix, listHandler(fn)).Methods(http.MethodGet)
 }
 
 // ListAllNamespaces return all resources across all namespaces
-func (r *ResourceRoute) ListAllNamespaces(fn actionHandlerFunc, path string) *mux.Route {
-	return handleAction(r.Router, path, fn)
+func (r *ResourceRoute) ListAllNamespaces(fn listHandlerFunc, path string) *mux.Route {
+	return r.Router.HandleFunc(path, listHandler(fn)).Methods(http.MethodGet)
 }
 
 // Post creates

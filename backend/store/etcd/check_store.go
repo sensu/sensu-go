@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
@@ -38,21 +39,28 @@ func (s *Store) DeleteCheckConfigByName(ctx context.Context, name string) error 
 }
 
 // GetCheckConfigs returns check configurations for an (optional) namespace.
-func (s *Store) GetCheckConfigs(ctx context.Context) ([]*types.CheckConfig, error) {
-	resp, err := s.client.Get(ctx, getCheckConfigsPath(ctx, ""), clientv3.WithPrefix())
-	if err != nil {
-		return nil, err
-	}
-	if len(resp.Kvs) == 0 {
-		return []*types.CheckConfig{}, nil
+func (s *Store) GetCheckConfigs(ctx context.Context, pageSize int64, continueToken string) (checks []*types.CheckConfig, nextContinueToken string, err error) {
+	opts := []clientv3.OpOption{
+		clientv3.WithLimit(pageSize),
 	}
 
-	checksArray := make([]*types.CheckConfig, len(resp.Kvs))
-	for i, kv := range resp.Kvs {
+	keyPrefix := getCheckConfigsPath(ctx, "")
+	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
+	opts = append(opts, clientv3.WithRange(rangeEnd))
+
+	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueToken), opts...)
+	if err != nil {
+		return nil, "", err
+	}
+	if len(resp.Kvs) == 0 {
+		return []*types.CheckConfig{}, "", nil
+	}
+
+	for _, kv := range resp.Kvs {
 		check := &types.CheckConfig{}
 		err = json.Unmarshal(kv.Value, check)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 		if check.Labels == nil {
 			check.Labels = make(map[string]string)
@@ -60,10 +68,16 @@ func (s *Store) GetCheckConfigs(ctx context.Context) ([]*types.CheckConfig, erro
 		if check.Annotations == nil {
 			check.Annotations = make(map[string]string)
 		}
-		checksArray[i] = check
+
+		checks = append(checks, check)
 	}
 
-	return checksArray, nil
+	if pageSize != 0 && resp.Count > pageSize {
+		lastCheck := checks[len(checks)-1]
+		nextContinueToken = computeContinueToken(ctx, lastCheck)
+	}
+
+	return checks, nextContinueToken, nil
 }
 
 // GetCheckConfigByName gets a CheckConfig by name.

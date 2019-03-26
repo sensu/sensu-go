@@ -115,18 +115,31 @@ func (s *Store) GetNamespace(ctx context.Context, name string) (*types.Namespace
 }
 
 // ListNamespaces returns all namespaces
-func (s *Store) ListNamespaces(ctx context.Context) ([]*types.Namespace, error) {
-	resp, err := s.client.Get(
-		ctx,
-		getNamespacePath(""),
-		v3.WithPrefix(),
-	)
-
-	if err != nil {
-		return []*types.Namespace{}, err
+func (s *Store) ListNamespaces(ctx context.Context, pageSize int64, continueToken string) (namespaces []*types.Namespace, newContinueToken string, err error) {
+	opts := []v3.OpOption{
+		v3.WithLimit(pageSize),
 	}
 
-	return unmarshalNamespaces(resp.Kvs)
+	keyPrefix := getNamespacePath("")
+	rangeEnd := v3.GetPrefixRangeEnd(keyPrefix)
+	opts = append(opts, v3.WithRange(rangeEnd))
+
+	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueToken), opts...)
+	if err != nil {
+		return []*types.Namespace{}, "", err
+	}
+
+	namespaces, err = unmarshalNamespaces(resp.Kvs)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if pageSize != 0 && resp.Count > pageSize {
+		lastNamespace := namespaces[len(namespaces)-1]
+		newContinueToken = lastNamespace.Name + "\x00"
+	}
+
+	return namespaces, newContinueToken, nil
 }
 
 // UpdateNamespace updates a namespace with the given object

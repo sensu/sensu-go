@@ -36,9 +36,9 @@ func (s *MockStore) GetRoleBinding(ctx context.Context, name string) (*types.Rol
 }
 
 // ListRoleBindings ...
-func (s *MockStore) ListRoleBindings(ctx context.Context) ([]*types.RoleBinding, error) {
-	args := s.Called(ctx)
-	return args.Get(0).([]*types.RoleBinding), args.Error(1)
+func (s *MockStore) ListRoleBindings(ctx context.Context, pageSize int64, continueToken string) ([]*types.RoleBinding, string, error) {
+	args := s.Called(ctx, pageSize, continueToken)
+	return args.Get(0).([]*types.RoleBinding), args.String(1), args.Error(2)
 }
 
 // UpdateRoleBinding ...

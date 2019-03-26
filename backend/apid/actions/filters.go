@@ -2,7 +2,9 @@ package actions
 
 import (
 	"context"
+	"encoding/base64"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -79,15 +81,20 @@ func (c EventFilterController) CreateOrReplace(ctx context.Context, filter types
 // It returns non-nil error if the params are invalid, read permissions
 // do not exist, or an internal error occurs while reading the underlying
 // store.
-func (c EventFilterController) Query(ctx context.Context) ([]*types.EventFilter, error) {
+func (c EventFilterController) Query(ctx context.Context) ([]*types.EventFilter, string, error) {
+	pageSize := corev2.PageSizeFromContext(ctx)
+	continueToken := corev2.PageContinueFromContext(ctx)
 
 	// Fetch from store
-	filters, err := c.Store.GetEventFilters(ctx)
+	filters, newContinueToken, err := c.Store.GetEventFilters(ctx, int64(pageSize), continueToken)
 	if err != nil {
-		return nil, NewError(InternalErr, err)
+		return nil, "", NewError(InternalErr, err)
 	}
 
-	return filters, nil
+	// Encode the continue token with base64url (RFC 4648), without padding
+	encodedNewContinueToken := base64.RawURLEncoding.EncodeToString([]byte(newContinueToken))
+
+	return filters, encodedNewContinueToken, nil
 }
 
 // Destroy destroys the named EventFilter.

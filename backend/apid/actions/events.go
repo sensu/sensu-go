@@ -2,10 +2,12 @@ package actions
 
 import (
 	"context"
+	"encoding/base64"
 
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 // EventController expose actions in which a viewer can perform.
@@ -23,33 +25,40 @@ func NewEventController(store store.EventStore, bus messaging.MessageBus) EventC
 }
 
 // Query returns resources available to the viewer filter by given params.
-func (a EventController) Query(ctx context.Context, entityName, checkName string) ([]*types.Event, error) {
-	var results []*types.Event
+func (a EventController) Query(ctx context.Context, entityName, checkName string) ([]*corev2.Event, string, error) {
+	var results []*corev2.Event
+	var nextContinueToken string
+
+	pageSize := corev2.PageSizeFromContext(ctx)
+	continueToken := corev2.PageContinueFromContext(ctx)
 
 	// Fetch from store
 	var serr error
 	if entityName != "" && checkName != "" {
-		var result *types.Event
+		var result *corev2.Event
 		result, serr = a.Store.GetEventByEntityCheck(ctx, entityName, checkName)
 		if result != nil {
 			results = append(results, result)
 		}
 	} else if entityName != "" {
-		results, serr = a.Store.GetEventsByEntity(ctx, entityName)
+		results, nextContinueToken, serr = a.Store.GetEventsByEntity(ctx, entityName, int64(pageSize), continueToken)
 	} else {
-		results, serr = a.Store.GetEvents(ctx)
+		results, nextContinueToken, serr = a.Store.GetEvents(ctx, int64(pageSize), continueToken)
 	}
 
 	if serr != nil {
-		return nil, NewError(InternalErr, serr)
+		return nil, "", NewError(InternalErr, serr)
 	}
 
-	return results, nil
+	// Encode the continue token with base64url (RFC 4648), without padding
+	encodedNextContinueToken := base64.RawURLEncoding.EncodeToString([]byte(nextContinueToken))
+
+	return results, encodedNextContinueToken, nil
 }
 
 // Find returns resource associated with given parameters if available to the
 // viewer.
-func (a EventController) Find(ctx context.Context, entity, check string) (*types.Event, error) {
+func (a EventController) Find(ctx context.Context, entity, check string) (*corev2.Event, error) {
 	// Find (for events) requires both an entity and check
 	if entity == "" || check == "" {
 		return nil, NewErrorf(InvalidArgument, "Find() requires both an entity and a check")
@@ -90,7 +99,7 @@ func (a EventController) Destroy(ctx context.Context, entity, check string) erro
 
 // Create creates the event indicated by the supplied entity and check.
 // If an event already exists for the entity and check, it updates that event.
-func (a EventController) Create(ctx context.Context, event types.Event) error {
+func (a EventController) Create(ctx context.Context, event corev2.Event) error {
 	if err := event.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
 	}
@@ -119,7 +128,7 @@ func (a EventController) Create(ctx context.Context, event types.Event) error {
 
 // CreateOrReplace creates the event indicated by the supplied entity and check.
 // If an event already exists for the entity and check, it updates that event.
-func (a EventController) CreateOrReplace(ctx context.Context, event types.Event) error {
+func (a EventController) CreateOrReplace(ctx context.Context, event corev2.Event) error {
 	if err := event.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
 	}

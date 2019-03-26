@@ -9,6 +9,8 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 // EventsRouter handles requests for /events
@@ -33,21 +35,32 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 	routes.Post(r.create)
 	routes.List(r.list)
 	routes.ListAllNamespaces(r.list, "/{resource:events}")
-	routes.Path("{entity}", r.listByEntity).Methods(http.MethodGet)
 	routes.Path("{entity}/{check}", r.find).Methods(http.MethodGet)
 	routes.Path("{entity}/{check}", r.destroy).Methods(http.MethodDelete)
 	routes.Path("{entity}/{check}", r.createOrReplace).Methods(http.MethodPut)
+
+	parent.HandleFunc("{entity}", listHandler(r.listByEntity)).Methods(http.MethodGet)
 }
 
-func (r *EventsRouter) list(req *http.Request) (interface{}, error) {
-	records, err := r.controller.Query(req.Context(), "", "")
+func (r *EventsRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
+	records, continueToken, err := r.controller.Query(req.Context(), "", "")
+
+	if continueToken != "" {
+		w.Header().Set(corev2.PaginationContinueHeader, continueToken)
+	}
+
 	return records, err
 }
 
-func (r *EventsRouter) listByEntity(req *http.Request) (interface{}, error) {
+func (r *EventsRouter) listByEntity(w http.ResponseWriter, req *http.Request) (interface{}, error) {
 	params := actions.QueryParams(mux.Vars(req))
 	entity := url.PathEscape(params["entity"])
-	records, err := r.controller.Query(req.Context(), entity, "")
+	records, continueToken, err := r.controller.Query(req.Context(), entity, "")
+
+	if continueToken != "" {
+		w.Header().Set(corev2.PaginationContinueHeader, continueToken)
+	}
+
 	return records, err
 }
 

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
@@ -34,28 +35,40 @@ func (s *Store) DeleteHandlerByName(ctx context.Context, name string) error {
 	return err
 }
 
-// GetHandlers gets the list of handlers for an (optional) namespace. Passing
-// the empty string as the org will return all handlers.
-func (s *Store) GetHandlers(ctx context.Context) ([]*types.Handler, error) {
-	resp, err := s.client.Get(ctx, getHandlersPath(ctx, ""), clientv3.WithPrefix())
-	if err != nil {
-		return nil, err
-	}
-	if len(resp.Kvs) == 0 {
-		return []*types.Handler{}, nil
+// GetHandlers gets the list of handlers for a namespace.
+func (s *Store) GetHandlers(ctx context.Context, pageSize int64, continueToken string) (handlers []*types.Handler, newContinueToken string, err error) {
+	opts := []clientv3.OpOption{
+		clientv3.WithLimit(pageSize),
 	}
 
-	handlersArray := make([]*types.Handler, len(resp.Kvs))
-	for i, kv := range resp.Kvs {
+	keyPrefix := getHandlersPath(ctx, "")
+	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
+	opts = append(opts, clientv3.WithRange(rangeEnd))
+
+	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueToken), opts...)
+	if err != nil {
+		return nil, "", err
+	}
+	if len(resp.Kvs) == 0 {
+		return []*types.Handler{}, "", nil
+	}
+
+	for _, kv := range resp.Kvs {
 		handler := &types.Handler{}
 		err = json.Unmarshal(kv.Value, handler)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
-		handlersArray[i] = handler
+
+		handlers = append(handlers, handler)
 	}
 
-	return handlersArray, nil
+	if pageSize != 0 && resp.Count > pageSize {
+		lastHandler := handlers[len(handlers)-1]
+		newContinueToken = computeContinueToken(ctx, lastHandler)
+	}
+
+	return handlers, newContinueToken, nil
 }
 
 // GetHandlerByName gets a Handler by name.

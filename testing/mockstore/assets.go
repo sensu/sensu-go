@@ -13,9 +13,9 @@ func (s *MockStore) DeleteAssetByName(ctx context.Context, name string) error {
 }
 
 // GetAssets ...
-func (s *MockStore) GetAssets(ctx context.Context) ([]*types.Asset, error) {
-	args := s.Called(ctx)
-	return args.Get(0).([]*types.Asset), args.Error(1)
+func (s *MockStore) GetAssets(ctx context.Context, pageSize int64, continueToken string) ([]*types.Asset, string, error) {
+	args := s.Called(ctx, pageSize, continueToken)
+	return args.Get(0).([]*types.Asset), args.String(1), args.Error(2)
 }
 
 // GetAssetByName ...

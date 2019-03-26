@@ -8,8 +8,9 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	jwt "github.com/dgrijalva/jwt-go"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 // ErrAlreadyExists is returned when an object already exists
@@ -96,7 +97,7 @@ type WatchEventHookConfig struct {
 
 // WatchEventEntity is a notification that the entity store has been updated.
 type WatchEventEntity struct {
-	Entity *v2.Entity
+	Entity *corev2.Entity
 	Action WatchActionType
 }
 
@@ -181,7 +182,7 @@ type AssetStore interface {
 
 	// GetAssets returns all assets in the given ctx's namespace. A nil
 	// slice with no error is returned if none were found.
-	GetAssets(ctx context.Context) ([]*types.Asset, error)
+	GetAssets(ctx context.Context, pageSize int64, continueToken string) (assets []*types.Asset, nextContinueToken string, err error)
 
 	// GetAssetByName returns an asset using the given name and the namespace
 	// stored in ctx. The resulting asset is nil if none was found.
@@ -213,7 +214,7 @@ type CheckConfigStore interface {
 	// GetCheckConfigs returns all checks configurations in the given ctx's
 	// namespace. A nil slice with no error is returned if none
 	// were found.
-	GetCheckConfigs(ctx context.Context) ([]*types.CheckConfig, error)
+	GetCheckConfigs(ctx context.Context, pageSize int64, continueToken string) (checks []*types.CheckConfig, nextContinueToken string, err error)
 
 	// GetCheckConfigByName returns a check's configuration using the given name
 	// and the namespace stored in ctx. The resulting check is
@@ -248,7 +249,7 @@ type ClusterRoleBindingStore interface {
 
 	// ListRoles returns all cluster role binding. An error is returned if no
 	// binding were found
-	ListClusterRoleBindings(context.Context) ([]*types.ClusterRoleBinding, error)
+	ListClusterRoleBindings(ctx context.Context, pageSize int64, continueToken string) (clusterRoleBindings []*types.ClusterRoleBinding, nextContinueToken string, err error)
 
 	// UpdateRole creates or updates a given cluster role binding.
 	UpdateClusterRoleBinding(ctx context.Context, clusterRoleBinding *types.ClusterRoleBinding) error
@@ -271,7 +272,7 @@ type ClusterRoleStore interface {
 
 	// ListClusterRoles returns all cluster roles. An error is returned if no
 	// roles were found
-	ListClusterRoles(context.Context) ([]*types.ClusterRole, error)
+	ListClusterRoles(ctx context.Context, pageSize int64, continueToken string) (clusterRoles []*types.ClusterRole, nextContinueToken string, err error)
 
 	// UpdateClusterRole creates or updates a given cluster role.
 	UpdateClusterRole(ctx context.Context, clusterRole *types.ClusterRole) error
@@ -286,7 +287,7 @@ type HookConfigStore interface {
 	// GetHookConfigs returns all hooks configurations in the given ctx's
 	// namespace. A nil slice with no error is returned if none
 	// were found.
-	GetHookConfigs(ctx context.Context) ([]*types.HookConfig, error)
+	GetHookConfigs(ctx context.Context, pageSize int64, continueToken string) (hooks []*types.HookConfig, newContinueToken string, err error)
 
 	// GetHookConfigByName returns a hook's configuration using the given name and
 	// the namespace stored in ctx. The resulting hook is nil if none was found.
@@ -313,7 +314,7 @@ type EntityStore interface {
 
 	// GetEntities returns all entities in the given ctx's namespace. A nil slice
 	// with no error is returned if none were found.
-	GetEntities(ctx context.Context) ([]*types.Entity, error)
+	GetEntities(ctx context.Context, pageSize int64, continueToken string) (entities []*types.Entity, nextContinueToken string, err error)
 
 	// GetEntityByName returns an entity using the given name and the namespace stored
 	// in ctx. The resulting entity is nil if none was found.
@@ -333,11 +334,17 @@ type EventStore interface {
 
 	// GetEvents returns all events in the given ctx's namespace. A nil slice with
 	// no error is returned if none were found.
-	GetEvents(ctx context.Context) ([]*types.Event, error)
+	//
+	// To get paginated results, the pageSize argument should be strictly positive.
+	// continueToken lets one continue paginating from the given token. The second
+	// value returned by GetEvents, nextContinueToken, is a potential "continue
+	// token" that lets the caller continue paginating in subsequent calls. If that
+	// new token is "", the last page is already being returned.
+	GetEvents(ctx context.Context, pageSize int64, continueToken string) (events []*corev2.Event, nextContinueToken string, err error)
 
 	// GetEventsByEntity returns all events for the given entity within the ctx's
 	// namespace. A nil slice with no error is returned if none were found.
-	GetEventsByEntity(ctx context.Context, entity string) ([]*types.Event, error)
+	GetEventsByEntity(ctx context.Context, entity string, pageSize int64, continueToken string) (events []*corev2.Event, nextContinueToken string, err error)
 
 	// GetEventByEntityCheck returns an event using the given entity and check,
 	// within the namespace stored in ctx. The resulting event
@@ -356,7 +363,7 @@ type EventFilterStore interface {
 
 	// GetEventFilters returns all filters in the given ctx's namespace. A nil
 	// slice with no error is returned if none were found.
-	GetEventFilters(ctx context.Context) ([]*types.EventFilter, error)
+	GetEventFilters(ctx context.Context, pageSize int64, continueToken string) (filters []*types.EventFilter, newContinueToken string, err error)
 
 	// GetEventFilterByName returns a filter using the given name and the
 	// namespace stored in ctx. The resulting filter is nil if none was found.
@@ -374,7 +381,7 @@ type HandlerStore interface {
 
 	// GetHandlers returns all handlers in the given ctx's namespace. A nil slice
 	// with no error is returned if none were found.
-	GetHandlers(ctx context.Context) ([]*types.Handler, error)
+	GetHandlers(ctx context.Context, pageSize int64, continueToken string) (handlers []*types.Handler, newContinueToken string, err error)
 
 	// GetHandlerByName returns a handler using the given name and the namespace
 	// stored in ctx. The resulting handler is nil if none was found.
@@ -410,7 +417,7 @@ type MutatorStore interface {
 
 	// GetMutators returns all mutators in the given ctx's namespace. A nil slice
 	// with no error is returned if none were found.
-	GetMutators(ctx context.Context) ([]*types.Mutator, error)
+	GetMutators(ctx context.Context, pageSize int64, continueToken string) (mutators []*types.Mutator, newContinueToken string, err error)
 
 	// GetMutatorByName returns a mutator using the given name and the
 	// namespace stored in ctx. The resulting mutator is nil if
@@ -431,7 +438,7 @@ type NamespaceStore interface {
 
 	// ListNamespaces returns all namespaces. A nil slice with no error is
 	// returned if none were found.
-	ListNamespaces(ctx context.Context) ([]*types.Namespace, error)
+	ListNamespaces(ctx context.Context, pageSize int64, continueToken string) (namespaces []*types.Namespace, newContinueToken string, err error)
 
 	// GetNamespace returns a namespace using the given name. The
 	// result is nil if none was found.
@@ -458,7 +465,7 @@ type RoleBindingStore interface {
 
 	// ListRoles returns all role binding. An error is returned if no binding were
 	// found
-	ListRoleBindings(context.Context) ([]*types.RoleBinding, error)
+	ListRoleBindings(ctx context.Context, pageSize int64, continueToke string) (roleBindings []*types.RoleBinding, nextContinueToken string, err error)
 
 	// UpdateRole creates or updates a given role binding.
 	UpdateRoleBinding(ctx context.Context, roleBinding *types.RoleBinding) error
@@ -480,7 +487,7 @@ type RoleStore interface {
 	GetRole(ctx context.Context, name string) (*types.Role, error)
 
 	// ListRoles returns all roles. An error is returned if no roles were found
-	ListRoles(context.Context) ([]*types.Role, error)
+	ListRoles(ctx context.Context, pageSize int64, continueToken string) (roles []*types.Role, nextContinueToken string, err error)
 
 	// UpdateRole creates or updates a given role.
 	UpdateRole(ctx context.Context, role *types.Role) error
@@ -518,10 +525,10 @@ type SilencedStore interface {
 // TessenConfigStore provides methods for managing the Tessen configuration
 type TessenConfigStore interface {
 	// CreateOrUpdateTessenConfig creates or updates the tessen configuration
-	CreateOrUpdateTessenConfig(context.Context, *v2.TessenConfig) error
+	CreateOrUpdateTessenConfig(context.Context, *corev2.TessenConfig) error
 
 	// GetTessenConfig gets the tessen configuration
-	GetTessenConfig(context.Context) (*v2.TessenConfig, error)
+	GetTessenConfig(context.Context) (*corev2.TessenConfig, error)
 }
 
 // TokenStore provides methods for managing the JWT access list
@@ -531,7 +538,7 @@ type TokenStore interface {
 
 	// RevokeTokens removes tokens using the provided claims from the JWT access
 	// list
-	RevokeTokens(claims ...*v2.Claims) error
+	RevokeTokens(claims ...*corev2.Claims) error
 
 	// GetToken returns the claims of a given token ID, belonging to the given
 	// subject. An error is returned if no claims were found.
@@ -560,7 +567,7 @@ type UserStore interface {
 
 	// GetUsers returns all users, including the disabled ones. A nil slice with
 	// no error is  returned if none were found.
-	GetAllUsers() ([]*types.User, error)
+	GetAllUsers(pageSize int64, continueToken string) (users []*types.User, newContinueToken string, err error)
 
 	// UpdateHandler updates a given user.
 	UpdateUser(user *types.User) error
@@ -601,5 +608,5 @@ type ExtensionRegistry interface {
 	GetExtension(ctx context.Context, name string) (*types.Extension, error)
 
 	// GetExtensions gets all the extensions for the namespace in ctx.
-	GetExtensions(ctx context.Context) ([]*types.Extension, error)
+	GetExtensions(ctx context.Context, pageSize int64, continueToken string) (extensions []*types.Extension, newContinueToken string, err error)
 }

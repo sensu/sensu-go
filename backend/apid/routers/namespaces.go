@@ -6,12 +6,13 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
 // NamespacesController represents the controller needs of the NamespacesRouter.
 type NamespacesController interface {
-	Query(ctx context.Context) ([]*types.Namespace, error)
+	Query(ctx context.Context) ([]*types.Namespace, string, error)
 	Find(ctx context.Context, name string) (*types.Namespace, error)
 	Create(ctx context.Context, newOrg types.Namespace) error
 	CreateOrReplace(ctx context.Context, newOrg types.Namespace) error
@@ -43,8 +44,13 @@ func (r *NamespacesRouter) Mount(parent *mux.Router) {
 	routes.Put(r.createOrReplace)
 }
 
-func (r *NamespacesRouter) list(req *http.Request) (interface{}, error) {
-	records, err := r.controller.Query(req.Context())
+func (r *NamespacesRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
+	records, continueToken, err := r.controller.Query(req.Context())
+
+	if continueToken != "" {
+		w.Header().Set(corev2.PaginationContinueHeader, continueToken)
+	}
+
 	return records, err
 }
 

@@ -54,8 +54,8 @@ func newIntervalScheduler(t *testing.T, ctx context.Context, executor string) *T
 	scheduler.check = request.Config
 	scheduler.check.Interval = 1
 	store := &mockstore.MockStore{}
-	store.On("GetAssets", mock.Anything).Return([]*types.Asset{&asset}, nil)
-	store.On("GetHookConfigs", mock.Anything).Return([]*types.HookConfig{&hook}, nil)
+	store.On("GetAssets", mock.Anything, int64(0), "").Return([]*types.Asset{&asset}, "", nil)
+	store.On("GetHookConfigs", mock.Anything, int64(0), "").Return([]*types.HookConfig{&hook}, "", nil)
 	store.On("GetCheckConfigByName", mock.Anything, mock.Anything).Return(scheduler.check, nil)
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
@@ -91,8 +91,8 @@ func newCronScheduler(t *testing.T, ctx context.Context, executor string) *TestC
 	scheduler.check.Interval = 1
 	scheduler.check.Cron = "* * * * *"
 	store := &mockstore.MockStore{}
-	store.On("GetAssets", mock.Anything).Return([]*types.Asset{&asset}, nil)
-	store.On("GetHookConfigs", mock.Anything).Return([]*types.HookConfig{&hook}, nil)
+	store.On("GetAssets", mock.Anything, int64(0), "").Return([]*types.Asset{&asset}, "", nil)
+	store.On("GetHookConfigs", mock.Anything, int64(0), "").Return([]*types.HookConfig{&hook}, "", nil)
 	store.On("GetCheckConfigByName", mock.Anything, mock.Anything).Return(scheduler.check, nil)
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})

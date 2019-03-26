@@ -4,12 +4,15 @@ package etcd
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 func TestnamespaceStorage(t *testing.T) {
@@ -17,7 +20,7 @@ func TestnamespaceStorage(t *testing.T) {
 		ctx := context.Background()
 
 		// We should receive the default namespace (set in store_test.go)
-		namespaces, err := store.ListNamespaces(ctx)
+		namespaces, _, err := store.ListNamespaces(ctx, 0, "")
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(namespaces))
 
@@ -36,7 +39,7 @@ func TestnamespaceStorage(t *testing.T) {
 		assert.Nil(t, result)
 
 		// Get all namespaces
-		namespaces, err = store.ListNamespaces(ctx)
+		namespaces, _, err = store.ListNamespaces(ctx, 0, "")
 		assert.NoError(t, err)
 		assert.NotEmpty(t, namespaces)
 		assert.Equal(t, 2, len(namespaces))
@@ -61,8 +64,98 @@ func TestnamespaceStorage(t *testing.T) {
 		assert.Error(t, err)
 
 		// Get again all namespaces
-		namespaces, err = store.ListNamespaces(ctx)
+		namespaces, _, err = store.ListNamespaces(ctx, 0, "")
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(namespaces))
 	})
+}
+
+func TestListNamespacesPagination(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		for i := 1; i <= 21; i++ {
+			// We force the object name to be 2 digits "wide" in order to
+			// have a "natural" lexicographic order: 01, 02, ... instead of 1,
+			// 11, ...
+			objectName := fmt.Sprintf("%.2d", i)
+			object := corev2.FixtureNamespace(objectName)
+
+			if err := store.CreateNamespace(context.Background(), object); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		// We get rid of the default namespace so that it doesn't
+		// interfere with our tests below.
+		if err := store.DeleteNamespace(context.Background(), "default"); err != nil {
+			t.Fatal(err)
+		}
+
+		ctx := context.Background()
+		t.Run("paginate through namespaces", func(t *testing.T) {
+			testListNamespacesPagination(t, ctx, store, 10, 21)
+		})
+
+		t.Run("page size equals one", func(t *testing.T) {
+			testListNamespacesPagination(t, ctx, store, 1, 21)
+		})
+
+		t.Run("page size bigger than set size", func(t *testing.T) {
+			testListNamespacesPagination(t, ctx, store, 1337, 21)
+		})
+	})
+}
+
+func testListNamespacesPagination(t *testing.T, ctx context.Context, etcd store.Store, pageSize, setSize int) {
+	nFullPages := setSize / pageSize
+	nLeftovers := setSize % pageSize
+
+	continueToken := ""
+	for i := 0; i < nFullPages; i++ {
+		objects, nextContinueToken, err := etcd.ListNamespaces(ctx, int64(pageSize), continueToken)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(objects) != pageSize {
+			t.Fatalf("Expected page %d to have %d objects but got %d", i, pageSize, len(objects))
+		}
+
+		offset := i * pageSize
+		for j, object := range objects {
+			n := ((offset + j) % setSize) + 1
+			expected := fmt.Sprintf("%.2d", n)
+
+			if object.Name != expected {
+				t.Fatalf("Expected %s, got %s", expected, object.Name)
+			}
+		}
+
+		continueToken = nextContinueToken
+	}
+
+	// Check the last page, supposed to hold nLeftovers objects
+	if nLeftovers > 0 {
+		objects, nextContinueToken, err := etcd.ListNamespaces(ctx, int64(pageSize), continueToken)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(objects) != nLeftovers {
+			t.Fatalf("Expected last page with %d objects, got %d", nLeftovers, len(objects))
+		}
+
+		if nextContinueToken != "" {
+			t.Fatalf("Expected next continue token to be \"\", got %s", nextContinueToken)
+		}
+
+		offset := pageSize * nFullPages
+		for j, object := range objects {
+			n := ((offset + j) % setSize) + 1
+			expected := fmt.Sprintf("%.2d", n)
+
+			if object.Name != expected {
+				t.Fatalf("Expected %s, got %s", expected, object.Name)
+			}
+		}
+	}
 }

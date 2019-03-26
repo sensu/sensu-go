@@ -10,7 +10,8 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 const (
@@ -21,7 +22,7 @@ var (
 	eventKeyBuilder = store.NewKeyBuilder(eventsPathPrefix)
 )
 
-func getEventPath(event *types.Event) string {
+func getEventPath(event *corev2.Event) string {
 	return path.Join(
 		EtcdRoot,
 		eventsPathPrefix,
@@ -32,7 +33,7 @@ func getEventPath(event *types.Event) string {
 }
 
 func getEventWithCheckPath(ctx context.Context, entity, check string) (string, error) {
-	namespace := types.ContextNamespace(ctx)
+	namespace := corev2.ContextNamespace(ctx)
 	if namespace == "" {
 		return "", errors.New("namespace missing from context")
 	}
@@ -61,22 +62,29 @@ func (s *Store) DeleteEventByEntityCheck(ctx context.Context, entityName, checkN
 
 // GetEvents returns the events for an (optional) namespace. If namespace is the
 // empty string, GetEvents returns all events for all namespaces.
-func (s *Store) GetEvents(ctx context.Context) ([]*types.Event, error) {
-	resp, err := s.client.Get(ctx, getEventsPath(ctx, ""), clientv3.WithPrefix())
+func (s *Store) GetEvents(ctx context.Context, pageSize int64, continueToken string) (events []*corev2.Event, nextContinueToken string, err error) {
+	opts := []clientv3.OpOption{
+		clientv3.WithLimit(pageSize),
+	}
+
+	keyPrefix := getEventsPath(ctx, "")
+	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
+	opts = append(opts, clientv3.WithRange(rangeEnd))
+
+	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueToken), opts...)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	if len(resp.Kvs) == 0 {
-		return []*types.Event{}, nil
+		return []*corev2.Event{}, "", nil
 	}
 
-	var eventsArray []*types.Event
 	for _, kv := range resp.Kvs {
-		event := &types.Event{}
+		event := &corev2.Event{}
 		err = json.Unmarshal(kv.Value, event)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 		if event.Labels == nil {
 			event.Labels = make(map[string]string)
@@ -85,33 +93,62 @@ func (s *Store) GetEvents(ctx context.Context) ([]*types.Event, error) {
 			event.Annotations = make(map[string]string)
 		}
 
-		eventsArray = append(eventsArray, event)
+		events = append(events, event)
 	}
 
-	return eventsArray, nil
+	if pageSize != 0 && resp.Count > pageSize {
+		queriedNamespace := store.NewNamespaceFromContext(ctx)
+		lastEvent := events[len(events)-1]
+
+		// TODO(ccressent): This can surely be simplified
+		if queriedNamespace == "" {
+			// Workaround for sensu-go#2465: keepalive events do not always have
+			// their namespace filled in, which would break the construction of
+			// nextContinueToken below. To accommodate for that, when
+			// constructing the continue token, whevener an event has a
+			// namespace of "" we construct the continue token using its
+			// entity's namespace instead.
+			lastEventNamespace := lastEvent.Namespace
+			if lastEventNamespace == "" {
+				lastEventNamespace = lastEvent.Entity.Namespace
+			}
+			nextContinueToken = "/" + lastEventNamespace + "/" + lastEvent.Entity.Name + "/" + lastEvent.Check.Name + "\x00"
+		} else {
+			nextContinueToken = lastEvent.Entity.Name + "/" + lastEvent.Check.Name + "\x00"
+		}
+	}
+
+	return events, nextContinueToken, nil
 }
 
 // GetEventsByEntity gets all events matching a given entity name.
-func (s *Store) GetEventsByEntity(ctx context.Context, entityName string) ([]*types.Event, error) {
+func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pageSize int64, continueToken string) (events []*corev2.Event, nextContinueToken string, err error) {
 	if entityName == "" {
-		return nil, errors.New("must specify entity name")
+		return nil, "", errors.New("must specify entity name")
 	}
 
-	resp, err := s.client.Get(ctx, getEventsPath(ctx, entityName), clientv3.WithPrefix())
+	opts := []clientv3.OpOption{
+		clientv3.WithLimit(pageSize),
+	}
+
+	keyPrefix := getEventsPath(ctx, entityName)
+	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
+	opts = append(opts, clientv3.WithRange(rangeEnd))
+
+	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueToken), opts...)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	if len(resp.Kvs) == 0 {
-		return nil, nil
+		return nil, "", nil
 	}
 
-	eventsArray := make([]*types.Event, len(resp.Kvs))
-	for i, kv := range resp.Kvs {
-		event := &types.Event{}
+	for _, kv := range resp.Kvs {
+		event := &corev2.Event{}
 		err = json.Unmarshal(kv.Value, event)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 		if event.Labels == nil {
 			event.Labels = make(map[string]string)
@@ -119,14 +156,20 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string) ([]*ty
 		if event.Annotations == nil {
 			event.Annotations = make(map[string]string)
 		}
-		eventsArray[i] = event
+
+		events = append(events, event)
 	}
 
-	return eventsArray, nil
+	if pageSize != 0 && resp.Count > pageSize {
+		lastEvent := events[len(events)-1]
+		nextContinueToken = lastEvent.Check.Name + "\x00"
+	}
+
+	return events, nextContinueToken, nil
 }
 
 // GetEventByEntityCheck gets an event by entity and check name.
-func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName string) (*types.Event, error) {
+func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName string) (*corev2.Event, error) {
 	if entityName == "" || checkName == "" {
 		return nil, errors.New("must specify entity and check name")
 	}
@@ -145,7 +188,7 @@ func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName
 	}
 
 	eventBytes := resp.Kvs[0].Value
-	event := &types.Event{}
+	event := &corev2.Event{}
 	if err := json.Unmarshal(eventBytes, event); err != nil {
 		return nil, err
 	}
@@ -160,7 +203,7 @@ func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName
 }
 
 // UpdateEvent updates an event.
-func (s *Store) UpdateEvent(ctx context.Context, event *types.Event) error {
+func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) error {
 	if event == nil || event.Check == nil {
 		return errors.New("event has no check")
 	}

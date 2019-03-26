@@ -36,9 +36,9 @@ func (s *MockStore) GetRole(ctx context.Context, name string) (*types.Role, erro
 }
 
 // ListRoles ...
-func (s *MockStore) ListRoles(ctx context.Context) ([]*types.Role, error) {
-	args := s.Called(ctx)
-	return args.Get(0).([]*types.Role), args.Error(1)
+func (s *MockStore) ListRoles(ctx context.Context, pageSize int64, continueToken string) ([]*types.Role, string, error) {
+	args := s.Called(ctx, pageSize, continueToken)
+	return args.Get(0).([]*types.Role), args.String(1), args.Error(2)
 }
 
 // UpdateRole ...

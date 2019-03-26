@@ -2,7 +2,9 @@ package actions
 
 import (
 	"context"
+	"encoding/base64"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -80,17 +82,23 @@ func (a RoleController) Get(ctx context.Context, name string) (*types.Role, erro
 }
 
 // List returns all available roles.
-func (a RoleController) List(ctx context.Context) ([]*types.Role, error) {
+func (a RoleController) List(ctx context.Context) ([]*types.Role, string, error) {
+	pageSize := corev2.PageSizeFromContext(ctx)
+	continueToken := corev2.PageContinueFromContext(ctx)
+
 	// Fetch from store
-	results, err := a.Store.ListRoles(ctx)
+	results, newContinueToken, err := a.Store.ListRoles(ctx, int64(pageSize), continueToken)
 	if err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
-			return nil, NewErrorf(NotFound)
+			return nil, "", NewErrorf(NotFound)
 		default:
-			return nil, NewError(InternalErr, err)
+			return nil, "", NewError(InternalErr, err)
 		}
 	}
 
-	return results, nil
+	// Encode the continue token with base64url (RFC 4648), without padding
+	encodedNewContinueToken := base64.RawURLEncoding.EncodeToString([]byte(newContinueToken))
+
+	return results, encodedNewContinueToken, nil
 }

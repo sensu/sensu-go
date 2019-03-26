@@ -71,7 +71,7 @@ type EntityCache struct {
 // NewEntityCache creates a new EntityCache. It retrieves all entities from the
 // store on creation.
 func NewEntityCache(ctx context.Context, store store.EntityStore) (*EntityCache, error) {
-	entities, err := store.GetEntities(ctx)
+	entities, _, err := store.GetEntities(ctx, 0, "")
 	if err != nil {
 		return nil, fmt.Errorf("error creating EntityCache: %s", err)
 	}

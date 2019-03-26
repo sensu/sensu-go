@@ -49,10 +49,10 @@ func (s *Store) GetRole(ctx context.Context, name string) (*types.Role, error) {
 }
 
 // ListRoles ...
-func (s *Store) ListRoles(ctx context.Context) ([]*types.Role, error) {
+func (s *Store) ListRoles(ctx context.Context, pageSize int64, continueToken string) ([]*types.Role, string, error) {
 	roles := []*types.Role{}
-	err := List(ctx, s.client, getRolesPath, &roles)
-	return roles, err
+	nextContinueToken, err := List(ctx, s.client, getRolesPath, &roles, pageSize, continueToken)
+	return roles, nextContinueToken, err
 }
 
 // UpdateRole ...

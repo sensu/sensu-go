@@ -2,7 +2,9 @@ package actions
 
 import (
 	"context"
+	"encoding/base64"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -27,14 +29,20 @@ func NewHookController(store store.HookConfigStore) HookController {
 }
 
 // Query returns resources available to the viewer.
-func (a HookController) Query(ctx context.Context) ([]*types.HookConfig, error) {
+func (a HookController) Query(ctx context.Context) ([]*types.HookConfig, string, error) {
+	pageSize := corev2.PageSizeFromContext(ctx)
+	continueToken := corev2.PageContinueFromContext(ctx)
+
 	// Fetch from store
-	results, serr := a.Store.GetHookConfigs(ctx)
+	results, newContinueToken, serr := a.Store.GetHookConfigs(ctx, int64(pageSize), continueToken)
 	if serr != nil {
-		return nil, NewError(InternalErr, serr)
+		return nil, "", NewError(InternalErr, serr)
 	}
 
-	return results, nil
+	// Encode the continue token with base64url (RFC 4648), without padding
+	encodedNewContinueToken := base64.RawURLEncoding.EncodeToString([]byte(newContinueToken))
+
+	return results, encodedNewContinueToken, nil
 }
 
 // Find returns resource associated with given parameters if available to the

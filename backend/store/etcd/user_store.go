@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
@@ -121,7 +122,7 @@ func (s *Store) GetUser(ctx context.Context, username string) (*types.User, erro
 
 // GetUsers retrieves all enabled users
 func (s *Store) GetUsers() ([]*types.User, error) {
-	allUsers, err := s.GetAllUsers()
+	allUsers, _, err := s.GetAllUsers(0, "")
 	if err != nil {
 		return allUsers, err
 	}
@@ -138,27 +139,40 @@ func (s *Store) GetUsers() ([]*types.User, error) {
 }
 
 // GetAllUsers retrieves all users
-func (s *Store) GetAllUsers() ([]*types.User, error) {
-	resp, err := s.client.Get(context.TODO(), getUserPath(""), clientv3.WithPrefix())
-	if err != nil {
-		return nil, err
-	}
-	if len(resp.Kvs) == 0 {
-		return []*types.User{}, nil
+func (s *Store) GetAllUsers(pageSize int64, continueToken string) (users []*types.User, newContinueToken string, err error) {
+	opts := []clientv3.OpOption{
+		clientv3.WithLimit(pageSize),
 	}
 
-	usersArray := []*types.User{}
+	keyPrefix := getUserPath("")
+	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
+	opts = append(opts, clientv3.WithRange(rangeEnd))
+
+	resp, err := s.client.Get(context.Background(), path.Join(keyPrefix, continueToken), opts...)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if len(resp.Kvs) == 0 {
+		return []*types.User{}, "", nil
+	}
+
 	for _, kv := range resp.Kvs {
 		user := &types.User{}
 		err = json.Unmarshal(kv.Value, user)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 
-		usersArray = append(usersArray, user)
+		users = append(users, user)
 	}
 
-	return usersArray, nil
+	if pageSize != 0 && resp.Count > pageSize {
+		lastUser := users[len(users)-1]
+		newContinueToken = lastUser.Username + "\x00"
+	}
+
+	return users, newContinueToken, nil
 }
 
 // UpdateUser updates a User.

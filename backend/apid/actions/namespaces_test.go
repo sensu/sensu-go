@@ -28,12 +28,14 @@ func TestNamespacesQuery(t *testing.T) {
 	)
 
 	testCases := []struct {
-		name        string
-		ctx         context.Context
-		records     []*types.Namespace
-		expectedLen int
-		storeErr    error
-		expectedErr error
+		name                  string
+		ctx                   context.Context
+		records               []*types.Namespace
+		storeErr              error
+		continueToken         string
+		expectedLen           int
+		expectedContinueToken string
+		expectedErr           error
 	}{
 		{
 			name: "With one org",
@@ -53,6 +55,28 @@ func TestNamespacesQuery(t *testing.T) {
 			storeErr:    errors.New(""),
 			expectedErr: NewError(InternalErr, errors.New("")),
 		},
+		{
+			name: "no continue token",
+			ctx:  defaultCtx,
+			records: []*types.Namespace{
+				types.FixtureNamespace("namespace1"),
+				types.FixtureNamespace("namespace2"),
+			},
+			continueToken:         "",
+			expectedLen:           2,
+			expectedContinueToken: "",
+		},
+		{
+			name: "base64url encode continue token",
+			ctx:  defaultCtx,
+			records: []*types.Namespace{
+				types.FixtureNamespace("namespace1"),
+				types.FixtureNamespace("namespace2"),
+			},
+			continueToken:         "Albert Camus",
+			expectedLen:           2,
+			expectedContinueToken: "QWxiZXJ0IENhbXVz",
+		},
 	}
 
 	for _, tc := range testCases {
@@ -62,13 +86,15 @@ func TestNamespacesQuery(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 			// Mock store methods
-			store.On("ListNamespaces", tc.ctx).Return(tc.records, tc.storeErr)
+			store.On("ListNamespaces", tc.ctx, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
+				Return(tc.records, tc.continueToken, tc.storeErr)
 
 			// Exec Query
-			results, err := actions.Query(tc.ctx)
+			results, continueToken, err := actions.Query(tc.ctx)
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)
+			assert.EqualValues(tc.expectedContinueToken, continueToken)
 			assert.Len(results, tc.expectedLen)
 		})
 	}
