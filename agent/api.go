@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sensu/lasr"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -39,6 +40,7 @@ func newServer(a *Agent) *http.Server {
 func registerRoutes(a *Agent, r *mux.Router) {
 	r.HandleFunc("/events", addEvent(a)).Methods(http.MethodPost)
 	r.HandleFunc("/healthz", healthz(a.Connected)).Methods(http.MethodGet)
+	r.Handle("/metrics", promhttp.Handler())
 }
 
 // healthz returns an OK status if the agent is up and connected to a backend.
