@@ -17,8 +17,7 @@ const styles = theme => ({
     opacity: "1 !important",
   },
   link: {
-    color: theme.typography.caption.color,
-    fontFamily: "SF Pro Text", // TODO come back to reassess typography
+    color: theme.palette.text.secondary,
   },
   label: {
     flexDirection: "column",
