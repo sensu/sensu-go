@@ -13,7 +13,7 @@ import (
 func OptInCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "opt-in",
-		Short:        "opt-in to the tessen phone home service",
+		Short:        "opt-in to the tessen call home service",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 0 {
