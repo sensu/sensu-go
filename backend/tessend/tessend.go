@@ -147,6 +147,7 @@ func (t *Tessend) start(tessen *corev2.TessenConfig) error {
 
 func (t *Tessend) schedule(tessen *corev2.TessenConfig) {
 	timer := time.NewTimer(time.Duration(time.Second * time.Duration(t.interval)))
+	defer timer.Stop()
 	// Attempt to send data immediately if tessen is enabled
 	if t.enabled(tessen) {
 		t.collectAndSend()
@@ -155,10 +156,8 @@ func (t *Tessend) schedule(tessen *corev2.TessenConfig) {
 	for {
 		select {
 		case <-t.ctx.Done():
-			timer.Stop()
 			return
 		case config := <-t.interrupt:
-			timer.Stop()
 			defer func() {
 				go t.schedule(config)
 			}()

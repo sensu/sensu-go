@@ -34,7 +34,7 @@ type Cluster struct {
 	Version string `json:"sensu_version"`
 
 	// License is the Cluster's license.
-	License License
+	License License `json:"license"`
 }
 
 // Timestamp is an alias to time.Time with json Marshaling/Unmarshaling support
