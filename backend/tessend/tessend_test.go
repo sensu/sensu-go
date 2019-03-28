@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/stretchr/testify/assert"
@@ -68,7 +68,7 @@ func TestTessend200InvalidHeaderKey(t *testing.T) {
 	require.NoError(t, tessend.Start())
 	time.Sleep(3 * time.Second)
 	assert.NoError(t, tessend.Stop())
-	require.Equal(t, uint32(v2.DefaultTessenInterval), tessend.interval)
+	require.Equal(t, uint32(corev2.DefaultTessenInterval), tessend.interval)
 	assert.Equal(t, tessend.Name(), "tessend")
 }
 
@@ -85,7 +85,7 @@ func TestTessend200InvalidHeaderValue(t *testing.T) {
 	require.NoError(t, tessend.Start())
 	time.Sleep(3 * time.Second)
 	assert.NoError(t, tessend.Stop())
-	require.Equal(t, uint32(v2.DefaultTessenInterval), tessend.interval)
+	require.Equal(t, uint32(corev2.DefaultTessenInterval), tessend.interval)
 	assert.Equal(t, tessend.Name(), "tessend")
 }
 
@@ -105,7 +105,7 @@ func TestTessend500(t *testing.T) {
 }
 
 func TestTessendEnabled(t *testing.T) {
-	tessen := v2.DefaultTessenConfig()
+	tessen := corev2.DefaultTessenConfig()
 	tessend := newTessendTest(t)
 	require.True(t, tessend.enabled(tessen))
 	tessen.OptOut = true

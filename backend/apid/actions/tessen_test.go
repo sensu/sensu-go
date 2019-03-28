@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/assert"
@@ -26,7 +26,7 @@ func TestCreateOrUpdateTessenConfig(t *testing.T) {
 	testCases := []struct {
 		name            string
 		ctx             context.Context
-		argument        *v2.TessenConfig
+		argument        *corev2.TessenConfig
 		storeErr        error
 		expectedErr     bool
 		expectedErrCode ErrCode
@@ -34,12 +34,12 @@ func TestCreateOrUpdateTessenConfig(t *testing.T) {
 		{
 			name:     "Create or update",
 			ctx:      context.Background(),
-			argument: v2.DefaultTessenConfig(),
+			argument: corev2.DefaultTessenConfig(),
 		},
 		{
 			name:            "Invalid input",
 			ctx:             context.Background(),
-			argument:        v2.DefaultTessenConfig(),
+			argument:        corev2.DefaultTessenConfig(),
 			storeErr:        &store.ErrNotValid{},
 			expectedErr:     true,
 			expectedErrCode: InvalidArgument,
@@ -47,7 +47,7 @@ func TestCreateOrUpdateTessenConfig(t *testing.T) {
 		{
 			name:            "Store error",
 			ctx:             context.Background(),
-			argument:        v2.DefaultTessenConfig(),
+			argument:        corev2.DefaultTessenConfig(),
 			storeErr:        errors.New("some error"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
@@ -87,14 +87,14 @@ func TestGetTessenConfig(t *testing.T) {
 		name            string
 		ctx             context.Context
 		storeErr        error
-		expectedResult  *v2.TessenConfig
+		expectedResult  *corev2.TessenConfig
 		expectedErr     bool
 		expectedErrCode ErrCode
 	}{
 		{
 			name:           "Get",
 			ctx:            context.Background(),
-			expectedResult: v2.DefaultTessenConfig(),
+			expectedResult: corev2.DefaultTessenConfig(),
 		},
 		{
 			name:            "Not found",
