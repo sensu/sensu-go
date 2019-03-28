@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- [Web] Ensure user chip is never rendered when creator is not present.
+
 ## [5.4.0] - 2019-03-27
 
 ### Added
@@ -22,8 +25,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - [Web] Updated dependencies that had warnings
-- [Web] updated dependency babel to ^7.4
-- [Web] updated UI library to ^3.8
+- [Web] Updated dependency babel to ^7.4
+- [Web] Updated UI library to ^3.8
 
 ### Fixed
 - Fixed a bug in `sensuctl` where global/persistent flags, such as `--namespace`
@@ -38,7 +41,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed a bug where agents would always try to reconnect to the same backend,
   even when multiple backends were specified. Agents will now try to connect to
   other backends, in pseudorandom fashion.
-- [Web] avoids crash when the creator of a check is inaccessible.
+- [Web] Avoids crash when the creator of a check is inaccessible.
 - [Api] Respond with 404 from the users endpoint when user for given name cannot
   be found.
 - Commands wrap on the event details page and will display "-" if there is no
