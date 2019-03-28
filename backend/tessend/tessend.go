@@ -261,11 +261,19 @@ func (t *Tessend) collect(now int64) *Data {
 		serverCount = float64(len(servers.Members))
 	}
 
+	// collect license information
+	wrapper := &Wrapper{}
+	err = etcd.Get(t.ctx, t.client, licenseStorePath, wrapper)
+	if err != nil {
+		logger.Debugf("cannot retrieve license: %v", err)
+	}
+
 	// populate data payload
 	data := &Data{
 		Cluster: Cluster{
 			ID:      clusterID,
-			Version: version.Version,
+			Version: version.Semver(),
+			License: wrapper.Value.License,
 		},
 		Metrics: corev2.Metrics{
 			Points: []*corev2.MetricPoint{
@@ -281,15 +289,6 @@ func (t *Tessend) collect(now int64) *Data {
 				},
 			},
 		},
-	}
-
-	// collect license information
-	wrapper := &Wrapper{}
-	err = etcd.Get(t.ctx, t.client, licenseStorePath, wrapper)
-	if err != nil {
-		logger.Debugf("cannot retrieve license: %v", err)
-	} else {
-		data.Cluster.License = wrapper.Value.License
 	}
 
 	return data
