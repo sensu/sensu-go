@@ -54,7 +54,7 @@ type SilencedExpireOnResolveFieldResolver interface {
 // SilencedCreatorFieldResolver implement to resolve requests for the Silenced's creator field.
 type SilencedCreatorFieldResolver interface {
 	// Creator implements response to request for creator field.
-	Creator(p graphql.ResolveParams) (interface{}, error)
+	Creator(p graphql.ResolveParams) (string, error)
 }
 
 // SilencedCheckFieldResolver implement to resolve requests for the Silenced's check field.
@@ -289,9 +289,16 @@ func (_ SilencedAliases) ExpireOnResolve(p graphql.ResolveParams) (bool, error) 
 }
 
 // Creator implements response to request for 'creator' field.
-func (_ SilencedAliases) Creator(p graphql.ResolveParams) (interface{}, error) {
+func (_ SilencedAliases) Creator(p graphql.ResolveParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'creator'")
+	}
+	return ret, err
 }
 
 // Check implements response to request for 'check' field.
@@ -453,7 +460,7 @@ func _ObjectTypeSilencedConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "Creator is the author of the silenced entry",
 				Name:              "creator",
-				Type:              graphql.OutputType("User"),
+				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"expire": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
