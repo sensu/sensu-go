@@ -8,9 +8,8 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/sensu/sensu-go/types"
-
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/types"
 )
 
 // ErrAlreadyExists is returned when an object already exists
@@ -99,6 +98,12 @@ type WatchEventHookConfig struct {
 type WatchEventEntity struct {
 	Entity *corev2.Entity
 	Action WatchActionType
+}
+
+// WatchEventTessenConfig is a notification that the tessen config store has been updated.
+type WatchEventTessenConfig struct {
+	TessenConfig *corev2.TessenConfig
+	Action       WatchActionType
 }
 
 // Store is used to abstract the durable storage used by the Sensu backend
@@ -295,12 +300,6 @@ type HookConfigStore interface {
 
 	// UpdateHookConfig creates or updates a given hook's configuration.
 	UpdateHookConfig(ctx context.Context, check *types.HookConfig) error
-
-	// GetHookConfigWatcher returns a channel that emits WatchEventHookConfig structs notifying
-	// the caller that a HookConfig was updated. If the watcher runs into a terminal error
-	// or the context passed is cancelled, then the channel will be closed. The caller must
-	// restart the watcher, if needed.
-	GetHookConfigWatcher(ctx context.Context) <-chan WatchEventHookConfig
 }
 
 // EntityStore provides methods for managing entities
@@ -529,6 +528,9 @@ type TessenConfigStore interface {
 
 	// GetTessenConfig gets the tessen configuration
 	GetTessenConfig(context.Context) (*corev2.TessenConfig, error)
+
+	// GetTessenConfigWatcher returns a tessen config watcher
+	GetTessenConfigWatcher(context.Context) <-chan WatchEventTessenConfig
 }
 
 // TokenStore provides methods for managing the JWT access list

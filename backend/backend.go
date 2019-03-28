@@ -10,7 +10,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/pkg/transport"
-	"github.com/sensu/sensu-go/api/core/v2"
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
@@ -30,6 +30,7 @@ import (
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
+	"github.com/sensu/sensu-go/backend/tessend"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/types"
@@ -143,8 +144,8 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
-		Store: store,
-		Bus:   bus,
+		Store:                   store,
+		Bus:                     bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 		AssetGetter:             assetGetter,
 	})
@@ -195,10 +196,10 @@ func Initialize(config *Config) (*Backend, error) {
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:             bus,
-		Store:           store,
-		LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
-		RingPool:        ringPool,
+		Bus:                   bus,
+		Store:                 store,
+		LivenessFactory:       liveness.EtcdFactory(b.ctx, b.Client),
+		RingPool:              ringPool,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
@@ -220,6 +221,8 @@ func Initialize(config *Config) (*Backend, error) {
 	}
 	authenticator.AddProvider(basic)
 
+	cluster := clientv3.NewCluster(b.Client)
+
 	// Initialize apid
 	api, err := apid.New(apid.Config{
 		ListenAddress:       config.APIListenAddress,
@@ -228,7 +231,7 @@ func Initialize(config *Config) (*Backend, error) {
 		Store:               store,
 		QueueGetter:         queueGetter,
 		TLS:                 config.TLS,
-		Cluster:             clientv3.NewCluster(b.Client),
+		Cluster:             cluster,
 		EtcdClientTLSConfig: etcdClientTLSConfig,
 		Authenticator:       authenticator,
 	})
@@ -236,6 +239,18 @@ func Initialize(config *Config) (*Backend, error) {
 		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, api)
+
+	// Initialize tessend
+	tessen, err := tessend.New(tessend.Config{
+		Store:    store,
+		RingPool: ringPool,
+		Cluster:  cluster,
+		Client:   b.Client,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error initializing %s: %s", tessen.Name(), err)
+	}
+	b.Daemons = append(b.Daemons, tessen)
 
 	// Initialize dashboardd TLS config
 	var dashboardTLSConfig *types.TLSOptions

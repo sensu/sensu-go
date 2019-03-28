@@ -5,14 +5,14 @@ import (
 )
 
 const (
-	// LowerBound is the minimum frequency that tessen will phone home
-	LowerBound = 1
+	// LowerBound is the minimum frequency that tessen will phone home, in seconds
+	LowerBound = 60
 
-	// UpperBound is the maximum frequency that tessen will phone home
-	UpperBound = 360
+	// UpperBound is the maximum frequency that tessen will phone home, in seconds
+	UpperBound = 21600
 
-	// DefaultTessenFrequency is the default frequency at which tessen will phone home
-	DefaultTessenFrequency = 1
+	// DefaultTessenFrequency is the default frequency at which tessen will phone home, in seconds
+	DefaultTessenFrequency = 60
 
 	// TessenPath is the store and api path for tessen
 	TessenPath = "/tessen"
