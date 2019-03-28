@@ -63,6 +63,20 @@ func (client *RestClient) Post(path string, obj interface{}) error {
 	return nil
 }
 
+// Put sends a PUT request with obj as the payload to the given path
+func (client *RestClient) Put(path string, obj interface{}) error {
+	res, err := client.R().SetBody(obj).Put(path)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return UnmarshalError(res)
+	}
+
+	return nil
+}
+
 // PutResource ...
 func (client *RestClient) PutResource(r types.Wrapper) error {
 	path := r.Value.URIPath()
