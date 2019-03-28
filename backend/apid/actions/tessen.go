@@ -1,7 +1,7 @@
 package actions
 
 import (
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"golang.org/x/net/context"
 )
@@ -19,7 +19,7 @@ func NewTessenController(store store.TessenConfigStore) TessenController {
 }
 
 // CreateOrUpdate creates or updates the tessen configuration
-func (c TessenController) CreateOrUpdate(ctx context.Context, config *v2.TessenConfig) error {
+func (c TessenController) CreateOrUpdate(ctx context.Context, config *corev2.TessenConfig) error {
 	if err := c.store.CreateOrUpdateTessenConfig(ctx, config); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotValid:
@@ -33,7 +33,7 @@ func (c TessenController) CreateOrUpdate(ctx context.Context, config *v2.TessenC
 }
 
 // Get gets the tessen configuration
-func (c TessenController) Get(ctx context.Context) (*v2.TessenConfig, error) {
+func (c TessenController) Get(ctx context.Context) (*corev2.TessenConfig, error) {
 	config, err := c.store.GetTessenConfig(ctx)
 	if err != nil {
 		switch err := err.(type) {

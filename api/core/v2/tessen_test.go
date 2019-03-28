@@ -6,9 +6,9 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestValidateFrequency(t *testing.T) {
-	assert.Error(t, ValidateFrequency(UpperBound+1))
-	assert.Error(t, ValidateFrequency(LowerBound-1))
-	assert.NoError(t, ValidateFrequency(UpperBound-1))
-	assert.NoError(t, ValidateFrequency(LowerBound+1))
+func TestValidateInterval(t *testing.T) {
+	assert.Error(t, ValidateInterval(UpperBound+1))
+	assert.Error(t, ValidateInterval(LowerBound-1))
+	assert.NoError(t, ValidateInterval(UpperBound-1))
+	assert.NoError(t, ValidateInterval(LowerBound+1))
 }

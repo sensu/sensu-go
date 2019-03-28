@@ -79,48 +79,10 @@ func (s *Store) GetCheckConfigWatcher(ctx context.Context) <-chan store.WatchEve
 	return ch
 }
 
-// GetHookConfigWatcher returns a channel that emits WatchEventHookConfig structs notifying
-// the caller that a HookConfig was updated. If the watcher runs into a terminal error
+// GetEntityWatcher returns a channel that emits WatchEventEntity structs notifying
+// the caller that an Entity was updated. If the watcher runs into a terminal error
 // or the context passed is cancelled, then the channel will be closed. The caller must
 // restart the watcher, if needed.
-func (s *Store) GetHookConfigWatcher(ctx context.Context) <-chan store.WatchEventHookConfig {
-	ch := make(chan store.WatchEventHookConfig)
-	watcherChan := s.client.Watch(ctx, hookKeyBuilder.Build(""), clientv3.WithPrefix(), clientv3.WithCreatedNotify())
-
-	go func() {
-		defer close(ch)
-
-		var (
-			watchEvent store.WatchEventHookConfig
-			action     store.WatchActionType
-			hookCfg    *corev2.HookConfig
-		)
-
-		for watchResponse := range watcherChan {
-			for _, event := range watchResponse.Events {
-				action = GetWatcherAction(event)
-				if action == store.WatchUnknown {
-					logger.Error("unknown etcd watch action: ", event.Type.String())
-				}
-
-				hookCfg = &corev2.HookConfig{}
-				if err := json.Unmarshal(event.Kv.Value, hookCfg); err != nil {
-					logger.WithField("key", event.Kv.Key).WithError(err).Error("unable to unmarshal hook config from key")
-				}
-
-				watchEvent = store.WatchEventHookConfig{
-					Action:     action,
-					HookConfig: hookCfg,
-				}
-
-				ch <- watchEvent
-			}
-		}
-	}()
-
-	return ch
-}
-
 func (s *Store) GetEntityWatcher(ctx context.Context) <-chan store.WatchEventEntity {
 	ch := make(chan store.WatchEventEntity, 1)
 	wc := s.client.Watch(ctx, entityKeyBuilder.Build(""), clientv3.WithPrefix(), clientv3.WithCreatedNotify())
@@ -153,6 +115,47 @@ func (s *Store) GetEntityWatcher(ctx context.Context) <-chan store.WatchEventEnt
 				watchEvent := store.WatchEventEntity{
 					Action: action,
 					Entity: &entity,
+				}
+
+				ch <- watchEvent
+			}
+		}
+	}()
+	return ch
+}
+
+// GetTessenConfigWatcher returns a channel that emits WatchEventTessenConfig structs notifying
+// the caller that a TessenConfig was updated. If the watcher runs into a terminal error
+// or the context passed is cancelled, then the channel will be closed. The caller must
+// restart the watcher, if needed.
+func (s *Store) GetTessenConfigWatcher(ctx context.Context) <-chan store.WatchEventTessenConfig {
+	ch := make(chan store.WatchEventTessenConfig, 1)
+	wc := s.client.Watch(ctx, tessenKeyBuilder.Build(""), clientv3.WithPrefix(), clientv3.WithCreatedNotify())
+	go func() {
+		defer close(ch)
+
+		for resp := range wc {
+			for _, event := range resp.Events {
+				action := GetWatcherAction(event)
+				if action == store.WatchUnknown {
+					logger.Errorf("unknown etcd watch action: %s", event.Type.String())
+					continue
+				}
+
+				var tessen *corev2.TessenConfig
+				if action != store.WatchDelete {
+					if err := json.Unmarshal(event.Kv.Value, &tessen); err != nil {
+						logger.WithError(err).Error("error unmarshaling watch event")
+						continue
+					}
+				} else {
+					// use default tessen config if it's deleted
+					tessen = corev2.DefaultTessenConfig()
+				}
+
+				watchEvent := store.WatchEventTessenConfig{
+					Action:       action,
+					TessenConfig: tessen,
 				}
 
 				ch <- watchEvent

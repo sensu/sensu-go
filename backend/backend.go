@@ -10,7 +10,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/pkg/transport"
-	"github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
@@ -30,6 +30,7 @@ import (
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
+	"github.com/sensu/sensu-go/backend/tessend"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/types"
@@ -143,8 +144,8 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
-		Store: store,
-		Bus:   bus,
+		Store:                   store,
+		Bus:                     bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 		AssetGetter:             assetGetter,
 	})
@@ -195,10 +196,10 @@ func Initialize(config *Config) (*Backend, error) {
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:             bus,
-		Store:           store,
-		LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
-		RingPool:        ringPool,
+		Bus:                   bus,
+		Store:                 store,
+		LivenessFactory:       liveness.EtcdFactory(b.ctx, b.Client),
+		RingPool:              ringPool,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
@@ -215,10 +216,12 @@ func Initialize(config *Config) (*Backend, error) {
 	// Prepare the authentication providers
 	authenticator := &authentication.Authenticator{}
 	basic := &basic.Provider{
-		ObjectMeta: v2.ObjectMeta{Name: basic.Type},
+		ObjectMeta: corev2.ObjectMeta{Name: basic.Type},
 		Store:      store,
 	}
 	authenticator.AddProvider(basic)
+
+	cluster := clientv3.NewCluster(b.Client)
 
 	// Initialize apid
 	api, err := apid.New(apid.Config{
@@ -228,7 +231,7 @@ func Initialize(config *Config) (*Backend, error) {
 		Store:               store,
 		QueueGetter:         queueGetter,
 		TLS:                 config.TLS,
-		Cluster:             clientv3.NewCluster(b.Client),
+		Cluster:             cluster,
 		EtcdClientTLSConfig: etcdClientTLSConfig,
 		Authenticator:       authenticator,
 	})
@@ -236,6 +239,18 @@ func Initialize(config *Config) (*Backend, error) {
 		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, api)
+
+	// Initialize tessend
+	tessen, err := tessend.New(tessend.Config{
+		Store:    store,
+		RingPool: ringPool,
+		Cluster:  cluster,
+		Client:   b.Client,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error initializing %s: %s", tessen.Name(), err)
+	}
+	b.Daemons = append(b.Daemons, tessen)
 
 	// Initialize dashboardd TLS config
 	var dashboardTLSConfig *types.TLSOptions
@@ -393,15 +408,15 @@ func (b *Backend) Stop() {
 	<-b.done
 }
 
-func (b *Backend) getBackendEntity(config *Config) *v2.Entity {
-	entity := &v2.Entity{
-		EntityClass: v2.EntityBackendClass,
+func (b *Backend) getBackendEntity(config *Config) *corev2.Entity {
+	entity := &corev2.Entity{
+		EntityClass: corev2.EntityBackendClass,
 		System:      getSystemInfo(),
-		ObjectMeta:  v2.NewObjectMeta(getDefaultBackendID(), ""),
+		ObjectMeta:  corev2.NewObjectMeta(getDefaultBackendID(), ""),
 	}
 
 	if config.DeregistrationHandler != "" {
-		entity.Deregistration = v2.Deregistration{
+		entity.Deregistration = corev2.Deregistration{
 			Handler: config.DeregistrationHandler,
 		}
 	}
@@ -420,7 +435,7 @@ func getDefaultBackendID() string {
 }
 
 // getSystemInfo returns the system info of the backend
-func getSystemInfo() v2.System {
+func getSystemInfo() corev2.System {
 	info, err := system.Info()
 	if err != nil {
 		logger.WithError(err).Error("error getting system info")

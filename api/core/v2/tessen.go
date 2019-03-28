@@ -5,23 +5,23 @@ import (
 )
 
 const (
-	// LowerBound is the minimum frequency that tessen will phone home
-	LowerBound = 1
+	// LowerBound is the minimum interval that tessen will phone home, in seconds
+	LowerBound = 60
 
-	// UpperBound is the maximum frequency that tessen will phone home
-	UpperBound = 360
+	// UpperBound is the maximum interval that tessen will phone home, in seconds
+	UpperBound = 21600
 
-	// DefaultTessenFrequency is the default frequency at which tessen will phone home
-	DefaultTessenFrequency = 1
+	// DefaultTessenInterval is the default interval at which tessen will phone home, in seconds
+	DefaultTessenInterval = 60
 
 	// TessenPath is the store and api path for tessen
 	TessenPath = "/tessen"
 )
 
-// ValidateFrequency returns an error if the tessen frequency is not within the upper and lower bound limits
-func ValidateFrequency(freq uint32) error {
+// ValidateInterval returns an error if the tessen interval is not within the upper and lower bound limits
+func ValidateInterval(freq uint32) error {
 	if !(freq >= LowerBound && freq <= UpperBound) {
-		return fmt.Errorf("tessen frequency must be in between the lower and upper bound limits (%d-%d)", LowerBound, UpperBound)
+		return fmt.Errorf("tessen interval must be in between the lower and upper bound limits (%d-%d)", LowerBound, UpperBound)
 	}
 	return nil
 }
