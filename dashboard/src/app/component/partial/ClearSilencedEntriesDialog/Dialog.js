@@ -64,9 +64,7 @@ class ClearSilencedEntriesDialog extends React.PureComponent {
         id
         deleted @client
         name
-        creator {
-          username
-        }
+        creator
       }
 
       ${SilenceExpiration.fragments.silence}
@@ -111,7 +109,7 @@ class ClearSilencedEntriesDialog extends React.PureComponent {
       </TableOverflowCell>
       <TableCell>
         <ResourceDetails
-          title={<Maybe value={silence.creator}>{u => u.username}</Maybe>}
+          title={<Maybe value={silence.creator} fallback="Unspecified" />}
         />
       </TableCell>
     </TableSelectableRow>

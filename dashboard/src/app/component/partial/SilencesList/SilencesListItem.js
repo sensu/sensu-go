@@ -60,9 +60,7 @@ class SilencesListItem extends React.Component {
         name
         begin
         reason
-        creator {
-          username
-        }
+        creator
       }
 
       ${SilenceExpiration.fragments.silence}
@@ -118,14 +116,14 @@ class SilencesListItem extends React.Component {
               }}
             >
               <Maybe value={silence.creator}>
-                {user => (
+                {creator => (
                   <Chip
                     avatar={
                       <Avatar>
                         <FaceIcon />
                       </Avatar>
                     }
-                    label={user.username}
+                    label={creator}
                     style={{
                       // TODO: ideally have Chip scale to current fontSize(?)
                       transform: "scale(0.87)",
