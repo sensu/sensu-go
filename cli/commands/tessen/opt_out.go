@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/spf13/cobra"
@@ -29,7 +29,7 @@ func OptOutCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			config := v2.TessenConfig{OptOut: true}
+			config := corev2.TessenConfig{OptOut: true}
 			if err := cli.Client.Put(config.URIPath(), config); err != nil {
 				return err
 			}

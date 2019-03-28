@@ -6,7 +6,7 @@ import (
 	"io"
 	"strconv"
 
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/list"
@@ -25,7 +25,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 				return errors.New("invalid argument(s) received")
 			}
 
-			config := &v2.TessenConfig{}
+			config := &corev2.TessenConfig{}
 			if err := cli.Client.Get(config.URIPath(), config); err != nil {
 				return err
 			}
@@ -43,7 +43,7 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 }
 
 func printToList(v interface{}, writer io.Writer) error {
-	r, ok := v.(*v2.TessenConfig)
+	r, ok := v.(*corev2.TessenConfig)
 	if !ok {
 		return fmt.Errorf("%t is not a tessen config", v)
 	}

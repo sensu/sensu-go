@@ -4,7 +4,7 @@ import (
 	"errors"
 	"testing"
 
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +29,7 @@ func TestInfoCommandRunEClosure(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("Get", mock.Anything, &v2.TessenConfig{OptOut: false}).Return(nil)
+	client.On("Get", mock.Anything, &corev2.TessenConfig{OptOut: false}).Return(nil)
 
 	cmd := InfoCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -56,7 +56,7 @@ func TestInfoCommandRunEClosureWithTable(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("Get", mock.Anything, &v2.TessenConfig{OptOut: false}).Return(nil)
+	client.On("Get", mock.Anything, &corev2.TessenConfig{OptOut: false}).Return(nil)
 
 	cmd := InfoCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "tabular"))
@@ -73,7 +73,7 @@ func TestInfoCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("Get", mock.Anything, &v2.TessenConfig{OptOut: false}).Return(errors.New("err"))
+	client.On("Get", mock.Anything, &corev2.TessenConfig{OptOut: false}).Return(errors.New("err"))
 
 	cmd := InfoCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})

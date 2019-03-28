@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/spf13/cobra"
 )
@@ -21,7 +21,7 @@ func OptInCommand(cli *cli.SensuCli) *cobra.Command {
 				return errors.New("invalid argument(s) received")
 			}
 
-			config := v2.TessenConfig{OptOut: false}
+			config := corev2.TessenConfig{OptOut: false}
 			if err := cli.Client.Put(config.URIPath(), config); err != nil {
 				return err
 			}
