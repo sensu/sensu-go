@@ -8,7 +8,6 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 )
 
@@ -143,7 +142,7 @@ func (s *Store) GetTessenConfigWatcher(ctx context.Context) <-chan store.WatchEv
 					continue
 				}
 
-				var tessen *v2.TessenConfig
+				var tessen *corev2.TessenConfig
 				if action != store.WatchDelete {
 					if err := json.Unmarshal(event.Kv.Value, &tessen); err != nil {
 						logger.WithError(err).Error("error unmarshaling watch event")
@@ -151,7 +150,7 @@ func (s *Store) GetTessenConfigWatcher(ctx context.Context) <-chan store.WatchEv
 					}
 				} else {
 					// use default tessen config if it's deleted
-					tessen = v2.DefaultTessenConfig()
+					tessen = corev2.DefaultTessenConfig()
 				}
 
 				watchEvent := store.WatchEventTessenConfig{

@@ -68,7 +68,7 @@ func TestTessend200InvalidHeaderKey(t *testing.T) {
 	require.NoError(t, tessend.Start())
 	time.Sleep(3 * time.Second)
 	assert.NoError(t, tessend.Stop())
-	require.Equal(t, uint32(v2.DefaultTessenFrequency), tessend.interval)
+	require.Equal(t, uint32(v2.DefaultTessenInterval), tessend.interval)
 	assert.Equal(t, tessend.Name(), "tessend")
 }
 
@@ -85,7 +85,7 @@ func TestTessend200InvalidHeaderValue(t *testing.T) {
 	require.NoError(t, tessend.Start())
 	time.Sleep(3 * time.Second)
 	assert.NoError(t, tessend.Stop())
-	require.Equal(t, uint32(v2.DefaultTessenFrequency), tessend.interval)
+	require.Equal(t, uint32(v2.DefaultTessenInterval), tessend.interval)
 	assert.Equal(t, tessend.Name(), "tessend")
 }
 

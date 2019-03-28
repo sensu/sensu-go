@@ -10,7 +10,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/pkg/transport"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
@@ -216,7 +216,7 @@ func Initialize(config *Config) (*Backend, error) {
 	// Prepare the authentication providers
 	authenticator := &authentication.Authenticator{}
 	basic := &basic.Provider{
-		ObjectMeta: v2.ObjectMeta{Name: basic.Type},
+		ObjectMeta: corev2.ObjectMeta{Name: basic.Type},
 		Store:      store,
 	}
 	authenticator.AddProvider(basic)
@@ -408,15 +408,15 @@ func (b *Backend) Stop() {
 	<-b.done
 }
 
-func (b *Backend) getBackendEntity(config *Config) *v2.Entity {
-	entity := &v2.Entity{
-		EntityClass: v2.EntityBackendClass,
+func (b *Backend) getBackendEntity(config *Config) *corev2.Entity {
+	entity := &corev2.Entity{
+		EntityClass: corev2.EntityBackendClass,
 		System:      getSystemInfo(),
-		ObjectMeta:  v2.NewObjectMeta(getDefaultBackendID(), ""),
+		ObjectMeta:  corev2.NewObjectMeta(getDefaultBackendID(), ""),
 	}
 
 	if config.DeregistrationHandler != "" {
-		entity.Deregistration = v2.Deregistration{
+		entity.Deregistration = corev2.Deregistration{
 			Handler: config.DeregistrationHandler,
 		}
 	}
@@ -435,7 +435,7 @@ func getDefaultBackendID() string {
 }
 
 // getSystemInfo returns the system info of the backend
-func getSystemInfo() v2.System {
+func getSystemInfo() corev2.System {
 	info, err := system.Info()
 	if err != nil {
 		logger.WithError(err).Error("error getting system info")

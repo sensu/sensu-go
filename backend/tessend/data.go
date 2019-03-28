@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"time"
 
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 const (
 	// TimestampFormat is the string representation for the license timestamps e.g.
 	// "2018-07-26T12:12:06-04:00"
 	TimestampFormat = time.RFC3339
+
+	licenseStorePath = "/sensu.io/api/enterprise/licensing/v2/license"
 )
 
 // Data is the payload sent to tessen
@@ -20,7 +22,7 @@ type Data struct {
 	Cluster Cluster `json:"cluster"`
 
 	// Metric data.
-	Metrics v2.Metrics `json:"metrics"`
+	Metrics corev2.Metrics `json:"metrics"`
 }
 
 // Cluster is the cluster information sent to tessen

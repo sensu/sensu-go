@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd"
@@ -28,7 +28,7 @@ type Tessend struct {
 	cancel    context.CancelFunc
 	errChan   chan error
 	ringPool  *ringv2.Pool
-	interrupt chan *v2.TessenConfig
+	interrupt chan *corev2.TessenConfig
 	cluster   clientv3.Cluster
 	client    *clientv3.Client
 	url       string
@@ -45,10 +45,10 @@ type Config struct {
 	Client   *clientv3.Client
 }
 
-// New creates a new APId.
+// New creates a new TessenD.
 func New(c Config, opts ...Option) (*Tessend, error) {
 	t := &Tessend{
-		interval: v2.DefaultTessenFrequency,
+		interval: corev2.DefaultTessenInterval,
 		store:    c.Store,
 		ringPool: c.RingPool,
 		cluster:  c.Cluster,
@@ -57,7 +57,7 @@ func New(c Config, opts ...Option) (*Tessend, error) {
 		url:      tessenURL,
 	}
 	t.ctx, t.cancel = context.WithCancel(context.Background())
-	t.interrupt = make(chan *v2.TessenConfig)
+	t.interrupt = make(chan *corev2.TessenConfig)
 
 	return t, nil
 }
@@ -67,7 +67,7 @@ func (t *Tessend) Start() error {
 	tessenConfig, err := t.store.GetTessenConfig(t.ctx)
 	// create the default tessen config if one does not already exist
 	if err != nil || tessenConfig == nil {
-		tessenConfig = v2.DefaultTessenConfig()
+		tessenConfig = corev2.DefaultTessenConfig()
 		err = t.store.CreateOrUpdateTessenConfig(t.ctx, tessenConfig)
 		if err != nil {
 			// log the error and continue with the default config
@@ -134,7 +134,7 @@ func (t *Tessend) handleWatchEvent(watchEvent store.WatchEventTessenConfig) {
 }
 
 // start starts a new scheduler for tessen
-func (t *Tessend) start(tessen *v2.TessenConfig) error {
+func (t *Tessend) start(tessen *corev2.TessenConfig) error {
 	// Guard against updates while the daemon is shutting down
 	if err := t.ctx.Err(); err != nil {
 		return err
@@ -145,7 +145,7 @@ func (t *Tessend) start(tessen *v2.TessenConfig) error {
 	return nil
 }
 
-func (t *Tessend) schedule(tessen *v2.TessenConfig) {
+func (t *Tessend) schedule(tessen *corev2.TessenConfig) {
 	timer := time.NewTimer(time.Duration(time.Second * time.Duration(t.interval)))
 	// Attempt to send data immediately if tessen is enabled
 	if t.enabled(tessen) {
@@ -175,14 +175,14 @@ func (t *Tessend) schedule(tessen *v2.TessenConfig) {
 
 // enabled checks the tessen config for opt-out status, and verifies the existence of an enterprise license.
 // It returns a boolean value indicating if tessen should be enabled or not.
-func (t *Tessend) enabled(tessen *v2.TessenConfig) bool {
+func (t *Tessend) enabled(tessen *corev2.TessenConfig) bool {
 	if !tessen.OptOut {
 		logger.WithField("opt-out", tessen.OptOut).Info("tessen is opted in, enabling tessen.. thank you so much for your support 💚")
 		return true
 	}
 
 	wrapper := &Wrapper{}
-	err := etcd.Get(t.ctx, t.client, "/sensu.io/api/enterprise/licensing/v2/license", wrapper)
+	err := etcd.Get(t.ctx, t.client, licenseStorePath, wrapper)
 	if err != nil {
 		logger.WithField("opt-out", tessen.OptOut).Info("tessen is opted out, patiently waiting for you to opt back in")
 	} else {
@@ -225,7 +225,7 @@ func (t *Tessend) collectAndSend() {
 	}
 
 	// validate the returned interval is within the upper/lower bound limits
-	err = v2.ValidateFrequency(uint32(interval))
+	err = corev2.ValidateInterval(uint32(interval))
 	if err != nil {
 		logger.Debugf("invalid tessen response header: %v", err)
 		return
@@ -262,37 +262,35 @@ func (t *Tessend) collect(now int64) *Data {
 		serverCount = float64(len(servers.Members))
 	}
 
-	// collect license information
-	license := License{}
-	wrapper := &Wrapper{}
-	err = etcd.Get(t.ctx, t.client, "/sensu.io/api/enterprise/licensing/v2/license", wrapper)
-	if err != nil {
-		logger.Debugf("cannot retrieve license: %v", err)
-	} else {
-		license = wrapper.Value.License
-	}
-
 	// populate data payload
 	data := &Data{
 		Cluster: Cluster{
 			ID:      clusterID,
 			Version: version.Version,
-			License: license,
 		},
-		Metrics: v2.Metrics{
-			Points: []*v2.MetricPoint{
-				&v2.MetricPoint{
+		Metrics: corev2.Metrics{
+			Points: []*corev2.MetricPoint{
+				&corev2.MetricPoint{
 					Name:      "client_count",
 					Value:     clientCount,
 					Timestamp: now,
 				},
-				&v2.MetricPoint{
+				&corev2.MetricPoint{
 					Name:      "server_count",
 					Value:     serverCount,
 					Timestamp: now,
 				},
 			},
 		},
+	}
+
+	// collect license information
+	wrapper := &Wrapper{}
+	err = etcd.Get(t.ctx, t.client, licenseStorePath, wrapper)
+	if err != nil {
+		logger.Debugf("cannot retrieve license: %v", err)
+	} else {
+		data.Cluster.License = wrapper.Value.License
 	}
 
 	return data
