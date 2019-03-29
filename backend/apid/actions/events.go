@@ -47,37 +47,6 @@ func (a EventController) List(ctx context.Context, pred *store.SelectionPredicat
 	return resources, nil
 }
 
-// func (a EventController) Query(ctx context.Context, entityName, checkName string) ([]*corev2.Event, string, error) {
-// 	var results []*corev2.Event
-// 	var nextContinueToken string
-
-// 	pageSize := corev2.PageSizeFromContext(ctx)
-// 	continueToken := corev2.PageContinueFromContext(ctx)
-
-// 	// Fetch from store
-// 	var serr error
-// 	if entityName != "" && checkName != "" {
-// 		var result *corev2.Event
-// 		result, serr = a.store.GetEventByEntityCheck(ctx, entityName, checkName)
-// 		if result != nil {
-// 			results = append(results, result)
-// 		}
-// 	} else if entityName != "" {
-// 		results, nextContinueToken, serr = a.store.GetEventsByEntity(ctx, entityName, int64(pageSize), continueToken)
-// 	} else {
-// 		results, nextContinueToken, serr = a.store.GetEvents(ctx, int64(pageSize), continueToken)
-// 	}
-
-// 	if serr != nil {
-// 		return nil, "", NewError(InternalErr, serr)
-// 	}
-
-// 	// Encode the continue token with base64url (RFC 4648), without padding
-// 	encodedNextContinueToken := base64.RawURLEncoding.EncodeToString([]byte(nextContinueToken))
-
-// 	return results, encodedNextContinueToken, nil
-// }
-
 // Find returns resource associated with given parameters if available to the
 // viewer.
 func (a EventController) Find(ctx context.Context, entity, check string) (*corev2.Event, error) {
