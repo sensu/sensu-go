@@ -3,6 +3,7 @@ package routers
 import (
 	"net/http"
 	"net/url"
+	"path"
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/apid/actions"
@@ -39,7 +40,7 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 
 	// Additionaly allow a suffix to be specified when listing events, which
 	// correspond to the entity name here
-	parent.HandleFunc("{suffix}", listerHandler(r.controller.List)).Methods(http.MethodGet)
+	parent.HandleFunc(path.Join(routes.PathPrefix, "{suffix}"), listerHandler(r.controller.List)).Methods(http.MethodGet)
 }
 
 func (r *EventsRouter) find(req *http.Request) (interface{}, error) {
