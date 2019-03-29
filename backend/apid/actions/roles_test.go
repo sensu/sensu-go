@@ -276,13 +276,12 @@ func TestRoleGet(t *testing.T) {
 
 func TestRoleList(t *testing.T) {
 	testCases := []struct {
-		name          string
-		ctx           context.Context
-		storeErr      error
-		continueToken string
-		records       []*types.Role
-		expectedLen   int
-		expectedErr   error
+		name        string
+		ctx         context.Context
+		storeErr    error
+		records     []*types.Role
+		expectedLen int
+		expectedErr error
 	}{
 		{
 			name: "List",

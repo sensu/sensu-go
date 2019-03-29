@@ -33,7 +33,6 @@ func TestEventList(t *testing.T) {
 		ctx         context.Context
 		events      []*types.Event
 		entity      string
-		check       string
 		storeErr    error
 		expectedLen int
 		expectedErr error
