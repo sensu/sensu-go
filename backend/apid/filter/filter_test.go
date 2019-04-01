@@ -10,6 +10,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/selection"
 
+	"github.com/robertkrimen/otto"
 	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/types/dynamic"
@@ -17,7 +18,7 @@ import (
 )
 
 // Tweak this number as required
-const eventsCount = 1000000
+const eventsCount = 1100000
 
 var events = make([]*v2.Event, eventsCount)
 
@@ -38,6 +39,31 @@ func BenchmarkOtto(b *testing.B) {
 		synth := dynamic.Synthesize(event)
 		parameters := map[string]interface{}{"event": synth}
 		_, _ = js.Evaluate(filter, parameters, nil)
+	}
+}
+
+func BenchmarkOttoWithReusedVM(b *testing.B) {
+	filter := "event.check.name == 'check42'"
+	vm := otto.New()
+
+	for i := 0; i < b.N; i++ {
+		event := events[i]
+
+		synth := dynamic.Synthesize(event)
+		parameters := map[string]interface{}{"event": synth}
+
+		for name, value := range parameters {
+			if err := vm.Set(name, value); err != nil {
+				b.Fatal(err)
+			}
+		}
+
+		_, _ = vm.Run(filter)
+
+		// Cleanup
+		for name := range parameters {
+			_ = vm.Set(name, otto.UndefinedValue())
+		}
 	}
 }
 
