@@ -6,15 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"k8s.io/apimachinery/pkg/fields"
-
-	"k8s.io/apimachinery/pkg/selection"
-
 	"github.com/robertkrimen/otto"
 	"github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/types/dynamic"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/selection"
 )
 
 // Tweak this number as required
@@ -29,7 +27,6 @@ func init() {
 		events[i] = v2.FixtureEvent("foo", checkName)
 	}
 }
-
 func BenchmarkOtto(b *testing.B) {
 	filter := "event.check.name == 'check42'"
 
@@ -58,7 +55,33 @@ func BenchmarkOttoWithReusedVM(b *testing.B) {
 			}
 		}
 
-		_, _ = vm.Run(filter)
+		value, _ := vm.Run(filter)
+		_, _ = value.ToBoolean()
+
+		// Cleanup
+		for name := range parameters {
+			_ = vm.Set(name, otto.UndefinedValue())
+		}
+	}
+}
+
+func BenchmarkOttoWithoutSynthesize(b *testing.B) {
+	filter := "event.Check.ObjectMeta.Name == 'check42'"
+	vm := otto.New()
+
+	for i := 0; i < b.N; i++ {
+		event := events[i]
+
+		parameters := map[string]interface{}{"event": event}
+
+		for name, value := range parameters {
+			if err := vm.Set(name, value); err != nil {
+				b.Fatal(err)
+			}
+		}
+
+		value, _ := vm.Run(filter)
+		_, _ = value.ToBoolean()
 
 		// Cleanup
 		for name := range parameters {
@@ -130,6 +153,32 @@ func TestDurationOttoWithReusedVM(t *testing.T) {
 		}
 	}
 }
+
+func TestDurationOttoWithoutSynthesize(t *testing.T) {
+	filter := "event.Check.ObjectMeta.Name == 'check42'"
+	vm := otto.New()
+
+	for i := 0; i < eventsCount; i++ {
+		event := events[i]
+
+		parameters := map[string]interface{}{"event": event}
+
+		for name, value := range parameters {
+			if err := vm.Set(name, value); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		value, _ := vm.Run(filter)
+		_, _ = value.ToBoolean()
+
+		// Cleanup
+		for name := range parameters {
+			_ = vm.Set(name, otto.UndefinedValue())
+		}
+	}
+}
+
 func TestDurationLabelSelector(t *testing.T) {
 	for i := 0; i < eventsCount; i++ {
 		event := events[i]
