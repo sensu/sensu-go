@@ -187,13 +187,15 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 
 		// Initialize the annotations and labels if they are nil
 		objValue := reflect.ValueOf(obj).Elem()
-		meta := objValue.Elem().FieldByName("ObjectMeta")
-		if meta.CanSet() {
-			if meta.FieldByName("Labels").Len() == 0 && meta.FieldByName("Labels").CanSet() {
-				meta.FieldByName("Labels").Set(reflect.MakeMap(reflect.TypeOf(make(map[string]string))))
-			}
-			if meta.FieldByName("Annotations").Len() == 0 && meta.FieldByName("Annotations").CanSet() {
-				meta.FieldByName("Annotations").Set(reflect.MakeMap(reflect.TypeOf(make(map[string]string))))
+		if objValue.Kind() == reflect.Ptr {
+			meta := objValue.Elem().FieldByName("ObjectMeta")
+			if meta.CanSet() {
+				if meta.FieldByName("Labels").Len() == 0 && meta.FieldByName("Labels").CanSet() {
+					meta.FieldByName("Labels").Set(reflect.MakeMap(reflect.TypeOf(make(map[string]string))))
+				}
+				if meta.FieldByName("Annotations").Len() == 0 && meta.FieldByName("Annotations").CanSet() {
+					meta.FieldByName("Annotations").Set(reflect.MakeMap(reflect.TypeOf(make(map[string]string))))
+				}
 			}
 		}
 
