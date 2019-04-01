@@ -18,7 +18,7 @@ import (
 )
 
 // Tweak this number as required
-const eventsCount = 1100000
+const eventsCount = 1000000
 
 var events = make([]*v2.Event, eventsCount)
 
@@ -105,6 +105,31 @@ func TestDurationOtto(t *testing.T) {
 	}
 }
 
+func TestDurationOttoWithReusedVM(t *testing.T) {
+	filter := "event.check.name == 'check42'"
+
+	vm := otto.New()
+
+	for i := 0; i < eventsCount; i++ {
+		event := events[i]
+
+		synth := dynamic.Synthesize(event)
+		parameters := map[string]interface{}{"event": synth}
+
+		for name, value := range parameters {
+			if err := vm.Set(name, value); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		_, _ = vm.Run(filter)
+
+		// Cleanup
+		for name := range parameters {
+			_ = vm.Set(name, otto.UndefinedValue())
+		}
+	}
+}
 func TestDurationLabelSelector(t *testing.T) {
 	for i := 0; i < eventsCount; i++ {
 		event := events[i]
