@@ -48,9 +48,7 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 	routes.Del(r.destroy)
 	routes.Get(r.find)
 	routes.List(r.controller.List)
-	// routes.Router.HandleFunc(routes.PathPrefix, listerHandler(r.controller.List)).Methods(http.MethodGet)
 	routes.ListAllNamespaces(r.controller.List, "/{resource:checks}")
-	// routes.Router.HandleFunc("/{resource:checks}", listerHandler(r.controller.List)).Methods(http.MethodGet)
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
 
