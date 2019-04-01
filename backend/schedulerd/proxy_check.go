@@ -22,16 +22,15 @@ OUTER:
 	for _, entity := range entities {
 		synth := dynamic.Synthesize(entity)
 		for _, expression := range proxyRequest.EntityAttributes {
-
+			fields := logrus.Fields{
+				"expression": expression,
+				"entity":     entity.Name,
+				"namespace":  entity.Namespace,
+			}
 			parameters := map[string]interface{}{"entity": synth}
 
 			result, err := js.Evaluate(expression, parameters, nil)
 			if err != nil {
-				fields := logrus.Fields{
-					"expression": expression,
-					"entity":     entity.Name,
-					"namespace":  entity.Namespace,
-				}
 				// Only report an error if the expression's syntax is invalid
 				switch err.(type) {
 				case js.SyntaxError:
@@ -48,6 +47,8 @@ OUTER:
 			if !result {
 				continue OUTER
 			}
+
+			logger.WithFields(fields).Debug("expression matches entity")
 		}
 
 		matched = append(matched, entity)
