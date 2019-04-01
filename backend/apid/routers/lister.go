@@ -23,11 +23,11 @@ var Lister listerFunc
 
 func init() {
 	// Assign the core lister
-	Lister = lister
+	Lister = List
 }
 
-// lister handles resources listing with pagination support
-func lister(list ListControllerFunc) http.HandlerFunc {
+// List handles resources listing with pagination support
+func List(list ListControllerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		pred := &store.SelectionPredicate{
 			Continue: corev2.PageContinueFromContext(r.Context()),
