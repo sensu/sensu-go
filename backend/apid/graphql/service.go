@@ -36,7 +36,6 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterAsset(svc, &assetImpl{})
 	schema.RegisterNamespace(svc, &namespaceImpl{factory: clientFactory})
 	schema.RegisterErrCode(svc)
-	schema.RegisterError(svc, nil)
 	schema.RegisterEvent(svc, &eventImpl{})
 	schema.RegisterEventsListOrder(svc)
 	schema.RegisterHandler(svc, &handlerImpl{factory: clientFactory})
@@ -57,7 +56,6 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterSchema(svc)
 	schema.RegisterSilenced(svc, &silencedImpl{factory: clientFactory})
 	schema.RegisterSilencedConnection(svc, &schema.SilencedConnectionAliases{})
-	schema.RegisterStandardError(svc, stdErrImpl{})
 	schema.RegisterSubscriptionSet(svc, subscriptionSetImpl{})
 	schema.RegisterSubscriptionSetOrder(svc)
 	schema.RegisterSubscriptionOccurences(svc, &schema.SubscriptionOccurencesAliases{})
@@ -123,6 +121,11 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterSilenceInputs(svc)
 	schema.RegisterUpdateCheckInput(svc)
 	schema.RegisterUpdateCheckPayload(svc, &checkMutationPayload{})
+	schema.RegisterPutWrappedPayload(svc, &schema.PutWrappedPayloadAliases{})
+
+	// Errors
+	schema.RegisterStandardError(svc, stdErrImpl{})
+	schema.RegisterError(svc, &errImpl{})
 
 	err := svc.Regenerate()
 	return &wrapper, err

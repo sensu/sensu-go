@@ -194,7 +194,18 @@ func newSchema(reg *typeRegister) (graphql.Schema, error) {
 		schemaCfg.Subscription = subscriptionType.(*graphql.Object)
 	}
 
-	return graphql.NewSchema(schemaCfg)
+	schema, err := graphql.NewSchema(schemaCfg)
+	if err != nil {
+		return schema, err
+	}
+
+	for _, ttype := range typeMap {
+		if err = schema.AppendType(ttype); err != nil {
+			return schema, err
+		}
+	}
+
+	return schema, err
 }
 
 func registerTypes(m graphql.TypeMap, col ...map[string]registerTypeFn) {

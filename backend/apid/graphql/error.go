@@ -8,6 +8,7 @@ import (
 )
 
 var _ schema.StandardErrorFieldResolvers = (*stdErrImpl)(nil)
+var _ graphql.InterfaceTypeResolver = (*errImpl)(nil)
 
 type stdErr struct {
 	code    schema.ErrCode
@@ -75,4 +76,18 @@ func (stdErrImpl) Message(p graphql.ResolveParams) (string, error) {
 func (stdErrImpl) IsTypeOf(record interface{}, _ graphql.IsTypeOfParams) bool {
 	_, ok := record.(stdErr)
 	return ok
+}
+
+//
+// Implement Error
+//
+
+type errImpl struct{}
+
+func (errImpl) ResolveType(obj interface{}, _ graphql.ResolveTypeParams) *graphql.Type {
+	switch obj.(type) {
+	case stdErr:
+		return &schema.StandardErrorType
+	}
+	return nil
 }
