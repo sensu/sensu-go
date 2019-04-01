@@ -20,18 +20,18 @@ import (
 
 const tessenURL = "https://tessen.sensu.io/v2/data"
 
-// Tessend is the tessen daemon
+// Tessend is the tessen daemon.
 type Tessend struct {
 	interval  uint32
 	store     store.Store
 	ctx       context.Context
 	cancel    context.CancelFunc
 	errChan   chan error
-	ringPool  *ringv2.Pool
+	ring      *ringv2.Ring
 	interrupt chan *corev2.TessenConfig
-	cluster   clientv3.Cluster
 	client    *clientv3.Client
 	url       string
+	backendID string
 }
 
 // Option is a functional option.
@@ -39,53 +39,61 @@ type Option func(*Tessend) error
 
 // Config configures Tessend.
 type Config struct {
-	Store    store.Store
-	RingPool *ringv2.Pool
-	Cluster  clientv3.Cluster
-	Client   *clientv3.Client
+	Store     store.Store
+	RingPool  *ringv2.Pool
+	Client    *clientv3.Client
+	BackendID string
 }
 
 // New creates a new TessenD.
 func New(c Config, opts ...Option) (*Tessend, error) {
 	t := &Tessend{
-		interval: corev2.DefaultTessenInterval,
-		store:    c.Store,
-		ringPool: c.RingPool,
-		cluster:  c.Cluster,
-		client:   c.Client,
-		errChan:  make(chan error, 1),
-		url:      tessenURL,
+		interval:  corev2.DefaultTessenInterval,
+		store:     c.Store,
+		client:    c.Client,
+		errChan:   make(chan error, 1),
+		url:       tessenURL,
+		backendID: c.BackendID,
 	}
 	t.ctx, t.cancel = context.WithCancel(context.Background())
 	t.interrupt = make(chan *corev2.TessenConfig)
+	key := ringv2.Path("global", "backends")
+	t.ring = c.RingPool.Get(key)
 
 	return t, nil
 }
 
-// Start the Scheduler daemon.
+// Start the Tessen daemon.
 func (t *Tessend) Start() error {
-	tessenConfig, err := t.store.GetTessenConfig(t.ctx)
+	tessen, err := t.store.GetTessenConfig(t.ctx)
 	// create the default tessen config if one does not already exist
-	if err != nil || tessenConfig == nil {
-		tessenConfig = corev2.DefaultTessenConfig()
-		err = t.store.CreateOrUpdateTessenConfig(t.ctx, tessenConfig)
+	if err != nil || tessen == nil {
+		tessen = corev2.DefaultTessenConfig()
+		err = t.store.CreateOrUpdateTessenConfig(t.ctx, tessen)
 		if err != nil {
 			// log the error and continue with the default config
 			logger.WithError(err).Error("unable to update tessen store")
 		}
 	}
 
-	if err := t.start(tessenConfig); err != nil {
+	if err := t.ctx.Err(); err != nil {
 		return err
 	}
 
 	go t.startWatcher()
+	go t.startRingUpdates()
+	go t.start(tessen)
 
 	return nil
 }
 
-// Stop the scheduler daemon.
+// Stop the Tessen daemon.
 func (t *Tessend) Stop() error {
+	if err := t.ring.Remove(t.ctx, t.backendID); err != nil {
+		logger.WithField("key", t.backendID).WithError(err).Error("error removing key from the ring")
+	} else {
+		logger.WithField("key", t.backendID).Debug("removed a key from the ring")
+	}
 	t.cancel()
 	close(t.errChan)
 	return nil
@@ -96,11 +104,12 @@ func (t *Tessend) Err() <-chan error {
 	return t.errChan
 }
 
-// Name returns the daemon name
+// Name returns the daemon name.
 func (t *Tessend) Name() string {
 	return "tessend"
 }
 
+// startWatcher watches the TessenConfig store for changes to the opt-out configuration.
 func (t *Tessend) startWatcher() {
 	watchChan := t.store.GetTessenConfigWatcher(t.ctx)
 	for {
@@ -118,6 +127,7 @@ func (t *Tessend) startWatcher() {
 	}
 }
 
+// handleWatchEvent issues an interrupt if a change to the stored TessenConfig has been detected.
 func (t *Tessend) handleWatchEvent(watchEvent store.WatchEventTessenConfig) {
 	tessen := watchEvent.TessenConfig
 
@@ -133,42 +143,80 @@ func (t *Tessend) handleWatchEvent(watchEvent store.WatchEventTessenConfig) {
 	t.interrupt <- tessen
 }
 
-// start starts a new scheduler for tessen
-func (t *Tessend) start(tessen *corev2.TessenConfig) error {
-	// Guard against updates while the daemon is shutting down
-	if err := t.ctx.Err(); err != nil {
-		return err
+// startRingUpdates starts a loop to periodically update the ring.
+func (t *Tessend) startRingUpdates() {
+	ticker := time.NewTicker(450 * time.Second)
+	defer ticker.Stop()
+	t.updateRing()
+	for {
+		select {
+		case <-t.ctx.Done():
+			return
+		case <-ticker.C:
+			t.updateRing()
+		}
 	}
-
-	go t.schedule(tessen)
-
-	return nil
 }
 
-func (t *Tessend) schedule(tessen *corev2.TessenConfig) {
-	timer := time.NewTimer(time.Duration(time.Second * time.Duration(t.interval)))
-	defer timer.Stop()
+// updateRing adds/updates the ring with a given key.
+func (t *Tessend) updateRing() {
+	if err := t.ring.Add(t.ctx, t.backendID, int64(900)); err != nil {
+		logger.WithField("key", t.backendID).WithError(err).Error("error adding key to the ring")
+	} else {
+		logger.WithField("key", t.backendID).Debug("added a key to the ring")
+	}
+}
+
+// watchRing watches the ring and handles ring events.
+func (t *Tessend) watchRing(ctx context.Context, tessen *corev2.TessenConfig) {
+	wc := t.ring.Watch(ctx, "tessen", 1, int(t.interval), "")
+	go t.handleEvents(tessen, wc)
+}
+
+// handleEvents logs different ring events and triggers tessen to run if applicable.
+func (t *Tessend) handleEvents(tessen *corev2.TessenConfig, ch <-chan ringv2.Event) {
+	for event := range ch {
+		switch event.Type {
+		case ringv2.EventError:
+			logger.WithError(event.Err).Error("ring event error")
+		case ringv2.EventAdd:
+			logger.WithField("values", event.Values).Info("ring event add")
+		case ringv2.EventRemove:
+			logger.WithField("values", event.Values).Info("ring event remove")
+		case ringv2.EventTrigger:
+			logger.WithField("values", event.Values).Info("ring event trigger")
+			// only trigger tessen if the next backend in the ring is this backend
+			if event.Values[0] == t.backendID {
+				if t.enabled(tessen) {
+					t.collectAndSend()
+				}
+			}
+		case ringv2.EventClosing:
+			logger.Info("ring event closing")
+		}
+	}
+}
+
+// start starts the tessen service.
+func (t *Tessend) start(tessen *corev2.TessenConfig) {
 	// Attempt to send data immediately if tessen is enabled
 	if t.enabled(tessen) {
 		t.collectAndSend()
 	}
 
+	ctx, cancel := context.WithCancel(t.ctx)
+	t.watchRing(ctx, tessen)
+
 	for {
 		select {
 		case <-t.ctx.Done():
+			cancel()
 			return
 		case config := <-t.interrupt:
-			defer func() {
-				go t.schedule(config)
-			}()
-			return
-		case <-timer.C:
+			cancel()
+			ctx, cancel = context.WithCancel(t.ctx)
+			t.watchRing(ctx, config)
 		}
-		// Attempt to send data if tessen is enabled
-		if t.enabled(tessen) {
-			t.collectAndSend()
-		}
-		timer.Reset(time.Duration(time.Second * time.Duration(t.interval)))
 	}
 }
 
@@ -252,7 +300,7 @@ func (t *Tessend) collect(now int64) *Data {
 	}
 
 	// collect server count and cluster id
-	servers, err := t.cluster.MemberList(t.ctx)
+	servers, err := t.client.Cluster.MemberList(t.ctx)
 	if err != nil {
 		logger.WithError(err).Error("unable to retrieve cluster information")
 	}

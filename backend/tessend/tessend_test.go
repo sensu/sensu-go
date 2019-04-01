@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
+	"github.com/sensu/sensu-go/backend/ringv2"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -25,14 +25,11 @@ func newTessendTest(t *testing.T) *Tessend {
 		t.Fatal(err)
 	}
 	defer client.Close()
-	cluster := clientv3.NewCluster(client)
-
-	store := etcdstore.NewStore(client, e.Name())
 
 	tessend, err := New(Config{
-		Store:   store,
-		Cluster: cluster,
-		Client:  client,
+		Store:    etcdstore.NewStore(client, e.Name()),
+		Client:   client,
+		RingPool: ringv2.NewPool(client),
 	})
 	require.NoError(t, err)
 	return tessend
