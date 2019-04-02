@@ -88,8 +88,8 @@ type SelectionPredicate struct {
 	Continue string
 	// Limit indicates the number of resources to retrieve
 	Limit int64
-	// Suffix provides an additional value to append to the key path
-	Suffix string
+	// Subcollection represents a sub-collection of the primary collection
+	Subcollection string
 }
 
 // A WatchEventCheckConfig contains the modified store object and the action that occured

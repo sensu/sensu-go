@@ -35,8 +35,8 @@ func List(list ListControllerFunc) http.HandlerFunc {
 		}
 
 		params := actions.QueryParams(mux.Vars(r))
-		if suffix := url.PathEscape(params["suffix"]); suffix != "" {
-			pred.Suffix = suffix
+		if subcollection := url.PathEscape(params["subcollection"]); subcollection != "" {
+			pred.Subcollection = subcollection
 		}
 
 		results, err := list(r.Context(), pred)

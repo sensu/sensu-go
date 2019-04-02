@@ -46,11 +46,11 @@ func TestList(t *testing.T) {
 			expectedStatus: http.StatusOK,
 		},
 		{
-			name:           "list with suffix but without pagination",
+			name:           "list with subcollection but without pagination",
 			path:           "/foo/bar",
 			results:        []corev2.Resource{corev2.FixtureCheck("check-cpu")},
 			expectedLen:    1,
-			expectedPred:   &store.SelectionPredicate{Suffix: "bar"},
+			expectedPred:   &store.SelectionPredicate{Subcollection: "bar"},
 			expectedStatus: http.StatusOK,
 		},
 		{
@@ -92,7 +92,7 @@ func TestList(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			router := mux.NewRouter()
-			router.PathPrefix("/foo/{suffix}").HandlerFunc(List(controller.List))
+			router.PathPrefix("/foo/{subcollection}").HandlerFunc(List(controller.List))
 			router.PathPrefix("/foo").HandlerFunc(List(controller.List))
 			middleware := middlewares.Pagination{}
 			router.Use(middleware.Then)

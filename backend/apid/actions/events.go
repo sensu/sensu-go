@@ -29,8 +29,8 @@ func (a EventController) List(ctx context.Context, pred *store.SelectionPredicat
 	var err error
 
 	// Fetch from store
-	if pred.Suffix != "" {
-		results, err = a.store.GetEventsByEntity(ctx, pred.Suffix, pred)
+	if pred.Subcollection != "" {
+		results, err = a.store.GetEventsByEntity(ctx, pred.Subcollection, pred)
 	} else {
 		results, err = a.store.GetEvents(ctx, pred)
 	}

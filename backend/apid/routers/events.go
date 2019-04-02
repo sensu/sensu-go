@@ -38,9 +38,9 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 	routes.Path("{entity}/{check}", r.destroy).Methods(http.MethodDelete)
 	routes.Path("{entity}/{check}", r.createOrReplace).Methods(http.MethodPut)
 
-	// Additionaly allow a suffix to be specified when listing events, which
-	// correspond to the entity name here
-	parent.HandleFunc(path.Join(routes.PathPrefix, "{suffix}"), listerHandler(r.controller.List)).Methods(http.MethodGet)
+	// Additionaly allow a subcollection to be specified when listing events,
+	// which correspond to the entity name here
+	parent.HandleFunc(path.Join(routes.PathPrefix, "{subcollection}"), listerHandler(r.controller.List)).Methods(http.MethodGet)
 }
 
 func (r *EventsRouter) find(req *http.Request) (interface{}, error) {
