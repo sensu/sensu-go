@@ -26,16 +26,6 @@ func (r *silencedImpl) Begin(p graphql.ResolveParams) (*time.Time, error) {
 	return convertTs(s.Begin), nil
 }
 
-// Creator implements response to request for 'creator' field.
-func (r *silencedImpl) Creator(p graphql.ResolveParams) (interface{}, error) {
-	src := p.Source.(*types.Silenced)
-	ctx := contextWithNamespace(p.Context, src.Namespace)
-
-	client := r.factory.NewWithContext(ctx)
-	res, err := client.FetchUser(src.Creator)
-	return handleFetchResult(res, err)
-}
-
 // Check implements response to request for 'check' field.
 func (r *silencedImpl) Check(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*types.Silenced)

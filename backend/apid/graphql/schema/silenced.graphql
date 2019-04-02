@@ -27,7 +27,7 @@ type Silenced implements Node, Namespaced, HasMetadata {
   expireOnResolve: Boolean!
 
   "Creator is the author of the silenced entry"
-  creator: User
+  creator: String!
 
   "Check is the name of the check event to be silenced."
   check: CheckConfig
