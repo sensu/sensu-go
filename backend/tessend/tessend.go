@@ -67,7 +67,7 @@ func New(c Config, opts ...Option) (*Tessend, error) {
 		backendID: c.BackendID,
 	}
 	t.ctx, t.cancel = context.WithCancel(context.Background())
-	t.interrupt = make(chan *corev2.TessenConfig)
+	t.interrupt = make(chan *corev2.TessenConfig, 1)
 	key := ringv2.Path("global", "backends")
 	t.ring = c.RingPool.Get(key)
 
@@ -94,6 +94,10 @@ func (t *Tessend) Start() error {
 	go t.startWatcher()
 	go t.startRingUpdates()
 	go t.start(tessen)
+	// Attempt to send data immediately if tessen is enabled
+	if t.enabled(tessen) {
+		t.collectAndSend(tessen)
+	}
 
 	return nil
 }
@@ -179,9 +183,10 @@ func (t *Tessend) updateRing() {
 }
 
 // watchRing watches the ring and handles ring events.
-func (t *Tessend) watchRing(ctx context.Context, tessen *corev2.TessenConfig) {
+func (t *Tessend) watchRing(ctx context.Context, tessen *corev2.TessenConfig) <-chan ringv2.Event {
 	wc := t.ring.Watch(ctx, "tessen", 1, int(t.interval), "")
 	go t.handleEvents(tessen, wc)
+	return wc
 }
 
 // handleEvents logs different ring events and triggers tessen to run if applicable.
@@ -199,7 +204,7 @@ func (t *Tessend) handleEvents(tessen *corev2.TessenConfig, ch <-chan ringv2.Eve
 			// only trigger tessen if the next backend in the ring is this backend
 			if event.Values[0] == t.backendID {
 				if t.enabled(tessen) {
-					t.collectAndSend()
+					t.collectAndSend(tessen)
 				}
 			}
 		case ringv2.EventClosing:
@@ -210,13 +215,8 @@ func (t *Tessend) handleEvents(tessen *corev2.TessenConfig, ch <-chan ringv2.Eve
 
 // start starts the tessen service.
 func (t *Tessend) start(tessen *corev2.TessenConfig) {
-	// Attempt to send data immediately if tessen is enabled
-	if t.enabled(tessen) {
-		t.collectAndSend()
-	}
-
 	ctx, cancel := context.WithCancel(t.ctx)
-	t.watchRing(ctx, tessen)
+	wc := t.watchRing(ctx, tessen)
 
 	for {
 		select {
@@ -226,7 +226,9 @@ func (t *Tessend) start(tessen *corev2.TessenConfig) {
 		case config := <-t.interrupt:
 			cancel()
 			ctx, cancel = context.WithCancel(t.ctx)
-			t.watchRing(ctx, config)
+			for range wc {
+			}
+			wc = t.watchRing(ctx, config)
 		}
 	}
 }
@@ -252,7 +254,7 @@ func (t *Tessend) enabled(tessen *corev2.TessenConfig) bool {
 
 // collectAndSend is a durable function to collect and send data to tessen.
 // Errors are logged and tessen continues to the best of its ability.
-func (t *Tessend) collectAndSend() {
+func (t *Tessend) collectAndSend(tessen *corev2.TessenConfig) {
 	// collect data
 	data := t.collect(time.Now().UTC().Unix())
 
@@ -293,6 +295,7 @@ func (t *Tessend) collectAndSend() {
 	if t.interval != uint32(interval) {
 		t.interval = uint32(interval)
 		logger.WithField("interval", t.interval).Debug("tessen interval updated")
+		t.interrupt <- tessen
 	}
 }
 
