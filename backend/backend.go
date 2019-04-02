@@ -221,8 +221,6 @@ func Initialize(config *Config) (*Backend, error) {
 	}
 	authenticator.AddProvider(basic)
 
-	cluster := clientv3.NewCluster(b.Client)
-
 	// Initialize apid
 	api, err := apid.New(apid.Config{
 		ListenAddress:       config.APIListenAddress,
@@ -231,7 +229,7 @@ func Initialize(config *Config) (*Backend, error) {
 		Store:               store,
 		QueueGetter:         queueGetter,
 		TLS:                 config.TLS,
-		Cluster:             cluster,
+		Cluster:             clientv3.NewCluster(b.Client),
 		EtcdClientTLSConfig: etcdClientTLSConfig,
 		Authenticator:       authenticator,
 	})
@@ -242,10 +240,10 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize tessend
 	tessen, err := tessend.New(tessend.Config{
-		Store:    store,
-		RingPool: ringPool,
-		Cluster:  cluster,
-		Client:   b.Client,
+		Store:     store,
+		RingPool:  ringPool,
+		Client:    b.Client,
+		BackendID: b.Etcd.BackendID(),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", tessen.Name(), err)

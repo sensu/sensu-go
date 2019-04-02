@@ -12,7 +12,7 @@ const (
 	UpperBound = 21600
 
 	// DefaultTessenInterval is the default interval at which tessen will phone home, in seconds
-	DefaultTessenInterval = 60
+	DefaultTessenInterval = 1800
 
 	// TessenPath is the store and api path for tessen
 	TessenPath = "/tessen"

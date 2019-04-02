@@ -358,11 +358,11 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, va
 		for {
 			select {
 			case <-ctx.Done():
-				notifyClosing(ch)
-				close(ch)
 				r.mu.Lock()
 				delete(r.watchers, watcher.watcherKey)
 				r.mu.Unlock()
+				notifyClosing(ch)
+				close(ch)
 				return
 			case response := <-itemsC:
 				if err := response.Err(); err != nil {
