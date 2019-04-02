@@ -180,11 +180,11 @@ func (t *Tessend) handleEvents(tessen *corev2.TessenConfig, ch <-chan ringv2.Eve
 		case ringv2.EventError:
 			logger.WithError(event.Err).Error("ring event error")
 		case ringv2.EventAdd:
-			logger.WithField("values", event.Values).Info("ring event add")
+			logger.WithField("values", event.Values).Debug("ring event add")
 		case ringv2.EventRemove:
-			logger.WithField("values", event.Values).Info("ring event remove")
+			logger.WithField("values", event.Values).Debug("ring event remove")
 		case ringv2.EventTrigger:
-			logger.WithField("values", event.Values).Info("ring event trigger")
+			logger.WithField("values", event.Values).Debug("ring event trigger")
 			// only trigger tessen if the next backend in the ring is this backend
 			if event.Values[0] == t.backendID {
 				if t.enabled(tessen) {
@@ -192,7 +192,7 @@ func (t *Tessend) handleEvents(tessen *corev2.TessenConfig, ch <-chan ringv2.Eve
 				}
 			}
 		case ringv2.EventClosing:
-			logger.Info("ring event closing")
+			logger.Debug("ring event closing")
 		}
 	}
 }
