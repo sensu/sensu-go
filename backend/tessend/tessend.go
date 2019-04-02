@@ -18,7 +18,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const tessenURL = "https://tessen.sensu.io/v2/data"
+const (
+	// tessenURL is the http endpoint for the tessen service.
+	tessenURL = "https://tessen.sensu.io/v2/data"
+
+	// ringUpdateInterval is the interval, in seconds, that TessenD will
+	// update the ring with any added/removed cluster members.
+	ringUpdateInterval = 450 * time.Second
+
+	// ringBackendKeepalive is the length of time, in seconds, that the
+	// ring considers an entry alive.
+	ringBackendKeepalive = 900
+)
 
 // Tessend is the tessen daemon.
 type Tessend struct {
@@ -145,7 +156,7 @@ func (t *Tessend) handleWatchEvent(watchEvent store.WatchEventTessenConfig) {
 
 // startRingUpdates starts a loop to periodically update the ring.
 func (t *Tessend) startRingUpdates() {
-	ticker := time.NewTicker(450 * time.Second)
+	ticker := time.NewTicker(ringUpdateInterval)
 	defer ticker.Stop()
 	t.updateRing()
 	for {
@@ -160,7 +171,7 @@ func (t *Tessend) startRingUpdates() {
 
 // updateRing adds/updates the ring with a given key.
 func (t *Tessend) updateRing() {
-	if err := t.ring.Add(t.ctx, t.backendID, int64(900)); err != nil {
+	if err := t.ring.Add(t.ctx, t.backendID, ringBackendKeepalive); err != nil {
 		logger.WithField("key", t.backendID).WithError(err).Error("error adding key to the ring")
 	} else {
 		logger.WithField("key", t.backendID).Debug("added a key to the ring")
