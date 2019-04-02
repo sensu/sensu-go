@@ -25,25 +25,6 @@ func (m *mockGenericController) List(ctx context.Context, pred *store.SelectionP
 	return args.Get(0).([]corev2.Resource), args.Error(1)
 }
 
-// func TestList(t *testing.T) {
-// controller := &mockGenericController{}
-
-// r, err := http.NewRequest("GET", "/foo", nil)
-// if err != nil {
-// 	t.Fatal(err)
-// }
-// w := httptest.NewRecorder()
-
-// router := mux.NewRouter()
-// router.PathPrefix("/foo/{suffix}").HandlerFunc(List(controller.List))
-// router.PathPrefix("/foo").HandlerFunc(List(controller.List))
-
-// fixtures := []corev2.Resource{types.FixtureCheckConfig("check1")}
-// controller.On("List", mock.Anything, mock.AnythingOfType("*store.SelectionPredicate")).Return(fixtures, nil)
-
-// router.ServeHTTP(w, r)
-// }
-
 func TestList(t *testing.T) {
 	tests := []struct {
 		name                   string

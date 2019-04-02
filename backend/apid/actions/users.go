@@ -21,12 +21,16 @@ func NewUserController(store store.Store) UserController {
 	}
 }
 
-// Query returns resources available to the viewer filter by given params.
+// List returns resources available to the viewer filter by given params.
 func (a UserController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
 	// Fetch from store
 	results, err := a.store.GetAllUsers(pred)
 	if err != nil {
 		return nil, NewError(InternalErr, err)
+	}
+
+	for i := range results {
+		results[i].Password = ""
 	}
 
 	resources := make([]corev2.Resource, len(results))

@@ -4,7 +4,6 @@ package etcd
 
 import (
 	"context"
-	"fmt"
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/store"
@@ -44,9 +43,6 @@ func TestCheckConfigStorage(t *testing.T) {
 		assert.NotEmpty(t, checks)
 		assert.Equal(t, 1, len(checks))
 		assert.Empty(t, pred.Continue)
-		for _, check := range checks {
-			fmt.Printf("TestCheckConfigStorage: %#v\n", check)
-		}
 
 		// Updating a check in a nonexistent org and env should not work
 		check.Namespace = "missing"

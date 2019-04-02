@@ -23,7 +23,7 @@ func NewEventController(store store.EventStore, bus messaging.MessageBus) EventC
 	}
 }
 
-// Query returns resources available to the viewer filter by given params.
+// List returns resources available to the viewer filter by given params.
 func (a EventController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
 	var results []*corev2.Event
 	var err error
