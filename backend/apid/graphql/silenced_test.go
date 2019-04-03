@@ -44,7 +44,6 @@ func TestSilencedTypeBeginField(t *testing.T) {
 	silenced := types.FixtureSilenced("unix:http-check")
 	impl := &silencedImpl{}
 
-	// with expiry unset
 	res, err := impl.Begin(graphql.ResolveParams{Source: silenced})
 	require.NoError(t, err)
 	assert.Nil(t, res)
