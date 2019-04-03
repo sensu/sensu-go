@@ -26,9 +26,7 @@ func TestSilencedTypeCheckField(t *testing.T) {
 
 func TestSilencedTypeExpiresField(t *testing.T) {
 	silenced := types.FixtureSilenced("unix:http-check")
-
-	_, factory := client.NewClientFactory()
-	impl := &silencedImpl{factory: factory}
+	impl := &silencedImpl{}
 
 	// with expiry unset
 	res, err := impl.Expires(graphql.ResolveParams{Source: silenced})
@@ -40,4 +38,14 @@ func TestSilencedTypeExpiresField(t *testing.T) {
 	res, err = impl.Expires(graphql.ResolveParams{Source: silenced})
 	require.NoError(t, err)
 	assert.NotNil(t, res)
+}
+
+func TestSilencedTypeBeginField(t *testing.T) {
+	silenced := types.FixtureSilenced("unix:http-check")
+	impl := &silencedImpl{}
+
+	// with expiry unset
+	res, err := impl.Begin(graphql.ResolveParams{Source: silenced})
+	require.NoError(t, err)
+	assert.Nil(t, res)
 }
