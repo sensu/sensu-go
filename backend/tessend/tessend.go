@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -319,7 +320,7 @@ func (t *Tessend) collect(now int64) *Data {
 		logger.WithError(err).Error("unable to retrieve cluster information")
 	}
 	if servers != nil {
-		clusterID = strconv.FormatUint(servers.Header.ClusterId, 10)
+		clusterID = fmt.Sprintf("%x", servers.Header.ClusterId)
 		serverCount = float64(len(servers.Members))
 	}
 
@@ -340,12 +341,12 @@ func (t *Tessend) collect(now int64) *Data {
 		Metrics: corev2.Metrics{
 			Points: []*corev2.MetricPoint{
 				&corev2.MetricPoint{
-					Name:      "client_count",
+					Name:      "entity_count",
 					Value:     clientCount,
 					Timestamp: now,
 				},
 				&corev2.MetricPoint{
-					Name:      "server_count",
+					Name:      "backend_count",
 					Value:     serverCount,
 					Timestamp: now,
 				},
