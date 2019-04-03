@@ -4,12 +4,14 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/google/uuid"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
@@ -50,10 +52,9 @@ type Option func(*Tessend) error
 
 // Config configures Tessend.
 type Config struct {
-	Store     store.Store
-	RingPool  *ringv2.Pool
-	Client    *clientv3.Client
-	BackendID string
+	Store    store.Store
+	RingPool *ringv2.Pool
+	Client   *clientv3.Client
 }
 
 // New creates a new TessenD.
@@ -64,7 +65,7 @@ func New(c Config, opts ...Option) (*Tessend, error) {
 		client:    c.Client,
 		errChan:   make(chan error, 1),
 		url:       tessenURL,
-		backendID: c.BackendID,
+		backendID: uuid.New().String(),
 	}
 	t.ctx, t.cancel = context.WithCancel(context.Background())
 	t.interrupt = make(chan *corev2.TessenConfig, 1)
@@ -302,7 +303,7 @@ func (t *Tessend) collectAndSend(tessen *corev2.TessenConfig) {
 // collect data and populate the data payload
 func (t *Tessend) collect(now int64) *Data {
 	var clusterID string
-	var clientCount, serverCount float64
+	var entityCount, backendCount float64
 
 	// collect client count
 	entities, _, err := t.store.GetEntities(t.ctx, 0, "")
@@ -310,7 +311,7 @@ func (t *Tessend) collect(now int64) *Data {
 		logger.WithError(err).Error("unable to retrieve client count")
 	}
 	if entities != nil {
-		clientCount = float64(len(entities))
+		entityCount = float64(len(entities))
 	}
 
 	// collect server count and cluster id
@@ -319,8 +320,8 @@ func (t *Tessend) collect(now int64) *Data {
 		logger.WithError(err).Error("unable to retrieve cluster information")
 	}
 	if servers != nil {
-		clusterID = strconv.FormatUint(servers.Header.ClusterId, 10)
-		serverCount = float64(len(servers.Members))
+		clusterID = fmt.Sprintf("%x", servers.Header.ClusterId)
+		backendCount = float64(len(servers.Members))
 	}
 
 	// collect license information
@@ -340,13 +341,13 @@ func (t *Tessend) collect(now int64) *Data {
 		Metrics: corev2.Metrics{
 			Points: []*corev2.MetricPoint{
 				&corev2.MetricPoint{
-					Name:      "client_count",
-					Value:     clientCount,
+					Name:      "entity_count",
+					Value:     entityCount,
 					Timestamp: now,
 				},
 				&corev2.MetricPoint{
-					Name:      "server_count",
-					Value:     serverCount,
+					Name:      "backend_count",
+					Value:     backendCount,
 					Timestamp: now,
 				},
 			},

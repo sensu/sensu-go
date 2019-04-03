@@ -240,10 +240,9 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize tessend
 	tessen, err := tessend.New(tessend.Config{
-		Store:     store,
-		RingPool:  ringPool,
-		Client:    b.Client,
-		BackendID: b.Etcd.BackendID(),
+		Store:    store,
+		RingPool: ringPool,
+		Client:   b.Client,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", tessen.Name(), err)
