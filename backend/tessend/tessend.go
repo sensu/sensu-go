@@ -303,7 +303,7 @@ func (t *Tessend) collectAndSend(tessen *corev2.TessenConfig) {
 // collect data and populate the data payload
 func (t *Tessend) collect(now int64) *Data {
 	var clusterID string
-	var clientCount, serverCount float64
+	var entityCount, backendCount float64
 
 	// collect client count
 	entities, _, err := t.store.GetEntities(t.ctx, 0, "")
@@ -311,7 +311,7 @@ func (t *Tessend) collect(now int64) *Data {
 		logger.WithError(err).Error("unable to retrieve client count")
 	}
 	if entities != nil {
-		clientCount = float64(len(entities))
+		entityCount = float64(len(entities))
 	}
 
 	// collect server count and cluster id
@@ -321,7 +321,7 @@ func (t *Tessend) collect(now int64) *Data {
 	}
 	if servers != nil {
 		clusterID = fmt.Sprintf("%x", servers.Header.ClusterId)
-		serverCount = float64(len(servers.Members))
+		backendCount = float64(len(servers.Members))
 	}
 
 	// collect license information
@@ -342,12 +342,12 @@ func (t *Tessend) collect(now int64) *Data {
 			Points: []*corev2.MetricPoint{
 				&corev2.MetricPoint{
 					Name:      "entity_count",
-					Value:     clientCount,
+					Value:     entityCount,
 					Timestamp: now,
 				},
 				&corev2.MetricPoint{
 					Name:      "backend_count",
-					Value:     serverCount,
+					Value:     backendCount,
 					Timestamp: now,
 				},
 			},
