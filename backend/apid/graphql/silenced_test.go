@@ -10,21 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSilencedTypeCreatorField(t *testing.T) {
-	user := types.FixtureUser("dean learner")
-	silenced := types.FixtureSilenced("unix:*")
-	silenced.Creator = user.Username
-
-	client, factory := client.NewClientFactory()
-	impl := &silencedImpl{factory: factory}
-
-	// Success
-	client.On("FetchUser", user.Username).Return(user, nil).Once()
-	res, err := impl.Creator(graphql.ResolveParams{Source: silenced})
-	require.NoError(t, err)
-	assert.NotEmpty(t, res)
-}
-
 func TestSilencedTypeCheckField(t *testing.T) {
 	check := types.FixtureCheckConfig("http-check")
 	silenced := types.FixtureSilenced("unix:http-check")
