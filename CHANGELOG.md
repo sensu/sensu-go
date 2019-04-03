@@ -5,7 +5,20 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [5.5.0] - 2019-04-03
+
+### Added
+- Added the TessenD daemon.
+- Added an etcd watcher for tessen configuration.
+- Added ring support for TessenD so that the service is invoked in a
+round-robin fashion within a cluster.
+- Added `tessen opt-in` command to `sensuctl`.
+- Added `tessen opt-out` command to `sensuctl`.
+- Added `tessen info` command to `sensuctl`.
+- Added more verbose logging to indicate when a proxy request matches an entity according to its entity attributes.
+
+### Removed
+- Removed the unused etcd watcher for hook configurations.
 
 ### Fixed
 - [Web] Ensure user chip is never rendered when creator is not present.
