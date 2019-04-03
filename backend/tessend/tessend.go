@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/google/uuid"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
@@ -51,10 +52,9 @@ type Option func(*Tessend) error
 
 // Config configures Tessend.
 type Config struct {
-	Store     store.Store
-	RingPool  *ringv2.Pool
-	Client    *clientv3.Client
-	BackendID string
+	Store    store.Store
+	RingPool *ringv2.Pool
+	Client   *clientv3.Client
 }
 
 // New creates a new TessenD.
@@ -65,7 +65,7 @@ func New(c Config, opts ...Option) (*Tessend, error) {
 		client:    c.Client,
 		errChan:   make(chan error, 1),
 		url:       tessenURL,
-		backendID: c.BackendID,
+		backendID: uuid.New().String(),
 	}
 	t.ctx, t.cancel = context.WithCancel(context.Background())
 	t.interrupt = make(chan *corev2.TessenConfig, 1)
