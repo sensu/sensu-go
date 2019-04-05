@@ -9,6 +9,7 @@ import (
 
 	v3 "github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -17,6 +18,10 @@ const (
 )
 
 func getNamespacePath(name string) string {
+	return path.Join(EtcdRoot, namespacesPathPrefix, name)
+}
+
+func getNamespacesPath(ctx context.Context, name string) string {
 	return path.Join(EtcdRoot, namespacesPathPrefix, name)
 }
 
@@ -115,31 +120,10 @@ func (s *Store) GetNamespace(ctx context.Context, name string) (*types.Namespace
 }
 
 // ListNamespaces returns all namespaces
-func (s *Store) ListNamespaces(ctx context.Context, pageSize int64, continueToken string) (namespaces []*types.Namespace, newContinueToken string, err error) {
-	opts := []v3.OpOption{
-		v3.WithLimit(pageSize),
-	}
-
-	keyPrefix := getNamespacePath("")
-	rangeEnd := v3.GetPrefixRangeEnd(keyPrefix)
-	opts = append(opts, v3.WithRange(rangeEnd))
-
-	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueToken), opts...)
-	if err != nil {
-		return []*types.Namespace{}, "", err
-	}
-
-	namespaces, err = unmarshalNamespaces(resp.Kvs)
-	if err != nil {
-		return nil, "", err
-	}
-
-	if pageSize != 0 && resp.Count > pageSize {
-		lastNamespace := namespaces[len(namespaces)-1]
-		newContinueToken = lastNamespace.Name + "\x00"
-	}
-
-	return namespaces, newContinueToken, nil
+func (s *Store) ListNamespaces(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Namespace, error) {
+	namespaces := []*types.Namespace{}
+	err := List(ctx, s.client, getNamespacesPath, &namespaces, pred)
+	return namespaces, err
 }
 
 // UpdateNamespace updates a namespace with the given object

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
@@ -39,45 +38,10 @@ func (s *Store) DeleteCheckConfigByName(ctx context.Context, name string) error 
 }
 
 // GetCheckConfigs returns check configurations for an (optional) namespace.
-func (s *Store) GetCheckConfigs(ctx context.Context, pageSize int64, continueToken string) (checks []*types.CheckConfig, nextContinueToken string, err error) {
-	opts := []clientv3.OpOption{
-		clientv3.WithLimit(pageSize),
-	}
-
-	keyPrefix := getCheckConfigsPath(ctx, "")
-	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
-	opts = append(opts, clientv3.WithRange(rangeEnd))
-
-	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueToken), opts...)
-	if err != nil {
-		return nil, "", err
-	}
-	if len(resp.Kvs) == 0 {
-		return []*types.CheckConfig{}, "", nil
-	}
-
-	for _, kv := range resp.Kvs {
-		check := &types.CheckConfig{}
-		err = json.Unmarshal(kv.Value, check)
-		if err != nil {
-			return nil, "", err
-		}
-		if check.Labels == nil {
-			check.Labels = make(map[string]string)
-		}
-		if check.Annotations == nil {
-			check.Annotations = make(map[string]string)
-		}
-
-		checks = append(checks, check)
-	}
-
-	if pageSize != 0 && resp.Count > pageSize {
-		lastCheck := checks[len(checks)-1]
-		nextContinueToken = computeContinueToken(ctx, lastCheck)
-	}
-
-	return checks, nextContinueToken, nil
+func (s *Store) GetCheckConfigs(ctx context.Context, pred *store.SelectionPredicate) ([]*types.CheckConfig, error) {
+	checks := []*types.CheckConfig{}
+	err := List(ctx, s.client, getCheckConfigsPath, &checks, pred)
+	return checks, err
 }
 
 // GetCheckConfigByName gets a CheckConfig by name.

@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sensu/sensu-go/backend/store"
+
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -53,24 +55,24 @@ func newIntervalScheduler(t *testing.T, ctx context.Context, executor string) *T
 	hook := request.Hooks[0]
 	scheduler.check = request.Config
 	scheduler.check.Interval = 1
-	store := &mockstore.MockStore{}
-	store.On("GetAssets", mock.Anything, int64(0), "").Return([]*types.Asset{&asset}, "", nil)
-	store.On("GetHookConfigs", mock.Anything, int64(0), "").Return([]*types.HookConfig{&hook}, "", nil)
-	store.On("GetCheckConfigByName", mock.Anything, mock.Anything).Return(scheduler.check, nil)
+	s := &mockstore.MockStore{}
+	s.On("GetAssets", mock.Anything, &store.SelectionPredicate{}).Return([]*types.Asset{&asset}, nil)
+	s.On("GetHookConfigs", mock.Anything, &store.SelectionPredicate{}).Return([]*types.HookConfig{&hook}, nil)
+	s.On("GetCheckConfigByName", mock.Anything, mock.Anything).Return(scheduler.check, nil)
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	scheduler.msgBus = bus
 
-	scheduler.scheduler = NewIntervalScheduler(ctx, store, scheduler.msgBus, scheduler.check, &EntityCache{})
+	scheduler.scheduler = NewIntervalScheduler(ctx, s, scheduler.msgBus, scheduler.check, &EntityCache{})
 
 	assert.NoError(scheduler.msgBus.Start())
 
 	switch executor {
 	case "adhoc":
-		scheduler.exec = NewAdhocRequestExecutor(ctx, store, &queue.Memory{}, scheduler.msgBus, &EntityCache{})
+		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, &EntityCache{})
 	default:
-		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", store, &EntityCache{})
+		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, &EntityCache{})
 	}
 
 	return scheduler
@@ -90,24 +92,24 @@ func newCronScheduler(t *testing.T, ctx context.Context, executor string) *TestC
 	scheduler.check = request.Config
 	scheduler.check.Interval = 1
 	scheduler.check.Cron = "* * * * *"
-	store := &mockstore.MockStore{}
-	store.On("GetAssets", mock.Anything, int64(0), "").Return([]*types.Asset{&asset}, "", nil)
-	store.On("GetHookConfigs", mock.Anything, int64(0), "").Return([]*types.HookConfig{&hook}, "", nil)
-	store.On("GetCheckConfigByName", mock.Anything, mock.Anything).Return(scheduler.check, nil)
+	s := &mockstore.MockStore{}
+	s.On("GetAssets", mock.Anything, &store.SelectionPredicate{}).Return([]*types.Asset{&asset}, nil)
+	s.On("GetHookConfigs", mock.Anything, &store.SelectionPredicate{}).Return([]*types.HookConfig{&hook}, nil)
+	s.On("GetCheckConfigByName", mock.Anything, mock.Anything).Return(scheduler.check, nil)
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	scheduler.msgBus = bus
 
-	scheduler.scheduler = NewCronScheduler(ctx, store, scheduler.msgBus, scheduler.check, &EntityCache{})
+	scheduler.scheduler = NewCronScheduler(ctx, s, scheduler.msgBus, scheduler.check, &EntityCache{})
 
 	assert.NoError(scheduler.msgBus.Start())
 
 	switch executor {
 	case "adhoc":
-		scheduler.exec = NewAdhocRequestExecutor(ctx, store, &queue.Memory{}, scheduler.msgBus, &EntityCache{})
+		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, &EntityCache{})
 	default:
-		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", store, &EntityCache{})
+		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, &EntityCache{})
 	}
 
 	return scheduler

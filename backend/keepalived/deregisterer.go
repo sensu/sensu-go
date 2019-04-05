@@ -33,7 +33,7 @@ func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
 		return fmt.Errorf("error deleting entity in store: %s", err)
 	}
 
-	events, _, err := adapterPtr.Store.GetEventsByEntity(ctx, entity.Name, 0, "")
+	events, err := adapterPtr.Store.GetEventsByEntity(ctx, entity.Name, &store.SelectionPredicate{})
 	if err != nil {
 		return fmt.Errorf("error fetching events for entity: %s", err)
 	}

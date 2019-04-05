@@ -15,8 +15,8 @@ type errorBody struct {
 	Code    uint32 `json:"code"`
 }
 
-// respondWith given writer and resource, marshal to JSON and write response.
-func respondWith(w http.ResponseWriter, resources interface{}) {
+// RespondWith given writer and resource, marshal to JSON and write response.
+func RespondWith(w http.ResponseWriter, resources interface{}) {
 	// Set content-type to JSON
 	w.Header().Set("Content-Type", "application/json")
 
@@ -29,19 +29,19 @@ func respondWith(w http.ResponseWriter, resources interface{}) {
 	// Marshal
 	bytes, err := json.Marshal(resources)
 	if err != nil {
-		writeError(w, err)
+		WriteError(w, err)
 		return
 	}
 
 	// Write response
 	if _, err := w.Write(bytes); err != nil {
 		logger.WithError(err).Error("failed to write response")
-		writeError(w, err)
+		WriteError(w, err)
 	}
 }
 
-// writeError writes error response in JSON format.
-func writeError(w http.ResponseWriter, err error) {
+// WriteError writes error response in JSON format.
+func WriteError(w http.ResponseWriter, err error) {
 	const fallback = `{"message": "failed to marshal error message"}`
 
 	errBody := errorBody{}
@@ -116,29 +116,32 @@ func HTTPStatusFromCode(code actions.ErrCode) int {
 //
 func actionHandler(action actionHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		records, err := action(r)
+		resources, err := action(r)
 		if err != nil {
-			writeError(w, err)
+			WriteError(w, err)
 			return
 		}
 
-		respondWith(w, records)
+		RespondWith(w, resources)
 	}
 }
 
+// listHandler is still used by silenced entries.
+// TODO(palourde): Add pagination to silenced entries
 func listHandler(fn listHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		records, err := fn(w, r)
 		if err != nil {
-			writeError(w, err)
+			WriteError(w, err)
 			return
 		}
 
-		respondWith(w, records)
+		RespondWith(w, records)
 	}
 }
 
 type actionHandlerFunc func(r *http.Request) (interface{}, error)
+
 type listHandlerFunc func(w http.ResponseWriter, req *http.Request) (interface{}, error)
 
 //
@@ -164,13 +167,13 @@ func (r *ResourceRoute) Get(fn actionHandlerFunc) *mux.Route {
 }
 
 // List resources
-func (r *ResourceRoute) List(fn listHandlerFunc) *mux.Route {
-	return r.Router.HandleFunc(r.PathPrefix, listHandler(fn)).Methods(http.MethodGet)
+func (r *ResourceRoute) List(fn ListControllerFunc) *mux.Route {
+	return r.Router.HandleFunc(r.PathPrefix, listerHandler(fn)).Methods(http.MethodGet)
 }
 
 // ListAllNamespaces return all resources across all namespaces
-func (r *ResourceRoute) ListAllNamespaces(fn listHandlerFunc, path string) *mux.Route {
-	return r.Router.HandleFunc(path, listHandler(fn)).Methods(http.MethodGet)
+func (r *ResourceRoute) ListAllNamespaces(fn ListControllerFunc, path string) *mux.Route {
+	return r.Router.HandleFunc(path, listerHandler(fn)).Methods(http.MethodGet)
 }
 
 // Post creates

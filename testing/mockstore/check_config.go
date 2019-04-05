@@ -14,9 +14,9 @@ func (s *MockStore) DeleteCheckConfigByName(ctx context.Context, name string) er
 }
 
 // GetCheckConfigs ...
-func (s *MockStore) GetCheckConfigs(ctx context.Context, pageSize int64, continueToken string) ([]*types.CheckConfig, string, error) {
-	args := s.Called(ctx, pageSize, continueToken)
-	return args.Get(0).([]*types.CheckConfig), args.String(1), args.Error(2)
+func (s *MockStore) GetCheckConfigs(ctx context.Context, pred *store.SelectionPredicate) ([]*types.CheckConfig, error) {
+	args := s.Called(ctx, pred)
+	return args.Get(0).([]*types.CheckConfig), args.Error(1)
 }
 
 // GetCheckConfigByName ...

@@ -3,6 +3,7 @@ package mockstore
 import (
 	"context"
 
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -13,9 +14,9 @@ func (s *MockStore) DeleteEventFilterByName(ctx context.Context, name string) er
 }
 
 // GetEventFilters ...
-func (s *MockStore) GetEventFilters(ctx context.Context, pageSize int64, continueToken string) ([]*types.EventFilter, string, error) {
-	args := s.Called(ctx, pageSize, continueToken)
-	return args.Get(0).([]*types.EventFilter), args.String(1), args.Error(2)
+func (s *MockStore) GetEventFilters(ctx context.Context, pred *store.SelectionPredicate) ([]*types.EventFilter, error) {
+	args := s.Called(ctx, pred)
+	return args.Get(0).([]*types.EventFilter), args.Error(1)
 }
 
 // GetEventFilterByName ...

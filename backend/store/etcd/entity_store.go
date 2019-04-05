@@ -5,12 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path"
 
 	"github.com/coreos/etcd/clientv3"
-	"github.com/sensu/sensu-go/backend/store"
-
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/store"
 )
 
 const (
@@ -76,45 +74,10 @@ func (s *Store) GetEntityByName(ctx context.Context, name string) (*corev2.Entit
 }
 
 // GetEntities returns the entities for the namespace in the supplied context.
-func (s *Store) GetEntities(ctx context.Context, pageSize int64, continueToken string) (entities []*corev2.Entity, nextContinueToken string, err error) {
-	opts := []clientv3.OpOption{
-		clientv3.WithLimit(pageSize),
-	}
-
-	keyPrefix := getEntitiesPath(ctx, "")
-	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
-	opts = append(opts, clientv3.WithRange(rangeEnd))
-
-	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueToken), opts...)
-	if err != nil {
-		return nil, "", err
-	}
-	if len(resp.Kvs) == 0 {
-		return []*corev2.Entity{}, "", nil
-	}
-
-	for _, kv := range resp.Kvs {
-		entity := &corev2.Entity{}
-		err = json.Unmarshal(kv.Value, entity)
-		if err != nil {
-			return nil, "", err
-		}
-		if entity.Labels == nil {
-			entity.Labels = make(map[string]string)
-		}
-		if entity.Annotations == nil {
-			entity.Annotations = make(map[string]string)
-		}
-
-		entities = append(entities, entity)
-	}
-
-	if pageSize != 0 && resp.Count > pageSize {
-		lastEntity := entities[len(entities)-1]
-		nextContinueToken = computeContinueToken(ctx, lastEntity)
-	}
-
-	return entities, nextContinueToken, nil
+func (s *Store) GetEntities(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Entity, error) {
+	entities := []*corev2.Entity{}
+	err := List(ctx, s.client, getEntitiesPath, &entities, pred)
+	return entities, err
 }
 
 // UpdateEntity updates an Entity.

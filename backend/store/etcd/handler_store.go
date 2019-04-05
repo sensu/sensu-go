@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
@@ -36,39 +35,10 @@ func (s *Store) DeleteHandlerByName(ctx context.Context, name string) error {
 }
 
 // GetHandlers gets the list of handlers for a namespace.
-func (s *Store) GetHandlers(ctx context.Context, pageSize int64, continueToken string) (handlers []*types.Handler, newContinueToken string, err error) {
-	opts := []clientv3.OpOption{
-		clientv3.WithLimit(pageSize),
-	}
-
-	keyPrefix := getHandlersPath(ctx, "")
-	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
-	opts = append(opts, clientv3.WithRange(rangeEnd))
-
-	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueToken), opts...)
-	if err != nil {
-		return nil, "", err
-	}
-	if len(resp.Kvs) == 0 {
-		return []*types.Handler{}, "", nil
-	}
-
-	for _, kv := range resp.Kvs {
-		handler := &types.Handler{}
-		err = json.Unmarshal(kv.Value, handler)
-		if err != nil {
-			return nil, "", err
-		}
-
-		handlers = append(handlers, handler)
-	}
-
-	if pageSize != 0 && resp.Count > pageSize {
-		lastHandler := handlers[len(handlers)-1]
-		newContinueToken = computeContinueToken(ctx, lastHandler)
-	}
-
-	return handlers, newContinueToken, nil
+func (s *Store) GetHandlers(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Handler, error) {
+	handlers := []*types.Handler{}
+	err := List(ctx, s.client, getHandlersPath, &handlers, pred)
+	return handlers, err
 }
 
 // GetHandlerByName gets a Handler by name.

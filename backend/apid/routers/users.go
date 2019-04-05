@@ -14,7 +14,7 @@ import (
 
 // UsersController represents the controller needs of the UsersRouter.
 type UserController interface {
-	Query(ctx context.Context) ([]*types.User, string, error)
+	List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error)
 	Find(ctx context.Context, name string) (*types.User, error)
 	Create(ctx context.Context, newUser types.User) error
 	CreateOrReplace(ctx context.Context, newOrg types.User) error
@@ -43,7 +43,7 @@ func (r *UsersRouter) Mount(parent *mux.Router) {
 		Router:     parent,
 		PathPrefix: "/{resource:users}",
 	}
-	routes.List(r.list)
+	routes.List(r.controller.List)
 	routes.Get(r.find)
 	routes.Post(r.create)
 	routes.Del(r.destroy)
@@ -57,21 +57,6 @@ func (r *UsersRouter) Mount(parent *mux.Router) {
 
 	// TODO: Remove?
 	routes.Path("{id}/{subresource:password}", r.updatePassword).Methods(http.MethodPut)
-}
-
-func (r *UsersRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
-	records, continueToken, err := r.controller.Query(req.Context())
-
-	// Obfustace users password
-	for i := range records {
-		records[i].Password = ""
-	}
-
-	if continueToken != "" {
-		w.Header().Set(corev2.PaginationContinueHeader, continueToken)
-	}
-
-	return records, err
 }
 
 func (r *UsersRouter) find(req *http.Request) (interface{}, error) {

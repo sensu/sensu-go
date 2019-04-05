@@ -27,11 +27,11 @@ func TestCheckWatcherSmoke(t *testing.T) {
 
 	checkA := types.FixtureCheckConfig("a")
 	checkB := types.FixtureCheckConfig("b")
-	st.On("GetCheckConfigs", mock.Anything, int64(0), "").Return([]*types.CheckConfig{checkA, checkB}, "", nil)
+	st.On("GetCheckConfigs", mock.Anything, &store.SelectionPredicate{}).Return([]*types.CheckConfig{checkA, checkB}, nil)
 	st.On("GetCheckConfigByName", mock.Anything, "a").Return(checkA, nil)
 	st.On("GetCheckConfigByName", mock.Anything, "b").Return(checkB, nil)
-	st.On("GetAssets", mock.Anything, int64(0), "").Return([]*types.Asset{}, "", nil)
-	st.On("GetHookConfigs", mock.Anything, int64(0), "").Return([]*types.HookConfig{}, "", nil)
+	st.On("GetAssets", mock.Anything, &store.SelectionPredicate{}).Return([]*types.Asset{}, nil)
+	st.On("GetHookConfigs", mock.Anything, &store.SelectionPredicate{}).Return([]*types.HookConfig{}, nil)
 
 	watcherChan := make(chan store.WatchEventCheckConfig)
 	st.On("GetCheckConfigWatcher", mock.Anything).Return((<-chan store.WatchEventCheckConfig)(watcherChan), nil)

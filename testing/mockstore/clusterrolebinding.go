@@ -3,6 +3,7 @@ package mockstore
 import (
 	"context"
 
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -36,9 +37,9 @@ func (s *MockStore) GetClusterRoleBinding(ctx context.Context, name string) (*ty
 }
 
 // ListClusterRoleBindings ...
-func (s *MockStore) ListClusterRoleBindings(ctx context.Context, pageSize int64, continueToken string) ([]*types.ClusterRoleBinding, string, error) {
-	args := s.Called(ctx, pageSize, continueToken)
-	return args.Get(0).([]*types.ClusterRoleBinding), args.String(1), args.Error(2)
+func (s *MockStore) ListClusterRoleBindings(ctx context.Context, pred *store.SelectionPredicate) ([]*types.ClusterRoleBinding, error) {
+	args := s.Called(ctx, pred)
+	return args.Get(0).([]*types.ClusterRoleBinding), args.Error(1)
 }
 
 // UpdateClusterRoleBinding ...

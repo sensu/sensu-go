@@ -289,14 +289,14 @@ func TestSilencedCreate(t *testing.T) {
 		expectedErr     bool
 		expectedErrCode ErrCode
 		expectedCreator string
-		expectedId      string
+		expectedID      string
 	}{
 		{
 			name:        "Created",
 			ctx:         defaultCtx,
 			argument:    types.FixtureSilenced("*:silence1"),
 			expectedErr: false,
-			expectedId:  "*:silence1",
+			expectedID:  "*:silence1",
 		},
 		{
 			name:            "Already Exists",
@@ -305,7 +305,7 @@ func TestSilencedCreate(t *testing.T) {
 			fetchResult:     types.FixtureSilenced("*:silence1"),
 			expectedErr:     true,
 			expectedErrCode: AlreadyExistsErr,
-			expectedId:      "*:silence1",
+			expectedID:      "*:silence1",
 		},
 		{
 			name:            "Store Err on Create",
@@ -314,7 +314,7 @@ func TestSilencedCreate(t *testing.T) {
 			createErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-			expectedId:      "*:silence1",
+			expectedID:      "*:silence1",
 		},
 		{
 			name:            "Store Err on Fetch",
@@ -323,7 +323,7 @@ func TestSilencedCreate(t *testing.T) {
 			fetchErr:        errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-			expectedId:      "*:silence1",
+			expectedID:      "*:silence1",
 		},
 		{
 			name:            "Validation Error",
@@ -331,7 +331,7 @@ func TestSilencedCreate(t *testing.T) {
 			argument:        badSilence,
 			expectedErr:     true,
 			expectedErrCode: InvalidArgument,
-			expectedId:      "*:silence1",
+			expectedID:      "*:silence1",
 		},
 		{
 			name:            "Creator",
@@ -339,7 +339,7 @@ func TestSilencedCreate(t *testing.T) {
 			argument:        types.FixtureSilenced("*:silence1"),
 			expectedErr:     false,
 			expectedCreator: "foo",
-			expectedId:      "*:silence1",
+			expectedID:      "*:silence1",
 		},
 		{
 			name:            "Other Id",
@@ -347,7 +347,7 @@ func TestSilencedCreate(t *testing.T) {
 			argument:        types.FixtureSilenced("unix:*"),
 			expectedErr:     false,
 			expectedCreator: "foo",
-			expectedId:      "unix:*",
+			expectedID:      "unix:*",
 		},
 	}
 
@@ -372,7 +372,7 @@ func TestSilencedCreate(t *testing.T) {
 						_ = json.Unmarshal(bytes, &entry)
 
 						assert.Equal(tc.expectedCreator, entry.Creator)
-						assert.Equal(tc.expectedId, entry.Name)
+						assert.Equal(tc.expectedID, entry.Name)
 					}
 				})
 

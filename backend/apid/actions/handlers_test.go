@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
@@ -18,7 +19,7 @@ func TestNewHandlerController(t *testing.T) {
 	store := &mockstore.MockStore{}
 	ctl := NewHandlerController(store)
 	assert.NotNil(ctl)
-	assert.Equal(store, ctl.Store)
+	assert.Equal(store, ctl.store)
 }
 
 func TestHandlerCreate(t *testing.T) {
@@ -54,7 +55,7 @@ func TestHandlerCreate(t *testing.T) {
 			expectedErrCode: AlreadyExistsErr,
 		},
 		{
-			name:            "Store Err on Fetch",
+			name:            "store Err on Fetch",
 			ctx:             defaultCtx,
 			argument:        types.FixtureHandler("foo"),
 			fetchErr:        errors.New("nein"),
@@ -315,23 +316,21 @@ func TestHandlerFind(t *testing.T) {
 	}
 }
 
-func TestHandlerQuery(t *testing.T) {
+func TestHandlerList(t *testing.T) {
 	readCtx := context.Background()
 
-	tests := []struct {
-		name                  string
-		ctx                   context.Context
-		handlers              []*types.Handler
-		storeErr              error
-		continueToken         string
-		expectedLen           int
-		expectedContinueToken string
-		expectedErr           error
+	testCases := []struct {
+		name        string
+		ctx         context.Context
+		records     []*types.Handler
+		storeErr    error
+		expectedLen int
+		expectedErr error
 	}{
 		{
 			name:        "no params, no handlers",
 			ctx:         readCtx,
-			handlers:    nil,
+			records:     nil,
 			expectedLen: 0,
 			storeErr:    nil,
 			expectedErr: nil,
@@ -339,7 +338,7 @@ func TestHandlerQuery(t *testing.T) {
 		{
 			name: "no params with handlers",
 			ctx:  readCtx,
-			handlers: []*types.Handler{
+			records: []*types.Handler{
 				types.FixtureHandler("foo"),
 				types.FixtureHandler("bar"),
 			},
@@ -350,7 +349,7 @@ func TestHandlerQuery(t *testing.T) {
 		{
 			name: "handler name param",
 			ctx:  readCtx,
-			handlers: []*types.Handler{
+			records: []*types.Handler{
 				types.FixtureHandler("foo"),
 			},
 			expectedLen: 1,
@@ -360,51 +359,30 @@ func TestHandlerQuery(t *testing.T) {
 		{
 			name:        "store failure",
 			ctx:         readCtx,
-			handlers:    nil,
+			records:     nil,
 			expectedLen: 0,
 			storeErr:    errors.New(""),
 			expectedErr: NewError(InternalErr, errors.New("")),
 		},
-		{
-			name: "no continue token",
-			ctx:  readCtx,
-			handlers: []*types.Handler{
-				types.FixtureHandler("handler1"),
-				types.FixtureHandler("handler2"),
-			},
-			continueToken:         "",
-			expectedLen:           2,
-			expectedContinueToken: "",
-		},
-		{
-			name: "base64url encode continue token",
-			ctx:  readCtx,
-			handlers: []*types.Handler{
-				types.FixtureHandler("handler1"),
-				types.FixtureHandler("handler2"),
-			},
-			continueToken:         "Albert Camus",
-			expectedLen:           2,
-			expectedContinueToken: "QWxiZXJ0IENhbXVz",
-		},
 	}
 
-	for _, test := range tests {
-		store := &mockstore.MockStore{}
-		ctl := NewHandlerController(store)
+	for _, tc := range testCases {
+		s := &mockstore.MockStore{}
+		actions := NewHandlerController(s)
 
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("GetHandlers", test.ctx, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
-				Return(test.handlers, test.continueToken, test.storeErr)
+			pred := &store.SelectionPredicate{}
+			s.On("GetHandlers", tc.ctx, pred).Return(tc.records, tc.storeErr)
 
-			results, continueToken, err := ctl.Query(test.ctx)
+			// Exec Query
+			results, err := actions.List(tc.ctx, pred)
 
-			assert.EqualValues(test.expectedErr, err)
-			assert.EqualValues(test.expectedContinueToken, continueToken)
-			assert.Len(results, test.expectedLen)
+			// Assert
+			assert.EqualValues(tc.expectedErr, err)
+			assert.Len(results, tc.expectedLen)
 		})
 	}
 }

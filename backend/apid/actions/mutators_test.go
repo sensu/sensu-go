@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
@@ -18,7 +19,7 @@ func TestNewMutatorController(t *testing.T) {
 	store := &mockstore.MockStore{}
 	ctl := NewMutatorController(store)
 	assert.NotNil(ctl)
-	assert.Equal(store, ctl.Store)
+	assert.Equal(store, ctl.store)
 }
 
 func TestMutatorCreateOrReplace(t *testing.T) {
@@ -121,7 +122,7 @@ func TestMutatorCreate(t *testing.T) {
 			expectedErrCode: AlreadyExistsErr,
 		},
 		{
-			name:            "Store Err on Fetch",
+			name:            "store Err on Fetch",
 			ctx:             defaultCtx,
 			argument:        types.FixtureMutator("grumpy"),
 			fetchErr:        errors.New("nein"),
@@ -196,7 +197,7 @@ func TestMutatorDestroy(t *testing.T) {
 			expectedErrCode: NotFound,
 		},
 		{
-			name:            "Store Err on Delete",
+			name:            "store Err on Delete",
 			ctx:             defaultCtx,
 			mutator:         "mutator1",
 			fetchResult:     types.FixtureMutator("mutator1"),
@@ -205,7 +206,7 @@ func TestMutatorDestroy(t *testing.T) {
 			expectedErrCode: InternalErr,
 		},
 		{
-			name:            "Store Err on Fetch",
+			name:            "store Err on Fetch",
 			ctx:             defaultCtx,
 			mutator:         "mutator1",
 			fetchResult:     types.FixtureMutator("mutator1"),
@@ -248,23 +249,21 @@ func TestMutatorDestroy(t *testing.T) {
 	}
 }
 
-func TestMutatorQuery(t *testing.T) {
+func TestMutatorList(t *testing.T) {
 	readCtx := context.Background()
 
-	tests := []struct {
-		name                  string
-		ctx                   context.Context
-		mutators              []*types.Mutator
-		storeErr              error
-		continueToken         string
-		expectedLen           int
-		expectedContinueToken string
-		expectedErr           error
+	testCases := []struct {
+		name        string
+		ctx         context.Context
+		records     []*types.Mutator
+		storeErr    error
+		expectedLen int
+		expectedErr error
 	}{
 		{
 			name:        "No Params, No Mutators",
 			ctx:         readCtx,
-			mutators:    nil,
+			records:     nil,
 			expectedLen: 0,
 			storeErr:    nil,
 			expectedErr: nil,
@@ -272,7 +271,7 @@ func TestMutatorQuery(t *testing.T) {
 		{
 			name: "No Params With Mutators",
 			ctx:  readCtx,
-			mutators: []*types.Mutator{
+			records: []*types.Mutator{
 				types.FixtureMutator("homer"),
 				types.FixtureMutator("bart"),
 			},
@@ -283,7 +282,7 @@ func TestMutatorQuery(t *testing.T) {
 		{
 			name: "Mutator Param",
 			ctx:  readCtx,
-			mutators: []*types.Mutator{
+			records: []*types.Mutator{
 				types.FixtureMutator("mr. burns"),
 			},
 			expectedLen: 1,
@@ -291,53 +290,32 @@ func TestMutatorQuery(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name:        "Store Failure",
+			name:        "store Failure",
 			ctx:         readCtx,
-			mutators:    nil,
+			records:     nil,
 			expectedLen: 0,
 			storeErr:    errors.New(""),
 			expectedErr: NewError(InternalErr, errors.New("")),
 		},
-		{
-			name: "no continue token",
-			ctx:  readCtx,
-			mutators: []*types.Mutator{
-				types.FixtureMutator("mutator1"),
-				types.FixtureMutator("mutator2"),
-			},
-			continueToken:         "",
-			expectedLen:           2,
-			expectedContinueToken: "",
-		},
-		{
-			name: "base64url encode continue token",
-			ctx:  readCtx,
-			mutators: []*types.Mutator{
-				types.FixtureMutator("mutator1"),
-				types.FixtureMutator("mutator2"),
-			},
-			continueToken:         "Albert Camus",
-			expectedLen:           2,
-			expectedContinueToken: "QWxiZXJ0IENhbXVz",
-		},
 	}
 
-	for _, test := range tests {
-		store := &mockstore.MockStore{}
-		ctl := NewMutatorController(store)
+	for _, tc := range testCases {
+		s := &mockstore.MockStore{}
+		actions := NewMutatorController(s)
 
-		t.Run(test.name, func(t *testing.T) {
+		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("GetMutators", test.ctx, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
-				Return(test.mutators, test.continueToken, test.storeErr)
+			pred := &store.SelectionPredicate{}
+			s.On("GetMutators", tc.ctx, pred).Return(tc.records, tc.storeErr)
 
-			results, continueToken, err := ctl.Query(test.ctx)
+			// Exec Query
+			results, err := actions.List(tc.ctx, pred)
 
-			assert.EqualValues(test.expectedErr, err)
-			assert.EqualValues(test.expectedContinueToken, continueToken)
-			assert.Len(results, test.expectedLen)
+			// Assert
+			assert.EqualValues(tc.expectedErr, err)
+			assert.Len(results, tc.expectedLen)
 		})
 	}
 }

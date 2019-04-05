@@ -2,7 +2,6 @@ package actions
 
 import (
 	"context"
-	"encoding/base64"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
@@ -18,13 +17,13 @@ var mutatorUpdateFields = []string{
 
 // MutatorController allows querying mutators in bulk or by name.
 type MutatorController struct {
-	Store store.MutatorStore
+	store store.MutatorStore
 }
 
 // NewMutatorController creates a new MutatorController backed by store.
 func NewMutatorController(store store.MutatorStore) MutatorController {
 	return MutatorController{
-		Store: store,
+		store: store,
 	}
 }
 
@@ -37,7 +36,7 @@ func (c MutatorController) Create(ctx context.Context, mut types.Mutator) error 
 	ctx = addOrgEnvToContext(ctx, &mut)
 
 	// Check for existing
-	if m, err := c.Store.GetMutatorByName(ctx, mut.Name); err != nil {
+	if m, err := c.store.GetMutatorByName(ctx, mut.Name); err != nil {
 		return NewError(InternalErr, err)
 	} else if m != nil {
 		return NewErrorf(AlreadyExistsErr, mut.Name)
@@ -49,7 +48,7 @@ func (c MutatorController) Create(ctx context.Context, mut types.Mutator) error 
 	}
 
 	// Persist
-	if err := c.Store.UpdateMutator(ctx, &mut); err != nil {
+	if err := c.store.UpdateMutator(ctx, &mut); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -70,31 +69,27 @@ func (c MutatorController) CreateOrReplace(ctx context.Context, mut types.Mutato
 	}
 
 	// Persist
-	if err := c.Store.UpdateMutator(ctx, &mut); err != nil {
+	if err := c.store.UpdateMutator(ctx, &mut); err != nil {
 		return NewError(InternalErr, err)
 	}
 
 	return nil
 }
 
-// Query returns resources available to the viewer filter by given params.
-// It returns non-nil error if the params are invalid, read permissions
-// do not exist, or an internal error occurs while reading the underlying
-// Store.
-func (c MutatorController) Query(ctx context.Context) ([]*types.Mutator, string, error) {
-	pageSize := corev2.PageSizeFromContext(ctx)
-	continueToken := corev2.PageContinueFromContext(ctx)
-
+// List returns mutators
+func (c MutatorController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
 	// Fetch from store
-	mutators, newContinueToken, err := c.Store.GetMutators(ctx, int64(pageSize), continueToken)
+	results, err := c.store.GetMutators(ctx, pred)
 	if err != nil {
-		return nil, "", NewError(InternalErr, err)
+		return nil, NewError(InternalErr, err)
 	}
 
-	// Encode the continue token with base64url (RFC 4648), without padding
-	encodedNewContinueToken := base64.RawURLEncoding.EncodeToString([]byte(newContinueToken))
+	resources := make([]corev2.Resource, len(results))
+	for i, v := range results {
+		resources[i] = corev2.Resource(v)
+	}
 
-	return mutators, encodedNewContinueToken, nil
+	return resources, nil
 }
 
 // Destroy destroys the named Mutator.
@@ -108,7 +103,7 @@ func (c MutatorController) Destroy(ctx context.Context, name string) error {
 	}
 
 	// Fetch from store
-	mut, err := c.Store.GetMutatorByName(ctx, name)
+	mut, err := c.store.GetMutatorByName(ctx, name)
 	if err != nil {
 		return NewError(InternalErr, err)
 	}
@@ -117,7 +112,7 @@ func (c MutatorController) Destroy(ctx context.Context, name string) error {
 	}
 
 	// Remove from store
-	if err := c.Store.DeleteMutatorByName(ctx, mut.Name); err != nil {
+	if err := c.store.DeleteMutatorByName(ctx, mut.Name); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -130,7 +125,7 @@ func (c MutatorController) Destroy(ctx context.Context, name string) error {
 // do not exist, or an internal error occurs while reading the underlying
 // Store.
 func (c MutatorController) Find(ctx context.Context, name string) (*types.Mutator, error) {
-	result, err := c.Store.GetMutatorByName(ctx, name)
+	result, err := c.store.GetMutatorByName(ctx, name)
 	if err != nil {
 		return nil, NewErrorf(InternalErr, err)
 	}

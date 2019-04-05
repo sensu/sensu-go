@@ -3,6 +3,7 @@ package mockstore
 import (
 	"context"
 
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -13,9 +14,9 @@ func (s *MockStore) DeleteHandlerByName(ctx context.Context, name string) error 
 }
 
 // GetHandlers ...
-func (s *MockStore) GetHandlers(ctx context.Context, pageSize int64, continueToken string) ([]*types.Handler, string, error) {
-	args := s.Called(ctx, pageSize, continueToken)
-	return args.Get(0).([]*types.Handler), args.String(1), args.Error(2)
+func (s *MockStore) GetHandlers(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Handler, error) {
+	args := s.Called(ctx, pred)
+	return args.Get(0).([]*types.Handler), args.Error(1)
 }
 
 // GetHandlerByName ...

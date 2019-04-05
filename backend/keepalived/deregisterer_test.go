@@ -3,6 +3,8 @@ package keepalived
 import (
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/store"
+
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -27,7 +29,7 @@ func TestDeregister(t *testing.T) {
 	check := types.FixtureCheck("check")
 	event := types.FixtureEvent(entity.Name, check.Name)
 
-	mockStore.On("GetEventsByEntity", mock.Anything, entity.Name, int64(0), "").Return([]*types.Event{event}, "", nil)
+	mockStore.On("GetEventsByEntity", mock.Anything, entity.Name, &store.SelectionPredicate{}).Return([]*types.Event{event}, nil)
 	mockStore.On("DeleteEventByEntityCheck", mock.Anything, entity.Name, check.Name).Return(nil)
 	mockStore.On("DeleteEntity", mock.Anything, entity).Return(nil)
 
@@ -54,7 +56,7 @@ func TestDeregistrationHandler(t *testing.T) {
 	}
 	check := types.FixtureCheck("check")
 
-	mockStore.On("GetEventsByEntity", mock.Anything, entity.Name, int64(0), "").Return([]*types.Event{}, "", nil)
+	mockStore.On("GetEventsByEntity", mock.Anything, entity.Name, &store.SelectionPredicate{}).Return([]*types.Event{}, nil)
 	mockStore.On("DeleteEventByEntityCheck", mock.Anything, entity.Name, check.Name).Return(nil)
 	mockStore.On("DeleteEntity", mock.Anything, entity).Return(nil)
 

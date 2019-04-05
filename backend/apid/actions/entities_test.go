@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
@@ -19,7 +20,7 @@ func TestNewEntityController(t *testing.T) {
 	actions := NewEntityController(store)
 
 	assert.NotNil(actions)
-	assert.Equal(store, actions.Store)
+	assert.Equal(store, actions.store)
 }
 
 func TestEntityDestroy(t *testing.T) {
@@ -169,20 +170,18 @@ func TestEntityFind(t *testing.T) {
 	}
 }
 
-func TestEntityQuery(t *testing.T) {
+func TestEntityList(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
 	)
 
 	testCases := []struct {
-		name                  string
-		ctx                   context.Context
-		records               []*types.Entity
-		storeErr              error
-		continueToken         string
-		expectedLen           int
-		expectedContinueToken string
-		expectedErr           error
+		name        string
+		ctx         context.Context
+		records     []*types.Entity
+		storeErr    error
+		expectedLen int
+		expectedErr error
 	}{
 		{
 			name:        "no results",
@@ -211,47 +210,24 @@ func TestEntityQuery(t *testing.T) {
 			storeErr:    errors.New(""),
 			expectedErr: NewError(InternalErr, errors.New("")),
 		},
-		{
-			name: "no continue token",
-			ctx:  defaultCtx,
-			records: []*types.Entity{
-				types.FixtureEntity("entity1"),
-				types.FixtureEntity("entity2"),
-			},
-			continueToken:         "",
-			expectedLen:           2,
-			expectedContinueToken: "",
-		},
-		{
-			name: "base64url encode continue token",
-			ctx:  defaultCtx,
-			records: []*types.Entity{
-				types.FixtureEntity("entity1"),
-				types.FixtureEntity("entity2"),
-			},
-			continueToken:         "Albert Camus",
-			expectedLen:           2,
-			expectedContinueToken: "QWxiZXJ0IENhbXVz",
-		},
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
-		actions := NewEntityController(store)
+		s := &mockstore.MockStore{}
+		actions := NewEntityController(s)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("GetEntities", tc.ctx, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
-				Return(tc.records, tc.continueToken, tc.storeErr)
+			pred := &store.SelectionPredicate{}
+			s.On("GetEntities", tc.ctx, pred).Return(tc.records, tc.storeErr)
 
 			// Exec Query
-			results, continueToken, err := actions.Query(tc.ctx)
+			results, err := actions.List(tc.ctx, pred)
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)
-			assert.EqualValues(tc.expectedContinueToken, continueToken)
 			assert.Len(results, tc.expectedLen)
 		})
 	}
@@ -285,7 +261,7 @@ func TestEntityCreate(t *testing.T) {
 			expectedErr: false,
 		},
 		{
-			name:            "Store err on Create",
+			name:            "store err on Create",
 			ctx:             defaultCtx,
 			argument:        types.FixtureEntity("foo"),
 			fetchResult:     nil,
@@ -295,7 +271,7 @@ func TestEntityCreate(t *testing.T) {
 			expectedErrCode: InternalErr,
 		},
 		{
-			name:            "Store err on fetch",
+			name:            "store err on fetch",
 			ctx:             defaultCtx,
 			argument:        types.FixtureEntity("foo"),
 			fetchResult:     types.FixtureEntity("foo"),
