@@ -3,6 +3,7 @@ package mockstore
 import (
 	"context"
 
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -36,9 +37,9 @@ func (s *MockStore) GetRoleBinding(ctx context.Context, name string) (*types.Rol
 }
 
 // ListRoleBindings ...
-func (s *MockStore) ListRoleBindings(ctx context.Context, pageSize int64, continueToken string) ([]*types.RoleBinding, string, error) {
-	args := s.Called(ctx, pageSize, continueToken)
-	return args.Get(0).([]*types.RoleBinding), args.String(1), args.Error(2)
+func (s *MockStore) ListRoleBindings(ctx context.Context, pred *store.SelectionPredicate) ([]*types.RoleBinding, error) {
+	args := s.Called(ctx, pred)
+	return args.Get(0).([]*types.RoleBinding), args.Error(1)
 }
 
 // UpdateRoleBinding ...

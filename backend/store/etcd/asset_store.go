@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
@@ -41,45 +40,10 @@ func (s *Store) DeleteAssetByName(ctx context.Context, name string) error {
 }
 
 // GetAssets fetches all assets from the store
-func (s *Store) GetAssets(ctx context.Context, pageSize int64, continueToken string) (assets []*types.Asset, nextContinueToken string, err error) {
-	opts := []clientv3.OpOption{
-		clientv3.WithLimit(pageSize),
-	}
-
-	keyPrefix := getAssetsPath(ctx, "")
-	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
-	opts = append(opts, clientv3.WithRange(rangeEnd))
-
-	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueToken), opts...)
-	if err != nil {
-		return nil, "", err
-	}
-	if len(resp.Kvs) == 0 {
-		return []*types.Asset{}, "", nil
-	}
-
-	for _, kv := range resp.Kvs {
-		asset := &types.Asset{}
-		err = json.Unmarshal(kv.Value, asset)
-		if err != nil {
-			return nil, "", err
-		}
-		if asset.Labels == nil {
-			asset.Labels = make(map[string]string)
-		}
-		if asset.Annotations == nil {
-			asset.Annotations = make(map[string]string)
-		}
-
-		assets = append(assets, asset)
-	}
-
-	if pageSize != 0 && resp.Count > pageSize {
-		lastAsset := assets[len(assets)-1]
-		nextContinueToken = computeContinueToken(ctx, lastAsset)
-	}
-
-	return assets, nextContinueToken, nil
+func (s *Store) GetAssets(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Asset, error) {
+	assets := []*types.Asset{}
+	err := List(ctx, s.client, getAssetsPath, &assets, pred)
+	return assets, err
 }
 
 // GetAssetByName gets an Asset by name.

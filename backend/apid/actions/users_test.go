@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
@@ -19,23 +20,21 @@ func TestNewUserController(t *testing.T) {
 	actions := NewUserController(store)
 
 	assert.NotNil(actions)
-	assert.Equal(store, actions.Store)
+	assert.Equal(store, actions.store)
 }
 
-func TestUserQuery(t *testing.T) {
+func TestUserList(t *testing.T) {
 	ctxWithAuthorizedViewer := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
 	)
 
 	testCases := []struct {
-		name                  string
-		ctx                   context.Context
-		storedRecords         []*types.User
-		storeErr              error
-		continueToken         string
-		expectedLen           int
-		expectedContinueToken string
-		expectedErr           error
+		name        string
+		ctx         context.Context
+		records     []*types.User
+		storeErr    error
+		expectedLen int
+		expectedErr error
 	}{
 		{
 			name:        "No Users",
@@ -47,7 +46,7 @@ func TestUserQuery(t *testing.T) {
 		{
 			name: "With Users",
 			ctx:  ctxWithAuthorizedViewer,
-			storedRecords: []*types.User{
+			records: []*types.User{
 				types.FixtureUser("user1"),
 				types.FixtureUser("user2"),
 			},
@@ -56,53 +55,30 @@ func TestUserQuery(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name:        "Store Failure",
+			name:        "store Failure",
 			ctx:         ctxWithAuthorizedViewer,
 			expectedLen: 0,
 			storeErr:    errors.New(""),
 			expectedErr: NewError(InternalErr, errors.New("")),
 		},
-		{
-			name: "no continue token",
-			ctx:  ctxWithAuthorizedViewer,
-			storedRecords: []*types.User{
-				types.FixtureUser("user1"),
-				types.FixtureUser("user2"),
-			},
-			continueToken:         "",
-			expectedLen:           2,
-			expectedContinueToken: "",
-		},
-		{
-			name: "base64url encode continue token",
-			ctx:  ctxWithAuthorizedViewer,
-			storedRecords: []*types.User{
-				types.FixtureUser("user1"),
-				types.FixtureUser("user2"),
-			},
-			continueToken:         "Albert Camus",
-			expectedLen:           2,
-			expectedContinueToken: "QWxiZXJ0IENhbXVz",
-		},
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
-		actions := NewUserController(store)
+		s := &mockstore.MockStore{}
+		actions := NewUserController(s)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("GetAllUsers", mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
-				Return(tc.storedRecords, tc.continueToken, tc.storeErr)
+			pred := &store.SelectionPredicate{}
+			s.On("GetAllUsers", pred).Return(tc.records, tc.storeErr)
 
 			// Exec Query
-			results, continueToken, err := actions.Query(tc.ctx)
+			results, err := actions.List(tc.ctx, pred)
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)
-			assert.EqualValues(tc.expectedContinueToken, continueToken)
 			assert.Len(results, tc.expectedLen)
 		})
 	}
@@ -137,7 +113,7 @@ func TestUserFind(t *testing.T) {
 			expected:     true,
 		},
 		{
-			name:            "Store Err",
+			name:            "store Err",
 			ctx:             ctxWithAuthorizedViewer,
 			argument:        "user1",
 			storeErr:        errors.New("test"),
@@ -210,7 +186,7 @@ func TestUserCreateOrReplace(t *testing.T) {
 			fetchResult: types.FixtureUser("user1"),
 		},
 		{
-			name:            "Store Err on Create",
+			name:            "store Err on Create",
 			ctx:             defaultCtx,
 			argument:        types.FixtureUser("user1"),
 			createErr:       errors.New("dunno"),
@@ -289,7 +265,7 @@ func TestUserCreate(t *testing.T) {
 			expectedErrCode: AlreadyExistsErr,
 		},
 		{
-			name:            "Store Err on Create",
+			name:            "store Err on Create",
 			ctx:             defaultCtx,
 			argument:        types.FixtureUser("user1"),
 			createErr:       errors.New("dunno"),
@@ -367,7 +343,7 @@ func TestUserDisable(t *testing.T) {
 			expectedErrCode: NotFound,
 		},
 		{
-			name:            "Store Err on Update",
+			name:            "store Err on Update",
 			ctx:             defaultCtx,
 			argument:        "user1",
 			fetchResult:     types.FixtureUser("user1"),
@@ -447,7 +423,7 @@ func TestUserEnable(t *testing.T) {
 			expectedErrCode: NotFound,
 		},
 		{
-			name:            "Store Err on Update",
+			name:            "store Err on Update",
 			ctx:             correctPermsCtx,
 			argument:        "user1",
 			fetchResult:     disabledUser(),

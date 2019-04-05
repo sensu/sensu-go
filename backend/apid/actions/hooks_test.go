@@ -5,6 +5,7 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
@@ -19,23 +20,21 @@ func TestNewHookController(t *testing.T) {
 	actions := NewHookController(store)
 
 	assert.NotNil(actions)
-	assert.Equal(store, actions.Store)
+	assert.Equal(store, actions.store)
 }
 
-func TestHookQuery(t *testing.T) {
+func TestHookList(t *testing.T) {
 	defaultCtx := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
 	)
 
 	testCases := []struct {
-		name                  string
-		ctx                   context.Context
-		records               []*types.HookConfig
-		storeErr              error
-		continueToken         string
-		expectedLen           int
-		expectedContinueToken string
-		expectedErr           error
+		name        string
+		ctx         context.Context
+		records     []*types.HookConfig
+		storeErr    error
+		expectedLen int
+		expectedErr error
 	}{
 		{
 			name:        "No Hooks",
@@ -57,54 +56,31 @@ func TestHookQuery(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name:        "Store Failure",
+			name:        "store Failure",
 			ctx:         defaultCtx,
 			records:     nil,
 			expectedLen: 0,
 			storeErr:    errors.New(""),
 			expectedErr: NewError(InternalErr, errors.New("")),
 		},
-		{
-			name: "no continue token",
-			ctx:  defaultCtx,
-			records: []*types.HookConfig{
-				types.FixtureHookConfig("hook1"),
-				types.FixtureHookConfig("hook2"),
-			},
-			continueToken:         "",
-			expectedLen:           2,
-			expectedContinueToken: "",
-		},
-		{
-			name: "base64url encode continue token",
-			ctx:  defaultCtx,
-			records: []*types.HookConfig{
-				types.FixtureHookConfig("hook1"),
-				types.FixtureHookConfig("hook2"),
-			},
-			continueToken:         "Albert Camus",
-			expectedLen:           2,
-			expectedContinueToken: "QWxiZXJ0IENhbXVz",
-		},
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
-		actions := NewHookController(store)
+		s := &mockstore.MockStore{}
+		actions := NewHookController(s)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
 			// Mock store methods
-			store.On("GetHookConfigs", tc.ctx, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
-				Return(tc.records, tc.continueToken, tc.storeErr)
+			pred := &store.SelectionPredicate{}
+			s.On("GetHookConfigs", tc.ctx, pred).Return(tc.records, tc.storeErr)
 
 			// Exec Query
-			results, continueToken, err := actions.Query(tc.ctx)
+			results, err := actions.List(tc.ctx, pred)
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)
-			assert.EqualValues(tc.expectedContinueToken, continueToken)
 			assert.Len(results, tc.expectedLen)
 		})
 	}
@@ -205,7 +181,7 @@ func TestHookCreateOrReplace(t *testing.T) {
 			fetchResult: types.FixtureHookConfig("hook1"),
 		},
 		{
-			name:            "Store Err on Create",
+			name:            "store Err on Create",
 			ctx:             defaultCtx,
 			argument:        types.FixtureHookConfig("hook1"),
 			createErr:       errors.New("dunno"),
@@ -287,7 +263,7 @@ func TestHookCreate(t *testing.T) {
 			expectedErrCode: AlreadyExistsErr,
 		},
 		{
-			name:            "Store Err on Create",
+			name:            "store Err on Create",
 			ctx:             defaultCtx,
 			argument:        types.FixtureHookConfig("hook1"),
 			createErr:       errors.New("dunno"),
@@ -295,7 +271,7 @@ func TestHookCreate(t *testing.T) {
 			expectedErrCode: InternalErr,
 		},
 		{
-			name:            "Store Err on Fetch",
+			name:            "store Err on Fetch",
 			ctx:             defaultCtx,
 			argument:        types.FixtureHookConfig("hook1"),
 			fetchErr:        errors.New("dunno"),
@@ -375,7 +351,7 @@ func TestHookDestroy(t *testing.T) {
 			expectedErrCode: NotFound,
 		},
 		{
-			name:            "Store Err on Delete",
+			name:            "store Err on Delete",
 			ctx:             defaultCtx,
 			argument:        "hook1",
 			fetchResult:     types.FixtureHookConfig("hook1"),
@@ -384,7 +360,7 @@ func TestHookDestroy(t *testing.T) {
 			expectedErrCode: InternalErr,
 		},
 		{
-			name:            "Store Err on Fetch",
+			name:            "store Err on Fetch",
 			ctx:             defaultCtx,
 			argument:        "hook1",
 			fetchResult:     types.FixtureHookConfig("hook1"),

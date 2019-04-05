@@ -2,7 +2,6 @@ package actions
 
 import (
 	"context"
-	"encoding/base64"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
@@ -11,31 +10,30 @@ import (
 
 // ExtensionController expose actions in which a viewer can perform.
 type ExtensionController struct {
-	Store store.ExtensionRegistry
+	store store.ExtensionRegistry
 }
 
 // NewExtensionController returns new ExtensionController
 func NewExtensionController(store store.ExtensionRegistry) ExtensionController {
 	return ExtensionController{
-		Store: store,
+		store: store,
 	}
 }
 
-// Query returns resources available to the viewer filter by given params.
-func (e ExtensionController) Query(ctx context.Context) ([]*types.Extension, string, error) {
-	pageSize := corev2.PageSizeFromContext(ctx)
-	continueToken := corev2.PageContinueFromContext(ctx)
-
+// List returns resources available to the viewer filter by given params.
+func (e ExtensionController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
 	// Fetch from store
-	results, newContinueToken, serr := e.Store.GetExtensions(ctx, int64(pageSize), continueToken)
-	if serr != nil {
-		return nil, "", NewError(InternalErr, serr)
+	results, err := e.store.GetExtensions(ctx, pred)
+	if err != nil {
+		return nil, NewError(InternalErr, err)
 	}
 
-	// Encode the continue token with base64url (RFC 4648), without padding
-	encodedNewContinueToken := base64.RawURLEncoding.EncodeToString([]byte(newContinueToken))
+	resources := make([]corev2.Resource, len(results))
+	for i, v := range results {
+		resources[i] = corev2.Resource(v)
+	}
 
-	return results, encodedNewContinueToken, nil
+	return resources, nil
 }
 
 // Find returns resource associated with given parameters if available to the
@@ -47,7 +45,7 @@ func (e ExtensionController) Find(ctx context.Context, name string) (*types.Exte
 	}
 
 	// Fetch from store
-	result, serr := e.Store.GetExtension(ctx, name)
+	result, serr := e.store.GetExtension(ctx, name)
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}
@@ -69,7 +67,7 @@ func (e ExtensionController) Register(ctx context.Context, extension types.Exten
 	}
 
 	// Persist Changes
-	if serr := e.Store.RegisterExtension(ctx, &extension); serr != nil {
+	if serr := e.store.RegisterExtension(ctx, &extension); serr != nil {
 		return NewError(InternalErr, serr)
 	}
 
@@ -78,7 +76,7 @@ func (e ExtensionController) Register(ctx context.Context, extension types.Exten
 
 // Deregister deletes the extension from the registry.
 func (e ExtensionController) Deregister(ctx context.Context, name string) error {
-	if err := e.Store.DeregisterExtension(ctx, name); err != nil {
+	if err := e.store.DeregisterExtension(ctx, name); err != nil {
 		return NewError(InternalErr, nil)
 	}
 	return nil

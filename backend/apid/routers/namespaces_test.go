@@ -9,6 +9,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/store"
+
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/mock"
@@ -26,9 +29,9 @@ func (m *mockOrgController) CreateOrReplace(ctx context.Context, org types.Names
 	return m.Called(ctx, org).Error(0)
 }
 
-func (m *mockOrgController) Query(ctx context.Context) ([]*types.Namespace, string, error) {
-	args := m.Called(ctx)
-	return args.Get(0).([]*types.Namespace), args.String(1), args.Error(2)
+func (m *mockOrgController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
+	args := m.Called(ctx, pred)
+	return args.Get(0).([]corev2.Resource), args.Error(1)
 }
 
 func (m *mockOrgController) Find(ctx context.Context, org string) (*types.Namespace, error) {
@@ -152,8 +155,8 @@ func TestListNamespaces(t *testing.T) {
 
 	client := new(http.Client)
 
-	fixtures := []*types.Namespace{types.FixtureNamespace("default")}
-	controller.On("Query", mock.Anything).Return(fixtures, "", nil)
+	fixtures := []corev2.Resource{types.FixtureNamespace("default")}
+	controller.On("List", mock.Anything, &store.SelectionPredicate{}).Return(fixtures, nil)
 	endpoint := "/namespaces"
 	req := newRequest(t, http.MethodGet, server.URL+endpoint, nil)
 

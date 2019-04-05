@@ -3,6 +3,7 @@ package mockstore
 import (
 	"context"
 
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -13,9 +14,9 @@ func (s *MockStore) DeleteHookConfigByName(ctx context.Context, name string) err
 }
 
 // GetHookConfigs ...
-func (s *MockStore) GetHookConfigs(ctx context.Context, pageSize int64, continueToken string) ([]*types.HookConfig, string, error) {
-	args := s.Called(ctx, pageSize, continueToken)
-	return args.Get(0).([]*types.HookConfig), args.String(1), args.Error(2)
+func (s *MockStore) GetHookConfigs(ctx context.Context, pred *store.SelectionPredicate) ([]*types.HookConfig, error) {
+	args := s.Called(ctx, pred)
+	return args.Get(0).([]*types.HookConfig), args.Error(1)
 }
 
 // GetHookConfigByName ...

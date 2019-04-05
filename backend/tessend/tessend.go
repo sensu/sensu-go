@@ -306,7 +306,7 @@ func (t *Tessend) collect(now int64) *Data {
 	var entityCount, backendCount float64
 
 	// collect client count
-	entities, _, err := t.store.GetEntities(t.ctx, 0, "")
+	entities, err := t.store.GetEntities(t.ctx, &store.SelectionPredicate{})
 	if err != nil {
 		logger.WithError(err).Error("unable to retrieve client count")
 	}

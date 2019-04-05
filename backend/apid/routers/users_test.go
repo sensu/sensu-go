@@ -8,7 +8,9 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -27,9 +29,9 @@ func (m *mockUserController) CreateOrReplace(ctx context.Context, name types.Use
 	return m.Called(ctx, name).Error(0)
 }
 
-func (m *mockUserController) Query(ctx context.Context) ([]*types.User, string, error) {
-	args := m.Called(ctx)
-	return args.Get(0).([]*types.User), args.String(1), args.Error(2)
+func (m *mockUserController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
+	args := m.Called(ctx, pred)
+	return args.Get(0).([]corev2.Resource), args.Error(1)
 }
 
 func (m *mockUserController) Find(ctx context.Context, name string) (*types.User, error) {
