@@ -126,8 +126,6 @@ func extractPackage(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	mustRunCmd("ls", path)
-	mustRunCmd("ls", tmpDir)
 	mustRunCmd("tar", "-zxf", path, "-C", tmpDir, "--strip-components=1")
 	return tmpDir, nil
 }
