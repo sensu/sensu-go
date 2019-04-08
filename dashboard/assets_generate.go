@@ -6,10 +6,12 @@ import (
 	"bytes"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -18,8 +20,12 @@ import (
 	"github.com/shurcooL/vfsgen"
 )
 
+const packageURL = "https://s3.us-west-2.amazonaws.com/sensu-ci-web-builds"
+const packagePathPrefix = "oss/webapp"
+const packageFilename = "package.tgz"
+const packageBranch = "master"
+
 const filenamePrefix = "assets_"
-const buildDir = "./build"
 
 var (
 	red    = ansi.ColorFunc("red+b")
@@ -28,34 +34,42 @@ var (
 )
 
 func main() {
-	if _, err := exec.LookPath("node"); err != nil {
-		fmt.Println(yellow("⚠️  Warning"), white("'node' was not found in your PATH, unable to bundle web UI."))
-		fmt.Println(white("See https://nodejs.org/en/download/package-manager/ for installation instructions."))
-		fmt.Println(white("Skipping dashboard build."))
+	if _, err := exec.LookPath("tar"); err != nil {
+		printErr("'tar' was not found in your PATH, unable to box the web UI.")
 		return
 	}
 
-	if _, err := exec.LookPath("yarn"); err != nil {
-		fmt.Println(yellow("⚠️  Warning"), white("'yarn' was not found in your PATH, unable to bundle web UI."))
-		fmt.Println(white("See https://yarnpkg.com/en/docs/install for installation instructions."))
-		fmt.Println(white("Skipping dashboard build."))
+	// pull latest ref from bucket
+	ref, err := fetchLatestRef()
+	if err != nil {
+		printErr(err.Error())
 		return
 	}
 
-	// install web ui depedencies
-	mustRunCmd("yarn", "install")
+	// download package
+	fpath, err := fetchPackage(ref)
+	if err != nil {
+		printErr(err.Error())
+		return
+	}
+	defer os.Remove(fpath)
 
-	// install web ui depedencies
-	mustRunCmd("yarn", "build")
+	// extract package
+	dir, err := extractPackage(fpath)
+	if err != nil {
+		printErr(err.Error())
+		return
+	}
+	defer os.RemoveAll(dir)
 
 	// combine bundled assets
 	collection := asset.NewCollection()
-	collection.Extend(http.Dir(filepath.Join(buildDir, "app", "public")))
-	collection.Extend(http.Dir(filepath.Join(buildDir, "lib", "public")))
-	collection.Extend(http.Dir(filepath.Join(buildDir, "vendor", "public")))
+	collection.Extend(http.Dir(filepath.Join(dir, "build", "app", "public")))
+	collection.Extend(http.Dir(filepath.Join(dir, "build", "lib", "public")))
+	collection.Extend(http.Dir(filepath.Join(dir, "build", "vendor", "public")))
 
 	// box bundled assets
-	err := vfsgen.Generate(collection, vfsgen.Options{
+	err = vfsgen.Generate(collection, vfsgen.Options{
 		Filename:     filenamePrefix + "oss" + ".go",
 		PackageName:  "dashboard",
 		VariableName: "OSS",
@@ -65,15 +79,71 @@ func main() {
 	}
 }
 
+func fetchLatestRef() (string, error) {
+	url := packageURL + "/" + path.Join(packagePathPrefix, packageBranch)
+	res, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+	ref, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return "", err
+	}
+	if len(ref) != 40 {
+		return "", fmt.Errorf("ref appears invalid, ref: %s...", ref[:48])
+	}
+	return string(ref), nil
+}
+
+func fetchPackage(ref string) (string, error) {
+	tmpFile, err := ioutil.TempFile("", "*."+packageFilename)
+	if err != nil {
+		return "", err
+	}
+	defer tmpFile.Close()
+
+	url := packageURL + "/" + path.Join(packagePathPrefix, ref, packageFilename)
+	res, err := http.Get(url)
+	if err != nil {
+		return "", err
+	}
+	defer res.Body.Close()
+
+	_, err = io.Copy(tmpFile, res.Body)
+	if err != nil {
+		return "", err
+	}
+
+	if err = tmpFile.Sync(); err != nil {
+		return "", err
+	}
+	return tmpFile.Name(), nil
+}
+
+func extractPackage(path string) (string, error) {
+	tmpDir, err := ioutil.TempDir("", "")
+	if err != nil {
+		return "", err
+	}
+	mustRunCmd("ls", path)
+	mustRunCmd("ls", tmpDir)
+	mustRunCmd("tar", "-zxf", path, "-C", tmpDir, "--strip-components=1")
+	return tmpDir, nil
+}
+
+func printErr(msg string) {
+	fmt.Println(red("⚠️  WError"), white(msg))
+}
+
 func mustRunCmd(pro string, args ...string) {
 	cmd := exec.Command(pro, args...)
-	cmd.Env = append(os.Environ(), "NODE_ENV=production")
 	cmdStr := strings.Join(append([]string{pro}, args...), " ")
 
-	fmt.Printf("Running '%s'\n", cmdStr)
+	fmt.Printf("running '%s'\n", cmdStr)
 	if buf, err := cmd.CombinedOutput(); err != nil {
-		fmt.Println("")
 		io.Copy(os.Stderr, bytes.NewReader(buf))
+		fmt.Println("")
 		fmt.Fprintf(os.Stderr, "🛑  %s %s '%s'\n", red("Error"), "failed to run", white(cmdStr))
 		os.Exit(1)
 	}
