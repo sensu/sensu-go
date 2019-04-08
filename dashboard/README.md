@@ -14,8 +14,8 @@ To update the set of assets embedded in to the binary, from this directory
 simply run:
 
 ```sh
-# NOTE: process pulls the assets from S3 and as such requires an active internet
-# connection.
+# NOTE: the process pulls the assets from S3 and as such will require an active
+#       internet connection.
 go generate ./
 ```
 
