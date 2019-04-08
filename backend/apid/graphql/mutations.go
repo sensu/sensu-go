@@ -1,9 +1,9 @@
 package graphql
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
@@ -36,7 +36,7 @@ func (r *mutationsImpl) PutWrapped(p schema.MutationPutWrappedFieldResolverParam
 	raw := p.Args.Raw
 
 	// decode given
-	dec := json.NewDecoder(bytes.NewReader([]byte(raw)))
+	dec := json.NewDecoder(strings.NewReader(raw))
 	dec.DisallowUnknownFields()
 	if err := dec.Decode(&ret); err != nil {
 		return map[string]interface{}{
