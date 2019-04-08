@@ -133,7 +133,7 @@ func extractPackage(path string) (string, error) {
 }
 
 func printErr(msg string) {
-	fmt.Println(red("⚠️  WError"), white(msg))
+	fmt.Println(red("⚠️  Error"), white(msg))
 }
 
 func mustRunCmd(pro string, args ...string) {
