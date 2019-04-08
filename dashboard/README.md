@@ -5,7 +5,7 @@
 > be found [here](https://github.com/sensu/web).
 
 This package contains the assets for the web application that are embedded into
-the `sensu-go` binary. For more on this asset embedding, see
+the `sensu-go` binary. For more on asset embedding, see
 [Embedding Assets in Go].
 
 ## Updating
@@ -14,6 +14,8 @@ To update the set of assets embedded in to the binary, from this directory
 simply run:
 
 ```sh
+# NOTE: process pulls the assets from S3 and as such requires an active internet
+# connection.
 go generate ./
 ```
 
