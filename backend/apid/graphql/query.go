@@ -3,6 +3,7 @@ package graphql
 import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
+	"github.com/sensu/sensu-go/types"
 )
 
 var _ schema.QueryFieldResolvers = (*queryImpl)(nil)
@@ -56,6 +57,16 @@ func (r *queryImpl) Check(p schema.QueryCheckFieldResolverParams) (interface{}, 
 func (r *queryImpl) Node(p schema.QueryNodeFieldResolverParams) (interface{}, error) {
 	resolver := r.nodeResolver
 	return resolver.Find(p.Context, p.Args.ID, p.Info)
+}
+
+// WrappedNode implements response to request for 'wrappedNode' field.
+func (r *queryImpl) WrappedNode(p schema.QueryWrappedNodeFieldResolverParams) (interface{}, error) {
+	resolver := r.nodeResolver
+	res, err := resolver.Find(p.Context, p.Args.ID, p.Info)
+	if rres, ok := res.(types.Resource); ok {
+		return types.WrapResource(rres), err
+	}
+	return nil, err
 }
 
 //

@@ -37,4 +37,12 @@ type Query {
     "The ID of an object."
     id: ID!
   ): Node
+
+  """
+  Node fetches an object given its ID and returns it as wrapped resource.
+  """
+  wrappedNode(
+    "The ID of an object."
+    id: ID!
+  ): JSON
 }
