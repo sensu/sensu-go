@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
@@ -183,11 +184,16 @@ func (t *Tessend) updateRing() {
 	}
 }
 
-// watchRing watches the ring and handles ring events.
-func (t *Tessend) watchRing(ctx context.Context, tessen *corev2.TessenConfig) <-chan ringv2.Event {
-	wc := t.ring.Watch(ctx, "tessen", 1, int(t.interval), "")
-	go t.handleEvents(tessen, wc)
-	return wc
+// watchRing watches the ring and handles ring events. It recreates watchers
+// when they terminate due to error.
+func (t *Tessend) watchRing(ctx context.Context, tessen *corev2.TessenConfig, wg *sync.WaitGroup) {
+	go func() {
+		defer wg.Done()
+		for ctx.Err() == nil {
+			wc := t.ring.Watch(ctx, "tessen", 1, int(t.interval), "")
+			t.handleEvents(tessen, wc)
+		}
+	}()
 }
 
 // handleEvents logs different ring events and triggers tessen to run if applicable.
@@ -197,11 +203,11 @@ func (t *Tessend) handleEvents(tessen *corev2.TessenConfig, ch <-chan ringv2.Eve
 		case ringv2.EventError:
 			logger.WithError(event.Err).Error("ring event error")
 		case ringv2.EventAdd:
-			logger.WithField("values", event.Values).Debug("ring event add")
+			logger.WithField("values", event.Values).Debug("added a backend to tessen")
 		case ringv2.EventRemove:
-			logger.WithField("values", event.Values).Debug("ring event remove")
+			logger.WithField("values", event.Values).Debug("removed a backend from tessen")
 		case ringv2.EventTrigger:
-			logger.WithField("values", event.Values).Debug("ring event trigger")
+			logger.WithField("values", event.Values).Debug("tessen send event")
 			// only trigger tessen if the next backend in the ring is this backend
 			if event.Values[0] == t.backendID {
 				if t.enabled(tessen) {
@@ -209,7 +215,7 @@ func (t *Tessend) handleEvents(tessen *corev2.TessenConfig, ch <-chan ringv2.Eve
 				}
 			}
 		case ringv2.EventClosing:
-			logger.Debug("ring event closing")
+			logger.Debug("tessen ring closing")
 		}
 	}
 }
@@ -217,7 +223,9 @@ func (t *Tessend) handleEvents(tessen *corev2.TessenConfig, ch <-chan ringv2.Eve
 // start starts the tessen service.
 func (t *Tessend) start(tessen *corev2.TessenConfig) {
 	ctx, cancel := context.WithCancel(t.ctx)
-	wc := t.watchRing(ctx, tessen)
+	wg := new(sync.WaitGroup)
+	wg.Add(1)
+	t.watchRing(ctx, tessen, wg)
 
 	for {
 		select {
@@ -225,11 +233,12 @@ func (t *Tessend) start(tessen *corev2.TessenConfig) {
 			cancel()
 			return
 		case config := <-t.interrupt:
+			// Config change indicates the need to recreate the watcher
 			cancel()
+			wg.Wait()
 			ctx, cancel = context.WithCancel(t.ctx)
-			for range wc {
-			}
-			wc = t.watchRing(ctx, config)
+			wg.Add(1)
+			t.watchRing(ctx, config, wg)
 		}
 	}
 }
@@ -260,8 +269,8 @@ func (t *Tessend) collectAndSend(tessen *corev2.TessenConfig) {
 	data := t.collect(time.Now().UTC().Unix())
 
 	logger.WithFields(logrus.Fields{
-		"url":                       t.url,
-		"id":                        data.Cluster.ID,
+		"url": t.url,
+		"id":  data.Cluster.ID,
 		data.Metrics.Points[0].Name: data.Metrics.Points[0].Value,
 		data.Metrics.Points[1].Name: data.Metrics.Points[1].Value,
 	}).Info("sending data to tessen")
