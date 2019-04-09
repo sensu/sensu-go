@@ -129,7 +129,7 @@ func (s *Store) GetTessenConfigWatcher(ctx context.Context) <-chan store.WatchEv
 				tessen = *corev2.DefaultTessenConfig()
 			} else {
 				if err := json.Unmarshal(response.Object, &tessen); err != nil {
-					logger.WithField("key", response.Key).WithError(err).Error("unable to unmarshal check config from key")
+					logger.WithField("key", response.Key).WithError(err).Error("unable to unmarshal tessen config from key")
 					continue
 				}
 			}
