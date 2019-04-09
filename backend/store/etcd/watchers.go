@@ -109,7 +109,7 @@ func (s *Store) GetEntityWatcher(ctx context.Context) <-chan store.WatchEventEnt
 // GetTessenConfigWatcher returns a channel that emits WatchEventTessenConfig structs notifying
 // the caller that a TessenConfig was updated. If the watcher runs into a terminal error
 // or the context passed is cancelled, then the channel will be closed. The caller must
-// restart the watcher, if needed.
+// The watcher does its best to recover from errors.
 func (s *Store) GetTessenConfigWatcher(ctx context.Context) <-chan store.WatchEventTessenConfig {
 	ch := make(chan store.WatchEventTessenConfig, 1)
 	key := tessenKeyBuilder.WithContext(ctx).Build()
