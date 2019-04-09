@@ -91,7 +91,7 @@ func (s *Store) GetEntityWatcher(ctx context.Context) <-chan store.WatchEventEnt
 				entity.Name = meta.ResourceName
 			} else {
 				if err := json.Unmarshal(response.Object, &entity); err != nil {
-					logger.WithField("key", response.Key).WithError(err).Error("unable to unmarshal check config from key")
+					logger.WithField("key", response.Key).WithError(err).Error("unable to unmarshal entity from key")
 					continue
 				}
 			}
