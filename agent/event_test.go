@@ -52,7 +52,32 @@ func TestTranslateToEvent(t *testing.T) {
 			},
 		},
 		{
-			Name:  "check with client",
+			Name:  "check from docs with source existing agent",
+			Input: `{"name": "check-mysql-status", "output": "error!", "status": 1, "handlers": ["slack"], "source": "test-agent"}`,
+			ExpOutput: &corev2.Event{
+				Check: &corev2.Check{
+					ObjectMeta: corev2.ObjectMeta{
+						Name:      "check-mysql-status",
+						Namespace: "test-namespace",
+					},
+					Output:   "error!",
+					Status:   1,
+					Handlers: []string{"slack"},
+				},
+				Entity: &corev2.Entity{
+					ObjectMeta: corev2.ObjectMeta{
+						Name:      "test-agent",
+						Namespace: "test-namespace",
+					},
+					EntityClass:   corev2.EntityAgentClass,
+					Subscriptions: []string{"default"},
+					User:          "test-user",
+					LastSeen:      time.Now().Unix(),
+				},
+			},
+		},
+		{
+			Name:  "check with deprecated client",
 			Input: `{"name": "check-mysql-status", "output": "error!", "status": 1, "handlers": ["slack"], "client": "foobar"}`,
 			ExpOutput: &corev2.Event{
 				Check: &corev2.Check{

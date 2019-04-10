@@ -65,6 +65,161 @@ func TestHandleTCPMessages(t *testing.T) {
 	assert.Equal("proxyEnt", event.Check.ProxyEntityName)
 }
 
+func TestHandleTCPMessagesWithClient(t *testing.T) {
+	assert := assert.New(t)
+
+	cfg, cleanup := FixtureConfig()
+	defer cleanup()
+	// Assign a random port to the socket to avoid overlaps
+	cfg.Socket.Port = 0
+	ta, err := NewAgent(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	addr, _, err := ta.createListenSockets(ctx)
+	assert.NoError(err)
+	if err != nil {
+		assert.FailNow("createListenSockets() failed to run")
+	}
+
+	tcpClient, err := net.Dial("tcp", addr)
+	if err != nil {
+		assert.FailNow("failed to create TCP connection")
+	}
+
+	payload := corev1.CheckResult{
+		Name:   "app_01",
+		Output: "could not connect to something",
+		Client: "proxyEnt",
+	}
+	bytes, _ := json.Marshal(payload)
+
+	_, err = tcpClient.Write(bytes)
+	require.NoError(t, err)
+	require.NoError(t, tcpClient.Close())
+
+	msg := <-ta.sendq
+	assert.NotEmpty(msg)
+	assert.Equal("event", msg.Type)
+
+	var event types.Event
+	err = json.Unmarshal(msg.Payload, &event)
+	if err != nil {
+		assert.FailNow("failed to unmarshal event json")
+	}
+
+	assert.NotNil(event.Entity)
+	assert.Equal("app_01", event.Check.Name)
+	assert.Equal(uint32(0), event.Check.Status)
+	assert.Equal("proxyEnt", event.Check.ProxyEntityName)
+}
+
+func TestHandleTCPMessagesWithAgent(t *testing.T) {
+	assert := assert.New(t)
+
+	cfg, cleanup := FixtureConfig()
+	defer cleanup()
+	// Assign a random port to the socket to avoid overlaps
+	cfg.Socket.Port = 0
+	ta, err := NewAgent(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	addr, _, err := ta.createListenSockets(ctx)
+	assert.NoError(err)
+	if err != nil {
+		assert.FailNow("createListenSockets() failed to run")
+	}
+
+	tcpClient, err := net.Dial("tcp", addr)
+	if err != nil {
+		assert.FailNow("failed to create TCP connection")
+	}
+
+	payload := corev1.CheckResult{
+		Name:   "app_01",
+		Output: "could not connect to something",
+		Source: cfg.AgentName,
+	}
+	bytes, _ := json.Marshal(payload)
+
+	_, err = tcpClient.Write(bytes)
+	require.NoError(t, err)
+	require.NoError(t, tcpClient.Close())
+
+	msg := <-ta.sendq
+	assert.NotEmpty(msg)
+	assert.Equal("event", msg.Type)
+
+	var event types.Event
+	err = json.Unmarshal(msg.Payload, &event)
+	if err != nil {
+		assert.FailNow("failed to unmarshal event json")
+	}
+
+	assert.NotNil(event.Entity)
+	assert.Equal("app_01", event.Check.Name)
+	assert.Equal(uint32(0), event.Check.Status)
+	assert.Equal("", event.Check.ProxyEntityName)
+}
+
+func TestHandleTCPMessagesNoSource(t *testing.T) {
+	assert := assert.New(t)
+
+	cfg, cleanup := FixtureConfig()
+	defer cleanup()
+	// Assign a random port to the socket to avoid overlaps
+	cfg.Socket.Port = 0
+	ta, err := NewAgent(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	addr, _, err := ta.createListenSockets(ctx)
+	assert.NoError(err)
+	if err != nil {
+		assert.FailNow("createListenSockets() failed to run")
+	}
+
+	tcpClient, err := net.Dial("tcp", addr)
+	if err != nil {
+		assert.FailNow("failed to create TCP connection")
+	}
+
+	payload := corev1.CheckResult{
+		Name:   "app_01",
+		Output: "could not connect to something",
+	}
+	bytes, _ := json.Marshal(payload)
+
+	_, err = tcpClient.Write(bytes)
+	require.NoError(t, err)
+	require.NoError(t, tcpClient.Close())
+
+	msg := <-ta.sendq
+	assert.NotEmpty(msg)
+	assert.Equal("event", msg.Type)
+
+	var event types.Event
+	err = json.Unmarshal(msg.Payload, &event)
+	if err != nil {
+		assert.FailNow("failed to unmarshal event json")
+	}
+
+	assert.NotNil(event.Entity)
+	assert.Equal("app_01", event.Check.Name)
+	assert.Equal(uint32(0), event.Check.Status)
+	assert.Equal("", event.Check.ProxyEntityName)
+}
+
 func TestHandleUDPMessages(t *testing.T) {
 	assert := assert.New(t)
 
