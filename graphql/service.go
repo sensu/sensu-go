@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/graphql-go/graphql"
-	"github.com/sensu/sensu-go/util/strings"
 )
 
 // Service ...TODO...
@@ -160,16 +159,6 @@ func (r *typeRegister) addType(name string, kind Kind, fn registerTypeFn) {
 	r.types[kind][name] = fn
 }
 
-func (r *typeRegister) typeNames() []string {
-	out := []string{}
-	for _, ltypes := range r.types {
-		for name := range ltypes {
-			out = append(out, name)
-		}
-	}
-	return out
-}
-
 func (r *typeRegister) setSchema(desc SchemaDesc) {
 	r.schema = desc
 }
@@ -210,12 +199,15 @@ func newSchema(reg *typeRegister) (graphql.Schema, error) {
 		return schema, err
 	}
 
-	ltypes := reg.typeNames()
-	for _, ttype := range schema.TypeMap() {
-		if registered := strings.InArray(ttype.Name(), ltypes); registered {
+	// Types that are not directly referenced by the root Schema type or any of
+	// their children are not immediately registered with the schema. As such to
+	// ensure that ALL types are available we append any that are missing.
+	registeredTypes := schema.TypeMap()
+	for _, ltype := range typeMap {
+		if _, registered := registeredTypes[ltype.Name()]; registered {
 			continue
 		}
-		if err = schema.AppendType(ttype); err != nil {
+		if err = schema.AppendType(ltype); err != nil {
 			return schema, err
 		}
 	}
