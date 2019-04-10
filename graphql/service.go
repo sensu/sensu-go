@@ -89,9 +89,9 @@ func (service *Service) RegisterUnion(t UnionDesc, impl UnionTypeResolver) {
 	cfg := t.Config()
 	registrar := func(m graphql.TypeMap) graphql.Type {
 		newTypes := make([]*graphql.Object, len(cfg.Types))
-		for _, t := range cfg.Types {
+		for i, t := range cfg.Types {
 			objType := m[t.PrivateName].(*graphql.Object)
-			newTypes = append(newTypes, objType)
+			newTypes[i] = objType
 		}
 		cfg.Types = newTypes
 
