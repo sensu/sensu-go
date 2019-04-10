@@ -7,7 +7,7 @@ import (
 
 	time "github.com/echlebek/timeproxy"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/types/v1"
+	corev1 "github.com/sensu/sensu-go/types/v1"
 )
 
 func TestTranslateToEvent(t *testing.T) {
@@ -118,6 +118,53 @@ func TestTranslateToEvent(t *testing.T) {
 			},
 		},
 		{
+			Name:  "check with source no client",
+			Input: `{"name": "check-mysql-status", "output": "error!", "status": 1, "source": "foobar"}`,
+			ExpOutput: &corev2.Event{
+				Check: &corev2.Check{
+					ObjectMeta: corev2.ObjectMeta{
+						Name:      "check-mysql-status",
+						Namespace: "test-namespace",
+					},
+					Output:          "error!",
+					Status:          1,
+					ProxyEntityName: "foobar",
+				},
+				Entity: &corev2.Entity{
+					ObjectMeta: corev2.ObjectMeta{
+						Name:      "test-agent",
+						Namespace: "test-namespace",
+					},
+					EntityClass:   corev2.EntityAgentClass,
+					Subscriptions: []string{"default"},
+					User:          "test-user",
+					LastSeen:      time.Now().Unix(),
+				},
+			},
+		},
+		{
+			Name:  "check with source with client",
+			Input: `{"name": "check-mysql-status", "output": "error!", "status": 1, "source": "foobar", "client": "test-client"}`,
+			ExpOutput: &corev2.Event{
+				Check: &corev2.Check{
+					ObjectMeta: corev2.ObjectMeta{
+						Name:      "check-mysql-status",
+						Namespace: "test-namespace",
+					},
+					Output:          "error!",
+					Status:          1,
+					ProxyEntityName: "foobar",
+				},
+				Entity: &corev2.Entity{
+					ObjectMeta: corev2.ObjectMeta{
+						Name:      "test-client",
+						Namespace: "test-namespace",
+					},
+					EntityClass: corev2.EntityProxyClass,
+				},
+			},
+		},
+		{
 			Name:     "missing name",
 			Input:    `{"output": "error!", "status": 1, "handler": "poop", "handlers": ["slack"], "client": "foobar"}`,
 			ExpError: true,
@@ -131,7 +178,7 @@ func TestTranslateToEvent(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
-			var result v1.CheckResult
+			var result corev1.CheckResult
 			if err := json.Unmarshal([]byte(test.Input), &result); err != nil {
 				t.Fatal(err)
 			}

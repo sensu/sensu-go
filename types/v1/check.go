@@ -14,6 +14,7 @@ type CheckResult struct {
 	Executed    int64    `json:"executed"`
 	Duration    float64  `json:"duration"`
 	Output      string   `json:"output"`
+	Source      string   `json:"source"`
 
 	// Handler is deprecated but still supported
 	Handler string `json:"handler"`

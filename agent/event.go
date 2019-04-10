@@ -5,14 +5,14 @@ import (
 
 	time "github.com/echlebek/timeproxy"
 
-	"github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/types/v1"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev1 "github.com/sensu/sensu-go/types/v1"
 )
 
 // prepareEvent accepts a partial or complete event and tries to add any missing
 // attributes so it can pass validation. An error is returned if it still can't
 // pass validation after all these changes
-func prepareEvent(a *Agent, event *v2.Event) error {
+func prepareEvent(a *Agent, event *corev2.Event) error {
 	if event == nil {
 		return fmt.Errorf("an event must be provided")
 	}
@@ -55,7 +55,7 @@ func prepareEvent(a *Agent, event *v2.Event) error {
 
 // translateToEvent accepts a 1.x compatible check result
 // and attempts to translate it to a 2.x event
-func translateToEvent(a *Agent, result v1.CheckResult, event *v2.Event) error {
+func translateToEvent(a *Agent, result corev1.CheckResult, event *corev2.Event) error {
 	if result.Name == "" {
 		return fmt.Errorf("a check name must be provided")
 	}
@@ -68,9 +68,9 @@ func translateToEvent(a *Agent, result v1.CheckResult, event *v2.Event) error {
 	if result.Client == "" || result.Client == agentEntity.Name {
 		event.Entity = agentEntity
 	} else {
-		event.Entity = &v2.Entity{
-			ObjectMeta:  v2.NewObjectMeta(result.Client, agentEntity.Namespace),
-			EntityClass: v2.EntityProxyClass,
+		event.Entity = &corev2.Entity{
+			ObjectMeta:  corev2.NewObjectMeta(result.Client, agentEntity.Namespace),
+			EntityClass: corev2.EntityProxyClass,
 		}
 	}
 
@@ -79,17 +79,18 @@ func translateToEvent(a *Agent, result v1.CheckResult, event *v2.Event) error {
 		handlers = append(handlers, result.Handler)
 	}
 
-	check := &v2.Check{
-		ObjectMeta:    v2.NewObjectMeta(result.Name, agentEntity.Namespace),
-		Status:        result.Status,
-		Command:       result.Command,
-		Subscriptions: result.Subscribers,
-		Interval:      result.Interval,
-		Issued:        result.Issued,
-		Executed:      result.Executed,
-		Duration:      result.Duration,
-		Output:        result.Output,
-		Handlers:      handlers,
+	check := &corev2.Check{
+		ObjectMeta:      corev2.NewObjectMeta(result.Name, agentEntity.Namespace),
+		Status:          result.Status,
+		Command:         result.Command,
+		Subscriptions:   result.Subscribers,
+		Interval:        result.Interval,
+		Issued:          result.Issued,
+		Executed:        result.Executed,
+		Duration:        result.Duration,
+		Output:          result.Output,
+		Handlers:        handlers,
+		ProxyEntityName: result.Source,
 	}
 
 	// add config and check values to the 2.x event
