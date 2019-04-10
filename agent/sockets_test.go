@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/types/v1"
+	corev1 "github.com/sensu/sensu-go/types/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -38,10 +38,10 @@ func TestHandleTCPMessages(t *testing.T) {
 		assert.FailNow("failed to create TCP connection")
 	}
 
-	payload := v1.CheckResult{
+	payload := corev1.CheckResult{
 		Name:   "app_01",
 		Output: "could not connect to something",
-		Client: "proxEnt",
+		Source: "proxyEnt",
 	}
 	bytes, _ := json.Marshal(payload)
 
@@ -62,6 +62,7 @@ func TestHandleTCPMessages(t *testing.T) {
 	assert.NotNil(event.Entity)
 	assert.Equal("app_01", event.Check.Name)
 	assert.Equal(uint32(0), event.Check.Status)
+	assert.Equal("proxyEnt", event.Check.ProxyEntityName)
 }
 
 func TestHandleUDPMessages(t *testing.T) {
@@ -90,10 +91,10 @@ func TestHandleUDPMessages(t *testing.T) {
 		assert.FailNow("failed to create UDP connection")
 	}
 
-	payload := v1.CheckResult{
+	payload := corev1.CheckResult{
 		Name:   "app_01",
 		Output: "could not connect to something",
-		Client: "proxEnt",
+		Source: "proxyEnt",
 	}
 	bytes, _ := json.Marshal(payload)
 
@@ -114,6 +115,7 @@ func TestHandleUDPMessages(t *testing.T) {
 	assert.NotNil(event.Entity)
 	assert.Equal("app_01", event.Check.Name)
 	assert.Equal(uint32(0), event.Check.Status)
+	assert.Equal("proxyEnt", event.Check.ProxyEntityName)
 }
 
 func TestMultiWriteTimeoutTCP(t *testing.T) {
@@ -186,10 +188,10 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 		assert.FailNow("failed to create TCP connection")
 	}
 
-	payload := v1.CheckResult{
+	payload := corev1.CheckResult{
 		Name:   "app_01",
 		Output: "could not connect to something",
-		Client: "proxEnt",
+		Source: "proxyEnt",
 	}
 	bytes, _ := json.Marshal(payload)
 
@@ -207,6 +209,7 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 	assert.NotNil(event.Entity)
 	assert.Equal("app_01", event.Check.Name)
 	assert.Equal(uint32(0), event.Check.Status)
+	assert.Equal("proxyEnt", event.Check.ProxyEntityName)
 }
 
 func TestReceivePingTCP(t *testing.T) {

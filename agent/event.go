@@ -64,12 +64,17 @@ func translateToEvent(a *Agent, result corev1.CheckResult, event *corev2.Event) 
 		return fmt.Errorf("a check output must be provided")
 	}
 
+	source := result.Source
+	if source == "" {
+		source = result.Client
+	}
+
 	agentEntity := a.getAgentEntity()
-	if result.Client == "" || result.Client == agentEntity.Name {
+	if source == "" || source == agentEntity.Name {
 		event.Entity = agentEntity
 	} else {
 		event.Entity = &corev2.Entity{
-			ObjectMeta:  corev2.NewObjectMeta(result.Client, agentEntity.Namespace),
+			ObjectMeta:  corev2.NewObjectMeta(source, agentEntity.Namespace),
 			EntityClass: corev2.EntityProxyClass,
 		}
 	}
@@ -80,17 +85,16 @@ func translateToEvent(a *Agent, result corev1.CheckResult, event *corev2.Event) 
 	}
 
 	check := &corev2.Check{
-		ObjectMeta:      corev2.NewObjectMeta(result.Name, agentEntity.Namespace),
-		Status:          result.Status,
-		Command:         result.Command,
-		Subscriptions:   result.Subscribers,
-		Interval:        result.Interval,
-		Issued:          result.Issued,
-		Executed:        result.Executed,
-		Duration:        result.Duration,
-		Output:          result.Output,
-		Handlers:        handlers,
-		ProxyEntityName: result.Source,
+		ObjectMeta:    corev2.NewObjectMeta(result.Name, agentEntity.Namespace),
+		Status:        result.Status,
+		Command:       result.Command,
+		Subscriptions: result.Subscribers,
+		Interval:      result.Interval,
+		Issued:        result.Issued,
+		Executed:      result.Executed,
+		Duration:      result.Duration,
+		Output:        result.Output,
+		Handlers:      handlers,
 	}
 
 	// add config and check values to the 2.x event

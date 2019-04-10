@@ -74,8 +74,30 @@ func TestTranslateToEvent(t *testing.T) {
 			},
 		},
 		{
+			Name:  "check with source",
+			Input: `{"name": "check-mysql-status", "output": "error!", "status": 1, "handlers": ["slack"], "source": "foobar"}`,
+			ExpOutput: &corev2.Event{
+				Check: &corev2.Check{
+					ObjectMeta: corev2.ObjectMeta{
+						Name:      "check-mysql-status",
+						Namespace: "test-namespace",
+					},
+					Output:   "error!",
+					Status:   1,
+					Handlers: []string{"slack"},
+				},
+				Entity: &corev2.Entity{
+					ObjectMeta: corev2.ObjectMeta{
+						Name:      "foobar",
+						Namespace: "test-namespace",
+					},
+					EntityClass: corev2.EntityProxyClass,
+				},
+			},
+		},
+		{
 			Name:  "check with deprecated handler attr",
-			Input: `{"name": "check-mysql-status", "output": "error!", "status": 1, "handler": "slack", "client": "foobar"}`,
+			Input: `{"name": "check-mysql-status", "output": "error!", "status": 1, "handler": "slack", "source": "foobar"}`,
 			ExpOutput: &corev2.Event{
 				Check: &corev2.Check{
 					ObjectMeta: corev2.ObjectMeta{
@@ -97,7 +119,7 @@ func TestTranslateToEvent(t *testing.T) {
 		},
 		{
 			Name:  "check with deprecated handler attr and new handlers attr",
-			Input: `{"name": "check-mysql-status", "output": "error!", "status": 1, "handler": "poop", "handlers": ["slack"], "client": "foobar"}`,
+			Input: `{"name": "check-mysql-status", "output": "error!", "status": 1, "handler": "poop", "handlers": ["slack"], "source": "foobar"}`,
 			ExpOutput: &corev2.Event{
 				Check: &corev2.Check{
 					ObjectMeta: corev2.ObjectMeta{
@@ -118,60 +140,13 @@ func TestTranslateToEvent(t *testing.T) {
 			},
 		},
 		{
-			Name:  "check with source no client",
-			Input: `{"name": "check-mysql-status", "output": "error!", "status": 1, "source": "foobar"}`,
-			ExpOutput: &corev2.Event{
-				Check: &corev2.Check{
-					ObjectMeta: corev2.ObjectMeta{
-						Name:      "check-mysql-status",
-						Namespace: "test-namespace",
-					},
-					Output:          "error!",
-					Status:          1,
-					ProxyEntityName: "foobar",
-				},
-				Entity: &corev2.Entity{
-					ObjectMeta: corev2.ObjectMeta{
-						Name:      "test-agent",
-						Namespace: "test-namespace",
-					},
-					EntityClass:   corev2.EntityAgentClass,
-					Subscriptions: []string{"default"},
-					User:          "test-user",
-					LastSeen:      time.Now().Unix(),
-				},
-			},
-		},
-		{
-			Name:  "check with source with client",
-			Input: `{"name": "check-mysql-status", "output": "error!", "status": 1, "source": "foobar", "client": "test-client"}`,
-			ExpOutput: &corev2.Event{
-				Check: &corev2.Check{
-					ObjectMeta: corev2.ObjectMeta{
-						Name:      "check-mysql-status",
-						Namespace: "test-namespace",
-					},
-					Output:          "error!",
-					Status:          1,
-					ProxyEntityName: "foobar",
-				},
-				Entity: &corev2.Entity{
-					ObjectMeta: corev2.ObjectMeta{
-						Name:      "test-client",
-						Namespace: "test-namespace",
-					},
-					EntityClass: corev2.EntityProxyClass,
-				},
-			},
-		},
-		{
 			Name:     "missing name",
-			Input:    `{"output": "error!", "status": 1, "handler": "poop", "handlers": ["slack"], "client": "foobar"}`,
+			Input:    `{"output": "error!", "status": 1, "handler": "poop", "handlers": ["slack"], "source": "foobar"}`,
 			ExpError: true,
 		},
 		{
 			Name:     "missing output",
-			Input:    `{"name": "check-mysql-status", "status": 1, "handler": "poop", "handlers": ["slack"], "client": "foobar"}`,
+			Input:    `{"name": "check-mysql-status", "status": 1, "handler": "poop", "handlers": ["slack"], "source": "foobar"}`,
 			ExpError: true,
 		},
 	}
