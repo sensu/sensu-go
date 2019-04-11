@@ -187,6 +187,7 @@ func newStartCommand() *cobra.Command {
 			}
 
 			if !viper.GetBool(flagDisableSockets) {
+				// Agent TCP/UDP sockets are deprecated in favor of the agent rest api
 				sensuAgent.StartSocketListeners(ctx)
 			}
 
