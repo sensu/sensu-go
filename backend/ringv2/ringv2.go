@@ -13,6 +13,7 @@ import (
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/robfig/cron"
 	"github.com/sensu/sensu-go/backend/store"
+	"golang.org/x/time/rate"
 )
 
 // EventType is an enum that describes the type of event received by watchers.
@@ -89,6 +90,9 @@ type Ring struct {
 	watchers map[watcherKey]*watcher
 
 	mu sync.Mutex
+
+	// limit watch restarts to one per second (defensive)
+	watchLimiter *rate.Limiter
 }
 
 type watcherKey struct {
@@ -145,6 +149,7 @@ func New(client *clientv3.Client, storePath string) *Ring {
 		triggerPrefix: path.Join(storePath, "triggers"),
 		interval:      5,
 		watchers:      make(map[watcherKey]*watcher),
+		watchLimiter:  rate.NewLimiter(rate.Every(time.Second), 1),
 	}
 }
 
@@ -337,24 +342,27 @@ func (w *watcher) ensureActiveTrigger(ctx context.Context) error {
 }
 
 func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, values, interval int, cron string) {
+	_ = r.watchLimiter.Wait(ctx)
 	watcher, err := newWatcher(r, ch, name, values, interval, cron)
 	if err != nil {
 		notifyError(ch, err)
 		notifyClosing(ch)
-		close(ch)
 		return
 	}
-	itemsC := r.client.Watch(ctx, r.itemPrefix, clientv3.WithPrefix())
-	nextC := r.client.Watch(ctx, watcher.triggerKey(), clientv3.WithFilterPut(), clientv3.WithPrevKV())
+	cancelCtx, cancel := context.WithCancel(clientv3.WithRequireLeader(ctx))
+	itemsC := r.client.Watch(cancelCtx, r.itemPrefix, clientv3.WithPrefix())
+	nextC := r.client.Watch(cancelCtx, watcher.triggerKey(), clientv3.WithFilterPut(), clientv3.WithPrevKV())
 	r.mu.Lock()
 	r.watchers[watcher.watcherKey] = watcher
 	r.mu.Unlock()
 	if err := watcher.ensureActiveTrigger(ctx); err != nil {
 		notifyError(ch, fmt.Errorf("error while starting ring watcher: %s", err))
 		notifyClosing(ch)
+		cancel()
 		return
 	}
 	go func() {
+		defer cancel()
 		for {
 			select {
 			case <-ctx.Done():
@@ -362,18 +370,25 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, va
 				delete(r.watchers, watcher.watcherKey)
 				r.mu.Unlock()
 				notifyClosing(ch)
-				close(ch)
 				return
 			case response := <-itemsC:
 				if err := response.Err(); err != nil {
 					notifyError(ch, err)
-					continue
+				}
+				if response.Canceled {
+					// The watcher needs to be reinstated
+					r.startWatchers(ctx, ch, name, values, interval, cron)
+					return
 				}
 				notifyAddRemove(ch, response)
 			case response := <-nextC:
 				if err := response.Err(); err != nil {
 					notifyError(ch, err)
-					continue
+				}
+				if response.Canceled {
+					// The watcher needs to be reinstated
+					r.startWatchers(ctx, ch, name, values, interval, cron)
+					return
 				}
 				watcher.handleRingTrigger(ctx, ch, response)
 			case <-watcher.notifier:
@@ -387,6 +402,7 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, va
 
 func notifyClosing(ch chan<- Event) {
 	ch <- Event{Type: EventClosing}
+	close(ch)
 }
 
 func (r *Ring) nextInRing(ctx context.Context, prevKv *mvccpb.KeyValue, n int64) ([]*mvccpb.KeyValue, error) {

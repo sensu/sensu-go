@@ -7,10 +7,12 @@ import (
 	"path"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/time/rate"
 )
 
 var (
@@ -234,7 +236,6 @@ func (t *SwitchSet) getTTLFromEvent(event *clientv3.Event) (int64, State) {
 // monitor starts a goroutine that monitors the SwitchSet prefix for key PUT
 // and DELETE events.
 func (t *SwitchSet) monitor(ctx context.Context) {
-	wc := t.client.Watch(ctx, t.prefix, clientv3.WithPrefix(), clientv3.WithPrevKV())
 	go func() {
 		for event := range t.events {
 			if key, bury := event(); bury {
@@ -245,15 +246,23 @@ func (t *SwitchSet) monitor(ctx context.Context) {
 		}
 	}()
 	go func() {
+		var wc clientv3.WatchChan
+		ctx := clientv3.WithRequireLeader(ctx)
+		limiter := rate.NewLimiter(rate.Every(time.Second), 1)
+		_ = limiter.Wait(ctx)
+	OUTER:
+		wc = t.client.Watch(ctx, t.prefix, clientv3.WithPrefix(), clientv3.WithPrevKV())
 		for {
 			select {
 			case <-ctx.Done():
 				close(t.events)
 				return
-			case resp := <-wc:
-				if err := resp.Err(); err != nil {
+			case resp, ok := <-wc:
+				if err := resp.Err(); err != nil && err != context.Canceled {
 					t.logger.WithError(err).Error("error monitoring toggles")
-					continue
+				}
+				if resp.Canceled || !ok {
+					goto OUTER
 				}
 				for _, event := range resp.Events {
 					t.handleEvent(ctx, event)
