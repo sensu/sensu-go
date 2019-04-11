@@ -7,12 +7,12 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/mgutz/ansi"
@@ -26,6 +26,10 @@ const packageFilename = "package.tgz"
 const packageBranch = "master"
 
 const filenamePrefix = "assets_"
+
+// The ref file stores the git SHA associated with the embedded assets. It is
+// used to avoid short-curcuit needless updates of the asset box.
+const refFile = ".ref"
 
 var (
 	red    = ansi.ColorFunc("red+b")
@@ -43,6 +47,13 @@ func main() {
 	ref, err := fetchLatestRef()
 	if err != nil {
 		printErr(err.Error())
+		return
+	}
+
+	// read the git SHA associated with current state of the asset box
+	lastRef, err := readLastRef()
+	if lastRef == ref {
+		fmt.Println("assets are already up to date")
 		return
 	}
 
@@ -75,8 +86,33 @@ func main() {
 		VariableName: "OSS",
 	})
 	if err != nil {
-		log.Fatalln(err)
+		printErr(err.Error())
 	}
+
+	// save git SHA associated with the current state of the asset box
+	if err = writeLastRef(ref); err != nil {
+		printErr(err.Error())
+	}
+}
+
+func getLastRefPath() string {
+	_, currentFilePath, _, _ := runtime.Caller(0)
+	dir := path.Dir(currentFilePath)
+	return path.Join(dir, refFile)
+}
+
+func readLastRef() (string, error) {
+	path := getLastRefPath()
+	bs, err := ioutil.ReadFile(path)
+	if err != nil && err != os.ErrNotExist {
+		return "", err
+	}
+	return string(bs), nil
+}
+
+func writeLastRef(ref string) error {
+	path := getLastRefPath()
+	return ioutil.WriteFile(path, []byte(ref), 0644)
 }
 
 func fetchLatestRef() (string, error) {
