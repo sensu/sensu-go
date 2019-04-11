@@ -187,12 +187,10 @@ func (t *Tessend) updateRing() {
 // watchRing watches the ring and handles ring events. It recreates watchers
 // when they terminate due to error.
 func (t *Tessend) watchRing(ctx context.Context, tessen *corev2.TessenConfig, wg *sync.WaitGroup) {
+	wc := t.ring.Watch(ctx, "tessen", 1, int(t.interval), "")
 	go func() {
+		t.handleEvents(tessen, wc)
 		defer wg.Done()
-		for ctx.Err() == nil {
-			wc := t.ring.Watch(ctx, "tessen", 1, int(t.interval), "")
-			t.handleEvents(tessen, wc)
-		}
 	}()
 }
 
@@ -207,7 +205,7 @@ func (t *Tessend) handleEvents(tessen *corev2.TessenConfig, ch <-chan ringv2.Eve
 		case ringv2.EventRemove:
 			logger.WithField("values", event.Values).Debug("removed a backend from tessen")
 		case ringv2.EventTrigger:
-			logger.WithField("values", event.Values).Debug("tessen send event")
+			logger.WithField("values", event.Values).Debug("tessen ring trigger")
 			// only trigger tessen if the next backend in the ring is this backend
 			if event.Values[0] == t.backendID {
 				if t.enabled(tessen) {
@@ -269,8 +267,8 @@ func (t *Tessend) collectAndSend(tessen *corev2.TessenConfig) {
 	data := t.collect(time.Now().UTC().Unix())
 
 	logger.WithFields(logrus.Fields{
-		"url": t.url,
-		"id":  data.Cluster.ID,
+		"url":                       t.url,
+		"id":                        data.Cluster.ID,
 		data.Metrics.Points[0].Name: data.Metrics.Points[0].Value,
 		data.Metrics.Points[1].Name: data.Metrics.Points[1].Value,
 	}).Info("sending data to tessen")

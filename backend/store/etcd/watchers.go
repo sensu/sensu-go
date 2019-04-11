@@ -113,7 +113,7 @@ func (s *Store) GetEntityWatcher(ctx context.Context) <-chan store.WatchEventEnt
 func (s *Store) GetTessenConfigWatcher(ctx context.Context) <-chan store.WatchEventTessenConfig {
 	ch := make(chan store.WatchEventTessenConfig, 1)
 	key := tessenKeyBuilder.WithContext(ctx).Build()
-	w := Watch(ctx, s.client, key, true)
+	w := Watch(ctx, s.client, key, false)
 
 	go func() {
 		defer close(ch)
