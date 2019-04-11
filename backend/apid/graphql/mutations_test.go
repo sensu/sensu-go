@@ -12,6 +12,44 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
+func TestMutationTypePutWrapped(t *testing.T) {
+	params := schema.MutationPutWrappedFieldResolverParams{}
+	params.Args.Raw = `
+		{
+			"type": "Silenced",
+			"metadata": {
+				"namespace":"sensu-devel",
+				"name": "test:fred"
+			},
+			"spec": {
+				"check": "fred",
+				"creator": "asdfasdf"
+			}
+		}
+	`
+
+	client, factory := client.NewClientFactory()
+	client.On("PutResource", mock.Anything).Return(nil).Once()
+	impl := mutationsImpl{factory: factory}
+
+	// Success
+	body, err := impl.PutWrapped(params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, body)
+
+	// Bad JSON
+	params.Args.Raw = `{ "type.... ]`
+	body, err = impl.PutWrapped(params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, body)
+
+	// Failure
+	client.On("PutResource", mock.Anything).Return(errors.New("test")).Once()
+	body, err = impl.PutWrapped(params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, body)
+}
+
 func TestMutationTypeExecuteCheck(t *testing.T) {
 	inputs := schema.ExecuteCheckInput{}
 	params := schema.MutationExecuteCheckFieldResolverParams{}

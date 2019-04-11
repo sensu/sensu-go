@@ -10,6 +10,10 @@ interface Error {
   code: ErrCode!
 }
 
+"""
+StandardError is the standard implementation of an error that includes a
+message.
+"""
 type StandardError implements Error {
   "The field associated with the error."
   input: String

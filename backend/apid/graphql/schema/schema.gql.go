@@ -121,6 +121,23 @@ type QueryNodeFieldResolver interface {
 	Node(p QueryNodeFieldResolverParams) (interface{}, error)
 }
 
+// QueryWrappedNodeFieldResolverArgs contains arguments provided to wrappedNode when selected
+type QueryWrappedNodeFieldResolverArgs struct {
+	ID string // ID - The ID of an object.
+}
+
+// QueryWrappedNodeFieldResolverParams contains contextual info to resolve wrappedNode field
+type QueryWrappedNodeFieldResolverParams struct {
+	graphql.ResolveParams
+	Args QueryWrappedNodeFieldResolverArgs
+}
+
+// QueryWrappedNodeFieldResolver implement to resolve requests for the Query's wrappedNode field.
+type QueryWrappedNodeFieldResolver interface {
+	// WrappedNode implements response to request for wrappedNode field.
+	WrappedNode(p QueryWrappedNodeFieldResolverParams) (interface{}, error)
+}
+
 //
 // QueryFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Query' type.
@@ -189,6 +206,7 @@ type QueryFieldResolvers interface {
 	QueryEntityFieldResolver
 	QueryCheckFieldResolver
 	QueryNodeFieldResolver
+	QueryWrappedNodeFieldResolver
 }
 
 // QueryAliases implements all methods on QueryFieldResolvers interface by using reflection to
@@ -274,6 +292,12 @@ func (_ QueryAliases) Node(p QueryNodeFieldResolverParams) (interface{}, error) 
 	return val, err
 }
 
+// WrappedNode implements response to request for 'wrappedNode' field.
+func (_ QueryAliases) WrappedNode(p QueryWrappedNodeFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // QueryType The query root of Sensu's GraphQL interface.
 var QueryType = graphql.NewType("Query", graphql.ObjectKind)
 
@@ -350,6 +374,19 @@ func _ObjTypeQueryNodeHandler(impl interface{}) graphql1.FieldResolveFn {
 		}
 
 		return resolver.Node(frp)
+	}
+}
+
+func _ObjTypeQueryWrappedNodeHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(QueryWrappedNodeFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := QueryWrappedNodeFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.WrappedNode(frp)
 	}
 }
 
@@ -436,6 +473,16 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 				Name:              "viewer",
 				Type:              graphql.OutputType("Viewer"),
 			},
+			"wrappedNode": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{"id": &graphql1.ArgumentConfig{
+					Description: "The ID of an object.",
+					Type:        graphql1.NewNonNull(graphql1.ID),
+				}},
+				DeprecationReason: "",
+				Description:       "Node fetches an object given its ID and returns it as wrapped resource.",
+				Name:              "wrappedNode",
+				Type:              graphql.OutputType("JSON"),
+			},
 		},
 		Interfaces: []*graphql1.Interface{},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
@@ -454,11 +501,12 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeQueryDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeQueryConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"check":     _ObjTypeQueryCheckHandler,
-		"entity":    _ObjTypeQueryEntityHandler,
-		"event":     _ObjTypeQueryEventHandler,
-		"namespace": _ObjTypeQueryNamespaceHandler,
-		"node":      _ObjTypeQueryNodeHandler,
-		"viewer":    _ObjTypeQueryViewerHandler,
+		"check":       _ObjTypeQueryCheckHandler,
+		"entity":      _ObjTypeQueryEntityHandler,
+		"event":       _ObjTypeQueryEventHandler,
+		"namespace":   _ObjTypeQueryNamespaceHandler,
+		"node":        _ObjTypeQueryNodeHandler,
+		"viewer":      _ObjTypeQueryViewerHandler,
+		"wrappedNode": _ObjTypeQueryWrappedNodeHandler,
 	},
 }

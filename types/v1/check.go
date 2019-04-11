@@ -4,7 +4,7 @@ package v1
 // This is a subset of 1.x attributes, see:
 // https://docs.sensu.io/sensu-core/1.6/reference/checks/#check-attributes
 type CheckResult struct {
-	Client      string   `json:"client"`
+	Source      string   `json:"source"`
 	Status      uint32   `json:"status"`
 	Command     string   `json:"command"`
 	Subscribers []string `json:"subscribers"`
@@ -14,6 +14,9 @@ type CheckResult struct {
 	Executed    int64    `json:"executed"`
 	Duration    float64  `json:"duration"`
 	Output      string   `json:"output"`
+
+	// Client is deprecated but still supported
+	Client string `json:"client"`
 
 	// Handler is deprecated but still supported
 	Handler string `json:"handler"`

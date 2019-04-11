@@ -5,9 +5,7 @@ package etcd
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"reflect"
-	"sync"
 	"testing"
 	"time"
 
@@ -26,39 +24,43 @@ func TestWatcher(t *testing.T) {
 		check.Annotations["channel"] = "#monitoring"
 		check.Labels["region"] = "us-west-1"
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, check.Namespace)
+		cancelCtx, cancel := context.WithCancel(ctx)
 
 		// Create this check in the store
-		w := Watch(ctx, client, checkKeyBuilder.Build(""), true)
+		w := Watch(cancelCtx, client, checkKeyBuilder.Build(""), true)
 		if err := s.UpdateCheckConfig(ctx, check); err != nil {
 			t.Fatalf("create failed: %v", err)
 		}
 		expectObject(t, w, store.WatchCreate, check)
-		w.Stop()
+		cancel()
 
+		cancelCtx, cancel = context.WithCancel(ctx)
 		// Update this check
-		w = Watch(ctx, client, checkKeyBuilder.Build(""), true)
+		w = Watch(cancelCtx, client, checkKeyBuilder.Build(""), true)
 		check.Interval = 30
 		if err := s.UpdateCheckConfig(ctx, check); err != nil {
 			t.Fatalf("updated failed: %v", err)
 		}
 		expectObject(t, w, store.WatchUpdate, check)
-		w.Stop()
+		cancel()
 
 		// Generate a second fixture check
 		check2 := v2.FixtureCheckConfig("bar")
 		check2.Annotations["channel"] = "#monitoring"
 		check2.Labels["region"] = "us-west-1"
 
+		cancelCtx, cancel = context.WithCancel(ctx)
 		// Create this second check in the store
-		w = Watch(ctx, client, checkKeyBuilder.Build(""), true)
+		w = Watch(cancelCtx, client, checkKeyBuilder.Build(""), true)
 		if err := s.UpdateCheckConfig(ctx, check2); err != nil {
 			t.Fatalf("create failed: %v", err)
 		}
 		expectObject(t, w, store.WatchCreate, check2)
-		w.Stop()
+		cancel()
 
+		cancelCtx, cancel = context.WithCancel(ctx)
 		// Compact the history of etcd and make sure we can still watch
-		w = Watch(ctx, client, checkKeyBuilder.Build(""), true)
+		w = Watch(cancelCtx, client, checkKeyBuilder.Build(""), true)
 		_, err := client.Compact(ctx, 1, clientv3.WithCompactPhysical())
 		if err != nil {
 			t.Fatalf("error compacting: %v", err)
@@ -67,20 +69,21 @@ func TestWatcher(t *testing.T) {
 			t.Fatalf("updated failed: %v", err)
 		}
 		expectObject(t, w, store.WatchUpdate, check)
-		w.Stop()
+		cancel()
 
+		cancelCtx, cancel = context.WithCancel(ctx)
 		// Delete a key
-		w = Watch(ctx, client, checkKeyBuilder.Build(""), true)
+		w = Watch(cancelCtx, client, checkKeyBuilder.Build(""), true)
 		if err := s.DeleteCheckConfigByName(ctx, check.Name); err != nil {
 			t.Fatalf("deletion failed: %v", err)
 		}
 		expectType(t, w, store.WatchDelete)
-		w.Stop()
-
-		// Test a canceled context
-		canceledCtx, cancel := context.WithCancel(ctx)
 		cancel()
-		w = Watch(canceledCtx, client, checkKeyBuilder.Build(""), true)
+
+		// Test context cancelation
+		cancelCtx, cancel = context.WithCancel(ctx)
+		cancel()
+		w = Watch(cancelCtx, client, checkKeyBuilder.Build(""), true)
 
 		select {
 		case _, ok := <-w.Result():
@@ -93,54 +96,15 @@ func TestWatcher(t *testing.T) {
 	})
 }
 
-func TestWatcherDoesNotBlock(t *testing.T) {
-	testWithEtcdStore(t, func(s *Store) {
-		ctx, cancel := context.WithCancel(context.Background())
-
-		w := createWatcher(ctx, s.client, checkKeyBuilder.Build(""), true)
-
-		// Send an error, which should block resultChan. Then, cancel the ctx, which
-		// should freed up the blocking on resultChan and therefore cause the run()
-		// goroutine to return
-		var wg sync.WaitGroup
-		wg.Add(1)
-		go func() {
-			// startedWG is required by the run() goroutine but we can ignore it here
-			var startedWG sync.WaitGroup
-			startedWG.Add(1)
-			w.run(&startedWG)
-			wg.Done()
-		}()
-		w.errChan <- fmt.Errorf("error")
-		cancel()
-		wg.Wait()
-	})
-}
-
 func TestEtcdClientClosed(t *testing.T) {
 	testWithEtcdStore(t, func(s *Store) {
-		w := createWatcher(context.Background(), s.client, checkKeyBuilder.Build(""), true)
+		w := Watch(context.Background(), s.client, checkKeyBuilder.Build(""), true)
 
-		// Close the etcd client, which should send an error via the etcd watcher
-		// chan, and then consume resultChan to ensure the error was reported, and
-		// therefore cause the run() goroutine to return
-		var wg sync.WaitGroup
-		wg.Add(1)
-		// startedWG is used to ensure the watcher was properly started before
-		// trying to use any of its watcher
-		var startedWG sync.WaitGroup
-		startedWG.Add(1)
-		go func() {
-			w.run(&startedWG)
-			wg.Done()
-		}()
-		startedWG.Wait()
 		// Close the etcd client
 		if err := w.client.Close(); err != nil {
 			t.Fatal(err)
 		}
 		expectType(t, w, store.WatchError)
-		wg.Wait()
 	})
 }
 

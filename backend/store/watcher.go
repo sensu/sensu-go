@@ -22,12 +22,12 @@ type WatchEvent struct {
 	Type   WatchActionType
 	Key    string
 	Object []byte
+	Err    error
 }
 
 // Watcher represents a generic watcher
 type Watcher interface {
 	Result() <-chan WatchEvent
-	Stop()
 }
 
 func (t WatchActionType) String() string {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/graphql-go/graphql"
+	"github.com/sensu/sensu-go/util/strings"
 )
 
 // Service ...TODO...
@@ -159,6 +160,16 @@ func (r *typeRegister) addType(name string, kind Kind, fn registerTypeFn) {
 	r.types[kind][name] = fn
 }
 
+func (r *typeRegister) typeNames() []string {
+	out := []string{}
+	for _, ltypes := range r.types {
+		for name := range ltypes {
+			out = append(out, name)
+		}
+	}
+	return out
+}
+
 func (r *typeRegister) setSchema(desc SchemaDesc) {
 	r.schema = desc
 }
@@ -194,7 +205,22 @@ func newSchema(reg *typeRegister) (graphql.Schema, error) {
 		schemaCfg.Subscription = subscriptionType.(*graphql.Object)
 	}
 
-	return graphql.NewSchema(schemaCfg)
+	schema, err := graphql.NewSchema(schemaCfg)
+	if err != nil {
+		return schema, err
+	}
+
+	ltypes := reg.typeNames()
+	for _, ttype := range schema.TypeMap() {
+		if registered := strings.InArray(ttype.Name(), ltypes); registered {
+			continue
+		}
+		if err = schema.AppendType(ttype); err != nil {
+			return schema, err
+		}
+	}
+
+	return schema, err
 }
 
 func registerTypes(m graphql.TypeMap, col ...map[string]registerTypeFn) {

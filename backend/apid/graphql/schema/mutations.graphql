@@ -4,6 +4,13 @@ The root query for implementing GraphQL mutations.
 type Mutation {
 
   #
+  # Generic
+  #
+
+  "Create or overrwrite resource from given wrapped resource."
+  putWrapped(raw: String!): PutWrappedPayload!
+
+  #
   # Checks
   #
 
@@ -45,6 +52,21 @@ type Mutation {
 
   "Removes given silence."
   deleteSilence(input: DeleteRecordInput!): DeleteRecordPayload
+}
+
+#
+# Generic
+#
+
+type PutWrappedPayload {
+  "The newly created / updated resource"
+  node: Node
+
+  """
+  Includes any failed preconditions or unrecoverable errors that occurred while
+  executing the mutation.
+  """
+  errors: [Error!]!
 }
 
 """

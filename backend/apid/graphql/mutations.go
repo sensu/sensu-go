@@ -1,7 +1,9 @@
 package graphql
 
 import (
+	"encoding/json"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/mitchellh/mapstructure"
@@ -22,6 +24,38 @@ type mutationsImpl struct {
 
 type deleteRecordPayload struct {
 	schema.DeleteRecordPayloadAliases
+}
+
+//
+// Implement generic PUT mutation
+//
+
+// PutWrapped implements response to request for the 'putWrapped' field.
+func (r *mutationsImpl) PutWrapped(p schema.MutationPutWrappedFieldResolverParams) (interface{}, error) {
+	var ret types.Wrapper
+	raw := p.Args.Raw
+
+	// decode given
+	dec := json.NewDecoder(strings.NewReader(raw))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&ret); err != nil {
+		return map[string]interface{}{
+			"errors": wrapInputErrors("raw", err),
+		}, nil
+	}
+
+	// PUT wrapped resource
+	client := r.factory.NewWithContext(p.Context)
+	if err := client.PutResource(ret); err != nil {
+		return map[string]interface{}{
+			"errors": wrapInputErrors("raw", err),
+		}, nil
+	}
+
+	return map[string]interface{}{
+		"node":   ret.Value,
+		"errors": []stdErr{},
+	}, nil
 }
 
 //

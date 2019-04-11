@@ -34,6 +34,7 @@ func newNodeResolver(factory ClientFactory) *nodeResolver {
 	registerUserNodeResolver(register, factory)
 	registerEventNodeResolver(register, factory)
 	registerNamespaceNodeResolver(register, factory)
+	registerSilencedNodeResolver(register, factory)
 
 	return &nodeResolver{register}
 }
@@ -361,5 +362,27 @@ func registerNamespaceNodeResolver(register relay.NodeRegister, factory ClientFa
 func (f *namespaceNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
 	client := f.factory.NewWithContext(p.Context)
 	record, err := client.FetchNamespace(p.IDComponents.UniqueComponent())
+	return handleFetchResult(record, err)
+}
+
+// silences
+
+type silencedNodeResolver struct {
+	factory ClientFactory
+}
+
+func registerSilencedNodeResolver(register relay.NodeRegister, factory ClientFactory) {
+	resolver := &silencedNodeResolver{factory}
+	register.RegisterResolver(relay.NodeResolver{
+		ObjectType: schema.SilencedType,
+		Translator: globalid.SilenceTranslator,
+		Resolve:    resolver.fetch,
+	})
+}
+
+func (f *silencedNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
+	ctx := setContextFromComponents(p.Context, p.IDComponents)
+	client := f.factory.NewWithContext(ctx)
+	record, err := client.FetchRoleBinding(p.IDComponents.UniqueComponent())
 	return handleFetchResult(record, err)
 }
