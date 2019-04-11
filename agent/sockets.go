@@ -12,12 +12,14 @@ import (
 
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/types/v1"
+	corev1 "github.com/sensu/sensu-go/types/v1"
 )
 
 var (
 	pingRe = regexp.MustCompile(`\s+ping\s+`)
 )
+
+// Agent TCP/UDP sockets are deprecated in favor of the agent rest api
 
 // createListenSockets UDP and TCP socket listeners on port 3030 for external check
 // events.
@@ -140,7 +142,7 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 		// read again from client, add any new message to the buffer, and parse
 		// again.
 		var event types.Event
-		var result v1.CheckResult
+		var result corev1.CheckResult
 		if err = json.Unmarshal(messageBuffer.Bytes(), &result); err != nil {
 			continue
 		}
@@ -223,7 +225,7 @@ func (a *Agent) handleUDPMessages(ctx context.Context, c net.PacketConn) {
 			// message sender with the addition of the agent's entity if it is not
 			// included in the message. Any JSON errors are logged, and we return.
 			var event types.Event
-			var result v1.CheckResult
+			var result corev1.CheckResult
 			if err = json.Unmarshal(buf[:bytesRead], &result); err != nil {
 				logger.WithError(err).Error("UDP Invalid event data")
 				return

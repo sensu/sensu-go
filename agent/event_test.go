@@ -7,7 +7,7 @@ import (
 
 	time "github.com/echlebek/timeproxy"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/types/v1"
+	corev1 "github.com/sensu/sensu-go/types/v1"
 )
 
 func TestTranslateToEvent(t *testing.T) {
@@ -52,7 +52,32 @@ func TestTranslateToEvent(t *testing.T) {
 			},
 		},
 		{
-			Name:  "check with client",
+			Name:  "check from docs with source existing agent",
+			Input: `{"name": "check-mysql-status", "output": "error!", "status": 1, "handlers": ["slack"], "source": "test-agent"}`,
+			ExpOutput: &corev2.Event{
+				Check: &corev2.Check{
+					ObjectMeta: corev2.ObjectMeta{
+						Name:      "check-mysql-status",
+						Namespace: "test-namespace",
+					},
+					Output:   "error!",
+					Status:   1,
+					Handlers: []string{"slack"},
+				},
+				Entity: &corev2.Entity{
+					ObjectMeta: corev2.ObjectMeta{
+						Name:      "test-agent",
+						Namespace: "test-namespace",
+					},
+					EntityClass:   corev2.EntityAgentClass,
+					Subscriptions: []string{"default"},
+					User:          "test-user",
+					LastSeen:      time.Now().Unix(),
+				},
+			},
+		},
+		{
+			Name:  "check with deprecated client",
 			Input: `{"name": "check-mysql-status", "output": "error!", "status": 1, "handlers": ["slack"], "client": "foobar"}`,
 			ExpOutput: &corev2.Event{
 				Check: &corev2.Check{
@@ -74,8 +99,30 @@ func TestTranslateToEvent(t *testing.T) {
 			},
 		},
 		{
+			Name:  "check with source",
+			Input: `{"name": "check-mysql-status", "output": "error!", "status": 1, "handlers": ["slack"], "source": "foobar"}`,
+			ExpOutput: &corev2.Event{
+				Check: &corev2.Check{
+					ObjectMeta: corev2.ObjectMeta{
+						Name:      "check-mysql-status",
+						Namespace: "test-namespace",
+					},
+					Output:   "error!",
+					Status:   1,
+					Handlers: []string{"slack"},
+				},
+				Entity: &corev2.Entity{
+					ObjectMeta: corev2.ObjectMeta{
+						Name:      "foobar",
+						Namespace: "test-namespace",
+					},
+					EntityClass: corev2.EntityProxyClass,
+				},
+			},
+		},
+		{
 			Name:  "check with deprecated handler attr",
-			Input: `{"name": "check-mysql-status", "output": "error!", "status": 1, "handler": "slack", "client": "foobar"}`,
+			Input: `{"name": "check-mysql-status", "output": "error!", "status": 1, "handler": "slack", "source": "foobar"}`,
 			ExpOutput: &corev2.Event{
 				Check: &corev2.Check{
 					ObjectMeta: corev2.ObjectMeta{
@@ -97,7 +144,7 @@ func TestTranslateToEvent(t *testing.T) {
 		},
 		{
 			Name:  "check with deprecated handler attr and new handlers attr",
-			Input: `{"name": "check-mysql-status", "output": "error!", "status": 1, "handler": "poop", "handlers": ["slack"], "client": "foobar"}`,
+			Input: `{"name": "check-mysql-status", "output": "error!", "status": 1, "handler": "poop", "handlers": ["slack"], "source": "foobar"}`,
 			ExpOutput: &corev2.Event{
 				Check: &corev2.Check{
 					ObjectMeta: corev2.ObjectMeta{
@@ -119,19 +166,19 @@ func TestTranslateToEvent(t *testing.T) {
 		},
 		{
 			Name:     "missing name",
-			Input:    `{"output": "error!", "status": 1, "handler": "poop", "handlers": ["slack"], "client": "foobar"}`,
+			Input:    `{"output": "error!", "status": 1, "handler": "poop", "handlers": ["slack"], "source": "foobar"}`,
 			ExpError: true,
 		},
 		{
 			Name:     "missing output",
-			Input:    `{"name": "check-mysql-status", "status": 1, "handler": "poop", "handlers": ["slack"], "client": "foobar"}`,
+			Input:    `{"name": "check-mysql-status", "status": 1, "handler": "poop", "handlers": ["slack"], "source": "foobar"}`,
 			ExpError: true,
 		},
 	}
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
-			var result v1.CheckResult
+			var result corev1.CheckResult
 			if err := json.Unmarshal([]byte(test.Input), &result); err != nil {
 				t.Fatal(err)
 			}
