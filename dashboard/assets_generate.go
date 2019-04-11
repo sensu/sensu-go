@@ -28,7 +28,7 @@ const packageBranch = "master"
 const filenamePrefix = "assets_"
 
 // The ref file stores the git SHA associated with the embedded assets. It is
-// used to avoid short-curcuit needless updates of the asset box.
+// used to short-curcuit needless updates of the asset box.
 const refFile = ".ref"
 
 var (
