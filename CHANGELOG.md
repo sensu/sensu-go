@@ -8,6 +8,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Changed
+- Added parsing annoatations to sensu-agent, both from agent.yml and command line arguments
+
+### Changed
 - Updated Go version from 1.11.4 to 1.12.3.
 
 ## [5.5.0] - 2019-04-03
