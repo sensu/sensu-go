@@ -24,6 +24,7 @@ results from watchers that broke, due to their stream terminating. Other
 components would simply stop updating. Watchers now get reinstated when the
 client regains connectivity.
 - Fixed the `/events/:entity` route in the REST API.
+- Fixed a bug where the --labels arg was not working as expected in sensu-agent.
 
 ## [5.5.0] - 2019-04-03
 
