@@ -117,6 +117,9 @@ type Config struct {
 	// Labels are key-value pairs that users can provide to agent entities
 	Labels map[string]string
 
+	// Annotations are key-value pairs that users can provide to agent entities
+	Annotations map[string]string
+
 	// Namespace sets the Agent's RBAC namespace identifier
 	Namespace string
 
