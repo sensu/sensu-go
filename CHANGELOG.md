@@ -5,13 +5,25 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [5.5.1] - 2019-04-15
 
 ### Changed
 - Added parsing annoatations to sensu-agent, both from agent.yml and command line arguments
+- Updated Go version from 1.11.4 to 1.12.3 for CI builds.
+- Changed the 1.x `client` field to `source` in the 1.x compatible agent socket. The `client` field is now deprecated.
+- Deprecated the agent TCP/UDP sockets in favor of the agent rest api.
+- [GraphQL] Added mutation to create / update using wrapped resources.
+- [GraphQL] Added field returning wrapped resource given ID.
+- apid uses a new generic router for listing resources.
+- The store uses the generic List function for listing resources.
 
-### Changed
-- Updated Go version from 1.11.4 to 1.12.3.
+### Fixed
+- Fixed an issue where etcd watchers were used incorrectly. This was causing
+100% CPU usage in some components, as they would loop endlessly trying to get
+results from watchers that broke, due to their stream terminating. Other
+components would simply stop updating. Watchers now get reinstated when the
+client regains connectivity.
+- Fixed the `/events/:entity` route in the REST API.
 
 ## [5.5.0] - 2019-04-03
 
