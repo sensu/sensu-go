@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [5.6.0] - TBD
 
+### Fixed
+- Fixed the agent `--annotations` and `--labels` flags.
+
 ## [5.5.1] - 2019-04-15
 
 ### Changed
