@@ -170,15 +170,11 @@ func newStartCommand() *cobra.Command {
 			// Workaround for https://github.com/sensu/sensu-go/issues/2357. Detect if
 			// the flags for labels and annotations were changed. If so, use their
 			// values since flags take precedence over config
-			if flag := cmd.Flags().Lookup(flagLabels); flag != nil {
-				if flag.Changed {
-					cfg.Labels = labels
-				}
+			if flag := cmd.Flags().Lookup(flagLabels); flag != nil && flag.Changed {
+				cfg.Labels = labels
 			}
-			if flag := cmd.Flags().Lookup(flagAnnotations); flag != nil {
-				if flag.Changed {
-					cfg.Labels = annotations
-				}
+			if flag := cmd.Flags().Lookup(flagAnnotations); flag != nil && flag.Changed {
+				cfg.Annotations = annotations
 			}
 
 			sensuAgent, err := agent.NewAgent(cfg)
