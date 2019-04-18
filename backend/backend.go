@@ -243,6 +243,7 @@ func Initialize(config *Config) (*Backend, error) {
 		Store:    store,
 		RingPool: ringPool,
 		Client:   b.Client,
+		Bus:      bus,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", tessen.Name(), err)

@@ -2,6 +2,7 @@ package actions
 
 import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"golang.org/x/net/context"
 )
@@ -9,12 +10,14 @@ import (
 // TessenController exposes actions which a viewer can perform
 type TessenController struct {
 	store store.TessenConfigStore
+	bus   messaging.MessageBus
 }
 
 // NewTessenController returns a new TessenController
-func NewTessenController(store store.TessenConfigStore) TessenController {
+func NewTessenController(store store.TessenConfigStore, bus messaging.MessageBus) TessenController {
 	return TessenController{
 		store: store,
+		bus:   bus,
 	}
 }
 
@@ -27,6 +30,11 @@ func (c TessenController) CreateOrUpdate(ctx context.Context, config *corev2.Tes
 		default:
 			return NewError(InternalErr, err)
 		}
+	}
+
+	// Publish to Tessend
+	if err := c.bus.Publish(messaging.TopicTessen, config); err != nil {
+		return NewError(InternalErr, err)
 	}
 
 	return nil
