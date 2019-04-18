@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -30,8 +31,8 @@ func (r *AssetsRouter) Mount(parent *mux.Router) {
 	}
 
 	routes.Get(r.find)
-	routes.List(r.controller.List)
-	routes.ListAllNamespaces(r.controller.List, "/{resource:assets}")
+	routes.List(r.controller.List, corev2.AssetFields)
+	routes.ListAllNamespaces(r.controller.List, "/{resource:assets}", corev2.AssetFields)
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
 }

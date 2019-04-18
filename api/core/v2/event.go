@@ -5,6 +5,8 @@ import (
 	fmt "fmt"
 	"net/url"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	stringsutil "github.com/sensu/sensu-go/util/strings"
@@ -348,4 +350,22 @@ func (e *Event) IsSilencedBy(entry *Silenced) bool {
 	}
 
 	return false
+}
+
+// EventFields returns a set of fields that represent that resource
+func EventFields(r Resource) map[string]string {
+	resource := r.(*Event)
+	fields := make(map[string]string, 11)
+	fields["event.name"] = resource.ObjectMeta.Name
+	fields["event.namespace"] = resource.ObjectMeta.Namespace
+	fields["event.check.handlers"] = strings.Join(resource.Check.Handlers, ",")
+	fields["event.check.publish"] = strconv.FormatBool(resource.Check.Publish)
+	fields["event.check.round_robin"] = strconv.FormatBool(resource.Check.RoundRobin)
+	fields["event.check.runtime_assets"] = strings.Join(resource.Check.RuntimeAssets, ",")
+	fields["event.check.status"] = strconv.Itoa(int(resource.Check.Status))
+	fields["event.check.subscriptions"] = strings.Join(resource.Check.Subscriptions, ",")
+	fields["event.entity.deregister"] = strconv.FormatBool(resource.Entity.Deregister)
+	fields["event.entity.entity_class"] = resource.Entity.EntityClass
+	fields["event.entity.subscriptions"] = strings.Join(resource.Entity.Subscriptions, ",")
+	return fields
 }

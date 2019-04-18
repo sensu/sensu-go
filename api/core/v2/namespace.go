@@ -27,7 +27,7 @@ func FixtureNamespace(name string) *Namespace {
 	}
 }
 
-// URIPath returns the path component of a Namespace URI.
+// URIPath returns the path component of a Namespace 	URI.
 func (n *Namespace) URIPath() string {
 	return fmt.Sprintf("/api/core/v2/namespaces/%s", url.PathEscape(n.Name))
 }
@@ -35,4 +35,12 @@ func (n *Namespace) URIPath() string {
 // GetObjectMeta only exists here to fulfil the requirements of Resource
 func (n *Namespace) GetObjectMeta() ObjectMeta {
 	return ObjectMeta{}
+}
+
+// NamespaceFields returns a set of fields that represent that resource
+func NamespaceFields(r Resource) map[string]string {
+	resource := r.(*Namespace)
+	fields := make(map[string]string, 1)
+	fields["namespace.name"] = resource.Name
+	return fields
 }

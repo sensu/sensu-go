@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
@@ -451,4 +453,18 @@ func (c *CheckConfig) IsSubdued() bool {
 		return false
 	}
 	return subdued
+}
+
+// CheckConfigFields returns a set of fields that represent that resource
+func CheckConfigFields(r Resource) map[string]string {
+	resource := r.(*CheckConfig)
+	fields := make(map[string]string, 7)
+	fields["check.name"] = resource.ObjectMeta.Name
+	fields["check.namespace"] = resource.ObjectMeta.Namespace
+	fields["check.handlers"] = strings.Join(resource.Handlers, ",")
+	fields["check.publish"] = strconv.FormatBool(resource.Publish)
+	fields["check.round_robin"] = strconv.FormatBool(resource.RoundRobin)
+	fields["check.runtime_assets"] = strings.Join(resource.RuntimeAssets, ",")
+	fields["check.subscriptions"] = strings.Join(resource.Subscriptions, ",")
+	return fields
 }

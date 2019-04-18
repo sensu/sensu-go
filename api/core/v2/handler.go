@@ -4,6 +4,7 @@ import (
 	"errors"
 	fmt "fmt"
 	"net/url"
+	"strings"
 )
 
 const (
@@ -109,4 +110,17 @@ func FixtureSetHandler(name string, handlers ...string) *Handler {
 // URIPath returns the path component of a Handler URI.
 func (h *Handler) URIPath() string {
 	return fmt.Sprintf("/api/core/v2/namespaces/%s/handlers/%s", url.PathEscape(h.Namespace), url.PathEscape(h.Name))
+}
+
+// HandlerFields returns a set of fields that represent that resource
+func HandlerFields(r Resource) map[string]string {
+	resource := r.(*Handler)
+	fields := make(map[string]string, 6)
+	fields["handler.name"] = resource.ObjectMeta.Name
+	fields["handler.namespace"] = resource.ObjectMeta.Namespace
+	fields["handler.filters"] = strings.Join(resource.Filters, ",")
+	fields["handler.handlers"] = strings.Join(resource.Handlers, ",")
+	fields["handler.mutator"] = resource.Mutator
+	fields["handler.type"] = resource.Type
+	return fields
 }

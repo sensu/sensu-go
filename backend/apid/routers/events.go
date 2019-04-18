@@ -6,6 +6,7 @@ import (
 	"path"
 
 	"github.com/gorilla/mux"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
@@ -32,15 +33,16 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 	}
 
 	routes.Post(r.create)
-	routes.List(r.controller.List)
-	routes.ListAllNamespaces(r.controller.List, "/{resource:events}")
+	routes.List(r.controller.List, corev2.EventFields)
+	routes.ListAllNamespaces(r.controller.List, "/{resource:events}", corev2.EventFields)
 	routes.Path("{entity}/{check}", r.find).Methods(http.MethodGet)
 	routes.Path("{entity}/{check}", r.destroy).Methods(http.MethodDelete)
 	routes.Path("{entity}/{check}", r.createOrReplace).Methods(http.MethodPut)
 
 	// Additionaly allow a subcollection to be specified when listing events,
 	// which correspond to the entity name here
-	parent.HandleFunc(path.Join(routes.PathPrefix, "{subcollection}"), listerHandler(r.controller.List)).Methods(http.MethodGet)
+	parent.HandleFunc(path.Join(routes.PathPrefix, "{subcollection}"),
+		listerHandler(r.controller.List, corev2.EventFields)).Methods(http.MethodGet)
 }
 
 func (r *EventsRouter) find(req *http.Request) (interface{}, error) {

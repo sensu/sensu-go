@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"sort"
+	"strconv"
 	"strings"
 )
 
@@ -123,4 +124,17 @@ func (s *silenceSorter) Swap(i, j int) {
 // Less implements sort.Interface.
 func (s *silenceSorter) Less(i, j int) bool {
 	return s.byFn(s.silences[i], s.silences[j])
+}
+
+// SilencedFields returns a set of fields that represent that resource
+func SilencedFields(r Resource) map[string]string {
+	resource := r.(*Silenced)
+	fields := make(map[string]string, 6)
+	fields["silenced.name"] = resource.ObjectMeta.Name
+	fields["silenced.namespace"] = resource.ObjectMeta.Namespace
+	fields["silenced.check"] = resource.Check
+	fields["silenced.creator"] = resource.Creator
+	fields["silenced.expire_on_resolve"] = strconv.FormatBool(resource.ExpireOnResolve)
+	fields["silenced.subscription"] = resource.Subscription
+	return fields
 }

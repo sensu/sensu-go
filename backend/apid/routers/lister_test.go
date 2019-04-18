@@ -92,8 +92,8 @@ func TestList(t *testing.T) {
 			w := httptest.NewRecorder()
 
 			router := mux.NewRouter()
-			router.PathPrefix("/foo/{subcollection}").HandlerFunc(List(controller.List))
-			router.PathPrefix("/foo").HandlerFunc(List(controller.List))
+			router.PathPrefix("/foo/{subcollection}").HandlerFunc(List(controller.List, corev2.CheckConfigFields))
+			router.PathPrefix("/foo").HandlerFunc(List(controller.List, corev2.CheckConfigFields))
 			middleware := middlewares.Pagination{}
 			router.Use(middleware.Then)
 			router.ServeHTTP(w, r)

@@ -36,3 +36,12 @@ func FixtureExtension(name string) *Extension {
 func NewExtension(meta ObjectMeta) *Extension {
 	return &Extension{ObjectMeta: meta}
 }
+
+// ExtensionFields returns a set of fields that represent that resource
+func ExtensionFields(r Resource) map[string]string {
+	resource := r.(*Extension)
+	fields := make(map[string]string, 2)
+	fields["extension.name"] = resource.ObjectMeta.Name
+	fields["extension.namespace"] = resource.ObjectMeta.Namespace
+	return fields
+}
