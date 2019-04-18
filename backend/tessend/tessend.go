@@ -184,6 +184,7 @@ func (t *Tessend) startMessageHandler() {
 				data.Metrics.Points[0].Name: data.Metrics.Points[0].Value,
 			}).Info("sending opt-out status event to tessen")
 			_ = t.send(data)
+		default:
 		}
 	}
 }
