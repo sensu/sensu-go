@@ -159,33 +159,30 @@ func (t *Tessend) Receiver() chan<- interface{} {
 
 func (t *Tessend) startMessageHandler() {
 	for {
-		select {
-		case msg, ok := <-t.messageChan:
-			if !ok {
-				select {
-				case t.errChan <- errors.New("tessen message channel closed"):
-				default:
-				}
-				return
+		msg, ok := <-t.messageChan
+		if !ok {
+			select {
+			case t.errChan <- errors.New("tessen message channel closed"):
+			default:
 			}
-
-			tessen, ok := msg.(*corev2.TessenConfig)
-			if !ok {
-				logger.WithField("msg", msg).Errorf("received non-TessenConfig on tessen message channel")
-				return
-			}
-
-			data := t.getDataPayload()
-			t.getTessenConfigMetrics(time.Now().UTC().Unix(), tessen, data)
-			logger.WithFields(logrus.Fields{
-				"url":                       t.url,
-				"id":                        data.Cluster.ID,
-				"opt-out":                   tessen.OptOut,
-				data.Metrics.Points[0].Name: data.Metrics.Points[0].Value,
-			}).Info("sending opt-out status event to tessen")
-			_ = t.send(data)
-		default:
+			return
 		}
+
+		tessen, ok := msg.(*corev2.TessenConfig)
+		if !ok {
+			logger.WithField("msg", msg).Errorf("received non-TessenConfig on tessen message channel")
+			return
+		}
+
+		data := t.getDataPayload()
+		t.getTessenConfigMetrics(time.Now().UTC().Unix(), tessen, data)
+		logger.WithFields(logrus.Fields{
+			"url":                       t.url,
+			"id":                        data.Cluster.ID,
+			"opt-out":                   tessen.OptOut,
+			data.Metrics.Points[0].Name: data.Metrics.Points[0].Value,
+		}).Info("sending opt-out status event to tessen")
+		_ = t.send(data)
 	}
 }
 
