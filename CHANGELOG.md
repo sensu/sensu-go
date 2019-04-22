@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Added the message bus to Tessend in order to track Tessen configuration changes from the API.
+- Added a performance optimizing `Count()` function to the generic store.
 
 ## [5.5.1] - 2019-04-15
 

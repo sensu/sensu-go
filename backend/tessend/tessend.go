@@ -4,8 +4,8 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"strconv"
@@ -161,10 +161,7 @@ func (t *Tessend) startMessageHandler() {
 	for {
 		msg, ok := <-t.messageChan
 		if !ok {
-			select {
-			case t.errChan <- errors.New("tessen message channel closed"):
-			default:
-			}
+			logger.Debug("tessen message channel closed")
 			return
 		}
 
@@ -401,13 +398,11 @@ func (t *Tessend) getTessenMetrics(now int64, data *Data) {
 	var entityCount, backendCount float64
 
 	// collect entity count
-	entities, err := t.store.GetEntities(t.ctx, &store.SelectionPredicate{})
+	entities, err := etcd.Count(t.ctx, t.client, etcd.GetEntitiesPath(t.ctx, ""))
 	if err != nil {
 		logger.WithError(err).Error("unable to retrieve entity count")
 	}
-	if entities != nil {
-		entityCount = float64(len(entities))
-	}
+	entityCount = float64(entities)
 
 	// collect backend count
 	cluster, err := t.client.Cluster.MemberList(t.ctx)
@@ -463,8 +458,9 @@ func (t *Tessend) send(data *Data) string {
 		logger.WithError(err).Error("tessen phone-home service failed")
 		return ""
 	}
+	defer resp.Body.Close()
 	if resp.StatusCode >= 400 {
-		body, _ := ioutil.ReadAll(resp.Body)
+		body, _ := ioutil.ReadAll(io.LimitReader(resp.Body, 4096))
 		logger.Errorf("bad status: %d (%q)", resp.StatusCode, string(body))
 		return ""
 	}
