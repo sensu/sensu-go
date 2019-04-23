@@ -49,10 +49,10 @@ func (s *Store) GetClusterRole(ctx context.Context, name string) (*types.Cluster
 }
 
 // ListClusterRoles ...
-func (s *Store) ListClusterRoles(ctx context.Context, pageSize int64, continueToken string) ([]*types.ClusterRole, string, error) {
+func (s *Store) ListClusterRoles(ctx context.Context, pred *store.SelectionPredicate) ([]*types.ClusterRole, error) {
 	clusterRoles := []*types.ClusterRole{}
-	nextContinueToken, err := List(ctx, s.client, getClusterRolesPath, &clusterRoles, pageSize, continueToken)
-	return clusterRoles, nextContinueToken, err
+	err := List(ctx, s.client, getClusterRolesPath, &clusterRoles, pred)
+	return clusterRoles, err
 }
 
 // UpdateClusterRole ...

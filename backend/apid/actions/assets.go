@@ -2,7 +2,6 @@ package actions
 
 import (
 	"context"
-	"encoding/base64"
 
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -18,31 +17,30 @@ var assetUpdateFields = []string{
 
 // AssetController expose actions in which a viewer can perform.
 type AssetController struct {
-	Store store.AssetStore
+	store store.AssetStore
 }
 
 // NewAssetController returns new AssetController
 func NewAssetController(store store.AssetStore) AssetController {
 	return AssetController{
-		Store: store,
+		store: store,
 	}
 }
 
-// Query returns resources available to the viewer filter by given params.
-func (a AssetController) Query(ctx context.Context) ([]*corev2.Asset, string, error) {
-	pageSize := corev2.PageSizeFromContext(ctx)
-	continueToken := corev2.PageContinueFromContext(ctx)
-
+// List returns resources available to the viewer filter by given params.
+func (a AssetController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
 	// Fetch from store
-	results, newContinueToken, serr := a.Store.GetAssets(ctx, int64(pageSize), continueToken)
-	if serr != nil {
-		return nil, "", NewError(InternalErr, serr)
+	results, err := a.store.GetAssets(ctx, pred)
+	if err != nil {
+		return nil, NewError(InternalErr, err)
 	}
 
-	// Encode the continue token with base64url (RFC 4648), without padding
-	encodedNewContinueToken := base64.RawURLEncoding.EncodeToString([]byte(newContinueToken))
+	resources := make([]corev2.Resource, len(results))
+	for i, v := range results {
+		resources[i] = corev2.Resource(v)
+	}
 
-	return results, encodedNewContinueToken, nil
+	return resources, nil
 }
 
 // Find returns resource associated with given parameters if available to the
@@ -54,7 +52,7 @@ func (a AssetController) Find(ctx context.Context, name string) (*types.Asset, e
 	}
 
 	// Fetch from store
-	result, serr := a.Store.GetAssetByName(ctx, name)
+	result, serr := a.store.GetAssetByName(ctx, name)
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
 	}
@@ -71,7 +69,7 @@ func (a AssetController) Create(ctx context.Context, newAsset types.Asset) error
 	ctx = addOrgEnvToContext(ctx, &newAsset)
 
 	// Check for existing
-	if e, err := a.Store.GetAssetByName(ctx, newAsset.Name); err != nil {
+	if e, err := a.store.GetAssetByName(ctx, newAsset.Name); err != nil {
 		return NewError(InternalErr, err)
 	} else if e != nil {
 		return NewErrorf(AlreadyExistsErr)
@@ -83,7 +81,7 @@ func (a AssetController) Create(ctx context.Context, newAsset types.Asset) error
 	}
 
 	// Persist
-	if err := a.Store.UpdateAsset(ctx, &newAsset); err != nil {
+	if err := a.store.UpdateAsset(ctx, &newAsset); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -101,7 +99,7 @@ func (a AssetController) CreateOrReplace(ctx context.Context, asset types.Asset)
 	}
 
 	// Persist Changes
-	if serr := a.Store.UpdateAsset(ctx, &asset); serr != nil {
+	if serr := a.store.UpdateAsset(ctx, &asset); serr != nil {
 		return NewError(InternalErr, serr)
 	}
 

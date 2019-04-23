@@ -64,9 +64,8 @@ func testWithEtcdClient(t *testing.T, f func(store.Store, *clientv3.Client)) {
 }
 
 type genericObject struct {
-	Namespace string
-	Name      string
-	Revision  int
+	corev2.ObjectMeta
+	Revision int
 }
 
 func (g *genericObject) GetNamespace() string {
@@ -208,46 +207,47 @@ func getGenericObjectsPath(ctx context.Context, name string) string {
 	return genericKeyBuilder.WithContext(ctx).Build(name)
 }
 func TestList(t *testing.T) {
-	testWithEtcdStore(t, func(store *Store) {
+	testWithEtcdStore(t, func(s *Store) {
 		// Create a second namespace
-		require.NoError(t, store.CreateNamespace(context.Background(), types.FixtureNamespace("acme")))
+		require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("acme")))
 
 		// Create a bunch of keys everywhere
-		obj1 := &genericObject{Name: "obj1", Namespace: "default"}
+		obj1 := &genericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj1", Namespace: "default"}}
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
-		require.NoError(t, Create(ctx, store.client, "/sensu.io/generic/default/obj1", "default", obj1))
+		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/default/obj1", "default", obj1))
 
-		obj2 := &genericObject{Name: "obj2", Namespace: "acme"}
+		obj2 := &genericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj2", Namespace: "acme"}}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
-		require.NoError(t, Create(ctx, store.client, "/sensu.io/generic/acme/obj2", "acme", obj2))
+		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/acme/obj2", "acme", obj2))
 
-		obj3 := &genericObject{Name: "obj3", Namespace: "acme"}
+		obj3 := &genericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj3", Namespace: "acme"}}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
-		require.NoError(t, Create(ctx, store.client, "/sensu.io/generic/acme/obj3", "acme", obj3))
+		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/acme/obj3", "acme", obj3))
 
 		// We should have 1 object when listing keys under the default namespace
 		list := []*genericObject{}
+		pred := &store.SelectionPredicate{}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "default")
-		continueToken, err := List(ctx, store.client, getGenericObjectsPath, &list, 0, "")
+		err := List(ctx, s.client, getGenericObjectsPath, &list, pred)
 		require.NoError(t, err)
 		assert.Len(t, list, 1)
-		assert.Empty(t, continueToken)
+		assert.Empty(t, pred.Continue)
 
 		// We should have 2 objects when listing keys under the acme namespace
 		list = []*genericObject{}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
-		continueToken, err = List(ctx, store.client, getGenericObjectsPath, &list, 0, "")
+		err = List(ctx, s.client, getGenericObjectsPath, &list, pred)
 		require.NoError(t, err)
 		assert.Len(t, list, 2)
-		assert.Empty(t, continueToken)
+		assert.Empty(t, pred.Continue)
 
 		// We should have 3 objects when listing through all namespaces
 		list = []*genericObject{}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "")
-		continueToken, err = List(ctx, store.client, getGenericObjectsPath, &list, 0, "")
+		err = List(ctx, s.client, getGenericObjectsPath, &list, pred)
 		require.NoError(t, err)
 		assert.Len(t, list, 3)
-		assert.Empty(t, continueToken)
+		assert.Empty(t, pred.Continue)
 	})
 }
 
@@ -265,7 +265,7 @@ func TestListPagination(t *testing.T) {
 			// have a "natural" lexicographic order: 01, 02, ... instead of 1,
 			// 11, ...
 			objectName := fmt.Sprintf("%.2d", i)
-			object := &genericObject{Name: objectName, Namespace: "default"}
+			object := &genericObject{ObjectMeta: corev2.ObjectMeta{Name: objectName, Namespace: "default"}}
 
 			ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
 			if err := Create(ctx, store.client, getGenericObjectPath(object), "default", object); err != nil {
@@ -305,23 +305,23 @@ func TestListPagination(t *testing.T) {
 	})
 }
 
-func testListPagination(t *testing.T, ctx context.Context, store *Store, pageSize, setSize int) {
-	nFullPages := setSize / pageSize
-	nLeftovers := setSize % pageSize
+func testListPagination(t *testing.T, ctx context.Context, s *Store, limit, setSize int) {
+	pred := &store.SelectionPredicate{Limit: int64(limit)}
+	nFullPages := setSize / limit
+	nLeftovers := setSize % limit
 
-	continueToken := ""
 	for i := 0; i < nFullPages; i++ {
 		objects := []*genericObject{}
-		nextContinueToken, err := List(ctx, store.client, getGenericObjectsPath, &objects, int64(pageSize), continueToken)
+		err := List(ctx, s.client, getGenericObjectsPath, &objects, pred)
 		if err != nil {
 			t.Fatal(err)
 		}
 
-		if len(objects) != pageSize {
-			t.Fatalf("Expected page %d to have %d objects but got %d", i, pageSize, len(objects))
+		if len(objects) != limit {
+			t.Fatalf("Expected page %d to have %d objects but got %d", i, limit, len(objects))
 		}
 
-		offset := i * pageSize
+		offset := i * limit
 		for j, object := range objects {
 			n := ((offset + j) % setSize) + 1
 			expected := fmt.Sprintf("%.2d", n)
@@ -330,14 +330,12 @@ func testListPagination(t *testing.T, ctx context.Context, store *Store, pageSiz
 				t.Fatalf("Expected %s, got %s", expected, object.Name)
 			}
 		}
-
-		continueToken = nextContinueToken
 	}
 
 	// Check the last page, supposed to hold nLeftovers objects
 	if nLeftovers > 0 {
 		objects := []*genericObject{}
-		nextContinueToken, err := List(ctx, store.client, getGenericObjectsPath, &objects, int64(pageSize), continueToken)
+		err := List(ctx, s.client, getGenericObjectsPath, &objects, pred)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -346,11 +344,11 @@ func testListPagination(t *testing.T, ctx context.Context, store *Store, pageSiz
 			t.Fatalf("Expected last page with %d objects, got %d", nLeftovers, len(objects))
 		}
 
-		if nextContinueToken != "" {
-			t.Fatalf("Expected next continue token to be \"\", got %s", nextContinueToken)
+		if pred.Continue != "" {
+			t.Fatalf("Expected next continue token to be \"\", got %s", pred.Continue)
 		}
 
-		offset := pageSize * nFullPages
+		offset := limit * nFullPages
 		for j, object := range objects {
 			n := ((offset + j) % setSize) + 1
 			expected := fmt.Sprintf("%.2d", n)

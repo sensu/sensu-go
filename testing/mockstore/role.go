@@ -3,6 +3,7 @@ package mockstore
 import (
 	"context"
 
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -36,9 +37,9 @@ func (s *MockStore) GetRole(ctx context.Context, name string) (*types.Role, erro
 }
 
 // ListRoles ...
-func (s *MockStore) ListRoles(ctx context.Context, pageSize int64, continueToken string) ([]*types.Role, string, error) {
-	args := s.Called(ctx, pageSize, continueToken)
-	return args.Get(0).([]*types.Role), args.String(1), args.Error(2)
+func (s *MockStore) ListRoles(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Role, error) {
+	args := s.Called(ctx, pred)
+	return args.Get(0).([]*types.Role), args.Error(1)
 }
 
 // UpdateRole ...

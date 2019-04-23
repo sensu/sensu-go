@@ -2,7 +2,6 @@ package actions
 
 import (
 	"context"
-	"encoding/base64"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
@@ -11,20 +10,20 @@ import (
 
 // ClusterRoleController exposes the ClusterRoles.
 type ClusterRoleController struct {
-	Store store.ClusterRoleStore
+	store store.ClusterRoleStore
 }
 
 // NewClusterRoleController creates a new ClusterRoleController.
 func NewClusterRoleController(store store.ClusterRoleStore) ClusterRoleController {
 	return ClusterRoleController{
-		Store: store,
+		store: store,
 	}
 }
 
 // Create creates a new cluster role.
 // Returns an error if the cluster role already exists.
 func (a ClusterRoleController) Create(ctx context.Context, role types.ClusterRole) error {
-	if err := a.Store.CreateClusterRole(ctx, &role); err != nil {
+	if err := a.store.CreateClusterRole(ctx, &role); err != nil {
 		switch err := err.(type) {
 		case *store.ErrAlreadyExists:
 			return NewErrorf(AlreadyExistsErr)
@@ -40,7 +39,7 @@ func (a ClusterRoleController) Create(ctx context.Context, role types.ClusterRol
 
 // CreateOrReplace creates or replaces a cluster role.
 func (a ClusterRoleController) CreateOrReplace(ctx context.Context, role types.ClusterRole) error {
-	if err := a.Store.CreateOrUpdateClusterRole(ctx, &role); err != nil {
+	if err := a.store.CreateOrUpdateClusterRole(ctx, &role); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotValid:
 			return NewErrorf(InvalidArgument)
@@ -54,7 +53,7 @@ func (a ClusterRoleController) CreateOrReplace(ctx context.Context, role types.C
 
 // Destroy removes the given cluster role from the store.
 func (a ClusterRoleController) Destroy(ctx context.Context, name string) error {
-	if err := a.Store.DeleteClusterRole(ctx, name); err != nil {
+	if err := a.store.DeleteClusterRole(ctx, name); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
 			return NewErrorf(NotFound)
@@ -68,7 +67,7 @@ func (a ClusterRoleController) Destroy(ctx context.Context, name string) error {
 
 // Get retrieves the cluster role with the given name.
 func (a ClusterRoleController) Get(ctx context.Context, name string) (*types.ClusterRole, error) {
-	role, err := a.Store.GetClusterRole(ctx, name)
+	role, err := a.store.GetClusterRole(ctx, name)
 	if err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
@@ -82,23 +81,17 @@ func (a ClusterRoleController) Get(ctx context.Context, name string) (*types.Clu
 }
 
 // List returns all available cluster roles.
-func (a ClusterRoleController) List(ctx context.Context) ([]*types.ClusterRole, string, error) {
-	pageSize := corev2.PageSizeFromContext(ctx)
-	continueToken := corev2.PageContinueFromContext(ctx)
-
+func (a ClusterRoleController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
 	// Fetch from store
-	results, newContinueToken, err := a.Store.ListClusterRoles(ctx, int64(pageSize), continueToken)
+	results, err := a.store.ListClusterRoles(ctx, pred)
 	if err != nil {
-		switch err := err.(type) {
-		case *store.ErrNotFound:
-			return nil, "", NewErrorf(NotFound)
-		default:
-			return nil, "", NewError(InternalErr, err)
-		}
+		return nil, NewError(InternalErr, err)
 	}
 
-	// Encode the continue token with base64url (RFC 4648), without padding
-	encodedNewContinueToken := base64.RawURLEncoding.EncodeToString([]byte(newContinueToken))
+	resources := make([]corev2.Resource, len(results))
+	for i, v := range results {
+		resources[i] = corev2.Resource(v)
+	}
 
-	return results, encodedNewContinueToken, nil
+	return resources, nil
 }

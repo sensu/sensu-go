@@ -281,12 +281,22 @@ func (q *Queue) timeStamp() (string, error) {
 }
 
 func (q *Queue) waitPutEvent(ctx context.Context) (*clientv3.Event, error) {
+	ctx, cancel := context.WithCancel(clientv3.WithRequireLeader(ctx))
+	defer cancel()
 	wc := q.watcher.Watch(ctx, q.workPrefix(), clientv3.WithPrefix())
 	// wc is a channel
 	if wc == nil {
 		return nil, ctx.Err()
 	}
 	for response := range wc {
+		if err := response.Err(); err != nil {
+			if response.Canceled && ctx.Err() == nil {
+				// The watcher has encountered a fatal error and must be
+				// reinstated.
+				return q.waitPutEvent(ctx)
+			}
+			return nil, err
+		}
 		events := response.Events
 		for _, event := range events {
 			if event.Type == mvccpb.PUT {

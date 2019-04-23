@@ -320,7 +320,7 @@ func publishRoundRobinProxyCheckRequests(executor *CheckExecutor, check *corev2.
 	return nil
 }
 
-func buildRequest(check *types.CheckConfig, store store.Store) (*types.CheckRequest, error) {
+func buildRequest(check *types.CheckConfig, s store.Store) (*types.CheckRequest, error) {
 	request := &types.CheckRequest{}
 	request.Config = check
 
@@ -330,7 +330,7 @@ func buildRequest(check *types.CheckConfig, store store.Store) (*types.CheckRequ
 	// the check in the first place.
 	if len(check.RuntimeAssets) != 0 {
 		// Explode assets; get assets & filter out those that are irrelevant
-		assets, _, err := store.GetAssets(ctx, 0, "")
+		assets, err := s.GetAssets(ctx, &store.SelectionPredicate{})
 		if err != nil {
 			return nil, err
 		}
@@ -346,7 +346,7 @@ func buildRequest(check *types.CheckConfig, store store.Store) (*types.CheckRequ
 	// the check in the first place.
 	if len(check.CheckHooks) != 0 {
 		// Explode hooks; get hooks & filter out those that are irrelevant
-		hooks, _, err := store.GetHookConfigs(ctx, 0, "")
+		hooks, err := s.GetHookConfigs(ctx, &store.SelectionPredicate{})
 		if err != nil {
 			return nil, err
 		}

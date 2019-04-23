@@ -5,13 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
-
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 const (
@@ -41,39 +38,10 @@ func (s *Store) DeleteHookConfigByName(ctx context.Context, name string) error {
 }
 
 // GetHookConfigs returns hook configurations for a namespace.
-func (s *Store) GetHookConfigs(ctx context.Context, pageSize int64, continueToken string) (hooks []*corev2.HookConfig, newContinueToken string, err error) {
-	opts := []clientv3.OpOption{
-		clientv3.WithLimit(pageSize),
-	}
-
-	keyPrefix := getHookConfigsPath(ctx, "")
-	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
-	opts = append(opts, clientv3.WithRange(rangeEnd))
-
-	resp, err := s.client.Get(ctx, path.Join(keyPrefix, continueToken), opts...)
-	if err != nil {
-		return nil, "", err
-	}
-	if len(resp.Kvs) == 0 {
-		return []*corev2.HookConfig{}, "", nil
-	}
-
-	for _, kv := range resp.Kvs {
-		hook := &corev2.HookConfig{}
-		err = json.Unmarshal(kv.Value, hook)
-		if err != nil {
-			return nil, "", err
-		}
-
-		hooks = append(hooks, hook)
-	}
-
-	if pageSize != 0 && resp.Count > pageSize {
-		lastHook := hooks[len(hooks)-1]
-		newContinueToken = computeContinueToken(ctx, lastHook)
-	}
-
-	return hooks, newContinueToken, nil
+func (s *Store) GetHookConfigs(ctx context.Context, pred *store.SelectionPredicate) ([]*types.HookConfig, error) {
+	hooks := []*types.HookConfig{}
+	err := List(ctx, s.client, getHookConfigsPath, &hooks, pred)
+	return hooks, err
 }
 
 // GetHookConfigByName gets a HookConfig by name.

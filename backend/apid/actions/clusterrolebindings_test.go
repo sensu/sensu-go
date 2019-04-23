@@ -20,7 +20,7 @@ func TestNewClusterRoleBindingController(t *testing.T) {
 	actions := NewClusterRoleBindingController(store)
 
 	assert.NotNil(actions)
-	assert.Equal(store, actions.Store)
+	assert.Equal(store, actions.store)
 }
 
 func TestClusterRoleBindingCreate(t *testing.T) {
@@ -276,86 +276,52 @@ func TestClusterRoleBindingGet(t *testing.T) {
 
 func TestClusterRoleBindingList(t *testing.T) {
 	testCases := []struct {
-		name                  string
-		ctx                   context.Context
-		storeErr              error
-		continueToken         string
-		expectedResult        []*types.ClusterRoleBinding
-		expectedContinueToken string
-		expectedErr           bool
-		expectedErrCode       ErrCode
+		name        string
+		ctx         context.Context
+		storeErr    error
+		records     []*types.ClusterRoleBinding
+		expectedLen int
+		expectedErr error
 	}{
 		{
 			name: "List",
 			ctx:  context.Background(),
-			expectedResult: []*types.ClusterRoleBinding{
+			records: []*types.ClusterRoleBinding{
 				types.FixtureClusterRoleBinding("read-write"),
 				types.FixtureClusterRoleBinding("read-only"),
 				types.FixtureClusterRoleBinding("sysadmin"),
 			},
+			expectedLen: 3,
 		},
 		{
-			name:            "Not found",
-			ctx:             context.Background(),
-			storeErr:        &store.ErrNotFound{},
-			expectedErr:     true,
-			expectedErrCode: NotFound,
-		},
-		{
-			name:            "Store error",
-			ctx:             context.Background(),
-			storeErr:        errors.New("some error"),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
-		},
-		{
-			name: "no continue token",
+			name: "Not found",
 			ctx:  context.Background(),
-			expectedResult: []*types.ClusterRoleBinding{
-				types.FixtureClusterRoleBinding("clusterRoleBinding1"),
-				types.FixtureClusterRoleBinding("clusterRoleBinding2"),
-			},
-			continueToken:         "",
-			expectedContinueToken: "",
 		},
 		{
-			name: "base64url encode continue token",
-			ctx:  context.Background(),
-			expectedResult: []*types.ClusterRoleBinding{
-				types.FixtureClusterRoleBinding("clusterRoleBinding1"),
-				types.FixtureClusterRoleBinding("clusterRoleBinding2"),
-			},
-			continueToken:         "Albert Camus",
-			expectedContinueToken: "QWxiZXJ0IENhbXVz",
+			name:        "Store error",
+			ctx:         context.Background(),
+			storeErr:    errors.New("some error"),
+			expectedErr: NewError(InternalErr, errors.New("some error")),
 		},
 	}
 
 	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
-		actions := NewClusterRoleBindingController(store)
+		s := &mockstore.MockStore{}
+		actions := NewClusterRoleBindingController(s)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
 
-			store.
-				On("ListClusterRoleBindings", mock.Anything, mock.AnythingOfType("int64"), mock.AnythingOfType("string")).
-				Return(tc.expectedResult, tc.continueToken, tc.storeErr)
+			// Mock store methods
+			pred := &store.SelectionPredicate{}
+			s.On("ListClusterRoleBindings", tc.ctx, pred).Return(tc.records, tc.storeErr)
 
-			result, continueToken, err := actions.List(tc.ctx)
+			// Exec Query
+			results, err := actions.List(tc.ctx, pred)
 
-			if tc.expectedErr {
-				inferErr, ok := err.(Error)
-				if ok {
-					assert.Equal(tc.expectedErrCode, inferErr.Code)
-				} else {
-					assert.Error(err)
-					assert.FailNow("Return value was not of type 'Error'")
-				}
-			} else {
-				assert.NoError(err)
-				assert.Equal(tc.expectedResult, result)
-				assert.Equal(tc.expectedContinueToken, continueToken)
-			}
+			// Assert
+			assert.EqualValues(tc.expectedErr, err)
+			assert.Len(results, tc.expectedLen)
 		})
 	}
 }

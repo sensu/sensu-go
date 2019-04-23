@@ -11,6 +11,7 @@ func (a *Agent) getAgentEntity() *types.Entity {
 	if a.entity == nil {
 		meta := v2.NewObjectMeta(a.config.AgentName, a.config.Namespace)
 		meta.Labels = a.config.Labels
+		meta.Annotations = a.config.Annotations
 		e := &types.Entity{
 			EntityClass:   types.EntityAgentClass,
 			Deregister:    a.config.Deregister,

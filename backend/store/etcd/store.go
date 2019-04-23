@@ -153,48 +153,63 @@ type KeyBuilderFn func(context.Context, string) string
 
 // List retrieves all keys from storage under the provided prefix key, while
 // supporting all namespaces, and deserialize it into objsPtr.
-func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn, objsPtr interface{}, pageSize int64, continueToken string) (string, error) {
+func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn, objsPtr interface{}, pred *store.SelectionPredicate) error {
 	// Make sure the interface is a pointer, and that the element at this address
 	// is a slice.
 	v := reflect.ValueOf(objsPtr)
 	if v.Kind() != reflect.Ptr {
-		return "", fmt.Errorf("expected pointer, but got %v type", v.Type())
+		return fmt.Errorf("expected pointer, but got %v type", v.Type())
 	}
 	if v.Elem().Kind() != reflect.Slice {
-		return "", fmt.Errorf("expected slice, but got %s", v.Elem().Kind())
+		return fmt.Errorf("expected slice, but got %s", v.Elem().Kind())
 	}
 	v = v.Elem()
 
 	opts := []clientv3.OpOption{
-		clientv3.WithLimit(pageSize),
+		clientv3.WithLimit(pred.Limit),
 	}
 
 	key := keyBuilder(ctx, "")
 	rangeEnd := clientv3.GetPrefixRangeEnd(key)
 	opts = append(opts, clientv3.WithRange(rangeEnd))
 
-	resp, err := client.Get(ctx, path.Join(key, continueToken), opts...)
+	resp, err := client.Get(ctx, path.Join(key, pred.Continue), opts...)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	for _, kv := range resp.Kvs {
 		// Decode and append the value to v, which must be a slice.
 		obj := reflect.New(v.Type().Elem()).Interface()
 		if err := json.Unmarshal(kv.Value, obj); err != nil {
-			return "", &store.ErrDecode{Key: key, Err: err}
+			return &store.ErrDecode{Key: key, Err: err}
+		}
+
+		// Initialize the annotations and labels if they are nil
+		objValue := reflect.ValueOf(obj).Elem()
+		if objValue.Kind() == reflect.Ptr {
+			meta := objValue.Elem().FieldByName("ObjectMeta")
+			if meta.CanSet() {
+				if meta.FieldByName("Labels").Len() == 0 && meta.FieldByName("Labels").CanSet() {
+					meta.FieldByName("Labels").Set(reflect.MakeMap(reflect.TypeOf(make(map[string]string))))
+				}
+				if meta.FieldByName("Annotations").Len() == 0 && meta.FieldByName("Annotations").CanSet() {
+					meta.FieldByName("Annotations").Set(reflect.MakeMap(reflect.TypeOf(make(map[string]string))))
+				}
+			}
 		}
 
 		v.Set(reflect.Append(v, reflect.ValueOf(obj).Elem()))
 	}
 
-	nextContinueToken := ""
-	if pageSize != 0 && resp.Count > pageSize {
+	if pred.Limit != 0 && resp.Count > pred.Limit {
 		lastObject := v.Index(v.Len() - 1).Interface().(corev2.Resource)
-		nextContinueToken = computeContinueToken(ctx, lastObject)
+		pred.Continue = computeContinueToken(ctx, lastObject)
+	} else {
+		pred.Continue = ""
 	}
 
-	return nextContinueToken, nil
+	return nil
 }
 
 // Update a key given with the serialized object.

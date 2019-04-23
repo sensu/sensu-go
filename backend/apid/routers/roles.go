@@ -5,7 +5,6 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -32,8 +31,8 @@ func (r *RolesRouter) Mount(parent *mux.Router) {
 
 	routes.Del(r.destroy)
 	routes.Get(r.find)
-	routes.List(r.list)
-	routes.ListAllNamespaces(r.list, "/{resource:roles}")
+	routes.List(r.controller.List)
+	routes.ListAllNamespaces(r.controller.List, "/{resource:roles}")
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
 }
@@ -82,14 +81,4 @@ func (r *RolesRouter) find(req *http.Request) (interface{}, error) {
 
 	obj, err := r.controller.Get(req.Context(), id)
 	return obj, err
-}
-
-func (r *RolesRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
-	objs, continueToken, err := r.controller.List(req.Context())
-
-	if continueToken != "" {
-		w.Header().Set(corev2.PaginationContinueHeader, continueToken)
-	}
-
-	return objs, err
 }

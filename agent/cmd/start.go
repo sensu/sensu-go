@@ -60,6 +60,7 @@ const (
 	flagDisableSockets        = "disable-sockets"
 	flagLogLevel              = "log-level"
 	flagLabels                = "labels"
+	flagAnnotations           = "annotations"
 
 	// TLS flags
 	flagTrustedCAFile         = "trusted-ca-file"
@@ -139,6 +140,7 @@ func newStartCommand() *cobra.Command {
 			cfg.StatsdServer.Port = viper.GetInt(flagStatsdMetricsPort)
 			cfg.StatsdServer.Handlers = viper.GetStringSlice(flagStatsdEventHandlers)
 			cfg.Labels = viper.GetStringMapString(flagLabels)
+			cfg.Annotations = viper.GetStringMapString(flagAnnotations)
 			cfg.User = viper.GetString(flagUser)
 
 			// TLS configuration
@@ -187,6 +189,7 @@ func newStartCommand() *cobra.Command {
 			}
 
 			if !viper.GetBool(flagDisableSockets) {
+				// Agent TCP/UDP sockets are deprecated in favor of the agent rest api
 				sensuAgent.StartSocketListeners(ctx)
 			}
 
@@ -277,6 +280,7 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")
 	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
 	cmd.Flags().StringToString(flagLabels, viper.GetStringMapString(flagLabels), "entity labels map")
+	cmd.Flags().StringToString(flagAnnotations, viper.GetStringMapString(flagAnnotations), "entity annotations map")
 
 	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc)
 

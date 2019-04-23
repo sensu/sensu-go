@@ -19,7 +19,7 @@ import (
 	"github.com/sensu/lasr"
 
 	"github.com/atlassian/gostatsd/pkg/statsd"
-	"github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/handler"
@@ -48,15 +48,15 @@ type Agent struct {
 	config          *Config
 	connected       bool
 	connectedMu     sync.RWMutex
-	entity          *v2.Entity
+	entity          *corev2.Entity
 	executor        command.Executor
 	handler         *handler.MessageHandler
 	header          http.Header
-	inProgress      map[string]*v2.CheckConfig
+	inProgress      map[string]*corev2.CheckConfig
 	inProgressMu    *sync.Mutex
 	statsdServer    *statsd.Server
 	sendq           chan *transport.Message
-	systemInfo      *v2.System
+	systemInfo      *corev2.System
 	systemInfoMu    sync.RWMutex
 	wg              sync.WaitGroup
 	apiQueue        *lasr.Q
@@ -71,14 +71,14 @@ func NewAgent(config *Config) (*Agent, error) {
 		config:          config,
 		executor:        command.NewExecutor(),
 		handler:         handler.NewMessageHandler(),
-		inProgress:      make(map[string]*v2.CheckConfig),
+		inProgress:      make(map[string]*corev2.CheckConfig),
 		inProgressMu:    &sync.Mutex{},
 		sendq:           make(chan *transport.Message, 10),
-		systemInfo:      &v2.System{},
+		systemInfo:      &corev2.System{},
 	}
 
 	agent.statsdServer = NewStatsdServer(agent)
-	agent.handler.AddHandler(v2.CheckRequestType, agent.handleCheck)
+	agent.handler.AddHandler(corev2.CheckRequestType, agent.handleCheck)
 
 	// We don't check for errors here and let the agent get created regardless
 	// of system info status.
@@ -162,7 +162,7 @@ func (a *Agent) Run(ctx context.Context) error {
 	a.header.Set("Authorization", "Basic "+userCredentials)
 
 	// Fail the agent after startup if the id is invalid
-	if err := v2.ValidateName(a.config.AgentName); err != nil {
+	if err := corev2.ValidateName(a.config.AgentName); err != nil {
 		return fmt.Errorf("invalid agent name: %v", err)
 	}
 	if timeout := a.config.KeepaliveTimeout; timeout < 5 {
@@ -277,12 +277,12 @@ func (a *Agent) newKeepalive() *transport.Message {
 	}
 	entity := a.getAgentEntity()
 
-	keepalive := &v2.Event{
-		ObjectMeta: v2.NewObjectMeta("", entity.Namespace),
+	keepalive := &corev2.Event{
+		ObjectMeta: corev2.NewObjectMeta("", entity.Namespace),
 	}
 
-	keepalive.Check = &v2.Check{
-		ObjectMeta: v2.NewObjectMeta("keepalive", entity.Namespace),
+	keepalive.Check = &corev2.Check{
+		ObjectMeta: corev2.NewObjectMeta("keepalive", entity.Namespace),
 		Interval:   a.config.KeepaliveInterval,
 		Timeout:    a.config.KeepaliveTimeout,
 	}
@@ -343,6 +343,7 @@ func (a *Agent) StartAPI(ctx context.Context) {
 }
 
 // StartSocketListeners starts the agent's TCP and UDP socket listeners.
+// Agent TCP/UDP sockets are deprecated in favor of the agent rest api.
 func (a *Agent) StartSocketListeners(ctx context.Context) {
 	if _, _, err := a.createListenSockets(ctx); err != nil {
 		logger.WithError(err).Error("unable to start socket listeners")
@@ -361,7 +362,7 @@ func (a *Agent) StartStatsd(ctx context.Context) {
 	}()
 }
 
-func connectWithBackoff(ctx context.Context, selector BackendSelector, tlsOpts *v2.TLSOptions, header http.Header) (transport.Transport, error) {
+func connectWithBackoff(ctx context.Context, selector BackendSelector, tlsOpts *corev2.TLSOptions, header http.Header) (transport.Transport, error) {
 	var conn transport.Transport
 
 	backoff := retry.ExponentialBackoff{

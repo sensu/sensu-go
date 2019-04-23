@@ -5,7 +5,6 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -29,7 +28,7 @@ func (r *ClusterRolesRouter) Mount(parent *mux.Router) {
 		Router:     parent,
 		PathPrefix: "/{resource:clusterroles}",
 	}
-	routes.List(r.list)
+	routes.List(r.controller.List)
 	routes.Get(r.find)
 	routes.Post(r.create)
 	routes.Del(r.destroy)
@@ -80,14 +79,4 @@ func (r *ClusterRolesRouter) find(req *http.Request) (interface{}, error) {
 
 	obj, err := r.controller.Get(req.Context(), id)
 	return obj, err
-}
-
-func (r *ClusterRolesRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
-	objs, continueToken, err := r.controller.List(req.Context())
-
-	if continueToken != "" {
-		w.Header().Set(corev2.PaginationContinueHeader, continueToken)
-	}
-
-	return objs, err
 }

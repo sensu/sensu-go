@@ -2,7 +2,6 @@ package actions
 
 import (
 	"context"
-	"encoding/base64"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
@@ -18,13 +17,13 @@ var filterUpdateFields = []string{
 
 // EventFilterController allows querying EventFilters in bulk or by name.
 type EventFilterController struct {
-	Store store.EventFilterStore
+	store store.EventFilterStore
 }
 
 // NewEventFilterController creates a new EventFilterController backed by store.
 func NewEventFilterController(store store.EventFilterStore) EventFilterController {
 	return EventFilterController{
-		Store: store,
+		store: store,
 	}
 }
 
@@ -37,7 +36,7 @@ func (c EventFilterController) Create(ctx context.Context, filter types.EventFil
 	ctx = addOrgEnvToContext(ctx, &filter)
 
 	// Check for existing
-	if m, err := c.Store.GetEventFilterByName(ctx, filter.Name); err != nil {
+	if m, err := c.store.GetEventFilterByName(ctx, filter.Name); err != nil {
 		return NewError(InternalErr, err)
 	} else if m != nil {
 		return NewErrorf(AlreadyExistsErr, filter.Name)
@@ -49,7 +48,7 @@ func (c EventFilterController) Create(ctx context.Context, filter types.EventFil
 	}
 
 	// Persist
-	if err := c.Store.UpdateEventFilter(ctx, &filter); err != nil {
+	if err := c.store.UpdateEventFilter(ctx, &filter); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -70,31 +69,27 @@ func (c EventFilterController) CreateOrReplace(ctx context.Context, filter types
 	}
 
 	// Persist
-	if err := c.Store.UpdateEventFilter(ctx, &filter); err != nil {
+	if err := c.store.UpdateEventFilter(ctx, &filter); err != nil {
 		return NewError(InternalErr, err)
 	}
 
 	return nil
 }
 
-// Query returns resources available to the viewer filter by given params.
-// It returns non-nil error if the params are invalid, read permissions
-// do not exist, or an internal error occurs while reading the underlying
-// store.
-func (c EventFilterController) Query(ctx context.Context) ([]*types.EventFilter, string, error) {
-	pageSize := corev2.PageSizeFromContext(ctx)
-	continueToken := corev2.PageContinueFromContext(ctx)
-
+// List returns event filters
+func (c EventFilterController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
 	// Fetch from store
-	filters, newContinueToken, err := c.Store.GetEventFilters(ctx, int64(pageSize), continueToken)
+	results, err := c.store.GetEventFilters(ctx, pred)
 	if err != nil {
-		return nil, "", NewError(InternalErr, err)
+		return nil, NewError(InternalErr, err)
 	}
 
-	// Encode the continue token with base64url (RFC 4648), without padding
-	encodedNewContinueToken := base64.RawURLEncoding.EncodeToString([]byte(newContinueToken))
+	resources := make([]corev2.Resource, len(results))
+	for i, v := range results {
+		resources[i] = corev2.Resource(v)
+	}
 
-	return filters, encodedNewContinueToken, nil
+	return resources, nil
 }
 
 // Destroy destroys the named EventFilter.
@@ -108,7 +103,7 @@ func (c EventFilterController) Destroy(ctx context.Context, name string) error {
 	}
 
 	// Fetch from store
-	filter, err := c.Store.GetEventFilterByName(ctx, name)
+	filter, err := c.store.GetEventFilterByName(ctx, name)
 	if err != nil {
 		return NewError(InternalErr, err)
 	}
@@ -117,7 +112,7 @@ func (c EventFilterController) Destroy(ctx context.Context, name string) error {
 	}
 
 	// Remove from store
-	if err := c.Store.DeleteEventFilterByName(ctx, filter.Name); err != nil {
+	if err := c.store.DeleteEventFilterByName(ctx, filter.Name); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -135,7 +130,7 @@ func (c EventFilterController) Find(ctx context.Context, name string) (*types.Ev
 		return nil, NewErrorf(InvalidArgument, "Find() requires a name")
 	}
 
-	result, err := c.Store.GetEventFilterByName(ctx, name)
+	result, err := c.store.GetEventFilterByName(ctx, name)
 	if err != nil {
 		return nil, NewErrorf(InternalErr, err)
 	}

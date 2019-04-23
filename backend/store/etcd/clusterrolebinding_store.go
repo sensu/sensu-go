@@ -49,10 +49,10 @@ func (s *Store) GetClusterRoleBinding(ctx context.Context, name string) (*types.
 }
 
 // ListClusterRoleBindings ...
-func (s *Store) ListClusterRoleBindings(ctx context.Context, pageSize int64, continueToken string) ([]*types.ClusterRoleBinding, string, error) {
+func (s *Store) ListClusterRoleBindings(ctx context.Context, pred *store.SelectionPredicate) ([]*types.ClusterRoleBinding, error) {
 	roles := []*types.ClusterRoleBinding{}
-	nextContinueToken, err := List(ctx, s.client, getClusterRoleBindingsPath, &roles, pageSize, continueToken)
-	return roles, nextContinueToken, err
+	err := List(ctx, s.client, getClusterRoleBindingsPath, &roles, pred)
+	return roles, err
 }
 
 // UpdateClusterRoleBinding ...

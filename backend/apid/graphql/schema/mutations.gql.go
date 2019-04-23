@@ -10,6 +10,23 @@ import (
 	time "time"
 )
 
+// MutationPutWrappedFieldResolverArgs contains arguments provided to putWrapped when selected
+type MutationPutWrappedFieldResolverArgs struct {
+	Raw string // Raw - self descriptive
+}
+
+// MutationPutWrappedFieldResolverParams contains contextual info to resolve putWrapped field
+type MutationPutWrappedFieldResolverParams struct {
+	graphql.ResolveParams
+	Args MutationPutWrappedFieldResolverArgs
+}
+
+// MutationPutWrappedFieldResolver implement to resolve requests for the Mutation's putWrapped field.
+type MutationPutWrappedFieldResolver interface {
+	// PutWrapped implements response to request for putWrapped field.
+	PutWrapped(p MutationPutWrappedFieldResolverParams) (interface{}, error)
+}
+
 // MutationCreateCheckFieldResolverArgs contains arguments provided to createCheck when selected
 type MutationCreateCheckFieldResolverArgs struct {
 	Input *CreateCheckInput // Input - self descriptive
@@ -225,6 +242,7 @@ type MutationDeleteSilenceFieldResolver interface {
 //   }
 //
 type MutationFieldResolvers interface {
+	MutationPutWrappedFieldResolver
 	MutationCreateCheckFieldResolver
 	MutationUpdateCheckFieldResolver
 	MutationExecuteCheckFieldResolver
@@ -282,6 +300,12 @@ type MutationFieldResolvers interface {
 //   }
 //
 type MutationAliases struct{}
+
+// PutWrapped implements response to request for 'putWrapped' field.
+func (_ MutationAliases) PutWrapped(p MutationPutWrappedFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
 
 // CreateCheck implements response to request for 'createCheck' field.
 func (_ MutationAliases) CreateCheck(p MutationCreateCheckFieldResolverParams) (interface{}, error) {
@@ -344,6 +368,19 @@ var MutationType = graphql.NewType("Mutation", graphql.ObjectKind)
 func RegisterMutation(svc *graphql.Service, impl MutationFieldResolvers) {
 	svc.RegisterObject(_ObjectTypeMutationDesc, impl)
 }
+func _ObjTypeMutationPutWrappedHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(MutationPutWrappedFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := MutationPutWrappedFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.PutWrapped(frp)
+	}
+}
+
 func _ObjTypeMutationCreateCheckHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(MutationCreateCheckFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
@@ -535,6 +572,16 @@ func _ObjectTypeMutationConfigFn() graphql1.ObjectConfig {
 				Name:              "executeCheck",
 				Type:              graphql.OutputType("ExecuteCheckPayload"),
 			},
+			"putWrapped": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{"raw": &graphql1.ArgumentConfig{
+					Description: "self descriptive",
+					Type:        graphql1.NewNonNull(graphql1.String),
+				}},
+				DeprecationReason: "",
+				Description:       "Create or overrwrite resource from given wrapped resource.",
+				Name:              "putWrapped",
+				Type:              graphql1.NewNonNull(graphql.OutputType("PutWrappedPayload")),
+			},
 			"resolveEvent": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{"input": &graphql1.ArgumentConfig{
 					Description: "self descriptive",
@@ -580,8 +627,208 @@ var _ObjectTypeMutationDesc = graphql.ObjectDesc{
 		"deleteEvent":   _ObjTypeMutationDeleteEventHandler,
 		"deleteSilence": _ObjTypeMutationDeleteSilenceHandler,
 		"executeCheck":  _ObjTypeMutationExecuteCheckHandler,
+		"putWrapped":    _ObjTypeMutationPutWrappedHandler,
 		"resolveEvent":  _ObjTypeMutationResolveEventHandler,
 		"updateCheck":   _ObjTypeMutationUpdateCheckHandler,
+	},
+}
+
+// PutWrappedPayloadNodeFieldResolver implement to resolve requests for the PutWrappedPayload's node field.
+type PutWrappedPayloadNodeFieldResolver interface {
+	// Node implements response to request for node field.
+	Node(p graphql.ResolveParams) (interface{}, error)
+}
+
+// PutWrappedPayloadErrorsFieldResolver implement to resolve requests for the PutWrappedPayload's errors field.
+type PutWrappedPayloadErrorsFieldResolver interface {
+	// Errors implements response to request for errors field.
+	Errors(p graphql.ResolveParams) (interface{}, error)
+}
+
+//
+// PutWrappedPayloadFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'PutWrappedPayload' type.
+//
+// == Example SDL
+//
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
+//
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
+//
+// == Example generated interface
+//
+//   // DogResolver ...
+//   type DogFieldResolvers interface {
+//     DogNameFieldResolver
+//     DogBreedFieldResolver
+//
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//   }
+//
+// == Example implementation ...
+//
+//   // DogResolver implements DogFieldResolvers interface
+//   type DogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
+//
+//   // Name implements response to request for name field.
+//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     return dog.GetName()
+//   }
+//
+//   // Breed implements response to request for breed field.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+//     // ... implementation details ...
+//     _, ok := p.Value.(DogGetter)
+//     return ok
+//   }
+//
+type PutWrappedPayloadFieldResolvers interface {
+	PutWrappedPayloadNodeFieldResolver
+	PutWrappedPayloadErrorsFieldResolver
+}
+
+// PutWrappedPayloadAliases implements all methods on PutWrappedPayloadFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+//
+type PutWrappedPayloadAliases struct{}
+
+// Node implements response to request for 'node' field.
+func (_ PutWrappedPayloadAliases) Node(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Errors implements response to request for 'errors' field.
+func (_ PutWrappedPayloadAliases) Errors(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// PutWrappedPayloadType self descriptive
+var PutWrappedPayloadType = graphql.NewType("PutWrappedPayload", graphql.ObjectKind)
+
+// RegisterPutWrappedPayload registers PutWrappedPayload object type with given service.
+func RegisterPutWrappedPayload(svc *graphql.Service, impl PutWrappedPayloadFieldResolvers) {
+	svc.RegisterObject(_ObjectTypePutWrappedPayloadDesc, impl)
+}
+func _ObjTypePutWrappedPayloadNodeHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(PutWrappedPayloadNodeFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Node(frp)
+	}
+}
+
+func _ObjTypePutWrappedPayloadErrorsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(PutWrappedPayloadErrorsFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Errors(frp)
+	}
+}
+
+func _ObjectTypePutWrappedPayloadConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "self descriptive",
+		Fields: graphql1.Fields{
+			"errors": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Includes any failed preconditions or unrecoverable errors that occurred while\nexecuting the mutation.",
+				Name:              "errors",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Error")))),
+			},
+			"node": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "The newly created / updated resource",
+				Name:              "node",
+				Type:              graphql.OutputType("Node"),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see PutWrappedPayloadFieldResolvers.")
+		},
+		Name: "PutWrappedPayload",
+	}
+}
+
+// describe PutWrappedPayload's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypePutWrappedPayloadDesc = graphql.ObjectDesc{
+	Config: _ObjectTypePutWrappedPayloadConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"errors": _ObjTypePutWrappedPayloadErrorsHandler,
+		"node":   _ObjTypePutWrappedPayloadNodeHandler,
 	},
 }
 
