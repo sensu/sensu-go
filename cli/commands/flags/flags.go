@@ -9,4 +9,12 @@ const (
 
 	// Interactive is used to specify if cli should be interactive
 	Interactive = "interactive"
+
+	// FieldSelector is used to provide a field expression that will be used as
+	// a filter, typically when listing resources.
+	FieldSelector = "field-selector"
+
+	// LabelSelector is used to provide a label expression that will be used as
+	// a filter, typically when listing resources.
+	LabelSelector = "label-selector"
 )

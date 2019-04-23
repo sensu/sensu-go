@@ -38,6 +38,16 @@ func AddInteractiveFlag(flagSet *pflag.FlagSet) {
 	flagSet.Bool(flags.Interactive, false, "Determines if CLI is in interactive mode")
 }
 
+// AddFieldSelectorFlag adds the '--field-selector' flag to the given command
+func AddFieldSelectorFlag(flagSet *pflag.FlagSet) {
+	flagSet.String(flags.FieldSelector, "", "Only select resources matching this field selector (enterprise only)")
+}
+
+// AddLabelSelectorFlag adds the '--label-selector' flag to the given command
+func AddLabelSelectorFlag(flagSet *pflag.FlagSet) {
+	flagSet.String(flags.LabelSelector, "", "Only select resources matching this label selector (enterprise only)")
+}
+
 // FlagHasChanged determines if the user has set the value of a flag,
 // or left it to default
 func FlagHasChanged(name string, flagset *pflag.FlagSet) bool {
