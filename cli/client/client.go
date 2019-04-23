@@ -131,7 +131,7 @@ func (client *RestClient) Reset() {
 	client.configured = false
 }
 
-// ClearAuthToken clears the authoization token from the client config
+// ClearAuthToken clears the authorization token from the client config
 func (client *RestClient) ClearAuthToken() {
 	client.configure()
 	client.resty.SetAuthToken("")
