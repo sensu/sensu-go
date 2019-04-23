@@ -7,12 +7,15 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes"
+	"github.com/coreos/etcd/etcdserver/etcdserverpb"
 	"github.com/sensu/sensu-go/types"
 )
 
 // GetClusterHealth retrieves the cluster health
 func (s *Store) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, etcdClientTLSConfig *tls.Config) *types.HealthResponse {
-	healthResponse := &types.HealthResponse{}
+	healthResponse := &types.HealthResponse{
+		Header: &etcdserverpb.ResponseHeader{},
+	}
 
 	// Do a get op against every cluster member. Collect the  memberIDs and
 	// op errors into a response map, and return this map as etcd health
@@ -22,6 +25,7 @@ func (s *Store) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, 
 		logger.WithError(err).Warning("could not get the cluster member list")
 		return healthResponse
 	}
+	healthResponse.Header = mList.Header
 
 	for _, member := range mList.Members {
 		health := &types.ClusterHealth{

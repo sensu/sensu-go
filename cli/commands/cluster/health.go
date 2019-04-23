@@ -7,6 +7,7 @@ import (
 	"github.com/coreos/etcd/etcdserver/etcdserverpb"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/elements/list"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
@@ -20,6 +21,10 @@ func HealthCommand(cli *cli.SensuCli) *cobra.Command {
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			result, err := cli.Client.Health()
+			if err != nil {
+				return err
+			}
+			err = helpers.PrintFormatted(helpers.GetChangedStringValueFlag("format", cmd.Flags()), cli.Config.Format(), result.Header, cmd.OutOrStdout(), printTitleClusterID)
 			if err != nil {
 				return err
 			}
@@ -122,4 +127,16 @@ func printAlarmsToTable(result interface{}, w io.Writer) {
 		},
 	})
 	table.Render(w, result)
+}
+
+func printTitleClusterID(v interface{}, writer io.Writer) error {
+	r, ok := v.(*etcdserverpb.ResponseHeader)
+	if !ok {
+		return fmt.Errorf("%t is not a ResponseHeader", v)
+	}
+	cfg := &list.Config{
+		Title: fmt.Sprintf("Cluster ID: %x", r.ClusterId),
+	}
+
+	return list.Print(writer, cfg)
 }
