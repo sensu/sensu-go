@@ -5,9 +5,10 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/go-resty/resty"
-	config "github.com/sensu/sensu-go/cli/client/testing"
+	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/types"
+
+	"github.com/go-resty/resty"
 	"github.com/stretchr/testify/assert"
 )
 
