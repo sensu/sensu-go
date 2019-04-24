@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -28,11 +29,16 @@ func (client *RestClient) FetchEvent(entity, check string) (*types.Event, error)
 }
 
 // ListEvents fetches events from Sensu API
-func (client *RestClient) ListEvents(namespace string) ([]types.Event, error) {
-	var events []types.Event
+func (client *RestClient) ListEvents(namespace string, options ListOptions) ([]corev2.Event, error) {
+	var events []corev2.Event
 
 	path := eventsPath(namespace)
-	res, err := client.R().Get(path)
+	request := client.R()
+
+	request.SetQueryParam("fieldSelector", options.FieldSelector)
+	request.SetQueryParam("labelSelector", options.LabelSelector)
+
+	res, err := request.Get(path)
 	if err != nil {
 		return events, err
 	}

@@ -118,11 +118,11 @@ func loadEntities(ctx context.Context, ns string) ([]types.Entity, error) {
 
 // events
 
-func loadEventsBatchFn(client client.APIClient) dataloader.BatchFunc {
+func loadEventsBatchFn(c client.APIClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			records, err := client.ListEvents(key.String())
+			records, err := c.ListEvents(key.String(), client.ListOptions{})
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}

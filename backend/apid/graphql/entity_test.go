@@ -41,7 +41,7 @@ func TestEntityTypeStatusField(t *testing.T) {
 	entity.Namespace = "sensu"
 
 	client, _ := client.NewClientFactory()
-	client.On("ListEvents", "sensu").Return([]types.Event{
+	client.On("ListEvents", "sensu", mock.Anything).Return([]types.Event{
 		*types.FixtureEvent(entity.Name, "a"),
 		*types.FixtureEvent(entity.Name, "b"),
 		*types.FixtureEvent(entity.Name, "c"),
@@ -61,7 +61,7 @@ func TestEntityTypeStatusField(t *testing.T) {
 	// Add failing event
 	failingEv := types.FixtureEvent(entity.Name, "bad")
 	failingEv.Check.Status = 2
-	client.On("ListEvents", "sensu").Return([]types.Event{
+	client.On("ListEvents", "sensu", mock.Anything).Return([]types.Event{
 		*types.FixtureEvent(entity.Name, "a"),
 		*failingEv,
 	}, nil).Once()
@@ -92,7 +92,7 @@ func TestEntityTypeEventsField(t *testing.T) {
 	entity := types.FixtureEntity("en")
 
 	client, _ := client.NewClientFactory()
-	client.On("ListEvents", mock.Anything).Return([]types.Event{
+	client.On("ListEvents", mock.Anything, mock.Anything).Return([]types.Event{
 		*types.FixtureEvent(entity.Name, "a"),
 		*types.FixtureEvent(entity.Name, "b"),
 		*types.FixtureEvent(entity.Name, "c"),

@@ -25,7 +25,7 @@ func TestNamespaceTypeColourID(t *testing.T) {
 
 func TestNamespaceTypeCheckHistoryField(t *testing.T) {
 	client, _ := client.NewClientFactory()
-	client.On("ListEvents", "sensu").Return([]types.Event{
+	client.On("ListEvents", "sensu", mock.Anything).Return([]types.Event{
 		*types.FixtureEvent("a", "b"),
 		*types.FixtureEvent("b", "c"),
 		*types.FixtureEvent("c", "d"),
@@ -45,7 +45,7 @@ func TestNamespaceTypeCheckHistoryField(t *testing.T) {
 	assert.Len(t, history, 30)
 
 	// store err
-	client.On("ListEvents", mock.Anything).Return([]types.Event{}, errors.New("test"))
+	client.On("ListEvents", mock.Anything, mock.Anything).Return([]types.Event{}, errors.New("test"))
 	history, err = impl.CheckHistory(params)
 	require.NotNil(t, history)
 	assert.Error(t, err)

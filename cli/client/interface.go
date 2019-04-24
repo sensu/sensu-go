@@ -3,7 +3,16 @@ package client
 import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
+
+// ListOptions represents the various options that can be used when listing
+// resources.
+type ListOptions struct {
+	FieldSelector string
+	LabelSelector string
+}
 
 // APIClient client methods across the Sensu API
 type APIClient interface {
@@ -113,7 +122,7 @@ type FilterAPIClient interface {
 // EventAPIClient client methods for events
 type EventAPIClient interface {
 	FetchEvent(string, string) (*types.Event, error)
-	ListEvents(string) ([]types.Event, error)
+	ListEvents(string, ListOptions) ([]corev2.Event, error)
 
 	// DeleteEvent deletes the event identified by entity, check.
 	DeleteEvent(namespace, entity, check string) error
