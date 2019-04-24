@@ -4,12 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"os"
-	"os/signal"
 	"path/filepath"
-	"strings"
-	"sync"
-	"syscall"
 
 	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/types"
@@ -74,13 +69,6 @@ func init() {
 	logger = logrus.WithFields(logrus.Fields{
 		"component": "cmd",
 	})
-
-	rootCmd.AddCommand(newVersionCommand())
-	rootCmd.AddCommand(newStartCommand())
-
-	viper.SetEnvPrefix("sensu")
-	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
-	viper.AutomaticEnv()
 }
 
 func newVersionCommand() *cobra.Command {
@@ -99,7 +87,7 @@ func newVersionCommand() *cobra.Command {
 	return cmd
 }
 
-func newStartCommand() *cobra.Command {
+func newStartCommand(args []string, ctx context.Context) *cobra.Command {
 	var setupErr error
 
 	cmd := &cobra.Command{
@@ -169,21 +157,6 @@ func newStartCommand() *cobra.Command {
 				return err
 			}
 
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			sigs := make(chan os.Signal, 1)
-			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-			var wg sync.WaitGroup
-			wg.Add(1)
-
-			go func() {
-				defer wg.Done()
-				sig := <-sigs
-				logger.Info("signal received: ", sig)
-				cancel()
-			}()
-
 			if !viper.GetBool(flagDisableAPI) {
 				sensuAgent.StartAPI(ctx)
 			}
@@ -201,7 +174,7 @@ func newStartCommand() *cobra.Command {
 	configFlagSet := pflag.NewFlagSet("sensu", pflag.ContinueOnError)
 	_ = configFlagSet.StringP(flagConfigFile, "c", "", "path to sensu-agent config file")
 	configFlagSet.SetOutput(ioutil.Discard)
-	_ = configFlagSet.Parse(os.Args[1:])
+	_ = configFlagSet.Parse(args[1:])
 
 	// Get the given config file path
 	configFile, _ := configFlagSet.GetString(flagConfigFile)
