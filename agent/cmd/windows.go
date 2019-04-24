@@ -38,7 +38,7 @@ func NewWindowsInstallServiceCommand() *cobra.Command {
 			if !fi.Mode().IsRegular() {
 				return errors.New("error reading config file: not a regular file")
 			}
-			return installService(serviceName, serviceDesc, "-c", configFile)
+			return installService(serviceName, serviceDesc, "start", "-c", configFile)
 		},
 	}
 	cmd.Flags().StringP(flagConfigFile, "c", "", "path to sensu-agent config file")

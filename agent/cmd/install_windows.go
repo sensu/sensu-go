@@ -67,8 +67,7 @@ func installService(name, desc string, args ...string) error {
 		return fmt.Errorf("SetupEventLogSource() failed: %s", err)
 	}
 
-	// TODO
-	return s.Start("start", "-c")
+	return s.Start(args...)
 }
 
 func removeService(name string) error {
