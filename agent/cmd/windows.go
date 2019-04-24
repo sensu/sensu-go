@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	serviceName = "sensu-agent"
-	serviceDesc = "Sensu Agent"
+	serviceName        = "SensuAgent"
+	serviceDisplayName = "Sensu Agent"
 )
 
 // NewWindowsInstallServiceCommand creates a cobra command that installs a
@@ -38,7 +38,7 @@ func NewWindowsInstallServiceCommand() *cobra.Command {
 			if !fi.Mode().IsRegular() {
 				return errors.New("error reading config file: not a regular file")
 			}
-			return installService(serviceName, serviceDesc, "start", "-c", configFile)
+			return installService(serviceName, serviceDisplayName, "start", "-c", configFile)
 		},
 	}
 	cmd.Flags().StringP(flagConfigFile, "c", "", "path to sensu-agent config file")
