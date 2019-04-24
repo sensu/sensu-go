@@ -262,37 +262,37 @@ func NewRoleBinding(meta ObjectMeta) *RoleBinding {
 // ClusterRoleFields returns a set of fields that represent that resource
 func ClusterRoleFields(r Resource) map[string]string {
 	resource := r.(*ClusterRole)
-	fields := make(map[string]string, 1)
-	fields["clusterrole.name"] = resource.ObjectMeta.Name
-	return fields
+	return map[string]string{
+		"clusterrole.name": resource.ObjectMeta.Name,
+	}
 }
 
 // ClusterRoleBindingFields returns a set of fields that represent that resource
 func ClusterRoleBindingFields(r Resource) map[string]string {
 	resource := r.(*ClusterRoleBinding)
-	fields := make(map[string]string, 3)
-	fields["clusterrolebinding.name"] = resource.ObjectMeta.Name
-	fields["clusterrolebinding.role_ref.name"] = resource.RoleRef.Name
-	fields["clusterrolebinding.role_ref.type"] = resource.RoleRef.Type
-	return fields
+	return map[string]string{
+		"clusterrolebinding.name":          resource.ObjectMeta.Name,
+		"clusterrolebinding.role_ref.name": resource.RoleRef.Name,
+		"clusterrolebinding.role_ref.type": resource.RoleRef.Type,
+	}
 }
 
 // RoleFields returns a set of fields that represent that resource
 func RoleFields(r Resource) map[string]string {
 	resource := r.(*Role)
-	fields := make(map[string]string, 2)
-	fields["role.name"] = resource.ObjectMeta.Name
-	fields["role.namespace"] = resource.ObjectMeta.Namespace
-	return fields
+	return map[string]string{
+		"role.name":      resource.ObjectMeta.Name,
+		"role.namespace": resource.ObjectMeta.Namespace,
+	}
 }
 
 // RoleBindingFields returns a set of fields that represent that resource
 func RoleBindingFields(r Resource) map[string]string {
 	resource := r.(*RoleBinding)
-	fields := make(map[string]string, 4)
-	fields["rolebinding.name"] = resource.ObjectMeta.Name
-	fields["rolebinding.namespace"] = resource.ObjectMeta.Namespace
-	fields["rolebinding.role_ref.name"] = resource.RoleRef.Name
-	fields["rolebinding.role_ref.type"] = resource.RoleRef.Type
-	return fields
+	return map[string]string{
+		"rolebinding.name":          resource.ObjectMeta.Name,
+		"rolebinding.namespace":     resource.ObjectMeta.Namespace,
+		"rolebinding.role_ref.name": resource.RoleRef.Name,
+		"rolebinding.role_ref.type": resource.RoleRef.Type,
+	}
 }

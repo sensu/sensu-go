@@ -52,9 +52,9 @@ func (u *User) GetObjectMeta() ObjectMeta {
 // UserFields returns a set of fields that represent that resource
 func UserFields(r Resource) map[string]string {
 	resource := r.(*User)
-	fields := make(map[string]string, 3)
-	fields["user.username"] = resource.Username
-	fields["user.disabled"] = strconv.FormatBool(resource.Disabled)
-	fields["user.groups"] = strings.Join(resource.Groups, ",")
-	return fields
+	return map[string]string{
+		"user.username": resource.Username,
+		"user.disabled": strconv.FormatBool(resource.Disabled),
+		"user.groups":   strings.Join(resource.Groups, ","),
+	}
 }

@@ -106,9 +106,9 @@ func NewAsset(meta ObjectMeta) *Asset {
 // AssetFields returns a set of fields that represent that resource
 func AssetFields(r Resource) map[string]string {
 	resource := r.(*Asset)
-	fields := make(map[string]string, 3)
-	fields["asset.name"] = resource.ObjectMeta.Name
-	fields["asset.namespace"] = resource.ObjectMeta.Namespace
-	fields["asset.filters"] = strings.Join(resource.Filters, ",")
-	return fields
+	return map[string]string{
+		"asset.name":      resource.ObjectMeta.Name,
+		"asset.namespace": resource.ObjectMeta.Namespace,
+		"asset.filters":   strings.Join(resource.Filters, ","),
+	}
 }

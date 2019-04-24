@@ -12,7 +12,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// UsersController represents the controller needs of the UsersRouter.
+// UserController represents the controller needs of the UsersRouter.
 type UserController interface {
 	List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error)
 	Find(ctx context.Context, name string) (*types.User, error)

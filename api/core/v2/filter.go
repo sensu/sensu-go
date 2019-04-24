@@ -108,10 +108,10 @@ func (f *EventFilter) URIPath() string {
 // EventFilterFields returns a set of fields that represent that resource
 func EventFilterFields(r Resource) map[string]string {
 	resource := r.(*EventFilter)
-	fields := make(map[string]string, 4)
-	fields["filter.name"] = resource.ObjectMeta.Name
-	fields["filter.namespace"] = resource.ObjectMeta.Namespace
-	fields["filter.action"] = resource.Action
-	fields["filter.runtime_assets"] = strings.Join(resource.RuntimeAssets, ",")
-	return fields
+	return map[string]string{
+		"filter.name":           resource.ObjectMeta.Name,
+		"filter.namespace":      resource.ObjectMeta.Namespace,
+		"filter.action":         resource.Action,
+		"filter.runtime_assets": strings.Join(resource.RuntimeAssets, ","),
+	}
 }

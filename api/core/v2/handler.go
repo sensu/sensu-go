@@ -115,12 +115,12 @@ func (h *Handler) URIPath() string {
 // HandlerFields returns a set of fields that represent that resource
 func HandlerFields(r Resource) map[string]string {
 	resource := r.(*Handler)
-	fields := make(map[string]string, 6)
-	fields["handler.name"] = resource.ObjectMeta.Name
-	fields["handler.namespace"] = resource.ObjectMeta.Namespace
-	fields["handler.filters"] = strings.Join(resource.Filters, ",")
-	fields["handler.handlers"] = strings.Join(resource.Handlers, ",")
-	fields["handler.mutator"] = resource.Mutator
-	fields["handler.type"] = resource.Type
-	return fields
+	return map[string]string{
+		"handler.name":      resource.ObjectMeta.Name,
+		"handler.namespace": resource.ObjectMeta.Namespace,
+		"handler.filters":   strings.Join(resource.Filters, ","),
+		"handler.handlers":  strings.Join(resource.Handlers, ","),
+		"handler.mutator":   resource.Mutator,
+		"handler.type":      resource.Type,
+	}
 }

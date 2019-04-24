@@ -152,8 +152,8 @@ func (h *Hook) URIPath() string {
 // HookConfigFields returns a set of fields that represent that resource
 func HookConfigFields(r Resource) map[string]string {
 	resource := r.(*HookConfig)
-	fields := make(map[string]string, 2)
-	fields["hook.name"] = resource.ObjectMeta.Name
-	fields["hook.namespace"] = resource.ObjectMeta.Namespace
-	return fields
+	return map[string]string{
+		"hook.name":      resource.ObjectMeta.Name,
+		"hook.namespace": resource.ObjectMeta.Namespace,
+	}
 }
