@@ -14,7 +14,7 @@ import (
 
 const (
 	serviceName = "sensu-agent"
-	serviceDesc = "monitoring agent for sensu-go (https://sensu.io)"
+	serviceDesc = "Sensu Agent"
 )
 
 // NewWindowsInstallServiceCommand creates a cobra command that installs a

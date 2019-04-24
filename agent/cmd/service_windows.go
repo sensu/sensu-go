@@ -1,11 +1,9 @@
-//+build windows
-
-package windows
+package cmd
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/spf13/cobra"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
 	"golang.org/x/sys/windows/svc/eventlog"
@@ -16,25 +14,46 @@ var (
 	elog debug.Log
 )
 
-func NewService(command *cobra.Command) *Service {
+func NewService() *Service {
+	ctx, cancel := context.WithCancel(context.Background())
 	return &Service{
-		command: command,
+		ctx:    ctx,
+		cancel: cancel,
 	}
 }
 
 type Service struct {
-	command *cobra.Command
+	ctx    context.Context
+	cancel context.CancelFunc
 }
 
 func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (bool, uint32) {
+	go func() {
+		defer func() {
+			changes <- svc.Status{State: svc.Stopped}
+		}()
+		defer s.cancel()
+		for req := range r {
+			switch req.Cmd {
+			case svc.Stop, svc.Shutdown:
+				changes <- svc.Status{State: svc.StopPending}
+				return
+			default:
+				// TODO log this to the appropriate place? or?
+				elog.Error(1, fmt.Sprintf("got change request: %v", req))
+			}
+		}
+	}()
 	changes <- svc.Status{State: svc.StartPending}
 	// Start service here
+	command := newStartCommand(args, s.ctx)
 	changes <- svc.Status{State: svc.Running, Accepts: svc.AcceptShutdown}
+
+	if err := command.Execute(); err != nil {
+		// TODO figure out how best to handle this
+		panic(err)
+	}
 	// Block until shutdown
-	// Service has been given stop signal
-	changes <- svc.Status{State: svc.StopPending}
-	// Service has stopped
-	changes <- svc.Status{State: svc.Stopped}
 	return false, 0
 }
 
