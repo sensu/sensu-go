@@ -5,9 +5,12 @@ import (
 	"strconv"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
+
 	"github.com/spf13/cobra"
 )
 
@@ -18,8 +21,22 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "list cluster role bindings",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			fieldSelector, err := cmd.Flags().GetString(flags.FieldSelector)
+			if err != nil {
+				return err
+			}
+
+			labelSelector, err := cmd.Flags().GetString(flags.LabelSelector)
+			if err != nil {
+				return err
+			}
+
+			opts := client.ListOptions{}
+			opts.FieldSelector = fieldSelector
+			opts.LabelSelector = labelSelector
+
 			// Fetch role bindings from API
-			results, err := cli.Client.ListClusterRoleBindings()
+			results, err := cli.Client.ListClusterRoleBindings(opts)
 			if err != nil {
 				return err
 			}
@@ -34,6 +51,9 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	helpers.AddFormatFlag(cmd.Flags())
+	helpers.AddFieldSelectorFlag(cmd.Flags())
+	helpers.AddLabelSelectorFlag(cmd.Flags())
+
 	return cmd
 }
 func printToTable(results interface{}, writer io.Writer) {

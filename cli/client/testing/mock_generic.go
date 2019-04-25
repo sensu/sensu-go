@@ -1,6 +1,9 @@
 package testing
 
-import "github.com/sensu/sensu-go/types"
+import (
+	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/types"
+)
 
 // Delete ...
 func (c *MockClient) Delete(path string) error {
@@ -15,8 +18,8 @@ func (c *MockClient) Get(path string, obj interface{}) error {
 }
 
 // List ...
-func (c *MockClient) List(path string, objs interface{}) error {
-	args := c.Called(path, objs)
+func (c *MockClient) List(path string, objs interface{}, options client.ListOptions) error {
+	args := c.Called(path, objs, options)
 	return args.Error(0)
 }
 

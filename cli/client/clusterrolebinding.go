@@ -1,6 +1,7 @@
 package client
 
 import (
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -26,10 +27,10 @@ func (client *RestClient) FetchClusterRoleBinding(name string) (*types.ClusterRo
 }
 
 // ListClusterRoleBinding in the cluster
-func (client *RestClient) ListClusterRoleBindings() ([]types.ClusterRoleBinding, error) {
-	clusterRoleBindings := []types.ClusterRoleBinding{}
+func (client *RestClient) ListClusterRoleBindings(options ListOptions) ([]corev2.ClusterRoleBinding, error) {
+	clusterRoleBindings := []corev2.ClusterRoleBinding{}
 
-	if err := client.List(clusterRoleBindingsPath(), &clusterRoleBindings); err != nil {
+	if err := client.List(clusterRoleBindingsPath(), &clusterRoleBindings, options); err != nil {
 		return clusterRoleBindings, err
 	}
 

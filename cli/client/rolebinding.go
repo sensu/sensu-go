@@ -1,6 +1,7 @@
 package client
 
 import (
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -26,10 +27,10 @@ func (client *RestClient) FetchRoleBinding(name string) (*types.RoleBinding, err
 }
 
 // ListRoleBindings lists the role bindings within the given namespace.
-func (client *RestClient) ListRoleBindings(namespace string) ([]types.RoleBinding, error) {
-	roleBindings := []types.RoleBinding{}
+func (client *RestClient) ListRoleBindings(namespace string, options ListOptions) ([]corev2.RoleBinding, error) {
+	roleBindings := []corev2.RoleBinding{}
 
-	if err := client.List(roleBindingsPath(namespace), &roleBindings); err != nil {
+	if err := client.List(roleBindingsPath(namespace), &roleBindings, options); err != nil {
 		return roleBindings, err
 	}
 

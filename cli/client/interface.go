@@ -46,7 +46,7 @@ type GenericClient interface {
 	// Get retrieves the key at the given path and stores it into obj
 	Get(path string, obj interface{}) error
 	// List retrieves all keys with the given path prefix and stores them into objs
-	List(path string, objs interface{}) error
+	List(path string, objs interface{}, options ListOptions) error
 	// Post creates the given obj at the specified path
 	Post(path string, obj interface{}) error
 	// Put creates the given obj at the specified path
@@ -90,7 +90,7 @@ type ClusterRoleAPIClient interface {
 	CreateClusterRole(*types.ClusterRole) error
 	DeleteClusterRole(string) error
 	FetchClusterRole(string) (*types.ClusterRole, error)
-	ListClusterRoles() ([]types.ClusterRole, error)
+	ListClusterRoles(ListOptions) ([]types.ClusterRole, error)
 }
 
 // ClusterRoleBindingAPIClient client methods for cluster role bindings
@@ -98,7 +98,7 @@ type ClusterRoleBindingAPIClient interface {
 	CreateClusterRoleBinding(*types.ClusterRoleBinding) error
 	DeleteClusterRoleBinding(string) error
 	FetchClusterRoleBinding(string) (*types.ClusterRoleBinding, error)
-	ListClusterRoleBindings() ([]types.ClusterRoleBinding, error)
+	ListClusterRoleBindings(ListOptions) ([]types.ClusterRoleBinding, error)
 }
 
 // EntityAPIClient client methods for entities
@@ -197,7 +197,7 @@ type RoleAPIClient interface {
 	CreateRole(*types.Role) error
 	DeleteRole(string, string) error
 	FetchRole(string) (*types.Role, error)
-	ListRoles(string) ([]types.Role, error)
+	ListRoles(string, ListOptions) ([]types.Role, error)
 }
 
 // RoleBindingAPIClient client methods for role bindings
@@ -205,7 +205,7 @@ type RoleBindingAPIClient interface {
 	CreateRoleBinding(*types.RoleBinding) error
 	DeleteRoleBinding(string, string) error
 	FetchRoleBinding(string) (*types.RoleBinding, error)
-	ListRoleBindings(string) ([]types.RoleBinding, error)
+	ListRoleBindings(string, ListOptions) ([]types.RoleBinding, error)
 }
 
 // SilencedAPIClient client methods for silenced

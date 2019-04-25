@@ -5,10 +5,12 @@ import (
 	"strconv"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
+
 	"github.com/spf13/cobra"
 )
 
@@ -24,8 +26,22 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 				namespace = types.NamespaceTypeAll
 			}
 
+			fieldSelector, err := cmd.Flags().GetString(flags.FieldSelector)
+			if err != nil {
+				return err
+			}
+
+			labelSelector, err := cmd.Flags().GetString(flags.LabelSelector)
+			if err != nil {
+				return err
+			}
+
+			opts := client.ListOptions{}
+			opts.FieldSelector = fieldSelector
+			opts.LabelSelector = labelSelector
+
 			// Fetch roles from API
-			results, err := cli.Client.ListRoles(namespace)
+			results, err := cli.Client.ListRoles(namespace, opts)
 			if err != nil {
 				return err
 			}
@@ -41,6 +57,8 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 
 	helpers.AddFormatFlag(cmd.Flags())
 	helpers.AddAllNamespace(cmd.Flags())
+	helpers.AddFieldSelectorFlag(cmd.Flags())
+	helpers.AddLabelSelectorFlag(cmd.Flags())
 
 	return cmd
 }

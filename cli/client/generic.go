@@ -36,8 +36,13 @@ func (client *RestClient) Get(path string, obj interface{}) error {
 }
 
 // List sends a GET request for all objects at the given path
-func (client *RestClient) List(path string, objs interface{}) error {
-	res, err := client.R().Get(path)
+func (client *RestClient) List(path string, objs interface{}, options ListOptions) error {
+	request := client.R()
+
+	request.SetQueryParam("fieldSelector", options.FieldSelector)
+	request.SetQueryParam("labelSelector", options.LabelSelector)
+
+	res, err := request.Get(path)
 	if err != nil {
 		return err
 	}
