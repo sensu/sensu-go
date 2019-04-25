@@ -26,6 +26,9 @@ func TestExerciseService(t *testing.T) {
 	schema.RegisterLocale(svc)
 	schema.RegisterSchema(svc)
 
+	schema.RegisterErr(svc, nil)
+	schema.RegisterStdErr(svc, &schema.StdErrAliases{})
+
 	err := svc.Regenerate()
 	require.NoError(t, err)
 

@@ -24,6 +24,10 @@ func MemberListCommand(cli *cli.SensuCli) *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("error listing cluster members: %s", err)
 			}
+			err = helpers.PrintFormatted(helpers.GetChangedStringValueFlag("format", cmd.Flags()), cli.Config.Format(), result.Header, cmd.OutOrStdout(), printTitleClusterID)
+			if err != nil {
+				return err
+			}
 			return helpers.Print(cmd, cli.Config.Format(), printMemberListToTable, nil, result)
 		},
 	}

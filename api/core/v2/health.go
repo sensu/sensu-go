@@ -22,12 +22,19 @@ type HealthResponse struct {
 	Alarms []*etcdserverpb.AlarmMember
 	// ClusterHealth is the list of health status for every cluster member.
 	ClusterHealth []*ClusterHealth
+	// Header is the response header for the entire cluster response.
+	Header *etcdserverpb.ResponseHeader
 }
 
 // FixtureHealthResponse returns a HealthResponse fixture for testing.
 func FixtureHealthResponse(healthy bool) *HealthResponse {
 	var err string
-	healthResponse := &HealthResponse{}
+	healthResponse := &HealthResponse{
+		Header: &etcdserverpb.ResponseHeader{
+			ClusterId: uint64(4255616304056076734),
+		},
+	}
+
 	clusterHealth := []*ClusterHealth{}
 	clusterHealth = append(clusterHealth, &ClusterHealth{
 		MemberID: uint64(12345),

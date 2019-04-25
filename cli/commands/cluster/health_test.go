@@ -1,6 +1,7 @@
 package cluster
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/coreos/etcd/etcdserver/etcdserverpb"
@@ -25,8 +26,13 @@ func TestHealthCommand(t *testing.T) {
 
 func TestHealthCommandAlarmCorrupt(t *testing.T) {
 	assert := assert.New(t)
+	clusterID := uint64(4255616304056076734)
 
-	healthResponse := &types.HealthResponse{}
+	healthResponse := &types.HealthResponse{
+		Header: &etcdserverpb.ResponseHeader{
+			ClusterId: clusterID,
+		},
+	}
 	clusterHealth := []*types.ClusterHealth{}
 	clusterHealth = append(clusterHealth, &types.ClusterHealth{
 		MemberID: uint64(12345),
@@ -59,21 +65,28 @@ func TestHealthCommandAlarmCorrupt(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{})
 	require.NoError(t, err)
 
-	assert.Contains(out, "ID")         // heading
-	assert.Contains(out, "Name")       // heading
-	assert.Contains(out, "Error")      // heading
-	assert.Contains(out, "Healthy")    // heading
-	assert.Contains(out, "Alarm Type") // Heading
-	assert.Contains(out, "true")       // healthy cluster member
-	assert.Contains(out, "false")      // unhealthy cluster member
-	assert.Contains(out, "error")      // cluster error
-	assert.Contains(out, "CORRUPT")    // alarm type
+	assert.Contains(out, "ID")                         // heading
+	assert.Contains(out, "Name")                       // heading
+	assert.Contains(out, "Error")                      // heading
+	assert.Contains(out, "Healthy")                    // heading
+	assert.Contains(out, "Alarm Type")                 // Heading
+	assert.Contains(out, "true")                       // healthy cluster member
+	assert.Contains(out, "false")                      // unhealthy cluster member
+	assert.Contains(out, "error")                      // cluster error
+	assert.Contains(out, "CORRUPT")                    // alarm type
+	assert.Contains(out, "Cluster ID")                 // cluster id title
+	assert.Contains(out, fmt.Sprintf("%x", clusterID)) // cluster id hex
 }
 
 func TestHealthCommandAlarmNoSpace(t *testing.T) {
 	assert := assert.New(t)
+	clusterID := uint64(4255616304056076734)
 
-	healthResponse := &types.HealthResponse{}
+	healthResponse := &types.HealthResponse{
+		Header: &etcdserverpb.ResponseHeader{
+			ClusterId: clusterID,
+		},
+	}
 	clusterHealth := []*types.ClusterHealth{}
 	clusterHealth = append(clusterHealth, &types.ClusterHealth{
 		MemberID: uint64(12345),
@@ -100,12 +113,14 @@ func TestHealthCommandAlarmNoSpace(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{})
 	require.NoError(t, err)
 
-	assert.Contains(out, "ID")         // heading
-	assert.Contains(out, "Name")       // heading
-	assert.Contains(out, "Error")      // heading
-	assert.Contains(out, "Healthy")    // heading
-	assert.Contains(out, "Alarm Type") // Heading
-	assert.Contains(out, "false")      // unhealthy cluster member
-	assert.Contains(out, "error")      // cluster error
-	assert.Contains(out, "NOSPACE")    // alarm type
+	assert.Contains(out, "ID")                         // heading
+	assert.Contains(out, "Name")                       // heading
+	assert.Contains(out, "Error")                      // heading
+	assert.Contains(out, "Healthy")                    // heading
+	assert.Contains(out, "Alarm Type")                 // Heading
+	assert.Contains(out, "false")                      // unhealthy cluster member
+	assert.Contains(out, "error")                      // cluster error
+	assert.Contains(out, "NOSPACE")                    // alarm type
+	assert.Contains(out, "Cluster ID")                 // cluster id title
+	assert.Contains(out, fmt.Sprintf("%x", clusterID)) // cluster id hex
 }

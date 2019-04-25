@@ -378,3 +378,41 @@ func TestUpdate(t *testing.T) {
 		assert.Equal(t, 2, obj.Revision)
 	})
 }
+
+func TestCount(t *testing.T) {
+	testWithEtcdStore(t, func(s *Store) {
+		// Create a second namespace
+		require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("acme")))
+
+		// Create a bunch of keys everywhere
+		obj1 := &genericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj1", Namespace: "default"}}
+		ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
+		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/default/obj1", "default", obj1))
+
+		obj2 := &genericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj2", Namespace: "acme"}}
+		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
+		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/acme/obj2", "acme", obj2))
+
+		obj3 := &genericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj3", Namespace: "acme"}}
+		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
+		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/acme/obj3", "acme", obj3))
+
+		// We should have 1 object when listing keys under the default namespace
+		ctx = context.WithValue(context.Background(), types.NamespaceKey, "default")
+		count, err := Count(ctx, s.client, getGenericObjectsPath(ctx, ""))
+		require.NoError(t, err)
+		assert.Equal(t, int64(1), count)
+
+		// We should have 2 objects when listing keys under the acme namespace
+		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
+		count, err = Count(ctx, s.client, getGenericObjectsPath(ctx, ""))
+		require.NoError(t, err)
+		assert.Equal(t, int64(2), count)
+
+		// We should have 3 objects when listing through all namespaces
+		ctx = context.WithValue(context.Background(), types.NamespaceKey, "")
+		count, err = Count(ctx, s.client, getGenericObjectsPath(ctx, ""))
+		require.NoError(t, err)
+		assert.Equal(t, int64(3), count)
+	})
+}

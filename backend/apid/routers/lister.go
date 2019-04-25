@@ -15,8 +15,11 @@ import (
 // ListControllerFunc represents a generic controller for listing resources
 type ListControllerFunc func(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error)
 
+// FieldsFunc represents the function to retrieve fields about a given resource
+type FieldsFunc func(resource corev2.Resource) map[string]string
+
 // listerFunc represents the function signature of a Lister
-type listerFunc func(ListControllerFunc) http.HandlerFunc
+type listerFunc func(ListControllerFunc, FieldsFunc) http.HandlerFunc
 
 // Lister represents the active Lister function
 var Lister listerFunc
@@ -27,7 +30,7 @@ func init() {
 }
 
 // List handles resources listing with pagination support
-func List(list ListControllerFunc) http.HandlerFunc {
+func List(list ListControllerFunc, fields FieldsFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		pred := &store.SelectionPredicate{
 			Continue: corev2.PageContinueFromContext(r.Context()),
@@ -57,8 +60,8 @@ func List(list ListControllerFunc) http.HandlerFunc {
 // We can't directly use a Lister in the mux.Router because it cannot be
 // modified at runtime, which is required for sensu-enterprise-go, therefore we
 // need this little wrapper
-func listerHandler(list ListControllerFunc) http.HandlerFunc {
+func listerHandler(list ListControllerFunc, fields FieldsFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		Lister(list).ServeHTTP(w, r)
+		Lister(list, fields).ServeHTTP(w, r)
 	}
 }

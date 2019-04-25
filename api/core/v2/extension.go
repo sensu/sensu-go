@@ -33,6 +33,16 @@ func FixtureExtension(name string) *Extension {
 	}
 }
 
+// NewExtension intializes an extension with the given object meta
 func NewExtension(meta ObjectMeta) *Extension {
 	return &Extension{ObjectMeta: meta}
+}
+
+// ExtensionFields returns a set of fields that represent that resource
+func ExtensionFields(r Resource) map[string]string {
+	resource := r.(*Extension)
+	return map[string]string{
+		"extension.name":      resource.ObjectMeta.Name,
+		"extension.namespace": resource.ObjectMeta.Namespace,
+	}
 }

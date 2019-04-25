@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"path"
 	"regexp"
+	"strings"
 
 	"github.com/sensu/sensu-go/js"
 )
@@ -100,4 +101,14 @@ func (a *Asset) URIPath() string {
 // NewAsset creates a new Asset.
 func NewAsset(meta ObjectMeta) *Asset {
 	return &Asset{ObjectMeta: meta}
+}
+
+// AssetFields returns a set of fields that represent that resource
+func AssetFields(r Resource) map[string]string {
+	resource := r.(*Asset)
+	return map[string]string{
+		"asset.name":      resource.ObjectMeta.Name,
+		"asset.namespace": resource.ObjectMeta.Namespace,
+		"asset.filters":   strings.Join(resource.Filters, ","),
+	}
 }

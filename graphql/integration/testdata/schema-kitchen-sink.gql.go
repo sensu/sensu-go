@@ -3,6 +3,7 @@
 package schema
 
 import (
+	errors "errors"
 	graphql1 "github.com/graphql-go/graphql"
 	ast "github.com/graphql-go/graphql/language/ast"
 	mapstructure "github.com/mitchellh/mapstructure"
@@ -100,9 +101,6 @@ type QueryRootMyBarFieldResolver interface {
 type QueryRootFieldResolvers interface {
 	QueryRootFoosFieldResolver
 	QueryRootMyBarFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the QueryRoot type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // QueryRootAliases implements all methods on QueryRootFieldResolvers interface by using reflection to
@@ -155,15 +153,13 @@ type QueryRootAliases struct{}
 // Foos implements response to request for 'foos' field.
 func (_ QueryRootAliases) Foos(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // MyBar implements response to request for 'myBar' field.
 func (_ QueryRootAliases) MyBar(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // QueryRootType QueryRoot is entry point for queries
@@ -175,12 +171,16 @@ func RegisterQueryRoot(svc *graphql.Service, impl QueryRootFieldResolvers) {
 }
 func _ObjTypeQueryRootFoosHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(QueryRootFoosFieldResolver)
-	return resolver.Foos
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Foos(frp)
+	}
 }
 
 func _ObjTypeQueryRootMyBarHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(QueryRootMyBarFieldResolver)
-	return resolver.MyBar
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.MyBar(frp)
+	}
 }
 
 func _ObjectTypeQueryRootConfigFn() graphql1.ObjectConfig {
@@ -278,7 +278,7 @@ type FooTwoFieldResolverArgs struct {
 // FooTwoFieldResolverParams contains contextual info to resolve two field
 type FooTwoFieldResolverParams struct {
 	graphql.ResolveParams
-	FooTwoFieldResolverArgs
+	Args FooTwoFieldResolverArgs
 }
 
 // FooTwoFieldResolver implement to resolve requests for the Foo's two field.
@@ -296,7 +296,7 @@ type FooThreeFieldResolverArgs struct {
 // FooThreeFieldResolverParams contains contextual info to resolve three field
 type FooThreeFieldResolverParams struct {
 	graphql.ResolveParams
-	FooThreeFieldResolverArgs
+	Args FooThreeFieldResolverArgs
 }
 
 // FooThreeFieldResolver implement to resolve requests for the Foo's three field.
@@ -313,7 +313,7 @@ type FooFourFieldResolverArgs struct {
 // FooFourFieldResolverParams contains contextual info to resolve four field
 type FooFourFieldResolverParams struct {
 	graphql.ResolveParams
-	FooFourFieldResolverArgs
+	Args FooFourFieldResolverArgs
 }
 
 // FooFourFieldResolver implement to resolve requests for the Foo's four field.
@@ -330,7 +330,7 @@ type FooFiveFieldResolverArgs struct {
 // FooFiveFieldResolverParams contains contextual info to resolve five field
 type FooFiveFieldResolverParams struct {
 	graphql.ResolveParams
-	FooFiveFieldResolverArgs
+	Args FooFiveFieldResolverArgs
 }
 
 // FooFiveFieldResolver implement to resolve requests for the Foo's five field.
@@ -347,7 +347,7 @@ type FooSixFieldResolverArgs struct {
 // FooSixFieldResolverParams contains contextual info to resolve six field
 type FooSixFieldResolverParams struct {
 	graphql.ResolveParams
-	FooSixFieldResolverArgs
+	Args FooSixFieldResolverArgs
 }
 
 // FooSixFieldResolver implement to resolve requests for the Foo's six field.
@@ -360,6 +360,12 @@ type FooSixFieldResolver interface {
 type FooSevenFieldResolver interface {
 	// Seven implements response to request for seven field.
 	Seven(p graphql.ResolveParams) (interface{}, error)
+}
+
+// FooEightFieldResolver implement to resolve requests for the Foo's eight field.
+type FooEightFieldResolver interface {
+	// Eight implements response to request for eight field.
+	Eight(p graphql.ResolveParams) (interface{}, error)
 }
 
 //
@@ -431,9 +437,7 @@ type FooFieldResolvers interface {
 	FooFiveFieldResolver
 	FooSixFieldResolver
 	FooSevenFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the Foo type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+	FooEightFieldResolver
 }
 
 // FooAliases implements all methods on FooFieldResolvers interface by using reflection to
@@ -486,50 +490,70 @@ type FooAliases struct{}
 // One implements response to request for 'one' field.
 func (_ FooAliases) One(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Two implements response to request for 'two' field.
 func (_ FooAliases) Two(p FooTwoFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Three implements response to request for 'three' field.
 func (_ FooAliases) Three(p FooThreeFieldResolverParams) (int, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(int)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'three'")
+	}
 	return ret, err
 }
 
 // Four implements response to request for 'four' field.
 func (_ FooAliases) Four(p FooFourFieldResolverParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'four'")
+	}
 	return ret, err
 }
 
 // Five implements response to request for 'five' field.
 func (_ FooAliases) Five(p FooFiveFieldResolverParams) (string, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(string)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'five'")
+	}
 	return ret, err
 }
 
 // Six implements response to request for 'six' field.
 func (_ FooAliases) Six(p FooSixFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // Seven implements response to request for 'seven' field.
 func (_ FooAliases) Seven(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
+}
+
+// Eight implements response to request for 'eight' field.
+func (_ FooAliases) Eight(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
 }
 
 // FooType Foo is quite the type.
@@ -541,7 +565,9 @@ func RegisterFoo(svc *graphql.Service, impl FooFieldResolvers) {
 }
 func _ObjTypeFooOneHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(FooOneFieldResolver)
-	return resolver.One
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.One(frp)
+	}
 }
 
 func _ObjTypeFooTwoHandler(impl interface{}) graphql1.FieldResolveFn {
@@ -611,13 +637,29 @@ func _ObjTypeFooSixHandler(impl interface{}) graphql1.FieldResolveFn {
 
 func _ObjTypeFooSevenHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(FooSevenFieldResolver)
-	return resolver.Seven
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Seven(frp)
+	}
+}
+
+func _ObjTypeFooEightHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(FooEightFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Eight(frp)
+	}
 }
 
 func _ObjectTypeFooConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Foo is quite the type.",
 		Fields: graphql1.Fields{
+			"eight": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "eight",
+				Type:              graphql.OutputType("Err"),
+			},
 			"five": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{"argument": &graphql1.ArgumentConfig{
 					DefaultValue: []interface{}{"string", "string"},
@@ -710,6 +752,7 @@ func _ObjectTypeFooConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeFooDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeFooConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
+		"eight": _ObjTypeFooEightHandler,
 		"five":  _ObjTypeFooFiveHandler,
 		"four":  _ObjTypeFooFourHandler,
 		"one":   _ObjTypeFooOneHandler,
@@ -728,7 +771,7 @@ type AnnotatedObjectAnnotatedFieldFieldResolverArgs struct {
 // AnnotatedObjectAnnotatedFieldFieldResolverParams contains contextual info to resolve annotatedField field
 type AnnotatedObjectAnnotatedFieldFieldResolverParams struct {
 	graphql.ResolveParams
-	AnnotatedObjectAnnotatedFieldFieldResolverArgs
+	Args AnnotatedObjectAnnotatedFieldFieldResolverArgs
 }
 
 // AnnotatedObjectAnnotatedFieldFieldResolver implement to resolve requests for the AnnotatedObject's annotatedField field.
@@ -800,9 +843,6 @@ type AnnotatedObjectAnnotatedFieldFieldResolver interface {
 //
 type AnnotatedObjectFieldResolvers interface {
 	AnnotatedObjectAnnotatedFieldFieldResolver
-
-	// IsTypeOf is used to determine if a given value is associated with the AnnotatedObject type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // AnnotatedObjectAliases implements all methods on AnnotatedObjectFieldResolvers interface by using reflection to
@@ -855,8 +895,7 @@ type AnnotatedObjectAliases struct{}
 // AnnotatedField implements response to request for 'annotatedField' field.
 func (_ AnnotatedObjectAliases) AnnotatedField(p AnnotatedObjectAnnotatedFieldFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	ret := val.(interface{})
-	return ret, err
+	return val, err
 }
 
 // AnnotatedObjectType self descriptive
@@ -1020,7 +1059,7 @@ func _UnionTypeFeedConfigFn() graphql1.UnionConfig {
 // describe Feed's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _UnionTypeFeedDesc = graphql.UnionDesc{Config: _UnionTypeFeedConfigFn}
 
-// AnnotatedUnionType AnnotatedUnion i dont care
+// AnnotatedUnionType AnnotatedUnion .. for the union
 var AnnotatedUnionType = graphql.NewType("AnnotatedUnion", graphql.UnionKind)
 
 // RegisterAnnotatedUnion registers AnnotatedUnion object type with given service.
@@ -1029,7 +1068,7 @@ func RegisterAnnotatedUnion(svc *graphql.Service, impl graphql.UnionTypeResolver
 }
 func _UnionTypeAnnotatedUnionConfigFn() graphql1.UnionConfig {
 	return graphql1.UnionConfig{
-		Description: "AnnotatedUnion i dont care",
+		Description: "AnnotatedUnion .. for the union",
 		Name:        "AnnotatedUnion",
 		ResolveType: func(_ graphql1.ResolveTypeParams) *graphql1.Object {
 			// NOTE:
@@ -1168,9 +1207,9 @@ var _EnumTypeSiteDesc = graphql.EnumDesc{Config: _EnumTypeSiteConfigFn}
 
 type _EnumTypeSiteValues struct {
 	// DESKTOP - self descriptive
-	DESKTOP string
+	DESKTOP Site
 	// MOBILE - self descriptive
-	MOBILE string
+	MOBILE Site
 }
 
 // Locale self descriptive
@@ -1225,13 +1264,13 @@ var _EnumTypeLocaleDesc = graphql.EnumDesc{Config: _EnumTypeLocaleConfigFn}
 
 type _EnumTypeLocaleValues struct {
 	// EN - Language I know
-	EN string
+	EN Locale
 	// JA - Glorious nippon
-	JA string
+	JA Locale
 	// HI - India
-	HI string
+	HI Locale
 	// LA - Lanugage I don't know
-	LA string
+	LA Locale
 }
 
 // AnnotatedEnum self descriptive
@@ -1274,20 +1313,23 @@ var _EnumTypeAnnotatedEnumDesc = graphql.EnumDesc{Config: _EnumTypeAnnotatedEnum
 
 type _EnumTypeAnnotatedEnumValues struct {
 	// ANNOTATED_VALUE - self descriptive
-	ANNOTATED_VALUE string
+	ANNOTATED_VALUE AnnotatedEnum
 	// OTHER_VALUE - self descriptive
-	OTHER_VALUE string
+	OTHER_VALUE AnnotatedEnum
 }
 
 // InputType is neato
 type InputType struct {
-	// Key - self descriptive Key string
-	// Answer - self descriptive Answer int
+	// Key - self descriptive
+	Key string
+	// Answer - self descriptive
+	Answer int
 	/*
 	   Answr - self descriptive
 
 	   Deprecated: No longer supported
-	*/Answr int
+	*/
+	Answr int
 }
 
 // InputTypeType InputType is neato
@@ -1302,12 +1344,12 @@ func _InputTypeInputTypeConfigFn() graphql1.InputObjectConfig {
 		Description: "InputType is neato",
 		Fields: graphql1.InputObjectConfigFieldMap{
 			"answer": &graphql1.InputObjectFieldConfig{
-				DefaultValue: "42",
+				DefaultValue: 42,
 				Description:  "self descriptive",
 				Type:         graphql1.Int,
 			},
 			"answr": &graphql1.InputObjectFieldConfig{
-				DefaultValue: "42",
+				DefaultValue: 42,
 				Description:  "self descriptive",
 				Type:         graphql1.Int,
 			},
@@ -1325,7 +1367,8 @@ var _InputTypeInputTypeDesc = graphql.InputDesc{Config: _InputTypeInputTypeConfi
 
 // AnnotatedInput self descriptive
 type AnnotatedInput struct {
-	// AnnotatedField - self descriptive AnnotatedField interface{}
+	// AnnotatedField - self descriptive
+	AnnotatedField interface{}
 }
 
 // AnnotatedInputType self descriptive
@@ -1411,9 +1454,6 @@ var _InputTypeAnnotatedInputDesc = graphql.InputDesc{Config: _InputTypeAnnotated
 //   }
 //
 type NoFieldsFieldResolvers interface {
-
-	// IsTypeOf is used to determine if a given value is associated with the NoFields type
-	IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
 }
 
 // NoFieldsAliases implements all methods on NoFieldsFieldResolvers interface by using reflection to
@@ -1491,4 +1531,250 @@ func _ObjectTypeNoFieldsConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeNoFieldsDesc = graphql.ObjectDesc{
 	Config:        _ObjectTypeNoFieldsConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{},
+}
+
+// ErrType self descriptive
+var ErrType = graphql.NewType("Err", graphql.InterfaceKind)
+
+// RegisterErr registers Err object type with given service.
+func RegisterErr(svc *graphql.Service, impl graphql.InterfaceTypeResolver) {
+	svc.RegisterInterface(_InterfaceTypeErrDesc, impl)
+}
+func _InterfaceTypeErrConfigFn() graphql1.InterfaceConfig {
+	return graphql1.InterfaceConfig{
+		Description: "self descriptive",
+		Fields: graphql1.Fields{"message": &graphql1.Field{
+			Args:              graphql1.FieldConfigArgument{},
+			DeprecationReason: "",
+			Description:       "self descriptive",
+			Name:              "message",
+			Type:              graphql1.NewNonNull(graphql1.String),
+		}},
+		Name: "Err",
+		ResolveType: func(_ graphql1.ResolveTypeParams) *graphql1.Object {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see InterfaceTypeResolver.")
+		},
+	}
+}
+
+// describe Err's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _InterfaceTypeErrDesc = graphql.InterfaceDesc{Config: _InterfaceTypeErrConfigFn}
+
+// StdErrMessageFieldResolver implement to resolve requests for the StdErr's message field.
+type StdErrMessageFieldResolver interface {
+	// Message implements response to request for message field.
+	Message(p graphql.ResolveParams) (string, error)
+}
+
+// StdErrCodeFieldResolver implement to resolve requests for the StdErr's code field.
+type StdErrCodeFieldResolver interface {
+	// Code implements response to request for code field.
+	Code(p graphql.ResolveParams) (int, error)
+}
+
+//
+// StdErrFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'StdErr' type.
+//
+// == Example SDL
+//
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
+//
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
+//
+// == Example generated interface
+//
+//   // DogResolver ...
+//   type DogFieldResolvers interface {
+//     DogNameFieldResolver
+//     DogBreedFieldResolver
+//
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//   }
+//
+// == Example implementation ...
+//
+//   // DogResolver implements DogFieldResolvers interface
+//   type DogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
+//
+//   // Name implements response to request for name field.
+//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     return dog.GetName()
+//   }
+//
+//   // Breed implements response to request for breed field.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+//     // ... implementation details ...
+//     _, ok := p.Value.(DogGetter)
+//     return ok
+//   }
+//
+type StdErrFieldResolvers interface {
+	StdErrMessageFieldResolver
+	StdErrCodeFieldResolver
+}
+
+// StdErrAliases implements all methods on StdErrFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+//
+type StdErrAliases struct{}
+
+// Message implements response to request for 'message' field.
+func (_ StdErrAliases) Message(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'message'")
+	}
+	return ret, err
+}
+
+// Code implements response to request for 'code' field.
+func (_ StdErrAliases) Code(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'code'")
+	}
+	return ret, err
+}
+
+// StdErrType self descriptive
+var StdErrType = graphql.NewType("StdErr", graphql.ObjectKind)
+
+// RegisterStdErr registers StdErr object type with given service.
+func RegisterStdErr(svc *graphql.Service, impl StdErrFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeStdErrDesc, impl)
+}
+func _ObjTypeStdErrMessageHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(StdErrMessageFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Message(frp)
+	}
+}
+
+func _ObjTypeStdErrCodeHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(StdErrCodeFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Code(frp)
+	}
+}
+
+func _ObjectTypeStdErrConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "self descriptive",
+		Fields: graphql1.Fields{
+			"code": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "code",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
+			"message": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "message",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+		},
+		Interfaces: []*graphql1.Interface{
+			graphql.Interface("Err")},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see StdErrFieldResolvers.")
+		},
+		Name: "StdErr",
+	}
+}
+
+// describe StdErr's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeStdErrDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeStdErrConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"code":    _ObjTypeStdErrCodeHandler,
+		"message": _ObjTypeStdErrMessageHandler,
+	},
 }
