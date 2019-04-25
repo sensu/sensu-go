@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -54,11 +55,16 @@ func (client *RestClient) FetchFilter(name string) (*types.EventFilter, error) {
 }
 
 // ListFilters fetches all filters from configured Sensu instance
-func (client *RestClient) ListFilters(namespace string) ([]types.EventFilter, error) {
-	var filters []types.EventFilter
+func (client *RestClient) ListFilters(namespace string, options ListOptions) ([]corev2.EventFilter, error) {
+	var filters []corev2.EventFilter
 
 	path := filtersPath(namespace)
-	res, err := client.R().Get(path)
+	request := client.R()
+
+	request.SetQueryParam("fieldSelector", options.FieldSelector)
+	request.SetQueryParam("labelSelector", options.LabelSelector)
+
+	res, err := request.Get(path)
 	if err != nil {
 		return filters, err
 	}

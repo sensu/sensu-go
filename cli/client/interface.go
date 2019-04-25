@@ -115,7 +115,7 @@ type FilterAPIClient interface {
 	CreateFilter(*types.EventFilter) error
 	DeleteFilter(string, string) error
 	FetchFilter(string) (*types.EventFilter, error)
-	ListFilters(string) ([]types.EventFilter, error)
+	ListFilters(string, ListOptions) ([]types.EventFilter, error)
 	UpdateFilter(*types.EventFilter) error
 }
 
