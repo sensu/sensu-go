@@ -163,7 +163,7 @@ type HookAPIClient interface {
 // MutatorAPIClient client methods for mutators
 type MutatorAPIClient interface {
 	CreateMutator(*types.Mutator) error
-	ListMutators(string) ([]types.Mutator, error)
+	ListMutators(string, ListOptions) ([]types.Mutator, error)
 	DeleteMutator(string, string) error
 	FetchMutator(string) (*types.Mutator, error)
 	UpdateMutator(*types.Mutator) error
