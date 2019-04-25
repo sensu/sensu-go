@@ -4,6 +4,7 @@ import (
 	"errors"
 	fmt "fmt"
 	"net/url"
+	"strings"
 )
 
 // NewMutator creates a new Mutator.
@@ -58,4 +59,14 @@ func FixtureMutator(name string) *Mutator {
 // URIPath returns the path component of a Mutator URI.
 func (m *Mutator) URIPath() string {
 	return fmt.Sprintf("/api/core/v2/namespaces/%s/mutators/%s", url.PathEscape(m.Namespace), url.PathEscape(m.Name))
+}
+
+// MutatorFields returns a set of fields that represent that resource
+func MutatorFields(r Resource) map[string]string {
+	resource := r.(*Mutator)
+	return map[string]string{
+		"mutator.name":           resource.ObjectMeta.Name,
+		"mutator.namespace":      resource.ObjectMeta.Namespace,
+		"mutator.runtime_assets": strings.Join(resource.RuntimeAssets, ","),
+	}
 }

@@ -36,3 +36,11 @@ func (n *Namespace) URIPath() string {
 func (n *Namespace) GetObjectMeta() ObjectMeta {
 	return ObjectMeta{}
 }
+
+// NamespaceFields returns a set of fields that represent that resource
+func NamespaceFields(r Resource) map[string]string {
+	resource := r.(*Namespace)
+	return map[string]string{
+		"namespace.name": resource.Name,
+	}
+}

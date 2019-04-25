@@ -167,13 +167,13 @@ func (r *ResourceRoute) Get(fn actionHandlerFunc) *mux.Route {
 }
 
 // List resources
-func (r *ResourceRoute) List(fn ListControllerFunc) *mux.Route {
-	return r.Router.HandleFunc(r.PathPrefix, listerHandler(fn)).Methods(http.MethodGet)
+func (r *ResourceRoute) List(fn ListControllerFunc, fields FieldsFunc) *mux.Route {
+	return r.Router.HandleFunc(r.PathPrefix, listerHandler(fn, fields)).Methods(http.MethodGet)
 }
 
 // ListAllNamespaces return all resources across all namespaces
-func (r *ResourceRoute) ListAllNamespaces(fn ListControllerFunc, path string) *mux.Route {
-	return r.Router.HandleFunc(path, listerHandler(fn)).Methods(http.MethodGet)
+func (r *ResourceRoute) ListAllNamespaces(fn ListControllerFunc, path string, fields FieldsFunc) *mux.Route {
+	return r.Router.HandleFunc(path, listerHandler(fn, fields)).Methods(http.MethodGet)
 }
 
 // Post creates

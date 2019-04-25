@@ -12,7 +12,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// UsersController represents the controller needs of the UsersRouter.
+// UserController represents the controller needs of the UsersRouter.
 type UserController interface {
 	List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error)
 	Find(ctx context.Context, name string) (*types.User, error)
@@ -43,7 +43,7 @@ func (r *UsersRouter) Mount(parent *mux.Router) {
 		Router:     parent,
 		PathPrefix: "/{resource:users}",
 	}
-	routes.List(r.controller.List)
+	routes.List(r.controller.List, corev2.UserFields)
 	routes.Get(r.find)
 	routes.Post(r.create)
 	routes.Del(r.destroy)

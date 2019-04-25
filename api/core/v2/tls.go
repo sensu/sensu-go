@@ -11,7 +11,8 @@ var (
 	// PCI compliance as of Jun 30, 2018: anything under TLS 1.1 must be disabled
 	// we bump this up to TLS 1.2 so we can support the best possible ciphers
 	tlsMinVersion = uint16(tls.VersionTLS12)
-	// disable CBC suites (Lucky13 attack) this means TLS 1.1 can't work (no GCM)
+	// DefaultCipherSuites overrides the default cipher suites in order to disable
+	// CBC suites (Lucky13 attack) this means TLS 1.1 can't work (no GCM)
 	// additionally, we should only use perfect forward secrecy ciphers
 	DefaultCipherSuites = []uint16{
 		tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,

@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [5.6.0] - TBD
 
+### Added
+- Added fields getter functions for resources available via the REST API.
+
 ### Fixed
 - Fixed the agent `--annotations` and `--labels` flags.
 
