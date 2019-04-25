@@ -254,6 +254,22 @@ func Update(ctx context.Context, client *clientv3.Client, key, namespace string,
 	return nil
 }
 
+// Count retrieves the count of all keys from storage under the
+// provided prefix key, while supporting all namespaces.
+func Count(ctx context.Context, client *clientv3.Client, key string) (int64, error) {
+	opts := []clientv3.OpOption{
+		clientv3.WithCountOnly(),
+		clientv3.WithRange(clientv3.GetPrefixRangeEnd(key)),
+	}
+
+	resp, err := client.Get(ctx, key, opts...)
+	if err != nil {
+		return 0, err
+	}
+
+	return resp.Count, nil
+}
+
 func getKey(key string) clientv3.Op {
 	return clientv3.OpGet(key)
 }

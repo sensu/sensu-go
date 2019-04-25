@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -28,7 +29,7 @@ func (r *ClusterRolesRouter) Mount(parent *mux.Router) {
 		Router:     parent,
 		PathPrefix: "/{resource:clusterroles}",
 	}
-	routes.List(r.controller.List)
+	routes.List(r.controller.List, corev2.ClusterRoleFields)
 	routes.Get(r.find)
 	routes.Post(r.create)
 	routes.Del(r.destroy)

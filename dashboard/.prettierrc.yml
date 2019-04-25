@@ -1,5 +1,0 @@
-# Congruent w/ Go
-trailingComma: all
-
-# Double quotes are more common in Go
-singleQuote: false

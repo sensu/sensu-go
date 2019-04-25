@@ -23,7 +23,8 @@ func getEntityPath(entity *corev2.Entity) string {
 	return entityKeyBuilder.WithResource(entity).Build(entity.Name)
 }
 
-func getEntitiesPath(ctx context.Context, name string) string {
+// GetEntitiesPath gets the path of the entity store
+func GetEntitiesPath(ctx context.Context, name string) string {
 	return entityKeyBuilder.WithContext(ctx).Build(name)
 }
 
@@ -42,7 +43,7 @@ func (s *Store) DeleteEntityByName(ctx context.Context, name string) error {
 		return errors.New("must specify name")
 	}
 
-	_, err := s.client.Delete(ctx, getEntitiesPath(ctx, name))
+	_, err := s.client.Delete(ctx, GetEntitiesPath(ctx, name))
 	return err
 }
 
@@ -52,7 +53,7 @@ func (s *Store) GetEntityByName(ctx context.Context, name string) (*corev2.Entit
 		return nil, errors.New("must specify name")
 	}
 
-	resp, err := s.client.Get(ctx, getEntitiesPath(ctx, name), clientv3.WithLimit(1))
+	resp, err := s.client.Get(ctx, GetEntitiesPath(ctx, name), clientv3.WithLimit(1))
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +77,7 @@ func (s *Store) GetEntityByName(ctx context.Context, name string) (*corev2.Entit
 // GetEntities returns the entities for the namespace in the supplied context.
 func (s *Store) GetEntities(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Entity, error) {
 	entities := []*corev2.Entity{}
-	err := List(ctx, s.client, getEntitiesPath, &entities, pred)
+	err := List(ctx, s.client, GetEntitiesPath, &entities, pred)
 	return entities, err
 }
 

@@ -22,6 +22,7 @@ func (s *Store) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, 
 		logger.WithError(err).Warning("could not get the cluster member list")
 		return healthResponse
 	}
+	healthResponse.Header = mList.Header
 
 	for _, member := range mList.Members {
 		health := &types.ClusterHealth{

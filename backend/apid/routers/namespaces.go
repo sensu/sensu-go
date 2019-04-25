@@ -38,7 +38,7 @@ func (r *NamespacesRouter) Mount(parent *mux.Router) {
 		Router:     parent,
 		PathPrefix: "/{resource:namespaces}",
 	}
-	routes.List(r.controller.List)
+	routes.List(r.controller.List, corev2.NamespaceFields)
 	routes.Get(r.find)
 	routes.Post(r.create)
 	routes.Del(r.destroy)

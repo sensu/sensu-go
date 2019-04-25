@@ -5,6 +5,7 @@ import (
 	"net/url"
 
 	"github.com/gorilla/mux"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -31,8 +32,8 @@ func (r *HandlersRouter) Mount(parent *mux.Router) {
 
 	routes.Del(r.destroy)
 	routes.Get(r.find)
-	routes.List(r.controller.List)
-	routes.ListAllNamespaces(r.controller.List, "/{resource:handlers}")
+	routes.List(r.controller.List, corev2.HandlerFields)
+	routes.ListAllNamespaces(r.controller.List, "/{resource:handlers}", corev2.HandlerFields)
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
 }

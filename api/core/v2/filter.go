@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"strings"
 
 	"github.com/sensu/sensu-go/js"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
@@ -102,4 +103,15 @@ func FixtureDenyEventFilter(name string) *EventFilter {
 // URIPath returns the path component of a Filter URI.
 func (f *EventFilter) URIPath() string {
 	return fmt.Sprintf("/api/core/v2/namespaces/%s/filters/%s", url.PathEscape(f.Namespace), url.PathEscape(f.Name))
+}
+
+// EventFilterFields returns a set of fields that represent that resource
+func EventFilterFields(r Resource) map[string]string {
+	resource := r.(*EventFilter)
+	return map[string]string{
+		"filter.name":           resource.ObjectMeta.Name,
+		"filter.namespace":      resource.ObjectMeta.Namespace,
+		"filter.action":         resource.Action,
+		"filter.runtime_assets": strings.Join(resource.RuntimeAssets, ","),
+	}
 }

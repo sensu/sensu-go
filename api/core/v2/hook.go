@@ -148,3 +148,12 @@ func FixtureHookList(hookName string) *HookList {
 func (h *Hook) URIPath() string {
 	return fmt.Sprintf("/api/core/v2/namespaces/%s/hooks/%s", url.PathEscape(h.Namespace), url.PathEscape(h.Name))
 }
+
+// HookConfigFields returns a set of fields that represent that resource
+func HookConfigFields(r Resource) map[string]string {
+	resource := r.(*HookConfig)
+	return map[string]string{
+		"hook.name":      resource.ObjectMeta.Name,
+		"hook.namespace": resource.ObjectMeta.Namespace,
+	}
+}

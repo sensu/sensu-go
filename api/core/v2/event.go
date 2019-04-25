@@ -5,6 +5,8 @@ import (
 	fmt "fmt"
 	"net/url"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	stringsutil "github.com/sensu/sensu-go/util/strings"
@@ -106,7 +108,7 @@ func (e *Event) IsSilenced() bool {
 	return len(e.Check.Silenced) > 0
 }
 
-// Implements dynamic.SynthesizeExtras
+// SynthesizeExtras implements dynamic.SynthesizeExtras
 func (e *Event) SynthesizeExtras() map[string]interface{} {
 	return map[string]interface{}{
 		"has_check":     e.HasCheck(),
@@ -348,4 +350,22 @@ func (e *Event) IsSilencedBy(entry *Silenced) bool {
 	}
 
 	return false
+}
+
+// EventFields returns a set of fields that represent that resource
+func EventFields(r Resource) map[string]string {
+	resource := r.(*Event)
+	return map[string]string{
+		"event.name":                 resource.ObjectMeta.Name,
+		"event.namespace":            resource.ObjectMeta.Namespace,
+		"event.check.handlers":       strings.Join(resource.Check.Handlers, ","),
+		"event.check.publish":        strconv.FormatBool(resource.Check.Publish),
+		"event.check.round_robin":    strconv.FormatBool(resource.Check.RoundRobin),
+		"event.check.runtime_assets": strings.Join(resource.Check.RuntimeAssets, ","),
+		"event.check.status":         strconv.Itoa(int(resource.Check.Status)),
+		"event.check.subscriptions":  strings.Join(resource.Check.Subscriptions, ","),
+		"event.entity.deregister":    strconv.FormatBool(resource.Entity.Deregister),
+		"event.entity.entity_class":  resource.Entity.EntityClass,
+		"event.entity.subscriptions": strings.Join(resource.Entity.Subscriptions, ","),
+	}
 }
