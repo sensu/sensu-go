@@ -141,7 +141,7 @@ type ExtensionAPIClient interface {
 type HandlerAPIClient interface {
 	CreateHandler(*types.Handler) error
 	DeleteHandler(string, string) error
-	ListHandlers(string) ([]types.Handler, error)
+	ListHandlers(string, ListOptions) ([]types.Handler, error)
 	FetchHandler(string) (*types.Handler, error)
 	UpdateHandler(*types.Handler) error
 }

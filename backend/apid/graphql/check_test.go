@@ -219,7 +219,7 @@ func TestCheckConfigTypeHandlersField(t *testing.T) {
 	params.Source = check
 
 	// return associated silence
-	client.On("ListHandlers", mock.Anything).Return([]types.Handler{
+	client.On("ListHandlers", mock.Anything, mock.Anything).Return([]types.Handler{
 		*types.FixtureHandler("one"),
 		*types.FixtureHandler("two"),
 		*types.FixtureHandler("three"),
@@ -242,7 +242,7 @@ func TestCheckTypeHandlersField(t *testing.T) {
 	params.Source = check
 
 	// return associated silence
-	client.On("ListHandlers", mock.Anything).Return([]types.Handler{
+	client.On("ListHandlers", mock.Anything, mock.Anything).Return([]types.Handler{
 		*types.FixtureHandler("one"),
 		*types.FixtureHandler("two"),
 		*types.FixtureHandler("three"),
@@ -265,7 +265,7 @@ func TestCheckConfigTypeOutputMetricHandlersField(t *testing.T) {
 	params.Source = check
 
 	// return associated silence
-	client.On("ListHandlers", mock.Anything).Return([]types.Handler{
+	client.On("ListHandlers", mock.Anything, mock.Anything).Return([]types.Handler{
 		*types.FixtureHandler("one"),
 		*types.FixtureHandler("two"),
 		*types.FixtureHandler("three"),
@@ -288,7 +288,7 @@ func TestCheckTypeOutputMetricHandlersField(t *testing.T) {
 	params.Source = check
 
 	// return associated silence
-	client.On("ListHandlers", mock.Anything).Return([]types.Handler{
+	client.On("ListHandlers", mock.Anything, mock.Anything).Return([]types.Handler{
 		*types.FixtureHandler("one"),
 		*types.FixtureHandler("two"),
 		*types.FixtureHandler("three"),
