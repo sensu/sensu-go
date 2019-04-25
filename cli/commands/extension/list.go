@@ -13,6 +13,7 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
+
 	"github.com/spf13/cobra"
 )
 
@@ -26,11 +27,13 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 
 	helpers.AddAllNamespace(cmd.Flags())
 	helpers.AddFormatFlag(cmd.Flags())
+	helpers.AddFieldSelectorFlag(cmd.Flags())
+	helpers.AddLabelSelectorFlag(cmd.Flags())
 
 	return cmd
 }
 
-func runList(config string, client client.APIClient, namespace, format string) func(*cobra.Command, []string) error {
+func runList(config string, c client.APIClient, namespace, format string) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		if len(args) != 0 {
 			_ = cmd.Help()
@@ -40,7 +43,21 @@ func runList(config string, client client.APIClient, namespace, format string) f
 			namespace = types.NamespaceTypeAll
 		}
 
-		extensions, err := client.ListExtensions(namespace)
+		fieldSelector, err := cmd.Flags().GetString(flags.FieldSelector)
+		if err != nil {
+			return err
+		}
+
+		labelSelector, err := cmd.Flags().GetString(flags.LabelSelector)
+		if err != nil {
+			return err
+		}
+
+		opts := client.ListOptions{}
+		opts.FieldSelector = fieldSelector
+		opts.LabelSelector = labelSelector
+
+		extensions, err := c.ListExtensions(namespace, opts)
 		if err != nil {
 			return err
 		}

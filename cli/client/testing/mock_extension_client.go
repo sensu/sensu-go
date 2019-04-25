@@ -1,11 +1,16 @@
 package testing
 
-import "github.com/sensu/sensu-go/types"
+import (
+	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+)
 
 // ListExtensions ...
-func (c *MockClient) ListExtensions(namespace string) ([]types.Extension, error) {
-	args := c.Called(namespace)
-	return args.Get(0).([]types.Extension), args.Error(1)
+func (c *MockClient) ListExtensions(namespace string, options client.ListOptions) ([]corev2.Extension, error) {
+	args := c.Called(namespace, options)
+	return args.Get(0).([]corev2.Extension), args.Error(1)
 }
 
 // RegisterExtension ...

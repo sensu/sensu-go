@@ -4,17 +4,23 @@ import (
 	"encoding/json"
 	"fmt"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
 var extPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "extensions")
 
 // ListExtensions retrieves a list of extension resources from the backend
-func (client *RestClient) ListExtensions(namespace string) ([]types.Extension, error) {
-	var extensions []types.Extension
+func (client *RestClient) ListExtensions(namespace string, options ListOptions) ([]corev2.Extension, error) {
+	var extensions []corev2.Extension
 
 	path := extPath(namespace)
-	res, err := client.R().Get(path)
+	request := client.R()
+
+	request.SetQueryParam("fieldSelector", options.FieldSelector)
+	request.SetQueryParam("labelSelector", options.LabelSelector)
+
+	res, err := request.Get(path)
 	if err != nil {
 		return extensions, err
 	}

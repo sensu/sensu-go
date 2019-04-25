@@ -132,7 +132,7 @@ type EventAPIClient interface {
 
 // ExtensionAPIClient client methods for extensions
 type ExtensionAPIClient interface {
-	ListExtensions(namespace string) ([]types.Extension, error)
+	ListExtensions(namespace string, options ListOptions) ([]types.Extension, error)
 	RegisterExtension(*types.Extension) error
 	DeregisterExtension(name, namespace string) error
 }
