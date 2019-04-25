@@ -87,7 +87,7 @@ func newVersionCommand() *cobra.Command {
 	return cmd
 }
 
-func newStartCommand(args []string, ctx context.Context) *cobra.Command {
+func newStartCommand(ctx context.Context, args []string) *cobra.Command {
 	var setupErr error
 
 	cmd := &cobra.Command{

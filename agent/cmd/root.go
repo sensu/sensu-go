@@ -18,7 +18,7 @@ func NewRootCommand(ctx context.Context, args []string) *cobra.Command {
 	}
 
 	cmd.AddCommand(newVersionCommand())
-	cmd.AddCommand(newStartCommand(args, ctx))
+	cmd.AddCommand(newStartCommand(ctx, args))
 
 	viper.SetEnvPrefix("sensu")
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
