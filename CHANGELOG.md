@@ -5,6 +5,15 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [5.6.0] - TBD
+
+### Added
+- Added filtering support to `sensuctl`. This feature only works against a
+  `sensu-backend` with a valid enterprise license.
+
+### Fixed
+- Fixed the agent `--annotations` and `--labels` flags.
+
 ## [5.5.1] - 2019-04-15
 
 ### Changed
