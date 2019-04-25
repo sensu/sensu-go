@@ -80,8 +80,7 @@ func (client *RestClient) ListUsers(options ListOptions) ([]corev2.User, error) 
 	path := usersPath()
 	request := client.R()
 
-	request.SetQueryParam("fieldSelector", options.FieldSelector)
-	request.SetQueryParam("labelSelector", options.LabelSelector)
+	ApplyListOptions(request, options)
 
 	res, err := request.Get(path)
 	if err != nil {

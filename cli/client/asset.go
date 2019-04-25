@@ -17,8 +17,7 @@ func (client *RestClient) ListAssets(namespace string, options ListOptions) ([]c
 	path := assetsPath(namespace)
 	request := client.R()
 
-	request.SetQueryParam("fieldSelector", options.FieldSelector)
-	request.SetQueryParam("labelSelector", options.LabelSelector)
+	ApplyListOptions(request, options)
 
 	res, err := request.Get(path)
 	if err != nil {

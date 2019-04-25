@@ -17,8 +17,7 @@ func (client *RestClient) ListHandlers(namespace string, options ListOptions) ([
 	path := handlersPath(namespace)
 	request := client.R()
 
-	request.SetQueryParam("fieldSelector", options.FieldSelector)
-	request.SetQueryParam("labelSelector", options.LabelSelector)
+	ApplyListOptions(request, options)
 
 	res, err := request.Get(path)
 	if err != nil {

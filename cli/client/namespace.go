@@ -63,8 +63,7 @@ func (client *RestClient) ListNamespaces(options ListOptions) ([]corev2.Namespac
 	path := namespacesPath()
 	request := client.R()
 
-	request.SetQueryParam("fieldSelector", options.FieldSelector)
-	request.SetQueryParam("labelSelector", options.LabelSelector)
+	ApplyListOptions(request, options)
 
 	res, err := request.Get(path)
 	if err != nil {

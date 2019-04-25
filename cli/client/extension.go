@@ -17,8 +17,7 @@ func (client *RestClient) ListExtensions(namespace string, options ListOptions) 
 	path := extPath(namespace)
 	request := client.R()
 
-	request.SetQueryParam("fieldSelector", options.FieldSelector)
-	request.SetQueryParam("labelSelector", options.LabelSelector)
+	ApplyListOptions(request, options)
 
 	res, err := request.Get(path)
 	if err != nil {

@@ -79,8 +79,7 @@ func (client *RestClient) ListHooks(namespace string, options ListOptions) ([]co
 	path := hooksPath(namespace)
 	request := client.R()
 
-	request.SetQueryParam("fieldSelector", options.FieldSelector)
-	request.SetQueryParam("labelSelector", options.LabelSelector)
+	ApplyListOptions(request, options)
 
 	res, err := request.Get(path)
 	if err != nil {

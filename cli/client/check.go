@@ -101,8 +101,7 @@ func (client *RestClient) ListChecks(namespace string, options ListOptions) ([]c
 	path := checksPath(namespace)
 	request := client.R()
 
-	request.SetQueryParam("fieldSelector", options.FieldSelector)
-	request.SetQueryParam("labelSelector", options.LabelSelector)
+	ApplyListOptions(request, options)
 
 	res, err := request.Get(path)
 	if err != nil {

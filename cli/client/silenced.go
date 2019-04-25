@@ -50,8 +50,7 @@ func (client *RestClient) ListSilenceds(namespace, sub, check string, options Li
 	path := silencedPath(namespace)
 	request := client.R()
 
-	request.SetQueryParam("fieldSelector", options.FieldSelector)
-	request.SetQueryParam("labelSelector", options.LabelSelector)
+	ApplyListOptions(request, options)
 
 	if sub != "" {
 		path = silencedPath(namespace, "subscriptions", sub)
