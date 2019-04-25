@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/sensu/sensu-go/agent"
@@ -54,6 +55,7 @@ const (
 	flagDisableAPI            = "disable-api"
 	flagDisableSockets        = "disable-sockets"
 	flagLogLevel              = "log-level"
+	flagLogPath               = "log-path"
 	flagLabels                = "labels"
 	flagAnnotations           = "annotations"
 
@@ -107,6 +109,15 @@ func newStartCommand(ctx context.Context, args []string) *cobra.Command {
 				return err
 			}
 			logrus.SetLevel(level)
+			logPath := viper.GetString(flagLogPath)
+			if logPath != "" {
+				file, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY, 0600)
+				if err == nil {
+					logrus.SetOutput(file)
+				} else {
+					return fmt.Errorf("error opening log file for writing: %s", err)
+				}
+			}
 
 			cfg := agent.NewConfig()
 			cfg.API.Host = viper.GetString(flagAPIHost)
@@ -218,6 +229,7 @@ func newStartCommand(ctx context.Context, args []string) *cobra.Command {
 	viper.SetDefault(flagTrustedCAFile, "")
 	viper.SetDefault(flagInsecureSkipTLSVerify, false)
 	viper.SetDefault(flagLogLevel, "warn")
+	viper.SetDefault(flagLogPath, "")
 
 	// Merge in config flag set so that it appears in command usage
 	cmd.Flags().AddFlagSet(configFlagSet)
@@ -252,6 +264,7 @@ func newStartCommand(ctx context.Context, args []string) *cobra.Command {
 	cmd.Flags().String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format")
 	cmd.Flags().Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")
 	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
+	cmd.Flags().String(flagLogPath, viper.GetString(flagLogPath), "path to the log file (overrides logging to stdout)")
 	cmd.Flags().StringToString(flagLabels, viper.GetStringMapString(flagLabels), "entity labels map")
 	cmd.Flags().StringToString(flagAnnotations, viper.GetStringMapString(flagAnnotations), "entity annotations map")
 

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/sensu/sensu-go/util/path"
 	"github.com/spf13/cobra"
 )
 
@@ -52,10 +53,34 @@ func NewWindowsInstallServiceCommand() *cobra.Command {
 			if !fi.Mode().IsRegular() {
 				return errors.New("error reading config file: not a regular file")
 			}
-			return installService(serviceName, serviceDisplayName, "service", "run", configFile)
+
+			logFile := cmd.Flag(flagLogPath).Value.String()
+			lp, err := filepath.Abs(logFile)
+			if err != nil {
+				return fmt.Errorf("error reading log file: %s", err)
+			}
+			os.OpenFile(lp, os.O_CREATE|os.O_WRONLY, 0600)
+			lfi, err := os.Stat(lp)
+			if err != nil {
+				return fmt.Errorf("error reading log file: %s", err)
+			}
+			if !lfi.Mode().IsRegular() {
+				return errors.New("error reading log file: not a regular file")
+			}
+
+			logLevel := cmd.Flag(flagLogLevel).Value.String()
+
+			return installService(serviceName, serviceDisplayName, "service", "run", configFile, logFile, logLevel)
 		},
 	}
-	cmd.Flags().StringP(flagConfigFile, "c", "", "path to sensu-agent config file")
+
+	defaultConfigPath := fmt.Sprintf("%s\\agent.yml", path.SystemConfigDir())
+	defaultLogPath := fmt.Sprintf("%s\\sensu-agent.log", path.SystemLogDir())
+
+	cmd.Flags().StringP(flagConfigFile, "c", defaultConfigPath, "path to sensu-agent config file")
+	cmd.Flags().StringP(flagLogPath, "", defaultLogPath, "path to the sensu-agent log file")
+	cmd.Flags().StringP(flagLogLevel, "", "warn", "logging level [panic, fatal, error, warn, info, debug]")
+
 	return cmd
 }
 
