@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/spf13/pflag"
@@ -82,6 +83,26 @@ func SafeSplitCSV(i string) []string {
 	}
 
 	return []string{}
+}
+
+// ListOptionsFromFlags construct an appropriate ListOptions given a FlagSet.
+func ListOptionsFromFlags(flagSet *pflag.FlagSet) (client.ListOptions, error) {
+	opts := client.ListOptions{}
+
+	fieldSelector, err := flagSet.GetString(flags.FieldSelector)
+	if err != nil {
+		return opts, err
+	}
+
+	labelSelector, err := flagSet.GetString(flags.LabelSelector)
+	if err != nil {
+		return opts, err
+	}
+
+	opts.FieldSelector = fieldSelector
+	opts.LabelSelector = labelSelector
+
+	return opts, nil
 }
 
 func init() {

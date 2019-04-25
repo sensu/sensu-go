@@ -5,8 +5,6 @@ import (
 	"strconv"
 
 	"github.com/sensu/sensu-go/cli"
-	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
@@ -21,19 +19,10 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "list cluster role bindings",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			fieldSelector, err := cmd.Flags().GetString(flags.FieldSelector)
+			opts, err := helpers.ListOptionsFromFlags(cmd.Flags())
 			if err != nil {
 				return err
 			}
-
-			labelSelector, err := cmd.Flags().GetString(flags.LabelSelector)
-			if err != nil {
-				return err
-			}
-
-			opts := client.ListOptions{}
-			opts.FieldSelector = fieldSelector
-			opts.LabelSelector = labelSelector
 
 			// Fetch role bindings from API
 			results, err := cli.Client.ListClusterRoleBindings(opts)

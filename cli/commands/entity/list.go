@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/sensu/sensu-go/cli"
-	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/commands/timeutil"
@@ -32,19 +31,10 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 				namespace = types.NamespaceTypeAll
 			}
 
-			fieldSelector, err := cmd.Flags().GetString(flags.FieldSelector)
+			opts, err := helpers.ListOptionsFromFlags(cmd.Flags())
 			if err != nil {
 				return err
 			}
-
-			labelSelector, err := cmd.Flags().GetString(flags.LabelSelector)
-			if err != nil {
-				return err
-			}
-
-			opts := client.ListOptions{}
-			opts.FieldSelector = fieldSelector
-			opts.LabelSelector = labelSelector
 
 			// Fetch handlers from API
 			results, err := cli.Client.ListEntities(namespace, opts)

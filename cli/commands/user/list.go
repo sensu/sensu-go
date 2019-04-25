@@ -6,8 +6,6 @@ import (
 	"strings"
 
 	"github.com/sensu/sensu-go/cli"
-	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/globals"
 	"github.com/sensu/sensu-go/cli/elements/table"
@@ -28,19 +26,10 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 				return errors.New("invalid argument(s) received")
 			}
 
-			fieldSelector, err := cmd.Flags().GetString(flags.FieldSelector)
+			opts, err := helpers.ListOptionsFromFlags(cmd.Flags())
 			if err != nil {
 				return err
 			}
-
-			labelSelector, err := cmd.Flags().GetString(flags.LabelSelector)
-			if err != nil {
-				return err
-			}
-
-			opts := client.ListOptions{}
-			opts.FieldSelector = fieldSelector
-			opts.LabelSelector = labelSelector
 
 			// Fetch users from API
 			results, err := cli.Client.ListUsers(opts)

@@ -43,19 +43,10 @@ func runList(config string, c client.APIClient, namespace, format string) func(*
 			namespace = types.NamespaceTypeAll
 		}
 
-		fieldSelector, err := cmd.Flags().GetString(flags.FieldSelector)
+		opts, err := helpers.ListOptionsFromFlags(cmd.Flags())
 		if err != nil {
 			return err
 		}
-
-		labelSelector, err := cmd.Flags().GetString(flags.LabelSelector)
-		if err != nil {
-			return err
-		}
-
-		opts := client.ListOptions{}
-		opts.FieldSelector = fieldSelector
-		opts.LabelSelector = labelSelector
 
 		extensions, err := c.ListExtensions(namespace, opts)
 		if err != nil {
