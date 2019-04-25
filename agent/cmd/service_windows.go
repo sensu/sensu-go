@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sync"
 
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
@@ -16,48 +17,61 @@ var (
 )
 
 func NewService() *Service {
-	ctx, cancel := context.WithCancel(context.Background())
-	return &Service{
-		ctx:    ctx,
-		cancel: cancel,
-	}
+	return &Service{}
 }
 
 type Service struct {
-	ctx    context.Context
-	cancel context.CancelFunc
+	wg sync.WaitGroup
+	mu sync.Mutex
+}
+
+func (s *Service) start(ctx context.Context, args []string, changes chan<- svc.Status) chan error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.wg.Wait()
+	s.wg.Add(1)
+	result := make(chan error, 1)
+	go func() {
+		defer s.wg.Done()
+		changes <- svc.Status{State: svc.StartPending}
+		// Start service here
+		args = []string{args[0], "start", "-c", args[len(args)-1]}
+		command := newStartCommand(ctx, args)
+		accepts := svc.AcceptShutdown | svc.AcceptStop
+		changes <- svc.Status{State: svc.Running, Accepts: accepts}
+
+		if err := command.Execute(); err != nil {
+			result <- err
+		}
+	}()
+	return result
 }
 
 func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (bool, uint32) {
-	go func() {
-		defer func() {
-			changes <- svc.Status{State: svc.Stopped}
-		}()
-		defer s.cancel()
-		for req := range r {
+	ctx, cancel := context.WithCancel(context.Background())
+	errs := s.start(ctx, args, changes)
+	for {
+		select {
+		case req := <-r:
 			switch req.Cmd {
-			case svc.Stop, svc.Shutdown:
+			case svc.Stop, svc.Pause:
 				changes <- svc.Status{State: svc.StopPending}
-				return
-			default:
-				// TODO log this to the appropriate place? or?
-				elog.Error(1, fmt.Sprintf("got change request: %v", req))
+				cancel()
+				s.wg.Wait()
+				changes <- svc.Status{State: svc.Stopped}
+			case svc.Shutdown:
+				cancel()
+				s.wg.Wait()
+				return false, 0
+			case svc.Continue:
+				s.wg.Wait()
+				ctx, cancel = context.WithCancel(context.Background())
+				errs = s.start(ctx, args, changes)
 			}
+		case err := <-errs:
+			log.Println(err)
 		}
-	}()
-	changes <- svc.Status{State: svc.StartPending}
-	// Start service here
-	args = []string{args[0], "start", "-c", args[len(args)-1]}
-	command := newStartCommand(s.ctx, args)
-	accepts := svc.AcceptShutdown | svc.AcceptStop
-	changes <- svc.Status{State: svc.Running, Accepts: accepts}
-
-	if err := command.Execute(); err != nil {
-		// TODO figure out how best to handle this
-		log.Println(err)
-		return false, 1
 	}
-	// Block until shutdown
 	return false, 0
 }
 
