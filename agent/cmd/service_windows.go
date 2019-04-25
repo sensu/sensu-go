@@ -49,7 +49,8 @@ func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes cha
 	// Start service here
 	args = []string{args[0], "start", "-c", args[len(args)-1]}
 	command := newStartCommand(s.ctx, args)
-	changes <- svc.Status{State: svc.Running, Accepts: svc.AcceptShutdown}
+	accepts := svc.AcceptShutdown | svc.AcceptStop
+	changes <- svc.Status{State: svc.Running, Accepts: accepts}
 
 	if err := command.Execute(); err != nil {
 		// TODO figure out how best to handle this
