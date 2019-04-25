@@ -69,7 +69,7 @@ type AssetAPIClient interface {
 	CreateAsset(*types.Asset) error
 	UpdateAsset(*types.Asset) error
 	FetchAsset(string) (*types.Asset, error)
-	ListAssets(string) ([]types.Asset, error)
+	ListAssets(string, ListOptions) ([]types.Asset, error)
 }
 
 // CheckAPIClient client methods for checks

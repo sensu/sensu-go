@@ -128,7 +128,7 @@ func TestCheckTypeRuntimeAssetsField(t *testing.T) {
 	check.RuntimeAssets = []string{"one", "two"}
 
 	client, _ := client.NewClientFactory()
-	client.On("ListAssets", mock.Anything).Return([]types.Asset{
+	client.On("ListAssets", mock.Anything, mock.Anything).Return([]types.Asset{
 		*types.FixtureAsset("one"),
 		*types.FixtureAsset("two"),
 		*types.FixtureAsset("three"),
@@ -193,7 +193,7 @@ func TestCheckConfigTypeRuntimeAssetsField(t *testing.T) {
 	check.RuntimeAssets = []string{"one", "two"}
 
 	client, _ := client.NewClientFactory()
-	client.On("ListAssets", mock.Anything).Return([]types.Asset{
+	client.On("ListAssets", mock.Anything, mock.Anything).Return([]types.Asset{
 		*types.FixtureAsset("one"),
 		*types.FixtureAsset("two"),
 		*types.FixtureAsset("three"),

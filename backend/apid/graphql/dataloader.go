@@ -31,11 +31,11 @@ var (
 
 // assets
 
-func loadAssetsBatchFn(client client.APIClient) dataloader.BatchFunc {
+func loadAssetsBatchFn(c client.APIClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			records, err := client.ListAssets(key.String())
+			records, err := c.ListAssets(key.String(), client.ListOptions{})
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
