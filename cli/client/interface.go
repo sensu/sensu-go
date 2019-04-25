@@ -157,7 +157,7 @@ type HookAPIClient interface {
 	UpdateHook(*types.HookConfig) error
 	DeleteHook(string, string) error
 	FetchHook(string) (*types.HookConfig, error)
-	ListHooks(string) ([]types.HookConfig, error)
+	ListHooks(string, ListOptions) ([]types.HookConfig, error)
 }
 
 // MutatorAPIClient client methods for mutators
