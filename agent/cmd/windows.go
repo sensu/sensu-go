@@ -68,9 +68,7 @@ func NewWindowsInstallServiceCommand() *cobra.Command {
 				return errors.New("error reading log file: not a regular file")
 			}
 
-			logLevel := cmd.Flag(flagLogLevel).Value.String()
-
-			return installService(serviceName, serviceDisplayName, "service", "run", configFile, logFile, logLevel)
+			return installService(serviceName, serviceDisplayName, "service", "run", configFile, logFile)
 		},
 	}
 
@@ -79,7 +77,6 @@ func NewWindowsInstallServiceCommand() *cobra.Command {
 
 	cmd.Flags().StringP(flagConfigFile, "c", defaultConfigPath, "path to sensu-agent config file")
 	cmd.Flags().StringP(flagLogPath, "", defaultLogPath, "path to the sensu-agent log file")
-	cmd.Flags().StringP(flagLogLevel, "", "warn", "logging level [panic, fatal, error, warn, info, debug]")
 
 	return cmd
 }
