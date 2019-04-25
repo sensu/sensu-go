@@ -1,6 +1,11 @@
 package testing
 
-import "github.com/sensu/sensu-go/types"
+import (
+	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+)
 
 // CreateCheck for use with mock lib
 func (c *MockClient) CreateCheck(check *types.CheckConfig) error {
@@ -33,9 +38,9 @@ func (c *MockClient) FetchCheck(name string) (*types.CheckConfig, error) {
 }
 
 // ListChecks for use with mock lib
-func (c *MockClient) ListChecks(namespace string) ([]types.CheckConfig, error) {
-	args := c.Called(namespace)
-	return args.Get(0).([]types.CheckConfig), args.Error(1)
+func (c *MockClient) ListChecks(namespace string, options client.ListOptions) ([]corev2.CheckConfig, error) {
+	args := c.Called(namespace, options)
+	return args.Get(0).([]corev2.CheckConfig), args.Error(1)
 }
 
 // AddCheckHook for use with mock lib

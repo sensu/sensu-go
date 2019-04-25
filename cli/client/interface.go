@@ -78,7 +78,7 @@ type CheckAPIClient interface {
 	DeleteCheck(string, string) error
 	ExecuteCheck(*types.AdhocRequest) error
 	FetchCheck(string) (*types.CheckConfig, error)
-	ListChecks(string) ([]types.CheckConfig, error)
+	ListChecks(string, ListOptions) ([]types.CheckConfig, error)
 	UpdateCheck(*types.CheckConfig) error
 
 	AddCheckHook(check *types.CheckConfig, checkHook *types.HookList) error

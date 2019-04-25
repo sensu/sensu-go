@@ -60,11 +60,11 @@ func loadAssets(ctx context.Context, ns string) ([]types.Asset, error) {
 
 // checks
 
-func loadCheckConfigsBatchFn(client client.APIClient) dataloader.BatchFunc {
+func loadCheckConfigsBatchFn(c client.APIClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			records, err := client.ListChecks(key.String())
+			records, err := c.ListChecks(key.String(), client.ListOptions{})
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
