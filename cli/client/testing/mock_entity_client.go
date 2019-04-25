@@ -1,11 +1,16 @@
 package testing
 
-import "github.com/sensu/sensu-go/types"
+import (
+	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+)
 
 // ListEntities for use with mock lib
-func (c *MockClient) ListEntities(namespace string) ([]types.Entity, error) {
-	args := c.Called(namespace)
-	return args.Get(0).([]types.Entity), args.Error(1)
+func (c *MockClient) ListEntities(namespace string, options client.ListOptions) ([]corev2.Entity, error) {
+	args := c.Called(namespace, options)
+	return args.Get(0).([]corev2.Entity), args.Error(1)
 }
 
 // FetchEntity for use with mock lib

@@ -18,7 +18,7 @@ func TestEntityTypeRelatedField(t *testing.T) {
 	source := types.FixtureEntity("c")
 
 	client, _ := client.NewClientFactory()
-	client.On("ListEntities", mock.Anything).Return([]types.Entity{
+	client.On("ListEntities", mock.Anything, mock.Anything).Return([]types.Entity{
 		*source,
 		*types.FixtureEntity("a"),
 		*types.FixtureEntity("b"),

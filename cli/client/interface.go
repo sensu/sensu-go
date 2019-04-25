@@ -106,7 +106,7 @@ type EntityAPIClient interface {
 	CreateEntity(entity *types.Entity) error
 	DeleteEntity(string, string) error
 	FetchEntity(ID string) (*types.Entity, error)
-	ListEntities(string) ([]types.Entity, error)
+	ListEntities(string, ListOptions) ([]types.Entity, error)
 	UpdateEntity(entity *types.Entity) error
 }
 

@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -32,11 +33,16 @@ func (client *RestClient) FetchEntity(name string) (*types.Entity, error) {
 }
 
 // ListEntities fetches all entities from configured Sensu instance
-func (client *RestClient) ListEntities(namespace string) ([]types.Entity, error) {
-	var entities []types.Entity
+func (client *RestClient) ListEntities(namespace string, options ListOptions) ([]corev2.Entity, error) {
+	var entities []corev2.Entity
 
 	path := entitiesPath(namespace)
-	res, err := client.R().Get(path)
+	request := client.R()
+
+	request.SetQueryParam("fieldSelector", options.FieldSelector)
+	request.SetQueryParam("labelSelector", options.LabelSelector)
+
+	res, err := request.Get(path)
 	if err != nil {
 		return entities, err
 	}

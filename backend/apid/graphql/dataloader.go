@@ -89,11 +89,11 @@ func loadCheckConfigs(ctx context.Context, ns string) ([]types.CheckConfig, erro
 
 // entities
 
-func loadEntitiesBatchFn(client client.APIClient) dataloader.BatchFunc {
+func loadEntitiesBatchFn(c client.APIClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			records, err := client.ListEntities(key.String())
+			records, err := c.ListEntities(key.String(), client.ListOptions{})
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
