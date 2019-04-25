@@ -218,7 +218,7 @@ type SilencedAPIClient interface {
 
 	// ListSilenceds lists all silenced entries, optionally constraining by
 	// subscription or check.
-	ListSilenceds(namespace, subscription, check string) ([]types.Silenced, error)
+	ListSilenceds(namespace, subscription, check string, options ListOptions) ([]types.Silenced, error)
 
 	// FetchSilenced fetches the silenced entry by ID.
 	FetchSilenced(id string) (*types.Silenced, error)

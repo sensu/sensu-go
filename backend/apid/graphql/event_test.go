@@ -58,7 +58,7 @@ func TestEventTypeIsSilencedField(t *testing.T) {
 	event.Check.Subscriptions = []string{"unix"}
 
 	client, _ := client.NewClientFactory()
-	client.On("ListSilenceds", mock.Anything, "", "").Return([]types.Silenced{
+	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{
 		*types.FixtureSilenced("*:my-check"),
 		*types.FixtureSilenced("unix:not-my-check"),
 		*types.FixtureSilenced("entity:my-entity:*"),
@@ -81,7 +81,7 @@ func TestEventTypeSilencesField(t *testing.T) {
 	event.Entity.Subscriptions = []string{"unix"}
 
 	client, _ := client.NewClientFactory()
-	client.On("ListSilenceds", mock.Anything, "", "").Return([]types.Silenced{
+	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{
 		*types.FixtureSilenced("*:my-check"),                    // match
 		*types.FixtureSilenced("unix:my-check"),                 // match
 		*types.FixtureSilenced("unix:not-my-check"),             // not match

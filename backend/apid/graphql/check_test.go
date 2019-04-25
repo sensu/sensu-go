@@ -106,7 +106,7 @@ func TestCheckTypeSilencesField(t *testing.T) {
 	check.Silenced = []string{"unix:my-check"}
 
 	client, _ := client.NewClientFactory()
-	client.On("ListSilenceds", mock.Anything, "", "").Return([]types.Silenced{
+	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{
 		*types.FixtureSilenced("unix:my-check"),
 		*types.FixtureSilenced("fred:my-check"),
 		*types.FixtureSilenced("unix:not-my-check"),
@@ -147,7 +147,7 @@ func TestCheckConfigTypeIsSilencedField(t *testing.T) {
 	check.Subscriptions = []string{"unix"}
 
 	client, _ := client.NewClientFactory()
-	client.On("ListSilenceds", mock.Anything, "", "").Return([]types.Silenced{
+	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{
 		*types.FixtureSilenced("*:my-check"),
 		*types.FixtureSilenced("unix:not-my-check"),
 	}, nil).Once()
@@ -168,7 +168,7 @@ func TestCheckConfigTypeSilencesField(t *testing.T) {
 	check.Subscriptions = []string{"unix"}
 
 	client, _ := client.NewClientFactory()
-	client.On("ListSilenceds", mock.Anything, "", "").Return([]types.Silenced{
+	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{
 		*types.FixtureSilenced("*:my-check"),
 		*types.FixtureSilenced("unix:*"),
 		*types.FixtureSilenced("unix:my-check"),

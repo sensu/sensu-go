@@ -1,6 +1,11 @@
 package testing
 
-import "github.com/sensu/sensu-go/types"
+import (
+	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+)
 
 // CreateSilenced for use with mock lib
 func (c *MockClient) CreateSilenced(silenced *types.Silenced) error {
@@ -27,7 +32,7 @@ func (c *MockClient) FetchSilenced(id string) (*types.Silenced, error) {
 }
 
 // ListSilenceds for use with mock lib
-func (c *MockClient) ListSilenceds(namespace, sub, check string) ([]types.Silenced, error) {
-	args := c.Called(namespace, sub, check)
-	return args.Get(0).([]types.Silenced), args.Error(1)
+func (c *MockClient) ListSilenceds(namespace, sub, check string, options client.ListOptions) ([]corev2.Silenced, error) {
+	args := c.Called(namespace, sub, check, options)
+	return args.Get(0).([]corev2.Silenced), args.Error(1)
 }

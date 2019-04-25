@@ -6,11 +6,13 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/globals"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
+
 	"github.com/spf13/cobra"
 )
 
@@ -40,8 +42,24 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			check, err := flg.GetString("check")
 			if err != nil {
 				return err
+
 			}
-			results, err := cli.Client.ListSilenceds(namespace, sub, check)
+
+			fieldSelector, err := cmd.Flags().GetString(flags.FieldSelector)
+			if err != nil {
+				return err
+			}
+
+			labelSelector, err := cmd.Flags().GetString(flags.LabelSelector)
+			if err != nil {
+				return err
+			}
+
+			opts := client.ListOptions{}
+			opts.FieldSelector = fieldSelector
+			opts.LabelSelector = labelSelector
+
+			results, err := cli.Client.ListSilenceds(namespace, sub, check, opts)
 			if err != nil {
 				return err
 			}
@@ -58,6 +76,9 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	flags := cmd.Flags()
 	helpers.AddFormatFlag(flags)
 	helpers.AddAllNamespace(flags)
+	helpers.AddFieldSelectorFlag(cmd.Flags())
+	helpers.AddLabelSelectorFlag(cmd.Flags())
+
 	_ = flags.StringP("subscription", "s", "", "name of the silenced subscription")
 	_ = flags.StringP("check", "c", "", "name of the silenced check")
 

@@ -205,11 +205,11 @@ func loadNamespaces(ctx context.Context) ([]types.Namespace, error) {
 
 // silences
 
-func loadSilencedsBatchFn(client client.APIClient) dataloader.BatchFunc {
+func loadSilencedsBatchFn(c client.APIClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			records, err := client.ListSilenceds(key.String(), "", "")
+			records, err := c.ListSilenceds(key.String(), "", "", client.ListOptions{})
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
