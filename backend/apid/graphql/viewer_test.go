@@ -9,6 +9,7 @@ import (
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -53,7 +54,7 @@ func TestViewerTypeNamespacesField(t *testing.T) {
 	params.Context = contextWithLoadersNoCache(context.Background(), client)
 
 	// Success
-	client.On("ListNamespaces").Return([]types.Namespace{*nsp}, nil).Once()
+	client.On("ListNamespaces", mock.Anything).Return([]types.Namespace{*nsp}, nil).Once()
 	res, err := impl.Namespaces(params)
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)

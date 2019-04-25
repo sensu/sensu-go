@@ -5,9 +5,12 @@ import (
 	"io"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
+
 	"github.com/spf13/cobra"
 )
 
@@ -22,8 +25,23 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 				_ = cmd.Help()
 				return errors.New("invalid argument(s) received")
 			}
+
+			fieldSelector, err := cmd.Flags().GetString(flags.FieldSelector)
+			if err != nil {
+				return err
+			}
+
+			labelSelector, err := cmd.Flags().GetString(flags.LabelSelector)
+			if err != nil {
+				return err
+			}
+
+			opts := client.ListOptions{}
+			opts.FieldSelector = fieldSelector
+			opts.LabelSelector = labelSelector
+
 			// Fetch namespaces from API
-			results, err := cli.Client.ListNamespaces()
+			results, err := cli.Client.ListNamespaces(opts)
 			if err != nil {
 				return err
 			}
@@ -38,6 +56,8 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	helpers.AddFormatFlag(cmd.Flags())
+	helpers.AddFieldSelectorFlag(cmd.Flags())
+	helpers.AddLabelSelectorFlag(cmd.Flags())
 
 	return cmd
 }

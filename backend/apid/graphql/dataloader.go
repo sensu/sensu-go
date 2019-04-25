@@ -176,11 +176,11 @@ func loadHandlers(ctx context.Context, ns string) ([]types.Handler, error) {
 
 // namespaces
 
-func loadNamespacesBatchFn(client client.APIClient) dataloader.BatchFunc {
+func loadNamespacesBatchFn(c client.APIClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for range keys {
-			records, err := client.ListNamespaces()
+			records, err := c.ListNamespaces(client.ListOptions{})
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}

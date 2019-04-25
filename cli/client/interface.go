@@ -174,7 +174,7 @@ type NamespaceAPIClient interface {
 	CreateNamespace(*types.Namespace) error
 	UpdateNamespace(*types.Namespace) error
 	DeleteNamespace(string) error
-	ListNamespaces() ([]types.Namespace, error)
+	ListNamespaces(ListOptions) ([]types.Namespace, error)
 	FetchNamespace(string) (*types.Namespace, error)
 }
 

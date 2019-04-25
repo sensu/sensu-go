@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -56,11 +57,16 @@ func (client *RestClient) DeleteNamespace(namespace string) error {
 }
 
 // ListNamespaces fetches all namespaces from configured Sensu instance
-func (client *RestClient) ListNamespaces() ([]types.Namespace, error) {
-	var namespaces []types.Namespace
+func (client *RestClient) ListNamespaces(options ListOptions) ([]corev2.Namespace, error) {
+	var namespaces []corev2.Namespace
 
 	path := namespacesPath()
-	res, err := client.R().Get(path)
+	request := client.R()
+
+	request.SetQueryParam("fieldSelector", options.FieldSelector)
+	request.SetQueryParam("labelSelector", options.LabelSelector)
+
+	res, err := request.Get(path)
 	if err != nil {
 		return namespaces, err
 	}
