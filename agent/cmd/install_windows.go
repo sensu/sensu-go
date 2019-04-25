@@ -41,7 +41,7 @@ func exePath() (string, error) {
 	return "", err
 }
 
-func installService(name, desc string, args ...string) error {
+func installService(name, displayName, desc string, args ...string) error {
 	exepath, err := exePath()
 	if err != nil {
 		return err
@@ -56,7 +56,11 @@ func installService(name, desc string, args ...string) error {
 		s.Close()
 		return fmt.Errorf("service %s already exists", name)
 	}
-	s, err = m.CreateService(name, exepath, mgr.Config{DisplayName: desc}, args...)
+	s, err = m.CreateService(name, exepath, mgr.Config{
+		Description: desc,
+		DisplayName: displayName,
+		StartType:   mgr.StartAutomatic,
+	}, args...)
 	if err != nil {
 		return err
 	}

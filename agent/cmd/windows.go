@@ -15,6 +15,7 @@ import (
 const (
 	serviceName        = "SensuAgent"
 	serviceDisplayName = "Sensu Agent"
+	serviceDescription = "The monitoring agent for sensu-go (https://sensu.io)"
 )
 
 // NewWindowsServiceCommand creates a cobra command that offers subcommands
@@ -68,7 +69,7 @@ func NewWindowsInstallServiceCommand() *cobra.Command {
 				return errors.New("error reading log file: not a regular file")
 			}
 
-			return installService(serviceName, serviceDisplayName, "service", "run", configFile, logFile)
+			return installService(serviceName, serviceDisplayName, serviceDescription, "service", "run", configFile, logFile)
 		},
 	}
 
