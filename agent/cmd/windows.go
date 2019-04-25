@@ -9,13 +9,27 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"golang.org/x/sys/windows/svc"
 )
 
 const (
 	serviceName        = "SensuAgent"
 	serviceDisplayName = "Sensu Agent"
 )
+
+// NewWindowsServiceCommand creates a cobra command that offers subcommands
+// for installing, uninstalling and running sensu-agent as a windows service.
+func NewWindowsServiceCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:   "service",
+		Short: "operate sensu-agent as a windows service",
+	}
+
+	command.AddCommand(NewWindowsInstallServiceCommand())
+	command.AddCommand(NewWindowsUninstallServiceCommand())
+	command.AddCommand(NewWindowsRunServiceCommand())
+
+	return command
+}
 
 // NewWindowsInstallServiceCommand creates a cobra command that installs a
 // sensu-agent service in Windows.
@@ -59,32 +73,15 @@ func NewWindowsUninstallServiceCommand() *cobra.Command {
 	}
 }
 
-// NewWindowsStartServiceCommand creates a cobra command that starts an
-// installed sensu-agent service.
-func NewWindowsStartServiceCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:           "start-service",
-		Short:         "start the sensu-agent service",
+func NewWindowsRunServiceCommand() *cobra.Command {
+	command := &cobra.Command{
+		Use:           "run",
+		Short:         "run the sensu-agent service (blocking)",
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			// TODO figure this out. Should start even exist?
-			// return controlService(serviceName, svc.Start, )
-			return nil
+			return runService(serviceName, false)
 		},
 	}
-}
-
-// NewWindowsStopServiceCommand creates a cobra command that stops an
-// installed sensu-agent service.
-func NewWindowsStopServiceCommand() *cobra.Command {
-	return &cobra.Command{
-		Use:           "start-service",
-		Short:         "start the sensu-agent service",
-		SilenceErrors: true,
-		SilenceUsage:  true,
-		RunE: func(cmd *cobra.Command, args []string) error {
-			return controlService(serviceName, svc.Stop, svc.Stopped)
-		},
-	}
+	return command
 }

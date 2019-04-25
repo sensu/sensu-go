@@ -29,10 +29,7 @@ func main() {
 	}()
 
 	command := cmd.NewRootCommand(ctx, os.Args)
-	command.AddCommand(cmd.NewWindowsInstallServiceCommand())
-	command.AddCommand(cmd.NewWindowsUninstallServiceCommand())
-	command.AddCommand(cmd.NewWindowsStartServiceCommand())
-	command.AddCommand(cmd.NewWindowsStopServiceCommand())
+	command.AddCommand(cmd.NewWindowsServiceCommand())
 
 	if err := command.Execute(); err != nil {
 		logger.WithError(err).Fatal("error executing sensu-agent")

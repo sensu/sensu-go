@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log"
 
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
@@ -51,20 +52,21 @@ func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes cha
 
 	if err := command.Execute(); err != nil {
 		// TODO figure out how best to handle this
-		panic(err)
+		log.Println(err)
+		return false, 1
 	}
 	// Block until shutdown
 	return false, 0
 }
 
-func runService(name string, isDebug bool) {
+func runService(name string, isDebug bool) error {
 	var err error
 	if isDebug {
 		elog = debug.New(name)
 	} else {
 		elog, err = eventlog.Open(name)
 		if err != nil {
-			return
+			return err
 		}
 	}
 	defer elog.Close()
@@ -75,8 +77,8 @@ func runService(name string, isDebug bool) {
 	}
 	err = run(name, NewService())
 	if err != nil {
-		elog.Error(1, fmt.Sprintf("%s service failed: %v", name, err))
-		return
+		return err
 	}
 	elog.Info(1, fmt.Sprintf("%s service stopped", name))
+	return nil
 }
