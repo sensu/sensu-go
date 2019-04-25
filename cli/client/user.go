@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -73,11 +74,16 @@ func (client *RestClient) FetchUser(username string) (*types.User, error) {
 }
 
 // ListUsers fetches all users from configured Sensu instance
-func (client *RestClient) ListUsers() ([]types.User, error) {
-	var users []types.User
+func (client *RestClient) ListUsers(options ListOptions) ([]corev2.User, error) {
+	var users []corev2.User
 
 	path := usersPath()
-	res, err := client.R().Get(path)
+	request := client.R()
+
+	request.SetQueryParam("fieldSelector", options.FieldSelector)
+	request.SetQueryParam("labelSelector", options.LabelSelector)
+
+	res, err := request.Get(path)
 	if err != nil {
 		return users, err
 	}
