@@ -30,7 +30,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListSilenceds", mock.Anything, mock.Anything, mock.Anything).Return([]types.Silenced{
+	client.On("ListSilenceds", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]types.Silenced{
 		*types.FixtureSilenced("foo:bar"),
 		*types.FixtureSilenced("bar:foo"),
 	}, nil)
@@ -50,7 +50,7 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListSilenceds", mock.Anything, mock.Anything, mock.Anything).Return([]types.Silenced{
+	client.On("ListSilenceds", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]types.Silenced{
 		*types.FixtureSilenced("foo:bar"),
 	}, nil)
 
@@ -74,7 +74,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	silenced.Namespace = "defaultnamespace"
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListSilenceds", mock.Anything, mock.Anything, mock.Anything).Return([]types.Silenced{*silenced}, nil)
+	client.On("ListSilenceds", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]types.Silenced{*silenced}, nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "none"))
@@ -104,7 +104,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListSilenceds", mock.Anything, mock.Anything, mock.Anything).Return([]types.Silenced{}, errors.New("my-err"))
+	client.On("ListSilenceds", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return([]types.Silenced{}, errors.New("my-err"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})

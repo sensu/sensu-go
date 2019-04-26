@@ -1,13 +1,16 @@
 package testing
 
 import (
+	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 // ListHandlers for use with mock package
-func (c *MockClient) ListHandlers(namespace string) ([]types.Handler, error) {
-	args := c.Called(namespace)
-	return args.Get(0).([]types.Handler), args.Error(1)
+func (c *MockClient) ListHandlers(namespace string, options client.ListOptions) ([]corev2.Handler, error) {
+	args := c.Called(namespace, options)
+	return args.Get(0).([]corev2.Handler), args.Error(1)
 }
 
 // CreateHandler for use with mock package

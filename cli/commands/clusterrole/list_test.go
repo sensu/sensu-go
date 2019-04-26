@@ -8,6 +8,7 @@ import (
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestListCommand(t *testing.T) {
@@ -23,7 +24,7 @@ func TestListCommandRunEClosureJSONFormat(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListClusterRoles").Return([]types.ClusterRole{
+	client.On("ListClusterRoles", mock.Anything).Return([]types.ClusterRole{
 		*types.FixtureClusterRole("one"),
 		*types.FixtureClusterRole("two"),
 	}, nil)
@@ -38,7 +39,7 @@ func TestListCommandRunEClosureTabularFormat(t *testing.T) {
 	config := cli.Config.(*client.MockConfig)
 	config.On("Format").Return("")
 	client := cli.Client.(*client.MockClient)
-	client.On("ListClusterRoles").Return([]types.ClusterRole{
+	client.On("ListClusterRoles", mock.Anything).Return([]types.ClusterRole{
 		*types.FixtureClusterRole("one"),
 		*types.FixtureClusterRole("two"),
 	}, nil)
@@ -54,7 +55,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListClusterRoles").Return([]types.ClusterRole{}, errors.New("fire"))
+	client.On("ListClusterRoles", mock.Anything).Return([]types.ClusterRole{}, errors.New("fire"))
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
 	assert.Empty(out)

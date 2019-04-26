@@ -1,6 +1,11 @@
 package testing
 
-import "github.com/sensu/sensu-go/types"
+import (
+	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+)
 
 // CreateRoleBinding ...
 func (c *MockClient) CreateRoleBinding(obj *types.RoleBinding) error {
@@ -21,7 +26,7 @@ func (c *MockClient) DeleteRoleBinding(namespace, name string) error {
 }
 
 // ListRoleBindings ...
-func (c *MockClient) ListRoleBindings(namespace string) ([]types.RoleBinding, error) {
-	args := c.Called(namespace)
-	return args.Get(0).([]types.RoleBinding), args.Error(1)
+func (c *MockClient) ListRoleBindings(namespace string, options client.ListOptions) ([]corev2.RoleBinding, error) {
+	args := c.Called(namespace, options)
+	return args.Get(0).([]corev2.RoleBinding), args.Error(1)
 }

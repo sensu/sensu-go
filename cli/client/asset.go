@@ -4,17 +4,22 @@ import (
 	"encoding/json"
 	"fmt"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
 var assetsPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "assets")
 
 // ListAssets fetches a list of asset resources from the backend
-func (client *RestClient) ListAssets(namespace string) ([]types.Asset, error) {
-	var assets []types.Asset
+func (client *RestClient) ListAssets(namespace string, options ListOptions) ([]corev2.Asset, error) {
+	var assets []corev2.Asset
 
 	path := assetsPath(namespace)
-	res, err := client.R().Get(path)
+	request := client.R()
+
+	ApplyListOptions(request, options)
+
+	res, err := request.Get(path)
 	if err != nil {
 		return assets, err
 	}

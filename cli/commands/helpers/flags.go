@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/spf13/pflag"
@@ -36,6 +37,16 @@ func AddAllNamespace(flagSet *pflag.FlagSet) {
 // AddInteractiveFlag adds the '--interactive' flag to the given command
 func AddInteractiveFlag(flagSet *pflag.FlagSet) {
 	flagSet.Bool(flags.Interactive, false, "Determines if CLI is in interactive mode")
+}
+
+// AddFieldSelectorFlag adds the '--field-selector' flag to the given command
+func AddFieldSelectorFlag(flagSet *pflag.FlagSet) {
+	flagSet.String(flags.FieldSelector, "", "Only select resources matching this field selector (enterprise only)")
+}
+
+// AddLabelSelectorFlag adds the '--label-selector' flag to the given command
+func AddLabelSelectorFlag(flagSet *pflag.FlagSet) {
+	flagSet.String(flags.LabelSelector, "", "Only select resources matching this label selector (enterprise only)")
 }
 
 // FlagHasChanged determines if the user has set the value of a flag,
@@ -72,6 +83,26 @@ func SafeSplitCSV(i string) []string {
 	}
 
 	return []string{}
+}
+
+// ListOptionsFromFlags construct an appropriate ListOptions given a FlagSet.
+func ListOptionsFromFlags(flagSet *pflag.FlagSet) (client.ListOptions, error) {
+	opts := client.ListOptions{}
+
+	fieldSelector, err := flagSet.GetString(flags.FieldSelector)
+	if err != nil {
+		return opts, err
+	}
+
+	labelSelector, err := flagSet.GetString(flags.LabelSelector)
+	if err != nil {
+		return opts, err
+	}
+
+	opts.FieldSelector = fieldSelector
+	opts.LabelSelector = labelSelector
+
+	return opts, nil
 }
 
 func init() {

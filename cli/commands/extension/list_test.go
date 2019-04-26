@@ -31,7 +31,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	config.On("Format").Return("none")
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListExtensions", mock.Anything).Return([]types.Extension{
+	client.On("ListExtensions", mock.Anything, mock.Anything).Return([]types.Extension{
 		*types.FixtureExtension("one"),
 		*types.FixtureExtension("two"),
 	}, nil)
@@ -51,7 +51,7 @@ func TestListCommandRunEClosureWithAllNamespaces(t *testing.T) {
 	config.On("Format").Return("none")
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListExtensions", "default").Return([]types.Extension{
+	client.On("ListExtensions", "default", mock.Anything).Return([]types.Extension{
 		*types.FixtureExtension("one"),
 	}, nil)
 
@@ -67,7 +67,7 @@ func TestListCommandRunEClosureWithJSON(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListExtensions", mock.Anything).Return([]types.Extension{
+	client.On("ListExtensions", mock.Anything, mock.Anything).Return([]types.Extension{
 		*types.FixtureExtension("one"),
 		*types.FixtureExtension("two"),
 	}, nil)
@@ -84,7 +84,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListExtensions", mock.Anything).Return([]types.Extension{}, errors.New("fire"))
+	client.On("ListExtensions", mock.Anything, mock.Anything).Return([]types.Extension{}, errors.New("fire"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})

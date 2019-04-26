@@ -9,6 +9,7 @@ import (
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -29,7 +30,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListUsers").Return([]types.User{
+	client.On("ListUsers", mock.Anything).Return([]types.User{
 		*types.FixtureUser("one"),
 		*types.FixtureUser("two"),
 	}, nil)
@@ -46,7 +47,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListUsers").Return([]types.User{}, errors.New("fire"))
+	client.On("ListUsers", mock.Anything).Return([]types.User{}, errors.New("fire"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -62,7 +63,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	cli := test.NewCLI()
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListUsers").Return([]types.User{
+	client.On("ListUsers", mock.Anything).Return([]types.User{
 		*types.FixtureUser("one"),
 		*types.FixtureUser("two"),
 	}, nil)
@@ -96,7 +97,7 @@ func TestListCommandRunEClosureWithJSONOutput(t *testing.T) {
 	}
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListUsers").Return(testUsers, nil)
+	client.On("ListUsers", mock.Anything).Return(testUsers, nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "json"))
@@ -124,7 +125,7 @@ func TestListCommandRunEClosureWithYAMLOutput(t *testing.T) {
 	}
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListUsers").Return(testUsers, nil)
+	client.On("ListUsers", mock.Anything).Return(testUsers, nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "yaml"))

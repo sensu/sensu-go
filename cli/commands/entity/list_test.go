@@ -30,7 +30,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEntities", mock.Anything).Return([]types.Entity{
+	client.On("ListEntities", mock.Anything, mock.Anything).Return([]types.Entity{
 		*types.FixtureEntity("name-one"),
 		*types.FixtureEntity("name-two"),
 	}, nil)
@@ -49,7 +49,7 @@ func TestListCommandRunEClosureWithAllNamespaces(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEntities", "").Return([]types.Entity{
+	client.On("ListEntities", "", mock.Anything).Return([]types.Entity{
 		*types.FixtureEntity("name-two"),
 	}, nil)
 
@@ -66,7 +66,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEntities", mock.Anything).Return([]types.Entity{
+	client.On("ListEntities", mock.Anything, mock.Anything).Return([]types.Entity{
 		*types.FixtureEntity("name-one"),
 		*types.FixtureEntity("name-two"),
 	}, nil)
@@ -89,7 +89,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEntities", mock.Anything).Return([]types.Entity{}, errors.New("my-err"))
+	client.On("ListEntities", mock.Anything, mock.Anything).Return([]types.Entity{}, errors.New("my-err"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})

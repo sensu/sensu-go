@@ -30,7 +30,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 	assert := assert.New(t)
 	cli := newConfiguredCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEvents", mock.Anything).Return([]types.Event{
+	client.On("ListEvents", mock.Anything, mock.Anything).Return([]types.Event{
 		*types.FixtureEvent("1", "something"),
 		*types.FixtureEvent("2", "funny"),
 	}, nil)
@@ -49,7 +49,7 @@ func TestListCommandRunEClosureWithAllNamespaces(t *testing.T) {
 	assert := assert.New(t)
 	cli := newConfiguredCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEvents", "").Return([]types.Event{
+	client.On("ListEvents", "", mock.Anything).Return([]types.Event{
 		*types.FixtureEvent("1", "something"),
 	}, nil)
 
@@ -66,7 +66,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 	cli := newConfiguredCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEvents", mock.Anything).Return([]types.Event{
+	client.On("ListEvents", mock.Anything, mock.Anything).Return([]types.Event{
 		*types.FixtureEvent("1", "something"),
 		*types.FixtureEvent("2", "funny"),
 	}, nil)
@@ -89,7 +89,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
 	cli := newConfiguredCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEvents", mock.Anything).Return([]types.Event{}, errors.New("fun-msg"))
+	client.On("ListEvents", mock.Anything, mock.Anything).Return([]types.Event{}, errors.New("fun-msg"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})

@@ -106,7 +106,7 @@ func TestCheckTypeSilencesField(t *testing.T) {
 	check.Silenced = []string{"unix:my-check"}
 
 	client, _ := client.NewClientFactory()
-	client.On("ListSilenceds", mock.Anything, "", "").Return([]types.Silenced{
+	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{
 		*types.FixtureSilenced("unix:my-check"),
 		*types.FixtureSilenced("fred:my-check"),
 		*types.FixtureSilenced("unix:not-my-check"),
@@ -128,7 +128,7 @@ func TestCheckTypeRuntimeAssetsField(t *testing.T) {
 	check.RuntimeAssets = []string{"one", "two"}
 
 	client, _ := client.NewClientFactory()
-	client.On("ListAssets", mock.Anything).Return([]types.Asset{
+	client.On("ListAssets", mock.Anything, mock.Anything).Return([]types.Asset{
 		*types.FixtureAsset("one"),
 		*types.FixtureAsset("two"),
 		*types.FixtureAsset("three"),
@@ -147,7 +147,7 @@ func TestCheckConfigTypeIsSilencedField(t *testing.T) {
 	check.Subscriptions = []string{"unix"}
 
 	client, _ := client.NewClientFactory()
-	client.On("ListSilenceds", mock.Anything, "", "").Return([]types.Silenced{
+	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{
 		*types.FixtureSilenced("*:my-check"),
 		*types.FixtureSilenced("unix:not-my-check"),
 	}, nil).Once()
@@ -168,7 +168,7 @@ func TestCheckConfigTypeSilencesField(t *testing.T) {
 	check.Subscriptions = []string{"unix"}
 
 	client, _ := client.NewClientFactory()
-	client.On("ListSilenceds", mock.Anything, "", "").Return([]types.Silenced{
+	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{
 		*types.FixtureSilenced("*:my-check"),
 		*types.FixtureSilenced("unix:*"),
 		*types.FixtureSilenced("unix:my-check"),
@@ -193,7 +193,7 @@ func TestCheckConfigTypeRuntimeAssetsField(t *testing.T) {
 	check.RuntimeAssets = []string{"one", "two"}
 
 	client, _ := client.NewClientFactory()
-	client.On("ListAssets", mock.Anything).Return([]types.Asset{
+	client.On("ListAssets", mock.Anything, mock.Anything).Return([]types.Asset{
 		*types.FixtureAsset("one"),
 		*types.FixtureAsset("two"),
 		*types.FixtureAsset("three"),
@@ -219,7 +219,7 @@ func TestCheckConfigTypeHandlersField(t *testing.T) {
 	params.Source = check
 
 	// return associated silence
-	client.On("ListHandlers", mock.Anything).Return([]types.Handler{
+	client.On("ListHandlers", mock.Anything, mock.Anything).Return([]types.Handler{
 		*types.FixtureHandler("one"),
 		*types.FixtureHandler("two"),
 		*types.FixtureHandler("three"),
@@ -242,7 +242,7 @@ func TestCheckTypeHandlersField(t *testing.T) {
 	params.Source = check
 
 	// return associated silence
-	client.On("ListHandlers", mock.Anything).Return([]types.Handler{
+	client.On("ListHandlers", mock.Anything, mock.Anything).Return([]types.Handler{
 		*types.FixtureHandler("one"),
 		*types.FixtureHandler("two"),
 		*types.FixtureHandler("three"),
@@ -265,7 +265,7 @@ func TestCheckConfigTypeOutputMetricHandlersField(t *testing.T) {
 	params.Source = check
 
 	// return associated silence
-	client.On("ListHandlers", mock.Anything).Return([]types.Handler{
+	client.On("ListHandlers", mock.Anything, mock.Anything).Return([]types.Handler{
 		*types.FixtureHandler("one"),
 		*types.FixtureHandler("two"),
 		*types.FixtureHandler("three"),
@@ -288,7 +288,7 @@ func TestCheckTypeOutputMetricHandlersField(t *testing.T) {
 	params.Source = check
 
 	// return associated silence
-	client.On("ListHandlers", mock.Anything).Return([]types.Handler{
+	client.On("ListHandlers", mock.Anything, mock.Anything).Return([]types.Handler{
 		*types.FixtureHandler("one"),
 		*types.FixtureHandler("two"),
 		*types.FixtureHandler("three"),

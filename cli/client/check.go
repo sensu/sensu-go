@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -94,11 +95,15 @@ func (client *RestClient) FetchCheck(name string) (*types.CheckConfig, error) {
 }
 
 // ListChecks fetches all checks from configured Sensu instance
-func (client *RestClient) ListChecks(namespace string) ([]types.CheckConfig, error) {
-	var checks []types.CheckConfig
+func (client *RestClient) ListChecks(namespace string, options ListOptions) ([]corev2.CheckConfig, error) {
+	var checks []corev2.CheckConfig
 
 	path := checksPath(namespace)
-	res, err := client.R().Get(path)
+	request := client.R()
+
+	ApplyListOptions(request, options)
+
+	res, err := request.Get(path)
 	if err != nil {
 		return checks, err
 	}

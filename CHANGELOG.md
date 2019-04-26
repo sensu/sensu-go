@@ -8,17 +8,17 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## [5.6.0] - TBD
 
 ### Added
+- Added filtering support to `sensuctl`. This feature only works against a
+  `sensu-backend` with a valid enterprise license.
 - Added fields getter functions for resources available via the REST API.
-
-### Fixed
-- Fixed the agent `--annotations` and `--labels` flags.
-
-### Added
 - Added the message bus to Tessend in order to track Tessen configuration changes from the API.
 - Added a performance optimizing `Count()` function to the generic store.
 - Added a hexadecimal Cluster ID title to the `sensuctl cluster health` and
 `sensuctl cluster member-list` commands in tabular format.
 - Added a `Header` field to the `HealthResponse` type returned by `/health`.
+
+### Fixed
+- Fixed the agent `--annotations` and `--labels` flags.
 
 ## [5.5.1] - 2019-04-15
 

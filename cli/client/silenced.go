@@ -3,6 +3,7 @@ package client
 import (
 	"encoding/json"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -34,7 +35,7 @@ func (client *RestClient) DeleteSilenced(namespace, name string) error {
 }
 
 // ListSilenceds fetches all silenced entries from configured Sensu instance
-func (client *RestClient) ListSilenceds(namespace, sub, check string) ([]types.Silenced, error) {
+func (client *RestClient) ListSilenceds(namespace, sub, check string, options ListOptions) ([]corev2.Silenced, error) {
 	if sub != "" && check != "" {
 		name, err := types.SilencedName(sub, check)
 		if err != nil {
@@ -44,15 +45,19 @@ func (client *RestClient) ListSilenceds(namespace, sub, check string) ([]types.S
 		if err != nil {
 			return nil, err
 		}
-		return []types.Silenced{*silenced}, nil
+		return []corev2.Silenced{*silenced}, nil
 	}
 	path := silencedPath(namespace)
+	request := client.R()
+
+	ApplyListOptions(request, options)
+
 	if sub != "" {
 		path = silencedPath(namespace, "subscriptions", sub)
 	} else if check != "" {
 		path = silencedPath(namespace, "checks", check)
 	}
-	resp, err := client.R().Get(path)
+	resp, err := request.Get(path)
 	if err != nil {
 		return nil, err
 	}

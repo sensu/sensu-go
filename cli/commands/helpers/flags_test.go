@@ -3,18 +3,38 @@ package helpers
 import (
 	"testing"
 
+	"github.com/sensu/sensu-go/cli/commands/flags"
+
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 )
 
 // With a default of 'json'
 func TestAddFormatFlag(t *testing.T) {
-	flags := &pflag.FlagSet{}
+	flagSet := &pflag.FlagSet{}
 
-	AddFormatFlag(flags)
+	AddFormatFlag(flagSet)
 
-	formatFlag := flags.Lookup("format")
+	formatFlag := flagSet.Lookup("format")
 	assert.NotNil(t, formatFlag)
+}
+
+func TestAddFieldSelectorFlag(t *testing.T) {
+	flagSet := &pflag.FlagSet{}
+
+	AddFieldSelectorFlag(flagSet)
+
+	fieldSelectorFlag := flagSet.Lookup(flags.FieldSelector)
+	assert.NotNil(t, fieldSelectorFlag)
+}
+
+func TestAddLabelSelectorFlag(t *testing.T) {
+	flagSet := &pflag.FlagSet{}
+
+	AddLabelSelectorFlag(flagSet)
+
+	labelSelectorFlag := flagSet.Lookup(flags.LabelSelector)
+	assert.NotNil(t, labelSelectorFlag)
 }
 
 func TestSafeSplitCSV(t *testing.T) {

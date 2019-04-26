@@ -30,7 +30,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListFilters", mock.Anything).Return([]types.EventFilter{
+	client.On("ListFilters", mock.Anything, mock.Anything).Return([]types.EventFilter{
 		*types.FixtureEventFilter("name-one"),
 		*types.FixtureEventFilter("name-two"),
 	}, nil)
@@ -50,7 +50,7 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListFilters", "").Return([]types.EventFilter{
+	client.On("ListFilters", "", mock.Anything).Return([]types.EventFilter{
 		*types.FixtureEventFilter("name-one"),
 	}, nil)
 
@@ -69,7 +69,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	filter := types.FixtureEventFilter("name-one")
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListFilters", mock.Anything).Return([]types.EventFilter{*filter}, nil)
+	client.On("ListFilters", mock.Anything, mock.Anything).Return([]types.EventFilter{*filter}, nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "none"))
@@ -88,7 +88,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListFilters", mock.Anything).Return([]types.EventFilter{}, errors.New("my-err"))
+	client.On("ListFilters", mock.Anything, mock.Anything).Return([]types.EventFilter{}, errors.New("my-err"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -105,7 +105,7 @@ func TestListCommandRunEClosureWithAlphaNumericChars(t *testing.T) {
 	client := cli.Client.(*client.MockClient)
 	filter := types.FixtureEventFilter("name-one")
 	filter.Expressions = append(filter.Expressions, "10 > 0")
-	client.On("ListFilters", "").Return([]types.EventFilter{*filter}, nil)
+	client.On("ListFilters", "", mock.Anything).Return([]types.EventFilter{*filter}, nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))
