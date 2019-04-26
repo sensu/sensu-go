@@ -295,7 +295,7 @@ func namespaceFound(namespace string) clientv3.Cmp {
 }
 
 // ComputeContinueToken calculates a continue token based on the given resource
-func ComputeContinueToken(ctx context.Context, r corev2.Resource) (token string) {
+func ComputeContinueToken(ctx context.Context, r corev2.Resource) string {
 	queriedNamespace := store.NewNamespaceFromContext(ctx)
 
 	switch resource := r.(type) {
@@ -315,15 +315,12 @@ func ComputeContinueToken(ctx context.Context, r corev2.Resource) (token string)
 			return "/" + eventNamespace + "/" + resource.Entity.Name + "/" + resource.Check.Name + "\x00"
 		}
 		return resource.Entity.Name + "/" + resource.Check.Name + "\x00"
+	default:
+		objMeta := r.GetObjectMeta()
+
+		if queriedNamespace == "" {
+			return path.Join(objMeta.Namespace, objMeta.Name) + "\x00"
+		}
+		return objMeta.Name + "\x00"
 	}
-
-	objMeta := r.GetObjectMeta()
-
-	if queriedNamespace == "" {
-		token = path.Join(objMeta.Namespace, objMeta.Name) + "\x00"
-	} else {
-		token = objMeta.Name + "\x00"
-	}
-
-	return
 }
