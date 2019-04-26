@@ -17,6 +17,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 `sensuctl cluster member-list` commands in tabular format.
 - Added a `Header` field to the `HealthResponse` type returned by `/health`.
 
+### Changed
+- The continue token of events is now computed by the same function as the other
+resources.
+
 ### Fixed
 - Fixed the agent `--annotations` and `--labels` flags.
 

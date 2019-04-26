@@ -98,25 +98,7 @@ func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) (
 	}
 
 	if pred.Limit != 0 && resp.Count > pred.Limit {
-		queriedNamespace := store.NewNamespaceFromContext(ctx)
-		lastEvent := events[len(events)-1]
-
-		// TODO(ccressent): This can surely be simplified
-		if queriedNamespace == "" {
-			// Workaround for sensu-go#2465: keepalive events do not always have
-			// their namespace filled in, which would break the construction of
-			// continue token below. To accommodate for that, when
-			// constructing the continue token, whevener an event has a
-			// namespace of "" we construct the continue token using its
-			// entity's namespace instead.
-			lastEventNamespace := lastEvent.Namespace
-			if lastEventNamespace == "" {
-				lastEventNamespace = lastEvent.Entity.Namespace
-			}
-			pred.Continue = "/" + lastEventNamespace + "/" + lastEvent.Entity.Name + "/" + lastEvent.Check.Name + "\x00"
-		} else {
-			pred.Continue = lastEvent.Entity.Name + "/" + lastEvent.Check.Name + "\x00"
-		}
+		pred.Continue = ComputeContinueToken(ctx, events[len(events)-1])
 	} else {
 		pred.Continue = ""
 	}
