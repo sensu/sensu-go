@@ -6,6 +6,8 @@ import (
 	"log"
 	"sync"
 
+	runtimedebug "runtime/debug"
+
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
 	"golang.org/x/sys/windows/svc/eventlog"
@@ -32,6 +34,13 @@ func (s *Service) start(ctx context.Context, args []string, changes chan<- svc.S
 	s.wg.Add(1)
 	result := make(chan error, 1)
 	go func() {
+		defer func() {
+			if e := recover(); e != nil {
+				changes <- svc.Status{State: svc.Stopped}
+				runtimedebug.PrintStack()
+				result <- fmt.Errorf("%v", e)
+			}
+		}()
 		defer s.wg.Done()
 		changes <- svc.Status{State: svc.StartPending}
 		// Start service here
@@ -69,7 +78,8 @@ func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes cha
 				errs = s.start(ctx, args, changes)
 			}
 		case err := <-errs:
-			log.Println(err)
+			log.Printf("restarting due to error: %s", err)
+			s.start(ctx, args, changes)
 		}
 	}
 	return false, 0
