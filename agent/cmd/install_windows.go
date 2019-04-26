@@ -59,6 +59,7 @@ func installService(name, displayName, desc string, args ...string) error {
 	s, err = m.CreateService(name, exepath, mgr.Config{
 		Description: desc,
 		DisplayName: displayName,
+		ServiceStartName: serviceUser,
 		StartType:   mgr.StartAutomatic,
 	}, args...)
 	if err != nil {

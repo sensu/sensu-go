@@ -16,6 +16,7 @@ const (
 	serviceName        = "SensuAgent"
 	serviceDisplayName = "Sensu Agent"
 	serviceDescription = "The monitoring agent for sensu-go (https://sensu.io)"
+	serviceUser        = "LocalSystem"
 )
 
 // NewWindowsServiceCommand creates a cobra command that offers subcommands
