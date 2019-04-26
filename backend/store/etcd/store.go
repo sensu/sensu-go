@@ -204,7 +204,7 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 
 	if pred.Limit != 0 && resp.Count > pred.Limit {
 		lastObject := v.Index(v.Len() - 1).Interface().(corev2.Resource)
-		pred.Continue = computeContinueToken(ctx, lastObject)
+		pred.Continue = ComputeContinueToken(ctx, lastObject)
 	} else {
 		pred.Continue = ""
 	}
@@ -294,15 +294,33 @@ func namespaceFound(namespace string) clientv3.Cmp {
 	return keyFound(getNamespacePath(namespace))
 }
 
-func computeContinueToken(ctx context.Context, r corev2.Resource) (token string) {
-	objMeta := r.GetObjectMeta()
+// ComputeContinueToken calculates a continue token based on the given resource
+func ComputeContinueToken(ctx context.Context, r corev2.Resource) string {
 	queriedNamespace := store.NewNamespaceFromContext(ctx)
 
-	if queriedNamespace == "" {
-		token = path.Join(objMeta.Namespace, objMeta.Name) + "\x00"
-	} else {
-		token = objMeta.Name + "\x00"
-	}
+	switch resource := r.(type) {
+	case *corev2.Event:
+		// TODO(ccressent): This can surely be simplified
+		if queriedNamespace == "" {
+			// Workaround for sensu-go#2465: keepalive events do not always have
+			// their namespace filled in, which would break the construction of
+			// continue token below. To accommodate for that, when
+			// constructing the continue token, whevener an event has a
+			// namespace of "" we construct the continue token using its
+			// entity's namespace instead.
+			eventNamespace := resource.Namespace
+			if eventNamespace == "" {
+				eventNamespace = resource.Entity.Namespace
+			}
+			return "/" + eventNamespace + "/" + resource.Entity.Name + "/" + resource.Check.Name + "\x00"
+		}
+		return resource.Entity.Name + "/" + resource.Check.Name + "\x00"
+	default:
+		objMeta := r.GetObjectMeta()
 
-	return
+		if queriedNamespace == "" {
+			return path.Join(objMeta.Namespace, objMeta.Name) + "\x00"
+		}
+		return objMeta.Name + "\x00"
+	}
 }
