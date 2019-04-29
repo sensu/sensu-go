@@ -74,7 +74,7 @@ func (t *Limitd) Err() <-chan error {
 
 // Name returns the daemon name.
 func (t *Limitd) Name() string {
-	return "limitd"
+	return componentName
 }
 
 // start starts a loop to periodically update entity count and history.

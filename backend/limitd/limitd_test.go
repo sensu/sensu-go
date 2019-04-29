@@ -33,5 +33,5 @@ func TestLimitd(t *testing.T) {
 	limitd := newLimitdTest(t)
 	require.NoError(t, limitd.Start())
 	assert.NoError(t, limitd.Stop())
-	assert.Equal(t, limitd.Name(), "limitd")
+	assert.Equal(t, limitd.Name(), componentName)
 }

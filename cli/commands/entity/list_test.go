@@ -133,7 +133,8 @@ func TestListCommandRunEntityLimitHeader(t *testing.T) {
 	assert.Nil(err)
 
 	// Tabular should contain header
-	cmd.Flags().Set("format", "tabular")
+	err = cmd.Flags().Set("format", "tabular")
+	assert.Nil(err)
 	out, err = test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
