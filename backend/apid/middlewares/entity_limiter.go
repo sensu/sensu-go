@@ -22,7 +22,7 @@ func (e EntityLimiter) Then(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !e.Limiter.License() {
 			entityLimit := e.Limiter.Limit()
-			entityCount := math.Floor(average(e.Limiter.CountHistory()))
+			entityCount := math.Floor(Average(e.Limiter.CountHistory()))
 			if entityCount > float64(entityLimit) {
 				w.Header().Set(HeaderWarning, fmt.Sprintf("You have exceeded the entity limit of %d for the free tier of Sensu Go: %d entities", entityLimit, int(entityCount)))
 			}
@@ -31,7 +31,8 @@ func (e EntityLimiter) Then(next http.Handler) http.Handler {
 	})
 }
 
-func average(history []int) float64 {
+// Average calculates the average value of a count history.
+func Average(history []int) float64 {
 	var total float64
 	for _, value := range history {
 		total += float64(value)
