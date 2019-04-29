@@ -18,9 +18,9 @@ func (c *MockClient) Get(path string, obj interface{}) error {
 }
 
 // List ...
-func (c *MockClient) List(path string, objs interface{}, options client.ListOptions) error {
+func (c *MockClient) List(path string, objs interface{}, options client.ListOptions) (string, error) {
 	args := c.Called(path, objs, options)
-	return args.Error(0)
+	return args.Get(0).(string), args.Error(1)
 }
 
 // Post ...

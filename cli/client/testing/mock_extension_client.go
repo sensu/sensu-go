@@ -8,9 +8,9 @@ import (
 )
 
 // ListExtensions ...
-func (c *MockClient) ListExtensions(namespace string, options client.ListOptions) ([]corev2.Extension, error) {
+func (c *MockClient) ListExtensions(namespace string, options client.ListOptions) ([]corev2.Extension, string, error) {
 	args := c.Called(namespace, options)
-	return args.Get(0).([]corev2.Extension), args.Error(1)
+	return args.Get(0).([]corev2.Extension), args.Get(1).(string), args.Error(2)
 }
 
 // RegisterExtension ...

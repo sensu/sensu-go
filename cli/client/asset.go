@@ -11,8 +11,9 @@ import (
 var assetsPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "assets")
 
 // ListAssets fetches a list of asset resources from the backend
-func (client *RestClient) ListAssets(namespace string, options ListOptions) ([]corev2.Asset, error) {
+func (client *RestClient) ListAssets(namespace string, options ListOptions) ([]corev2.Asset, string, error) {
 	var assets []corev2.Asset
+	var header string
 
 	path := assetsPath(namespace)
 	request := client.R()
@@ -21,15 +22,17 @@ func (client *RestClient) ListAssets(namespace string, options ListOptions) ([]c
 
 	res, err := request.Get(path)
 	if err != nil {
-		return assets, err
+		return assets, header, err
 	}
 
+	header = EntityLimitHeader(res.Header())
+
 	if res.StatusCode() >= 400 {
-		return assets, UnmarshalError(res)
+		return assets, header, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &assets)
-	return assets, err
+	return assets, header, err
 }
 
 // FetchAsset fetches an asset resource from the backend

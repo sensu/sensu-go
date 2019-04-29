@@ -8,9 +8,9 @@ import (
 )
 
 // ListEntities for use with mock lib
-func (c *MockClient) ListEntities(namespace string, options client.ListOptions) ([]corev2.Entity, error) {
+func (c *MockClient) ListEntities(namespace string, options client.ListOptions) ([]corev2.Entity, string, error) {
 	args := c.Called(namespace, options)
-	return args.Get(0).([]corev2.Entity), args.Error(1)
+	return args.Get(0).([]corev2.Entity), args.Get(1).(string), args.Error(2)
 }
 
 // FetchEntity for use with mock lib

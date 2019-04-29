@@ -27,12 +27,14 @@ func (client *RestClient) FetchRole(name string) (*types.Role, error) {
 }
 
 // ListRoles lists the roles within the given namespace.
-func (client *RestClient) ListRoles(namespace string, options ListOptions) ([]corev2.Role, error) {
+func (client *RestClient) ListRoles(namespace string, options ListOptions) ([]corev2.Role, string, error) {
+	var header string
 	roles := []corev2.Role{}
 
-	if err := client.List(rolesPath(namespace), &roles, options); err != nil {
-		return roles, err
+	header, err := client.List(rolesPath(namespace), &roles, options)
+	if err != nil {
+		return roles, header, err
 	}
 
-	return roles, nil
+	return roles, header, nil
 }

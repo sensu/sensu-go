@@ -49,7 +49,12 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			results, err := cli.Client.ListSilenceds(namespace, sub, check, opts)
+			results, header, err := cli.Client.ListSilenceds(namespace, sub, check, opts)
+			if err != nil {
+				return err
+			}
+
+			err = helpers.PrintTitle(helpers.GetChangedStringValueFlag("format", cmd.Flags()), cli.Config.Format(), header, cmd.OutOrStdout())
 			if err != nil {
 				return err
 			}

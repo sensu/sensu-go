@@ -73,8 +73,9 @@ func (client *RestClient) FetchHook(name string) (*types.HookConfig, error) {
 }
 
 // ListHooks fetches all hooks from configured Sensu instance
-func (client *RestClient) ListHooks(namespace string, options ListOptions) ([]corev2.HookConfig, error) {
+func (client *RestClient) ListHooks(namespace string, options ListOptions) ([]corev2.HookConfig, string, error) {
 	var hooks []corev2.HookConfig
+	var header string
 
 	path := hooksPath(namespace)
 	request := client.R()
@@ -83,13 +84,15 @@ func (client *RestClient) ListHooks(namespace string, options ListOptions) ([]co
 
 	res, err := request.Get(path)
 	if err != nil {
-		return hooks, err
+		return hooks, header, err
 	}
 
+	header = EntityLimitHeader(res.Header())
+
 	if res.StatusCode() >= 400 {
-		return hooks, UnmarshalError(res)
+		return hooks, header, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &hooks)
-	return hooks, err
+	return hooks, header, err
 }

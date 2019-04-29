@@ -32,7 +32,7 @@ func (c *MockClient) FetchSilenced(id string) (*types.Silenced, error) {
 }
 
 // ListSilenceds for use with mock lib
-func (c *MockClient) ListSilenceds(namespace, sub, check string, options client.ListOptions) ([]corev2.Silenced, error) {
+func (c *MockClient) ListSilenceds(namespace, sub, check string, options client.ListOptions) ([]corev2.Silenced, string, error) {
 	args := c.Called(namespace, sub, check, options)
-	return args.Get(0).([]corev2.Silenced), args.Error(1)
+	return args.Get(0).([]corev2.Silenced), args.Get(1).(string), args.Error(2)
 }

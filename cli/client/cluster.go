@@ -11,19 +11,23 @@ import (
 
 var clusterMembersPath = CreateBasePath(coreAPIGroup, coreAPIVersion, "cluster", "members")
 
-func (c *RestClient) MemberList() (*clientv3.MemberListResponse, error) {
+// MemberList lists all cluster members.
+func (c *RestClient) MemberList() (*clientv3.MemberListResponse, string, error) {
+	var header string
 	path := clusterMembersPath()
 	res, err := c.R().Get(path)
 	if err != nil {
-		return nil, fmt.Errorf("GET %q: %s", path, err)
+		return nil, header, fmt.Errorf("GET %q: %s", path, err)
 	}
 	if res.StatusCode() >= 400 {
-		return nil, UnmarshalError(res)
+		return nil, header, UnmarshalError(res)
 	}
+	header = EntityLimitHeader(res.Header())
 	var result clientv3.MemberListResponse
-	return &result, json.Unmarshal(res.Body(), &result)
+	return &result, header, json.Unmarshal(res.Body(), &result)
 }
 
+// MemberAdd adds a cluster member.
 func (c *RestClient) MemberAdd(peerAddrs []string) (*clientv3.MemberAddResponse, error) {
 	values := url.Values{"peer-addrs": {strings.Join(peerAddrs, ",")}}.Encode()
 	endpoint := fmt.Sprintf("%s?%s", clusterMembersPath(), values)
@@ -38,6 +42,7 @@ func (c *RestClient) MemberAdd(peerAddrs []string) (*clientv3.MemberAddResponse,
 	return &result, json.Unmarshal(res.Body(), &result)
 }
 
+// MemberUpdate updates a cluster member.
 func (c *RestClient) MemberUpdate(id uint64, peerAddrs []string) (*clientv3.MemberUpdateResponse, error) {
 	values := url.Values{"peer-addrs": {strings.Join(peerAddrs, ",")}}.Encode()
 	endpoint := fmt.Sprintf("%s/%x?%s", clusterMembersPath(), id, values)
@@ -52,6 +57,7 @@ func (c *RestClient) MemberUpdate(id uint64, peerAddrs []string) (*clientv3.Memb
 	return &result, json.Unmarshal(res.Body(), &result)
 }
 
+// MemberRemove removes a cluster member.
 func (c *RestClient) MemberRemove(id uint64) (*clientv3.MemberRemoveResponse, error) {
 	endpoint := fmt.Sprintf("%s/%x", clusterMembersPath(), id)
 	res, err := c.R().Delete(endpoint)

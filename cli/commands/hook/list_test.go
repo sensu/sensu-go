@@ -33,7 +33,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 	client.On("ListHooks", mock.Anything, mock.Anything).Return([]types.HookConfig{
 		*types.FixtureHookConfig("name-one"),
 		*types.FixtureHookConfig("name-two"),
-	}, nil)
+	}, "", nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "json"))
@@ -52,7 +52,7 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 	client := cli.Client.(*client.MockClient)
 	client.On("ListHooks", "", mock.Anything).Return([]types.HookConfig{
 		*types.FixtureHookConfig("name-one"),
-	}, nil)
+	}, "", nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))
@@ -69,7 +69,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	hook := types.FixtureHookConfig("name-one")
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListHooks", mock.Anything, mock.Anything).Return([]types.HookConfig{*hook}, nil)
+	client.On("ListHooks", mock.Anything, mock.Anything).Return([]types.HookConfig{*hook}, "", nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "none"))
@@ -89,7 +89,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListHooks", mock.Anything, mock.Anything).Return([]types.HookConfig{}, errors.New("my-err"))
+	client.On("ListHooks", mock.Anything, mock.Anything).Return([]types.HookConfig{}, "", errors.New("my-err"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -108,7 +108,7 @@ func TestListCommandRunEClosureWithAlphaNumericChars(t *testing.T) {
 	hookConfig.Command = "echo foo && exit 1"
 	client.On("ListHooks", "", mock.Anything).Return([]types.HookConfig{
 		*hookConfig,
-	}, nil)
+	}, "", nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))

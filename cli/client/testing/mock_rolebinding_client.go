@@ -26,7 +26,7 @@ func (c *MockClient) DeleteRoleBinding(namespace, name string) error {
 }
 
 // ListRoleBindings ...
-func (c *MockClient) ListRoleBindings(namespace string, options client.ListOptions) ([]corev2.RoleBinding, error) {
+func (c *MockClient) ListRoleBindings(namespace string, options client.ListOptions) ([]corev2.RoleBinding, string, error) {
 	args := c.Called(namespace, options)
-	return args.Get(0).([]corev2.RoleBinding), args.Error(1)
+	return args.Get(0).([]corev2.RoleBinding), args.Get(1).(string), args.Error(2)
 }

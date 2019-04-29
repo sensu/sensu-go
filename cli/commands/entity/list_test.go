@@ -33,7 +33,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 	client.On("ListEntities", mock.Anything, mock.Anything).Return([]types.Entity{
 		*types.FixtureEntity("name-one"),
 		*types.FixtureEntity("name-two"),
-	}, nil)
+	}, "", nil)
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -51,7 +51,7 @@ func TestListCommandRunEClosureWithAllNamespaces(t *testing.T) {
 	client := cli.Client.(*client.MockClient)
 	client.On("ListEntities", "", mock.Anything).Return([]types.Entity{
 		*types.FixtureEntity("name-two"),
-	}, nil)
+	}, "", nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.AllNamespaces, "t"))
@@ -69,7 +69,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	client.On("ListEntities", mock.Anything, mock.Anything).Return([]types.Entity{
 		*types.FixtureEntity("name-one"),
 		*types.FixtureEntity("name-two"),
-	}, nil)
+	}, "", nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "none"))
@@ -89,7 +89,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEntities", mock.Anything, mock.Anything).Return([]types.Entity{}, errors.New("my-err"))
+	client.On("ListEntities", mock.Anything, mock.Anything).Return([]types.Entity{}, "", errors.New("my-err"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -110,4 +110,35 @@ func TestListFlags(t *testing.T) {
 
 	flag = cmd.Flag("format")
 	assert.NotNil(flag)
+}
+
+func TestListCommandRunEntityLimitHeader(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := test.NewCLI()
+	client := cli.Client.(*client.MockClient)
+	client.On("ListEntities", mock.Anything, mock.Anything).Return([]types.Entity{
+		*types.FixtureEntity("name-one"),
+		*types.FixtureEntity("name-two"),
+	}, "warning", nil)
+
+	// JSON should not contain header
+	cmd := ListCommand(cli)
+	out, err := test.RunCmd(cmd, []string{})
+
+	assert.NotEmpty(out)
+	assert.Contains(out, "name-one")
+	assert.Contains(out, "name-two")
+	assert.NotContains(out, "warning")
+	assert.Nil(err)
+
+	// Tabular should contain header
+	cmd.Flags().Set("format", "tabular")
+	out, err = test.RunCmd(cmd, []string{})
+
+	assert.NotEmpty(out)
+	assert.Contains(out, "name-one")
+	assert.Contains(out, "name-two")
+	assert.Contains(out, "warning")
+	assert.Nil(err)
 }

@@ -21,6 +21,8 @@ import (
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/eventd"
 	"github.com/sensu/sensu-go/backend/keepalived"
+	"github.com/sensu/sensu-go/backend/limitd"
+	"github.com/sensu/sensu-go/backend/limiter"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/pipelined"
@@ -221,6 +223,8 @@ func Initialize(config *Config) (*Backend, error) {
 	}
 	authenticator.AddProvider(basic)
 
+	entityLimiter := limiter.NewEntityLimiter()
+
 	// Initialize apid
 	api, err := apid.New(apid.Config{
 		ListenAddress:       config.APIListenAddress,
@@ -232,6 +236,7 @@ func Initialize(config *Config) (*Backend, error) {
 		Cluster:             clientv3.NewCluster(b.Client),
 		EtcdClientTLSConfig: etcdClientTLSConfig,
 		Authenticator:       authenticator,
+		EntityLimiter:       entityLimiter,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err)
@@ -249,6 +254,16 @@ func Initialize(config *Config) (*Backend, error) {
 		return nil, fmt.Errorf("error initializing %s: %s", tessen.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, tessen)
+
+	// Initialize limitd
+	limit, err := limitd.New(limitd.Config{
+		Client:        b.Client,
+		EntityLimiter: entityLimiter,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error initializing %s: %s", limit.Name(), err)
+	}
+	b.Daemons = append(b.Daemons, limit)
 
 	// Initialize dashboardd TLS config
 	var dashboardTLSConfig *types.TLSOptions

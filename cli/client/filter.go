@@ -55,8 +55,9 @@ func (client *RestClient) FetchFilter(name string) (*types.EventFilter, error) {
 }
 
 // ListFilters fetches all filters from configured Sensu instance
-func (client *RestClient) ListFilters(namespace string, options ListOptions) ([]corev2.EventFilter, error) {
+func (client *RestClient) ListFilters(namespace string, options ListOptions) ([]corev2.EventFilter, string, error) {
 	var filters []corev2.EventFilter
+	var header string
 
 	path := filtersPath(namespace)
 	request := client.R()
@@ -65,15 +66,17 @@ func (client *RestClient) ListFilters(namespace string, options ListOptions) ([]
 
 	res, err := request.Get(path)
 	if err != nil {
-		return filters, err
+		return filters, header, err
 	}
 
+	header = EntityLimitHeader(res.Header())
+
 	if res.StatusCode() >= 400 {
-		return filters, UnmarshalError(res)
+		return filters, header, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &filters)
-	return filters, err
+	return filters, header, err
 }
 
 // UpdateFilter updates an existing filter with fields from a new one.

@@ -57,8 +57,9 @@ func (client *RestClient) DeleteNamespace(namespace string) error {
 }
 
 // ListNamespaces fetches all namespaces from configured Sensu instance
-func (client *RestClient) ListNamespaces(options ListOptions) ([]corev2.Namespace, error) {
+func (client *RestClient) ListNamespaces(options ListOptions) ([]corev2.Namespace, string, error) {
 	var namespaces []corev2.Namespace
+	var header string
 
 	path := namespacesPath()
 	request := client.R()
@@ -67,15 +68,17 @@ func (client *RestClient) ListNamespaces(options ListOptions) ([]corev2.Namespac
 
 	res, err := request.Get(path)
 	if err != nil {
-		return namespaces, err
+		return namespaces, header, err
 	}
 
+	header = EntityLimitHeader(res.Header())
+
 	if res.StatusCode() >= 400 {
-		return namespaces, fmt.Errorf("%v", res.String())
+		return namespaces, header, fmt.Errorf("%v", res.String())
 	}
 
 	err = json.Unmarshal(res.Body(), &namespaces)
-	return namespaces, err
+	return namespaces, header, err
 }
 
 // FetchNamespace fetches an namespace by name

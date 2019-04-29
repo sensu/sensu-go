@@ -3,7 +3,9 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"net/http"
 
+	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -36,21 +38,24 @@ func (client *RestClient) Get(path string, obj interface{}) error {
 }
 
 // List sends a GET request for all objects at the given path
-func (client *RestClient) List(path string, objs interface{}, options ListOptions) error {
+func (client *RestClient) List(path string, objs interface{}, options ListOptions) (string, error) {
+	var header string
 	request := client.R()
 
 	ApplyListOptions(request, options)
 
 	res, err := request.Get(path)
 	if err != nil {
-		return err
+		return header, err
 	}
+
+	header = EntityLimitHeader(res.Header())
 
 	if res.StatusCode() >= 400 {
-		return UnmarshalError(res)
+		return header, UnmarshalError(res)
 	}
 
-	return json.Unmarshal(res.Body(), objs)
+	return header, json.Unmarshal(res.Body(), objs)
 }
 
 // Post sends a POST request with obj as the payload to the given path
@@ -106,4 +111,13 @@ func (client *RestClient) PutResource(r types.Wrapper) error {
 		return fmt.Errorf("PUT %q: %s", path, res.String())
 	}
 	return nil
+}
+
+// EntityLimitHeader returns the warning header from an http response.
+func EntityLimitHeader(headers http.Header) string {
+	var header string
+	if len(headers[middlewares.HeaderWarning]) > 0 {
+		header = headers[middlewares.HeaderWarning][0]
+	}
+	return header
 }

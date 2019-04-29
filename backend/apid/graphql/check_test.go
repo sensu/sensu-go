@@ -110,7 +110,7 @@ func TestCheckTypeSilencesField(t *testing.T) {
 		*types.FixtureSilenced("unix:my-check"),
 		*types.FixtureSilenced("fred:my-check"),
 		*types.FixtureSilenced("unix:not-my-check"),
-	}, nil).Once()
+	}, "", nil).Once()
 
 	impl := &checkImpl{}
 	params := graphql.ResolveParams{}
@@ -132,7 +132,7 @@ func TestCheckTypeRuntimeAssetsField(t *testing.T) {
 		*types.FixtureAsset("one"),
 		*types.FixtureAsset("two"),
 		*types.FixtureAsset("three"),
-	}, nil).Once()
+	}, "", nil).Once()
 
 	// return associated silence
 	impl := &checkImpl{}
@@ -150,7 +150,7 @@ func TestCheckConfigTypeIsSilencedField(t *testing.T) {
 	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{
 		*types.FixtureSilenced("*:my-check"),
 		*types.FixtureSilenced("unix:not-my-check"),
-	}, nil).Once()
+	}, "", nil).Once()
 
 	impl := &checkCfgImpl{}
 	params := graphql.ResolveParams{}
@@ -175,7 +175,7 @@ func TestCheckConfigTypeSilencesField(t *testing.T) {
 		*types.FixtureSilenced("unix:different-check"),
 		*types.FixtureSilenced("unrelated:my-check"),
 		*types.FixtureSilenced("*:another-check"),
-	}, nil).Once()
+	}, "", nil).Once()
 
 	impl := &checkCfgImpl{}
 	params := graphql.ResolveParams{}
@@ -197,7 +197,7 @@ func TestCheckConfigTypeRuntimeAssetsField(t *testing.T) {
 		*types.FixtureAsset("one"),
 		*types.FixtureAsset("two"),
 		*types.FixtureAsset("three"),
-	}, nil).Once()
+	}, "", nil).Once()
 
 	// return associated silence
 	impl := &checkCfgImpl{}
@@ -223,7 +223,7 @@ func TestCheckConfigTypeHandlersField(t *testing.T) {
 		*types.FixtureHandler("one"),
 		*types.FixtureHandler("two"),
 		*types.FixtureHandler("three"),
-	}, nil).Once()
+	}, "", nil).Once()
 
 	res, err := impl.Handlers(params)
 	require.NoError(t, err)
@@ -246,7 +246,7 @@ func TestCheckTypeHandlersField(t *testing.T) {
 		*types.FixtureHandler("one"),
 		*types.FixtureHandler("two"),
 		*types.FixtureHandler("three"),
-	}, nil).Once()
+	}, "", nil).Once()
 
 	res, err := impl.Handlers(params)
 	require.NoError(t, err)
@@ -269,7 +269,7 @@ func TestCheckConfigTypeOutputMetricHandlersField(t *testing.T) {
 		*types.FixtureHandler("one"),
 		*types.FixtureHandler("two"),
 		*types.FixtureHandler("three"),
-	}, nil).Once()
+	}, "", nil).Once()
 
 	res, err := impl.OutputMetricHandlers(params)
 	require.NoError(t, err)
@@ -292,7 +292,7 @@ func TestCheckTypeOutputMetricHandlersField(t *testing.T) {
 		*types.FixtureHandler("one"),
 		*types.FixtureHandler("two"),
 		*types.FixtureHandler("three"),
-	}, nil).Once()
+	}, "", nil).Once()
 
 	res, err := impl.OutputMetricHandlers(params)
 	require.NoError(t, err)

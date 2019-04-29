@@ -32,7 +32,7 @@ func (c *MockClient) FetchHook(name string) (*types.HookConfig, error) {
 }
 
 // ListHooks for use with mock lib
-func (c *MockClient) ListHooks(namespace string, options client.ListOptions) ([]corev2.HookConfig, error) {
+func (c *MockClient) ListHooks(namespace string, options client.ListOptions) ([]corev2.HookConfig, string, error) {
 	args := c.Called(namespace, options)
-	return args.Get(0).([]corev2.HookConfig), args.Error(1)
+	return args.Get(0).([]corev2.HookConfig), args.Get(1).(string), args.Error(2)
 }

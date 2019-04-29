@@ -33,7 +33,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 	client.On("ListEvents", mock.Anything, mock.Anything).Return([]types.Event{
 		*types.FixtureEvent("1", "something"),
 		*types.FixtureEvent("2", "funny"),
-	}, nil)
+	}, "", nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))
@@ -51,7 +51,7 @@ func TestListCommandRunEClosureWithAllNamespaces(t *testing.T) {
 	client := cli.Client.(*client.MockClient)
 	client.On("ListEvents", "", mock.Anything).Return([]types.Event{
 		*types.FixtureEvent("1", "something"),
-	}, nil)
+	}, "", nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))
@@ -69,7 +69,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	client.On("ListEvents", mock.Anything, mock.Anything).Return([]types.Event{
 		*types.FixtureEvent("1", "something"),
 		*types.FixtureEvent("2", "funny"),
-	}, nil)
+	}, "", nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "none"))
@@ -89,7 +89,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
 	cli := newConfiguredCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEvents", mock.Anything, mock.Anything).Return([]types.Event{}, errors.New("fun-msg"))
+	client.On("ListEvents", mock.Anything, mock.Anything).Return([]types.Event{}, "", errors.New("fun-msg"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})

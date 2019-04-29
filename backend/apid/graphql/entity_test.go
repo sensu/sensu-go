@@ -22,7 +22,7 @@ func TestEntityTypeRelatedField(t *testing.T) {
 		*source,
 		*types.FixtureEntity("a"),
 		*types.FixtureEntity("b"),
-	}, nil).Once()
+	}, "", nil).Once()
 
 	params := schema.EntityRelatedFieldResolverParams{}
 	params.Context = contextWithLoaders(context.Background(), client)
@@ -45,7 +45,7 @@ func TestEntityTypeStatusField(t *testing.T) {
 		*types.FixtureEvent(entity.Name, "a"),
 		*types.FixtureEvent(entity.Name, "b"),
 		*types.FixtureEvent(entity.Name, "c"),
-	}, nil).Once()
+	}, "", nil).Once()
 
 	// params
 	params := graphql.ResolveParams{}
@@ -64,7 +64,7 @@ func TestEntityTypeStatusField(t *testing.T) {
 	client.On("ListEvents", "sensu", mock.Anything).Return([]types.Event{
 		*types.FixtureEvent(entity.Name, "a"),
 		*failingEv,
-	}, nil).Once()
+	}, "", nil).Once()
 
 	// exit status: 2
 	// params.Context = contextWithLoaders(context.Background(), client)
@@ -96,7 +96,7 @@ func TestEntityTypeEventsField(t *testing.T) {
 		*types.FixtureEvent(entity.Name, "a"),
 		*types.FixtureEvent(entity.Name, "b"),
 		*types.FixtureEvent(entity.Name, "c"),
-	}, nil).Once()
+	}, "", nil).Once()
 
 	// params
 	params := schema.EntityEventsFieldResolverParams{}
@@ -120,7 +120,7 @@ func TestEntityTypeSilencesField(t *testing.T) {
 		*types.FixtureSilenced("www:*"),
 		*types.FixtureSilenced("unix:my-check"),
 		*types.FixtureSilenced("entity:unrelated:*"),
-	}, nil).Once()
+	}, "", nil).Once()
 
 	impl := &entityImpl{}
 	params := graphql.ResolveParams{}
@@ -142,7 +142,7 @@ func TestEntityTypeIsSilencedField(t *testing.T) {
 		*types.FixtureSilenced("entity:en:*"),
 		*types.FixtureSilenced("ou:my-check"),
 		*types.FixtureSilenced("entity:unrelated:*"),
-	}, nil).Once()
+	}, "", nil).Once()
 
 	impl := &entityImpl{}
 	params := graphql.ResolveParams{}

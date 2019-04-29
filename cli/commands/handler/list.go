@@ -38,7 +38,12 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Fetch handlers from API
-			results, err := cli.Client.ListHandlers(namespace, opts)
+			results, header, err := cli.Client.ListHandlers(namespace, opts)
+			if err != nil {
+				return err
+			}
+
+			err = helpers.PrintTitle(helpers.GetChangedStringValueFlag("format", cmd.Flags()), cli.Config.Format(), header, cmd.OutOrStdout())
 			if err != nil {
 				return err
 			}

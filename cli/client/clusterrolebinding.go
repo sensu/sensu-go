@@ -26,13 +26,15 @@ func (client *RestClient) FetchClusterRoleBinding(name string) (*types.ClusterRo
 	return clusterRoleBinding, nil
 }
 
-// ListClusterRoleBinding in the cluster
-func (client *RestClient) ListClusterRoleBindings(options ListOptions) ([]corev2.ClusterRoleBinding, error) {
+// ListClusterRoleBindings in the cluster
+func (client *RestClient) ListClusterRoleBindings(options ListOptions) ([]corev2.ClusterRoleBinding, string, error) {
+	var header string
 	clusterRoleBindings := []corev2.ClusterRoleBinding{}
 
-	if err := client.List(clusterRoleBindingsPath(), &clusterRoleBindings, options); err != nil {
-		return clusterRoleBindings, err
+	header, err := client.List(clusterRoleBindingsPath(), &clusterRoleBindings, options)
+	if err != nil {
+		return clusterRoleBindings, header, err
 	}
 
-	return clusterRoleBindings, nil
+	return clusterRoleBindings, header, nil
 }

@@ -27,7 +27,7 @@ func TestListCommandRunEClosureJSONFormat(t *testing.T) {
 	client.On("ListRoles", "default", mock.Anything).Return([]types.Role{
 		*types.FixtureRole("one", "default"),
 		*types.FixtureRole("two", "default"),
-	}, nil)
+	}, "", nil)
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
 	assert.NotEmpty(out)
@@ -42,7 +42,7 @@ func TestListCommandRunEClosureTabularFormat(t *testing.T) {
 	client.On("ListRoles", "default", mock.Anything).Return([]types.Role{
 		*types.FixtureRole("one", "default"),
 		*types.FixtureRole("two", "default"),
-	}, nil)
+	}, "", nil)
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
 	assert.NotEmpty(out)
@@ -55,7 +55,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListRoles", "default", mock.Anything).Return([]types.Role{}, errors.New("fire"))
+	client.On("ListRoles", "default", mock.Anything).Return([]types.Role{}, "", errors.New("fire"))
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
 	assert.Empty(out)

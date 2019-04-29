@@ -20,11 +20,15 @@ func MemberListCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "list cluster members",
 		SilenceUsage: false,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			result, err := cli.Client.MemberList()
+			result, header, err := cli.Client.MemberList()
 			if err != nil {
 				return fmt.Errorf("error listing cluster members: %s", err)
 			}
-			err = helpers.PrintFormatted(helpers.GetChangedStringValueFlag("format", cmd.Flags()), cli.Config.Format(), result.Header, cmd.OutOrStdout(), printTitleClusterID)
+			err = helpers.PrintTitle(helpers.GetChangedStringValueFlag("format", cmd.Flags()), cli.Config.Format(), header, cmd.OutOrStdout())
+			if err != nil {
+				return err
+			}
+			err = helpers.PrintTitle(helpers.GetChangedStringValueFlag("format", cmd.Flags()), cli.Config.Format(), fmt.Sprintf("Cluster ID: %x", result.Header.ClusterId), cmd.OutOrStdout())
 			if err != nil {
 				return err
 			}

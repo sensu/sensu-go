@@ -95,8 +95,9 @@ func (client *RestClient) FetchCheck(name string) (*types.CheckConfig, error) {
 }
 
 // ListChecks fetches all checks from configured Sensu instance
-func (client *RestClient) ListChecks(namespace string, options ListOptions) ([]corev2.CheckConfig, error) {
+func (client *RestClient) ListChecks(namespace string, options ListOptions) ([]corev2.CheckConfig, string, error) {
 	var checks []corev2.CheckConfig
+	var header string
 
 	path := checksPath(namespace)
 	request := client.R()
@@ -105,15 +106,17 @@ func (client *RestClient) ListChecks(namespace string, options ListOptions) ([]c
 
 	res, err := request.Get(path)
 	if err != nil {
-		return checks, err
+		return checks, header, err
 	}
 
+	header = EntityLimitHeader(res.Header())
+
 	if res.StatusCode() >= 400 {
-		return checks, UnmarshalError(res)
+		return checks, header, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &checks)
-	return checks, err
+	return checks, header, err
 }
 
 // AddCheckHook associates an existing hook with an existing check

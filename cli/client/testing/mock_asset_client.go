@@ -8,9 +8,9 @@ import (
 )
 
 // ListAssets for use with mock lib
-func (c *MockClient) ListAssets(namespace string, options client.ListOptions) ([]corev2.Asset, error) {
+func (c *MockClient) ListAssets(namespace string, options client.ListOptions) ([]corev2.Asset, string, error) {
 	args := c.Called(namespace, options)
-	return args.Get(0).([]corev2.Asset), args.Error(1)
+	return args.Get(0).([]corev2.Asset), args.Get(1).(string), args.Error(2)
 }
 
 // FetchAsset for use with mock lib

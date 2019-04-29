@@ -11,8 +11,9 @@ import (
 var mutatorsPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "mutators")
 
 // ListMutators fetches all mutators from the configured Sensu instance
-func (client *RestClient) ListMutators(namespace string, options ListOptions) ([]corev2.Mutator, error) {
+func (client *RestClient) ListMutators(namespace string, options ListOptions) ([]corev2.Mutator, string, error) {
 	var mutators []corev2.Mutator
+	var header string
 
 	path := mutatorsPath(namespace)
 	request := client.R()
@@ -21,15 +22,17 @@ func (client *RestClient) ListMutators(namespace string, options ListOptions) ([
 
 	res, err := request.Get(path)
 	if err != nil {
-		return mutators, err
+		return mutators, header, err
 	}
 
+	header = EntityLimitHeader(res.Header())
+
 	if res.StatusCode() >= 400 {
-		return mutators, fmt.Errorf("%v", res.String())
+		return mutators, header, fmt.Errorf("%v", res.String())
 	}
 
 	err = json.Unmarshal(res.Body(), &mutators)
-	return mutators, err
+	return mutators, header, err
 }
 
 // CreateMutator creates new mutator on the configured Sensu instance

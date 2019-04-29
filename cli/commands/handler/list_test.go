@@ -33,7 +33,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 	client.On("ListHandlers", mock.Anything, mock.Anything).Return([]types.Handler{
 		*types.FixtureHandler("one"),
 		*types.FixtureHandler("two"),
-	}, nil)
+	}, "", nil)
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -49,7 +49,7 @@ func TestListCommandRunEClosureWithAllNamespaces(t *testing.T) {
 	client := cli.Client.(*client.MockClient)
 	client.On("ListHandlers", "", mock.Anything).Return([]types.Handler{
 		*types.FixtureHandler("one"),
-	}, nil)
+	}, "", nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.AllNamespaces, "t"))
@@ -68,7 +68,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 		*types.FixtureSetHandler("one", "two", "three"),
 		*types.FixtureSocketHandler("two", "tcp"),
 		*types.FixtureHandler("three"),
-	}, nil)
+	}, "", nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "none"))
@@ -83,7 +83,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListHandlers", mock.Anything, mock.Anything).Return([]types.Handler{}, errors.New("fire"))
+	client.On("ListHandlers", mock.Anything, mock.Anything).Return([]types.Handler{}, "", errors.New("fire"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})

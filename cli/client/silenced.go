@@ -35,17 +35,18 @@ func (client *RestClient) DeleteSilenced(namespace, name string) error {
 }
 
 // ListSilenceds fetches all silenced entries from configured Sensu instance
-func (client *RestClient) ListSilenceds(namespace, sub, check string, options ListOptions) ([]corev2.Silenced, error) {
+func (client *RestClient) ListSilenceds(namespace, sub, check string, options ListOptions) ([]corev2.Silenced, string, error) {
+	var header string
 	if sub != "" && check != "" {
 		name, err := types.SilencedName(sub, check)
 		if err != nil {
-			return nil, err
+			return nil, header, err
 		}
 		silenced, err := client.FetchSilenced(name)
 		if err != nil {
-			return nil, err
+			return nil, header, err
 		}
-		return []corev2.Silenced{*silenced}, nil
+		return []corev2.Silenced{*silenced}, header, nil
 	}
 	path := silencedPath(namespace)
 	request := client.R()
@@ -59,15 +60,16 @@ func (client *RestClient) ListSilenceds(namespace, sub, check string, options Li
 	}
 	resp, err := request.Get(path)
 	if err != nil {
-		return nil, err
+		return nil, header, err
 	}
+	header = EntityLimitHeader(resp.Header())
 	if resp.StatusCode() >= 400 {
-		return nil, UnmarshalError(resp)
+		return nil, header, UnmarshalError(resp)
 	}
 
 	var result []types.Silenced
 	err = json.Unmarshal(resp.Body(), &result)
-	return result, err
+	return result, header, err
 }
 
 // FetchSilenced fetches a silenced entry from configured Sensu instance

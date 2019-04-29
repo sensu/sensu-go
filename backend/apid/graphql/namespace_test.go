@@ -29,7 +29,7 @@ func TestNamespaceTypeCheckHistoryField(t *testing.T) {
 		*types.FixtureEvent("a", "b"),
 		*types.FixtureEvent("b", "c"),
 		*types.FixtureEvent("c", "d"),
-	}, nil).Once()
+	}, "", nil).Once()
 	impl := &namespaceImpl{}
 
 	// Params
@@ -45,7 +45,7 @@ func TestNamespaceTypeCheckHistoryField(t *testing.T) {
 	assert.Len(t, history, 30)
 
 	// store err
-	client.On("ListEvents", mock.Anything, mock.Anything).Return([]types.Event{}, errors.New("test"))
+	client.On("ListEvents", mock.Anything, mock.Anything).Return([]types.Event{}, "", errors.New("test"))
 	history, err = impl.CheckHistory(params)
 	require.NotNil(t, history)
 	assert.Error(t, err)
@@ -58,7 +58,7 @@ func TestNamespaceTypeSilencesField(t *testing.T) {
 		*types.FixtureSilenced("a:b"),
 		*types.FixtureSilenced("b:c"),
 		*types.FixtureSilenced("c:d"),
-	}, nil).Once()
+	}, "", nil).Once()
 
 	impl := &namespaceImpl{}
 	params := schema.NamespaceSilencesFieldResolverParams{}
@@ -71,7 +71,7 @@ func TestNamespaceTypeSilencesField(t *testing.T) {
 	assert.NotEmpty(t, res)
 
 	// Store err
-	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{}, errors.New("abc"))
+	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{}, "", errors.New("abc"))
 	res, err = impl.Silences(params)
 	assert.Empty(t, res)
 	assert.Error(t, err)

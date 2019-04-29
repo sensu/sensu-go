@@ -37,7 +37,12 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Fetch mutators from the API
-			results, err := cli.Client.ListMutators(namespace, opts)
+			results, header, err := cli.Client.ListMutators(namespace, opts)
+			if err != nil {
+				return err
+			}
+
+			err = helpers.PrintTitle(helpers.GetChangedStringValueFlag("format", cmd.Flags()), cli.Config.Format(), header, cmd.OutOrStdout())
 			if err != nil {
 				return err
 			}

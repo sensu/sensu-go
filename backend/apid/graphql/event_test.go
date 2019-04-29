@@ -62,7 +62,7 @@ func TestEventTypeIsSilencedField(t *testing.T) {
 		*types.FixtureSilenced("*:my-check"),
 		*types.FixtureSilenced("unix:not-my-check"),
 		*types.FixtureSilenced("entity:my-entity:*"),
-	}, nil).Once()
+	}, "", nil).Once()
 
 	impl := &eventImpl{}
 	params := graphql.ResolveParams{}
@@ -89,7 +89,7 @@ func TestEventTypeSilencesField(t *testing.T) {
 		*types.FixtureSilenced("entity:my-entity:my-check"),     // match
 		*types.FixtureSilenced("entity:my-entity:not-my-check"), // not match
 		*types.FixtureSilenced("not-my-subscription:*"),         // not match
-	}, nil).Once()
+	}, "", nil).Once()
 
 	impl := &eventImpl{}
 	params := graphql.ResolveParams{}

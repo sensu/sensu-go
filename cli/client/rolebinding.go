@@ -27,12 +27,14 @@ func (client *RestClient) FetchRoleBinding(name string) (*types.RoleBinding, err
 }
 
 // ListRoleBindings lists the role bindings within the given namespace.
-func (client *RestClient) ListRoleBindings(namespace string, options ListOptions) ([]corev2.RoleBinding, error) {
+func (client *RestClient) ListRoleBindings(namespace string, options ListOptions) ([]corev2.RoleBinding, string, error) {
+	var header string
 	roleBindings := []corev2.RoleBinding{}
 
-	if err := client.List(roleBindingsPath(namespace), &roleBindings, options); err != nil {
-		return roleBindings, err
+	header, err := client.List(roleBindingsPath(namespace), &roleBindings, options)
+	if err != nil {
+		return roleBindings, header, err
 	}
 
-	return roleBindings, nil
+	return roleBindings, header, nil
 }

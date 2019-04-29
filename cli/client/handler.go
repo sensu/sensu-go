@@ -11,8 +11,9 @@ import (
 var handlersPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "handlers")
 
 // ListHandlers fetches all handlers from configured Sensu instance
-func (client *RestClient) ListHandlers(namespace string, options ListOptions) ([]corev2.Handler, error) {
+func (client *RestClient) ListHandlers(namespace string, options ListOptions) ([]corev2.Handler, string, error) {
 	var handlers []corev2.Handler
+	var header string
 
 	path := handlersPath(namespace)
 	request := client.R()
@@ -21,15 +22,17 @@ func (client *RestClient) ListHandlers(namespace string, options ListOptions) ([
 
 	res, err := request.Get(path)
 	if err != nil {
-		return handlers, err
+		return handlers, header, err
 	}
 
+	header = EntityLimitHeader(res.Header())
+
 	if res.StatusCode() >= 400 {
-		return handlers, UnmarshalError(res)
+		return handlers, header, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &handlers)
-	return handlers, err
+	return handlers, header, err
 }
 
 // CreateHandler creates new handler on configured Sensu instance

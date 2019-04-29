@@ -27,12 +27,14 @@ func (client *RestClient) FetchClusterRole(name string) (*types.ClusterRole, err
 }
 
 // ListClusterRoles within the namespace
-func (client *RestClient) ListClusterRoles(options ListOptions) ([]corev2.ClusterRole, error) {
+func (client *RestClient) ListClusterRoles(options ListOptions) ([]corev2.ClusterRole, string, error) {
+	var header string
 	clusterRoles := []corev2.ClusterRole{}
 
-	if err := client.List(clusterRolesPath(), &clusterRoles, options); err != nil {
-		return clusterRoles, err
+	header, err := client.List(clusterRolesPath(), &clusterRoles, options)
+	if err != nil {
+		return clusterRoles, header, err
 	}
 
-	return clusterRoles, nil
+	return clusterRoles, header, nil
 }

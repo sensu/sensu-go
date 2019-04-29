@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/backend/authentication"
+	"github.com/sensu/sensu-go/backend/limiter"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gorilla/mux"
@@ -55,6 +56,7 @@ type Config struct {
 	Cluster             clientv3.Cluster
 	EtcdClientTLSConfig *tls.Config
 	Authenticator       *authentication.Authenticator
+	EntityLimiter       *limiter.EntityLimiter
 }
 
 // New creates a new APId.
@@ -99,10 +101,10 @@ func New(c Config, opts ...Option) (*APId, error) {
 	router := mux.NewRouter().UseEncodedPath()
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
 	router.Handle("/metrics", promhttp.Handler())
-	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig)
-	registerGraphQLService(router, a.store, c.URL, tlsClientConfig)
-	registerAuthenticationResources(router, a.store, a.Authenticator)
-	registerRestrictedResources(router, a.store, a.queueGetter, a.bus, a.cluster)
+	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig, c.EntityLimiter)
+	registerGraphQLService(router, a.store, c.URL, tlsClientConfig, c.EntityLimiter)
+	registerAuthenticationResources(router, a.store, a.Authenticator, c.EntityLimiter)
+	registerRestrictedResources(router, a.store, a.queueGetter, a.bus, a.cluster, c.EntityLimiter)
 
 	a.HTTPServer = &http.Server{
 		Addr:         c.ListenAddress,
@@ -184,18 +186,20 @@ func registerUnauthenticatedResources(
 	store store.Store,
 	cluster clientv3.Cluster,
 	etcdClientTLSConfig *tls.Config,
+	entityLimiter *limiter.EntityLimiter,
 ) {
 	mountRouters(
 		NewSubrouter(
 			router.NewRoute(),
 			middlewares.SimpleLogger{},
 			middlewares.LimitRequest{},
+			middlewares.EntityLimiter{Limiter: entityLimiter},
 		),
 		routers.NewHealthRouter(actions.NewHealthController(store, cluster, etcdClientTLSConfig)),
 	)
 }
 
-func registerGraphQLService(router *mux.Router, store store.Store, url string, tls *tls.Config) {
+func registerGraphQLService(router *mux.Router, store store.Store, url string, tls *tls.Config, entityLimiter *limiter.EntityLimiter) {
 	mountRouters(
 		NewSubrouter(
 			router.NewRoute(),
@@ -211,24 +215,26 @@ func registerGraphQLService(router *mux.Router, store store.Store, url string, t
 			//       https://graphql.org/learn/introspection/
 			middlewares.Authentication{IgnoreUnauthorized: false},
 			middlewares.AllowList{Store: store, IgnoreMissingClaims: true},
+			middlewares.EntityLimiter{Limiter: entityLimiter},
 		),
 		routers.NewGraphQLRouter(url, tls, store),
 	)
 }
 
-func registerAuthenticationResources(router *mux.Router, store store.Store, authenticator *authentication.Authenticator) {
+func registerAuthenticationResources(router *mux.Router, store store.Store, authenticator *authentication.Authenticator, entityLimiter *limiter.EntityLimiter) {
 	mountRouters(
 		NewSubrouter(
 			router.NewRoute(),
 			middlewares.SimpleLogger{},
 			middlewares.RefreshToken{},
 			middlewares.LimitRequest{},
+			middlewares.EntityLimiter{Limiter: entityLimiter},
 		),
 		routers.NewAuthenticationRouter(store, authenticator),
 	)
 }
 
-func registerRestrictedResources(router *mux.Router, store store.Store, getter types.QueueGetter, bus messaging.MessageBus, cluster clientv3.Cluster) {
+func registerRestrictedResources(router *mux.Router, store store.Store, getter types.QueueGetter, bus messaging.MessageBus, cluster clientv3.Cluster, entityLimiter *limiter.EntityLimiter) {
 	mountRouters(
 		NewSubrouter(
 			router.NewRoute().
@@ -241,6 +247,7 @@ func registerRestrictedResources(router *mux.Router, store store.Store, getter t
 			middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: store}},
 			middlewares.LimitRequest{},
 			middlewares.Pagination{},
+			middlewares.EntityLimiter{Limiter: entityLimiter},
 		),
 		routers.NewAssetRouter(store),
 		routers.NewChecksRouter(actions.NewCheckController(store, getter)),

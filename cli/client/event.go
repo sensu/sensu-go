@@ -29,8 +29,9 @@ func (client *RestClient) FetchEvent(entity, check string) (*types.Event, error)
 }
 
 // ListEvents fetches events from Sensu API
-func (client *RestClient) ListEvents(namespace string, options ListOptions) ([]corev2.Event, error) {
+func (client *RestClient) ListEvents(namespace string, options ListOptions) ([]corev2.Event, string, error) {
 	var events []corev2.Event
+	var header string
 
 	path := eventsPath(namespace)
 	request := client.R()
@@ -39,15 +40,17 @@ func (client *RestClient) ListEvents(namespace string, options ListOptions) ([]c
 
 	res, err := request.Get(path)
 	if err != nil {
-		return events, err
+		return events, header, err
 	}
 
+	header = EntityLimitHeader(res.Header())
+
 	if res.StatusCode() >= 400 {
-		return nil, UnmarshalError(res)
+		return nil, header, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &events)
-	return events, err
+	return events, header, err
 }
 
 // DeleteEvent deletes an event.

@@ -28,7 +28,7 @@ func TestHandlerTypeHandlersField(t *testing.T) {
 		*types.FixtureHandler("one"),
 		*types.FixtureHandler("two"),
 		*types.FixtureHandler("three"),
-	}, nil).Once()
+	}, "", nil).Once()
 
 	res, err := impl.Handlers(params)
 	require.NoError(t, err)

@@ -48,7 +48,7 @@ func runList(config string, c client.APIClient, namespace, format string) func(*
 			return err
 		}
 
-		extensions, err := c.ListExtensions(namespace, opts)
+		extensions, _, err := c.ListExtensions(namespace, opts)
 		if err != nil {
 			return err
 		}

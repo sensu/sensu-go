@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+- Added LimitD, a backend daemon that collects and maintains a history of the total entity count.
+- Added EntityLimiter, an API middleware that appends a `Warning` header to all API responses if
+the cluster exceeds the free entity limit, on average.
+- Added the entity limit warning header to all `sensuctl` tabular `list` commands.
+
 ## [5.6.0] - TBD
 
 ### Added

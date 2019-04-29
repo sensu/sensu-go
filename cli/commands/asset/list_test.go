@@ -36,7 +36,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	client.On("ListAssets", mock.Anything, mock.Anything).Return([]types.Asset{
 		*types.FixtureAsset("one"),
 		*types.FixtureAsset("two"),
-	}, nil)
+	}, "", nil)
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -55,7 +55,7 @@ func TestListCommandRunEClosureWithAllNamespaces(t *testing.T) {
 	client := cli.Client.(*client.MockClient)
 	client.On("ListAssets", "", mock.Anything).Return([]types.Asset{
 		*types.FixtureAsset("one"),
-	}, nil)
+	}, "", nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.AllNamespaces, "t"))
@@ -73,7 +73,7 @@ func TestListCommandRunEClosureWithJSON(t *testing.T) {
 	client.On("ListAssets", mock.Anything, mock.Anything).Return([]types.Asset{
 		*types.FixtureAsset("one"),
 		*types.FixtureAsset("two"),
-	}, nil)
+	}, "", nil)
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -87,7 +87,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListAssets", mock.Anything, mock.Anything).Return([]types.Asset{}, errors.New("fire"))
+	client.On("ListAssets", mock.Anything, mock.Anything).Return([]types.Asset{}, "", errors.New("fire"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})

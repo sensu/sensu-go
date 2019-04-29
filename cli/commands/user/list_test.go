@@ -33,7 +33,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 	client.On("ListUsers", mock.Anything).Return([]types.User{
 		*types.FixtureUser("one"),
 		*types.FixtureUser("two"),
-	}, nil)
+	}, "", nil)
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -47,7 +47,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListUsers", mock.Anything).Return([]types.User{}, errors.New("fire"))
+	client.On("ListUsers", mock.Anything).Return([]types.User{}, "", errors.New("fire"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -66,7 +66,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	client.On("ListUsers", mock.Anything).Return([]types.User{
 		*types.FixtureUser("one"),
 		*types.FixtureUser("two"),
-	}, nil)
+	}, "", nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "none"))
@@ -97,7 +97,7 @@ func TestListCommandRunEClosureWithJSONOutput(t *testing.T) {
 	}
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListUsers", mock.Anything).Return(testUsers, nil)
+	client.On("ListUsers", mock.Anything).Return(testUsers, "", nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "json"))
@@ -125,7 +125,7 @@ func TestListCommandRunEClosureWithYAMLOutput(t *testing.T) {
 	}
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListUsers", mock.Anything).Return(testUsers, nil)
+	client.On("ListUsers", mock.Anything).Return(testUsers, "", nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "yaml"))

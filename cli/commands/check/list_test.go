@@ -33,7 +33,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 	client.On("ListChecks", mock.Anything, mock.Anything).Return([]types.CheckConfig{
 		*types.FixtureCheckConfig("name-one"),
 		*types.FixtureCheckConfig("name-two"),
-	}, nil)
+	}, "", nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "json"))
@@ -52,7 +52,7 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 	client := cli.Client.(*client.MockClient)
 	client.On("ListChecks", "", mock.Anything).Return([]types.CheckConfig{
 		*types.FixtureCheckConfig("name-one"),
-	}, nil)
+	}, "", nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))
@@ -70,7 +70,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	check.RuntimeAssets = []string{"asset-one"}
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListChecks", mock.Anything, mock.Anything).Return([]types.CheckConfig{*check}, nil)
+	client.On("ListChecks", mock.Anything, mock.Anything).Return([]types.CheckConfig{*check}, "", nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "none"))
@@ -94,7 +94,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListChecks", mock.Anything, mock.Anything).Return([]types.CheckConfig{}, errors.New("my-err"))
+	client.On("ListChecks", mock.Anything, mock.Anything).Return([]types.CheckConfig{}, "", errors.New("my-err"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -113,7 +113,7 @@ func TestListCommandRunEClosureWithAlphaNumericChars(t *testing.T) {
 	checkConfig.Command = "echo foo && exit 1"
 	client.On("ListChecks", "", mock.Anything).Return([]types.CheckConfig{
 		*checkConfig,
-	}, nil)
+	}, "", nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))
