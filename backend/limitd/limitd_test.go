@@ -3,6 +3,7 @@
 package limitd
 
 import (
+	"context"
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/etcd"
@@ -23,7 +24,7 @@ func newLimitdTest(t *testing.T) *Limitd {
 
 	limitd, err := New(Config{
 		Client:        client,
-		EntityLimiter: limiter.NewEntityLimiter(),
+		EntityLimiter: limiter.NewEntityLimiter(context.Background(), client),
 	})
 	require.NoError(t, err)
 	return limitd

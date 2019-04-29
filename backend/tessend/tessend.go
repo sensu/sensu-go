@@ -307,7 +307,7 @@ func (t *Tessend) enabled(tessen *corev2.TessenConfig) bool {
 	}
 
 	wrapper := &Wrapper{}
-	err := etcd.Get(t.ctx, t.client, licenseStorePath, wrapper)
+	err := etcd.Get(t.ctx, t.client, LicenseStorePath, wrapper)
 	if err != nil {
 		logger.WithField("opt-out", tessen.OptOut).Info("tessen is opted out, patiently waiting for you to opt back in")
 	} else {
@@ -376,7 +376,7 @@ func (t *Tessend) getDataPayload() *Data {
 
 	// collect license information
 	wrapper := &Wrapper{}
-	err = etcd.Get(t.ctx, t.client, licenseStorePath, wrapper)
+	err = etcd.Get(t.ctx, t.client, LicenseStorePath, wrapper)
 	if err != nil {
 		logger.WithError(err).Debug("unable to retrieve license")
 	}

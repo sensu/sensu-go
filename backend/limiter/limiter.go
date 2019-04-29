@@ -1,7 +1,12 @@
 package limiter
 
 import (
+	"context"
 	"sync"
+
+	"github.com/coreos/etcd/clientv3"
+	"github.com/sensu/sensu-go/backend/store/etcd"
+	"github.com/sensu/sensu-go/backend/tessend"
 )
 
 const (
@@ -17,24 +22,39 @@ type Limiter interface {
 	Limit() int
 	CountHistory() []int
 	AddCount(int)
+	License() bool
 }
 
 // EntityLimiter contains the entity count history.
 type EntityLimiter struct {
 	entityCountHistory []int
 	mu                 sync.Mutex
+	client             *clientv3.Client
+	ctx                context.Context
 }
 
 // NewEntityLimiter instantiates a new EntityLimiter.
-func NewEntityLimiter() *EntityLimiter {
+func NewEntityLimiter(ctx context.Context, client *clientv3.Client) *EntityLimiter {
 	return &EntityLimiter{
 		entityCountHistory: []int{},
+		client:             client,
+		ctx:                ctx,
 	}
 }
 
 // Limit returns the entity limit.
 func (e *EntityLimiter) Limit() int {
 	return entityLimit
+}
+
+// License returns a bool indicating the presence of a license.
+func (e *EntityLimiter) License() bool {
+	wrapper := &tessend.Wrapper{}
+	err := etcd.Get(e.ctx, e.client, tessend.LicenseStorePath, wrapper)
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 // CountHistory returns the count history.

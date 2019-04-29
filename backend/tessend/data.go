@@ -5,7 +5,8 @@ import (
 )
 
 const (
-	licenseStorePath = "/sensu.io/api/enterprise/licensing/v2/license"
+	// LicenseStorePath is the enterprise path to the license.
+	LicenseStorePath = "/sensu.io/api/enterprise/licensing/v2/license"
 )
 
 // Data is the payload sent to tessen

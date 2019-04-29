@@ -223,7 +223,7 @@ func Initialize(config *Config) (*Backend, error) {
 	}
 	authenticator.AddProvider(basic)
 
-	entityLimiter := limiter.NewEntityLimiter()
+	entityLimiter := limiter.NewEntityLimiter(b.ctx, b.Client)
 
 	// Initialize apid
 	api, err := apid.New(apid.Config{

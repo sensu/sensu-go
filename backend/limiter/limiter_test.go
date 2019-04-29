@@ -1,13 +1,24 @@
 package limiter
 
 import (
+	"context"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestLimiter(t *testing.T) {
-	limiter := NewEntityLimiter()
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+
+	client, err := e.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Close()
+
+	limiter := NewEntityLimiter(context.Background(), client)
 	assert.NotEmpty(t, limiter)
 	assert.Equal(t, entityLimit, limiter.Limit())
 	assert.Equal(t, 0, len(limiter.CountHistory()))

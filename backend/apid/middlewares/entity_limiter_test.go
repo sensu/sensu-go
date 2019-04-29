@@ -2,16 +2,26 @@ package middlewares
 
 import (
 	"bytes"
+	"context"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/limiter"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestMiddlewareEntityLimit(t *testing.T) {
 	assert := assert.New(t)
+	e, cleanup := etcd.NewTestEtcd(t)
+	defer cleanup()
+
+	client, err := e.NewClient()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Close()
 
 	tests := []struct {
 		description string
@@ -34,7 +44,7 @@ func TestMiddlewareEntityLimit(t *testing.T) {
 	}
 
 	mware := EntityLimiter{
-		Limiter: limiter.NewEntityLimiter(),
+		Limiter: limiter.NewEntityLimiter(context.Background(), client),
 	}
 	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
