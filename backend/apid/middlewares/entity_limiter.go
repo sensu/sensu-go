@@ -20,13 +20,18 @@ type EntityLimiter struct {
 // Then middleware
 func (e EntityLimiter) Then(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		entityLimit := e.Limiter.Limit()
-		entityCount := math.Floor(average(e.Limiter.CountHistory()))
-		if entityCount > float64(entityLimit) {
-			w.Header().Set(HeaderWarning, fmt.Sprintf("You have exceeded the entity limit of %d for the free tier of Sensu Go: %d entities", entityLimit, int(entityCount)))
-		}
+		e.LimitHeader(w)
 		next.ServeHTTP(w, r)
 	})
+}
+
+// LimitHeader calculates if the entity limit has been reached and appends a warning header.
+func (e EntityLimiter) LimitHeader(w http.ResponseWriter) {
+	entityLimit := e.Limiter.Limit()
+	entityCount := math.Floor(average(e.Limiter.CountHistory()))
+	if entityCount > float64(entityLimit) {
+		w.Header().Set(HeaderWarning, fmt.Sprintf("You have exceeded the entity limit of %d for the free tier of Sensu Go: %d entities", entityLimit, int(entityCount)))
+	}
 }
 
 func average(history []int) float64 {
