@@ -29,6 +29,7 @@ import (
 type APId struct {
 	Authenticator *authentication.Authenticator
 	HTTPServer    *http.Server
+	EntityLimiter *limiter.EntityLimiter
 
 	stopping            chan struct{}
 	running             *atomic.Value
@@ -73,6 +74,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 		cluster:             c.Cluster,
 		etcdClientTLSConfig: c.EtcdClientTLSConfig,
 		Authenticator:       c.Authenticator,
+		EntityLimiter:       c.EntityLimiter,
 	}
 
 	// prepare TLS configs (both server and client)
