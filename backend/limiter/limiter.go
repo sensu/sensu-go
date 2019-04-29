@@ -50,11 +50,7 @@ func (e *EntityLimiter) Limit() int {
 // License returns a bool indicating the presence of a license.
 func (e *EntityLimiter) License() bool {
 	wrapper := &tessend.Wrapper{}
-	err := etcd.Get(e.ctx, e.client, tessend.LicenseStorePath, wrapper)
-	if err != nil {
-		return false
-	}
-	return true
+	return etcd.Get(e.ctx, e.client, tessend.LicenseStorePath, wrapper) == nil
 }
 
 // CountHistory returns the count history.
