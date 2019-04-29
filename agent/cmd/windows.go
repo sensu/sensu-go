@@ -17,6 +17,8 @@ const (
 	serviceDisplayName = "Sensu Agent"
 	serviceDescription = "The monitoring agent for sensu-go (https://sensu.io)"
 	serviceUser        = "LocalSystem"
+
+	flagLogPath = "log-file"
 )
 
 // NewWindowsServiceCommand creates a cobra command that offers subcommands
@@ -61,7 +63,7 @@ func NewWindowsInstallServiceCommand() *cobra.Command {
 			if err != nil {
 				return fmt.Errorf("error reading log file: %s", err)
 			}
-			os.OpenFile(lp, os.O_CREATE|os.O_WRONLY, 0600)
+			os.OpenFile(lp, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0600)
 			lfi, err := os.Stat(lp)
 			if err != nil {
 				return fmt.Errorf("error reading log file: %s", err)

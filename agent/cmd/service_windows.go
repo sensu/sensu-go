@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"sync"
 
 	runtimedebug "runtime/debug"
@@ -27,6 +29,37 @@ type Service struct {
 	mu sync.Mutex
 }
 
+func copyLines(mu *sync.Mutex, in *os.File, out *os.File) {
+	scanner := bufio.NewScanner(in)
+	for scanner.Scan() {
+		mu.Lock()
+		_, _ = out.Write(scanner.Bytes())
+		mu.Unlock()
+	}
+}
+
+func pipeLogsToFile(path string) error {
+	logFile, err := os.OpenFile(path, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+	if err != nil {
+		return fmt.Errorf("couldn't open log file: %s", err)
+	}
+	stdoutReader, stdoutWriter, err := os.Pipe()
+	if err != nil {
+		return fmt.Errorf("couldn't create stdout pipe: %s", err)
+	}
+	stderrReader, stderrWriter, err := os.Pipe()
+	if err != nil {
+		return fmt.Errorf("couldn't create stderr pipe: %s", err)
+	}
+	os.Stdout = stdoutWriter
+	os.Stderr = stderrWriter
+	var mu sync.Mutex
+	go copyLines(&mu, stdoutReader, logFile)
+	go copyLines(&mu, stderrReader, logFile)
+
+	return nil
+}
+
 func (s *Service) start(ctx context.Context, args []string, changes chan<- svc.Status) chan error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -44,10 +77,17 @@ func (s *Service) start(ctx context.Context, args []string, changes chan<- svc.S
 		defer s.wg.Done()
 		changes <- svc.Status{State: svc.StartPending}
 		// Start service here
-		args = []string{args[0], "start", "-c", args[len(args)-1]}
+		configFile := args[len(args)-2]
+		logFile := args[len(args)-1]
+		args = []string{args[0], "start", "-c", configFile}
 		command := newStartCommand(ctx, args)
 		accepts := svc.AcceptShutdown | svc.AcceptStop
 		changes <- svc.Status{State: svc.Running, Accepts: accepts}
+
+		if err := pipeLogsToFile(logFile); err != nil {
+			result <- err
+			return
+		}
 
 		if err := command.Execute(); err != nil {
 			result <- err
