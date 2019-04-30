@@ -15,9 +15,9 @@ func TestPipeLogsToFile(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_ = tempfile.Close()
 	defer os.Remove(tempfile.Name())
-	if err := pipeLogsToFile(tempfile.Name()); err != nil {
+	defer tempfile.Close()
+	if err := pipeLogsToFile(tempfile); err != nil {
 		t.Fatal(err)
 	}
 	want := "HELLO, WORLD"
@@ -27,11 +27,10 @@ func TestPipeLogsToFile(t *testing.T) {
 	time.Sleep(time.Second)
 
 	os.Stdout, os.Stderr = oldStdout, oldStderr
-	f, err := os.Open(tempfile.Name())
-	if err != nil {
+	if _, err := tempfile.Seek(0, 0); err != nil {
 		t.Fatal(err)
 	}
-	b, err := ioutil.ReadAll(f)
+	b, err := ioutil.ReadAll(tempfile)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"os"
 	"sync"
 
 	runtimedebug "runtime/debug"
@@ -44,20 +45,30 @@ func (s *Service) start(ctx context.Context, args []string, changes chan<- svc.S
 		changes <- svc.Status{State: svc.StartPending}
 		// Start service here
 		configFile := args[len(args)-2]
-		logFile := args[len(args)-1]
+		logPath := args[len(args)-1]
 		args = []string{args[0], "start", "-c", configFile}
 		command := newStartCommand(ctx, args)
 		accepts := svc.AcceptShutdown | svc.AcceptStop
 		changes <- svc.Status{State: svc.Running, Accepts: accepts}
 
+		logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+		if err != nil {
+			result <- fmt.Errorf("service quit: cant't open log file: %s", err)
+		}
+		defer logFile.Close()
+
 		if err := pipeLogsToFile(logFile); err != nil {
+			fmt.Fprintf(logFile, "service quit: error writing log file: %s\n", err)
 			result <- err
 			return
 		}
 
 		if err := command.Execute(); err != nil {
+			fmt.Fprintf(logFile, "service quit: %s\n", err)
 			result <- err
 		}
+
+		fmt.Fprintln(logFile, "service halted")
 	}()
 	return result
 }
