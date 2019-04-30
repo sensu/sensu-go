@@ -87,9 +87,10 @@ func removeService(name string) error {
 		return fmt.Errorf("service %s is not installed", name)
 	}
 	defer s.Close()
-	if _, err := s.Control(svc.Stop); err != nil {
-		return fmt.Errorf("error stopping service: %s", err)
-	}
+
+	// Attempt to stop the service, but don't return the error if it fails.
+	_, _ := s.Control(svc.Stop)
+
 	if err := s.Delete(); err != nil {
 		return fmt.Errorf("error uninstalling service: %s", err)
 	}
