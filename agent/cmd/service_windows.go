@@ -1,10 +1,8 @@
 package cmd
 
 import (
-	"bufio"
 	"context"
 	"fmt"
-	"os"
 	"sync"
 
 	runtimedebug "runtime/debug"
@@ -26,16 +24,6 @@ func NewService() *Service {
 type Service struct {
 	wg sync.WaitGroup
 	mu sync.Mutex
-}
-
-func copyLines(mu *sync.Mutex, in *os.File, out *os.File) {
-	scanner := bufio.NewScanner(in)
-	for scanner.Scan() {
-		mu.Lock()
-		_, _ = out.Write(append(scanner.Bytes(), '\n'))
-		_ = out.Flush()
-		mu.Unlock()
-	}
 }
 
 func (s *Service) start(ctx context.Context, args []string, changes chan<- svc.Status) chan error {
