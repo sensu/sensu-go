@@ -32,7 +32,7 @@ func copyLines(mu *sync.Mutex, in *os.File, out *os.File) {
 	scanner := bufio.NewScanner(in)
 	for scanner.Scan() {
 		mu.Lock()
-		_, _ = out.Write(scanner.Bytes())
+		_, _ = out.Write(append(scanner.Bytes(), '\n'))
 		mu.Unlock()
 	}
 }

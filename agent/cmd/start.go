@@ -64,13 +64,6 @@ const (
 	deprecatedFlagAgentID = "id"
 )
 
-func init() {
-	logrus.SetFormatter(&logrus.JSONFormatter{})
-	logger = logrus.WithFields(logrus.Fields{
-		"component": "cmd",
-	})
-}
-
 func newVersionCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
@@ -102,6 +95,10 @@ func newStartCommand(ctx context.Context, args []string) *cobra.Command {
 			if setupErr != nil {
 				return setupErr
 			}
+			logrus.SetFormatter(&logrus.JSONFormatter{})
+			logger = logrus.WithFields(logrus.Fields{
+				"component": "cmd",
+			})
 			level, err := logrus.ParseLevel(viper.GetString(flagLogLevel))
 			if err != nil {
 				return err
