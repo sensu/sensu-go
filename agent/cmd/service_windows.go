@@ -33,6 +33,7 @@ func copyLines(mu *sync.Mutex, in *os.File, out *os.File) {
 	for scanner.Scan() {
 		mu.Lock()
 		_, _ = out.Write(append(scanner.Bytes(), '\n'))
+		_ = out.Flush()
 		mu.Unlock()
 	}
 }
