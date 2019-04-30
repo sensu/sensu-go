@@ -106,7 +106,7 @@ func NewWindowsRunServiceCommand() *cobra.Command {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return runService(serviceName, false)
+			return runService()
 		},
 	}
 	return command

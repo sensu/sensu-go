@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"log"
 	"os"
 	"sync"
 
@@ -99,6 +98,8 @@ func (s *Service) start(ctx context.Context, args []string, changes chan<- svc.S
 func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (bool, uint32) {
 	ctx, cancel := context.WithCancel(context.Background())
 	errs := s.start(ctx, args, changes)
+	elog, _ := eventlog.Open(serviceName)
+	defer elog.Close()
 	for {
 		select {
 		case req := <-r:
@@ -118,33 +119,23 @@ func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes cha
 				errs = s.start(ctx, args, changes)
 			}
 		case err := <-errs:
-			log.Printf("restarting due to error: %s", err)
+			elog.Error(1, fmt.Sprintf("restarting due to error: %s", err))
 			s.start(ctx, args, changes)
 		}
 	}
 	return false, 0
 }
 
-func runService(name string, isDebug bool) error {
-	var err error
-	if isDebug {
-		elog = debug.New(name)
-	} else {
-		elog, err = eventlog.Open(name)
-		if err != nil {
-			return err
-		}
-	}
-	defer elog.Close()
-	elog.Info(1, fmt.Sprintf("starting %s service", name))
-	run := svc.Run
-	if isDebug {
-		run = debug.Run
-	}
-	err = run(name, NewService())
+func runService() error {
+	elog, err := eventlog.Open(serviceName)
 	if err != nil {
 		return err
 	}
-	elog.Info(1, fmt.Sprintf("%s service stopped", name))
+	defer elog.Close()
+	elog.Info(1, fmt.Sprintf("starting %s service", serviceName))
+	if err := svc.Run(serviceName, NewService()); err != nil {
+		return err
+	}
+	elog.Info(1, fmt.Sprintf("%s service stopped", serviceName))
 	return nil
 }
