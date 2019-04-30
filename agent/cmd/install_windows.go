@@ -89,7 +89,7 @@ func removeService(name string) error {
 	defer s.Close()
 
 	// Attempt to stop the service, but don't return the error if it fails.
-	_, _ := s.Control(svc.Stop)
+	_, _ = s.Control(svc.Stop)
 
 	if err := s.Delete(); err != nil {
 		return fmt.Errorf("error uninstalling service: %s", err)
