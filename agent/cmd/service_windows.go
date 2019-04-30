@@ -96,6 +96,7 @@ func (s *Service) start(ctx context.Context, args []string, changes chan<- svc.S
 }
 
 func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (bool, uint32) {
+	fmt.Println("--- starting sensu-agent")
 	ctx, cancel := context.WithCancel(context.Background())
 	errs := s.start(ctx, args, changes)
 	elog, _ := eventlog.Open(serviceName)
