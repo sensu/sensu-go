@@ -24,6 +24,11 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+var (
+	// EntityLimiterMiddleware ...
+	EntityLimiterMiddleware middlewares.HTTPMiddleware
+)
+
 // APId is the backend HTTP API.
 type APId struct {
 	Authenticator *authentication.Authenticator
@@ -72,6 +77,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 		etcdClientTLSConfig: c.EtcdClientTLSConfig,
 		Authenticator:       c.Authenticator,
 	}
+	EntityLimiterMiddleware = middlewares.EntityLimiter{}
 
 	// prepare TLS configs (both server and client)
 	var tlsServerConfig, tlsClientConfig *tls.Config
@@ -241,6 +247,7 @@ func registerRestrictedResources(router *mux.Router, store store.Store, getter t
 			middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: store}},
 			middlewares.LimitRequest{},
 			middlewares.Pagination{},
+			EntityLimiterMiddleware,
 		),
 		routers.NewAssetRouter(store),
 		routers.NewChecksRouter(actions.NewCheckController(store, getter)),
