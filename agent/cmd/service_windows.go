@@ -54,8 +54,8 @@ func (s *Service) start(ctx context.Context, args []string, changes chan<- svc.S
 		}
 		defer logFile.Close()
 
-		logrus.SetFormatter(&logrus.JSONFormatter{})
 		logger := logrus.New()
+		logger.SetFormatter(&logrus.JSONFormatter{})
 		logger.SetOutput(logFile)
 		entry := logger.WithFields(logrus.Fields{
 			"component": "cmd",
