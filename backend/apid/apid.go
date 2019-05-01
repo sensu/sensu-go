@@ -24,11 +24,6 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-var (
-	// EntityLimiterMiddleware ...
-	EntityLimiterMiddleware middlewares.HTTPMiddleware
-)
-
 // APId is the backend HTTP API.
 type APId struct {
 	Authenticator *authentication.Authenticator
@@ -78,7 +73,6 @@ func New(c Config, opts ...Option) (*APId, error) {
 		etcdClientTLSConfig: c.EtcdClientTLSConfig,
 		Authenticator:       c.Authenticator,
 	}
-	EntityLimiterMiddleware = &middlewares.EntityLimiter{}
 
 	// prepare TLS configs (both server and client)
 	var tlsServerConfig, tlsClientConfig *tls.Config
@@ -109,7 +103,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig)
 	registerGraphQLService(router, a.store, c.URL, tlsClientConfig)
 	registerAuthenticationResources(router, a.store, a.Authenticator)
-	a.registerRestrictedResources(router, a.store, a.queueGetter, a.bus, a.cluster)
+	a.registerRestrictedResources(router)
 
 	a.HTTPServer = &http.Server{
 		Addr:         c.ListenAddress,
@@ -235,39 +229,39 @@ func registerAuthenticationResources(router *mux.Router, store store.Store, auth
 	)
 }
 
-func (a *APId) registerRestrictedResources(router *mux.Router, store store.Store, getter types.QueueGetter, bus messaging.MessageBus, cluster clientv3.Cluster) {
+func (a *APId) registerRestrictedResources(router *mux.Router) {
 	a.CoreSubrouter = NewSubrouter(
 		router.NewRoute().
 			PathPrefix("/api/{group:core}/{version:v2}/"),
 		middlewares.SimpleLogger{},
 		middlewares.Namespace{},
 		middlewares.Authentication{},
-		middlewares.AllowList{Store: store},
+		middlewares.AllowList{Store: a.store},
 		middlewares.AuthorizationAttributes{},
-		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: store}},
+		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: a.store}},
 		middlewares.LimitRequest{},
 		middlewares.Pagination{},
 	)
 	mountRouters(
 		a.CoreSubrouter,
-		routers.NewAssetRouter(store),
-		routers.NewChecksRouter(actions.NewCheckController(store, getter)),
-		routers.NewClusterRolesRouter(store),
-		routers.NewClusterRoleBindingsRouter(store),
-		routers.NewClusterRouter(actions.NewClusterController(cluster)),
-		routers.NewEntitiesRouter(store),
-		routers.NewEventFiltersRouter(store),
-		routers.NewEventsRouter(store, bus),
-		routers.NewExtensionsRouter(store),
-		routers.NewHandlersRouter(store),
-		routers.NewHooksRouter(store),
-		routers.NewMutatorsRouter(store),
-		routers.NewNamespacesRouter(actions.NewNamespacesController(store)),
-		routers.NewRolesRouter(store),
-		routers.NewRoleBindingsRouter(store),
-		routers.NewSilencedRouter(store),
-		routers.NewTessenRouter(actions.NewTessenController(store, bus)),
-		routers.NewUsersRouter(store),
+		routers.NewAssetRouter(a.store),
+		routers.NewChecksRouter(actions.NewCheckController(a.store, a.queueGetter)),
+		routers.NewClusterRolesRouter(a.store),
+		routers.NewClusterRoleBindingsRouter(a.store),
+		routers.NewClusterRouter(actions.NewClusterController(a.cluster)),
+		routers.NewEntitiesRouter(a.store),
+		routers.NewEventFiltersRouter(a.store),
+		routers.NewEventsRouter(a.store, a.bus),
+		routers.NewExtensionsRouter(a.store),
+		routers.NewHandlersRouter(a.store),
+		routers.NewHooksRouter(a.store),
+		routers.NewMutatorsRouter(a.store),
+		routers.NewNamespacesRouter(actions.NewNamespacesController(a.store)),
+		routers.NewRolesRouter(a.store),
+		routers.NewRoleBindingsRouter(a.store),
+		routers.NewSilencedRouter(a.store),
+		routers.NewTessenRouter(actions.NewTessenController(a.store, a.bus)),
+		routers.NewUsersRouter(a.store),
 	)
 }
 
