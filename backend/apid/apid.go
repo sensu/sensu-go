@@ -33,6 +33,7 @@ var (
 type APId struct {
 	Authenticator *authentication.Authenticator
 	HTTPServer    *http.Server
+	CoreSubrouter *mux.Router
 
 	stopping            chan struct{}
 	running             *atomic.Value
@@ -108,7 +109,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig)
 	registerGraphQLService(router, a.store, c.URL, tlsClientConfig)
 	registerAuthenticationResources(router, a.store, a.Authenticator)
-	registerRestrictedResources(router, a.store, a.queueGetter, a.bus, a.cluster)
+	a.registerRestrictedResources(router, a.store, a.queueGetter, a.bus, a.cluster)
 
 	a.HTTPServer = &http.Server{
 		Addr:         c.ListenAddress,
@@ -234,21 +235,21 @@ func registerAuthenticationResources(router *mux.Router, store store.Store, auth
 	)
 }
 
-func registerRestrictedResources(router *mux.Router, store store.Store, getter types.QueueGetter, bus messaging.MessageBus, cluster clientv3.Cluster) {
+func (a *APId) registerRestrictedResources(router *mux.Router, store store.Store, getter types.QueueGetter, bus messaging.MessageBus, cluster clientv3.Cluster) {
+	a.CoreSubrouter = NewSubrouter(
+		router.NewRoute().
+			PathPrefix("/api/{group:core}/{version:v2}/"),
+		middlewares.SimpleLogger{},
+		middlewares.Namespace{},
+		middlewares.Authentication{},
+		middlewares.AllowList{Store: store},
+		middlewares.AuthorizationAttributes{},
+		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: store}},
+		middlewares.LimitRequest{},
+		middlewares.Pagination{},
+	)
 	mountRouters(
-		NewSubrouter(
-			router.NewRoute().
-				PathPrefix("/api/{group:core}/{version:v2}/"),
-			middlewares.SimpleLogger{},
-			middlewares.Namespace{},
-			middlewares.Authentication{},
-			middlewares.AllowList{Store: store},
-			middlewares.AuthorizationAttributes{},
-			middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: store}},
-			middlewares.LimitRequest{},
-			middlewares.Pagination{},
-			EntityLimiterMiddleware,
-		),
+		a.CoreSubrouter,
 		routers.NewAssetRouter(store),
 		routers.NewChecksRouter(actions.NewCheckController(store, getter)),
 		routers.NewClusterRolesRouter(store),
