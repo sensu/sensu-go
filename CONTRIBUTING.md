@@ -182,7 +182,7 @@ Examples:
 
 Our git workflow is largely inspired by [GitHub Flow](https://guides.github.com/introduction/flow/) and [Oneflow](https://www.endoflineblog.com/oneflow-a-git-branching-model-and-workflow) but adapted to our reality and our needs.
 
-Here are the hightlights:
+Here are the highlights:
 - There's only one eternal branch named `master`. All other branches are temporary.
 - Feature branches are where the day-to-day development work happens. They are based from master and pushed continuously back into it whenever possible so the pull requests are small and simple, while keeping master stable.
 - Release branches are branched off from master at the point all the necessary features are present. From then on, new work aimed for the next release is pushed to master as always, while any necessary changes for the release (updating the changelog, last minute bugfixes, updating dependencies etc.) are pushed to the release branch. Once the release is ready, we tag the top of the release branch. Finally, we merge the release branch into master.
