@@ -77,7 +77,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 		etcdClientTLSConfig: c.EtcdClientTLSConfig,
 		Authenticator:       c.Authenticator,
 	}
-	EntityLimiterMiddleware = middlewares.EntityLimiter{}
+	EntityLimiterMiddleware = &middlewares.EntityLimiter{}
 
 	// prepare TLS configs (both server and client)
 	var tlsServerConfig, tlsClientConfig *tls.Config
