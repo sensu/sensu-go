@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -17,8 +18,13 @@ func NewRootCommand(ctx context.Context, args []string) *cobra.Command {
 		Short: "sensu agent",
 	}
 
+	logrus.SetFormatter(&logrus.JSONFormatter{})
+	logger := logrus.WithFields(logrus.Fields{
+		"component": "cmd",
+	})
+
 	cmd.AddCommand(newVersionCommand())
-	cmd.AddCommand(newStartCommand(ctx, args))
+	cmd.AddCommand(newStartCommand(ctx, args, logger))
 
 	viper.SetEnvPrefix("sensu")
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))

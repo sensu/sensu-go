@@ -18,10 +18,6 @@ import (
 	"golang.org/x/time/rate"
 )
 
-var (
-	logger *logrus.Entry
-)
-
 const (
 	// DefaultBackendPort specifies the default port to use when a port is not
 	// specified in backend urls
@@ -80,7 +76,7 @@ func newVersionCommand() *cobra.Command {
 	return cmd
 }
 
-func newStartCommand(ctx context.Context, args []string) *cobra.Command {
+func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *cobra.Command {
 	var setupErr error
 
 	cmd := &cobra.Command{
@@ -95,10 +91,6 @@ func newStartCommand(ctx context.Context, args []string) *cobra.Command {
 			if setupErr != nil {
 				return setupErr
 			}
-			logrus.SetFormatter(&logrus.JSONFormatter{})
-			logger = logrus.WithFields(logrus.Fields{
-				"component": "cmd",
-			})
 			level, err := logrus.ParseLevel(viper.GetString(flagLogLevel))
 			if err != nil {
 				return err
@@ -252,35 +244,37 @@ func newStartCommand(ctx context.Context, args []string) *cobra.Command {
 	cmd.Flags().StringToString(flagLabels, viper.GetStringMapString(flagLabels), "entity labels map")
 	cmd.Flags().StringToString(flagAnnotations, viper.GetStringMapString(flagAnnotations), "entity annotations map")
 
-	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc)
+	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc(logger))
 
 	if err := viper.ReadInConfig(); err != nil && configFile != "" {
 		setupErr = err
 	}
 
-	deprecatedConfigAttributes()
+	deprecatedConfigAttributes(logger)
 	viper.RegisterAlias(deprecatedFlagAgentID, flagAgentName)
 
 	return cmd
 }
 
-func aliasNormalizeFunc(f *pflag.FlagSet, name string) pflag.NormalizedName {
-	// Wait until the command-line flags have been parsed
-	if !f.Parsed() {
+func aliasNormalizeFunc(logger *logrus.Entry) func(*pflag.FlagSet, string) pflag.NormalizedName {
+	return func(f *pflag.FlagSet, name string) pflag.NormalizedName {
+		// Wait until the command-line flags have been parsed
+		if !f.Parsed() {
+			return pflag.NormalizedName(name)
+		}
+
+		switch name {
+		case deprecatedFlagAgentID:
+			deprecatedFlagMessage(name, flagAgentName, logger)
+			name = flagAgentName
+		}
 		return pflag.NormalizedName(name)
 	}
-
-	switch name {
-	case deprecatedFlagAgentID:
-		deprecatedFlagMessage(name, flagAgentName)
-		name = flagAgentName
-	}
-	return pflag.NormalizedName(name)
 }
 
 // Look up the deprecated attributes in our config file and print a warning
 // message if set
-func deprecatedConfigAttributes() {
+func deprecatedConfigAttributes(logger *logrus.Entry) {
 	attributes := map[string]string{
 		deprecatedFlagAgentID: flagAgentName,
 	}
@@ -295,7 +289,7 @@ func deprecatedConfigAttributes() {
 	}
 }
 
-func deprecatedFlagMessage(oldFlag, newFlag string) {
+func deprecatedFlagMessage(oldFlag, newFlag string, logger *logrus.Entry) {
 	logger.Warningf("flag --%s has been deprecated, please use --%s instead",
 		oldFlag, newFlag)
 }

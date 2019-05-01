@@ -2,12 +2,14 @@ package cmd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"sync"
 
 	runtimedebug "runtime/debug"
 
+	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
 	"golang.org/x/sys/windows/svc/eventlog"
@@ -37,8 +39,8 @@ func (s *Service) start(ctx context.Context, args []string, changes chan<- svc.S
 		defer func() {
 			if e := recover(); e != nil {
 				changes <- svc.Status{State: svc.Stopped}
-				runtimedebug.PrintStack()
-				result <- fmt.Errorf("%v", e)
+				stack := runtimedebug.Stack()
+				result <- errors.New(string(stack))
 			}
 		}()
 		defer s.wg.Done()
@@ -46,35 +48,33 @@ func (s *Service) start(ctx context.Context, args []string, changes chan<- svc.S
 		// Start service here
 		configFile := args[len(args)-2]
 		logPath := args[len(args)-1]
-		args = []string{args[0], "start", "-c", configFile}
-		command := newStartCommand(ctx, args)
-		accepts := svc.AcceptShutdown | svc.AcceptStop
-		changes <- svc.Status{State: svc.Running, Accepts: accepts}
-
 		logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 		if err != nil {
 			result <- fmt.Errorf("service quit: cant't open log file: %s", err)
 		}
 		defer logFile.Close()
 
-		if err := pipeLogsToFile(logFile); err != nil {
-			fmt.Fprintf(logFile, "service quit: error writing log file: %s\n", err)
-			result <- err
-			return
-		}
+		logrus.SetFormatter(&logrus.JSONFormatter{})
+		logger := logrus.New()
+		logger.SetOutput(logFile)
+		entry := logger.WithFields(logrus.Fields{
+			"component": "cmd",
+		})
+
+		args = []string{args[0], "start", "-c", configFile}
+		command := newStartCommand(ctx, args, entry)
+		accepts := svc.AcceptShutdown | svc.AcceptStop
+		changes <- svc.Status{State: svc.Running, Accepts: accepts}
 
 		if err := command.Execute(); err != nil {
-			fmt.Fprintf(logFile, "service quit: %s\n", err)
+			logger.WithError(err).Error("sensu-agent exited with error")
 			result <- err
 		}
-
-		fmt.Fprintln(logFile, "service halted")
 	}()
 	return result
 }
 
 func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (bool, uint32) {
-	fmt.Println("--- starting sensu-agent")
 	ctx, cancel := context.WithCancel(context.Background())
 	errs := s.start(ctx, args, changes)
 	elog, _ := eventlog.Open(serviceName)
