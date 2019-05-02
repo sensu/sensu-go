@@ -91,11 +91,13 @@ func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes cha
 				cancel()
 				s.wg.Wait()
 				changes <- svc.Status{State: svc.Stopped}
+				elog.Info(1, "service stopped")
 			case svc.Shutdown:
 				cancel()
 				s.wg.Wait()
 				return false, 0
 			case svc.Continue:
+				elog.Info(1, "service started")
 				s.wg.Wait()
 				ctx, cancel = context.WithCancel(context.Background())
 				errs = s.start(ctx, args, changes)
@@ -118,6 +120,6 @@ func runService() error {
 	if err := svc.Run(serviceName, NewService()); err != nil {
 		return err
 	}
-	elog.Info(1, fmt.Sprintf("%s service stopped", serviceName))
+	elog.Info(1, fmt.Sprintf("%s service terminated", serviceName))
 	return nil
 }
