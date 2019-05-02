@@ -80,7 +80,7 @@ func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes cha
 	elog, _ := eventlog.Open(serviceName)
 	defer elog.Close()
 	defer func() {
-		elog.Info(1, "service terminated")
+		elog.Info(1, "Execute() terminated")
 	}()
 	for {
 		select {
@@ -93,6 +93,7 @@ func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes cha
 				changes <- svc.Status{State: svc.Stopped}
 				elog.Info(1, "service stopped")
 			case svc.Shutdown:
+				elog.Info(1, "service shutting down")
 				cancel()
 				s.wg.Wait()
 				return false, 0
