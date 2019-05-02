@@ -98,7 +98,7 @@ func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes cha
 				errs = s.start(ctx, args, changes)
 			}
 		case err := <-errs:
-			elog.Error(1, fmt.Sprintf("restarting due to error: %s", err))
+			elog.Error(1, fmt.Sprintf("restarting due to error (%v) %s", args, err))
 			s.start(ctx, args, changes)
 		}
 	}
