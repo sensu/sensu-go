@@ -47,8 +47,12 @@ func (s *Service) start(ctx context.Context, args []string, changes chan<- svc.S
 		defer s.wg.Done()
 		changes <- svc.Status{State: svc.StartPending}
 		// Start service here
-		configFile := args[len(args)-2]
-		logPath := args[len(args)-1]
+		binPath, err := exePath()
+		if err != nil {
+			panic(err)
+		}
+		configFile := args[0]
+		logPath := args[1]
 		logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
 		if err != nil {
 			result <- fmt.Errorf("service quit: cant't open log file: %s", err)
@@ -62,7 +66,7 @@ func (s *Service) start(ctx context.Context, args []string, changes chan<- svc.S
 			"component": "cmd",
 		})
 
-		args = []string{args[0], "start", "-c", configFile}
+		args = []string{binPath, "start", "-c", configFile}
 		command := newStartCommand(ctx, args, entry)
 		accepts := svc.AcceptShutdown | svc.AcceptStop
 		changes <- svc.Status{State: svc.Running, Accepts: accepts}
@@ -77,10 +81,9 @@ func (s *Service) start(ctx context.Context, args []string, changes chan<- svc.S
 
 func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (bool, uint32) {
 	ctx, cancel := context.WithCancel(context.Background())
-	errs := s.start(ctx, args, changes)
+	errs := s.start(ctx, s.args, changes)
 	elog, _ := eventlog.Open(serviceName)
 	defer elog.Close()
-	elog.Info(1, fmt.Sprintf("Execute() args: %v, service args: %v", args, s.args))
 	for {
 		select {
 		case req := <-r:
@@ -94,8 +97,8 @@ func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes cha
 				return false, 0
 			}
 		case err := <-errs:
-			elog.Error(1, fmt.Sprintf("restarting due to error (%v) %s", args, err))
-			s.start(ctx, args, changes)
+			elog.Error(1, fmt.Sprintf("restarting due to error (%v) %s", s.args, err))
+			s.start(ctx, s.args, changes)
 		}
 	}
 	return false, 0
