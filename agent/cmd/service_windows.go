@@ -79,29 +79,17 @@ func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes cha
 	errs := s.start(ctx, args, changes)
 	elog, _ := eventlog.Open(serviceName)
 	defer elog.Close()
-	defer func() {
-		elog.Info(1, "Execute() terminated")
-	}()
 	for {
 		select {
 		case req := <-r:
 			switch req.Cmd {
-			case svc.Stop, svc.Pause:
+			case svc.Stop, svc.Shutdown:
+				elog.Info(1, "service shutting down")
 				changes <- svc.Status{State: svc.StopPending}
 				cancel()
 				s.wg.Wait()
 				changes <- svc.Status{State: svc.Stopped}
-				elog.Info(1, "service stopped")
-			case svc.Shutdown:
-				elog.Info(1, "service shutting down")
-				cancel()
-				s.wg.Wait()
 				return false, 0
-			case svc.Continue:
-				elog.Info(1, "service started")
-				s.wg.Wait()
-				ctx, cancel = context.WithCancel(context.Background())
-				errs = s.start(ctx, args, changes)
 			}
 		case err := <-errs:
 			elog.Error(1, fmt.Sprintf("restarting due to error (%v) %s", args, err))
