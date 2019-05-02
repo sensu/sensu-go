@@ -186,7 +186,7 @@ Here are the highlights:
 - There's only one eternal branch named `master`. All other branches are temporary.
 - Feature branches are where the day-to-day development work happens. They are based from master and pushed continuously back into it whenever possible so the pull requests are small and simple, while keeping master stable.
 - Release branches are branched off from master at the point all the necessary features are present. From then on, new work aimed for the next release is pushed to master as always, while any necessary changes for the release (updating the changelog, last minute bugfixes, updating dependencies etc.) are pushed to the release branch. Once the release is ready, we tag the top of the release branch. Finally, we merge the release branch into master.
-- Hotfixes are very similar to releases, except we branch off from a release tag.
+- Hotfixes are very similar to releases, except we branch off from a release tag. A hotfix is basically an immediate fix for something that's really getting in the way of our users.
 
 ![](https://i.imgur.com/AinipVI.jpg)
 
