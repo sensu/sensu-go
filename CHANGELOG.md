@@ -5,13 +5,41 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [5.6.0] - 2019-04-30
+
+### Added
+- Added filtering support to `sensuctl`. This feature only works against a
+  `sensu-backend` with a valid enterprise license.
+- Added fields getter functions for resources available via the REST API.
+- Added the message bus to Tessend in order to track Tessen configuration changes from the API.
+- Added a performance optimizing `Count()` function to the generic store.
+- Added a hexadecimal Cluster ID title to the `sensuctl cluster health` and
+`sensuctl cluster member-list` commands in tabular format.
+- Added a `Header` field to the `HealthResponse` type returned by `/health`.
+
+### Fixed
+- Fixed the agent `--annotations` and `--labels` flags.
+
+## [5.5.1] - 2019-04-15
 
 ### Changed
 - Added parsing annoatations to sensu-agent, both from agent.yml and command line arguments
+- Updated Go version from 1.11.4 to 1.12.3 for CI builds.
+- Changed the 1.x `client` field to `source` in the 1.x compatible agent socket. The `client` field is now deprecated.
+- Deprecated the agent TCP/UDP sockets in favor of the agent rest api.
+- [GraphQL] Added mutation to create / update using wrapped resources.
+- [GraphQL] Added field returning wrapped resource given ID.
+- apid uses a new generic router for listing resources.
+- The store uses the generic List function for listing resources.
 
-### Changed
-- Updated Go version from 1.11.4 to 1.12.3.
+### Fixed
+- Fixed an issue where etcd watchers were used incorrectly. This was causing
+100% CPU usage in some components, as they would loop endlessly trying to get
+results from watchers that broke, due to their stream terminating. Other
+components would simply stop updating. Watchers now get reinstated when the
+client regains connectivity.
+- Fixed the `/events/:entity` route in the REST API.
+- Fixed a bug where the --labels arg was not working as expected in sensu-agent.
 
 ## [5.5.0] - 2019-04-03
 

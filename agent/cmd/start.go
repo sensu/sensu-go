@@ -18,6 +18,11 @@ import (
 	"golang.org/x/time/rate"
 )
 
+var (
+	annotations map[string]string
+	labels      map[string]string
+)
+
 const (
 	// DefaultBackendPort specifies the default port to use when a port is not
 	// specified in backend urls
@@ -141,6 +146,16 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 			cfg.Redact = viper.GetStringSlice(flagRedact)
 			cfg.Subscriptions = viper.GetStringSlice(flagSubscriptions)
 
+			// Workaround for https://github.com/sensu/sensu-go/issues/2357. Detect if
+			// the flags for labels and annotations were changed. If so, use their
+			// values since flags take precedence over config
+			if flag := cmd.Flags().Lookup(flagLabels); flag != nil && flag.Changed {
+				cfg.Labels = labels
+			}
+			if flag := cmd.Flags().Lookup(flagAnnotations); flag != nil && flag.Changed {
+				cfg.Annotations = annotations
+			}
+
 			sensuAgent, err := agent.NewAgent(cfg)
 			if err != nil {
 				return err
@@ -241,8 +256,8 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	cmd.Flags().String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format")
 	cmd.Flags().Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")
 	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
-	cmd.Flags().StringToString(flagLabels, viper.GetStringMapString(flagLabels), "entity labels map")
-	cmd.Flags().StringToString(flagAnnotations, viper.GetStringMapString(flagAnnotations), "entity annotations map")
+	cmd.Flags().StringToStringVar(&labels, flagLabels, nil, "entity labels map")
+	cmd.Flags().StringToStringVar(&annotations, flagAnnotations, nil, "entity annotations map")
 
 	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc(logger))
 

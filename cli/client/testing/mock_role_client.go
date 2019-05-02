@@ -1,6 +1,11 @@
 package testing
 
-import "github.com/sensu/sensu-go/types"
+import (
+	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+)
 
 // CreateRole ...
 func (c *MockClient) CreateRole(check *types.Role) error {
@@ -21,7 +26,7 @@ func (c *MockClient) DeleteRole(namespace, name string) error {
 }
 
 // ListRoles ...
-func (c *MockClient) ListRoles(namespace string) ([]types.Role, error) {
-	args := c.Called(namespace)
-	return args.Get(0).([]types.Role), args.Error(1)
+func (c *MockClient) ListRoles(namespace string, options client.ListOptions) ([]corev2.Role, error) {
+	args := c.Called(namespace, options)
+	return args.Get(0).([]corev2.Role), args.Error(1)
 }

@@ -24,7 +24,7 @@ func TestHandlerTypeHandlersField(t *testing.T) {
 	params.Source = handler
 
 	// Success
-	client.On("ListHandlers", mock.Anything).Return([]types.Handler{
+	client.On("ListHandlers", mock.Anything, mock.Anything).Return([]types.Handler{
 		*types.FixtureHandler("one"),
 		*types.FixtureHandler("two"),
 		*types.FixtureHandler("three"),

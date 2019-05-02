@@ -4,6 +4,8 @@ import (
 	"errors"
 	fmt "fmt"
 	"net/url"
+	"strconv"
+	"strings"
 )
 
 // FixtureUser returns a testing fixture for an Entity object.
@@ -45,4 +47,14 @@ func (u *User) URIPath() string {
 // GetObjectMeta is a dummy implementation to meet the Resource interface.
 func (u *User) GetObjectMeta() ObjectMeta {
 	return ObjectMeta{}
+}
+
+// UserFields returns a set of fields that represent that resource
+func UserFields(r Resource) map[string]string {
+	resource := r.(*User)
+	return map[string]string{
+		"user.username": resource.Username,
+		"user.disabled": strconv.FormatBool(resource.Disabled),
+		"user.groups":   strings.Join(resource.Groups, ","),
+	}
 }

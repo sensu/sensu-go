@@ -152,6 +152,7 @@ func httpRouter(d *Dashboardd) *mux.Router {
 
 	// Proxy endpoints
 	r.PathPrefix("/auth").Handler(backendProxy)
+	r.PathPrefix("/api").Handler(backendProxy)
 	r.PathPrefix("/graphql").Handler(gziphandler(backendProxy))
 
 	// Expose Asset Info

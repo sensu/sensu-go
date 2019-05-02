@@ -33,6 +33,7 @@ type Foo implements Bar {
   five(argument: [String] = ["string", "string"]): String
   six(argument: InputType = {key: "value"}): Url
   seven: [Bar]
+  eight: Err
 }
 
 type AnnotatedObject @onObject(arg: "value") {
@@ -56,7 +57,7 @@ Feed includes all stuff and things.
 """
 union Feed = Foo | QueryRoot
 
-"AnnotatedUnion i dont care"
+"AnnotatedUnion .. for the union"
 union AnnotatedUnion @onUnion = A | B
 
 scalar CustomScalar
@@ -121,3 +122,12 @@ directive @skip(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
 directive @include(if: Boolean!)
   on FIELD
   | FRAGMENT_SPREAD
+
+interface Err {
+  message: String!
+}
+
+type StdErr implements Err {
+  message: String!
+  code: Int!
+}

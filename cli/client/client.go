@@ -131,7 +131,7 @@ func (client *RestClient) Reset() {
 	client.configured = false
 }
 
-// ClearAuthToken clears the authoization token from the client config
+// ClearAuthToken clears the authorization token from the client config
 func (client *RestClient) ClearAuthToken() {
 	client.configure()
 	client.resty.SetAuthToken("")
@@ -154,4 +154,16 @@ func (client *RestClient) configure() {
 	}
 
 	client.configured = true
+}
+
+// ApplyListOptions mutates the given request to make it carry the semantics of
+// the given options.
+func ApplyListOptions(request *resty.Request, options ListOptions) {
+	if options.FieldSelector != "" {
+		request.SetQueryParam("fieldSelector", options.FieldSelector)
+	}
+
+	if options.LabelSelector != "" {
+		request.SetQueryParam("labelSelector", options.LabelSelector)
+	}
 }

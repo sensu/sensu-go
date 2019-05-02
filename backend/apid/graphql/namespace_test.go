@@ -25,7 +25,7 @@ func TestNamespaceTypeColourID(t *testing.T) {
 
 func TestNamespaceTypeCheckHistoryField(t *testing.T) {
 	client, _ := client.NewClientFactory()
-	client.On("ListEvents", "sensu").Return([]types.Event{
+	client.On("ListEvents", "sensu", mock.Anything).Return([]types.Event{
 		*types.FixtureEvent("a", "b"),
 		*types.FixtureEvent("b", "c"),
 		*types.FixtureEvent("c", "d"),
@@ -45,7 +45,7 @@ func TestNamespaceTypeCheckHistoryField(t *testing.T) {
 	assert.Len(t, history, 30)
 
 	// store err
-	client.On("ListEvents", mock.Anything).Return([]types.Event{}, errors.New("test"))
+	client.On("ListEvents", mock.Anything, mock.Anything).Return([]types.Event{}, errors.New("test"))
 	history, err = impl.CheckHistory(params)
 	require.NotNil(t, history)
 	assert.Error(t, err)
@@ -54,7 +54,7 @@ func TestNamespaceTypeCheckHistoryField(t *testing.T) {
 
 func TestNamespaceTypeSilencesField(t *testing.T) {
 	client, _ := client.NewClientFactory()
-	client.On("ListSilenceds", mock.Anything, "", "").Return([]types.Silenced{
+	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{
 		*types.FixtureSilenced("a:b"),
 		*types.FixtureSilenced("b:c"),
 		*types.FixtureSilenced("c:d"),
@@ -71,7 +71,7 @@ func TestNamespaceTypeSilencesField(t *testing.T) {
 	assert.NotEmpty(t, res)
 
 	// Store err
-	client.On("ListSilenceds", mock.Anything, "", "").Return([]types.Silenced{}, errors.New("abc"))
+	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{}, errors.New("abc"))
 	res, err = impl.Silences(params)
 	assert.Empty(t, res)
 	assert.Error(t, err)

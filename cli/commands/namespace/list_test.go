@@ -8,6 +8,7 @@ import (
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestListCommand(t *testing.T) {
@@ -27,7 +28,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListNamespaces").Return([]types.Namespace{
+	client.On("ListNamespaces", mock.Anything).Return([]types.Namespace{
 		*types.FixtureNamespace("one"),
 		*types.FixtureNamespace("two"),
 	}, nil)
@@ -44,7 +45,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListNamespaces").Return([]types.Namespace{}, errors.New("fire"))
+	client.On("ListNamespaces", mock.Anything).Return([]types.Namespace{}, errors.New("fire"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})

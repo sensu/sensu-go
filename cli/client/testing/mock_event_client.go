@@ -1,6 +1,11 @@
 package testing
 
-import "github.com/sensu/sensu-go/types"
+import (
+	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+)
 
 // FetchEvent for use with mock lib
 func (c *MockClient) FetchEvent(entity, check string) (*types.Event, error) {
@@ -9,9 +14,9 @@ func (c *MockClient) FetchEvent(entity, check string) (*types.Event, error) {
 }
 
 // ListEvents for use with mock lib
-func (c *MockClient) ListEvents(namespace string) ([]types.Event, error) {
-	args := c.Called(namespace)
-	return args.Get(0).([]types.Event), args.Error(1)
+func (c *MockClient) ListEvents(namespace string, options client.ListOptions) ([]corev2.Event, error) {
+	args := c.Called(namespace, options)
+	return args.Get(0).([]corev2.Event), args.Error(1)
 }
 
 // DeleteEvent for use with mock lib

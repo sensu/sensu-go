@@ -8,6 +8,7 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
+
 	"github.com/spf13/cobra"
 )
 
@@ -18,8 +19,13 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "list cluster roles",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			opts, err := helpers.ListOptionsFromFlags(cmd.Flags())
+			if err != nil {
+				return err
+			}
+
 			// Fetch roles from API
-			results, err := cli.Client.ListClusterRoles()
+			results, err := cli.Client.ListClusterRoles(opts)
 			if err != nil {
 				return err
 			}
@@ -34,6 +40,9 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	helpers.AddFormatFlag(cmd.Flags())
+	helpers.AddFieldSelectorFlag(cmd.Flags())
+	helpers.AddLabelSelectorFlag(cmd.Flags())
+
 	return cmd
 }
 func printToTable(results interface{}, writer io.Writer) {

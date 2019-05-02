@@ -7,6 +7,7 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -16,10 +17,12 @@ func TestNewTessenController(t *testing.T) {
 	assert := assert.New(t)
 
 	store := &mockstore.MockStore{}
-	actions := NewTessenController(store)
+	bus := &mockbus.MockBus{}
+	actions := NewTessenController(store, bus)
 
 	assert.NotNil(actions)
 	assert.Equal(store, actions.store)
+	assert.Equal(bus, actions.bus)
 }
 
 func TestCreateOrUpdateTessenConfig(t *testing.T) {
@@ -28,6 +31,7 @@ func TestCreateOrUpdateTessenConfig(t *testing.T) {
 		ctx             context.Context
 		argument        *corev2.TessenConfig
 		storeErr        error
+		busErr          error
 		expectedErr     bool
 		expectedErrCode ErrCode
 	}{
@@ -52,11 +56,20 @@ func TestCreateOrUpdateTessenConfig(t *testing.T) {
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
 		},
+		{
+			name:            "Bus Error",
+			ctx:             context.Background(),
+			argument:        corev2.DefaultTessenConfig(),
+			busErr:          errors.New("the bus has a flat tire"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
 	}
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		actions := NewTessenController(store)
+		bus := &mockbus.MockBus{}
+		actions := NewTessenController(store, bus)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)
@@ -64,6 +77,8 @@ func TestCreateOrUpdateTessenConfig(t *testing.T) {
 			store.
 				On("CreateOrUpdateTessenConfig", mock.Anything, mock.Anything).
 				Return(tc.storeErr)
+
+			bus.On("Publish", mock.Anything, mock.Anything).Return(tc.busErr)
 
 			err := actions.CreateOrUpdate(tc.ctx, tc.argument)
 
@@ -114,7 +129,8 @@ func TestGetTessenConfig(t *testing.T) {
 
 	for _, tc := range testCases {
 		store := &mockstore.MockStore{}
-		actions := NewTessenController(store)
+		bus := &mockbus.MockBus{}
+		actions := NewTessenController(store, bus)
 
 		t.Run(tc.name, func(t *testing.T) {
 			assert := assert.New(t)

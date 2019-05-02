@@ -1,6 +1,11 @@
 package testing
 
-import "github.com/sensu/sensu-go/types"
+import (
+	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+)
 
 // CreateClusterRoleBinding ...
 func (c *MockClient) CreateClusterRoleBinding(obj *types.ClusterRoleBinding) error {
@@ -21,7 +26,7 @@ func (c *MockClient) DeleteClusterRoleBinding(name string) error {
 }
 
 // ListClusterRoleBindings ...
-func (c *MockClient) ListClusterRoleBindings() ([]types.ClusterRoleBinding, error) {
-	args := c.Called()
-	return args.Get(0).([]types.ClusterRoleBinding), args.Error(1)
+func (c *MockClient) ListClusterRoleBindings(options client.ListOptions) ([]corev2.ClusterRoleBinding, error) {
+	args := c.Called(options)
+	return args.Get(0).([]corev2.ClusterRoleBinding), args.Error(1)
 }

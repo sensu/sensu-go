@@ -31,11 +31,11 @@ var (
 
 // assets
 
-func loadAssetsBatchFn(client client.APIClient) dataloader.BatchFunc {
+func loadAssetsBatchFn(c client.APIClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			records, err := client.ListAssets(key.String())
+			records, err := c.ListAssets(key.String(), client.ListOptions{})
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
@@ -60,11 +60,11 @@ func loadAssets(ctx context.Context, ns string) ([]types.Asset, error) {
 
 // checks
 
-func loadCheckConfigsBatchFn(client client.APIClient) dataloader.BatchFunc {
+func loadCheckConfigsBatchFn(c client.APIClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			records, err := client.ListChecks(key.String())
+			records, err := c.ListChecks(key.String(), client.ListOptions{})
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
@@ -89,11 +89,11 @@ func loadCheckConfigs(ctx context.Context, ns string) ([]types.CheckConfig, erro
 
 // entities
 
-func loadEntitiesBatchFn(client client.APIClient) dataloader.BatchFunc {
+func loadEntitiesBatchFn(c client.APIClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			records, err := client.ListEntities(key.String())
+			records, err := c.ListEntities(key.String(), client.ListOptions{})
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
@@ -118,11 +118,11 @@ func loadEntities(ctx context.Context, ns string) ([]types.Entity, error) {
 
 // events
 
-func loadEventsBatchFn(client client.APIClient) dataloader.BatchFunc {
+func loadEventsBatchFn(c client.APIClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			records, err := client.ListEvents(key.String())
+			records, err := c.ListEvents(key.String(), client.ListOptions{})
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
@@ -147,11 +147,11 @@ func loadEvents(ctx context.Context, ns string) ([]types.Event, error) {
 
 // handlers
 
-func loadHandlersBatchFn(client client.APIClient) dataloader.BatchFunc {
+func loadHandlersBatchFn(c client.APIClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			records, err := client.ListHandlers(key.String())
+			records, err := c.ListHandlers(key.String(), client.ListOptions{})
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
@@ -176,11 +176,11 @@ func loadHandlers(ctx context.Context, ns string) ([]types.Handler, error) {
 
 // namespaces
 
-func loadNamespacesBatchFn(client client.APIClient) dataloader.BatchFunc {
+func loadNamespacesBatchFn(c client.APIClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for range keys {
-			records, err := client.ListNamespaces()
+			records, err := c.ListNamespaces(client.ListOptions{})
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
@@ -205,11 +205,11 @@ func loadNamespaces(ctx context.Context) ([]types.Namespace, error) {
 
 // silences
 
-func loadSilencedsBatchFn(client client.APIClient) dataloader.BatchFunc {
+func loadSilencedsBatchFn(c client.APIClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			records, err := client.ListSilenceds(key.String(), "", "")
+			records, err := c.ListSilenceds(key.String(), "", "", client.ListOptions{})
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}

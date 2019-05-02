@@ -30,7 +30,7 @@ func TestListCommandRunEClosure(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListMutators", mock.Anything).Return([]types.Mutator{
+	client.On("ListMutators", mock.Anything, mock.Anything).Return([]types.Mutator{
 		*types.FixtureMutator("name-one"),
 		*types.FixtureMutator("name-two"),
 	}, nil)
@@ -50,7 +50,7 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListMutators", "").Return([]types.Mutator{
+	client.On("ListMutators", "", mock.Anything).Return([]types.Mutator{
 		*types.FixtureMutator("name-one"),
 	}, nil)
 
@@ -69,7 +69,7 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	mutator := types.FixtureMutator("name-one")
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListMutators", mock.Anything).Return([]types.Mutator{*mutator}, nil)
+	client.On("ListMutators", mock.Anything, mock.Anything).Return([]types.Mutator{*mutator}, nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "none"))
@@ -88,7 +88,7 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListMutators", mock.Anything).Return([]types.Mutator{}, errors.New("my-err"))
+	client.On("ListMutators", mock.Anything, mock.Anything).Return([]types.Mutator{}, errors.New("my-err"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -105,7 +105,7 @@ func TestListCommandRunEClosureWithAlphaNumericChars(t *testing.T) {
 	client := cli.Client.(*client.MockClient)
 	mutator := types.FixtureMutator("name-one")
 	mutator.Command = "echo foo && exit 1"
-	client.On("ListMutators", "").Return([]types.Mutator{*mutator}, nil)
+	client.On("ListMutators", "", mock.Anything).Return([]types.Mutator{*mutator}, nil)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))

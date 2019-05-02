@@ -1,6 +1,7 @@
 package client
 
 import (
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -26,10 +27,10 @@ func (client *RestClient) FetchClusterRole(name string) (*types.ClusterRole, err
 }
 
 // ListClusterRoles within the namespace
-func (client *RestClient) ListClusterRoles() ([]types.ClusterRole, error) {
-	clusterRoles := []types.ClusterRole{}
+func (client *RestClient) ListClusterRoles(options ListOptions) ([]corev2.ClusterRole, error) {
+	clusterRoles := []corev2.ClusterRole{}
 
-	if err := client.List(clusterRolesPath(), &clusterRoles); err != nil {
+	if err := client.List(clusterRolesPath(), &clusterRoles, options); err != nil {
 		return clusterRoles, err
 	}
 

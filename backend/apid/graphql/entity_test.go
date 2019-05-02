@@ -18,7 +18,7 @@ func TestEntityTypeRelatedField(t *testing.T) {
 	source := types.FixtureEntity("c")
 
 	client, _ := client.NewClientFactory()
-	client.On("ListEntities", mock.Anything).Return([]types.Entity{
+	client.On("ListEntities", mock.Anything, mock.Anything).Return([]types.Entity{
 		*source,
 		*types.FixtureEntity("a"),
 		*types.FixtureEntity("b"),
@@ -41,7 +41,7 @@ func TestEntityTypeStatusField(t *testing.T) {
 	entity.Namespace = "sensu"
 
 	client, _ := client.NewClientFactory()
-	client.On("ListEvents", "sensu").Return([]types.Event{
+	client.On("ListEvents", "sensu", mock.Anything).Return([]types.Event{
 		*types.FixtureEvent(entity.Name, "a"),
 		*types.FixtureEvent(entity.Name, "b"),
 		*types.FixtureEvent(entity.Name, "c"),
@@ -61,7 +61,7 @@ func TestEntityTypeStatusField(t *testing.T) {
 	// Add failing event
 	failingEv := types.FixtureEvent(entity.Name, "bad")
 	failingEv.Check.Status = 2
-	client.On("ListEvents", "sensu").Return([]types.Event{
+	client.On("ListEvents", "sensu", mock.Anything).Return([]types.Event{
 		*types.FixtureEvent(entity.Name, "a"),
 		*failingEv,
 	}, nil).Once()
@@ -92,7 +92,7 @@ func TestEntityTypeEventsField(t *testing.T) {
 	entity := types.FixtureEntity("en")
 
 	client, _ := client.NewClientFactory()
-	client.On("ListEvents", mock.Anything).Return([]types.Event{
+	client.On("ListEvents", mock.Anything, mock.Anything).Return([]types.Event{
 		*types.FixtureEvent(entity.Name, "a"),
 		*types.FixtureEvent(entity.Name, "b"),
 		*types.FixtureEvent(entity.Name, "c"),
@@ -115,7 +115,7 @@ func TestEntityTypeSilencesField(t *testing.T) {
 	entity.Subscriptions = []string{"entity:en", "unix", "www"}
 
 	client, _ := client.NewClientFactory()
-	client.On("ListSilenceds", mock.Anything, "", "").Return([]types.Silenced{
+	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{
 		*types.FixtureSilenced("entity:en:*"),
 		*types.FixtureSilenced("www:*"),
 		*types.FixtureSilenced("unix:my-check"),
@@ -138,7 +138,7 @@ func TestEntityTypeIsSilencedField(t *testing.T) {
 	entity.Subscriptions = []string{"entity:en", "ou"}
 
 	client, _ := client.NewClientFactory()
-	client.On("ListSilenceds", mock.Anything, "", "").Return([]types.Silenced{
+	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{
 		*types.FixtureSilenced("entity:en:*"),
 		*types.FixtureSilenced("ou:my-check"),
 		*types.FixtureSilenced("entity:unrelated:*"),

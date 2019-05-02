@@ -4,17 +4,22 @@ import (
 	"encoding/json"
 	"fmt"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
 var mutatorsPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "mutators")
 
 // ListMutators fetches all mutators from the configured Sensu instance
-func (client *RestClient) ListMutators(namespace string) ([]types.Mutator, error) {
-	var mutators []types.Mutator
+func (client *RestClient) ListMutators(namespace string, options ListOptions) ([]corev2.Mutator, error) {
+	var mutators []corev2.Mutator
 
 	path := mutatorsPath(namespace)
-	res, err := client.R().Get(path)
+	request := client.R()
+
+	ApplyListOptions(request, options)
+
+	res, err := request.Get(path)
 	if err != nil {
 		return mutators, err
 	}

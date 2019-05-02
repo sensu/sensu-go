@@ -1,6 +1,11 @@
 package testing
 
-import "github.com/sensu/sensu-go/types"
+import (
+	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+)
 
 // CreateFilter for use with mock lib
 func (c *MockClient) CreateFilter(filter *types.EventFilter) error {
@@ -21,9 +26,9 @@ func (c *MockClient) FetchFilter(name string) (*types.EventFilter, error) {
 }
 
 // ListFilters for use with mock lib
-func (c *MockClient) ListFilters(namespace string) ([]types.EventFilter, error) {
-	args := c.Called(namespace)
-	return args.Get(0).([]types.EventFilter), args.Error(1)
+func (c *MockClient) ListFilters(namespace string, options client.ListOptions) ([]corev2.EventFilter, error) {
+	args := c.Called(namespace, options)
+	return args.Get(0).([]corev2.EventFilter), args.Error(1)
 }
 
 // UpdateFilter for use with mock lib

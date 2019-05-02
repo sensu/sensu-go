@@ -11,6 +11,7 @@ import (
 	"github.com/sensu/sensu-go/cli/elements/globals"
 	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
+
 	"github.com/spf13/cobra"
 )
 
@@ -40,8 +41,15 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			check, err := flg.GetString("check")
 			if err != nil {
 				return err
+
 			}
-			results, err := cli.Client.ListSilenceds(namespace, sub, check)
+
+			opts, err := helpers.ListOptionsFromFlags(cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			results, err := cli.Client.ListSilenceds(namespace, sub, check, opts)
 			if err != nil {
 				return err
 			}
@@ -58,6 +66,9 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	flags := cmd.Flags()
 	helpers.AddFormatFlag(flags)
 	helpers.AddAllNamespace(flags)
+	helpers.AddFieldSelectorFlag(cmd.Flags())
+	helpers.AddLabelSelectorFlag(cmd.Flags())
+
 	_ = flags.StringP("subscription", "s", "", "name of the silenced subscription")
 	_ = flags.StringP("check", "c", "", "name of the silenced check")
 
