@@ -20,13 +20,14 @@ var (
 	elog debug.Log
 )
 
-func NewService() *Service {
-	return &Service{}
+func NewService(args []string) *Service {
+	return &Service{args: args}
 }
 
 type Service struct {
-	wg sync.WaitGroup
-	mu sync.Mutex
+	args []string
+	wg   sync.WaitGroup
+	mu   sync.Mutex
 }
 
 func (s *Service) start(ctx context.Context, args []string, changes chan<- svc.Status) chan error {
@@ -79,6 +80,7 @@ func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes cha
 	errs := s.start(ctx, args, changes)
 	elog, _ := eventlog.Open(serviceName)
 	defer elog.Close()
+	elog.Info(1, fmt.Sprintf("Execute() args: %v, service args: %v", args, s.args))
 	for {
 		select {
 		case req := <-r:
@@ -99,14 +101,14 @@ func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes cha
 	return false, 0
 }
 
-func runService() error {
+func runService(args []string) error {
 	elog, err := eventlog.Open(serviceName)
 	if err != nil {
 		return err
 	}
 	defer elog.Close()
-	elog.Info(1, fmt.Sprintf("starting %s service", serviceName))
-	if err := svc.Run(serviceName, NewService()); err != nil {
+	elog.Info(1, fmt.Sprintf("starting %s service (%v)", serviceName, args))
+	if err := svc.Run(serviceName, NewService(args)); err != nil {
 		return err
 	}
 	elog.Info(1, fmt.Sprintf("%s service terminated", serviceName))
