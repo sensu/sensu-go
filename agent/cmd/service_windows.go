@@ -79,6 +79,9 @@ func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes cha
 	errs := s.start(ctx, args, changes)
 	elog, _ := eventlog.Open(serviceName)
 	defer elog.Close()
+	defer func() {
+		elog.Info(1, "service terminated")
+	}()
 	for {
 		select {
 		case req := <-r:
