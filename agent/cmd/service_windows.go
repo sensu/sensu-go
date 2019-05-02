@@ -79,7 +79,7 @@ func (s *Service) start(ctx context.Context, args []string, changes chan<- svc.S
 	return result
 }
 
-func (s *Service) Execute(args []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (bool, uint32) {
+func (s *Service) Execute(_ []string, r <-chan svc.ChangeRequest, changes chan<- svc.Status) (bool, uint32) {
 	ctx, cancel := context.WithCancel(context.Background())
 	errs := s.start(ctx, s.args, changes)
 	elog, _ := eventlog.Open(serviceName)
