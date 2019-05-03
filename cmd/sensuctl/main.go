@@ -1,5 +1,6 @@
 //+build !windows
 
+// Use a windows-only main file in order to get an .exe when cross compiling.
 package main
 
 import (
