@@ -963,13 +963,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:67f1e72cf67ecae57ac09b1888b9095a3f02278d3c0129a638bc3d9f513e7eef"
+  digest = "1:e3eb1159bbf8ab9c9d526c9b3b3881ee7d8d8e1f3c2b86e1620dc8e3a62f8657"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
+    "windows/svc",
   ]
-  pruneopts = "UT"
+  pruneopts = "T"
   revision = "b6e1ae21643682ce023deb8d152024597b0e9bb4"
 
 [[projects]]
@@ -1147,6 +1148,7 @@
     "go.etcd.io/bbolt",
     "golang.org/x/crypto/bcrypt",
     "golang.org/x/net/context",
+    "golang.org/x/sys/windows/svc",
     "golang.org/x/time/rate",
     "google.golang.org/grpc",
     "google.golang.org/grpc/grpclog",

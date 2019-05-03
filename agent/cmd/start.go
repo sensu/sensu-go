@@ -4,12 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
-	"os"
-	"os/signal"
 	"path/filepath"
-	"strings"
-	"sync"
-	"syscall"
 
 	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/types"
@@ -24,8 +19,6 @@ import (
 )
 
 var (
-	logger *logrus.Entry
-
 	annotations map[string]string
 	labels      map[string]string
 )
@@ -72,20 +65,6 @@ const (
 	deprecatedFlagAgentID = "id"
 )
 
-func init() {
-	logrus.SetFormatter(&logrus.JSONFormatter{})
-	logger = logrus.WithFields(logrus.Fields{
-		"component": "cmd",
-	})
-
-	rootCmd.AddCommand(newVersionCommand())
-	rootCmd.AddCommand(newStartCommand())
-
-	viper.SetEnvPrefix("sensu")
-	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
-	viper.AutomaticEnv()
-}
-
 func newVersionCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
@@ -102,7 +81,7 @@ func newVersionCommand() *cobra.Command {
 	return cmd
 }
 
-func newStartCommand() *cobra.Command {
+func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *cobra.Command {
 	var setupErr error
 
 	cmd := &cobra.Command{
@@ -182,21 +161,6 @@ func newStartCommand() *cobra.Command {
 				return err
 			}
 
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			sigs := make(chan os.Signal, 1)
-			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-
-			var wg sync.WaitGroup
-			wg.Add(1)
-
-			go func() {
-				defer wg.Done()
-				sig := <-sigs
-				logger.Info("signal received: ", sig)
-				cancel()
-			}()
-
 			if !viper.GetBool(flagDisableAPI) {
 				sensuAgent.StartAPI(ctx)
 			}
@@ -214,7 +178,7 @@ func newStartCommand() *cobra.Command {
 	configFlagSet := pflag.NewFlagSet("sensu", pflag.ContinueOnError)
 	_ = configFlagSet.StringP(flagConfigFile, "c", "", "path to sensu-agent config file")
 	configFlagSet.SetOutput(ioutil.Discard)
-	_ = configFlagSet.Parse(os.Args[1:])
+	_ = configFlagSet.Parse(args[1:])
 
 	// Get the given config file path
 	configFile, _ := configFlagSet.GetString(flagConfigFile)
@@ -295,35 +259,37 @@ func newStartCommand() *cobra.Command {
 	cmd.Flags().StringToStringVar(&labels, flagLabels, nil, "entity labels map")
 	cmd.Flags().StringToStringVar(&annotations, flagAnnotations, nil, "entity annotations map")
 
-	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc)
+	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc(logger))
 
 	if err := viper.ReadInConfig(); err != nil && configFile != "" {
 		setupErr = err
 	}
 
-	deprecatedConfigAttributes()
+	deprecatedConfigAttributes(logger)
 	viper.RegisterAlias(deprecatedFlagAgentID, flagAgentName)
 
 	return cmd
 }
 
-func aliasNormalizeFunc(f *pflag.FlagSet, name string) pflag.NormalizedName {
-	// Wait until the command-line flags have been parsed
-	if !f.Parsed() {
+func aliasNormalizeFunc(logger *logrus.Entry) func(*pflag.FlagSet, string) pflag.NormalizedName {
+	return func(f *pflag.FlagSet, name string) pflag.NormalizedName {
+		// Wait until the command-line flags have been parsed
+		if !f.Parsed() {
+			return pflag.NormalizedName(name)
+		}
+
+		switch name {
+		case deprecatedFlagAgentID:
+			deprecatedFlagMessage(name, flagAgentName, logger)
+			name = flagAgentName
+		}
 		return pflag.NormalizedName(name)
 	}
-
-	switch name {
-	case deprecatedFlagAgentID:
-		deprecatedFlagMessage(name, flagAgentName)
-		name = flagAgentName
-	}
-	return pflag.NormalizedName(name)
 }
 
 // Look up the deprecated attributes in our config file and print a warning
 // message if set
-func deprecatedConfigAttributes() {
+func deprecatedConfigAttributes(logger *logrus.Entry) {
 	attributes := map[string]string{
 		deprecatedFlagAgentID: flagAgentName,
 	}
@@ -338,7 +304,7 @@ func deprecatedConfigAttributes() {
 	}
 }
 
-func deprecatedFlagMessage(oldFlag, newFlag string) {
+func deprecatedFlagMessage(oldFlag, newFlag string, logger *logrus.Entry) {
 	logger.Warningf("flag --%s has been deprecated, please use --%s instead",
 		oldFlag, newFlag)
 }

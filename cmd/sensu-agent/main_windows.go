@@ -1,6 +1,8 @@
-//+build !windows
-
 package main
+
+// main_windows.go exists to provide a build artifact with a .exe extension,
+// and to add commands to the root command that handle windows service
+// management.
 
 import (
 	"context"
@@ -27,6 +29,7 @@ func main() {
 	}()
 
 	command := cmd.NewRootCommand(ctx, os.Args)
+	command.AddCommand(cmd.NewWindowsServiceCommand())
 
 	if err := command.Execute(); err != nil {
 		logger.WithError(err).Fatal("error executing sensu-agent")
