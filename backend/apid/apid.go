@@ -26,9 +26,10 @@ import (
 
 // APId is the backend HTTP API.
 type APId struct {
-	Authenticator *authentication.Authenticator
-	HTTPServer    *http.Server
-	CoreSubrouter *mux.Router
+	Authenticator    *authentication.Authenticator
+	HTTPServer       *http.Server
+	CoreSubrouter    *mux.Router
+	GraphQLSubrouter *mux.Router
 
 	stopping            chan struct{}
 	running             *atomic.Value
@@ -101,7 +102,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
 	router.Handle("/metrics", promhttp.Handler())
 	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig)
-	registerGraphQLService(router, a.store, c.URL, tlsClientConfig)
+	a.registerGraphQLService(router, c.URL, tlsClientConfig)
 	registerAuthenticationResources(router, a.store, a.Authenticator)
 	a.registerRestrictedResources(router)
 
@@ -196,24 +197,25 @@ func registerUnauthenticatedResources(
 	)
 }
 
-func registerGraphQLService(router *mux.Router, store store.Store, url string, tls *tls.Config) {
+func (a *APId) registerGraphQLService(router *mux.Router, url string, tls *tls.Config) {
+	a.GraphQLSubrouter = NewSubrouter(
+		router.NewRoute(),
+		middlewares.SimpleLogger{},
+		middlewares.LimitRequest{},
+		// TODO: Currently the web app relies on receiving a 401 to determine if
+		//       a user is not authenticated. However, in the future we should
+		//       allow requests without an access token to continue so that
+		//       unauthenticated clients can still fetch the schema. Useful for
+		//       implementing tools like GraphiQL.
+		//
+		//       https://github.com/graphql/graphiql
+		//       https://graphql.org/learn/introspection/
+		middlewares.Authentication{IgnoreUnauthorized: false},
+		middlewares.AllowList{Store: a.store, IgnoreMissingClaims: true},
+	)
 	mountRouters(
-		NewSubrouter(
-			router.NewRoute(),
-			middlewares.SimpleLogger{},
-			middlewares.LimitRequest{},
-			// TODO: Currently the web app relies on receiving a 401 to determine if
-			//       a user is not authenticated. However, in the future we should
-			//       allow requests without an access token to continue so that
-			//       unauthenticated clients can still fetch the schema. Useful for
-			//       implementing tools like GraphiQL.
-			//
-			//       https://github.com/graphql/graphiql
-			//       https://graphql.org/learn/introspection/
-			middlewares.Authentication{IgnoreUnauthorized: false},
-			middlewares.AllowList{Store: store, IgnoreMissingClaims: true},
-		),
-		routers.NewGraphQLRouter(url, tls, store),
+		a.GraphQLSubrouter,
+		routers.NewGraphQLRouter(url, tls, a.store),
 	)
 }
 
