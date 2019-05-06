@@ -38,6 +38,10 @@ const (
 	// Unauthenticated used when viewer is not authenticated but action requires
 	// viewer to be authenticated.
 	Unauthenticated
+
+	// PaymentRequired is used when the user tries to use a feature that's gated
+	// behind a license.
+	PaymentRequired
 )
 
 // Default error messages if not message is provided.
@@ -48,6 +52,7 @@ var standardErrorMessages = map[ErrCode]string{
 	AlreadyExistsErr: "resource already exists",
 	PermissionDenied: "unauthorized to perform action",
 	Unauthenticated:  "unauthenticated",
+	PaymentRequired:  "license required",
 }
 
 // Error describes an issue that ocurred while performing the action.

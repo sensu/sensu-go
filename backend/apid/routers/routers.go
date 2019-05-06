@@ -89,6 +89,8 @@ func HTTPStatusFromCode(code actions.ErrCode) int {
 		return http.StatusNotFound
 	case actions.AlreadyExistsErr:
 		return http.StatusConflict
+	case actions.PaymentRequired:
+		return http.StatusPaymentRequired
 	}
 
 	logger.WithField("code", code).Error("unknown error code")
