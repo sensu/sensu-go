@@ -208,8 +208,9 @@ func getGenericObjectsPath(ctx context.Context, name string) string {
 }
 func TestList(t *testing.T) {
 	testWithEtcdStore(t, func(s *Store) {
-		// Create a second namespace
+		// Create new namespaces
 		require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("acme")))
+		require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("acme-devel")))
 
 		// Create a bunch of keys everywhere
 		obj1 := &genericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj1", Namespace: "default"}}
@@ -223,6 +224,14 @@ func TestList(t *testing.T) {
 		obj3 := &genericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj3", Namespace: "acme"}}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
 		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/acme/obj3", "acme", obj3))
+
+		// This object is required to test
+		// https://github.com/sensu/sensu-enterprise-go/issues/418. We want to make
+		// sure resources within a namespace, whose name contains an another
+		// namespace as a prefix, are not showing up (e.g. acme & acme-devel)
+		obj4 := &genericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj4", Namespace: "acme-devel"}}
+		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme-devel")
+		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/acme-devel/obj4", "acme-devel", obj4))
 
 		// We should have 1 object when listing keys under the default namespace
 		list := []*genericObject{}
@@ -241,12 +250,21 @@ func TestList(t *testing.T) {
 		assert.Len(t, list, 2)
 		assert.Empty(t, pred.Continue)
 
-		// We should have 3 objects when listing through all namespaces
+		// We should have 1 object when listing keys under the acme-devel namespace
+		list = []*genericObject{}
+		pred = &store.SelectionPredicate{}
+		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme-devel")
+		err = List(ctx, s.client, getGenericObjectsPath, &list, pred)
+		require.NoError(t, err)
+		assert.Len(t, list, 1)
+		assert.Empty(t, pred.Continue)
+
+		// We should have 4 objects when listing through all namespaces
 		list = []*genericObject{}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "")
 		err = List(ctx, s.client, getGenericObjectsPath, &list, pred)
 		require.NoError(t, err)
-		assert.Len(t, list, 3)
+		assert.Len(t, list, 4)
 		assert.Empty(t, pred.Continue)
 	})
 }

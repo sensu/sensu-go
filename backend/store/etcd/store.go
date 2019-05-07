@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"path"
 	"reflect"
+	"strings"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
@@ -169,11 +170,20 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 		clientv3.WithLimit(pred.Limit),
 	}
 
-	key := keyBuilder(ctx, "")
-	rangeEnd := clientv3.GetPrefixRangeEnd(key)
+	keyPrefix := keyBuilder(ctx, "")
+	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
 	opts = append(opts, clientv3.WithRange(rangeEnd))
 
-	resp, err := client.Get(ctx, path.Join(key, pred.Continue), opts...)
+	key := keyPrefix
+	if pred.Continue != "" {
+		key = path.Join(keyPrefix, pred.Continue)
+	} else {
+		if !strings.HasSuffix(key, "/") {
+			key += "/"
+		}
+	}
+
+	resp, err := client.Get(ctx, key, opts...)
 	if err != nil {
 		return err
 	}

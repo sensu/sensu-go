@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -36,6 +37,10 @@ func TestEventStorageMaxOutputSize(t *testing.T) {
 
 func TestEventStorage(t *testing.T) {
 	testWithEtcd(t, func(s store.Store) {
+		// Create new namespaces
+		require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("acme")))
+		require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("acme-devel")))
+
 		event := corev2.FixtureEvent("entity1", "check1")
 		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 		pred := &store.SelectionPredicate{}
@@ -68,15 +73,41 @@ func TestEventStorage(t *testing.T) {
 			t.Errorf("bad event: got %v, want %v", got.Check, want.Check)
 		}
 
+		// Add an event in the acme namespace
+		event.Entity.Namespace = "acme"
+		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
+		err = s.UpdateEvent(ctx, event)
+		require.NoError(t, err)
+
+		// Add an event in the acme-devel namespace
+		event.Entity.Namespace = "acme-devel"
+		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
+		err = s.UpdateEvent(ctx, event)
+		require.NoError(t, err)
+
 		// Get all events with wildcards
 		ctx = context.WithValue(ctx, corev2.NamespaceKey, corev2.NamespaceTypeAll)
+		events, err = s.GetEvents(ctx, pred)
+		assert.NoError(t, err)
+		assert.Equal(t, 3, len(events))
+		assert.Empty(t, pred.Continue)
+
+		// Get all events in the acme namespace
+		ctx = context.WithValue(ctx, corev2.NamespaceKey, "acme")
+		events, err = s.GetEvents(ctx, pred)
+		assert.NoError(t, err)
+		assert.Equal(t, 1, len(events))
+		assert.Empty(t, pred.Continue)
+
+		// Get all events in the acme-devel namespace
+		ctx = context.WithValue(ctx, corev2.NamespaceKey, "acme-devel")
 		events, err = s.GetEvents(ctx, pred)
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(events))
 		assert.Empty(t, pred.Continue)
 
 		// Get all events from a missing namespace
-		ctx = context.WithValue(ctx, corev2.NamespaceKey, "acme")
+		ctx = context.WithValue(ctx, corev2.NamespaceKey, "missing")
 		events, err = s.GetEvents(ctx, pred)
 		require.NoError(t, err)
 		require.Equal(t, 0, len(events))
@@ -114,7 +145,7 @@ func TestEventStorage(t *testing.T) {
 		assert.Error(t, s.DeleteEventByEntityCheck(ctx, "", "foo"))
 		assert.Error(t, s.DeleteEventByEntityCheck(ctx, "foo", ""))
 
-		// Updating an event in a nonexistent org and env should not work
+		// Updating an event in a nonexistent namespace should not work
 		event.Entity.Namespace = "missing"
 		err = s.UpdateEvent(ctx, event)
 		assert.Error(t, err)

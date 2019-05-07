@@ -10,6 +10,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Fixed `sensuctl` color output on Windows.
 - Fixed a regression in `sensuctl cluster` json/wrapped-json output.
+- Fixed a regression that caused listing objects for a given namespace to also
+  include results from namespaces sharing a similar prefix.
 
 ## [5.6.0] - 2019-04-30
 
