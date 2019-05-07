@@ -1,6 +1,7 @@
 package globals
 
 import (
+	"runtime"
 	"strings"
 
 	"github.com/mgutz/ansi"
@@ -25,6 +26,12 @@ var (
 	// SuccessStyle is used to format strings to indicate a successfull operation
 	SuccessStyle = ansi.ColorFunc("green+bh")
 )
+
+func init() {
+	if runtime.GOOS == "windows" {
+		PrimaryTextStyle = ansi.ColorFunc("blue+bh")
+	}
+}
 
 // BooleanStyle colors instances of 'true' & 'false' blue & red respectively
 func BooleanStyle(in string) string {
