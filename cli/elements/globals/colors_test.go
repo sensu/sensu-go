@@ -1,6 +1,7 @@
 package globals
 
 import (
+	"runtime"
 	"testing"
 
 	"github.com/mgutz/ansi"
@@ -14,13 +15,23 @@ func TestBooleanStyle(t *testing.T) {
 	trueIn := "true"
 	trueOut := BooleanStyle(trueIn)
 	assert.NotEqual(trueIn, trueOut)
-	assert.Contains(trueOut, ansi.ColorCode("blue"))
+
+	if runtime.GOOS == "windows" {
+		assert.Contains(trueOut, ansi.ColorCode("cyan+h"))
+	} else {
+		assert.Contains(trueOut, ansi.ColorCode("blue"))
+	}
 
 	// changes false
 	falseIn := "false"
 	falseOut := BooleanStyle(falseIn)
 	assert.NotEqual(falseIn, falseOut)
-	assert.Contains(falseOut, ansi.ColorCode("red"))
+
+	if runtime.GOOS == "windows" {
+		assert.Contains(falseOut, ansi.ColorCode("red+h"))
+	} else {
+		assert.Contains(falseOut, ansi.ColorCode("red"))
+	}
 
 	// neither 'true' or 'false'
 	neitherIn := "neither lol"

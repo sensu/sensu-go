@@ -1,6 +1,7 @@
 package root
 
 import (
+	"github.com/mattn/go-colorable"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/version"
@@ -18,6 +19,9 @@ func Command() *cobra.Command {
 			_ = cmd.Help()
 		},
 	}
+
+	// Use colorable (fixes Windows color support)
+	cmd.SetOutput(colorable.NewColorableStdout())
 
 	// Templates
 	cmd.SetUsageTemplate(usageTemplate)
