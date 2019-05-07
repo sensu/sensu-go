@@ -6,6 +6,7 @@ import (
 
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/flags"
+	"github.com/sensu/sensu-go/cli/elements/list"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -57,4 +58,21 @@ func PrintFormatted(flag string, format string, v interface{}, w io.Writer, prin
 	default:
 		return printToList(v, w)
 	}
+}
+
+// PrintTitle prints a title for tabular format only.
+// Flag overrides the cli config format, if set.
+func PrintTitle(flag string, format string, title string, w io.Writer) error {
+	if flag != "" {
+		format = flag
+	}
+	// checking the formats exclusively to cover invalid formats
+	// that get defaulted to tabular
+	if format != config.FormatJSON && format != config.FormatWrappedJSON && format != config.FormatYAML {
+		cfg := &list.Config{
+			Title: title,
+		}
+		return list.Print(w, cfg)
+	}
+	return nil
 }
