@@ -25,21 +25,31 @@ var (
 
 	// SuccessStyle is used to format strings to indicate a successfull operation
 	SuccessStyle = ansi.ColorFunc("green+bh")
+
+	// BooleanTrueStyle is used to format strings that indicate a boolean true value
+	BooleanTrueStyle = ansi.ColorFunc("blue")
+
+	// BooleanFalseStyle is used to format strings that indicate a boolean false value
+	BooleanFalseStyle = ansi.ColorFunc("red")
 )
 
 func init() {
 	if runtime.GOOS == "windows" {
-		PrimaryTextStyle = ansi.ColorFunc("blue+bh")
+		TitleStyle = ansi.ColorFunc("default+b")
+		PrimaryTextStyle = ansi.ColorFunc("default+bh")
+		CTATextStyle = ansi.ColorFunc("red+bh:white+h")
+		ErrorTextStyle = ansi.ColorFunc("red+bh:black")
+		WarningStyle = ansi.ColorFunc("yellow+bh:black")
+		BooleanTrueStyle = ansi.ColorFunc("cyan+h")
+		BooleanFalseStyle = ansi.ColorFunc("red+h")
 	}
 }
 
 // BooleanStyle colors instances of 'true' & 'false' blue & red respectively
 func BooleanStyle(in string) string {
-	trueStyle := ansi.ColorFunc("blue")
-	falseStyle := ansi.ColorFunc("red")
 	replacer := strings.NewReplacer(
-		"false", falseStyle("false"),
-		"true", trueStyle("true"),
+		"false", BooleanFalseStyle("false"),
+		"true", BooleanTrueStyle("true"),
 	)
 
 	return replacer.Replace(in)
