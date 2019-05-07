@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
@@ -71,7 +72,16 @@ func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) (
 	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
 	opts = append(opts, clientv3.WithRange(rangeEnd))
 
-	resp, err := s.client.Get(ctx, path.Join(keyPrefix, pred.Continue), opts...)
+	key := keyPrefix
+	if pred.Continue != "" {
+		key = path.Join(keyPrefix, pred.Continue)
+	} else {
+		if !strings.HasSuffix(key, "/") {
+			key += "/"
+		}
+	}
+
+	resp, err := s.client.Get(ctx, key, opts...)
 	if err != nil {
 		return nil, err
 	}
