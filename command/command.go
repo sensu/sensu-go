@@ -14,6 +14,34 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const undocumentedTestCheckName = "!sensu_test_check!"
+
+const cannedResponseText = `
+                         .'loo:,
+                        ,KNMMWNWX
+                  ..    ,000OkxkW'
+                 ,o,.   .O0KOOOk0:
+                 dkl.    :OO0kkkk;
+                 :ko     .lOOOOkx
+              'OXX0:       'xWMdkd;o,.
+              cMMMM; .,lkXN;oWNOk,;MMMMWXx:
+              oMMMM:KNWMMMMl'.cl .NMMMMMMMMX
+              NMMMWkMMMMMMMMWxxKONMMMMMMMMMM
+             oMMMMMMMMMMMMMMMNW0NMMMMMMMMMMM.
+             KMMMMMMMMMMMMMMWMWWMMMMMMMMMMMMN
+             oKXXKKKKXMMMMMMMMMWMMMMMMMMMMMMM.
+                     'MMMMMMMMMMMMMMMMMMMMMMMk
+                     .MMMMMMMMWMMMMMMMMMMMMMMM
+                      WMMMMMMMMMMWNMMMMMMMMMMN
+                      WMMMMMMMMMWX0kO0WMMMMMMO
+                     .MMMMMMMMMMMNX0kkWMMMMWO'
+                     ;MMMMMMMMMMMMWXNNMMMMW.
+`
+
+var cannedResponse = &ExecutionResponse{
+	Output: cannedResponseText,
+}
+
 // Executor ...
 type Executor interface {
 	Execute(context.Context, ExecutionRequest) (*ExecutionResponse, error)
@@ -87,6 +115,9 @@ func NewExecutor() Executor {
 // timeout, optionally writing to STDIN, capturing its combined output
 // (STDOUT/ERR) and exit status.
 func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionRequest) (*ExecutionResponse, error) {
+	if execution.Name == undocumentedTestCheckName {
+		return cannedResponse, nil
+	}
 	resp := &ExecutionResponse{}
 	logger := logrus.WithFields(logrus.Fields{"component": "command"})
 	// Using a platform specific shell to "cheat", as the shell
