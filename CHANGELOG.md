@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [5.7.0] - 2019-05-09
 
+### Added
+- Added a Windows service wrapper for sensu-agent. See
+"sensu-agent service --help" for more information.
+
 ### Fixed
 - Fixed `sensuctl` color output on Windows.
 - Fixed a regression in `sensuctl cluster` json/wrapped-json output.
