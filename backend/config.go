@@ -53,6 +53,7 @@ type Config struct {
 	// Etcd TLS configuration
 	EtcdClientTLSInfo etcd.TLSInfo
 	EtcdPeerTLSInfo   etcd.TLSInfo
+	EtcdCipherSuites  []string
 
 	TLS *types.TLSOptions
 }

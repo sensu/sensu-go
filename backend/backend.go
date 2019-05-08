@@ -81,6 +81,7 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 	// Etcd TLS config
 	cfg.ClientTLSInfo = config.EtcdClientTLSInfo
 	cfg.PeerTLSInfo = config.EtcdPeerTLSInfo
+	cfg.CipherSuites = config.EtcdCipherSuites
 
 	// Start etcd
 	e, err := etcd.NewEtcd(cfg)
@@ -144,8 +145,8 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
-		Store:                   store,
-		Bus:                     bus,
+		Store: store,
+		Bus:   bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 		AssetGetter:             assetGetter,
 	})
@@ -196,10 +197,10 @@ func Initialize(config *Config) (*Backend, error) {
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:                   bus,
-		Store:                 store,
-		LivenessFactory:       liveness.EtcdFactory(b.ctx, b.Client),
-		RingPool:              ringPool,
+		Bus:             bus,
+		Store:           store,
+		LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
+		RingPool:        ringPool,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)

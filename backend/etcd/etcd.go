@@ -51,6 +51,8 @@ type Config struct {
 
 	ClientTLSInfo TLSInfo
 	PeerTLSInfo   TLSInfo
+
+	CipherSuites []string
 }
 
 // TLSInfo wraps etcd transport TLSInfo
@@ -148,6 +150,8 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	cfg.APUrls = apURLs
 	cfg.LPUrls = lpURLs
 	cfg.PeerTLSInfo = (transport.TLSInfo)(config.PeerTLSInfo)
+
+	cfg.CipherSuites = config.CipherSuites
 
 	// Cluster config
 	cfg.InitialClusterToken = config.InitialClusterToken
