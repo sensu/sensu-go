@@ -76,7 +76,7 @@
   revision = "48ea1b39c25fc1bab3506fbc712ecbaa842c4d2d"
 
 [[projects]]
-  digest = "1:a2a2c0fe9c8a7df5aab4d482e9fc96c8727a94a7316104291023e63fd56a5b9c"
+  digest = "1:8c8cbf17df2e923172f1d439b6df6dab743f38a7f168b7ce2156a82265e2edee"
   name = "github.com/coreos/etcd"
   packages = [
     "alarm",
@@ -200,7 +200,7 @@
   version = "v3.0.0"
 
 [[projects]]
-  digest = "1:fd8c7bf9d26923754ce318187a884d3b75f1001fda152a3ea57703ef384da37e"
+  digest = "1:5a9464d972454e9bb1ed81f6742dfdb3ad834ba816c4783fd4e5c975b669f01c"
   name = "github.com/docker/docker"
   packages = [
     "pkg/term",
@@ -484,7 +484,7 @@
   version = "v0.1.0"
 
 [[projects]]
-  digest = "1:7210167b8d965ed25b31b7cacc9700d54291b80d2f5c9dc0d287a1d3623dac34"
+  digest = "1:1ed5ad32e321bd35d51e30dbbccab9d226ac290347838d03362b427459036a91"
   name = "github.com/json-iterator/go"
   packages = ["."]
   pruneopts = "UT"
@@ -526,12 +526,12 @@
   version = "v1.7.3"
 
 [[projects]]
-  digest = "1:2fa7b0155cd54479a755c629de26f888a918e13f8857a2c442205d825368e084"
+  digest = "1:c658e84ad3916da105a761660dcaeb01e63416c8ec7bc62256a9b411a05fcd67"
   name = "github.com/mattn/go-colorable"
   packages = ["."]
   pruneopts = "UT"
-  revision = "3a70a971f94a22f2fa562ffcc7a0eb45f5daf045"
-  version = "v0.1.1"
+  revision = "167de6bfdfba052fa6b2d3664c8f5272e23c9072"
+  version = "v0.0.9"
 
 [[projects]]
   digest = "1:fa610f9fe6a93f4a75e64c83673dfff9bf1a34bbb21e6102021b6bc7850834a3"
@@ -696,7 +696,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:b72cf8bd75a01ce3c15b00c899942a4961865336a14168e8d597718e7a7453b3"
+  digest = "1:e3f36c748588410d67b7bb3fb442c339ee0c297100425b9040ed6bf3074978f6"
   name = "github.com/prometheus/procfs"
   packages = [
     ".",
@@ -747,10 +747,8 @@
   digest = "1:267c6a4d9d69c5d14f4f233d364a59eaea299ea17b29dfe9be07ce5226c19899"
   name = "github.com/shirou/gopsutil"
   packages = [
-    "cpu",
     "host",
     "internal/common",
-    "mem",
     "net",
     "process",
   ]
@@ -965,18 +963,14 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:06ef66b161142aba0a2c2401a456106a3a0cfac7c7581dce949d077e7e3682de"
+  digest = "1:e3eb1159bbf8ab9c9d526c9b3b3881ee7d8d8e1f3c2b86e1620dc8e3a62f8657"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
-    "windows/registry",
     "windows/svc",
-    "windows/svc/debug",
-    "windows/svc/eventlog",
-    "windows/svc/mgr",
   ]
-  pruneopts = "UT"
+  pruneopts = "T"
   revision = "b6e1ae21643682ce023deb8d152024597b0e9bb4"
 
 [[projects]]
@@ -1127,7 +1121,6 @@
     "github.com/graphql-go/graphql/language/parser",
     "github.com/graphql-go/graphql/testutil",
     "github.com/json-iterator/go",
-    "github.com/mattn/go-colorable",
     "github.com/mgutz/ansi",
     "github.com/mholt/archiver",
     "github.com/mitchellh/go-homedir",
@@ -1156,9 +1149,6 @@
     "golang.org/x/crypto/bcrypt",
     "golang.org/x/net/context",
     "golang.org/x/sys/windows/svc",
-    "golang.org/x/sys/windows/svc/debug",
-    "golang.org/x/sys/windows/svc/eventlog",
-    "golang.org/x/sys/windows/svc/mgr",
     "golang.org/x/time/rate",
     "google.golang.org/grpc",
     "google.golang.org/grpc/grpclog",
