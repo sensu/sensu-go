@@ -14,7 +14,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const undocumentedTestCheckName = "!sensu_test_check!"
+const undocumentedTestCheckCommand = "!sensu_test_check!"
 
 const cannedResponseText = `
                          .'loo:,
@@ -115,7 +115,7 @@ func NewExecutor() Executor {
 // timeout, optionally writing to STDIN, capturing its combined output
 // (STDOUT/ERR) and exit status.
 func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionRequest) (*ExecutionResponse, error) {
-	if execution.Name == undocumentedTestCheckName {
+	if execution.Command == undocumentedTestCheckCommand {
 		return cannedResponse, nil
 	}
 	resp := &ExecutionResponse{}

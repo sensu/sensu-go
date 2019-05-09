@@ -86,16 +86,8 @@ func NewCheck(c *CheckConfig) *Check {
 	return check
 }
 
-const undocumentedTestCheckName = "!sensu_test_check!"
-
 // Validate returns an error if the check does not pass validation tests.
 func (c *Check) Validate() error {
-	if c.Name == undocumentedTestCheckName {
-		// undocumented test check, the agent will use this name to return
-		// a canned response. It is not possible to use this name according
-		// to the normal validation rules, so it shouldn't impact anyone.
-		return nil
-	}
 	if err := ValidateName(c.Name); err != nil {
 		return errors.New("check name " + err.Error())
 	}
@@ -206,12 +198,6 @@ func (c *CheckConfig) MarshalJSON() ([]byte, error) {
 
 // Validate returns an error if the check does not pass validation tests.
 func (c *CheckConfig) Validate() error {
-	if c.Name == undocumentedTestCheckName {
-		// undocumented test check, the agent will use this name to return
-		// a canned response. It is not possible to use this name according
-		// to the normal validation rules, so it shouldn't impact anyone.
-		return nil
-	}
 	if err := ValidateName(c.Name); err != nil {
 		return errors.New("check name " + err.Error())
 	}
