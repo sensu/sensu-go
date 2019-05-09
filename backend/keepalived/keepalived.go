@@ -312,7 +312,9 @@ func createRegistrationEvent(entity *types.Entity) *types.Event {
 func (k *Keepalived) alive(key string, prev liveness.State, leader bool) bool {
 	lager := logger.WithFields(logrus.Fields{
 		"status":          liveness.Alive.String(),
-		"previous_status": prev.String()})
+		"previous_status": prev.String(),
+		"leader":          fmt.Sprintf("%v", leader),
+	})
 
 	namespace, name, err := parseKey(key)
 	if err != nil {
@@ -328,7 +330,9 @@ func (k *Keepalived) alive(key string, prev liveness.State, leader bool) bool {
 func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 	lager := logger.WithFields(logrus.Fields{
 		"status":          liveness.Dead.String(),
-		"previous_status": prev.String()})
+		"previous_status": prev.String(),
+		"leader":          fmt.Sprintf("v", leader),
+	})
 
 	namespace, name, err := parseKey(key)
 	if err != nil {

@@ -66,7 +66,7 @@ func New(c Config, opts ...Option) (*Eventd, error) {
 	e := &Eventd{
 		store:           c.Store,
 		bus:             c.Bus,
-		handlerCount:    10,
+		handlerCount:    100,
 		livenessFactory: c.LivenessFactory,
 		errChan:         make(chan error, 1),
 		shutdownChan:    make(chan struct{}, 1),
