@@ -33,7 +33,7 @@ var (
 			Name: "sensu_go_events_processed",
 			Help: "The total number of processed events",
 		},
-		[]string{"status"},
+		[]string{"status", "type"},
 	)
 )
 
@@ -162,11 +162,23 @@ func eventKey(event *corev2.Event) string {
 	return path.Join(event.Entity.Namespace, event.Check.Name, event.Entity.Name)
 }
 
-func (e *Eventd) handleMessage(msg interface{}) error {
+func (e *Eventd) handleMessage(msg interface{}) (err error) {
 	event, ok := msg.(*corev2.Event)
 	if !ok {
 		return errors.New("received non-Event on event channel")
 	}
+
+	defer func() {
+		var eventType = "check"
+		if !event.HasCheck() {
+			eventType = "metric"
+		}
+		if err == nil {
+			eventsProcessed.WithLabelValues("success", eventType).Inc()
+		} else {
+			eventsProcessed.WithLabelValues("failure", eventType).Inc()
+		}
+	}()
 
 	// Validate the received event
 	if err := event.Validate(); err != nil {
@@ -238,8 +250,6 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 			logger.WithError(err).Error("error burying switch")
 		}
 	}
-
-	eventsProcessed.WithLabelValues("success").Inc()
 
 	return e.bus.Publish(messaging.TopicEvent, event)
 }
