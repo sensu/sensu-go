@@ -331,7 +331,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 	lager := logger.WithFields(logrus.Fields{
 		"status":          liveness.Dead.String(),
 		"previous_status": prev.String(),
-		"leader":          fmt.Sprintf("v", leader),
+		"leader":          fmt.Sprintf("%v", leader),
 	})
 
 	namespace, name, err := parseKey(key)
