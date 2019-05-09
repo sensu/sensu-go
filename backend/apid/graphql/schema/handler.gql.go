@@ -758,3 +758,408 @@ var _ObjectTypeHandlerSocketDesc = graphql.ObjectDesc{
 		"port": _ObjTypeHandlerSocketPortHandler,
 	},
 }
+
+// HandlerConnectionNodesFieldResolver implement to resolve requests for the HandlerConnection's nodes field.
+type HandlerConnectionNodesFieldResolver interface {
+	// Nodes implements response to request for nodes field.
+	Nodes(p graphql.ResolveParams) (interface{}, error)
+}
+
+// HandlerConnectionPageInfoFieldResolver implement to resolve requests for the HandlerConnection's pageInfo field.
+type HandlerConnectionPageInfoFieldResolver interface {
+	// PageInfo implements response to request for pageInfo field.
+	PageInfo(p graphql.ResolveParams) (interface{}, error)
+}
+
+//
+// HandlerConnectionFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'HandlerConnection' type.
+//
+// == Example SDL
+//
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
+//
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
+//
+// == Example generated interface
+//
+//   // DogResolver ...
+//   type DogFieldResolvers interface {
+//     DogNameFieldResolver
+//     DogBreedFieldResolver
+//
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//   }
+//
+// == Example implementation ...
+//
+//   // DogResolver implements DogFieldResolvers interface
+//   type DogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
+//
+//   // Name implements response to request for name field.
+//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     return dog.GetName()
+//   }
+//
+//   // Breed implements response to request for breed field.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+//     // ... implementation details ...
+//     _, ok := p.Value.(DogGetter)
+//     return ok
+//   }
+//
+type HandlerConnectionFieldResolvers interface {
+	HandlerConnectionNodesFieldResolver
+	HandlerConnectionPageInfoFieldResolver
+}
+
+// HandlerConnectionAliases implements all methods on HandlerConnectionFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+//
+type HandlerConnectionAliases struct{}
+
+// Nodes implements response to request for 'nodes' field.
+func (_ HandlerConnectionAliases) Nodes(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// PageInfo implements response to request for 'pageInfo' field.
+func (_ HandlerConnectionAliases) PageInfo(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// HandlerConnectionType A connection to a sequence of records.
+var HandlerConnectionType = graphql.NewType("HandlerConnection", graphql.ObjectKind)
+
+// RegisterHandlerConnection registers HandlerConnection object type with given service.
+func RegisterHandlerConnection(svc *graphql.Service, impl HandlerConnectionFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeHandlerConnectionDesc, impl)
+}
+func _ObjTypeHandlerConnectionNodesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(HandlerConnectionNodesFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Nodes(frp)
+	}
+}
+
+func _ObjTypeHandlerConnectionPageInfoHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(HandlerConnectionPageInfoFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.PageInfo(frp)
+	}
+}
+
+func _ObjectTypeHandlerConnectionConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "A connection to a sequence of records.",
+		Fields: graphql1.Fields{
+			"nodes": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "nodes",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Handler")))),
+			},
+			"pageInfo": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "pageInfo",
+				Type:              graphql1.NewNonNull(graphql.OutputType("OffsetPageInfo")),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see HandlerConnectionFieldResolvers.")
+		},
+		Name: "HandlerConnection",
+	}
+}
+
+// describe HandlerConnection's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeHandlerConnectionDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeHandlerConnectionConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"nodes":    _ObjTypeHandlerConnectionNodesHandler,
+		"pageInfo": _ObjTypeHandlerConnectionPageInfoHandler,
+	},
+}
+
+// HandlerEdgeNodeFieldResolver implement to resolve requests for the HandlerEdge's node field.
+type HandlerEdgeNodeFieldResolver interface {
+	// Node implements response to request for node field.
+	Node(p graphql.ResolveParams) (interface{}, error)
+}
+
+// HandlerEdgeCursorFieldResolver implement to resolve requests for the HandlerEdge's cursor field.
+type HandlerEdgeCursorFieldResolver interface {
+	// Cursor implements response to request for cursor field.
+	Cursor(p graphql.ResolveParams) (string, error)
+}
+
+//
+// HandlerEdgeFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'HandlerEdge' type.
+//
+// == Example SDL
+//
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
+//
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
+//
+// == Example generated interface
+//
+//   // DogResolver ...
+//   type DogFieldResolvers interface {
+//     DogNameFieldResolver
+//     DogBreedFieldResolver
+//
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//   }
+//
+// == Example implementation ...
+//
+//   // DogResolver implements DogFieldResolvers interface
+//   type DogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
+//
+//   // Name implements response to request for name field.
+//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     return dog.GetName()
+//   }
+//
+//   // Breed implements response to request for breed field.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+//     // ... implementation details ...
+//     _, ok := p.Value.(DogGetter)
+//     return ok
+//   }
+//
+type HandlerEdgeFieldResolvers interface {
+	HandlerEdgeNodeFieldResolver
+	HandlerEdgeCursorFieldResolver
+}
+
+// HandlerEdgeAliases implements all methods on HandlerEdgeFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+//
+type HandlerEdgeAliases struct{}
+
+// Node implements response to request for 'node' field.
+func (_ HandlerEdgeAliases) Node(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Cursor implements response to request for 'cursor' field.
+func (_ HandlerEdgeAliases) Cursor(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'cursor'")
+	}
+	return ret, err
+}
+
+// HandlerEdgeType An edge in a connection.
+var HandlerEdgeType = graphql.NewType("HandlerEdge", graphql.ObjectKind)
+
+// RegisterHandlerEdge registers HandlerEdge object type with given service.
+func RegisterHandlerEdge(svc *graphql.Service, impl HandlerEdgeFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeHandlerEdgeDesc, impl)
+}
+func _ObjTypeHandlerEdgeNodeHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(HandlerEdgeNodeFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Node(frp)
+	}
+}
+
+func _ObjTypeHandlerEdgeCursorHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(HandlerEdgeCursorFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Cursor(frp)
+	}
+}
+
+func _ObjectTypeHandlerEdgeConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "An edge in a connection.",
+		Fields: graphql1.Fields{
+			"cursor": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "cursor",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"node": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "node",
+				Type:              graphql.OutputType("Handler"),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see HandlerEdgeFieldResolvers.")
+		},
+		Name: "HandlerEdge",
+	}
+}
+
+// describe HandlerEdge's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeHandlerEdgeDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeHandlerEdgeConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"cursor": _ObjTypeHandlerEdgeCursorHandler,
+		"node":   _ObjTypeHandlerEdgeNodeHandler,
+	},
+}

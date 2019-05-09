@@ -104,6 +104,24 @@ type QueryCheckFieldResolver interface {
 	Check(p QueryCheckFieldResolverParams) (interface{}, error)
 }
 
+// QueryHandlerFieldResolverArgs contains arguments provided to handler when selected
+type QueryHandlerFieldResolverArgs struct {
+	Namespace string // Namespace - self descriptive
+	Name      string // Name - self descriptive
+}
+
+// QueryHandlerFieldResolverParams contains contextual info to resolve handler field
+type QueryHandlerFieldResolverParams struct {
+	graphql.ResolveParams
+	Args QueryHandlerFieldResolverArgs
+}
+
+// QueryHandlerFieldResolver implement to resolve requests for the Query's handler field.
+type QueryHandlerFieldResolver interface {
+	// Handler implements response to request for handler field.
+	Handler(p QueryHandlerFieldResolverParams) (interface{}, error)
+}
+
 // QueryNodeFieldResolverArgs contains arguments provided to node when selected
 type QueryNodeFieldResolverArgs struct {
 	ID string // ID - The ID of an object.
@@ -205,6 +223,7 @@ type QueryFieldResolvers interface {
 	QueryEventFieldResolver
 	QueryEntityFieldResolver
 	QueryCheckFieldResolver
+	QueryHandlerFieldResolver
 	QueryNodeFieldResolver
 	QueryWrappedNodeFieldResolver
 }
@@ -286,6 +305,12 @@ func (_ QueryAliases) Check(p QueryCheckFieldResolverParams) (interface{}, error
 	return val, err
 }
 
+// Handler implements response to request for 'handler' field.
+func (_ QueryAliases) Handler(p QueryHandlerFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // Node implements response to request for 'node' field.
 func (_ QueryAliases) Node(p QueryNodeFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -361,6 +386,19 @@ func _ObjTypeQueryCheckHandler(impl interface{}) graphql1.FieldResolveFn {
 		}
 
 		return resolver.Check(frp)
+	}
+}
+
+func _ObjTypeQueryHandlerHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(QueryHandlerFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := QueryHandlerFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Handler(frp)
 	}
 }
 
@@ -446,6 +484,22 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 				Name:              "event",
 				Type:              graphql.OutputType("Event"),
 			},
+			"handler": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"name": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.NewNonNull(graphql1.String),
+					},
+					"namespace": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.NewNonNull(graphql1.String),
+					},
+				},
+				DeprecationReason: "",
+				Description:       "handler fetch the handler associated with the given set of arguments.",
+				Name:              "handler",
+				Type:              graphql.OutputType("Handler"),
+			},
 			"namespace": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{"name": &graphql1.ArgumentConfig{
 					Description: "self descriptive",
@@ -504,6 +558,7 @@ var _ObjectTypeQueryDesc = graphql.ObjectDesc{
 		"check":       _ObjTypeQueryCheckHandler,
 		"entity":      _ObjTypeQueryEntityHandler,
 		"event":       _ObjTypeQueryEventHandler,
+		"handler":     _ObjTypeQueryHandlerHandler,
 		"namespace":   _ObjTypeQueryNamespaceHandler,
 		"node":        _ObjTypeQueryNodeHandler,
 		"viewer":      _ObjTypeQueryViewerHandler,
