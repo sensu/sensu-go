@@ -38,7 +38,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Fetch assets from API
-			results, err := cli.Client.ListAssets(namespace, opts)
+			results, err := cli.Client.ListAssets(namespace, &opts)
 			if err != nil {
 				return err
 			}

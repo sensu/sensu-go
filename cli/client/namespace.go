@@ -57,7 +57,7 @@ func (client *RestClient) DeleteNamespace(namespace string) error {
 }
 
 // ListNamespaces fetches all namespaces from configured Sensu instance
-func (client *RestClient) ListNamespaces(options ListOptions) ([]corev2.Namespace, error) {
+func (client *RestClient) ListNamespaces(options *ListOptions) ([]corev2.Namespace, error) {
 	var namespaces []corev2.Namespace
 
 	path := namespacesPath()

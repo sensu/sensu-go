@@ -25,7 +25,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Fetch roles from API
-			results, err := cli.Client.ListClusterRoles(opts)
+			results, err := cli.Client.ListClusterRoles(&opts)
 			if err != nil {
 				return err
 			}

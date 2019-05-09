@@ -30,7 +30,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Fetch namespaces from API
-			results, err := cli.Client.ListNamespaces(opts)
+			results, err := cli.Client.ListNamespaces(&opts)
 			if err != nil {
 				return err
 			}

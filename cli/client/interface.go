@@ -46,7 +46,7 @@ type GenericClient interface {
 	// Get retrieves the key at the given path and stores it into obj
 	Get(path string, obj interface{}) error
 	// List retrieves all keys with the given path prefix and stores them into objs
-	List(path string, objs interface{}, options ListOptions) error
+	List(path string, objs interface{}, options *ListOptions) error
 	// Post creates the given obj at the specified path
 	Post(path string, obj interface{}) error
 	// Put creates the given obj at the specified path
@@ -69,7 +69,7 @@ type AssetAPIClient interface {
 	CreateAsset(*types.Asset) error
 	UpdateAsset(*types.Asset) error
 	FetchAsset(string) (*types.Asset, error)
-	ListAssets(string, ListOptions) ([]types.Asset, error)
+	ListAssets(string, *ListOptions) ([]types.Asset, error)
 }
 
 // CheckAPIClient client methods for checks
@@ -78,7 +78,7 @@ type CheckAPIClient interface {
 	DeleteCheck(string, string) error
 	ExecuteCheck(*types.AdhocRequest) error
 	FetchCheck(string) (*types.CheckConfig, error)
-	ListChecks(string, ListOptions) ([]types.CheckConfig, error)
+	ListChecks(string, *ListOptions) ([]types.CheckConfig, error)
 	UpdateCheck(*types.CheckConfig) error
 
 	AddCheckHook(check *types.CheckConfig, checkHook *types.HookList) error
@@ -90,7 +90,7 @@ type ClusterRoleAPIClient interface {
 	CreateClusterRole(*types.ClusterRole) error
 	DeleteClusterRole(string) error
 	FetchClusterRole(string) (*types.ClusterRole, error)
-	ListClusterRoles(ListOptions) ([]types.ClusterRole, error)
+	ListClusterRoles(*ListOptions) ([]types.ClusterRole, error)
 }
 
 // ClusterRoleBindingAPIClient client methods for cluster role bindings
@@ -98,7 +98,7 @@ type ClusterRoleBindingAPIClient interface {
 	CreateClusterRoleBinding(*types.ClusterRoleBinding) error
 	DeleteClusterRoleBinding(string) error
 	FetchClusterRoleBinding(string) (*types.ClusterRoleBinding, error)
-	ListClusterRoleBindings(ListOptions) ([]types.ClusterRoleBinding, error)
+	ListClusterRoleBindings(*ListOptions) ([]types.ClusterRoleBinding, error)
 }
 
 // EntityAPIClient client methods for entities
@@ -106,7 +106,7 @@ type EntityAPIClient interface {
 	CreateEntity(entity *types.Entity) error
 	DeleteEntity(string, string) error
 	FetchEntity(ID string) (*types.Entity, error)
-	ListEntities(string, ListOptions) ([]types.Entity, error)
+	ListEntities(string, *ListOptions) ([]types.Entity, error)
 	UpdateEntity(entity *types.Entity) error
 }
 
@@ -115,14 +115,14 @@ type FilterAPIClient interface {
 	CreateFilter(*types.EventFilter) error
 	DeleteFilter(string, string) error
 	FetchFilter(string) (*types.EventFilter, error)
-	ListFilters(string, ListOptions) ([]types.EventFilter, error)
+	ListFilters(string, *ListOptions) ([]types.EventFilter, error)
 	UpdateFilter(*types.EventFilter) error
 }
 
 // EventAPIClient client methods for events
 type EventAPIClient interface {
 	FetchEvent(string, string) (*types.Event, error)
-	ListEvents(string, ListOptions) ([]corev2.Event, error)
+	ListEvents(string, *ListOptions) ([]corev2.Event, error)
 
 	// DeleteEvent deletes the event identified by entity, check.
 	DeleteEvent(namespace, entity, check string) error
@@ -132,7 +132,7 @@ type EventAPIClient interface {
 
 // ExtensionAPIClient client methods for extensions
 type ExtensionAPIClient interface {
-	ListExtensions(namespace string, options ListOptions) ([]types.Extension, error)
+	ListExtensions(namespace string, options *ListOptions) ([]types.Extension, error)
 	RegisterExtension(*types.Extension) error
 	DeregisterExtension(name, namespace string) error
 }
@@ -141,7 +141,7 @@ type ExtensionAPIClient interface {
 type HandlerAPIClient interface {
 	CreateHandler(*types.Handler) error
 	DeleteHandler(string, string) error
-	ListHandlers(string, ListOptions) ([]types.Handler, error)
+	ListHandlers(string, *ListOptions) ([]types.Handler, error)
 	FetchHandler(string) (*types.Handler, error)
 	UpdateHandler(*types.Handler) error
 }
@@ -157,13 +157,13 @@ type HookAPIClient interface {
 	UpdateHook(*types.HookConfig) error
 	DeleteHook(string, string) error
 	FetchHook(string) (*types.HookConfig, error)
-	ListHooks(string, ListOptions) ([]types.HookConfig, error)
+	ListHooks(string, *ListOptions) ([]types.HookConfig, error)
 }
 
 // MutatorAPIClient client methods for mutators
 type MutatorAPIClient interface {
 	CreateMutator(*types.Mutator) error
-	ListMutators(string, ListOptions) ([]types.Mutator, error)
+	ListMutators(string, *ListOptions) ([]types.Mutator, error)
 	DeleteMutator(string, string) error
 	FetchMutator(string) (*types.Mutator, error)
 	UpdateMutator(*types.Mutator) error
@@ -174,7 +174,7 @@ type NamespaceAPIClient interface {
 	CreateNamespace(*types.Namespace) error
 	UpdateNamespace(*types.Namespace) error
 	DeleteNamespace(string) error
-	ListNamespaces(ListOptions) ([]types.Namespace, error)
+	ListNamespaces(*ListOptions) ([]types.Namespace, error)
 	FetchNamespace(string) (*types.Namespace, error)
 }
 
@@ -184,7 +184,7 @@ type UserAPIClient interface {
 	CreateUser(*types.User) error
 	DisableUser(string) error
 	FetchUser(string) (*types.User, error)
-	ListUsers(ListOptions) ([]types.User, error)
+	ListUsers(*ListOptions) ([]types.User, error)
 	ReinstateUser(string) error
 	RemoveGroupFromUser(string, string) error
 	RemoveAllGroupsFromUser(string) error
@@ -197,7 +197,7 @@ type RoleAPIClient interface {
 	CreateRole(*types.Role) error
 	DeleteRole(string, string) error
 	FetchRole(string) (*types.Role, error)
-	ListRoles(string, ListOptions) ([]types.Role, error)
+	ListRoles(string, *ListOptions) ([]types.Role, error)
 }
 
 // RoleBindingAPIClient client methods for role bindings
@@ -205,7 +205,7 @@ type RoleBindingAPIClient interface {
 	CreateRoleBinding(*types.RoleBinding) error
 	DeleteRoleBinding(string, string) error
 	FetchRoleBinding(string) (*types.RoleBinding, error)
-	ListRoleBindings(string, ListOptions) ([]types.RoleBinding, error)
+	ListRoleBindings(string, *ListOptions) ([]types.RoleBinding, error)
 }
 
 // SilencedAPIClient client methods for silenced
@@ -218,7 +218,7 @@ type SilencedAPIClient interface {
 
 	// ListSilenceds lists all silenced entries, optionally constraining by
 	// subscription or check.
-	ListSilenceds(namespace, subscription, check string, options ListOptions) ([]types.Silenced, error)
+	ListSilenceds(namespace, subscription, check string, options *ListOptions) ([]types.Silenced, error)
 
 	// FetchSilenced fetches the silenced entry by ID.
 	FetchSilenced(id string) (*types.Silenced, error)

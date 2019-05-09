@@ -29,7 +29,7 @@ func (client *RestClient) FetchEvent(entity, check string) (*types.Event, error)
 }
 
 // ListEvents fetches events from Sensu API
-func (client *RestClient) ListEvents(namespace string, options ListOptions) ([]corev2.Event, error) {
+func (client *RestClient) ListEvents(namespace string, options *ListOptions) ([]corev2.Event, error) {
 	var events []corev2.Event
 
 	path := eventsPath(namespace)

@@ -32,7 +32,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Fetch users from API
-			results, err := cli.Client.ListUsers(opts)
+			results, err := cli.Client.ListUsers(&opts)
 			if err != nil {
 				return err
 			}

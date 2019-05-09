@@ -95,7 +95,7 @@ func (client *RestClient) FetchCheck(name string) (*types.CheckConfig, error) {
 }
 
 // ListChecks fetches all checks from configured Sensu instance
-func (client *RestClient) ListChecks(namespace string, options ListOptions) ([]corev2.CheckConfig, error) {
+func (client *RestClient) ListChecks(namespace string, options *ListOptions) ([]corev2.CheckConfig, error) {
 	var checks []corev2.CheckConfig
 
 	path := checksPath(namespace)

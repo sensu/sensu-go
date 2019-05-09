@@ -32,7 +32,7 @@ func (c *MockClient) FetchUser(username string) (*types.User, error) {
 }
 
 // ListUsers for use with mock lib
-func (c *MockClient) ListUsers(options client.ListOptions) ([]corev2.User, error) {
+func (c *MockClient) ListUsers(options *client.ListOptions) ([]corev2.User, error) {
 	args := c.Called(options)
 	return args.Get(0).([]corev2.User), args.Error(1)
 }

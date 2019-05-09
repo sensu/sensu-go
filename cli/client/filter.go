@@ -55,7 +55,7 @@ func (client *RestClient) FetchFilter(name string) (*types.EventFilter, error) {
 }
 
 // ListFilters fetches all filters from configured Sensu instance
-func (client *RestClient) ListFilters(namespace string, options ListOptions) ([]corev2.EventFilter, error) {
+func (client *RestClient) ListFilters(namespace string, options *ListOptions) ([]corev2.EventFilter, error) {
 	var filters []corev2.EventFilter
 
 	path := filtersPath(namespace)

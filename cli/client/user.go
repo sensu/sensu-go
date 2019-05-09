@@ -74,7 +74,7 @@ func (client *RestClient) FetchUser(username string) (*types.User, error) {
 }
 
 // ListUsers fetches all users from configured Sensu instance
-func (client *RestClient) ListUsers(options ListOptions) ([]corev2.User, error) {
+func (client *RestClient) ListUsers(options *ListOptions) ([]corev2.User, error) {
 	var users []corev2.User
 
 	path := usersPath()

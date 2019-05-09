@@ -11,7 +11,7 @@ import (
 var extPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "extensions")
 
 // ListExtensions retrieves a list of extension resources from the backend
-func (client *RestClient) ListExtensions(namespace string, options ListOptions) ([]corev2.Extension, error) {
+func (client *RestClient) ListExtensions(namespace string, options *ListOptions) ([]corev2.Extension, error) {
 	var extensions []corev2.Extension
 
 	path := extPath(namespace)

@@ -73,7 +73,7 @@ func (client *RestClient) FetchHook(name string) (*types.HookConfig, error) {
 }
 
 // ListHooks fetches all hooks from configured Sensu instance
-func (client *RestClient) ListHooks(namespace string, options ListOptions) ([]corev2.HookConfig, error) {
+func (client *RestClient) ListHooks(namespace string, options *ListOptions) ([]corev2.HookConfig, error) {
 	var hooks []corev2.HookConfig
 
 	path := hooksPath(namespace)

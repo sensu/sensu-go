@@ -36,7 +36,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Fetch filters from the API
-			results, err := cli.Client.ListFilters(namespace, opts)
+			results, err := cli.Client.ListFilters(namespace, &opts)
 			if err != nil {
 				return err
 			}

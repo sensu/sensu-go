@@ -11,7 +11,7 @@ import (
 var handlersPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "handlers")
 
 // ListHandlers fetches all handlers from configured Sensu instance
-func (client *RestClient) ListHandlers(namespace string, options ListOptions) ([]corev2.Handler, error) {
+func (client *RestClient) ListHandlers(namespace string, options *ListOptions) ([]corev2.Handler, error) {
 	var handlers []corev2.Handler
 
 	path := handlersPath(namespace)

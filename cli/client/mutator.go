@@ -11,7 +11,7 @@ import (
 var mutatorsPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "mutators")
 
 // ListMutators fetches all mutators from the configured Sensu instance
-func (client *RestClient) ListMutators(namespace string, options ListOptions) ([]corev2.Mutator, error) {
+func (client *RestClient) ListMutators(namespace string, options *ListOptions) ([]corev2.Mutator, error) {
 	var mutators []corev2.Mutator
 
 	path := mutatorsPath(namespace)

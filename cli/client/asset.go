@@ -11,7 +11,7 @@ import (
 var assetsPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "assets")
 
 // ListAssets fetches a list of asset resources from the backend
-func (client *RestClient) ListAssets(namespace string, options ListOptions) ([]corev2.Asset, error) {
+func (client *RestClient) ListAssets(namespace string, options *ListOptions) ([]corev2.Asset, error) {
 	var assets []corev2.Asset
 
 	path := assetsPath(namespace)

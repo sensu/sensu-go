@@ -31,7 +31,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Fetch role bindings from API
-			results, err := cli.Client.ListRoleBindings(namespace, opts)
+			results, err := cli.Client.ListRoleBindings(namespace, &opts)
 			if err != nil {
 				return err
 			}

@@ -36,7 +36,7 @@ func (client *RestClient) Get(path string, obj interface{}) error {
 }
 
 // List sends a GET request for all objects at the given path
-func (client *RestClient) List(path string, objs interface{}, options ListOptions) error {
+func (client *RestClient) List(path string, objs interface{}, options *ListOptions) error {
 	request := client.R()
 
 	ApplyListOptions(request, options)

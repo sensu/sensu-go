@@ -38,7 +38,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Fetch checks from the API
-			results, err := cli.Client.ListChecks(namespace, opts)
+			results, err := cli.Client.ListChecks(namespace, &opts)
 			if err != nil {
 				return err
 			}

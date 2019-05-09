@@ -33,7 +33,7 @@ func (client *RestClient) FetchEntity(name string) (*types.Entity, error) {
 }
 
 // ListEntities fetches all entities from configured Sensu instance
-func (client *RestClient) ListEntities(namespace string, options ListOptions) ([]corev2.Entity, error) {
+func (client *RestClient) ListEntities(namespace string, options *ListOptions) ([]corev2.Entity, error) {
 	var entities []corev2.Entity
 
 	path := entitiesPath(namespace)

@@ -37,7 +37,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Fetch handlers from API
-			results, err := cli.Client.ListEntities(namespace, opts)
+			results, err := cli.Client.ListEntities(namespace, &opts)
 			if err != nil {
 				return err
 			}

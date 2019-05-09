@@ -36,7 +36,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Fetch hooks from the API
-			results, err := cli.Client.ListHooks(namespace, opts)
+			results, err := cli.Client.ListHooks(namespace, &opts)
 			if err != nil {
 				return err
 			}

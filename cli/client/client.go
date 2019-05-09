@@ -158,7 +158,7 @@ func (client *RestClient) configure() {
 
 // ApplyListOptions mutates the given request to make it carry the semantics of
 // the given options.
-func ApplyListOptions(request *resty.Request, options ListOptions) {
+func ApplyListOptions(request *resty.Request, options *ListOptions) {
 	if options.FieldSelector != "" {
 		request.SetQueryParam("fieldSelector", options.FieldSelector)
 	}
