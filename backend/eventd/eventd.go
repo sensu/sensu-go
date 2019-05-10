@@ -21,6 +21,10 @@ const (
 	// ComponentName identifies Eventd as the component/daemon implemented in this
 	// package.
 	ComponentName = "eventd"
+
+	// DefaultHandlerCount is the default number of goroutines dedicated to
+	// handling events.
+	DefaultHandlerCount = 1000
 )
 
 var (
@@ -66,7 +70,7 @@ func New(c Config, opts ...Option) (*Eventd, error) {
 	e := &Eventd{
 		store:           c.Store,
 		bus:             c.Bus,
-		handlerCount:    100,
+		handlerCount:    DefaultHandlerCount,
 		livenessFactory: c.LivenessFactory,
 		errChan:         make(chan error, 1),
 		shutdownChan:    make(chan struct{}, 1),

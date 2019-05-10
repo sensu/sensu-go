@@ -22,7 +22,7 @@ import (
 const (
 	// DefaultHandlerCount is the default number of goroutines dedicated to
 	// handling keepalive events.
-	DefaultHandlerCount = 10
+	DefaultHandlerCount = 1000
 
 	// KeepaliveCheckName is the name of the check that is created when a
 	// keepalive timeout occurs.
