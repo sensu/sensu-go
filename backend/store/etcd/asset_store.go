@@ -23,7 +23,8 @@ func getAssetPath(asset *types.Asset) string {
 	return assetKeyBuilder.WithResource(asset).Build(asset.Name)
 }
 
-func getAssetsPath(ctx context.Context, name string) string {
+// GetAssetsPath gets the path of the asset store.
+func GetAssetsPath(ctx context.Context, name string) string {
 	namespace := types.ContextNamespace(ctx)
 
 	return assetKeyBuilder.WithNamespace(namespace).Build(name)
@@ -35,14 +36,14 @@ func (s *Store) DeleteAssetByName(ctx context.Context, name string) error {
 		return errors.New("must specify name")
 	}
 
-	_, err := s.client.Delete(ctx, getAssetsPath(ctx, name))
+	_, err := s.client.Delete(ctx, GetAssetsPath(ctx, name))
 	return err
 }
 
 // GetAssets fetches all assets from the store
 func (s *Store) GetAssets(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Asset, error) {
 	assets := []*types.Asset{}
-	err := List(ctx, s.client, getAssetsPath, &assets, pred)
+	err := List(ctx, s.client, GetAssetsPath, &assets, pred)
 	return assets, err
 }
 
@@ -52,7 +53,7 @@ func (s *Store) GetAssetByName(ctx context.Context, name string) (*types.Asset, 
 		return nil, errors.New("must specify namespace and name")
 	}
 
-	resp, err := s.client.Get(ctx, getAssetsPath(ctx, name))
+	resp, err := s.client.Get(ctx, GetAssetsPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}

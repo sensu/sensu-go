@@ -18,7 +18,8 @@ func getUserPath(id string) string {
 	return path.Join(store.Root, usersPathPrefix, id)
 }
 
-func getUsersPath(ctx context.Context, id string) string {
+// GetUsersPath gets the path of the user store.
+func GetUsersPath(ctx context.Context, id string) string {
 	return path.Join(store.Root, usersPathPrefix, id)
 }
 
@@ -148,7 +149,7 @@ func (s *Store) GetUsers() ([]*types.User, error) {
 // GetAllUsers retrieves all users
 func (s *Store) GetAllUsers(pred *store.SelectionPredicate) ([]*types.User, error) {
 	users := []*types.User{}
-	err := List(context.Background(), s.client, getUsersPath, &users, pred)
+	err := List(context.Background(), s.client, GetUsersPath, &users, pred)
 	return users, err
 }
 

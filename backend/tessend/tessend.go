@@ -42,6 +42,32 @@ const (
 	// ringBackendKeepalive is the length of time, in seconds, that the
 	// ring considers an entry alive.
 	ringBackendKeepalive = 900
+
+	// perResourceDuration is the duration of time, in seconds, that TessenD will
+	// wait in between resources when collecting its respective count.
+	perResourceDuration = 5 * time.Second
+)
+
+var (
+	// resourceMetrics maps the metric name to the etcd function
+	// responsible for retrieving the resources store path.
+	resourceMetrics = map[string]func(context.Context, string) string{
+		"asset_count":                etcd.GetAssetsPath,
+		"check_count":                etcd.GetCheckConfigsPath,
+		"cluster_role_count":         etcd.GetClusterRolesPath,
+		"cluster_role_binding_count": etcd.GetClusterRoleBindingsPath,
+		"entity_count":               etcd.GetEntitiesPath,
+		"event_count":                etcd.GetEventsPath,
+		"filter_count":               etcd.GetEventFiltersPath,
+		"handler_count":              etcd.GetHandlersPath,
+		"hook_count":                 etcd.GetHookConfigsPath,
+		"mutator_count":              etcd.GetMutatorsPath,
+		"namespace_count":            etcd.GetNamespacesPath,
+		"role_count":                 etcd.GetRolesPath,
+		"role_binding_count":         etcd.GetRoleBindingsPath,
+		"silenced_count":             etcd.GetSilencedPath,
+		"user_count":                 etcd.GetUsersPath,
+	}
 )
 
 // Tessend is the tessen daemon.
@@ -59,6 +85,7 @@ type Tessend struct {
 	bus          messaging.MessageBus
 	messageChan  chan interface{}
 	subscription messaging.Subscription
+	duration     time.Duration
 }
 
 // Option is a functional option.
@@ -83,6 +110,7 @@ func New(c Config, opts ...Option) (*Tessend, error) {
 		backendID:   uuid.New().String(),
 		bus:         c.Bus,
 		messageChan: make(chan interface{}, 1),
+		duration:    perResourceDuration,
 	}
 	t.ctx, t.cancel = context.WithCancel(context.Background())
 	t.interrupt = make(chan *corev2.TessenConfig, 1)
@@ -322,14 +350,13 @@ func (t *Tessend) enabled(tessen *corev2.TessenConfig) bool {
 func (t *Tessend) collectAndSend(tessen *corev2.TessenConfig) {
 	// collect data
 	data := t.getDataPayload()
-	t.getTessenMetrics(time.Now().UTC().Unix(), data)
+	t.getPerResourceMetrics(time.Now().UTC().Unix(), data)
 
 	logger.WithFields(logrus.Fields{
-		"url":                       t.url,
-		"id":                        data.Cluster.ID,
-		data.Metrics.Points[0].Name: data.Metrics.Points[0].Value,
-		data.Metrics.Points[1].Name: data.Metrics.Points[1].Value,
-	}).Info("sending data to tessen")
+		"url":           t.url,
+		"id":            data.Cluster.ID,
+		"metric_points": len(data.Metrics.Points),
+	}).Info("sending resource counts to tessen")
 
 	// send data
 	respHeader := t.send(data)
@@ -393,16 +420,9 @@ func (t *Tessend) getDataPayload() *Data {
 	return data
 }
 
-// getTessenMetrics populates the data payload with # backends/entities.
-func (t *Tessend) getTessenMetrics(now int64, data *Data) {
-	var entityCount, backendCount float64
-
-	// collect entity count
-	entities, err := etcd.Count(t.ctx, t.client, etcd.GetEntitiesPath(t.ctx, ""))
-	if err != nil {
-		logger.WithError(err).Error("unable to retrieve entity count")
-	}
-	entityCount = float64(entities)
+// getPerResourceMetrics populates the data payload with the total number of each resource.
+func (t *Tessend) getPerResourceMetrics(now int64, data *Data) {
+	var backendCount float64
 
 	// collect backend count
 	cluster, err := t.client.Cluster.MemberList(t.ctx)
@@ -414,39 +434,49 @@ func (t *Tessend) getTessenMetrics(now int64, data *Data) {
 	}
 
 	// populate data payload
-	data.Metrics = corev2.Metrics{
-		Points: []*corev2.MetricPoint{
-			&corev2.MetricPoint{
-				Name:      "entity_count",
-				Value:     entityCount,
-				Timestamp: now,
-			},
-			&corev2.MetricPoint{
-				Name:      "backend_count",
-				Value:     backendCount,
-				Timestamp: now,
-			},
-		},
+	mp := &corev2.MetricPoint{
+		Name:      "backend_count",
+		Value:     backendCount,
+		Timestamp: now,
+	}
+	logMetric(mp)
+	data.Metrics.Points = append(data.Metrics.Points, mp)
+
+	// loop through the resource map and collect the count of each
+	// resource every 5 seconds to distribute the load on etcd
+	for metricName, metricFunc := range resourceMetrics {
+		time.Sleep(t.duration)
+		count, err := etcd.Count(t.ctx, t.client, metricFunc(t.ctx, ""))
+		if err != nil {
+			logger.WithError(err).Error("unable to retrieve resource count")
+			continue
+		}
+
+		mp = &corev2.MetricPoint{
+			Name:      metricName,
+			Value:     float64(count),
+			Timestamp: now,
+		}
+		logMetric(mp)
+		data.Metrics.Points = append(data.Metrics.Points, mp)
 	}
 }
 
 // getTessenConfigMetrics populates the data payload with an opt-out status event.
 func (t *Tessend) getTessenConfigMetrics(now int64, tessen *corev2.TessenConfig, data *Data) {
-	data.Metrics = corev2.Metrics{
-		Points: []*corev2.MetricPoint{
-			&corev2.MetricPoint{
-				Name:      "tessen_config_update",
-				Value:     1,
-				Timestamp: now,
-				Tags: []*corev2.MetricTag{
-					&corev2.MetricTag{
-						Name:  "opt_out",
-						Value: strconv.FormatBool(tessen.OptOut),
-					},
-				},
+	mp := &corev2.MetricPoint{
+		Name:      "tessen_config_update",
+		Value:     1,
+		Timestamp: now,
+		Tags: []*corev2.MetricTag{
+			&corev2.MetricTag{
+				Name:  "opt_out",
+				Value: strconv.FormatBool(tessen.OptOut),
 			},
 		},
 	}
+	logMetric(mp)
+	data.Metrics.Points = append(data.Metrics.Points, mp)
 }
 
 // send sends the data payload to the tessen url and retrieves the interval response header.
@@ -466,4 +496,12 @@ func (t *Tessend) send(data *Data) string {
 	}
 
 	return resp.Header.Get(tessenIntervalHeader)
+}
+
+// logMetric logs the metric name and value collected for transparency.
+func logMetric(m *corev2.MetricPoint) {
+	logger.WithFields(logrus.Fields{
+		"metric_name":  m.Name,
+		"metric_value": m.Value,
+	}).Debug("collected a metric for tessen")
 }
