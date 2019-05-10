@@ -144,27 +144,6 @@ enum SubscriptionSetOrder {
   OCCURRENCES
 }
 
-"Describes ways in which a list of checks can be ordered."
-enum CheckListOrder {
-  NAME
-  NAME_DESC
-}
-
-"Describes ways in which a list of entities can be ordered."
-enum EntityListOrder {
-  ID
-  ID_DESC
-  LASTSEEN
-}
-
-"Describes ways in which a list of silences can be ordered."
-enum SilencesListOrder {
-  ID
-  ID_DESC
-  BEGIN
-  BEGIN_DESC
-}
-
 "Describes a graphical element that can be used to distinguish a resource."
 enum Icon {
   BRIEFCASE

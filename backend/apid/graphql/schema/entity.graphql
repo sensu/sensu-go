@@ -68,12 +68,6 @@ type Entity implements Node, Namespaced, Silenceable, HasMetadata {
   extendedAttributes: JSON!
 }
 
-"A connection to a sequence of records."
-type EntityConnection {
-  nodes: [Entity!]!
-  pageInfo: OffsetPageInfo!
-}
-
 """
 System contains information about the system that the Agent process
 is running on, used for additional Entity context.
@@ -127,4 +121,17 @@ Deregistration contains configuration for Sensu entity de-registration.
 """
 type Deregistration {
   handler: String!
+}
+
+"A connection to a sequence of records."
+type EntityConnection {
+  nodes: [Entity!]!
+  pageInfo: OffsetPageInfo!
+}
+
+"Describes ways in which a list of entities can be ordered."
+enum EntityListOrder {
+  ID
+  ID_DESC
+  LASTSEEN
 }
