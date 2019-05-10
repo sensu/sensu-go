@@ -35,7 +35,25 @@ type Entity implements Node, Namespaced, Silenceable, HasMetadata {
   related(limit: Int = 10): [Entity]!
 
   "All events associated with the entity."
-  events(orderBy: EventsListOrder = SEVERITY): [Event!]!
+  events(
+    "OrderBy adds optional order to the records retrieved."
+    orderBy: EventsListOrder = SEVERITY
+    """
+    Filters reduces the set using given arbitrary expression[s]; expressions
+    take on the form KEY: VALUE. The accepted key(s) are: status, check, entity,
+    & silenced.
+
+    Eg.
+
+    status:passing
+    status:warning
+    status:incident
+    check:check-disk
+    entity:venice
+    silenced:true
+    """
+    filters: [String!] = [],
+  ): [Event!]!
 
   "isSilenced return true if the entity has any silences associated with it."
   isSilenced: Boolean!

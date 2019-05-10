@@ -107,7 +107,21 @@ type EntityRelatedFieldResolver interface {
 
 // EntityEventsFieldResolverArgs contains arguments provided to events when selected
 type EntityEventsFieldResolverArgs struct {
-	OrderBy EventsListOrder // OrderBy - self descriptive
+	OrderBy EventsListOrder // OrderBy adds optional order to the records retrieved.
+	Filters []string        /*
+	Filters reduces the set using given arbitrary expression[s]; expressions
+	take on the form KEY: VALUE. The accepted key(s) are: status, check, entity,
+	& silenced.
+
+	Eg.
+
+	status:passing
+	status:warning
+	status:incident
+	check:check-disk
+	entity:venice
+	silenced:true
+	*/
 }
 
 // EntityEventsFieldResolverParams contains contextual info to resolve events field
@@ -621,11 +635,18 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"events": &graphql1.Field{
-				Args: graphql1.FieldConfigArgument{"orderBy": &graphql1.ArgumentConfig{
-					DefaultValue: "SEVERITY",
-					Description:  "self descriptive",
-					Type:         graphql.InputType("EventsListOrder"),
-				}},
+				Args: graphql1.FieldConfigArgument{
+					"filters": &graphql1.ArgumentConfig{
+						DefaultValue: []interface{}{},
+						Description:  "Filters reduces the set using given arbitrary expression[s]; expressions\ntake on the form KEY: VALUE. The accepted key(s) are: status, check, entity,\n& silenced.\n\nEg.\n\nstatus:passing\nstatus:warning\nstatus:incident\ncheck:check-disk\nentity:venice\nsilenced:true",
+						Type:         graphql1.NewList(graphql1.NewNonNull(graphql1.String)),
+					},
+					"orderBy": &graphql1.ArgumentConfig{
+						DefaultValue: "SEVERITY",
+						Description:  "OrderBy adds optional order to the records retrieved.",
+						Type:         graphql.InputType("EventsListOrder"),
+					},
+				},
 				DeprecationReason: "",
 				Description:       "All events associated with the entity.",
 				Name:              "events",

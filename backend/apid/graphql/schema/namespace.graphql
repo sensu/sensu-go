@@ -30,8 +30,19 @@ type Namespace implements Node {
     limit: Int = 10,
     "OrderBy adds optional order to the records retrieved."
     orderBy: CheckListOrder = NAME_DESC
-    "Filter reduces the set using the given Sensu Query Expression predicate."
+    "DEPRECATED: Please use the filters argument instead."
     filter: String = "",
+    """
+    Filters reduces the set using given arbitrary expression[s]; expressions
+    take on the form KEY: VALUE. The accepted key(s) are: subscription &
+    published.
+
+    Eg.
+
+    subscription:unix
+    published:true
+    """
+    filters: [String!] = [],
   ): CheckConfigConnection!
 
   "All entities associated with the namespace."
@@ -41,8 +52,19 @@ type Namespace implements Node {
     limit: Int = 10,
     "OrderBy adds optional order to the records retrieved."
     orderBy: EntityListOrder = ID_DESC
-    "Filter reduces the set using the given Sensu Query Expression predicate."
+    "DEPRECATED: Please use the filters argument instead."
     filter: String = "",
+    """
+    Filters reduces the set using given arbitrary expression[s]; expressions
+    take on the form KEY: VALUE. The accepted key(s) are: subscription &
+    class.
+
+    Eg.
+
+    subscription:unix
+    class:proxy
+    """
+    filters: [String!] = [],
   ): EntityConnection!
 
   "All events associated with the namespace."
@@ -52,8 +74,23 @@ type Namespace implements Node {
     limit: Int = 10,
     "OrderBy adds optional order to the records retrieved."
     orderBy: EventsListOrder = SEVERITY
-    "Filter reduces the set using the given Sensu Query Expression predicate."
+    "DEPRECATED: Please use the filters argument instead."
     filter: String = "",
+    """
+    Filters reduces the set using given arbitrary expression[s]; expressions
+    take on the form KEY: VALUE. The accepted key(s) are: status, check, entity,
+    & silenced.
+
+    Eg.
+
+    status:passing
+    status:warning
+    status:incident
+    check:check-disk
+    entity:venice
+    silenced:true
+    """
+    filters: [String!] = [],
   ): EventConnection!
 
   "All silences associated with the namespace."
@@ -63,8 +100,18 @@ type Namespace implements Node {
     limit: Int = 10
     "OrderBy adds optional order to the records retrieved."
     orderBy: SilencesListOrder = ID_DESC
-    "Filter reduces the set using the given Sensu Query Expression predicate."
+    "DEPRECATED: Please use the filters argument instead."
     filter: String = "",
+    """
+    Filters reduces the set using given arbitrary expression[s]; expressions
+    take on the form KEY: VALUE. The accepted key(s) are: check & subscription.
+
+    Eg.
+
+    check:check-disk
+    subscription:unix
+    """
+    filters: [String!] = [],
   ): SilencedConnection!
 
   "All subscriptions in use in the namespace."
@@ -75,16 +122,18 @@ type Namespace implements Node {
     orderBy: SubscriptionSetOrder = OCCURRENCES
   ): SubscriptionSet!
 
+  # TODO: Remove me.
+
   """
   checkHistory includes all persisted check execution results associated with
   the namespace. Unlike the Check type's history this field includes the most
   recent result.
   """
   checkHistory(
-    "Filter reduces the set using the given Sensu Query Expression predicate."
-    filter: String = ""
     "Limit adds optional limit to the number of entries returned."
     limit: Int = 10000
+    "Filter reduces the set using the given Sensu Query Expression predicate."
+    filter: String = ""
   ): [CheckHistory]!
 
   #
@@ -120,14 +169,6 @@ enum EntityListOrder {
   ID
   ID_DESC
   LASTSEEN
-}
-
-"Describes ways in which a list of events can be ordered."
-enum EventsListOrder {
-  LASTOK
-  NEWEST
-  OLDEST
-  SEVERITY
 }
 
 "Describes ways in which a list of silences can be ordered."
