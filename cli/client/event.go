@@ -32,22 +32,11 @@ func (client *RestClient) FetchEvent(entity, check string) (*types.Event, error)
 func (client *RestClient) ListEvents(namespace string, options *ListOptions) ([]corev2.Event, error) {
 	var events []corev2.Event
 
-	path := eventsPath(namespace)
-	request := client.R()
-
-	ApplyListOptions(request, options)
-
-	res, err := request.Get(path)
-	if err != nil {
+	if err := client.List(eventsPath(namespace), &events, options); err != nil {
 		return events, err
 	}
 
-	if res.StatusCode() >= 400 {
-		return nil, UnmarshalError(res)
-	}
-
-	err = json.Unmarshal(res.Body(), &events)
-	return events, err
+	return events, nil
 }
 
 // DeleteEvent deletes an event.

@@ -76,20 +76,9 @@ func (client *RestClient) FetchHook(name string) (*types.HookConfig, error) {
 func (client *RestClient) ListHooks(namespace string, options *ListOptions) ([]corev2.HookConfig, error) {
 	var hooks []corev2.HookConfig
 
-	path := hooksPath(namespace)
-	request := client.R()
-
-	ApplyListOptions(request, options)
-
-	res, err := request.Get(path)
-	if err != nil {
+	if err := client.List(hooksPath(namespace), &hooks, options); err != nil {
 		return hooks, err
 	}
 
-	if res.StatusCode() >= 400 {
-		return hooks, UnmarshalError(res)
-	}
-
-	err = json.Unmarshal(res.Body(), &hooks)
-	return hooks, err
+	return hooks, nil
 }

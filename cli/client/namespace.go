@@ -60,22 +60,11 @@ func (client *RestClient) DeleteNamespace(namespace string) error {
 func (client *RestClient) ListNamespaces(options *ListOptions) ([]corev2.Namespace, error) {
 	var namespaces []corev2.Namespace
 
-	path := namespacesPath()
-	request := client.R()
-
-	ApplyListOptions(request, options)
-
-	res, err := request.Get(path)
-	if err != nil {
+	if err := client.List(namespacesPath(), &namespaces, options); err != nil {
 		return namespaces, err
 	}
 
-	if res.StatusCode() >= 400 {
-		return namespaces, fmt.Errorf("%v", res.String())
-	}
-
-	err = json.Unmarshal(res.Body(), &namespaces)
-	return namespaces, err
+	return namespaces, nil
 }
 
 // FetchNamespace fetches an namespace by name

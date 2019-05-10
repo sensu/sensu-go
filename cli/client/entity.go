@@ -36,22 +36,11 @@ func (client *RestClient) FetchEntity(name string) (*types.Entity, error) {
 func (client *RestClient) ListEntities(namespace string, options *ListOptions) ([]corev2.Entity, error) {
 	var entities []corev2.Entity
 
-	path := entitiesPath(namespace)
-	request := client.R()
-
-	ApplyListOptions(request, options)
-
-	res, err := request.Get(path)
-	if err != nil {
+	if err := client.List(entitiesPath(namespace), &entities, options); err != nil {
 		return entities, err
 	}
 
-	if res.StatusCode() >= 400 {
-		return entities, UnmarshalError(res)
-	}
-
-	err = json.Unmarshal(res.Body(), &entities)
-	return entities, err
+	return entities, nil
 }
 
 // UpdateEntity updates given entity on configured Sensu instance

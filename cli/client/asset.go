@@ -14,22 +14,11 @@ var assetsPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "assets")
 func (client *RestClient) ListAssets(namespace string, options *ListOptions) ([]corev2.Asset, error) {
 	var assets []corev2.Asset
 
-	path := assetsPath(namespace)
-	request := client.R()
-
-	ApplyListOptions(request, options)
-
-	res, err := request.Get(path)
-	if err != nil {
+	if err := client.List(assetsPath(namespace), &assets, options); err != nil {
 		return assets, err
 	}
 
-	if res.StatusCode() >= 400 {
-		return assets, UnmarshalError(res)
-	}
-
-	err = json.Unmarshal(res.Body(), &assets)
-	return assets, err
+	return assets, nil
 }
 
 // FetchAsset fetches an asset resource from the backend
