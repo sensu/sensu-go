@@ -25,7 +25,6 @@ var (
 // splat as a checkName may return multiple values.
 
 // GetSilencedPath gets the path of the silenced store.
-// populates type keyBuilder with org and env info, returns a prefix
 func GetSilencedPath(ctx context.Context, name string) string {
 	return silencedKeyBuilder.WithContext(ctx).Build(name)
 }
