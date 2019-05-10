@@ -149,7 +149,7 @@ func (t *Tessend) Start() error {
 	go t.start(tessen)
 	// Attempt to send data immediately if tessen is enabled
 	if t.enabled(tessen) {
-		t.collectAndSend(tessen)
+		go t.collectAndSend(tessen)
 	}
 
 	return nil
@@ -294,7 +294,7 @@ func (t *Tessend) handleEvents(tessen *corev2.TessenConfig, ch <-chan ringv2.Eve
 			// only trigger tessen if the next backend in the ring is this backend
 			if event.Values[0] == t.backendID {
 				if t.enabled(tessen) {
-					t.collectAndSend(tessen)
+					go t.collectAndSend(tessen)
 				}
 			}
 		case ringv2.EventClosing:
