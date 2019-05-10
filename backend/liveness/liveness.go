@@ -139,7 +139,8 @@ func NewSwitchSet(client *clientv3.Client, name string, dead, alive EventFunc, l
 // Bury buries a live or dead switch. The switch will no longer
 // or callbacks.
 func (t *SwitchSet) Bury(ctx context.Context, key string) error {
-	key = path.Join(t.prefix, key)
+	t.logger.WithFields(logrus.Fields{"key": key}).Debug("buring key")
+
 	if _, err := t.client.Put(ctx, key, buried); err != nil {
 		return fmt.Errorf("error burying switch: %s", err)
 	}
@@ -239,7 +240,7 @@ func (t *SwitchSet) monitor(ctx context.Context) {
 	go func() {
 		for event := range t.events {
 			if key, bury := event(); bury {
-				if err := t.Bury(context.Background(), path.Base(key)); err != nil {
+				if err := t.Bury(context.Background(), key); err != nil {
 					t.logger.WithError(err).Errorf("error burying %q", key)
 				}
 			}

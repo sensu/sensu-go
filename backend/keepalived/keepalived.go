@@ -167,9 +167,9 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 		}
 
 		ttl := int64(event.Check.Timeout)
-
-		if err := switches.Dead(ctx, keepalive.Name, ttl); err != nil {
-			return fmt.Errorf("error initializing keepalive %q: %s", keepalive.Name, err)
+		key := path.Join(keepalive.Namespace, keepalive.Name)
+		if err := switches.Dead(ctx, key, ttl); err != nil {
+			return fmt.Errorf("error initializing keepalive %q: %s", key, err)
 		}
 	}
 
@@ -313,7 +313,7 @@ func (k *Keepalived) alive(key string, prev liveness.State, leader bool) bool {
 	lager := logger.WithFields(logrus.Fields{
 		"status":          liveness.Alive.String(),
 		"previous_status": prev.String(),
-		"leader":          fmt.Sprintf("%v", leader),
+		"is_leader":       fmt.Sprintf("%v", leader),
 	})
 
 	namespace, name, err := parseKey(key)
@@ -331,7 +331,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 	lager := logger.WithFields(logrus.Fields{
 		"status":          liveness.Dead.String(),
 		"previous_status": prev.String(),
-		"leader":          fmt.Sprintf("%v", leader),
+		"is_leader":       fmt.Sprintf("%v", leader),
 	})
 
 	namespace, name, err := parseKey(key)
@@ -346,6 +346,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 	if !leader {
 		// If this client isn't the one that flipped the keepalive switch,
 		// don't do anything further.
+		logger.Debug("not the leader of this keepalive switch, stopping here")
 		return false
 	}
 
