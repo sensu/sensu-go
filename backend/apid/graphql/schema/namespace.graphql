@@ -122,20 +122,6 @@ type Namespace implements Node {
     orderBy: SubscriptionSetOrder = OCCURRENCES
   ): SubscriptionSet!
 
-  # TODO: Remove me.
-
-  """
-  checkHistory includes all persisted check execution results associated with
-  the namespace. Unlike the Check type's history this field includes the most
-  recent result.
-  """
-  checkHistory(
-    "Limit adds optional limit to the number of entries returned."
-    limit: Int = 10000
-    "Filter reduces the set using the given Sensu Query Expression predicate."
-    filter: String = ""
-  ): [CheckHistory]!
-
   #
   # Icon & colour are pulled over from the previous namespace implementation.
   # Retained in the short term to keep implementation of frontend as straight

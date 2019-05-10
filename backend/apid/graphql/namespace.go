@@ -234,39 +234,6 @@ func (r *namespaceImpl) Events(p schema.NamespaceEventsFieldResolverParams) (int
 	return res, nil
 }
 
-// CheckHistory implements response to request for 'checkHistory' field.
-func (r *namespaceImpl) CheckHistory(p schema.NamespaceCheckHistoryFieldResolverParams) (interface{}, error) {
-	nsp := p.Source.(*types.Namespace)
-	ctx := contextWithNamespace(p.Context, nsp.Name)
-
-	// Fetch all events
-	records, err := loadEvents(ctx, nsp.Name)
-	if err != nil {
-		return []types.CheckHistory{}, err
-	}
-
-	// Accumulate history
-	history := []types.CheckHistory{}
-	for _, record := range records {
-		if record.Check == nil {
-			continue
-		}
-		latest := types.CheckHistory{
-			Executed: record.Check.Executed,
-			Status:   record.Check.Status,
-		}
-		history = append(history, latest)
-		history = append(history, record.Check.History...)
-	}
-
-	// Sort
-	sort.Sort(types.ByExecuted(history))
-
-	// Limit
-	limit := clampInt(p.Args.Limit, 0, len(history))
-	return history[0:limit], nil
-}
-
 // Subscriptions implements response to request for 'subscriptions' field.
 func (r *namespaceImpl) Subscriptions(p schema.NamespaceSubscriptionsFieldResolverParams) (interface{}, error) {
 	set := string_utils.OccurrenceSet{}
