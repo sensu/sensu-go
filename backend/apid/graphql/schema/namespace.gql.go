@@ -113,6 +113,26 @@ type NamespaceEventsFieldResolver interface {
 	Events(p NamespaceEventsFieldResolverParams) (interface{}, error)
 }
 
+// NamespaceHandlersFieldResolverArgs contains arguments provided to handlers when selected
+type NamespaceHandlersFieldResolverArgs struct {
+	Offset  int              // Offset - self descriptive
+	Limit   int              // Limit adds an optional limit to the number of handlers returned.
+	OrderBy HandlerListOrder // OrderBy - Orderby adds an optional order to the records retrieved.
+	Filter  string           // Filter reduces the set using the given Sensu Query Expresion predicate
+}
+
+// NamespaceHandlersFieldResolverParams contains contextual info to resolve handlers field
+type NamespaceHandlersFieldResolverParams struct {
+	graphql.ResolveParams
+	Args NamespaceHandlersFieldResolverArgs
+}
+
+// NamespaceHandlersFieldResolver implement to resolve requests for the Namespace's handlers field.
+type NamespaceHandlersFieldResolver interface {
+	// Handlers implements response to request for handlers field.
+	Handlers(p NamespaceHandlersFieldResolverParams) (interface{}, error)
+}
+
 // NamespaceSilencesFieldResolverArgs contains arguments provided to silences when selected
 type NamespaceSilencesFieldResolverArgs struct {
 	Offset  int               // Offset - self descriptive
@@ -248,6 +268,7 @@ type NamespaceFieldResolvers interface {
 	NamespaceChecksFieldResolver
 	NamespaceEntitiesFieldResolver
 	NamespaceEventsFieldResolver
+	NamespaceHandlersFieldResolver
 	NamespaceSilencesFieldResolver
 	NamespaceSubscriptionsFieldResolver
 	NamespaceCheckHistoryFieldResolver
@@ -342,6 +363,12 @@ func (_ NamespaceAliases) Entities(p NamespaceEntitiesFieldResolverParams) (inte
 
 // Events implements response to request for 'events' field.
 func (_ NamespaceAliases) Events(p NamespaceEventsFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Handlers implements response to request for 'handlers' field.
+func (_ NamespaceAliases) Handlers(p NamespaceHandlersFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -447,6 +474,19 @@ func _ObjTypeNamespaceEventsHandler(impl interface{}) graphql1.FieldResolveFn {
 		}
 
 		return resolver.Events(frp)
+	}
+}
+
+func _ObjTypeNamespaceHandlersHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(NamespaceHandlersFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := NamespaceHandlersFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Handlers(frp)
 	}
 }
 
@@ -620,6 +660,34 @@ func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 				Name:              "events",
 				Type:              graphql1.NewNonNull(graphql.OutputType("EventConnection")),
 			},
+			"handlers": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"filter": &graphql1.ArgumentConfig{
+						DefaultValue: "",
+						Description:  "Filter reduces the set using the given Sensu Query Expresion predicate",
+						Type:         graphql1.String,
+					},
+					"limit": &graphql1.ArgumentConfig{
+						DefaultValue: 10,
+						Description:  "Limit adds an optional limit to the number of handlers returned.",
+						Type:         graphql1.Int,
+					},
+					"offset": &graphql1.ArgumentConfig{
+						DefaultValue: 0,
+						Description:  "self descriptive",
+						Type:         graphql1.Int,
+					},
+					"orderBy": &graphql1.ArgumentConfig{
+						DefaultValue: "NAME_DESC",
+						Description:  "Orderby adds an optional order to the records retrieved.",
+						Type:         graphql.InputType("HandlerListOrder"),
+					},
+				},
+				DeprecationReason: "",
+				Description:       "All handlers associated with the namespace.",
+				Name:              "handlers",
+				Type:              graphql1.NewNonNull(graphql.OutputType("HandlerConnection")),
+			},
 			"iconId": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -711,6 +779,7 @@ var _ObjectTypeNamespaceDesc = graphql.ObjectDesc{
 		"colourId":      _ObjTypeNamespaceColourIDHandler,
 		"entities":      _ObjTypeNamespaceEntitiesHandler,
 		"events":        _ObjTypeNamespaceEventsHandler,
+		"handlers":      _ObjTypeNamespaceHandlersHandler,
 		"iconId":        _ObjTypeNamespaceIconIDHandler,
 		"id":            _ObjTypeNamespaceIDHandler,
 		"name":          _ObjTypeNamespaceNameHandler,
@@ -929,6 +998,51 @@ type _EnumTypeEventsListOrderValues struct {
 	OLDEST EventsListOrder
 	// SEVERITY - self descriptive
 	SEVERITY EventsListOrder
+}
+
+// HandlerListOrder Describes ways in which a list of handlers can be ordered.
+type HandlerListOrder string
+
+// HandlerListOrders holds enum values
+var HandlerListOrders = _EnumTypeHandlerListOrderValues{
+	NAME:      "NAME",
+	NAME_DESC: "NAME_DESC",
+}
+
+// HandlerListOrderType Describes ways in which a list of handlers can be ordered.
+var HandlerListOrderType = graphql.NewType("HandlerListOrder", graphql.EnumKind)
+
+// RegisterHandlerListOrder registers HandlerListOrder object type with given service.
+func RegisterHandlerListOrder(svc *graphql.Service) {
+	svc.RegisterEnum(_EnumTypeHandlerListOrderDesc)
+}
+func _EnumTypeHandlerListOrderConfigFn() graphql1.EnumConfig {
+	return graphql1.EnumConfig{
+		Description: "Describes ways in which a list of handlers can be ordered.",
+		Name:        "HandlerListOrder",
+		Values: graphql1.EnumValueConfigMap{
+			"NAME": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "NAME",
+			},
+			"NAME_DESC": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "NAME_DESC",
+			},
+		},
+	}
+}
+
+// describe HandlerListOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _EnumTypeHandlerListOrderDesc = graphql.EnumDesc{Config: _EnumTypeHandlerListOrderConfigFn}
+
+type _EnumTypeHandlerListOrderValues struct {
+	// NAME - self descriptive
+	NAME HandlerListOrder
+	// NAME_DESC - self descriptive
+	NAME_DESC HandlerListOrder
 }
 
 // SilencesListOrder Describes ways in which a list of silences can be ordered.
