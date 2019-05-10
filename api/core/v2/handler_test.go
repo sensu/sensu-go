@@ -2,6 +2,7 @@ package v2
 
 import (
 	"fmt"
+	"sort"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -202,6 +203,40 @@ func TestHandlerValidate(t *testing.T) {
 			} else if len(test.Error) > 0 {
 				t.Fatal("expected error, got none")
 			}
+		})
+	}
+}
+
+func TestSortHandlersByName(t *testing.T) {
+	a := FixtureHandler("Abernathy")
+	b := FixtureHandler("Bernard")
+	c := FixtureHandler("Clementine")
+	d := FixtureHandler("Dolores")
+
+	testCases := []struct {
+		name     string
+		inDir    bool
+		inChecks []*Handler
+		expected []*Handler
+	}{
+		{
+			name:     "Sorts ascending",
+			inDir:    true,
+			inChecks: []*Handler{d, c, a, b},
+			expected: []*Handler{a, b, c, d},
+		},
+		{
+			name:     "Sorts descending",
+			inDir:    false,
+			inChecks: []*Handler{d, a, c, b},
+			expected: []*Handler{d, c, b, a},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sort.Sort(SortHandlersByName(tc.inChecks, tc.inDir))
+			assert.EqualValues(t, tc.expected, tc.inChecks)
 		})
 	}
 }

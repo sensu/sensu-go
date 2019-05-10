@@ -38,8 +38,6 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterErrCode(svc)
 	schema.RegisterEvent(svc, &eventImpl{})
 	schema.RegisterEventsListOrder(svc)
-	schema.RegisterHandler(svc, &handlerImpl{factory: clientFactory})
-	schema.RegisterHandlerSocket(svc, &handlerSocketImpl{})
 	schema.RegisterHasMetadata(svc, nil)
 	schema.RegisterIcon(svc)
 	schema.RegisterJSON(svc, jsonImpl{})
@@ -88,6 +86,12 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterHook(svc, &hookImpl{})
 	schema.RegisterHookConfig(svc, &hookCfgImpl{})
 	schema.RegisterHookList(svc, &hookListImpl{})
+
+	// Register handler types
+	schema.RegisterHandler(svc, &handlerImpl{factory: clientFactory})
+	schema.RegisterHandlerListOrder(svc)
+	schema.RegisterHandlerConnection(svc, &schema.HandlerConnectionAliases{})
+	schema.RegisterHandlerSocket(svc, &handlerSocketImpl{})
 
 	// Register time window
 	schema.RegisterTimeWindowDays(svc, &schema.TimeWindowDaysAliases{})
