@@ -158,8 +158,8 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	// revision.
 	cfg.AutoCompactionMode = "revision"
 	cfg.AutoCompactionRetention = "2"
-	// Default to 4G etcd size. TODO: make this configurable.
-	cfg.QuotaBackendBytes = int64(4 * 1024 * 1024 * 1024)
+	// Current maximum supported database size is 10 GB.
+	cfg.QuotaBackendBytes = int64(10 * 1024 * 1024 * 1024)
 
 	capnslog.SetFormatter(NewLogrusFormatter())
 
