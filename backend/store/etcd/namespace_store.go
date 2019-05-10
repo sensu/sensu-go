@@ -21,7 +21,8 @@ func getNamespacePath(name string) string {
 	return path.Join(EtcdRoot, namespacesPathPrefix, name)
 }
 
-func getNamespacesPath(ctx context.Context, name string) string {
+// GetNamespacesPath gets the path of the namespace store.
+func GetNamespacesPath(ctx context.Context, name string) string {
 	return path.Join(EtcdRoot, namespacesPathPrefix, name)
 }
 
@@ -122,7 +123,7 @@ func (s *Store) GetNamespace(ctx context.Context, name string) (*types.Namespace
 // ListNamespaces returns all namespaces
 func (s *Store) ListNamespaces(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Namespace, error) {
 	namespaces := []*types.Namespace{}
-	err := List(ctx, s.client, getNamespacesPath, &namespaces, pred)
+	err := List(ctx, s.client, GetNamespacesPath, &namespaces, pred)
 	return namespaces, err
 }
 

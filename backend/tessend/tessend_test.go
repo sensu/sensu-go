@@ -15,7 +15,6 @@ import (
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -36,12 +35,7 @@ func newTessendTest(t *testing.T) *Tessend {
 	defer client.Close()
 
 	s := &mockstore.MockStore{}
-	pred := &store.SelectionPredicate{}
 	ch := make(<-chan store.WatchEventTessenConfig)
-	s.On("GetEntities", mock.Anything, pred).Return([]*types.Entity{
-		types.FixtureEntity("entity1"),
-		types.FixtureEntity("entity2"),
-	}, nil)
 	s.On("CreateOrUpdateTessenConfig", mock.Anything, mock.Anything).Return(fmt.Errorf("foo"))
 	s.On("GetTessenConfig", mock.Anything, mock.Anything).Return(corev2.DefaultTessenConfig(), fmt.Errorf("foo"))
 	s.On("GetTessenConfigWatcher", mock.Anything).Return(ch)
@@ -52,6 +46,7 @@ func newTessendTest(t *testing.T) *Tessend {
 		RingPool: ringv2.NewPool(client),
 		Bus:      bus,
 	})
+	tessend.duration = 5 * time.Millisecond
 	require.NoError(t, err)
 	return tessend
 }
