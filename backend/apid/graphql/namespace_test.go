@@ -23,35 +23,6 @@ func TestNamespaceTypeColourID(t *testing.T) {
 	assert.Equal(t, string(colour), "ORANGE")
 }
 
-func TestNamespaceTypeCheckHistoryField(t *testing.T) {
-	client, _ := client.NewClientFactory()
-	client.On("ListEvents", "sensu", mock.Anything).Return([]types.Event{
-		*types.FixtureEvent("a", "b"),
-		*types.FixtureEvent("b", "c"),
-		*types.FixtureEvent("c", "d"),
-	}, nil).Once()
-	impl := &namespaceImpl{}
-
-	// Params
-	params := schema.NamespaceCheckHistoryFieldResolverParams{}
-	params.Context = contextWithLoadersNoCache(context.Background(), client)
-	params.Source = &types.Namespace{Name: "sensu"}
-
-	// limit: 30
-	params.Args.Limit = 30
-	history, err := impl.CheckHistory(params)
-	require.NoError(t, err)
-	assert.NotEmpty(t, history)
-	assert.Len(t, history, 30)
-
-	// store err
-	client.On("ListEvents", mock.Anything, mock.Anything).Return([]types.Event{}, errors.New("test"))
-	history, err = impl.CheckHistory(params)
-	require.NotNil(t, history)
-	assert.Error(t, err)
-	assert.Empty(t, history)
-}
-
 func TestNamespaceTypeSilencesField(t *testing.T) {
 	client, _ := client.NewClientFactory()
 	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{
