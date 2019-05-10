@@ -9,6 +9,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Fixed keepalives switchsets for entities with deregistration.
+## [5.8.0] - TBD
+
+### Added
+- Added per resource counts to tessen data collection.
 
 ## [5.7.0] - 2019-05-09
 
