@@ -963,14 +963,18 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:e3eb1159bbf8ab9c9d526c9b3b3881ee7d8d8e1f3c2b86e1620dc8e3a62f8657"
+  digest = "1:06ef66b161142aba0a2c2401a456106a3a0cfac7c7581dce949d077e7e3682de"
   name = "golang.org/x/sys"
   packages = [
     "unix",
     "windows",
+    "windows/registry",
     "windows/svc",
+    "windows/svc/debug",
+    "windows/svc/eventlog",
+    "windows/svc/mgr",
   ]
-  pruneopts = "T"
+  pruneopts = "UT"
   revision = "b6e1ae21643682ce023deb8d152024597b0e9bb4"
 
 [[projects]]
@@ -1128,6 +1132,7 @@
     "github.com/olekukonko/tablewriter",
     "github.com/prometheus/client_golang/prometheus",
     "github.com/prometheus/client_golang/prometheus/promhttp",
+    "github.com/prometheus/client_model/go",
     "github.com/robertkrimen/otto",
     "github.com/robertkrimen/otto/parser",
     "github.com/robfig/cron",
@@ -1149,6 +1154,9 @@
     "golang.org/x/crypto/bcrypt",
     "golang.org/x/net/context",
     "golang.org/x/sys/windows/svc",
+    "golang.org/x/sys/windows/svc/debug",
+    "golang.org/x/sys/windows/svc/eventlog",
+    "golang.org/x/sys/windows/svc/mgr",
     "golang.org/x/time/rate",
     "google.golang.org/grpc",
     "google.golang.org/grpc/grpclog",
