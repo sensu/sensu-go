@@ -20,7 +20,8 @@ func getHandlerPath(handler *types.Handler) string {
 	return handlerKeyBuilder.WithResource(handler).Build(handler.Name)
 }
 
-func getHandlersPath(ctx context.Context, name string) string {
+// GetHandlersPath gets the path of the handler store.
+func GetHandlersPath(ctx context.Context, name string) string {
 	return handlerKeyBuilder.WithContext(ctx).Build(name)
 }
 
@@ -30,14 +31,14 @@ func (s *Store) DeleteHandlerByName(ctx context.Context, name string) error {
 		return errors.New("must specify name of handler")
 	}
 
-	_, err := s.client.Delete(ctx, getHandlersPath(ctx, name))
+	_, err := s.client.Delete(ctx, GetHandlersPath(ctx, name))
 	return err
 }
 
 // GetHandlers gets the list of handlers for a namespace.
 func (s *Store) GetHandlers(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Handler, error) {
 	handlers := []*types.Handler{}
-	err := List(ctx, s.client, getHandlersPath, &handlers, pred)
+	err := List(ctx, s.client, GetHandlersPath, &handlers, pred)
 	return handlers, err
 }
 
@@ -47,7 +48,7 @@ func (s *Store) GetHandlerByName(ctx context.Context, name string) (*types.Handl
 		return nil, errors.New("must specify name of handler")
 	}
 
-	resp, err := s.client.Get(ctx, getHandlersPath(ctx, name))
+	resp, err := s.client.Get(ctx, GetHandlersPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}

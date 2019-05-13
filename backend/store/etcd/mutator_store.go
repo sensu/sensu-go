@@ -20,7 +20,8 @@ func getMutatorPath(mutator *types.Mutator) string {
 	return mutatorKeyBuilder.WithResource(mutator).Build(mutator.Name)
 }
 
-func getMutatorsPath(ctx context.Context, name string) string {
+// GetMutatorsPath gets the path of the mutator store.
+func GetMutatorsPath(ctx context.Context, name string) string {
 	return mutatorKeyBuilder.WithContext(ctx).Build(name)
 }
 
@@ -30,14 +31,14 @@ func (s *Store) DeleteMutatorByName(ctx context.Context, name string) error {
 		return errors.New("must specify name of mutator")
 	}
 
-	_, err := s.client.Delete(ctx, getMutatorsPath(ctx, name))
+	_, err := s.client.Delete(ctx, GetMutatorsPath(ctx, name))
 	return err
 }
 
 // GetMutators gets the list of mutators for a namespace.
 func (s *Store) GetMutators(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Mutator, error) {
 	mutators := []*types.Mutator{}
-	err := List(ctx, s.client, getMutatorsPath, &mutators, pred)
+	err := List(ctx, s.client, GetMutatorsPath, &mutators, pred)
 	return mutators, err
 }
 
@@ -47,7 +48,7 @@ func (s *Store) GetMutatorByName(ctx context.Context, name string) (*types.Mutat
 		return nil, errors.New("must specify name of mutator")
 	}
 
-	resp, err := s.client.Get(ctx, getMutatorsPath(ctx, name))
+	resp, err := s.client.Get(ctx, GetMutatorsPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}

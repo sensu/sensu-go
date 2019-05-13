@@ -20,7 +20,8 @@ func getEventFilterPath(filter *types.EventFilter) string {
 	return eventFilterKeyBuilder.WithResource(filter).Build(filter.Name)
 }
 
-func getEventFiltersPath(ctx context.Context, name string) string {
+// GetEventFiltersPath gets the path of the event filter store.
+func GetEventFiltersPath(ctx context.Context, name string) string {
 	return eventFilterKeyBuilder.WithContext(ctx).Build(name)
 }
 
@@ -30,7 +31,7 @@ func (s *Store) DeleteEventFilterByName(ctx context.Context, name string) error 
 		return errors.New("must specify name of filter")
 	}
 
-	resp, err := s.client.Delete(ctx, getEventFiltersPath(ctx, name))
+	resp, err := s.client.Delete(ctx, GetEventFiltersPath(ctx, name))
 	if err != nil {
 		return err
 	}
@@ -45,7 +46,7 @@ func (s *Store) DeleteEventFilterByName(ctx context.Context, name string) error 
 // GetEventFilters gets the list of filters for a namespace.
 func (s *Store) GetEventFilters(ctx context.Context, pred *store.SelectionPredicate) ([]*types.EventFilter, error) {
 	filters := []*types.EventFilter{}
-	err := List(ctx, s.client, getEventFiltersPath, &filters, pred)
+	err := List(ctx, s.client, GetEventFiltersPath, &filters, pred)
 	return filters, err
 }
 
@@ -55,7 +56,7 @@ func (s *Store) GetEventFilterByName(ctx context.Context, name string) (*types.E
 		return nil, errors.New("must specify name of filter")
 	}
 
-	resp, err := s.client.Get(ctx, getEventFiltersPath(ctx, name))
+	resp, err := s.client.Get(ctx, GetEventFiltersPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}

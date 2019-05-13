@@ -16,7 +16,8 @@ func getClusterRolePath(clusterRole *types.ClusterRole) string {
 	return path.Join(store.Root, clusterRolesPathPrefix, clusterRole.Name)
 }
 
-func getClusterRolesPath(ctx context.Context, name string) string {
+// GetClusterRolesPath gets the path of the cluster role store.
+func GetClusterRolesPath(ctx context.Context, name string) string {
 	return path.Join(store.Root, clusterRolesPathPrefix, name)
 }
 
@@ -38,20 +39,20 @@ func (s *Store) CreateOrUpdateClusterRole(ctx context.Context, clusterRole *type
 
 // DeleteClusterRole ...
 func (s *Store) DeleteClusterRole(ctx context.Context, name string) error {
-	return Delete(ctx, s.client, getClusterRolesPath(ctx, name))
+	return Delete(ctx, s.client, GetClusterRolesPath(ctx, name))
 }
 
 // GetClusterRole ...
 func (s *Store) GetClusterRole(ctx context.Context, name string) (*types.ClusterRole, error) {
 	clusterRole := &types.ClusterRole{}
-	err := Get(ctx, s.client, getClusterRolesPath(ctx, name), clusterRole)
+	err := Get(ctx, s.client, GetClusterRolesPath(ctx, name), clusterRole)
 	return clusterRole, err
 }
 
 // ListClusterRoles ...
 func (s *Store) ListClusterRoles(ctx context.Context, pred *store.SelectionPredicate) ([]*types.ClusterRole, error) {
 	clusterRoles := []*types.ClusterRole{}
-	err := List(ctx, s.client, getClusterRolesPath, &clusterRoles, pred)
+	err := List(ctx, s.client, GetClusterRolesPath, &clusterRoles, pred)
 	return clusterRoles, err
 }
 

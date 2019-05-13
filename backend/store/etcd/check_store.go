@@ -23,7 +23,8 @@ func getCheckConfigPath(check *types.CheckConfig) string {
 	return checkKeyBuilder.WithResource(check).Build(check.Name)
 }
 
-func getCheckConfigsPath(ctx context.Context, name string) string {
+// GetCheckConfigsPath gets the path of the check config store.
+func GetCheckConfigsPath(ctx context.Context, name string) string {
 	return checkKeyBuilder.WithContext(ctx).Build(name)
 }
 
@@ -33,14 +34,14 @@ func (s *Store) DeleteCheckConfigByName(ctx context.Context, name string) error 
 		return errors.New("must specify name")
 	}
 
-	_, err := s.client.Delete(ctx, getCheckConfigsPath(ctx, name))
+	_, err := s.client.Delete(ctx, GetCheckConfigsPath(ctx, name))
 	return err
 }
 
 // GetCheckConfigs returns check configurations for an (optional) namespace.
 func (s *Store) GetCheckConfigs(ctx context.Context, pred *store.SelectionPredicate) ([]*types.CheckConfig, error) {
 	checks := []*types.CheckConfig{}
-	err := List(ctx, s.client, getCheckConfigsPath, &checks, pred)
+	err := List(ctx, s.client, GetCheckConfigsPath, &checks, pred)
 	return checks, err
 }
 
@@ -50,7 +51,7 @@ func (s *Store) GetCheckConfigByName(ctx context.Context, name string) (*types.C
 		return nil, errors.New("must specify name")
 	}
 
-	resp, err := s.client.Get(ctx, getCheckConfigsPath(ctx, name))
+	resp, err := s.client.Get(ctx, GetCheckConfigsPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}
