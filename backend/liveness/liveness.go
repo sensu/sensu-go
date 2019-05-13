@@ -148,7 +148,6 @@ func NewSwitchSet(client *clientv3.Client, name string, dead, alive EventFunc, l
 // TTL value is 5. If a smaller value is passed, then an error will be returned
 // and no registration will occur.
 func (t *SwitchSet) Alive(ctx context.Context, id string, ttl int64) error {
-	fmt.Println("Alive: " + id)
 	return t.ping(ctx, id, ttl, true)
 }
 
@@ -156,7 +155,6 @@ func (t *SwitchSet) Alive(ctx context.Context, id string, ttl int64) error {
 // or callbacks.
 func (t *SwitchSet) Bury(ctx context.Context, id string) error {
 	key := path.Join(t.prefix, id)
-	fmt.Println("Bury Key: " + key)
 
 	t.logger.WithFields(logrus.Fields{"key": key}).Debug("burying key")
 
@@ -182,7 +180,6 @@ func (t *SwitchSet) Bury(ctx context.Context, id string) error {
 // TTL value is 5. If a smaller value is passed, then an error will be returned
 // and no registration will occur.
 func (t *SwitchSet) Dead(ctx context.Context, id string, ttl int64) error {
-	fmt.Println("Dead: " + id)
 	return t.ping(ctx, id, ttl, false)
 }
 
@@ -303,7 +300,7 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 	}
 	ttl, prevState := t.getTTLFromEvent(event)
 	key := string(event.Kv.Key)
-	fmt.Println("handleEvent: " + key)
+
 	switch event.Type {
 	case mvccpb.DELETE:
 		// The entity has expired. Replace it with a new entity

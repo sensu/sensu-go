@@ -2,7 +2,6 @@ package keepalived
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"path"
 	"strings"
@@ -167,9 +166,9 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 		}
 
 		ttl := int64(event.Check.Timeout)
-		key := path.Join(keepalive.Namespace, keepalive.Name)
-		if err := switches.Dead(ctx, key, ttl); err != nil {
-			return fmt.Errorf("error initializing keepalive %q: %s", key, err)
+		id := path.Join(keepalive.Namespace, keepalive.Name)
+		if err := switches.Dead(ctx, id, ttl); err != nil {
+			return fmt.Errorf("error initializing keepalive %q: %s", id, err)
 		}
 	}
 
@@ -334,21 +333,24 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 		"is_leader":       fmt.Sprintf("%v", leader),
 	})
 
-	namespace, name, err := parseKey(key)
-	if err != nil {
-		lager.Error(err)
-		return false
-	}
-
-	lager = lager.WithFields(logrus.Fields{"entity": name, "namespace": namespace})
-	lager.Warn("keepalive timed out")
-
 	if !leader {
 		// If this client isn't the one that flipped the keepalive switch,
 		// don't do anything further.
 		logger.Debug("not the leader of this keepalive switch, stopping here")
 		return false
 	}
+
+	namespace, name, err := parseKey(key)
+	if err != nil {
+		// We couldn't parse the key, which probably means the key didn't contain a
+		// namespace. Log the error and then try to bury the key so it stops sending
+		// events to the watcher.
+		lager.Error(err)
+		return true
+	}
+
+	lager = lager.WithFields(logrus.Fields{"entity": name, "namespace": namespace})
+	lager.Warn("keepalive timed out")
 
 	ctx := store.NamespaceContext(context.Background(), namespace)
 
@@ -421,7 +423,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 func parseKey(key string) (namespace, name string, err error) {
 	parts := strings.Split(key, "/")
 	if len(parts) != 2 {
-		return "", "", errors.New("bad key")
+		return "", "", fmt.Errorf("bad key: '%s'", key)
 	}
 	return parts[0], parts[1], nil
 }
