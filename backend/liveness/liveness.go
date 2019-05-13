@@ -20,20 +20,22 @@ var (
 	switchMu sync.Mutex
 )
 
-// All switchset entities are tracked under path.Join(SwitchPrefix, toggleName, key)
+// SwitchPrefix contains the base path for switchset, which are tracked under
+// path.Join(SwitchPrefix, toggleName, key)
 var SwitchPrefix = "/sensu.io/switchsets"
 
+// State represents a custom int type for the key stae
 type State int
 
 const (
-	// The system has discovered a toggle that did not store a TTL. Use the minimum
-	// supported etcd lease TTL as a fallback.
+	// FallbackTTL represents the minimal supported etcd lease TTL,  in case the
+	// system encounters a toggle that does not store a TTL
 	FallbackTTL = 5
 
-	// The Alive state is 0
+	// Alive state is 0
 	Alive State = 0
 
-	// The Dead state is 1
+	// Dead state is 1
 	Dead State = 1
 
 	// If a key is marked as buried, it is slated to be deleted
