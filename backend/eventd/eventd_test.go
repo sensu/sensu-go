@@ -67,7 +67,7 @@ func TestEventHandling(t *testing.T) {
 	err = e.Stop()
 	assert.NoError(t, err)
 
-	// mockStore.AssertCalled(t, "UpdateEvent", mock.Anything)
+	mockStore.AssertCalled(t, "UpdateEvent", mock.Anything)
 
 	assert.Equal(t, int64(1), event.Check.Occurrences)
 
