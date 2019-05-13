@@ -197,12 +197,13 @@ func (e *Eventd) handleMessage(msg interface{}) (err error) {
 
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 
-	prevEvent, err := e.store.GetEventByEntityCheck(
-		ctx, event.Entity.Name, event.Check.Name,
-	)
-	if err != nil {
-		return err
-	}
+	// prevEvent, err := e.store.GetEventByEntityCheck(
+	// 	ctx, event.Entity.Name, event.Check.Name,
+	// )
+	// if err != nil {
+	// 	return err
+	// }
+	var prevEvent *corev2.Event
 
 	// Maintain check history.
 	if prevEvent != nil {
@@ -232,9 +233,9 @@ func (e *Eventd) handleMessage(msg interface{}) (err error) {
 		return err
 	}
 
-	if err := e.store.UpdateEvent(ctx, event); err != nil {
-		return err
-	}
+	// if err := e.store.UpdateEvent(ctx, event); err != nil {
+	// 	return err
+	// }
 
 	switches := e.livenessFactory("eventd", e.dead, e.alive, logger)
 	switchKey := eventKey(event)
@@ -366,12 +367,12 @@ func parseKey(key string) (namespace, check, entity string, err error) {
 
 // handleUpdate updates the event in the store and publishes it to TopicEvent.
 func (e *Eventd) handleUpdate(event *corev2.Event) error {
-	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
+	// ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 
-	err := e.store.UpdateEvent(ctx, event)
-	if err != nil {
-		return err
-	}
+	// err := e.store.UpdateEvent(ctx, event)
+	// if err != nil {
+	// 	return err
+	// }
 
 	return e.bus.Publish(messaging.TopicEvent, event)
 }
@@ -386,10 +387,10 @@ func (e *Eventd) handleFailure(event *corev2.Event) error {
 	if err != nil {
 		return err
 	}
-	err = e.store.UpdateEvent(ctx, failedCheckEvent)
-	if err != nil {
-		return err
-	}
+	// err = e.store.UpdateEvent(ctx, failedCheckEvent)
+	// if err != nil {
+	// 	return err
+	// }
 
 	return e.bus.Publish(messaging.TopicEvent, failedCheckEvent)
 }
@@ -399,12 +400,12 @@ func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *corev2.Event
 		return nil, errors.New("event does not contain a check")
 	}
 
-	event, err := e.store.GetEventByEntityCheck(
-		ctx, event.Entity.Name, event.Check.Name,
-	)
-	if err != nil {
-		return nil, err
-	}
+	// event, err := e.store.GetEventByEntityCheck(
+	// 	ctx, event.Entity.Name, event.Check.Name,
+	// )
+	// if err != nil {
+	// 	return nil, err
+	// }
 
 	check := corev2.NewCheck(corev2.NewCheckConfigFromFace(event.Check))
 	output := fmt.Sprintf("Last check execution was %d seconds ago", time.Now().Unix()-event.Check.Executed)
