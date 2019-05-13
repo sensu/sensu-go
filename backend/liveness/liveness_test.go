@@ -4,7 +4,6 @@ package liveness
 
 import (
 	"context"
-	"path"
 	"reflect"
 	"sync"
 	"testing"
@@ -166,7 +165,7 @@ func TestBury(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := toggle.Bury(ctx, path.Join(SwitchPrefix, "test", "default/entity1")); err != nil {
+	if err := toggle.Bury(ctx, "default/entity1"); err != nil {
 		t.Fatal(err)
 	}
 

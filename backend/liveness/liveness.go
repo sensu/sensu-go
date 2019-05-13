@@ -56,14 +56,14 @@ func (s State) String() string {
 // Interface specifies the interface for liveness
 type Interface interface {
 	// Alive is an assertion that an entity is alive.
-	Alive(ctx context.Context, key string, ttl int64) error
+	Alive(ctx context.Context, id string, ttl int64) error
 
 	// Dead is an assertion that an entity is dead. Dead is useful for
 	// registering entities that are known to be dead, but not yet tracked.
-	Dead(ctx context.Context, key string, ttl int64) error
+	Dead(ctx context.Context, id string, ttl int64) error
 
 	// Bury forgets an entity exists
-	Bury(ctx context.Context, key string) error
+	Bury(ctx context.Context, id string) error
 }
 
 // Factory is a function that can deliver an Interface
@@ -138,9 +138,26 @@ func NewSwitchSet(client *clientv3.Client, name string, dead, alive EventFunc, l
 	}
 }
 
+// Alive is an assertion that an entity is alive.
+//
+// If the SwitchSet doesn't know about the entity yet, then it will be
+// registered, and the TTL countdown will start. Unless the entity continually
+// asserts its liveness with calls to Alive, it will be presumed dead.
+//
+// The ttl parameter is the time-to-live in seconds for the entity. The minimum
+// TTL value is 5. If a smaller value is passed, then an error will be returned
+// and no registration will occur.
+func (t *SwitchSet) Alive(ctx context.Context, id string, ttl int64) error {
+	fmt.Println("Alive: " + id)
+	return t.ping(ctx, id, ttl, true)
+}
+
 // Bury buries a live or dead switch. The switch will no longer
 // or callbacks.
-func (t *SwitchSet) Bury(ctx context.Context, key string) error {
+func (t *SwitchSet) Bury(ctx context.Context, id string) error {
+	key := path.Join(t.prefix, id)
+	fmt.Println("Bury Key: " + key)
+
 	t.logger.WithFields(logrus.Fields{"key": key}).Debug("burying key")
 
 	if _, err := t.client.Put(ctx, key, buried); err != nil {
@@ -151,37 +168,6 @@ func (t *SwitchSet) Bury(ctx context.Context, key string) error {
 	}
 
 	return nil
-}
-
-func (t *SwitchSet) ping(ctx context.Context, key string, ttl int64, alive bool) error {
-	if ttl < FallbackTTL {
-		return fmt.Errorf("bad ttl: %d is less than the minimum value of %d", ttl, FallbackTTL)
-	}
-	putVal := ttl
-	if !alive {
-		putVal = -putVal
-	}
-	key = path.Join(t.prefix, key)
-	val := fmt.Sprintf("%d", putVal)
-	lease, err := t.client.Grant(ctx, ttl)
-	if err != nil {
-		return err
-	}
-	_, err = t.client.Put(ctx, key, val, clientv3.WithLease(lease.ID), clientv3.WithPrevKV())
-	return err
-}
-
-// Alive is an assertion that an entity is alive.
-//
-// If the SwitchSet doesn't know about the entity yet, then it will be
-// registered, and the TTL countdown will start. Unless the entity continually
-// asserts its liveness with calls to Alive, it will be presumed dead.
-//
-// The ttl parameter is the time-to-live in seconds for the entity. The minimum
-// TTL value is 5. If a smaller value is passed, then an error will be returned
-// and no registration will occur.
-func (t *SwitchSet) Alive(ctx context.Context, key string, ttl int64) error {
-	return t.ping(ctx, key, ttl, true)
 }
 
 // Dead is an assertion that an entity is dead. Dead is useful for registering
@@ -195,8 +181,9 @@ func (t *SwitchSet) Alive(ctx context.Context, key string, ttl int64) error {
 // The ttl parameter is the time-to-live in seconds for the entity. The minimum
 // TTL value is 5. If a smaller value is passed, then an error will be returned
 // and no registration will occur.
-func (t *SwitchSet) Dead(ctx context.Context, key string, ttl int64) error {
-	return t.ping(ctx, key, ttl, false)
+func (t *SwitchSet) Dead(ctx context.Context, id string, ttl int64) error {
+	fmt.Println("Dead: " + id)
+	return t.ping(ctx, id, ttl, false)
 }
 
 func isBuried(event *clientv3.Event) bool {
@@ -207,6 +194,26 @@ func isBuried(event *clientv3.Event) bool {
 		return string(event.PrevKv.Value) == buried
 	}
 	return false
+}
+
+func (t *SwitchSet) ping(ctx context.Context, id string, ttl int64, alive bool) error {
+	if ttl < FallbackTTL {
+		return fmt.Errorf("bad ttl: %d is less than the minimum value of %d", ttl, FallbackTTL)
+	}
+
+	putVal := ttl
+	if !alive {
+		putVal = -putVal
+	}
+
+	key := path.Join(t.prefix, id)
+	val := fmt.Sprintf("%d", putVal)
+	lease, err := t.client.Grant(ctx, ttl)
+	if err != nil {
+		return err
+	}
+	_, err = t.client.Put(ctx, key, val, clientv3.WithLease(lease.ID), clientv3.WithPrevKV())
+	return err
 }
 
 func (t *SwitchSet) getTTLFromEvent(event *clientv3.Event) (int64, State) {
@@ -242,7 +249,8 @@ func (t *SwitchSet) monitor(ctx context.Context) {
 	go func() {
 		for event := range t.events {
 			if key, bury := event(); bury {
-				if err := t.Bury(context.Background(), key); err != nil {
+				id := strings.TrimPrefix(key, t.prefix+"/")
+				if err := t.Bury(context.Background(), id); err != nil {
 					t.logger.WithError(err).Errorf("error burying %q", key)
 				}
 			}
@@ -295,6 +303,7 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 	}
 	ttl, prevState := t.getTTLFromEvent(event)
 	key := string(event.Kv.Key)
+	fmt.Println("handleEvent: " + key)
 	switch event.Type {
 	case mvccpb.DELETE:
 		// The entity has expired. Replace it with a new entity
