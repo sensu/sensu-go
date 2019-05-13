@@ -247,7 +247,7 @@ func (e *Eventd) handleMessage(msg interface{}) (err error) {
 			return err
 		}
 		return e.handleUpdate(event)
-	} else {
+	} else if prevEvent != nil && prevEvent.Check.Ttl > 0 {
 		// The check TTL has been disabled, there is no longer a need to track it
 		if err := switches.Bury(context.TODO(), switchKey); err != nil {
 			// It's better to publish the event even if this fails, so
