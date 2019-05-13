@@ -187,9 +187,7 @@ func TestBuryOnCallback(t *testing.T) {
 
 	// This callback gets executed when the entity dies
 	expired := func(key string, prev State, leader bool) bool {
-		if prev == Dead {
-			t.Fatal("should not have been called")
-		}
+		t.Fatal("expired should not have been called")
 		return true
 	}
 
@@ -204,7 +202,7 @@ func TestBuryOnCallback(t *testing.T) {
 	toggle := NewSwitchSet(client, "test", expired, alive, logger)
 	go toggle.monitor(ctx)
 
-	if err := toggle.Alive(ctx, "entity1", 5); err != nil {
+	if err := toggle.Alive(ctx, "default/entity1", 5); err != nil {
 		t.Fatal(err)
 	}
 
