@@ -8,13 +8,16 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strconv"
 	"sync"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/google/uuid"
+	dto "github.com/prometheus/client_model/go"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/eventd"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
@@ -146,6 +149,7 @@ func (t *Tessend) Start() error {
 	go t.startMessageHandler()
 	go t.startWatcher()
 	go t.startRingUpdates()
+	go t.startPromMetricsUpdates(tessen)
 	go t.start(tessen)
 	// Attempt to send data immediately if tessen is enabled
 	if t.enabled(tessen) {
@@ -301,6 +305,72 @@ func (t *Tessend) handleEvents(tessen *corev2.TessenConfig, ch <-chan ringv2.Eve
 			logger.Debug("tessen ring closing")
 		}
 	}
+}
+
+// startPromMetricsUpdates starts a loop to periodically send prometheus metrics
+// from each backend to tessen.
+func (t *Tessend) startPromMetricsUpdates(tessen *corev2.TessenConfig) {
+	ticker := time.NewTicker(time.Duration(t.interval) * time.Second)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-t.ctx.Done():
+			return
+		case <-ticker.C:
+			if t.enabled(tessen) {
+				t.sendPromMetrics()
+			}
+		case config := <-t.interrupt:
+			// config change indicates the need to recreate the goroutine
+			go t.startPromMetricsUpdates(config)
+			return
+		}
+	}
+}
+
+// sendPromMetrics collects and sends prometheus metrics for event processing to tessen.
+func (t *Tessend) sendPromMetrics() {
+	var hostname string
+
+	// collect data
+	data := t.getDataPayload()
+	now := time.Now().UTC().Unix()
+	c := eventd.EventsProcessed.WithLabelValues(eventd.EventsProcessedLabelSuccess)
+	pb := &dto.Metric{}
+	err := c.Write(pb)
+	if err != nil {
+		logger.WithError(err).Warn("failed to retrieve prometheus event counter")
+		return
+	}
+
+	// get the backend hostname to use as a metric tag
+	hostname, err = os.Hostname()
+	if err != nil {
+		logger.WithError(err).Error("error getting hostname")
+	}
+
+	// populate data payload
+	mp := &corev2.MetricPoint{
+		Name:      eventd.EventsProcessedCounterVec,
+		Value:     pb.GetCounter().GetValue(),
+		Timestamp: now,
+		Tags: []*corev2.MetricTag{
+			&corev2.MetricTag{
+				Name:  "hostname",
+				Value: hostname,
+			},
+		},
+	}
+	logMetric(mp)
+	data.Metrics.Points = append(data.Metrics.Points, mp)
+
+	logger.WithFields(logrus.Fields{
+		"url": t.url,
+		"id":  data.Cluster.ID,
+	}).Info("sending event processing metrics to tessen")
+
+	// send data
+	_ = t.send(data)
 }
 
 // start starts the tessen service.
