@@ -21,6 +21,15 @@ const (
 	// ComponentName identifies Eventd as the component/daemon implemented in this
 	// package.
 	ComponentName = "eventd"
+
+	// EventsProcessedCounterVec is the name of the prometheus counter vec used to count events processed.
+	EventsProcessedCounterVec = "sensu_go_events_processed"
+
+	// EventsProcessedLabelName is the name of the label which stores prometheus values.
+	EventsProcessedLabelName = "status"
+
+	// EventsProcessedLabelSuccess is the name of the label used to count events processed successfully.
+	EventsProcessedLabelSuccess = "success"
 )
 
 var (
@@ -28,12 +37,13 @@ var (
 		"component": ComponentName,
 	})
 
-	eventsProcessed = prometheus.NewCounterVec(
+	// EventsProcessed counts the number of sensu go events processed.
+	EventsProcessed = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
-			Name: "sensu_go_events_processed",
+			Name: EventsProcessedCounterVec,
 			Help: "The total number of processed events",
 		},
-		[]string{"status"},
+		[]string{EventsProcessedLabelName},
 	)
 )
 
@@ -80,7 +90,7 @@ func New(c Config, opts ...Option) (*Eventd, error) {
 		}
 	}
 
-	_ = prometheus.Register(eventsProcessed)
+	_ = prometheus.Register(EventsProcessed)
 
 	return e, nil
 }
@@ -235,7 +245,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		}
 	}
 
-	eventsProcessed.WithLabelValues("success").Inc()
+	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess).Inc()
 
 	return e.bus.Publish(messaging.TopicEvent, event)
 }

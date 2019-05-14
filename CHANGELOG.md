@@ -11,6 +11,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Added per resource counts to tessen data collection.
+- Added event processing counts to tessen data collection.
 - Added ability to query for `Handlers` (individual and collections) from the GraphQL query endpoint.
 
 ### Fixed
