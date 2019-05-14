@@ -9,6 +9,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Fixed keepalives switchsets for entities with deregistration.
+- Fixed continue token generation in namespace and user pagination.
+
 ## [5.8.0] - TBD
 
 ### Added
