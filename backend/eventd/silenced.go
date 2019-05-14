@@ -2,7 +2,6 @@ package eventd
 
 import (
 	"context"
-	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store/cache"
@@ -35,7 +34,6 @@ func getSilenced(ctx context.Context, event *types.Event, silencedCache *cache.R
 	for i, resource := range resources {
 		entries[i] = resource.(*corev2.Silenced)
 	}
-	fmt.Println(entries)
 
 	// // Retrieve silenced entries using the entity subscription
 	// entitySubscription := types.GetEntitySubscription(event.Entity.Name)
