@@ -53,6 +53,14 @@ func (r *queryImpl) Check(p schema.QueryCheckFieldResolverParams) (interface{}, 
 	return handleFetchResult(res, err)
 }
 
+// Handler implements a response to a request for the 'hander' field.
+func (r *queryImpl) Handler(p schema.QueryHandlerFieldResolverParams) (interface{}, error) {
+	ctx := contextWithNamespace(p.Context, p.Args.Namespace)
+	client := r.factory.NewWithContext(ctx)
+	res, err := client.FetchHandler(p.Args.Name)
+	return handleFetchResult(res, err)
+}
+
 // Node implements response to request for 'node' field.
 func (r *queryImpl) Node(p schema.QueryNodeFieldResolverParams) (interface{}, error) {
 	resolver := r.nodeResolver

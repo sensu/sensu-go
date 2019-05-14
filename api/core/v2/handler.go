@@ -4,6 +4,7 @@ import (
 	"errors"
 	fmt "fmt"
 	"net/url"
+	"sort"
 	"strings"
 )
 
@@ -78,6 +79,49 @@ func (s *HandlerSocket) Validate() error {
 		return errors.New("socket port undefined")
 	}
 	return nil
+}
+
+//
+// Sorting
+
+type cmpHandler func(a, b *Handler) bool
+
+// SortHandlersByPredicate is used to sort a given collection using a given predicate.
+func SortHandlersByPredicate(hs []*Handler, fn cmpHandler) sort.Interface {
+	return &handlerSorter{handlers: hs, byFn: fn}
+}
+
+// SortHandlersByName is used to sort a given collection of handlers by their names.
+func SortHandlersByName(hs []*Handler, asc bool) sort.Interface {
+	if asc {
+		return SortHandlersByPredicate(hs, func(a, b *Handler) bool {
+			return a.Name < b.Name
+		})
+	}
+
+	return SortHandlersByPredicate(hs, func(a, b *Handler) bool {
+		return a.Name > b.Name
+	})
+}
+
+type handlerSorter struct {
+	handlers []*Handler
+	byFn     cmpHandler
+}
+
+// Len implements sort.Interface
+func (s *handlerSorter) Len() int {
+	return len(s.handlers)
+}
+
+// Swap implements sort.Interface
+func (s *handlerSorter) Swap(i, j int) {
+	s.handlers[i], s.handlers[j] = s.handlers[j], s.handlers[i]
+}
+
+// Less implements sort.Interface
+func (s *handlerSorter) Less(i, j int) bool {
+	return s.byFn(s.handlers[i], s.handlers[j])
 }
 
 // FixtureHandler returns a Handler fixture for testing.

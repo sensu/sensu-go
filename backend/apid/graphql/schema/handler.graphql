@@ -49,3 +49,15 @@ type HandlerSocket {
   "Port is the socket peer port."
   port: Int
 }
+
+"A connection to a sequence of records."
+type HandlerConnection {
+  nodes: [Handler!]!
+  pageInfo: OffsetPageInfo!
+}
+
+"An edge in a connection."
+type HandlerEdge {
+  node: Handler 
+  cursor: String!
+}
