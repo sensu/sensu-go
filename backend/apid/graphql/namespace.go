@@ -102,39 +102,33 @@ func (r *namespaceImpl) Handlers(p schema.NamespaceHandlersFieldResolverParams) 
 	nsp := p.Source.(*types.Namespace)
 
 	// finds all records
-	filter := p.Args.Filter
 	results, err := loadHandlers(p.Context, nsp.Name)
 	if err != nil {
 		return res, err
 	}
 
-	records := filterHandlers(results, func(obj *types.Handler) bool {
-		if filter == "" {
-			return true
-		}
-		sobj := dynamic.Synthesize(obj)
-		matched, err := js.Evaluate(filter, sobj, nil)
-		if err != nil {
-			logger.WithError(err).Debug("unable to filter record")
-		}
-		if matched {
-			return true
-		}
-		return false
-	})
+	// filter
+	matches, err := filter.Compile(p.Args.Filters, HandlerFilters(), v2.HandlerFields)
 	if err != nil {
 		return res, err
 	}
+	filteredResults := make([]*v2.Handler, 0, len(results))
+	for i := range results {
+		if matches(&results[i]) {
+			filteredResults = append(filteredResults, &results[i])
+		}
+	}
 
+	// sort
 	sort.Sort(types.SortHandlersByName(
-		records,
+		filteredResults,
 		p.Args.OrderBy == schema.HandlerListOrders.NAME,
 	))
 
 	// paginate
-	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(records))
-	res.Nodes = records[l:h]
-	res.PageInfo.totalCount = len(records)
+	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(filteredResults))
+	res.Nodes = filteredResults[l:h]
+	res.PageInfo.totalCount = len(filteredResults)
 	return res, nil
 }
 
