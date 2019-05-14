@@ -11,6 +11,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Added per resource counts to tessen data collection.
+- Added event processing counts to tessen data collection.
 
 ## [5.7.0] - 2019-05-09
 
