@@ -157,11 +157,6 @@ func (e *Eventd) startHandlers() {
 	}
 }
 
-// HandleError handles event errors.
-func (e *Eventd) HandleError(err error) {
-	logger.WithError(err).Error("error monitoring event")
-}
-
 // eventKey creates a key to identify the event for liveness monitoring
 func eventKey(event *corev2.Event) string {
 	// Typically we want the entity name to be the thing we monitor, but if
@@ -241,12 +236,13 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 			return err
 		}
 		return e.handleUpdate(event)
-	}
-	// The check TTL has been disabled, there is no longer a need to track it
-	if err := switches.Bury(context.TODO(), switchKey); err != nil {
-		// It's better to publish the event even if this fails, so
-		// don't return the error here.
-		logger.WithError(err).Error("error burying switch")
+	} else if prevEvent != nil && prevEvent.Check.Ttl > 0 {
+		// The check TTL has been disabled, there is no longer a need to track it
+		if err := switches.Bury(context.TODO(), switchKey); err != nil {
+			// It's better to publish the event even if this fails, so
+			// don't return the error here.
+			logger.WithError(err).Error("error burying switch")
+		}
 	}
 
 	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess).Inc()
