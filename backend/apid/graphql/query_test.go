@@ -71,3 +71,19 @@ func TestQueryTypeCheckField(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 }
+
+func TestQueryTypeHandlerField(t *testing.T) {
+	client, factory := client.NewClientFactory()
+	impl := queryImpl{factory: factory}
+
+	handler := types.FixtureHandler("a")
+	params := schema.QueryHandlerFieldResolverParams{}
+	params.Args.Namespace = handler.Namespace
+	params.Args.Name = handler.Name
+
+	// Success
+	client.On("FetchHandler", handler.Name).Return(handler, nil).Once()
+	res, err := impl.Handler(params)
+	require.NoError(t, err)
+	assert.NotEmpty(t, res)
+}

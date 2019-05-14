@@ -13,6 +13,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Added per resource counts to tessen data collection.
+- Added ability to query for `Handlers` (individual and collections) from the GraphQL query endpoint.
+
+### Fixed
+- Only bury switchsets of checks that no longer have a TTL, in order to reduce
+the number of write operations made to etcd.
 
 ## [5.7.0] - 2019-05-09
 
