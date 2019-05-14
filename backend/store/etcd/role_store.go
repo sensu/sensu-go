@@ -16,7 +16,8 @@ func getRolePath(role *types.Role) string {
 	return roleKeyBuilder.WithResource(role).Build(role.Name)
 }
 
-func getRolesPath(ctx context.Context, name string) string {
+// GetRolesPath gets the path of the role store.
+func GetRolesPath(ctx context.Context, name string) string {
 	return roleKeyBuilder.WithContext(ctx).Build(name)
 }
 
@@ -38,20 +39,20 @@ func (s *Store) CreateOrUpdateRole(ctx context.Context, role *types.Role) error 
 
 // DeleteRole ...
 func (s *Store) DeleteRole(ctx context.Context, name string) error {
-	return Delete(ctx, s.client, getRolesPath(ctx, name))
+	return Delete(ctx, s.client, GetRolesPath(ctx, name))
 }
 
 // GetRole ...
 func (s *Store) GetRole(ctx context.Context, name string) (*types.Role, error) {
 	role := &types.Role{}
-	err := Get(ctx, s.client, getRolesPath(ctx, name), role)
+	err := Get(ctx, s.client, GetRolesPath(ctx, name), role)
 	return role, err
 }
 
 // ListRoles ...
 func (s *Store) ListRoles(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Role, error) {
 	roles := []*types.Role{}
-	err := List(ctx, s.client, getRolesPath, &roles, pred)
+	err := List(ctx, s.client, GetRolesPath, &roles, pred)
 	return roles, err
 }
 

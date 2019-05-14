@@ -101,6 +101,37 @@ func TestNamespaceTypeEventsField(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestNamespaceTypeHandlersField(t *testing.T) {
+	client, _ := client.NewClientFactory()
+	client.On("ListHandlers", mock.Anything, mock.Anything).Return([]types.Handler{
+		*types.FixtureHandler("Abe"),
+		*types.FixtureHandler("Bernie"),
+		*types.FixtureHandler("Clem"),
+		*types.FixtureHandler("Dolly"),
+	}, nil).Once()
+
+	impl := &namespaceImpl{}
+	params := schema.NamespaceHandlersFieldResolverParams{}
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
+	params.Source = types.FixtureNamespace("default")
+	params.Args.Limit = 10
+
+	// Success
+	res, err := impl.Handlers(params)
+	require.NoError(t, err)
+	assert.Len(t, res.(offsetContainer).Nodes, 4)
+
+	// Store err
+	client.On("ListHandlers", mock.Anything, mock.Anything).Return(
+		[]types.Handler{},
+		errors.New("error"),
+	)
+
+	res, err = impl.Handlers(params)
+	assert.Empty(t, res.(offsetContainer).Nodes)
+	assert.Error(t, err)
+}
+
 func TestNamespaceTypeSilencesField(t *testing.T) {
 	client, _ := client.NewClientFactory()
 	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{

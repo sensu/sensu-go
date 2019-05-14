@@ -24,8 +24,8 @@ var (
 // stored with a splat in string form. Key lookups for subscriptions with a
 // splat as a checkName may return multiple values.
 
-// populates type keyBuilder with org and env info, returns a prefix
-func getSilencedPath(ctx context.Context, name string) string {
+// GetSilencedPath gets the path of the silenced store.
+func GetSilencedPath(ctx context.Context, name string) string {
 	return silencedKeyBuilder.WithContext(ctx).Build(name)
 }
 
@@ -35,13 +35,13 @@ func (s *Store) DeleteSilencedEntryByName(ctx context.Context, silencedName stri
 		return errors.New("must specify name")
 	}
 
-	_, err := s.client.Delete(ctx, getSilencedPath(ctx, silencedName))
+	_, err := s.client.Delete(ctx, GetSilencedPath(ctx, silencedName))
 	return err
 }
 
 // GetSilencedEntries gets all silenced entries.
 func (s *Store) GetSilencedEntries(ctx context.Context) ([]*types.Silenced, error) {
-	resp, err := s.client.Get(ctx, getSilencedPath(ctx, ""), clientv3.WithPrefix())
+	resp, err := s.client.Get(ctx, GetSilencedPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -57,7 +57,7 @@ func (s *Store) GetSilencedEntriesBySubscription(ctx context.Context, subscripti
 	if subscription == "" {
 		return nil, errors.New("must specify subscription")
 	}
-	resp, err := s.client.Get(ctx, getSilencedPath(ctx, subscription), clientv3.WithPrefix())
+	resp, err := s.client.Get(ctx, GetSilencedPath(ctx, subscription), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (s *Store) GetSilencedEntriesByCheckName(ctx context.Context, checkName str
 	if checkName == "" {
 		return nil, errors.New("must specify check name")
 	}
-	resp, err := s.client.Get(ctx, getSilencedPath(ctx, ""), clientv3.WithPrefix())
+	resp, err := s.client.Get(ctx, GetSilencedPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
 		return nil, err
 	}
@@ -102,7 +102,7 @@ func (s *Store) GetSilencedEntryByName(ctx context.Context, name string) (*types
 		return nil, errors.New("must specify name")
 	}
 
-	resp, err := s.client.Get(ctx, getSilencedPath(ctx, name))
+	resp, err := s.client.Get(ctx, GetSilencedPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}
@@ -148,9 +148,9 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *types.Silence
 			return err
 		}
 
-		req = clientv3.OpPut(getSilencedPath(ctx, silenced.Name), string(silencedBytes), clientv3.WithLease(lease.ID))
+		req = clientv3.OpPut(GetSilencedPath(ctx, silenced.Name), string(silencedBytes), clientv3.WithLease(lease.ID))
 	} else {
-		req = clientv3.OpPut(getSilencedPath(ctx, silenced.Name), string(silencedBytes))
+		req = clientv3.OpPut(GetSilencedPath(ctx, silenced.Name), string(silencedBytes))
 	}
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {

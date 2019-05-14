@@ -7,9 +7,23 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.8.0] - TBD
+
+### Added
+- Added per resource counts to tessen data collection.
+- Added ability to query for `Handlers` (individual and collections) from the GraphQL query endpoint.
+
+## [5.7.0] - 2019-05-09
+
+### Added
+- Added a Windows service wrapper for sensu-agent. See
+"sensu-agent service --help" for more information.
+
 ### Fixed
 - Fixed `sensuctl` color output on Windows.
 - Fixed a regression in `sensuctl cluster` json/wrapped-json output.
+- Fixed a regression that caused listing objects for a given namespace to also
+  include results from namespaces sharing a similar prefix.
 
 ## [5.6.0] - 2019-04-30
 

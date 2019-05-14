@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
@@ -41,7 +42,8 @@ func getEventWithCheckPath(ctx context.Context, entity, check string) (string, e
 	return path.Join(EtcdRoot, eventsPathPrefix, namespace, entity, check), nil
 }
 
-func getEventsPath(ctx context.Context, entity string) string {
+// GetEventsPath gets the path of the event store.
+func GetEventsPath(ctx context.Context, entity string) string {
 	return eventKeyBuilder.WithContext(ctx).Build(entity)
 }
 
@@ -67,11 +69,20 @@ func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) (
 		clientv3.WithLimit(pred.Limit),
 	}
 
-	keyPrefix := getEventsPath(ctx, "")
+	keyPrefix := GetEventsPath(ctx, "")
 	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
 	opts = append(opts, clientv3.WithRange(rangeEnd))
 
-	resp, err := s.client.Get(ctx, path.Join(keyPrefix, pred.Continue), opts...)
+	key := keyPrefix
+	if pred.Continue != "" {
+		key = path.Join(keyPrefix, pred.Continue)
+	} else {
+		if !strings.HasSuffix(key, "/") {
+			key += "/"
+		}
+	}
+
+	resp, err := s.client.Get(ctx, key, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +127,7 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *
 		clientv3.WithLimit(pred.Limit),
 	}
 
-	keyPrefix := getEventsPath(ctx, entityName)
+	keyPrefix := GetEventsPath(ctx, entityName)
 	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
 	opts = append(opts, clientv3.WithRange(rangeEnd))
 

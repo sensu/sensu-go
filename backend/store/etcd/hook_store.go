@@ -23,7 +23,8 @@ func getHookConfigPath(hook *types.HookConfig) string {
 	return hookKeyBuilder.WithResource(hook).Build(hook.Name)
 }
 
-func getHookConfigsPath(ctx context.Context, name string) string {
+// GetHookConfigsPath gets the path of the hook config store.
+func GetHookConfigsPath(ctx context.Context, name string) string {
 	return hookKeyBuilder.WithContext(ctx).Build(name)
 }
 
@@ -33,14 +34,14 @@ func (s *Store) DeleteHookConfigByName(ctx context.Context, name string) error {
 		return errors.New("must specify name")
 	}
 
-	_, err := s.client.Delete(ctx, getHookConfigsPath(ctx, name))
+	_, err := s.client.Delete(ctx, GetHookConfigsPath(ctx, name))
 	return err
 }
 
 // GetHookConfigs returns hook configurations for a namespace.
 func (s *Store) GetHookConfigs(ctx context.Context, pred *store.SelectionPredicate) ([]*types.HookConfig, error) {
 	hooks := []*types.HookConfig{}
-	err := List(ctx, s.client, getHookConfigsPath, &hooks, pred)
+	err := List(ctx, s.client, GetHookConfigsPath, &hooks, pred)
 	return hooks, err
 }
 
@@ -50,7 +51,7 @@ func (s *Store) GetHookConfigByName(ctx context.Context, name string) (*types.Ho
 		return nil, errors.New("must specify name")
 	}
 
-	resp, err := s.client.Get(ctx, getHookConfigsPath(ctx, name))
+	resp, err := s.client.Get(ctx, GetHookConfigsPath(ctx, name))
 	if err != nil {
 		return nil, err
 	}

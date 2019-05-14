@@ -16,7 +16,8 @@ func getClusterRoleBindingPath(clusterRole *types.ClusterRoleBinding) string {
 	return path.Join(store.Root, clusterRoleBindingPathPrefix, clusterRole.Name)
 }
 
-func getClusterRoleBindingsPath(ctx context.Context, name string) string {
+// GetClusterRoleBindingsPath gets the path of the cluster role binding store.
+func GetClusterRoleBindingsPath(ctx context.Context, name string) string {
 	return path.Join(store.Root, clusterRoleBindingPathPrefix, name)
 }
 
@@ -38,20 +39,20 @@ func (s *Store) CreateOrUpdateClusterRoleBinding(ctx context.Context, clusterRol
 
 // DeleteClusterRoleBinding ...
 func (s *Store) DeleteClusterRoleBinding(ctx context.Context, name string) error {
-	return Delete(ctx, s.client, getClusterRoleBindingsPath(ctx, name))
+	return Delete(ctx, s.client, GetClusterRoleBindingsPath(ctx, name))
 }
 
 // GetClusterRoleBinding ...
 func (s *Store) GetClusterRoleBinding(ctx context.Context, name string) (*types.ClusterRoleBinding, error) {
 	role := &types.ClusterRoleBinding{}
-	err := Get(ctx, s.client, getClusterRoleBindingsPath(ctx, name), role)
+	err := Get(ctx, s.client, GetClusterRoleBindingsPath(ctx, name), role)
 	return role, err
 }
 
 // ListClusterRoleBindings ...
 func (s *Store) ListClusterRoleBindings(ctx context.Context, pred *store.SelectionPredicate) ([]*types.ClusterRoleBinding, error) {
 	roles := []*types.ClusterRoleBinding{}
-	err := List(ctx, s.client, getClusterRoleBindingsPath, &roles, pred)
+	err := List(ctx, s.client, GetClusterRoleBindingsPath, &roles, pred)
 	return roles, err
 }
 

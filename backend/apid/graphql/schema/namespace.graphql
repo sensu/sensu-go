@@ -93,6 +93,28 @@ type Namespace implements Node {
     filters: [String!] = [],
   ): EventConnection!
 
+  "All handlers associated with the namespace."
+  handlers(
+    offset: Int = 0,
+    "Limit adds an optional limit to the number of handlers returned."
+    limit: Int = 10,
+    "Orderby adds an optional order to the records retrieved."
+    orderBy: HandlerListOrder = NAME_DESC,
+    "DEPRECATED: Please use the filters argument instead."
+    filter: String = "",
+    """
+    Filters reduces the set using given arbitrary expression[s]; expressions
+    take on the form KEY: VALUE. The accepted key(s) are: type.
+
+    Eg.
+
+    type:pipe
+    type:socket
+    type:set
+    """
+    filters: [String!] = [],
+  ): HandlerConnection!
+
   "All silences associated with the namespace."
   silences(
     offset: Int = 0
