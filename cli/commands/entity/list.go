@@ -55,6 +55,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	helpers.AddAllNamespace(cmd.Flags())
 	helpers.AddFieldSelectorFlag(cmd.Flags())
 	helpers.AddLabelSelectorFlag(cmd.Flags())
+	helpers.AddChunkSizeFlag(cmd.Flags())
 
 	return cmd
 }
