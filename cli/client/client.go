@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/go-resty/resty"
@@ -165,5 +166,13 @@ func ApplyListOptions(request *resty.Request, options *ListOptions) {
 
 	if options.LabelSelector != "" {
 		request.SetQueryParam("labelSelector", options.LabelSelector)
+	}
+
+	if options.ChunkSize > 0 {
+		request.SetQueryParam("limit", strconv.Itoa(options.ChunkSize))
+	}
+
+	if options.ContinueToken != "" {
+		request.SetQueryParam("continue", options.ContinueToken)
 	}
 }

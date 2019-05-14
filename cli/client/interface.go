@@ -12,6 +12,14 @@ import (
 type ListOptions struct {
 	FieldSelector string
 	LabelSelector string
+
+	// ContinueToken is the current pagination token.
+	ContinueToken string
+
+	// ChunkSize is the number of objects to fetch per page when taking
+	// advantage of the API's pagination capabilities. ChunkSize <= 0 means
+	// fetch everything all at once; do not use pagination.
+	ChunkSize int
 }
 
 // APIClient client methods across the Sensu API
