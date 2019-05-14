@@ -327,20 +327,28 @@ func (k *Keepalived) alive(key string, prev liveness.State, leader bool) bool {
 }
 
 func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
+	// Parse the key to determine the namespace and entity name. The error will be
+	// verified later
+	namespace, name, err := parseKey(key)
+
 	lager := logger.WithFields(logrus.Fields{
 		"status":          liveness.Dead.String(),
 		"previous_status": prev.String(),
 		"is_leader":       fmt.Sprintf("%v", leader),
+		"entity":          name,
+		"namespace":       namespace,
 	})
 
 	if !leader {
 		// If this client isn't the one that flipped the keepalive switch,
 		// don't do anything further.
-		logger.Debug("not the leader of this keepalive switch, stopping here")
+		lager.Debug("not the leader of this keepalive switch, stopping here")
 		return false
 	}
 
-	namespace, name, err := parseKey(key)
+	lager.Warn("keepalive timed out")
+
+	// Now verify if we encountered an error while parsing the key
 	if err != nil {
 		// We couldn't parse the key, which probably means the key didn't contain a
 		// namespace. Log the error and then try to bury the key so it stops sending
@@ -348,9 +356,6 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 		lager.Error(err)
 		return true
 	}
-
-	lager = lager.WithFields(logrus.Fields{"entity": name, "namespace": namespace})
-	lager.Warn("keepalive timed out")
 
 	ctx := store.NamespaceContext(context.Background(), namespace)
 
