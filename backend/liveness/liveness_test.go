@@ -148,24 +148,24 @@ func TestBury(t *testing.T) {
 
 	// This callback gets executed when the entity dies
 	expired := func(key string, prev State, leader bool) bool {
-		t.Fatal("should never be called")
+		t.Fatal("expired should never be called on key " + key)
 		return false
 	}
 
 	// This callback gets executed when the entity asserts its liveness
 	alive := func(key string, prev State, leader bool) bool {
-		t.Fatal("should never be called")
+		t.Fatal("alive should never be called on key " + key)
 		return false
 	}
 
 	toggle := NewSwitchSet(client, "test", expired, alive, logger)
 	go toggle.monitor(ctx)
 
-	if err := toggle.Dead(ctx, "entity1", 5); err != nil {
+	if err := toggle.Dead(ctx, "default/entity1", 5); err != nil {
 		t.Fatal(err)
 	}
 
-	if err := toggle.Bury(ctx, "entity1"); err != nil {
+	if err := toggle.Bury(ctx, "default/entity1"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -186,9 +186,7 @@ func TestBuryOnCallback(t *testing.T) {
 
 	// This callback gets executed when the entity dies
 	expired := func(key string, prev State, leader bool) bool {
-		if prev == Dead {
-			t.Fatal("should not have been called")
-		}
+		t.Fatal("expired should not have been called")
 		return true
 	}
 
@@ -203,7 +201,7 @@ func TestBuryOnCallback(t *testing.T) {
 	toggle := NewSwitchSet(client, "test", expired, alive, logger)
 	go toggle.monitor(ctx)
 
-	if err := toggle.Alive(ctx, "entity1", 5); err != nil {
+	if err := toggle.Alive(ctx, "default/entity1", 5); err != nil {
 		t.Fatal(err)
 	}
 

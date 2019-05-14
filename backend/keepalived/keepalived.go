@@ -2,7 +2,6 @@ package keepalived
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"path"
 	"strings"
@@ -72,8 +71,8 @@ type Config struct {
 // New creates a new Keepalived.
 func New(c Config, opts ...Option) (*Keepalived, error) {
 	k := &Keepalived{
-		store: c.Store,
-		bus:   c.Bus,
+		store:                 c.Store,
+		bus:                   c.Bus,
 		deregistrationHandler: c.DeregistrationHandler,
 		livenessFactory:       c.LivenessFactory,
 		keepaliveChan:         make(chan interface{}, 10),
@@ -167,9 +166,9 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 		}
 
 		ttl := int64(event.Check.Timeout)
-
-		if err := switches.Dead(ctx, keepalive.Name, ttl); err != nil {
-			return fmt.Errorf("error initializing keepalive %q: %s", keepalive.Name, err)
+		id := path.Join(keepalive.Namespace, keepalive.Name)
+		if err := switches.Dead(ctx, id, ttl); err != nil {
+			return fmt.Errorf("error initializing keepalive %q: %s", id, err)
 		}
 	}
 
@@ -312,7 +311,9 @@ func createRegistrationEvent(entity *types.Entity) *types.Event {
 func (k *Keepalived) alive(key string, prev liveness.State, leader bool) bool {
 	lager := logger.WithFields(logrus.Fields{
 		"status":          liveness.Alive.String(),
-		"previous_status": prev.String()})
+		"previous_status": prev.String(),
+		"is_leader":       fmt.Sprintf("%v", leader),
+	})
 
 	namespace, name, err := parseKey(key)
 	if err != nil {
@@ -326,23 +327,34 @@ func (k *Keepalived) alive(key string, prev liveness.State, leader bool) bool {
 }
 
 func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
+	// Parse the key to determine the namespace and entity name. The error will be
+	// verified later
+	namespace, name, err := parseKey(key)
+
 	lager := logger.WithFields(logrus.Fields{
 		"status":          liveness.Dead.String(),
-		"previous_status": prev.String()})
-
-	namespace, name, err := parseKey(key)
-	if err != nil {
-		lager.Error(err)
-		return false
-	}
-
-	lager = lager.WithFields(logrus.Fields{"entity": name, "namespace": namespace})
-	lager.Warn("keepalive timed out")
+		"previous_status": prev.String(),
+		"is_leader":       fmt.Sprintf("%v", leader),
+		"entity":          name,
+		"namespace":       namespace,
+	})
 
 	if !leader {
 		// If this client isn't the one that flipped the keepalive switch,
 		// don't do anything further.
+		lager.Debug("not the leader of this keepalive switch, stopping here")
 		return false
+	}
+
+	lager.Warn("keepalive timed out")
+
+	// Now verify if we encountered an error while parsing the key
+	if err != nil {
+		// We couldn't parse the key, which probably means the key didn't contain a
+		// namespace. Log the error and then try to bury the key so it stops sending
+		// events to the watcher.
+		lager.Error(err)
+		return true
 	}
 
 	ctx := store.NamespaceContext(context.Background(), namespace)
@@ -416,7 +428,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 func parseKey(key string) (namespace, name string, err error) {
 	parts := strings.Split(key, "/")
 	if len(parts) != 2 {
-		return "", "", errors.New("bad key")
+		return "", "", fmt.Errorf("bad key: '%s'", key)
 	}
 	return parts[0], parts[1], nil
 }

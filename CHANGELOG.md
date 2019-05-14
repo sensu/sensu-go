@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Fixed keepalives switchsets for entities with deregistration.
 ## [5.8.0] - TBD
 
 ### Added

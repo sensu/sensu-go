@@ -20,20 +20,22 @@ var (
 	switchMu sync.Mutex
 )
 
-// All switchset entities are tracked under path.Join(SwitchPrefix, toggleName, key)
+// SwitchPrefix contains the base path for switchset, which are tracked under
+// path.Join(SwitchPrefix, toggleName, key)
 var SwitchPrefix = "/sensu.io/switchsets"
 
+// State represents a custom int type for the key stae
 type State int
 
 const (
-	// The system has discovered a toggle that did not store a TTL. Use the minimum
-	// supported etcd lease TTL as a fallback.
+	// FallbackTTL represents the minimal supported etcd lease TTL,  in case the
+	// system encounters a toggle that does not store a TTL
 	FallbackTTL = 5
 
-	// The Alive state is 0
+	// Alive state is 0
 	Alive State = 0
 
-	// The Dead state is 1
+	// Dead state is 1
 	Dead State = 1
 
 	// If a key is marked as buried, it is slated to be deleted
@@ -54,14 +56,14 @@ func (s State) String() string {
 // Interface specifies the interface for liveness
 type Interface interface {
 	// Alive is an assertion that an entity is alive.
-	Alive(ctx context.Context, key string, ttl int64) error
+	Alive(ctx context.Context, id string, ttl int64) error
 
 	// Dead is an assertion that an entity is dead. Dead is useful for
 	// registering entities that are known to be dead, but not yet tracked.
-	Dead(ctx context.Context, key string, ttl int64) error
+	Dead(ctx context.Context, id string, ttl int64) error
 
 	// Bury forgets an entity exists
-	Bury(ctx context.Context, key string) error
+	Bury(ctx context.Context, id string) error
 }
 
 // Factory is a function that can deliver an Interface
@@ -136,38 +138,6 @@ func NewSwitchSet(client *clientv3.Client, name string, dead, alive EventFunc, l
 	}
 }
 
-// Bury buries a live or dead switch. The switch will no longer
-// or callbacks.
-func (t *SwitchSet) Bury(ctx context.Context, key string) error {
-	key = path.Join(t.prefix, key)
-	if _, err := t.client.Put(ctx, key, buried); err != nil {
-		return fmt.Errorf("error burying switch: %s", err)
-	}
-	if _, err := t.client.Delete(ctx, key); err != nil {
-		return fmt.Errorf("error burying switch: %s", err)
-	}
-
-	return nil
-}
-
-func (t *SwitchSet) ping(ctx context.Context, key string, ttl int64, alive bool) error {
-	if ttl < FallbackTTL {
-		return fmt.Errorf("bad ttl: %d is less than the minimum value of %d", ttl, FallbackTTL)
-	}
-	putVal := ttl
-	if !alive {
-		putVal = -putVal
-	}
-	key = path.Join(t.prefix, key)
-	val := fmt.Sprintf("%d", putVal)
-	lease, err := t.client.Grant(ctx, ttl)
-	if err != nil {
-		return err
-	}
-	_, err = t.client.Put(ctx, key, val, clientv3.WithLease(lease.ID), clientv3.WithPrevKV())
-	return err
-}
-
 // Alive is an assertion that an entity is alive.
 //
 // If the SwitchSet doesn't know about the entity yet, then it will be
@@ -177,8 +147,25 @@ func (t *SwitchSet) ping(ctx context.Context, key string, ttl int64, alive bool)
 // The ttl parameter is the time-to-live in seconds for the entity. The minimum
 // TTL value is 5. If a smaller value is passed, then an error will be returned
 // and no registration will occur.
-func (t *SwitchSet) Alive(ctx context.Context, key string, ttl int64) error {
-	return t.ping(ctx, key, ttl, true)
+func (t *SwitchSet) Alive(ctx context.Context, id string, ttl int64) error {
+	return t.ping(ctx, id, ttl, true)
+}
+
+// Bury buries a live or dead switch. The switch will no longer
+// or callbacks.
+func (t *SwitchSet) Bury(ctx context.Context, id string) error {
+	key := path.Join(t.prefix, id)
+
+	t.logger.WithFields(logrus.Fields{"key": key}).Debug("burying key")
+
+	if _, err := t.client.Put(ctx, key, buried); err != nil {
+		return fmt.Errorf("error burying switch: %s", err)
+	}
+	if _, err := t.client.Delete(ctx, key); err != nil {
+		return fmt.Errorf("error burying switch: %s", err)
+	}
+
+	return nil
 }
 
 // Dead is an assertion that an entity is dead. Dead is useful for registering
@@ -192,8 +179,8 @@ func (t *SwitchSet) Alive(ctx context.Context, key string, ttl int64) error {
 // The ttl parameter is the time-to-live in seconds for the entity. The minimum
 // TTL value is 5. If a smaller value is passed, then an error will be returned
 // and no registration will occur.
-func (t *SwitchSet) Dead(ctx context.Context, key string, ttl int64) error {
-	return t.ping(ctx, key, ttl, false)
+func (t *SwitchSet) Dead(ctx context.Context, id string, ttl int64) error {
+	return t.ping(ctx, id, ttl, false)
 }
 
 func isBuried(event *clientv3.Event) bool {
@@ -204,6 +191,26 @@ func isBuried(event *clientv3.Event) bool {
 		return string(event.PrevKv.Value) == buried
 	}
 	return false
+}
+
+func (t *SwitchSet) ping(ctx context.Context, id string, ttl int64, alive bool) error {
+	if ttl < FallbackTTL {
+		return fmt.Errorf("bad ttl: %d is less than the minimum value of %d", ttl, FallbackTTL)
+	}
+
+	putVal := ttl
+	if !alive {
+		putVal = -putVal
+	}
+
+	key := path.Join(t.prefix, id)
+	val := fmt.Sprintf("%d", putVal)
+	lease, err := t.client.Grant(ctx, ttl)
+	if err != nil {
+		return err
+	}
+	_, err = t.client.Put(ctx, key, val, clientv3.WithLease(lease.ID), clientv3.WithPrevKV())
+	return err
 }
 
 func (t *SwitchSet) getTTLFromEvent(event *clientv3.Event) (int64, State) {
@@ -239,7 +246,8 @@ func (t *SwitchSet) monitor(ctx context.Context) {
 	go func() {
 		for event := range t.events {
 			if key, bury := event(); bury {
-				if err := t.Bury(context.Background(), path.Base(key)); err != nil {
+				id := strings.TrimPrefix(key, t.prefix+"/")
+				if err := t.Bury(context.Background(), id); err != nil {
 					t.logger.WithError(err).Errorf("error burying %q", key)
 				}
 			}
@@ -292,6 +300,7 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 	}
 	ttl, prevState := t.getTTLFromEvent(event)
 	key := string(event.Kv.Key)
+
 	switch event.Type {
 	case mvccpb.DELETE:
 		// The entity has expired. Replace it with a new entity
