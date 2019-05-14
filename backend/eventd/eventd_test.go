@@ -18,9 +18,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-type fakeSwitchSet struct {
-	mock.Mock
-}
+type fakeSwitchSet struct{}
 
 func (f *fakeSwitchSet) Alive(context.Context, string, int64) error {
 	return nil
