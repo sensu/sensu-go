@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Added per resource counts to tessen data collection.
 - Added ability to query for `Handlers` (individual and collections) from the GraphQL query endpoint.
+- --etcd-cipher-suites option is now available for sensu-backend.
 
 ## [5.7.0] - 2019-05-09
 
