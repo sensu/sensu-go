@@ -3,9 +3,13 @@ package schedulerd
 import (
 	"context"
 
+	"github.com/coreos/etcd/clientv3"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
+	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -21,7 +25,7 @@ type Schedulerd struct {
 	cancel               context.CancelFunc
 	errChan              chan error
 	ringPool             *ringv2.Pool
-	entityCache          *EntityCache
+	entityCache          *cache.ResourceCacher
 }
 
 // Option is a functional option.
@@ -33,6 +37,7 @@ type Config struct {
 	QueueGetter types.QueueGetter
 	RingPool    *ringv2.Pool
 	Bus         messaging.MessageBus
+	Client      *clientv3.Client
 }
 
 // New creates a new Schedulerd.
@@ -45,7 +50,7 @@ func New(c Config, opts ...Option) (*Schedulerd, error) {
 		ringPool:    c.RingPool,
 	}
 	s.ctx, s.cancel = context.WithCancel(context.Background())
-	cache, err := NewEntityCache(s.ctx, s.store)
+	cache, err := cache.New(s.ctx, c.Client, etcd.GetEntitiesPath, &corev2.Entity{})
 	if err != nil {
 		return nil, err
 	}
@@ -81,4 +86,12 @@ func (s *Schedulerd) Err() <-chan error {
 // Name returns the daemon name
 func (s *Schedulerd) Name() string {
 	return "schedulerd"
+}
+
+func resourcesToEntities(resources []corev2.Resource) []*corev2.Entity {
+	entities := make([]*corev2.Entity, len(resources))
+	for i, resource := range resources {
+		entities[i] = resource.(*corev2.Entity)
+	}
+	return entities
 }

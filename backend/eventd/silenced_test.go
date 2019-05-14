@@ -10,46 +10,46 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestGetSilenced(t *testing.T) {
-	testCases := []struct {
-		name                  string
-		event                 *types.Event
-		silencedSubscriptions []*types.Silenced
-		silencedChecks        []*types.Silenced
-		expectedEntries       []string
-	}{
-		{
-			name:                  "Sets the silenced attribute of an event",
-			event:                 types.FixtureEvent("foo", "check_cpu"),
-			silencedSubscriptions: []*types.Silenced{},
-			silencedChecks: []*types.Silenced{
-				types.FixtureSilenced("entity:foo:check_cpu"),
-			},
-			expectedEntries: []string{"entity:foo:check_cpu"},
-		},
-	}
+// func TestGetSilenced(t *testing.T) {
+// 	testCases := []struct {
+// 		name                  string
+// 		event                 *types.Event
+// 		silencedSubscriptions []*types.Silenced
+// 		silencedChecks        []*types.Silenced
+// 		expectedEntries       []string
+// 	}{
+// 		{
+// 			name:                  "Sets the silenced attribute of an event",
+// 			event:                 types.FixtureEvent("foo", "check_cpu"),
+// 			silencedSubscriptions: []*types.Silenced{},
+// 			silencedChecks: []*types.Silenced{
+// 				types.FixtureSilenced("entity:foo:check_cpu"),
+// 			},
+// 			expectedEntries: []string{"entity:foo:check_cpu"},
+// 		},
+// 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
+// 	for _, tc := range testCases {
+// 		t.Run(tc.name, func(t *testing.T) {
+// 			ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
 
-			mockStore := &mockstore.MockStore{}
-			mockStore.On(
-				"GetSilencedEntriesBySubscription",
-				mock.Anything,
-			).Return(tc.silencedSubscriptions, nil)
+// 			mockStore := &mockstore.MockStore{}
+// 			mockStore.On(
+// 				"GetSilencedEntriesBySubscription",
+// 				mock.Anything,
+// 			).Return(tc.silencedSubscriptions, nil)
 
-			mockStore.On(
-				"GetSilencedEntriesByCheckName",
-				mock.Anything,
-			).Return(tc.silencedChecks, nil)
+// 			mockStore.On(
+// 				"GetSilencedEntriesByCheckName",
+// 				mock.Anything,
+// 			).Return(tc.silencedChecks, nil)
 
-			result := getSilenced(ctx, tc.event, mockStore)
-			assert.Nil(t, result)
-			assert.Equal(t, tc.expectedEntries, tc.event.Check.Silenced)
-		})
-	}
-}
+// 			result := getSilenced(ctx, tc.event, mockStore)
+// 			assert.Nil(t, result)
+// 			assert.Equal(t, tc.expectedEntries, tc.event.Check.Silenced)
+// 		})
+// 	}
+// }
 
 func TestSilencedBy(t *testing.T) {
 	testCases := []struct {

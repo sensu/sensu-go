@@ -1,222 +1,207 @@
 package eventd
 
-import (
-	"context"
-	"testing"
-	"time"
+// func TestEventHandling(t *testing.T) {
+// 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+// 	require.NoError(t, err)
+// 	require.NoError(t, bus.Start())
 
-	"github.com/sensu/sensu-go/backend/liveness"
-	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
-	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-)
+// 	mockStore := &mockstore.MockStore{}
+// 	e, err := New(Config{
+// 		Store:           mockStore,
+// 		Bus:             bus,
+// 		LivenessFactory: fakeFactory,
+// 	})
+// 	require.NoError(t, err)
+// 	e.handlerCount = 5
 
-func TestEventHandling(t *testing.T) {
-	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
-	require.NoError(t, err)
-	require.NoError(t, bus.Start())
+// 	require.NoError(t, e.Start())
 
-	mockStore := &mockstore.MockStore{}
-	e, err := New(Config{
-		Store:           mockStore,
-		Bus:             bus,
-		LivenessFactory: fakeFactory,
-	})
-	require.NoError(t, err)
-	e.handlerCount = 5
+// 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, nil))
 
-	require.NoError(t, e.Start())
+// 	badEvent := &types.Event{}
+// 	badEvent.Check = &types.Check{}
+// 	badEvent.Entity = &types.Entity{}
+// 	badEvent.Timestamp = time.Now().Unix()
 
-	require.NoError(t, bus.Publish(messaging.TopicEventRaw, nil))
+// 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, badEvent))
 
-	badEvent := &types.Event{}
-	badEvent.Check = &types.Check{}
-	badEvent.Entity = &types.Entity{}
-	badEvent.Timestamp = time.Now().Unix()
+// 	event := types.FixtureEvent("entity", "check")
 
-	require.NoError(t, bus.Publish(messaging.TopicEventRaw, badEvent))
+// 	var nilEvent *types.Event
+// 	// no previous event.
+// 	mockStore.On(
+// 		"GetEventByEntityCheck",
+// 		mock.Anything,
+// 		"entity",
+// 		"check",
+// 	).Return(nilEvent, nil)
+// 	mockStore.On("UpdateEvent", mock.Anything).Return(nil)
 
-	event := types.FixtureEvent("entity", "check")
+// 	// No silenced entries
+// 	mockStore.On(
+// 		"GetSilencedEntriesBySubscription",
+// 		mock.Anything,
+// 	).Return([]*types.Silenced{}, nil)
+// 	mockStore.On(
+// 		"GetSilencedEntriesByCheckName",
+// 		mock.Anything,
+// 	).Return([]*types.Silenced{}, nil)
 
-	var nilEvent *types.Event
-	// no previous event.
-	mockStore.On(
-		"GetEventByEntityCheck",
-		mock.Anything,
-		"entity",
-		"check",
-	).Return(nilEvent, nil)
-	mockStore.On("UpdateEvent", mock.Anything).Return(nil)
+// 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, event))
 
-	// No silenced entries
-	mockStore.On(
-		"GetSilencedEntriesBySubscription",
-		mock.Anything,
-	).Return([]*types.Silenced{}, nil)
-	mockStore.On(
-		"GetSilencedEntriesByCheckName",
-		mock.Anything,
-	).Return([]*types.Silenced{}, nil)
+// 	err = e.Stop()
+// 	assert.NoError(t, err)
 
-	require.NoError(t, bus.Publish(messaging.TopicEventRaw, event))
+// 	mockStore.AssertCalled(t, "UpdateEvent", mock.Anything)
 
-	err = e.Stop()
-	assert.NoError(t, err)
+// 	assert.Equal(t, int64(1), event.Check.Occurrences)
 
-	mockStore.AssertCalled(t, "UpdateEvent", mock.Anything)
+// 	// Make sure the event has been marked with the proper state
+// 	assert.Equal(t, types.EventPassingState, event.Check.State)
+// 	assert.Equal(t, event.Timestamp, event.Check.LastOK)
+// }
 
-	assert.Equal(t, int64(1), event.Check.Occurrences)
+// type fakeSwitchSet struct {
+// }
 
-	// Make sure the event has been marked with the proper state
-	assert.Equal(t, types.EventPassingState, event.Check.State)
-	assert.Equal(t, event.Timestamp, event.Check.LastOK)
-}
+// func (fakeSwitchSet) Alive(context.Context, string, int64) error {
+// 	return nil
+// }
 
-type fakeSwitchSet struct {
-}
+// func (fakeSwitchSet) Dead(context.Context, string, int64) error {
+// 	return nil
+// }
 
-func (fakeSwitchSet) Alive(context.Context, string, int64) error {
-	return nil
-}
+// func (fakeSwitchSet) Bury(context.Context, string) error {
+// 	return nil
+// }
 
-func (fakeSwitchSet) Dead(context.Context, string, int64) error {
-	return nil
-}
+// func fakeFactory(name string, dead, alive liveness.EventFunc, logger logrus.FieldLogger) liveness.Interface {
+// 	return fakeSwitchSet{}
+// }
 
-func (fakeSwitchSet) Bury(context.Context, string) error {
-	return nil
-}
+// func TestEventMonitor(t *testing.T) {
+// 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+// 	require.NoError(t, err)
+// 	require.NoError(t, bus.Start())
 
-func fakeFactory(name string, dead, alive liveness.EventFunc, logger logrus.FieldLogger) liveness.Interface {
-	return fakeSwitchSet{}
-}
+// 	mockStore := &mockstore.MockStore{}
+// 	e, err := New(Config{Store: mockStore, Bus: bus})
+// 	require.NoError(t, err)
+// 	e.handlerCount = 5
 
-func TestEventMonitor(t *testing.T) {
-	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
-	require.NoError(t, err)
-	require.NoError(t, bus.Start())
+// 	e.livenessFactory = fakeFactory
 
-	mockStore := &mockstore.MockStore{}
-	e, err := New(Config{Store: mockStore, Bus: bus})
-	require.NoError(t, err)
-	e.handlerCount = 5
+// 	require.NoError(t, e.Start())
 
-	e.livenessFactory = fakeFactory
+// 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, nil))
 
-	require.NoError(t, e.Start())
+// 	event := types.FixtureEvent("entity", "check")
+// 	event.Check.Ttl = 90
 
-	require.NoError(t, bus.Publish(messaging.TopicEventRaw, nil))
+// 	var nilEvent *types.Event
+// 	// no previous event.
+// 	mockStore.On(
+// 		"GetEventByEntityCheck",
+// 		mock.Anything,
+// 		"entity",
+// 		"check",
+// 	).Return(nilEvent, nil)
+// 	mockStore.On("UpdateEvent", mock.Anything).Return(nil)
 
-	event := types.FixtureEvent("entity", "check")
-	event.Check.Ttl = 90
+// 	// No silenced entries
+// 	mockStore.On(
+// 		"GetSilencedEntriesBySubscription",
+// 		mock.Anything,
+// 	).Return([]*types.Silenced{}, nil)
+// 	mockStore.On(
+// 		"GetSilencedEntriesByCheckName",
+// 		mock.Anything,
+// 	).Return([]*types.Silenced{}, nil)
 
-	var nilEvent *types.Event
-	// no previous event.
-	mockStore.On(
-		"GetEventByEntityCheck",
-		mock.Anything,
-		"entity",
-		"check",
-	).Return(nilEvent, nil)
-	mockStore.On("UpdateEvent", mock.Anything).Return(nil)
+// 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, event))
 
-	// No silenced entries
-	mockStore.On(
-		"GetSilencedEntriesBySubscription",
-		mock.Anything,
-	).Return([]*types.Silenced{}, nil)
-	mockStore.On(
-		"GetSilencedEntriesByCheckName",
-		mock.Anything,
-	).Return([]*types.Silenced{}, nil)
+// 	err = e.Stop()
+// 	assert.NoError(t, err)
 
-	require.NoError(t, bus.Publish(messaging.TopicEventRaw, event))
+// 	// Make sure the event has been marked with the proper state
+// 	assert.Equal(t, types.EventPassingState, event.Check.State)
+// }
 
-	err = e.Stop()
-	assert.NoError(t, err)
+// func TestCheckOccurrences(t *testing.T) {
+// 	testCases := []struct {
+// 		name                         string
+// 		status                       uint32
+// 		occurrences                  int64
+// 		history                      []types.CheckHistory
+// 		expectedOccurrences          int64
+// 		expectedOccurrencesWatermark int64
+// 	}{
+// 		{
+// 			name:        "No previous occurences, check OK",
+// 			status:      0,
+// 			occurrences: int64(0),
+// 			history: []types.CheckHistory{
+// 				{Status: 0, Executed: time.Now().Unix() - 1},
+// 			},
+// 			expectedOccurrences:          1,
+// 			expectedOccurrencesWatermark: 1,
+// 		},
+// 		{
+// 			name:        "No previous occurences, check WARN",
+// 			status:      1,
+// 			occurrences: int64(0),
+// 			history: []types.CheckHistory{
+// 				{Status: 1, Executed: time.Now().Unix() - 1},
+// 			},
+// 			expectedOccurrences:          1,
+// 			expectedOccurrencesWatermark: 1,
+// 		},
+// 		{
+// 			name:        "previous WARN occurences, check OK",
+// 			status:      0,
+// 			occurrences: int64(1),
+// 			history: []types.CheckHistory{
+// 				{Status: 1, Executed: time.Now().Unix() - 2},
+// 				{Status: 0, Executed: time.Now().Unix() - 1},
+// 			},
+// 			expectedOccurrences:          1,
+// 			expectedOccurrencesWatermark: 1,
+// 		},
+// 		{
+// 			name:        "previous WARN occurences, check WARN",
+// 			status:      1,
+// 			occurrences: int64(1),
+// 			history: []types.CheckHistory{
+// 				{Status: 1, Executed: time.Now().Unix() - 2},
+// 				{Status: 1, Executed: time.Now().Unix() - 1},
+// 			},
+// 			expectedOccurrences:          2,
+// 			expectedOccurrencesWatermark: 2,
+// 		},
+// 		{
+// 			name:        "previous CRIT occurences, check WARN",
+// 			status:      1,
+// 			occurrences: int64(1),
+// 			history: []types.CheckHistory{
+// 				{Status: 2, Executed: time.Now().Unix() - 2},
+// 				{Status: 1, Executed: time.Now().Unix() - 1},
+// 			},
+// 			expectedOccurrences:          1,
+// 			expectedOccurrencesWatermark: 1,
+// 		},
+// 	}
 
-	// Make sure the event has been marked with the proper state
-	assert.Equal(t, types.EventPassingState, event.Check.State)
-}
+// 	for _, tc := range testCases {
+// 		t.Run(tc.name, func(t *testing.T) {
+// 			event := types.FixtureEvent("entity1", "check1")
+// 			event.Check.Status = tc.status
+// 			event.Check.Occurrences = tc.occurrences
+// 			event.Check.History = tc.history
+// 			updateOccurrences(event)
 
-func TestCheckOccurrences(t *testing.T) {
-	testCases := []struct {
-		name                         string
-		status                       uint32
-		occurrences                  int64
-		history                      []types.CheckHistory
-		expectedOccurrences          int64
-		expectedOccurrencesWatermark int64
-	}{
-		{
-			name:        "No previous occurences, check OK",
-			status:      0,
-			occurrences: int64(0),
-			history: []types.CheckHistory{
-				{Status: 0, Executed: time.Now().Unix() - 1},
-			},
-			expectedOccurrences:          1,
-			expectedOccurrencesWatermark: 1,
-		},
-		{
-			name:        "No previous occurences, check WARN",
-			status:      1,
-			occurrences: int64(0),
-			history: []types.CheckHistory{
-				{Status: 1, Executed: time.Now().Unix() - 1},
-			},
-			expectedOccurrences:          1,
-			expectedOccurrencesWatermark: 1,
-		},
-		{
-			name:        "previous WARN occurences, check OK",
-			status:      0,
-			occurrences: int64(1),
-			history: []types.CheckHistory{
-				{Status: 1, Executed: time.Now().Unix() - 2},
-				{Status: 0, Executed: time.Now().Unix() - 1},
-			},
-			expectedOccurrences:          1,
-			expectedOccurrencesWatermark: 1,
-		},
-		{
-			name:        "previous WARN occurences, check WARN",
-			status:      1,
-			occurrences: int64(1),
-			history: []types.CheckHistory{
-				{Status: 1, Executed: time.Now().Unix() - 2},
-				{Status: 1, Executed: time.Now().Unix() - 1},
-			},
-			expectedOccurrences:          2,
-			expectedOccurrencesWatermark: 2,
-		},
-		{
-			name:        "previous CRIT occurences, check WARN",
-			status:      1,
-			occurrences: int64(1),
-			history: []types.CheckHistory{
-				{Status: 2, Executed: time.Now().Unix() - 2},
-				{Status: 1, Executed: time.Now().Unix() - 1},
-			},
-			expectedOccurrences:          1,
-			expectedOccurrencesWatermark: 1,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			event := types.FixtureEvent("entity1", "check1")
-			event.Check.Status = tc.status
-			event.Check.Occurrences = tc.occurrences
-			event.Check.History = tc.history
-			updateOccurrences(event)
-
-			assert.Equal(t, tc.expectedOccurrences, event.Check.Occurrences)
-			assert.Equal(t, tc.expectedOccurrencesWatermark, event.Check.OccurrencesWatermark)
-		})
-	}
-}
+// 			assert.Equal(t, tc.expectedOccurrences, event.Check.Occurrences)
+// 			assert.Equal(t, tc.expectedOccurrencesWatermark, event.Check.OccurrencesWatermark)
+// 		})
+// 	}
+// }

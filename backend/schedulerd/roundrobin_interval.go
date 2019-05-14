@@ -8,6 +8,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 )
@@ -17,6 +18,8 @@ type ringCancel struct {
 	Cancel               context.CancelFunc
 }
 
+// RoundRobinIntervalScheduler schedules checks to be executed in a round robin
+// fashion between the subscribers
 type RoundRobinIntervalScheduler struct {
 	lastIntervalState      uint32
 	lastSubscriptionsState []string
@@ -30,10 +33,11 @@ type RoundRobinIntervalScheduler struct {
 	ringPool               *ringv2.Pool
 	executor               *CheckExecutor
 	cancels                map[string]ringCancel
-	entityCache            *EntityCache
+	entityCache            *cache.ResourceCacher
 }
 
-func NewRoundRobinIntervalScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, pool *ringv2.Pool, check *corev2.CheckConfig, cache *EntityCache) *RoundRobinIntervalScheduler {
+// NewRoundRobinIntervalScheduler initializes a RoundRobinIntervalScheduler
+func NewRoundRobinIntervalScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, pool *ringv2.Pool, check *corev2.CheckConfig, cache *cache.ResourceCacher) *RoundRobinIntervalScheduler {
 	sched := &RoundRobinIntervalScheduler{
 		store:             store,
 		bus:               bus,
@@ -60,7 +64,8 @@ func (s *RoundRobinIntervalScheduler) updateRings() {
 	agentEntitiesRequest := 1
 	var proxyEntities []*corev2.Entity
 	if s.check.ProxyRequests != nil {
-		entities := s.entityCache.GetEntities(s.check.Namespace)
+		entities := resourcesToEntities(s.entityCache.Get(s.check.Namespace))
+
 		proxyEntities = matchEntities(entities, s.check.ProxyRequests)
 		agentEntitiesRequest = len(proxyEntities)
 		if agentEntitiesRequest == 0 {

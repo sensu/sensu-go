@@ -3,6 +3,7 @@ package etcd
 import (
 	"context"
 	"encoding/json"
+	"reflect"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
@@ -24,6 +25,47 @@ func GetWatcherAction(event *clientv3.Event) store.WatchActionType {
 	}
 
 	return store.WatchUnknown
+}
+
+// GetResourceWatcher ...
+func GetResourceWatcher(ctx context.Context, client *clientv3.Client, key string, elemType reflect.Type) <-chan store.WatchEventResource {
+	w := Watch(ctx, client, key, true)
+	ch := make(chan store.WatchEventResource, 1)
+
+	go func() {
+		defer close(ch)
+		for response := range w.Result() {
+			if response.Type == store.WatchUnknown {
+				logger.Error("unknown etcd watch type: ", response.Type)
+				continue
+			}
+
+			var resource corev2.Resource
+			elemPtr := reflect.New(elemType)
+
+			if response.Type == store.WatchDelete {
+				meta := store.ParseResourceKey(response.Key)
+				r := &corev2.AbstractResource{}
+				r.Namespace = meta.Namespace
+				r.Name = meta.ResourceName
+				resource = r
+			} else {
+				if err := json.Unmarshal(response.Object, elemPtr.Interface()); err != nil {
+					logger.WithField("key", response.Key).WithError(err).
+						Error("unable to unmarshal resource from key")
+					continue
+				}
+				resource = elemPtr.Elem().Interface().(corev2.Resource)
+			}
+
+			ch <- store.WatchEventResource{
+				Action:   response.Type,
+				Resource: resource,
+			}
+		}
+	}()
+
+	return ch
 }
 
 // GetCheckConfigWatcher returns a channel that emits WatchEventCheckConfig structs notifying

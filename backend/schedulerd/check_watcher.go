@@ -8,6 +8,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -19,11 +20,11 @@ type CheckWatcher struct {
 	mu          sync.Mutex
 	ctx         context.Context
 	ringPool    *ringv2.Pool
-	entityCache *EntityCache
+	entityCache *cache.ResourceCacher
 }
 
 // NewCheckWatcher creates a new ScheduleManager.
-func NewCheckWatcher(ctx context.Context, msgBus messaging.MessageBus, store store.Store, pool *ringv2.Pool, cache *EntityCache) *CheckWatcher {
+func NewCheckWatcher(ctx context.Context, msgBus messaging.MessageBus, store store.Store, pool *ringv2.Pool, cache *cache.ResourceCacher) *CheckWatcher {
 	watcher := &CheckWatcher{
 		store:       store,
 		items:       make(map[string]Scheduler),
@@ -50,10 +51,9 @@ func (c *CheckWatcher) startScheduler(check *types.CheckConfig) error {
 		if existing.Type() == GetSchedulerType(check) {
 			logger.Error("scheduler already exists")
 			return nil
-		} else {
-			if err := existing.Stop(); err != nil {
-				return err
-			}
+		}
+		if err := existing.Stop(); err != nil {
+			return err
 		}
 	}
 

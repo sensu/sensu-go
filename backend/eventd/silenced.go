@@ -2,6 +2,10 @@ package eventd
 
 import (
 	"context"
+	"fmt"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/store/cache"
 
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -20,41 +24,48 @@ func addToSilencedBy(id string, ids []string) []string {
 // getSilenced retrieves all silenced entries for a given event, using the
 // entity subscription, the check subscription and the check name while
 // supporting wildcard silenced entries (e.g. subscription:*)
-func getSilenced(ctx context.Context, event *types.Event, s store.Store) error {
-	entries := []*types.Silenced{}
+func getSilenced(ctx context.Context, event *types.Event, silencedCache *cache.ResourceCacher) error {
+	// entries := []*types.Silenced{}
 	if !event.HasCheck() {
 		return nil
 	}
 
-	// Retrieve silenced entries using the entity subscription
-	entitySubscription := types.GetEntitySubscription(event.Entity.Name)
-	results, err := s.GetSilencedEntriesBySubscription(ctx, entitySubscription)
-	if err != nil {
-		return err
+	resources := silencedCache.Get(event.Check.Namespace)
+	entries := make([]*corev2.Silenced, len(resources))
+	for i, resource := range resources {
+		entries[i] = resource.(*corev2.Silenced)
 	}
-	entries = append(entries, results...)
+	fmt.Println(entries)
 
-	// Retrieve silenced entries using the check subscriptions
-	for _, value := range event.Check.Subscriptions {
-		results, err = s.GetSilencedEntriesBySubscription(ctx, value)
-		if err != nil {
-			return err
-		}
-		entries = append(entries, results...)
-	}
+	// // Retrieve silenced entries using the entity subscription
+	// entitySubscription := types.GetEntitySubscription(event.Entity.Name)
+	// results, err := s.GetSilencedEntriesBySubscription(ctx, entitySubscription)
+	// if err != nil {
+	// 	return err
+	// }
+	// entries = append(entries, results...)
 
-	// Retrieve silenced entries using the check name
-	results, err = s.GetSilencedEntriesByCheckName(ctx, event.Check.Name)
-	if err != nil {
-		return err
-	}
-	entries = append(entries, results...)
+	// // Retrieve silenced entries using the check subscriptions
+	// for _, value := range event.Check.Subscriptions {
+	// 	results, err = s.GetSilencedEntriesBySubscription(ctx, value)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	entries = append(entries, results...)
+	// }
 
-	// Determine which entries silence this event
-	silencedIDs := silencedBy(event, entries)
+	// // Retrieve silenced entries using the check name
+	// results, err = s.GetSilencedEntriesByCheckName(ctx, event.Check.Name)
+	// if err != nil {
+	// 	return err
+	// }
+	// entries = append(entries, results...)
 
-	// Add to the event all silenced entries ID that actually silence it
-	event.Check.Silenced = silencedIDs
+	// // Determine which entries silence this event
+	// silencedIDs := silencedBy(event, entries)
+
+	// // Add to the event all silenced entries ID that actually silence it
+	// event.Check.Silenced = silencedIDs
 
 	return nil
 }

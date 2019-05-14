@@ -7,6 +7,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 )
@@ -25,11 +26,11 @@ type RoundRobinCronScheduler struct {
 	ringPool      *ringv2.Pool
 	cancels       map[string]ringCancel
 	executor      *CheckExecutor
-	entityCache   *EntityCache
+	entityCache   *cache.ResourceCacher
 }
 
 // NewRoundRobinCronScheduler creates a new RoundRobinCronScheduler.
-func NewRoundRobinCronScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, pool *ringv2.Pool, check *corev2.CheckConfig, cache *EntityCache) *RoundRobinCronScheduler {
+func NewRoundRobinCronScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, pool *ringv2.Pool, check *corev2.CheckConfig, cache *cache.ResourceCacher) *RoundRobinCronScheduler {
 	sched := &RoundRobinCronScheduler{
 		store:         store,
 		bus:           bus,
@@ -118,7 +119,8 @@ func (s *RoundRobinCronScheduler) updateRings() {
 	agentEntitiesRequest := 1
 	var proxyEntities []*corev2.Entity
 	if s.check.ProxyRequests != nil {
-		entities := s.entityCache.GetEntities(s.check.Namespace)
+		entities := resourcesToEntities(s.entityCache.Get(s.check.Namespace))
+
 		proxyEntities = matchEntities(entities, s.check.ProxyRequests)
 		agentEntitiesRequest = len(proxyEntities)
 		if agentEntitiesRequest == 0 {

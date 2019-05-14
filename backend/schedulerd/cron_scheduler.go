@@ -3,14 +3,14 @@ package schedulerd
 import (
 	"context"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sirupsen/logrus"
-
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
-// IntervalScheduler schedules checks to be executed on a cron schedule.
+// CronScheduler schedules checks to be executed on a cron schedule.
 type CronScheduler struct {
 	lastCronState string
 	check         *corev2.CheckConfig
@@ -20,10 +20,11 @@ type CronScheduler struct {
 	ctx           context.Context
 	cancel        context.CancelFunc
 	interrupt     chan *corev2.CheckConfig
-	entityCache   *EntityCache
+	entityCache   *cache.ResourceCacher
 }
 
-func NewCronScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, check *corev2.CheckConfig, cache *EntityCache) *CronScheduler {
+// NewCronScheduler initalizes a CronScheduler
+func NewCronScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, check *corev2.CheckConfig, cache *cache.ResourceCacher) *CronScheduler {
 	sched := &CronScheduler{
 		store:         store,
 		bus:           bus,

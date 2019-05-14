@@ -9,11 +9,14 @@ import (
 	"sync"
 	"time"
 
+	"github.com/coreos/etcd/clientv3"
 	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
+	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sirupsen/logrus"
 )
 
@@ -43,6 +46,8 @@ var (
 
 // Eventd handles incoming sensu events and stores them in etcd.
 type Eventd struct {
+	ctx             context.Context
+	cancel          context.CancelFunc
 	store           store.Store
 	bus             messaging.MessageBus
 	handlerCount    int
@@ -53,6 +58,7 @@ type Eventd struct {
 	mu              *sync.Mutex
 	shutdownChan    chan struct{}
 	wg              *sync.WaitGroup
+	silencedCache   *cache.ResourceCacher
 }
 
 // Option is a functional option.
@@ -63,6 +69,7 @@ type Config struct {
 	Store           store.Store
 	Bus             messaging.MessageBus
 	LivenessFactory liveness.Factory
+	Client          *clientv3.Client
 }
 
 // New creates a new Eventd.
@@ -78,6 +85,14 @@ func New(c Config, opts ...Option) (*Eventd, error) {
 		wg:              &sync.WaitGroup{},
 		mu:              &sync.Mutex{},
 	}
+
+	e.ctx, e.cancel = context.WithCancel(context.Background())
+	cache, err := cache.New(e.ctx, c.Client, etcd.GetSilencedPath, &corev2.Silenced{})
+	if err != nil {
+		return nil, err
+	}
+	e.silencedCache = cache
+
 	for _, o := range opts {
 		if err := o(e); err != nil {
 			return nil, err
@@ -222,7 +237,7 @@ func (e *Eventd) handleMessage(msg interface{}) (err error) {
 	state(event)
 
 	// Add any silenced subscriptions to the event
-	err = getSilenced(ctx, event, e.store)
+	err = getSilenced(ctx, event, e.silencedCache)
 	if err != nil {
 		return err
 	}
@@ -428,6 +443,7 @@ func (e *Eventd) Stop() error {
 	if err := e.subscription.Cancel(); err != nil {
 		logger.WithError(err).Error("unable to unsubscribe from message bus")
 	}
+	e.cancel()
 	close(e.eventChan)
 	close(e.shutdownChan)
 	e.wg.Wait()

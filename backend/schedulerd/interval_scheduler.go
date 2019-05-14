@@ -6,6 +6,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 )
@@ -20,10 +21,11 @@ type IntervalScheduler struct {
 	ctx               context.Context
 	cancel            context.CancelFunc
 	interrupt         chan *corev2.CheckConfig
-	entityCache       *EntityCache
+	entityCache       *cache.ResourceCacher
 }
 
-func NewIntervalScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, check *types.CheckConfig, cache *EntityCache) *IntervalScheduler {
+// NewIntervalScheduler initializes a IntervalScheduler
+func NewIntervalScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, check *types.CheckConfig, cache *cache.ResourceCacher) *IntervalScheduler {
 	sched := &IntervalScheduler{
 		store:             store,
 		bus:               bus,

@@ -118,6 +118,12 @@ type WatchEventTessenConfig struct {
 	Action       WatchActionType
 }
 
+// WatchEventResource is a store event about a specific resource
+type WatchEventResource struct {
+	Resource corev2.Resource
+	Action   WatchActionType
+}
+
 // Store is used to abstract the durable storage used by the Sensu backend
 // processses. Each Sensu resources is represented by its own interface. A
 // MockStore is available in order to mock a store implementation
