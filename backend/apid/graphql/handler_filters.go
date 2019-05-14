@@ -8,7 +8,7 @@ import (
 // HandlerFilters returns collection of filters used for matching resources.
 func HandlerFilters() map[string]filter.Filter {
 	filters := map[string]filter.Filter{
-		// type:pipe | type:socket | type:set
+		// type:pipe | type:tcp | type:udp | type:set
 		"type": filter.String(func(res v2.Resource, v string) bool {
 			return res.(*v2.Handler).Type == v
 		}),

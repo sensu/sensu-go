@@ -109,7 +109,8 @@ type Namespace implements Node {
     Eg.
 
     type:pipe
-    type:socket
+    type:tcp
+    type:udp
     type:set
     """
     filters: [String!] = [],
