@@ -16,6 +16,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added event processing counts to tessen data collection.
 - Added ability to query for `Handlers` (individual and collections) from the GraphQL query endpoint.
 
+### Changed
+- eventd and keepalived now use 1000 handlers for events.
+
 ### Fixed
 - Only bury switchsets of checks that no longer have a TTL, in order to reduce
 the number of write operations made to etcd.
