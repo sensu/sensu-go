@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/coreos/etcd/client"
 	"github.com/coreos/etcd/clientv3"
 	jwt "github.com/dgrijalva/jwt-go"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -185,6 +186,9 @@ type Store interface {
 
 	// ExtensionRegistry tracks third-party extensions.
 	ExtensionRegistry
+
+	// VersionStore provides an interface for sensu and etcd versions.
+	VersionStore
 
 	// NewInitializer returns the Initializer interfaces, which provides the
 	// required mechanism to verify if a store is initialized
@@ -579,6 +583,12 @@ type UserStore interface {
 
 	// UpdateHandler updates a given user.
 	UpdateUser(user *types.User) error
+}
+
+// VersionStore provides methods for sensu and etcd versions.
+type VersionStore interface {
+	// GetVersion retrieves the sensu and etcd versions.
+	GetVersion(ctx context.Context, client client.Client) (*corev2.Version, error)
 }
 
 // Initializer provides methods to verify if a store is initialized

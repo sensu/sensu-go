@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/coreos/etcd/client"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/pkg/transport"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -221,6 +222,16 @@ func Initialize(config *Config) (*Backend, error) {
 	}
 	authenticator.AddProvider(basic)
 
+	// Create an etcd client
+	cfg := client.Config{
+		Endpoints:               config.EtcdAdvertiseClientURLs,
+		HeaderTimeoutPerRequest: 5 * time.Second,
+	}
+	c, err := client.New(cfg)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize apid
 	api, err := apid.New(apid.Config{
 		ListenAddress:       config.APIListenAddress,
@@ -232,6 +243,7 @@ func Initialize(config *Config) (*Backend, error) {
 		Cluster:             clientv3.NewCluster(b.Client),
 		EtcdClientTLSConfig: etcdClientTLSConfig,
 		Authenticator:       authenticator,
+		Client:              c,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err)
