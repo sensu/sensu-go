@@ -71,6 +71,7 @@ const (
 	flagEtcdPeerKeyFile        = "etcd-peer-key-file"
 	flagEtcdPeerClientCertAuth = "etcd-peer-client-cert-auth"
 	flagEtcdPeerTrustedCAFile  = "etcd-peer-trusted-ca-file"
+	flagEtcdCipherSuites       = "etcd-cipher-suites"
 
 	// Default values
 
@@ -170,6 +171,7 @@ func newStartCommand() *cobra.Command {
 				EtcdInitialAdvertisePeerURLs: viper.GetStringSlice(flagEtcdInitialAdvertisePeerURLs),
 				EtcdInitialClusterToken:      viper.GetString(flagEtcdInitialClusterToken),
 				EtcdName:                     viper.GetString(flagEtcdNodeName),
+				EtcdCipherSuites:             viper.GetStringSlice(flagEtcdCipherSuites),
 				NoEmbedEtcd:                  viper.GetBool(flagNoEmbedEtcd),
 			}
 
@@ -324,6 +326,8 @@ func newStartCommand() *cobra.Command {
 	_ = cmd.Flags().SetAnnotation(flagEtcdNodeName, "categories", []string{"store"})
 	cmd.Flags().Bool(flagNoEmbedEtcd, viper.GetBool(flagNoEmbedEtcd), "don't embed etcd, use external etcd instead")
 	_ = cmd.Flags().SetAnnotation(flagNoEmbedEtcd, "categories", []string{"store"})
+	cmd.Flags().StringSlice(flagEtcdCipherSuites, nil, "list of ciphers to use for etcd TLS configuration")
+	_ = cmd.Flags().SetAnnotation(flagEtcdCipherSuites, "categories", []string{"store"})
 
 	// Etcd TLS flags
 	cmd.Flags().String(flagEtcdCertFile, viper.GetString(flagEtcdCertFile), "path to the client server TLS cert file")
