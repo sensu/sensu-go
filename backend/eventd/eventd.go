@@ -22,6 +22,10 @@ const (
 	// package.
 	ComponentName = "eventd"
 
+	// DefaultHandlerCount is the number of goroutines that will be allocated
+	// for processing incoming events.
+	DefaultHandlerCount = 1000
+
 	// EventsProcessedCounterVec is the name of the prometheus counter vec used to count events processed.
 	EventsProcessedCounterVec = "sensu_go_events_processed"
 
@@ -76,7 +80,7 @@ func New(c Config, opts ...Option) (*Eventd, error) {
 	e := &Eventd{
 		store:           c.Store,
 		bus:             c.Bus,
-		handlerCount:    10,
+		handlerCount:    DefaultHandlerCount,
 		livenessFactory: c.LivenessFactory,
 		errChan:         make(chan error, 1),
 		shutdownChan:    make(chan struct{}, 1),
