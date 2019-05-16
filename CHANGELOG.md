@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added event processing counts to tessen data collection.
 - Added ability to query for `Handlers` (individual and collections) from the GraphQL query endpoint.
 - --etcd-cipher-suites option is now available for sensu-backend.
+- Added the `--chunk-size` flag to `sensuctl * list` sub-commands
 
 ### Changed
 - eventd and keepalived now use 1000 handlers for events.
