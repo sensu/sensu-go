@@ -55,7 +55,7 @@ func TestSwitchSet(t *testing.T) {
 	}
 
 	toggle := NewSwitchSet(client, "test", expired, alive, logger)
-	go toggle.monitor(ctx)
+	toggle.monitor(ctx)
 
 	// the [0, 0, 0, 1] sequences
 	for i := 0; i < 3; i++ {
@@ -119,7 +119,7 @@ func TestDead(t *testing.T) {
 	}
 
 	toggle := NewSwitchSet(client, "test", expired, alive, logger)
-	go toggle.monitor(ctx)
+	toggle.monitor(ctx)
 
 	if err := toggle.Dead(ctx, "entity1", 5); err != nil {
 		t.Fatal(err)
@@ -159,7 +159,7 @@ func TestBury(t *testing.T) {
 	}
 
 	toggle := NewSwitchSet(client, "test", expired, alive, logger)
-	go toggle.monitor(ctx)
+	toggle.monitor(ctx)
 
 	if err := toggle.Dead(ctx, "default/entity1", 5); err != nil {
 		t.Fatal(err)
@@ -199,7 +199,7 @@ func TestBuryOnCallback(t *testing.T) {
 	}
 
 	toggle := NewSwitchSet(client, "test", expired, alive, logger)
-	go toggle.monitor(ctx)
+	toggle.monitor(ctx)
 
 	if err := toggle.Alive(ctx, "default/entity1", 5); err != nil {
 		t.Fatal(err)
