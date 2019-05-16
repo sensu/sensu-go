@@ -12,6 +12,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added event processing counts to tessen data collection.
 - Added ability to query for `Handlers` (individual and collections) from the GraphQL query endpoint.
 - Added `/version` to retrieve the current etcd server/cluster version and the sensu-backend version.
+- --etcd-cipher-suites option is now available for sensu-backend.
+
+### Changed
+- eventd and keepalived now use 1000 handlers for events.
 
 ### Fixed
 - Only bury switchsets of checks that no longer have a TTL, in order to reduce

@@ -76,7 +76,7 @@
   revision = "48ea1b39c25fc1bab3506fbc712ecbaa842c4d2d"
 
 [[projects]]
-  digest = "1:8c8cbf17df2e923172f1d439b6df6dab743f38a7f168b7ce2156a82265e2edee"
+  digest = "1:4515acf54596c3c615aaf704ba962df0c23f1ecb359624bd348dda51a6796b9a"
   name = "github.com/coreos/etcd"
   packages = [
     "alarm",
@@ -148,8 +148,8 @@
     "wal/walpb",
   ]
   pruneopts = "UT"
-  revision = "c9d46ab3799b7f2174268e75f72d01e6d6aac953"
-  version = "v3.3.2"
+  revision = "98d308426819d892e149fe45f6fd542464cb1f9d"
+  version = "v3.3.13"
 
 [[projects]]
   digest = "1:0ef770954bca104ee99b3b6b7f9b240605ac03517d9f98cbc1893daa03f3c038"
@@ -222,14 +222,6 @@
   ]
   pruneopts = "UT"
   revision = "f41072d47fff1112fa37146dfc812a476cce2d7f"
-
-[[projects]]
-  branch = "master"
-  digest = "1:ee7fe6a68ba9f21bc748293d4e1e66ad327f64a89b0f5ba2d021430babd4b8c9"
-  name = "github.com/dustin/go-humanize"
-  packages = ["."]
-  pruneopts = "UT"
-  revision = "bb3d318650d48840a39aa21a027c6630e198e626"
 
 [[projects]]
   digest = "1:6e3284ba4b7eb26e3a88ee5f39ce6e5dc6793fde50812cb00e79524e10e54dd6"
@@ -398,6 +390,14 @@
   revision = "1c504cfe6f6391d1ed5bc24b6c926965baf6015d"
 
 [[projects]]
+  digest = "1:1168584a5881d371e96cb0e66ef6db71d7cef0856cc7f311490bc856627f8328"
+  name = "github.com/grpc-ecosystem/go-grpc-middleware"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "c250d6563d4d4c20252cd865923440e829844f4e"
+  version = "v1.0.0"
+
+[[projects]]
   digest = "1:18d7ca9d0ea92fbf087e15cfd90b2c3fb391e9a46181fd421f99c48c8885bab7"
   name = "github.com/grpc-ecosystem/go-grpc-prometheus"
   packages = ["."]
@@ -484,11 +484,11 @@
   version = "v0.1.0"
 
 [[projects]]
-  digest = "1:1ed5ad32e321bd35d51e30dbbccab9d226ac290347838d03362b427459036a91"
+  digest = "1:f5a2051c55d05548d2d4fd23d244027b59fbd943217df8aa3b5e170ac2fd6e1b"
   name = "github.com/json-iterator/go"
   packages = ["."]
   pruneopts = "UT"
-  revision = "f7279a603edee96fe7764d3de9c6ff8cf9970994"
+  revision = "v1.1.6"
 
 [[projects]]
   digest = "1:0a69a1c0db3591fcefb47f115b224592c8dfa4368b7ba9fae509d5e16cdc95c8"
@@ -587,6 +587,22 @@
   packages = ["."]
   pruneopts = "UT"
   revision = "d0303fe809921458f417bcf828397a65db30a7e4"
+
+[[projects]]
+  digest = "1:33422d238f147d247752996a26574ac48dcf472976eda7f5134015f06bf16563"
+  name = "github.com/modern-go/concurrent"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "bacd9c7ef1dd9b15be4a9909b8ac7a4e313eec94"
+  version = "1.0.3"
+
+[[projects]]
+  digest = "1:e32bdbdb7c377a07a9a46378290059822efdce5c8d96fe71940d87cb4f918855"
+  name = "github.com/modern-go/reflect2"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "4b7aa43c6742a2c18fdef89dd197aaae7dac7ccd"
+  version = "1.0.1"
 
 [[projects]]
   branch = "master"
@@ -747,8 +763,10 @@
   digest = "1:267c6a4d9d69c5d14f4f233d364a59eaea299ea17b29dfe9be07ce5226c19899"
   name = "github.com/shirou/gopsutil"
   packages = [
+    "cpu",
     "host",
     "internal/common",
+    "mem",
     "net",
     "process",
   ]
@@ -876,14 +894,6 @@
   revision = "830351dc03c6f07d625727d5f993a463babb20e1"
 
 [[projects]]
-  branch = "master"
-  digest = "1:a8c1772186acf021f0a392a3c6a151604ba32b35f939bc1b4b653a447e7e4e0d"
-  name = "github.com/ugorji/go"
-  packages = ["codec"]
-  pruneopts = "UT"
-  revision = "f0aa215a7d653544d39d0e27dfa10fa4b183f397"
-
-[[projects]]
   digest = "1:4aeb3860275fa1fd60cccfb5a6ef85da438bf17402e1e84412ade4d4b55066a0"
   name = "github.com/ulikunitz/xz"
   packages = [
@@ -927,6 +937,37 @@
   pruneopts = "UT"
   revision = "63597a96ec0ad9e6d43c3fc81e809909e0237461"
   version = "v1.3.2"
+
+[[projects]]
+  digest = "1:a5158647b553c61877aa9ae74f4015000294e47981e6b8b07525edcbb0747c81"
+  name = "go.uber.org/atomic"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "df976f2515e274675050de7b3f42545de80594fd"
+  version = "v1.4.0"
+
+[[projects]]
+  digest = "1:60bf2a5e347af463c42ed31a493d817f8a72f102543060ed992754e689805d1a"
+  name = "go.uber.org/multierr"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "3c4937480c32f4c13a875a1829af76c98ca3d40a"
+  version = "v1.1.0"
+
+[[projects]]
+  digest = "1:676160e6a4722b08e0e26b11521d575c2cb2b6f0c679e1ee6178c5d8dee51e5e"
+  name = "go.uber.org/zap"
+  packages = [
+    ".",
+    "buffer",
+    "internal/bufferpool",
+    "internal/color",
+    "internal/exit",
+    "zapcore",
+  ]
+  pruneopts = "UT"
+  revision = "27376062155ad36be76b0f12cf1572a221d3a48c"
+  version = "v1.10.0"
 
 [[projects]]
   branch = "master"
@@ -1017,31 +1058,41 @@
   revision = "1e559d0a00eef8a9a43151db4665280bd8dd5886"
 
 [[projects]]
-  digest = "1:271761bd4d38761097ae76ef1edd4d635b5182b934c1de7e3a3219f09fff32f5"
+  digest = "1:3507dfd1eb0ec3fb7a1b591f17ba1cae23024f369d2912525a44e161ac6fe66e"
   name = "google.golang.org/grpc"
   packages = [
     ".",
     "balancer",
+    "balancer/base",
+    "balancer/roundrobin",
     "codes",
     "connectivity",
     "credentials",
+    "encoding",
+    "encoding/proto",
     "grpclb/grpc_lb_v1/messages",
     "grpclog",
     "health",
     "health/grpc_health_v1",
     "internal",
+    "internal/backoff",
+    "internal/channelz",
+    "internal/grpcrand",
     "keepalive",
     "metadata",
     "naming",
     "peer",
     "resolver",
+    "resolver/dns",
+    "resolver/passthrough",
     "stats",
     "status",
     "tap",
     "transport",
   ]
   pruneopts = "UT"
-  revision = "9a2334748bab9638f1480ad4f0ac6ac0c6c3a486"
+  revision = "168a6198bcb0ef175f7dacec0b8691fc141dc9b8"
+  version = "v1.13.0"
 
 [[projects]]
   digest = "1:daefe19254ef9f4955dc4b975f978e529d0099a83d24a1572673a5eac615bf09"
