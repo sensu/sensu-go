@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/coreos/etcd/client"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -62,21 +61,6 @@ func testWithEtcdClient(t *testing.T, f func(store.Store, *clientv3.Client)) {
 	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
 
 	f(s, client)
-}
-
-func testWithEtcdStoreClient(t *testing.T, f func(store.Store, client.Client)) {
-	e, c, cleanup := etcd.NewTestEtcdClient(t)
-	defer cleanup()
-
-	client, err := e.NewClient()
-	require.NoError(t, err)
-
-	s := NewStore(client, e.Name())
-
-	// Mock a default namespace
-	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
-
-	f(s, c)
 }
 
 type genericObject struct {
