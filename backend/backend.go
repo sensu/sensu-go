@@ -83,6 +83,13 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 	cfg.PeerTLSInfo = config.EtcdPeerTLSInfo
 	cfg.CipherSuites = config.EtcdCipherSuites
 
+	if config.EtcdQuotaBackendBytes != 0 {
+		cfg.QuotaBackendBytes = config.EtcdQuotaBackendBytes
+	}
+	if config.EtcdMaxRequestBytes != 0 {
+		cfg.MaxRequestBytes = config.EtcdMaxRequestBytes
+	}
+
 	// Start etcd
 	e, err := etcd.NewEtcd(cfg)
 	if err != nil {

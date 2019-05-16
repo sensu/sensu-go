@@ -15,6 +15,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - eventd and keepalived now use 1000 handlers for events.
+- etcd database size and request size are now configurable.
 
 ### Fixed
 - Only bury switchsets of checks that no longer have a TTL, in order to reduce

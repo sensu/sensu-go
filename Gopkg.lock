@@ -858,12 +858,11 @@
   version = "v1.0.3"
 
 [[projects]]
-  digest = "1:1b773526998f3dbde3a51a4a5881680c4d237d3600f570d900f97ac93c7ba0a8"
+  digest = "1:5251a6504191bf86e95a6c09528771138d3631d4b032f74aa56ec1da4f8b1f03"
   name = "github.com/spf13/viper"
   packages = ["."]
   pruneopts = "UT"
-  revision = "9e56dacc08fbbf8c9ee2dbc717553c758ce42bc9"
-  version = "v1.3.2"
+  revision = "7a605a50e69cd1ea431c4a1e6eebe9b287ef6de4"
 
 [[projects]]
   digest = "1:ac83cf90d08b63ad5f7e020ef480d319ae890c208f8524622a2f3136e2686b02"
@@ -1058,7 +1057,7 @@
   revision = "1e559d0a00eef8a9a43151db4665280bd8dd5886"
 
 [[projects]]
-  digest = "1:3507dfd1eb0ec3fb7a1b591f17ba1cae23024f369d2912525a44e161ac6fe66e"
+  digest = "1:1a9c0243b6fc4ccd431b2ac2eb964b453db89e0465bab46a718695f8a7f25bfb"
   name = "google.golang.org/grpc"
   packages = [
     ".",
@@ -1070,7 +1069,6 @@
     "credentials",
     "encoding",
     "encoding/proto",
-    "grpclb/grpc_lb_v1/messages",
     "grpclog",
     "health",
     "health/grpc_health_v1",
