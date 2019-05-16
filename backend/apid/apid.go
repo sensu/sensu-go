@@ -12,7 +12,6 @@ import (
 
 	"github.com/sensu/sensu-go/backend/authentication"
 
-	"github.com/coreos/etcd/client"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -42,7 +41,7 @@ type APId struct {
 	tls                 *types.TLSOptions
 	cluster             clientv3.Cluster
 	etcdClientTLSConfig *tls.Config
-	client              client.Client
+	clusterVersion      string
 }
 
 // Option is a functional option.
@@ -59,7 +58,7 @@ type Config struct {
 	Cluster             clientv3.Cluster
 	EtcdClientTLSConfig *tls.Config
 	Authenticator       *authentication.Authenticator
-	Client              client.Client
+	ClusterVersion      string
 }
 
 // New creates a new APId.
@@ -76,7 +75,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 		cluster:             c.Cluster,
 		etcdClientTLSConfig: c.EtcdClientTLSConfig,
 		Authenticator:       c.Authenticator,
-		client:              c.Client,
+		clusterVersion:      c.ClusterVersion,
 	}
 
 	// prepare TLS configs (both server and client)
@@ -105,7 +104,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	router := mux.NewRouter().UseEncodedPath()
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
 	router.Handle("/metrics", promhttp.Handler())
-	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig, a.client)
+	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig, a.clusterVersion)
 	a.registerGraphQLService(router, c.URL, tlsClientConfig)
 	registerAuthenticationResources(router, a.store, a.Authenticator)
 	a.registerRestrictedResources(router)
@@ -190,7 +189,7 @@ func registerUnauthenticatedResources(
 	store store.Store,
 	cluster clientv3.Cluster,
 	etcdClientTLSConfig *tls.Config,
-	client client.Client,
+	clusterVersion string,
 ) {
 	mountRouters(
 		NewSubrouter(
@@ -199,7 +198,7 @@ func registerUnauthenticatedResources(
 			middlewares.LimitRequest{},
 		),
 		routers.NewHealthRouter(actions.NewHealthController(store, cluster, etcdClientTLSConfig)),
-		routers.NewVersionRouter(actions.NewVersionController(store, client)),
+		routers.NewVersionRouter(actions.NewVersionController(clusterVersion)),
 	)
 }
 

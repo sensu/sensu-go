@@ -6,8 +6,8 @@ import (
 
 // Version holds the current etcd server and cluster version, and the sensu-backend version.
 type Version struct {
-	Etcd         *version.Versions
-	SensuBackend string
+	Etcd         *version.Versions `json:"etcd"`
+	SensuBackend string            `json:"sensu_backend"`
 }
 
 // FixtureVersion returns a Version fixture for testing.

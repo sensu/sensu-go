@@ -2,7 +2,6 @@ package routers
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -17,9 +16,9 @@ type mockVersionController struct {
 	mock.Mock
 }
 
-func (m *mockVersionController) GetVersion(ctx context.Context) (*corev2.Version, error) {
+func (m *mockVersionController) GetVersion(ctx context.Context) *corev2.Version {
 	args := m.Called(ctx)
-	return args.Get(0).(*corev2.Version), args.Error(1)
+	return args.Get(0).(*corev2.Version)
 }
 
 func newVersionTest(t *testing.T) (*mockVersionController, *httptest.Server) {
@@ -29,7 +28,7 @@ func newVersionTest(t *testing.T) (*mockVersionController, *httptest.Server) {
 	versionRouter.Mount(router)
 	return controller, httptest.NewServer(router)
 }
-func TestVersionSuccess(t *testing.T) {
+func TestVersion(t *testing.T) {
 	controller, server := newVersionTest(t)
 	defer server.Close()
 	versionResponse := corev2.FixtureVersion()
@@ -44,26 +43,6 @@ func TestVersionSuccess(t *testing.T) {
 	}
 
 	if resp.StatusCode >= 400 {
-		body, _ := ioutil.ReadAll(resp.Body)
-		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
-	}
-}
-
-func TestVersionErr(t *testing.T) {
-	controller, server := newVersionTest(t)
-	defer server.Close()
-	versionResponse := &corev2.Version{}
-	controller.On("GetVersion", mock.Anything).Return(versionResponse, fmt.Errorf("foo"))
-
-	client := new(http.Client)
-	endpoint := "/version"
-	req := newRequest(t, http.MethodGet, server.URL+endpoint, nil)
-	resp, err := client.Do(req)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if resp.StatusCode != 500 {
 		body, _ := ioutil.ReadAll(resp.Body)
 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
 	}

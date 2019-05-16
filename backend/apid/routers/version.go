@@ -11,7 +11,7 @@ import (
 
 // VersionController represents the controller needs of the VersionRouter
 type VersionController interface {
-	GetVersion(ctx context.Context) (*corev2.Version, error)
+	GetVersion(ctx context.Context) *corev2.Version
 }
 
 // VersionRouter handles requests for /version
@@ -32,10 +32,6 @@ func (r *VersionRouter) Mount(parent *mux.Router) {
 }
 
 func (r *VersionRouter) version(w http.ResponseWriter, _ *http.Request) {
-	version, err := r.controller.GetVersion(context.Background())
-	if err != nil {
-		http.Error(w, "Unable to get cluster version", http.StatusInternalServerError)
-		return
-	}
+	version := r.controller.GetVersion(context.Background())
 	_ = json.NewEncoder(w).Encode(version)
 }
