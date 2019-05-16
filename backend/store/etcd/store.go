@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -189,14 +190,22 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 	}
 
 	for _, kv := range resp.Kvs {
-		// Decode and append the value to v, which must be a slice.
-		obj := reflect.New(v.Type().Elem()).Interface()
-		if err := json.Unmarshal(kv.Value, obj); err != nil {
-			return &store.ErrDecode{Key: key, Err: err}
+		var obj interface{}
+		if kv.Value[0] == '{' {
+			obj = reflect.New(v.Type().Elem().Elem()).Interface()
+			if err := json.Unmarshal(kv.Value, obj); err != nil {
+				return &store.ErrDecode{Key: key, Err: err}
+			}
+		} else {
+			msg := reflect.New(v.Type().Elem().Elem()).Interface().(proto.Message)
+			if err := proto.Unmarshal(kv.Value, msg); err != nil {
+				return &store.ErrDecode{Key: key, Err: err}
+			}
+			obj = msg
 		}
 
 		// Initialize the annotations and labels if they are nil
-		objValue := reflect.ValueOf(obj).Elem()
+		objValue := reflect.ValueOf(obj)
 		if objValue.Kind() == reflect.Ptr {
 			meta := objValue.Elem().FieldByName("ObjectMeta")
 			if meta.CanSet() {
@@ -209,7 +218,7 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 			}
 		}
 
-		v.Set(reflect.Append(v, reflect.ValueOf(obj).Elem()))
+		v.Set(reflect.Append(v, reflect.ValueOf(obj)))
 	}
 
 	if pred.Limit != 0 && resp.Count > pred.Limit {

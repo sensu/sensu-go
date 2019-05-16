@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -94,10 +95,12 @@ func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) (
 	events := []*corev2.Event{}
 	for _, kv := range resp.Kvs {
 		event := &corev2.Event{}
-		err = json.Unmarshal(kv.Value, event)
-		if err != nil {
-			return nil, err
+		if err = proto.Unmarshal(kv.Value, event); err != nil {
+			if err := json.Unmarshal(kv.Value, event); err != nil {
+				return nil, err
+			}
 		}
+
 		if event.Labels == nil {
 			event.Labels = make(map[string]string)
 		}
@@ -143,10 +146,12 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *
 	events := []*corev2.Event{}
 	for _, kv := range resp.Kvs {
 		event := &corev2.Event{}
-		err = json.Unmarshal(kv.Value, event)
-		if err != nil {
-			return nil, err
+		if err = proto.Unmarshal(kv.Value, event); err != nil {
+			if err := json.Unmarshal(kv.Value, event); err != nil {
+				return nil, err
+			}
 		}
+
 		if event.Labels == nil {
 			event.Labels = make(map[string]string)
 		}
@@ -188,9 +193,12 @@ func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName
 
 	eventBytes := resp.Kvs[0].Value
 	event := &corev2.Event{}
-	if err := json.Unmarshal(eventBytes, event); err != nil {
-		return nil, err
+	if err = proto.Unmarshal(eventBytes, event); err != nil {
+		if err := json.Unmarshal(eventBytes, event); err != nil {
+			return nil, err
+		}
 	}
+
 	if event.Labels == nil {
 		event.Labels = make(map[string]string)
 	}
@@ -240,7 +248,7 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) error {
 
 	// update the history
 	// marshal the new event and store it.
-	eventBytes, err := json.Marshal(event)
+	eventBytes, err := proto.Marshal(event)
 	if err != nil {
 		return err
 	}

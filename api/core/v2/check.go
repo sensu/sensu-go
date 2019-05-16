@@ -351,19 +351,15 @@ func FixtureCheckConfig(id string) *CheckConfig {
 	timeout := uint32(0)
 
 	check := &CheckConfig{
-		ObjectMeta:           NewObjectMeta(id, "default"),
-		Interval:             interval,
-		Subscriptions:        []string{"linux"},
-		Command:              "command",
-		Handlers:             []string{},
-		RuntimeAssets:        []string{"ruby-2-4-2"},
-		CheckHooks:           []HookList{*FixtureHookList("hook1")},
-		Publish:              true,
-		Cron:                 "",
-		Ttl:                  0,
-		Timeout:              timeout,
-		OutputMetricHandlers: []string{},
-		OutputMetricFormat:   "",
+		ObjectMeta:    NewObjectMeta(id, "default"),
+		Interval:      interval,
+		Subscriptions: []string{"linux"},
+		Command:       "command",
+		RuntimeAssets: []string{"ruby-2-4-2"},
+		CheckHooks:    []HookList{*FixtureHookList("hook1")},
+		Publish:       true,
+		Ttl:           0,
+		Timeout:       timeout,
 	}
 	return check
 }

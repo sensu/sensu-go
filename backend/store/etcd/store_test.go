@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/gogo/protobuf/proto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -217,9 +218,14 @@ func TestList(t *testing.T) {
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
 		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/default/obj1", "default", obj1))
 
+		// Let's encode a resources with protobuf (instead of JSON) to ensure the
+		// List function supports both encoding format
 		obj2 := &genericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj2", Namespace: "acme"}}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
-		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/acme/obj2", "acme", obj2))
+		// require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/acme/obj2", "acme", obj2))
+		bytes, _ := proto.Marshal(obj2)
+		_, err := s.client.Put(ctx, "/sensu.io/generic/acme/obj2", string(bytes))
+		require.NoError(t, err)
 
 		obj3 := &genericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj3", Namespace: "acme"}}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
@@ -237,10 +243,14 @@ func TestList(t *testing.T) {
 		list := []*genericObject{}
 		pred := &store.SelectionPredicate{}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "default")
-		err := List(ctx, s.client, getGenericObjectsPath, &list, pred)
+		err = List(ctx, s.client, getGenericObjectsPath, &list, pred)
 		require.NoError(t, err)
 		assert.Len(t, list, 1)
 		assert.Empty(t, pred.Continue)
+
+		// Make sure the annonations & labels were initialized if nil
+		assert.Equal(t, map[string]string{}, list[0].ObjectMeta.Annotations)
+		assert.Equal(t, map[string]string{}, list[0].ObjectMeta.Labels)
 
 		// We should have 2 objects when listing keys under the acme namespace
 		list = []*genericObject{}
