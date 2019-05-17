@@ -222,6 +222,12 @@ func Initialize(config *Config) (*Backend, error) {
 	}
 	authenticator.AddProvider(basic)
 
+	var clusterVersion string
+	// only retrieve the cluster version if etcd is embedded
+	if !config.NoEmbedEtcd {
+		clusterVersion = b.Etcd.GetClusterVersion()
+	}
+
 	// Initialize apid
 	api, err := apid.New(apid.Config{
 		ListenAddress:       config.APIListenAddress,
@@ -233,6 +239,7 @@ func Initialize(config *Config) (*Backend, error) {
 		Cluster:             clientv3.NewCluster(b.Client),
 		EtcdClientTLSConfig: etcdClientTLSConfig,
 		Authenticator:       authenticator,
+		ClusterVersion:      clusterVersion,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err)

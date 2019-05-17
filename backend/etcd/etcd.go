@@ -98,6 +98,11 @@ func (e *Etcd) BackendID() (result string) {
 	return e.etcd.Server.ID().String()
 }
 
+// GetClusterVersion returns the cluster version of the etcd server
+func (e *Etcd) GetClusterVersion() string {
+	return e.etcd.Server.ClusterVersion().String()
+}
+
 // NewEtcd returns a new, configured, and running Etcd. The running Etcd will
 // panic on error. The calling goroutine should recover() from the panic and
 // shutdown accordingly. Callers must also ensure that the running Etcd is
