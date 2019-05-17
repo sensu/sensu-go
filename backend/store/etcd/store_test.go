@@ -4,19 +4,18 @@ package etcd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
-
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func testWithEtcd(t *testing.T, f func(store.Store)) {
@@ -443,4 +442,44 @@ func TestCount(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, int64(3), count)
 	})
+}
+
+func TestUnmarshal(t *testing.T) {
+	resource := &genericObject{Revision: 1}
+	jsonResource, _ := json.Marshal(resource)
+	protoResource, _ := json.Marshal(resource)
+
+	tests := []struct {
+		name    string
+		data    []byte
+		v       interface{}
+		wantErr bool
+	}{
+		{
+			name: "JSON data",
+			data: jsonResource,
+			v:    resource,
+		},
+		{
+			name: "Protobuf data",
+			data: protoResource,
+			v:    resource,
+		},
+		{
+			name:    "Invalid serialized object",
+			data:    protoResource,
+			v:       string("foo"),
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := unmarshal(tt.data, tt.v); (err != nil) != tt.wantErr {
+				t.Errorf("unmarshal() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !tt.wantErr {
+				assert.Equal(t, resource, tt.v)
+			}
+		})
+	}
 }

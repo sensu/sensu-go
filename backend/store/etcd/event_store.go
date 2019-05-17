@@ -2,7 +2,6 @@ package etcd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"path"
@@ -95,10 +94,8 @@ func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) (
 	events := []*corev2.Event{}
 	for _, kv := range resp.Kvs {
 		event := &corev2.Event{}
-		if err = proto.Unmarshal(kv.Value, event); err != nil {
-			if err := json.Unmarshal(kv.Value, event); err != nil {
-				return nil, err
-			}
+		if err := unmarshal(kv.Value, event); err != nil {
+			return nil, err
 		}
 
 		if event.Labels == nil {
@@ -146,10 +143,8 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *
 	events := []*corev2.Event{}
 	for _, kv := range resp.Kvs {
 		event := &corev2.Event{}
-		if err = proto.Unmarshal(kv.Value, event); err != nil {
-			if err := json.Unmarshal(kv.Value, event); err != nil {
-				return nil, err
-			}
+		if err := unmarshal(kv.Value, event); err != nil {
+			return nil, err
 		}
 
 		if event.Labels == nil {
@@ -193,10 +188,8 @@ func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName
 
 	eventBytes := resp.Kvs[0].Value
 	event := &corev2.Event{}
-	if err = proto.Unmarshal(eventBytes, event); err != nil {
-		if err := json.Unmarshal(eventBytes, event); err != nil {
-			return nil, err
-		}
+	if err := unmarshal(eventBytes, event); err != nil {
+		return nil, err
 	}
 
 	if event.Labels == nil {

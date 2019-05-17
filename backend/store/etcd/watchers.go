@@ -6,7 +6,6 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
-	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 )
@@ -91,11 +90,9 @@ func (s *Store) GetEntityWatcher(ctx context.Context) <-chan store.WatchEventEnt
 				entity.Namespace = meta.Namespace
 				entity.Name = meta.ResourceName
 			} else {
-				if err := proto.Unmarshal(response.Object, &entity); err != nil {
-					if err := json.Unmarshal(response.Object, &entity); err != nil {
-						logger.WithField("key", response.Key).WithError(err).Error("unable to unmarshal entity from key")
-						continue
-					}
+				if err := unmarshal(response.Object, &entity); err != nil {
+					logger.WithField("key", response.Key).WithError(err).Error("unable to unmarshal entity from key")
+					continue
 				}
 			}
 

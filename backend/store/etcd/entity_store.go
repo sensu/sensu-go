@@ -2,7 +2,6 @@ package etcd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -62,10 +61,8 @@ func (s *Store) GetEntityByName(ctx context.Context, name string) (*corev2.Entit
 		return nil, nil
 	}
 	entity := &corev2.Entity{}
-	if err = proto.Unmarshal(resp.Kvs[0].Value, entity); err != nil {
-		if err := json.Unmarshal(resp.Kvs[0].Value, entity); err != nil {
-			return nil, err
-		}
+	if err := unmarshal(resp.Kvs[0].Value, entity); err != nil {
+		return nil, err
 	}
 
 	if entity.Labels == nil {
