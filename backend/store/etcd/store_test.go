@@ -199,7 +199,6 @@ func TestList(t *testing.T) {
 		// List function supports both encoding format
 		obj2 := &GenericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj2", Namespace: "acme"}}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
-		// require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/acme/obj2", "acme", obj2))
 		bytes, _ := json.Marshal(obj2)
 		_, err := s.client.Put(ctx, "/sensu.io/generic/acme/obj2", string(bytes))
 		require.NoError(t, err)
