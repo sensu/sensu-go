@@ -2,7 +2,6 @@ package etcd
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
@@ -50,7 +49,7 @@ func (s *Store) GetCheckConfigWatcher(ctx context.Context) <-chan store.WatchEve
 				checkConfig.Namespace = meta.Namespace
 				checkConfig.Name = meta.ResourceName
 			} else {
-				if err := json.Unmarshal(response.Object, &checkConfig); err != nil {
+				if err := unmarshal(response.Object, &checkConfig); err != nil {
 					logger.WithField("key", response.Key).WithError(err).Error("unable to unmarshal check config from key")
 					continue
 				}
@@ -90,7 +89,7 @@ func (s *Store) GetEntityWatcher(ctx context.Context) <-chan store.WatchEventEnt
 				entity.Namespace = meta.Namespace
 				entity.Name = meta.ResourceName
 			} else {
-				if err := json.Unmarshal(response.Object, &entity); err != nil {
+				if err := unmarshal(response.Object, &entity); err != nil {
 					logger.WithField("key", response.Key).WithError(err).Error("unable to unmarshal entity from key")
 					continue
 				}
@@ -128,7 +127,7 @@ func (s *Store) GetTessenConfigWatcher(ctx context.Context) <-chan store.WatchEv
 			if response.Type == store.WatchDelete {
 				tessen = *corev2.DefaultTessenConfig()
 			} else {
-				if err := json.Unmarshal(response.Object, &tessen); err != nil {
+				if err := unmarshal(response.Object, &tessen); err != nil {
 					logger.WithField("key", response.Key).WithError(err).Error("unable to unmarshal tessen config from key")
 					continue
 				}

@@ -9,7 +9,9 @@ import (
 	"strings"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/types"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
@@ -36,8 +38,8 @@ func NewStore(client *clientv3.Client, name string) *Store {
 }
 
 // Create the given key with the serialized object.
-func Create(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
-	bytes, err := json.Marshal(object)
+func Create(ctx context.Context, client *clientv3.Client, key, namespace string, object proto.Message) error {
+	bytes, err := proto.Marshal(object)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}
@@ -80,9 +82,28 @@ func Create(ctx context.Context, client *clientv3.Client, key, namespace string,
 // CreateOrUpdate writes the given key with the serialized object, regarless of
 // its current existence
 func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
-	bytes, err := json.Marshal(object)
-	if err != nil {
-		return &store.ErrEncode{Key: key, Err: err}
+	var bytes []byte
+	var err error
+
+	switch object.(type) {
+	case types.Wrapper:
+		// Supporting protobuf serialization for wrapped resources is not
+		// straightforward since the types.Wrapper struct holds an interface. We
+		// will just use JSON encoding for now since the all store functions support
+		// both for decoding.
+		bytes, err = json.Marshal(object)
+		if err != nil {
+			return &store.ErrEncode{Key: key, Err: err}
+		}
+	default:
+		msg, ok := object.(proto.Message)
+		if !ok {
+			return &store.ErrEncode{Key: key, Err: fmt.Errorf("%T is not proto.Message", object)}
+		}
+		bytes, err = proto.Marshal(msg)
+		if err != nil {
+			return &store.ErrEncode{Key: key, Err: err}
+		}
 	}
 
 	comparisons := []clientv3.Cmp{}
@@ -142,7 +163,7 @@ func Get(ctx context.Context, client *clientv3.Client, key string, object interf
 	}
 
 	// Deserialize the object to the given object
-	if err := json.Unmarshal(resp.Kvs[0].Value, object); err != nil {
+	if err := unmarshal(resp.Kvs[0].Value, object); err != nil {
 		return &store.ErrDecode{Key: key, Err: err}
 	}
 
@@ -189,14 +210,22 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 	}
 
 	for _, kv := range resp.Kvs {
-		// Decode and append the value to v, which must be a slice.
-		obj := reflect.New(v.Type().Elem()).Interface()
-		if err := json.Unmarshal(kv.Value, obj); err != nil {
-			return &store.ErrDecode{Key: key, Err: err}
+		var obj interface{}
+		if len(kv.Value) > 0 && kv.Value[0] == '{' {
+			obj = reflect.New(v.Type().Elem().Elem()).Interface()
+			if err := json.Unmarshal(kv.Value, obj); err != nil {
+				return &store.ErrDecode{Key: key, Err: err}
+			}
+		} else {
+			msg := reflect.New(v.Type().Elem().Elem()).Interface().(proto.Message)
+			if err := proto.Unmarshal(kv.Value, msg); err != nil {
+				return &store.ErrDecode{Key: key, Err: err}
+			}
+			obj = msg
 		}
 
 		// Initialize the annotations and labels if they are nil
-		objValue := reflect.ValueOf(obj).Elem()
+		objValue := reflect.ValueOf(obj)
 		if objValue.Kind() == reflect.Ptr {
 			meta := objValue.Elem().FieldByName("ObjectMeta")
 			if meta.CanSet() {
@@ -209,7 +238,7 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 			}
 		}
 
-		v.Set(reflect.Append(v, reflect.ValueOf(obj).Elem()))
+		v.Set(reflect.Append(v, reflect.ValueOf(obj)))
 	}
 
 	if pred.Limit != 0 && resp.Count > pred.Limit {
@@ -223,8 +252,8 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 }
 
 // Update a key given with the serialized object.
-func Update(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
-	bytes, err := json.Marshal(object)
+func Update(ctx context.Context, client *clientv3.Client, key, namespace string, object proto.Message) error {
+	bytes, err := proto.Marshal(object)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}
@@ -340,4 +369,22 @@ func ComputeContinueToken(ctx context.Context, r corev2.Resource) string {
 		}
 		return objMeta.Name + "\x00"
 	}
+}
+
+func unmarshal(data []byte, v interface{}) error {
+	if len(data) > 0 && data[0] == '{' {
+		if err := json.Unmarshal(data, v); err != nil {
+			return err
+		}
+	} else {
+		msg, ok := v.(proto.Message)
+		if !ok {
+			return fmt.Errorf("%T is not proto.Message", v)
+		}
+		if err := proto.Unmarshal(data, msg); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

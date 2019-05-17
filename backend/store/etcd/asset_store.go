@@ -2,11 +2,11 @@ package etcd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -63,7 +63,7 @@ func (s *Store) GetAssetByName(ctx context.Context, name string) (*types.Asset, 
 
 	assetBytes := resp.Kvs[0].Value
 	asset := &types.Asset{}
-	if err := json.Unmarshal(assetBytes, asset); err != nil {
+	if err := unmarshal(assetBytes, asset); err != nil {
 		return nil, err
 	}
 	if asset.Labels == nil {
@@ -82,7 +82,7 @@ func (s *Store) UpdateAsset(ctx context.Context, asset *types.Asset) error {
 		return err
 	}
 
-	assetBytes, err := json.Marshal(asset)
+	assetBytes, err := proto.Marshal(asset)
 	if err != nil {
 		return err
 	}

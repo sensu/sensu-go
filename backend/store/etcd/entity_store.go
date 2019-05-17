@@ -2,11 +2,11 @@ package etcd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 )
@@ -61,10 +61,10 @@ func (s *Store) GetEntityByName(ctx context.Context, name string) (*corev2.Entit
 		return nil, nil
 	}
 	entity := &corev2.Entity{}
-	err = json.Unmarshal(resp.Kvs[0].Value, entity)
-	if err != nil {
+	if err := unmarshal(resp.Kvs[0].Value, entity); err != nil {
 		return nil, err
 	}
+
 	if entity.Labels == nil {
 		entity.Labels = make(map[string]string)
 	}
@@ -87,7 +87,7 @@ func (s *Store) UpdateEntity(ctx context.Context, e *corev2.Entity) error {
 		return err
 	}
 
-	eStr, err := json.Marshal(e)
+	eStr, err := proto.Marshal(e)
 	if err != nil {
 		return err
 	}

@@ -2,11 +2,11 @@ package etcd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -66,7 +66,7 @@ func (s *Store) GetEventFilterByName(ctx context.Context, name string) (*types.E
 
 	filterBytes := resp.Kvs[0].Value
 	filter := &types.EventFilter{}
-	if err := json.Unmarshal(filterBytes, filter); err != nil {
+	if err := unmarshal(filterBytes, filter); err != nil {
 		return nil, err
 	}
 
@@ -79,7 +79,7 @@ func (s *Store) UpdateEventFilter(ctx context.Context, filter *types.EventFilter
 		return err
 	}
 
-	filterBytes, err := json.Marshal(filter)
+	filterBytes, err := proto.Marshal(filter)
 	if err != nil {
 		return err
 	}

@@ -2,11 +2,11 @@ package etcd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -31,7 +31,7 @@ func (s *Store) RegisterExtension(ctx context.Context, ext *types.Extension) err
 		return err
 	}
 
-	b, err := json.Marshal(ext)
+	b, err := proto.Marshal(ext)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (s *Store) GetExtension(ctx context.Context, name string) (*types.Extension
 	}
 
 	var ext types.Extension
-	return &ext, json.Unmarshal(resp.Kvs[0].Value, &ext)
+	return &ext, unmarshal(resp.Kvs[0].Value, &ext)
 }
 
 // GetExtensions gets an extension

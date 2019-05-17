@@ -4,18 +4,17 @@ package etcd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"testing"
 
 	"github.com/coreos/etcd/clientv3"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
-
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func testWithEtcd(t *testing.T, f func(store.Store)) {
@@ -63,31 +62,10 @@ func testWithEtcdClient(t *testing.T, f func(store.Store, *clientv3.Client)) {
 	f(s, client)
 }
 
-type genericObject struct {
-	corev2.ObjectMeta
-	Revision int
-}
-
-func (g *genericObject) GetNamespace() string {
-	return g.Namespace
-}
-
-func (g *genericObject) URIPath() string {
-	return ""
-}
-
-func (g *genericObject) Validate() error {
-	return nil
-}
-
-func (g *genericObject) GetObjectMeta() corev2.ObjectMeta {
-	return corev2.NewObjectMeta(g.Name, g.Namespace)
-}
-
 func TestCreate(t *testing.T) {
 	testWithEtcdStore(t, func(s *Store) {
 		// Creating a namespaced key that does not exist should work
-		obj := &genericObject{}
+		obj := &GenericObject{}
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
 		err := Create(ctx, s.client, "/default/foo", "default", obj)
 		assert.NoError(t, err)
@@ -131,17 +109,17 @@ func TestCreate(t *testing.T) {
 func TestCreateOrUpdate(t *testing.T) {
 	testWithEtcdStore(t, func(store *Store) {
 		// Creating a namespaced key that does not exist should work
-		obj := &genericObject{Revision: 1}
+		obj := &GenericObject{Revision: 1}
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
 		err := CreateOrUpdate(ctx, store.client, "/default/foo", "default", obj)
 		assert.NoError(t, err)
 
 		// Creating this same key should also work, but the revision should be
 		// different
-		obj2 := &genericObject{Revision: 2}
+		obj2 := &GenericObject{Revision: 2}
 		err = CreateOrUpdate(ctx, store.client, "/default/foo", "default", obj)
 		assert.NoError(t, err)
-		result := &genericObject{}
+		result := &GenericObject{}
 		err = Get(ctx, store.client, "/default/foo", obj2)
 		assert.NoError(t, err)
 		assert.NotEqual(t, obj.Revision, result.Revision)
@@ -160,37 +138,37 @@ func TestDelete(t *testing.T) {
 		require.Error(t, Delete(ctx, store.client, "/default/foo"))
 
 		// Create it first
-		obj := &genericObject{}
+		obj := &GenericObject{}
 		require.NoError(t, Create(ctx, store.client, "/default/foo", "default", obj))
 
 		// Now make sure it gets properly deleted
 		require.NoError(t, Delete(ctx, store.client, "/default/foo"))
-		result := &genericObject{}
+		result := &GenericObject{}
 		require.Error(t, Get(ctx, store.client, "/default/foo", result))
 	})
 }
 func TestGet(t *testing.T) {
 	testWithEtcdStore(t, func(store *Store) {
 		// Create a namespaced key
-		obj := &genericObject{Revision: 1}
+		obj := &GenericObject{Revision: 1}
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
 		err := Create(ctx, store.client, "/default/foo", "default", obj)
 		assert.NoError(t, err)
 
 		// Retrieve the namespaced key and make sure it's the expected object
-		result := &genericObject{}
+		result := &GenericObject{}
 		err = Get(ctx, store.client, "/default/foo", result)
 		assert.NoError(t, err)
 		assert.Equal(t, obj, result)
 
 		// Create a global key
-		obj2 := &genericObject{Revision: 2}
+		obj2 := &GenericObject{Revision: 2}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "")
 		err = Create(ctx, store.client, "/foo", "", obj2)
 		assert.NoError(t, err)
 
 		// Retrieve the global key and make sure it's the expected object
-		result2 := &genericObject{}
+		result2 := &GenericObject{}
 		err = Get(ctx, store.client, "/foo", result2)
 		assert.NoError(t, err)
 		assert.Equal(t, obj2, result2)
@@ -199,7 +177,7 @@ func TestGet(t *testing.T) {
 
 var genericKeyBuilder = store.NewKeyBuilder("generic")
 
-func getGenericObjectPath(obj *genericObject) string {
+func getGenericObjectPath(obj *GenericObject) string {
 	return genericKeyBuilder.WithResource(obj).Build(obj.Name)
 }
 
@@ -213,15 +191,19 @@ func TestList(t *testing.T) {
 		require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("acme-devel")))
 
 		// Create a bunch of keys everywhere
-		obj1 := &genericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj1", Namespace: "default"}}
+		obj1 := &GenericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj1", Namespace: "default"}}
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
 		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/default/obj1", "default", obj1))
 
-		obj2 := &genericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj2", Namespace: "acme"}}
+		// Let's encode a resources with JSON (instead of Protobuf) to ensure the
+		// List function supports both encoding format
+		obj2 := &GenericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj2", Namespace: "acme"}}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
-		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/acme/obj2", "acme", obj2))
+		bytes, _ := json.Marshal(obj2)
+		_, err := s.client.Put(ctx, "/sensu.io/generic/acme/obj2", string(bytes))
+		require.NoError(t, err)
 
-		obj3 := &genericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj3", Namespace: "acme"}}
+		obj3 := &GenericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj3", Namespace: "acme"}}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
 		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/acme/obj3", "acme", obj3))
 
@@ -229,21 +211,25 @@ func TestList(t *testing.T) {
 		// https://github.com/sensu/sensu-enterprise-go/issues/418. We want to make
 		// sure resources within a namespace, whose name contains an another
 		// namespace as a prefix, are not showing up (e.g. acme & acme-devel)
-		obj4 := &genericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj4", Namespace: "acme-devel"}}
+		obj4 := &GenericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj4", Namespace: "acme-devel"}}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme-devel")
 		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/acme-devel/obj4", "acme-devel", obj4))
 
 		// We should have 1 object when listing keys under the default namespace
-		list := []*genericObject{}
+		list := []*GenericObject{}
 		pred := &store.SelectionPredicate{}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "default")
-		err := List(ctx, s.client, getGenericObjectsPath, &list, pred)
+		err = List(ctx, s.client, getGenericObjectsPath, &list, pred)
 		require.NoError(t, err)
 		assert.Len(t, list, 1)
 		assert.Empty(t, pred.Continue)
 
+		// Make sure the annonations & labels were initialized if nil
+		assert.Equal(t, map[string]string{}, list[0].ObjectMeta.Annotations)
+		assert.Equal(t, map[string]string{}, list[0].ObjectMeta.Labels)
+
 		// We should have 2 objects when listing keys under the acme namespace
-		list = []*genericObject{}
+		list = []*GenericObject{}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
 		err = List(ctx, s.client, getGenericObjectsPath, &list, pred)
 		require.NoError(t, err)
@@ -251,7 +237,7 @@ func TestList(t *testing.T) {
 		assert.Empty(t, pred.Continue)
 
 		// We should have 1 object when listing keys under the acme-devel namespace
-		list = []*genericObject{}
+		list = []*GenericObject{}
 		pred = &store.SelectionPredicate{}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme-devel")
 		err = List(ctx, s.client, getGenericObjectsPath, &list, pred)
@@ -260,7 +246,7 @@ func TestList(t *testing.T) {
 		assert.Empty(t, pred.Continue)
 
 		// We should have 4 objects when listing through all namespaces
-		list = []*genericObject{}
+		list = []*GenericObject{}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "")
 		err = List(ctx, s.client, getGenericObjectsPath, &list, pred)
 		require.NoError(t, err)
@@ -283,7 +269,7 @@ func TestListPagination(t *testing.T) {
 			// have a "natural" lexicographic order: 01, 02, ... instead of 1,
 			// 11, ...
 			objectName := fmt.Sprintf("%.2d", i)
-			object := &genericObject{ObjectMeta: corev2.ObjectMeta{Name: objectName, Namespace: "default"}}
+			object := &GenericObject{ObjectMeta: corev2.ObjectMeta{Name: objectName, Namespace: "default"}}
 
 			ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
 			if err := Create(ctx, store.client, getGenericObjectPath(object), "default", object); err != nil {
@@ -329,7 +315,7 @@ func testListPagination(t *testing.T, ctx context.Context, s *Store, limit, setS
 	nLeftovers := setSize % limit
 
 	for i := 0; i < nFullPages; i++ {
-		objects := []*genericObject{}
+		objects := []*GenericObject{}
 		err := List(ctx, s.client, getGenericObjectsPath, &objects, pred)
 		if err != nil {
 			t.Fatal(err)
@@ -352,7 +338,7 @@ func testListPagination(t *testing.T, ctx context.Context, s *Store, limit, setS
 
 	// Check the last page, supposed to hold nLeftovers objects
 	if nLeftovers > 0 {
-		objects := []*genericObject{}
+		objects := []*GenericObject{}
 		err := List(ctx, s.client, getGenericObjectsPath, &objects, pred)
 		if err != nil {
 			t.Fatal(err)
@@ -381,7 +367,7 @@ func testListPagination(t *testing.T, ctx context.Context, s *Store, limit, setS
 func TestUpdate(t *testing.T) {
 	testWithEtcdStore(t, func(store *Store) {
 		// Updating a non-existent object should fail
-		obj := &genericObject{Revision: 1}
+		obj := &GenericObject{Revision: 1}
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
 		require.Error(t, Update(ctx, store.client, "/default/foo", "default", obj))
 
@@ -391,9 +377,9 @@ func TestUpdate(t *testing.T) {
 		// Now make sure it gets properly updated
 		obj.Revision = 2
 		require.NoError(t, Update(ctx, store.client, "/default/foo", "default", obj))
-		result := &genericObject{}
+		result := &GenericObject{}
 		require.NoError(t, Get(ctx, store.client, "/default/foo", result))
-		assert.Equal(t, 2, obj.Revision)
+		assert.Equal(t, uint32(2), obj.Revision)
 	})
 }
 
@@ -403,15 +389,15 @@ func TestCount(t *testing.T) {
 		require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("acme")))
 
 		// Create a bunch of keys everywhere
-		obj1 := &genericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj1", Namespace: "default"}}
+		obj1 := &GenericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj1", Namespace: "default"}}
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
 		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/default/obj1", "default", obj1))
 
-		obj2 := &genericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj2", Namespace: "acme"}}
+		obj2 := &GenericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj2", Namespace: "acme"}}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
 		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/acme/obj2", "acme", obj2))
 
-		obj3 := &genericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj3", Namespace: "acme"}}
+		obj3 := &GenericObject{ObjectMeta: corev2.ObjectMeta{Name: "obj3", Namespace: "acme"}}
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
 		require.NoError(t, Create(ctx, s.client, "/sensu.io/generic/acme/obj3", "acme", obj3))
 
@@ -433,4 +419,44 @@ func TestCount(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, int64(3), count)
 	})
+}
+
+func TestUnmarshal(t *testing.T) {
+	resource := &GenericObject{Revision: 1}
+	jsonResource, _ := json.Marshal(resource)
+	protoResource, _ := json.Marshal(resource)
+
+	tests := []struct {
+		name    string
+		data    []byte
+		v       interface{}
+		wantErr bool
+	}{
+		{
+			name: "JSON data",
+			data: jsonResource,
+			v:    resource,
+		},
+		{
+			name: "Protobuf data",
+			data: protoResource,
+			v:    resource,
+		},
+		{
+			name:    "Invalid serialized object",
+			data:    protoResource,
+			v:       string("foo"),
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := unmarshal(tt.data, tt.v); (err != nil) != tt.wantErr {
+				t.Errorf("unmarshal() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !tt.wantErr {
+				assert.Equal(t, resource, tt.v)
+			}
+		})
+	}
 }

@@ -2,13 +2,13 @@ package etcd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"path"
 
 	v3 "github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
+	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -32,7 +32,7 @@ func (s *Store) CreateNamespace(ctx context.Context, namespace *types.Namespace)
 		return err
 	}
 
-	namespaceBytes, err := json.Marshal(namespace)
+	namespaceBytes, err := proto.Marshal(namespace)
 	if err != nil {
 		return err
 	}
@@ -133,7 +133,7 @@ func (s *Store) UpdateNamespace(ctx context.Context, namespace *types.Namespace)
 		return err
 	}
 
-	bytes, err := json.Marshal(namespace)
+	bytes, err := proto.Marshal(namespace)
 	if err != nil {
 		return err
 	}
@@ -148,7 +148,7 @@ func unmarshalNamespaces(kvs []*mvccpb.KeyValue) ([]*types.Namespace, error) {
 	for i, kv := range kvs {
 		namespace := &types.Namespace{}
 		s[i] = namespace
-		if err := json.Unmarshal(kv.Value, namespace); err != nil {
+		if err := unmarshal(kv.Value, namespace); err != nil {
 			return nil, err
 		}
 	}
