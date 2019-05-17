@@ -32,7 +32,12 @@ const (
 	// to start.
 	EtcdStartupTimeout = 60 // seconds
 
-	DefaultMaxRequestBytes   = 1.5 * (1 << 20)
+	// DefaultMaxRequestBytes is the default maximum request size for etcd
+	// requests (1.5 MB)
+	DefaultMaxRequestBytes = 1.5 * (1 << 20)
+
+	// DefaultQuotaBackendBytes is the default database size limit for etcd
+	// databases (4 GB)
 	DefaultQuotaBackendBytes = 1 << 32
 )
 
