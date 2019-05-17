@@ -38,8 +38,8 @@ func NewStore(client *clientv3.Client, name string) *Store {
 }
 
 // Create the given key with the serialized object.
-func Create(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
-	bytes, err := proto.Marshal(object.(proto.Message))
+func Create(ctx context.Context, client *clientv3.Client, key, namespace string, object proto.Message) error {
+	bytes, err := proto.Marshal(object)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}
@@ -252,8 +252,8 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 }
 
 // Update a key given with the serialized object.
-func Update(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
-	bytes, err := proto.Marshal(object.(proto.Message))
+func Update(ctx context.Context, client *clientv3.Client, key, namespace string, object proto.Message) error {
+	bytes, err := proto.Marshal(object)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}
