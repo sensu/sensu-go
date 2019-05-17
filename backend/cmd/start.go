@@ -71,6 +71,9 @@ const (
 	flagEtcdPeerKeyFile        = "etcd-peer-key-file"
 	flagEtcdPeerClientCertAuth = "etcd-peer-client-cert-auth"
 	flagEtcdPeerTrustedCAFile  = "etcd-peer-trusted-ca-file"
+	flagEtcdCipherSuites       = "etcd-cipher-suites"
+	flagEtcdMaxRequestBytes    = "etcd-max-request-bytes"
+	flagEtcdQuotaBackendBytes  = "etcd-quota-backend-bytes"
 
 	// Default values
 
@@ -170,6 +173,9 @@ func newStartCommand() *cobra.Command {
 				EtcdInitialAdvertisePeerURLs: viper.GetStringSlice(flagEtcdInitialAdvertisePeerURLs),
 				EtcdInitialClusterToken:      viper.GetString(flagEtcdInitialClusterToken),
 				EtcdName:                     viper.GetString(flagEtcdNodeName),
+				EtcdCipherSuites:             viper.GetStringSlice(flagEtcdCipherSuites),
+				EtcdQuotaBackendBytes:        viper.GetInt64(flagEtcdQuotaBackendBytes),
+				EtcdMaxRequestBytes:          viper.GetUint(flagEtcdMaxRequestBytes),
 				NoEmbedEtcd:                  viper.GetBool(flagNoEmbedEtcd),
 			}
 
@@ -281,6 +287,8 @@ func newStartCommand() *cobra.Command {
 	viper.SetDefault(flagEtcdInitialClusterState, etcd.ClusterStateNew)
 	viper.SetDefault(flagEtcdInitialClusterToken, "")
 	viper.SetDefault(flagEtcdNodeName, defaultEtcdName)
+	viper.SetDefault(flagEtcdQuotaBackendBytes, etcd.DefaultQuotaBackendBytes)
+	viper.SetDefault(flagEtcdMaxRequestBytes, etcd.DefaultMaxRequestBytes)
 	viper.SetDefault(flagNoEmbedEtcd, false)
 
 	// Merge in config flag set so that it appears in command usage
@@ -324,6 +332,12 @@ func newStartCommand() *cobra.Command {
 	_ = cmd.Flags().SetAnnotation(flagEtcdNodeName, "categories", []string{"store"})
 	cmd.Flags().Bool(flagNoEmbedEtcd, viper.GetBool(flagNoEmbedEtcd), "don't embed etcd, use external etcd instead")
 	_ = cmd.Flags().SetAnnotation(flagNoEmbedEtcd, "categories", []string{"store"})
+	cmd.Flags().StringSlice(flagEtcdCipherSuites, nil, "list of ciphers to use for etcd TLS configuration")
+	_ = cmd.Flags().SetAnnotation(flagEtcdCipherSuites, "categories", []string{"store"})
+	cmd.Flags().Int64(flagEtcdQuotaBackendBytes, viper.GetInt64(flagEtcdQuotaBackendBytes), "maximum etcd database size in bytes (use with caution)")
+	_ = cmd.Flags().SetAnnotation(flagEtcdQuotaBackendBytes, "categories", []string{"store"})
+	cmd.Flags().Uint(flagEtcdMaxRequestBytes, viper.GetUint(flagEtcdMaxRequestBytes), "maximum etcd request size in bytes (use with caution)")
+	_ = cmd.Flags().SetAnnotation(flagEtcdMaxRequestBytes, "categories", []string{"store"})
 
 	// Etcd TLS flags
 	cmd.Flags().String(flagEtcdCertFile, viper.GetString(flagEtcdCertFile), "path to the client server TLS cert file")

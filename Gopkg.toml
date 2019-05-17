@@ -90,7 +90,7 @@ required = [
 
 [[constraint]]
   name = "github.com/spf13/viper"
-  version = "1.3.2"
+  revision = "7a605a50e69cd1ea431c4a1e6eebe9b287ef6de4"
 
 [[constraint]]
   name = "github.com/stretchr/testify"
@@ -128,7 +128,7 @@ required = [
 
 [[constraint]]
   name = "github.com/json-iterator/go"
-  revision = "f7279a603edee96fe7764d3de9c6ff8cf9970994"
+  revision = "v1.1.6"
 
 [[constraint]]
   name = "github.com/graphql-go/graphql"
@@ -144,7 +144,7 @@ required = [
 
 [[constraint]]
   name = "github.com/coreos/etcd"
-  version = "3.3.2"
+  version = "3.3.13"
 
 [[constraint]]
   name = "github.com/robfig/cron"

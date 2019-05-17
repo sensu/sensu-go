@@ -81,6 +81,14 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 	// Etcd TLS config
 	cfg.ClientTLSInfo = config.EtcdClientTLSInfo
 	cfg.PeerTLSInfo = config.EtcdPeerTLSInfo
+	cfg.CipherSuites = config.EtcdCipherSuites
+
+	if config.EtcdQuotaBackendBytes != 0 {
+		cfg.QuotaBackendBytes = config.EtcdQuotaBackendBytes
+	}
+	if config.EtcdMaxRequestBytes != 0 {
+		cfg.MaxRequestBytes = config.EtcdMaxRequestBytes
+	}
 
 	// Start etcd
 	e, err := etcd.NewEtcd(cfg)
@@ -144,8 +152,8 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
-		Store:                   store,
-		Bus:                     bus,
+		Store: store,
+		Bus:   bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 		AssetGetter:             assetGetter,
 	})
@@ -196,10 +204,10 @@ func Initialize(config *Config) (*Backend, error) {
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:                   bus,
-		Store:                 store,
-		LivenessFactory:       liveness.EtcdFactory(b.ctx, b.Client),
-		RingPool:              ringPool,
+		Bus:             bus,
+		Store:           store,
+		LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
+		RingPool:        ringPool,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
@@ -221,6 +229,12 @@ func Initialize(config *Config) (*Backend, error) {
 	}
 	authenticator.AddProvider(basic)
 
+	var clusterVersion string
+	// only retrieve the cluster version if etcd is embedded
+	if !config.NoEmbedEtcd {
+		clusterVersion = b.Etcd.GetClusterVersion()
+	}
+
 	// Initialize apid
 	api, err := apid.New(apid.Config{
 		ListenAddress:       config.APIListenAddress,
@@ -232,6 +246,7 @@ func Initialize(config *Config) (*Backend, error) {
 		Cluster:             clientv3.NewCluster(b.Client),
 		EtcdClientTLSConfig: etcdClientTLSConfig,
 		Authenticator:       authenticator,
+		ClusterVersion:      clusterVersion,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err)
