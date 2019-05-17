@@ -365,14 +365,19 @@ func ComputeContinueToken(ctx context.Context, r corev2.Resource) string {
 }
 
 func unmarshal(data []byte, v interface{}) error {
-	msg, ok := v.(proto.Message)
-	if !ok {
-		return fmt.Errorf("%T is not proto.Message", v)
-	}
-	if err := proto.Unmarshal(data, msg); err != nil {
+	if data[0] == '{' {
 		if err := json.Unmarshal(data, v); err != nil {
 			return err
 		}
+	} else {
+		msg, ok := v.(proto.Message)
+		if !ok {
+			return fmt.Errorf("%T is not proto.Message", v)
+		}
+		if err := proto.Unmarshal(data, msg); err != nil {
+			return err
+		}
 	}
+
 	return nil
 }
