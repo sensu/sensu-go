@@ -211,7 +211,7 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 
 	for _, kv := range resp.Kvs {
 		var obj interface{}
-		if kv.Value[0] == '{' {
+		if len(kv.Value) > 0 && kv.Value[0] == '{' {
 			obj = reflect.New(v.Type().Elem().Elem()).Interface()
 			if err := json.Unmarshal(kv.Value, obj); err != nil {
 				return &store.ErrDecode{Key: key, Err: err}
@@ -365,7 +365,7 @@ func ComputeContinueToken(ctx context.Context, r corev2.Resource) string {
 }
 
 func unmarshal(data []byte, v interface{}) error {
-	if data[0] == '{' {
+	if len(data) > 0 && data[0] == '{' {
 		if err := json.Unmarshal(data, v); err != nil {
 			return err
 		}
