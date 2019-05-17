@@ -11,6 +11,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/types"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
@@ -81,9 +82,28 @@ func Create(ctx context.Context, client *clientv3.Client, key, namespace string,
 // CreateOrUpdate writes the given key with the serialized object, regarless of
 // its current existence
 func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
-	bytes, err := proto.Marshal(object.(proto.Message))
-	if err != nil {
-		return &store.ErrEncode{Key: key, Err: err}
+	var bytes []byte
+	var err error
+
+	switch object.(type) {
+	case types.Wrapper:
+		// Supporting protobuf serialization for wrapped resources is not
+		// straightforward since the types.Wrapper struct holds an interface. We
+		// will just use JSON encoding for now since the all store functions support
+		// both for decoding.
+		bytes, err = json.Marshal(object)
+		if err != nil {
+			return &store.ErrEncode{Key: key, Err: err}
+		}
+	default:
+		msg, ok := object.(proto.Message)
+		if !ok {
+			return &store.ErrEncode{Key: key, Err: fmt.Errorf("%T is not proto.Message", object)}
+		}
+		bytes, err = proto.Marshal(msg)
+		if err != nil {
+			return &store.ErrEncode{Key: key, Err: err}
+		}
 	}
 
 	comparisons := []clientv3.Cmp{}
