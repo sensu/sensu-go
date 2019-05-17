@@ -22,6 +22,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Only bury switchsets of checks that no longer have a TTL, in order to reduce
 the number of write operations made to etcd.
 - Fixed keepalives switchsets for entities with deregistration.
+- Fixed continue token generation in namespace and user pagination.
 
 ## [5.7.0] - 2019-05-09
 
