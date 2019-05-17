@@ -26,7 +26,7 @@ func (c *MockClient) DeleteNamespace(namespace string) error {
 }
 
 // ListNamespaces for use with mock lib
-func (c *MockClient) ListNamespaces(options client.ListOptions) ([]corev2.Namespace, error) {
+func (c *MockClient) ListNamespaces(options *client.ListOptions) ([]corev2.Namespace, error) {
 	args := c.Called(options)
 	return args.Get(0).([]corev2.Namespace), args.Error(1)
 }

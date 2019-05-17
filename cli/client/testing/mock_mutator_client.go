@@ -32,7 +32,7 @@ func (c *MockClient) UpdateMutator(m *types.Mutator) error {
 }
 
 // ListMutators for use with mock lib
-func (c *MockClient) ListMutators(namespace string, options client.ListOptions) ([]corev2.Mutator, error) {
+func (c *MockClient) ListMutators(namespace string, options *client.ListOptions) ([]corev2.Mutator, error) {
 	args := c.Called(namespace, options)
 	return args.Get(0).([]corev2.Mutator), args.Error(1)
 }

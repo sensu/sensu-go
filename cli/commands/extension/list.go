@@ -29,6 +29,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	helpers.AddFormatFlag(cmd.Flags())
 	helpers.AddFieldSelectorFlag(cmd.Flags())
 	helpers.AddLabelSelectorFlag(cmd.Flags())
+	helpers.AddChunkSizeFlag(cmd.Flags())
 
 	return cmd
 }
@@ -48,7 +49,7 @@ func runList(config string, c client.APIClient, namespace, format string) func(*
 			return err
 		}
 
-		extensions, err := c.ListExtensions(namespace, opts)
+		extensions, err := c.ListExtensions(namespace, &opts)
 		if err != nil {
 			return err
 		}

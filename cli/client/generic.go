@@ -3,7 +3,9 @@ package client
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -35,22 +37,44 @@ func (client *RestClient) Get(path string, obj interface{}) error {
 	return nil
 }
 
-// List sends a GET request for all objects at the given path
-func (client *RestClient) List(path string, objs interface{}, options ListOptions) error {
-	request := client.R()
-
-	ApplyListOptions(request, options)
-
-	res, err := request.Get(path)
-	if err != nil {
-		return err
+// List sends a GET request for all objects at the given path.
+// The options parameter allows for enhancing the request with field/label
+// selectors (filtering), pagination, ...
+func (client *RestClient) List(path string, objs interface{}, options *ListOptions) error {
+	objsType := reflect.TypeOf(objs)
+	if objsType.Kind() != reflect.Ptr || objsType.Elem().Kind() != reflect.Slice {
+		panic("unexpected type for objs")
 	}
 
-	if res.StatusCode() >= 400 {
-		return UnmarshalError(res)
+	newObjs := reflect.New(objsType.Elem())
+
+	for {
+		request := client.R()
+		ApplyListOptions(request, options)
+
+		resp, err := request.Get(path)
+		if err != nil {
+			return err
+		}
+
+		if resp.StatusCode() >= 400 {
+			return UnmarshalError(resp)
+		}
+
+		if err := json.Unmarshal(resp.Body(), newObjs.Interface()); err != nil {
+			return err
+		}
+
+		o := reflect.ValueOf(objs).Elem()
+		o.Set(reflect.AppendSlice(o, newObjs.Elem()))
+
+		options.ContinueToken = resp.Header().Get(v2.PaginationContinueHeader)
+		if options.ContinueToken == "" {
+			break
+		}
 	}
 
-	return json.Unmarshal(res.Body(), objs)
+	return nil
 }
 
 // Post sends a POST request with obj as the payload to the given path

@@ -74,25 +74,14 @@ func (client *RestClient) FetchUser(username string) (*types.User, error) {
 }
 
 // ListUsers fetches all users from configured Sensu instance
-func (client *RestClient) ListUsers(options ListOptions) ([]corev2.User, error) {
+func (client *RestClient) ListUsers(options *ListOptions) ([]corev2.User, error) {
 	var users []corev2.User
 
-	path := usersPath()
-	request := client.R()
-
-	ApplyListOptions(request, options)
-
-	res, err := request.Get(path)
-	if err != nil {
+	if err := client.List(usersPath(), &users, options); err != nil {
 		return users, err
 	}
 
-	if res.StatusCode() >= 400 {
-		return users, UnmarshalError(res)
-	}
-
-	err = json.Unmarshal(res.Body(), &users)
-	return users, err
+	return users, nil
 }
 
 // ReinstateUser reinstates a disabled user on configured Sensu instance

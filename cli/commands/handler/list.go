@@ -38,7 +38,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Fetch handlers from API
-			results, err := cli.Client.ListHandlers(namespace, opts)
+			results, err := cli.Client.ListHandlers(namespace, &opts)
 			if err != nil {
 				return err
 			}
@@ -56,6 +56,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	helpers.AddAllNamespace(cmd.Flags())
 	helpers.AddFieldSelectorFlag(cmd.Flags())
 	helpers.AddLabelSelectorFlag(cmd.Flags())
+	helpers.AddChunkSizeFlag(cmd.Flags())
 
 	return cmd
 }

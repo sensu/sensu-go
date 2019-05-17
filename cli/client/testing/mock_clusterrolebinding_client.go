@@ -26,7 +26,7 @@ func (c *MockClient) DeleteClusterRoleBinding(name string) error {
 }
 
 // ListClusterRoleBindings ...
-func (c *MockClient) ListClusterRoleBindings(options client.ListOptions) ([]corev2.ClusterRoleBinding, error) {
+func (c *MockClient) ListClusterRoleBindings(options *client.ListOptions) ([]corev2.ClusterRoleBinding, error) {
 	args := c.Called(options)
 	return args.Get(0).([]corev2.ClusterRoleBinding), args.Error(1)
 }

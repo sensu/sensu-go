@@ -35,7 +35,7 @@ func (client *RestClient) DeleteSilenced(namespace, name string) error {
 }
 
 // ListSilenceds fetches all silenced entries from configured Sensu instance
-func (client *RestClient) ListSilenceds(namespace, sub, check string, options ListOptions) ([]corev2.Silenced, error) {
+func (client *RestClient) ListSilenceds(namespace, sub, check string, options *ListOptions) ([]corev2.Silenced, error) {
 	if sub != "" && check != "" {
 		name, err := types.SilencedName(sub, check)
 		if err != nil {

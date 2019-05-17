@@ -38,7 +38,7 @@ func (c *MockClient) FetchCheck(name string) (*types.CheckConfig, error) {
 }
 
 // ListChecks for use with mock lib
-func (c *MockClient) ListChecks(namespace string, options client.ListOptions) ([]corev2.CheckConfig, error) {
+func (c *MockClient) ListChecks(namespace string, options *client.ListOptions) ([]corev2.CheckConfig, error) {
 	args := c.Called(namespace, options)
 	return args.Get(0).([]corev2.CheckConfig), args.Error(1)
 }

@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/go-resty/resty"
@@ -158,12 +159,20 @@ func (client *RestClient) configure() {
 
 // ApplyListOptions mutates the given request to make it carry the semantics of
 // the given options.
-func ApplyListOptions(request *resty.Request, options ListOptions) {
+func ApplyListOptions(request *resty.Request, options *ListOptions) {
 	if options.FieldSelector != "" {
 		request.SetQueryParam("fieldSelector", options.FieldSelector)
 	}
 
 	if options.LabelSelector != "" {
 		request.SetQueryParam("labelSelector", options.LabelSelector)
+	}
+
+	if options.ChunkSize > 0 {
+		request.SetQueryParam("limit", strconv.Itoa(options.ChunkSize))
+	}
+
+	if options.ContinueToken != "" {
+		request.SetQueryParam("continue", options.ContinueToken)
 	}
 }

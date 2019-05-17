@@ -49,6 +49,11 @@ func AddLabelSelectorFlag(flagSet *pflag.FlagSet) {
 	flagSet.String(flags.LabelSelector, "", "Only select resources matching this label selector (enterprise only)")
 }
 
+// AddChunkSizeFlag adds the '--chunk-size' flag to the given command
+func AddChunkSizeFlag(flagSet *pflag.FlagSet) {
+	flagSet.Int(flags.ChunkSize, 0, "Return large lists in chunks of the given size rather than all at once")
+}
+
 // FlagHasChanged determines if the user has set the value of a flag,
 // or left it to default
 func FlagHasChanged(name string, flagset *pflag.FlagSet) bool {
@@ -99,8 +104,14 @@ func ListOptionsFromFlags(flagSet *pflag.FlagSet) (client.ListOptions, error) {
 		return opts, err
 	}
 
+	chunkSize, err := flagSet.GetInt(flags.ChunkSize)
+	if err != nil {
+		chunkSize = 0
+	}
+
 	opts.FieldSelector = fieldSelector
 	opts.LabelSelector = labelSelector
+	opts.ChunkSize = chunkSize
 
 	return opts, nil
 }

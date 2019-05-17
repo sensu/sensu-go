@@ -49,7 +49,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			results, err := cli.Client.ListSilenceds(namespace, sub, check, opts)
+			results, err := cli.Client.ListSilenceds(namespace, sub, check, &opts)
 			if err != nil {
 				return err
 			}
@@ -68,6 +68,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 	helpers.AddAllNamespace(flags)
 	helpers.AddFieldSelectorFlag(cmd.Flags())
 	helpers.AddLabelSelectorFlag(cmd.Flags())
+	helpers.AddChunkSizeFlag(cmd.Flags())
 
 	_ = flags.StringP("subscription", "s", "", "name of the silenced subscription")
 	_ = flags.StringP("check", "c", "", "name of the silenced check")

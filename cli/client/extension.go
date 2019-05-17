@@ -11,25 +11,14 @@ import (
 var extPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "extensions")
 
 // ListExtensions retrieves a list of extension resources from the backend
-func (client *RestClient) ListExtensions(namespace string, options ListOptions) ([]corev2.Extension, error) {
+func (client *RestClient) ListExtensions(namespace string, options *ListOptions) ([]corev2.Extension, error) {
 	var extensions []corev2.Extension
 
-	path := extPath(namespace)
-	request := client.R()
-
-	ApplyListOptions(request, options)
-
-	res, err := request.Get(path)
-	if err != nil {
+	if err := client.List(extPath(namespace), &extensions, options); err != nil {
 		return extensions, err
 	}
 
-	if res.StatusCode() >= 400 {
-		return extensions, fmt.Errorf("%v", res.String())
-	}
-
-	err = json.Unmarshal(res.Body(), &extensions)
-	return extensions, err
+	return extensions, nil
 }
 
 // DeregisterExtension deregisters an extension resource from the backend

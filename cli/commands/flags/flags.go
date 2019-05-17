@@ -17,4 +17,8 @@ const (
 	// LabelSelector is used to provide a label expression that will be used as
 	// a filter, typically when listing resources.
 	LabelSelector = "label-selector"
+
+	// ChunkSize is used to specify that a list of objects is to be fetched in
+	// chunks of the given size, using the API's pagination capabilities.
+	ChunkSize = "chunk-size"
 )

@@ -27,7 +27,7 @@ func (client *RestClient) FetchClusterRoleBinding(name string) (*types.ClusterRo
 }
 
 // ListClusterRoleBinding in the cluster
-func (client *RestClient) ListClusterRoleBindings(options ListOptions) ([]corev2.ClusterRoleBinding, error) {
+func (client *RestClient) ListClusterRoleBindings(options *ListOptions) ([]corev2.ClusterRoleBinding, error) {
 	clusterRoleBindings := []corev2.ClusterRoleBinding{}
 
 	if err := client.List(clusterRoleBindingsPath(), &clusterRoleBindings, options); err != nil {
