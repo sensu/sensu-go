@@ -51,9 +51,11 @@ type Config struct {
 	NoEmbedEtcd                  bool
 
 	// Etcd TLS configuration
-	EtcdClientTLSInfo etcd.TLSInfo
-	EtcdPeerTLSInfo   etcd.TLSInfo
-	EtcdCipherSuites  []string
+	EtcdClientTLSInfo     etcd.TLSInfo
+	EtcdPeerTLSInfo       etcd.TLSInfo
+	EtcdCipherSuites      []string
+	EtcdMaxRequestBytes   uint
+	EtcdQuotaBackendBytes int64
 
 	TLS *types.TLSOptions
 }

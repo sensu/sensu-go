@@ -31,6 +31,14 @@ const (
 	// EtcdStartupTimeout is the amount of time we give the embedded Etcd Server
 	// to start.
 	EtcdStartupTimeout = 60 // seconds
+
+	// DefaultMaxRequestBytes is the default maximum request size for etcd
+	// requests (1.5 MB)
+	DefaultMaxRequestBytes = 1.5 * (1 << 20)
+
+	// DefaultQuotaBackendBytes is the default database size limit for etcd
+	// databases (4 GB)
+	DefaultQuotaBackendBytes = 1 << 32
 )
 
 func init() {
@@ -53,6 +61,9 @@ type Config struct {
 	PeerTLSInfo   TLSInfo
 
 	CipherSuites []string
+
+	MaxRequestBytes   uint
+	QuotaBackendBytes int64
 }
 
 // TLSInfo wraps etcd transport TLSInfo
@@ -62,6 +73,8 @@ type TLSInfo transport.TLSInfo
 func NewConfig() *Config {
 	c := &Config{}
 	c.DataDir = path.SystemCacheDir("sensu-backend")
+	c.MaxRequestBytes = DefaultMaxRequestBytes
+	c.QuotaBackendBytes = DefaultQuotaBackendBytes
 
 	return c
 }
@@ -167,8 +180,8 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	// revision.
 	cfg.AutoCompactionMode = "revision"
 	cfg.AutoCompactionRetention = "2"
-	// Default to 4G etcd size. TODO: make this configurable.
-	cfg.QuotaBackendBytes = int64(4 * 1024 * 1024 * 1024)
+	cfg.QuotaBackendBytes = config.QuotaBackendBytes
+	cfg.MaxRequestBytes = config.MaxRequestBytes
 
 	capnslog.SetFormatter(NewLogrusFormatter())
 
