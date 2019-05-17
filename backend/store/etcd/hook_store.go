@@ -2,11 +2,11 @@ package etcd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -61,7 +61,7 @@ func (s *Store) GetHookConfigByName(ctx context.Context, name string) (*types.Ho
 
 	hookBytes := resp.Kvs[0].Value
 	hook := &types.HookConfig{}
-	if err := json.Unmarshal(hookBytes, hook); err != nil {
+	if err := unmarshal(hookBytes, hook); err != nil {
 		return nil, err
 	}
 
@@ -74,7 +74,7 @@ func (s *Store) UpdateHookConfig(ctx context.Context, hook *types.HookConfig) er
 		return err
 	}
 
-	hookBytes, err := json.Marshal(hook)
+	hookBytes, err := proto.Marshal(hook)
 	if err != nil {
 		return err
 	}

@@ -38,7 +38,7 @@ func NewStore(client *clientv3.Client, name string) *Store {
 
 // Create the given key with the serialized object.
 func Create(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
-	bytes, err := json.Marshal(object)
+	bytes, err := proto.Marshal(object.(proto.Message))
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}
@@ -81,7 +81,7 @@ func Create(ctx context.Context, client *clientv3.Client, key, namespace string,
 // CreateOrUpdate writes the given key with the serialized object, regarless of
 // its current existence
 func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
-	bytes, err := json.Marshal(object)
+	bytes, err := proto.Marshal(object.(proto.Message))
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}
@@ -143,7 +143,7 @@ func Get(ctx context.Context, client *clientv3.Client, key string, object interf
 	}
 
 	// Deserialize the object to the given object
-	if err := json.Unmarshal(resp.Kvs[0].Value, object); err != nil {
+	if err := unmarshal(resp.Kvs[0].Value, object); err != nil {
 		return &store.ErrDecode{Key: key, Err: err}
 	}
 
@@ -233,7 +233,7 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 
 // Update a key given with the serialized object.
 func Update(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
-	bytes, err := json.Marshal(object)
+	bytes, err := proto.Marshal(object.(proto.Message))
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}

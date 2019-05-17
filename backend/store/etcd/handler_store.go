@@ -2,11 +2,11 @@ package etcd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -58,7 +58,7 @@ func (s *Store) GetHandlerByName(ctx context.Context, name string) (*types.Handl
 
 	handlerBytes := resp.Kvs[0].Value
 	handler := &types.Handler{}
-	if err := json.Unmarshal(handlerBytes, handler); err != nil {
+	if err := unmarshal(handlerBytes, handler); err != nil {
 		return nil, err
 	}
 
@@ -71,7 +71,7 @@ func (s *Store) UpdateHandler(ctx context.Context, handler *types.Handler) error
 		return err
 	}
 
-	handlerBytes, err := json.Marshal(handler)
+	handlerBytes, err := proto.Marshal(handler)
 	if err != nil {
 		return err
 	}

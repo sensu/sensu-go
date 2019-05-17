@@ -4,7 +4,6 @@ package etcd
 
 import (
 	"context"
-	"encoding/json"
 	"reflect"
 	"testing"
 	"time"
@@ -137,7 +136,7 @@ func expectObject(t *testing.T, w store.Watcher, typ store.WatchActionType, want
 		}
 
 		got := &v2.CheckConfig{}
-		if err := json.Unmarshal(event.Object, got); err != nil {
+		if err := unmarshal(event.Object, got); err != nil {
 			t.Errorf("could not decode event object: %v", err)
 			return
 		}

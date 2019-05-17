@@ -2,11 +2,11 @@ package etcd
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -46,7 +46,7 @@ func (s *Store) AuthenticateUser(ctx context.Context, username, password string)
 
 // CreateUser creates a new user
 func (s *Store) CreateUser(u *types.User) error {
-	userBytes, err := json.Marshal(u)
+	userBytes, err := proto.Marshal(u)
 	if err != nil {
 		return err
 	}
@@ -76,7 +76,7 @@ func (s *Store) DeleteUser(ctx context.Context, user *types.User) error {
 	user.Disabled = true
 
 	// Marshal the user struct
-	userBytes, err := json.Marshal(user)
+	userBytes, err := proto.Marshal(user)
 	if err != nil {
 		return err
 	}
@@ -120,7 +120,7 @@ func (s *Store) GetUser(ctx context.Context, username string) (*types.User, erro
 	}
 
 	user := &types.User{}
-	err = json.Unmarshal(resp.Kvs[0].Value, user)
+	err = unmarshal(resp.Kvs[0].Value, user)
 	if err != nil {
 		return nil, err
 	}
@@ -155,7 +155,7 @@ func (s *Store) GetAllUsers(pred *store.SelectionPredicate) ([]*types.User, erro
 
 // UpdateUser updates a User.
 func (s *Store) UpdateUser(u *types.User) error {
-	bytes, err := json.Marshal(u)
+	bytes, err := proto.Marshal(u)
 	if err != nil {
 		return err
 	}

@@ -2,11 +2,11 @@ package etcd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -61,7 +61,7 @@ func (s *Store) GetCheckConfigByName(ctx context.Context, name string) (*types.C
 
 	checkBytes := resp.Kvs[0].Value
 	check := &types.CheckConfig{}
-	if err := json.Unmarshal(checkBytes, check); err != nil {
+	if err := unmarshal(checkBytes, check); err != nil {
 		return nil, err
 	}
 	if check.Labels == nil {
@@ -80,7 +80,7 @@ func (s *Store) UpdateCheckConfig(ctx context.Context, check *types.CheckConfig)
 		return err
 	}
 
-	checkBytes, err := json.Marshal(check)
+	checkBytes, err := proto.Marshal(check)
 	if err != nil {
 		return err
 	}

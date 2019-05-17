@@ -2,12 +2,12 @@ package etcd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -84,7 +84,7 @@ func (s *Store) GetSilencedEntriesByCheckName(ctx context.Context, checkName str
 	silencedArray := []*types.Silenced{}
 	for _, kv := range resp.Kvs {
 		silencedEntry := &types.Silenced{}
-		err := json.Unmarshal(kv.Value, silencedEntry)
+		err := unmarshal(kv.Value, silencedEntry)
 		if err != nil {
 			return nil, err
 		}
@@ -123,7 +123,7 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *types.Silence
 		return err
 	}
 
-	silencedBytes, err := json.Marshal(silenced)
+	silencedBytes, err := proto.Marshal(silenced)
 	if err != nil {
 		return err
 	}
@@ -167,8 +167,8 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *types.Silence
 	return nil
 }
 
-// arraySilencedEntries is a helper function to unmarshal entries from json and return
-// them as an array
+// arraySilencedEntries is a helper function to unmarshal serialized entries and
+// return them as an array
 func (s *Store) arraySilencedEntries(resp *clientv3.GetResponse) ([]*types.Silenced, error) {
 	if len(resp.Kvs) == 0 {
 		return []*types.Silenced{}, nil
@@ -181,7 +181,7 @@ func (s *Store) arraySilencedEntries(resp *clientv3.GetResponse) ([]*types.Silen
 			return nil, err
 		}
 		silencedEntry := &types.Silenced{}
-		err = json.Unmarshal(kv.Value, silencedEntry)
+		err = unmarshal(kv.Value, silencedEntry)
 		if err != nil {
 			return nil, err
 		}

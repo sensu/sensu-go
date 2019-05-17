@@ -2,11 +2,11 @@ package etcd
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -58,7 +58,7 @@ func (s *Store) GetMutatorByName(ctx context.Context, name string) (*types.Mutat
 
 	mutatorBytes := resp.Kvs[0].Value
 	mutator := &types.Mutator{}
-	if err := json.Unmarshal(mutatorBytes, mutator); err != nil {
+	if err := unmarshal(mutatorBytes, mutator); err != nil {
 		return nil, err
 	}
 
@@ -71,7 +71,7 @@ func (s *Store) UpdateMutator(ctx context.Context, mutator *types.Mutator) error
 		return err
 	}
 
-	mutatorBytes, err := json.Marshal(mutator)
+	mutatorBytes, err := proto.Marshal(mutator)
 	if err != nil {
 		return err
 	}
