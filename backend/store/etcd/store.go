@@ -354,6 +354,13 @@ func ComputeContinueToken(ctx context.Context, r corev2.Resource) string {
 			return "/" + eventNamespace + "/" + resource.Entity.Name + "/" + resource.Check.Name + "\x00"
 		}
 		return resource.Entity.Name + "/" + resource.Check.Name + "\x00"
+
+	case *corev2.Namespace:
+		return resource.Name + "\x00"
+
+	case *corev2.User:
+		return resource.Username + "\x00"
+
 	default:
 		objMeta := r.GetObjectMeta()
 

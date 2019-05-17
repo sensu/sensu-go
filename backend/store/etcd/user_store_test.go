@@ -4,6 +4,7 @@ package etcd
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -120,4 +121,92 @@ func TestUserStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 2, len(users))
 	})
+}
+
+// TestGetAllUsersPagination tests the store's ability to paginate Users.
+// While GetAllUsers() internally merely calls the generic List() method of the
+// store, we can't rely on that method's tests because they assume a generic,
+// "well formed" object with object metadata. User is a snowflake in the sense
+// that its object metadata is always empty. So we need to write specific tests
+// for it.
+func TestGetAllUsersPagination(t *testing.T) {
+	testWithEtcd(t, func(store store.Store) {
+		for i := 1; i <= 21; i++ {
+			// We force the object name to be 2 digits "wide" in order to
+			// have a "natural" lexicographic order: 01, 02, ... instead of 1,
+			// 11, ...
+			objectName := fmt.Sprintf("%.2d", i)
+			object := corev2.FixtureUser(objectName)
+
+			if err := store.CreateUser(object); err != nil {
+				t.Fatal(err)
+			}
+		}
+
+		ctx := context.Background()
+		t.Run("paginate through users", func(t *testing.T) {
+			testGetAllUsersPagination(t, ctx, store, 10, 21)
+		})
+
+		t.Run("page size equals one", func(t *testing.T) {
+			testGetAllUsersPagination(t, ctx, store, 1, 21)
+		})
+
+		t.Run("page size bigger than set size", func(t *testing.T) {
+			testGetAllUsersPagination(t, ctx, store, 1337, 21)
+		})
+	})
+}
+
+func testGetAllUsersPagination(t *testing.T, ctx context.Context, etcd store.Store, pageSize, setSize int) {
+	pred := &store.SelectionPredicate{Limit: int64(pageSize)}
+	nFullPages := setSize / pageSize
+	nLeftovers := setSize % pageSize
+
+	for i := 0; i < nFullPages; i++ {
+		objects, err := etcd.GetAllUsers(pred)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(objects) != pageSize {
+			t.Fatalf("Expected page %d to have %d objects but got %d", i, pageSize, len(objects))
+		}
+
+		offset := i * pageSize
+		for j, object := range objects {
+			n := ((offset + j) % setSize) + 1
+			expected := fmt.Sprintf("%.2d", n)
+
+			if object.Username != expected {
+				t.Fatalf("Expected %s, got %s", expected, object.Username)
+			}
+		}
+	}
+
+	// Check the last page, supposed to hold nLeftovers objects
+	if nLeftovers > 0 {
+		objects, err := etcd.GetAllUsers(pred)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		if len(objects) != nLeftovers {
+			t.Fatalf("Expected last page with %d objects, got %d", nLeftovers, len(objects))
+		}
+
+		if pred.Continue != "" {
+			t.Fatalf("Expected next continue token to be \"\", got %s", pred.Continue)
+		}
+
+		offset := pageSize * nFullPages
+		for j, object := range objects {
+			n := ((offset + j) % setSize) + 1
+			expected := fmt.Sprintf("%.2d", n)
+
+			if object.Username != expected {
+				t.Fatalf("Expected %s, got %s", expected, object.Username)
+			}
+		}
+	}
 }

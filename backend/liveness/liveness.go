@@ -243,6 +243,7 @@ func (t *SwitchSet) getTTLFromEvent(event *clientv3.Event) (int64, State) {
 // monitor starts a goroutine that monitors the SwitchSet prefix for key PUT
 // and DELETE events.
 func (t *SwitchSet) monitor(ctx context.Context) {
+	wc := t.client.Watch(ctx, t.prefix, clientv3.WithPrefix(), clientv3.WithPrevKV())
 	go func() {
 		for event := range t.events {
 			if key, bury := event(); bury {
@@ -254,12 +255,10 @@ func (t *SwitchSet) monitor(ctx context.Context) {
 		}
 	}()
 	go func() {
-		var wc clientv3.WatchChan
 		ctx := clientv3.WithRequireLeader(ctx)
 		limiter := rate.NewLimiter(rate.Every(time.Second), 1)
 		_ = limiter.Wait(ctx)
 	OUTER:
-		wc = t.client.Watch(ctx, t.prefix, clientv3.WithPrefix(), clientv3.WithPrevKV())
 		for {
 			select {
 			case <-ctx.Done():
@@ -270,6 +269,7 @@ func (t *SwitchSet) monitor(ctx context.Context) {
 					t.logger.WithError(err).Error("error monitoring toggles")
 				}
 				if resp.Canceled || !ok {
+					wc = t.client.Watch(ctx, t.prefix, clientv3.WithPrefix(), clientv3.WithPrevKV())
 					goto OUTER
 				}
 				for _, event := range resp.Events {
