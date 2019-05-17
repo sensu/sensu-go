@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"flag"
+	"fmt"
 	"html/template"
 	"log"
 	"os"
@@ -83,9 +84,9 @@ func main() {
 
 func discoverTypeNames() (typeNames, error) {
 	var t typeNames
-	doc, err := exec.Command("godoc", ".").Output()
+	doc, err := exec.Command("go", "doc", "-all", ".").CombinedOutput()
 	if err != nil {
-		return t, err
+		return t, fmt.Errorf("%s: %s", string(doc), err)
 	}
 	scanner := bufio.NewScanner(bytes.NewReader(doc))
 	for scanner.Scan() {
