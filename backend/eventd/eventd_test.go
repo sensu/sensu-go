@@ -148,77 +148,117 @@ func TestEventMonitor(t *testing.T) {
 }
 
 func TestCheckOccurrences(t *testing.T) {
+	OK := uint32(0)
+	WARN := uint32(1)
+	CRIT := uint32(2)
+
+	// 1. Event with OK Check status - Occurrences: 1, OccurrencesWatermark: 1
+	// 2. Event with OK Check status - Occurrences: 2, OccurrencesWatermark: 2
+	// 3. Event with WARN Check status - Occurrences: 1, OccurrencesWatermark: 1
+	// 4. Event with WARN Check status - Occurrences: 2, OccurrencesWatermark: 2
+	// 5. Event with WARN Check status - Occurrences: 3, OccurrencesWatermark: 3
+	// 6. Event with CRIT Check status - Occurrences: 1, OccurrencesWatermark: 3
+	// 7. Event with CRIT Check status - Occurrences: 2, OccurrencesWatermark: 3
+	// 8. Event with CRIT Check status - Occurrences: 3, OccurrencesWatermark: 3
+	// 9. Event with CRIT Check status - Occurrences: 4, OccurrencesWatermark: 4
+	// 10. Event with OK Check status - Occurrences: 1, OccurrencesWatermark: 4
+	// 11. Event with CRIT Check status - Occurrences: 1, OccurrencesWatermark: 1
 	testCases := []struct {
 		name                         string
 		status                       uint32
-		occurrences                  int64
-		history                      []types.CheckHistory
+		history                      corev2.CheckHistory
 		expectedOccurrences          int64
 		expectedOccurrencesWatermark int64
 	}{
 		{
-			name:        "No previous occurences, check OK",
-			status:      0,
-			occurrences: int64(0),
-			history: []types.CheckHistory{
-				{Status: 0, Executed: time.Now().Unix() - 1},
-			},
+			name:                         "OK",
+			status:                       OK,
+			history:                      corev2.CheckHistory{Status: OK},
 			expectedOccurrences:          1,
 			expectedOccurrencesWatermark: 1,
 		},
 		{
-			name:        "No previous occurences, check WARN",
-			status:      1,
-			occurrences: int64(0),
-			history: []types.CheckHistory{
-				{Status: 1, Executed: time.Now().Unix() - 1},
-			},
-			expectedOccurrences:          1,
-			expectedOccurrencesWatermark: 1,
-		},
-		{
-			name:        "previous WARN occurences, check OK",
-			status:      0,
-			occurrences: int64(1),
-			history: []types.CheckHistory{
-				{Status: 1, Executed: time.Now().Unix() - 2},
-				{Status: 0, Executed: time.Now().Unix() - 1},
-			},
-			expectedOccurrences:          1,
-			expectedOccurrencesWatermark: 1,
-		},
-		{
-			name:        "previous WARN occurences, check WARN",
-			status:      1,
-			occurrences: int64(1),
-			history: []types.CheckHistory{
-				{Status: 1, Executed: time.Now().Unix() - 2},
-				{Status: 1, Executed: time.Now().Unix() - 1},
-			},
+			name:                         "OK -> OK",
+			status:                       OK,
+			history:                      corev2.CheckHistory{Status: OK},
 			expectedOccurrences:          2,
 			expectedOccurrencesWatermark: 2,
 		},
 		{
-			name:        "previous CRIT occurences, check WARN",
-			status:      1,
-			occurrences: int64(1),
-			history: []types.CheckHistory{
-				{Status: 2, Executed: time.Now().Unix() - 2},
-				{Status: 1, Executed: time.Now().Unix() - 1},
-			},
+			name:                         "OK -> WARN",
+			status:                       WARN,
+			history:                      corev2.CheckHistory{Status: WARN},
+			expectedOccurrences:          1,
+			expectedOccurrencesWatermark: 1,
+		},
+		{
+			name:                         "WARN -> WARN",
+			status:                       WARN,
+			history:                      corev2.CheckHistory{Status: WARN},
+			expectedOccurrences:          2,
+			expectedOccurrencesWatermark: 2,
+		},
+		{
+			name:                         "WARN -> WARN",
+			status:                       WARN,
+			history:                      corev2.CheckHistory{Status: WARN},
+			expectedOccurrences:          3,
+			expectedOccurrencesWatermark: 3,
+		},
+		{
+			name:                         "WARN -> CRIT",
+			status:                       CRIT,
+			history:                      corev2.CheckHistory{Status: CRIT},
+			expectedOccurrences:          1,
+			expectedOccurrencesWatermark: 3,
+		},
+		{
+			name:                         "CRIT -> CRIT",
+			status:                       CRIT,
+			history:                      corev2.CheckHistory{Status: CRIT},
+			expectedOccurrences:          2,
+			expectedOccurrencesWatermark: 3,
+		},
+		{
+			name:                         "CRIT -> CRIT",
+			status:                       CRIT,
+			history:                      corev2.CheckHistory{Status: CRIT},
+			expectedOccurrences:          3,
+			expectedOccurrencesWatermark: 3,
+		},
+		{
+			name:                         "CRIT -> CRIT",
+			status:                       CRIT,
+			history:                      corev2.CheckHistory{Status: CRIT},
+			expectedOccurrences:          4,
+			expectedOccurrencesWatermark: 4,
+		},
+		{
+			name:                         "CRIT -> OK",
+			status:                       OK,
+			history:                      corev2.CheckHistory{Status: OK},
+			expectedOccurrences:          1,
+			expectedOccurrencesWatermark: 4,
+		},
+		{
+			name:                         "OK -> CRIT",
+			status:                       CRIT,
+			history:                      corev2.CheckHistory{Status: CRIT},
 			expectedOccurrences:          1,
 			expectedOccurrencesWatermark: 1,
 		},
 	}
 
+	event := corev2.FixtureEvent("entity1", "check1")
+	event.Check.Occurrences = 1
+	event.Check.OccurrencesWatermark = 1
+	event.Check.History = []corev2.CheckHistory{}
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			event := types.FixtureEvent("entity1", "check1")
 			event.Check.Status = tc.status
-			event.Check.Occurrences = tc.occurrences
-			event.Check.History = tc.history
+			event.Check.History = append(event.Check.History, tc.history)
 			updateOccurrences(event)
-
 			assert.Equal(t, tc.expectedOccurrences, event.Check.Occurrences)
 			assert.Equal(t, tc.expectedOccurrencesWatermark, event.Check.OccurrencesWatermark)
 		})

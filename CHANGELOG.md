@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
+## [5.9.0] - TBD
+
+### Fixed
+- Fixed the behaviors for check `Occurrences` and `OccurrencesWatermark`.
+
 ## [5.8.0] - TBD
 
 ### Added
