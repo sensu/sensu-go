@@ -166,84 +166,72 @@ func TestCheckOccurrences(t *testing.T) {
 	testCases := []struct {
 		name                         string
 		status                       uint32
-		history                      corev2.CheckHistory
 		expectedOccurrences          int64
 		expectedOccurrencesWatermark int64
 	}{
 		{
 			name:                         "OK",
 			status:                       OK,
-			history:                      corev2.CheckHistory{Status: OK},
 			expectedOccurrences:          1,
 			expectedOccurrencesWatermark: 1,
 		},
 		{
 			name:                         "OK -> OK",
 			status:                       OK,
-			history:                      corev2.CheckHistory{Status: OK},
 			expectedOccurrences:          2,
 			expectedOccurrencesWatermark: 2,
 		},
 		{
 			name:                         "OK -> WARN",
 			status:                       WARN,
-			history:                      corev2.CheckHistory{Status: WARN},
 			expectedOccurrences:          1,
 			expectedOccurrencesWatermark: 1,
 		},
 		{
 			name:                         "WARN -> WARN",
 			status:                       WARN,
-			history:                      corev2.CheckHistory{Status: WARN},
 			expectedOccurrences:          2,
 			expectedOccurrencesWatermark: 2,
 		},
 		{
 			name:                         "WARN -> WARN",
 			status:                       WARN,
-			history:                      corev2.CheckHistory{Status: WARN},
 			expectedOccurrences:          3,
 			expectedOccurrencesWatermark: 3,
 		},
 		{
 			name:                         "WARN -> CRIT",
 			status:                       CRIT,
-			history:                      corev2.CheckHistory{Status: CRIT},
 			expectedOccurrences:          1,
 			expectedOccurrencesWatermark: 3,
 		},
 		{
 			name:                         "CRIT -> CRIT",
 			status:                       CRIT,
-			history:                      corev2.CheckHistory{Status: CRIT},
 			expectedOccurrences:          2,
 			expectedOccurrencesWatermark: 3,
 		},
 		{
 			name:                         "CRIT -> CRIT",
 			status:                       CRIT,
-			history:                      corev2.CheckHistory{Status: CRIT},
 			expectedOccurrences:          3,
 			expectedOccurrencesWatermark: 3,
 		},
 		{
 			name:                         "CRIT -> CRIT",
 			status:                       CRIT,
-			history:                      corev2.CheckHistory{Status: CRIT},
 			expectedOccurrences:          4,
 			expectedOccurrencesWatermark: 4,
 		},
 		{
 			name:                         "CRIT -> OK",
 			status:                       OK,
-			history:                      corev2.CheckHistory{Status: OK},
 			expectedOccurrences:          1,
 			expectedOccurrencesWatermark: 4,
 		},
 		{
 			name:                         "OK -> CRIT",
 			status:                       CRIT,
-			history:                      corev2.CheckHistory{Status: CRIT},
 			expectedOccurrences:          1,
 			expectedOccurrencesWatermark: 1,
 		},
@@ -257,7 +245,7 @@ func TestCheckOccurrences(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			event.Check.Status = tc.status
-			event.Check.History = append(event.Check.History, tc.history)
+			event.Check.History = append(event.Check.History, corev2.CheckHistory{Status: tc.status})
 			updateOccurrences(event)
 			assert.Equal(t, tc.expectedOccurrences, event.Check.Occurrences)
 			assert.Equal(t, tc.expectedOccurrencesWatermark, event.Check.OccurrencesWatermark)
