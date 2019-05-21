@@ -107,7 +107,21 @@ type EntityRelatedFieldResolver interface {
 
 // EntityEventsFieldResolverArgs contains arguments provided to events when selected
 type EntityEventsFieldResolverArgs struct {
-	OrderBy EventsListOrder // OrderBy - self descriptive
+	OrderBy EventsListOrder // OrderBy adds optional order to the records retrieved.
+	Filters []string        /*
+	Filters reduces the set using given arbitrary expression[s]; expressions
+	take on the form KEY: VALUE. The accepted key(s) are: status, check, entity,
+	& silenced.
+
+	Eg.
+
+	status:passing
+	status:warning
+	status:incident
+	check:check-disk
+	entity:venice
+	silenced:true
+	*/
 }
 
 // EntityEventsFieldResolverParams contains contextual info to resolve events field
@@ -621,11 +635,18 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"events": &graphql1.Field{
-				Args: graphql1.FieldConfigArgument{"orderBy": &graphql1.ArgumentConfig{
-					DefaultValue: "SEVERITY",
-					Description:  "self descriptive",
-					Type:         graphql.InputType("EventsListOrder"),
-				}},
+				Args: graphql1.FieldConfigArgument{
+					"filters": &graphql1.ArgumentConfig{
+						DefaultValue: []interface{}{},
+						Description:  "Filters reduces the set using given arbitrary expression[s]; expressions\ntake on the form KEY: VALUE. The accepted key(s) are: status, check, entity,\n& silenced.\n\nEg.\n\nstatus:passing\nstatus:warning\nstatus:incident\ncheck:check-disk\nentity:venice\nsilenced:true",
+						Type:         graphql1.NewList(graphql1.NewNonNull(graphql1.String)),
+					},
+					"orderBy": &graphql1.ArgumentConfig{
+						DefaultValue: "SEVERITY",
+						Description:  "OrderBy adds optional order to the records retrieved.",
+						Type:         graphql.InputType("EventsListOrder"),
+					},
+				},
 				DeprecationReason: "",
 				Description:       "All events associated with the entity.",
 				Name:              "events",
@@ -773,205 +794,6 @@ var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 		"subscriptions":      _ObjTypeEntitySubscriptionsHandler,
 		"system":             _ObjTypeEntitySystemHandler,
 		"user":               _ObjTypeEntityUserHandler,
-	},
-}
-
-// EntityConnectionNodesFieldResolver implement to resolve requests for the EntityConnection's nodes field.
-type EntityConnectionNodesFieldResolver interface {
-	// Nodes implements response to request for nodes field.
-	Nodes(p graphql.ResolveParams) (interface{}, error)
-}
-
-// EntityConnectionPageInfoFieldResolver implement to resolve requests for the EntityConnection's pageInfo field.
-type EntityConnectionPageInfoFieldResolver interface {
-	// PageInfo implements response to request for pageInfo field.
-	PageInfo(p graphql.ResolveParams) (interface{}, error)
-}
-
-//
-// EntityConnectionFieldResolvers represents a collection of methods whose products represent the
-// response values of the 'EntityConnection' type.
-//
-// == Example SDL
-//
-//   """
-//   Dog's are not hooman.
-//   """
-//   type Dog implements Pet {
-//     "name of this fine beast."
-//     name:  String!
-//
-//     "breed of this silly animal; probably shibe."
-//     breed: [Breed]
-//   }
-//
-// == Example generated interface
-//
-//   // DogResolver ...
-//   type DogFieldResolvers interface {
-//     DogNameFieldResolver
-//     DogBreedFieldResolver
-//
-//     // IsTypeOf is used to determine if a given value is associated with the Dog type
-//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
-//   }
-//
-// == Example implementation ...
-//
-//   // DogResolver implements DogFieldResolvers interface
-//   type DogResolver struct {
-//     logger logrus.LogEntry
-//     store interface{
-//       store.BreedStore
-//       store.DogStore
-//     }
-//   }
-//
-//   // Name implements response to request for name field.
-//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     return dog.GetName()
-//   }
-//
-//   // Breed implements response to request for breed field.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // ... implementation details ...
-//     dog := p.Source.(DogGetter)
-//     breed := r.store.GetBreed(dog.GetBreedName())
-//     return breed
-//   }
-//
-//   // IsTypeOf is used to determine if a given value is associated with the Dog type
-//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
-//     // ... implementation details ...
-//     _, ok := p.Value.(DogGetter)
-//     return ok
-//   }
-//
-type EntityConnectionFieldResolvers interface {
-	EntityConnectionNodesFieldResolver
-	EntityConnectionPageInfoFieldResolver
-}
-
-// EntityConnectionAliases implements all methods on EntityConnectionFieldResolvers interface by using reflection to
-// match name of field to a field on the given value. Intent is reduce friction
-// of writing new resolvers by removing all the instances where you would simply
-// have the resolvers method return a field.
-//
-// == Example SDL
-//
-//    type Dog {
-//      name:   String!
-//      weight: Float!
-//      dob:    DateTime
-//      breed:  [Breed]
-//    }
-//
-// == Example generated aliases
-//
-//   type DogAliases struct {}
-//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
-//     // reflect...
-//   }
-//
-// == Example Implementation
-//
-//   type DogResolver struct { // Implements DogResolver
-//     DogAliases
-//     store store.BreedStore
-//   }
-//
-//   // NOTE:
-//   // All other fields are satisified by DogAliases but since this one
-//   // requires hitting the store we implement it in our resolver.
-//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
-//     dog := v.(*Dog)
-//     return r.BreedsById(dog.BreedIDs)
-//   }
-//
-type EntityConnectionAliases struct{}
-
-// Nodes implements response to request for 'nodes' field.
-func (_ EntityConnectionAliases) Nodes(p graphql.ResolveParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
-// PageInfo implements response to request for 'pageInfo' field.
-func (_ EntityConnectionAliases) PageInfo(p graphql.ResolveParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
-// EntityConnectionType A connection to a sequence of records.
-var EntityConnectionType = graphql.NewType("EntityConnection", graphql.ObjectKind)
-
-// RegisterEntityConnection registers EntityConnection object type with given service.
-func RegisterEntityConnection(svc *graphql.Service, impl EntityConnectionFieldResolvers) {
-	svc.RegisterObject(_ObjectTypeEntityConnectionDesc, impl)
-}
-func _ObjTypeEntityConnectionNodesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EntityConnectionNodesFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Nodes(frp)
-	}
-}
-
-func _ObjTypeEntityConnectionPageInfoHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EntityConnectionPageInfoFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.PageInfo(frp)
-	}
-}
-
-func _ObjectTypeEntityConnectionConfigFn() graphql1.ObjectConfig {
-	return graphql1.ObjectConfig{
-		Description: "A connection to a sequence of records.",
-		Fields: graphql1.Fields{
-			"nodes": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "nodes",
-				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Entity")))),
-			},
-			"pageInfo": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Name:              "pageInfo",
-				Type:              graphql1.NewNonNull(graphql.OutputType("OffsetPageInfo")),
-			},
-		},
-		Interfaces: []*graphql1.Interface{},
-		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
-			// NOTE:
-			// Panic by default. Intent is that when Service is invoked, values of
-			// these fields are updated with instantiated resolvers. If these
-			// defaults are called it is most certainly programmer err.
-			// If you're see this comment then: 'Whoops! Sorry, my bad.'
-			panic("Unimplemented; see EntityConnectionFieldResolvers.")
-		},
-		Name: "EntityConnection",
-	}
-}
-
-// describe EntityConnection's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _ObjectTypeEntityConnectionDesc = graphql.ObjectDesc{
-	Config: _ObjectTypeEntityConnectionConfigFn,
-	FieldHandlers: map[string]graphql.FieldHandler{
-		"nodes":    _ObjTypeEntityConnectionNodesHandler,
-		"pageInfo": _ObjTypeEntityConnectionPageInfoHandler,
 	},
 }
 
@@ -1953,4 +1775,256 @@ func _ObjectTypeDeregistrationConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeDeregistrationDesc = graphql.ObjectDesc{
 	Config:        _ObjectTypeDeregistrationConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{"handler": _ObjTypeDeregistrationHandlerHandler},
+}
+
+// EntityConnectionNodesFieldResolver implement to resolve requests for the EntityConnection's nodes field.
+type EntityConnectionNodesFieldResolver interface {
+	// Nodes implements response to request for nodes field.
+	Nodes(p graphql.ResolveParams) (interface{}, error)
+}
+
+// EntityConnectionPageInfoFieldResolver implement to resolve requests for the EntityConnection's pageInfo field.
+type EntityConnectionPageInfoFieldResolver interface {
+	// PageInfo implements response to request for pageInfo field.
+	PageInfo(p graphql.ResolveParams) (interface{}, error)
+}
+
+//
+// EntityConnectionFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'EntityConnection' type.
+//
+// == Example SDL
+//
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
+//
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
+//
+// == Example generated interface
+//
+//   // DogResolver ...
+//   type DogFieldResolvers interface {
+//     DogNameFieldResolver
+//     DogBreedFieldResolver
+//
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//   }
+//
+// == Example implementation ...
+//
+//   // DogResolver implements DogFieldResolvers interface
+//   type DogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
+//
+//   // Name implements response to request for name field.
+//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     return dog.GetName()
+//   }
+//
+//   // Breed implements response to request for breed field.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+//     // ... implementation details ...
+//     _, ok := p.Value.(DogGetter)
+//     return ok
+//   }
+//
+type EntityConnectionFieldResolvers interface {
+	EntityConnectionNodesFieldResolver
+	EntityConnectionPageInfoFieldResolver
+}
+
+// EntityConnectionAliases implements all methods on EntityConnectionFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+//
+type EntityConnectionAliases struct{}
+
+// Nodes implements response to request for 'nodes' field.
+func (_ EntityConnectionAliases) Nodes(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// PageInfo implements response to request for 'pageInfo' field.
+func (_ EntityConnectionAliases) PageInfo(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// EntityConnectionType A connection to a sequence of records.
+var EntityConnectionType = graphql.NewType("EntityConnection", graphql.ObjectKind)
+
+// RegisterEntityConnection registers EntityConnection object type with given service.
+func RegisterEntityConnection(svc *graphql.Service, impl EntityConnectionFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeEntityConnectionDesc, impl)
+}
+func _ObjTypeEntityConnectionNodesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityConnectionNodesFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Nodes(frp)
+	}
+}
+
+func _ObjTypeEntityConnectionPageInfoHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityConnectionPageInfoFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.PageInfo(frp)
+	}
+}
+
+func _ObjectTypeEntityConnectionConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "A connection to a sequence of records.",
+		Fields: graphql1.Fields{
+			"nodes": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "nodes",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Entity")))),
+			},
+			"pageInfo": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "pageInfo",
+				Type:              graphql1.NewNonNull(graphql.OutputType("OffsetPageInfo")),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see EntityConnectionFieldResolvers.")
+		},
+		Name: "EntityConnection",
+	}
+}
+
+// describe EntityConnection's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeEntityConnectionDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeEntityConnectionConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"nodes":    _ObjTypeEntityConnectionNodesHandler,
+		"pageInfo": _ObjTypeEntityConnectionPageInfoHandler,
+	},
+}
+
+// EntityListOrder Describes ways in which a list of entities can be ordered.
+type EntityListOrder string
+
+// EntityListOrders holds enum values
+var EntityListOrders = _EnumTypeEntityListOrderValues{
+	ID:       "ID",
+	ID_DESC:  "ID_DESC",
+	LASTSEEN: "LASTSEEN",
+}
+
+// EntityListOrderType Describes ways in which a list of entities can be ordered.
+var EntityListOrderType = graphql.NewType("EntityListOrder", graphql.EnumKind)
+
+// RegisterEntityListOrder registers EntityListOrder object type with given service.
+func RegisterEntityListOrder(svc *graphql.Service) {
+	svc.RegisterEnum(_EnumTypeEntityListOrderDesc)
+}
+func _EnumTypeEntityListOrderConfigFn() graphql1.EnumConfig {
+	return graphql1.EnumConfig{
+		Description: "Describes ways in which a list of entities can be ordered.",
+		Name:        "EntityListOrder",
+		Values: graphql1.EnumValueConfigMap{
+			"ID": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ID",
+			},
+			"ID_DESC": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ID_DESC",
+			},
+			"LASTSEEN": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "LASTSEEN",
+			},
+		},
+	}
+}
+
+// describe EntityListOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _EnumTypeEntityListOrderDesc = graphql.EnumDesc{Config: _EnumTypeEntityListOrderConfigFn}
+
+type _EnumTypeEntityListOrderValues struct {
+	// ID - self descriptive
+	ID EntityListOrder
+	// ID_DESC - self descriptive
+	ID_DESC EntityListOrder
+	// LASTSEEN - self descriptive
+	LASTSEEN EntityListOrder
 }

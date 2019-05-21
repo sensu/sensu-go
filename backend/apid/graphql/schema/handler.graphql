@@ -58,6 +58,12 @@ type HandlerConnection {
 
 "An edge in a connection."
 type HandlerEdge {
-  node: Handler 
+  node: Handler
   cursor: String!
+}
+
+"Describes ways in which a list of handlers can be ordered."
+enum HandlerListOrder {
+  NAME
+  NAME_DESC
 }

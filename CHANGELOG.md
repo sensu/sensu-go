@@ -20,6 +20,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - etcd database size and request size are now configurable.
 - Most resources now use protobuf serialization in etcd.
 
+### Changed
+- GraphQL fields that previously accepted a JS filter have been deprecated and
+  replaced with a simpler syntax.
+
 ### Fixed
 - Only bury switchsets of checks that no longer have a TTL, in order to reduce
 the number of write operations made to etcd.
