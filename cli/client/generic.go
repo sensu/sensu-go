@@ -46,8 +46,6 @@ func (client *RestClient) List(path string, objs interface{}, options *ListOptio
 		panic("unexpected type for objs")
 	}
 
-	newObjs := reflect.New(objsType.Elem())
-
 	for {
 		request := client.R()
 		ApplyListOptions(request, options)
@@ -61,6 +59,7 @@ func (client *RestClient) List(path string, objs interface{}, options *ListOptio
 			return UnmarshalError(resp)
 		}
 
+		newObjs := reflect.New(objsType.Elem())
 		if err := json.Unmarshal(resp.Body(), newObjs.Interface()); err != nil {
 			return err
 		}
