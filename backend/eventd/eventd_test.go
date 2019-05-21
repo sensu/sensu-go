@@ -314,6 +314,7 @@ func TestCheckTTL(t *testing.T) {
 				livenessFactory: newFakeFactory(switches),
 				handlerCount:    1,
 				wg:              &sync.WaitGroup{},
+				Logger:          &RawLogger{},
 			}
 			var err error
 			e.bus, err = messaging.NewWizardBus(messaging.WizardBusConfig{})
