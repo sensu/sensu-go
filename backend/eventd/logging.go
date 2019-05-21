@@ -3,14 +3,14 @@ package eventd
 // Logger ...
 type Logger interface {
 	Stop()
-	Write(v interface{})
+	Println(v interface{})
 }
 
 // RawLogger ...
 type RawLogger struct{}
 
+// Println ...
+func (l *RawLogger) Println(v interface{}) { return }
+
 // Stop ...
 func (l *RawLogger) Stop() { return }
-
-// Write ...
-func (l *RawLogger) Write(v interface{}) { return }

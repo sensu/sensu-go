@@ -188,7 +188,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	// If the event does not contain a check (rather, it contains metrics)
 	// publish the event without writing to the store
 	if !event.HasCheck() {
-		e.Logger.Write(event)
+		e.Logger.Println(event)
 		return e.bus.Publish(messaging.TopicEvent, event)
 	}
 
@@ -224,7 +224,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		return err
 	}
 
-	e.Logger.Write(event)
+	e.Logger.Println(event)
 
 	// Handle expire on resolve silenced entries
 	if err = handleExpireOnResolveEntries(ctx, event, e.store); err != nil {
