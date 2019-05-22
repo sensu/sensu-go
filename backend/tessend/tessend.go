@@ -405,16 +405,12 @@ func (t *Tessend) enabled(tessen *corev2.TessenConfig) bool {
 		logger.WithField("opt-out", tessen.OptOut).Info("tessen is opted in, enabling tessen.. thank you so much for your support 💚")
 		return true
 	}
-
-	wrapper := &Wrapper{}
-	err := etcd.Get(t.ctx, t.client, licenseStorePath, wrapper)
-	if err != nil || t.AllowOptOut {
+	if t.AllowOptOut {
 		logger.WithField("opt-out", tessen.OptOut).Info("tessen is opted out, patiently waiting for you to opt back in")
-	} else {
-		logger.WithField("opt-out", tessen.OptOut).Info("tessen is opted out but a enterprise license is detected, enabling tessen.. thank you so much for your support 💚")
+		return false
 	}
-
-	return err == nil
+	logger.WithField("opt-out", tessen.OptOut).Info("tessen is opted out but per the license agreement, we're enabling tessen.. thank you so much for your support 💚")
+	return true
 }
 
 // collectAndSend is a durable function to collect and send data to tessen.
