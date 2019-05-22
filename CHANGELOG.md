@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Fixed the behaviors for check `Occurrences` and `OccurrencesWatermark`.
+
 ## [5.8.0] - 2019-05-22
 
 ### Added
