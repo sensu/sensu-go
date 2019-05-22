@@ -89,6 +89,7 @@ type Tessend struct {
 	messageChan  chan interface{}
 	subscription messaging.Subscription
 	duration     time.Duration
+	AllowOptOut  bool
 }
 
 // Option is a functional option.
@@ -114,6 +115,7 @@ func New(c Config, opts ...Option) (*Tessend, error) {
 		bus:         c.Bus,
 		messageChan: make(chan interface{}, 1),
 		duration:    perResourceDuration,
+		AllowOptOut: true,
 	}
 	t.ctx, t.cancel = context.WithCancel(context.Background())
 	t.interrupt = make(chan *corev2.TessenConfig, 1)
@@ -406,7 +408,7 @@ func (t *Tessend) enabled(tessen *corev2.TessenConfig) bool {
 
 	wrapper := &Wrapper{}
 	err := etcd.Get(t.ctx, t.client, licenseStorePath, wrapper)
-	if err != nil {
+	if err != nil || t.AllowOptOut {
 		logger.WithField("opt-out", tessen.OptOut).Info("tessen is opted out, patiently waiting for you to opt back in")
 	} else {
 		logger.WithField("opt-out", tessen.OptOut).Info("tessen is opted out but a enterprise license is detected, enabling tessen.. thank you so much for your support 💚")
