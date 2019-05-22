@@ -1163,3 +1163,48 @@ var _ObjectTypeHandlerEdgeDesc = graphql.ObjectDesc{
 		"node":   _ObjTypeHandlerEdgeNodeHandler,
 	},
 }
+
+// HandlerListOrder Describes ways in which a list of handlers can be ordered.
+type HandlerListOrder string
+
+// HandlerListOrders holds enum values
+var HandlerListOrders = _EnumTypeHandlerListOrderValues{
+	NAME:      "NAME",
+	NAME_DESC: "NAME_DESC",
+}
+
+// HandlerListOrderType Describes ways in which a list of handlers can be ordered.
+var HandlerListOrderType = graphql.NewType("HandlerListOrder", graphql.EnumKind)
+
+// RegisterHandlerListOrder registers HandlerListOrder object type with given service.
+func RegisterHandlerListOrder(svc *graphql.Service) {
+	svc.RegisterEnum(_EnumTypeHandlerListOrderDesc)
+}
+func _EnumTypeHandlerListOrderConfigFn() graphql1.EnumConfig {
+	return graphql1.EnumConfig{
+		Description: "Describes ways in which a list of handlers can be ordered.",
+		Name:        "HandlerListOrder",
+		Values: graphql1.EnumValueConfigMap{
+			"NAME": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "NAME",
+			},
+			"NAME_DESC": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "NAME_DESC",
+			},
+		},
+	}
+}
+
+// describe HandlerListOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _EnumTypeHandlerListOrderDesc = graphql.EnumDesc{Config: _EnumTypeHandlerListOrderConfigFn}
+
+type _EnumTypeHandlerListOrderValues struct {
+	// NAME - self descriptive
+	NAME HandlerListOrder
+	// NAME_DESC - self descriptive
+	NAME_DESC HandlerListOrder
+}

@@ -5,12 +5,12 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## [5.9.0] - TBD
+## Unreleased
 
 ### Fixed
 - Fixed the behaviors for check `Occurrences` and `OccurrencesWatermark`.
 
-## [5.8.0] - TBD
+## [5.8.0] - 2019-05-22
 
 ### Added
 - Added per resource counts to tessen data collection.
@@ -24,6 +24,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - eventd and keepalived now use 1000 handlers for events.
 - etcd database size and request size are now configurable.
 - Most resources now use protobuf serialization in etcd.
+
+### Changed
+- GraphQL fields that previously accepted a JS filter have been deprecated and
+  replaced with a simpler syntax.
 
 ### Fixed
 - Only bury switchsets of checks that no longer have a TTL, in order to reduce
