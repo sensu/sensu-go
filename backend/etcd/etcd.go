@@ -38,7 +38,7 @@ const (
 
 	// DefaultQuotaBackendBytes is the default database size limit for etcd
 	// databases (4 GB)
-	DefaultQuotaBackendBytes = 1 << 32
+	DefaultQuotaBackendBytes int64 = (1 << 32)
 )
 
 func init() {
