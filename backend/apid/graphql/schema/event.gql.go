@@ -87,6 +87,12 @@ type EventSilencesFieldResolver interface {
 	Silences(p graphql.ResolveParams) (interface{}, error)
 }
 
+// EventSilencedFieldResolver implement to resolve requests for the Event's silenced field.
+type EventSilencedFieldResolver interface {
+	// Silenced implements response to request for silenced field.
+	Silenced(p graphql.ResolveParams) ([]string, error)
+}
+
 //
 // EventFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Event' type.
@@ -162,6 +168,7 @@ type EventFieldResolvers interface {
 	EventWasSilencedFieldResolver
 	EventIsSilencedFieldResolver
 	EventSilencesFieldResolver
+	EventSilencedFieldResolver
 }
 
 // EventAliases implements all methods on EventFieldResolvers interface by using reflection to
@@ -345,6 +352,19 @@ func (_ EventAliases) Silences(p graphql.ResolveParams) (interface{}, error) {
 	return val, err
 }
 
+// Silenced implements response to request for 'silenced' field.
+func (_ EventAliases) Silenced(p graphql.ResolveParams) ([]string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.([]string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'silenced'")
+	}
+	return ret, err
+}
+
 // EventType An Event is the encapsulating type sent across the Sensu websocket transport.
 var EventType = graphql.NewType("Event", graphql.ObjectKind)
 
@@ -443,6 +463,13 @@ func _ObjTypeEventSilencesHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeEventSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EventSilencedFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Silenced(frp)
+	}
+}
+
 func _ObjectTypeEventConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "An Event is the encapsulating type sent across the Sensu websocket transport.",
@@ -517,6 +544,13 @@ func _ObjectTypeEventConfigFn() graphql1.ObjectConfig {
 				Name:              "namespace",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
+			"silenced": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Silenced is a list of silenced entry ids (subscription and check name)",
+				Name:              "silenced",
+				Type:              graphql1.NewList(graphql1.String),
+			},
 			"silences": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -570,6 +604,7 @@ var _ObjectTypeEventDesc = graphql.ObjectDesc{
 		"isSilenced":    _ObjTypeEventIsSilencedHandler,
 		"metadata":      _ObjTypeEventMetadataHandler,
 		"namespace":     _ObjTypeEventNamespaceHandler,
+		"silenced":      _ObjTypeEventSilencedHandler,
 		"silences":      _ObjTypeEventSilencesHandler,
 		"timestamp":     _ObjTypeEventTimestampHandler,
 		"wasSilenced":   _ObjTypeEventWasSilencedHandler,
@@ -773,4 +808,65 @@ var _ObjectTypeEventConnectionDesc = graphql.ObjectDesc{
 		"nodes":    _ObjTypeEventConnectionNodesHandler,
 		"pageInfo": _ObjTypeEventConnectionPageInfoHandler,
 	},
+}
+
+// EventsListOrder Describes ways in which a list of events can be ordered.
+type EventsListOrder string
+
+// EventsListOrders holds enum values
+var EventsListOrders = _EnumTypeEventsListOrderValues{
+	LASTOK:   "LASTOK",
+	NEWEST:   "NEWEST",
+	OLDEST:   "OLDEST",
+	SEVERITY: "SEVERITY",
+}
+
+// EventsListOrderType Describes ways in which a list of events can be ordered.
+var EventsListOrderType = graphql.NewType("EventsListOrder", graphql.EnumKind)
+
+// RegisterEventsListOrder registers EventsListOrder object type with given service.
+func RegisterEventsListOrder(svc *graphql.Service) {
+	svc.RegisterEnum(_EnumTypeEventsListOrderDesc)
+}
+func _EnumTypeEventsListOrderConfigFn() graphql1.EnumConfig {
+	return graphql1.EnumConfig{
+		Description: "Describes ways in which a list of events can be ordered.",
+		Name:        "EventsListOrder",
+		Values: graphql1.EnumValueConfigMap{
+			"LASTOK": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "LASTOK",
+			},
+			"NEWEST": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "NEWEST",
+			},
+			"OLDEST": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "OLDEST",
+			},
+			"SEVERITY": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "SEVERITY",
+			},
+		},
+	}
+}
+
+// describe EventsListOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _EnumTypeEventsListOrderDesc = graphql.EnumDesc{Config: _EnumTypeEventsListOrderConfigFn}
+
+type _EnumTypeEventsListOrderValues struct {
+	// LASTOK - self descriptive
+	LASTOK EventsListOrder
+	// NEWEST - self descriptive
+	NEWEST EventsListOrder
+	// OLDEST - self descriptive
+	OLDEST EventsListOrder
+	// SEVERITY - self descriptive
+	SEVERITY EventsListOrder
 }

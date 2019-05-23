@@ -4,6 +4,8 @@ import (
 	"sort"
 	"time"
 
+	v2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/apid/graphql/filter"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
@@ -54,8 +56,12 @@ func (r *entityImpl) Events(p schema.EntityEventsFieldResolverParams) (interface
 	}
 
 	// filter
+	matches, err := filter.Compile(p.Args.Filters, EventFilters(), v2.EventFields)
+	if err != nil {
+		return []interface{}{}, err
+	}
 	records := filterEvents(results, func(obj *types.Event) bool {
-		return obj.Entity.Name == src.Name
+		return matches(obj)
 	})
 
 	// sort records

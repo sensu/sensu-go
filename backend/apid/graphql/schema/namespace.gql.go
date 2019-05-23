@@ -58,7 +58,17 @@ type NamespaceChecksFieldResolverArgs struct {
 	Offset  int            // Offset - self descriptive
 	Limit   int            // Limit adds optional limit to the number of entries returned.
 	OrderBy CheckListOrder // OrderBy adds optional order to the records retrieved.
-	Filter  string         // Filter reduces the set using the given Sensu Query Expression predicate.
+	Filter  string         // Filter - DEPRECATED: Please use the filters argument instead.
+	Filters []string       /*
+	Filters reduces the set using given arbitrary expression[s]; expressions
+	take on the form KEY: VALUE. The accepted key(s) are: subscription &
+	published.
+
+	Eg.
+
+	subscription:unix
+	published:true
+	*/
 }
 
 // NamespaceChecksFieldResolverParams contains contextual info to resolve checks field
@@ -78,7 +88,17 @@ type NamespaceEntitiesFieldResolverArgs struct {
 	Offset  int             // Offset - self descriptive
 	Limit   int             // Limit adds optional limit to the number of entries returned.
 	OrderBy EntityListOrder // OrderBy adds optional order to the records retrieved.
-	Filter  string          // Filter reduces the set using the given Sensu Query Expression predicate.
+	Filter  string          // Filter - DEPRECATED: Please use the filters argument instead.
+	Filters []string        /*
+	Filters reduces the set using given arbitrary expression[s]; expressions
+	take on the form KEY: VALUE. The accepted key(s) are: subscription &
+	class.
+
+	Eg.
+
+	subscription:unix
+	class:proxy
+	*/
 }
 
 // NamespaceEntitiesFieldResolverParams contains contextual info to resolve entities field
@@ -98,7 +118,21 @@ type NamespaceEventsFieldResolverArgs struct {
 	Offset  int             // Offset - self descriptive
 	Limit   int             // Limit adds optional limit to the number of entries returned.
 	OrderBy EventsListOrder // OrderBy adds optional order to the records retrieved.
-	Filter  string          // Filter reduces the set using the given Sensu Query Expression predicate.
+	Filter  string          // Filter - DEPRECATED: Please use the filters argument instead.
+	Filters []string        /*
+	Filters reduces the set using given arbitrary expression[s]; expressions
+	take on the form KEY: VALUE. The accepted key(s) are: status, check, entity,
+	& silenced.
+
+	Eg.
+
+	status:passing
+	status:warning
+	status:incident
+	check:check-disk
+	entity:venice
+	silenced:true
+	*/
 }
 
 // NamespaceEventsFieldResolverParams contains contextual info to resolve events field
@@ -118,7 +152,17 @@ type NamespaceHandlersFieldResolverArgs struct {
 	Offset  int              // Offset - self descriptive
 	Limit   int              // Limit adds an optional limit to the number of handlers returned.
 	OrderBy HandlerListOrder // OrderBy - Orderby adds an optional order to the records retrieved.
-	Filter  string           // Filter reduces the set using the given Sensu Query Expresion predicate
+	Filter  string           // Filter - DEPRECATED: Please use the filters argument instead.
+	Filters []string         /*
+	Filters reduces the set using given arbitrary expression[s]; expressions
+	take on the form KEY: VALUE. The accepted key(s) are: type.
+
+	Eg.
+
+	type:pipe
+	type:socket
+	type:set
+	*/
 }
 
 // NamespaceHandlersFieldResolverParams contains contextual info to resolve handlers field
@@ -138,7 +182,16 @@ type NamespaceSilencesFieldResolverArgs struct {
 	Offset  int               // Offset - self descriptive
 	Limit   int               // Limit adds optional limit to the number of entries returned.
 	OrderBy SilencesListOrder // OrderBy adds optional order to the records retrieved.
-	Filter  string            // Filter reduces the set using the given Sensu Query Expression predicate.
+	Filter  string            // Filter - DEPRECATED: Please use the filters argument instead.
+	Filters []string          /*
+	Filters reduces the set using given arbitrary expression[s]; expressions
+	take on the form KEY: VALUE. The accepted key(s) are: check & subscription.
+
+	Eg.
+
+	check:check-disk
+	subscription:unix
+	*/
 }
 
 // NamespaceSilencesFieldResolverParams contains contextual info to resolve silences field
@@ -169,24 +222,6 @@ type NamespaceSubscriptionsFieldResolverParams struct {
 type NamespaceSubscriptionsFieldResolver interface {
 	// Subscriptions implements response to request for subscriptions field.
 	Subscriptions(p NamespaceSubscriptionsFieldResolverParams) (interface{}, error)
-}
-
-// NamespaceCheckHistoryFieldResolverArgs contains arguments provided to checkHistory when selected
-type NamespaceCheckHistoryFieldResolverArgs struct {
-	Filter string // Filter reduces the set using the given Sensu Query Expression predicate.
-	Limit  int    // Limit adds optional limit to the number of entries returned.
-}
-
-// NamespaceCheckHistoryFieldResolverParams contains contextual info to resolve checkHistory field
-type NamespaceCheckHistoryFieldResolverParams struct {
-	graphql.ResolveParams
-	Args NamespaceCheckHistoryFieldResolverArgs
-}
-
-// NamespaceCheckHistoryFieldResolver implement to resolve requests for the Namespace's checkHistory field.
-type NamespaceCheckHistoryFieldResolver interface {
-	// CheckHistory implements response to request for checkHistory field.
-	CheckHistory(p NamespaceCheckHistoryFieldResolverParams) (interface{}, error)
 }
 
 // NamespaceIconIDFieldResolver implement to resolve requests for the Namespace's iconId field.
@@ -271,7 +306,6 @@ type NamespaceFieldResolvers interface {
 	NamespaceHandlersFieldResolver
 	NamespaceSilencesFieldResolver
 	NamespaceSubscriptionsFieldResolver
-	NamespaceCheckHistoryFieldResolver
 	NamespaceIconIDFieldResolver
 	NamespaceColourIDFieldResolver
 }
@@ -381,12 +415,6 @@ func (_ NamespaceAliases) Silences(p NamespaceSilencesFieldResolverParams) (inte
 
 // Subscriptions implements response to request for 'subscriptions' field.
 func (_ NamespaceAliases) Subscriptions(p NamespaceSubscriptionsFieldResolverParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
-// CheckHistory implements response to request for 'checkHistory' field.
-func (_ NamespaceAliases) CheckHistory(p NamespaceCheckHistoryFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -516,19 +544,6 @@ func _ObjTypeNamespaceSubscriptionsHandler(impl interface{}) graphql1.FieldResol
 	}
 }
 
-func _ObjTypeNamespaceCheckHistoryHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(NamespaceCheckHistoryFieldResolver)
-	return func(p graphql1.ResolveParams) (interface{}, error) {
-		frp := NamespaceCheckHistoryFieldResolverParams{ResolveParams: p}
-		err := mapstructure.Decode(p.Args, &frp.Args)
-		if err != nil {
-			return nil, err
-		}
-
-		return resolver.CheckHistory(frp)
-	}
-}
-
 func _ObjTypeNamespaceIconIDHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(NamespaceIconIDFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -551,30 +566,17 @@ func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Represents a virtual cluster",
 		Fields: graphql1.Fields{
-			"checkHistory": &graphql1.Field{
-				Args: graphql1.FieldConfigArgument{
-					"filter": &graphql1.ArgumentConfig{
-						DefaultValue: "",
-						Description:  "Filter reduces the set using the given Sensu Query Expression predicate.",
-						Type:         graphql1.String,
-					},
-					"limit": &graphql1.ArgumentConfig{
-						DefaultValue: 10000,
-						Description:  "Limit adds optional limit to the number of entries returned.",
-						Type:         graphql1.Int,
-					},
-				},
-				DeprecationReason: "",
-				Description:       "checkHistory includes all persisted check execution results associated with\nthe namespace. Unlike the Check type's history this field includes the most\nrecent result.",
-				Name:              "checkHistory",
-				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("CheckHistory"))),
-			},
 			"checks": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
 					"filter": &graphql1.ArgumentConfig{
 						DefaultValue: "",
-						Description:  "Filter reduces the set using the given Sensu Query Expression predicate.",
+						Description:  "DEPRECATED: Please use the filters argument instead.",
 						Type:         graphql1.String,
+					},
+					"filters": &graphql1.ArgumentConfig{
+						DefaultValue: []interface{}{},
+						Description:  "Filters reduces the set using given arbitrary expression[s]; expressions\ntake on the form KEY: VALUE. The accepted key(s) are: subscription &\npublished.\n\nEg.\n\nsubscription:unix\npublished:true",
+						Type:         graphql1.NewList(graphql1.NewNonNull(graphql1.String)),
 					},
 					"limit": &graphql1.ArgumentConfig{
 						DefaultValue: 10,
@@ -608,8 +610,13 @@ func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 				Args: graphql1.FieldConfigArgument{
 					"filter": &graphql1.ArgumentConfig{
 						DefaultValue: "",
-						Description:  "Filter reduces the set using the given Sensu Query Expression predicate.",
+						Description:  "DEPRECATED: Please use the filters argument instead.",
 						Type:         graphql1.String,
+					},
+					"filters": &graphql1.ArgumentConfig{
+						DefaultValue: []interface{}{},
+						Description:  "Filters reduces the set using given arbitrary expression[s]; expressions\ntake on the form KEY: VALUE. The accepted key(s) are: subscription &\nclass.\n\nEg.\n\nsubscription:unix\nclass:proxy",
+						Type:         graphql1.NewList(graphql1.NewNonNull(graphql1.String)),
 					},
 					"limit": &graphql1.ArgumentConfig{
 						DefaultValue: 10,
@@ -636,8 +643,13 @@ func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 				Args: graphql1.FieldConfigArgument{
 					"filter": &graphql1.ArgumentConfig{
 						DefaultValue: "",
-						Description:  "Filter reduces the set using the given Sensu Query Expression predicate.",
+						Description:  "DEPRECATED: Please use the filters argument instead.",
 						Type:         graphql1.String,
+					},
+					"filters": &graphql1.ArgumentConfig{
+						DefaultValue: []interface{}{},
+						Description:  "Filters reduces the set using given arbitrary expression[s]; expressions\ntake on the form KEY: VALUE. The accepted key(s) are: status, check, entity,\n& silenced.\n\nEg.\n\nstatus:passing\nstatus:warning\nstatus:incident\ncheck:check-disk\nentity:venice\nsilenced:true",
+						Type:         graphql1.NewList(graphql1.NewNonNull(graphql1.String)),
 					},
 					"limit": &graphql1.ArgumentConfig{
 						DefaultValue: 10,
@@ -664,8 +676,13 @@ func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 				Args: graphql1.FieldConfigArgument{
 					"filter": &graphql1.ArgumentConfig{
 						DefaultValue: "",
-						Description:  "Filter reduces the set using the given Sensu Query Expresion predicate",
+						Description:  "DEPRECATED: Please use the filters argument instead.",
 						Type:         graphql1.String,
+					},
+					"filters": &graphql1.ArgumentConfig{
+						DefaultValue: []interface{}{},
+						Description:  "Filters reduces the set using given arbitrary expression[s]; expressions\ntake on the form KEY: VALUE. The accepted key(s) are: type.\n\nEg.\n\ntype:pipe\ntype:socket\ntype:set",
+						Type:         graphql1.NewList(graphql1.NewNonNull(graphql1.String)),
 					},
 					"limit": &graphql1.ArgumentConfig{
 						DefaultValue: 10,
@@ -713,8 +730,13 @@ func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 				Args: graphql1.FieldConfigArgument{
 					"filter": &graphql1.ArgumentConfig{
 						DefaultValue: "",
-						Description:  "Filter reduces the set using the given Sensu Query Expression predicate.",
+						Description:  "DEPRECATED: Please use the filters argument instead.",
 						Type:         graphql1.String,
+					},
+					"filters": &graphql1.ArgumentConfig{
+						DefaultValue: []interface{}{},
+						Description:  "Filters reduces the set using given arbitrary expression[s]; expressions\ntake on the form KEY: VALUE. The accepted key(s) are: check & subscription.\n\nEg.\n\ncheck:check-disk\nsubscription:unix",
+						Type:         graphql1.NewList(graphql1.NewNonNull(graphql1.String)),
 					},
 					"limit": &graphql1.ArgumentConfig{
 						DefaultValue: 10,
@@ -774,7 +796,6 @@ func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeNamespaceDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeNamespaceConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"checkHistory":  _ObjTypeNamespaceCheckHistoryHandler,
 		"checks":        _ObjTypeNamespaceChecksHandler,
 		"colourId":      _ObjTypeNamespaceColourIDHandler,
 		"entities":      _ObjTypeNamespaceEntitiesHandler,
@@ -839,271 +860,6 @@ type _EnumTypeSubscriptionSetOrderValues struct {
 	ALPHA_DESC SubscriptionSetOrder
 	// OCCURRENCES - self descriptive
 	OCCURRENCES SubscriptionSetOrder
-}
-
-// CheckListOrder Describes ways in which a list of checks can be ordered.
-type CheckListOrder string
-
-// CheckListOrders holds enum values
-var CheckListOrders = _EnumTypeCheckListOrderValues{
-	NAME:      "NAME",
-	NAME_DESC: "NAME_DESC",
-}
-
-// CheckListOrderType Describes ways in which a list of checks can be ordered.
-var CheckListOrderType = graphql.NewType("CheckListOrder", graphql.EnumKind)
-
-// RegisterCheckListOrder registers CheckListOrder object type with given service.
-func RegisterCheckListOrder(svc *graphql.Service) {
-	svc.RegisterEnum(_EnumTypeCheckListOrderDesc)
-}
-func _EnumTypeCheckListOrderConfigFn() graphql1.EnumConfig {
-	return graphql1.EnumConfig{
-		Description: "Describes ways in which a list of checks can be ordered.",
-		Name:        "CheckListOrder",
-		Values: graphql1.EnumValueConfigMap{
-			"NAME": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "NAME",
-			},
-			"NAME_DESC": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "NAME_DESC",
-			},
-		},
-	}
-}
-
-// describe CheckListOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _EnumTypeCheckListOrderDesc = graphql.EnumDesc{Config: _EnumTypeCheckListOrderConfigFn}
-
-type _EnumTypeCheckListOrderValues struct {
-	// NAME - self descriptive
-	NAME CheckListOrder
-	// NAME_DESC - self descriptive
-	NAME_DESC CheckListOrder
-}
-
-// EntityListOrder Describes ways in which a list of entities can be ordered.
-type EntityListOrder string
-
-// EntityListOrders holds enum values
-var EntityListOrders = _EnumTypeEntityListOrderValues{
-	ID:       "ID",
-	ID_DESC:  "ID_DESC",
-	LASTSEEN: "LASTSEEN",
-}
-
-// EntityListOrderType Describes ways in which a list of entities can be ordered.
-var EntityListOrderType = graphql.NewType("EntityListOrder", graphql.EnumKind)
-
-// RegisterEntityListOrder registers EntityListOrder object type with given service.
-func RegisterEntityListOrder(svc *graphql.Service) {
-	svc.RegisterEnum(_EnumTypeEntityListOrderDesc)
-}
-func _EnumTypeEntityListOrderConfigFn() graphql1.EnumConfig {
-	return graphql1.EnumConfig{
-		Description: "Describes ways in which a list of entities can be ordered.",
-		Name:        "EntityListOrder",
-		Values: graphql1.EnumValueConfigMap{
-			"ID": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "ID",
-			},
-			"ID_DESC": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "ID_DESC",
-			},
-			"LASTSEEN": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "LASTSEEN",
-			},
-		},
-	}
-}
-
-// describe EntityListOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _EnumTypeEntityListOrderDesc = graphql.EnumDesc{Config: _EnumTypeEntityListOrderConfigFn}
-
-type _EnumTypeEntityListOrderValues struct {
-	// ID - self descriptive
-	ID EntityListOrder
-	// ID_DESC - self descriptive
-	ID_DESC EntityListOrder
-	// LASTSEEN - self descriptive
-	LASTSEEN EntityListOrder
-}
-
-// EventsListOrder Describes ways in which a list of events can be ordered.
-type EventsListOrder string
-
-// EventsListOrders holds enum values
-var EventsListOrders = _EnumTypeEventsListOrderValues{
-	LASTOK:   "LASTOK",
-	NEWEST:   "NEWEST",
-	OLDEST:   "OLDEST",
-	SEVERITY: "SEVERITY",
-}
-
-// EventsListOrderType Describes ways in which a list of events can be ordered.
-var EventsListOrderType = graphql.NewType("EventsListOrder", graphql.EnumKind)
-
-// RegisterEventsListOrder registers EventsListOrder object type with given service.
-func RegisterEventsListOrder(svc *graphql.Service) {
-	svc.RegisterEnum(_EnumTypeEventsListOrderDesc)
-}
-func _EnumTypeEventsListOrderConfigFn() graphql1.EnumConfig {
-	return graphql1.EnumConfig{
-		Description: "Describes ways in which a list of events can be ordered.",
-		Name:        "EventsListOrder",
-		Values: graphql1.EnumValueConfigMap{
-			"LASTOK": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "LASTOK",
-			},
-			"NEWEST": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "NEWEST",
-			},
-			"OLDEST": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "OLDEST",
-			},
-			"SEVERITY": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "SEVERITY",
-			},
-		},
-	}
-}
-
-// describe EventsListOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _EnumTypeEventsListOrderDesc = graphql.EnumDesc{Config: _EnumTypeEventsListOrderConfigFn}
-
-type _EnumTypeEventsListOrderValues struct {
-	// LASTOK - self descriptive
-	LASTOK EventsListOrder
-	// NEWEST - self descriptive
-	NEWEST EventsListOrder
-	// OLDEST - self descriptive
-	OLDEST EventsListOrder
-	// SEVERITY - self descriptive
-	SEVERITY EventsListOrder
-}
-
-// HandlerListOrder Describes ways in which a list of handlers can be ordered.
-type HandlerListOrder string
-
-// HandlerListOrders holds enum values
-var HandlerListOrders = _EnumTypeHandlerListOrderValues{
-	NAME:      "NAME",
-	NAME_DESC: "NAME_DESC",
-}
-
-// HandlerListOrderType Describes ways in which a list of handlers can be ordered.
-var HandlerListOrderType = graphql.NewType("HandlerListOrder", graphql.EnumKind)
-
-// RegisterHandlerListOrder registers HandlerListOrder object type with given service.
-func RegisterHandlerListOrder(svc *graphql.Service) {
-	svc.RegisterEnum(_EnumTypeHandlerListOrderDesc)
-}
-func _EnumTypeHandlerListOrderConfigFn() graphql1.EnumConfig {
-	return graphql1.EnumConfig{
-		Description: "Describes ways in which a list of handlers can be ordered.",
-		Name:        "HandlerListOrder",
-		Values: graphql1.EnumValueConfigMap{
-			"NAME": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "NAME",
-			},
-			"NAME_DESC": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "NAME_DESC",
-			},
-		},
-	}
-}
-
-// describe HandlerListOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _EnumTypeHandlerListOrderDesc = graphql.EnumDesc{Config: _EnumTypeHandlerListOrderConfigFn}
-
-type _EnumTypeHandlerListOrderValues struct {
-	// NAME - self descriptive
-	NAME HandlerListOrder
-	// NAME_DESC - self descriptive
-	NAME_DESC HandlerListOrder
-}
-
-// SilencesListOrder Describes ways in which a list of silences can be ordered.
-type SilencesListOrder string
-
-// SilencesListOrders holds enum values
-var SilencesListOrders = _EnumTypeSilencesListOrderValues{
-	BEGIN:      "BEGIN",
-	BEGIN_DESC: "BEGIN_DESC",
-	ID:         "ID",
-	ID_DESC:    "ID_DESC",
-}
-
-// SilencesListOrderType Describes ways in which a list of silences can be ordered.
-var SilencesListOrderType = graphql.NewType("SilencesListOrder", graphql.EnumKind)
-
-// RegisterSilencesListOrder registers SilencesListOrder object type with given service.
-func RegisterSilencesListOrder(svc *graphql.Service) {
-	svc.RegisterEnum(_EnumTypeSilencesListOrderDesc)
-}
-func _EnumTypeSilencesListOrderConfigFn() graphql1.EnumConfig {
-	return graphql1.EnumConfig{
-		Description: "Describes ways in which a list of silences can be ordered.",
-		Name:        "SilencesListOrder",
-		Values: graphql1.EnumValueConfigMap{
-			"BEGIN": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "BEGIN",
-			},
-			"BEGIN_DESC": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "BEGIN_DESC",
-			},
-			"ID": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "ID",
-			},
-			"ID_DESC": &graphql1.EnumValueConfig{
-				DeprecationReason: "",
-				Description:       "self descriptive",
-				Value:             "ID_DESC",
-			},
-		},
-	}
-}
-
-// describe SilencesListOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _EnumTypeSilencesListOrderDesc = graphql.EnumDesc{Config: _EnumTypeSilencesListOrderConfigFn}
-
-type _EnumTypeSilencesListOrderValues struct {
-	// ID - self descriptive
-	ID SilencesListOrder
-	// ID_DESC - self descriptive
-	ID_DESC SilencesListOrder
-	// BEGIN - self descriptive
-	BEGIN SilencesListOrder
-	// BEGIN_DESC - self descriptive
-	BEGIN_DESC SilencesListOrder
 }
 
 // Icon Describes a graphical element that can be used to distinguish a resource.

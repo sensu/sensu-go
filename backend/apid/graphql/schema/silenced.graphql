@@ -42,14 +42,22 @@ type Silenced implements Node, Namespaced, HasMetadata {
   begin: DateTime
 }
 
+"Silenceable describes resources that can be silenced"
+interface Silenceable {
+  isSilenced: Boolean!
+  silences: [Silenced!]!
+}
+
 "A connection to a sequence of records."
 type SilencedConnection {
   nodes: [Silenced!]!
   pageInfo: OffsetPageInfo!
 }
 
-"Silenceable describes resources that can be silenced"
-interface Silenceable {
-  isSilenced: Boolean!
-  silences: [Silenced!]!
+"Describes ways in which a list of silences can be ordered."
+enum SilencesListOrder {
+  ID
+  ID_DESC
+  BEGIN
+  BEGIN_DESC
 }

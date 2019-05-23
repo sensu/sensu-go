@@ -112,18 +112,6 @@ type CheckConfig implements Node, Namespaced, Silenceable, HasMetadata {
   toJSON: JSON!
 }
 
-"A connection to a sequence of records."
-type CheckConfigConnection {
-  nodes: [CheckConfig!]!
-  pageInfo: OffsetPageInfo!
-}
-
-"An edge in a connection."
-type CheckConfigEdge {
-  node: CheckConfig
-  cursor: String!
-}
-
 """
 A Check is a check specification and optionally the results of the check's
 execution.
@@ -315,4 +303,16 @@ type ProxyRequests {
   calculation.
   """
   splayCoverage: Int!
+}
+
+"A connection to a sequence of records."
+type CheckConfigConnection {
+  nodes: [CheckConfig!]!
+  pageInfo: OffsetPageInfo!
+}
+
+"Describes ways in which a list of checks can be ordered."
+enum CheckListOrder {
+  NAME
+  NAME_DESC
 }

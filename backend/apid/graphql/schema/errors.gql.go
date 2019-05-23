@@ -223,7 +223,10 @@ func (_ StandardErrorAliases) Message(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
-// StandardErrorType self descriptive
+/*
+StandardErrorType StandardError is the standard implementation of an error that includes a
+message.
+*/
 var StandardErrorType = graphql.NewType("StandardError", graphql.ObjectKind)
 
 // RegisterStandardError registers StandardError object type with given service.
@@ -255,7 +258,7 @@ func _ObjTypeStandardErrorMessageHandler(impl interface{}) graphql1.FieldResolve
 
 func _ObjectTypeStandardErrorConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
-		Description: "self descriptive",
+		Description: "StandardError is the standard implementation of an error that includes a\nmessage.",
 		Fields: graphql1.Fields{
 			"code": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},

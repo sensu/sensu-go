@@ -5,12 +5,12 @@ import (
 	"sort"
 	"strings"
 
+	v2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/apid/graphql/filter"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
-	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/types/dynamic"
 	string_utils "github.com/sensu/sensu-go/util/strings"
 )
 
@@ -66,40 +66,33 @@ func (r *namespaceImpl) Checks(p schema.NamespaceChecksFieldResolverParams) (int
 	nsp := p.Source.(*types.Namespace)
 
 	// finds all records
-	filter := p.Args.Filter
 	results, err := loadCheckConfigs(p.Context, nsp.Name)
 	if err != nil {
 		return res, err
 	}
 
-	records := filterChecks(results, func(obj *types.CheckConfig) bool {
-		if filter == "" {
-			return true
-		}
-		sobj := dynamic.Synthesize(obj)
-		matched, err := js.Evaluate(filter, sobj, nil)
-		if err != nil {
-			logger.WithError(err).Debug("unable to filter record")
-		}
-		if matched {
-			return true
-		}
-		return false
-	})
+	// filter
+	matches, err := filter.Compile(p.Args.Filters, CheckFilters(), v2.CheckConfigFields)
 	if err != nil {
 		return res, err
+	}
+	filteredResults := make([]*v2.CheckConfig, 0, len(results))
+	for i := range results {
+		if matches(&results[i]) {
+			filteredResults = append(filteredResults, &results[i])
+		}
 	}
 
 	// sort records
 	sort.Sort(types.SortCheckConfigsByName(
-		records,
+		filteredResults,
 		p.Args.OrderBy == schema.CheckListOrders.NAME,
 	))
 
 	// paginate
-	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(records))
-	res.Nodes = records[l:h]
-	res.PageInfo.totalCount = len(records)
+	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(filteredResults))
+	res.Nodes = filteredResults[l:h]
+	res.PageInfo.totalCount = len(filteredResults)
 	return res, nil
 }
 
@@ -109,39 +102,33 @@ func (r *namespaceImpl) Handlers(p schema.NamespaceHandlersFieldResolverParams) 
 	nsp := p.Source.(*types.Namespace)
 
 	// finds all records
-	filter := p.Args.Filter
 	results, err := loadHandlers(p.Context, nsp.Name)
 	if err != nil {
 		return res, err
 	}
 
-	records := filterHandlers(results, func(obj *types.Handler) bool {
-		if filter == "" {
-			return true
-		}
-		sobj := dynamic.Synthesize(obj)
-		matched, err := js.Evaluate(filter, sobj, nil)
-		if err != nil {
-			logger.WithError(err).Debug("unable to filter record")
-		}
-		if matched {
-			return true
-		}
-		return false
-	})
+	// filter
+	matches, err := filter.Compile(p.Args.Filters, HandlerFilters(), v2.HandlerFields)
 	if err != nil {
 		return res, err
 	}
+	filteredResults := make([]*v2.Handler, 0, len(results))
+	for i := range results {
+		if matches(&results[i]) {
+			filteredResults = append(filteredResults, &results[i])
+		}
+	}
 
+	// sort
 	sort.Sort(types.SortHandlersByName(
-		records,
+		filteredResults,
 		p.Args.OrderBy == schema.HandlerListOrders.NAME,
 	))
 
 	// paginate
-	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(records))
-	res.Nodes = records[l:h]
-	res.PageInfo.totalCount = len(records)
+	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(filteredResults))
+	res.Nodes = filteredResults[l:h]
+	res.PageInfo.totalCount = len(filteredResults)
 	return res, nil
 }
 
@@ -153,42 +140,37 @@ func (r *namespaceImpl) Silences(p schema.NamespaceSilencesFieldResolverParams) 
 	// fetch
 	results, err := loadSilenceds(p.Context, nsp.Name)
 	if err != nil {
-		return nil, err
+		return res, err
 	}
 
-	// filter relevant
-	filter := p.Args.Filter
-	records := filterSilenceds(results, func(obj *types.Silenced) bool {
-		if filter == "" {
-			return true
+	// filter
+	matches, err := filter.Compile(p.Args.Filters, SilenceFilters(), v2.SilencedFields)
+	if err != nil {
+		return res, err
+	}
+	filteredResults := make([]*v2.Silenced, 0, len(results))
+	for i := range results {
+		if matches(&results[i]) {
+			filteredResults = append(filteredResults, &results[i])
 		}
-		sobj := dynamic.Synthesize(obj)
-		matched, err := js.Evaluate(filter, sobj, nil)
-		if err != nil {
-			logger.WithError(err).Debug("unable to filter record")
-		}
-		if matched {
-			return true
-		}
-		return false
-	})
+	}
 
 	// sort records
 	switch p.Args.OrderBy {
 	case schema.SilencesListOrders.BEGIN_DESC:
-		sort.Sort(sort.Reverse(types.SortSilencedByBegin(records)))
+		sort.Sort(sort.Reverse(types.SortSilencedByBegin(filteredResults)))
 	case schema.SilencesListOrders.BEGIN:
-		sort.Sort(types.SortSilencedByBegin(records))
+		sort.Sort(types.SortSilencedByBegin(filteredResults))
 	case schema.SilencesListOrders.ID_DESC:
-		sort.Sort(sort.Reverse(types.SortSilencedByName(records)))
+		sort.Sort(sort.Reverse(types.SortSilencedByName(filteredResults)))
 	case schema.SilencesListOrders.ID:
 	default:
-		sort.Sort(types.SortSilencedByName(records))
+		sort.Sort(types.SortSilencedByName(filteredResults))
 	}
 
-	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(records))
-	res.Nodes = records[l:h]
-	res.PageInfo.totalCount = len(records)
+	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(filteredResults))
+	res.Nodes = filteredResults[l:h]
+	res.PageInfo.totalCount = len(filteredResults)
 	return res, nil
 }
 
@@ -200,41 +182,36 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 	// fetch
 	results, err := loadEntities(p.Context, nsp.Name)
 	if err != nil {
-		return nil, err
+		return res, err
 	}
 
-	// filter relevant
-	filter := p.Args.Filter
-	records := filterEntities(results, func(obj *types.Entity) bool {
-		if filter == "" {
-			return true
+	// filter
+	matches, err := filter.Compile(p.Args.Filters, EntityFilters(), v2.EntityFields)
+	if err != nil {
+		return res, err
+	}
+	filteredResults := make([]*v2.Entity, 0, len(results))
+	for i := range results {
+		if matches(&results[i]) {
+			filteredResults = append(filteredResults, &results[i])
 		}
-		sobj := dynamic.Synthesize(obj.GetRedactedEntity())
-		matched, err := js.Evaluate(filter, sobj, nil)
-		if err != nil {
-			logger.WithError(err).Debug("unable to filter record")
-		}
-		if matched {
-			return true
-		}
-		return false
-	})
+	}
 
 	// sort records
 	switch p.Args.OrderBy {
 	case schema.EntityListOrders.LASTSEEN:
-		sort.Sort(types.SortEntitiesByLastSeen(records))
+		sort.Sort(types.SortEntitiesByLastSeen(filteredResults))
 	default:
 		sort.Sort(types.SortEntitiesByID(
-			records,
+			filteredResults,
 			p.Args.OrderBy == schema.EntityListOrders.ID,
 		))
 	}
 
 	// paginate
-	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(records))
-	res.Nodes = records[l:h]
-	res.PageInfo.totalCount = len(records)
+	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(filteredResults))
+	res.Nodes = filteredResults[l:h]
+	res.PageInfo.totalCount = len(filteredResults)
 	return res, nil
 }
 
@@ -249,64 +226,26 @@ func (r *namespaceImpl) Events(p schema.NamespaceEventsFieldResolverParams) (int
 		return res, err
 	}
 
-	// fetch relevant
-	filter := p.Args.Filter
-	records := filterEvents(results, func(obj *types.Event) bool {
-		if filter == "" {
-			return true
+	// filter
+	matches, err := filter.Compile(p.Args.Filters, EventFilters(), v2.EventFields)
+	if err != nil {
+		return res, err
+	}
+	filteredResults := make([]*v2.Event, 0, len(results))
+	for i := range results {
+		if matches(&results[i]) {
+			filteredResults = append(filteredResults, &results[i])
 		}
-		sobj := dynamic.Synthesize(obj)
-		matched, err := js.Evaluate(filter, sobj, nil)
-		if err != nil {
-			logger.WithError(err).Debug("unable to filter record")
-		}
-		if matched {
-			return true
-		}
-		return false
-	})
+	}
 
 	// sort records
-	sortEvents(records, p.Args.OrderBy)
+	sortEvents(filteredResults, p.Args.OrderBy)
 
 	// pagination
-	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(records))
-	res.Nodes = records[l:h]
-	res.PageInfo.totalCount = len(records)
+	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(filteredResults))
+	res.Nodes = filteredResults[l:h]
+	res.PageInfo.totalCount = len(filteredResults)
 	return res, nil
-}
-
-// CheckHistory implements response to request for 'checkHistory' field.
-func (r *namespaceImpl) CheckHistory(p schema.NamespaceCheckHistoryFieldResolverParams) (interface{}, error) {
-	nsp := p.Source.(*types.Namespace)
-	ctx := contextWithNamespace(p.Context, nsp.Name)
-
-	// Fetch all events
-	records, err := loadEvents(ctx, nsp.Name)
-	if err != nil {
-		return []types.CheckHistory{}, err
-	}
-
-	// Accumulate history
-	history := []types.CheckHistory{}
-	for _, record := range records {
-		if record.Check == nil {
-			continue
-		}
-		latest := types.CheckHistory{
-			Executed: record.Check.Executed,
-			Status:   record.Check.Status,
-		}
-		history = append(history, latest)
-		history = append(history, record.Check.History...)
-	}
-
-	// Sort
-	sort.Sort(types.ByExecuted(history))
-
-	// Limit
-	limit := clampInt(p.Args.Limit, 0, len(history))
-	return history[0:limit], nil
 }
 
 // Subscriptions implements response to request for 'subscriptions' field.
