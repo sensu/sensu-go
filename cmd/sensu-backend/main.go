@@ -25,9 +25,4 @@ func main() {
 	if err := rootCmd.Execute(); err != nil {
 		logger.WithError(err).Fatal("error executing sensu-backend")
 	}
-
-	// if err := rootCmd.Execute()
-	// if err := cmd.Execute(backend.Initialize); err != nil {
-	// 	logger.WithError(err).Fatal("error executing sensu-backend")
-	// }
 }
