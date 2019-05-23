@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
@@ -42,6 +43,11 @@ func (*hookCfgImpl) ID(p graphql.ResolveParams) (string, error) {
 func (*hookCfgImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 	_, ok := s.(*types.HookConfig)
 	return ok
+}
+
+// ToJSON implements response to request for 'toJSON' field.
+func (*hookCfgImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
+	return types.WrapResource(p.Source.(v2.Resource)), nil
 }
 
 //

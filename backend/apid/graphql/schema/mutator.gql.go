@@ -50,6 +50,12 @@ type MutatorEnvVarsFieldResolver interface {
 	EnvVars(p graphql.ResolveParams) ([]string, error)
 }
 
+// MutatorToJSONFieldResolver implement to resolve requests for the Mutator's toJSON field.
+type MutatorToJSONFieldResolver interface {
+	// ToJSON implements response to request for toJSON field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
+}
+
 //
 // MutatorFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Mutator' type.
@@ -119,6 +125,7 @@ type MutatorFieldResolvers interface {
 	MutatorCommandFieldResolver
 	MutatorTimeoutFieldResolver
 	MutatorEnvVarsFieldResolver
+	MutatorToJSONFieldResolver
 }
 
 // MutatorAliases implements all methods on MutatorFieldResolvers interface by using reflection to
@@ -252,6 +259,12 @@ func (_ MutatorAliases) EnvVars(p graphql.ResolveParams) ([]string, error) {
 	return ret, err
 }
 
+// ToJSON implements response to request for 'toJSON' field.
+func (_ MutatorAliases) ToJSON(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // MutatorType A Mutator is a mutator specification.
 var MutatorType = graphql.NewType("Mutator", graphql.ObjectKind)
 
@@ -308,6 +321,13 @@ func _ObjTypeMutatorEnvVarsHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeMutatorToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(MutatorToJSONFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ToJSON(frp)
+	}
+}
+
 func _ObjectTypeMutatorConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "A Mutator is a mutator specification.",
@@ -361,11 +381,18 @@ func _ObjectTypeMutatorConfigFn() graphql1.ObjectConfig {
 				Name:              "timeout",
 				Type:              graphql1.Int,
 			},
+			"toJSON": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "toJSON returns a REST API compatible representation of the resource. Handy for\nsharing snippets that can then be imported with `sensuctl import`.",
+				Name:              "toJSON",
+				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
+			},
 		},
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node"),
 			graphql.Interface("Namespaced"),
-			graphql.Interface("HasMetadata")},
+			graphql.Interface("Resource")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -389,5 +416,6 @@ var _ObjectTypeMutatorDesc = graphql.ObjectDesc{
 		"name":      _ObjTypeMutatorNameHandler,
 		"namespace": _ObjTypeMutatorNamespaceHandler,
 		"timeout":   _ObjTypeMutatorTimeoutHandler,
+		"toJSON":    _ObjTypeMutatorToJSONHandler,
 	},
 }

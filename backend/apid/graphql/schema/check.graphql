@@ -1,7 +1,7 @@
 """
 CheckConfig is the specification of a check.
 """
-type CheckConfig implements Node, Namespaced, Silenceable, HasMetadata {
+type CheckConfig implements Node, Namespaced, Silenceable, Resource {
   "The globally unique identifier of the check."
   id: ID!
 
@@ -116,7 +116,7 @@ type CheckConfig implements Node, Namespaced, Silenceable, HasMetadata {
 A Check is a check specification and optionally the results of the check's
 execution.
 """
-type Check implements Silenceable, HasMetadata {
+type Check implements Silenceable, Resource {
   "id of the check's configuration"
   nodeId: ID!
 
@@ -269,6 +269,12 @@ type Check implements Silenceable, HasMetadata {
   TTL represents the length of time in seconds for which a check result is valid.
   """
   ttl: Int!
+
+  """
+  toJSON returns a REST API compatible representation of the resource. Handy for
+  sharing snippets that can then be imported with `sensuctl import`.
+  """
+  toJSON: JSON!
 }
 
 """

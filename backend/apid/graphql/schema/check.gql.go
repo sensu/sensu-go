@@ -1019,7 +1019,7 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 			graphql.Interface("Node"),
 			graphql.Interface("Namespaced"),
 			graphql.Interface("Silenceable"),
-			graphql.Interface("HasMetadata")},
+			graphql.Interface("Resource")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -1312,6 +1312,12 @@ type CheckTtlFieldResolver interface {
 	Ttl(p graphql.ResolveParams) (int, error)
 }
 
+// CheckToJSONFieldResolver implement to resolve requests for the Check's toJSON field.
+type CheckToJSONFieldResolver interface {
+	// ToJSON implements response to request for toJSON field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
+}
+
 //
 // CheckFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Check' type.
@@ -1413,6 +1419,7 @@ type CheckFieldResolvers interface {
 	CheckOccurrencesWatermarkFieldResolver
 	CheckTimeoutFieldResolver
 	CheckTtlFieldResolver
+	CheckToJSONFieldResolver
 }
 
 // CheckAliases implements all methods on CheckFieldResolvers interface by using reflection to
@@ -1885,6 +1892,12 @@ func (_ CheckAliases) Ttl(p graphql.ResolveParams) (int, error) {
 	return ret, err
 }
 
+// ToJSON implements response to request for 'toJSON' field.
+func (_ CheckAliases) ToJSON(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 /*
 CheckType A Check is a check specification and optionally the results of the check's
 execution.
@@ -2174,6 +2187,13 @@ func _ObjTypeCheckTtlHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeCheckToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(CheckToJSONFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ToJSON(frp)
+	}
+}
+
 func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "A Check is a check specification and optionally the results of the check's\nexecution.",
@@ -2441,6 +2461,13 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Name:              "timeout",
 				Type:              graphql1.NewNonNull(graphql1.Int),
 			},
+			"toJSON": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "toJSON returns a REST API compatible representation of the resource. Handy for\nsharing snippets that can then be imported with `sensuctl import`.",
+				Name:              "toJSON",
+				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
+			},
 			"totalStateChange": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -2458,7 +2485,7 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 		},
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Silenceable"),
-			graphql.Interface("HasMetadata")},
+			graphql.Interface("Resource")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -2512,6 +2539,7 @@ var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 		"subdue":               _ObjTypeCheckSubdueHandler,
 		"subscriptions":        _ObjTypeCheckSubscriptionsHandler,
 		"timeout":              _ObjTypeCheckTimeoutHandler,
+		"toJSON":               _ObjTypeCheckToJSONHandler,
 		"totalStateChange":     _ObjTypeCheckTotalStateChangeHandler,
 		"ttl":                  _ObjTypeCheckTtlHandler,
 	},

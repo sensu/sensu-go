@@ -93,6 +93,12 @@ type EventSilencedFieldResolver interface {
 	Silenced(p graphql.ResolveParams) ([]string, error)
 }
 
+// EventToJSONFieldResolver implement to resolve requests for the Event's toJSON field.
+type EventToJSONFieldResolver interface {
+	// ToJSON implements response to request for toJSON field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
+}
+
 //
 // EventFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Event' type.
@@ -169,6 +175,7 @@ type EventFieldResolvers interface {
 	EventIsSilencedFieldResolver
 	EventSilencesFieldResolver
 	EventSilencedFieldResolver
+	EventToJSONFieldResolver
 }
 
 // EventAliases implements all methods on EventFieldResolvers interface by using reflection to
@@ -365,6 +372,12 @@ func (_ EventAliases) Silenced(p graphql.ResolveParams) ([]string, error) {
 	return ret, err
 }
 
+// ToJSON implements response to request for 'toJSON' field.
+func (_ EventAliases) ToJSON(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // EventType An Event is the encapsulating type sent across the Sensu websocket transport.
 var EventType = graphql.NewType("Event", graphql.ObjectKind)
 
@@ -470,6 +483,13 @@ func _ObjTypeEventSilencedHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeEventToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EventToJSONFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ToJSON(frp)
+	}
+}
+
 func _ObjectTypeEventConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "An Event is the encapsulating type sent across the Sensu websocket transport.",
@@ -565,6 +585,13 @@ func _ObjectTypeEventConfigFn() graphql1.ObjectConfig {
 				Name:              "timestamp",
 				Type:              graphql1.NewNonNull(graphql1.DateTime),
 			},
+			"toJSON": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "toJSON returns a REST API compatible representation of the resource. Handy for\nsharing snippets that can then be imported with `sensuctl import`.",
+				Name:              "toJSON",
+				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
+			},
 			"wasSilenced": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -577,7 +604,7 @@ func _ObjectTypeEventConfigFn() graphql1.ObjectConfig {
 			graphql.Interface("Node"),
 			graphql.Interface("Namespaced"),
 			graphql.Interface("Silenceable"),
-			graphql.Interface("HasMetadata")},
+			graphql.Interface("Resource")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -607,6 +634,7 @@ var _ObjectTypeEventDesc = graphql.ObjectDesc{
 		"silenced":      _ObjTypeEventSilencedHandler,
 		"silences":      _ObjTypeEventSilencesHandler,
 		"timestamp":     _ObjTypeEventTimestampHandler,
+		"toJSON":        _ObjTypeEventToJSONHandler,
 		"wasSilenced":   _ObjTypeEventWasSilencedHandler,
 	},
 }

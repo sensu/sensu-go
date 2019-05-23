@@ -163,6 +163,11 @@ func (*entityImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 	return ok
 }
 
+// ToJSON implements response to request for 'toJSON' field.
+func (*entityImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
+	return types.WrapResource(p.Source.(v2.Resource)), nil
+}
+
 //
 // Implement SystemFieldResolvers
 //

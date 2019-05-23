@@ -492,35 +492,3 @@ var _ObjectTypeObjectMetaDesc = graphql.ObjectDesc{
 		"namespace":   _ObjTypeObjectMetaNamespaceHandler,
 	},
 }
-
-// HasMetadataType HasMetadata describes objects that have metadata.
-var HasMetadataType = graphql.NewType("HasMetadata", graphql.InterfaceKind)
-
-// RegisterHasMetadata registers HasMetadata object type with given service.
-func RegisterHasMetadata(svc *graphql.Service, impl graphql.InterfaceTypeResolver) {
-	svc.RegisterInterface(_InterfaceTypeHasMetadataDesc, impl)
-}
-func _InterfaceTypeHasMetadataConfigFn() graphql1.InterfaceConfig {
-	return graphql1.InterfaceConfig{
-		Description: "HasMetadata describes objects that have metadata.",
-		Fields: graphql1.Fields{"metadata": &graphql1.Field{
-			Args:              graphql1.FieldConfigArgument{},
-			DeprecationReason: "",
-			Description:       "self descriptive",
-			Name:              "metadata",
-			Type:              graphql1.NewNonNull(graphql.OutputType("ObjectMeta")),
-		}},
-		Name: "HasMetadata",
-		ResolveType: func(_ graphql1.ResolveTypeParams) *graphql1.Object {
-			// NOTE:
-			// Panic by default. Intent is that when Service is invoked, values of
-			// these fields are updated with instantiated resolvers. If these
-			// defaults are called it is most certainly programmer err.
-			// If you're see this comment then: 'Whoops! Sorry, my bad.'
-			panic("Unimplemented; see InterfaceTypeResolver.")
-		},
-	}
-}
-
-// describe HasMetadata's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _InterfaceTypeHasMetadataDesc = graphql.InterfaceDesc{Config: _InterfaceTypeHasMetadataConfigFn}

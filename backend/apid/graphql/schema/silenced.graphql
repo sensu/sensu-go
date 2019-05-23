@@ -1,7 +1,7 @@
 """
 Silenced is the representation of a silence entry.
 """
-type Silenced implements Node, Namespaced, HasMetadata {
+type Silenced implements Node, Namespaced, Resource {
   "The globally unique identifier for the record."
   id: ID!
 
@@ -40,6 +40,12 @@ type Silenced implements Node, Namespaced, HasMetadata {
 
   "Begin is a timestamp at which the silenced entry takes effect."
   begin: DateTime
+
+  """
+  toJSON returns a REST API compatible representation of the resource. Handy for
+  sharing snippets that can then be imported with `sensuctl import`.
+  """
+  toJSON: JSON!
 }
 
 "Silenceable describes resources that can be silenced"

@@ -50,6 +50,12 @@ type AssetFiltersFieldResolver interface {
 	Filters(p graphql.ResolveParams) ([]string, error)
 }
 
+// AssetToJSONFieldResolver implement to resolve requests for the Asset's toJSON field.
+type AssetToJSONFieldResolver interface {
+	// ToJSON implements response to request for toJSON field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
+}
+
 //
 // AssetFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Asset' type.
@@ -119,6 +125,7 @@ type AssetFieldResolvers interface {
 	AssetUrlFieldResolver
 	AssetSha512FieldResolver
 	AssetFiltersFieldResolver
+	AssetToJSONFieldResolver
 }
 
 // AssetAliases implements all methods on AssetFieldResolvers interface by using reflection to
@@ -252,6 +259,12 @@ func (_ AssetAliases) Filters(p graphql.ResolveParams) ([]string, error) {
 	return ret, err
 }
 
+// ToJSON implements response to request for 'toJSON' field.
+func (_ AssetAliases) ToJSON(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // AssetType Asset defines an archive, an agent will install as a dependency for a check.
 var AssetType = graphql.NewType("Asset", graphql.ObjectKind)
 
@@ -308,6 +321,13 @@ func _ObjTypeAssetFiltersHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeAssetToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(AssetToJSONFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ToJSON(frp)
+	}
+}
+
 func _ObjectTypeAssetConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Asset defines an archive, an agent will install as a dependency for a check.",
@@ -354,6 +374,13 @@ func _ObjectTypeAssetConfigFn() graphql1.ObjectConfig {
 				Name:              "sha512",
 				Type:              graphql1.String,
 			},
+			"toJSON": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "toJSON returns a REST API compatible representation of the resource. Handy for\nsharing snippets that can then be imported with `sensuctl import`.",
+				Name:              "toJSON",
+				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
+			},
 			"url": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -365,7 +392,7 @@ func _ObjectTypeAssetConfigFn() graphql1.ObjectConfig {
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node"),
 			graphql.Interface("Namespaced"),
-			graphql.Interface("HasMetadata")},
+			graphql.Interface("Resource")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -388,6 +415,7 @@ var _ObjectTypeAssetDesc = graphql.ObjectDesc{
 		"name":      _ObjTypeAssetNameHandler,
 		"namespace": _ObjTypeAssetNamespaceHandler,
 		"sha512":    _ObjTypeAssetSha512Handler,
+		"toJSON":    _ObjTypeAssetToJSONHandler,
 		"url":       _ObjTypeAssetUrlHandler,
 	},
 }

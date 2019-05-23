@@ -1,7 +1,7 @@
 """
 Asset defines an archive, an agent will install as a dependency for a check.
 """
-type Asset implements Node, Namespaced, HasMetadata {
+type Asset implements Node, Namespaced, Resource {
   "The globally unique identifier of the record"
   id: ID!
 
@@ -26,4 +26,10 @@ type Asset implements Node, Namespaced, HasMetadata {
   queries are joined by the "AND" operator.
   """
   filters: [String]
+
+  """
+  toJSON returns a REST API compatible representation of the resource. Handy for
+  sharing snippets that can then be imported with `sensuctl import`.
+  """
+  toJSON: JSON!
 }

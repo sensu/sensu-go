@@ -1,7 +1,7 @@
 """
 A Handler is a handler specification.
 """
-type Handler implements Node, Namespaced, HasMetadata {
+type Handler implements Node, Namespaced, Resource {
   "The globally unique identifier of the record."
   id: ID!
 
@@ -37,6 +37,12 @@ type Handler implements Node, Namespaced, HasMetadata {
 
   "EnvVars is a list of environment variables to use with command execution"
   envVars: [String!]!
+
+  """
+  toJSON returns a REST API compatible representation of the resource. Handy for
+  sharing snippets that can then be imported with `sensuctl import`.
+  """
+  toJSON: JSON!
 }
 
 """

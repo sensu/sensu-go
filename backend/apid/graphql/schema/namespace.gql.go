@@ -160,7 +160,8 @@ type NamespaceHandlersFieldResolverArgs struct {
 	Eg.
 
 	type:pipe
-	type:socket
+	type:tcp
+	type:udp
 	type:set
 	*/
 }
@@ -681,7 +682,7 @@ func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 					},
 					"filters": &graphql1.ArgumentConfig{
 						DefaultValue: []interface{}{},
-						Description:  "Filters reduces the set using given arbitrary expression[s]; expressions\ntake on the form KEY: VALUE. The accepted key(s) are: type.\n\nEg.\n\ntype:pipe\ntype:socket\ntype:set",
+						Description:  "Filters reduces the set using given arbitrary expression[s]; expressions\ntake on the form KEY: VALUE. The accepted key(s) are: type.\n\nEg.\n\ntype:pipe\ntype:tcp\ntype:udp\ntype:set",
 						Type:         graphql1.NewList(graphql1.NewNonNull(graphql1.String)),
 					},
 					"limit": &graphql1.ArgumentConfig{

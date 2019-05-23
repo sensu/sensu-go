@@ -1,7 +1,7 @@
 """
 An Event is the encapsulating type sent across the Sensu websocket transport.
 """
-type Event implements Node, Namespaced, Silenceable, HasMetadata {
+type Event implements Node, Namespaced, Silenceable, Resource {
   "The globally unique identifier of the record."
   id: ID!
 
@@ -54,6 +54,12 @@ type Event implements Node, Namespaced, Silenceable, HasMetadata {
 
   "Silenced is a list of silenced entry ids (subscription and check name)"
   silenced: [String]
+
+  """
+  toJSON returns a REST API compatible representation of the resource. Handy for
+  sharing snippets that can then be imported with `sensuctl import`.
+  """
+  toJSON: JSON!
 }
 
 "A connection to a sequence of records."
