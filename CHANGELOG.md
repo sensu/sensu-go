@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Fixed the behaviors for check `Occurrences` and `OccurrencesWatermark`.
+- Fixed a panic that could occur when seeding initial data.
 - [Web] Compress dashboard assets
 
 ## [5.8.0] - 2019-05-22
