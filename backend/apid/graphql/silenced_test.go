@@ -3,6 +3,7 @@ package graphql
 import (
 	"testing"
 
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	client "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
@@ -47,4 +48,13 @@ func TestSilencedTypeBeginField(t *testing.T) {
 	res, err := impl.Begin(graphql.ResolveParams{Source: silenced})
 	require.NoError(t, err)
 	assert.Nil(t, res)
+}
+
+func TestSilencedTypeToJSONField(t *testing.T) {
+	src := v2.FixtureSilenced("check:subscription")
+	imp := &silencedImpl{}
+
+	res, err := imp.ToJSON(graphql.ResolveParams{Source: src})
+	require.NoError(t, err)
+	assert.NotEmpty(t, res)
 }

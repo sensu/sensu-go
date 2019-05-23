@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	client "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
@@ -153,4 +154,13 @@ func TestEntityTypeIsSilencedField(t *testing.T) {
 	res, err := impl.IsSilenced(params)
 	require.NoError(t, err)
 	assert.True(t, res)
+}
+
+func TestEntityTypeToJSONField(t *testing.T) {
+	src := v2.FixtureEntity("name")
+	imp := &entityImpl{}
+
+	res, err := imp.ToJSON(graphql.ResolveParams{Source: src})
+	require.NoError(t, err)
+	assert.NotEmpty(t, res)
 }

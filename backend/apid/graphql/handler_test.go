@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	client "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
@@ -46,6 +47,15 @@ func TestHandlerTypeMutatorField(t *testing.T) {
 	// Success
 	client.On("FetchMutator", mutator.Name).Return(mutator, nil).Once()
 	res, err := impl.Mutator(graphql.ResolveParams{Source: handler})
+	require.NoError(t, err)
+	assert.NotEmpty(t, res)
+}
+
+func TestHandlerTypeToJSONField(t *testing.T) {
+	src := v2.FixtureHandler("name")
+	imp := &handlerImpl{}
+
+	res, err := imp.ToJSON(graphql.ResolveParams{Source: src})
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 }
