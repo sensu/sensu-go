@@ -71,7 +71,6 @@ build_binary () {
     unset GOOS
     unset GOARCH
 
-    local version_pkg="github.com/sensu/sensu-go/version"
     local version=$($VERSION_CMD -v)
     local prerelease=$($VERSION_CMD -p)
 
@@ -80,13 +79,12 @@ build_binary () {
     local cmd=$3
     local cmd_name=$4
     local ext="${@:5}"
-    local date=$(date --utc +%FT%T.%3NZ)
-    local buildsha=$(git rev-parse HEAD)
+
     local outfile="target/${goos}-${goarch}/${cmd_name}"
 
     local main_pkg="cmd/${cmd_name}"
 
-    CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch go build -ldflags '-X "'$version_pkg'.Version='$version'" -X "'$version_pkg'.BuildDate='$date'" -X "'$version_pkg'.BuildSHA='$buildsha'"' $ext -o $outfile ${REPO_PATH}/${main_pkg}
+    CGO_ENABLED=0 GOOS=$goos GOARCH=$goarch go build $ext -o $outfile ${REPO_PATH}/${main_pkg}
 
     echo $outfile
 }
