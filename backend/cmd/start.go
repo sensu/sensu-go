@@ -120,11 +120,12 @@ Use "{{.CommandPath}} [command] --help" for more information about a command.{{e
 `
 )
 
-func init() {
-	rootCmd.AddCommand(newStartCommand())
-}
+// initializeFunc represents the signature of an initialization function, used
+// to initialize the backend
+type initializeFunc func(*backend.Config) (*backend.Backend, error)
 
-func newStartCommand() *cobra.Command {
+// StartCommand ...
+func StartCommand(initialize initializeFunc) *cobra.Command {
 	var setupErr error
 
 	cmd := &cobra.Command{

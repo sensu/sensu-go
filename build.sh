@@ -80,7 +80,7 @@ build_binary () {
     local cmd=$3
     local cmd_name=$4
     local ext="${@:5}"
-    local date=$(date --utc +%FT%T.%3NZ)
+    local date=$(date -u +%FT%T.%3NZ)
     local buildsha=$(git rev-parse HEAD)
     local outfile="target/${goos}-${goarch}/${cmd_name}"
 

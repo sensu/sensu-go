@@ -7,11 +7,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func init() {
-	rootCmd.AddCommand(newVersionCommand())
-}
-
-func newVersionCommand() *cobra.Command {
+func VersionCommand() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "version",
 		Short: "Show the sensu-backend version information",
