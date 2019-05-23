@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+- [Web] Vendored `sensu/web` @ SHA `275386a`
+- [Web] Updated embedded web assets from `9d91d7f` ... `275386a`
+
 ### Fixed
 - Fixed the behaviors for check `Occurrences` and `OccurrencesWatermark`.
 - Fixed a panic that could occur when seeding initial data.
