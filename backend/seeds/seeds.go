@@ -3,7 +3,7 @@ package seeds
 import (
 	"context"
 
-	"github.com/sensu/sensu-go/api/core/v2"
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
@@ -13,11 +13,14 @@ import (
 // SeedInitialData will seed a store with initial data. This method is
 // idempotent and can be safely run every time the backend starts.
 func SeedInitialData(store store.Store) (err error) {
-	initializer, _ := store.NewInitializer()
+	initializer, err := store.NewInitializer()
+	if err != nil {
+		return err
+	}
 	logger := logger.WithField("component", "backend.seeds")
 
 	// Lock initialization key to avoid competing installations
-	if err := initializer.Lock(); err != nil {
+	if err = initializer.Lock(); err != nil {
 		return err
 	}
 	defer func() {
