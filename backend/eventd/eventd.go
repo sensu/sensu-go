@@ -333,19 +333,25 @@ func updateOccurrences(event *corev2.Event) {
 	if !event.HasCheck() {
 		return
 	}
-	if len(event.Check.History) > 1 && (event.IsIncident() || isFlapping(event)) {
-		historyLen := len(event.Check.History)
-		if event.Check.History[historyLen-1].Status == event.Check.History[historyLen-2].Status {
-			event.Check.Occurrences++
-		} else {
-			event.Check.Occurrences = 1
-		}
+
+	historyLen := len(event.Check.History)
+	if historyLen > 1 && event.Check.History[historyLen-1].Status == event.Check.History[historyLen-2].Status {
+		// 1. Occurrences should always be incremented if the current Check status is the same as the previous status (this includes events with the Check status of OK)
+		event.Check.Occurrences++
 	} else {
+		// 2. Occurrences should always reset to 1 if the current Check status is different than the previous status
 		event.Check.Occurrences = 1
 	}
 
-	if event.Check.Occurrences > event.Check.OccurrencesWatermark {
-		event.Check.OccurrencesWatermark = event.Check.Occurrences
+	if historyLen > 1 && event.Check.History[historyLen-1].Status != 0 && event.Check.History[historyLen-2].Status == 0 {
+		// 3. OccurrencesWatermark only resets on the a first non OK Check status (it does not get reset going between warning, critical, unknown)
+		event.Check.OccurrencesWatermark = 1
+	} else if event.Check.Occurrences <= event.Check.OccurrencesWatermark {
+		// 4. OccurrencesWatermark should remain the same when occurrences is less than or equal to the watermark
+		return
+	} else {
+		// 5. OccurrencesWatermark should be incremented if conditions 3 and 4 have not been met.
+		event.Check.OccurrencesWatermark++
 	}
 }
 

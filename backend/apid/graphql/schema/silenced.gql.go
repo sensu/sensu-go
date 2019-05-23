@@ -561,6 +561,47 @@ var _ObjectTypeSilencedDesc = graphql.ObjectDesc{
 	},
 }
 
+// SilenceableType Silenceable describes resources that can be silenced
+var SilenceableType = graphql.NewType("Silenceable", graphql.InterfaceKind)
+
+// RegisterSilenceable registers Silenceable object type with given service.
+func RegisterSilenceable(svc *graphql.Service, impl graphql.InterfaceTypeResolver) {
+	svc.RegisterInterface(_InterfaceTypeSilenceableDesc, impl)
+}
+func _InterfaceTypeSilenceableConfigFn() graphql1.InterfaceConfig {
+	return graphql1.InterfaceConfig{
+		Description: "Silenceable describes resources that can be silenced",
+		Fields: graphql1.Fields{
+			"isSilenced": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "isSilenced",
+				Type:              graphql1.NewNonNull(graphql1.Boolean),
+			},
+			"silences": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "silences",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Silenced")))),
+			},
+		},
+		Name: "Silenceable",
+		ResolveType: func(_ graphql1.ResolveTypeParams) *graphql1.Object {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see InterfaceTypeResolver.")
+		},
+	}
+}
+
+// describe Silenceable's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _InterfaceTypeSilenceableDesc = graphql.InterfaceDesc{Config: _InterfaceTypeSilenceableConfigFn}
+
 // SilencedConnectionNodesFieldResolver implement to resolve requests for the SilencedConnection's nodes field.
 type SilencedConnectionNodesFieldResolver interface {
 	// Nodes implements response to request for nodes field.
@@ -760,43 +801,63 @@ var _ObjectTypeSilencedConnectionDesc = graphql.ObjectDesc{
 	},
 }
 
-// SilenceableType Silenceable describes resources that can be silenced
-var SilenceableType = graphql.NewType("Silenceable", graphql.InterfaceKind)
+// SilencesListOrder Describes ways in which a list of silences can be ordered.
+type SilencesListOrder string
 
-// RegisterSilenceable registers Silenceable object type with given service.
-func RegisterSilenceable(svc *graphql.Service, impl graphql.InterfaceTypeResolver) {
-	svc.RegisterInterface(_InterfaceTypeSilenceableDesc, impl)
+// SilencesListOrders holds enum values
+var SilencesListOrders = _EnumTypeSilencesListOrderValues{
+	BEGIN:      "BEGIN",
+	BEGIN_DESC: "BEGIN_DESC",
+	ID:         "ID",
+	ID_DESC:    "ID_DESC",
 }
-func _InterfaceTypeSilenceableConfigFn() graphql1.InterfaceConfig {
-	return graphql1.InterfaceConfig{
-		Description: "Silenceable describes resources that can be silenced",
-		Fields: graphql1.Fields{
-			"isSilenced": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
+
+// SilencesListOrderType Describes ways in which a list of silences can be ordered.
+var SilencesListOrderType = graphql.NewType("SilencesListOrder", graphql.EnumKind)
+
+// RegisterSilencesListOrder registers SilencesListOrder object type with given service.
+func RegisterSilencesListOrder(svc *graphql.Service) {
+	svc.RegisterEnum(_EnumTypeSilencesListOrderDesc)
+}
+func _EnumTypeSilencesListOrderConfigFn() graphql1.EnumConfig {
+	return graphql1.EnumConfig{
+		Description: "Describes ways in which a list of silences can be ordered.",
+		Name:        "SilencesListOrder",
+		Values: graphql1.EnumValueConfigMap{
+			"BEGIN": &graphql1.EnumValueConfig{
 				DeprecationReason: "",
 				Description:       "self descriptive",
-				Name:              "isSilenced",
-				Type:              graphql1.NewNonNull(graphql1.Boolean),
+				Value:             "BEGIN",
 			},
-			"silences": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
+			"BEGIN_DESC": &graphql1.EnumValueConfig{
 				DeprecationReason: "",
 				Description:       "self descriptive",
-				Name:              "silences",
-				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Silenced")))),
+				Value:             "BEGIN_DESC",
 			},
-		},
-		Name: "Silenceable",
-		ResolveType: func(_ graphql1.ResolveTypeParams) *graphql1.Object {
-			// NOTE:
-			// Panic by default. Intent is that when Service is invoked, values of
-			// these fields are updated with instantiated resolvers. If these
-			// defaults are called it is most certainly programmer err.
-			// If you're see this comment then: 'Whoops! Sorry, my bad.'
-			panic("Unimplemented; see InterfaceTypeResolver.")
+			"ID": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ID",
+			},
+			"ID_DESC": &graphql1.EnumValueConfig{
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Value:             "ID_DESC",
+			},
 		},
 	}
 }
 
-// describe Silenceable's configuration; kept private to avoid unintentional tampering of configuration at runtime.
-var _InterfaceTypeSilenceableDesc = graphql.InterfaceDesc{Config: _InterfaceTypeSilenceableConfigFn}
+// describe SilencesListOrder's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _EnumTypeSilencesListOrderDesc = graphql.EnumDesc{Config: _EnumTypeSilencesListOrderConfigFn}
+
+type _EnumTypeSilencesListOrderValues struct {
+	// ID - self descriptive
+	ID SilencesListOrder
+	// ID_DESC - self descriptive
+	ID_DESC SilencesListOrder
+	// BEGIN - self descriptive
+	BEGIN SilencesListOrder
+	// BEGIN_DESC - self descriptive
+	BEGIN_DESC SilencesListOrder
+}

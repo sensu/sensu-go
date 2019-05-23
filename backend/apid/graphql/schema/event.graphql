@@ -52,13 +52,20 @@ type Event implements Node, Namespaced, Silenceable, HasMetadata {
   "all current silences matching the check and entity's subscriptions."
   silences: [Silenced!]!
 
-  # TODO: Implement silences
-  # "Silenced is a list of silenced entry ids (subscription and check name)"
-  # silenced: [String]
+  "Silenced is a list of silenced entry ids (subscription and check name)"
+  silenced: [String]
 }
 
 "A connection to a sequence of records."
 type EventConnection {
   nodes: [Event!]!
   pageInfo: OffsetPageInfo!
+}
+
+"Describes ways in which a list of events can be ordered."
+enum EventsListOrder {
+  LASTOK
+  NEWEST
+  OLDEST
+  SEVERITY
 }
