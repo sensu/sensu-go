@@ -3,7 +3,7 @@ package seeds
 import (
 	"context"
 
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
@@ -84,7 +84,7 @@ func setupClusterRoleBindings(store store.Store) error {
 	// The cluster-admin ClusterRoleBinding grants permission found in the
 	// cluster-admin ClusterRole to any user belonging to the cluster-admins group
 	clusterAdmin := &types.ClusterRoleBinding{
-		ObjectMeta: v2.NewObjectMeta("cluster-admin", ""),
+		ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
 		RoleRef: types.RoleRef{
 			Type: "ClusterRole",
 			Name: "cluster-admin",
@@ -103,7 +103,7 @@ func setupClusterRoleBindings(store store.Store) error {
 	// The system:agent ClusterRoleBinding grants permission found in the
 	// system-agent ClusterRole to any agents belonging to the system:agents group
 	systemAgent := &types.ClusterRoleBinding{
-		ObjectMeta: v2.NewObjectMeta("system:agent", ""),
+		ObjectMeta: corev2.NewObjectMeta("system:agent", ""),
 		RoleRef: types.RoleRef{
 			Type: "ClusterRole",
 			Name: "system:agent",
@@ -122,7 +122,7 @@ func setupClusterRoleBindings(store store.Store) error {
 	// The system:user ClusterRoleBinding grants permission found in the
 	// system:user ClusterRole to any user belonging to the system:users group
 	systemUser := &types.ClusterRoleBinding{
-		ObjectMeta: v2.NewObjectMeta("system:user", ""),
+		ObjectMeta: corev2.NewObjectMeta("system:user", ""),
 		RoleRef: types.RoleRef{
 			Type: "ClusterRole",
 			Name: "system:user",
@@ -144,7 +144,7 @@ func setupClusterRoles(store store.Store) error {
 	// RoleBinding, it gives full control over every resource in the rolebinding's
 	// namespace, including the namespace itself
 	clusterAdmin := &types.ClusterRole{
-		ObjectMeta: v2.NewObjectMeta("cluster-admin", ""),
+		ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
 		Rules: []types.Rule{
 			types.Rule{
 				Verbs:     []string{types.VerbAll},
@@ -161,7 +161,7 @@ func setupClusterRoles(store store.Store) error {
 	// to create Roles and RoleBindings within the namespace but does not allow
 	// write access to the namespace itself
 	admin := &types.ClusterRole{
-		ObjectMeta: v2.NewObjectMeta("admin", ""),
+		ObjectMeta: corev2.NewObjectMeta("admin", ""),
 		Rules: []types.Rule{
 			types.Rule{
 				Verbs: []string{types.VerbAll},
@@ -186,7 +186,7 @@ func setupClusterRoles(store store.Store) error {
 	// RoleBinding. It allows read/write access to most objects in a namespace. It
 	// does not allow viewing or modifying roles or rolebindings.
 	edit := &types.ClusterRole{
-		ObjectMeta: v2.NewObjectMeta("edit", ""),
+		ObjectMeta: corev2.NewObjectMeta("edit", ""),
 		Rules: []types.Rule{
 			types.Rule{
 				Verbs:     []string{types.VerbAll},
@@ -208,7 +208,7 @@ func setupClusterRoles(store store.Store) error {
 	// RoleBinding. It allows read-only access to see most objects in a namespace.
 	// It does not allow viewing roles or rolebindings.
 	view := &types.ClusterRole{
-		ObjectMeta: v2.NewObjectMeta("view", ""),
+		ObjectMeta: corev2.NewObjectMeta("view", ""),
 		Rules: []types.Rule{
 			types.Rule{
 				Verbs: []string{"get", "list"},
@@ -226,7 +226,7 @@ func setupClusterRoles(store store.Store) error {
 	// modified by the users. Modification to his ClusterRole can result in
 	// non-functional Sensu agents.
 	systemAgent := &types.ClusterRole{
-		ObjectMeta: v2.NewObjectMeta("system:agent", ""),
+		ObjectMeta: corev2.NewObjectMeta("system:agent", ""),
 		Rules: []types.Rule{
 			types.Rule{
 				Verbs:     []string{types.VerbAll},
@@ -243,7 +243,7 @@ func setupClusterRoles(store store.Store) error {
 	// non-functional Sensu users. It allows users to view themselves and change
 	// their own password
 	systemUser := &types.ClusterRole{
-		ObjectMeta: v2.NewObjectMeta("system:user", ""),
+		ObjectMeta: corev2.NewObjectMeta("system:user", ""),
 		Rules: []types.Rule{
 			types.Rule{
 				Verbs:     []string{"get", "update"},
