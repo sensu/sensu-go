@@ -159,7 +159,7 @@ func httpRouter(d *Dashboardd) *mux.Router {
 	r.PathPrefix("/index.json").Handler(gziphandler(listAssetsHandler(d.Assets, d.logger)))
 
 	// Serve assets
-	r.PathPrefix("/static").Handler(staticHandler(d.Assets))
+	r.PathPrefix("/static").Handler(gziphandler(staticHandler(d.Assets)))
 	r.PathPrefix("/").Handler(rootHandler(d.Assets))
 
 	return r
