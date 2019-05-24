@@ -50,6 +50,12 @@ type HookConfigStdinFieldResolver interface {
 	Stdin(p graphql.ResolveParams) (bool, error)
 }
 
+// HookConfigToJSONFieldResolver implement to resolve requests for the HookConfig's toJSON field.
+type HookConfigToJSONFieldResolver interface {
+	// ToJSON implements response to request for toJSON field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
+}
+
 //
 // HookConfigFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'HookConfig' type.
@@ -119,6 +125,7 @@ type HookConfigFieldResolvers interface {
 	HookConfigCommandFieldResolver
 	HookConfigTimeoutFieldResolver
 	HookConfigStdinFieldResolver
+	HookConfigToJSONFieldResolver
 }
 
 // HookConfigAliases implements all methods on HookConfigFieldResolvers interface by using reflection to
@@ -252,6 +259,12 @@ func (_ HookConfigAliases) Stdin(p graphql.ResolveParams) (bool, error) {
 	return ret, err
 }
 
+// ToJSON implements response to request for 'toJSON' field.
+func (_ HookConfigAliases) ToJSON(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // HookConfigType HookConfig is the specification of a hook
 var HookConfigType = graphql.NewType("HookConfig", graphql.ObjectKind)
 
@@ -308,6 +321,13 @@ func _ObjTypeHookConfigStdinHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeHookConfigToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(HookConfigToJSONFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ToJSON(frp)
+	}
+}
+
 func _ObjectTypeHookConfigConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "HookConfig is the specification of a hook",
@@ -361,11 +381,18 @@ func _ObjectTypeHookConfigConfigFn() graphql1.ObjectConfig {
 				Name:              "timeout",
 				Type:              graphql1.Int,
 			},
+			"toJSON": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "toJSON returns a REST API compatible representation of the resource. Handy for\nsharing snippets that can then be imported with `sensuctl import`.",
+				Name:              "toJSON",
+				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
+			},
 		},
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node"),
 			graphql.Interface("Namespaced"),
-			graphql.Interface("HasMetadata")},
+			graphql.Interface("Resource")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -389,6 +416,7 @@ var _ObjectTypeHookConfigDesc = graphql.ObjectDesc{
 		"namespace": _ObjTypeHookConfigNamespaceHandler,
 		"stdin":     _ObjTypeHookConfigStdinHandler,
 		"timeout":   _ObjTypeHookConfigTimeoutHandler,
+		"toJSON":    _ObjTypeHookConfigToJSONHandler,
 	},
 }
 

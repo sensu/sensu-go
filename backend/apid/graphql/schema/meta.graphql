@@ -16,10 +16,3 @@ type ObjectMeta {
   labels: [KVPairString!]
   annotations: [KVPairString!]
 }
-
-"""
-HasMetadata describes objects that have metadata.
-"""
-interface HasMetadata {
-  metadata: ObjectMeta!
-}

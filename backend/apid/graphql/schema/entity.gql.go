@@ -154,6 +154,12 @@ type EntityExtendedAttributesFieldResolver interface {
 	ExtendedAttributes(p graphql.ResolveParams) (interface{}, error)
 }
 
+// EntityToJSONFieldResolver implement to resolve requests for the Entity's toJSON field.
+type EntityToJSONFieldResolver interface {
+	// ToJSON implements response to request for toJSON field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
+}
+
 //
 // EntityFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Entity' type.
@@ -234,6 +240,7 @@ type EntityFieldResolvers interface {
 	EntityIsSilencedFieldResolver
 	EntitySilencesFieldResolver
 	EntityExtendedAttributesFieldResolver
+	EntityToJSONFieldResolver
 }
 
 // EntityAliases implements all methods on EntityFieldResolvers interface by using reflection to
@@ -461,6 +468,12 @@ func (_ EntityAliases) ExtendedAttributes(p graphql.ResolveParams) (interface{},
 	return val, err
 }
 
+// ToJSON implements response to request for 'toJSON' field.
+func (_ EntityAliases) ToJSON(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 /*
 EntityType Entity is the Entity supplying the event. The default Entity for any
 Event is the running Agent process--if the Event is sent by an Agent.
@@ -609,6 +622,13 @@ func _ObjTypeEntityExtendedAttributesHandler(impl interface{}) graphql1.FieldRes
 	}
 }
 
+func _ObjTypeEntityToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(EntityToJSONFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ToJSON(frp)
+	}
+}
+
 func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Entity is the Entity supplying the event. The default Entity for any\nEvent is the running Agent process--if the Event is sent by an Agent.",
@@ -747,6 +767,13 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				Name:              "system",
 				Type:              graphql1.NewNonNull(graphql.OutputType("System")),
 			},
+			"toJSON": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "toJSON returns a REST API compatible representation of the resource. Handy for\nsharing snippets that can then be imported with `sensuctl import`.",
+				Name:              "toJSON",
+				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
+			},
 			"user": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -759,7 +786,7 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 			graphql.Interface("Node"),
 			graphql.Interface("Namespaced"),
 			graphql.Interface("Silenceable"),
-			graphql.Interface("HasMetadata")},
+			graphql.Interface("Resource")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -793,6 +820,7 @@ var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 		"status":             _ObjTypeEntityStatusHandler,
 		"subscriptions":      _ObjTypeEntitySubscriptionsHandler,
 		"system":             _ObjTypeEntitySystemHandler,
+		"toJSON":             _ObjTypeEntityToJSONHandler,
 		"user":               _ObjTypeEntityUserHandler,
 	},
 }

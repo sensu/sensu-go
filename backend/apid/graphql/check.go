@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/graphql-go/graphql"
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/types"
@@ -95,8 +96,7 @@ func (r *checkCfgImpl) Silences(p graphql.ResolveParams) (interface{}, error) {
 
 // ToJSON implements response to request for 'toJSON' field.
 func (r *checkCfgImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
-	check := p.Source.(*types.CheckConfig)
-	return types.WrapResource(check), nil
+	return types.WrapResource(p.Source.(v2.Resource)), nil
 }
 
 // RuntimeAssets implements response to request for 'runtimeAssets' field.
@@ -219,6 +219,11 @@ func (r *checkImpl) RuntimeAssets(p graphql.ResolveParams) (interface{}, error) 
 		return strings.FoundInArray(obj.Name, src.RuntimeAssets)
 	})
 	return results, err
+}
+
+// ToJSON implements response to request for 'toJSON' field.
+func (r *checkImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
+	return types.WrapResource(p.Source.(v2.Resource)), nil
 }
 
 //

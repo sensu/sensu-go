@@ -3,6 +3,7 @@ package graphql
 import (
 	"time"
 
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
@@ -48,4 +49,9 @@ func (r *silencedImpl) Expires(p graphql.ResolveParams) (*time.Time, error) {
 // ID implements response to request for 'id' field.
 func (r *silencedImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.SilenceTranslator.EncodeToString(p.Source), nil
+}
+
+// ToJSON implements response to request for 'toJSON' field.
+func (r *silencedImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
+	return types.WrapResource(p.Source.(v2.Resource)), nil
 }

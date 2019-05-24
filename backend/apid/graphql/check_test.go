@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	client "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
@@ -297,4 +298,22 @@ func TestCheckTypeOutputMetricHandlersField(t *testing.T) {
 	res, err := impl.OutputMetricHandlers(params)
 	require.NoError(t, err)
 	assert.Len(t, res, 2)
+}
+
+func TestCheckTypeToJSONField(t *testing.T) {
+	src := v2.FixtureCheck("name")
+	imp := &checkImpl{}
+
+	res, err := imp.ToJSON(graphql.ResolveParams{Source: src})
+	require.NoError(t, err)
+	assert.NotEmpty(t, res)
+}
+
+func TestCheckConfigTypeToJSONField(t *testing.T) {
+	src := v2.FixtureCheckConfig("name")
+	imp := &checkCfgImpl{}
+
+	res, err := imp.ToJSON(graphql.ResolveParams{Source: src})
+	require.NoError(t, err)
+	assert.NotEmpty(t, res)
 }

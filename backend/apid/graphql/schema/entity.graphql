@@ -2,7 +2,7 @@
 Entity is the Entity supplying the event. The default Entity for any
 Event is the running Agent process--if the Event is sent by an Agent.
 """
-type Entity implements Node, Namespaced, Silenceable, HasMetadata {
+type Entity implements Node, Namespaced, Silenceable, Resource {
   "The globally unique identifier of the record"
   id: ID!
 
@@ -66,6 +66,12 @@ type Entity implements Node, Namespaced, Silenceable, HasMetadata {
 
   "Extended attributes includes arbitrary user-defined data"
   extendedAttributes: JSON!
+
+  """
+  toJSON returns a REST API compatible representation of the resource. Handy for
+  sharing snippets that can then be imported with `sensuctl create`.
+  """
+  toJSON: JSON!
 }
 
 """

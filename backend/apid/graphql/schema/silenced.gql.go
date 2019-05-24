@@ -81,6 +81,12 @@ type SilencedBeginFieldResolver interface {
 	Begin(p graphql.ResolveParams) (*time.Time, error)
 }
 
+// SilencedToJSONFieldResolver implement to resolve requests for the Silenced's toJSON field.
+type SilencedToJSONFieldResolver interface {
+	// ToJSON implements response to request for toJSON field.
+	ToJSON(p graphql.ResolveParams) (interface{}, error)
+}
+
 //
 // SilencedFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'Silenced' type.
@@ -155,6 +161,7 @@ type SilencedFieldResolvers interface {
 	SilencedReasonFieldResolver
 	SilencedSubscriptionFieldResolver
 	SilencedBeginFieldResolver
+	SilencedToJSONFieldResolver
 }
 
 // SilencedAliases implements all methods on SilencedFieldResolvers interface by using reflection to
@@ -346,6 +353,12 @@ func (_ SilencedAliases) Begin(p graphql.ResolveParams) (*time.Time, error) {
 	return ret, err
 }
 
+// ToJSON implements response to request for 'toJSON' field.
+func (_ SilencedAliases) ToJSON(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 // SilencedType Silenced is the representation of a silence entry.
 var SilencedType = graphql.NewType("Silenced", graphql.ObjectKind)
 
@@ -437,6 +450,13 @@ func _ObjTypeSilencedBeginHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeSilencedToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SilencedToJSONFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ToJSON(frp)
+	}
+}
+
 func _ObjectTypeSilencedConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "Silenced is the representation of a silence entry.",
@@ -525,11 +545,18 @@ func _ObjectTypeSilencedConfigFn() graphql1.ObjectConfig {
 				Name:              "subscription",
 				Type:              graphql1.String,
 			},
+			"toJSON": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "toJSON returns a REST API compatible representation of the resource. Handy for\nsharing snippets that can then be imported with `sensuctl import`.",
+				Name:              "toJSON",
+				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
+			},
 		},
 		Interfaces: []*graphql1.Interface{
 			graphql.Interface("Node"),
 			graphql.Interface("Namespaced"),
-			graphql.Interface("HasMetadata")},
+			graphql.Interface("Resource")},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
 			// NOTE:
 			// Panic by default. Intent is that when Service is invoked, values of
@@ -558,6 +585,7 @@ var _ObjectTypeSilencedDesc = graphql.ObjectDesc{
 		"namespace":       _ObjTypeSilencedNamespaceHandler,
 		"reason":          _ObjTypeSilencedReasonHandler,
 		"subscription":    _ObjTypeSilencedSubscriptionHandler,
+		"toJSON":          _ObjTypeSilencedToJSONHandler,
 	},
 }
 

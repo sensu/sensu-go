@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- [GraphQL] Added field to retrieve REST API representation of a resource to
+  each core type
+
 ### Changed
 - [Web] Vendored `sensu/web` @ SHA `275386a`
 - [Web] Updated embedded web assets from `9d91d7f` ... `275386a`

@@ -1,7 +1,7 @@
 """
 HookConfig is the specification of a hook
 """
-type HookConfig implements Node, Namespaced, HasMetadata {
+type HookConfig implements Node, Namespaced, Resource {
   "The globally unique identifier of the record"
   id: ID!
 
@@ -22,6 +22,12 @@ type HookConfig implements Node, Namespaced, HasMetadata {
 
   "Stdin indicates if hook requests have stdin enabled"
   stdin: Boolean!
+
+  """
+  toJSON returns a REST API compatible representation of the resource. Handy for
+  sharing snippets that can then be imported with `sensuctl create`.
+  """
+  toJSON: JSON!
 }
 
 """
