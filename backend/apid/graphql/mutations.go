@@ -265,6 +265,27 @@ func decodeEventGID(gid string) (globalid.EventComponents, error) {
 }
 
 //
+// Implement handler mutations
+//
+
+// DeleteHandler implements response to request for the 'deleteHandler' field.
+func (r *mutationsImpl) DeleteHandler(p schema.MutationDeleteHandlerFieldResolverParams) (interface{}, error) {
+	components, _ := globalid.Decode(p.Args.Input.ID)
+	ctx := setContextFromComponents(p.Context, components)
+
+	client := r.factory.NewWithContext(ctx)
+
+	err := client.DeleteHandler(components.Namespace(), components.UniqueComponent())
+	if err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{
+		"clientMutationId": p.Args.Input.ClientMutationID,
+		"deletedId":        components.String(),
+	}, nil
+}
+
+//
 // Implement silenced mutations
 //
 

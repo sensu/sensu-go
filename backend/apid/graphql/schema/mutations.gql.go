@@ -146,6 +146,23 @@ type MutationDeleteEventFieldResolver interface {
 	DeleteEvent(p MutationDeleteEventFieldResolverParams) (interface{}, error)
 }
 
+// MutationDeleteHandlerFieldResolverArgs contains arguments provided to deleteHandler when selected
+type MutationDeleteHandlerFieldResolverArgs struct {
+	Input *DeleteRecordInput // Input - self descriptive
+}
+
+// MutationDeleteHandlerFieldResolverParams contains contextual info to resolve deleteHandler field
+type MutationDeleteHandlerFieldResolverParams struct {
+	graphql.ResolveParams
+	Args MutationDeleteHandlerFieldResolverArgs
+}
+
+// MutationDeleteHandlerFieldResolver implement to resolve requests for the Mutation's deleteHandler field.
+type MutationDeleteHandlerFieldResolver interface {
+	// DeleteHandler implements response to request for deleteHandler field.
+	DeleteHandler(p MutationDeleteHandlerFieldResolverParams) (interface{}, error)
+}
+
 // MutationCreateSilenceFieldResolverArgs contains arguments provided to createSilence when selected
 type MutationCreateSilenceFieldResolverArgs struct {
 	Input *CreateSilenceInput // Input - self descriptive
@@ -250,6 +267,7 @@ type MutationFieldResolvers interface {
 	MutationDeleteEntityFieldResolver
 	MutationResolveEventFieldResolver
 	MutationDeleteEventFieldResolver
+	MutationDeleteHandlerFieldResolver
 	MutationCreateSilenceFieldResolver
 	MutationDeleteSilenceFieldResolver
 }
@@ -345,6 +363,12 @@ func (_ MutationAliases) ResolveEvent(p MutationResolveEventFieldResolverParams)
 
 // DeleteEvent implements response to request for 'deleteEvent' field.
 func (_ MutationAliases) DeleteEvent(p MutationDeleteEventFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// DeleteHandler implements response to request for 'deleteHandler' field.
+func (_ MutationAliases) DeleteHandler(p MutationDeleteHandlerFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -472,6 +496,19 @@ func _ObjTypeMutationDeleteEventHandler(impl interface{}) graphql1.FieldResolveF
 	}
 }
 
+func _ObjTypeMutationDeleteHandlerHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(MutationDeleteHandlerFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := MutationDeleteHandlerFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.DeleteHandler(frp)
+	}
+}
+
 func _ObjTypeMutationCreateSilenceHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(MutationCreateSilenceFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
@@ -552,6 +589,16 @@ func _ObjectTypeMutationConfigFn() graphql1.ObjectConfig {
 				Name:              "deleteEvent",
 				Type:              graphql.OutputType("DeleteRecordPayload"),
 			},
+			"deleteHandler": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{"input": &graphql1.ArgumentConfig{
+					Description: "self descriptive",
+					Type:        graphql1.NewNonNull(graphql.InputType("DeleteRecordInput")),
+				}},
+				DeprecationReason: "",
+				Description:       "Removes given handler.",
+				Name:              "deleteHandler",
+				Type:              graphql.OutputType("DeleteRecordPayload"),
+			},
 			"deleteSilence": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{"input": &graphql1.ArgumentConfig{
 					Description: "self descriptive",
@@ -625,6 +672,7 @@ var _ObjectTypeMutationDesc = graphql.ObjectDesc{
 		"deleteCheck":   _ObjTypeMutationDeleteCheckHandler,
 		"deleteEntity":  _ObjTypeMutationDeleteEntityHandler,
 		"deleteEvent":   _ObjTypeMutationDeleteEventHandler,
+		"deleteHandler": _ObjTypeMutationDeleteHandlerHandler,
 		"deleteSilence": _ObjTypeMutationDeleteSilenceHandler,
 		"executeCheck":  _ObjTypeMutationExecuteCheckHandler,
 		"putWrapped":    _ObjTypeMutationPutWrappedHandler,
