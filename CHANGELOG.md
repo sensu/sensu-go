@@ -11,8 +11,15 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - [GraphQL] Added field to retrieve REST API representation of a resource to
   each core type
 
+### Changed
+- [Web] Vendored `sensu/web` @ SHA `275386a`
+- [Web] Updated embedded web assets from `9d91d7f` ... `275386a`
+
 ### Fixed
 - Fixed the behaviors for check `Occurrences` and `OccurrencesWatermark`.
+- Fixed a panic that could occur when seeding initial data.
+- [Web] Compress dashboard assets
+- [Web] Fixed regression where dashboard assets were no longer compressed.
 
 ## [5.8.0] - 2019-05-22
 
