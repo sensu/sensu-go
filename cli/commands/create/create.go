@@ -180,9 +180,9 @@ func describeError(index int, err error) {
 }
 
 func PutResources(client client.GenericClient, resources []types.Wrapper) error {
-	for _, resource := range resources {
+	for i, resource := range resources {
 		if err := client.PutResource(resource); err != nil {
-			return err
+			return fmt.Errorf("error putting resource %d (%s): %s", i, resource.Value.URIPath(), err)
 		}
 	}
 	return nil

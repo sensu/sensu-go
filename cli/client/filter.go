@@ -2,8 +2,6 @@ package client
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
@@ -25,7 +23,7 @@ func (client *RestClient) CreateFilter(filter *types.EventFilter) (err error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("%v", res.String())
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -47,7 +45,7 @@ func (client *RestClient) FetchFilter(name string) (*types.EventFilter, error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return nil, fmt.Errorf("%v", res.String())
+		return nil, UnmarshalError(res)
 	}
 
 	err = json.Unmarshal(res.Body(), &filter)
@@ -79,7 +77,7 @@ func (client *RestClient) UpdateFilter(f *types.EventFilter) error {
 	}
 
 	if resp.StatusCode() >= 400 {
-		err = errors.New(resp.String())
+		return UnmarshalError(resp)
 	}
 
 	return err

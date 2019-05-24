@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/go-resty/resty"
+	"github.com/sensu/sensu-go/backend/apid/actions"
 )
 
 // APIError describes an error message returned by the REST API
@@ -25,7 +26,7 @@ func UnmarshalError(res *resty.Response) error {
 
 	switch res.StatusCode() {
 	case http.StatusPaymentRequired:
-		apiErr.Code = http.StatusPaymentRequired
+		apiErr.Code = uint32(actions.PaymentRequired)
 		apiErr.Message = "This functionality requires a valid Sensu Go license. Please install a valid license file and restart or contact Sales for a trial."
 
 	default:

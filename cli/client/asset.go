@@ -57,7 +57,7 @@ func (client *RestClient) CreateAsset(asset *types.Asset) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("%v", res.String())
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -77,7 +77,7 @@ func (client *RestClient) UpdateAsset(asset *types.Asset) (err error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("PUT %q: %s", path, res.String())
+		return UnmarshalError(res)
 	}
 
 	return nil

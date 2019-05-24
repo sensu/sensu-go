@@ -30,7 +30,7 @@ func (client *RestClient) DeregisterExtension(name, namespace string) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("DELETE %q: %s", path, res.String())
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -50,7 +50,7 @@ func (client *RestClient) RegisterExtension(extension *types.Extension) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("PUT %q: %s", path, res.String())
+		return UnmarshalError(res)
 	}
 
 	return nil
