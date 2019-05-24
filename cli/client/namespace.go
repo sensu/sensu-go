@@ -2,7 +2,6 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
@@ -25,7 +24,7 @@ func (client *RestClient) CreateNamespace(namespace *types.Namespace) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("%v", res.String())
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -45,7 +44,7 @@ func (client *RestClient) UpdateNamespace(namespace *types.Namespace) error {
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("%v", res.String())
+		return UnmarshalError(res)
 	}
 
 	return nil

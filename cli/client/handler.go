@@ -2,7 +2,6 @@ package client
 
 import (
 	"encoding/json"
-	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
@@ -35,7 +34,7 @@ func (client *RestClient) CreateHandler(handler *types.Handler) (err error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("%v", res.String())
+		return UnmarshalError(res)
 	}
 
 	return nil
@@ -77,7 +76,7 @@ func (client *RestClient) UpdateHandler(handler *types.Handler) (err error) {
 	}
 
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("%v", res.String())
+		return UnmarshalError(res)
 	}
 
 	return nil

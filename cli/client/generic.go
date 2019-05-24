@@ -126,7 +126,7 @@ func (client *RestClient) PutResource(r types.Wrapper) error {
 		return fmt.Errorf("PUT %q: %s", path, err)
 	}
 	if res.StatusCode() >= 400 {
-		return fmt.Errorf("PUT %q: %s", path, res.String())
+		return UnmarshalError(res)
 	}
 	return nil
 }
