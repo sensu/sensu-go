@@ -20,8 +20,9 @@ func TestDeregister(t *testing.T) {
 	mockBus := &mockbus.MockBus{}
 
 	adapter := &Deregistration{
-		Store:      mockStore,
-		MessageBus: mockBus,
+		EntityStore: mockStore,
+		EventStore:  mockStore,
+		MessageBus:  mockBus,
 	}
 
 	entity := types.FixtureEntity("entity")
@@ -45,8 +46,9 @@ func TestDeregistrationHandler(t *testing.T) {
 	mockBus := &mockbus.MockBus{}
 
 	adapter := &Deregistration{
-		Store:      mockStore,
-		MessageBus: mockBus,
+		EventStore:  mockStore,
+		EntityStore: mockStore,
+		MessageBus:  mockBus,
 	}
 
 	entity := types.FixtureEntity("entity")

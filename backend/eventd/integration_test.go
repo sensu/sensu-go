@@ -62,7 +62,7 @@ func TestEventdMonitor(t *testing.T) {
 		assert.FailNow(t, err.Error())
 	}
 
-	e, err := New(Config{Store: store, Bus: bus, LivenessFactory: livenessFactory})
+	e, err := New(Config{Store: store, EventStore: store, Bus: bus, LivenessFactory: livenessFactory})
 	require.NoError(t, err)
 
 	if err := e.Start(); err != nil {
