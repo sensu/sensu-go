@@ -96,19 +96,20 @@ func TestEntityTypeEventsField(t *testing.T) {
 	client.On("ListEvents", mock.Anything, mock.Anything).Return([]types.Event{
 		*types.FixtureEvent(entity.Name, "a"),
 		*types.FixtureEvent(entity.Name, "b"),
-		*types.FixtureEvent(entity.Name, "c"),
+		*types.FixtureEvent("no-entity", "c"),
 	}, nil).Once()
 
 	// params
 	params := schema.EntityEventsFieldResolverParams{}
 	params.Context = contextWithLoadersNoCache(context.Background(), client)
+	params.Args.Filters = []string{}
 	params.Source = entity
 
 	// return all events
 	impl := &entityImpl{}
 	evs, err := impl.Events(params)
 	require.NoError(t, err)
-	assert.Len(t, evs, 3)
+	assert.Len(t, evs, 2)
 }
 
 func TestEntityTypeSilencesField(t *testing.T) {
