@@ -7,13 +7,18 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.9.0] - 2019-05-29
+
 ### Added
 - [GraphQL] Added field to retrieve REST API representation of a resource to
   each core type
+- [Web] Add views for handlers
 
 ### Changed
-- [Web] Vendored `sensu/web` @ SHA `275386a`
 - [Web] Updated embedded web assets from `9d91d7f` ... `275386a`
+- [Web] Implements simpler & more efficient filtering.
+- [GraphQL] fields that previously accepted a JS filter have been deprecated and
+  replaced with a simpler syntax.
 
 ### Fixed
 - Fixed the behaviors for check `Occurrences` and `OccurrencesWatermark`.
@@ -37,10 +42,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - eventd and keepalived now use 1000 handlers for events.
 - etcd database size and request size are now configurable.
 - Most resources now use protobuf serialization in etcd.
-
-### Changed
-- GraphQL fields that previously accepted a JS filter have been deprecated and
-  replaced with a simpler syntax.
 
 ### Fixed
 - Only bury switchsets of checks that no longer have a TTL, in order to reduce
