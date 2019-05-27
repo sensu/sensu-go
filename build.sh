@@ -207,8 +207,8 @@ docker_build() {
         build_binary linux amd64 $cmd $cmd_name $ext
     done
 
-    # build the docker image with master tag
-    docker build --label build.sha=${build_sha} -t sensu/sensu:master .
+    # build the docker image with latest tag
+    docker build --label build.sha=${build_sha} -t sensu/sensu:latest .
 }
 
 test_dashboard() {

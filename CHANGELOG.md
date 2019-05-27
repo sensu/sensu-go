@@ -21,6 +21,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - [Web] Compress dashboard assets
 - [Web] Fixed regression where dashboard assets were no longer compressed.
 - Fixed listing of silenced entries by check or subscription.
+- The docker-compose.yaml file now refers to the sensu/sensu:latest image.
 
 ## [5.8.0] - 2019-05-22
 
