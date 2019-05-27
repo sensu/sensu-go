@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.9.0] - 2019-05-29
+
 ### Added
 - [GraphQL] Added field to retrieve REST API representation of a resource to
   each core type
