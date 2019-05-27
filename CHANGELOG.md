@@ -12,9 +12,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - [GraphQL] Added field to retrieve REST API representation of a resource to
   each core type
+- [Web] Add views for handlers
 
 ### Changed
 - [Web] Updated embedded web assets from `9d91d7f` ... `275386a`
+- [Web] Implements simpler & more efficient filtering.
 - [GraphQL] fields that previously accepted a JS filter have been deprecated and
   replaced with a simpler syntax.
 
