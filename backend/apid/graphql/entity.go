@@ -61,7 +61,7 @@ func (r *entityImpl) Events(p schema.EntityEventsFieldResolverParams) (interface
 		return []interface{}{}, err
 	}
 	records := filterEvents(results, func(obj *types.Event) bool {
-		return matches(obj)
+		return obj.Entity.Name == src.Name && matches(obj)
 	})
 
 	// sort records
