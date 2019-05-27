@@ -20,7 +20,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed a panic that could occur when seeding initial data.
 - [Web] Compress dashboard assets
 - [Web] Fixed regression where dashboard assets were no longer compressed.
-- Fixed listing of silenced entries by subscription or check.
+- Fixed listing of silenced entries by check or subscription.
 
 ## [5.8.0] - 2019-05-22
 
