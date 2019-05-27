@@ -63,6 +63,7 @@ type Eventd struct {
 	mu              *sync.Mutex
 	shutdownChan    chan struct{}
 	wg              *sync.WaitGroup
+	Logger          Logger
 }
 
 // Option is a functional option.
@@ -87,6 +88,7 @@ func New(c Config, opts ...Option) (*Eventd, error) {
 		eventChan:       make(chan interface{}, 100),
 		wg:              &sync.WaitGroup{},
 		mu:              &sync.Mutex{},
+		Logger:          &RawLogger{},
 	}
 	for _, o := range opts {
 		if err := o(e); err != nil {
@@ -186,6 +188,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	// If the event does not contain a check (rather, it contains metrics)
 	// publish the event without writing to the store
 	if !event.HasCheck() {
+		e.Logger.Println(event)
 		return e.bus.Publish(messaging.TopicEvent, event)
 	}
 
@@ -220,6 +223,8 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	if err != nil {
 		return err
 	}
+
+	e.Logger.Println(event)
 
 	// Handle expire on resolve silenced entries
 	if err = handleExpireOnResolveEntries(ctx, event, e.store); err != nil {
