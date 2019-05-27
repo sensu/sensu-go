@@ -2,6 +2,7 @@ package silenced
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"time"
 
@@ -38,6 +39,12 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			if err != nil {
 				return err
 			}
+
+			// We do not support both subscription and all-namespaces flags together
+			if sub != "" && namespace == types.NamespaceTypeAll {
+				return fmt.Errorf("the subscription and %s flags are mutually exclusive", flags.AllNamespaces)
+			}
+
 			check, err := flg.GetString("check")
 			if err != nil {
 				return err

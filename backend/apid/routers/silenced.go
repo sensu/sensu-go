@@ -36,9 +36,11 @@ func (r *SilencedRouter) Mount(parent *mux.Router) {
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
 
-	// Custom
-	routes.Router.HandleFunc("subscriptions/{subscriptions}", listHandler(r.list)).Methods(http.MethodGet)
-	routes.Router.HandleFunc("checks/{check}", listHandler(r.list)).Methods(http.MethodGet)
+	// Custom routes for listing by subscription and checks for a specific
+	// namespace, in addition to all namespaces for checks.
+	routes.Router.HandleFunc("/{resource:silenced}/checks/{check}", listHandler(r.list)).Methods(http.MethodGet)
+	routes.Router.HandleFunc(routes.PathPrefix+"/subscriptions/{subscription}", listHandler(r.list)).Methods(http.MethodGet)
+	routes.Router.HandleFunc(routes.PathPrefix+"/checks/{check}", listHandler(r.list)).Methods(http.MethodGet)
 }
 
 func (r *SilencedRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
