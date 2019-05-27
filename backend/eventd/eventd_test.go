@@ -46,6 +46,7 @@ func TestEventHandling(t *testing.T) {
 	mockStore := &mockstore.MockStore{}
 	e, err := New(Config{
 		Store:           mockStore,
+		EventStore:      mockStore,
 		Bus:             bus,
 		LivenessFactory: newFakeFactory(&fakeSwitchSet{}),
 	})
@@ -105,7 +106,7 @@ func TestEventMonitor(t *testing.T) {
 	require.NoError(t, bus.Start())
 
 	mockStore := &mockstore.MockStore{}
-	e, err := New(Config{Store: mockStore, Bus: bus})
+	e, err := New(Config{Store: mockStore, EventStore: mockStore, Bus: bus})
 	require.NoError(t, err)
 	e.handlerCount = 5
 
@@ -339,6 +340,7 @@ func TestCheckTTL(t *testing.T) {
 
 			e := &Eventd{
 				store:           store,
+				eventStore:      store,
 				livenessFactory: newFakeFactory(switches),
 				handlerCount:    1,
 				wg:              &sync.WaitGroup{},

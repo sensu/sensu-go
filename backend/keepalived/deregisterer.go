@@ -21,19 +21,20 @@ type Deregisterer interface {
 // Deregistration is an adapter for deregistering an entity from the store and
 // publishing a deregistration event to WizardBus.
 type Deregistration struct {
-	Store      store.Store
-	MessageBus messaging.MessageBus
+	EntityStore store.EntityStore
+	EventStore  store.EventStore
+	MessageBus  messaging.MessageBus
 }
 
 // Deregister an entity and all of its associated events.
-func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
+func (d *Deregistration) Deregister(entity *types.Entity) error {
 	ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
 
-	if err := adapterPtr.Store.DeleteEntity(ctx, entity); err != nil {
+	if err := d.EntityStore.DeleteEntity(ctx, entity); err != nil {
 		return fmt.Errorf("error deleting entity in store: %s", err)
 	}
 
-	events, err := adapterPtr.Store.GetEventsByEntity(ctx, entity.Name, &store.SelectionPredicate{})
+	events, err := d.EventStore.GetEventsByEntity(ctx, entity.Name, &store.SelectionPredicate{})
 	if err != nil {
 		return fmt.Errorf("error fetching events for entity: %s", err)
 	}
@@ -43,7 +44,7 @@ func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
 			return fmt.Errorf("error deleting event without check")
 		}
 
-		if err := adapterPtr.Store.DeleteEventByEntityCheck(
+		if err := d.EventStore.DeleteEventByEntityCheck(
 			ctx, entity.Name, event.Check.Name,
 		); err != nil {
 			return fmt.Errorf("error deleting event for entity: %s", err)
@@ -53,7 +54,7 @@ func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
 		event.Check.Status = 0
 		event.Check.History = []types.CheckHistory{}
 
-		if err := adapterPtr.MessageBus.Publish(messaging.TopicEvent, event); err != nil {
+		if err := d.MessageBus.Publish(messaging.TopicEvent, event); err != nil {
 			return fmt.Errorf("error publishing deregistration event: %s", err)
 		}
 	}
@@ -73,7 +74,7 @@ func (adapterPtr *Deregistration) Deregister(entity *types.Entity) error {
 			Check:  deregistrationCheck,
 		}
 
-		return adapterPtr.MessageBus.Publish(messaging.TopicEvent, deregistrationEvent)
+		return d.MessageBus.Publish(messaging.TopicEvent, deregistrationEvent)
 	}
 
 	logger.WithField("entity", entity.GetName()).Info("entity deregistered")

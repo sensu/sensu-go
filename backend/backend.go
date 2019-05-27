@@ -165,6 +165,7 @@ func Initialize(config *Config) (*Backend, error) {
 	// Initialize eventd
 	event, err := eventd.New(eventd.Config{
 		Store:           store,
+		EventStore:      store,
 		Bus:             bus,
 		LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
 	})
@@ -206,6 +207,7 @@ func Initialize(config *Config) (*Backend, error) {
 		DeregistrationHandler: config.DeregistrationHandler,
 		Bus:             bus,
 		Store:           store,
+		EventStore:      store,
 		LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
 		RingPool:        ringPool,
 	})

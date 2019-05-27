@@ -46,6 +46,7 @@ type Keepalived struct {
 	bus                   messaging.MessageBus
 	handlerCount          int
 	store                 store.Store
+	eventStore            store.EventStore
 	deregistrationHandler string
 	mu                    *sync.Mutex
 	wg                    *sync.WaitGroup
@@ -62,6 +63,7 @@ type Option func(*Keepalived) error
 // Config configures Keepalived.
 type Config struct {
 	Store                 store.Store
+	EventStore            store.EventStore
 	Bus                   messaging.MessageBus
 	LivenessFactory       liveness.Factory
 	DeregistrationHandler string
@@ -71,8 +73,9 @@ type Config struct {
 // New creates a new Keepalived.
 func New(c Config, opts ...Option) (*Keepalived, error) {
 	k := &Keepalived{
-		store: c.Store,
-		bus:   c.Bus,
+		store:      c.Store,
+		eventStore: c.EventStore,
+		bus:        c.Bus,
 		deregistrationHandler: c.DeregistrationHandler,
 		livenessFactory:       c.LivenessFactory,
 		keepaliveChan:         make(chan interface{}, 10),
@@ -372,8 +375,9 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 	}
 
 	deregisterer := &Deregistration{
-		Store:      k.store,
-		MessageBus: k.bus,
+		EntityStore: k.store,
+		EventStore:  k.eventStore,
+		MessageBus:  k.bus,
 	}
 
 	if entity.Deregister {
