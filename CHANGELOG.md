@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+- [Web] Updated embedded web assets from `275386a` ... `0e6c347`
+
 ## [5.9.0] - 2019-05-29
 
 ### Added
