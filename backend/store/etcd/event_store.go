@@ -203,34 +203,58 @@ func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName
 }
 
 // UpdateEvent updates an event.
-func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) error {
+func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.Event, *corev2.Event, error) {
 	if event == nil || event.Check == nil {
-		return errors.New("event has no check")
+		return nil, nil, errors.New("event has no check")
 	}
 
 	if err := event.Check.Validate(); err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	if err := event.Entity.Validate(); err != nil {
-		return err
+		return nil, nil, err
 	}
+
+	ctx = store.NamespaceContext(ctx, event.Entity.Namespace)
+
+	prevEvent, err := s.GetEventByEntityCheck(
+		ctx, event.Entity.Name, event.Check.Name,
+	)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// Maintain check history.
+	if prevEvent != nil {
+		if !prevEvent.HasCheck() {
+			return nil, nil, errors.New("invalid previous event")
+		}
+
+		event.Check.MergeWith(prevEvent.Check)
+	}
+
+	updateOccurrences(event.Check)
+
+	persistEvent := event
 
 	if event.HasMetrics() {
 		// Taking pains to not modify our input, set metrics to nil so they are
 		// not persisted.
 		newEvent := *event
-		event = &newEvent
-		event.Metrics = nil
+		persistEvent = &newEvent
+		persistEvent.Metrics = nil
 	}
 
 	// Truncate check output if the output is larger than MaxOutputSize
 	if size := event.Check.MaxOutputSize; size > 0 && int64(len(event.Check.Output)) > size {
 		// Taking pains to not modify our input, set a bound on the check
 		// output size.
-		check := *event.Check
+		newEvent := *persistEvent
+		persistEvent = &newEvent
+		check := *persistEvent.Check
 		check.Output = check.Output[:size]
-		event.Check = &check
+		persistEvent.Check = &check
 	}
 
 	if event.Timestamp == 0 {
@@ -241,19 +265,19 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) error {
 
 	// update the history
 	// marshal the new event and store it.
-	eventBytes, err := proto.Marshal(event)
+	eventBytes, err := proto.Marshal(persistEvent)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	cmp := namespaceExistsForResource(event.Entity)
 	req := clientv3.OpPut(getEventPath(event), string(eventBytes))
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	if !res.Succeeded {
-		return fmt.Errorf(
+		return nil, nil, fmt.Errorf(
 			"could not create the event %s/%s in namespace %s",
 			event.Entity.Name,
 			event.Check.Name,
@@ -261,5 +285,31 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) error {
 		)
 	}
 
-	return nil
+	return event, prevEvent, nil
+}
+
+func updateOccurrences(check *corev2.Check) {
+	if check == nil {
+		return
+	}
+
+	historyLen := len(check.History)
+	if historyLen > 1 && check.History[historyLen-1].Status == check.History[historyLen-2].Status {
+		// 1. Occurrences should always be incremented if the current Check status is the same as the previous status (this includes events with the Check status of OK)
+		check.Occurrences++
+	} else {
+		// 2. Occurrences should always reset to 1 if the current Check status is different than the previous status
+		check.Occurrences = 1
+	}
+
+	if historyLen > 1 && check.History[historyLen-1].Status != 0 && check.History[historyLen-2].Status == 0 {
+		// 3. OccurrencesWatermark only resets on the a first non OK Check status (it does not get reset going between warning, critical, unknown)
+		check.OccurrencesWatermark = 1
+	} else if check.Occurrences <= check.OccurrencesWatermark {
+		// 4. OccurrencesWatermark should remain the same when occurrences is less than or equal to the watermark
+		return
+	} else {
+		// 5. OccurrencesWatermark should be incremented if conditions 3 and 4 have not been met.
+		check.OccurrencesWatermark++
+	}
 }

@@ -74,7 +74,10 @@ func TestEventHandling(t *testing.T) {
 		"entity",
 		"check",
 	).Return(nilEvent, nil)
-	mockStore.On("UpdateEvent", mock.Anything).Return(nil)
+	event.Check.Occurrences = 1
+	event.Check.State = types.EventPassingState
+	event.Check.LastOK = event.Timestamp
+	mockStore.On("UpdateEvent", mock.Anything).Return(event, nilEvent, nil)
 
 	// No silenced entries
 	mockStore.On(
@@ -127,7 +130,8 @@ func TestEventMonitor(t *testing.T) {
 		"entity",
 		"check",
 	).Return(nilEvent, nil)
-	mockStore.On("UpdateEvent", mock.Anything).Return(nil)
+	event.Check.State = types.EventPassingState
+	mockStore.On("UpdateEvent", mock.Anything).Return(event, nilEvent, nil)
 
 	// No silenced entries
 	mockStore.On(
@@ -146,112 +150,6 @@ func TestEventMonitor(t *testing.T) {
 
 	// Make sure the event has been marked with the proper state
 	assert.Equal(t, types.EventPassingState, event.Check.State)
-}
-
-func TestCheckOccurrences(t *testing.T) {
-	OK := uint32(0)
-	WARN := uint32(1)
-	CRIT := uint32(2)
-
-	// 1. Event with OK Check status - Occurrences: 1, OccurrencesWatermark: 1
-	// 2. Event with OK Check status - Occurrences: 2, OccurrencesWatermark: 2
-	// 3. Event with WARN Check status - Occurrences: 1, OccurrencesWatermark: 1
-	// 4. Event with WARN Check status - Occurrences: 2, OccurrencesWatermark: 2
-	// 5. Event with WARN Check status - Occurrences: 3, OccurrencesWatermark: 3
-	// 6. Event with CRIT Check status - Occurrences: 1, OccurrencesWatermark: 3
-	// 7. Event with CRIT Check status - Occurrences: 2, OccurrencesWatermark: 3
-	// 8. Event with CRIT Check status - Occurrences: 3, OccurrencesWatermark: 3
-	// 9. Event with CRIT Check status - Occurrences: 4, OccurrencesWatermark: 4
-	// 10. Event with OK Check status - Occurrences: 1, OccurrencesWatermark: 4
-	// 11. Event with CRIT Check status - Occurrences: 1, OccurrencesWatermark: 1
-	testCases := []struct {
-		name                         string
-		status                       uint32
-		expectedOccurrences          int64
-		expectedOccurrencesWatermark int64
-	}{
-		{
-			name:                         "OK",
-			status:                       OK,
-			expectedOccurrences:          1,
-			expectedOccurrencesWatermark: 1,
-		},
-		{
-			name:                         "OK -> OK",
-			status:                       OK,
-			expectedOccurrences:          2,
-			expectedOccurrencesWatermark: 2,
-		},
-		{
-			name:                         "OK -> WARN",
-			status:                       WARN,
-			expectedOccurrences:          1,
-			expectedOccurrencesWatermark: 1,
-		},
-		{
-			name:                         "WARN -> WARN",
-			status:                       WARN,
-			expectedOccurrences:          2,
-			expectedOccurrencesWatermark: 2,
-		},
-		{
-			name:                         "WARN -> WARN",
-			status:                       WARN,
-			expectedOccurrences:          3,
-			expectedOccurrencesWatermark: 3,
-		},
-		{
-			name:                         "WARN -> CRIT",
-			status:                       CRIT,
-			expectedOccurrences:          1,
-			expectedOccurrencesWatermark: 3,
-		},
-		{
-			name:                         "CRIT -> CRIT",
-			status:                       CRIT,
-			expectedOccurrences:          2,
-			expectedOccurrencesWatermark: 3,
-		},
-		{
-			name:                         "CRIT -> CRIT",
-			status:                       CRIT,
-			expectedOccurrences:          3,
-			expectedOccurrencesWatermark: 3,
-		},
-		{
-			name:                         "CRIT -> CRIT",
-			status:                       CRIT,
-			expectedOccurrences:          4,
-			expectedOccurrencesWatermark: 4,
-		},
-		{
-			name:                         "CRIT -> OK",
-			status:                       OK,
-			expectedOccurrences:          1,
-			expectedOccurrencesWatermark: 4,
-		},
-		{
-			name:                         "OK -> CRIT",
-			status:                       CRIT,
-			expectedOccurrences:          1,
-			expectedOccurrencesWatermark: 1,
-		},
-	}
-
-	event := corev2.FixtureEvent("entity1", "check1")
-	event.Check.Occurrences = 1
-	event.Check.OccurrencesWatermark = 1
-	event.Check.History = []corev2.CheckHistory{}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			event.Check.Status = tc.status
-			event.Check.History = append(event.Check.History, corev2.CheckHistory{Status: tc.status})
-			updateOccurrences(event)
-			assert.Equal(t, tc.expectedOccurrences, event.Check.Occurrences)
-			assert.Equal(t, tc.expectedOccurrencesWatermark, event.Check.OccurrencesWatermark)
-		})
-	}
 }
 
 type mockSwitchSet struct {
@@ -338,6 +236,8 @@ func TestCheckTTL(t *testing.T) {
 				tt.switchesFunc(switches)
 			}
 
+			mockEvent := corev2.FixtureEvent("default", "mock")
+
 			e := &Eventd{
 				store:           store,
 				eventStore:      store,
@@ -357,7 +257,7 @@ func TestCheckTTL(t *testing.T) {
 				Return([]*corev2.Silenced{}, nil)
 			store.On("GetSilencedEntriesByCheckName", mock.Anything, mock.Anything).
 				Return([]*corev2.Silenced{}, nil)
-			store.On("UpdateEvent", mock.Anything, mock.Anything).Return(nil)
+			store.On("UpdateEvent", mock.Anything, mock.Anything).Return(tt.msg, mockEvent, nil)
 
 			if err := e.handleMessage(tt.msg); (err != nil) != tt.wantErr {
 				t.Errorf("Eventd.handleMessage() error = %v, wantErr %v", err, tt.wantErr)

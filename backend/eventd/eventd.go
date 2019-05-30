@@ -197,46 +197,22 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 
-	prevEvent, err := e.eventStore.GetEventByEntityCheck(
-		ctx, event.Entity.Name, event.Check.Name,
-	)
-	if err != nil {
+	// Add any silenced subscriptions to the event
+	if err := getSilenced(ctx, event, e.store); err != nil {
 		return err
 	}
 
-	// Maintain check history.
-	if prevEvent != nil {
-		if !prevEvent.HasCheck() {
-			return errors.New("invalid previous event")
-		}
-
-		event.Check.MergeWith(prevEvent.Check)
+	// Handle expire on resolve silenced entries
+	if err := handleExpireOnResolveEntries(ctx, event, e.store); err != nil {
+		return err
 	}
 
-	updateOccurrences(event)
-
-	// Calculate percent state change for this check's history
-	event.Check.TotalStateChange = totalStateChange(event)
-
-	// Determine the check's state
-	state(event)
-
-	// Add any silenced subscriptions to the event
-	err = getSilenced(ctx, event, e.store)
+	event, prevEvent, err := e.eventStore.UpdateEvent(ctx, event)
 	if err != nil {
 		return err
 	}
 
 	e.Logger.Println(event)
-
-	// Handle expire on resolve silenced entries
-	if err = handleExpireOnResolveEntries(ctx, event, e.store); err != nil {
-		return err
-	}
-
-	if err := e.eventStore.UpdateEvent(ctx, event); err != nil {
-		return err
-	}
 
 	switches := e.livenessFactory("eventd", e.dead, e.alive, logger)
 	switchKey := eventKey(event)
@@ -247,7 +223,6 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		if err := switches.Alive(context.TODO(), switchKey, timeout); err != nil {
 			return err
 		}
-		return e.handleUpdate(event)
 	} else if prevEvent != nil && prevEvent.Check.Ttl > 0 {
 		// The check TTL has been disabled, there is no longer a need to track it
 		if err := switches.Bury(context.TODO(), switchKey); err != nil {
@@ -337,32 +312,6 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 	return false
 }
 
-func updateOccurrences(event *corev2.Event) {
-	if !event.HasCheck() {
-		return
-	}
-
-	historyLen := len(event.Check.History)
-	if historyLen > 1 && event.Check.History[historyLen-1].Status == event.Check.History[historyLen-2].Status {
-		// 1. Occurrences should always be incremented if the current Check status is the same as the previous status (this includes events with the Check status of OK)
-		event.Check.Occurrences++
-	} else {
-		// 2. Occurrences should always reset to 1 if the current Check status is different than the previous status
-		event.Check.Occurrences = 1
-	}
-
-	if historyLen > 1 && event.Check.History[historyLen-1].Status != 0 && event.Check.History[historyLen-2].Status == 0 {
-		// 3. OccurrencesWatermark only resets on the a first non OK Check status (it does not get reset going between warning, critical, unknown)
-		event.Check.OccurrencesWatermark = 1
-	} else if event.Check.Occurrences <= event.Check.OccurrencesWatermark {
-		// 4. OccurrencesWatermark should remain the same when occurrences is less than or equal to the watermark
-		return
-	} else {
-		// 5. OccurrencesWatermark should be incremented if conditions 3 and 4 have not been met.
-		event.Check.OccurrencesWatermark++
-	}
-}
-
 func parseKey(key string) (namespace, check, entity string, err error) {
 	parts := strings.Split(key, "/")
 	if len(parts) == 2 {
@@ -372,18 +321,6 @@ func parseKey(key string) (namespace, check, entity string, err error) {
 		return parts[0], parts[1], parts[2], nil
 	}
 	return "", "", "", errors.New("bad key")
-}
-
-// handleUpdate updates the event in the store and publishes it to TopicEvent.
-func (e *Eventd) handleUpdate(event *corev2.Event) error {
-	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
-
-	err := e.eventStore.UpdateEvent(ctx, event)
-	if err != nil {
-		return err
-	}
-
-	return e.bus.Publish(messaging.TopicEvent, event)
 }
 
 // handleFailure creates a check event with a warn status and publishes it to
@@ -396,12 +333,12 @@ func (e *Eventd) handleFailure(event *corev2.Event) error {
 	if err != nil {
 		return err
 	}
-	err = e.eventStore.UpdateEvent(ctx, failedCheckEvent)
+	updatedEvent, _, err := e.eventStore.UpdateEvent(ctx, failedCheckEvent)
 	if err != nil {
 		return err
 	}
 
-	return e.bus.Publish(messaging.TopicEvent, failedCheckEvent)
+	return e.bus.Publish(messaging.TopicEvent, updatedEvent)
 }
 
 func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *corev2.Event) (*corev2.Event, error) {
