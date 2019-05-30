@@ -24,7 +24,7 @@ func TestLogout(t *testing.T) {
 	config.On("Tokens").Return(tokens)
 
 	out, err := test.RunCmd(cmd, []string{})
-	assert.Regexp(t, "logout", out)
+	assert.Regexp(t, "logged out", out)
 	assert.Nil(t, err)
 }
 
