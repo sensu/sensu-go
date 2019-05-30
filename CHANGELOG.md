@@ -7,6 +7,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+- Eventd now uses a constant number of requests to etcd when working with
+silenced entries, instead of a number that is proportional to the number of
+subscriptions in a check.
+
 ## [5.9.0] - 2019-05-29
 
 ### Added
