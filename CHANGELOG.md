@@ -7,6 +7,13 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- The check state and check total_state_change properties are now more correct.
+
+### Changed
+- Eventd has been refactored. Users should not perceive any changes, but a
+substantial amount of business logic has been moved into other packages.
+
 ## [5.9.0] - 2019-05-29
 
 ### Added

@@ -74,7 +74,7 @@ func TestKeepaliveMonitor(t *testing.T) {
 		Timestamp: time.Now().Unix(),
 	}
 
-	if err := store.UpdateEvent(ctx, keepalive); err != nil {
+	if _, _, err := store.UpdateEvent(ctx, keepalive); err != nil {
 		t.Fatal(err)
 	}
 

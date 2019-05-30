@@ -328,6 +328,8 @@ func (c *Check) MergeWith(prevCheck *Check) {
 	c.LastOK = prevCheck.LastOK
 	c.Occurrences = prevCheck.Occurrences
 	c.OccurrencesWatermark = prevCheck.OccurrencesWatermark
+	updateCheckState(c)
+	c.TotalStateChange = totalStateChange(c)
 }
 
 // FixtureCheckRequest returns a fixture for a CheckRequest object.

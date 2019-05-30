@@ -22,7 +22,7 @@ func TestEventStorageMaxOutputSize(t *testing.T) {
 		event.Check.Output = "VERY LONG"
 		event.Check.MaxOutputSize = 4
 		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
-		if err := store.UpdateEvent(ctx, event); err != nil {
+		if _, _, err := store.UpdateEvent(ctx, event); err != nil {
 			t.Fatal(err)
 		}
 		event, err := store.GetEventByEntityCheck(ctx, "entity1", "check1")
@@ -56,7 +56,7 @@ func TestEventStorage(t *testing.T) {
 		assert.Equal(t, len(events), 0)
 		assert.Empty(t, pred.Continue)
 
-		err = s.UpdateEvent(ctx, event)
+		_, _, err = s.UpdateEvent(ctx, event)
 		require.NoError(t, err)
 
 		newEv, err := s.GetEventByEntityCheck(ctx, "entity1", "check1")
@@ -76,13 +76,13 @@ func TestEventStorage(t *testing.T) {
 		// Add an event in the acme namespace
 		event.Entity.Namespace = "acme"
 		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
-		err = s.UpdateEvent(ctx, event)
+		_, _, err = s.UpdateEvent(ctx, event)
 		require.NoError(t, err)
 
 		// Add an event in the acme-devel namespace
 		event.Entity.Namespace = "acme-devel"
 		ctx = context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
-		err = s.UpdateEvent(ctx, event)
+		_, _, err = s.UpdateEvent(ctx, event)
 		require.NoError(t, err)
 
 		// Get all events with wildcards
@@ -147,7 +147,7 @@ func TestEventStorage(t *testing.T) {
 
 		// Updating an event in a nonexistent namespace should not work
 		event.Entity.Namespace = "missing"
-		err = s.UpdateEvent(ctx, event)
+		_, _, err = s.UpdateEvent(ctx, event)
 		assert.Error(t, err)
 	})
 }
@@ -159,7 +159,7 @@ func TestDoNotStoreMetrics(t *testing.T) {
 		event.Metrics = &corev2.Metrics{
 			Handlers: []string{"metrix"},
 		}
-		if err := store.UpdateEvent(ctx, event); err != nil {
+		if _, _, err := store.UpdateEvent(ctx, event); err != nil {
 			t.Fatal(err)
 		}
 		if event, err := store.GetEventByEntityCheck(ctx, event.Entity.Name, event.Check.Name); err != nil {
@@ -177,7 +177,7 @@ func TestUpdateEventWithZeroTimestamp_GH2636(t *testing.T) {
 		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 		event.Timestamp = 0
 
-		if err := store.UpdateEvent(ctx, event); err != nil {
+		if _, _, err := store.UpdateEvent(ctx, event); err != nil {
 			t.Fatal(err)
 		}
 
@@ -190,6 +190,112 @@ func TestUpdateEventWithZeroTimestamp_GH2636(t *testing.T) {
 			t.Fatal("expected non-zero timestamp")
 		}
 	})
+}
+
+func TestCheckOccurrences(t *testing.T) {
+	OK := uint32(0)
+	WARN := uint32(1)
+	CRIT := uint32(2)
+
+	// 1. Event with OK Check status - Occurrences: 1, OccurrencesWatermark: 1
+	// 2. Event with OK Check status - Occurrences: 2, OccurrencesWatermark: 2
+	// 3. Event with WARN Check status - Occurrences: 1, OccurrencesWatermark: 1
+	// 4. Event with WARN Check status - Occurrences: 2, OccurrencesWatermark: 2
+	// 5. Event with WARN Check status - Occurrences: 3, OccurrencesWatermark: 3
+	// 6. Event with CRIT Check status - Occurrences: 1, OccurrencesWatermark: 3
+	// 7. Event with CRIT Check status - Occurrences: 2, OccurrencesWatermark: 3
+	// 8. Event with CRIT Check status - Occurrences: 3, OccurrencesWatermark: 3
+	// 9. Event with CRIT Check status - Occurrences: 4, OccurrencesWatermark: 4
+	// 10. Event with OK Check status - Occurrences: 1, OccurrencesWatermark: 4
+	// 11. Event with CRIT Check status - Occurrences: 1, OccurrencesWatermark: 1
+	testCases := []struct {
+		name                         string
+		status                       uint32
+		expectedOccurrences          int64
+		expectedOccurrencesWatermark int64
+	}{
+		{
+			name:                         "OK",
+			status:                       OK,
+			expectedOccurrences:          1,
+			expectedOccurrencesWatermark: 1,
+		},
+		{
+			name:                         "OK -> OK",
+			status:                       OK,
+			expectedOccurrences:          2,
+			expectedOccurrencesWatermark: 2,
+		},
+		{
+			name:                         "OK -> WARN",
+			status:                       WARN,
+			expectedOccurrences:          1,
+			expectedOccurrencesWatermark: 1,
+		},
+		{
+			name:                         "WARN -> WARN",
+			status:                       WARN,
+			expectedOccurrences:          2,
+			expectedOccurrencesWatermark: 2,
+		},
+		{
+			name:                         "WARN -> WARN",
+			status:                       WARN,
+			expectedOccurrences:          3,
+			expectedOccurrencesWatermark: 3,
+		},
+		{
+			name:                         "WARN -> CRIT",
+			status:                       CRIT,
+			expectedOccurrences:          1,
+			expectedOccurrencesWatermark: 3,
+		},
+		{
+			name:                         "CRIT -> CRIT",
+			status:                       CRIT,
+			expectedOccurrences:          2,
+			expectedOccurrencesWatermark: 3,
+		},
+		{
+			name:                         "CRIT -> CRIT",
+			status:                       CRIT,
+			expectedOccurrences:          3,
+			expectedOccurrencesWatermark: 3,
+		},
+		{
+			name:                         "CRIT -> CRIT",
+			status:                       CRIT,
+			expectedOccurrences:          4,
+			expectedOccurrencesWatermark: 4,
+		},
+		{
+			name:                         "CRIT -> OK",
+			status:                       OK,
+			expectedOccurrences:          1,
+			expectedOccurrencesWatermark: 4,
+		},
+		{
+			name:                         "OK -> CRIT",
+			status:                       CRIT,
+			expectedOccurrences:          1,
+			expectedOccurrencesWatermark: 1,
+		},
+	}
+
+	event := corev2.FixtureEvent("entity1", "check1")
+	event.Check.Occurrences = 1
+	event.Check.OccurrencesWatermark = 1
+	event.Check.History = []corev2.CheckHistory{}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			event.Check.Status = tc.status
+			event.Check.History = append(event.Check.History, corev2.CheckHistory{Status: tc.status})
+			updateOccurrences(event.Check)
+			assert.Equal(t, tc.expectedOccurrences, event.Check.Occurrences)
+			assert.Equal(t, tc.expectedOccurrencesWatermark, event.Check.OccurrencesWatermark)
+		})
+	}
 }
 
 func TestGetEventsPagination(t *testing.T) {
@@ -210,14 +316,14 @@ func TestGetEventsPagination(t *testing.T) {
 			event := corev2.FixtureEvent(entityName, checkName)
 			event.Name = fmt.Sprintf("%s/%s", entityName, checkName)
 
-			if err := s.UpdateEvent(context.Background(), event); err != nil {
+			if _, _, err := s.UpdateEvent(context.Background(), event); err != nil {
 				t.Fatal(err)
 			}
 
 			event.Namespace = "testing"
 			event.Entity.Namespace = "testing"
 
-			if err := s.UpdateEvent(context.Background(), event); err != nil {
+			if _, _, err := s.UpdateEvent(context.Background(), event); err != nil {
 				t.Fatal(err)
 			}
 		}
@@ -388,14 +494,14 @@ func TestGetEventsByEntityPagination(t *testing.T) {
 			event := corev2.FixtureEvent("entity1", checkName)
 			event.Name = fmt.Sprintf("entity1/%s", checkName)
 
-			if err := store.UpdateEvent(context.Background(), event); err != nil {
+			if _, _, err := store.UpdateEvent(context.Background(), event); err != nil {
 				t.Fatal(err)
 			}
 
 			event.Namespace = "testing"
 			event.Entity.Namespace = "testing"
 
-			if err := store.UpdateEvent(context.Background(), event); err != nil {
+			if _, _, err := store.UpdateEvent(context.Background(), event); err != nil {
 				t.Fatal(err)
 			}
 		}
