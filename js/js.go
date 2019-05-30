@@ -134,3 +134,50 @@ func Evaluate(expr string, parameters interface{}, assets JavascriptAssets) (boo
 	}
 	return value.ToBoolean()
 }
+
+// EvaluateEntityFilters evaluates a slice of Javascript expressions with parameters
+// applied. The same VM is re-used for each expression evaluation. If scripts
+// is non-nil, then the scripts will be evaluated in the expressions' runtime
+// context before the expressions are evaluated.
+func EvaluateEntityFilters(expressions []string, entities []interface{}) ([]bool, error) {
+	jsvm, err := newOttoVM(nil)
+	if err != nil {
+		return nil, err
+	}
+	if err := jsvm.Set("expressions", expressions); err != nil {
+		return nil, err
+	}
+	if err := jsvm.Set("entities", entities); err != nil {
+		return nil, err
+	}
+	value, err := jsvm.Run(evalEntityFilters)
+	if err != nil {
+		return nil, err
+	}
+	exported, err := value.Export()
+	if err != nil {
+		return nil, err
+	}
+	array, ok := exported.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("VM returned non-slice type %T", exported)
+	}
+	result := make([]bool, len(array))
+	for i := range array {
+		b, ok := array[i].(bool)
+		if !ok {
+			return nil, fmt.Errorf("VM returned non-bool in slice: %v", array[i])
+		}
+		result[i] = b
+	}
+	return result, nil
+}
+
+const evalEntityFilters = `(function () {
+	var result = [];
+	for ( var i = 0; i < expressions.length; i++ ) {
+        var entity = entities[i];
+        result.push(eval(expressions[i]));
+	}
+	return result;
+}())`
