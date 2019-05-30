@@ -138,3 +138,8 @@ func SilencedFields(r Resource) map[string]string {
 		"silenced.subscription":      resource.Subscription,
 	}
 }
+
+// SetNamespace sets the namespace of the resource.
+func (s *Silenced) SetNamespace(namespace string) {
+	s.Namespace = namespace
+}

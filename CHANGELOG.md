@@ -13,6 +13,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - Eventd has been refactored. Users should not perceive any changes, but a
 substantial amount of business logic has been moved into other packages.
+- The `sensuctl create` command now accepts resources without a declared
+namespace. If the namespace is ommitted, the resource will be created in the
+current namespace, or overridden by the `--namespace` flag.
 
 ## [5.9.0] - 2019-05-29
 

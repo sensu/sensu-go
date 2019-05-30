@@ -115,3 +115,8 @@ func EventFilterFields(r Resource) map[string]string {
 		"filter.runtime_assets": strings.Join(resource.RuntimeAssets, ","),
 	}
 }
+
+// SetNamespace sets the namespace of the resource.
+func (f *EventFilter) SetNamespace(namespace string) {
+	f.Namespace = namespace
+}
