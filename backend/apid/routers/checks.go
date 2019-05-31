@@ -10,6 +10,7 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -84,6 +85,10 @@ func (r *ChecksRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	cfg := types.CheckConfig{}
 	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
+	}
+
+	if err := checkMeta(&cfg, mux.Vars(req)); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	err := r.controller.CreateOrReplace(req.Context(), cfg)
