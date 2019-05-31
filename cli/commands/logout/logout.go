@@ -31,7 +31,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "You have been logout")
+			fmt.Fprintln(cmd.OutOrStdout(), "You have been logged out")
 			return nil
 		},
 	}
