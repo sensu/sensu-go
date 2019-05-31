@@ -18,7 +18,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - [Web] Add views for handlers
 
 ### Changed
-- [Web] Updated embedded web assets from `9d91d7f` ... `275386a`
+- [Web] Updated embedded web assets from `9d91d7f` ... `b0c1138`
 - [Web] Implements simpler & more efficient filtering.
 - [GraphQL] fields that previously accepted a JS filter have been deprecated and
   replaced with a simpler syntax.
