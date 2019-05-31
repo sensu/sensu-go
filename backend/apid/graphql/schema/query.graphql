@@ -1,0 +1,60 @@
+"""
+The query root of Sensu's GraphQL interface.
+"""
+type Query {
+  """
+  Current viewer.
+  """
+  viewer: Viewer
+
+  "Namespace fetches the namespace object associated with the given name."
+  namespace(name: String!): Namespace
+
+  """
+  Event fetches the event associated with the given set of arguments.
+  """
+  event(namespace: String!, entity: String!, check: String): Event
+
+  """
+  Entity fetches the entity associated with the given set of arguments.
+  """
+  entity(namespace: String!, name: String!): Entity
+
+  """
+  check fetches the check config associated with the given set of arguments.
+  """
+  check(namespace: String!, name: String!): CheckConfig
+
+  """
+  handler fetch the handler associated with the given set of arguments.
+  """
+  handler(namespace: String!, name: String!): Handler
+
+  """
+  Given a type, field and a namespace returns a set of suggested values.
+  """
+  suggests(
+    namespace: String!,
+    ref: String!,
+    includes: String = "",
+    limit: Int = 10,
+    order: SuggestionOrder = FREQUENCY,
+    # cursor: String,
+  ): SuggestionResultSet
+
+  """
+  Node fetches an object given its ID.
+  """
+  node(
+    "The ID of an object."
+    id: ID!
+  ): Node
+
+  """
+  Node fetches an object given its ID and returns it as wrapped resource.
+  """
+  wrappedNode(
+    "The ID of an object."
+    id: ID!
+  ): JSON
+}
