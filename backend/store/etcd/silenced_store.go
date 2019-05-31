@@ -59,7 +59,7 @@ func (s *Store) GetSilencedEntries(ctx context.Context) ([]*corev2.Silenced, err
 	return silencedArray, nil
 }
 
-// GetSilencedEntriesBySubscription gets all silenced entries that match set of subscriptions.
+// GetSilencedEntriesBySubscription gets all silenced entries that match a set of subscriptions.
 func (s *Store) GetSilencedEntriesBySubscription(ctx context.Context, subscriptions ...string) ([]*corev2.Silenced, error) {
 	if len(subscriptions) == 0 {
 		return nil, errors.New("couldn't get silenced entries: must specify at least one subscription")
