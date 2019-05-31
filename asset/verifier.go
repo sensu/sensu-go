@@ -33,7 +33,7 @@ func (v *sha512Verifier) Verify(rs io.ReadSeeker, desiredSHA string) error {
 	}
 
 	if foundSHA := hex.EncodeToString(h.Sum(nil)); foundSHA != desiredSHA {
-		return fmt.Errorf("sha512:%s does not match specified sha512%s", desiredSHA, foundSHA)
+		return fmt.Errorf("sha512 '%s' does not match specified sha512: '%s'", desiredSHA, foundSHA)
 	}
 
 	return nil

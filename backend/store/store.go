@@ -356,8 +356,10 @@ type EventStore interface {
 	// is nil if none was found.
 	GetEventByEntityCheck(ctx context.Context, entity, check string) (*types.Event, error)
 
-	// UpdateEvent creates or updates a given event.
-	UpdateEvent(ctx context.Context, event *types.Event) error
+	// UpdateEvent creates or updates a given event. It returns the updated
+	// event, which may be the same as the event that was passed in, and the
+	// previous event, if one existed, as well as any error that occurred.
+	UpdateEvent(ctx context.Context, event *types.Event) (old, new *types.Event, err error)
 }
 
 // EventFilterStore provides methods for managing events filters
