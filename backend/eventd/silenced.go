@@ -72,16 +72,19 @@ func handleExpireOnResolveEntries(ctx context.Context, event *types.Event, store
 	if err != nil {
 		return fmt.Errorf("couldn't resolve silences: %s", err)
 	}
-	toDelete := entries[:0]
+	toDelete := []string{}
 	toRetain := []string{}
 	for _, entry := range entries {
 		if entry.ExpireOnResolve {
-			toDelete = append(toDelete, entry)
+			toDelete = append(toDelete, entry.Name)
 		} else {
 			toRetain = append(toRetain, entry.Name)
 		}
 	}
 
+	if err := store.DeleteSilencedEntryByName(ctx, toDelete...); err != nil {
+		return fmt.Errorf("couldn't resolve silences: %s", err)
+	}
 	event.Check.Silenced = toRetain
 
 	return nil
