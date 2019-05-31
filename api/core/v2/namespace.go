@@ -11,6 +11,16 @@ const (
 	NamespaceTypeAll = ""
 )
 
+// StorePath returns the path prefix to namespaces in the store
+func (n *Namespace) StorePath() string {
+	return ""
+}
+
+// URIPath returns the path component of a Namespace URI.
+func (n *Namespace) URIPath() string {
+	return fmt.Sprintf("/api/core/v2/namespaces/%s", url.PathEscape(n.Name))
+}
+
 // Validate returns an error if the namespace does not pass validation tests
 func (n *Namespace) Validate() error {
 	if err := ValidateName(n.Name); err != nil {
@@ -25,11 +35,6 @@ func FixtureNamespace(name string) *Namespace {
 	return &Namespace{
 		Name: name,
 	}
-}
-
-// URIPath returns the path component of a Namespace URI.
-func (n *Namespace) URIPath() string {
-	return fmt.Sprintf("/api/core/v2/namespaces/%s", url.PathEscape(n.Name))
 }
 
 // GetObjectMeta only exists here to fulfil the requirements of Resource

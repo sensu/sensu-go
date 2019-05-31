@@ -4,14 +4,28 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"path"
 	"sort"
 	"strconv"
 	"strings"
 )
 
-// NewSilenced creates a new Silenced entry.
-func NewSilenced(meta ObjectMeta) *Silenced {
-	return &Silenced{ObjectMeta: meta}
+const (
+	// SilencedResource is the name of this resource type
+	SilencedResource = "silenced"
+)
+
+// StorePath returns the path prefix to silenced entries in the store
+func (s *Silenced) StorePath() string {
+	return SilencedResource
+}
+
+// URIPath returns the path component of a silenced entry URI.
+func (s *Silenced) URIPath() string {
+	if s.Name == "" {
+		s.Name, _ = SilencedName(s.Subscription, s.Check)
+	}
+	return path.Join(URLPrefix, "namespaces", url.PathEscape(s.Namespace), SilencedResource, url.PathEscape(s.Name))
 }
 
 // Validate returns an error if the CheckName and Subscription fields are not
@@ -41,6 +55,11 @@ func (s *Silenced) StartSilence(currentTime int64) bool {
 		return true
 	}
 	return currentTime > s.Begin
+}
+
+// NewSilenced creates a new Silenced entry.
+func NewSilenced(meta ObjectMeta) *Silenced {
+	return &Silenced{ObjectMeta: meta}
 }
 
 // FixtureSilenced returns a testing fixutre for a Silenced event struct.
@@ -79,14 +98,6 @@ func SilencedName(subscription, check string) (string, error) {
 		check = "*"
 	}
 	return fmt.Sprintf("%s:%s", subscription, check), nil
-}
-
-// URIPath returns the path component of a Silenced URI.
-func (s *Silenced) URIPath() string {
-	if s.Name == "" {
-		s.Name, _ = SilencedName(s.Subscription, s.Check)
-	}
-	return fmt.Sprintf("/api/core/v2/namespaces/%s/silenced/%s", url.PathEscape(s.Namespace), url.PathEscape(s.Name))
 }
 
 // SortSilencedByPredicate can be used to sort a given collection using a given
