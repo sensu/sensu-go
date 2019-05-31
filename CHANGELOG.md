@@ -7,10 +7,19 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- [Web] Adds ability to delete entities
+
 ### Changed
-- [Web] Updated embedded web assets from `275386a` ... `0e6c347`
+- [Web] Updated embedded web assets from `275386a` ... `b0c1138`
+
 ### Fixed
 - The check state and check total_state_change properties are now more correct.
+- [Web] Unless required- scrollbars on code blocks are hidden.
+- [Web] Ensure that we redirect user to a valid namespace when first signing in.
+- [Web] Correctly display timeout value for handlers.
+- [Web] Avoid exception when parsing non-standard cron statements. (Eg.
+`@every 1h` or `@weekly`)
 
 ### Changed
 - Eventd has been refactored. Users should not perceive any changes, but a
@@ -24,7 +33,7 @@ substantial amount of business logic has been moved into other packages.
 - [Web] Add views for handlers
 
 ### Changed
-- [Web] Updated embedded web assets from `9d91d7f` ... `b0c1138`
+- [Web] Updated embedded web assets from `9d91d7f` ... `275386a`
 - [Web] Implements simpler & more efficient filtering.
 - [GraphQL] fields that previously accepted a JS filter have been deprecated and
   replaced with a simpler syntax.
