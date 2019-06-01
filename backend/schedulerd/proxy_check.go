@@ -17,41 +17,36 @@ import (
 // configured in the proxy request
 func matchEntities(entities []*types.Entity, proxyRequest *types.ProxyRequests) []*types.Entity {
 	matched := []*types.Entity{}
-
-OUTER:
-	for _, entity := range entities {
+	synthesizedEntities := make([]interface{}, 0, len(entities))
+	expressions := make([]string, 0, len(entities))
+	entityMap := make([]int, 0, len(entities))
+	for i, entity := range entities {
 		synth := dynamic.Synthesize(entity)
 		for _, expression := range proxyRequest.EntityAttributes {
-			fields := logrus.Fields{
-				"expression": expression,
-				"entity":     entity.Name,
-				"namespace":  entity.Namespace,
-			}
-			parameters := map[string]interface{}{"entity": synth}
-
-			result, err := js.Evaluate(expression, parameters, nil)
-			if err != nil {
-				// Only report an error if the expression's syntax is invalid
-				switch err.(type) {
-				case js.SyntaxError:
-					logger.WithFields(fields).WithError(err).Error("syntax error")
-				default:
-					logger.WithFields(fields).WithError(err).Debug("skipping expression")
-				}
-				// Skip to the next entity
-				continue OUTER
-			}
-
-			// Check if the expression returned a negative result, and if so, skip to
-			// the next entity
-			if !result {
-				continue OUTER
-			}
-
-			logger.WithFields(fields).Debug("expression matches entity")
+			synthesizedEntities = append(synthesizedEntities, synth)
+			expressions = append(expressions, expression)
+			entityMap = append(entityMap, i)
 		}
+	}
 
-		matched = append(matched, entity)
+	results, err := js.EvaluateEntityFilters(expressions, synthesizedEntities)
+	if err != nil {
+		logger.WithError(err).Error("error matching proxy entities")
+		return nil
+	}
+
+	for i, result := range results {
+		if result.Err != nil {
+			fields := logrus.Fields{
+				"entity":     entities[entityMap[i]].Name,
+				"expression": expressions[i],
+			}
+			logger.WithFields(fields).WithError(result.Err).Debug("skipping expression")
+			continue
+		}
+		if result.Value {
+			matched = append(matched, entities[entityMap[i]])
+		}
 	}
 
 	return matched

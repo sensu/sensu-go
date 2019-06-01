@@ -135,11 +135,17 @@ func Evaluate(expr string, parameters interface{}, assets JavascriptAssets) (boo
 	return value.ToBoolean()
 }
 
+// EntityFilterResult is returned by EvaluateEntityFilters
+type EntityFilterResult struct {
+	Value bool
+	Err   error
+}
+
 // EvaluateEntityFilters evaluates a slice of Javascript expressions with parameters
 // applied. The same VM is re-used for each expression evaluation. If scripts
 // is non-nil, then the scripts will be evaluated in the expressions' runtime
 // context before the expressions are evaluated.
-func EvaluateEntityFilters(expressions []string, entities []interface{}) ([]bool, error) {
+func EvaluateEntityFilters(expressions []string, entities []interface{}) ([]EntityFilterResult, error) {
 	jsvm, err := newOttoVM(nil)
 	if err != nil {
 		return nil, err
@@ -158,26 +164,46 @@ func EvaluateEntityFilters(expressions []string, entities []interface{}) ([]bool
 	if err != nil {
 		return nil, err
 	}
-	array, ok := exported.([]interface{})
+	jsResult, ok := exported.(map[string]interface{})
 	if !ok {
-		return nil, fmt.Errorf("VM returned non-slice type %T", exported)
+		return nil, fmt.Errorf("VM returned non-[]bool type %T", exported)
 	}
-	result := make([]bool, len(array))
-	for i := range array {
-		b, ok := array[i].(bool)
-		if !ok {
-			return nil, fmt.Errorf("VM returned non-bool in slice: %v", array[i])
+	if len(jsResult) != 2 {
+		return nil, fmt.Errorf("VM returned unexpectedly sized jsResult (got %d, want 2)", len(jsResult))
+	}
+	results := make([]EntityFilterResult, 0, len(expressions))
+	bools, ok := jsResult["results"].([]bool)
+	if !ok {
+		return nil, fmt.Errorf("VM returned incorrect bools: %v", jsResult["results"])
+	}
+	errs, ok := jsResult["errors"].([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("VM returned incorrect srings: %v", jsResult["errors"])
+	}
+	for i := range bools {
+		var result EntityFilterResult
+		result.Value = bools[i]
+		if errs[i] != nil {
+			result.Err = fmt.Errorf("error evaluating event filter: %v", errs[i])
 		}
-		result[i] = b
+		results = append(results, result)
 	}
-	return result, nil
+	return results, nil
 }
 
 const evalEntityFilters = `(function () {
-	var result = [];
+	var results = [];
+	var errors = [];
 	for ( var i = 0; i < expressions.length; i++ ) {
         var entity = entities[i];
-        result.push(eval(expressions[i]));
+        try {
+			var b = eval(expressions[i]);
+			results.push(b);
+			errors.push(undefined);
+		} catch (error) {
+			results.push(false);
+			errors.push(error.toString());
+		}
 	}
-	return result;
+	return {"results": results, "errors": errors};
 }())`
