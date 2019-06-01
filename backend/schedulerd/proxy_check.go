@@ -10,42 +10,32 @@ import (
 	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/dynamic"
-	"github.com/sirupsen/logrus"
 )
 
 // matchEntities matches the provided list of entities to the entity attributes
 // configured in the proxy request
 func matchEntities(entities []*types.Entity, proxyRequest *types.ProxyRequests) []*types.Entity {
-	matched := []*types.Entity{}
+	matched := make([]*types.Entity, 0, len(entities))
 	synthesizedEntities := make([]interface{}, 0, len(entities))
-	expressions := make([]string, 0, len(entities))
-	entityMap := make([]int, 0, len(entities))
-	for i, entity := range entities {
+	for _, entity := range entities {
 		synth := dynamic.Synthesize(entity)
-		for _, expression := range proxyRequest.EntityAttributes {
-			synthesizedEntities = append(synthesizedEntities, synth)
-			expressions = append(expressions, expression)
-			entityMap = append(entityMap, i)
-		}
+		synthesizedEntities = append(synthesizedEntities, synth)
 	}
 
-	results, err := js.EvaluateEntityFilters(expressions, synthesizedEntities)
+	results, err := js.MatchEntities(proxyRequest.EntityAttributes, synthesizedEntities)
 	if err != nil {
-		logger.WithError(err).Error("error matching proxy entities")
+		logger.Error(fmt.Errorf("error evaluating proxy entities: %s", err))
+		return nil
+	}
+
+	if got, want := len(results), len(entities); got != want {
+		logger.Error(fmt.Errorf("mismatched result and entity lengths: (%d != %d)", got, want))
 		return nil
 	}
 
 	for i, result := range results {
-		if result.Err != nil {
-			fields := logrus.Fields{
-				"entity":     entities[entityMap[i]].Name,
-				"expression": expressions[i],
-			}
-			logger.WithFields(fields).WithError(result.Err).Debug("skipping expression")
-			continue
-		}
-		if result.Value {
-			matched = append(matched, entities[entityMap[i]])
+		if result {
+			matched = append(matched, entities[i])
 		}
 	}
 

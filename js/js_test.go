@@ -8,37 +8,24 @@ import (
 	"github.com/sensu/sensu-go/types/dynamic"
 )
 
-func TestEvaluateEntityFilters(t *testing.T) {
+func BenchmarkMatchEntities1000(b *testing.B) {
 	entity := dynamic.Synthesize(corev2.FixtureEntity("foo"))
-	expression := "entity.system.arch == 'amd64'"
-	entities := []interface{}{entity}
-	expressions := []string{expression}
+	// non-matching expression to avoid short-circuiting behaviour
+	expression := "entity.system.arch == 'amd65'"
 
-	results, err := js.EvaluateEntityFilters(expressions, entities)
-	if err != nil {
-		t.Fatal(err)
-	}
+	entities := make([]interface{}, 100)
+	expressions := make([]string, 10)
 
-	if got, want := len(results), 1; got != want {
-		t.Fatalf("wrong number of results: got %d, want %d", got, want)
-	}
-}
-
-func BenchmarkEvaluateEntityFilters1000(b *testing.B) {
-	entity := dynamic.Synthesize(corev2.FixtureEntity("foo"))
-	expression := "entity.system.arch == 'amd64'"
-
-	entities := make([]interface{}, 1000)
-	expressions := make([]string, 1000)
-
-	for i := 0; i < 1000; i++ {
+	for i := range entities {
 		entities[i] = entity
+	}
+	for i := range expressions {
 		expressions[i] = expression
 	}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, _ = js.EvaluateEntityFilters(expressions, entities)
+		_, _ = js.MatchEntities(expressions, entities)
 	}
 }
 

@@ -8,7 +8,12 @@ import (
 	time "github.com/echlebek/timeproxy"
 	"github.com/robertkrimen/otto"
 	"github.com/robertkrimen/otto/parser"
+	"github.com/sirupsen/logrus"
 )
+
+var logger = logrus.WithFields(logrus.Fields{
+	"component": "filtering",
+})
 
 var ottoCache *vmCache
 var ottoOnce sync.Once
@@ -141,69 +146,55 @@ type EntityFilterResult struct {
 	Err   error
 }
 
-// EvaluateEntityFilters evaluates a slice of Javascript expressions with parameters
-// applied. The same VM is re-used for each expression evaluation. If scripts
-// is non-nil, then the scripts will be evaluated in the expressions' runtime
-// context before the expressions are evaluated.
-func EvaluateEntityFilters(expressions []string, entities []interface{}) ([]EntityFilterResult, error) {
+// MatchEntities compiles the expressions supplied, and applies each
+// one of them to each entity supplied. On the first match, success is recorded
+// and the evaluator moves on to the next entity. A slice of bools is returned
+// that is the same length as the slice of entities supplied, indicating
+// match success or failure.
+//
+// Errors are reported by logging only, with the log level determined by the
+// severity of the error. Syntax and type errors are reported at error level,
+// while attribute lookup errors are reported at debug level.
+//
+// If the function cannot set up a javascript VM, or has issues setting vars,
+// then the function returns a nil slice and a non-nil error.
+func MatchEntities(expressions []string, entities []interface{}) ([]bool, error) {
 	jsvm, err := newOttoVM(nil)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error evaluating entity filters: %s", err)
 	}
-	if err := jsvm.Set("expressions", expressions); err != nil {
-		return nil, err
-	}
-	if err := jsvm.Set("entities", entities); err != nil {
-		return nil, err
-	}
-	value, err := jsvm.Run(evalEntityFilters)
-	if err != nil {
-		return nil, err
-	}
-	exported, err := value.Export()
-	if err != nil {
-		return nil, err
-	}
-	jsResult, ok := exported.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("VM returned non-[]bool type %T", exported)
-	}
-	if len(jsResult) != 2 {
-		return nil, fmt.Errorf("VM returned unexpectedly sized jsResult (got %d, want 2)", len(jsResult))
-	}
-	results := make([]EntityFilterResult, 0, len(expressions))
-	bools, ok := jsResult["results"].([]bool)
-	if !ok {
-		return nil, fmt.Errorf("VM returned incorrect bools: %v", jsResult["results"])
-	}
-	errs, ok := jsResult["errors"].([]interface{})
-	if !ok {
-		return nil, fmt.Errorf("VM returned incorrect srings: %v", jsResult["errors"])
-	}
-	for i := range bools {
-		var result EntityFilterResult
-		result.Value = bools[i]
-		if errs[i] != nil {
-			result.Err = fmt.Errorf("error evaluating event filter: %v", errs[i])
+	scripts := make([]*otto.Script, 0, len(expressions))
+	for _, expr := range expressions {
+		script, err := jsvm.Compile("", expr)
+		if err != nil {
+			logger.WithError(err).Errorf("syntax error in script (%s)", expr)
+			continue
 		}
-		results = append(results, result)
+		scripts = append(scripts, script)
+	}
+	results := make([]bool, 0, len(entities))
+	for _, entity := range entities {
+		if err := jsvm.Set("entity", entity); err != nil {
+			return nil, fmt.Errorf("error evaluating entity filters: %s", err)
+		}
+		var filtered bool
+		for _, script := range scripts {
+			result, err := jsvm.Run(script)
+			if err != nil {
+				logger.WithError(err).Debugf("error executing entity filter (%s)", script.String())
+				continue
+			}
+			b, err := result.ToBoolean()
+			if err != nil {
+				logger.WithError(err).Errorf("entity filter did not return bool (%s)", script.String())
+				continue
+			}
+			if b {
+				filtered = true
+				break
+			}
+		}
+		results = append(results, filtered)
 	}
 	return results, nil
 }
-
-const evalEntityFilters = `(function () {
-	var results = [];
-	var errors = [];
-	for ( var i = 0; i < expressions.length; i++ ) {
-        var entity = entities[i];
-        try {
-			var b = eval(expressions[i]);
-			results.push(b);
-			errors.push(undefined);
-		} catch (error) {
-			results.push(false);
-			errors.push(error.toString());
-		}
-	}
-	return {"results": results, "errors": errors};
-}())`
