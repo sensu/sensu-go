@@ -22,7 +22,7 @@ import (
 
 const packageURL = "https://s3.us-west-2.amazonaws.com/sensu-ci-web-builds"
 const packagePathPrefix = "oss/webapp"
-const packageFilename = "package.tgz"
+const packageFilename = "dashboard.tgz"
 const packageBranch = "master"
 
 const filenamePrefix = "assets_"
@@ -162,7 +162,7 @@ func extractPackage(path string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	mustRunCmd("tar", "-zxf", path, "-C", tmpDir, "--strip-components=1")
+	mustRunCmd("tar", "-zxpf", path, "-C", tmpDir, "--strip-components=1")
 	return tmpDir, nil
 }
 
