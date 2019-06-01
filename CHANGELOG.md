@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - The check state and check total_state_change properties are now more correct.
+- Scheduling proxy checks now consumes far fewer CPU resources.
 
 ### Changed
 - Eventd has been refactored. Users should not perceive any changes, but a
