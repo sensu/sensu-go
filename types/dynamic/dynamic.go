@@ -5,7 +5,19 @@ import (
 	"fmt"
 	"reflect"
 	"strings"
+
+	lru "github.com/hashicorp/golang-lru"
 )
+
+// synthesizeCacheSize is the maximum number of objects to cache in the
+// Synthesize LRU cache. Since Synthesize is expensive to call, and tends
+// to be called on the same objects many times, it's worth caching items.
+//
+// Since the cache considers access frequency in addition to recency,
+// setting larger cache sizes produces diminishing returns.
+const synthesizeCacheSize = 1000
+
+var synthCache, _ = lru.New2Q(synthesizeCacheSize)
 
 // SynthesizeExtras is a type that wants to pass extra values to the Synthesize
 // function. The key-value pairs will be included as-is without inspection by
@@ -110,7 +122,16 @@ func reflectMapToMapParameters(v reflect.Value) interface{} {
 //
 // Synthesize will use the json tag from struct fields to name map
 // keys, if the json tag is present.
-func Synthesize(v interface{}) interface{} {
+func Synthesize(v interface{}) (result interface{}) {
+	cached, ok := synthCache.Get(v)
+	if ok {
+		return cached
+	}
+	defer func() {
+		if result != nil {
+			synthCache.Add(v, result)
+		}
+	}()
 	value := reflect.Indirect(reflect.ValueOf(v))
 	switch value.Kind() {
 	case reflect.Struct:
