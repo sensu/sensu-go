@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	time "github.com/echlebek/timeproxy"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -141,4 +142,27 @@ func TestSubstituteProxyEntityTokens(t *testing.T) {
 		assert.FailNow(err.Error())
 	}
 	assert.Equal(entity.Name, substitutedProxyEntityTokens.ProxyEntityName)
+}
+
+func BenchmarkMatchEntities1000(b *testing.B) {
+	entity := corev2.FixtureEntity("foo")
+	// non-matching expression to avoid short-circuiting behaviour
+	expression := "entity.system.arch == 'amd65'"
+
+	entities := make([]*corev2.Entity, 100)
+	expressions := make([]string, 10)
+
+	for i := range entities {
+		entities[i] = entity
+	}
+	for i := range expressions {
+		expressions[i] = expression
+	}
+
+	req := &corev2.ProxyRequests{EntityAttributes: expressions}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		_ = matchEntities(entities, req)
+	}
 }
