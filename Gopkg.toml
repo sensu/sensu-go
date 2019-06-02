@@ -213,7 +213,3 @@ required = [
 [[constraint]]
   branch = "master"
   name = "golang.org/x/sys"
-
-[[constraint]]
-  name = "github.com/hashicorp/golang-lru"
-  version = "0.5.1"

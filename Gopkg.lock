@@ -433,17 +433,6 @@
   revision = "80a92cca79a8041496ccc9dd773fcb52a57ec6f9"
 
 [[projects]]
-  digest = "1:d15ee511aa0f56baacc1eb4c6b922fa1c03b38413b6be18166b996d82a0156ea"
-  name = "github.com/hashicorp/golang-lru"
-  packages = [
-    ".",
-    "simplelru",
-  ]
-  pruneopts = "UT"
-  revision = "7087cb70de9f7a8bc0a10c375cb0d2280a8edf9c"
-  version = "v0.5.1"
-
-[[projects]]
   branch = "master"
   digest = "1:b8017e2bad40823cef7b1dc42bebef46d473b359ef9e5751dcd24f42e512498c"
   name = "github.com/hashicorp/hcl"
@@ -1162,7 +1151,6 @@
     "github.com/coreos/etcd/pkg/transport",
     "github.com/coreos/etcd/pkg/types",
     "github.com/coreos/etcd/store",
-    "github.com/coreos/etcd/version",
     "github.com/coreos/pkg/capnslog",
     "github.com/dave/jennifer/jen",
     "github.com/dgrijalva/jwt-go",
@@ -1174,7 +1162,6 @@
     "github.com/go-resty/resty",
     "github.com/gogo/protobuf/gogoproto",
     "github.com/gogo/protobuf/jsonpb",
-    "github.com/gogo/protobuf/proto",
     "github.com/golang/protobuf/proto",
     "github.com/google/uuid",
     "github.com/gorilla/mux",
@@ -1186,7 +1173,6 @@
     "github.com/graphql-go/graphql/language/location",
     "github.com/graphql-go/graphql/language/parser",
     "github.com/graphql-go/graphql/testutil",
-    "github.com/hashicorp/golang-lru",
     "github.com/json-iterator/go",
     "github.com/mgutz/ansi",
     "github.com/mholt/archiver",
