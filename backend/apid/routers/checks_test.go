@@ -9,10 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/sensu/sensu-go/backend/store"
-
 	"github.com/gorilla/mux"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/testing/mockqueue"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -23,24 +20,6 @@ import (
 
 type mockCheckController struct {
 	mock.Mock
-}
-
-func (m *mockCheckController) Create(ctx context.Context, check types.CheckConfig) error {
-	return m.Called(ctx, check).Error(0)
-}
-
-func (m *mockCheckController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
-	args := m.Called(ctx, pred)
-	return args.Get(0).([]corev2.Resource), args.Error(1)
-}
-
-func (m *mockCheckController) Find(ctx context.Context, check string) (*types.CheckConfig, error) {
-	args := m.Called(ctx, check)
-	return args.Get(0).(*types.CheckConfig), args.Error(1)
-}
-
-func (m *mockCheckController) Destroy(ctx context.Context, check string) error {
-	return m.Called(ctx, check).Error(0)
 }
 
 func (m *mockCheckController) AddCheckHook(ctx context.Context, check string, hook types.HookList) error {
@@ -64,120 +43,6 @@ func newCheckTest(t *testing.T) (*mockCheckController, *httptest.Server) {
 
 	return controller, httptest.NewServer(router)
 }
-
-// func TestPostCheck(t *testing.T) {
-// 	controller, server := newCheckTest(t)
-// 	defer server.Close()
-
-// 	client := new(http.Client)
-
-// 	check := types.FixtureCheckConfig("check1")
-// 	controller.mockResourceController.On("CreateResource", mock.Anything, mock.Anything).Return(nil)
-// 	b, _ := json.Marshal(check)
-// 	body := bytes.NewReader(b)
-// 	endpoint := "/namespaces/default/checks"
-// 	req := newRequest(t, http.MethodPost, server.URL+endpoint, body)
-
-// 	resp, err := client.Do(req)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-
-// 	if resp.StatusCode >= 400 {
-// 		body, _ := ioutil.ReadAll(resp.Body)
-// 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
-// 	}
-
-// 	controller.mockResourceController.AssertCalled(t, "CreateResource", mock.Anything, mock.Anything)
-// }
-
-// func TestPutCheck(t *testing.T) {
-// 	controller, server := newCheckTest(t)
-// 	defer server.Close()
-
-// 	client := new(http.Client)
-// 	controller.mockResourceController.On("CreateOrUpdateResource", mock.Anything, mock.Anything).Return(nil)
-// 	b, _ := json.Marshal(types.FixtureCheckConfig("check1"))
-// 	body := bytes.NewReader(b)
-// 	endpoint := "/namespaces/default/checks/check1"
-// 	req := newRequest(t, http.MethodPut, server.URL+endpoint, body)
-
-// 	resp, err := client.Do(req)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-
-// 	if resp.StatusCode >= 400 {
-// 		body, _ := ioutil.ReadAll(resp.Body)
-// 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
-// 	}
-
-// 	controller.mockResourceController.AssertCalled(t, "CreateOrUpdateResource", mock.Anything, mock.Anything)
-// }
-
-// func TestGetCheck(t *testing.T) {
-// 	controller, server := newCheckTest(t)
-// 	defer server.Close()
-
-// 	client := new(http.Client)
-
-// 	controller.mockResourceController.On("GetResource", mock.Anything, "check1", mock.Anything).Return(nil)
-// 	endpoint := "/namespaces/default/checks/check1"
-// 	req := newRequest(t, http.MethodGet, server.URL+endpoint, nil)
-
-// 	resp, err := client.Do(req)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-
-// 	if resp.StatusCode >= 400 {
-// 		body, _ := ioutil.ReadAll(resp.Body)
-// 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
-// 	}
-// }
-
-// func TestDeleteCheck(t *testing.T) {
-// 	controller, server := newCheckTest(t)
-// 	defer server.Close()
-
-// 	client := new(http.Client)
-
-// 	controller.mockResourceController.On("DeleteResource", mock.Anything, "check1").Return(nil)
-// 	endpoint := "/namespaces/default/checks/check1"
-// 	req := newRequest(t, http.MethodDelete, server.URL+endpoint, nil)
-
-// 	resp, err := client.Do(req)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-
-// 	if resp.StatusCode >= 400 {
-// 		body, _ := ioutil.ReadAll(resp.Body)
-// 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
-// 	}
-// }
-
-// func TestListChecks(t *testing.T) {
-// 	controller, server := newCheckTest(t)
-// 	defer server.Close()
-
-// 	client := new(http.Client)
-
-// 	fixtures := []corev2.Resource{types.FixtureCheckConfig("check1")}
-// 	controller.On("List", mock.Anything, &store.SelectionPredicate{}).Return(fixtures, nil)
-// 	endpoint := "/namespaces/default/checks"
-// 	req := newRequest(t, http.MethodGet, server.URL+endpoint, nil)
-
-// 	resp, err := client.Do(req)
-// 	if err != nil {
-// 		t.Fatal(err)
-// 	}
-
-// 	if resp.StatusCode >= 400 {
-// 		body, _ := ioutil.ReadAll(resp.Body)
-// 		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
-// 	}
-// }
 
 func TestPutCheckHook(t *testing.T) {
 	controller, server := newCheckTest(t)
