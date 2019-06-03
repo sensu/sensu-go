@@ -27,6 +27,10 @@ func (r *mockResource) GetObjectMeta() corev2.ObjectMeta {
 	return r.ObjectMeta
 }
 
+func (r *mockResource) StorePath() string {
+	return ""
+}
+
 func (r *mockResource) URIPath() string {
 	return ""
 }

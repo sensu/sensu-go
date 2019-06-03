@@ -30,7 +30,7 @@ func NewTessenRouter(ctrl TessenController) *TessenRouter {
 func (r *TessenRouter) Mount(parent *mux.Router) {
 	routes := ResourceRoute{
 		Router:     parent,
-		PathPrefix: corev2.TessenPath,
+		PathPrefix: "/" + corev2.TessenResource,
 	}
 
 	routes.Path("", r.get).Methods(http.MethodGet)

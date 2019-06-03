@@ -4,6 +4,7 @@ import (
 	"context"
 	"path"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -85,4 +86,44 @@ func (b KeyBuilder) BuildPrefix(keys ...string) string {
 	}
 
 	return out
+}
+
+// KeyFromResource determines the path to a resource in the store using the
+// resource itself
+func KeyFromResource(r corev2.Resource) string {
+	kind := r.StorePath()
+	namespace := r.GetObjectMeta().Namespace
+	name := r.GetObjectMeta().Name
+	key := path.Join(Root, kind, namespace, name)
+
+	// In order to not inadvertently build a key that could list across
+	// namespaces, we need to make sure that we terminate the key with the key
+	// separator when a namespace is involved without a specific object name
+	// within it.
+	if namespace != "" {
+		if len(name) == 0 {
+			key += keySeparator
+		}
+	}
+
+	return key
+}
+
+// KeyFromArgs determines the path to a resource in the store using the provided
+// arguments
+func KeyFromArgs(ctx context.Context, kind, name string) string {
+	namespace := NewNamespaceFromContext(ctx)
+	key := path.Join(Root, kind, namespace, name)
+
+	// In order to not inadvertently build a key that could list across
+	// namespaces, we need to make sure that we terminate the key with the key
+	// separator when a namespace is involved without a specific object name
+	// within it.
+	if namespace != "" {
+		if len(name) == 0 {
+			key += keySeparator
+		}
+	}
+
+	return key
 }

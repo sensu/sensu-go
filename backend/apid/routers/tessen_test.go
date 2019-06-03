@@ -45,7 +45,7 @@ func TestPutTessen(t *testing.T) {
 	controller.On("CreateOrUpdate", mock.Anything, mock.Anything).Return(nil)
 	b, _ := json.Marshal(corev2.DefaultTessenConfig())
 	body := bytes.NewReader(b)
-	endpoint := corev2.TessenPath
+	endpoint := "/" + corev2.TessenResource
 	req := newRequest(t, http.MethodPut, server.URL+endpoint, body)
 
 	resp, err := client.Do(req)
@@ -69,7 +69,7 @@ func TestGetTessen(t *testing.T) {
 
 	fixture := corev2.DefaultTessenConfig()
 	controller.On("Get", mock.Anything).Return(fixture, nil)
-	endpoint := corev2.TessenPath
+	endpoint := "/" + corev2.TessenResource
 	req := newRequest(t, http.MethodGet, server.URL+endpoint, nil)
 
 	resp, err := client.Do(req)

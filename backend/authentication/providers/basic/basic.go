@@ -79,6 +79,12 @@ func (p *Provider) Type() string {
 	return Type
 }
 
+// StorePath returns the path prefix to the provider in the store. Not
+// implemented
+func (p *Provider) StorePath() string {
+	return ""
+}
+
 // URIPath returns the path component of the basic provider. Not implemented
 func (p *Provider) URIPath() string {
 	return ""

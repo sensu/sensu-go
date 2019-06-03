@@ -186,6 +186,9 @@ type Store interface {
 	// ExtensionRegistry tracks third-party extensions.
 	ExtensionRegistry
 
+	// ResourceStore ...
+	ResourceStore
+
 	// NewInitializer returns the Initializer interfaces, which provides the
 	// required mechanism to verify if a store is initialized
 	NewInitializer() (Initializer, error)
@@ -453,6 +456,19 @@ type NamespaceStore interface {
 
 	// UpdateNamespace updates an existing namespace.
 	UpdateNamespace(ctx context.Context, org *types.Namespace) error
+}
+
+// ResourceStore ...
+type ResourceStore interface {
+	CreateResource(ctx context.Context, resource corev2.Resource) error
+
+	CreateOrUpdateResource(ctx context.Context, resource corev2.Resource) error
+
+	DeleteResource(ctx context.Context, kind, name string) error
+
+	GetResource(ctx context.Context, name string, resource corev2.Resource) error
+
+	ListResource(ctx context.Context, kind string, resources interface{}, pred *SelectionPredicate) error
 }
 
 // RoleBindingStore provides methods for managing RBAC role bindings

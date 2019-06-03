@@ -5,33 +5,10 @@ import (
 
 	"context"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
 )
-
-// checkConfigUpdateFields whitelists fields allowed to be updated for CheckConfigs
-var checkConfigUpdateFields = []string{
-	"Command",
-	"Handlers",
-	"HighFlapThreshold",
-	"LowFlapThreshold",
-	"Interval",
-	"Publish",
-	"RuntimeAssets",
-	"ProxyEntityName",
-	"Stdin",
-	"Subscriptions",
-	"CheckHooks",
-	"Subdue",
-	"Cron",
-	"Timeout",
-	"Ttl",
-	"ProxyRequests",
-	"OutputMetricFormat",
-	"OutputMetricHandlers",
-}
 
 var (
 	adhocQueueName = "adhocRequest"
@@ -51,22 +28,6 @@ func NewCheckController(store store.CheckConfigStore, getter types.QueueGetter) 
 	}
 }
 
-// List returns resources available to the viewer.
-func (a CheckController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
-	// Fetch from store
-	results, err := a.store.GetCheckConfigs(ctx, pred)
-	if err != nil {
-		return nil, NewError(InternalErr, err)
-	}
-
-	resources := make([]corev2.Resource, len(results))
-	for i, v := range results {
-		resources[i] = corev2.Resource(v)
-	}
-
-	return resources, nil
-}
-
 // Find returns resource associated with given parameters if available to the
 // viewer.
 func (a CheckController) Find(ctx context.Context, name string) (*types.CheckConfig, error) {
@@ -81,67 +42,6 @@ func (a CheckController) Find(ctx context.Context, name string) (*types.CheckCon
 	}
 
 	return result, nil
-}
-
-// Create instantiates, validates and persists new resource if viewer has access.
-func (a CheckController) Create(ctx context.Context, newCheck types.CheckConfig) error {
-	// Adjust context
-	ctx = addOrgEnvToContext(ctx, &newCheck)
-
-	// Check for existing
-	if e, err := a.store.GetCheckConfigByName(ctx, newCheck.Name); err != nil {
-		return NewError(InternalErr, err)
-	} else if e != nil {
-		return NewErrorf(AlreadyExistsErr)
-	}
-
-	// Validate
-	if err := newCheck.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-
-	// Persist
-	if err := a.store.UpdateCheckConfig(ctx, &newCheck); err != nil {
-		return NewError(InternalErr, err)
-	}
-
-	return nil
-}
-
-// CreateOrReplace instatiates and persists new resource if viewer has access.
-func (a CheckController) CreateOrReplace(ctx context.Context, newCheck types.CheckConfig) error {
-	// Adjust context
-	ctx = addOrgEnvToContext(ctx, &newCheck)
-
-	// Validate
-	if err := newCheck.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-
-	// Persist
-	if err := a.store.UpdateCheckConfig(ctx, &newCheck); err != nil {
-		return NewError(InternalErr, err)
-	}
-
-	return nil
-}
-
-// Destroy removes a resource if viewer has access.
-func (a CheckController) Destroy(ctx context.Context, name string) error {
-	// Fetch from store
-	result, serr := a.store.GetCheckConfigByName(ctx, name)
-	if serr != nil {
-		return NewError(InternalErr, serr)
-	} else if result == nil {
-		return NewErrorf(NotFound)
-	}
-
-	// Remove from store
-	if err := a.store.DeleteCheckConfigByName(ctx, result.Name); err != nil {
-		return NewError(InternalErr, err)
-	}
-
-	return nil
 }
 
 // AddCheckHook adds an association between a hook and a check
