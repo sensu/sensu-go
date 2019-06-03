@@ -25,6 +25,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - Eventd has been refactored. Users should not perceive any changes, but a
 substantial amount of business logic has been moved into other packages.
+- Eventd now uses a constant number of requests to etcd when working with
+silenced entries, instead of a number that is proportional to the number of
+subscriptions in a check.
 
 ## [5.9.0] - 2019-05-29
 
