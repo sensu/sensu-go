@@ -15,6 +15,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - The check state and check total_state_change properties are now more correct.
+- Scheduling proxy checks now consumes far fewer CPU resources.
 - [Web] Unless required- scrollbars on code blocks are hidden.
 - [Web] Ensure that we redirect user to a valid namespace when first signing in.
 - [Web] Correctly display timeout value for handlers.
