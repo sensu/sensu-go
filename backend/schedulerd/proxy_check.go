@@ -14,12 +14,11 @@ import (
 
 // matchEntities matches the provided list of entities to the entity attributes
 // configured in the proxy request
-func matchEntities(entities []*types.Entity, proxyRequest *types.ProxyRequests) []*types.Entity {
+func matchEntities(entities []EntityCacheValue, proxyRequest *types.ProxyRequests) []*types.Entity {
 	matched := make([]*types.Entity, 0, len(entities))
 	synthesizedEntities := make([]interface{}, 0, len(entities))
 	for _, entity := range entities {
-		synth := dynamic.Synthesize(entity)
-		synthesizedEntities = append(synthesizedEntities, synth)
+		synthesizedEntities = append(synthesizedEntities, entity.Synth)
 	}
 
 	results, err := js.MatchEntities(proxyRequest.EntityAttributes, synthesizedEntities)
@@ -35,7 +34,7 @@ func matchEntities(entities []*types.Entity, proxyRequest *types.ProxyRequests) 
 
 	for i, result := range results {
 		if result {
-			matched = append(matched, entities[i])
+			matched = append(matched, entities[i].Entity)
 		}
 	}
 

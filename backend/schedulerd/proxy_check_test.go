@@ -77,7 +77,7 @@ func TestMatchEntities(t *testing.T) {
 			p := &types.ProxyRequests{
 				EntityAttributes: tc.entityAttributes,
 			}
-			got := matchEntities(tc.entities, p)
+			got := matchEntities(makeSliceCache(tc.entities), p)
 
 			if len(got) != len(tc.want) {
 				t.Errorf("Expected %d entities, got %d", len(tc.want), len(got))
@@ -160,9 +160,10 @@ func BenchmarkMatchEntities1000(b *testing.B) {
 	}
 
 	req := &corev2.ProxyRequests{EntityAttributes: expressions}
+	slice := makeSliceCache(entities)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = matchEntities(entities, req)
+		_ = matchEntities(slice, req)
 	}
 }
