@@ -2,13 +2,11 @@ package routers
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"path"
 
 	"github.com/gorilla/mux"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 )
 
@@ -220,30 +218,6 @@ func UnmarshalBody(req *http.Request, record interface{}) error {
 		return err
 	}
 	// TODO: Support other types of requests other than JSON?
-
-	return nil
-}
-
-// checkMeta inspects the resource metadata and ensures it matches what was
-// specified in the request URL
-func checkMeta(resource corev2.Resource, vars map[string]string) error {
-	meta := resource.GetObjectMeta()
-
-	if meta.Namespace != vars["namespace"] {
-		return fmt.Errorf(
-			"the namespace of the resource (%s) does not match the namespace on the request (%s)",
-			meta.Namespace,
-			vars["namespace"],
-		)
-	}
-
-	if meta.Name != vars["id"] {
-		return fmt.Errorf(
-			"the name of the resource (%s) does not match the name on the request (%s)",
-			meta.Name,
-			vars["id"],
-		)
-	}
 
 	return nil
 }

@@ -17,7 +17,6 @@ import (
 
 // CheckController represents the controller needs of the ChecksRouter.
 type CheckController interface {
-	List(context.Context, *store.SelectionPredicate) ([]corev2.Resource, error)
 	AddCheckHook(context.Context, string, types.HookList) error
 	RemoveCheckHook(context.Context, string, string, string) error
 	QueueAdhocRequest(context.Context, string, *types.AdhocRequest) error

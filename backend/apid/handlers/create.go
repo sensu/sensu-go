@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"reflect"
 
+	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
@@ -16,6 +17,10 @@ func (h Handlers) CreateResource(r *http.Request) (interface{}, error) {
 	if err := json.NewDecoder(r.Body).Decode(payload.Interface()); err != nil {
 		logger.WithError(err).Error("unable to read request body")
 		return nil, err
+	}
+
+	if err := checkMeta(payload.Interface(), mux.Vars(r)); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	resource, ok := payload.Interface().(corev2.Resource)
