@@ -285,6 +285,7 @@ var deleteTestCases = func(pathPrefix, kind string) []routerTestCase {
 		deleteResourceInvalidPathTestCase(pathPrefix, kind),
 		deleteResourceNotFoundTestCase(pathPrefix, kind),
 		deleteResourceStoreErrTestCase(pathPrefix, kind),
+		deleteResourceSuccessTestCase(pathPrefix, kind),
 	}
 }
 
@@ -329,7 +330,7 @@ var deleteResourceStoreErrTestCase = func(pathPrefix, kind string) routerTestCas
 
 var deleteResourceSuccessTestCase = func(pathPrefix, kind string) routerTestCase {
 	return routerTestCase{
-		name:   "it returns 200 if the resource was delete",
+		name:   "it returns 204 if the resource was delete",
 		method: http.MethodDelete,
 		path:   "/namespaces/default/" + pathPrefix + "/foo",
 		body:   []byte(`{"metadata": {"namespace":"default","name":"foo"}}`),
@@ -338,6 +339,6 @@ var deleteResourceSuccessTestCase = func(pathPrefix, kind string) routerTestCase
 				Return(nil).
 				Once()
 		},
-		wantStatusCode: http.StatusOK,
+		wantStatusCode: http.StatusNoContent,
 	}
 }
