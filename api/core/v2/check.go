@@ -480,3 +480,13 @@ func CheckConfigFields(r Resource) map[string]string {
 		"check.subscriptions":  strings.Join(resource.Subscriptions, ","),
 	}
 }
+
+// SetNamespace sets the namespace of the resource.
+func (c *CheckConfig) SetNamespace(namespace string) {
+	c.Namespace = namespace
+}
+
+// SetNamespace sets the namespace of the resource.
+func (c *Check) SetNamespace(namespace string) {
+	c.Namespace = namespace
+}

@@ -21,4 +21,6 @@ type AuthProvider interface {
 	URIPath() string
 	// Validate checks if the fields in the provider are valid
 	Validate() error
+	// SetNamespace sets the namespace of the resource.
+	SetNamespace(string)
 }

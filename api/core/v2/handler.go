@@ -168,3 +168,8 @@ func HandlerFields(r Resource) map[string]string {
 		"handler.type":      resource.Type,
 	}
 }
+
+// SetNamespace sets the namespace of the resource.
+func (h *Handler) SetNamespace(namespace string) {
+	h.Namespace = namespace
+}

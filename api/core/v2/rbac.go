@@ -296,3 +296,23 @@ func RoleBindingFields(r Resource) map[string]string {
 		"rolebinding.role_ref.type": resource.RoleRef.Type,
 	}
 }
+
+// SetNamespace sets the namespace of the resource.
+func (r *ClusterRole) SetNamespace(namespace string) {
+	return
+}
+
+// SetNamespace sets the namespace of the resource.
+func (b *ClusterRoleBinding) SetNamespace(namespace string) {
+	return
+}
+
+// SetNamespace sets the namespace of the resource.
+func (r *Role) SetNamespace(namespace string) {
+	r.Namespace = namespace
+}
+
+// SetNamespace sets the namespace of the resource.
+func (b *RoleBinding) SetNamespace(namespace string) {
+	b.Namespace = namespace
+}

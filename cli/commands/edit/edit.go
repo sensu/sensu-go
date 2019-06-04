@@ -96,7 +96,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			if len(resources) == 0 {
 				return errors.New("no resources were parsed")
 			}
-			if err := create.ValidateResources(resources); err != nil {
+			if err := create.ValidateResources(resources, cli.Config.Namespace()); err != nil {
 				return err
 			}
 			if err := create.PutResources(cli.Client, resources); err != nil {

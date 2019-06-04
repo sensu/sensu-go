@@ -70,3 +70,8 @@ func MutatorFields(r Resource) map[string]string {
 		"mutator.runtime_assets": strings.Join(resource.RuntimeAssets, ","),
 	}
 }
+
+// SetNamespace sets the namespace of the resource.
+func (m *Mutator) SetNamespace(namespace string) {
+	m.Namespace = namespace
+}
