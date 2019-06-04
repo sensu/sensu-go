@@ -1,8 +1,10 @@
 package routers
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/url"
+	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
@@ -341,4 +343,13 @@ var deleteResourceSuccessTestCase = func(pathPrefix, kind string) routerTestCase
 		},
 		wantStatusCode: http.StatusNoContent,
 	}
+}
+
+func marshal(t *testing.T, v interface{}) []byte {
+	t.Helper()
+	bytes, err := json.Marshal(v)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return bytes
 }
