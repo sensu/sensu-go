@@ -21,7 +21,7 @@ var (
 // Executor executes scheduled or adhoc checks
 type Executor interface {
 	processCheck(ctx context.Context, check *types.CheckConfig) error
-	getEntities(ctx context.Context) ([]*types.Entity, error)
+	getEntities(ctx context.Context) ([]EntityCacheValue, error)
 	publishProxyCheckRequests(entities []*types.Entity, check *types.CheckConfig) error
 	execute(check *types.CheckConfig) error
 	buildRequest(check *types.CheckConfig) (*types.CheckRequest, error)
@@ -46,7 +46,7 @@ func (c *CheckExecutor) processCheck(ctx context.Context, check *types.CheckConf
 	return processCheck(ctx, c, check)
 }
 
-func (c *CheckExecutor) getEntities(ctx context.Context) ([]*types.Entity, error) {
+func (c *CheckExecutor) getEntities(ctx context.Context) ([]EntityCacheValue, error) {
 	return c.entityCache.GetEntities(store.NewNamespaceFromContext(ctx)), nil
 }
 
@@ -201,7 +201,7 @@ func (a *AdhocRequestExecutor) processCheck(ctx context.Context, check *types.Ch
 	return processCheck(ctx, a, check)
 }
 
-func (a *AdhocRequestExecutor) getEntities(ctx context.Context) ([]*types.Entity, error) {
+func (a *AdhocRequestExecutor) getEntities(ctx context.Context) ([]EntityCacheValue, error) {
 	return a.entityCache.GetEntities(store.NewNamespaceFromContext(ctx)), nil
 }
 

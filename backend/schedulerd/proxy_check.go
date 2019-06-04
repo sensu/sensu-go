@@ -10,48 +10,32 @@ import (
 	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/dynamic"
-	"github.com/sirupsen/logrus"
 )
 
 // matchEntities matches the provided list of entities to the entity attributes
 // configured in the proxy request
-func matchEntities(entities []*types.Entity, proxyRequest *types.ProxyRequests) []*types.Entity {
-	matched := []*types.Entity{}
-
-OUTER:
+func matchEntities(entities []EntityCacheValue, proxyRequest *types.ProxyRequests) []*types.Entity {
+	matched := make([]*types.Entity, 0, len(entities))
+	synthesizedEntities := make([]interface{}, 0, len(entities))
 	for _, entity := range entities {
-		synth := dynamic.Synthesize(entity)
-		for _, expression := range proxyRequest.EntityAttributes {
-			fields := logrus.Fields{
-				"expression": expression,
-				"entity":     entity.Name,
-				"namespace":  entity.Namespace,
-			}
-			parameters := map[string]interface{}{"entity": synth}
+		synthesizedEntities = append(synthesizedEntities, entity.Synth)
+	}
 
-			result, err := js.Evaluate(expression, parameters, nil)
-			if err != nil {
-				// Only report an error if the expression's syntax is invalid
-				switch err.(type) {
-				case js.SyntaxError:
-					logger.WithFields(fields).WithError(err).Error("syntax error")
-				default:
-					logger.WithFields(fields).WithError(err).Debug("skipping expression")
-				}
-				// Skip to the next entity
-				continue OUTER
-			}
+	results, err := js.MatchEntities(proxyRequest.EntityAttributes, synthesizedEntities)
+	if err != nil {
+		logger.Error(fmt.Errorf("error evaluating proxy entities: %s", err))
+		return nil
+	}
 
-			// Check if the expression returned a negative result, and if so, skip to
-			// the next entity
-			if !result {
-				continue OUTER
-			}
+	if got, want := len(results), len(entities); got != want {
+		logger.Error(fmt.Errorf("mismatched result and entity lengths: (%d != %d)", got, want))
+		return nil
+	}
 
-			logger.WithFields(fields).Debug("expression matches entity")
+	for i, result := range results {
+		if result {
+			matched = append(matched, entities[i].Entity)
 		}
-
-		matched = append(matched, entity)
 	}
 
 	return matched
