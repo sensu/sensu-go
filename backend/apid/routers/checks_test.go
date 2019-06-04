@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/testing/mockqueue"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -119,5 +120,55 @@ func TestHttpApiChecksAdhocRequest(t *testing.T) {
 
 	if status := rr.Code; status != http.StatusAccepted {
 		t.Errorf("handler returned incorrect status code: %v want %v", status, http.StatusAccepted)
+	}
+}
+
+func TestChecksRouter(t *testing.T) {
+	// Setup the router & the HTTP server
+	controller := &mockCheckController{}
+	s := &mockstore.MockStore{}
+	router := NewChecksRouter(controller, s)
+	parentRouter := mux.NewRouter()
+	router.Mount(parentRouter)
+	server := httptest.NewServer(parentRouter)
+	defer server.Close()
+
+	pathPrefix := "checks"
+	kind := "*v2.CheckConfig"
+	check := corev2.FixtureCheckConfig("foo")
+
+	tests := []routerTestCase{}
+	tests = append(tests, getTestCases(pathPrefix, kind, check)...)
+	tests = append(tests, listTestCases(pathPrefix, kind, []corev2.Resource{check})...)
+	tests = append(tests, createTestCases(pathPrefix, kind)...)
+	tests = append(tests, updateTestCases(pathPrefix, kind)...)
+	tests = append(tests, deleteTestCases(pathPrefix, kind)...)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.storeFunc != nil {
+				tt.storeFunc(s)
+			}
+
+			// Prepare the HTTP request
+			client := new(http.Client)
+			req, err := http.NewRequest(tt.method, server.URL+tt.path, bytes.NewReader(tt.body))
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Perform the HTTP request
+			res, err := client.Do(req)
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			// Inspect the response code
+			if res.StatusCode != tt.wantStatusCode {
+				t.Errorf("ChecksRouter StatusCode = %v, wantStatusCode %v", res.StatusCode, tt.wantStatusCode)
+				body, _ := ioutil.ReadAll(res.Body)
+				t.Errorf("error message: %q", string(body))
+				return
+			}
+		})
 	}
 }

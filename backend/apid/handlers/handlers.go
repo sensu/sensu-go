@@ -23,7 +23,7 @@ func checkMeta(resource interface{}, vars map[string]string) error {
 	}
 	meta := v.GetObjectMeta()
 
-	if meta.Namespace != vars["namespace"] {
+	if meta.Namespace != vars["namespace"] && vars["namespace"] != "" {
 		return fmt.Errorf(
 			"the namespace of the resource (%s) does not match the namespace on the request (%s)",
 			meta.Namespace,
@@ -31,7 +31,7 @@ func checkMeta(resource interface{}, vars map[string]string) error {
 		)
 	}
 
-	if meta.Name != vars["id"] {
+	if meta.Name != vars["id"] && vars["id"] != "" {
 		return fmt.Errorf(
 			"the name of the resource (%s) does not match the name on the request (%s)",
 			meta.Name,

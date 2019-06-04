@@ -15,8 +15,7 @@ import (
 func (h Handlers) CreateResource(r *http.Request) (interface{}, error) {
 	payload := reflect.New(reflect.TypeOf(h.Resource).Elem())
 	if err := json.NewDecoder(r.Body).Decode(payload.Interface()); err != nil {
-		logger.WithError(err).Error("unable to read request body")
-		return nil, err
+		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	if err := checkMeta(payload.Interface(), mux.Vars(r)); err != nil {
