@@ -65,7 +65,7 @@ var getResourceSuccessTestCase = func(pathPrefix, kind string, resource corev2.R
 			s.On("GetResource", mock.Anything, "checkfound", mock.AnythingOfType(kind)).
 				Return(nil).
 				Run(func(args mock.Arguments) {
-					args[2] = resource
+					// args[2] = resource
 				})
 		},
 		wantStatusCode: http.StatusOK,
@@ -103,7 +103,7 @@ var listResourcesSuccessTestCase = func(pathPrefix, kind string, resources []cor
 			s.On("ListResources", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("*[]"+kind), mock.AnythingOfType("*store.SelectionPredicate")).
 				Return(nil).
 				Run(func(args mock.Arguments) {
-					args[2] = resources
+					// args[2] = resources
 				}).
 				Once()
 		},

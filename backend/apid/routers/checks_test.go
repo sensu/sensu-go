@@ -124,14 +124,12 @@ func TestHttpApiChecksAdhocRequest(t *testing.T) {
 }
 
 func TestChecksRouter(t *testing.T) {
-	// Setup the router & the HTTP server
+	// Setup the router
 	controller := &mockCheckController{}
 	s := &mockstore.MockStore{}
 	router := NewChecksRouter(controller, s)
 	parentRouter := mux.NewRouter()
 	router.Mount(parentRouter)
-	server := httptest.NewServer(parentRouter)
-	defer server.Close()
 
 	pathPrefix := "checks"
 	kind := "*v2.CheckConfig"
@@ -145,6 +143,10 @@ func TestChecksRouter(t *testing.T) {
 	tests = append(tests, deleteTestCases(pathPrefix, kind)...)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Only start the HTTP server here to prevent data races in tests
+			server := httptest.NewServer(parentRouter)
+			defer server.Close()
+
 			if tt.storeFunc != nil {
 				tt.storeFunc(s)
 			}
