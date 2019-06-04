@@ -20,12 +20,12 @@ func (h Handlers) GetResource(r *http.Request) (interface{}, error) {
 	}
 
 	v := reflect.New(reflect.TypeOf(h.Resource).Elem())
-	checkConfig, ok := v.Interface().(corev2.Resource)
+	resource, ok := v.Interface().(corev2.Resource)
 	if !ok {
-		return nil, actions.NewErrorf(actions.InvalidArgument)
+		return nil, actions.NewErrorf(actions.InternalErr)
 	}
 
-	if err := h.Store.GetResource(r.Context(), name, checkConfig); err != nil {
+	if err := h.Store.GetResource(r.Context(), name, resource); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
 			return nil, actions.NewErrorf(actions.NotFound)
@@ -34,5 +34,5 @@ func (h Handlers) GetResource(r *http.Request) (interface{}, error) {
 		}
 	}
 
-	return checkConfig, nil
+	return resource, nil
 }

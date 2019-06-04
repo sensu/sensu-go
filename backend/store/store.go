@@ -468,7 +468,7 @@ type ResourceStore interface {
 
 	GetResource(ctx context.Context, name string, resource corev2.Resource) error
 
-	ListResource(ctx context.Context, kind string, resources interface{}, pred *SelectionPredicate) error
+	ListResources(ctx context.Context, kind string, resources interface{}, pred *SelectionPredicate) error
 }
 
 // RoleBindingStore provides methods for managing RBAC role bindings

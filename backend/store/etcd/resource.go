@@ -48,8 +48,8 @@ func (s *Store) GetResource(ctx context.Context, name string, resource corev2.Re
 	return Get(ctx, s.client, key, resource)
 }
 
-// ListResource ...
-func (s *Store) ListResource(ctx context.Context, kind string, resources interface{}, pred *store.SelectionPredicate) error {
+// ListResources ...
+func (s *Store) ListResources(ctx context.Context, kind string, resources interface{}, pred *store.SelectionPredicate) error {
 	keyBuilderFunc := func(ctx context.Context, name string) string {
 		return store.NewKeyBuilder(kind).WithContext(ctx).Build("")
 	}

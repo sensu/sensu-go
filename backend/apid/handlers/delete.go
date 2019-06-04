@@ -14,7 +14,7 @@ func (h Handlers) DeleteResource(r *http.Request) (interface{}, error) {
 	params := mux.Vars(r)
 	name, err := url.PathUnescape(params["id"])
 	if err != nil {
-		return nil, err
+		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	if err := h.Store.DeleteResource(r.Context(), h.Resource.StorePath(), name); err != nil {

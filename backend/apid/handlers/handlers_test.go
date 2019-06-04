@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -58,4 +59,13 @@ func TestCheckMeta(t *testing.T) {
 			}
 		})
 	}
+}
+
+func marshal(t *testing.T, v interface{}) []byte {
+	t.Helper()
+	bytes, err := json.Marshal(v)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return bytes
 }

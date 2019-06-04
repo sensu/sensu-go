@@ -31,8 +31,8 @@ func (s *MockStore) GetResource(ctx context.Context, name string, resource corev
 	return args.Error(0)
 }
 
-// ListResource ...
-func (s *MockStore) ListResource(ctx context.Context, kind string, list interface{}, pred *store.SelectionPredicate) error {
+// ListResources ...
+func (s *MockStore) ListResources(ctx context.Context, kind string, list interface{}, pred *store.SelectionPredicate) error {
 	args := s.Called(ctx, kind, list, pred)
 	return args.Error(0)
 }

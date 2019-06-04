@@ -9,15 +9,16 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
-// List ...
-func (h Handlers) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
+// ListResources ...
+func (h Handlers) ListResources(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
+	// Get the type of the resource and create a slice type of []type
 	typeOfResource := reflect.TypeOf(h.Resource)
 	sliceOfResource := reflect.SliceOf(typeOfResource)
-	// Create a pointer and then set the slice value
+	// Create a pointer to our slice type and then set the slice value
 	ptr := reflect.New(sliceOfResource)
 	ptr.Elem().Set(reflect.MakeSlice(sliceOfResource, 0, 0))
 
-	if err := h.Store.ListResource(ctx, h.Resource.StorePath(), ptr.Interface(), pred); err != nil {
+	if err := h.Store.ListResources(ctx, h.Resource.StorePath(), ptr.Interface(), pred); err != nil {
 		return nil, actions.NewError(actions.InternalErr, err)
 	}
 
