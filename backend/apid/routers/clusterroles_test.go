@@ -12,16 +12,16 @@ import (
 	"github.com/sensu/sensu-go/testing/mockstore"
 )
 
-func TestNamespacesRouter(t *testing.T) {
+func TestClusterRoleRouter(t *testing.T) {
 	// Setup the router
 	s := &mockstore.MockStore{}
-	router := NewNamespacesRouter(s)
+	router := NewClusterRolesRouter(s)
 	parentRouter := mux.NewRouter()
 	router.Mount(parentRouter)
 
-	pathPrefix := "/namespaces"
-	kind := "*v2.Namespace"
-	fixture := corev2.FixtureNamespace("foo")
+	pathPrefix := "/clusterroles"
+	kind := "*v2.ClusterRole"
+	fixture := corev2.FixtureClusterRole("foo")
 
 	tests := []routerTestCase{}
 	tests = append(tests, getTestCases(pathPrefix, kind, fixture)...)

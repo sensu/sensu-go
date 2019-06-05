@@ -2,6 +2,7 @@ package routers
 
 import (
 	"bytes"
+	"context"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -9,23 +10,36 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
+	"github.com/stretchr/testify/mock"
 )
 
-func TestNamespacesRouter(t *testing.T) {
+type mockSilencedController struct {
+	mock.Mock
+}
+
+func (m *mockSilencedController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
+	args := m.Called(ctx, pred)
+	return args.Get(0).([]corev2.Resource), args.Error(1)
+}
+
+func TestSilencedRouter(t *testing.T) {
 	// Setup the router
 	s := &mockstore.MockStore{}
-	router := NewNamespacesRouter(s)
+	router := NewSilencedRouter(s)
 	parentRouter := mux.NewRouter()
 	router.Mount(parentRouter)
 
-	pathPrefix := "/namespaces"
-	kind := "*v2.Namespace"
-	fixture := corev2.FixtureNamespace("foo")
+	pathPrefix := "/namespaces/default/silenced"
+	kind := "*v2.Silenced"
+	fixture := corev2.FixtureEntity("foo")
 
 	tests := []routerTestCase{}
 	tests = append(tests, getTestCases(pathPrefix, kind, fixture)...)
-	tests = append(tests, listTestCases(pathPrefix, kind, []corev2.Resource{fixture})...)
+	// TODO(palourde): Re-enable these tests once the silenced router uses the
+	// common listing handler
+	// tests = append(tests, listTestCases(pathPrefix, kind, []corev2.Resource{fixture})...)
 	tests = append(tests, createTestCases(pathPrefix, kind)...)
 	tests = append(tests, updateTestCases(pathPrefix, kind)...)
 	tests = append(tests, deleteTestCases(pathPrefix, kind)...)

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"strings"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -36,7 +37,7 @@ var getResourceNotFoundTestCase = func(pathPrefix, kind string) routerTestCase {
 	return routerTestCase{
 		name:   "it returns 404 if a resource is not found",
 		method: http.MethodGet,
-		path:   "/namespaces/default/" + pathPrefix + "/notfound",
+		path:   pathPrefix + "/notfound",
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("GetResource", mock.Anything, "notfound", mock.AnythingOfType(kind)).
 				Return(&store.ErrNotFound{})
@@ -49,7 +50,7 @@ var getResourceStoreErrTestCase = func(pathPrefix, kind string) routerTestCase {
 	return routerTestCase{
 		name:   "it returns 500 if the store encounters an error while retrieving a resource",
 		method: http.MethodGet,
-		path:   "/namespaces/default/" + pathPrefix + "/storerr",
+		path:   pathPrefix + "/storerr",
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("GetResource", mock.Anything, "storerr", mock.AnythingOfType(kind)).
 				Return(&store.ErrInternal{})
@@ -62,12 +63,12 @@ var getResourceSuccessTestCase = func(pathPrefix, kind string, resource corev2.R
 	return routerTestCase{
 		name:   "it retrieves a check config",
 		method: http.MethodGet,
-		path:   "/namespaces/default/" + pathPrefix + "/checkfound",
+		path:   pathPrefix + "/checkfound",
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("GetResource", mock.Anything, "checkfound", mock.AnythingOfType(kind)).
 				Return(nil).
 				Run(func(args mock.Arguments) {
-					// args[2] = resource
+					args[2] = resource
 				})
 		},
 		wantStatusCode: http.StatusOK,
@@ -79,6 +80,7 @@ var listTestCases = func(pathPrefix, kind string, resources []corev2.Resource) [
 	return []routerTestCase{
 		listResourcesStoreErrTestCase(pathPrefix, kind),
 		listResourcesSuccessTestCase(pathPrefix, kind, resources),
+		listResourcesAcrossNamespacesTestCase(pathPrefix, kind, resources),
 	}
 }
 
@@ -86,7 +88,7 @@ var listResourcesStoreErrTestCase = func(pathPrefix, kind string) routerTestCase
 	return routerTestCase{
 		name:   "it returns 500 if the store encounters an error while listing resources",
 		method: http.MethodGet,
-		path:   "/namespaces/default/" + pathPrefix,
+		path:   pathPrefix,
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("ListResources", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("*[]"+kind), mock.AnythingOfType("*store.SelectionPredicate")).
 				Return(&store.ErrInternal{}).
@@ -100,12 +102,32 @@ var listResourcesSuccessTestCase = func(pathPrefix, kind string, resources []cor
 	return routerTestCase{
 		name:   "it lists resources",
 		method: http.MethodGet,
-		path:   "/namespaces/default/" + pathPrefix,
+		path:   pathPrefix,
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("ListResources", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("*[]"+kind), mock.AnythingOfType("*store.SelectionPredicate")).
 				Return(nil).
 				Run(func(args mock.Arguments) {
-					// args[2] = resources
+					args[2] = resources
+				}).
+				Once()
+		},
+		wantStatusCode: http.StatusOK,
+	}
+}
+
+var listResourcesAcrossNamespacesTestCase = func(pathPrefix, kind string, resources []corev2.Resource) routerTestCase {
+	// Strip the namespace from the path
+	pathPrefix = strings.TrimPrefix(pathPrefix, "/namespaces/default")
+
+	return routerTestCase{
+		name:   "it lists resources across namespaces",
+		method: http.MethodGet,
+		path:   pathPrefix,
+		storeFunc: func(s *mockstore.MockStore) {
+			s.On("ListResources", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("*[]"+kind), mock.AnythingOfType("*store.SelectionPredicate")).
+				Return(nil).
+				Run(func(args mock.Arguments) {
+					args[2] = resources
 				}).
 				Once()
 		},
@@ -129,17 +151,22 @@ var createResourceInvalidPayloadTestCase = func(pathPrefix, kind string) routerT
 	return routerTestCase{
 		name:           "it returns 400 if the request payload to create is invalid",
 		method:         http.MethodPost,
-		path:           "/namespaces/default/" + pathPrefix,
+		path:           pathPrefix,
 		body:           []byte("foo"),
 		wantStatusCode: http.StatusBadRequest,
 	}
 }
 
 var createResourceInvalidMetaTestCase = func(pathPrefix, kind string) routerTestCase {
+	// Do not test this on global resources
+	if s := strings.Split(strings.TrimPrefix(pathPrefix, "/"), "/"); len(s) == 1 {
+		return routerTestCase{wantStatusCode: 404}
+	}
+
 	return routerTestCase{
 		name:           "it returns 400 if the resource metadata to create does not match the request path",
 		method:         http.MethodPost,
-		path:           "/namespaces/default/" + pathPrefix,
+		path:           pathPrefix,
 		body:           []byte(`{"metadata": {"namespace":"acme"}}`),
 		wantStatusCode: http.StatusBadRequest,
 	}
@@ -149,7 +176,7 @@ var createResourceAlreadyExistsTestCase = func(pathPrefix, kind string) routerTe
 	return routerTestCase{
 		name:   "it returns 409 if the resource to create already exists",
 		method: http.MethodPost,
-		path:   "/namespaces/default/" + pathPrefix,
+		path:   pathPrefix,
 		body:   []byte(`{"metadata": {"namespace":"default","name":"foo"}}`),
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("CreateResource", mock.Anything, mock.AnythingOfType(kind)).
@@ -164,7 +191,7 @@ var createResourceInvalidTestCase = func(pathPrefix, kind string) routerTestCase
 	return routerTestCase{
 		name:   "it returns 400 if the resource to create is invalid",
 		method: http.MethodPost,
-		path:   "/namespaces/default/" + pathPrefix,
+		path:   pathPrefix,
 		body:   []byte(`{"metadata": {"namespace":"default","name":"foo"}}`),
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("CreateResource", mock.Anything, mock.AnythingOfType(kind)).
@@ -179,7 +206,7 @@ var createResourceStoreErrTestCase = func(pathPrefix, kind string) routerTestCas
 	return routerTestCase{
 		name:   "it returns 500 if the store returns an error while creating",
 		method: http.MethodPost,
-		path:   "/namespaces/default/" + pathPrefix,
+		path:   pathPrefix,
 		body:   []byte(`{"metadata": {"namespace":"default","name":"foo"}}`),
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("CreateResource", mock.Anything, mock.AnythingOfType(kind)).
@@ -194,7 +221,7 @@ var createResourceSuccessTestCase = func(pathPrefix, kind string) routerTestCase
 	return routerTestCase{
 		name:   "it returns 204 if the resource was created",
 		method: http.MethodPost,
-		path:   "/namespaces/default/" + pathPrefix,
+		path:   pathPrefix,
 		body:   []byte(`{"metadata": {"namespace":"default","name":"foo"}}`),
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("CreateResource", mock.Anything, mock.AnythingOfType(kind)).
@@ -220,7 +247,7 @@ var updateResourceInvalidPayloadTestCase = func(pathPrefix, kind string) routerT
 	return routerTestCase{
 		name:           "it returns 400 if the request payload to update is invalid",
 		method:         http.MethodPut,
-		path:           "/namespaces/default/" + pathPrefix + "/foo",
+		path:           pathPrefix + "/foo",
 		body:           []byte("foo"),
 		wantStatusCode: http.StatusBadRequest,
 	}
@@ -230,7 +257,7 @@ var updateResourceInvalidMetaTestCase = func(pathPrefix, kind string) routerTest
 	return routerTestCase{
 		name:           "it returns 400 if the resource metadata to update does not match the request path",
 		method:         http.MethodPut,
-		path:           "/namespaces/default/" + pathPrefix + "/bar",
+		path:           pathPrefix + "/bar",
 		body:           []byte(`{"metadata": {"namespace":"default","name":"foo}}`),
 		wantStatusCode: http.StatusBadRequest,
 	}
@@ -240,8 +267,8 @@ var updateResourceInvalidTestCase = func(pathPrefix, kind string) routerTestCase
 	return routerTestCase{
 		name:   "it returns 400 if the resource to update is invalid",
 		method: http.MethodPut,
-		path:   "/namespaces/default/" + pathPrefix + "/foo",
-		body:   []byte(`{"metadata": {"namespace":"default","name":"foo"}}`),
+		path:   pathPrefix + "/foo",
+		body:   body(pathPrefix),
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("CreateOrUpdateResource", mock.Anything, mock.AnythingOfType(kind)).
 				Return(&store.ErrNotValid{}).
@@ -255,10 +282,10 @@ var updateResourceStoreErrTestCase = func(pathPrefix, kind string) routerTestCas
 	return routerTestCase{
 		name:   "it returns 500 if the store returns an error while updating",
 		method: http.MethodPut,
-		path:   "/namespaces/default/" + pathPrefix + "/foo",
-		body:   []byte(`{"metadata": {"namespace":"default","name":"foo"}}`),
+		path:   pathPrefix + "/foo",
+		body:   body(pathPrefix),
 		storeFunc: func(s *mockstore.MockStore) {
-			s.On("CreateOrUpdateResource", mock.Anything, mock.AnythingOfType(kind)).
+			s.On("CreateOrUpdateResource", mock.Anything, mock.Anything).
 				Return(&store.ErrInternal{}).
 				Once()
 		},
@@ -270,8 +297,8 @@ var updateResourceSuccessTestCase = func(pathPrefix, kind string) routerTestCase
 	return routerTestCase{
 		name:   "it returns 204 if the resource was updated",
 		method: http.MethodPut,
-		path:   "/namespaces/default/" + pathPrefix + "/foo",
-		body:   []byte(`{"metadata": {"namespace":"default","name":"foo"}}`),
+		path:   pathPrefix + "/foo",
+		body:   body(pathPrefix),
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("CreateOrUpdateResource", mock.Anything, mock.AnythingOfType(kind)).
 				Return(nil).
@@ -295,7 +322,7 @@ var deleteResourceInvalidPathTestCase = func(pathPrefix, kind string) routerTest
 	return routerTestCase{
 		name:           "it returns 400 if the resource ID to delete is invalid",
 		method:         http.MethodDelete,
-		path:           "/namespaces/default/" + pathPrefix + "/" + url.PathEscape("%"),
+		path:           pathPrefix + "/" + url.PathEscape("%"),
 		wantStatusCode: http.StatusBadRequest,
 	}
 }
@@ -304,7 +331,7 @@ var deleteResourceNotFoundTestCase = func(pathPrefix, kind string) routerTestCas
 	return routerTestCase{
 		name:   "it returns 404 if the resource to delete does not exist",
 		method: http.MethodDelete,
-		path:   "/namespaces/default/" + pathPrefix + "/foo",
+		path:   pathPrefix + "/foo",
 		body:   []byte(`{"metadata": {"namespace":"default","name":"foo"}}`),
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("DeleteResource", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
@@ -319,7 +346,7 @@ var deleteResourceStoreErrTestCase = func(pathPrefix, kind string) routerTestCas
 	return routerTestCase{
 		name:   "it returns 500 if the store returns an error while deleting",
 		method: http.MethodDelete,
-		path:   "/namespaces/default/" + pathPrefix + "/foo",
+		path:   pathPrefix + "/foo",
 		body:   []byte(`{"metadata": {"namespace":"default","name":"foo"}}`),
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("DeleteResource", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
@@ -334,7 +361,7 @@ var deleteResourceSuccessTestCase = func(pathPrefix, kind string) routerTestCase
 	return routerTestCase{
 		name:   "it returns 204 if the resource was delete",
 		method: http.MethodDelete,
-		path:   "/namespaces/default/" + pathPrefix + "/foo",
+		path:   pathPrefix + "/foo",
 		body:   []byte(`{"metadata": {"namespace":"default","name":"foo"}}`),
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("DeleteResource", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("string")).
@@ -352,4 +379,14 @@ func marshal(t *testing.T, v interface{}) []byte {
 		t.Fatal(err)
 	}
 	return bytes
+}
+
+func body(pathPrefix string) []byte {
+	var body []byte
+	if pathPrefix == "/namespaces" {
+		body = []byte(`{"name":"foo"}`)
+	} else {
+		body = []byte(`{"metadata": {"namespace":"default","name":"foo"}}`)
+	}
+	return body
 }

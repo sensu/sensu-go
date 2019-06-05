@@ -12,16 +12,16 @@ import (
 	"github.com/sensu/sensu-go/testing/mockstore"
 )
 
-func TestNamespacesRouter(t *testing.T) {
+func TestRoleBindingsRouter(t *testing.T) {
 	// Setup the router
 	s := &mockstore.MockStore{}
-	router := NewNamespacesRouter(s)
+	router := NewRoleBindingsRouter(s)
 	parentRouter := mux.NewRouter()
 	router.Mount(parentRouter)
 
-	pathPrefix := "/namespaces"
-	kind := "*v2.Namespace"
-	fixture := corev2.FixtureNamespace("foo")
+	pathPrefix := "/namespaces/default/rolebindings"
+	kind := "*v2.RoleBinding"
+	fixture := corev2.FixtureRoleBinding("default", "foo")
 
 	tests := []routerTestCase{}
 	tests = append(tests, getTestCases(pathPrefix, kind, fixture)...)

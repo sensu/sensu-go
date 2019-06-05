@@ -39,7 +39,7 @@ func FixtureNamespace(name string) *Namespace {
 
 // GetObjectMeta only exists here to fulfil the requirements of Resource
 func (n *Namespace) GetObjectMeta() ObjectMeta {
-	return ObjectMeta{}
+	return ObjectMeta{Name: n.Name}
 }
 
 // NamespaceFields returns a set of fields that represent that resource

@@ -12,23 +12,22 @@ import (
 	"github.com/sensu/sensu-go/testing/mockstore"
 )
 
-func TestNamespacesRouter(t *testing.T) {
+func TestAssetsRouter(t *testing.T) {
 	// Setup the router
 	s := &mockstore.MockStore{}
-	router := NewNamespacesRouter(s)
+	router := NewAssetRouter(s)
 	parentRouter := mux.NewRouter()
 	router.Mount(parentRouter)
 
-	pathPrefix := "/namespaces"
-	kind := "*v2.Namespace"
-	fixture := corev2.FixtureNamespace("foo")
+	pathPrefix := "/namespaces/default/assets"
+	kind := "*v2.Asset"
+	fixture := corev2.FixtureAsset("foo")
 
 	tests := []routerTestCase{}
 	tests = append(tests, getTestCases(pathPrefix, kind, fixture)...)
 	tests = append(tests, listTestCases(pathPrefix, kind, []corev2.Resource{fixture})...)
 	tests = append(tests, createTestCases(pathPrefix, kind)...)
 	tests = append(tests, updateTestCases(pathPrefix, kind)...)
-	tests = append(tests, deleteTestCases(pathPrefix, kind)...)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Only start the HTTP server here to prevent data races in tests

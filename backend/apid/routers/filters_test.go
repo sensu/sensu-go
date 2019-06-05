@@ -12,16 +12,16 @@ import (
 	"github.com/sensu/sensu-go/testing/mockstore"
 )
 
-func TestNamespacesRouter(t *testing.T) {
+func TestEventFiltersRouter(t *testing.T) {
 	// Setup the router
 	s := &mockstore.MockStore{}
-	router := NewNamespacesRouter(s)
+	router := NewEventFiltersRouter(s)
 	parentRouter := mux.NewRouter()
 	router.Mount(parentRouter)
 
-	pathPrefix := "/namespaces"
-	kind := "*v2.Namespace"
-	fixture := corev2.FixtureNamespace("foo")
+	pathPrefix := "/namespaces/default/filters"
+	kind := "*v2.EventFilter"
+	fixture := corev2.FixtureEventFilter("foo")
 
 	tests := []routerTestCase{}
 	tests = append(tests, getTestCases(pathPrefix, kind, fixture)...)

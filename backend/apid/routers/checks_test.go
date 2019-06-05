@@ -72,13 +72,13 @@ func TestChecksRouter(t *testing.T) {
 	parentRouter := mux.NewRouter()
 	router.Mount(parentRouter)
 
-	pathPrefix := "checks"
+	pathPrefix := "/namespaces/default/checks"
 	kind := "*v2.CheckConfig"
-	check := corev2.FixtureCheckConfig("foo")
+	fixture := corev2.FixtureCheckConfig("foo")
 
 	tests := []routerTestCase{}
-	tests = append(tests, getTestCases(pathPrefix, kind, check)...)
-	tests = append(tests, listTestCases(pathPrefix, kind, []corev2.Resource{check})...)
+	tests = append(tests, getTestCases(pathPrefix, kind, fixture)...)
+	tests = append(tests, listTestCases(pathPrefix, kind, []corev2.Resource{fixture})...)
 	tests = append(tests, createTestCases(pathPrefix, kind)...)
 	tests = append(tests, updateTestCases(pathPrefix, kind)...)
 	tests = append(tests, deleteTestCases(pathPrefix, kind)...)
@@ -107,7 +107,7 @@ func TestChecksRouter(t *testing.T) {
 
 			// Inspect the response code
 			if res.StatusCode != tt.wantStatusCode {
-				t.Errorf("ChecksRouter StatusCode = %v, wantStatusCode %v", res.StatusCode, tt.wantStatusCode)
+				t.Errorf("StatusCode = %v, wantStatusCode %v", res.StatusCode, tt.wantStatusCode)
 				body, _ := ioutil.ReadAll(res.Body)
 				t.Errorf("error message: %q", string(body))
 				return

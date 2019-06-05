@@ -265,7 +265,7 @@ func (a *APId) registerRestrictedResources(router *mux.Router) {
 		routers.NewHandlersRouter(a.store),
 		routers.NewHooksRouter(a.store),
 		routers.NewMutatorsRouter(a.store),
-		routers.NewNamespacesRouter(actions.NewNamespacesController(a.store)),
+		routers.NewNamespacesRouter(a.store),
 		routers.NewRolesRouter(a.store),
 		routers.NewRoleBindingsRouter(a.store),
 		routers.NewSilencedRouter(a.store),

@@ -1,25 +1,24 @@
 package routers
 
 import (
-	"net/http"
-	"net/url"
-
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/apid/handlers"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 // ClusterRolesRouter handles requests for ClusterRoles.
 type ClusterRolesRouter struct {
-	controller actions.ClusterRoleController
+	handlers handlers.Handlers
 }
 
 // NewClusterRolesRouter instantiates a new router for ClusterRoles.
-func NewClusterRolesRouter(store store.ClusterRoleStore) *ClusterRolesRouter {
+func NewClusterRolesRouter(store store.ResourceStore) *ClusterRolesRouter {
 	return &ClusterRolesRouter{
-		controller: actions.NewClusterRoleController(store),
+		handlers: handlers.Handlers{
+			Resource: &corev2.ClusterRole{},
+			Store:    store,
+		},
 	}
 }
 
@@ -29,55 +28,10 @@ func (r *ClusterRolesRouter) Mount(parent *mux.Router) {
 		Router:     parent,
 		PathPrefix: "/{resource:clusterroles}",
 	}
-	routes.List(r.controller.List, corev2.ClusterRoleFields)
-	routes.Get(r.find)
-	routes.Post(r.create)
-	routes.Del(r.destroy)
-	routes.Put(r.createOrReplace)
-}
 
-func (r *ClusterRolesRouter) create(req *http.Request) (interface{}, error) {
-	obj := types.ClusterRole{}
-
-	if err := UnmarshalBody(req, &obj); err != nil {
-		return nil, err
-	}
-
-	err := r.controller.Create(req.Context(), obj)
-	return obj, err
-}
-
-func (r *ClusterRolesRouter) createOrReplace(req *http.Request) (interface{}, error) {
-	obj := types.ClusterRole{}
-
-	if err := UnmarshalBody(req, &obj); err != nil {
-		return nil, err
-	}
-
-	err := r.controller.CreateOrReplace(req.Context(), obj)
-	return obj, err
-}
-
-func (r *ClusterRolesRouter) destroy(req *http.Request) (interface{}, error) {
-	params := mux.Vars(req)
-
-	id, err := url.PathUnescape(params["id"])
-	if err != nil {
-		return nil, err
-	}
-
-	err = r.controller.Destroy(req.Context(), id)
-	return nil, err
-}
-
-func (r *ClusterRolesRouter) find(req *http.Request) (interface{}, error) {
-	params := mux.Vars(req)
-
-	id, err := url.PathUnescape(params["id"])
-	if err != nil {
-		return nil, err
-	}
-
-	obj, err := r.controller.Get(req.Context(), id)
-	return obj, err
+	routes.Del(r.handlers.DeleteResource)
+	routes.Get(r.handlers.GetResource)
+	routes.List(r.handlers.ListResources, corev2.ClusterRoleFields)
+	routes.Post(r.handlers.CreateResource)
+	routes.Put(r.handlers.CreateOrUpdateResource)
 }
