@@ -256,3 +256,42 @@ func TestSortCheckConfigsByName(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckMerge(t *testing.T) {
+	a := FixtureCheck("check")
+	b := FixtureCheck("check")
+
+	for i := range a.History {
+		if i%2 == 0 {
+			a.History[i].Status = 1
+		}
+	}
+
+	a.Occurrences = 1
+	a.OccurrencesWatermark = 1
+
+	b.History = nil
+	b.TotalStateChange = 0
+	b.State = ""
+	b.Occurrences = 0
+	b.OccurrencesWatermark = 0
+
+	b.MergeWith(a)
+
+	if got, want := b.TotalStateChange, uint32(98); got != want {
+		t.Errorf("bad TotalStateChange: got %d, want %d", got, want)
+	}
+
+	if got, want := b.State, EventFlappingState; got != want {
+		t.Errorf("bad State: got %s, want %s", got, want)
+	}
+
+	if got, want := b.Occurrences, int64(1); got != want {
+		t.Errorf("bad Occurrences: got %d, want %d", got, want)
+	}
+
+	if got, want := b.OccurrencesWatermark, int64(1); got != want {
+		t.Errorf("bad OccurrencesWatermark: got %d, want %d", got, want)
+	}
+
+}
