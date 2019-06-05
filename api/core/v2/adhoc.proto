@@ -14,9 +14,6 @@ option (gogoproto.sizer_all) = true;
 option (gogoproto.testgen_all) = true;
 
 message AdhocRequest {
-  option (gogoproto.face) = true;
-  option (gogoproto.goproto_getters) = false;
-
   // Subscriptions is the list of entity subscriptions.
   repeated string subscriptions = 2 [(gogoproto.nullable) = true];
 
@@ -27,5 +24,5 @@ message AdhocRequest {
   string reason = 4 [(gogoproto.nullable) = true];
 
   // Metadata contains the name, namespace, labels and annotations of the AdhocCheck
-  ObjectMeta metadata = 5 [(gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false];
+  ObjectMeta metadata = 5 [(gogoproto.jsontag) = "metadata", (gogoproto.embed) = true, (gogoproto.nullable) = false];
 }
