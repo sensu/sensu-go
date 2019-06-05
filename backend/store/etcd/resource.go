@@ -17,11 +17,12 @@ func (s *Store) CreateResource(ctx context.Context, resource corev2.Resource) er
 
 	key := store.KeyFromResource(resource)
 	namespace := resource.GetObjectMeta().Namespace
+	fmt.Printf("%#v\n", resource)
 	msg, ok := resource.(proto.Message)
 	if !ok {
 		return &store.ErrEncode{Key: key, Err: fmt.Errorf("%T is not proto.Message", resource)}
 	}
-
+	fmt.Printf("%#v\n", msg)
 	return Create(ctx, s.client, key, namespace, msg)
 }
 

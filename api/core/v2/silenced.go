@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/url"
@@ -8,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
@@ -55,6 +57,28 @@ func (s *Silenced) StartSilence(currentTime int64) bool {
 		return true
 	}
 	return currentTime > s.Begin
+}
+
+// Prepare prepares a silenced entry for storage by
+func (s *Silenced) Prepare(ctx context.Context) {
+	// Populate newSilence.Name with the subscription and checkName. Substitute a
+	// splat if one of the values does not exist. If both values are empty, the
+	// validator will return an error when attempting to update it in the store.
+	s.Name, _ = SilencedName(s.Subscription, s.Check)
+
+	// If begin timestamp was not already provided set it to the current time.
+	if s.Begin == 0 {
+		s.Begin = time.Now().Unix()
+	}
+
+	// Retrieve the subject of the JWT, which represents the logged on user, in
+	// order to set it as the creator of the silenced entry
+	if value := ctx.Value(ClaimsKey); value != nil {
+		claims, ok := value.(*Claims)
+		if ok {
+			s.Creator = claims.Subject
+		}
+	}
 }
 
 // NewSilenced creates a new Silenced entry.

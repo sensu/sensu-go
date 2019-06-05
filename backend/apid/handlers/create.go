@@ -18,6 +18,12 @@ func (h Handlers) CreateResource(r *http.Request) (interface{}, error) {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
+	// Determine if the given resource has a Prepare() method and if so, call it
+	// so additional business logic is ran for this resource before it gets stored
+	if method := payload.MethodByName("Prepare"); method.IsValid() {
+		method.Call([]reflect.Value{reflect.ValueOf(r.Context())})
+	}
+
 	if err := checkMeta(payload.Interface(), mux.Vars(r)); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
