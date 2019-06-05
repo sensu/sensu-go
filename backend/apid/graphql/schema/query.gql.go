@@ -104,25 +104,51 @@ type QueryHandlerFieldResolver interface {
 	Handler(p QueryHandlerFieldResolverParams) (interface{}, error)
 }
 
-// QuerySuggestsFieldResolverArgs contains arguments provided to suggests when selected
-type QuerySuggestsFieldResolverArgs struct {
+// QuerySuggestFieldResolverArgs contains arguments provided to suggest when selected
+type QuerySuggestFieldResolverArgs struct {
+	Q string /*
+	Q - If the value of a field does not contain the value of this argument it will
+	be omitted from the response. Operation is case-insensitive.
+	*/
+	Ref string /*
+	Ref is used to uniquely identify a resource in the system as well as a field
+	on said resource. Refs take the form: :group/:version/:resource/:field. The
+	field segment may be a path in and of it's own, eg. metadata/name would
+	refer to the name field nested inside a resource's metadata.
+
+	The following are valid example values for this argument:
+
+	    `core/v2/assets/metadata/name`
+	    `core/v2/assets/metadata/name`
+	    `core/v2/assets/metadata/labels`
+	    `core/v2/assets/metadata/labels/region`
+	    `core/v2/checks/subscriptions`
+	    `core/v2/checks/command`
+	    `core/v2/checks/timeout`
+	    `core/v2/entities/system/os`
+	    `core/v2/entities/system/platform`
+	    `core/v2/filters/metadata/name`
+	    `core/v2/handlers/command`
+	    `core/v2/hooks/command`
+	    `core/v2/mutators/command`
+	    `core/v2/mutators/timeout`
+	    `core/v2/silenced/creator`
+	*/
 	Namespace string          // Namespace - self descriptive
-	Ref       string          // Ref - self descriptive
-	Includes  string          // Includes - self descriptive
 	Limit     int             // Limit - self descriptive
 	Order     SuggestionOrder // Order - self descriptive
 }
 
-// QuerySuggestsFieldResolverParams contains contextual info to resolve suggests field
-type QuerySuggestsFieldResolverParams struct {
+// QuerySuggestFieldResolverParams contains contextual info to resolve suggest field
+type QuerySuggestFieldResolverParams struct {
 	graphql.ResolveParams
-	Args QuerySuggestsFieldResolverArgs
+	Args QuerySuggestFieldResolverArgs
 }
 
-// QuerySuggestsFieldResolver implement to resolve requests for the Query's suggests field.
-type QuerySuggestsFieldResolver interface {
-	// Suggests implements response to request for suggests field.
-	Suggests(p QuerySuggestsFieldResolverParams) (interface{}, error)
+// QuerySuggestFieldResolver implement to resolve requests for the Query's suggest field.
+type QuerySuggestFieldResolver interface {
+	// Suggest implements response to request for suggest field.
+	Suggest(p QuerySuggestFieldResolverParams) (interface{}, error)
 }
 
 // QueryNodeFieldResolverArgs contains arguments provided to node when selected
@@ -227,7 +253,7 @@ type QueryFieldResolvers interface {
 	QueryEntityFieldResolver
 	QueryCheckFieldResolver
 	QueryHandlerFieldResolver
-	QuerySuggestsFieldResolver
+	QuerySuggestFieldResolver
 	QueryNodeFieldResolver
 	QueryWrappedNodeFieldResolver
 }
@@ -315,8 +341,8 @@ func (_ QueryAliases) Handler(p QueryHandlerFieldResolverParams) (interface{}, e
 	return val, err
 }
 
-// Suggests implements response to request for 'suggests' field.
-func (_ QueryAliases) Suggests(p QuerySuggestsFieldResolverParams) (interface{}, error) {
+// Suggest implements response to request for 'suggest' field.
+func (_ QueryAliases) Suggest(p QuerySuggestFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -412,16 +438,16 @@ func _ObjTypeQueryHandlerHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
-func _ObjTypeQuerySuggestsHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QuerySuggestsFieldResolver)
+func _ObjTypeQuerySuggestHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(QuerySuggestFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
-		frp := QuerySuggestsFieldResolverParams{ResolveParams: p}
+		frp := QuerySuggestFieldResolverParams{ResolveParams: p}
 		err := mapstructure.Decode(p.Args, &frp.Args)
 		if err != nil {
 			return nil, err
 		}
 
-		return resolver.Suggests(frp)
+		return resolver.Suggest(frp)
 	}
 }
 
@@ -543,13 +569,8 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 				Name:              "node",
 				Type:              graphql.OutputType("Node"),
 			},
-			"suggests": &graphql1.Field{
+			"suggest": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
-					"includes": &graphql1.ArgumentConfig{
-						DefaultValue: "",
-						Description:  "self descriptive",
-						Type:         graphql1.String,
-					},
 					"limit": &graphql1.ArgumentConfig{
 						DefaultValue: 10,
 						Description:  "self descriptive",
@@ -564,14 +585,19 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 						Description:  "self descriptive",
 						Type:         graphql.InputType("SuggestionOrder"),
 					},
+					"q": &graphql1.ArgumentConfig{
+						DefaultValue: "",
+						Description:  "If the value of a field does not contain the value of this argument it will\nbe omitted from the response. Operation is case-insensitive.",
+						Type:         graphql1.String,
+					},
 					"ref": &graphql1.ArgumentConfig{
-						Description: "self descriptive",
+						Description: "Ref is used to uniquely identify a resource in the system as well as a field\non said resource. Refs take the form: :group/:version/:resource/:field. The\nfield segment may be a path in and of it's own, eg. metadata/name would\nrefer to the name field nested inside a resource's metadata.\n\nThe following are valid example values for this argument:\n\n    `core/v2/assets/metadata/name`\n    `core/v2/assets/metadata/name`\n    `core/v2/assets/metadata/labels`\n    `core/v2/assets/metadata/labels/region`\n    `core/v2/checks/subscriptions`\n    `core/v2/checks/command`\n    `core/v2/checks/timeout`\n    `core/v2/entities/system/os`\n    `core/v2/entities/system/platform`\n    `core/v2/filters/metadata/name`\n    `core/v2/handlers/command`\n    `core/v2/hooks/command`\n    `core/v2/mutators/command`\n    `core/v2/mutators/timeout`\n    `core/v2/silenced/creator`",
 						Type:        graphql1.NewNonNull(graphql1.String),
 					},
 				},
 				DeprecationReason: "",
-				Description:       "Given a type, field and a namespace returns a set of suggested values.",
-				Name:              "suggests",
+				Description:       "Given a ref, field and a namespace returns a set of suggested values. Refs\nhave the following format: :group/:version/:resource/:field...\n\nAs an example if you would like a list of check names you might use:\n`suggest(ref: \"core/v2/checks/metadata/name\", namespace: \"default\")`\n\nOr, if you would like a list of subscriptions...\n`suggest(ref: \"core/v2/entities/subscriptions\", namespace: \"default\")`\n\nYou may filter the results with the `q` argument, for example:\n`suggest(ref: \"core/v2/checks/metadata/name\", namespace: \"default\", q: \"disk\")`\n\nBy default the results are ordered by the frequency in which the result occurs in the set. The `order` argument allow you to tweak this behaviour, for example:\n`suggest(ref: \"core/v2/checks/metadata/name\", namespace: \"default\", order: ALPHA_DESC)`",
+				Name:              "suggest",
 				Type:              graphql.OutputType("SuggestionResultSet"),
 			},
 			"viewer": &graphql1.Field{
@@ -615,7 +641,7 @@ var _ObjectTypeQueryDesc = graphql.ObjectDesc{
 		"handler":     _ObjTypeQueryHandlerHandler,
 		"namespace":   _ObjTypeQueryNamespaceHandler,
 		"node":        _ObjTypeQueryNodeHandler,
-		"suggests":    _ObjTypeQuerySuggestsHandler,
+		"suggest":     _ObjTypeQuerySuggestHandler,
 		"viewer":      _ObjTypeQueryViewerHandler,
 		"wrappedNode": _ObjTypeQueryWrappedNodeHandler,
 	},

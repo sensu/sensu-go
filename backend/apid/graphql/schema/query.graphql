@@ -31,15 +31,56 @@ type Query {
   handler(namespace: String!, name: String!): Handler
 
   """
-  Given a type, field and a namespace returns a set of suggested values.
+  Given a ref, field and a namespace returns a set of suggested values. Refs
+  have the following format: :group/:version/:resource/:field...
+
+  As an example if you would like a list of check names you might use:
+  `suggest(ref: "core/v2/checks/metadata/name", namespace: "default")`
+
+  Or, if you would like a list of subscriptions...
+  `suggest(ref: "core/v2/entities/subscriptions", namespace: "default")`
+
+  You may filter the results with the `q` argument, for example:
+  `suggest(ref: "core/v2/checks/metadata/name", namespace: "default", q: "disk")`
+
+  By default the results are ordered by the frequency in which the result occurs in the set. The `order` argument allow you to tweak this behaviour, for example:
+  `suggest(ref: "core/v2/checks/metadata/name", namespace: "default", order: ALPHA_DESC)`
   """
-  suggests(
-    namespace: String!,
+  suggest(
+    """
+    If the value of a field does not contain the value of this argument it will
+    be omitted from the response. Operation is case-insensitive.
+    """
+    q: String = "",
+    """
+    Ref is used to uniquely identify a resource in the system as well as a field
+    on said resource. Refs take the form: :group/:version/:resource/:field. The
+    field segment may be a path in and of it's own, eg. metadata/name would
+    refer to the name field nested inside a resource's metadata.
+
+    The following are valid example values for this argument:
+
+        `core/v2/assets/metadata/name`
+        `core/v2/assets/metadata/name`
+        `core/v2/assets/metadata/labels`
+        `core/v2/assets/metadata/labels/region`
+        `core/v2/checks/subscriptions`
+        `core/v2/checks/command`
+        `core/v2/checks/timeout`
+        `core/v2/entities/system/os`
+        `core/v2/entities/system/platform`
+        `core/v2/filters/metadata/name`
+        `core/v2/handlers/command`
+        `core/v2/hooks/command`
+        `core/v2/mutators/command`
+        `core/v2/mutators/timeout`
+        `core/v2/silenced/creator`
+
+    """
     ref: String!,
-    includes: String = "",
+    namespace: String!,
     limit: Int = 10,
     order: SuggestionOrder = FREQUENCY,
-    # cursor: String,
   ): SuggestionResultSet
 
   """
