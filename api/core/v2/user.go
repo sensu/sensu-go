@@ -69,3 +69,8 @@ func UserFields(r Resource) map[string]string {
 		"user.groups":   strings.Join(resource.Groups, ","),
 	}
 }
+
+// SetNamespace sets the namespace of the resource.
+func (u *User) SetNamespace(namespace string) {
+	return
+}

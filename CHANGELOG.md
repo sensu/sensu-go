@@ -7,12 +7,30 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- [Web] Adds ability to delete entities
+
+### Changed
+- [Web] Updated embedded web assets from `275386a` ... `b0c1138`
+
 ### Fixed
 - The check state and check total_state_change properties are now more correct.
+- Scheduling proxy checks now consumes far fewer CPU resources.
+- [Web] Unless required- scrollbars on code blocks are hidden.
+- [Web] Ensure that we redirect user to a valid namespace when first signing in.
+- [Web] Correctly display timeout value for handlers.
+- [Web] Avoid exception when parsing non-standard cron statements. (Eg.
+`@every 1h` or `@weekly`)
 
 ### Changed
 - Eventd has been refactored. Users should not perceive any changes, but a
 substantial amount of business logic has been moved into other packages.
+- The `sensuctl create` command now accepts resources without a declared
+namespace. If the namespace is omitted, the resource will be created in the
+current namespace, or overridden by the `--namespace` flag.
+- Eventd now uses a constant number of requests to etcd when working with
+silenced entries, instead of a number that is proportional to the number of
+subscriptions in a check.
 
 ## [5.9.0] - 2019-05-29
 

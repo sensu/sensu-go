@@ -112,6 +112,11 @@ func NewCheck(c *CheckConfig) *Check {
 	return check
 }
 
+// SetNamespace sets the namespace of the resource.
+func (c *Check) SetNamespace(namespace string) {
+	c.Namespace = namespace
+}
+
 // StorePath returns the path prefix to checks in the store
 func (c *Check) StorePath() string {
 	return ChecksResource

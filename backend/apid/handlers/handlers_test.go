@@ -5,27 +5,8 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/testing/fixture"
 )
-
-type mockResource struct {
-	corev2.ObjectMeta
-}
-
-func (r *mockResource) GetObjectMeta() corev2.ObjectMeta {
-	return r.ObjectMeta
-}
-
-func (r *mockResource) StorePath() string {
-	return ""
-}
-
-func (r *mockResource) URIPath() string {
-	return ""
-}
-
-func (r *mockResource) Validate() error {
-	return nil
-}
 
 func TestCheckMeta(t *testing.T) {
 	tests := []struct {
@@ -36,19 +17,19 @@ func TestCheckMeta(t *testing.T) {
 	}{
 		{
 			name:     "namespaces mismatch",
-			resource: &mockResource{ObjectMeta: corev2.ObjectMeta{Namespace: "foo"}},
+			resource: &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Namespace: "foo"}},
 			vars:     map[string]string{"namespace": "bar"},
 			wantErr:  true,
 		},
 		{
 			name:     "name mismatch",
-			resource: &mockResource{ObjectMeta: corev2.ObjectMeta{Name: "baz"}},
+			resource: &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "baz"}},
 			vars:     map[string]string{"id": "qux"},
 			wantErr:  true,
 		},
 		{
 			name:     "valid objectmeta",
-			resource: &mockResource{ObjectMeta: corev2.ObjectMeta{Name: "baz", Namespace: "foo"}},
+			resource: &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "baz", Namespace: "foo"}},
 			vars:     map[string]string{"namespace": "foo", "id": "baz"},
 		},
 	}

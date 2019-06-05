@@ -17,6 +17,11 @@ func (f *Resource) GetObjectMeta() corev2.ObjectMeta {
 	return f.ObjectMeta
 }
 
+// SetNamespace ...
+func (f *Resource) SetNamespace(namespace string) {
+	f.Namespace = namespace
+}
+
 // StorePath ...
 func (f *Resource) StorePath() string {
 	return "resource"

@@ -56,3 +56,8 @@ func ExtensionFields(r Resource) map[string]string {
 		"extension.namespace": resource.ObjectMeta.Namespace,
 	}
 }
+
+// SetNamespace sets the namespace of the resource.
+func (e *Extension) SetNamespace(namespace string) {
+	e.Namespace = namespace
+}

@@ -123,3 +123,8 @@ func AssetFields(r Resource) map[string]string {
 		"asset.filters":   strings.Join(resource.Filters, ","),
 	}
 }
+
+// SetNamespace sets the namespace of the resource.
+func (a *Asset) SetNamespace(namespace string) {
+	a.Namespace = namespace
+}

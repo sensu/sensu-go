@@ -9,11 +9,18 @@ import (
 	time "github.com/echlebek/timeproxy"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/types/dynamic"
 )
 
 type entityCacheKey struct {
 	Name      string
 	Namespace string
+}
+
+// EntityCacheValue contains an entity, and its synthesized companion.
+type EntityCacheValue struct {
+	Entity *corev2.Entity
+	Synth  interface{}
 }
 
 func getEntityCacheKey(entity *corev2.Entity) entityCacheKey {
@@ -23,7 +30,22 @@ func getEntityCacheKey(entity *corev2.Entity) entityCacheKey {
 	}
 }
 
-type entitySlice []*corev2.Entity
+func getEntityCacheValue(entity *corev2.Entity) EntityCacheValue {
+	return EntityCacheValue{
+		Entity: entity,
+		Synth:  dynamic.Synthesize(entity),
+	}
+}
+
+func makeSliceCache(entities []*corev2.Entity) []EntityCacheValue {
+	cache := make([]EntityCacheValue, len(entities))
+	for i := range cache {
+		cache[i] = getEntityCacheValue(entities[i])
+	}
+	return cache
+}
+
+type entitySlice []EntityCacheValue
 
 func (e entitySlice) Len() int {
 	return len(e)
@@ -33,17 +55,17 @@ func (e entitySlice) Swap(i, j int) {
 	e[i], e[j] = e[j], e[i]
 }
 
-func entityLT(x, y *corev2.Entity) bool {
-	if x == nil {
+func entityLT(x, y EntityCacheValue) bool {
+	if x.Entity == nil {
 		return true
 	}
-	if y == nil {
+	if y.Entity == nil {
 		return false
 	}
-	if x.Namespace == y.Namespace {
-		return x.Name < y.Name
+	if x.Entity.Namespace == y.Entity.Namespace {
+		return x.Entity.Name < y.Entity.Name
 	}
-	return x.Namespace < y.Namespace
+	return x.Entity.Namespace < y.Entity.Namespace
 }
 
 func (e entitySlice) Less(i, j int) bool {
@@ -60,8 +82,8 @@ type cacheWatcher struct {
 // the cache by namespace.
 type EntityCache struct {
 	watcher    <-chan store.WatchEventEntity
-	mapCache   map[entityCacheKey]*corev2.Entity
-	sliceCache []*corev2.Entity
+	mapCache   map[entityCacheKey]EntityCacheValue
+	sliceCache []EntityCacheValue
 	updates    []store.WatchEventEntity
 	cacheMu    sync.Mutex
 	watchers   []cacheWatcher
@@ -75,12 +97,12 @@ func NewEntityCache(ctx context.Context, s store.EntityStore) (*EntityCache, err
 	if err != nil {
 		return nil, fmt.Errorf("error creating EntityCache: %s", err)
 	}
-	mapCache := make(map[entityCacheKey]*corev2.Entity, len(entities))
+	mapCache := make(map[entityCacheKey]EntityCacheValue, len(entities))
 	for _, entity := range entities {
-		mapCache[getEntityCacheKey(entity)] = entity
+		mapCache[getEntityCacheKey(entity)] = getEntityCacheValue(entity)
 	}
 	cache := &EntityCache{
-		sliceCache: entities,
+		sliceCache: makeSliceCache(entities),
 		mapCache:   mapCache,
 		watcher:    s.GetEntityWatcher(ctx),
 	}
@@ -147,16 +169,16 @@ func (e *EntityCache) start(ctx context.Context) {
 }
 
 // GetEntities gets all entities in a namespace.
-func (e *EntityCache) GetEntities(namespace string) []*corev2.Entity {
+func (e *EntityCache) GetEntities(namespace string) []EntityCacheValue {
 	e.cacheMu.Lock()
 	cache := e.sliceCache
 	e.cacheMu.Unlock()
 	start := sort.Search(len(cache), func(i int) bool {
-		return cache[i].Namespace >= namespace
+		return cache[i].Entity.Namespace >= namespace
 	})
 	endNS := namespace + string(rune(0))
 	stop := sort.Search(len(cache), func(i int) bool {
-		return cache[i].Namespace >= endNS
+		return cache[i].Entity.Namespace >= endNS
 	})
 	if stop > len(cache) {
 		stop = len(cache)
@@ -174,7 +196,7 @@ func (e *EntityCache) updateCache() {
 		key := getEntityCacheKey(entity)
 		switch event.Action {
 		case store.WatchCreate, store.WatchUpdate:
-			e.mapCache[key] = entity
+			e.mapCache[key] = getEntityCacheValue(entity)
 		case store.WatchDelete:
 			delete(e.mapCache, key)
 		default:
@@ -182,7 +204,7 @@ func (e *EntityCache) updateCache() {
 		}
 	}
 	e.updates = nil
-	newSliceCache := make([]*corev2.Entity, 0, len(e.mapCache))
+	newSliceCache := make([]EntityCacheValue, 0, len(e.mapCache))
 	for _, v := range e.mapCache {
 		newSliceCache = append(newSliceCache, v)
 	}

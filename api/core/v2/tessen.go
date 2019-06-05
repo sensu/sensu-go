@@ -52,3 +52,8 @@ func ValidateInterval(freq uint32) error {
 func DefaultTessenConfig() *TessenConfig {
 	return &TessenConfig{}
 }
+
+// SetNamespace sets the namespace of the resource.
+func (t *TessenConfig) SetNamespace(namespace string) {
+	return
+}

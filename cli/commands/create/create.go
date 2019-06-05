@@ -13,12 +13,12 @@ import (
 	"github.com/ghodss/yaml"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
+// CreateCommand creates generic Sensu resources.
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create [-f FILE]",
@@ -31,24 +31,12 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	return cmd
 }
 
-// returns true if --namespace is specified to be anything other than "default"
-func namespaceFlagsSet(cmd *cobra.Command) bool {
-	namespace, err := cmd.Flags().GetString("namespace")
-	if err == nil && namespace != config.DefaultNamespace {
-		return true
-	}
-	return false
-}
-
 func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		var in io.Reader
 		if len(args) > 1 {
 			_ = cmd.Help()
 			return errors.New("invalid argument(s) received")
-		}
-		if namespaceFlagsSet(cmd) {
-			cli.Logger.Warn("namespace flags have no effect for create command")
 		}
 		fp, err := cmd.Flags().GetString("file")
 		if err != nil {
@@ -64,7 +52,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		if err != nil {
 			return err
 		}
-		if err := ValidateResources(resources); err != nil {
+		if err := ValidateResources(resources, cli.Config.Namespace()); err != nil {
 			return err
 		}
 		return PutResources(cli.Client, resources)
@@ -147,7 +135,9 @@ func filterCheckSubdue(resources []types.Wrapper) {
 	}
 }
 
-func ValidateResources(resources []types.Wrapper) error {
+// ValidateResources loops through a list of resources, appends a namespace
+// if one is not already declared, and validates the resource.
+func ValidateResources(resources []types.Wrapper, namespace string) error {
 	var err error
 	errCount := 0
 	for i, r := range resources {
@@ -156,6 +146,9 @@ func ValidateResources(resources []types.Wrapper) error {
 			errCount++
 			fmt.Fprintf(os.Stderr, "error validating resource %d: resource is nil\n", i)
 			continue
+		}
+		if resource.GetObjectMeta().Namespace == "" {
+			resource.SetNamespace(namespace)
 		}
 		if verr := resource.Validate(); verr != nil {
 			errCount++
@@ -179,6 +172,7 @@ func describeError(index int, err error) {
 	fmt.Fprintf(os.Stderr, "resource %d: (offset %d): %s\n", index, jsonErr.Offset, err)
 }
 
+// PutResources uses the GenericClient to PUT a resource at the inferred URI path.
 func PutResources(client client.GenericClient, resources []types.Wrapper) error {
 	for i, resource := range resources {
 		if err := client.PutResource(resource); err != nil {

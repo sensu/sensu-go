@@ -57,6 +57,11 @@ func (c *CheckConfig) MarshalJSON() ([]byte, error) {
 	return jsoniter.Marshal(clone)
 }
 
+// SetNamespace sets the namespace of the resource.
+func (c *CheckConfig) SetNamespace(namespace string) {
+	c.Namespace = namespace
+}
+
 // StorePath returns the path prefix to CheckConfigs in the store
 func (c *CheckConfig) StorePath() string {
 	return ChecksResource

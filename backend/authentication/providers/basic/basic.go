@@ -102,3 +102,8 @@ func (p *Provider) claims(username string) corev2.AuthProviderClaims {
 		UserID:     username,
 	}
 }
+
+// SetNamespace sets the namespace of the resource.
+func (p *Provider) SetNamespace(namespace string) {
+	p.Namespace = namespace
+}
