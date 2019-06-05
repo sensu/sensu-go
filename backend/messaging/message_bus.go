@@ -25,6 +25,9 @@ const (
 
 	// TopicTessen is the topic prefix for tessen api events to Tessend.
 	TopicTessen = "sensu:tessen"
+
+	// TopicTessenMetric is the topic prefix for tessen api metrics to Tessend.
+	TopicTessenMetric = "sensu:tessen-metric"
 )
 
 // A Subscriber receives messages via a channel.
