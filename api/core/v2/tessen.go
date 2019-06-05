@@ -45,3 +45,8 @@ func (t *TessenConfig) Validate() error {
 func (t *TessenConfig) GetObjectMeta() ObjectMeta {
 	return ObjectMeta{}
 }
+
+// SetNamespace sets the namespace of the resource.
+func (t *TessenConfig) SetNamespace(namespace string) {
+	return
+}

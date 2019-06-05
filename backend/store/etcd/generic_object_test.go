@@ -14,3 +14,8 @@ func (g *GenericObject) URIPath() string {
 func (g *GenericObject) Validate() error {
 	return nil
 }
+
+// SetNamespace sets the namespace of the resource.
+func (g *GenericObject) SetNamespace(namespace string) {
+	g.Namespace = namespace
+}

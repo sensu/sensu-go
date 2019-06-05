@@ -369,3 +369,8 @@ func EventFields(r Resource) map[string]string {
 		"event.entity.subscriptions": strings.Join(resource.Entity.Subscriptions, ","),
 	}
 }
+
+// SetNamespace sets the namespace of the resource.
+func (e *Event) SetNamespace(namespace string) {
+	e.Namespace = namespace
+}

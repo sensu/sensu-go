@@ -157,3 +157,13 @@ func HookConfigFields(r Resource) map[string]string {
 		"hook.namespace": resource.ObjectMeta.Namespace,
 	}
 }
+
+// SetNamespace sets the namespace of the resource.
+func (c *HookConfig) SetNamespace(namespace string) {
+	c.Namespace = namespace
+}
+
+// SetNamespace sets the namespace of the resource.
+func (h *Hook) SetNamespace(namespace string) {
+	h.Namespace = namespace
+}

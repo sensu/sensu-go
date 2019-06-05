@@ -30,20 +30,20 @@ func TestEntityCacheIntegration(t *testing.T) {
 		t.Fatal(err)
 	}
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
-	fixtures := []*corev2.Entity{}
+	fixtures := []EntityCacheValue{}
 
 	// Populate store with some initial entities
 	for i := 0; i < 9; i++ {
 		fixture := corev2.FixtureEntity(fmt.Sprintf("%d", i))
 		fixture.Name = fmt.Sprintf("%d", i)
 		fixture.EntityClass = corev2.EntityProxyClass
-		fixtures = append(fixtures, fixture)
+		fixtures = append(fixtures, getEntityCacheValue(fixture))
 		if err := store.UpdateEntity(ctx, fixture); err != nil {
 			t.Fatal(err)
 		}
 	}
 
-	otherFixtures := []*corev2.Entity{}
+	otherFixtures := []EntityCacheValue{}
 
 	// Include some entities from a non-default namespace
 	if err := store.CreateNamespace(context.Background(), &corev2.Namespace{Name: "other"}); err != nil {
@@ -54,7 +54,7 @@ func TestEntityCacheIntegration(t *testing.T) {
 		fixture.Name = fmt.Sprintf("%d", i)
 		fixture.Namespace = "other"
 		fixture.EntityClass = corev2.EntityProxyClass
-		otherFixtures = append(otherFixtures, fixture)
+		otherFixtures = append(otherFixtures, getEntityCacheValue(fixture))
 		if err := store.UpdateEntity(ctx, fixture); err != nil {
 			t.Fatal(err)
 		}
@@ -74,7 +74,7 @@ func TestEntityCacheIntegration(t *testing.T) {
 		t.Fatalf("bad entities")
 	}
 
-	if got, want := cache.GetEntities("notdefault"), []*corev2.Entity{}; !checkEntities(got, want) {
+	if got, want := cache.GetEntities("notdefault"), []EntityCacheValue{}; !checkEntities(got, want) {
 		t.Fatal("bad entities")
 	}
 
@@ -92,8 +92,8 @@ func TestEntityCacheIntegration(t *testing.T) {
 
 	got := cache.GetEntities("default")
 
-	if got, want := got[len(got)-1], newEntity; got.Name != want.Name {
-		t.Errorf("bad entity: got %s, want %s", got.Name, want.Name)
+	if got, want := got[len(got)-1], getEntityCacheValue(newEntity); got.Entity.Name != want.Entity.Name {
+		t.Errorf("bad entity: got %s, want %s", got.Entity.Name, want.Entity.Name)
 	}
 
 	if err := store.DeleteEntity(ctx, newEntity); err != nil {
@@ -108,15 +108,15 @@ func TestEntityCacheIntegration(t *testing.T) {
 
 }
 
-func checkEntities(got, want []*corev2.Entity) bool {
+func checkEntities(got, want []EntityCacheValue) bool {
 	if len(got) != len(want) {
 		return false
 	}
 	for i := range got {
-		if got[i].Namespace != want[i].Namespace {
+		if got[i].Entity.Namespace != want[i].Entity.Namespace {
 			return false
 		}
-		if got[i].Name != want[i].Name {
+		if got[i].Entity.Name != want[i].Entity.Name {
 			return false
 		}
 	}

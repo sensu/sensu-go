@@ -2,6 +2,7 @@ package eventd
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -21,30 +22,21 @@ func addToSilencedBy(id string, ids []string) []string {
 // entity subscription, the check subscription and the check name while
 // supporting wildcard silenced entries (e.g. subscription:*)
 func getSilenced(ctx context.Context, event *types.Event, s store.Store) error {
-	entries := []*types.Silenced{}
 	if !event.HasCheck() {
 		return nil
 	}
 
 	// Retrieve silenced entries using the entity subscription
 	entitySubscription := types.GetEntitySubscription(event.Entity.Name)
-	results, err := s.GetSilencedEntriesBySubscription(ctx, entitySubscription)
-	if err != nil {
-		return err
-	}
-	entries = append(entries, results...)
+	subscriptions := append(event.Check.Subscriptions, entitySubscription)
 
-	// Retrieve silenced entries using the check subscriptions
-	for _, value := range event.Check.Subscriptions {
-		results, err = s.GetSilencedEntriesBySubscription(ctx, value)
-		if err != nil {
-			return err
-		}
-		entries = append(entries, results...)
+	entries, err := s.GetSilencedEntriesBySubscription(ctx, subscriptions...)
+	if err != nil {
+		return fmt.Errorf("error setting silenced entries: %s", err)
 	}
 
 	// Retrieve silenced entries using the check name
-	results, err = s.GetSilencedEntriesByCheckName(ctx, event.Check.Name)
+	results, err := s.GetSilencedEntriesByCheckName(ctx, event.Check.Name)
 	if err != nil {
 		return err
 	}
@@ -76,25 +68,24 @@ func handleExpireOnResolveEntries(ctx context.Context, event *types.Event, store
 		return nil
 	}
 
-	nonExpireOnResolveEntries := []string{}
-
-	for _, silencedID := range event.Check.Silenced {
-		silencedEntry, err := store.GetSilencedEntryByName(ctx, silencedID)
-		if err != nil {
-			return err
-		}
-
-		if silencedEntry.ExpireOnResolve {
-			err := store.DeleteSilencedEntryByName(ctx, silencedID)
-			if err != nil {
-				return err
-			}
+	entries, err := store.GetSilencedEntriesByName(ctx, event.Check.Silenced...)
+	if err != nil {
+		return fmt.Errorf("couldn't resolve silences: %s", err)
+	}
+	toDelete := []string{}
+	toRetain := []string{}
+	for _, entry := range entries {
+		if entry.ExpireOnResolve {
+			toDelete = append(toDelete, entry.Name)
 		} else {
-			nonExpireOnResolveEntries = append(nonExpireOnResolveEntries, silencedID)
+			toRetain = append(toRetain, entry.Name)
 		}
 	}
 
-	event.Check.Silenced = nonExpireOnResolveEntries
+	if err := store.DeleteSilencedEntryByName(ctx, toDelete...); err != nil {
+		return fmt.Errorf("couldn't resolve silences: %s", err)
+	}
+	event.Check.Silenced = toRetain
 
 	return nil
 }

@@ -7,7 +7,7 @@ import (
 )
 
 // DeleteSilencedEntryByName ...
-func (s *MockStore) DeleteSilencedEntryByName(ctx context.Context, silencedID string) error {
+func (s *MockStore) DeleteSilencedEntryByName(ctx context.Context, silencedID ...string) error {
 	args := s.Called(ctx, silencedID)
 	return args.Error(0)
 }
@@ -24,8 +24,13 @@ func (s *MockStore) GetSilencedEntryByName(ctx context.Context, silencedID strin
 	return args.Get(0).(*types.Silenced), args.Error(1)
 }
 
+func (s *MockStore) GetSilencedEntriesByName(ctx context.Context, names ...string) ([]*types.Silenced, error) {
+	args := s.Called(ctx, names)
+	return args.Get(0).([]*types.Silenced), args.Error(1)
+}
+
 // GetSilencedEntriesBySubscription ...
-func (s *MockStore) GetSilencedEntriesBySubscription(ctx context.Context, subscription string) ([]*types.Silenced, error) {
+func (s *MockStore) GetSilencedEntriesBySubscription(ctx context.Context, subscriptions ...string) ([]*types.Silenced, error) {
 	args := s.Called(ctx)
 	return args.Get(0).([]*types.Silenced), args.Error(1)
 }

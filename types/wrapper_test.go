@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 var null = json.RawMessage("null")
@@ -18,6 +18,10 @@ func (g generic) URIPath() string {
 
 func (g generic) Validate() error {
 	return nil
+}
+
+func (g generic) SetNamespace(namespace string) {
+	return
 }
 
 func mustMarshal(t *testing.T, value interface{}) []byte {
@@ -36,7 +40,7 @@ func TestUnmarshalBody(t *testing.T) {
 	asset.Labels["foo"] = "bar"
 	var (
 		wrappedAsset = Wrapper{
-			TypeMeta: v2.TypeMeta{
+			TypeMeta: corev2.TypeMeta{
 				Type:       "Asset",
 				APIVersion: "core/v2",
 			},

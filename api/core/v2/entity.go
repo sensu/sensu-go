@@ -183,3 +183,8 @@ func EntityFields(r Resource) map[string]string {
 		"entity.subscriptions": strings.Join(resource.Subscriptions, ","),
 	}
 }
+
+// SetNamespace sets the namespace of the resource.
+func (e *Entity) SetNamespace(namespace string) {
+	e.Namespace = namespace
+}

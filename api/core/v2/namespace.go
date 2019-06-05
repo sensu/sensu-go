@@ -44,3 +44,8 @@ func NamespaceFields(r Resource) map[string]string {
 		"namespace.name": resource.Name,
 	}
 }
+
+// SetNamespace sets the namespace of the resource.
+func (n *Namespace) SetNamespace(namespace string) {
+	return
+}

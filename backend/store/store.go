@@ -504,7 +504,7 @@ type RoleStore interface {
 // consisting of entities, subscriptions and/or checks
 type SilencedStore interface {
 	// DeleteSilencedEntryByName deletes an entry using the given id.
-	DeleteSilencedEntryByName(ctx context.Context, id string) error
+	DeleteSilencedEntryByName(ctx context.Context, id ...string) error
 
 	// GetSilencedEntries returns all entries. A nil slice with no error is
 	// returned if none were found.
@@ -518,7 +518,7 @@ type SilencedStore interface {
 	// GetSilencedEntriesByCheckName returns all entries for the given subscription
 	// within the ctx's namespace. A nil slice with no error is
 	// returned if none were found.
-	GetSilencedEntriesBySubscription(ctx context.Context, subscription string) ([]*types.Silenced, error)
+	GetSilencedEntriesBySubscription(ctx context.Context, subscriptions ...string) ([]*types.Silenced, error)
 
 	// GetSilencedEntryByName returns an entry using the given id and the
 	// namespace stored in ctx. The resulting entry is nil if
@@ -527,6 +527,9 @@ type SilencedStore interface {
 
 	// UpdateHandler creates or updates a given entry.
 	UpdateSilencedEntry(ctx context.Context, entry *types.Silenced) error
+
+	// GetSilencedEntriesByName gets all the named silenced entries.
+	GetSilencedEntriesByName(ctx context.Context, id ...string) ([]*types.Silenced, error)
 }
 
 // TessenConfigStore provides methods for managing the Tessen configuration
