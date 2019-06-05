@@ -85,12 +85,14 @@ var listTestCases = func(pathPrefix, kind string, resources []corev2.Resource) [
 }
 
 var listResourcesStoreErrTestCase = func(pathPrefix, kind string) routerTestCase {
+	s := strings.Split(pathPrefix, "/")
+	resource := s[len(s)-1]
 	return routerTestCase{
 		name:   "it returns 500 if the store encounters an error while listing resources",
 		method: http.MethodGet,
 		path:   pathPrefix,
 		storeFunc: func(s *mockstore.MockStore) {
-			s.On("ListResources", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("*[]"+kind), mock.AnythingOfType("*store.SelectionPredicate")).
+			s.On("ListResources", mock.Anything, resource, mock.AnythingOfType("*[]"+kind), mock.AnythingOfType("*store.SelectionPredicate")).
 				Return(&store.ErrInternal{}).
 				Once()
 		},
@@ -99,12 +101,14 @@ var listResourcesStoreErrTestCase = func(pathPrefix, kind string) routerTestCase
 }
 
 var listResourcesSuccessTestCase = func(pathPrefix, kind string, resources []corev2.Resource) routerTestCase {
+	s := strings.Split(pathPrefix, "/")
+	resource := s[len(s)-1]
 	return routerTestCase{
 		name:   "it lists resources",
 		method: http.MethodGet,
 		path:   pathPrefix,
 		storeFunc: func(s *mockstore.MockStore) {
-			s.On("ListResources", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("*[]"+kind), mock.AnythingOfType("*store.SelectionPredicate")).
+			s.On("ListResources", mock.Anything, resource, mock.AnythingOfType("*[]"+kind), mock.AnythingOfType("*store.SelectionPredicate")).
 				Return(nil).
 				Run(func(args mock.Arguments) {
 					args[2] = resources
@@ -118,13 +122,13 @@ var listResourcesSuccessTestCase = func(pathPrefix, kind string, resources []cor
 var listResourcesAcrossNamespacesTestCase = func(pathPrefix, kind string, resources []corev2.Resource) routerTestCase {
 	// Strip the namespace from the path
 	pathPrefix = strings.TrimPrefix(pathPrefix, "/namespaces/default")
-
+	resource := strings.TrimPrefix(pathPrefix, "/")
 	return routerTestCase{
 		name:   "it lists resources across namespaces",
 		method: http.MethodGet,
 		path:   pathPrefix,
 		storeFunc: func(s *mockstore.MockStore) {
-			s.On("ListResources", mock.Anything, mock.AnythingOfType("string"), mock.AnythingOfType("*[]"+kind), mock.AnythingOfType("*store.SelectionPredicate")).
+			s.On("ListResources", mock.Anything, resource, mock.AnythingOfType("*[]"+kind), mock.AnythingOfType("*store.SelectionPredicate")).
 				Return(nil).
 				Run(func(args mock.Arguments) {
 					args[2] = resources

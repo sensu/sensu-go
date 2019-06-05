@@ -9,11 +9,14 @@ const (
 	// NamespaceTypeAll represents an empty namespace, used to represent a request
 	// across all namespaces
 	NamespaceTypeAll = ""
+
+	// NamespacesResource is the name of this resource type
+	NamespacesResource = "namespaces"
 )
 
 // StorePath returns the path prefix to namespaces in the store
 func (n *Namespace) StorePath() string {
-	return ""
+	return NamespacesResource
 }
 
 // URIPath returns the path component of a Namespace URI.
