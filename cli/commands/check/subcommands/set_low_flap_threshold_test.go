@@ -35,6 +35,9 @@ func TestSetLowFlapThresholdCommand(t *testing.T) {
 
 		t.Run(tc.testName, func(t *testing.T) {
 			check := types.FixtureCheckConfig("checky")
+			check.LowFlapThreshold = 0
+			check.HighFlapThreshold = 0
+
 			cli := test.NewMockCLI()
 
 			client := cli.Client.(*client.MockClient)
