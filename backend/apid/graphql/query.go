@@ -118,8 +118,6 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 		}
 	}
 
-	logger.WithField("set", set).Info("sort")
-
 	values := set.Values()
 	if p.Args.Order == schema.SuggestionOrders.FREQUENCY {
 		sort.Strings(values)
