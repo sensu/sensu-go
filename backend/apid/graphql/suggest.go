@@ -88,17 +88,6 @@ func DefaultSuggestSchema() suggest.Register {
 					Name:      "timeout",
 					FieldFunc: timeoutFn,
 				},
-				// =================
-				// more ...
-				// =================
-				// interval
-				// low_flap
-				// high_flap
-				// cron
-				// ttl
-				// envvars.{key}
-				// max output size
-				// =================
 			},
 		},
 		&suggest.Resource{
@@ -188,11 +177,6 @@ func DefaultSuggestSchema() suggest.Register {
 					Name:      "timeout",
 					FieldFunc: timeoutFn,
 				},
-				// =================
-				// more ...
-				// =================
-				// envvars.{key}
-				// =================
 			},
 		},
 		&suggest.Resource{
@@ -237,11 +221,6 @@ func DefaultSuggestSchema() suggest.Register {
 					Name:      "timeout",
 					FieldFunc: timeoutFn,
 				},
-				// =================
-				// more ...
-				// =================
-				// envvars.{key}
-				// =================
 			},
 		},
 		&suggest.Resource{
@@ -254,6 +233,18 @@ func DefaultSuggestSchema() suggest.Register {
 					Fields: []suggest.Field{
 						suggest.NameField,
 						suggest.LabelsField,
+					},
+				},
+				&suggest.CustomField{
+					Name: "check",
+					FieldFunc: func(res v2.Resource) []string {
+						return []string{res.(*v2.Silenced).Check}
+					},
+				},
+				&suggest.CustomField{
+					Name: "subscription",
+					FieldFunc: func(res v2.Resource) []string {
+						return []string{res.(*v2.Silenced).Subscription}
 					},
 				},
 				&suggest.CustomField{
