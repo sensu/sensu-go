@@ -156,3 +156,73 @@ func TestGetTessenConfig(t *testing.T) {
 		})
 	}
 }
+
+func TestNewTessenMetricController(t *testing.T) {
+	assert := assert.New(t)
+
+	bus := &mockbus.MockBus{}
+	actions := NewTessenMetricController(bus)
+
+	assert.NotNil(actions)
+	assert.Equal(bus, actions.bus)
+}
+
+func TestPublishTessenMetrics(t *testing.T) {
+	testCases := []struct {
+		name            string
+		ctx             context.Context
+		argument        []corev2.MetricPoint
+		busErr          error
+		expectedErr     bool
+		expectedErrCode ErrCode
+	}{
+		{
+			name: "Publish",
+			ctx:  context.Background(),
+			argument: []corev2.MetricPoint{
+				corev2.MetricPoint{
+					Name:  "metric",
+					Value: 1,
+				},
+			},
+		},
+		{
+			name: "Bus Error",
+			ctx:  context.Background(),
+			argument: []corev2.MetricPoint{
+				corev2.MetricPoint{
+					Name:  "metric",
+					Value: 1,
+				},
+			},
+			busErr:          errors.New("the bus has a flat tire"),
+			expectedErr:     true,
+			expectedErrCode: InternalErr,
+		},
+	}
+
+	for _, tc := range testCases {
+		bus := &mockbus.MockBus{}
+		actions := NewTessenMetricController(bus)
+
+		t.Run(tc.name, func(t *testing.T) {
+			assert := assert.New(t)
+
+			bus.On("Publish", mock.Anything, mock.Anything).Return(tc.busErr)
+
+			err := actions.Publish(tc.ctx, tc.argument)
+
+			if tc.expectedErr {
+				inferErr, ok := err.(Error)
+				if ok {
+					assert.Equal(tc.expectedErrCode, inferErr.Code)
+				} else {
+					assert.Error(err)
+					assert.FailNow("Return value was not of type 'Error'")
+				}
+			} else {
+				assert.NoError(err)
+			}
+		})
+	}
+}
