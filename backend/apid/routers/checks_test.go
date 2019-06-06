@@ -69,19 +69,18 @@ func TestChecksRouter(t *testing.T) {
 	controller := &mockCheckController{}
 	s := &mockstore.MockStore{}
 	router := NewChecksRouter(controller, s)
-	parentRouter := mux.NewRouter()
+	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)
 
-	pathPrefix := "/namespaces/default/checks"
-	kind := "*v2.CheckConfig"
+	empty := &corev2.CheckConfig{}
 	fixture := corev2.FixtureCheckConfig("foo")
 
 	tests := []routerTestCase{}
-	tests = append(tests, getTestCases(pathPrefix, kind, fixture)...)
-	tests = append(tests, listTestCases(pathPrefix, kind, []corev2.Resource{fixture})...)
-	tests = append(tests, createTestCases(pathPrefix, kind)...)
-	tests = append(tests, updateTestCases(pathPrefix, kind)...)
-	tests = append(tests, deleteTestCases(pathPrefix, kind)...)
+	tests = append(tests, getTestCases(fixture)...)
+	tests = append(tests, listTestCases(empty)...)
+	tests = append(tests, createTestCases(empty)...)
+	tests = append(tests, updateTestCases(fixture)...)
+	tests = append(tests, deleteTestCases(fixture)...)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Only start the HTTP server here to prevent data races in tests
@@ -139,7 +138,7 @@ func TestChecksRouterCustomRoutes(t *testing.T) {
 			name:   "it adds a check hook to a check",
 			method: http.MethodPut,
 			path:   "/namespaces/default/checks/check1/hooks/non-zero",
-			body:   marshal(t, corev2.FixtureHookList("hook1")),
+			body:   marshal(corev2.FixtureHookList("hook1")),
 			controllerFunc: func(c *mockCheckController) {
 				c.On("AddCheckHook", mock.Anything, "check1", mock.AnythingOfType("v2.HookList")).Return(nil)
 			},

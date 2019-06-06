@@ -27,8 +27,8 @@ const (
 	EventPassingState = "passing"
 )
 
-// StorePath returns the path prefix to events in the store
-func (e *Event) StorePath() string {
+// StorePrefix returns the path prefix to this resource in the store
+func (e *Event) StorePrefix() string {
 	return EventsResource
 }
 

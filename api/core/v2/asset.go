@@ -25,8 +25,8 @@ var (
 	AssetNameRegex = regexp.MustCompile("^" + AssetNameRegexStr + "$")
 )
 
-// StorePath returns the path prefix to assets in the store
-func (a *Asset) StorePath() string {
+// StorePrefix returns the path prefix to this resource in the store
+func (a *Asset) StorePrefix() string {
 	return AssetsResource
 }
 

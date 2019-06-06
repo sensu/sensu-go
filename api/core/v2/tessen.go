@@ -25,8 +25,8 @@ func (t *TessenConfig) GetObjectMeta() ObjectMeta {
 	return ObjectMeta{}
 }
 
-// StorePath returns the path prefix to the Tessen config in the store
-func (t *TessenConfig) StorePath() string {
+// StorePrefix returns the path prefix to the Tessen config in the store
+func (t *TessenConfig) StorePrefix() string {
 	return TessenResource
 }
 

@@ -62,8 +62,8 @@ func (c *CheckConfig) SetNamespace(namespace string) {
 	c.Namespace = namespace
 }
 
-// StorePath returns the path prefix to CheckConfigs in the store
-func (c *CheckConfig) StorePath() string {
+// StorePrefix returns the path prefix to this resource in the store
+func (c *CheckConfig) StorePrefix() string {
 	return ChecksResource
 }
 

@@ -19,8 +19,8 @@ func (u *User) GetObjectMeta() ObjectMeta {
 	return ObjectMeta{}
 }
 
-// StorePath returns the path prefix to mutators in the store
-func (u *User) StorePath() string {
+// StorePrefix returns the path prefix to this resource in the store
+func (u *User) StorePrefix() string {
 	return UsersResource
 }
 

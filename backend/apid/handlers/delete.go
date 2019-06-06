@@ -17,7 +17,7 @@ func (h Handlers) DeleteResource(r *http.Request) (interface{}, error) {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	if err := h.Store.DeleteResource(r.Context(), h.Resource.StorePath(), name); err != nil {
+	if err := h.Store.DeleteResource(r.Context(), h.Resource.StorePrefix(), name); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
 			return nil, actions.NewErrorf(actions.NotFound)

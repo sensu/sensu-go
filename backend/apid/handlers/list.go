@@ -18,7 +18,7 @@ func (h Handlers) ListResources(ctx context.Context, pred *store.SelectionPredic
 	ptr := reflect.New(sliceOfResource)
 	ptr.Elem().Set(reflect.MakeSlice(sliceOfResource, 0, 0))
 
-	if err := h.Store.ListResources(ctx, h.Resource.StorePath(), ptr.Interface(), pred); err != nil {
+	if err := h.Store.ListResources(ctx, h.Resource.StorePrefix(), ptr.Interface(), pred); err != nil {
 		return nil, actions.NewError(actions.InternalErr, err)
 	}
 

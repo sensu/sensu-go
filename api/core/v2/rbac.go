@@ -111,9 +111,9 @@ func FixtureClusterRoleBinding(name string) *ClusterRoleBinding {
 	}
 }
 
-// StorePath returns the path prefix to cluster roles in the store
-func (r *ClusterRole) StorePath() string {
-	return ClusterRolesResource
+// StorePrefix returns the path prefix to this resource in the store
+func (r *ClusterRole) StorePrefix() string {
+	return "rbac/" + ClusterRolesResource
 }
 
 // URIPath returns the path component of a cluster role URI.
@@ -138,9 +138,9 @@ func (r *ClusterRole) Validate() error {
 	return nil
 }
 
-// StorePath returns the path prefix to cluster role bindings in the store
-func (b *ClusterRoleBinding) StorePath() string {
-	return ClusterRoleBindingsResource
+// StorePrefix returns the path prefix to this resource in the store
+func (b *ClusterRoleBinding) StorePrefix() string {
+	return "rbac/" + ClusterRoleBindingsResource
 }
 
 // URIPath returns the path component of a cluster role binding URI.
@@ -169,9 +169,9 @@ func (b *ClusterRoleBinding) Validate() error {
 	return nil
 }
 
-// StorePath returns the path prefix to cluster roles in the store
-func (r *Role) StorePath() string {
-	return RolesResource
+// StorePrefix returns the path prefix to this resource in the store
+func (r *Role) StorePrefix() string {
+	return "rbac/" + RolesResource
 }
 
 // URIPath returns the path component of a role URI.
@@ -197,9 +197,9 @@ func (r *Role) Validate() error {
 	return nil
 }
 
-// StorePath returns the path prefix to role bindings in the store
-func (b *RoleBinding) StorePath() string {
-	return RoleBindingsResource
+// StorePrefix returns the path prefix to this resource in the store
+func (b *RoleBinding) StorePrefix() string {
+	return "rbac/" + RoleBindingsResource
 }
 
 // URIPath returns the path component of a role binding URI.

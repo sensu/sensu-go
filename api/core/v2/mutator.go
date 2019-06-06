@@ -13,8 +13,8 @@ const (
 	MutatorsResource = "mutators"
 )
 
-// StorePath returns the path prefix to mutators in the store
-func (m *Mutator) StorePath() string {
+// StorePrefix returns the path prefix to this resource in the store
+func (m *Mutator) StorePrefix() string {
 	return MutatorsResource
 }
 

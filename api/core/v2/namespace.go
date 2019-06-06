@@ -3,6 +3,7 @@ package v2
 import (
 	"fmt"
 	"net/url"
+	"path"
 )
 
 const (
@@ -14,14 +15,14 @@ const (
 	NamespacesResource = "namespaces"
 )
 
-// StorePath returns the path prefix to namespaces in the store
-func (n *Namespace) StorePath() string {
+// StorePrefix returns the path prefix to this resource in the store
+func (n *Namespace) StorePrefix() string {
 	return NamespacesResource
 }
 
 // URIPath returns the path component of a Namespace URI.
 func (n *Namespace) URIPath() string {
-	return fmt.Sprintf("/api/core/v2/namespaces/%s", url.PathEscape(n.Name))
+	return path.Join(URLPrefix, "namespaces", url.PathEscape(n.Name))
 }
 
 // Validate returns an error if the namespace does not pass validation tests

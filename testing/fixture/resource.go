@@ -22,8 +22,8 @@ func (f *Resource) SetNamespace(namespace string) {
 	f.Namespace = namespace
 }
 
-// StorePath ...
-func (f *Resource) StorePath() string {
+// StorePrefix ...
+func (f *Resource) StorePrefix() string {
 	return "resource"
 }
 

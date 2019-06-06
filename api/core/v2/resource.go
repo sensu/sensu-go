@@ -8,8 +8,8 @@ type Resource interface {
 	// SetNamespace sets the namespace of the resource.
 	SetNamespace(string)
 
-	// StorePath gives the path to the resources in the store
-	StorePath() string
+	// StorePrefix gives the path prefix to this resource in the store
+	StorePrefix() string
 
 	// URIPath gives the path to the resource, e.g. /checks/checkname
 	URIPath() string

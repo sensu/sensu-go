@@ -43,8 +43,8 @@ func (h *Hook) Validate() error {
 	return nil
 }
 
-// StorePath returns the path prefix to hooks in the store
-func (c *HookConfig) StorePath() string {
+// StorePrefix returns the path prefix to this resource in the store
+func (c *HookConfig) StorePrefix() string {
 	return HooksResource
 }
 

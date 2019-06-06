@@ -34,8 +34,8 @@ const (
 var DefaultRedactFields = []string{"password", "passwd", "pass", "api_key",
 	"api_token", "access_key", "secret_key", "private_key", "secret"}
 
-// StorePath returns the path prefix to entities in the store
-func (e *Entity) StorePath() string {
+// StorePrefix returns the path prefix to this resource in the store
+func (e *Entity) StorePrefix() string {
 	return EntitiesResource
 }
 

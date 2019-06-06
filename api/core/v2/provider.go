@@ -15,8 +15,8 @@ type AuthProvider interface {
 	GetObjectMeta() ObjectMeta
 	// Name returns the provider name (e.g. default)
 	Name() string
-	// StorePath gives the path to the resources in the store
-	StorePath() string
+	// StorePrefix gives the path prefix to this resource in the store
+	StorePrefix() string
 	// Type returns the provider type (e.g. ldap)
 	Type() string
 	// URIPath gives the path to the provider

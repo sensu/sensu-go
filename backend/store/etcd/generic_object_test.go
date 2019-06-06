@@ -7,7 +7,7 @@ func (g *GenericObject) GetNamespace() string {
 	return g.Namespace
 }
 
-func (g *GenericObject) StorePath() string {
+func (g *GenericObject) StorePrefix() string {
 	return ""
 }
 

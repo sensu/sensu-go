@@ -79,9 +79,9 @@ func (p *Provider) Type() string {
 	return Type
 }
 
-// StorePath returns the path prefix to the provider in the store. Not
+// StorePrefix returns the path prefix to the provider in the store. Not
 // implemented
-func (p *Provider) StorePath() string {
+func (p *Provider) StorePrefix() string {
 	return ""
 }
 

@@ -38,21 +38,21 @@ func (s *Store) CreateOrUpdateResource(ctx context.Context, resource corev2.Reso
 }
 
 // DeleteResource ...
-func (s *Store) DeleteResource(ctx context.Context, kind, name string) error {
-	key := store.KeyFromArgs(ctx, kind, name)
+func (s *Store) DeleteResource(ctx context.Context, resourcePrefix, name string) error {
+	key := store.KeyFromArgs(ctx, resourcePrefix, name)
 	return Delete(ctx, s.client, key)
 }
 
 // GetResource ...
 func (s *Store) GetResource(ctx context.Context, name string, resource corev2.Resource) error {
-	key := store.KeyFromArgs(ctx, resource.StorePath(), name)
+	key := store.KeyFromArgs(ctx, resource.StorePrefix(), name)
 	return Get(ctx, s.client, key, resource)
 }
 
 // ListResources ...
-func (s *Store) ListResources(ctx context.Context, kind string, resources interface{}, pred *store.SelectionPredicate) error {
+func (s *Store) ListResources(ctx context.Context, resourcePrefix string, resources interface{}, pred *store.SelectionPredicate) error {
 	keyBuilderFunc := func(ctx context.Context, name string) string {
-		return store.NewKeyBuilder(kind).WithContext(ctx).Build("")
+		return store.NewKeyBuilder(resourcePrefix).WithContext(ctx).Build("")
 	}
 
 	return List(ctx, s.client, keyBuilderFunc, resources, pred)

@@ -16,19 +16,18 @@ func TestExtensionsRouter(t *testing.T) {
 	// Setup the router
 	s := &mockstore.MockStore{}
 	router := NewExtensionsRouter(s)
-	parentRouter := mux.NewRouter()
+	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)
 
-	pathPrefix := "/namespaces/default/extensions"
-	kind := "*v2.Extension"
+	empty := &corev2.Extension{}
 	fixture := corev2.FixtureExtension("foo")
 
 	tests := []routerTestCase{}
-	tests = append(tests, getTestCases(pathPrefix, kind, fixture)...)
-	tests = append(tests, listTestCases(pathPrefix, kind, []corev2.Resource{fixture})...)
-	tests = append(tests, createTestCases(pathPrefix, kind)...)
-	tests = append(tests, updateTestCases(pathPrefix, kind)...)
-	tests = append(tests, deleteTestCases(pathPrefix, kind)...)
+	tests = append(tests, getTestCases(fixture)...)
+	tests = append(tests, listTestCases(empty)...)
+	tests = append(tests, createTestCases(empty)...)
+	tests = append(tests, updateTestCases(fixture)...)
+	tests = append(tests, deleteTestCases(fixture)...)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Only start the HTTP server here to prevent data races in tests

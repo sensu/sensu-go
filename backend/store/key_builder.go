@@ -91,10 +91,10 @@ func (b KeyBuilder) BuildPrefix(keys ...string) string {
 // KeyFromResource determines the path to a resource in the store using the
 // resource itself
 func KeyFromResource(r corev2.Resource) string {
-	kind := r.StorePath()
+	resourcePrefix := r.StorePrefix()
 	namespace := r.GetObjectMeta().Namespace
 	name := r.GetObjectMeta().Name
-	key := path.Join(Root, kind, namespace, name)
+	key := path.Join(Root, resourcePrefix, namespace, name)
 
 	// In order to not inadvertently build a key that could list across
 	// namespaces, we need to make sure that we terminate the key with the key
@@ -111,9 +111,9 @@ func KeyFromResource(r corev2.Resource) string {
 
 // KeyFromArgs determines the path to a resource in the store using the provided
 // arguments
-func KeyFromArgs(ctx context.Context, kind, name string) string {
+func KeyFromArgs(ctx context.Context, resourcePrefix, name string) string {
 	namespace := NewNamespaceFromContext(ctx)
-	key := path.Join(Root, kind, namespace, name)
+	key := path.Join(Root, resourcePrefix, namespace, name)
 
 	// In order to not inadvertently build a key that could list across
 	// namespaces, we need to make sure that we terminate the key with the key

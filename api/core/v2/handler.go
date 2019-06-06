@@ -34,8 +34,8 @@ const (
 	HandlerGRPCType = "grpc"
 )
 
-// StorePath returns the path prefix to handlers in the store
-func (h *Handler) StorePath() string {
+// StorePrefix returns the path prefix to this resource in the store
+func (h *Handler) StorePrefix() string {
 	return HandlersResource
 }
 

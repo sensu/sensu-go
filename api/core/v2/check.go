@@ -117,8 +117,8 @@ func (c *Check) SetNamespace(namespace string) {
 	c.Namespace = namespace
 }
 
-// StorePath returns the path prefix to checks in the store
-func (c *Check) StorePath() string {
+// StorePrefix returns the path prefix to this resource in the store
+func (c *Check) StorePrefix() string {
 	return ChecksResource
 }
 

@@ -11,8 +11,8 @@ const (
 	ExtensionsResource = "extensions"
 )
 
-// StorePath returns the path prefix to extensions in the store
-func (e *Extension) StorePath() string {
+// StorePrefix returns the path prefix to this resource in the store
+func (e *Extension) StorePrefix() string {
 	return ExtensionsResource
 }
 

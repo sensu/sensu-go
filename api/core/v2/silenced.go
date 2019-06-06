@@ -17,8 +17,8 @@ const (
 	SilencedResource = "silenced"
 )
 
-// StorePath returns the path prefix to silenced entries in the store
-func (s *Silenced) StorePath() string {
+// StorePrefix returns the path prefix to this resource in the store
+func (s *Silenced) StorePrefix() string {
 	return SilencedResource
 }
 
