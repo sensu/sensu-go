@@ -112,7 +112,7 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 	for i := 0; i < objs.Elem().Len(); i++ {
 		s := objs.Elem().Index(i).Interface().(v2.Resource)
 		for _, v := range field.Value(s, ref.FieldPath) {
-			if strings.Contains(strings.ToLower(v), q) {
+			if v != "" && strings.Contains(strings.ToLower(v), q) {
 				set.Add(v)
 			}
 		}
