@@ -119,7 +119,6 @@ type QuerySuggestFieldResolverArgs struct {
 	The following are valid example values for this argument:
 
 	    `core/v2/asset/metadata/name`
-	    `core/v2/asset/metadata/name`
 	    `core/v2/asset/metadata/labels`
 	    `core/v2/asset/metadata/labels/region`
 	    `core/v2/check_config/subscriptions`
@@ -591,7 +590,7 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 						Type:         graphql1.String,
 					},
 					"ref": &graphql1.ArgumentConfig{
-						Description: "Ref is used to uniquely identify a resource in the system as well as a field\non said resource. Refs take the form: :group/:version/:type/:field. The\nfield segment may be a path in and of it's own, eg. metadata/name would\nrefer to the name field nested inside a resource's metadata.\n\nThe following are valid example values for this argument:\n\n    `core/v2/asset/metadata/name`\n    `core/v2/asset/metadata/name`\n    `core/v2/asset/metadata/labels`\n    `core/v2/asset/metadata/labels/region`\n    `core/v2/check_config/subscriptions`\n    `core/v2/check_config/command`\n    `core/v2/check_config/timeout`\n    `core/v2/entity/system/os`\n    `core/v2/entity/system/platform`\n    `core/v2/filter/metadata/name`\n    `core/v2/handler/command`\n    `core/v2/hook_config/command`\n    `core/v2/mutator/command`\n    `core/v2/mutator/timeout`\n    `core/v2/silenced/creator`",
+						Description: "Ref is used to uniquely identify a resource in the system as well as a field\non said resource. Refs take the form: :group/:version/:type/:field. The\nfield segment may be a path in and of it's own, eg. metadata/name would\nrefer to the name field nested inside a resource's metadata.\n\nThe following are valid example values for this argument:\n\n    `core/v2/asset/metadata/name`\n    `core/v2/asset/metadata/labels`\n    `core/v2/asset/metadata/labels/region`\n    `core/v2/check_config/subscriptions`\n    `core/v2/check_config/command`\n    `core/v2/check_config/timeout`\n    `core/v2/entity/system/os`\n    `core/v2/entity/system/platform`\n    `core/v2/filter/metadata/name`\n    `core/v2/handler/command`\n    `core/v2/hook_config/command`\n    `core/v2/mutator/command`\n    `core/v2/mutator/timeout`\n    `core/v2/silenced/creator`",
 						Type:        graphql1.NewNonNull(graphql1.String),
 					},
 				},

@@ -1,7 +1,6 @@
 package graphql
 
 import (
-	"errors"
 	"fmt"
 	"reflect"
 	"sort"
@@ -83,7 +82,7 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 
 	res := SuggestSchema.Lookup(ref)
 	if res == nil {
-		return results, errors.New("no configuration could be found for given ref")
+		return results, fmt.Errorf("no mapping found for '%s'", strings.Join([]string{ref.Group, ref.Name}, "/"))
 	}
 
 	field := res.LookupField(ref)
@@ -96,6 +95,7 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 		return results, err
 	}
 
+	// makes a slice from variable t and then gets the pointer to it.
 	objT := reflect.MakeSlice(reflect.SliceOf(reflect.PtrTo(reflect.TypeOf(t).Elem())), 0, 0)
 	objs := reflect.New(objT.Type())
 	objs.Elem().Set(objT)
@@ -136,14 +136,6 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 
 	results["values"] = values
 	return results, nil
-}
-
-func mustBeSlice(objs interface{}) {
-	objsType := reflect.TypeOf(objs)
-	logger.WithField("kind", objsType.Kind()).WithField("elem kind", objsType.Elem().Kind()).Info("reflect")
-	if objsType.Kind() != reflect.Ptr || objsType.Elem().Kind() != reflect.Slice {
-		panic("unexpected type for objs")
-	}
 }
 
 // Node implements response to request for 'node' field.

@@ -3,24 +3,7 @@ SuggestionResultSet contains a collection of results for the given query.
 """
 type SuggestionResultSet {
   values: [String!]!
-  # next: String
 }
-
-# """
-# SuggestionResult represents either a string or integer value in a set of
-# suggestsions.
-# """
-# union SuggestionResult = StringResult | IntResult
-#
-# type StringResult {
-#   value: String!
-#   score: Float # interface?
-# }
-#
-# type IntResult {
-#   value: Int!
-#   score: Float
-# }
 
 enum SuggestionOrder {
   ALPHA_ASC

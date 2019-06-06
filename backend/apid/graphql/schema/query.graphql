@@ -60,7 +60,6 @@ type Query {
     The following are valid example values for this argument:
 
         `core/v2/asset/metadata/name`
-        `core/v2/asset/metadata/name`
         `core/v2/asset/metadata/labels`
         `core/v2/asset/metadata/labels/region`
         `core/v2/check_config/subscriptions`
