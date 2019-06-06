@@ -126,6 +126,17 @@ func RegisterTypeResolver(key string, resolver func(string) (Resource, error)) {
 	packageMap[key] = resolver
 }
 
+func ResolveType(apiVersion string, resource string) (Resource, error) {
+	// Guard read access to packageMap
+	packageMapMu.RLock()
+	defer packageMapMu.RUnlock()
+	resolver, ok := packageMap[apiVersion]
+	if !ok {
+		return nil, fmt.Errorf("invalid API version: %s", apiVersion)
+	}
+	return resolver(resource)
+}
+
 func apiVersion(version string) string {
 	parts := strings.Split(version, "/")
 	if len(parts) == 0 {

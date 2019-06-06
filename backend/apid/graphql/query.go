@@ -3,12 +3,14 @@ package graphql
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"sort"
 	"strings"
 
 	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/apid/graphql/suggest"
+	cliclient "github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
@@ -71,7 +73,7 @@ func (r *queryImpl) Handler(p schema.QueryHandlerFieldResolverParams) (interface
 
 // Suggest implements a response to a request for the 'suggest' field.
 func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface{}, error) {
-	results := map[string][]string{}
+	results := make(map[string]interface{}, 1)
 	results["values"] = []string{}
 
 	ref, err := suggest.ParseRef(p.Args.Ref)
@@ -89,23 +91,34 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 		return results, fmt.Errorf("could not find field for '%s'", ref.FieldPath)
 	}
 
-	client := r.factory.NewWithContext(p.Context)
-	source := []v2.Resource{}
+	t, err := types.ResolveType(res.Group, res.Name)
+	if err != nil {
+		return results, err
+	}
 
-	err = client.List(res.URIPath(p.Args.Namespace), source, nil)
+	objT := reflect.MakeSlice(reflect.SliceOf(reflect.PtrTo(reflect.TypeOf(t).Elem())), 0, 0)
+	objs := reflect.New(objT.Type())
+	objs.Elem().Set(objT)
+
+	client := r.factory.NewWithContext(p.Context)
+
+	err = client.List(res.URIPath(p.Args.Namespace), objs.Interface(), &cliclient.ListOptions{})
 	if handleListErr(err) != nil {
 		return results, err
 	}
 
 	q := strings.ToLower(p.Args.Q)
 	set := utilstrings.OccurrenceSet{}
-	for _, s := range source {
+	for i := 0; i < objs.Elem().Len(); i++ {
+		s := objs.Elem().Index(i).Interface().(v2.Resource)
 		for _, v := range field.Value(s, ref.FieldPath) {
 			if strings.Contains(strings.ToLower(v), q) {
 				set.Add(v)
 			}
 		}
 	}
+
+	logger.WithField("set", set).Info("sort")
 
 	values := set.Values()
 	if p.Args.Order == schema.SuggestionOrders.FREQUENCY {
@@ -125,6 +138,14 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 
 	results["values"] = values
 	return results, nil
+}
+
+func mustBeSlice(objs interface{}) {
+	objsType := reflect.TypeOf(objs)
+	logger.WithField("kind", objsType.Kind()).WithField("elem kind", objsType.Elem().Kind()).Info("reflect")
+	if objsType.Kind() != reflect.Ptr || objsType.Elem().Kind() != reflect.Slice {
+		panic("unexpected type for objs")
+	}
 }
 
 // Node implements response to request for 'node' field.

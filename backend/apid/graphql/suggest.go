@@ -40,7 +40,8 @@ func DefaultSuggestSchema() suggest.Register {
 	return suggest.Register{
 		&suggest.Resource{
 			Group: "core/v2",
-			Name:  "assets",
+			Name:  "asset",
+			Path:  "/api/core/v2/namespaces/{namespace}/assets",
 			Fields: []suggest.Field{
 				&suggest.ObjectField{
 					Name: "metadata",
@@ -59,7 +60,8 @@ func DefaultSuggestSchema() suggest.Register {
 		},
 		&suggest.Resource{
 			Group: "core/v2",
-			Name:  "checks",
+			Name:  "check_config",
+			Path:  "/api/core/v2/namespaces/{namespace}/checks",
 			Fields: []suggest.Field{
 				&suggest.ObjectField{
 					Name: "metadata",
@@ -101,7 +103,8 @@ func DefaultSuggestSchema() suggest.Register {
 		},
 		&suggest.Resource{
 			Group: "core/v2",
-			Name:  "entities",
+			Name:  "entity",
+			Path:  "/api/core/v2/namespaces/{namespace}/entities",
 			Fields: []suggest.Field{
 				&suggest.ObjectField{
 					Name: "metadata",
@@ -153,7 +156,8 @@ func DefaultSuggestSchema() suggest.Register {
 		},
 		&suggest.Resource{
 			Group: "core/v2",
-			Name:  "filters",
+			Name:  "filter",
+			Path:  "/api/core/v2/namespaces/{namespace}/filters",
 			Fields: []suggest.Field{
 				&suggest.ObjectField{
 					Name: "metadata",
@@ -166,7 +170,8 @@ func DefaultSuggestSchema() suggest.Register {
 		},
 		&suggest.Resource{
 			Group: "core/v2",
-			Name:  "handlers",
+			Name:  "handler",
+			Path:  "/api/core/v2/namespaces/{namespace}/handlers",
 			Fields: []suggest.Field{
 				&suggest.ObjectField{
 					Name: "metadata",
@@ -192,7 +197,8 @@ func DefaultSuggestSchema() suggest.Register {
 		},
 		&suggest.Resource{
 			Group: "core/v2",
-			Name:  "hooks",
+			Name:  "hook_config",
+			Path:  "/api/core/v2/namespaces/{namespace}/hooks",
 			Fields: []suggest.Field{
 				&suggest.ObjectField{
 					Name: "metadata",
@@ -213,7 +219,8 @@ func DefaultSuggestSchema() suggest.Register {
 		},
 		&suggest.Resource{
 			Group: "core/v2",
-			Name:  "mutators",
+			Name:  "mutator",
+			Path:  "/api/core/v2/namespaces/{namespace}/mutators",
 			Fields: []suggest.Field{
 				&suggest.ObjectField{
 					Name: "metadata",
@@ -240,6 +247,7 @@ func DefaultSuggestSchema() suggest.Register {
 		&suggest.Resource{
 			Group: "core/v2",
 			Name:  "silenced",
+			Path:  "/api/core/v2/namespaces/{namespace}/silenced",
 			Fields: []suggest.Field{
 				&suggest.ObjectField{
 					Name: "metadata",
@@ -258,7 +266,7 @@ func DefaultSuggestSchema() suggest.Register {
 		},
 		&suggest.Resource{
 			Group: "core/v2",
-			Name:  "users",
+			Name:  "user",
 			Path:  "/api/core/v2/users",
 			Fields: []suggest.Field{
 				&suggest.CustomField{

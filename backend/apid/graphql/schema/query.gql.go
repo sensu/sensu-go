@@ -112,26 +112,26 @@ type QuerySuggestFieldResolverArgs struct {
 	*/
 	Ref string /*
 	Ref is used to uniquely identify a resource in the system as well as a field
-	on said resource. Refs take the form: :group/:version/:resource/:field. The
+	on said resource. Refs take the form: :group/:version/:type/:field. The
 	field segment may be a path in and of it's own, eg. metadata/name would
 	refer to the name field nested inside a resource's metadata.
 
 	The following are valid example values for this argument:
 
-	    `core/v2/assets/metadata/name`
-	    `core/v2/assets/metadata/name`
-	    `core/v2/assets/metadata/labels`
-	    `core/v2/assets/metadata/labels/region`
-	    `core/v2/checks/subscriptions`
-	    `core/v2/checks/command`
-	    `core/v2/checks/timeout`
-	    `core/v2/entities/system/os`
-	    `core/v2/entities/system/platform`
-	    `core/v2/filters/metadata/name`
-	    `core/v2/handlers/command`
-	    `core/v2/hooks/command`
-	    `core/v2/mutators/command`
-	    `core/v2/mutators/timeout`
+	    `core/v2/asset/metadata/name`
+	    `core/v2/asset/metadata/name`
+	    `core/v2/asset/metadata/labels`
+	    `core/v2/asset/metadata/labels/region`
+	    `core/v2/check_config/subscriptions`
+	    `core/v2/check_config/command`
+	    `core/v2/check_config/timeout`
+	    `core/v2/entity/system/os`
+	    `core/v2/entity/system/platform`
+	    `core/v2/filter/metadata/name`
+	    `core/v2/handler/command`
+	    `core/v2/hook_config/command`
+	    `core/v2/mutator/command`
+	    `core/v2/mutator/timeout`
 	    `core/v2/silenced/creator`
 	*/
 	Namespace string          // Namespace - self descriptive
@@ -591,12 +591,12 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 						Type:         graphql1.String,
 					},
 					"ref": &graphql1.ArgumentConfig{
-						Description: "Ref is used to uniquely identify a resource in the system as well as a field\non said resource. Refs take the form: :group/:version/:resource/:field. The\nfield segment may be a path in and of it's own, eg. metadata/name would\nrefer to the name field nested inside a resource's metadata.\n\nThe following are valid example values for this argument:\n\n    `core/v2/assets/metadata/name`\n    `core/v2/assets/metadata/name`\n    `core/v2/assets/metadata/labels`\n    `core/v2/assets/metadata/labels/region`\n    `core/v2/checks/subscriptions`\n    `core/v2/checks/command`\n    `core/v2/checks/timeout`\n    `core/v2/entities/system/os`\n    `core/v2/entities/system/platform`\n    `core/v2/filters/metadata/name`\n    `core/v2/handlers/command`\n    `core/v2/hooks/command`\n    `core/v2/mutators/command`\n    `core/v2/mutators/timeout`\n    `core/v2/silenced/creator`",
+						Description: "Ref is used to uniquely identify a resource in the system as well as a field\non said resource. Refs take the form: :group/:version/:type/:field. The\nfield segment may be a path in and of it's own, eg. metadata/name would\nrefer to the name field nested inside a resource's metadata.\n\nThe following are valid example values for this argument:\n\n    `core/v2/asset/metadata/name`\n    `core/v2/asset/metadata/name`\n    `core/v2/asset/metadata/labels`\n    `core/v2/asset/metadata/labels/region`\n    `core/v2/check_config/subscriptions`\n    `core/v2/check_config/command`\n    `core/v2/check_config/timeout`\n    `core/v2/entity/system/os`\n    `core/v2/entity/system/platform`\n    `core/v2/filter/metadata/name`\n    `core/v2/handler/command`\n    `core/v2/hook_config/command`\n    `core/v2/mutator/command`\n    `core/v2/mutator/timeout`\n    `core/v2/silenced/creator`",
 						Type:        graphql1.NewNonNull(graphql1.String),
 					},
 				},
 				DeprecationReason: "",
-				Description:       "Given a ref, field and a namespace returns a set of suggested values. Refs\nhave the following format: :group/:version/:resource/:field...\n\nAs an example if you would like a list of check names you might use:\n`suggest(ref: \"core/v2/checks/metadata/name\", namespace: \"default\")`\n\nOr, if you would like a list of subscriptions...\n`suggest(ref: \"core/v2/entities/subscriptions\", namespace: \"default\")`\n\nYou may filter the results with the `q` argument, for example:\n`suggest(ref: \"core/v2/checks/metadata/name\", namespace: \"default\", q: \"disk\")`\n\nBy default the results are ordered by the frequency in which the result occurs in the set. The `order` argument allow you to tweak this behaviour, for example:\n`suggest(ref: \"core/v2/checks/metadata/name\", namespace: \"default\", order: ALPHA_DESC)`",
+				Description:       "Given a ref, field and a namespace returns a set of suggested values.\n\nAs an example if you would like a list of check names you might use:\n`suggest(ref: \"core/v2/check_config/metadata/name\", namespace: \"default\")`\n\nOr, if you would like a list of subscriptions...\n`suggest(ref: \"core/v2/entity/subscriptions\", namespace: \"default\")`\n\nYou may filter the results with the `q` argument, for example:\n`suggest(ref: \"core/v2/check_config/metadata/name\", namespace: \"default\", q: \"disk\")`\n\nBy default the results are ordered by the frequency in which the result occurs in the set. The `order` argument allow you to tweak this behaviour, for example:\n`suggest(ref: \"core/v2/check_config/metadata/name\", namespace: \"default\", order: ALPHA_DESC)`",
 				Name:              "suggest",
 				Type:              graphql.OutputType("SuggestionResultSet"),
 			},
