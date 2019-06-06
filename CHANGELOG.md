@@ -10,6 +10,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - [Web] Adds ability to delete entities
 - Added POST `/api/core/v2/tessen/metrics`.
+- Added the ability in TessenD to listen for metric points on the message bus,
+populate, and send them to the Tessen service.
 
 ### Changed
 - [Web] Updated embedded web assets from `275386a` ... `b0c1138`

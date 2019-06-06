@@ -87,9 +87,10 @@ type Tessend struct {
 	backendID    string
 	bus          messaging.MessageBus
 	messageChan  chan interface{}
-	subscription messaging.Subscription
+	subscription []messaging.Subscription
 	duration     time.Duration
 	AllowOptOut  bool
+	config       *corev2.TessenConfig
 }
 
 // Option is a functional option.
@@ -137,25 +138,24 @@ func (t *Tessend) Start() error {
 			logger.WithError(err).Error("unable to update tessen store")
 		}
 	}
+	t.config = tessen
 
 	if err := t.ctx.Err(); err != nil {
 		return err
 	}
 
-	sub, err := t.bus.Subscribe(messaging.TopicTessen, componentName, t)
-	t.subscription = sub
-	if err != nil {
+	if err = t.subscribe(messaging.TopicTessen, messaging.TopicTessenMetric); err != nil {
 		return err
 	}
 
 	go t.startMessageHandler()
 	go t.startWatcher()
 	go t.startRingUpdates()
-	go t.startPromMetricsUpdates(tessen)
-	go t.start(tessen)
+	go t.startPromMetricsUpdates()
+	go t.start()
 	// Attempt to send data immediately if tessen is enabled
-	if t.enabled(tessen) {
-		go t.collectAndSend(tessen)
+	if t.enabled() {
+		go t.collectAndSend()
 	}
 
 	return nil
@@ -168,8 +168,10 @@ func (t *Tessend) Stop() error {
 	} else {
 		logger.WithField("key", t.backendID).Debug("removed a key from the ring")
 	}
-	if err := t.subscription.Cancel(); err != nil {
-		logger.WithError(err).Error("unable to unsubscribe from message bus")
+	for _, sub := range t.subscription {
+		if err := sub.Cancel(); err != nil {
+			logger.WithError(err).Error("unable to unsubscribe from message bus")
+		}
 	}
 	t.cancel()
 	close(t.messageChan)
@@ -191,7 +193,22 @@ func (t *Tessend) Receiver() chan<- interface{} {
 	return t.messageChan
 }
 
+// subscribes to multiple message bus topics.
+func (t *Tessend) subscribe(subscriptions ...string) error {
+	for _, s := range subscriptions {
+		sub, err := t.bus.Subscribe(s, componentName, t)
+		if err != nil {
+			return err
+		}
+		t.subscription = append(t.subscription, sub)
+	}
+	return nil
+}
+
+// startMessageHandler listens to the message channel and handles incoming messages.
 func (t *Tessend) startMessageHandler() {
+	var hostname string
+	var err error
 	for {
 		msg, ok := <-t.messageChan
 		if !ok {
@@ -200,20 +217,44 @@ func (t *Tessend) startMessageHandler() {
 		}
 
 		tessen, ok := msg.(*corev2.TessenConfig)
-		if !ok {
-			logger.WithField("msg", msg).Errorf("received non-TessenConfig on tessen message channel")
-			return
+		if ok {
+			data := t.getDataPayload()
+			t.getTessenConfigMetrics(time.Now().UTC().Unix(), tessen, data)
+			logger.WithFields(logrus.Fields{
+				"url":                       t.url,
+				"id":                        data.Cluster.ID,
+				"opt-out":                   tessen.OptOut,
+				data.Metrics.Points[0].Name: data.Metrics.Points[0].Value,
+			}).Info("sending opt-out status event to tessen")
+			_ = t.send(data)
+			continue
 		}
 
-		data := t.getDataPayload()
-		t.getTessenConfigMetrics(time.Now().UTC().Unix(), tessen, data)
-		logger.WithFields(logrus.Fields{
-			"url":                       t.url,
-			"id":                        data.Cluster.ID,
-			"opt-out":                   tessen.OptOut,
-			data.Metrics.Points[0].Name: data.Metrics.Points[0].Value,
-		}).Info("sending opt-out status event to tessen")
-		_ = t.send(data)
+		metrics, ok := msg.([]corev2.MetricPoint)
+		if ok {
+			if t.enabled() {
+				data := t.getDataPayload()
+				now := time.Now().UTC().Unix()
+				for _, metric := range metrics {
+					if hostname, err = os.Hostname(); err != nil {
+						logger.WithError(err).Error("error getting hostname")
+					}
+					metric.Tags = append(metric.Tags, &corev2.MetricTag{Name: "hostname", Value: hostname})
+					metric.Timestamp = now
+					logMetric(&metric)
+					data.Metrics.Points = append(data.Metrics.Points, &metric)
+				}
+				logger.WithFields(logrus.Fields{
+					"url":           t.url,
+					"id":            data.Cluster.ID,
+					"metric_points": len(data.Metrics.Points),
+				}).Info("sending web ui metrics to tessen")
+				_ = t.send(data)
+			}
+			continue
+		}
+
+		logger.WithField("msg", msg).Errorf("received invalid message on tessen subscription channel")
 	}
 }
 
@@ -248,7 +289,8 @@ func (t *Tessend) handleWatchEvent(watchEvent store.WatchEventTessenConfig) {
 		logger.WithField("opt-out", tessen.OptOut).Debug("tessen configuration deleted")
 	}
 
-	t.interrupt <- tessen
+	t.config = tessen
+	t.interrupt <- t.config
 }
 
 // startRingUpdates starts a loop to periodically update the ring.
@@ -299,8 +341,8 @@ func (t *Tessend) handleEvents(tessen *corev2.TessenConfig, ch <-chan ringv2.Eve
 			logger.WithField("values", event.Values).Debug("tessen ring trigger")
 			// only trigger tessen if the next backend in the ring is this backend
 			if event.Values[0] == t.backendID {
-				if t.enabled(tessen) {
-					go t.collectAndSend(tessen)
+				if t.enabled() {
+					go t.collectAndSend()
 				}
 			}
 		case ringv2.EventClosing:
@@ -311,7 +353,7 @@ func (t *Tessend) handleEvents(tessen *corev2.TessenConfig, ch <-chan ringv2.Eve
 
 // startPromMetricsUpdates starts a loop to periodically send prometheus metrics
 // from each backend to tessen.
-func (t *Tessend) startPromMetricsUpdates(tessen *corev2.TessenConfig) {
+func (t *Tessend) startPromMetricsUpdates() {
 	ticker := time.NewTicker(time.Duration(t.interval) * time.Second)
 	defer ticker.Stop()
 	for {
@@ -319,13 +361,9 @@ func (t *Tessend) startPromMetricsUpdates(tessen *corev2.TessenConfig) {
 		case <-t.ctx.Done():
 			return
 		case <-ticker.C:
-			if t.enabled(tessen) {
+			if t.enabled() {
 				t.sendPromMetrics()
 			}
-		case config := <-t.interrupt:
-			// config change indicates the need to recreate the goroutine
-			go t.startPromMetricsUpdates(config)
-			return
 		}
 	}
 }
@@ -376,11 +414,11 @@ func (t *Tessend) sendPromMetrics() {
 }
 
 // start starts the tessen service.
-func (t *Tessend) start(tessen *corev2.TessenConfig) {
+func (t *Tessend) start() {
 	ctx, cancel := context.WithCancel(t.ctx)
 	wg := new(sync.WaitGroup)
 	wg.Add(1)
-	t.watchRing(ctx, tessen, wg)
+	t.watchRing(ctx, t.config, wg)
 
 	for {
 		select {
@@ -400,22 +438,22 @@ func (t *Tessend) start(tessen *corev2.TessenConfig) {
 
 // enabled checks the tessen config for opt-out status, and verifies the existence of an enterprise license.
 // It returns a boolean value indicating if tessen should be enabled or not.
-func (t *Tessend) enabled(tessen *corev2.TessenConfig) bool {
-	if !tessen.OptOut {
-		logger.WithField("opt-out", tessen.OptOut).Info("tessen is opted in, enabling tessen.. thank you so much for your support 💚")
+func (t *Tessend) enabled() bool {
+	if !t.config.OptOut {
+		logger.WithField("opt-out", t.config.OptOut).Info("tessen is opted in, enabling tessen.. thank you so much for your support 💚")
 		return true
 	}
 	if t.AllowOptOut {
-		logger.WithField("opt-out", tessen.OptOut).Info("tessen is opted out, patiently waiting for you to opt back in")
+		logger.WithField("opt-out", t.config.OptOut).Info("tessen is opted out, patiently waiting for you to opt back in")
 		return false
 	}
-	logger.WithField("opt-out", tessen.OptOut).Info("tessen is opted out but per the license agreement, we're enabling tessen.. thank you so much for your support 💚")
+	logger.WithField("opt-out", t.config.OptOut).Info("tessen is opted out but per the license agreement, we're enabling tessen.. thank you so much for your support 💚")
 	return true
 }
 
 // collectAndSend is a durable function to collect and send data to tessen.
 // Errors are logged and tessen continues to the best of its ability.
-func (t *Tessend) collectAndSend(tessen *corev2.TessenConfig) {
+func (t *Tessend) collectAndSend() {
 	// collect data
 	data := t.getDataPayload()
 	t.getPerResourceMetrics(time.Now().UTC().Unix(), data)
@@ -451,7 +489,7 @@ func (t *Tessend) collectAndSend(tessen *corev2.TessenConfig) {
 	if t.interval != uint32(interval) {
 		t.interval = uint32(interval)
 		logger.WithField("interval", t.interval).Debug("tessen interval updated")
-		t.interrupt <- tessen
+		t.interrupt <- t.config
 	}
 }
 
