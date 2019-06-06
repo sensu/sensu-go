@@ -39,14 +39,21 @@ import (
 // Backend represents the backend server, which is used to hold the datastore
 // and coordinating the daemons
 type Backend struct {
-	Client  *clientv3.Client
-	Daemons []daemon.Daemon
-	Etcd    *etcd.Etcd
-	Store   store.Store
+	Client     *clientv3.Client
+	Daemons    []daemon.Daemon
+	Etcd       *etcd.Etcd
+	Store      store.Store
+	EventStore EventStoreUpdater
 
 	done   chan struct{}
 	ctx    context.Context
 	cancel context.CancelFunc
+}
+
+// EventStoreUpdater offers a way to update an event store to a different
+// implementation in-place.
+type EventStoreUpdater interface {
+	UpdateEventStore(to store.EventStore)
 }
 
 func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
@@ -121,11 +128,15 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize the store, which lives on top of etcd
 	logger.Debug("Initializing store...")
-	store := etcdstore.NewStore(b.Client, config.EtcdName)
-	if err = seeds.SeedInitialData(store); err != nil {
+	stor := etcdstore.NewStore(b.Client, config.EtcdName)
+	if err = seeds.SeedInitialData(stor); err != nil {
 		return nil, fmt.Errorf("error initializing the store: %s", err)
 	}
 	logger.Debug("Done initializing store")
+	b.Store = stor
+
+	proxy := store.NewEventStoreProxy(stor)
+	b.EventStore = proxy
 
 	logger.Debug("Registering backend...")
 	backendID := etcd.NewBackendIDGetter(b.ctx, b.Client)
@@ -152,7 +163,7 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
-		Store: store,
+		Store: stor,
 		Bus:   bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 		AssetGetter:             assetGetter,
@@ -164,8 +175,8 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize eventd
 	event, err := eventd.New(eventd.Config{
-		Store:           store,
-		EventStore:      store,
+		Store:           stor,
+		EventStore:      proxy,
 		Bus:             bus,
 		LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
 	})
@@ -178,7 +189,7 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize schedulerd
 	scheduler, err := schedulerd.New(schedulerd.Config{
-		Store:       store,
+		Store:       stor,
 		Bus:         bus,
 		QueueGetter: queueGetter,
 		RingPool:    ringPool,
@@ -193,7 +204,7 @@ func Initialize(config *Config) (*Backend, error) {
 		Host:     config.AgentHost,
 		Port:     config.AgentPort,
 		Bus:      bus,
-		Store:    store,
+		Store:    stor,
 		TLS:      config.TLS,
 		RingPool: ringPool,
 	})
@@ -206,8 +217,8 @@ func Initialize(config *Config) (*Backend, error) {
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
 		Bus:             bus,
-		Store:           store,
-		EventStore:      store,
+		Store:           stor,
+		EventStore:      stor,
 		LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
 		RingPool:        ringPool,
 	})
@@ -227,7 +238,7 @@ func Initialize(config *Config) (*Backend, error) {
 	authenticator := &authentication.Authenticator{}
 	basic := &basic.Provider{
 		ObjectMeta: corev2.ObjectMeta{Name: basic.Type},
-		Store:      store,
+		Store:      stor,
 	}
 	authenticator.AddProvider(basic)
 
@@ -242,7 +253,7 @@ func Initialize(config *Config) (*Backend, error) {
 		ListenAddress:       config.APIListenAddress,
 		URL:                 config.APIURL,
 		Bus:                 bus,
-		Store:               store,
+		Store:               stor,
 		QueueGetter:         queueGetter,
 		TLS:                 config.TLS,
 		Cluster:             clientv3.NewCluster(b.Client),
@@ -257,7 +268,7 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize tessend
 	tessen, err := tessend.New(tessend.Config{
-		Store:    store,
+		Store:    stor,
 		RingPool: ringPool,
 		Client:   b.Client,
 		Bus:      bus,
@@ -293,9 +304,6 @@ func Initialize(config *Config) (*Backend, error) {
 		return nil, fmt.Errorf("error initializing %s: %s", dashboard.Name(), err)
 	}
 	b.Daemons = append(b.Daemons, dashboard)
-
-	// Add store to our backend, since it's needed across the methods
-	b.Store = store
 
 	return b, nil
 }
