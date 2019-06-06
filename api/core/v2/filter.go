@@ -35,7 +35,7 @@ var (
 
 // StorePrefix returns the path prefix to this resource in the store
 func (f *EventFilter) StorePrefix() string {
-	return EventFiltersResource
+	return "event-filters"
 }
 
 // URIPath returns the path component of an event filter URI.
