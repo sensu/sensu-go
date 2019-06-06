@@ -124,7 +124,7 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 	if p.Args.Order == schema.SuggestionOrders.FREQUENCY {
 		sort.Strings(values)
 		sort.SliceStable(values, func(i, j int) bool {
-			return set.Get(values[i]) < set.Get(values[j])
+			return set.Get(values[i]) > set.Get(values[j])
 		})
 	} else if p.Args.Order == schema.SuggestionOrders.ALPHA_DESC {
 		sort.Strings(values)
