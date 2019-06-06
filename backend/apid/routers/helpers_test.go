@@ -1,12 +1,17 @@
 package routers
 
 import (
+	"bytes"
 	"encoding/json"
+	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"net/url"
 	"reflect"
 	"strings"
+	"testing"
 
+	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -22,6 +27,39 @@ type routerTestCase struct {
 	body           []byte
 	storeFunc      storeFunc
 	wantStatusCode int
+}
+
+func run(t *testing.T, tt routerTestCase, router *mux.Router, store *mockstore.MockStore) bool {
+	return t.Run(tt.name, func(t *testing.T) {
+		// Only start the HTTP server here to prevent data races in tests
+		server := httptest.NewServer(router)
+		defer server.Close()
+
+		if tt.storeFunc != nil {
+			tt.storeFunc(store)
+		}
+
+		// Prepare the HTTP request
+		client := new(http.Client)
+		req, err := http.NewRequest(tt.method, server.URL+tt.path, bytes.NewReader(tt.body))
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// Perform the HTTP request
+		res, err := client.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		// Inspect the response code
+		if res.StatusCode != tt.wantStatusCode {
+			t.Errorf("StatusCode = %v, wantStatusCode %v", res.StatusCode, tt.wantStatusCode)
+			body, _ := ioutil.ReadAll(res.Body)
+			t.Errorf("error message: %q", string(body))
+			return
+		}
+	})
 }
 
 // Get
