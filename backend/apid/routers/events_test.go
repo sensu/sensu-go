@@ -15,62 +15,46 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type mockUserController struct {
+type mockEventController struct {
 	mock.Mock
 }
 
-func (m *mockUserController) Create(ctx context.Context, user *corev2.User) error {
-	return m.Called(ctx, user).Error(0)
+func (m *mockEventController) Create(ctx context.Context, check *corev2.Event) error {
+	return m.Called(ctx, check).Error(0)
 }
 
-func (m *mockUserController) CreateOrReplace(ctx context.Context, user *corev2.User) error {
-	return m.Called(ctx, user).Error(0)
+func (m *mockEventController) CreateOrReplace(ctx context.Context, check *corev2.Event) error {
+	return m.Called(ctx, check).Error(0)
 }
 
-func (m *mockUserController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
+func (m *mockEventController) Delete(ctx context.Context, entity, check string) error {
+	return m.Called(ctx, entity, check).Error(0)
+}
+
+func (m *mockEventController) Get(ctx context.Context, entity, check string) (*corev2.Event, error) {
+	args := m.Called(ctx, entity, check)
+	return args.Get(0).(*corev2.Event), args.Error(1)
+}
+
+func (m *mockEventController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
 	args := m.Called(ctx, pred)
 	return args.Get(0).([]corev2.Resource), args.Error(1)
 }
 
-func (m *mockUserController) Get(ctx context.Context, name string) (*corev2.User, error) {
-	args := m.Called(ctx, name)
-	if args.Get(0) == nil {
-		return nil, args.Error(1)
-	}
-	return args.Get(0).(*corev2.User), args.Error(1)
-}
-
-func (m *mockUserController) Disable(ctx context.Context, name string) error {
-	return m.Called(ctx, name).Error(0)
-}
-
-func (m *mockUserController) Enable(ctx context.Context, name string) error {
-	return m.Called(ctx, name).Error(0)
-}
-
-func (m *mockUserController) AddGroup(ctx context.Context, name string, group string) error {
-	return m.Called(ctx, name, group).Error(0)
-}
-
-func (m *mockUserController) RemoveGroup(ctx context.Context, name string, group string) error {
-	return m.Called(ctx, name, group).Error(0)
-}
-
-func (m *mockUserController) RemoveAllGroups(ctx context.Context, name string) error {
-	return m.Called(ctx, name).Error(0)
-}
-
-func TestUsersRouter(t *testing.T) {
-	type controllerFunc func(*mockUserController)
+func TestEventsRouter(t *testing.T) {
+	type controllerFunc func(*mockEventController)
 
 	// Setup the router
-	controller := &mockUserController{}
-	router := UsersRouter{controller: controller}
+	controller := &mockEventController{}
+	router := EventsRouter{controller: controller}
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)
 
-	empty := &corev2.User{}
-	fixture := corev2.FixtureUser("foo")
+	empty := &corev2.Event{
+		Check:  &corev2.Check{ObjectMeta: corev2.ObjectMeta{}},
+		Entity: &corev2.Entity{ObjectMeta: corev2.ObjectMeta{Namespace: "default"}},
+	}
+	fixture := corev2.FixtureEvent("foo", "check-cpu")
 
 	tests := []struct {
 		name           string
@@ -84,8 +68,8 @@ func TestUsersRouter(t *testing.T) {
 			name:   "it returns 404 if a resource is not found",
 			method: http.MethodGet,
 			path:   fixture.URIPath(),
-			controllerFunc: func(c *mockUserController) {
-				c.On("Get", mock.Anything, "foo").
+			controllerFunc: func(c *mockEventController) {
+				c.On("Get", mock.Anything, "foo", "check-cpu").
 					Return(empty, actions.NewErrorf(actions.NotFound)).
 					Once()
 			},
@@ -95,18 +79,18 @@ func TestUsersRouter(t *testing.T) {
 			name:   "it returns 200 if a resource is found",
 			method: http.MethodGet,
 			path:   fixture.URIPath(),
-			controllerFunc: func(c *mockUserController) {
-				c.On("Get", mock.Anything, "foo").
+			controllerFunc: func(c *mockEventController) {
+				c.On("Get", mock.Anything, "foo", "check-cpu").
 					Return(fixture, nil).
 					Once()
 			},
 			wantStatusCode: http.StatusOK,
 		},
 		{
-			name:   "it returns 500 if the store encounters an error while listing users",
+			name:   "it returns 500 if the store encounters an error while listing events",
 			method: http.MethodGet,
 			path:   empty.URIPath(),
-			controllerFunc: func(c *mockUserController) {
+			controllerFunc: func(c *mockEventController) {
 				c.On("List", mock.Anything, mock.AnythingOfType("*store.SelectionPredicate")).
 					Return([]corev2.Resource{empty}, actions.NewErrorf(actions.InternalErr)).
 					Once()
@@ -117,7 +101,7 @@ func TestUsersRouter(t *testing.T) {
 			name:   "it returns 200 and lists resources",
 			method: http.MethodGet,
 			path:   empty.URIPath(),
-			controllerFunc: func(c *mockUserController) {
+			controllerFunc: func(c *mockEventController) {
 				c.On("List", mock.Anything, mock.AnythingOfType("*store.SelectionPredicate")).
 					Return([]corev2.Resource{fixture}, nil).
 					Once()
@@ -132,11 +116,18 @@ func TestUsersRouter(t *testing.T) {
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
-			name:   "it returns 400 if the user to create is not valid",
+			name:           "it returns 400 if the event metadata to create is invalid",
+			method:         http.MethodPost,
+			path:           empty.URIPath(),
+			body:           []byte(`{"metadata": {"namespace":"acme"}}`),
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:   "it returns 400 if the event to create is not valid",
 			method: http.MethodPost,
 			path:   empty.URIPath(),
 			body:   marshal(fixture),
-			controllerFunc: func(c *mockUserController) {
+			controllerFunc: func(c *mockEventController) {
 				c.On("Create", mock.Anything, mock.Anything).
 					Return(actions.NewErrorf(actions.InvalidArgument)).
 					Once()
@@ -144,11 +135,11 @@ func TestUsersRouter(t *testing.T) {
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
-			name:   "it returns 500 if the store returns an error while creating a user",
+			name:   "it returns 500 if the store returns an error while creating an event",
 			method: http.MethodPost,
 			path:   empty.URIPath(),
 			body:   marshal(fixture),
-			controllerFunc: func(c *mockUserController) {
+			controllerFunc: func(c *mockEventController) {
 				c.On("Create", mock.Anything, mock.Anything).
 					Return(actions.NewErrorf(actions.InternalErr)).
 					Once()
@@ -156,11 +147,11 @@ func TestUsersRouter(t *testing.T) {
 			wantStatusCode: http.StatusInternalServerError,
 		},
 		{
-			name:   "it returns 201 when a user is successfully created",
+			name:   "it returns 201 when an event is successfully created",
 			method: http.MethodPost,
 			path:   empty.URIPath(),
 			body:   marshal(fixture),
-			controllerFunc: func(c *mockUserController) {
+			controllerFunc: func(c *mockEventController) {
 				c.On("Create", mock.Anything, mock.Anything).
 					Return(nil).
 					Once()
@@ -175,18 +166,30 @@ func TestUsersRouter(t *testing.T) {
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
-			name:           "it returns 400 if the user metadata to update is invalid",
+			name:           "it returns 400 if the event metadata to update is invalid",
 			method:         http.MethodPut,
 			path:           fixture.URIPath(),
-			body:           []byte(`{"username":"bar"}`),
+			body:           []byte(`{"metadata": {"namespace":"acme"}}`),
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
-			name:   "it returns 500 if the store returns an error while updating a user",
+			name:   "it returns 400 if the event to update is not valid",
 			method: http.MethodPut,
 			path:   fixture.URIPath(),
 			body:   marshal(fixture),
-			controllerFunc: func(c *mockUserController) {
+			controllerFunc: func(c *mockEventController) {
+				c.On("CreateOrReplace", mock.Anything, mock.Anything).
+					Return(actions.NewErrorf(actions.InvalidArgument)).
+					Once()
+			},
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:   "it returns 500 if the store returns an error while updating an event",
+			method: http.MethodPut,
+			path:   fixture.URIPath(),
+			body:   marshal(fixture),
+			controllerFunc: func(c *mockEventController) {
 				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(actions.NewErrorf(actions.InternalErr)).
 					Once()
@@ -198,8 +201,41 @@ func TestUsersRouter(t *testing.T) {
 			method: http.MethodPut,
 			path:   fixture.URIPath(),
 			body:   marshal(fixture),
-			controllerFunc: func(c *mockUserController) {
+			controllerFunc: func(c *mockEventController) {
 				c.On("CreateOrReplace", mock.Anything, mock.Anything).
+					Return(nil).
+					Once()
+			},
+			wantStatusCode: http.StatusNoContent,
+		},
+		{
+			name:   "it returns 404 if the event to delete does not exist",
+			method: http.MethodDelete,
+			path:   fixture.URIPath(),
+			controllerFunc: func(c *mockEventController) {
+				c.On("Delete", mock.Anything, "foo", "check-cpu").
+					Return(actions.NewErrorf(actions.NotFound)).
+					Once()
+			},
+			wantStatusCode: http.StatusNotFound,
+		},
+		{
+			name:   "it returns 500 if the store returns an error while deleting an event",
+			method: http.MethodDelete,
+			path:   fixture.URIPath(),
+			controllerFunc: func(c *mockEventController) {
+				c.On("Delete", mock.Anything, "foo", "check-cpu").
+					Return(actions.NewErrorf(actions.InternalErr)).
+					Once()
+			},
+			wantStatusCode: http.StatusInternalServerError,
+		},
+		{
+			name:   "it returns 204 if the event was deleted",
+			method: http.MethodDelete,
+			path:   fixture.URIPath(),
+			controllerFunc: func(c *mockEventController) {
+				c.On("Delete", mock.Anything, "foo", "check-cpu").
 					Return(nil).
 					Once()
 			},

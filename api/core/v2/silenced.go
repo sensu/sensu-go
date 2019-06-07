@@ -59,7 +59,7 @@ func (s *Silenced) StartSilence(currentTime int64) bool {
 	return currentTime > s.Begin
 }
 
-// Prepare prepares a silenced entry for storage by
+// Prepare prepares a silenced entry for storage
 func (s *Silenced) Prepare(ctx context.Context) {
 	// Populate newSilence.Name with the subscription and checkName. Substitute a
 	// splat if one of the values does not exist. If both values are empty, the

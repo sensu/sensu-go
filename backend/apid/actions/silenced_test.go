@@ -101,7 +101,7 @@ func TestSilencedQuery(t *testing.T) {
 			store.On("GetSilencedEntries", tc.ctx).Return(tc.storeRecords, tc.storeErr).Once()
 
 			// Exec Query
-			results, err := actions.Query(tc.ctx, tc.params["subscription"], tc.params["check"])
+			results, err := actions.List(tc.ctx, tc.params["subscription"], tc.params["check"])
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)

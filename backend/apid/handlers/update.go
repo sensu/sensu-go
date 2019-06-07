@@ -18,7 +18,7 @@ func (h Handlers) CreateOrUpdateResource(r *http.Request) (interface{}, error) {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	if err := checkMeta(payload.Interface(), mux.Vars(r)); err != nil {
+	if err := CheckMeta(payload.Interface(), mux.Vars(r)); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 

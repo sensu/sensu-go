@@ -13,9 +13,9 @@ type Handlers struct {
 	Store    store.ResourceStore
 }
 
-// checkMeta inspects the resource metadata and ensures it matches what was
+// CheckMeta inspects the resource metadata and ensures it matches what was
 // specified in the request URL
-func checkMeta(resource interface{}, vars map[string]string) error {
+func CheckMeta(resource interface{}, vars map[string]string) error {
 	v, ok := resource.(interface{ GetObjectMeta() corev2.ObjectMeta })
 	if !ok {
 		// We are not dealing with a corev2.Resource interface

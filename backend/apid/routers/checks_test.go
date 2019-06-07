@@ -15,7 +15,6 @@ import (
 	"github.com/sensu/sensu-go/testing/mockqueue"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/testutil"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -23,7 +22,7 @@ type mockCheckController struct {
 	mock.Mock
 }
 
-func (m *mockCheckController) AddCheckHook(ctx context.Context, check string, hook types.HookList) error {
+func (m *mockCheckController) AddCheckHook(ctx context.Context, check string, hook corev2.HookList) error {
 	return m.Called(ctx, check, hook).Error(0)
 }
 
@@ -31,7 +30,7 @@ func (m *mockCheckController) RemoveCheckHook(ctx context.Context, check string,
 	return m.Called(ctx, check, hookType, hookName).Error(0)
 }
 
-func (m *mockCheckController) QueueAdhocRequest(ctx context.Context, check string, req *types.AdhocRequest) error {
+func (m *mockCheckController) QueueAdhocRequest(ctx context.Context, check string, req *corev2.AdhocRequest) error {
 	return m.Called(ctx, check, req).Error(0)
 }
 
@@ -42,22 +41,26 @@ func TestHttpApiChecksAdhocRequest(t *testing.T) {
 
 	store := &mockstore.MockStore{}
 	queue := &mockqueue.MockQueue{}
-	adhocRequest := types.FixtureAdhocRequest("check1", []string{"subscription1", "subscription2"})
-	checkConfig := types.FixtureCheckConfig("check1")
-	store.On("GetCheckConfigByName", mock.Anything, mock.Anything).Return(checkConfig, nil)
+	adhocRequest := corev2.FixtureAdhocRequest("check1", []string{"subscription1", "subscription2"})
+	checkConfig := corev2.FixtureCheckConfig("check1")
+	store.On("GetCheckConfigByName", mock.Anything, "check1").Return(checkConfig, nil)
 	queue.On("Enqueue", mock.Anything, mock.Anything).Return(nil)
 	getter := &mockqueue.Getter{}
 	getter.On("GetQueue", mock.Anything).Return(queue)
 	checkController := actions.NewCheckController(store, getter)
 	c := &ChecksRouter{checkController: checkController}
 	payload, _ := json.Marshal(adhocRequest)
-	req, err := http.NewRequest(http.MethodPost, "/checks/check1/execute", bytes.NewBuffer(payload))
+
+	req, err := http.NewRequest(http.MethodPost, "/", bytes.NewBuffer(payload))
 	if err != nil {
 		t.Fatal(err)
 	}
+	req = req.WithContext(defaultCtx)
+	req = mux.SetURLVars(req, map[string]string{"id": "check1"})
+
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(c.adhocRequest)
-	handler.ServeHTTP(rr, req.WithContext(defaultCtx))
+	handler.ServeHTTP(rr, req)
 
 	if status := rr.Code; status != http.StatusAccepted {
 		t.Errorf("handler returned incorrect status code: %v want %v", status, http.StatusAccepted)

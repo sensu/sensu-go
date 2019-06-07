@@ -12,14 +12,13 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 // CheckController represents the controller needs of the ChecksRouter.
 type CheckController interface {
-	AddCheckHook(context.Context, string, types.HookList) error
+	AddCheckHook(context.Context, string, corev2.HookList) error
 	RemoveCheckHook(context.Context, string, string, string) error
-	QueueAdhocRequest(context.Context, string, *types.AdhocRequest) error
+	QueueAdhocRequest(context.Context, string, *corev2.AdhocRequest) error
 }
 
 // ChecksRouter handles requests for /checks
@@ -62,7 +61,7 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 }
 
 func (r *ChecksRouter) addCheckHook(req *http.Request) (interface{}, error) {
-	cfg := types.HookList{}
+	cfg := corev2.HookList{}
 	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
@@ -96,7 +95,7 @@ func (r *ChecksRouter) removeCheckHook(req *http.Request) (interface{}, error) {
 }
 
 func (r *ChecksRouter) adhocRequest(w http.ResponseWriter, req *http.Request) {
-	adhocReq := types.AdhocRequest{}
+	adhocReq := corev2.AdhocRequest{}
 	if err := UnmarshalBody(req, &adhocReq); err != nil {
 		WriteError(w, err)
 		return

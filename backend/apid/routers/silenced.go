@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -12,8 +13,15 @@ import (
 
 // SilencedRouter handles requests for /users
 type SilencedRouter struct {
-	controller actions.SilencedController
+	controller silencedController
 	handlers   handlers.Handlers
+}
+
+// silencedController represents the controller needs of the SilencedRouter.
+type silencedController interface {
+	Create(ctx context.Context, entry *corev2.Silenced) error
+	CreateOrReplace(ctx context.Context, entry *corev2.Silenced) error
+	List(ctx context.Context, sub, check string) ([]*corev2.Silenced, error)
 }
 
 // NewSilencedRouter instantiates new router for controlling user resources
@@ -52,7 +60,11 @@ func (r *SilencedRouter) Mount(parent *mux.Router) {
 func (r *SilencedRouter) create(req *http.Request) (interface{}, error) {
 	entry := &corev2.Silenced{}
 	if err := UnmarshalBody(req, entry); err != nil {
-		return nil, err
+		return nil, actions.NewError(actions.InvalidArgument, err)
+	}
+
+	if err := handlers.CheckMeta(entry, mux.Vars(req)); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	err := r.controller.Create(req.Context(), entry)
@@ -62,7 +74,11 @@ func (r *SilencedRouter) create(req *http.Request) (interface{}, error) {
 func (r *SilencedRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	entry := &corev2.Silenced{}
 	if err := UnmarshalBody(req, entry); err != nil {
-		return nil, err
+		return nil, actions.NewError(actions.InvalidArgument, err)
+	}
+
+	if err := handlers.CheckMeta(entry, mux.Vars(req)); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	err := r.controller.CreateOrReplace(req.Context(), entry)
@@ -71,5 +87,5 @@ func (r *SilencedRouter) createOrReplace(req *http.Request) (interface{}, error)
 
 func (r *SilencedRouter) list(w http.ResponseWriter, req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
-	return r.controller.Query(req.Context(), params["subscription"], params["check"])
+	return r.controller.List(req.Context(), params["subscription"], params["check"])
 }

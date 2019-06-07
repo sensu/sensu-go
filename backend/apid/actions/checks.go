@@ -5,6 +5,7 @@ import (
 
 	"context"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
@@ -30,7 +31,7 @@ func NewCheckController(store store.CheckConfigStore, getter types.QueueGetter) 
 
 // Find returns resource associated with given parameters if available to the
 // viewer.
-func (a CheckController) Find(ctx context.Context, name string) (*types.CheckConfig, error) {
+func (a CheckController) Find(ctx context.Context, name string) (*corev2.CheckConfig, error) {
 	// Fetch from store
 	result, serr := a.store.GetCheckConfigByName(ctx, name)
 
@@ -45,8 +46,8 @@ func (a CheckController) Find(ctx context.Context, name string) (*types.CheckCon
 }
 
 // AddCheckHook adds an association between a hook and a check
-func (a CheckController) AddCheckHook(ctx context.Context, check string, checkHook types.HookList) error {
-	return a.findAndUpdateCheckConfig(ctx, check, func(check *types.CheckConfig) error {
+func (a CheckController) AddCheckHook(ctx context.Context, check string, checkHook corev2.HookList) error {
+	return a.findAndUpdateCheckConfig(ctx, check, func(check *corev2.CheckConfig) error {
 		var exists bool
 		for i, r := range check.CheckHooks {
 			if r.Type == checkHook.Type {
@@ -74,7 +75,7 @@ func (a CheckController) AddCheckHook(ctx context.Context, check string, checkHo
 
 // RemoveCheckHook removes an association between a hook and a check
 func (a CheckController) RemoveCheckHook(ctx context.Context, checkName string, hookType string, hookName string) error {
-	return a.findAndUpdateCheckConfig(ctx, checkName, func(check *types.CheckConfig) error {
+	return a.findAndUpdateCheckConfig(ctx, checkName, func(check *corev2.CheckConfig) error {
 		for i, r := range check.CheckHooks {
 			if r.Type == hookType {
 				hookList := check.CheckHooks[i].Hooks
@@ -95,7 +96,7 @@ func (a CheckController) RemoveCheckHook(ctx context.Context, checkName string, 
 	})
 }
 
-func (a CheckController) findCheckConfig(ctx context.Context, name string) (*types.CheckConfig, error) {
+func (a CheckController) findCheckConfig(ctx context.Context, name string) (*corev2.CheckConfig, error) {
 	result, serr := a.store.GetCheckConfigByName(ctx, name)
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
@@ -106,7 +107,7 @@ func (a CheckController) findCheckConfig(ctx context.Context, name string) (*typ
 	return result, nil
 }
 
-func (a CheckController) updateCheckConfig(ctx context.Context, check *types.CheckConfig) error {
+func (a CheckController) updateCheckConfig(ctx context.Context, check *corev2.CheckConfig) error {
 	if err := a.store.UpdateCheckConfig(ctx, check); err != nil {
 		return NewError(InternalErr, err)
 	}
@@ -117,7 +118,7 @@ func (a CheckController) updateCheckConfig(ctx context.Context, check *types.Che
 func (a CheckController) findAndUpdateCheckConfig(
 	ctx context.Context,
 	name string,
-	configureFn func(*types.CheckConfig) error,
+	configureFn func(*corev2.CheckConfig) error,
 ) error {
 	// Find
 	check, serr := a.findCheckConfig(ctx, name)
@@ -141,14 +142,14 @@ func (a CheckController) findAndUpdateCheckConfig(
 
 // QueueAdhocRequest takes a check request and adds it to the queue for
 // processing.
-func (a CheckController) QueueAdhocRequest(ctx context.Context, name string, adhocRequest *types.AdhocRequest) error {
+func (a CheckController) QueueAdhocRequest(ctx context.Context, name string, adhocRequest *corev2.AdhocRequest) error {
 	checkConfig, err := a.Find(ctx, name)
 	if err != nil {
 		return err
 	}
 
 	// Adjust context
-	ctx = addOrgEnvToContext(ctx, checkConfig)
+	ctx = corev2.SetContextFromResource(ctx, checkConfig)
 
 	// if there are subscriptions, update the check with the provided subscriptions;
 	// otherwise, use what the check already has
