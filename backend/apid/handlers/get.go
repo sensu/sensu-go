@@ -11,7 +11,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
-// GetResource ...
+// GetResource retrieves the resource identified in the request path
 func (h Handlers) GetResource(r *http.Request) (interface{}, error) {
 	params := mux.Vars(r)
 	name, err := url.PathUnescape(params["id"])

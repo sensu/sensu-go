@@ -9,7 +9,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
-// ListResources ...
+// ListResources lists all resources for the resource type
 func (h Handlers) ListResources(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
 	// Get the type of the resource and create a slice type of []type
 	typeOfResource := reflect.TypeOf(h.Resource)

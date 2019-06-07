@@ -11,7 +11,8 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
-// CreateResource ...
+// CreateResource creates the resource given in the request body but only if it
+// does not already exist
 func (h Handlers) CreateResource(r *http.Request) (interface{}, error) {
 	payload := reflect.New(reflect.TypeOf(h.Resource).Elem())
 	if err := json.NewDecoder(r.Body).Decode(payload.Interface()); err != nil {

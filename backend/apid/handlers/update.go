@@ -11,7 +11,8 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
-// CreateOrUpdateResource ...
+// CreateOrUpdateResource creates or updates the resource given in the request
+// body, regardless of whether it already exists or not
 func (h Handlers) CreateOrUpdateResource(r *http.Request) (interface{}, error) {
 	payload := reflect.New(reflect.TypeOf(h.Resource).Elem())
 	if err := json.NewDecoder(r.Body).Decode(payload.Interface()); err != nil {

@@ -9,7 +9,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
-// CreateResource ...
+// CreateResource creates the given resource only if it does not already exist
 func (s *Store) CreateResource(ctx context.Context, resource corev2.Resource) error {
 	if err := resource.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
@@ -26,7 +26,8 @@ func (s *Store) CreateResource(ctx context.Context, resource corev2.Resource) er
 	return Create(ctx, s.client, key, namespace, msg)
 }
 
-// CreateOrUpdateResource ...
+// CreateOrUpdateResource creates or updates the given resource regardless of
+// whether it already exists or not
 func (s *Store) CreateOrUpdateResource(ctx context.Context, resource corev2.Resource) error {
 	if err := resource.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
@@ -37,19 +38,21 @@ func (s *Store) CreateOrUpdateResource(ctx context.Context, resource corev2.Reso
 	return CreateOrUpdate(ctx, s.client, key, namespace, resource)
 }
 
-// DeleteResource ...
+// DeleteResource deletes the resource using the given resource prefix and name
 func (s *Store) DeleteResource(ctx context.Context, resourcePrefix, name string) error {
 	key := store.KeyFromArgs(ctx, resourcePrefix, name)
 	return Delete(ctx, s.client, key)
 }
 
-// GetResource ...
+// GetResource retrieves a resource with the given name and stores it into the
+// resource pointer
 func (s *Store) GetResource(ctx context.Context, name string, resource corev2.Resource) error {
 	key := store.KeyFromArgs(ctx, resource.StorePrefix(), name)
 	return Get(ctx, s.client, key, resource)
 }
 
-// ListResources ...
+// ListResources retrieves all resources for the resourcePrefix type and stores
+// them into the resources pointer
 func (s *Store) ListResources(ctx context.Context, resourcePrefix string, resources interface{}, pred *store.SelectionPredicate) error {
 	keyBuilderFunc := func(ctx context.Context, name string) string {
 		return store.NewKeyBuilder(resourcePrefix).WithContext(ctx).Build("")

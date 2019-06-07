@@ -9,7 +9,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
-// DeleteResource ...
+// DeleteResource deletes the resources identified in the request path
 func (h Handlers) DeleteResource(r *http.Request) (interface{}, error) {
 	params := mux.Vars(r)
 	name, err := url.PathUnescape(params["id"])
