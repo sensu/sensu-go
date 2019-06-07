@@ -135,8 +135,8 @@ func Initialize(config *Config) (*Backend, error) {
 	logger.Debug("Done initializing store")
 	b.Store = stor
 
-	proxy := store.NewEventStoreProxy(stor)
-	b.EventStore = proxy
+	eventStoreProxy := store.NewEventStoreProxy(stor)
+	b.EventStore = eventStoreProxy
 
 	logger.Debug("Registering backend...")
 	backendID := etcd.NewBackendIDGetter(b.ctx, b.Client)
@@ -176,7 +176,7 @@ func Initialize(config *Config) (*Backend, error) {
 	// Initialize eventd
 	event, err := eventd.New(eventd.Config{
 		Store:           stor,
-		EventStore:      proxy,
+		EventStore:      eventStoreProxy,
 		Bus:             bus,
 		LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
 	})
@@ -254,6 +254,7 @@ func Initialize(config *Config) (*Backend, error) {
 		URL:                 config.APIURL,
 		Bus:                 bus,
 		Store:               stor,
+		EventStore:          eventStoreProxy,
 		QueueGetter:         queueGetter,
 		TLS:                 config.TLS,
 		Cluster:             clientv3.NewCluster(b.Client),

@@ -37,6 +37,7 @@ type APId struct {
 	errChan             chan error
 	bus                 messaging.MessageBus
 	store               store.Store
+	eventStore          store.EventStore
 	queueGetter         types.QueueGetter
 	tls                 *types.TLSOptions
 	cluster             clientv3.Cluster
@@ -53,6 +54,7 @@ type Config struct {
 	URL                 string
 	Bus                 messaging.MessageBus
 	Store               store.Store
+	EventStore          store.EventStore
 	QueueGetter         types.QueueGetter
 	TLS                 *types.TLSOptions
 	Cluster             clientv3.Cluster
@@ -65,6 +67,7 @@ type Config struct {
 func New(c Config, opts ...Option) (*APId, error) {
 	a := &APId{
 		store:               c.Store,
+		eventStore:          c.EventStore,
 		queueGetter:         c.QueueGetter,
 		tls:                 c.TLS,
 		bus:                 c.Bus,
@@ -260,7 +263,7 @@ func (a *APId) registerRestrictedResources(router *mux.Router) {
 		routers.NewClusterRouter(actions.NewClusterController(a.cluster)),
 		routers.NewEntitiesRouter(a.store),
 		routers.NewEventFiltersRouter(a.store),
-		routers.NewEventsRouter(a.store, a.bus),
+		routers.NewEventsRouter(a.eventStore, a.bus),
 		routers.NewExtensionsRouter(a.store),
 		routers.NewHandlersRouter(a.store),
 		routers.NewHooksRouter(a.store),
