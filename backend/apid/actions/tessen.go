@@ -54,3 +54,24 @@ func (c TessenController) Get(ctx context.Context) (*corev2.TessenConfig, error)
 
 	return config, nil
 }
+
+// TessenMetricController exposes actions which a viewer can perform
+type TessenMetricController struct {
+	bus messaging.MessageBus
+}
+
+// NewTessenMetricController returns a new TessenMetricController
+func NewTessenMetricController(bus messaging.MessageBus) TessenMetricController {
+	return TessenMetricController{
+		bus: bus,
+	}
+}
+
+// Publish publishes the metrics to the message bus used by TessenD
+func (c TessenMetricController) Publish(ctx context.Context, metrics []corev2.MetricPoint) error {
+	if err := c.bus.Publish(messaging.TopicTessenMetric, metrics); err != nil {
+		return NewError(InternalErr, err)
+	}
+
+	return nil
+}

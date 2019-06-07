@@ -103,7 +103,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	router := mux.NewRouter().UseEncodedPath()
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
 	router.Handle("/metrics", promhttp.Handler())
-	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig, a.clusterVersion)
+	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig, a.clusterVersion, a.bus)
 	a.registerGraphQLService(router, c.URL, tlsClientConfig)
 	registerAuthenticationResources(router, a.store, a.Authenticator)
 	a.registerRestrictedResources(router)
@@ -189,6 +189,7 @@ func registerUnauthenticatedResources(
 	cluster clientv3.Cluster,
 	etcdClientTLSConfig *tls.Config,
 	clusterVersion string,
+	bus messaging.MessageBus,
 ) {
 	mountRouters(
 		NewSubrouter(
@@ -198,6 +199,7 @@ func registerUnauthenticatedResources(
 		),
 		routers.NewHealthRouter(actions.NewHealthController(store, cluster, etcdClientTLSConfig)),
 		routers.NewVersionRouter(actions.NewVersionController(clusterVersion)),
+		routers.NewTessenMetricRouter(actions.NewTessenMetricController(bus)),
 	)
 }
 

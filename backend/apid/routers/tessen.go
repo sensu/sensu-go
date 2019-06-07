@@ -51,3 +51,40 @@ func (r *TessenRouter) get(req *http.Request) (interface{}, error) {
 	obj, err := r.controller.Get(req.Context())
 	return obj, err
 }
+
+// TessenMetricController represents the controller needs of the TessenMetricRouter.
+type TessenMetricController interface {
+	Publish(context.Context, []corev2.MetricPoint) error
+}
+
+// TessenMetricRouter handles requests for /tessen/metrics.
+type TessenMetricRouter struct {
+	controller TessenMetricController
+}
+
+// NewTessenMetricRouter instantiates a new router for tessen metrics.
+func NewTessenMetricRouter(ctrl TessenMetricController) *TessenMetricRouter {
+	return &TessenMetricRouter{
+		controller: ctrl,
+	}
+}
+
+// Mount the TessenMetricRouter on the given parent Router
+func (r *TessenMetricRouter) Mount(parent *mux.Router) {
+	routes := ResourceRoute{
+		Router:     parent,
+		PathPrefix: "/api/{group:core}/{version:v2}/tessen/metrics",
+	}
+
+	routes.Path("", r.publish).Methods(http.MethodPost)
+}
+
+func (r *TessenMetricRouter) publish(req *http.Request) (interface{}, error) {
+	obj := []corev2.MetricPoint{}
+	if err := UnmarshalBody(req, &obj); err != nil {
+		return nil, err
+	}
+
+	err := r.controller.Publish(req.Context(), obj)
+	return obj, err
+}

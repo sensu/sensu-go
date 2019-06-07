@@ -239,7 +239,6 @@ func (c *Check) MergeWith(prevCheck *Check) {
 	c.Occurrences = prevCheck.Occurrences
 	c.OccurrencesWatermark = prevCheck.OccurrencesWatermark
 	updateCheckState(c)
-	c.TotalStateChange = totalStateChange(c)
 }
 
 // ValidateOutputMetricFormat returns an error if the string is not a valid metric

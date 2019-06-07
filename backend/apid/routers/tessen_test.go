@@ -84,3 +84,50 @@ func TestGetTessen(t *testing.T) {
 
 	controller.AssertCalled(t, "Get", mock.Anything)
 }
+
+type mockTessenMetricController struct {
+	mock.Mock
+}
+
+func (m *mockTessenMetricController) Publish(ctx context.Context, metrics []corev2.MetricPoint) error {
+	return m.Called(ctx, metrics).Error(0)
+}
+
+func newTessenMetricTest(t *testing.T) (*mockTessenMetricController, *httptest.Server) {
+	controller := &mockTessenMetricController{}
+	tessenRouter := NewTessenMetricRouter(controller)
+	router := mux.NewRouter()
+	tessenRouter.Mount(router)
+
+	return controller, httptest.NewServer(router)
+}
+
+func TestPostTessenMetrics(t *testing.T) {
+	controller, server := newTessenMetricTest(t)
+	defer server.Close()
+
+	client := new(http.Client)
+
+	controller.On("Publish", mock.Anything, mock.Anything).Return(nil)
+	b, _ := json.Marshal([]corev2.MetricPoint{
+		corev2.MetricPoint{
+			Name:  "metric",
+			Value: 1,
+		},
+	})
+	body := bytes.NewReader(b)
+	endpoint := "/api/core/v2/tessen/metrics"
+	req := newRequest(t, http.MethodPost, server.URL+endpoint, body)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if resp.StatusCode >= 400 {
+		body, _ := ioutil.ReadAll(resp.Body)
+		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
+	}
+
+	controller.AssertCalled(t, "Publish", mock.Anything, mock.Anything)
+}
