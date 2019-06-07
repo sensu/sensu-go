@@ -76,7 +76,7 @@ func (r *EventsRouter) create(req *http.Request) (interface{}, error) {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	if err := handlers.CheckMeta(event, mux.Vars(req)); err != nil {
+	if err := handlers.CheckMeta(event.Entity, mux.Vars(req)); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
@@ -90,7 +90,7 @@ func (r *EventsRouter) createOrReplace(req *http.Request) (interface{}, error) {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	if err := handlers.CheckMeta(event, mux.Vars(req)); err != nil {
+	if err := handlers.CheckMeta(event.Entity, mux.Vars(req)); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 

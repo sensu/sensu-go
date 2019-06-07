@@ -119,7 +119,7 @@ func TestEventsRouter(t *testing.T) {
 			name:           "it returns 400 if the event metadata to create is invalid",
 			method:         http.MethodPost,
 			path:           empty.URIPath(),
-			body:           []byte(`{"metadata": {"namespace":"acme"}}`),
+			body:           []byte(`{"entity": {"namespace":"acme"}}`),
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
@@ -169,7 +169,7 @@ func TestEventsRouter(t *testing.T) {
 			name:           "it returns 400 if the event metadata to update is invalid",
 			method:         http.MethodPut,
 			path:           fixture.URIPath(),
-			body:           []byte(`{"metadata": {"namespace":"acme"}}`),
+			body:           []byte(`{"entity": {"namespace":"acme"}}`),
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
