@@ -22,7 +22,7 @@ func TestSilencedRouter(t *testing.T) {
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)
 
-	fixture := corev2.FixtureSilenced("foo:bar")
+	fixture := corev2.FixtureSilenced("*:bar")
 
 	tests := []routerTestCase{}
 	tests = append(tests, getTestCases(fixture)...)

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"net/url"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
@@ -22,20 +23,28 @@ func CheckMeta(resource interface{}, vars map[string]string) error {
 		return nil
 	}
 	meta := v.GetObjectMeta()
+	namespace, err := url.PathUnescape(vars["namespace"])
+	if err != nil {
+		return err
+	}
+	id, err := url.PathUnescape(vars["id"])
+	if err != nil {
+		return err
+	}
 
-	if meta.Namespace != vars["namespace"] && vars["namespace"] != "" {
+	if meta.Namespace != namespace && namespace != "" {
 		return fmt.Errorf(
-			"the namespace of the resource (%s) does not match the namespace on the request (%s)",
+			"the namespace of the resource (%s) does not match the namespace of the URI (%s)",
 			meta.Namespace,
-			vars["namespace"],
+			namespace,
 		)
 	}
 
-	if meta.Name != vars["id"] && vars["id"] != "" {
+	if meta.Name != id && id != "" {
 		return fmt.Errorf(
-			"the name of the resource (%s) does not match the name on the request (%s)",
+			"the name of the resource (%s) does not match the name of the URI (%s)",
 			meta.Name,
-			vars["id"],
+			id,
 		)
 	}
 
