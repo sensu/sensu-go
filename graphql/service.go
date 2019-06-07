@@ -9,8 +9,8 @@ import (
 
 // Service ...TODO...
 type Service struct {
+	Schema graphql.Schema
 	types  *typeRegister
-	schema graphql.Schema
 }
 
 // NewService returns new instance of Service
@@ -113,7 +113,7 @@ func (service *Service) RegisterSchema(t SchemaDesc) {
 func (service *Service) Regenerate() error {
 	schema, err := newSchema(service.types)
 	if err == nil {
-		service.schema = schema
+		service.Schema = schema
 	}
 	return err
 }
@@ -125,7 +125,7 @@ func (service *Service) Do(
 	vars map[string]interface{},
 ) *graphql.Result {
 	params := graphql.Params{
-		Schema:         service.schema,
+		Schema:         service.Schema,
 		VariableValues: vars,
 		Context:        ctx,
 		RequestString:  q,

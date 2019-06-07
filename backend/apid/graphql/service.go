@@ -9,6 +9,12 @@ import (
 	"github.com/sensu/sensu-go/graphql"
 )
 
+type InitHook func(*graphql.Service, ServiceConfig)
+
+// InitHooks allow consumers to hook into the initialization of the service and
+// mutate the schema. Useful for product variants.
+var InitHooks = []InitHook{}
+
 // ClientFactory instantiates new instances of the REST API client
 type ClientFactory interface {
 	NewWithContext(ctx context.Context) client.APIClient
@@ -132,6 +138,10 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterError(svc, &errImpl{})
 
 	err := svc.Regenerate()
+
+	for _, hookFn := range InitHooks {
+		hookFn(svc, cfg)
+	}
 	return &wrapper, err
 }
 
