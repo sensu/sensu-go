@@ -10,12 +10,14 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/handlers"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/types"
 )
 
-// CheckController represents the controller needs of the ChecksRouter.
-type CheckController interface {
+// checkController represents the controller needs of the ChecksRouter.
+type checkController interface {
 	AddCheckHook(context.Context, string, corev2.HookList) error
 	RemoveCheckHook(context.Context, string, string, string) error
 	QueueAdhocRequest(context.Context, string, *corev2.AdhocRequest) error
@@ -23,14 +25,14 @@ type CheckController interface {
 
 // ChecksRouter handles requests for /checks
 type ChecksRouter struct {
-	checkController CheckController
-	handlers        handlers.Handlers
+	controller checkController
+	handlers   handlers.Handlers
 }
 
 // NewChecksRouter instantiates new router for controlling check resources
-func NewChecksRouter(checkController CheckController, store store.ResourceStore) *ChecksRouter {
+func NewChecksRouter(store store.Store, getter types.QueueGetter) *ChecksRouter {
 	return &ChecksRouter{
-		checkController: checkController,
+		controller: actions.NewCheckController(store, getter),
 		handlers: handlers.Handlers{
 			Resource: &corev2.CheckConfig{},
 			Store:    store,
@@ -71,7 +73,7 @@ func (r *ChecksRouter) addCheckHook(req *http.Request) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = r.checkController.AddCheckHook(req.Context(), id, cfg)
+	err = r.controller.AddCheckHook(req.Context(), id, cfg)
 
 	return nil, err
 }
@@ -90,7 +92,7 @@ func (r *ChecksRouter) removeCheckHook(req *http.Request) (interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
-	err = r.checkController.RemoveCheckHook(req.Context(), id, typ, hook)
+	err = r.controller.RemoveCheckHook(req.Context(), id, typ, hook)
 	return nil, err
 }
 
@@ -106,7 +108,7 @@ func (r *ChecksRouter) adhocRequest(w http.ResponseWriter, req *http.Request) {
 		WriteError(w, err)
 		return
 	}
-	if err := r.checkController.QueueAdhocRequest(req.Context(), id, &adhocReq); err != nil {
+	if err := r.controller.QueueAdhocRequest(req.Context(), id, &adhocReq); err != nil {
 		WriteError(w, err)
 		return
 	}

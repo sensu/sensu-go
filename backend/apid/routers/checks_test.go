@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/apid/handlers"
 	"github.com/sensu/sensu-go/testing/mockqueue"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/testutil"
@@ -48,7 +49,7 @@ func TestHttpApiChecksAdhocRequest(t *testing.T) {
 	getter := &mockqueue.Getter{}
 	getter.On("GetQueue", mock.Anything).Return(queue)
 	checkController := actions.NewCheckController(store, getter)
-	c := &ChecksRouter{checkController: checkController}
+	c := &ChecksRouter{controller: checkController}
 	payload, _ := json.Marshal(adhocRequest)
 
 	req, err := http.NewRequest(http.MethodPost, "/", bytes.NewBuffer(payload))
@@ -69,9 +70,11 @@ func TestHttpApiChecksAdhocRequest(t *testing.T) {
 
 func TestChecksRouter(t *testing.T) {
 	// Setup the router
-	controller := &mockCheckController{}
 	s := &mockstore.MockStore{}
-	router := NewChecksRouter(controller, s)
+	router := ChecksRouter{handlers: handlers.Handlers{
+		Resource: &corev2.CheckConfig{},
+		Store:    s,
+	}}
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)
 
@@ -94,9 +97,7 @@ func TestChecksRouterCustomRoutes(t *testing.T) {
 
 	// Setup the router
 	controller := &mockCheckController{}
-	s := &mockstore.MockStore{}
-	// queue := &mockqueue.MockQueue{}
-	router := NewChecksRouter(controller, s)
+	router := ChecksRouter{controller: controller}
 	parentRouter := mux.NewRouter()
 	router.Mount(parentRouter)
 

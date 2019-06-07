@@ -253,10 +253,7 @@ func (a *APId) registerRestrictedResources(router *mux.Router) {
 	mountRouters(
 		a.CoreSubrouter,
 		routers.NewAssetRouter(a.store),
-		routers.NewChecksRouter(
-			actions.NewCheckController(a.store, a.queueGetter),
-			a.store,
-		),
+		routers.NewChecksRouter(a.store, a.queueGetter),
 		routers.NewClusterRolesRouter(a.store),
 		routers.NewClusterRoleBindingsRouter(a.store),
 		routers.NewClusterRouter(actions.NewClusterController(a.cluster)),
