@@ -2,10 +2,12 @@ package types
 
 import (
 	"encoding/json"
+	"fmt"
 	"reflect"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 var null = json.RawMessage("null")
@@ -88,5 +90,42 @@ func TestWrapResourceObjectMeta(t *testing.T) {
 	wrapped := WrapResource(check)
 	if !reflect.DeepEqual(wrapped.ObjectMeta, check.ObjectMeta) {
 		t.Fatal("objectmeta not equal")
+	}
+}
+
+func TestResolveType(t *testing.T) {
+	testCases := []struct {
+		ApiVersion string
+		Type       string
+		ExpRet     interface{}
+		ExpErr     bool
+	}{
+		{
+			ApiVersion: "core/v2",
+			Type:       "asset",
+			ExpRet:     &v2.Asset{},
+			ExpErr:     false,
+		},
+		{
+			ApiVersion: "non/existence",
+			Type:       "null",
+			ExpRet:     nil,
+			ExpErr:     true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(fmt.Sprintf("%s/%s", tc.ApiVersion, tc.Type), func(t *testing.T) {
+			r, err := ResolveType(tc.ApiVersion, tc.Type)
+			if !reflect.DeepEqual(r, tc.ExpRet) {
+				t.Fatal("unexpected type")
+			}
+			if err != nil && !tc.ExpErr {
+				t.Fatal(err)
+			}
+			if err == nil && tc.ExpErr {
+				t.Fatal("expected an error")
+			}
+		})
 	}
 }

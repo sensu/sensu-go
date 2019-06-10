@@ -1,0 +1,12 @@
+"""
+SuggestionResultSet contains a collection of results for the given query.
+"""
+type SuggestionResultSet {
+  values: [String!]!
+}
+
+enum SuggestionOrder {
+  ALPHA_ASC
+  ALPHA_DESC
+  FREQUENCY
+}
