@@ -219,7 +219,7 @@ func (t *Tessend) startMessageHandler() {
 		tessen, ok := msg.(*corev2.TessenConfig)
 		if ok {
 			data := t.getDataPayload()
-			t.getTessenConfigMetrics(time.Now().UTC().Unix(), tessen, data)
+			t.getTessenConfigMetrics(time.Now().Unix(), tessen, data)
 			logger.WithFields(logrus.Fields{
 				"url":                       t.url,
 				"id":                        data.Cluster.ID,
@@ -234,7 +234,7 @@ func (t *Tessend) startMessageHandler() {
 		if ok {
 			if t.enabled() {
 				data := t.getDataPayload()
-				now := time.Now().UTC().Unix()
+				now := time.Now().Unix()
 				for _, metric := range metrics {
 					if hostname, err = os.Hostname(); err != nil {
 						logger.WithError(err).Error("error getting hostname")
@@ -374,7 +374,7 @@ func (t *Tessend) sendPromMetrics() {
 
 	// collect data
 	data := t.getDataPayload()
-	now := time.Now().UTC().Unix()
+	now := time.Now().Unix()
 	c := eventd.EventsProcessed.WithLabelValues(eventd.EventsProcessedLabelSuccess)
 	pb := &dto.Metric{}
 	err := c.Write(pb)
@@ -456,7 +456,7 @@ func (t *Tessend) enabled() bool {
 func (t *Tessend) collectAndSend() {
 	// collect data
 	data := t.getDataPayload()
-	t.getPerResourceMetrics(time.Now().UTC().Unix(), data)
+	t.getPerResourceMetrics(time.Now().Unix(), data)
 
 	logger.WithFields(logrus.Fields{
 		"url":           t.url,
