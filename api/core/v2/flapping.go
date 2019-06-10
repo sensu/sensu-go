@@ -23,6 +23,7 @@ func isFlapping(check *Check) bool {
 // updateCheckState determines the check state based on whether the check is
 // flapping, and its status
 func updateCheckState(check *Check) {
+	check.TotalStateChange = totalStateChange(check)
 	if check == nil {
 		return
 	}

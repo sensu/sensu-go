@@ -1,0 +1,99 @@
+"""
+The query root of Sensu's GraphQL interface.
+"""
+type Query {
+  """
+  Current viewer.
+  """
+  viewer: Viewer
+
+  "Namespace fetches the namespace object associated with the given name."
+  namespace(name: String!): Namespace
+
+  """
+  Event fetches the event associated with the given set of arguments.
+  """
+  event(namespace: String!, entity: String!, check: String): Event
+
+  """
+  Entity fetches the entity associated with the given set of arguments.
+  """
+  entity(namespace: String!, name: String!): Entity
+
+  """
+  check fetches the check config associated with the given set of arguments.
+  """
+  check(namespace: String!, name: String!): CheckConfig
+
+  """
+  handler fetch the handler associated with the given set of arguments.
+  """
+  handler(namespace: String!, name: String!): Handler
+
+  """
+  Given a ref, field and a namespace returns a set of suggested values.
+
+  As an example if you would like a list of check names you might use:
+  `suggest(ref: "core/v2/check_config/metadata/name", namespace: "default")`
+
+  Or, if you would like a list of subscriptions...
+  `suggest(ref: "core/v2/entity/subscriptions", namespace: "default")`
+
+  You may filter the results with the `q` argument, for example:
+  `suggest(ref: "core/v2/check_config/metadata/name", namespace: "default", q: "disk")`
+
+  By default the results are ordered by the frequency in which the result occurs in the set. The `order` argument allow you to tweak this behaviour, for example:
+  `suggest(ref: "core/v2/check_config/metadata/name", namespace: "default", order: ALPHA_DESC)`
+  """
+  suggest(
+    """
+    If the value of a field does not contain the value of this argument it will
+    be omitted from the response. Operation is case-insensitive.
+    """
+    q: String = "",
+    """
+    Ref is used to uniquely identify a resource in the system as well as a field
+    on said resource. Refs take the form: :group/:version/:type/:field. The
+    field segment may be a path in and of it's own, eg. metadata/name would
+    refer to the name field nested inside a resource's metadata.
+
+    The following are valid example values for this argument:
+
+        `core/v2/asset/metadata/name`
+        `core/v2/asset/metadata/labels`
+        `core/v2/asset/metadata/labels/region`
+        `core/v2/check_config/subscriptions`
+        `core/v2/check_config/command`
+        `core/v2/check_config/timeout`
+        `core/v2/entity/system/os`
+        `core/v2/entity/system/platform`
+        `core/v2/filter/metadata/name`
+        `core/v2/handler/command`
+        `core/v2/hook_config/command`
+        `core/v2/mutator/command`
+        `core/v2/mutator/timeout`
+        `core/v2/silenced/creator`
+
+    """
+    ref: String!,
+    namespace: String!,
+    limit: Int = 10,
+    order: SuggestionOrder = FREQUENCY,
+  ): SuggestionResultSet
+
+  """
+  Node fetches an object given its ID.
+  """
+  node(
+    "The ID of an object."
+    id: ID!
+  ): Node
+
+  """
+  Node fetches an object given its ID and returns it as wrapped resource.
+  """
+  wrappedNode(
+    "The ID of an object."
+    id: ID!
+  ): JSON
+}

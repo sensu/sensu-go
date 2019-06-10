@@ -46,15 +46,7 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 	if w.APIVersion == "" {
 		w.APIVersion = "core/v2"
 	}
-
-	// Guard read access to packageMap
-	packageMapMu.RLock()
-	defer packageMapMu.RUnlock()
-	resolver, ok := packageMap[w.TypeMeta.APIVersion]
-	if !ok {
-		return fmt.Errorf("invalid API version: %s", w.TypeMeta.APIVersion)
-	}
-	resource, err := resolver(w.TypeMeta.Type)
+	resource, err := ResolveType(w.TypeMeta.APIVersion, w.TypeMeta.Type)
 	if err != nil {
 		return fmt.Errorf("error parsing spec: %s", err)
 	}
@@ -124,6 +116,18 @@ func RegisterTypeResolver(key string, resolver func(string) (Resource, error)) {
 	packageMapMu.Lock()
 	defer packageMapMu.Unlock()
 	packageMap[key] = resolver
+}
+
+// ResolveType returns the Resource associated with the given package and type.
+func ResolveType(apiVersion string, typename string) (Resource, error) {
+	// Guard read access to packageMap
+	packageMapMu.RLock()
+	defer packageMapMu.RUnlock()
+	resolver, ok := packageMap[apiVersion]
+	if !ok {
+		return nil, fmt.Errorf("invalid API version: %s", apiVersion)
+	}
+	return resolver(typename)
 }
 
 func apiVersion(version string) string {
