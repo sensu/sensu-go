@@ -1,34 +1,24 @@
 package routers
 
 import (
-	"context"
-	"net/http"
-	"net/url"
-
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/apid/handlers"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
-
-// NamespacesController represents the controller needs of the NamespacesRouter.
-type NamespacesController interface {
-	List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error)
-	Find(ctx context.Context, name string) (*types.Namespace, error)
-	Create(ctx context.Context, newOrg types.Namespace) error
-	CreateOrReplace(ctx context.Context, newOrg types.Namespace) error
-	Destroy(ctx context.Context, name string) error
-}
 
 // NamespacesRouter handles requests for /namespaces
 type NamespacesRouter struct {
-	controller NamespacesController
+	handlers handlers.Handlers
 }
 
 // NewNamespacesRouter instantiates new router for controlling check resources
-func NewNamespacesRouter(ctrl NamespacesController) *NamespacesRouter {
+func NewNamespacesRouter(store store.ResourceStore) *NamespacesRouter {
 	return &NamespacesRouter{
-		controller: ctrl,
+		handlers: handlers.Handlers{
+			Resource: &corev2.Namespace{},
+			Store:    store,
+		},
 	}
 }
 
@@ -38,49 +28,10 @@ func (r *NamespacesRouter) Mount(parent *mux.Router) {
 		Router:     parent,
 		PathPrefix: "/{resource:namespaces}",
 	}
-	routes.List(r.controller.List, corev2.NamespaceFields)
-	routes.Get(r.find)
-	routes.Post(r.create)
-	routes.Del(r.destroy)
-	routes.Put(r.createOrReplace)
-}
 
-func (r *NamespacesRouter) find(req *http.Request) (interface{}, error) {
-	params := mux.Vars(req)
-	id, err := url.PathUnescape(params["id"])
-	if err != nil {
-		return nil, err
-	}
-	record, err := r.controller.Find(req.Context(), id)
-	return record, err
-}
-
-func (r *NamespacesRouter) create(req *http.Request) (interface{}, error) {
-	org := types.Namespace{}
-	if err := UnmarshalBody(req, &org); err != nil {
-		return nil, err
-	}
-
-	err := r.controller.Create(req.Context(), org)
-	return org, err
-}
-
-func (r *NamespacesRouter) createOrReplace(req *http.Request) (interface{}, error) {
-	org := types.Namespace{}
-	if err := UnmarshalBody(req, &org); err != nil {
-		return nil, err
-	}
-
-	err := r.controller.CreateOrReplace(req.Context(), org)
-	return org, err
-}
-
-func (r *NamespacesRouter) destroy(req *http.Request) (interface{}, error) {
-	params := mux.Vars(req)
-	id, err := url.PathUnescape(params["id"])
-	if err != nil {
-		return nil, err
-	}
-	err = r.controller.Destroy(req.Context(), id)
-	return nil, err
+	routes.Del(r.handlers.DeleteResource)
+	routes.Get(r.handlers.GetResource)
+	routes.List(r.handlers.ListResources, corev2.NamespaceFields)
+	routes.Post(r.handlers.CreateResource)
+	routes.Put(r.handlers.CreateOrUpdateResource)
 }

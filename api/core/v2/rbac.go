@@ -2,11 +2,23 @@ package v2
 
 import (
 	"errors"
-	"fmt"
 	"net/url"
+	"path"
 )
 
 const (
+	// ClusterRolesResource is the name of this resource type
+	ClusterRolesResource = "clusterroles"
+
+	// ClusterRoleBindingsResource is the name of this resource type
+	ClusterRoleBindingsResource = "clusterrolebindings"
+
+	// RolesResource is the name of this resource type
+	RolesResource = "roles"
+
+	// RoleBindingsResource is the name of this resource type
+	RoleBindingsResource = "rolebindings"
+
 	// ResourceAll represents all possible resources
 	ResourceAll = "*"
 	// VerbAll represents all possible verbs
@@ -99,6 +111,16 @@ func FixtureClusterRoleBinding(name string) *ClusterRoleBinding {
 	}
 }
 
+// StorePrefix returns the path prefix to this resource in the store
+func (r *ClusterRole) StorePrefix() string {
+	return "rbac/" + ClusterRolesResource
+}
+
+// URIPath returns the path component of a cluster role URI.
+func (r *ClusterRole) URIPath() string {
+	return path.Join(URLPrefix, ClusterRolesResource, url.PathEscape(r.Name))
+}
+
 // Validate a ClusterRole
 func (r *ClusterRole) Validate() error {
 	if err := ValidateSubscriptionName(r.Name); err != nil {
@@ -116,9 +138,14 @@ func (r *ClusterRole) Validate() error {
 	return nil
 }
 
-// URIPath returns the path component of a ClusterRole URI.
-func (r *ClusterRole) URIPath() string {
-	return fmt.Sprintf("/api/core/v2/clusterroles/%s", url.PathEscape(r.Name))
+// StorePrefix returns the path prefix to this resource in the store
+func (b *ClusterRoleBinding) StorePrefix() string {
+	return "rbac/" + ClusterRoleBindingsResource
+}
+
+// URIPath returns the path component of a cluster role binding URI.
+func (b *ClusterRoleBinding) URIPath() string {
+	return path.Join(URLPrefix, ClusterRoleBindingsResource, url.PathEscape(b.Name))
 }
 
 // Validate a ClusterRoleBinding
@@ -142,9 +169,15 @@ func (b *ClusterRoleBinding) Validate() error {
 	return nil
 }
 
-// URIPath returns the path component of a ClusterRole URI.
-func (b *ClusterRoleBinding) URIPath() string {
-	return fmt.Sprintf("/api/core/v2/clusterrolebindings/%s", url.PathEscape(b.Name))
+// StorePrefix returns the path prefix to this resource in the store
+func (r *Role) StorePrefix() string {
+	return "rbac/" + RolesResource
+}
+
+// URIPath returns the path component of a role URI.
+func (r *Role) URIPath() string {
+	return path.Join(URLPrefix, "namespaces", url.PathEscape(r.Namespace), RolesResource, url.PathEscape(r.Name))
+
 }
 
 // Validate a Role
@@ -164,12 +197,14 @@ func (r *Role) Validate() error {
 	return nil
 }
 
-// URIPath returns the path component of a Role URI.
-func (r *Role) URIPath() string {
-	return fmt.Sprintf("/api/core/v2/namespaces/%s/roles/%s",
-		url.PathEscape(r.Namespace),
-		url.PathEscape(r.Name),
-	)
+// StorePrefix returns the path prefix to this resource in the store
+func (b *RoleBinding) StorePrefix() string {
+	return "rbac/" + RoleBindingsResource
+}
+
+// URIPath returns the path component of a role binding URI.
+func (b *RoleBinding) URIPath() string {
+	return path.Join(URLPrefix, "namespaces", url.PathEscape(b.Namespace), RoleBindingsResource, url.PathEscape(b.Name))
 }
 
 // Validate a RoleBinding
@@ -191,14 +226,6 @@ func (b *RoleBinding) Validate() error {
 	}
 
 	return nil
-}
-
-// URIPath returns the path component of a Role URI.
-func (b *RoleBinding) URIPath() string {
-	return fmt.Sprintf("/api/core/v2/namespaces/%s/rolebindings/%s",
-		url.PathEscape(b.Namespace),
-		url.PathEscape(b.Name),
-	)
 }
 
 // ResourceMatches returns whether the specified requestedResource matches any

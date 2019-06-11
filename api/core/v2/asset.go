@@ -4,7 +4,6 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"net/url"
 	"path"
 	"regexp"
@@ -13,11 +12,28 @@ import (
 	"github.com/sensu/sensu-go/js"
 )
 
-// AssetNameRegexStr used to validate name of asset
-var AssetNameRegexStr = `[a-z0-9\/\_\.\-]+`
+const (
+	// AssetsResource is the name of this resource type
+	AssetsResource = "assets"
+)
 
-// AssetNameRegex used to validate name of asset
-var AssetNameRegex = regexp.MustCompile("^" + AssetNameRegexStr + "$")
+var (
+	// AssetNameRegexStr used to validate name of asset
+	AssetNameRegexStr = `[a-z0-9\/\_\.\-]+`
+
+	// AssetNameRegex used to validate name of asset
+	AssetNameRegex = regexp.MustCompile("^" + AssetNameRegexStr + "$")
+)
+
+// StorePrefix returns the path prefix to this resource in the store
+func (a *Asset) StorePrefix() string {
+	return AssetsResource
+}
+
+// URIPath returns the path component of an asset URI.
+func (a *Asset) URIPath() string {
+	return path.Join(URLPrefix, "namespaces", url.PathEscape(a.Namespace), AssetsResource, url.PathEscape(a.Name))
+}
 
 // Validate returns an error if the asset contains invalid values.
 func (a *Asset) Validate() error {
@@ -91,11 +107,6 @@ func FixtureAsset(name string) *Asset {
 		URL:        "https://localhost/" + hash + ".zip",
 	}
 	return asset
-}
-
-// URIPath returns the path component of a Asset URI.
-func (a *Asset) URIPath() string {
-	return fmt.Sprintf("/api/core/v2/namespaces/%s/assets/%s", url.PathEscape(a.Namespace), url.PathEscape(a.Name))
 }
 
 // NewAsset creates a new Asset.

@@ -6,8 +6,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/dgrijalva/jwt-go"
-
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -102,73 +101,11 @@ func TestSilencedQuery(t *testing.T) {
 			store.On("GetSilencedEntries", tc.ctx).Return(tc.storeRecords, tc.storeErr).Once()
 
 			// Exec Query
-			results, err := actions.Query(tc.ctx, tc.params["subscription"], tc.params["check"])
+			results, err := actions.List(tc.ctx, tc.params["subscription"], tc.params["check"])
 
 			// Assert
 			assert.EqualValues(tc.expectedErr, err)
 			assert.Len(results, tc.expectedLen)
-		})
-	}
-}
-
-func TestSilencedFind(t *testing.T) {
-	defaultCtx := context.Background()
-
-	testCases := []struct {
-		name            string
-		ctx             context.Context
-		record          *types.Silenced
-		argument        string
-		expected        bool
-		expectedErrCode ErrCode
-	}{
-		{
-			name:            "No argument given",
-			ctx:             defaultCtx,
-			argument:        "",
-			expected:        false,
-			expectedErrCode: NotFound,
-		},
-		{
-			name:            "Found",
-			ctx:             defaultCtx,
-			record:          types.FixtureSilenced("*:silence1"),
-			argument:        "silence1",
-			expected:        true,
-			expectedErrCode: 0,
-		},
-		{
-			name:            "Not Found",
-			ctx:             defaultCtx,
-			record:          nil,
-			argument:        "missing",
-			expected:        false,
-			expectedErrCode: NotFound,
-		},
-	}
-
-	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
-		actions := NewSilencedController(store)
-
-		t.Run(tc.name, func(t *testing.T) {
-			assert := assert.New(t)
-
-			// Mock store methods
-			store.
-				On("GetSilencedEntryByName", tc.ctx, mock.Anything, mock.Anything).
-				Return(tc.record, nil).Once()
-
-			// Exec Query
-			result, err := actions.Find(tc.ctx, tc.argument)
-
-			inferErr, ok := err.(Error)
-			if ok {
-				assert.Equal(tc.expectedErrCode, inferErr.Code)
-			} else {
-				assert.NoError(err)
-			}
-			assert.Equal(tc.expected, result != nil, "expects Find() to return a record")
 		})
 	}
 }
@@ -254,7 +191,7 @@ func TestSilencedCreateOrReplace(t *testing.T) {
 				})
 
 			// Exec Query
-			err := actions.CreateOrReplace(tc.ctx, *tc.argument)
+			err := actions.CreateOrReplace(tc.ctx, tc.argument)
 
 			if tc.expectedErr {
 				inferErr, ok := err.(Error)
@@ -378,86 +315,6 @@ func TestSilencedCreate(t *testing.T) {
 
 			// Exec Query
 			err := actions.Create(tc.ctx, tc.argument)
-
-			if tc.expectedErr {
-				inferErr, ok := err.(Error)
-				if ok {
-					assert.Equal(tc.expectedErrCode, inferErr.Code)
-				} else {
-					assert.Error(err)
-					assert.FailNow("Given was not of type 'Error'")
-				}
-			} else {
-				assert.NoError(err)
-			}
-		})
-	}
-}
-
-func TestSilencedDestroy(t *testing.T) {
-	defaultCtx := context.Background()
-
-	testCases := []struct {
-		name            string
-		ctx             context.Context
-		id              string
-		deleteErr       error
-		fetchErr        error
-		fetchResult     *types.Silenced
-		expectedErr     bool
-		expectedErrCode ErrCode
-	}{
-		{
-			name:        "Deleted",
-			ctx:         defaultCtx,
-			id:          "i-424242:*",
-			fetchResult: types.FixtureSilenced("i-424242:*"),
-			expectedErr: false,
-		},
-		{
-			name:            "Does Not Exist",
-			ctx:             defaultCtx,
-			id:              "missing:*",
-			fetchResult:     nil,
-			expectedErr:     true,
-			expectedErrCode: NotFound,
-		},
-		{
-			name:            "Store Err on Fetch",
-			ctx:             defaultCtx,
-			id:              "i-424242:*",
-			fetchErr:        errors.New("dunno"),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
-		},
-		{
-			name:            "Store Err on Delete",
-			ctx:             defaultCtx,
-			id:              "i-424242:*",
-			deleteErr:       errors.New("dunno"),
-			fetchResult:     types.FixtureSilenced("i-424242:*"),
-			expectedErr:     true,
-			expectedErrCode: InternalErr,
-		},
-	}
-
-	for _, tc := range testCases {
-		store := &mockstore.MockStore{}
-		actions := NewSilencedController(store)
-
-		t.Run(tc.name, func(t *testing.T) {
-			assert := assert.New(t)
-
-			// Mock store methods
-			store.
-				On("GetSilencedEntryByName", mock.Anything, mock.Anything).
-				Return(tc.fetchResult, tc.fetchErr)
-			store.
-				On("DeleteSilencedEntryByName", mock.Anything, mock.Anything).
-				Return(tc.deleteErr).Once()
-
-			// Exec Query
-			err := actions.Destroy(tc.ctx, tc.id)
 
 			if tc.expectedErr {
 				inferErr, ok := err.(Error)

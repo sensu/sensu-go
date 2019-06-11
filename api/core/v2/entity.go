@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"path"
 	"sort"
 	"strconv"
 	"strings"
@@ -13,6 +14,9 @@ import (
 )
 
 const (
+	// EntitiesResource is the name of this resource type
+	EntitiesResource = "entities"
+
 	// EntityAgentClass is the name of the class given to agent entities.
 	EntityAgentClass = "agent"
 
@@ -29,6 +33,16 @@ const (
 // DefaultRedactFields contains the default fields to redact
 var DefaultRedactFields = []string{"password", "passwd", "pass", "api_key",
 	"api_token", "access_key", "secret_key", "private_key", "secret"}
+
+// StorePrefix returns the path prefix to this resource in the store
+func (e *Entity) StorePrefix() string {
+	return EntitiesResource
+}
+
+// URIPath returns the path component of an entity URI.
+func (e *Entity) URIPath() string {
+	return path.Join(URLPrefix, "namespaces", url.PathEscape(e.Namespace), EntitiesResource, url.PathEscape(e.Name))
+}
 
 // Validate returns an error if the entity is invalid.
 func (e *Entity) Validate() error {
@@ -115,11 +129,6 @@ func FixtureEntity(name string) *Entity {
 			Arch: "amd64",
 		},
 	}
-}
-
-// URIPath returns the path component of a Entity URI.
-func (e *Entity) URIPath() string {
-	return fmt.Sprintf("/api/core/v2/namespaces/%s/entities/%s", url.PathEscape(e.Namespace), url.PathEscape(e.Name))
 }
 
 //

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"path"
 	"strings"
 
 	"github.com/sensu/sensu-go/js"
@@ -11,6 +12,9 @@ import (
 )
 
 const (
+	// EventFiltersResource is the name of this resource type
+	EventFiltersResource = "filters"
+
 	// EventFilterActionAllow is an action to allow events to pass through to the pipeline
 	EventFilterActionAllow = "allow"
 
@@ -29,9 +33,14 @@ var (
 	}
 )
 
-// NewEventFilter creates a new EventFilter.
-func NewEventFilter(meta ObjectMeta) *EventFilter {
-	return &EventFilter{ObjectMeta: meta}
+// StorePrefix returns the path prefix to this resource in the store
+func (f *EventFilter) StorePrefix() string {
+	return "event-filters"
+}
+
+// URIPath returns the path component of an event filter URI.
+func (f *EventFilter) URIPath() string {
+	return path.Join(URLPrefix, "namespaces", url.PathEscape(f.Namespace), EventFiltersResource, url.PathEscape(f.Name))
 }
 
 // Validate returns an error if the filter does not pass validation tests.
@@ -79,6 +88,11 @@ func (f *EventFilter) Update(from *EventFilter, fields ...string) error {
 	return nil
 }
 
+// NewEventFilter creates a new EventFilter.
+func NewEventFilter(meta ObjectMeta) *EventFilter {
+	return &EventFilter{ObjectMeta: meta}
+}
+
 // FixtureEventFilter returns a Filter fixture for testing.
 func FixtureEventFilter(name string) *EventFilter {
 	return &EventFilter{
@@ -98,11 +112,6 @@ func FixtureDenyEventFilter(name string) *EventFilter {
 			Name:      name,
 		},
 	}
-}
-
-// URIPath returns the path component of a Filter URI.
-func (f *EventFilter) URIPath() string {
-	return fmt.Sprintf("/api/core/v2/namespaces/%s/filters/%s", url.PathEscape(f.Namespace), url.PathEscape(f.Name))
 }
 
 // EventFilterFields returns a set of fields that represent that resource

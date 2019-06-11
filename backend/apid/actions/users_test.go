@@ -84,7 +84,7 @@ func TestUserList(t *testing.T) {
 	}
 }
 
-func TestUserFind(t *testing.T) {
+func TestUserGet(t *testing.T) {
 	ctxWithAuthorizedViewer := testutil.NewContext(
 		testutil.ContextWithNamespace("default"),
 	)
@@ -142,7 +142,7 @@ func TestUserFind(t *testing.T) {
 				Return(tc.storedRecord, tc.storeErr)
 
 			// Exec Query
-			result, err := actions.Find(tc.ctx, tc.argument)
+			result, err := actions.Get(tc.ctx, tc.argument)
 
 			inferErr, ok := err.(Error)
 			if ok {
@@ -150,7 +150,7 @@ func TestUserFind(t *testing.T) {
 			} else {
 				assert.NoError(err)
 			}
-			assert.Equal(tc.expected, result != nil, "expects Find() to return a record")
+			assert.Equal(tc.expected, result != nil, "expects Get() to return a record")
 		})
 	}
 }
@@ -216,7 +216,7 @@ func TestUserCreateOrReplace(t *testing.T) {
 				Return(tc.fetchResult, tc.fetchErr)
 
 			// Exec Query
-			err := actions.CreateOrReplace(tc.ctx, *tc.argument)
+			err := actions.CreateOrReplace(tc.ctx, tc.argument)
 
 			if tc.expectedErr {
 				inferErr, ok := err.(Error)
@@ -295,7 +295,7 @@ func TestUserCreate(t *testing.T) {
 				Return(tc.fetchResult, tc.fetchErr)
 
 			// Exec Query
-			err := actions.Create(tc.ctx, *tc.argument)
+			err := actions.Create(tc.ctx, tc.argument)
 
 			if tc.expectedErr {
 				inferErr, ok := err.(Error)

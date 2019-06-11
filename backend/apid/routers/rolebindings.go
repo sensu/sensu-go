@@ -1,25 +1,24 @@
 package routers
 
 import (
-	"net/http"
-	"net/url"
-
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/apid/handlers"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 // RoleBindingsRouter handles requests for RoleBindings.
 type RoleBindingsRouter struct {
-	controller actions.RoleBindingController
+	handlers handlers.Handlers
 }
 
 // NewRoleBindingsRouter instantiates a new router for RoleBindings.
-func NewRoleBindingsRouter(store store.RoleBindingStore) *RoleBindingsRouter {
+func NewRoleBindingsRouter(store store.ResourceStore) *RoleBindingsRouter {
 	return &RoleBindingsRouter{
-		controller: actions.NewRoleBindingController(store),
+		handlers: handlers.Handlers{
+			Resource: &corev2.RoleBinding{},
+			Store:    store,
+		},
 	}
 }
 
@@ -30,56 +29,10 @@ func (r *RoleBindingsRouter) Mount(parent *mux.Router) {
 		PathPrefix: "/namespaces/{namespace}/{resource:rolebindings}",
 	}
 
-	routes.Del(r.destroy)
-	routes.Get(r.find)
-	routes.List(r.controller.List, corev2.RoleBindingFields)
-	routes.ListAllNamespaces(r.controller.List, "/{resource:rolebindings}", corev2.RoleBindingFields)
-	routes.Post(r.create)
-	routes.Put(r.createOrReplace)
-}
-
-func (r *RoleBindingsRouter) create(req *http.Request) (interface{}, error) {
-	obj := types.RoleBinding{}
-
-	if err := UnmarshalBody(req, &obj); err != nil {
-		return nil, err
-	}
-
-	err := r.controller.Create(req.Context(), obj)
-	return obj, err
-}
-
-func (r *RoleBindingsRouter) createOrReplace(req *http.Request) (interface{}, error) {
-	obj := types.RoleBinding{}
-
-	if err := UnmarshalBody(req, &obj); err != nil {
-		return nil, err
-	}
-
-	err := r.controller.CreateOrReplace(req.Context(), obj)
-	return obj, err
-}
-
-func (r *RoleBindingsRouter) destroy(req *http.Request) (interface{}, error) {
-	params := mux.Vars(req)
-
-	id, err := url.PathUnescape(params["id"])
-	if err != nil {
-		return nil, err
-	}
-
-	err = r.controller.Destroy(req.Context(), id)
-	return nil, err
-}
-
-func (r *RoleBindingsRouter) find(req *http.Request) (interface{}, error) {
-	params := mux.Vars(req)
-
-	id, err := url.PathUnescape(params["id"])
-	if err != nil {
-		return nil, err
-	}
-
-	obj, err := r.controller.Get(req.Context(), id)
-	return obj, err
+	routes.Del(r.handlers.DeleteResource)
+	routes.Get(r.handlers.GetResource)
+	routes.List(r.handlers.ListResources, corev2.RoleBindingFields)
+	routes.ListAllNamespaces(r.handlers.ListResources, "/{resource:rolebindings}", corev2.RoleBindingFields)
+	routes.Post(r.handlers.CreateResource)
+	routes.Put(r.handlers.CreateOrUpdateResource)
 }

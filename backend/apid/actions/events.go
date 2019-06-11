@@ -47,12 +47,12 @@ func (a EventController) List(ctx context.Context, pred *store.SelectionPredicat
 	return resources, nil
 }
 
-// Find returns resource associated with given parameters if available to the
+// Get returns resource associated with given parameters if available to the
 // viewer.
-func (a EventController) Find(ctx context.Context, entity, check string) (*corev2.Event, error) {
-	// Find (for events) requires both an entity and check
+func (a EventController) Get(ctx context.Context, entity, check string) (*corev2.Event, error) {
+	// Get (for events) requires both an entity and check
 	if entity == "" || check == "" {
-		return nil, NewErrorf(InvalidArgument, "Find() requires both an entity and a check")
+		return nil, NewErrorf(InvalidArgument, "Get() requires both an entity and a check")
 	}
 
 	result, err := a.store.GetEventByEntityCheck(ctx, entity, check)
@@ -66,11 +66,11 @@ func (a EventController) Find(ctx context.Context, entity, check string) (*corev
 	return result, nil
 }
 
-// Destroy destroys the event indicated by the supplied entity and check.
-func (a EventController) Destroy(ctx context.Context, entity, check string) error {
+// Delete destroys the event indicated by the supplied entity and check.
+func (a EventController) Delete(ctx context.Context, entity, check string) error {
 	// Destroy (for events) requires both an entity and check
 	if entity == "" || check == "" {
-		return NewErrorf(InvalidArgument, "Destroy() requires both an entity and a check")
+		return NewErrorf(InvalidArgument, "Delete() requires both an entity and a check")
 	}
 
 	result, err := a.store.GetEventByEntityCheck(ctx, entity, check)
@@ -78,11 +78,12 @@ func (a EventController) Destroy(ctx context.Context, entity, check string) erro
 		return NewError(InternalErr, err)
 	}
 
-	if result != nil {
-		err := a.store.DeleteEventByEntityCheck(ctx, entity, check)
-		if err != nil {
-			return NewError(InternalErr, err)
-		}
+	if result == nil {
+		return NewErrorf(NotFound)
+	}
+
+	if err := a.store.DeleteEventByEntityCheck(ctx, entity, check); err != nil {
+		return NewError(InternalErr, err)
 	}
 
 	return nil
@@ -90,7 +91,7 @@ func (a EventController) Destroy(ctx context.Context, entity, check string) erro
 
 // Create creates the event indicated by the supplied entity and check.
 // If an event already exists for the entity and check, it updates that event.
-func (a EventController) Create(ctx context.Context, event corev2.Event) error {
+func (a EventController) Create(ctx context.Context, event *corev2.Event) error {
 	if err := event.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
 	}
@@ -110,7 +111,7 @@ func (a EventController) Create(ctx context.Context, event corev2.Event) error {
 	}
 
 	// Publish to event pipeline
-	if err := a.bus.Publish(messaging.TopicEventRaw, &event); err != nil {
+	if err := a.bus.Publish(messaging.TopicEventRaw, event); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -119,13 +120,13 @@ func (a EventController) Create(ctx context.Context, event corev2.Event) error {
 
 // CreateOrReplace creates the event indicated by the supplied entity and check.
 // If an event already exists for the entity and check, it updates that event.
-func (a EventController) CreateOrReplace(ctx context.Context, event corev2.Event) error {
+func (a EventController) CreateOrReplace(ctx context.Context, event *corev2.Event) error {
 	if err := event.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
 	}
 
 	// Publish to event pipeline
-	if err := a.bus.Publish(messaging.TopicEventRaw, &event); err != nil {
+	if err := a.bus.Publish(messaging.TopicEventRaw, event); err != nil {
 		return NewError(InternalErr, err)
 	}
 

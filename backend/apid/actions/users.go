@@ -6,7 +6,6 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 // UserController exposes actions in which a viewer can perform.
@@ -41,9 +40,9 @@ func (a UserController) List(ctx context.Context, pred *store.SelectionPredicate
 	return resources, nil
 }
 
-// Find returns resource associated with given parameters if available to the
+// Get returns resource associated with given parameters if available to the
 // viewer.
-func (a UserController) Find(ctx context.Context, name string) (*types.User, error) {
+func (a UserController) Get(ctx context.Context, name string) (*corev2.User, error) {
 	// Fetch from store
 	result, serr := a.findUser(ctx, name)
 	if serr != nil {
@@ -57,38 +56,38 @@ func (a UserController) Find(ctx context.Context, name string) (*types.User, err
 }
 
 // Create creates a new user. It returns an error if the user already exists.
-func (a UserController) Create(ctx context.Context, newUser types.User) error {
+func (a UserController) Create(ctx context.Context, user *corev2.User) error {
 	// Check for existing
-	if e, err := a.store.GetUser(ctx, newUser.Username); err != nil {
+	if e, err := a.store.GetUser(ctx, user.Username); err != nil {
 		return NewError(InternalErr, err)
 	} else if e != nil {
 		return NewErrorf(AlreadyExistsErr)
 	}
 
-	return a.CreateOrReplace(ctx, newUser)
+	return a.CreateOrReplace(ctx, user)
 }
 
 // CreateOrReplace creates or replaces a user.
-func (a UserController) CreateOrReplace(ctx context.Context, newUser types.User) error {
+func (a UserController) CreateOrReplace(ctx context.Context, user *corev2.User) error {
 	// Validate
-	if err := newUser.Validate(); err != nil {
+	if err := user.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
 	}
 
 	// Validate password
-	if err := newUser.ValidatePassword(); err != nil {
+	if err := user.ValidatePassword(); err != nil {
 		return NewError(InvalidArgument, err)
 	}
 
 	// Create password digest
-	hash, err := bcrypt.HashPassword(newUser.Password)
+	hash, err := bcrypt.HashPassword(user.Password)
 	if err != nil {
 		return NewError(InternalErr, err)
 	}
-	newUser.Password = hash
+	user.Password = hash
 
 	// Persist
-	if err := a.store.UpdateUser(&newUser); err != nil {
+	if err := a.store.UpdateUser(user); err != nil {
 		return NewError(InternalErr, err)
 	}
 
@@ -133,7 +132,7 @@ func (a UserController) Enable(ctx context.Context, name string) error {
 
 // AddGroup adds a given group to a user
 func (a UserController) AddGroup(ctx context.Context, username string, group string) error {
-	return a.findAndUpdateUser(ctx, username, func(user *types.User) error {
+	return a.findAndUpdateUser(ctx, username, func(user *corev2.User) error {
 		var exists bool
 		for _, g := range user.Groups {
 			if g == group {
@@ -152,7 +151,7 @@ func (a UserController) AddGroup(ctx context.Context, username string, group str
 
 // RemoveGroup removes a group from a given user
 func (a UserController) RemoveGroup(ctx context.Context, username string, group string) error {
-	return a.findAndUpdateUser(ctx, username, func(user *types.User) error {
+	return a.findAndUpdateUser(ctx, username, func(user *corev2.User) error {
 		updatedGroups := []string{}
 		for _, g := range user.Groups {
 			if g != group {
@@ -167,13 +166,13 @@ func (a UserController) RemoveGroup(ctx context.Context, username string, group 
 
 // RemoveAllGroups removes all groups from a given user
 func (a UserController) RemoveAllGroups(ctx context.Context, username string) error {
-	return a.findAndUpdateUser(ctx, username, func(user *types.User) error {
+	return a.findAndUpdateUser(ctx, username, func(user *corev2.User) error {
 		user.Groups = []string{}
 		return nil
 	})
 }
 
-func (a UserController) findUser(ctx context.Context, name string) (*types.User, error) {
+func (a UserController) findUser(ctx context.Context, name string) (*corev2.User, error) {
 	result, serr := a.store.GetUser(ctx, name)
 	if serr != nil {
 		return nil, NewError(InternalErr, serr)
@@ -184,7 +183,7 @@ func (a UserController) findUser(ctx context.Context, name string) (*types.User,
 	return result, nil
 }
 
-func (a UserController) updateUser(ctx context.Context, user *types.User) error {
+func (a UserController) updateUser(ctx context.Context, user *corev2.User) error {
 	if err := a.store.UpdateUser(user); err != nil {
 		return NewError(InternalErr, err)
 	}
@@ -195,7 +194,7 @@ func (a UserController) updateUser(ctx context.Context, user *types.User) error 
 func (a UserController) findAndUpdateUser(
 	ctx context.Context,
 	name string,
-	configureFn func(*types.User) error,
+	configureFn func(*corev2.User) error,
 ) error {
 	// Find
 	user, serr := a.findUser(ctx, name)

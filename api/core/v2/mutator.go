@@ -2,14 +2,25 @@ package v2
 
 import (
 	"errors"
-	fmt "fmt"
+	"fmt"
 	"net/url"
+	"path"
 	"strings"
 )
 
-// NewMutator creates a new Mutator.
-func NewMutator(meta ObjectMeta) *Mutator {
-	return &Mutator{ObjectMeta: meta}
+const (
+	// MutatorsResource is the name of this resource type
+	MutatorsResource = "mutators"
+)
+
+// StorePrefix returns the path prefix to this resource in the store
+func (m *Mutator) StorePrefix() string {
+	return MutatorsResource
+}
+
+// URIPath returns the path component of a mutator URI.
+func (m *Mutator) URIPath() string {
+	return path.Join(URLPrefix, "namespaces", url.PathEscape(m.Namespace), MutatorsResource, url.PathEscape(m.Name))
 }
 
 // Validate returns an error if the mutator does not pass validation tests.
@@ -48,17 +59,17 @@ func (m *Mutator) Update(from *Mutator, fields ...string) error {
 	return nil
 }
 
+// NewMutator creates a new Mutator.
+func NewMutator(meta ObjectMeta) *Mutator {
+	return &Mutator{ObjectMeta: meta}
+}
+
 // FixtureMutator returns a Mutator fixture for testing.
 func FixtureMutator(name string) *Mutator {
 	return &Mutator{
 		Command:    "command",
 		ObjectMeta: NewObjectMeta(name, "default"),
 	}
-}
-
-// URIPath returns the path component of a Mutator URI.
-func (m *Mutator) URIPath() string {
-	return fmt.Sprintf("/api/core/v2/namespaces/%s/mutators/%s", url.PathEscape(m.Namespace), url.PathEscape(m.Name))
 }
 
 // MutatorFields returns a set of fields that represent that resource

@@ -105,6 +105,8 @@ var typeMap = map[string]interface{}{
 	"type_meta":              &TypeMeta{},
 	"User":                   &User{},
 	"user":                   &User{},
+	"Version":                &Version{},
+	"version":                &Version{},
 }
 
 // ResolveResource returns a zero-valued resource, given a name.

@@ -1,6 +1,7 @@
 package routers
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"path"
@@ -8,14 +9,23 @@ import (
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/apid/handlers"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 // EventsRouter handles requests for /events
 type EventsRouter struct {
-	controller actions.EventController
+	controller eventController
+}
+
+// eventController represents the controller needs of the EventsRouter.
+type eventController interface {
+	Create(ctx context.Context, check *corev2.Event) error
+	CreateOrReplace(ctx context.Context, check *corev2.Event) error
+	Delete(ctx context.Context, entity, check string) error
+	Get(ctx context.Context, entity, check string) (*corev2.Event, error)
+	List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error)
 }
 
 // NewEventsRouter instantiates new events controller
@@ -35,8 +45,8 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 	routes.Post(r.create)
 	routes.List(r.controller.List, corev2.EventFields)
 	routes.ListAllNamespaces(r.controller.List, "/{resource:events}", corev2.EventFields)
-	routes.Path("{entity}/{check}", r.find).Methods(http.MethodGet)
-	routes.Path("{entity}/{check}", r.destroy).Methods(http.MethodDelete)
+	routes.Path("{entity}/{check}", r.get).Methods(http.MethodGet)
+	routes.Path("{entity}/{check}", r.delete).Methods(http.MethodDelete)
 	routes.Path("{entity}/{check}", r.createOrReplace).Methods(http.MethodPut)
 
 	// Additionaly allow a subcollection to be specified when listing events,
@@ -45,37 +55,45 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 		listerHandler(r.controller.List, corev2.EventFields)).Methods(http.MethodGet)
 }
 
-func (r *EventsRouter) find(req *http.Request) (interface{}, error) {
+func (r *EventsRouter) get(req *http.Request) (interface{}, error) {
 	params := actions.QueryParams(mux.Vars(req))
 	entity := url.PathEscape(params["entity"])
 	check := url.PathEscape(params["check"])
-	record, err := r.controller.Find(req.Context(), entity, check)
+	record, err := r.controller.Get(req.Context(), entity, check)
 	return record, err
 }
 
-func (r *EventsRouter) destroy(req *http.Request) (interface{}, error) {
+func (r *EventsRouter) delete(req *http.Request) (interface{}, error) {
 	params := actions.QueryParams(mux.Vars(req))
 	entity := url.PathEscape(params["entity"])
 	check := url.PathEscape(params["check"])
-	return nil, r.controller.Destroy(req.Context(), entity, check)
+	return nil, r.controller.Delete(req.Context(), entity, check)
 }
 
 func (r *EventsRouter) create(req *http.Request) (interface{}, error) {
-	event := types.Event{}
-	if err := UnmarshalBody(req, &event); err != nil {
-		return nil, err
+	event := &corev2.Event{}
+	if err := UnmarshalBody(req, event); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
+	}
+
+	if err := handlers.CheckMeta(event.Entity, mux.Vars(req)); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	err := r.controller.Create(req.Context(), event)
-	return event, err
+	return nil, err
 }
 
 func (r *EventsRouter) createOrReplace(req *http.Request) (interface{}, error) {
-	event := types.Event{}
-	if err := UnmarshalBody(req, &event); err != nil {
-		return nil, err
+	event := &corev2.Event{}
+	if err := UnmarshalBody(req, event); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
+	}
+
+	if err := handlers.CheckMeta(event.Entity, mux.Vars(req)); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	err := r.controller.CreateOrReplace(req.Context(), event)
-	return event, err
+	return nil, err
 }

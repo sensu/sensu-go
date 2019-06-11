@@ -2,6 +2,7 @@ package routers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -9,15 +10,14 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 // UserController represents the controller needs of the UsersRouter.
 type UserController interface {
 	List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error)
-	Find(ctx context.Context, name string) (*types.User, error)
-	Create(ctx context.Context, newUser types.User) error
-	CreateOrReplace(ctx context.Context, newOrg types.User) error
+	Get(ctx context.Context, name string) (*corev2.User, error)
+	Create(ctx context.Context, user *corev2.User) error
+	CreateOrReplace(ctx context.Context, user *corev2.User) error
 	Disable(ctx context.Context, name string) error
 	Enable(ctx context.Context, name string) error
 	AddGroup(ctx context.Context, name string, group string) error
@@ -44,9 +44,9 @@ func (r *UsersRouter) Mount(parent *mux.Router) {
 		PathPrefix: "/{resource:users}",
 	}
 	routes.List(r.controller.List, corev2.UserFields)
-	routes.Get(r.find)
+	routes.Get(r.get)
 	routes.Post(r.create)
-	routes.Del(r.destroy)
+	routes.Del(r.disable)
 	routes.Put(r.createOrReplace)
 
 	// Custom
@@ -59,48 +59,52 @@ func (r *UsersRouter) Mount(parent *mux.Router) {
 	routes.Path("{id}/{subresource:password}", r.updatePassword).Methods(http.MethodPut)
 }
 
-func (r *UsersRouter) find(req *http.Request) (interface{}, error) {
+func (r *UsersRouter) get(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
 	id, err := url.PathUnescape(params["id"])
 	if err != nil {
 		return nil, err
 	}
-	record, err := r.controller.Find(req.Context(), id)
+	user, err := r.controller.Get(req.Context(), id)
 
 	// Obfuscate users password
-	if record != nil {
-		record.Password = ""
+	if user != nil {
+		user.Password = ""
 	}
-	return record, err
+	return user, err
 }
 
 func (r *UsersRouter) create(req *http.Request) (interface{}, error) {
-	cfg := types.User{}
-	if err := UnmarshalBody(req, &cfg); err != nil {
-		return nil, err
+	user := &corev2.User{}
+	if err := UnmarshalBody(req, user); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	err := r.controller.Create(req.Context(), cfg)
-
-	// Hide user's password
-	cfg.Password = ""
-	return cfg, err
+	err := r.controller.Create(req.Context(), user)
+	return nil, err
 }
 
 func (r *UsersRouter) createOrReplace(req *http.Request) (interface{}, error) {
-	cfg := types.User{}
-	if err := UnmarshalBody(req, &cfg); err != nil {
-		return nil, err
+	user := &corev2.User{}
+	if err := UnmarshalBody(req, user); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	err := r.controller.CreateOrReplace(req.Context(), cfg)
+	vars := mux.Vars(req)
+	if user.Username != vars["id"] {
+		return nil, actions.NewError(actions.InvalidArgument,
+			fmt.Errorf(
+				"the username (%s) does not match the username on the request (%s)",
+				user.Username,
+				vars["id"],
+			))
+	}
 
-	// Hide user's password
-	cfg.Password = ""
-	return cfg, err
+	err := r.controller.CreateOrReplace(req.Context(), user)
+	return nil, err
 }
 
-func (r *UsersRouter) destroy(req *http.Request) (interface{}, error) {
+func (r *UsersRouter) disable(req *http.Request) (interface{}, error) {
 	params := mux.Vars(req)
 	id, err := url.PathUnescape(params["id"])
 	if err != nil {
@@ -132,13 +136,13 @@ func (r *UsersRouter) updatePassword(req *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
-	record, err := r.controller.Find(req.Context(), id)
+	user, err := r.controller.Get(req.Context(), id)
 	if err != nil {
 		return nil, err
 	}
 
-	record.Password = params["password"]
-	err = r.controller.CreateOrReplace(req.Context(), *record)
+	user.Password = params["password"]
+	err = r.controller.CreateOrReplace(req.Context(), user)
 	return nil, err
 }
 

@@ -1,25 +1,24 @@
 package routers
 
 import (
-	"net/http"
-	"net/url"
-
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/apid/handlers"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 // ExtensionsRouter handles requests for /extensions
 type ExtensionsRouter struct {
-	controller actions.ExtensionController
+	handlers handlers.Handlers
 }
 
 // NewExtensionsRouter creates a new router for controlling extension resources
-func NewExtensionsRouter(store store.ExtensionRegistry) *ExtensionsRouter {
+func NewExtensionsRouter(store store.ResourceStore) *ExtensionsRouter {
 	return &ExtensionsRouter{
-		controller: actions.NewExtensionController(store),
+		handlers: handlers.Handlers{
+			Resource: &corev2.Extension{},
+			Store:    store,
+		},
 	}
 }
 
@@ -30,37 +29,10 @@ func (r *ExtensionsRouter) Mount(parent *mux.Router) {
 		PathPrefix: "/namespaces/{namespace}/{resource:extensions}",
 	}
 
-	routes.Del(r.deregister)
-	routes.Get(r.find)
-	routes.List(r.controller.List, corev2.ExtensionFields)
-	routes.ListAllNamespaces(r.controller.List, "/{resource:extensions}", corev2.ExtensionFields)
-	routes.Put(r.register)
-}
-
-func (r *ExtensionsRouter) find(req *http.Request) (interface{}, error) {
-	params := mux.Vars(req)
-	extensionPath, err := url.PathUnescape(params["id"])
-	if err != nil {
-		return nil, err
-	}
-	record, err := r.controller.Find(req.Context(), extensionPath)
-	return record, err
-}
-
-func (r *ExtensionsRouter) register(req *http.Request) (interface{}, error) {
-	var extension types.Extension
-	if err := UnmarshalBody(req, &extension); err != nil {
-		return nil, err
-	}
-	err := r.controller.Register(req.Context(), extension)
-	return extension, err
-}
-
-func (r *ExtensionsRouter) deregister(req *http.Request) (interface{}, error) {
-	params := mux.Vars(req)
-	extensionPath, err := url.PathUnescape(params["id"])
-	if err != nil {
-		return nil, err
-	}
-	return nil, r.controller.Deregister(req.Context(), extensionPath)
+	routes.Del(r.handlers.DeleteResource)
+	routes.Get(r.handlers.GetResource)
+	routes.List(r.handlers.ListResources, corev2.ExtensionFields)
+	routes.ListAllNamespaces(r.handlers.ListResources, "/{resource:extensions}", corev2.ExtensionFields)
+	routes.Post(r.handlers.CreateResource)
+	routes.Put(r.handlers.CreateOrUpdateResource)
 }

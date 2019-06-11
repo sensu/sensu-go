@@ -10,14 +10,13 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/sensu/sensu-go/backend/authentication"
-
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/apid/routers"
+	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
@@ -257,7 +256,7 @@ func (a *APId) registerRestrictedResources(router *mux.Router) {
 	mountRouters(
 		a.CoreSubrouter,
 		routers.NewAssetRouter(a.store),
-		routers.NewChecksRouter(actions.NewCheckController(a.store, a.queueGetter)),
+		routers.NewChecksRouter(a.store, a.queueGetter),
 		routers.NewClusterRolesRouter(a.store),
 		routers.NewClusterRoleBindingsRouter(a.store),
 		routers.NewClusterRouter(actions.NewClusterController(a.cluster)),
@@ -268,7 +267,7 @@ func (a *APId) registerRestrictedResources(router *mux.Router) {
 		routers.NewHandlersRouter(a.store),
 		routers.NewHooksRouter(a.store),
 		routers.NewMutatorsRouter(a.store),
-		routers.NewNamespacesRouter(actions.NewNamespacesController(a.store)),
+		routers.NewNamespacesRouter(a.store),
 		routers.NewRolesRouter(a.store),
 		routers.NewRoleBindingsRouter(a.store),
 		routers.NewSilencedRouter(a.store),

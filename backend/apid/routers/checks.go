@@ -10,31 +10,33 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/apid/handlers"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
-// CheckController represents the controller needs of the ChecksRouter.
-type CheckController interface {
-	Create(context.Context, types.CheckConfig) error
-	CreateOrReplace(context.Context, types.CheckConfig) error
-	List(context.Context, *store.SelectionPredicate) ([]corev2.Resource, error)
-	Find(context.Context, string) (*types.CheckConfig, error)
-	Destroy(context.Context, string) error
-	AddCheckHook(context.Context, string, types.HookList) error
+// checkController represents the controller needs of the ChecksRouter.
+type checkController interface {
+	AddCheckHook(context.Context, string, corev2.HookList) error
 	RemoveCheckHook(context.Context, string, string, string) error
-	QueueAdhocRequest(context.Context, string, *types.AdhocRequest) error
+	QueueAdhocRequest(context.Context, string, *corev2.AdhocRequest) error
 }
 
 // ChecksRouter handles requests for /checks
 type ChecksRouter struct {
-	controller CheckController
+	controller checkController
+	handlers   handlers.Handlers
 }
 
 // NewChecksRouter instantiates new router for controlling check resources
-func NewChecksRouter(ctrl CheckController) *ChecksRouter {
+func NewChecksRouter(store store.Store, getter types.QueueGetter) *ChecksRouter {
 	return &ChecksRouter{
-		controller: ctrl,
+		controller: actions.NewCheckController(store, getter),
+		handlers: handlers.Handlers{
+			Resource: &corev2.CheckConfig{},
+			Store:    store,
+		},
 	}
 }
 
@@ -45,12 +47,12 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 		PathPrefix: "/namespaces/{namespace}/{resource:checks}",
 	}
 
-	routes.Del(r.destroy)
-	routes.Get(r.find)
-	routes.List(r.controller.List, corev2.CheckConfigFields)
-	routes.ListAllNamespaces(r.controller.List, "/{resource:checks}", corev2.CheckConfigFields)
-	routes.Post(r.create)
-	routes.Put(r.createOrReplace)
+	routes.Del(r.handlers.DeleteResource)
+	routes.Get(r.handlers.GetResource)
+	routes.List(r.handlers.ListResources, corev2.CheckConfigFields)
+	routes.ListAllNamespaces(r.handlers.ListResources, "/{resource:checks}", corev2.CheckConfigFields)
+	routes.Post(r.handlers.CreateResource)
+	routes.Put(r.handlers.CreateOrUpdateResource)
 
 	// Custom
 	routes.Path("{id}/hooks/{type}", r.addCheckHook).Methods(http.MethodPut)
@@ -60,48 +62,8 @@ func (r *ChecksRouter) Mount(parent *mux.Router) {
 	parent.HandleFunc(path.Join(routes.PathPrefix, "{id}/execute"), r.adhocRequest).Methods(http.MethodPost)
 }
 
-func (r *ChecksRouter) find(req *http.Request) (interface{}, error) {
-	params := mux.Vars(req)
-	id, err := url.PathUnescape(params["id"])
-	if err != nil {
-		return nil, err
-	}
-	record, err := r.controller.Find(req.Context(), id)
-	return record, err
-}
-
-func (r *ChecksRouter) create(req *http.Request) (interface{}, error) {
-	cfg := types.CheckConfig{}
-	if err := UnmarshalBody(req, &cfg); err != nil {
-		return nil, err
-	}
-
-	err := r.controller.Create(req.Context(), cfg)
-	return cfg, err
-}
-
-func (r *ChecksRouter) createOrReplace(req *http.Request) (interface{}, error) {
-	cfg := types.CheckConfig{}
-	if err := UnmarshalBody(req, &cfg); err != nil {
-		return nil, err
-	}
-
-	err := r.controller.CreateOrReplace(req.Context(), cfg)
-	return cfg, err
-}
-
-func (r *ChecksRouter) destroy(req *http.Request) (interface{}, error) {
-	params := mux.Vars(req)
-	id, err := url.PathUnescape(params["id"])
-	if err != nil {
-		return nil, err
-	}
-	err = r.controller.Destroy(req.Context(), id)
-	return nil, err
-}
-
 func (r *ChecksRouter) addCheckHook(req *http.Request) (interface{}, error) {
-	cfg := types.HookList{}
+	cfg := corev2.HookList{}
 	if err := UnmarshalBody(req, &cfg); err != nil {
 		return nil, err
 	}
@@ -135,7 +97,7 @@ func (r *ChecksRouter) removeCheckHook(req *http.Request) (interface{}, error) {
 }
 
 func (r *ChecksRouter) adhocRequest(w http.ResponseWriter, req *http.Request) {
-	adhocReq := types.AdhocRequest{}
+	adhocReq := corev2.AdhocRequest{}
 	if err := UnmarshalBody(req, &adhocReq); err != nil {
 		WriteError(w, err)
 		return

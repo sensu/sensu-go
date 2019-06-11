@@ -5,10 +5,10 @@ import (
 	"errors"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -31,7 +31,7 @@ func TestEventList(t *testing.T) {
 	testCases := []struct {
 		name        string
 		ctx         context.Context
-		events      []*types.Event
+		events      []*corev2.Event
 		entity      string
 		storeErr    error
 		expectedLen int
@@ -40,7 +40,7 @@ func TestEventList(t *testing.T) {
 		{
 			name:        "No Params No Events",
 			ctx:         defaultCtx,
-			events:      []*types.Event{},
+			events:      []*corev2.Event{},
 			expectedLen: 0,
 			storeErr:    nil,
 			expectedErr: nil,
@@ -48,9 +48,9 @@ func TestEventList(t *testing.T) {
 		{
 			name: "No Params With Events",
 			ctx:  defaultCtx,
-			events: []*types.Event{
-				types.FixtureEvent("entity1", "check1"),
-				types.FixtureEvent("entity2", "check2"),
+			events: []*corev2.Event{
+				corev2.FixtureEvent("entity1", "check1"),
+				corev2.FixtureEvent("entity2", "check2"),
 			},
 			expectedLen: 2,
 			storeErr:    nil,
@@ -59,8 +59,8 @@ func TestEventList(t *testing.T) {
 		{
 			name: "Entity Param",
 			ctx:  defaultCtx,
-			events: []*types.Event{
-				types.FixtureEvent("entity1", "check1"),
+			events: []*corev2.Event{
+				corev2.FixtureEvent("entity1", "check1"),
 			},
 			entity:      "entity1",
 			expectedLen: 1,
@@ -109,7 +109,7 @@ func TestEventFind(t *testing.T) {
 	testCases := []struct {
 		name            string
 		ctx             context.Context
-		event           *types.Event
+		event           *corev2.Event
 		entity          string
 		check           string
 		expected        bool
@@ -138,7 +138,7 @@ func TestEventFind(t *testing.T) {
 		{
 			name:            "Found",
 			ctx:             defaultCtx,
-			event:           types.FixtureEvent("entity1", "check1"),
+			event:           corev2.FixtureEvent("entity1", "check1"),
 			entity:          "entity1",
 			check:           "check1",
 			expected:        true,
@@ -169,7 +169,7 @@ func TestEventFind(t *testing.T) {
 				Return(tc.event, nil)
 
 			// Exec Query
-			result, err := eventController.Find(tc.ctx, tc.entity, tc.check)
+			result, err := eventController.Get(tc.ctx, tc.entity, tc.check)
 
 			inferErr, ok := err.(Error)
 			if ok {
@@ -177,7 +177,7 @@ func TestEventFind(t *testing.T) {
 			} else {
 				assert.NoError(err)
 			}
-			assert.Equal(tc.expected, result != nil, "expects Find() to return an event")
+			assert.Equal(tc.expected, result != nil, "expects Get() to return an event")
 		})
 	}
 }
@@ -188,7 +188,7 @@ func TestEventDestroy(t *testing.T) {
 	testCases := []struct {
 		name            string
 		ctx             context.Context
-		event           *types.Event
+		event           *corev2.Event
 		entity          string
 		check           string
 		expectedErrCode ErrCode
@@ -213,7 +213,7 @@ func TestEventDestroy(t *testing.T) {
 		{
 			name:            "Delete",
 			ctx:             defaultCtx,
-			event:           types.FixtureEvent("entity1", "check1"),
+			event:           corev2.FixtureEvent("entity1", "check1"),
 			entity:          "entity1",
 			check:           "check1",
 			expectedErrCode: 0,
@@ -245,7 +245,7 @@ func TestEventDestroy(t *testing.T) {
 				Return(nil)
 
 			// Exec Query
-			err := eventController.Destroy(tc.ctx, tc.entity, tc.check)
+			err := eventController.Delete(tc.ctx, tc.entity, tc.check)
 
 			inferErr, ok := err.(Error)
 			if ok {
@@ -259,23 +259,23 @@ func TestEventDestroy(t *testing.T) {
 
 func TestEventCreate(t *testing.T) {
 	defaultCtx := context.Background()
-	badEvent := types.FixtureEvent("entity1", "check1")
+	badEvent := corev2.FixtureEvent("entity1", "check1")
 	badEvent.Check.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
 
-	incompleteEvent := &types.Event{
-		Entity: types.FixtureEntity("entity1"),
+	incompleteEvent := &corev2.Event{
+		Entity: corev2.FixtureEntity("entity1"),
 	}
 
-	metricEvent := &types.Event{
-		Entity:  types.FixtureEntity("entity1"),
-		Metrics: types.FixtureMetrics(),
+	metricEvent := &corev2.Event{
+		Entity:  corev2.FixtureEntity("entity1"),
+		Metrics: corev2.FixtureMetrics(),
 	}
 
 	testCases := []struct {
 		name            string
 		ctx             context.Context
-		argument        *types.Event
-		fetchResult     *types.Event
+		argument        *corev2.Event
+		fetchResult     *corev2.Event
 		fetchErr        error
 		busErr          error
 		expectedErr     bool
@@ -284,21 +284,21 @@ func TestEventCreate(t *testing.T) {
 		{
 			name:        "Created",
 			ctx:         defaultCtx,
-			argument:    types.FixtureEvent("entity1", "check1"),
+			argument:    corev2.FixtureEvent("entity1", "check1"),
 			expectedErr: false,
 		},
 		{
 			name:            "Already Exists",
 			ctx:             defaultCtx,
-			argument:        types.FixtureEvent("entity1", "check1"),
-			fetchResult:     types.FixtureEvent("entity1", "check1"),
+			argument:        corev2.FixtureEvent("entity1", "check1"),
+			fetchResult:     corev2.FixtureEvent("entity1", "check1"),
 			expectedErr:     true,
 			expectedErrCode: AlreadyExistsErr,
 		},
 		{
 			name:            "store Err on Fetch",
 			ctx:             defaultCtx,
-			argument:        types.FixtureEvent("entity1", "check1"),
+			argument:        corev2.FixtureEvent("entity1", "check1"),
 			fetchErr:        errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
@@ -313,7 +313,7 @@ func TestEventCreate(t *testing.T) {
 		{
 			name:            "Message Bus Error",
 			ctx:             defaultCtx,
-			argument:        types.FixtureEvent("entity1", "check1"),
+			argument:        corev2.FixtureEvent("entity1", "check1"),
 			busErr:          errors.New("where's the wizard"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
@@ -349,7 +349,7 @@ func TestEventCreate(t *testing.T) {
 			bus.On("Publish", mock.Anything, mock.Anything).Return(tc.busErr)
 
 			// Exec Query
-			err := actions.Create(tc.ctx, *tc.argument)
+			err := actions.Create(tc.ctx, tc.argument)
 			if tc.expectedErr {
 				inferErr, ok := err.(Error)
 				if ok {
@@ -368,14 +368,14 @@ func TestEventCreate(t *testing.T) {
 func TestEventCreateOrReplace(t *testing.T) {
 	defaultCtx := context.Background()
 
-	badEvent := types.FixtureEvent("entity1", "check1")
+	badEvent := corev2.FixtureEvent("entity1", "check1")
 	badEvent.Check.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
 
 	testCases := []struct {
 		name            string
 		ctx             context.Context
-		argument        *types.Event
-		fetchResult     *types.Event
+		argument        *corev2.Event
+		fetchResult     *corev2.Event
 		fetchErr        error
 		busErr          error
 		expectedErr     bool
@@ -384,14 +384,14 @@ func TestEventCreateOrReplace(t *testing.T) {
 		{
 			name:        "Created",
 			ctx:         defaultCtx,
-			argument:    types.FixtureEvent("entity1", "check1"),
+			argument:    corev2.FixtureEvent("entity1", "check1"),
 			expectedErr: false,
 		},
 		{
 			name:        "Already Exists",
 			ctx:         defaultCtx,
-			argument:    types.FixtureEvent("entity1", "check1"),
-			fetchResult: types.FixtureEvent("entity1", "check1"),
+			argument:    corev2.FixtureEvent("entity1", "check1"),
+			fetchResult: corev2.FixtureEvent("entity1", "check1"),
 		},
 		{
 			name:            "Validation Error",
@@ -403,7 +403,7 @@ func TestEventCreateOrReplace(t *testing.T) {
 		{
 			name:            "Message Bus Error",
 			ctx:             defaultCtx,
-			argument:        types.FixtureEvent("entity1", "check1"),
+			argument:        corev2.FixtureEvent("entity1", "check1"),
 			busErr:          errors.New("where's the wizard"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
@@ -426,7 +426,7 @@ func TestEventCreateOrReplace(t *testing.T) {
 			bus.On("Publish", mock.Anything, mock.Anything).Return(tc.busErr)
 
 			// Exec Query
-			err := actions.CreateOrReplace(tc.ctx, *tc.argument)
+			err := actions.CreateOrReplace(tc.ctx, tc.argument)
 			if tc.expectedErr {
 				inferErr, ok := err.(Error)
 				if ok {

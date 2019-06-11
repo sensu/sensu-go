@@ -1,17 +1,33 @@
 package v2
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net/url"
+	"path"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
-// NewSilenced creates a new Silenced entry.
-func NewSilenced(meta ObjectMeta) *Silenced {
-	return &Silenced{ObjectMeta: meta}
+const (
+	// SilencedResource is the name of this resource type
+	SilencedResource = "silenced"
+)
+
+// StorePrefix returns the path prefix to this resource in the store
+func (s *Silenced) StorePrefix() string {
+	return SilencedResource
+}
+
+// URIPath returns the path component of a silenced entry URI.
+func (s *Silenced) URIPath() string {
+	if s.Name == "" {
+		s.Name, _ = SilencedName(s.Subscription, s.Check)
+	}
+	return path.Join(URLPrefix, "namespaces", url.PathEscape(s.Namespace), SilencedResource, url.PathEscape(s.Name))
 }
 
 // Validate returns an error if the CheckName and Subscription fields are not
@@ -41,6 +57,33 @@ func (s *Silenced) StartSilence(currentTime int64) bool {
 		return true
 	}
 	return currentTime > s.Begin
+}
+
+// Prepare prepares a silenced entry for storage
+func (s *Silenced) Prepare(ctx context.Context) {
+	// Populate newSilence.Name with the subscription and checkName. Substitute a
+	// splat if one of the values does not exist. If both values are empty, the
+	// validator will return an error when attempting to update it in the store.
+	s.Name, _ = SilencedName(s.Subscription, s.Check)
+
+	// If begin timestamp was not already provided set it to the current time.
+	if s.Begin == 0 {
+		s.Begin = time.Now().Unix()
+	}
+
+	// Retrieve the subject of the JWT, which represents the logged on user, in
+	// order to set it as the creator of the silenced entry
+	if value := ctx.Value(ClaimsKey); value != nil {
+		claims, ok := value.(*Claims)
+		if ok {
+			s.Creator = claims.Subject
+		}
+	}
+}
+
+// NewSilenced creates a new Silenced entry.
+func NewSilenced(meta ObjectMeta) *Silenced {
+	return &Silenced{ObjectMeta: meta}
 }
 
 // FixtureSilenced returns a testing fixutre for a Silenced event struct.
@@ -79,14 +122,6 @@ func SilencedName(subscription, check string) (string, error) {
 		check = "*"
 	}
 	return fmt.Sprintf("%s:%s", subscription, check), nil
-}
-
-// URIPath returns the path component of a Silenced URI.
-func (s *Silenced) URIPath() string {
-	if s.Name == "" {
-		s.Name, _ = SilencedName(s.Subscription, s.Check)
-	}
-	return fmt.Sprintf("/api/core/v2/namespaces/%s/silenced/%s", url.PathEscape(s.Namespace), url.PathEscape(s.Name))
 }
 
 // SortSilencedByPredicate can be used to sort a given collection using a given

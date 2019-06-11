@@ -4,6 +4,7 @@ import (
 	"errors"
 	fmt "fmt"
 	"net/url"
+	"path"
 	"sort"
 	"strconv"
 	"strings"
@@ -12,28 +13,31 @@ import (
 	stringsutil "github.com/sensu/sensu-go/util/strings"
 )
 
-// EventFailingState indicates failing check result status
-const EventFailingState = "failing"
+const (
+	// EventsResource is the name of this resource type
+	EventsResource = "events"
 
-// EventFlappingState indicates a rapid change in check result status
-const EventFlappingState = "flapping"
+	// EventFailingState indicates failing check result status
+	EventFailingState = "failing"
 
-// EventPassingState indicates successful check result status
-const EventPassingState = "passing"
+	// EventFlappingState indicates a rapid change in check result status
+	EventFlappingState = "flapping"
 
-// FixtureEvent returns a testing fixture for an Event object.
-func FixtureEvent(entityName, checkID string) *Event {
-	return &Event{
-		ObjectMeta: NewObjectMeta("", "default"),
-		Timestamp:  time.Now().Unix(),
-		Entity:     FixtureEntity(entityName),
-		Check:      FixtureCheck(checkID),
-	}
+	// EventPassingState indicates successful check result status
+	EventPassingState = "passing"
+)
+
+// StorePrefix returns the path prefix to this resource in the store
+func (e *Event) StorePrefix() string {
+	return EventsResource
 }
 
-// NewEvent creates a new Event.
-func NewEvent(meta ObjectMeta) *Event {
-	return &Event{ObjectMeta: meta}
+// URIPath returns the path component of an event URI.
+func (e *Event) URIPath() string {
+	if !e.HasCheck() {
+		return ""
+	}
+	return path.Join(URLPrefix, "namespaces", url.PathEscape(e.Entity.Namespace), EventsResource, url.PathEscape(e.Entity.Name), url.PathEscape(e.Check.Name))
 }
 
 // Validate returns an error if the event does not pass validation tests.
@@ -117,6 +121,21 @@ func (e *Event) SynthesizeExtras() map[string]interface{} {
 		"is_resolution": e.IsResolution(),
 		"is_silenced":   e.IsSilenced(),
 	}
+}
+
+// FixtureEvent returns a testing fixture for an Event object.
+func FixtureEvent(entityName, checkID string) *Event {
+	return &Event{
+		ObjectMeta: NewObjectMeta("", "default"),
+		Timestamp:  time.Now().Unix(),
+		Entity:     FixtureEntity(entityName),
+		Check:      FixtureCheck(checkID),
+	}
+}
+
+// NewEvent creates a new Event.
+func NewEvent(meta ObjectMeta) *Event {
+	return &Event{ObjectMeta: meta}
 }
 
 //
@@ -274,14 +293,6 @@ func (s *eventSorter) Swap(i, j int) {
 // Less implements sort.Interface.
 func (s *eventSorter) Less(i, j int) bool {
 	return s.byFn(s.events[i], s.events[j])
-}
-
-// URIPath returns the path component of a Event URI.
-func (e *Event) URIPath() string {
-	if !e.HasCheck() {
-		return ""
-	}
-	return fmt.Sprintf("/api/core/v2/namespaces/%s/events/%s/%s", url.PathEscape(e.Entity.Namespace), url.PathEscape(e.Entity.Name), url.PathEscape(e.Check.Name))
 }
 
 // SilencedBy returns the subset of given silences, that silence the event.

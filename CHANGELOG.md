@@ -16,6 +16,7 @@ populate, and send them to the Tessen service.
 
 ### Changed
 - [Web] Updated embedded web assets from `275386a` ... `b0c1138`
+- Refactoring of the REST API.
 
 ### Fixed
 - The check state and check total_state_change properties are now more correct.
@@ -25,6 +26,7 @@ populate, and send them to the Tessen service.
 - [Web] Correctly display timeout value for handlers.
 - [Web] Avoid exception when parsing non-standard cron statements. (Eg.
 `@every 1h` or `@weekly`)
+- The resources metadata are now validated with the request URI.
 
 ### Changed
 - Eventd has been refactored. Users should not perceive any changes, but a

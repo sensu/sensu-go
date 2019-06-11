@@ -4,11 +4,15 @@ import (
 	"errors"
 	fmt "fmt"
 	"net/url"
+	"path"
 	"sort"
 	"strings"
 )
 
 const (
+	// HandlersResource is the name of this resource type
+	HandlersResource = "handlers"
+
 	// HandlerPipeType represents handlers that pipes event data // into arbitrary
 	// commands via STDIN
 	HandlerPipeType = "pipe"
@@ -30,9 +34,14 @@ const (
 	HandlerGRPCType = "grpc"
 )
 
-// NewHandler creates a new Handler.
-func NewHandler(meta ObjectMeta) *Handler {
-	return &Handler{ObjectMeta: meta}
+// StorePrefix returns the path prefix to this resource in the store
+func (h *Handler) StorePrefix() string {
+	return HandlersResource
+}
+
+// URIPath returns the path component of a handler URI.
+func (h *Handler) URIPath() string {
+	return path.Join(URLPrefix, "namespaces", url.PathEscape(h.Namespace), HandlersResource, url.PathEscape(h.Name))
 }
 
 // Validate returns an error if the handler does not pass validation tests.
@@ -79,6 +88,11 @@ func (s *HandlerSocket) Validate() error {
 		return errors.New("socket port undefined")
 	}
 	return nil
+}
+
+// NewHandler creates a new Handler.
+func NewHandler(meta ObjectMeta) *Handler {
+	return &Handler{ObjectMeta: meta}
 }
 
 //
@@ -149,11 +163,6 @@ func FixtureSetHandler(name string, handlers ...string) *Handler {
 	handler := FixtureHandler(name)
 	handler.Handlers = handlers
 	return handler
-}
-
-// URIPath returns the path component of a Handler URI.
-func (h *Handler) URIPath() string {
-	return fmt.Sprintf("/api/core/v2/namespaces/%s/handlers/%s", url.PathEscape(h.Namespace), url.PathEscape(h.Name))
 }
 
 // HandlerFields returns a set of fields that represent that resource
