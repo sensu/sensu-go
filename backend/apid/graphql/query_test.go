@@ -7,6 +7,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -84,6 +85,21 @@ func TestQueryTypeHandlerField(t *testing.T) {
 	// Success
 	client.On("FetchHandler", handler.Name).Return(handler, nil).Once()
 	res, err := impl.Handler(params)
+	require.NoError(t, err)
+	assert.NotEmpty(t, res)
+}
+
+func TestQueryTypeSuggestField(t *testing.T) {
+	client, factory := client.NewClientFactory()
+	impl := queryImpl{factory: factory}
+
+	params := schema.QuerySuggestFieldResolverParams{}
+	params.Args.Namespace = "default"
+	params.Args.Ref = "core/v2/check_config/subscriptions"
+
+	// Success
+	client.On("List", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	res, err := impl.Suggest(params)
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 }

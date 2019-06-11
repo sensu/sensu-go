@@ -384,7 +384,7 @@ func _ObjectTypeMutatorConfigFn() graphql1.ObjectConfig {
 			"toJSON": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "toJSON returns a REST API compatible representation of the resource. Handy for\nsharing snippets that can then be imported with `sensuctl import`.",
+				Description:       "toJSON returns a REST API compatible representation of the resource. Handy for\nsharing snippets that can then be imported with `sensuctl create`.",
 				Name:              "toJSON",
 				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
 			},

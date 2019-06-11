@@ -1,9 +1,18 @@
 package graphql
 
 import (
+	"fmt"
+	"reflect"
+	"sort"
+	"strings"
+
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
+	"github.com/sensu/sensu-go/backend/apid/graphql/suggest"
+	cliclient "github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
+	utilstrings "github.com/sensu/sensu-go/util/strings"
 )
 
 var _ schema.QueryFieldResolvers = (*queryImpl)(nil)
@@ -59,6 +68,74 @@ func (r *queryImpl) Handler(p schema.QueryHandlerFieldResolverParams) (interface
 	client := r.factory.NewWithContext(ctx)
 	res, err := client.FetchHandler(p.Args.Name)
 	return handleFetchResult(res, err)
+}
+
+// Suggest implements a response to a request for the 'suggest' field.
+func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface{}, error) {
+	results := make(map[string]interface{}, 1)
+	results["values"] = []string{}
+
+	ref, err := suggest.ParseRef(p.Args.Ref)
+	if err != nil {
+		return results, err
+	}
+
+	res := SuggestSchema.Lookup(ref)
+	if res == nil {
+		return results, fmt.Errorf("no mapping found for '%s'", strings.Join([]string{ref.Group, ref.Name}, "/"))
+	}
+
+	field := res.LookupField(ref)
+	if field == nil {
+		return results, fmt.Errorf("could not find field for '%s'", ref.FieldPath)
+	}
+
+	t, err := types.ResolveType(res.Group, res.Name)
+	if err != nil {
+		return results, err
+	}
+
+	// makes a slice from variable t and then gets the pointer to it.
+	objT := reflect.MakeSlice(reflect.SliceOf(reflect.PtrTo(reflect.TypeOf(t).Elem())), 0, 0)
+	objs := reflect.New(objT.Type())
+	objs.Elem().Set(objT)
+
+	client := r.factory.NewWithContext(p.Context)
+
+	err = client.List(res.URIPath(p.Args.Namespace), objs.Interface(), &cliclient.ListOptions{})
+	if handleListErr(err) != nil {
+		return results, err
+	}
+
+	q := strings.ToLower(p.Args.Q)
+	set := utilstrings.OccurrenceSet{}
+	for i := 0; i < objs.Elem().Len(); i++ {
+		s := objs.Elem().Index(i).Interface().(v2.Resource)
+		for _, v := range field.Value(s, ref.FieldPath) {
+			if v != "" && strings.Contains(strings.ToLower(v), q) {
+				set.Add(v)
+			}
+		}
+	}
+
+	values := set.Values()
+	if p.Args.Order == schema.SuggestionOrders.FREQUENCY {
+		sort.Strings(values)
+		sort.SliceStable(values, func(i, j int) bool {
+			return set.Get(values[i]) > set.Get(values[j])
+		})
+	} else if p.Args.Order == schema.SuggestionOrders.ALPHA_DESC {
+		sort.Strings(values)
+	} else if p.Args.Order == schema.SuggestionOrders.ALPHA_ASC {
+		sort.Sort(sort.Reverse(sort.StringSlice(values)))
+	}
+
+	if len(values) > p.Args.Limit {
+		values = values[:p.Args.Limit]
+	}
+
+	results["values"] = values
+	return results, nil
 }
 
 // Node implements response to request for 'node' field.

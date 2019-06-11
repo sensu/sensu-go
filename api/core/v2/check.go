@@ -38,8 +38,6 @@ const (
 	// InfluxDBOutputMetricFormat is the accepted string to represent the output metric format of
 	// InfluxDB Line
 	InfluxDBOutputMetricFormat = "influxdb_line"
-
-	undocumentedTestCheckName = "!sensu_test_check!"
 )
 
 // OutputMetricFormats represents all the accepted output_metric_format's a check can have
@@ -129,12 +127,6 @@ func (c *Check) URIPath() string {
 
 // Validate returns an error if the check does not pass validation tests.
 func (c *Check) Validate() error {
-	if c.Name == undocumentedTestCheckName {
-		// undocumented test check, the agent will use this name to return
-		// a canned response. It is not possible to use this name according
-		// to the normal validation rules, so it shouldn't impact anyone.
-		return nil
-	}
 	if err := ValidateName(c.Name); err != nil {
 		return errors.New("check name " + err.Error())
 	}

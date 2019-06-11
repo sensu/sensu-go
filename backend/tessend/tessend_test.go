@@ -47,6 +47,7 @@ func newTessendTest(t *testing.T) *Tessend {
 		Bus:      bus,
 	})
 	tessend.duration = 5 * time.Millisecond
+	tessend.config = corev2.DefaultTessenConfig()
 	require.NoError(t, err)
 	return tessend
 }
@@ -62,6 +63,27 @@ func TestTessendBus(t *testing.T) {
 	tessend.url = ts.URL
 	require.NoError(t, tessend.Start())
 	require.NoError(t, tessend.bus.Publish(messaging.TopicTessen, corev2.DefaultTessenConfig()))
+	time.Sleep(2 * time.Second)
+	assert.NoError(t, tessend.Stop())
+	assert.Equal(t, tessend.Name(), "tessend")
+}
+
+func TestTessendBusMetrics(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		assert.NotEmpty(t, r.Body)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer ts.Close()
+
+	tessend := newTessendTest(t)
+	tessend.url = ts.URL
+	require.NoError(t, tessend.Start())
+	require.NoError(t, tessend.bus.Publish(messaging.TopicTessenMetric, []corev2.MetricPoint{
+		corev2.MetricPoint{
+			Name:  "metric",
+			Value: 1,
+		},
+	}))
 	time.Sleep(2 * time.Second)
 	assert.NoError(t, tessend.Stop())
 	assert.Equal(t, tessend.Name(), "tessend")
@@ -136,7 +158,8 @@ func TestTessend500(t *testing.T) {
 func TestTessendEnabled(t *testing.T) {
 	tessen := corev2.DefaultTessenConfig()
 	tessend := newTessendTest(t)
-	require.True(t, tessend.enabled(tessen))
+	require.True(t, tessend.enabled())
 	tessen.OptOut = true
-	require.False(t, tessend.enabled(tessen))
+	tessend.config = tessen
+	require.False(t, tessend.enabled())
 }
