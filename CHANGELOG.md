@@ -22,6 +22,7 @@ populate, and send them to the Tessen service.
 - Refactoring of the REST API.
 - Changed the identifying cluster id in TessenD from the etcd cluster id to
 the sensu cluster id.
+- [GraphQL] Updates `PutResource` mutation to accept an `upsert` boolean flag parameter. The `upsert` param defaults to `true`, but if set to `false` the mutation will return an error when attempting to create a duplicate resource.
 
 ### Fixed
 - The check state and check total_state_change properties are now more correct.
