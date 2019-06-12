@@ -1392,6 +1392,110 @@ func _InputTypeAnnotatedInputConfigFn() graphql1.InputObjectConfig {
 // describe AnnotatedInput's configuration; kept private to avoid unintentional tampering of configuration at runtime.
 var _InputTypeAnnotatedInputDesc = graphql.InputDesc{Config: _InputTypeAnnotatedInputConfigFn}
 
+// QueryRootExtensionOrdersOrderFieldResolver implement to resolve requests for the QueryRootExtensionOrders's order field.
+type QueryRootExtensionOrdersOrderFieldResolver interface {
+	// Order implements response to request for order field.
+	Order(p graphql.ResolveParams) (int, error)
+}
+
+//
+// QueryRootExtensionOrdersFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'QueryRootExtensionOrders' type.
+//
+// == Example SDL
+//
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
+//
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
+//
+// == Example generated interface
+//
+//   // DogResolver ...
+//   type DogFieldResolvers interface {
+//     DogNameFieldResolver
+//     DogBreedFieldResolver
+//
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//   }
+//
+// == Example implementation ...
+//
+//   // DogResolver implements DogFieldResolvers interface
+//   type DogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
+//
+//   // Name implements response to request for name field.
+//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     return dog.GetName()
+//   }
+//
+//   // Breed implements response to request for breed field.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+//     // ... implementation details ...
+//     _, ok := p.Value.(DogGetter)
+//     return ok
+//   }
+//
+type QueryRootExtensionOrdersFieldResolvers interface {
+	QueryRootExtensionOrdersOrderFieldResolver
+}
+
+// RegisterQueryRootExtensionOrders registers QueryRootExtensionOrders object type with given service.
+func RegisterQueryRootExtensionOrders(svc *graphql.Service, impl QueryRootExtensionOrdersFieldResolvers) {
+	svc.RegisterObjectExtension(_ObjectExtensionTypeQueryRootExtensionOrdersDesc, impl)
+}
+
+func _ObjTypeQueryRootExtensionOrdersOrderHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(QueryRootExtensionOrdersOrderFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Order(frp)
+	}
+}
+
+func _ObjectExtensionTypeQueryRootExtensionOrdersConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "",
+		Fields: graphql1.Fields{"order": &graphql1.Field{
+			Args:              graphql1.FieldConfigArgument{},
+			DeprecationReason: "",
+			Description:       "self descriptive",
+			Name:              "order",
+			Type:              graphql1.NewNonNull(graphql1.Int),
+		}},
+		Interfaces: []*graphql1.Interface{},
+		Name:       "QueryRoot",
+	}
+}
+
+// describe QueryRootExtensionOrders's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectExtensionTypeQueryRootExtensionOrdersDesc = graphql.ObjectDesc{
+	Config:        _ObjectExtensionTypeQueryRootExtensionOrdersConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{"order": _ObjTypeQueryRootExtensionOrdersOrderHandler},
+}
+
 //
 // NoFieldsFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'NoFields' type.

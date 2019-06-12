@@ -29,13 +29,21 @@ func TestExerciseService(t *testing.T) {
 	schema.RegisterErr(svc, nil)
 	schema.RegisterStdErr(svc, &schema.StdErrAliases{})
 
+	schema.RegisterQueryRootExtensionOrders(svc, &queryExtResolver{})
+
 	err := svc.Regenerate()
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	res := svc.Do(ctx, "query { myBar { one } }", map[string]interface{}{})
+	res := svc.Do(ctx, "query { myBar { one }, order }", map[string]interface{}{})
 	require.Empty(t, res.Errors)
 	assert.NotEmpty(t, res.Data)
+}
+
+type queryExtResolver struct{}
+
+func (*queryExtResolver) Order(_ graphql.ResolveParams) (int, error) {
+	return 77, nil
 }
 
 type exResolver struct{}

@@ -109,11 +109,12 @@ input AnnotatedInput @onInputObjectType {
   annotatedField: Url @onField
 }
 
-extend type Foo {
-  seven(argument: [String]): Url
+extend type QueryRoot @named(suffix: "Orders") {
+  order: Int!
 }
 
-extend type Foo @onType {}
+# TODO
+# extend type Foo @onType {}
 
 type NoFields {}
 
