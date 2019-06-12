@@ -20,10 +20,13 @@ type Watcher struct {
 	recursive  bool
 	eventChan  chan *clientv3.Event
 	resultChan chan store.WatchEvent
+	opts       []clientv3.OpOption
 }
 
-// Watch returns a Watcher for the given key
-func Watch(ctx context.Context, client *clientv3.Client, key string, recursive bool) *Watcher {
+// Watch returns a Watcher for the given key. If recursive is true, then the
+// watcher is created with clientv3.WithPrefix. The watcher will also be provided
+// with any etcd client options passed in.
+func Watch(ctx context.Context, client *clientv3.Client, key string, recursive bool, opts ...clientv3.OpOption) *Watcher {
 	// Make sure we have a trailing slash if we need to watch the key and its
 	// children
 	if recursive && !strings.HasSuffix(key, "/") {
@@ -42,20 +45,21 @@ func Watch(ctx context.Context, client *clientv3.Client, key string, recursive b
 	// make sure to wrap context with "WithRequireLeader".
 	ctx = clientv3.WithRequireLeader(ctx)
 
-	w := newWatcher(client, key, recursive)
+	w := newWatcher(client, key, recursive, opts...)
 	w.start(ctx)
 
 	return w
 }
 
 // newWatcher creates a new Watcher
-func newWatcher(client *clientv3.Client, key string, recursive bool) *Watcher {
+func newWatcher(client *clientv3.Client, key string, recursive bool, opts ...clientv3.OpOption) *Watcher {
 	return &Watcher{
 		client:     client,
 		key:        key,
 		recursive:  recursive,
 		eventChan:  make(chan *clientv3.Event),
 		resultChan: make(chan store.WatchEvent),
+		opts:       opts,
 	}
 }
 
@@ -71,6 +75,8 @@ func (w *Watcher) start(ctx context.Context) {
 	if w.recursive {
 		opts = append(opts, clientv3.WithPrefix())
 	}
+
+	opts = append(opts, w.opts...)
 
 	logger.Debugf("starting a watcher for key %s", w.key)
 
