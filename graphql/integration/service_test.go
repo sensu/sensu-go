@@ -43,7 +43,7 @@ func TestExerciseService(t *testing.T) {
 type queryExtResolver struct{}
 
 func (*queryExtResolver) Order(_ graphql.ResolveParams) (int, error) {
-	return 77, nil
+	return 66, nil
 }
 
 type exResolver struct{}
