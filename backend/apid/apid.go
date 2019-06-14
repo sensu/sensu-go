@@ -203,6 +203,7 @@ func registerUnauthenticatedResources(
 		routers.NewHealthRouter(actions.NewHealthController(store, cluster, etcdClientTLSConfig)),
 		routers.NewVersionRouter(actions.NewVersionController(clusterVersion)),
 		routers.NewTessenMetricRouter(actions.NewTessenMetricController(bus)),
+		routers.NewClusterIDRouter(actions.NewClusterIDController(store)),
 	)
 }
 

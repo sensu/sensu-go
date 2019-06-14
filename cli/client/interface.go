@@ -27,6 +27,7 @@ type APIClient interface {
 	AuthenticationAPIClient
 	AssetAPIClient
 	CheckAPIClient
+	ClusterIDAPIClient
 	ClusterRoleAPIClient
 	ClusterRoleBindingAPIClient
 	EntityAPIClient
@@ -91,6 +92,11 @@ type CheckAPIClient interface {
 
 	AddCheckHook(check *types.CheckConfig, checkHook *types.HookList) error
 	RemoveCheckHook(check *types.CheckConfig, checkHookType string, hookName string) error
+}
+
+// ClusterIDAPIClient client methods for sensu cluster id
+type ClusterIDAPIClient interface {
+	FetchClusterID() (string, error)
 }
 
 // ClusterRoleAPIClient client methods for cluster roles
