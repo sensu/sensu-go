@@ -155,6 +155,7 @@ type typeRegister struct {
 }
 
 func newTypeRegister() *typeRegister {
+	exts := map[string][]interface{}{}
 	types := make(map[Kind]map[string]registerTypeFn, 6)
 	types[EnumKind] = map[string]registerTypeFn{}
 	types[ScalarKind] = map[string]registerTypeFn{}
@@ -162,7 +163,7 @@ func newTypeRegister() *typeRegister {
 	types[InputKind] = map[string]registerTypeFn{}
 	types[InterfaceKind] = map[string]registerTypeFn{}
 	types[UnionKind] = map[string]registerTypeFn{}
-	return &typeRegister{types: types}
+	return &typeRegister{types: types, extensions: exts}
 }
 
 func (r *typeRegister) addType(name string, kind Kind, fn registerTypeFn) {
@@ -176,9 +177,6 @@ func (r *typeRegister) addType(name string, kind Kind, fn registerTypeFn) {
 }
 
 func (r *typeRegister) addExtension(name string, cfg interface{}) {
-	if r.extensions == nil {
-		r.extensions = map[string][]interface{}{}
-	}
 	if _, ok := r.extensions[name]; !ok {
 		r.extensions[name] = []interface{}{}
 	}
@@ -186,9 +184,6 @@ func (r *typeRegister) addExtension(name string, cfg interface{}) {
 }
 
 func (r *typeRegister) extensionsForType(t string) []interface{} {
-	if r.extensions == nil {
-		return []interface{}{}
-	}
 	if _, ok := r.extensions[t]; !ok {
 		return []interface{}{}
 	}

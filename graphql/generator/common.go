@@ -7,6 +7,10 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 )
 
+const (
+	MissingNamedDirectiveErr = `extend type must be followed by @named(suffix: "MyUniqueId") directive`
+)
+
 func getNodeName(def ast.Node) string {
 	switch d := def.(type) {
 	case *ast.EnumDefinition:

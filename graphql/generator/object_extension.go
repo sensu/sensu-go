@@ -5,10 +5,6 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 )
 
-const (
-	MissingNamedDirectiveErr = `extend type must be followed by @named(suffix: "MyUniqueId") directive`
-)
-
 func genObjectExtension(node *ast.TypeExtensionDefinition, i info) jen.Code {
 	code := newGroup()
 
