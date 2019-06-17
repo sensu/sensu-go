@@ -35,9 +35,23 @@ func TestExerciseService(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	res := svc.Do(ctx, "query { myBar { one }, order }", map[string]interface{}{})
+	res := svc.Do(ctx, `
+		query {
+			myBar {
+				one
+			}
+			order
+		}
+	`, nil)
+
 	require.Empty(t, res.Errors)
-	assert.NotEmpty(t, res.Data)
+	require.NotEmpty(t, res.Data)
+	assert.EqualValues(t, res.Data, map[string]interface{}{
+		"myBar": map[string]interface{}{
+			"one": "https://sensu.io/1",
+		},
+		"order": 66,
+	})
 }
 
 type queryExtResolver struct{}

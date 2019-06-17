@@ -1,0 +1,125 @@
+# Filename: schema-kitchen-sink.graphql
+
+schema {
+  query: QueryRoot
+}
+
+"""
+QueryRoot is entry point for queries
+"""
+type QueryRoot {
+  foos: [Foo]
+  myBar: Bar
+}
+
+"""
+Url describes an address that points to a resource.
+"""
+scalar Url
+
+"""
+Foo is quite the type.
+"""
+type Foo implements Bar {
+  """
+  one is a number.
+  """
+  one: Url
+
+  "I am told that two is also a number"
+  two(argument: InputType!): Url
+  three(argument: InputType, other: String): Int
+  four(argument: String = "string"): String
+  five(argument: [String] = ["string", "string"]): String
+  six(argument: InputType = {key: "value"}): Url
+  seven: [Bar]
+  eight: [Url]!
+  nine: [Url!]
+  ten(integer: Int = 4): Float!
+  eleven(float: Float!): Int!
+}
+
+type AnnotatedObject @onObject(arg: "value") {
+  annotatedField(arg: Url = "default" @onArg): Url @onField
+}
+
+interface Bar {
+  one: Url
+  four(argument: String = "string"): String
+}
+
+"""
+AnnotatedInterface has stuff
+"""
+interface AnnotatedInterface @onInterface {
+  annotatedField(arg: Url @onArg): Url @onField
+}
+
+"""
+Feed includes all stuff and things.
+"""
+union Feed = Foo | QueryRoot
+
+"AnnotatedUnion i dont care"
+union AnnotatedUnion @onUnion = A | B
+
+scalar CustomScalar
+
+scalar AnnotatedScalar @onScalar
+
+enum Site {
+  DESKTOP
+  MOBILE
+}
+
+enum Locale {
+  """
+  Language I know
+  """
+  EN
+
+  """
+  Glorious nippon
+  """
+  JA
+
+  """
+  India
+  """
+  HI
+
+  """
+  Lanugage I don't know
+  """
+  LA @deprecated(reason: "dead language")
+}
+
+enum AnnotatedEnum @onEnum {
+  ANNOTATED_VALUE @onEnumValue
+  OTHER_VALUE
+}
+
+"""
+InputType is neato
+"""
+input InputType {
+  key: String!
+  answer: Int = 42
+  answr: Int = 42 @deprecated
+}
+
+input AnnotatedInput @onInputObjectType {
+  annotatedField: Url @onField
+}
+
+extend type Foo @named(suffix: "Seven") {
+  seven(argument: [String]): Url
+}
+
+type NoFields {}
+
+directive @skip(if: Boolean!) on FIELD | FRAGMENT_SPREAD | INLINE_FRAGMENT
+
+directive @include(if: Boolean!)
+  on FIELD
+  | FRAGMENT_SPREAD

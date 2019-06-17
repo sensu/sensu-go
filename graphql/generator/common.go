@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	MissingNamedDirectiveErr = `extend type must be followed by @named(suffix: "MyUniqueId") directive`
+	MissingNamedDirectiveErr = `extend keyword must be followed by @named directive`
 )
 
 func getNodeName(def ast.Node) string {
@@ -137,11 +137,11 @@ func mustExtractSuffix(obj *ast.ObjectDefinition) string {
 	if namedDir == nil {
 		logger.Fatal(MissingNamedDirectiveErr)
 	}
-	argDir := findArgumentNamed(namedDir.Arguments, "suffix")
-	if argDir == nil {
+	suffixArg := findArgumentNamed(namedDir.Arguments, "suffix")
+	if suffixArg == nil {
 		logger.Fatal(MissingNamedDirectiveErr)
 	}
-	suffix, ok := argDir.Value.GetValue().(string)
+	suffix, ok := suffixArg.Value.GetValue().(string)
 	if !ok {
 		logger.Fatal(MissingNamedDirectiveErr)
 	}

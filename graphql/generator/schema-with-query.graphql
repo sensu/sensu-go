@@ -1,0 +1,11 @@
+schema {
+  query: Foo
+}
+
+type Foo {
+  bar: Int!
+}
+
+query FooBar {
+  bar
+}
