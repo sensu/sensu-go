@@ -26,6 +26,9 @@ type ClusterController interface {
 
 	// MemberUpdate updates the peer addresses of the member.
 	MemberUpdate(ctx context.Context, id uint64, peerAddrs []string) (*clientv3.MemberUpdateResponse, error)
+
+	// ClusterID gets the sensu cluster id.
+	ClusterID(ctx context.Context) (string, error)
 }
 
 // ClusterRouter handles requests for /cluster
@@ -46,6 +49,7 @@ func (r *ClusterRouter) Mount(parent *mux.Router) {
 	parent.HandleFunc("/cluster/members", r.memberAdd).Methods(http.MethodPost)
 	parent.HandleFunc("/cluster/members/{id}", r.memberRemove).Methods(http.MethodDelete)
 	parent.HandleFunc("/cluster/members/{id}", r.memberUpdate).Methods(http.MethodPut)
+	parent.HandleFunc("/cluster/id", r.clusterID).Methods(http.MethodGet)
 }
 
 func parseID(req *http.Request) (uint64, error) {
@@ -114,6 +118,15 @@ func (r *ClusterRouter) memberUpdate(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	resp, err := r.controller.MemberUpdate(req.Context(), id, peerAddrs)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	_ = json.NewEncoder(w).Encode(resp)
+}
+
+func (r *ClusterRouter) clusterID(w http.ResponseWriter, req *http.Request) {
+	resp, err := r.controller.ClusterID(req.Context())
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

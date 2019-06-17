@@ -10,6 +10,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/pkg/transport"
+	"github.com/google/uuid"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
@@ -135,6 +136,18 @@ func Initialize(config *Config) (*Backend, error) {
 	logger.Debug("Done initializing store")
 	b.Store = stor
 
+	_, err = stor.GetClusterID(b.ctx)
+	if err != nil {
+		switch err := err.(type) {
+		case *store.ErrNotFound:
+			if storeErr := stor.CreateClusterID(b.ctx, uuid.New().String()); storeErr != nil {
+				return nil, fmt.Errorf("error assigning a sensu cluster id: %s", err)
+			}
+		default:
+			return nil, fmt.Errorf("error retrieving sensu cluster id: %s", err)
+		}
+	}
+
 	eventStoreProxy := store.NewEventStoreProxy(stor)
 	b.EventStore = eventStoreProxy
 
@@ -163,8 +176,8 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
-		Store: stor,
-		Bus:   bus,
+		Store:                   stor,
+		Bus:                     bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 		AssetGetter:             assetGetter,
 	})
@@ -216,11 +229,11 @@ func Initialize(config *Config) (*Backend, error) {
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:             bus,
-		Store:           stor,
-		EventStore:      stor,
-		LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
-		RingPool:        ringPool,
+		Bus:                   bus,
+		Store:                 stor,
+		EventStore:            stor,
+		LivenessFactory:       liveness.EtcdFactory(b.ctx, b.Client),
+		RingPool:              ringPool,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)

@@ -47,7 +47,7 @@ func SimpleSensuCLI(apiClient client.APIClient) *cli.SensuCli {
 }
 
 // RunCmd runs your SensuCLI command and returns any output and errors the
-// command might have returnerd. Works with commands that have implemented Run
+// command might have returned. Works with commands that have implemented Run
 // or RunE hooks.
 func RunCmd(cmd *cobra.Command, args []string) (string, error) {
 	var err error
