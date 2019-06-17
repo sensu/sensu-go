@@ -40,6 +40,7 @@ func newTessendTest(t *testing.T) *Tessend {
 	s.On("CreateOrUpdateTessenConfig", mock.Anything, mock.Anything).Return(fmt.Errorf("foo"))
 	s.On("GetTessenConfig", mock.Anything, mock.Anything).Return(corev2.DefaultTessenConfig(), fmt.Errorf("foo"))
 	s.On("GetTessenConfigWatcher", mock.Anything).Return(ch)
+	s.On("GetClusterID", mock.Anything).Return("foo", fmt.Errorf("foo"))
 
 	tessend, err := New(Config{
 		Store:    s,

@@ -14,10 +14,14 @@ populate, and send them to the Tessen service.
 - [Web] Adds ability to delete entities
 - [GraphQL] Adds simple auto-suggestion feature.
 - Added a tag to all Tessen metrics to differentiate internal builds.
+- Added a unique sensu cluster id, accessible by GET `/api/core/v2/cluster/id`.
+- Added `sensuctl cluster id` which exposes the unique sensu cluster id.
 
 ### Changed
 - [Web] Updated embedded web assets from `275386a` ... `b0c1138`
 - Refactoring of the REST API.
+- Changed the identifying cluster id in TessenD from the etcd cluster id to
+the sensu cluster id.
 
 ### Fixed
 - The check state and check total_state_change properties are now more correct.

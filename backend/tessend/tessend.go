@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -498,15 +497,10 @@ func (t *Tessend) collectAndSend() {
 // getDataPayload retrieves cluster, version, and license information
 // and returns the populated data payload.
 func (t *Tessend) getDataPayload() *Data {
-	var clusterID string
-
 	// collect cluster id
-	cluster, err := t.client.Cluster.MemberList(t.ctx)
+	clusterID, err := t.store.GetClusterID(t.ctx)
 	if err != nil {
 		logger.WithError(err).Error("unable to retrieve cluster id")
-	}
-	if cluster != nil {
-		clusterID = fmt.Sprintf("%x", cluster.Header.ClusterId)
 	}
 
 	// collect license information
