@@ -39,6 +39,12 @@ func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
 		a.sendFailure(event, err)
 	}
 
+	if a.config.DisableAssets && len(request.Assets) > 0 {
+		err := errors.New("check requested assets, but they are disabled on this agent")
+		sendFailure(err)
+		return nil
+	}
+
 	// only schedule check execution if its not already in progress
 	// ** check hooks are part of a checks execution
 	if a.checkInProgress(request) {
@@ -90,8 +96,8 @@ func (a *Agent) executeCheck(ctx context.Context, request *v2.CheckRequest, enti
 	a.addInProgress(request)
 	defer a.removeInProgress(request)
 
-	checkConfig := request.Config
 	checkAssets := request.Assets
+	checkConfig := request.Config
 	checkHooks := request.Hooks
 
 	// Before token subsitution we retain copy of the command

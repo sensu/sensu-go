@@ -16,6 +16,7 @@ populate, and send them to the Tessen service.
 - Added a tag to all Tessen metrics to differentiate internal builds.
 - Added a unique sensu cluster id, accessible by GET `/api/core/v2/cluster/id`.
 - Added `sensuctl cluster id` which exposes the unique sensu cluster id.
+- Added --disable-assets flag to sensu-agent.
 
 ### Changed
 - [Web] Updated embedded web assets from `275386a` ... `b0c1138`
