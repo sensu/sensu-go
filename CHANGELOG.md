@@ -13,6 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 populate, and send them to the Tessen service.
 - [Web] Adds ability to delete entities
 - [GraphQL] Adds simple auto-suggestion feature.
+- Added a tag to all Tessen metrics to differentiate internal builds.
 
 ### Changed
 - [Web] Updated embedded web assets from `275386a` ... `b0c1138`
