@@ -137,11 +137,12 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterStandardError(svc, stdErrImpl{})
 	schema.RegisterError(svc, &errImpl{})
 
-	err := svc.Regenerate()
-
+	// Run init hooks allowing consumers to extend service
 	for _, hookFn := range InitHooks {
 		hookFn(svc, cfg)
 	}
+
+	err := svc.Regenerate()
 	return &wrapper, err
 }
 
