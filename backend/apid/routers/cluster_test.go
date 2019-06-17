@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/mock"
 )
@@ -35,6 +36,11 @@ func (m *mockClusterController) MemberRemove(ctx context.Context, id uint64) (*c
 func (m *mockClusterController) MemberUpdate(ctx context.Context, id uint64, peerAddrs []string) (*clientv3.MemberUpdateResponse, error) {
 	args := m.Called(ctx, id, peerAddrs)
 	return args.Get(0).(*clientv3.MemberUpdateResponse), args.Error(1)
+}
+
+func (m *mockClusterController) ClusterID(ctx context.Context) (string, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(string), args.Error(1)
 }
 
 func newClusterTest(t *testing.T) (*mockClusterController, *httptest.Server) {
@@ -236,4 +242,28 @@ func TestClusterRouterMemberUpdateBadRequestPeerAddrs(t *testing.T) {
 		body, _ := ioutil.ReadAll(resp.Body)
 		t.Fatalf("bad status (want 400): %d (%q)", resp.StatusCode, string(body))
 	}
+}
+
+func TestGetClusterID(t *testing.T) {
+	controller, server := newClusterTest(t)
+	defer server.Close()
+
+	client := new(http.Client)
+
+	fixture := uuid.New().String()
+	controller.On("ClusterID", mock.Anything).Return(fixture, nil)
+	endpoint := "/cluster/id"
+	req := newRequest(t, http.MethodGet, server.URL+endpoint, nil)
+
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if resp.StatusCode >= 400 {
+		body, _ := ioutil.ReadAll(resp.Body)
+		t.Fatalf("bad status: %d (%q)", resp.StatusCode, string(body))
+	}
+
+	controller.AssertCalled(t, "ClusterID", mock.Anything)
 }

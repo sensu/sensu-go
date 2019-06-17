@@ -13,7 +13,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 populate, and send them to the Tessen service.
 - [Web] Adds ability to delete entities
 - [GraphQL] Adds simple auto-suggestion feature.
-- Added a unique sensu cluster id, accessible by GET `/id`.
+- Added a unique sensu cluster id, accessible by GET `/api/core/v2/cluster/id`.
+- Added `sensuctl cluster id` which exposes the unique sensu cluster id.
 
 ### Changed
 - [Web] Updated embedded web assets from `275386a` ... `b0c1138`

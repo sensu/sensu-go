@@ -1,4 +1,4 @@
-package id
+package cluster
 
 import (
 	"errors"
@@ -15,7 +15,7 @@ func TestIDCommand(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := test.NewCLI()
-	cmd := Command(cli)
+	cmd := IDCommand(cli)
 
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
@@ -31,7 +31,7 @@ func TestInfoCommandRunEClosure(t *testing.T) {
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchClusterID").Return("foo", nil)
 
-	cmd := Command(cli)
+	cmd := IDCommand(cli)
 	stdout.Start()
 	_, err := test.RunCmd(cmd, []string{})
 	stdout.Stop()
@@ -43,7 +43,7 @@ func TestInfoCommandWithArgs(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := test.NewCLI()
-	cmd := Command(cli)
+	cmd := IDCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"arg"})
 	require.Error(t, err)
 
@@ -59,7 +59,7 @@ func TestInfoCommandRunEClosureWithErr(t *testing.T) {
 	client := cli.Client.(*client.MockClient)
 	client.On("FetchClusterID").Return("", errors.New("err"))
 
-	cmd := Command(cli)
+	cmd := IDCommand(cli)
 	stdout.Start()
 	_, err := test.RunCmd(cmd, []string{})
 	stdout.Stop()

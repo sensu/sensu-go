@@ -1,16 +1,15 @@
-package id
+package cluster
 
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/spf13/cobra"
 )
 
-// Command provides the sensu cluster id
-func Command(cli *cli.SensuCli) *cobra.Command {
+// IDCommand provides the sensu cluster id
+func IDCommand(cli *cli.SensuCli) *cobra.Command {
 	return &cobra.Command{
 		Use:          "id",
 		Short:        "show sensu cluster id",
@@ -24,7 +23,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			fmt.Printf("sensu cluster id: %s\n", strings.Trim(id, "\""))
+			fmt.Printf("sensu cluster id: %s", id)
 			return nil
 		},
 	}
