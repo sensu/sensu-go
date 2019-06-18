@@ -21,7 +21,8 @@ func Command() *cobra.Command {
 	}
 
 	// Use colorable (fixes Windows color support)
-	cmd.SetOutput(colorable.NewColorableStdout())
+	cmd.SetOut(colorable.NewColorableStdout())
+	cmd.SetErr(colorable.NewColorableStderr())
 
 	// Templates
 	cmd.SetUsageTemplate(usageTemplate)
