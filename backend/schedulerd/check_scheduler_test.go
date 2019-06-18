@@ -7,11 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/cache"
-
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/queue"
+	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
