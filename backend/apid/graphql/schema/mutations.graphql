@@ -8,7 +8,16 @@ type Mutation {
   #
 
   "Create or overrwrite resource from given wrapped resource."
-  putWrapped(raw: String!): PutWrappedPayload!
+  putWrapped(
+    "Raw is a JSON string representation of the resource"
+    raw: String!,
+    """
+    Upsert is a flag that determines whether to insert a resource, or on
+    the basis of the resource already existing, UPDATE that existing
+    resource instead.
+    """
+    upsert: Boolean = true,
+  ): PutWrappedPayload!
 
   #
   # Checks

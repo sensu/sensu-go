@@ -161,7 +161,7 @@ func genTypeDefinition(node ast.Node, i info) jen.Code {
 	case *ast.DirectiveDefinition:
 		logger.Warn("unsupported at this time; skipping")
 	case *ast.TypeExtensionDefinition:
-		logger.Warn("unsupported at this time; skipping")
+		return genObjectExtension(def, i)
 	default:
 		logger.Fatal("unhandled type encountered")
 	}

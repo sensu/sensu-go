@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -241,6 +240,7 @@ func (t *Tessend) startMessageHandler() {
 					}
 					metric.Tags = append(metric.Tags, &corev2.MetricTag{Name: "hostname", Value: hostname})
 					metric.Timestamp = now
+					appendInternalTag(&metric)
 					logMetric(&metric)
 					data.Metrics.Points = append(data.Metrics.Points, &metric)
 				}
@@ -401,6 +401,7 @@ func (t *Tessend) sendPromMetrics() {
 			},
 		},
 	}
+	appendInternalTag(mp)
 	logMetric(mp)
 	data.Metrics.Points = append(data.Metrics.Points, mp)
 
@@ -496,15 +497,10 @@ func (t *Tessend) collectAndSend() {
 // getDataPayload retrieves cluster, version, and license information
 // and returns the populated data payload.
 func (t *Tessend) getDataPayload() *Data {
-	var clusterID string
-
 	// collect cluster id
-	cluster, err := t.client.Cluster.MemberList(t.ctx)
+	clusterID, err := t.store.GetClusterID(t.ctx)
 	if err != nil {
 		logger.WithError(err).Error("unable to retrieve cluster id")
-	}
-	if cluster != nil {
-		clusterID = fmt.Sprintf("%x", cluster.Header.ClusterId)
 	}
 
 	// collect license information
@@ -545,6 +541,7 @@ func (t *Tessend) getPerResourceMetrics(now int64, data *Data) {
 		Value:     backendCount,
 		Timestamp: now,
 	}
+	appendInternalTag(mp)
 	logMetric(mp)
 	data.Metrics.Points = append(data.Metrics.Points, mp)
 
@@ -563,6 +560,7 @@ func (t *Tessend) getPerResourceMetrics(now int64, data *Data) {
 			Value:     float64(count),
 			Timestamp: now,
 		}
+		appendInternalTag(mp)
 		logMetric(mp)
 		data.Metrics.Points = append(data.Metrics.Points, mp)
 	}
@@ -581,6 +579,7 @@ func (t *Tessend) getTessenConfigMetrics(now int64, tessen *corev2.TessenConfig,
 			},
 		},
 	}
+	appendInternalTag(mp)
 	logMetric(mp)
 	data.Metrics.Points = append(data.Metrics.Points, mp)
 }
@@ -610,4 +609,14 @@ func logMetric(m *corev2.MetricPoint) {
 		"metric_name":  m.Name,
 		"metric_value": m.Value,
 	}).Debug("collected a metric for tessen")
+}
+
+// appendInternalTag tags the metric with an internal environment variable value
+func appendInternalTag(m *corev2.MetricPoint) {
+	if internalEnv := os.Getenv("SENSU_INTERNAL_ENVIRONMENT"); internalEnv != "" {
+		m.Tags = append(m.Tags, &corev2.MetricTag{
+			Name:  "sensu_internal_environment",
+			Value: internalEnv,
+		})
+	}
 }

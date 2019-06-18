@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"testing"
 	"time"
 
@@ -39,6 +40,7 @@ func newTessendTest(t *testing.T) *Tessend {
 	s.On("CreateOrUpdateTessenConfig", mock.Anything, mock.Anything).Return(fmt.Errorf("foo"))
 	s.On("GetTessenConfig", mock.Anything, mock.Anything).Return(corev2.DefaultTessenConfig(), fmt.Errorf("foo"))
 	s.On("GetTessenConfigWatcher", mock.Anything).Return(ch)
+	s.On("GetClusterID", mock.Anything).Return("foo", fmt.Errorf("foo"))
 
 	tessend, err := New(Config{
 		Store:    s,
@@ -162,4 +164,18 @@ func TestTessendEnabled(t *testing.T) {
 	tessen.OptOut = true
 	tessend.config = tessen
 	require.False(t, tessend.enabled())
+}
+
+func TestInternalTag(t *testing.T) {
+	mp := &corev2.MetricPoint{
+		Name:  "test_metric",
+		Value: 5,
+	}
+	appendInternalTag(mp)
+	assert.Equal(t, 0, len(mp.Tags))
+	os.Setenv("SENSU_INTERNAL_ENVIRONMENT", "foo")
+	appendInternalTag(mp)
+	assert.Equal(t, 1, len(mp.Tags))
+	assert.Equal(t, "sensu_internal_environment", mp.Tags[0].Name)
+	assert.Equal(t, "foo", mp.Tags[0].Value)
 }

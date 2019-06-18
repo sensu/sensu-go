@@ -131,6 +131,9 @@ type Store interface {
 	// CheckConfigStore provides an interface for managing checks configuration
 	CheckConfigStore
 
+	// ClusterIDStore provides an interface for managing the sensu cluster id
+	ClusterIDStore
+
 	// EntityStore provides an interface for managing entities
 	EntityStore
 
@@ -249,6 +252,15 @@ type CheckConfigStore interface {
 	// or the context passed is cancelled, then the channel will be closed. The caller must
 	// restart the watcher, if needed.
 	GetCheckConfigWatcher(ctx context.Context) <-chan WatchEventCheckConfig
+}
+
+// ClusterIDStore provides methods for managing the sensu cluster id
+type ClusterIDStore interface {
+	// CreateClusterID creates a sensu cluster id
+	CreateClusterID(context.Context, string) error
+
+	// GetClusterID gets the sensu cluster id
+	GetClusterID(context.Context) (string, error)
 }
 
 // ClusterRoleBindingStore provides methods for managing RBAC cluster role

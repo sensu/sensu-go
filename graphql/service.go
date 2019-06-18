@@ -9,8 +9,8 @@ import (
 
 // Service ...TODO...
 type Service struct {
-	types  *typeRegister
 	schema graphql.Schema
+	types  *typeRegister
 }
 
 // NewService returns new instance of Service
@@ -77,11 +77,26 @@ func (service *Service) RegisterObject(t ObjectDesc, impl interface{}) {
 			cfg.IsTypeOf = newIsTypeOfFn(typeResolver)
 		}
 
+		for _, ext := range service.types.extensionsForType(cfg.Name) {
+			extObjCfg := ext.(graphql.ObjectConfig)
+			mergeObjectConfig(cfg, extObjCfg)
+		}
+
 		cfg.Fields = fieldsThunk(m, fields)
 		cfg.Interfaces = interfacesThunk(m, cfg.Interfaces)
 		return graphql.NewObject(cfg)
 	}
 	service.types.addType(cfg.Name, ObjectKind, registrar)
+}
+
+// RegisterObjectExtension registers a GraphQL type with the service.
+func (service *Service) RegisterObjectExtension(t ObjectDesc, impl interface{}) {
+	cfg := t.Config()
+	fields := cfg.Fields.(graphql.Fields)
+	for fieldName, handler := range t.FieldHandlers {
+		fields[fieldName].Resolve = handler(impl)
+	}
+	service.types.addExtension(cfg.Name, cfg)
 }
 
 // RegisterUnion registers a GraphQL type with the service.
@@ -134,11 +149,13 @@ func (service *Service) Do(
 }
 
 type typeRegister struct {
-	types  map[Kind]map[string]registerTypeFn
-	schema SchemaDesc
+	types      map[Kind]map[string]registerTypeFn
+	extensions map[string][]interface{}
+	schema     SchemaDesc
 }
 
 func newTypeRegister() *typeRegister {
+	exts := map[string][]interface{}{}
 	types := make(map[Kind]map[string]registerTypeFn, 6)
 	types[EnumKind] = map[string]registerTypeFn{}
 	types[ScalarKind] = map[string]registerTypeFn{}
@@ -146,7 +163,7 @@ func newTypeRegister() *typeRegister {
 	types[InputKind] = map[string]registerTypeFn{}
 	types[InterfaceKind] = map[string]registerTypeFn{}
 	types[UnionKind] = map[string]registerTypeFn{}
-	return &typeRegister{types: types}
+	return &typeRegister{types: types, extensions: exts}
 }
 
 func (r *typeRegister) addType(name string, kind Kind, fn registerTypeFn) {
@@ -157,6 +174,20 @@ func (r *typeRegister) addType(name string, kind Kind, fn registerTypeFn) {
 		r.types[kind] = map[string]registerTypeFn{}
 	}
 	r.types[kind][name] = fn
+}
+
+func (r *typeRegister) addExtension(name string, cfg interface{}) {
+	if _, ok := r.extensions[name]; !ok {
+		r.extensions[name] = []interface{}{}
+	}
+	r.extensions[name] = append(r.extensions[name], cfg)
+}
+
+func (r *typeRegister) extensionsForType(t string) []interface{} {
+	if _, ok := r.extensions[t]; !ok {
+		return []interface{}{}
+	}
+	return r.extensions[t]
 }
 
 func (r *typeRegister) setSchema(desc SchemaDesc) {
@@ -238,4 +269,15 @@ func findType(m graphql.TypeMap, name string) graphql.Type {
 	panic(
 		fmt.Sprintf("required type '%s' not registered.", name),
 	)
+}
+
+func mergeObjectConfig(a, b graphql.ObjectConfig) {
+	af := a.Fields.(graphql.Fields)
+	bf := b.Fields.(graphql.Fields)
+	for n, f := range bf {
+		af[n] = f
+	}
+	ai := a.Interfaces.([]*graphql.Interface)
+	bi := a.Interfaces.([]*graphql.Interface)
+	a.Interfaces = append(ai, bi...)
 }

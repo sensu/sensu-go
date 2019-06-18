@@ -13,12 +13,18 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 populate, and send them to the Tessen service.
 - [Web] Adds ability to delete entities
 - [GraphQL] Adds simple auto-suggestion feature.
+- Added a tag to all Tessen metrics to differentiate internal builds.
+- Added a unique sensu cluster id, accessible by GET `/api/core/v2/cluster/id`.
+- Added `sensuctl cluster id` which exposes the unique sensu cluster id.
 - Silenced entries are now retrieved from the cache when determining if an event
 is silenced.
 
 ### Changed
 - [Web] Updated embedded web assets from `275386a` ... `b0c1138`
 - Refactoring of the REST API.
+- Changed the identifying cluster id in TessenD from the etcd cluster id to
+the sensu cluster id.
+- [GraphQL] Updates `PutResource` mutation to accept an `upsert` boolean flag parameter. The `upsert` param defaults to `true`, but if set to `false` the mutation will return an error when attempting to create a duplicate resource.
 
 ### Fixed
 - The check state and check total_state_change properties are now more correct.
