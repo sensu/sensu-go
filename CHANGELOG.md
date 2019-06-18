@@ -33,6 +33,7 @@ the sensu cluster id.
 - [Web] Avoid exception when parsing non-standard cron statements. (Eg.
 `@every 1h` or `@weekly`)
 - The resources metadata are now validated with the request URI.
+- Fixed `sensuctl` color output on Windows.
 
 ### Changed
 - Eventd has been refactored. Users should not perceive any changes, but a
