@@ -212,9 +212,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 
 	// Add any silenced subscriptions to the event
-	if err := getSilenced(ctx, event, e.silencedCache); err != nil {
-		return err
-	}
+	getSilenced(ctx, event, e.silencedCache)
 
 	// Handle expire on resolve silenced entries
 	if err := handleExpireOnResolveEntries(ctx, event, e.store); err != nil {

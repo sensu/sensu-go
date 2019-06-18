@@ -22,7 +22,7 @@ func TestGetSilenced(t *testing.T) {
 			name:  "Sets the silenced attribute of an event",
 			event: corev2.FixtureEvent("foo", "check_cpu"),
 			silencedEntries: []corev2.Resource{
-				corev2.FixtureSilenced("entity:foo:check_cpu"), // check
+				corev2.FixtureSilenced("entity:foo:check_cpu"),
 			},
 			expectedEntries: []string{"entity:foo:check_cpu"},
 		},
@@ -31,22 +31,9 @@ func TestGetSilenced(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
-
-			// mockStore := &mockstore.MockStore{}
-			// mockStore.On(
-			// 	"GetSilencedEntriesBySubscription",
-			// 	mock.Anything,
-			// ).Return(tc.silencedSubscriptions, nil)
-
-			// mockStore.On(
-			// 	"GetSilencedEntriesByCheckName",
-			// 	mock.Anything,
-			// ).Return(tc.silencedChecks, nil)
-			// values := cache.MakeSliceCache(tc.silencedEntries, false)
-			// cache := &cache.Resource{values}
 			c := cache.NewFromResources(tc.silencedEntries, false)
-			result := getSilenced(ctx, tc.event, c)
-			assert.Nil(t, result)
+
+			getSilenced(ctx, tc.event, c)
 			assert.Equal(t, tc.expectedEntries, tc.event.Check.Silenced)
 		})
 	}
