@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 
+	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
@@ -14,6 +15,7 @@ import (
 // IntegrationTestStore wrapper for etcd & store
 type IntegrationTestStore struct {
 	*etcdstore.Store
+	Client *clientv3.Client
 	// underscores to avoid collision w/ store
 	_etcd        *etcd.Etcd
 	_removeTmpFn func()
@@ -73,6 +75,7 @@ func NewStoreInstance() (*IntegrationTestStore, error) {
 
 	return &IntegrationTestStore{
 		Store:        st,
+		Client:       client,
 		_etcd:        e,
 		_removeTmpFn: removeTmp,
 	}, nil

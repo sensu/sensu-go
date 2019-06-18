@@ -6,6 +6,8 @@ import (
 	"context"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/store/cache"
+
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -36,7 +38,7 @@ func TestCheckWatcherSmoke(t *testing.T) {
 	watcherChan := make(chan store.WatchEventCheckConfig)
 	st.On("GetCheckConfigWatcher", mock.Anything).Return((<-chan store.WatchEventCheckConfig)(watcherChan), nil)
 
-	watcher := NewCheckWatcher(ctx, bus, st, nil, &EntityCache{})
+	watcher := NewCheckWatcher(ctx, bus, st, nil, &cache.Resource{})
 	require.NoError(t, watcher.Start())
 
 	checkAA := types.FixtureCheckConfig("a")

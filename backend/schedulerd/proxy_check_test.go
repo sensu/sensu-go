@@ -6,7 +6,7 @@ import (
 
 	time "github.com/echlebek/timeproxy"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -14,70 +14,70 @@ func TestMatchEntities(t *testing.T) {
 	tests := []struct {
 		name             string
 		entityAttributes []string
-		entities         []*types.Entity
-		want             []*types.Entity
+		entities         []corev2.Resource
+		want             []*corev2.Entity
 	}{
 		{
 			name:             "standard string attribute",
 			entityAttributes: []string{`entity.name == "entity1"`},
-			entities: []*types.Entity{
-				types.FixtureEntity("entity1"),
-				types.FixtureEntity("entity2"),
+			entities: []corev2.Resource{
+				corev2.FixtureEntity("entity1"),
+				corev2.FixtureEntity("entity2"),
 			},
-			want: []*types.Entity{
-				types.FixtureEntity("entity1"),
+			want: []*corev2.Entity{
+				corev2.FixtureEntity("entity1"),
 			},
 		},
 		{
 			name:             "standard bool attribute",
 			entityAttributes: []string{`entity.deregister == false`},
-			entities: []*types.Entity{
-				&types.Entity{Deregister: false},
-				&types.Entity{Deregister: true},
+			entities: []corev2.Resource{
+				&corev2.Entity{Deregister: false},
+				&corev2.Entity{Deregister: true},
 			},
-			want: []*types.Entity{
-				&types.Entity{Deregister: false},
+			want: []*corev2.Entity{
+				&corev2.Entity{Deregister: false},
 			},
 		},
 		{
 			name:             "nested standard attribute",
 			entityAttributes: []string{`entity.system.hostname == "foo.local"`},
-			entities: []*types.Entity{
-				&types.Entity{System: types.System{Hostname: "localhost"}},
-				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "foo"}},
-				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "foo"}, System: types.System{Hostname: "foo.local"}},
+			entities: []corev2.Resource{
+				&corev2.Entity{System: corev2.System{Hostname: "localhost"}},
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo"}},
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo"}, System: corev2.System{Hostname: "foo.local"}},
 			},
-			want: []*types.Entity{
-				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "foo"}, System: types.System{Hostname: "foo.local"}},
+			want: []*corev2.Entity{
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo"}, System: corev2.System{Hostname: "foo.local"}},
 			},
 		},
 		{
 			name:             "multiple matches",
 			entityAttributes: []string{`entity.entity_class == "proxy"`},
-			entities: []*types.Entity{
-				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "foo"}, EntityClass: "proxy"},
-				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "bar"}, EntityClass: "agent"},
-				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "baz"}, EntityClass: "proxy"},
+			entities: []corev2.Resource{
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo"}, EntityClass: "proxy"},
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "bar"}, EntityClass: "agent"},
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "baz"}, EntityClass: "proxy"},
 			},
-			want: []*types.Entity{
-				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "foo"}, EntityClass: "proxy"},
-				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "baz"}, EntityClass: "proxy"},
+			want: []*corev2.Entity{
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo"}, EntityClass: "proxy"},
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "baz"}, EntityClass: "proxy"},
 			},
 		},
 		{
 			name:             "invalid expression",
 			entityAttributes: []string{`foo &&`},
-			entities: []*types.Entity{
-				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "foo"}},
+			entities: []corev2.Resource{
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo"}},
 			},
 		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			p := &types.ProxyRequests{
+			p := &corev2.ProxyRequests{
 				EntityAttributes: tc.entityAttributes,
 			}
-			got := matchEntities(makeSliceCache(tc.entities), p)
+			got := matchEntities(cache.MakeSliceCache(tc.entities, true), p)
 
 			if len(got) != len(tc.want) {
 				t.Errorf("Expected %d entities, got %d", len(tc.want), len(got))
@@ -98,8 +98,8 @@ func TestMatchEntities(t *testing.T) {
 func TestSplayCalculation(t *testing.T) {
 	assert := assert.New(t)
 
-	check := types.FixtureCheckConfig("check1")
-	check.ProxyRequests = types.FixtureProxyRequests(true)
+	check := corev2.FixtureCheckConfig("check1")
+	check.ProxyRequests = corev2.FixtureProxyRequests(true)
 
 	// 10s * 90% / 3 = 3
 	check.Interval = 10
@@ -132,10 +132,10 @@ func TestSplayCalculation(t *testing.T) {
 func TestSubstituteProxyEntityTokens(t *testing.T) {
 	assert := assert.New(t)
 
-	entity := types.FixtureEntity("entity1")
-	check := types.FixtureCheckConfig("check1")
+	entity := corev2.FixtureEntity("entity1")
+	check := corev2.FixtureCheckConfig("check1")
 	check.Subscriptions = []string{"subscription1"}
-	check.ProxyRequests = types.FixtureProxyRequests(true)
+	check.ProxyRequests = corev2.FixtureProxyRequests(true)
 
 	substitutedProxyEntityTokens, err := substituteProxyEntityTokens(entity, check)
 	if err != nil {
@@ -149,7 +149,7 @@ func BenchmarkMatchEntities1000(b *testing.B) {
 	// non-matching expression to avoid short-circuiting behaviour
 	expression := "entity.system.arch == 'amd65'"
 
-	entities := make([]*corev2.Entity, 100)
+	entities := make([]corev2.Resource, 100)
 	expressions := make([]string, 10)
 
 	for i := range entities {
@@ -160,7 +160,7 @@ func BenchmarkMatchEntities1000(b *testing.B) {
 	}
 
 	req := &corev2.ProxyRequests{EntityAttributes: expressions}
-	slice := makeSliceCache(entities)
+	slice := cache.MakeSliceCache(entities, true)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

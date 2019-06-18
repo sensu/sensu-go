@@ -7,15 +7,16 @@ import (
 	time "github.com/echlebek/timeproxy"
 	"github.com/robfig/cron"
 	"github.com/sensu/sensu-go/agent"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/js"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/dynamic"
 )
 
 // matchEntities matches the provided list of entities to the entity attributes
 // configured in the proxy request
-func matchEntities(entities []EntityCacheValue, proxyRequest *types.ProxyRequests) []*types.Entity {
-	matched := make([]*types.Entity, 0, len(entities))
+func matchEntities(entities []cache.Value, proxyRequest *corev2.ProxyRequests) []*corev2.Entity {
+	matched := make([]*corev2.Entity, 0, len(entities))
 	synthesizedEntities := make([]interface{}, 0, len(entities))
 	for _, entity := range entities {
 		synthesizedEntities = append(synthesizedEntities, entity.Synth)
@@ -34,7 +35,7 @@ func matchEntities(entities []EntityCacheValue, proxyRequest *types.ProxyRequest
 
 	for i, result := range results {
 		if result {
-			matched = append(matched, entities[i].Entity)
+			matched = append(matched, entities[i].Resource.(*corev2.Entity))
 		}
 	}
 
@@ -43,7 +44,7 @@ func matchEntities(entities []EntityCacheValue, proxyRequest *types.ProxyRequest
 
 // substituteProxyEntityTokens substitutes entity tokens in the proxy check definition. If
 // there are unmatched entity tokens, it returns an error.
-func substituteProxyEntityTokens(entity *types.Entity, check *types.CheckConfig) (*types.CheckConfig, error) {
+func substituteProxyEntityTokens(entity *corev2.Entity, check *corev2.CheckConfig) (*corev2.CheckConfig, error) {
 	// Extract the extended attributes from the entity and combine them at the
 	// top-level so they can be easily accessed using token substitution
 	synthesizedEntity := dynamic.Synthesize(entity)
@@ -55,7 +56,7 @@ func substituteProxyEntityTokens(entity *types.Entity, check *types.CheckConfig)
 		return nil, err
 	}
 
-	substitutedCheck := &types.CheckConfig{}
+	substitutedCheck := &corev2.CheckConfig{}
 
 	// Unmarshal the check configuration obtained after the token substitution
 	// back into the check config struct
@@ -70,7 +71,7 @@ func substituteProxyEntityTokens(entity *types.Entity, check *types.CheckConfig)
 
 // calculateSplayInterval calculates the duration between publishing proxy
 // requests to each individual entity (based on a configurable splay %)
-func calculateSplayInterval(check *types.CheckConfig, numEntities int) (time.Duration, error) {
+func calculateSplayInterval(check *corev2.CheckConfig, numEntities int) (time.Duration, error) {
 	next := time.Second * time.Duration(check.Interval)
 	if check.Cron != "" {
 		schedule, err := cron.ParseStandard(check.Cron)
@@ -88,7 +89,7 @@ func calculateSplayInterval(check *types.CheckConfig, numEntities int) (time.Dur
 	}
 	splayCoverage := float64(check.ProxyRequests.SplayCoverage)
 	if splayCoverage == 0 {
-		splayCoverage = types.DefaultSplayCoverage
+		splayCoverage = corev2.DefaultSplayCoverage
 	}
 	timeSlice := splayCoverage / 100.0 / float64(numEntities)
 	splay := time.Duration(float64(next) * timeSlice)

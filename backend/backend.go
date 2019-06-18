@@ -163,8 +163,8 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
-		Store: stor,
-		Bus:   bus,
+		Store:                   stor,
+		Bus:                     bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 		AssetGetter:             assetGetter,
 	})
@@ -193,6 +193,7 @@ func Initialize(config *Config) (*Backend, error) {
 		Bus:         bus,
 		QueueGetter: queueGetter,
 		RingPool:    ringPool,
+		Client:      b.Client,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", scheduler.Name(), err)
@@ -216,11 +217,11 @@ func Initialize(config *Config) (*Backend, error) {
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:             bus,
-		Store:           stor,
-		EventStore:      stor,
-		LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
-		RingPool:        ringPool,
+		Bus:                   bus,
+		Store:                 stor,
+		EventStore:            stor,
+		LivenessFactory:       liveness.EtcdFactory(b.ctx, b.Client),
+		RingPool:              ringPool,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)

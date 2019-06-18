@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/store/cache"
+
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
@@ -24,7 +26,7 @@ func TestAdhocExecutor(t *testing.T) {
 	}
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
-	newAdhocExec := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus, &EntityCache{})
+	newAdhocExec := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus, &cache.Resource{})
 	defer newAdhocExec.Stop()
 	assert.NoError(t, newAdhocExec.bus.Start())
 
