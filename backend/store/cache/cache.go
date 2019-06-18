@@ -143,6 +143,16 @@ func New(ctx context.Context, client *clientv3.Client, resource corev2.Resource,
 	return cache, nil
 }
 
+// NewFromResources creates a new resources cache using the given resources.
+// This function should only be used for testing purpose; it provides a way to
+// inject resources directly into the cache without an actual store
+func NewFromResources(resources []corev2.Resource, synthesize bool) *Resource {
+	return &Resource{
+		cacheMu:    sync.Mutex{},
+		sliceCache: MakeSliceCache(resources, synthesize),
+	}
+}
+
 // Watch allows cache users to get notified when the cache has new values.
 // When the context is canceled, the channel will be closed.
 func (r *Resource) Watch(ctx context.Context) <-chan struct{} {

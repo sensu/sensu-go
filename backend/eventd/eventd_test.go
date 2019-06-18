@@ -10,8 +10,9 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -38,35 +39,48 @@ func newFakeFactory(f liveness.Interface) liveness.Factory {
 	}
 }
 
+func newEventd(store store.Store, bus messaging.MessageBus, livenessFactory liveness.Factory) *Eventd {
+	ctx, cancel := context.WithCancel(context.Background())
+	return &Eventd{
+		ctx:             ctx,
+		cancel:          cancel,
+		store:           store,
+		eventStore:      store,
+		bus:             bus,
+		livenessFactory: livenessFactory,
+		errChan:         make(chan error, 1),
+		shutdownChan:    make(chan struct{}, 1),
+		eventChan:       make(chan interface{}, 100),
+		wg:              &sync.WaitGroup{},
+		mu:              &sync.Mutex{},
+		Logger:          &RawLogger{},
+		handlerCount:    5,
+		silencedCache:   &cache.Resource{},
+	}
+}
+
 func TestEventHandling(t *testing.T) {
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	require.NoError(t, bus.Start())
 
 	mockStore := &mockstore.MockStore{}
-	e, err := New(Config{
-		Store:           mockStore,
-		EventStore:      mockStore,
-		Bus:             bus,
-		LivenessFactory: newFakeFactory(&fakeSwitchSet{}),
-	})
-	require.NoError(t, err)
-	e.handlerCount = 5
+	e := newEventd(mockStore, bus, newFakeFactory(&fakeSwitchSet{}))
 
 	require.NoError(t, e.Start())
 
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, nil))
 
-	badEvent := &types.Event{}
-	badEvent.Check = &types.Check{}
-	badEvent.Entity = &types.Entity{}
+	badEvent := &corev2.Event{}
+	badEvent.Check = &corev2.Check{}
+	badEvent.Entity = &corev2.Entity{}
 	badEvent.Timestamp = time.Now().Unix()
 
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, badEvent))
 
-	event := types.FixtureEvent("entity", "check")
+	event := corev2.FixtureEvent("entity", "check")
 
-	var nilEvent *types.Event
+	var nilEvent *corev2.Event
 	// no previous event.
 	mockStore.On(
 		"GetEventByEntityCheck",
@@ -75,7 +89,7 @@ func TestEventHandling(t *testing.T) {
 		"check",
 	).Return(nilEvent, nil)
 	event.Check.Occurrences = 1
-	event.Check.State = types.EventPassingState
+	event.Check.State = corev2.EventPassingState
 	event.Check.LastOK = event.Timestamp
 	mockStore.On("UpdateEvent", mock.Anything).Return(event, nilEvent, nil)
 
@@ -83,11 +97,11 @@ func TestEventHandling(t *testing.T) {
 	mockStore.On(
 		"GetSilencedEntriesBySubscription",
 		mock.Anything,
-	).Return([]*types.Silenced{}, nil)
+	).Return([]*corev2.Silenced{}, nil)
 	mockStore.On(
 		"GetSilencedEntriesByCheckName",
 		mock.Anything,
-	).Return([]*types.Silenced{}, nil)
+	).Return([]*corev2.Silenced{}, nil)
 
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, event))
 
@@ -99,7 +113,7 @@ func TestEventHandling(t *testing.T) {
 	assert.Equal(t, int64(1), event.Check.Occurrences)
 
 	// Make sure the event has been marked with the proper state
-	assert.Equal(t, types.EventPassingState, event.Check.State)
+	assert.Equal(t, corev2.EventPassingState, event.Check.State)
 	assert.Equal(t, event.Timestamp, event.Check.LastOK)
 }
 
@@ -109,20 +123,16 @@ func TestEventMonitor(t *testing.T) {
 	require.NoError(t, bus.Start())
 
 	mockStore := &mockstore.MockStore{}
-	e, err := New(Config{Store: mockStore, EventStore: mockStore, Bus: bus})
-	require.NoError(t, err)
-	e.handlerCount = 5
-
-	e.livenessFactory = newFakeFactory(&fakeSwitchSet{})
+	e := newEventd(mockStore, bus, newFakeFactory(&fakeSwitchSet{}))
 
 	require.NoError(t, e.Start())
 
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, nil))
 
-	event := types.FixtureEvent("entity", "check")
+	event := corev2.FixtureEvent("entity", "check")
 	event.Check.Ttl = 90
 
-	var nilEvent *types.Event
+	var nilEvent *corev2.Event
 	// no previous event.
 	mockStore.On(
 		"GetEventByEntityCheck",
@@ -130,18 +140,18 @@ func TestEventMonitor(t *testing.T) {
 		"entity",
 		"check",
 	).Return(nilEvent, nil)
-	event.Check.State = types.EventPassingState
+	event.Check.State = corev2.EventPassingState
 	mockStore.On("UpdateEvent", mock.Anything).Return(event, nilEvent, nil)
 
 	// No silenced entries
 	mockStore.On(
 		"GetSilencedEntriesBySubscription",
 		mock.Anything,
-	).Return([]*types.Silenced{}, nil)
+	).Return([]*corev2.Silenced{}, nil)
 	mockStore.On(
 		"GetSilencedEntriesByCheckName",
 		mock.Anything,
-	).Return([]*types.Silenced{}, nil)
+	).Return([]*corev2.Silenced{}, nil)
 
 	require.NoError(t, bus.Publish(messaging.TopicEventRaw, event))
 
@@ -149,7 +159,7 @@ func TestEventMonitor(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Make sure the event has been marked with the proper state
-	assert.Equal(t, types.EventPassingState, event.Check.State)
+	assert.Equal(t, corev2.EventPassingState, event.Check.State)
 }
 
 type mockSwitchSet struct {
@@ -245,6 +255,7 @@ func TestCheckTTL(t *testing.T) {
 				handlerCount:    1,
 				wg:              &sync.WaitGroup{},
 				Logger:          &RawLogger{},
+				silencedCache:   &cache.Resource{},
 			}
 			var err error
 			e.bus, err = messaging.NewWizardBus(messaging.WizardBusConfig{})

@@ -179,6 +179,7 @@ func Initialize(config *Config) (*Backend, error) {
 		EventStore:      eventStoreProxy,
 		Bus:             bus,
 		LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
+		Client:          b.Client,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", event.Name(), err)
