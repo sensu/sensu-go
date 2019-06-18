@@ -8,12 +8,86 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 // Authorizer implements an authorizer interface using Role-Based Acccess
 // Control (RBAC)
 type Authorizer struct {
 	Store store.Store
+}
+
+type RoleBinding interface {
+	GetSubjects() []corev2.Subject
+	GetRoleRef() corev2.RoleRef
+	GetObjectMeta() corev2.ObjectMeta
+}
+
+type RuleVisitFunc func(RoleBinding, corev2.Rule, error) (terminate bool)
+
+// VisitRulesFor visits all of the matching rules for a given Attributes.
+// It applies a visitor function that can elect to either continue visiting
+// rules, or stop visiting rules.
+//
+// It is up to the visitor function to make a useful decision about the
+// information it is given. For an example, see the Authorize method.
+func (a *Authorizer) VisitRulesFor(ctx context.Context, attrs *authorization.Attributes, visitor RuleVisitFunc) {
+	var empty = corev2.Rule{}
+	clusterRoleBindings, err := a.Store.ListClusterRoleBindings(ctx, &store.SelectionPredicate{})
+	if err != nil {
+		if !visitor(nil, empty, err) {
+			return
+		}
+	}
+	for _, binding := range clusterRoleBindings {
+		// Verify if this cluster role binding matches our user
+		if !matchesUser(attrs.User, binding.Subjects) {
+			continue
+		}
+
+		// Get the RoleRef that matched our user
+		rules, err := a.getRoleReferencerules(ctx, binding.RoleRef)
+		if err != nil {
+			if !visitor(binding, empty, err) {
+				return
+			}
+		}
+		for _, rule := range rules {
+			if !visitor(binding, rule, nil) {
+				return
+			}
+		}
+	}
+
+	roleBindings, err := a.Store.ListRoleBindings(ctx, &store.SelectionPredicate{})
+	if err != nil {
+		if !visitor(nil, empty, err) {
+			return
+		}
+	}
+
+	for _, binding := range roleBindings {
+		// Verify if this role binding matches our user
+		if !matchesUser(attrs.User, binding.Subjects) {
+			continue
+		}
+
+		// Get the RoleRef that matched our user
+		rules, err := a.getRoleReferencerules(ctx, binding.RoleRef)
+		if err != nil {
+			if !visitor(nil, empty, err) {
+				return
+			}
+		}
+
+		// Visit the rules
+		for _, rule := range rules {
+			if !visitor(binding, rule, nil) {
+				return
+			}
+		}
+	}
 }
 
 // Authorize determines if a request is authorized based on its attributes
@@ -32,102 +106,42 @@ func (a *Authorizer) Authorize(ctx context.Context, attrs *authorization.Attribu
 		})
 	}
 
-	// Get cluster roles binding
-	clusterRoleBindings, err := a.Store.ListClusterRoleBindings(ctx, &store.SelectionPredicate{})
-	if err != nil {
-		switch err := err.(type) {
-		case *store.ErrNotFound:
-			// No ClusterRoleBindings founds, let's continue with the RoleBindings
-			logger.WithError(err).Debug("no ClusterRoleBindings found")
-		default:
-			logger.WithError(err).Warning("could not retrieve the ClusterRoleBindings")
-			return false, err
-		}
-	}
+	var (
+		authorized bool
+		visitErr   error
+	)
 
-	// Inspect each cluster role binding
-	for _, clusterRoleBinding := range clusterRoleBindings {
-		bindingName := clusterRoleBinding.Name
-
-		// Verify if this cluster role binding matches our user
-		if !matchesUser(attrs.User, clusterRoleBinding.Subjects) {
-			logger.Debugf("the user is not a subject of the ClusterRoleBinding %s", bindingName)
-			continue
-		}
-
-		// Get the RoleRef that matched our user
-		rules, err := a.getRoleReferencerules(ctx, clusterRoleBinding.RoleRef)
-		if err != nil {
-			return false, err
-		}
-
-		// Loop through the rules
-		for _, rule := range rules {
-			// Verify if this rule applies to our request
-			allowed, reason := ruleAllows(attrs, rule)
-			if allowed {
-				logger.Debugf("request authorized by the ClusterRoleBinding %s", bindingName)
-				return true, nil
-			}
-			logger.Tracef("%s by rule %+v", reason, rule)
-		}
-		logger.Debugf("could not authorize the request with the ClusterRoleBinding %s",
-			bindingName,
-		)
-		logger.Debugf("could not authorize the request with any ClusterRoleBindings")
-	}
-
-	// None of the cluster roles authorized our request. Let's try with roles
-	// First, make sure we have a namespace
-	if len(attrs.Namespace) > 0 {
-		// Get roles binding
-		roleBindings, err := a.Store.ListRoleBindings(ctx, &store.SelectionPredicate{})
+	a.VisitRulesFor(ctx, attrs, func(binding RoleBinding, rule corev2.Rule, err error) bool {
 		if err != nil {
 			switch err := err.(type) {
 			case *store.ErrNotFound:
 				// No ClusterRoleBindings founds, let's continue with the RoleBindings
-				logger.WithError(err).Debug("no RoleBindings found")
+				logger.WithError(err).Debug("no bindings found")
 			default:
-				logger.WithError(err).Warning("could not retrieve the ClusterRoleBindings")
-				return false, err
+				logger.WithError(err).Warning("could not retrieve the ClusterRoleBindings or RoleBindings")
+				visitErr = err
+				return false
 			}
 		}
 
-		// Inspect each role binding
-		for _, roleBinding := range roleBindings {
-			bindingName := roleBinding.Name
-
-			// Verify if this role binding matches our user
-			if !matchesUser(attrs.User, roleBinding.Subjects) {
-				logger.Debugf("the user is not a subject of the RoleBinding %s", bindingName)
-				continue
-			}
-
-			// Get the RoleRef that matched our user
-			rules, err := a.getRoleReferencerules(ctx, roleBinding.RoleRef)
-			if err != nil {
-				return false, err
-			}
-
-			// Loop through the rules
-			for _, rule := range rules {
-				// Verify if this rule applies to our request
-				allowed, reason := ruleAllows(attrs, rule)
-				if allowed {
-					logger.Debugf("request authorized by the RoleBinding %s", bindingName)
-					return true, nil
-				}
-				logger.Tracef("%s by rule %+v", reason, rule)
-			}
-			logger.Debugf("could not authorize the request with the RoleBinding %s",
-				bindingName,
-			)
+		allowed, reason := ruleAllows(attrs, rule)
+		if allowed {
+			roleRef := binding.GetRoleRef()
+			name := roleRef.GetName()
+			logger.Debugf("request authorized by the binding %s", name)
+			authorized = true
+			return false
 		}
-		logger.Debugf("could not authorize the request with any RoleBindings")
+		logger.Tracef("%s by rule %+v", reason, rule)
+
+		return true
+	})
+
+	if !authorized {
+		logger.Debugf("unauthorized request")
 	}
 
-	logger.Debugf("unauthorized request")
-	return false, nil
+	return authorized, visitErr
 }
 
 func (a *Authorizer) getRoleReferencerules(ctx context.Context, roleRef types.RoleRef) ([]types.Rule, error) {
