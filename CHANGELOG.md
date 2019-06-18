@@ -33,6 +33,7 @@ the sensu cluster id.
 - [Web] Avoid exception when parsing non-standard cron statements. (Eg.
 `@every 1h` or `@weekly`)
 - The resources metadata are now validated with the request URI.
+- Fixed a bug where events were not deleted when their corresponding entity was.
 
 ### Changed
 - Eventd has been refactored. Users should not perceive any changes, but a
