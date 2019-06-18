@@ -1,0 +1,11 @@
+schema {
+  query: Foo
+}
+
+type Foo {
+  bar: Int!
+}
+
+fragment FooBar on Foo {
+  bar
+}

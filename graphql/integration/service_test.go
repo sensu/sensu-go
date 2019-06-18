@@ -29,13 +29,35 @@ func TestExerciseService(t *testing.T) {
 	schema.RegisterErr(svc, nil)
 	schema.RegisterStdErr(svc, &schema.StdErrAliases{})
 
+	schema.RegisterQueryRootExtensionOrders(svc, &queryExtResolver{})
+
 	err := svc.Regenerate()
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	res := svc.Do(ctx, "query { myBar { one } }", map[string]interface{}{})
+	res := svc.Do(ctx, `
+		query {
+			myBar {
+				one
+			}
+			order
+		}
+	`, nil)
+
 	require.Empty(t, res.Errors)
-	assert.NotEmpty(t, res.Data)
+	require.NotEmpty(t, res.Data)
+	assert.EqualValues(t, res.Data, map[string]interface{}{
+		"myBar": map[string]interface{}{
+			"one": "https://sensu.io/1",
+		},
+		"order": 66,
+	})
+}
+
+type queryExtResolver struct{}
+
+func (*queryExtResolver) Order(_ graphql.ResolveParams) (int, error) {
+	return 66, nil
 }
 
 type exResolver struct{}

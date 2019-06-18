@@ -7,6 +7,10 @@ import (
 	"github.com/graphql-go/graphql/language/ast"
 )
 
+const (
+	MissingNamedDirectiveErr = `extend keyword must be followed by @named directive`
+)
+
 func getNodeName(def ast.Node) string {
 	switch d := def.(type) {
 	case *ast.EnumDefinition:
@@ -21,6 +25,10 @@ func getNodeName(def ast.Node) string {
 		return d.Name.Value
 	case *ast.UnionDefinition:
 		return d.Name.Value
+	case *ast.TypeExtensionDefinition:
+		objDef := d.Definition
+		suffix := mustExtractSuffix(objDef)
+		return objDef.Name.Value + "Extension" + suffix
 	default:
 		return ""
 	}
@@ -40,6 +48,8 @@ func getTypeStr(node ast.Node) string {
 		return "Union"
 	case *ast.EnumDefinition:
 		return "Enum"
+	case *ast.TypeExtensionDefinition:
+		return "ObjectExtension"
 	default:
 		fmt.Printf("node: %#v", node)
 		panic("unknown node")
@@ -120,4 +130,38 @@ func isEnum(tt ast.Type, i info) bool {
 	}
 	_, isEnum := def.(*ast.EnumDefinition)
 	return isEnum
+}
+
+func mustExtractSuffix(obj *ast.ObjectDefinition) string {
+	namedDir := findDirectiveNamed(obj.Directives, "named")
+	if namedDir == nil {
+		logger.Fatal(MissingNamedDirectiveErr)
+	}
+	suffixArg := findArgumentNamed(namedDir.Arguments, "suffix")
+	if suffixArg == nil {
+		logger.Fatal(MissingNamedDirectiveErr)
+	}
+	suffix, ok := suffixArg.Value.GetValue().(string)
+	if !ok {
+		logger.Fatal(MissingNamedDirectiveErr)
+	}
+	return suffix
+}
+
+func findDirectiveNamed(ds []*ast.Directive, name string) *ast.Directive {
+	for _, d := range ds {
+		if d.Name.Value == name {
+			return d
+		}
+	}
+	return nil
+}
+
+func findArgumentNamed(as []*ast.Argument, name string) *ast.Argument {
+	for _, a := range as {
+		if a.Name.Value == name {
+			return a
+		}
+	}
+	return nil
 }
