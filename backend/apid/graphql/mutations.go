@@ -3,6 +3,7 @@ package graphql
 import (
 	"encoding/json"
 	"errors"
+	"net/url"
 	"strings"
 	"time"
 
@@ -33,20 +34,64 @@ type deleteRecordPayload struct {
 // PutWrapped implements response to request for the 'putWrapped' field.
 func (r *mutationsImpl) PutWrapped(p schema.MutationPutWrappedFieldResolverParams) (interface{}, error) {
 	var ret types.Wrapper
+	var err error
+
 	raw := p.Args.Raw
+	upsert := p.Args.Upsert
 
 	// decode given
 	dec := json.NewDecoder(strings.NewReader(raw))
 	dec.DisallowUnknownFields()
-	if err := dec.Decode(&ret); err != nil {
+	if err = dec.Decode(&ret); err != nil {
 		return map[string]interface{}{
 			"errors": wrapInputErrors("raw", err),
 		}, nil
 	}
 
-	// PUT wrapped resource
+	// Determine if we should send the wrapped resource or only the resource
+	// itself
+	var bytes []byte
+	if ret.APIVersion == "core/v2" {
+		bytes, err = json.Marshal(ret.Value)
+	} else {
+		bytes, err = json.Marshal(ret)
+	}
+	if err != nil {
+		return map[string]interface{}{
+			"errors": wrapInputErrors("raw", err),
+		}, nil
+	}
+
+	path := ret.Value.URIPath()
 	client := r.factory.NewWithContext(p.Context)
-	if err := client.PutResource(ret); err != nil {
+	if upsert {
+		err = client.Put(path, bytes)
+	} else {
+		// Note: Minor Hack
+		// -----------------------------------------------------------------
+		// If the `upsert` parameter on this mutation is `false`, we want to
+		// return an error if the resource already exists, instead of
+		// updating the existing resource.
+		//
+		// To do this, we make a request to the POST endpoint instead of the
+		// PUT endpoint. However, since the URI path resolved from
+		// `ret.Value.URIPath()` includes the name of the resource in the
+		// path string, we need to remove the name in order to call the
+		// correct endpoint.
+		//
+		// Ex.
+		// POST `/api/core/v2/namespaces/default/checks`
+		// PUT `/api/core/v2/namespaces/default/checks/check-cpu`
+		//
+		// Here we slice off the resource name in order to call the correct
+		// endpoint. This works for the resource we currently create from the
+		// Web UI (Checks and Handlers), but it's possible that this MAY not
+		// work for future resources.
+		suffix := "/" + url.PathEscape(ret.Value.GetObjectMeta().Name)
+		pathSubstr := strings.TrimSuffix(suffix, path)
+		err = client.Post(pathSubstr, bytes)
+	}
+	if err != nil {
 		return map[string]interface{}{
 			"errors": wrapInputErrors("raw", err),
 		}, nil

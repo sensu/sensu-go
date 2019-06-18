@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestMutationTypePutWrapped(t *testing.T) {
+func TestMutationTypePutWrappedUpsertTrue(t *testing.T) {
 	params := schema.MutationPutWrappedFieldResolverParams{}
 	params.Args.Raw = `
 		{
@@ -27,9 +27,10 @@ func TestMutationTypePutWrapped(t *testing.T) {
 			}
 		}
 	`
+	params.Args.Upsert = true
 
 	client, factory := client.NewClientFactory()
-	client.On("PutResource", mock.Anything).Return(nil).Once()
+	client.On("Put", mock.Anything, mock.Anything).Return(nil).Once()
 	impl := mutationsImpl{factory: factory}
 
 	// Success
@@ -44,7 +45,46 @@ func TestMutationTypePutWrapped(t *testing.T) {
 	assert.NotEmpty(t, body)
 
 	// Failure
-	client.On("PutResource", mock.Anything).Return(errors.New("test")).Once()
+	client.On("Put", mock.Anything, mock.Anything).Return(errors.New("test")).Once()
+	body, err = impl.PutWrapped(params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, body)
+}
+
+func TestMutationTypePutWrappedUpsertFalse(t *testing.T) {
+	params := schema.MutationPutWrappedFieldResolverParams{}
+	params.Args.Raw = `
+		{
+			"type": "Silenced",
+			"metadata": {
+				"namespace":"sensu-devel",
+				"name": "test:fred"
+			},
+			"spec": {
+				"check": "fred",
+				"creator": "asdfasdf"
+			}
+		}
+	`
+	params.Args.Upsert = false
+
+	client, factory := client.NewClientFactory()
+	client.On("Post", mock.Anything, mock.Anything).Return(nil).Once()
+	impl := mutationsImpl{factory: factory}
+
+	// Success
+	body, err := impl.PutWrapped(params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, body)
+
+	// Bad JSON
+	params.Args.Raw = `{ "type.... ]`
+	body, err = impl.PutWrapped(params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, body)
+
+	// Failure
+	client.On("Post", mock.Anything, mock.Anything).Return(errors.New("test")).Once()
 	body, err = impl.PutWrapped(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, body)

@@ -12,7 +12,12 @@ import (
 
 // MutationPutWrappedFieldResolverArgs contains arguments provided to putWrapped when selected
 type MutationPutWrappedFieldResolverArgs struct {
-	Raw string // Raw - self descriptive
+	Raw    string // Raw is a JSON string representation of the resource
+	Upsert bool   /*
+	Upsert is a flag that determines whether to insert a resource, or on
+	the basis of the resource already existing, UPDATE that existing
+	resource instead.
+	*/
 }
 
 // MutationPutWrappedFieldResolverParams contains contextual info to resolve putWrapped field
@@ -620,10 +625,17 @@ func _ObjectTypeMutationConfigFn() graphql1.ObjectConfig {
 				Type:              graphql.OutputType("ExecuteCheckPayload"),
 			},
 			"putWrapped": &graphql1.Field{
-				Args: graphql1.FieldConfigArgument{"raw": &graphql1.ArgumentConfig{
-					Description: "self descriptive",
-					Type:        graphql1.NewNonNull(graphql1.String),
-				}},
+				Args: graphql1.FieldConfigArgument{
+					"raw": &graphql1.ArgumentConfig{
+						Description: "Raw is a JSON string representation of the resource",
+						Type:        graphql1.NewNonNull(graphql1.String),
+					},
+					"upsert": &graphql1.ArgumentConfig{
+						DefaultValue: true,
+						Description:  "Upsert is a flag that determines whether to insert a resource, or on\nthe basis of the resource already existing, UPDATE that existing\nresource instead.",
+						Type:         graphql1.Boolean,
+					},
+				},
 				DeprecationReason: "",
 				Description:       "Create or overrwrite resource from given wrapped resource.",
 				Name:              "putWrapped",
