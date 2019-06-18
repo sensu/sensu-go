@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.10.0] - 2019.06.18
+
 ### Added
 - Added POST `/api/core/v2/tessen/metrics`.
 - Added the ability in TessenD to listen for metric points on the message bus,
@@ -18,11 +20,19 @@ populate, and send them to the Tessen service.
 - Added `sensuctl cluster id` which exposes the unique sensu cluster id.
 
 ### Changed
-- [Web] Updated embedded web assets from `275386a` ... `b0c1138`
+- [Web] Updated embedded web assets from `275386a` ... `46cd0ee`
 - Refactoring of the REST API.
 - Changed the identifying cluster id in TessenD from the etcd cluster id to
 the sensu cluster id.
 - [GraphQL] Updates `PutResource` mutation to accept an `upsert` boolean flag parameter. The `upsert` param defaults to `true`, but if set to `false` the mutation will return an error when attempting to create a duplicate resource.
+- Eventd has been refactored. Users should not perceive any changes, but a
+substantial amount of business logic has been moved into other packages.
+- The `sensuctl create` command now accepts resources without a declared
+namespace. If the namespace is omitted, the resource will be created in the
+current namespace, or overridden by the `--namespace` flag.
+- Eventd now uses a constant number of requests to etcd when working with
+silenced entries, instead of a number that is proportional to the number of
+subscriptions in a check.
 
 ### Fixed
 - The check state and check total_state_change properties are now more correct.
@@ -33,16 +43,6 @@ the sensu cluster id.
 - [Web] Avoid exception when parsing non-standard cron statements. (Eg.
 `@every 1h` or `@weekly`)
 - The resources metadata are now validated with the request URI.
-
-### Changed
-- Eventd has been refactored. Users should not perceive any changes, but a
-substantial amount of business logic has been moved into other packages.
-- The `sensuctl create` command now accepts resources without a declared
-namespace. If the namespace is omitted, the resource will be created in the
-current namespace, or overridden by the `--namespace` flag.
-- Eventd now uses a constant number of requests to etcd when working with
-silenced entries, instead of a number that is proportional to the number of
-subscriptions in a check.
 
 ## [5.9.0] - 2019-05-29
 
