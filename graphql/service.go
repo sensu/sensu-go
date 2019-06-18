@@ -9,8 +9,8 @@ import (
 
 // Service ...TODO...
 type Service struct {
-	types  *typeRegister
 	schema graphql.Schema
+	types  *typeRegister
 }
 
 // NewService returns new instance of Service
