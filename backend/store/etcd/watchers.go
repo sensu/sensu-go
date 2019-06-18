@@ -66,46 +66,6 @@ func (s *Store) GetCheckConfigWatcher(ctx context.Context) <-chan store.WatchEve
 	return ch
 }
 
-// GetEntityWatcher returns a channel that emits WatchEventEntity structs notifying
-// the caller that an Entity was updated. If the watcher runs into a terminal error
-// or the context passed is cancelled, then the channel will be closed.
-// The watcher does its best to recover from errors.
-func (s *Store) GetEntityWatcher(ctx context.Context) <-chan store.WatchEventEntity {
-	ch := make(chan store.WatchEventEntity, 1)
-	key := entityKeyBuilder.WithContext(ctx).Build()
-	w := Watch(ctx, s.client, key, true)
-
-	go func() {
-		defer close(ch)
-		for response := range w.Result() {
-			if response.Type == store.WatchUnknown {
-				logger.Error("unknown etcd watch type: ", response.Type)
-				continue
-			}
-
-			var entity corev2.Entity
-
-			if response.Type == store.WatchDelete {
-				meta := store.ParseResourceKey(response.Key)
-				entity.Namespace = meta.Namespace
-				entity.Name = meta.ResourceName
-			} else {
-				if err := unmarshal(response.Object, &entity); err != nil {
-					logger.WithField("key", response.Key).WithError(err).Error("unable to unmarshal entity from key")
-					continue
-				}
-			}
-
-			ch <- store.WatchEventEntity{
-				Action: response.Type,
-				Entity: &entity,
-			}
-		}
-	}()
-
-	return ch
-}
-
 // GetTessenConfigWatcher returns a channel that emits WatchEventTessenConfig structs notifying
 // the caller that a TessenConfig was updated. If the watcher runs into a terminal error
 // or the context passed is cancelled, then the channel will be closed. The caller must
