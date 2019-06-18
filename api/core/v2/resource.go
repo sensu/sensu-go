@@ -17,34 +17,3 @@ type Resource interface {
 	// Validate checks if the fields in the resource are valid.
 	Validate() error
 }
-
-// AbstractResource is a resource holder in cases we only care about the
-// resource metadata but we need to pass that information as a Resource
-type AbstractResource struct {
-	ObjectMeta
-}
-
-// GetObjectMeta only exists here to fulfil the requirements of Resource
-func (r *AbstractResource) GetObjectMeta() ObjectMeta {
-	return r.ObjectMeta
-}
-
-// SetNamespace only exists here to fulfil the requirements of Resource
-func (r *AbstractResource) SetNamespace(_ string) {
-	return
-}
-
-// StorePrefix only exists here to fulfil the requirements of Resource
-func (r *AbstractResource) StorePrefix() string {
-	return ""
-}
-
-// URIPath returns an empty string
-func (r *AbstractResource) URIPath() string {
-	return ""
-}
-
-// Validate returns no error
-func (r *AbstractResource) Validate() error {
-	return nil
-}

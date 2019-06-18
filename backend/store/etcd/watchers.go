@@ -161,21 +161,28 @@ func GetResourceWatcher(ctx context.Context, client *clientv3.Client, key string
 			elemPtr := reflect.New(elemType.Elem())
 
 			if response.Type == store.WatchDelete {
-				// TODO(palourde) do some reflection here instead
-				meta := store.ParseResourceKey(response.Key)
-				r := &corev2.AbstractResource{}
-				r.Namespace = meta.Namespace
-				r.Name = meta.ResourceName
-				resource = r
+				key := store.ParseResourceKey(response.Key)
+
+				meta := elemPtr.Elem().FieldByName("ObjectMeta")
+				if !meta.CanSet() {
+					logger.WithField("key", response.Key).Error("unable to set the resource object meta")
+					continue
+				}
+				if meta.FieldByName("Name").CanSet() {
+					meta.FieldByName("Name").SetString(key.ResourceName)
+				}
+				if meta.FieldByName("Namespace").CanSet() {
+					meta.FieldByName("Namespace").SetString(key.Namespace)
+				}
 			} else {
 				if err := unmarshal(response.Object, elemPtr.Interface()); err != nil {
 					logger.WithField("key", response.Key).WithError(err).
 						Error("unable to unmarshal resource from key")
 					continue
 				}
-				resource = elemPtr.Interface().(corev2.Resource)
 			}
 
+			resource = elemPtr.Interface().(corev2.Resource)
 			ch <- store.WatchEventResource{
 				Action:   response.Type,
 				Resource: resource,
