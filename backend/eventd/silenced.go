@@ -23,6 +23,10 @@ func addToSilencedBy(id string, ids []string) []string {
 // entity subscription, the check subscription and the check name while
 // supporting wildcard silenced entries (e.g. subscription:*)
 func getSilenced(ctx context.Context, event *corev2.Event, cache *cache.Resource) {
+	if !event.HasCheck() {
+		return
+	}
+
 	resources := cache.Get(event.Check.Namespace)
 	entries := make([]*corev2.Silenced, len(resources))
 	for i, resource := range resources {
