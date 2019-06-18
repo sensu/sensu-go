@@ -13,6 +13,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 populate, and send them to the Tessen service.
 - [Web] Adds ability to delete entities
 - [GraphQL] Adds simple auto-suggestion feature.
+- Silenced entries are now retrieved from the cache when determining if an event
+is silenced.
 
 ### Changed
 - [Web] Updated embedded web assets from `275386a` ... `b0c1138`
