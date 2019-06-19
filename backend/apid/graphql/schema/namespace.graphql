@@ -116,6 +116,20 @@ type Namespace implements Node {
     filters: [String!] = [],
   ): HandlerConnection!
 
+  "All mutators associated with the namespace."
+  mutators(
+    offset: Int = 0,
+    "Limit adds an optional limit to the number of records returned."
+    limit: Int = 10,
+    "Orderby adds an optional order to the records retrieved."
+    orderBy: MutatorListOrder = NAME_DESC,
+    """
+    Filters reduces the set using given arbitrary expression[s]; expressions
+    take on the form KEY: VALUE.
+    """
+    filters: [String!] = [],
+  ): MutatorConnection!
+
   "All silences associated with the namespace."
   silences(
     offset: Int = 0

@@ -68,6 +68,24 @@ type QueryEntityFieldResolver interface {
 	Entity(p QueryEntityFieldResolverParams) (interface{}, error)
 }
 
+// QueryMutatorFieldResolverArgs contains arguments provided to mutator when selected
+type QueryMutatorFieldResolverArgs struct {
+	Namespace string // Namespace - self descriptive
+	Name      string // Name - self descriptive
+}
+
+// QueryMutatorFieldResolverParams contains contextual info to resolve mutator field
+type QueryMutatorFieldResolverParams struct {
+	graphql.ResolveParams
+	Args QueryMutatorFieldResolverArgs
+}
+
+// QueryMutatorFieldResolver implement to resolve requests for the Query's mutator field.
+type QueryMutatorFieldResolver interface {
+	// Mutator implements response to request for mutator field.
+	Mutator(p QueryMutatorFieldResolverParams) (interface{}, error)
+}
+
 // QueryCheckFieldResolverArgs contains arguments provided to check when selected
 type QueryCheckFieldResolverArgs struct {
 	Namespace string // Namespace - self descriptive
@@ -250,6 +268,7 @@ type QueryFieldResolvers interface {
 	QueryNamespaceFieldResolver
 	QueryEventFieldResolver
 	QueryEntityFieldResolver
+	QueryMutatorFieldResolver
 	QueryCheckFieldResolver
 	QueryHandlerFieldResolver
 	QuerySuggestFieldResolver
@@ -324,6 +343,12 @@ func (_ QueryAliases) Event(p QueryEventFieldResolverParams) (interface{}, error
 
 // Entity implements response to request for 'entity' field.
 func (_ QueryAliases) Entity(p QueryEntityFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Mutator implements response to request for 'mutator' field.
+func (_ QueryAliases) Mutator(p QueryMutatorFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -408,6 +433,19 @@ func _ObjTypeQueryEntityHandler(impl interface{}) graphql1.FieldResolveFn {
 		}
 
 		return resolver.Entity(frp)
+	}
+}
+
+func _ObjTypeQueryMutatorHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(QueryMutatorFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := QueryMutatorFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Mutator(frp)
 	}
 }
 
@@ -548,6 +586,22 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 				Name:              "handler",
 				Type:              graphql.OutputType("Handler"),
 			},
+			"mutator": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"name": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.NewNonNull(graphql1.String),
+					},
+					"namespace": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.NewNonNull(graphql1.String),
+					},
+				},
+				DeprecationReason: "",
+				Description:       "Mutator fetch the mutator associated with the given set of arguments.",
+				Name:              "mutator",
+				Type:              graphql.OutputType("Mutator"),
+			},
 			"namespace": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{"name": &graphql1.ArgumentConfig{
 					Description: "self descriptive",
@@ -638,6 +692,7 @@ var _ObjectTypeQueryDesc = graphql.ObjectDesc{
 		"entity":      _ObjTypeQueryEntityHandler,
 		"event":       _ObjTypeQueryEventHandler,
 		"handler":     _ObjTypeQueryHandlerHandler,
+		"mutator":     _ObjTypeQueryMutatorHandler,
 		"namespace":   _ObjTypeQueryNamespaceHandler,
 		"node":        _ObjTypeQueryNodeHandler,
 		"suggest":     _ObjTypeQuerySuggestHandler,

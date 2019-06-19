@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"sort"
 	"strings"
 )
 
@@ -62,6 +63,49 @@ func (m *Mutator) Update(from *Mutator, fields ...string) error {
 // NewMutator creates a new Mutator.
 func NewMutator(meta ObjectMeta) *Mutator {
 	return &Mutator{ObjectMeta: meta}
+}
+
+//
+// Sorting
+
+type cmpMutator func(a, b *Mutator) bool
+
+// SortMutatorsByPredicate is used to sort a given collection using a given predicate.
+func SortMutatorsByPredicate(hs []*Mutator, fn cmpMutator) sort.Interface {
+	return &mutatorSorter{mutators: hs, byFn: fn}
+}
+
+// SortMutatorsByName is used to sort a given collection of mutators by their names.
+func SortMutatorsByName(hs []*Mutator, asc bool) sort.Interface {
+	if asc {
+		return SortMutatorsByPredicate(hs, func(a, b *Mutator) bool {
+			return a.Name < b.Name
+		})
+	}
+
+	return SortMutatorsByPredicate(hs, func(a, b *Mutator) bool {
+		return a.Name > b.Name
+	})
+}
+
+type mutatorSorter struct {
+	mutators []*Mutator
+	byFn     cmpMutator
+}
+
+// Len implements sort.Interface
+func (s *mutatorSorter) Len() int {
+	return len(s.mutators)
+}
+
+// Swap implements sort.Interface
+func (s *mutatorSorter) Swap(i, j int) {
+	s.mutators[i], s.mutators[j] = s.mutators[j], s.mutators[i]
+}
+
+// Less implements sort.Interface
+func (s *mutatorSorter) Less(i, j int) bool {
+	return s.byFn(s.mutators[i], s.mutators[j])
 }
 
 // FixtureMutator returns a Mutator fixture for testing.

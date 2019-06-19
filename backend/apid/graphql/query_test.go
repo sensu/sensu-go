@@ -89,6 +89,22 @@ func TestQueryTypeHandlerField(t *testing.T) {
 	assert.NotEmpty(t, res)
 }
 
+func TestQueryTypeMuatorField(t *testing.T) {
+	client, factory := client.NewClientFactory()
+	impl := queryImpl{factory: factory}
+
+	mutator := types.FixtureMutator("a")
+	params := schema.QueryMutatorFieldResolverParams{}
+	params.Args.Namespace = mutator.Namespace
+	params.Args.Name = mutator.Name
+
+	// Success
+	client.On("FetchMutator", mutator.Name).Return(mutator, nil).Once()
+	res, err := impl.Mutator(params)
+	require.NoError(t, err)
+	assert.NotEmpty(t, res)
+}
+
 func TestQueryTypeSuggestField(t *testing.T) {
 	client, factory := client.NewClientFactory()
 	impl := queryImpl{factory: factory}
