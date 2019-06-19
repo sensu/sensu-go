@@ -49,7 +49,6 @@ func New(c Config, opts ...Option) (*Schedulerd, error) {
 		ringPool:    c.RingPool,
 	}
 	s.ctx, s.cancel = context.WithCancel(context.Background())
-	// cache, err := NewEntityCache(s.ctx, s.store)
 	cache, err := cache.New(s.ctx, c.Client, &corev2.Entity{}, true)
 	if err != nil {
 		return nil, err

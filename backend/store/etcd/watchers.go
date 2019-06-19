@@ -66,10 +66,10 @@ func (s *Store) GetCheckConfigWatcher(ctx context.Context) <-chan store.WatchEve
 	return ch
 }
 
-// GetTessenConfigWatcher returns a channel that emits WatchEventTessenConfig structs notifying
-// the caller that a TessenConfig was updated. If the watcher runs into a terminal error
-// or the context passed is cancelled, then the channel will be closed. The caller must
-// The watcher does its best to recover from errors.
+// GetTessenConfigWatcher returns a channel that emits WatchEventTessenConfig
+// structs notifying the caller that a TessenConfig was updated. If the watcher
+// runs into a terminal error or the context passed is cancelled, then the
+// channel will be closed.
 func (s *Store) GetTessenConfigWatcher(ctx context.Context) <-chan store.WatchEventTessenConfig {
 	ch := make(chan store.WatchEventTessenConfig, 1)
 	key := tessenKeyBuilder.WithContext(ctx).Build()
