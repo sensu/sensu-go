@@ -27,11 +27,8 @@ type Value struct {
 	Synth    interface{}
 }
 
-func getCacheKey(resource corev2.Resource) key {
-	return key{
-		namespace: resource.GetObjectMeta().Namespace,
-		name:      resource.GetObjectMeta().Name,
-	}
+func getCacheKey(resource corev2.Resource) string {
+	return resource.GetObjectMeta().Namespace
 }
 
 func getCacheValue(resource corev2.Resource, synthesize bool) Value {
@@ -42,11 +39,14 @@ func getCacheValue(resource corev2.Resource, synthesize bool) Value {
 	return v
 }
 
-// MakeSliceCache ...
-func MakeSliceCache(resources []corev2.Resource, synthesize bool) []Value {
-	cache := make([]Value, len(resources))
-	for i := range cache {
-		cache[i] = getCacheValue(resources[i], synthesize)
+type cache map[string][]Value
+
+// buildCache ...
+func buildCache(resources []corev2.Resource, synthesize bool) cache {
+	cache := make(map[string][]Value)
+	for i, resource := range resources {
+		key := getCacheKey(resource)
+		cache[key] = append(cache[key], getCacheValue(resources[i], synthesize))
 	}
 	return cache
 }
@@ -72,10 +72,7 @@ func resourceLT(x, y Value) bool {
 	if y.Resource == nil {
 		return false
 	}
-	if x.Resource.GetObjectMeta().Namespace == y.Resource.GetObjectMeta().Namespace {
-		return x.Resource.GetObjectMeta().Name < y.Resource.GetObjectMeta().Name
-	}
-	return x.Resource.GetObjectMeta().Namespace < y.Resource.GetObjectMeta().Namespace
+	return x.Resource.GetObjectMeta().Name < y.Resource.GetObjectMeta().Name
 }
 
 type cacheWatcher struct {
@@ -88,8 +85,7 @@ type cacheWatcher struct {
 // efficiently retrieved from the cache by namespace.
 type Resource struct {
 	watcher    <-chan store.WatchEventResource
-	mapCache   map[key]Value
-	sliceCache []Value
+	cache      cache
 	updates    []store.WatchEventResource
 	cacheMu    sync.Mutex
 	watchers   []cacheWatcher
@@ -128,19 +124,16 @@ func New(ctx context.Context, client *clientv3.Client, resource corev2.Resource,
 		resources[i] = r
 	}
 
-	mapCache := make(map[key]Value, len(resources))
-	for _, resource := range resources {
-		mapCache[getCacheKey(resource)] = getCacheValue(resource, synthesize)
-	}
+	cache := buildCache(resources, synthesize)
 
-	cache := &Resource{
-		sliceCache: MakeSliceCache(resources, synthesize),
-		mapCache:   mapCache,
+	cacher := &Resource{
+		cache:      cache,
 		watcher:    etcd.GetResourceWatcher(ctx, client, keyBuilderFunc(ctx, ""), typeOfResource),
 		synthesize: synthesize,
 	}
-	go cache.start(ctx)
-	return cache, nil
+	go cacher.start(ctx)
+
+	return cacher, nil
 }
 
 // NewFromResources creates a new resources cache using the given resources.
@@ -148,9 +141,16 @@ func New(ctx context.Context, client *clientv3.Client, resource corev2.Resource,
 // inject resources directly into the cache without an actual store
 func NewFromResources(resources []corev2.Resource, synthesize bool) *Resource {
 	return &Resource{
-		cacheMu:    sync.Mutex{},
-		sliceCache: MakeSliceCache(resources, synthesize),
+		cacheMu: sync.Mutex{},
+		cache:   buildCache(resources, synthesize),
 	}
+}
+
+// Get returns all cached resources in a namespace.
+func (r *Resource) Get(namespace string) []Value {
+	r.cacheMu.Lock()
+	defer r.cacheMu.Unlock()
+	return r.cache[namespace]
 }
 
 // Watch allows cache users to get notified when the cache has new values.
@@ -211,48 +211,49 @@ func (r *Resource) start(ctx context.Context) {
 	}
 }
 
-// Get returns all cached resources in a namespace.
-func (r *Resource) Get(namespace string) []Value {
-	r.cacheMu.Lock()
-	cache := r.sliceCache
-	r.cacheMu.Unlock()
-	start := sort.Search(len(cache), func(i int) bool {
-		return cache[i].Resource.GetObjectMeta().Namespace >= namespace
-	})
-	endNS := namespace + string(rune(0))
-	stop := sort.Search(len(cache), func(i int) bool {
-		return cache[i].Resource.GetObjectMeta().Namespace >= endNS
-	})
-	if stop > len(cache) {
-		stop = len(cache)
-	}
-	return cache[start:stop]
-}
-
 func (r *Resource) updateCache() {
+	r.cacheMu.Lock()
 	for _, event := range r.updates {
 		resource := event.Resource
-		if resource == nil {
+		if resource == nil || reflect.ValueOf(resource).IsNil() {
 			logger.Error("nil resource in watch event")
 			continue
 		}
 		key := getCacheKey(resource)
+
 		switch event.Action {
-		case store.WatchCreate, store.WatchUpdate:
-			r.mapCache[key] = getCacheValue(resource, r.synthesize)
+		case store.WatchCreate:
+			// Append the new resource to the corresponding namespace
+			r.cache[key] = append(r.cache[key], getCacheValue(resource, r.synthesize))
+		case store.WatchUpdate:
+			// Loop through the resources of the resource's namespace to find the
+			// exact resource and update it
+			for i := range r.cache[key] {
+				if r.cache[key][i].Resource.GetObjectMeta().Name == resource.GetObjectMeta().Name {
+					r.cache[key][i] = getCacheValue(resource, r.synthesize)
+					break
+				}
+			}
 		case store.WatchDelete:
-			delete(r.mapCache, key)
+			// Loop through the resources of the resource's namespace to find the
+			// exact resource and delete it
+			for i := range r.cache[key] {
+				if r.cache[key][i].Resource.GetObjectMeta().Name == resource.GetObjectMeta().Name {
+					r.cache[key] = append(r.cache[key][:i], r.cache[key][i+1:]...)
+					break
+				}
+			}
 		default:
 			logger.Error("error in resource watcher")
 		}
 	}
+
 	r.updates = nil
-	newSliceCache := make([]Value, 0, len(r.mapCache))
-	for _, v := range r.mapCache {
-		newSliceCache = append(newSliceCache, v)
+
+	// Sort the resources alphabetically in each namespace
+	for _, v := range r.cache {
+		sort.Sort(resourceSlice(v))
 	}
-	sort.Sort(resourceSlice(newSliceCache))
-	r.cacheMu.Lock()
-	r.sliceCache = newSliceCache
+
 	r.cacheMu.Unlock()
 }

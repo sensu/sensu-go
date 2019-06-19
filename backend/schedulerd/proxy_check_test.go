@@ -32,11 +32,11 @@ func TestMatchEntities(t *testing.T) {
 			name:             "standard bool attribute",
 			entityAttributes: []string{`entity.deregister == false`},
 			entities: []corev2.Resource{
-				&corev2.Entity{Deregister: false},
-				&corev2.Entity{Deregister: true},
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}, Deregister: false},
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "bar", Namespace: "default"}, Deregister: true},
 			},
 			want: []*corev2.Entity{
-				&corev2.Entity{Deregister: false},
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}, Deregister: false},
 			},
 		},
 		{
@@ -44,31 +44,31 @@ func TestMatchEntities(t *testing.T) {
 			entityAttributes: []string{`entity.system.hostname == "foo.local"`},
 			entities: []corev2.Resource{
 				&corev2.Entity{System: corev2.System{Hostname: "localhost"}},
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo"}},
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo"}, System: corev2.System{Hostname: "foo.local"}},
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}},
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}, System: corev2.System{Hostname: "foo.local"}},
 			},
 			want: []*corev2.Entity{
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo"}, System: corev2.System{Hostname: "foo.local"}},
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}, System: corev2.System{Hostname: "foo.local"}},
 			},
 		},
 		{
 			name:             "multiple matches",
 			entityAttributes: []string{`entity.entity_class == "proxy"`},
 			entities: []corev2.Resource{
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo"}, EntityClass: "proxy"},
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "bar"}, EntityClass: "agent"},
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "baz"}, EntityClass: "proxy"},
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}, EntityClass: "proxy"},
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "bar", Namespace: "default"}, EntityClass: "agent"},
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "baz", Namespace: "default"}, EntityClass: "proxy"},
 			},
 			want: []*corev2.Entity{
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo"}, EntityClass: "proxy"},
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "baz"}, EntityClass: "proxy"},
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}, EntityClass: "proxy"},
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "baz", Namespace: "default"}, EntityClass: "proxy"},
 			},
 		},
 		{
 			name:             "invalid expression",
 			entityAttributes: []string{`foo &&`},
 			entities: []corev2.Resource{
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo"}},
+				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}},
 			},
 		},
 	}
@@ -77,7 +77,8 @@ func TestMatchEntities(t *testing.T) {
 			p := &corev2.ProxyRequests{
 				EntityAttributes: tc.entityAttributes,
 			}
-			got := matchEntities(cache.MakeSliceCache(tc.entities, true), p)
+			cacher := cache.NewFromResources(tc.entities, true)
+			got := matchEntities(cacher.Get("default"), p)
 
 			if len(got) != len(tc.want) {
 				t.Errorf("Expected %d entities, got %d", len(tc.want), len(got))
@@ -160,10 +161,11 @@ func BenchmarkMatchEntities1000(b *testing.B) {
 	}
 
 	req := &corev2.ProxyRequests{EntityAttributes: expressions}
-	slice := cache.MakeSliceCache(entities, true)
-
+	// slice := cache.MakeSliceCache(entities, true)
+	cacher := cache.NewFromResources(entities, true)
+	resources := cacher.Get("default")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_ = matchEntities(slice, req)
+		_ = matchEntities(resources, req)
 	}
 }
