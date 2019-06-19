@@ -78,6 +78,12 @@ func (m *Message) Ack() (err error) {
 	if !atomic.CompareAndSwapInt32(&m.once, 0, 1) {
 		return ErrAckNack
 	}
+	if m.q == nil {
+		// If a user has constructed a Message outside of this package, ie,
+		// for the purposes of mocking a Q, then simply return nil here,
+		// instead of dereferencing the underlying Q and causing a panic.
+		return nil
+	}
 	return m.q.ack(m.ID)
 }
 
@@ -87,6 +93,12 @@ func (m *Message) Ack() (err error) {
 func (m *Message) Nack(retry bool) (err error) {
 	if !atomic.CompareAndSwapInt32(&m.once, 0, 1) {
 		return ErrAckNack
+	}
+	if m.q == nil {
+		// If a user has constructed a Message outside of this package, ie,
+		// for the purposes of mocking a Q, then simply return nil here,
+		// instead of dereferencing the underlying Q and causing a panic.
+		return nil
 	}
 	return m.q.nack(m.ID, retry)
 }

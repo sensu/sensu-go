@@ -745,12 +745,12 @@
   revision = "2315d5715e36303a941d907f038da7f7c44c773b"
 
 [[projects]]
-  digest = "1:55f03143250f57c5674f514c2cbacfe08fa6366a55741e0ec7f3fac1c1ce92bb"
+  digest = "1:80f6da37cbe8e63d0c910df2c5ab26b6550a97b21030fba2b5bb30f29819bccf"
   name = "github.com/sensu/lasr"
   packages = ["."]
   pruneopts = "UT"
-  revision = "ef89d3cc501cf1dc3ef065b60c9fbfa11e823967"
-  version = "v1.2.0"
+  revision = "ad0673de98cd49174a2e6b5cfea3214dafabd66c"
+  version = "v1.2.1"
 
 [[projects]]
   digest = "1:4d2e5a73dc1500038e504a8d78b986630e3626dc027bc030ba5c75da257cdb96"
@@ -1151,6 +1151,7 @@
     "github.com/coreos/etcd/pkg/transport",
     "github.com/coreos/etcd/pkg/types",
     "github.com/coreos/etcd/store",
+    "github.com/coreos/etcd/version",
     "github.com/coreos/pkg/capnslog",
     "github.com/dave/jennifer/jen",
     "github.com/dgrijalva/jwt-go",
@@ -1162,6 +1163,7 @@
     "github.com/go-resty/resty",
     "github.com/gogo/protobuf/gogoproto",
     "github.com/gogo/protobuf/jsonpb",
+    "github.com/gogo/protobuf/proto",
     "github.com/golang/protobuf/proto",
     "github.com/google/uuid",
     "github.com/gorilla/mux",

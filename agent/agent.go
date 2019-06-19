@@ -16,7 +16,6 @@ import (
 	"sync"
 
 	time "github.com/echlebek/timeproxy"
-	"github.com/sensu/lasr"
 
 	"github.com/atlassian/gostatsd/pkg/statsd"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -59,7 +58,7 @@ type Agent struct {
 	systemInfo      *corev2.System
 	systemInfoMu    sync.RWMutex
 	wg              sync.WaitGroup
-	apiQueue        *lasr.Q
+	apiQueue        queue
 }
 
 // NewAgent creates a new Agent. It returns non-nil error if there is any error
@@ -169,11 +168,13 @@ func (a *Agent) Run(ctx context.Context) error {
 		return fmt.Errorf("bad keepalive timeout: %d (minimum value is 5 seconds)", timeout)
 	}
 
-	assetManager := asset.NewManager(a.config.CacheDir, a.getAgentEntity(), &a.wg)
-	var err error
-	a.assetGetter, err = assetManager.StartAssetManager(ctx)
-	if err != nil {
-		return err
+	if !a.config.DisableAssets {
+		assetManager := asset.NewManager(a.config.CacheDir, a.getAgentEntity(), &a.wg)
+		var err error
+		a.assetGetter, err = assetManager.StartAssetManager(ctx)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Start the statsd listener only if the agent configuration has it enabled

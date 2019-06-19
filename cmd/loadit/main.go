@@ -3,11 +3,9 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strings"
 	"syscall"
 
@@ -34,20 +32,14 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	homedir, err := os.UserHomeDir()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	cacheDir := filepath.Join(homedir, "sensu-benchmark-cache")
-
 	for i := 0; i < *flagCount; i++ {
 		name := uuid.New().String()
 
 		cfg := agent.NewConfig()
 		cfg.API.Host = agent.DefaultAPIHost
 		cfg.API.Port = agent.DefaultAPIPort
-		cfg.CacheDir = filepath.Join(cacheDir, fmt.Sprintf("sensu-agent-%d", i))
+		cfg.CacheDir = os.DevNull
+		cfg.DisableAssets = true
 		cfg.Deregister = true
 		cfg.DeregistrationHandler = ""
 		cfg.DisableAPI = true
