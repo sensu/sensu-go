@@ -60,6 +60,10 @@ func (a *Authorizer) VisitRulesFor(ctx context.Context, attrs *authorization.Att
 		}
 	}
 
+	if len(attrs.Namespace) == 0 {
+		return
+	}
+
 	roleBindings, err := a.Store.ListRoleBindings(ctx, &store.SelectionPredicate{})
 	if err != nil {
 		if !visitor(nil, empty, err) {

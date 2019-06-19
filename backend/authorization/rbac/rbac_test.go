@@ -217,6 +217,39 @@ func TestAuthorize(t *testing.T) {
 			},
 			want: true,
 		},
+		{
+			name: "role bindings do not match cluster width resource request",
+			attrs: &authorization.Attributes{
+				User: types.User{
+					Username: "foo",
+				},
+				Verb:     "list",
+				Resource: "users",
+			},
+			storeFunc: func(s *mockstore.MockStore) {
+				s.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx"), &store.SelectionPredicate{}).
+					Return(nilClusterRoleBindings, nil)
+
+				s.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx"), &store.SelectionPredicate{}).
+					Return([]*types.RoleBinding{&types.RoleBinding{
+						RoleRef: types.RoleRef{
+							Type: "ClusterRole",
+							Name: "cluster-admin",
+						},
+						Subjects: []types.Subject{
+							types.Subject{Type: types.UserType, Name: "foo"},
+						},
+					}}, nil)
+				s.On("GetClusterRole", mock.AnythingOfType("*context.emptyCtx"), "cluster-admin", mock.Anything).
+					Return(&types.ClusterRole{Rules: []types.Rule{
+						types.Rule{
+							Verbs:     []string{"*"},
+							Resources: []string{"*"},
+						},
+					}}, nil)
+			},
+			want: false,
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
