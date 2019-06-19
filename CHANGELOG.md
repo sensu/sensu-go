@@ -49,6 +49,7 @@ subscriptions in a check.
 - [Web] Avoid exception when parsing non-standard cron statements. (Eg.
 `@every 1h` or `@weekly`)
 - The resources metadata are now validated with the request URI.
+- Fixed a bug where events were not deleted when their corresponding entity was.
 
 ## [5.9.0] - 2019-05-29
 

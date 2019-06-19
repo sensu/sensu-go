@@ -260,7 +260,7 @@ func (a *APId) registerRestrictedResources(router *mux.Router) {
 		routers.NewClusterRolesRouter(a.store),
 		routers.NewClusterRoleBindingsRouter(a.store),
 		routers.NewClusterRouter(actions.NewClusterController(a.cluster, a.store)),
-		routers.NewEntitiesRouter(a.store),
+		routers.NewEntitiesRouter(a.store, a.eventStore),
 		routers.NewEventFiltersRouter(a.store),
 		routers.NewEventsRouter(a.eventStore, a.bus),
 		routers.NewExtensionsRouter(a.store),
