@@ -15,12 +15,6 @@ import (
 	"github.com/sensu/sensu-go/types/dynamic"
 )
 
-// key is used to uniquely identify cache entries
-type key struct {
-	name      string
-	namespace string
-}
-
 // Value contains a cached value, and its synthesized companion.
 type Value struct {
 	Resource corev2.Resource
