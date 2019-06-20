@@ -10,8 +10,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Silenced entries are now retrieved from the cache when determining if an event
 is silenced.
+- Added --disable-assets flag to sensu-agent.
 
-## [5.10.0] - 2019.06.18
+### Fixed
+- Fixed a bug where events were not deleted when their corresponding entity was.
+
+## [5.10.0] - 2019-06-18
 
 ### Added
 - Added POST `/api/core/v2/tessen/metrics`.
@@ -22,7 +26,6 @@ populate, and send them to the Tessen service.
 - Added a tag to all Tessen metrics to differentiate internal builds.
 - Added a unique sensu cluster id, accessible by GET `/api/core/v2/cluster/id`.
 - Added `sensuctl cluster id` which exposes the unique sensu cluster id.
-- Added --disable-assets flag to sensu-agent.
 
 ### Changed
 - [Web] Updated embedded web assets from `275386a` ... `46cd0ee`
@@ -48,7 +51,6 @@ subscriptions in a check.
 - [Web] Avoid exception when parsing non-standard cron statements. (Eg.
 `@every 1h` or `@weekly`)
 - The resources metadata are now validated with the request URI.
-- Fixed a bug where events were not deleted when their corresponding entity was.
 
 ## [5.9.0] - 2019-05-29
 
