@@ -2,11 +2,11 @@ package agent
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"testing"
 	"time"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/testing/mockexecutor"
 
@@ -22,7 +22,7 @@ func TestHandleCheck(t *testing.T) {
 	checkConfig := corev2.FixtureCheckConfig("check")
 
 	request := &corev2.CheckRequest{Config: checkConfig, Issued: time.Now().Unix()}
-	payload, err := json.Marshal(request)
+	payload, err := proto.Marshal(request)
 	if err != nil {
 		assert.FailNow("error marshaling check request")
 	}
@@ -128,8 +128,8 @@ func TestHandleProxyCheck(t *testing.T) {
 	reqA := &corev2.CheckRequest{Config: checkA, Issued: time.Now().Unix()}
 	reqB := &corev2.CheckRequest{Config: checkB, Issued: time.Now().Unix()}
 
-	payloadA, _ := json.Marshal(reqA)
-	payloadB, _ := json.Marshal(reqB)
+	payloadA, _ := proto.Marshal(reqA)
+	payloadB, _ := proto.Marshal(reqB)
 
 	config, cleanup := FixtureConfig()
 	defer cleanup()
@@ -193,7 +193,7 @@ func TestExecuteCheck(t *testing.T) {
 	msg := <-ch
 
 	event := &corev2.Event{}
-	assert.NoError(json.Unmarshal(msg.Payload, event))
+	assert.NoError(proto.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.Equal(uint32(0), event.Check.Status)
 	assert.False(event.HasMetrics())
@@ -203,7 +203,7 @@ func TestExecuteCheck(t *testing.T) {
 	msg = <-ch
 
 	event = &corev2.Event{}
-	assert.NoError(json.Unmarshal(msg.Payload, event))
+	assert.NoError(proto.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.Equal(uint32(1), event.Check.Status)
 	assert.NotZero(event.Check.Issued)
@@ -214,7 +214,7 @@ func TestExecuteCheck(t *testing.T) {
 	msg = <-ch
 
 	event = &corev2.Event{}
-	assert.NoError(json.Unmarshal(msg.Payload, event))
+	assert.NoError(proto.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.Equal(uint32(127), event.Check.Status)
 	assert.Equal("command not found", event.Check.Output)
@@ -226,7 +226,7 @@ func TestExecuteCheck(t *testing.T) {
 	msg = <-ch
 
 	event = &corev2.Event{}
-	assert.NoError(json.Unmarshal(msg.Payload, event))
+	assert.NoError(proto.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.Equal(uint32(2), event.Check.Status)
 
@@ -239,7 +239,7 @@ func TestExecuteCheck(t *testing.T) {
 	msg = <-ch
 
 	event = &corev2.Event{}
-	assert.NoError(json.Unmarshal(msg.Payload, event))
+	assert.NoError(proto.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.False(event.HasMetrics())
 
@@ -249,7 +249,7 @@ func TestExecuteCheck(t *testing.T) {
 	msg = <-ch
 
 	event = &corev2.Event{}
-	assert.NoError(json.Unmarshal(msg.Payload, event))
+	assert.NoError(proto.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.True(event.HasMetrics())
 	require.Equal(t, 2, len(event.Metrics.Points), string(msg.Payload))
@@ -286,7 +286,7 @@ func TestExecuteCheckDiscardOutput(t *testing.T) {
 	msg := <-ch
 
 	event := &corev2.Event{}
-	if err := json.Unmarshal(msg.Payload, event); err != nil {
+	if err := proto.Unmarshal(msg.Payload, event); err != nil {
 		t.Fatal(err)
 	}
 
@@ -299,7 +299,7 @@ func TestExecuteCheckDiscardOutput(t *testing.T) {
 	agent.executeCheck(context.TODO(), request, agent.getAgentEntity())
 	msg = <-ch
 
-	if err := json.Unmarshal(msg.Payload, event); err != nil {
+	if err := proto.Unmarshal(msg.Payload, event); err != nil {
 		t.Fatal(err)
 	}
 
@@ -330,7 +330,7 @@ func TestHandleTokenSubstitution(t *testing.T) {
 	checkConfig.Command = `echo {{ .name }} {{ .Missing | default "defaultValue" }}`
 	checkConfig.Timeout = 10
 
-	payload, err := json.Marshal(request)
+	payload, err := proto.Marshal(request)
 	if err != nil {
 		assert.FailNow("error marshaling check request")
 	}
@@ -340,7 +340,7 @@ func TestHandleTokenSubstitution(t *testing.T) {
 	msg := <-ch
 
 	event := &corev2.Event{}
-	assert.NoError(json.Unmarshal(msg.Payload, event))
+	assert.NoError(proto.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.EqualValues(int32(0), event.Check.Status)
 	assert.Contains(event.Check.Output, "TestTokenSubstitution defaultValue")
@@ -368,7 +368,7 @@ func TestHandleTokenSubstitutionNoKey(t *testing.T) {
 	// check command with unmatched token
 	checkConfig.Command = `{{ .Foo }}`
 
-	payload, err := json.Marshal(request)
+	payload, err := proto.Marshal(request)
 	if err != nil {
 		assert.FailNow("error marshaling check request")
 	}
@@ -378,7 +378,7 @@ func TestHandleTokenSubstitutionNoKey(t *testing.T) {
 	msg := <-ch
 
 	event := &corev2.Event{}
-	assert.NoError(json.Unmarshal(msg.Payload, event))
+	assert.NoError(proto.Unmarshal(msg.Payload, event))
 	assert.NotZero(event.Timestamp)
 	assert.Contains(event.Check.Output, "has no entry for key")
 	assert.Contains(event.Check.Command, checkConfig.Command)
@@ -500,7 +500,7 @@ func TestFailOnAssetCheckWithDisabledAssets(t *testing.T) {
 	checkConfig := corev2.FixtureCheckConfig("check")
 	assets := []corev2.Asset{corev2.Asset{URL: "http://example.com/asset"}}
 	request := &corev2.CheckRequest{Assets: assets, Config: checkConfig, Issued: time.Now().Unix()}
-	payload, err := json.Marshal(request)
+	payload, err := proto.Marshal(request)
 	if err != nil {
 		t.Fatal("error marshaling check request")
 	}
@@ -509,7 +509,7 @@ func TestFailOnAssetCheckWithDisabledAssets(t *testing.T) {
 	}
 	msg := <-agent.sendq
 	var event corev2.Event
-	if err := json.Unmarshal(msg.Payload, &event); err != nil {
+	if err := proto.Unmarshal(msg.Payload, &event); err != nil {
 		t.Fatal(err)
 	}
 	if got, want := event.Check.Status, uint32(3); got != want {
