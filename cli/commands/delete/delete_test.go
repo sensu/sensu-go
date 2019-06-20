@@ -1,7 +1,6 @@
 package delete
 
 import (
-	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"os"
@@ -10,7 +9,6 @@ import (
 
 	"text/template"
 
-	"github.com/ghodss/yaml"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -25,34 +23,11 @@ var resourceSpecTmpl = template.Must(template.New("test").Parse(`
 {"type": "Hook", "spec": {{ .Hook }} }
 `))
 
-var yamlSpecTmpl = template.Must(template.New("yamltest").Parse(`
-type: Check
-spec:
-  {{ .Check }}
----
-type: Asset
-spec:
-  {{ .Asset }}
----
-type: Hook
-spec:
-  {{ .Hook }}
-`))
-
 func mustMarshal(t interface{}) string {
 	b, err := json.Marshal(t)
 	if err != nil {
 		panic(err)
 	}
-	return string(b)
-}
-
-func mustYAMLMarshal(t interface{}) string {
-	b, err := yaml.Marshal(t)
-	if err != nil {
-		panic(err)
-	}
-	b = bytes.Replace(b, []byte("\n"), []byte("\n  "), -1)
 	return string(b)
 }
 
@@ -70,16 +45,6 @@ var resources = struct {
 	Check: mustMarshal(fixtureCheck),
 	Asset: mustMarshal(fixtureAsset),
 	Hook:  mustMarshal(fixtureHook),
-}
-
-var yamlResources = struct {
-	Check string
-	Asset string
-	Hook  string
-}{
-	Check: mustYAMLMarshal(fixtureCheck),
-	Asset: mustYAMLMarshal(fixtureAsset),
-	Hook:  mustYAMLMarshal(fixtureHook),
 }
 
 func TestDeleteCommand(t *testing.T) {
