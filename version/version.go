@@ -35,7 +35,7 @@ var (
 var (
 	buildNumberRE       = regexp.MustCompile(`[0-9]+$`)
 	prereleaseVersionRE = regexp.MustCompile(`.*\-.*\.([0-9]+)\-[0-9]+$`)
-	versionRE           = regexp.MustCompile(`^[0-9]\.[0-9]\.[0-9]`)
+	versionRE           = regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+`)
 )
 
 type BuildType string
