@@ -13,7 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Fixed a bug where events were not deleted when their corresponding entity was.
 
-## [5.10.0] - 2019.06.18
+## [5.10.0] - 2019-06-18
 
 ### Added
 - Added POST `/api/core/v2/tessen/metrics`.
