@@ -3,16 +3,70 @@ package agent
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"github.com/sensu/lasr"
 	bolt "go.etcd.io/bbolt"
 )
 
-func newQueue(path string) (*lasr.Q, error) {
+type queue interface {
+	Close() error
+	Compact() error
+	Receive(context.Context) (*lasr.Message, error)
+	Send([]byte) (lasr.ID, error)
+}
+
+func newMemoryQueue(size int) *memoryQueue {
+	return &memoryQueue{
+		queue: make(chan *lasr.Message, size),
+	}
+}
+
+type memoryQueue struct {
+	id    lasr.Uint64ID
+	mu    sync.Mutex
+	queue chan *lasr.Message
+}
+
+func (m *memoryQueue) Close() error {
+	return nil
+}
+
+func (m *memoryQueue) Compact() error {
+	return nil
+}
+
+func (m *memoryQueue) Receive(ctx context.Context) (*lasr.Message, error) {
+	return <-m.queue, nil
+}
+
+func (m *memoryQueue) Send(body []byte) (lasr.ID, error) {
+	m.mu.Lock()
+	id := m.id
+	m.id++
+	m.mu.Unlock()
+	idBytes, err := id.MarshalBinary()
+	if err != nil {
+		return id, fmt.Errorf("couldn't send message to queue: %s", err)
+	}
+
+	message := &lasr.Message{
+		Body: body,
+		ID:   idBytes,
+	}
+	m.queue <- message
+	return id, nil
+}
+
+func newQueue(path string) (queue, error) {
+	if path == os.DevNull {
+		return newMemoryQueue(1000), nil
+	}
 	if err := os.MkdirAll(path, 0744|os.ModeDir); err != nil {
 		return nil, fmt.Errorf("error creating api queue: %s", err)
 	}

@@ -8,6 +8,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+- Silenced entries are now retrieved from the cache when determining if an event
+is silenced.
+
+## [5.10.0] - 2019.06.18
+
+### Added
 - Added POST `/api/core/v2/tessen/metrics`.
 - Added the ability in TessenD to listen for metric points on the message bus,
 populate, and send them to the Tessen service.
@@ -16,15 +22,22 @@ populate, and send them to the Tessen service.
 - Added a tag to all Tessen metrics to differentiate internal builds.
 - Added a unique sensu cluster id, accessible by GET `/api/core/v2/cluster/id`.
 - Added `sensuctl cluster id` which exposes the unique sensu cluster id.
-- Silenced entries are now retrieved from the cache when determining if an event
-is silenced.
+- Added --disable-assets flag to sensu-agent.
 
 ### Changed
-- [Web] Updated embedded web assets from `275386a` ... `b0c1138`
+- [Web] Updated embedded web assets from `275386a` ... `46cd0ee`
 - Refactoring of the REST API.
 - Changed the identifying cluster id in TessenD from the etcd cluster id to
 the sensu cluster id.
 - [GraphQL] Updates `PutResource` mutation to accept an `upsert` boolean flag parameter. The `upsert` param defaults to `true`, but if set to `false` the mutation will return an error when attempting to create a duplicate resource.
+- Eventd has been refactored. Users should not perceive any changes, but a
+substantial amount of business logic has been moved into other packages.
+- The `sensuctl create` command now accepts resources without a declared
+namespace. If the namespace is omitted, the resource will be created in the
+current namespace, or overridden by the `--namespace` flag.
+- Eventd now uses a constant number of requests to etcd when working with
+silenced entries, instead of a number that is proportional to the number of
+subscriptions in a check.
 
 ### Fixed
 - The check state and check total_state_change properties are now more correct.
@@ -35,16 +48,7 @@ the sensu cluster id.
 - [Web] Avoid exception when parsing non-standard cron statements. (Eg.
 `@every 1h` or `@weekly`)
 - The resources metadata are now validated with the request URI.
-
-### Changed
-- Eventd has been refactored. Users should not perceive any changes, but a
-substantial amount of business logic has been moved into other packages.
-- The `sensuctl create` command now accepts resources without a declared
-namespace. If the namespace is omitted, the resource will be created in the
-current namespace, or overridden by the `--namespace` flag.
-- Eventd now uses a constant number of requests to etcd when working with
-silenced entries, instead of a number that is proportional to the number of
-subscriptions in a check.
+- Fixed a bug where events were not deleted when their corresponding entity was.
 
 ## [5.9.0] - 2019-05-29
 

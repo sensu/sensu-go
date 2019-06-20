@@ -53,6 +53,7 @@ const (
 	flagSubscriptions         = "subscriptions"
 	flagUser                  = "user"
 	flagDisableAPI            = "disable-api"
+	flagDisableAssets         = "disable-assets"
 	flagDisableSockets        = "disable-sockets"
 	flagLogLevel              = "log-level"
 	flagLabels                = "labels"
@@ -108,6 +109,7 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 			cfg.CacheDir = viper.GetString(flagCacheDir)
 			cfg.Deregister = viper.GetBool(flagDeregister)
 			cfg.DeregistrationHandler = viper.GetString(flagDeregistrationHandler)
+			cfg.DisableAssets = viper.GetBool(flagDisableAssets)
 			cfg.EventsAPIRateLimit = rate.Limit(viper.GetFloat64(flagEventsRateLimit))
 			cfg.EventsAPIBurstLimit = viper.GetInt(flagEventsBurstLimit)
 			cfg.KeepaliveInterval = uint32(viper.GetInt(flagKeepaliveInterval))
@@ -201,6 +203,9 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	viper.SetDefault(flagCacheDir, path.SystemCacheDir("sensu-agent"))
 	viper.SetDefault(flagDeregister, false)
 	viper.SetDefault(flagDeregistrationHandler, "")
+	viper.SetDefault(flagDisableAPI, false)
+	viper.SetDefault(flagDisableSockets, false)
+	viper.SetDefault(flagDisableAssets, false)
 	viper.SetDefault(flagEventsRateLimit, agent.DefaultEventsAPIRateLimit)
 	viper.SetDefault(flagEventsBurstLimit, agent.DefaultEventsAPIBurstLimit)
 	viper.SetDefault(flagKeepaliveInterval, agent.DefaultKeepaliveInterval)
@@ -217,8 +222,6 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	viper.SetDefault(flagStatsdEventHandlers, []string{})
 	viper.SetDefault(flagSubscriptions, []string{})
 	viper.SetDefault(flagUser, agent.DefaultUser)
-	viper.SetDefault(flagDisableAPI, false)
-	viper.SetDefault(flagDisableSockets, false)
 	viper.SetDefault(flagTrustedCAFile, "")
 	viper.SetDefault(flagInsecureSkipTLSVerify, false)
 	viper.SetDefault(flagLogLevel, "warn")
@@ -252,6 +255,7 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	cmd.Flags().StringSlice(flagBackendURL, viper.GetStringSlice(flagBackendURL), "ws/wss URL of Sensu backend server (to specify multiple backends use this flag multiple times)")
 	cmd.Flags().Uint32(flagKeepaliveTimeout, uint32(viper.GetInt(flagKeepaliveTimeout)), "number of seconds until agent is considered dead by backend")
 	cmd.Flags().Bool(flagDisableAPI, viper.GetBool(flagDisableAPI), "disable the Agent HTTP API")
+	cmd.Flags().Bool(flagDisableAssets, viper.GetBool(flagDisableAssets), "disable check assets on this agent")
 	cmd.Flags().Bool(flagDisableSockets, viper.GetBool(flagDisableSockets), "disable the Agent TCP and UDP event sockets")
 	cmd.Flags().String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format")
 	cmd.Flags().Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")

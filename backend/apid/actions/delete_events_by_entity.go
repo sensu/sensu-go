@@ -1,0 +1,47 @@
+package actions
+
+import (
+	"fmt"
+	"net/http"
+	"net/url"
+
+	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sirupsen/logrus"
+)
+
+type EntityDeleter struct {
+	EntityStore store.EntityStore
+	EventStore  store.EventStore
+}
+
+func (d EntityDeleter) Delete(req *http.Request) (interface{}, error) {
+	params := mux.Vars(req)
+	entityName, err := url.PathUnescape(params["id"])
+	if err != nil {
+		return nil, NewError(InvalidArgument, err)
+	}
+
+	events, err := d.EventStore.GetEventsByEntity(req.Context(), entityName, &store.SelectionPredicate{})
+	if err != nil {
+		return nil, fmt.Errorf("error fetching events for entity: %s", err)
+	}
+
+	for _, event := range events {
+		if !event.HasCheck() {
+			// improbable
+			continue
+		}
+		err := d.EventStore.DeleteEventByEntityCheck(req.Context(), entityName, event.Check.Name)
+		if err != nil {
+			logger := logger.WithFields(logrus.Fields{
+				"entity":    entityName,
+				"check":     event.Check.Name,
+				"namespace": event.Namespace})
+			logger.WithError(err).Error("error deleting event from entity")
+			continue
+		}
+	}
+
+	return nil, d.EntityStore.DeleteEntityByName(req.Context(), entityName)
+}

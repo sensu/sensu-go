@@ -486,3 +486,33 @@ func TestExtractMetrics(t *testing.T) {
 		})
 	}
 }
+
+func TestFailOnAssetCheckWithDisabledAssets(t *testing.T) {
+	config, cleanup := FixtureConfig()
+	defer cleanup()
+	config.DisableAssets = true
+
+	agent, err := NewAgent(config)
+	if err != nil {
+		t.Fatal(err)
+	}
+	agent.sendq = make(chan *transport.Message, 5)
+	checkConfig := corev2.FixtureCheckConfig("check")
+	assets := []corev2.Asset{corev2.Asset{URL: "http://example.com/asset"}}
+	request := &corev2.CheckRequest{Assets: assets, Config: checkConfig, Issued: time.Now().Unix()}
+	payload, err := json.Marshal(request)
+	if err != nil {
+		t.Fatal("error marshaling check request")
+	}
+	if err := agent.handleCheck(context.Background(), payload); err != nil {
+		t.Fatal(err)
+	}
+	msg := <-agent.sendq
+	var event corev2.Event
+	if err := json.Unmarshal(msg.Payload, &event); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := event.Check.Status, uint32(3); got != want {
+		t.Errorf("bad status: got %d, want %d", got, want)
+	}
+}

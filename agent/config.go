@@ -95,6 +95,10 @@ type Config struct {
 	// DisableAPI disables the events API
 	DisableAPI bool
 
+	// DisableAssets stops the agent from downloading and deploying assets
+	// in check execution.
+	DisableAssets bool
+
 	// DisableSockets disables the event sockets
 	DisableSockets bool
 
