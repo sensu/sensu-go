@@ -88,7 +88,7 @@ func (r *mutationsImpl) PutWrapped(p schema.MutationPutWrappedFieldResolverParam
 		// Web UI (Checks and Handlers), but it's possible that this MAY not
 		// work for future resources.
 		suffix := "/" + url.PathEscape(ret.Value.GetObjectMeta().Name)
-		pathSubstr := strings.TrimSuffix(suffix, path)
+		pathSubstr := strings.TrimSuffix(path, suffix)
 		err = client.Post(pathSubstr, bytes)
 	}
 	if err != nil {

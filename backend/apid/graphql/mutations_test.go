@@ -30,7 +30,7 @@ func TestMutationTypePutWrappedUpsertTrue(t *testing.T) {
 	params.Args.Upsert = true
 
 	client, factory := client.NewClientFactory()
-	client.On("Put", mock.Anything, mock.Anything).Return(nil).Once()
+	client.On("Put", "/api/core/v2/namespaces/sensu-devel/silenced/test:fred", mock.Anything).Return(nil).Once()
 	impl := mutationsImpl{factory: factory}
 
 	// Success
@@ -69,7 +69,7 @@ func TestMutationTypePutWrappedUpsertFalse(t *testing.T) {
 	params.Args.Upsert = false
 
 	client, factory := client.NewClientFactory()
-	client.On("Post", mock.Anything, mock.Anything).Return(nil).Once()
+	client.On("Post", "/api/core/v2/namespaces/sensu-devel/silenced", mock.Anything).Return(nil).Once()
 	impl := mutationsImpl{factory: factory}
 
 	// Success
