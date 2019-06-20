@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/asset"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/types"
@@ -132,23 +131,29 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 					Error("failed to retrieve a handler"))
 				continue
 			}
-			extension, err = p.store.GetExtension(ctx, handlerName)
-			if err == store.ErrNoExtension {
-				continue
-			}
-			if err != nil {
-				(logger.
-					WithFields(fields).
-					WithError(err).
-					Error("failed to retrieve an extension"))
-				continue
-			}
-			handler = &types.Handler{
-				ObjectMeta: types.ObjectMeta{
-					Name: extension.URL,
-				},
-				Type: "grpc",
-			}
+
+			continue // remove this line if you enable the stuff below
+
+			// TODO: this code enables extension handler lookups, but for now,
+			// extensions are not enabled. Re-enable this code when extensions
+			// are re-enabled.
+			// extension, err = p.store.GetExtension(ctx, handlerName)
+			// if err == store.ErrNoExtension {
+			// 	continue
+			// }
+			// if err != nil {
+			// 	(logger.
+			// 		WithFields(fields).
+			// 		WithError(err).
+			// 		Error("failed to retrieve an extension"))
+			// 	continue
+			// }
+			// handler = &types.Handler{
+			// 	ObjectMeta: types.ObjectMeta{
+			// 		Name: extension.URL,
+			// 	},
+			// 	Type: "grpc",
+			// }
 		}
 
 		if handler.Type == "set" {

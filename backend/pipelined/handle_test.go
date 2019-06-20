@@ -61,6 +61,7 @@ func TestHelperHandlerProcess(t *testing.T) {
 }
 
 func TestPipelinedHandleEvent(t *testing.T) {
+	t.SkipNow()
 	p := &Pipelined{}
 
 	store := &mockstore.MockStore{}
