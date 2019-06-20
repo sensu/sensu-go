@@ -2,7 +2,6 @@ package etcd
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"time"
 
@@ -87,35 +86,30 @@ func (w *Watcher) start(ctx context.Context) {
 		defer close(w.resultChan)
 		_ = limiter.Wait(ctx)
 		for ctx.Err() == nil {
-			for watchResponse := range watcherChan {
+			select {
+			case watchResponse, closed := <-watcherChan:
 				if err := watchResponse.Err(); err != nil {
-					if ctx.Err() != nil {
-						// Our context was canceled, return without error,
-						// since the consumer is probably shutting down.
-						return
-					}
 					logger.WithError(err).Info("error from watch response")
 					w.resultChan <- store.WatchEvent{
 						Type: store.WatchError,
 						Err:  err,
 					}
-					if watchResponse.Canceled {
-						// Reinstate the watcher and break to the outer loop
+
+					if watchResponse.Canceled || closed {
+						// Reinstate the watcher
 						watcherChan = w.client.Watch(ctx, w.key, opts...)
-						break
 					}
-					continue
+				} else {
+					for _, event := range watchResponse.Events {
+						logger.Debugf("received event of type %v for key %s", event.Type, event.Kv.Key)
+						w.event(ctx, event)
+					}
 				}
 
-				for _, event := range watchResponse.Events {
-					logger.Debugf("received event of type %v for key %s", event.Type, event.Kv.Key)
-					w.event(ctx, event)
-				}
-			}
-			if w.client.Ctx().Err() != nil {
+			case <-w.client.Ctx().Done():
 				w.resultChan <- store.WatchEvent{
 					Type: store.WatchError,
-					Err:  errors.New("client closed unexpectedly"),
+					Err:  w.client.Ctx().Err(),
 				}
 				return
 			}
