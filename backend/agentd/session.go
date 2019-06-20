@@ -8,6 +8,8 @@ import (
 
 	jsoniter "github.com/json-iterator/go"
 	"github.com/prometheus/client_golang/prometheus"
+	"github.com/gogo/protobuf/proto"
+
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
@@ -179,7 +181,7 @@ func (s *Session) subPump() {
 				continue
 			}
 
-			configBytes, err := json.Marshal(request)
+			configBytes, err := proto.Marshal(request)
 			if err != nil {
 				logger.WithError(err).Error("session failed to serialize check request")
 				continue
@@ -288,7 +290,7 @@ func (s *Session) Stop() {
 
 func (s *Session) handleKeepalive(ctx context.Context, payload []byte) error {
 	keepalive := &types.Event{}
-	err := json.Unmarshal(payload, keepalive)
+	err := proto.Unmarshal(payload, keepalive)
 	if err != nil {
 		return err
 	}
@@ -310,7 +312,7 @@ func (s *Session) handleKeepalive(ctx context.Context, payload []byte) error {
 func (s *Session) handleEvent(ctx context.Context, payload []byte) error {
 	// Decode the payload to an event
 	event := &types.Event{}
-	if err := json.Unmarshal(payload, event); err != nil {
+	if err := proto.Unmarshal(payload, event); err != nil {
 		return err
 	}
 

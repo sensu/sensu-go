@@ -7,7 +7,6 @@ package agent
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -16,6 +15,7 @@ import (
 	"sync"
 
 	time "github.com/echlebek/timeproxy"
+	"github.com/gogo/protobuf/proto"
 
 	"github.com/atlassian/gostatsd/pkg/statsd"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -290,7 +290,7 @@ func (a *Agent) newKeepalive() *transport.Message {
 	keepalive.Entity = a.getAgentEntity()
 	keepalive.Timestamp = time.Now().Unix()
 
-	msgBytes, err := json.Marshal(keepalive)
+	msgBytes, err := proto.Marshal(keepalive)
 	if err != nil {
 		// unlikely that this will ever happen
 		logger.WithError(err).Error("error sending keepalive")

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/agent/transformers"
 	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
@@ -22,7 +23,7 @@ import (
 // TODO(greg): At some point, we're going to need max parallelism.
 func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
 	request := &v2.CheckRequest{}
-	if err := json.Unmarshal(payload, request); err != nil {
+	if err := proto.Unmarshal(payload, request); err != nil {
 		return err
 	} else if request == nil {
 		return errors.New("given check configuration appears invalid")
@@ -202,7 +203,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *v2.CheckRequest, enti
 		event.Check.Output = ""
 	}
 
-	msg, err := json.Marshal(event)
+	msg, err := proto.Marshal(event)
 	if err != nil {
 		logger.WithError(err).Error("error marshaling check result")
 		return
@@ -245,7 +246,7 @@ func (a *Agent) sendFailure(event *v2.Event, err error) {
 	event.Entity = a.getAgentEntity()
 	event.Timestamp = time.Now().Unix()
 
-	if msg, err := json.Marshal(event); err != nil {
+	if msg, err := proto.Marshal(event); err != nil {
 		logger.WithError(err).Error("error marshaling check failure")
 	} else {
 		tm := &transport.Message{
