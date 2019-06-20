@@ -217,6 +217,39 @@ func TestAuthorize(t *testing.T) {
 			},
 			want: true,
 		},
+		{
+			name: "role bindings do not match cluster width resource request",
+			attrs: &authorization.Attributes{
+				User: types.User{
+					Username: "foo",
+				},
+				Verb:     "list",
+				Resource: "users",
+			},
+			storeFunc: func(s *mockstore.MockStore) {
+				s.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx"), &store.SelectionPredicate{}).
+					Return(nilClusterRoleBindings, nil)
+
+				s.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx"), &store.SelectionPredicate{}).
+					Return([]*types.RoleBinding{&types.RoleBinding{
+						RoleRef: types.RoleRef{
+							Type: "ClusterRole",
+							Name: "cluster-admin",
+						},
+						Subjects: []types.Subject{
+							types.Subject{Type: types.UserType, Name: "foo"},
+						},
+					}}, nil)
+				s.On("GetClusterRole", mock.AnythingOfType("*context.emptyCtx"), "cluster-admin", mock.Anything).
+					Return(&types.ClusterRole{Rules: []types.Rule{
+						types.Rule{
+							Verbs:     []string{"*"},
+							Resources: []string{"*"},
+						},
+					}}, nil)
+			},
+			want: false,
+		},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -345,5 +378,73 @@ func TestRuleAllows(t *testing.T) {
 				t.Errorf("ruleAllows() = %v, want %v", got, tc.want)
 			}
 		})
+	}
+}
+
+func TestVisitRulesFor(t *testing.T) {
+	attrs := &authorization.Attributes{
+		Namespace: "acme",
+		User: types.User{
+			Username: "foo",
+		},
+		Verb:         "create,delete",
+		Resource:     "checks",
+		ResourceName: "check-cpu",
+	}
+	stor := &mockstore.MockStore{}
+	a := &Authorizer{
+		Store: stor,
+	}
+	stor.On("ListClusterRoleBindings", mock.AnythingOfType("*context.emptyCtx"), &store.SelectionPredicate{}).
+		Return([]*types.ClusterRoleBinding{&types.ClusterRoleBinding{
+			RoleRef: types.RoleRef{
+				Type: "ClusterRole",
+				Name: "admin",
+			},
+			Subjects: []types.Subject{
+				types.Subject{Type: types.UserType, Name: "foo"},
+			},
+		}}, nil)
+
+	stor.On("ListRoleBindings", mock.AnythingOfType("*context.emptyCtx"), &store.SelectionPredicate{}).
+		Return([]*types.RoleBinding{&types.RoleBinding{
+			RoleRef: types.RoleRef{
+				Type: "Role",
+				Name: "admin",
+			},
+			Subjects: []types.Subject{
+				types.Subject{Type: types.UserType, Name: "foo"},
+			},
+		}}, nil)
+	stor.On("GetRole", mock.AnythingOfType("*context.emptyCtx"), "admin", mock.Anything).
+		Return(&types.Role{Rules: []types.Rule{
+			types.Rule{
+				Verbs:         []string{"create"},
+				Resources:     []string{"checks"},
+				ResourceNames: []string{"check-cpu"},
+			},
+		}}, nil)
+	stor.On("GetClusterRole", mock.AnythingOfType("*context.emptyCtx"), "admin", mock.Anything).
+		Return(&types.ClusterRole{Rules: []types.Rule{
+			types.Rule{
+				Verbs:         []string{"delete"},
+				Resources:     []string{"checks"},
+				ResourceNames: []string{"check-cpu"},
+			},
+		}}, nil)
+
+	var rules []types.Rule
+
+	a.VisitRulesFor(context.Background(), attrs, func(binding RoleBinding, rule types.Rule, err error) bool {
+		if err != nil {
+			t.Fatal(err)
+			return false
+		}
+		rules = append(rules, rule)
+		return true
+	})
+
+	if got, want := len(rules), 2; got != want {
+		t.Fatalf("wrong number of rules: got %d, want %d", got, want)
 	}
 }
