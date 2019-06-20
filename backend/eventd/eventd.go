@@ -9,11 +9,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/coreos/etcd/clientv3"
 	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sirupsen/logrus"
 )
 
@@ -53,6 +55,8 @@ var (
 
 // Eventd handles incoming sensu events and stores them in etcd.
 type Eventd struct {
+	ctx             context.Context
+	cancel          context.CancelFunc
 	store           store.Store
 	eventStore      store.EventStore
 	bus             messaging.MessageBus
@@ -65,6 +69,7 @@ type Eventd struct {
 	shutdownChan    chan struct{}
 	wg              *sync.WaitGroup
 	Logger          Logger
+	silencedCache   *cache.Resource
 }
 
 // Option is a functional option.
@@ -76,6 +81,7 @@ type Config struct {
 	EventStore      store.EventStore
 	Bus             messaging.MessageBus
 	LivenessFactory liveness.Factory
+	Client          *clientv3.Client
 }
 
 // New creates a new Eventd.
@@ -93,6 +99,14 @@ func New(c Config, opts ...Option) (*Eventd, error) {
 		mu:              &sync.Mutex{},
 		Logger:          &RawLogger{},
 	}
+
+	e.ctx, e.cancel = context.WithCancel(context.Background())
+	cache, err := cache.New(e.ctx, c.Client, &corev2.Silenced{}, false)
+	if err != nil {
+		return nil, err
+	}
+	e.silencedCache = cache
+
 	for _, o := range opts {
 		if err := o(e); err != nil {
 			return nil, err
@@ -198,9 +212,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 
 	// Add any silenced subscriptions to the event
-	if err := getSilenced(ctx, event, e.store); err != nil {
-		return err
-	}
+	getSilenced(ctx, event, e.silencedCache)
 
 	// Handle expire on resolve silenced entries
 	if err := handleExpireOnResolveEntries(ctx, event, e.store); err != nil {
@@ -375,6 +387,7 @@ func (e *Eventd) Stop() error {
 	if err := e.subscription.Cancel(); err != nil {
 		logger.WithError(err).Error("unable to unsubscribe from message bus")
 	}
+	e.cancel()
 	close(e.eventChan)
 	close(e.shutdownChan)
 	e.wg.Wait()

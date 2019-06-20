@@ -106,16 +106,16 @@ type WatchEventHookConfig struct {
 	Action     WatchActionType
 }
 
-// WatchEventEntity is a notification that the entity store has been updated.
-type WatchEventEntity struct {
-	Entity *corev2.Entity
-	Action WatchActionType
-}
-
 // WatchEventTessenConfig is a notification that the tessen config store has been updated.
 type WatchEventTessenConfig struct {
 	TessenConfig *corev2.TessenConfig
 	Action       WatchActionType
+}
+
+// WatchEventResource is a store event about a specific resource
+type WatchEventResource struct {
+	Resource corev2.Resource
+	Action   WatchActionType
 }
 
 // Store is used to abstract the durable storage used by the Sensu backend
@@ -348,8 +348,6 @@ type EntityStore interface {
 
 	// UpdateEntity creates or updates a given entity.
 	UpdateEntity(ctx context.Context, entity *types.Entity) error
-
-	GetEntityWatcher(context.Context) <-chan WatchEventEntity
 }
 
 // EventStore provides methods for managing events

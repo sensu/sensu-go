@@ -36,6 +36,7 @@ func TestSchedulerd(t *testing.T) {
 		Store:       st,
 		QueueGetter: queue.NewMemoryGetter(),
 		Bus:         bus,
+		Client:      st.Client,
 	})
 	require.NoError(t, err)
 	require.NoError(t, schedulerd.Start())

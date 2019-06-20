@@ -8,6 +8,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+- Silenced entries are now retrieved from the cache when determining if an event
+is silenced.
 - Added --disable-assets flag to sensu-agent.
 
 ### Fixed

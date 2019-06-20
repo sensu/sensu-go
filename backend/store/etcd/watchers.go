@@ -2,6 +2,7 @@ package etcd
 
 import (
 	"context"
+	"reflect"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
@@ -65,50 +66,10 @@ func (s *Store) GetCheckConfigWatcher(ctx context.Context) <-chan store.WatchEve
 	return ch
 }
 
-// GetEntityWatcher returns a channel that emits WatchEventEntity structs notifying
-// the caller that an Entity was updated. If the watcher runs into a terminal error
-// or the context passed is cancelled, then the channel will be closed.
-// The watcher does its best to recover from errors.
-func (s *Store) GetEntityWatcher(ctx context.Context) <-chan store.WatchEventEntity {
-	ch := make(chan store.WatchEventEntity, 1)
-	key := entityKeyBuilder.WithContext(ctx).Build()
-	w := Watch(ctx, s.client, key, true)
-
-	go func() {
-		defer close(ch)
-		for response := range w.Result() {
-			if response.Type == store.WatchUnknown {
-				logger.Error("unknown etcd watch type: ", response.Type)
-				continue
-			}
-
-			var entity corev2.Entity
-
-			if response.Type == store.WatchDelete {
-				meta := store.ParseResourceKey(response.Key)
-				entity.Namespace = meta.Namespace
-				entity.Name = meta.ResourceName
-			} else {
-				if err := unmarshal(response.Object, &entity); err != nil {
-					logger.WithField("key", response.Key).WithError(err).Error("unable to unmarshal entity from key")
-					continue
-				}
-			}
-
-			ch <- store.WatchEventEntity{
-				Action: response.Type,
-				Entity: &entity,
-			}
-		}
-	}()
-
-	return ch
-}
-
-// GetTessenConfigWatcher returns a channel that emits WatchEventTessenConfig structs notifying
-// the caller that a TessenConfig was updated. If the watcher runs into a terminal error
-// or the context passed is cancelled, then the channel will be closed. The caller must
-// The watcher does its best to recover from errors.
+// GetTessenConfigWatcher returns a channel that emits WatchEventTessenConfig
+// structs notifying the caller that a TessenConfig was updated. If the watcher
+// runs into a terminal error or the context passed is cancelled, then the
+// channel will be closed.
 func (s *Store) GetTessenConfigWatcher(ctx context.Context) <-chan store.WatchEventTessenConfig {
 	ch := make(chan store.WatchEventTessenConfig, 1)
 	key := tessenKeyBuilder.WithContext(ctx).Build()
@@ -136,6 +97,55 @@ func (s *Store) GetTessenConfigWatcher(ctx context.Context) <-chan store.WatchEv
 			ch <- store.WatchEventTessenConfig{
 				Action:       response.Type,
 				TessenConfig: &tessen,
+			}
+		}
+	}()
+
+	return ch
+}
+
+// GetResourceWatcher ...
+func GetResourceWatcher(ctx context.Context, client *clientv3.Client, key string, elemType reflect.Type) <-chan store.WatchEventResource {
+	w := Watch(ctx, client, key, true)
+	ch := make(chan store.WatchEventResource, 1)
+
+	go func() {
+		defer close(ch)
+		for response := range w.Result() {
+			if response.Type == store.WatchUnknown {
+				logger.Error("unknown etcd watch type: ", response.Type)
+				continue
+			}
+
+			var resource corev2.Resource
+			elemPtr := reflect.New(elemType.Elem())
+
+			if response.Type == store.WatchDelete {
+				key := store.ParseResourceKey(response.Key)
+
+				meta := elemPtr.Elem().FieldByName("ObjectMeta")
+				if !meta.CanSet() {
+					logger.WithField("key", response.Key).Error("unable to set the resource object meta")
+					continue
+				}
+				if meta.FieldByName("Name").CanSet() {
+					meta.FieldByName("Name").SetString(key.ResourceName)
+				}
+				if meta.FieldByName("Namespace").CanSet() {
+					meta.FieldByName("Namespace").SetString(key.Namespace)
+				}
+			} else {
+				if err := unmarshal(response.Object, elemPtr.Interface()); err != nil {
+					logger.WithField("key", response.Key).WithError(err).
+						Error("unable to unmarshal resource from key")
+					continue
+				}
+			}
+
+			resource = elemPtr.Interface().(corev2.Resource)
+			ch <- store.WatchEventResource{
+				Action:   response.Type,
+				Resource: resource,
 			}
 		}
 	}()

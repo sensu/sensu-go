@@ -3,9 +3,12 @@ package schedulerd
 import (
 	"context"
 
+	"github.com/coreos/etcd/clientv3"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -21,7 +24,7 @@ type Schedulerd struct {
 	cancel               context.CancelFunc
 	errChan              chan error
 	ringPool             *ringv2.Pool
-	entityCache          *EntityCache
+	entityCache          *cache.Resource
 }
 
 // Option is a functional option.
@@ -33,6 +36,7 @@ type Config struct {
 	QueueGetter types.QueueGetter
 	RingPool    *ringv2.Pool
 	Bus         messaging.MessageBus
+	Client      *clientv3.Client
 }
 
 // New creates a new Schedulerd.
@@ -45,7 +49,7 @@ func New(c Config, opts ...Option) (*Schedulerd, error) {
 		ringPool:    c.RingPool,
 	}
 	s.ctx, s.cancel = context.WithCancel(context.Background())
-	cache, err := NewEntityCache(s.ctx, s.store)
+	cache, err := cache.New(s.ctx, c.Client, &corev2.Entity{}, true)
 	if err != nil {
 		return nil, err
 	}

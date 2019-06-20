@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/sensu/sensu-go/backend/store"
-
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/queue"
+	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -64,15 +64,15 @@ func newIntervalScheduler(t *testing.T, ctx context.Context, executor string) *T
 	require.NoError(t, err)
 	scheduler.msgBus = bus
 
-	scheduler.scheduler = NewIntervalScheduler(ctx, s, scheduler.msgBus, scheduler.check, &EntityCache{})
+	scheduler.scheduler = NewIntervalScheduler(ctx, s, scheduler.msgBus, scheduler.check, &cache.Resource{})
 
 	assert.NoError(scheduler.msgBus.Start())
 
 	switch executor {
 	case "adhoc":
-		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, &EntityCache{})
+		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, &cache.Resource{})
 	default:
-		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, &EntityCache{})
+		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, &cache.Resource{})
 	}
 
 	return scheduler
@@ -101,15 +101,15 @@ func newCronScheduler(t *testing.T, ctx context.Context, executor string) *TestC
 	require.NoError(t, err)
 	scheduler.msgBus = bus
 
-	scheduler.scheduler = NewCronScheduler(ctx, s, scheduler.msgBus, scheduler.check, &EntityCache{})
+	scheduler.scheduler = NewCronScheduler(ctx, s, scheduler.msgBus, scheduler.check, &cache.Resource{})
 
 	assert.NoError(scheduler.msgBus.Start())
 
 	switch executor {
 	case "adhoc":
-		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, &EntityCache{})
+		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, &cache.Resource{})
 	default:
-		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, &EntityCache{})
+		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, &cache.Resource{})
 	}
 
 	return scheduler

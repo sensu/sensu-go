@@ -10,6 +10,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 )
@@ -21,7 +22,7 @@ var (
 // Executor executes scheduled or adhoc checks
 type Executor interface {
 	processCheck(ctx context.Context, check *types.CheckConfig) error
-	getEntities(ctx context.Context) ([]EntityCacheValue, error)
+	getEntities(ctx context.Context) ([]cache.Value, error)
 	publishProxyCheckRequests(entities []*types.Entity, check *types.CheckConfig) error
 	execute(check *types.CheckConfig) error
 	buildRequest(check *types.CheckConfig) (*types.CheckRequest, error)
@@ -32,11 +33,11 @@ type CheckExecutor struct {
 	bus         messaging.MessageBus
 	store       store.Store
 	namespace   string
-	entityCache *EntityCache
+	entityCache *cache.Resource
 }
 
 // NewCheckExecutor creates a new check executor
-func NewCheckExecutor(bus messaging.MessageBus, namespace string, store store.Store, cache *EntityCache) *CheckExecutor {
+func NewCheckExecutor(bus messaging.MessageBus, namespace string, store store.Store, cache *cache.Resource) *CheckExecutor {
 	return &CheckExecutor{bus: bus, namespace: namespace, store: store, entityCache: cache}
 }
 
@@ -46,8 +47,8 @@ func (c *CheckExecutor) processCheck(ctx context.Context, check *types.CheckConf
 	return processCheck(ctx, c, check)
 }
 
-func (c *CheckExecutor) getEntities(ctx context.Context) ([]EntityCacheValue, error) {
-	return c.entityCache.GetEntities(store.NewNamespaceFromContext(ctx)), nil
+func (c *CheckExecutor) getEntities(ctx context.Context) ([]cache.Value, error) {
+	return c.entityCache.Get(store.NewNamespaceFromContext(ctx)), nil
 }
 
 func (c *CheckExecutor) publishProxyCheckRequests(entities []*types.Entity, check *types.CheckConfig) error {
@@ -138,11 +139,11 @@ type AdhocRequestExecutor struct {
 	ctx            context.Context
 	cancel         context.CancelFunc
 	listenQueueErr chan error
-	entityCache    *EntityCache
+	entityCache    *cache.Resource
 }
 
 // NewAdhocRequestExecutor returns a new AdhocRequestExecutor.
-func NewAdhocRequestExecutor(ctx context.Context, store store.Store, queue types.Queue, bus messaging.MessageBus, cache *EntityCache) *AdhocRequestExecutor {
+func NewAdhocRequestExecutor(ctx context.Context, store store.Store, queue types.Queue, bus messaging.MessageBus, cache *cache.Resource) *AdhocRequestExecutor {
 	ctx, cancel := context.WithCancel(ctx)
 	executor := &AdhocRequestExecutor{
 		adhocQueue:  queue,
@@ -201,8 +202,8 @@ func (a *AdhocRequestExecutor) processCheck(ctx context.Context, check *types.Ch
 	return processCheck(ctx, a, check)
 }
 
-func (a *AdhocRequestExecutor) getEntities(ctx context.Context) ([]EntityCacheValue, error) {
-	return a.entityCache.GetEntities(store.NewNamespaceFromContext(ctx)), nil
+func (a *AdhocRequestExecutor) getEntities(ctx context.Context) ([]cache.Value, error) {
+	return a.entityCache.Get(store.NewNamespaceFromContext(ctx)), nil
 }
 
 func (a *AdhocRequestExecutor) publishProxyCheckRequests(entities []*types.Entity, check *types.CheckConfig) error {
