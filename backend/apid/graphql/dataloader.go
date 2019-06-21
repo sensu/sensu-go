@@ -19,6 +19,7 @@ const (
 	entitiesLoaderKey
 	eventsLoaderKey
 	handlersLoaderKey
+	mutatorsLoaderKey
 	namespacesLoaderKey
 	silencedsLoaderKey
 )
@@ -174,6 +175,35 @@ func loadHandlers(ctx context.Context, ns string) ([]types.Handler, error) {
 	return records, err
 }
 
+// mutators
+
+func loadMutatorsBatchFn(c client.APIClient) dataloader.BatchFunc {
+	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
+		results := make([]*dataloader.Result, 0, len(keys))
+		for _, key := range keys {
+			records, err := c.ListMutators(key.String(), &client.ListOptions{})
+			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
+			results = append(results, result)
+		}
+		return results
+	}
+}
+
+func loadMutators(ctx context.Context, ns string) ([]types.Mutator, error) {
+	var records []types.Mutator
+	loader, err := getLoader(ctx, mutatorsLoaderKey)
+	if err != nil {
+		return records, err
+	}
+
+	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
+	records, ok := results.([]types.Mutator)
+	if err == nil && !ok {
+		err = errUnexpectedLoaderResult
+	}
+	return records, err
+}
+
 // namespaces
 
 func loadNamespacesBatchFn(c client.APIClient) dataloader.BatchFunc {
@@ -243,6 +273,7 @@ func contextWithLoaders(ctx context.Context, client client.APIClient, opts ...da
 	loaders[entitiesLoaderKey] = dataloader.NewBatchedLoader(loadEntitiesBatchFn(client), opts...)
 	loaders[eventsLoaderKey] = dataloader.NewBatchedLoader(loadEventsBatchFn(client), opts...)
 	loaders[handlersLoaderKey] = dataloader.NewBatchedLoader(loadHandlersBatchFn(client), opts...)
+	loaders[mutatorsLoaderKey] = dataloader.NewBatchedLoader(loadMutatorsBatchFn(client), opts...)
 	loaders[namespacesLoaderKey] = dataloader.NewBatchedLoader(loadNamespacesBatchFn(client), opts...)
 	loaders[silencedsLoaderKey] = dataloader.NewBatchedLoader(loadSilencedsBatchFn(client), opts...)
 	return context.WithValue(ctx, loadersKey, loaders)

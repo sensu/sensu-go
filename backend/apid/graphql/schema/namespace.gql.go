@@ -178,6 +178,29 @@ type NamespaceHandlersFieldResolver interface {
 	Handlers(p NamespaceHandlersFieldResolverParams) (interface{}, error)
 }
 
+// NamespaceMutatorsFieldResolverArgs contains arguments provided to mutators when selected
+type NamespaceMutatorsFieldResolverArgs struct {
+	Offset  int              // Offset - self descriptive
+	Limit   int              // Limit adds an optional limit to the number of records returned.
+	OrderBy MutatorListOrder // OrderBy - Orderby adds an optional order to the records retrieved.
+	Filters []string         /*
+	Filters reduces the set using given arbitrary expression[s]; expressions
+	take on the form KEY: VALUE.
+	*/
+}
+
+// NamespaceMutatorsFieldResolverParams contains contextual info to resolve mutators field
+type NamespaceMutatorsFieldResolverParams struct {
+	graphql.ResolveParams
+	Args NamespaceMutatorsFieldResolverArgs
+}
+
+// NamespaceMutatorsFieldResolver implement to resolve requests for the Namespace's mutators field.
+type NamespaceMutatorsFieldResolver interface {
+	// Mutators implements response to request for mutators field.
+	Mutators(p NamespaceMutatorsFieldResolverParams) (interface{}, error)
+}
+
 // NamespaceSilencesFieldResolverArgs contains arguments provided to silences when selected
 type NamespaceSilencesFieldResolverArgs struct {
 	Offset  int               // Offset - self descriptive
@@ -305,6 +328,7 @@ type NamespaceFieldResolvers interface {
 	NamespaceEntitiesFieldResolver
 	NamespaceEventsFieldResolver
 	NamespaceHandlersFieldResolver
+	NamespaceMutatorsFieldResolver
 	NamespaceSilencesFieldResolver
 	NamespaceSubscriptionsFieldResolver
 	NamespaceIconIDFieldResolver
@@ -404,6 +428,12 @@ func (_ NamespaceAliases) Events(p NamespaceEventsFieldResolverParams) (interfac
 
 // Handlers implements response to request for 'handlers' field.
 func (_ NamespaceAliases) Handlers(p NamespaceHandlersFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Mutators implements response to request for 'mutators' field.
+func (_ NamespaceAliases) Mutators(p NamespaceMutatorsFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -516,6 +546,19 @@ func _ObjTypeNamespaceHandlersHandler(impl interface{}) graphql1.FieldResolveFn 
 		}
 
 		return resolver.Handlers(frp)
+	}
+}
+
+func _ObjTypeNamespaceMutatorsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(NamespaceMutatorsFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := NamespaceMutatorsFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Mutators(frp)
 	}
 }
 
@@ -720,6 +763,34 @@ func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 				Name:              "id",
 				Type:              graphql1.NewNonNull(graphql1.ID),
 			},
+			"mutators": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"filters": &graphql1.ArgumentConfig{
+						DefaultValue: []interface{}{},
+						Description:  "Filters reduces the set using given arbitrary expression[s]; expressions\ntake on the form KEY: VALUE.",
+						Type:         graphql1.NewList(graphql1.NewNonNull(graphql1.String)),
+					},
+					"limit": &graphql1.ArgumentConfig{
+						DefaultValue: 10,
+						Description:  "Limit adds an optional limit to the number of records returned.",
+						Type:         graphql1.Int,
+					},
+					"offset": &graphql1.ArgumentConfig{
+						DefaultValue: 0,
+						Description:  "self descriptive",
+						Type:         graphql1.Int,
+					},
+					"orderBy": &graphql1.ArgumentConfig{
+						DefaultValue: "NAME_DESC",
+						Description:  "Orderby adds an optional order to the records retrieved.",
+						Type:         graphql.InputType("MutatorListOrder"),
+					},
+				},
+				DeprecationReason: "",
+				Description:       "All mutators associated with the namespace.",
+				Name:              "mutators",
+				Type:              graphql1.NewNonNull(graphql.OutputType("MutatorConnection")),
+			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -804,6 +875,7 @@ var _ObjectTypeNamespaceDesc = graphql.ObjectDesc{
 		"handlers":      _ObjTypeNamespaceHandlersHandler,
 		"iconId":        _ObjTypeNamespaceIconIDHandler,
 		"id":            _ObjTypeNamespaceIDHandler,
+		"mutators":      _ObjTypeNamespaceMutatorsHandler,
 		"name":          _ObjTypeNamespaceNameHandler,
 		"silences":      _ObjTypeNamespaceSilencesHandler,
 		"subscriptions": _ObjTypeNamespaceSubscriptionsHandler,

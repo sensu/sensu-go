@@ -21,6 +21,11 @@ type Query {
   entity(namespace: String!, name: String!): Entity
 
   """
+  Mutator fetch the mutator associated with the given set of arguments.
+  """
+  mutator(namespace: String!, name: String!): Mutator
+
+  """
   check fetches the check config associated with the given set of arguments.
   """
   check(namespace: String!, name: String!): CheckConfig

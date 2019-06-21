@@ -132,6 +132,42 @@ func (r *namespaceImpl) Handlers(p schema.NamespaceHandlersFieldResolverParams) 
 	return res, nil
 }
 
+// Mutators implements response to request for 'mutators' field.
+func (r *namespaceImpl) Mutators(p schema.NamespaceMutatorsFieldResolverParams) (interface{}, error) {
+	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
+	nsp := p.Source.(*types.Namespace)
+
+	// finds all records
+	results, err := loadMutators(p.Context, nsp.Name)
+	if err != nil {
+		return res, err
+	}
+
+	// filter
+	matches, err := filter.Compile(p.Args.Filters, MutatorFilters(), v2.MutatorFields)
+	if err != nil {
+		return res, err
+	}
+	filteredResults := make([]*v2.Mutator, 0, len(results))
+	for i := range results {
+		if matches(&results[i]) {
+			filteredResults = append(filteredResults, &results[i])
+		}
+	}
+
+	// sort
+	sort.Sort(v2.SortMutatorsByName(
+		filteredResults,
+		p.Args.OrderBy == schema.MutatorListOrders.NAME,
+	))
+
+	// paginate
+	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(filteredResults))
+	res.Nodes = filteredResults[l:h]
+	res.PageInfo.totalCount = len(filteredResults)
+	return res, nil
+}
+
 // Silences implements response to request for 'silences' field.
 func (r *namespaceImpl) Silences(p schema.NamespaceSilencesFieldResolverParams) (interface{}, error) {
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)

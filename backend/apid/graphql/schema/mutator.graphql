@@ -29,3 +29,27 @@ type Mutator implements Node, Namespaced, Resource {
   """
   toJSON: JSON!
 }
+
+"""
+A connection to a sequence of records.
+"""
+type MutatorConnection {
+  nodes: [Mutator!]!
+  pageInfo: OffsetPageInfo!
+}
+
+"""
+An edge in a connection.
+"""
+type MutatorEdge {
+  node: Mutator
+  cursor: String!
+}
+
+"""
+Describes ways in which a list of mutators can be ordered.
+"""
+enum MutatorListOrder {
+  NAME
+  NAME_DESC
+}

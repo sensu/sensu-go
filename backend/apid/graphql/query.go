@@ -70,6 +70,14 @@ func (r *queryImpl) Handler(p schema.QueryHandlerFieldResolverParams) (interface
 	return handleFetchResult(res, err)
 }
 
+// Mutator implements a response to a request for the 'mutator' field.
+func (r *queryImpl) Mutator(p schema.QueryMutatorFieldResolverParams) (interface{}, error) {
+	ctx := contextWithNamespace(p.Context, p.Args.Namespace)
+	client := r.factory.NewWithContext(ctx)
+	res, err := client.FetchMutator(p.Args.Name)
+	return handleFetchResult(res, err)
+}
+
 // Suggest implements a response to a request for the 'suggest' field.
 func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface{}, error) {
 	results := make(map[string]interface{}, 1)
