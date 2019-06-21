@@ -9,6 +9,9 @@ import (
 	"strings"
 	"syscall"
 
+	"net/http"
+	_ "net/http/pprof"
+
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/types"
@@ -23,6 +26,10 @@ var (
 
 func main() {
 	flag.Parse()
+
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
 
 	logrus.SetLevel(logrus.WarnLevel)
 
