@@ -2,6 +2,7 @@ package graphql
 
 import (
 	v2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
@@ -15,6 +16,11 @@ var _ schema.MutatorFieldResolvers = (*mutatorImpl)(nil)
 
 type mutatorImpl struct {
 	schema.MutatorAliases
+}
+
+// ID implements response to request for 'id' field.
+func (*mutatorImpl) ID(p graphql.ResolveParams) (string, error) {
+	return globalid.MutatorTranslator.EncodeToString(p.Source), nil
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type
