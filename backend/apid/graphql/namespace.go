@@ -96,6 +96,42 @@ func (r *namespaceImpl) Checks(p schema.NamespaceChecksFieldResolverParams) (int
 	return res, nil
 }
 
+// EventFilters implements response to request for 'eventFilters' field.
+func (r *namespaceImpl) EventFilters(p schema.NamespaceEventFiltersFieldResolverParams) (interface{}, error) {
+	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
+	nsp := p.Source.(*types.Namespace)
+
+	// find all records
+	results, err := loadEventFilters(p.Context, nsp.Name)
+	if err != nil {
+		return res, err
+	}
+
+	// filter
+	matches, err := filter.Compile(p.Args.Filters, EventFilterFilters(), v2.EventFilterFields)
+	if err != nil {
+		return res, err
+	}
+	filteredResults := make([]*v2.EventFilter, 0, len(results))
+	for i := range results {
+		if matches(&results[i]) {
+			filteredResults = append(filteredResults, &results[i])
+		}
+	}
+
+	// sort records
+	sort.Sort(types.SortEventFiltersByName(
+		filteredResults,
+		p.Args.OrderBy == schema.EventFilterListOrders.NAME,
+	))
+
+	// paginate
+	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(filteredResults))
+	res.Nodes = filteredResults[l:h]
+	res.PageInfo.totalCount = len(filteredResults)
+	return res, nil
+}
+
 // Handlers implements response to request for 'handlers' field.
 func (r *namespaceImpl) Handlers(p schema.NamespaceHandlersFieldResolverParams) (interface{}, error) {
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)

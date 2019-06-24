@@ -243,6 +243,8 @@ var (
 	SortEntitiesByPredicate     = v2.SortEntitiesByPredicate
 	SortEntitiesByID            = v2.SortEntitiesByID
 	SortEntitiesByLastSeen      = v2.SortEntitiesByLastSeen
+	SortEventFiltersByPredicate = v2.SortEventFiltersByPredicate
+	SortEventFiltersByName      = v2.SortEventFiltersByName
 	SortHandlersByPredicate     = v2.SortHandlersByPredicate
 	SortHandlersByName          = v2.SortHandlersByName
 	SortSilencedByPredicate     = v2.SortSilencedByPredicate

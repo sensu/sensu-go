@@ -18,6 +18,7 @@ const (
 	checkConfigsLoaderKey
 	entitiesLoaderKey
 	eventsLoaderKey
+	eventFiltersLoaderKey
 	handlersLoaderKey
 	mutatorsLoaderKey
 	namespacesLoaderKey
@@ -140,6 +141,35 @@ func loadEvents(ctx context.Context, ns string) ([]types.Event, error) {
 
 	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
 	records, ok := results.([]types.Event)
+	if err == nil && !ok {
+		err = errUnexpectedLoaderResult
+	}
+	return records, err
+}
+
+// event filters
+
+func loadEventFiltersBatchFn(c client.APIClient) dataloader.BatchFunc {
+	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
+		results := make([]*dataloader.Result, 0, len(keys))
+		for _, key := range keys {
+			records, err := c.ListFilters(key.String(), &client.ListOptions{})
+			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
+			results = append(results, result)
+		}
+		return results
+	}
+}
+
+func loadEventFilters(ctx context.Context, ns string) ([]types.EventFilter, error) {
+	var records []types.EventFilter
+	loader, err := getLoader(ctx, eventFiltersLoaderKey)
+	if err != nil {
+		return records, err
+	}
+
+	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
+	records, ok := results.([]types.EventFilter)
 	if err == nil && !ok {
 		err = errUnexpectedLoaderResult
 	}
@@ -272,6 +302,7 @@ func contextWithLoaders(ctx context.Context, client client.APIClient, opts ...da
 	loaders[checkConfigsLoaderKey] = dataloader.NewBatchedLoader(loadCheckConfigsBatchFn(client), opts...)
 	loaders[entitiesLoaderKey] = dataloader.NewBatchedLoader(loadEntitiesBatchFn(client), opts...)
 	loaders[eventsLoaderKey] = dataloader.NewBatchedLoader(loadEventsBatchFn(client), opts...)
+	loaders[eventFiltersLoaderKey] = dataloader.NewBatchedLoader(loadEventFiltersBatchFn(client), opts...)
 	loaders[handlersLoaderKey] = dataloader.NewBatchedLoader(loadHandlersBatchFn(client), opts...)
 	loaders[mutatorsLoaderKey] = dataloader.NewBatchedLoader(loadMutatorsBatchFn(client), opts...)
 	loaders[namespacesLoaderKey] = dataloader.NewBatchedLoader(loadNamespacesBatchFn(client), opts...)

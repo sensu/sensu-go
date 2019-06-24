@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"sort"
 	"strings"
 
 	"github.com/sensu/sensu-go/js"
@@ -112,6 +113,51 @@ func FixtureDenyEventFilter(name string) *EventFilter {
 			Name:      name,
 		},
 	}
+}
+
+//
+// Sorting
+//
+type cmpEventFilter func(a, b *EventFilter) bool
+
+// SortEventFiltersByPredicate can be used to sort a given collection using a given
+// predicate.
+func SortEventFiltersByPredicate(ef []*EventFilter, fn cmpEventFilter) sort.Interface {
+	return &eventFilterSorter{eventFilters: ef, byFn: fn}
+}
+
+// SortEventFiltersByName can be used to sort a given collection of event filter by
+// their names.
+func SortEventFiltersByName(ef []*EventFilter, asc bool) sort.Interface {
+	if asc {
+		return SortEventFiltersByPredicate(ef, func(a, b *EventFilter) bool {
+			return a.Name < b.Name
+		})
+	}
+
+	return SortEventFiltersByPredicate(ef, func(a, b *EventFilter) bool {
+		return a.Name > b.Name
+	})
+}
+
+type eventFilterSorter struct {
+	eventFilters []*EventFilter
+	byFn         cmpEventFilter
+}
+
+// Len implements sort.Interface.
+func (s *eventFilterSorter) Len() int {
+	return len(s.eventFilters)
+}
+
+// Swap implements sort.Interface.
+func (s *eventFilterSorter) Swap(i, j int) {
+	s.eventFilters[i], s.eventFilters[j] = s.eventFilters[j], s.eventFilters[i]
+}
+
+// Less implements sort.Interface.
+func (s *eventFilterSorter) Less(i, j int) bool {
+	return s.byFn(s.eventFilters[i], s.eventFilters[j])
 }
 
 // EventFilterFields returns a set of fields that represent that resource
