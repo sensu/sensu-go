@@ -94,7 +94,7 @@ func New(c Config, opts ...Option) (*Eventd, error) {
 		livenessFactory: c.LivenessFactory,
 		errChan:         make(chan error, 1),
 		shutdownChan:    make(chan struct{}, 1),
-		eventChan:       make(chan interface{}, 100),
+		eventChan:       make(chan interface{}, 1000),
 		wg:              &sync.WaitGroup{},
 		mu:              &sync.Mutex{},
 		Logger:          &RawLogger{},
