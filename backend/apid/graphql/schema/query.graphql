@@ -31,6 +31,11 @@ type Query {
   check(namespace: String!, name: String!): CheckConfig
 
   """
+  eventFilter fetches the event filter associated with the given set of arguments.
+  """
+  eventFilter(namespace: String!, name: String!): EventFilter
+
+  """
   handler fetch the handler associated with the given set of arguments.
   """
   handler(namespace: String!, name: String!): Handler

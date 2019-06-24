@@ -1,0 +1,60 @@
+"""
+A Filter is a filter specification.
+"""
+type EventFilter implements Node, Namespaced, Resource {
+  "The globally unique identifier of the record"
+  id: ID!
+
+  "Namespace in which this record resides"
+  namespace: String!
+
+  "Name is the unique identifier for an event filter."
+  name: String!
+
+  "metadata contains name, namespace, labels and annotations of the record"
+  metadata: ObjectMeta!
+
+  "Command is the command to be executed."
+  action: EventFilterAction!
+
+  "Env is a list of environment variables to use with command execution"
+  expressions: [String!]!
+
+  "RuntimeAssets are a list of assets required to execute the event filter"
+  runtimeAssets: [Asset!]!
+
+  """
+  toJSON returns a REST API compatible representation of the resource. Handy for
+  sharing snippets that can then be imported with `sensuctl create`.
+  """
+  toJSON: JSON!
+}
+
+enum EventFilterAction {
+  ALLOW
+  DENY
+}
+
+"""
+A connection to a sequence of records.
+"""
+type EventFilterConnection {
+  nodes: [EventFilter!]!
+  pageInfo: OffsetPageInfo!
+}
+
+"""
+An edge in a connection.
+"""
+type EventFilterEdge {
+  node: EventFilter
+  cursor: String!
+}
+
+"""
+Describes ways in which a list of mutators can be ordered.
+"""
+enum EventFilterListOrder {
+  NAME
+  NAME_DESC
+}

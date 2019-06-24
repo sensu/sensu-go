@@ -104,6 +104,24 @@ type QueryCheckFieldResolver interface {
 	Check(p QueryCheckFieldResolverParams) (interface{}, error)
 }
 
+// QueryEventFilterFieldResolverArgs contains arguments provided to eventFilter when selected
+type QueryEventFilterFieldResolverArgs struct {
+	Namespace string // Namespace - self descriptive
+	Name      string // Name - self descriptive
+}
+
+// QueryEventFilterFieldResolverParams contains contextual info to resolve eventFilter field
+type QueryEventFilterFieldResolverParams struct {
+	graphql.ResolveParams
+	Args QueryEventFilterFieldResolverArgs
+}
+
+// QueryEventFilterFieldResolver implement to resolve requests for the Query's eventFilter field.
+type QueryEventFilterFieldResolver interface {
+	// EventFilter implements response to request for eventFilter field.
+	EventFilter(p QueryEventFilterFieldResolverParams) (interface{}, error)
+}
+
 // QueryHandlerFieldResolverArgs contains arguments provided to handler when selected
 type QueryHandlerFieldResolverArgs struct {
 	Namespace string // Namespace - self descriptive
@@ -270,6 +288,7 @@ type QueryFieldResolvers interface {
 	QueryEntityFieldResolver
 	QueryMutatorFieldResolver
 	QueryCheckFieldResolver
+	QueryEventFilterFieldResolver
 	QueryHandlerFieldResolver
 	QuerySuggestFieldResolver
 	QueryNodeFieldResolver
@@ -355,6 +374,12 @@ func (_ QueryAliases) Mutator(p QueryMutatorFieldResolverParams) (interface{}, e
 
 // Check implements response to request for 'check' field.
 func (_ QueryAliases) Check(p QueryCheckFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// EventFilter implements response to request for 'eventFilter' field.
+func (_ QueryAliases) EventFilter(p QueryEventFilterFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -459,6 +484,19 @@ func _ObjTypeQueryCheckHandler(impl interface{}) graphql1.FieldResolveFn {
 		}
 
 		return resolver.Check(frp)
+	}
+}
+
+func _ObjTypeQueryEventFilterHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(QueryEventFilterFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := QueryEventFilterFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.EventFilter(frp)
 	}
 }
 
@@ -569,6 +607,22 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 				Description:       "Event fetches the event associated with the given set of arguments.",
 				Name:              "event",
 				Type:              graphql.OutputType("Event"),
+			},
+			"eventFilter": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"name": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.NewNonNull(graphql1.String),
+					},
+					"namespace": &graphql1.ArgumentConfig{
+						Description: "self descriptive",
+						Type:        graphql1.NewNonNull(graphql1.String),
+					},
+				},
+				DeprecationReason: "",
+				Description:       "eventFilter fetches the event filter associated with the given set of arguments.",
+				Name:              "eventFilter",
+				Type:              graphql.OutputType("EventFilter"),
 			},
 			"handler": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
@@ -691,6 +745,7 @@ var _ObjectTypeQueryDesc = graphql.ObjectDesc{
 		"check":       _ObjTypeQueryCheckHandler,
 		"entity":      _ObjTypeQueryEntityHandler,
 		"event":       _ObjTypeQueryEventHandler,
+		"eventFilter": _ObjTypeQueryEventFilterHandler,
 		"handler":     _ObjTypeQueryHandlerHandler,
 		"mutator":     _ObjTypeQueryMutatorHandler,
 		"namespace":   _ObjTypeQueryNamespaceHandler,
