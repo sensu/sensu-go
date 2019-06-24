@@ -62,7 +62,7 @@ func New(c Config, options ...Option) (*Pipelined, error) {
 		running:           &atomic.Value{},
 		wg:                &sync.WaitGroup{},
 		errChan:           make(chan error, 1),
-		eventChan:         make(chan interface{}, 100),
+		eventChan:         make(chan interface{}, 1000),
 		executor:          command.NewExecutor(),
 		assetGetter:       c.AssetGetter,
 	}
