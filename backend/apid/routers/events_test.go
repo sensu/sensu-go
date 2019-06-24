@@ -156,7 +156,7 @@ func TestEventsRouter(t *testing.T) {
 					Return(nil).
 					Once()
 			},
-			wantStatusCode: http.StatusNoContent,
+			wantStatusCode: http.StatusCreated,
 		},
 		{
 			name:           "it returns 400 if the payload to update is not decodable",
@@ -206,7 +206,7 @@ func TestEventsRouter(t *testing.T) {
 					Return(nil).
 					Once()
 			},
-			wantStatusCode: http.StatusNoContent,
+			wantStatusCode: http.StatusCreated,
 		},
 		{
 			name:   "it returns 404 if the event to delete does not exist",

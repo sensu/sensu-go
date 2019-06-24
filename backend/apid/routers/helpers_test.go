@@ -280,7 +280,7 @@ var createResourceSuccessTestCase = func(resource corev2.Resource) routerTestCas
 	typ := reflect.TypeOf(resource).String()
 
 	return routerTestCase{
-		name:   "it returns 204 if the resource was created",
+		name:   "it returns 201 if the resource was created",
 		method: http.MethodPost,
 		path:   resource.URIPath(),
 		body:   marshal(resource),
@@ -289,7 +289,7 @@ var createResourceSuccessTestCase = func(resource corev2.Resource) routerTestCas
 				Return(nil).
 				Once()
 		},
-		wantStatusCode: http.StatusNoContent,
+		wantStatusCode: http.StatusCreated,
 	}
 }
 
@@ -367,7 +367,7 @@ var updateResourceSuccessTestCase = func(resource corev2.Resource) routerTestCas
 	typ := reflect.TypeOf(resource).String()
 
 	return routerTestCase{
-		name:   "it returns 204 if the resource was updated",
+		name:   "it returns 201 if the resource was updated",
 		method: http.MethodPut,
 		path:   resource.URIPath(),
 		body:   marshal(resource),
@@ -376,7 +376,7 @@ var updateResourceSuccessTestCase = func(resource corev2.Resource) routerTestCas
 				Return(nil).
 				Once()
 		},
-		wantStatusCode: http.StatusNoContent,
+		wantStatusCode: http.StatusCreated,
 	}
 }
 

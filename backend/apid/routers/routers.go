@@ -16,13 +16,17 @@ type errorBody struct {
 }
 
 // RespondWith given writer and resource, marshal to JSON and write response.
-func RespondWith(w http.ResponseWriter, resources interface{}) {
+func RespondWith(w http.ResponseWriter, r *http.Request, resources interface{}) {
 	// Set content-type to JSON
 	w.Header().Set("Content-Type", "application/json")
 
 	// If no resource(s) are present return a 204 response code
 	if resources == nil {
-		w.WriteHeader(http.StatusNoContent)
+		if r.Method == http.MethodPost || r.Method == http.MethodPut {
+			w.WriteHeader(http.StatusCreated)
+		} else {
+			w.WriteHeader(http.StatusNoContent)
+		}
 		return
 	}
 
@@ -124,7 +128,7 @@ func actionHandler(action actionHandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		RespondWith(w, resources)
+		RespondWith(w, r, resources)
 	}
 }
 
@@ -132,13 +136,13 @@ func actionHandler(action actionHandlerFunc) http.HandlerFunc {
 // TODO(palourde): Add pagination to silenced entries
 func listHandler(fn listHandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		records, err := fn(w, r)
+		resources, err := fn(w, r)
 		if err != nil {
 			WriteError(w, err)
 			return
 		}
 
-		RespondWith(w, records)
+		RespondWith(w, r, resources)
 	}
 }
 

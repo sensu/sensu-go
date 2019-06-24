@@ -117,7 +117,7 @@ func TestChecksRouterCustomRoutes(t *testing.T) {
 			controllerFunc: func(c *mockCheckController) {
 				c.On("AddCheckHook", mock.Anything, "check1", mock.AnythingOfType("v2.HookList")).Return(nil)
 			},
-			wantStatusCode: http.StatusNoContent,
+			wantStatusCode: http.StatusCreated,
 		},
 		{
 			name:   "it deletes a check hook from a check",
