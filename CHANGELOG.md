@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Fixed the entity_attributes in proxy_requests so all attributes must match
 instead of only one of them.
+- Fixed a bug where events were not deleted when their corresponding entity was.
 
 ## [5.10.0] - 2019-06-18
 
@@ -49,7 +50,6 @@ subscriptions in a check.
 - [Web] Avoid exception when parsing non-standard cron statements. (Eg.
 `@every 1h` or `@weekly`)
 - The resources metadata are now validated with the request URI.
-- Fixed a bug where events were not deleted when their corresponding entity was.
 
 ## [5.9.0] - 2019-05-29
 
