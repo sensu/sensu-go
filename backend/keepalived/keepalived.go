@@ -19,10 +19,6 @@ import (
 )
 
 const (
-	// DefaultHandlerCount is the default number of goroutines dedicated to
-	// handling keepalive events.
-	DefaultHandlerCount = 1000
-
 	// KeepaliveCheckName is the name of the check that is created when a
 	// keepalive timeout occurs.
 	KeepaliveCheckName = "keepalive"
@@ -44,7 +40,7 @@ const (
 // keepalives for entities.
 type Keepalived struct {
 	bus                   messaging.MessageBus
-	handlerCount          int
+	workerCount           int
 	store                 store.Store
 	eventStore            store.EventStore
 	deregistrationHandler string
@@ -68,18 +64,27 @@ type Config struct {
 	LivenessFactory       liveness.Factory
 	DeregistrationHandler string
 	RingPool              *ringv2.Pool
+	BufferSize            int
+	WorkerCount           int
 }
 
 // New creates a new Keepalived.
 func New(c Config, opts ...Option) (*Keepalived, error) {
+	if c.BufferSize == 0 {
+		c.BufferSize = 1
+	}
+	if c.WorkerCount == 0 {
+		c.WorkerCount = 1
+	}
+
 	k := &Keepalived{
 		store:                 c.Store,
 		eventStore:            c.EventStore,
 		bus:                   c.Bus,
 		deregistrationHandler: c.DeregistrationHandler,
 		livenessFactory:       c.LivenessFactory,
-		keepaliveChan:         make(chan interface{}, 1000),
-		handlerCount:          DefaultHandlerCount,
+		keepaliveChan:         make(chan interface{}, c.BufferSize),
+		workerCount:           c.WorkerCount,
 		mu:                    &sync.Mutex{},
 		errChan:               make(chan error, 1),
 		ringPool:              c.RingPool,
@@ -180,9 +185,9 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 
 func (k *Keepalived) startWorkers() {
 	k.wg = &sync.WaitGroup{}
-	k.wg.Add(k.handlerCount)
+	k.wg.Add(k.workerCount)
 
-	for i := 0; i < k.handlerCount; i++ {
+	for i := 0; i < k.workerCount; i++ {
 		go k.processKeepalives(context.Background())
 	}
 }
