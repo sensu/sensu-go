@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/types"
@@ -321,6 +322,30 @@ func (r *mutationsImpl) DeleteHandler(p schema.MutationDeleteHandlerFieldResolve
 	client := r.factory.NewWithContext(ctx)
 
 	err := client.DeleteHandler(components.Namespace(), components.UniqueComponent())
+	if err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{
+		"clientMutationId": p.Args.Input.ClientMutationID,
+		"deletedId":        components.String(),
+	}, nil
+}
+
+//
+// Implement mutator mutations
+//
+
+// DeleteMutator implements response to request for the 'deleteMutator' field.
+func (r *mutationsImpl) DeleteMutator(p schema.MutationDeleteMutatorFieldResolverParams) (interface{}, error) {
+	components, _ := globalid.Decode(p.Args.Input.ID)
+	if components.Resource() != v2.MutatorsResource {
+		return nil, errors.New("given ID must be a mutator")
+	}
+
+	ctx := setContextFromComponents(p.Context, components)
+	client := r.factory.NewWithContext(ctx)
+
+	err := client.DeleteMutator(components.Namespace(), components.UniqueComponent())
 	if err != nil {
 		return nil, err
 	}
