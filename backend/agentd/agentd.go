@@ -43,7 +43,7 @@ type Agentd struct {
 	wg         *sync.WaitGroup
 	errChan    chan error
 	httpServer *http.Server
-	store      Store
+	store      store.Store
 	bus        messaging.MessageBus
 	tls        *types.TLSOptions
 	ringPool   *ringv2.Pool
@@ -83,7 +83,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		return nil, err
 	}
 
-	handler := middlewares.BasicAuthentication(http.HandlerFunc(a.webSocketHandler), a.store)
+	handler := middlewares.BasicAuthorization(middlewares.BasicAuthentication(http.HandlerFunc(a.webSocketHandler), a.store), a.store)
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
 		Handler:      handler,

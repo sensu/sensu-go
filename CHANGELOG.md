@@ -18,6 +18,9 @@ is silenced.
 - The REST API now returns the `201 Created` success status response code for
 POST & PUT requests instead of `204 No Content`.
 
+### Fixed
+- Fixed a bug where basic authorization was not being performed on the agent websocket connection.
+
 ## [5.10.1] - 2019-06-25
 
 ### Fixed
