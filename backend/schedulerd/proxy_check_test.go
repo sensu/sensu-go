@@ -11,65 +11,75 @@ import (
 )
 
 func TestMatchEntities(t *testing.T) {
+	entity1 := &corev2.Entity{
+		ObjectMeta: corev2.ObjectMeta{
+			Name:      "entity1",
+			Namespace: "default",
+			Labels:    map[string]string{"proxy_type": "switch"},
+		},
+		EntityClass: "proxy",
+		System:      corev2.System{Hostname: "foo.local"},
+	}
+	entity2 := &corev2.Entity{
+		ObjectMeta: corev2.ObjectMeta{
+			Name:      "entity2",
+			Namespace: "default",
+			Labels:    map[string]string{"proxy_type": "sensor"},
+		},
+		Deregister:  true,
+		EntityClass: "proxy",
+	}
+	entity3 := &corev2.Entity{
+		ObjectMeta: corev2.ObjectMeta{
+			Name:      "entity3",
+			Namespace: "default",
+		},
+		EntityClass: "agent",
+	}
+
 	tests := []struct {
 		name             string
 		entityAttributes []string
-		entities         []*types.Entity
-		want             []*types.Entity
+		entities         []*corev2.Entity
+		want             []*corev2.Entity
 	}{
 		{
 			name:             "standard string attribute",
 			entityAttributes: []string{`entity.name == "entity1"`},
-			entities: []*types.Entity{
-				types.FixtureEntity("entity1"),
-				types.FixtureEntity("entity2"),
-			},
-			want: []*types.Entity{
-				types.FixtureEntity("entity1"),
-			},
+			entities:         []*corev2.Entity{entity1, entity2, entity3},
+			want:             []*corev2.Entity{entity1},
 		},
 		{
 			name:             "standard bool attribute",
-			entityAttributes: []string{`entity.deregister == false`},
-			entities: []*types.Entity{
-				&types.Entity{Deregister: false},
-				&types.Entity{Deregister: true},
-			},
-			want: []*types.Entity{
-				&types.Entity{Deregister: false},
-			},
+			entityAttributes: []string{`entity.deregister == true`},
+			entities:         []*corev2.Entity{entity1, entity2, entity3},
+			want:             []*corev2.Entity{entity2},
 		},
 		{
 			name:             "nested standard attribute",
 			entityAttributes: []string{`entity.system.hostname == "foo.local"`},
-			entities: []*types.Entity{
-				&types.Entity{System: types.System{Hostname: "localhost"}},
-				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "foo"}},
-				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "foo"}, System: types.System{Hostname: "foo.local"}},
-			},
-			want: []*types.Entity{
-				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "foo"}, System: types.System{Hostname: "foo.local"}},
-			},
+			entities:         []*corev2.Entity{entity1, entity2, entity3},
+			want:             []*corev2.Entity{entity1},
 		},
 		{
 			name:             "multiple matches",
 			entityAttributes: []string{`entity.entity_class == "proxy"`},
-			entities: []*types.Entity{
-				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "foo"}, EntityClass: "proxy"},
-				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "bar"}, EntityClass: "agent"},
-				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "baz"}, EntityClass: "proxy"},
-			},
-			want: []*types.Entity{
-				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "foo"}, EntityClass: "proxy"},
-				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "baz"}, EntityClass: "proxy"},
-			},
+			entities:         []*corev2.Entity{entity1, entity2, entity3},
+			want:             []*corev2.Entity{entity1, entity2},
 		},
 		{
 			name:             "invalid expression",
 			entityAttributes: []string{`foo &&`},
-			entities: []*types.Entity{
-				&types.Entity{ObjectMeta: types.ObjectMeta{Name: "foo"}},
+			entities:         []*corev2.Entity{entity1, entity2, entity3},
+		},
+		{
+			name: "multiple entity attributes",
+			entityAttributes: []string{
+				`entity.entity_class == "proxy"`,
+				`entity.labels.proxy_type == "sensor"`,
 			},
+			entities: []*corev2.Entity{entity1, entity2, entity3},
+			want:     []*corev2.Entity{entity2},
 		},
 	}
 	for _, tc := range tests {

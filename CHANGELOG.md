@@ -8,6 +8,22 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ## [5.10.0] - 2019.06.18
+### Added
+- Silenced entries are now retrieved from the cache when determining if an event
+is silenced.
+- Added --disable-assets flag to sensu-agent.
+- Added ability to query mutators to the GraphQL service
+
+### Changed
+- The REST API now returns the `201 Created` success status response code for
+POST & PUT requests instead of `204 No Content`.
+
+### Fixed
+- Fixed a bug where events were not deleted when their corresponding entity was.
+- Fixed the entity_attributes in proxy_requests so all attributes must match
+instead of only one of them.
+
+## [5.10.0] - 2019-06-18
 
 ### Added
 - Added POST `/api/core/v2/tessen/metrics`.
