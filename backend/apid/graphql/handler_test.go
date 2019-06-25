@@ -49,6 +49,12 @@ func TestHandlerTypeMutatorField(t *testing.T) {
 	res, err := impl.Mutator(graphql.ResolveParams{Source: handler})
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
+
+	// No mutator
+	handler.Mutator = ""
+	res, err = impl.Mutator(graphql.ResolveParams{Source: handler})
+	require.NoError(t, err)
+	assert.Nil(t, res)
 }
 
 func TestHandlerTypeToJSONField(t *testing.T) {
