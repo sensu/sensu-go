@@ -227,6 +227,30 @@ func TestMutationTypeDeleteHandlerField(t *testing.T) {
 	assert.Nil(t, body)
 }
 
+func TestMutationTypeDeleteMutatorField(t *testing.T) {
+	mut := types.FixtureMutator("a")
+	gid := globalid.MutatorTranslator.EncodeToString(mut)
+
+	inputs := schema.DeleteRecordInput{ID: gid}
+	params := schema.MutationDeleteMutatorFieldResolverParams{}
+	params.Args.Input = &inputs
+
+	client, factory := client.NewClientFactory()
+	impl := mutationsImpl{factory: factory}
+
+	// Success
+	client.On("DeleteMutator", mock.Anything, mock.Anything).Return(nil).Once()
+	body, err := impl.DeleteMutator(params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, body)
+
+	// Failure
+	client.On("DeleteMutator", mock.Anything, mock.Anything).Return(errors.New("err")).Once()
+	body, err = impl.DeleteMutator(params)
+	assert.Error(t, err)
+	assert.Nil(t, body)
+}
+
 func TestMutationTypeCreateSilenceField(t *testing.T) {
 	inputs := schema.CreateSilenceInput{
 		Namespace: "a",

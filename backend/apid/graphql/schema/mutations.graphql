@@ -60,6 +60,13 @@ type Mutation {
   deleteHandler(input: DeleteRecordInput!): DeleteRecordPayload
 
   #
+  # Mutator
+  #
+
+  "Removes given mutator."
+  deleteMutator(input: DeleteRecordInput!): DeleteRecordPayload
+
+  #
   # Silences
   #
 
