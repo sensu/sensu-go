@@ -29,8 +29,11 @@ func (*handlerImpl) ID(p graphql.ResolveParams) (string, error) {
 // Mutator implements response to request for 'mutator' field.
 func (r *handlerImpl) Mutator(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*types.Handler)
-	ctx := types.SetContextFromResource(p.Context, src)
+	if src.Mutator == "" {
+		return nil, nil
+	}
 
+	ctx := types.SetContextFromResource(p.Context, src)
 	client := r.factory.NewWithContext(ctx)
 	res, err := client.FetchMutator(src.Mutator)
 
