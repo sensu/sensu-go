@@ -53,7 +53,7 @@ func List(list ListControllerFunc, fields FieldsFunc) http.HandlerFunc {
 			w.Header().Set(corev2.PaginationContinueHeader, encodedContinue)
 		}
 
-		RespondWith(w, results)
+		RespondWith(w, r, results)
 	}
 }
 

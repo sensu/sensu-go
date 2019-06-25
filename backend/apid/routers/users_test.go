@@ -165,7 +165,7 @@ func TestUsersRouter(t *testing.T) {
 					Return(nil).
 					Once()
 			},
-			wantStatusCode: http.StatusNoContent,
+			wantStatusCode: http.StatusCreated,
 		},
 		{
 			name:           "it returns 400 if the payload to update is not decodable",
@@ -203,7 +203,7 @@ func TestUsersRouter(t *testing.T) {
 					Return(nil).
 					Once()
 			},
-			wantStatusCode: http.StatusNoContent,
+			wantStatusCode: http.StatusCreated,
 		},
 	}
 	for _, tt := range tests {

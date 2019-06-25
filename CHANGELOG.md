@@ -13,6 +13,10 @@ is silenced.
 - Added --disable-assets flag to sensu-agent.
 - Added ability to query mutators to the GraphQL service
 
+### Changed
+- The REST API now returns the `201 Created` success status response code for
+POST & PUT requests instead of `204 No Content`.
+
 ### Fixed
 - Fixed a bug where events were not deleted when their corresponding entity was.
 
