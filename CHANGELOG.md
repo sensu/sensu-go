@@ -18,10 +18,12 @@ is silenced.
 - The REST API now returns the `201 Created` success status response code for
 POST & PUT requests instead of `204 No Content`.
 
+## [5.10.1] - 2019-06-25
+
 ### Fixed
-- Fixed a bug where events were not deleted when their corresponding entity was.
 - Fixed the entity_attributes in proxy_requests so all attributes must match
 instead of only one of them.
+- Fixed a bug where events were not deleted when their corresponding entity was.
 
 ## [5.10.0] - 2019-06-18
 
