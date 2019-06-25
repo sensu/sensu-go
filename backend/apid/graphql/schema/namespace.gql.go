@@ -147,6 +147,34 @@ type NamespaceEventsFieldResolver interface {
 	Events(p NamespaceEventsFieldResolverParams) (interface{}, error)
 }
 
+// NamespaceEventFiltersFieldResolverArgs contains arguments provided to eventFilters when selected
+type NamespaceEventFiltersFieldResolverArgs struct {
+	Offset  int                  // Offset - self descriptive
+	Limit   int                  // Limit adds optional limit to the number of entries returned.
+	OrderBy EventFilterListOrder // OrderBy adds optional order to the records retrieved.
+	Filters []string             /*
+	Filters reduces the set using given arbitrary expression[s]; expressions
+	take on the form KEY: VALUE. The accepted key(s) are: action
+
+	Eg.
+
+	action:allow
+	action:deny
+	*/
+}
+
+// NamespaceEventFiltersFieldResolverParams contains contextual info to resolve eventFilters field
+type NamespaceEventFiltersFieldResolverParams struct {
+	graphql.ResolveParams
+	Args NamespaceEventFiltersFieldResolverArgs
+}
+
+// NamespaceEventFiltersFieldResolver implement to resolve requests for the Namespace's eventFilters field.
+type NamespaceEventFiltersFieldResolver interface {
+	// EventFilters implements response to request for eventFilters field.
+	EventFilters(p NamespaceEventFiltersFieldResolverParams) (interface{}, error)
+}
+
 // NamespaceHandlersFieldResolverArgs contains arguments provided to handlers when selected
 type NamespaceHandlersFieldResolverArgs struct {
 	Offset  int              // Offset - self descriptive
@@ -327,6 +355,7 @@ type NamespaceFieldResolvers interface {
 	NamespaceChecksFieldResolver
 	NamespaceEntitiesFieldResolver
 	NamespaceEventsFieldResolver
+	NamespaceEventFiltersFieldResolver
 	NamespaceHandlersFieldResolver
 	NamespaceMutatorsFieldResolver
 	NamespaceSilencesFieldResolver
@@ -422,6 +451,12 @@ func (_ NamespaceAliases) Entities(p NamespaceEntitiesFieldResolverParams) (inte
 
 // Events implements response to request for 'events' field.
 func (_ NamespaceAliases) Events(p NamespaceEventsFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// EventFilters implements response to request for 'eventFilters' field.
+func (_ NamespaceAliases) EventFilters(p NamespaceEventFiltersFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -533,6 +568,19 @@ func _ObjTypeNamespaceEventsHandler(impl interface{}) graphql1.FieldResolveFn {
 		}
 
 		return resolver.Events(frp)
+	}
+}
+
+func _ObjTypeNamespaceEventFiltersHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(NamespaceEventFiltersFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := NamespaceEventFiltersFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.EventFilters(frp)
 	}
 }
 
@@ -682,6 +730,34 @@ func _ObjectTypeNamespaceConfigFn() graphql1.ObjectConfig {
 				Description:       "All entities associated with the namespace.",
 				Name:              "entities",
 				Type:              graphql1.NewNonNull(graphql.OutputType("EntityConnection")),
+			},
+			"eventFilters": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{
+					"filters": &graphql1.ArgumentConfig{
+						DefaultValue: []interface{}{},
+						Description:  "Filters reduces the set using given arbitrary expression[s]; expressions\ntake on the form KEY: VALUE. The accepted key(s) are: action\n\nEg.\n\naction:allow\naction:deny",
+						Type:         graphql1.NewList(graphql1.NewNonNull(graphql1.String)),
+					},
+					"limit": &graphql1.ArgumentConfig{
+						DefaultValue: 10,
+						Description:  "Limit adds optional limit to the number of entries returned.",
+						Type:         graphql1.Int,
+					},
+					"offset": &graphql1.ArgumentConfig{
+						DefaultValue: 0,
+						Description:  "self descriptive",
+						Type:         graphql1.Int,
+					},
+					"orderBy": &graphql1.ArgumentConfig{
+						DefaultValue: "NAME_DESC",
+						Description:  "OrderBy adds optional order to the records retrieved.",
+						Type:         graphql.InputType("EventFilterListOrder"),
+					},
+				},
+				DeprecationReason: "",
+				Description:       "All filters associated with the namespace.",
+				Name:              "eventFilters",
+				Type:              graphql1.NewNonNull(graphql.OutputType("EventFilterConnection")),
 			},
 			"events": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
@@ -871,6 +947,7 @@ var _ObjectTypeNamespaceDesc = graphql.ObjectDesc{
 		"checks":        _ObjTypeNamespaceChecksHandler,
 		"colourId":      _ObjTypeNamespaceColourIDHandler,
 		"entities":      _ObjTypeNamespaceEntitiesHandler,
+		"eventFilters":  _ObjTypeNamespaceEventFiltersHandler,
 		"events":        _ObjTypeNamespaceEventsHandler,
 		"handlers":      _ObjTypeNamespaceHandlersHandler,
 		"iconId":        _ObjTypeNamespaceIconIDHandler,

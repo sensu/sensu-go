@@ -46,6 +46,14 @@ func (r *queryImpl) Event(p schema.QueryEventFieldResolverParams) (interface{}, 
 	return handleFetchResult(res, err)
 }
 
+// EventFilter implements response to request for 'eventFilter' field.
+func (r *queryImpl) EventFilter(p schema.QueryEventFilterFieldResolverParams) (interface{}, error) {
+	ctx := contextWithNamespace(p.Context, p.Args.Namespace)
+	client := r.factory.NewWithContext(ctx)
+	res, err := client.FetchFilter(p.Args.Name)
+	return handleFetchResult(res, err)
+}
+
 // Entity implements response to request for 'entity' field.
 func (r *queryImpl) Entity(p schema.QueryEntityFieldResolverParams) (interface{}, error) {
 	ctx := contextWithNamespace(p.Context, p.Args.Namespace)

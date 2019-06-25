@@ -101,6 +101,32 @@ func TestNamespaceTypeEventsField(t *testing.T) {
 	assert.Error(t, err)
 }
 
+func TestNamespaceTypeEventFiltersField(t *testing.T) {
+	client, _ := client.NewClientFactory()
+	client.On("ListFilters", mock.Anything, mock.Anything).Return([]types.EventFilter{
+		*types.FixtureEventFilter("a"),
+		*types.FixtureEventFilter("b"),
+		*types.FixtureEventFilter("c"),
+	}, nil).Once()
+
+	impl := &namespaceImpl{}
+	params := schema.NamespaceEventFiltersFieldResolverParams{}
+	params.Context = contextWithLoadersNoCache(context.Background(), client)
+	params.Source = types.FixtureNamespace("default")
+	params.Args.Limit = 20
+
+	// Success
+	res, err := impl.EventFilters(params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, res.(offsetContainer).Nodes)
+
+	// Store err
+	client.On("ListFilters", mock.Anything, mock.Anything).Return([]types.Event{}, errors.New("abc")).Once()
+	res, err = impl.EventFilters(params)
+	assert.Empty(t, res.(offsetContainer).Nodes)
+	assert.Error(t, err)
+}
+
 func TestNamespaceTypeHandlersField(t *testing.T) {
 	client, _ := client.NewClientFactory()
 	client.On("ListHandlers", mock.Anything, mock.Anything).Return([]types.Handler{

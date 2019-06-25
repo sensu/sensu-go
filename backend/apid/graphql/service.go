@@ -93,6 +93,12 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterEvent(svc, &eventImpl{})
 	schema.RegisterEventConnection(svc, &schema.EventConnectionAliases{})
 
+	// Register event filter types
+	schema.RegisterEventFilter(svc, &eventFilterImpl{})
+	schema.RegisterEventFilterConnection(svc, &schema.EventFilterConnectionAliases{})
+	schema.RegisterEventFilterAction(svc)
+	schema.RegisterEventFilterListOrder(svc)
+
 	// Register hook types
 	schema.RegisterHook(svc, &hookImpl{})
 	schema.RegisterHookConfig(svc, &hookCfgImpl{})

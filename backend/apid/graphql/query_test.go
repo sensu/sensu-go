@@ -26,6 +26,21 @@ func TestQueryTypeEventField(t *testing.T) {
 	assert.NotEmpty(t, res)
 }
 
+func TestQueryTypeEventFilterField(t *testing.T) {
+	client, factory := client.NewClientFactory()
+	impl := queryImpl{factory: factory}
+
+	filter := types.FixtureEventFilter("a")
+	args := schema.QueryEventFilterFieldResolverArgs{Namespace: "ns", Name: "a"}
+	params := schema.QueryEventFilterFieldResolverParams{Args: args}
+
+	// Success
+	client.On("FetchFilter", filter.Name).Return(filter, nil).Once()
+	res, err := impl.EventFilter(params)
+	require.NoError(t, err)
+	assert.NotEmpty(t, res)
+}
+
 func TestQueryTypeNamespaceField(t *testing.T) {
 	client, factory := client.NewClientFactory()
 	impl := queryImpl{factory: factory}

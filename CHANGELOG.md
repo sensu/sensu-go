@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 is silenced.
 - Added --disable-assets flag to sensu-agent.
 - Added ability to query mutators to the GraphQL service
+- Added ability to query event filters to the GraphQL service
 
 ### Changed
 - The REST API now returns the `201 Created` success status response code for

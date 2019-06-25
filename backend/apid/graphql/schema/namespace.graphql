@@ -93,6 +93,25 @@ type Namespace implements Node {
     filters: [String!] = [],
   ): EventConnection!
 
+  "All filters associated with the namespace."
+  eventFilters(
+    offset: Int = 0,
+    "Limit adds optional limit to the number of entries returned."
+    limit: Int = 10,
+    "OrderBy adds optional order to the records retrieved."
+    orderBy: EventFilterListOrder = NAME_DESC,
+    """
+    Filters reduces the set using given arbitrary expression[s]; expressions
+    take on the form KEY: VALUE. The accepted key(s) are: action
+
+    Eg.
+
+    action:allow
+    action:deny
+    """
+    filters: [String!] = [],
+  ): EventFilterConnection!
+
   "All handlers associated with the namespace."
   handlers(
     offset: Int = 0,
