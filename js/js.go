@@ -182,19 +182,28 @@ func MatchEntities(expressions []string, entities []interface{}) ([]bool, error)
 			result, err := jsvm.Run(script)
 			if err != nil {
 				logger.WithError(err).Debugf("error executing entity filter (%s)", script.String())
-				continue
-			}
-			b, err := result.ToBoolean()
-			if err != nil {
-				logger.WithError(err).Errorf("entity filter did not return bool (%s)", script.String())
-				continue
-			}
-			if b {
-				filtered = true
+				filtered = false
 				break
 			}
+			matches, err := result.ToBoolean()
+			if err != nil {
+				logger.WithError(err).Errorf("entity filter did not return bool (%s)", script.String())
+				filtered = false
+				break
+			}
+			if !matches {
+				filtered = false
+				break
+			}
+			// Mark the entity as filtered, but continue with the next script
+			// (expression) until it went through all filters
+			filtered = true
 		}
+
+		// At this point, the entity will be marked as filtered only if matched all
+		// the expressions
 		results = append(results, filtered)
 	}
+
 	return results, nil
 }

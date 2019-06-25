@@ -19,6 +19,8 @@ POST & PUT requests instead of `204 No Content`.
 
 ### Fixed
 - Fixed a bug where events were not deleted when their corresponding entity was.
+- Fixed the entity_attributes in proxy_requests so all attributes must match
+instead of only one of them.
 
 ## [5.10.0] - 2019-06-18
 

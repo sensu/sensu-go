@@ -11,6 +11,32 @@ import (
 )
 
 func TestMatchEntities(t *testing.T) {
+	entity1 := &corev2.Entity{
+		ObjectMeta: corev2.ObjectMeta{
+			Name:      "entity1",
+			Namespace: "default",
+			Labels:    map[string]string{"proxy_type": "switch"},
+		},
+		EntityClass: "proxy",
+		System:      corev2.System{Hostname: "foo.local"},
+	}
+	entity2 := &corev2.Entity{
+		ObjectMeta: corev2.ObjectMeta{
+			Name:      "entity2",
+			Namespace: "default",
+			Labels:    map[string]string{"proxy_type": "sensor"},
+		},
+		Deregister:  true,
+		EntityClass: "proxy",
+	}
+	entity3 := &corev2.Entity{
+		ObjectMeta: corev2.ObjectMeta{
+			Name:      "entity3",
+			Namespace: "default",
+		},
+		EntityClass: "agent",
+	}
+
 	tests := []struct {
 		name             string
 		entityAttributes []string
@@ -20,56 +46,40 @@ func TestMatchEntities(t *testing.T) {
 		{
 			name:             "standard string attribute",
 			entityAttributes: []string{`entity.name == "entity1"`},
-			entities: []corev2.Resource{
-				corev2.FixtureEntity("entity1"),
-				corev2.FixtureEntity("entity2"),
-			},
-			want: []*corev2.Entity{
-				corev2.FixtureEntity("entity1"),
-			},
+			entities:         []corev2.Resource{entity1, entity2, entity3},
+			want:             []*corev2.Entity{entity1},
 		},
 		{
 			name:             "standard bool attribute",
-			entityAttributes: []string{`entity.deregister == false`},
-			entities: []corev2.Resource{
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}, Deregister: false},
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "bar", Namespace: "default"}, Deregister: true},
-			},
-			want: []*corev2.Entity{
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}, Deregister: false},
-			},
+			entityAttributes: []string{`entity.deregister == true`},
+			entities:         []corev2.Resource{entity1, entity2, entity3},
+			want:             []*corev2.Entity{entity2},
 		},
 		{
 			name:             "nested standard attribute",
 			entityAttributes: []string{`entity.system.hostname == "foo.local"`},
-			entities: []corev2.Resource{
-				&corev2.Entity{System: corev2.System{Hostname: "localhost"}},
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}},
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}, System: corev2.System{Hostname: "foo.local"}},
-			},
-			want: []*corev2.Entity{
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}, System: corev2.System{Hostname: "foo.local"}},
-			},
+			entities:         []corev2.Resource{entity1, entity2, entity3},
+			want:             []*corev2.Entity{entity1},
 		},
 		{
 			name:             "multiple matches",
 			entityAttributes: []string{`entity.entity_class == "proxy"`},
-			entities: []corev2.Resource{
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}, EntityClass: "proxy"},
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "bar", Namespace: "default"}, EntityClass: "agent"},
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "baz", Namespace: "default"}, EntityClass: "proxy"},
-			},
-			want: []*corev2.Entity{
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}, EntityClass: "proxy"},
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "baz", Namespace: "default"}, EntityClass: "proxy"},
-			},
+			entities:         []corev2.Resource{entity1, entity2, entity3},
+			want:             []*corev2.Entity{entity1, entity2},
 		},
 		{
 			name:             "invalid expression",
 			entityAttributes: []string{`foo &&`},
-			entities: []corev2.Resource{
-				&corev2.Entity{ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}},
+			entities:         []corev2.Resource{entity1, entity2, entity3},
+		},
+		{
+			name: "multiple entity attributes",
+			entityAttributes: []string{
+				`entity.entity_class == "proxy"`,
+				`entity.labels.proxy_type == "sensor"`,
 			},
+			entities: []corev2.Resource{entity1, entity2, entity3},
+			want:     []*corev2.Entity{entity2},
 		},
 	}
 	for _, tc := range tests {
