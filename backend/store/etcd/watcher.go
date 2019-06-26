@@ -87,7 +87,7 @@ func (w *Watcher) start(ctx context.Context) {
 		_ = limiter.Wait(ctx)
 		for ctx.Err() == nil {
 			select {
-			case watchResponse, closed := <-watcherChan:
+			case watchResponse, ok := <-watcherChan:
 				if err := watchResponse.Err(); err != nil {
 					logger.WithError(err).Info("error from watch response")
 					w.resultChan <- store.WatchEvent{
@@ -95,7 +95,12 @@ func (w *Watcher) start(ctx context.Context) {
 						Err:  err,
 					}
 
-					if watchResponse.Canceled || closed {
+					// If the watch failed or if the channel is still open then
+					// just recreate the watcher since it can fail to close its
+					// channel or set Canceled to true. That's the only thing I
+					// tried that ended up working to avoid spinning
+					// indefinitely...
+					if watchResponse.Canceled || ok {
 						// Reinstate the watcher
 						watcherChan = w.client.Watch(ctx, w.key, opts...)
 					}
