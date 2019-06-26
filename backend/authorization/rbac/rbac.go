@@ -130,10 +130,6 @@ func (a *Authorizer) Authorize(ctx context.Context, attrs *authorization.Attribu
 			}
 		}
 
-		if attrs.Websocket && attrs.Namespace != binding.GetObjectMeta().Namespace {
-			return false
-		}
-
 		allowed, reason := ruleAllows(attrs, rule)
 		if allowed {
 			roleRef := binding.GetRoleRef()

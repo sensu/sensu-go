@@ -82,14 +82,14 @@ func TestBackendHTTPListener(t *testing.T) {
 			}
 
 			b, err := Initialize(&Config{
-				AgentHost:        "127.0.0.1",
-				AgentPort:        agentPort,
-				APIListenAddress: fmt.Sprintf("127.0.0.1:%d", apiPort),
-				DashboardHost:    "127.0.0.1",
-				DashboardPort:    dashboardPort,
-				StateDir:         dataPath,
-				CacheDir:         cachePath,
-				TLS:              tc.tls,
+				AgentHost:                    "127.0.0.1",
+				AgentPort:                    agentPort,
+				APIListenAddress:             fmt.Sprintf("127.0.0.1:%d", apiPort),
+				DashboardHost:                "127.0.0.1",
+				DashboardPort:                dashboardPort,
+				StateDir:                     dataPath,
+				CacheDir:                     cachePath,
+				TLS:                          tc.tls,
 				EtcdAdvertiseClientURLs:      []string{clURL},
 				EtcdListenClientURLs:         []string{clURL},
 				EtcdListenPeerURLs:           []string{apURL},
@@ -125,6 +125,7 @@ func TestBackendHTTPListener(t *testing.T) {
 
 			hdr := http.Header{
 				"Authorization":                  {"Basic " + userCredentials},
+				transport.HeaderKeyUser:          {"agent"},
 				transport.HeaderKeyNamespace:     {"default"},
 				transport.HeaderKeyAgentName:     {"agent"},
 				transport.HeaderKeySubscriptions: {},

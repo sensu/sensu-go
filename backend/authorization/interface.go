@@ -23,7 +23,6 @@ type Attributes struct {
 	ResourceName string
 	User         types.User
 	Verb         string
-	Websocket    bool
 }
 
 // GetAttributes returns the authorization attributes stored in the given

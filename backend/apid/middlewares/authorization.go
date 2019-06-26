@@ -1,6 +1,7 @@
 package middlewares
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/sensu/sensu-go/backend/apid/actions"
@@ -8,6 +9,7 @@ import (
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/transport"
+	corev2 "github.com/sensu/sensu-go/types"
 )
 
 // Authorization is an HTTP middleware that enforces authorization
@@ -51,7 +53,9 @@ func (a Authorization) Then(next http.Handler) http.Handler {
 // BasicAuthorization performs basic authorization for entity creation via the agent websocket.
 func BasicAuthorization(next http.Handler, store store.Store) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		namespace := r.Header.Get(transport.HeaderKeyNamespace)
 		ctx := r.Context()
+		ctx = context.WithValue(ctx, corev2.NamespaceKey, namespace)
 
 		user, err := store.GetUser(ctx, r.Header.Get(transport.HeaderKeyUser))
 		if err != nil {
@@ -61,12 +65,11 @@ func BasicAuthorization(next http.Handler, store store.Store) http.Handler {
 		attrs := &authorization.Attributes{
 			APIGroup:     "core",
 			APIVersion:   "v2",
-			Namespace:    r.Header.Get(transport.HeaderKeyNamespace),
-			Resource:     "entities",
+			Namespace:    namespace,
+			Resource:     "events",
 			ResourceName: r.Header.Get(transport.HeaderKeyAgentName),
 			Verb:         "create",
 			User:         *user,
-			Websocket:    true,
 		}
 
 		auth := &rbac.Authorizer{

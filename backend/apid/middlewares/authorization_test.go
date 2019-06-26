@@ -652,7 +652,7 @@ func TestBasicAuthorization(t *testing.T) {
 			Return(&corev2.ClusterRole{Rules: []corev2.Rule{
 				corev2.Rule{
 					Verbs:     []string{"create"},
-					Resources: []string{"entities"},
+					Resources: []string{"events"},
 				},
 			}}, nil)
 		server := httptest.NewServer(BasicAuthorization(testHandler(), stor))
