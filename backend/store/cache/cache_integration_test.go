@@ -94,10 +94,11 @@ func TestEntityCacheIntegration(t *testing.T) {
 
 	newEntity := corev2.FixtureEntity("new")
 	newEntity.EntityClass = corev2.EntityProxyClass
+	fmt.Println("update...")
 	if err := store.UpdateEntity(ctx, newEntity); err != nil {
 		t.Fatal(err)
 	}
-
+	fmt.Println("updated")
 	<-watcher
 
 	got := cache.Get("default")

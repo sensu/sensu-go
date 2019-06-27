@@ -35,7 +35,7 @@ func Watch(ctx context.Context, client *clientv3.Client, key string, recursive b
 	}
 
 	w := newWatcher(ctx, client, key, recursive, opts...)
-	go w.start()
+	w.start()
 
 	return w
 }
@@ -75,44 +75,46 @@ func (w *Watcher) start() {
 
 	// Start the watcher
 	logger.Debugf("starting a watcher for key %s", w.key)
-	go w.watch(ctx, opts, watchChanStopped)
+	w.watch(ctx, opts, watchChanStopped)
 
 	// Initialize a rate limiter
 	limiter := rate.NewLimiter(rate.Every(time.Second), 1)
 
-RetryLoop:
-	for {
-		select {
-		case <-watchChanStopped:
-			// The watch channel is broken, so let's make sure to close the watcher
-			// first by cancelling its context, to prevent any possible memory leak
-			cancel()
+	go func() {
+	RetryLoop:
+		for {
+			select {
+			case <-watchChanStopped:
+				// The watch channel is broken, so let's make sure to close the watcher
+				// first by cancelling its context, to prevent any possible memory leak
+				cancel()
 
-			// Now, we don't want to reconnect too quickly so wait for a moment
-			_ = limiter.Wait(w.ctx)
+				// Now, we don't want to reconnect too quickly so wait for a moment
+				_ = limiter.Wait(w.ctx)
 
-			// Re-create a cancellable context for our watcher
-			ctx, cancel = context.WithCancel(w.ctx)
+				// Re-create a cancellable context for our watcher
+				ctx, cancel = context.WithCancel(w.ctx)
 
-			// Re-create a channel to be notified if the watch channel is closed
-			watchChanStopped = make(chan struct{})
+				// Re-create a channel to be notified if the watch channel is closed
+				watchChanStopped = make(chan struct{})
 
-			// Restart the watcher
-			logger.Debugf("restarting the watcher for key %s", w.key)
-			go w.watch(ctx, opts, watchChanStopped)
-		case <-w.ctx.Done():
-			// The consumer has cancelled this watcher, we need to exit
-			logger.Debugf("stopping the watcher for key %s", w.key)
-			break RetryLoop
+				// Restart the watcher
+				logger.Debugf("restarting the watcher for key %s", w.key)
+				w.watch(ctx, opts, watchChanStopped)
+			case <-w.ctx.Done():
+				// The consumer has cancelled this watcher, we need to exit
+				logger.Debugf("stopping the watcher for key %s", w.key)
+				break RetryLoop
+			}
 		}
-	}
 
-	// Use both parent and current watcher context's cancellable functions to reap
-	// all goroutines. At this point the consumer has stopped the watcher so we
-	// should stop everything. It's also fine to double cancel.
-	cancel()
-	w.cancel()
-	close(w.resultChan)
+		// Use both parent and current watcher context's cancellable functions to reap
+		// all goroutines. At this point the consumer has stopped the watcher so we
+		// should stop everything. It's also fine to double cancel.
+		cancel()
+		w.cancel()
+		close(w.resultChan)
+	}()
 }
 
 func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChanStopped chan struct{}) {
@@ -122,27 +124,30 @@ func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChan
 
 	watchChan := w.client.Watch(ctx, w.key, opts...)
 
-	// Loop over the watchChan channel to receive watch responses. The loop will
-	// exit if the channel is closed.
-	for watchResponse := range watchChan {
-		if watchResponse.Err() != nil {
-			// We received an error from the channel, so let's assume it's no longer
-			// functional and exit this goroutine so we can try to re-create the
-			// watcher
-			logger.WithError(watchResponse.Err()).Info("error from watch response")
-			break
+	go func() {
+		// Loop over the watchChan channel to receive watch responses. The loop will
+		// exit if the channel is closed.
+		for watchResponse := range watchChan {
+			if watchResponse.Err() != nil {
+				// We received an error from the channel, so let's assume it's no longer
+				// functional and exit this goroutine so we can try to re-create the
+				// watcher
+				logger.WithError(watchResponse.Err()).Info("error from watch response")
+				break
+			}
+
+			for _, event := range watchResponse.Events {
+				logger.Debugf("received event of type %v for key %s", event.Type, event.Kv.Key)
+				w.event(ctx, event)
+			}
 		}
 
-		for _, event := range watchResponse.Events {
-			logger.Debugf("received event of type %v for key %s", event.Type, event.Kv.Key)
-			w.event(ctx, event)
-		}
-	}
+		// At this point, the watch channel has been closed by its consumer or is
+		// broken, therefore we should notify the main thread that this goroutine has
+		// exited
+		close(watchChanStopped)
+	}()
 
-	// At this point, the watch channel has been closed by its consumer or is
-	// broken, therefore we should notify the main thread that this goroutine has
-	// exited
-	close(watchChanStopped)
 }
 
 func (w *Watcher) event(ctx context.Context, e *clientv3.Event) {
