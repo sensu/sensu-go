@@ -97,7 +97,6 @@ func TestEntityCacheIntegration(t *testing.T) {
 	if err := store.UpdateEntity(ctx, newEntity); err != nil {
 		t.Fatal(err)
 	}
-	fmt.Println("updated")
 	<-watcher
 
 	got := cache.Get("default")
