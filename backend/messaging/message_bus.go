@@ -32,8 +32,8 @@ const (
 )
 
 var (
-	topicCounter = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
+	topicCounter = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
 			Name: "sensu_go_wizard_bus",
 			Help: "Number of elements in a topic",
 		},
