@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	jsoniter "github.com/json-iterator/go"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
@@ -17,6 +18,16 @@ import (
 )
 
 var json = jsoniter.ConfigDefault
+
+var (
+	sessionCounter = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "sensu_go_agent_sessions",
+			Help: "Number of active agent sessions on this backend",
+		},
+		[]string{"namespace"},
+	)
+)
 
 // SessionStore specifies the storage requirements of the Session.
 type SessionStore interface {
@@ -211,6 +222,7 @@ func (s *Session) sendPump() {
 // 3. Start subscription pump
 // 5. Ensure bus unsubscribe when the session shuts down.
 func (s *Session) Start() (err error) {
+	sessionCounter.WithLabelValues(s.cfg.Namespace).Inc()
 	s.wg = &sync.WaitGroup{}
 	s.wg.Add(3)
 	go s.sendPump()
@@ -249,6 +261,7 @@ func (s *Session) Start() (err error) {
 // Stop a running session. This will cause the send and receive loops to
 // shutdown. Blocks until the session has shutdown.
 func (s *Session) Stop() {
+	sessionCounter.WithLabelValues(s.cfg.Namespace).Dec()
 	defer s.cancel()
 	close(s.stopping)
 	s.wg.Wait()
