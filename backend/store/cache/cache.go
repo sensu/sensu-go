@@ -195,7 +195,6 @@ func (r *Resource) start(ctx context.Context) {
 		case <-ctx.Done():
 			return
 		case event := <-r.watcher:
-			fmt.Println("received event")
 			r.updates = append(r.updates, event)
 		case <-ticker.C:
 			if len(r.updates) > 0 {
