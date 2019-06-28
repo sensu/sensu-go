@@ -80,7 +80,6 @@ func (w *Watcher) start() {
 
 	// Start the watcher
 	logger.Debugf("starting a watcher for key %s", w.key)
-	resultChanWG.Add(1)
 	w.watch(ctx, opts, watchChanStopped, &resultChanWG)
 
 	// Initialize a rate limiter
@@ -106,7 +105,6 @@ func (w *Watcher) start() {
 
 				// Restart the watcher
 				logger.Debugf("restarting the watcher for key %s", w.key)
-				resultChanWG.Add(1)
 				w.watch(ctx, opts, watchChanStopped, &resultChanWG)
 			case <-w.ctx.Done():
 				// The consumer has cancelled this watcher, we need to exit
@@ -131,6 +129,8 @@ func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChan
 	// Wrap the context with WithRequireLeader so ErrNoLeader is returned and the
 	// WatchChan is closed if the etcd server has no leader
 	ctx = clientv3.WithRequireLeader(ctx)
+
+	resultChanWG.Add(1)
 
 	watchChan := w.client.Watch(ctx, w.key, opts...)
 
