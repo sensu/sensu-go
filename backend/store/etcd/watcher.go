@@ -3,6 +3,7 @@ package etcd
 import (
 	"context"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
@@ -70,12 +71,17 @@ func (w *Watcher) start() {
 	// Create a channel to be notified if the watch channel is closed
 	watchChanStopped := make(chan struct{})
 
+	// Create a waitgroup that will be used make sure we do not write to a closed
+	// resultChan
+	var resultChanWG sync.WaitGroup
+
 	// Create a cancellable context for our watcher
 	ctx, cancel := context.WithCancel(w.ctx)
 
 	// Start the watcher
 	logger.Debugf("starting a watcher for key %s", w.key)
-	w.watch(ctx, opts, watchChanStopped)
+	resultChanWG.Add(1)
+	w.watch(ctx, opts, watchChanStopped, &resultChanWG)
 
 	// Initialize a rate limiter
 	limiter := rate.NewLimiter(rate.Every(time.Second), 1)
@@ -100,7 +106,8 @@ func (w *Watcher) start() {
 
 				// Restart the watcher
 				logger.Debugf("restarting the watcher for key %s", w.key)
-				w.watch(ctx, opts, watchChanStopped)
+				resultChanWG.Add(1)
+				w.watch(ctx, opts, watchChanStopped, &resultChanWG)
 			case <-w.ctx.Done():
 				// The consumer has cancelled this watcher, we need to exit
 				logger.Debugf("stopping the watcher for key %s", w.key)
@@ -113,11 +120,14 @@ func (w *Watcher) start() {
 		// should stop everything. It's also fine to double cancel.
 		cancel()
 		w.cancel()
+
+		// Make sure we do not close the resultChan while it's still be used
+		resultChanWG.Wait()
 		close(w.resultChan)
 	}()
 }
 
-func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChanStopped chan struct{}) {
+func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChanStopped chan struct{}, resultChanWG *sync.WaitGroup) {
 	// Wrap the context with WithRequireLeader so ErrNoLeader is returned and the
 	// WatchChan is closed if the etcd server has no leader
 	ctx = clientv3.WithRequireLeader(ctx)
@@ -125,6 +135,10 @@ func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChan
 	watchChan := w.client.Watch(ctx, w.key, opts...)
 
 	go func() {
+		// Indicate that the resultChan is no longer used once we existed the
+		// goroutine below
+		defer resultChanWG.Done()
+
 		// Loop over the watchChan channel to receive watch responses. The loop will
 		// exit if the channel is closed.
 		for watchResponse := range watchChan {
