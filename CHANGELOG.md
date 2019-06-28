@@ -18,6 +18,10 @@ is silenced.
 - The REST API now returns the `201 Created` success status response code for
 POST & PUT requests instead of `204 No Content`.
 
+### Fixed
+- The REST API now returns an error when trying to delete an entity that does
+not exist.
+
 ## [5.10.1] - 2019-06-25
 
 ### Fixed

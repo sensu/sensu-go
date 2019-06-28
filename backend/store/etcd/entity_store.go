@@ -43,8 +43,20 @@ func (s *Store) DeleteEntityByName(ctx context.Context, name string) error {
 		return errors.New("must specify name")
 	}
 
-	_, err := s.client.Delete(ctx, GetEntitiesPath(ctx, name))
-	return err
+	key := GetEntitiesPath(ctx, name)
+	resp, err := s.client.Delete(ctx, key)
+	if err != nil {
+		return err
+	}
+	if resp.Deleted == 0 {
+		return &store.ErrNotFound{Key: key}
+	} else if resp.Deleted > 1 {
+		return &store.ErrInternal{
+			Message: fmt.Sprintf("expected to delete exactly 1 key, deleted %d", resp.Deleted),
+		}
+	}
+
+	return nil
 }
 
 // GetEntityByName gets an Entity by its name.
