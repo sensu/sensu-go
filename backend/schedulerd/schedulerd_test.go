@@ -32,7 +32,7 @@ func TestSchedulerd(t *testing.T) {
 	// Mock a default namespace
 	require.NoError(t, st.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
 
-	schedulerd, err := New(Config{
+	schedulerd, err := New(context.Background(), Config{
 		Store:       st,
 		QueueGetter: queue.NewMemoryGetter(),
 		Bus:         bus,

@@ -95,18 +95,6 @@ func TestWatcher(t *testing.T) {
 	})
 }
 
-func TestEtcdClientClosed(t *testing.T) {
-	testWithEtcdStore(t, func(s *Store) {
-		w := Watch(context.Background(), s.client, checkKeyBuilder.Build(""), true)
-
-		// Close the etcd client
-		if err := w.client.Close(); err != nil {
-			t.Fatal(err)
-		}
-		expectType(t, w, store.WatchError)
-	})
-}
-
 func expectType(t *testing.T, w store.Watcher, typ store.WatchActionType) {
 	t.Helper()
 

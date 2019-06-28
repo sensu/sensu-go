@@ -85,7 +85,7 @@ type Config struct {
 }
 
 // New creates a new Eventd.
-func New(c Config, opts ...Option) (*Eventd, error) {
+func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 	e := &Eventd{
 		store:           c.Store,
 		eventStore:      c.EventStore,
@@ -100,7 +100,7 @@ func New(c Config, opts ...Option) (*Eventd, error) {
 		Logger:          &RawLogger{},
 	}
 
-	e.ctx, e.cancel = context.WithCancel(context.Background())
+	e.ctx, e.cancel = context.WithCancel(ctx)
 	cache, err := cache.New(e.ctx, c.Client, &corev2.Silenced{}, false)
 	if err != nil {
 		return nil, err
