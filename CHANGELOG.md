@@ -13,6 +13,7 @@ is silenced.
 - Added --disable-assets flag to sensu-agent.
 - Added ability to query mutators to the GraphQL service
 - Added ability to query event filters to the GraphQL service
+- Added prometheus metrics for topics in wizard bus and agent sessions.
 
 ### Changed
 - The REST API now returns the `201 Created` success status response code for
