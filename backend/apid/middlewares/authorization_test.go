@@ -612,7 +612,7 @@ func TestBasicAuthorization(t *testing.T) {
 			namespace:    "test-rbac",
 			username:     "nonexistent-user",
 			storeErr:     fmt.Errorf("user not found"),
-			expectedCode: http.StatusForbidden,
+			expectedCode: http.StatusUnauthorized,
 		},
 	}
 
@@ -621,6 +621,7 @@ func TestBasicAuthorization(t *testing.T) {
 		user := corev2.FixtureUser(tc.username)
 		user.Groups = append(user.Groups, tc.group)
 		stor.On("GetUser", mock.Anything, tc.username).Return(user, tc.storeErr)
+		stor.On("AuthenticateUser", mock.Anything, tc.username, "password").Return(user, tc.storeErr)
 		stor.On("ListClusterRoleBindings", mock.Anything, &store.SelectionPredicate{}).
 			Return([]*corev2.ClusterRoleBinding{&corev2.ClusterRoleBinding{
 				RoleRef: corev2.RoleRef{
@@ -655,9 +656,10 @@ func TestBasicAuthorization(t *testing.T) {
 					Resources: []string{"events"},
 				},
 			}}, nil)
-		server := httptest.NewServer(BasicAuthorization(testHandler(), stor))
+		server := httptest.NewServer(BasicAuthentication(BasicAuthorization(testHandler(), stor), stor))
 		defer server.Close()
 		req, _ := http.NewRequest(http.MethodPost, server.URL, bytes.NewBuffer([]byte{}))
+		req.SetBasicAuth(tc.username, "password")
 		req.Header.Set(transport.HeaderKeyNamespace, tc.namespace)
 		req.Header.Set(transport.HeaderKeyAgentName, tc.agentName)
 		req.Header.Set(transport.HeaderKeyUser, tc.username)

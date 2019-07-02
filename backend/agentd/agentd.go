@@ -24,12 +24,6 @@ var (
 	upgrader = &websocket.Upgrader{}
 )
 
-// Store specifies storage requirements for Agentd.
-type Store interface {
-	middlewares.AuthStore
-	SessionStore
-}
-
 // Agentd is the backend HTTP API.
 type Agentd struct {
 	// Host is the hostname Agentd is running on.
@@ -83,7 +77,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		return nil, err
 	}
 
-	handler := middlewares.BasicAuthorization(middlewares.BasicAuthentication(http.HandlerFunc(a.webSocketHandler), a.store), a.store)
+	handler := middlewares.BasicAuthentication(middlewares.BasicAuthorization(http.HandlerFunc(a.webSocketHandler), a.store), a.store)
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
 		Handler:      handler,
