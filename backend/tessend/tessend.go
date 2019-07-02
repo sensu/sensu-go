@@ -104,7 +104,7 @@ type Config struct {
 }
 
 // New creates a new TessenD.
-func New(c Config, opts ...Option) (*Tessend, error) {
+func New(ctx context.Context, c Config, opts ...Option) (*Tessend, error) {
 	t := &Tessend{
 		interval:    corev2.DefaultTessenInterval,
 		store:       c.Store,
@@ -117,7 +117,7 @@ func New(c Config, opts ...Option) (*Tessend, error) {
 		duration:    perResourceDuration,
 		AllowOptOut: true,
 	}
-	t.ctx, t.cancel = context.WithCancel(context.Background())
+	t.ctx, t.cancel = context.WithCancel(ctx)
 	t.interrupt = make(chan *corev2.TessenConfig, 1)
 	key := ringv2.Path("global", "backends")
 	t.ring = c.RingPool.Get(key)

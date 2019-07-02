@@ -40,7 +40,7 @@ type Config struct {
 }
 
 // New creates a new Schedulerd.
-func New(c Config, opts ...Option) (*Schedulerd, error) {
+func New(ctx context.Context, c Config, opts ...Option) (*Schedulerd, error) {
 	s := &Schedulerd{
 		store:       c.Store,
 		queueGetter: c.QueueGetter,
@@ -48,7 +48,7 @@ func New(c Config, opts ...Option) (*Schedulerd, error) {
 		errChan:     make(chan error, 1),
 		ringPool:    c.RingPool,
 	}
-	s.ctx, s.cancel = context.WithCancel(context.Background())
+	s.ctx, s.cancel = context.WithCancel(ctx)
 	cache, err := cache.New(s.ctx, c.Client, &corev2.Entity{}, true)
 	if err != nil {
 		return nil, err

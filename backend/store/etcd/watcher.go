@@ -2,8 +2,8 @@ package etcd
 
 import (
 	"context"
-	"errors"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
@@ -15,6 +15,8 @@ import (
 // so the channel returned by the Watch method only provides a single event at a
 // time instead of a list of events, and the events are ready to be consumed
 type Watcher struct {
+	ctx        context.Context
+	cancel     context.CancelFunc
 	client     *clientv3.Client
 	key        string
 	recursive  bool
@@ -33,27 +35,15 @@ func Watch(ctx context.Context, client *clientv3.Client, key string, recursive b
 		key += "/"
 	}
 
-	// From etcd docs:
-	// If the context is "context.Background/TODO", returned "WatchChan" will
-	// not be closed and block until event is triggered, except when server
-	// returns a non-recoverable error (e.g. ErrCompacted).
-	// For example, when context passed with "WithRequireLeader" and the
-	// connected server has no leader (e.g. due to network partition),
-	// error "etcdserver: no leader" (ErrNoLeader) will be returned,
-	// and then "WatchChan" is closed with non-nil "Err()".
-	// In order to prevent a watch stream being stuck in a partitioned node,
-	// make sure to wrap context with "WithRequireLeader".
-	ctx = clientv3.WithRequireLeader(ctx)
-
-	w := newWatcher(client, key, recursive, opts...)
-	w.start(ctx)
+	w := newWatcher(ctx, client, key, recursive, opts...)
+	w.start()
 
 	return w
 }
 
 // newWatcher creates a new Watcher
-func newWatcher(client *clientv3.Client, key string, recursive bool, opts ...clientv3.OpOption) *Watcher {
-	return &Watcher{
+func newWatcher(ctx context.Context, client *clientv3.Client, key string, recursive bool, opts ...clientv3.OpOption) *Watcher {
+	wc := &Watcher{
 		client:     client,
 		key:        key,
 		recursive:  recursive,
@@ -61,6 +51,8 @@ func newWatcher(client *clientv3.Client, key string, recursive bool, opts ...cli
 		resultChan: make(chan store.WatchEvent),
 		opts:       opts,
 	}
+	wc.ctx, wc.cancel = context.WithCancel(ctx)
+	return wc
 }
 
 // Result returns the resultChan
@@ -68,59 +60,108 @@ func (w *Watcher) Result() <-chan store.WatchEvent {
 	return w.resultChan
 }
 
-// start starts watching the configured key and sends all etcd events
-// received to resultChan
-func (w *Watcher) start(ctx context.Context) {
+func (w *Watcher) start() {
+	// Define the client options for this watcher
 	opts := []clientv3.OpOption{clientv3.WithCreatedNotify()}
 	if w.recursive {
 		opts = append(opts, clientv3.WithPrefix())
 	}
-
 	opts = append(opts, w.opts...)
 
-	logger.Debugf("starting a watcher for key %s", w.key)
+	// Create a channel to be notified if the watch channel is closed
+	watchChanStopped := make(chan struct{})
 
-	watcherChan := w.client.Watch(ctx, w.key, opts...)
+	// Create a waitgroup that will be used make sure we do not write to a closed
+	// resultChan
+	var resultChanWG sync.WaitGroup
+
+	// Create a cancellable context for our watcher
+	ctx, cancel := context.WithCancel(w.ctx)
+
+	// Start the watcher
+	logger.Debugf("starting a watcher for key %s", w.key)
+	w.watch(ctx, opts, watchChanStopped, &resultChanWG)
+
+	// Initialize a rate limiter
 	limiter := rate.NewLimiter(rate.Every(time.Second), 1)
 
 	go func() {
-		defer close(w.resultChan)
-		_ = limiter.Wait(ctx)
-		for ctx.Err() == nil {
-			for watchResponse := range watcherChan {
-				if err := watchResponse.Err(); err != nil {
-					if ctx.Err() != nil {
-						// Our context was canceled, return without error,
-						// since the consumer is probably shutting down.
-						return
-					}
-					logger.WithError(err).Info("error from watch response")
-					w.resultChan <- store.WatchEvent{
-						Type: store.WatchError,
-						Err:  err,
-					}
-					if watchResponse.Canceled {
-						// Reinstate the watcher and break to the outer loop
-						watcherChan = w.client.Watch(ctx, w.key, opts...)
-						break
-					}
-					continue
-				}
+	RetryLoop:
+		for {
+			select {
+			case <-watchChanStopped:
+				// The watch channel is broken, so let's make sure to close the watcher
+				// first by cancelling its context, to prevent any possible memory leak
+				cancel()
 
-				for _, event := range watchResponse.Events {
-					logger.Debugf("received event of type %v for key %s", event.Type, event.Kv.Key)
-					w.event(ctx, event)
-				}
-			}
-			if w.client.Ctx().Err() != nil {
-				w.resultChan <- store.WatchEvent{
-					Type: store.WatchError,
-					Err:  errors.New("client closed unexpectedly"),
-				}
-				return
+				// Now, we don't want to reconnect too quickly so wait for a moment
+				_ = limiter.Wait(w.ctx)
+
+				// Re-create a cancellable context for our watcher
+				ctx, cancel = context.WithCancel(w.ctx)
+
+				// Re-create a channel to be notified if the watch channel is closed
+				watchChanStopped = make(chan struct{})
+
+				// Restart the watcher
+				logger.Debugf("restarting the watcher for key %s", w.key)
+				w.watch(ctx, opts, watchChanStopped, &resultChanWG)
+			case <-w.ctx.Done():
+				// The consumer has cancelled this watcher, we need to exit
+				logger.Debugf("stopping the watcher for key %s", w.key)
+				break RetryLoop
 			}
 		}
+
+		// Use both parent and current watcher context's cancellable functions to reap
+		// all goroutines. At this point the consumer has stopped the watcher so we
+		// should stop everything. It's also fine to double cancel.
+		cancel()
+		w.cancel()
+
+		// Make sure we do not close the resultChan while it's still be used
+		resultChanWG.Wait()
+		close(w.resultChan)
 	}()
+}
+
+func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChanStopped chan struct{}, resultChanWG *sync.WaitGroup) {
+	// Wrap the context with WithRequireLeader so ErrNoLeader is returned and the
+	// WatchChan is closed if the etcd server has no leader
+	ctx = clientv3.WithRequireLeader(ctx)
+
+	resultChanWG.Add(1)
+
+	watchChan := w.client.Watch(ctx, w.key, opts...)
+
+	go func() {
+		// Indicate that the resultChan is no longer used once we existed the
+		// goroutine below
+		defer resultChanWG.Done()
+
+		// Loop over the watchChan channel to receive watch responses. The loop will
+		// exit if the channel is closed.
+		for watchResponse := range watchChan {
+			if watchResponse.Err() != nil {
+				// We received an error from the channel, so let's assume it's no longer
+				// functional and exit this goroutine so we can try to re-create the
+				// watcher
+				logger.WithError(watchResponse.Err()).Info("error from watch response")
+				break
+			}
+
+			for _, event := range watchResponse.Events {
+				logger.Debugf("received event of type %v for key %s", event.Type, event.Kv.Key)
+				w.event(ctx, event)
+			}
+		}
+
+		// At this point, the watch channel has been closed by its consumer or is
+		// broken, therefore we should notify the main thread that this goroutine has
+		// exited
+		close(watchChanStopped)
+	}()
+
 }
 
 func (w *Watcher) event(ctx context.Context, e *clientv3.Event) {
