@@ -151,6 +151,23 @@ type MutationDeleteEventFieldResolver interface {
 	DeleteEvent(p MutationDeleteEventFieldResolverParams) (interface{}, error)
 }
 
+// MutationDeleteEventFilterFieldResolverArgs contains arguments provided to deleteEventFilter when selected
+type MutationDeleteEventFilterFieldResolverArgs struct {
+	Input *DeleteRecordInput // Input - self descriptive
+}
+
+// MutationDeleteEventFilterFieldResolverParams contains contextual info to resolve deleteEventFilter field
+type MutationDeleteEventFilterFieldResolverParams struct {
+	graphql.ResolveParams
+	Args MutationDeleteEventFilterFieldResolverArgs
+}
+
+// MutationDeleteEventFilterFieldResolver implement to resolve requests for the Mutation's deleteEventFilter field.
+type MutationDeleteEventFilterFieldResolver interface {
+	// DeleteEventFilter implements response to request for deleteEventFilter field.
+	DeleteEventFilter(p MutationDeleteEventFilterFieldResolverParams) (interface{}, error)
+}
+
 // MutationDeleteHandlerFieldResolverArgs contains arguments provided to deleteHandler when selected
 type MutationDeleteHandlerFieldResolverArgs struct {
 	Input *DeleteRecordInput // Input - self descriptive
@@ -289,6 +306,7 @@ type MutationFieldResolvers interface {
 	MutationDeleteEntityFieldResolver
 	MutationResolveEventFieldResolver
 	MutationDeleteEventFieldResolver
+	MutationDeleteEventFilterFieldResolver
 	MutationDeleteHandlerFieldResolver
 	MutationDeleteMutatorFieldResolver
 	MutationCreateSilenceFieldResolver
@@ -386,6 +404,12 @@ func (_ MutationAliases) ResolveEvent(p MutationResolveEventFieldResolverParams)
 
 // DeleteEvent implements response to request for 'deleteEvent' field.
 func (_ MutationAliases) DeleteEvent(p MutationDeleteEventFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// DeleteEventFilter implements response to request for 'deleteEventFilter' field.
+func (_ MutationAliases) DeleteEventFilter(p MutationDeleteEventFilterFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -525,6 +549,19 @@ func _ObjTypeMutationDeleteEventHandler(impl interface{}) graphql1.FieldResolveF
 	}
 }
 
+func _ObjTypeMutationDeleteEventFilterHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(MutationDeleteEventFilterFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := MutationDeleteEventFilterFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.DeleteEventFilter(frp)
+	}
+}
+
 func _ObjTypeMutationDeleteHandlerHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(MutationDeleteHandlerFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
@@ -631,6 +668,16 @@ func _ObjectTypeMutationConfigFn() graphql1.ObjectConfig {
 				Name:              "deleteEvent",
 				Type:              graphql.OutputType("DeleteRecordPayload"),
 			},
+			"deleteEventFilter": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{"input": &graphql1.ArgumentConfig{
+					Description: "self descriptive",
+					Type:        graphql1.NewNonNull(graphql.InputType("DeleteRecordInput")),
+				}},
+				DeprecationReason: "",
+				Description:       "Removes given event filter.",
+				Name:              "deleteEventFilter",
+				Type:              graphql.OutputType("DeleteRecordPayload"),
+			},
 			"deleteHandler": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{"input": &graphql1.ArgumentConfig{
 					Description: "self descriptive",
@@ -726,18 +773,19 @@ func _ObjectTypeMutationConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeMutationDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeMutationConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"createCheck":   _ObjTypeMutationCreateCheckHandler,
-		"createSilence": _ObjTypeMutationCreateSilenceHandler,
-		"deleteCheck":   _ObjTypeMutationDeleteCheckHandler,
-		"deleteEntity":  _ObjTypeMutationDeleteEntityHandler,
-		"deleteEvent":   _ObjTypeMutationDeleteEventHandler,
-		"deleteHandler": _ObjTypeMutationDeleteHandlerHandler,
-		"deleteMutator": _ObjTypeMutationDeleteMutatorHandler,
-		"deleteSilence": _ObjTypeMutationDeleteSilenceHandler,
-		"executeCheck":  _ObjTypeMutationExecuteCheckHandler,
-		"putWrapped":    _ObjTypeMutationPutWrappedHandler,
-		"resolveEvent":  _ObjTypeMutationResolveEventHandler,
-		"updateCheck":   _ObjTypeMutationUpdateCheckHandler,
+		"createCheck":       _ObjTypeMutationCreateCheckHandler,
+		"createSilence":     _ObjTypeMutationCreateSilenceHandler,
+		"deleteCheck":       _ObjTypeMutationDeleteCheckHandler,
+		"deleteEntity":      _ObjTypeMutationDeleteEntityHandler,
+		"deleteEvent":       _ObjTypeMutationDeleteEventHandler,
+		"deleteEventFilter": _ObjTypeMutationDeleteEventFilterHandler,
+		"deleteHandler":     _ObjTypeMutationDeleteHandlerHandler,
+		"deleteMutator":     _ObjTypeMutationDeleteMutatorHandler,
+		"deleteSilence":     _ObjTypeMutationDeleteSilenceHandler,
+		"executeCheck":      _ObjTypeMutationExecuteCheckHandler,
+		"putWrapped":        _ObjTypeMutationPutWrappedHandler,
+		"resolveEvent":      _ObjTypeMutationResolveEventHandler,
+		"updateCheck":       _ObjTypeMutationUpdateCheckHandler,
 	},
 }
 

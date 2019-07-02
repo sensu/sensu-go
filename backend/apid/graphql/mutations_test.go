@@ -251,6 +251,30 @@ func TestMutationTypeDeleteMutatorField(t *testing.T) {
 	assert.Nil(t, body)
 }
 
+func TestMutationTypeDeleteEventFilterField(t *testing.T) {
+	flr := types.FixtureEventFilter("a")
+	gid := globalid.EventFilterTranslator.EncodeToString(flr)
+
+	inputs := schema.DeleteRecordInput{ID: gid}
+	params := schema.MutationDeleteEventFilterFieldResolverParams{}
+	params.Args.Input = &inputs
+
+	client, factory := client.NewClientFactory()
+	impl := mutationsImpl{factory: factory}
+
+	// Success
+	client.On("DeleteFilter", mock.Anything, mock.Anything).Return(nil).Once()
+	body, err := impl.DeleteEventFilter(params)
+	assert.NoError(t, err)
+	assert.NotEmpty(t, body)
+
+	// Failure
+	client.On("DeleteFilter", mock.Anything, mock.Anything).Return(errors.New("err")).Once()
+	body, err = impl.DeleteEventFilter(params)
+	assert.Error(t, err)
+	assert.Nil(t, body)
+}
+
 func TestMutationTypeCreateSilenceField(t *testing.T) {
 	inputs := schema.CreateSilenceInput{
 		Namespace: "a",
