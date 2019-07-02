@@ -277,12 +277,12 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	viper.SetDefault(flagTrustedCAFile, "")
 	viper.SetDefault(flagInsecureSkipTLSVerify, false)
 	viper.SetDefault(flagLogLevel, "warn")
-	viper.SetDefault(backend.FlagEventdWorkers, 1000)
-	viper.SetDefault(backend.FlagEventdBufferSize, 2000)
-	viper.SetDefault(backend.FlagKeepalivedWorkers, 1000)
-	viper.SetDefault(backend.FlagKeepalivedBufferSize, 2000)
-	viper.SetDefault(backend.FlagPipelinedWorkers, 1000)
-	viper.SetDefault(backend.FlagPipelinedBufferSize, 2000)
+	viper.SetDefault(backend.FlagEventdWorkers, 100)
+	viper.SetDefault(backend.FlagEventdBufferSize, 100)
+	viper.SetDefault(backend.FlagKeepalivedWorkers, 100)
+	viper.SetDefault(backend.FlagKeepalivedBufferSize, 100)
+	viper.SetDefault(backend.FlagPipelinedWorkers, 100)
+	viper.SetDefault(backend.FlagPipelinedBufferSize, 100)
 
 	// Etcd defaults
 	viper.SetDefault(flagEtcdAdvertiseClientURLs, defaultEtcdAdvertiseClientURL)
