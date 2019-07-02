@@ -53,6 +53,13 @@ type Mutation {
   deleteEvent(input: DeleteRecordInput!): DeleteRecordPayload
 
   #
+  # Event Filters
+  #
+
+  "Removes given event filter."
+  deleteEventFilter(input: DeleteRecordInput!): DeleteRecordPayload
+
+  #
   # Handlers
   #
 

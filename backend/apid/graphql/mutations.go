@@ -311,6 +311,30 @@ func decodeEventGID(gid string) (globalid.EventComponents, error) {
 }
 
 //
+// Implement event filter mutations
+//
+
+// DeleteEventFilter implements response to request for the 'deleteEventFilter' field.
+func (r *mutationsImpl) DeleteEventFilter(p schema.MutationDeleteEventFilterFieldResolverParams) (interface{}, error) {
+	components, _ := globalid.Decode(p.Args.Input.ID)
+	if components.Resource() != v2.EventFiltersResource {
+		return nil, errors.New("given ID must be a event filter")
+	}
+
+	ctx := setContextFromComponents(p.Context, components)
+	client := r.factory.NewWithContext(ctx)
+
+	err := client.DeleteFilter(components.Namespace(), components.UniqueComponent())
+	if err != nil {
+		return nil, err
+	}
+	return map[string]interface{}{
+		"clientMutationId": p.Args.Input.ClientMutationID,
+		"deletedId":        components.String(),
+	}, nil
+}
+
+//
 // Implement handler mutations
 //
 

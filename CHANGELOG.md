@@ -20,6 +20,8 @@ POST & PUT requests instead of `204 No Content`.
 
 ### Fixed
 - Fixed a bug where basic authorization was not being performed on the agent websocket connection.
+- Fixed an aliasing regression where event timestamps from the /events API
+were not getting properly populated.
 
 ## [5.10.1] - 2019-06-25
 
@@ -27,6 +29,8 @@ POST & PUT requests instead of `204 No Content`.
 - Fixed the entity_attributes in proxy_requests so all attributes must match
 instead of only one of them.
 - Fixed a bug where events were not deleted when their corresponding entity was.
+- Fixed a bug where watchers could enter a tight loop, causing very high CPU
+  usage until sensu-backend was restarted
 
 ## [5.10.0] - 2019-06-18
 
