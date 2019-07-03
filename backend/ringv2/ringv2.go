@@ -371,21 +371,21 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, va
 				r.mu.Unlock()
 				notifyClosing(ch)
 				return
-			case response := <-itemsC:
+			case response, ok := <-itemsC:
 				if err := response.Err(); err != nil {
 					notifyError(ch, err)
 				}
-				if response.Canceled {
+				if response.Canceled || !ok {
 					// The watcher needs to be reinstated
 					r.startWatchers(ctx, ch, name, values, interval, cron)
 					return
 				}
 				notifyAddRemove(ch, response)
-			case response := <-nextC:
+			case response, ok := <-nextC:
 				if err := response.Err(); err != nil {
 					notifyError(ch, err)
 				}
-				if response.Canceled {
+				if response.Canceled || !ok {
 					// The watcher needs to be reinstated
 					r.startWatchers(ctx, ch, name, values, interval, cron)
 					return

@@ -257,10 +257,10 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 		persistEvent.Check = &check
 	}
 
-	if event.Timestamp == 0 {
+	if persistEvent.Timestamp == 0 {
 		// If the event is being created for the first time, it may not include
 		// a timestamp. Use the current time.
-		event.Timestamp = time.Now().Unix()
+		persistEvent.Timestamp = time.Now().Unix()
 	}
 
 	// update the history

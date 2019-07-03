@@ -13,12 +13,6 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-const (
-	// PipelineCount specifies how many pipelines (goroutines) are
-	// in action.
-	PipelineCount int = 10
-)
-
 // ExtensionExecutorGetterFunc gets an ExtensionExecutor. Used to decouple
 // Pipelined from gRPC.
 type ExtensionExecutorGetterFunc func(*types.Extension) (rpc.ExtensionExecutor, error)
@@ -39,6 +33,7 @@ type Pipelined struct {
 	bus               messaging.MessageBus
 	extensionExecutor ExtensionExecutorGetterFunc
 	executor          command.Executor
+	workerCount       int
 }
 
 // Config configures a Pipelined.
@@ -47,6 +42,8 @@ type Config struct {
 	Bus                     messaging.MessageBus
 	ExtensionExecutorGetter ExtensionExecutorGetterFunc
 	AssetGetter             asset.Getter
+	BufferSize              int
+	WorkerCount             int
 }
 
 // Option is a functional option used to configure Pipelined.
@@ -54,6 +51,13 @@ type Option func(*Pipelined) error
 
 // New creates a new Pipelined with supplied Options applied.
 func New(c Config, options ...Option) (*Pipelined, error) {
+	if c.BufferSize == 0 {
+		c.BufferSize = 1
+	}
+	if c.WorkerCount == 0 {
+		c.WorkerCount = 1
+	}
+
 	p := &Pipelined{
 		store:             c.Store,
 		bus:               c.Bus,
@@ -62,7 +66,8 @@ func New(c Config, options ...Option) (*Pipelined, error) {
 		running:           &atomic.Value{},
 		wg:                &sync.WaitGroup{},
 		errChan:           make(chan error, 1),
-		eventChan:         make(chan interface{}, 100),
+		eventChan:         make(chan interface{}, c.BufferSize),
+		workerCount:       c.WorkerCount,
 		executor:          command.NewExecutor(),
 		assetGetter:       c.AssetGetter,
 	}
@@ -88,7 +93,7 @@ func (p *Pipelined) Start() error {
 	}
 	p.subscription = sub
 
-	p.createPipelines(PipelineCount, p.eventChan)
+	p.createPipelines(p.workerCount, p.eventChan)
 
 	return nil
 }
