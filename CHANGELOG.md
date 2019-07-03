@@ -16,6 +16,8 @@ is silenced.
 - Added prometheus metrics for topics in wizard bus and agent sessions.
 - The buffer size and worker count of keepalived, eventd & pipelined can now be
 configured on sensu-backend.
+- Added a `headers` field to the `Asset` struct. Headers is a map of key/value
+string pairs used as HTTP headers for asset retrieval.
 
 ### Changed
 - The REST API now returns the `201 Created` success status response code for
