@@ -13,6 +13,7 @@ is silenced.
 - Added --disable-assets flag to sensu-agent.
 - Added ability to query mutators to the GraphQL service
 - Added ability to query event filters to the GraphQL service
+- Added prometheus metrics for topics in wizard bus and agent sessions.
 - The buffer size and worker count of keepalived, eventd & pipelined can now be
 configured on sensu-backend.
 

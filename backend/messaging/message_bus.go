@@ -5,6 +5,7 @@ package messaging
 import (
 	"fmt"
 
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sensu/sensu-go/backend/daemon"
 )
 
@@ -28,6 +29,16 @@ const (
 
 	// TopicTessenMetric is the topic prefix for tessen api metrics to Tessend.
 	TopicTessenMetric = "sensu:tessen-metric"
+)
+
+var (
+	topicCounter = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "sensu_go_wizard_bus",
+			Help: "Number of elements in a topic",
+		},
+		[]string{"topic"},
+	)
 )
 
 // A Subscriber receives messages via a channel.

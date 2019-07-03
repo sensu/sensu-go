@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
@@ -111,6 +112,8 @@ func (a *Agentd) Start() error {
 			logger.WithError(err).Error("failed to start http/https server")
 		}
 	}()
+
+	_ = prometheus.Register(sessionCounter)
 
 	return nil
 }

@@ -4,6 +4,8 @@ import (
 	"errors"
 	"sync"
 	"sync/atomic"
+
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 // WizardBus is a message bus.
@@ -38,6 +40,8 @@ func NewWizardBus(cfg WizardBusConfig, opts ...WizardOption) (*WizardBus, error)
 			return nil, err
 		}
 	}
+	_ = prometheus.Register(topicCounter)
+
 	return bus, nil
 }
 
