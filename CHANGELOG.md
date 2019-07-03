@@ -23,6 +23,8 @@ POST & PUT requests instead of `204 No Content`.
 ### Fixed
 - Fixed an aliasing regression where event timestamps from the /events API
 were not getting properly populated.
+- Fixed a bug where multiple nested set handlers could be incorrectly flagged as
+deeply nested.
 
 ## [5.10.1] - 2019-06-25
 
