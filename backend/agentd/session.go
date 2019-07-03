@@ -80,6 +80,7 @@ func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.Messa
 
 	logger.WithFields(logrus.Fields{
 		"addr":          cfg.AgentAddr,
+		"namespace":     cfg.Namespace,
 		"id":            cfg.AgentName,
 		"subscriptions": cfg.Subscriptions,
 	}).Info("agent connected")
@@ -261,7 +262,10 @@ func (s *Session) Stop() {
 	close(s.checkChannel)
 	for _, sub := range s.cfg.Subscriptions {
 		ring := s.ringPool.Get(ringv2.Path(s.cfg.Namespace, sub))
-		logger.Info("removing agent from ring")
+		logger.WithFields(logrus.Fields{
+			"namespace": s.cfg.Namespace,
+			"id":        s.cfg.AgentName,
+		}).Info("removing agent from ring")
 		if err := ring.Remove(s.ctx, s.cfg.AgentName); err != nil {
 			logger.WithError(err).Error("unable to remove agent from ring")
 		}
