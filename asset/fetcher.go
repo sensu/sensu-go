@@ -37,7 +37,7 @@ func httpGet(ctx context.Context, path string, headers map[string]string) (io.Re
 	for k, v := range headers {
 		values := strings.Split(v, ",")
 		for _, value := range values {
-			req.Header.Add(k, value)
+			req.Header.Add(k, strings.TrimSpace(value))
 		}
 	}
 
