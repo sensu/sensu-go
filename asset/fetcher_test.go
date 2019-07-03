@@ -67,5 +67,7 @@ func TestHTTPGet(t *testing.T) {
 	defer ts.Close()
 
 	headers := map[string]string{"foo": "bar", "hi": "hello,sup"}
-	httpGet(context.Background(), ts.URL, headers)
+	closer, err := httpGet(context.Background(), ts.URL, headers)
+	assert.NotNil(t, closer)
+	assert.NoError(t, err)
 }
