@@ -35,6 +35,7 @@ import (
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/types"
+	"github.com/spf13/viper"
 )
 
 // Backend represents the backend server, which is used to hold the datastore
@@ -180,6 +181,8 @@ func Initialize(config *Config) (*Backend, error) {
 		Bus:                     bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 		AssetGetter:             assetGetter,
+		BufferSize:              viper.GetInt(FlagPipelinedBufferSize),
+		WorkerCount:             viper.GetInt(FlagPipelinedWorkers),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", pipeline.Name(), err)
@@ -187,13 +190,18 @@ func Initialize(config *Config) (*Backend, error) {
 	b.Daemons = append(b.Daemons, pipeline)
 
 	// Initialize eventd
-	event, err := eventd.New(eventd.Config{
-		Store:           stor,
-		EventStore:      eventStoreProxy,
-		Bus:             bus,
-		LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
-		Client:          b.Client,
-	})
+	event, err := eventd.New(
+		b.ctx,
+		eventd.Config{
+			Store:           stor,
+			EventStore:      eventStoreProxy,
+			Bus:             bus,
+			LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
+			Client:          b.Client,
+			BufferSize:      viper.GetInt(FlagEventdBufferSize),
+			WorkerCount:     viper.GetInt(FlagEventdWorkers),
+		},
+	)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", event.Name(), err)
 	}
@@ -202,13 +210,15 @@ func Initialize(config *Config) (*Backend, error) {
 	ringPool := ringv2.NewPool(b.Client)
 
 	// Initialize schedulerd
-	scheduler, err := schedulerd.New(schedulerd.Config{
-		Store:       stor,
-		Bus:         bus,
-		QueueGetter: queueGetter,
-		RingPool:    ringPool,
-		Client:      b.Client,
-	})
+	scheduler, err := schedulerd.New(
+		b.ctx,
+		schedulerd.Config{
+			Store:       stor,
+			Bus:         bus,
+			QueueGetter: queueGetter,
+			RingPool:    ringPool,
+			Client:      b.Client,
+		})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", scheduler.Name(), err)
 	}
@@ -236,6 +246,8 @@ func Initialize(config *Config) (*Backend, error) {
 		EventStore:            stor,
 		LivenessFactory:       liveness.EtcdFactory(b.ctx, b.Client),
 		RingPool:              ringPool,
+		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
+		WorkerCount:           viper.GetInt(FlagKeepalivedWorkers),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
@@ -283,12 +295,14 @@ func Initialize(config *Config) (*Backend, error) {
 	b.Daemons = append(b.Daemons, api)
 
 	// Initialize tessend
-	tessen, err := tessend.New(tessend.Config{
-		Store:    stor,
-		RingPool: ringPool,
-		Client:   b.Client,
-		Bus:      bus,
-	})
+	tessen, err := tessend.New(
+		b.ctx,
+		tessend.Config{
+			Store:    stor,
+			RingPool: ringPool,
+			Client:   b.Client,
+			Bus:      bus,
+		})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", tessen.Name(), err)
 	}

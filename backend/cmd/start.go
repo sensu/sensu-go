@@ -277,6 +277,12 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	viper.SetDefault(flagTrustedCAFile, "")
 	viper.SetDefault(flagInsecureSkipTLSVerify, false)
 	viper.SetDefault(flagLogLevel, "warn")
+	viper.SetDefault(backend.FlagEventdWorkers, 100)
+	viper.SetDefault(backend.FlagEventdBufferSize, 100)
+	viper.SetDefault(backend.FlagKeepalivedWorkers, 100)
+	viper.SetDefault(backend.FlagKeepalivedBufferSize, 100)
+	viper.SetDefault(backend.FlagPipelinedWorkers, 100)
+	viper.SetDefault(backend.FlagPipelinedBufferSize, 100)
 
 	// Etcd defaults
 	viper.SetDefault(flagEtcdAdvertiseClientURLs, defaultEtcdAdvertiseClientURL)
@@ -313,6 +319,12 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	cmd.Flags().Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")
 	cmd.Flags().Bool(flagDebug, false, "enable debugging and profiling features")
 	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
+	cmd.Flags().Int(backend.FlagEventdWorkers, viper.GetInt(backend.FlagEventdWorkers), "number of workers spawned for processing incoming events")
+	cmd.Flags().Int(backend.FlagEventdBufferSize, viper.GetInt(backend.FlagEventdBufferSize), "number of incoming events that can be buffered")
+	cmd.Flags().Int(backend.FlagKeepalivedWorkers, viper.GetInt(backend.FlagKeepalivedWorkers), "number of workers spawned for processing incoming keepalives")
+	cmd.Flags().Int(backend.FlagKeepalivedBufferSize, viper.GetInt(backend.FlagKeepalivedBufferSize), "number of incoming keepalives that can be buffered")
+	cmd.Flags().Int(backend.FlagPipelinedWorkers, viper.GetInt(backend.FlagPipelinedWorkers), "number of workers spawned for handling events through the event pipeline")
+	cmd.Flags().Int(backend.FlagPipelinedBufferSize, viper.GetInt(backend.FlagPipelinedBufferSize), "number of events to handle that can be buffered")
 
 	// Etcd flags
 	cmd.Flags().StringSlice(flagEtcdAdvertiseClientURLs, viper.GetStringSlice(flagEtcdAdvertiseClientURLs), "list of this member's client URLs to advertise to the rest of the cluster.")

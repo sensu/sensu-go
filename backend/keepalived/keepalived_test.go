@@ -58,7 +58,11 @@ func newKeepalivedTest(t *testing.T) *keepalivedTest {
 	deregisterer := &mockDeregisterer{}
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
-	k, err := New(Config{Store: store, Bus: bus, LivenessFactory: fakeFactory})
+	k, err := New(Config{
+		Store:           store,
+		Bus:             bus,
+		LivenessFactory: fakeFactory,
+	})
 	require.NoError(t, err)
 	test := &keepalivedTest{
 		MessageBus:   bus,

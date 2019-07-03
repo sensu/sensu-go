@@ -14,10 +14,16 @@ is silenced.
 - Added ability to query mutators to the GraphQL service
 - Added ability to query event filters to the GraphQL service
 - Added prometheus metrics for topics in wizard bus and agent sessions.
+- The buffer size and worker count of keepalived, eventd & pipelined can now be
+configured on sensu-backend.
 
 ### Changed
 - The REST API now returns the `201 Created` success status response code for
 POST & PUT requests instead of `204 No Content`.
+
+### Fixed
+- Fixed an aliasing regression where event timestamps from the /events API
+were not getting properly populated.
 
 ## [5.10.1] - 2019-06-25
 
@@ -25,6 +31,8 @@ POST & PUT requests instead of `204 No Content`.
 - Fixed the entity_attributes in proxy_requests so all attributes must match
 instead of only one of them.
 - Fixed a bug where events were not deleted when their corresponding entity was.
+- Fixed a bug where watchers could enter a tight loop, causing very high CPU
+  usage until sensu-backend was restarted
 
 ## [5.10.0] - 2019-06-18
 

@@ -3,6 +3,7 @@
 package tessend
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -42,12 +43,14 @@ func newTessendTest(t *testing.T) *Tessend {
 	s.On("GetTessenConfigWatcher", mock.Anything).Return(ch)
 	s.On("GetClusterID", mock.Anything).Return("foo", fmt.Errorf("foo"))
 
-	tessend, err := New(Config{
-		Store:    s,
-		Client:   client,
-		RingPool: ringv2.NewPool(client),
-		Bus:      bus,
-	})
+	tessend, err := New(
+		context.Background(),
+		Config{
+			Store:    s,
+			Client:   client,
+			RingPool: ringv2.NewPool(client),
+			Bus:      bus,
+		})
 	tessend.duration = 5 * time.Millisecond
 	tessend.config = corev2.DefaultTessenConfig()
 	require.NoError(t, err)

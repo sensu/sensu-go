@@ -14,6 +14,19 @@ const (
 
 	// DefaultEtcdPeerURL is the default URL to listen for Etcd peers (single-node cluster only)
 	DefaultEtcdPeerURL = "http://127.0.0.1:2380"
+
+	// FlagEventdWorkers defines the number of workers for eventd
+	FlagEventdWorkers = "eventd-workers"
+	// FlagEventdBufferSize defines the buffer size for eventd
+	FlagEventdBufferSize = "eventd-buffer-size"
+	// FlagKeepalivedWorkers defines the number of workers for keepalived
+	FlagKeepalivedWorkers = "keepalived-workers"
+	// FlagKeepalivedBufferSize defines buffer size for keepalived
+	FlagKeepalivedBufferSize = "keepalived-buffer-size"
+	// FlagPipelinedWorkers defines the number of workers for pipelined
+	FlagPipelinedWorkers = "pipelined-workers"
+	// FlagPipelinedBufferSize defines the buffer size for pipelined
+	FlagPipelinedBufferSize = "pipelined-buffer-size"
 )
 
 // Config specifies a Backend configuration.
