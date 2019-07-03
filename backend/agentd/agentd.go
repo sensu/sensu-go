@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
@@ -24,12 +25,6 @@ var (
 	upgrader = &websocket.Upgrader{}
 )
 
-// Store specifies storage requirements for Agentd.
-type Store interface {
-	middlewares.AuthStore
-	SessionStore
-}
-
 // Agentd is the backend HTTP API.
 type Agentd struct {
 	// Host is the hostname Agentd is running on.
@@ -43,7 +38,7 @@ type Agentd struct {
 	wg         *sync.WaitGroup
 	errChan    chan error
 	httpServer *http.Server
-	store      Store
+	store      store.Store
 	bus        messaging.MessageBus
 	tls        *types.TLSOptions
 	ringPool   *ringv2.Pool
@@ -83,7 +78,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		return nil, err
 	}
 
-	handler := middlewares.BasicAuthentication(http.HandlerFunc(a.webSocketHandler), a.store)
+	handler := middlewares.BasicAuthentication(middlewares.BasicAuthorization(http.HandlerFunc(a.webSocketHandler), a.store), a.store)
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
 		Handler:      handler,
@@ -117,6 +112,8 @@ func (a *Agentd) Start() error {
 			logger.WithError(err).Error("failed to start http/https server")
 		}
 	}()
+
+	_ = prometheus.Register(sessionCounter)
 
 	return nil
 }

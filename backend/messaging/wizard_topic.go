@@ -21,7 +21,9 @@ func (t *wizardTopic) Send(msg interface{}) {
 		subscribers = append(subscribers, subscriber)
 	}
 	t.RUnlock()
+
 	for _, subscriber := range subscribers {
+		topicCounter.WithLabelValues(t.id).Set(float64(len(subscriber.Receiver())))
 		select {
 		case subscriber.Receiver() <- msg:
 		case <-t.done:
