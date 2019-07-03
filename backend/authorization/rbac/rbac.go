@@ -18,12 +18,14 @@ type Authorizer struct {
 	Store store.Store
 }
 
+// RoleBinding implements the RoleBinding interface.
 type RoleBinding interface {
 	GetSubjects() []corev2.Subject
 	GetRoleRef() corev2.RoleRef
 	GetObjectMeta() corev2.ObjectMeta
 }
 
+// RuleVisitFunc is a function to help visit matching rules.
 type RuleVisitFunc func(RoleBinding, corev2.Rule, error) (terminate bool)
 
 // VisitRulesFor visits all of the matching rules for a given Attributes.

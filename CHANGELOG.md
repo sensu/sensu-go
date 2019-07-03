@@ -21,6 +21,7 @@ configured on sensu-backend.
 POST & PUT requests instead of `204 No Content`.
 
 ### Fixed
+- Fixed a bug where basic authorization was not being performed on the agent websocket connection.
 - Fixed an aliasing regression where event timestamps from the /events API
 were not getting properly populated.
 

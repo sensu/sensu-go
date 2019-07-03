@@ -1,7 +1,9 @@
 package middlewares
 
 import (
+	"bytes"
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,14 +12,16 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	sensuJWT "github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/testing/mockstore"
+	"github.com/sensu/sensu-go/transport"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
 func seedStore(t *testing.T, store store.Store) {
@@ -30,14 +34,14 @@ func seedStore(t *testing.T, store store.Store) {
 	// Add custom resources for the tests
 	// Add a ClusterRoleBinding for the ClusteRole admin and assign the
 	// local-admins group
-	localAdmins := &types.ClusterRoleBinding{
-		ObjectMeta: v2.NewObjectMeta("admin", ""),
-		RoleRef: types.RoleRef{
+	localAdmins := &corev2.ClusterRoleBinding{
+		ObjectMeta: corev2.NewObjectMeta("admin", ""),
+		RoleRef: corev2.RoleRef{
 			Type: "ClusterRole",
 			Name: "admin",
 		},
-		Subjects: []types.Subject{
-			types.Subject{
+		Subjects: []corev2.Subject{
+			corev2.Subject{
 				Type: "Group",
 				Name: "local-admins",
 			},
@@ -47,14 +51,14 @@ func seedStore(t *testing.T, store store.Store) {
 		t.Fatal("Could not add the admin ClusterRoleBinding")
 	}
 
-	admins := &types.RoleBinding{
-		ObjectMeta: v2.NewObjectMeta("admin", "default"),
-		RoleRef: types.RoleRef{
+	admins := &corev2.RoleBinding{
+		ObjectMeta: corev2.NewObjectMeta("admin", "default"),
+		RoleRef: corev2.RoleRef{
 			Type: "ClusterRole",
 			Name: "admin",
 		},
-		Subjects: []types.Subject{
-			types.Subject{
+		Subjects: []corev2.Subject{
+			corev2.Subject{
 				Type: "Group",
 				Name: "admins",
 			},
@@ -64,14 +68,14 @@ func seedStore(t *testing.T, store store.Store) {
 		t.Fatal("Could not add the admin RoleBinding")
 	}
 
-	editors := &types.RoleBinding{
-		ObjectMeta: v2.NewObjectMeta("edit", "default"),
-		RoleRef: types.RoleRef{
+	editors := &corev2.RoleBinding{
+		ObjectMeta: corev2.NewObjectMeta("edit", "default"),
+		RoleRef: corev2.RoleRef{
 			Type: "ClusterRole",
 			Name: "edit",
 		},
-		Subjects: []types.Subject{
-			types.Subject{
+		Subjects: []corev2.Subject{
+			corev2.Subject{
 				Type: "Group",
 				Name: "editors",
 			},
@@ -81,14 +85,14 @@ func seedStore(t *testing.T, store store.Store) {
 		t.Fatal("Could not add the edit RoleBinding")
 	}
 
-	viewers := &types.RoleBinding{
-		ObjectMeta: v2.NewObjectMeta("view", "default"),
-		RoleRef: types.RoleRef{
+	viewers := &corev2.RoleBinding{
+		ObjectMeta: corev2.NewObjectMeta("view", "default"),
+		RoleRef: corev2.RoleRef{
 			Type: "ClusterRole",
 			Name: "view",
 		},
-		Subjects: []types.Subject{
-			types.Subject{
+		Subjects: []corev2.Subject{
+			corev2.Subject{
 				Type: "Group",
 				Name: "viewers",
 			},
@@ -98,10 +102,10 @@ func seedStore(t *testing.T, store store.Store) {
 		t.Fatal("Could not add the view RoleBinding")
 	}
 
-	fooViewerRole := &types.Role{
-		ObjectMeta: v2.NewObjectMeta("foo-viewer", "default"),
-		Rules: []types.Rule{
-			types.Rule{
+	fooViewerRole := &corev2.Role{
+		ObjectMeta: corev2.NewObjectMeta("foo-viewer", "default"),
+		Rules: []corev2.Rule{
+			corev2.Rule{
 				Verbs:         []string{"get"},
 				Resources:     []string{"checks"},
 				ResourceNames: []string{"foo"},
@@ -112,14 +116,14 @@ func seedStore(t *testing.T, store store.Store) {
 		t.Fatal("Could not add the foo-viewer RoleBinding")
 	}
 
-	fooViewerRoleBinding := &types.RoleBinding{
-		ObjectMeta: v2.NewObjectMeta("foo-viewer", "default"),
-		RoleRef: types.RoleRef{
+	fooViewerRoleBinding := &corev2.RoleBinding{
+		ObjectMeta: corev2.NewObjectMeta("foo-viewer", "default"),
+		RoleRef: corev2.RoleRef{
 			Type: "Role",
 			Name: "foo-viewer",
 		},
-		Subjects: []types.Subject{
-			types.Subject{
+		Subjects: []corev2.Subject{
+			corev2.Subject{
 				Type: "Group",
 				Name: "foo-viewers",
 			},
@@ -546,7 +550,7 @@ func TestAuthorization(t *testing.T) {
 			}
 
 			// Inject the claims into the request context
-			claims := types.Claims{
+			claims := corev2.Claims{
 				StandardClaims: jwt.StandardClaims{Subject: "foo"},
 				Groups:         []string{tt.group},
 			}
@@ -577,5 +581,90 @@ func TestAuthorization(t *testing.T) {
 				t.Logf("Response body: %s", w.Body.String())
 			}
 		})
+	}
+}
+
+func TestBasicAuthorization(t *testing.T) {
+	assert := assert.New(t)
+
+	tests := []struct {
+		description  string
+		namespace    string
+		agentName    string
+		username     string
+		group        string
+		storeErr     error
+		expectedCode int
+	}{
+		{
+			description:  "Authorized request",
+			namespace:    "test-rbac",
+			username:     "authorized-user",
+			group:        "group-test-rbac",
+			expectedCode: http.StatusOK,
+		}, {
+			description:  "Unauthorized request",
+			namespace:    "super-secret",
+			username:     "unauthorized-user",
+			expectedCode: http.StatusForbidden,
+		}, {
+			description:  "Invalid user",
+			namespace:    "test-rbac",
+			username:     "nonexistent-user",
+			storeErr:     fmt.Errorf("user not found"),
+			expectedCode: http.StatusUnauthorized,
+		},
+	}
+
+	for _, tc := range tests {
+		stor := &mockstore.MockStore{}
+		user := corev2.FixtureUser(tc.username)
+		user.Groups = append(user.Groups, tc.group)
+		stor.On("GetUser", mock.Anything, tc.username).Return(user, tc.storeErr)
+		stor.On("AuthenticateUser", mock.Anything, tc.username, "password").Return(user, tc.storeErr)
+		stor.On("ListClusterRoleBindings", mock.Anything, &store.SelectionPredicate{}).
+			Return([]*corev2.ClusterRoleBinding{&corev2.ClusterRoleBinding{
+				RoleRef: corev2.RoleRef{
+					Type: "ClusterRole",
+					Name: "cluster-admin",
+				},
+				Subjects: []corev2.Subject{
+					corev2.Subject{Type: corev2.GroupType, Name: "cluster-admins"},
+				},
+				ObjectMeta: corev2.ObjectMeta{
+					Name: "cluster-admin",
+				},
+			}}, nil)
+		stor.On("ListRoleBindings", mock.Anything, &store.SelectionPredicate{}).
+			Return([]*corev2.RoleBinding{&corev2.RoleBinding{
+				RoleRef: corev2.RoleRef{
+					Type: "ClusterRole",
+					Name: "admin",
+				},
+				Subjects: []corev2.Subject{
+					corev2.Subject{Type: corev2.GroupType, Name: "group-test-rbac"},
+				},
+				ObjectMeta: corev2.ObjectMeta{
+					Name:      "role-test-rbac-admin",
+					Namespace: "test-rbac",
+				},
+			}}, nil)
+		stor.On("GetClusterRole", mock.Anything, "admin", mock.Anything).
+			Return(&corev2.ClusterRole{Rules: []corev2.Rule{
+				corev2.Rule{
+					Verbs:     []string{"create"},
+					Resources: []string{"events"},
+				},
+			}}, nil)
+		server := httptest.NewServer(BasicAuthentication(BasicAuthorization(testHandler(), stor), stor))
+		defer server.Close()
+		req, _ := http.NewRequest(http.MethodPost, server.URL, bytes.NewBuffer([]byte{}))
+		req.SetBasicAuth(tc.username, "password")
+		req.Header.Set(transport.HeaderKeyNamespace, tc.namespace)
+		req.Header.Set(transport.HeaderKeyAgentName, tc.agentName)
+		req.Header.Set(transport.HeaderKeyUser, tc.username)
+		res, err := http.DefaultClient.Do(req)
+		assert.NoError(err)
+		assert.Equal(tc.expectedCode, res.StatusCode, tc.description)
 	}
 }

@@ -69,10 +69,11 @@ type SessionConfig struct {
 // connection, message bus, and store.
 // The Session is responsible for stopping itself, and does so when it
 // encounters a receive error.
-func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store Store) (*Session, error) {
+func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store store.Store) (*Session, error) {
 	// Validate the agent namespace
 	ctx, cancel := context.WithCancel(context.Background())
 	if _, err := store.GetNamespace(ctx, cfg.Namespace); err != nil {
+		defer cancel()
 		return nil, fmt.Errorf(
 			"could not retrieve the namespace '%s': %s", cfg.Namespace, err.Error(),
 		)
