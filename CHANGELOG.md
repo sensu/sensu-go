@@ -16,6 +16,7 @@ is silenced.
 - Added prometheus metrics for topics in wizard bus and agent sessions.
 - The buffer size and worker count of keepalived, eventd & pipelined can now be
 configured on sensu-backend.
+- Added the current user to the output of `sensuctl config view`.
 
 ### Changed
 - The REST API now returns the `201 Created` success status response code for
