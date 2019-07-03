@@ -54,7 +54,7 @@ func newEventd(store store.Store, bus messaging.MessageBus, livenessFactory live
 		wg:              &sync.WaitGroup{},
 		mu:              &sync.Mutex{},
 		Logger:          &RawLogger{},
-		handlerCount:    5,
+		workerCount:     5,
 		silencedCache:   &cache.Resource{},
 	}
 }
@@ -252,7 +252,7 @@ func TestCheckTTL(t *testing.T) {
 				store:           store,
 				eventStore:      store,
 				livenessFactory: newFakeFactory(switches),
-				handlerCount:    1,
+				workerCount:     1,
 				wg:              &sync.WaitGroup{},
 				Logger:          &RawLogger{},
 				silencedCache:   &cache.Resource{},

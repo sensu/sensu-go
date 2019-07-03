@@ -24,10 +24,6 @@ const (
 	// package.
 	ComponentName = "eventd"
 
-	// DefaultHandlerCount is the number of goroutines that will be allocated
-	// for processing incoming events.
-	DefaultHandlerCount = 1000
-
 	// EventsProcessedCounterVec is the name of the prometheus counter vec used to count events processed.
 	EventsProcessedCounterVec = "sensu_go_events_processed"
 
@@ -60,7 +56,7 @@ type Eventd struct {
 	store           store.Store
 	eventStore      store.EventStore
 	bus             messaging.MessageBus
-	handlerCount    int
+	workerCount     int
 	livenessFactory liveness.Factory
 	eventChan       chan interface{}
 	subscription    messaging.Subscription
@@ -82,19 +78,28 @@ type Config struct {
 	Bus             messaging.MessageBus
 	LivenessFactory liveness.Factory
 	Client          *clientv3.Client
+	BufferSize      int
+	WorkerCount     int
 }
 
 // New creates a new Eventd.
 func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
+	if c.BufferSize == 0 {
+		c.BufferSize = 1
+	}
+	if c.WorkerCount == 0 {
+		c.WorkerCount = 1
+	}
+
 	e := &Eventd{
 		store:           c.Store,
 		eventStore:      c.EventStore,
 		bus:             c.Bus,
-		handlerCount:    DefaultHandlerCount,
+		workerCount:     c.WorkerCount,
 		livenessFactory: c.LivenessFactory,
 		errChan:         make(chan error, 1),
 		shutdownChan:    make(chan struct{}, 1),
-		eventChan:       make(chan interface{}, 100),
+		eventChan:       make(chan interface{}, c.BufferSize),
 		wg:              &sync.WaitGroup{},
 		mu:              &sync.Mutex{},
 		Logger:          &RawLogger{},
@@ -125,7 +130,7 @@ func (e *Eventd) Receiver() chan<- interface{} {
 
 // Start eventd.
 func (e *Eventd) Start() error {
-	e.wg.Add(e.handlerCount)
+	e.wg.Add(e.workerCount)
 	sub, err := e.bus.Subscribe(messaging.TopicEventRaw, "eventd", e)
 	e.subscription = sub
 	if err != nil {
@@ -137,7 +142,7 @@ func (e *Eventd) Start() error {
 }
 
 func (e *Eventd) startHandlers() {
-	for i := 0; i < e.handlerCount; i++ {
+	for i := 0; i < e.workerCount; i++ {
 		go func() {
 			defer e.wg.Done()
 

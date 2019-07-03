@@ -13,6 +13,8 @@ is silenced.
 - Added --disable-assets flag to sensu-agent.
 - Added ability to query mutators to the GraphQL service
 - Added ability to query event filters to the GraphQL service
+- The buffer size and worker count of keepalived, eventd & pipelined can now be
+configured on sensu-backend.
 
 ### Changed
 - The REST API now returns the `201 Created` success status response code for
