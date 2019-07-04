@@ -47,7 +47,7 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 	routes.ListAllNamespaces(r.controller.List, "/{resource:events}", corev2.EventFields)
 	routes.Path("{entity}/{check}", r.get).Methods(http.MethodGet)
 	routes.Path("{entity}/{check}", r.delete).Methods(http.MethodDelete)
-	routes.Path("{entity}/{check}", r.createOrReplace).Methods(http.MethodPut)
+	routes.Path("{entity}/{check}", r.createOrReplace).Methods(http.MethodPost, http.MethodPut)
 
 	// Additionaly allow a subcollection to be specified when listing events,
 	// which correspond to the entity name here

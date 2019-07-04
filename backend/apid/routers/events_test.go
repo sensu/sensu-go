@@ -209,6 +209,56 @@ func TestEventsRouter(t *testing.T) {
 			wantStatusCode: http.StatusCreated,
 		},
 		{
+			name:           "it returns 400 if the payload to update is not decodable",
+			method:         http.MethodPost,
+			path:           fixture.URIPath(),
+			body:           []byte(`foo`),
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:           "it returns 400 if the event metadata to update is invalid",
+			method:         http.MethodPost,
+			path:           fixture.URIPath(),
+			body:           []byte(`{"entity": {"namespace":"acme"}}`),
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:   "it returns 400 if the event to update is not valid",
+			method: http.MethodPost,
+			path:   fixture.URIPath(),
+			body:   marshal(fixture),
+			controllerFunc: func(c *mockEventController) {
+				c.On("CreateOrReplace", mock.Anything, mock.Anything).
+					Return(actions.NewErrorf(actions.InvalidArgument)).
+					Once()
+			},
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:   "it returns 500 if the store returns an error while updating an event",
+			method: http.MethodPost,
+			path:   fixture.URIPath(),
+			body:   marshal(fixture),
+			controllerFunc: func(c *mockEventController) {
+				c.On("CreateOrReplace", mock.Anything, mock.Anything).
+					Return(actions.NewErrorf(actions.InternalErr)).
+					Once()
+			},
+			wantStatusCode: http.StatusInternalServerError,
+		},
+		{
+			name:   "it returns 201 when an event is successfully updated",
+			method: http.MethodPost,
+			path:   fixture.URIPath(),
+			body:   marshal(fixture),
+			controllerFunc: func(c *mockEventController) {
+				c.On("CreateOrReplace", mock.Anything, mock.Anything).
+					Return(nil).
+					Once()
+			},
+			wantStatusCode: http.StatusCreated,
+		},
+		{
 			name:   "it returns 404 if the event to delete does not exist",
 			method: http.MethodDelete,
 			path:   fixture.URIPath(),
