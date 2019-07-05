@@ -4,14 +4,16 @@ package pipelined
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 
-	storre "github.com/sensu/sensu-go/backend/store"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -107,52 +109,97 @@ func TestPipelinedHandleEvent(t *testing.T) {
 }
 
 func TestPipelinedExpandHandlers(t *testing.T) {
-	p := &Pipelined{}
-	store := &mockstore.MockStore{}
-	p.store = store
+	type storeFunc func(*mockstore.MockStore)
 
-	handler1 := types.FixtureHandler("handler1")
-	ctx := context.WithValue(context.Background(), types.NamespaceKey, handler1.Namespace)
+	var nilHandler *corev2.Handler
+	pipeHandler := corev2.FixtureHandler("pipeHandler")
+	setHandler := &corev2.Handler{
+		ObjectMeta: corev2.NewObjectMeta("setHandler", "default"),
+		Type:       corev2.HandlerSetType,
+		Handlers:   []string{"pipeHandler"},
+	}
+	nestedHandler := &corev2.Handler{
+		ObjectMeta: corev2.NewObjectMeta("nestedHandler", "default"),
+		Type:       corev2.HandlerSetType,
+		Handlers:   []string{"setHandler"},
+	}
+	recursiveLoopHandler := &corev2.Handler{
+		ObjectMeta: corev2.NewObjectMeta("recursiveLoopHandler", "default"),
+		Type:       corev2.HandlerSetType,
+		Handlers:   []string{"recursiveLoopHandler"},
+	}
 
-	store.On("GetHandlerByName", mock.Anything, "handler1").Return(handler1, nil)
+	tests := []struct {
+		name      string
+		handlers  []string
+		storeFunc storeFunc
+		want      map[string]handlerExtensionUnion
+	}{
+		{
+			name:     "pipe handler",
+			handlers: []string{"pipeHandler"},
+			storeFunc: func(s *mockstore.MockStore) {
+				s.On("GetHandlerByName", mock.Anything, "pipeHandler").Return(pipeHandler, nil)
+			},
+			want: map[string]handlerExtensionUnion{
+				"pipeHandler": handlerExtensionUnion{Handler: pipeHandler},
+			},
+		},
+		{
+			name:     "store error",
+			handlers: []string{"pipeHandler"},
+			storeFunc: func(s *mockstore.MockStore) {
+				s.On("GetHandlerByName", mock.Anything, "pipeHandler").Return(nilHandler, errors.New("error"))
+			},
+			want: map[string]handlerExtensionUnion{},
+		},
+		{
+			name:     "set handler",
+			handlers: []string{"setHandler"},
+			storeFunc: func(s *mockstore.MockStore) {
+				s.On("GetHandlerByName", mock.Anything, "setHandler").Return(setHandler, nil)
+				s.On("GetHandlerByName", mock.Anything, "pipeHandler").Return(pipeHandler, nil)
+			},
+			want: map[string]handlerExtensionUnion{
+				"pipeHandler": handlerExtensionUnion{Handler: pipeHandler},
+			},
+		},
+		{
+			name:     "too deeply nested set handler",
+			handlers: []string{"recursiveLoopHandler"},
+			storeFunc: func(s *mockstore.MockStore) {
+				s.On("GetHandlerByName", mock.Anything, "recursiveLoopHandler").Return(recursiveLoopHandler, nil)
+			},
+			want: map[string]handlerExtensionUnion{},
+		},
+		{
+			name:     "multiple nested set handlers",
+			handlers: []string{"recursiveLoopHandler", "nestedHandler"},
+			storeFunc: func(s *mockstore.MockStore) {
+				s.On("GetHandlerByName", mock.Anything, "recursiveLoopHandler").Return(recursiveLoopHandler, nil)
+				s.On("GetHandlerByName", mock.Anything, "nestedHandler").Return(nestedHandler, nil)
+				s.On("GetHandlerByName", mock.Anything, "setHandler").Return(setHandler, nil)
+				s.On("GetHandlerByName", mock.Anything, "pipeHandler").Return(pipeHandler, nil)
+			},
+			want: map[string]handlerExtensionUnion{
+				"pipeHandler": handlerExtensionUnion{Handler: pipeHandler},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := &mockstore.MockStore{}
+			if tt.storeFunc != nil {
+				tt.storeFunc(store)
+			}
 
-	oneLevel, err := p.expandHandlers(ctx, []string{"handler1"}, 1)
-	assert.NoError(t, err)
-
-	expanded := map[string]handlerExtensionUnion{"handler1": {Handler: handler1}}
-	assert.Equal(t, expanded, oneLevel)
-
-	handler2 := types.FixtureHandler("handler2")
-	handler2.Type = "set"
-	handler2.Handlers = []string{"handler1", "unknown"}
-
-	handler3 := types.FixtureHandler("handler3")
-	handler3.Type = "set"
-	handler3.Handlers = []string{"handler1", "handler2"}
-
-	var nilHandler *types.Handler
-	store.On("GetHandlerByName", mock.Anything, "unknown").Return(nilHandler, nil)
-	store.On("GetHandlerByName", mock.Anything, "handler2").Return(handler2, nil)
-	store.On("GetHandlerByName", mock.Anything, "handler3").Return(handler3, nil)
-	store.On("GetExtension", mock.Anything, "unknown").Return(&types.Extension{}, storre.ErrNoExtension)
-	store.On("GetExtension", mock.Anything, "handler2").Return(&types.Extension{URL: "http://localhost"}, nil)
-	store.On("GetExtension", mock.Anything, "handler3").Return(&types.Extension{URL: "http://localhost"}, nil)
-	store.On("GetExtension", mock.Anything, "handler4").Return(&types.Extension{URL: "http://localhost"}, nil)
-
-	twoLevels, err := p.expandHandlers(ctx, []string{"handler3"}, 1)
-	assert.NoError(t, err)
-	assert.Equal(t, expanded, twoLevels)
-
-	handler4 := types.FixtureHandler("handler4")
-	handler4.Type = "set"
-	handler4.Handlers = []string{"handler2", "handler3"}
-
-	store.On("GetHandlerByName", mock.Anything, "handler4").Return(handler4, nil)
-	threeLevels, err := p.expandHandlers(ctx, []string{"handler4"}, 1)
-
-	assert.NoError(t, err)
-
-	assert.Equal(t, expanded, threeLevels)
+			p := &Pipelined{store: store}
+			got, _ := p.expandHandlers(context.Background(), tt.handlers, 1)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Pipelined.expandHandlers() = %#v, want %#v", got, tt.want)
+			}
+		})
+	}
 }
 
 func TestPipelinedPipeHandler(t *testing.T) {

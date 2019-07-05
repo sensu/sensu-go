@@ -22,6 +22,7 @@ func ViewCommand(cli *cli.SensuCli) *cobra.Command {
 				"api-url":   cli.Config.APIUrl(),
 				"namespace": cli.Config.Namespace(),
 				"format":    cli.Config.Format(),
+				"username":  helpers.GetCurrentUsername(cli.Config),
 			}
 
 			// Determine the format to use to output the data
@@ -61,6 +62,10 @@ func printToList(v interface{}, writer io.Writer) error {
 			{
 				Label: "Format",
 				Value: r["format"],
+			},
+			{
+				Label: "Username",
+				Value: r["username"],
 			},
 		},
 	}

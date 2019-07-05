@@ -18,6 +18,7 @@ is silenced.
 configured on sensu-backend.
 - Added a `headers` field to the `Asset` struct. Headers is a map of key/value
 string pairs used as HTTP headers for asset retrieval.
+- Added the current user to the output of `sensuctl config view`.
 
 ### Changed
 - The REST API now returns the `201 Created` success status response code for
@@ -29,6 +30,8 @@ not exist.
 - Fixed a bug where basic authorization was not being performed on the agent websocket connection.
 - Fixed an aliasing regression where event timestamps from the /events API
 were not getting properly populated.
+- Fixed a bug where multiple nested set handlers could be incorrectly flagged as
+deeply nested.
 
 ## [5.10.1] - 2019-06-25
 
