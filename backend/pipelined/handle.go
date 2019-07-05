@@ -157,8 +157,7 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 		}
 
 		if handler.Type == "set" {
-			level++
-			setHandlers, err := p.expandHandlers(ctx, handler.Handlers, level)
+			setHandlers, err := p.expandHandlers(ctx, handler.Handlers, level+1)
 
 			if err != nil {
 				logger.
