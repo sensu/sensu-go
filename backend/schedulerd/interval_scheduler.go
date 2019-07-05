@@ -45,7 +45,7 @@ func NewIntervalScheduler(ctx context.Context, store store.Store, bus messaging.
 }
 
 func (s *IntervalScheduler) schedule(timer CheckTimer, executor *CheckExecutor) {
-	defer s.resetTimer(timer)
+	s.resetTimer(timer)
 
 	if s.check.IsSubdued() {
 		s.logger.Debug("check is subdued")
