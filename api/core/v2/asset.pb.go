@@ -37,7 +37,7 @@ type Asset struct {
 	Filters []string `protobuf:"bytes,5,rep,name=filters" json:"filters"`
 	// Metadata contains the name, namespace, labels and annotations of the asset
 	ObjectMeta `protobuf:"bytes,8,opt,name=metadata,embedded=metadata" json:"metadata,omitempty"`
-	// Headers is a collection of key/value string pairs used to as HTTP headers
+	// Headers is a collection of key/value string pairs used as HTTP headers
 	// for asset retrieval.
 	Headers              map[string]string `protobuf:"bytes,9,rep,name=headers" json:"headers" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
 	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
@@ -49,7 +49,7 @@ func (m *Asset) Reset()         { *m = Asset{} }
 func (m *Asset) String() string { return proto.CompactTextString(m) }
 func (*Asset) ProtoMessage()    {}
 func (*Asset) Descriptor() ([]byte, []int) {
-	return fileDescriptor_asset_6f05c8af566d58c3, []int{0}
+	return fileDescriptor_asset_c1b13ea12e5dcaec, []int{0}
 }
 func (m *Asset) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -794,9 +794,9 @@ var (
 	ErrIntOverflowAsset   = fmt.Errorf("proto: integer overflow")
 )
 
-func init() { proto.RegisterFile("asset.proto", fileDescriptor_asset_6f05c8af566d58c3) }
+func init() { proto.RegisterFile("asset.proto", fileDescriptor_asset_c1b13ea12e5dcaec) }
 
-var fileDescriptor_asset_6f05c8af566d58c3 = []byte{
+var fileDescriptor_asset_c1b13ea12e5dcaec = []byte{
 	// 352 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x5c, 0x50, 0x4d, 0x4a, 0xc3, 0x40,
 	0x18, 0xed, 0x24, 0xf4, 0x6f, 0xa2, 0x20, 0x83, 0x48, 0xda, 0xc5, 0x24, 0x0a, 0x42, 0x16, 0x3a,
