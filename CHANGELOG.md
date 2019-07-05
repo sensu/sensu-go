@@ -29,6 +29,8 @@ not exist.
 were not getting properly populated.
 - Fixed a bug where multiple nested set handlers could be incorrectly flagged as
 deeply nested.
+- Splayed proxy checks are now executed every interval, instead of every
+`interval + interval * splay_coverage`.
 
 ## [5.10.1] - 2019-06-25
 
