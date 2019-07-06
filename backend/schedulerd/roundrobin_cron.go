@@ -115,7 +115,6 @@ func (s *RoundRobinCronScheduler) handleEvents(executor *CheckExecutor, ch <-cha
 }
 
 func (s *RoundRobinCronScheduler) updateRings() {
-	newCancels := make(map[string]ringCancel)
 	agentEntitiesRequest := 1
 	var proxyEntities []*corev2.Entity
 	if s.check.ProxyRequests != nil {
@@ -127,12 +126,18 @@ func (s *RoundRobinCronScheduler) updateRings() {
 			return
 		}
 	}
-	// Cancel any ring watchers that should no longer exist
-	for _, watcher := range s.cancels {
-		watcher.Cancel()
-	}
+	newCancels := make(map[string]ringCancel)
 	for _, sub := range s.check.Subscriptions {
 		key := ringv2.Path(s.check.Namespace, sub)
+		watcher, ok := s.cancels[key]
+		if ok {
+			if watcher.AgentEntitiesRequest == agentEntitiesRequest {
+				// don't need to recreate the watcher
+				newCancels[key] = watcher
+				continue
+			}
+			watcher.Cancel()
+		}
 
 		// Create a new watcher
 		ctx, cancel := context.WithCancel(s.ctx)
@@ -140,6 +145,12 @@ func (s *RoundRobinCronScheduler) updateRings() {
 		val := ringCancel{Cancel: cancel, AgentEntitiesRequest: agentEntitiesRequest}
 		go s.handleEvents(s.executor, wc, proxyEntities)
 		newCancels[key] = val
+	}
+	// clean up any remaining watchers that are no longer valid
+	for key, watcher := range s.cancels {
+		if _, ok := newCancels[key]; !ok {
+			watcher.Cancel()
+		}
 	}
 	s.cancels = newCancels
 }
