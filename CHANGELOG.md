@@ -32,6 +32,7 @@ not exist.
 were not getting properly populated.
 - Fixed a bug where multiple nested set handlers could be incorrectly flagged as
 deeply nested.
+- Fixed a bug where round robin proxy checks could fail to execute.
 
 ## [5.10.1] - 2019-06-25
 
