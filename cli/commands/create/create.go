@@ -26,7 +26,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE:  execute(cli),
 	}
 
-	_ = cmd.Flags().StringP("file", "f", "", "File or directory to create resources from")
+	_ = cmd.Flags().StringP("file", "f", "", "File to create resources from")
 
 	return cmd
 }
