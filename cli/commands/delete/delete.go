@@ -21,7 +21,7 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE:  execute(cli),
 	}
 
-	_ = cmd.Flags().StringP("file", "f", "", "File or directory to delete resources from")
+	_ = cmd.Flags().StringP("file", "f", "", "File to delete resources from")
 
 	return cmd
 }
