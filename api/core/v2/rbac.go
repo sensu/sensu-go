@@ -326,12 +326,10 @@ func RoleBindingFields(r Resource) map[string]string {
 
 // SetNamespace sets the namespace of the resource.
 func (r *ClusterRole) SetNamespace(namespace string) {
-	return
 }
 
 // SetNamespace sets the namespace of the resource.
 func (b *ClusterRoleBinding) SetNamespace(namespace string) {
-	return
 }
 
 // SetNamespace sets the namespace of the resource.

@@ -16,7 +16,6 @@ func FixtureAdhocRequest(name string, subscriptions []string) *AdhocRequest {
 
 // SetNamespace sets the namespace of the resource.
 func (a *AdhocRequest) SetNamespace(namespace string) {
-	return
 }
 
 // StorePrefix returns the path prefix to this resource in the store
