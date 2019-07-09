@@ -108,7 +108,7 @@ func trimSeg(path, seg string) string {
 }
 
 func collectKeys(labels map[string]string) (vals []string) {
-	for key, _ := range labels {
+	for key := range labels {
 		vals = append(vals, key)
 	}
 	return
