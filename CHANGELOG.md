@@ -19,8 +19,11 @@ configured on sensu-backend.
 - Added a `headers` field to the `Asset` struct. Headers is a map of key/value
 string pairs used as HTTP headers for asset retrieval.
 - Added the current user to the output of `sensuctl config view`.
+- [Web] Adds list and details views for mutators
+- [Web] Adds list and details views for event filters
 
 ### Changed
+- [Web] Updated embedded web assets from `46cd0ee` ... `8f50155`
 - The REST API now returns the `201 Created` success status response code for
 POST & PUT requests instead of `204 No Content`.
 
