@@ -149,7 +149,7 @@ func TestAuthorize(t *testing.T) {
 							types.Subject{Type: types.UserType, Name: "foo"},
 						},
 					}}, nil)
-				s.On("GetRole", mock.AnythingOfType("*context.emptyCtx"), "admin", mock.Anything).
+				s.On("GetRole", mock.Anything, "admin").
 					Return(nil, nil)
 			},
 			want:    false,
@@ -176,7 +176,7 @@ func TestAuthorize(t *testing.T) {
 							types.Subject{Type: types.UserType, Name: "foo"},
 						},
 					}}, nil)
-				s.On("GetRole", mock.AnythingOfType("*context.emptyCtx"), "admin", mock.Anything).
+				s.On("GetRole", mock.Anything, "admin").
 					Return(nil, errors.New("error"))
 			},
 			wantErr: true,
@@ -206,7 +206,7 @@ func TestAuthorize(t *testing.T) {
 							types.Subject{Type: types.UserType, Name: "foo"},
 						},
 					}}, nil)
-				s.On("GetRole", mock.AnythingOfType("*context.emptyCtx"), "admin", mock.Anything).
+				s.On("GetRole", mock.Anything, "admin").
 					Return(&types.Role{Rules: []types.Rule{
 						types.Rule{
 							Verbs:         []string{"create"},
@@ -416,7 +416,7 @@ func TestVisitRulesFor(t *testing.T) {
 				types.Subject{Type: types.UserType, Name: "foo"},
 			},
 		}}, nil)
-	stor.On("GetRole", mock.AnythingOfType("*context.emptyCtx"), "admin", mock.Anything).
+	stor.On("GetRole", mock.Anything, "admin").
 		Return(&types.Role{Rules: []types.Rule{
 			types.Rule{
 				Verbs:         []string{"create"},
