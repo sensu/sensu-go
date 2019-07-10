@@ -6,11 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/sensu/sensu-go/agent/transformers"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/transport"
@@ -19,9 +20,12 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const allowListOnDenyStatus = "allow_list_on_deny_status"
+const allowListOnDenyOutput = "Check command denied by the Agent Allow list"
+
 // TODO(greg): At some point, we're going to need max parallelism.
 func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
-	request := &v2.CheckRequest{}
+	request := &corev2.CheckRequest{}
 	if err := json.Unmarshal(payload, request); err != nil {
 		return err
 	} else if request == nil {
@@ -30,10 +34,10 @@ func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
 
 	checkConfig := request.Config
 	sendFailure := func(err error) {
-		check := v2.NewCheck(checkConfig)
+		check := corev2.NewCheck(checkConfig)
 		check.Executed = time.Now().Unix()
-		event := &v2.Event{
-			ObjectMeta: v2.NewObjectMeta("", check.Namespace),
+		event := &corev2.Event{
+			ObjectMeta: corev2.NewObjectMeta("", check.Namespace),
 			Check:      check,
 		}
 		a.sendFailure(event, err)
@@ -65,14 +69,14 @@ func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
 	return nil
 }
 
-func (a *Agent) checkInProgress(req *v2.CheckRequest) bool {
+func (a *Agent) checkInProgress(req *corev2.CheckRequest) bool {
 	a.inProgressMu.Lock()
 	defer a.inProgressMu.Unlock()
 	_, ok := a.inProgress[checkKey(req)]
 	return ok
 }
 
-func checkKey(request *v2.CheckRequest) string {
+func checkKey(request *corev2.CheckRequest) string {
 	parts := []string{request.Config.Name}
 	if len(request.Config.ProxyEntityName) > 0 {
 		parts = append(parts, request.Config.ProxyEntityName)
@@ -80,19 +84,19 @@ func checkKey(request *v2.CheckRequest) string {
 	return strings.Join(parts, "/")
 }
 
-func (a *Agent) addInProgress(request *v2.CheckRequest) {
+func (a *Agent) addInProgress(request *corev2.CheckRequest) {
 	a.inProgressMu.Lock()
 	a.inProgress[checkKey(request)] = request.Config
 	a.inProgressMu.Unlock()
 }
 
-func (a *Agent) removeInProgress(request *v2.CheckRequest) {
+func (a *Agent) removeInProgress(request *corev2.CheckRequest) {
 	a.inProgressMu.Lock()
 	delete(a.inProgress, checkKey(request))
 	a.inProgressMu.Unlock()
 }
 
-func (a *Agent) executeCheck(ctx context.Context, request *v2.CheckRequest, entity *v2.Entity) {
+func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, entity *corev2.Entity) {
 	a.addInProgress(request)
 	defer a.removeInProgress(request)
 
@@ -102,10 +106,10 @@ func (a *Agent) executeCheck(ctx context.Context, request *v2.CheckRequest, enti
 
 	// Before token subsitution we retain copy of the command
 	origCommand := checkConfig.Command
-	createEvent := func() *v2.Event {
-		event := &v2.Event{}
+	createEvent := func() *corev2.Event {
+		event := &corev2.Event{}
 		event.Namespace = checkConfig.Namespace
-		event.Check = v2.NewCheck(checkConfig)
+		event.Check = corev2.NewCheck(checkConfig)
 		event.Check.Executed = time.Now().Unix()
 		event.Check.Issued = request.Issued
 
@@ -134,6 +138,20 @@ func (a *Agent) executeCheck(ctx context.Context, request *v2.CheckRequest, enti
 		"assets":    check.RuntimeAssets,
 	}
 
+	// Match check against allow list
+	var matchedEntry allowList
+	var match bool
+	if len(a.allowList) != 0 {
+		logger.WithFields(fields).Debug("matching check against agent allow list")
+		matchedEntry, match = a.matchAllowList(checkConfig.Command)
+		if !match {
+			logger.WithFields(fields).Debug("check does not match agent allow list")
+			a.sendFailure(event, fmt.Errorf(allowListOnDenyOutput))
+			return
+		}
+		logger.WithFields(fields).Debug("check matches agent allow list")
+	}
+
 	// Fetch and install all assets required for check execution.
 	logger.WithFields(fields).Debug("fetching assets for check")
 	assets, err := asset.GetAll(ctx, a.assetGetter, checkAssets)
@@ -143,7 +161,36 @@ func (a *Agent) executeCheck(ctx context.Context, request *v2.CheckRequest, enti
 	}
 
 	// Prepare environment variables
-	env := environment.MergeEnvironments(os.Environ(), assets.Env(), checkConfig.EnvVars)
+	var env []string
+	if match && !matchedEntry.EnableEnv {
+		logger.WithFields(fields).Debug("disabling check env vars per the agent allow list")
+		env = environment.MergeEnvironments(os.Environ(), assets.Env())
+	} else {
+		env = environment.MergeEnvironments(os.Environ(), assets.Env(), checkConfig.EnvVars)
+	}
+
+	// Verify sha against the allow list
+	if matchedEntry.Sha512 != "" {
+		logger.WithFields(fields).Debug("matching check sha against agent allow list")
+		path, err := lookPath(strings.Split(checkConfig.Command, " ")[0], env)
+		if err != nil {
+			logger.WithFields(fields).WithError(err).Error("unable to find the executable path")
+			a.sendFailure(event, fmt.Errorf(allowListOnDenyOutput))
+			return
+		}
+		file, err := os.Open(path)
+		if err != nil {
+			logger.WithFields(fields).WithError(err).Error("unable to open executable")
+			a.sendFailure(event, fmt.Errorf(allowListOnDenyOutput))
+			return
+		}
+		verifier := asset.Sha512Verifier{}
+		if err := verifier.Verify(file, matchedEntry.Sha512); err != nil {
+			logger.WithFields(fields).WithError(err).Error("check sha does not match agent allow list")
+			a.sendFailure(event, fmt.Errorf(allowListOnDenyOutput))
+			return
+		}
+	}
 
 	// Inject the dependencies into PATH, LD_LIBRARY_PATH & CPATH so that they
 	// are availabe when when the command is executed.
@@ -185,7 +232,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *v2.CheckRequest, enti
 
 	// Instantiate metrics in the event if the check is attempting to extract metrics
 	if check.OutputMetricFormat != "" || len(check.OutputMetricHandlers) != 0 {
-		event.Metrics = &v2.Metrics{}
+		event.Metrics = &corev2.Metrics{}
 	}
 
 	if check.OutputMetricFormat != "" {
@@ -217,7 +264,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *v2.CheckRequest, enti
 
 // prepareCheck prepares a check before its execution by performing token
 // substitution.
-func prepareCheck(cfg *v2.CheckConfig, entity *v2.Entity) error {
+func prepareCheck(cfg *corev2.CheckConfig, entity *corev2.Entity) error {
 	// Extract the extended attributes from the entity and combine them at the
 	// top-level so they can be easily accessed using token substitution
 	synthesizedEntity := dynamic.Synthesize(entity)
@@ -239,11 +286,20 @@ func prepareCheck(cfg *v2.CheckConfig, entity *v2.Entity) error {
 	return nil
 }
 
-func (a *Agent) sendFailure(event *v2.Event, err error) {
+func (a *Agent) sendFailure(event *corev2.Event, err error) {
 	event.Check.Output = err.Error()
 	event.Check.Status = 3
 	event.Entity = a.getAgentEntity()
 	event.Timestamp = time.Now().Unix()
+
+	// Override the default check status of 3 if an annotation is configured
+	allowListStatus, ok := event.Check.Annotations[allowListOnDenyStatus]
+	if ok {
+		allowListValue, err := strconv.ParseUint(allowListStatus, 10, 32)
+		if err == nil {
+			event.Check.Status = uint32(allowListValue)
+		}
+	}
 
 	if msg, err := json.Marshal(event); err != nil {
 		logger.WithError(err).Error("error marshaling check failure")
@@ -256,7 +312,7 @@ func (a *Agent) sendFailure(event *v2.Event, err error) {
 	}
 }
 
-func extractMetrics(event *v2.Event) []*v2.MetricPoint {
+func extractMetrics(event *corev2.Event) []*corev2.MetricPoint {
 	var transformer Transformer
 	if !event.HasCheck() {
 		logger.WithError(transformers.ErrMetricExtraction).Error("event must contain a check to parse and extract metrics")
@@ -264,13 +320,13 @@ func extractMetrics(event *v2.Event) []*v2.MetricPoint {
 	}
 
 	switch event.Check.OutputMetricFormat {
-	case v2.GraphiteOutputMetricFormat:
+	case corev2.GraphiteOutputMetricFormat:
 		transformer = transformers.ParseGraphite(event)
-	case v2.InfluxDBOutputMetricFormat:
+	case corev2.InfluxDBOutputMetricFormat:
 		transformer = transformers.ParseInflux(event)
-	case v2.NagiosOutputMetricFormat:
+	case corev2.NagiosOutputMetricFormat:
 		transformer = transformers.ParseNagios(event)
-	case v2.OpenTSDBOutputMetricFormat:
+	case corev2.OpenTSDBOutputMetricFormat:
 		transformer = transformers.ParseOpenTSDB(event)
 	}
 

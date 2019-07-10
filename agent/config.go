@@ -76,6 +76,9 @@ type Config struct {
 	// AgentName is the entity name for the running agent. Default is hostname.
 	AgentName string
 
+	// AllowList is the path to agent execution allow list configuration file.
+	AllowList string
+
 	// API contains the Sensu client HTTP API configuration
 	API *APIConfig
 
