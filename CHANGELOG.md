@@ -21,6 +21,7 @@ string pairs used as HTTP headers for asset retrieval.
 - Added the current user to the output of `sensuctl config view`.
 - [Web] Adds list and details views for mutators
 - [Web] Adds list and details views for event filters
+- Added sensuctl delete command
 
 ### Changed
 - [Web] Updated embedded web assets from `46cd0ee` ... `8f50155`
