@@ -35,5 +35,5 @@ func TestEnvVars(t *testing.T) {
 	event := &types.Event{}
 	assert.NoError(t, json.Unmarshal(msg.Payload, event))
 	assert.NotZero(t, event.Timestamp)
-	assert.Contains(t, event.Check.Output, "FOO=BAR")
+	assert.Equal(t, "FOO=BAR\r\n", event.Check.Output)
 }
