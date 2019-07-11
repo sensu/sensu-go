@@ -13,12 +13,13 @@ import (
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/types/dynamic"
+	"github.com/sensu/sensu-go/util/environment"
 	"github.com/sirupsen/logrus"
 )
 
 // ExecuteHooks executes all hooks contained in a check request based on
 // the check status code of the check request
-func (a *Agent) ExecuteHooks(request *corev2.CheckRequest, status int) []*corev2.Hook {
+func (a *Agent) ExecuteHooks(request *corev2.CheckRequest, status int, assets asset.RuntimeAssetSet) []*corev2.Hook {
 	executedHooks := []*corev2.Hook{}
 	for _, hookList := range request.Config.CheckHooks {
 		// find the hookList with the corresponding type
@@ -37,7 +38,7 @@ func (a *Agent) ExecuteHooks(request *corev2.CheckRequest, status int) []*corev2
 				// code and severity (ex. 0, ok)
 				in := hookInList(hookConfig.Name, executedHooks)
 				if !in {
-					hook := a.executeHook(hookConfig, request.Config.Name)
+					hook := a.executeHook(hookConfig, request.Config.Name, assets)
 					// To guard against publishing sensitive/redacted client attribute values
 					// the original command value is reinstated.
 					hook.Command = origCommand
@@ -49,7 +50,7 @@ func (a *Agent) ExecuteHooks(request *corev2.CheckRequest, status int) []*corev2
 	return executedHooks
 }
 
-func (a *Agent) executeHook(hookConfig *corev2.HookConfig, check string) *corev2.Hook {
+func (a *Agent) executeHook(hookConfig *corev2.HookConfig, check string, assets asset.RuntimeAssetSet) *corev2.Hook {
 	// Instantiate Event and Hook
 	event := &corev2.Event{
 		Check: &corev2.Check{},
@@ -64,6 +65,7 @@ func (a *Agent) executeHook(hookConfig *corev2.HookConfig, check string) *corev2
 	fields := logrus.Fields{
 		"namespace": hook.Namespace,
 		"hook":      hook.Name,
+		"assets":    hook.RuntimeAssets,
 	}
 
 	// Match check against allow list
@@ -80,7 +82,7 @@ func (a *Agent) executeHook(hookConfig *corev2.HookConfig, check string) *corev2
 	}
 
 	// Prepare environment
-	env := os.Environ()
+	env := environment.MergeEnvironments(os.Environ(), assets.Env())
 
 	// Verify sha against the allow list
 	if matchedEntry.Sha512 != "" {
@@ -109,6 +111,7 @@ func (a *Agent) executeHook(hookConfig *corev2.HookConfig, check string) *corev2
 		InProgress:   a.inProgress,
 		InProgressMu: a.inProgressMu,
 		Name:         check,
+		Env:          env,
 	}
 
 	// If stdin is true, add JSON event data to command execution.

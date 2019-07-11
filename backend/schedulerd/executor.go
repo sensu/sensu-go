@@ -108,8 +108,8 @@ func (c *CheckExecutor) buildRequest(check *types.CheckConfig) (*types.CheckRequ
 	return buildRequest(check, c.store)
 }
 
-func assetIsRelevant(asset *types.Asset, check *types.CheckConfig) bool {
-	for _, assetName := range check.RuntimeAssets {
+func assetIsRelevant(asset *types.Asset, assets []string) bool {
+	for _, assetName := range assets {
 		if strings.HasPrefix(asset.Name, assetName) {
 			return true
 		}
@@ -286,11 +286,10 @@ func processCheck(ctx context.Context, executor Executor, check *types.CheckConf
 func processRoundRobinCheck(ctx context.Context, executor *CheckExecutor, check *corev2.CheckConfig, proxyEntities []*corev2.Entity, agentEntities []string) error {
 	if check.ProxyRequests != nil {
 		return publishRoundRobinProxyCheckRequests(executor, check, proxyEntities, agentEntities)
-	} else {
-		for _, entity := range agentEntities {
-			if err := executor.executeOnEntity(check, entity); err != nil {
-				return err
-			}
+	}
+	for _, entity := range agentEntities {
+		if err := executor.executeOnEntity(check, entity); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -327,17 +326,17 @@ func buildRequest(check *types.CheckConfig, s store.Store) (*types.CheckRequest,
 
 	ctx := types.SetContextFromResource(context.Background(), check)
 
+	assets, err := s.GetAssets(ctx, &store.SelectionPredicate{})
+	if err != nil {
+		return nil, err
+	}
+
 	// Guard against iterating over assets if there are no assets associated with
 	// the check in the first place.
 	if len(check.RuntimeAssets) != 0 {
-		// Explode assets; get assets & filter out those that are irrelevant
-		assets, err := s.GetAssets(ctx, &store.SelectionPredicate{})
-		if err != nil {
-			return nil, err
-		}
-
+		// Filter out assets that are irrelevant
 		for _, asset := range assets {
-			if assetIsRelevant(asset, check) {
+			if assetIsRelevant(asset, check.RuntimeAssets) {
 				request.Assets = append(request.Assets, *asset)
 			}
 		}
@@ -355,6 +354,13 @@ func buildRequest(check *types.CheckConfig, s store.Store) (*types.CheckRequest,
 		for _, hook := range hooks {
 			if hookIsRelevant(hook, check) {
 				request.Hooks = append(request.Hooks, *hook)
+				if len(hook.RuntimeAssets) != 0 {
+					for _, asset := range assets {
+						if assetIsRelevant(asset, hook.RuntimeAssets) {
+							request.Assets = append(request.Assets, *asset)
+						}
+					}
+				}
 			}
 		}
 	}

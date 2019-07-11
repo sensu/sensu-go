@@ -30,14 +30,14 @@ func TestExecuteHook(t *testing.T) {
 	execution := command.FixtureExecutionResponse(0, "")
 	ex.Return(execution, nil)
 
-	hook := agent.executeHook(hookConfig, "check")
+	hook := agent.executeHook(hookConfig, "check", nil)
 
 	assert.NotZero(hook.Executed)
 	assert.Equal(int32(0), hook.Status)
 	assert.Equal("", hook.Output)
 
 	execution.Output = "hello"
-	hook = agent.executeHook(hookConfig, "check")
+	hook = agent.executeHook(hookConfig, "check", nil)
 
 	assert.NotZero(hook.Executed)
 	assert.Equal(int32(0), hook.Status)

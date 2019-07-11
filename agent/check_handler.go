@@ -227,7 +227,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	event.Timestamp = time.Now().Unix()
 
 	if len(checkHooks) != 0 {
-		event.Check.Hooks = a.ExecuteHooks(request, checkExec.Status)
+		event.Check.Hooks = a.ExecuteHooks(request, checkExec.Status, assets)
 	}
 
 	// Instantiate metrics in the event if the check is attempting to extract metrics

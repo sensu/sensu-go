@@ -59,6 +59,7 @@ func (s *CronScheduler) schedule(timer *CronTimer, executor *CheckExecutor) {
 	}
 }
 
+// Start starts thr cron scheduler.
 func (s *CronScheduler) Start() {
 	go s.start()
 }
@@ -94,6 +95,7 @@ func (s *CronScheduler) Interrupt(check *corev2.CheckConfig) {
 	s.interrupt <- check
 }
 
+// Stop stops the cron scheduler.
 func (s *CronScheduler) Stop() error {
 	logger.Info("stopping cron scheduler")
 	s.cancel()
@@ -122,6 +124,7 @@ func (s *CronScheduler) resetTimer(timer *CronTimer) {
 	timer.Next()
 }
 
+// Type returns the type of the cron scheduler.
 func (s *CronScheduler) Type() SchedulerType {
 	return CronType
 }
