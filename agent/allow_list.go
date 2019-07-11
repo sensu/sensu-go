@@ -66,10 +66,10 @@ func (a *Agent) matchAllowList(command string) (allowList, bool) {
 	for _, al := range a.allowList {
 		remaining := command
 		if strings.Contains(command, al.Exec) {
-			remaining = strings.Trim(remaining, al.Exec)
+			remaining = strings.Replace(remaining, al.Exec, "", -1)
 			for _, a := range al.Args {
 				if strings.Contains(command, a) {
-					remaining = strings.Trim(remaining, a)
+					remaining = strings.Replace(remaining, a, "", -1)
 				}
 			}
 			if strings.TrimSpace(remaining) == "" {
