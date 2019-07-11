@@ -58,6 +58,7 @@ const (
 	flagLogLevel              = "log-level"
 	flagLabels                = "labels"
 	flagAnnotations           = "annotations"
+	flagAllowList             = "allow-list"
 
 	// TLS flags
 	flagTrustedCAFile         = "trusted-ca-file"
@@ -126,6 +127,7 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 			cfg.Labels = viper.GetStringMapString(flagLabels)
 			cfg.Annotations = viper.GetStringMapString(flagAnnotations)
 			cfg.User = viper.GetString(flagUser)
+			cfg.AllowList = viper.GetString(flagAllowList)
 
 			// TLS configuration
 			cfg.TLS = &types.TLSOptions{}
@@ -262,6 +264,7 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
 	cmd.Flags().StringToStringVar(&labels, flagLabels, nil, "entity labels map")
 	cmd.Flags().StringToStringVar(&annotations, flagAnnotations, nil, "entity annotations map")
+	cmd.Flags().String(flagAllowList, viper.GetString(flagAllowList), "path to agent execution allow list configuration file")
 
 	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc(logger))
 
