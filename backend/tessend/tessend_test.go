@@ -174,6 +174,7 @@ func TestInternalTag(t *testing.T) {
 		Name:  "test_metric",
 		Value: 5,
 	}
+	os.Clearenv()
 	appendInternalTag(mp)
 	assert.Equal(t, 0, len(mp.Tags))
 	os.Setenv("SENSU_INTERNAL_ENVIRONMENT", "foo")

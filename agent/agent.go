@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -41,6 +42,7 @@ func GetDefaultAgentName() string {
 
 // An Agent receives and acts on messages from a Sensu Backend.
 type Agent struct {
+	allowList       []allowList
 	api             *http.Server
 	assetGetter     asset.Getter
 	backendSelector BackendSelector
@@ -62,7 +64,7 @@ type Agent struct {
 }
 
 // NewAgent creates a new Agent. It returns non-nil error if there is any error
-// when creating the config.CacheDir.
+// when creating the Agent.
 func NewAgent(config *Config) (*Agent, error) {
 	agent := &Agent{
 		backendSelector: &RandomBackendSelector{Backends: config.BackendURLs},
@@ -87,6 +89,13 @@ func NewAgent(config *Config) (*Agent, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error creating agent: %s", err)
 	}
+
+	allowList, err := readAllowList(config.AllowList, ioutil.ReadFile)
+	if err != nil {
+		return nil, err
+	}
+	agent.allowList = allowList
+
 	return agent, nil
 }
 
