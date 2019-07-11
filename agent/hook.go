@@ -204,7 +204,7 @@ func hookShouldExecute(hookType string, status int) bool {
 
 func failedHook(hook *corev2.Hook) *corev2.Hook {
 	hook.Status = 3
-	hook.Output = "Check Hook command denied by the Agent Allow list"
+	hook.Output = "check hook command denied by the agent allow list"
 
 	// Override the default hook status of 3 if an annotation is configured
 	allowListStatus, ok := hook.Annotations[allowListOnDenyStatus]

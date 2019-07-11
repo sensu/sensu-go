@@ -21,7 +21,7 @@ import (
 )
 
 const allowListOnDenyStatus = "allow_list_on_deny_status"
-const allowListOnDenyOutput = "Check command denied by the Agent Allow list"
+const allowListOnDenyOutput = "check command denied by the agent allow list"
 
 // TODO(greg): At some point, we're going to need max parallelism.
 func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
