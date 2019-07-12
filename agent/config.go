@@ -158,11 +158,11 @@ type Config struct {
 	BackendHandshakeTimeout int
 
 	// BackendHeartbeatInterval specifies the interval at which the agent must
-	// send a hearbeat to the backend
+	// send a heartbeat to the backend
 	BackendHeartbeatInterval int
 
 	// BackendHeartbeatTimeout specifies the maximum time (in seconds) to wait for
-	// a response to a hearbeat from the backend.  If a timeout occurs, the agent
+	// a response to a heartbeat from the backend.  If a timeout occurs, the agent
 	// will close the existing connection with the backend and attempt to
 	// reconnect with exponential backoff
 	BackendHeartbeatTimeout int

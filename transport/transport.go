@@ -184,7 +184,7 @@ func (t *WebSocketTransport) Heartbeat(ctx context.Context, interval, timeout in
 		timeout = 45
 	}
 	if timeout <= interval {
-		logger.Warningf("the hearbeat timeout (%d) must be bigger than the heartbeat interval (%d), increasing the timeout", timeout, interval)
+		logger.Warningf("the heartbeat timeout (%d) must be bigger than the heartbeat interval (%d), increasing the timeout", timeout, interval)
 		timeout = (interval * 10) / 6
 	}
 
@@ -203,7 +203,7 @@ func (t *WebSocketTransport) Heartbeat(ctx context.Context, interval, timeout in
 					return
 				}
 			case <-ctx.Done():
-				logger.Debug("websocket connection has been closed, stopping the hearbeat")
+				logger.Debug("websocket connection has been closed, stopping the heartbeat")
 				return
 			}
 		}

@@ -275,7 +275,7 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	cmd.Flags().StringToStringVar(&annotations, flagAnnotations, nil, "entity annotations map")
 	cmd.Flags().String(flagAllowList, viper.GetString(flagAllowList), "path to agent execution allow list configuration file")
 	cmd.Flags().Int(flagBackendHandshakeTimeout, viper.GetInt(flagBackendHandshakeTimeout), "number of seconds the agent should wait when negotiating a new WebSocket connection")
-	cmd.Flags().Int(flagBackendHeartbeatInterval, viper.GetInt(flagBackendHeartbeatInterval), "interval at which the agent should send hearbeats to the backend")
+	cmd.Flags().Int(flagBackendHeartbeatInterval, viper.GetInt(flagBackendHeartbeatInterval), "interval at which the agent should send heartbeats to the backend")
 	cmd.Flags().Int(flagBackendHeartbeatTimeout, viper.GetInt(flagBackendHeartbeatTimeout), "number of seconds the agent should wait for a response to a hearbeat")
 
 	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc(logger))
