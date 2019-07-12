@@ -53,6 +53,7 @@ func substituteProxyEntityTokens(entity *corev2.Entity, check *corev2.CheckConfi
 	// entity
 	checkBytes, err := agent.TokenSubstitution(synthesizedEntity, check)
 	if err != nil {
+		logger.Error(fmt.Errorf("error in TokenSubstitution for proxy entity: %s check: %s err: %s", entity.Name, check.Name, err))
 		return nil, err
 	}
 
