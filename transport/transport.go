@@ -11,19 +11,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-// const (
-// 	// PingPeriod indicates the frequency at which pings must be sent to the
-// 	// client. Must be less than PongWait.
-// 	PingPeriod = (pongWait * 8) / 10
-
-// 	// pongWait represents the time allowed to read the next pong message from the
-// 	// client.
-// 	pongWait = 10 * time.Second
-
-// 	// pingWait represents the time allowed to send a ping message to the backend
-// 	pingWait = pongWait / 2
-// )
-
 var (
 	sep     = []byte("\n")
 	msgPool sync.Pool
@@ -190,6 +177,17 @@ func (t *WebSocketTransport) Closed() bool {
 // Heartbeat starts a goroutine that sends ping frames to the backend in order
 // to determine if the backend is still responsive
 func (t *WebSocketTransport) Heartbeat(ctx context.Context, interval, timeout int) {
+	if interval < 1 {
+		interval = 30
+	}
+	if timeout < 1 {
+		timeout = 45
+	}
+	if timeout <= interval {
+		logger.Warningf("the hearbeat timeout (%d) must be bigger than the heartbeat interval (%d), increasing the timeout", timeout, interval)
+		timeout = (interval * 10) / 6
+	}
+
 	pingTicker := time.NewTicker(time.Duration(interval) * time.Second)
 	pongWait := time.Duration(timeout) * time.Second
 	pingWait := pongWait / 2

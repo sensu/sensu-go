@@ -1,6 +1,7 @@
 package agentd
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"testing"
@@ -28,6 +29,10 @@ func (t *testTransport) Closed() bool {
 func (t *testTransport) Close() error {
 	t.closed = true
 	return nil
+}
+
+func (t *testTransport) Heartbeat(ctx context.Context, interval, timeout int) {
+	return
 }
 
 func (t *testTransport) Reconnect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.Header) error {

@@ -19,6 +19,9 @@ func connect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.H
 		return nil, err
 	}
 
+	if handshakeTimeout < 1 {
+		handshakeTimeout = 15
+	}
 	dialer := websocket.Dialer{
 		HandshakeTimeout: time.Second * time.Duration(handshakeTimeout),
 		Proxy:            http.ProxyFromEnvironment,
@@ -53,26 +56,6 @@ func Connect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.H
 	if err != nil {
 		return nil, err
 	}
-
-	// pingTicker := time.NewTicker(PingPeriod)
-
-	// go func() {
-	// 	defer pingTicker.Stop()
-	// 	for _ = range pingTicker.C {
-	// 		logger.Debug("sending ping")
-	// 		if err := conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(pingWait)); err != nil {
-	// 			logger.WithError(err).Error("could not send a ping to the backend")
-	// 			return
-	// 		}
-	// 	}
-	// }()
-
-	// conn.SetReadDeadline(time.Now().Add(pongWait))
-	// conn.SetPongHandler(func(string) error {
-	// 	logger.Debugf("pong received from the backend, setting the read deadline to %s", time.Now().Add(pongWait))
-	// 	conn.SetReadDeadline(time.Now().Add(pongWait))
-	// 	return nil
-	// })
 
 	return NewTransport(conn), nil
 }
