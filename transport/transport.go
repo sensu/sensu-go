@@ -209,11 +209,10 @@ func (t *WebSocketTransport) Heartbeat(ctx context.Context, interval, timeout in
 		}
 	}()
 
-	t.Connection.SetReadDeadline(time.Now().Add(pongWait))
+	_ = t.Connection.SetReadDeadline(time.Now().Add(pongWait))
 	t.Connection.SetPongHandler(func(string) error {
 		logger.Debugf("pong received from the backend, setting the read deadline to %d", time.Now().Add(pongWait).Unix())
-		t.Connection.SetReadDeadline(time.Now().Add(pongWait))
-		return nil
+		return t.Connection.SetReadDeadline(time.Now().Add(pongWait))
 	})
 }
 

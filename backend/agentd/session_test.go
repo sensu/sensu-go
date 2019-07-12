@@ -31,9 +31,7 @@ func (t *testTransport) Close() error {
 	return nil
 }
 
-func (t *testTransport) Heartbeat(ctx context.Context, interval, timeout int) {
-	return
-}
+func (t *testTransport) Heartbeat(ctx context.Context, interval, timeout int) {}
 
 func (t *testTransport) Reconnect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.Header) error {
 	return nil
