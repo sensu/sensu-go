@@ -28,36 +28,39 @@ const (
 	// specified in backend urls
 	DefaultBackendPort = "8081"
 
-	flagAgentName             = "name"
-	flagAPIHost               = "api-host"
-	flagAPIPort               = "api-port"
-	flagBackendURL            = "backend-url"
-	flagCacheDir              = "cache-dir"
-	flagConfigFile            = "config-file"
-	flagDeregister            = "deregister"
-	flagDeregistrationHandler = "deregistration-handler"
-	flagEventsRateLimit       = "events-rate-limit"
-	flagEventsBurstLimit      = "events-burst-limit"
-	flagKeepaliveInterval     = "keepalive-interval"
-	flagKeepaliveTimeout      = "keepalive-timeout"
-	flagNamespace             = "namespace"
-	flagPassword              = "password"
-	flagRedact                = "redact"
-	flagSocketHost            = "socket-host"
-	flagSocketPort            = "socket-port"
-	flagStatsdDisable         = "statsd-disable"
-	flagStatsdEventHandlers   = "statsd-event-handlers"
-	flagStatsdFlushInterval   = "statsd-flush-interval"
-	flagStatsdMetricsHost     = "statsd-metrics-host"
-	flagStatsdMetricsPort     = "statsd-metrics-port"
-	flagSubscriptions         = "subscriptions"
-	flagUser                  = "user"
-	flagDisableAPI            = "disable-api"
-	flagDisableAssets         = "disable-assets"
-	flagDisableSockets        = "disable-sockets"
-	flagLogLevel              = "log-level"
-	flagLabels                = "labels"
-	flagAnnotations           = "annotations"
+	flagAgentName                = "name"
+	flagAPIHost                  = "api-host"
+	flagAPIPort                  = "api-port"
+	flagBackendURL               = "backend-url"
+	flagCacheDir                 = "cache-dir"
+	flagConfigFile               = "config-file"
+	flagDeregister               = "deregister"
+	flagDeregistrationHandler    = "deregistration-handler"
+	flagEventsRateLimit          = "events-rate-limit"
+	flagEventsBurstLimit         = "events-burst-limit"
+	flagKeepaliveInterval        = "keepalive-interval"
+	flagKeepaliveTimeout         = "keepalive-timeout"
+	flagNamespace                = "namespace"
+	flagPassword                 = "password"
+	flagRedact                   = "redact"
+	flagSocketHost               = "socket-host"
+	flagSocketPort               = "socket-port"
+	flagStatsdDisable            = "statsd-disable"
+	flagStatsdEventHandlers      = "statsd-event-handlers"
+	flagStatsdFlushInterval      = "statsd-flush-interval"
+	flagStatsdMetricsHost        = "statsd-metrics-host"
+	flagStatsdMetricsPort        = "statsd-metrics-port"
+	flagSubscriptions            = "subscriptions"
+	flagUser                     = "user"
+	flagDisableAPI               = "disable-api"
+	flagDisableAssets            = "disable-assets"
+	flagDisableSockets           = "disable-sockets"
+	flagLogLevel                 = "log-level"
+	flagLabels                   = "labels"
+	flagAnnotations              = "annotations"
+	flagBackendHandshakeTimeout  = "backend-handshake-timeout"
+	flagBackendHeartbeatInterval = "backend-heartbeat-interval"
+	flagBackendHeartbeatTimeout  = "backend-heartbeat-timeout"
 
 	// TLS flags
 	flagTrustedCAFile         = "trusted-ca-file"
@@ -126,6 +129,9 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 			cfg.Labels = viper.GetStringMapString(flagLabels)
 			cfg.Annotations = viper.GetStringMapString(flagAnnotations)
 			cfg.User = viper.GetString(flagUser)
+			cfg.BackendHandshakeTimeout = viper.GetInt(flagBackendHandshakeTimeout)
+			cfg.BackendHeartbeatInterval = viper.GetInt(flagBackendHeartbeatInterval)
+			cfg.BackendHeartbeatTimeout = viper.GetInt(flagBackendHeartbeatTimeout)
 
 			// TLS configuration
 			cfg.TLS = &types.TLSOptions{}
@@ -225,6 +231,9 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	viper.SetDefault(flagTrustedCAFile, "")
 	viper.SetDefault(flagInsecureSkipTLSVerify, false)
 	viper.SetDefault(flagLogLevel, "warn")
+	viper.SetDefault(flagBackendHandshakeTimeout, 15)
+	viper.SetDefault(flagBackendHeartbeatInterval, 30)
+	viper.SetDefault(flagBackendHeartbeatTimeout, 45)
 
 	// Merge in config flag set so that it appears in command usage
 	cmd.Flags().AddFlagSet(configFlagSet)
@@ -262,6 +271,9 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
 	cmd.Flags().StringToStringVar(&labels, flagLabels, nil, "entity labels map")
 	cmd.Flags().StringToStringVar(&annotations, flagAnnotations, nil, "entity annotations map")
+	cmd.Flags().Int(flagBackendHandshakeTimeout, viper.GetInt(flagBackendHandshakeTimeout), "number of seconds the agent should wait when negotiating a new WebSocket connection")
+	cmd.Flags().Int(flagBackendHeartbeatInterval, viper.GetInt(flagBackendHeartbeatInterval), "interval at which the agent should send hearbeats to the backend")
+	cmd.Flags().Int(flagBackendHeartbeatTimeout, viper.GetInt(flagBackendHeartbeatTimeout), "number of seconds the agent should wait for a response to a hearbeat")
 
 	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc(logger))
 
