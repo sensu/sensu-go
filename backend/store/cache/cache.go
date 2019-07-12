@@ -15,6 +15,8 @@ import (
 	"github.com/sensu/sensu-go/types/dynamic"
 )
 
+const CacheRebuildRate = time.Second * 20
+
 // Value contains a cached value, and its synthesized companion.
 type Value struct {
 	Resource corev2.Resource
@@ -69,6 +71,16 @@ func resourceLT(x, y Value) bool {
 	return x.Resource.GetObjectMeta().Name < y.Resource.GetObjectMeta().Name
 }
 
+func (s resourceSlice) Find(value Value) Value {
+	idx := sort.Search(len(s), func(i int) bool {
+		return !resourceLT(s[i], value)
+	})
+	if idx < len(s) && s[idx].Resource.GetObjectMeta().Name == value.Resource.GetObjectMeta().Name {
+		return s[idx]
+	}
+	return Value{}
+}
+
 type cacheWatcher struct {
 	ctx context.Context
 	ch  chan struct{}
@@ -85,11 +97,11 @@ type Resource struct {
 	watchers   []cacheWatcher
 	watchersMu sync.Mutex
 	synthesize bool
+	resourceT  corev2.Resource
+	client     *clientv3.Client
 }
 
-// New creates a new resource cache. It retrieves all resources from the
-// store on creation.
-func New(ctx context.Context, client *clientv3.Client, resource corev2.Resource, synthesize bool) (*Resource, error) {
+func getResources(ctx context.Context, client *clientv3.Client, resource corev2.Resource) ([]corev2.Resource, error) {
 	// Get the type of the resource and create a slice type of []type
 	typeOfResource := reflect.TypeOf(resource)
 	sliceOfResource := reflect.SliceOf(typeOfResource)
@@ -117,17 +129,92 @@ func New(ctx context.Context, client *clientv3.Client, resource corev2.Resource,
 		}
 		resources[i] = r
 	}
+	return resources, nil
+}
+
+// New creates a new resource cache. It retrieves all resources from the
+// store on creation.
+func New(ctx context.Context, client *clientv3.Client, resource corev2.Resource, synthesize bool) (*Resource, error) {
+	resources, err := getResources(ctx, client, resource)
+	if err != nil {
+		return nil, err
+	}
 
 	cache := buildCache(resources, synthesize)
+
+	// Get a keybuilderFunc for this resource
+	keyBuilderFunc := func(ctx context.Context, name string) string {
+		return store.NewKeyBuilder(resource.StorePrefix()).WithContext(ctx).Build("")
+	}
+	typeOfResource := reflect.TypeOf(resource)
 
 	cacher := &Resource{
 		cache:      cache,
 		watcher:    etcd.GetResourceWatcher(ctx, client, keyBuilderFunc(ctx, ""), typeOfResource),
 		synthesize: synthesize,
+		resourceT:  resource,
+		client:     client,
 	}
 	go cacher.start(ctx)
 
 	return cacher, nil
+}
+
+// rebuildCache is needed periodically, since we cannot rely on watchers to
+// always deliver accurate results.
+func (r *Resource) rebuildCache(ctx context.Context) error {
+	resources, err := getResources(ctx, r.client, r.resourceT)
+	if err != nil {
+		return err
+	}
+	newCache := buildCache(resources, r.synthesize)
+	for key, values := range newCache {
+		oldValues, ok := r.cache[key]
+		if !ok {
+			// Apparently we have an entire namespace's worth of values that
+			// just appeared out of nowhere...
+			r.updates = append(r.updates, makeNewUpdates(values)...)
+			continue
+		}
+		for _, value := range values {
+			oldValue := resourceSlice(oldValues).Find(value)
+			if oldValue.Resource == nil {
+				r.updates = append(r.updates, store.WatchEventResource{
+					Resource: value.Resource,
+					Action:   store.WatchCreate,
+				})
+				continue
+			}
+			if !reflect.DeepEqual(oldValue.Resource, value.Resource) {
+				r.updates = append(r.updates, store.WatchEventResource{
+					Resource: value.Resource,
+					Action:   store.WatchUpdate,
+				})
+			}
+		}
+		for _, value := range oldValues {
+			newValue := resourceSlice(values).Find(value)
+			if newValue.Resource == nil {
+				r.updates = append(r.updates, store.WatchEventResource{
+					Resource: value.Resource,
+					Action:   store.WatchDelete,
+				})
+			}
+		}
+	}
+	r.cache = newCache
+	return nil
+}
+
+func makeNewUpdates(values []Value) []store.WatchEventResource {
+	result := make([]store.WatchEventResource, len(values))
+	for i := range values {
+		result[i] = store.WatchEventResource{
+			Resource: values[i].Resource,
+			Action:   store.WatchCreate,
+		}
+	}
+	return result
 }
 
 // NewFromResources creates a new resources cache using the given resources.
@@ -189,7 +276,9 @@ func (r *Resource) start(ctx context.Context) {
 	// 1s is the minimum scheduling interval, and so is the rate that
 	// the cache will update at.
 	ticker := time.NewTicker(time.Second)
+	rebuildTicker := time.NewTicker(CacheRebuildRate)
 	defer ticker.Stop()
+	defer rebuildTicker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
@@ -201,6 +290,12 @@ func (r *Resource) start(ctx context.Context) {
 				r.updateCache()
 				r.notifyWatchers()
 			}
+		case <-rebuildTicker.C:
+			r.cacheMu.Lock()
+			if err := r.rebuildCache(ctx); err != nil {
+
+			}
+			r.cacheMu.Unlock()
 		}
 	}
 }
