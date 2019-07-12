@@ -52,7 +52,7 @@ func TestFetchExistingAsset(t *testing.T) {
 
 	desiredSHA, _ := ioutil.ReadFile(getFixturePath(fmt.Sprintf("%s.sha512", assetName)))
 
-	verifier := &sha512Verifier{}
+	verifier := &Sha512Verifier{}
 	if err := verifier.Verify(f, string(desiredSHA)); err != nil {
 		t.Logf("expected no error, got: %v", err)
 		t.FailNow()

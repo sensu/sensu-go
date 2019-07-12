@@ -58,6 +58,7 @@ const (
 	flagLogLevel                 = "log-level"
 	flagLabels                   = "labels"
 	flagAnnotations              = "annotations"
+	flagAllowList                = "allow-list"
 	flagBackendHandshakeTimeout  = "backend-handshake-timeout"
 	flagBackendHeartbeatInterval = "backend-heartbeat-interval"
 	flagBackendHeartbeatTimeout  = "backend-heartbeat-timeout"
@@ -129,6 +130,7 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 			cfg.Labels = viper.GetStringMapString(flagLabels)
 			cfg.Annotations = viper.GetStringMapString(flagAnnotations)
 			cfg.User = viper.GetString(flagUser)
+			cfg.AllowList = viper.GetString(flagAllowList)
 			cfg.BackendHandshakeTimeout = viper.GetInt(flagBackendHandshakeTimeout)
 			cfg.BackendHeartbeatInterval = viper.GetInt(flagBackendHeartbeatInterval)
 			cfg.BackendHeartbeatTimeout = viper.GetInt(flagBackendHeartbeatTimeout)
@@ -271,6 +273,7 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
 	cmd.Flags().StringToStringVar(&labels, flagLabels, nil, "entity labels map")
 	cmd.Flags().StringToStringVar(&annotations, flagAnnotations, nil, "entity annotations map")
+	cmd.Flags().String(flagAllowList, viper.GetString(flagAllowList), "path to agent execution allow list configuration file")
 	cmd.Flags().Int(flagBackendHandshakeTimeout, viper.GetInt(flagBackendHandshakeTimeout), "number of seconds the agent should wait when negotiating a new WebSocket connection")
 	cmd.Flags().Int(flagBackendHeartbeatInterval, viper.GetInt(flagBackendHeartbeatInterval), "interval at which the agent should send hearbeats to the backend")
 	cmd.Flags().Int(flagBackendHeartbeatTimeout, viper.GetInt(flagBackendHeartbeatTimeout), "number of seconds the agent should wait for a response to a hearbeat")
