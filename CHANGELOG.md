@@ -11,6 +11,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added functionality for the agent `--allow-list` configuration, which
 whitelists check and check hook executables.
 
+### Fixed
+- The REST API now correctly only returns events for the specific entity
+queried in the `GET /events/:entity` endpoint (#3141)
+
 ## [5.11.0] - 2019-07-10
 
 ### Added
