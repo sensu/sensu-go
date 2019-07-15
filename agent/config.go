@@ -147,6 +147,22 @@ type Config struct {
 
 	// User sets the Agent's username
 	User string
+
+	// BackendHandshakeTimeout specifies the maximum time (in seconds) to wait for
+	// the handshake with the backend to complete when opening a connection. If a
+	// timeout occurs, the agent will attempt to reconnect with exponential
+	// backoff
+	BackendHandshakeTimeout int
+
+	// BackendHeartbeatInterval specifies the interval at which the agent must
+	// send a heartbeat to the backend
+	BackendHeartbeatInterval int
+
+	// BackendHeartbeatTimeout specifies the maximum time (in seconds) to wait for
+	// a response to a heartbeat from the backend.  If a timeout occurs, the agent
+	// will close the existing connection with the backend and attempt to
+	// reconnect with exponential backoff
+	BackendHeartbeatTimeout int
 }
 
 // StatsdServerConfig contains the statsd server configuration
