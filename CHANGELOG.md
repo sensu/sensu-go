@@ -10,6 +10,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Added functionality for the agent `--allow-list` configuration, which
 whitelists check and check hook executables.
+- The agent now sends heartbeats to the backend in order to detect network
+failures and reconnect faster.
+
+### Changed
+- The default handshake timeout for the WebSocket connection negotiation has
+been lowered from 45 to 15 seconds and is now configurable.
 
 ## [5.11.0] - 2019-07-10
 
