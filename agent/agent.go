@@ -206,7 +206,7 @@ func (a *Agent) connectionManager(ctx context.Context) {
 		a.connected = false
 		a.connectedMu.Unlock()
 
-		conn, err := connectWithBackoff(ctx, a.backendSelector, a.config.TLS, a.header)
+		conn, err := connectWithBackoff(ctx, a.backendSelector, a.config.TLS, a.header, a.config.BackendHandshakeTimeout)
 		if err != nil {
 			if err == ctx.Err() {
 				return
@@ -214,11 +214,15 @@ func (a *Agent) connectionManager(ctx context.Context) {
 			log.Fatal(err)
 		}
 
+		ctx, cancel := context.WithCancel(ctx)
+
+		// Start sending hearbeats to the backend
+		conn.Heartbeat(ctx, a.config.BackendHeartbeatInterval, a.config.BackendHeartbeatTimeout)
+
 		a.connectedMu.Lock()
 		a.connected = true
 		a.connectedMu.Unlock()
 
-		ctx, cancel := context.WithCancel(ctx)
 		go a.receiveLoop(ctx, cancel, conn)
 		if err := a.sendLoop(ctx, cancel, conn); err != nil && err != ctx.Err() {
 			logger.WithError(err).Error("error sending messages")
@@ -372,7 +376,7 @@ func (a *Agent) StartStatsd(ctx context.Context) {
 	}()
 }
 
-func connectWithBackoff(ctx context.Context, selector BackendSelector, tlsOpts *corev2.TLSOptions, header http.Header) (transport.Transport, error) {
+func connectWithBackoff(ctx context.Context, selector BackendSelector, tlsOpts *corev2.TLSOptions, header http.Header, handshakeTimeout int) (transport.Transport, error) {
 	var conn transport.Transport
 
 	backoff := retry.ExponentialBackoff{
@@ -384,7 +388,9 @@ func connectWithBackoff(ctx context.Context, selector BackendSelector, tlsOpts *
 
 	err := backoff.Retry(func(retry int) (bool, error) {
 		url := selector.Select()
-		c, err := transport.Connect(url, tlsOpts, header)
+
+		logger.Infof("connecting to backend URL %q", url)
+		c, err := transport.Connect(url, tlsOpts, header, handshakeTimeout)
 		if err != nil {
 			logger.WithError(err).Error("reconnection attempt failed")
 			return false, nil

@@ -12,6 +12,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 whitelists check and check hook executables.
 - Added the `runtime_assets` field to `HookConfig`. Assets are enabled
 for check hook execution.
+- The agent now sends heartbeats to the backend in order to detect network
+failures and reconnect faster.
+
+### Changed
+- The default handshake timeout for the WebSocket connection negotiation has
+been lowered from 45 to 15 seconds and is now configurable.
 
 ## [5.11.0] - 2019-07-10
 

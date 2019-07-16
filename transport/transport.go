@@ -2,9 +2,11 @@ package transport
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -103,6 +105,10 @@ type Transport interface {
 	// Closed returns true if the underlying connection is closed.
 	Closed() bool
 
+	// Heartbeat starts a goroutine that sends ping frames to the backend in order
+	// to determine if the backend is still responsive
+	Heartbeat(ctx context.Context, interval, timeout int)
+
 	// Receive is used to receive a message from the transport. It takes a context
 	// and blocks until the next message is received from the transport.
 	Receive() (*Message, error)
@@ -168,6 +174,48 @@ func (t *WebSocketTransport) Closed() bool {
 	return t.closed
 }
 
+// Heartbeat starts a goroutine that sends ping frames to the backend in order
+// to determine if the backend is still responsive
+func (t *WebSocketTransport) Heartbeat(ctx context.Context, interval, timeout int) {
+	if interval < 1 {
+		interval = 30
+	}
+	if timeout < 1 {
+		timeout = 45
+	}
+	if timeout <= interval {
+		logger.Warningf("the heartbeat timeout (%d) must be bigger than the heartbeat interval (%d), increasing the timeout", timeout, interval)
+		timeout = (interval * 10) / 6
+	}
+
+	pingTicker := time.NewTicker(time.Duration(interval) * time.Second)
+	pongWait := time.Duration(timeout) * time.Second
+	pingWait := pongWait / 2
+
+	go func() {
+		defer pingTicker.Stop()
+		for {
+			select {
+			case <-pingTicker.C:
+				logger.Debug("sending ping")
+				if err := t.Connection.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(pingWait)); err != nil {
+					logger.WithError(err).Error("could not send a ping to the backend")
+					return
+				}
+			case <-ctx.Done():
+				logger.Debug("websocket connection has been closed, stopping the heartbeat")
+				return
+			}
+		}
+	}()
+
+	_ = t.Connection.SetReadDeadline(time.Now().Add(pongWait))
+	t.Connection.SetPongHandler(func(string) error {
+		logger.Debugf("pong received from the backend, setting the read deadline to %d", time.Now().Add(pongWait).Unix())
+		return t.Connection.SetReadDeadline(time.Now().Add(pongWait))
+	})
+}
+
 // Receive a message over the websocket connection. Like Send, returns either
 // a ClosedError or a ConnectionError if unable to receive a message. Receive
 // blocks until the connection has a message ready or a timeout is reached.
@@ -184,6 +232,8 @@ func (t *WebSocketTransport) Receive() (*Message, error) {
 		t.mutex.Lock()
 		t.closed = true
 		t.mutex.Unlock()
+
+		defer t.Connection.Close()
 
 		if websocket.IsCloseError(err, websocket.CloseGoingAway) {
 			return nil, ClosedError{err.Error()}
