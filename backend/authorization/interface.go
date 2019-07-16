@@ -2,9 +2,12 @@ package authorization
 
 import (
 	"context"
+	"errors"
 
 	"github.com/sensu/sensu-go/types"
 )
+
+var ErrUnauthorized = errors.New("request unauthorized")
 
 // Authorizer determines whether a request is authorized using the Attributes
 // passed. It returns true if the request should be authorized, along with any
