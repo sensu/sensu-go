@@ -79,7 +79,7 @@ func (w *Watcher) start() {
 	ctx, cancel := context.WithCancel(w.ctx)
 
 	// Start the watcher
-	logger.Debugf("starting a watcher for key %s", w.key)
+	logger.Debugf("starting a watcher for the key %q", w.key)
 	w.watch(ctx, opts, watchChanStopped, &resultChanWG)
 
 	// Initialize a rate limiter
@@ -104,11 +104,11 @@ func (w *Watcher) start() {
 				watchChanStopped = make(chan struct{})
 
 				// Restart the watcher
-				logger.Debugf("restarting the watcher for key %s", w.key)
+				logger.Warningf("restarting the watcher for the key %q", w.key)
 				w.watch(ctx, opts, watchChanStopped, &resultChanWG)
 			case <-w.ctx.Done():
 				// The consumer has cancelled this watcher, we need to exit
-				logger.Debugf("stopping the watcher for key %s", w.key)
+				logger.Debugf("stopping the watcher for the key %q", w.key)
 				break RetryLoop
 			}
 		}
@@ -146,7 +146,7 @@ func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChan
 				// We received an error from the channel, so let's assume it's no longer
 				// functional and exit this goroutine so we can try to re-create the
 				// watcher
-				logger.WithError(watchResponse.Err()).Info("error from watch response")
+				logger.WithError(watchResponse.Err()).Warn("error from watch response")
 				break
 			}
 
@@ -155,6 +155,8 @@ func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChan
 				w.event(ctx, event)
 			}
 		}
+
+		logger.Warningf("the watcher for the key %q is stopped", w.key)
 
 		// At this point, the watch channel has been closed by its consumer or is
 		// broken, therefore we should notify the main thread that this goroutine has
