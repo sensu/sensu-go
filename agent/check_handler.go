@@ -100,7 +100,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	a.addInProgress(request)
 	defer a.removeInProgress(request)
 
-	checkAssets := request.Assets
+	requestAssets := request.Assets
 	checkConfig := request.Config
 	checkHooks := request.Hooks
 
@@ -154,7 +154,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 
 	// Fetch and install all assets required for check execution.
 	logger.WithFields(fields).Debug("fetching assets for check")
-	assets, err := asset.GetAll(ctx, a.assetGetter, checkAssets)
+	assets, err := asset.GetAll(ctx, a.assetGetter, requestAssets)
 	if err != nil {
 		a.sendFailure(event, fmt.Errorf("error getting assets for event: %s", err))
 		return

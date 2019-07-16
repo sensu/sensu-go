@@ -59,7 +59,7 @@ func (s *CronScheduler) schedule(timer *CronTimer, executor *CheckExecutor) {
 	}
 }
 
-// Start starts thr cron scheduler.
+// Start starts the cron scheduler.
 func (s *CronScheduler) Start() {
 	go s.start()
 }
