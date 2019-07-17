@@ -9,7 +9,7 @@ type AuthProvider interface {
 	// Authenticate attempts to authenticate a user with its username and password
 	Authenticate(ctx context.Context, username, password string) (*Claims, error)
 	// Refresh renews the user claims with the provider claims
-	Refresh(ctx context.Context, providerClaims AuthProviderClaims) (*Claims, error)
+	Refresh(ctx context.Context, claims *Claims) (*Claims, error)
 
 	// GetObjectMeta returns the object metadata for the provider
 	GetObjectMeta() ObjectMeta
