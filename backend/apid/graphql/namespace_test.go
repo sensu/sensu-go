@@ -121,7 +121,7 @@ func TestNamespaceTypeEventFiltersField(t *testing.T) {
 	assert.NotEmpty(t, res.(offsetContainer).Nodes)
 
 	// Store err
-	client.On("ListFilters", mock.Anything, mock.Anything).Return([]types.Event{}, errors.New("abc")).Once()
+	client.On("ListFilters", mock.Anything, mock.Anything).Return([]types.EventFilter{}, errors.New("abc")).Once()
 	res, err = impl.EventFilters(params)
 	assert.Empty(t, res.(offsetContainer).Nodes)
 	assert.Error(t, err)
