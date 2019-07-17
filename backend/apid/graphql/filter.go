@@ -1,20 +1,20 @@
 package graphql
 
-import "github.com/sensu/sensu-go/types"
+import corev2 "github.com/sensu/sensu-go/api/core/v2"
 
 // TODO: It would be more ideal to generate the functions in this package
 
 // assets
 
-type assetPredicate func(*types.Asset) bool
+type assetPredicate func(*corev2.Asset) bool
 
-func filterAssets(records []types.Asset, filterFn assetPredicate) []*types.Asset {
-	relevant := make([]*types.Asset, 0, len(records))
+func filterAssets(records []*corev2.Asset, filterFn assetPredicate) []*corev2.Asset {
+	relevant := make([]*corev2.Asset, 0, len(records))
 
 	for i := range records {
 		record := records[i]
-		if filterFn(&record) {
-			relevant = append(relevant, &record)
+		if filterFn(record) {
+			relevant = append(relevant, record)
 		}
 	}
 
@@ -23,10 +23,10 @@ func filterAssets(records []types.Asset, filterFn assetPredicate) []*types.Asset
 
 // checks
 
-type checkPredicate func(*types.CheckConfig) bool
+type checkPredicate func(*corev2.CheckConfig) bool
 
-func filterChecks(records []types.CheckConfig, filterFn checkPredicate) []*types.CheckConfig {
-	relevant := make([]*types.CheckConfig, 0, len(records))
+func filterChecks(records []corev2.CheckConfig, filterFn checkPredicate) []*corev2.CheckConfig {
+	relevant := make([]*corev2.CheckConfig, 0, len(records))
 
 	for i := range records {
 		record := records[i]
@@ -40,10 +40,10 @@ func filterChecks(records []types.CheckConfig, filterFn checkPredicate) []*types
 
 // entities
 
-type entityPredicate func(*types.Entity) bool
+type entityPredicate func(*corev2.Entity) bool
 
-func filterEntities(records []types.Entity, filterFn entityPredicate) []*types.Entity {
-	relevant := make([]*types.Entity, 0, len(records))
+func filterEntities(records []corev2.Entity, filterFn entityPredicate) []*corev2.Entity {
+	relevant := make([]*corev2.Entity, 0, len(records))
 
 	for i := range records {
 		record := records[i]
@@ -57,10 +57,10 @@ func filterEntities(records []types.Entity, filterFn entityPredicate) []*types.E
 
 // events
 
-type eventPredicate func(*types.Event) bool
+type eventPredicate func(*corev2.Event) bool
 
-func filterEvents(records []types.Event, filterFn eventPredicate) []*types.Event {
-	relevant := make([]*types.Event, 0, len(records))
+func filterEvents(records []corev2.Event, filterFn eventPredicate) []*corev2.Event {
+	relevant := make([]*corev2.Event, 0, len(records))
 
 	for i := range records {
 		record := records[i]
@@ -74,10 +74,10 @@ func filterEvents(records []types.Event, filterFn eventPredicate) []*types.Event
 
 // handlers
 
-type handlerPredicate func(*types.Handler) bool
+type handlerPredicate func(*corev2.Handler) bool
 
-func filterHandlers(records []types.Handler, filterFn handlerPredicate) []*types.Handler {
-	relevant := make([]*types.Handler, 0, len(records))
+func filterHandlers(records []corev2.Handler, filterFn handlerPredicate) []*corev2.Handler {
+	relevant := make([]*corev2.Handler, 0, len(records))
 
 	for i := range records {
 		record := records[i]
@@ -91,10 +91,10 @@ func filterHandlers(records []types.Handler, filterFn handlerPredicate) []*types
 
 // silences
 
-type silencePredicate func(*types.Silenced) bool
+type silencePredicate func(*corev2.Silenced) bool
 
-func filterSilenceds(records []types.Silenced, filterFn silencePredicate) []*types.Silenced {
-	relevant := make([]*types.Silenced, 0, len(records))
+func filterSilenceds(records []corev2.Silenced, filterFn silencePredicate) []*corev2.Silenced {
+	relevant := make([]*corev2.Silenced, 0, len(records))
 
 	for i := range records {
 		record := records[i]

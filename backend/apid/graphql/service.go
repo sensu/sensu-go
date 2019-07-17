@@ -23,20 +23,21 @@ type ClientFactory interface {
 // ServiceConfig describes values required to instantiate service.
 type ServiceConfig struct {
 	ClientFactory ClientFactory
+	AssetClient   AssetClient
 }
 
 // Service describes the Sensu GraphQL service capable of handling queries.
 type Service struct {
-	target  *graphql.Service
-	factory ClientFactory
+	target *graphql.Service
+	cfg    ServiceConfig
 }
 
 // NewService instantiates new GraphQL service
 func NewService(cfg ServiceConfig) (*Service, error) {
 	svc := graphql.NewService()
 	clientFactory := cfg.ClientFactory
-	wrapper := Service{target: svc, factory: clientFactory}
-	nodeResolver := newNodeResolver(clientFactory)
+	wrapper := Service{target: svc, cfg: cfg}
+	nodeResolver := newNodeResolver(cfg)
 
 	// Register types
 	schema.RegisterAsset(svc, &assetImpl{})
@@ -158,14 +159,9 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 }
 
 // Do executes given query string and variables
-func (svc *Service) Do(
-	ctx context.Context,
-	q string,
-	vars map[string]interface{},
-) *gql.Result {
+func (svc *Service) Do(ctx context.Context, q string, vars map[string]interface{}) *gql.Result {
 	// Instantiate loaders and lift them into the context
-	client := svc.factory.NewWithContext(ctx)
-	qryCtx := contextWithLoaders(ctx, client)
+	qryCtx := contextWithLoaders(ctx, svc.cfg)
 
 	// Execute query inside context
 	return svc.target.Do(qryCtx, q, vars)

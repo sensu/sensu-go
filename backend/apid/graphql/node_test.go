@@ -10,10 +10,11 @@ import (
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
-func setupNodeResolver(factory ClientFactory) func(string) (interface{}, error) {
-	resolver := newNodeResolver(factory)
+func setupNodeResolver(cfg ServiceConfig) func(string) (interface{}, error) {
+	resolver := newNodeResolver(cfg)
 	ctx := context.Background()
 	info := graphql.ResolveInfo{}
 
@@ -24,7 +25,8 @@ func setupNodeResolver(factory ClientFactory) func(string) (interface{}, error) 
 
 func TestNodeResolverFindType(t *testing.T) {
 	_, factory := mockclient.NewClientFactory()
-	resolver := newNodeResolver(factory)
+	cfg := ServiceConfig{ClientFactory: factory}
+	resolver := newNodeResolver(cfg)
 
 	check := types.FixtureCheckConfig("http-check")
 	typeID := resolver.FindType(check)
@@ -33,7 +35,8 @@ func TestNodeResolverFindType(t *testing.T) {
 
 func TestNodeResolverFind(t *testing.T) {
 	client, factory := mockclient.NewClientFactory()
-	resolver := newNodeResolver(factory)
+	cfg := ServiceConfig{ClientFactory: factory}
+	resolver := newNodeResolver(cfg)
 
 	ctx := context.Background()
 	info := graphql.ResolveInfo{}
@@ -67,7 +70,9 @@ func TestNodeResolverFind(t *testing.T) {
 
 func TestAssetNodeResolver(t *testing.T) {
 	client, factory := mockclient.NewClientFactory()
-	find := setupNodeResolver(factory)
+	assetClient := new(MockAssetClient)
+	cfg := ServiceConfig{ClientFactory: factory, AssetClient: assetClient}
+	find := setupNodeResolver(cfg)
 
 	testCases := []struct {
 		name      string
@@ -84,7 +89,7 @@ func TestAssetNodeResolver(t *testing.T) {
 				return globalid.AssetTranslator.EncodeToString(r)
 			},
 			setup: func(r interface{}) {
-				client.On("FetchAsset", "name").Return(r, nil).Once()
+				assetClient.On("FetchAsset", mock.Anything, "name").Return(r, nil).Once()
 			},
 		},
 		{

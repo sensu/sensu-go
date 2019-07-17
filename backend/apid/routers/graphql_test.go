@@ -22,7 +22,7 @@ func setupRequest(method string, path string, payload interface{}) (*http.Reques
 }
 
 func TestHttpGraphQLRequest(t *testing.T) {
-	router := NewGraphQLRouter("http://localhost:8080", nil, nil)
+	router := NewGraphQLRouter("http://localhost:8080", nil, nil, nil)
 	body := map[string]interface{}{
 		"operationName": "intrsopection",
 		"query":         testutil.IntrospectionQuery,
@@ -39,7 +39,7 @@ func TestHttpGraphQLRequest(t *testing.T) {
 }
 
 func TestHttpGraphQLBatchRequest(t *testing.T) {
-	router := NewGraphQLRouter("http://localhost:8080", nil, nil)
+	router := NewGraphQLRouter("http://localhost:8080", nil, nil, nil)
 	body := []map[string]interface{}{
 		map[string]interface{}{
 			"operationName": "intrsopection",

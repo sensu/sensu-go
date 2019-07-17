@@ -17,11 +17,12 @@ func TestHandlerTypeHandlersField(t *testing.T) {
 	handler := types.FixtureHandler("my-handler")
 	handler.Handlers = []string{"one", "two"}
 
-	client, _ := client.NewClientFactory()
+	client, factory := client.NewClientFactory()
 	impl := &handlerImpl{}
 
 	params := graphql.ResolveParams{}
-	params.Context = contextWithLoadersNoCache(context.Background(), client)
+	cfg := ServiceConfig{ClientFactory: factory}
+	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = handler
 
 	// Success

@@ -18,10 +18,11 @@ type nodeResolver struct {
 	register relay.NodeRegister
 }
 
-func newNodeResolver(factory ClientFactory) *nodeResolver {
+func newNodeResolver(cfg ServiceConfig) *nodeResolver {
+	factory := cfg.ClientFactory
 	register := relay.NodeRegister{}
 
-	registerAssetNodeResolver(register, factory)
+	registerAssetNodeResolver(register, cfg.AssetClient)
 	registerCheckNodeResolver(register, factory)
 	registerEntityNodeResolver(register, factory)
 	registerHandlerNodeResolver(register, factory)
@@ -78,11 +79,11 @@ func (r *nodeResolver) Find(ctx context.Context, id string, info graphql.Resolve
 // assets
 
 type assetNodeResolver struct {
-	factory ClientFactory
+	client AssetClient
 }
 
-func registerAssetNodeResolver(register relay.NodeRegister, factory ClientFactory) {
-	resolver := &assetNodeResolver{factory}
+func registerAssetNodeResolver(register relay.NodeRegister, client AssetClient) {
+	resolver := &assetNodeResolver{client: client}
 	register.RegisterResolver(relay.NodeResolver{
 		ObjectType: schema.AssetType,
 		Translator: globalid.AssetTranslator,
@@ -92,8 +93,7 @@ func registerAssetNodeResolver(register relay.NodeRegister, factory ClientFactor
 
 func (f *assetNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
 	ctx := setContextFromComponents(p.Context, p.IDComponents)
-	client := f.factory.NewWithContext(ctx)
-	record, err := client.FetchAsset(p.IDComponents.UniqueComponent())
+	record, err := f.client.FetchAsset(ctx, p.IDComponents.UniqueComponent())
 	return handleFetchResult(record, err)
 }
 

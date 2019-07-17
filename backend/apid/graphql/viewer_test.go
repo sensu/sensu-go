@@ -48,10 +48,11 @@ func TestViewerTypeUserField(t *testing.T) {
 func TestViewerTypeNamespacesField(t *testing.T) {
 	nsp := types.FixtureNamespace("sensu")
 	impl := viewerImpl{}
-	client, _ := mockclient.NewClientFactory()
+	client, factory := mockclient.NewClientFactory()
 
 	params := graphql.ResolveParams{}
-	params.Context = contextWithLoadersNoCache(context.Background(), client)
+	cfg := ServiceConfig{ClientFactory: factory}
+	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 
 	// Success
 	client.On("ListNamespaces", mock.Anything).Return([]types.Namespace{*nsp}, nil).Once()

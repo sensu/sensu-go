@@ -5,7 +5,6 @@ import (
 
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
@@ -42,7 +41,7 @@ func (a *AssetClient) ListAssets(ctx context.Context) ([]*corev2.Asset, error) {
 }
 
 // FetchAsset fetches an asset resource from the backend
-func (a *AssetClient) FetchAsset(ctx context.Context, name string) (*types.Asset, error) {
+func (a *AssetClient) FetchAsset(ctx context.Context, name string) (*corev2.Asset, error) {
 	attrs := assetFetchAttributes(ctx, name)
 	if err := authorize(ctx, a.auth, attrs); err != nil {
 		return nil, err

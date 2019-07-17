@@ -24,7 +24,7 @@ func TestNamespaceTypeColourID(t *testing.T) {
 }
 
 func TestNamespaceTypeCheckConfigsField(t *testing.T) {
-	client, _ := client.NewClientFactory()
+	client, factory := client.NewClientFactory()
 	client.On("ListChecks", "default", mock.Anything).Return([]types.CheckConfig{
 		*types.FixtureCheckConfig("a"),
 		*types.FixtureCheckConfig("b"),
@@ -33,7 +33,8 @@ func TestNamespaceTypeCheckConfigsField(t *testing.T) {
 
 	impl := &namespaceImpl{}
 	params := schema.NamespaceChecksFieldResolverParams{}
-	params.Context = contextWithLoadersNoCache(context.Background(), client)
+	cfg := ServiceConfig{ClientFactory: factory}
+	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = types.FixtureNamespace("default")
 	params.Args.Limit = 20
 
@@ -50,7 +51,7 @@ func TestNamespaceTypeCheckConfigsField(t *testing.T) {
 }
 
 func TestNamespaceTypeEntitiesField(t *testing.T) {
-	client, _ := client.NewClientFactory()
+	client, factory := client.NewClientFactory()
 	client.On("ListEntities", "default", mock.Anything).Return([]types.Entity{
 		*types.FixtureEntity("a"),
 		*types.FixtureEntity("b"),
@@ -59,7 +60,8 @@ func TestNamespaceTypeEntitiesField(t *testing.T) {
 
 	impl := &namespaceImpl{}
 	params := schema.NamespaceEntitiesFieldResolverParams{}
-	params.Context = contextWithLoadersNoCache(context.Background(), client)
+	cfg := ServiceConfig{ClientFactory: factory}
+	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = types.FixtureNamespace("default")
 	params.Args.Limit = 20
 
@@ -76,7 +78,7 @@ func TestNamespaceTypeEntitiesField(t *testing.T) {
 }
 
 func TestNamespaceTypeEventsField(t *testing.T) {
-	client, _ := client.NewClientFactory()
+	client, factory := client.NewClientFactory()
 	client.On("ListEvents", "default", mock.Anything).Return([]types.Event{
 		*types.FixtureEvent("a", "b"),
 		*types.FixtureEvent("b", "c"),
@@ -85,7 +87,8 @@ func TestNamespaceTypeEventsField(t *testing.T) {
 
 	impl := &namespaceImpl{}
 	params := schema.NamespaceEventsFieldResolverParams{}
-	params.Context = contextWithLoadersNoCache(context.Background(), client)
+	cfg := ServiceConfig{ClientFactory: factory}
+	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = types.FixtureNamespace("default")
 	params.Args.Limit = 20
 
@@ -102,7 +105,7 @@ func TestNamespaceTypeEventsField(t *testing.T) {
 }
 
 func TestNamespaceTypeEventFiltersField(t *testing.T) {
-	client, _ := client.NewClientFactory()
+	client, factory := client.NewClientFactory()
 	client.On("ListFilters", mock.Anything, mock.Anything).Return([]types.EventFilter{
 		*types.FixtureEventFilter("a"),
 		*types.FixtureEventFilter("b"),
@@ -111,7 +114,8 @@ func TestNamespaceTypeEventFiltersField(t *testing.T) {
 
 	impl := &namespaceImpl{}
 	params := schema.NamespaceEventFiltersFieldResolverParams{}
-	params.Context = contextWithLoadersNoCache(context.Background(), client)
+	cfg := ServiceConfig{ClientFactory: factory}
+	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = types.FixtureNamespace("default")
 	params.Args.Limit = 20
 
@@ -128,7 +132,7 @@ func TestNamespaceTypeEventFiltersField(t *testing.T) {
 }
 
 func TestNamespaceTypeHandlersField(t *testing.T) {
-	client, _ := client.NewClientFactory()
+	client, factory := client.NewClientFactory()
 	client.On("ListHandlers", mock.Anything, mock.Anything).Return([]types.Handler{
 		*types.FixtureHandler("Abe"),
 		*types.FixtureHandler("Bernie"),
@@ -138,7 +142,8 @@ func TestNamespaceTypeHandlersField(t *testing.T) {
 
 	impl := &namespaceImpl{}
 	params := schema.NamespaceHandlersFieldResolverParams{}
-	params.Context = contextWithLoadersNoCache(context.Background(), client)
+	cfg := ServiceConfig{ClientFactory: factory}
+	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = types.FixtureNamespace("default")
 	params.Args.Limit = 10
 
@@ -159,7 +164,7 @@ func TestNamespaceTypeHandlersField(t *testing.T) {
 }
 
 func TestNamespaceTypeMutatorsField(t *testing.T) {
-	client, _ := client.NewClientFactory()
+	client, factory := client.NewClientFactory()
 	client.On("ListMutators", mock.Anything, mock.Anything).Return([]types.Mutator{
 		*types.FixtureMutator("Abe"),
 		*types.FixtureMutator("Bernie"),
@@ -169,7 +174,8 @@ func TestNamespaceTypeMutatorsField(t *testing.T) {
 
 	impl := &namespaceImpl{}
 	params := schema.NamespaceMutatorsFieldResolverParams{}
-	params.Context = contextWithLoadersNoCache(context.Background(), client)
+	cfg := ServiceConfig{ClientFactory: factory}
+	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = types.FixtureNamespace("default")
 	params.Args.Limit = 10
 
@@ -190,7 +196,7 @@ func TestNamespaceTypeMutatorsField(t *testing.T) {
 }
 
 func TestNamespaceTypeSilencesField(t *testing.T) {
-	client, _ := client.NewClientFactory()
+	client, factory := client.NewClientFactory()
 	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{
 		*types.FixtureSilenced("a:b"),
 		*types.FixtureSilenced("b:c"),
@@ -198,8 +204,9 @@ func TestNamespaceTypeSilencesField(t *testing.T) {
 	}, nil).Once()
 
 	impl := &namespaceImpl{}
+	cfg := ServiceConfig{ClientFactory: factory}
 	params := schema.NamespaceSilencesFieldResolverParams{}
-	params.Context = contextWithLoadersNoCache(context.Background(), client)
+	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = types.FixtureNamespace("xxx")
 
 	// Success

@@ -5,9 +5,10 @@ import (
 	"errors"
 
 	"github.com/graph-gophers/dataloader"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/sensu-go/types"
 )
 
 type key int
@@ -33,11 +34,12 @@ var (
 
 // assets
 
-func loadAssetsBatchFn(c client.APIClient) dataloader.BatchFunc {
+func loadAssetsBatchFn(c AssetClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			records, err := c.ListAssets(key.String(), &client.ListOptions{})
+			ctx = store.NamespaceContext(ctx, key.String())
+			records, err := c.ListAssets(ctx)
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
@@ -45,15 +47,15 @@ func loadAssetsBatchFn(c client.APIClient) dataloader.BatchFunc {
 	}
 }
 
-func loadAssets(ctx context.Context, ns string) ([]types.Asset, error) {
-	var records []types.Asset
+func loadAssets(ctx context.Context, ns string) ([]*corev2.Asset, error) {
+	var records []*corev2.Asset
 	loader, err := getLoader(ctx, assetsLoaderKey)
 	if err != nil {
 		return records, err
 	}
 
 	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
-	records, ok := results.([]types.Asset)
+	records, ok := results.([]*corev2.Asset)
 	if err == nil && !ok {
 		err = errUnexpectedLoaderResult
 	}
@@ -74,15 +76,15 @@ func loadCheckConfigsBatchFn(c client.APIClient) dataloader.BatchFunc {
 	}
 }
 
-func loadCheckConfigs(ctx context.Context, ns string) ([]types.CheckConfig, error) {
-	var records []types.CheckConfig
+func loadCheckConfigs(ctx context.Context, ns string) ([]corev2.CheckConfig, error) {
+	var records []corev2.CheckConfig
 	loader, err := getLoader(ctx, checkConfigsLoaderKey)
 	if err != nil {
 		return records, err
 	}
 
 	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
-	records, ok := results.([]types.CheckConfig)
+	records, ok := results.([]corev2.CheckConfig)
 	if err == nil && !ok {
 		err = errUnexpectedLoaderResult
 	}
@@ -103,15 +105,15 @@ func loadEntitiesBatchFn(c client.APIClient) dataloader.BatchFunc {
 	}
 }
 
-func loadEntities(ctx context.Context, ns string) ([]types.Entity, error) {
-	var records []types.Entity
+func loadEntities(ctx context.Context, ns string) ([]corev2.Entity, error) {
+	var records []corev2.Entity
 	loader, err := getLoader(ctx, entitiesLoaderKey)
 	if err != nil {
 		return records, err
 	}
 
 	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
-	records, ok := results.([]types.Entity)
+	records, ok := results.([]corev2.Entity)
 	if err == nil && !ok {
 		err = errUnexpectedLoaderResult
 	}
@@ -132,15 +134,15 @@ func loadEventsBatchFn(c client.APIClient) dataloader.BatchFunc {
 	}
 }
 
-func loadEvents(ctx context.Context, ns string) ([]types.Event, error) {
-	var records []types.Event
+func loadEvents(ctx context.Context, ns string) ([]corev2.Event, error) {
+	var records []corev2.Event
 	loader, err := getLoader(ctx, eventsLoaderKey)
 	if err != nil {
 		return records, err
 	}
 
 	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
-	records, ok := results.([]types.Event)
+	records, ok := results.([]corev2.Event)
 	if err == nil && !ok {
 		err = errUnexpectedLoaderResult
 	}
@@ -161,15 +163,15 @@ func loadEventFiltersBatchFn(c client.APIClient) dataloader.BatchFunc {
 	}
 }
 
-func loadEventFilters(ctx context.Context, ns string) ([]types.EventFilter, error) {
-	var records []types.EventFilter
+func loadEventFilters(ctx context.Context, ns string) ([]corev2.EventFilter, error) {
+	var records []corev2.EventFilter
 	loader, err := getLoader(ctx, eventFiltersLoaderKey)
 	if err != nil {
 		return records, err
 	}
 
 	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
-	records, ok := results.([]types.EventFilter)
+	records, ok := results.([]corev2.EventFilter)
 	if err == nil && !ok {
 		err = errUnexpectedLoaderResult
 	}
@@ -190,15 +192,15 @@ func loadHandlersBatchFn(c client.APIClient) dataloader.BatchFunc {
 	}
 }
 
-func loadHandlers(ctx context.Context, ns string) ([]types.Handler, error) {
-	var records []types.Handler
+func loadHandlers(ctx context.Context, ns string) ([]corev2.Handler, error) {
+	var records []corev2.Handler
 	loader, err := getLoader(ctx, handlersLoaderKey)
 	if err != nil {
 		return records, err
 	}
 
 	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
-	records, ok := results.([]types.Handler)
+	records, ok := results.([]corev2.Handler)
 	if err == nil && !ok {
 		err = errUnexpectedLoaderResult
 	}
@@ -219,15 +221,15 @@ func loadMutatorsBatchFn(c client.APIClient) dataloader.BatchFunc {
 	}
 }
 
-func loadMutators(ctx context.Context, ns string) ([]types.Mutator, error) {
-	var records []types.Mutator
+func loadMutators(ctx context.Context, ns string) ([]corev2.Mutator, error) {
+	var records []corev2.Mutator
 	loader, err := getLoader(ctx, mutatorsLoaderKey)
 	if err != nil {
 		return records, err
 	}
 
 	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
-	records, ok := results.([]types.Mutator)
+	records, ok := results.([]corev2.Mutator)
 	if err == nil && !ok {
 		err = errUnexpectedLoaderResult
 	}
@@ -248,15 +250,15 @@ func loadNamespacesBatchFn(c client.APIClient) dataloader.BatchFunc {
 	}
 }
 
-func loadNamespaces(ctx context.Context) ([]types.Namespace, error) {
-	var records []types.Namespace
+func loadNamespaces(ctx context.Context) ([]corev2.Namespace, error) {
+	var records []corev2.Namespace
 	loader, err := getLoader(ctx, namespacesLoaderKey)
 	if err != nil {
 		return records, err
 	}
 
 	results, err := loader.Load(ctx, dataloader.StringKey("*"))()
-	records, ok := results.([]types.Namespace)
+	records, ok := results.([]corev2.Namespace)
 	if err == nil && !ok {
 		err = errUnexpectedLoaderResult
 	}
@@ -277,28 +279,29 @@ func loadSilencedsBatchFn(c client.APIClient) dataloader.BatchFunc {
 	}
 }
 
-func loadSilenceds(ctx context.Context, ns string) ([]types.Silenced, error) {
-	var records []types.Silenced
+func loadSilenceds(ctx context.Context, ns string) ([]corev2.Silenced, error) {
+	var records []corev2.Silenced
 	loader, err := getLoader(ctx, silencedsLoaderKey)
 	if err != nil {
 		return records, err
 	}
 
 	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
-	records, ok := results.([]types.Silenced)
+	records, ok := results.([]corev2.Silenced)
 	if err == nil && !ok {
 		err = errUnexpectedLoaderResult
 	}
 	return records, err
 }
 
-func contextWithLoaders(ctx context.Context, client client.APIClient, opts ...dataloader.Option) context.Context {
+func contextWithLoaders(ctx context.Context, cfg ServiceConfig, opts ...dataloader.Option) context.Context {
 	// Currently all fields are resolved serially, as such we disable batching and
 	// rely only on dataloader's cache.
 	opts = append([]dataloader.Option{dataloader.WithBatchCapacity(1)}, opts...)
+	client := cfg.ClientFactory.NewWithContext(ctx)
 
 	loaders := map[key]*dataloader.Loader{}
-	loaders[assetsLoaderKey] = dataloader.NewBatchedLoader(loadAssetsBatchFn(client), opts...)
+	loaders[assetsLoaderKey] = dataloader.NewBatchedLoader(loadAssetsBatchFn(cfg.AssetClient), opts...)
 	loaders[checkConfigsLoaderKey] = dataloader.NewBatchedLoader(loadCheckConfigsBatchFn(client), opts...)
 	loaders[entitiesLoaderKey] = dataloader.NewBatchedLoader(loadEntitiesBatchFn(client), opts...)
 	loaders[eventsLoaderKey] = dataloader.NewBatchedLoader(loadEventsBatchFn(client), opts...)

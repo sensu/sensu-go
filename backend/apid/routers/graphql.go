@@ -10,9 +10,11 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/api"
 	graphql "github.com/sensu/sensu-go/backend/apid/graphql"
 	"github.com/sensu/sensu-go/backend/apid/graphql/restclient"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
+	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -28,9 +30,10 @@ type GraphQLRouter struct {
 }
 
 // NewGraphQLRouter instantiates new events controller
-func NewGraphQLRouter(apiURL string, tls *tls.Config, store store.Store) *GraphQLRouter {
+func NewGraphQLRouter(apiURL string, tls *tls.Config, store store.Store, auth authorization.Authorizer) *GraphQLRouter {
 	factory := restclient.NewClientFactory(apiURL, tls)
-	service, err := graphql.NewService(graphql.ServiceConfig{ClientFactory: factory})
+	assetClient := api.NewAssetClient(store, auth)
+	service, err := graphql.NewService(graphql.ServiceConfig{ClientFactory: factory, AssetClient: assetClient})
 	if err != nil {
 		logger.WithError(err).Panic("unable to configure graphql service")
 	}

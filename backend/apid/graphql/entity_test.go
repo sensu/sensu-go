@@ -18,15 +18,16 @@ import (
 func TestEntityTypeRelatedField(t *testing.T) {
 	source := types.FixtureEntity("c")
 
-	client, _ := client.NewClientFactory()
+	client, factory := client.NewClientFactory()
 	client.On("ListEntities", mock.Anything, mock.Anything).Return([]types.Entity{
 		*source,
 		*types.FixtureEntity("a"),
 		*types.FixtureEntity("b"),
 	}, nil).Once()
 
+	cfg := ServiceConfig{ClientFactory: factory}
 	params := schema.EntityRelatedFieldResolverParams{}
-	params.Context = contextWithLoaders(context.Background(), client)
+	params.Context = contextWithLoaders(context.Background(), cfg)
 	params.Source = source
 	params.Args.Limit = 10
 
@@ -41,7 +42,7 @@ func TestEntityTypeStatusField(t *testing.T) {
 	entity := types.FixtureEntity("en")
 	entity.Namespace = "sensu"
 
-	client, _ := client.NewClientFactory()
+	client, factory := client.NewClientFactory()
 	client.On("ListEvents", "sensu", mock.Anything).Return([]types.Event{
 		*types.FixtureEvent(entity.Name, "a"),
 		*types.FixtureEvent(entity.Name, "b"),
@@ -50,7 +51,8 @@ func TestEntityTypeStatusField(t *testing.T) {
 
 	// params
 	params := graphql.ResolveParams{}
-	params.Context = contextWithLoadersNoCache(context.Background(), client)
+	cfg := ServiceConfig{ClientFactory: factory}
+	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = entity
 
 	// exit status: 0
@@ -92,7 +94,7 @@ func TestEntityTypeLastSeenField(t *testing.T) {
 func TestEntityTypeEventsField(t *testing.T) {
 	entity := types.FixtureEntity("en")
 
-	client, _ := client.NewClientFactory()
+	client, factory := client.NewClientFactory()
 	client.On("ListEvents", mock.Anything, mock.Anything).Return([]types.Event{
 		*types.FixtureEvent(entity.Name, "a"),
 		*types.FixtureEvent(entity.Name, "b"),
@@ -101,7 +103,8 @@ func TestEntityTypeEventsField(t *testing.T) {
 
 	// params
 	params := schema.EntityEventsFieldResolverParams{}
-	params.Context = contextWithLoadersNoCache(context.Background(), client)
+	cfg := ServiceConfig{ClientFactory: factory}
+	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Args.Filters = []string{}
 	params.Source = entity
 
@@ -116,7 +119,7 @@ func TestEntityTypeSilencesField(t *testing.T) {
 	entity := types.FixtureEntity("en")
 	entity.Subscriptions = []string{"entity:en", "unix", "www"}
 
-	client, _ := client.NewClientFactory()
+	client, factory := client.NewClientFactory()
 	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{
 		*types.FixtureSilenced("entity:en:*"),
 		*types.FixtureSilenced("www:*"),
@@ -126,7 +129,8 @@ func TestEntityTypeSilencesField(t *testing.T) {
 
 	impl := &entityImpl{}
 	params := graphql.ResolveParams{}
-	params.Context = contextWithLoadersNoCache(context.Background(), client)
+	cfg := ServiceConfig{ClientFactory: factory}
+	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = entity
 
 	// return associated silence
@@ -139,7 +143,7 @@ func TestEntityTypeIsSilencedField(t *testing.T) {
 	entity := types.FixtureEntity("en")
 	entity.Subscriptions = []string{"entity:en", "ou"}
 
-	client, _ := client.NewClientFactory()
+	client, factory := client.NewClientFactory()
 	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{
 		*types.FixtureSilenced("entity:en:*"),
 		*types.FixtureSilenced("ou:my-check"),
@@ -148,7 +152,8 @@ func TestEntityTypeIsSilencedField(t *testing.T) {
 
 	impl := &entityImpl{}
 	params := graphql.ResolveParams{}
-	params.Context = contextWithLoadersNoCache(context.Background(), client)
+	cfg := ServiceConfig{ClientFactory: factory}
+	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = entity
 
 	// return associated silence
