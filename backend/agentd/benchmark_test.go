@@ -1,12 +1,13 @@
 package agentd
 
 import (
+	"encoding/json"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/transport"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -25,14 +26,14 @@ func BenchmarkSubPump(b *testing.B) {
 		"GetNamespace",
 		mock.Anything,
 		"acme",
-	).Return(&types.Namespace{}, nil)
+	).Return(&corev2.Namespace{}, nil)
 
 	cfg := SessionConfig{
 		AgentName:     "testing",
 		Namespace:     "acme",
 		Subscriptions: []string{"testing"},
 	}
-	session, err := NewSession(cfg, conn, bus, st)
+	session, err := NewSession(cfg, conn, bus, st, json.Unmarshal, json.Marshal)
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -45,7 +46,7 @@ func BenchmarkSubPump(b *testing.B) {
 	session.wg.Add(1)
 	go session.subPump()
 
-	check := types.FixtureCheckRequest("checkity-check-check")
+	check := corev2.FixtureCheckRequest("checkity-check-check")
 
 	b.ResetTimer()
 	b.RunParallel(func(pb *testing.PB) {

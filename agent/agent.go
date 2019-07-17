@@ -17,10 +17,12 @@ import (
 	"sync"
 
 	time "github.com/echlebek/timeproxy"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 
 	"github.com/atlassian/gostatsd/pkg/statsd"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
+	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/system"
@@ -61,6 +63,8 @@ type Agent struct {
 	systemInfoMu    sync.RWMutex
 	wg              sync.WaitGroup
 	apiQueue        queue
+	marshal         agentd.MarshalFunc
+	unmarshal       agentd.UnmarshalFunc
 }
 
 // NewAgent creates a new Agent. It returns non-nil error if there is any error
@@ -96,13 +100,27 @@ func NewAgent(config *Config) (*Agent, error) {
 	}
 	agent.allowList = allowList
 
+	agent.header = agent.buildTransportHeaderMap()
+	userCredentials := fmt.Sprintf("%s:%s", agent.config.User, agent.config.Password)
+	userCredentials = base64.StdEncoding.EncodeToString([]byte(userCredentials))
+	agent.header.Set("Authorization", "Basic "+userCredentials)
+	if agent.config.ProtobufSerialization {
+		pm := runtime.ProtoMarshaller{}
+		agent.header.Set("Content-Type", pm.ContentType())
+		agent.unmarshal = pm.Unmarshal
+		agent.marshal = pm.Marshal
+	} else {
+		agent.unmarshal = json.Unmarshal
+		agent.marshal = json.Marshal
+	}
+
 	return agent, nil
 }
 
 func (a *Agent) sendMessage(msg *transport.Message) {
 	logger.WithFields(logrus.Fields{
-		"type":    msg.Type,
-		"payload": string(msg.Payload),
+		"type":         msg.Type,
+		"payload_size": len(msg.Payload),
 	}).Info("sending message")
 	a.sendq <- msg
 }
@@ -164,10 +182,6 @@ func (a *Agent) Run(ctx context.Context) error {
 			logger.WithError(err).Error("error closing API queue")
 		}
 	}()
-	userCredentials := fmt.Sprintf("%s:%s", a.config.User, a.config.Password)
-	userCredentials = base64.StdEncoding.EncodeToString([]byte(userCredentials))
-	a.header = a.buildTransportHeaderMap()
-	a.header.Set("Authorization", "Basic "+userCredentials)
 
 	// Fail the agent after startup if the id is invalid
 	if err := corev2.ValidateName(a.config.AgentName); err != nil {
@@ -241,8 +255,8 @@ func (a *Agent) receiveLoop(ctx context.Context, cancel context.CancelFunc, conn
 
 		go func(msg *transport.Message) {
 			logger.WithFields(logrus.Fields{
-				"type":    msg.Type,
-				"payload": string(msg.Payload),
+				"type":         msg.Type,
+				"payload_size": len(msg.Payload),
 			}).Info("message received")
 			err := a.handler.Handle(ctx, msg.Type, msg.Payload)
 			if err != nil {
@@ -303,7 +317,7 @@ func (a *Agent) newKeepalive() *transport.Message {
 	keepalive.Entity = a.getAgentEntity()
 	keepalive.Timestamp = time.Now().Unix()
 
-	msgBytes, err := json.Marshal(keepalive)
+	msgBytes, err := a.marshal(keepalive)
 	if err != nil {
 		// unlikely that this will ever happen
 		logger.WithError(err).Error("error sending keepalive")

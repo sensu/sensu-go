@@ -2,6 +2,7 @@ package agentd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,13 +11,14 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/prometheus/client_golang/prometheus"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/transport"
-	"github.com/sensu/sensu-go/types"
 )
 
 var (
@@ -40,7 +42,7 @@ type Agentd struct {
 	httpServer *http.Server
 	store      store.Store
 	bus        messaging.MessageBus
-	tls        *types.TLSOptions
+	tls        *corev2.TLSOptions
 	ringPool   *ringv2.Pool
 }
 
@@ -50,7 +52,7 @@ type Config struct {
 	Port     int
 	Bus      messaging.MessageBus
 	Store    store.Store
-	TLS      *types.TLSOptions
+	TLS      *corev2.TLSOptions
 	RingPool *ringv2.Pool
 }
 
@@ -153,6 +155,17 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	pm := runtime.ProtoMarshaller{}
+	var marshal MarshalFunc
+	var unmarshal UnmarshalFunc
+	if r.Header.Get("Content-Type") == pm.ContentType() {
+		marshal = pm.Marshal
+		unmarshal = pm.Unmarshal
+	} else {
+		marshal = json.Marshal
+		unmarshal = json.Unmarshal
+	}
+
 	cfg := SessionConfig{
 		AgentAddr:     r.RemoteAddr,
 		AgentName:     r.Header.Get(transport.HeaderKeyAgentName),
@@ -164,7 +177,7 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	cfg.Subscriptions = addEntitySubscription(cfg.AgentName, cfg.Subscriptions)
 
-	session, err := NewSession(cfg, transport.NewTransport(conn), a.bus, a.store)
+	session, err := NewSession(cfg, transport.NewTransport(conn), a.bus, a.store, unmarshal, marshal)
 	if err != nil {
 		logger.WithError(err).Error("failed to create session")
 		http.Error(w, err.Error(), http.StatusInternalServerError)

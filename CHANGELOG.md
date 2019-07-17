@@ -12,6 +12,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 whitelists check and check hook executables.
 - The agent now sends heartbeats to the backend in order to detect network
 failures and reconnect faster.
+- Added the `--protobuf-serialization` flag to the agent to use protobuf for
+serialization/deserialization rather than the default, JSON.
 
 ### Changed
 - The default handshake timeout for the WebSocket connection negotiation has

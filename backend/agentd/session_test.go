@@ -2,14 +2,16 @@ package agentd
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"testing"
 
+	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/transport"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -33,7 +35,7 @@ func (t *testTransport) Close() error {
 
 func (t *testTransport) Heartbeat(ctx context.Context, interval, timeout int) {}
 
-func (t *testTransport) Reconnect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.Header) error {
+func (t *testTransport) Reconnect(wsServerURL string, tlsOpts *corev2.TLSOptions, requestHeader http.Header) error {
 	return nil
 }
 
@@ -66,14 +68,41 @@ func TestGoodSessionConfig(t *testing.T) {
 		"GetNamespace",
 		mock.Anything,
 		"acme",
-	).Return(&types.Namespace{}, nil)
+	).Return(&corev2.Namespace{}, nil)
 
 	cfg := SessionConfig{
 		AgentName:     "testing",
 		Namespace:     "acme",
 		Subscriptions: []string{"testing"},
 	}
-	session, err := NewSession(cfg, conn, bus, st)
+	session, err := NewSession(cfg, conn, bus, st, json.Unmarshal, json.Marshal)
+	assert.NotNil(t, session)
+	assert.NoError(t, err)
+}
+
+func TestGoodSessionConfigProto(t *testing.T) {
+	conn := &testTransport{
+		sendCh: make(chan *transport.Message, 10),
+	}
+
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+	require.NoError(t, err)
+	require.NoError(t, bus.Start())
+
+	st := &mockstore.MockStore{}
+	st.On(
+		"GetNamespace",
+		mock.Anything,
+		"acme",
+	).Return(&corev2.Namespace{}, nil)
+
+	cfg := SessionConfig{
+		AgentName:     "testing",
+		Namespace:     "acme",
+		Subscriptions: []string{"testing"},
+	}
+	pm := runtime.ProtoMarshaller{}
+	session, err := NewSession(cfg, conn, bus, st, pm.Unmarshal, pm.Marshal)
 	assert.NotNil(t, session)
 	assert.NoError(t, err)
 }
@@ -97,12 +126,12 @@ func TestBadSessionConfig(t *testing.T) {
 		"GetNamespace",
 		mock.Anything,
 		mock.AnythingOfType("string"),
-	).Return(&types.Namespace{}, fmt.Errorf("error"))
+	).Return(&corev2.Namespace{}, fmt.Errorf("error"))
 
 	cfg := SessionConfig{
 		Subscriptions: []string{"testing"},
 	}
-	session, err := NewSession(cfg, conn, bus, st)
+	session, err := NewSession(cfg, conn, bus, st, json.Unmarshal, json.Marshal)
 	assert.Nil(t, session)
 	assert.Error(t, err)
 }

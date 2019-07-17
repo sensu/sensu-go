@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"golang.org/x/time/rate"
 )
 
@@ -117,7 +117,7 @@ type Config struct {
 	KeepaliveInterval uint32
 
 	// KeepaliveTimeout is the time after which a sensu-agent is considered dead
-	// by the backend. See DefaultKeepaliveTimeout in types package for default
+	// by the backend. See DefaultKeepaliveTimeout in corev2 package for default
 	// value.
 	KeepaliveTimeout uint32
 
@@ -133,6 +133,9 @@ type Config struct {
 	// Password sets Agent's password
 	Password string
 
+	// ProtobufSerialization enables protobuf serialization/deserialization
+	ProtobufSerialization bool
+
 	// Redact contains the fields to redact when marshalling the agent's entity
 	Redact []string
 
@@ -146,7 +149,7 @@ type Config struct {
 	Subscriptions []string
 
 	// TLS sets the TLSConfig for agent TLS options
-	TLS *types.TLSOptions
+	TLS *corev2.TLSOptions
 
 	// User sets the Agent's username
 	User string
@@ -202,7 +205,7 @@ func FixtureConfig() (*Config, func()) {
 		EventsAPIRateLimit:  DefaultEventsAPIRateLimit,
 		EventsAPIBurstLimit: DefaultEventsAPIBurstLimit,
 		KeepaliveInterval:   DefaultKeepaliveInterval,
-		KeepaliveTimeout:    types.DefaultKeepaliveTimeout,
+		KeepaliveTimeout:    corev2.DefaultKeepaliveTimeout,
 		Namespace:           DefaultNamespace,
 		Password:            DefaultPassword,
 		Socket: &SocketConfig{
