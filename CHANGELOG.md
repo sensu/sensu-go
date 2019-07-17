@@ -17,6 +17,10 @@ failures and reconnect faster.
 - The default handshake timeout for the WebSocket connection negotiation has
 been lowered from 45 to 15 seconds and is now configurable.
 
+### Fixed
+- Fixed the tabular output of `sensuctl filter list` so inclusive filter expressions
+are joined with `&&` and exclusive filter expressions are joined with `||`.
+
 ## [5.11.0] - 2019-07-10
 
 ### Added
