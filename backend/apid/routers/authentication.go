@@ -224,7 +224,7 @@ func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Refresh the user claims
-	claims, err := a.authenticator.Refresh(r.Context(), accessClaims.Provider)
+	claims, err := a.authenticator.Refresh(r.Context(), accessClaims)
 	if err != nil {
 		logger.WithError(err).Error("could not refresh user claims")
 		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
