@@ -2,18 +2,14 @@ package routers
 
 import (
 	"encoding/json"
-	"errors"
-	"fmt"
 	"net/http"
 
-	"github.com/sensu/sensu-go/api/core/v2"
-
 	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/backend/api"
 	"github.com/sensu/sensu-go/backend/authentication"
-	"github.com/sensu/sensu-go/backend/authentication/jwt"
-	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 // AuthenticationRouter handles authentication related requests
@@ -44,60 +40,25 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Authenticate against the provider
-	claims, err := a.authenticator.Authenticate(r.Context(), username, password)
+	client := api.NewAuthenticationClient(a.store, a.authenticator)
+	tokens, err := client.CreateAccessToken(r.Context(), username, password)
+
 	if err != nil {
-		logger.WithError(err).WithField("user", username).
-			Error("invalid username and/or password")
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-		return
-	}
-
-	logger = logger.WithField("user", claims.Subject)
-
-	// Add the 'system:users' group to this user
-	claims.Groups = append(claims.Groups, "system:users")
-
-	// Create an access token and its signed version
-	token, tokenString, err := jwt.AccessToken(claims)
-	if err != nil {
+		if err == corev2.ErrUnauthorized {
+			logger.WithError(err).WithField("user", username).
+				Error("invalid username and/or password")
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
 		logger.WithError(err).Error("could not issue an access token")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	// Create a refresh token and its signed version
-	refreshClaims := &v2.Claims{StandardClaims: v2.StandardClaims(claims.Subject)}
-	refreshToken, refreshTokenString, err := jwt.RefreshToken(refreshClaims)
-	if err != nil {
-		logger.WithError(err).Error("could not issue a refresh token")
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	// Add the tokens in the access list
-	if err := a.store.AllowTokens(token, refreshToken); err != nil {
-		logger.WithError(err).Error("could not add tokens to the access list")
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	// Prepare the response body
-	response := &types.Tokens{
-		Access:    tokenString,
-		ExpiresAt: claims.ExpiresAt,
-		Refresh:   refreshTokenString,
-	}
-
-	resBytes, err := json.Marshal(response)
-	if err != nil {
-		logger.WithError(err).Error("could not encode response body")
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
 	w.Header().Set("Content-Type", "application/json")
-	_, _ = fmt.Fprint(w, string(resBytes))
+	if err := json.NewEncoder(w).Encode(tokens); err != nil {
+		logger.WithError(err).Error("couldn't write response")
+	}
 }
 
 // test provides minimal username and password validation
@@ -109,18 +70,10 @@ func (a *AuthenticationRouter) test(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Authenticate against the basic provider
-	var err error
-	providers := a.authenticator.Providers()
-
-	if basic, ok := providers[basic.Type]; ok {
-		_, err = basic.Authenticate(r.Context(), username, password)
-		if err == nil {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-	} else {
-		err = errors.New("basic provider is disabled")
+	client := api.NewAuthenticationClient(a.store, a.authenticator)
+	err := client.TestCreds(r.Context(), username, password)
+	if err == nil {
+		return
 	}
 
 	logger.WithField(
@@ -131,138 +84,41 @@ func (a *AuthenticationRouter) test(w http.ResponseWriter, r *http.Request) {
 
 // logout handles the logout flow
 func (a *AuthenticationRouter) logout(w http.ResponseWriter, r *http.Request) {
-	var accessClaims, refreshClaims *types.Claims
-
-	// Get the access token claims
-	if value := r.Context().Value(types.AccessTokenClaims); value != nil {
-		accessClaims = value.(*v2.Claims)
-	} else {
-		http.Error(w, "invalid access token", http.StatusBadRequest)
+	client := api.NewAuthenticationClient(a.store, a.authenticator)
+	err := client.Logout(r.Context())
+	if err == nil {
 		return
 	}
 
-	// Get the refresh token claims
-	if value := r.Context().Value(types.RefreshTokenClaims); value != nil {
-		refreshClaims = value.(*v2.Claims)
-	} else {
+	if err == corev2.ErrInvalidToken {
 		http.Error(w, "invalid refresh token", http.StatusBadRequest)
 		return
 	}
 
-	// Remove the access & refresh tokens from the access list
-	if err := a.store.RevokeTokens(accessClaims, refreshClaims); err != nil {
-		logger.WithError(err).WithField("user", refreshClaims.Subject).Errorf(
-			"could not revoke tokens IDs %q & %q", accessClaims.Id, refreshClaims.Id,
-		)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
+	http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 }
 
 // token handles logic for issuing new access tokens
 func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
-	var accessClaims, refreshClaims *v2.Claims
-
-	// Get the access token claims
-	if value := r.Context().Value(v2.AccessTokenClaims); value != nil {
-		accessClaims = value.(*v2.Claims)
-	} else {
-		http.Error(w, "invalid access token", http.StatusBadRequest)
-		return
-	}
-
-	logger = logger.WithField("user", accessClaims.Subject)
-
-	// Get the refresh token claims
-	if value := r.Context().Value(v2.RefreshTokenClaims); value != nil {
-		refreshClaims = value.(*v2.Claims)
-	} else {
-		http.Error(w, "invalid refresh token", http.StatusBadRequest)
-		return
-	}
-
-	// Get the refresh token string
-	var refreshTokenString string
-	if value := r.Context().Value(v2.RefreshTokenString); value != nil {
-		refreshTokenString = value.(string)
-	} else {
-		http.Error(w, "invalid refresh token", http.StatusBadRequest)
-		return
-	}
-
-	// Make sure the refresh token is authorized in the access list
-	if _, err := a.store.GetToken(refreshClaims.Subject, refreshClaims.Id); err != nil {
-		switch err := err.(type) {
-		case *store.ErrNotFound:
-			logger.WithError(err).Infof("refresh token ID %q is unauthorized", refreshClaims.Id)
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-			return
-		default:
-			logger.WithError(err).Infof("unexpected error while authorizing refresh token ID %q", refreshClaims.Id)
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	client := api.NewAuthenticationClient(a.store, a.authenticator)
+	tokens, err := client.RefreshAccessToken(r.Context())
+	if err != nil {
+		if err == corev2.ErrInvalidToken {
+			http.Error(w, "invalid access token", http.StatusBadRequest)
 			return
 		}
-	}
-
-	// Revoke the old access token from the access list
-	if err := a.store.RevokeTokens(accessClaims); err != nil {
-		logger.WithError(err).Errorf("could not revoke access token ID %q", accessClaims.Id)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	// Ensure backward compatibility by filling the provider claims if missing
-	if accessClaims.Provider.ProviderID == "" || accessClaims.Provider.UserID == "" {
-		accessClaims.Provider.ProviderID = basic.Type
-		accessClaims.Provider.UserID = accessClaims.Subject
-	}
-
-	// Ensure backward compatibility with Sensu Go 5.1.1, since the provider type
-	// was used in the provider ID
-	if accessClaims.Provider.ProviderID == "basic/default" {
-		accessClaims.Provider.ProviderID = basic.Type
-	}
-
-	// Refresh the user claims
-	claims, err := a.authenticator.Refresh(r.Context(), accessClaims.Provider)
-	if err != nil {
-		logger.WithError(err).Error("could not refresh user claims")
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-		return
-	}
-
-	// Ensure the 'system:users' group is present
-	claims.Groups = append(claims.Groups, "system:users")
-
-	// Issue a new access token
-	accessToken, accessTokenString, err := jwt.AccessToken(claims)
-	if err != nil {
-		logger.WithError(err).Error("could not issue a new access token")
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	// store the new access token in the access list
-	if err = a.store.AllowTokens(accessToken); err != nil {
-		logger.WithError(err).Errorf("could not allow new access token %q", claims.Id)
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
-		return
-	}
-
-	// Prepare the response body
-	response := &types.Tokens{
-		Access:    accessTokenString,
-		ExpiresAt: accessClaims.ExpiresAt,
-		Refresh:   refreshTokenString,
-	}
-
-	resBytes, err := json.Marshal(response)
-	if err != nil {
-		logger.WithError(err).Error("could not encode response body")
+		if _, ok := err.(*store.ErrNotFound); ok {
+			logger.WithError(err).Info("refresh token unauthorized")
+			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			return
+		}
+		logger.WithError(err).Info("unexpected error while authorizing refresh token")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	_, _ = fmt.Fprint(w, string(resBytes))
+	if err := json.NewEncoder(w).Encode(tokens); err != nil {
+		logger.WithError(err).Error("couldn't write response body")
+	}
 }

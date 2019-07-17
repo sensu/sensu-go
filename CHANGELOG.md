@@ -20,6 +20,8 @@ been lowered from 45 to 15 seconds and is now configurable.
 ### Fixed
 - Fixed the tabular output of `sensuctl filter list` so inclusive filter expressions
 are joined with `&&` and exclusive filter expressions are joined with `||`.
+- The REST API now correctly only returns events for the specific entity
+queried in the `GET /events/:entity` endpoint (#3141)
 
 ## [5.11.0] - 2019-07-10
 
