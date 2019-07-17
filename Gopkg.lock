@@ -76,7 +76,7 @@
   revision = "48ea1b39c25fc1bab3506fbc712ecbaa842c4d2d"
 
 [[projects]]
-  digest = "1:4515acf54596c3c615aaf704ba962df0c23f1ecb359624bd348dda51a6796b9a"
+  digest = "1:f83c9ddb60625b53f4a07f2da1665168b4776d81a30e97d0b64da0f9fa126010"
   name = "github.com/coreos/etcd"
   packages = [
     "alarm",
@@ -85,6 +85,8 @@
     "client",
     "clientv3",
     "clientv3/concurrency",
+    "clientv3/namespace",
+    "clientv3/naming",
     "compactor",
     "discovery",
     "embed",
@@ -109,6 +111,7 @@
     "etcdserver/etcdserverpb/gw",
     "etcdserver/membership",
     "etcdserver/stats",
+    "integration",
     "lease",
     "lease/leasehttp",
     "lease/leasepb",
@@ -132,11 +135,14 @@
     "pkg/runtime",
     "pkg/schedule",
     "pkg/srv",
+    "pkg/testutil",
     "pkg/tlsutil",
     "pkg/transport",
     "pkg/types",
     "pkg/wait",
+    "proxy/grpcproxy",
     "proxy/grpcproxy/adapter",
+    "proxy/grpcproxy/cache",
     "raft",
     "raft/raftpb",
     "rafthttp",
@@ -295,6 +301,14 @@
   pruneopts = "T"
   revision = "636bf0302bc95575d69441b25a2603156ffdddf1"
   version = "v1.1.1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:b7cb6054d3dff43b38ad2e92492f220f57ae6087ee797dca298139776749ace8"
+  name = "github.com/golang/groupcache"
+  packages = ["lru"]
+  pruneopts = "UT"
+  revision = "869f871628b6baa9cfbc11732cdf6546b17c1298"
 
 [[projects]]
   digest = "1:832e17df5ff8bbe0e0693d2fb46c5e53f96c662ee804049ce3ab6557df74e3ab"
@@ -799,9 +813,12 @@
   revision = "ffb13db8def02f545acc58bd288ec6057c2bbfb9"
 
 [[projects]]
-  digest = "1:69b1cc331fca23d702bd72f860c6a647afd0aa9fcbc1d0659b1365e26546dd70"
+  digest = "1:05aaa4aafcc339843489e731d3b223efc537bbf2eddbb57ded586064baaee260"
   name = "github.com/sirupsen/logrus"
-  packages = ["."]
+  packages = [
+    ".",
+    "hooks/test",
+  ]
   pruneopts = "UT"
   revision = "bcd833dfe83d3cebad139e4a29ed79cb2318bf95"
   version = "v1.2.0"
@@ -1147,6 +1164,7 @@
     "github.com/coreos/etcd/embed",
     "github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes",
     "github.com/coreos/etcd/etcdserver/etcdserverpb",
+    "github.com/coreos/etcd/integration",
     "github.com/coreos/etcd/mvcc/mvccpb",
     "github.com/coreos/etcd/pkg/transport",
     "github.com/coreos/etcd/pkg/types",
@@ -1194,6 +1212,7 @@
     "github.com/shirou/w32",
     "github.com/shurcooL/vfsgen",
     "github.com/sirupsen/logrus",
+    "github.com/sirupsen/logrus/hooks/test",
     "github.com/spf13/cobra",
     "github.com/spf13/pflag",
     "github.com/spf13/viper",
@@ -1213,6 +1232,7 @@
     "google.golang.org/grpc/grpclog",
     "gopkg.in/h2non/filetype.v1",
     "gopkg.in/h2non/filetype.v1/types",
+    "gopkg.in/yaml.v2",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1

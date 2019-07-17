@@ -6,23 +6,33 @@ import (
 	"sync"
 	"time"
 
+	"github.com/sirupsen/logrus"
+
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
 	"golang.org/x/time/rate"
+)
+
+const (
+	// Set a buffer for the incoming and outgoing channels in order to reduce
+	// times of context switches
+	incomingEventChanBufSize = 100
+	resultChanBufSize        = 100
 )
 
 // Watcher implements the store.Watcher interface rather than clientv3.Watcher,
 // so the channel returned by the Watch method only provides a single event at a
 // time instead of a list of events, and the events are ready to be consumed
 type Watcher struct {
-	ctx        context.Context
-	cancel     context.CancelFunc
-	client     *clientv3.Client
-	key        string
-	recursive  bool
-	eventChan  chan *clientv3.Event
-	resultChan chan store.WatchEvent
-	opts       []clientv3.OpOption
+	ctx               context.Context
+	cancel            context.CancelFunc
+	client            *clientv3.Client
+	key               string
+	recursive         bool
+	incomingEventChan chan store.WatchEvent
+	resultChan        chan store.WatchEvent
+	opts              []clientv3.OpOption
+	logger            *logrus.Entry
 }
 
 // Watch returns a Watcher for the given key. If recursive is true, then the
@@ -44,13 +54,15 @@ func Watch(ctx context.Context, client *clientv3.Client, key string, recursive b
 // newWatcher creates a new Watcher
 func newWatcher(ctx context.Context, client *clientv3.Client, key string, recursive bool, opts ...clientv3.OpOption) *Watcher {
 	wc := &Watcher{
-		client:     client,
-		key:        key,
-		recursive:  recursive,
-		eventChan:  make(chan *clientv3.Event),
-		resultChan: make(chan store.WatchEvent),
-		opts:       opts,
+		client:            client,
+		key:               key,
+		recursive:         recursive,
+		incomingEventChan: make(chan store.WatchEvent, incomingEventChanBufSize),
+		resultChan:        make(chan store.WatchEvent, resultChanBufSize),
+		opts:              opts,
+		logger:            logger.WithField("key", key),
 	}
+
 	wc.ctx, wc.cancel = context.WithCancel(ctx)
 	return wc
 }
@@ -62,7 +74,7 @@ func (w *Watcher) Result() <-chan store.WatchEvent {
 
 func (w *Watcher) start() {
 	// Define the client options for this watcher
-	opts := []clientv3.OpOption{clientv3.WithCreatedNotify()}
+	opts := []clientv3.OpOption{clientv3.WithCreatedNotify(), clientv3.WithPrevKV()}
 	if w.recursive {
 		opts = append(opts, clientv3.WithPrefix())
 	}
@@ -79,8 +91,11 @@ func (w *Watcher) start() {
 	ctx, cancel := context.WithCancel(w.ctx)
 
 	// Start the watcher
-	logger.Debugf("starting a watcher for the key %q", w.key)
-	w.watch(ctx, opts, watchChanStopped, &resultChanWG)
+	w.logger.Debug("starting a watcher")
+	w.watch(ctx, opts, watchChanStopped)
+
+	// Start processing the incoming events from the watcher
+	go w.processEvents(&resultChanWG)
 
 	// Initialize a rate limiter
 	limiter := rate.NewLimiter(rate.Every(time.Second), 1)
@@ -104,11 +119,11 @@ func (w *Watcher) start() {
 				watchChanStopped = make(chan struct{})
 
 				// Restart the watcher
-				logger.Warningf("restarting the watcher for the key %q", w.key)
-				w.watch(ctx, opts, watchChanStopped, &resultChanWG)
+				w.logger.Warning("restarting the watcher")
+				w.watch(ctx, opts, watchChanStopped)
 			case <-w.ctx.Done():
 				// The consumer has cancelled this watcher, we need to exit
-				logger.Debugf("stopping the watcher for the key %q", w.key)
+				w.logger.Debug("stopping the watcher")
 				break RetryLoop
 			}
 		}
@@ -125,20 +140,14 @@ func (w *Watcher) start() {
 	}()
 }
 
-func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChanStopped chan struct{}, resultChanWG *sync.WaitGroup) {
+func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChanStopped chan struct{}) {
 	// Wrap the context with WithRequireLeader so ErrNoLeader is returned and the
 	// WatchChan is closed if the etcd server has no leader
 	ctx = clientv3.WithRequireLeader(ctx)
 
-	resultChanWG.Add(1)
-
 	watchChan := w.client.Watch(ctx, w.key, opts...)
 
 	go func() {
-		// Indicate that the resultChan is no longer used once we existed the
-		// goroutine below
-		defer resultChanWG.Done()
-
 		// Loop over the watchChan channel to receive watch responses. The loop will
 		// exit if the channel is closed.
 		for watchResponse := range watchChan {
@@ -146,17 +155,23 @@ func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChan
 				// We received an error from the channel, so let's assume it's no longer
 				// functional and exit this goroutine so we can try to re-create the
 				// watcher
-				logger.WithError(watchResponse.Err()).Warn("error from watch response")
+				w.logger.WithError(watchResponse.Err()).Warn("error from watch response")
 				break
 			}
 
 			for _, event := range watchResponse.Events {
-				logger.Debugf("received event of type %v for key %s", event.Type, event.Kv.Key)
-				w.event(ctx, event)
+				w.logger.Debugf("received event of type %s", event.Type.String())
+				parsedEvent := parseEvent(event)
+				w.queueEvent(ctx, parsedEvent)
 			}
 		}
 
-		logger.Warningf("the watcher for the key %q is stopped", w.key)
+		// Verify if the parent context was cancelled, which would indicate that the
+		// watcher was gracefully shutdown by its consumer and therefore we don't
+		// need to print a warning here
+		if err := w.ctx.Err(); err == nil || err != context.Canceled {
+			w.logger.Warning("the watcher has been stopped")
+		}
 
 		// At this point, the watch channel has been closed by its consumer or is
 		// broken, therefore we should notify the main thread that this goroutine has
@@ -166,22 +181,63 @@ func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChan
 
 }
 
-func (w *Watcher) event(ctx context.Context, e *clientv3.Event) {
-	typ := GetWatcherAction(e)
-	if typ == store.WatchUnknown {
-		logger.Infof("unknown etcd watch action type %q", e.Type.String())
-		return
-	}
+// processEvents process the incomingEventChan buffer and send the results over
+// to the resultChan buffer
+func (w *Watcher) processEvents(wg *sync.WaitGroup) {
+	// Use the waitgroup to indicate that the resultChan is currently used but release it once we exit this
+	wg.Add(1)
+	defer wg.Done()
 
-	result := store.WatchEvent{
-		Type:   typ,
-		Key:    string(e.Kv.Key),
-		Object: e.Kv.Value,
+	for {
+		select {
+		case e := <-w.incomingEventChan:
+			if len(w.resultChan) == cap(w.resultChan) {
+				w.logger.Warning("resultChan buffer is full, watch events are not consumed " +
+					"fast enough, incoming events from the watcher might be delayed")
+			}
+			select {
+			case w.resultChan <- e:
+			case <-w.ctx.Done():
+				return
+			}
+		case <-w.ctx.Done():
+			return
+		}
+	}
+}
+
+// queueEvent takes an incoming event from the watcher and adds it to the buffer
+// of incoming events that need to be processed so we don't block the watcher
+func (w *Watcher) queueEvent(ctx context.Context, e store.WatchEvent) {
+	if len(w.incomingEventChan) == cap(w.incomingEventChan) {
+		w.logger.Warning("incomingEventChan buffer is full, incoming watch events " +
+			"are not processed fast enough, incoming events from the watcher will be blocked")
 	}
 
 	select {
-	case w.resultChan <- result:
+	case w.incomingEventChan <- e:
 	case <-ctx.Done():
-		return
 	}
+}
+
+func parseEvent(e *clientv3.Event) store.WatchEvent {
+	event := store.WatchEvent{
+		Key:      string(e.Kv.Key),
+		Revision: e.Kv.ModRevision,
+		Object:   e.Kv.Value,
+	}
+
+	if e.IsCreate() {
+		event.Type = store.WatchCreate
+	} else if e.IsModify() {
+		event.Type = store.WatchUpdate
+	} else {
+		event.Type = store.WatchDelete
+		// Fetch the key value before it was deleted
+		if e.PrevKv != nil {
+			event.Object = e.PrevKv.Value
+		}
+	}
+
+	return event
 }

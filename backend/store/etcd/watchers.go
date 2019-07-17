@@ -5,26 +5,9 @@ import (
 	"reflect"
 
 	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/mvcc/mvccpb"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 )
-
-// GetWatcherAction maps an etcd Event to the corresponding WatchActionType.
-// This function is exported for use by sensu-enterprise-go's etcd watchers.
-func GetWatcherAction(event *clientv3.Event) store.WatchActionType {
-	switch event.Type {
-	case mvccpb.PUT:
-		if event.IsCreate() {
-			return store.WatchCreate
-		}
-		return store.WatchUpdate
-	case mvccpb.DELETE:
-		return store.WatchDelete
-	}
-
-	return store.WatchUnknown
-}
 
 // GetCheckConfigWatcher returns a channel that emits WatchEventCheckConfig structs notifying
 // the caller that a CheckConfig was updated. If the watcher runs into a terminal error
