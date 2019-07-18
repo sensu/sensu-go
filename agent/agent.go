@@ -119,16 +119,10 @@ func NewAgent(config *Config) (*Agent, error) {
 }
 
 func (a *Agent) sendMessage(msg *transport.Message) {
-	var payload string
-	if a.contentType == agentd.ProtobufSerializationHeader {
-		payload = fmt.Sprintf("%x", msg.Payload)
-	} else {
-		payload = string(msg.Payload)
-	}
 	logger.WithFields(logrus.Fields{
 		"type":    msg.Type,
-		"payload": payload,
-	}).Info("sending message")
+		"payload": payloadString(a.contentType, msg.Payload),
+	}).Debug("sending message")
 	a.sendq <- msg
 }
 
@@ -262,9 +256,9 @@ func (a *Agent) receiveLoop(ctx context.Context, cancel context.CancelFunc, conn
 
 		go func(msg *transport.Message) {
 			logger.WithFields(logrus.Fields{
-				"type":         msg.Type,
-				"payload_size": len(msg.Payload),
-			}).Info("message received")
+				"type":    msg.Type,
+				"payload": payloadString(a.contentType, msg.Payload),
+			}).Debug("message received")
 			err := a.handler.Handle(ctx, msg.Type, msg.Payload)
 			if err != nil {
 				logger.WithError(err).Error("error handling message")
@@ -425,4 +419,14 @@ func connectWithBackoff(ctx context.Context, selector BackendSelector, tlsOpts *
 	})
 
 	return conn, err
+}
+
+func payloadString(contentType string, msgPayload []byte) string {
+	var payload string
+	if contentType == agentd.ProtobufSerializationHeader {
+		payload = fmt.Sprintf("%x", msgPayload)
+	} else {
+		payload = string(msgPayload)
+	}
+	return payload
 }
