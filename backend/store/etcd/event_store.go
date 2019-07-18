@@ -44,7 +44,11 @@ func getEventWithCheckPath(ctx context.Context, entity, check string) (string, e
 
 // GetEventsPath gets the path of the event store.
 func GetEventsPath(ctx context.Context, entity string) string {
-	return eventKeyBuilder.WithContext(ctx).Build(entity)
+	b := eventKeyBuilder.WithContext(ctx)
+	if entity != "" {
+		b = b.WithExactMatch()
+	}
+	return b.Build(entity)
 }
 
 // DeleteEventByEntityCheck deletes an event by entity name and check name.

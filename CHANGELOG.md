@@ -10,6 +10,16 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Added functionality for the agent `--allow-list` configuration, which
 whitelists check and check hook executables.
+
+### Fixed
+- Fixed the tabular output of `sensuctl filter list` so inclusive filter expressions
+are joined with `&&` and exclusive filter expressions are joined with `||`.
+- The REST API now correctly only returns events for the specific entity
+queried in the `GET /events/:entity` endpoint (#3141)
+
+## [5.11.1] - 2019-07-18
+
+### Fixed
 - The agent now sends heartbeats to the backend in order to detect network
 failures and reconnect faster.
 - Added the `--protobuf-serialization` flag to the agent to use protobuf for
