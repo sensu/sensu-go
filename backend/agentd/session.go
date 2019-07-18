@@ -34,10 +34,10 @@ const ProtobufSerializationHeader = "application/octet-stream"
 // JSONSerializationHeader is the Content-Type header which indicates JSON serialization.
 const JSONSerializationHeader = "application/json"
 
-// MarshalFunc is the function signature for protobuf/JSON marshaling
+// MarshalFunc is the function signature for protobuf/JSON marshaling.
 type MarshalFunc = func(pb proto.Message) ([]byte, error)
 
-// UnmarshalFunc is the function signature for protobuf/JSON unmarshaling
+// UnmarshalFunc is the function signature for protobuf/JSON unmarshaling.
 type UnmarshalFunc = func(buf []byte, pb proto.Message) error
 
 // UnmarshalJSON is a wrapper to deserialize proto messages with JSON.

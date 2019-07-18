@@ -422,11 +422,8 @@ func connectWithBackoff(ctx context.Context, selector BackendSelector, tlsOpts *
 }
 
 func payloadString(contentType string, msgPayload []byte) string {
-	var payload string
 	if contentType == agentd.ProtobufSerializationHeader {
-		payload = fmt.Sprintf("%x", msgPayload)
-	} else {
-		payload = string(msgPayload)
+		return fmt.Sprintf("%x", msgPayload)
 	}
-	return payload
+	return string(msgPayload)
 }
