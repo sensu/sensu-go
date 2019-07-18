@@ -302,16 +302,11 @@
   packages = [
     "jsonpb",
     "proto",
-    "protoc-gen-go/descriptor",
-    "protoc-gen-go/generator",
-    "protoc-gen-go/generator/internal/remap",
-    "protoc-gen-go/plugin",
     "ptypes",
     "ptypes/any",
     "ptypes/duration",
     "ptypes/struct",
     "ptypes/timestamp",
-    "ptypes/wrappers",
   ]
   pruneopts = "T"
   revision = "b4deda0973fb4c70b50d226b1af49f3da59f5265"
@@ -411,16 +406,15 @@
   version = "v1.1"
 
 [[projects]]
-  digest = "1:07ac748d2913b3c6d963aceec7fc4348c34a4ea58c0063779d08c2717380f7e9"
+  digest = "1:81e4a1fb1a9bbcdc5916537b084b6d8410f737ff7f375693d0d6d1942b580e43"
   name = "github.com/grpc-ecosystem/grpc-gateway"
   packages = [
-    "internal",
     "runtime",
+    "runtime/internal",
     "utilities",
   ]
   pruneopts = "UT"
-  revision = "bebc7374a79e1105d786ef3468b474e47d652511"
-  version = "v1.9.4"
+  revision = "8cc3a55af3bcf171a1c23a90c4df9cf591706104"
 
 [[projects]]
   branch = "master"
@@ -1056,13 +1050,9 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:3b4286fcb6abb45649efd0720ad45b0767b54597cc70fb0a7a59089e89a9f24c"
+  digest = "1:cd018653a358d4b743a9d3bee89e825521f2ab2f2ec0770164bf7632d8d73ab7"
   name = "google.golang.org/genproto"
-  packages = [
-    "googleapis/api/httpbody",
-    "googleapis/rpc/status",
-    "protobuf/field_mask",
-  ]
+  packages = ["googleapis/rpc/status"]
   pruneopts = "UT"
   revision = "1e559d0a00eef8a9a43151db4665280bd8dd5886"
 
