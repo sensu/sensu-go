@@ -128,3 +128,48 @@ func TestListFlags(t *testing.T) {
 	flag = cmd.Flag("format")
 	assert.NotNil(flag)
 }
+
+func TestListCommandRunEClosureWithTableAllow(t *testing.T) {
+	assert := assert.New(t)
+	cli := test.NewCLI()
+
+	filter := types.FixtureEventFilter("name-one")
+	filter.Expressions = append(filter.Expressions, "event.check.name == 'dev'")
+
+	client := cli.Client.(*client.MockClient)
+	client.On("ListFilters", mock.Anything, mock.Anything).Return([]types.EventFilter{*filter}, nil)
+
+	cmd := ListCommand(cli)
+	require.NoError(t, cmd.Flags().Set("format", "none"))
+	out, err := test.RunCmd(cmd, []string{})
+
+	assert.NotEmpty(out)
+	assert.Contains(out, "Name")                                                       // heading
+	assert.Contains(out, "Action")                                                     // heading
+	assert.Contains(out, "Expressions")                                                // heading
+	assert.Contains(out, "(event.check.team == 'ops') && (event.check.name == 'dev')") // allow &&
+	assert.Nil(err)
+}
+
+func TestListCommandRunEClosureWithTableDeny(t *testing.T) {
+	assert := assert.New(t)
+	cli := test.NewCLI()
+
+	filter := types.FixtureEventFilter("name-one")
+	filter.Expressions = append(filter.Expressions, "event.check.name == 'dev'")
+	filter.Action = types.EventFilterActionDeny
+
+	client := cli.Client.(*client.MockClient)
+	client.On("ListFilters", mock.Anything, mock.Anything).Return([]types.EventFilter{*filter}, nil)
+
+	cmd := ListCommand(cli)
+	require.NoError(t, cmd.Flags().Set("format", "none"))
+	out, err := test.RunCmd(cmd, []string{})
+
+	assert.NotEmpty(out)
+	assert.Contains(out, "Name")                                                       // heading
+	assert.Contains(out, "Action")                                                     // heading
+	assert.Contains(out, "Expressions")                                                // heading
+	assert.Contains(out, "(event.check.team == 'ops') || (event.check.name == 'dev')") // deny ||
+	assert.Nil(err)
+}

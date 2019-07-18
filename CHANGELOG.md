@@ -12,6 +12,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 whitelists check and check hook executables.
 
 ### Fixed
+- Fixed the tabular output of `sensuctl filter list` so inclusive filter expressions
+are joined with `&&` and exclusive filter expressions are joined with `||`.
 - The REST API now correctly only returns events for the specific entity
 queried in the `GET /events/:entity` endpoint (#3141)
 
