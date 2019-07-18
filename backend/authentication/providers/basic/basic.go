@@ -44,24 +44,24 @@ func (p *Provider) Authenticate(ctx context.Context, username, password string) 
 }
 
 // Refresh the claims of a user
-func (p *Provider) Refresh(ctx context.Context, providerClaims corev2.AuthProviderClaims) (*corev2.Claims, error) {
-	user, err := p.Store.GetUser(ctx, providerClaims.UserID)
+func (p *Provider) Refresh(ctx context.Context, claims *corev2.Claims) (*corev2.Claims, error) {
+	user, err := p.Store.GetUser(ctx, claims.Provider.UserID)
 	if err != nil {
 		return nil, err
 	}
 	if user == nil {
-		return nil, fmt.Errorf("user %q does not exist", providerClaims.UserID)
+		return nil, fmt.Errorf("user %q does not exist", claims.Provider.UserID)
 	}
 
-	claims, err := jwt.NewClaims(user)
+	newClaims, err := jwt.NewClaims(user)
 	if err != nil {
 		return nil, err
 	}
 
 	// Set the provider claims
-	claims.Provider = p.claims(user.Username)
+	newClaims.Provider = p.claims(user.Username)
 
-	return claims, nil
+	return newClaims, nil
 }
 
 // GetObjectMeta returns the provider metadata
