@@ -2,10 +2,12 @@ package agentd
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -26,11 +28,23 @@ var (
 	)
 )
 
+// ProtobufSerializationHeader is the Content-Type header which indicates protobuf serialization.
+const ProtobufSerializationHeader = "application/octet-stream"
+
+// JSONSerializationHeader is the Content-Type header which indicates JSON serialization.
+const JSONSerializationHeader = "application/json"
+
 // MarshalFunc is the function signature for protobuf/JSON marshaling
-type MarshalFunc = func(v interface{}) ([]byte, error)
+type MarshalFunc = func(pb proto.Message) ([]byte, error)
 
 // UnmarshalFunc is the function signature for protobuf/JSON unmarshaling
-type UnmarshalFunc = func(data []byte, v interface{}) error
+type UnmarshalFunc = func(buf []byte, pb proto.Message) error
+
+// UnmarshalJSON is a wrapper to deserialize proto messages with JSON.
+func UnmarshalJSON(b []byte, msg proto.Message) error { return json.Unmarshal(b, &msg) }
+
+// MarshalJSON is a wrapper to serialize proto messages with JSON.
+func MarshalJSON(msg proto.Message) ([]byte, error) { return json.Marshal(msg) }
 
 // SessionStore specifies the storage requirements of the Session.
 type SessionStore interface {

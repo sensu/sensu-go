@@ -2,7 +2,6 @@ package agentd
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -10,8 +9,8 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/websocket"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
@@ -155,15 +154,14 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pm := runtime.ProtoMarshaller{}
 	var marshal MarshalFunc
 	var unmarshal UnmarshalFunc
-	if r.Header.Get("Content-Type") == pm.ContentType() {
-		marshal = pm.Marshal
-		unmarshal = pm.Unmarshal
+	if r.Header.Get("Content-Type") == ProtobufSerializationHeader {
+		unmarshal = proto.Unmarshal
+		marshal = proto.Marshal
 	} else {
-		marshal = json.Marshal
-		unmarshal = json.Unmarshal
+		unmarshal = UnmarshalJSON
+		marshal = MarshalJSON
 	}
 
 	cfg := SessionConfig{

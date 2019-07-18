@@ -1185,7 +1185,6 @@
     "github.com/graphql-go/graphql/language/location",
     "github.com/graphql-go/graphql/language/parser",
     "github.com/graphql-go/graphql/testutil",
-    "github.com/grpc-ecosystem/grpc-gateway/runtime",
     "github.com/json-iterator/go",
     "github.com/mgutz/ansi",
     "github.com/mholt/archiver",

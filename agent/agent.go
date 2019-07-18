@@ -7,7 +7,6 @@ package agent
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -17,7 +16,7 @@ import (
 	"sync"
 
 	time "github.com/echlebek/timeproxy"
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/gogo/protobuf/proto"
 
 	"github.com/atlassian/gostatsd/pkg/statsd"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -51,6 +50,7 @@ type Agent struct {
 	config          *Config
 	connected       bool
 	connectedMu     sync.RWMutex
+	contentType     string
 	entity          *corev2.Entity
 	executor        command.Executor
 	handler         *handler.MessageHandler
@@ -105,22 +105,29 @@ func NewAgent(config *Config) (*Agent, error) {
 	userCredentials = base64.StdEncoding.EncodeToString([]byte(userCredentials))
 	agent.header.Set("Authorization", "Basic "+userCredentials)
 	if agent.config.ProtobufSerialization {
-		pm := runtime.ProtoMarshaller{}
-		agent.header.Set("Content-Type", pm.ContentType())
-		agent.unmarshal = pm.Unmarshal
-		agent.marshal = pm.Marshal
+		agent.contentType = agentd.ProtobufSerializationHeader
+		agent.unmarshal = proto.Unmarshal
+		agent.marshal = proto.Marshal
 	} else {
-		agent.unmarshal = json.Unmarshal
-		agent.marshal = json.Marshal
+		agent.contentType = agentd.JSONSerializationHeader
+		agent.unmarshal = agentd.UnmarshalJSON
+		agent.marshal = agentd.MarshalJSON
 	}
+	agent.header.Set("Content-Type", agent.contentType)
 
 	return agent, nil
 }
 
 func (a *Agent) sendMessage(msg *transport.Message) {
+	var payload string
+	if a.contentType == agentd.ProtobufSerializationHeader {
+		payload = fmt.Sprintf("%x", msg.Payload)
+	} else {
+		payload = string(msg.Payload)
+	}
 	logger.WithFields(logrus.Fields{
-		"type":         msg.Type,
-		"payload_size": len(msg.Payload),
+		"type":    msg.Type,
+		"payload": payload,
 	}).Info("sending message")
 	a.sendq <- msg
 }

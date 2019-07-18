@@ -2,12 +2,11 @@ package agentd
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"testing"
 
-	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -75,7 +74,7 @@ func TestGoodSessionConfig(t *testing.T) {
 		Namespace:     "acme",
 		Subscriptions: []string{"testing"},
 	}
-	session, err := NewSession(cfg, conn, bus, st, json.Unmarshal, json.Marshal)
+	session, err := NewSession(cfg, conn, bus, st, UnmarshalJSON, MarshalJSON)
 	assert.NotNil(t, session)
 	assert.NoError(t, err)
 }
@@ -101,8 +100,7 @@ func TestGoodSessionConfigProto(t *testing.T) {
 		Namespace:     "acme",
 		Subscriptions: []string{"testing"},
 	}
-	pm := runtime.ProtoMarshaller{}
-	session, err := NewSession(cfg, conn, bus, st, pm.Unmarshal, pm.Marshal)
+	session, err := NewSession(cfg, conn, bus, st, proto.Unmarshal, proto.Marshal)
 	assert.NotNil(t, session)
 	assert.NoError(t, err)
 }
@@ -131,7 +129,7 @@ func TestBadSessionConfig(t *testing.T) {
 	cfg := SessionConfig{
 		Subscriptions: []string{"testing"},
 	}
-	session, err := NewSession(cfg, conn, bus, st, json.Unmarshal, json.Marshal)
+	session, err := NewSession(cfg, conn, bus, st, UnmarshalJSON, MarshalJSON)
 	assert.Nil(t, session)
 	assert.Error(t, err)
 }
