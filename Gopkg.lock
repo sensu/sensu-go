@@ -1213,6 +1213,7 @@
     "google.golang.org/grpc/grpclog",
     "gopkg.in/h2non/filetype.v1",
     "gopkg.in/h2non/filetype.v1/types",
+    "gopkg.in/yaml.v2",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
