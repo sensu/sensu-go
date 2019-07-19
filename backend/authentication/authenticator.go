@@ -44,16 +44,16 @@ func (a *Authenticator) Authenticate(ctx context.Context, username, password str
 // Refresh is called when a new access token is requested with a refresh token.
 // The provider should attempt to update the user identity to reflect any changes
 // since the access token was last refreshed
-func (a *Authenticator) Refresh(ctx context.Context, claims corev2.AuthProviderClaims) (*corev2.Claims, error) {
+func (a *Authenticator) Refresh(ctx context.Context, claims *corev2.Claims) (*corev2.Claims, error) {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 
 	// Retrieve the right provider with the provider ID specified in the claims
-	if provider, ok := a.providers[claims.ProviderID]; ok {
+	if provider, ok := a.providers[claims.Provider.ProviderID]; ok {
 		user, err := provider.Refresh(ctx, claims)
 		if err != nil {
 			return nil, fmt.Errorf(
-				"could not refresh user %q with provider %q: %s", claims.UserID, provider.Type(), err,
+				"could not refresh user %q with provider %q: %s", claims.Provider.UserID, provider.Type(), err,
 			)
 		}
 
@@ -61,7 +61,7 @@ func (a *Authenticator) Refresh(ctx context.Context, claims corev2.AuthProviderC
 	}
 
 	return nil, fmt.Errorf(
-		"could not refresh user %q with missing provider ID %q", claims.UserID, claims.ProviderID,
+		"could not refresh user %q with missing provider ID %q", claims.Provider.UserID, claims.Provider.ProviderID,
 	)
 }
 

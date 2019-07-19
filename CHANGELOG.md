@@ -12,10 +12,18 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 whitelists check and check hook executables.
 - Added the `runtime_assets` field to `HookConfig`. Assets are enabled
 for check hook execution.
+
+### Fixed
+- Fixed the tabular output of `sensuctl filter list` so inclusive filter expressions
+are joined with `&&` and exclusive filter expressions are joined with `||`.
+- The REST API now correctly only returns events for the specific entity
+queried in the `GET /events/:entity` endpoint (#3141)
+
+## [5.11.1] - 2019-07-18
+
+### Fixed
 - The agent now sends heartbeats to the backend in order to detect network
 failures and reconnect faster.
-
-### Changed
 - The default handshake timeout for the WebSocket connection negotiation has
 been lowered from 45 to 15 seconds and is now configurable.
 
