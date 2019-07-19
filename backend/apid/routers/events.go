@@ -90,7 +90,20 @@ func (r *EventsRouter) createOrReplace(req *http.Request) (interface{}, error) {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	if err := handlers.CheckMeta(event.Entity, mux.Vars(req)); err != nil {
+	vars := mux.Vars(req)
+
+	meta := &event.Entity.ObjectMeta
+
+	if meta.Namespace == "" {
+		namespace, err := url.PathUnescape(vars["namespace"])
+		if err != nil {
+			return nil, err
+		}
+
+		meta.Namespace = namespace
+	}
+
+	if err := handlers.CheckMeta(event.Entity, vars); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 

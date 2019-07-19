@@ -56,6 +56,9 @@ func TestEventsRouter(t *testing.T) {
 	}
 	fixture := corev2.FixtureEvent("foo", "check-cpu")
 
+	fixture_wo_namespace := corev2.FixtureEvent("foo", "check-cpu")
+	fixture_wo_namespace.Entity.ObjectMeta.Namespace = ""
+
 	tests := []struct {
 		name           string
 		method         string
@@ -169,7 +172,7 @@ func TestEventsRouter(t *testing.T) {
 			name:           "it returns 400 if the event metadata to update is invalid",
 			method:         http.MethodPut,
 			path:           fixture.URIPath(),
-			body:           []byte(`{"entity": {"namespace":"acme"}}`),
+			body:           []byte(`{"entity": {"metadata": {"namespace":"acme"}}}`),
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
@@ -209,17 +212,29 @@ func TestEventsRouter(t *testing.T) {
 			wantStatusCode: http.StatusCreated,
 		},
 		{
-			name:           "it returns 400 if the payload to update is not decodable",
+			name:   "it returns 201 when an event does not provide a namespace (using url namespace)",
+			method: http.MethodPut,
+			path:   fixture.URIPath(),
+			body:   marshal(fixture_wo_namespace),
+			controllerFunc: func(c *mockEventController) {
+				c.On("CreateOrReplace", mock.Anything, mock.Anything).
+					Return(nil).
+					Once()
+			},
+			wantStatusCode: http.StatusCreated,
+		},
+		{
+			name:           "it returns 400 if the payload to update is not decodable (post)",
 			method:         http.MethodPost,
 			path:           fixture.URIPath(),
 			body:           []byte(`foo`),
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
-			name:           "it returns 400 if the event metadata to update is invalid",
+			name:           "it returns 400 if the event metadata to update is invalid (post)",
 			method:         http.MethodPost,
 			path:           fixture.URIPath(),
-			body:           []byte(`{"entity": {"namespace":"acme"}}`),
+			body:           []byte(`{"entity": {"metadata": {"namespace":"acme"}}}`),
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
