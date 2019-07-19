@@ -10,6 +10,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Added functionality for the agent `--allow-list` configuration, which
 whitelists check and check hook executables.
+- Added the `runtime_assets` field to `HookConfig`. Assets are enabled
+for check hook execution.
 - Added backwards compatible content negotiation to the websocket connection.
 Protobuf will be used for serialization/deserialization unless indicated by the
 backend to use JSON.

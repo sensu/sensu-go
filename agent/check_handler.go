@@ -104,6 +104,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	checkAssets := request.Assets
 	checkConfig := request.Config
 	checkHooks := request.Hooks
+	hookAssets := request.HookAssets
 
 	// Before token subsitution we retain copy of the command
 	origCommand := checkConfig.Command
@@ -228,7 +229,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	event.Timestamp = time.Now().Unix()
 
 	if len(checkHooks) != 0 {
-		event.Check.Hooks = a.ExecuteHooks(request, checkExec.Status)
+		event.Check.Hooks = a.ExecuteHooks(ctx, request, checkExec.Status, hookAssets)
 	}
 
 	// Instantiate metrics in the event if the check is attempting to extract metrics
