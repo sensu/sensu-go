@@ -2,6 +2,7 @@ package agentd
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -361,7 +362,7 @@ func (s *Session) handleEvent(ctx context.Context, payload []byte) error {
 // or JSON serialized payload.
 func PayloadString(contentType string, msgPayload []byte) string {
 	if contentType == ProtobufSerializationHeader {
-		return fmt.Sprintf("%x", msgPayload)
+		return base64.StdEncoding.EncodeToString(msgPayload)
 	}
 	return string(msgPayload)
 }
