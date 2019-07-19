@@ -125,7 +125,7 @@ func addEvent(a *Agent) http.HandlerFunc {
 			return
 		}
 
-		payload, err := json.Marshal(event)
+		payload, err := a.marshal(event)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("error marshaling check result: %s", err), http.StatusInternalServerError)
 			return
