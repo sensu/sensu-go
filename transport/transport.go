@@ -94,9 +94,6 @@ type Message struct {
 	// SendCallback is a callback that is executed after a Send operation.
 	// The error value of Send is passed to the callback.
 	SendCallback func(error)
-
-	// ContentType is the Content-Type header.
-	ContentType string
 }
 
 // The Transport interface defines the set of methods available to a connection

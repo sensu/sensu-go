@@ -159,17 +159,15 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 		marshal = proto.Marshal
 		unmarshal = proto.Unmarshal
 		contentType = ProtobufSerializationHeader
-		responseHeader.Set("Content-Type", contentType)
-		logger.WithField("header", fmt.Sprintf("Content-Type: %s", contentType)).Debug("setting header")
 		logger.WithField("format", "protobuf").Debug("setting serialization/deserialization")
 	} else {
 		marshal = MarshalJSON
 		unmarshal = UnmarshalJSON
 		contentType = JSONSerializationHeader
-		responseHeader.Set("Content-Type", contentType)
-		logger.WithField("header", fmt.Sprintf("Content-Type: %s", contentType)).Debug("setting header")
 		logger.WithField("format", "JSON").Debug("setting serialization/deserialization")
 	}
+	responseHeader.Set("Content-Type", contentType)
+	logger.WithField("header", fmt.Sprintf("Content-Type: %s", contentType)).Debug("setting header")
 
 	conn, err := upgrader.Upgrade(w, r, responseHeader)
 	if err != nil {
