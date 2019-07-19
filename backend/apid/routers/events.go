@@ -21,7 +21,6 @@ type EventsRouter struct {
 
 // eventController represents the controller needs of the EventsRouter.
 type eventController interface {
-	Create(ctx context.Context, check *corev2.Event) error
 	CreateOrReplace(ctx context.Context, check *corev2.Event) error
 	Delete(ctx context.Context, entity, check string) error
 	Get(ctx context.Context, entity, check string) (*corev2.Event, error)
@@ -80,7 +79,7 @@ func (r *EventsRouter) create(req *http.Request) (interface{}, error) {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	err := r.controller.Create(req.Context(), event)
+	err := r.controller.CreateOrReplace(req.Context(), event)
 	return nil, err
 }
 

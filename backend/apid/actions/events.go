@@ -89,35 +89,6 @@ func (a EventController) Delete(ctx context.Context, entity, check string) error
 	return nil
 }
 
-// Create creates the event indicated by the supplied entity and check.
-// If an event already exists for the entity and check, it updates that event.
-func (a EventController) Create(ctx context.Context, event *corev2.Event) error {
-	if err := event.Validate(); err != nil {
-		return NewError(InvalidArgument, err)
-	}
-
-	// Verify if we already have an existing event for this entity/check pair.
-	// Doesn't apply to metric events.
-	if event.HasCheck() {
-		check := event.Check
-		entity := event.Entity
-
-		e, err := a.store.GetEventByEntityCheck(ctx, entity.Name, check.Name)
-		if err != nil {
-			return NewError(InternalErr, err)
-		} else if e != nil {
-			return NewErrorf(AlreadyExistsErr)
-		}
-	}
-
-	// Publish to event pipeline
-	if err := a.bus.Publish(messaging.TopicEventRaw, event); err != nil {
-		return NewError(InternalErr, err)
-	}
-
-	return nil
-}
-
 // CreateOrReplace creates the event indicated by the supplied entity and check.
 // If an event already exists for the entity and check, it updates that event.
 func (a EventController) CreateOrReplace(ctx context.Context, event *corev2.Event) error {

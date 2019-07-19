@@ -19,10 +19,6 @@ type mockEventController struct {
 	mock.Mock
 }
 
-func (m *mockEventController) Create(ctx context.Context, check *corev2.Event) error {
-	return m.Called(ctx, check).Error(0)
-}
-
 func (m *mockEventController) CreateOrReplace(ctx context.Context, check *corev2.Event) error {
 	return m.Called(ctx, check).Error(0)
 }
@@ -131,7 +127,7 @@ func TestEventsRouter(t *testing.T) {
 			path:   empty.URIPath(),
 			body:   marshal(fixture),
 			controllerFunc: func(c *mockEventController) {
-				c.On("Create", mock.Anything, mock.Anything).
+				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(actions.NewErrorf(actions.InvalidArgument)).
 					Once()
 			},
@@ -143,7 +139,7 @@ func TestEventsRouter(t *testing.T) {
 			path:   empty.URIPath(),
 			body:   marshal(fixture),
 			controllerFunc: func(c *mockEventController) {
-				c.On("Create", mock.Anything, mock.Anything).
+				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(actions.NewErrorf(actions.InternalErr)).
 					Once()
 			},
@@ -155,7 +151,7 @@ func TestEventsRouter(t *testing.T) {
 			path:   empty.URIPath(),
 			body:   marshal(fixture),
 			controllerFunc: func(c *mockEventController) {
-				c.On("Create", mock.Anything, mock.Anything).
+				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(nil).
 					Once()
 			},
