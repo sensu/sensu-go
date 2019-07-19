@@ -149,22 +149,25 @@ func (a *Agentd) Name() string {
 func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	var marshal MarshalFunc
 	var unmarshal UnmarshalFunc
+	var contentType string
 	responseHeader := make(http.Header)
 	responseHeader.Add("Accept", ProtobufSerializationHeader)
 	logger.WithField("header", fmt.Sprintf("Accept: %s", ProtobufSerializationHeader)).Debug("setting header")
 	responseHeader.Add("Accept", JSONSerializationHeader)
 	logger.WithField("header", fmt.Sprintf("Accept: %s", JSONSerializationHeader)).Debug("setting header")
 	if r.Header.Get("Accept") == ProtobufSerializationHeader {
-		responseHeader.Set("Content-Type", ProtobufSerializationHeader)
-		logger.WithField("header", fmt.Sprintf("Content-Type: %s", ProtobufSerializationHeader)).Debug("setting header")
 		marshal = proto.Marshal
 		unmarshal = proto.Unmarshal
+		contentType = ProtobufSerializationHeader
+		responseHeader.Set("Content-Type", contentType)
+		logger.WithField("header", fmt.Sprintf("Content-Type: %s", contentType)).Debug("setting header")
 		logger.WithField("format", "protobuf").Debug("setting serialization/deserialization")
 	} else {
-		responseHeader.Set("Content-Type", JSONSerializationHeader)
-		logger.WithField("header", fmt.Sprintf("Content-Type: %s", JSONSerializationHeader)).Debug("setting header")
 		marshal = MarshalJSON
 		unmarshal = UnmarshalJSON
+		contentType = JSONSerializationHeader
+		responseHeader.Set("Content-Type", contentType)
+		logger.WithField("header", fmt.Sprintf("Content-Type: %s", contentType)).Debug("setting header")
 		logger.WithField("format", "JSON").Debug("setting serialization/deserialization")
 	}
 
@@ -182,6 +185,7 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 		User:          r.Header.Get(transport.HeaderKeyUser),
 		Subscriptions: strings.Split(r.Header.Get(transport.HeaderKeySubscriptions), ","),
 		RingPool:      a.ringPool,
+		ContentType:   contentType,
 	}
 
 	cfg.Subscriptions = addEntitySubscription(cfg.AgentName, cfg.Subscriptions)

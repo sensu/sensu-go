@@ -109,7 +109,7 @@ func NewAgent(config *Config) (*Agent, error) {
 func (a *Agent) sendMessage(msg *transport.Message) {
 	logger.WithFields(logrus.Fields{
 		"type":    msg.Type,
-		"payload": payloadString(a.contentType, msg.Payload),
+		"payload": agentd.PayloadString(a.contentType, msg.Payload),
 	}).Debug("sending message")
 	a.sendq <- msg
 }
@@ -249,7 +249,7 @@ func (a *Agent) receiveLoop(ctx context.Context, cancel context.CancelFunc, conn
 		go func(msg *transport.Message) {
 			logger.WithFields(logrus.Fields{
 				"type":    msg.Type,
-				"payload": payloadString(a.contentType, msg.Payload),
+				"payload": agentd.PayloadString(a.contentType, msg.Payload),
 			}).Debug("message received")
 			err := a.handler.Handle(ctx, msg.Type, msg.Payload)
 			if err != nil {
@@ -428,11 +428,4 @@ func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, er
 	})
 
 	return conn, err
-}
-
-func payloadString(contentType string, msgPayload []byte) string {
-	if contentType == agentd.ProtobufSerializationHeader {
-		return fmt.Sprintf("%x", msgPayload)
-	}
-	return string(msgPayload)
 }
