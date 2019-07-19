@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/graphql-go/graphql/testutil"
+	"github.com/sensu/sensu-go/testing/mockqueue"
 )
 
 func setupRequest(method string, path string, payload interface{}) (*http.Request, error) {
@@ -22,7 +23,10 @@ func setupRequest(method string, path string, payload interface{}) (*http.Reques
 }
 
 func TestHttpGraphQLRequest(t *testing.T) {
-	router := NewGraphQLRouter("http://localhost:8080", nil, nil, nil)
+	queue := &mockqueue.MockQueue{}
+	getter := &mockqueue.Getter{}
+	getter.On("GetQueue", "adhocRequest").Return(queue)
+	router := NewGraphQLRouter("http://localhost:8080", nil, nil, nil, getter)
 	body := map[string]interface{}{
 		"operationName": "intrsopection",
 		"query":         testutil.IntrospectionQuery,
@@ -39,7 +43,10 @@ func TestHttpGraphQLRequest(t *testing.T) {
 }
 
 func TestHttpGraphQLBatchRequest(t *testing.T) {
-	router := NewGraphQLRouter("http://localhost:8080", nil, nil, nil)
+	queue := &mockqueue.MockQueue{}
+	getter := &mockqueue.Getter{}
+	getter.On("GetQueue", "adhocRequest").Return(queue)
+	router := NewGraphQLRouter("http://localhost:8080", nil, nil, nil, getter)
 	body := []map[string]interface{}{
 		map[string]interface{}{
 			"operationName": "intrsopection",

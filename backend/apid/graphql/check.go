@@ -21,7 +21,6 @@ var _ schema.CheckHistoryFieldResolvers = (*checkHistoryImpl)(nil)
 
 type checkCfgImpl struct {
 	schema.CheckConfigAliases
-	factory ClientFactory
 }
 
 // ID implements response to request for 'id' field.
@@ -121,7 +120,6 @@ func (r *checkCfgImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 
 type checkImpl struct {
 	schema.CheckAliases
-	factory ClientFactory
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type

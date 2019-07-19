@@ -24,16 +24,17 @@ func TestNamespaceTypeColourID(t *testing.T) {
 }
 
 func TestNamespaceTypeCheckConfigsField(t *testing.T) {
-	client, factory := client.NewClientFactory()
-	client.On("ListChecks", "default", mock.Anything).Return([]types.CheckConfig{
-		*types.FixtureCheckConfig("a"),
-		*types.FixtureCheckConfig("b"),
-		*types.FixtureCheckConfig("c"),
+	_, factory := client.NewClientFactory()
+	checkClient := new(MockCheckClient)
+	checkClient.On("ListChecks", mock.Anything).Return([]*types.CheckConfig{
+		types.FixtureCheckConfig("a"),
+		types.FixtureCheckConfig("b"),
+		types.FixtureCheckConfig("c"),
 	}, nil).Once()
 
 	impl := &namespaceImpl{}
 	params := schema.NamespaceChecksFieldResolverParams{}
-	cfg := ServiceConfig{ClientFactory: factory}
+	cfg := ServiceConfig{ClientFactory: factory, CheckClient: checkClient}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = types.FixtureNamespace("default")
 	params.Args.Limit = 20
@@ -44,7 +45,7 @@ func TestNamespaceTypeCheckConfigsField(t *testing.T) {
 	assert.NotEmpty(t, res.(offsetContainer).Nodes)
 
 	// Store err
-	client.On("ListChecks", "default", mock.Anything).Return([]types.CheckConfig{}, errors.New("abc")).Once()
+	checkClient.On("ListChecks", mock.Anything).Return([]*types.CheckConfig{}, errors.New("abc")).Once()
 	res, err = impl.Checks(params)
 	assert.Empty(t, res.(offsetContainer).Nodes)
 	assert.Error(t, err)

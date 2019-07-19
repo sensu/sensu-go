@@ -78,8 +78,8 @@ func (r *namespaceImpl) Checks(p schema.NamespaceChecksFieldResolverParams) (int
 	}
 	filteredResults := make([]*v2.CheckConfig, 0, len(results))
 	for i := range results {
-		if matches(&results[i]) {
-			filteredResults = append(filteredResults, &results[i])
+		if matches(results[i]) {
+			filteredResults = append(filteredResults, results[i])
 		}
 	}
 
@@ -343,7 +343,7 @@ func (r *namespaceImpl) Subscriptions(p schema.NamespaceSubscriptionsFieldResolv
 		return set, err
 	}
 	for _, check := range checks {
-		newSet := occurrencesOfSubscriptions(&check)
+		newSet := occurrencesOfSubscriptions(check)
 		set.Merge(newSet)
 	}
 

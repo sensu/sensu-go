@@ -24,6 +24,7 @@ type ClientFactory interface {
 type ServiceConfig struct {
 	ClientFactory ClientFactory
 	AssetClient   AssetClient
+	CheckClient   CheckClient
 }
 
 // Service describes the Sensu GraphQL service capable of handling queries.
@@ -75,8 +76,8 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterViewer(svc, &viewerImpl{factory: clientFactory})
 
 	// Register check types
-	schema.RegisterCheck(svc, &checkImpl{factory: clientFactory})
-	schema.RegisterCheckConfig(svc, &checkCfgImpl{factory: clientFactory})
+	schema.RegisterCheck(svc, &checkImpl{})
+	schema.RegisterCheckConfig(svc, &checkCfgImpl{})
 	schema.RegisterCheckConfigConnection(svc, &schema.CheckConfigConnectionAliases{})
 	schema.RegisterCheckHistory(svc, &checkHistoryImpl{})
 	schema.RegisterCheckListOrder(svc)

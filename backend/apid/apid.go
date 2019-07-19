@@ -224,7 +224,7 @@ func (a *APId) registerGraphQLService(router *mux.Router, url string, tls *tls.C
 	)
 	mountRouters(
 		a.GraphQLSubrouter,
-		routers.NewGraphQLRouter(url, tls, a.store, &rbac.Authorizer{a.store}),
+		routers.NewGraphQLRouter(url, tls, a.store, &rbac.Authorizer{a.store}, a.queueGetter),
 	)
 }
 

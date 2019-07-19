@@ -64,11 +64,12 @@ func loadAssets(ctx context.Context, ns string) ([]*corev2.Asset, error) {
 
 // checks
 
-func loadCheckConfigsBatchFn(c client.APIClient) dataloader.BatchFunc {
+func loadCheckConfigsBatchFn(c CheckClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			records, err := c.ListChecks(key.String(), &client.ListOptions{})
+			ctx = store.NamespaceContext(ctx, key.String())
+			records, err := c.ListChecks(ctx)
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
@@ -76,15 +77,15 @@ func loadCheckConfigsBatchFn(c client.APIClient) dataloader.BatchFunc {
 	}
 }
 
-func loadCheckConfigs(ctx context.Context, ns string) ([]corev2.CheckConfig, error) {
-	var records []corev2.CheckConfig
+func loadCheckConfigs(ctx context.Context, ns string) ([]*corev2.CheckConfig, error) {
+	var records []*corev2.CheckConfig
 	loader, err := getLoader(ctx, checkConfigsLoaderKey)
 	if err != nil {
 		return records, err
 	}
 
 	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
-	records, ok := results.([]corev2.CheckConfig)
+	records, ok := results.([]*corev2.CheckConfig)
 	if err == nil && !ok {
 		err = errUnexpectedLoaderResult
 	}
@@ -302,7 +303,7 @@ func contextWithLoaders(ctx context.Context, cfg ServiceConfig, opts ...dataload
 
 	loaders := map[key]*dataloader.Loader{}
 	loaders[assetsLoaderKey] = dataloader.NewBatchedLoader(loadAssetsBatchFn(cfg.AssetClient), opts...)
-	loaders[checkConfigsLoaderKey] = dataloader.NewBatchedLoader(loadCheckConfigsBatchFn(client), opts...)
+	loaders[checkConfigsLoaderKey] = dataloader.NewBatchedLoader(loadCheckConfigsBatchFn(cfg.CheckClient), opts...)
 	loaders[entitiesLoaderKey] = dataloader.NewBatchedLoader(loadEntitiesBatchFn(client), opts...)
 	loaders[eventsLoaderKey] = dataloader.NewBatchedLoader(loadEventsBatchFn(client), opts...)
 	loaders[eventFiltersLoaderKey] = dataloader.NewBatchedLoader(loadEventFiltersBatchFn(client), opts...)
