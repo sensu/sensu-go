@@ -19,7 +19,7 @@ import (
 
 // ExecuteHooks executes all hooks contained in a check request based on
 // the check status code of the check request
-func (a *Agent) ExecuteHooks(request *corev2.CheckRequest, status int, assets asset.RuntimeAssetSet) []*corev2.Hook {
+func (a *Agent) ExecuteHooks(ctx context.Context, request *corev2.CheckRequest, status int, assets map[string]*corev2.AssetList) []*corev2.Hook {
 	executedHooks := []*corev2.Hook{}
 	for _, hookList := range request.Config.CheckHooks {
 		// find the hookList with the corresponding type
@@ -38,7 +38,7 @@ func (a *Agent) ExecuteHooks(request *corev2.CheckRequest, status int, assets as
 				// code and severity (ex. 0, ok)
 				in := hookInList(hookConfig.Name, executedHooks)
 				if !in {
-					hook := a.executeHook(hookConfig, request.Config.Name, assets)
+					hook := a.executeHook(ctx, hookConfig, request.Config.Name, assets)
 					// To guard against publishing sensitive/redacted client attribute values
 					// the original command value is reinstated.
 					hook.Command = origCommand
@@ -50,7 +50,7 @@ func (a *Agent) ExecuteHooks(request *corev2.CheckRequest, status int, assets as
 	return executedHooks
 }
 
-func (a *Agent) executeHook(hookConfig *corev2.HookConfig, check string, assets asset.RuntimeAssetSet) *corev2.Hook {
+func (a *Agent) executeHook(ctx context.Context, hookConfig *corev2.HookConfig, check string, hookAssets map[string]*corev2.AssetList) *corev2.Hook {
 	// Instantiate Event and Hook
 	event := &corev2.Event{
 		Check: &corev2.Check{},
@@ -79,6 +79,20 @@ func (a *Agent) executeHook(hookConfig *corev2.HookConfig, check string, assets 
 			return failedHook(hook)
 		}
 		logger.WithFields(fields).Debug("hook matches agent allow list")
+	}
+
+	// Fetch and install all assets required for hook execution.
+	logger.WithFields(fields).Debug("fetching assets for hook")
+	var assetList []corev2.Asset
+	if hookAssets != nil {
+		if value, in := hookAssets[hook.Name]; in {
+			assetList = value.Assets
+		}
+	}
+	assets, err := asset.GetAll(ctx, a.assetGetter, assetList)
+	if err != nil {
+		logger.WithError(err).WithFields(fields).Error("error getting assets for hook")
+		return failedHook(hook)
 	}
 
 	// Prepare environment

@@ -100,9 +100,10 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	a.addInProgress(request)
 	defer a.removeInProgress(request)
 
-	requestAssets := request.Assets
+	checkAssets := request.Assets
 	checkConfig := request.Config
 	checkHooks := request.Hooks
+	hookAssets := request.HookAssets
 
 	// Before token subsitution we retain copy of the command
 	origCommand := checkConfig.Command
@@ -154,7 +155,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 
 	// Fetch and install all assets required for check execution.
 	logger.WithFields(fields).Debug("fetching assets for check")
-	assets, err := asset.GetAll(ctx, a.assetGetter, requestAssets)
+	assets, err := asset.GetAll(ctx, a.assetGetter, checkAssets)
 	if err != nil {
 		a.sendFailure(event, fmt.Errorf("error getting assets for event: %s", err))
 		return
@@ -227,7 +228,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	event.Timestamp = time.Now().Unix()
 
 	if len(checkHooks) != 0 {
-		event.Check.Hooks = a.ExecuteHooks(request, checkExec.Status, assets)
+		event.Check.Hooks = a.ExecuteHooks(ctx, request, checkExec.Status, hookAssets)
 	}
 
 	// Instantiate metrics in the event if the check is attempting to extract metrics

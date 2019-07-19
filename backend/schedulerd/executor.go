@@ -323,6 +323,7 @@ func publishRoundRobinProxyCheckRequests(executor *CheckExecutor, check *corev2.
 func buildRequest(check *types.CheckConfig, s store.Store) (*types.CheckRequest, error) {
 	request := &types.CheckRequest{}
 	request.Config = check
+	request.HookAssets = make(map[string]*corev2.AssetList)
 
 	ctx := types.SetContextFromResource(context.Background(), check)
 
@@ -355,11 +356,13 @@ func buildRequest(check *types.CheckConfig, s store.Store) (*types.CheckRequest,
 			if hookIsRelevant(hook, check) {
 				request.Hooks = append(request.Hooks, *hook)
 				if len(hook.RuntimeAssets) != 0 {
+					assetList := &corev2.AssetList{}
 					for _, asset := range assets {
 						if assetIsRelevant(asset, hook.RuntimeAssets) {
-							request.Assets = append(request.Assets, *asset)
+							assetList.Assets = append(assetList.Assets, *asset)
 						}
 					}
+					request.HookAssets[hook.Name] = assetList
 				}
 			}
 		}
