@@ -197,3 +197,8 @@ func EntityFields(r Resource) map[string]string {
 func (e *Entity) SetNamespace(namespace string) {
 	e.Namespace = namespace
 }
+
+// SetName sets the name of the resource.
+func (e *Entity) SetName(name string) {
+	e.Name = name
+}

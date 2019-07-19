@@ -92,19 +92,24 @@ func (r *EventsRouter) createOrReplace(req *http.Request) (interface{}, error) {
 
 	vars := mux.Vars(req)
 
-	meta := &event.Entity.ObjectMeta
-
-	if meta.Namespace == "" {
-		namespace, err := url.PathUnescape(vars["namespace"])
-		if err != nil {
+	if event.Entity != nil {
+		if err := handlers.MetaPathValues(event.Entity, vars, "entity"); err != nil {
 			return nil, err
 		}
 
-		meta.Namespace = namespace
+		if err := handlers.CheckMeta(event.Entity, vars); err != nil {
+			return nil, actions.NewError(actions.InvalidArgument, err)
+		}
 	}
 
-	if err := handlers.CheckMeta(event.Entity, vars); err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+	if event.Check != nil {
+		if err := handlers.MetaPathValues(event.Check, vars, "check"); err != nil {
+			return nil, err
+		}
+
+		if err := handlers.CheckMeta(event.Check, vars); err != nil {
+			return nil, actions.NewError(actions.InvalidArgument, err)
+		}
 	}
 
 	err := r.controller.CreateOrReplace(req.Context(), event)
