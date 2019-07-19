@@ -248,7 +248,7 @@ func TestEventsRouter(t *testing.T) {
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
-			name:   "it returns 400 if the event to update is not valid",
+			name:   "it returns 400 if the event to update is not valid (post)",
 			method: http.MethodPost,
 			path:   fixture.URIPath(),
 			body:   marshal(fixture),
@@ -260,7 +260,7 @@ func TestEventsRouter(t *testing.T) {
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
-			name:   "it returns 500 if the store returns an error while updating an event",
+			name:   "it returns 500 if the store returns an error while updating an event (post)",
 			method: http.MethodPost,
 			path:   fixture.URIPath(),
 			body:   marshal(fixture),
@@ -272,7 +272,7 @@ func TestEventsRouter(t *testing.T) {
 			wantStatusCode: http.StatusInternalServerError,
 		},
 		{
-			name:   "it returns 201 when an event is successfully updated",
+			name:   "it returns 201 when an event is successfully updated (post)",
 			method: http.MethodPost,
 			path:   fixture.URIPath(),
 			body:   marshal(fixture),
