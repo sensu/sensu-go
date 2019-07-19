@@ -27,6 +27,7 @@ import (
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/util/retry"
+	utilstrings "github.com/sensu/sensu-go/util/strings"
 	"github.com/sirupsen/logrus"
 )
 
@@ -80,6 +81,8 @@ func NewAgent(config *Config) (*Agent, error) {
 		inProgressMu:    &sync.Mutex{},
 		sendq:           make(chan *transport.Message, 10),
 		systemInfo:      &corev2.System{},
+		unmarshal:       agentd.UnmarshalJSON,
+		marshal:         agentd.MarshalJSON,
 	}
 
 	agent.statsdServer = NewStatsdServer(agent)
@@ -99,21 +102,6 @@ func NewAgent(config *Config) (*Agent, error) {
 		return nil, err
 	}
 	agent.allowList = allowList
-
-	agent.header = agent.buildTransportHeaderMap()
-	userCredentials := fmt.Sprintf("%s:%s", agent.config.User, agent.config.Password)
-	userCredentials = base64.StdEncoding.EncodeToString([]byte(userCredentials))
-	agent.header.Set("Authorization", "Basic "+userCredentials)
-	if agent.config.ProtobufSerialization {
-		agent.contentType = agentd.ProtobufSerializationHeader
-		agent.unmarshal = proto.Unmarshal
-		agent.marshal = proto.Marshal
-	} else {
-		agent.contentType = agentd.JSONSerializationHeader
-		agent.unmarshal = agentd.UnmarshalJSON
-		agent.marshal = agentd.MarshalJSON
-	}
-	agent.header.Set("Content-Type", agent.contentType)
 
 	return agent, nil
 }
@@ -183,6 +171,10 @@ func (a *Agent) Run(ctx context.Context) error {
 			logger.WithError(err).Error("error closing API queue")
 		}
 	}()
+	userCredentials := fmt.Sprintf("%s:%s", a.config.User, a.config.Password)
+	userCredentials = base64.StdEncoding.EncodeToString([]byte(userCredentials))
+	a.header = a.buildTransportHeaderMap()
+	a.header.Set("Authorization", "Basic "+userCredentials)
 
 	// Fail the agent after startup if the id is invalid
 	if err := corev2.ValidateName(a.config.AgentName); err != nil {
@@ -221,7 +213,7 @@ func (a *Agent) connectionManager(ctx context.Context) {
 		a.connected = false
 		a.connectedMu.Unlock()
 
-		conn, err := connectWithBackoff(ctx, a.backendSelector, a.config.TLS, a.header, a.config.BackendHandshakeTimeout)
+		conn, err := a.connectWithBackoff(ctx)
 		if err != nil {
 			if err == ctx.Err() {
 				return
@@ -391,7 +383,7 @@ func (a *Agent) StartStatsd(ctx context.Context) {
 	}()
 }
 
-func connectWithBackoff(ctx context.Context, selector BackendSelector, tlsOpts *corev2.TLSOptions, header http.Header, handshakeTimeout int) (transport.Transport, error) {
+func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, error) {
 	var conn transport.Transport
 
 	backoff := retry.ExponentialBackoff{
@@ -402,10 +394,12 @@ func connectWithBackoff(ctx context.Context, selector BackendSelector, tlsOpts *
 	}
 
 	err := backoff.Retry(func(retry int) (bool, error) {
-		url := selector.Select()
+		url := a.backendSelector.Select()
 
 		logger.Infof("connecting to backend URL %q", url)
-		c, err := transport.Connect(url, tlsOpts, header, handshakeTimeout)
+		a.header.Set("Accept", agentd.ProtobufSerializationHeader)
+		logger.WithField("header", fmt.Sprintf("Accept: %s", agentd.ProtobufSerializationHeader)).Debug("setting header")
+		c, respHeader, err := transport.Connect(url, a.config.TLS, a.header, a.config.BackendHandshakeTimeout)
 		if err != nil {
 			logger.WithError(err).Error("reconnection attempt failed")
 			return false, nil
@@ -414,6 +408,21 @@ func connectWithBackoff(ctx context.Context, selector BackendSelector, tlsOpts *
 		logger.Info("successfully connected")
 
 		conn = c
+
+		logger.WithField("header", fmt.Sprintf("Accept: %s", respHeader["Accept"])).Debug("received header")
+		if utilstrings.InArray(agentd.ProtobufSerializationHeader, respHeader["Accept"]) {
+			a.contentType = agentd.ProtobufSerializationHeader
+			a.unmarshal = proto.Unmarshal
+			a.marshal = proto.Marshal
+			logger.WithField("format", "protobuf").Debug("setting serialization/deserialization")
+		} else {
+			a.contentType = agentd.JSONSerializationHeader
+			a.unmarshal = agentd.UnmarshalJSON
+			a.marshal = agentd.MarshalJSON
+			logger.WithField("format", "JSON").Debug("setting serialization/deserialization")
+		}
+		a.header.Set("Content-Type", a.contentType)
+		logger.WithField("header", fmt.Sprintf("Content-Type: %s", a.contentType)).Debug("setting header")
 
 		return true, nil
 	})

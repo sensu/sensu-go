@@ -147,21 +147,32 @@ func (a *Agentd) Name() string {
 }
 
 func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
+	var marshal MarshalFunc
+	var unmarshal UnmarshalFunc
+	responseHeader := make(http.Header)
+	responseHeader.Add("Accept", ProtobufSerializationHeader)
+	logger.WithField("header", fmt.Sprintf("Accept: %s", ProtobufSerializationHeader)).Debug("setting header")
+	responseHeader.Add("Accept", JSONSerializationHeader)
+	logger.WithField("header", fmt.Sprintf("Accept: %s", JSONSerializationHeader)).Debug("setting header")
+	if r.Header.Get("Accept") == ProtobufSerializationHeader {
+		responseHeader.Set("Content-Type", ProtobufSerializationHeader)
+		logger.WithField("header", fmt.Sprintf("Content-Type: %s", ProtobufSerializationHeader)).Debug("setting header")
+		marshal = proto.Marshal
+		unmarshal = proto.Unmarshal
+		logger.WithField("format", "protobuf").Debug("setting serialization/deserialization")
+	} else {
+		responseHeader.Set("Content-Type", JSONSerializationHeader)
+		logger.WithField("header", fmt.Sprintf("Content-Type: %s", JSONSerializationHeader)).Debug("setting header")
+		marshal = MarshalJSON
+		unmarshal = UnmarshalJSON
+		logger.WithField("format", "JSON").Debug("setting serialization/deserialization")
+	}
+
+	conn, err := upgrader.Upgrade(w, r, responseHeader)
 	if err != nil {
 		logger.WithField("addr", r.RemoteAddr).WithError(err).Error("transport error on websocket upgrade")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
-	}
-
-	var marshal MarshalFunc
-	var unmarshal UnmarshalFunc
-	if r.Header.Get("Content-Type") == ProtobufSerializationHeader {
-		unmarshal = proto.Unmarshal
-		marshal = proto.Marshal
-	} else {
-		unmarshal = UnmarshalJSON
-		marshal = MarshalJSON
 	}
 
 	cfg := SessionConfig{

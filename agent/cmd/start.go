@@ -62,7 +62,6 @@ const (
 	flagBackendHandshakeTimeout  = "backend-handshake-timeout"
 	flagBackendHeartbeatInterval = "backend-heartbeat-interval"
 	flagBackendHeartbeatTimeout  = "backend-heartbeat-timeout"
-	flagProtoSerialization       = "protobuf-serialization"
 
 	// TLS flags
 	flagTrustedCAFile         = "trusted-ca-file"
@@ -135,7 +134,6 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 			cfg.BackendHandshakeTimeout = viper.GetInt(flagBackendHandshakeTimeout)
 			cfg.BackendHeartbeatInterval = viper.GetInt(flagBackendHeartbeatInterval)
 			cfg.BackendHeartbeatTimeout = viper.GetInt(flagBackendHeartbeatTimeout)
-			cfg.ProtobufSerialization = viper.GetBool(flagProtoSerialization)
 
 			// TLS configuration
 			cfg.TLS = &corev2.TLSOptions{}
@@ -238,7 +236,6 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	viper.SetDefault(flagBackendHandshakeTimeout, 15)
 	viper.SetDefault(flagBackendHeartbeatInterval, 30)
 	viper.SetDefault(flagBackendHeartbeatTimeout, 45)
-	viper.SetDefault(flagProtoSerialization, false)
 
 	// Merge in config flag set so that it appears in command usage
 	cmd.Flags().AddFlagSet(configFlagSet)
@@ -280,7 +277,6 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	cmd.Flags().Int(flagBackendHandshakeTimeout, viper.GetInt(flagBackendHandshakeTimeout), "number of seconds the agent should wait when negotiating a new WebSocket connection")
 	cmd.Flags().Int(flagBackendHeartbeatInterval, viper.GetInt(flagBackendHeartbeatInterval), "interval at which the agent should send heartbeats to the backend")
 	cmd.Flags().Int(flagBackendHeartbeatTimeout, viper.GetInt(flagBackendHeartbeatTimeout), "number of seconds the agent should wait for a response to a hearbeat")
-	cmd.Flags().Bool(flagProtoSerialization, viper.GetBool(flagProtoSerialization), "enable protobuf serialization/deserialization on the agent websocket handshake")
 
 	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc(logger))
 

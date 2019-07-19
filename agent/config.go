@@ -133,9 +133,6 @@ type Config struct {
 	// Password sets Agent's password
 	Password string
 
-	// ProtobufSerialization enables protobuf serialization/deserialization
-	ProtobufSerialization bool
-
 	// Redact contains the fields to redact when marshalling the agent's entity
 	Redact []string
 
