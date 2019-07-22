@@ -2,7 +2,6 @@ package agentd
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -225,7 +224,7 @@ func (s *Session) sendPump() {
 	for {
 		select {
 		case msg := <-s.sendq:
-			logger.WithField("message", PayloadString(s.cfg.ContentType, msg.Payload)).Debug("session - sending message")
+			logger.WithField("payload_size", len(msg.Payload)).Debug("session - sending message")
 			err := s.conn.Send(msg)
 			if err != nil {
 				switch err := err.(type) {
@@ -356,13 +355,4 @@ func (s *Session) handleEvent(ctx context.Context, payload []byte) error {
 	event.Entity.Subscriptions = addEntitySubscription(event.Entity.Name, event.Entity.Subscriptions)
 
 	return s.bus.Publish(messaging.TopicEventRaw, event)
-}
-
-// PayloadString returns the string representation of a protobuf
-// or JSON serialized payload.
-func PayloadString(contentType string, msgPayload []byte) string {
-	if contentType == ProtobufSerializationHeader {
-		return base64.StdEncoding.EncodeToString(msgPayload)
-	}
-	return string(msgPayload)
 }

@@ -108,9 +108,10 @@ func NewAgent(config *Config) (*Agent, error) {
 
 func (a *Agent) sendMessage(msg *transport.Message) {
 	logger.WithFields(logrus.Fields{
-		"type":    msg.Type,
-		"payload": agentd.PayloadString(a.contentType, msg.Payload),
-	}).Debug("sending message")
+		"type":         msg.Type,
+		"content_type": a.contentType,
+		"payload_size": len(msg.Payload),
+	}).Info("sending message")
 	a.sendq <- msg
 }
 
@@ -248,9 +249,10 @@ func (a *Agent) receiveLoop(ctx context.Context, cancel context.CancelFunc, conn
 
 		go func(msg *transport.Message) {
 			logger.WithFields(logrus.Fields{
-				"type":    msg.Type,
-				"payload": agentd.PayloadString(a.contentType, msg.Payload),
-			}).Debug("message received")
+				"type":         msg.Type,
+				"content_type": a.contentType,
+				"payload_size": len(msg.Payload),
+			}).Info("message received")
 			err := a.handler.Handle(ctx, msg.Type, msg.Payload)
 			if err != nil {
 				logger.WithError(err).Error("error handling message")
