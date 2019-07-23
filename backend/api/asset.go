@@ -9,17 +9,17 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
+var assetStorePrefix = (&corev2.Asset{}).StorePrefix()
+
 type AssetClient struct {
-	store    store.ResourceStore
-	auth     authorization.Authorizer
-	resource corev2.Resource
+	store store.ResourceStore
+	auth  authorization.Authorizer
 }
 
 func NewAssetClient(store store.ResourceStore, auth authorization.Authorizer) *AssetClient {
 	return &AssetClient{
-		store:    store,
-		auth:     auth,
-		resource: &corev2.Asset{},
+		store: store,
+		auth:  auth,
 	}
 }
 
@@ -34,7 +34,7 @@ func (a *AssetClient) ListAssets(ctx context.Context) ([]*corev2.Asset, error) {
 		Limit:    int64(corev2.PageSizeFromContext(ctx)),
 	}
 	slice := []*corev2.Asset{}
-	if err := a.store.ListResources(ctx, a.resource.StorePrefix(), &slice, pred); err != nil {
+	if err := a.store.ListResources(ctx, assetStorePrefix, &slice, pred); err != nil {
 		return nil, err
 	}
 	return slice, nil
