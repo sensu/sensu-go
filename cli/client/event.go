@@ -66,8 +66,11 @@ func (client *RestClient) UpdateEvent(event *types.Event) error {
 
 // ResolveEvent resolves an event.
 func (client *RestClient) ResolveEvent(event *types.Event) error {
+	ts := int64(time.Now().Unix())
 	event.Check.Status = 0
 	event.Check.Output = "Resolved manually by sensuctl"
-	event.Timestamp = int64(time.Now().Unix())
+	event.Check.Executed = ts
+	event.Check.MergeWith(event.Check)
+	event.Timestamp = ts
 	return client.UpdateEvent(event)
 }

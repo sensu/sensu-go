@@ -258,9 +258,12 @@ func (r *mutationsImpl) ResolveEvent(p schema.MutationResolveEventFieldResolverP
 	}
 
 	if event.HasCheck() && event.Check.Status > 0 {
+		ts := int64(time.Now().Unix())
 		event.Check.Status = 0
 		event.Check.Output = "Resolved manually with " + p.Args.Input.Source
-		event.Timestamp = int64(time.Now().Unix())
+		event.Check.Executed = ts
+		event.Check.MergeWith(event.Check)
+		event.Timestamp = ts
 
 		err = client.UpdateEvent(event)
 		if err != nil {
