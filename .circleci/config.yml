@@ -24,15 +24,15 @@ jobs:
       - checkout
       - restore_cache:
           keys:
-            - go-mod-v1-{{ checksum "go.sum" }}
+            - go-pkg-cache
 
       # Run tests
       - run: ./build.sh unit
       - run: ./build.sh integration
       - save_cache:
-          key: go-mod-v1-{{ checksum "go.sum" }}
+          key: go-pkg-cache
           paths:
-            - "/go/pkg/mod"
+            - "/go/pkg"
 
 workflows:
   version: 2
