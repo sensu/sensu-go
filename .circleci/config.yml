@@ -21,10 +21,10 @@ jobs:
     resource_class: large
     parallelism: 2
     steps:
+      - checkout
       - restore_cache:
           keys:
             - go-mod-v1-{{ checksum "go.sum" }}
-      - checkout
 
       # Run tests
       - run: ./build.sh unit
