@@ -221,44 +221,8 @@ Once you make a change to any `*.proto` file within the **types** package, you w
 
 ### Dependencies
 
-Sensu uses [golang/dep](https://github.com/golang/dep) for managing its
-dependencies. You will need to install the latest stable version of dep in
-order to modify Sensu's dependencies.
-
-[Dep releases](https://github.com/golang/dep/releases)
-
-#### Usage
-
-Running the following will pull all required dependencies, including static
-analysis and linter tools.
-
-```shell
-./build.sh deps
-```
-
-Later, if you would like to add a dependency, run:
-
-```shell
-dep ensure -add https://my-repo.com/my/dep
-```
-
-If you would like to update a dependency, run:
-
-```shell
-dep ensure -update https://my-repo.com/my/dep
-```
-
-When you would like to remove a dependency, remove the it from `Gopkg.toml` and
-then run:
-
-```shell
-dep prune
-```
-
-#### Further Reading
-
-- [The Saga of Go Dependency Management](https://blog.gopheracademy.com/advent-2016/saga-go-dependency-management/)
-- [`dep` Usage](https://github.com/golang/dep#usage)
+Sensu uses [Go modules](https://github.com/golang/go/wiki/Modules) for managing
+its dependencies.
 
 ## Building
 
