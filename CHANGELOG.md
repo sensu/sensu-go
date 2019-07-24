@@ -16,6 +16,9 @@ for check hook execution.
 Protobuf will be used for serialization/deserialization unless indicated by the
 backend to use JSON.
 
+### Changed
+- The project now uses Go modules instead of dep for dependency management.
+
 ### Fixed
 - Fixed the tabular output of `sensuctl filter list` so inclusive filter expressions
 are joined with `&&` and exclusive filter expressions are joined with `||`.
