@@ -17,7 +17,7 @@ jobs:
   test:
     <<: *sensu_go_build_env
     environment:
-      GO111MODULE: on
+      GO111MODULE: 'on'
     resource_class: large
     parallelism: 2
     steps:
