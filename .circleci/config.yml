@@ -18,6 +18,7 @@ jobs:
     <<: *sensu_go_build_env
     environment:
       GO111MODULE: 'on'
+      GOPROXY: 'https://proxy.golang.org'
     resource_class: large
     parallelism: 2
     steps:
