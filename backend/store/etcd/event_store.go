@@ -316,7 +316,9 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 
 func (s *Store) UpdateEventBatch(ctx context.Context, event *corev2.Event) error {
 	s.eventBatcherOnce.Do(func() {
-		go s.startEventBatcher()
+		for i := 0; i < 100; i++ {
+			go s.startEventBatcher()
+		}
 	})
 	b, err := proto.Marshal(event)
 	if err != nil {
@@ -348,6 +350,10 @@ func (s *Store) startEventBatcher() {
 				logger.WithError(err).Error("error while writing batched event")
 				continue
 			} else if err == nil {
+				if len(batch) >= eventBatchSize {
+					s.handleEventBatch(context.TODO(), batch)
+					batch = batch[0:0]
+				}
 				batch = append(batch, message)
 			}
 		}
