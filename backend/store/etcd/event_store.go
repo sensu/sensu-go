@@ -10,6 +10,8 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
+	"github.com/sensu/lasr"
+	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/store"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -17,10 +19,12 @@ import (
 
 const (
 	eventsPathPrefix = "events"
+	eventBatchSize   = 10
 )
 
 var (
 	eventKeyBuilder = store.NewKeyBuilder(eventsPathPrefix)
+	txnFailedError  = errors.New("transaction failed")
 )
 
 func getEventPath(event *corev2.Event) string {
@@ -171,6 +175,23 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *
 	return events, nil
 }
 
+func getEventOp(ctx context.Context, event *corev2.Event) (clientv3.Op, error) {
+	var op clientv3.Op
+	if event == nil || event.Check == nil || event.Entity == nil {
+		return op, errors.New("invalid event")
+	}
+	if event.Entity.Name == "" || event.Check.Name == "" {
+		return op, errors.New("must specify entity and check name")
+	}
+
+	path, err := getEventWithCheckPath(ctx, event.Entity.Name, event.Check.Name)
+	if err != nil {
+		return op, err
+	}
+
+	return clientv3.OpGet(path, clientv3.WithPrefix()), nil
+}
+
 // GetEventByEntityCheck gets an event by entity and check name.
 func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName string) (*corev2.Event, error) {
 	if entityName == "" || checkName == "" {
@@ -276,6 +297,7 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 
 	cmp := namespaceExistsForResource(event.Entity)
 	req := clientv3.OpPut(getEventPath(event), string(eventBytes))
+
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
 		return nil, nil, err
@@ -290,6 +312,255 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 	}
 
 	return event, prevEvent, nil
+}
+
+func (s *Store) UpdateEventBatch(ctx context.Context, event *corev2.Event) error {
+	s.eventBatcherOnce.Do(func() {
+		go s.startEventBatcher()
+	})
+	b, err := proto.Marshal(event)
+	if err != nil {
+		return fmt.Errorf("error writing event: %s", err)
+	}
+	if _, err := s.eventQueue.Send(b); err != nil {
+		return fmt.Errorf("error writing event: %s", err)
+	}
+	return nil
+}
+
+func (s *Store) startEventBatcher() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ticker := time.NewTicker(time.Second)
+	defer ticker.Stop()
+	batch := make([]*lasr.Message, 0, eventBatchSize)
+	for {
+		select {
+		case <-ticker.C:
+			cancel()
+			ctx, cancel = context.WithTimeout(context.Background(), time.Second)
+			if len(batch) > 0 {
+				s.handleEventBatch(context.TODO(), batch)
+				batch = batch[0:0]
+			}
+		default:
+			message, err := s.eventQueue.Receive(ctx)
+			if err != nil && err != context.Canceled && err != context.DeadlineExceeded {
+				logger.WithError(err).Error("error while writing batched event")
+				continue
+			} else if err == nil {
+				batch = append(batch, message)
+			}
+		}
+	}
+}
+
+func (s *Store) handleEventBatch(ctx context.Context, batch []*lasr.Message) {
+	inputEvents := getInputEventBatch(batch)
+	currentEvents, err := s.getCurrentEventsBatch(ctx, inputEvents)
+	if err != nil {
+		if err == txnFailedError {
+			nackMessages(batch, err, false)
+			return
+		}
+		nackMessages(batch, err, true)
+		return
+	}
+	cmps, ops, err := s.getBatchOps(ctx, inputEvents, currentEvents)
+	if err != nil {
+		nackMessages(batch, err, false)
+		return
+	}
+	resp, err := s.client.Txn(ctx).If(cmps...).Then(ops...).Commit()
+	if err != nil {
+		nackMessages(batch, err, true)
+		return
+	}
+	if !resp.Succeeded {
+		nackMessages(batch, err, false)
+		return
+	}
+	ackMessages(batch)
+}
+
+func (s *Store) getBatchOps(ctx context.Context, inputEvents, currentEvents []*corev2.Event) ([]clientv3.Cmp, []clientv3.Op, error) {
+	if len(inputEvents) != len(currentEvents) {
+		return nil, nil, errors.New("mismatched input and current events")
+	}
+	cmps := make([]clientv3.Cmp, 0, len(inputEvents))
+	ops := make([]clientv3.Op, 0, len(inputEvents))
+	for i := range inputEvents {
+		cmp, op, err := s.getEventPutOp(ctx, inputEvents[i], currentEvents[i])
+		if err != nil {
+			logger.WithError(err).Error("error creating op, skipping event")
+			continue
+		}
+		cmps = append(cmps, cmp)
+		ops = append(ops, op)
+	}
+	return cmps, ops, nil
+}
+
+// eventKey creates a key to identify the event for liveness monitoring
+func eventKey(event *corev2.Event) string {
+	// Typically we want the entity name to be the thing we monitor, but if
+	// it's a round robin check, and there is no proxy entity, then use
+	// the check name instead.
+	if event.Check.RoundRobin && event.Entity.EntityClass != corev2.EntityProxyClass {
+		return path.Join(event.Check.Namespace, event.Check.Name)
+	}
+	return path.Join(event.Entity.Namespace, event.Check.Name, event.Entity.Name)
+}
+
+func (s *Store) getEventPutOp(ctx context.Context, event, prevEvent *corev2.Event) (clientv3.Cmp, clientv3.Op, error) {
+	var cmp clientv3.Cmp
+	var op clientv3.Op
+	if event == nil || event.Check == nil {
+		return cmp, op, errors.New("event has no check")
+	}
+
+	if err := event.Check.Validate(); err != nil {
+		return cmp, op, err
+	}
+
+	if err := event.Entity.Validate(); err != nil {
+		return cmp, op, err
+	}
+
+	ctx = store.NamespaceContext(ctx, event.Entity.Namespace)
+
+	// Maintain check history.
+	if prevEvent != nil {
+		if !prevEvent.HasCheck() {
+			return cmp, op, errors.New("invalid previous event")
+		}
+
+		event.Check.MergeWith(prevEvent.Check)
+	}
+
+	updateOccurrences(event.Check)
+
+	persistEvent := event
+
+	if event.HasMetrics() {
+		// Taking pains to not modify our input, set metrics to nil so they are
+		// not persisted.
+		newEvent := *event
+		persistEvent = &newEvent
+		persistEvent.Metrics = nil
+	}
+
+	// Truncate check output if the output is larger than MaxOutputSize
+	if size := event.Check.MaxOutputSize; size > 0 && int64(len(event.Check.Output)) > size {
+		// Taking pains to not modify our input, set a bound on the check
+		// output size.
+		newEvent := *persistEvent
+		persistEvent = &newEvent
+		check := *persistEvent.Check
+		check.Output = check.Output[:size]
+		persistEvent.Check = &check
+	}
+
+	if persistEvent.Timestamp == 0 {
+		// If the event is being created for the first time, it may not include
+		// a timestamp. Use the current time.
+		persistEvent.Timestamp = time.Now().Unix()
+	}
+
+	// update the history
+	// marshal the new event and store it.
+	eventBytes, err := proto.Marshal(persistEvent)
+	if err != nil {
+		return cmp, op, err
+	}
+
+	cmp = namespaceExistsForResource(event.Entity)
+	op = clientv3.OpPut(getEventPath(event), string(eventBytes))
+
+	switches := liveness.WaitLookup(context.Background(), s.client, "eventd")
+	switchKey := eventKey(event)
+
+	if event.Check.Ttl > 0 {
+		// Reset the switch
+		timeout := int64(event.Check.Ttl)
+		if err := switches.Alive(context.TODO(), switchKey, timeout); err != nil {
+			logger.WithError(err).Error("error refreshing check TTL")
+		}
+	} else if prevEvent != nil && prevEvent.Check.Ttl > 0 {
+		// The check TTL has been disabled, there is no longer a need to track it
+		if err := switches.Bury(context.TODO(), switchKey); err != nil {
+			logger.WithError(err).Error("error cancelling check TTL")
+		}
+	}
+
+	return cmp, op, nil
+}
+
+func ackMessages(batch []*lasr.Message) {
+	for _, message := range batch {
+		_ = message.Ack()
+	}
+}
+
+func nackMessages(batch []*lasr.Message, err error, retry bool) {
+	if !retry {
+		logger.WithError(err).Error("unable to handle event batch, data lost!")
+		for _, message := range batch {
+			_ = message.Nack(false)
+		}
+		return
+	}
+	logger.WithError(err).Error("error handling events, retrying")
+	for _, message := range batch {
+		_ = message.Nack(true)
+	}
+}
+
+func getInputEventBatch(batch []*lasr.Message) []*corev2.Event {
+	events := make([]*corev2.Event, 0, len(batch))
+	for _, message := range batch {
+		var event corev2.Event
+		if err := proto.Unmarshal(message.Body, &event); err != nil {
+			logger.WithError(err).Error("error reading event")
+			continue
+		}
+		events = append(events, &event)
+	}
+	return events
+}
+
+func (s *Store) getCurrentEventsBatch(ctx context.Context, inputEvents []*corev2.Event) ([]*corev2.Event, error) {
+	ops := make([]clientv3.Op, 0, len(inputEvents))
+	for _, event := range inputEvents {
+		ctx := store.NamespaceContext(ctx, event.Entity.Namespace)
+		op, err := getEventOp(ctx, event)
+		if err != nil {
+			return nil, fmt.Errorf("error getting current events: %s", err)
+		}
+		ops = append(ops, op)
+	}
+	response, err := s.client.Txn(ctx).Then(ops...).Commit()
+	if err != nil {
+		return nil, fmt.Errorf("error reading event batch: %s", err)
+	}
+	if !response.Succeeded {
+		return nil, txnFailedError
+	}
+	results := make([]*corev2.Event, 0, len(inputEvents))
+	for _, r := range response.Responses {
+		resp := r.GetResponseRange()
+		if len(resp.Kvs) == 0 {
+			results = append(results, nil)
+			continue
+		}
+		for _, kv := range resp.Kvs {
+			var event corev2.Event
+			if err := unmarshal(kv.Value, &event); err != nil {
+				return nil, fmt.Errorf("corrupted event: %s", err)
+			}
+			results = append(results, &event)
+		}
+	}
+	return results, nil
 }
 
 func updateOccurrences(check *corev2.Check) {

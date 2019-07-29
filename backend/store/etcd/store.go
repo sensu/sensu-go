@@ -7,9 +7,11 @@ import (
 	"path"
 	"reflect"
 	"strings"
+	"sync"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
+	"github.com/sensu/lasr"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 
@@ -23,15 +25,18 @@ const (
 
 // Store is an implementation of the sensu-go/backend/store.Store iface.
 type Store struct {
-	client         *clientv3.Client
-	keepalivesPath string
+	client           *clientv3.Client
+	eventQueue       *lasr.Q
+	eventBatcherOnce sync.Once
+	keepalivesPath   string
 }
 
 // NewStore creates a new Store.
-func NewStore(client *clientv3.Client, name string) *Store {
+func NewStore(client *clientv3.Client, eventQueue *lasr.Q, name string) *Store {
 	store := &Store{
 		client:         client,
 		keepalivesPath: path.Join(EtcdRoot, keepalivesPathPrefix, name),
+		eventQueue:     eventQueue,
 	}
 
 	return store

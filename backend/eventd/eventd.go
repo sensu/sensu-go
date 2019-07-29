@@ -49,6 +49,10 @@ var (
 	)
 )
 
+type batcher interface {
+	UpdateEventBatch(context.Context, *corev2.Event) error
+}
+
 // Eventd handles incoming sensu events and stores them in etcd.
 type Eventd struct {
 	ctx             context.Context
@@ -224,6 +228,11 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		return err
 	}
 
+	switches := e.livenessFactory("eventd", e.dead, e.alive, logger)
+
+	if batcher, ok := e.eventStore.(batcher); ok {
+		return e.queueMessage(ctx, batcher, event)
+	}
 	event, prevEvent, err := e.eventStore.UpdateEvent(ctx, event)
 	if err != nil {
 		return err
@@ -231,7 +240,6 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 
 	e.Logger.Println(event)
 
-	switches := e.livenessFactory("eventd", e.dead, e.alive, logger)
 	switchKey := eventKey(event)
 
 	if event.Check.Ttl > 0 {
@@ -247,6 +255,17 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 			// don't return the error here.
 			logger.WithError(err).Error("error burying switch")
 		}
+	}
+
+	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess).Inc()
+
+	return e.bus.Publish(messaging.TopicEvent, event)
+}
+
+func (e *Eventd) queueMessage(ctx context.Context, b batcher, event *corev2.Event) error {
+	// TODO(eric): support check TTL
+	if err := b.UpdateEventBatch(ctx, event); err != nil {
+		return err
 	}
 
 	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess).Inc()

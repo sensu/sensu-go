@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"path/filepath"
 	"runtime/debug"
 	"sync"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/pkg/transport"
 	"github.com/google/uuid"
+	"github.com/sensu/lasr"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
@@ -36,6 +38,7 @@ import (
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/viper"
+	"go.etcd.io/bbolt"
 )
 
 // Backend represents the backend server, which is used to hold the datastore
@@ -128,9 +131,20 @@ func Initialize(config *Config) (*Backend, error) {
 		return nil, err
 	}
 
+	var db *bbolt.DB
+	db, err = bbolt.Open(filepath.Join(config.StateDir, "eventQueue.db"), 0600, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error opening event queue: %s", err)
+	}
+
+	eventQueue, err := lasr.NewQ(db, "events", lasr.WithMessageBufferSize(10))
+	if err != nil {
+		return nil, fmt.Errorf("error opening event queue: %s", err)
+	}
+
 	// Initialize the store, which lives on top of etcd
 	logger.Debug("Initializing store...")
-	stor := etcdstore.NewStore(b.Client, config.EtcdName)
+	stor := etcdstore.NewStore(b.Client, eventQueue, config.EtcdName)
 	if err = seeds.SeedInitialData(stor); err != nil {
 		return nil, fmt.Errorf("error initializing the store: %s", err)
 	}
@@ -177,8 +191,8 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
-		Store:                   stor,
-		Bus:                     bus,
+		Store: stor,
+		Bus:   bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 		AssetGetter:             assetGetter,
 		BufferSize:              viper.GetInt(FlagPipelinedBufferSize),
@@ -241,13 +255,13 @@ func Initialize(config *Config) (*Backend, error) {
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:                   bus,
-		Store:                 stor,
-		EventStore:            stor,
-		LivenessFactory:       liveness.EtcdFactory(b.ctx, b.Client),
-		RingPool:              ringPool,
-		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
-		WorkerCount:           viper.GetInt(FlagKeepalivedWorkers),
+		Bus:             bus,
+		Store:           stor,
+		EventStore:      stor,
+		LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
+		RingPool:        ringPool,
+		BufferSize:      viper.GetInt(FlagKeepalivedBufferSize),
+		WorkerCount:     viper.GetInt(FlagKeepalivedWorkers),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)

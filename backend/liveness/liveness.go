@@ -69,6 +69,20 @@ type Interface interface {
 // Factory is a function that can deliver an Interface
 type Factory func(name string, dead, alive EventFunc, logger logrus.FieldLogger) Interface
 
+// WaitLookup waits for another goroutine to create a switch, and then returns it.
+func WaitLookup(ctx context.Context, client *clientv3.Client, name string) Interface {
+	for ctx.Err() == nil {
+		switchMu.Lock()
+		v, ok := switches[name]
+		switchMu.Unlock()
+		if ok {
+			return v
+		}
+		time.Sleep(time.Second)
+	}
+	return nil
+}
+
 // EtcdFactory returns a Factory that uses an etcd client. The Interface is
 // cached after the first instantiation, and the EventFuncs and logger cannot
 // be changed later.
@@ -78,6 +92,11 @@ func EtcdFactory(ctx context.Context, client *clientv3.Client) Factory {
 		defer switchMu.Unlock()
 		_, ok := switches[name]
 		if !ok {
+			if dead == nil && alive == nil {
+				// nil params here indicate that we are only doing a lookup, do
+				// not want to store a switchset.
+				return nil
+			}
 			ss := NewSwitchSet(client, name, dead, alive, logger)
 			ss.monitor(ctx)
 			switches[name] = ss
