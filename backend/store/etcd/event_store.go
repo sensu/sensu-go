@@ -339,7 +339,6 @@ func (s *Store) startEventBatcher() {
 			cancel()
 			ctx, cancel = context.WithTimeout(context.Background(), time.Second)
 			if len(batch) > 0 {
-				logger.Error("writing event batch")
 				s.handleEventBatch(context.TODO(), batch)
 				batch = batch[0:0]
 			}

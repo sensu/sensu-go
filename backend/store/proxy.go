@@ -28,28 +28,28 @@ func NewEventStoreProxy(s EventStore) *EventStoreProxy {
 	}
 }
 
-func (e *EventStoreProxy) do() EventStore {
+func (e *EventStoreProxy) Impl() EventStore {
 	return *((*EventStore)(atomic.LoadPointer(&e.impl)))
 }
 
 func (e *EventStoreProxy) DeleteEventByEntityCheck(ctx context.Context, entity, check string) error {
-	return e.do().DeleteEventByEntityCheck(ctx, entity, check)
+	return e.Impl().DeleteEventByEntityCheck(ctx, entity, check)
 }
 
 func (e *EventStoreProxy) GetEvents(ctx context.Context, pred *SelectionPredicate) ([]*corev2.Event, error) {
-	return e.do().GetEvents(ctx, pred)
+	return e.Impl().GetEvents(ctx, pred)
 }
 
 func (e *EventStoreProxy) GetEventsByEntity(ctx context.Context, entity string, pred *SelectionPredicate) ([]*corev2.Event, error) {
-	return e.do().GetEventsByEntity(ctx, entity, pred)
+	return e.Impl().GetEventsByEntity(ctx, entity, pred)
 }
 
 func (e *EventStoreProxy) GetEventByEntityCheck(ctx context.Context, entity, check string) (*types.Event, error) {
-	return e.do().GetEventByEntityCheck(ctx, entity, check)
+	return e.Impl().GetEventByEntityCheck(ctx, entity, check)
 }
 
 func (e *EventStoreProxy) UpdateEvent(ctx context.Context, event *types.Event) (old, new *types.Event, err error) {
-	return e.do().UpdateEvent(ctx, event)
+	return e.Impl().UpdateEvent(ctx, event)
 }
 
 type closer interface {
