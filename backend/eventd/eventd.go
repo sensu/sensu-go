@@ -230,9 +230,12 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 
 	switches := e.livenessFactory("eventd", e.dead, e.alive, logger)
 
-	if batcher, ok := e.eventStore.(*store.EventStoreProxy).Impl().(batcher); ok {
-		return e.queueMessage(ctx, batcher, event)
+	if proxy, ok := e.eventStore.(*store.EventStoreProxy); ok {
+		if batcher, ok := proxy.Impl().(batcher); ok {
+			return e.queueMessage(ctx, batcher, event)
+		}
 	}
+
 	event, prevEvent, err := e.eventStore.UpdateEvent(ctx, event)
 	if err != nil {
 		return err
