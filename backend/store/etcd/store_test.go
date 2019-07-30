@@ -24,7 +24,7 @@ func testWithEtcd(t *testing.T, f func(store.Store)) {
 	client, err := e.NewClient()
 	require.NoError(t, err)
 
-	s := NewStore(client, nil, e.Name())
+	s := NewStore(client, e.Name())
 
 	// Mock a default namespace
 	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
@@ -39,7 +39,7 @@ func testWithEtcdStore(t *testing.T, f func(*Store)) {
 	client, err := e.NewClient()
 	require.NoError(t, err)
 
-	s := NewStore(client, nil, e.Name())
+	s := NewStore(client, e.Name())
 
 	// Mock a default namespace
 	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
@@ -54,7 +54,7 @@ func testWithEtcdClient(t *testing.T, f func(store.Store, *clientv3.Client)) {
 	client, err := e.NewClient()
 	require.NoError(t, err)
 
-	s := NewStore(client, nil, e.Name())
+	s := NewStore(client, e.Name())
 
 	// Mock a default namespace
 	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))

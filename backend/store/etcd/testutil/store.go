@@ -4,15 +4,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 
 	"github.com/coreos/etcd/clientv3"
-	"github.com/sensu/lasr"
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/testing/testutil"
-	"go.etcd.io/bbolt"
 )
 
 // IntegrationTestStore wrapper for etcd & store
@@ -74,17 +71,7 @@ func NewStoreInstance() (*IntegrationTestStore, error) {
 		return nil, err
 	}
 
-	queueDB, err := bbolt.Open(filepath.Join(tmpDir, "events.db"), 0666, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	queue, err := lasr.NewQ(queueDB, "events")
-	if err != nil {
-		return nil, err
-	}
-
-	st := etcdstore.NewStore(client, queue, e.Name())
+	st := etcdstore.NewStore(client, e.Name())
 
 	return &IntegrationTestStore{
 		Store:        st,

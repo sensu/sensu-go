@@ -34,7 +34,7 @@ func TestEntityCacheIntegration(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	store := store.NewStore(client, nil, e.Name())
+	store := store.NewStore(client, e.Name())
 
 	if err := store.CreateNamespace(context.Background(), types.FixtureNamespace("default")); err != nil {
 		t.Fatal(err)

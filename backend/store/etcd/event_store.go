@@ -12,7 +12,6 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
-	"github.com/sensu/lasr"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/metrics"
 	"github.com/sensu/sensu-go/backend/store"
@@ -330,12 +329,8 @@ func (s *Store) UpdateEventBatch(ctx context.Context, event *corev2.Event) error
 			go s.startEventBatcher()
 		}
 	})
-	b, err := proto.Marshal(event)
-	if err != nil {
-		return fmt.Errorf("error writing event: %s", err)
-	}
-	if _, err := s.eventQueue.Send(b); err != nil {
-		return fmt.Errorf("error writing event: %s", err)
+	if err := s.eventQueue.Send(ctx, event); err != nil {
+		return err
 	}
 	return nil
 }
@@ -344,7 +339,7 @@ func (s *Store) startEventBatcher() {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
-	batch := make([]*lasr.Message, 0, eventBatchSize)
+	batch := make([]*corev2.Event, 0, eventBatchSize)
 	for {
 		select {
 		case <-ticker.C:
@@ -356,12 +351,12 @@ func (s *Store) startEventBatcher() {
 				batch = batch[0:0]
 			}
 		default:
-			message, err := s.eventQueue.Receive(ctx)
+			event, err := s.eventQueue.Receive(ctx)
 			if err != nil && err != context.Canceled && err != context.DeadlineExceeded {
 				logger.WithError(err).Error("error while writing batched event")
 				continue
 			} else if err == nil {
-				batch = append(batch, message)
+				batch = append(batch, event)
 				if len(batch) >= eventBatchSize {
 					s.handleEventBatch(context.TODO(), batch)
 					metrics.EventsProcessed.WithLabelValues(metrics.EventsProcessedLabelSuccess).Add(float64(len(batch)))
@@ -372,32 +367,26 @@ func (s *Store) startEventBatcher() {
 	}
 }
 
-func (s *Store) handleEventBatch(ctx context.Context, batch []*lasr.Message) {
-	inputEvents := getInputEventBatch(batch)
+func (s *Store) handleEventBatch(ctx context.Context, inputEvents []*corev2.Event) {
 	currentEvents, err := s.getCurrentEventsBatch(ctx, inputEvents)
 	if err != nil {
-		if err == txnFailedError {
-			nackMessages(batch, err, false)
-			return
-		}
-		nackMessages(batch, err, true)
+		logger.WithError(err).Error("couldn't write events")
 		return
 	}
 	cmps, ops, err := s.getBatchOps(ctx, inputEvents, currentEvents)
 	if err != nil {
-		nackMessages(batch, err, false)
+		logger.WithError(err).Error("couldn't write events")
 		return
 	}
 	resp, err := s.client.Txn(ctx).If(cmps...).Then(ops...).Commit()
 	if err != nil {
-		nackMessages(batch, err, true)
+		logger.WithError(err).Error("couldn't write events")
 		return
 	}
 	if !resp.Succeeded {
-		nackMessages(batch, err, false)
+		logger.WithError(err).Error("couldn't write events")
 		return
 	}
-	ackMessages(batch)
 }
 
 func (s *Store) getBatchOps(ctx context.Context, inputEvents, currentEvents []*corev2.Event) ([]clientv3.Cmp, []clientv3.Op, error) {
@@ -511,39 +500,6 @@ func (s *Store) getEventPutOp(ctx context.Context, event, prevEvent *corev2.Even
 	}
 
 	return cmp, op, nil
-}
-
-func ackMessages(batch []*lasr.Message) {
-	for _, message := range batch {
-		_ = message.Ack()
-	}
-}
-
-func nackMessages(batch []*lasr.Message, err error, retry bool) {
-	if !retry {
-		logger.WithError(err).Error("unable to handle event batch, data lost!")
-		for _, message := range batch {
-			_ = message.Nack(false)
-		}
-		return
-	}
-	logger.WithError(err).Error("error handling events, retrying")
-	for _, message := range batch {
-		_ = message.Nack(true)
-	}
-}
-
-func getInputEventBatch(batch []*lasr.Message) []*corev2.Event {
-	events := make([]*corev2.Event, 0, len(batch))
-	for _, message := range batch {
-		var event corev2.Event
-		if err := proto.Unmarshal(message.Body, &event); err != nil {
-			logger.WithError(err).Error("error reading event")
-			continue
-		}
-		events = append(events, &event)
-	}
-	return events
 }
 
 func (s *Store) getCurrentEventsBatch(ctx context.Context, inputEvents []*corev2.Event) ([]*corev2.Event, error) {
