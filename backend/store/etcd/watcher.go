@@ -174,7 +174,7 @@ func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChan
 				// we are keeping track of
 				if watchResponse.CompactRevision > w.revision {
 					w.revision = watchResponse.CompactRevision
-					w.logger.Debugf("watch revision updated to %d by compact revision", watchResponse.CompactRevision)
+					w.logger.Debugf("watch revision updated to %d by compact revision", w.revision)
 				}
 				break
 			}
@@ -184,7 +184,7 @@ func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChan
 			// only if there's new events
 			if !watchResponse.Created && watchResponse.Header.GetRevision() >= w.revision {
 				w.revision = watchResponse.Header.GetRevision() + 1
-				w.logger.Debugf("watch revision updated to %d by header revision", watchResponse.CompactRevision)
+				w.logger.Debugf("watch revision updated to %d by header revision", w.revision)
 			}
 
 			for _, event := range watchResponse.Events {

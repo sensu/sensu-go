@@ -277,6 +277,68 @@ func TestWatchCompactedRevision(t *testing.T) {
 	cancel()
 }
 
+func TestWatchRevisions(t *testing.T) {
+	c := integration.NewClusterV3(t, &integration.ClusterConfig{GRPCKeepAliveInterval: 1 * time.Second, GRPCKeepAliveTimeout: 2 * time.Second, Size: 3})
+	defer c.Terminate(t)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	client := c.Client(0)
+	s := NewStore(client, "store")
+
+	// Create the 'foo' resource to generate a new revision (revision=2)
+	foo := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "foo"}}
+	if err := s.CreateOrUpdateResource(ctx, foo); err != nil {
+		t.Fatal(err)
+	}
+
+	// Update the 'foo' resource to generate an additional revision (revision=3)
+	fooBis := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "foo"}}
+	fooBis.Foo = "acme"
+	if err := s.CreateOrUpdateResource(ctx, fooBis); err != nil {
+		t.Fatal(err)
+	}
+
+	// Start a watcher with a compacted revision (1)
+	w := &Watcher{
+		ctx:               context.Background(),
+		client:            client,
+		key:               EtcdRoot,
+		recursive:         true,
+		revision:          int64(1),
+		incomingEventChan: make(chan store.WatchEvent, incomingEventChanBufSize),
+		resultChan:        make(chan store.WatchEvent, resultChanBufSize),
+		logger:            logger,
+	}
+	w.start()
+
+	// The watcher should return all events from revision 1
+	testCheckResult(t, w, store.WatchCreate, foo)
+	testCheckResult(t, w, store.WatchUpdate, fooBis)
+
+	// Since we handled the revision 3, if the watcher was to be restarted, it
+	// should pick up from revision 4
+	if w.revision != 4 {
+		t.Errorf("watcher revision = %d, want %d", w.revision, 4)
+	}
+
+	// Update the 'foo' resource to generate an additional revision (revision=4)
+	fooBis.Foo = "bar"
+	if err := s.CreateOrUpdateResource(ctx, fooBis); err != nil {
+		t.Fatal(err)
+	}
+
+	// The watcher should also return this new watch event
+	testCheckResult(t, w, store.WatchUpdate, fooBis)
+
+	// The tracked revision should also be bumped
+	if w.revision != 5 {
+		t.Errorf("watcher revision = %d, want %d", w.revision, 5)
+	}
+
+	cancel()
+}
+
 func testCheckResult(t *testing.T, w *Watcher, action store.WatchActionType, resource corev2.Resource) {
 	t.Helper()
 
