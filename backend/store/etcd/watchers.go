@@ -21,11 +21,6 @@ func (s *Store) GetCheckConfigWatcher(ctx context.Context) <-chan store.WatchEve
 	go func() {
 		defer close(ch)
 		for response := range w.Result() {
-			if response.Type == store.WatchUnknown {
-				logger.Error("unknown etcd watch type: ", response.Type)
-				continue
-			}
-
 			var checkConfig corev2.CheckConfig
 
 			if response.Type == store.WatchDelete {
@@ -61,11 +56,6 @@ func (s *Store) GetTessenConfigWatcher(ctx context.Context) <-chan store.WatchEv
 	go func() {
 		defer close(ch)
 		for response := range w.Result() {
-			if response.Type == store.WatchUnknown {
-				logger.Error("unknown etcd watch type: ", response.Type)
-				continue
-			}
-
 			var tessen corev2.TessenConfig
 
 			if response.Type == store.WatchDelete {
@@ -95,11 +85,6 @@ func GetResourceWatcher(ctx context.Context, client *clientv3.Client, key string
 	go func() {
 		defer close(ch)
 		for response := range w.Result() {
-			if response.Type == store.WatchUnknown {
-				logger.Error("unknown etcd watch type: ", response.Type)
-				continue
-			}
-
 			var resource corev2.Resource
 			elemPtr := reflect.New(elemType.Elem())
 

@@ -3,7 +3,6 @@ package etcd
 import (
 	"context"
 	"reflect"
-	"sync"
 	"testing"
 	"time"
 
@@ -84,13 +83,12 @@ func TestWatch(t *testing.T) {
 func TestWatchErrConnClosed(t *testing.T) {
 	testWithEtcdClient(t, func(s store.Store, client *clientv3.Client) {
 		w := &Watcher{
-			ctx:               context.Background(),
-			client:            client,
-			key:               EtcdRoot,
-			recursive:         true,
-			incomingEventChan: make(chan store.WatchEvent, incomingEventChanBufSize),
-			resultChan:        make(chan store.WatchEvent, resultChanBufSize),
-			logger:            logger,
+			ctx:        context.Background(),
+			client:     client,
+			key:        EtcdRoot,
+			recursive:  true,
+			resultChan: make(chan store.WatchEvent, resultChanBufSize),
+			logger:     logger,
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
@@ -116,14 +114,13 @@ func TestWatchContextCancel(t *testing.T) {
 		ctx, cancel := context.WithCancel(context.Background())
 
 		w := &Watcher{
-			ctx:               ctx,
-			cancel:            cancel,
-			client:            client,
-			key:               EtcdRoot,
-			recursive:         true,
-			incomingEventChan: make(chan store.WatchEvent, incomingEventChanBufSize),
-			resultChan:        make(chan store.WatchEvent, resultChanBufSize),
-			logger:            logger,
+			ctx:        ctx,
+			cancel:     cancel,
+			client:     client,
+			key:        EtcdRoot,
+			recursive:  true,
+			resultChan: make(chan store.WatchEvent, resultChanBufSize),
+			logger:     logger,
 		}
 
 		w.start()
@@ -133,47 +130,13 @@ func TestWatchContextCancel(t *testing.T) {
 	})
 }
 
-func TestWatchProcessEvents(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	nullLogger, hook := test.NewNullLogger()
-	w := &Watcher{
-		ctx:               ctx,
-		cancel:            cancel,
-		incomingEventChan: make(chan store.WatchEvent, 2),
-		resultChan:        make(chan store.WatchEvent, 1),
-		logger:            nullLogger.WithField("testing", true),
-	}
-
-	var wg sync.WaitGroup
-	go w.processEvents(&wg)
-
-	// Inject a first event, we should not have any log entry
-	w.incomingEventChan <- store.WatchEvent{}
-	if len(hook.Entries) != 0 {
-		t.Errorf("expected no log entries, got %d", len(hook.Entries))
-	}
-
-	// Inject a second event, which should block because the resultChan buffer is
-	// full. We should therefore receive a warning
-	go func() {
-		w.incomingEventChan <- store.WatchEvent{}
-	}()
-	time.Sleep(1 * time.Second)
-	if len(hook.AllEntries()) != 1 {
-		t.Errorf("expected one log entry, got %d", len(hook.Entries))
-	}
-
-	cancel()
-	wg.Wait()
-}
-
 func TestWatchQueueEvent(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	nullLogger, hook := test.NewNullLogger()
 	w := &Watcher{
-		ctx:               ctx,
-		incomingEventChan: make(chan store.WatchEvent, 1),
-		logger:            nullLogger.WithField("testing", true),
+		ctx:        ctx,
+		resultChan: make(chan store.WatchEvent, 1),
+		logger:     nullLogger.WithField("testing", true),
 	}
 
 	// Queue a first event, we should not have any log entry
@@ -253,14 +216,13 @@ func TestWatchCompactedRevision(t *testing.T) {
 
 	// Start a watcher with a compacted revision (1)
 	w := &Watcher{
-		ctx:               context.Background(),
-		client:            client,
-		key:               EtcdRoot,
-		recursive:         true,
-		revision:          int64(1),
-		incomingEventChan: make(chan store.WatchEvent, incomingEventChanBufSize),
-		resultChan:        make(chan store.WatchEvent, resultChanBufSize),
-		logger:            logger,
+		ctx:        context.Background(),
+		client:     client,
+		key:        EtcdRoot,
+		recursive:  true,
+		revision:   int64(1),
+		resultChan: make(chan store.WatchEvent, resultChanBufSize),
+		logger:     logger,
 	}
 	w.start()
 
@@ -301,14 +263,13 @@ func TestWatchRevisions(t *testing.T) {
 
 	// Start a watcher with a compacted revision (1)
 	w := &Watcher{
-		ctx:               context.Background(),
-		client:            client,
-		key:               EtcdRoot,
-		recursive:         true,
-		revision:          int64(1),
-		incomingEventChan: make(chan store.WatchEvent, incomingEventChanBufSize),
-		resultChan:        make(chan store.WatchEvent, resultChanBufSize),
-		logger:            logger,
+		ctx:        context.Background(),
+		client:     client,
+		key:        EtcdRoot,
+		recursive:  true,
+		revision:   int64(1),
+		resultChan: make(chan store.WatchEvent, resultChanBufSize),
+		logger:     logger,
 	}
 	w.start()
 

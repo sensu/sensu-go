@@ -3,7 +3,6 @@ package etcd
 import (
 	"context"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -14,26 +13,24 @@ import (
 )
 
 const (
-	// Set a buffer for the incoming and outgoing channels in order to reduce
-	// times of context switches
-	incomingEventChanBufSize = 100
-	resultChanBufSize        = 100
+	// Set a buffer for the outgoing channel in order to reduce times of context
+	// switches
+	resultChanBufSize = 100
 )
 
 // Watcher implements the store.Watcher interface rather than clientv3.Watcher,
 // so the channel returned by the Watch method only provides a single event at a
 // time instead of a list of events, and the events are ready to be consumed
 type Watcher struct {
-	ctx               context.Context
-	cancel            context.CancelFunc
-	client            *clientv3.Client
-	key               string
-	recursive         bool
-	revision          int64
-	incomingEventChan chan store.WatchEvent
-	resultChan        chan store.WatchEvent
-	opts              []clientv3.OpOption
-	logger            *logrus.Entry
+	ctx        context.Context
+	cancel     context.CancelFunc
+	client     *clientv3.Client
+	key        string
+	recursive  bool
+	revision   int64
+	resultChan chan store.WatchEvent
+	opts       []clientv3.OpOption
+	logger     *logrus.Entry
 }
 
 // Watch returns a Watcher for the given key. If recursive is true, then the
@@ -55,13 +52,12 @@ func Watch(ctx context.Context, client *clientv3.Client, key string, recursive b
 // newWatcher creates a new Watcher
 func newWatcher(ctx context.Context, client *clientv3.Client, key string, recursive bool, opts ...clientv3.OpOption) *Watcher {
 	wc := &Watcher{
-		client:            client,
-		key:               key,
-		recursive:         recursive,
-		incomingEventChan: make(chan store.WatchEvent, incomingEventChanBufSize),
-		resultChan:        make(chan store.WatchEvent, resultChanBufSize),
-		opts:              opts,
-		logger:            logger.WithField("key", key),
+		client:     client,
+		key:        key,
+		recursive:  recursive,
+		resultChan: make(chan store.WatchEvent, resultChanBufSize),
+		opts:       opts,
+		logger:     logger.WithField("key", key),
 	}
 
 	wc.ctx, wc.cancel = context.WithCancel(ctx)
@@ -88,19 +84,12 @@ func (w *Watcher) start() {
 	// Create a channel to be notified if the watch channel is closed
 	watchChanStopped := make(chan struct{})
 
-	// Create a waitgroup that will be used make sure we do not write to a closed
-	// resultChan
-	var resultChanWG sync.WaitGroup
-
 	// Create a cancellable context for our watcher
 	ctx, cancel := context.WithCancel(w.ctx)
 
 	// Start the watcher
 	w.logger.Debug("starting a watcher")
 	w.watch(ctx, opts, watchChanStopped)
-
-	// Start processing the incoming events from the watcher
-	go w.processEvents(&resultChanWG)
 
 	// Initialize a rate limiter
 	limiter := rate.NewLimiter(rate.Every(time.Second), 1)
@@ -146,9 +135,6 @@ func (w *Watcher) start() {
 		// should stop everything. It's also fine to double cancel.
 		cancel()
 		w.cancel()
-
-		// Make sure we do not close the resultChan while it's still be used
-		resultChanWG.Wait()
 		close(w.resultChan)
 	}()
 }
@@ -209,41 +195,16 @@ func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChan
 
 }
 
-// processEvents process the incomingEventChan buffer and send the results over
-// to the resultChan buffer
-func (w *Watcher) processEvents(wg *sync.WaitGroup) {
-	// Use the waitgroup to indicate that the resultChan is currently used but release it once we exit this
-	wg.Add(1)
-	defer wg.Done()
-
-	for {
-		select {
-		case e := <-w.incomingEventChan:
-			if len(w.resultChan) == cap(w.resultChan) {
-				w.logger.Warning("resultChan buffer is full, watch events are not consumed " +
-					"fast enough, incoming events from the watcher might be delayed")
-			}
-			select {
-			case w.resultChan <- e:
-			case <-w.ctx.Done():
-				return
-			}
-		case <-w.ctx.Done():
-			return
-		}
-	}
-}
-
 // queueEvent takes an incoming event from the watcher and adds it to the buffer
-// of incoming events that need to be processed so we don't block the watcher
+// of outgoing results
 func (w *Watcher) queueEvent(ctx context.Context, e store.WatchEvent) {
-	if len(w.incomingEventChan) == cap(w.incomingEventChan) {
-		w.logger.Warning("incomingEventChan buffer is full, incoming watch events " +
-			"are not processed fast enough, incoming events from the watcher will be blocked")
+	if len(w.resultChan) == cap(w.resultChan) {
+		w.logger.Warning("resultChan buffer is full, watch events are not " +
+			"processed fast enough, incoming events from the watcher will be blocked")
 	}
 
 	select {
-	case w.incomingEventChan <- e:
+	case w.resultChan <- e:
 	case <-ctx.Done():
 	}
 }
