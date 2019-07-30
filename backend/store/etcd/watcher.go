@@ -159,8 +159,12 @@ func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChan
 				// Check if we received a compact revision that bigger than the revision
 				// we are keeping track of
 				if watchResponse.CompactRevision > w.revision {
+					// If we arrive at this point, it means we missed watch events.
+					// Therefore we need to send a WatchError so the watcher consumer can
+					// act accordingly.
 					w.revision = watchResponse.CompactRevision
 					w.logger.Debugf("watch revision updated to %d by compact revision", w.revision)
+					w.queueEvent(ctx, store.WatchEvent{Type: store.WatchError})
 				}
 				break
 			}
@@ -222,10 +226,12 @@ func parseEvent(e *clientv3.Event) store.WatchEvent {
 		event.Type = store.WatchUpdate
 	} else {
 		event.Type = store.WatchDelete
-		// Fetch the key value before it was deleted
-		if e.PrevKv != nil {
-			event.Object = e.PrevKv.Value
+		// If the previous key value is not available, return a watch error
+		if e.PrevKv == nil {
+			return store.WatchEvent{Type: store.WatchError}
 		}
+		// Fetch the key value before it was deleted
+		event.Object = e.PrevKv.Value
 	}
 
 	return event

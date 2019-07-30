@@ -47,6 +47,16 @@ func buildCache(resources []corev2.Resource, synthesize bool) cache {
 
 type resourceSlice []Value
 
+func (s resourceSlice) Find(value Value) Value {
+	idx := sort.Search(len(s), func(i int) bool {
+		return !resourceLT(s[i], value)
+	})
+	if idx < len(s) && s[idx].Resource.GetObjectMeta().Name == value.Resource.GetObjectMeta().Name {
+		return s[idx]
+	}
+	return Value{}
+}
+
 func (s resourceSlice) Len() int {
 	return len(s)
 }
@@ -85,11 +95,12 @@ type Resource struct {
 	watchers   []cacheWatcher
 	watchersMu sync.Mutex
 	synthesize bool
+	resourceT  corev2.Resource
+	client     *clientv3.Client
 }
 
-// New creates a new resource cache. It retrieves all resources from the
-// store on creation.
-func New(ctx context.Context, client *clientv3.Client, resource corev2.Resource, synthesize bool) (*Resource, error) {
+// getResources retrieves the resources from the store
+func getResources(ctx context.Context, client *clientv3.Client, resource corev2.Resource) ([]corev2.Resource, error) {
 	// Get the type of the resource and create a slice type of []type
 	typeOfResource := reflect.TypeOf(resource)
 	sliceOfResource := reflect.SliceOf(typeOfResource)
@@ -117,13 +128,31 @@ func New(ctx context.Context, client *clientv3.Client, resource corev2.Resource,
 		}
 		resources[i] = r
 	}
+	return resources, nil
+}
+
+// New creates a new resource cache. It retrieves all resources from the
+// store on creation.
+func New(ctx context.Context, client *clientv3.Client, resource corev2.Resource, synthesize bool) (*Resource, error) {
+	resources, err := getResources(ctx, client, resource)
+	if err != nil {
+		return nil, err
+	}
 
 	cache := buildCache(resources, synthesize)
+
+	// Get a keybuilderFunc for this resource
+	keyBuilderFunc := func(ctx context.Context, name string) string {
+		return store.NewKeyBuilder(resource.StorePrefix()).WithContext(ctx).Build("")
+	}
+	typeOfResource := reflect.TypeOf(resource)
 
 	cacher := &Resource{
 		cache:      cache,
 		watcher:    etcd.GetResourceWatcher(ctx, client, keyBuilderFunc(ctx, ""), typeOfResource),
 		synthesize: synthesize,
+		resourceT:  resource,
+		client:     client,
 	}
 	go cacher.start(ctx)
 
@@ -198,16 +227,69 @@ func (r *Resource) start(ctx context.Context) {
 			r.updates = append(r.updates, event)
 		case <-ticker.C:
 			if len(r.updates) > 0 {
-				r.updateCache()
+				r.updateCache(ctx)
 				r.notifyWatchers()
 			}
 		}
 	}
 }
 
-func (r *Resource) updateCache() {
+// rebuild the cache using the store as the source of truth
+func (r *Resource) rebuild(ctx context.Context) error {
+	resources, err := getResources(ctx, r.client, r.resourceT)
+	if err != nil {
+		return err
+	}
+	newCache := buildCache(resources, r.synthesize)
+	for key, values := range newCache {
+		oldValues, ok := r.cache[key]
+		if !ok {
+			// Apparently we have an entire namespace's worth of values that
+			// just appeared out of nowhere...
+			r.updates = append(r.updates, makeNewUpdates(values)...)
+			continue
+		}
+		for _, value := range values {
+			oldValue := resourceSlice(oldValues).Find(value)
+			if oldValue.Resource == nil {
+				r.updates = append(r.updates, store.WatchEventResource{
+					Resource: value.Resource,
+					Action:   store.WatchCreate,
+				})
+				continue
+			}
+			if !reflect.DeepEqual(oldValue.Resource, value.Resource) {
+				r.updates = append(r.updates, store.WatchEventResource{
+					Resource: value.Resource,
+					Action:   store.WatchUpdate,
+				})
+			}
+		}
+		for _, value := range oldValues {
+			newValue := resourceSlice(values).Find(value)
+			if newValue.Resource == nil {
+				r.updates = append(r.updates, store.WatchEventResource{
+					Resource: value.Resource,
+					Action:   store.WatchDelete,
+				})
+			}
+		}
+	}
+	r.cache = newCache
+	return nil
+}
+
+func (r *Resource) updateCache(ctx context.Context) {
 	r.cacheMu.Lock()
 	for _, event := range r.updates {
+		if event.Action == store.WatchError {
+			// Rebuild the cache
+			if err := r.rebuild(ctx); err != nil {
+				logger.WithError(err).Error("could not rebuild the cache")
+			}
+			continue
+		}
+
 		resource := event.Resource
 		if resource == nil || reflect.ValueOf(resource).IsNil() {
 			logger.Error("nil resource in watch event")
@@ -250,4 +332,15 @@ func (r *Resource) updateCache() {
 	}
 
 	r.cacheMu.Unlock()
+}
+
+func makeNewUpdates(values []Value) []store.WatchEventResource {
+	result := make([]store.WatchEventResource, len(values))
+	for i := range values {
+		result[i] = store.WatchEventResource{
+			Resource: values[i].Resource,
+			Action:   store.WatchCreate,
+		}
+	}
+	return result
 }

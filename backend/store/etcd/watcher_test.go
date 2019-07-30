@@ -228,6 +228,7 @@ func TestWatchCompactedRevision(t *testing.T) {
 
 	// The watcher should return the event associated with the latest revision
 	// (3), which corresponds to the update to the foo resource
+	testCheckResult(t, w, store.WatchError, nil)
 	testCheckResult(t, w, store.WatchUpdate, foo)
 
 	// Since we handled the revision 3, if the watcher was to be restarted, it
@@ -307,6 +308,10 @@ func testCheckResult(t *testing.T, w *Watcher, action store.WatchActionType, res
 	case event := <-w.Result():
 		if event.Type != action {
 			t.Errorf("event type = %v, want %v", event.Type, action)
+		}
+
+		if event.Type == store.WatchError {
+			return
 		}
 
 		got := &fixture.Resource{}

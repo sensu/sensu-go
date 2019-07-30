@@ -21,17 +21,16 @@ func (s *Store) GetCheckConfigWatcher(ctx context.Context) <-chan store.WatchEve
 	go func() {
 		defer close(ch)
 		for response := range w.Result() {
+			// schedulerd does not support a full refresh of the check schedulers
+			if response.Type == store.WatchError {
+				continue
+			}
+
 			var checkConfig corev2.CheckConfig
 
-			if response.Type == store.WatchDelete {
-				meta := store.ParseResourceKey(response.Key)
-				checkConfig.Namespace = meta.Namespace
-				checkConfig.Name = meta.ResourceName
-			} else {
-				if err := unmarshal(response.Object, &checkConfig); err != nil {
-					logger.WithField("key", response.Key).WithError(err).Error("unable to unmarshal check config from key")
-					continue
-				}
+			if err := unmarshal(response.Object, &checkConfig); err != nil {
+				logger.WithField("key", response.Key).WithError(err).Error("unable to unmarshal check config from key")
+				continue
 			}
 
 			ch <- store.WatchEventCheckConfig{
@@ -56,6 +55,11 @@ func (s *Store) GetTessenConfigWatcher(ctx context.Context) <-chan store.WatchEv
 	go func() {
 		defer close(ch)
 		for response := range w.Result() {
+			// tessend does not support a full refresh of its config
+			if response.Type == store.WatchError {
+				continue
+			}
+
 			var tessen corev2.TessenConfig
 
 			if response.Type == store.WatchDelete {
@@ -85,29 +89,20 @@ func GetResourceWatcher(ctx context.Context, client *clientv3.Client, key string
 	go func() {
 		defer close(ch)
 		for response := range w.Result() {
+			if response.Type == store.WatchError {
+				ch <- store.WatchEventResource{
+					Action: response.Type,
+				}
+				continue
+			}
+
 			var resource corev2.Resource
 			elemPtr := reflect.New(elemType.Elem())
 
-			if response.Type == store.WatchDelete {
-				key := store.ParseResourceKey(response.Key)
-
-				meta := elemPtr.Elem().FieldByName("ObjectMeta")
-				if !meta.CanSet() {
-					logger.WithField("key", response.Key).Error("unable to set the resource object meta")
-					continue
-				}
-				if meta.FieldByName("Name").CanSet() {
-					meta.FieldByName("Name").SetString(key.ResourceName)
-				}
-				if meta.FieldByName("Namespace").CanSet() {
-					meta.FieldByName("Namespace").SetString(key.Namespace)
-				}
-			} else {
-				if err := unmarshal(response.Object, elemPtr.Interface()); err != nil {
-					logger.WithField("key", response.Key).WithError(err).
-						Error("unable to unmarshal resource from key")
-					continue
-				}
+			if err := unmarshal(response.Object, elemPtr.Interface()); err != nil {
+				logger.WithField("key", response.Key).WithError(err).
+					Error("unable to unmarshal resource from key")
+				continue
 			}
 
 			resource = elemPtr.Interface().(corev2.Resource)
