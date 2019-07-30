@@ -159,7 +159,7 @@ func TestWatchProcessEvents(t *testing.T) {
 		w.incomingEventChan <- store.WatchEvent{}
 	}()
 	time.Sleep(1 * time.Second)
-	if len(hook.Entries) != 1 {
+	if len(hook.AllEntries()) != 1 {
 		t.Errorf("expected one log entry, got %d", len(hook.Entries))
 	}
 
@@ -185,7 +185,7 @@ func TestWatchQueueEvent(t *testing.T) {
 		w.queueEvent(ctx, store.WatchEvent{})
 	}()
 	time.Sleep(1 * time.Second)
-	if len(hook.Entries) != 1 {
+	if len(hook.AllEntries()) != 1 {
 		t.Errorf("expected one log entry, got %d", len(hook.Entries))
 	}
 
@@ -198,13 +198,13 @@ func TestWatchRetry(t *testing.T) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	client0 := c.Client(0)
-	store0 := NewStore(client0, "store0")
-	w := Watch(ctx, client0, "/sensu.io", true)
+	client := c.Client(0)
+	s := NewStore(client, "store0")
+	w := Watch(ctx, client, "/sensu.io", true)
 
 	// Create resource
 	foo := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "foo"}}
-	if err := store0.CreateOrUpdateResource(ctx, foo); err != nil {
+	if err := s.CreateOrUpdateResource(ctx, foo); err != nil {
 		t.Fatal(err)
 	}
 	testCheckResult(t, w, store.WatchCreate, foo)
@@ -219,11 +219,61 @@ func TestWatchRetry(t *testing.T) {
 
 	// Update resource
 	foo.Foo = "acme"
-	if err := store0.CreateOrUpdateResource(ctx, foo); err != nil {
+	if err := s.CreateOrUpdateResource(ctx, foo); err != nil {
 		t.Fatal(err)
 	}
 
 	testCheckResult(t, w, store.WatchUpdate, foo)
+	cancel()
+}
+
+func TestWatchCompactedRevision(t *testing.T) {
+	c := integration.NewClusterV3(t, &integration.ClusterConfig{GRPCKeepAliveInterval: 1 * time.Second, GRPCKeepAliveTimeout: 2 * time.Second, Size: 3})
+	defer c.Terminate(t)
+
+	ctx, cancel := context.WithCancel(context.Background())
+
+	client := c.Client(0)
+	s := NewStore(client, "store")
+
+	// Create the 'foo' resource to generate a new revision (revision=2)
+	foo := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "foo"}}
+	if err := s.CreateOrUpdateResource(ctx, foo); err != nil {
+		t.Fatal(err)
+	}
+
+	// Update the 'foo' resource to generate an additional revision (revision=3)
+	foo.Foo = "acme"
+	if err := s.CreateOrUpdateResource(ctx, foo); err != nil {
+		t.Fatal(err)
+	}
+
+	// Compact to the latest revision
+	client.Compact(ctx, int64(3), clientv3.WithCompactPhysical())
+
+	// Start a watcher with a compacted revision (1)
+	w := &Watcher{
+		ctx:               context.Background(),
+		client:            client,
+		key:               EtcdRoot,
+		recursive:         true,
+		revision:          int64(1),
+		incomingEventChan: make(chan store.WatchEvent, incomingEventChanBufSize),
+		resultChan:        make(chan store.WatchEvent, resultChanBufSize),
+		logger:            logger,
+	}
+	w.start()
+
+	// The watcher should return the event associated with the latest revision
+	// (3), which corresponds to the update to the foo resource
+	testCheckResult(t, w, store.WatchUpdate, foo)
+
+	// Since we handled the revision 3, if the watcher was to be restarted, it
+	// should pick up from revision 4
+	if w.revision != 4 {
+		t.Errorf("watcher revision = %d, want %d", w.revision, 4)
+	}
+
 	cancel()
 }
 

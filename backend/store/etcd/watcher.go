@@ -29,6 +29,7 @@ type Watcher struct {
 	client            *clientv3.Client
 	key               string
 	recursive         bool
+	revision          int64
 	incomingEventChan chan store.WatchEvent
 	resultChan        chan store.WatchEvent
 	opts              []clientv3.OpOption
@@ -74,11 +75,15 @@ func (w *Watcher) Result() <-chan store.WatchEvent {
 
 func (w *Watcher) start() {
 	// Define the client options for this watcher
-	opts := []clientv3.OpOption{clientv3.WithCreatedNotify(), clientv3.WithPrevKV()}
+	baseOpts := []clientv3.OpOption{clientv3.WithCreatedNotify(), clientv3.WithPrevKV()}
 	if w.recursive {
-		opts = append(opts, clientv3.WithPrefix())
+		baseOpts = append(baseOpts, clientv3.WithPrefix())
 	}
-	opts = append(opts, w.opts...)
+	opts := make([]clientv3.OpOption, len(baseOpts))
+	copy(opts, baseOpts)
+	if w.revision != 0 {
+		opts = append(opts, clientv3.WithRev(w.revision))
+	}
 
 	// Create a channel to be notified if the watch channel is closed
 	watchChanStopped := make(chan struct{})
@@ -120,6 +125,14 @@ func (w *Watcher) start() {
 
 				// Restart the watcher
 				w.logger.Warning("restarting the watcher")
+
+				// Specify the latest revision we tracked
+				opts = make([]clientv3.OpOption, len(baseOpts))
+				copy(opts, baseOpts)
+				if w.revision != 0 {
+					opts = append(opts, clientv3.WithRev(w.revision))
+				}
+
 				w.watch(ctx, opts, watchChanStopped)
 			case <-w.ctx.Done():
 				// The consumer has cancelled this watcher, we need to exit
@@ -156,7 +169,22 @@ func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChan
 				// functional and exit this goroutine so we can try to re-create the
 				// watcher
 				w.logger.WithError(watchResponse.Err()).Warn("error from watch response")
+
+				// Check if we received a compact revision that bigger than the revision
+				// we are keeping track of
+				if watchResponse.CompactRevision > w.revision {
+					w.revision = watchResponse.CompactRevision
+					w.logger.Debugf("watch revision updated to %d by compact revision", watchResponse.CompactRevision)
+				}
 				break
+			}
+
+			// Bump the revision to indicate that this revision was handled by the
+			// watcher. We do bump the revision in response to a WatchCreateRequest,
+			// only if there's new events
+			if !watchResponse.Created && watchResponse.Header.GetRevision() >= w.revision {
+				w.revision = watchResponse.Header.GetRevision() + 1
+				w.logger.Debugf("watch revision updated to %d by header revision", watchResponse.CompactRevision)
 			}
 
 			for _, event := range watchResponse.Events {
