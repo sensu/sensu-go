@@ -16,8 +16,8 @@ import (
 	"github.com/google/uuid"
 	dto "github.com/prometheus/client_model/go"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/eventd"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/metrics"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd"
@@ -375,7 +375,7 @@ func (t *Tessend) sendPromMetrics() {
 	// collect data
 	data := t.getDataPayload()
 	now := time.Now().Unix()
-	c := eventd.EventsProcessed.WithLabelValues(eventd.EventsProcessedLabelSuccess)
+	c := metrics.EventsProcessed.WithLabelValues(metrics.EventsProcessedLabelSuccess)
 	pb := &dto.Metric{}
 	err := c.Write(pb)
 	if err != nil {
@@ -391,7 +391,7 @@ func (t *Tessend) sendPromMetrics() {
 
 	// populate data payload
 	mp := &corev2.MetricPoint{
-		Name:      eventd.EventsProcessedCounterVec,
+		Name:      metrics.EventsProcessedCounterVec,
 		Value:     pb.GetCounter().GetValue(),
 		Timestamp: now,
 		Tags: []*corev2.MetricTag{

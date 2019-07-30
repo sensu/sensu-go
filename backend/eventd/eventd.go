@@ -10,10 +10,10 @@ import (
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
-	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/metrics"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sirupsen/logrus"
@@ -23,30 +23,12 @@ const (
 	// ComponentName identifies Eventd as the component/daemon implemented in this
 	// package.
 	ComponentName = "eventd"
-
-	// EventsProcessedCounterVec is the name of the prometheus counter vec used to count events processed.
-	EventsProcessedCounterVec = "sensu_go_events_processed"
-
-	// EventsProcessedLabelName is the name of the label which stores prometheus values.
-	EventsProcessedLabelName = "status"
-
-	// EventsProcessedLabelSuccess is the name of the label used to count events processed successfully.
-	EventsProcessedLabelSuccess = "success"
 )
 
 var (
 	logger = logrus.WithFields(logrus.Fields{
 		"component": ComponentName,
 	})
-
-	// EventsProcessed counts the number of sensu go events processed.
-	EventsProcessed = prometheus.NewCounterVec(
-		prometheus.CounterOpts{
-			Name: EventsProcessedCounterVec,
-			Help: "The total number of processed events",
-		},
-		[]string{EventsProcessedLabelName},
-	)
 )
 
 type batcher interface {
@@ -121,8 +103,6 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 			return nil, err
 		}
 	}
-
-	_ = prometheus.Register(EventsProcessed)
 
 	return e, nil
 }
@@ -258,7 +238,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		}
 	}
 
-	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess).Inc()
+	metrics.EventsProcessed.WithLabelValues(metrics.EventsProcessedLabelSuccess).Inc()
 
 	return e.bus.Publish(messaging.TopicEvent, event)
 }
@@ -268,8 +248,6 @@ func (e *Eventd) queueMessage(ctx context.Context, b batcher, event *corev2.Even
 	if err := b.UpdateEventBatch(ctx, event); err != nil {
 		return err
 	}
-
-	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess).Inc()
 
 	return e.bus.Publish(messaging.TopicEvent, event)
 }

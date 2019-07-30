@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,6 +14,7 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/lasr"
 	"github.com/sensu/sensu-go/backend/liveness"
+	"github.com/sensu/sensu-go/backend/metrics"
 	"github.com/sensu/sensu-go/backend/store"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -19,13 +22,20 @@ import (
 
 const (
 	eventsPathPrefix = "events"
-	eventBatchSize   = 10
 )
 
 var (
 	eventKeyBuilder = store.NewKeyBuilder(eventsPathPrefix)
 	txnFailedError  = errors.New("transaction failed")
+	eventBatchSize  = 5
 )
+
+func init() {
+	bs, err := strconv.Atoi(os.Getenv("SENSU_BATCH_SIZE"))
+	if err == nil {
+		eventBatchSize = bs
+	}
+}
 
 func getEventPath(event *corev2.Event) string {
 	return path.Join(
@@ -342,6 +352,7 @@ func (s *Store) startEventBatcher() {
 			ctx, cancel = context.WithTimeout(context.Background(), time.Second)
 			if len(batch) > 0 {
 				s.handleEventBatch(context.TODO(), batch)
+				metrics.EventsProcessed.WithLabelValues(metrics.EventsProcessedLabelSuccess).Add(float64(len(batch)))
 				batch = batch[0:0]
 			}
 		default:
@@ -350,11 +361,12 @@ func (s *Store) startEventBatcher() {
 				logger.WithError(err).Error("error while writing batched event")
 				continue
 			} else if err == nil {
+				batch = append(batch, message)
 				if len(batch) >= eventBatchSize {
 					s.handleEventBatch(context.TODO(), batch)
+					metrics.EventsProcessed.WithLabelValues(metrics.EventsProcessedLabelSuccess).Add(float64(len(batch)))
 					batch = batch[0:0]
 				}
-				batch = append(batch, message)
 			}
 		}
 	}

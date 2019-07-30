@@ -137,7 +137,7 @@ func Initialize(config *Config) (*Backend, error) {
 		return nil, fmt.Errorf("error opening event queue: %s", err)
 	}
 
-	eventQueue, err := lasr.NewQ(db, "events", lasr.WithMessageBufferSize(10))
+	eventQueue, err := lasr.NewQ(db, "events", lasr.WithMessageBufferSize(1000))
 	if err != nil {
 		return nil, fmt.Errorf("error opening event queue: %s", err)
 	}
