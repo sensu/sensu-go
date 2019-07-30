@@ -10,15 +10,43 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	utilstrings "github.com/sensu/sensu-go/util/strings"
 	"github.com/spf13/cobra"
 )
 
+const (
+	// VerbList is the sensuctl verb to list resources.
+	VerbList = "list"
+	// VerbInfo is the sensuctl verb to get info about a resource.
+	VerbInfo = "info"
+)
+
+// Action is a resource/verb tuple for sensuctl commands.
+type Action struct {
+	Resource   string
+	Verb       string
+	Namespaced bool
+}
+
 var (
-	// All is all the core resource types that sensuctl can list (non-namespaced resources are intentionally ordered first).
-	All = []string{"namespace", "cluster-role", "cluster-role-binding", "user", "asset", "check", "entity", "event", "filter", "handler", "hook", "mutator", "role", "role-binding", "silenced"}
-	// NoNamespace is all the non-namespaced core resource types that sensuctl can list.
-	NoNamespace = []string{"namespace", "cluster-role", "cluster-role-binding", "user"}
+	// All is all the core resource types and associated sensuctl verbs (non-namespaced resources are intentionally ordered first).
+	All = []Action{
+		Action{Resource: "namespace", Verb: VerbList, Namespaced: false},
+		Action{Resource: "cluster-role", Verb: VerbList, Namespaced: false},
+		Action{Resource: "cluster-role-binding", Verb: VerbList, Namespaced: false},
+		Action{Resource: "user", Verb: VerbList, Namespaced: false},
+		Action{Resource: "tessen", Verb: VerbInfo, Namespaced: false},
+		Action{Resource: "asset", Verb: VerbList, Namespaced: true},
+		Action{Resource: "check", Verb: VerbList, Namespaced: true},
+		Action{Resource: "entity", Verb: VerbList, Namespaced: true},
+		Action{Resource: "event", Verb: VerbList, Namespaced: true},
+		Action{Resource: "filter", Verb: VerbList, Namespaced: true},
+		Action{Resource: "handler", Verb: VerbList, Namespaced: true},
+		Action{Resource: "hook", Verb: VerbList, Namespaced: true},
+		Action{Resource: "mutator", Verb: VerbList, Namespaced: true},
+		Action{Resource: "role", Verb: VerbList, Namespaced: true},
+		Action{Resource: "role-binding", Verb: VerbList, Namespaced: true},
+		Action{Resource: "silenced", Verb: VerbList, Namespaced: true},
+	}
 )
 
 // Command dumps generic Sensu resources to a file or STDOUT.
@@ -54,26 +82,37 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			format = "yaml"
 		}
 
-		// parse the comma separated resource types
-		var types []string
+		// parse the comma separated resource types and match against the defined actions
+		var actions []Action
 		if args[0] == "all" {
-			types = All
+			actions = All
 		} else {
-			types = strings.Split(args[0], ",")
+			types := strings.Split(args[0], ",")
+			for _, t := range types {
+				length := len(actions)
+				for _, action := range All {
+					if t == action.Resource {
+						actions = append(actions, action)
+					}
+				}
+				if length == len(actions) {
+					return fmt.Errorf("couldn't get resource: %s", t)
+				}
+			}
 		}
 
-		// iterate the desired types and start building a sensuctl list command
+		// iterate the matched actions and start building a sensuctl command
 		var out string
-		for i, t := range types {
+		for i, a := range actions {
 			ctlArgs := []string{
-				t,
-				"list",
+				a.Resource,
+				a.Verb,
 				"--format",
 				format,
 			}
 
 			// append --namespace or --all-namespaces flag if compatible with the resource type
-			if !utilstrings.InArray(t, NoNamespace) {
+			if a.Namespaced {
 				if ok, err := cmd.Flags().GetBool(flags.AllNamespaces); err != nil {
 					return err
 				} else if ok {
@@ -93,7 +132,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			if len(originalBytes) == 0 {
 				continue
 			}
-			if format == "wrapped-json" || i == len(types)-1 || out == "" {
+			if format == "wrapped-json" || i == len(actions)-1 || out == "" {
 				out = fmt.Sprintf("%s%s", out, string(originalBytes))
 			} else {
 				out = fmt.Sprintf("%s---\n%s", out, string(originalBytes))
