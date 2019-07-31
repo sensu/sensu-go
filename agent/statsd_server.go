@@ -6,7 +6,6 @@ package agent
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -152,7 +151,7 @@ func (c Client) sendMetrics(points []*types.MetricPoint) (retErr error) {
 		Metrics:   metrics,
 	}
 
-	msg, err := json.Marshal(event)
+	msg, err := c.agent.marshal(event)
 	if err != nil {
 		logger.WithError(err).Error("error marshaling metric event")
 		return err

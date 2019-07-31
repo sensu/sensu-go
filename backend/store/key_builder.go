@@ -12,8 +12,9 @@ const keySeparator = "/"
 
 // KeyBuilder builds multi-tenant resource keys.
 type KeyBuilder struct {
-	resourceName string
-	namespace    string
+	resourceName         string
+	namespace            string
+	includeTrailingSlash bool
 }
 
 // NewKeyBuilder creates a new KeyBuilder.
@@ -40,6 +41,17 @@ func (b KeyBuilder) WithContext(ctx context.Context) KeyBuilder {
 	return b
 }
 
+// WithExactMatch ensures the final key has a trailing slash.
+// This is useful for searching sub-resources without erroneously including
+// resources that the final path component is a prefix for.
+// eg consider two entities, foo and foobar, both with events.
+// Without a trailing slash, we end up iterating over both
+// /foo/event and /foobar/event.
+func (b KeyBuilder) WithExactMatch() KeyBuilder {
+	b.includeTrailingSlash = true
+	return b
+}
+
 // Build builds a key from the components it is given.
 func (b KeyBuilder) Build(keys ...string) string {
 	items := append(
@@ -61,6 +73,11 @@ func (b KeyBuilder) Build(keys ...string) string {
 		if len(keys) == 0 || keys[len(keys)-1] == "" {
 			key += keySeparator
 		}
+	}
+
+	// Be specific when listing sub-resources for a specific resource.
+	if b.includeTrailingSlash {
+		key += keySeparator
 	}
 
 	return key

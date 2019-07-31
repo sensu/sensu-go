@@ -23,10 +23,11 @@ import (
 const allowListOnDenyStatus = "allow_list_on_deny_status"
 const allowListOnDenyOutput = "check command denied by the agent allow list"
 
+// handleCheck is the check message handler.
 // TODO(greg): At some point, we're going to need max parallelism.
 func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
 	request := &corev2.CheckRequest{}
-	if err := json.Unmarshal(payload, request); err != nil {
+	if err := a.unmarshal(payload, request); err != nil {
 		return err
 	} else if request == nil {
 		return errors.New("given check configuration appears invalid")
@@ -103,6 +104,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	checkAssets := request.Assets
 	checkConfig := request.Config
 	checkHooks := request.Hooks
+	hookAssets := request.HookAssets
 
 	// Before token subsitution we retain copy of the command
 	origCommand := checkConfig.Command
@@ -227,7 +229,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	event.Timestamp = time.Now().Unix()
 
 	if len(checkHooks) != 0 {
-		event.Check.Hooks = a.ExecuteHooks(request, checkExec.Status)
+		event.Check.Hooks = a.ExecuteHooks(ctx, request, checkExec.Status, hookAssets)
 	}
 
 	// Instantiate metrics in the event if the check is attempting to extract metrics
@@ -249,7 +251,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 		event.Check.Output = ""
 	}
 
-	msg, err := json.Marshal(event)
+	msg, err := a.marshal(event)
 	if err != nil {
 		logger.WithError(err).Error("error marshaling check result")
 		return
@@ -301,7 +303,7 @@ func (a *Agent) sendFailure(event *corev2.Event, err error) {
 		}
 	}
 
-	if msg, err := json.Marshal(event); err != nil {
+	if msg, err := a.marshal(event); err != nil {
 		logger.WithError(err).Error("error marshaling check failure")
 	} else {
 		tm := &transport.Message{

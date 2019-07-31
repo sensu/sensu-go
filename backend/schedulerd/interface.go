@@ -21,12 +21,17 @@ type Scheduler interface {
 	Type() SchedulerType
 }
 
+// SchedulerType represents the type of a scheduler.
 type SchedulerType int
 
 const (
+	// IntervalType ...
 	IntervalType SchedulerType = iota
+	// CronType ...
 	CronType
+	// RoundRobinIntervalType ...
 	RoundRobinIntervalType
+	// RoundRobinCronType ...
 	RoundRobinCronType
 )
 

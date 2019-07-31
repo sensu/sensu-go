@@ -12,11 +12,11 @@ import (
 
 // connect establish the connection to a given websocket backend and returns it
 // along with any error encountered
-func connect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.Header, handshakeTimeout int) (*websocket.Conn, error) {
+func connect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.Header, handshakeTimeout int) (*websocket.Conn, http.Header, error) {
 	// TODO(grep): configurable max sendq depth
 	u, err := url.Parse(wsServerURL)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	if handshakeTimeout < 1 {
@@ -30,7 +30,7 @@ func connect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.H
 	if tlsOpts != nil {
 		dialer.TLSClientConfig, err = tlsOpts.ToClientTLSConfig()
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 	}
 
@@ -38,24 +38,24 @@ func connect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.H
 	if err != nil {
 		if resp != nil {
 			if err == websocket.ErrBadHandshake {
-				return nil, fmt.Errorf("handshake failed with status %d", resp.StatusCode)
+				return nil, resp.Header, fmt.Errorf("handshake failed with status %d", resp.StatusCode)
 			}
-			return nil, fmt.Errorf("connection failed with status %d", resp.StatusCode)
+			return nil, resp.Header, fmt.Errorf("connection failed with status %d", resp.StatusCode)
 		}
-		return nil, err
+		return nil, nil, err
 	}
 
-	return conn, nil
+	return conn, resp.Header, nil
 }
 
 // Connect causes the transport Client to connect to a given websocket backend.
 // This is a thin wrapper around a websocket connection that makes the
 // connection safe for concurrent use by multiple goroutines.
-func Connect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.Header, handshakeTimeout int) (Transport, error) {
-	conn, err := connect(wsServerURL, tlsOpts, requestHeader, handshakeTimeout)
+func Connect(wsServerURL string, tlsOpts *types.TLSOptions, requestHeader http.Header, handshakeTimeout int) (Transport, http.Header, error) {
+	conn, resp, err := connect(wsServerURL, tlsOpts, requestHeader, handshakeTimeout)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return NewTransport(conn), nil
+	return NewTransport(conn), resp, nil
 }

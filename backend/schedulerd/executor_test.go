@@ -79,7 +79,7 @@ func TestPublishProxyCheckRequest(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newIntervalScheduler(t, ctx, "check")
+	scheduler := newIntervalScheduler(ctx, t, "check")
 
 	entity := types.FixtureEntity("entity1")
 	check := scheduler.check
@@ -127,7 +127,7 @@ func TestPublishProxyCheckRequestsInterval(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newIntervalScheduler(t, ctx, "check")
+	scheduler := newIntervalScheduler(ctx, t, "check")
 
 	entity1 := types.FixtureEntity("entity1")
 	entity2 := types.FixtureEntity("entity2")
@@ -182,7 +182,7 @@ func TestPublishProxyCheckRequestsCron(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newCronScheduler(t, ctx, "check")
+	scheduler := newCronScheduler(ctx, t, "check")
 
 	entity1 := types.FixtureEntity("entity1")
 	entity2 := types.FixtureEntity("entity2")
@@ -236,7 +236,7 @@ func TestCheckBuildRequestInterval(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newIntervalScheduler(t, ctx, "check")
+	scheduler := newIntervalScheduler(ctx, t, "check")
 
 	check := scheduler.check
 	request, err := scheduler.exec.buildRequest(check)
@@ -271,7 +271,7 @@ func TestCheckBuildRequestCron(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newCronScheduler(t, ctx, "check")
+	scheduler := newCronScheduler(ctx, t, "check")
 
 	check := scheduler.check
 	check.Cron = "* * * * *"
@@ -307,7 +307,7 @@ func TestCheckBuildRequestAdhoc_GH2201(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newIntervalScheduler(t, ctx, "adhoc")
+	scheduler := newIntervalScheduler(ctx, t, "adhoc")
 
 	check := scheduler.check
 	check.Cron = "* * * * *"

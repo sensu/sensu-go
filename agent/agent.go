@@ -7,7 +7,6 @@ package agent
 import (
 	"context"
 	"encoding/base64"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -17,15 +16,18 @@ import (
 	"sync"
 
 	time "github.com/echlebek/timeproxy"
+	"github.com/gogo/protobuf/proto"
 
 	"github.com/atlassian/gostatsd/pkg/statsd"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
+	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/util/retry"
+	utilstrings "github.com/sensu/sensu-go/util/strings"
 	"github.com/sirupsen/logrus"
 )
 
@@ -49,6 +51,7 @@ type Agent struct {
 	config          *Config
 	connected       bool
 	connectedMu     sync.RWMutex
+	contentType     string
 	entity          *corev2.Entity
 	executor        command.Executor
 	handler         *handler.MessageHandler
@@ -61,6 +64,8 @@ type Agent struct {
 	systemInfoMu    sync.RWMutex
 	wg              sync.WaitGroup
 	apiQueue        queue
+	marshal         agentd.MarshalFunc
+	unmarshal       agentd.UnmarshalFunc
 }
 
 // NewAgent creates a new Agent. It returns non-nil error if there is any error
@@ -76,6 +81,8 @@ func NewAgent(config *Config) (*Agent, error) {
 		inProgressMu:    &sync.Mutex{},
 		sendq:           make(chan *transport.Message, 10),
 		systemInfo:      &corev2.System{},
+		unmarshal:       agentd.UnmarshalJSON,
+		marshal:         agentd.MarshalJSON,
 	}
 
 	agent.statsdServer = NewStatsdServer(agent)
@@ -101,8 +108,9 @@ func NewAgent(config *Config) (*Agent, error) {
 
 func (a *Agent) sendMessage(msg *transport.Message) {
 	logger.WithFields(logrus.Fields{
-		"type":    msg.Type,
-		"payload": string(msg.Payload),
+		"type":         msg.Type,
+		"content_type": a.contentType,
+		"payload_size": len(msg.Payload),
 	}).Info("sending message")
 	a.sendq <- msg
 }
@@ -206,7 +214,7 @@ func (a *Agent) connectionManager(ctx context.Context) {
 		a.connected = false
 		a.connectedMu.Unlock()
 
-		conn, err := connectWithBackoff(ctx, a.backendSelector, a.config.TLS, a.header, a.config.BackendHandshakeTimeout)
+		conn, err := a.connectWithBackoff(ctx)
 		if err != nil {
 			if err == ctx.Err() {
 				return
@@ -241,8 +249,9 @@ func (a *Agent) receiveLoop(ctx context.Context, cancel context.CancelFunc, conn
 
 		go func(msg *transport.Message) {
 			logger.WithFields(logrus.Fields{
-				"type":    msg.Type,
-				"payload": string(msg.Payload),
+				"type":         msg.Type,
+				"content_type": a.contentType,
+				"payload_size": len(msg.Payload),
 			}).Info("message received")
 			err := a.handler.Handle(ctx, msg.Type, msg.Payload)
 			if err != nil {
@@ -303,7 +312,7 @@ func (a *Agent) newKeepalive() *transport.Message {
 	keepalive.Entity = a.getAgentEntity()
 	keepalive.Timestamp = time.Now().Unix()
 
-	msgBytes, err := json.Marshal(keepalive)
+	msgBytes, err := a.marshal(keepalive)
 	if err != nil {
 		// unlikely that this will ever happen
 		logger.WithError(err).Error("error sending keepalive")
@@ -376,7 +385,7 @@ func (a *Agent) StartStatsd(ctx context.Context) {
 	}()
 }
 
-func connectWithBackoff(ctx context.Context, selector BackendSelector, tlsOpts *corev2.TLSOptions, header http.Header, handshakeTimeout int) (transport.Transport, error) {
+func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, error) {
 	var conn transport.Transport
 
 	backoff := retry.ExponentialBackoff{
@@ -387,10 +396,12 @@ func connectWithBackoff(ctx context.Context, selector BackendSelector, tlsOpts *
 	}
 
 	err := backoff.Retry(func(retry int) (bool, error) {
-		url := selector.Select()
+		url := a.backendSelector.Select()
 
 		logger.Infof("connecting to backend URL %q", url)
-		c, err := transport.Connect(url, tlsOpts, header, handshakeTimeout)
+		a.header.Set("Accept", agentd.ProtobufSerializationHeader)
+		logger.WithField("header", fmt.Sprintf("Accept: %s", agentd.ProtobufSerializationHeader)).Debug("setting header")
+		c, respHeader, err := transport.Connect(url, a.config.TLS, a.header, a.config.BackendHandshakeTimeout)
 		if err != nil {
 			logger.WithError(err).Error("reconnection attempt failed")
 			return false, nil
@@ -399,6 +410,21 @@ func connectWithBackoff(ctx context.Context, selector BackendSelector, tlsOpts *
 		logger.Info("successfully connected")
 
 		conn = c
+
+		logger.WithField("header", fmt.Sprintf("Accept: %s", respHeader["Accept"])).Debug("received header")
+		if utilstrings.InArray(agentd.ProtobufSerializationHeader, respHeader["Accept"]) {
+			a.contentType = agentd.ProtobufSerializationHeader
+			a.unmarshal = proto.Unmarshal
+			a.marshal = proto.Marshal
+			logger.WithField("format", "protobuf").Debug("setting serialization/deserialization")
+		} else {
+			a.contentType = agentd.JSONSerializationHeader
+			a.unmarshal = agentd.UnmarshalJSON
+			a.marshal = agentd.MarshalJSON
+			logger.WithField("format", "JSON").Debug("setting serialization/deserialization")
+		}
+		a.header.Set("Content-Type", a.contentType)
+		logger.WithField("header", fmt.Sprintf("Content-Type: %s", a.contentType)).Debug("setting header")
 
 		return true, nil
 	})

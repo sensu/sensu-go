@@ -10,10 +10,30 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Added functionality for the agent `--allow-list` configuration, which
 whitelists check and check hook executables.
-- The agent now sends heartbeats to the backend in order to detect network
-failures and reconnect faster.
+- Added the `runtime_assets` field to `HookConfig`. Assets are enabled
+for check hook execution.
+- Added backwards compatible content negotiation to the websocket connection.
+Protobuf will be used for serialization/deserialization unless indicated by the
+backend to use JSON.
 
 ### Changed
+- The project now uses Go modules instead of dep for dependency management.
+
+### Fixed
+- Fixed the tabular output of `sensuctl filter list` so inclusive filter expressions
+are joined with `&&` and exclusive filter expressions are joined with `||`.
+- The REST API now correctly only returns events for the specific entity
+queried in the `GET /events/:entity` endpoint (#3141)
+
+### Removed
+- Removed encoded protobuf payloads from log messages (when decoded, they can reveal
+redacted secrets).
+
+## [5.11.1] - 2019-07-18
+
+### Fixed
+- The agent now sends heartbeats to the backend in order to detect network
+failures and reconnect faster.
 - The default handshake timeout for the WebSocket connection negotiation has
 been lowered from 45 to 15 seconds and is now configurable.
 

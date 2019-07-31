@@ -8,9 +8,13 @@ image:
   - Visual Studio 2015
   # - Visual Studio 2017
 
+cache:
+  - c:\go\pkg\mod -> go.mod, go.sum
+
 environment:
   GOPATH: c:\gopath
   GOVERSION: 1.12.3
+  GO111MODULE: 'on'
 
   matrix:
     - GOARCH: amd64

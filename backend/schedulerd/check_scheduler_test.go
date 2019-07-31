@@ -42,7 +42,7 @@ func (tcs *TestCronScheduler) Receiver() chan<- interface{} {
 	return tcs.channel
 }
 
-func newIntervalScheduler(t *testing.T, ctx context.Context, executor string) *TestIntervalScheduler {
+func newIntervalScheduler(ctx context.Context, t *testing.T, executor string) *TestIntervalScheduler {
 	t.Helper()
 
 	assert := assert.New(t)
@@ -78,7 +78,7 @@ func newIntervalScheduler(t *testing.T, ctx context.Context, executor string) *T
 	return scheduler
 }
 
-func newCronScheduler(t *testing.T, ctx context.Context, executor string) *TestCronScheduler {
+func newCronScheduler(ctx context.Context, t *testing.T, executor string) *TestCronScheduler {
 	t.Helper()
 
 	assert := assert.New(t)
@@ -121,7 +121,7 @@ func TestIntervalScheduling(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newIntervalScheduler(t, ctx, "check")
+	scheduler := newIntervalScheduler(ctx, t, "check")
 
 	// Set interval to smallest valid value
 	check := scheduler.check
@@ -161,7 +161,7 @@ func TestCheckSubdueInterval(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newIntervalScheduler(t, ctx, "check")
+	scheduler := newIntervalScheduler(ctx, t, "check")
 
 	// Set interval to smallest valid value
 	check := scheduler.check
@@ -210,7 +210,7 @@ func TestCronScheduling(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newCronScheduler(t, ctx, "check")
+	scheduler := newCronScheduler(ctx, t, "check")
 
 	// Set interval to smallest valid value
 	check := scheduler.check
@@ -255,7 +255,7 @@ func TestCheckSubdueCron(t *testing.T) {
 	// Start a scheduler
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	scheduler := newCronScheduler(t, ctx, "check")
+	scheduler := newCronScheduler(ctx, t, "check")
 
 	// Set interval to smallest valid value
 	check := scheduler.check

@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/sensu/sensu-go/agent"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/util/url"
 	"github.com/sensu/sensu-go/version"
@@ -136,7 +136,7 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 			cfg.BackendHeartbeatTimeout = viper.GetInt(flagBackendHeartbeatTimeout)
 
 			// TLS configuration
-			cfg.TLS = &types.TLSOptions{}
+			cfg.TLS = &corev2.TLSOptions{}
 			cfg.TLS.TrustedCAFile = viper.GetString(flagTrustedCAFile)
 			cfg.TLS.InsecureSkipVerify = viper.GetBool(flagInsecureSkipTLSVerify)
 
@@ -217,10 +217,10 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	viper.SetDefault(flagEventsRateLimit, agent.DefaultEventsAPIRateLimit)
 	viper.SetDefault(flagEventsBurstLimit, agent.DefaultEventsAPIBurstLimit)
 	viper.SetDefault(flagKeepaliveInterval, agent.DefaultKeepaliveInterval)
-	viper.SetDefault(flagKeepaliveTimeout, types.DefaultKeepaliveTimeout)
+	viper.SetDefault(flagKeepaliveTimeout, corev2.DefaultKeepaliveTimeout)
 	viper.SetDefault(flagNamespace, agent.DefaultNamespace)
 	viper.SetDefault(flagPassword, agent.DefaultPassword)
-	viper.SetDefault(flagRedact, types.DefaultRedactFields)
+	viper.SetDefault(flagRedact, corev2.DefaultRedactFields)
 	viper.SetDefault(flagSocketHost, agent.DefaultSocketHost)
 	viper.SetDefault(flagSocketPort, agent.DefaultSocketPort)
 	viper.SetDefault(flagStatsdDisable, agent.DefaultStatsdDisable)

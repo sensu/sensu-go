@@ -152,6 +152,49 @@ func TestEventStorage(t *testing.T) {
 	})
 }
 
+func TestEventByEntity(t *testing.T) {
+	testWithEtcd(t, func(s store.Store) {
+		// Create new namespaces
+		require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("acme")))
+
+		e1 := corev2.FixtureEvent("entity", "check1")
+		e2 := corev2.FixtureEvent("entity1", "check1")
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, e1.Entity.Namespace)
+		pred := &store.SelectionPredicate{}
+
+		// Set these to nil in order to avoid comparison issues between {} and nil
+		e1.Check.Labels = nil
+		e1.Check.Annotations = nil
+		e2.Check.Labels = nil
+		e2.Check.Annotations = nil
+
+		_, _, err := s.UpdateEvent(ctx, e1)
+		require.NoError(t, err)
+		_, _, err = s.UpdateEvent(ctx, e2)
+		require.NoError(t, err)
+
+		// Listing events for entity should not return the event for entity1
+		events, err := s.GetEventsByEntity(ctx, "entity", pred)
+		assert.NoError(t, err)
+		assert.NotNil(t, events)
+		assert.Equal(t, 1, len(events))
+		assert.Empty(t, pred.Continue)
+		if got, want := events[0], e1; !reflect.DeepEqual(got, want) {
+			t.Errorf("bad event: got %#v, want %#v", got.Check, want.Check)
+		}
+
+		// Listing events for entity1 should still work even though entity exists
+		events, err = s.GetEventsByEntity(ctx, "entity1", pred)
+		assert.NoError(t, err)
+		assert.NotNil(t, events)
+		assert.Equal(t, len(events), 1)
+		assert.Empty(t, pred.Continue)
+		if got, want := events[0], e2; !reflect.DeepEqual(got, want) {
+			t.Errorf("bad event: got %#v, want %#v", got.Check, want.Check)
+		}
+	})
+}
+
 func TestDoNotStoreMetrics(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		event := corev2.FixtureEvent("entity1", "check1")

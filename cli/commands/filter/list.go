@@ -2,6 +2,7 @@ package filter
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"strings"
 
@@ -89,7 +90,20 @@ func printToTable(results interface{}, writer io.Writer) {
 				if !ok {
 					return cli.TypeError
 				}
-				return strings.Join(filter.Expressions, " && ")
+				var expressions []string
+				var sep string
+				switch action := filter.Action; action {
+				case types.EventFilterActionAllow:
+					sep = " && "
+				case types.EventFilterActionDeny:
+					sep = " || "
+				default:
+					sep = ", "
+				}
+				for _, exp := range filter.Expressions {
+					expressions = append(expressions, fmt.Sprintf("(%s)", exp))
+				}
+				return strings.Join(expressions, sep)
 			},
 		},
 	})

@@ -28,3 +28,16 @@ func TestContextKeyBuilder(t *testing.T) {
 	// a different namespace that would have the same prefix, eg: acme-devel
 	assert.Equal(t, "/sensu.io/checks/acme/", builder.Build(""))
 }
+
+func TestExactMatchKeyBuilder(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	ctx = context.WithValue(ctx, types.NamespaceKey, "default")
+	builder := NewKeyBuilder("events").WithContext(ctx).WithExactMatch()
+
+	// Querying all events for an entity uses etcd prefixes, so we want
+	// the key to end in '/' in order not to inadvertently retrieve events from
+	// a different entity that would have the same prefix, eg: foobar
+	assert.Equal(t, "/sensu.io/events/default/entity_name/", builder.Build("entity_name"))
+}

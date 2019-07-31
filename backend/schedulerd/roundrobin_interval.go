@@ -101,6 +101,7 @@ func (s *RoundRobinIntervalScheduler) updateRings() {
 	s.cancels = newCancels
 }
 
+// Start starts the round robin interval scheduler.
 func (s *RoundRobinIntervalScheduler) Start() {
 	go s.start()
 }
@@ -217,6 +218,7 @@ func (s *RoundRobinIntervalScheduler) Stop() error {
 	return nil
 }
 
+// Type returns the type of the round robin interval scheduler.
 func (s *RoundRobinIntervalScheduler) Type() SchedulerType {
 	return RoundRobinIntervalType
 }

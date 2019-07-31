@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"context"
 	"testing"
 
 	"github.com/sensu/sensu-go/command"
@@ -13,6 +14,7 @@ import (
 
 func TestExecuteHook(t *testing.T) {
 	assert := assert.New(t)
+	ctx := context.Background()
 
 	hookConfig := types.FixtureHookConfig("hook")
 	hookConfig.Stdin = true
@@ -30,14 +32,14 @@ func TestExecuteHook(t *testing.T) {
 	execution := command.FixtureExecutionResponse(0, "")
 	ex.Return(execution, nil)
 
-	hook := agent.executeHook(hookConfig, "check")
+	hook := agent.executeHook(ctx, hookConfig, "check", nil)
 
 	assert.NotZero(hook.Executed)
 	assert.Equal(int32(0), hook.Status)
 	assert.Equal("", hook.Output)
 
 	execution.Output = "hello"
-	hook = agent.executeHook(hookConfig, "check")
+	hook = agent.executeHook(ctx, hookConfig, "check", nil)
 
 	assert.NotZero(hook.Executed)
 	assert.Equal(int32(0), hook.Status)
