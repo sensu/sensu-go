@@ -145,10 +145,10 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			return err
 		}
 		f, err := os.Create(fp)
-		defer f.Close()
 		if err != nil {
 			return err
 		}
+		defer f.Close()
 		_, err = f.WriteString(out)
 		return err
 	}
