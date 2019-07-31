@@ -96,7 +96,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 					}
 				}
 				if length == len(actions) {
-					return fmt.Errorf("invalid arg: %s", t)
+					return fmt.Errorf("invalid resource type: %s", t)
 				}
 			}
 		}
