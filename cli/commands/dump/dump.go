@@ -89,14 +89,10 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		} else {
 			types := strings.Split(args[0], ",")
 			for _, t := range types {
-				length := len(actions)
 				for _, action := range All {
 					if t == action.Resource {
 						actions = append(actions, action)
 					}
-				}
-				if length == len(actions) {
-					return fmt.Errorf("couldn't get resource: %s", t)
 				}
 			}
 		}
