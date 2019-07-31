@@ -141,6 +141,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			return err
 		}
 		if fp == "" {
+			_, err := fmt.Print(out)
 			return err
 		}
 		f, err := os.Create(fp)
