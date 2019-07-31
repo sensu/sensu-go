@@ -103,7 +103,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 
 		// iterate the matched actions and start building a sensuctl command
 		var out string
-		for i, a := range actions {
+		for _, a := range actions {
 			ctlArgs := []string{
 				a.Resource,
 				a.Verb,
@@ -132,7 +132,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			if len(originalBytes) == 0 {
 				continue
 			}
-			if format == "wrapped-json" || i == len(actions)-1 || out == "" {
+			if format == "wrapped-json" {
 				out = fmt.Sprintf("%s%s", out, string(originalBytes))
 			} else {
 				out = fmt.Sprintf("%s---\n%s", out, string(originalBytes))
