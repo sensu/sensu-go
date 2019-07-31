@@ -124,7 +124,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			}
 
 			// execute the command and build wrapped-json or yaml lists
-			originalBytes, _ := exec.Command(os.Args[0], ctlArgs...).CombinedOutput()
+			originalBytes, _ := exec.Command(os.Args[0], ctlArgs...).Output()
 			if len(originalBytes) == 0 {
 				continue
 			}
