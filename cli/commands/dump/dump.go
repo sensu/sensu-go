@@ -89,10 +89,14 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		} else {
 			types := strings.Split(args[0], ",")
 			for _, t := range types {
+				length := len(actions)
 				for _, action := range All {
 					if t == action.Resource {
 						actions = append(actions, action)
 					}
+				}
+				if length == len(actions) {
+					return fmt.Errorf("invalid arg: %s", t)
 				}
 			}
 		}
@@ -120,11 +124,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			}
 
 			// execute the command and build wrapped-json or yaml lists
-			originalBytes, err := exec.Command(os.Args[0], ctlArgs...).CombinedOutput()
-			if err != nil {
-				_, _ = cmd.OutOrStdout().Write(originalBytes)
-				return fmt.Errorf("couldn't get resource: %s", err)
-			}
+			originalBytes, _ := exec.Command(os.Args[0], ctlArgs...).CombinedOutput()
 			if len(originalBytes) == 0 {
 				continue
 			}
