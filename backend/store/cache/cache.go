@@ -236,6 +236,7 @@ func (r *Resource) start(ctx context.Context) {
 
 // rebuild the cache using the store as the source of truth
 func (r *Resource) rebuild(ctx context.Context) error {
+	logger.Infof("rebuilding the cache for resource type %T", r.resourceT)
 	resources, err := getResources(ctx, r.client, r.resourceT)
 	if err != nil {
 		return err
