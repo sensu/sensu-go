@@ -38,7 +38,7 @@ require (
 	github.com/gorilla/websocket v1.2.0
 	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
 	github.com/graph-gophers/dataloader v0.0.0-20180104184831-78139374585c
-	github.com/graphql-go/graphql v0.0.0-20180119225129-1c504cfe6f63
+	github.com/graphql-go/graphql v0.7.9-0.20190403165646-199d20bbfed7
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v0.0.0-20160910222444-6b7015e65d36 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.3.0 // indirect
