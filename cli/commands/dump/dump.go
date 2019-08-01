@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/spf13/cobra"
@@ -57,8 +58,8 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 		RunE:  execute(cli),
 	}
 
-	helpers.AddFormatFlag(cmd.Flags())
 	helpers.AddAllNamespace(cmd.Flags())
+	_ = cmd.Flags().StringP("format", "", cli.Config.Format(), fmt.Sprintf(`format of data returned ("%s"|"%s")`, config.FormatWrappedJSON, config.FormatYAML))
 	_ = cmd.Flags().StringP("file", "f", "", "file to dump resources to")
 
 	return cmd
@@ -77,9 +78,9 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			format = flag
 		}
 		switch format {
-		case "yaml", "wrapped-json":
+		case config.FormatYAML, config.FormatWrappedJSON:
 		default:
-			format = "yaml"
+			format = config.FormatYAML
 		}
 
 		// parse the comma separated resource types and match against the defined actions
@@ -87,7 +88,16 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		if args[0] == "all" {
 			actions = All
 		} else {
+			// check for duplicates first
 			types := strings.Split(args[0], ",")
+			for i := 0; i < len(types); i++ {
+				for v := 0; v < i; v++ {
+					if types[v] == types[i] {
+						return fmt.Errorf("duplicate resource type: %s", types[v])
+					}
+				}
+			}
+			// build actions for sensuctl
 			for _, t := range types {
 				length := len(actions)
 				for _, action := range All {
@@ -128,7 +138,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			if len(originalBytes) == 0 {
 				continue
 			}
-			if format == "wrapped-json" {
+			if format == config.FormatWrappedJSON {
 				out = fmt.Sprintf("%s%s", out, string(originalBytes))
 			} else {
 				out = fmt.Sprintf("%s---\n%s", out, string(originalBytes))
