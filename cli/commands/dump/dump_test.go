@@ -28,6 +28,10 @@ func TestCommandArgs(t *testing.T) {
 	out, err := test.RunCmd(cmd, []string{})
 	assert.NotEmpty(out)
 	assert.Error(err)
+
+	out, err = test.RunCmd(cmd, []string{"check,handler,check"})
+	assert.Empty(out)
+	assert.Error(err)
 }
 
 func TestListFlags(t *testing.T) {
