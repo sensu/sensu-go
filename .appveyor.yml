@@ -15,6 +15,7 @@ environment:
   GOPATH: c:\gopath
   GOVERSION: 1.12.3
   GO111MODULE: 'on'
+  GOPROXY: 'https://proxy.golang.org'
 
   matrix:
     - GOARCH: amd64
