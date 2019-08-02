@@ -2,7 +2,6 @@ package tracing
 
 import (
 	"context"
-	"fmt"
 
 	time "github.com/echlebek/timeproxy"
 	"github.com/graphql-go/graphql"
@@ -75,7 +74,6 @@ func (c *PrometheusTracer) ParseDidStart(ctx context.Context) (context.Context, 
 	t := time.Now()
 	return ctx, func(_ error) {
 		dur := msecSince(t)
-		fmt.Printf("dur: %v", dur)
 		met := Collector.WithLabelValues(KeyParse, platformKeys[KeyParse])
 		met.Observe(dur)
 	}
