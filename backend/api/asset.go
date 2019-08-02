@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
@@ -9,104 +10,59 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
-var assetStorePrefix = (&corev2.Asset{}).StorePrefix()
-
 type AssetClient struct {
-	store store.ResourceStore
-	auth  authorization.Authorizer
+	client genericClient
+	auth   authorization.Authorizer
 }
 
 func NewAssetClient(store store.ResourceStore, auth authorization.Authorizer) *AssetClient {
 	return &AssetClient{
-		store: store,
-		auth:  auth,
+		client: genericClient{
+			Kind:       &corev2.Asset{},
+			Store:      store,
+			Auth:       auth,
+			Resource:   "assets",
+			APIGroup:   "core",
+			APIVersion: "v2",
+		},
+		auth: auth,
 	}
 }
 
 // ListAssets fetches a list of asset resources
 func (a *AssetClient) ListAssets(ctx context.Context) ([]*corev2.Asset, error) {
-	attrs := assetListAttributes(ctx)
-	if err := authorize(ctx, a.auth, attrs); err != nil {
-		return nil, err
-	}
 	pred := &store.SelectionPredicate{
 		Continue: corev2.PageContinueFromContext(ctx),
 		Limit:    int64(corev2.PageSizeFromContext(ctx)),
 	}
 	slice := []*corev2.Asset{}
-	if err := a.store.ListResources(ctx, assetStorePrefix, &slice, pred); err != nil {
-		return nil, err
+	if err := a.client.List(ctx, &slice, pred); err != nil {
+		return nil, fmt.Errorf("couldn't list assets: %s", err)
 	}
 	return slice, nil
 }
 
 // FetchAsset fetches an asset resource from the backend
 func (a *AssetClient) FetchAsset(ctx context.Context, name string) (*corev2.Asset, error) {
-	attrs := assetFetchAttributes(ctx, name)
-	if err := authorize(ctx, a.auth, attrs); err != nil {
-		return nil, err
-	}
 	var asset corev2.Asset
-	return &asset, a.store.GetResource(ctx, name, &asset)
+	if err := a.client.Get(ctx, name, &asset); err != nil {
+		return nil, fmt.Errorf("couldn't get asset: %s", err)
+	}
+	return &asset, nil
 }
 
 // CreateAsset creates an asset resource
 func (a *AssetClient) CreateAsset(ctx context.Context, asset *corev2.Asset) error {
-	attrs := assetCreateAttributes(ctx, asset.Name)
-	if err := authorize(ctx, a.auth, attrs); err != nil {
-		return err
+	if err := a.client.Create(ctx, asset); err != nil {
+		return fmt.Errorf("couldn't create asset: %s", err)
 	}
-	return a.store.CreateResource(ctx, asset)
+	return nil
 }
 
 // UpdateAsset updates an asset resource
 func (a *AssetClient) UpdateAsset(ctx context.Context, asset *corev2.Asset) error {
-	attrs := assetUpdateAttributes(ctx, asset.Name)
-	if err := authorize(ctx, a.auth, attrs); err != nil {
-		return err
+	if err := a.client.Update(ctx, asset); err != nil {
+		return fmt.Errorf("couldn't update asset: %s", err)
 	}
-	return a.store.CreateOrUpdateResource(ctx, asset)
-}
-
-func assetListAttributes(ctx context.Context) *authorization.Attributes {
-	return &authorization.Attributes{
-		APIGroup:   "core",
-		APIVersion: "v2",
-		Namespace:  corev2.ContextNamespace(ctx),
-		Resource:   "assets",
-		Verb:       "list",
-	}
-}
-
-func assetFetchAttributes(ctx context.Context, name string) *authorization.Attributes {
-	return &authorization.Attributes{
-		APIGroup:     "core",
-		APIVersion:   "v2",
-		Namespace:    corev2.ContextNamespace(ctx),
-		Resource:     "assets",
-		Verb:         "get",
-		ResourceName: name,
-	}
-}
-
-func assetCreateAttributes(ctx context.Context, name string) *authorization.Attributes {
-	return &authorization.Attributes{
-		APIGroup:     "core",
-		APIVersion:   "v2",
-		Namespace:    corev2.ContextNamespace(ctx),
-		Resource:     "assets",
-		Verb:         "create",
-		ResourceName: name,
-	}
-}
-
-func assetUpdateAttributes(ctx context.Context, name string) *authorization.Attributes {
-	return &authorization.Attributes{
-		APIGroup:     "core",
-		APIVersion:   "v2",
-		Namespace:    corev2.ContextNamespace(ctx),
-		Resource:     "assets",
-		Verb:         "update",
-		ResourceName: name,
-	}
+	return nil
 }
