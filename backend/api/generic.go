@@ -19,6 +19,9 @@ type genericClient struct {
 }
 
 func (g *genericClient) Create(ctx context.Context, value corev2.Resource) error {
+	if err := value.Validate(); err != nil {
+		return err
+	}
 	attrs := &authorization.Attributes{
 		APIGroup:     g.APIGroup,
 		APIVersion:   g.APIVersion,
@@ -34,6 +37,9 @@ func (g *genericClient) Create(ctx context.Context, value corev2.Resource) error
 }
 
 func (g *genericClient) Update(ctx context.Context, value corev2.Resource) error {
+	if err := value.Validate(); err != nil {
+		return err
+	}
 	attrs := &authorization.Attributes{
 		APIGroup:     g.APIGroup,
 		APIVersion:   g.APIVersion,
