@@ -10,12 +10,15 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// EntityClient is an API client for entities.
 type EntityClient struct {
 	client     *genericClient
 	eventStore store.EventStore
 	auth       authorization.Authorizer
 }
 
+// NewEntityClient creates a new EntityClient given a store, an event store and
+// an authorizer.
 func NewEntityClient(store store.ResourceStore, eventStore store.EventStore, auth authorization.Authorizer) *EntityClient {
 	return &EntityClient{
 		client: &genericClient{
@@ -31,6 +34,9 @@ func NewEntityClient(store store.ResourceStore, eventStore store.EventStore, aut
 	}
 }
 
+// DeleteEntity deletes an Entity, if authorized. In doing so, it will also
+// delete all of the events associated with the entity. The operation is not
+// transactional; partial data may remain if it fails.
 func (e *EntityClient) DeleteEntity(ctx context.Context, name string) error {
 	if err := e.client.Delete(ctx, name); err != nil {
 		return err
@@ -59,6 +65,7 @@ func (e *EntityClient) DeleteEntity(ctx context.Context, name string) error {
 	return nil
 }
 
+// CreateEntity creates an entity, if authorized.
 func (e *EntityClient) CreateEntity(ctx context.Context, entity *corev2.Entity) error {
 	if err := e.client.Create(ctx, entity); err != nil {
 		return fmt.Errorf("couldn't create entity: %s", err)
@@ -66,6 +73,7 @@ func (e *EntityClient) CreateEntity(ctx context.Context, entity *corev2.Entity) 
 	return nil
 }
 
+// UpdateEntity updates an entity, if authorized.
 func (e *EntityClient) UpdateEntity(ctx context.Context, entity *corev2.Entity) error {
 	if err := e.client.Update(ctx, entity); err != nil {
 		return fmt.Errorf("couldn't update entity: %s", err)
@@ -73,6 +81,7 @@ func (e *EntityClient) UpdateEntity(ctx context.Context, entity *corev2.Entity) 
 	return nil
 }
 
+// GetEntity gets an entity, if authorized.
 func (e *EntityClient) GetEntity(ctx context.Context, name string) (*corev2.Entity, error) {
 	var entity corev2.Entity
 	if err := e.client.Get(ctx, name, &entity); err != nil {

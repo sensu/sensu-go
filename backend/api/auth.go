@@ -9,6 +9,8 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+// addAuthUser finds the user in the provided context, and sets it on the
+// attrs.
 func addAuthUser(ctx context.Context, attrs *authorization.Attributes) error {
 	// Get the claims from the request context
 	claims := jwt.GetClaimsFromContext(ctx)
@@ -25,6 +27,8 @@ func addAuthUser(ctx context.Context, attrs *authorization.Attributes) error {
 	return nil
 }
 
+// authorize is a convenience function for clients that want to test if the
+// operation specified by the attributes is authorized.
 func authorize(ctx context.Context, auth authorization.Authorizer, attrs *authorization.Attributes) error {
 	if err := addAuthUser(ctx, attrs); err != nil {
 		return err

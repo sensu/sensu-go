@@ -9,11 +9,13 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
+// HandlerClient is an API client for handlers.
 type HandlerClient struct {
 	client genericClient
 	auth   authorization.Authorizer
 }
 
+// NewHandlerClient creates a new HandlerClient, given a store and authorizer.
 func NewHandlerClient(store store.ResourceStore, auth authorization.Authorizer) *HandlerClient {
 	return &HandlerClient{
 		client: genericClient{
@@ -28,7 +30,7 @@ func NewHandlerClient(store store.ResourceStore, auth authorization.Authorizer) 
 	}
 }
 
-// ListHandlers fetches a list of handler resources
+// ListHandlers fetches a list of handler resources, if authorized.
 func (a *HandlerClient) ListHandlers(ctx context.Context) ([]*corev2.Handler, error) {
 	pred := &store.SelectionPredicate{
 		Continue: corev2.PageContinueFromContext(ctx),
@@ -41,7 +43,7 @@ func (a *HandlerClient) ListHandlers(ctx context.Context) ([]*corev2.Handler, er
 	return slice, nil
 }
 
-// FetchHandler fetches a handler resource from the backend
+// FetchHandler fetches a handler resource from the backend, if authorized.
 func (a *HandlerClient) FetchHandler(ctx context.Context, name string) (*corev2.Handler, error) {
 	var handler corev2.Handler
 	if err := a.client.Get(ctx, name, &handler); err != nil {
@@ -50,7 +52,7 @@ func (a *HandlerClient) FetchHandler(ctx context.Context, name string) (*corev2.
 	return &handler, nil
 }
 
-// CreateHandler creates a handler resource
+// CreateHandler creates a handler resource, if authorized.
 func (a *HandlerClient) CreateHandler(ctx context.Context, handler *corev2.Handler) error {
 	if err := a.client.Create(ctx, handler); err != nil {
 		return fmt.Errorf("couldn't create handler: %s", err)
@@ -58,7 +60,7 @@ func (a *HandlerClient) CreateHandler(ctx context.Context, handler *corev2.Handl
 	return nil
 }
 
-// UpdateHandler updates a handler resource
+// UpdateHandler updates a handler resource, if authorized.
 func (a *HandlerClient) UpdateHandler(ctx context.Context, handler *corev2.Handler) error {
 	if err := a.client.Update(ctx, handler); err != nil {
 		return fmt.Errorf("couldn't update handler: %s", err)

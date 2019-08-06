@@ -10,16 +10,19 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
+// Publisher is an interface that represents the message bus concept.
 type Publisher interface {
 	Publish(topic string, message interface{}) error
 }
 
+// EventClient is an API client for events.
 type EventClient struct {
 	store store.EventStore
 	auth  authorization.Authorizer
 	bus   Publisher
 }
 
+// NewEventClient creates a new EventClient, given a store, authorizer, and bus.
 func NewEventClient(store store.EventStore, auth authorization.Authorizer, bus Publisher) *EventClient {
 	return &EventClient{
 		store: store,
@@ -28,6 +31,8 @@ func NewEventClient(store store.EventStore, auth authorization.Authorizer, bus P
 	}
 }
 
+// UpdateEvent updates an event, and publishes the update ot the bus, if
+// authorized.
 func (e *EventClient) UpdateEvent(ctx context.Context, event *corev2.Event) error {
 	if err := event.Validate(); err != nil {
 		return fmt.Errorf("couldn't create event: %s", err)
@@ -40,6 +45,7 @@ func (e *EventClient) UpdateEvent(ctx context.Context, event *corev2.Event) erro
 	return e.bus.Publish(messaging.TopicEventRaw, event)
 }
 
+// GetEvent gets an event, if authorized.
 func (e *EventClient) GetEvent(ctx context.Context, entity, check string) (*corev2.Event, error) {
 	attrs := eventGetAttributes(ctx, fmt.Sprintf("%s:%s", entity, check))
 	if err := authorize(ctx, e.auth, attrs); err != nil {
@@ -48,6 +54,7 @@ func (e *EventClient) GetEvent(ctx context.Context, entity, check string) (*core
 	return e.store.GetEventByEntityCheck(ctx, entity, check)
 }
 
+// DeleteEvent deletes an event, if authorized.
 func (e *EventClient) DeleteEvent(ctx context.Context, entity, check string) error {
 	attrs := eventDeleteAttributes(ctx, entity, check)
 	if err := authorize(ctx, e.auth, attrs); err != nil {
@@ -59,6 +66,8 @@ func (e *EventClient) DeleteEvent(ctx context.Context, entity, check string) err
 	return nil
 }
 
+// ListEvents lists all events in a namespace, according to the selection
+// predicate, if authorized.
 func (e *EventClient) ListEvents(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
 	attrs := eventListAttributes(ctx)
 	if err := authorize(ctx, e.auth, attrs); err != nil {

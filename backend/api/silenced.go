@@ -9,11 +9,13 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
+// SilencedClient is an API client for silencing checks.
 type SilencedClient struct {
 	store store.SilencedStore
 	auth  authorization.Authorizer
 }
 
+// NewSilencedClient creates a new SilencedClient, given a store and authorizer.
 func NewSilencedClient(store store.SilencedStore, auth authorization.Authorizer) *SilencedClient {
 	return &SilencedClient{
 		store: store,
@@ -21,6 +23,7 @@ func NewSilencedClient(store store.SilencedStore, auth authorization.Authorizer)
 	}
 }
 
+// UpdateSilenced updates a silenced entry, if authorized.
 func (s *SilencedClient) UpdateSilenced(ctx context.Context, silenced *corev2.Silenced) error {
 	if err := silenced.Validate(); err != nil {
 		return fmt.Errorf("couldn't update silenced entry: %s", err)
@@ -35,6 +38,7 @@ func (s *SilencedClient) UpdateSilenced(ctx context.Context, silenced *corev2.Si
 	return nil
 }
 
+// GetSilencedByName gets a silenced entry by name, if authorized.
 func (s *SilencedClient) GetSilencedByName(ctx context.Context, name string) (*corev2.Silenced, error) {
 	attrs := silencedFetchAttrs(ctx, name)
 	if err := authorize(ctx, s.auth, attrs); err != nil {
@@ -47,6 +51,7 @@ func (s *SilencedClient) GetSilencedByName(ctx context.Context, name string) (*c
 	return silenced, nil
 }
 
+// DeleteSilencedByName deletes a silenced entry by name, if authorized.
 func (s *SilencedClient) DeleteSilencedByName(ctx context.Context, name string) error {
 	attrs := silencedDeleteAttrs(ctx, name)
 	if err := authorize(ctx, s.auth, attrs); err != nil {
@@ -58,6 +63,7 @@ func (s *SilencedClient) DeleteSilencedByName(ctx context.Context, name string) 
 	return nil
 }
 
+// ListSilenced lists all silenced entries within a namespace, if authorized.
 func (s *SilencedClient) ListSilenced(ctx context.Context) ([]*corev2.Silenced, error) {
 	attrs := silencedListAttrs(ctx)
 	if err := authorize(ctx, s.auth, attrs); err != nil {
@@ -70,6 +76,8 @@ func (s *SilencedClient) ListSilenced(ctx context.Context) ([]*corev2.Silenced, 
 	return silenceds, nil
 }
 
+// GetSilencedByCheckName gets all of the silenced entries applied to a check,
+// if authorized.
 func (s *SilencedClient) GetSilencedByCheckName(ctx context.Context, check string) ([]*corev2.Silenced, error) {
 	// access to the check implies access to its silenced entries
 	attrs := checkFetchAttributes(ctx, check)
@@ -83,12 +91,14 @@ func (s *SilencedClient) GetSilencedByCheckName(ctx context.Context, check strin
 	return silenceds, nil
 }
 
-func (s *SilencedClient) GetSilencedBySubscription(ctx context.Context, subscriptions ...string) ([]*corev2.Silenced, error) {
+// GetSilencedBySubscription gets all of the silenced entries applied to a
+// subscription, if authorized.
+func (s *SilencedClient) GetSilencedBySubscription(ctx context.Context, subs ...string) ([]*corev2.Silenced, error) {
 	attrs := silencedListAttrs(ctx)
 	if err := authorize(ctx, s.auth, attrs); err != nil {
 		return nil, fmt.Errorf("couldn't list silenced entries: %s", err)
 	}
-	silenceds, err := s.store.GetSilencedEntriesBySubscription(ctx, subscriptions...)
+	silenceds, err := s.store.GetSilencedEntriesBySubscription(ctx, subs...)
 	if err != nil {
 		return nil, fmt.Errorf("couldn't list silenced entries: %s", err)
 	}

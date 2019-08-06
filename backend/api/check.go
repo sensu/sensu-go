@@ -15,16 +15,20 @@ type CheckController interface {
 	QueueAdhocRequest(context.Context, string, *corev2.AdhocRequest) error
 }
 
+// CheckClient is an API client for check configuration.
 type CheckClient struct {
 	store      store.CheckConfigStore
 	controller CheckController
 	auth       authorization.Authorizer
 }
 
+// NewCheckClient creates a new CheckClient, given a store, a controller, and
+// an authorizer.
 func NewCheckClient(store store.Store, controller CheckController, auth authorization.Authorizer) *CheckClient {
 	return &CheckClient{store: store, controller: controller, auth: auth}
 }
 
+// CreateCheck creates a new check, if authorized.
 func (c *CheckClient) CreateCheck(ctx context.Context, check *corev2.CheckConfig) error {
 	attrs := checkCreateAttributes(ctx, check.Name)
 	if err := authorize(ctx, c.auth, attrs); err != nil {
@@ -33,6 +37,7 @@ func (c *CheckClient) CreateCheck(ctx context.Context, check *corev2.CheckConfig
 	return c.store.UpdateCheckConfig(ctx, check)
 }
 
+// UpdateCheck updates a check, if authorized.
 func (c *CheckClient) UpdateCheck(ctx context.Context, check *corev2.CheckConfig) error {
 	attrs := checkUpdateAttributes(ctx, check.Name)
 	if err := authorize(ctx, c.auth, attrs); err != nil {
@@ -41,6 +46,7 @@ func (c *CheckClient) UpdateCheck(ctx context.Context, check *corev2.CheckConfig
 	return c.store.UpdateCheckConfig(ctx, check)
 }
 
+// DeleteCheck deletes a check, if authorized.
 func (c *CheckClient) DeleteCheck(ctx context.Context, name string) error {
 	attrs := checkDeleteAttributes(ctx, name)
 	if err := authorize(ctx, c.auth, attrs); err != nil {
@@ -49,6 +55,7 @@ func (c *CheckClient) DeleteCheck(ctx context.Context, name string) error {
 	return c.store.DeleteCheckConfigByName(ctx, name)
 }
 
+// ExecuteCheck queues an ahoc check request, if authorized.
 func (c *CheckClient) ExecuteCheck(ctx context.Context, name string, req *corev2.AdhocRequest) error {
 	attrs := checkCreateAttributes(ctx, name)
 	if err := authorize(ctx, c.auth, attrs); err != nil {
@@ -57,6 +64,7 @@ func (c *CheckClient) ExecuteCheck(ctx context.Context, name string, req *corev2
 	return c.controller.QueueAdhocRequest(ctx, name, req)
 }
 
+// FetchCheck retrieves a check, if authorized.
 func (c *CheckClient) FetchCheck(ctx context.Context, name string) (*corev2.CheckConfig, error) {
 	attrs := checkFetchAttributes(ctx, name)
 	if err := authorize(ctx, c.auth, attrs); err != nil {
@@ -65,6 +73,7 @@ func (c *CheckClient) FetchCheck(ctx context.Context, name string) (*corev2.Chec
 	return c.store.GetCheckConfigByName(ctx, name)
 }
 
+// ListChecks lists all checks in a namespace, if authorized.
 func (c *CheckClient) ListChecks(ctx context.Context) ([]*corev2.CheckConfig, error) {
 	pred := &store.SelectionPredicate{
 		Continue: corev2.PageContinueFromContext(ctx),

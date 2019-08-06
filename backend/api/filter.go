@@ -9,11 +9,14 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
+// EventFilterClient is an API client for event filters.
 type EventFilterClient struct {
 	client genericClient
 	auth   authorization.Authorizer
 }
 
+// NewEventFilterClient creates a new EventFilterClient, given a store and
+// authorizer.
 func NewEventFilterClient(store store.ResourceStore, auth authorization.Authorizer) *EventFilterClient {
 	return &EventFilterClient{
 		client: genericClient{
@@ -28,7 +31,7 @@ func NewEventFilterClient(store store.ResourceStore, auth authorization.Authoriz
 	}
 }
 
-// ListEventFilters fetches a list of filter resources
+// ListEventFilters fetches a list of filter resources, if authorized.
 func (a *EventFilterClient) ListEventFilters(ctx context.Context) ([]*corev2.EventFilter, error) {
 	pred := &store.SelectionPredicate{
 		Continue: corev2.PageContinueFromContext(ctx),
@@ -41,7 +44,7 @@ func (a *EventFilterClient) ListEventFilters(ctx context.Context) ([]*corev2.Eve
 	return slice, nil
 }
 
-// FetchEventFilter fetches a filter resource from the backend
+// FetchEventFilter fetches a filter resource from the backend, if authorized.
 func (a *EventFilterClient) FetchEventFilter(ctx context.Context, name string) (*corev2.EventFilter, error) {
 	var filter corev2.EventFilter
 	if err := a.client.Get(ctx, name, &filter); err != nil {
@@ -50,7 +53,7 @@ func (a *EventFilterClient) FetchEventFilter(ctx context.Context, name string) (
 	return &filter, nil
 }
 
-// CreateEventFilter creates a filter resource
+// CreateEventFilter creates a filter resource, if authorized.
 func (a *EventFilterClient) CreateEventFilter(ctx context.Context, filter *corev2.EventFilter) error {
 	if err := a.client.Create(ctx, filter); err != nil {
 		return fmt.Errorf("couldn't create filter: %s", err)
@@ -58,7 +61,7 @@ func (a *EventFilterClient) CreateEventFilter(ctx context.Context, filter *corev
 	return nil
 }
 
-// UpdateEventFilter updates a filter resource
+// UpdateEventFilter updates a filter resource, if authorized.
 func (a *EventFilterClient) UpdateEventFilter(ctx context.Context, filter *corev2.EventFilter) error {
 	if err := a.client.Update(ctx, filter); err != nil {
 		return fmt.Errorf("couldn't update filter: %s", err)

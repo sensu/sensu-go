@@ -41,3 +41,27 @@ func GetAttributes(ctx context.Context) *Attributes {
 func SetAttributes(ctx context.Context, attrs *Attributes) context.Context {
 	return context.WithValue(ctx, types.AuthorizationAttributesKey, attrs)
 }
+
+// AttributesKey is a convenience type for storing an attributes-like value
+// as a map key.
+type AttributesKey struct {
+	APIGroup     string
+	APIVersion   string
+	Namespace    string
+	Resource     string
+	ResourceName string
+	UserName     string
+	Verb         string
+}
+
+func (a Attributes) Key() AttributesKey {
+	return AttributesKey{
+		APIGroup:     a.APIGroup,
+		APIVersion:   a.APIVersion,
+		Namespace:    a.Namespace,
+		Resource:     a.Resource,
+		ResourceName: a.ResourceName,
+		UserName:     a.User.Username,
+		Verb:         a.Verb,
+	}
+}

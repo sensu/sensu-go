@@ -9,11 +9,13 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
+// MutatorClient is an API client for mutators.
 type MutatorClient struct {
 	client genericClient
 	auth   authorization.Authorizer
 }
 
+// NewMutatorClient creates a new MutatorClient, given a store and an authorizer.
 func NewMutatorClient(store store.ResourceStore, auth authorization.Authorizer) *MutatorClient {
 	return &MutatorClient{
 		client: genericClient{
@@ -28,7 +30,7 @@ func NewMutatorClient(store store.ResourceStore, auth authorization.Authorizer) 
 	}
 }
 
-// ListMutators fetches a list of mutator resources
+// ListMutators fetches a list of mutator resources, if authorized.
 func (a *MutatorClient) ListMutators(ctx context.Context) ([]*corev2.Mutator, error) {
 	pred := &store.SelectionPredicate{
 		Continue: corev2.PageContinueFromContext(ctx),
@@ -41,7 +43,7 @@ func (a *MutatorClient) ListMutators(ctx context.Context) ([]*corev2.Mutator, er
 	return slice, nil
 }
 
-// FetchMutator fetches a mutator resource from the backend
+// FetchMutator fetches a mutator resource from the backend, if authorized.
 func (a *MutatorClient) FetchMutator(ctx context.Context, name string) (*corev2.Mutator, error) {
 	var mutator corev2.Mutator
 	if err := a.client.Get(ctx, name, &mutator); err != nil {
@@ -50,7 +52,7 @@ func (a *MutatorClient) FetchMutator(ctx context.Context, name string) (*corev2.
 	return &mutator, nil
 }
 
-// CreateMutator creates a mutator resource
+// CreateMutator creates a mutator resource, if authorized.
 func (a *MutatorClient) CreateMutator(ctx context.Context, mutator *corev2.Mutator) error {
 	if err := a.client.Create(ctx, mutator); err != nil {
 		return fmt.Errorf("couldn't create mutator: %s", err)
@@ -58,7 +60,7 @@ func (a *MutatorClient) CreateMutator(ctx context.Context, mutator *corev2.Mutat
 	return nil
 }
 
-// UpdateMutator updates a mutator resource
+// UpdateMutator updates a mutator resource, if authorized.
 func (a *MutatorClient) UpdateMutator(ctx context.Context, mutator *corev2.Mutator) error {
 	if err := a.client.Update(ctx, mutator); err != nil {
 		return fmt.Errorf("couldn't update mutator: %s", err)

@@ -9,11 +9,13 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
+// NamespaceClient is an API client for namespaces.
 type NamespaceClient struct {
 	client genericClient
 	auth   authorization.Authorizer
 }
 
+// NewnamespaceClient creates a new NamespaceClient, given a store and authorizer.
 func NewNamespaceClient(store store.ResourceStore, auth authorization.Authorizer) *NamespaceClient {
 	return &NamespaceClient{
 		client: genericClient{
@@ -28,7 +30,7 @@ func NewNamespaceClient(store store.ResourceStore, auth authorization.Authorizer
 	}
 }
 
-// ListNamespaces fetches a list of namespace resources
+// ListNamespaces fetches a list of namespace resources, if authorized.
 func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespace, error) {
 	pred := &store.SelectionPredicate{
 		Continue: corev2.PageContinueFromContext(ctx),
@@ -41,7 +43,7 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespa
 	return slice, nil
 }
 
-// FetchNamespace fetches a namespace resource from the backend
+// FetchNamespace fetches a namespace resource from the backend, if authorized.
 func (a *NamespaceClient) FetchNamespace(ctx context.Context, name string) (*corev2.Namespace, error) {
 	var namespace corev2.Namespace
 	if err := a.client.Get(ctx, name, &namespace); err != nil {
@@ -50,7 +52,7 @@ func (a *NamespaceClient) FetchNamespace(ctx context.Context, name string) (*cor
 	return &namespace, nil
 }
 
-// CreateNamespace creates a namespace resource
+// CreateNamespace creates a namespace resource, if authorized.
 func (a *NamespaceClient) CreateNamespace(ctx context.Context, namespace *corev2.Namespace) error {
 	if err := a.client.Create(ctx, namespace); err != nil {
 		return fmt.Errorf("couldn't create namespace: %s", err)
@@ -58,7 +60,7 @@ func (a *NamespaceClient) CreateNamespace(ctx context.Context, namespace *corev2
 	return nil
 }
 
-// UpdateNamespace updates a namespace resource
+// UpdateNamespace updates a namespace resource, if authorized.
 func (a *NamespaceClient) UpdateNamespace(ctx context.Context, namespace *corev2.Namespace) error {
 	if err := a.client.Update(ctx, namespace); err != nil {
 		return fmt.Errorf("couldn't update namespace: %s", err)

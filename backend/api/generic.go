@@ -8,7 +8,9 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
-// not meant to be used outside this package for now
+// genericClient is a client that's attached to the ResourceStore. It's intended
+// to be used by other clients in this package.
+// Not meant to be used outside this package for now.
 type genericClient struct {
 	Kind       corev2.Resource
 	Store      store.ResourceStore
@@ -18,6 +20,7 @@ type genericClient struct {
 	APIVersion string
 }
 
+// Create creates a resource, if authorized
 func (g *genericClient) Create(ctx context.Context, value corev2.Resource) error {
 	if err := value.Validate(); err != nil {
 		return err
@@ -36,6 +39,7 @@ func (g *genericClient) Create(ctx context.Context, value corev2.Resource) error
 	return g.Store.CreateResource(ctx, value)
 }
 
+// Update creates or updates a resource, if authorized
 func (g *genericClient) Update(ctx context.Context, value corev2.Resource) error {
 	if err := value.Validate(); err != nil {
 		return err
@@ -54,6 +58,7 @@ func (g *genericClient) Update(ctx context.Context, value corev2.Resource) error
 	return g.Store.CreateOrUpdateResource(ctx, value)
 }
 
+// Delete deletes a resource, if authorized
 func (g *genericClient) Delete(ctx context.Context, name string) error {
 	attrs := &authorization.Attributes{
 		APIGroup:     g.APIGroup,
@@ -69,6 +74,7 @@ func (g *genericClient) Delete(ctx context.Context, name string) error {
 	return g.Store.DeleteResource(ctx, g.Kind.StorePrefix(), name)
 }
 
+// Get gets a resource, if authorized
 func (g *genericClient) Get(ctx context.Context, name string, val corev2.Resource) error {
 	attrs := &authorization.Attributes{
 		APIGroup:     g.APIGroup,
@@ -84,6 +90,8 @@ func (g *genericClient) Get(ctx context.Context, name string, val corev2.Resourc
 	return g.Store.GetResource(ctx, name, val)
 }
 
+// List lists all resources within a namespace, according to a selection
+// predicate, if authorized
 func (g *genericClient) List(ctx context.Context, resources interface{}, pred *store.SelectionPredicate) error {
 	attrs := &authorization.Attributes{
 		APIGroup:   g.APIGroup,

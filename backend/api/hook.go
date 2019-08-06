@@ -9,11 +9,13 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 )
 
+// HookConfigClient is an API client for check hooks.
 type HookConfigClient struct {
 	client genericClient
 	auth   authorization.Authorizer
 }
 
+// NewHookConfigClient creates a new HookConfigClient, given a store and authorizer.
 func NewHookConfigClient(store store.ResourceStore, auth authorization.Authorizer) *HookConfigClient {
 	return &HookConfigClient{
 		client: genericClient{
@@ -28,7 +30,7 @@ func NewHookConfigClient(store store.ResourceStore, auth authorization.Authorize
 	}
 }
 
-// ListHookConfigs fetches a list of hook resources
+// ListHookConfigs fetches a list of hook resources, if authorized.
 func (a *HookConfigClient) ListHookConfigs(ctx context.Context) ([]*corev2.HookConfig, error) {
 	pred := &store.SelectionPredicate{
 		Continue: corev2.PageContinueFromContext(ctx),
@@ -41,7 +43,7 @@ func (a *HookConfigClient) ListHookConfigs(ctx context.Context) ([]*corev2.HookC
 	return slice, nil
 }
 
-// FetchHookConfig fetches a hook resource from the backend
+// FetchHookConfig fetches a hook resource from the backend, if authorized.
 func (a *HookConfigClient) FetchHookConfig(ctx context.Context, name string) (*corev2.HookConfig, error) {
 	var hook corev2.HookConfig
 	if err := a.client.Get(ctx, name, &hook); err != nil {
@@ -50,7 +52,7 @@ func (a *HookConfigClient) FetchHookConfig(ctx context.Context, name string) (*c
 	return &hook, nil
 }
 
-// CreateHookConfig creates a hook resource
+// CreateHookConfig creates a hook resource, if authorized.
 func (a *HookConfigClient) CreateHookConfig(ctx context.Context, hook *corev2.HookConfig) error {
 	if err := a.client.Create(ctx, hook); err != nil {
 		return fmt.Errorf("couldn't create hook: %s", err)
@@ -58,7 +60,7 @@ func (a *HookConfigClient) CreateHookConfig(ctx context.Context, hook *corev2.Ho
 	return nil
 }
 
-// UpdateHookConfig updates a hook resource
+// UpdateHookConfig updates a hook resource, if authorized.
 func (a *HookConfigClient) UpdateHookConfig(ctx context.Context, hook *corev2.HookConfig) error {
 	if err := a.client.Update(ctx, hook); err != nil {
 		return fmt.Errorf("couldn't update hook: %s", err)
