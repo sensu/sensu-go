@@ -23,7 +23,8 @@ var (
 	flagSubscriptions     = flag.String("subscriptions", "default", "comma separated list of subscriptions")
 	flagKeepaliveInterval = flag.Int("keepalive-interval", agent.DefaultKeepaliveInterval, "Keepalive interval")
 	flagKeepaliveTimeout  = flag.Int("keepalive-timeout", types.DefaultKeepaliveTimeout, "Keepalive timeout")
-	flagSkipTLSVerify     = flag.Bool("skip-tls-verify", false, "Skip TLS hostname verification")
+	flagSkipTLSVerify     = flag.Bool("skip-tls-verify", false, "Skip TLS certificates verification")
+	flagTrustedCABundle   = flag.String("trusted-ca-bundle", "", "Path to the CA bundle used to verify TLS certificates")
 )
 
 func main() {
@@ -63,6 +64,12 @@ func main() {
 		cfg.Subscriptions = subscriptions
 		cfg.AgentName = name
 		cfg.BackendURLs = backends
+
+		if *flagTrustedCABundle != "" {
+			cfg.TLS = &corev2.TLSOptions{
+				TrustedCAFile: *flagTrustedCABundle,
+			}
+		}
 
 		if *flagSkipTLSVerify {
 			cfg.TLS = &corev2.TLSOptions{
