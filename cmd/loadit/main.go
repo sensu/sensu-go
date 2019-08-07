@@ -13,6 +13,8 @@ import (
 	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 var (
@@ -21,6 +23,7 @@ var (
 	flagSubscriptions     = flag.String("subscriptions", "default", "comma separated list of subscriptions")
 	flagKeepaliveInterval = flag.Int("keepalive-interval", agent.DefaultKeepaliveInterval, "Keepalive interval")
 	flagKeepaliveTimeout  = flag.Int("keepalive-timeout", types.DefaultKeepaliveTimeout, "Keepalive timeout")
+	flagSkipTLSVerify     = flag.Bool("skip-tls-verify", false, "Skip TLS hostname verification")
 )
 
 func main() {
@@ -60,6 +63,12 @@ func main() {
 		cfg.Subscriptions = subscriptions
 		cfg.AgentName = name
 		cfg.BackendURLs = backends
+
+		if *flagSkipTLSVerify {
+			cfg.TLS = &corev2.TLSOptions{
+				InsecureSkipVerify: true,
+			}
+		}
 
 		agent, err := agent.NewAgent(cfg)
 		if err != nil {
