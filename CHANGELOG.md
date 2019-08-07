@@ -16,6 +16,7 @@ for check hook execution.
 Protobuf will be used for serialization/deserialization unless indicated by the
 backend to use JSON.
 - Added delete functionality for assets in the API and sensuctl.
+- Added `sensuctl dump` to dump resources to a file or STDOUT.
 
 ### Changed
 - The project now uses Go modules instead of dep for dependency management.
