@@ -12,12 +12,11 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func defaultTestClient(store store.ResourceStore, auth authorization.Authorizer) *genericClient {
-	return &genericClient{
+func defaultTestClient(store store.ResourceStore, auth authorization.Authorizer) *GenericClient {
+	return &GenericClient{
 		Kind:       defaultResource(),
 		Store:      store,
 		Auth:       auth,
-		Resource:   "assets",
 		APIGroup:   "core",
 		APIVersion: "v2",
 	}
@@ -72,7 +71,7 @@ func defaultResourceStore() store.ResourceStore {
 func TestGenericClient(t *testing.T) {
 	tests := []struct {
 		Name      string
-		Client    *genericClient
+		Client    *GenericClient
 		CreateVal corev2.Resource
 		CreateErr bool
 		UpdateVal corev2.Resource

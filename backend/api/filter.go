@@ -11,7 +11,7 @@ import (
 
 // EventFilterClient is an API client for event filters.
 type EventFilterClient struct {
-	client genericClient
+	client GenericClient
 	auth   authorization.Authorizer
 }
 
@@ -19,11 +19,10 @@ type EventFilterClient struct {
 // authorizer.
 func NewEventFilterClient(store store.ResourceStore, auth authorization.Authorizer) *EventFilterClient {
 	return &EventFilterClient{
-		client: genericClient{
+		client: GenericClient{
 			Kind:       &corev2.EventFilter{},
 			Store:      store,
 			Auth:       auth,
-			Resource:   "filters",
 			APIGroup:   "core",
 			APIVersion: "v2",
 		},
@@ -65,6 +64,13 @@ func (a *EventFilterClient) CreateEventFilter(ctx context.Context, filter *corev
 func (a *EventFilterClient) UpdateEventFilter(ctx context.Context, filter *corev2.EventFilter) error {
 	if err := a.client.Update(ctx, filter); err != nil {
 		return fmt.Errorf("couldn't update filter: %s", err)
+	}
+	return nil
+}
+
+func (a *EventFilterClient) DeleteEventFilter(ctx context.Context, name string) error {
+	if err := a.client.Delete(ctx, name); err != nil {
+		return fmt.Errorf("couldn't delete filter: %s", err)
 	}
 	return nil
 }

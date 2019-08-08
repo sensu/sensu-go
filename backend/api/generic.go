@@ -2,33 +2,31 @@ package api
 
 import (
 	"context"
+	"path"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
 )
 
-// genericClient is a client that's attached to the ResourceStore. It's intended
-// to be used by other clients in this package.
-// Not meant to be used outside this package for now.
-type genericClient struct {
+// GenericClient is a generic API client that uses the ResourceStore.
+type GenericClient struct {
 	Kind       corev2.Resource
 	Store      store.ResourceStore
 	Auth       authorization.Authorizer
-	Resource   string
 	APIGroup   string
 	APIVersion string
 }
 
 // Create creates a resource, if authorized
-func (g *genericClient) Create(ctx context.Context, value corev2.Resource) error {
+func (g *GenericClient) Create(ctx context.Context, value corev2.Resource) error {
 	if err := value.Validate(); err != nil {
 		return err
 	}
 	attrs := &authorization.Attributes{
 		APIGroup:     g.APIGroup,
 		APIVersion:   g.APIVersion,
-		Resource:     g.Resource,
+		Resource:     path.Base(g.Kind.StorePrefix()),
 		Namespace:    corev2.ContextNamespace(ctx),
 		Verb:         "create",
 		ResourceName: value.GetObjectMeta().Name,
@@ -39,15 +37,19 @@ func (g *genericClient) Create(ctx context.Context, value corev2.Resource) error
 	return g.Store.CreateResource(ctx, value)
 }
 
+func (g *GenericClient) resource() string {
+	return path.Base(g.Kind.StorePrefix())
+}
+
 // Update creates or updates a resource, if authorized
-func (g *genericClient) Update(ctx context.Context, value corev2.Resource) error {
+func (g *GenericClient) Update(ctx context.Context, value corev2.Resource) error {
 	if err := value.Validate(); err != nil {
 		return err
 	}
 	attrs := &authorization.Attributes{
 		APIGroup:     g.APIGroup,
 		APIVersion:   g.APIVersion,
-		Resource:     g.Resource,
+		Resource:     g.resource(),
 		Namespace:    corev2.ContextNamespace(ctx),
 		Verb:         "update",
 		ResourceName: value.GetObjectMeta().Name,
@@ -59,11 +61,11 @@ func (g *genericClient) Update(ctx context.Context, value corev2.Resource) error
 }
 
 // Delete deletes a resource, if authorized
-func (g *genericClient) Delete(ctx context.Context, name string) error {
+func (g *GenericClient) Delete(ctx context.Context, name string) error {
 	attrs := &authorization.Attributes{
 		APIGroup:     g.APIGroup,
 		APIVersion:   g.APIVersion,
-		Resource:     g.Resource,
+		Resource:     g.resource(),
 		Namespace:    corev2.ContextNamespace(ctx),
 		Verb:         "delete",
 		ResourceName: name,
@@ -75,11 +77,11 @@ func (g *genericClient) Delete(ctx context.Context, name string) error {
 }
 
 // Get gets a resource, if authorized
-func (g *genericClient) Get(ctx context.Context, name string, val corev2.Resource) error {
+func (g *GenericClient) Get(ctx context.Context, name string, val corev2.Resource) error {
 	attrs := &authorization.Attributes{
 		APIGroup:     g.APIGroup,
 		APIVersion:   g.APIVersion,
-		Resource:     g.Resource,
+		Resource:     g.resource(),
 		Namespace:    corev2.ContextNamespace(ctx),
 		Verb:         "get",
 		ResourceName: name,
@@ -92,11 +94,11 @@ func (g *genericClient) Get(ctx context.Context, name string, val corev2.Resourc
 
 // List lists all resources within a namespace, according to a selection
 // predicate, if authorized
-func (g *genericClient) List(ctx context.Context, resources interface{}, pred *store.SelectionPredicate) error {
+func (g *GenericClient) List(ctx context.Context, resources interface{}, pred *store.SelectionPredicate) error {
 	attrs := &authorization.Attributes{
 		APIGroup:   g.APIGroup,
 		APIVersion: g.APIVersion,
-		Resource:   g.Resource,
+		Resource:   g.resource(),
 		Namespace:  corev2.ContextNamespace(ctx),
 		Verb:       "list",
 	}

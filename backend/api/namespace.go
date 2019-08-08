@@ -11,18 +11,17 @@ import (
 
 // NamespaceClient is an API client for namespaces.
 type NamespaceClient struct {
-	client genericClient
+	client GenericClient
 	auth   authorization.Authorizer
 }
 
 // NewnamespaceClient creates a new NamespaceClient, given a store and authorizer.
 func NewNamespaceClient(store store.ResourceStore, auth authorization.Authorizer) *NamespaceClient {
 	return &NamespaceClient{
-		client: genericClient{
+		client: GenericClient{
 			Kind:       &corev2.Namespace{},
 			Store:      store,
 			Auth:       auth,
-			Resource:   "namespaces",
 			APIGroup:   "core",
 			APIVersion: "v2",
 		},

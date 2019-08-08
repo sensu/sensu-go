@@ -11,18 +11,17 @@ import (
 
 // HandlerClient is an API client for handlers.
 type HandlerClient struct {
-	client genericClient
+	client GenericClient
 	auth   authorization.Authorizer
 }
 
 // NewHandlerClient creates a new HandlerClient, given a store and authorizer.
 func NewHandlerClient(store store.ResourceStore, auth authorization.Authorizer) *HandlerClient {
 	return &HandlerClient{
-		client: genericClient{
+		client: GenericClient{
 			Kind:       &corev2.Handler{},
 			Store:      store,
 			Auth:       auth,
-			Resource:   "handlers",
 			APIGroup:   "core",
 			APIVersion: "v2",
 		},
@@ -64,6 +63,13 @@ func (a *HandlerClient) CreateHandler(ctx context.Context, handler *corev2.Handl
 func (a *HandlerClient) UpdateHandler(ctx context.Context, handler *corev2.Handler) error {
 	if err := a.client.Update(ctx, handler); err != nil {
 		return fmt.Errorf("couldn't update handler: %s", err)
+	}
+	return nil
+}
+
+func (a *HandlerClient) DeleteHandler(ctx context.Context, name string) error {
+	if err := a.client.Delete(ctx, name); err != nil {
+		return fmt.Errorf("couldn't delete handler: %s", err)
 	}
 	return nil
 }

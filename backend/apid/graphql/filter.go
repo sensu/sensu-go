@@ -25,13 +25,12 @@ func filterAssets(records []*corev2.Asset, filterFn assetPredicate) []*corev2.As
 
 type checkPredicate func(*corev2.CheckConfig) bool
 
-func filterChecks(records []corev2.CheckConfig, filterFn checkPredicate) []*corev2.CheckConfig {
+func filterChecks(records []*corev2.CheckConfig, filterFn checkPredicate) []*corev2.CheckConfig {
 	relevant := make([]*corev2.CheckConfig, 0, len(records))
 
-	for i := range records {
-		record := records[i]
-		if filterFn(&record) {
-			relevant = append(relevant, &record)
+	for _, record := range records {
+		if filterFn(record) {
+			relevant = append(relevant, record)
 		}
 	}
 
@@ -42,13 +41,12 @@ func filterChecks(records []corev2.CheckConfig, filterFn checkPredicate) []*core
 
 type entityPredicate func(*corev2.Entity) bool
 
-func filterEntities(records []corev2.Entity, filterFn entityPredicate) []*corev2.Entity {
+func filterEntities(records []*corev2.Entity, filterFn entityPredicate) []*corev2.Entity {
 	relevant := make([]*corev2.Entity, 0, len(records))
 
-	for i := range records {
-		record := records[i]
-		if filterFn(&record) {
-			relevant = append(relevant, &record)
+	for _, record := range records {
+		if filterFn(record) {
+			relevant = append(relevant, record)
 		}
 	}
 
@@ -59,13 +57,12 @@ func filterEntities(records []corev2.Entity, filterFn entityPredicate) []*corev2
 
 type eventPredicate func(*corev2.Event) bool
 
-func filterEvents(records []corev2.Event, filterFn eventPredicate) []*corev2.Event {
+func filterEvents(records []*corev2.Event, filterFn eventPredicate) []*corev2.Event {
 	relevant := make([]*corev2.Event, 0, len(records))
 
-	for i := range records {
-		record := records[i]
-		if filterFn(&record) {
-			relevant = append(relevant, &record)
+	for _, record := range records {
+		if filterFn(record) {
+			relevant = append(relevant, record)
 		}
 	}
 
@@ -76,13 +73,12 @@ func filterEvents(records []corev2.Event, filterFn eventPredicate) []*corev2.Eve
 
 type handlerPredicate func(*corev2.Handler) bool
 
-func filterHandlers(records []corev2.Handler, filterFn handlerPredicate) []*corev2.Handler {
+func filterHandlers(records []*corev2.Handler, filterFn handlerPredicate) []*corev2.Handler {
 	relevant := make([]*corev2.Handler, 0, len(records))
 
-	for i := range records {
-		record := records[i]
-		if filterFn(&record) {
-			relevant = append(relevant, &record)
+	for _, record := range records {
+		if filterFn(record) {
+			relevant = append(relevant, record)
 		}
 	}
 
@@ -93,13 +89,12 @@ func filterHandlers(records []corev2.Handler, filterFn handlerPredicate) []*core
 
 type silencePredicate func(*corev2.Silenced) bool
 
-func filterSilenceds(records []corev2.Silenced, filterFn silencePredicate) []*corev2.Silenced {
+func filterSilenceds(records []*corev2.Silenced, filterFn silencePredicate) []*corev2.Silenced {
 	relevant := make([]*corev2.Silenced, 0, len(records))
 
-	for i := range records {
-		record := records[i]
-		if filterFn(&record) {
-			relevant = append(relevant, &record)
+	for _, record := range records {
+		if filterFn(record) {
+			relevant = append(relevant, record)
 		}
 	}
 

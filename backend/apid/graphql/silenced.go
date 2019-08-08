@@ -18,7 +18,7 @@ var _ schema.SilencedFieldResolvers = (*silencedImpl)(nil)
 
 type silencedImpl struct {
 	schema.SilencedAliases
-	factory ClientFactory
+	client CheckClient
 }
 
 // Begin implements response to request for 'begin' field.
@@ -32,8 +32,7 @@ func (r *silencedImpl) Check(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*types.Silenced)
 	ctx := contextWithNamespace(p.Context, src.Namespace)
 
-	client := r.factory.NewWithContext(ctx)
-	res, err := client.FetchCheck(src.Check)
+	res, err := r.client.FetchCheck(ctx, src.Check)
 	return handleFetchResult(res, err)
 }
 

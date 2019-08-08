@@ -25,7 +25,6 @@ var _ schema.DeregistrationFieldResolvers = (*deregistrationImpl)(nil)
 
 type entityImpl struct {
 	schema.EntityAliases
-	factory ClientFactory
 }
 
 // ID implements response to request for 'id' field.

@@ -21,7 +21,7 @@ var _ schema.NamespaceFieldResolvers = (*namespaceImpl)(nil)
 //
 
 type namespaceImpl struct {
-	factory ClientFactory
+	client NamespaceClient
 }
 
 // ID implements response to request for 'id' field.
@@ -114,8 +114,8 @@ func (r *namespaceImpl) EventFilters(p schema.NamespaceEventFiltersFieldResolver
 	}
 	filteredResults := make([]*v2.EventFilter, 0, len(results))
 	for i := range results {
-		if matches(&results[i]) {
-			filteredResults = append(filteredResults, &results[i])
+		if matches(results[i]) {
+			filteredResults = append(filteredResults, results[i])
 		}
 	}
 
@@ -150,8 +150,8 @@ func (r *namespaceImpl) Handlers(p schema.NamespaceHandlersFieldResolverParams) 
 	}
 	filteredResults := make([]*v2.Handler, 0, len(results))
 	for i := range results {
-		if matches(&results[i]) {
-			filteredResults = append(filteredResults, &results[i])
+		if matches(results[i]) {
+			filteredResults = append(filteredResults, results[i])
 		}
 	}
 
@@ -186,8 +186,8 @@ func (r *namespaceImpl) Mutators(p schema.NamespaceMutatorsFieldResolverParams) 
 	}
 	filteredResults := make([]*v2.Mutator, 0, len(results))
 	for i := range results {
-		if matches(&results[i]) {
-			filteredResults = append(filteredResults, &results[i])
+		if matches(results[i]) {
+			filteredResults = append(filteredResults, results[i])
 		}
 	}
 
@@ -222,8 +222,8 @@ func (r *namespaceImpl) Silences(p schema.NamespaceSilencesFieldResolverParams) 
 	}
 	filteredResults := make([]*v2.Silenced, 0, len(results))
 	for i := range results {
-		if matches(&results[i]) {
-			filteredResults = append(filteredResults, &results[i])
+		if matches(results[i]) {
+			filteredResults = append(filteredResults, results[i])
 		}
 	}
 
@@ -264,8 +264,8 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 	}
 	filteredResults := make([]*v2.Entity, 0, len(results))
 	for i := range results {
-		if matches(&results[i]) {
-			filteredResults = append(filteredResults, &results[i])
+		if matches(results[i]) {
+			filteredResults = append(filteredResults, results[i])
 		}
 	}
 
@@ -305,8 +305,8 @@ func (r *namespaceImpl) Events(p schema.NamespaceEventsFieldResolverParams) (int
 	}
 	filteredResults := make([]*v2.Event, 0, len(results))
 	for i := range results {
-		if matches(&results[i]) {
-			filteredResults = append(filteredResults, &results[i])
+		if matches(results[i]) {
+			filteredResults = append(filteredResults, results[i])
 		}
 	}
 
@@ -334,7 +334,7 @@ func (r *namespaceImpl) Subscriptions(p schema.NamespaceSubscriptionsFieldResolv
 
 	for i := range entities {
 		entity := entities[i]
-		newSet := occurrencesOfSubscriptions(&entity)
+		newSet := occurrencesOfSubscriptions(entity)
 		set.Merge(newSet)
 	}
 

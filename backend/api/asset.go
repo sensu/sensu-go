@@ -12,18 +12,17 @@ import (
 
 // AssetClient is an API client for assets.
 type AssetClient struct {
-	client genericClient
+	client GenericClient
 	auth   authorization.Authorizer
 }
 
 // NewAssetClient creates a new AssetClient, given a store and an authorizer.
 func NewAssetClient(store store.ResourceStore, auth authorization.Authorizer) *AssetClient {
 	return &AssetClient{
-		client: genericClient{
+		client: GenericClient{
 			Kind:       &corev2.Asset{},
 			Store:      store,
 			Auth:       auth,
-			Resource:   "assets",
 			APIGroup:   "core",
 			APIVersion: "v2",
 		},

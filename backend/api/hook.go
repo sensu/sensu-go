@@ -11,18 +11,17 @@ import (
 
 // HookConfigClient is an API client for check hooks.
 type HookConfigClient struct {
-	client genericClient
+	client GenericClient
 	auth   authorization.Authorizer
 }
 
 // NewHookConfigClient creates a new HookConfigClient, given a store and authorizer.
 func NewHookConfigClient(store store.ResourceStore, auth authorization.Authorizer) *HookConfigClient {
 	return &HookConfigClient{
-		client: genericClient{
+		client: GenericClient{
 			Kind:       &corev2.HookConfig{},
 			Store:      store,
 			Auth:       auth,
-			Resource:   "hooks",
 			APIGroup:   "core",
 			APIVersion: "v2",
 		},

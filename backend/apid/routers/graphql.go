@@ -9,13 +9,13 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/api/core/v2"
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/api"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	graphql "github.com/sensu/sensu-go/backend/apid/graphql"
-	"github.com/sensu/sensu-go/backend/apid/graphql/restclient"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authorization"
+	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -31,14 +31,21 @@ type GraphQLRouter struct {
 }
 
 // NewGraphQLRouter instantiates new events controller
-func NewGraphQLRouter(apiURL string, tls *tls.Config, store store.Store, auth authorization.Authorizer, qGetter types.QueueGetter) *GraphQLRouter {
-	factory := restclient.NewClientFactory(apiURL, tls)
-	assetClient := api.NewAssetClient(store, auth)
-	checkClient := api.NewCheckClient(store, actions.NewCheckController(store, qGetter), auth)
+func NewGraphQLRouter(apiURL string, tls *tls.Config, store store.Store, eventStore store.EventStore, auth authorization.Authorizer, qGetter types.QueueGetter, bus messaging.MessageBus) *GraphQLRouter {
 	service, err := graphql.NewService(graphql.ServiceConfig{
-		ClientFactory: factory,
-		AssetClient:   assetClient,
-		CheckClient:   checkClient,
+		AssetClient:       api.NewAssetClient(store, auth),
+		CheckClient:       api.NewCheckClient(store, actions.NewCheckController(store, qGetter), auth),
+		EntityClient:      api.NewEntityClient(store, eventStore, auth),
+		EventClient:       api.NewEventClient(eventStore, auth, bus),
+		EventFilterClient: api.NewEventFilterClient(store, auth),
+		HandlerClient:     api.NewHandlerClient(store, auth),
+		MutatorClient:     api.NewMutatorClient(store, auth),
+		SilencedClient:    api.NewSilencedClient(store, auth),
+		NamespaceClient:   api.NewNamespaceClient(store, auth),
+		HookClient:        api.NewHookConfigClient(store, auth),
+		UserClient:        api.NewUserClient(store, auth),
+		RBACClient:        api.NewRBACClient(store, auth),
+		GenericClient:     api.GenericClient{Store: store, Auth: auth},
 	})
 	if err != nil {
 		logger.WithError(err).Panic("unable to configure graphql service")

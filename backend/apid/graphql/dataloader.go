@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/graph-gophers/dataloader"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -57,7 +58,7 @@ func loadAssets(ctx context.Context, ns string) ([]*corev2.Asset, error) {
 	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
 	records, ok := results.([]*corev2.Asset)
 	if err == nil && !ok {
-		err = errUnexpectedLoaderResult
+		err = fmt.Errorf("asset loader: %s", errUnexpectedLoaderResult)
 	}
 	return records, err
 }
@@ -68,7 +69,7 @@ func loadCheckConfigsBatchFn(c CheckClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			ctx = store.NamespaceContext(ctx, key.String())
+			ctx := store.NamespaceContext(ctx, key.String())
 			records, err := c.ListChecks(ctx)
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
@@ -87,18 +88,19 @@ func loadCheckConfigs(ctx context.Context, ns string) ([]*corev2.CheckConfig, er
 	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
 	records, ok := results.([]*corev2.CheckConfig)
 	if err == nil && !ok {
-		err = errUnexpectedLoaderResult
+		err = fmt.Errorf("check loader: %s", errUnexpectedLoaderResult)
 	}
 	return records, err
 }
 
 // entities
 
-func loadEntitiesBatchFn(c client.APIClient) dataloader.BatchFunc {
+func loadEntitiesBatchFn(c EntityClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			records, err := c.ListEntities(key.String(), &client.ListOptions{})
+			ctx := store.NamespaceContext(ctx, key.String())
+			records, err := c.ListEntities(ctx)
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
@@ -106,28 +108,29 @@ func loadEntitiesBatchFn(c client.APIClient) dataloader.BatchFunc {
 	}
 }
 
-func loadEntities(ctx context.Context, ns string) ([]corev2.Entity, error) {
-	var records []corev2.Entity
+func loadEntities(ctx context.Context, ns string) ([]*corev2.Entity, error) {
+	var records []*corev2.Entity
 	loader, err := getLoader(ctx, entitiesLoaderKey)
 	if err != nil {
 		return records, err
 	}
 
 	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
-	records, ok := results.([]corev2.Entity)
+	records, ok := results.([]*corev2.Entity)
 	if err == nil && !ok {
-		err = errUnexpectedLoaderResult
+		err = fmt.Errorf("entity loader: %s", errUnexpectedLoaderResult)
 	}
 	return records, err
 }
 
 // events
 
-func loadEventsBatchFn(c client.APIClient) dataloader.BatchFunc {
+func loadEventsBatchFn(c EventClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			records, err := c.ListEvents(key.String(), &client.ListOptions{})
+			ctx := store.NamespaceContext(ctx, key.String())
+			records, err := c.ListEvents(ctx, &store.SelectionPredicate{})
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
@@ -135,28 +138,29 @@ func loadEventsBatchFn(c client.APIClient) dataloader.BatchFunc {
 	}
 }
 
-func loadEvents(ctx context.Context, ns string) ([]corev2.Event, error) {
-	var records []corev2.Event
+func loadEvents(ctx context.Context, ns string) ([]*corev2.Event, error) {
+	var records []*corev2.Event
 	loader, err := getLoader(ctx, eventsLoaderKey)
 	if err != nil {
 		return records, err
 	}
 
 	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
-	records, ok := results.([]corev2.Event)
+	records, ok := results.([]*corev2.Event)
 	if err == nil && !ok {
-		err = errUnexpectedLoaderResult
+		err = fmt.Errorf("event loader: %s", errUnexpectedLoaderResult)
 	}
 	return records, err
 }
 
 // event filters
 
-func loadEventFiltersBatchFn(c client.APIClient) dataloader.BatchFunc {
+func loadEventFiltersBatchFn(c EventFilterClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			records, err := c.ListFilters(key.String(), &client.ListOptions{})
+			ctx := store.NamespaceContext(ctx, key.String())
+			records, err := c.ListEventFilters(ctx)
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
@@ -164,28 +168,29 @@ func loadEventFiltersBatchFn(c client.APIClient) dataloader.BatchFunc {
 	}
 }
 
-func loadEventFilters(ctx context.Context, ns string) ([]corev2.EventFilter, error) {
-	var records []corev2.EventFilter
+func loadEventFilters(ctx context.Context, ns string) ([]*corev2.EventFilter, error) {
+	var records []*corev2.EventFilter
 	loader, err := getLoader(ctx, eventFiltersLoaderKey)
 	if err != nil {
 		return records, err
 	}
 
 	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
-	records, ok := results.([]corev2.EventFilter)
+	records, ok := results.([]*corev2.EventFilter)
 	if err == nil && !ok {
-		err = errUnexpectedLoaderResult
+		err = fmt.Errorf("filter loader: %s", errUnexpectedLoaderResult)
 	}
 	return records, err
 }
 
 // handlers
 
-func loadHandlersBatchFn(c client.APIClient) dataloader.BatchFunc {
+func loadHandlersBatchFn(c HandlerClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			records, err := c.ListHandlers(key.String(), &client.ListOptions{})
+			ctx := store.NamespaceContext(ctx, key.String())
+			records, err := c.ListHandlers(ctx)
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
@@ -193,28 +198,29 @@ func loadHandlersBatchFn(c client.APIClient) dataloader.BatchFunc {
 	}
 }
 
-func loadHandlers(ctx context.Context, ns string) ([]corev2.Handler, error) {
-	var records []corev2.Handler
+func loadHandlers(ctx context.Context, ns string) ([]*corev2.Handler, error) {
+	var records []*corev2.Handler
 	loader, err := getLoader(ctx, handlersLoaderKey)
 	if err != nil {
 		return records, err
 	}
 
 	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
-	records, ok := results.([]corev2.Handler)
+	records, ok := results.([]*corev2.Handler)
 	if err == nil && !ok {
-		err = errUnexpectedLoaderResult
+		err = fmt.Errorf("handler loader: %s", errUnexpectedLoaderResult)
 	}
 	return records, err
 }
 
 // mutators
 
-func loadMutatorsBatchFn(c client.APIClient) dataloader.BatchFunc {
+func loadMutatorsBatchFn(c MutatorClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			records, err := c.ListMutators(key.String(), &client.ListOptions{})
+			ctx := store.NamespaceContext(ctx, key.String())
+			records, err := c.ListMutators(ctx)
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
@@ -222,28 +228,28 @@ func loadMutatorsBatchFn(c client.APIClient) dataloader.BatchFunc {
 	}
 }
 
-func loadMutators(ctx context.Context, ns string) ([]corev2.Mutator, error) {
-	var records []corev2.Mutator
+func loadMutators(ctx context.Context, ns string) ([]*corev2.Mutator, error) {
+	var records []*corev2.Mutator
 	loader, err := getLoader(ctx, mutatorsLoaderKey)
 	if err != nil {
 		return records, err
 	}
 
 	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
-	records, ok := results.([]corev2.Mutator)
+	records, ok := results.([]*corev2.Mutator)
 	if err == nil && !ok {
-		err = errUnexpectedLoaderResult
+		err = fmt.Errorf("mutator loader: %s", errUnexpectedLoaderResult)
 	}
 	return records, err
 }
 
 // namespaces
 
-func loadNamespacesBatchFn(c client.APIClient) dataloader.BatchFunc {
+func loadNamespacesBatchFn(c NamespaceClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for range keys {
-			records, err := c.ListNamespaces(&client.ListOptions{})
+			records, err := c.ListNamespaces(ctx)
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
@@ -251,28 +257,29 @@ func loadNamespacesBatchFn(c client.APIClient) dataloader.BatchFunc {
 	}
 }
 
-func loadNamespaces(ctx context.Context) ([]corev2.Namespace, error) {
-	var records []corev2.Namespace
+func loadNamespaces(ctx context.Context) ([]*corev2.Namespace, error) {
+	var records []*corev2.Namespace
 	loader, err := getLoader(ctx, namespacesLoaderKey)
 	if err != nil {
 		return records, err
 	}
 
 	results, err := loader.Load(ctx, dataloader.StringKey("*"))()
-	records, ok := results.([]corev2.Namespace)
+	records, ok := results.([]*corev2.Namespace)
 	if err == nil && !ok {
-		err = errUnexpectedLoaderResult
+		err = fmt.Errorf("namespace loader: %s", errUnexpectedLoaderResult)
 	}
 	return records, err
 }
 
 // silences
 
-func loadSilencedsBatchFn(c client.APIClient) dataloader.BatchFunc {
+func loadSilencedsBatchFn(c SilencedClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for _, key := range keys {
-			records, err := c.ListSilenceds(key.String(), "", "", &client.ListOptions{})
+			ctx := store.NamespaceContext(ctx, key.String())
+			records, err := c.ListSilenced(ctx)
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}
@@ -280,17 +287,17 @@ func loadSilencedsBatchFn(c client.APIClient) dataloader.BatchFunc {
 	}
 }
 
-func loadSilenceds(ctx context.Context, ns string) ([]corev2.Silenced, error) {
-	var records []corev2.Silenced
+func loadSilenceds(ctx context.Context, ns string) ([]*corev2.Silenced, error) {
+	var records []*corev2.Silenced
 	loader, err := getLoader(ctx, silencedsLoaderKey)
 	if err != nil {
 		return records, err
 	}
 
 	results, err := loader.Load(ctx, dataloader.StringKey(ns))()
-	records, ok := results.([]corev2.Silenced)
+	records, ok := results.([]*corev2.Silenced)
 	if err == nil && !ok {
-		err = errUnexpectedLoaderResult
+		err = fmt.Errorf("silenced loader: %s", errUnexpectedLoaderResult)
 	}
 	return records, err
 }
@@ -299,18 +306,17 @@ func contextWithLoaders(ctx context.Context, cfg ServiceConfig, opts ...dataload
 	// Currently all fields are resolved serially, as such we disable batching and
 	// rely only on dataloader's cache.
 	opts = append([]dataloader.Option{dataloader.WithBatchCapacity(1)}, opts...)
-	client := cfg.ClientFactory.NewWithContext(ctx)
 
 	loaders := map[key]*dataloader.Loader{}
 	loaders[assetsLoaderKey] = dataloader.NewBatchedLoader(loadAssetsBatchFn(cfg.AssetClient), opts...)
 	loaders[checkConfigsLoaderKey] = dataloader.NewBatchedLoader(loadCheckConfigsBatchFn(cfg.CheckClient), opts...)
-	loaders[entitiesLoaderKey] = dataloader.NewBatchedLoader(loadEntitiesBatchFn(client), opts...)
-	loaders[eventsLoaderKey] = dataloader.NewBatchedLoader(loadEventsBatchFn(client), opts...)
-	loaders[eventFiltersLoaderKey] = dataloader.NewBatchedLoader(loadEventFiltersBatchFn(client), opts...)
-	loaders[handlersLoaderKey] = dataloader.NewBatchedLoader(loadHandlersBatchFn(client), opts...)
-	loaders[mutatorsLoaderKey] = dataloader.NewBatchedLoader(loadMutatorsBatchFn(client), opts...)
-	loaders[namespacesLoaderKey] = dataloader.NewBatchedLoader(loadNamespacesBatchFn(client), opts...)
-	loaders[silencedsLoaderKey] = dataloader.NewBatchedLoader(loadSilencedsBatchFn(client), opts...)
+	loaders[entitiesLoaderKey] = dataloader.NewBatchedLoader(loadEntitiesBatchFn(cfg.EntityClient), opts...)
+	loaders[eventsLoaderKey] = dataloader.NewBatchedLoader(loadEventsBatchFn(cfg.EventClient), opts...)
+	loaders[eventFiltersLoaderKey] = dataloader.NewBatchedLoader(loadEventFiltersBatchFn(cfg.EventFilterClient), opts...)
+	loaders[handlersLoaderKey] = dataloader.NewBatchedLoader(loadHandlersBatchFn(cfg.HandlerClient), opts...)
+	loaders[mutatorsLoaderKey] = dataloader.NewBatchedLoader(loadMutatorsBatchFn(cfg.MutatorClient), opts...)
+	loaders[namespacesLoaderKey] = dataloader.NewBatchedLoader(loadNamespacesBatchFn(cfg.NamespaceClient), opts...)
+	loaders[silencedsLoaderKey] = dataloader.NewBatchedLoader(loadSilencedsBatchFn(cfg.SilencedClient), opts...)
 	return context.WithValue(ctx, loadersKey, loaders)
 }
 

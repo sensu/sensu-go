@@ -45,8 +45,8 @@ func (e *EventClient) UpdateEvent(ctx context.Context, event *corev2.Event) erro
 	return e.bus.Publish(messaging.TopicEventRaw, event)
 }
 
-// GetEvent gets an event, if authorized.
-func (e *EventClient) GetEvent(ctx context.Context, entity, check string) (*corev2.Event, error) {
+// FetchEvent gets an event, if authorized.
+func (e *EventClient) FetchEvent(ctx context.Context, entity, check string) (*corev2.Event, error) {
 	attrs := eventGetAttributes(ctx, fmt.Sprintf("%s:%s", entity, check))
 	if err := authorize(ctx, e.auth, attrs); err != nil {
 		return nil, fmt.Errorf("couldn't get event: %s", err)

@@ -18,7 +18,7 @@ var _ schema.HandlerSocketFieldResolvers = (*handlerSocketImpl)(nil)
 
 type handlerImpl struct {
 	schema.HandlerAliases
-	factory ClientFactory
+	client MutatorClient
 }
 
 // ID implements response to request for 'id' field.
@@ -34,8 +34,7 @@ func (r *handlerImpl) Mutator(p graphql.ResolveParams) (interface{}, error) {
 	}
 
 	ctx := types.SetContextFromResource(p.Context, src)
-	client := r.factory.NewWithContext(ctx)
-	res, err := client.FetchMutator(src.Mutator)
+	res, err := r.client.FetchMutator(ctx, src.Mutator)
 
 	return handleFetchResult(res, err)
 }

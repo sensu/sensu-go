@@ -12,7 +12,7 @@ import (
 
 // EntityClient is an API client for entities.
 type EntityClient struct {
-	client     *genericClient
+	client     *GenericClient
 	eventStore store.EventStore
 	auth       authorization.Authorizer
 }
@@ -21,13 +21,12 @@ type EntityClient struct {
 // an authorizer.
 func NewEntityClient(store store.ResourceStore, eventStore store.EventStore, auth authorization.Authorizer) *EntityClient {
 	return &EntityClient{
-		client: &genericClient{
+		client: &GenericClient{
 			Kind:       &corev2.Entity{},
 			Auth:       auth,
-			Resource:   "entities",
+			Store:      store,
 			APIGroup:   "core",
 			APIVersion: "v2",
-			Store:      store,
 		},
 		eventStore: eventStore,
 		auth:       auth,
@@ -81,11 +80,24 @@ func (e *EntityClient) UpdateEntity(ctx context.Context, entity *corev2.Entity) 
 	return nil
 }
 
-// GetEntity gets an entity, if authorized.
-func (e *EntityClient) GetEntity(ctx context.Context, name string) (*corev2.Entity, error) {
+// FetchEntity gets an entity, if authorized.
+func (e *EntityClient) FetchEntity(ctx context.Context, name string) (*corev2.Entity, error) {
 	var entity corev2.Entity
 	if err := e.client.Get(ctx, name, &entity); err != nil {
 		return nil, fmt.Errorf("couldn't get entity: %s", err)
 	}
 	return &entity, nil
+}
+
+// ListEntities lists all entities in a namespace, if authorized.
+func (e *EntityClient) ListEntities(ctx context.Context) ([]*corev2.Entity, error) {
+	pred := &store.SelectionPredicate{
+		Continue: corev2.PageContinueFromContext(ctx),
+		Limit:    int64(corev2.PageSizeFromContext(ctx)),
+	}
+	slice := []*corev2.Entity{}
+	if err := e.client.List(ctx, &slice, pred); err != nil {
+		return nil, fmt.Errorf("couldn't list entities: %s", err)
+	}
+	return slice, nil
 }

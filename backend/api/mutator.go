@@ -11,18 +11,17 @@ import (
 
 // MutatorClient is an API client for mutators.
 type MutatorClient struct {
-	client genericClient
+	client GenericClient
 	auth   authorization.Authorizer
 }
 
 // NewMutatorClient creates a new MutatorClient, given a store and an authorizer.
 func NewMutatorClient(store store.ResourceStore, auth authorization.Authorizer) *MutatorClient {
 	return &MutatorClient{
-		client: genericClient{
+		client: GenericClient{
 			Kind:       &corev2.Mutator{},
 			Store:      store,
 			Auth:       auth,
-			Resource:   "mutators",
 			APIGroup:   "core",
 			APIVersion: "v2",
 		},
@@ -64,6 +63,14 @@ func (a *MutatorClient) CreateMutator(ctx context.Context, mutator *corev2.Mutat
 func (a *MutatorClient) UpdateMutator(ctx context.Context, mutator *corev2.Mutator) error {
 	if err := a.client.Update(ctx, mutator); err != nil {
 		return fmt.Errorf("couldn't update mutator: %s", err)
+	}
+	return nil
+}
+
+// DeleteMutator deletes a mutator resource, if authorized.
+func (a *MutatorClient) DeleteMutator(ctx context.Context, name string) error {
+	if err := a.client.Delete(ctx, name); err != nil {
+		return fmt.Errorf("couldn't delete mutator: %s", err)
 	}
 	return nil
 }
