@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"testing"
 
-	client "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -57,16 +56,16 @@ func TestEventTypeIsSilencedField(t *testing.T) {
 	event := types.FixtureEvent("my-entity", "my-check")
 	event.Check.Subscriptions = []string{"unix"}
 
-	client, factory := client.NewClientFactory()
-	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{
-		*types.FixtureSilenced("*:my-check"),
-		*types.FixtureSilenced("unix:not-my-check"),
-		*types.FixtureSilenced("entity:my-entity:*"),
+	client := new(MockSilencedClient)
+	client.On("ListSilenced", mock.Anything).Return([]*types.Silenced{
+		types.FixtureSilenced("*:my-check"),
+		types.FixtureSilenced("unix:not-my-check"),
+		types.FixtureSilenced("entity:my-entity:*"),
 	}, nil).Once()
 
 	impl := &eventImpl{}
 	params := graphql.ResolveParams{}
-	cfg := ServiceConfig{ClientFactory: factory}
+	cfg := ServiceConfig{SilencedClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = event
 
@@ -81,20 +80,20 @@ func TestEventTypeSilencesField(t *testing.T) {
 	event.Check.Subscriptions = []string{"unix"}
 	event.Entity.Subscriptions = []string{"unix"}
 
-	client, factory := client.NewClientFactory()
-	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{
-		*types.FixtureSilenced("*:my-check"),                    // match
-		*types.FixtureSilenced("unix:my-check"),                 // match
-		*types.FixtureSilenced("unix:not-my-check"),             // not match
-		*types.FixtureSilenced("entity:my-entity:*"),            // match
-		*types.FixtureSilenced("entity:my-entity:my-check"),     // match
-		*types.FixtureSilenced("entity:my-entity:not-my-check"), // not match
-		*types.FixtureSilenced("not-my-subscription:*"),         // not match
+	client := new(MockSilencedClient)
+	client.On("ListSilenced", mock.Anything).Return([]*types.Silenced{
+		types.FixtureSilenced("*:my-check"),                    // match
+		types.FixtureSilenced("unix:my-check"),                 // match
+		types.FixtureSilenced("unix:not-my-check"),             // not match
+		types.FixtureSilenced("entity:my-entity:*"),            // match
+		types.FixtureSilenced("entity:my-entity:my-check"),     // match
+		types.FixtureSilenced("entity:my-entity:not-my-check"), // not match
+		types.FixtureSilenced("not-my-subscription:*"),         // not match
 	}, nil).Once()
 
 	impl := &eventImpl{}
 	params := graphql.ResolveParams{}
-	cfg := ServiceConfig{ClientFactory: factory}
+	cfg := ServiceConfig{SilencedClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = event
 

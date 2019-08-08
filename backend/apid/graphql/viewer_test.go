@@ -14,8 +14,8 @@ import (
 )
 
 func TestViewerTypeUserField(t *testing.T) {
-	client, factory := mockclient.NewClientFactory()
-	impl := viewerImpl{factory: factory}
+	client := new(MockUserClient)
+	impl := viewerImpl{userClient: client}
 
 	user := types.FixtureUser("frankwest")
 	claims, err := jwt.NewClaims(user)
@@ -27,13 +27,13 @@ func TestViewerTypeUserField(t *testing.T) {
 	params.Context = context.WithValue(context.Background(), types.ClaimsKey, claims)
 
 	// Success
-	client.On("FetchUser", user.Username).Return(user, nil).Once()
+	client.On("FetchUser", mock.Anything, user.Username).Return(user, nil).Once()
 	res, err := impl.User(params)
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 
 	// User not found for claim
-	client.On("FetchUser", user.Username).Return(user, mockclient.NotFound).Once()
+	client.On("FetchUser", mock.Anything, user.Username).Return(user, mockclient.NotFound).Once()
 	res, err = impl.User(params)
 	require.NoError(t, err)
 	assert.Empty(t, res)
@@ -48,14 +48,14 @@ func TestViewerTypeUserField(t *testing.T) {
 func TestViewerTypeNamespacesField(t *testing.T) {
 	nsp := types.FixtureNamespace("sensu")
 	impl := viewerImpl{}
-	client, factory := mockclient.NewClientFactory()
+	client := new(MockNamespaceClient)
 
 	params := graphql.ResolveParams{}
-	cfg := ServiceConfig{ClientFactory: factory}
+	cfg := ServiceConfig{NamespaceClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 
 	// Success
-	client.On("ListNamespaces", mock.Anything).Return([]types.Namespace{*nsp}, nil).Once()
+	client.On("ListNamespaces", mock.Anything).Return([]*types.Namespace{nsp}, nil).Once()
 	res, err := impl.Namespaces(params)
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)

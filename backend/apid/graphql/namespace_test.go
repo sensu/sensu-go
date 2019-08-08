@@ -5,7 +5,6 @@ import (
 	"errors"
 	"testing"
 
-	client "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
@@ -24,7 +23,6 @@ func TestNamespaceTypeColourID(t *testing.T) {
 }
 
 func TestNamespaceTypeCheckConfigsField(t *testing.T) {
-	_, factory := client.NewClientFactory()
 	checkClient := new(MockCheckClient)
 	checkClient.On("ListChecks", mock.Anything).Return([]*types.CheckConfig{
 		types.FixtureCheckConfig("a"),
@@ -34,7 +32,7 @@ func TestNamespaceTypeCheckConfigsField(t *testing.T) {
 
 	impl := &namespaceImpl{}
 	params := schema.NamespaceChecksFieldResolverParams{}
-	cfg := ServiceConfig{ClientFactory: factory, CheckClient: checkClient}
+	cfg := ServiceConfig{CheckClient: checkClient}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = types.FixtureNamespace("default")
 	params.Args.Limit = 20
@@ -52,16 +50,16 @@ func TestNamespaceTypeCheckConfigsField(t *testing.T) {
 }
 
 func TestNamespaceTypeEntitiesField(t *testing.T) {
-	client, factory := client.NewClientFactory()
-	client.On("ListEntities", "default", mock.Anything).Return([]types.Entity{
-		*types.FixtureEntity("a"),
-		*types.FixtureEntity("b"),
-		*types.FixtureEntity("c"),
+	client := new(MockEntityClient)
+	client.On("ListEntities", mock.Anything).Return([]*types.Entity{
+		types.FixtureEntity("a"),
+		types.FixtureEntity("b"),
+		types.FixtureEntity("c"),
 	}, nil).Once()
 
 	impl := &namespaceImpl{}
 	params := schema.NamespaceEntitiesFieldResolverParams{}
-	cfg := ServiceConfig{ClientFactory: factory}
+	cfg := ServiceConfig{EntityClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = types.FixtureNamespace("default")
 	params.Args.Limit = 20
@@ -72,23 +70,23 @@ func TestNamespaceTypeEntitiesField(t *testing.T) {
 	assert.NotEmpty(t, res.(offsetContainer).Nodes)
 
 	// Store err
-	client.On("ListEntities", "default", mock.Anything).Return([]types.Entity{}, errors.New("abc")).Once()
+	client.On("ListEntities", mock.Anything, mock.Anything).Return([]*types.Entity{}, errors.New("abc")).Once()
 	res, err = impl.Entities(params)
 	assert.Empty(t, res.(offsetContainer).Nodes)
 	assert.Error(t, err)
 }
 
 func TestNamespaceTypeEventsField(t *testing.T) {
-	client, factory := client.NewClientFactory()
-	client.On("ListEvents", "default", mock.Anything).Return([]types.Event{
-		*types.FixtureEvent("a", "b"),
-		*types.FixtureEvent("b", "c"),
-		*types.FixtureEvent("c", "d"),
+	client := new(MockEventClient)
+	client.On("ListEvents", mock.Anything, mock.Anything).Return([]*types.Event{
+		types.FixtureEvent("a", "b"),
+		types.FixtureEvent("b", "c"),
+		types.FixtureEvent("c", "d"),
 	}, nil).Once()
 
 	impl := &namespaceImpl{}
 	params := schema.NamespaceEventsFieldResolverParams{}
-	cfg := ServiceConfig{ClientFactory: factory}
+	cfg := ServiceConfig{EventClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = types.FixtureNamespace("default")
 	params.Args.Limit = 20
@@ -99,23 +97,23 @@ func TestNamespaceTypeEventsField(t *testing.T) {
 	assert.NotEmpty(t, res.(offsetContainer).Nodes)
 
 	// Store err
-	client.On("ListEvents", "default", mock.Anything).Return([]types.Event{}, errors.New("abc")).Once()
+	client.On("ListEvents", mock.Anything, mock.Anything).Return([]*types.Event{}, errors.New("abc")).Once()
 	res, err = impl.Events(params)
 	assert.Empty(t, res.(offsetContainer).Nodes)
 	assert.Error(t, err)
 }
 
 func TestNamespaceTypeEventFiltersField(t *testing.T) {
-	client, factory := client.NewClientFactory()
-	client.On("ListFilters", mock.Anything, mock.Anything).Return([]types.EventFilter{
-		*types.FixtureEventFilter("a"),
-		*types.FixtureEventFilter("b"),
-		*types.FixtureEventFilter("c"),
+	client := new(MockEventFilterClient)
+	client.On("ListEventFilters", mock.Anything).Return([]*types.EventFilter{
+		types.FixtureEventFilter("a"),
+		types.FixtureEventFilter("b"),
+		types.FixtureEventFilter("c"),
 	}, nil).Once()
 
 	impl := &namespaceImpl{}
 	params := schema.NamespaceEventFiltersFieldResolverParams{}
-	cfg := ServiceConfig{ClientFactory: factory}
+	cfg := ServiceConfig{EventFilterClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = types.FixtureNamespace("default")
 	params.Args.Limit = 20
@@ -126,24 +124,24 @@ func TestNamespaceTypeEventFiltersField(t *testing.T) {
 	assert.NotEmpty(t, res.(offsetContainer).Nodes)
 
 	// Store err
-	client.On("ListFilters", mock.Anything, mock.Anything).Return([]types.EventFilter{}, errors.New("abc")).Once()
+	client.On("ListEventFilters", mock.Anything, mock.Anything).Return([]*types.EventFilter{}, errors.New("abc")).Once()
 	res, err = impl.EventFilters(params)
 	assert.Empty(t, res.(offsetContainer).Nodes)
 	assert.Error(t, err)
 }
 
 func TestNamespaceTypeHandlersField(t *testing.T) {
-	client, factory := client.NewClientFactory()
-	client.On("ListHandlers", mock.Anything, mock.Anything).Return([]types.Handler{
-		*types.FixtureHandler("Abe"),
-		*types.FixtureHandler("Bernie"),
-		*types.FixtureHandler("Clem"),
-		*types.FixtureHandler("Dolly"),
+	client := new(MockHandlerClient)
+	client.On("ListHandlers", mock.Anything).Return([]*types.Handler{
+		types.FixtureHandler("Abe"),
+		types.FixtureHandler("Bernie"),
+		types.FixtureHandler("Clem"),
+		types.FixtureHandler("Dolly"),
 	}, nil).Once()
 
 	impl := &namespaceImpl{}
 	params := schema.NamespaceHandlersFieldResolverParams{}
-	cfg := ServiceConfig{ClientFactory: factory}
+	cfg := ServiceConfig{HandlerClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = types.FixtureNamespace("default")
 	params.Args.Limit = 10
@@ -155,7 +153,7 @@ func TestNamespaceTypeHandlersField(t *testing.T) {
 
 	// Store err
 	client.On("ListHandlers", mock.Anything, mock.Anything).Return(
-		[]types.Handler{},
+		[]*types.Handler{},
 		errors.New("error"),
 	)
 
@@ -165,17 +163,17 @@ func TestNamespaceTypeHandlersField(t *testing.T) {
 }
 
 func TestNamespaceTypeMutatorsField(t *testing.T) {
-	client, factory := client.NewClientFactory()
-	client.On("ListMutators", mock.Anything, mock.Anything).Return([]types.Mutator{
-		*types.FixtureMutator("Abe"),
-		*types.FixtureMutator("Bernie"),
-		*types.FixtureMutator("Clem"),
-		*types.FixtureMutator("Dolly"),
+	client := new(MockMutatorClient)
+	client.On("ListMutators", mock.Anything).Return([]*types.Mutator{
+		types.FixtureMutator("Abe"),
+		types.FixtureMutator("Bernie"),
+		types.FixtureMutator("Clem"),
+		types.FixtureMutator("Dolly"),
 	}, nil).Once()
 
 	impl := &namespaceImpl{}
 	params := schema.NamespaceMutatorsFieldResolverParams{}
-	cfg := ServiceConfig{ClientFactory: factory}
+	cfg := ServiceConfig{MutatorClient: client}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = types.FixtureNamespace("default")
 	params.Args.Limit = 10
@@ -187,7 +185,7 @@ func TestNamespaceTypeMutatorsField(t *testing.T) {
 
 	// Store err
 	client.On("ListMutators", mock.Anything, mock.Anything).Return(
-		[]types.Mutator{},
+		[]*types.Mutator{},
 		errors.New("error"),
 	)
 
@@ -197,15 +195,15 @@ func TestNamespaceTypeMutatorsField(t *testing.T) {
 }
 
 func TestNamespaceTypeSilencesField(t *testing.T) {
-	client, factory := client.NewClientFactory()
-	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{
-		*types.FixtureSilenced("a:b"),
-		*types.FixtureSilenced("b:c"),
-		*types.FixtureSilenced("c:d"),
+	client := new(MockSilencedClient)
+	client.On("ListSilenced", mock.Anything).Return([]*types.Silenced{
+		types.FixtureSilenced("a:b"),
+		types.FixtureSilenced("b:c"),
+		types.FixtureSilenced("c:d"),
 	}, nil).Once()
 
 	impl := &namespaceImpl{}
-	cfg := ServiceConfig{ClientFactory: factory}
+	cfg := ServiceConfig{SilencedClient: client}
 	params := schema.NamespaceSilencesFieldResolverParams{}
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 	params.Source = types.FixtureNamespace("xxx")
@@ -216,7 +214,7 @@ func TestNamespaceTypeSilencesField(t *testing.T) {
 	assert.NotEmpty(t, res)
 
 	// Store err
-	client.On("ListSilenceds", mock.Anything, "", "", mock.Anything).Return([]types.Silenced{}, errors.New("abc"))
+	client.On("ListSilenced", mock.Anything).Return([]*types.Silenced{}, errors.New("abc"))
 	res, err = impl.Silences(params)
 	assert.Empty(t, res.(offsetContainer).Nodes)
 	assert.Error(t, err)

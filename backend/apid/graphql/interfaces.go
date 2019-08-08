@@ -110,3 +110,12 @@ type RBACClient interface {
 	CreateClusterRole(ctx context.Context, rb *corev2.ClusterRole) error
 	UpdateClusterRole(ctx context.Context, rb *corev2.ClusterRole) error
 }
+
+type GenericClient interface {
+	SetTypeMeta(meta corev2.TypeMeta) error
+	Create(ctx context.Context, value corev2.Resource) error
+	Update(ctx context.Context, value corev2.Resource) error
+	Delete(ctx context.Context, name string) error
+	Get(ctx context.Context, name string, val corev2.Resource) error
+	List(ctx context.Context, resources interface{}, pred *store.SelectionPredicate) error
+}

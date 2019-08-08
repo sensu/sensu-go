@@ -4,7 +4,6 @@ import (
 	"context"
 
 	gql "github.com/graphql-go/graphql"
-	"github.com/sensu/sensu-go/backend/api"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/graphql"
@@ -35,7 +34,7 @@ type ServiceConfig struct {
 	HookClient        HookClient
 	UserClient        UserClient
 	RBACClient        RBACClient
-	GenericClient     api.GenericClient
+	GenericClient     GenericClient
 }
 
 // Service describes the Sensu GraphQL service capable of handling queries.

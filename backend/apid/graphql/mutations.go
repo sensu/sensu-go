@@ -3,7 +3,6 @@ package graphql
 import (
 	"encoding/json"
 	"errors"
-	"path"
 	"strings"
 	"time"
 
@@ -51,8 +50,9 @@ func (r *mutationsImpl) PutWrapped(p schema.MutationPutWrappedFieldResolverParam
 	}
 
 	client := r.svc.GenericClient
-	client.APIGroup, client.APIVersion = path.Split(ret.TypeMeta.APIVersion)
-	client.Kind = ret.Value
+	if err := client.SetTypeMeta(ret.TypeMeta); err != nil {
+		return nil, err
+	}
 
 	ctx := store.NamespaceContext(p.Context, ret.ObjectMeta.Namespace)
 

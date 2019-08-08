@@ -22,7 +22,6 @@ type EntityClient struct {
 func NewEntityClient(store store.ResourceStore, eventStore store.EventStore, auth authorization.Authorizer) *EntityClient {
 	return &EntityClient{
 		client: &GenericClient{
-			Kind:       &corev2.Entity{},
 			Auth:       auth,
 			Store:      store,
 			APIGroup:   "core",

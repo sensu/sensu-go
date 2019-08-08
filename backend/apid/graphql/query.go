@@ -2,13 +2,12 @@ package graphql
 
 import (
 	"fmt"
-	"path"
 	"reflect"
 	"sort"
 	"strings"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	v2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/api"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/apid/graphql/suggest"
 	"github.com/sensu/sensu-go/backend/store"
@@ -26,7 +25,6 @@ var _ schema.QueryFieldResolvers = (*queryImpl)(nil)
 type queryImpl struct {
 	nodeResolver *nodeResolver
 	svc          ServiceConfig
-	client       api.GenericClient
 }
 
 // Viewer implements response to request for 'viewer' field.
@@ -112,12 +110,9 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 	objs := reflect.New(objT.Type())
 	objs.Elem().Set(objT)
 
-	group, version := path.Split(res.Group)
-
-	client := r.client
-	client.APIGroup = group
-	client.APIVersion = version
-	client.Kind = t
+	client := r.svc.GenericClient
+	// Don't need to check error, as type meta already successfully resolved
+	_ = client.SetTypeMeta(corev2.TypeMeta{Type: res.Name, APIVersion: res.Group})
 
 	ctx := store.NamespaceContext(p.Context, p.Args.Namespace)
 

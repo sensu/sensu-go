@@ -4,10 +4,10 @@ import (
 	"testing"
 
 	v2 "github.com/sensu/sensu-go/api/core/v2"
-	client "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,11 +15,11 @@ func TestSilencedTypeCheckField(t *testing.T) {
 	check := types.FixtureCheckConfig("http-check")
 	silenced := types.FixtureSilenced("unix:http-check")
 
-	client, factory := client.NewClientFactory()
-	impl := &silencedImpl{factory: factory}
+	client := new(MockCheckClient)
+	impl := &silencedImpl{client: client}
 
 	// Success
-	client.On("FetchCheck", check.Name).Return(check, nil).Once()
+	client.On("FetchCheck", mock.Anything, check.Name).Return(check, nil).Once()
 	res, err := impl.Check(graphql.ResolveParams{Source: silenced})
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)

@@ -24,8 +24,7 @@ func setupNodeResolver(cfg ServiceConfig) func(string) (interface{}, error) {
 }
 
 func TestNodeResolverFindType(t *testing.T) {
-	_, factory := mockclient.NewClientFactory()
-	cfg := ServiceConfig{ClientFactory: factory}
+	cfg := ServiceConfig{}
 	resolver := newNodeResolver(cfg)
 
 	check := types.FixtureCheckConfig("http-check")
@@ -34,8 +33,8 @@ func TestNodeResolverFindType(t *testing.T) {
 }
 
 func TestNodeResolverFind(t *testing.T) {
-	client, factory := mockclient.NewClientFactory()
-	cfg := ServiceConfig{ClientFactory: factory}
+	client := new(MockCheckClient)
+	cfg := ServiceConfig{CheckClient: client}
 	resolver := newNodeResolver(cfg)
 
 	ctx := context.Background()
@@ -45,19 +44,19 @@ func TestNodeResolverFind(t *testing.T) {
 	gid := globalid.CheckTranslator.EncodeToString(check)
 
 	// Sucess
-	client.On("FetchCheck", check.Name).Return(check, nil).Once()
+	client.On("FetchCheck", mock.Anything, check.Name).Return(check, nil).Once()
 	res, err := resolver.Find(ctx, gid, info)
 	assert.NotEmpty(t, res)
 	assert.NoError(t, err)
 
 	// Missing
-	client.On("FetchCheck", check.Name).Return(check, mockclient.NotFound).Once()
+	client.On("FetchCheck", mock.Anything, check.Name).Return(check, mockclient.NotFound).Once()
 	res, err = resolver.Find(ctx, gid, info)
 	assert.Empty(t, res)
 	assert.NoError(t, err)
 
 	// Error
-	client.On("FetchCheck", check.Name).Return(check, mockclient.InternalErr).Once()
+	client.On("FetchCheck", mock.Anything, check.Name).Return(check, mockclient.InternalErr).Once()
 	res, err = resolver.Find(ctx, gid, info)
 	assert.Empty(t, res)
 	assert.Error(t, err)
@@ -68,10 +67,22 @@ func TestNodeResolverFind(t *testing.T) {
 	assert.Error(t, err)
 }
 
+type onner interface {
+	On(string, ...interface{}) *mock.Call
+}
+
 func TestAssetNodeResolver(t *testing.T) {
-	client, factory := mockclient.NewClientFactory()
-	assetClient := new(MockAssetClient)
-	cfg := ServiceConfig{ClientFactory: factory, AssetClient: assetClient}
+	cfg := ServiceConfig{
+		AssetClient:       new(MockAssetClient),
+		CheckClient:       new(MockCheckClient),
+		EntityClient:      new(MockEntityClient),
+		EventClient:       new(MockEventClient),
+		EventFilterClient: new(MockEventFilterClient),
+		HandlerClient:     new(MockHandlerClient),
+		MutatorClient:     new(MockMutatorClient),
+		UserClient:        new(MockUserClient),
+		NamespaceClient:   new(MockNamespaceClient),
+	}
 	find := setupNodeResolver(cfg)
 
 	testCases := []struct {
@@ -89,7 +100,7 @@ func TestAssetNodeResolver(t *testing.T) {
 				return globalid.AssetTranslator.EncodeToString(r)
 			},
 			setup: func(r interface{}) {
-				assetClient.On("FetchAsset", mock.Anything, "name").Return(r, nil).Once()
+				cfg.AssetClient.(onner).On("FetchAsset", mock.Anything, "name").Return(r, nil).Once()
 			},
 		},
 		{
@@ -101,7 +112,7 @@ func TestAssetNodeResolver(t *testing.T) {
 				return globalid.CheckTranslator.EncodeToString(r)
 			},
 			setup: func(r interface{}) {
-				client.On("FetchCheck", "name").Return(r, nil).Once()
+				cfg.CheckClient.(onner).On("FetchCheck", mock.Anything, "name").Return(r, nil).Once()
 			},
 		},
 		{
@@ -113,7 +124,7 @@ func TestAssetNodeResolver(t *testing.T) {
 				return globalid.EntityTranslator.EncodeToString(r)
 			},
 			setup: func(r interface{}) {
-				client.On("FetchEntity", "name").Return(r, nil).Once()
+				cfg.EntityClient.(onner).On("FetchEntity", mock.Anything, "name").Return(r, nil).Once()
 			},
 		},
 		{
@@ -125,7 +136,7 @@ func TestAssetNodeResolver(t *testing.T) {
 				return globalid.HandlerTranslator.EncodeToString(r)
 			},
 			setup: func(r interface{}) {
-				client.On("FetchHandler", "name").Return(r, nil).Once()
+				cfg.HandlerClient.(onner).On("FetchHandler", mock.Anything, "name").Return(r, nil).Once()
 			},
 		},
 		{
@@ -137,7 +148,7 @@ func TestAssetNodeResolver(t *testing.T) {
 				return globalid.MutatorTranslator.EncodeToString(r)
 			},
 			setup: func(r interface{}) {
-				client.On("FetchMutator", "name").Return(r, nil).Once()
+				cfg.MutatorClient.(onner).On("FetchMutator", mock.Anything, "name").Return(r, nil).Once()
 			},
 		},
 		{
@@ -149,7 +160,7 @@ func TestAssetNodeResolver(t *testing.T) {
 				return globalid.UserTranslator.EncodeToString(r)
 			},
 			setup: func(r interface{}) {
-				client.On("FetchUser", "name").Return(r, nil).Once()
+				cfg.UserClient.(onner).On("FetchUser", mock.Anything, "name").Return(r, nil).Once()
 			},
 		},
 		{
@@ -161,7 +172,7 @@ func TestAssetNodeResolver(t *testing.T) {
 				return globalid.EventTranslator.EncodeToString(r)
 			},
 			setup: func(r interface{}) {
-				client.On("FetchEvent", "a", "b").Return(r, nil).Once()
+				cfg.EventClient.(onner).On("FetchEvent", mock.Anything, "a", "b").Return(r, nil).Once()
 			},
 		},
 		{
@@ -173,7 +184,7 @@ func TestAssetNodeResolver(t *testing.T) {
 				return globalid.NamespaceTranslator.EncodeToString(r)
 			},
 			setup: func(r interface{}) {
-				client.On("FetchNamespace", "sensu").Return(r, nil).Once()
+				cfg.NamespaceClient.(onner).On("FetchNamespace", mock.Anything, "sensu").Return(r, nil).Once()
 			},
 		},
 	}

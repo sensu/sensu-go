@@ -5,7 +5,6 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	client "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -16,7 +15,6 @@ func TestEventFilterTypeRuntimeAssetsField(t *testing.T) {
 	filter := corev2.FixtureEventFilter("my-filter")
 	filter.RuntimeAssets = []string{"one", "two"}
 
-	_, factory := client.NewClientFactory()
 	assetClient := new(MockAssetClient)
 	assetClient.On("ListAssets", mock.Anything, mock.Anything).Return([]*corev2.Asset{
 		corev2.FixtureAsset("one"),
@@ -26,7 +24,7 @@ func TestEventFilterTypeRuntimeAssetsField(t *testing.T) {
 
 	// return associated silence
 	impl := &eventFilterImpl{}
-	cfg := ServiceConfig{ClientFactory: factory, AssetClient: assetClient}
+	cfg := ServiceConfig{AssetClient: assetClient}
 	ctx := contextWithLoaders(context.Background(), cfg)
 	res, err := impl.RuntimeAssets(graphql.ResolveParams{Source: filter, Context: ctx})
 	require.NoError(t, err)

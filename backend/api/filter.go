@@ -20,9 +20,9 @@ type EventFilterClient struct {
 func NewEventFilterClient(store store.ResourceStore, auth authorization.Authorizer) *EventFilterClient {
 	return &EventFilterClient{
 		client: GenericClient{
-			Kind:       &corev2.EventFilter{},
 			Store:      store,
 			Auth:       auth,
+			Kind:       &corev2.EventFilter{},
 			APIGroup:   "core",
 			APIVersion: "v2",
 		},
@@ -68,6 +68,7 @@ func (a *EventFilterClient) UpdateEventFilter(ctx context.Context, filter *corev
 	return nil
 }
 
+// DeleteEventFilter deletes a filter resource, if authorized.
 func (a *EventFilterClient) DeleteEventFilter(ctx context.Context, name string) error {
 	if err := a.client.Delete(ctx, name); err != nil {
 		return fmt.Errorf("couldn't delete filter: %s", err)

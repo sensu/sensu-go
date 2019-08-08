@@ -20,9 +20,9 @@ type AssetClient struct {
 func NewAssetClient(store store.ResourceStore, auth authorization.Authorizer) *AssetClient {
 	return &AssetClient{
 		client: GenericClient{
-			Kind:       &corev2.Asset{},
 			Store:      store,
 			Auth:       auth,
+			Kind:       &corev2.Asset{},
 			APIGroup:   "core",
 			APIVersion: "v2",
 		},
