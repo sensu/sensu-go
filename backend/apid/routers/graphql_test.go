@@ -26,7 +26,7 @@ func TestHttpGraphQLRequest(t *testing.T) {
 	queue := &mockqueue.MockQueue{}
 	getter := &mockqueue.Getter{}
 	getter.On("GetQueue", "adhocRequest").Return(queue)
-	router := NewGraphQLRouter("http://localhost:8080", nil, nil, nil, getter)
+	router := NewGraphQLRouter("http://localhost:8080", nil, nil, nil, nil, getter, nil)
 	body := map[string]interface{}{
 		"operationName": "intrsopection",
 		"query":         testutil.IntrospectionQuery,
@@ -46,7 +46,7 @@ func TestHttpGraphQLBatchRequest(t *testing.T) {
 	queue := &mockqueue.MockQueue{}
 	getter := &mockqueue.Getter{}
 	getter.On("GetQueue", "adhocRequest").Return(queue)
-	router := NewGraphQLRouter("http://localhost:8080", nil, nil, nil, getter)
+	router := NewGraphQLRouter("http://localhost:8080", nil, nil, nil, nil, getter, nil)
 	body := []map[string]interface{}{
 		map[string]interface{}{
 			"operationName": "intrsopection",

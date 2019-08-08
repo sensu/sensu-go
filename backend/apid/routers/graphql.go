@@ -45,7 +45,7 @@ func NewGraphQLRouter(apiURL string, tls *tls.Config, store store.Store, eventSt
 		HookClient:        api.NewHookConfigClient(store, auth),
 		UserClient:        api.NewUserClient(store, auth),
 		RBACClient:        api.NewRBACClient(store, auth),
-		GenericClient:     api.GenericClient{Store: store, Auth: auth},
+		GenericClient:     &api.GenericClient{Store: store, Auth: auth},
 	})
 	if err != nil {
 		logger.WithError(err).Panic("unable to configure graphql service")
