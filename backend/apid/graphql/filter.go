@@ -21,22 +21,6 @@ func filterAssets(records []*corev2.Asset, filterFn assetPredicate) []*corev2.As
 	return relevant
 }
 
-// checks
-
-type checkPredicate func(*corev2.CheckConfig) bool
-
-func filterChecks(records []*corev2.CheckConfig, filterFn checkPredicate) []*corev2.CheckConfig {
-	relevant := make([]*corev2.CheckConfig, 0, len(records))
-
-	for _, record := range records {
-		if filterFn(record) {
-			relevant = append(relevant, record)
-		}
-	}
-
-	return relevant
-}
-
 // entities
 
 type entityPredicate func(*corev2.Entity) bool

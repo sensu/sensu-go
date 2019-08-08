@@ -37,7 +37,7 @@ func TestListAssets(t *testing.T) {
 		t.Run(test.Name, func(t *testing.T) {
 			ctx := test.Ctx()
 			store := test.Store()
-			auth := &rbac.Authorizer{store}
+			auth := &rbac.Authorizer{Store: store}
 			client := NewAssetClient(store, auth)
 			assets, err := client.ListAssets(ctx)
 			if err != nil && !test.ExpErr {
