@@ -80,6 +80,7 @@ type Config struct {
 	Client          *clientv3.Client
 	BufferSize      int
 	WorkerCount     int
+	ImpliedEntities bool
 }
 
 // New creates a new Eventd.

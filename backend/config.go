@@ -36,8 +36,9 @@ type Config struct {
 	CacheDir string
 
 	// Agentd Configuration
-	AgentHost string
-	AgentPort int
+	AgentHost       string
+	AgentPort       int
+	ImpliedEntities bool
 
 	// Apid Configuration
 	APIListenAddress string

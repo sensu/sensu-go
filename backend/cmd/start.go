@@ -43,6 +43,7 @@ const (
 	flagInsecureSkipTLSVerify = "insecure-skip-tls-verify"
 	flagDebug                 = "debug"
 	flagLogLevel              = "log-level"
+	flagNoImpliedEntities     = "no-implied-entities"
 
 	// Etcd flag constants
 	deprecatedFlagEtcdClientURLs               = "listen-client-urls"
@@ -165,6 +166,7 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 				DeregistrationHandler: viper.GetString(flagDeregistrationHandler),
 				CacheDir:              viper.GetString(flagCacheDir),
 				StateDir:              viper.GetString(flagStateDir),
+				ImpliedEntities:       viper.GetBool(flagNoImpliedEntities),
 
 				EtcdAdvertiseClientURLs:      viper.GetStringSlice(flagEtcdAdvertiseClientURLs),
 				EtcdListenClientURLs:         viper.GetStringSlice(flagEtcdClientURLs),
@@ -283,6 +285,7 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	viper.SetDefault(backend.FlagKeepalivedBufferSize, 100)
 	viper.SetDefault(backend.FlagPipelinedWorkers, 100)
 	viper.SetDefault(backend.FlagPipelinedBufferSize, 100)
+	viper.SetDefault(flagNoImpliedEntities, false)
 
 	// Etcd defaults
 	viper.SetDefault(flagEtcdAdvertiseClientURLs, defaultEtcdAdvertiseClientURL)
@@ -325,6 +328,7 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	cmd.Flags().Int(backend.FlagKeepalivedBufferSize, viper.GetInt(backend.FlagKeepalivedBufferSize), "number of incoming keepalives that can be buffered")
 	cmd.Flags().Int(backend.FlagPipelinedWorkers, viper.GetInt(backend.FlagPipelinedWorkers), "number of workers spawned for handling events through the event pipeline")
 	cmd.Flags().Int(backend.FlagPipelinedBufferSize, viper.GetInt(backend.FlagPipelinedBufferSize), "number of events to handle that can be buffered")
+	cmd.Flags().Bool(flagNoImpliedEntities, viper.GetBool(flagNoImpliedEntities), "do not create a new proxy entity when an event is received for one that doesn't already exist")
 
 	// Etcd flags
 	cmd.Flags().StringSlice(flagEtcdAdvertiseClientURLs, viper.GetStringSlice(flagEtcdAdvertiseClientURLs), "list of this member's client URLs to advertise to the rest of the cluster.")

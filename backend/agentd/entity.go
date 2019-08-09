@@ -7,6 +7,12 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+type ErrImpliedEntity string
+
+func (e ErrImpliedEntity) Error() string {
+	return fmt.Sprintf("%s does not exist and implied proxy entities are disabled", string(e))
+}
+
 // addEntitySubscription appends the entity subscription (using the format
 // "entity:entityName") to the subscriptions of an entity
 func addEntitySubscription(entityName string, subscriptions []string) []string {
@@ -17,8 +23,9 @@ func addEntitySubscription(entityName string, subscriptions []string) []string {
 // getProxyEntity verifies if a proxy entity name was provided in the given event and if
 // so, retrieves the corresponding entity in the store in order to replace the
 // event's entity with it. In case no entity exists, we create an entity with
-// the proxy class
-func getProxyEntity(event *types.Event, s SessionStore) error {
+// the proxy class only if createMissing is true.
+// If createMissing is false and the entity doesn't exist, an ErrImpliedEntity is returned.
+func getProxyEntity(event *types.Event, s SessionStore, createMissing bool) error {
 	ctx := context.WithValue(context.Background(), types.NamespaceKey, event.Entity.Namespace)
 
 	// Verify if a proxy entity name, representing a proxy entity, is defined in the check
@@ -29,8 +36,13 @@ func getProxyEntity(event *types.Event, s SessionStore) error {
 			return fmt.Errorf("could not query the store for a proxy entity: %s", err)
 		}
 
-		// Check if an entity was found for this proxy entity. If not, we need to create it
+		// Handle implied proxy entities
 		if entity == nil {
+			if !createMissing {
+				return ErrImpliedEntity(event.Check.ProxyEntityName)
+			}
+
+			// Create a new proxy entity
 			entity = &types.Entity{
 				EntityClass:   types.EntityProxyClass,
 				Subscriptions: addEntitySubscription(event.Check.ProxyEntityName, []string{}),

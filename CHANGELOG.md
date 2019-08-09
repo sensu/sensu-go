@@ -16,6 +16,10 @@ for check hook execution.
 Protobuf will be used for serialization/deserialization unless indicated by the
 backend to use JSON.
 - Added `sensuctl dump` to dump resources to a file or STDOUT.
+- Added `--no-implied-entities` flag to backend to allow events containing
+proxy entities that do not exist to be dropped. This is useful for setups
+that sync entities from an external source-of-truth and don't want to
+allow the entity list in Sensu to deviate from it.
 
 ### Changed
 - The project now uses Go modules instead of dep for dependency management.

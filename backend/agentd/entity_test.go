@@ -28,10 +28,11 @@ func TestGetProxyEntity(t *testing.T) {
 	store.On("UpdateEntity", mock.Anything, mock.Anything).Once().Return(errors.New("error"))
 
 	testCases := []struct {
-		name           string
-		event          *types.Event
-		expectedError  bool
-		expectedEntity string
+		name            string
+		event           *types.Event
+		impliedEntities bool
+		expectedError   bool
+		expectedEntity  string
 	}{
 		{
 			name:           "The event has no proxy entity",
@@ -52,7 +53,7 @@ func TestGetProxyEntity(t *testing.T) {
 			expectedEntity: "bar",
 		},
 		{
-			name: "The event has a proxy entity with no corresponding entity",
+			name: "The event has a proxy entity with no corresponding entity, and impliedEntities is enabled",
 			event: &types.Event{
 				ObjectMeta: v2.NewObjectMeta("", "default"),
 				Check: &types.Check{
@@ -60,8 +61,21 @@ func TestGetProxyEntity(t *testing.T) {
 				},
 				Entity: types.FixtureEntity("foo"),
 			},
-			expectedError:  false,
-			expectedEntity: "baz",
+			impliedEntities: true,
+			expectedError:   false,
+			expectedEntity:  "baz",
+		},
+		{
+			name: "The event has a proxy entity with no corresponding entity, and impliedEntities is disabled",
+			event: &types.Event{
+				ObjectMeta: v2.NewObjectMeta("", "default"),
+				Check: &types.Check{
+					ProxyEntityName: "baz",
+				},
+				Entity: types.FixtureEntity("foo"),
+			},
+			impliedEntities: false,
+			expectedError:   true,
 		},
 		{
 			name: "The proxy entity can't be queried",
@@ -89,7 +103,7 @@ func TestGetProxyEntity(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := getProxyEntity(tc.event, store)
+			err := getProxyEntity(tc.event, store, tc.impliedEntities)
 			testutil.CompareError(err, tc.expectedError, t)
 
 			if tc.expectedEntity != "" {

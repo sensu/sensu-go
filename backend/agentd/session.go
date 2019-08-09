@@ -87,13 +87,14 @@ func newSessionHandler(s *Session) *handler.MessageHandler {
 // A SessionConfig contains all of the ncessary information to initialize
 // an agent session.
 type SessionConfig struct {
-	ContentType   string
-	Namespace     string
-	AgentAddr     string
-	AgentName     string
-	User          string
-	Subscriptions []string
-	RingPool      *ringv2.Pool
+	ContentType     string
+	Namespace       string
+	AgentAddr       string
+	AgentName       string
+	User            string
+	Subscriptions   []string
+	RingPool        *ringv2.Pool
+	ImpliedEntities bool
 }
 
 // NewSession creates a new Session object given the triple of a transport
@@ -346,7 +347,7 @@ func (s *Session) handleEvent(ctx context.Context, payload []byte) error {
 	// Verify if we have a source in the event and if so, use it as the entity by
 	// creating or retrieving it from the store
 	if event.HasCheck() {
-		if err := getProxyEntity(event, s.store); err != nil {
+		if err := getProxyEntity(event, s.store, s.cfg.ImpliedEntities); err != nil {
 			return err
 		}
 	}
