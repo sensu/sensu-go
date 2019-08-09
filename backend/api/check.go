@@ -75,6 +75,10 @@ func (c *CheckClient) FetchCheck(ctx context.Context, name string) (*corev2.Chec
 
 // ListChecks lists all checks in a namespace, if authorized.
 func (c *CheckClient) ListChecks(ctx context.Context) ([]*corev2.CheckConfig, error) {
+	attrs := checkListAttributes(ctx)
+	if err := authorize(ctx, c.auth, attrs); err != nil {
+		return nil, err
+	}
 	pred := &store.SelectionPredicate{
 		Continue: corev2.PageContinueFromContext(ctx),
 		Limit:    int64(corev2.PageSizeFromContext(ctx)),
