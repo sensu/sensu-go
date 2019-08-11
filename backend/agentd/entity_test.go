@@ -16,7 +16,8 @@ func TestGetProxyEntity(t *testing.T) {
 	assert := assert.New(t)
 
 	store := &mockstore.MockStore{}
-	store.On("GetEntityByName", mock.Anything, "bar").Return(types.FixtureEntity("bar"), nil)
+	store.On("GetEntityByName", mock.Anything, "bar").Return(types.FixtureProxyEntity("bar"), nil)
+	store.On("GetEntityByName", mock.Anything, "foo").Return(types.FixtureProxyEntity("foo"), nil)
 
 	var nilEntity *types.Entity
 	store.On("GetEntityByName", mock.Anything, "baz").Return(nilEntity, nil)
@@ -46,7 +47,7 @@ func TestGetProxyEntity(t *testing.T) {
 				Check: &types.Check{
 					ProxyEntityName: "bar",
 				},
-				Entity: types.FixtureEntity("foo"),
+				Entity: types.FixtureProxyEntity("bar"),
 			},
 			expectedError:  false,
 			expectedEntity: "bar",
@@ -58,10 +59,21 @@ func TestGetProxyEntity(t *testing.T) {
 				Check: &types.Check{
 					ProxyEntityName: "baz",
 				},
-				Entity: types.FixtureEntity("foo"),
+				Entity: types.FixtureProxyEntity("baz"),
 			},
 			expectedError:  false,
 			expectedEntity: "baz",
+		},
+		{
+			name: "The event has an entity, but no corresponding entity matches it (likely because it was deleted)",
+			event: &types.Event{
+				ObjectMeta: v2.NewObjectMeta("", "default"),
+				Check: &types.Check{
+					ProxyEntityName: "missing",
+				},
+				Entity: types.FixtureProxyEntity("missing"),
+			},
+			expectedError: true,
 		},
 		{
 			name: "The proxy entity can't be queried",
@@ -70,7 +82,7 @@ func TestGetProxyEntity(t *testing.T) {
 				Check: &types.Check{
 					ProxyEntityName: "quux",
 				},
-				Entity: types.FixtureEntity("foo"),
+				Entity: types.FixtureProxyEntity("quux"),
 			},
 			expectedError: true,
 		},
@@ -81,7 +93,18 @@ func TestGetProxyEntity(t *testing.T) {
 				Check: &types.Check{
 					ProxyEntityName: "qux",
 				},
-				Entity: types.FixtureEntity("foo"),
+				Entity: types.FixtureProxyEntity("qux"),
+			},
+			expectedError: true,
+		},
+		{
+			name: "The proxy entity doesn't match the entity embedded in the event",
+			event: &types.Event{
+				ObjectMeta: v2.NewObjectMeta("", "default"),
+				Check: &types.Check{
+					ProxyEntityName: "foo",
+				},
+				Entity: types.FixtureProxyEntity("bar"),
 			},
 			expectedError: true,
 		},
