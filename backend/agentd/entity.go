@@ -15,14 +15,14 @@ func (e ErrDeletedEntity) Error() string {
 	return fmt.Sprintf("%s was deleted after this event was scheduled, dropping event", string(e))
 }
 
-// ErrBadProxyEntity is returned when the entity name for an event does not match
-// the proxy entity name in the scheduled check.
+// ErrEntityNameMismatch is returned when the entity name for an event does not match
+// the entity fetched from the store using the Event.Check.ProxyEntityName.
 // Since the proxy entity is looked up directly and then overwrites the entity inside
 // the event, this mismatch could otherwise cause events to be attached to unexpected entities.
-type ErrBadProxyEntity [2]string
+type ErrEntityNameMismatch [2]string
 
-func (e ErrBadProxyEntity) Error() string {
-	return fmt.Sprintf("proxy_entity_name %s does not match existing entity in event %s", e[0], e[1])
+func (e ErrEntityNameMismatch) Error() string {
+	return fmt.Sprintf("found %q in entity store, which does not match existing entity in event object %q", e[0], e[1])
 }
 
 // addEntitySubscription appends the entity subscription (using the format
@@ -57,7 +57,7 @@ func getProxyEntity(event *types.Event, s SessionStore) error {
 		//   3: Entity does not exist in event or the store (ie: check was not scheduled by
 		//      the backend, but was instead submitted via the agent's API). We should
 		//      create a new entity in this case.
-		if entity == nil {
+		if entity == nil || entity.Name == "" {
 			// case 2: event has an entity but it doesn't exist in the store anymore
 			// because it was deleted.
 			if event.Entity.Name != "" {
@@ -87,14 +87,14 @@ func getProxyEntity(event *types.Event, s SessionStore) error {
 		//
 		// This method looks up the entity in the store based on (1) and then
 		// overwrites the existing entity in the event. Before doing this, confirm
-		// that (1) and (2) match. If they don't, the event is invalid.
+		// that the event fetched using (1), and (2) match. If they don't, the event is invalid.
 		//
 		// Generally, this shouldn't happen because the agent overwrites the
 		// proxy_entity_name field with the entity name when it receives events over
 		// it's API, but it's an undesirable state of inconsistency that should be
 		// avoided regardless.
 		if event.Entity.Name != "" && entity.Name != event.Entity.Name {
-			return ErrBadProxyEntity([2]string{event.Check.ProxyEntityName, event.Entity.Name})
+			return ErrEntityNameMismatch([2]string{entity.Name, event.Entity.Name})
 		}
 
 		event.Entity = entity

@@ -16,8 +16,9 @@ func TestGetProxyEntity(t *testing.T) {
 	assert := assert.New(t)
 
 	store := &mockstore.MockStore{}
-	store.On("GetEntityByName", mock.Anything, "bar").Return(types.FixtureProxyEntity("bar"), nil)
-	store.On("GetEntityByName", mock.Anything, "foo").Return(types.FixtureProxyEntity("foo"), nil)
+	store.On("GetEntityByName", mock.Anything, "bar").Return(types.FixtureEntity("bar"), nil)
+	store.On("GetEntityByName", mock.Anything, "foo").Return(types.FixtureEntity("foo"), nil)
+	store.On("GetEntityByName", mock.Anything, "broken").Return(types.FixtureEntity("not_broken"), nil)
 
 	var nilEntity *types.Entity
 	store.On("GetEntityByName", mock.Anything, "baz").Return(nilEntity, nil)
@@ -71,7 +72,7 @@ func TestGetProxyEntity(t *testing.T) {
 				Check: &types.Check{
 					ProxyEntityName: "missing",
 				},
-				Entity: types.FixtureProxyEntity("missing"),
+				Entity: types.FixtureEntity("missing"),
 			},
 			expectedError: true,
 		},
@@ -104,7 +105,18 @@ func TestGetProxyEntity(t *testing.T) {
 				Check: &types.Check{
 					ProxyEntityName: "foo",
 				},
-				Entity: types.FixtureProxyEntity("bar"),
+				Entity: types.FixtureEntity("bar"),
+			},
+			expectedError: true,
+		},
+		{
+			name: "The entity store returned an incorrect entity, which does not match the one in the event",
+			event: &types.Event{
+				ObjectMeta: v2.NewObjectMeta("", "default"),
+				Check: &types.Check{
+					ProxyEntityName: "foo",
+				},
+				Entity: types.FixtureEntity("broken"),
 			},
 			expectedError: true,
 		},
