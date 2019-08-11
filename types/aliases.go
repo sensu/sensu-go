@@ -193,6 +193,7 @@ var (
 	FixtureCheckRequest       = v2.FixtureCheckRequest
 	FixtureCheckConfig        = v2.FixtureCheckConfig
 	FixtureCheck              = v2.FixtureCheck
+	FixtureProxyCheck         = v2.FixtureProxyCheck
 	FixtureProxyRequests      = v2.FixtureProxyRequests
 	FixtureNamespace          = v2.FixtureNamespace
 	FixtureMetrics            = v2.FixtureMetrics
@@ -204,6 +205,7 @@ var (
 	FixtureUser               = v2.FixtureUser
 	FixtureHealthResponse     = v2.FixtureHealthResponse
 	FixtureEvent              = v2.FixtureEvent
+	FixtureProxyEvent         = v2.FixtureProxyEvent
 	FixtureEventFilter        = v2.FixtureEventFilter
 	FixtureDenyEventFilter    = v2.FixtureDenyEventFilter
 	FixtureExtension          = v2.FixtureExtension
@@ -217,6 +219,7 @@ var (
 	FixtureClusterRole        = v2.FixtureClusterRole
 	FixtureClusterRoleBinding = v2.FixtureClusterRoleBinding
 	FixtureEntity             = v2.FixtureEntity
+	FixtureProxyEntity        = v2.FixtureProxyEntity
 	FixtureHookConfig         = v2.FixtureHookConfig
 	FixtureHook               = v2.FixtureHook
 	FixtureHookList           = v2.FixtureHookList

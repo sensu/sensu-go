@@ -133,6 +133,16 @@ func FixtureEvent(entityName, checkID string) *Event {
 	}
 }
 
+// FixtureProxyEvent returns a testing fixture for an Event object for a proxy Entity.
+func FixtureProxyEvent(entityName, checkID string) *Event {
+	return &Event{
+		ObjectMeta: NewObjectMeta("", "default"),
+		Timestamp:  time.Now().Unix(),
+		Entity:     FixtureProxyEntity(entityName),
+		Check:      FixtureProxyCheck(checkID, entityName),
+	}
+}
+
 // NewEvent creates a new Event.
 func NewEvent(meta ObjectMeta) *Event {
 	return &Event{ObjectMeta: meta}

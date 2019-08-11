@@ -64,6 +64,14 @@ func FixtureCheck(id string) *Check {
 	return c
 }
 
+// FixtureProxyCheck returns a fixture for a proxy check object, associated with
+// the given entity.
+func FixtureProxyCheck(id string, proxyEntityName string) *Check {
+	c := FixtureCheck(id)
+	c.ProxyEntityName = proxyEntityName
+	return c
+}
+
 // NewCheck creates a new Check. It copies the fields from CheckConfig that
 // match with Check's fields.
 //

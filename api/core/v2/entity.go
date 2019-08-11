@@ -131,6 +131,14 @@ func FixtureEntity(name string) *Entity {
 	}
 }
 
+// FixtureProxyEntity returns a testing fixture for an proxy Entity object.
+func FixtureProxyEntity(name string) *Entity {
+	e := FixtureEntity(name)
+	e.EntityClass = "proxy"
+	e.ObjectMeta.Name = ""
+	return e
+}
+
 //
 // Sorting
 
