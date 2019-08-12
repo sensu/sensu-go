@@ -64,7 +64,32 @@ func (a *Agent) handleCheck(ctx context.Context, payload []byte) error {
 
 	logger.Info("scheduling check execution: ", checkConfig.Name)
 
-	entity := a.getAgentEntity()
+	// In order to protect against processing results for since-deleted entities,
+	// the backend needs to be aware of the correct entity.
+	// If this is a proxy check, the entity should not be the agent but instead
+	// the entity the check is actually for.
+	agentEntity := a.getAgentEntity()
+	var entity *corev2.Entity
+	fmt.Printf("proxy_entity_name: %q\n", request.Config.ProxyEntityName)
+	if request.Config.ProxyEntityName != "" {
+		// Since we don't actually have access to the real entity here, we need to
+		// make a placeholder. The backend will replace it with the entity in the
+		// store that it fetches using Event.Check.ProxyEntityName, so the full details
+		// aren't necessary. The backend specifically requires:
+		//   - namespace (to find the correct entity)
+		//   - name (to allow detection of events submitted for deleted entities)
+		// Additionally, Agent.executeCheck looks at the entity class to see whether
+		// it is a proxy entity.
+		entity = &corev2.Entity{
+			ObjectMeta: corev2.ObjectMeta{
+				Namespace: agentEntity.Namespace,
+				Name:      request.Config.ProxyEntityName,
+			},
+			EntityClass: "proxy",
+		}
+	} else {
+		entity = agentEntity
+	}
 	go a.executeCheck(ctx, request, entity)
 
 	return nil
@@ -225,7 +250,18 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	event.Check.Duration = checkExec.Duration
 	event.Check.Status = uint32(checkExec.Status)
 
-	event.Entity = a.getAgentEntity()
+	// Proxy checks depend on the entity in the event being the entity the
+	// check was issued to, not the agent. Non-proxy checks depend on it
+	// being the agent.
+	// This entity is overwritten by the backend (after some validation is performed)
+	// so it's not absolutely necessary that it be correct. The fields that are
+	// primarily depended on for differentiation are the namespace and the name.
+	switch entity.EntityClass {
+	case "proxy":
+		event.Entity = entity
+	default:
+		event.Entity = a.getAgentEntity()
+	}
 	event.Timestamp = time.Now().Unix()
 
 	if len(checkHooks) != 0 {
