@@ -28,7 +28,7 @@ func CompareErrorType(err error, expected reflect.Type, t *testing.T) {
 		if reflect.TypeOf(err) != expected {
 			t.Fatalf("expected error of type %s, got %T", expected.Name(), err)
 		}
-	} else if expected == nil && err != nil {
+	} else if err != nil {
 		t.Fatalf("unexpected error: %s", err.Error())
 	}
 }
