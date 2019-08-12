@@ -2,6 +2,7 @@ package agentd
 
 import (
 	"errors"
+	"reflect"
 	"testing"
 
 	"github.com/sensu/sensu-go/api/core/v2"
@@ -29,17 +30,19 @@ func TestGetProxyEntity(t *testing.T) {
 	store.On("GetEntityByName", mock.Anything, "qux").Return(nilEntity, nil)
 	store.On("UpdateEntity", mock.Anything, mock.Anything).Once().Return(errors.New("error"))
 
+	store.On("GetEntityByName", mock.Anything, "missing").Return(nilEntity, nil)
+
 	testCases := []struct {
-		name           string
-		event          *types.Event
-		expectedError  bool
-		expectedEntity string
+		name              string
+		event             *types.Event
+		expectedErrorType reflect.Type
+		expectedEntity    string
 	}{
 		{
-			name:           "The event has no proxy entity",
-			event:          types.FixtureEvent("foo", "check_cpu"),
-			expectedError:  false,
-			expectedEntity: "foo",
+			name:              "The event has no proxy entity",
+			event:             types.FixtureEvent("foo", "check_cpu"),
+			expectedErrorType: nil,
+			expectedEntity:    "foo",
 		},
 		{
 			name: "The event has a proxy entity with a corresponding entity",
@@ -50,8 +53,8 @@ func TestGetProxyEntity(t *testing.T) {
 				},
 				Entity: types.FixtureProxyEntity("bar"),
 			},
-			expectedError:  false,
-			expectedEntity: "bar",
+			expectedErrorType: nil,
+			expectedEntity:    "bar",
 		},
 		{
 			name: "The event has a proxy entity with no corresponding entity",
@@ -62,8 +65,8 @@ func TestGetProxyEntity(t *testing.T) {
 				},
 				Entity: types.FixtureProxyEntity("baz"),
 			},
-			expectedError:  false,
-			expectedEntity: "baz",
+			expectedErrorType: nil,
+			expectedEntity:    "baz",
 		},
 		{
 			name: "The event has an entity, but no corresponding entity matches it (likely because it was deleted)",
@@ -74,7 +77,7 @@ func TestGetProxyEntity(t *testing.T) {
 				},
 				Entity: types.FixtureEntity("missing"),
 			},
-			expectedError: true,
+			expectedErrorType: reflect.TypeOf(ErrDeletedEntity("")),
 		},
 		{
 			name: "The proxy entity can't be queried",
@@ -85,7 +88,7 @@ func TestGetProxyEntity(t *testing.T) {
 				},
 				Entity: types.FixtureProxyEntity("quux"),
 			},
-			expectedError: true,
+			expectedErrorType: reflect.TypeOf(errors.New("")),
 		},
 		{
 			name: "The proxy entity can't be created",
@@ -96,18 +99,7 @@ func TestGetProxyEntity(t *testing.T) {
 				},
 				Entity: types.FixtureProxyEntity("qux"),
 			},
-			expectedError: true,
-		},
-		{
-			name: "The proxy entity doesn't match the entity embedded in the event",
-			event: &types.Event{
-				ObjectMeta: v2.NewObjectMeta("", "default"),
-				Check: &types.Check{
-					ProxyEntityName: "foo",
-				},
-				Entity: types.FixtureEntity("bar"),
-			},
-			expectedError: true,
+			expectedErrorType: reflect.TypeOf(errors.New("")),
 		},
 		{
 			name: "The entity store returned an incorrect entity, which does not match the one in the event",
@@ -118,14 +110,14 @@ func TestGetProxyEntity(t *testing.T) {
 				},
 				Entity: types.FixtureEntity("broken"),
 			},
-			expectedError: true,
+			expectedErrorType: reflect.TypeOf(ErrEntityNameMismatch([2]string{})),
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			err := getProxyEntity(tc.event, store)
-			testutil.CompareError(err, tc.expectedError, t)
+			testutil.CompareErrorType(err, tc.expectedErrorType, t)
 
 			if tc.expectedEntity != "" {
 				assert.Equal(tc.expectedEntity, tc.event.Entity.Name)
