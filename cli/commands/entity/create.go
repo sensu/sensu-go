@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
@@ -41,7 +41,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			opts.Namespace = cli.Config.Namespace()
 
 			if isInteractive {
-				if err := opts.administerQuestionnaire(); err != nil {
+				if err := opts.administerQuestionnaire(false); err != nil {
 					return err
 				}
 			} else {
@@ -49,7 +49,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Apply given arguments to entity
-			entity := v2.NewEntity(v2.NewObjectMeta("", ""))
+			entity := corev2.NewEntity(corev2.NewObjectMeta("", ""))
 			opts.copy(entity)
 
 			if err := entity.Validate(); err != nil {
