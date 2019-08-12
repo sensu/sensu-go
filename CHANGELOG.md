@@ -25,6 +25,7 @@ backend to use JSON.
 are joined with `&&` and exclusive filter expressions are joined with `||`.
 - The REST API now correctly only returns events for the specific entity
 queried in the `GET /events/:entity` endpoint (#3141)
+- The backend now drops events for entities that have been deleted (#3178)
 
 ### Removed
 - Removed encoded protobuf payloads from log messages (when decoded, they can reveal
