@@ -81,6 +81,7 @@ func (a *Agent) getEntities(event *types.Event) {
 				ObjectMeta: types.ObjectMeta{
 					Namespace: agentEntity.Namespace,
 				},
+				EntityClass: "proxy",
 			}
 			// Case 2
 		} else {
@@ -90,6 +91,7 @@ func (a *Agent) getEntities(event *types.Event) {
 			if event.Entity.Namespace == "" {
 				event.Entity.Namespace = agentEntity.Namespace
 			}
+			event.EntityClass = "proxy"
 		}
 	} else {
 		// Send as the agent's entity directly
