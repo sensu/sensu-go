@@ -107,7 +107,7 @@ func eventDeleteAttributes(ctx context.Context, entity, check string) *authoriza
 		APIVersion:   "v2",
 		Namespace:    corev2.ContextNamespace(ctx),
 		Resource:     "events",
-		Verb:         "del",
+		Verb:         "delete",
 		ResourceName: fmt.Sprintf("%s:%s", entity, check),
 	}
 }
