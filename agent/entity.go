@@ -91,7 +91,7 @@ func (a *Agent) getEntities(event *types.Event) {
 			if event.Entity.Namespace == "" {
 				event.Entity.Namespace = agentEntity.Namespace
 			}
-			event.EntityClass = "proxy"
+			event.Entity.EntityClass = "proxy"
 		}
 	} else {
 		// Send as the agent's entity directly
