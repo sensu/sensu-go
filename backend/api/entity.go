@@ -24,6 +24,7 @@ func NewEntityClient(store store.ResourceStore, eventStore store.EventStore, aut
 		client: &GenericClient{
 			Auth:       auth,
 			Store:      store,
+			Kind:       &corev2.Entity{},
 			APIGroup:   "core",
 			APIVersion: "v2",
 		},
