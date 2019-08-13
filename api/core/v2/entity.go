@@ -197,3 +197,7 @@ func EntityFields(r Resource) map[string]string {
 func (e *Entity) SetNamespace(namespace string) {
 	e.Namespace = namespace
 }
+
+func (e *Entity) RBACName() string {
+	return "entities"
+}

@@ -61,3 +61,7 @@ func ExtensionFields(r Resource) map[string]string {
 func (e *Extension) SetNamespace(namespace string) {
 	e.Namespace = namespace
 }
+
+func (e *Extension) RBACName() string {
+	return "extensions"
+}

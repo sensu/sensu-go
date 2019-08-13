@@ -385,3 +385,7 @@ func EventFields(r Resource) map[string]string {
 func (e *Event) SetNamespace(namespace string) {
 	e.Namespace = namespace
 }
+
+func (e *Event) RBACName() string {
+	return "events"
+}
