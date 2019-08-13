@@ -2,14 +2,19 @@ package helpers
 
 import (
 	jwt "github.com/dgrijalva/jwt-go"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli/client/config"
-	"github.com/sensu/sensu-go/types"
 )
 
 // GetCurrentUsername retrieves the username from the active JWT
 func GetCurrentUsername(cfg config.Config) string {
-	accessToken := cfg.Tokens().Access
-	token, _ := jwt.ParseWithClaims(accessToken, &types.Claims{}, nil)
-	claims := token.Claims.(*types.Claims)
+	tokens := cfg.Tokens()
+	if tokens == nil {
+		return ""
+	}
+
+	accessToken := tokens.Access
+	token, _ := jwt.ParseWithClaims(accessToken, &corev2.Claims{}, nil)
+	claims := token.Claims.(*corev2.Claims)
 	return claims.StandardClaims.Subject
 }
