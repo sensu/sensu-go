@@ -26,6 +26,8 @@ backend to use JSON.
 are joined with `&&` and exclusive filter expressions are joined with `||`.
 - The REST API now correctly only returns events for the specific entity
 queried in the `GET /events/:entity` endpoint (#3141)
+- Prevent a segmentation violation when running `sensuctl config view` without
+configuration.
 
 ### Removed
 - Removed encoded protobuf payloads from log messages (when decoded, they can reveal
