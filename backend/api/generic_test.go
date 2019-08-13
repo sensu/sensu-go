@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"reflect"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -254,5 +255,16 @@ func TestGenericClient(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestSetTypeMeta(t *testing.T) {
+	var g GenericClient
+	g.SetTypeMeta(corev2.TypeMeta{
+		Type:       "check",
+		APIVersion: "core/v2",
+	})
+	if got, want := g.Kind, (&corev2.Check{}); !reflect.DeepEqual(got, want) {
+		t.Fatal("SetTypeMeta not working")
 	}
 }
