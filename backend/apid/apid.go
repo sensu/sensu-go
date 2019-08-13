@@ -80,36 +80,23 @@ func New(c Config, opts ...Option) (*APId, error) {
 		clusterVersion:      c.ClusterVersion,
 	}
 
-	// prepare TLS configs (both server and client)
-	var tlsServerConfig, tlsClientConfig *tls.Config
+	// prepare TLS config
+	var tlsServerConfig *tls.Config
 	var err error
 	if c.TLS != nil {
 		tlsServerConfig, err = c.TLS.ToServerTLSConfig()
 		if err != nil {
 			return nil, err
 		}
-
-		// TODO(gbolo): since the backend does not yet support mutual TLS
-		// this client does not need a cert and key. Once we do support
-		// mutual TLS we need new options for client cert and key
-		cTLSOptions := types.TLSOptions{
-			TrustedCAFile: c.TLS.TrustedCAFile,
-			// TODO(palourde): We should avoid using the loopback interface
-			InsecureSkipVerify: true,
-		}
-		tlsClientConfig, err = cTLSOptions.ToClientTLSConfig()
-		if err != nil {
-			return nil, err
-		}
 	}
 
-	router := mux.NewRouter().UseEncodedPath()
-	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
-	router.Handle("/metrics", promhttp.Handler())
-	registerUnauthenticatedResources(router, a.store, a.cluster, a.etcdClientTLSConfig, a.clusterVersion, a.bus)
-	a.registerGraphQLService(router, c.URL, tlsClientConfig)
-	registerAuthenticationResources(router, a.store, a.Authenticator)
-	a.registerRestrictedResources(router)
+	router, coreSubrouter, graphQLSubrouter, err := NewHandler(c)
+	if err != nil {
+		return nil, err
+	}
+
+	a.CoreSubrouter = coreSubrouter
+	a.GraphQLSubrouter = graphQLSubrouter
 
 	a.HTTPServer = &http.Server{
 		Addr:         c.ListenAddress,
@@ -126,6 +113,68 @@ func New(c Config, opts ...Option) (*APId, error) {
 	}
 
 	return a, nil
+}
+
+func NewHandler(c Config) (root http.Handler, core *mux.Router, graphql *mux.Router, err error) {
+	router := mux.NewRouter().UseEncodedPath()
+	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
+	router.Handle("/metrics", promhttp.Handler())
+	registerUnauthenticatedResources(router, c.Store, c.Cluster, c.EtcdClientTLSConfig, c.ClusterVersion, c.Bus)
+	graphQLSubrouter := NewSubrouter(
+		router.NewRoute(),
+		middlewares.SimpleLogger{},
+		middlewares.LimitRequest{},
+		// TODO: Currently the web app relies on receiving a 401 to determine if
+		//       a user is not authenticated. However, in the future we should
+		//       allow requests without an access token to continue so that
+		//       unauthenticated clients can still fetch the schema. Useful for
+		//       implementing tools like GraphiQL.
+		//
+		//       https://github.com/graphql/graphiql
+		//       https://graphql.org/learn/introspection/
+		middlewares.Authentication{IgnoreUnauthorized: false},
+		middlewares.AllowList{Store: c.Store, IgnoreMissingClaims: true},
+	)
+	mountRouters(
+		graphQLSubrouter,
+		routers.NewGraphQLRouter(c.Store, c.EventStore, &rbac.Authorizer{Store: c.Store}, c.QueueGetter, c.Bus),
+	)
+	registerAuthenticationResources(router, c.Store, c.Authenticator)
+	coreSubrouter := NewSubrouter(
+		router.NewRoute().
+			PathPrefix("/api/{group:core}/{version:v2}/"),
+		middlewares.SimpleLogger{},
+		middlewares.Namespace{},
+		middlewares.Authentication{},
+		middlewares.AllowList{Store: c.Store},
+		middlewares.AuthorizationAttributes{},
+		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: c.Store}},
+		middlewares.LimitRequest{},
+		middlewares.Pagination{},
+	)
+	mountRouters(
+		coreSubrouter,
+		routers.NewAssetRouter(c.Store),
+		routers.NewChecksRouter(c.Store, c.QueueGetter),
+		routers.NewClusterRolesRouter(c.Store),
+		routers.NewClusterRoleBindingsRouter(c.Store),
+		routers.NewClusterRouter(actions.NewClusterController(c.Cluster, c.Store)),
+		routers.NewEntitiesRouter(c.Store, c.EventStore),
+		routers.NewEventFiltersRouter(c.Store),
+		routers.NewEventsRouter(c.EventStore, c.Bus),
+		routers.NewExtensionsRouter(c.Store),
+		routers.NewHandlersRouter(c.Store),
+		routers.NewHooksRouter(c.Store),
+		routers.NewMutatorsRouter(c.Store),
+		routers.NewNamespacesRouter(c.Store),
+		routers.NewRolesRouter(c.Store),
+		routers.NewRoleBindingsRouter(c.Store),
+		routers.NewSilencedRouter(c.Store),
+		routers.NewTessenRouter(actions.NewTessenController(c.Store, c.Bus)),
+		routers.NewUsersRouter(c.Store),
+	)
+
+	return router, coreSubrouter, graphQLSubrouter, nil
 }
 
 func notFoundHandler(w http.ResponseWriter, req *http.Request) {
@@ -206,28 +255,6 @@ func registerUnauthenticatedResources(
 	)
 }
 
-func (a *APId) registerGraphQLService(router *mux.Router, url string, tls *tls.Config) {
-	a.GraphQLSubrouter = NewSubrouter(
-		router.NewRoute(),
-		middlewares.SimpleLogger{},
-		middlewares.LimitRequest{},
-		// TODO: Currently the web app relies on receiving a 401 to determine if
-		//       a user is not authenticated. However, in the future we should
-		//       allow requests without an access token to continue so that
-		//       unauthenticated clients can still fetch the schema. Useful for
-		//       implementing tools like GraphiQL.
-		//
-		//       https://github.com/graphql/graphiql
-		//       https://graphql.org/learn/introspection/
-		middlewares.Authentication{IgnoreUnauthorized: false},
-		middlewares.AllowList{Store: a.store, IgnoreMissingClaims: true},
-	)
-	mountRouters(
-		a.GraphQLSubrouter,
-		routers.NewGraphQLRouter(url, tls, a.store, a.eventStore, &rbac.Authorizer{Store: a.store}, a.queueGetter, a.bus),
-	)
-}
-
 func registerAuthenticationResources(router *mux.Router, store store.Store, authenticator *authentication.Authenticator) {
 	mountRouters(
 		NewSubrouter(
@@ -237,42 +264,6 @@ func registerAuthenticationResources(router *mux.Router, store store.Store, auth
 			middlewares.LimitRequest{},
 		),
 		routers.NewAuthenticationRouter(store, authenticator),
-	)
-}
-
-func (a *APId) registerRestrictedResources(router *mux.Router) {
-	a.CoreSubrouter = NewSubrouter(
-		router.NewRoute().
-			PathPrefix("/api/{group:core}/{version:v2}/"),
-		middlewares.SimpleLogger{},
-		middlewares.Namespace{},
-		middlewares.Authentication{},
-		middlewares.AllowList{Store: a.store},
-		middlewares.AuthorizationAttributes{},
-		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: a.store}},
-		middlewares.LimitRequest{},
-		middlewares.Pagination{},
-	)
-	mountRouters(
-		a.CoreSubrouter,
-		routers.NewAssetRouter(a.store),
-		routers.NewChecksRouter(a.store, a.queueGetter),
-		routers.NewClusterRolesRouter(a.store),
-		routers.NewClusterRoleBindingsRouter(a.store),
-		routers.NewClusterRouter(actions.NewClusterController(a.cluster, a.store)),
-		routers.NewEntitiesRouter(a.store, a.eventStore),
-		routers.NewEventFiltersRouter(a.store),
-		routers.NewEventsRouter(a.eventStore, a.bus),
-		routers.NewExtensionsRouter(a.store),
-		routers.NewHandlersRouter(a.store),
-		routers.NewHooksRouter(a.store),
-		routers.NewMutatorsRouter(a.store),
-		routers.NewNamespacesRouter(a.store),
-		routers.NewRolesRouter(a.store),
-		routers.NewRoleBindingsRouter(a.store),
-		routers.NewSilencedRouter(a.store),
-		routers.NewTessenRouter(actions.NewTessenController(a.store, a.bus)),
-		routers.NewUsersRouter(a.store),
 	)
 }
 
