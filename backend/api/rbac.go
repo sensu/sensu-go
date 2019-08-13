@@ -135,8 +135,8 @@ func (a *RBACClient) ListClusterRoleBindings(ctx context.Context) ([]*corev2.Clu
 		Limit:    int64(corev2.PageSizeFromContext(ctx)),
 	}
 	slice := []*corev2.ClusterRoleBinding{}
-	if err := a.roleBindingC.List(ctx, &slice, pred); err != nil {
-		return nil, fmt.Errorf("couldn't list role bindings: %s", err)
+	if err := a.clusterRoleBindingC.List(ctx, &slice, pred); err != nil {
+		return nil, fmt.Errorf("couldn't list cluster role bindings: %s", err)
 	}
 	return slice, nil
 }
@@ -144,24 +144,24 @@ func (a *RBACClient) ListClusterRoleBindings(ctx context.Context) ([]*corev2.Clu
 // FetchClusterRoleBinding fetches an role binding resource from the backend, if authorized.
 func (a *RBACClient) FetchClusterRoleBinding(ctx context.Context, name string) (*corev2.ClusterRoleBinding, error) {
 	var rb corev2.ClusterRoleBinding
-	if err := a.roleBindingC.Get(ctx, name, &rb); err != nil {
-		return nil, fmt.Errorf("couldn't get role binding: %s", err)
+	if err := a.clusterRoleBindingC.Get(ctx, name, &rb); err != nil {
+		return nil, fmt.Errorf("couldn't get cluster role binding: %s", err)
 	}
 	return &rb, nil
 }
 
 // CreateClusterRoleBinding creates an role binding resource, if authorized.
 func (a *RBACClient) CreateClusterRoleBinding(ctx context.Context, rb *corev2.ClusterRoleBinding) error {
-	if err := a.roleBindingC.Create(ctx, rb); err != nil {
-		return fmt.Errorf("couldn't create role binding: %s", err)
+	if err := a.clusterRoleBindingC.Create(ctx, rb); err != nil {
+		return fmt.Errorf("couldn't create cluster role binding: %s", err)
 	}
 	return nil
 }
 
 // UpdateClusterRoleBinding updates an role binding resource, if authorized.
 func (a *RBACClient) UpdateClusterRoleBinding(ctx context.Context, rb *corev2.ClusterRoleBinding) error {
-	if err := a.roleBindingC.Update(ctx, rb); err != nil {
-		return fmt.Errorf("couldn't update role binding: %s", err)
+	if err := a.clusterRoleBindingC.Update(ctx, rb); err != nil {
+		return fmt.Errorf("couldn't update cluster role binding: %s", err)
 	}
 	return nil
 }
@@ -173,8 +173,8 @@ func (a *RBACClient) ListClusterRoles(ctx context.Context) ([]*corev2.ClusterRol
 		Limit:    int64(corev2.PageSizeFromContext(ctx)),
 	}
 	slice := []*corev2.ClusterRole{}
-	if err := a.roleC.List(ctx, &slice, pred); err != nil {
-		return nil, fmt.Errorf("couldn't list role bindings: %s", err)
+	if err := a.clusterRoleC.List(ctx, &slice, pred); err != nil {
+		return nil, fmt.Errorf("couldn't list cluster roles: %s", err)
 	}
 	return slice, nil
 }
@@ -182,24 +182,56 @@ func (a *RBACClient) ListClusterRoles(ctx context.Context) ([]*corev2.ClusterRol
 // FetchClusterRole fetches an role resource from the backend, if authorized.
 func (a *RBACClient) FetchClusterRole(ctx context.Context, name string) (*corev2.ClusterRole, error) {
 	var rb corev2.ClusterRole
-	if err := a.roleC.Get(ctx, name, &rb); err != nil {
-		return nil, fmt.Errorf("couldn't get role binding: %s", err)
+	if err := a.clusterRoleC.Get(ctx, name, &rb); err != nil {
+		return nil, fmt.Errorf("couldn't get cluster role: %s", err)
 	}
 	return &rb, nil
 }
 
 // CreateClusterRole creates an role resource, if authorized.
 func (a *RBACClient) CreateClusterRole(ctx context.Context, rb *corev2.ClusterRole) error {
-	if err := a.roleC.Create(ctx, rb); err != nil {
-		return fmt.Errorf("couldn't create role binding: %s", err)
+	if err := a.clusterRoleC.Create(ctx, rb); err != nil {
+		return fmt.Errorf("couldn't create cluster role: %s", err)
 	}
 	return nil
 }
 
 // UpdateClusterRole updates an role resource, if authorized.
 func (a *RBACClient) UpdateClusterRole(ctx context.Context, rb *corev2.ClusterRole) error {
-	if err := a.roleC.Update(ctx, rb); err != nil {
-		return fmt.Errorf("couldn't update role binding: %s", err)
+	if err := a.clusterRoleC.Update(ctx, rb); err != nil {
+		return fmt.Errorf("couldn't update cluster role: %s", err)
+	}
+	return nil
+}
+
+// DeleteRole deletes a role resource, if authorized.
+func (a *RBACClient) DeleteRole(ctx context.Context, name string) error {
+	if err := a.roleC.Delete(ctx, name); err != nil {
+		return fmt.Errorf("couldn't delete role: %s", err)
+	}
+	return nil
+}
+
+// DeleteRoleBinding deletes a rolebinding resource, if authorized.
+func (a *RBACClient) DeleteRoleBinding(ctx context.Context, name string) error {
+	if err := a.roleBindingC.Delete(ctx, name); err != nil {
+		return fmt.Errorf("couldn't delete role binding: %s", err)
+	}
+	return nil
+}
+
+// DeleteClusterRole deletes a role resource, if authorized.
+func (a *RBACClient) DeleteClusterRole(ctx context.Context, name string) error {
+	if err := a.clusterRoleC.Delete(ctx, name); err != nil {
+		return fmt.Errorf("couldn't delete cluster role: %s", err)
+	}
+	return nil
+}
+
+// DeleteClusterRoleBinding deletes a rolebinding resource, if authorized.
+func (a *RBACClient) DeleteClusterRoleBinding(ctx context.Context, name string) error {
+	if err := a.clusterRoleBindingC.Delete(ctx, name); err != nil {
+		return fmt.Errorf("couldn't delete cluster role binding: %s", err)
 	}
 	return nil
 }
