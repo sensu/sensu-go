@@ -66,3 +66,11 @@ func (a *HookConfigClient) UpdateHookConfig(ctx context.Context, hook *corev2.Ho
 	}
 	return nil
 }
+
+// DeleteHookConfig deletes a hook resource, if authorized.
+func (a *HookConfigClient) DeleteHookConfig(ctx context.Context, name string) error {
+	if err := a.client.Delete(ctx, name); err != nil {
+		return fmt.Errorf("couldn't delete hook: %s", err)
+	}
+	return nil
+}
