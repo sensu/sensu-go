@@ -31,7 +31,7 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 			// Administer questionnaire
 			opts := newEntityOpts()
 			opts.withEntity(entity)
-			if err := opts.administerQuestionnaire(); err != nil {
+			if err := opts.administerQuestionnaire(true); err != nil {
 				return err
 			}
 

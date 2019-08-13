@@ -12,6 +12,7 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/configure"
 	"github.com/sensu/sensu-go/cli/commands/create"
 	"github.com/sensu/sensu-go/cli/commands/delete"
+	"github.com/sensu/sensu-go/cli/commands/dump"
 	"github.com/sensu/sensu-go/cli/commands/edit"
 	"github.com/sensu/sensu-go/cli/commands/entity"
 	"github.com/sensu/sensu-go/cli/commands/event"
@@ -59,6 +60,7 @@ func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 		cluster.HelpCommand(cli),
 		edit.Command(cli),
 		tessen.HelpCommand(cli),
+		dump.Command(cli),
 	)
 
 	for _, cmd := range rootCmd.Commands() {

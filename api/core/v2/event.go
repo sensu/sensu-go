@@ -369,6 +369,7 @@ func EventFields(r Resource) map[string]string {
 	return map[string]string{
 		"event.name":                 resource.ObjectMeta.Name,
 		"event.namespace":            resource.ObjectMeta.Namespace,
+		"event.check.name":           resource.Check.Name,
 		"event.check.handlers":       strings.Join(resource.Check.Handlers, ","),
 		"event.check.publish":        strconv.FormatBool(resource.Check.Publish),
 		"event.check.round_robin":    strconv.FormatBool(resource.Check.RoundRobin),

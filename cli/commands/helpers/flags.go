@@ -21,10 +21,11 @@ func AddFormatFlag(flagSet *pflag.FlagSet) {
 		"format",
 		config.DefaultFormat,
 		fmt.Sprintf(
-			`format of data returned ("%s"|"%s"|"%s")`,
+			`format of data returned ("%s"|"%s"|"%s"|"%s")`,
 			config.FormatJSON,
 			config.FormatWrappedJSON,
 			config.FormatTabular,
+			config.FormatYAML,
 		),
 	)
 }
