@@ -1,13 +1,16 @@
+---
+name: 'Bug report'
+about: 'Create bug report'
+---
+
 <!--- Provide a general summary of the issue in the Title above -->
 
 ## Expected Behavior
-<!--- If you're looking for help, please see https://sensuapp.org/support for resources --->
-<!--- If you're describing a bug, tell us what should happen -->
-<!--- If you're suggesting a change/improvement, tell us how it should work -->
+<!--- If you're looking for help, please see https://sensu.io/support/ for resources --->
+<!--- Tell us what should happen -->
 
 ## Current Behavior
-<!--- If describing a bug, tell us what happens instead of the expected behavior -->
-<!--- If suggesting a change/improvement, explain the difference from current behavior -->
+<!--- Tell us what happens instead of the expected behavior -->
 
 ## Possible Solution
 <!--- Not obligatory, but suggest a fix/reason for the bug, -->
