@@ -16,7 +16,7 @@ const (
 
 // GetObjectMeta is a dummy implementation to meet the Resource interface.
 func (u *User) GetObjectMeta() ObjectMeta {
-	return ObjectMeta{}
+	return ObjectMeta{Name: u.Username}
 }
 
 // StorePrefix returns the path prefix to this resource in the store

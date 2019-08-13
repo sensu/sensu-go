@@ -67,3 +67,11 @@ func (a *UserClient) UpdateUser(ctx context.Context, user *corev2.User) error {
 	}
 	return nil
 }
+
+// DeleteUser deletes a user resource, if authorized.
+func (a *UserClient) DeleteUser(ctx context.Context, name string) error {
+	if err := a.client.Delete(ctx, name); err != nil {
+		return fmt.Errorf("couldn't delete user: %s", err)
+	}
+	return nil
+}
