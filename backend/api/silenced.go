@@ -110,7 +110,7 @@ func silencedUpdateAttrs(ctx context.Context, name string) *authorization.Attrib
 		APIGroup:     "core",
 		APIVersion:   "v2",
 		Namespace:    corev2.ContextNamespace(ctx),
-		Resource:     "silenceds",
+		Resource:     "silenced",
 		Verb:         "create,update",
 		ResourceName: name,
 	}
@@ -121,7 +121,7 @@ func silencedFetchAttrs(ctx context.Context, name string) *authorization.Attribu
 		APIGroup:     "core",
 		APIVersion:   "v2",
 		Namespace:    corev2.ContextNamespace(ctx),
-		Resource:     "silenceds",
+		Resource:     "silenced",
 		Verb:         "get",
 		ResourceName: name,
 	}
@@ -132,7 +132,7 @@ func silencedDeleteAttrs(ctx context.Context, name string) *authorization.Attrib
 		APIGroup:     "core",
 		APIVersion:   "v2",
 		Namespace:    corev2.ContextNamespace(ctx),
-		Resource:     "silenceds",
+		Resource:     "silenced",
 		Verb:         "delete",
 		ResourceName: name,
 	}
@@ -143,7 +143,7 @@ func silencedListAttrs(ctx context.Context) *authorization.Attributes {
 		APIGroup:   "core",
 		APIVersion: "v2",
 		Namespace:  corev2.ContextNamespace(ctx),
-		Resource:   "silenceds",
+		Resource:   "silenced",
 		Verb:       "list",
 	}
 }
