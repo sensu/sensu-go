@@ -81,7 +81,7 @@ func (c *PrometheusTracer) ParseDidStart(ctx context.Context) (context.Context, 
 
 // ValidationDidStart is called just before the validation begins
 func (c *PrometheusTracer) ValidationDidStart(ctx context.Context) (context.Context, graphql.ValidationFinishFunc) {
-	if !strings.InArray(KeyValidate, c.AllowList) {
+	if !utilstrings.InArray(KeyValidate, c.AllowList) {
 		return ctx, noopValidate
 	}
 	t := time.Now()
@@ -94,7 +94,7 @@ func (c *PrometheusTracer) ValidationDidStart(ctx context.Context) (context.Cont
 
 // ExecutionDidStart notifies about the start of the execution
 func (c *PrometheusTracer) ExecutionDidStart(ctx context.Context) (context.Context, graphql.ExecutionFinishFunc) {
-	if !strings.InArray(KeyExecuteQuery, c.AllowList) {
+	if !utilstrings.InArray(KeyExecuteQuery, c.AllowList) {
 		return ctx, noopQuery
 	}
 	t := time.Now()
@@ -107,7 +107,7 @@ func (c *PrometheusTracer) ExecutionDidStart(ctx context.Context) (context.Conte
 
 // ResolveFieldDidStart notifies about the start of the resolving of a field
 func (c *PrometheusTracer) ResolveFieldDidStart(ctx context.Context, i *graphql.ResolveInfo) (context.Context, graphql.ResolveFieldFinishFunc) {
-	if !strings.InArray(KeyExecuteField, c.AllowList) {
+	if !utilstrings.InArray(KeyExecuteField, c.AllowList) {
 		return ctx, noopField
 	}
 	t := time.Now()
