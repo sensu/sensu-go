@@ -48,7 +48,7 @@ func (g *GenericClient) Create(ctx context.Context, value corev2.Resource) error
 	attrs := &authorization.Attributes{
 		APIGroup:     g.APIGroup,
 		APIVersion:   g.APIVersion,
-		Resource:     path.Base(g.Kind.StorePrefix()),
+		Resource:     g.Kind.RBACName(),
 		Namespace:    corev2.ContextNamespace(ctx),
 		Verb:         "create",
 		ResourceName: value.GetObjectMeta().Name,
@@ -59,8 +59,14 @@ func (g *GenericClient) Create(ctx context.Context, value corev2.Resource) error
 	return g.Store.CreateResource(ctx, value)
 }
 
-func (g *GenericClient) resource() string {
-	return path.Base(g.Kind.StorePrefix())
+func (g *GenericClient) resource(prefix bool) string {
+	uripath := g.Kind.URIPath()
+	fmt.Println(uripath)
+	if !prefix {
+		uripath, _ = path.Split(uripath)
+	}
+	fmt.Println(path.Base(uripath))
+	return path.Base(uripath)
 }
 
 // SetTypeMeta sets the type of values that the client expects to be dealing
@@ -90,7 +96,7 @@ func (g *GenericClient) Update(ctx context.Context, value corev2.Resource) error
 	attrs := &authorization.Attributes{
 		APIGroup:     g.APIGroup,
 		APIVersion:   g.APIVersion,
-		Resource:     g.resource(),
+		Resource:     g.Kind.RBACName(),
 		Namespace:    corev2.ContextNamespace(ctx),
 		Verb:         "update",
 		ResourceName: value.GetObjectMeta().Name,
@@ -109,7 +115,7 @@ func (g *GenericClient) Delete(ctx context.Context, name string) error {
 	attrs := &authorization.Attributes{
 		APIGroup:     g.APIGroup,
 		APIVersion:   g.APIVersion,
-		Resource:     g.resource(),
+		Resource:     g.Kind.RBACName(),
 		Namespace:    corev2.ContextNamespace(ctx),
 		Verb:         "delete",
 		ResourceName: name,
@@ -128,7 +134,7 @@ func (g *GenericClient) Get(ctx context.Context, name string, val corev2.Resourc
 	attrs := &authorization.Attributes{
 		APIGroup:     g.APIGroup,
 		APIVersion:   g.APIVersion,
-		Resource:     g.resource(),
+		Resource:     g.Kind.RBACName(),
 		Namespace:    corev2.ContextNamespace(ctx),
 		Verb:         "get",
 		ResourceName: name,
@@ -148,7 +154,7 @@ func (g *GenericClient) List(ctx context.Context, resources interface{}, pred *s
 	attrs := &authorization.Attributes{
 		APIGroup:   g.APIGroup,
 		APIVersion: g.APIVersion,
-		Resource:   g.resource(),
+		Resource:   g.Kind.RBACName(),
 		Namespace:  corev2.ContextNamespace(ctx),
 		Verb:       "list",
 	}
