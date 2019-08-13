@@ -29,8 +29,31 @@ func (opts *entityOpts) withFlags(flags *pflag.FlagSet) {
 	}
 }
 
-func (opts *entityOpts) administerQuestionnaire() error {
-	qs := []*survey.Question{
+func (opts *entityOpts) administerQuestionnaire(editing bool) error {
+	var qs = []*survey.Question{}
+
+	if !editing {
+		qs = append(qs, []*survey.Question{
+			{
+				Name: "name",
+				Prompt: &survey.Input{
+					Message: "Entity Name:",
+					Default: opts.Name,
+				},
+				Validate: survey.Required,
+			},
+			{
+				Name: "namespace",
+				Prompt: &survey.Input{
+					Message: "Namespace:",
+					Default: opts.Namespace,
+				},
+				Validate: survey.Required,
+			},
+		}...)
+	}
+
+	qs = append(qs, []*survey.Question{
 		{
 			Name: "entity-class",
 			Prompt: &survey.Input{
@@ -48,15 +71,7 @@ func (opts *entityOpts) administerQuestionnaire() error {
 				Help:    "comma separated list of subscriptions",
 			},
 		},
-		{
-			Name: "namespace",
-			Prompt: &survey.Input{
-				Message: "Namespace:",
-				Default: opts.Namespace,
-			},
-			Validate: survey.Required,
-		},
-	}
+	}...)
 
 	return survey.Ask(qs, opts)
 }

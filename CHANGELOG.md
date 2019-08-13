@@ -15,6 +15,7 @@ for check hook execution.
 - Added backwards compatible content negotiation to the websocket connection.
 Protobuf will be used for serialization/deserialization unless indicated by the
 backend to use JSON.
+- Added delete functionality for assets in the API and sensuctl.
 - Added `sensuctl dump` to dump resources to a file or STDOUT.
 - Added `event.check.name` as a supported field selector.
 
@@ -28,6 +29,7 @@ are joined with `&&` and exclusive filter expressions are joined with `||`.
 queried in the `GET /events/:entity` endpoint (#3141)
 - Prevent a segmentation violation when running `sensuctl config view` without
 configuration.
+- Added entity name to the interactive sensuctl survey.
 
 ### Removed
 - Removed encoded protobuf payloads from log messages (when decoded, they can reveal
