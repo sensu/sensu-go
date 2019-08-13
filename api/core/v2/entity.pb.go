@@ -88,6 +88,7 @@ type System struct {
 	PlatformVersion      string   `protobuf:"bytes,5,opt,name=platform_version,json=platformVersion,proto3" json:"platform_version,omitempty"`
 	Network              Network  `protobuf:"bytes,6,opt,name=network,proto3" json:"network"`
 	Arch                 string   `protobuf:"bytes,7,opt,name=arch,proto3" json:"arch,omitempty"`
+	ARMVersion           uint8    `protobuf:"bytes,8,opt,name=arm_version" json:"arm_version,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`

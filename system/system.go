@@ -6,12 +6,17 @@ package system
 import (
 	"runtime"
 
+	_ "unsafe"
+
 	"github.com/sensu/sensu-go/types"
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/net"
 )
 
 const defaultHostname = "unidentified-hostname"
+
+//go:linkname goarm runtime.goarm
+var goarm uint8
 
 // Info describes the local system, hostname, OS, platform, platform
 // family, platform version, and network interfaces.
@@ -24,6 +29,7 @@ func Info() (types.System, error) {
 
 	system := types.System{
 		Arch:            runtime.GOARCH,
+		ARMVersion:      goarm,
 		Hostname:        info.Hostname,
 		OS:              info.OS,
 		Platform:        info.Platform,
