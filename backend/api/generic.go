@@ -59,16 +59,6 @@ func (g *GenericClient) Create(ctx context.Context, value corev2.Resource) error
 	return g.Store.CreateResource(ctx, value)
 }
 
-func (g *GenericClient) resource(prefix bool) string {
-	uripath := g.Kind.URIPath()
-	fmt.Println(uripath)
-	if !prefix {
-		uripath, _ = path.Split(uripath)
-	}
-	fmt.Println(path.Base(uripath))
-	return path.Base(uripath)
-}
-
 // SetTypeMeta sets the type of values that the client expects to be dealing
 // with. The TypeMeta must match the type of objects that are passed to the
 // CRUD methods.
