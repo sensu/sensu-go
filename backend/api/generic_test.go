@@ -260,10 +260,13 @@ func TestGenericClient(t *testing.T) {
 
 func TestSetTypeMeta(t *testing.T) {
 	var g GenericClient
-	g.SetTypeMeta(corev2.TypeMeta{
+	err := g.SetTypeMeta(corev2.TypeMeta{
 		Type:       "check",
 		APIVersion: "core/v2",
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	if got, want := g.Kind, (&corev2.Check{}); !reflect.DeepEqual(got, want) {
 		t.Fatal("SetTypeMeta not working")
 	}
