@@ -7,7 +7,7 @@ import (
 	"github.com/graphql-go/graphql"
 	"github.com/graphql-go/graphql/gqlerrors"
 	"github.com/prometheus/client_golang/prometheus"
-	"github.com/sensu/sensu-go/util/strings"
+	utilstrings "github.com/sensu/sensu-go/util/strings"
 )
 
 const (
@@ -68,7 +68,7 @@ func (c *PrometheusTracer) Name() string {
 
 // ParseDidStart is called before starting parsing
 func (c *PrometheusTracer) ParseDidStart(ctx context.Context) (context.Context, graphql.ParseFinishFunc) {
-	if !strings.InArray(KeyParse, c.AllowList) {
+	if !utilstrings.InArray(KeyParse, c.AllowList) {
 		return ctx, noopParse
 	}
 	t := time.Now()

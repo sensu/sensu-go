@@ -9,7 +9,8 @@ import (
 // Middleware is an interface for extending a service with operations that
 // wrap existing functionality.
 type Middleware interface {
-	// Init is used to help you initialize the extension
+	// Init is called at the beginning of an execution. Helpful for initializing
+	// anything used during the execution of the query.
 	Init(context.Context, *graphql.Params) context.Context
 
 	// Name returns the name of the extension (make sure it's custom)
