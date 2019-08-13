@@ -21,6 +21,7 @@ backend to use JSON.
 
 ### Changed
 - The project now uses Go modules instead of dep for dependency management.
+- The internal reverse proxy relied on by the dashboard has been eliminated.
 
 ### Fixed
 - Fixed the tabular output of `sensuctl filter list` so inclusive filter expressions
