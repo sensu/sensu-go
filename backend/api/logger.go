@@ -5,5 +5,5 @@ import (
 )
 
 var logger = logrus.WithFields(logrus.Fields{
-	"component": "backend/api",
+	"component": "backend.api",
 })
