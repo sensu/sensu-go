@@ -43,7 +43,7 @@ func TestNodeResolverFind(t *testing.T) {
 	check := types.FixtureCheckConfig("http-check")
 	gid := globalid.CheckTranslator.EncodeToString(check)
 
-	// Sucess
+	// Success
 	client.On("FetchCheck", mock.Anything, check.Name).Return(check, nil).Once()
 	res, err := resolver.Find(ctx, gid, info)
 	assert.NotEmpty(t, res)
