@@ -12,10 +12,20 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
+// Store is the storage requirements for the Authorizer. If you find that you
+// need functionality that is not in here, add it method by method. The god
+// type in the store package will have it.
+type Store interface {
+	ListClusterRoleBindings(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.ClusterRoleBinding, error)
+	ListRoleBindings(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.RoleBinding, error)
+	GetRole(ctx context.Context, name string) (*corev2.Role, error)
+	GetClusterRole(ctx context.Context, name string) (*corev2.ClusterRole, error)
+}
+
 // Authorizer implements an authorizer interface using Role-Based Acccess
 // Control (RBAC)
 type Authorizer struct {
-	Store store.Store
+	Store Store
 }
 
 // RoleBinding implements the RoleBinding interface.
@@ -78,6 +88,8 @@ func (a *Authorizer) VisitRulesFor(ctx context.Context, attrs *authorization.Att
 		if !matchesUser(attrs.User, binding.Subjects) {
 			continue
 		}
+
+		ctx = store.NamespaceContext(ctx, binding.Namespace)
 
 		// Get the RoleRef that matched our user
 		rules, err := a.getRoleReferencerules(ctx, binding.RoleRef)

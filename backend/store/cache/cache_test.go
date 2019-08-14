@@ -1,16 +1,20 @@
 package cache
 
 import (
+	"context"
 	"reflect"
 	"testing"
 
-	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types/dynamic"
+	"github.com/sensu/sensu-go/backend/store/etcd"
+	"github.com/sensu/sensu-go/types"
 
-	"github.com/sensu/sensu-go/testing/fixture"
-	"github.com/stretchr/testify/assert"
-
+	"github.com/coreos/etcd/integration"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/testing/fixture"
+	"github.com/sensu/sensu-go/types/dynamic"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func fixtureEntity(namespace, name string) *corev2.Entity {
@@ -71,18 +75,20 @@ func TestBuildCache(t *testing.T) {
 }
 
 func TestResourceUpdateCache(t *testing.T) {
-	cacher := Resource{cache: make(map[string][]Value)}
+	cacher := Resource{
+		cache: make(map[string][]Value),
+	}
 	resource0 := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "resource0", Namespace: "default"}, Foo: "bar"}
 	resource1 := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "resource1", Namespace: "default"}, Foo: "bar"}
-	resource2 := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "resource0", Namespace: "default"}, Foo: "baz"}
-	resource3 := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "resource1", Namespace: "default"}, Foo: "qux"}
+	resource0Bis := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "resource0", Namespace: "default"}, Foo: "baz"}
+	resource1Bis := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "resource1", Namespace: "default"}, Foo: "qux"}
 
 	// Add a resource
 	cacher.updates = append(cacher.updates, store.WatchEventResource{
 		Resource: resource1,
 		Action:   store.WatchCreate,
 	})
-	cacher.updateCache()
+	cacher.updateCache(context.Background())
 	assert.Len(t, cacher.cache["default"], 1)
 
 	// Add a second resource. It should be alphabetically sorted and therefore at
@@ -91,29 +97,29 @@ func TestResourceUpdateCache(t *testing.T) {
 	cacher.updates = append(cacher.updates, store.WatchEventResource{
 		Resource: resource0, Action: store.WatchCreate,
 	})
-	cacher.updateCache()
+	cacher.updateCache(context.Background())
 	assert.Len(t, cacher.cache["default"], 2)
 	assert.Equal(t, resource0, cacher.cache["default"][0].Resource)
 	assert.Equal(t, resource1, cacher.cache["default"][1].Resource)
 
 	// Update the resources
 	updates := []store.WatchEventResource{
-		store.WatchEventResource{Resource: resource2, Action: store.WatchUpdate},
-		store.WatchEventResource{Resource: resource3, Action: store.WatchUpdate},
+		store.WatchEventResource{Resource: resource0Bis, Action: store.WatchUpdate},
+		store.WatchEventResource{Resource: resource1Bis, Action: store.WatchUpdate},
 	}
 	cacher.updates = append(cacher.updates, updates...)
-	cacher.updateCache()
+	cacher.updateCache(context.Background())
 	assert.Len(t, cacher.cache["default"], 2)
-	assert.Equal(t, resource2, cacher.cache["default"][0].Resource.(*fixture.Resource))
-	assert.Equal(t, resource3, cacher.cache["default"][1].Resource.(*fixture.Resource))
+	assert.Equal(t, resource0Bis, cacher.cache["default"][0].Resource.(*fixture.Resource))
+	assert.Equal(t, resource1Bis, cacher.cache["default"][1].Resource.(*fixture.Resource))
 
 	// Delete the resources
 	deletes := []store.WatchEventResource{
-		store.WatchEventResource{Resource: resource3, Action: store.WatchDelete},
-		store.WatchEventResource{Resource: resource2, Action: store.WatchDelete},
+		store.WatchEventResource{Resource: resource1Bis, Action: store.WatchDelete},
+		store.WatchEventResource{Resource: resource0Bis, Action: store.WatchDelete},
 	}
 	cacher.updates = append(cacher.updates, deletes...)
-	cacher.updateCache()
+	cacher.updateCache(context.Background())
 	assert.Len(t, cacher.cache["default"], 0)
 
 	// Invalid watch event
@@ -122,14 +128,71 @@ func TestResourceUpdateCache(t *testing.T) {
 		Resource: nilResource,
 		Action:   store.WatchCreate,
 	})
-	cacher.updateCache()
+	cacher.updateCache(context.Background())
+	assert.Len(t, cacher.cache["default"], 0)
+}
+
+func TestResourceRebuild(t *testing.T) {
+	c := integration.NewClusterV3(t, &integration.ClusterConfig{Size: 1})
+	defer c.Terminate(t)
+	client := c.RandClient()
+	s := etcd.NewStore(client, "store")
+	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
+	ctx := store.NamespaceContext(context.Background(), "default")
+
+	cacher := Resource{
+		cache:     make(map[string][]Value),
+		client:    client,
+		resourceT: &fixture.Resource{},
+	}
+
+	// Empty store
+	cacher.updates = append(cacher.updates, store.WatchEventResource{
+		Action: store.WatchError,
+	})
+	cacher.updateCache(ctx)
 	assert.Len(t, cacher.cache["default"], 0)
 
-	// Unknown watch event type
+	// Resource added to a new namespace
+	foo := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}}
+	if err := s.CreateOrUpdateResource(ctx, foo); err != nil {
+		t.Fatal(err)
+	}
 	cacher.updates = append(cacher.updates, store.WatchEventResource{
-		Resource: resource0,
-		Action:   store.WatchUnknown,
+		Action: store.WatchError,
 	})
-	cacher.updateCache()
-	assert.Len(t, cacher.cache["default"], 0)
+	cacher.updateCache(ctx)
+	assert.Len(t, cacher.cache["default"], 1)
+
+	// Resource added to an existing namespace
+	bar := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "bar", Namespace: "default"}}
+	if err := s.CreateOrUpdateResource(ctx, bar); err != nil {
+		t.Fatal(err)
+	}
+	cacher.updates = append(cacher.updates, store.WatchEventResource{
+		Action: store.WatchError,
+	})
+	cacher.updateCache(ctx)
+	assert.Len(t, cacher.cache["default"], 2)
+
+	// Resource updated
+	bar.Foo = "acme"
+	if err := s.CreateOrUpdateResource(ctx, bar); err != nil {
+		t.Fatal(err)
+	}
+	cacher.updates = append(cacher.updates, store.WatchEventResource{
+		Action: store.WatchError,
+	})
+	cacher.updateCache(ctx)
+	assert.Len(t, cacher.cache["default"], 2)
+
+	// Resource deleted
+	if err := s.DeleteResource(ctx, bar.StorePrefix(), bar.GetObjectMeta().Name); err != nil {
+		t.Fatal(err)
+	}
+	cacher.updates = append(cacher.updates, store.WatchEventResource{
+		Action: store.WatchError,
+	})
+	cacher.updateCache(ctx)
+	assert.Len(t, cacher.cache["default"], 1)
 }

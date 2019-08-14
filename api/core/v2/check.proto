@@ -29,6 +29,15 @@ message CheckRequest {
 
     // Issued describes the time in which the check request was issued
     int64 Issued = 4 [(gogoproto.jsontag) = "issued"];
+
+    // HookAssets is a map of assets required to execute hooks.
+    map<string, AssetList> hook_assets = 5 [(gogoproto.jsontag) = "hook_assets"];
+}
+
+// An AssetList represents a list of assets for a CheckRequest.
+message AssetList {
+    // Assets are a list of assets required to execute check or hook.
+    repeated Asset assets = 1 [(gogoproto.jsontag) = "assets", (gogoproto.nullable) = false];
 }
 
 // A ProxyRequests represents a request to execute a proxy check

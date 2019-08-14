@@ -11,6 +11,7 @@ import (
 type Service struct {
 	schema graphql.Schema
 	types  *typeRegister
+	mware  []Middleware
 }
 
 // NewService returns new instance of Service
@@ -124,9 +125,14 @@ func (service *Service) RegisterSchema(t SchemaDesc) {
 	service.types.setSchema(t)
 }
 
+// RegisterMiddleware registers given middleware with the service.
+func (service *Service) RegisterMiddleware(mware Middleware) {
+	service.mware = append(service.mware, mware)
+}
+
 // Regenerate generates new schema given registered types.
 func (service *Service) Regenerate() error {
-	schema, err := newSchema(service.types)
+	schema, err := newSchema(service.types, service.mware)
 	if err == nil {
 		service.schema = schema
 	}
@@ -194,7 +200,7 @@ func (r *typeRegister) setSchema(desc SchemaDesc) {
 	r.schema = desc
 }
 
-func newSchema(reg *typeRegister) (graphql.Schema, error) {
+func newSchema(reg *typeRegister, mware []Middleware) (graphql.Schema, error) {
 	typeMap := make(graphql.TypeMap, len(reg.types))
 
 	registerTypes(
@@ -241,6 +247,11 @@ func newSchema(reg *typeRegister) (graphql.Schema, error) {
 		if err = schema.AppendType(ltype); err != nil {
 			return schema, err
 		}
+	}
+
+	// Register middleware
+	for _, m := range mware {
+		schema.AddExtensions(m)
 	}
 
 	return schema, err

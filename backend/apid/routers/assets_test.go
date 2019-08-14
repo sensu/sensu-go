@@ -23,6 +23,7 @@ func TestAssetsRouter(t *testing.T) {
 	tests = append(tests, listTestCases(empty)...)
 	tests = append(tests, createTestCases(empty)...)
 	tests = append(tests, updateTestCases(fixture)...)
+	tests = append(tests, deleteTestCases(fixture)...)
 	for _, tt := range tests {
 		run(t, tt, parentRouter, s)
 	}

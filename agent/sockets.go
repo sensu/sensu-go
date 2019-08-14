@@ -160,7 +160,7 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 
 		// At this point, should receive valid JSON, so send it along to the
 		// message sender.
-		payload, err := json.Marshal(event)
+		payload, err := a.marshal(&event)
 		if err != nil {
 			logger.WithError(err).Error("could not marshal json payload")
 			return
@@ -242,7 +242,7 @@ func (a *Agent) handleUDPMessages(ctx context.Context, c net.PacketConn) {
 				return
 			}
 
-			payload, err := json.Marshal(event)
+			payload, err := a.marshal(&event)
 			if err != nil {
 				return
 			}

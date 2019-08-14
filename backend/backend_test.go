@@ -130,7 +130,7 @@ func TestBackendHTTPListener(t *testing.T) {
 				transport.HeaderKeyAgentName:     {"agent"},
 				transport.HeaderKeySubscriptions: {},
 			}
-			client, err := transport.Connect(fmt.Sprintf("%s://127.0.0.1:%d/", tc.wsScheme, agentPort), tc.tls, hdr)
+			client, _, err := transport.Connect(fmt.Sprintf("%s://127.0.0.1:%d/", tc.wsScheme, agentPort), tc.tls, hdr, 5)
 			require.NoError(t, err)
 			require.NotNil(t, client)
 

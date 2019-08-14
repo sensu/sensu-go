@@ -72,5 +72,4 @@ func UserFields(r Resource) map[string]string {
 
 // SetNamespace sets the namespace of the resource.
 func (u *User) SetNamespace(namespace string) {
-	return
 }

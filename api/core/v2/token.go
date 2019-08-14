@@ -1,6 +1,15 @@
 package v2
 
-import jwt "github.com/dgrijalva/jwt-go"
+import (
+	"errors"
+
+	jwt "github.com/dgrijalva/jwt-go"
+)
+
+var (
+	ErrInvalidToken = errors.New("invalid access or refresh token")
+	ErrUnauthorized = errors.New("unauthorized")
+)
 
 // Claims represents the JWT claims
 type Claims struct {

@@ -29,6 +29,9 @@ message HookConfig {
 
   // Stdin indicates if hook requests have stdin enabled
   bool stdin = 4 [(gogoproto.jsontag) = "stdin"];
+
+  // RuntimeAssets are a list of assets required to execute hook.
+  repeated string runtime_assets = 5 [(gogoproto.jsontag) = "runtime_assets"];
 }
 
 // A Hook is a hook specification and optionally the results of the hook's

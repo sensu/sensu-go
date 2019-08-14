@@ -3,12 +3,19 @@ package etcd
 import (
 	"context"
 	"strings"
-	"sync"
 	"time"
+
+	"github.com/sirupsen/logrus"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
 	"golang.org/x/time/rate"
+)
+
+const (
+	// Set a buffer for the outgoing channel in order to reduce times of context
+	// switches
+	resultChanBufSize = 100
 )
 
 // Watcher implements the store.Watcher interface rather than clientv3.Watcher,
@@ -20,9 +27,10 @@ type Watcher struct {
 	client     *clientv3.Client
 	key        string
 	recursive  bool
-	eventChan  chan *clientv3.Event
+	revision   int64
 	resultChan chan store.WatchEvent
 	opts       []clientv3.OpOption
+	logger     *logrus.Entry
 }
 
 // Watch returns a Watcher for the given key. If recursive is true, then the
@@ -47,10 +55,11 @@ func newWatcher(ctx context.Context, client *clientv3.Client, key string, recurs
 		client:     client,
 		key:        key,
 		recursive:  recursive,
-		eventChan:  make(chan *clientv3.Event),
-		resultChan: make(chan store.WatchEvent),
+		resultChan: make(chan store.WatchEvent, resultChanBufSize),
 		opts:       opts,
+		logger:     logger.WithField("key", key),
 	}
+
 	wc.ctx, wc.cancel = context.WithCancel(ctx)
 	return wc
 }
@@ -62,25 +71,25 @@ func (w *Watcher) Result() <-chan store.WatchEvent {
 
 func (w *Watcher) start() {
 	// Define the client options for this watcher
-	opts := []clientv3.OpOption{clientv3.WithCreatedNotify()}
+	baseOpts := []clientv3.OpOption{clientv3.WithCreatedNotify(), clientv3.WithPrevKV()}
 	if w.recursive {
-		opts = append(opts, clientv3.WithPrefix())
+		baseOpts = append(baseOpts, clientv3.WithPrefix())
 	}
-	opts = append(opts, w.opts...)
+	opts := make([]clientv3.OpOption, len(baseOpts))
+	copy(opts, baseOpts)
+	if w.revision != 0 {
+		opts = append(opts, clientv3.WithRev(w.revision))
+	}
 
 	// Create a channel to be notified if the watch channel is closed
 	watchChanStopped := make(chan struct{})
-
-	// Create a waitgroup that will be used make sure we do not write to a closed
-	// resultChan
-	var resultChanWG sync.WaitGroup
 
 	// Create a cancellable context for our watcher
 	ctx, cancel := context.WithCancel(w.ctx)
 
 	// Start the watcher
-	logger.Debugf("starting a watcher for key %s", w.key)
-	w.watch(ctx, opts, watchChanStopped, &resultChanWG)
+	w.logger.Debug("starting a watcher")
+	w.watch(ctx, opts, watchChanStopped)
 
 	// Initialize a rate limiter
 	limiter := rate.NewLimiter(rate.Every(time.Second), 1)
@@ -104,11 +113,19 @@ func (w *Watcher) start() {
 				watchChanStopped = make(chan struct{})
 
 				// Restart the watcher
-				logger.Debugf("restarting the watcher for key %s", w.key)
-				w.watch(ctx, opts, watchChanStopped, &resultChanWG)
+				w.logger.Warning("restarting the watcher")
+
+				// Specify the latest revision we tracked
+				opts = make([]clientv3.OpOption, len(baseOpts))
+				copy(opts, baseOpts)
+				if w.revision != 0 {
+					opts = append(opts, clientv3.WithRev(w.revision))
+				}
+
+				w.watch(ctx, opts, watchChanStopped)
 			case <-w.ctx.Done():
 				// The consumer has cancelled this watcher, we need to exit
-				logger.Debugf("stopping the watcher for key %s", w.key)
+				w.logger.Debug("stopping the watcher")
 				break RetryLoop
 			}
 		}
@@ -118,27 +135,18 @@ func (w *Watcher) start() {
 		// should stop everything. It's also fine to double cancel.
 		cancel()
 		w.cancel()
-
-		// Make sure we do not close the resultChan while it's still be used
-		resultChanWG.Wait()
 		close(w.resultChan)
 	}()
 }
 
-func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChanStopped chan struct{}, resultChanWG *sync.WaitGroup) {
+func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChanStopped chan struct{}) {
 	// Wrap the context with WithRequireLeader so ErrNoLeader is returned and the
 	// WatchChan is closed if the etcd server has no leader
 	ctx = clientv3.WithRequireLeader(ctx)
 
-	resultChanWG.Add(1)
-
 	watchChan := w.client.Watch(ctx, w.key, opts...)
 
 	go func() {
-		// Indicate that the resultChan is no longer used once we existed the
-		// goroutine below
-		defer resultChanWG.Done()
-
 		// Loop over the watchChan channel to receive watch responses. The loop will
 		// exit if the channel is closed.
 		for watchResponse := range watchChan {
@@ -146,14 +154,41 @@ func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChan
 				// We received an error from the channel, so let's assume it's no longer
 				// functional and exit this goroutine so we can try to re-create the
 				// watcher
-				logger.WithError(watchResponse.Err()).Info("error from watch response")
+				w.logger.WithError(watchResponse.Err()).Warn("error from watch response")
+
+				// Check if we received a compact revision that bigger than the revision
+				// we are keeping track of
+				if watchResponse.CompactRevision > w.revision {
+					// If we arrive at this point, it means we missed watch events.
+					// Therefore we need to send a WatchError so the watcher consumer can
+					// act accordingly.
+					w.revision = watchResponse.CompactRevision
+					w.logger.Debugf("watch revision updated to %d by compact revision", w.revision)
+					w.queueEvent(ctx, store.WatchEvent{Type: store.WatchError})
+				}
 				break
 			}
 
-			for _, event := range watchResponse.Events {
-				logger.Debugf("received event of type %v for key %s", event.Type, event.Kv.Key)
-				w.event(ctx, event)
+			// Bump the revision to indicate that this revision was handled by the
+			// watcher. We do bump the revision in response to a WatchCreateRequest,
+			// only if there's new events
+			if !watchResponse.Created && watchResponse.Header.GetRevision() >= w.revision {
+				w.revision = watchResponse.Header.GetRevision() + 1
+				w.logger.Debugf("watch revision updated to %d by header revision", w.revision)
 			}
+
+			for _, event := range watchResponse.Events {
+				w.logger.Debugf("received event of type %s", event.Type.String())
+				parsedEvent := parseEvent(event)
+				w.queueEvent(ctx, parsedEvent)
+			}
+		}
+
+		// Verify if the parent context was cancelled, which would indicate that the
+		// watcher was gracefully shutdown by its consumer and therefore we don't
+		// need to print a warning here
+		if err := w.ctx.Err(); err == nil || err != context.Canceled {
+			w.logger.Warning("the watcher has been stopped")
 		}
 
 		// At this point, the watch channel has been closed by its consumer or is
@@ -164,22 +199,40 @@ func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChan
 
 }
 
-func (w *Watcher) event(ctx context.Context, e *clientv3.Event) {
-	typ := GetWatcherAction(e)
-	if typ == store.WatchUnknown {
-		logger.Infof("unknown etcd watch action type %q", e.Type.String())
-		return
-	}
-
-	result := store.WatchEvent{
-		Type:   typ,
-		Key:    string(e.Kv.Key),
-		Object: e.Kv.Value,
+// queueEvent takes an incoming event from the watcher and adds it to the buffer
+// of outgoing results
+func (w *Watcher) queueEvent(ctx context.Context, e store.WatchEvent) {
+	if len(w.resultChan) == cap(w.resultChan) {
+		w.logger.Warning("resultChan buffer is full, watch events are not " +
+			"processed fast enough, incoming events from the watcher will be blocked")
 	}
 
 	select {
-	case w.resultChan <- result:
+	case w.resultChan <- e:
 	case <-ctx.Done():
-		return
 	}
+}
+
+func parseEvent(e *clientv3.Event) store.WatchEvent {
+	event := store.WatchEvent{
+		Key:      string(e.Kv.Key),
+		Revision: e.Kv.ModRevision,
+		Object:   e.Kv.Value,
+	}
+
+	if e.IsCreate() {
+		event.Type = store.WatchCreate
+	} else if e.IsModify() {
+		event.Type = store.WatchUpdate
+	} else {
+		event.Type = store.WatchDelete
+		// If the previous key value is not available, return a watch error
+		if e.PrevKv == nil {
+			return store.WatchEvent{Type: store.WatchError}
+		}
+		// Fetch the key value before it was deleted
+		event.Object = e.PrevKv.Value
+	}
+
+	return event
 }
