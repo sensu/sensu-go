@@ -8,11 +8,9 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/api"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	graphql "github.com/sensu/sensu-go/backend/apid/graphql"
-	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
@@ -64,17 +62,7 @@ func (r *GraphQLRouter) Mount(parent *mux.Router) {
 
 func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 	// Setup context
-	ctx := req.Context()
-	ctx = context.WithValue(ctx, types.NamespaceKey, "")
-
-	// Create a short-lived access token for the duration of the request and lift
-	// it into the context.
-	ctx, teardown, err := contextWithTempAccessToken(ctx, r.store)
-	if err != nil {
-		logger.WithError(err).Info("unable to get temporary token for request")
-		return nil, err
-	}
-	defer teardown()
+	ctx := context.WithValue(req.Context(), types.NamespaceKey, "")
 
 	// Parse request body
 	var reqBody interface{}
@@ -121,34 +109,3 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 	}
 	return results[0], nil
 }
-
-func contextWithTempAccessToken(ctx context.Context, store store.Store) (context.Context, func(), error) {
-	// Create new token
-	claims := jwt.GetClaimsFromContext(ctx)
-	if claims == nil {
-		return ctx, noop, nil
-	}
-
-	// Create an access token from claims
-	token, tokenString, err := jwt.AccessToken(claims)
-	if err != nil {
-		return ctx, noop, err
-	}
-
-	// Add token to the allow list
-	if err := store.AllowTokens(token); err != nil {
-		return ctx, noop, err
-	}
-
-	revokeFn := func() {
-		if err := store.RevokeTokens(claims); err != nil {
-			logger.WithError(err).Error("unable to remove token")
-		}
-	}
-
-	// Lift access token into the request context
-	ctx = context.WithValue(ctx, v2.AccessTokenString, tokenString)
-	return ctx, revokeFn, nil
-}
-
-func noop() {}
