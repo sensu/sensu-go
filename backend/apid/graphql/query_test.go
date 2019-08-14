@@ -3,6 +3,7 @@ package graphql
 import (
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
