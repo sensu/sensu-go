@@ -32,6 +32,8 @@ queried in the `GET /events/:entity` endpoint (#3141)
 - Prevent a segmentation violation when running `sensuctl config view` without
 configuration.
 - Added entity name to the interactive sensuctl survey.
+- Check hooks with `stdin: true` now receive actual event data on STDIN instead
+  of an empty event.
 
 ### Removed
 - Removed encoded protobuf payloads from log messages (when decoded, they can reveal
