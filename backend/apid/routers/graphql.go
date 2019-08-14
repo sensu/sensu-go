@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/api"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	graphql "github.com/sensu/sensu-go/backend/apid/graphql"
@@ -62,7 +63,7 @@ func (r *GraphQLRouter) Mount(parent *mux.Router) {
 
 func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 	// Setup context
-	ctx := context.WithValue(req.Context(), types.NamespaceKey, "")
+	ctx := context.WithValue(req.Context(), corev2.NamespaceKey, "")
 
 	// Parse request body
 	var reqBody interface{}
