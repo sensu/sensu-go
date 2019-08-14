@@ -228,10 +228,6 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	event.Entity = a.getAgentEntity()
 	event.Timestamp = time.Now().Unix()
 
-	if len(checkHooks) != 0 {
-		event.Check.Hooks = a.ExecuteHooks(ctx, request, checkExec.Status, hookAssets)
-	}
-
 	// Instantiate metrics in the event if the check is attempting to extract metrics
 	if check.OutputMetricFormat != "" || len(check.OutputMetricHandlers) != 0 {
 		event.Metrics = &corev2.Metrics{}
@@ -243,6 +239,11 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 
 	if len(check.OutputMetricHandlers) != 0 {
 		event.Metrics.Handlers = check.OutputMetricHandlers
+	}
+
+	// Execute hooks after we have a completely populated event object
+	if len(checkHooks) != 0 {
+		event.Check.Hooks = a.ExecuteHooks(ctx, request, event, hookAssets)
 	}
 
 	// The check requested that we discard its output before writing back

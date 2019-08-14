@@ -19,10 +19,6 @@ type mockEventController struct {
 	mock.Mock
 }
 
-func (m *mockEventController) Create(ctx context.Context, check *corev2.Event) error {
-	return m.Called(ctx, check).Error(0)
-}
-
 func (m *mockEventController) CreateOrReplace(ctx context.Context, check *corev2.Event) error {
 	return m.Called(ctx, check).Error(0)
 }
@@ -55,6 +51,9 @@ func TestEventsRouter(t *testing.T) {
 		Entity: &corev2.Entity{ObjectMeta: corev2.ObjectMeta{Namespace: "default"}},
 	}
 	fixture := corev2.FixtureEvent("foo", "check-cpu")
+
+	fixture_wo_namespace := corev2.FixtureEvent("foo", "check-cpu")
+	fixture_wo_namespace.Entity.ObjectMeta.Namespace = ""
 
 	tests := []struct {
 		name           string
@@ -128,7 +127,7 @@ func TestEventsRouter(t *testing.T) {
 			path:   empty.URIPath(),
 			body:   marshal(fixture),
 			controllerFunc: func(c *mockEventController) {
-				c.On("Create", mock.Anything, mock.Anything).
+				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(actions.NewErrorf(actions.InvalidArgument)).
 					Once()
 			},
@@ -140,7 +139,7 @@ func TestEventsRouter(t *testing.T) {
 			path:   empty.URIPath(),
 			body:   marshal(fixture),
 			controllerFunc: func(c *mockEventController) {
-				c.On("Create", mock.Anything, mock.Anything).
+				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(actions.NewErrorf(actions.InternalErr)).
 					Once()
 			},
@@ -152,7 +151,7 @@ func TestEventsRouter(t *testing.T) {
 			path:   empty.URIPath(),
 			body:   marshal(fixture),
 			controllerFunc: func(c *mockEventController) {
-				c.On("Create", mock.Anything, mock.Anything).
+				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(nil).
 					Once()
 			},
@@ -169,7 +168,14 @@ func TestEventsRouter(t *testing.T) {
 			name:           "it returns 400 if the event metadata to update is invalid",
 			method:         http.MethodPut,
 			path:           fixture.URIPath(),
-			body:           []byte(`{"entity": {"namespace":"acme"}}`),
+			body:           []byte(`{"entity": {"metadata": {"namespace":"acme"}}}`),
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:           "it returns 400 if the event metadata to update is invalid",
+			method:         http.MethodPut,
+			path:           fixture.URIPath(),
+			body:           []byte(`{"entity": {}, "check": {"metadata": {"namespace":"acme"}}}`),
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
@@ -199,6 +205,75 @@ func TestEventsRouter(t *testing.T) {
 		{
 			name:   "it returns 201 when an event is successfully updated",
 			method: http.MethodPut,
+			path:   fixture.URIPath(),
+			body:   marshal(fixture),
+			controllerFunc: func(c *mockEventController) {
+				c.On("CreateOrReplace", mock.Anything, mock.Anything).
+					Return(nil).
+					Once()
+			},
+			wantStatusCode: http.StatusCreated,
+		},
+		{
+			name:   "it returns 201 when an event does not provide a namespace (using url namespace)",
+			method: http.MethodPut,
+			path:   fixture.URIPath(),
+			body:   marshal(fixture_wo_namespace),
+			controllerFunc: func(c *mockEventController) {
+				c.On("CreateOrReplace", mock.Anything, mock.Anything).
+					Return(nil).
+					Once()
+			},
+			wantStatusCode: http.StatusCreated,
+		},
+		{
+			name:           "it returns 400 if the payload to update is not decodable (post)",
+			method:         http.MethodPost,
+			path:           fixture.URIPath(),
+			body:           []byte(`foo`),
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:           "it returns 400 if the event metadata to update is invalid (post)",
+			method:         http.MethodPost,
+			path:           fixture.URIPath(),
+			body:           []byte(`{"entity": {"metadata": {"namespace":"acme"}}}`),
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:           "it returns 400 if the event metadata to update is invalid (post)",
+			method:         http.MethodPost,
+			path:           fixture.URIPath(),
+			body:           []byte(`{"entity": {}, "check": {"metadata": {"namespace":"acme"}}}`),
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:   "it returns 400 if the event to update is not valid (post)",
+			method: http.MethodPost,
+			path:   fixture.URIPath(),
+			body:   marshal(fixture),
+			controllerFunc: func(c *mockEventController) {
+				c.On("CreateOrReplace", mock.Anything, mock.Anything).
+					Return(actions.NewErrorf(actions.InvalidArgument)).
+					Once()
+			},
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:   "it returns 500 if the store returns an error while updating an event (post)",
+			method: http.MethodPost,
+			path:   fixture.URIPath(),
+			body:   marshal(fixture),
+			controllerFunc: func(c *mockEventController) {
+				c.On("CreateOrReplace", mock.Anything, mock.Anything).
+					Return(actions.NewErrorf(actions.InternalErr)).
+					Once()
+			},
+			wantStatusCode: http.StatusInternalServerError,
+		},
+		{
+			name:   "it returns 201 when an event is successfully updated (post)",
+			method: http.MethodPost,
 			path:   fixture.URIPath(),
 			body:   marshal(fixture),
 			controllerFunc: func(c *mockEventController) {

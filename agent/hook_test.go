@@ -32,14 +32,22 @@ func TestExecuteHook(t *testing.T) {
 	execution := command.FixtureExecutionResponse(0, "")
 	ex.Return(execution, nil)
 
-	hook := agent.executeHook(ctx, hookConfig, "check", nil)
+	evt := &types.Event{
+		Check: &types.Check{
+			ObjectMeta: types.ObjectMeta{
+				Name: "check",
+			},
+		},
+	}
+
+	hook := agent.executeHook(ctx, hookConfig, evt, nil)
 
 	assert.NotZero(hook.Executed)
 	assert.Equal(int32(0), hook.Status)
 	assert.Equal("", hook.Output)
 
 	execution.Output = "hello"
-	hook = agent.executeHook(ctx, hookConfig, "check", nil)
+	hook = agent.executeHook(ctx, hookConfig, evt, nil)
 
 	assert.NotZero(hook.Executed)
 	assert.Equal(int32(0), hook.Status)

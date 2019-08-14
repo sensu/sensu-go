@@ -22,6 +22,11 @@ backend to use JSON.
 ### Changed
 - The project now uses Go modules instead of dep for dependency management.
 - The internal reverse proxy relied on by the dashboard has been eliminated.
+- The generic etcd watcher now keeps track of revisions.
+- The resource caches can now rebuild themselves in case of failures.
+- Event and Entity resources can now be created without an explicit namespace;
+the system will refer to the namespace in the URL.
+- Events and Entities can now be created with the POST verb.
 
 ### Fixed
 - Fixed the tabular output of `sensuctl filter list` so inclusive filter expressions
@@ -31,6 +36,8 @@ queried in the `GET /events/:entity` endpoint (#3141)
 - Prevent a segmentation violation when running `sensuctl config view` without
 configuration.
 - Added entity name to the interactive sensuctl survey.
+- Check hooks with `stdin: true` now receive actual event data on STDIN instead
+  of an empty event.
 
 ### Removed
 - Removed encoded protobuf payloads from log messages (when decoded, they can reveal

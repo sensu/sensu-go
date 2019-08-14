@@ -21,7 +21,6 @@ type EventsRouter struct {
 
 // eventController represents the controller needs of the EventsRouter.
 type eventController interface {
-	Create(ctx context.Context, check *corev2.Event) error
 	CreateOrReplace(ctx context.Context, check *corev2.Event) error
 	Delete(ctx context.Context, entity, check string) error
 	Get(ctx context.Context, entity, check string) (*corev2.Event, error)
@@ -47,7 +46,7 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 	routes.ListAllNamespaces(r.controller.List, "/{resource:events}", corev2.EventFields)
 	routes.Path("{entity}/{check}", r.get).Methods(http.MethodGet)
 	routes.Path("{entity}/{check}", r.delete).Methods(http.MethodDelete)
-	routes.Path("{entity}/{check}", r.createOrReplace).Methods(http.MethodPut)
+	routes.Path("{entity}/{check}", r.createOrReplace).Methods(http.MethodPost, http.MethodPut)
 
 	// Additionaly allow a subcollection to be specified when listing events,
 	// which correspond to the entity name here
@@ -80,7 +79,7 @@ func (r *EventsRouter) create(req *http.Request) (interface{}, error) {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	err := r.controller.Create(req.Context(), event)
+	err := r.controller.CreateOrReplace(req.Context(), event)
 	return nil, err
 }
 
@@ -90,8 +89,26 @@ func (r *EventsRouter) createOrReplace(req *http.Request) (interface{}, error) {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	if err := handlers.CheckMeta(event.Entity, mux.Vars(req)); err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+	vars := mux.Vars(req)
+
+	if event.Entity != nil {
+		if err := handlers.MetaPathValues(event.Entity, vars, "entity"); err != nil {
+			return nil, err
+		}
+
+		if err := handlers.CheckMeta(event.Entity, vars); err != nil {
+			return nil, actions.NewError(actions.InvalidArgument, err)
+		}
+	}
+
+	if event.Check != nil {
+		if err := handlers.MetaPathValues(event.Check, vars, "check"); err != nil {
+			return nil, err
+		}
+
+		if err := handlers.CheckMeta(event.Check, vars); err != nil {
+			return nil, actions.NewError(actions.InvalidArgument, err)
+		}
 	}
 
 	err := r.controller.CreateOrReplace(req.Context(), event)

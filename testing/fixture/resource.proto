@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+import "github.com/gogo/protobuf/gogoproto/gogo.proto";
+import "github.com/sensu/sensu-go/api/core/v2/meta.proto";
+
+package testing.fixture;
+
+option go_package = "fixture";
+option (gogoproto.populate_all) = true;
+option (gogoproto.equal_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.testgen_all) = true;
+
+message Resource {
+  string foo = 1 [(gogoproto.nullable) = true];
+
+  sensu.core.v2.ObjectMeta metadata = 2 [(gogoproto.jsontag) = "metadata", (gogoproto.embed) = true, (gogoproto.nullable) = false];
+}

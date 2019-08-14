@@ -115,6 +115,11 @@ func (c *Check) SetNamespace(namespace string) {
 	c.Namespace = namespace
 }
 
+// SetName sets the name of the resource.
+func (c *Check) SetName(name string) {
+	c.Name = name
+}
+
 // StorePrefix returns the path prefix to this resource in the store
 func (c *Check) StorePrefix() string {
 	return ChecksResource

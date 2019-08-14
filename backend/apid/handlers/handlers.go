@@ -50,3 +50,40 @@ func CheckMeta(resource interface{}, vars map[string]string) error {
 
 	return nil
 }
+
+// resource is used to set metadata values, e.g. in MetaPathValues()
+type Resource interface {
+	GetObjectMeta() corev2.ObjectMeta
+	SetNamespace(string)
+	SetName(string)
+}
+
+// MetaPathValues inspects the resource metadata and pulls values from
+// the path variables when specific values are missing.
+func MetaPathValues(resource Resource, muxVars map[string]string, nameVar string) error {
+	meta := resource.GetObjectMeta()
+
+	if meta.Namespace == "" {
+		namespace, err := url.PathUnescape(muxVars["namespace"])
+		if err != nil {
+			return err
+		}
+
+		resource.SetNamespace(namespace)
+	}
+
+	if meta.Name == "" {
+		if nameVar == "" {
+			nameVar = "id"
+		}
+
+		name, err := url.PathUnescape(muxVars[nameVar])
+		if err != nil {
+			return err
+		}
+
+		resource.SetName(name)
+	}
+
+	return nil
+}

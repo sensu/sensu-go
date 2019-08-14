@@ -19,11 +19,11 @@ import (
 
 // ExecuteHooks executes all hooks contained in a check request based on
 // the check status code of the check request
-func (a *Agent) ExecuteHooks(ctx context.Context, request *corev2.CheckRequest, status int, assets map[string]*corev2.AssetList) []*corev2.Hook {
+func (a *Agent) ExecuteHooks(ctx context.Context, request *corev2.CheckRequest, event *corev2.Event, assets map[string]*corev2.AssetList) []*corev2.Hook {
 	executedHooks := []*corev2.Hook{}
 	for _, hookList := range request.Config.CheckHooks {
 		// find the hookList with the corresponding type
-		if hookShouldExecute(hookList.Type, status) {
+		if hookShouldExecute(hookList.Type, event.Check.Status) {
 			// run all the hooks of that type
 			for _, hookName := range hookList.Hooks {
 				hookConfig := getHookConfig(hookName, request.Hooks)
@@ -38,7 +38,7 @@ func (a *Agent) ExecuteHooks(ctx context.Context, request *corev2.CheckRequest, 
 				// code and severity (ex. 0, ok)
 				in := hookInList(hookConfig.Name, executedHooks)
 				if !in {
-					hook := a.executeHook(ctx, hookConfig, request.Config.Name, assets)
+					hook := a.executeHook(ctx, hookConfig, event, assets)
 					// To guard against publishing sensitive/redacted client attribute values
 					// the original command value is reinstated.
 					hook.Command = origCommand
@@ -50,12 +50,8 @@ func (a *Agent) ExecuteHooks(ctx context.Context, request *corev2.CheckRequest, 
 	return executedHooks
 }
 
-func (a *Agent) executeHook(ctx context.Context, hookConfig *corev2.HookConfig, check string, hookAssets map[string]*corev2.AssetList) *corev2.Hook {
-	// Instantiate Event and Hook
-	event := &corev2.Event{
-		Check: &corev2.Check{},
-	}
-
+func (a *Agent) executeHook(ctx context.Context, hookConfig *corev2.HookConfig, event *corev2.Event, hookAssets map[string]*corev2.AssetList) *corev2.Hook {
+	// Instantiate Hook
 	hook := &corev2.Hook{
 		HookConfig: *hookConfig,
 		Executed:   time.Now().Unix(),
@@ -124,7 +120,7 @@ func (a *Agent) executeHook(ctx context.Context, hookConfig *corev2.HookConfig, 
 		Timeout:      int(hookConfig.Timeout),
 		InProgress:   a.inProgress,
 		InProgressMu: a.inProgressMu,
-		Name:         check,
+		Name:         event.Check.ObjectMeta.Name,
 		Env:          env,
 	}
 
@@ -207,8 +203,8 @@ func hookInList(hookName string, hookList []*corev2.Hook) bool {
 	return false
 }
 
-func hookShouldExecute(hookType string, status int) bool {
-	if (hookType == strconv.Itoa(status)) ||
+func hookShouldExecute(hookType string, status uint32) bool {
+	if (hookType == strconv.FormatInt(int64(status), 10)) ||
 		(hookType == "non-zero" && status != 0) ||
 		(hookType == "ok" && status == 0) ||
 		(hookType == "warning" && status == 1) ||
