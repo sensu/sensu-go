@@ -19,10 +19,11 @@ type WatchActionType int
 
 // WatchEvent represents an event of a watched resource
 type WatchEvent struct {
-	Type   WatchActionType
-	Key    string
-	Object []byte
-	Err    error
+	Type     WatchActionType
+	Key      string
+	Object   []byte
+	Revision int64
+	Err      error
 }
 
 // Watcher represents a generic watcher
