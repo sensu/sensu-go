@@ -5,19 +5,19 @@ import (
 	"fmt"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/graphql"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
 func TestEventTypeIsNewIncidentFieldImpl(t *testing.T) {
-	mkEvent := func(status, lastStatus uint32) *types.Event {
-		event := types.Event{
-			Check: &types.Check{
+	mkEvent := func(status, lastStatus uint32) *corev2.Event {
+		event := corev2.Event{
+			Check: &corev2.Check{
 				Status: status,
-				History: []types.CheckHistory{
+				History: []corev2.CheckHistory{
 					{Status: lastStatus},
 				},
 			},
@@ -28,10 +28,10 @@ func TestEventTypeIsNewIncidentFieldImpl(t *testing.T) {
 	testCases := []struct {
 		assertion      string
 		expectedResult bool
-		event          *types.Event
+		event          *corev2.Event
 	}{
-		{"no check", false, &types.Event{Check: nil, Timestamp: 12345678}},
-		{"no history", false, &types.Event{Check: &types.Check{}}},
+		{"no check", false, &corev2.Event{Check: nil, Timestamp: 12345678}},
+		{"no history", false, &corev2.Event{Check: &corev2.Check{}}},
 		{"currently OK", false, mkEvent(0, 0)},
 		{"ongoing incident", false, mkEvent(2, 2)},
 		{"ongoing incident w/ new code", false, mkEvent(2, 1)},
@@ -53,14 +53,14 @@ func TestEventTypeIsNewIncidentFieldImpl(t *testing.T) {
 }
 
 func TestEventTypeIsSilencedField(t *testing.T) {
-	event := types.FixtureEvent("my-entity", "my-check")
+	event := corev2.FixtureEvent("my-entity", "my-check")
 	event.Check.Subscriptions = []string{"unix"}
 
 	client := new(MockSilencedClient)
-	client.On("ListSilenced", mock.Anything).Return([]*types.Silenced{
-		types.FixtureSilenced("*:my-check"),
-		types.FixtureSilenced("unix:not-my-check"),
-		types.FixtureSilenced("entity:my-entity:*"),
+	client.On("ListSilenced", mock.Anything).Return([]*corev2.Silenced{
+		corev2.FixtureSilenced("*:my-check"),
+		corev2.FixtureSilenced("unix:not-my-check"),
+		corev2.FixtureSilenced("entity:my-entity:*"),
 	}, nil).Once()
 
 	impl := &eventImpl{}
@@ -76,19 +76,19 @@ func TestEventTypeIsSilencedField(t *testing.T) {
 }
 
 func TestEventTypeSilencesField(t *testing.T) {
-	event := types.FixtureEvent("my-entity", "my-check")
+	event := corev2.FixtureEvent("my-entity", "my-check")
 	event.Check.Subscriptions = []string{"unix"}
 	event.Entity.Subscriptions = []string{"unix"}
 
 	client := new(MockSilencedClient)
-	client.On("ListSilenced", mock.Anything).Return([]*types.Silenced{
-		types.FixtureSilenced("*:my-check"),                    // match
-		types.FixtureSilenced("unix:my-check"),                 // match
-		types.FixtureSilenced("unix:not-my-check"),             // not match
-		types.FixtureSilenced("entity:my-entity:*"),            // match
-		types.FixtureSilenced("entity:my-entity:my-check"),     // match
-		types.FixtureSilenced("entity:my-entity:not-my-check"), // not match
-		types.FixtureSilenced("not-my-subscription:*"),         // not match
+	client.On("ListSilenced", mock.Anything).Return([]*corev2.Silenced{
+		corev2.FixtureSilenced("*:my-check"),                    // match
+		corev2.FixtureSilenced("unix:my-check"),                 // match
+		corev2.FixtureSilenced("unix:not-my-check"),             // not match
+		corev2.FixtureSilenced("entity:my-entity:*"),            // match
+		corev2.FixtureSilenced("entity:my-entity:my-check"),     // match
+		corev2.FixtureSilenced("entity:my-entity:not-my-check"), // not match
+		corev2.FixtureSilenced("not-my-subscription:*"),         // not match
 	}, nil).Once()
 
 	impl := &eventImpl{}

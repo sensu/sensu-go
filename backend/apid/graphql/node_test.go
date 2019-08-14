@@ -9,7 +9,6 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -28,7 +27,7 @@ func TestNodeResolverFindType(t *testing.T) {
 	cfg := ServiceConfig{}
 	resolver := newNodeResolver(cfg)
 
-	check := types.FixtureCheckConfig("http-check")
+	check := corev2.FixtureCheckConfig("http-check")
 	typeID := resolver.FindType(check)
 	assert.NotNil(t, typeID)
 }
@@ -41,7 +40,7 @@ func TestNodeResolverFind(t *testing.T) {
 	ctx := context.Background()
 	info := graphql.ResolveInfo{}
 
-	check := types.FixtureCheckConfig("http-check")
+	check := corev2.FixtureCheckConfig("http-check")
 	gid := globalid.CheckTranslator.EncodeToString(check)
 
 	// Success
@@ -95,7 +94,7 @@ func TestAssetNodeResolver(t *testing.T) {
 		{
 			name: "assets",
 			setupNode: func() interface{} {
-				return types.FixtureAsset("name")
+				return corev2.FixtureAsset("name")
 			},
 			setupID: func(r interface{}) string {
 				return globalid.AssetTranslator.EncodeToString(r)
@@ -107,7 +106,7 @@ func TestAssetNodeResolver(t *testing.T) {
 		{
 			name: "check",
 			setupNode: func() interface{} {
-				return types.FixtureCheckConfig("name")
+				return corev2.FixtureCheckConfig("name")
 			},
 			setupID: func(r interface{}) string {
 				return globalid.CheckTranslator.EncodeToString(r)
@@ -119,7 +118,7 @@ func TestAssetNodeResolver(t *testing.T) {
 		{
 			name: "entities",
 			setupNode: func() interface{} {
-				return types.FixtureEntity("name")
+				return corev2.FixtureEntity("name")
 			},
 			setupID: func(r interface{}) string {
 				return globalid.EntityTranslator.EncodeToString(r)
@@ -131,7 +130,7 @@ func TestAssetNodeResolver(t *testing.T) {
 		{
 			name: "handlers",
 			setupNode: func() interface{} {
-				return types.FixtureHandler("name")
+				return corev2.FixtureHandler("name")
 			},
 			setupID: func(r interface{}) string {
 				return globalid.HandlerTranslator.EncodeToString(r)
@@ -143,7 +142,7 @@ func TestAssetNodeResolver(t *testing.T) {
 		{
 			name: "mutators",
 			setupNode: func() interface{} {
-				return types.FixtureMutator("name")
+				return corev2.FixtureMutator("name")
 			},
 			setupID: func(r interface{}) string {
 				return globalid.MutatorTranslator.EncodeToString(r)
@@ -155,7 +154,7 @@ func TestAssetNodeResolver(t *testing.T) {
 		{
 			name: "users",
 			setupNode: func() interface{} {
-				return types.FixtureUser("name")
+				return corev2.FixtureUser("name")
 			},
 			setupID: func(r interface{}) string {
 				return globalid.UserTranslator.EncodeToString(r)
@@ -167,7 +166,7 @@ func TestAssetNodeResolver(t *testing.T) {
 		{
 			name: "events",
 			setupNode: func() interface{} {
-				return types.FixtureEvent("a", "b")
+				return corev2.FixtureEvent("a", "b")
 			},
 			setupID: func(r interface{}) string {
 				return globalid.EventTranslator.EncodeToString(r)
@@ -179,7 +178,7 @@ func TestAssetNodeResolver(t *testing.T) {
 		{
 			name: "namespaces",
 			setupNode: func() interface{} {
-				return types.FixtureNamespace("sensu")
+				return corev2.FixtureNamespace("sensu")
 			},
 			setupID: func(r interface{}) string {
 				return globalid.NamespaceTranslator.EncodeToString(r)

@@ -4,10 +4,10 @@ import (
 	"context"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -17,14 +17,14 @@ func TestViewerTypeUserField(t *testing.T) {
 	client := new(MockUserClient)
 	impl := viewerImpl{userClient: client}
 
-	user := types.FixtureUser("frankwest")
+	user := corev2.FixtureUser("frankwest")
 	claims, err := jwt.NewClaims(user)
 	if err != nil {
 		require.NoError(t, err)
 	}
 
 	params := graphql.ResolveParams{}
-	params.Context = context.WithValue(context.Background(), types.ClaimsKey, claims)
+	params.Context = context.WithValue(context.Background(), corev2.ClaimsKey, claims)
 
 	// Success
 	client.On("FetchUser", mock.Anything, user.Username).Return(user, nil).Once()
@@ -46,7 +46,7 @@ func TestViewerTypeUserField(t *testing.T) {
 }
 
 func TestViewerTypeNamespacesField(t *testing.T) {
-	nsp := types.FixtureNamespace("sensu")
+	nsp := corev2.FixtureNamespace("sensu")
 	impl := viewerImpl{}
 	client := new(MockNamespaceClient)
 
@@ -55,7 +55,7 @@ func TestViewerTypeNamespacesField(t *testing.T) {
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 
 	// Success
-	client.On("ListNamespaces", mock.Anything).Return([]*types.Namespace{nsp}, nil).Once()
+	client.On("ListNamespaces", mock.Anything).Return([]*corev2.Namespace{nsp}, nil).Once()
 	res, err := impl.Namespaces(params)
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)

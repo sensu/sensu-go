@@ -4,7 +4,7 @@ import (
 	"errors"
 	gostrings "strings"
 
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
@@ -29,13 +29,13 @@ func (*eventFilterImpl) ID(p graphql.ResolveParams) (string, error) {
 
 // IsTypeOf is used to determine if a given value is associated with the type
 func (*eventFilterImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	_, ok := s.(*v2.EventFilter)
+	_, ok := s.(*corev2.EventFilter)
 	return ok
 }
 
 // Action implements response to request for 'action' field.
 func (*eventFilterImpl) Action(p graphql.ResolveParams) (schema.EventFilterAction, error) {
-	src := p.Source.(*v2.EventFilter)
+	src := p.Source.(*corev2.EventFilter)
 	ret, ok := schema.EventFilterAction(gostrings.ToUpper(src.Action)), true
 	if !ok {
 		return ret, errors.New("unable to coerce value for field 'action'")
@@ -45,14 +45,14 @@ func (*eventFilterImpl) Action(p graphql.ResolveParams) (schema.EventFilterActio
 
 // ToJSON implements response to request for 'toJSON' field.
 func (*eventFilterImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
-	return types.WrapResource(p.Source.(v2.Resource)), nil
+	return types.WrapResource(p.Source.(corev2.Resource)), nil
 }
 
 // RuntimeAssets implements response to request for 'runtimeAssets' field.
 func (r *eventFilterImpl) RuntimeAssets(p graphql.ResolveParams) (interface{}, error) {
-	src := p.Source.(*v2.EventFilter)
+	src := p.Source.(*corev2.EventFilter)
 	records, err := loadAssets(p.Context, src.Namespace)
-	results := filterAssets(records, func(obj *types.Asset) bool {
+	results := filterAssets(records, func(obj *corev2.Asset) bool {
 		return strings.FoundInArray(obj.Name, src.RuntimeAssets)
 	})
 	return results, err

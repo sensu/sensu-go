@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/apid/graphql/suggest"
 	"github.com/sensu/sensu-go/backend/store"
@@ -124,7 +123,7 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 	q := strings.ToLower(p.Args.Q)
 	set := utilstrings.OccurrenceSet{}
 	for i := 0; i < objs.Elem().Len(); i++ {
-		s := objs.Elem().Index(i).Interface().(v2.Resource)
+		s := objs.Elem().Index(i).Interface().(corev2.Resource)
 		for _, v := range field.Value(s, ref.FieldPath) {
 			if v != "" && strings.Contains(strings.ToLower(v), q) {
 				set.Add(v)

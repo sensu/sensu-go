@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -98,7 +98,7 @@ func TestMutationTypeExecuteCheck(t *testing.T) {
 	params := schema.MutationExecuteCheckFieldResolverParams{}
 	params.Args.Input = &inputs
 
-	check := types.FixtureCheckConfig("test")
+	check := corev2.FixtureCheckConfig("test")
 	client := new(MockCheckClient)
 	client.On("FetchCheck", mock.Anything, mock.Anything).Return(check, nil)
 	client.On("ExecuteCheck", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
@@ -129,7 +129,7 @@ func TestMutationTypeUpdateCheck(t *testing.T) {
 		},
 	}
 
-	check := types.FixtureCheckConfig("a")
+	check := corev2.FixtureCheckConfig("a")
 	client := new(MockCheckClient)
 	client.On("FetchCheck", mock.Anything, mock.Anything).Return(check, nil).Once()
 	client.On("UpdateCheck", mock.Anything, mock.Anything).Return(nil).Once()
@@ -160,7 +160,7 @@ func TestMutationTypeDeleteEntityField(t *testing.T) {
 	params := schema.MutationDeleteEntityFieldResolverParams{}
 	params.Args.Input = &inputs
 
-	entity := types.FixtureEntity("abc")
+	entity := corev2.FixtureEntity("abc")
 	client := new(MockEntityClient)
 	cfg := ServiceConfig{EntityClient: client}
 	impl := mutationsImpl{svc: cfg}
@@ -180,7 +180,7 @@ func TestMutationTypeDeleteEntityField(t *testing.T) {
 }
 
 func TestMutationTypeDeleteEventField(t *testing.T) {
-	evt := types.FixtureEvent("a", "b")
+	evt := corev2.FixtureEvent("a", "b")
 	gid := globalid.EventTranslator.EncodeToString(evt)
 
 	inputs := schema.DeleteRecordInput{ID: gid}
@@ -211,7 +211,7 @@ func TestMutationTypeDeleteEventField(t *testing.T) {
 }
 
 func TestMutationTypeDeleteHandlerField(t *testing.T) {
-	hd := types.FixtureHandler("a")
+	hd := corev2.FixtureHandler("a")
 	gid := globalid.HandlerTranslator.EncodeToString(hd)
 
 	inputs := schema.DeleteRecordInput{ID: gid}
@@ -236,7 +236,7 @@ func TestMutationTypeDeleteHandlerField(t *testing.T) {
 }
 
 func TestMutationTypeDeleteMutatorField(t *testing.T) {
-	mut := types.FixtureMutator("a")
+	mut := corev2.FixtureMutator("a")
 	gid := globalid.MutatorTranslator.EncodeToString(mut)
 
 	inputs := schema.DeleteRecordInput{ID: gid}
@@ -261,7 +261,7 @@ func TestMutationTypeDeleteMutatorField(t *testing.T) {
 }
 
 func TestMutationTypeDeleteEventFilterField(t *testing.T) {
-	flr := types.FixtureEventFilter("a")
+	flr := corev2.FixtureEventFilter("a")
 	gid := globalid.EventFilterTranslator.EncodeToString(flr)
 
 	inputs := schema.DeleteRecordInput{ID: gid}

@@ -4,16 +4,15 @@ import (
 	"context"
 	"testing"
 
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/graphql"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
 func TestHandlerTypeHandlersField(t *testing.T) {
-	handler := types.FixtureHandler("my-handler")
+	handler := corev2.FixtureHandler("my-handler")
 	handler.Handlers = []string{"one", "two"}
 
 	client := new(MockHandlerClient)
@@ -25,10 +24,10 @@ func TestHandlerTypeHandlersField(t *testing.T) {
 	params.Source = handler
 
 	// Success
-	client.On("ListHandlers", mock.Anything).Return([]*types.Handler{
-		types.FixtureHandler("one"),
-		types.FixtureHandler("two"),
-		types.FixtureHandler("three"),
+	client.On("ListHandlers", mock.Anything).Return([]*corev2.Handler{
+		corev2.FixtureHandler("one"),
+		corev2.FixtureHandler("two"),
+		corev2.FixtureHandler("three"),
 	}, nil).Once()
 
 	res, err := impl.Handlers(params)
@@ -37,8 +36,8 @@ func TestHandlerTypeHandlersField(t *testing.T) {
 }
 
 func TestHandlerTypeMutatorField(t *testing.T) {
-	mutator := types.FixtureMutator("my-mutator")
-	handler := types.FixtureHandler("my-handler")
+	mutator := corev2.FixtureMutator("my-mutator")
+	handler := corev2.FixtureHandler("my-handler")
 	handler.Mutator = mutator.Name
 
 	client := new(MockMutatorClient)
@@ -58,7 +57,7 @@ func TestHandlerTypeMutatorField(t *testing.T) {
 }
 
 func TestHandlerTypeToJSONField(t *testing.T) {
-	src := v2.FixtureHandler("name")
+	src := corev2.FixtureHandler("name")
 	imp := &handlerImpl{}
 
 	res, err := imp.ToJSON(graphql.ResolveParams{Source: src})

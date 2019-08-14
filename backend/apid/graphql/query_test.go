@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -15,7 +14,7 @@ func TestQueryTypeEventField(t *testing.T) {
 	cfg := ServiceConfig{EventClient: client}
 	impl := queryImpl{svc: cfg}
 
-	event := types.FixtureEvent("a", "b")
+	event := corev2.FixtureEvent("a", "b")
 	args := schema.QueryEventFieldResolverArgs{Namespace: "ns", Entity: "a", Check: "b"}
 	params := schema.QueryEventFieldResolverParams{Args: args}
 
@@ -31,7 +30,7 @@ func TestQueryTypeEventFilterField(t *testing.T) {
 	cfg := ServiceConfig{EventFilterClient: client}
 	impl := queryImpl{svc: cfg}
 
-	filter := types.FixtureEventFilter("a")
+	filter := corev2.FixtureEventFilter("a")
 	args := schema.QueryEventFilterFieldResolverArgs{Namespace: "ns", Name: "a"}
 	params := schema.QueryEventFilterFieldResolverParams{Args: args}
 
@@ -47,7 +46,7 @@ func TestQueryTypeNamespaceField(t *testing.T) {
 	cfg := ServiceConfig{NamespaceClient: client}
 	impl := queryImpl{svc: cfg}
 
-	nsp := types.FixtureNamespace("sensu")
+	nsp := corev2.FixtureNamespace("sensu")
 	params := schema.QueryNamespaceFieldResolverParams{}
 	params.Args.Name = nsp.Name
 
@@ -63,7 +62,7 @@ func TestQueryTypeEntityField(t *testing.T) {
 	cfg := ServiceConfig{EntityClient: client}
 	impl := queryImpl{svc: cfg}
 
-	entity := types.FixtureEntity("a")
+	entity := corev2.FixtureEntity("a")
 	params := schema.QueryEntityFieldResolverParams{}
 	params.Args.Namespace = entity.Namespace
 	params.Args.Name = entity.Name
@@ -80,7 +79,7 @@ func TestQueryTypeCheckField(t *testing.T) {
 	cfg := ServiceConfig{CheckClient: client}
 	impl := queryImpl{svc: cfg}
 
-	check := types.FixtureCheckConfig("a")
+	check := corev2.FixtureCheckConfig("a")
 	params := schema.QueryCheckFieldResolverParams{}
 	params.Args.Namespace = check.Namespace
 	params.Args.Name = check.Name
@@ -97,7 +96,7 @@ func TestQueryTypeHandlerField(t *testing.T) {
 	cfg := ServiceConfig{HandlerClient: client}
 	impl := queryImpl{svc: cfg}
 
-	handler := types.FixtureHandler("a")
+	handler := corev2.FixtureHandler("a")
 	params := schema.QueryHandlerFieldResolverParams{}
 	params.Args.Namespace = handler.Namespace
 	params.Args.Name = handler.Name
@@ -114,7 +113,7 @@ func TestQueryTypeMuatorField(t *testing.T) {
 	cfg := ServiceConfig{MutatorClient: client}
 	impl := queryImpl{svc: cfg}
 
-	mutator := types.FixtureMutator("a")
+	mutator := corev2.FixtureMutator("a")
 	params := schema.QueryMutatorFieldResolverParams{}
 	params.Args.Namespace = mutator.Namespace
 	params.Args.Name = mutator.Name

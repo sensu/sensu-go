@@ -5,12 +5,11 @@ import (
 	"sort"
 	"strings"
 
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/filter"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
-	"github.com/sensu/sensu-go/types"
 	string_utils "github.com/sensu/sensu-go/util/strings"
 )
 
@@ -31,7 +30,7 @@ func (r *namespaceImpl) ID(p graphql.ResolveParams) (string, error) {
 
 // Name implements response to request for 'name' field.
 func (r *namespaceImpl) Name(p graphql.ResolveParams) (string, error) {
-	nsp := p.Source.(*types.Namespace)
+	nsp := p.Source.(*corev2.Namespace)
 	return nsp.Name, nil
 }
 
@@ -39,7 +38,7 @@ func (r *namespaceImpl) Name(p graphql.ResolveParams) (string, error) {
 // Experimental. Value is not persisted in any way at this time and is simply
 // derived from the name.
 func (r *namespaceImpl) ColourID(p graphql.ResolveParams) (schema.MutedColour, error) {
-	nsp := p.Source.(*types.Namespace)
+	nsp := p.Source.(*corev2.Namespace)
 	num := nsp.Name[0] % 7
 	switch num {
 	case 0:
@@ -63,7 +62,7 @@ func (r *namespaceImpl) ColourID(p graphql.ResolveParams) (schema.MutedColour, e
 // Checks implements response to request for 'checks' field.
 func (r *namespaceImpl) Checks(p schema.NamespaceChecksFieldResolverParams) (interface{}, error) {
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
-	nsp := p.Source.(*types.Namespace)
+	nsp := p.Source.(*corev2.Namespace)
 
 	// finds all records
 	results, err := loadCheckConfigs(p.Context, nsp.Name)
@@ -72,11 +71,11 @@ func (r *namespaceImpl) Checks(p schema.NamespaceChecksFieldResolverParams) (int
 	}
 
 	// filter
-	matches, err := filter.Compile(p.Args.Filters, CheckFilters(), v2.CheckConfigFields)
+	matches, err := filter.Compile(p.Args.Filters, CheckFilters(), corev2.CheckConfigFields)
 	if err != nil {
 		return res, err
 	}
-	filteredResults := make([]*v2.CheckConfig, 0, len(results))
+	filteredResults := make([]*corev2.CheckConfig, 0, len(results))
 	for i := range results {
 		if matches(results[i]) {
 			filteredResults = append(filteredResults, results[i])
@@ -84,7 +83,7 @@ func (r *namespaceImpl) Checks(p schema.NamespaceChecksFieldResolverParams) (int
 	}
 
 	// sort records
-	sort.Sort(types.SortCheckConfigsByName(
+	sort.Sort(corev2.SortCheckConfigsByName(
 		filteredResults,
 		p.Args.OrderBy == schema.CheckListOrders.NAME,
 	))
@@ -99,7 +98,7 @@ func (r *namespaceImpl) Checks(p schema.NamespaceChecksFieldResolverParams) (int
 // EventFilters implements response to request for 'eventFilters' field.
 func (r *namespaceImpl) EventFilters(p schema.NamespaceEventFiltersFieldResolverParams) (interface{}, error) {
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
-	nsp := p.Source.(*types.Namespace)
+	nsp := p.Source.(*corev2.Namespace)
 
 	// find all records
 	results, err := loadEventFilters(p.Context, nsp.Name)
@@ -108,11 +107,11 @@ func (r *namespaceImpl) EventFilters(p schema.NamespaceEventFiltersFieldResolver
 	}
 
 	// filter
-	matches, err := filter.Compile(p.Args.Filters, EventFilterFilters(), v2.EventFilterFields)
+	matches, err := filter.Compile(p.Args.Filters, EventFilterFilters(), corev2.EventFilterFields)
 	if err != nil {
 		return res, err
 	}
-	filteredResults := make([]*v2.EventFilter, 0, len(results))
+	filteredResults := make([]*corev2.EventFilter, 0, len(results))
 	for i := range results {
 		if matches(results[i]) {
 			filteredResults = append(filteredResults, results[i])
@@ -120,7 +119,7 @@ func (r *namespaceImpl) EventFilters(p schema.NamespaceEventFiltersFieldResolver
 	}
 
 	// sort records
-	sort.Sort(types.SortEventFiltersByName(
+	sort.Sort(corev2.SortEventFiltersByName(
 		filteredResults,
 		p.Args.OrderBy == schema.EventFilterListOrders.NAME,
 	))
@@ -135,7 +134,7 @@ func (r *namespaceImpl) EventFilters(p schema.NamespaceEventFiltersFieldResolver
 // Handlers implements response to request for 'handlers' field.
 func (r *namespaceImpl) Handlers(p schema.NamespaceHandlersFieldResolverParams) (interface{}, error) {
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
-	nsp := p.Source.(*types.Namespace)
+	nsp := p.Source.(*corev2.Namespace)
 
 	// finds all records
 	results, err := loadHandlers(p.Context, nsp.Name)
@@ -144,11 +143,11 @@ func (r *namespaceImpl) Handlers(p schema.NamespaceHandlersFieldResolverParams) 
 	}
 
 	// filter
-	matches, err := filter.Compile(p.Args.Filters, HandlerFilters(), v2.HandlerFields)
+	matches, err := filter.Compile(p.Args.Filters, HandlerFilters(), corev2.HandlerFields)
 	if err != nil {
 		return res, err
 	}
-	filteredResults := make([]*v2.Handler, 0, len(results))
+	filteredResults := make([]*corev2.Handler, 0, len(results))
 	for i := range results {
 		if matches(results[i]) {
 			filteredResults = append(filteredResults, results[i])
@@ -156,7 +155,7 @@ func (r *namespaceImpl) Handlers(p schema.NamespaceHandlersFieldResolverParams) 
 	}
 
 	// sort
-	sort.Sort(types.SortHandlersByName(
+	sort.Sort(corev2.SortHandlersByName(
 		filteredResults,
 		p.Args.OrderBy == schema.HandlerListOrders.NAME,
 	))
@@ -171,7 +170,7 @@ func (r *namespaceImpl) Handlers(p schema.NamespaceHandlersFieldResolverParams) 
 // Mutators implements response to request for 'mutators' field.
 func (r *namespaceImpl) Mutators(p schema.NamespaceMutatorsFieldResolverParams) (interface{}, error) {
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
-	nsp := p.Source.(*types.Namespace)
+	nsp := p.Source.(*corev2.Namespace)
 
 	// finds all records
 	results, err := loadMutators(p.Context, nsp.Name)
@@ -180,11 +179,11 @@ func (r *namespaceImpl) Mutators(p schema.NamespaceMutatorsFieldResolverParams) 
 	}
 
 	// filter
-	matches, err := filter.Compile(p.Args.Filters, MutatorFilters(), v2.MutatorFields)
+	matches, err := filter.Compile(p.Args.Filters, MutatorFilters(), corev2.MutatorFields)
 	if err != nil {
 		return res, err
 	}
-	filteredResults := make([]*v2.Mutator, 0, len(results))
+	filteredResults := make([]*corev2.Mutator, 0, len(results))
 	for i := range results {
 		if matches(results[i]) {
 			filteredResults = append(filteredResults, results[i])
@@ -192,7 +191,7 @@ func (r *namespaceImpl) Mutators(p schema.NamespaceMutatorsFieldResolverParams) 
 	}
 
 	// sort
-	sort.Sort(v2.SortMutatorsByName(
+	sort.Sort(corev2.SortMutatorsByName(
 		filteredResults,
 		p.Args.OrderBy == schema.MutatorListOrders.NAME,
 	))
@@ -207,7 +206,7 @@ func (r *namespaceImpl) Mutators(p schema.NamespaceMutatorsFieldResolverParams) 
 // Silences implements response to request for 'silences' field.
 func (r *namespaceImpl) Silences(p schema.NamespaceSilencesFieldResolverParams) (interface{}, error) {
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
-	nsp := p.Source.(*types.Namespace)
+	nsp := p.Source.(*corev2.Namespace)
 
 	// fetch
 	results, err := loadSilenceds(p.Context, nsp.Name)
@@ -216,11 +215,11 @@ func (r *namespaceImpl) Silences(p schema.NamespaceSilencesFieldResolverParams) 
 	}
 
 	// filter
-	matches, err := filter.Compile(p.Args.Filters, SilenceFilters(), v2.SilencedFields)
+	matches, err := filter.Compile(p.Args.Filters, SilenceFilters(), corev2.SilencedFields)
 	if err != nil {
 		return res, err
 	}
-	filteredResults := make([]*v2.Silenced, 0, len(results))
+	filteredResults := make([]*corev2.Silenced, 0, len(results))
 	for i := range results {
 		if matches(results[i]) {
 			filteredResults = append(filteredResults, results[i])
@@ -230,14 +229,14 @@ func (r *namespaceImpl) Silences(p schema.NamespaceSilencesFieldResolverParams) 
 	// sort records
 	switch p.Args.OrderBy {
 	case schema.SilencesListOrders.BEGIN_DESC:
-		sort.Sort(sort.Reverse(types.SortSilencedByBegin(filteredResults)))
+		sort.Sort(sort.Reverse(corev2.SortSilencedByBegin(filteredResults)))
 	case schema.SilencesListOrders.BEGIN:
-		sort.Sort(types.SortSilencedByBegin(filteredResults))
+		sort.Sort(corev2.SortSilencedByBegin(filteredResults))
 	case schema.SilencesListOrders.ID_DESC:
-		sort.Sort(sort.Reverse(types.SortSilencedByName(filteredResults)))
+		sort.Sort(sort.Reverse(corev2.SortSilencedByName(filteredResults)))
 	case schema.SilencesListOrders.ID:
 	default:
-		sort.Sort(types.SortSilencedByName(filteredResults))
+		sort.Sort(corev2.SortSilencedByName(filteredResults))
 	}
 
 	l, h := clampSlice(p.Args.Offset, p.Args.Offset+p.Args.Limit, len(filteredResults))
@@ -249,7 +248,7 @@ func (r *namespaceImpl) Silences(p schema.NamespaceSilencesFieldResolverParams) 
 // Entities implements response to request for 'entities' field.
 func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) (interface{}, error) {
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
-	nsp := p.Source.(*types.Namespace)
+	nsp := p.Source.(*corev2.Namespace)
 
 	// fetch
 	results, err := loadEntities(p.Context, nsp.Name)
@@ -258,11 +257,11 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 	}
 
 	// filter
-	matches, err := filter.Compile(p.Args.Filters, EntityFilters(), v2.EntityFields)
+	matches, err := filter.Compile(p.Args.Filters, EntityFilters(), corev2.EntityFields)
 	if err != nil {
 		return res, err
 	}
-	filteredResults := make([]*v2.Entity, 0, len(results))
+	filteredResults := make([]*corev2.Entity, 0, len(results))
 	for i := range results {
 		if matches(results[i]) {
 			filteredResults = append(filteredResults, results[i])
@@ -272,9 +271,9 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 	// sort records
 	switch p.Args.OrderBy {
 	case schema.EntityListOrders.LASTSEEN:
-		sort.Sort(types.SortEntitiesByLastSeen(filteredResults))
+		sort.Sort(corev2.SortEntitiesByLastSeen(filteredResults))
 	default:
-		sort.Sort(types.SortEntitiesByID(
+		sort.Sort(corev2.SortEntitiesByID(
 			filteredResults,
 			p.Args.OrderBy == schema.EntityListOrders.ID,
 		))
@@ -290,7 +289,7 @@ func (r *namespaceImpl) Entities(p schema.NamespaceEntitiesFieldResolverParams) 
 // Events implements response to request for 'events' field.
 func (r *namespaceImpl) Events(p schema.NamespaceEventsFieldResolverParams) (interface{}, error) {
 	res := newOffsetContainer(p.Args.Offset, p.Args.Limit)
-	nsp := p.Source.(*types.Namespace)
+	nsp := p.Source.(*corev2.Namespace)
 
 	// fetch
 	results, err := loadEvents(p.Context, nsp.Name)
@@ -299,11 +298,11 @@ func (r *namespaceImpl) Events(p schema.NamespaceEventsFieldResolverParams) (int
 	}
 
 	// filter
-	matches, err := filter.Compile(p.Args.Filters, EventFilters(), v2.EventFields)
+	matches, err := filter.Compile(p.Args.Filters, EventFilters(), corev2.EventFields)
 	if err != nil {
 		return res, err
 	}
-	filteredResults := make([]*v2.Event, 0, len(results))
+	filteredResults := make([]*corev2.Event, 0, len(results))
 	for i := range results {
 		if matches(results[i]) {
 			filteredResults = append(filteredResults, results[i])
@@ -323,7 +322,7 @@ func (r *namespaceImpl) Events(p schema.NamespaceEventsFieldResolverParams) (int
 // Subscriptions implements response to request for 'subscriptions' field.
 func (r *namespaceImpl) Subscriptions(p schema.NamespaceSubscriptionsFieldResolverParams) (interface{}, error) {
 	set := string_utils.OccurrenceSet{}
-	nsp := p.Source.(*types.Namespace)
+	nsp := p.Source.(*corev2.Namespace)
 	ctx := contextWithNamespace(p.Context, nsp.Name)
 
 	// fetch
@@ -373,7 +372,7 @@ func (r *namespaceImpl) Subscriptions(p schema.NamespaceSubscriptionsFieldResolv
 // Experimental. Value is not persisted in any way at this time and is simply
 // derived from the name.
 func (r *namespaceImpl) IconID(p graphql.ResolveParams) (schema.Icon, error) {
-	nsp := p.Source.(*types.Namespace)
+	nsp := p.Source.(*corev2.Namespace)
 	switch nsp.Name[0] % 11 {
 	case 0:
 		return schema.Icons.BRIEFCASE, nil

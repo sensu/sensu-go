@@ -4,7 +4,7 @@ import (
 	"sort"
 	"time"
 
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/filter"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
@@ -34,19 +34,19 @@ func (*entityImpl) ID(p graphql.ResolveParams) (string, error) {
 
 // ExtendedAttributes implements response to request for 'extendedAttributes' field.
 func (*entityImpl) ExtendedAttributes(p graphql.ResolveParams) (interface{}, error) {
-	entity := p.Source.(*types.Entity)
+	entity := p.Source.(*corev2.Entity)
 	return wrapExtendedAttributes(entity.ExtendedAttributes), nil
 }
 
 // LastSeen implements response to request for 'executed' field.
 func (r *entityImpl) LastSeen(p graphql.ResolveParams) (*time.Time, error) {
-	e := p.Source.(*types.Entity)
+	e := p.Source.(*corev2.Entity)
 	return convertTs(e.LastSeen), nil
 }
 
 // Events implements response to request for 'events' field.
 func (r *entityImpl) Events(p schema.EntityEventsFieldResolverParams) (interface{}, error) {
-	src := p.Source.(*types.Entity)
+	src := p.Source.(*corev2.Entity)
 
 	// fetch
 	results, err := loadEvents(p.Context, src.Namespace)
@@ -55,11 +55,11 @@ func (r *entityImpl) Events(p schema.EntityEventsFieldResolverParams) (interface
 	}
 
 	// filter
-	matches, err := filter.Compile(p.Args.Filters, EventFilters(), v2.EventFields)
+	matches, err := filter.Compile(p.Args.Filters, EventFilters(), corev2.EventFields)
 	if err != nil {
 		return []interface{}{}, err
 	}
-	records := filterEvents(results, func(obj *types.Event) bool {
+	records := filterEvents(results, func(obj *corev2.Event) bool {
 		return obj.Entity.Name == src.Name && matches(obj)
 	})
 
@@ -72,14 +72,14 @@ func (r *entityImpl) Events(p schema.EntityEventsFieldResolverParams) (interface
 // Related implements response to request for 'related' field.
 func (r *entityImpl) Related(p schema.EntityRelatedFieldResolverParams) (interface{}, error) {
 	// fetch
-	entity := p.Source.(*types.Entity)
+	entity := p.Source.(*corev2.Entity)
 	results, err := loadEntities(p.Context, entity.Namespace)
 	if err != nil {
 		return []interface{}{}, err
 	}
 
 	// omit self
-	records := filterEntities(results, func(obj *types.Entity) bool {
+	records := filterEntities(results, func(obj *corev2.Entity) bool {
 		return obj.Name != entity.Name
 	})
 
@@ -103,7 +103,7 @@ func (r *entityImpl) Related(p schema.EntityRelatedFieldResolverParams) (interfa
 
 // Status implements response to request for 'status' field.
 func (r *entityImpl) Status(p graphql.ResolveParams) (interface{}, error) {
-	src := p.Source.(*types.Entity)
+	src := p.Source.(*corev2.Entity)
 
 	// fetch
 	results, err := loadEvents(p.Context, src.Namespace)
@@ -112,7 +112,7 @@ func (r *entityImpl) Status(p graphql.ResolveParams) (interface{}, error) {
 	}
 
 	// filter events associated w/ entity
-	evs := filterEvents(results, func(obj *types.Event) bool {
+	evs := filterEvents(results, func(obj *corev2.Event) bool {
 		return obj.Entity.Name == src.Name
 	})
 
@@ -129,7 +129,7 @@ func (r *entityImpl) Status(p graphql.ResolveParams) (interface{}, error) {
 
 // IsSilenced implements response to request for 'isSilenced' field.
 func (r *entityImpl) IsSilenced(p graphql.ResolveParams) (bool, error) {
-	src := p.Source.(*types.Entity)
+	src := p.Source.(*corev2.Entity)
 	results, err := loadSilenceds(p.Context, src.Namespace)
 	records := filterSilenceds(results, filterSilenceByEntity(src))
 	return len(records) > 0, err
@@ -137,15 +137,15 @@ func (r *entityImpl) IsSilenced(p graphql.ResolveParams) (bool, error) {
 
 // Silences implements response to request for 'silences' field.
 func (r *entityImpl) Silences(p graphql.ResolveParams) (interface{}, error) {
-	src := p.Source.(*types.Entity)
+	src := p.Source.(*corev2.Entity)
 	results, err := loadSilenceds(p.Context, src.Namespace)
 	records := filterSilenceds(results, filterSilenceByEntity(src))
 	return records, err
 }
 
-func filterSilenceByEntity(src *types.Entity) silencePredicate {
+func filterSilenceByEntity(src *corev2.Entity) silencePredicate {
 	now := time.Now().Unix()
-	return func(obj *types.Silenced) bool {
+	return func(obj *corev2.Silenced) bool {
 		if !(obj.Check == "" || obj.Check == "*") || !obj.StartSilence(now) {
 			return false
 		}
@@ -158,13 +158,13 @@ func filterSilenceByEntity(src *types.Entity) silencePredicate {
 
 // IsTypeOf is used to determine if a given value is associated with the type
 func (*entityImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	_, ok := s.(*types.Entity)
+	_, ok := s.(*corev2.Entity)
 	return ok
 }
 
 // ToJSON implements response to request for 'toJSON' field.
 func (*entityImpl) ToJSON(p graphql.ResolveParams) (interface{}, error) {
-	return types.WrapResource(p.Source.(v2.Resource)), nil
+	return types.WrapResource(p.Source.(corev2.Resource)), nil
 }
 
 //
@@ -177,7 +177,7 @@ type systemImpl struct {
 
 // Os implements response to request for 'os' field.
 func (r *systemImpl) Os(p graphql.ResolveParams) (string, error) {
-	sys := p.Source.(types.System)
+	sys := p.Source.(corev2.System)
 	return sys.OS, nil
 }
 
@@ -199,7 +199,7 @@ type networkInterfaceImpl struct {
 
 // Mac implements response to request for 'mac' field.
 func (r *networkInterfaceImpl) Mac(p graphql.ResolveParams) (string, error) {
-	i := p.Source.(types.NetworkInterface)
+	i := p.Source.(corev2.NetworkInterface)
 	return i.MAC, nil
 }
 

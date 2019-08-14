@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/mitchellh/mapstructure"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/store"
@@ -84,7 +84,7 @@ func (r *mutationsImpl) PutWrapped(p schema.MutationPutWrappedFieldResolverParam
 func (r *mutationsImpl) CreateCheck(p schema.MutationCreateCheckFieldResolverParams) (interface{}, error) {
 	inputs := p.Args.Input
 
-	var check types.CheckConfig
+	var check corev2.CheckConfig
 	check.Name = inputs.Name
 	check.Namespace = inputs.Namespace
 
@@ -159,7 +159,7 @@ func (r *mutationsImpl) ExecuteCheck(p schema.MutationExecuteCheckFieldResolverP
 		return nil, err
 	}
 
-	adhocReq := types.AdhocRequest{
+	adhocReq := corev2.AdhocRequest{
 		ObjectMeta:    check.ObjectMeta,
 		Subscriptions: p.Args.Input.Subscriptions,
 		Reason:        p.Args.Input.Reason,
@@ -171,7 +171,7 @@ func (r *mutationsImpl) ExecuteCheck(p schema.MutationExecuteCheckFieldResolverP
 	}, nil
 }
 
-func copyCheckInputs(r *types.CheckConfig, args interface{}) error {
+func copyCheckInputs(r *corev2.CheckConfig, args interface{}) error {
 	input, ok := args.(map[string]interface{})
 	if !ok {
 		return errors.New("given unexpected arguments")
@@ -288,7 +288,7 @@ func decodeEventGID(gid string) (globalid.EventComponents, error) {
 // DeleteEventFilter implements response to request for the 'deleteEventFilter' field.
 func (r *mutationsImpl) DeleteEventFilter(p schema.MutationDeleteEventFilterFieldResolverParams) (interface{}, error) {
 	components, _ := globalid.Decode(p.Args.Input.ID)
-	if components.Resource() != v2.EventFiltersResource {
+	if components.Resource() != corev2.EventFiltersResource {
 		return nil, errors.New("given ID must be a event filter")
 	}
 
@@ -333,7 +333,7 @@ func (r *mutationsImpl) DeleteHandler(p schema.MutationDeleteHandlerFieldResolve
 // DeleteMutator implements response to request for the 'deleteMutator' field.
 func (r *mutationsImpl) DeleteMutator(p schema.MutationDeleteMutatorFieldResolverParams) (interface{}, error) {
 	components, _ := globalid.Decode(p.Args.Input.ID)
-	if components.Resource() != v2.MutatorsResource {
+	if components.Resource() != corev2.MutatorsResource {
 		return nil, errors.New("given ID must be a mutator")
 	}
 
@@ -358,7 +358,7 @@ func (r *mutationsImpl) DeleteMutator(p schema.MutationDeleteMutatorFieldResolve
 func (r *mutationsImpl) CreateSilence(p schema.MutationCreateSilenceFieldResolverParams) (interface{}, error) {
 	inputs := p.Args.Input
 
-	var silence types.Silenced
+	var silence corev2.Silenced
 	silence.Check = inputs.Check
 	silence.Subscription = inputs.Subscription
 	silence.Namespace = inputs.Namespace
@@ -393,7 +393,7 @@ func (r *mutationsImpl) DeleteSilence(p schema.MutationDeleteSilenceFieldResolve
 	}, nil
 }
 
-func copySilenceInputs(r *types.Silenced, ins *schema.SilenceInputs) {
+func copySilenceInputs(r *corev2.Silenced, ins *schema.SilenceInputs) {
 	r.Begin = 0
 	if ins.Begin.After(time.Now()) {
 		r.Begin = ins.Begin.Unix()
