@@ -23,6 +23,8 @@ backend to use JSON.
 - The project now uses Go modules instead of dep for dependency management.
 - The generic etcd watcher now keeps track of revisions.
 - The resource caches can now rebuild themselves in case of failures.
+- Event resources can now be created without an explicit namespace; the system
+will refer to the namespace in the URL.
 
 ### Fixed
 - Fixed the tabular output of `sensuctl filter list` so inclusive filter expressions
