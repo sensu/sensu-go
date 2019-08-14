@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	mockclient "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -33,7 +33,7 @@ func TestViewerTypeUserField(t *testing.T) {
 	assert.NotEmpty(t, res)
 
 	// User not found for claim
-	client.On("FetchUser", mock.Anything, user.Username).Return(user, mockclient.NotFound).Once()
+	client.On("FetchUser", mock.Anything, user.Username).Return(user, &store.ErrNotFound{}).Once()
 	res, err = impl.User(params)
 	require.NoError(t, err)
 	assert.Empty(t, res)

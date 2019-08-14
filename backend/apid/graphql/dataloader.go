@@ -7,9 +7,8 @@ import (
 
 	"github.com/graph-gophers/dataloader"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/cli/client"
 )
 
 type key int
@@ -336,10 +335,9 @@ func getLoader(ctx context.Context, loaderKey key) (*dataloader.Loader, error) {
 // When resolving a field, GraphQL does not consider the absence of a value an
 // error; as such we omit the error if the API client returns Permission denied.
 func handleListErr(err error) error {
-	if apiErr, ok := err.(client.APIError); ok {
-		if apiErr.Code == uint32(actions.PermissionDenied) {
-			return nil
-		}
+	if err == authorization.ErrUnauthorized {
+		logger.WithError(err).Warn("couldn't access resource")
+		return nil
 	}
 	return err
 }
@@ -348,10 +346,13 @@ func handleListErr(err error) error {
 // error; as such we omit the error when the API client returns NotFound or
 // Permission denied.
 func handleFetchResult(resource interface{}, err error) (interface{}, error) {
-	if apiErr, ok := err.(client.APIError); ok {
-		if apiErr.Code == uint32(actions.NotFound) || apiErr.Code == uint32(actions.PermissionDenied) {
-			return nil, nil
-		}
+	if err == authorization.ErrUnauthorized {
+		logger.WithError(err).Warn("couldn't access resource")
+		return nil, nil
+	}
+	if _, ok := err.(*store.ErrNotFound); ok {
+		logger.WithError(err).Warn("couldn't access resource")
+		return nil, nil
 	}
 	if err != nil {
 		return nil, err

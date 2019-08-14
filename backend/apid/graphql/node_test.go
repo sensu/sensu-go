@@ -2,11 +2,12 @@ package graphql
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
-	mockclient "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -50,13 +51,13 @@ func TestNodeResolverFind(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Missing
-	client.On("FetchCheck", mock.Anything, check.Name).Return(check, mockclient.NotFound).Once()
+	client.On("FetchCheck", mock.Anything, check.Name).Return(check, &store.ErrNotFound{}).Once()
 	res, err = resolver.Find(ctx, gid, info)
 	assert.Empty(t, res)
 	assert.NoError(t, err)
 
 	// Error
-	client.On("FetchCheck", mock.Anything, check.Name).Return(check, mockclient.InternalErr).Once()
+	client.On("FetchCheck", mock.Anything, check.Name).Return(check, errors.New("an error")).Once()
 	res, err = resolver.Find(ctx, gid, info)
 	assert.Empty(t, res)
 	assert.Error(t, err)
