@@ -7,6 +7,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/graphql"
+	"github.com/sensu/sensu-go/graphql/tracing"
 )
 
 type InitHook func(*graphql.Service, ServiceConfig)
@@ -152,6 +153,10 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	for _, hookFn := range InitHooks {
 		hookFn(svc, cfg)
 	}
+
+	// Configure tracing
+	tracer := tracing.NewPrometheusTracer()
+	svc.RegisterMiddleware(tracer)
 
 	err := svc.Regenerate()
 	return &wrapper, err

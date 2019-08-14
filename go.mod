@@ -25,7 +25,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-ole/go-ole v0.0.0-20170209151332-de8695c8edbf // indirect
 	github.com/go-resty/resty v0.0.0-20170925192930-9ac9c42358f7
-	github.com/gogo/protobuf v1.1.1
+	github.com/gogo/protobuf v1.2.1
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b // indirect
 	github.com/golang/groupcache v0.0.0-20190702054246-869f871628b6 // indirect
 	github.com/golang/protobuf v1.1.0
@@ -38,7 +38,7 @@ require (
 	github.com/gorilla/websocket v1.2.0
 	github.com/gotestyourself/gotestyourself v2.2.0+incompatible // indirect
 	github.com/graph-gophers/dataloader v0.0.0-20180104184831-78139374585c
-	github.com/graphql-go/graphql v0.0.0-20180119225129-1c504cfe6f63
+	github.com/graphql-go/graphql v0.7.9-0.20190403165646-199d20bbfed7
 	github.com/grpc-ecosystem/go-grpc-middleware v1.0.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v0.0.0-20160910222444-6b7015e65d36 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.3.0 // indirect
@@ -69,7 +69,7 @@ require (
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/prometheus/client_golang v0.8.0
 	github.com/prometheus/client_model v0.0.0-20170216185247-6f3806018612
-	github.com/prometheus/common v0.0.0-20170908161822-2f17f4a9d485 // indirect
+	github.com/prometheus/common v0.0.0-20170908161822-2f17f4a9d485
 	github.com/prometheus/procfs v0.0.0-20170703101242-e645f4e5aaa8 // indirect
 	github.com/robertkrimen/otto v0.0.0-20180617131154-15f95af6e78d
 	github.com/robfig/cron v0.0.0-20171101201047-2315d5715e36
