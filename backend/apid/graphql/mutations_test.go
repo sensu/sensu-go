@@ -46,7 +46,7 @@ func TestMutationTypePutWrappedUpsertTrue(t *testing.T) {
 	assert.NotEmpty(t, body)
 
 	// Failure
-	//client.On("Put", mock.Anything, mock.Anything).Return(errors.New("test")).Once()
+	client.On("Put", mock.Anything, mock.Anything).Return(errors.New("test")).Once()
 	body, err = impl.PutWrapped(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, body)
