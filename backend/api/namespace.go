@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization"
@@ -37,7 +36,7 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespa
 	}
 	slice := []*corev2.Namespace{}
 	if err := a.client.List(ctx, &slice, pred); err != nil {
-		return nil, fmt.Errorf("couldn't list namespaces: %s", err)
+		return nil, err
 	}
 	return slice, nil
 }
@@ -46,7 +45,7 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespa
 func (a *NamespaceClient) FetchNamespace(ctx context.Context, name string) (*corev2.Namespace, error) {
 	var namespace corev2.Namespace
 	if err := a.client.Get(ctx, name, &namespace); err != nil {
-		return nil, fmt.Errorf("couldn't get namespace: %s", err)
+		return nil, err
 	}
 	return &namespace, nil
 }
@@ -54,7 +53,7 @@ func (a *NamespaceClient) FetchNamespace(ctx context.Context, name string) (*cor
 // CreateNamespace creates a namespace resource, if authorized.
 func (a *NamespaceClient) CreateNamespace(ctx context.Context, namespace *corev2.Namespace) error {
 	if err := a.client.Create(ctx, namespace); err != nil {
-		return fmt.Errorf("couldn't create namespace: %s", err)
+		return err
 	}
 	return nil
 }
@@ -62,7 +61,7 @@ func (a *NamespaceClient) CreateNamespace(ctx context.Context, namespace *corev2
 // UpdateNamespace updates a namespace resource, if authorized.
 func (a *NamespaceClient) UpdateNamespace(ctx context.Context, namespace *corev2.Namespace) error {
 	if err := a.client.Update(ctx, namespace); err != nil {
-		return fmt.Errorf("couldn't update namespace: %s", err)
+		return err
 	}
 	return nil
 }

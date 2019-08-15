@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/store"
@@ -38,7 +37,7 @@ func (a *AssetClient) ListAssets(ctx context.Context) ([]*corev2.Asset, error) {
 	}
 	slice := []*corev2.Asset{}
 	if err := a.client.List(ctx, &slice, pred); err != nil {
-		return nil, fmt.Errorf("couldn't list assets: %s", err)
+		return nil, err
 	}
 	return slice, nil
 }
@@ -47,7 +46,7 @@ func (a *AssetClient) ListAssets(ctx context.Context) ([]*corev2.Asset, error) {
 func (a *AssetClient) FetchAsset(ctx context.Context, name string) (*corev2.Asset, error) {
 	var asset corev2.Asset
 	if err := a.client.Get(ctx, name, &asset); err != nil {
-		return nil, fmt.Errorf("couldn't get asset: %s", err)
+		return nil, err
 	}
 	return &asset, nil
 }
@@ -55,7 +54,7 @@ func (a *AssetClient) FetchAsset(ctx context.Context, name string) (*corev2.Asse
 // CreateAsset creates an asset resource, if authorized.
 func (a *AssetClient) CreateAsset(ctx context.Context, asset *corev2.Asset) error {
 	if err := a.client.Create(ctx, asset); err != nil {
-		return fmt.Errorf("couldn't create asset: %s", err)
+		return err
 	}
 	return nil
 }
@@ -63,7 +62,7 @@ func (a *AssetClient) CreateAsset(ctx context.Context, asset *corev2.Asset) erro
 // UpdateAsset updates an asset resource, if authorized.
 func (a *AssetClient) UpdateAsset(ctx context.Context, asset *corev2.Asset) error {
 	if err := a.client.Update(ctx, asset); err != nil {
-		return fmt.Errorf("couldn't update asset: %s", err)
+		return err
 	}
 	return nil
 }

@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization"
@@ -37,7 +36,7 @@ func (a *HookConfigClient) ListHookConfigs(ctx context.Context) ([]*corev2.HookC
 	}
 	slice := []*corev2.HookConfig{}
 	if err := a.client.List(ctx, &slice, pred); err != nil {
-		return nil, fmt.Errorf("couldn't list hooks: %s", err)
+		return nil, err
 	}
 	return slice, nil
 }
@@ -46,7 +45,7 @@ func (a *HookConfigClient) ListHookConfigs(ctx context.Context) ([]*corev2.HookC
 func (a *HookConfigClient) FetchHookConfig(ctx context.Context, name string) (*corev2.HookConfig, error) {
 	var hook corev2.HookConfig
 	if err := a.client.Get(ctx, name, &hook); err != nil {
-		return nil, fmt.Errorf("couldn't get hook: %s", err)
+		return nil, err
 	}
 	return &hook, nil
 }
@@ -54,7 +53,7 @@ func (a *HookConfigClient) FetchHookConfig(ctx context.Context, name string) (*c
 // CreateHookConfig creates a hook resource, if authorized.
 func (a *HookConfigClient) CreateHookConfig(ctx context.Context, hook *corev2.HookConfig) error {
 	if err := a.client.Create(ctx, hook); err != nil {
-		return fmt.Errorf("couldn't create hook: %s", err)
+		return err
 	}
 	return nil
 }
@@ -62,7 +61,7 @@ func (a *HookConfigClient) CreateHookConfig(ctx context.Context, hook *corev2.Ho
 // UpdateHookConfig updates a hook resource, if authorized.
 func (a *HookConfigClient) UpdateHookConfig(ctx context.Context, hook *corev2.HookConfig) error {
 	if err := a.client.Update(ctx, hook); err != nil {
-		return fmt.Errorf("couldn't update hook: %s", err)
+		return err
 	}
 	return nil
 }
@@ -70,7 +69,7 @@ func (a *HookConfigClient) UpdateHookConfig(ctx context.Context, hook *corev2.Ho
 // DeleteHookConfig deletes a hook resource, if authorized.
 func (a *HookConfigClient) DeleteHookConfig(ctx context.Context, name string) error {
 	if err := a.client.Delete(ctx, name); err != nil {
-		return fmt.Errorf("couldn't delete hook: %s", err)
+		return err
 	}
 	return nil
 }

@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization"
@@ -38,7 +37,7 @@ func (a *EventFilterClient) ListEventFilters(ctx context.Context) ([]*corev2.Eve
 	}
 	slice := []*corev2.EventFilter{}
 	if err := a.client.List(ctx, &slice, pred); err != nil {
-		return nil, fmt.Errorf("couldn't list filters: %s", err)
+		return nil, err
 	}
 	return slice, nil
 }
@@ -47,7 +46,7 @@ func (a *EventFilterClient) ListEventFilters(ctx context.Context) ([]*corev2.Eve
 func (a *EventFilterClient) FetchEventFilter(ctx context.Context, name string) (*corev2.EventFilter, error) {
 	var filter corev2.EventFilter
 	if err := a.client.Get(ctx, name, &filter); err != nil {
-		return nil, fmt.Errorf("couldn't get filter: %s", err)
+		return nil, err
 	}
 	return &filter, nil
 }
@@ -55,7 +54,7 @@ func (a *EventFilterClient) FetchEventFilter(ctx context.Context, name string) (
 // CreateEventFilter creates a filter resource, if authorized.
 func (a *EventFilterClient) CreateEventFilter(ctx context.Context, filter *corev2.EventFilter) error {
 	if err := a.client.Create(ctx, filter); err != nil {
-		return fmt.Errorf("couldn't create filter: %s", err)
+		return err
 	}
 	return nil
 }
@@ -63,7 +62,7 @@ func (a *EventFilterClient) CreateEventFilter(ctx context.Context, filter *corev
 // UpdateEventFilter updates a filter resource, if authorized.
 func (a *EventFilterClient) UpdateEventFilter(ctx context.Context, filter *corev2.EventFilter) error {
 	if err := a.client.Update(ctx, filter); err != nil {
-		return fmt.Errorf("couldn't update filter: %s", err)
+		return err
 	}
 	return nil
 }
@@ -71,7 +70,7 @@ func (a *EventFilterClient) UpdateEventFilter(ctx context.Context, filter *corev
 // DeleteEventFilter deletes a filter resource, if authorized.
 func (a *EventFilterClient) DeleteEventFilter(ctx context.Context, name string) error {
 	if err := a.client.Delete(ctx, name); err != nil {
-		return fmt.Errorf("couldn't delete filter: %s", err)
+		return err
 	}
 	return nil
 }

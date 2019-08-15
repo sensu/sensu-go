@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization"
@@ -37,7 +36,7 @@ func (a *HandlerClient) ListHandlers(ctx context.Context) ([]*corev2.Handler, er
 	}
 	slice := []*corev2.Handler{}
 	if err := a.client.List(ctx, &slice, pred); err != nil {
-		return nil, fmt.Errorf("couldn't list handlers: %s", err)
+		return nil, err
 	}
 	return slice, nil
 }
@@ -46,7 +45,7 @@ func (a *HandlerClient) ListHandlers(ctx context.Context) ([]*corev2.Handler, er
 func (a *HandlerClient) FetchHandler(ctx context.Context, name string) (*corev2.Handler, error) {
 	var handler corev2.Handler
 	if err := a.client.Get(ctx, name, &handler); err != nil {
-		return nil, fmt.Errorf("couldn't get handler: %s", err)
+		return nil, err
 	}
 	return &handler, nil
 }
@@ -54,7 +53,7 @@ func (a *HandlerClient) FetchHandler(ctx context.Context, name string) (*corev2.
 // CreateHandler creates a handler resource, if authorized.
 func (a *HandlerClient) CreateHandler(ctx context.Context, handler *corev2.Handler) error {
 	if err := a.client.Create(ctx, handler); err != nil {
-		return fmt.Errorf("couldn't create handler: %s", err)
+		return err
 	}
 	return nil
 }
@@ -62,14 +61,14 @@ func (a *HandlerClient) CreateHandler(ctx context.Context, handler *corev2.Handl
 // UpdateHandler updates a handler resource, if authorized.
 func (a *HandlerClient) UpdateHandler(ctx context.Context, handler *corev2.Handler) error {
 	if err := a.client.Update(ctx, handler); err != nil {
-		return fmt.Errorf("couldn't update handler: %s", err)
+		return err
 	}
 	return nil
 }
 
 func (a *HandlerClient) DeleteHandler(ctx context.Context, name string) error {
 	if err := a.client.Delete(ctx, name); err != nil {
-		return fmt.Errorf("couldn't delete handler: %s", err)
+		return err
 	}
 	return nil
 }

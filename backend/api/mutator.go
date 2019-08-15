@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization"
@@ -37,7 +36,7 @@ func (a *MutatorClient) ListMutators(ctx context.Context) ([]*corev2.Mutator, er
 	}
 	slice := []*corev2.Mutator{}
 	if err := a.client.List(ctx, &slice, pred); err != nil {
-		return nil, fmt.Errorf("couldn't list mutators: %s", err)
+		return nil, err
 	}
 	return slice, nil
 }
@@ -46,7 +45,7 @@ func (a *MutatorClient) ListMutators(ctx context.Context) ([]*corev2.Mutator, er
 func (a *MutatorClient) FetchMutator(ctx context.Context, name string) (*corev2.Mutator, error) {
 	var mutator corev2.Mutator
 	if err := a.client.Get(ctx, name, &mutator); err != nil {
-		return nil, fmt.Errorf("couldn't get mutator: %s", err)
+		return nil, err
 	}
 	return &mutator, nil
 }
@@ -54,7 +53,7 @@ func (a *MutatorClient) FetchMutator(ctx context.Context, name string) (*corev2.
 // CreateMutator creates a mutator resource, if authorized.
 func (a *MutatorClient) CreateMutator(ctx context.Context, mutator *corev2.Mutator) error {
 	if err := a.client.Create(ctx, mutator); err != nil {
-		return fmt.Errorf("couldn't create mutator: %s", err)
+		return err
 	}
 	return nil
 }
@@ -62,7 +61,7 @@ func (a *MutatorClient) CreateMutator(ctx context.Context, mutator *corev2.Mutat
 // UpdateMutator updates a mutator resource, if authorized.
 func (a *MutatorClient) UpdateMutator(ctx context.Context, mutator *corev2.Mutator) error {
 	if err := a.client.Update(ctx, mutator); err != nil {
-		return fmt.Errorf("couldn't update mutator: %s", err)
+		return err
 	}
 	return nil
 }
@@ -70,7 +69,7 @@ func (a *MutatorClient) UpdateMutator(ctx context.Context, mutator *corev2.Mutat
 // DeleteMutator deletes a mutator resource, if authorized.
 func (a *MutatorClient) DeleteMutator(ctx context.Context, name string) error {
 	if err := a.client.Delete(ctx, name); err != nil {
-		return fmt.Errorf("couldn't delete mutator: %s", err)
+		return err
 	}
 	return nil
 }

@@ -39,7 +39,7 @@ func (e *EventClient) UpdateEvent(ctx context.Context, event *corev2.Event) erro
 	}
 	attrs := eventCreateAttributes(ctx)
 	if err := authorize(ctx, e.auth, attrs); err != nil {
-		return fmt.Errorf("couldn't create event: %s", err)
+		return err
 	}
 	// Update the event through eventd
 	return e.bus.Publish(messaging.TopicEventRaw, event)
@@ -49,7 +49,7 @@ func (e *EventClient) UpdateEvent(ctx context.Context, event *corev2.Event) erro
 func (e *EventClient) FetchEvent(ctx context.Context, entity, check string) (*corev2.Event, error) {
 	attrs := eventGetAttributes(ctx, fmt.Sprintf("%s:%s", entity, check))
 	if err := authorize(ctx, e.auth, attrs); err != nil {
-		return nil, fmt.Errorf("couldn't get event: %s", err)
+		return nil, err
 	}
 	return e.store.GetEventByEntityCheck(ctx, entity, check)
 }
@@ -58,7 +58,7 @@ func (e *EventClient) FetchEvent(ctx context.Context, entity, check string) (*co
 func (e *EventClient) DeleteEvent(ctx context.Context, entity, check string) error {
 	attrs := eventDeleteAttributes(ctx, entity, check)
 	if err := authorize(ctx, e.auth, attrs); err != nil {
-		return fmt.Errorf("couldn't delete event: %s", err)
+		return err
 	}
 	if err := e.store.DeleteEventByEntityCheck(ctx, entity, check); err != nil {
 		return fmt.Errorf("couldn't delete event: %s", err)
@@ -71,7 +71,7 @@ func (e *EventClient) DeleteEvent(ctx context.Context, entity, check string) err
 func (e *EventClient) ListEvents(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
 	attrs := eventListAttributes(ctx)
 	if err := authorize(ctx, e.auth, attrs); err != nil {
-		return nil, fmt.Errorf("couldn't list events: %s", err)
+		return nil, err
 	}
 	events, err := e.store.GetEvents(ctx, pred)
 	if err != nil {

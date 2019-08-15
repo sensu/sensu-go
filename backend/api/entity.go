@@ -67,7 +67,7 @@ func (e *EntityClient) DeleteEntity(ctx context.Context, name string) error {
 // CreateEntity creates an entity, if authorized.
 func (e *EntityClient) CreateEntity(ctx context.Context, entity *corev2.Entity) error {
 	if err := e.client.Create(ctx, entity); err != nil {
-		return fmt.Errorf("couldn't create entity: %s", err)
+		return err
 	}
 	return nil
 }
@@ -75,7 +75,7 @@ func (e *EntityClient) CreateEntity(ctx context.Context, entity *corev2.Entity) 
 // UpdateEntity updates an entity, if authorized.
 func (e *EntityClient) UpdateEntity(ctx context.Context, entity *corev2.Entity) error {
 	if err := e.client.Update(ctx, entity); err != nil {
-		return fmt.Errorf("couldn't update entity: %s", err)
+		return err
 	}
 	return nil
 }
@@ -84,7 +84,7 @@ func (e *EntityClient) UpdateEntity(ctx context.Context, entity *corev2.Entity) 
 func (e *EntityClient) FetchEntity(ctx context.Context, name string) (*corev2.Entity, error) {
 	var entity corev2.Entity
 	if err := e.client.Get(ctx, name, &entity); err != nil {
-		return nil, fmt.Errorf("couldn't get entity: %s", err)
+		return nil, err
 	}
 	return &entity, nil
 }
@@ -97,7 +97,7 @@ func (e *EntityClient) ListEntities(ctx context.Context) ([]*corev2.Entity, erro
 	}
 	slice := []*corev2.Entity{}
 	if err := e.client.List(ctx, &slice, pred); err != nil {
-		return nil, fmt.Errorf("couldn't list entities: %s", err)
+		return nil, err
 	}
 	return slice, nil
 }

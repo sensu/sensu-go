@@ -30,7 +30,7 @@ func (s *SilencedClient) UpdateSilenced(ctx context.Context, silenced *corev2.Si
 	}
 	attrs := silencedUpdateAttrs(ctx, silenced.Name)
 	if err := authorize(ctx, s.auth, attrs); err != nil {
-		return fmt.Errorf("couldn't update silenced entry: %s", err)
+		return err
 	}
 	if err := s.store.UpdateSilencedEntry(ctx, silenced); err != nil {
 		return fmt.Errorf("couldn't update silenced entry: %s", err)
@@ -42,7 +42,7 @@ func (s *SilencedClient) UpdateSilenced(ctx context.Context, silenced *corev2.Si
 func (s *SilencedClient) GetSilencedByName(ctx context.Context, name string) (*corev2.Silenced, error) {
 	attrs := silencedFetchAttrs(ctx, name)
 	if err := authorize(ctx, s.auth, attrs); err != nil {
-		return nil, fmt.Errorf("couldn't update silenced entry: %s", err)
+		return nil, err
 	}
 	silenced, err := s.store.GetSilencedEntryByName(ctx, name)
 	if err != nil {
@@ -55,7 +55,7 @@ func (s *SilencedClient) GetSilencedByName(ctx context.Context, name string) (*c
 func (s *SilencedClient) DeleteSilencedByName(ctx context.Context, name string) error {
 	attrs := silencedDeleteAttrs(ctx, name)
 	if err := authorize(ctx, s.auth, attrs); err != nil {
-		return fmt.Errorf("couldn't delete silenced entry: %s", err)
+		return err
 	}
 	if err := s.store.DeleteSilencedEntryByName(ctx, name); err != nil {
 		return fmt.Errorf("couldn't delete silenced entry: %s", err)
@@ -67,7 +67,7 @@ func (s *SilencedClient) DeleteSilencedByName(ctx context.Context, name string) 
 func (s *SilencedClient) ListSilenced(ctx context.Context) ([]*corev2.Silenced, error) {
 	attrs := silencedListAttrs(ctx)
 	if err := authorize(ctx, s.auth, attrs); err != nil {
-		return nil, fmt.Errorf("couldn't list silenced entries: %s", err)
+		return nil, err
 	}
 	silenceds, err := s.store.GetSilencedEntries(ctx)
 	if err != nil {
@@ -82,7 +82,7 @@ func (s *SilencedClient) GetSilencedByCheckName(ctx context.Context, check strin
 	// access to the check implies access to its silenced entries
 	attrs := checkFetchAttributes(ctx, check)
 	if err := authorize(ctx, s.auth, attrs); err != nil {
-		return nil, fmt.Errorf("couldn't list silenced entries: %s", err)
+		return nil, err
 	}
 	silenceds, err := s.store.GetSilencedEntriesByCheckName(ctx, check)
 	if err != nil {
@@ -96,7 +96,7 @@ func (s *SilencedClient) GetSilencedByCheckName(ctx context.Context, check strin
 func (s *SilencedClient) GetSilencedBySubscription(ctx context.Context, subs ...string) ([]*corev2.Silenced, error) {
 	attrs := silencedListAttrs(ctx)
 	if err := authorize(ctx, s.auth, attrs); err != nil {
-		return nil, fmt.Errorf("couldn't list silenced entries: %s", err)
+		return nil, err
 	}
 	silenceds, err := s.store.GetSilencedEntriesBySubscription(ctx, subs...)
 	if err != nil {
