@@ -51,8 +51,7 @@ github.com/go-ole/go-ole v0.0.0-20170209151332-de8695c8edbf h1:ofRt4uynuRg/S2LGi
 github.com/go-ole/go-ole v0.0.0-20170209151332-de8695c8edbf/go.mod h1:7FAglXiTm7HKlQRDeOQ6ZNUHidzCWXuZWq/1dTyBNF8=
 github.com/go-resty/resty v0.0.0-20170925192930-9ac9c42358f7 h1:lbvF7dIiXWPjUxm0zpBdesefB7W9WKJz24nsQoeoRXA=
 github.com/go-resty/resty v0.0.0-20170925192930-9ac9c42358f7/go.mod h1:xMECeum3O2uZ1/noW5020CuR+OfNI3xjv3MVVCNVGYI=
-github.com/gogo/protobuf v1.1.1 h1:72R+M5VuhED/KujmZVcIquuo8mBgX4oVda//DQb3PXo=
-github.com/gogo/protobuf v1.1.1/go.mod h1:r8qH/GZQm5c6nD/R0oafs1akxWv10x8SbQlK7atdtwQ=
+github.com/gogo/protobuf v1.2.1 h1:/s5zKNz0uPFCZ5hddgPdo2TK2TVrUNMn0OOX8/aZMTE=
 github.com/gogo/protobuf v1.2.1/go.mod h1:hp+jE20tsWTFYpLwKvXlhS1hjn+gTNwPg2I6zVXpSg4=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b h1:VKtxabqXZkF25pY9ekfRL6a582T4P37/31XEstQ5p58=
 github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b/go.mod h1:SBH7ygxi8pfUlaOkMMuAQtPIUF8ecWP5IEl/CR7VP2Q=
@@ -78,8 +77,7 @@ github.com/gotestyourself/gotestyourself v2.2.0+incompatible h1:AQwinXlbQR2HvPjQ
 github.com/gotestyourself/gotestyourself v2.2.0+incompatible/go.mod h1:zZKM6oeNM8k+FRljX1mnzVYeS8wiGgQyvST1/GafPbY=
 github.com/graph-gophers/dataloader v0.0.0-20180104184831-78139374585c h1:94S+uoVVMpQAEOrqGjCDyUdML4dJDkh6aC4MYmXECg4=
 github.com/graph-gophers/dataloader v0.0.0-20180104184831-78139374585c/go.mod h1:jk4jk0c5ZISbKaMe8WsVopGB5/15GvGHMdMdPtwlRp4=
-github.com/graphql-go/graphql v0.0.0-20180119225129-1c504cfe6f63 h1:SzyRVZObOKxxmgJOiso84rXeQYhsq8/a7RDZryUe6xg=
-github.com/graphql-go/graphql v0.0.0-20180119225129-1c504cfe6f63/go.mod h1:k6yrAYQaSP59DC5UVxbgxESlmVyojThKdORUqGDGmrI=
+github.com/graphql-go/graphql v0.7.9-0.20190403165646-199d20bbfed7 h1:E45QFM7IqRdFnuyFk8GSamb42EckUSyJ55rtVB/w8VQ=
 github.com/graphql-go/graphql v0.7.9-0.20190403165646-199d20bbfed7/go.mod h1:k6yrAYQaSP59DC5UVxbgxESlmVyojThKdORUqGDGmrI=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.0 h1:Iju5GlWwrvL6UBg4zJJt3btmonfrMlCDdsejg4CZE7c=
 github.com/grpc-ecosystem/go-grpc-middleware v1.0.0/go.mod h1:FiyG127CGDf3tlThmgyCl78X/SZQqEOJBCDaAfeWzPs=
