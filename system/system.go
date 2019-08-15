@@ -16,7 +16,7 @@ import (
 const defaultHostname = "unidentified-hostname"
 
 //go:linkname goarm runtime.goarm
-var goarm uint8
+var goarm int32
 
 // Info describes the local system, hostname, OS, platform, platform
 // family, platform version, and network interfaces.
