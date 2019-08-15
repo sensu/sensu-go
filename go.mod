@@ -69,7 +69,7 @@ require (
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/prometheus/client_golang v0.8.0
 	github.com/prometheus/client_model v0.0.0-20170216185247-6f3806018612
-	github.com/prometheus/common v0.0.0-20170908161822-2f17f4a9d485
+	github.com/prometheus/common v0.0.0-20170908161822-2f17f4a9d485 // indirect
 	github.com/prometheus/procfs v0.0.0-20170703101242-e645f4e5aaa8 // indirect
 	github.com/robertkrimen/otto v0.0.0-20180617131154-15f95af6e78d
 	github.com/robfig/cron v0.0.0-20171101201047-2315d5715e36

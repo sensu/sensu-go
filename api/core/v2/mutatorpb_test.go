@@ -3,15 +3,17 @@
 
 package v2
 
-import testing "testing"
-import math_rand "math/rand"
-import time "time"
-import github_com_golang_protobuf_proto "github.com/golang/protobuf/proto"
-import github_com_gogo_protobuf_jsonpb "github.com/gogo/protobuf/jsonpb"
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
-import _ "github.com/gogo/protobuf/gogoproto"
+import (
+	fmt "fmt"
+	_ "github.com/gogo/protobuf/gogoproto"
+	github_com_gogo_protobuf_jsonpb "github.com/gogo/protobuf/jsonpb"
+	github_com_golang_protobuf_proto "github.com/golang/protobuf/proto"
+	proto "github.com/golang/protobuf/proto"
+	math "math"
+	math_rand "math/rand"
+	testing "testing"
+	time "time"
+)
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
