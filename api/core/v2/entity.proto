@@ -44,6 +44,7 @@ message System {
   string  platform_version = 5;
   Network network = 6 [(gogoproto.nullable) = false];
   string arch = 7;
+  uint32 arm_version = 8 [(gogoproto.customname) = "ARMVersion", (gogoproto.casttype) = "uint8"];
 }
 
 // Network contains information about the system network interfaces
