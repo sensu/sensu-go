@@ -25,6 +25,7 @@ func NewSilencedClient(store store.SilencedStore, auth authorization.Authorizer)
 
 // UpdateSilenced updates a silenced entry, if authorized.
 func (s *SilencedClient) UpdateSilenced(ctx context.Context, silenced *corev2.Silenced) error {
+	silenced.Prepare(ctx)
 	if err := silenced.Validate(); err != nil {
 		return fmt.Errorf("couldn't update silenced entry: %s", err)
 	}
