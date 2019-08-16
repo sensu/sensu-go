@@ -219,13 +219,14 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	// Add any silenced subscriptions to the event
 	getSilenced(ctx, event, e.silencedCache)
 
-	// Handle expire on resolve silenced entries
-	if err := handleExpireOnResolveEntries(ctx, event, e.store); err != nil {
+	// Merge the new event with the stored event if a match is found
+	event, prevEvent, err := e.eventStore.UpdateEvent(ctx, event)
+	if err != nil {
 		return err
 	}
 
-	event, prevEvent, err := e.eventStore.UpdateEvent(ctx, event)
-	if err != nil {
+	// Handle expire on resolve silenced entries
+	if err := handleExpireOnResolveEntries(ctx, event, e.store); err != nil {
 		return err
 	}
 

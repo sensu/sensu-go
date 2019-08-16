@@ -50,6 +50,7 @@ configuration.
 - Prevent a segmentation fault on the agent when a command execution returns an
 error.
 - [Web] Fixed issue where a bad or revoked access token could crash the app.
+- Fixed a bug where silences would not expire on event resolution.
 
 ### Removed
 - Removed encoded protobuf payloads from log messages (when decoded, they can reveal
