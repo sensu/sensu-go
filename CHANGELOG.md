@@ -37,6 +37,7 @@ configuration.
 - Added entity name to the interactive sensuctl survey.
 - Check hooks with `stdin: true` now receive actual event data on STDIN instead
   of an empty event.
+- Fixed a bug where silences would not expire on event resolution.
 
 ### Removed
 - Removed encoded protobuf payloads from log messages (when decoded, they can reveal
