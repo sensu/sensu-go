@@ -130,3 +130,7 @@ func MutatorFields(r Resource) map[string]string {
 func (m *Mutator) SetNamespace(namespace string) {
 	m.Namespace = namespace
 }
+
+func (m *Mutator) RBACName() string {
+	return "mutators"
+}

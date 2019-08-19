@@ -258,3 +258,11 @@ type ByExecuted []CheckHistory
 func (b ByExecuted) Len() int           { return len(b) }
 func (b ByExecuted) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
 func (b ByExecuted) Less(i, j int) bool { return b[i].Executed < b[j].Executed }
+
+func (c *Check) RBACName() string {
+	return "checks"
+}
+
+func (c *CheckConfig) RBACName() string {
+	return "checks"
+}

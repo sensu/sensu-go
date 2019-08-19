@@ -3,7 +3,7 @@ package graphql
 import (
 	"testing"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/util/strings"
 	"github.com/stretchr/testify/assert"
 )
@@ -11,7 +11,7 @@ import (
 func TestOccurrencesOfSubscription(t *testing.T) {
 	assert := assert.New(t)
 
-	entity := types.FixtureEntity("test")
+	entity := corev2.FixtureEntity("test")
 	entity.Subscriptions = []string{"one", "two"}
 
 	set := occurrencesOfSubscriptions(entity)

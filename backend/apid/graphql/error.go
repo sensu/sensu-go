@@ -1,9 +1,9 @@
 package graphql
 
 import (
-	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/backend/authorization"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 )
 
@@ -17,28 +17,21 @@ type stdErr struct {
 }
 
 func newStdErr(input string, err error) stdErr {
-	out := stdErr{code: schema.ErrCodes.ERR_INTERNAL, input: input}
-	switch terr := err.(type) {
-	case client.APIError:
-		out.message = terr.Message
-		out.code = mapServiceErrCode(terr.Code)
-	case error:
-		out.message = err.Error()
+	out := stdErr{
+		code:    schema.ErrCodes.ERR_INTERNAL,
+		input:   input,
+		message: err.Error(),
+	}
+	if err == authorization.ErrUnauthorized {
+		out.code = schema.ErrCodes.ERR_PERMISSION_DENIED
+	}
+	switch err.(type) {
+	case (*store.ErrAlreadyExists):
+		out.code = schema.ErrCodes.ERR_ALREADY_EXISTS
+	case (*store.ErrNotFound):
+		out.code = schema.ErrCodes.ERR_NOT_FOUND
 	}
 	return out
-}
-
-func mapServiceErrCode(code uint32) schema.ErrCode {
-	switch code {
-	case uint32(actions.NotFound):
-		return schema.ErrCodes.ERR_NOT_FOUND
-	case uint32(actions.AlreadyExistsErr):
-		return schema.ErrCodes.ERR_ALREADY_EXISTS
-	case uint32(actions.InternalErr):
-		fallthrough
-	default:
-		return schema.ErrCodes.ERR_INTERNAL
-	}
 }
 
 func wrapInputErrors(input string, errs ...error) []stdErr {

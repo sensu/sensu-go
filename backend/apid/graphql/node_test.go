@@ -2,18 +2,20 @@ package graphql
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
-	mockclient "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 )
 
-func setupNodeResolver(factory ClientFactory) func(string) (interface{}, error) {
-	resolver := newNodeResolver(factory)
+func setupNodeResolver(cfg ServiceConfig) func(string) (interface{}, error) {
+	resolver := newNodeResolver(cfg)
 	ctx := context.Background()
 	info := graphql.ResolveInfo{}
 
@@ -23,38 +25,39 @@ func setupNodeResolver(factory ClientFactory) func(string) (interface{}, error) 
 }
 
 func TestNodeResolverFindType(t *testing.T) {
-	_, factory := mockclient.NewClientFactory()
-	resolver := newNodeResolver(factory)
+	cfg := ServiceConfig{}
+	resolver := newNodeResolver(cfg)
 
-	check := types.FixtureCheckConfig("http-check")
+	check := corev2.FixtureCheckConfig("http-check")
 	typeID := resolver.FindType(check)
 	assert.NotNil(t, typeID)
 }
 
 func TestNodeResolverFind(t *testing.T) {
-	client, factory := mockclient.NewClientFactory()
-	resolver := newNodeResolver(factory)
+	client := new(MockCheckClient)
+	cfg := ServiceConfig{CheckClient: client}
+	resolver := newNodeResolver(cfg)
 
 	ctx := context.Background()
 	info := graphql.ResolveInfo{}
 
-	check := types.FixtureCheckConfig("http-check")
+	check := corev2.FixtureCheckConfig("http-check")
 	gid := globalid.CheckTranslator.EncodeToString(check)
 
-	// Sucess
-	client.On("FetchCheck", check.Name).Return(check, nil).Once()
+	// Success
+	client.On("FetchCheck", mock.Anything, check.Name).Return(check, nil).Once()
 	res, err := resolver.Find(ctx, gid, info)
 	assert.NotEmpty(t, res)
 	assert.NoError(t, err)
 
 	// Missing
-	client.On("FetchCheck", check.Name).Return(check, mockclient.NotFound).Once()
+	client.On("FetchCheck", mock.Anything, check.Name).Return(check, &store.ErrNotFound{}).Once()
 	res, err = resolver.Find(ctx, gid, info)
 	assert.Empty(t, res)
 	assert.NoError(t, err)
 
 	// Error
-	client.On("FetchCheck", check.Name).Return(check, mockclient.InternalErr).Once()
+	client.On("FetchCheck", mock.Anything, check.Name).Return(check, errors.New("an error")).Once()
 	res, err = resolver.Find(ctx, gid, info)
 	assert.Empty(t, res)
 	assert.Error(t, err)
@@ -65,9 +68,23 @@ func TestNodeResolverFind(t *testing.T) {
 	assert.Error(t, err)
 }
 
+type onner interface {
+	On(string, ...interface{}) *mock.Call
+}
+
 func TestAssetNodeResolver(t *testing.T) {
-	client, factory := mockclient.NewClientFactory()
-	find := setupNodeResolver(factory)
+	cfg := ServiceConfig{
+		AssetClient:       new(MockAssetClient),
+		CheckClient:       new(MockCheckClient),
+		EntityClient:      new(MockEntityClient),
+		EventClient:       new(MockEventClient),
+		EventFilterClient: new(MockEventFilterClient),
+		HandlerClient:     new(MockHandlerClient),
+		MutatorClient:     new(MockMutatorClient),
+		UserClient:        new(MockUserClient),
+		NamespaceClient:   new(MockNamespaceClient),
+	}
+	find := setupNodeResolver(cfg)
 
 	testCases := []struct {
 		name      string
@@ -78,97 +95,97 @@ func TestAssetNodeResolver(t *testing.T) {
 		{
 			name: "assets",
 			setupNode: func() interface{} {
-				return types.FixtureAsset("name")
+				return corev2.FixtureAsset("name")
 			},
 			setupID: func(r interface{}) string {
 				return globalid.AssetTranslator.EncodeToString(r)
 			},
 			setup: func(r interface{}) {
-				client.On("FetchAsset", "name").Return(r, nil).Once()
+				cfg.AssetClient.(onner).On("FetchAsset", mock.Anything, "name").Return(r, nil).Once()
 			},
 		},
 		{
 			name: "check",
 			setupNode: func() interface{} {
-				return types.FixtureCheckConfig("name")
+				return corev2.FixtureCheckConfig("name")
 			},
 			setupID: func(r interface{}) string {
 				return globalid.CheckTranslator.EncodeToString(r)
 			},
 			setup: func(r interface{}) {
-				client.On("FetchCheck", "name").Return(r, nil).Once()
+				cfg.CheckClient.(onner).On("FetchCheck", mock.Anything, "name").Return(r, nil).Once()
 			},
 		},
 		{
 			name: "entities",
 			setupNode: func() interface{} {
-				return types.FixtureEntity("name")
+				return corev2.FixtureEntity("name")
 			},
 			setupID: func(r interface{}) string {
 				return globalid.EntityTranslator.EncodeToString(r)
 			},
 			setup: func(r interface{}) {
-				client.On("FetchEntity", "name").Return(r, nil).Once()
+				cfg.EntityClient.(onner).On("FetchEntity", mock.Anything, "name").Return(r, nil).Once()
 			},
 		},
 		{
 			name: "handlers",
 			setupNode: func() interface{} {
-				return types.FixtureHandler("name")
+				return corev2.FixtureHandler("name")
 			},
 			setupID: func(r interface{}) string {
 				return globalid.HandlerTranslator.EncodeToString(r)
 			},
 			setup: func(r interface{}) {
-				client.On("FetchHandler", "name").Return(r, nil).Once()
+				cfg.HandlerClient.(onner).On("FetchHandler", mock.Anything, "name").Return(r, nil).Once()
 			},
 		},
 		{
 			name: "mutators",
 			setupNode: func() interface{} {
-				return types.FixtureMutator("name")
+				return corev2.FixtureMutator("name")
 			},
 			setupID: func(r interface{}) string {
 				return globalid.MutatorTranslator.EncodeToString(r)
 			},
 			setup: func(r interface{}) {
-				client.On("FetchMutator", "name").Return(r, nil).Once()
+				cfg.MutatorClient.(onner).On("FetchMutator", mock.Anything, "name").Return(r, nil).Once()
 			},
 		},
 		{
 			name: "users",
 			setupNode: func() interface{} {
-				return types.FixtureUser("name")
+				return corev2.FixtureUser("name")
 			},
 			setupID: func(r interface{}) string {
 				return globalid.UserTranslator.EncodeToString(r)
 			},
 			setup: func(r interface{}) {
-				client.On("FetchUser", "name").Return(r, nil).Once()
+				cfg.UserClient.(onner).On("FetchUser", mock.Anything, "name").Return(r, nil).Once()
 			},
 		},
 		{
 			name: "events",
 			setupNode: func() interface{} {
-				return types.FixtureEvent("a", "b")
+				return corev2.FixtureEvent("a", "b")
 			},
 			setupID: func(r interface{}) string {
 				return globalid.EventTranslator.EncodeToString(r)
 			},
 			setup: func(r interface{}) {
-				client.On("FetchEvent", "a", "b").Return(r, nil).Once()
+				cfg.EventClient.(onner).On("FetchEvent", mock.Anything, "a", "b").Return(r, nil).Once()
 			},
 		},
 		{
 			name: "namespaces",
 			setupNode: func() interface{} {
-				return types.FixtureNamespace("sensu")
+				return corev2.FixtureNamespace("sensu")
 			},
 			setupID: func(r interface{}) string {
 				return globalid.NamespaceTranslator.EncodeToString(r)
 			},
 			setup: func(r interface{}) {
-				client.On("FetchNamespace", "sensu").Return(r, nil).Once()
+				cfg.NamespaceClient.(onner).On("FetchNamespace", mock.Anything, "sensu").Return(r, nil).Once()
 			},
 		},
 	}

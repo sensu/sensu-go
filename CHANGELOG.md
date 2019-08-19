@@ -22,6 +22,7 @@ backend to use JSON.
 
 ### Changed
 - The project now uses Go modules instead of dep for dependency management.
+- The internal reverse proxy relied on by the dashboard has been eliminated.
 - The generic etcd watcher now keeps track of revisions.
 - The resource caches can now rebuild themselves in case of failures.
 - Event and Entity resources can now be created without an explicit namespace;

@@ -2,17 +2,18 @@ package routers
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/api"
+	"github.com/sensu/sensu-go/backend/apid/actions"
 	graphql "github.com/sensu/sensu-go/backend/apid/graphql"
-	"github.com/sensu/sensu-go/backend/apid/graphql/restclient"
-	"github.com/sensu/sensu-go/backend/authentication/jwt"
+	"github.com/sensu/sensu-go/backend/authorization"
+	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -28,9 +29,22 @@ type GraphQLRouter struct {
 }
 
 // NewGraphQLRouter instantiates new events controller
-func NewGraphQLRouter(apiURL string, tls *tls.Config, store store.Store) *GraphQLRouter {
-	factory := restclient.NewClientFactory(apiURL, tls)
-	service, err := graphql.NewService(graphql.ServiceConfig{ClientFactory: factory})
+func NewGraphQLRouter(store store.Store, eventStore store.EventStore, auth authorization.Authorizer, qGetter types.QueueGetter, bus messaging.MessageBus) *GraphQLRouter {
+	service, err := graphql.NewService(graphql.ServiceConfig{
+		AssetClient:       api.NewAssetClient(store, auth),
+		CheckClient:       api.NewCheckClient(store, actions.NewCheckController(store, qGetter), auth),
+		EntityClient:      api.NewEntityClient(store, eventStore, auth),
+		EventClient:       api.NewEventClient(eventStore, auth, bus),
+		EventFilterClient: api.NewEventFilterClient(store, auth),
+		HandlerClient:     api.NewHandlerClient(store, auth),
+		MutatorClient:     api.NewMutatorClient(store, auth),
+		SilencedClient:    api.NewSilencedClient(store, auth),
+		NamespaceClient:   api.NewNamespaceClient(store, auth),
+		HookClient:        api.NewHookConfigClient(store, auth),
+		UserClient:        api.NewUserClient(store, auth),
+		RBACClient:        api.NewRBACClient(store, auth),
+		GenericClient:     &api.GenericClient{Store: store, Auth: auth},
+	})
 	if err != nil {
 		logger.WithError(err).Panic("unable to configure graphql service")
 	}
@@ -49,17 +63,7 @@ func (r *GraphQLRouter) Mount(parent *mux.Router) {
 
 func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 	// Setup context
-	ctx := req.Context()
-	ctx = context.WithValue(ctx, types.NamespaceKey, "")
-
-	// Create a short-lived access token for the duration of the request and lift
-	// it into the context.
-	ctx, teardown, err := contextWithTempAccessToken(ctx, r.store)
-	if err != nil {
-		logger.WithError(err).Info("unable to get temporary token for request")
-		return nil, err
-	}
-	defer teardown()
+	ctx := context.WithValue(req.Context(), corev2.NamespaceKey, "")
 
 	// Parse request body
 	var reqBody interface{}
@@ -106,34 +110,3 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 	}
 	return results[0], nil
 }
-
-func contextWithTempAccessToken(ctx context.Context, store store.Store) (context.Context, func(), error) {
-	// Create new token
-	claims := jwt.GetClaimsFromContext(ctx)
-	if claims == nil {
-		return ctx, noop, nil
-	}
-
-	// Create an access token from claims
-	token, tokenString, err := jwt.AccessToken(claims)
-	if err != nil {
-		return ctx, noop, err
-	}
-
-	// Add token to the allow list
-	if err := store.AllowTokens(token); err != nil {
-		return ctx, noop, err
-	}
-
-	revokeFn := func() {
-		if err := store.RevokeTokens(claims); err != nil {
-			logger.WithError(err).Error("unable to remove token")
-		}
-	}
-
-	// Lift access token into the request context
-	ctx = context.WithValue(ctx, v2.AccessTokenString, tokenString)
-	return ctx, revokeFn, nil
-}
-
-func noop() {}
