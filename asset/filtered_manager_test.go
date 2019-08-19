@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -17,7 +18,7 @@ type MockGetter struct {
 }
 
 // Get satisfies the asset.Getter interface
-func (m *MockGetter) Get(context.Context, *types.Asset) (*RuntimeAsset, error) {
+func (m *MockGetter) Get(context.Context, *corev2.Asset) (*RuntimeAsset, error) {
 	m.getCalled = true
 	return m.asset, m.err
 }
