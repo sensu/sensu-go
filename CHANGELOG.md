@@ -29,6 +29,7 @@ backend to use JSON.
 the system will refer to the namespace in the URL.
 - Events and Entities can now be created with the POST verb.
 - [Web] Changed styling of namespace labels.
+- Log token substitution failures more clearly.
 
 ### Fixed
 - Fixed the tabular output of `sensuctl filter list` so inclusive filter expressions
