@@ -218,6 +218,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	checkExec, err := a.executor.Execute(context.Background(), ex)
 	if err != nil {
 		event.Check.Output = err.Error()
+		checkExec.Status = 3
 	} else {
 		event.Check.Output = checkExec.Output
 	}
