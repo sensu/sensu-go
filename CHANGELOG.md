@@ -34,11 +34,13 @@ the system will refer to the namespace in the URL.
 are joined with `&&` and exclusive filter expressions are joined with `||`.
 - The REST API now correctly only returns events for the specific entity
 queried in the `GET /events/:entity` endpoint (#3141)
-- Prevent a segmentation violation when running `sensuctl config view` without
+- Prevent a segmentation fault when running `sensuctl config view` without
 configuration.
 - Added entity name to the interactive sensuctl survey.
 - Check hooks with `stdin: true` now receive actual event data on STDIN instead
   of an empty event.
+- Prevent a segmentation fault on the agent when a command execution returns an
+error.
 - [Web] Fixed issue where a bad or revoked access token could crash the app.
 
 ### Removed
