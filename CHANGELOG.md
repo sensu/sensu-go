@@ -20,6 +20,8 @@ backend to use JSON.
 - Added `event.check.name` as a supported field selector.
 - [Web] Added timeline chart to event details view.
 - Added `entity.system.arm_version` to record the value of `GOARM` at compile time.
+- Added `builds` field to the `Asset` type to allow assets to specify different
+URLs for each platform/architecture/arch_version.
 
 ### Changed
 - The project now uses Go modules instead of dep for dependency management.
