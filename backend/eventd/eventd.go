@@ -225,11 +225,6 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		return err
 	}
 
-	// Handle expire on resolve silenced entries
-	if err := handleExpireOnResolveEntries(ctx, event, e.store); err != nil {
-		return err
-	}
-
 	e.Logger.Println(event)
 
 	switches := e.livenessFactory("eventd", e.dead, e.alive, logger)

@@ -2,10 +2,8 @@ package eventd
 
 import (
 	"context"
-	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
 )
@@ -49,32 +47,4 @@ func silencedBy(event *corev2.Event, silencedEntries []*corev2.Silenced) []strin
 		names = addToSilencedBy(entry.Name, names)
 	}
 	return names
-}
-
-func handleExpireOnResolveEntries(ctx context.Context, event *corev2.Event, store store.Store) error {
-	// Make sure we have a check and that the event is a resolution
-	if !event.HasCheck() || !event.IsResolution() {
-		return nil
-	}
-
-	entries, err := store.GetSilencedEntriesByName(ctx, event.Check.Silenced...)
-	if err != nil {
-		return fmt.Errorf("couldn't resolve silences: %s", err)
-	}
-	toDelete := []string{}
-	toRetain := []string{}
-	for _, entry := range entries {
-		if entry.ExpireOnResolve {
-			toDelete = append(toDelete, entry.Name)
-		} else {
-			toRetain = append(toRetain, entry.Name)
-		}
-	}
-
-	if err := store.DeleteSilencedEntryByName(ctx, toDelete...); err != nil {
-		return fmt.Errorf("couldn't resolve silences: %s", err)
-	}
-	event.Check.Silenced = toRetain
-
-	return nil
 }
