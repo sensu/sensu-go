@@ -2,12 +2,14 @@ package filter
 
 import (
 	"errors"
+	"net/http"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	"github.com/sensu/sensu-go/cli/commands/flags"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -30,10 +32,16 @@ func TestListCommandRunEClosure(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListFilters", mock.Anything, mock.Anything).Return([]types.EventFilter{
-		*types.FixtureEventFilter("name-one"),
-		*types.FixtureEventFilter("name-two"),
-	}, nil)
+	resources := []corev2.EventFilter{}
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
+		func(args mock.Arguments) {
+			resources := args[1].(*[]corev2.EventFilter)
+			*resources = []corev2.EventFilter{
+				*corev2.FixtureEventFilter("name-one"),
+				*corev2.FixtureEventFilter("name-two"),
+			}
+		},
+	)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "json"))
@@ -50,9 +58,15 @@ func TestListCommandRunEClosureWithAll(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListFilters", "", mock.Anything).Return([]types.EventFilter{
-		*types.FixtureEventFilter("name-one"),
-	}, nil)
+	resources := []corev2.EventFilter{}
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
+		func(args mock.Arguments) {
+			resources := args[1].(*[]corev2.EventFilter)
+			*resources = []corev2.EventFilter{
+				*corev2.FixtureEventFilter("name-one"),
+			}
+		},
+	)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))
@@ -66,10 +80,18 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewCLI()
 
-	filter := types.FixtureEventFilter("name-one")
+	filter := corev2.FixtureEventFilter("name-one")
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListFilters", mock.Anything, mock.Anything).Return([]types.EventFilter{*filter}, nil)
+	resources := []corev2.EventFilter{}
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
+		func(args mock.Arguments) {
+			resources := args[1].(*[]corev2.EventFilter)
+			*resources = []corev2.EventFilter{
+				*filter,
+			}
+		},
+	)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "none"))
@@ -88,7 +110,8 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListFilters", mock.Anything, mock.Anything).Return([]types.EventFilter{}, errors.New("my-err"))
+	resources := []corev2.EventFilter{}
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(errors.New("my-err"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -103,9 +126,17 @@ func TestListCommandRunEClosureWithAlphaNumericChars(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	filter := types.FixtureEventFilter("name-one")
+	filter := corev2.FixtureEventFilter("name-one")
 	filter.Expressions = append(filter.Expressions, "10 > 0")
-	client.On("ListFilters", "", mock.Anything).Return([]types.EventFilter{*filter}, nil)
+	resources := []corev2.EventFilter{}
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
+		func(args mock.Arguments) {
+			resources := args[1].(*[]corev2.EventFilter)
+			*resources = []corev2.EventFilter{
+				*filter,
+			}
+		},
+	)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))
@@ -133,11 +164,19 @@ func TestListCommandRunEClosureWithTableAllow(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewCLI()
 
-	filter := types.FixtureEventFilter("name-one")
+	filter := corev2.FixtureEventFilter("name-one")
 	filter.Expressions = append(filter.Expressions, "event.check.name == 'dev'")
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListFilters", mock.Anything, mock.Anything).Return([]types.EventFilter{*filter}, nil)
+	resources := []corev2.EventFilter{}
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
+		func(args mock.Arguments) {
+			resources := args[1].(*[]corev2.EventFilter)
+			*resources = []corev2.EventFilter{
+				*filter,
+			}
+		},
+	)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "none"))
@@ -155,12 +194,20 @@ func TestListCommandRunEClosureWithTableDeny(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewCLI()
 
-	filter := types.FixtureEventFilter("name-one")
+	filter := corev2.FixtureEventFilter("name-one")
 	filter.Expressions = append(filter.Expressions, "event.check.name == 'dev'")
-	filter.Action = types.EventFilterActionDeny
+	filter.Action = corev2.EventFilterActionDeny
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListFilters", mock.Anything, mock.Anything).Return([]types.EventFilter{*filter}, nil)
+	resources := []corev2.EventFilter{}
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
+		func(args mock.Arguments) {
+			resources := args[1].(*[]corev2.EventFilter)
+			*resources = []corev2.EventFilter{
+				*filter,
+			}
+		},
+	)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "none"))
@@ -172,4 +219,33 @@ func TestListCommandRunEClosureWithTableDeny(t *testing.T) {
 	assert.Contains(out, "Expressions")                                                // heading
 	assert.Contains(out, "(event.check.team == 'ops') || (event.check.name == 'dev')") // deny ||
 	assert.Nil(err)
+}
+
+func TestListCommandRunEClosureWithHeader(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := test.NewMockCLI()
+	config := cli.Config.(*client.MockConfig)
+	config.On("Format").Return("none")
+
+	client := cli.Client.(*client.MockClient)
+	var header http.Header
+	resources := []corev2.EventFilter{}
+	client.On("List", mock.Anything, &resources, mock.Anything, &header).Return(nil).Run(
+		func(args mock.Arguments) {
+			resources := args[1].(*[]corev2.EventFilter)
+			*resources = []corev2.EventFilter{}
+			header := args[3].(*http.Header)
+			*header = make(http.Header)
+			header.Add(helpers.HeaderWarning, "E_TOO_MANY_ENTITIES")
+		},
+	)
+
+	cmd := ListCommand(cli)
+	out, err := test.RunCmd(cmd, []string{})
+
+	assert.NotEmpty(out)
+	assert.Nil(err)
+	assert.Contains(out, "E_TOO_MANY_ENTITIES")
+	assert.Contains(out, "==")
 }

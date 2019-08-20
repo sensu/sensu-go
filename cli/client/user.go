@@ -4,14 +4,14 @@ import (
 	"encoding/json"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/types"
 )
 
-var usersPath = CreateBasePath(coreAPIGroup, coreAPIVersion, "users")
+// UsersPath is the api path for users.
+var UsersPath = CreateBasePath(coreAPIGroup, coreAPIVersion, "users")
 
 // AddGroupToUser makes "username" a member of "group".
 func (client *RestClient) AddGroupToUser(username, group string) error {
-	path := usersPath(username, "groups", group)
+	path := UsersPath(username, "groups", group)
 	res, err := client.R().Put(path)
 	if err != nil {
 		return err
@@ -25,8 +25,8 @@ func (client *RestClient) AddGroupToUser(username, group string) error {
 }
 
 // CreateUser creates new check on configured Sensu instance
-func (client *RestClient) CreateUser(user *types.User) error {
-	path := usersPath("")
+func (client *RestClient) CreateUser(user *corev2.User) error {
+	path := UsersPath("")
 	res, err := client.R().SetBody(user).Post(path)
 	if err != nil {
 		return err
@@ -41,7 +41,7 @@ func (client *RestClient) CreateUser(user *types.User) error {
 
 // DisableUser disables a user on configured Sensu instance
 func (client *RestClient) DisableUser(username string) error {
-	path := usersPath(username)
+	path := UsersPath(username)
 	res, err := client.R().Delete(path)
 
 	if err != nil {
@@ -56,9 +56,9 @@ func (client *RestClient) DisableUser(username string) error {
 }
 
 // FetchUser retrieve the given user
-func (client *RestClient) FetchUser(username string) (*types.User, error) {
-	user := &types.User{}
-	path := usersPath(username)
+func (client *RestClient) FetchUser(username string) (*corev2.User, error) {
+	user := &corev2.User{}
+	path := UsersPath(username)
 	res, err := client.R().Get(path)
 
 	if err != nil {
@@ -73,20 +73,9 @@ func (client *RestClient) FetchUser(username string) (*types.User, error) {
 	return user, err
 }
 
-// ListUsers fetches all users from configured Sensu instance
-func (client *RestClient) ListUsers(options *ListOptions) ([]corev2.User, error) {
-	var users []corev2.User
-
-	if err := client.List(usersPath(), &users, options); err != nil {
-		return users, err
-	}
-
-	return users, nil
-}
-
 // ReinstateUser reinstates a disabled user on configured Sensu instance
 func (client *RestClient) ReinstateUser(username string) error {
-	path := usersPath(username, "reinstate")
+	path := UsersPath(username, "reinstate")
 	res, err := client.R().Put(path)
 
 	if err != nil {
@@ -102,7 +91,7 @@ func (client *RestClient) ReinstateUser(username string) error {
 
 // RemoveGroupFromUser removes "username" from the given "group".
 func (client *RestClient) RemoveGroupFromUser(username, group string) error {
-	path := usersPath(username, "groups", group)
+	path := UsersPath(username, "groups", group)
 	res, err := client.R().Delete(path)
 	if err != nil {
 		return err
@@ -115,9 +104,9 @@ func (client *RestClient) RemoveGroupFromUser(username, group string) error {
 	return nil
 }
 
-// RemoveGroupsFromUser removes all the groups for "username".
+// RemoveAllGroupsFromUser removes all the groups for "username".
 func (client *RestClient) RemoveAllGroupsFromUser(username string) error {
-	path := usersPath(username, "groups")
+	path := UsersPath(username, "groups")
 	res, err := client.R().Delete(path)
 	if err != nil {
 		return err
@@ -157,7 +146,7 @@ func (client *RestClient) UpdatePassword(username, pwd string) error {
 		return err
 	}
 
-	path := usersPath(username, "password")
+	path := UsersPath(username, "password")
 	res, err := client.R().
 		SetBody(bytes).
 		Put(path)
