@@ -45,6 +45,44 @@ func (a *Asset) Validate() error {
 		return errors.New("namespace cannot be empty")
 	}
 
+	if len(a.Builds) == 0 {
+		if a.Sha512 == "" {
+			return errors.New("SHA-512 checksum cannot be empty")
+		}
+
+		if len(a.Sha512) < 128 {
+			return errors.New("SHA-512 checksum must be at least 128 characters")
+		}
+
+		if a.URL == "" {
+			return errors.New("URL cannot be empty")
+		}
+
+		if a.URL != "" {
+			u, err := url.Parse(a.URL)
+			if err != nil {
+				return errors.New("invalid URL provided")
+			}
+
+			if u.Scheme != "https" && u.Scheme != "http" {
+				return errors.New("URL must be HTTP or HTTPS")
+			}
+		}
+
+		return js.ParseExpressions(a.Filters)
+	} else {
+		for _, build := range a.Builds {
+			if err := build.Validate(); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// Validate returns an error if the asset contains invalid values.
+func (a *AssetBuild) Validate() error {
 	if a.Sha512 == "" {
 		return errors.New("SHA-512 checksum cannot be empty")
 	}
@@ -57,13 +95,15 @@ func (a *Asset) Validate() error {
 		return errors.New("URL cannot be empty")
 	}
 
-	u, err := url.Parse(a.URL)
-	if err != nil {
-		return errors.New("invalid URL provided")
-	}
+	if a.URL != "" {
+		u, err := url.Parse(a.URL)
+		if err != nil {
+			return errors.New("invalid URL provided")
+		}
 
-	if u.Scheme != "https" && u.Scheme != "http" {
-		return errors.New("URL must be HTTP or HTTPS")
+		if u.Scheme != "https" && u.Scheme != "http" {
+			return errors.New("URL must be HTTP or HTTPS")
+		}
 	}
 
 	return js.ParseExpressions(a.Filters)
