@@ -3,6 +3,7 @@ package middlewares
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"regexp"
 
@@ -52,7 +53,7 @@ func (m RefreshToken) Then(next http.Handler) http.Handler {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-
+		fmt.Println("HELLO!")
 		// Now we want to validate the refresh token
 		refreshToken, err := jwt.ValidateToken(payload.Refresh)
 		if err != nil {

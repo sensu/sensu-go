@@ -9,7 +9,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -45,7 +45,7 @@ func TestRefreshTokenNoRefreshToken(t *testing.T) {
 	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
-	claims := v2.FixtureClaims("foo", nil)
+	claims := corev2.FixtureClaims("foo", nil)
 	_, tokenString, _ := jwt.AccessToken(claims)
 
 	req, _ := http.NewRequest(http.MethodPost, server.URL, nil)
@@ -68,7 +68,7 @@ func TestRefreshTokenInvalidRefreshToken(t *testing.T) {
 	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
-	claims := v2.FixtureClaims("foo", nil)
+	claims := corev2.FixtureClaims("foo", nil)
 	_, tokenString, _ := jwt.AccessToken(claims)
 	refreshTokenString := "foobar"
 	body := &types.Tokens{Refresh: refreshTokenString}
@@ -87,8 +87,8 @@ func TestRefreshTokenMismatchingSub(t *testing.T) {
 	server := httptest.NewServer(mware.Then(testHandler()))
 	defer server.Close()
 
-	fooClaims := v2.FixtureClaims("foo", nil)
-	barClaims := v2.FixtureClaims("bar", nil)
+	fooClaims := corev2.FixtureClaims("foo", nil)
+	barClaims := corev2.FixtureClaims("bar", nil)
 	_, tokenString, _ := jwt.AccessToken(fooClaims)
 	_, refreshTokenString, _ := jwt.RefreshToken(barClaims)
 
@@ -123,7 +123,7 @@ func TestRefreshTokenSuccess(t *testing.T) {
 	))
 	defer server.Close()
 
-	claims := v2.FixtureClaims("foo", nil)
+	claims := corev2.FixtureClaims("foo", nil)
 	_, tokenString, _ := jwt.AccessToken(claims)
 	_, refreshTokenString, _ := jwt.RefreshToken(claims)
 	body := &types.Tokens{Refresh: refreshTokenString}
