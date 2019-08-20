@@ -182,3 +182,7 @@ func HandlerFields(r Resource) map[string]string {
 func (h *Handler) SetNamespace(namespace string) {
 	h.Namespace = namespace
 }
+
+func (h *Handler) RBACName() string {
+	return "handlers"
+}

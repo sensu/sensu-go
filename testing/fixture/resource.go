@@ -30,3 +30,7 @@ func (f *Resource) URIPath() string {
 func (f *Resource) Validate() error {
 	return nil
 }
+
+func (*Resource) RBACName() string {
+	return "resource"
+}

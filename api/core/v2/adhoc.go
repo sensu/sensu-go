@@ -35,3 +35,7 @@ func (a *AdhocRequest) Validate() error {
 func (a *AdhocRequest) URIPath() string {
 	return fmt.Sprintf("/api/core/v2/namespaces/%s/checks/%s/execute", url.PathEscape(a.Namespace), url.PathEscape(a.Name))
 }
+
+func (a *AdhocRequest) RBACName() string {
+	return "checks"
+}

@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sensu/sensu-go/api/core/v2"
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
@@ -14,13 +14,14 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
-// AuthenticationClient is a type that can be used to interact with the
-// backend's authentication services.
+// AuthenticationClient is an API client for authentication.
 type AuthenticationClient struct {
 	store store.TokenStore
 	auth  *authentication.Authenticator
 }
 
+// NewAuthenticationClient creates a new AuthenticationClient, given a a store
+// and an authenticator.
 func NewAuthenticationClient(store store.TokenStore, auth *authentication.Authenticator) *AuthenticationClient {
 	return &AuthenticationClient{
 		store: store,
@@ -28,7 +29,8 @@ func NewAuthenticationClient(store store.TokenStore, auth *authentication.Authen
 	}
 }
 
-// CreateAccessToken creates a new access token, given a valid username and password.
+// CreateAccessToken creates a new access token, given a valid username and
+// password.
 func (a *AuthenticationClient) CreateAccessToken(ctx context.Context, username, password string) (*corev2.Tokens, error) {
 	claims, err := a.auth.Authenticate(ctx, username, password)
 	if err != nil {

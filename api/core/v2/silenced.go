@@ -178,3 +178,7 @@ func SilencedFields(r Resource) map[string]string {
 func (s *Silenced) SetNamespace(namespace string) {
 	s.Namespace = namespace
 }
+
+func (*Silenced) RBACName() string {
+	return "silenced"
+}

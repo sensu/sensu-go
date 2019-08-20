@@ -177,7 +177,7 @@ func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionReque
 	if err := cmd.Start(); err != nil {
 		// Something unexpected happended when attepting to
 		// fork/exec, return immediately.
-		return nil, err
+		return resp, err
 	}
 
 	err := cmd.Wait()

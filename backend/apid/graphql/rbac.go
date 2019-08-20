@@ -1,10 +1,10 @@
 package graphql
 
 import (
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
-	"github.com/sensu/sensu-go/types"
 )
 
 var _ schema.RuleFieldResolvers = (*ruleImpl)(nil)
@@ -20,7 +20,7 @@ type ruleImpl struct {
 
 // IsTypeOf is used to determine if a given value is associated with the type
 func (*ruleImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	_, ok := s.(types.Rule)
+	_, ok := s.(corev2.Rule)
 	return ok
 }
 
@@ -39,6 +39,6 @@ func (*roleImpl) ID(p graphql.ResolveParams) (string, error) {
 
 // IsTypeOf is used to determine if a given value is associated with the type
 func (*roleImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
-	_, ok := s.(*types.Role)
+	_, ok := s.(*corev2.Role)
 	return ok
 }
