@@ -65,6 +65,29 @@ func TestFilteredManagerUnfilteredAsset(t *testing.T) {
 	assert.False(t, mockGetter.getCalled)
 }
 
+// FilteredManager should pass a build asset if the asset has builds.
+func TestFilteredManagerFilteredBuildAsset(t *testing.T) {
+	mockGetter, entity, filteredManager := NewTestFilteredManager()
+
+	url := "http://asset-build-url"
+	sha512 := "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e"
+	filters := []string{fmt.Sprintf("entity.name == '%s'", entity.Name)}
+
+	fixtureAsset := types.FixtureAsset("test-asset")
+	fixtureAsset.Filters = []string{"entity.name == 'foo'"}
+	fixtureAsset.Builds = []*corev2.AssetBuild{
+		{
+			URL:     url,
+			Sha512:  sha512,
+			Filters: filters,
+		},
+	}
+	actualAsset, err := filteredManager.Get(context.TODO(), fixtureAsset)
+	assert.NoError(t, err)
+	assert.Equal(t, mockGetter.asset, actualAsset)
+	assert.True(t, mockGetter.getCalled)
+}
+
 // FilteredManager should return error passed by underlying Getter.
 func TestFilteredManagerError(t *testing.T) {
 	mockGetter, _, filteredManager := NewTestFilteredManager()
