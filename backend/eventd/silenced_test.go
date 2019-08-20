@@ -6,9 +6,7 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store/cache"
-	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestGetSilenced(t *testing.T) {
@@ -169,81 +167,6 @@ func TestSilencedBy(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			result := silencedBy(tc.event, tc.entries)
 			assert.Equal(t, tc.expectedEntries, result)
-		})
-	}
-}
-
-func TestHandleExpireOnResolveEntries(t *testing.T) {
-	expireOnResolve := func(s *corev2.Silenced) *corev2.Silenced {
-		s.ExpireOnResolve = true
-		return s
-	}
-
-	resolution := func(e *corev2.Event) *corev2.Event {
-		e.Check.History = []corev2.CheckHistory{
-			corev2.CheckHistory{Status: 1},
-			corev2.CheckHistory{Status: 0},
-		}
-		e.Check.Status = 0
-		return e
-	}
-
-	testCases := []struct {
-		name                    string
-		event                   *corev2.Event
-		silencedEntry           *corev2.Silenced
-		expectedSilencedEntries []string
-	}{
-		{
-			name:                    "Non-resolution Non-expire-on-resolve Event",
-			event:                   corev2.FixtureEvent("entity1", "check1"),
-			silencedEntry:           corev2.FixtureSilenced("sub1:check1"),
-			expectedSilencedEntries: []string{"sub1:check1"},
-		},
-		{
-			name:                    "Non-Resolution Expire-on-resolve Event",
-			event:                   corev2.FixtureEvent("entity1", "check1"),
-			silencedEntry:           expireOnResolve(corev2.FixtureSilenced("sub1:check1")),
-			expectedSilencedEntries: []string{"sub1:check1"},
-		},
-		{
-			name:                    "Resolution Non-expire-on-resolve Event",
-			event:                   resolution(corev2.FixtureEvent("entity1", "check1")),
-			silencedEntry:           corev2.FixtureSilenced("sub1:check1"),
-			expectedSilencedEntries: []string{"sub1:check1"},
-		},
-		{
-			name:                    "Resolution Expire-on-resolve Event",
-			event:                   resolution(corev2.FixtureEvent("entity1", "check1")),
-			silencedEntry:           expireOnResolve(corev2.FixtureSilenced("sub1:check1")),
-			expectedSilencedEntries: []string{},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
-
-			mockStore := &mockstore.MockStore{}
-
-			mockStore.On(
-				"GetSilencedEntriesByName",
-				mock.Anything,
-				mock.Anything,
-			).Return([]*corev2.Silenced{tc.silencedEntry}, nil)
-
-			mockStore.On(
-				"DeleteSilencedEntryByName",
-				mock.Anything,
-				mock.Anything,
-			).Return(nil)
-
-			tc.event.Check.Silenced = []string{tc.silencedEntry.Name}
-
-			err := handleExpireOnResolveEntries(ctx, tc.event, mockStore)
-
-			assert.NoError(t, err)
-			assert.Equal(t, tc.expectedSilencedEntries, tc.event.Check.Silenced)
 		})
 	}
 }
