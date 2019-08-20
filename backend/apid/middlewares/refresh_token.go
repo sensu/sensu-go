@@ -52,9 +52,8 @@ func (m RefreshToken) Then(next http.Handler) http.Handler {
 			return
 		}
 
-		// TODO(palourde): This is a big hack
-		if accessClaims.Provider.ProviderID == "okta" {
-			http.Redirect(w, r, "/api/enterprise/authentication/v2/oidc/token", 301)
+		if accessClaims.Provider.ProviderType == "oidc" {
+			http.Redirect(w, r, "/api/enterprise/authentication/v2/oidc/token", http.StatusTemporaryRedirect)
 			return
 		}
 

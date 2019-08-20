@@ -114,21 +114,21 @@ func (a *AuthenticationClient) Logout(ctx context.Context) error {
 // corev2.RefreshTokenString -> string
 func (a *AuthenticationClient) RefreshAccessToken(ctx context.Context) (*corev2.Tokens, error) {
 	var accessClaims, refreshClaims *corev2.Claims
-	fmt.Println("0")
+
 	// Get the access token claims
 	if value := ctx.Value(corev2.AccessTokenClaims); value != nil {
 		accessClaims = value.(*corev2.Claims)
 	} else {
 		return nil, corev2.ErrInvalidToken
 	}
-	fmt.Println("1")
+
 	// Get the refresh token claims
 	if value := ctx.Value(corev2.RefreshTokenClaims); value != nil {
 		refreshClaims = value.(*corev2.Claims)
 	} else {
 		return nil, corev2.ErrInvalidToken
 	}
-	fmt.Println("2")
+
 	// Get the refresh token string
 	var refreshTokenString string
 	if value := ctx.Value(corev2.RefreshTokenString); value != nil {
