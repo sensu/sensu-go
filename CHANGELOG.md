@@ -19,6 +19,7 @@ backend to use JSON.
 - Added `sensuctl dump` to dump resources to a file or STDOUT.
 - Added `event.check.name` as a supported field selector.
 - [Web] Added timeline chart to event details view.
+- Added `entity.system.arm_version` to record the value of `GOARM` at compile time.
 
 ### Changed
 - The project now uses Go modules instead of dep for dependency management.
