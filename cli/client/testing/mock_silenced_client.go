@@ -1,6 +1,8 @@
 package testing
 
 import (
+	"net/http"
+
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/types"
 
@@ -32,7 +34,7 @@ func (c *MockClient) FetchSilenced(id string) (*types.Silenced, error) {
 }
 
 // ListSilenceds for use with mock lib
-func (c *MockClient) ListSilenceds(namespace, sub, check string, options *client.ListOptions) ([]corev2.Silenced, error) {
-	args := c.Called(namespace, sub, check, options)
+func (c *MockClient) ListSilenceds(namespace, sub, check string, options *client.ListOptions, header *http.Header) ([]corev2.Silenced, error) {
+	args := c.Called(namespace, sub, check, options, header)
 	return args.Get(0).([]corev2.Silenced), args.Error(1)
 }

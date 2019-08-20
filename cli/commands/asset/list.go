@@ -4,14 +4,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"path"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
-	"github.com/sensu/sensu-go/types"
 
 	"github.com/spf13/cobra"
 )
@@ -29,7 +31,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 			namespace := cli.Config.Namespace()
 			if ok, _ := cmd.Flags().GetBool(flags.AllNamespaces); ok {
-				namespace = types.NamespaceTypeAll
+				namespace = corev2.NamespaceTypeAll
 			}
 
 			opts, err := helpers.ListOptionsFromFlags(cmd.Flags())
@@ -38,17 +40,19 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Fetch assets from API
-			results, err := cli.Client.ListAssets(namespace, &opts)
+			var header http.Header
+			results := []corev2.Asset{}
+			err = cli.Client.List(client.AssetsPath(namespace), &results, &opts, &header)
 			if err != nil {
 				return err
 			}
 
 			// Print the results based on the user preferences
-			resources := []types.Resource{}
+			resources := []corev2.Resource{}
 			for i := range results {
 				resources = append(resources, &results[i])
 			}
-			return helpers.Print(cmd, cli.Config.Format(), printToTable, resources, results)
+			return helpers.PrintList(cmd, cli.Config.Format(), printToTable, resources, results, header)
 		},
 	}
 
@@ -67,7 +71,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				asset, ok := data.(types.Asset)
+				asset, ok := data.(corev2.Asset)
 				if !ok {
 					return cli.TypeError
 				}
@@ -77,7 +81,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "URL",
 			CellTransformer: func(data interface{}) string {
-				asset, ok := data.(types.Asset)
+				asset, ok := data.(corev2.Asset)
 				if !ok {
 					return cli.TypeError
 				}
@@ -97,7 +101,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Hash",
 			CellTransformer: func(data interface{}) string {
-				asset, ok := data.(types.Asset)
+				asset, ok := data.(corev2.Asset)
 				if !ok {
 					return cli.TypeError
 				}

@@ -4,19 +4,19 @@ import (
 	"encoding/json"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/types"
 )
 
-var namespacesPath = CreateBasePath(coreAPIGroup, coreAPIVersion, "namespaces")
+// NamespacesPath is the api path for namespaces.
+var NamespacesPath = CreateBasePath(coreAPIGroup, coreAPIVersion, "namespaces")
 
 // CreateNamespace creates new namespace on configured Sensu instance
-func (client *RestClient) CreateNamespace(namespace *types.Namespace) error {
+func (client *RestClient) CreateNamespace(namespace *corev2.Namespace) error {
 	bytes, err := json.Marshal(namespace)
 	if err != nil {
 		return err
 	}
 
-	path := namespacesPath()
+	path := NamespacesPath()
 	res, err := client.R().SetBody(bytes).Post(path)
 
 	if err != nil {
@@ -31,13 +31,13 @@ func (client *RestClient) CreateNamespace(namespace *types.Namespace) error {
 }
 
 // UpdateNamespace updates given namespace on a configured Sensu instance
-func (client *RestClient) UpdateNamespace(namespace *types.Namespace) error {
+func (client *RestClient) UpdateNamespace(namespace *corev2.Namespace) error {
 	bytes, err := json.Marshal(namespace)
 	if err != nil {
 		return err
 	}
 
-	path := namespacesPath(namespace.Name)
+	path := NamespacesPath(namespace.Name)
 	res, err := client.R().SetBody(bytes).Put(path)
 	if err != nil {
 		return err
@@ -52,25 +52,14 @@ func (client *RestClient) UpdateNamespace(namespace *types.Namespace) error {
 
 // DeleteNamespace deletes an namespace on configured Sensu instance
 func (client *RestClient) DeleteNamespace(namespace string) error {
-	return client.Delete(namespacesPath(namespace))
-}
-
-// ListNamespaces fetches all namespaces from configured Sensu instance
-func (client *RestClient) ListNamespaces(options *ListOptions) ([]corev2.Namespace, error) {
-	var namespaces []corev2.Namespace
-
-	if err := client.List(namespacesPath(), &namespaces, options); err != nil {
-		return namespaces, err
-	}
-
-	return namespaces, nil
+	return client.Delete(NamespacesPath(namespace))
 }
 
 // FetchNamespace fetches an namespace by name
-func (client *RestClient) FetchNamespace(namespaceName string) (*types.Namespace, error) {
-	var namespace *types.Namespace
+func (client *RestClient) FetchNamespace(namespaceName string) (*corev2.Namespace, error) {
+	var namespace *corev2.Namespace
 
-	path := namespacesPath(namespaceName)
+	path := NamespacesPath(namespaceName)
 	res, err := client.R().Get(path)
 	if err != nil {
 		return namespace, err

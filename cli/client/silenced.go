@@ -2,15 +2,15 @@ package client
 
 import (
 	"encoding/json"
+	"net/http"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/types"
 )
 
 var silencedPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "silenced")
 
 // CreateSilenced creates a new silenced  entry.
-func (client *RestClient) CreateSilenced(silenced *types.Silenced) error {
+func (client *RestClient) CreateSilenced(silenced *corev2.Silenced) error {
 	b, err := json.Marshal(silenced)
 	if err != nil {
 		return err
@@ -35,9 +35,9 @@ func (client *RestClient) DeleteSilenced(namespace, name string) error {
 }
 
 // ListSilenceds fetches all silenced entries from configured Sensu instance
-func (client *RestClient) ListSilenceds(namespace, sub, check string, options *ListOptions) ([]corev2.Silenced, error) {
+func (client *RestClient) ListSilenceds(namespace, sub, check string, options *ListOptions, header *http.Header) ([]corev2.Silenced, error) {
 	if sub != "" && check != "" {
-		name, err := types.SilencedName(sub, check)
+		name, err := corev2.SilencedName(sub, check)
 		if err != nil {
 			return nil, err
 		}
@@ -61,17 +61,18 @@ func (client *RestClient) ListSilenceds(namespace, sub, check string, options *L
 	if err != nil {
 		return nil, err
 	}
+	*header = resp.Header()
 	if resp.StatusCode() >= 400 {
 		return nil, UnmarshalError(resp)
 	}
 
-	var result []types.Silenced
+	var result []corev2.Silenced
 	err = json.Unmarshal(resp.Body(), &result)
 	return result, err
 }
 
 // FetchSilenced fetches a silenced entry from configured Sensu instance
-func (client *RestClient) FetchSilenced(name string) (*types.Silenced, error) {
+func (client *RestClient) FetchSilenced(name string) (*corev2.Silenced, error) {
 	path := silencedPath(client.config.Namespace(), name)
 	resp, err := client.R().Get(path)
 	if err != nil {
@@ -80,12 +81,12 @@ func (client *RestClient) FetchSilenced(name string) (*types.Silenced, error) {
 	if resp.StatusCode() >= 400 {
 		return nil, UnmarshalError(resp)
 	}
-	var result types.Silenced
+	var result corev2.Silenced
 	return &result, json.Unmarshal(resp.Body(), &result)
 }
 
 // UpdateSilenced updates a silenced entry from configured Sensu instance
-func (client *RestClient) UpdateSilenced(s *types.Silenced) error {
+func (client *RestClient) UpdateSilenced(s *corev2.Silenced) error {
 	b, err := json.Marshal(s)
 	if err != nil {
 		return err

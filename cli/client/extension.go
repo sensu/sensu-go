@@ -4,26 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
 
-var extPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "extensions")
-
-// ListExtensions retrieves a list of extension resources from the backend
-func (client *RestClient) ListExtensions(namespace string, options *ListOptions) ([]corev2.Extension, error) {
-	var extensions []corev2.Extension
-
-	if err := client.List(extPath(namespace), &extensions, options); err != nil {
-		return extensions, err
-	}
-
-	return extensions, nil
-}
+// ExtPath is the api path for extensions.
+var ExtPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "extensions")
 
 // DeregisterExtension deregisters an extension resource from the backend
 func (client *RestClient) DeregisterExtension(name, namespace string) error {
-	path := extPath(namespace, name)
+	path := ExtPath(namespace, name)
 	res, err := client.R().Delete(path)
 	if err != nil {
 		return fmt.Errorf("DELETE %q: %s", path, err)
@@ -43,7 +32,7 @@ func (client *RestClient) RegisterExtension(extension *types.Extension) error {
 		return err
 	}
 
-	path := extPath(extension.Namespace, extension.Name)
+	path := ExtPath(extension.Namespace, extension.Name)
 	res, err := client.R().SetBody(bytes).Put(path)
 	if err != nil {
 		return fmt.Errorf("PUT %q: %s", path, err)

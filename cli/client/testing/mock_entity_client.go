@@ -1,22 +1,13 @@
 package testing
 
 import (
-	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/sensu-go/types"
-
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
-// ListEntities for use with mock lib
-func (c *MockClient) ListEntities(namespace string, options *client.ListOptions) ([]corev2.Entity, error) {
-	args := c.Called(namespace, options)
-	return args.Get(0).([]corev2.Entity), args.Error(1)
-}
-
 // FetchEntity for use with mock lib
-func (c *MockClient) FetchEntity(ID string) (*types.Entity, error) {
+func (c *MockClient) FetchEntity(ID string) (*corev2.Entity, error) {
 	args := c.Called(ID)
-	return args.Get(0).(*types.Entity), args.Error(1)
+	return args.Get(0).(*corev2.Entity), args.Error(1)
 }
 
 // DeleteEntity for use with mock lib
@@ -26,13 +17,13 @@ func (c *MockClient) DeleteEntity(namespace, name string) error {
 }
 
 // UpdateEntity for use with mock lib
-func (c *MockClient) UpdateEntity(entity *types.Entity) error {
+func (c *MockClient) UpdateEntity(entity *corev2.Entity) error {
 	args := c.Called(entity)
 	return args.Error(0)
 }
 
 // CreateEntity for use with mock lib
-func (c *MockClient) CreateEntity(entity *types.Entity) error {
+func (c *MockClient) CreateEntity(entity *corev2.Entity) error {
 	args := c.Called(entity)
 	return args.Error(0)
 }

@@ -4,19 +4,19 @@ import (
 	"encoding/json"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/types"
 )
 
-var hooksPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "hooks")
+// HooksPath is the api path for hooks.
+var HooksPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "hooks")
 
 // CreateHook creates new hook on configured Sensu instance
-func (client *RestClient) CreateHook(hook *types.HookConfig) (err error) {
+func (client *RestClient) CreateHook(hook *corev2.HookConfig) (err error) {
 	bytes, err := json.Marshal(hook)
 	if err != nil {
 		return err
 	}
 
-	path := hooksPath(hook.Namespace)
+	path := HooksPath(hook.Namespace)
 	res, err := client.R().SetBody(bytes).Post(path)
 	if err != nil {
 		return err
@@ -30,13 +30,13 @@ func (client *RestClient) CreateHook(hook *types.HookConfig) (err error) {
 }
 
 // UpdateHook updates given hook on configured Sensu instance
-func (client *RestClient) UpdateHook(hook *types.HookConfig) (err error) {
+func (client *RestClient) UpdateHook(hook *corev2.HookConfig) (err error) {
 	bytes, err := json.Marshal(hook)
 	if err != nil {
 		return err
 	}
 
-	path := hooksPath(hook.Namespace, hook.Name)
+	path := HooksPath(hook.Namespace, hook.Name)
 	res, err := client.R().SetBody(bytes).Put(path)
 	if err != nil {
 		return err
@@ -51,14 +51,14 @@ func (client *RestClient) UpdateHook(hook *types.HookConfig) (err error) {
 
 // DeleteHook deletes hook from configured Sensu instance
 func (client *RestClient) DeleteHook(namespace, name string) error {
-	return client.Delete(hooksPath(namespace, name))
+	return client.Delete(HooksPath(namespace, name))
 }
 
 // FetchHook fetches a specific hook
-func (client *RestClient) FetchHook(name string) (*types.HookConfig, error) {
-	var hook *types.HookConfig
+func (client *RestClient) FetchHook(name string) (*corev2.HookConfig, error) {
+	var hook *corev2.HookConfig
 
-	path := hooksPath(client.config.Namespace(), name)
+	path := HooksPath(client.config.Namespace(), name)
 	res, err := client.R().Get(path)
 	if err != nil {
 		return nil, err
@@ -70,15 +70,4 @@ func (client *RestClient) FetchHook(name string) (*types.HookConfig, error) {
 
 	err = json.Unmarshal(res.Body(), &hook)
 	return hook, err
-}
-
-// ListHooks fetches all hooks from configured Sensu instance
-func (client *RestClient) ListHooks(namespace string, options *ListOptions) ([]corev2.HookConfig, error) {
-	var hooks []corev2.HookConfig
-
-	if err := client.List(hooksPath(namespace), &hooks, options); err != nil {
-		return hooks, err
-	}
-
-	return hooks, nil
 }
