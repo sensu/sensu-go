@@ -18,8 +18,9 @@ type MockGetter struct {
 }
 
 // Get satisfies the asset.Getter interface
-func (m *MockGetter) Get(context.Context, *corev2.Asset) (*RuntimeAsset, error) {
+func (m *MockGetter) Get(ctx context.Context, asset *corev2.Asset) (*RuntimeAsset, error) {
 	m.getCalled = true
+	m.asset.SHA512 = asset.Sha512
 	return m.asset, m.err
 }
 
@@ -66,6 +67,9 @@ func TestFilteredManagerUnfilteredAsset(t *testing.T) {
 }
 
 // FilteredManager should pass a build asset if the asset has builds.
+// This test ensures that filteredManager detects that an asset build
+// exists and passes the build asset to its getter instead of the asset
+// containing the asset build.
 func TestFilteredManagerFilteredBuildAsset(t *testing.T) {
 	mockGetter, entity, filteredManager := NewTestFilteredManager()
 
@@ -82,9 +86,12 @@ func TestFilteredManagerFilteredBuildAsset(t *testing.T) {
 			Filters: filters,
 		},
 	}
+
 	actualAsset, err := filteredManager.Get(context.TODO(), fixtureAsset)
 	assert.NoError(t, err)
 	assert.Equal(t, mockGetter.asset, actualAsset)
+	assert.Equal(t, mockGetter.asset.SHA512, sha512)
+	assert.NotEqual(t, mockGetter.asset.SHA512, fixtureAsset.Sha512)
 	assert.True(t, mockGetter.getCalled)
 }
 
