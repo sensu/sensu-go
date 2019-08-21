@@ -16,7 +16,7 @@ import (
 	"context"
 	"path/filepath"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 const (
@@ -25,7 +25,7 @@ const (
 	includeDir = "include"
 )
 
-// A Getter is responsible for fetching (based on fitler selection), verifying,
+// A Getter is responsible for fetching (based on filter selection), verifying,
 // and expanding an asset. Calls to the Get method block until the Asset has
 // fetched, verified, and expanded or it returns an error indicating why getting
 // the asset failed.
@@ -33,7 +33,7 @@ const (
 // If the context is canceled while Get is in progress, then the operation will
 // be canceled and the error from the context will be returned.
 type Getter interface {
-	Get(context.Context, *types.Asset) (*RuntimeAsset, error)
+	Get(context.Context, *corev2.Asset) (*RuntimeAsset, error)
 }
 
 // A RuntimeAsset is a locally expanded Asset.
