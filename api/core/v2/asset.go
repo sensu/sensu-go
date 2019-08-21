@@ -128,3 +128,7 @@ func AssetFields(r Resource) map[string]string {
 func (a *Asset) SetNamespace(namespace string) {
 	a.Namespace = namespace
 }
+
+func (a *Asset) RBACName() string {
+	return "assets"
+}

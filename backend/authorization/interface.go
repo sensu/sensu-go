@@ -2,9 +2,12 @@ package authorization
 
 import (
 	"context"
+	"errors"
 
 	"github.com/sensu/sensu-go/types"
 )
+
+var ErrUnauthorized = errors.New("request unauthorized")
 
 // Authorizer determines whether a request is authorized using the Attributes
 // passed. It returns true if the request should be authorized, along with any
@@ -37,4 +40,28 @@ func GetAttributes(ctx context.Context) *Attributes {
 // SetAttributes stores the given attributes within the provided context
 func SetAttributes(ctx context.Context, attrs *Attributes) context.Context {
 	return context.WithValue(ctx, types.AuthorizationAttributesKey, attrs)
+}
+
+// AttributesKey is a convenience type for storing an attributes-like value
+// as a map key.
+type AttributesKey struct {
+	APIGroup     string
+	APIVersion   string
+	Namespace    string
+	Resource     string
+	ResourceName string
+	UserName     string
+	Verb         string
+}
+
+func (a Attributes) Key() AttributesKey {
+	return AttributesKey{
+		APIGroup:     a.APIGroup,
+		APIVersion:   a.APIVersion,
+		Namespace:    a.Namespace,
+		Resource:     a.Resource,
+		ResourceName: a.ResourceName,
+		UserName:     a.User.Username,
+		Verb:         a.Verb,
+	}
 }

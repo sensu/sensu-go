@@ -3,7 +3,6 @@ package graphql
 import (
 	"testing"
 
-	client "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -19,8 +18,7 @@ func addHook(fns ...InitHook) func() {
 }
 
 func TestNewService(t *testing.T) {
-	_, factory := client.NewClientFactory()
-	svc, err := NewService(ServiceConfig{ClientFactory: factory})
+	svc, err := NewService(ServiceConfig{})
 	require.NoError(t, err)
 	assert.NotEmpty(t, svc)
 }

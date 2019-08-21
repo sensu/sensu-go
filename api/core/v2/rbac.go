@@ -341,3 +341,19 @@ func (r *Role) SetNamespace(namespace string) {
 func (b *RoleBinding) SetNamespace(namespace string) {
 	b.Namespace = namespace
 }
+
+func (*ClusterRoleBinding) RBACName() string {
+	return "clusterrolebindings"
+}
+
+func (*RoleBinding) RBACName() string {
+	return "rolebindings"
+}
+
+func (*ClusterRole) RBACName() string {
+	return "clusterroles"
+}
+
+func (*Role) RBACName() string {
+	return "roles"
+}

@@ -175,3 +175,7 @@ func EventFilterFields(r Resource) map[string]string {
 func (f *EventFilter) SetNamespace(namespace string) {
 	f.Namespace = namespace
 }
+
+func (f *EventFilter) RBACName() string {
+	return "filters"
+}
