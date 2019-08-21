@@ -68,8 +68,8 @@ func TestFilteredManagerUnfilteredAsset(t *testing.T) {
 
 // FilteredManager should pass a build asset if the asset has builds.
 // This test ensures that filteredManager detects that an asset build
-// exists and passes the build asset to its getter instead of the asset
-// containing the asset build.
+// exists and passes the build asset to filtereManager's getter
+// instead of the asset containing the asset build.
 func TestFilteredManagerFilteredBuildAsset(t *testing.T) {
 	mockGetter, entity, filteredManager := NewTestFilteredManager()
 
