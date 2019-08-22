@@ -24,6 +24,8 @@ type Claims struct {
 type AuthProviderClaims struct {
 	// ProviderID used to login the user
 	ProviderID string `json:"provider_id"`
+	// ProviderType represents the type of provider used
+	ProviderType string `json:"provider_type"`
 	// UserID assigned to the user by the provider
 	UserID string `json:"user_id"`
 }
@@ -34,8 +36,9 @@ func FixtureClaims(username string, groups []string) *Claims {
 		StandardClaims: jwt.StandardClaims{Subject: username},
 		Groups:         groups,
 		Provider: AuthProviderClaims{
-			ProviderID: "basic/default",
-			UserID:     username,
+			ProviderID:   "basic/default",
+			ProviderType: "basic",
+			UserID:       username,
 		},
 	}
 }

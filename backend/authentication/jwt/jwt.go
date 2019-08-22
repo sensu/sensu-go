@@ -9,7 +9,7 @@ import (
 
 	jwt "github.com/dgrijalva/jwt-go"
 	time "github.com/echlebek/timeproxy"
-	"github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 	utilbytes "github.com/sensu/sensu-go/util/bytes"
@@ -22,7 +22,7 @@ var (
 
 // AccessToken creates a new access token and returns it in both JWT and
 // signed format, along with any error
-func AccessToken(claims *v2.Claims) (*jwt.Token, string, error) {
+func AccessToken(claims *corev2.Claims) (*jwt.Token, string, error) {
 	// Create a unique identifier for the token
 	jti, err := GenJTI()
 	if err != nil {
@@ -43,14 +43,14 @@ func AccessToken(claims *v2.Claims) (*jwt.Token, string, error) {
 }
 
 // NewClaims creates new claim based on username
-func NewClaims(user *v2.User) (*v2.Claims, error) {
+func NewClaims(user *corev2.User) (*corev2.Claims, error) {
 	// Create a unique identifier for the token
 	jti, err := GenJTI()
 	if err != nil {
 		return nil, err
 	}
 
-	claims := &v2.Claims{
+	claims := &corev2.Claims{
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(defaultExpiration).Unix(),
 			Id:        jti,
@@ -71,8 +71,8 @@ func GenJTI() (string, error) {
 }
 
 // GetClaims returns the claims from a token
-func GetClaims(token *jwt.Token) (*v2.Claims, error) {
-	if claims, ok := token.Claims.(*v2.Claims); ok {
+func GetClaims(token *jwt.Token) (*corev2.Claims, error) {
+	if claims, ok := token.Claims.(*corev2.Claims); ok {
 		return claims, nil
 	}
 
@@ -80,9 +80,9 @@ func GetClaims(token *jwt.Token) (*v2.Claims, error) {
 }
 
 // GetClaimsFromContext retrieves the JWT claims from the request context
-func GetClaimsFromContext(ctx context.Context) *v2.Claims {
-	if value := ctx.Value(v2.ClaimsKey); value != nil {
-		claims, ok := value.(*v2.Claims)
+func GetClaimsFromContext(ctx context.Context) *corev2.Claims {
+	if value := ctx.Value(corev2.ClaimsKey); value != nil {
+		claims, ok := value.(*corev2.Claims)
 		if !ok {
 			return nil
 		}
@@ -148,7 +148,7 @@ func parseToken(tokenString string) (*jwt.Token, error) {
 }
 
 // RefreshToken returns a refresh token for a specific user
-func RefreshToken(claims *v2.Claims) (*jwt.Token, string, error) {
+func RefreshToken(claims *corev2.Claims) (*jwt.Token, string, error) {
 	// Create a unique identifier for the token
 	jti, err := GenJTI()
 	if err != nil {
@@ -169,8 +169,8 @@ func RefreshToken(claims *v2.Claims) (*jwt.Token, string, error) {
 
 // SetClaimsIntoContext adds the token claims into the request context for
 // easier consumption later
-func SetClaimsIntoContext(r *http.Request, claims *v2.Claims) context.Context {
-	return context.WithValue(r.Context(), v2.ClaimsKey, claims)
+func SetClaimsIntoContext(r *http.Request, claims *corev2.Claims) context.Context {
+	return context.WithValue(r.Context(), corev2.ClaimsKey, claims)
 }
 
 // ValidateExpiredToken verifies that the provided token is valid, even if
@@ -181,7 +181,7 @@ func ValidateExpiredToken(tokenString string) (*jwt.Token, error) {
 		return nil, err
 	}
 
-	if _, ok := token.Claims.(*v2.Claims); ok {
+	if _, ok := token.Claims.(*corev2.Claims); ok {
 		if token.Valid {
 			return token, nil
 		}
