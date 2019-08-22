@@ -51,7 +51,7 @@ func (r *nodeResolver) FindType(i interface{}) *graphql.Type {
 	resolver := r.register.Lookup(components)
 	if resolver == nil {
 		logger := logger.WithField("translator", fmt.Sprintf("%#v", translator))
-		logger.Warn("unable to find node resolver for type")
+		logger.Error("unable to find node resolver for type")
 		return nil
 	}
 	return &resolver.ObjectType
