@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
@@ -24,6 +25,7 @@ func newNodeResolver(cfg ServiceConfig) *nodeResolver {
 	registerAssetNodeResolver(register, cfg.AssetClient)
 	registerCheckNodeResolver(register, cfg.CheckClient)
 	registerEntityNodeResolver(register, cfg.EntityClient)
+	registerEventFilterNodeResolver(register, cfg.EventFilterClient)
 	registerHandlerNodeResolver(register, cfg.HandlerClient)
 	registerHookNodeResolver(register, cfg.HookClient)
 	registerMutatorNodeResolver(register, cfg.MutatorClient)
@@ -47,6 +49,11 @@ func (r *nodeResolver) FindType(i interface{}) *graphql.Type {
 
 	components := translator.Encode(i)
 	resolver := r.register.Lookup(components)
+	if resolver == nil {
+		logger := logger.WithField("translator", fmt.Sprintf("%#v", translator))
+		logger.Warn("unable to find node resolver for type")
+		return nil
+	}
 	return &resolver.ObjectType
 }
 
@@ -135,6 +142,27 @@ func registerEntityNodeResolver(register relay.NodeRegister, client EntityClient
 func (f *entityNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
 	ctx := setContextFromComponents(p.Context, p.IDComponents)
 	record, err := f.client.FetchEntity(ctx, p.IDComponents.UniqueComponent())
+	return handleFetchResult(record, err)
+}
+
+// event filters
+
+type eventFilterNodeResolver struct {
+	client EventFilterClient
+}
+
+func registerEventFilterNodeResolver(register relay.NodeRegister, client EventFilterClient) {
+	resolver := &eventFilterNodeResolver{client: client}
+	register.RegisterResolver(relay.NodeResolver{
+		ObjectType: schema.EventFilterType,
+		Translator: globalid.EventFilterTranslator,
+		Resolve:    resolver.fetch,
+	})
+}
+
+func (f *eventFilterNodeResolver) fetch(p relay.NodeResolverParams) (interface{}, error) {
+	ctx := setContextFromComponents(p.Context, p.IDComponents)
+	record, err := f.client.FetchEventFilter(ctx, p.IDComponents.UniqueComponent())
 	return handleFetchResult(record, err)
 }
 
