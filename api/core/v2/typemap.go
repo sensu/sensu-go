@@ -15,6 +15,8 @@ var typeMap = map[string]interface{}{
 	"any":                    &Any{},
 	"Asset":                  &Asset{},
 	"asset":                  &Asset{},
+	"AssetBuild":             &AssetBuild{},
+	"asset_build":            &AssetBuild{},
 	"AssetList":              &AssetList{},
 	"asset_list":             &AssetList{},
 	"AuthProviderClaims":     &AuthProviderClaims{},
