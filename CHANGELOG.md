@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- sensuctl dump no longer silently discards errors.
+
 ## [5.12.0] - 2019-08-22
 
 ### Added
