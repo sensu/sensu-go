@@ -40,6 +40,8 @@ var (
 		&corev2.RoleBinding{},
 		&corev2.Silenced{},
 	}
+
+	ChunkSize = 100
 )
 
 var resourceRE = regexp.MustCompile(`(\w+\/v\d+\.)?(\w+)`)
@@ -175,7 +177,10 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			}
 
 			val := reflect.New(reflect.SliceOf(reflect.TypeOf(req)))
-			err = cli.Client.List(req.URIPath(), val.Interface(), &client.ListOptions{})
+			err = cli.Client.List(
+				req.URIPath(), val.Interface(), &client.ListOptions{
+					ChunkSize: ChunkSize,
+				})
 			if err != nil {
 				// We want to ignore non-nil errors that are a result of
 				// resources not existing, or features being licensed.
