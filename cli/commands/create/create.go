@@ -7,13 +7,15 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
+	"net/url"
 	"os"
+	"path/filepath"
 	"regexp"
 
 	"github.com/ghodss/yaml"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -21,34 +23,53 @@ import (
 // CreateCommand creates generic Sensu resources.
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create [-f FILE]",
-		Short: "create new resources from file or STDIN",
+		Use:   "create [-f (FILE OR URL)]",
+		Short: "create new resources from file or URL (file://, http[s]://), or STDIN otherwise.",
 		RunE:  execute(cli),
 	}
 
-	_ = cmd.Flags().StringP("file", "f", "", "File to create resources from")
+	_ = cmd.Flags().StringP("file", "f", "", "File or URL to create resources from")
 
 	return cmd
 }
 
 func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
-		var in io.Reader
 		if len(args) > 1 {
 			_ = cmd.Help()
 			return errors.New("invalid argument(s) received")
 		}
-		fp, err := cmd.Flags().GetString("file")
+		t := &http.Transport{}
+		t.RegisterProtocol("file", http.NewFileTransport(http.Dir("/")))
+		client := &http.Client{Transport: t}
+		input, err := cmd.Flags().GetString("file")
 		if err != nil {
 			return err
 		}
-
-		in, err = helpers.InputData(fp)
+		urly, err := url.Parse(input)
 		if err != nil {
 			return err
 		}
+		if urly.Scheme == "" {
+			urly.Scheme = "file"
+			urly.Path, _ = filepath.Abs(urly.Path)
+		}
+		req, err := http.NewRequest("GET", urly.String(), nil)
+		if err != nil {
+			return err
+		}
+		resp, err := client.Do(req)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode >= 400 {
+			buf := new(bytes.Buffer)
+			_, _ = io.Copy(buf, resp.Body)
+			return errors.New(buf.String())
+		}
 
-		resources, err := ParseResources(in)
+		resources, err := ParseResources(resp.Body)
 		if err != nil {
 			return err
 		}
