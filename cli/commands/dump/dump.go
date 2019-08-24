@@ -42,11 +42,23 @@ var (
 	}
 
 	ChunkSize = 100
+
+	// synonyms provides user-friendly resource synonyms like checks, entities
+	synonyms = map[string]corev2.Resource{}
 )
+
+func init() {
+	for _, resource := range All {
+		synonyms[resource.RBACName()] = resource
+	}
+}
 
 var resourceRE = regexp.MustCompile(`(\w+\/v\d+\.)?(\w+)`)
 
 func resolveResource(resource string) (types.Resource, error) {
+	if resource, ok := synonyms[resource]; ok {
+		return resource, nil
+	}
 	matches := resourceRE.FindStringSubmatch(resource)
 	if len(matches) != 3 {
 		return nil, fmt.Errorf("bad resource qualifier: %s. hint: try something like core/v2.CheckConfig", resource)
@@ -61,17 +73,13 @@ func resolveResource(resource string) (types.Resource, error) {
 
 var description = `sensuctl dump
 
-Dump resources to stdout or a file.
+Dump resources to stdout or a file. Example:
+$ sensuctl dump checks
 
-The tool accepts arguments in the form of resource types which are
-comma delimited. For instance,
-
+The tool also supports naming types by their fully-qualified names:
 $ sensuctl dump core/v2.CheckConfig,core/v2.Entity
 
-will dump all check configurations and entities.
-
 You can also use the 'all' qualifier to dump all supported resources:
-
 $ sensuctl dump all
 `
 
