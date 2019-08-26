@@ -3,6 +3,7 @@ package create
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
@@ -12,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/ghodss/yaml"
 	"github.com/sensu/sensu-go/cli"
@@ -28,9 +30,66 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE:  execute(cli),
 	}
 
-	_ = cmd.Flags().StringP("file", "f", "", "File or URL to create resources from")
+	_ = cmd.Flags().StringSliceP("file", "f", nil, "Files or URLs to create resources from")
+	_ = cmd.Flags().BoolP("recurse", "r", false, "Traverse directories, loading each file found")
 
 	return cmd
+}
+
+type httpDirectory struct {
+	XMLName xml.Name `xml:"pre"`
+	Files   []string `xml:"a"`
+}
+
+func process(cli *cli.SensuCli, client *http.Client, input string, recurse bool) error {
+	urly, err := url.Parse(input)
+	if err != nil {
+		return err
+	}
+	if urly.Scheme == "" {
+		urly.Scheme = "file"
+		urly.Path, _ = filepath.Abs(urly.Path)
+	}
+	req, err := http.NewRequest("GET", urly.String(), nil)
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		buf := new(bytes.Buffer)
+		_, _ = io.Copy(buf, resp.Body)
+		return errors.New(buf.String())
+	}
+
+	if strings.HasPrefix(resp.Header.Get("Content-Type"), "text/html") {
+		// The server returned us a direcory listing
+		if !recurse {
+			return errors.New("use -r to enable directory recursion")
+		}
+		dec := xml.NewDecoder(resp.Body)
+		var dir httpDirectory
+		if err := dec.Decode(&dir); err != nil {
+			return err
+		}
+		for _, file := range dir.Files {
+			if err := process(cli, client, filepath.Join(input, file), recurse); err != nil {
+				return err
+			}
+		}
+	}
+
+	resources, err := ParseResources(resp.Body)
+	if err != nil {
+		return fmt.Errorf("in %s: %s", input, err)
+	}
+	if err := ValidateResources(resources, cli.Config.Namespace()); err != nil {
+		return err
+	}
+	return PutResources(cli.Client, resources)
 }
 
 func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
@@ -42,41 +101,20 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		t := &http.Transport{}
 		t.RegisterProtocol("file", http.NewFileTransport(http.Dir("/")))
 		client := &http.Client{Transport: t}
-		input, err := cmd.Flags().GetString("file")
+		inputs, err := cmd.Flags().GetStringSlice("file")
 		if err != nil {
 			return err
 		}
-		urly, err := url.Parse(input)
+		recurse, err := cmd.Flags().GetBool("recurse")
 		if err != nil {
 			return err
 		}
-		if urly.Scheme == "" {
-			urly.Scheme = "file"
-			urly.Path, _ = filepath.Abs(urly.Path)
+		for _, input := range inputs {
+			if err := process(cli, client, input, recurse); err != nil {
+				return err
+			}
 		}
-		req, err := http.NewRequest("GET", urly.String(), nil)
-		if err != nil {
-			return err
-		}
-		resp, err := client.Do(req)
-		if err != nil {
-			return err
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode >= 400 {
-			buf := new(bytes.Buffer)
-			_, _ = io.Copy(buf, resp.Body)
-			return errors.New(buf.String())
-		}
-
-		resources, err := ParseResources(resp.Body)
-		if err != nil {
-			return err
-		}
-		if err := ValidateResources(resources, cli.Config.Namespace()); err != nil {
-			return err
-		}
-		return PutResources(cli.Client, resources)
+		return nil
 	}
 }
 
