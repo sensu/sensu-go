@@ -25,13 +25,13 @@ import (
 // CreateCommand creates generic Sensu resources.
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create [-f (FILE OR URL)]",
-		Short: "create new resources from file or URL (file://, http[s]://), or STDIN otherwise.",
+		Use:   "create [-r] [[-f URL] ... ]",
+		Short: "create or replace resources from file or URL (path, file://, http[s]://), or STDIN otherwise.",
 		RunE:  execute(cli),
 	}
 
-	_ = cmd.Flags().StringSliceP("file", "f", nil, "Files or URLs to create resources from")
-	_ = cmd.Flags().BoolP("recurse", "r", false, "Traverse directories, loading each file found")
+	_ = cmd.Flags().StringSliceP("file", "f", nil, "Files, directories, or URLs to create resources from")
+	_ = cmd.Flags().BoolP("recurse", "r", false, "Follow subdirectories")
 
 	return cmd
 }
@@ -41,14 +41,41 @@ type httpDirectory struct {
 	Files   []string `xml:"a"`
 }
 
+func processFile(cli *cli.SensuCli, input string, recurse bool) error {
+	var tld = true
+	return filepath.Walk(input, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if !recurse && info.IsDir() && !tld {
+			return filepath.SkipDir
+		} else if info.IsDir() && tld || info.IsDir() && recurse {
+			tld = false
+			return nil
+		}
+		f, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		resources, err := ParseResources(f)
+		if err != nil {
+			return fmt.Errorf("in %s: %s", input, err)
+		}
+		if err := ValidateResources(resources, cli.Config.Namespace()); err != nil {
+			return err
+		}
+		return PutResources(cli.Client, resources)
+	})
+}
+
 func process(cli *cli.SensuCli, client *http.Client, input string, recurse bool) error {
 	urly, err := url.Parse(input)
 	if err != nil {
 		return err
 	}
-	if urly.Scheme == "" {
-		urly.Scheme = "file"
-		urly.Path, _ = filepath.Abs(urly.Path)
+	if urly.Scheme == "" || len(urly.Scheme) == 1 {
+		// We are dealing with a file path
+		return processFile(cli, input, recurse)
 	}
 	req, err := http.NewRequest("GET", urly.String(), nil)
 	if err != nil {
