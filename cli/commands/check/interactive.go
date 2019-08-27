@@ -231,6 +231,7 @@ func (opts *checkOpts) administerQuestionnaire(editing bool) error {
 			Prompt: &survey.Select{
 				Message: "Metric Format:",
 				Options: append([]string{"none"}, types.OutputMetricFormats...),
+				Default: opts.OutputMetricFormat,
 			},
 			Validate: func(val interface{}) error {
 				if value := strings.TrimSpace(val.(string)); value != "" && value != "none" {
