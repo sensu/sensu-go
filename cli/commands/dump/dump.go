@@ -188,7 +188,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			err = cli.Client.List(
 				req.URIPath(), val.Interface(), &client.ListOptions{
 					ChunkSize: ChunkSize,
-				})
+				}, nil)
 			if err != nil {
 				// We want to ignore non-nil errors that are a result of
 				// resources not existing, or features being licensed.

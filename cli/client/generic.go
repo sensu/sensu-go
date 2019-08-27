@@ -55,7 +55,9 @@ func (client *RestClient) List(path string, objs interface{}, options *ListOptio
 		if err != nil {
 			return err
 		}
-		*header = resp.Header()
+		if header != nil {
+			*header = resp.Header()
+		}
 
 		if resp.StatusCode() >= 400 {
 			return UnmarshalError(resp)
