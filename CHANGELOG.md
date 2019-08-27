@@ -8,6 +8,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Fixed
+- Interactive check create and update modes now have 'none' as the first
+highlighted option, instead of nagios-perfdata.
 - Fixed a bug where silences would not expire on event resolution.
 
 ## [5.12.0] - 2019-08-22
