@@ -3,30 +3,29 @@ package graphql
 import (
 	"testing"
 
-	v2 "github.com/sensu/sensu-go/api/core/v2"
-	client "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/graphql"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
 func TestSilencedTypeCheckField(t *testing.T) {
-	check := types.FixtureCheckConfig("http-check")
-	silenced := types.FixtureSilenced("unix:http-check")
+	check := corev2.FixtureCheckConfig("http-check")
+	silenced := corev2.FixtureSilenced("unix:http-check")
 
-	client, factory := client.NewClientFactory()
-	impl := &silencedImpl{factory: factory}
+	client := new(MockCheckClient)
+	impl := &silencedImpl{client: client}
 
 	// Success
-	client.On("FetchCheck", check.Name).Return(check, nil).Once()
+	client.On("FetchCheck", mock.Anything, check.Name).Return(check, nil).Once()
 	res, err := impl.Check(graphql.ResolveParams{Source: silenced})
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
 }
 
 func TestSilencedTypeExpiresField(t *testing.T) {
-	silenced := types.FixtureSilenced("unix:http-check")
+	silenced := corev2.FixtureSilenced("unix:http-check")
 	impl := &silencedImpl{}
 
 	// with expiry unset
@@ -42,7 +41,7 @@ func TestSilencedTypeExpiresField(t *testing.T) {
 }
 
 func TestSilencedTypeBeginField(t *testing.T) {
-	silenced := types.FixtureSilenced("unix:http-check")
+	silenced := corev2.FixtureSilenced("unix:http-check")
 	impl := &silencedImpl{}
 
 	res, err := impl.Begin(graphql.ResolveParams{Source: silenced})
@@ -51,7 +50,7 @@ func TestSilencedTypeBeginField(t *testing.T) {
 }
 
 func TestSilencedTypeToJSONField(t *testing.T) {
-	src := v2.FixtureSilenced("check:subscription")
+	src := corev2.FixtureSilenced("check:subscription")
 	imp := &silencedImpl{}
 
 	res, err := imp.ToJSON(graphql.ResolveParams{Source: src})

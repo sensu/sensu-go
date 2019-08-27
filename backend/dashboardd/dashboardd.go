@@ -15,6 +15,7 @@ import (
 
 	"github.com/NYTimes/gziphandler"
 	"github.com/gorilla/mux"
+	"github.com/sensu/sensu-go/backend/apid"
 	"github.com/sensu/sensu-go/backend/dashboardd/asset"
 	"github.com/sensu/sensu-go/dashboard"
 	"github.com/sensu/sensu-go/types"
@@ -27,7 +28,7 @@ type Config struct {
 	Port int
 	TLS  *types.TLSOptions
 
-	APIURL string
+	APIDConfig apid.Config
 }
 
 // Dashboardd represents the dashboard daemon
@@ -41,6 +42,9 @@ type Dashboardd struct {
 
 	Config
 	Assets *asset.Collection
+
+	CoreSubrouter    *mux.Router
+	GraphQLSubrouter *mux.Router
 }
 
 // Option is a functional option.
@@ -70,9 +74,14 @@ func New(cfg Config, opts ...Option) (*Dashboardd, error) {
 		return nil, err
 	}
 
+	handler, err := httpRouter(cfg.APIDConfig, d)
+	if err != nil {
+		return nil, err
+	}
+
 	d.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", d.Host, d.Port),
-		Handler:      httpRouter(d),
+		Handler:      handler,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 		TLSConfig:    tlsServerConfig,
@@ -133,27 +142,26 @@ func (d *Dashboardd) Name() string {
 	return "dashboardd"
 }
 
-func httpRouter(d *Dashboardd) *mux.Router {
+func httpRouter(c apid.Config, d *Dashboardd) (*mux.Router, error) {
 	r := mux.NewRouter()
 
-	backendProxy, err := newBackendProxy(d.Config.APIURL, d.Config.TLS)
+	handler, coreSubrouter, graphQLSubrouter, err := apid.NewHandler(c)
 	if err != nil {
-		d.errChan <- err
+		return nil, err
 	}
+	d.CoreSubrouter = coreSubrouter
+	d.GraphQLSubrouter = graphQLSubrouter
 
 	// Gzip content
 	gziphandler, err := gziphandler.NewGzipLevelAndMinSize(
 		gzip.DefaultCompression,
 		gziphandler.DefaultMinSize,
 	)
-	if err != nil {
-		panic(err)
-	}
 
 	// Proxy endpoints
-	r.PathPrefix("/auth").Handler(backendProxy)
-	r.PathPrefix("/api").Handler(backendProxy)
-	r.PathPrefix("/graphql").Handler(gziphandler(backendProxy))
+	r.PathPrefix("/auth").Handler(handler)
+	r.PathPrefix("/api").Handler(handler)
+	r.PathPrefix("/graphql").Handler(gziphandler(handler))
 
 	// Expose Asset Info
 	r.PathPrefix("/index.json").Handler(gziphandler(listAssetsHandler(d.Assets, d.logger)))
@@ -162,7 +170,7 @@ func httpRouter(d *Dashboardd) *mux.Router {
 	r.PathPrefix("/static").Handler(gziphandler(staticHandler(d.Assets)))
 	r.PathPrefix("/").Handler(rootHandler(d.Assets))
 
-	return r
+	return r, nil
 }
 
 func staticHandler(fs http.FileSystem) http.Handler {

@@ -5,22 +5,21 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
 	"github.com/sensu/sensu-go/backend/store"
-
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
-// AuthenticationClient is a type that can be used to interact with the
-// backend's authentication services.
+// AuthenticationClient is an API client for authentication.
 type AuthenticationClient struct {
 	store store.TokenStore
 	auth  *authentication.Authenticator
 }
 
+// NewAuthenticationClient creates a new AuthenticationClient, given a a store
+// and an authenticator.
 func NewAuthenticationClient(store store.TokenStore, auth *authentication.Authenticator) *AuthenticationClient {
 	return &AuthenticationClient{
 		store: store,
@@ -28,7 +27,8 @@ func NewAuthenticationClient(store store.TokenStore, auth *authentication.Authen
 	}
 }
 
-// CreateAccessToken creates a new access token, given a valid username and password.
+// CreateAccessToken creates a new access token, given a valid username and
+// password.
 func (a *AuthenticationClient) CreateAccessToken(ctx context.Context, username, password string) (*corev2.Tokens, error) {
 	claims, err := a.auth.Authenticate(ctx, username, password)
 	if err != nil {
@@ -45,7 +45,7 @@ func (a *AuthenticationClient) CreateAccessToken(ctx context.Context, username, 
 	}
 
 	// Create a refresh token and its signed version
-	refreshClaims := &v2.Claims{StandardClaims: v2.StandardClaims(claims.Subject)}
+	refreshClaims := &corev2.Claims{StandardClaims: corev2.StandardClaims(claims.Subject)}
 	refreshToken, refreshTokenString, err := jwt.RefreshToken(refreshClaims)
 	if err != nil {
 		return nil, fmt.Errorf("error creating access token: %s", err)
@@ -91,14 +91,14 @@ func (a *AuthenticationClient) Logout(ctx context.Context) error {
 
 	// Get the access token claims
 	if value := ctx.Value(corev2.AccessTokenClaims); value != nil {
-		accessClaims = value.(*v2.Claims)
+		accessClaims = value.(*corev2.Claims)
 	} else {
 		return corev2.ErrInvalidToken
 	}
 
 	// Get the refresh token claims
 	if value := ctx.Value(corev2.RefreshTokenClaims); value != nil {
-		refreshClaims = value.(*v2.Claims)
+		refreshClaims = value.(*corev2.Claims)
 	} else {
 		return corev2.ErrInvalidToken
 	}
@@ -115,25 +115,25 @@ func (a *AuthenticationClient) Logout(ctx context.Context) error {
 // corev2.RefreshTokenClaims -> *corev2.Claims
 // corev2.RefreshTokenString -> string
 func (a *AuthenticationClient) RefreshAccessToken(ctx context.Context) (*corev2.Tokens, error) {
-	var accessClaims, refreshClaims *v2.Claims
+	var accessClaims, refreshClaims *corev2.Claims
 
 	// Get the access token claims
-	if value := ctx.Value(v2.AccessTokenClaims); value != nil {
-		accessClaims = value.(*v2.Claims)
+	if value := ctx.Value(corev2.AccessTokenClaims); value != nil {
+		accessClaims = value.(*corev2.Claims)
 	} else {
 		return nil, corev2.ErrInvalidToken
 	}
 
 	// Get the refresh token claims
-	if value := ctx.Value(v2.RefreshTokenClaims); value != nil {
-		refreshClaims = value.(*v2.Claims)
+	if value := ctx.Value(corev2.RefreshTokenClaims); value != nil {
+		refreshClaims = value.(*corev2.Claims)
 	} else {
 		return nil, corev2.ErrInvalidToken
 	}
 
 	// Get the refresh token string
 	var refreshTokenString string
-	if value := ctx.Value(v2.RefreshTokenString); value != nil {
+	if value := ctx.Value(corev2.RefreshTokenString); value != nil {
 		refreshTokenString = value.(string)
 	} else {
 		return nil, corev2.ErrInvalidToken

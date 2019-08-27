@@ -2,13 +2,15 @@ package event
 
 import (
 	"errors"
+	"net/http"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	"github.com/sensu/sensu-go/cli/commands/flags"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -30,10 +32,16 @@ func TestListCommandRunEClosure(t *testing.T) {
 	assert := assert.New(t)
 	cli := newConfiguredCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEvents", mock.Anything, mock.Anything).Return([]types.Event{
-		*types.FixtureEvent("1", "something"),
-		*types.FixtureEvent("2", "funny"),
-	}, nil)
+	resources := []corev2.Event{}
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
+		func(args mock.Arguments) {
+			resources := args[1].(*[]corev2.Event)
+			*resources = []corev2.Event{
+				*corev2.FixtureEvent("1", "something"),
+				*corev2.FixtureEvent("2", "funny"),
+			}
+		},
+	)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))
@@ -43,15 +51,22 @@ func TestListCommandRunEClosure(t *testing.T) {
 	assert.Contains(out, "something")
 	assert.Contains(out, "funny")
 	assert.Nil(err)
+	assert.NotContains(out, "==")
 }
 
 func TestListCommandRunEClosureWithAllNamespaces(t *testing.T) {
 	assert := assert.New(t)
 	cli := newConfiguredCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEvents", "", mock.Anything).Return([]types.Event{
-		*types.FixtureEvent("1", "something"),
-	}, nil)
+	resources := []corev2.Event{}
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
+		func(args mock.Arguments) {
+			resources := args[1].(*[]corev2.Event)
+			*resources = []corev2.Event{
+				*corev2.FixtureEvent("1", "something"),
+			}
+		},
+	)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "json"))
@@ -66,10 +81,16 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	assert := assert.New(t)
 	cli := newConfiguredCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEvents", mock.Anything, mock.Anything).Return([]types.Event{
-		*types.FixtureEvent("1", "something"),
-		*types.FixtureEvent("2", "funny"),
-	}, nil)
+	resources := []corev2.Event{}
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
+		func(args mock.Arguments) {
+			resources := args[1].(*[]corev2.Event)
+			*resources = []corev2.Event{
+				*corev2.FixtureEvent("1", "something"),
+				*corev2.FixtureEvent("2", "funny"),
+			}
+		},
+	)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.Format, "none"))
@@ -89,7 +110,8 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 	assert := assert.New(t)
 	cli := newConfiguredCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListEvents", mock.Anything, mock.Anything).Return([]types.Event{}, errors.New("fun-msg"))
+	resources := []corev2.Event{}
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(errors.New("fun-msg"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -117,4 +139,33 @@ func newConfiguredCLI() *cli.SensuCli {
 	config := cli.Config.(*client.MockConfig)
 	config.On("Format").Return("json")
 	return cli
+}
+
+func TestListCommandRunEClosureWithHeader(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := test.NewMockCLI()
+	config := cli.Config.(*client.MockConfig)
+	config.On("Format").Return("none")
+
+	client := cli.Client.(*client.MockClient)
+	var header http.Header
+	resources := []corev2.Event{}
+	client.On("List", mock.Anything, &resources, mock.Anything, &header).Return(nil).Run(
+		func(args mock.Arguments) {
+			resources := args[1].(*[]corev2.Event)
+			*resources = []corev2.Event{}
+			header := args[3].(*http.Header)
+			*header = make(http.Header)
+			header.Add(helpers.HeaderWarning, "E_TOO_MANY_ENTITIES")
+		},
+	)
+
+	cmd := ListCommand(cli)
+	out, err := test.RunCmd(cmd, []string{})
+
+	assert.NotEmpty(out)
+	assert.Nil(err)
+	assert.Contains(out, "E_TOO_MANY_ENTITIES")
+	assert.Contains(out, "==")
 }
