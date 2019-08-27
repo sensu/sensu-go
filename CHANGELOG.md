@@ -47,6 +47,7 @@ configuration.
 - Added entity name to the interactive sensuctl survey.
 - Check hooks with `stdin: true` now receive actual event data on STDIN instead
   of an empty event.
+- Fixed a bug where silences would not expire on event resolution.
 - Prevent a segmentation fault on the agent when a command execution returns an
 error.
 - [Web] Fixed issue where a bad or revoked access token could crash the app.
