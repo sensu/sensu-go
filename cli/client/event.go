@@ -5,16 +5,16 @@ import (
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/types"
 )
 
-var eventsPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "events")
+// EventsPath is the api path for events.
+var EventsPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "events")
 
 // FetchEvent fetches a specific event
-func (client *RestClient) FetchEvent(entity, check string) (*types.Event, error) {
-	var event *types.Event
+func (client *RestClient) FetchEvent(entity, check string) (*corev2.Event, error) {
+	var event *corev2.Event
 
-	path := eventsPath(client.config.Namespace(), entity, check)
+	path := EventsPath(client.config.Namespace(), entity, check)
 	res, err := client.R().Get(path)
 	if err != nil {
 		return nil, err
@@ -28,30 +28,19 @@ func (client *RestClient) FetchEvent(entity, check string) (*types.Event, error)
 	return event, err
 }
 
-// ListEvents fetches events from Sensu API
-func (client *RestClient) ListEvents(namespace string, options *ListOptions) ([]corev2.Event, error) {
-	var events []corev2.Event
-
-	if err := client.List(eventsPath(namespace), &events, options); err != nil {
-		return events, err
-	}
-
-	return events, nil
-}
-
 // DeleteEvent deletes an event.
 func (client *RestClient) DeleteEvent(namespace, entity, check string) error {
-	return client.Delete(eventsPath(namespace, entity, check))
+	return client.Delete(EventsPath(namespace, entity, check))
 }
 
 // UpdateEvent updates an event.
-func (client *RestClient) UpdateEvent(event *types.Event) error {
+func (client *RestClient) UpdateEvent(event *corev2.Event) error {
 	bytes, err := json.Marshal(event)
 	if err != nil {
 		return err
 	}
 
-	path := eventsPath(event.Check.Namespace, event.Entity.Name, event.Check.Name)
+	path := EventsPath(event.Check.Namespace, event.Entity.Name, event.Check.Name)
 	res, err := client.R().SetBody(bytes).Put(path)
 	if err != nil {
 		return err
@@ -65,7 +54,7 @@ func (client *RestClient) UpdateEvent(event *types.Event) error {
 }
 
 // ResolveEvent resolves an event.
-func (client *RestClient) ResolveEvent(event *types.Event) error {
+func (client *RestClient) ResolveEvent(event *corev2.Event) error {
 	event.Check.Status = 0
 	event.Check.Output = "Resolved manually by sensuctl"
 	event.Timestamp = int64(time.Now().Unix())

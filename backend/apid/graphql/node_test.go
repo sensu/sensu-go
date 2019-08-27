@@ -129,6 +129,18 @@ func TestAssetNodeResolver(t *testing.T) {
 			},
 		},
 		{
+			name: "event filters",
+			setupNode: func() interface{} {
+				return corev2.FixtureEventFilter("name")
+			},
+			setupID: func(r interface{}) string {
+				return globalid.EventFilterTranslator.EncodeToString(r)
+			},
+			setup: func(r interface{}) {
+				cfg.EventFilterClient.(onner).On("FetchEventFilter", mock.Anything, "name").Return(r, nil).Once()
+			},
+		},
+		{
 			name: "handlers",
 			setupNode: func() interface{} {
 				return corev2.FixtureHandler("name")

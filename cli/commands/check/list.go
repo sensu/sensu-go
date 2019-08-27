@@ -3,15 +3,17 @@ package check
 import (
 	"errors"
 	"io"
+	"net/http"
 	"strconv"
 	"strings"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/globals"
 	"github.com/sensu/sensu-go/cli/elements/table"
-	"github.com/sensu/sensu-go/types"
 
 	"github.com/spf13/cobra"
 )
@@ -29,7 +31,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 			namespace := cli.Config.Namespace()
 			if ok, _ := cmd.Flags().GetBool(flags.AllNamespaces); ok {
-				namespace = types.NamespaceTypeAll
+				namespace = corev2.NamespaceTypeAll
 			}
 
 			opts, err := helpers.ListOptionsFromFlags(cmd.Flags())
@@ -38,17 +40,19 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Fetch checks from the API
-			results, err := cli.Client.ListChecks(namespace, &opts)
+			var header http.Header
+			results := []corev2.CheckConfig{}
+			err = cli.Client.List(client.ChecksPath(namespace), &results, &opts, &header)
 			if err != nil {
 				return err
 			}
 
 			// Print the results based on the user preferences
-			resources := []types.Resource{}
+			resources := []corev2.Resource{}
 			for i := range results {
 				resources = append(resources, &results[i])
 			}
-			return helpers.Print(cmd, cli.Config.Format(), printToTable, resources, results)
+			return helpers.PrintList(cmd, cli.Config.Format(), printToTable, resources, results, header)
 		},
 	}
 
@@ -67,7 +71,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				check, ok := data.(types.CheckConfig)
+				check, ok := data.(corev2.CheckConfig)
 				if !ok {
 					return cli.TypeError
 				}
@@ -77,7 +81,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Command",
 			CellTransformer: func(data interface{}) string {
-				check, ok := data.(types.CheckConfig)
+				check, ok := data.(corev2.CheckConfig)
 				if !ok {
 					return cli.TypeError
 				}
@@ -87,7 +91,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Interval",
 			CellTransformer: func(data interface{}) string {
-				check, ok := data.(types.CheckConfig)
+				check, ok := data.(corev2.CheckConfig)
 				if !ok {
 					return cli.TypeError
 				}
@@ -98,7 +102,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Cron",
 			CellTransformer: func(data interface{}) string {
-				check, ok := data.(types.CheckConfig)
+				check, ok := data.(corev2.CheckConfig)
 				if !ok {
 					return cli.TypeError
 				}
@@ -108,7 +112,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Timeout",
 			CellTransformer: func(data interface{}) string {
-				check, ok := data.(types.CheckConfig)
+				check, ok := data.(corev2.CheckConfig)
 				if !ok {
 					return cli.TypeError
 				}
@@ -119,7 +123,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "TTL",
 			CellTransformer: func(data interface{}) string {
-				check, ok := data.(types.CheckConfig)
+				check, ok := data.(corev2.CheckConfig)
 				if !ok {
 					return cli.TypeError
 				}
@@ -130,7 +134,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Subscriptions",
 			CellTransformer: func(data interface{}) string {
-				check, ok := data.(types.CheckConfig)
+				check, ok := data.(corev2.CheckConfig)
 				if !ok {
 					return cli.TypeError
 				}
@@ -140,7 +144,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Handlers",
 			CellTransformer: func(data interface{}) string {
-				check, ok := data.(types.CheckConfig)
+				check, ok := data.(corev2.CheckConfig)
 				if !ok {
 					return cli.TypeError
 				}
@@ -150,7 +154,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Assets",
 			CellTransformer: func(data interface{}) string {
-				check, ok := data.(types.CheckConfig)
+				check, ok := data.(corev2.CheckConfig)
 				if !ok {
 					return cli.TypeError
 				}
@@ -160,7 +164,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Hooks",
 			CellTransformer: func(data interface{}) string {
-				check, ok := data.(types.CheckConfig)
+				check, ok := data.(corev2.CheckConfig)
 				if !ok {
 					return cli.TypeError
 				}
@@ -170,7 +174,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Publish?",
 			CellTransformer: func(data interface{}) string {
-				check, ok := data.(types.CheckConfig)
+				check, ok := data.(corev2.CheckConfig)
 				if !ok {
 					return cli.TypeError
 				}
@@ -180,7 +184,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Stdin?",
 			CellTransformer: func(data interface{}) string {
-				check, ok := data.(types.CheckConfig)
+				check, ok := data.(corev2.CheckConfig)
 				if !ok {
 					return cli.TypeError
 				}
@@ -190,7 +194,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Metric Format",
 			CellTransformer: func(data interface{}) string {
-				check, ok := data.(types.CheckConfig)
+				check, ok := data.(corev2.CheckConfig)
 				if !ok {
 					return cli.TypeError
 				}
@@ -200,7 +204,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Metric Handlers",
 			CellTransformer: func(data interface{}) string {
-				check, ok := data.(types.CheckConfig)
+				check, ok := data.(corev2.CheckConfig)
 				if !ok {
 					return cli.TypeError
 				}

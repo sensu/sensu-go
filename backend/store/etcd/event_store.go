@@ -267,6 +267,11 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 		persistEvent.Timestamp = time.Now().Unix()
 	}
 
+	// Handle expire on resolve silenced entries
+	if err := handleExpireOnResolveEntries(ctx, persistEvent, s); err != nil {
+		return nil, nil, err
+	}
+
 	// update the history
 	// marshal the new event and store it.
 	eventBytes, err := proto.Marshal(persistEvent)
@@ -316,4 +321,32 @@ func updateOccurrences(check *corev2.Check) {
 		// 5. OccurrencesWatermark should be incremented if conditions 3 and 4 have not been met.
 		check.OccurrencesWatermark++
 	}
+}
+
+func handleExpireOnResolveEntries(ctx context.Context, event *corev2.Event, store store.Store) error {
+	// Make sure we have a check and that the event is a resolution
+	if !event.HasCheck() || !event.IsResolution() {
+		return nil
+	}
+
+	entries, err := store.GetSilencedEntriesByName(ctx, event.Check.Silenced...)
+	if err != nil {
+		return fmt.Errorf("couldn't resolve silences: %s", err)
+	}
+	toDelete := []string{}
+	toRetain := []string{}
+	for _, entry := range entries {
+		if entry.ExpireOnResolve {
+			toDelete = append(toDelete, entry.Name)
+		} else {
+			toRetain = append(toRetain, entry.Name)
+		}
+	}
+
+	if err := store.DeleteSilencedEntryByName(ctx, toDelete...); err != nil {
+		return fmt.Errorf("couldn't resolve silences: %s", err)
+	}
+	event.Check.Silenced = toRetain
+
+	return nil
 }
