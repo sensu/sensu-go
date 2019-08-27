@@ -56,3 +56,7 @@ func DefaultTessenConfig() *TessenConfig {
 // SetNamespace sets the namespace of the resource.
 func (t *TessenConfig) SetNamespace(namespace string) {
 }
+
+func (*TessenConfig) RBACName() string {
+	return "tessen"
+}

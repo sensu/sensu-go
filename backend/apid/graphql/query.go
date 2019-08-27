@@ -6,10 +6,10 @@ import (
 	"sort"
 	"strings"
 
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/apid/graphql/suggest"
-	cliclient "github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/sensu/sensu-go/types"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
@@ -23,7 +23,7 @@ var _ schema.QueryFieldResolvers = (*queryImpl)(nil)
 
 type queryImpl struct {
 	nodeResolver *nodeResolver
-	factory      ClientFactory
+	svc          ServiceConfig
 }
 
 // Viewer implements response to request for 'viewer' field.
@@ -33,56 +33,49 @@ func (r *queryImpl) Viewer(p graphql.ResolveParams) (interface{}, error) {
 
 // Environment implements response to request for 'namespace' field.
 func (r *queryImpl) Namespace(p schema.QueryNamespaceFieldResolverParams) (interface{}, error) {
-	client := r.factory.NewWithContext(p.Context)
-	res, err := client.FetchNamespace(p.Args.Name)
+	res, err := r.svc.NamespaceClient.FetchNamespace(p.Context, p.Args.Name)
 	return handleFetchResult(res, err)
 }
 
 // Event implements response to request for 'event' field.
 func (r *queryImpl) Event(p schema.QueryEventFieldResolverParams) (interface{}, error) {
 	ctx := contextWithNamespace(p.Context, p.Args.Namespace)
-	client := r.factory.NewWithContext(ctx)
-	res, err := client.FetchEvent(p.Args.Entity, p.Args.Check)
+	res, err := r.svc.EventClient.FetchEvent(ctx, p.Args.Entity, p.Args.Check)
 	return handleFetchResult(res, err)
 }
 
 // EventFilter implements response to request for 'eventFilter' field.
 func (r *queryImpl) EventFilter(p schema.QueryEventFilterFieldResolverParams) (interface{}, error) {
 	ctx := contextWithNamespace(p.Context, p.Args.Namespace)
-	client := r.factory.NewWithContext(ctx)
-	res, err := client.FetchFilter(p.Args.Name)
+	res, err := r.svc.EventFilterClient.FetchEventFilter(ctx, p.Args.Name)
 	return handleFetchResult(res, err)
 }
 
 // Entity implements response to request for 'entity' field.
 func (r *queryImpl) Entity(p schema.QueryEntityFieldResolverParams) (interface{}, error) {
 	ctx := contextWithNamespace(p.Context, p.Args.Namespace)
-	client := r.factory.NewWithContext(ctx)
-	res, err := client.FetchEntity(p.Args.Name)
+	res, err := r.svc.EntityClient.FetchEntity(ctx, p.Args.Name)
 	return handleFetchResult(res, err)
 }
 
 // Check implements response to request for 'check' field.
 func (r *queryImpl) Check(p schema.QueryCheckFieldResolverParams) (interface{}, error) {
 	ctx := contextWithNamespace(p.Context, p.Args.Namespace)
-	client := r.factory.NewWithContext(ctx)
-	res, err := client.FetchCheck(p.Args.Name)
+	res, err := r.svc.CheckClient.FetchCheck(ctx, p.Args.Name)
 	return handleFetchResult(res, err)
 }
 
 // Handler implements a response to a request for the 'hander' field.
 func (r *queryImpl) Handler(p schema.QueryHandlerFieldResolverParams) (interface{}, error) {
 	ctx := contextWithNamespace(p.Context, p.Args.Namespace)
-	client := r.factory.NewWithContext(ctx)
-	res, err := client.FetchHandler(p.Args.Name)
+	res, err := r.svc.HandlerClient.FetchHandler(ctx, p.Args.Name)
 	return handleFetchResult(res, err)
 }
 
 // Mutator implements a response to a request for the 'mutator' field.
 func (r *queryImpl) Mutator(p schema.QueryMutatorFieldResolverParams) (interface{}, error) {
 	ctx := contextWithNamespace(p.Context, p.Args.Namespace)
-	client := r.factory.NewWithContext(ctx)
-	res, err := client.FetchMutator(p.Args.Name)
+	res, err := r.svc.MutatorClient.FetchMutator(ctx, p.Args.Name)
 	return handleFetchResult(res, err)
 }
 
@@ -116,9 +109,13 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 	objs := reflect.New(objT.Type())
 	objs.Elem().Set(objT)
 
-	client := r.factory.NewWithContext(p.Context)
+	client := r.svc.GenericClient
+	// Don't need to check error, as type meta already successfully resolved
+	_ = client.SetTypeMeta(corev2.TypeMeta{Type: res.Name, APIVersion: res.Group})
 
-	err = client.List(res.URIPath(p.Args.Namespace), objs.Interface(), &cliclient.ListOptions{})
+	ctx := store.NamespaceContext(p.Context, p.Args.Namespace)
+
+	err = client.List(ctx, objs.Interface(), &store.SelectionPredicate{})
 	if handleListErr(err) != nil {
 		return results, err
 	}
@@ -126,7 +123,7 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 	q := strings.ToLower(p.Args.Q)
 	set := utilstrings.OccurrenceSet{}
 	for i := 0; i < objs.Elem().Len(); i++ {
-		s := objs.Elem().Index(i).Interface().(v2.Resource)
+		s := objs.Elem().Index(i).Interface().(corev2.Resource)
 		for _, v := range field.Value(s, ref.FieldPath) {
 			if v != "" && strings.Contains(strings.ToLower(v), q) {
 				set.Add(v)

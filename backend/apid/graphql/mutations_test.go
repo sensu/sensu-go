@@ -4,10 +4,9 @@ import (
 	"errors"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
-	client "github.com/sensu/sensu-go/backend/apid/graphql/mockclient"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -29,9 +28,11 @@ func TestMutationTypePutWrappedUpsertTrue(t *testing.T) {
 	`
 	params.Args.Upsert = true
 
-	client, factory := client.NewClientFactory()
-	client.On("Put", "/api/core/v2/namespaces/sensu-devel/silenced/test:fred", mock.Anything).Return(nil).Once()
-	impl := mutationsImpl{factory: factory}
+	client := new(MockGenericClient)
+	client.On("Update", mock.Anything, mock.Anything).Return(nil).Once()
+	client.On("SetTypeMeta", mock.Anything).Return(nil)
+	cfg := ServiceConfig{GenericClient: client}
+	impl := mutationsImpl{svc: cfg}
 
 	// Success
 	body, err := impl.PutWrapped(params)
@@ -68,9 +69,11 @@ func TestMutationTypePutWrappedUpsertFalse(t *testing.T) {
 	`
 	params.Args.Upsert = false
 
-	client, factory := client.NewClientFactory()
-	client.On("Post", "/api/core/v2/namespaces/sensu-devel/silenced", mock.Anything).Return(nil).Once()
-	impl := mutationsImpl{factory: factory}
+	client := new(MockGenericClient)
+	cfg := ServiceConfig{GenericClient: client}
+	client.On("Create", mock.Anything, mock.Anything).Return(nil).Once()
+	client.On("SetTypeMeta", mock.Anything).Return(nil)
+	impl := mutationsImpl{svc: cfg}
 
 	// Success
 	body, err := impl.PutWrapped(params)
@@ -84,7 +87,7 @@ func TestMutationTypePutWrappedUpsertFalse(t *testing.T) {
 	assert.NotEmpty(t, body)
 
 	// Failure
-	client.On("Post", mock.Anything, mock.Anything).Return(errors.New("test")).Once()
+	client.On("Create", mock.Anything, mock.Anything).Return(errors.New("test")).Once()
 	body, err = impl.PutWrapped(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, body)
@@ -95,11 +98,12 @@ func TestMutationTypeExecuteCheck(t *testing.T) {
 	params := schema.MutationExecuteCheckFieldResolverParams{}
 	params.Args.Input = &inputs
 
-	check := types.FixtureCheckConfig("test")
-	client, factory := client.NewClientFactory()
-	client.On("FetchCheck", mock.Anything).Return(check, nil)
-	client.On("ExecuteCheck", mock.Anything).Return(nil).Once()
-	impl := mutationsImpl{factory: factory}
+	check := corev2.FixtureCheckConfig("test")
+	client := new(MockCheckClient)
+	client.On("FetchCheck", mock.Anything, mock.Anything).Return(check, nil)
+	client.On("ExecuteCheck", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	cfg := ServiceConfig{CheckClient: client}
+	impl := mutationsImpl{svc: cfg}
 
 	// Success
 	body, err := impl.ExecuteCheck(params)
@@ -107,7 +111,7 @@ func TestMutationTypeExecuteCheck(t *testing.T) {
 	assert.NotEmpty(t, body)
 
 	// Failure
-	client.On("ExecuteCheck", mock.Anything).Return(errors.New("test")).Once()
+	client.On("ExecuteCheck", mock.Anything, mock.Anything, mock.Anything).Return(errors.New("test")).Once()
 	body, err = impl.ExecuteCheck(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, body)
@@ -125,26 +129,27 @@ func TestMutationTypeUpdateCheck(t *testing.T) {
 		},
 	}
 
-	check := types.FixtureCheckConfig("a")
-	client, factory := client.NewClientFactory()
-	client.On("FetchCheck", mock.Anything).Return(check, nil).Once()
-	client.On("UpdateCheck", mock.Anything).Return(nil).Once()
+	check := corev2.FixtureCheckConfig("a")
+	client := new(MockCheckClient)
+	client.On("FetchCheck", mock.Anything, mock.Anything).Return(check, nil).Once()
+	client.On("UpdateCheck", mock.Anything, mock.Anything).Return(nil).Once()
+	cfg := ServiceConfig{CheckClient: client}
 
 	// Success
-	impl := mutationsImpl{factory: factory}
+	impl := mutationsImpl{svc: cfg}
 	body, err := impl.UpdateCheck(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, body)
 
 	// Failure - no check
-	client.On("FetchCheck", mock.Anything).Return(check, errors.New("404")).Once()
+	client.On("FetchCheck", mock.Anything, mock.Anything).Return(check, errors.New("404")).Once()
 	body, err = impl.UpdateCheck(params)
 	assert.Error(t, err)
 	assert.Empty(t, body)
 
 	// Failure - replace fails
-	client.On("FetchCheck", mock.Anything).Return(check, nil).Once()
-	client.On("UpdateCheck", mock.Anything).Return(errors.New("fail")).Once()
+	client.On("FetchCheck", mock.Anything, mock.Anything).Return(check, nil).Once()
+	client.On("UpdateCheck", mock.Anything, mock.Anything).Return(errors.New("fail")).Once()
 	body, err = impl.UpdateCheck(params)
 	assert.Error(t, err)
 	assert.Empty(t, body)
@@ -155,12 +160,13 @@ func TestMutationTypeDeleteEntityField(t *testing.T) {
 	params := schema.MutationDeleteEntityFieldResolverParams{}
 	params.Args.Input = &inputs
 
-	entity := types.FixtureEntity("abc")
-	client, factory := client.NewClientFactory()
-	impl := mutationsImpl{factory: factory}
+	entity := corev2.FixtureEntity("abc")
+	client := new(MockEntityClient)
+	cfg := ServiceConfig{EntityClient: client}
+	impl := mutationsImpl{svc: cfg}
 
 	// Success
-	client.On("FetchEntity", mock.Anything).Return(entity, nil)
+	client.On("FetchEntity", mock.Anything, mock.Anything).Return(entity, nil)
 	client.On("DeleteEntity", mock.Anything, mock.Anything).Return(nil).Once()
 	body, err := impl.DeleteEntity(params)
 	assert.NoError(t, err)
@@ -174,18 +180,19 @@ func TestMutationTypeDeleteEntityField(t *testing.T) {
 }
 
 func TestMutationTypeDeleteEventField(t *testing.T) {
-	evt := types.FixtureEvent("a", "b")
+	evt := corev2.FixtureEvent("a", "b")
 	gid := globalid.EventTranslator.EncodeToString(evt)
 
 	inputs := schema.DeleteRecordInput{ID: gid}
 	params := schema.MutationDeleteEventFieldResolverParams{}
 	params.Args.Input = &inputs
 
-	client, factory := client.NewClientFactory()
-	impl := mutationsImpl{factory: factory}
+	client := new(MockEventClient)
+	cfg := ServiceConfig{EventClient: client}
+	impl := mutationsImpl{svc: cfg}
 
 	// Success
-	client.On("DeleteEvent", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
+	client.On("DeleteEvent", mock.Anything, "a", "b").Return(nil).Once()
 	body, err := impl.DeleteEvent(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, body)
@@ -204,18 +211,19 @@ func TestMutationTypeDeleteEventField(t *testing.T) {
 }
 
 func TestMutationTypeDeleteHandlerField(t *testing.T) {
-	hd := types.FixtureHandler("a")
+	hd := corev2.FixtureHandler("a")
 	gid := globalid.HandlerTranslator.EncodeToString(hd)
 
 	inputs := schema.DeleteRecordInput{ID: gid}
 	params := schema.MutationDeleteHandlerFieldResolverParams{}
 	params.Args.Input = &inputs
 
-	client, factory := client.NewClientFactory()
-	impl := mutationsImpl{factory: factory}
+	client := new(MockHandlerClient)
+	cfg := ServiceConfig{HandlerClient: client}
+	impl := mutationsImpl{svc: cfg}
 
 	// Success
-	client.On("DeleteHandler", mock.Anything, mock.Anything).Return(nil).Once()
+	client.On("DeleteHandler", mock.Anything, "a").Return(nil).Once()
 	body, err := impl.DeleteHandler(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, body)
@@ -228,18 +236,19 @@ func TestMutationTypeDeleteHandlerField(t *testing.T) {
 }
 
 func TestMutationTypeDeleteMutatorField(t *testing.T) {
-	mut := types.FixtureMutator("a")
+	mut := corev2.FixtureMutator("a")
 	gid := globalid.MutatorTranslator.EncodeToString(mut)
 
 	inputs := schema.DeleteRecordInput{ID: gid}
 	params := schema.MutationDeleteMutatorFieldResolverParams{}
 	params.Args.Input = &inputs
 
-	client, factory := client.NewClientFactory()
-	impl := mutationsImpl{factory: factory}
+	client := new(MockMutatorClient)
+	cfg := ServiceConfig{MutatorClient: client}
+	impl := mutationsImpl{svc: cfg}
 
 	// Success
-	client.On("DeleteMutator", mock.Anything, mock.Anything).Return(nil).Once()
+	client.On("DeleteMutator", mock.Anything, "a").Return(nil).Once()
 	body, err := impl.DeleteMutator(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, body)
@@ -252,24 +261,25 @@ func TestMutationTypeDeleteMutatorField(t *testing.T) {
 }
 
 func TestMutationTypeDeleteEventFilterField(t *testing.T) {
-	flr := types.FixtureEventFilter("a")
+	flr := corev2.FixtureEventFilter("a")
 	gid := globalid.EventFilterTranslator.EncodeToString(flr)
 
 	inputs := schema.DeleteRecordInput{ID: gid}
 	params := schema.MutationDeleteEventFilterFieldResolverParams{}
 	params.Args.Input = &inputs
 
-	client, factory := client.NewClientFactory()
-	impl := mutationsImpl{factory: factory}
+	client := new(MockEventFilterClient)
+	cfg := ServiceConfig{EventFilterClient: client}
+	impl := mutationsImpl{svc: cfg}
 
 	// Success
-	client.On("DeleteFilter", mock.Anything, mock.Anything).Return(nil).Once()
+	client.On("DeleteEventFilter", mock.Anything, mock.Anything).Return(nil).Once()
 	body, err := impl.DeleteEventFilter(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, body)
 
 	// Failure
-	client.On("DeleteFilter", mock.Anything, mock.Anything).Return(errors.New("err")).Once()
+	client.On("DeleteEventFilter", mock.Anything, mock.Anything).Return(errors.New("err")).Once()
 	body, err = impl.DeleteEventFilter(params)
 	assert.Error(t, err)
 	assert.Nil(t, body)
@@ -283,17 +293,18 @@ func TestMutationTypeCreateSilenceField(t *testing.T) {
 	params := schema.MutationCreateSilenceFieldResolverParams{}
 	params.Args.Input = &inputs
 
-	client, factory := client.NewClientFactory()
-	impl := mutationsImpl{factory: factory}
+	client := new(MockSilencedClient)
+	cfg := ServiceConfig{SilencedClient: client}
+	impl := mutationsImpl{svc: cfg}
 
 	// Success
-	client.On("CreateSilenced", mock.Anything).Return(nil).Once()
+	client.On("UpdateSilenced", mock.Anything, mock.Anything).Return(nil).Once()
 	body, err := impl.CreateSilence(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, body)
 
 	// Failure
-	client.On("CreateSilenced", mock.Anything).Return(errors.New("test")).Once()
+	client.On("UpdateSilenced", mock.Anything, mock.Anything).Return(errors.New("test")).Once()
 	body, err = impl.CreateSilence(params)
 	assert.Error(t, err)
 	assert.Nil(t, body)
@@ -304,17 +315,18 @@ func TestMutationTypeDeleteSilenceField(t *testing.T) {
 	params := schema.MutationDeleteSilenceFieldResolverParams{}
 	params.Args.Input = &inputs
 
-	client, factory := client.NewClientFactory()
-	impl := mutationsImpl{factory: factory}
+	client := new(MockSilencedClient)
+	cfg := ServiceConfig{SilencedClient: client}
+	impl := mutationsImpl{svc: cfg}
 
 	// Success
-	client.On("DeleteSilenced", mock.Anything, mock.Anything).Return(nil).Once()
+	client.On("DeleteSilencedByName", mock.Anything, mock.Anything).Return(nil).Once()
 	body, err := impl.DeleteSilence(params)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, body)
 
 	// Failure
-	client.On("DeleteSilenced", mock.Anything, mock.Anything).Return(errors.New("test")).Once()
+	client.On("DeleteSilencedByName", mock.Anything, mock.Anything).Return(errors.New("test")).Once()
 	body, err = impl.DeleteSilence(params)
 	assert.Error(t, err)
 	assert.Nil(t, body)

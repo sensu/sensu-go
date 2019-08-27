@@ -276,7 +276,7 @@ func Initialize(config *Config) (*Backend, error) {
 	}
 
 	// Initialize apid
-	api, err := apid.New(apid.Config{
+	apidConfig := apid.Config{
 		ListenAddress:       config.APIListenAddress,
 		URL:                 config.APIURL,
 		Bus:                 bus,
@@ -288,7 +288,8 @@ func Initialize(config *Config) (*Backend, error) {
 		EtcdClientTLSConfig: etcdClientTLSConfig,
 		Authenticator:       authenticator,
 		ClusterVersion:      clusterVersion,
-	})
+	}
+	api, err := apid.New(apidConfig)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", api.Name(), err)
 	}
@@ -325,10 +326,10 @@ func Initialize(config *Config) (*Backend, error) {
 		}
 	}
 	dashboard, err := dashboardd.New(dashboardd.Config{
-		APIURL: config.APIURL,
-		Host:   config.DashboardHost,
-		Port:   config.DashboardPort,
-		TLS:    dashboardTLSConfig,
+		APIDConfig: apidConfig,
+		Host:       config.DashboardHost,
+		Port:       config.DashboardPort,
+		TLS:        dashboardTLSConfig,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", dashboard.Name(), err)

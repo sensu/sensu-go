@@ -2,12 +2,14 @@ package handler
 
 import (
 	"errors"
+	"net/http"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	client "github.com/sensu/sensu-go/cli/client/testing"
 	"github.com/sensu/sensu-go/cli/commands/flags"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -30,16 +32,23 @@ func TestListCommandRunEClosure(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListHandlers", mock.Anything, mock.Anything).Return([]types.Handler{
-		*types.FixtureHandler("one"),
-		*types.FixtureHandler("two"),
-	}, nil)
+	resources := []corev2.Handler{}
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
+		func(args mock.Arguments) {
+			resources := args[1].(*[]corev2.Handler)
+			*resources = []corev2.Handler{
+				*corev2.FixtureHandler("one"),
+				*corev2.FixtureHandler("two"),
+			}
+		},
+	)
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
 	assert.Nil(err)
+	assert.NotContains(out, "==")
 }
 
 func TestListCommandRunEClosureWithAllNamespaces(t *testing.T) {
@@ -47,9 +56,15 @@ func TestListCommandRunEClosureWithAllNamespaces(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListHandlers", "", mock.Anything).Return([]types.Handler{
-		*types.FixtureHandler("one"),
-	}, nil)
+	resources := []corev2.Handler{}
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
+		func(args mock.Arguments) {
+			resources := args[1].(*[]corev2.Handler)
+			*resources = []corev2.Handler{
+				*corev2.FixtureHandler("one"),
+			}
+		},
+	)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set(flags.AllNamespaces, "t"))
@@ -64,11 +79,17 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListHandlers", mock.Anything, mock.Anything).Return([]types.Handler{
-		*types.FixtureSetHandler("one", "two", "three"),
-		*types.FixtureSocketHandler("two", "tcp"),
-		*types.FixtureHandler("three"),
-	}, nil)
+	resources := []corev2.Handler{}
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
+		func(args mock.Arguments) {
+			resources := args[1].(*[]corev2.Handler)
+			*resources = []corev2.Handler{
+				*corev2.FixtureSetHandler("one", "two", "three"),
+				*corev2.FixtureSocketHandler("two", "tcp"),
+				*corev2.FixtureHandler("three"),
+			}
+		},
+	)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "none"))
@@ -83,7 +104,8 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListHandlers", mock.Anything, mock.Anything).Return([]types.Handler{}, errors.New("fire"))
+	resources := []corev2.Handler{}
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(errors.New("fire"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -104,4 +126,33 @@ func TestListFlags(t *testing.T) {
 
 	flag = cmd.Flag("format")
 	assert.NotNil(flag)
+}
+
+func TestListCommandRunEClosureWithHeader(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := test.NewMockCLI()
+	config := cli.Config.(*client.MockConfig)
+	config.On("Format").Return("none")
+
+	client := cli.Client.(*client.MockClient)
+	var header http.Header
+	resources := []corev2.Handler{}
+	client.On("List", mock.Anything, &resources, mock.Anything, &header).Return(nil).Run(
+		func(args mock.Arguments) {
+			resources := args[1].(*[]corev2.Handler)
+			*resources = []corev2.Handler{}
+			header := args[3].(*http.Header)
+			*header = make(http.Header)
+			header.Add(helpers.HeaderWarning, "E_TOO_MANY_ENTITIES")
+		},
+	)
+
+	cmd := ListCommand(cli)
+	out, err := test.RunCmd(cmd, []string{})
+
+	assert.NotEmpty(out)
+	assert.Nil(err)
+	assert.Contains(out, "E_TOO_MANY_ENTITIES")
+	assert.Contains(out, "==")
 }

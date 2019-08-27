@@ -1,10 +1,11 @@
 package client
 
 import (
-	"github.com/coreos/etcd/clientv3"
-	"github.com/sensu/sensu-go/types"
+	"net/http"
 
+	"github.com/coreos/etcd/clientv3"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/types"
 )
 
 // ListOptions represents the various options that can be used when listing
@@ -54,7 +55,7 @@ type GenericClient interface {
 	// Get retrieves the key at the given path and stores it into obj
 	Get(path string, obj interface{}) error
 	// List retrieves all keys with the given path prefix and stores them into objs
-	List(path string, objs interface{}, options *ListOptions) error
+	List(path string, objs interface{}, options *ListOptions, header *http.Header) error
 	// Post creates the given obj at the specified path
 	Post(path string, obj interface{}) error
 	// Put creates the given obj at the specified path
@@ -66,133 +67,120 @@ type GenericClient interface {
 
 // AuthenticationAPIClient client methods for authenticating
 type AuthenticationAPIClient interface {
-	CreateAccessToken(url string, userid string, secret string) (*types.Tokens, error)
+	CreateAccessToken(url string, userid string, secret string) (*corev2.Tokens, error)
 	TestCreds(userid string, secret string) error
 	Logout(token string) error
-	RefreshAccessToken(refreshToken string) (*types.Tokens, error)
+	RefreshAccessToken(refreshToken string) (*corev2.Tokens, error)
 }
 
 // AssetAPIClient client methods for assets
 type AssetAPIClient interface {
-	CreateAsset(*types.Asset) error
-	UpdateAsset(*types.Asset) error
-	FetchAsset(string) (*types.Asset, error)
-	ListAssets(string, *ListOptions) ([]types.Asset, error)
+	CreateAsset(*corev2.Asset) error
+	UpdateAsset(*corev2.Asset) error
+	FetchAsset(string) (*corev2.Asset, error)
 }
 
 // CheckAPIClient client methods for checks
 type CheckAPIClient interface {
-	CreateCheck(*types.CheckConfig) error
+	CreateCheck(*corev2.CheckConfig) error
 	DeleteCheck(string, string) error
-	ExecuteCheck(*types.AdhocRequest) error
-	FetchCheck(string) (*types.CheckConfig, error)
-	ListChecks(string, *ListOptions) ([]types.CheckConfig, error)
-	UpdateCheck(*types.CheckConfig) error
+	ExecuteCheck(*corev2.AdhocRequest) error
+	FetchCheck(string) (*corev2.CheckConfig, error)
+	UpdateCheck(*corev2.CheckConfig) error
 
-	AddCheckHook(check *types.CheckConfig, checkHook *types.HookList) error
-	RemoveCheckHook(check *types.CheckConfig, checkHookType string, hookName string) error
+	AddCheckHook(check *corev2.CheckConfig, checkHook *corev2.HookList) error
+	RemoveCheckHook(check *corev2.CheckConfig, checkHookType string, hookName string) error
 }
 
 // ClusterRoleAPIClient client methods for cluster roles
 type ClusterRoleAPIClient interface {
-	CreateClusterRole(*types.ClusterRole) error
+	CreateClusterRole(*corev2.ClusterRole) error
 	DeleteClusterRole(string) error
-	FetchClusterRole(string) (*types.ClusterRole, error)
-	ListClusterRoles(*ListOptions) ([]types.ClusterRole, error)
+	FetchClusterRole(string) (*corev2.ClusterRole, error)
 }
 
 // ClusterRoleBindingAPIClient client methods for cluster role bindings
 type ClusterRoleBindingAPIClient interface {
-	CreateClusterRoleBinding(*types.ClusterRoleBinding) error
+	CreateClusterRoleBinding(*corev2.ClusterRoleBinding) error
 	DeleteClusterRoleBinding(string) error
-	FetchClusterRoleBinding(string) (*types.ClusterRoleBinding, error)
-	ListClusterRoleBindings(*ListOptions) ([]types.ClusterRoleBinding, error)
+	FetchClusterRoleBinding(string) (*corev2.ClusterRoleBinding, error)
 }
 
 // EntityAPIClient client methods for entities
 type EntityAPIClient interface {
-	CreateEntity(entity *types.Entity) error
+	CreateEntity(entity *corev2.Entity) error
 	DeleteEntity(string, string) error
-	FetchEntity(ID string) (*types.Entity, error)
-	ListEntities(string, *ListOptions) ([]types.Entity, error)
-	UpdateEntity(entity *types.Entity) error
+	FetchEntity(ID string) (*corev2.Entity, error)
+	UpdateEntity(entity *corev2.Entity) error
 }
 
 // FilterAPIClient client methods for filters
 type FilterAPIClient interface {
-	CreateFilter(*types.EventFilter) error
+	CreateFilter(*corev2.EventFilter) error
 	DeleteFilter(string, string) error
-	FetchFilter(string) (*types.EventFilter, error)
-	ListFilters(string, *ListOptions) ([]types.EventFilter, error)
-	UpdateFilter(*types.EventFilter) error
+	FetchFilter(string) (*corev2.EventFilter, error)
+	UpdateFilter(*corev2.EventFilter) error
 }
 
 // EventAPIClient client methods for events
 type EventAPIClient interface {
-	FetchEvent(string, string) (*types.Event, error)
-	ListEvents(string, *ListOptions) ([]corev2.Event, error)
+	FetchEvent(string, string) (*corev2.Event, error)
 
 	// DeleteEvent deletes the event identified by entity, check.
 	DeleteEvent(namespace, entity, check string) error
-	UpdateEvent(*types.Event) error
-	ResolveEvent(*types.Event) error
+	UpdateEvent(*corev2.Event) error
+	ResolveEvent(*corev2.Event) error
 }
 
 // ExtensionAPIClient client methods for extensions
 type ExtensionAPIClient interface {
-	ListExtensions(namespace string, options *ListOptions) ([]types.Extension, error)
-	RegisterExtension(*types.Extension) error
+	RegisterExtension(*corev2.Extension) error
 	DeregisterExtension(name, namespace string) error
 }
 
 // HandlerAPIClient client methods for handlers
 type HandlerAPIClient interface {
-	CreateHandler(*types.Handler) error
+	CreateHandler(*corev2.Handler) error
 	DeleteHandler(string, string) error
-	ListHandlers(string, *ListOptions) ([]types.Handler, error)
-	FetchHandler(string) (*types.Handler, error)
-	UpdateHandler(*types.Handler) error
+	FetchHandler(string) (*corev2.Handler, error)
+	UpdateHandler(*corev2.Handler) error
 }
 
 // HealthAPIClient client methods for health api
 type HealthAPIClient interface {
-	Health() (*types.HealthResponse, error)
+	Health() (*corev2.HealthResponse, error)
 }
 
 // HookAPIClient client methods for hooks
 type HookAPIClient interface {
-	CreateHook(*types.HookConfig) error
-	UpdateHook(*types.HookConfig) error
+	CreateHook(*corev2.HookConfig) error
+	UpdateHook(*corev2.HookConfig) error
 	DeleteHook(string, string) error
-	FetchHook(string) (*types.HookConfig, error)
-	ListHooks(string, *ListOptions) ([]types.HookConfig, error)
+	FetchHook(string) (*corev2.HookConfig, error)
 }
 
 // MutatorAPIClient client methods for mutators
 type MutatorAPIClient interface {
-	CreateMutator(*types.Mutator) error
-	ListMutators(string, *ListOptions) ([]types.Mutator, error)
+	CreateMutator(*corev2.Mutator) error
 	DeleteMutator(string, string) error
-	FetchMutator(string) (*types.Mutator, error)
-	UpdateMutator(*types.Mutator) error
+	FetchMutator(string) (*corev2.Mutator, error)
+	UpdateMutator(*corev2.Mutator) error
 }
 
 // NamespaceAPIClient client methods for namespaces
 type NamespaceAPIClient interface {
-	CreateNamespace(*types.Namespace) error
-	UpdateNamespace(*types.Namespace) error
+	CreateNamespace(*corev2.Namespace) error
+	UpdateNamespace(*corev2.Namespace) error
 	DeleteNamespace(string) error
-	ListNamespaces(*ListOptions) ([]types.Namespace, error)
-	FetchNamespace(string) (*types.Namespace, error)
+	FetchNamespace(string) (*corev2.Namespace, error)
 }
 
 // UserAPIClient client methods for users
 type UserAPIClient interface {
 	AddGroupToUser(string, string) error
-	CreateUser(*types.User) error
+	CreateUser(*corev2.User) error
 	DisableUser(string) error
-	FetchUser(string) (*types.User, error)
-	ListUsers(*ListOptions) ([]types.User, error)
+	FetchUser(string) (*corev2.User, error)
 	ReinstateUser(string) error
 	RemoveGroupFromUser(string, string) error
 	RemoveAllGroupsFromUser(string) error
@@ -202,37 +190,35 @@ type UserAPIClient interface {
 
 // RoleAPIClient client methods for roles
 type RoleAPIClient interface {
-	CreateRole(*types.Role) error
+	CreateRole(*corev2.Role) error
 	DeleteRole(string, string) error
-	FetchRole(string) (*types.Role, error)
-	ListRoles(string, *ListOptions) ([]types.Role, error)
+	FetchRole(string) (*corev2.Role, error)
 }
 
 // RoleBindingAPIClient client methods for role bindings
 type RoleBindingAPIClient interface {
-	CreateRoleBinding(*types.RoleBinding) error
+	CreateRoleBinding(*corev2.RoleBinding) error
 	DeleteRoleBinding(string, string) error
-	FetchRoleBinding(string) (*types.RoleBinding, error)
-	ListRoleBindings(string, *ListOptions) ([]types.RoleBinding, error)
+	FetchRoleBinding(string) (*corev2.RoleBinding, error)
 }
 
 // SilencedAPIClient client methods for silenced
 type SilencedAPIClient interface {
 	// CreateSilenced creates a new silenced entry from its input.
-	CreateSilenced(*types.Silenced) error
+	CreateSilenced(*corev2.Silenced) error
 
 	// DeleteSilenced deletes an existing silenced entry given its ID.
 	DeleteSilenced(namespace string, name string) error
 
 	// ListSilenceds lists all silenced entries, optionally constraining by
 	// subscription or check.
-	ListSilenceds(namespace, subscription, check string, options *ListOptions) ([]types.Silenced, error)
+	ListSilenceds(namespace, subscription, check string, options *ListOptions, header *http.Header) ([]types.Silenced, error)
 
 	// FetchSilenced fetches the silenced entry by ID.
-	FetchSilenced(id string) (*types.Silenced, error)
+	FetchSilenced(id string) (*corev2.Silenced, error)
 
 	// UpdateSilenced updates an existing silenced entry.
-	UpdateSilenced(*types.Silenced) error
+	UpdateSilenced(*corev2.Silenced) error
 }
 
 // ClusterMemberClient specifies client methods for cluster membership management.

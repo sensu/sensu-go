@@ -23,32 +23,43 @@ type ClientFactory interface {
 
 // ServiceConfig describes values required to instantiate service.
 type ServiceConfig struct {
-	ClientFactory ClientFactory
+	AssetClient       AssetClient
+	CheckClient       CheckClient
+	EntityClient      EntityClient
+	EventClient       EventClient
+	EventFilterClient EventFilterClient
+	HandlerClient     HandlerClient
+	MutatorClient     MutatorClient
+	SilencedClient    SilencedClient
+	NamespaceClient   NamespaceClient
+	HookClient        HookClient
+	UserClient        UserClient
+	RBACClient        RBACClient
+	GenericClient     GenericClient
 }
 
 // Service describes the Sensu GraphQL service capable of handling queries.
 type Service struct {
-	target  *graphql.Service
-	factory ClientFactory
+	target *graphql.Service
+	cfg    ServiceConfig
 }
 
 // NewService instantiates new GraphQL service
 func NewService(cfg ServiceConfig) (*Service, error) {
 	svc := graphql.NewService()
-	clientFactory := cfg.ClientFactory
-	wrapper := Service{target: svc, factory: clientFactory}
-	nodeResolver := newNodeResolver(clientFactory)
+	wrapper := Service{target: svc, cfg: cfg}
+	nodeResolver := newNodeResolver(cfg)
 
 	// Register types
 	schema.RegisterAsset(svc, &assetImpl{})
-	schema.RegisterNamespace(svc, &namespaceImpl{factory: clientFactory})
+	schema.RegisterNamespace(svc, &namespaceImpl{client: cfg.NamespaceClient})
 	schema.RegisterErrCode(svc)
 	schema.RegisterEvent(svc, &eventImpl{})
 	schema.RegisterEventsListOrder(svc)
 	schema.RegisterIcon(svc)
 	schema.RegisterJSON(svc, jsonImpl{})
 	schema.RegisterKVPairString(svc, &schema.KVPairStringAliases{})
-	schema.RegisterQuery(svc, &queryImpl{nodeResolver: nodeResolver, factory: clientFactory})
+	schema.RegisterQuery(svc, &queryImpl{nodeResolver: nodeResolver, svc: cfg})
 	schema.RegisterMutator(svc, &mutatorImpl{})
 	schema.RegisterMutatorConnection(svc, &schema.MutatorConnectionAliases{})
 	schema.RegisterMutatorListOrder(svc)
@@ -63,7 +74,7 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterResolveEventPayload(svc, &schema.ResolveEventPayloadAliases{})
 	schema.RegisterSchema(svc)
 	schema.RegisterSilenceable(svc, nil)
-	schema.RegisterSilenced(svc, &silencedImpl{factory: clientFactory})
+	schema.RegisterSilenced(svc, &silencedImpl{client: cfg.CheckClient})
 	schema.RegisterSilencedConnection(svc, &schema.SilencedConnectionAliases{})
 	schema.RegisterSilencesListOrder(svc)
 	schema.RegisterSubscriptionSet(svc, subscriptionSetImpl{})
@@ -72,17 +83,17 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterSuggestionOrder(svc)
 	schema.RegisterSuggestionResultSet(svc, &schema.SuggestionResultSetAliases{})
 	schema.RegisterUint(svc, unsignedIntegerImpl{})
-	schema.RegisterViewer(svc, &viewerImpl{factory: clientFactory})
+	schema.RegisterViewer(svc, &viewerImpl{userClient: cfg.UserClient})
 
 	// Register check types
-	schema.RegisterCheck(svc, &checkImpl{factory: clientFactory})
-	schema.RegisterCheckConfig(svc, &checkCfgImpl{factory: clientFactory})
+	schema.RegisterCheck(svc, &checkImpl{})
+	schema.RegisterCheckConfig(svc, &checkCfgImpl{})
 	schema.RegisterCheckConfigConnection(svc, &schema.CheckConfigConnectionAliases{})
 	schema.RegisterCheckHistory(svc, &checkHistoryImpl{})
 	schema.RegisterCheckListOrder(svc)
 
 	// Register entity types
-	schema.RegisterEntity(svc, &entityImpl{factory: clientFactory})
+	schema.RegisterEntity(svc, &entityImpl{})
 	schema.RegisterEntityConnection(svc, &schema.EntityConnectionAliases{})
 	schema.RegisterEntityListOrder(svc)
 	schema.RegisterDeregistration(svc, &deregistrationImpl{})
@@ -106,7 +117,7 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterHookList(svc, &hookListImpl{})
 
 	// Register handler types
-	schema.RegisterHandler(svc, &handlerImpl{factory: clientFactory})
+	schema.RegisterHandler(svc, &handlerImpl{client: cfg.MutatorClient})
 	schema.RegisterHandlerListOrder(svc)
 	schema.RegisterHandlerConnection(svc, &schema.HandlerConnectionAliases{})
 	schema.RegisterHandlerSocket(svc, &handlerSocketImpl{})
@@ -129,7 +140,7 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterUser(svc, &userImpl{})
 
 	// Register mutations
-	schema.RegisterMutation(svc, &mutationsImpl{factory: clientFactory})
+	schema.RegisterMutation(svc, &mutationsImpl{svc: cfg})
 	schema.RegisterCheckConfigInputs(svc)
 	schema.RegisterCreateCheckInput(svc)
 	schema.RegisterCreateCheckPayload(svc, &checkMutationPayload{})
@@ -163,14 +174,9 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 }
 
 // Do executes given query string and variables
-func (svc *Service) Do(
-	ctx context.Context,
-	q string,
-	vars map[string]interface{},
-) *gql.Result {
+func (svc *Service) Do(ctx context.Context, q string, vars map[string]interface{}) *gql.Result {
 	// Instantiate loaders and lift them into the context
-	client := svc.factory.NewWithContext(ctx)
-	qryCtx := contextWithLoaders(ctx, client)
+	qryCtx := contextWithLoaders(ctx, svc.cfg)
 
 	// Execute query inside context
 	return svc.target.Do(qryCtx, q, vars)

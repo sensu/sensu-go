@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 )
@@ -33,7 +34,7 @@ type mockGetter struct {
 	err error
 }
 
-func (m *mockGetter) Get(ctx context.Context, asset *types.Asset) (*RuntimeAsset, error) {
+func (m *mockGetter) Get(ctx context.Context, asset *corev2.Asset) (*RuntimeAsset, error) {
 	if m.err != nil {
 		return nil, m.err
 	}

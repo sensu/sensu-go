@@ -4,8 +4,8 @@ import (
 	"sort"
 	"time"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
-	"github.com/sensu/sensu-go/types"
 )
 
 // clampInt returns int within given range.
@@ -43,13 +43,13 @@ func convertTs(ts int64) *time.Time {
 }
 
 // sortEvents by given enum value
-func sortEvents(evs []*types.Event, order schema.EventsListOrder) {
+func sortEvents(evs []*corev2.Event, order schema.EventsListOrder) {
 	if order == schema.EventsListOrders.SEVERITY {
-		sort.Sort(types.EventsBySeverity(evs))
+		sort.Sort(corev2.EventsBySeverity(evs))
 	} else if order == schema.EventsListOrders.LASTOK {
-		sort.Sort(types.EventsByLastOk(evs))
+		sort.Sort(corev2.EventsByLastOk(evs))
 	} else {
-		sort.Sort(types.EventsByTimestamp(
+		sort.Sort(corev2.EventsByTimestamp(
 			evs,
 			order == schema.EventsListOrders.NEWEST,
 		))

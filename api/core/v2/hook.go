@@ -180,3 +180,11 @@ func (c *HookConfig) SetNamespace(namespace string) {
 func (h *Hook) SetNamespace(namespace string) {
 	h.Namespace = namespace
 }
+
+func (*Hook) RBACName() string {
+	return "hooks"
+}
+
+func (*HookConfig) RBACName() string {
+	return "hooks"
+}

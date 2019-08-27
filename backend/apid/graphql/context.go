@@ -3,8 +3,8 @@ package graphql
 import (
 	"context"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/globalid"
-	"github.com/sensu/sensu-go/types"
 )
 
 // setContextFromComponents takes a context and global id components, adds the
@@ -16,5 +16,5 @@ func setContextFromComponents(ctx context.Context, c globalid.Components) contex
 // contextWithNamespace takes a context and a name adds it to the context, and
 // returns the updated context.
 func contextWithNamespace(ctx context.Context, name string) context.Context {
-	return context.WithValue(ctx, types.NamespaceKey, name)
+	return context.WithValue(ctx, corev2.NamespaceKey, name)
 }

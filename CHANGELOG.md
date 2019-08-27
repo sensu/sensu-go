@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.12.0] - 2019-08-22
+
 ### Added
 - Added functionality for the agent `--allow-list` configuration, which
 whitelists check and check hook executables.
@@ -19,15 +21,21 @@ backend to use JSON.
 - Added `sensuctl dump` to dump resources to a file or STDOUT.
 - Added `event.check.name` as a supported field selector.
 - [Web] Added timeline chart to event details view.
+- Added `entity.system.arm_version` to record the value of `GOARM` at compile time.
+- Added `ProviderType` field to `AuthProviderClaims`
+- Added `builds` field to the `Asset` type to allow assets to specify different
+URLs for each platform/architecture/arch_version.
 
 ### Changed
 - The project now uses Go modules instead of dep for dependency management.
+- The internal reverse proxy relied on by the dashboard has been eliminated.
 - The generic etcd watcher now keeps track of revisions.
 - The resource caches can now rebuild themselves in case of failures.
 - Event and Entity resources can now be created without an explicit namespace;
 the system will refer to the namespace in the URL.
 - Events and Entities can now be created with the POST verb.
 - [Web] Changed styling of namespace labels.
+- Log token substitution failures more clearly.
 
 ### Fixed
 - Fixed the tabular output of `sensuctl filter list` so inclusive filter expressions
