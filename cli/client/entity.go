@@ -4,21 +4,21 @@ import (
 	"encoding/json"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/types"
 )
 
-var entitiesPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "entities")
+// EntitiesPath is the api path for entities.
+var EntitiesPath = createNSBasePath(coreAPIGroup, coreAPIVersion, "entities")
 
 // DeleteEntity deletes given entitiy from the configured sensu instance
 func (client *RestClient) DeleteEntity(namespace, name string) (err error) {
-	return client.Delete(entitiesPath(namespace, name))
+	return client.Delete(EntitiesPath(namespace, name))
 }
 
 // FetchEntity fetches a specific entity
-func (client *RestClient) FetchEntity(name string) (*types.Entity, error) {
-	var entity *types.Entity
+func (client *RestClient) FetchEntity(name string) (*corev2.Entity, error) {
+	var entity *corev2.Entity
 
-	path := entitiesPath(client.config.Namespace(), name)
+	path := EntitiesPath(client.config.Namespace(), name)
 	res, err := client.R().Get(path)
 	if err != nil {
 		return entity, err
@@ -32,25 +32,14 @@ func (client *RestClient) FetchEntity(name string) (*types.Entity, error) {
 	return entity, err
 }
 
-// ListEntities fetches all entities from configured Sensu instance
-func (client *RestClient) ListEntities(namespace string, options *ListOptions) ([]corev2.Entity, error) {
-	var entities []corev2.Entity
-
-	if err := client.List(entitiesPath(namespace), &entities, options); err != nil {
-		return entities, err
-	}
-
-	return entities, nil
-}
-
 // UpdateEntity updates given entity on configured Sensu instance
-func (client *RestClient) UpdateEntity(entity *types.Entity) (err error) {
+func (client *RestClient) UpdateEntity(entity *corev2.Entity) (err error) {
 	bytes, err := json.Marshal(entity)
 	if err != nil {
 		return err
 	}
 
-	path := entitiesPath(entity.Namespace, entity.Name)
+	path := EntitiesPath(entity.Namespace, entity.Name)
 	res, err := client.R().SetBody(bytes).Put(path)
 	if err != nil {
 		return err
@@ -64,13 +53,13 @@ func (client *RestClient) UpdateEntity(entity *types.Entity) (err error) {
 }
 
 // CreateEntity creates a new entity
-func (client *RestClient) CreateEntity(entity *types.Entity) (err error) {
+func (client *RestClient) CreateEntity(entity *corev2.Entity) (err error) {
 	bytes, err := json.Marshal(entity)
 	if err != nil {
 		return err
 	}
 
-	path := entitiesPath(entity.Namespace)
+	path := EntitiesPath(entity.Namespace)
 	res, err := client.R().SetBody(bytes).Post(path)
 	if err != nil {
 		return err

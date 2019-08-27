@@ -42,6 +42,9 @@ type Dashboardd struct {
 
 	Config
 	Assets *asset.Collection
+
+	CoreSubrouter    *mux.Router
+	GraphQLSubrouter *mux.Router
 }
 
 // Option is a functional option.
@@ -142,10 +145,12 @@ func (d *Dashboardd) Name() string {
 func httpRouter(c apid.Config, d *Dashboardd) (*mux.Router, error) {
 	r := mux.NewRouter()
 
-	handler, _, _, err := apid.NewHandler(c)
+	handler, coreSubrouter, graphQLSubrouter, err := apid.NewHandler(c)
 	if err != nil {
 		return nil, err
 	}
+	d.CoreSubrouter = coreSubrouter
+	d.GraphQLSubrouter = graphQLSubrouter
 
 	// Gzip content
 	gziphandler, err := gziphandler.NewGzipLevelAndMinSize(
