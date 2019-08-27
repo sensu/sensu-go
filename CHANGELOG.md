@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Fixed a bug where silences would not expire on event resolution.
+
 ## [5.12.0] - 2019-08-22
 
 ### Added
