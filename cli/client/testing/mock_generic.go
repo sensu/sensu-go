@@ -1,6 +1,8 @@
 package testing
 
 import (
+	"net/http"
+
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/types"
 )
@@ -18,8 +20,8 @@ func (c *MockClient) Get(path string, obj interface{}) error {
 }
 
 // List ...
-func (c *MockClient) List(path string, objs interface{}, options *client.ListOptions) error {
-	args := c.Called(path, objs, options)
+func (c *MockClient) List(path string, objs interface{}, options *client.ListOptions, header *http.Header) error {
+	args := c.Called(path, objs, options, header)
 	return args.Error(0)
 }
 

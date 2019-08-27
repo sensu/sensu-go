@@ -4,16 +4,17 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 const healthPath = "/health"
 
-func (c *RestClient) Health() (*types.HealthResponse, error) {
+// Health returns the health of the cluster.
+func (c *RestClient) Health() (*corev2.HealthResponse, error) {
 	res, err := c.R().Get(healthPath)
 	if err != nil {
 		return nil, fmt.Errorf("GET %q: %s", healthPath, err)
 	}
-	var healthResponse *types.HealthResponse
+	var healthResponse *corev2.HealthResponse
 	return healthResponse, json.Unmarshal(res.Body(), &healthResponse)
 }

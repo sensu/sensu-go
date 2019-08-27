@@ -3,6 +3,7 @@ package helpers
 import (
 	"fmt"
 	"io"
+	"net/http"
 
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/flags"
@@ -12,6 +13,19 @@ import (
 )
 
 type printTableFunc func(interface{}, io.Writer)
+
+// HeaderWarning is the header key for entity limit warnings
+const HeaderWarning = "Sensu-Entity-Warning"
+
+// PrintList prints a list of resources to stdout with a title, if relevant.
+func PrintList(cmd *cobra.Command, format string, printTable printTableFunc, objects []types.Resource, v interface{}, header http.Header) error {
+	if warning := header.Get(HeaderWarning); warning != "" {
+		if err := PrintTitle(GetChangedStringValueFlag(flags.Format, cmd.Flags()), format, warning, cmd.OutOrStdout()); err != nil {
+			return err
+		}
+	}
+	return Print(cmd, format, printTable, objects, v)
+}
 
 // Print displays
 func Print(cmd *cobra.Command, format string, printTable printTableFunc, objects []types.Resource, v interface{}) error {

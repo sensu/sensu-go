@@ -1,9 +1,6 @@
 package testing
 
 import (
-	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/sensu-go/types"
-
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
@@ -14,7 +11,7 @@ func (c *MockClient) AddGroupToUser(username, group string) error {
 }
 
 // CreateUser for use with mock lib
-func (c *MockClient) CreateUser(user *types.User) error {
+func (c *MockClient) CreateUser(user *corev2.User) error {
 	args := c.Called(user)
 	return args.Error(0)
 }
@@ -26,15 +23,9 @@ func (c *MockClient) DisableUser(username string) error {
 }
 
 // FetchUser for use with mock lib
-func (c *MockClient) FetchUser(username string) (*types.User, error) {
+func (c *MockClient) FetchUser(username string) (*corev2.User, error) {
 	args := c.Called(username)
-	return args.Get(0).(*types.User), args.Error(1)
-}
-
-// ListUsers for use with mock lib
-func (c *MockClient) ListUsers(options *client.ListOptions) ([]corev2.User, error) {
-	args := c.Called(options)
-	return args.Get(0).([]corev2.User), args.Error(1)
+	return args.Get(0).(*corev2.User), args.Error(1)
 }
 
 // ReinstateUser for use with mock lib
