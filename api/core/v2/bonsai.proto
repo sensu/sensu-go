@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+import "github.com/gogo/protobuf@v1.2.1/gogoproto/gogo.proto";
+import "meta.proto";
+
+package sensu.core.v2;
+
+option go_package = "v2";
+option (gogoproto.populate_all) = true;
+option (gogoproto.equal_all) = true;
+option (gogoproto.marshaler_all) = true;
+option (gogoproto.unmarshaler_all) = true;
+option (gogoproto.sizer_all) = true;
+option (gogoproto.testgen_all) = true;
+
+// BonsaiAsset stores information about an asset (metadata, versions, etc.) from Bonsai
+message BonsaiAsset {
+  option (gogoproto.face) = true;
+  option (gogoproto.goproto_getters) = false;
+
+  // Name is the full name (including namespace) of the asset
+  string name = 2;
+
+  // Description is the description for the asset
+  string description = 3;
+
+  // URL is the API URL for the asset
+  string url = 4 [(gogoproto.customname) = "URL"];
+
+  // GithubURL is the Github URL for the asset
+  string github_url = 5 [(gogoproto.customname) = "GithubURL"];
+
+  // DownloadURL is the URL to download the asset source code
+  string download_url = 6 [(gogoproto.customname) = "DownloadURL"];
+
+  // Versions is a list of asset versions
+  repeated BonsaiAssetVersionGrouping versions = 7 [(gogoproto.jsontag) = "versions"];
+};
+
+message BonsaiAssetVersionGrouping {
+  option (gogoproto.face) = true;
+  option (gogoproto.goproto_getters) = false;
+
+  // Version is a single version for an asset
+  string version = 2;
+};
+
+message BonsaiBaseAsset {
+  option (gogoproto.face) = true;
+  option (gogoproto.goproto_getters) = false;
+
+  // Namespace is the Bonsai asset namespace (username)
+  string namespace = 2;
+
+  // Name is the Bonsai asset name
+  string name = 3;
+
+  // Version is a single version for an asset
+  string version = 4;
+};
