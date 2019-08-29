@@ -27,3 +27,19 @@ func (client *RestClient) FetchAsset(namespace, name string) (*corev2.BonsaiAsse
 
 	return &asset, nil
 }
+
+// FetchAssetVersion fetches an asset definition for a the specified asset version
+func (client *RestClient) FetchAssetVersion(namespace, name, version string) (string, error) {
+	path := fmt.Sprintf("/%s/%s/%s/release_asset_builds", namespace, name, version)
+	res, err := client.R().Get(path)
+	if err != nil {
+		return "", err
+	}
+
+	if res.StatusCode() >= 400 {
+		// TODO: this should return an actual error
+		return "", err
+	}
+
+	return res.String(), nil
+}
