@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"sort"
+	"strings"
 
 	"github.com/sensu/sensu-go/bonsai"
 	"github.com/sensu/sensu-go/cli"
@@ -61,7 +63,14 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 			fmt.Println("no version specified, using latest:", bonsaiAsset.LatestVersion())
 			version = bonsaiAsset.LatestVersion()
 		} else if !bonsaiAsset.HasVersion(version) {
-			return fmt.Errorf("version \"%s\" of asset \"%s/%s\" does not exist", version, bAsset.Namespace, bAsset.Name)
+			availableVersions := bonsaiAsset.ValidVersions()
+			sort.Sort(goversion.Collection(availableVersions))
+			availableVersionStrs := []string{}
+			for _, v := range availableVersions {
+				availableVersionStrs = append(availableVersionStrs, v.String())
+			}
+			return fmt.Errorf("version \"%s\" of asset \"%s/%s\" does not exist\navailable versions: %s",
+				version, bAsset.Namespace, bAsset.Name, strings.Join(availableVersionStrs, ", "))
 		}
 
 		fmt.Printf("fetching bonsai asset: %s/%s:%s\n", bAsset.Namespace, bAsset.Name, version)
