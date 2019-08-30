@@ -16,7 +16,7 @@ func (client *RestClient) FetchAsset(namespace, name string) (*corev2.BonsaiAsse
 	}
 
 	if res.StatusCode() >= 400 {
-		// TODO: this should return an actual error
+		err = fmt.Errorf("bonsai api returned status code: %d", res.StatusCode())
 		return nil, err
 	}
 
@@ -37,7 +37,7 @@ func (client *RestClient) FetchAssetVersion(namespace, name, version string) (st
 	}
 
 	if res.StatusCode() >= 400 {
-		// TODO: this should return an actual error
+		err = fmt.Errorf("bonsai api returned status code: %d", res.StatusCode())
 		return "", err
 	}
 

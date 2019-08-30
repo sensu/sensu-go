@@ -45,6 +45,7 @@ func (b *BonsaiAsset) HasVersion(version *goversion.Version) bool {
 // Any versions that cannot be parsed as semver-compliant will be disregarded.
 func (b *BonsaiAsset) ValidVersions() []*goversion.Version {
 	var versions []*goversion.Version
+
 	for _, bVersion := range b.Versions {
 		version, err := goversion.NewVersion(bVersion.Version)
 		if err == nil {
