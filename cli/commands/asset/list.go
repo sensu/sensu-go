@@ -49,10 +49,26 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 
 			// Print the results based on the user preferences
 			resources := []corev2.Resource{}
+			var resultsWithBuilds []interface{}
 			for i := range results {
+				if len(results[i].Builds) > 0 {
+					for _, build := range results[i].Builds {
+						asset := corev2.Asset{
+							ObjectMeta: results[i].ObjectMeta,
+							URL:        build.URL,
+							Sha512:     build.Sha512,
+							Filters:    build.Filters,
+							Headers:    build.Headers,
+						}
+						resultsWithBuilds = append(resultsWithBuilds, asset)
+					}
+				} else {
+					resultsWithBuilds = append(resultsWithBuilds, results[i])
+				}
 				resources = append(resources, &results[i])
 			}
-			return helpers.PrintList(cmd, cli.Config.Format(), printToTable, resources, results, header)
+
+			return helpers.PrintList(cmd, cli.Config.Format(), printToTable, resources, resultsWithBuilds, header)
 		},
 	}
 
