@@ -19,6 +19,8 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
+var rename string
+
 // AddCommand adds c ommand that allows user to add assets from Bonsai.
 func AddCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
@@ -26,6 +28,8 @@ func AddCommand(cli *cli.SensuCli) *cobra.Command {
 		Short: "adds an asset definition fetched from Bonsai",
 		RunE:  addCommandExecute(cli),
 	}
+
+	cmd.Flags().StringVarP(&rename, "rename", "r", "", "rename the asset to the provided string after fetching it from Bonsai")
 
 	return cmd
 }
@@ -89,7 +93,11 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 		}
 		for i := range resources {
 			meta := resources[i].Value.GetObjectMeta()
-			meta.Name = fmt.Sprintf("%s/%s", bAsset.Namespace, bAsset.Name)
+			if rename != "" {
+				meta.Name = rename
+			} else {
+				meta.Name = fmt.Sprintf("%s/%s", bAsset.Namespace, bAsset.Name)
+			}
 			resources[i].Value.SetObjectMeta(meta)
 		}
 		if err := create.PutResources(cli.Client, resources); err != nil {
