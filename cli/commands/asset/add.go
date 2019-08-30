@@ -22,13 +22,13 @@ func AddCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "add [NAME]",
 		Short: "adds an asset definition fetched from Bonsai",
-		RunE:  execute(cli),
+		RunE:  addCommandExecute(cli),
 	}
 
 	return cmd
 }
 
-func execute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string) error {
+func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		// If no name is present print out usage
 		if len(args) != 1 {
