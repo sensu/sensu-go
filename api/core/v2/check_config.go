@@ -64,6 +64,11 @@ func (c *CheckConfig) SetNamespace(namespace string) {
 	c.Namespace = namespace
 }
 
+// SetObjectMeta sets the meta of the resource.
+func (c *CheckConfig) SetObjectMeta(meta ObjectMeta) {
+	c.ObjectMeta = meta
+}
+
 // StorePrefix returns the path prefix to this resource in the store
 func (c *CheckConfig) StorePrefix() string {
 	return ChecksResource

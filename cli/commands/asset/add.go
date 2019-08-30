@@ -87,6 +87,11 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 		if err := create.ValidateResources(resources, cli.Config.Namespace()); err != nil {
 			return err
 		}
+		for i := range resources {
+			meta := resources[i].Value.GetObjectMeta()
+			meta.Name = fmt.Sprintf("%s/%s", bAsset.Namespace, bAsset.Name)
+			resources[i].Value.SetObjectMeta(meta)
+		}
 		if err := create.PutResources(cli.Client, resources); err != nil {
 			return err
 		}

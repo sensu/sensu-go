@@ -172,3 +172,8 @@ func (a *Asset) SetNamespace(namespace string) {
 func (a *Asset) RBACName() string {
 	return "assets"
 }
+
+// SetObjectMeta sets the meta of the resource.
+func (a *Asset) SetObjectMeta(meta ObjectMeta) {
+	a.ObjectMeta = meta
+}

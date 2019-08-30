@@ -74,6 +74,11 @@ func UserFields(r Resource) map[string]string {
 func (u *User) SetNamespace(namespace string) {
 }
 
+// SetObjectMeta is a dummy implementation to meet the Resource interface.
+func (u *User) SetObjectMeta(meta ObjectMeta) {
+	u.Username = meta.Name
+}
+
 func (*User) RBACName() string {
 	return "users"
 }

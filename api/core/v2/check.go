@@ -115,6 +115,11 @@ func (c *Check) SetNamespace(namespace string) {
 	c.Namespace = namespace
 }
 
+// SetObjectMeta sets the meta of the resource.
+func (c *Check) SetObjectMeta(meta ObjectMeta) {
+	c.ObjectMeta = meta
+}
+
 // SetName sets the name of the resource.
 func (c *Check) SetName(name string) {
 	c.Name = name
