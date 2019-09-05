@@ -150,7 +150,7 @@ func refreshAccessToken(cli *cli.SensuCli) func(*cobra.Command, []string) {
 func shell() string {
 	shell := os.Getenv("SHELL")
 	if shell == "" {
-		// Default to powershell for npw when running on Windows
+		// Default to powershell for now when running on Windows
 		if runtime.GOOS == "windows" {
 			return "powershell"
 		}

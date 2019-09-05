@@ -26,6 +26,7 @@ func TestEnvCommandBash(t *testing.T) {
 	testSetupMocks(t, cli.Config.(*mockclient.MockConfig))
 
 	cmd := Command(cli)
+	_ = cmd.Flags().Set("shell", "bash")
 	out, err := test.RunCmd(cmd, nil)
 	assert.Regexp(t, `export SENSU_API_URL="http://127.0.0.1:8080"`, out)
 	assert.NoError(t, err)
