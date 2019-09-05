@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"text/template"
 
 	"github.com/sensu/sensu-go/cli"
@@ -16,9 +17,9 @@ const (
 		`{{ .Prefix }}SENSU_FORMAT{{ .Delimiter }}{{ .Format }}{{ .LineEnding }}` +
 		`{{ .Prefix }}SENSU_ACCESS_TOKEN{{ .Delimiter }}{{ .AccessToken }}{{ .LineEnding }}` +
 		`{{ .Prefix }}SENSU_ACCESS_TOKEN_EXPIRES_AT{{ .Delimiter }}{{ .AccessTokenExpiresAt }}{{ .LineEnding }}` +
-		`{{ .Prefix }}SENSU_REFRESH_TOKEN{{ .Delimiter }}{{ .RefreshToken }}{{ .LineEnding }}` // +
-	//`{{ .Prefix }}SENSU_TRUSTED_CA_FILE{{ .Delimiter }}{{ .TrustedCAFile }}{{ .LineEnding }}` +
-	//`{{ .Prefix }}SENSU_INSECURE_SKIP_TLS_VERIFY{{ .Delimiter }}{{ .InsecureSkipTLSVerify }}{{ .LineEnding }}`
+		`{{ .Prefix }}SENSU_REFRESH_TOKEN{{ .Delimiter }}{{ .RefreshToken }}{{ .LineEnding }}` +
+		`{{ .Prefix }}SENSU_TRUSTED_CA_FILE{{ .Delimiter }}{{ .TrustedCAFile }}{{ .LineEnding }}` +
+		`{{ .Prefix }}SENSU_INSECURE_SKIP_TLS_VERIFY{{ .Delimiter }}{{ .InsecureSkipTLSVerify }}{{ .LineEnding }}`
 
 	shellFlag = "shell"
 )
@@ -46,27 +47,27 @@ type shellConfig struct {
 	Delimiter  string
 	LineEnding string
 
-	APIURL               string
-	Namespace            string
-	Format               string
-	AccessToken          string
-	AccessTokenExpiresAt int64
-	RefreshToken         string
-	// TrustedCAFile string
-	// InsecureSkipTLSVerify string
+	APIURL                string
+	Namespace             string
+	Format                string
+	AccessToken           string
+	AccessTokenExpiresAt  int64
+	RefreshToken          string
+	TrustedCAFile         string
+	InsecureSkipTLSVerify string
 }
 
 func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		shellCfg := shellConfig{
-			APIURL:               cli.Config.APIUrl(),
-			Namespace:            cli.Config.Namespace(),
-			Format:               cli.Config.Format(),
-			AccessToken:          cli.Config.Tokens().Access,
-			AccessTokenExpiresAt: cli.Config.Tokens().ExpiresAt,
-			RefreshToken:         cli.Config.Tokens().Refresh,
-			// TrustedCAFile  cli.Config.TrustedCAFile(),
-			// InsecureSkipTLSVerify: cli.Config.InsecureSkipTLSVerify(),
+			APIURL:                cli.Config.APIUrl(),
+			Namespace:             cli.Config.Namespace(),
+			Format:                cli.Config.Format(),
+			AccessToken:           cli.Config.Tokens().Access,
+			AccessTokenExpiresAt:  cli.Config.Tokens().ExpiresAt,
+			RefreshToken:          cli.Config.Tokens().Refresh,
+			TrustedCAFile:         cli.Config.TrustedCAFile(),
+			InsecureSkipTLSVerify: strconv.FormatBool(cli.Config.InsecureSkipTLSVerify()),
 		}
 
 		// Get the user shell
