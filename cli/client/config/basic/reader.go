@@ -18,6 +18,11 @@ func (c *Config) Format() string {
 	return c.Profile.Format
 }
 
+// InsecureSkipTLSVerify returns whether InsecureSkipTLSVerify is enabled
+func (c *Config) InsecureSkipTLSVerify() bool {
+	return c.Cluster.InsecureSkipTLSVerify
+}
+
 // Namespace returns the user's active namespace
 func (c *Config) Namespace() string {
 	if c.Profile.Namespace == "" {
@@ -29,4 +34,9 @@ func (c *Config) Namespace() string {
 // Tokens returns the active cluster JWT
 func (c *Config) Tokens() *types.Tokens {
 	return c.Cluster.Tokens
+}
+
+// TrustedCAFile returns the trusted CA file
+func (c *Config) TrustedCAFile() string {
+	return c.Cluster.TrustedCAFile
 }
