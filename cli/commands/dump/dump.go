@@ -172,7 +172,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			w = f
 		}
 
-		for i, req := range requests {
+		for _, req := range requests {
 			// set the namespaces on the requests
 			ok, err := cmd.Flags().GetBool(flags.AllNamespaces)
 			if err != nil {
@@ -204,10 +204,6 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			}
 
 			val = reflect.Indirect(val)
-			if val.Len() == 0 {
-				continue
-			}
-
 			resources := make([]corev2.Resource, val.Len())
 			for i := range resources {
 				resources[i] = val.Index(i).Interface().(corev2.Resource)
@@ -219,9 +215,6 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			case config.FormatWrappedJSON:
 				err = helpers.PrintWrappedJSONList(resources, w)
 			case config.FormatYAML:
-				if i > 0 {
-					_, _ = fmt.Fprintln(cmd.OutOrStdout(), "---")
-				}
 				err = helpers.PrintYAML(resources, w)
 			default:
 				err = fmt.Errorf("invalid output format: %s", format)
