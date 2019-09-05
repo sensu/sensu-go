@@ -3,92 +3,59 @@ package dump
 import (
 	"errors"
 	"fmt"
-	"io"
 	"os"
-	"reflect"
-	"regexp"
+	"os/exec"
 	"strings"
 
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/cli"
-	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
-var (
-	// All is all the core resource types and associated sensuctl verbs (non-namespaced resources are intentionally ordered first).
-	All = []types.Resource{
-		&corev2.Namespace{},
-		&corev2.ClusterRole{},
-		&corev2.ClusterRoleBinding{},
-		&corev2.User{},
-		&corev2.TessenConfig{},
-		&corev2.Asset{},
-		&corev2.CheckConfig{},
-		&corev2.Entity{},
-		&corev2.Event{},
-		&corev2.EventFilter{},
-		&corev2.Handler{},
-		&corev2.Hook{},
-		&corev2.Mutator{},
-		&corev2.Role{},
-		&corev2.RoleBinding{},
-		&corev2.Silenced{},
-	}
-
-	ChunkSize = 100
-
-	// synonyms provides user-friendly resource synonyms like checks, entities
-	synonyms = map[string]corev2.Resource{}
+const (
+	// VerbList is the sensuctl verb to list resources.
+	VerbList = "list"
+	// VerbInfo is the sensuctl verb to get info about a resource.
+	VerbInfo = "info"
 )
 
-func init() {
-	for _, resource := range All {
-		synonyms[resource.RBACName()] = resource
-	}
+// Action is a resource/verb tuple for sensuctl commands.
+type Action struct {
+	Resource   string
+	Verb       string
+	Namespaced bool
 }
 
-var resourceRE = regexp.MustCompile(`(\w+\/v\d+\.)?(\w+)`)
-
-func resolveResource(resource string) (types.Resource, error) {
-	if resource, ok := synonyms[resource]; ok {
-		return resource, nil
+var (
+	// All is all the core resource types and associated sensuctl verbs (non-namespaced resources are intentionally ordered first).
+	All = []Action{
+		Action{Resource: "namespace", Verb: VerbList, Namespaced: false},
+		Action{Resource: "cluster-role", Verb: VerbList, Namespaced: false},
+		Action{Resource: "cluster-role-binding", Verb: VerbList, Namespaced: false},
+		Action{Resource: "user", Verb: VerbList, Namespaced: false},
+		Action{Resource: "tessen", Verb: VerbInfo, Namespaced: false},
+		Action{Resource: "asset", Verb: VerbList, Namespaced: true},
+		Action{Resource: "check", Verb: VerbList, Namespaced: true},
+		Action{Resource: "entity", Verb: VerbList, Namespaced: true},
+		Action{Resource: "event", Verb: VerbList, Namespaced: true},
+		Action{Resource: "filter", Verb: VerbList, Namespaced: true},
+		Action{Resource: "handler", Verb: VerbList, Namespaced: true},
+		Action{Resource: "hook", Verb: VerbList, Namespaced: true},
+		Action{Resource: "mutator", Verb: VerbList, Namespaced: true},
+		Action{Resource: "role", Verb: VerbList, Namespaced: true},
+		Action{Resource: "role-binding", Verb: VerbList, Namespaced: true},
+		Action{Resource: "silenced", Verb: VerbList, Namespaced: true},
 	}
-	matches := resourceRE.FindStringSubmatch(resource)
-	if len(matches) != 3 {
-		return nil, fmt.Errorf("bad resource qualifier: %s. hint: try something like core/v2.CheckConfig", resource)
-	}
-	apiVersion := strings.TrimSuffix(matches[1], ".")
-	typeName := matches[2]
-	if apiVersion == "" {
-		apiVersion = "core/v2"
-	}
-	return types.ResolveType(apiVersion, typeName)
-}
-
-var description = `sensuctl dump
-
-Dump resources to stdout or a file. Example:
-$ sensuctl dump checks
-
-The tool also supports naming types by their fully-qualified names:
-$ sensuctl dump core/v2.CheckConfig,core/v2.Entity
-
-You can also use the 'all' qualifier to dump all supported resources:
-$ sensuctl dump all
-`
+)
 
 // Command dumps generic Sensu resources to a file or STDOUT.
 func Command(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:  "dump [RESOURCE TYPE],[RESOURCE TYPE]... [-f FILE]",
-		Long: description,
-		RunE: execute(cli),
+		Use:   "dump [RESOURCE TYPE],[RESOURCE TYPE]... [-f FILE]",
+		Short: "dump resources to a file or STDOUT",
+		RunE:  execute(cli),
 	}
 
 	helpers.AddAllNamespace(cmd.Flags())
@@ -96,40 +63,6 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 	_ = cmd.Flags().StringP("file", "f", "", "file to dump resources to")
 
 	return cmd
-}
-
-func dedupTypes(arg string) []string {
-	types := strings.Split(arg, ",")
-	seen := make(map[string]struct{})
-	result := make([]string, 0, len(types))
-	for _, t := range types {
-		if _, ok := seen[t]; ok {
-			continue
-		}
-		seen[t] = struct{}{}
-		result = append(result, t)
-	}
-	return result
-}
-
-func getResourceRequests(actionSpec string) ([]types.Resource, error) {
-	// parse the comma separated resource types and match against the defined actions
-	if actionSpec == "all" {
-		return All, nil
-	}
-	var actions []types.Resource
-	// deduplicate requested resources
-	types := dedupTypes(actionSpec)
-
-	// build resource requests for sensuctl
-	for _, t := range types {
-		resource, err := resolveResource(t)
-		if err != nil {
-			return nil, fmt.Errorf("invalid resource type: %s", t)
-		}
-		actions = append(actions, resource)
-	}
-	return actions, nil
 }
 
 func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
@@ -151,80 +84,82 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		}
 
 		// parse the comma separated resource types and match against the defined actions
-		requests, err := getResourceRequests(args[0])
-		if err != nil {
-			return err
+		var actions []Action
+		if args[0] == "all" {
+			actions = All
+		} else {
+			// check for duplicates first
+			types := strings.Split(args[0], ",")
+			for i := 0; i < len(types); i++ {
+				for v := 0; v < i; v++ {
+					if types[v] == types[i] {
+						return fmt.Errorf("duplicate resource type: %s", types[v])
+					}
+				}
+			}
+			// build actions for sensuctl
+			for _, t := range types {
+				length := len(actions)
+				for _, action := range All {
+					if t == action.Resource {
+						actions = append(actions, action)
+					}
+				}
+				if length == len(actions) {
+					return fmt.Errorf("invalid resource type: %s", t)
+				}
+			}
 		}
 
-		var w io.Writer = cmd.OutOrStdout()
+		// iterate the matched actions and start building a sensuctl command
+		var out string
+		for _, a := range actions {
+			ctlArgs := []string{
+				a.Resource,
+				a.Verb,
+				"--format",
+				format,
+			}
 
-		// if a file is requested, write data to that
+			// append --namespace or --all-namespaces flag if compatible with the resource type
+			if a.Namespaced {
+				if ok, err := cmd.Flags().GetBool(flags.AllNamespaces); err != nil {
+					return err
+				} else if ok {
+					ctlArgs = append(ctlArgs, "--all-namespaces")
+				} else {
+					ctlArgs = append(ctlArgs, "--namespace")
+					ctlArgs = append(ctlArgs, cli.Config.Namespace())
+				}
+			}
+
+			// execute the command and build wrapped-json or yaml lists
+			originalBytes, _ := exec.Command(os.Args[0], ctlArgs...).Output()
+			if len(originalBytes) == 0 {
+				continue
+			}
+			if format == config.FormatWrappedJSON {
+				out = fmt.Sprintf("%s%s", out, string(originalBytes))
+			} else {
+				out = fmt.Sprintf("%s---\n%s", out, string(originalBytes))
+			}
+		}
+
+		// write data to file or STDOUT
 		fp, err := cmd.Flags().GetString("file")
 		if err != nil {
 			return err
 		}
-		if fp != "" {
-			f, err := os.Create(fp)
-			if err != nil {
-				return err
-			}
-			defer f.Close()
-			w = f
+		if fp == "" {
+			_, err := fmt.Print(out)
+			return err
 		}
-
-		for _, req := range requests {
-			// set the namespaces on the requests
-			ok, err := cmd.Flags().GetBool(flags.AllNamespaces)
-			if err != nil {
-				return err
-			}
-			if ok {
-				req.SetNamespace(corev2.NamespaceTypeAll)
-			} else {
-				req.SetNamespace(cli.Config.Namespace())
-			}
-
-			val := reflect.New(reflect.SliceOf(reflect.TypeOf(req)))
-			err = cli.Client.List(
-				req.URIPath(), val.Interface(), &client.ListOptions{
-					ChunkSize: ChunkSize,
-				}, nil)
-			if err != nil {
-				// We want to ignore non-nil errors that are a result of
-				// resources not existing, or features being licensed.
-				err, ok := err.(client.APIError)
-				if !ok {
-					return fmt.Errorf("API error: %s", err)
-				}
-				switch actions.ErrCode(err.Code) {
-				case actions.PaymentRequired, actions.NotFound:
-					continue
-				}
-				return fmt.Errorf("API error: %s", err)
-			}
-
-			val = reflect.Indirect(val)
-			resources := make([]corev2.Resource, val.Len())
-			for i := range resources {
-				resources[i] = val.Index(i).Interface().(corev2.Resource)
-			}
-
-			switch format {
-			case config.FormatJSON:
-				err = helpers.PrintJSON(resources, w)
-			case config.FormatWrappedJSON:
-				err = helpers.PrintWrappedJSONList(resources, w)
-			case config.FormatYAML:
-				err = helpers.PrintYAML(resources, w)
-			default:
-				err = fmt.Errorf("invalid output format: %s", format)
-			}
-
-			if err != nil {
-				return err
-			}
+		f, err := os.Create(fp)
+		if err != nil {
+			return err
 		}
-
-		return nil
+		defer f.Close()
+		_, err = f.WriteString(out)
+		return err
 	}
 }

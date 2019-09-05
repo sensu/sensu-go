@@ -55,35 +55,18 @@ func (client *RestClient) List(path string, objs interface{}, options *ListOptio
 		if err != nil {
 			return err
 		}
-		if header != nil {
-			*header = resp.Header()
-		}
+		*header = resp.Header()
 
 		if resp.StatusCode() >= 400 {
 			return UnmarshalError(resp)
 		}
 
 		newObjs := reflect.New(objsType.Elem())
-		o := reflect.ValueOf(objs).Elem()
-
-		body := resp.Body()
-		if len(body) == 0 {
-			return nil
-		}
-		if len(body) > 0 && body[0] == '{' {
-			// Special case for a single resource being returned
-			elem := reflect.New(reflect.Indirect(newObjs).Type().Elem().Elem())
-			if err := json.Unmarshal(body, elem.Interface()); err != nil {
-				return err
-			}
-			o.Set(reflect.Append(o, elem))
-			return nil
-		}
-
-		if err := json.Unmarshal(body, newObjs.Interface()); err != nil {
+		if err := json.Unmarshal(resp.Body(), newObjs.Interface()); err != nil {
 			return err
 		}
 
+		o := reflect.ValueOf(objs).Elem()
 		o.Set(reflect.AppendSlice(o, newObjs.Elem()))
 
 		options.ContinueToken = resp.Header().Get(corev2.PaginationContinueHeader)
