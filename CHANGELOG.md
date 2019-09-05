@@ -109,6 +109,7 @@ deeply nested.
 usage until sensu-backend was restarted.
 
 ## [5.10.1] - 2019-06-25
+- Add HTTP and directory support to sensuctl create
 
 ### Fixed
 - Fixed the entity_attributes in proxy_requests so all attributes must match
