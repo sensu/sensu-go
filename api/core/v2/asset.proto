@@ -59,4 +59,4 @@ message AssetBuild {
   // Headers is a collection of key/value string pairs used as HTTP headers
   // for asset retrieval.
   map<string, string> headers = 9 [(gogoproto.jsontag) = "headers"];
-}
+};

@@ -176,6 +176,11 @@ func (c *HookConfig) SetNamespace(namespace string) {
 	c.Namespace = namespace
 }
 
+// SetObjectMeta sets the meta of the resource.
+func (h *HookConfig) SetObjectMeta(meta ObjectMeta) {
+	h.ObjectMeta = meta
+}
+
 // SetNamespace sets the namespace of the resource.
 func (h *Hook) SetNamespace(namespace string) {
 	h.Namespace = namespace

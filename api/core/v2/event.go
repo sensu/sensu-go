@@ -387,6 +387,11 @@ func (e *Event) SetNamespace(namespace string) {
 	e.Namespace = namespace
 }
 
+// SetObjectMeta sets the meta of the resource.
+func (e *Event) SetObjectMeta(meta ObjectMeta) {
+	e.ObjectMeta = meta
+}
+
 func (e *Event) RBACName() string {
 	return "events"
 }

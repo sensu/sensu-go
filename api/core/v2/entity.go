@@ -198,6 +198,11 @@ func (e *Entity) SetNamespace(namespace string) {
 	e.Namespace = namespace
 }
 
+// SetObjectMeta sets the meta of the resource.
+func (e *Entity) SetObjectMeta(meta ObjectMeta) {
+	e.ObjectMeta = meta
+}
+
 func (e *Entity) RBACName() string {
 	return "entities"
 }

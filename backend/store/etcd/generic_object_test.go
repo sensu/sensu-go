@@ -1,10 +1,16 @@
 package etcd
 
+import corev2 "github.com/sensu/sensu-go/api/core/v2"
+
 //go:generate -command protoc protoc --gofast_out=plugins:. -I=${GOPATH}/src:. -I=../../../vendor/ -I=./ -I=../../../vendor/github.com/gogo/protobuf/protobuf/
 //go:generate protoc generic_object.proto
 
 func (g *GenericObject) GetNamespace() string {
 	return g.Namespace
+}
+
+func (g *GenericObject) SetObjectMeta(meta corev2.ObjectMeta) {
+	g.ObjectMeta = meta
 }
 
 func (g *GenericObject) StorePrefix() string {

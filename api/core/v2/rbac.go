@@ -328,8 +328,18 @@ func RoleBindingFields(r Resource) map[string]string {
 func (r *ClusterRole) SetNamespace(namespace string) {
 }
 
+// SetObjectMeta sets the meta of the resource.
+func (r *ClusterRole) SetObjectMeta(meta ObjectMeta) {
+	r.ObjectMeta = meta
+}
+
 // SetNamespace sets the namespace of the resource.
 func (b *ClusterRoleBinding) SetNamespace(namespace string) {
+}
+
+// SetObjectMeta sets the meta of the resource.
+func (b *ClusterRoleBinding) SetObjectMeta(meta ObjectMeta) {
+	b.ObjectMeta = meta
 }
 
 // SetNamespace sets the namespace of the resource.
@@ -337,9 +347,19 @@ func (r *Role) SetNamespace(namespace string) {
 	r.Namespace = namespace
 }
 
+// SetObjectMeta sets the meta of the resource.
+func (r *Role) SetObjectMeta(meta ObjectMeta) {
+	r.ObjectMeta = meta
+}
+
 // SetNamespace sets the namespace of the resource.
 func (b *RoleBinding) SetNamespace(namespace string) {
 	b.Namespace = namespace
+}
+
+// SetObjectMeta sets the meta of the resource.
+func (b *RoleBinding) SetObjectMeta(meta ObjectMeta) {
+	b.ObjectMeta = meta
 }
 
 func (*ClusterRoleBinding) RBACName() string {

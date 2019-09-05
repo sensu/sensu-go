@@ -9,6 +9,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Added the `sensuctl env` command.
+- sensuctl asset add (fetches & adds assets from Bonsai).
+- sensuctl asset outdated (checks for newer versions of assets from Bonsai).
 
 ### Fixed
 - sensuctl dump no longer silently discards errors.

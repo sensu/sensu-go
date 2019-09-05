@@ -57,6 +57,11 @@ func DefaultTessenConfig() *TessenConfig {
 func (t *TessenConfig) SetNamespace(namespace string) {
 }
 
+// SetObjectMeta only exists here to fulfil the requirements of Resource
+func (t *TessenConfig) SetObjectMeta(ObjectMeta) {
+	// no-op
+}
+
 func (*TessenConfig) RBACName() string {
 	return "tessen"
 }

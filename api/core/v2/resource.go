@@ -5,6 +5,9 @@ type Resource interface {
 	// GetObjectMeta returns the object metadata for the resource.
 	GetObjectMeta() ObjectMeta
 
+	// SetObjectMeta sets the object metadata for the resource.
+	SetObjectMeta(ObjectMeta)
+
 	// SetNamespace sets the namespace of the resource.
 	SetNamespace(string)
 
