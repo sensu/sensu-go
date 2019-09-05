@@ -36,7 +36,7 @@ func TestEnvCommandCmd(t *testing.T) {
 	testSetupMocks(t, cli.Config.(*mockclient.MockConfig))
 
 	cmd := Command(cli)
-	cmd.Flags().Set("shell", "cmd")
+	_ = cmd.Flags().Set("shell", "cmd")
 	out, err := test.RunCmd(cmd, nil)
 	assert.Regexp(t, `SET SENSU_API_URL=http://127.0.0.1:8080`, out)
 	assert.NoError(t, err)
@@ -47,7 +47,7 @@ func TestEnvCommandPowershell(t *testing.T) {
 	testSetupMocks(t, cli.Config.(*mockclient.MockConfig))
 
 	cmd := Command(cli)
-	cmd.Flags().Set("shell", "powershell")
+	_ = cmd.Flags().Set("shell", "powershell")
 	out, err := test.RunCmd(cmd, nil)
 	assert.Regexp(t, `\$Env:SENSU_API_URL = "http://127.0.0.1:8080"`, out)
 	assert.NoError(t, err)

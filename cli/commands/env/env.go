@@ -143,8 +143,6 @@ func refreshAccessToken(cli *cli.SensuCli) func(*cobra.Command, []string) {
 
 		// Write new tokens to disk
 		_ = cli.Config.SaveTokens(tokens)
-
-		return
 	}
 }
 
