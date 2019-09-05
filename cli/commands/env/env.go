@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"text/template"
 
 	"github.com/sensu/sensu-go/cli"
@@ -19,7 +20,8 @@ const (
 		`{{ .Prefix }}SENSU_ACCESS_TOKEN_EXPIRES_AT{{ .Delimiter }}{{ .AccessTokenExpiresAt }}{{ .LineEnding }}` +
 		`{{ .Prefix }}SENSU_REFRESH_TOKEN{{ .Delimiter }}{{ .RefreshToken }}{{ .LineEnding }}` +
 		`{{ .Prefix }}SENSU_TRUSTED_CA_FILE{{ .Delimiter }}{{ .TrustedCAFile }}{{ .LineEnding }}` +
-		`{{ .Prefix }}SENSU_INSECURE_SKIP_TLS_VERIFY{{ .Delimiter }}{{ .InsecureSkipTLSVerify }}{{ .LineEnding }}`
+		`{{ .Prefix }}SENSU_INSECURE_SKIP_TLS_VERIFY{{ .Delimiter }}{{ .InsecureSkipTLSVerify }}{{ .LineEnding }}` +
+		`{{ .UsageHint }}`
 
 	shellFlag = "shell"
 )
@@ -43,9 +45,13 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 }
 
 type shellConfig struct {
+	args      []string
+	userShell string
+
 	Prefix     string
 	Delimiter  string
 	LineEnding string
+	// UsageHint  string
 
 	APIURL                string
 	Namespace             string
@@ -57,9 +63,28 @@ type shellConfig struct {
 	InsecureSkipTLSVerify string
 }
 
+func (s shellConfig) UsageHint() string {
+	cmd := ""
+	comment := "#"
+	commandLine := strings.Join(s.args, " ")
+
+	switch s.userShell {
+	case "cmd":
+		cmd = fmt.Sprintf("\t@FOR /f \"tokens=*\" %%i IN ('%s') DO @%%i", commandLine)
+		comment = "REM"
+	case "powershell":
+		cmd = fmt.Sprintf("& %s | Invoke-Expression", commandLine)
+	default:
+		cmd = fmt.Sprintf("eval $(%s)", commandLine)
+	}
+
+	return fmt.Sprintf("%s Run this command to configure your shell: \n%s %s\n", comment, comment, cmd)
+}
+
 func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		shellCfg := shellConfig{
+			args:                  os.Args,
 			APIURL:                cli.Config.APIUrl(),
 			Namespace:             cli.Config.Namespace(),
 			Format:                cli.Config.Format(),
@@ -71,7 +96,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		}
 
 		// Get the user shell
-		shell := shell()
+		shellCfg.userShell = shell()
 
 		// Determine if the shell flag was passed to override the shell to use
 		shellFlag, err := cmd.Flags().GetString(shellFlag)
@@ -79,10 +104,10 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			return err
 		}
 		if shellFlag != "" {
-			shell = shellFlag
+			shellCfg.userShell = shellFlag
 		}
 
-		switch shell {
+		switch shellCfg.userShell {
 		case "cmd":
 			shellCfg.Prefix = "SET "
 			shellCfg.Delimiter = "="
