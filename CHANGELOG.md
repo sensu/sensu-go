@@ -5,12 +5,13 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [5.13.0] - 2019-09-09
 
 ### Added
 - Added the `sensuctl env` command.
 - sensuctl asset add (fetches & adds assets from Bonsai).
 - sensuctl asset outdated (checks for newer versions of assets from Bonsai).
+- Add HTTP and directory support to `sensuctl create`
 
 ### Fixed
 - Interactive check create and update modes now have 'none' as the first
