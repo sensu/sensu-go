@@ -26,9 +26,10 @@ const (
 // Command display the commands to set up the environment used by sensuctl
 func Command(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "env",
-		Short: "display the commands to set up the environment used by sensuctl",
-		RunE:  execute(cli),
+		Use:     "env",
+		Short:   "display the commands to set up the environment used by sensuctl",
+		PreRunE: refreshAccessToken(cli),
+		RunE:    execute(cli),
 	}
 
 	_ = cmd.Flags().StringP(shellFlag, "", "",
@@ -102,6 +103,21 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		}
 
 		return tmpl.Execute(os.Stdout, shellCfg)
+	}
+}
+
+func refreshAccessToken(cli *cli.SensuCli) func(*cobra.Command, []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		tokens, err := cli.Client.RefreshAccessToken(cli.Config.Tokens().Refresh)
+		if err != nil {
+			return fmt.Errorf(
+				"failed to request new refresh token; client returned '%s'",
+				err,
+			)
+		}
+
+		// Write new tokens to disk
+		return cli.Config.SaveTokens(tokens)
 	}
 }
 
