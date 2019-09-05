@@ -28,10 +28,6 @@ func OutdatedCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	helpers.AddFormatFlag(cmd.Flags())
-	helpers.AddAllNamespace(cmd.Flags())
-	helpers.AddFieldSelectorFlag(cmd.Flags())
-	helpers.AddLabelSelectorFlag(cmd.Flags())
-	helpers.AddChunkSizeFlag(cmd.Flags())
 
 	return cmd
 }
