@@ -31,7 +31,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	_ = cmd.Flags().StringSliceP("file", "f", nil, "Files, directories, or URLs to create resources from")
-	_ = cmd.Flags().BoolP("recurse", "r", false, "Follow subdirectories")
+	_ = cmd.Flags().BoolP("recursive", "r", false, "Follow subdirectories")
 
 	return cmd
 }
@@ -132,7 +132,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		if err != nil {
 			return err
 		}
-		recurse, err := cmd.Flags().GetBool("recurse")
+		recurse, err := cmd.Flags().GetBool("recursive")
 		if err != nil {
 			return err
 		}
