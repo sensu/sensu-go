@@ -83,6 +83,8 @@ var typeMap = map[string]interface{}{
 	"network_interface":             &NetworkInterface{},
 	"ObjectMeta":                    &ObjectMeta{},
 	"object_meta":                   &ObjectMeta{},
+	"OutdatedBonsaiAsset":           &OutdatedBonsaiAsset{},
+	"outdated_bonsai_asset":         &OutdatedBonsaiAsset{},
 	"ProxyRequests":                 &ProxyRequests{},
 	"proxy_requests":                &ProxyRequests{},
 	"Role":                          &Role{},

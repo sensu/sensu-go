@@ -3,6 +3,7 @@ package asset
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 
 	goversion "github.com/hashicorp/go-version"
@@ -12,17 +13,10 @@ import (
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/elements/table"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
-
-type OutdatedAsset struct {
-	Name           string
-	Namespace      string
-	AssetName      string
-	CurrentVersion string
-	LatestVersion  string
-}
 
 // OutdatedCommand adds a command that allows users to list outdated assets
 // that have been added from Bonsai.
@@ -69,7 +63,7 @@ func outdatedCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []s
 
 		bonsaiClient := bonsai.New(bonsai.BonsaiConfig{})
 
-		outdatedAssets := []OutdatedAsset{}
+		outdatedAssets := []corev2.OutdatedBonsaiAsset{}
 
 		for _, asset := range results {
 			annotations := asset.GetObjectMeta().Annotations
@@ -101,29 +95,71 @@ func outdatedCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []s
 				latestVersion := bonsaiAsset.LatestVersion()
 
 				if installedVersion.LessThan(latestVersion) {
-					outdatedAssets = append(outdatedAssets, OutdatedAsset{
-						Name:           bonsaiName,
-						Namespace:      bonsaiNamespace,
-						AssetName:      asset.Name,
-						CurrentVersion: installedVersion.String(),
-						LatestVersion:  latestVersion.String(),
+					outdatedAssets = append(outdatedAssets, corev2.OutdatedBonsaiAsset{
+						BonsaiName:      bonsaiName,
+						BonsaiNamespace: bonsaiNamespace,
+						AssetName:       asset.Name,
+						CurrentVersion:  installedVersion.String(),
+						LatestVersion:   latestVersion.String(),
 					})
 				}
 			}
 		}
 
-		if len(outdatedAssets) == 0 {
-			fmt.Println("all bonsai assets are up to date!")
-		} else {
-			for _, outdatedAsset := range outdatedAssets {
-				assetName := outdatedAsset.AssetName
-				if assetName != fmt.Sprintf("%s/%s", outdatedAsset.Namespace, outdatedAsset.Name) {
-					assetName = fmt.Sprintf("%s (%s/%s)", outdatedAsset.AssetName, outdatedAsset.Namespace, outdatedAsset.Name)
-				}
-				fmt.Printf("%s has a newer version (current: %s, latest %s)\n", assetName, outdatedAsset.CurrentVersion, outdatedAsset.LatestVersion)
-			}
+		// Print the results based on user preferences
+		resources := []corev2.Resource{}
+		for _, outdatedAsset := range outdatedAssets {
+			resources = append(resources, &outdatedAsset)
 		}
 
-		return nil
+		return helpers.PrintList(cmd, cli.Config.Format(), printOutdatedToTable, resources, outdatedAssets, header)
 	}
+}
+
+func printOutdatedToTable(results interface{}, writer io.Writer) {
+	table := table.New([]*table.Column{
+		{
+			Title:       "Asset Name",
+			ColumnStyle: table.PrimaryTextStyle,
+			CellTransformer: func(data interface{}) string {
+				outdatedAsset, ok := data.(corev2.OutdatedBonsaiAsset)
+				if !ok {
+					return cli.TypeError
+				}
+				return outdatedAsset.AssetName
+			},
+		},
+		{
+			Title: "Bonsai Asset",
+			CellTransformer: func(data interface{}) string {
+				outdatedAsset, ok := data.(corev2.OutdatedBonsaiAsset)
+				if !ok {
+					return cli.TypeError
+				}
+				return fmt.Sprintf("%s/%s", outdatedAsset.BonsaiNamespace, outdatedAsset.BonsaiName)
+			},
+		},
+		{
+			Title: "Current Version",
+			CellTransformer: func(data interface{}) string {
+				outdatedAsset, ok := data.(corev2.OutdatedBonsaiAsset)
+				if !ok {
+					return cli.TypeError
+				}
+				return outdatedAsset.CurrentVersion
+			},
+		},
+		{
+			Title: "Latest Version",
+			CellTransformer: func(data interface{}) string {
+				outdatedAsset, ok := data.(corev2.OutdatedBonsaiAsset)
+				if !ok {
+					return cli.TypeError
+				}
+				return outdatedAsset.LatestVersion
+			},
+		},
+	})
+
+	table.Render(writer, results)
 }

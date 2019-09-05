@@ -61,3 +61,38 @@ func (b *BonsaiAsset) LatestVersion() *goversion.Version {
 	sort.Sort(goversion.Collection(versions))
 	return versions[len(versions)-1]
 }
+
+// GetObjectMeta is just a no-op to satisfy the Resource interface
+func (o *OutdatedBonsaiAsset) GetObjectMeta() ObjectMeta {
+	return ObjectMeta{}
+}
+
+// SetObjectMeta is just a no-op to satisfy the Resource interface
+func (o *OutdatedBonsaiAsset) SetObjectMeta(meta ObjectMeta) {
+	// no-op
+}
+
+// SetNamespace is just a no-op to satisfy the Resource interface
+func (o *OutdatedBonsaiAsset) SetNamespace(namespace string) {
+	// no-op
+}
+
+// StorePrefix is just a no-op to satisfy the Resource interface
+func (o *OutdatedBonsaiAsset) StorePrefix() string {
+	return ""
+}
+
+// RBACName is just a no-op to satisfy the Resource interface
+func (o *OutdatedBonsaiAsset) RBACName() string {
+	return ""
+}
+
+// URIPath is just a no-op to satisfy the Resource interface
+func (o *OutdatedBonsaiAsset) URIPath() string {
+	return ""
+}
+
+// Validate is just a no-op to satisfy the Resource interface
+func (o *OutdatedBonsaiAsset) Validate() error {
+	return nil
+}

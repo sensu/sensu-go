@@ -58,3 +58,23 @@ message BonsaiBaseAsset {
   // Version is a single version for an asset
   string version = 4;
 };
+
+message OutdatedBonsaiAsset {
+  option (gogoproto.face) = true;
+  option (gogoproto.goproto_getters) = false;
+
+  // BonsaiName is the name of the Bonsai asset
+  string bonsai_name = 2;
+
+  // BonsaiNamespace is the Bonsai namespace (aka username)
+  string bonsai_namespace = 3;
+
+  // AssetName is the name of the Sensu asset
+  string asset_name = 4;
+
+  // CurrentVersion is the version of the Sensu asset currently installed
+  string current_version = 5;
+
+  // LatestVersion is the latest version of the asset in Bonsai
+  string latest_version = 6;
+}
