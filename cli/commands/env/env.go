@@ -114,7 +114,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			shellCfg.LineEnding = "\n"
 		case "powershell":
 			shellCfg.Prefix = "$Env:"
-			shellCfg.Delimiter = "="
+			shellCfg.Delimiter = " = \""
 			shellCfg.LineEnding = "\"\n"
 		default: // bash
 			shellCfg.Prefix = "export "
