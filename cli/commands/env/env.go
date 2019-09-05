@@ -98,7 +98,6 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 
 		// Get the user shell
 		shellCfg.userShell = shell()
-		fmt.Printf("os.Getenv('SHELL') == %s\n", shell())
 
 		// Determine if the shell flag was passed to override the shell to use
 		shellFlag, err := cmd.Flags().GetString(shellFlag)
@@ -130,7 +129,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			return err
 		}
 
-		return tmpl.Execute(os.Stdout, shellCfg)
+		return tmpl.Execute(cmd.OutOrStdout(), shellCfg)
 	}
 }
 
