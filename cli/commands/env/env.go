@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"text/template"
@@ -51,7 +52,6 @@ type shellConfig struct {
 	Prefix     string
 	Delimiter  string
 	LineEnding string
-	// UsageHint  string
 
 	APIURL                string
 	Namespace             string
@@ -81,6 +81,7 @@ func (s shellConfig) UsageHint() string {
 	return fmt.Sprintf("%s Run this command to configure your shell: \n%s %s\n", comment, comment, cmd)
 }
 
+// execute contains the actual logic for displaying the environment
 func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		shellCfg := shellConfig{
@@ -133,6 +134,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 	}
 }
 
+// refreshAccessToken attempts to silently refresh the access token
 func refreshAccessToken(cli *cli.SensuCli) func(*cobra.Command, []string) {
 	return func(cmd *cobra.Command, args []string) {
 		tokens, err := cli.Client.RefreshAccessToken(cli.Config.Tokens().Refresh)
@@ -147,9 +149,14 @@ func refreshAccessToken(cli *cli.SensuCli) func(*cobra.Command, []string) {
 	}
 }
 
+// shell attempts to discover the shell currently used
 func shell() string {
 	shell := os.Getenv("SHELL")
 	if shell == "" {
+		// Default to powershell for npw when running on Windows
+		if runtime.GOOS == "windows" {
+			return "powershell"
+		}
 		return ""
 	}
 
