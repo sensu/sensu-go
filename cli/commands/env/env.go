@@ -29,10 +29,10 @@ const (
 // Command display the commands to set up the environment used by sensuctl
 func Command(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:     "env",
-		Short:   "display the commands to set up the environment used by sensuctl",
-		PreRunE: refreshAccessToken(cli),
-		RunE:    execute(cli),
+		Use:    "env",
+		Short:  "display the commands to set up the environment used by sensuctl",
+		PreRun: refreshAccessToken(cli),
+		RunE:   execute(cli),
 	}
 
 	_ = cmd.Flags().StringP(shellFlag, "", "",
@@ -97,6 +97,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 
 		// Get the user shell
 		shellCfg.userShell = shell()
+		fmt.Printf("os.Getenv('SHELL') == %s\n", shell())
 
 		// Determine if the shell flag was passed to override the shell to use
 		shellFlag, err := cmd.Flags().GetString(shellFlag)
@@ -132,18 +133,17 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 	}
 }
 
-func refreshAccessToken(cli *cli.SensuCli) func(*cobra.Command, []string) error {
-	return func(cmd *cobra.Command, args []string) error {
+func refreshAccessToken(cli *cli.SensuCli) func(*cobra.Command, []string) {
+	return func(cmd *cobra.Command, args []string) {
 		tokens, err := cli.Client.RefreshAccessToken(cli.Config.Tokens().Refresh)
 		if err != nil {
-			return fmt.Errorf(
-				"failed to request new refresh token; client returned '%s'",
-				err,
-			)
+			return
 		}
 
 		// Write new tokens to disk
-		return cli.Config.SaveTokens(tokens)
+		_ = cli.Config.SaveTokens(tokens)
+
+		return
 	}
 }
 
