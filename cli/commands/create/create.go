@@ -3,17 +3,21 @@ package create
 import (
 	"bytes"
 	"encoding/json"
+	"encoding/xml"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
+	"net/http"
+	"net/url"
 	"os"
+	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/ghodss/yaml"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
-	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -21,41 +25,123 @@ import (
 // CreateCommand creates generic Sensu resources.
 func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create [-f FILE]",
-		Short: "create new resources from file or STDIN",
+		Use:   "create [-r] [[-f URL] ... ]",
+		Short: "create or replace resources from file or URL (path, file://, http[s]://), or STDIN otherwise.",
 		RunE:  execute(cli),
 	}
 
-	_ = cmd.Flags().StringP("file", "f", "", "File to create resources from")
+	_ = cmd.Flags().StringSliceP("file", "f", nil, "Files, directories, or URLs to create resources from")
+	_ = cmd.Flags().BoolP("recursive", "r", false, "Follow subdirectories")
 
 	return cmd
 }
 
-func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		var in io.Reader
-		if len(args) > 1 {
-			_ = cmd.Help()
-			return errors.New("invalid argument(s) received")
-		}
-		fp, err := cmd.Flags().GetString("file")
-		if err != nil {
-			return err
-		}
+type httpDirectory struct {
+	XMLName xml.Name `xml:"pre"`
+	Files   []string `xml:"a"`
+}
 
-		in, err = helpers.InputData(fp)
+func processFile(cli *cli.SensuCli, input string, recurse bool) error {
+	var tld = true
+	return filepath.Walk(input, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-
-		resources, err := ParseResources(in)
+		if !recurse && info.IsDir() && !tld {
+			return filepath.SkipDir
+		} else if info.IsDir() && tld || info.IsDir() && recurse {
+			tld = false
+			return nil
+		}
+		f, err := os.Open(path)
 		if err != nil {
 			return err
+		}
+		resources, err := ParseResources(f)
+		if err != nil {
+			return fmt.Errorf("in %s: %s", input, err)
 		}
 		if err := ValidateResources(resources, cli.Config.Namespace()); err != nil {
 			return err
 		}
 		return PutResources(cli.Client, resources)
+	})
+}
+
+func process(cli *cli.SensuCli, client *http.Client, input string, recurse bool) error {
+	urly, err := url.Parse(input)
+	if err != nil {
+		return err
+	}
+	if urly.Scheme == "" || len(urly.Scheme) == 1 {
+		// We are dealing with a file path
+		return processFile(cli, input, recurse)
+	}
+	req, err := http.NewRequest("GET", urly.String(), nil)
+	if err != nil {
+		return err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		buf := new(bytes.Buffer)
+		_, _ = io.Copy(buf, resp.Body)
+		return errors.New(buf.String())
+	}
+
+	if strings.HasPrefix(resp.Header.Get("Content-Type"), "text/html") {
+		// The server returned us a directory listing
+		if !recurse {
+			return errors.New("use -r to enable directory recursion")
+		}
+		dec := xml.NewDecoder(resp.Body)
+		var dir httpDirectory
+		if err := dec.Decode(&dir); err != nil {
+			return err
+		}
+		for _, file := range dir.Files {
+			if err := process(cli, client, filepath.Join(input, file), recurse); err != nil {
+				return err
+			}
+		}
+	}
+
+	resources, err := ParseResources(resp.Body)
+	if err != nil {
+		return fmt.Errorf("in %s: %s", input, err)
+	}
+	if err := ValidateResources(resources, cli.Config.Namespace()); err != nil {
+		return err
+	}
+	return PutResources(cli.Client, resources)
+}
+
+func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
+	return func(cmd *cobra.Command, args []string) error {
+		if len(args) > 1 {
+			_ = cmd.Help()
+			return errors.New("invalid argument(s) received")
+		}
+		t := &http.Transport{}
+		t.RegisterProtocol("file", http.NewFileTransport(http.Dir("/")))
+		client := &http.Client{Transport: t}
+		inputs, err := cmd.Flags().GetStringSlice("file")
+		if err != nil {
+			return err
+		}
+		recurse, err := cmd.Flags().GetBool("recursive")
+		if err != nil {
+			return err
+		}
+		for _, input := range inputs {
+			if err := process(cli, client, input, recurse); err != nil {
+				return err
+			}
+		}
+		return nil
 	}
 }
 
