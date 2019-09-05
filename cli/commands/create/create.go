@@ -93,7 +93,7 @@ func process(cli *cli.SensuCli, client *http.Client, input string, recurse bool)
 	}
 
 	if strings.HasPrefix(resp.Header.Get("Content-Type"), "text/html") {
-		// The server returned us a direcory listing
+		// The server returned us a directory listing
 		if !recurse {
 			return errors.New("use -r to enable directory recursion")
 		}
