@@ -140,17 +140,19 @@ func (c *Check) Validate() error {
 	if err := ValidateName(c.Name); err != nil {
 		return errors.New("check name " + err.Error())
 	}
-	if c.Cron != "" {
-		if c.Interval > 0 {
-			return errors.New("must only specify either an interval or a cron schedule")
-		}
+	if c.Publish {
+		if c.Cron != "" {
+			if c.Interval > 0 {
+				return errors.New("must only specify either an interval or a cron schedule")
+			}
 
-		if _, err := cron.ParseStandard(c.Cron); err != nil {
-			return errors.New("check cron string is invalid")
-		}
-	} else {
-		if c.Interval < 1 {
-			return errors.New("check interval must be greater than or equal to 1")
+			if _, err := cron.ParseStandard(c.Cron); err != nil {
+				return errors.New("check cron string is invalid")
+			}
+		} else {
+			if c.Interval < 1 {
+				return errors.New("check interval must be greater than or equal to 1")
+			}
 		}
 	}
 

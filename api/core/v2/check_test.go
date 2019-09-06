@@ -35,6 +35,9 @@ func TestScheduleValidation(t *testing.T) {
 
 	c.Cron = "this is an invalid cron"
 	assert.Error(t, c.Validate())
+
+	c.Publish = false
+	assert.NoError(t, c.Validate())
 }
 
 func TestFixtureCheckIsValid(t *testing.T) {
