@@ -91,14 +91,20 @@ func (r *EventsRouter) createOrReplace(req *http.Request) (interface{}, error) {
 
 	vars := mux.Vars(req)
 
-	if event.Entity != nil {
-		if err := handlers.MetaPathValues(event.Entity, vars, "entity"); err != nil {
-			return nil, err
-		}
+	if event.Entity == nil {
+		event.Entity = &corev2.Entity{}
+	}
 
-		if err := handlers.CheckMeta(event.Entity, vars); err != nil {
-			return nil, actions.NewError(actions.InvalidArgument, err)
-		}
+	if event.Entity.EntityClass == "" {
+		event.Entity.EntityClass = "proxy"
+	}
+
+	if err := handlers.MetaPathValues(event.Entity, vars, "entity"); err != nil {
+		return nil, err
+	}
+
+	if err := handlers.CheckMeta(event.Entity, vars); err != nil {
+		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
 	if event.Check != nil {
