@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - sensuctl asset add (fetches & adds assets from Bonsai).
 - sensuctl asset outdated (checks for newer versions of assets from Bonsai).
 - Add HTTP and directory support to `sensuctl create`
+- Only validate check interval/cron when publish true
 
 ### Fixed
 - Interactive check create and update modes now have 'none' as the first
