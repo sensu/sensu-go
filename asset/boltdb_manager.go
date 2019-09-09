@@ -6,9 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	bolt "go.etcd.io/bbolt"
-
-	"github.com/sensu/sensu-go/types"
 )
 
 var (
@@ -67,8 +66,8 @@ type boltDBAssetManager struct {
 //
 // If a value is not returned, the asset is not installed or not installed
 // correctly. We then proceed to attempt asset installation.
-func (b *boltDBAssetManager) Get(ctx context.Context, asset *types.Asset) (*RuntimeAsset, error) {
-	key := []byte(asset.Sha512)
+func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*RuntimeAsset, error) {
+	key := []byte(asset.GetSha512())
 	var localAsset *RuntimeAsset
 
 	// Concurrent calls to View are allowed, but a concurrent call that has
@@ -118,7 +117,7 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *types.Asset) (*Runt
 		}
 
 		// install the asset
-		tmpFile, err := b.fetcher.Fetch(ctx, asset.URL)
+		tmpFile, err := b.fetcher.Fetch(ctx, asset.URL, asset.Headers)
 		if err != nil {
 			return err
 		}

@@ -56,5 +56,13 @@ func NamespaceFields(r Resource) map[string]string {
 
 // SetNamespace sets the namespace of the resource.
 func (n *Namespace) SetNamespace(namespace string) {
-	return
+}
+
+// SetObjectMeta only exists here to fulfil the requirements of Resource
+func (n *Namespace) SetObjectMeta(meta ObjectMeta) {
+	n.Name = meta.Name
+}
+
+func (n *Namespace) RBACName() string {
+	return "namespaces"
 }

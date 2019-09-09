@@ -89,6 +89,8 @@ func (a *Authorizer) VisitRulesFor(ctx context.Context, attrs *authorization.Att
 			continue
 		}
 
+		ctx = store.NamespaceContext(ctx, binding.Namespace)
+
 		// Get the RoleRef that matched our user
 		rules, err := a.getRoleReferencerules(ctx, binding.RoleRef)
 		if err != nil {

@@ -115,6 +115,16 @@ func (c *Check) SetNamespace(namespace string) {
 	c.Namespace = namespace
 }
 
+// SetObjectMeta sets the meta of the resource.
+func (c *Check) SetObjectMeta(meta ObjectMeta) {
+	c.ObjectMeta = meta
+}
+
+// SetName sets the name of the resource.
+func (c *Check) SetName(name string) {
+	c.Name = name
+}
+
 // StorePrefix returns the path prefix to this resource in the store
 func (c *Check) StorePrefix() string {
 	return ChecksResource
@@ -130,17 +140,19 @@ func (c *Check) Validate() error {
 	if err := ValidateName(c.Name); err != nil {
 		return errors.New("check name " + err.Error())
 	}
-	if c.Cron != "" {
-		if c.Interval > 0 {
-			return errors.New("must only specify either an interval or a cron schedule")
-		}
+	if c.Publish {
+		if c.Cron != "" {
+			if c.Interval > 0 {
+				return errors.New("must only specify either an interval or a cron schedule")
+			}
 
-		if _, err := cron.ParseStandard(c.Cron); err != nil {
-			return errors.New("check cron string is invalid")
-		}
-	} else {
-		if c.Interval < 1 {
-			return errors.New("check interval must be greater than or equal to 1")
+			if _, err := cron.ParseStandard(c.Cron); err != nil {
+				return errors.New("check cron string is invalid")
+			}
+		} else {
+			if c.Interval < 1 {
+				return errors.New("check interval must be greater than or equal to 1")
+			}
 		}
 	}
 
@@ -253,3 +265,11 @@ type ByExecuted []CheckHistory
 func (b ByExecuted) Len() int           { return len(b) }
 func (b ByExecuted) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
 func (b ByExecuted) Less(i, j int) bool { return b[i].Executed < b[j].Executed }
+
+func (c *Check) RBACName() string {
+	return "checks"
+}
+
+func (c *CheckConfig) RBACName() string {
+	return "checks"
+}

@@ -4,14 +4,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"time"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/globals"
 	"github.com/sensu/sensu-go/cli/elements/table"
-	"github.com/sensu/sensu-go/types"
 
 	"github.com/spf13/cobra"
 )
@@ -32,7 +33,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			if ok, err := flg.GetBool(flags.AllNamespaces); err != nil {
 				return err
 			} else if ok {
-				namespace = types.NamespaceTypeAll
+				namespace = corev2.NamespaceTypeAll
 			}
 			// Fetch silenceds from the API
 			sub, err := flg.GetString("subscription")
@@ -41,7 +42,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// We do not support both subscription and all-namespaces flags together
-			if sub != "" && namespace == types.NamespaceTypeAll {
+			if sub != "" && namespace == corev2.NamespaceTypeAll {
 				return fmt.Errorf("the subscription and %s flags are mutually exclusive", flags.AllNamespaces)
 			}
 
@@ -56,17 +57,18 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			results, err := cli.Client.ListSilenceds(namespace, sub, check, &opts)
+			var header http.Header
+			results, err := cli.Client.ListSilenceds(namespace, sub, check, &opts, &header)
 			if err != nil {
 				return err
 			}
 
 			// Print the results based on the user preferences
-			resources := []types.Resource{}
+			resources := []corev2.Resource{}
 			for i := range results {
 				resources = append(resources, &results[i])
 			}
-			return helpers.Print(cmd, cli.Config.Format(), printToTable, resources, results)
+			return helpers.PrintList(cmd, cli.Config.Format(), printToTable, resources, results, header)
 		},
 	}
 
@@ -89,7 +91,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				silenced, ok := data.(types.Silenced)
+				silenced, ok := data.(corev2.Silenced)
 				if !ok {
 					return cli.TypeError
 				}
@@ -99,7 +101,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Subscription",
 			CellTransformer: func(data interface{}) string {
-				silenced, ok := data.(types.Silenced)
+				silenced, ok := data.(corev2.Silenced)
 				if !ok {
 					return cli.TypeError
 				}
@@ -109,7 +111,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Check",
 			CellTransformer: func(data interface{}) string {
-				silenced, ok := data.(types.Silenced)
+				silenced, ok := data.(corev2.Silenced)
 				if !ok {
 					return cli.TypeError
 				}
@@ -119,7 +121,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Begin",
 			CellTransformer: func(data interface{}) string {
-				silenced, ok := data.(types.Silenced)
+				silenced, ok := data.(corev2.Silenced)
 				if !ok {
 					return cli.TypeError
 				}
@@ -129,7 +131,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Expire",
 			CellTransformer: func(data interface{}) string {
-				silenced, ok := data.(types.Silenced)
+				silenced, ok := data.(corev2.Silenced)
 				if !ok {
 					return cli.TypeError
 				}
@@ -139,7 +141,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "ExpireOnResolve",
 			CellTransformer: func(data interface{}) string {
-				silenced, ok := data.(types.Silenced)
+				silenced, ok := data.(corev2.Silenced)
 				if !ok {
 					return cli.TypeError
 				}
@@ -149,7 +151,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Creator",
 			CellTransformer: func(data interface{}) string {
-				silenced, ok := data.(types.Silenced)
+				silenced, ok := data.(corev2.Silenced)
 				if !ok {
 					return cli.TypeError
 				}
@@ -159,7 +161,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Reason",
 			CellTransformer: func(data interface{}) string {
-				silenced, ok := data.(types.Silenced)
+				silenced, ok := data.(corev2.Silenced)
 				if !ok {
 					return cli.TypeError
 				}
@@ -170,7 +172,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Namespace",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				silenced, ok := data.(types.Silenced)
+				silenced, ok := data.(corev2.Silenced)
 				if !ok {
 					return cli.TypeError
 				}

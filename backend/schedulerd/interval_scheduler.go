@@ -127,6 +127,7 @@ func (s *IntervalScheduler) resetTimer(timer CheckTimer) {
 	timer.Next()
 }
 
+// Type returns the type of the interval scheduler.
 func (s *IntervalScheduler) Type() SchedulerType {
 	return IntervalType
 }

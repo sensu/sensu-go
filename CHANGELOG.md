@@ -7,6 +7,82 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Splayed proxy checks are now executed every interval, instead of every
+`interval + interval * splay_coverage`.
+
+## [5.13.0] - 2019-09-09
+
+### Added
+- Added the `sensuctl env` command.
+- sensuctl asset add (fetches & adds assets from Bonsai).
+- sensuctl asset outdated (checks for newer versions of assets from Bonsai).
+- Add HTTP and directory support to `sensuctl create`
+- Only validate check interval/cron when publish true
+
+### Fixed
+- Interactive check create and update modes now have 'none' as the first
+highlighted option, instead of nagios-perfdata.
+- Fixed a bug where silences would not expire on event resolution.
+
+## [5.12.0] - 2019-08-22
+
+### Added
+- Added functionality for the agent `--allow-list` configuration, which
+whitelists check and check hook executables.
+- Added the `runtime_assets` field to `HookConfig`. Assets are enabled
+for check hook execution.
+- Added backwards compatible content negotiation to the websocket connection.
+Protobuf will be used for serialization/deserialization unless indicated by the
+backend to use JSON.
+- Added delete functionality for assets in the API and sensuctl.
+- Added `sensuctl dump` to dump resources to a file or STDOUT.
+- Added `event.check.name` as a supported field selector.
+- [Web] Added timeline chart to event details view.
+- Added `entity.system.arm_version` to record the value of `GOARM` at compile time.
+- Added `ProviderType` field to `AuthProviderClaims`
+- Added `builds` field to the `Asset` type to allow assets to specify different
+URLs for each platform/architecture/arch_version.
+
+### Changed
+- The project now uses Go modules instead of dep for dependency management.
+- The internal reverse proxy relied on by the dashboard has been eliminated.
+- The generic etcd watcher now keeps track of revisions.
+- The resource caches can now rebuild themselves in case of failures.
+- Event and Entity resources can now be created without an explicit namespace;
+the system will refer to the namespace in the URL.
+- Events and Entities can now be created with the POST verb.
+- [Web] Changed styling of namespace labels.
+- Log token substitution failures more clearly.
+
+### Fixed
+- Fixed the tabular output of `sensuctl filter list` so inclusive filter expressions
+are joined with `&&` and exclusive filter expressions are joined with `||`.
+- The REST API now correctly only returns events for the specific entity
+queried in the `GET /events/:entity` endpoint (#3141)
+- Prevent a segmentation fault when running `sensuctl config view` without
+configuration.
+- Added entity name to the interactive sensuctl survey.
+- Check hooks with `stdin: true` now receive actual event data on STDIN instead
+  of an empty event.
+- Prevent a segmentation fault on the agent when a command execution returns an
+error.
+- [Web] Fixed issue where a bad or revoked access token could crash the app.
+
+### Removed
+- Removed encoded protobuf payloads from log messages (when decoded, they can reveal
+redacted secrets).
+
+## [5.11.1] - 2019-07-18
+
+### Fixed
+- The agent now sends heartbeats to the backend in order to detect network
+failures and reconnect faster.
+- The default handshake timeout for the WebSocket connection negotiation has
+been lowered from 45 to 15 seconds and is now configurable.
+
+## [5.11.0] - 2019-07-10
+
 ### Added
 - Silenced entries are now retrieved from the cache when determining if an event
 is silenced.
@@ -16,8 +92,15 @@ is silenced.
 - Added prometheus metrics for topics in wizard bus and agent sessions.
 - The buffer size and worker count of keepalived, eventd & pipelined can now be
 configured on sensu-backend.
+- Added a `headers` field to the `Asset` struct. Headers is a map of key/value
+string pairs used as HTTP headers for asset retrieval.
+- Added the current user to the output of `sensuctl config view`.
+- [Web] Adds list and details views for mutators
+- [Web] Adds list and details views for event filters
+- Added sensuctl delete command
 
 ### Changed
+- [Web] Updated embedded web assets from `46cd0ee` ... `8f50155`
 - The REST API now returns the `201 Created` success status response code for
 POST & PUT requests instead of `204 No Content`.
 
@@ -29,8 +112,9 @@ not exist.
 were not getting properly populated.
 - Fixed a bug where multiple nested set handlers could be incorrectly flagged as
 deeply nested.
-- Splayed proxy checks are now executed every interval, instead of every
-`interval + interval * splay_coverage`.
+- Fixed a bug where round robin proxy checks could fail to execute.
+- Fixed a bug where watchers could enter a tight loop, causing very high CPU
+usage until sensu-backend was restarted.
 
 ## [5.10.1] - 2019-06-25
 
@@ -38,8 +122,6 @@ deeply nested.
 - Fixed the entity_attributes in proxy_requests so all attributes must match
 instead of only one of them.
 - Fixed a bug where events were not deleted when their corresponding entity was.
-- Fixed a bug where watchers could enter a tight loop, causing very high CPU
-  usage until sensu-backend was restarted
 
 ## [5.10.0] - 2019-06-18
 

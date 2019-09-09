@@ -2,22 +2,21 @@ package agentd
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sync"
 
-	jsoniter "github.com/json-iterator/go"
+	"github.com/gogo/protobuf/proto"
 	"github.com/prometheus/client_golang/prometheus"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 )
-
-var json = jsoniter.ConfigDefault
 
 var (
 	sessionCounter = prometheus.NewGaugeVec(
@@ -28,6 +27,24 @@ var (
 		[]string{"namespace"},
 	)
 )
+
+// ProtobufSerializationHeader is the Content-Type header which indicates protobuf serialization.
+const ProtobufSerializationHeader = "application/octet-stream"
+
+// JSONSerializationHeader is the Content-Type header which indicates JSON serialization.
+const JSONSerializationHeader = "application/json"
+
+// MarshalFunc is the function signature for protobuf/JSON marshaling.
+type MarshalFunc = func(pb proto.Message) ([]byte, error)
+
+// UnmarshalFunc is the function signature for protobuf/JSON unmarshaling.
+type UnmarshalFunc = func(buf []byte, pb proto.Message) error
+
+// UnmarshalJSON is a wrapper to deserialize proto messages with JSON.
+func UnmarshalJSON(b []byte, msg proto.Message) error { return json.Unmarshal(b, &msg) }
+
+// MarshalJSON is a wrapper to serialize proto messages with JSON.
+func MarshalJSON(msg proto.Message) ([]byte, error) { return json.Marshal(msg) }
 
 // SessionStore specifies the storage requirements of the Session.
 type SessionStore interface {
@@ -53,6 +70,8 @@ type Session struct {
 	ringPool     *ringv2.Pool
 	ctx          context.Context
 	cancel       context.CancelFunc
+	marshal      MarshalFunc
+	unmarshal    UnmarshalFunc
 
 	subscriptions chan messaging.Subscription
 }
@@ -68,6 +87,7 @@ func newSessionHandler(s *Session) *handler.MessageHandler {
 // A SessionConfig contains all of the ncessary information to initialize
 // an agent session.
 type SessionConfig struct {
+	ContentType   string
 	Namespace     string
 	AgentAddr     string
 	AgentName     string
@@ -80,7 +100,7 @@ type SessionConfig struct {
 // connection, message bus, and store.
 // The Session is responsible for stopping itself, and does so when it
 // encounters a receive error.
-func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store store.Store) (*Session, error) {
+func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store store.Store, unmarshal UnmarshalFunc, marshal MarshalFunc) (*Session, error) {
 	// Validate the agent namespace
 	ctx, cancel := context.WithCancel(context.Background())
 	if _, err := store.GetNamespace(ctx, cfg.Namespace); err != nil {
@@ -110,6 +130,8 @@ func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.Messa
 		ctx:           ctx,
 		cancel:        cancel,
 		ringPool:      cfg.RingPool,
+		unmarshal:     unmarshal,
+		marshal:       marshal,
 	}
 	s.handler = newSessionHandler(s)
 	return s, nil
@@ -173,19 +195,19 @@ func (s *Session) subPump() {
 	for {
 		select {
 		case c := <-s.checkChannel:
-			request, ok := c.(*types.CheckRequest)
+			request, ok := c.(*corev2.CheckRequest)
 			if !ok {
 				logger.Error("session received non-config over check channel")
 				continue
 			}
 
-			configBytes, err := json.Marshal(request)
+			configBytes, err := s.marshal(request)
 			if err != nil {
 				logger.WithError(err).Error("session failed to serialize check request")
 				continue
 			}
 
-			msg := transport.NewMessage(types.CheckRequestType, configBytes)
+			msg := transport.NewMessage(corev2.CheckRequestType, configBytes)
 			s.sendq <- msg
 		case <-s.stopping:
 			return
@@ -202,7 +224,7 @@ func (s *Session) sendPump() {
 	for {
 		select {
 		case msg := <-s.sendq:
-			logger.WithField("message", string(msg.Payload)).Debug("session - sending message")
+			logger.WithField("payload_size", len(msg.Payload)).Debug("session - sending message")
 			err := s.conn.Send(msg)
 			if err != nil {
 				switch err := err.(type) {
@@ -286,9 +308,10 @@ func (s *Session) Stop() {
 	}
 }
 
+// handleKeepalive is the keepalive message handler.
 func (s *Session) handleKeepalive(ctx context.Context, payload []byte) error {
-	keepalive := &types.Event{}
-	err := json.Unmarshal(payload, keepalive)
+	keepalive := &corev2.Event{}
+	err := s.unmarshal(payload, keepalive)
 	if err != nil {
 		return err
 	}
@@ -307,10 +330,11 @@ func (s *Session) handleKeepalive(ctx context.Context, payload []byte) error {
 	return s.bus.Publish(messaging.TopicKeepalive, keepalive)
 }
 
+// handleEvent is the event message handler.
 func (s *Session) handleEvent(ctx context.Context, payload []byte) error {
 	// Decode the payload to an event
-	event := &types.Event{}
-	if err := json.Unmarshal(payload, event); err != nil {
+	event := &corev2.Event{}
+	if err := s.unmarshal(payload, event); err != nil {
 		return err
 	}
 

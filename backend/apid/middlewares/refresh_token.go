@@ -44,6 +44,19 @@ func (m RefreshToken) Then(next http.Handler) http.Handler {
 			return
 		}
 
+		// Retrieve the claims for the access token
+		accessClaims, err := jwt.GetClaims(accessToken)
+		if err != nil {
+			logger.WithError(err).Error("could not parse the access token claims")
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		if accessClaims.Provider.ProviderType == "oidc" {
+			http.Redirect(w, r, "/api/enterprise/authentication/v2/oidc/token", http.StatusTemporaryRedirect)
+			return
+		}
+
 		decoder := json.NewDecoder(r.Body)
 		payload := &types.Tokens{}
 		err = decoder.Decode(payload)
@@ -61,14 +74,7 @@ func (m RefreshToken) Then(next http.Handler) http.Handler {
 			return
 		}
 
-		// Retrieve the claims for both tokens
-		accessClaims, err := jwt.GetClaims(accessToken)
-		if err != nil {
-			logger.WithError(err).Error("could not parse the access token claims")
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
+		// Retrieve the claims for the refresh token
 		refreshClaims, err := jwt.GetClaims(refreshToken)
 		if err != nil {
 			logger.WithError(err).Error("could not parse the refresh token claims")

@@ -18,6 +18,9 @@ func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 		ListCommand(cli),
 		InfoCommand(cli),
 		UpdateCommand(cli),
+		DeleteCommand(cli),
+		AddCommand(cli),
+		OutdatedCommand(cli),
 	)
 	return cmd
 }

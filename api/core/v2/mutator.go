@@ -130,3 +130,12 @@ func MutatorFields(r Resource) map[string]string {
 func (m *Mutator) SetNamespace(namespace string) {
 	m.Namespace = namespace
 }
+
+// SetObjectMeta sets the meta of the resource.
+func (m *Mutator) SetObjectMeta(meta ObjectMeta) {
+	m.ObjectMeta = meta
+}
+
+func (m *Mutator) RBACName() string {
+	return "mutators"
+}

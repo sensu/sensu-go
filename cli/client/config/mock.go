@@ -26,8 +26,20 @@ func (m *MockConfig) Format() string {
 	return args.String(0)
 }
 
+// InsecureSkipTLSVerify mocks the insecure skip TLS verify config
+func (m *MockConfig) InsecureSkipTLSVerify() bool {
+	args := m.Called()
+	return args.Bool(0)
+}
+
 // Namespace mocks the namespace config
 func (m *MockConfig) Namespace() string {
+	args := m.Called()
+	return args.String(0)
+}
+
+// TrustedCAFile mocks the trusted CA file config
+func (m *MockConfig) TrustedCAFile() string {
 	args := m.Called()
 	return args.String(0)
 }

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 	"strings"
 
 	"github.com/sensu/sensu-go/cli"
@@ -50,30 +51,75 @@ func printToList(v interface{}, writer io.Writer) error {
 		return fmt.Errorf("%t is not an Asset", v)
 	}
 
-	cfg := &list.Config{
-		Title: r.Name,
-		Rows: []*list.Row{
-			{
-				Label: "Name",
-				Value: r.Name,
+	var cfg *list.Config
+
+	if len(r.Builds) > 0 {
+		buildRows := []*list.Row{}
+		for i, build := range r.Builds {
+			rows := []*list.Row{
+				{
+					Label: "Build",
+					Value: strconv.Itoa(i),
+				},
+				{
+					Label: "URL",
+					Value: build.URL,
+				},
+				{
+					Label: "SHA-512 Checksum",
+					Value: build.Sha512,
+				},
+				{
+					Label: "Filters",
+					Value: strings.Join(build.Filters, ", "),
+				},
+			}
+			buildRows = append(buildRows, rows...)
+		}
+		cfg = &list.Config{
+			Title: r.Name,
+			Rows: []*list.Row{
+				{
+					Label: "Name",
+					Value: r.Name,
+				},
+				{
+					Label: "Namespace",
+					Value: r.Namespace,
+				},
+				{
+					Label: "Builds",
+					Value: "",
+				},
 			},
-			{
-				Label: "Namespace",
-				Value: r.Namespace,
+		}
+		cfg.Rows = append(cfg.Rows, buildRows...)
+	} else {
+		cfg = &list.Config{
+			Title: r.Name,
+			Rows: []*list.Row{
+				{
+					Label: "Name",
+					Value: r.Name,
+				},
+				{
+					Label: "Namespace",
+					Value: r.Namespace,
+				},
+				{
+					Label: "URL",
+					Value: r.URL,
+				},
+				{
+					Label: "SHA-512 Checksum",
+					Value: r.Sha512,
+				},
+				{
+					Label: "Filters",
+					Value: strings.Join(r.Filters, ", "),
+				},
 			},
-			{
-				Label: "URL",
-				Value: r.URL,
-			},
-			{
-				Label: "SHA-512 Checksum",
-				Value: r.Sha512,
-			},
-			{
-				Label: "Filters",
-				Value: strings.Join(r.Filters, ", "),
-			},
-		},
+		}
 	}
 
 	return list.Print(writer, cfg)

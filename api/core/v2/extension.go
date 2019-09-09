@@ -61,3 +61,12 @@ func ExtensionFields(r Resource) map[string]string {
 func (e *Extension) SetNamespace(namespace string) {
 	e.Namespace = namespace
 }
+
+// SetObjectMeta sets the meta of the resource.
+func (e *Extension) SetObjectMeta(meta ObjectMeta) {
+	e.ObjectMeta = meta
+}
+
+func (e *Extension) RBACName() string {
+	return "extensions"
+}

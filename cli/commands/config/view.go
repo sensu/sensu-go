@@ -1,6 +1,7 @@
 package config
 
 import (
+	"errors"
 	"fmt"
 	"io"
 
@@ -18,10 +19,15 @@ func ViewCommand(cli *cli.SensuCli) *cobra.Command {
 		Short:        "Display active configuration",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			username := helpers.GetCurrentUsername(cli.Config)
+			if username == "" {
+				return errors.New("no active configuration found")
+			}
 			activeConfig := map[string]string{
 				"api-url":   cli.Config.APIUrl(),
 				"namespace": cli.Config.Namespace(),
 				"format":    cli.Config.Format(),
+				"username":  helpers.GetCurrentUsername(cli.Config),
 			}
 
 			// Determine the format to use to output the data
@@ -61,6 +67,10 @@ func printToList(v interface{}, writer io.Writer) error {
 			{
 				Label: "Format",
 				Value: r["format"],
+			},
+			{
+				Label: "Username",
+				Value: r["username"],
 			},
 		},
 	}

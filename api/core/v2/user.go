@@ -16,7 +16,7 @@ const (
 
 // GetObjectMeta is a dummy implementation to meet the Resource interface.
 func (u *User) GetObjectMeta() ObjectMeta {
-	return ObjectMeta{}
+	return ObjectMeta{Name: u.Username}
 }
 
 // StorePrefix returns the path prefix to this resource in the store
@@ -72,5 +72,13 @@ func UserFields(r Resource) map[string]string {
 
 // SetNamespace sets the namespace of the resource.
 func (u *User) SetNamespace(namespace string) {
-	return
+}
+
+// SetObjectMeta is a dummy implementation to meet the Resource interface.
+func (u *User) SetObjectMeta(meta ObjectMeta) {
+	u.Username = meta.Name
+}
+
+func (*User) RBACName() string {
+	return "users"
 }

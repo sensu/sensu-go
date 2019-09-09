@@ -3,18 +3,16 @@
 
 package v2
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
-import _ "github.com/gogo/protobuf/gogoproto"
-
-import bytes "bytes"
-
-import github_com_golang_protobuf_proto "github.com/golang/protobuf/proto"
-
-import encoding_binary "encoding/binary"
-
-import io "io"
+import (
+	bytes "bytes"
+	encoding_binary "encoding/binary"
+	fmt "fmt"
+	_ "github.com/gogo/protobuf/gogoproto"
+	github_com_golang_protobuf_proto "github.com/golang/protobuf/proto"
+	proto "github.com/golang/protobuf/proto"
+	io "io"
+	math "math"
+)
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -30,13 +28,15 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 // HookConfig is the specification of a hook
 type HookConfig struct {
 	// Metadata contains the name, namespace, labels and annotations of the hook
-	ObjectMeta `protobuf:"bytes,1,opt,name=metadata,embedded=metadata" json:"metadata,omitempty"`
+	ObjectMeta `protobuf:"bytes,1,opt,name=metadata,proto3,embedded=metadata" json:"metadata,omitempty"`
 	// Command is the command to be executed
 	Command string `protobuf:"bytes,2,opt,name=command,proto3" json:"command,omitempty"`
 	// Timeout is the timeout, in seconds, at which the hook has to run
 	Timeout uint32 `protobuf:"varint,3,opt,name=timeout,proto3" json:"timeout"`
 	// Stdin indicates if hook requests have stdin enabled
-	Stdin                bool     `protobuf:"varint,4,opt,name=stdin,proto3" json:"stdin"`
+	Stdin bool `protobuf:"varint,4,opt,name=stdin,proto3" json:"stdin"`
+	// RuntimeAssets are a list of assets required to execute hook.
+	RuntimeAssets        []string `protobuf:"bytes,5,rep,name=runtime_assets,json=runtimeAssets,proto3" json:"runtime_assets"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -46,7 +46,7 @@ func (m *HookConfig) Reset()         { *m = HookConfig{} }
 func (m *HookConfig) String() string { return proto.CompactTextString(m) }
 func (*HookConfig) ProtoMessage()    {}
 func (*HookConfig) Descriptor() ([]byte, []int) {
-	return fileDescriptor_hook_d161085ce096f34d, []int{0}
+	return fileDescriptor_3eef30da1c11ee1b, []int{0}
 }
 func (m *HookConfig) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -63,8 +63,8 @@ func (m *HookConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (dst *HookConfig) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_HookConfig.Merge(dst, src)
+func (m *HookConfig) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_HookConfig.Merge(m, src)
 }
 func (m *HookConfig) XXX_Size() int {
 	return m.Size()
@@ -79,7 +79,7 @@ var xxx_messageInfo_HookConfig proto.InternalMessageInfo
 // execution.
 type Hook struct {
 	// Config is the specification of a hook
-	HookConfig `protobuf:"bytes,1,opt,name=config,embedded=config" json:""`
+	HookConfig `protobuf:"bytes,1,opt,name=config,proto3,embedded=config" json:""`
 	// Duration of execution
 	Duration float64 `protobuf:"fixed64,2,opt,name=duration,proto3" json:"duration,omitempty"`
 	// Executed describes the time in which the hook request was executed
@@ -99,7 +99,7 @@ func (m *Hook) Reset()         { *m = Hook{} }
 func (m *Hook) String() string { return proto.CompactTextString(m) }
 func (*Hook) ProtoMessage()    {}
 func (*Hook) Descriptor() ([]byte, []int) {
-	return fileDescriptor_hook_d161085ce096f34d, []int{1}
+	return fileDescriptor_3eef30da1c11ee1b, []int{1}
 }
 func (m *Hook) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -116,8 +116,8 @@ func (m *Hook) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (dst *Hook) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Hook.Merge(dst, src)
+func (m *Hook) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Hook.Merge(m, src)
 }
 func (m *Hook) XXX_Size() int {
 	return m.Size()
@@ -165,7 +165,7 @@ func (m *Hook) GetStatus() int32 {
 
 type HookList struct {
 	// Hooks is the list of hooks for the check hook
-	Hooks []string `protobuf:"bytes,1,rep,name=hooks" json:"hooks"`
+	Hooks []string `protobuf:"bytes,1,rep,name=hooks,proto3" json:"hooks"`
 	// Type indicates the type or response code for the check hook
 	Type                 string   `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -177,7 +177,7 @@ func (m *HookList) Reset()         { *m = HookList{} }
 func (m *HookList) String() string { return proto.CompactTextString(m) }
 func (*HookList) ProtoMessage()    {}
 func (*HookList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_hook_d161085ce096f34d, []int{2}
+	return fileDescriptor_3eef30da1c11ee1b, []int{2}
 }
 func (m *HookList) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -194,8 +194,8 @@ func (m *HookList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (dst *HookList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_HookList.Merge(dst, src)
+func (m *HookList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_HookList.Merge(m, src)
 }
 func (m *HookList) XXX_Size() int {
 	return m.Size()
@@ -225,6 +225,43 @@ func init() {
 	proto.RegisterType((*Hook)(nil), "sensu.core.v2.Hook")
 	proto.RegisterType((*HookList)(nil), "sensu.core.v2.HookList")
 }
+
+func init() { proto.RegisterFile("hook.proto", fileDescriptor_3eef30da1c11ee1b) }
+
+var fileDescriptor_3eef30da1c11ee1b = []byte{
+	// 471 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x92, 0xbf, 0x6e, 0xd4, 0x40,
+	0x10, 0xc6, 0x6f, 0xef, 0x8f, 0xe3, 0x9b, 0xe4, 0x28, 0xb6, 0x40, 0xcb, 0x15, 0x5e, 0xeb, 0x24,
+	0x24, 0x17, 0xc8, 0x51, 0x0e, 0x1a, 0x68, 0x02, 0xa6, 0xa1, 0x00, 0x21, 0xad, 0x44, 0x43, 0x83,
+	0x7c, 0xf6, 0xe6, 0x62, 0x22, 0x7b, 0x4f, 0xb7, 0xb3, 0x27, 0xf2, 0x06, 0x88, 0x27, 0xa0, 0x4c,
+	0x99, 0x47, 0xe0, 0x11, 0x52, 0xe6, 0x09, 0x2c, 0x30, 0x9d, 0x25, 0x7a, 0x4a, 0xe4, 0xb5, 0xcf,
+	0xfc, 0x91, 0xa8, 0xe6, 0xfb, 0xbe, 0xdd, 0x59, 0x6b, 0x7e, 0x1e, 0x80, 0x73, 0xa5, 0x2e, 0xc2,
+	0xcd, 0x56, 0xa1, 0xa2, 0x33, 0x2d, 0x0b, 0x6d, 0xc2, 0x44, 0x6d, 0x65, 0xb8, 0x5b, 0xce, 0x1f,
+	0xad, 0x33, 0x3c, 0x37, 0xab, 0x30, 0x51, 0xf9, 0xf1, 0x5a, 0xad, 0xd5, 0xb1, 0xbd, 0xb5, 0x32,
+	0x67, 0x4f, 0x77, 0x27, 0xe1, 0x32, 0x3c, 0xb1, 0xa1, 0xcd, 0xac, 0x6a, 0x1f, 0x99, 0x43, 0x2e,
+	0x31, 0x6e, 0xf5, 0xe2, 0xd3, 0x10, 0xe0, 0x85, 0x52, 0x17, 0xcf, 0x55, 0x71, 0x96, 0xad, 0xe9,
+	0x1b, 0x70, 0x9b, 0xc3, 0x34, 0xc6, 0x98, 0x11, 0x9f, 0x04, 0x87, 0xcb, 0x7b, 0xe1, 0x5f, 0x9f,
+	0x0c, 0x5f, 0xaf, 0xde, 0xcb, 0x04, 0x5f, 0x49, 0x8c, 0x23, 0xef, 0xa6, 0xe4, 0x83, 0xdb, 0x92,
+	0x93, 0xba, 0xe4, 0x74, 0xdf, 0xf6, 0x40, 0xe5, 0x19, 0xca, 0x7c, 0x83, 0x97, 0xa2, 0x7f, 0x8a,
+	0x32, 0x38, 0x48, 0x54, 0x9e, 0xc7, 0x45, 0xca, 0x86, 0x3e, 0x09, 0xa6, 0x62, 0x6f, 0xe9, 0x7d,
+	0x38, 0xc0, 0x2c, 0x97, 0xca, 0x20, 0x1b, 0xf9, 0x24, 0x98, 0x45, 0x87, 0x75, 0xc9, 0xf7, 0x91,
+	0xd8, 0x0b, 0xca, 0x61, 0xa2, 0x31, 0xcd, 0x0a, 0x36, 0xf6, 0x49, 0xe0, 0x46, 0xd3, 0xba, 0xe4,
+	0x6d, 0x20, 0xda, 0x42, 0x1f, 0xc3, 0x9d, 0xad, 0x29, 0x9a, 0xeb, 0xef, 0x62, 0xad, 0x25, 0x6a,
+	0x36, 0xf1, 0x47, 0xc1, 0x34, 0xa2, 0x75, 0xc9, 0xff, 0x39, 0x11, 0xb3, 0xce, 0x3f, 0xb3, 0xf6,
+	0x89, 0xfb, 0xf1, 0x8a, 0x0f, 0xae, 0xaf, 0x38, 0x59, 0xfc, 0x20, 0x30, 0x6e, 0x60, 0xd0, 0x53,
+	0x70, 0x12, 0x0b, 0xe4, 0x3f, 0x10, 0x7e, 0x13, 0x8b, 0x8e, 0xfe, 0x80, 0x30, 0x10, 0x5d, 0x1b,
+	0x9d, 0x83, 0x9b, 0x9a, 0x6d, 0x8c, 0x99, 0x2a, 0xec, 0xc4, 0x44, 0xf4, 0x9e, 0x06, 0xe0, 0xca,
+	0x0f, 0x32, 0x31, 0x28, 0x53, 0x3b, 0xf3, 0x28, 0x3a, 0xaa, 0x4b, 0xde, 0x67, 0xa2, 0x57, 0x74,
+	0x01, 0x4e, 0xa6, 0xb5, 0x91, 0xa9, 0x1d, 0x7b, 0x14, 0x41, 0x5d, 0xf2, 0x2e, 0x11, 0x5d, 0xa5,
+	0x77, 0xc1, 0x51, 0x06, 0x37, 0x06, 0xd9, 0xc4, 0x92, 0xed, 0x5c, 0xd3, 0xab, 0x31, 0x46, 0xa3,
+	0x99, 0xe3, 0x93, 0x60, 0xd2, 0xf6, 0xb6, 0x89, 0xe8, 0xea, 0xe2, 0x14, 0xdc, 0x66, 0x92, 0x97,
+	0x99, 0xb6, 0x84, 0x9b, 0x3d, 0xd3, 0x8c, 0x58, 0x6e, 0x96, 0xb0, 0x0d, 0x44, 0x5b, 0x28, 0x85,
+	0x31, 0x5e, 0x6e, 0x64, 0xf7, 0x03, 0xad, 0x8e, 0xfc, 0x9f, 0xdf, 0x3c, 0x72, 0x5d, 0x79, 0xe4,
+	0x4b, 0xe5, 0x91, 0x9b, 0xca, 0x23, 0xb7, 0x95, 0x47, 0xbe, 0x56, 0x1e, 0xf9, 0xfc, 0xdd, 0x1b,
+	0xbc, 0x1d, 0xee, 0x96, 0x2b, 0xc7, 0xae, 0xd9, 0xc3, 0x5f, 0x01, 0x00, 0x00, 0xff, 0xff, 0xe4,
+	0x17, 0xc3, 0xe9, 0xc5, 0x02, 0x00, 0x00,
+}
+
 func (this *HookConfig) Equal(that interface{}) bool {
 	if that == nil {
 		return this == nil
@@ -255,6 +292,14 @@ func (this *HookConfig) Equal(that interface{}) bool {
 	}
 	if this.Stdin != that1.Stdin {
 		return false
+	}
+	if len(this.RuntimeAssets) != len(that1.RuntimeAssets) {
+		return false
+	}
+	for i := range this.RuntimeAssets {
+		if this.RuntimeAssets[i] != that1.RuntimeAssets[i] {
+			return false
+		}
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
 		return false
@@ -345,6 +390,7 @@ type HookConfigFace interface {
 	GetCommand() string
 	GetTimeout() uint32
 	GetStdin() bool
+	GetRuntimeAssets() []string
 }
 
 func (this *HookConfig) Proto() github_com_golang_protobuf_proto.Message {
@@ -371,12 +417,17 @@ func (this *HookConfig) GetStdin() bool {
 	return this.Stdin
 }
 
+func (this *HookConfig) GetRuntimeAssets() []string {
+	return this.RuntimeAssets
+}
+
 func NewHookConfigFromFace(that HookConfigFace) *HookConfig {
 	this := &HookConfig{}
 	this.ObjectMeta = that.GetObjectMeta()
 	this.Command = that.GetCommand()
 	this.Timeout = that.GetTimeout()
 	this.Stdin = that.GetStdin()
+	this.RuntimeAssets = that.GetRuntimeAssets()
 	return this
 }
 
@@ -423,6 +474,21 @@ func (m *HookConfig) MarshalTo(dAtA []byte) (int, error) {
 			dAtA[i] = 0
 		}
 		i++
+	}
+	if len(m.RuntimeAssets) > 0 {
+		for _, s := range m.RuntimeAssets {
+			dAtA[i] = 0x2a
+			i++
+			l = len(s)
+			for l >= 1<<7 {
+				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
+				l >>= 7
+				i++
+			}
+			dAtA[i] = uint8(l)
+			i++
+			i += copy(dAtA[i:], s)
+		}
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -544,16 +610,21 @@ func NewPopulatedHookConfig(r randyHook, easy bool) *HookConfig {
 	this.Command = string(randStringHook(r))
 	this.Timeout = uint32(r.Uint32())
 	this.Stdin = bool(bool(r.Intn(2) == 0))
+	v2 := r.Intn(10)
+	this.RuntimeAssets = make([]string, v2)
+	for i := 0; i < v2; i++ {
+		this.RuntimeAssets[i] = string(randStringHook(r))
+	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedHook(r, 5)
+		this.XXX_unrecognized = randUnrecognizedHook(r, 6)
 	}
 	return this
 }
 
 func NewPopulatedHook(r randyHook, easy bool) *Hook {
 	this := &Hook{}
-	v2 := NewPopulatedHookConfig(r, easy)
-	this.HookConfig = *v2
+	v3 := NewPopulatedHookConfig(r, easy)
+	this.HookConfig = *v3
 	this.Duration = float64(r.Float64())
 	if r.Intn(2) == 0 {
 		this.Duration *= -1
@@ -579,9 +650,9 @@ func NewPopulatedHook(r randyHook, easy bool) *Hook {
 
 func NewPopulatedHookList(r randyHook, easy bool) *HookList {
 	this := &HookList{}
-	v3 := r.Intn(10)
-	this.Hooks = make([]string, v3)
-	for i := 0; i < v3; i++ {
+	v4 := r.Intn(10)
+	this.Hooks = make([]string, v4)
+	for i := 0; i < v4; i++ {
 		this.Hooks[i] = string(randStringHook(r))
 	}
 	this.Type = string(randStringHook(r))
@@ -610,9 +681,9 @@ func randUTF8RuneHook(r randyHook) rune {
 	return rune(ru + 61)
 }
 func randStringHook(r randyHook) string {
-	v4 := r.Intn(100)
-	tmps := make([]rune, v4)
-	for i := 0; i < v4; i++ {
+	v5 := r.Intn(100)
+	tmps := make([]rune, v5)
+	for i := 0; i < v5; i++ {
 		tmps[i] = randUTF8RuneHook(r)
 	}
 	return string(tmps)
@@ -634,11 +705,11 @@ func randFieldHook(dAtA []byte, r randyHook, fieldNumber int, wire int) []byte {
 	switch wire {
 	case 0:
 		dAtA = encodeVarintPopulateHook(dAtA, uint64(key))
-		v5 := r.Int63()
+		v6 := r.Int63()
 		if r.Intn(2) == 0 {
-			v5 *= -1
+			v6 *= -1
 		}
-		dAtA = encodeVarintPopulateHook(dAtA, uint64(v5))
+		dAtA = encodeVarintPopulateHook(dAtA, uint64(v6))
 	case 1:
 		dAtA = encodeVarintPopulateHook(dAtA, uint64(key))
 		dAtA = append(dAtA, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -664,6 +735,9 @@ func encodeVarintPopulateHook(dAtA []byte, v uint64) []byte {
 	return dAtA
 }
 func (m *HookConfig) Size() (n int) {
+	if m == nil {
+		return 0
+	}
 	var l int
 	_ = l
 	l = m.ObjectMeta.Size()
@@ -678,6 +752,12 @@ func (m *HookConfig) Size() (n int) {
 	if m.Stdin {
 		n += 2
 	}
+	if len(m.RuntimeAssets) > 0 {
+		for _, s := range m.RuntimeAssets {
+			l = len(s)
+			n += 1 + l + sovHook(uint64(l))
+		}
+	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
@@ -685,6 +765,9 @@ func (m *HookConfig) Size() (n int) {
 }
 
 func (m *Hook) Size() (n int) {
+	if m == nil {
+		return 0
+	}
 	var l int
 	_ = l
 	l = m.HookConfig.Size()
@@ -712,6 +795,9 @@ func (m *Hook) Size() (n int) {
 }
 
 func (m *HookList) Size() (n int) {
+	if m == nil {
+		return 0
+	}
 	var l int
 	_ = l
 	if len(m.Hooks) > 0 {
@@ -758,7 +844,7 @@ func (m *HookConfig) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
+			wire |= uint64(b&0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -786,7 +872,7 @@ func (m *HookConfig) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -795,6 +881,9 @@ func (m *HookConfig) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthHook
 			}
 			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthHook
+			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -816,7 +905,7 @@ func (m *HookConfig) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -826,6 +915,9 @@ func (m *HookConfig) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthHook
 			}
 			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthHook
+			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -845,7 +937,7 @@ func (m *HookConfig) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Timeout |= (uint32(b) & 0x7F) << shift
+				m.Timeout |= uint32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -864,12 +956,44 @@ func (m *HookConfig) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				v |= (int(b) & 0x7F) << shift
+				v |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
 			m.Stdin = bool(v != 0)
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field RuntimeAssets", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowHook
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthHook
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthHook
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.RuntimeAssets = append(m.RuntimeAssets, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipHook(dAtA[iNdEx:])
@@ -877,6 +1001,9 @@ func (m *HookConfig) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
+				return ErrInvalidLengthHook
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthHook
 			}
 			if (iNdEx + skippy) > l {
@@ -907,7 +1034,7 @@ func (m *Hook) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
+			wire |= uint64(b&0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -935,7 +1062,7 @@ func (m *Hook) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= (int(b) & 0x7F) << shift
+				msglen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -944,6 +1071,9 @@ func (m *Hook) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthHook
 			}
 			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthHook
+			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -976,7 +1106,7 @@ func (m *Hook) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Executed |= (int64(b) & 0x7F) << shift
+				m.Executed |= int64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -995,7 +1125,7 @@ func (m *Hook) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Issued |= (int64(b) & 0x7F) << shift
+				m.Issued |= int64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1014,7 +1144,7 @@ func (m *Hook) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1024,6 +1154,9 @@ func (m *Hook) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthHook
 			}
 			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthHook
+			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -1043,7 +1176,7 @@ func (m *Hook) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Status |= (int32(b) & 0x7F) << shift
+				m.Status |= int32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1055,6 +1188,9 @@ func (m *Hook) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
+				return ErrInvalidLengthHook
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthHook
 			}
 			if (iNdEx + skippy) > l {
@@ -1085,7 +1221,7 @@ func (m *HookList) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
+			wire |= uint64(b&0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -1113,7 +1249,7 @@ func (m *HookList) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1123,6 +1259,9 @@ func (m *HookList) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthHook
 			}
 			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthHook
+			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -1142,7 +1281,7 @@ func (m *HookList) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -1152,6 +1291,9 @@ func (m *HookList) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthHook
 			}
 			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthHook
+			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -1164,6 +1306,9 @@ func (m *HookList) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
+				return ErrInvalidLengthHook
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthHook
 			}
 			if (iNdEx + skippy) > l {
@@ -1233,8 +1378,11 @@ func skipHook(dAtA []byte) (n int, err error) {
 					break
 				}
 			}
-			iNdEx += length
 			if length < 0 {
+				return 0, ErrInvalidLengthHook
+			}
+			iNdEx += length
+			if iNdEx < 0 {
 				return 0, ErrInvalidLengthHook
 			}
 			return iNdEx, nil
@@ -1265,6 +1413,9 @@ func skipHook(dAtA []byte) (n int, err error) {
 					return 0, err
 				}
 				iNdEx = start + next
+				if iNdEx < 0 {
+					return 0, ErrInvalidLengthHook
+				}
 			}
 			return iNdEx, nil
 		case 4:
@@ -1283,36 +1434,3 @@ var (
 	ErrInvalidLengthHook = fmt.Errorf("proto: negative length found during unmarshaling")
 	ErrIntOverflowHook   = fmt.Errorf("proto: integer overflow")
 )
-
-func init() { proto.RegisterFile("hook.proto", fileDescriptor_hook_d161085ce096f34d) }
-
-var fileDescriptor_hook_d161085ce096f34d = []byte{
-	// 432 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x52, 0xbf, 0x6e, 0xd3, 0x40,
-	0x18, 0xcf, 0xd7, 0x24, 0xae, 0xf3, 0xb5, 0x5d, 0x6e, 0x40, 0x26, 0x83, 0xcf, 0x8a, 0x84, 0xe4,
-	0x01, 0x5c, 0x29, 0x6c, 0x2c, 0x95, 0xcc, 0xc2, 0x00, 0x42, 0x3a, 0x89, 0x85, 0xcd, 0xb1, 0xaf,
-	0xa9, 0xa9, 0xec, 0x8b, 0x72, 0xdf, 0x55, 0xf4, 0x0d, 0x78, 0x04, 0xc6, 0x8e, 0x7d, 0x04, 0x1e,
-	0xa1, 0x1b, 0x79, 0x02, 0x0b, 0xcc, 0x66, 0x89, 0x9d, 0x11, 0xf9, 0xce, 0x09, 0x30, 0x30, 0xfd,
-	0xfe, 0xd8, 0x3f, 0xfb, 0xfb, 0x7d, 0x77, 0x88, 0x57, 0x4a, 0x5d, 0x27, 0x9b, 0xad, 0x22, 0xc5,
-	0xce, 0xb4, 0xac, 0xb5, 0x49, 0x72, 0xb5, 0x95, 0xc9, 0xcd, 0x72, 0xfe, 0x6c, 0x5d, 0xd2, 0x95,
-	0x59, 0x25, 0xb9, 0xaa, 0xce, 0xd7, 0x6a, 0xad, 0xce, 0xed, 0x5b, 0x2b, 0x73, 0x69, 0x95, 0x15,
-	0x96, 0xb9, 0xf4, 0x1c, 0x2b, 0x49, 0x99, 0xe3, 0x8b, 0xaf, 0x80, 0xf8, 0x4a, 0xa9, 0xeb, 0x97,
-	0xaa, 0xbe, 0x2c, 0xd7, 0xec, 0x1d, 0xfa, 0xfd, 0xc3, 0x22, 0xa3, 0x2c, 0x80, 0x08, 0xe2, 0x93,
-	0xe5, 0xe3, 0xe4, 0x9f, 0x7f, 0x25, 0x6f, 0x57, 0x1f, 0x64, 0x4e, 0x6f, 0x24, 0x65, 0x69, 0xf8,
-	0xd0, 0xf0, 0xd1, 0xae, 0xe1, 0xd0, 0x35, 0x9c, 0xed, 0x63, 0x4f, 0x55, 0x55, 0x92, 0xac, 0x36,
-	0x74, 0x2b, 0x0e, 0x9f, 0x62, 0x01, 0x1e, 0xe7, 0xaa, 0xaa, 0xb2, 0xba, 0x08, 0x8e, 0x22, 0x88,
-	0x67, 0x62, 0x2f, 0xd9, 0x13, 0x3c, 0xa6, 0xb2, 0x92, 0xca, 0x50, 0x30, 0x8e, 0x20, 0x3e, 0x4b,
-	0x4f, 0xba, 0x86, 0xef, 0x2d, 0xb1, 0x27, 0x8c, 0xe3, 0x54, 0x53, 0x51, 0xd6, 0xc1, 0x24, 0x82,
-	0xd8, 0x4f, 0x67, 0x5d, 0xc3, 0x9d, 0x21, 0x1c, 0xbc, 0xf0, 0x3f, 0xdd, 0xf1, 0xd1, 0xfd, 0x1d,
-	0x87, 0xc5, 0x4f, 0xc0, 0x49, 0xdf, 0x88, 0x5d, 0xa0, 0x97, 0xdb, 0x56, 0xff, 0x69, 0xf2, 0xa7,
-	0x76, 0x7a, 0xfa, 0x57, 0x93, 0x91, 0x18, 0x62, 0x6c, 0x8e, 0x7e, 0x61, 0xb6, 0x19, 0x95, 0xaa,
-	0xb6, 0x63, 0x83, 0x38, 0x68, 0x16, 0xa3, 0x2f, 0x3f, 0xca, 0xdc, 0x90, 0x2c, 0xec, 0xe0, 0xe3,
-	0xf4, 0xb4, 0x6b, 0xf8, 0xc1, 0x13, 0x07, 0xc6, 0x16, 0xe8, 0x95, 0x5a, 0x1b, 0x59, 0xd8, 0xd9,
-	0xc7, 0x29, 0x76, 0x0d, 0x1f, 0x1c, 0x31, 0x20, 0x7b, 0x84, 0x9e, 0x32, 0xb4, 0x31, 0x14, 0x4c,
-	0xed, 0x7a, 0x06, 0xd5, 0x67, 0x35, 0x65, 0x64, 0x74, 0xe0, 0x45, 0x10, 0x4f, 0x5d, 0xd6, 0x39,
-	0x62, 0xc0, 0xc5, 0x05, 0xfa, 0x7d, 0x93, 0xd7, 0xa5, 0xb6, 0x6b, 0xea, 0x6f, 0x89, 0x0e, 0x20,
-	0x1a, 0xc7, 0x33, 0xb7, 0x26, 0x6b, 0x08, 0x07, 0x8c, 0xe1, 0x84, 0x6e, 0x37, 0x72, 0x38, 0x05,
-	0xcb, 0xd3, 0xe8, 0xd7, 0xf7, 0x10, 0xee, 0xdb, 0x10, 0xbe, 0xb4, 0x21, 0x3c, 0xb4, 0x21, 0xec,
-	0xda, 0x10, 0xbe, 0xb5, 0x21, 0x7c, 0xfe, 0x11, 0x8e, 0xde, 0x1f, 0xdd, 0x2c, 0x57, 0x9e, 0xbd,
-	0x2b, 0xcf, 0x7f, 0x07, 0x00, 0x00, 0xff, 0xff, 0xd9, 0x3a, 0xa0, 0xb1, 0x83, 0x02, 0x00, 0x00,
-}

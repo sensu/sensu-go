@@ -197,3 +197,17 @@ func EntityFields(r Resource) map[string]string {
 func (e *Entity) SetNamespace(namespace string) {
 	e.Namespace = namespace
 }
+
+// SetObjectMeta sets the meta of the resource.
+func (e *Entity) SetObjectMeta(meta ObjectMeta) {
+	e.ObjectMeta = meta
+}
+
+func (e *Entity) RBACName() string {
+	return "entities"
+}
+
+// SetName sets the name of the resource.
+func (e *Entity) SetName(name string) {
+	e.Name = name
+}

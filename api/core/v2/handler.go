@@ -182,3 +182,12 @@ func HandlerFields(r Resource) map[string]string {
 func (h *Handler) SetNamespace(namespace string) {
 	h.Namespace = namespace
 }
+
+// SetObjectMeta sets the meta of the resource.
+func (h *Handler) SetObjectMeta(meta ObjectMeta) {
+	h.ObjectMeta = meta
+}
+
+func (h *Handler) RBACName() string {
+	return "handlers"
+}

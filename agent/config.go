@@ -5,7 +5,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"golang.org/x/time/rate"
 )
 
@@ -76,6 +76,9 @@ type Config struct {
 	// AgentName is the entity name for the running agent. Default is hostname.
 	AgentName string
 
+	// AllowList is the path to agent execution allow list configuration file.
+	AllowList string
+
 	// API contains the Sensu client HTTP API configuration
 	API *APIConfig
 
@@ -114,7 +117,7 @@ type Config struct {
 	KeepaliveInterval uint32
 
 	// KeepaliveTimeout is the time after which a sensu-agent is considered dead
-	// by the backend. See DefaultKeepaliveTimeout in types package for default
+	// by the backend. See DefaultKeepaliveTimeout in corev2 package for default
 	// value.
 	KeepaliveTimeout uint32
 
@@ -143,10 +146,26 @@ type Config struct {
 	Subscriptions []string
 
 	// TLS sets the TLSConfig for agent TLS options
-	TLS *types.TLSOptions
+	TLS *corev2.TLSOptions
 
 	// User sets the Agent's username
 	User string
+
+	// BackendHandshakeTimeout specifies the maximum time (in seconds) to wait for
+	// the handshake with the backend to complete when opening a connection. If a
+	// timeout occurs, the agent will attempt to reconnect with exponential
+	// backoff
+	BackendHandshakeTimeout int
+
+	// BackendHeartbeatInterval specifies the interval at which the agent must
+	// send a heartbeat to the backend
+	BackendHeartbeatInterval int
+
+	// BackendHeartbeatTimeout specifies the maximum time (in seconds) to wait for
+	// a response to a heartbeat from the backend.  If a timeout occurs, the agent
+	// will close the existing connection with the backend and attempt to
+	// reconnect with exponential backoff
+	BackendHeartbeatTimeout int
 }
 
 // StatsdServerConfig contains the statsd server configuration
@@ -183,7 +202,7 @@ func FixtureConfig() (*Config, func()) {
 		EventsAPIRateLimit:  DefaultEventsAPIRateLimit,
 		EventsAPIBurstLimit: DefaultEventsAPIBurstLimit,
 		KeepaliveInterval:   DefaultKeepaliveInterval,
-		KeepaliveTimeout:    types.DefaultKeepaliveTimeout,
+		KeepaliveTimeout:    corev2.DefaultKeepaliveTimeout,
 		Namespace:           DefaultNamespace,
 		Password:            DefaultPassword,
 		Socket: &SocketConfig{

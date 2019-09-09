@@ -175,3 +175,12 @@ func EventFilterFields(r Resource) map[string]string {
 func (f *EventFilter) SetNamespace(namespace string) {
 	f.Namespace = namespace
 }
+
+// SetObjectMeta sets the meta of the resource.
+func (f *EventFilter) SetObjectMeta(meta ObjectMeta) {
+	f.ObjectMeta = meta
+}
+
+func (f *EventFilter) RBACName() string {
+	return "filters"
+}

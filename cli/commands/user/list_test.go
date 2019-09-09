@@ -3,11 +3,13 @@ package user
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	client "github.com/sensu/sensu-go/cli/client/testing"
+	"github.com/sensu/sensu-go/cli/commands/helpers"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -30,16 +32,23 @@ func TestListCommandRunEClosure(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListUsers", mock.Anything).Return([]types.User{
-		*types.FixtureUser("one"),
-		*types.FixtureUser("two"),
-	}, nil)
+	resources := []corev2.User{}
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
+		func(args mock.Arguments) {
+			resources := args[1].(*[]corev2.User)
+			*resources = []corev2.User{
+				*corev2.FixtureUser("one"),
+				*corev2.FixtureUser("two"),
+			}
+		},
+	)
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
 
 	assert.NotEmpty(out)
 	assert.Nil(err)
+	assert.NotContains(out, "==")
 }
 
 func TestListCommandRunEClosureWithErr(t *testing.T) {
@@ -47,7 +56,8 @@ func TestListCommandRunEClosureWithErr(t *testing.T) {
 
 	cli := test.NewCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("ListUsers", mock.Anything).Return([]types.User{}, errors.New("fire"))
+	resources := []corev2.User{}
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(errors.New("fire"))
 
 	cmd := ListCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -63,10 +73,16 @@ func TestListCommandRunEClosureWithTable(t *testing.T) {
 	cli := test.NewCLI()
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListUsers", mock.Anything).Return([]types.User{
-		*types.FixtureUser("one"),
-		*types.FixtureUser("two"),
-	}, nil)
+	resources := []corev2.User{}
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
+		func(args mock.Arguments) {
+			resources := args[1].(*[]corev2.User)
+			*resources = []corev2.User{
+				*corev2.FixtureUser("one"),
+				*corev2.FixtureUser("two"),
+			}
+		},
+	)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "none"))
@@ -86,9 +102,9 @@ func TestListCommandRunEClosureWithJSONOutput(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewCLI()
 
-	testUsers := []types.User{
-		*types.FixtureUser("user1"),
-		*types.FixtureUser("user2"),
+	testUsers := []corev2.User{
+		*corev2.FixtureUser("user1"),
+		*corev2.FixtureUser("user2"),
 	}
 
 	expected, err := json.Marshal(testUsers)
@@ -97,7 +113,13 @@ func TestListCommandRunEClosureWithJSONOutput(t *testing.T) {
 	}
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListUsers", mock.Anything).Return(testUsers, nil)
+	resources := []corev2.User{}
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
+		func(args mock.Arguments) {
+			resources := args[1].(*[]corev2.User)
+			*resources = testUsers
+		},
+	)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "json"))
@@ -119,13 +141,19 @@ func TestListCommandRunEClosureWithYAMLOutput(t *testing.T) {
 	assert := assert.New(t)
 	cli := test.NewCLI()
 
-	testUsers := []types.User{
-		*types.FixtureUser("user1"),
-		*types.FixtureUser("user2"),
+	testUsers := []corev2.User{
+		*corev2.FixtureUser("user1"),
+		*corev2.FixtureUser("user2"),
 	}
 
 	client := cli.Client.(*client.MockClient)
-	client.On("ListUsers", mock.Anything).Return(testUsers, nil)
+	resources := []corev2.User{}
+	client.On("List", mock.Anything, &resources, mock.Anything, mock.Anything).Return(nil).Run(
+		func(args mock.Arguments) {
+			resources := args[1].(*[]corev2.User)
+			*resources = testUsers
+		},
+	)
 
 	cmd := ListCommand(cli)
 	require.NoError(t, cmd.Flags().Set("format", "yaml"))
@@ -139,4 +167,33 @@ func TestListCommandRunEClosureWithYAMLOutput(t *testing.T) {
 	assert.Contains(out, "user1")
 	assert.Contains(out, "user2")
 	assert.Contains(out, "false")
+}
+
+func TestListCommandRunEClosureWithHeader(t *testing.T) {
+	assert := assert.New(t)
+
+	cli := test.NewMockCLI()
+	config := cli.Config.(*client.MockConfig)
+	config.On("Format").Return("none")
+
+	client := cli.Client.(*client.MockClient)
+	var header http.Header
+	resources := []corev2.User{}
+	client.On("List", mock.Anything, &resources, mock.Anything, &header).Return(nil).Run(
+		func(args mock.Arguments) {
+			resources := args[1].(*[]corev2.User)
+			*resources = []corev2.User{}
+			header := args[3].(*http.Header)
+			*header = make(http.Header)
+			header.Add(helpers.HeaderWarning, "E_TOO_MANY_ENTITIES")
+		},
+	)
+
+	cmd := ListCommand(cli)
+	out, err := test.RunCmd(cmd, []string{})
+
+	assert.NotEmpty(out)
+	assert.Nil(err)
+	assert.Contains(out, "E_TOO_MANY_ENTITIES")
+	assert.Contains(out, "==")
 }

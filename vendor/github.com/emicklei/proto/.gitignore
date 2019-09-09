@@ -1,8 +1,0 @@
-cmd/proto2xsd/sample.proto
-cmd/proto2xsd/proto2xsd
-cmd/protofmt/protofmt
-cmd/proto2gql/proto2gql
-debug.test
-.idea/
-bin/
-.DS_Store

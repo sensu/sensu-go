@@ -2,14 +2,17 @@ package filter
 
 import (
 	"errors"
+	"fmt"
 	"io"
+	"net/http"
 	"strings"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
-	"github.com/sensu/sensu-go/types"
 
 	"github.com/spf13/cobra"
 )
@@ -27,7 +30,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 			namespace := cli.Config.Namespace()
 			if ok, _ := cmd.Flags().GetBool(flags.AllNamespaces); ok {
-				namespace = types.NamespaceTypeAll
+				namespace = corev2.NamespaceTypeAll
 			}
 
 			opts, err := helpers.ListOptionsFromFlags(cmd.Flags())
@@ -36,17 +39,19 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 			}
 
 			// Fetch filters from the API
-			results, err := cli.Client.ListFilters(namespace, &opts)
+			var header http.Header
+			results := []corev2.EventFilter{}
+			err = cli.Client.List(client.FiltersPath(namespace), &results, &opts, &header)
 			if err != nil {
 				return err
 			}
 
 			// Print the results based on the user preferences
-			resources := []types.Resource{}
+			resources := []corev2.Resource{}
 			for i := range results {
 				resources = append(resources, &results[i])
 			}
-			return helpers.Print(cmd, cli.Config.Format(), printToTable, resources, results)
+			return helpers.PrintList(cmd, cli.Config.Format(), printToTable, resources, results, header)
 		},
 	}
 
@@ -65,7 +70,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			Title:       "Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				filter, ok := data.(types.EventFilter)
+				filter, ok := data.(corev2.EventFilter)
 				if !ok {
 					return cli.TypeError
 				}
@@ -75,7 +80,7 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Action",
 			CellTransformer: func(data interface{}) string {
-				filter, ok := data.(types.EventFilter)
+				filter, ok := data.(corev2.EventFilter)
 				if !ok {
 					return cli.TypeError
 				}
@@ -85,11 +90,24 @@ func printToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Expressions",
 			CellTransformer: func(data interface{}) string {
-				filter, ok := data.(types.EventFilter)
+				filter, ok := data.(corev2.EventFilter)
 				if !ok {
 					return cli.TypeError
 				}
-				return strings.Join(filter.Expressions, " && ")
+				var expressions []string
+				var sep string
+				switch action := filter.Action; action {
+				case corev2.EventFilterActionAllow:
+					sep = " && "
+				case corev2.EventFilterActionDeny:
+					sep = " || "
+				default:
+					sep = ", "
+				}
+				for _, exp := range filter.Expressions {
+					expressions = append(expressions, fmt.Sprintf("(%s)", exp))
+				}
+				return strings.Join(expressions, sep)
 			},
 		},
 	})

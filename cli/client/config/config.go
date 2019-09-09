@@ -35,8 +35,10 @@ type Config interface {
 type Read interface {
 	APIUrl() string
 	Format() string
+	InsecureSkipTLSVerify() bool
 	Namespace() string
 	Tokens() *types.Tokens
+	TrustedCAFile() string
 }
 
 // Write contains all methods related to setting and writting configuration

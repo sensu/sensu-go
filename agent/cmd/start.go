@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/sensu/sensu-go/agent"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/util/url"
 	"github.com/sensu/sensu-go/version"
@@ -28,36 +28,40 @@ const (
 	// specified in backend urls
 	DefaultBackendPort = "8081"
 
-	flagAgentName             = "name"
-	flagAPIHost               = "api-host"
-	flagAPIPort               = "api-port"
-	flagBackendURL            = "backend-url"
-	flagCacheDir              = "cache-dir"
-	flagConfigFile            = "config-file"
-	flagDeregister            = "deregister"
-	flagDeregistrationHandler = "deregistration-handler"
-	flagEventsRateLimit       = "events-rate-limit"
-	flagEventsBurstLimit      = "events-burst-limit"
-	flagKeepaliveInterval     = "keepalive-interval"
-	flagKeepaliveTimeout      = "keepalive-timeout"
-	flagNamespace             = "namespace"
-	flagPassword              = "password"
-	flagRedact                = "redact"
-	flagSocketHost            = "socket-host"
-	flagSocketPort            = "socket-port"
-	flagStatsdDisable         = "statsd-disable"
-	flagStatsdEventHandlers   = "statsd-event-handlers"
-	flagStatsdFlushInterval   = "statsd-flush-interval"
-	flagStatsdMetricsHost     = "statsd-metrics-host"
-	flagStatsdMetricsPort     = "statsd-metrics-port"
-	flagSubscriptions         = "subscriptions"
-	flagUser                  = "user"
-	flagDisableAPI            = "disable-api"
-	flagDisableAssets         = "disable-assets"
-	flagDisableSockets        = "disable-sockets"
-	flagLogLevel              = "log-level"
-	flagLabels                = "labels"
-	flagAnnotations           = "annotations"
+	flagAgentName                = "name"
+	flagAPIHost                  = "api-host"
+	flagAPIPort                  = "api-port"
+	flagBackendURL               = "backend-url"
+	flagCacheDir                 = "cache-dir"
+	flagConfigFile               = "config-file"
+	flagDeregister               = "deregister"
+	flagDeregistrationHandler    = "deregistration-handler"
+	flagEventsRateLimit          = "events-rate-limit"
+	flagEventsBurstLimit         = "events-burst-limit"
+	flagKeepaliveInterval        = "keepalive-interval"
+	flagKeepaliveTimeout         = "keepalive-timeout"
+	flagNamespace                = "namespace"
+	flagPassword                 = "password"
+	flagRedact                   = "redact"
+	flagSocketHost               = "socket-host"
+	flagSocketPort               = "socket-port"
+	flagStatsdDisable            = "statsd-disable"
+	flagStatsdEventHandlers      = "statsd-event-handlers"
+	flagStatsdFlushInterval      = "statsd-flush-interval"
+	flagStatsdMetricsHost        = "statsd-metrics-host"
+	flagStatsdMetricsPort        = "statsd-metrics-port"
+	flagSubscriptions            = "subscriptions"
+	flagUser                     = "user"
+	flagDisableAPI               = "disable-api"
+	flagDisableAssets            = "disable-assets"
+	flagDisableSockets           = "disable-sockets"
+	flagLogLevel                 = "log-level"
+	flagLabels                   = "labels"
+	flagAnnotations              = "annotations"
+	flagAllowList                = "allow-list"
+	flagBackendHandshakeTimeout  = "backend-handshake-timeout"
+	flagBackendHeartbeatInterval = "backend-heartbeat-interval"
+	flagBackendHeartbeatTimeout  = "backend-heartbeat-timeout"
 
 	// TLS flags
 	flagTrustedCAFile         = "trusted-ca-file"
@@ -126,9 +130,13 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 			cfg.Labels = viper.GetStringMapString(flagLabels)
 			cfg.Annotations = viper.GetStringMapString(flagAnnotations)
 			cfg.User = viper.GetString(flagUser)
+			cfg.AllowList = viper.GetString(flagAllowList)
+			cfg.BackendHandshakeTimeout = viper.GetInt(flagBackendHandshakeTimeout)
+			cfg.BackendHeartbeatInterval = viper.GetInt(flagBackendHeartbeatInterval)
+			cfg.BackendHeartbeatTimeout = viper.GetInt(flagBackendHeartbeatTimeout)
 
 			// TLS configuration
-			cfg.TLS = &types.TLSOptions{}
+			cfg.TLS = &corev2.TLSOptions{}
 			cfg.TLS.TrustedCAFile = viper.GetString(flagTrustedCAFile)
 			cfg.TLS.InsecureSkipVerify = viper.GetBool(flagInsecureSkipTLSVerify)
 
@@ -209,10 +217,10 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	viper.SetDefault(flagEventsRateLimit, agent.DefaultEventsAPIRateLimit)
 	viper.SetDefault(flagEventsBurstLimit, agent.DefaultEventsAPIBurstLimit)
 	viper.SetDefault(flagKeepaliveInterval, agent.DefaultKeepaliveInterval)
-	viper.SetDefault(flagKeepaliveTimeout, types.DefaultKeepaliveTimeout)
+	viper.SetDefault(flagKeepaliveTimeout, corev2.DefaultKeepaliveTimeout)
 	viper.SetDefault(flagNamespace, agent.DefaultNamespace)
 	viper.SetDefault(flagPassword, agent.DefaultPassword)
-	viper.SetDefault(flagRedact, types.DefaultRedactFields)
+	viper.SetDefault(flagRedact, corev2.DefaultRedactFields)
 	viper.SetDefault(flagSocketHost, agent.DefaultSocketHost)
 	viper.SetDefault(flagSocketPort, agent.DefaultSocketPort)
 	viper.SetDefault(flagStatsdDisable, agent.DefaultStatsdDisable)
@@ -225,6 +233,9 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	viper.SetDefault(flagTrustedCAFile, "")
 	viper.SetDefault(flagInsecureSkipTLSVerify, false)
 	viper.SetDefault(flagLogLevel, "warn")
+	viper.SetDefault(flagBackendHandshakeTimeout, 15)
+	viper.SetDefault(flagBackendHeartbeatInterval, 30)
+	viper.SetDefault(flagBackendHeartbeatTimeout, 45)
 
 	// Merge in config flag set so that it appears in command usage
 	cmd.Flags().AddFlagSet(configFlagSet)
@@ -262,6 +273,10 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
 	cmd.Flags().StringToStringVar(&labels, flagLabels, nil, "entity labels map")
 	cmd.Flags().StringToStringVar(&annotations, flagAnnotations, nil, "entity annotations map")
+	cmd.Flags().String(flagAllowList, viper.GetString(flagAllowList), "path to agent execution allow list configuration file")
+	cmd.Flags().Int(flagBackendHandshakeTimeout, viper.GetInt(flagBackendHandshakeTimeout), "number of seconds the agent should wait when negotiating a new WebSocket connection")
+	cmd.Flags().Int(flagBackendHeartbeatInterval, viper.GetInt(flagBackendHeartbeatInterval), "interval at which the agent should send heartbeats to the backend")
+	cmd.Flags().Int(flagBackendHeartbeatTimeout, viper.GetInt(flagBackendHeartbeatTimeout), "number of seconds the agent should wait for a response to a hearbeat")
 
 	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc(logger))
 

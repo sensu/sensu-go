@@ -178,3 +178,12 @@ func SilencedFields(r Resource) map[string]string {
 func (s *Silenced) SetNamespace(namespace string) {
 	s.Namespace = namespace
 }
+
+// SetObjectMeta sets the meta of the resource.
+func (s *Silenced) SetObjectMeta(meta ObjectMeta) {
+	s.ObjectMeta = meta
+}
+
+func (*Silenced) RBACName() string {
+	return "silenced"
+}
