@@ -6,7 +6,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/coreos/etcd/clientv3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +16,7 @@ func TestNewEtcd(t *testing.T) {
 
 	client, err := e.NewClient()
 	assert.NoError(t, err)
-	kv := clientv3.NewKV(client)
+	kv := client.KV
 	assert.NotNil(t, kv)
 
 	putsResp, err := kv.Put(context.Background(), "key", "value")

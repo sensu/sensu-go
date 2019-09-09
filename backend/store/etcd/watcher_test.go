@@ -99,7 +99,7 @@ func TestWatchErrConnClosed(t *testing.T) {
 		watchChanStopped := make(chan struct{})
 		w.watch(ctx, opts, watchChanStopped)
 
-		if err := client.ActiveConnection().Close(); err != nil {
+		if err := client.Close(); err != nil && err != context.Canceled {
 			t.Fatal(err)
 		}
 

@@ -1,7 +1,6 @@
 package testutil
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -53,9 +52,9 @@ func NewStoreInstance() (*IntegrationTestStore, error) {
 	cfg.DataDir = tmpDir
 	cfg.InitialClusterState = etcd.ClusterStateNew
 
-	cfg.ListenClientURLs = []string{fmt.Sprintf("http://127.0.0.1:%d", p[0])}
-	cfg.ListenPeerURLs = []string{fmt.Sprintf("http://127.0.0.1:%d", p[1])}
-	cfg.InitialCluster = fmt.Sprintf("default=http://127.0.0.1:%d", p[1])
+	cfg.ListenClientURLs = []string{"http://127.0.0.1:0"}
+	cfg.ListenPeerURLs = []string{"http://127.0.0.1:0"}
+	cfg.InitialCluster = "default=http://127.0.0.1:0"
 	cfg.AdvertiseClientURLs = cfg.ListenClientURLs
 	cfg.InitialAdvertisePeerURLs = cfg.ListenPeerURLs
 	e, err := etcd.NewEtcd(cfg)

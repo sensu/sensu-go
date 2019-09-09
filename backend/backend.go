@@ -284,7 +284,7 @@ func Initialize(config *Config) (*Backend, error) {
 		EventStore:          eventStoreProxy,
 		QueueGetter:         queueGetter,
 		TLS:                 config.TLS,
-		Cluster:             clientv3.NewCluster(b.Client),
+		Cluster:             b.Client.Cluster,
 		EtcdClientTLSConfig: etcdClientTLSConfig,
 		Authenticator:       authenticator,
 		ClusterVersion:      clusterVersion,
