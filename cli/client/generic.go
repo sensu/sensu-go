@@ -63,28 +63,37 @@ func (client *RestClient) List(path string, objs interface{}, options *ListOptio
 			return UnmarshalError(resp)
 		}
 
-		newObjs := reflect.New(objsType.Elem())
-		o := reflect.ValueOf(objs).Elem()
-
 		body := resp.Body()
 		if len(body) == 0 {
 			return nil
 		}
-		if len(body) > 0 && body[0] == '{' {
-			// Special case for a single resource being returned
-			elem := reflect.New(reflect.Indirect(newObjs).Type().Elem().Elem())
-			if err := json.Unmarshal(body, elem.Interface()); err != nil {
+
+		o := reflect.ValueOf(objs).Elem()
+
+		var slice []*types.Wrapper
+		if err := json.Unmarshal(body, &slice); err == nil {
+			// This case is for when the API returns a wrapped resource
+			for _, wrapper := range slice {
+				o.Set(reflect.Append(o, reflect.ValueOf(wrapper.Value)))
+			}
+		} else {
+			newObjs := reflect.New(objsType.Elem())
+			if len(body) > 0 && body[0] == '{' {
+				// Special case for a single resource being returned
+				elem := reflect.New(reflect.Indirect(newObjs).Type().Elem().Elem())
+				if err := json.Unmarshal(body, elem.Interface()); err != nil {
+					return err
+				}
+				o.Set(reflect.Append(o, elem))
+				return nil
+			}
+
+			if err := json.Unmarshal(body, newObjs.Interface()); err != nil {
 				return err
 			}
-			o.Set(reflect.Append(o, elem))
-			return nil
-		}
 
-		if err := json.Unmarshal(body, newObjs.Interface()); err != nil {
-			return err
+			o.Set(reflect.AppendSlice(o, newObjs.Elem()))
 		}
-
-		o.Set(reflect.AppendSlice(o, newObjs.Elem()))
 
 		options.ContinueToken = resp.Header().Get(corev2.PaginationContinueHeader)
 		if options.ContinueToken == "" {
