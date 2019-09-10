@@ -10,6 +10,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Splayed proxy checks are now executed every interval, instead of every
 `interval + interval * splay_coverage`.
+## [5.13.1] - 2019-09-10
+
+### Fixed
+- Multi-build asset definitions with no matching filters will no longer cause a panic.
 
 ## [5.13.0] - 2019-09-09
 
