@@ -8,7 +8,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## [5.13.1] - 2019-09-10
 
 ### Fixed
-- Multi-asset builds with no matching filters will no longer cause a panic.
+- Multi-build asset definitions with no matching filters will no longer cause a panic.
 
 ## [5.13.0] - 2019-09-09
 
