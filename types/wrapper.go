@@ -36,6 +36,10 @@ var packageMap = map[string]func(string) (Resource, error){
 
 var packageMapMu = &sync.RWMutex{}
 
+type lifter interface {
+	Lift() Resource
+}
+
 // UnmarshalJSON implements json.Unmarshaler
 func (w *Wrapper) UnmarshalJSON(b []byte) error {
 	var wrapper rawWrapper
@@ -93,6 +97,9 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 		return nil
 	}
 	val.FieldByName("ObjectMeta").Set(reflect.ValueOf(innerMeta))
+	if lifter, ok := resource.(lifter); ok {
+		resource = lifter.Lift()
+	}
 	w.Value = resource
 	return nil
 }

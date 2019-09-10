@@ -53,6 +53,10 @@ func init() {
 	}
 }
 
+type lifter interface {
+	Lift() types.Resource
+}
+
 var resourceRE = regexp.MustCompile(`(\w+\/v\d+\.)?(\w+)`)
 
 func resolveResource(resource string) (types.Resource, error) {
@@ -126,6 +130,9 @@ func getResourceRequests(actionSpec string) ([]types.Resource, error) {
 		resource, err := resolveResource(t)
 		if err != nil {
 			return nil, fmt.Errorf("invalid resource type: %s", t)
+		}
+		if lifter, ok := resource.(lifter); ok {
+			resource = lifter.Lift()
 		}
 		actions = append(actions, resource)
 	}
