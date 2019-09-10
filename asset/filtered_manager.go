@@ -30,8 +30,14 @@ type filteredManager struct {
 func (f *filteredManager) Get(ctx context.Context, asset *corev2.Asset) (*RuntimeAsset, error) {
 	var filteredAsset *corev2.Asset
 
+	fields := logrus.Fields{
+		"entity":  f.entity.Name,
+		"asset":   asset.Name,
+		"filters": asset.Filters,
+	}
+
 	if len(asset.Builds) > 0 {
-		fields := logrus.Fields{
+		fields = logrus.Fields{
 			"entity": f.entity.Name,
 			"asset":  asset.Name,
 		}
@@ -65,11 +71,6 @@ func (f *filteredManager) Get(ctx context.Context, asset *corev2.Asset) (*Runtim
 			break
 		}
 	} else {
-		fields := logrus.Fields{
-			"entity":  f.entity.Name,
-			"asset":   asset.Name,
-			"filters": asset.Filters,
-		}
 		filtered, err := f.isFiltered(asset)
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("error filtering entities from asset")
@@ -83,6 +84,12 @@ func (f *filteredManager) Get(ctx context.Context, asset *corev2.Asset) (*Runtim
 
 		logger.WithFields(fields).Debug("entity filtered, installing asset")
 		filteredAsset = asset
+	}
+
+	// catch case where no asset build filters pass
+	if filteredAsset == nil {
+		logger.WithFields(fields).Debug("entity not filtered from any asset builds, not installing asset")
+		return nil, nil
 	}
 
 	return f.getter.Get(ctx, filteredAsset)
