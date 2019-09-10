@@ -14,7 +14,7 @@ import (
 
 func TestGetClusterHealth(t *testing.T) {
 	testWithEtcdClient(t, func(store store.Store, client *clientv3.Client) {
-		healthResult := store.GetClusterHealth(context.Background(), clientv3.NewCluster(client), (*tls.Config)(nil))
+		healthResult := store.GetClusterHealth(context.Background(), client.Cluster, (*tls.Config)(nil))
 		assert.Empty(t, healthResult.ClusterHealth[0].Err)
 	})
 }

@@ -8,7 +8,6 @@ package etcd
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -17,10 +16,10 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/embed"
+	"github.com/coreos/etcd/etcdserver/api/v3client"
 	"github.com/coreos/etcd/pkg/transport"
 	etcdTypes "github.com/coreos/etcd/pkg/types"
 	"github.com/coreos/pkg/capnslog"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/path"
 	"google.golang.org/grpc/grpclog"
 )
@@ -101,9 +100,8 @@ func ensureDir(path string) error {
 
 // Etcd is a wrapper around github.com/coreos/etcd/embed.Etcd
 type Etcd struct {
-	cfg        *Config
-	etcd       *embed.Etcd
-	clientURLs []string
+	cfg  *Config
+	etcd *embed.Etcd
 }
 
 // BackendID returns the ID of the etcd cluster member
@@ -198,7 +196,7 @@ func NewEtcd(config *Config) (*Etcd, error) {
 		return nil, fmt.Errorf("Etcd failed to start in %d seconds", EtcdStartupTimeout)
 	}
 
-	return &Etcd{cfg: config, etcd: e, clientURLs: config.AdvertiseClientURLs}, nil
+	return &Etcd{cfg: config, etcd: e}, nil
 }
 
 // Name returns the configured name for Etcd.
@@ -221,35 +219,7 @@ func (e *Etcd) Shutdown() error {
 
 // NewClient returns a new etcd v3 client. Clients must be closed after use.
 func (e *Etcd) NewClient() (*clientv3.Client, error) {
-	// Define the TLS options for the client using the etcd client config
-	tlsOptions := &types.TLSOptions{
-		CertFile:      e.cfg.ClientTLSInfo.CertFile,
-		KeyFile:       e.cfg.ClientTLSInfo.KeyFile,
-		TrustedCAFile: e.cfg.ClientTLSInfo.TrustedCAFile,
-	}
-
-	// Translate our TLS options to a *tls.Config
-	tlsConfig, err := tlsOptions.ToClientTLSConfig()
-	if err != nil {
-		return nil, err
-	}
-
-	listeners := e.etcd.Clients
-	if len(listeners) == 0 {
-		return nil, errors.New("no etcd client listeners found for server")
-	}
-
-	cli, err := clientv3.New(clientv3.Config{
-		Endpoints:   e.clientURLs,
-		DialTimeout: 5 * time.Second,
-		TLS:         tlsConfig,
-	})
-
-	if err != nil {
-		return nil, err
-	}
-
-	return cli, nil
+	return v3client.New(e.etcd.Server), nil
 }
 
 // Healthy returns Etcd status information.
@@ -261,13 +231,7 @@ func (e *Etcd) Healthy() bool {
 	if err != nil {
 		return false
 	}
-	mapi := clientv3.NewMaintenance(client)
+	mapi := client.Maintenance
 	_, err = mapi.Status(context.TODO(), e.cfg.AdvertiseClientURLs[0])
 	return err == nil
-}
-
-func (e *Etcd) ClientURLs() []string {
-	result := make([]string, len(e.clientURLs))
-	copy(result, e.clientURLs)
-	return result
 }
