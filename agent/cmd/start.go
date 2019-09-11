@@ -66,6 +66,8 @@ const (
 	// TLS flags
 	flagTrustedCAFile         = "trusted-ca-file"
 	flagInsecureSkipTLSVerify = "insecure-skip-tls-verify"
+	flagCertFile              = "cert-file"
+	flagKeyFile               = "key-file"
 
 	deprecatedFlagAgentID = "id"
 )
@@ -139,6 +141,8 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 			cfg.TLS = &corev2.TLSOptions{}
 			cfg.TLS.TrustedCAFile = viper.GetString(flagTrustedCAFile)
 			cfg.TLS.InsecureSkipVerify = viper.GetBool(flagInsecureSkipTLSVerify)
+			cfg.TLS.CertFile = viper.GetString(flagCertFile)
+			cfg.TLS.KeyFile = viper.GetString(flagKeyFile)
 
 			agentName := viper.GetString(flagAgentName)
 			if agentName != "" {

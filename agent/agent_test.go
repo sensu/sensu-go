@@ -12,6 +12,8 @@ import (
 	"sync"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	sensutesting "github.com/sensu/sensu-go/testing"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -20,6 +22,75 @@ import (
 
 type testMessageType struct {
 	Data string
+}
+
+func TestTLSAuth(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	caPath, certPath, keyPath, tlsCleanup := sensutesting.WithFakeCerts(t)
+	defer tlsCleanup()
+
+	server := transport.NewServer()
+	var once sync.Once
+	var wg sync.WaitGroup
+	wg.Add(1)
+	ts := httptest.NewUnstartedServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		once.Do(func() {
+			defer wg.Done()
+			conn, err := server.Serve(w, r)
+			require.NoError(t, err)
+
+			msg, err := conn.Receive()
+			assert.NoError(t, err)
+			assert.Equal(t, "keepalive", msg.Type)
+
+			event := &types.Event{}
+			assert.NoError(t, json.Unmarshal(msg.Payload, event))
+			assert.NotNil(t, event.Entity)
+			assert.Equal(t, "agent", event.Entity.EntityClass)
+			assert.NotEmpty(t, event.Entity.System)
+
+			if auth := r.Header.Get("Authorization"); len(auth) > 0 {
+				t.Fatal("authorization header set")
+			}
+
+			cancel()
+		})
+	}))
+
+	cfg, cleanup := FixtureConfig()
+	defer cleanup()
+	cfg.TLS = &corev2.TLSOptions{}
+	cfg.TLS.CertFile = certPath
+	cfg.TLS.KeyFile = keyPath
+	cfg.TLS.TrustedCAFile = caPath
+	cfg.TLS.InsecureSkipVerify = true
+
+	var err error
+	ts.TLS, err = cfg.TLS.ToServerTLSConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	ts.StartTLS()
+	defer ts.Close()
+
+	wsURL := strings.Replace(ts.URL, "https", "wss", 1)
+	cfg.BackendURLs = []string{wsURL}
+	cfg.API.Port = 0
+	cfg.Socket.Port = 0
+	cfg.Password = ""
+
+	ta, err := NewAgent(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mockTime.Start()
+	defer mockTime.Stop()
+	err = ta.Run(ctx)
+	fmt.Println("HI")
+	require.NoError(t, err)
+	wg.Wait()
 }
 
 func TestSendLoop(t *testing.T) {
