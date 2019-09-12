@@ -88,7 +88,6 @@ func TestTLSAuth(t *testing.T) {
 	mockTime.Start()
 	defer mockTime.Stop()
 	err = ta.Run(ctx)
-	fmt.Println("HI")
 	require.NoError(t, err)
 	wg.Wait()
 }

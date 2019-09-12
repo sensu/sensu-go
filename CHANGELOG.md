@@ -8,7 +8,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
-- Support agent TLS authentication.
+- Support agent TLS authentication, usable with a licensed sensu-backend.
 
 ### Fixed
 - Splayed proxy checks are now executed every interval, instead of every
