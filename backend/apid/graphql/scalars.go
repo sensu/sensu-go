@@ -46,13 +46,6 @@ func (w jsonWrapper) MarshalJSON() ([]byte, error) {
 	return w.data, nil
 }
 
-func wrapExtendedAttributes(j []byte) jsonWrapper {
-	if len(j) == 0 {
-		j = []byte("{}")
-	}
-	return jsonWrapper{data: j}
-}
-
 // Implement ScalarResolver for JSON type
 
 type unsignedIntegerImpl struct{}

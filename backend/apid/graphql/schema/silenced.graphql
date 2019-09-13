@@ -1,7 +1,7 @@
 """
 Silenced is the representation of a silence entry.
 """
-type Silenced implements Node, Namespaced, Resource {
+type Silenced implements Node & Namespaced & Resource {
   "The globally unique identifier for the record."
   id: ID!
 

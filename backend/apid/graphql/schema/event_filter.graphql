@@ -1,7 +1,7 @@
 """
 A Filter is a filter specification.
 """
-type EventFilter implements Node, Namespaced, Resource {
+type EventFilter implements Node & Namespaced & Resource {
   "The globally unique identifier of the record"
   id: ID!
 

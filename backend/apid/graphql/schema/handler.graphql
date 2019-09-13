@@ -1,7 +1,7 @@
 """
 A Handler is a handler specification.
 """
-type Handler implements Node, Namespaced, Resource {
+type Handler implements Node & Namespaced & Resource {
   "The globally unique identifier of the record."
   id: ID!
 

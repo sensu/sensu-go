@@ -38,12 +38,6 @@ func (*entityImpl) Metadata(p graphql.ResolveParams) (interface{}, error) {
 	return entity.GetRedactedEntity(), nil
 }
 
-// ExtendedAttributes implements response to request for 'extendedAttributes' field.
-func (*entityImpl) ExtendedAttributes(p graphql.ResolveParams) (interface{}, error) {
-	entity := p.Source.(*corev2.Entity)
-	return wrapExtendedAttributes(entity.ExtendedAttributes), nil
-}
-
 // LastSeen implements response to request for 'executed' field.
 func (r *entityImpl) LastSeen(p graphql.ResolveParams) (*time.Time, error) {
 	e := p.Source.(*corev2.Entity)

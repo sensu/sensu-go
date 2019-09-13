@@ -148,12 +148,6 @@ type EntitySilencesFieldResolver interface {
 	Silences(p graphql.ResolveParams) (interface{}, error)
 }
 
-// EntityExtendedAttributesFieldResolver implement to resolve requests for the Entity's extendedAttributes field.
-type EntityExtendedAttributesFieldResolver interface {
-	// ExtendedAttributes implements response to request for extendedAttributes field.
-	ExtendedAttributes(p graphql.ResolveParams) (interface{}, error)
-}
-
 // EntityToJSONFieldResolver implement to resolve requests for the Entity's toJSON field.
 type EntityToJSONFieldResolver interface {
 	// ToJSON implements response to request for toJSON field.
@@ -239,7 +233,6 @@ type EntityFieldResolvers interface {
 	EntityEventsFieldResolver
 	EntityIsSilencedFieldResolver
 	EntitySilencesFieldResolver
-	EntityExtendedAttributesFieldResolver
 	EntityToJSONFieldResolver
 }
 
@@ -462,12 +455,6 @@ func (_ EntityAliases) Silences(p graphql.ResolveParams) (interface{}, error) {
 	return val, err
 }
 
-// ExtendedAttributes implements response to request for 'extendedAttributes' field.
-func (_ EntityAliases) ExtendedAttributes(p graphql.ResolveParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
-}
-
 // ToJSON implements response to request for 'toJSON' field.
 func (_ EntityAliases) ToJSON(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
@@ -615,13 +602,6 @@ func _ObjTypeEntitySilencesHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
-func _ObjTypeEntityExtendedAttributesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(EntityExtendedAttributesFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.ExtendedAttributes(frp)
-	}
-}
-
 func _ObjTypeEntityToJSONHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(EntityToJSONFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -671,13 +651,6 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 				Description:       "All events associated with the entity.",
 				Name:              "events",
 				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Event")))),
-			},
-			"extendedAttributes": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "Extended attributes includes arbitrary user-defined data",
-				Name:              "extendedAttributes",
-				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
 			},
 			"id": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -803,25 +776,24 @@ func _ObjectTypeEntityConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeEntityDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeEntityConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
-		"deregister":         _ObjTypeEntityDeregisterHandler,
-		"deregistration":     _ObjTypeEntityDeregistrationHandler,
-		"entityClass":        _ObjTypeEntityEntityClassHandler,
-		"events":             _ObjTypeEntityEventsHandler,
-		"extendedAttributes": _ObjTypeEntityExtendedAttributesHandler,
-		"id":                 _ObjTypeEntityIDHandler,
-		"isSilenced":         _ObjTypeEntityIsSilencedHandler,
-		"lastSeen":           _ObjTypeEntityLastSeenHandler,
-		"metadata":           _ObjTypeEntityMetadataHandler,
-		"name":               _ObjTypeEntityNameHandler,
-		"namespace":          _ObjTypeEntityNamespaceHandler,
-		"redact":             _ObjTypeEntityRedactHandler,
-		"related":            _ObjTypeEntityRelatedHandler,
-		"silences":           _ObjTypeEntitySilencesHandler,
-		"status":             _ObjTypeEntityStatusHandler,
-		"subscriptions":      _ObjTypeEntitySubscriptionsHandler,
-		"system":             _ObjTypeEntitySystemHandler,
-		"toJSON":             _ObjTypeEntityToJSONHandler,
-		"user":               _ObjTypeEntityUserHandler,
+		"deregister":     _ObjTypeEntityDeregisterHandler,
+		"deregistration": _ObjTypeEntityDeregistrationHandler,
+		"entityClass":    _ObjTypeEntityEntityClassHandler,
+		"events":         _ObjTypeEntityEventsHandler,
+		"id":             _ObjTypeEntityIDHandler,
+		"isSilenced":     _ObjTypeEntityIsSilencedHandler,
+		"lastSeen":       _ObjTypeEntityLastSeenHandler,
+		"metadata":       _ObjTypeEntityMetadataHandler,
+		"name":           _ObjTypeEntityNameHandler,
+		"namespace":      _ObjTypeEntityNamespaceHandler,
+		"redact":         _ObjTypeEntityRedactHandler,
+		"related":        _ObjTypeEntityRelatedHandler,
+		"silences":       _ObjTypeEntitySilencesHandler,
+		"status":         _ObjTypeEntityStatusHandler,
+		"subscriptions":  _ObjTypeEntitySubscriptionsHandler,
+		"system":         _ObjTypeEntitySystemHandler,
+		"toJSON":         _ObjTypeEntityToJSONHandler,
+		"user":           _ObjTypeEntityUserHandler,
 	},
 }
 

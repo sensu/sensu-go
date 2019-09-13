@@ -2,7 +2,7 @@
 Entity is the Entity supplying the event. The default Entity for any
 Event is the running Agent process--if the Event is sent by an Agent.
 """
-type Entity implements Node, Namespaced, Silenceable, Resource {
+type Entity implements Node & Namespaced & Silenceable & Resource {
   "The globally unique identifier of the record"
   id: ID!
 
@@ -63,9 +63,6 @@ type Entity implements Node, Namespaced, Silenceable, Resource {
   matches all checks.
   """
   silences: [Silenced!]!
-
-  "Extended attributes includes arbitrary user-defined data"
-  extendedAttributes: JSON!
 
   """
   toJSON returns a REST API compatible representation of the resource. Handy for

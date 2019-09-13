@@ -1,7 +1,7 @@
 """
 Asset defines an archive, an agent will install as a dependency for a check.
 """
-type Asset implements Node, Namespaced, Resource {
+type Asset implements Node & Namespaced & Resource {
   "The globally unique identifier of the record"
   id: ID!
 

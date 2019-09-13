@@ -29,12 +29,6 @@ func (r *checkCfgImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.CheckTranslator.EncodeToString(p.Source), nil
 }
 
-// ExtendedAttributes implements response to request for 'extendedAttributes' field.
-func (*checkCfgImpl) ExtendedAttributes(p graphql.ResolveParams) (interface{}, error) {
-	check := p.Source.(*corev2.CheckConfig)
-	return wrapExtendedAttributes(check.ExtendedAttributes), nil
-}
-
 // Handlers implements response to request for 'handlers' field.
 func (r *checkCfgImpl) Handlers(p graphql.ResolveParams) (interface{}, error) {
 	src := p.Source.(*corev2.CheckConfig)
@@ -145,12 +139,6 @@ func (r *checkImpl) NodeID(p graphql.ResolveParams) (string, error) {
 func (r *checkImpl) Executed(p graphql.ResolveParams) (time.Time, error) {
 	c := p.Source.(*corev2.Check)
 	return time.Unix(c.Executed, 0), nil
-}
-
-// ExtendedAttributes implements response to request for 'extendedAttributes' field.
-func (*checkImpl) ExtendedAttributes(p graphql.ResolveParams) (interface{}, error) {
-	check := p.Source.(*corev2.Check)
-	return wrapExtendedAttributes(check.ExtendedAttributes), nil
 }
 
 // LastOK implements response to request for 'lastOK' field.

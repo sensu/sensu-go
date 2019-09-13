@@ -1,7 +1,7 @@
 """
 A Mutator is a mutator specification.
 """
-type Mutator implements Node, Namespaced, Resource {
+type Mutator implements Node & Namespaced & Resource {
   "The globally unique identifier of the record"
   id: ID!
 
