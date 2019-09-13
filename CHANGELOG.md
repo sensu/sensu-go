@@ -12,28 +12,25 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 completely wipe the application's persisted state; in lieu of them having to
 manually wipe their local / session storage. This may help in the rare cases
 where something in said state is leading to an uncaught exception.
-sensu/web#196
 - [Web] For operating systems with support for selecting a preferred light /dark
 theme, the application now respects the system preference by default.
-sensu/web#193
 
 ### Changed
 - [Web] Github is not always the best place for feature requests and discussion,
 as such we've changed CTA for feedback to point to Discourse instead of the
-web repository's issues page. sensu/web#195
+web repository's issues page.
 - [Web] When a user lands on a page inside a namespace that no longer exists or
 they do not have access to, the drawer is now opened so that namespace switcher
 is front and center. Hopefully this should reduce any confusion around next
-steps. sensu/web#197
+steps.
 
 ### Fixed
 - Splayed proxy checks are now executed every interval, instead of every
 `interval + interval * splay_coverage`.
 - [Web] Unauthorized errors emitted while creating silences or resolving events
 are now caught and a toast is presented to communicate what occurred.
-sensu/web#194
 - [Web] Internal errors are now avoided when a user attempts to queue an ad-hoc
-check for a keepalive. sensu/web#198
+check for a keepalive.
 
 ## [5.13.1] - 2019-09-10
 
