@@ -336,7 +336,7 @@ func TestUpdateEvent(t *testing.T) {
 							Resource:     "events",
 							ResourceName: "default:default",
 							UserName:     "legit",
-							Verb:         "create,update",
+							Verb:         "update",
 						}: true,
 					},
 				}
@@ -400,7 +400,7 @@ func TestUpdateEvent(t *testing.T) {
 							Namespace:  "default",
 							Resource:   "events",
 							UserName:   "legit",
-							Verb:       "create,update",
+							Verb:       "update",
 						}: true,
 					},
 				}

@@ -112,7 +112,7 @@ func silencedUpdateAttrs(ctx context.Context, name string) *authorization.Attrib
 		APIVersion:   "v2",
 		Namespace:    corev2.ContextNamespace(ctx),
 		Resource:     "silenced",
-		Verb:         "create,update",
+		Verb:         "update",
 		ResourceName: name,
 	}
 }
