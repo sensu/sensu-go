@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 	"syscall"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend"
 	"github.com/sensu/sensu-go/backend/etcd"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/path"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
 	"github.com/sirupsen/logrus"
@@ -189,16 +189,24 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 			trustedCAFile := viper.GetString(flagTrustedCAFile)
 
 			if certFile != "" && keyFile != "" {
-				cfg.TLS = &types.TLSOptions{
+				cfg.TLS = &corev2.TLSOptions{
 					CertFile:           certFile,
 					KeyFile:            keyFile,
 					TrustedCAFile:      trustedCAFile,
 					InsecureSkipVerify: insecureSkipTLSVerify,
 				}
-			} else if certFile == "" && keyFile != "" {
-				return fmt.Errorf("tls configuration error, missing flag: --%s", flagCertFile)
-			} else if certFile != "" && keyFile == "" {
-				return fmt.Errorf("tls configuration error, missing flag: --%s", flagKeyFile)
+
+				// Duplicate the TLS options for the agent TLS configuration
+				cfg.AgentTLSOptions = &corev2.TLSOptions{
+					CertFile:           cfg.TLS.CertFile,
+					KeyFile:            cfg.TLS.KeyFile,
+					TrustedCAFile:      cfg.TLS.TrustedCAFile,
+					InsecureSkipVerify: cfg.TLS.InsecureSkipVerify,
+				}
+			} else if certFile != "" || keyFile != "" {
+				return fmt.Errorf(
+					"tls configuration error, both flags --%s & --%s are required",
+					flagCertFile, flagKeyFile)
 			}
 
 			// Etcd TLS config
@@ -315,7 +323,7 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	cmd.Flags().StringP(flagStateDir, "d", viper.GetString(flagStateDir), "path to sensu state storage")
 	cmd.Flags().String(flagCertFile, viper.GetString(flagCertFile), "TLS certificate in PEM format")
 	cmd.Flags().String(flagKeyFile, viper.GetString(flagKeyFile), "TLS certificate key in PEM format")
-	cmd.Flags().String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format used for etcd client (mutual TLS)")
+	cmd.Flags().String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format")
 	cmd.Flags().Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")
 	cmd.Flags().Bool(flagDebug, false, "enable debugging and profiling features")
 	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")

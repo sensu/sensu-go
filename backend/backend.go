@@ -230,7 +230,7 @@ func Initialize(config *Config) (*Backend, error) {
 		Port:     config.AgentPort,
 		Bus:      bus,
 		Store:    stor,
-		TLS:      config.TLS,
+		TLS:      config.AgentTLSOptions,
 		RingPool: ringPool,
 	})
 	if err != nil {
