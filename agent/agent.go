@@ -147,9 +147,17 @@ func (a *Agent) refreshSystemInfoPeriodically(ctx context.Context) {
 
 func (a *Agent) buildTransportHeaderMap() http.Header {
 	header := http.Header{}
-	header.Set(transport.HeaderKeyAgentName, a.config.AgentName)
 	header.Set(transport.HeaderKeyNamespace, a.config.Namespace)
-	header.Set(transport.HeaderKeyUser, a.config.User)
+	header.Set(transport.HeaderKeyAgentName, a.config.AgentName)
+	if tls := a.config.TLS; tls != nil && len(tls.CertFile) == 0 && len(tls.KeyFile) == 0 {
+		logger.Info("using password auth")
+		header.Set(transport.HeaderKeyUser, a.config.User)
+		userCredentials := fmt.Sprintf("%s:%s", a.config.User, a.config.Password)
+		userCredentials = base64.StdEncoding.EncodeToString([]byte(userCredentials))
+		header.Set("Authorization", "Basic "+userCredentials)
+	} else {
+		logger.Info("using tls client auth")
+	}
 	header.Set(transport.HeaderKeySubscriptions, strings.Join(a.config.Subscriptions, ","))
 
 	return header
@@ -172,10 +180,7 @@ func (a *Agent) Run(ctx context.Context) error {
 			logger.WithError(err).Error("error closing API queue")
 		}
 	}()
-	userCredentials := fmt.Sprintf("%s:%s", a.config.User, a.config.Password)
-	userCredentials = base64.StdEncoding.EncodeToString([]byte(userCredentials))
 	a.header = a.buildTransportHeaderMap()
-	a.header.Set("Authorization", "Basic "+userCredentials)
 
 	// Fail the agent after startup if the id is invalid
 	if err := corev2.ValidateName(a.config.AgentName); err != nil {
