@@ -116,7 +116,7 @@ func (a *AuthenticationClient) Logout(ctx context.Context) error {
 // corev2.RefreshTokenString -> string
 func (a *AuthenticationClient) RefreshAccessToken(ctx context.Context) (*corev2.Tokens, error) {
 	var accessClaims, refreshClaims *corev2.Claims
-
+	fmt.Println(ctx.Value(corev2.AccessTokenClaims))
 	// Get the access token claims
 	if value := ctx.Value(corev2.AccessTokenClaims); value != nil {
 		accessClaims = value.(*corev2.Claims)

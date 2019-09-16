@@ -28,7 +28,7 @@ func (r *WrappedRouter) Match(req *http.Request, match *mux.RouteMatch) bool {
 
 // NewSubrouter returns new router given route and set of middleware. Useful
 // when you would like a subset of routes that are wrapped in a specific set of
-// middleware. Eg. you would some routes to require authetication while others
+// middleware. Eg. you would some routes to require authentication while others
 // you would not.
 func NewSubrouter(r *mux.Route, ms ...middlewares.HTTPMiddleware) *mux.Router {
 	subRouter := r.Subrouter().UseEncodedPath()
