@@ -195,14 +195,6 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 					TrustedCAFile:      trustedCAFile,
 					InsecureSkipVerify: insecureSkipTLSVerify,
 				}
-
-				// Duplicate the TLS options for the agent TLS configuration
-				cfg.AgentTLSOptions = &corev2.TLSOptions{
-					CertFile:           cfg.TLS.CertFile,
-					KeyFile:            cfg.TLS.KeyFile,
-					TrustedCAFile:      cfg.TLS.TrustedCAFile,
-					InsecureSkipVerify: cfg.TLS.InsecureSkipVerify,
-				}
 			} else if certFile != "" || keyFile != "" {
 				return fmt.Errorf(
 					"tls configuration error, both flags --%s & --%s are required",

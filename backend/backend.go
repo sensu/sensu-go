@@ -225,6 +225,11 @@ func Initialize(config *Config) (*Backend, error) {
 	b.Daemons = append(b.Daemons, scheduler)
 
 	// Initialize agentd
+	// TODO(palourde): To fix or remove depending on how we deal
+	// with agent TLS stuff
+	if config.TLS != nil && config.AgentTLSOptions == nil {
+		config.AgentTLSOptions = config.TLS
+	}
 	agent, err := agentd.New(agentd.Config{
 		Host:     config.AgentHost,
 		Port:     config.AgentPort,
