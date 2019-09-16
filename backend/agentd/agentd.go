@@ -3,6 +3,7 @@ package agentd
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -86,6 +87,8 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 		TLSConfig:    tlsServerConfig,
+		// Capture the log entries from agentd's HTTP server
+		ErrorLog: log.New(&logrusIOWriter{entry: logger}, "", 0),
 	}
 	for _, o := range opts {
 		if err := o(a); err != nil {
