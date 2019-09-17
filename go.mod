@@ -94,9 +94,9 @@ require (
 	go.uber.org/zap v1.10.0 // indirect
 	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
 	golang.org/x/net v0.0.0-20190620200207-3b0461eec859
+	golang.org/x/sync v0.0.0-20190423024810-112230192c58 // indirect
 	golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a
 	golang.org/x/time v0.0.0-20170927054726-6dc17368e09b
-	golang.org/x/tools/gopls v0.1.6 // indirect
 	google.golang.org/genproto v0.0.0-20170918111702-1e559d0a00ee // indirect
 	google.golang.org/grpc v1.13.0
 	gopkg.in/AlecAivazis/survey.v1 v1.4.0 // indirect

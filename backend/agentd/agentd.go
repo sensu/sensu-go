@@ -80,16 +80,21 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		return nil, err
 	}
 
+	// Prepare the middlewares used by agentd's HTTP server and assign them to
+	// public variables so they can be overriden if required
 	auth := &authenticationMiddleware{store: a.store}
 	authz := &authorizationMiddleware{store: a.store}
 	AuthenticationMiddleware = auth.Middleware
 	AuthorizationMiddleware = authz.Middleware
 
+	// Initialize a mux router that indirectly uses our middlewares defined above.
+	// We can't directly use them because mux will keep a copy of the middleware
+	// functions, which prevent us from modifying the actual middleware logic at
+	// runtime, so we need this workaround
 	router := mux.NewRouter()
 	router.HandleFunc("/", a.webSocketHandler)
 	router.Use(authenticate, authorize)
 
-	// handler := middlewares.BasicAuthentication(middlewares.BasicAuthorization(http.HandlerFunc(a.webSocketHandler), a.store), a.store)
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
 		Handler:      router,

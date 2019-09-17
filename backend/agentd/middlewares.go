@@ -21,12 +21,16 @@ var AuthenticationMiddleware mux.MiddlewareFunc
 // AuthorizationMiddleware represents the middleware used for authorization
 var AuthorizationMiddleware mux.MiddlewareFunc
 
+// authenticate is the abstraction layer required to be able to change at
+// runtime the actual function assigned to AuthenticationMiddleware above
 func authenticate(next http.Handler) http.Handler {
 	return AuthenticationMiddleware(next)
 }
 
+// authorize is the abstraction layer required to be able to change at
+// runtime the actual function assigned to AuthenticationMiddleware above
 func authorize(next http.Handler) http.Handler {
-	return AuthenticationMiddleware(next)
+	return AuthorizationMiddleware(next)
 }
 
 // AuthStore specifies the storage requirements for authentication and
@@ -46,9 +50,10 @@ type authenticationMiddleware struct {
 	store AuthStore
 }
 
+// Middleware represents the core authentication middleware for agentd, which
+// consists of basic authentication.
 func (a *authenticationMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("authenticationMiddleware")
 		username, password, ok := r.BasicAuth()
 		if !ok {
 			http.Error(w, "missing credentials", http.StatusUnauthorized)
@@ -82,6 +87,9 @@ type authorizationMiddleware struct {
 	store store.Store
 }
 
+// Middleware represents the core authorization middleware for agentd, which
+// consists of making sure the agent's entity is authorized to create events in
+// the given namespace
 func (a *authorizationMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("authorizationMiddleware")
