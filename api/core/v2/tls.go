@@ -38,7 +38,6 @@ var (
 // ToServerTLSConfig should only be used for server TLS configuration. outputs a tls.Config from TLSOptions
 func (t *TLSOptions) ToServerTLSConfig() (*tls.Config, error) {
 	cfg := tls.Config{}
-	cfg.InsecureSkipVerify = t.GetInsecureSkipVerify()
 
 	if t.GetTrustedCAFile() != "" {
 		caCertPool, err := LoadCACerts(t.TrustedCAFile)
