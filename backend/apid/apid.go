@@ -91,10 +91,6 @@ func New(c Config, opts ...Option) (*APId, error) {
 		}
 	}
 
-	// router, coreSubrouter, graphQLSubrouter, err := NewHandler(c)
-	// if err != nil {
-	// 	return nil, err
-	// }
 	router := NewRouter()
 	_ = PublicSubrouter(router, c)
 	a.GraphQLSubrouter = GraphQLSubrouter(router, c)
