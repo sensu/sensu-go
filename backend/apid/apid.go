@@ -25,11 +25,10 @@ import (
 
 // APId is the backend HTTP API.
 type APId struct {
-	Authenticator           *authentication.Authenticator
-	HTTPServer              *http.Server
-	AuthenticationSubrouter *mux.Router
-	CoreSubrouter           *mux.Router
-	GraphQLSubrouter        *mux.Router
+	Authenticator    *authentication.Authenticator
+	HTTPServer       *http.Server
+	CoreSubrouter    *mux.Router
+	GraphQLSubrouter *mux.Router
 
 	stopping            chan struct{}
 	running             *atomic.Value
@@ -94,7 +93,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	router := NewRouter()
 	_ = PublicSubrouter(router, c)
 	a.GraphQLSubrouter = GraphQLSubrouter(router, c)
-	a.AuthenticationSubrouter = AuthenticationSubrouter(router, c)
+	_ = AuthenticationSubrouter(router, c)
 	a.CoreSubrouter = CoreSubrouter(router, c)
 
 	a.HTTPServer = &http.Server{
