@@ -11,10 +11,10 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
@@ -80,10 +80,19 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		return nil, err
 	}
 
-	handler := middlewares.BasicAuthentication(middlewares.BasicAuthorization(http.HandlerFunc(a.webSocketHandler), a.store), a.store)
+	auth := &authenticationMiddleware{store: a.store}
+	authz := &authorizationMiddleware{store: a.store}
+	AuthenticationMiddleware = auth.Middleware
+	AuthorizationMiddleware = authz.Middleware
+
+	router := mux.NewRouter()
+	router.HandleFunc("/", a.webSocketHandler)
+	router.Use(authenticate, authorize)
+
+	// handler := middlewares.BasicAuthentication(middlewares.BasicAuthorization(http.HandlerFunc(a.webSocketHandler), a.store), a.store)
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
-		Handler:      handler,
+		Handler:      router,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 		TLSConfig:    tlsServerConfig,
