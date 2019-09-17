@@ -2,7 +2,6 @@ package agentd
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -92,7 +91,6 @@ type authorizationMiddleware struct {
 // the given namespace
 func (a *authorizationMiddleware) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("authorizationMiddleware")
 		namespace := r.Header.Get(transport.HeaderKeyNamespace)
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, corev2.NamespaceKey, namespace)
