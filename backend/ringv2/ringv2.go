@@ -354,11 +354,11 @@ func (w *watcher) ensureActiveTrigger(ctx context.Context) error {
 		triggerCmp := clientv3.Compare(clientv3.Version(w.triggerKey()), "=", 0)
 
 		resp, err := w.ring.client.Txn(ctx).If(triggerCmp).Then(triggerOp).Commit()
-		if !resp.Succeeded {
-			_, _ = w.ring.client.Revoke(ctx, lease.ID)
-		}
 		if err != nil {
 			return false, err
+		}
+		if !resp.Succeeded {
+			_, _ = w.ring.client.Revoke(ctx, lease.ID)
 		}
 		return true, nil
 	})
