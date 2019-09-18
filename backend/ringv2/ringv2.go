@@ -357,6 +357,9 @@ func (w *watcher) ensureActiveTrigger(ctx context.Context) error {
 		if !resp.Succeeded {
 			_, _ = w.ring.client.Revoke(ctx, lease.ID)
 		}
+		if err != nil {
+			return false, err
+		}
 		return true, nil
 	})
 
