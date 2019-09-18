@@ -13,6 +13,7 @@ import (
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/robfig/cron"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/util/retry"
 	"golang.org/x/time/rate"
 )
 
@@ -20,10 +21,15 @@ import (
 type EventType int
 
 const (
+	// EventError ...
 	EventError EventType = iota
+	// EventAdd ...
 	EventAdd
+	// EventRemove ...
 	EventRemove
+	// EventTrigger ...
 	EventTrigger
+	// EventClosing ...
 	EventClosing
 )
 
@@ -44,6 +50,7 @@ func (e EventType) String() string {
 	}
 }
 
+// MinInterval ...
 const MinInterval = 5
 
 // Path returns the canonical path to a ring.
@@ -65,6 +72,7 @@ type Event struct {
 	Err error
 }
 
+// Ring is a ring of items that are triggered in a round robin fashion.
 type Ring struct {
 	client *clientv3.Client
 
@@ -355,12 +363,22 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, va
 	r.mu.Lock()
 	r.watchers[watcher.watcherKey] = watcher
 	r.mu.Unlock()
-	if err := watcher.ensureActiveTrigger(ctx); err != nil {
-		notifyError(ch, fmt.Errorf("error while starting ring watcher: %s", err))
-		notifyClosing(ch)
-		cancel()
-		return
+
+	backoff := retry.ExponentialBackoff{
+		InitialDelayInterval: 10 * time.Millisecond,
+		MaxDelayInterval:     10 * time.Second,
+		Multiplier:           10,
+		Ctx:                  ctx,
 	}
+
+	err = backoff.Retry(func(retry int) (bool, error) {
+		if err := watcher.ensureActiveTrigger(ctx); err != nil {
+			notifyError(ch, fmt.Errorf("error while starting ring watcher: %s", err))
+			return false, err
+		}
+		return true, nil
+	})
+
 	go func() {
 		defer cancel()
 		for {

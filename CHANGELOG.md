@@ -13,6 +13,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Splayed proxy checks are now executed every interval, instead of every
 `interval + interval * splay_coverage`.
+- Fixed a bug in the ring where round robin schedules would not recover
+after quorum loss.
 
 ## [5.13.1] - 2019-09-10
 
