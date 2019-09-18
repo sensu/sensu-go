@@ -204,7 +204,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 					return fmt.Errorf("API error: %s", err)
 				}
 				switch actions.ErrCode(err.Code) {
-				case actions.PaymentRequired, actions.NotFound:
+				case actions.PaymentRequired, actions.NotFound, actions.PermissionDenied:
 					continue
 				}
 				return fmt.Errorf("API error: %s", err)
