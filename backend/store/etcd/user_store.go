@@ -7,9 +7,9 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 const usersPathPrefix = "users"
@@ -24,7 +24,7 @@ func GetUsersPath(ctx context.Context, id string) string {
 }
 
 // AuthenticateUser authenticates a User by username and password.
-func (s *Store) AuthenticateUser(ctx context.Context, username, password string) (*types.User, error) {
+func (s *Store) AuthenticateUser(ctx context.Context, username, password string) (*corev2.User, error) {
 	user, err := s.GetUser(ctx, username)
 	if user == nil {
 		return nil, fmt.Errorf("user %s does not exist", username)
@@ -45,7 +45,7 @@ func (s *Store) AuthenticateUser(ctx context.Context, username, password string)
 }
 
 // CreateUser creates a new user
-func (s *Store) CreateUser(u *types.User) error {
+func (s *Store) CreateUser(u *corev2.User) error {
 	userBytes, err := proto.Marshal(u)
 	if err != nil {
 		return err
@@ -71,7 +71,7 @@ func (s *Store) CreateUser(u *types.User) error {
 // NOTE:
 // Store probably shouldn't be responsible for deleting the token;
 // business logic.
-func (s *Store) DeleteUser(ctx context.Context, user *types.User) error {
+func (s *Store) DeleteUser(ctx context.Context, user *corev2.User) error {
 	// Mark it as disabled
 	user.Disabled = true
 
@@ -110,7 +110,7 @@ func (s *Store) DeleteUser(ctx context.Context, user *types.User) error {
 }
 
 // GetUser gets a User.
-func (s *Store) GetUser(ctx context.Context, username string) (*types.User, error) {
+func (s *Store) GetUser(ctx context.Context, username string) (*corev2.User, error) {
 	resp, err := s.client.Get(ctx, getUserPath(username), clientv3.WithLimit(1))
 	if err != nil {
 		return nil, err
@@ -119,7 +119,7 @@ func (s *Store) GetUser(ctx context.Context, username string) (*types.User, erro
 		return nil, nil
 	}
 
-	user := &types.User{}
+	user := &corev2.User{}
 	err = unmarshal(resp.Kvs[0].Value, user)
 	if err != nil {
 		return nil, err
@@ -129,13 +129,13 @@ func (s *Store) GetUser(ctx context.Context, username string) (*types.User, erro
 }
 
 // GetUsers retrieves all enabled users
-func (s *Store) GetUsers() ([]*types.User, error) {
+func (s *Store) GetUsers() ([]*corev2.User, error) {
 	allUsers, err := s.GetAllUsers(&store.SelectionPredicate{})
 	if err != nil {
 		return allUsers, err
 	}
 
-	var users []*types.User
+	var users []*corev2.User
 	for _, user := range allUsers {
 		// Verify that the user is not disabled
 		if !user.Disabled {
@@ -147,14 +147,14 @@ func (s *Store) GetUsers() ([]*types.User, error) {
 }
 
 // GetAllUsers retrieves all users
-func (s *Store) GetAllUsers(pred *store.SelectionPredicate) ([]*types.User, error) {
-	users := []*types.User{}
+func (s *Store) GetAllUsers(pred *store.SelectionPredicate) ([]*corev2.User, error) {
+	users := []*corev2.User{}
 	err := List(context.Background(), s.client, GetUsersPath, &users, pred)
 	return users, err
 }
 
 // UpdateUser updates a User.
-func (s *Store) UpdateUser(u *types.User) error {
+func (s *Store) UpdateUser(u *corev2.User) error {
 	bytes, err := proto.Marshal(u)
 	if err != nil {
 		return err

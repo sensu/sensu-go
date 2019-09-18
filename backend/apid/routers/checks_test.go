@@ -151,6 +151,7 @@ func TestChecksRouterCustomRoutes(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			defer res.Body.Close()
 
 			// Inspect the response code
 			if res.StatusCode != tt.wantStatusCode {
