@@ -2,7 +2,6 @@ package etcd
 
 import (
 	"fmt"
-	"log"
 	"testing"
 
 	"github.com/sensu/sensu-go/testing/testutil"
@@ -13,14 +12,8 @@ import (
 func NewTestEtcd(t *testing.T) (*Etcd, func()) {
 	tmpDir, remove := testutil.TempDir(t)
 
-	ports := make([]int, 2)
-	err := testutil.RandomPorts(ports)
-	if err != nil {
-		remove()
-		log.Panic(err)
-	}
-	clURL := fmt.Sprintf("http://127.0.0.1:%d", ports[0])
-	apURL := fmt.Sprintf("http://127.0.0.1:%d", ports[1])
+	clURL := "http://127.0.0.1:0"
+	apURL := "http://127.0.0.1:0"
 	initCluster := fmt.Sprintf("default=%s", apURL)
 
 	cfg := NewConfig()

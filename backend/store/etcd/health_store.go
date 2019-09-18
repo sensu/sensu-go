@@ -3,12 +3,24 @@ package etcd
 import (
 	"context"
 	"crypto/tls"
+	"strings"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes"
 	"github.com/sensu/sensu-go/types"
 )
+
+func isEmbeddedClient(clientURLs []string) bool {
+	// It is assumed that if any of the client URLs have ':0' as their port,
+	// the member is embedded and the client doesn't need to dial.
+	for _, url := range clientURLs {
+		if strings.HasSuffix(url, ":0") {
+			return true
+		}
+	}
+	return false
+}
 
 // GetClusterHealth retrieves the cluster health
 func (s *Store) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, etcdClientTLSConfig *tls.Config) *types.HealthResponse {
@@ -30,11 +42,18 @@ func (s *Store) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, 
 			Name:     member.Name,
 		}
 
-		cli, cliErr := clientv3.New(clientv3.Config{
-			Endpoints:   member.ClientURLs,
-			DialTimeout: 5 * time.Second,
-			TLS:         etcdClientTLSConfig,
-		})
+		var cli *clientv3.Client
+		var cliErr error
+
+		if isEmbeddedClient(member.ClientURLs) {
+			cli = s.client
+		} else {
+			cli, cliErr = clientv3.New(clientv3.Config{
+				Endpoints:   member.ClientURLs,
+				DialTimeout: 5 * time.Second,
+				TLS:         etcdClientTLSConfig,
+			})
+		}
 
 		if cliErr != nil {
 			logger.WithField("member", member.ID).WithError(cliErr).Error("unhealthy cluster member")
