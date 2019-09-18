@@ -21,15 +21,15 @@ import (
 type EventType int
 
 const (
-	// EventError ...
+	// EventError is a message sent when a ring processing error occurs.
 	EventError EventType = iota
-	// EventAdd ...
+	// EventAdd is a message sent when an item is added to the ring.
 	EventAdd
-	// EventRemove ...
+	// EventRemove is a message sent when an item is removed from the ring.
 	EventRemove
-	// EventTrigger ...
+	// EventTrigger is a message sent when a ring item has moved from the front of the queue to the back.
 	EventTrigger
-	// EventClosing ...
+	// EventClosing is a message sent when the ring is closing due to context cancellation.
 	EventClosing
 )
 
@@ -72,7 +72,10 @@ type Event struct {
 	Err error
 }
 
-// Ring is a ring of items that are triggered in a round robin fashion.
+// Ring is a circular queue of items that are cooperatively iterated over by one
+// or more subscribers. The subscribers are notified every time an item goes from
+// the front to the back of the queue, with EventTrigger. Iteration proceeds
+// according to an interval, and is triggered by an etcd lease expiring.
 type Ring struct {
 	client *clientv3.Client
 
@@ -326,26 +329,37 @@ func (w *watcher) hasTrigger(ctx context.Context) (bool, string, error) {
 }
 
 func (w *watcher) ensureActiveTrigger(ctx context.Context) error {
-	has, next, err := w.hasTrigger(ctx)
-	if err != nil {
-		return err
+	backoff := retry.ExponentialBackoff{
+		InitialDelayInterval: 10 * time.Millisecond,
+		MaxDelayInterval:     10 * time.Second,
+		Multiplier:           10,
+		Ctx:                  ctx,
 	}
-	if has || next == "" {
-		// if next == "", there are no ring items
-		return nil
-	}
-	lease, err := w.grant(ctx)
-	if err != nil {
-		return err
-	}
-	nextValue := path.Base(next)
-	triggerOp := clientv3.OpPut(w.triggerKey(), nextValue, clientv3.WithLease(lease.ID))
-	triggerCmp := clientv3.Compare(clientv3.Version(w.triggerKey()), "=", 0)
 
-	resp, err := w.ring.client.Txn(ctx).If(triggerCmp).Then(triggerOp).Commit()
-	if !resp.Succeeded {
-		_, _ = w.ring.client.Revoke(ctx, lease.ID)
-	}
+	err := backoff.Retry(func(retry int) (bool, error) {
+		has, next, err := w.hasTrigger(ctx)
+		if err != nil {
+			return false, err
+		}
+		if has || next == "" {
+			// if next == "", there are no ring items
+			return true, nil
+		}
+		lease, err := w.grant(ctx)
+		if err != nil {
+			return false, err
+		}
+		nextValue := path.Base(next)
+		triggerOp := clientv3.OpPut(w.triggerKey(), nextValue, clientv3.WithLease(lease.ID))
+		triggerCmp := clientv3.Compare(clientv3.Version(w.triggerKey()), "=", 0)
+
+		resp, err := w.ring.client.Txn(ctx).If(triggerCmp).Then(triggerOp).Commit()
+		if !resp.Succeeded {
+			_, _ = w.ring.client.Revoke(ctx, lease.ID)
+		}
+		return true, nil
+	})
+
 	return err
 }
 
@@ -363,21 +377,12 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, va
 	r.mu.Lock()
 	r.watchers[watcher.watcherKey] = watcher
 	r.mu.Unlock()
-
-	backoff := retry.ExponentialBackoff{
-		InitialDelayInterval: 10 * time.Millisecond,
-		MaxDelayInterval:     10 * time.Second,
-		Multiplier:           10,
-		Ctx:                  ctx,
+	if err := watcher.ensureActiveTrigger(ctx); err != nil {
+		notifyError(ch, fmt.Errorf("error while starting ring watcher: %s", err))
+		notifyClosing(ch)
+		cancel()
+		return
 	}
-
-	_ = backoff.Retry(func(retry int) (bool, error) {
-		if err := watcher.ensureActiveTrigger(ctx); err != nil {
-			notifyError(ch, fmt.Errorf("error while starting ring watcher: %s", err))
-			return false, err
-		}
-		return true, nil
-	})
 
 	go func() {
 		defer cancel()
