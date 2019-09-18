@@ -371,7 +371,7 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, va
 		Ctx:                  ctx,
 	}
 
-	err = backoff.Retry(func(retry int) (bool, error) {
+	_ = backoff.Retry(func(retry int) (bool, error) {
 		if err := watcher.ensureActiveTrigger(ctx); err != nil {
 			notifyError(ch, fmt.Errorf("error while starting ring watcher: %s", err))
 			return false, err
