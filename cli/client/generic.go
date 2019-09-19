@@ -71,15 +71,20 @@ func (client *RestClient) List(path string, objs interface{}, options *ListOptio
 		o := reflect.ValueOf(objs).Elem()
 
 		var slice []*types.Wrapper
+		var wrapper types.Wrapper
+
 		if err := json.Unmarshal(body, &slice); err == nil {
-			// This case is for when the API returns a wrapped resource
+			// This case is for when the API returns a slice of wrapped resources.
 			for _, wrapper := range slice {
 				o.Set(reflect.Append(o, reflect.ValueOf(wrapper.Value)))
 			}
+		} else if err := json.Unmarshal(body, &wrapper); err == nil {
+			// This case is for when the API returns a single wrapped value.
+			o.Set(reflect.Append(o, reflect.ValueOf(wrapper.Value)))
 		} else {
 			newObjs := reflect.New(objsType.Elem())
 			if len(body) > 0 && body[0] == '{' {
-				// Special case for a single resource being returned
+				// This case is for when the API returns a single unwrapped value.
 				elem := reflect.New(reflect.Indirect(newObjs).Type().Elem().Elem())
 				if err := json.Unmarshal(body, elem.Interface()); err != nil {
 					return err
@@ -88,6 +93,7 @@ func (client *RestClient) List(path string, objs interface{}, options *ListOptio
 				return nil
 			}
 
+			// And this is the default, the common case.
 			if err := json.Unmarshal(body, newObjs.Interface()); err != nil {
 				return err
 			}
