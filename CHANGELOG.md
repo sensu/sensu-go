@@ -13,6 +13,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Splayed proxy checks are now executed every interval, instead of every
 `interval + interval * splay_coverage`.
+## [5.13.2] - 2019-09-19
+
+### Fixed
+- Enterprise bug fix.
 
 ## [5.13.1] - 2019-09-10
 
