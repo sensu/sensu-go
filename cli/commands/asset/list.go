@@ -11,6 +11,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
+	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/table"
@@ -47,11 +48,18 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
+			// Determine the user preferred format
+			var format string
+			if format = helpers.GetChangedStringValueFlag("format", cmd.Flags()); format == "" {
+				format = cli.Config.Format()
+			}
+
 			// Print the results based on the user preferences
 			resources := []corev2.Resource{}
 			var resultsWithBuilds []interface{}
 			for i := range results {
-				if len(results[i].Builds) > 0 {
+				// Break the builds into multiple assets if we use the tabular format
+				if len(results[i].Builds) > 0 && format == config.FormatTabular {
 					for _, build := range results[i].Builds {
 						asset := corev2.Asset{
 							ObjectMeta: results[i].ObjectMeta,
