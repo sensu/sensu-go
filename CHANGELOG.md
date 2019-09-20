@@ -15,6 +15,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 `interval + interval * splay_coverage`.
 - Do not seperate asset builds into several assets unless the the tabular format
 is used in `sensuctl asset list`.
+
 ## [5.13.2] - 2019-09-19
 
 ### Fixed
