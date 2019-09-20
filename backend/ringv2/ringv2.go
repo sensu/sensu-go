@@ -14,8 +14,13 @@ import (
 	"github.com/robfig/cron"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/util/retry"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/time/rate"
 )
+
+var logger = logrus.WithFields(logrus.Fields{
+	"component": "ring",
+})
 
 // EventType is an enum that describes the type of event received by watchers.
 type EventType int
@@ -339,7 +344,8 @@ func (w *watcher) ensureActiveTrigger(ctx context.Context) error {
 	err := backoff.Retry(func(retry int) (bool, error) {
 		has, next, err := w.hasTrigger(ctx)
 		if err != nil {
-			return false, err
+			logger.WithError(err).Error("retrying")
+			return false, nil
 		}
 		if has || next == "" {
 			// if next == "", there are no ring items
@@ -347,7 +353,8 @@ func (w *watcher) ensureActiveTrigger(ctx context.Context) error {
 		}
 		lease, err := w.grant(ctx)
 		if err != nil {
-			return false, err
+			logger.WithError(err).Error("retrying")
+			return false, nil
 		}
 		nextValue := path.Base(next)
 		triggerOp := clientv3.OpPut(w.triggerKey(), nextValue, clientv3.WithLease(lease.ID))
@@ -355,7 +362,8 @@ func (w *watcher) ensureActiveTrigger(ctx context.Context) error {
 
 		resp, err := w.ring.client.Txn(ctx).If(triggerCmp).Then(triggerOp).Commit()
 		if err != nil {
-			return false, err
+			logger.WithError(err).Error("retrying")
+			return false, nil
 		}
 		if !resp.Succeeded {
 			_, _ = w.ring.client.Revoke(ctx, lease.ID)
