@@ -59,16 +59,11 @@ func TestBackendHTTPListener(t *testing.T) {
 			cachePath, cleanup := testutil.TempDir(t)
 			defer cleanup()
 
-			ports := make([]int, 5)
-			err := testutil.RandomPorts(ports)
-			if err != nil {
-				t.Fatal(err)
-			}
-			clURL := fmt.Sprintf("%s://127.0.0.1:%d", tc.httpScheme, ports[0])
-			apURL := fmt.Sprintf("%s://127.0.0.1:%d", tc.httpScheme, ports[1])
-			agentPort := ports[2]
-			apiPort := ports[3]
-			dashboardPort := ports[4]
+			clURL := fmt.Sprintf("%s://127.0.0.1:0", tc.httpScheme)
+			apURL := fmt.Sprintf("%s://127.0.0.1:0", tc.httpScheme)
+			agentPort := 8081
+			apiPort := 8080
+			dashboardPort := 3000
 			initCluster := fmt.Sprintf("default=%s", apURL)
 
 			var tlsInfo etcd.TLSInfo
@@ -82,14 +77,14 @@ func TestBackendHTTPListener(t *testing.T) {
 			}
 
 			b, err := Initialize(&Config{
-				AgentHost:                    "127.0.0.1",
-				AgentPort:                    agentPort,
-				APIListenAddress:             fmt.Sprintf("127.0.0.1:%d", apiPort),
-				DashboardHost:                "127.0.0.1",
-				DashboardPort:                dashboardPort,
-				StateDir:                     dataPath,
-				CacheDir:                     cachePath,
-				TLS:                          tc.tls,
+				AgentHost:        "127.0.0.1",
+				AgentPort:        agentPort,
+				APIListenAddress: fmt.Sprintf("127.0.0.1:%d", apiPort),
+				DashboardHost:    "127.0.0.1",
+				DashboardPort:    dashboardPort,
+				StateDir:         dataPath,
+				CacheDir:         cachePath,
+				TLS:              tc.tls,
 				EtcdAdvertiseClientURLs:      []string{clURL},
 				EtcdListenClientURLs:         []string{clURL},
 				EtcdListenPeerURLs:           []string{apURL},
