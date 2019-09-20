@@ -68,31 +68,46 @@ func (client *RestClient) List(path string, objs interface{}, options *ListOptio
 			return nil
 		}
 
-		o := reflect.ValueOf(objs).Elem()
-
-		var slice []*types.Wrapper
-		if err := json.Unmarshal(body, &slice); err == nil {
-			// This case is for when the API returns a wrapped resource
-			for _, wrapper := range slice {
-				o.Set(reflect.Append(o, reflect.ValueOf(wrapper.Value)))
-			}
-		} else {
-			newObjs := reflect.New(objsType.Elem())
-			if len(body) > 0 && body[0] == '{' {
-				// Special case for a single resource being returned
-				elem := reflect.New(reflect.Indirect(newObjs).Type().Elem().Elem())
-				if err := json.Unmarshal(body, elem.Interface()); err != nil {
-					return err
-				}
-				o.Set(reflect.Append(o, elem))
-				return nil
-			}
-
-			if err := json.Unmarshal(body, newObjs.Interface()); err != nil {
+		switch objs.(type) {
+		case *[]types.Wrapper, *[]*types.Wrapper:
+			if err := json.Unmarshal(body, objs); err != nil {
 				return err
 			}
+		default:
+			o := reflect.ValueOf(objs).Elem()
 
-			o.Set(reflect.AppendSlice(o, newObjs.Elem()))
+			var slice []*types.Wrapper
+			var wrapper types.Wrapper
+
+			if err := json.Unmarshal(body, &slice); err == nil {
+				// This case is for when the API returns a slice of wrapped resources,
+				// but we've passed in unwrapped resources to be filled.
+				for _, wrapper := range slice {
+					o.Set(reflect.Append(o, reflect.ValueOf(wrapper.Value)))
+				}
+			} else if err := json.Unmarshal(body, &wrapper); err == nil {
+				// This case is for when the API returns a single wrapped value, but we've
+				// passed in the unwrapped value.
+				o.Set(reflect.Append(o, reflect.ValueOf(wrapper.Value)))
+			} else {
+				newObjs := reflect.New(objsType.Elem())
+				if len(body) > 0 && body[0] == '{' {
+					// This case is for when the API returns a single unwrapped value.
+					elem := reflect.New(reflect.Indirect(newObjs).Type().Elem().Elem())
+					if err := json.Unmarshal(body, elem.Interface()); err != nil {
+						return err
+					}
+					o.Set(reflect.Append(o, elem))
+					return nil
+				}
+
+				// And this is the default, the common case.
+				if err := json.Unmarshal(body, newObjs.Interface()); err != nil {
+					return err
+				}
+
+				o.Set(reflect.AppendSlice(o, newObjs.Elem()))
+			}
 		}
 
 		options.ContinueToken = resp.Header().Get(corev2.PaginationContinueHeader)

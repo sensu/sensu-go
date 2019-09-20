@@ -43,8 +43,9 @@ type Dashboardd struct {
 	Config
 	Assets *asset.Collection
 
-	CoreSubrouter    *mux.Router
-	GraphQLSubrouter *mux.Router
+	AuthenticationSubrouter *mux.Router
+	CoreSubrouter           *mux.Router
+	GraphQLSubrouter        *mux.Router
 }
 
 // Option is a functional option.
@@ -145,23 +146,25 @@ func (d *Dashboardd) Name() string {
 func httpRouter(c apid.Config, d *Dashboardd) (*mux.Router, error) {
 	r := mux.NewRouter()
 
-	handler, coreSubrouter, graphQLSubrouter, err := apid.NewHandler(c)
-	if err != nil {
-		return nil, err
-	}
-	d.CoreSubrouter = coreSubrouter
-	d.GraphQLSubrouter = graphQLSubrouter
+	router := apid.NewRouter()
+	_ = apid.PublicSubrouter(router, c)
+	d.GraphQLSubrouter = apid.GraphQLSubrouter(router, c)
+	d.AuthenticationSubrouter = apid.AuthenticationSubrouter(router, c)
+	d.CoreSubrouter = apid.CoreSubrouter(router, c)
 
 	// Gzip content
 	gziphandler, err := gziphandler.NewGzipLevelAndMinSize(
 		gzip.DefaultCompression,
 		gziphandler.DefaultMinSize,
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	// Proxy endpoints
-	r.PathPrefix("/auth").Handler(handler)
-	r.PathPrefix("/api").Handler(handler)
-	r.PathPrefix("/graphql").Handler(gziphandler(handler))
+	r.PathPrefix("/auth").Handler(router)
+	r.PathPrefix("/api").Handler(router)
+	r.PathPrefix("/graphql").Handler(gziphandler(router))
 
 	// Expose Asset Info
 	r.PathPrefix("/index.json").Handler(gziphandler(listAssetsHandler(d.Assets, d.logger)))

@@ -15,6 +15,13 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 `interval + interval * splay_coverage`.
 - Fixed a bug in the ring where round robin schedules would not recover
 after quorum loss.
+- Do not seperate asset builds into several assets unless the the tabular format
+is used in `sensuctl asset list`.
+
+## [5.13.2] - 2019-09-19
+
+### Fixed
+- Enterprise bug fix.
 
 ## [5.13.1] - 2019-09-10
 

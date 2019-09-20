@@ -3,7 +3,6 @@ package testutil
 import (
 	"fmt"
 	"io/ioutil"
-	"net"
 	"os"
 	"runtime"
 	"strings"
@@ -21,29 +20,6 @@ func TempDir(t *testing.T) (tmpDir string, remove func()) {
 	}
 
 	return tmpDir, func() { _ = os.RemoveAll(tmpDir) }
-}
-
-// RandomPorts generates len(p) random ports and assigns them to elements of p.
-func RandomPorts(p []int) (err error) {
-	for i := range p {
-		l, err := net.Listen("tcp", "127.0.0.1:0")
-		if err != nil {
-			return err
-		}
-		defer func() {
-			e := l.Close()
-			if err == nil {
-				err = e
-			}
-		}()
-
-		addr, err := net.ResolveTCPAddr("tcp", l.Addr().String())
-		if err != nil {
-			return err
-		}
-		p[i] = addr.Port
-	}
-	return nil
 }
 
 // CleanOutput takes a string and strips extra characters that are not

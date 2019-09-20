@@ -82,7 +82,7 @@ func (a AuthorizationAttributes) Then(next http.Handler) http.Handler {
 		}
 
 		// Add the user to the attributes
-		if err := getUser(ctx, attrs); err != nil {
+		if err := GetUser(ctx, attrs); err != nil {
 			http.Error(w, err.Error(), http.StatusUnauthorized)
 			return
 		}
@@ -117,7 +117,9 @@ func isListable(resourceType, name string) bool {
 	return false
 }
 
-func getUser(ctx context.Context, attrs *authorization.Attributes) error {
+// GetUser retrieves the user from the context and inject it into the
+// authorization attributes
+func GetUser(ctx context.Context, attrs *authorization.Attributes) error {
 	// Get the claims from the request context
 	claims := jwt.GetClaimsFromContext(ctx)
 	if claims == nil {

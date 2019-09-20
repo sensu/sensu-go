@@ -51,6 +51,7 @@ func run(t *testing.T, tt routerTestCase, router *mux.Router, store *mockstore.M
 		if err != nil {
 			t.Fatal(err)
 		}
+		defer res.Body.Close()
 
 		// Inspect the response code
 		if res.StatusCode != tt.wantStatusCode {
