@@ -3,6 +3,7 @@ package agentd
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
 	"sync"
@@ -10,10 +11,14 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
+	"github.com/sensu/sensu-go/backend/authorization"
+	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
@@ -79,13 +84,27 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		return nil, err
 	}
 
-	handler := middlewares.BasicAuthentication(middlewares.BasicAuthorization(http.HandlerFunc(a.webSocketHandler), a.store), a.store)
+	// Configure the middlewares used by agentd's HTTP server by assigning them to
+	// public variables so they can be overriden from the enterprise codebase
+	AuthenticationMiddleware = a.AuthenticationMiddleware
+	AuthorizationMiddleware = a.AuthorizationMiddleware
+
+	// Initialize a mux router that indirectly uses our middlewares defined above.
+	// We can't directly use them because mux will keep a copy of the middleware
+	// functions, which prevent us from modifying the actual middleware logic at
+	// runtime, so we need this workaround
+	router := mux.NewRouter()
+	router.HandleFunc("/", a.webSocketHandler)
+	router.Use(authenticate, authorize)
+
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
-		Handler:      handler,
+		Handler:      router,
 		WriteTimeout: 15 * time.Second,
 		ReadTimeout:  15 * time.Second,
 		TLSConfig:    tlsServerConfig,
+		// Capture the log entries from agentd's HTTP server
+		ErrorLog: log.New(&logrusIOWriter{entry: logger}, "", 0),
 	}
 	for _, o := range opts {
 		if err := o(a); err != nil {
@@ -201,4 +220,79 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+// AuthenticationMiddleware represents the core authentication middleware for
+// agentd, which consists of basic authentication.
+func (a *Agentd) AuthenticationMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		username, password, ok := r.BasicAuth()
+		if !ok {
+			http.Error(w, "missing credentials", http.StatusUnauthorized)
+			return
+		}
+
+		// Authenticate against the provider
+		user, err := a.store.AuthenticateUser(r.Context(), username, password)
+		if err != nil {
+			logger.
+				WithField("user", username).
+				WithError(err).
+				Error("invalid username and/or password")
+			http.Error(w, "bad credentials", http.StatusUnauthorized)
+			return
+		}
+
+		// The user was authenticated against the local store, therefore add the
+		// system:user group so it can view itself and change its password
+		user.Groups = append(user.Groups, "system:user")
+
+		// TODO: eventually break out authorization details in context from jwt
+		// claims; in this method they are too tightly bound
+		claims, _ := jwt.NewClaims(user)
+		ctx := jwt.SetClaimsIntoContext(r, claims)
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// AuthorizationMiddleware represents the core authorization middleware for
+// agentd, which consists of making sure the agent's entity is authorized to
+// create events in the given namespace
+func (a *Agentd) AuthorizationMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		namespace := r.Header.Get(transport.HeaderKeyNamespace)
+		ctx := r.Context()
+		ctx = context.WithValue(ctx, corev2.NamespaceKey, namespace)
+
+		attrs := &authorization.Attributes{
+			APIGroup:     "core",
+			APIVersion:   "v2",
+			Namespace:    namespace,
+			Resource:     "events",
+			ResourceName: r.Header.Get(transport.HeaderKeyAgentName),
+			Verb:         "create",
+		}
+
+		err := middlewares.GetUser(ctx, attrs)
+		if err != nil {
+			logger.WithError(err).Info("could not get user from request context")
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+
+		auth := &rbac.Authorizer{
+			Store: a.store,
+		}
+		authorized, err := auth.Authorize(ctx, attrs)
+		if err != nil {
+			logger.WithError(err).Error("unexpected error while authorization the session")
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+		if !authorized {
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			return
+		}
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
 }

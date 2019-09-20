@@ -29,6 +29,10 @@ func UnmarshalError(res *resty.Response) error {
 		apiErr.Code = uint32(actions.PaymentRequired)
 		apiErr.Message = "This functionality requires a valid Sensu Go license. Please install a valid license file and restart or contact Sales for a trial."
 
+	case http.StatusNotFound:
+		apiErr.Code = uint32(actions.NotFound)
+		fallthrough
+
 	default:
 		if err := json.Unmarshal(res.Body(), &apiErr); err != nil {
 			if len(res.Body()) > 0 {

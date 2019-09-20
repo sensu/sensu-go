@@ -66,6 +66,8 @@ const (
 	// TLS flags
 	flagTrustedCAFile         = "trusted-ca-file"
 	flagInsecureSkipTLSVerify = "insecure-skip-tls-verify"
+	flagCertFile              = "cert-file"
+	flagKeyFile               = "key-file"
 
 	deprecatedFlagAgentID = "id"
 )
@@ -139,6 +141,8 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 			cfg.TLS = &corev2.TLSOptions{}
 			cfg.TLS.TrustedCAFile = viper.GetString(flagTrustedCAFile)
 			cfg.TLS.InsecureSkipVerify = viper.GetBool(flagInsecureSkipTLSVerify)
+			cfg.TLS.CertFile = viper.GetString(flagCertFile)
+			cfg.TLS.KeyFile = viper.GetString(flagKeyFile)
 
 			agentName := viper.GetString(flagAgentName)
 			if agentName != "" {
@@ -270,6 +274,8 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	cmd.Flags().Bool(flagDisableSockets, viper.GetBool(flagDisableSockets), "disable the Agent TCP and UDP event sockets")
 	cmd.Flags().String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format")
 	cmd.Flags().Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")
+	cmd.Flags().String(flagCertFile, viper.GetString(flagCertFile), "certificate for TLS authentication")
+	cmd.Flags().String(flagKeyFile, viper.GetString(flagKeyFile), "key for TLS authentication")
 	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
 	cmd.Flags().StringToStringVar(&labels, flagLabels, nil, "entity labels map")
 	cmd.Flags().StringToStringVar(&annotations, flagAnnotations, nil, "entity annotations map")

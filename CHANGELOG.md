@@ -23,6 +23,7 @@ web repository's issues page.
 they do not have access to, the drawer is now opened so that namespace switcher
 is front and center. Hopefully this should reduce any confusion around next
 steps.
+- Support agent TLS authentication, usable with a licensed sensu-backend.
 
 ### Fixed
 - Splayed proxy checks are now executed every interval, instead of every
@@ -31,6 +32,13 @@ steps.
 are now caught and a toast is presented to communicate what occurred.
 - [Web] Internal errors are now avoided when a user attempts to queue an ad-hoc
 check for a keepalive.
+- Do not seperate asset builds into several assets unless the the tabular format
+is used in `sensuctl asset list`.
+
+## [5.13.2] - 2019-09-19
+
+### Fixed
+- Enterprise bug fix.
 
 ## [5.13.1] - 2019-09-10
 
@@ -47,6 +55,7 @@ check for a keepalive.
 - Only validate check interval/cron when publish true
 
 ### Fixed
+- sensuctl dump no longer silently discards errors.
 - Interactive check create and update modes now have 'none' as the first
 highlighted option, instead of nagios-perfdata.
 - Fixed a bug where silences would not expire on event resolution.

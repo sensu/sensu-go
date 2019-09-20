@@ -1,8 +1,8 @@
 package backend
 
 import (
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
-	"github.com/sensu/sensu-go/types"
 )
 
 const (
@@ -36,8 +36,9 @@ type Config struct {
 	CacheDir string
 
 	// Agentd Configuration
-	AgentHost string
-	AgentPort int
+	AgentHost       string
+	AgentPort       int
+	AgentTLSOptions *corev2.TLSOptions
 
 	// Apid Configuration
 	APIListenAddress string
@@ -70,5 +71,5 @@ type Config struct {
 	EtcdMaxRequestBytes   uint
 	EtcdQuotaBackendBytes int64
 
-	TLS *types.TLSOptions
+	TLS *corev2.TLSOptions
 }
