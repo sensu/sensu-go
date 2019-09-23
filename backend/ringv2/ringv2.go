@@ -344,7 +344,7 @@ func (w *watcher) ensureActiveTrigger(ctx context.Context) error {
 	err := backoff.Retry(func(retry int) (bool, error) {
 		has, next, err := w.hasTrigger(ctx)
 		if err != nil {
-			logger.WithError(err).Error("retrying")
+			logger.WithError(err).Error("can't check ring trigger, retrying")
 			return false, nil
 		}
 		if has || next == "" {
@@ -353,7 +353,7 @@ func (w *watcher) ensureActiveTrigger(ctx context.Context) error {
 		}
 		lease, err := w.grant(ctx)
 		if err != nil {
-			logger.WithError(err).Error("retrying")
+			logger.WithError(err).Error("can't grant ring trigger lease, retrying")
 			return false, nil
 		}
 		nextValue := path.Base(next)
@@ -362,7 +362,7 @@ func (w *watcher) ensureActiveTrigger(ctx context.Context) error {
 
 		resp, err := w.ring.client.Txn(ctx).If(triggerCmp).Then(triggerOp).Commit()
 		if err != nil {
-			logger.WithError(err).Error("retrying")
+			logger.WithError(err).Error("can't write ring trigger, retrying")
 			return false, nil
 		}
 		if !resp.Succeeded {
