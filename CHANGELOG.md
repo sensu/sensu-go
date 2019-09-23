@@ -8,6 +8,21 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+- [Web] Added an additional option to the error dialog allowing users to
+completely wipe the application's persisted state; in lieu of them having to
+manually wipe their local / session storage. This may help in the rare cases
+where something in said state is leading to an uncaught exception.
+- [Web] For operating systems with support for selecting a preferred light /dark
+theme, the application now respects the system preference by default.
+
+### Changed
+- [Web] Github is not always the best place for feature requests and discussion,
+as such we've changed CTA for feedback to point to Discourse instead of the
+web repository's issues page.
+- [Web] When a user lands on a page inside a namespace that no longer exists or
+they do not have access to, the drawer is now opened so that namespace switcher
+is front and center. Hopefully this should reduce any confusion around next
+steps.
 - Support agent TLS authentication, usable with a licensed sensu-backend.
 
 ### Fixed
@@ -15,6 +30,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 `interval + interval * splay_coverage`.
 - Fixed a bug in the ring where round robin schedules would not recover
 after quorum loss.
+- [Web] Unauthorized errors emitted while creating silences or resolving events
+are now caught and a toast is presented to communicate what occurred.
+- [Web] Internal errors are now avoided when a user attempts to queue an ad-hoc
+check for a keepalive.
 - Do not seperate asset builds into several assets unless the the tabular format
 is used in `sensuctl asset list`.
 
