@@ -13,17 +13,28 @@ import (
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/robfig/cron"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/util/retry"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/time/rate"
 )
+
+var logger = logrus.WithFields(logrus.Fields{
+	"component": "ring",
+})
 
 // EventType is an enum that describes the type of event received by watchers.
 type EventType int
 
 const (
+	// EventError is a message sent when a ring processing error occurs.
 	EventError EventType = iota
+	// EventAdd is a message sent when an item is added to the ring.
 	EventAdd
+	// EventRemove is a message sent when an item is removed from the ring.
 	EventRemove
+	// EventTrigger is a message sent when a ring item has moved from the front of the queue to the back.
 	EventTrigger
+	// EventClosing is a message sent when the ring is closing due to context cancellation.
 	EventClosing
 )
 
@@ -44,6 +55,7 @@ func (e EventType) String() string {
 	}
 }
 
+// MinInterval ...
 const MinInterval = 5
 
 // Path returns the canonical path to a ring.
@@ -65,6 +77,10 @@ type Event struct {
 	Err error
 }
 
+// Ring is a circular queue of items that are cooperatively iterated over by one
+// or more subscribers. The subscribers are notified every time an item goes from
+// the front to the back of the queue, with EventTrigger. Iteration proceeds
+// according to an interval, and is triggered by an etcd lease expiring.
 type Ring struct {
 	client *clientv3.Client
 
@@ -318,26 +334,43 @@ func (w *watcher) hasTrigger(ctx context.Context) (bool, string, error) {
 }
 
 func (w *watcher) ensureActiveTrigger(ctx context.Context) error {
-	has, next, err := w.hasTrigger(ctx)
-	if err != nil {
-		return err
+	backoff := retry.ExponentialBackoff{
+		InitialDelayInterval: 10 * time.Millisecond,
+		MaxDelayInterval:     10 * time.Second,
+		Multiplier:           10,
+		Ctx:                  ctx,
 	}
-	if has || next == "" {
-		// if next == "", there are no ring items
-		return nil
-	}
-	lease, err := w.grant(ctx)
-	if err != nil {
-		return err
-	}
-	nextValue := path.Base(next)
-	triggerOp := clientv3.OpPut(w.triggerKey(), nextValue, clientv3.WithLease(lease.ID))
-	triggerCmp := clientv3.Compare(clientv3.Version(w.triggerKey()), "=", 0)
 
-	resp, err := w.ring.client.Txn(ctx).If(triggerCmp).Then(triggerOp).Commit()
-	if !resp.Succeeded {
-		_, _ = w.ring.client.Revoke(ctx, lease.ID)
-	}
+	err := backoff.Retry(func(retry int) (bool, error) {
+		has, next, err := w.hasTrigger(ctx)
+		if err != nil {
+			logger.WithError(err).Error("can't check ring trigger, retrying")
+			return false, nil
+		}
+		if has || next == "" {
+			// if next == "", there are no ring items
+			return true, nil
+		}
+		lease, err := w.grant(ctx)
+		if err != nil {
+			logger.WithError(err).Error("can't grant ring trigger lease, retrying")
+			return false, nil
+		}
+		nextValue := path.Base(next)
+		triggerOp := clientv3.OpPut(w.triggerKey(), nextValue, clientv3.WithLease(lease.ID))
+		triggerCmp := clientv3.Compare(clientv3.Version(w.triggerKey()), "=", 0)
+
+		resp, err := w.ring.client.Txn(ctx).If(triggerCmp).Then(triggerOp).Commit()
+		if err != nil {
+			logger.WithError(err).Error("can't write ring trigger, retrying")
+			return false, nil
+		}
+		if !resp.Succeeded {
+			_, _ = w.ring.client.Revoke(ctx, lease.ID)
+		}
+		return true, nil
+	})
+
 	return err
 }
 
@@ -361,6 +394,7 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, va
 		cancel()
 		return
 	}
+
 	go func() {
 		defer cancel()
 		for {

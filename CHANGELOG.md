@@ -28,6 +28,8 @@ steps.
 ### Fixed
 - Splayed proxy checks are now executed every interval, instead of every
 `interval + interval * splay_coverage`.
+- Fixed a bug in the ring where round robin schedules would not recover
+after quorum loss.
 - [Web] Unauthorized errors emitted while creating silences or resolving events
 are now caught and a toast is presented to communicate what occurred.
 - [Web] Internal errors are now avoided when a user attempts to queue an ad-hoc
