@@ -177,6 +177,9 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			return err
 		}
 		if printTypes {
+			if len(args) > 0 {
+				return errors.New("--types is mutually exclusive with positional args")
+			}
 			return printAllTypes(cli, cmd)
 		}
 
