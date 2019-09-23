@@ -14,6 +14,7 @@ manually wipe their local / session storage. This may help in the rare cases
 where something in said state is leading to an uncaught exception.
 - [Web] For operating systems with support for selecting a preferred light /dark
 theme, the application now respects the system preference by default.
+- sensuctl dump can now list the types of supported resources with --types.
 
 ### Changed
 - [Web] Github is not always the best place for feature requests and discussion,
