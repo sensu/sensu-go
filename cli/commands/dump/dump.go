@@ -98,6 +98,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 	helpers.AddAllNamespace(cmd.Flags())
 	_ = cmd.Flags().StringP("format", "", cli.Config.Format(), fmt.Sprintf(`format of data returned ("%s"|"%s")`, config.FormatWrappedJSON, config.FormatYAML))
 	_ = cmd.Flags().StringP("file", "f", "", "file to dump resources to")
+	_ = cmd.Flags().BoolP("types", "t", false, "list supported resource types")
 
 	return cmd
 }
@@ -139,18 +140,51 @@ func getResourceRequests(actionSpec string) ([]types.Resource, error) {
 	return actions, nil
 }
 
+func printAllTypes(cli *cli.SensuCli, cmd *cobra.Command) error {
+	var typeNames []string
+	for _, resource := range All {
+		wrapped := types.WrapResource(resource)
+		typeNames = append(typeNames, fmt.Sprintf("%s.%s", wrapped.APIVersion, wrapped.Type))
+	}
+	switch getFormat(cli, cmd) {
+	case config.FormatJSON, config.FormatWrappedJSON:
+		return helpers.PrintJSON(typeNames, cmd.OutOrStdout())
+	case config.FormatYAML:
+		return helpers.PrintYAML(typeNames, cmd.OutOrStdout())
+	default:
+		for _, name := range typeNames {
+			if _, err := fmt.Fprintln(cmd.OutOrStdout(), name); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+func getFormat(cli *cli.SensuCli, cmd *cobra.Command) string {
+	// get the configured format or the flag override
+	format := cli.Config.Format()
+	if flag := helpers.GetChangedStringValueFlag("format", cmd.Flags()); flag != "" {
+		format = flag
+	}
+	return format
+}
+
 func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
+		printTypes, err := cmd.Flags().GetBool("types")
+		if err != nil {
+			return err
+		}
+		if printTypes {
+			return printAllTypes(cli, cmd)
+		}
+
 		if len(args) != 1 {
 			_ = cmd.Help()
 			return errors.New("invalid argument(s) received")
 		}
-
-		// get the configured format or the flag override
-		format := cli.Config.Format()
-		if flag := helpers.GetChangedStringValueFlag("format", cmd.Flags()); flag != "" {
-			format = flag
-		}
+		format := getFormat(cli, cmd)
 		switch format {
 		case config.FormatYAML, config.FormatWrappedJSON:
 		default:
