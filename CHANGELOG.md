@@ -25,6 +25,7 @@ they do not have access to, the drawer is now opened so that namespace switcher
 is front and center. Hopefully this should reduce any confusion around next
 steps.
 - Support agent TLS authentication, usable with a licensed sensu-backend.
+- Updated Go version from 1.12.3 to 1.13.0.
 
 ### Fixed
 - Splayed proxy checks are now executed every interval, instead of every
