@@ -19,4 +19,5 @@ message TLSOptions {
   string key_file = 2;
   string trusted_ca_file = 3 [(gogoproto.customname) = "TrustedCAFile"];
   bool insecure_skip_verify = 4 [(gogoproto.jsontag) = "insecure_skip_verify"];
+  bool client_auth_type = 5;
 }
