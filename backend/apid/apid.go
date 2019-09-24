@@ -90,13 +90,11 @@ func New(c Config, opts ...Option) (*APId, error) {
 		}
 	}
 
-	router, coreSubrouter, graphQLSubrouter, err := NewHandler(c)
-	if err != nil {
-		return nil, err
-	}
-
-	a.CoreSubrouter = coreSubrouter
-	a.GraphQLSubrouter = graphQLSubrouter
+	router := NewRouter()
+	_ = PublicSubrouter(router, c)
+	a.GraphQLSubrouter = GraphQLSubrouter(router, c)
+	_ = AuthenticationSubrouter(router, c)
+	a.CoreSubrouter = CoreSubrouter(router, c)
 
 	a.HTTPServer = &http.Server{
 		Addr:         c.ListenAddress,
@@ -115,12 +113,77 @@ func New(c Config, opts ...Option) (*APId, error) {
 	return a, nil
 }
 
-func NewHandler(c Config) (root http.Handler, core *mux.Router, graphql *mux.Router, err error) {
+// NewRouter creates a new mux router that implements the http.Handler interface
+// and serves all requests
+func NewRouter() *mux.Router {
 	router := mux.NewRouter().UseEncodedPath()
+
+	// Register a default handler when no routes match
 	router.NotFoundHandler = middlewares.SimpleLogger{}.Then(http.HandlerFunc(notFoundHandler))
-	router.Handle("/metrics", promhttp.Handler())
-	registerUnauthenticatedResources(router, c.Store, c.Cluster, c.EtcdClientTLSConfig, c.ClusterVersion, c.Bus)
-	graphQLSubrouter := NewSubrouter(
+
+	return router
+}
+
+// AuthenticationSubrouter initializes a subrouter that handles all
+// authentication requests
+func AuthenticationSubrouter(router *mux.Router, cfg Config) *mux.Router {
+	subrouter := NewSubrouter(
+		router.NewRoute(),
+		middlewares.SimpleLogger{},
+		middlewares.RefreshToken{},
+		middlewares.LimitRequest{},
+	)
+
+	mountRouters(subrouter,
+		routers.NewAuthenticationRouter(cfg.Store, cfg.Authenticator),
+	)
+
+	return subrouter
+}
+
+// CoreSubrouter initializes a subrouter that handles all requests coming to
+// /api/core/v2
+func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
+	subrouter := NewSubrouter(
+		router.PathPrefix("/api/{group:core}/{version:v2}/"),
+		middlewares.SimpleLogger{},
+		middlewares.Namespace{},
+		middlewares.Authentication{},
+		middlewares.AllowList{Store: cfg.Store},
+		middlewares.AuthorizationAttributes{},
+		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},
+		middlewares.LimitRequest{},
+		middlewares.Pagination{},
+	)
+	mountRouters(
+		subrouter,
+		routers.NewAssetRouter(cfg.Store),
+		routers.NewChecksRouter(cfg.Store, cfg.QueueGetter),
+		routers.NewClusterRolesRouter(cfg.Store),
+		routers.NewClusterRoleBindingsRouter(cfg.Store),
+		routers.NewClusterRouter(actions.NewClusterController(cfg.Cluster, cfg.Store)),
+		routers.NewEntitiesRouter(cfg.Store, cfg.EventStore),
+		routers.NewEventFiltersRouter(cfg.Store),
+		routers.NewEventsRouter(cfg.EventStore, cfg.Bus),
+		routers.NewExtensionsRouter(cfg.Store),
+		routers.NewHandlersRouter(cfg.Store),
+		routers.NewHooksRouter(cfg.Store),
+		routers.NewMutatorsRouter(cfg.Store),
+		routers.NewNamespacesRouter(cfg.Store),
+		routers.NewRolesRouter(cfg.Store),
+		routers.NewRoleBindingsRouter(cfg.Store),
+		routers.NewSilencedRouter(cfg.Store),
+		routers.NewTessenRouter(actions.NewTessenController(cfg.Store, cfg.Bus)),
+		routers.NewUsersRouter(cfg.Store),
+	)
+
+	return subrouter
+}
+
+// GraphQLSubrouter initializes a subrouter that handles all requests for
+// GraphQL
+func GraphQLSubrouter(router *mux.Router, cfg Config) *mux.Router {
+	subrouter := NewSubrouter(
 		router.NewRoute(),
 		middlewares.SimpleLogger{},
 		middlewares.LimitRequest{},
@@ -133,48 +196,39 @@ func NewHandler(c Config) (root http.Handler, core *mux.Router, graphql *mux.Rou
 		//       https://github.com/graphql/graphiql
 		//       https://graphql.org/learn/introspection/
 		middlewares.Authentication{IgnoreUnauthorized: false},
-		middlewares.AllowList{Store: c.Store, IgnoreMissingClaims: true},
-	)
-	mountRouters(
-		graphQLSubrouter,
-		routers.NewGraphQLRouter(c.Store, c.EventStore, &rbac.Authorizer{Store: c.Store}, c.QueueGetter, c.Bus),
-	)
-	registerAuthenticationResources(router, c.Store, c.Authenticator)
-	coreSubrouter := NewSubrouter(
-		router.NewRoute().
-			PathPrefix("/api/{group:core}/{version:v2}/"),
-		middlewares.SimpleLogger{},
-		middlewares.Namespace{},
-		middlewares.Authentication{},
-		middlewares.AllowList{Store: c.Store},
-		middlewares.AuthorizationAttributes{},
-		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: c.Store}},
-		middlewares.LimitRequest{},
-		middlewares.Pagination{},
-	)
-	mountRouters(
-		coreSubrouter,
-		routers.NewAssetRouter(c.Store),
-		routers.NewChecksRouter(c.Store, c.QueueGetter),
-		routers.NewClusterRolesRouter(c.Store),
-		routers.NewClusterRoleBindingsRouter(c.Store),
-		routers.NewClusterRouter(actions.NewClusterController(c.Cluster, c.Store)),
-		routers.NewEntitiesRouter(c.Store, c.EventStore),
-		routers.NewEventFiltersRouter(c.Store),
-		routers.NewEventsRouter(c.EventStore, c.Bus),
-		routers.NewExtensionsRouter(c.Store),
-		routers.NewHandlersRouter(c.Store),
-		routers.NewHooksRouter(c.Store),
-		routers.NewMutatorsRouter(c.Store),
-		routers.NewNamespacesRouter(c.Store),
-		routers.NewRolesRouter(c.Store),
-		routers.NewRoleBindingsRouter(c.Store),
-		routers.NewSilencedRouter(c.Store),
-		routers.NewTessenRouter(actions.NewTessenController(c.Store, c.Bus)),
-		routers.NewUsersRouter(c.Store),
+		middlewares.AllowList{Store: cfg.Store, IgnoreMissingClaims: true},
 	)
 
-	return router, coreSubrouter, graphQLSubrouter, nil
+	mountRouters(
+		subrouter,
+		routers.NewGraphQLRouter(
+			cfg.Store, cfg.EventStore, &rbac.Authorizer{Store: cfg.Store}, cfg.QueueGetter, cfg.Bus,
+		),
+	)
+
+	return subrouter
+}
+
+// PublicSubrouter initializes a subrouter that handles all requests to public
+// endpoints
+func PublicSubrouter(router *mux.Router, cfg Config) *mux.Router {
+	subrouter := NewSubrouter(
+		router.NewRoute(),
+		middlewares.SimpleLogger{},
+		middlewares.LimitRequest{},
+	)
+
+	mountRouters(subrouter,
+		routers.NewHealthRouter(
+			actions.NewHealthController(cfg.Store, cfg.Cluster, cfg.EtcdClientTLSConfig),
+		),
+		routers.NewVersionRouter(actions.NewVersionController(cfg.ClusterVersion)),
+		routers.NewTessenMetricRouter(actions.NewTessenMetricController(cfg.Bus)),
+	)
+
+	subrouter.Handle("/metrics", promhttp.Handler())
+
+	return subrouter
 }
 
 func notFoundHandler(w http.ResponseWriter, req *http.Request) {
@@ -233,38 +287,6 @@ func (a *APId) Err() <-chan error {
 // Name returns the daemon name
 func (a *APId) Name() string {
 	return "apid"
-}
-
-func registerUnauthenticatedResources(
-	router *mux.Router,
-	store store.Store,
-	cluster clientv3.Cluster,
-	etcdClientTLSConfig *tls.Config,
-	clusterVersion string,
-	bus messaging.MessageBus,
-) {
-	mountRouters(
-		NewSubrouter(
-			router.NewRoute(),
-			middlewares.SimpleLogger{},
-			middlewares.LimitRequest{},
-		),
-		routers.NewHealthRouter(actions.NewHealthController(store, cluster, etcdClientTLSConfig)),
-		routers.NewVersionRouter(actions.NewVersionController(clusterVersion)),
-		routers.NewTessenMetricRouter(actions.NewTessenMetricController(bus)),
-	)
-}
-
-func registerAuthenticationResources(router *mux.Router, store store.Store, authenticator *authentication.Authenticator) {
-	mountRouters(
-		NewSubrouter(
-			router.NewRoute(),
-			middlewares.SimpleLogger{},
-			middlewares.RefreshToken{},
-			middlewares.LimitRequest{},
-		),
-		routers.NewAuthenticationRouter(store, authenticator),
-	)
 }
 
 func mountRouters(parent *mux.Router, subRouters ...routers.Router) {

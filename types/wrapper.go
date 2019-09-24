@@ -36,6 +36,10 @@ var packageMap = map[string]func(string) (Resource, error){
 
 var packageMapMu = &sync.RWMutex{}
 
+type lifter interface {
+	Lift() Resource
+}
+
 // UnmarshalJSON implements json.Unmarshaler
 func (w *Wrapper) UnmarshalJSON(b []byte) error {
 	var wrapper rawWrapper
@@ -93,19 +97,34 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 		return nil
 	}
 	val.FieldByName("ObjectMeta").Set(reflect.ValueOf(innerMeta))
+	if lifter, ok := resource.(lifter); ok {
+		resource = lifter.Lift()
+	}
 	w.Value = resource
 	return nil
+}
+
+// tmGetter is useful for types that want to explicitly provide their
+// TypeMeta - this is useful for lifters.
+type tmGetter interface {
+	GetTypeMeta() TypeMeta
 }
 
 // WrapResource wraps a Resource in a Wrapper that contains TypeMeta and
 // ObjectMeta.
 func WrapResource(r Resource) Wrapper {
-	typ := reflect.Indirect(reflect.ValueOf(r)).Type()
-	return Wrapper{
-		TypeMeta: TypeMeta{
+	var tm TypeMeta
+	if getter, ok := r.(tmGetter); ok {
+		tm = getter.GetTypeMeta()
+	} else {
+		typ := reflect.Indirect(reflect.ValueOf(r)).Type()
+		tm = TypeMeta{
 			Type:       typ.Name(),
 			APIVersion: apiVersion(typ.PkgPath()),
-		},
+		}
+	}
+	return Wrapper{
+		TypeMeta:   tm,
 		ObjectMeta: r.GetObjectMeta(),
 		Value:      r,
 	}
