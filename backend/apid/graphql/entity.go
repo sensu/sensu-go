@@ -32,10 +32,10 @@ func (*entityImpl) ID(p graphql.ResolveParams) (string, error) {
 	return globalid.EntityTranslator.EncodeToString(p.Source), nil
 }
 
-// ExtendedAttributes implements response to request for 'extendedAttributes' field.
-func (*entityImpl) ExtendedAttributes(p graphql.ResolveParams) (interface{}, error) {
+// Metadata implements response to request for 'metadata' field.
+func (*entityImpl) Metadata(p graphql.ResolveParams) (interface{}, error) {
 	entity := p.Source.(*corev2.Entity)
-	return wrapExtendedAttributes(entity.ExtendedAttributes), nil
+	return entity.GetRedactedEntity(), nil
 }
 
 // LastSeen implements response to request for 'executed' field.

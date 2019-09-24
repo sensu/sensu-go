@@ -1,7 +1,7 @@
 """
 CheckConfig is the specification of a check.
 """
-type CheckConfig implements Node, Namespaced, Silenceable, Resource {
+type CheckConfig implements Node & Namespaced & Silenceable & Resource {
   "The globally unique identifier of the check."
   id: ID!
 
@@ -28,9 +28,6 @@ type CheckConfig implements Node, Namespaced, Silenceable, Resource {
   execution environment.
   """
   envVars: [String!]!
-
-  "ExtendedAttributes store serialized arbitrary JSON-encoded data"
-  extendedAttributes: JSON!
 
   "handlers are the event handler for the check (incidents and/or metrics)."
   handlers: [Handler]!
@@ -116,7 +113,7 @@ type CheckConfig implements Node, Namespaced, Silenceable, Resource {
 A Check is a check specification and optionally the results of the check's
 execution.
 """
-type Check implements Silenceable, Resource {
+type Check implements Silenceable & Resource {
   "id of the check's configuration"
   nodeId: ID!
 
@@ -137,9 +134,6 @@ type Check implements Silenceable, Resource {
   execution environment.
   """
   envVars: [String!]!
-
-  "ExtendedAttributes store serialized arbitrary JSON-encoded data"
-  extendedAttributes: JSON!
 
   "handlers are the event handler for the check (incidents and/or metrics)."
   handlers: [Handler]!

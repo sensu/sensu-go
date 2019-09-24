@@ -29,6 +29,7 @@ steps.
 ### Fixed
 - Splayed proxy checks are now executed every interval, instead of every
 `interval + interval * splay_coverage`.
+- [GraphQL] Ensures that proxy entity label & annotations are redacted.
 - Fixed a bug in the ring where round robin schedules would not recover
 after quorum loss.
 - [Web] Unauthorized errors emitted while creating silences or resolving events

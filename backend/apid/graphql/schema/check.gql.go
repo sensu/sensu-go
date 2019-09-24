@@ -58,12 +58,6 @@ type CheckConfigEnvVarsFieldResolver interface {
 	EnvVars(p graphql.ResolveParams) ([]string, error)
 }
 
-// CheckConfigExtendedAttributesFieldResolver implement to resolve requests for the CheckConfig's extendedAttributes field.
-type CheckConfigExtendedAttributesFieldResolver interface {
-	// ExtendedAttributes implements response to request for extendedAttributes field.
-	ExtendedAttributes(p graphql.ResolveParams) (interface{}, error)
-}
-
 // CheckConfigHandlersFieldResolver implement to resolve requests for the CheckConfig's handlers field.
 type CheckConfigHandlersFieldResolver interface {
 	// Handlers implements response to request for handlers field.
@@ -248,7 +242,6 @@ type CheckConfigFieldResolvers interface {
 	CheckConfigCheckHooksFieldResolver
 	CheckConfigCronFieldResolver
 	CheckConfigEnvVarsFieldResolver
-	CheckConfigExtendedAttributesFieldResolver
 	CheckConfigHandlersFieldResolver
 	CheckConfigHighFlapThresholdFieldResolver
 	CheckConfigIntervalFieldResolver
@@ -405,12 +398,6 @@ func (_ CheckConfigAliases) EnvVars(p graphql.ResolveParams) ([]string, error) {
 		return ret, errors.New("unable to coerce value for field 'envVars'")
 	}
 	return ret, err
-}
-
-// ExtendedAttributes implements response to request for 'extendedAttributes' field.
-func (_ CheckConfigAliases) ExtendedAttributes(p graphql.ResolveParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
 }
 
 // Handlers implements response to request for 'handlers' field.
@@ -674,13 +661,6 @@ func _ObjTypeCheckConfigEnvVarsHandler(impl interface{}) graphql1.FieldResolveFn
 	}
 }
 
-func _ObjTypeCheckConfigExtendedAttributesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckConfigExtendedAttributesFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.ExtendedAttributes(frp)
-	}
-}
-
 func _ObjTypeCheckConfigHandlersHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckConfigHandlersFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -845,13 +825,6 @@ func _ObjectTypeCheckConfigConfigFn() graphql1.ObjectConfig {
 				Description:       "EnvVars is the list of environment variables to set for the check's\nexecution environment.",
 				Name:              "envVars",
 				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql1.String))),
-			},
-			"extendedAttributes": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "ExtendedAttributes store serialized arbitrary JSON-encoded data",
-				Name:              "extendedAttributes",
-				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
 			},
 			"handlers": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -1040,7 +1013,6 @@ var _ObjectTypeCheckConfigDesc = graphql.ObjectDesc{
 		"command":              _ObjTypeCheckConfigCommandHandler,
 		"cron":                 _ObjTypeCheckConfigCronHandler,
 		"envVars":              _ObjTypeCheckConfigEnvVarsHandler,
-		"extendedAttributes":   _ObjTypeCheckConfigExtendedAttributesHandler,
 		"handlers":             _ObjTypeCheckConfigHandlersHandler,
 		"highFlapThreshold":    _ObjTypeCheckConfigHighFlapThresholdHandler,
 		"id":                   _ObjTypeCheckConfigIDHandler,
@@ -1101,12 +1073,6 @@ type CheckCheckHooksFieldResolver interface {
 type CheckEnvVarsFieldResolver interface {
 	// EnvVars implements response to request for envVars field.
 	EnvVars(p graphql.ResolveParams) ([]string, error)
-}
-
-// CheckExtendedAttributesFieldResolver implement to resolve requests for the Check's extendedAttributes field.
-type CheckExtendedAttributesFieldResolver interface {
-	// ExtendedAttributes implements response to request for extendedAttributes field.
-	ExtendedAttributes(p graphql.ResolveParams) (interface{}, error)
 }
 
 // CheckHandlersFieldResolver implement to resolve requests for the Check's handlers field.
@@ -1386,7 +1352,6 @@ type CheckFieldResolvers interface {
 	CheckCommandFieldResolver
 	CheckCheckHooksFieldResolver
 	CheckEnvVarsFieldResolver
-	CheckExtendedAttributesFieldResolver
 	CheckHandlersFieldResolver
 	CheckHighFlapThresholdFieldResolver
 	CheckIntervalFieldResolver
@@ -1531,12 +1496,6 @@ func (_ CheckAliases) EnvVars(p graphql.ResolveParams) ([]string, error) {
 		return ret, errors.New("unable to coerce value for field 'envVars'")
 	}
 	return ret, err
-}
-
-// ExtendedAttributes implements response to request for 'extendedAttributes' field.
-func (_ CheckAliases) ExtendedAttributes(p graphql.ResolveParams) (interface{}, error) {
-	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
-	return val, err
 }
 
 // Handlers implements response to request for 'handlers' field.
@@ -1950,13 +1909,6 @@ func _ObjTypeCheckEnvVarsHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
-func _ObjTypeCheckExtendedAttributesHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(CheckExtendedAttributesFieldResolver)
-	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.ExtendedAttributes(frp)
-	}
-}
-
 func _ObjTypeCheckHandlersHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(CheckHandlersFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
@@ -2240,13 +2192,6 @@ func _ObjectTypeCheckConfigFn() graphql1.ObjectConfig {
 				Name:              "executed",
 				Type:              graphql1.NewNonNull(graphql1.DateTime),
 			},
-			"extendedAttributes": &graphql1.Field{
-				Args:              graphql1.FieldConfigArgument{},
-				DeprecationReason: "",
-				Description:       "ExtendedAttributes store serialized arbitrary JSON-encoded data",
-				Name:              "extendedAttributes",
-				Type:              graphql1.NewNonNull(graphql.OutputType("JSON")),
-			},
 			"handlers": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -2508,7 +2453,6 @@ var _ObjectTypeCheckDesc = graphql.ObjectDesc{
 		"duration":             _ObjTypeCheckDurationHandler,
 		"envVars":              _ObjTypeCheckEnvVarsHandler,
 		"executed":             _ObjTypeCheckExecutedHandler,
-		"extendedAttributes":   _ObjTypeCheckExtendedAttributesHandler,
 		"handlers":             _ObjTypeCheckHandlersHandler,
 		"highFlapThreshold":    _ObjTypeCheckHighFlapThresholdHandler,
 		"history":              _ObjTypeCheckHistoryHandler,
