@@ -3,27 +3,28 @@ package agent
 import (
 	time "github.com/echlebek/timeproxy"
 
-	"github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/version"
 )
 
-func (a *Agent) getAgentEntity() *types.Entity {
+func (a *Agent) getAgentEntity() *corev2.Entity {
 	if a.entity == nil {
-		meta := v2.NewObjectMeta(a.config.AgentName, a.config.Namespace)
+		meta := corev2.NewObjectMeta(a.config.AgentName, a.config.Namespace)
 		meta.Labels = a.config.Labels
 		meta.Annotations = a.config.Annotations
-		e := &types.Entity{
-			EntityClass:   types.EntityAgentClass,
+		e := &corev2.Entity{
+			EntityClass:   corev2.EntityAgentClass,
 			Deregister:    a.config.Deregister,
 			LastSeen:      time.Now().Unix(),
 			Redact:        a.config.Redact,
 			Subscriptions: a.config.Subscriptions,
 			User:          a.config.User,
 			ObjectMeta:    meta,
+			Version:       version.Semver(),
 		}
 
 		if a.config.DeregistrationHandler != "" {
-			e.Deregistration = types.Deregistration{
+			e.Deregistration = corev2.Deregistration{
 				Handler: a.config.DeregistrationHandler,
 			}
 		}
@@ -42,7 +43,7 @@ func (a *Agent) getAgentEntity() *types.Entity {
 // getEntities receives an event and verifies if we have a proxy entity, so it
 // can be added as the source, and ensures that the event uses the agent's
 // entity
-func (a *Agent) getEntities(event *types.Event) {
+func (a *Agent) getEntities(event *corev2.Event) {
 	// Verify if we have an entity in the event, and that it is different from the
 	// agent's entity
 	if event.Entity != nil && event.HasCheck() && event.Entity.Name != a.config.AgentName {

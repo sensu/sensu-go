@@ -32,6 +32,8 @@ message Entity {
   repeated string redact = 13;
   // Metadata contains the name, namespace, labels and annotations of the entity
   ObjectMeta metadata = 14 [(gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false];
+  // Version is the sensu-agent version.
+  string version = 15 [(gogoproto.jsontag) = "version"];
 }
 
 // System contains information about the system that the Agent process
