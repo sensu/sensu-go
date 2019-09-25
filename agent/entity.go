@@ -13,14 +13,14 @@ func (a *Agent) getAgentEntity() *corev2.Entity {
 		meta.Labels = a.config.Labels
 		meta.Annotations = a.config.Annotations
 		e := &corev2.Entity{
-			EntityClass:   corev2.EntityAgentClass,
-			Deregister:    a.config.Deregister,
-			LastSeen:      time.Now().Unix(),
-			Redact:        a.config.Redact,
-			Subscriptions: a.config.Subscriptions,
-			User:          a.config.User,
-			ObjectMeta:    meta,
-			Version:       version.Semver(),
+			EntityClass:       corev2.EntityAgentClass,
+			Deregister:        a.config.Deregister,
+			LastSeen:          time.Now().Unix(),
+			Redact:            a.config.Redact,
+			Subscriptions:     a.config.Subscriptions,
+			User:              a.config.User,
+			ObjectMeta:        meta,
+			SensuAgentVersion: version.Semver(),
 		}
 
 		if a.config.DeregistrationHandler != "" {
