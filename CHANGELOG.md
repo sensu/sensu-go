@@ -39,8 +39,9 @@ after quorum loss.
 are now caught and a toast is presented to communicate what occurred.
 - [Web] Internal errors are now avoided when a user attempts to queue an ad-hoc
 check for a keepalive.
-- Do not seperate asset builds into several assets unless the the tabular format
+- Do not separate asset builds into several assets unless the the tabular format
 is used in `sensuctl asset list`.
+- Fix the 'flag accessed but not defined' error in `sensuctl asset outdated`
 
 ## [5.13.2] - 2019-09-19
 
