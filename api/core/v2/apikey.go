@@ -60,9 +60,7 @@ func APIKeyFields(r Resource) map[string]string {
 }
 
 // SetNamespace sets the namespace of the resource.
-func (a *APIKey) SetNamespace(namespace string) {
-	return
-}
+func (a *APIKey) SetNamespace(namespace string) {}
 
 // SetObjectMeta sets the meta of the resource.
 func (a *APIKey) SetObjectMeta(meta ObjectMeta) {
