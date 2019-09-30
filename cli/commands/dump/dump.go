@@ -27,6 +27,7 @@ var (
 		&corev2.ClusterRole{},
 		&corev2.ClusterRoleBinding{},
 		&corev2.User{},
+		&corev2.APIKey{},
 		&corev2.TessenConfig{},
 		&corev2.Asset{},
 		&corev2.CheckConfig{},
