@@ -50,6 +50,9 @@ func (c *HookConfig) StorePrefix() string {
 
 // URIPath returns the path component of a hook URI.
 func (c *HookConfig) URIPath() string {
+	if c.Namespace == "" {
+		return path.Join(URLPrefix, HooksResource, url.PathEscape(c.Name))
+	}
 	return path.Join(URLPrefix, "namespaces", url.PathEscape(c.Namespace), HooksResource, url.PathEscape(c.Name))
 }
 

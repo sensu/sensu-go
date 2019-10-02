@@ -41,6 +41,9 @@ func (h *Handler) StorePrefix() string {
 
 // URIPath returns the path component of a handler URI.
 func (h *Handler) URIPath() string {
+	if h.Namespace == "" {
+		return path.Join(URLPrefix, HandlersResource, url.PathEscape(h.Name))
+	}
 	return path.Join(URLPrefix, "namespaces", url.PathEscape(h.Namespace), HandlersResource, url.PathEscape(h.Name))
 }
 

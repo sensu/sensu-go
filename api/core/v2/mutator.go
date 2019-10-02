@@ -21,6 +21,9 @@ func (m *Mutator) StorePrefix() string {
 
 // URIPath returns the path component of a mutator URI.
 func (m *Mutator) URIPath() string {
+	if m.Namespace == "" {
+		return path.Join(URLPrefix, MutatorsResource, url.PathEscape(m.Name))
+	}
 	return path.Join(URLPrefix, "namespaces", url.PathEscape(m.Namespace), MutatorsResource, url.PathEscape(m.Name))
 }
 

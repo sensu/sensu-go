@@ -34,8 +34,11 @@ func (e *Event) StorePrefix() string {
 
 // URIPath returns the path component of an event URI.
 func (e *Event) URIPath() string {
+	if !e.HasCheck() && e.Entity == nil {
+		return path.Join(URLPrefix, EventsResource)
+	}
 	if !e.HasCheck() {
-		return ""
+		return path.Join(URLPrefix, EventsResource, url.PathEscape(e.Entity.Name))
 	}
 	return path.Join(URLPrefix, "namespaces", url.PathEscape(e.Entity.Namespace), EventsResource, url.PathEscape(e.Entity.Name), url.PathEscape(e.Check.Name))
 }
