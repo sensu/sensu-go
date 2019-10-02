@@ -54,7 +54,12 @@ func (r *APIKeysRouter) create(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// set/overwrite the key id and created_at time
-	apikey.Key = uuid.New().String()
+	uuidKey, err := uuid.NewRandom()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	apikey.Key = uuidKey.String()
 	apikey.CreatedAt = time.Now().Unix()
 	newBytes, err := json.Marshal(apikey)
 	if err != nil {

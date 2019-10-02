@@ -26,7 +26,7 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // An APIKey is an api key specification.
 type APIKey struct {
-	// Metadata contains the name of the APIKey.
+	// Metadata contains the name, namespace (N/A), labels and annotations of the APIKey.
 	ObjectMeta `protobuf:"bytes,1,opt,name=metadata,proto3,embedded=metadata" json:"metadata,omitempty"`
 	// Key is the API key id.
 	Key string `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`

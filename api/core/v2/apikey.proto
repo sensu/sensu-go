@@ -18,7 +18,7 @@ message APIKey {
   option (gogoproto.face) = true;
   option (gogoproto.goproto_getters) = false;
 
-  // Metadata contains the name of the APIKey.
+  // Metadata contains the name, namespace (N/A), labels and annotations of the APIKey.
   ObjectMeta metadata = 1 [(gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false];
 
   // Key is the API key id.
