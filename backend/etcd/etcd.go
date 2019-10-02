@@ -235,3 +235,13 @@ func (e *Etcd) Healthy() bool {
 	_, err = mapi.Status(context.TODO(), e.cfg.AdvertiseClientURLs[0])
 	return err == nil
 }
+
+// GetClientURLs gets the valid client URLs for the etcd server.
+func (e *Etcd) GetClientURLs() []string {
+	listeners := e.etcd.Clients
+	results := make([]string, 0, len(listeners))
+	for _, list := range listeners {
+		results = append(results, list.Addr().String())
+	}
+	return results
+}
