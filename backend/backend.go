@@ -87,6 +87,16 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 	cfg.AdvertiseClientURLs = config.EtcdAdvertiseClientURLs
 	cfg.Name = config.EtcdName
 
+	// Heartbeat interval
+	if config.EtcdHeartbeatInterval > 0 {
+		cfg.TickMs = config.EtcdHeartbeatInterval
+	}
+
+	// Election timeout
+	if config.EtcdElectionTimeout > 0 {
+		cfg.ElectionMs = config.EtcdElectionTimeout
+	}
+
 	// Etcd TLS config
 	cfg.ClientTLSInfo = config.EtcdClientTLSInfo
 	cfg.PeerTLSInfo = config.EtcdPeerTLSInfo

@@ -17,6 +17,8 @@ theme, the application now respects the system preference by default.
 - sensuctl dump can now list the types of supported resources with --types.
 - Added the `sensu_agent_version` field to the `Entity` resource, which reflects
 the Sensu semver version of the agent entity.
+- Added the `--etcd-heartbeat-interval` and `--etcd-election-timeout` flags to
+`sensu-backend`
 
 ### Changed
 - [Web] Github is not always the best place for feature requests and discussion,

@@ -63,6 +63,8 @@ type Config struct {
 	EtcdListenPeerURLs           []string
 	EtcdName                     string
 	NoEmbedEtcd                  bool
+	EtcdHeartbeatInterval        uint
+	EtcdElectionTimeout          uint
 
 	// Etcd TLS configuration
 	EtcdClientTLSInfo     etcd.TLSInfo
