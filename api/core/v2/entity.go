@@ -41,6 +41,9 @@ func (e *Entity) StorePrefix() string {
 
 // URIPath returns the path component of an entity URI.
 func (e *Entity) URIPath() string {
+	if e.Namespace == "" {
+		return path.Join(URLPrefix, EntitiesResource, url.PathEscape(e.Name))
+	}
 	return path.Join(URLPrefix, "namespaces", url.PathEscape(e.Namespace), EntitiesResource, url.PathEscape(e.Name))
 }
 

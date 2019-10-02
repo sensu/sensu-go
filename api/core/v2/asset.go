@@ -32,6 +32,9 @@ func (a *Asset) StorePrefix() string {
 
 // URIPath returns the path component of an asset URI.
 func (a *Asset) URIPath() string {
+	if a.Namespace == "" {
+		return path.Join(URLPrefix, AssetsResource, url.PathEscape(a.Name))
+	}
 	return path.Join(URLPrefix, "namespaces", url.PathEscape(a.Namespace), AssetsResource, url.PathEscape(a.Name))
 }
 
