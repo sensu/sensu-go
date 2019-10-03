@@ -140,10 +140,11 @@ func (s *Session) Receiver() chan<- interface{} {
 	return s.checkChannel
 }
 
-func (s *Session) recvPump() {
+func (s *Session) receiver() {
 	defer func() {
 		s.cancel()
 		s.wg.Done()
+		logger.Info("shutting down agent session: stopping receiver")
 	}()
 
 	for {
@@ -155,15 +156,13 @@ func (s *Session) recvPump() {
 			switch err := err.(type) {
 			case transport.ConnectionError, transport.ClosedError:
 				logger.WithFields(logrus.Fields{
-					"addr":       s.cfg.AgentAddr,
-					"agent":      s.cfg.AgentName,
-					"recv error": err.Error(),
-				}).Warn("stopping session")
-				return
+					"addr":  s.cfg.AgentAddr,
+					"agent": s.cfg.AgentName,
+				}).WithError(err).Warn("stopping session")
 			default:
 				logger.WithError(err).Error("recv error")
-				continue
 			}
+			return
 		}
 		if err := s.handler.Handle(s.ctx, msg.Type, msg.Payload); err != nil {
 			logger.WithError(err).WithFields(logrus.Fields{
@@ -173,15 +172,17 @@ func (s *Session) recvPump() {
 	}
 }
 
-func (s *Session) subPump() {
+func (s *Session) sender() {
 	defer func() {
 		s.cancel()
 		s.wg.Done()
-		logger.Info("shutting down - stopping subPump")
+		logger.Info("shutting down agent session: stopping sender")
 	}()
 
 	for {
+		var msg *transport.Message
 		select {
+		case msg = <-s.sendq:
 		case c := <-s.checkChannel:
 			request, ok := c.(*corev2.CheckRequest)
 			if !ok {
@@ -195,52 +196,32 @@ func (s *Session) subPump() {
 				continue
 			}
 
-			msg := transport.NewMessage(corev2.CheckRequestType, configBytes)
-			s.sendq <- msg
+			msg = transport.NewMessage(corev2.CheckRequestType, configBytes)
 		case <-s.ctx.Done():
 			return
 		}
-	}
-}
-
-func (s *Session) sendPump() {
-	defer func() {
-		s.cancel()
-		s.wg.Done()
-		logger.Info("shutting down - stopping sendPump")
-	}()
-
-	for {
-		select {
-		case msg := <-s.sendq:
-			logger.WithField("payload_size", len(msg.Payload)).Debug("session - sending message")
-			err := s.conn.Send(msg)
-			if err != nil {
-				switch err := err.(type) {
-				case transport.ConnectionError, transport.ClosedError:
-					return
-				default:
-					logger.WithError(err).Error("send error")
-				}
+		logger.WithField("payload_size", len(msg.Payload)).Debug("session - sending message")
+		if err := s.conn.Send(msg); err != nil {
+			switch err := err.(type) {
+			case transport.ConnectionError, transport.ClosedError:
+			default:
+				logger.WithError(err).Error("send error")
 			}
-		case <-s.ctx.Done():
 			return
 		}
 	}
 }
 
 // Start a Session.
-// 1. Start send pump
-// 2. Start receive pump
-// 3. Start subscription pump
-// 5. Ensure bus unsubscribe when the session shuts down.
+// 1. Start sender
+// 2. Start receiver
+// 3. Start goroutine that waits for context cancellation, and shuts down service.
 func (s *Session) Start() (err error) {
 	sessionCounter.WithLabelValues(s.cfg.Namespace).Inc()
 	s.wg = &sync.WaitGroup{}
 	s.wg.Add(3)
-	go s.sendPump()
-	go s.recvPump()
-	go s.subPump()
+	go s.sender()
+	go s.receiver()
 	go func() {
 		<-s.ctx.Done()
 		s.stop()
