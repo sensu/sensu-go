@@ -290,7 +290,7 @@ func (s *Session) stop() {
 			"namespace": s.cfg.Namespace,
 			"agent":     s.cfg.AgentName,
 		}).Info("removing agent from ring")
-		if err := ring.Remove(s.ctx, s.cfg.AgentName); err != nil {
+		if err := ring.Remove(context.Background(), s.cfg.AgentName); err != nil {
 			logger.WithError(err).Error("unable to remove agent from ring")
 		}
 	}
