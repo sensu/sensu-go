@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"sync"
-	"time"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
@@ -204,12 +203,6 @@ func (s *Session) sender() {
 			return
 		}
 		logger.WithField("payload_size", len(msg.Payload)).Debug("session - sending message")
-		if wsc, ok := s.conn.(*transport.WebSocketTransport); ok {
-			deadline := time.Now().Add(time.Second * time.Duration(s.cfg.WriteTimeout))
-			if err := wsc.Connection.SetWriteDeadline(deadline); err != nil {
-				logger.WithError(err).Error("session connection couldn't set write deadline")
-			}
-		}
 		if err := s.conn.Send(msg); err != nil {
 			switch err := err.(type) {
 			case transport.ConnectionError, transport.ClosedError:
