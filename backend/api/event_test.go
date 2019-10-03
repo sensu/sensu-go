@@ -347,7 +347,7 @@ func TestUpdateEvent(t *testing.T) {
 		{
 			Name: "right user, wrong perms",
 			Ctx: func() context.Context {
-				return contextWithUser(defaultContext(), "haxor", nil)
+				return contextWithUser(defaultContext(), "legit", nil)
 			},
 			EventStore: func() store.EventStore {
 				store := new(mockstore.MockStore)
