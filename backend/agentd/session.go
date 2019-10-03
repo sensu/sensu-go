@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/gogo/protobuf/proto"
+	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -234,7 +235,7 @@ func (s *Session) Start() (err error) {
 	}()
 
 	namespace := s.cfg.Namespace
-	agentName := fmt.Sprintf("%s:%s", namespace, s.cfg.AgentName)
+	agentName := fmt.Sprintf("%s:%s-%s", namespace, s.cfg.AgentName, uuid.New().String())
 
 	defer func() {
 		if err != nil {
