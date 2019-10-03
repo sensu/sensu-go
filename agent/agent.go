@@ -17,6 +17,7 @@ import (
 
 	time "github.com/echlebek/timeproxy"
 	"github.com/gogo/protobuf/proto"
+	"github.com/google/uuid"
 
 	"github.com/atlassian/gostatsd/pkg/statsd"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -36,8 +37,7 @@ func GetDefaultAgentName() string {
 	defaultAgentName, err := os.Hostname()
 	if err != nil {
 		logger.WithError(err).Error("error getting hostname")
-		// TODO(greg): wat do?
-		defaultAgentName = "unidentified-sensu-agent"
+		defaultAgentName = uuid.New().String()
 	}
 	return defaultAgentName
 }
