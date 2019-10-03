@@ -151,7 +151,7 @@ func TestSessionTerminateOnSendError(t *testing.T) {
 	}
 
 	conn.On("Receive").After(100*time.Millisecond).Return(tm, nil)
-	conn.On("Send", mock.Anything).Return(transport.ConnectionError{"some horrible network outage"})
+	conn.On("Send", mock.Anything).Return(transport.ConnectionError{Message: "some horrible network outage"})
 	conn.On("Close").Return(nil)
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
