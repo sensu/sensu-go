@@ -54,12 +54,13 @@ type Agentd struct {
 
 // Config configures an Agentd.
 type Config struct {
-	Host     string
-	Port     int
-	Bus      messaging.MessageBus
-	Store    store.Store
-	TLS      *corev2.TLSOptions
-	RingPool *ringv2.Pool
+	Host         string
+	Port         int
+	Bus          messaging.MessageBus
+	Store        store.Store
+	TLS          *corev2.TLSOptions
+	RingPool     *ringv2.Pool
+	WriteTimeout int
 }
 
 // Option is a functional option.
@@ -105,7 +106,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
 		Handler:      router,
-		WriteTimeout: 15 * time.Second,
+		WriteTimeout: time.Duration(c.WriteTimeout) * time.Second,
 		ReadTimeout:  15 * time.Second,
 		TLSConfig:    tlsServerConfig,
 		// Capture the log entries from agentd's HTTP server

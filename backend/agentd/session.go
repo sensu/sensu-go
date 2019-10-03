@@ -95,6 +95,7 @@ type SessionConfig struct {
 	User          string
 	Subscriptions []string
 	RingPool      *ringv2.Pool
+	WriteTimeout  int
 }
 
 // NewSession creates a new Session object given the triple of a transport
@@ -204,7 +205,8 @@ func (s *Session) sender() {
 		}
 		logger.WithField("payload_size", len(msg.Payload)).Debug("session - sending message")
 		if wsc, ok := s.conn.(*transport.WebSocketTransport); ok {
-			if err := wsc.Connection.SetWriteDeadline(time.Now().Add(time.Second * 10)); err != nil {
+			deadline := time.Now().Add(time.Second * time.Duration(s.cfg.WriteTimeout))
+			if err := wsc.Connection.SetWriteDeadline(deadline); err != nil {
 				logger.WithError(err).Error("session connection couldn't set write deadline")
 			}
 		}

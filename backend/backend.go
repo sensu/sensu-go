@@ -232,12 +232,13 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize agentd
 	agent, err := agentd.New(agentd.Config{
-		Host:     config.AgentHost,
-		Port:     config.AgentPort,
-		Bus:      bus,
-		Store:    stor,
-		TLS:      config.AgentTLSOptions,
-		RingPool: ringPool,
+		Host:         config.AgentHost,
+		Port:         config.AgentPort,
+		Bus:          bus,
+		Store:        stor,
+		TLS:          config.AgentTLSOptions,
+		RingPool:     ringPool,
+		WriteTimeout: config.AgentWriteTimeout,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)
