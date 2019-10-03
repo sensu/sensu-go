@@ -45,10 +45,12 @@ func TestHelperProcess(t *testing.T) {
 }
 
 func TestExecute(t *testing.T) {
+	executor := NewExecutor()
+
 	// test that stdout can be read from
 	echo := FakeCommand("echo", "foo")
 
-	echoExec, echoErr := echo.Execute(context.Background(), echo)
+	echoExec, echoErr := executor.Execute(context.Background(), echo)
 	assert.Equal(t, nil, echoErr)
 	assert.Equal(t, "foo\n", echoExec.Output)
 	assert.Equal(t, 0, echoExec.Status)
@@ -58,7 +60,7 @@ func TestExecute(t *testing.T) {
 	cat := FakeCommand("cat")
 	cat.Input = "bar"
 
-	catExec, catErr := cat.Execute(context.Background(), cat)
+	catExec, catErr := executor.Execute(context.Background(), cat)
 	assert.Equal(t, nil, catErr)
 	assert.Equal(t, "bar", testutil.CleanOutput(catExec.Output))
 	assert.Equal(t, 0, catExec.Status)
@@ -67,7 +69,7 @@ func TestExecute(t *testing.T) {
 	// test that command exit codes can be read
 	falseCmd := FakeCommand("false")
 
-	falseExec, falseErr := falseCmd.Execute(context.Background(), falseCmd)
+	falseExec, falseErr := executor.Execute(context.Background(), falseCmd)
 	assert.Equal(t, nil, falseErr)
 	assert.Equal(t, "", testutil.CleanOutput(falseExec.Output))
 	assert.Equal(t, 1, falseExec.Status)
@@ -76,7 +78,7 @@ func TestExecute(t *testing.T) {
 	// test that stderr can be read from
 	outputs := FakeCommand("echo bar 1>&2")
 
-	outputsExec, outputsErr := outputs.Execute(context.Background(), outputs)
+	outputsExec, outputsErr := executor.Execute(context.Background(), outputs)
 	assert.Equal(t, nil, outputsErr)
 	assert.Equal(t, "bar\n", testutil.CleanOutput(outputsExec.Output))
 	assert.Equal(t, 0, outputsExec.Status)
@@ -86,7 +88,7 @@ func TestExecute(t *testing.T) {
 	sleep := FakeCommand("sleep 10")
 	sleep.Timeout = 1
 
-	sleepExec, sleepErr := sleep.Execute(context.Background(), sleep)
+	sleepExec, sleepErr := executor.Execute(context.Background(), sleep)
 	assert.Equal(t, nil, sleepErr)
 	assert.Equal(t, "Execution timed out\n", testutil.CleanOutput(sleepExec.Output))
 	assert.Equal(t, 2, sleepExec.Status)
@@ -96,7 +98,7 @@ func TestExecute(t *testing.T) {
 	sleepMultiple := FakeCommand("sleep 10 && echo foo")
 	sleepMultiple.Timeout = 1
 
-	sleepMultipleExec, sleepMultipleErr := sleepMultiple.Execute(context.Background(), sleepMultiple)
+	sleepMultipleExec, sleepMultipleErr := executor.Execute(context.Background(), sleepMultiple)
 	assert.Equal(t, nil, sleepMultipleErr)
 	assert.Equal(t, "Execution timed out\n", testutil.CleanOutput(sleepMultipleExec.Output))
 	assert.Equal(t, 2, sleepMultipleExec.Status)

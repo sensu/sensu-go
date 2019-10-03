@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"os/exec"
+	"runtime"
 	"strings"
 	"sync"
 	"syscall"
@@ -42,8 +43,11 @@ var cannedResponse = &ExecutionResponse{
 	Output: cannedResponseText,
 }
 
-// Executor ...
+// Executor executes ExecutionRequests.
 type Executor interface {
+	// Execute executes a system command (fork/exec) with a
+	// timeout, optionally writing to STDIN, capturing its combined output
+	// (STDOUT/ERR) and exit status.
 	Execute(context.Context, ExecutionRequest) (*ExecutionResponse, error)
 }
 
@@ -65,6 +69,126 @@ const (
 	// status.
 	FallbackExitStatus int = 3
 )
+
+// BoundedExecutor is an executor that will not allow more than runtime.NumCPU
+// parallel processes.
+type BoundedExecutor struct {
+	pool chan struct{}
+}
+
+func NewBoundedExecutor() *BoundedExecutor {
+	pool := make(chan struct{}, runtime.GOMAXPROCS(0))
+	for i := 0; i < runtime.GOMAXPROCS(0); i++ {
+		pool <- struct{}{}
+	}
+	return &BoundedExecutor{
+		pool: pool,
+	}
+}
+
+func (b *BoundedExecutor) Execute(ctx context.Context, req ExecutionRequest) (*ExecutionResponse, error) {
+	<-b.pool
+	defer func() {
+		b.pool <- struct{}{}
+	}()
+
+	if req.Command == undocumentedTestCheckCommand {
+		return cannedResponse, nil
+	}
+	resp := &ExecutionResponse{}
+	logger := logrus.WithFields(logrus.Fields{"component": "command"})
+	// Using a platform specific shell to "cheat", as the shell
+	// will handle certain failures for us, where golang exec is
+	// known to have troubles, e.g. command not found. We still
+	// use a fallback exit status in the unlikely event that the
+	// exit status cannot be determined.
+	var cmd *exec.Cmd
+
+	// Use context.WithCancel for execution timeout.
+	// context.WithTimeout will not kill child/grandchild processes
+	// (see issues tagged in https://github.com/sensu/sensu-go/issues/781).
+	// Rather, we will use a timer, CancelFunc and proc functions
+	// to perform full cleanup.
+	ctx, timeout := context.WithCancel(ctx)
+	defer timeout()
+
+	// Taken from Sensu-Spawn (Sensu 1.x.x).
+	cmd = Command(ctx, req.Command)
+
+	// Set the ENV for the command if it is set
+	if len(req.Env) > 0 {
+		cmd.Env = req.Env
+	}
+
+	// Share an output buffer between STDOUT/ERR, following the
+	// Nagios plugin spec.
+	var output bytes.Buffer
+
+	cmd.Stdout = &output
+	cmd.Stderr = &output
+
+	// If Input is specified, write to STDIN.
+	if req.Input != "" {
+		cmd.Stdin = strings.NewReader(req.Input)
+	}
+
+	started := time.Now()
+	defer func() {
+		resp.Duration = time.Since(started).Seconds()
+	}()
+
+	var timer *time.Timer
+	// Kill process and all of its children when the timeout has expired.
+	if req.Timeout != 0 {
+		SetProcessGroup(cmd)
+		timer = time.AfterFunc(time.Duration(req.Timeout)*time.Second, func() {
+			timeout()
+			if err := KillProcess(cmd); err != nil {
+				logger.WithError(err).Errorf("Execution timed out - Unable to TERM/KILL the process: #%d", cmd.Process.Pid)
+				escapeZombie(&req)
+			}
+		})
+		defer timer.Stop()
+	}
+
+	if err := cmd.Start(); err != nil {
+		// Something unexpected happended when attepting to
+		// fork/exec, return immediately.
+		return resp, err
+	}
+
+	err := cmd.Wait()
+	if timer != nil {
+		timer.Stop()
+	}
+
+	resp.Output = output.String()
+
+	// The execution timed out if the context was cancelled prematurely
+	if ctx.Err() == context.Canceled {
+		resp.Output = TimeoutOutput
+		resp.Status = TimeoutExitStatus
+	} else if err != nil {
+		// The command most likely return a non-zero exit status.
+		if exitError, ok := err.(*exec.ExitError); ok {
+			// Best effort to determine the exit status, this
+			// should work on Linux, OSX, and Windows.
+			if status, ok := exitError.Sys().(syscall.WaitStatus); ok {
+				resp.Status = status.ExitStatus()
+			} else {
+				resp.Status = FallbackExitStatus
+			}
+		} else {
+			resp.Status = FallbackExitStatus
+		}
+	} else {
+		// Everything is A-OK.
+		resp.Status = 0
+	}
+
+	return resp, nil
+
+}
 
 // ExecutionRequest provides information about a system command execution,
 // somewhat of an abstraction intended to be used for Sensu check,
@@ -106,110 +230,9 @@ type ExecutionResponse struct {
 	Duration float64
 }
 
-// NewExecutor ...
+// NewExecutor creates a new Executor.
 func NewExecutor() Executor {
-	return &ExecutionRequest{}
-}
-
-// Execute executes a system command (fork/exec) with a
-// timeout, optionally writing to STDIN, capturing its combined output
-// (STDOUT/ERR) and exit status.
-func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionRequest) (*ExecutionResponse, error) {
-	if execution.Command == undocumentedTestCheckCommand {
-		return cannedResponse, nil
-	}
-	resp := &ExecutionResponse{}
-	logger := logrus.WithFields(logrus.Fields{"component": "command"})
-	// Using a platform specific shell to "cheat", as the shell
-	// will handle certain failures for us, where golang exec is
-	// known to have troubles, e.g. command not found. We still
-	// use a fallback exit status in the unlikely event that the
-	// exit status cannot be determined.
-	var cmd *exec.Cmd
-
-	// Use context.WithCancel for command execution timeout.
-	// context.WithTimeout will not kill child/grandchild processes
-	// (see issues tagged in https://github.com/sensu/sensu-go/issues/781).
-	// Rather, we will use a timer, CancelFunc and proc functions
-	// to perform full cleanup.
-	ctx, timeout := context.WithCancel(ctx)
-	defer timeout()
-
-	// Taken from Sensu-Spawn (Sensu 1.x.x).
-	cmd = Command(ctx, execution.Command)
-
-	// Set the ENV for the command if it is set
-	if len(execution.Env) > 0 {
-		cmd.Env = execution.Env
-	}
-
-	// Share an output buffer between STDOUT/ERR, following the
-	// Nagios plugin spec.
-	var output bytes.Buffer
-
-	cmd.Stdout = &output
-	cmd.Stderr = &output
-
-	// If Input is specified, write to STDIN.
-	if execution.Input != "" {
-		cmd.Stdin = strings.NewReader(execution.Input)
-	}
-
-	started := time.Now()
-	defer func() {
-		resp.Duration = time.Since(started).Seconds()
-	}()
-
-	var timer *time.Timer
-	// Kill process and all of its children when the timeout has expired.
-	if execution.Timeout != 0 {
-		SetProcessGroup(cmd)
-		timer = time.AfterFunc(time.Duration(execution.Timeout)*time.Second, func() {
-			timeout()
-			if err := KillProcess(cmd); err != nil {
-				logger.WithError(err).Errorf("Execution timed out - Unable to TERM/KILL the process: #%d", cmd.Process.Pid)
-				escapeZombie(&execution)
-			}
-		})
-		defer timer.Stop()
-	}
-
-	if err := cmd.Start(); err != nil {
-		// Something unexpected happended when attepting to
-		// fork/exec, return immediately.
-		return resp, err
-	}
-
-	err := cmd.Wait()
-	if timer != nil {
-		timer.Stop()
-	}
-
-	resp.Output = output.String()
-
-	// The command execution timed out if the context was cancelled prematurely
-	if ctx.Err() == context.Canceled {
-		resp.Output = TimeoutOutput
-		resp.Status = TimeoutExitStatus
-	} else if err != nil {
-		// The command most likely return a non-zero exit status.
-		if exitError, ok := err.(*exec.ExitError); ok {
-			// Best effort to determine the exit status, this
-			// should work on Linux, OSX, and Windows.
-			if status, ok := exitError.Sys().(syscall.WaitStatus); ok {
-				resp.Status = status.ExitStatus()
-			} else {
-				resp.Status = FallbackExitStatus
-			}
-		} else {
-			resp.Status = FallbackExitStatus
-		}
-	} else {
-		// Everything is A-OK.
-		resp.Status = 0
-	}
-
-	return resp, nil
+	return NewBoundedExecutor()
 }
 
 func escapeZombie(ex *ExecutionRequest) {
