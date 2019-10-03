@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.14.0] - 2019-10-03
+
 ### Added
 - [Web] Added an additional option to the error dialog allowing users to
 completely wipe the application's persisted state; in lieu of them having to
