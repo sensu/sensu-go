@@ -6,12 +6,23 @@ import (
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
+
+func TestEntityTypeMetadataField(t *testing.T) {
+	src := corev2.FixtureEntity("bug")
+	impl := entityImpl{}
+
+	res, err := impl.Metadata(graphql.ResolveParams{Source: src})
+	require.NoError(t, err)
+	assert.NotEmpty(t, res)
+	assert.IsType(t, v2.ObjectMeta{}, res)
+}
 
 func TestEntityTypeRelatedField(t *testing.T) {
 	source := corev2.FixtureEntity("c")

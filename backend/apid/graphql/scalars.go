@@ -38,14 +38,6 @@ func (jsonImpl) Serialize(val interface{}) interface{} {
 	return val
 }
 
-type jsonWrapper struct {
-	data []byte
-}
-
-func (w jsonWrapper) MarshalJSON() ([]byte, error) {
-	return w.data, nil
-}
-
 // Implement ScalarResolver for JSON type
 
 type unsignedIntegerImpl struct{}
