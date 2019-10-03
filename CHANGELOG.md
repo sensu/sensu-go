@@ -42,6 +42,7 @@ check for a keepalive.
 - Do not separate asset builds into several assets unless the the tabular format
 is used in `sensuctl asset list`.
 - Fix the 'flag accessed but not defined' error in `sensuctl asset outdated`
+- Fixed a bug where checks would stop executing after a network error.
 
 ## [5.13.2] - 2019-09-19
 
