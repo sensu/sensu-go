@@ -384,7 +384,7 @@ func (a *Agent) StartStatsd(ctx context.Context) {
 	logger.Info("starting statsd server on address: ", a.statsdServer.MetricsAddr)
 
 	go func() {
-		if err := a.statsdServer.Run(ctx); err != nil && err != ctx.Err() {
+		if err := a.statsdServer.Run(ctx); err != nil && err != context.Canceled {
 			logger.WithError(err).Errorf("error with statsd server on address: %s, statsd listener will not run", a.statsdServer.MetricsAddr)
 		}
 	}()

@@ -48,6 +48,8 @@ type Agentd struct {
 	bus        messaging.MessageBus
 	tls        *corev2.TLSOptions
 	ringPool   *ringv2.Pool
+	ctx        context.Context
+	cancel     context.CancelFunc
 }
 
 // Config configures an Agentd.
@@ -65,6 +67,7 @@ type Option func(*Agentd) error
 
 // New creates a new Agentd.
 func New(c Config, opts ...Option) (*Agentd, error) {
+	ctx, cancel := context.WithCancel(context.Background())
 	a := &Agentd{
 		Host:     c.Host,
 		Port:     c.Port,
@@ -76,6 +79,8 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		wg:       &sync.WaitGroup{},
 		errChan:  make(chan error, 1),
 		ringPool: c.RingPool,
+		ctx:      ctx,
+		cancel:   cancel,
 	}
 
 	// prepare server TLS config
@@ -140,6 +145,7 @@ func (a *Agentd) Start() error {
 
 // Stop Agentd.
 func (a *Agentd) Stop() error {
+	a.cancel()
 	if err := a.httpServer.Shutdown(context.TODO()); err != nil {
 		// failure/timeout shutting down the server gracefully
 		logger.Error("failed to shutdown http server gracefully - forcing shutdown")
@@ -207,7 +213,7 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	cfg.Subscriptions = addEntitySubscription(cfg.AgentName, cfg.Subscriptions)
 
-	session, err := NewSession(cfg, transport.NewTransport(conn), a.bus, a.store, unmarshal, marshal)
+	session, err := NewSession(a.ctx, cfg, transport.NewTransport(conn), a.bus, a.store, unmarshal, marshal)
 	if err != nil {
 		logger.WithError(err).Error("failed to create session")
 		http.Error(w, err.Error(), http.StatusInternalServerError)

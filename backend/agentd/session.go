@@ -62,7 +62,6 @@ type Session struct {
 	conn         transport.Transport
 	store        SessionStore
 	handler      *handler.MessageHandler
-	stopping     chan struct{}
 	wg           *sync.WaitGroup
 	sendq        chan *transport.Message
 	checkChannel chan interface{}
@@ -100,11 +99,9 @@ type SessionConfig struct {
 // connection, message bus, and store.
 // The Session is responsible for stopping itself, and does so when it
 // encounters a receive error.
-func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store store.Store, unmarshal UnmarshalFunc, marshal MarshalFunc) (*Session, error) {
+func NewSession(ctx context.Context, cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store store.Store, unmarshal UnmarshalFunc, marshal MarshalFunc) (*Session, error) {
 	// Validate the agent namespace
-	ctx, cancel := context.WithCancel(context.Background())
 	if _, err := store.GetNamespace(ctx, cfg.Namespace); err != nil {
-		defer cancel()
 		return nil, fmt.Errorf(
 			"could not retrieve the namespace '%s': %s", cfg.Namespace, err.Error(),
 		)
@@ -117,10 +114,11 @@ func NewSession(cfg SessionConfig, conn transport.Transport, bus messaging.Messa
 		"subscriptions": cfg.Subscriptions,
 	}).Info("agent connected")
 
+	ctx, cancel := context.WithCancel(ctx)
+
 	s := &Session{
 		conn:          conn,
 		cfg:           cfg,
-		stopping:      make(chan struct{}, 1),
 		wg:            &sync.WaitGroup{},
 		sendq:         make(chan *transport.Message, 10),
 		checkChannel:  make(chan interface{}, 100),
@@ -144,24 +142,13 @@ func (s *Session) Receiver() chan<- interface{} {
 
 func (s *Session) recvPump() {
 	defer func() {
-		logger.Info("session disconnected - stopping recvPump")
+		s.cancel()
 		s.wg.Done()
-		select {
-		case <-s.stopping:
-		default:
-			s.Stop()
-		}
 	}()
 
-	// TODO(eric): replace s.stopping with a context and use it here
-	ctx, cancel := context.WithCancel(context.TODO())
-	defer cancel()
-
 	for {
-		select {
-		case <-s.stopping:
+		if err := s.ctx.Err(); err != nil {
 			return
-		default:
 		}
 		msg, err := s.conn.Receive()
 		if err != nil {
@@ -178,7 +165,7 @@ func (s *Session) recvPump() {
 				continue
 			}
 		}
-		if err := s.handler.Handle(ctx, msg.Type, msg.Payload); err != nil {
+		if err := s.handler.Handle(s.ctx, msg.Type, msg.Payload); err != nil {
 			logger.WithError(err).WithFields(logrus.Fields{
 				"type":    msg.Type,
 				"payload": string(msg.Payload)}).Error("error handling message")
@@ -188,6 +175,7 @@ func (s *Session) recvPump() {
 
 func (s *Session) subPump() {
 	defer func() {
+		s.cancel()
 		s.wg.Done()
 		logger.Info("shutting down - stopping subPump")
 	}()
@@ -209,7 +197,7 @@ func (s *Session) subPump() {
 
 			msg := transport.NewMessage(corev2.CheckRequestType, configBytes)
 			s.sendq <- msg
-		case <-s.stopping:
+		case <-s.ctx.Done():
 			return
 		}
 	}
@@ -217,6 +205,7 @@ func (s *Session) subPump() {
 
 func (s *Session) sendPump() {
 	defer func() {
+		s.cancel()
 		s.wg.Done()
 		logger.Info("shutting down - stopping sendPump")
 	}()
@@ -234,7 +223,7 @@ func (s *Session) sendPump() {
 					logger.WithError(err).Error("send error")
 				}
 			}
-		case <-s.stopping:
+		case <-s.ctx.Done():
 			return
 		}
 	}
@@ -252,13 +241,17 @@ func (s *Session) Start() (err error) {
 	go s.sendPump()
 	go s.recvPump()
 	go s.subPump()
+	go func() {
+		<-s.ctx.Done()
+		s.stop()
+	}()
 
 	namespace := s.cfg.Namespace
 	agentName := fmt.Sprintf("%s:%s", namespace, s.cfg.AgentName)
 
 	defer func() {
 		if err != nil {
-			s.Stop()
+			s.cancel()
 		}
 	}()
 
@@ -285,9 +278,18 @@ func (s *Session) Start() (err error) {
 // Stop a running session. This will cause the send and receive loops to
 // shutdown. Blocks until the session has shutdown.
 func (s *Session) Stop() {
+	s.cancel()
+	s.wg.Wait()
+}
+
+func (s *Session) stop() {
+	defer func() {
+		if err := s.conn.Close(); err != nil {
+			logger.WithError(err).Error("error closing session")
+		}
+	}()
+
 	sessionCounter.WithLabelValues(s.cfg.Namespace).Dec()
-	defer s.cancel()
-	close(s.stopping)
 	s.wg.Wait()
 
 	for sub := range s.subscriptions {
@@ -296,6 +298,11 @@ func (s *Session) Stop() {
 		}
 	}
 	close(s.checkChannel)
+	if s.ringPool == nil {
+		// This is a bit of a hack - allow ringPool to be nil for the benefit
+		// of the tests.
+		return
+	}
 	for _, sub := range s.cfg.Subscriptions {
 		ring := s.ringPool.Get(ringv2.Path(s.cfg.Namespace, sub))
 		logger.WithFields(logrus.Fields{

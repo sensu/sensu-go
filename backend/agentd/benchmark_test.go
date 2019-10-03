@@ -1,6 +1,7 @@
 package agentd
 
 import (
+	"context"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -32,7 +33,7 @@ func BenchmarkSubPump(b *testing.B) {
 		Namespace:     "acme",
 		Subscriptions: []string{"testing"},
 	}
-	session, err := NewSession(cfg, conn, bus, st, UnmarshalJSON, MarshalJSON)
+	session, err := NewSession(context.Background(), cfg, conn, bus, st, UnmarshalJSON, MarshalJSON)
 	if err != nil {
 		b.Fatal(err)
 	}

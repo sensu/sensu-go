@@ -77,7 +77,7 @@ func TestGoodSessionConfig(t *testing.T) {
 		Namespace:     "acme",
 		Subscriptions: []string{"testing"},
 	}
-	session, err := NewSession(cfg, conn, bus, st, UnmarshalJSON, MarshalJSON)
+	session, err := NewSession(context.Background(), cfg, conn, bus, st, UnmarshalJSON, MarshalJSON)
 	assert.NotNil(t, session)
 	assert.NoError(t, err)
 }
@@ -103,7 +103,7 @@ func TestGoodSessionConfigProto(t *testing.T) {
 		Namespace:     "acme",
 		Subscriptions: []string{"testing"},
 	}
-	session, err := NewSession(cfg, conn, bus, st, proto.Unmarshal, proto.Marshal)
+	session, err := NewSession(context.Background(), cfg, conn, bus, st, proto.Unmarshal, proto.Marshal)
 	assert.NotNil(t, session)
 	assert.NoError(t, err)
 }
@@ -132,7 +132,7 @@ func TestBadSessionConfig(t *testing.T) {
 	cfg := SessionConfig{
 		Subscriptions: []string{"testing"},
 	}
-	session, err := NewSession(cfg, conn, bus, st, UnmarshalJSON, MarshalJSON)
+	session, err := NewSession(context.Background(), cfg, conn, bus, st, UnmarshalJSON, MarshalJSON)
 	assert.Nil(t, session)
 	assert.Error(t, err)
 }
@@ -152,6 +152,7 @@ func TestSessionTerminateOnSendError(t *testing.T) {
 
 	conn.On("Receive").After(100*time.Millisecond).Return(tm, nil)
 	conn.On("Send", mock.Anything).Return(transport.ConnectionError{"some horrible network outage"})
+	conn.On("Close").Return(nil)
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	if err != nil {
@@ -173,7 +174,7 @@ func TestSessionTerminateOnSendError(t *testing.T) {
 		Namespace:     "acme",
 		Subscriptions: []string{"testing"},
 	}
-	session, err := NewSession(cfg, conn, bus, st, UnmarshalJSON, MarshalJSON)
+	session, err := NewSession(context.Background(), cfg, conn, bus, st, UnmarshalJSON, MarshalJSON)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -184,7 +185,7 @@ func TestSessionTerminateOnSendError(t *testing.T) {
 		t.Fatal(err)
 	}
 	select {
-	case <-session.stopping:
+	case <-session.ctx.Done():
 	case <-time.After(time.Second * 5):
 		t.Fatal("broken session never stopped")
 	}
