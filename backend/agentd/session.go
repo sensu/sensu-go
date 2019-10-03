@@ -202,8 +202,10 @@ func (s *Session) sender() {
 			return
 		}
 		logger.WithField("payload_size", len(msg.Payload)).Debug("session - sending message")
-		if err := s.conn.SetWriteDeadline(time.Now().Add(time.Second * 10)); err != nil {
-			logger.WithError(err).Error("session connection couldn't set write deadline")
+		if wsc, ok := s.conn.(*transport.WebSocketTransport); ok {
+			if err := wsc.Connection.SetWriteDeadline(time.Now().Add(time.Second * 10)); err != nil {
+				logger.WithError(err).Error("session connection couldn't set write deadline")
+			}
 		}
 		if err := s.conn.Send(msg); err != nil {
 			switch err := err.(type) {
