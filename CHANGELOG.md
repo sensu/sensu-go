@@ -32,6 +32,8 @@ is front and center. Hopefully this should reduce any confusion around next
 steps.
 - Support agent TLS authentication, usable with a licensed sensu-backend.
 - Updated Go version from 1.12.3 to 1.13.1.
+- [GraphQL] `putWrapped` mutation now accepts wrapped JSON with empty
+outer objectmeta.
 
 ### Fixed
 - Splayed proxy checks are now executed every interval, instead of every
