@@ -60,6 +60,9 @@ func main() {
 		cfg.Subscriptions = subscriptions
 		cfg.AgentName = name
 		cfg.BackendURLs = backends
+		cfg.BackendHandshakeTimeout = 15
+		cfg.BackendHeartbeatInterval = 30
+		cfg.BackendHeartbeatTimeout = 45
 
 		agent, err := agent.NewAgent(cfg)
 		if err != nil {
