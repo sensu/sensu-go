@@ -3,6 +3,7 @@ package etcd
 import (
 	"context"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -31,6 +32,7 @@ type Watcher struct {
 	resultChan chan store.WatchEvent
 	opts       []clientv3.OpOption
 	logger     *logrus.Entry
+	wg         sync.WaitGroup
 }
 
 // Watch returns a Watcher for the given key. If recursive is true, then the
@@ -122,6 +124,9 @@ func (w *Watcher) start() {
 					opts = append(opts, clientv3.WithRev(w.revision))
 				}
 
+				// Wait for the previous goroutine to stop before starting another
+				w.wg.Wait()
+
 				w.watch(ctx, opts, watchChanStopped)
 			case <-w.ctx.Done():
 				// The consumer has cancelled this watcher, we need to exit
@@ -135,11 +140,13 @@ func (w *Watcher) start() {
 		// should stop everything. It's also fine to double cancel.
 		cancel()
 		w.cancel()
+		w.wg.Wait()
 		close(w.resultChan)
 	}()
 }
 
 func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChanStopped chan struct{}) {
+	w.wg.Add(1)
 	// Wrap the context with WithRequireLeader so ErrNoLeader is returned and the
 	// WatchChan is closed if the etcd server has no leader
 	ctx = clientv3.WithRequireLeader(ctx)
@@ -149,6 +156,7 @@ func (w *Watcher) watch(ctx context.Context, opts []clientv3.OpOption, watchChan
 	go func() {
 		// Loop over the watchChan channel to receive watch responses. The loop will
 		// exit if the channel is closed.
+		defer w.wg.Done()
 		for watchResponse := range watchChan {
 			if watchResponse.Err() != nil {
 				// We received an error from the channel, so let's assume it's no longer
