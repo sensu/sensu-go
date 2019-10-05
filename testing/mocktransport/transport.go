@@ -1,6 +1,7 @@
 package mocktransport
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/sensu/sensu-go/transport"
@@ -41,4 +42,8 @@ func (m *MockTransport) Reconnect(wsServerURL string, tlsOpts *types.TLSOptions,
 func (m *MockTransport) Send(message *transport.Message) error {
 	args := m.Called(message)
 	return args.Error(0)
+}
+
+func (m *MockTransport) Heartbeat(ctx context.Context, interval, timeout int) {
+	_ = m.Called(ctx, interval, timeout)
 }

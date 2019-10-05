@@ -27,6 +27,10 @@ const (
 	FlagPipelinedWorkers = "pipelined-workers"
 	// FlagPipelinedBufferSize defines the buffer size for pipelined
 	FlagPipelinedBufferSize = "pipelined-buffer-size"
+
+	// FlagAgentWriteTimeout specifies the time in seconds to wait before
+	// giving up on a write to an agent and disposing of the connection.
+	FlagAgentWriteTimeout = "agent-write-timeout"
 )
 
 // Config specifies a Backend configuration.
@@ -36,9 +40,10 @@ type Config struct {
 	CacheDir string
 
 	// Agentd Configuration
-	AgentHost       string
-	AgentPort       int
-	AgentTLSOptions *corev2.TLSOptions
+	AgentHost         string
+	AgentPort         int
+	AgentTLSOptions   *corev2.TLSOptions
+	AgentWriteTimeout int
 
 	// Apid Configuration
 	APIListenAddress string
