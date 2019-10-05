@@ -63,6 +63,7 @@ func main() {
 		cfg.BackendHandshakeTimeout = 15
 		cfg.BackendHeartbeatInterval = 30
 		cfg.BackendHeartbeatTimeout = 45
+		cfg.TLS = &types.TLSOptions{}
 
 		agent, err := agent.NewAgent(cfg)
 		if err != nil {
