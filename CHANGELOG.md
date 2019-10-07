@@ -53,6 +53,7 @@ is used in `sensuctl asset list`.
 - Fix generic API client's `SetTypeMeta` method. The APIGroup is now correctly
 configured and by virtue unintended authorization denied errs are avoided.
 - Fixed a bug where checks would stop executing after a network error.
+- Fixed a bug where sensuctl create with stdin was not working.
 
 ## [5.13.2] - 2019-09-19
 
