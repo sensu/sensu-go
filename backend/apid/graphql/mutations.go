@@ -54,7 +54,7 @@ func (r *mutationsImpl) PutWrapped(p schema.MutationPutWrappedFieldResolverParam
 		return nil, err
 	}
 
-	ctx := store.NamespaceContext(p.Context, ret.ObjectMeta.Namespace)
+	ctx := store.NamespaceContext(p.Context, ret.Value.GetObjectMeta().Namespace)
 
 	if upsert {
 		err = client.Update(ctx, ret.Value)
