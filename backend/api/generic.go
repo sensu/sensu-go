@@ -66,7 +66,8 @@ func (g *GenericClient) SetTypeMeta(meta corev2.TypeMeta) error {
 	if meta.APIVersion == "" {
 		meta.APIVersion = "core/v2"
 	}
-	g.APIGroup, g.APIVersion = path.Split(meta.APIVersion)
+	g.APIGroup = path.Dir(meta.APIVersion)
+	g.APIVersion = path.Base(meta.APIVersion)
 	kind, err := types.ResolveType(meta.APIVersion, meta.Type)
 	if err != nil {
 		return fmt.Errorf("error (SetTypeMeta): %s", err)
