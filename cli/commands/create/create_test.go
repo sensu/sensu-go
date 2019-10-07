@@ -141,3 +141,42 @@ func TestCreateCommandYAML(t *testing.T) {
 	client.AssertCalled(t, "PutResource", mock.Anything)
 	client.AssertCalled(t, "PutResource", mock.Anything)
 }
+
+func TestCreateCommandStdin(t *testing.T) {
+	cli := cmdtesting.NewMockCLI()
+	client := cli.Client.(*mockclient.MockClient)
+	client.On("PutResource", mock.Anything).Return(nil)
+	client.On("PutResource", mock.Anything).Return(nil)
+	client.On("PutResource", mock.Anything).Return(nil)
+
+	cmd := CreateCommand(cli)
+	td, err := ioutil.TempDir("", "")
+	require.NoError(t, err)
+	defer os.RemoveAll(td)
+
+	fp := filepath.Join(td, "input")
+
+	f, err := os.Create(fp)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := yamlSpecTmpl.Execute(f, yamlResources); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.Seek(0, 0); err != nil {
+		t.Fatal(err)
+	}
+
+	defer func(orig *os.File) {
+		os.Stdin = orig
+	}(os.Stdin)
+	os.Stdin = f
+
+	_, err = cmdtesting.RunCmd(cmd, nil)
+	require.NoError(t, err)
+
+	client.AssertCalled(t, "PutResource", mock.Anything)
+	client.AssertCalled(t, "PutResource", mock.Anything)
+	client.AssertCalled(t, "PutResource", mock.Anything)
+}
