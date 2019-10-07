@@ -37,7 +37,7 @@ func (e *EventClient) UpdateEvent(ctx context.Context, event *corev2.Event) erro
 	if err := event.Validate(); err != nil {
 		return fmt.Errorf("couldn't create event: %s", err)
 	}
-	attrs := eventCreateAttributes(ctx)
+	attrs := eventUpdateAttributes(ctx)
 	if err := authorize(ctx, e.auth, attrs); err != nil {
 		return err
 	}
@@ -80,13 +80,13 @@ func (e *EventClient) ListEvents(ctx context.Context, pred *store.SelectionPredi
 	return events, nil
 }
 
-func eventCreateAttributes(ctx context.Context) *authorization.Attributes {
+func eventUpdateAttributes(ctx context.Context) *authorization.Attributes {
 	return &authorization.Attributes{
 		APIGroup:   "core",
 		APIVersion: "v2",
 		Namespace:  corev2.ContextNamespace(ctx),
 		Resource:   "events",
-		Verb:       "create,update",
+		Verb:       "update",
 	}
 }
 
