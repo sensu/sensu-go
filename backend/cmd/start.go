@@ -158,6 +158,7 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 			cfg := &backend.Config{
 				AgentHost:             viper.GetString(flagAgentHost),
 				AgentPort:             viper.GetInt(flagAgentPort),
+				AgentWriteTimeout:     viper.GetInt(backend.FlagAgentWriteTimeout),
 				APIListenAddress:      viper.GetString(flagAPIListenAddress),
 				APIURL:                viper.GetString(flagAPIURL),
 				DashboardHost:         viper.GetString(flagDashboardHost),
@@ -287,6 +288,7 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	viper.SetDefault(backend.FlagKeepalivedBufferSize, 100)
 	viper.SetDefault(backend.FlagPipelinedWorkers, 100)
 	viper.SetDefault(backend.FlagPipelinedBufferSize, 100)
+	viper.SetDefault(backend.FlagAgentWriteTimeout, 15)
 
 	// Etcd defaults
 	viper.SetDefault(flagEtcdAdvertiseClientURLs, defaultEtcdAdvertiseClientURL)
@@ -331,6 +333,7 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	cmd.Flags().Int(backend.FlagKeepalivedBufferSize, viper.GetInt(backend.FlagKeepalivedBufferSize), "number of incoming keepalives that can be buffered")
 	cmd.Flags().Int(backend.FlagPipelinedWorkers, viper.GetInt(backend.FlagPipelinedWorkers), "number of workers spawned for handling events through the event pipeline")
 	cmd.Flags().Int(backend.FlagPipelinedBufferSize, viper.GetInt(backend.FlagPipelinedBufferSize), "number of events to handle that can be buffered")
+	cmd.Flags().Int(backend.FlagAgentWriteTimeout, viper.GetInt(backend.FlagAgentWriteTimeout), "timeout in seconds for agent writes")
 
 	// Etcd flags
 	cmd.Flags().StringSlice(flagEtcdAdvertiseClientURLs, viper.GetStringSlice(flagEtcdAdvertiseClientURLs), "list of this member's client URLs to advertise to the rest of the cluster.")

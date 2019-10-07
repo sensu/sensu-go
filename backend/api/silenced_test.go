@@ -348,7 +348,7 @@ func TestUpdateSilenced(t *testing.T) {
 							Resource:     "silenced",
 							ResourceName: "default:default",
 							UserName:     "legit",
-							Verb:         "create,update",
+							Verb:         "update",
 						}: true,
 					},
 				}

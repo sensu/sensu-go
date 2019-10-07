@@ -34,6 +34,8 @@ steps.
 - Updated Go version from 1.12.3 to 1.13.1.
 
 ### Fixed
+- [Web] Fixed issue where a user with an appropriate role may have been unable
+to resolve events, queue checks, and create silenced entries.
 - Splayed proxy checks are now executed every interval, instead of every
 `interval + interval * splay_coverage`.
 - [GraphQL] Ensures that proxy entity label & annotations are redacted.
@@ -48,6 +50,7 @@ is used in `sensuctl asset list`.
 - Fix the 'flag accessed but not defined' error in `sensuctl asset outdated`
 - Fix generic API client's `SetTypeMeta` method. The APIGroup is now correctly
 configured and by virtue unintended authorization denied errs are avoided.
+- Fixed a bug where checks would stop executing after a network error.
 
 ## [5.13.2] - 2019-09-19
 
