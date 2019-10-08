@@ -11,7 +11,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Opening an already open Bolt database should not cause sensu-agent to hang
 indefinitely.
 
-## [5.14.0] - 2019-10-03
 ## [5.14.0] - 2019-10-08
 
 ### Added
