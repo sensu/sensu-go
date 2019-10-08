@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/url"
 	"path"
-	"strings"
 )
 
 const (
@@ -54,8 +53,6 @@ func APIKeyFields(r Resource) map[string]string {
 	return map[string]string{
 		"api_key.name":     resource.ObjectMeta.Name,
 		"api_key.username": resource.Username,
-		"api_key.groups":   strings.Join(resource.Groups, ","),
-		"api_key.key":      resource.Key,
 	}
 }
 

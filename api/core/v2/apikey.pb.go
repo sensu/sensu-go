@@ -28,14 +28,10 @@ const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 type APIKey struct {
 	// Metadata contains the name, namespace (N/A), labels and annotations of the APIKey.
 	ObjectMeta `protobuf:"bytes,1,opt,name=metadata,proto3,embedded=metadata" json:"metadata,omitempty"`
-	// Key is the API key id.
-	Key string `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
 	// Username is the username associated with the API key.
-	Username string `protobuf:"bytes,3,opt,name=username,proto3" json:"username,omitempty"`
-	// Groups are the groups associated with the API key.
-	Groups []string `protobuf:"bytes,4,rep,name=groups,proto3" json:"groups,omitempty"`
+	Username string `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
 	// CreatedAt is a timestamp which the API key was created.
-	CreatedAt            int64    `protobuf:"varint,5,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
+	CreatedAt            int64    `protobuf:"varint,3,opt,name=created_at,json=createdAt,proto3" json:"created_at,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -81,26 +77,24 @@ func init() {
 func init() { proto.RegisterFile("apikey.proto", fileDescriptor_c99fd356877382bd) }
 
 var fileDescriptor_c99fd356877382bd = []byte{
-	// 301 bytes of a gzipped FileDescriptorProto
+	// 270 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x49, 0x2c, 0xc8, 0xcc,
 	0x4e, 0xad, 0xd4, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2d, 0x4e, 0xcd, 0x2b, 0x2e, 0xd5,
 	0x4b, 0xce, 0x2f, 0x4a, 0xd5, 0x2b, 0x33, 0x92, 0x32, 0x49, 0xcf, 0x2c, 0xc9, 0x28, 0x4d, 0xd2,
 	0x4b, 0xce, 0xcf, 0xd5, 0x4f, 0xcf, 0x4f, 0xcf, 0xd7, 0x07, 0xab, 0x4a, 0x2a, 0x4d, 0x73, 0x28,
 	0x33, 0xd4, 0x33, 0xd2, 0x33, 0x04, 0x0b, 0x82, 0xc5, 0xc0, 0x2c, 0x88, 0x21, 0x52, 0x5c, 0xb9,
-	0xa9, 0x25, 0x89, 0x10, 0xb6, 0xd2, 0x39, 0x46, 0x2e, 0x36, 0xc7, 0x00, 0x4f, 0xef, 0xd4, 0x4a,
+	0xa9, 0x25, 0x89, 0x10, 0xb6, 0xd2, 0x12, 0x46, 0x2e, 0x36, 0xc7, 0x00, 0x4f, 0xef, 0xd4, 0x4a,
 	0xa1, 0x50, 0x2e, 0x0e, 0x90, 0x44, 0x4a, 0x62, 0x49, 0xa2, 0x04, 0xa3, 0x02, 0xa3, 0x06, 0xb7,
 	0x91, 0xa4, 0x1e, 0x8a, 0x75, 0x7a, 0xfe, 0x49, 0x59, 0xa9, 0xc9, 0x25, 0xbe, 0xa9, 0x25, 0x89,
 	0x4e, 0x72, 0x27, 0xee, 0xc9, 0x33, 0x5c, 0xb8, 0x27, 0xcf, 0xf8, 0xea, 0x9e, 0xbc, 0x10, 0x4c,
-	0x9b, 0x4e, 0x7e, 0x6e, 0x66, 0x49, 0x6a, 0x6e, 0x41, 0x49, 0x65, 0x10, 0xdc, 0x28, 0x21, 0x01,
-	0x2e, 0xe6, 0xec, 0xd4, 0x4a, 0x09, 0x26, 0x05, 0x46, 0x0d, 0xce, 0x20, 0x10, 0x53, 0x48, 0x8a,
-	0x8b, 0xa3, 0xb4, 0x38, 0xb5, 0x28, 0x2f, 0x31, 0x37, 0x55, 0x82, 0x19, 0x2c, 0x0c, 0xe7, 0x0b,
-	0x89, 0x71, 0xb1, 0xa5, 0x17, 0xe5, 0x97, 0x16, 0x14, 0x4b, 0xb0, 0x28, 0x30, 0x6b, 0x70, 0x06,
-	0x41, 0x79, 0x42, 0xb2, 0x5c, 0x5c, 0xc9, 0x45, 0xa9, 0x89, 0x25, 0xa9, 0x29, 0xf1, 0x89, 0x25,
-	0x12, 0xac, 0x0a, 0x8c, 0x1a, 0xcc, 0x41, 0x9c, 0x50, 0x11, 0xc7, 0x12, 0x2b, 0x8e, 0x8e, 0x05,
-	0xf2, 0x0c, 0x2b, 0x16, 0xc8, 0x33, 0x3a, 0x29, 0xfc, 0x78, 0x28, 0xc7, 0xb8, 0xe2, 0x91, 0x1c,
-	0xe3, 0x8e, 0x47, 0x72, 0x8c, 0x27, 0x1e, 0xc9, 0x31, 0x5e, 0x78, 0x24, 0xc7, 0xf8, 0xe0, 0x91,
-	0x1c, 0xe3, 0x8c, 0xc7, 0x72, 0x0c, 0x51, 0x4c, 0x65, 0x46, 0x49, 0x6c, 0x60, 0x9f, 0x1b, 0x03,
-	0x02, 0x00, 0x00, 0xff, 0xff, 0x41, 0x8e, 0x3e, 0x32, 0x5a, 0x01, 0x00, 0x00,
+	0x9b, 0x4e, 0x7e, 0x6e, 0x66, 0x49, 0x6a, 0x6e, 0x41, 0x49, 0x65, 0x10, 0xdc, 0x28, 0x21, 0x29,
+	0x2e, 0x8e, 0xd2, 0xe2, 0xd4, 0xa2, 0xbc, 0xc4, 0xdc, 0x54, 0x09, 0x26, 0x05, 0x46, 0x0d, 0xce,
+	0x20, 0x38, 0x5f, 0x48, 0x96, 0x8b, 0x2b, 0xb9, 0x28, 0x35, 0xb1, 0x24, 0x35, 0x25, 0x3e, 0xb1,
+	0x44, 0x82, 0x59, 0x81, 0x51, 0x83, 0x39, 0x88, 0x13, 0x2a, 0xe2, 0x58, 0x62, 0xc5, 0xd1, 0xb1,
+	0x40, 0x9e, 0x61, 0xc5, 0x02, 0x79, 0x46, 0x27, 0x85, 0x1f, 0x0f, 0xe5, 0x18, 0x57, 0x3c, 0x92,
+	0x63, 0xdc, 0xf1, 0x48, 0x8e, 0xf1, 0xc4, 0x23, 0x39, 0xc6, 0x0b, 0x8f, 0xe4, 0x18, 0x1f, 0x3c,
+	0x92, 0x63, 0x9c, 0xf1, 0x58, 0x8e, 0x21, 0x8a, 0xa9, 0xcc, 0x28, 0x89, 0x0d, 0xec, 0x1f, 0x63,
+	0x40, 0x00, 0x00, 0x00, 0xff, 0xff, 0xce, 0x78, 0xef, 0xf3, 0x30, 0x01, 0x00, 0x00,
 }
 
 func (this *APIKey) Equal(that interface{}) bool {
@@ -125,19 +119,8 @@ func (this *APIKey) Equal(that interface{}) bool {
 	if !this.ObjectMeta.Equal(&that1.ObjectMeta) {
 		return false
 	}
-	if this.Key != that1.Key {
-		return false
-	}
 	if this.Username != that1.Username {
 		return false
-	}
-	if len(this.Groups) != len(that1.Groups) {
-		return false
-	}
-	for i := range this.Groups {
-		if this.Groups[i] != that1.Groups[i] {
-			return false
-		}
 	}
 	if this.CreatedAt != that1.CreatedAt {
 		return false
@@ -151,9 +134,7 @@ func (this *APIKey) Equal(that interface{}) bool {
 type APIKeyFace interface {
 	Proto() github_com_golang_protobuf_proto.Message
 	GetObjectMeta() ObjectMeta
-	GetKey() string
 	GetUsername() string
-	GetGroups() []string
 	GetCreatedAt() int64
 }
 
@@ -169,16 +150,8 @@ func (this *APIKey) GetObjectMeta() ObjectMeta {
 	return this.ObjectMeta
 }
 
-func (this *APIKey) GetKey() string {
-	return this.Key
-}
-
 func (this *APIKey) GetUsername() string {
 	return this.Username
-}
-
-func (this *APIKey) GetGroups() []string {
-	return this.Groups
 }
 
 func (this *APIKey) GetCreatedAt() int64 {
@@ -188,9 +161,7 @@ func (this *APIKey) GetCreatedAt() int64 {
 func NewAPIKeyFromFace(that APIKeyFace) *APIKey {
 	this := &APIKey{}
 	this.ObjectMeta = that.GetObjectMeta()
-	this.Key = that.GetKey()
 	this.Username = that.GetUsername()
-	this.Groups = that.GetGroups()
 	this.CreatedAt = that.GetCreatedAt()
 	return this
 }
@@ -218,35 +189,14 @@ func (m *APIKey) MarshalTo(dAtA []byte) (int, error) {
 		return 0, err
 	}
 	i += n1
-	if len(m.Key) > 0 {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintApikey(dAtA, i, uint64(len(m.Key)))
-		i += copy(dAtA[i:], m.Key)
-	}
 	if len(m.Username) > 0 {
-		dAtA[i] = 0x1a
+		dAtA[i] = 0x12
 		i++
 		i = encodeVarintApikey(dAtA, i, uint64(len(m.Username)))
 		i += copy(dAtA[i:], m.Username)
 	}
-	if len(m.Groups) > 0 {
-		for _, s := range m.Groups {
-			dAtA[i] = 0x22
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
-		}
-	}
 	if m.CreatedAt != 0 {
-		dAtA[i] = 0x28
+		dAtA[i] = 0x18
 		i++
 		i = encodeVarintApikey(dAtA, i, uint64(m.CreatedAt))
 	}
@@ -269,19 +219,13 @@ func NewPopulatedAPIKey(r randyApikey, easy bool) *APIKey {
 	this := &APIKey{}
 	v1 := NewPopulatedObjectMeta(r, easy)
 	this.ObjectMeta = *v1
-	this.Key = string(randStringApikey(r))
 	this.Username = string(randStringApikey(r))
-	v2 := r.Intn(10)
-	this.Groups = make([]string, v2)
-	for i := 0; i < v2; i++ {
-		this.Groups[i] = string(randStringApikey(r))
-	}
 	this.CreatedAt = int64(r.Int63())
 	if r.Intn(2) == 0 {
 		this.CreatedAt *= -1
 	}
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedApikey(r, 6)
+		this.XXX_unrecognized = randUnrecognizedApikey(r, 4)
 	}
 	return this
 }
@@ -305,9 +249,9 @@ func randUTF8RuneApikey(r randyApikey) rune {
 	return rune(ru + 61)
 }
 func randStringApikey(r randyApikey) string {
-	v3 := r.Intn(100)
-	tmps := make([]rune, v3)
-	for i := 0; i < v3; i++ {
+	v2 := r.Intn(100)
+	tmps := make([]rune, v2)
+	for i := 0; i < v2; i++ {
 		tmps[i] = randUTF8RuneApikey(r)
 	}
 	return string(tmps)
@@ -329,11 +273,11 @@ func randFieldApikey(dAtA []byte, r randyApikey, fieldNumber int, wire int) []by
 	switch wire {
 	case 0:
 		dAtA = encodeVarintPopulateApikey(dAtA, uint64(key))
-		v4 := r.Int63()
+		v3 := r.Int63()
 		if r.Intn(2) == 0 {
-			v4 *= -1
+			v3 *= -1
 		}
-		dAtA = encodeVarintPopulateApikey(dAtA, uint64(v4))
+		dAtA = encodeVarintPopulateApikey(dAtA, uint64(v3))
 	case 1:
 		dAtA = encodeVarintPopulateApikey(dAtA, uint64(key))
 		dAtA = append(dAtA, byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)), byte(r.Intn(256)))
@@ -366,19 +310,9 @@ func (m *APIKey) Size() (n int) {
 	_ = l
 	l = m.ObjectMeta.Size()
 	n += 1 + l + sovApikey(uint64(l))
-	l = len(m.Key)
-	if l > 0 {
-		n += 1 + l + sovApikey(uint64(l))
-	}
 	l = len(m.Username)
 	if l > 0 {
 		n += 1 + l + sovApikey(uint64(l))
-	}
-	if len(m.Groups) > 0 {
-		for _, s := range m.Groups {
-			l = len(s)
-			n += 1 + l + sovApikey(uint64(l))
-		}
 	}
 	if m.CreatedAt != 0 {
 		n += 1 + sovApikey(uint64(m.CreatedAt))
@@ -466,38 +400,6 @@ func (m *APIKey) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Key", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowApikey
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthApikey
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthApikey
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Key = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Username", wireType)
 			}
 			var stringLen uint64
@@ -528,39 +430,7 @@ func (m *APIKey) Unmarshal(dAtA []byte) error {
 			}
 			m.Username = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Groups", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowApikey
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthApikey
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthApikey
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Groups = append(m.Groups, string(dAtA[iNdEx:postIndex]))
-			iNdEx = postIndex
-		case 5:
+		case 3:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field CreatedAt", wireType)
 			}

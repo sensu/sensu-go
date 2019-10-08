@@ -54,12 +54,12 @@ func (r *APIKeysRouter) create(w http.ResponseWriter, req *http.Request) {
 	}
 
 	// set/overwrite the key id and created_at time
-	uuidKey, err := uuid.NewRandom()
+	key, err := uuid.NewRandom()
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	apikey.Key = uuidKey.String()
+	apikey.Name = key.String()
 	apikey.CreatedAt = time.Now().Unix()
 	newBytes, err := json.Marshal(apikey)
 	if err != nil {
@@ -96,6 +96,6 @@ func (r *APIKeysRouter) update(req *http.Request) (interface{}, error) {
 	}
 
 	// only allow groups to be updated
-	stored.Groups = apikey.Groups
+	stored.Username = apikey.Username
 	return stored, r.handlers.Store.CreateOrUpdateResource(req.Context(), stored)
 }

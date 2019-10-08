@@ -21,15 +21,9 @@ message APIKey {
   // Metadata contains the name, namespace (N/A), labels and annotations of the APIKey.
   ObjectMeta metadata = 1 [(gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false];
 
-  // Key is the API key id.
-  string key = 2;
-
   // Username is the username associated with the API key.
-  string username = 3;
-
-  // Groups are the groups associated with the API key.
-  repeated string groups = 4;
+  string username = 2;
 
   // CreatedAt is a timestamp which the API key was created.
-  int64 created_at = 5;
+  int64 created_at = 3;
 }
