@@ -87,6 +87,16 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 	cfg.AdvertiseClientURLs = config.EtcdAdvertiseClientURLs
 	cfg.Name = config.EtcdName
 
+	// Heartbeat interval
+	if config.EtcdHeartbeatInterval > 0 {
+		cfg.TickMs = config.EtcdHeartbeatInterval
+	}
+
+	// Election timeout
+	if config.EtcdElectionTimeout > 0 {
+		cfg.ElectionMs = config.EtcdElectionTimeout
+	}
+
 	// Etcd TLS config
 	cfg.ClientTLSInfo = config.EtcdClientTLSInfo
 	cfg.PeerTLSInfo = config.EtcdPeerTLSInfo
@@ -232,12 +242,13 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize agentd
 	agent, err := agentd.New(agentd.Config{
-		Host:     config.AgentHost,
-		Port:     config.AgentPort,
-		Bus:      bus,
-		Store:    stor,
-		TLS:      config.AgentTLSOptions,
-		RingPool: ringPool,
+		Host:         config.AgentHost,
+		Port:         config.AgentPort,
+		Bus:          bus,
+		Store:        stor,
+		TLS:          config.AgentTLSOptions,
+		RingPool:     ringPool,
+		WriteTimeout: config.AgentWriteTimeout,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)

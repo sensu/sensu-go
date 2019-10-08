@@ -47,3 +47,13 @@ func TestEtcdHealthy(t *testing.T) {
 	health := e.Healthy()
 	assert.True(t, health)
 }
+
+func TestGetClientURLs(t *testing.T) {
+	etcd, cleanup := NewTestEtcd(t)
+	defer cleanup()
+
+	clientURLs := etcd.GetClientURLs()
+	if got, want := len(clientURLs), 1; got < want {
+		t.Fatalf("got %d client URLs, want at least %d", got, want)
+	}
+}

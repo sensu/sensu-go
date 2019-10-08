@@ -38,6 +38,19 @@ const (
 	// DefaultQuotaBackendBytes is the default database size limit for etcd
 	// databases (4 GB)
 	DefaultQuotaBackendBytes int64 = (1 << 32)
+
+	// DefaultTickMs is the default Heartbeat Interval. This is the interval
+	// with which the leader will notify followers that it is still the leader.
+	// For best practices, the parameter should be set around round-trip time
+	// between members.
+	// See: https://github.com/etcd-io/etcd/blob/master/Documentation/tuning.md#time-parameters
+	DefaultTickMs = 100
+
+	// DefaultElectionMs is the default Election Timeout. This timeout is how
+	// long a follower node will go without hearing a heartbeat before
+	// attempting to become leader itself.
+	// See: https://github.com/etcd-io/etcd/blob/master/Documentation/tuning.md#time-parameters
+	DefaultElectionMs = 1000
 )
 
 func init() {
@@ -46,8 +59,17 @@ func init() {
 
 // Config is a configuration for the embedded etcd
 type Config struct {
-	DataDir                  string
-	Name                     string // Cluster Member Name
+	DataDir string
+
+	// Cluster Member Name
+	Name string
+
+	// Heartbeat interval
+	TickMs uint
+
+	// Election Timeout
+	ElectionMs uint
+
 	AdvertiseClientURLs      []string
 	ListenPeerURLs           []string
 	ListenClientURLs         []string
@@ -74,6 +96,8 @@ func NewConfig() *Config {
 	c.DataDir = path.SystemCacheDir("sensu-backend")
 	c.MaxRequestBytes = DefaultMaxRequestBytes
 	c.QuotaBackendBytes = DefaultQuotaBackendBytes
+	c.TickMs = DefaultTickMs
+	c.ElectionMs = DefaultElectionMs
 
 	return c
 }
@@ -157,6 +181,10 @@ func NewEtcd(config *Config) (*Etcd, error) {
 		return nil, err
 	}
 
+	// Heartbeat and Election timeouts
+	cfg.TickMs = config.TickMs
+	cfg.ElectionMs = config.ElectionMs
+
 	// Client config
 	cfg.ACUrls = acURLs
 	cfg.LCUrls = lcURLs
@@ -234,4 +262,14 @@ func (e *Etcd) Healthy() bool {
 	mapi := client.Maintenance
 	_, err = mapi.Status(context.TODO(), e.cfg.AdvertiseClientURLs[0])
 	return err == nil
+}
+
+// GetClientURLs gets the valid client URLs for the etcd server.
+func (e *Etcd) GetClientURLs() []string {
+	listeners := e.etcd.Clients
+	results := make([]string, 0, len(listeners))
+	for _, list := range listeners {
+		results = append(results, list.Addr().String())
+	}
+	return results
 }

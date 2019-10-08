@@ -76,6 +76,9 @@ func (c *CheckConfig) StorePrefix() string {
 
 // URIPath returns the path component of a CheckConfig URI.
 func (c *CheckConfig) URIPath() string {
+	if c.Namespace == "" {
+		return path.Join(URLPrefix, ChecksResource, url.PathEscape(c.Name))
+	}
 	return path.Join(URLPrefix, "namespaces", url.PathEscape(c.Namespace), ChecksResource, url.PathEscape(c.Name))
 }
 

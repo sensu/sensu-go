@@ -132,6 +132,9 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		if err != nil {
 			return err
 		}
+		if len(inputs) == 0 {
+			return processStdin(cli, client)
+		}
 		recurse, err := cmd.Flags().GetBool("recursive")
 		if err != nil {
 			return err
@@ -143,6 +146,17 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		}
 		return nil
 	}
+}
+
+func processStdin(cli *cli.SensuCli, client *http.Client) error {
+	resources, err := ParseResources(os.Stdin)
+	if err != nil {
+		return fmt.Errorf("in stdin: %s", err)
+	}
+	if err := ValidateResources(resources, cli.Config.Namespace()); err != nil {
+		return err
+	}
+	return PutResources(cli.Client, resources)
 }
 
 var jsonRe = regexp.MustCompile(`^(\s)*[\{\[]`)

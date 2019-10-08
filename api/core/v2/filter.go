@@ -41,6 +41,9 @@ func (f *EventFilter) StorePrefix() string {
 
 // URIPath returns the path component of an event filter URI.
 func (f *EventFilter) URIPath() string {
+	if f.Namespace == "" {
+		return path.Join(URLPrefix, EventFiltersResource, url.PathEscape(f.Name))
+	}
 	return path.Join(URLPrefix, "namespaces", url.PathEscape(f.Namespace), EventFiltersResource, url.PathEscape(f.Name))
 }
 

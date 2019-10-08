@@ -8,6 +8,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+- Added the `APIKey` resource and HTTP API support for POST, GET, PATCH and DELETE.
+
+## [5.14.0] - 2019-10-08
+
+### Added
 - [Web] Added an additional option to the error dialog allowing users to
 completely wipe the application's persisted state; in lieu of them having to
 manually wipe their local / session storage. This may help in the rare cases
@@ -17,7 +22,8 @@ theme, the application now respects the system preference by default.
 - sensuctl dump can now list the types of supported resources with --types.
 - Added the `sensu_agent_version` field to the `Entity` resource, which reflects
 the Sensu semver version of the agent entity.
-- Added the `APIKey` resource and HTTP API support for POST, GET, PATCH and DELETE.
+- Added the `--etcd-heartbeat-interval` and `--etcd-election-timeout` flags to
+`sensu-backend`
 
 ### Changed
 - [Web] Github is not always the best place for feature requests and discussion,
@@ -29,8 +35,12 @@ is front and center. Hopefully this should reduce any confusion around next
 steps.
 - Support agent TLS authentication, usable with a licensed sensu-backend.
 - Updated Go version from 1.12.3 to 1.13.1.
+- [GraphQL] `putWrapped` mutation now accepts wrapped JSON with empty
+outer objectmeta.
 
 ### Fixed
+- [Web] Fixed issue where a user with an appropriate role may have been unable
+to resolve events, queue checks, and create silenced entries.
 - Splayed proxy checks are now executed every interval, instead of every
 `interval + interval * splay_coverage`.
 - [GraphQL] Ensures that proxy entity label & annotations are redacted.
@@ -43,6 +53,10 @@ check for a keepalive.
 - Do not separate asset builds into several assets unless the the tabular format
 is used in `sensuctl asset list`.
 - Fix the 'flag accessed but not defined' error in `sensuctl asset outdated`
+- Fix generic API client's `SetTypeMeta` method. The APIGroup is now correctly
+configured and by virtue unintended authorization denied errs are avoided.
+- Fixed a bug where checks would stop executing after a network error.
+- Fixed a bug where sensuctl create with stdin was not working.
 
 ## [5.13.2] - 2019-09-19
 

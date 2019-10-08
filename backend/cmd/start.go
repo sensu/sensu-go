@@ -61,6 +61,8 @@ const (
 	flagEtcdNodeName                           = "etcd-name"
 	flagNoEmbedEtcd                            = "no-embed-etcd"
 	flagEtcdAdvertiseClientURLs                = "etcd-advertise-client-urls"
+	flagEtcdHeartbeatInterval                  = "etcd-heartbeat-interval"
+	flagEtcdElectionTimeout                    = "etcd-election-timeout"
 
 	// Etcd TLS flag constants
 	flagEtcdCertFile           = "etcd-cert-file"
@@ -156,6 +158,7 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 			cfg := &backend.Config{
 				AgentHost:             viper.GetString(flagAgentHost),
 				AgentPort:             viper.GetInt(flagAgentPort),
+				AgentWriteTimeout:     viper.GetInt(backend.FlagAgentWriteTimeout),
 				APIListenAddress:      viper.GetString(flagAPIListenAddress),
 				APIURL:                viper.GetString(flagAPIURL),
 				DashboardHost:         viper.GetString(flagDashboardHost),
@@ -177,6 +180,8 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 				EtcdCipherSuites:             viper.GetStringSlice(flagEtcdCipherSuites),
 				EtcdQuotaBackendBytes:        viper.GetInt64(flagEtcdQuotaBackendBytes),
 				EtcdMaxRequestBytes:          viper.GetUint(flagEtcdMaxRequestBytes),
+				EtcdHeartbeatInterval:        viper.GetUint(flagEtcdHeartbeatInterval),
+				EtcdElectionTimeout:          viper.GetUint(flagEtcdElectionTimeout),
 				NoEmbedEtcd:                  viper.GetBool(flagNoEmbedEtcd),
 			}
 
@@ -283,6 +288,7 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	viper.SetDefault(backend.FlagKeepalivedBufferSize, 100)
 	viper.SetDefault(backend.FlagPipelinedWorkers, 100)
 	viper.SetDefault(backend.FlagPipelinedBufferSize, 100)
+	viper.SetDefault(backend.FlagAgentWriteTimeout, 15)
 
 	// Etcd defaults
 	viper.SetDefault(flagEtcdAdvertiseClientURLs, defaultEtcdAdvertiseClientURL)
@@ -296,6 +302,8 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	viper.SetDefault(flagEtcdNodeName, defaultEtcdName)
 	viper.SetDefault(flagEtcdQuotaBackendBytes, etcd.DefaultQuotaBackendBytes)
 	viper.SetDefault(flagEtcdMaxRequestBytes, etcd.DefaultMaxRequestBytes)
+	viper.SetDefault(flagEtcdHeartbeatInterval, etcd.DefaultTickMs)
+	viper.SetDefault(flagEtcdElectionTimeout, etcd.DefaultElectionMs)
 	viper.SetDefault(flagNoEmbedEtcd, false)
 
 	// Merge in config flag set so that it appears in command usage
@@ -325,6 +333,7 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	cmd.Flags().Int(backend.FlagKeepalivedBufferSize, viper.GetInt(backend.FlagKeepalivedBufferSize), "number of incoming keepalives that can be buffered")
 	cmd.Flags().Int(backend.FlagPipelinedWorkers, viper.GetInt(backend.FlagPipelinedWorkers), "number of workers spawned for handling events through the event pipeline")
 	cmd.Flags().Int(backend.FlagPipelinedBufferSize, viper.GetInt(backend.FlagPipelinedBufferSize), "number of events to handle that can be buffered")
+	cmd.Flags().Int(backend.FlagAgentWriteTimeout, viper.GetInt(backend.FlagAgentWriteTimeout), "timeout in seconds for agent writes")
 
 	// Etcd flags
 	cmd.Flags().StringSlice(flagEtcdAdvertiseClientURLs, viper.GetStringSlice(flagEtcdAdvertiseClientURLs), "list of this member's client URLs to advertise to the rest of the cluster.")
@@ -351,6 +360,10 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	_ = cmd.Flags().SetAnnotation(flagEtcdQuotaBackendBytes, "categories", []string{"store"})
 	cmd.Flags().Uint(flagEtcdMaxRequestBytes, viper.GetUint(flagEtcdMaxRequestBytes), "maximum etcd request size in bytes (use with caution)")
 	_ = cmd.Flags().SetAnnotation(flagEtcdMaxRequestBytes, "categories", []string{"store"})
+	cmd.Flags().Uint(flagEtcdHeartbeatInterval, viper.GetUint(flagEtcdHeartbeatInterval), "interval in ms with which the etcd leader will notify followers that it is still the leader")
+	_ = cmd.Flags().SetAnnotation(flagEtcdHeartbeatInterval, "categories", []string{"store"})
+	cmd.Flags().Uint(flagEtcdElectionTimeout, viper.GetUint(flagEtcdElectionTimeout), "time in ms a follower node will go without hearing a heartbeat before attempting to become leader itself")
+	_ = cmd.Flags().SetAnnotation(flagEtcdElectionTimeout, "categories", []string{"store"})
 
 	// Etcd TLS flags
 	cmd.Flags().String(flagEtcdCertFile, viper.GetString(flagEtcdCertFile), "path to the client server TLS cert file")

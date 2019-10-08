@@ -27,6 +27,9 @@ func (s *Silenced) URIPath() string {
 	if s.Name == "" {
 		s.Name, _ = SilencedName(s.Subscription, s.Check)
 	}
+	if s.Namespace == "" {
+		return path.Join(URLPrefix, SilencedResource, url.PathEscape(s.Name))
+	}
 	return path.Join(URLPrefix, "namespaces", url.PathEscape(s.Namespace), SilencedResource, url.PathEscape(s.Name))
 }
 

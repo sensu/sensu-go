@@ -176,6 +176,9 @@ func (r *Role) StorePrefix() string {
 
 // URIPath returns the path component of a role URI.
 func (r *Role) URIPath() string {
+	if r.Namespace == "" {
+		return path.Join(URLPrefix, RolesResource, url.PathEscape(r.Name))
+	}
 	return path.Join(URLPrefix, "namespaces", url.PathEscape(r.Namespace), RolesResource, url.PathEscape(r.Name))
 
 }
@@ -204,6 +207,9 @@ func (b *RoleBinding) StorePrefix() string {
 
 // URIPath returns the path component of a role binding URI.
 func (b *RoleBinding) URIPath() string {
+	if b.Namespace == "" {
+		return path.Join(URLPrefix, RoleBindingsResource, url.PathEscape(b.Name))
+	}
 	return path.Join(URLPrefix, "namespaces", url.PathEscape(b.Namespace), RoleBindingsResource, url.PathEscape(b.Name))
 }
 

@@ -271,3 +271,57 @@ func TestSetTypeMeta(t *testing.T) {
 		t.Fatal("SetTypeMeta not working")
 	}
 }
+
+func TestGenericClient_SetTypeMeta(t *testing.T) {
+	tests := []struct {
+		name       string
+		arg        corev2.TypeMeta
+		outGroup   string
+		outVersion string
+		wantErr    bool
+	}{
+		{
+			name: "unregistered type",
+			arg: corev2.TypeMeta{
+				APIVersion: "core/v2",
+				Type:       "xxxyyyzzz",
+			},
+			outGroup:   "core",
+			outVersion: "v2",
+			wantErr:    true,
+		},
+		{
+			name: "registered type",
+			arg: corev2.TypeMeta{
+				APIVersion: "core/v2",
+				Type:       "mutator",
+			},
+			outGroup:   "core",
+			outVersion: "v2",
+			wantErr:    false,
+		},
+		{
+			name: "defaults to core/v2",
+			arg: corev2.TypeMeta{
+				Type: "mutator",
+			},
+			outGroup:   "core",
+			outVersion: "v2",
+			wantErr:    false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := &GenericClient{}
+			if err := g.SetTypeMeta(tt.arg); (err != nil) != tt.wantErr {
+				t.Errorf("GenericClient.SetTypeMeta() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.outGroup != g.APIGroup {
+				t.Errorf("GenericClient.SetTypeMeta() group = %v, expected group = %v", g.APIGroup, tt.outGroup)
+			}
+			if tt.outVersion != g.APIVersion {
+				t.Errorf("GenericClient.SetTypeMeta() version = %v, expected version = %v", g.APIVersion, tt.outVersion)
+			}
+		})
+	}
+}

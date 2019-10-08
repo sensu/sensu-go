@@ -132,6 +132,9 @@ func (c *Check) StorePrefix() string {
 
 // URIPath returns the path component of a check URI.
 func (c *Check) URIPath() string {
+	if c.Namespace == "" {
+		return path.Join(URLPrefix, ChecksResource, url.PathEscape(c.Name))
+	}
 	return path.Join(URLPrefix, "namespaces", url.PathEscape(c.Namespace), ChecksResource, url.PathEscape(c.Name))
 }
 

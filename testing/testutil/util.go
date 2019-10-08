@@ -13,7 +13,7 @@ import (
 // returning the absolute path to the directory and a remove() function
 // that should be deferred immediately after calling TempDir(t) to recursively
 // delete the contents of the directory.
-func TempDir(t *testing.T) (tmpDir string, remove func()) {
+func TempDir(t testing.TB) (tmpDir string, remove func()) {
 	tmpDir, err := ioutil.TempDir(os.TempDir(), "sensu")
 	if err != nil {
 		t.FailNow()

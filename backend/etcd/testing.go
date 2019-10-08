@@ -9,7 +9,8 @@ import (
 )
 
 // NewTestEtcd creates a new Etcd for testing purposes.
-func NewTestEtcd(t *testing.T) (*Etcd, func()) {
+func NewTestEtcd(t testing.TB) (*Etcd, func()) {
+	t.Helper()
 	tmpDir, remove := testutil.TempDir(t)
 
 	clURL := "http://127.0.0.1:0"
