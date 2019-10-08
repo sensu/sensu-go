@@ -37,6 +37,12 @@ func (c *MockClient) Put(path string, obj interface{}) error {
 	return args.Error(0)
 }
 
+// Patch ...
+func (c *MockClient) Patch(path string, obj interface{}) error {
+	args := c.Called(path, obj)
+	return args.Error(0)
+}
+
 // PutResource ...
 func (c *MockClient) PutResource(r types.Wrapper) error {
 	args := c.Called(r)

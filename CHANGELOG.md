@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Added the `APIKey` resource and HTTP API support for POST, GET, PATCH and DELETE.
+- Added sensuctl commands to manage the `APIKey` resource.
 
 ## [5.14.0] - 2019-10-08
 
