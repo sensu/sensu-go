@@ -72,7 +72,10 @@ func newQueue(path string) (queue, error) {
 		return nil, fmt.Errorf("could not create directory for api queue (%s): %s", path, err)
 	}
 	queuePath := filepath.Join(path, "queue.db")
-	db, err := bolt.Open(queuePath, 0644, &bolt.Options{Timeout: 60 * time.Second})
+	// Create and open the database for the queue. The FileMode given here (0600)
+	// is only temporary since it will be enforced to 0600 when the queue is
+	// compacted below by the queue.Compact method
+	db, err := bolt.Open(queuePath, 0600, &bolt.Options{Timeout: 60 * time.Second})
 	if err != nil {
 		return nil, fmt.Errorf("could not open api queue (%s): %s", queuePath, err)
 	}
