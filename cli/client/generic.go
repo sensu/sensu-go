@@ -147,6 +147,20 @@ func (client *RestClient) Put(path string, obj interface{}) error {
 	return nil
 }
 
+// Patch updates the given obj at the specified path.
+func (client *RestClient) Patch(path string, obj interface{}) error {
+	res, err := client.R().SetBody(obj).Patch(path)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return UnmarshalError(res)
+	}
+
+	return nil
+}
+
 // PutResource ...
 func (client *RestClient) PutResource(r types.Wrapper) error {
 	path := r.Value.URIPath()
