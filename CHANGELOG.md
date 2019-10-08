@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 indefinitely.
 
 ## [5.14.0] - 2019-10-03
+## [5.14.0] - 2019-10-08
 
 ### Added
 - [Web] Added an additional option to the error dialog allowing users to
