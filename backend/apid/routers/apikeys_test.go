@@ -16,6 +16,7 @@ import (
 
 func TestAPIKeysRouter(t *testing.T) {
 	s := &mockstore.MockStore{}
+	s.On("GetUser", mock.Anything, mock.Anything).Return(corev2.FixtureUser("admin"), nil)
 	router := NewAPIKeysRouter(s)
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)
@@ -35,6 +36,7 @@ func TestAPIKeysRouter(t *testing.T) {
 func TestPostAPIKey(t *testing.T) {
 	s := &mockstore.MockStore{}
 	s.On("CreateResource", mock.Anything, mock.Anything).Return(nil, nil)
+	s.On("GetUser", mock.Anything, mock.Anything).Return(corev2.FixtureUser("admin"), nil)
 	router := NewAPIKeysRouter(s)
 	parentRouter := mux.NewRouter()
 	router.Mount(parentRouter)
@@ -42,7 +44,7 @@ func TestPostAPIKey(t *testing.T) {
 	defer server.Close()
 
 	// Prepare the HTTP request
-	fixture := corev2.FixtureAPIKey("226f9e06-9d54-45c6-a9f6-4206bfa7ccf6", "bar")
+	fixture := corev2.FixtureAPIKey("226f9e06-9d54-45c6-a9f6-4206bfa7ccf6", "admin")
 	payload, err := json.Marshal(fixture)
 	assert.NoError(t, err)
 	client := new(http.Client)
@@ -61,10 +63,11 @@ func TestPostAPIKey(t *testing.T) {
 	assert.Equal(t, http.StatusCreated, res.StatusCode)
 }
 
-func TestPatchAPIKey(t *testing.T) {
+func TestPostAPIKeyInvalidUser(t *testing.T) {
 	s := &mockstore.MockStore{}
-	s.On("CreateOrUpdateResource", mock.Anything, mock.Anything).Return(nil, nil)
-	s.On("GetResource", mock.Anything, mock.Anything, mock.Anything).Return(nil, nil)
+	var user *corev2.User
+	s.On("CreateResource", mock.Anything, mock.Anything).Return(nil, nil)
+	s.On("GetUser", mock.Anything, mock.Anything).Return(user, nil)
 	router := NewAPIKeysRouter(s)
 	parentRouter := mux.NewRouter()
 	router.Mount(parentRouter)
@@ -72,11 +75,11 @@ func TestPatchAPIKey(t *testing.T) {
 	defer server.Close()
 
 	// Prepare the HTTP request
-	fixture := corev2.FixtureAPIKey("226f9e06-9d54-45c6-a9f6-4206bfa7ccf6", "bar")
+	fixture := corev2.FixtureAPIKey("226f9e06-9d54-45c6-a9f6-4206bfa7ccf6", "admin")
 	payload, err := json.Marshal(fixture)
 	assert.NoError(t, err)
 	client := new(http.Client)
-	req, err := http.NewRequest(http.MethodPatch, server.URL+"/apikeys/foo", bytes.NewReader(payload))
+	req, err := http.NewRequest(http.MethodPost, server.URL+"/apikeys", bytes.NewReader(payload))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,5 +91,5 @@ func TestPatchAPIKey(t *testing.T) {
 	}
 	defer res.Body.Close()
 
-	assert.Equal(t, http.StatusOK, res.StatusCode)
+	assert.Equal(t, http.StatusBadRequest, res.StatusCode)
 }
