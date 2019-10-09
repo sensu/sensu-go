@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/sensu/lasr"
 	bolt "go.etcd.io/bbolt"
@@ -68,12 +69,15 @@ func newQueue(path string) (queue, error) {
 		return newMemoryQueue(1000), nil
 	}
 	if err := os.MkdirAll(path, 0744|os.ModeDir); err != nil {
-		return nil, fmt.Errorf("error creating api queue: %s", err)
+		return nil, fmt.Errorf("could not create directory for api queue (%s): %s", path, err)
 	}
 	queuePath := filepath.Join(path, "queue.db")
-	db, err := bolt.Open(queuePath, 0644, nil)
+	// Create and open the database for the queue. The FileMode given here (0600)
+	// is only temporary since it will be enforced to 0600 when the queue is
+	// compacted below by the queue.Compact method
+	db, err := bolt.Open(queuePath, 0600, &bolt.Options{Timeout: 60 * time.Second})
 	if err != nil {
-		return nil, fmt.Errorf("error creating api queue: %s", err)
+		return nil, fmt.Errorf("could not open api queue (%s): %s", queuePath, err)
 	}
 	queue, err := lasr.NewQ(db, "api-buffer")
 	if err != nil {
