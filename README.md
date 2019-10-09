@@ -39,6 +39,43 @@ to get started is with the official Docker image, sensu/sensu.
 
 See the [installation documentation](https://docs.sensu.io/sensu-go/latest/installation/install-sensu/) to get started.
 
+### Building from source
+
+The various components of Sensu Go can be manually built from this repository.
+You will first need [Go 1.13.1](https://golang.org/doc/install#install)
+installed. Then, you should clone this repository **outside** of the GOPATH
+since Sensu Go uses [Go Modules](https://github.com/golang/go/wiki/Modules):
+```
+$ git clone https://github.com/sensu/sensu-go.git
+$ cd sensu-go
+```
+
+To compile and then run Sensu Go within a single step:
+```
+$ go run ./cmd/sensu-agent
+$ go run ./cmd/sensu-backend
+$ go run ./cmd/sensuctl
+```
+
+To build Sensu Go binaries and save them into the `bin/` directory:
+```
+$ go build -o bin/sensu-agent ./cmd/sensu-agent
+$ go build -o bin/sensu-backend ./cmd/sensu-backend
+$ go build -o bin/sensuctl ./cmd/sensuctl
+```
+
+To build Sensu Go binaries with the version information:
+```
+# sensu-agent
+$ go build -ldflags '-X "github.com/sensu/sensu-go/version.Version=5.14.0" -X "github.com/sensu/sensu-go/version.BuildDate=2019-10-08" -X "github.com/sensu/sensu-go/version.BuildSHA='`git rev-parse HEAD`'"' -o bin/sensu-agent ./cmd/sensu-agent
+
+# sensu-backend
+$ go build -ldflags '-X "github.com/sensu/sensu-go/version.Version=5.14.0" -X "github.com/sensu/sensu-go/version.BuildDate=2019-10-08" -X "github.com/sensu/sensu-go/version.BuildSHA='`git rev-parse HEAD`'"' -o bin/sensu-backend ./cmd/sensu-backend
+
+# sensuctl
+$ go build -ldflags '-X "github.com/sensu/sensu-go/version.Version=5.14.0" -X "github.com/sensu/sensu-go/version.BuildDate=2019-10-08" -X "github.com/sensu/sensu-go/version.BuildSHA='`git rev-parse HEAD`'"' -o bin/sensuctl ./cmd/sensuctl
+```
+
 ## Contributing
 
 For guidelines on how to contribute to this project, how to hack on Sensu, and
