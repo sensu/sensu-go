@@ -306,11 +306,11 @@ func (s *Session) handleKeepalive(ctx context.Context, payload []byte) error {
 		return err
 	}
 
-	// TODO(greg): better entity validation than this garbage.
-	if keepalive.Entity == nil {
-		return errors.New("keepalive does not contain an entity")
+	if err := keepalive.Validate(); err != nil {
+		return err
 	}
 
+	// Not done by event.Validate()
 	if keepalive.Timestamp == 0 {
 		return errors.New("keepalive contains invalid timestamp")
 	}
