@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -32,14 +34,14 @@ func (a *APIKey) Validate() error {
 		return fmt.Errorf("api key must have a username")
 	}
 
-	if err := ValidateName(a.Name); err != nil {
-		return fmt.Errorf("api key name %s", err)
+	if _, err := uuid.Parse(a.Name); err != nil {
+		return fmt.Errorf("api key name: %s", err)
 	}
 
 	return nil
 }
 
-// FixtureAPIKey returns a testing fixutre for an APIKey struct.
+// FixtureAPIKey returns a testing fixture for an APIKey struct.
 func FixtureAPIKey(name string, username string) *APIKey {
 	return &APIKey{
 		Username:   username,

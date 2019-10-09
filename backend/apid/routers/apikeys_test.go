@@ -21,7 +21,7 @@ func TestAPIKeysRouter(t *testing.T) {
 	router.Mount(parentRouter)
 
 	empty := &corev2.APIKey{}
-	fixture := corev2.FixtureAPIKey("foo", "bar")
+	fixture := corev2.FixtureAPIKey("226f9e06-9d54-45c6-a9f6-4206bfa7ccf6", "bar")
 
 	tests := []routerTestCase{}
 	tests = append(tests, getTestCases(fixture)...)
@@ -42,7 +42,7 @@ func TestPostAPIKey(t *testing.T) {
 	defer server.Close()
 
 	// Prepare the HTTP request
-	fixture := corev2.FixtureAPIKey("foo", "bar")
+	fixture := corev2.FixtureAPIKey("226f9e06-9d54-45c6-a9f6-4206bfa7ccf6", "bar")
 	payload, err := json.Marshal(fixture)
 	assert.NoError(t, err)
 	client := new(http.Client)
@@ -72,7 +72,7 @@ func TestPatchAPIKey(t *testing.T) {
 	defer server.Close()
 
 	// Prepare the HTTP request
-	fixture := corev2.FixtureAPIKey("foo", "bar")
+	fixture := corev2.FixtureAPIKey("226f9e06-9d54-45c6-a9f6-4206bfa7ccf6", "bar")
 	payload, err := json.Marshal(fixture)
 	assert.NoError(t, err)
 	client := new(http.Client)
