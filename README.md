@@ -42,15 +42,19 @@ See the [installation documentation](https://docs.sensu.io/sensu-go/latest/insta
 ### Building from source
 
 The various components of Sensu Go can be manually built from this repository.
-You will first need [Go](https://golang.org/doc/install#install) installed.
-Then, you should clone this repository **outside** of the GOPATH since Sensu Go
-uses [Go Modules](https://github.com/golang/go/wiki/Modules).
+You will first need [Go 1.13.1](https://golang.org/doc/install#install)
+installed. Then, you should clone this repository **outside** of the GOPATH
+since Sensu Go uses [Go Modules](https://github.com/golang/go/wiki/Modules):
+```
+$ git clone https://github.com/sensu/sensu-go.git
+$ cd sensu-go
+```
 
 To compile and then run Sensu Go within a single step:
 ```
-$ go run ./cmd/sensu-agent/main.go
-$ go run ./cmd/sensu-backend/main.go
-$ go run ./cmd/sensuctl/main.go
+$ go run ./cmd/sensu-agent
+$ go run ./cmd/sensu-backend
+$ go run ./cmd/sensuctl
 ```
 
 To build Sensu Go binaries and save them into the `bin/` directory:
