@@ -42,6 +42,34 @@ type CommandPlugin struct {
 	Asset corev2.Asset `json:"asset"`
 }
 
+func (p *CommandPlugin) GetObjectMeta() corev2.ObjectMeta {
+	return corev2.ObjectMeta{Name: p.Alias}
+}
+
+func (p *CommandPlugin) RBACName() string {
+	return ""
+}
+
+func (p *CommandPlugin) StorePrefix() string {
+	return ""
+}
+
+func (p *CommandPlugin) URIPath() string {
+	return ""
+}
+
+func (p *CommandPlugin) Validate() error {
+	return nil
+}
+
+func (p *CommandPlugin) SetNamespace(namespace string) {
+	// no-op
+}
+
+func (p *CommandPlugin) SetObjectMeta(meta corev2.ObjectMeta) {
+	// no-op
+}
+
 func NewCommandManager() (*CommandManager, error) {
 	m := CommandManager{}
 
@@ -265,4 +293,33 @@ func (m *CommandManager) fetchCommandPlugin(alias string) (*CommandPlugin, error
 	}
 
 	return localCommandPlugin, nil
+}
+
+func (m *CommandManager) FetchCommandPlugins() ([]*CommandPlugin, error) {
+	var localCommandPlugins []*CommandPlugin
+
+	if err := m.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(commandBucketName))
+		if b == nil {
+			return nil
+		}
+
+		b.ForEach(func(k, v []byte) error {
+			var localCommandPlugin *CommandPlugin
+
+			// deserialize command plugin
+			if err := json.Unmarshal(v, &localCommandPlugin); err != nil {
+				return err
+			}
+			localCommandPlugins = append(localCommandPlugins, localCommandPlugin)
+
+			return nil
+		})
+
+		return nil
+	}); err != nil {
+		return nil, err
+	}
+
+	return localCommandPlugins, nil
 }
