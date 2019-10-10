@@ -2,7 +2,7 @@ package middlewares
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -29,7 +29,7 @@ func (a Authentication) Then(next http.Handler) http.Handler {
 			headerString := authHeader[0]
 
 			// if the auth header contains Bearer, continue with token auth
-			if strings.Contains(headerString, "Bearer ") {
+			if strings.HasPrefix(headerString, "Bearer ") {
 				headerString = strings.TrimPrefix(headerString, "Bearer ")
 				token, err := jwt.ValidateToken(headerString)
 				if err != nil {
@@ -44,7 +44,7 @@ func (a Authentication) Then(next http.Handler) http.Handler {
 			}
 
 			// if the auth header contains Key, continue with api key auth
-			if strings.Contains(headerString, "Key ") {
+			if strings.HasPrefix(headerString, "Key ") {
 				headerString = strings.TrimPrefix(headerString, "Key ")
 				claims, err := extractAPIKeyClaims(ctx, headerString, a.Store)
 				if err != nil {
@@ -92,7 +92,7 @@ func extractAPIKeyClaims(ctx context.Context, key string, store store.Store) (*c
 	// but in the event a user is deleted after a key has been generated,
 	// the key should not pass authentication
 	if user == nil {
-		return claims, errors.New("user not found")
+		return claims, fmt.Errorf("user %s not found", apiKey.Username)
 	}
 
 	// inject the username and groups into standard jwt claims
