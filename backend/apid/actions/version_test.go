@@ -23,5 +23,5 @@ func TestGetVersion(t *testing.T) {
 	assert.NotEmpty(response)
 	assert.Equal("foo-version", response.Etcd.Cluster)
 	assert.Contains(response.Etcd.Server, "3")
-	assert.Contains(response.SensuBackend, "#")
+	assert.Contains(response.SensuBackend, "")
 }
