@@ -30,6 +30,9 @@ func (m AllowList) Then(next http.Handler) http.Handler {
 				writeErr(w, actions.NewErrorf(actions.Unauthenticated))
 			}
 			return
+		} else if claims.APIKey {
+			next.ServeHTTP(w, r)
+			return
 		}
 
 		// Validate that the JWT is authorized
