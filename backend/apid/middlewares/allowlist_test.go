@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -15,7 +15,7 @@ import (
 
 func TestAllowList(t *testing.T) {
 	// Create a token
-	claims := v2.FixtureClaims("foo", nil)
+	claims := corev2.FixtureClaims("foo", nil)
 	_, tokenString, _ := jwt.AccessToken(claims)
 
 	store := &mockstore.MockStore{}
@@ -38,7 +38,7 @@ func TestAllowList(t *testing.T) {
 
 func TestMissingTokenFromAllowList(t *testing.T) {
 	// Create a token
-	claims := v2.FixtureClaims("bar", nil)
+	claims := corev2.FixtureClaims("bar", nil)
 	_, tokenString, _ := jwt.AccessToken(claims)
 
 	sErr := &store.ErrNotFound{}
