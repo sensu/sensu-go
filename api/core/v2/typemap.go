@@ -9,6 +9,8 @@ import (
 
 // typeMap is used to dynamically look up data types from strings.
 var typeMap = map[string]interface{}{
+	"APIKey":                        &APIKey{},
+	"api_key":                       &APIKey{},
 	"AdhocRequest":                  &AdhocRequest{},
 	"adhoc_request":                 &AdhocRequest{},
 	"Any":                           &Any{},

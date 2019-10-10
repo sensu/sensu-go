@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Added the `APIKey` resource and HTTP API support for POST, GET, and DELETE.
+
 ### Fixed
 - Opening an already open Bolt database should not cause sensu-agent to hang
 indefinitely.

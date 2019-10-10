@@ -89,7 +89,7 @@ func NewSilenced(meta ObjectMeta) *Silenced {
 	return &Silenced{ObjectMeta: meta}
 }
 
-// FixtureSilenced returns a testing fixutre for a Silenced event struct.
+// FixtureSilenced returns a testing fixture for a Silenced event struct.
 func FixtureSilenced(name string) *Silenced {
 	var check, subscription string
 

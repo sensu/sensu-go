@@ -158,6 +158,7 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	mountRouters(
 		subrouter,
 		routers.NewAssetRouter(cfg.Store),
+		routers.NewAPIKeysRouter(cfg.Store),
 		routers.NewChecksRouter(cfg.Store, cfg.QueueGetter),
 		routers.NewClusterRolesRouter(cfg.Store),
 		routers.NewClusterRoleBindingsRouter(cfg.Store),
