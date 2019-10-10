@@ -7,6 +7,16 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Added the `APIKey` resource and HTTP API support for POST, GET, and DELETE.
+- Added sensuctl commands to manage the `APIKey` resource.
+
+### Fixed
+- Opening an already open Bolt database should not cause sensu-agent to hang
+indefinitely.
+- [CLI] Dump multiple types as YAML to a file would print separator STDOUT
+instead of specified file
+
 ## [5.14.0] - 2019-10-08
 
 ### Added
