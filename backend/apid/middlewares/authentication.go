@@ -79,7 +79,7 @@ func extractAPIKeyClaims(ctx context.Context, key string, store store.Store) (*c
 			Name: key,
 		},
 	}
-	if err := store.GetResource(ctx, apiKey.Name, apiKey); err != nil {
+	if err := store.GetResource(context.Background(), apiKey.Name, apiKey); err != nil {
 		return claims, err
 	}
 
