@@ -2,8 +2,11 @@ package jwt
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"encoding/hex"
+	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"strings"
 
@@ -18,7 +21,14 @@ import (
 var (
 	defaultExpiration = time.Minute * 15
 	secret            []byte
+	privateKey        *ecdsa.PrivateKey
+	publicKey         *ecdsa.PublicKey
+	signingMethod     jwt.SigningMethod
 )
+
+func init() {
+	signingMethod = jwt.SigningMethodHS256
+}
 
 // AccessToken creates a new access token and returns it in both JWT and
 // signed format, along with any error
@@ -33,12 +43,21 @@ func AccessToken(claims *corev2.Claims) (*jwt.Token, string, error) {
 	// Add an expiration to the token
 	claims.ExpiresAt = time.Now().Add(defaultExpiration).Unix()
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	tokenString, err := token.SignedString(secret)
+	token := jwt.NewWithClaims(signingMethod, claims)
+
+	// Determine which key to use to sign the token
+	var key interface{}
+	if signingMethod == jwt.SigningMethodHS256 {
+		key = secret
+	} else {
+		key = privateKey
+	}
+
+	// Sign the token
+	tokenString, err := token.SignedString(key)
 	if err != nil {
 		return nil, "", err
 	}
-
 	return token, tokenString, nil
 }
 
@@ -105,6 +124,47 @@ func ExtractBearerToken(r *http.Request) string {
 	return tokenString
 }
 
+// LoadKeyPair loads a private and public key pair from files
+func LoadKeyPair(privatePath, publicPath string) error {
+	if privatePath != "" && publicPath == "" {
+		return errors.New("a public key is required when specifying a private key")
+	}
+
+	if publicPath != "" {
+		publicBytes, err := ioutil.ReadFile(publicPath)
+		if err != nil {
+			return fmt.Errorf("unable to read the public key file: %s", err)
+		}
+		if publicKey, err = jwt.ParseECPublicKeyFromPEM(publicBytes); err != nil {
+			return fmt.Errorf("unable to parse the ECDSA public key: %v", err)
+		}
+	}
+
+	if privatePath != "" {
+		privateBytes, err := ioutil.ReadFile(privatePath)
+		if err != nil {
+			return fmt.Errorf("unable to read the private key file: %s", err)
+		}
+		if privateKey, err = jwt.ParseECPrivateKeyFromPEM(privateBytes); err != nil {
+			return fmt.Errorf("unable to parse the ECDSA private key: %v", err)
+		}
+
+		// Determine the signing method to use
+		switch bitSize := publicKey.Curve.Params().BitSize; bitSize {
+		case 256:
+			signingMethod = jwt.SigningMethodES256
+		case 384:
+			signingMethod = jwt.SigningMethodES384
+		case 521:
+			signingMethod = jwt.SigningMethodES512
+		default:
+			return fmt.Errorf("could not determine a signing method for curve %s", publicKey.Curve.Params().Name)
+		}
+	}
+
+	return nil
+}
+
 // InitSecret initializes and retrieves the secret for our signing tokens
 func InitSecret(store store.Store) error {
 	var s []byte
@@ -136,15 +196,38 @@ func InitSecret(store store.Store) error {
 
 // parseToken takes a signed token and parse it to verify its integrity
 func parseToken(tokenString string) (*jwt.Token, error) {
-	return jwt.ParseWithClaims(tokenString, &types.Claims{}, func(token *jwt.Token) (interface{}, error) {
-		// Don't forget to validate the alg is what you expect:
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+	t, err := jwt.ParseWithClaims(tokenString, &types.Claims{}, func(token *jwt.Token) (interface{}, error) {
+		if token.Header["alg"] == jwt.SigningMethodHS256.Alg() {
+			// Validate the signing method used
+			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+			}
+
+			// Use the secret to verify the signature
+			return secret, nil
+		}
+
+		// Validate that we do have a public key available
+		if publicKey == nil {
+			return nil, errors.New("no public key available to validate the signature")
+		}
+
+		// Validate the signing method used
+		if _, ok := token.Method.(*jwt.SigningMethodECDSA); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
-		// secret is a []byte containing the secret
-		return secret, nil
+		// Validate the algorith used
+		switch alg := token.Header["alg"]; alg {
+		case jwt.SigningMethodHS256.Alg(), jwt.SigningMethodES384.Alg(), jwt.SigningMethodES512.Alg():
+		default:
+			return nil, fmt.Errorf("unexpected algorith %q found in token header", alg)
+		}
+
+		// Use the public key to verify the signature
+		return publicKey, nil
 	})
+	return t, err
 }
 
 // RefreshToken returns a refresh token for a specific user
@@ -156,10 +239,18 @@ func RefreshToken(claims *corev2.Claims) (*jwt.Token, string, error) {
 	}
 	claims.Id = jti
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	token := jwt.NewWithClaims(signingMethod, claims)
 
-	// Sign the token as a string using the secret
-	tokenString, err := token.SignedString(secret)
+	// Determine which key to use to sign the token
+	var key interface{}
+	if signingMethod == jwt.SigningMethodHS256 {
+		key = secret
+	} else {
+		key = privateKey
+	}
+
+	// Sign the token
+	tokenString, err := token.SignedString(key)
 	if err != nil {
 		return nil, "", err
 	}
@@ -210,10 +301,8 @@ func ValidateToken(tokenString string) (*jwt.Token, error) {
 	if token == nil {
 		return nil, err
 	}
-
 	if _, ok := token.Claims.(*types.Claims); ok && token.Valid {
 		return token, nil
 	}
-
 	return nil, err
 }

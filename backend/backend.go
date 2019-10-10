@@ -16,6 +16,7 @@ import (
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/backend/apid"
 	"github.com/sensu/sensu-go/backend/authentication"
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
 	"github.com/sensu/sensu-go/backend/daemon"
 	"github.com/sensu/sensu-go/backend/dashboardd"
@@ -291,6 +292,9 @@ func Initialize(config *Config) (*Backend, error) {
 	if !config.NoEmbedEtcd {
 		clusterVersion = b.Etcd.GetClusterVersion()
 	}
+
+	// Load the JWT key pair
+	jwt.LoadKeyPair(viper.GetString(FlagJWTPrivateKeyFile), viper.GetString(FlagJWTPublicKeysFile))
 
 	// Initialize apid
 	apidConfig := apid.Config{

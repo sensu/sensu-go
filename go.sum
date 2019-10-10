@@ -33,6 +33,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/dgrijalva/jwt-go v3.0.0+incompatible h1:nfVqwkkhaRUethVJaQf5TUFdFr3YUF4lJBTf/F2XwVI=
 github.com/dgrijalva/jwt-go v3.0.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
+github.com/dgrijalva/jwt-go v3.2.0+incompatible h1:7qlOGliEKZXTDg6OTjfoBKDXWrumCAMpl/TFQ4/5kLM=
+github.com/dgrijalva/jwt-go v3.2.0+incompatible/go.mod h1:E3ru+11k8xSBh+hMPgOLZmtrrCbhqsmaPHjLKYnJCaQ=
 github.com/docker/docker v0.0.0-20180409082103-cbde00b44273 h1:fBZtiZxfOkWgrl/P6Qi+r1W5vt0ajRitqn6qQMVUKs4=
 github.com/docker/docker v0.0.0-20180409082103-cbde00b44273/go.mod h1:eEKB0N0r5NX/I1kEveEz05bcu8tLC/8azJZsviup8Sk=
 github.com/dsnet/compress v0.0.0-20170928175515-f41072d47fff h1:MFJQNyvphGyGo3sZoTx9qZY3tKHLD3OTjhJDA2ES2SY=

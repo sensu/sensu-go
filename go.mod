@@ -16,7 +16,7 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20170731111925-d21964639418 // indirect
 	github.com/coreos/pkg v0.0.0-20160727233714-3ac0863d7acf
 	github.com/dave/jennifer v0.0.0-20171207062344-d8bdbdbee4e1
-	github.com/dgrijalva/jwt-go v3.0.0+incompatible
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/docker v0.0.0-20180409082103-cbde00b44273
 	github.com/dsnet/compress v0.0.0-20170928175515-f41072d47fff // indirect
 	github.com/echlebek/crock v1.0.1
