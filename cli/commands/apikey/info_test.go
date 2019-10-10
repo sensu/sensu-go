@@ -20,7 +20,7 @@ func TestInfoCommand(t *testing.T) {
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
 	assert.Regexp("info", cmd.Use)
-	assert.Regexp("apikey", cmd.Short)
+	assert.Regexp("api-key", cmd.Short)
 }
 
 func TestInfoCommandRunEClosure(t *testing.T) {

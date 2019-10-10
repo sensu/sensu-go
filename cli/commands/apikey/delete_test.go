@@ -21,7 +21,7 @@ func TestRevokeCommand(t *testing.T) {
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
 	assert.Regexp("revoke", cmd.Use)
-	assert.Regexp("apikey", cmd.Short)
+	assert.Regexp("api-key", cmd.Short)
 }
 
 func TestRevokeCommandRunEClosureWithoutName(t *testing.T) {

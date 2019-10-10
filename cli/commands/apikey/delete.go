@@ -14,7 +14,7 @@ import (
 func RevokeCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "revoke [NAME]",
-		Short:        "revoke apikey given name",
+		Short:        "revoke api-key given name",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {

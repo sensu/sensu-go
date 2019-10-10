@@ -20,7 +20,7 @@ func TestGrantCommand(t *testing.T) {
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
 	assert.Regexp("grant", cmd.Use)
-	assert.Regexp("apikey", cmd.Short)
+	assert.Regexp("api-key", cmd.Short)
 }
 
 func TestGrantCommandWithoutArgs(t *testing.T) {
@@ -28,7 +28,7 @@ func TestGrantCommandWithoutArgs(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("Post", mock.Anything, mock.Anything).Return(nil)
+	client.On("PostAPIKey", mock.Anything, mock.Anything).Return("", nil)
 
 	cmd := GrantCommand(cli)
 	out, err := test.RunCmd(cmd, []string{})
@@ -42,20 +42,20 @@ func TestGrantCommandWithArgs(t *testing.T) {
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("Post", mock.Anything, mock.Anything).Return(nil)
+	client.On("PostAPIKey", mock.Anything, mock.Anything).Return("location", nil)
 
 	cmd := GrantCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"user1"})
 
 	require.NoError(t, err)
-	assert.Regexp("Created", out)
+	assert.Regexp("Created: location", out)
 }
 func TestGrantCommandServerError(t *testing.T) {
 	assert := assert.New(t)
 
 	cli := test.NewMockCLI()
 	client := cli.Client.(*client.MockClient)
-	client.On("Post", mock.Anything, mock.Anything).Return(errors.New("err"))
+	client.On("PostAPIKey", mock.Anything, mock.Anything).Return("", errors.New("err"))
 
 	cmd := GrantCommand(cli)
 	out, err := test.RunCmd(cmd, []string{"user1"})

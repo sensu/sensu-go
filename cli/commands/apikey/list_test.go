@@ -24,7 +24,7 @@ func TestListCommand(t *testing.T) {
 	assert.NotNil(cmd, "cmd should be returned")
 	assert.NotNil(cmd.RunE, "cmd should be able to be executed")
 	assert.Regexp("list", cmd.Use)
-	assert.Regexp("apikeys", cmd.Short)
+	assert.Regexp("api-keys", cmd.Short)
 }
 
 func TestListCommandRunEClosure(t *testing.T) {

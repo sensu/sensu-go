@@ -8,7 +8,7 @@ import (
 // HelpCommand defines new parent
 func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "apikey",
+		Use:   "api-key",
 		Short: "Manage apikeys",
 	}
 

@@ -13,7 +13,7 @@ import (
 func GrantCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "grant [USERNAME]",
-		Short:        "grant new apikey",
+		Short:        "grant new api-key",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
@@ -25,11 +25,12 @@ func GrantCommand(cli *cli.SensuCli) *cobra.Command {
 				Username: args[0],
 			}
 
-			if err := cli.Client.Post(apikey.URIPath(), apikey); err != nil {
+			location, err := cli.Client.PostAPIKey(apikey.URIPath(), apikey)
+			if err != nil {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), "Created")
+			fmt.Fprintln(cmd.OutOrStdout(), fmt.Sprintf("Created: %s", location))
 			return nil
 		},
 	}

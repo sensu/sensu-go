@@ -17,7 +17,7 @@ import (
 func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:          "info [NAME]",
-		Short:        "show detailed apikey information",
+		Short:        "show detailed api-key information",
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) != 1 {
