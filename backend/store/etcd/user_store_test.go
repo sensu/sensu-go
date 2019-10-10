@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
-	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 
@@ -78,12 +77,6 @@ func TestUserStorage(t *testing.T) {
 		assert.NotEmpty(t, users)
 		assert.Equal(t, 2, len(users))
 
-		// Generate a token for the bar user
-		claims := corev2.FixtureClaims("bar", nil)
-		token, _, _ := jwt.AccessToken(claims)
-		err = s.AllowTokens(token)
-		assert.NoError(t, err)
-
 		// Disable a user that does not exist
 		err = s.DeleteUser(ctx, &types.User{Username: "Frankieie"})
 		assert.NoError(t, err)
@@ -100,10 +93,6 @@ func TestUserStorage(t *testing.T) {
 		// Make sure the user is now disabled
 		disabledUser, _ := s.GetUser(ctx, mockedUser.Username)
 		assert.True(t, disabledUser.Disabled)
-
-		// Make sure the token was revoked
-		_, err = s.GetToken(claims.Subject, claims.Id)
-		assert.Error(t, err)
 
 		// Authentication should be unsuccessful with a disabled user
 		_, err = s.AuthenticateUser(ctx, mockedUser.Username, password)

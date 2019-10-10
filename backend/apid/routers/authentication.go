@@ -40,7 +40,7 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := api.NewAuthenticationClient(a.store, a.authenticator)
+	client := api.NewAuthenticationClient(a.authenticator)
 	tokens, err := client.CreateAccessToken(r.Context(), username, password)
 
 	if err != nil {
@@ -70,7 +70,7 @@ func (a *AuthenticationRouter) test(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := api.NewAuthenticationClient(a.store, a.authenticator)
+	client := api.NewAuthenticationClient(a.authenticator)
 	err := client.TestCreds(r.Context(), username, password)
 	if err == nil {
 		return
@@ -84,7 +84,7 @@ func (a *AuthenticationRouter) test(w http.ResponseWriter, r *http.Request) {
 
 // logout handles the logout flow
 func (a *AuthenticationRouter) logout(w http.ResponseWriter, r *http.Request) {
-	client := api.NewAuthenticationClient(a.store, a.authenticator)
+	client := api.NewAuthenticationClient(a.authenticator)
 	err := client.Logout(r.Context())
 	if err == nil {
 		return
@@ -100,7 +100,7 @@ func (a *AuthenticationRouter) logout(w http.ResponseWriter, r *http.Request) {
 
 // token handles logic for issuing new access tokens
 func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
-	client := api.NewAuthenticationClient(a.store, a.authenticator)
+	client := api.NewAuthenticationClient(a.authenticator)
 	tokens, err := client.RefreshAccessToken(r.Context())
 	if err != nil {
 		if err == corev2.ErrInvalidToken {
