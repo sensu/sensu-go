@@ -265,7 +265,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 				err = helpers.PrintWrappedJSONList(resources, w)
 			case config.FormatYAML:
 				if i > 0 {
-					_, _ = fmt.Fprintln(cmd.OutOrStdout(), "---")
+					_, _ = fmt.Fprintln(w, "---")
 				}
 				err = helpers.PrintYAML(resources, w)
 			default:

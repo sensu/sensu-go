@@ -14,6 +14,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Opening an already open Bolt database should not cause sensu-agent to hang
 indefinitely.
+- [CLI] Dump multiple types as YAML to a file would print separator STDOUT
+instead of specified file
 
 ## [5.14.0] - 2019-10-08
 
