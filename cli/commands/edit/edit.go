@@ -1,18 +1,23 @@
 package edit
 
 import (
+	"bufio"
 	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"strings"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/create"
+	"github.com/sensu/sensu-go/cli/commands/dump"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
 
@@ -21,12 +26,80 @@ const defaultEditor = "vi"
 
 func extension(format string) string {
 	switch format {
-	case config.FormatYAML:
-		return "yaml"
 	case config.FormatJSON, config.FormatWrappedJSON:
 		return "json"
 	default:
-		return "txt"
+		return "yaml"
+	}
+}
+
+type lifter interface {
+	Lift() types.Resource
+}
+
+type namespaceFormat interface {
+	Namespace() string
+	Format() string
+}
+
+type client interface {
+	Get(string, interface{}) error
+}
+
+func dumpResource(client client, cfg namespaceFormat, typeName string, key []string, to io.Writer) error {
+	resource, err := dump.ResolveResource(typeName)
+	if err != nil {
+		return fmt.Errorf("invalid resource type: %s", typeName)
+	}
+	switch r := resource.(type) {
+	case *corev2.Event:
+		// Need an exception for event, because it's a special little type
+		if len(key) != 2 {
+			return errors.New("events need an entity and check component")
+		}
+		r.Entity = &corev2.Entity{
+			ObjectMeta: corev2.ObjectMeta{
+				Namespace: cfg.Namespace(),
+				Name:      key[0],
+			},
+		}
+		r.Check = &corev2.Check{
+			ObjectMeta: corev2.ObjectMeta{
+				Namespace: cfg.Namespace(),
+				Name:      key[1],
+			},
+		}
+	case *corev2.Check:
+		// Special case here takes care of the check naming boondoggle
+		resource = &corev2.CheckConfig{}
+		if len(key) != 1 {
+			return errors.New("resource name missing")
+		}
+		resource.SetObjectMeta(corev2.ObjectMeta{
+			Namespace: cfg.Namespace(),
+			Name:      key[0],
+		})
+	default:
+		if len(key) != 1 {
+			return errors.New("resource name missing")
+		}
+		resource.SetObjectMeta(corev2.ObjectMeta{
+			Namespace: cfg.Namespace(),
+			Name:      key[0],
+		})
+	}
+	if lifter, ok := resource.(lifter); ok {
+		resource = lifter.Lift()
+	}
+	if err := client.Get(resource.URIPath(), &resource); err != nil {
+		return err
+	}
+	format := cfg.Format()
+	switch format {
+	case "wrapped-json", "json":
+		return helpers.PrintWrappedJSON(resource, to)
+	default:
+		return helpers.PrintYAML([]types.Resource{resource}, to)
 	}
 }
 
@@ -39,32 +112,14 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 				_ = cmd.Help()
 				return errors.New("invalid argument(s) received")
 			}
-			resourceType := args[0]
-			resourceKeyParams := args[1:]
-			format := cli.Config.Format()
-			switch format {
-			case "yaml", "wrapped-json":
-			default:
-				format = "yaml"
-			}
-			ctlArgs := []string{
-				resourceType,
-				"info",
-			}
-			ctlArgs = append(ctlArgs, resourceKeyParams...)
-			ctlArgs = append(ctlArgs, "--format")
-			ctlArgs = append(ctlArgs, format)
-			originalBytes, err := exec.Command(os.Args[0], ctlArgs...).CombinedOutput()
-			if err != nil {
-				_, _ = cmd.OutOrStdout().Write(originalBytes)
-				return fmt.Errorf("couldn't get resource: %s", err)
-			}
-			tf, err := ioutil.TempFile("", fmt.Sprintf("sensu-resource.*.%s", extension(format)))
+			tf, err := ioutil.TempFile("", fmt.Sprintf("sensu-resource.*.%s", extension(cli.Config.Format())))
 			if err != nil {
 				return err
 			}
 			defer os.Remove(tf.Name())
-			if _, err := tf.Write(originalBytes); err != nil {
+			orig := new(bytes.Buffer)
+			writer := io.MultiWriter(orig, tf)
+			if err := dumpResource(cli.Client, cli.Config, args[0], args[1:], writer); err != nil {
 				return err
 			}
 			if err := tf.Close(); err != nil {
@@ -86,7 +141,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if bytes.Equal(originalBytes, changedBytes) {
+			if bytes.Equal(orig.Bytes(), changedBytes) {
 				return nil
 			}
 			resources, err := create.ParseResources(bytes.NewReader(changedBytes))
@@ -113,13 +168,15 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 }
 
 func parseCommand(cmd string) []string {
-	parts := strings.Split(cmd, " ")
-	result := []string{}
-	for _, part := range parts {
-		part = strings.TrimSpace(part)
-		if len(part) > 0 {
-			result = append(result, part)
-		}
+	scanner := bufio.NewScanner(strings.NewReader(cmd))
+	scanner.Split(bufio.ScanWords)
+	var result []string
+	for scanner.Scan() {
+		result = append(result, scanner.Text())
+	}
+	if err := scanner.Err(); err != nil {
+		// unlikely
+		panic(err)
 	}
 	return result
 }

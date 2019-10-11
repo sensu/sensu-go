@@ -59,7 +59,9 @@ type lifter interface {
 
 var resourceRE = regexp.MustCompile(`(\w+\/v\d+\.)?(\w+)`)
 
-func resolveResource(resource string) (types.Resource, error) {
+// ResolveResource resolves a named resource to an empty concrete type.
+// The value is boxed within a types.Resource interface value.
+func ResolveResource(resource string) (types.Resource, error) {
 	if resource, ok := synonyms[resource]; ok {
 		return resource, nil
 	}
@@ -128,7 +130,7 @@ func getResourceRequests(actionSpec string) ([]types.Resource, error) {
 
 	// build resource requests for sensuctl
 	for _, t := range types {
-		resource, err := resolveResource(t)
+		resource, err := ResolveResource(t)
 		if err != nil {
 			return nil, fmt.Errorf("invalid resource type: %s", t)
 		}
