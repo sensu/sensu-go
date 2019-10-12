@@ -103,12 +103,59 @@ func dumpResource(client client, cfg namespaceFormat, typeName string, key []str
 	}
 }
 
+func dumpBlank(cfg namespaceFormat, typeName string, to io.Writer) error {
+	resource, err := dump.ResolveResource(typeName)
+	if err != nil {
+		return fmt.Errorf("invalid resource type: %s", typeName)
+	}
+	switch r := resource.(type) {
+	case *corev2.Event:
+		r.Entity = &corev2.Entity{
+			ObjectMeta: corev2.ObjectMeta{
+				Namespace: cfg.Namespace(),
+			},
+		}
+		r.Check = &corev2.Check{
+			ObjectMeta: corev2.ObjectMeta{
+				Namespace: cfg.Namespace(),
+			},
+		}
+	case *corev2.Check:
+		// Special case here takes care of the check naming boondoggle
+		resource = &corev2.CheckConfig{}
+		resource.SetObjectMeta(corev2.ObjectMeta{
+			Namespace: cfg.Namespace(),
+		})
+	default:
+		resource.SetObjectMeta(corev2.ObjectMeta{
+			Namespace: cfg.Namespace(),
+		})
+	}
+	if lifter, ok := resource.(lifter); ok {
+		resource = lifter.Lift()
+	}
+	format := cfg.Format()
+	switch format {
+	case "wrapped-json", "json":
+		return helpers.PrintWrappedJSON(resource, to)
+	default:
+		return helpers.PrintYAML([]types.Resource{resource}, to)
+	}
+}
+
 func Command(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "edit [RESOURCE TYPE] [KEY]...",
 		Short: "Edit resources interactively",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if len(args) < 2 {
+			blank, err := cmd.Flags().GetBool("blank")
+			if err != nil {
+				return err
+			}
+			if len(args) < 2 && !blank {
+				_ = cmd.Help()
+				return errors.New("invalid argument(s) received")
+			} else if len(args) < 1 && blank {
 				_ = cmd.Help()
 				return errors.New("invalid argument(s) received")
 			}
@@ -119,8 +166,14 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			defer os.Remove(tf.Name())
 			orig := new(bytes.Buffer)
 			writer := io.MultiWriter(orig, tf)
-			if err := dumpResource(cli.Client, cli.Config, args[0], args[1:], writer); err != nil {
-				return err
+			if blank {
+				if err := dumpBlank(cli.Config, args[0], writer); err != nil {
+					return err
+				}
+			} else {
+				if err := dumpResource(cli.Client, cli.Config, args[0], args[1:], writer); err != nil {
+					return err
+				}
 			}
 			if err := tf.Close(); err != nil {
 				return err
@@ -163,6 +216,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	helpers.AddFormatFlag(cmd.Flags())
+	_ = cmd.Flags().BoolP("blank", "b", false, "edit a blank resource, and create it on save")
 
 	return cmd
 }

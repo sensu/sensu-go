@@ -196,6 +196,92 @@ func TestDumpResource(t *testing.T) {
 	}
 }
 
+func TestDumpBlank(t *testing.T) {
+	tests := []struct {
+		Type string
+		Err  bool
+	}{
+		{
+			Type: "namespace",
+		},
+		{
+			Type: "cluster_role",
+		},
+		{
+			Type: "cluster_role_binding",
+		},
+		{
+			Type: "user",
+		},
+		{
+			Type: "asset",
+		},
+		{
+			Type: "check_config",
+		},
+		{
+			Type: "check",
+		},
+		{
+			Type: "entity",
+		},
+		{
+			Type: "event",
+		},
+		{
+			Type: "event_filter",
+		},
+		{
+			Type: "handler",
+		},
+		{
+			Type: "mutator",
+		},
+		{
+			Type: "role",
+		},
+		{
+			Type: "role_binding",
+		},
+		{
+			Type: "silenced",
+		},
+		{
+			Type: "invalid",
+			Err:  true,
+		},
+	}
+	for _, test := range tests {
+		unmarshalers := []func([]byte, interface{}) error{
+			json.Unmarshal,
+			yaml.Unmarshal,
+		}
+		for i, unmarshal := range unmarshalers {
+			t.Run(testName(um(i), test.Type), func(t *testing.T) {
+				cfg := testConfig{
+					namespace: "default",
+					format:    "json",
+				}
+				buf := new(bytes.Buffer)
+				err := dumpBlank(cfg, test.Type, buf)
+				if err != nil && !test.Err {
+					t.Error(err)
+				}
+				if err == nil && test.Err {
+					t.Error("expected non-nil error")
+				}
+				if test.Err {
+					return
+				}
+				var m map[string]interface{}
+				if err := unmarshal(buf.Bytes(), &m); err != nil {
+					t.Fatal(err)
+				}
+			})
+		}
+	}
+}
+
 func TestParseCommand(t *testing.T) {
 	tests := []struct {
 		Input  string
