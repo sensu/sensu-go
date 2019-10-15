@@ -98,6 +98,10 @@ func New(ctx context.Context, c Config, opts ...Option) (*Schedulerd, error) {
 
 // Start the Scheduler daemon.
 func (s *Schedulerd) Start() error {
+	_ = prometheus.Register(intervalCounter)
+	_ = prometheus.Register(cronCounter)
+	_ = prometheus.Register(rrIntervalCounter)
+	_ = prometheus.Register(rrCronCounter)
 	return s.checkWatcher.Start()
 }
 
