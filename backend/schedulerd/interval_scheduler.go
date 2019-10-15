@@ -61,6 +61,7 @@ func (s *IntervalScheduler) schedule(timer CheckTimer, executor *CheckExecutor) 
 
 // Start starts the IntervalScheduler.
 func (s *IntervalScheduler) Start() {
+	intervalCounter.WithLabelValues(s.check.Namespace).Inc()
 	go s.start()
 }
 
@@ -98,6 +99,7 @@ func (s *IntervalScheduler) Interrupt(check *corev2.CheckConfig) {
 
 // Stop stops the IntervalScheduler
 func (s *IntervalScheduler) Stop() error {
+	intervalCounter.WithLabelValues(s.check.Namespace).Dec()
 	s.logger.Info("stopping scheduler")
 	s.cancel()
 

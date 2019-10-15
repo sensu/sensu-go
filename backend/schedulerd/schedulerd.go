@@ -4,12 +4,43 @@ import (
 	"context"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/types"
+)
+
+var (
+	intervalCounter = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "sensu_go_interval_schedulers",
+			Help: "Number of active interval check schedulers on this backend",
+		},
+		[]string{"namespace"})
+
+	cronCounter = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "sensu_go_cron_schedulers",
+			Help: "Number of active cron check schedulers on this backend",
+		},
+		[]string{"namespace"})
+
+	rrIntervalCounter = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "sensu_go_round_robin_interval_schedulers",
+			Help: "Number of active round robin interval check schedulers on this backend.",
+		},
+		[]string{"namespace"})
+
+	rrCronCounter = prometheus.NewGaugeVec(
+		prometheus.GaugeOpts{
+			Name: "sensu_go_round_robin_cron_schedulers",
+			Help: "Number of active round robin cron check schedulers on this backend.",
+		},
+		[]string{"namespace"})
 )
 
 // Schedulerd handles scheduling check requests for each check's

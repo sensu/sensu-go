@@ -103,6 +103,7 @@ func (s *RoundRobinIntervalScheduler) updateRings() {
 
 // Start starts the round robin interval scheduler.
 func (s *RoundRobinIntervalScheduler) Start() {
+	rrIntervalCounter.WithLabelValues(s.check.Namespace).Inc()
 	go s.start()
 }
 
@@ -213,6 +214,7 @@ func (s *RoundRobinIntervalScheduler) Interrupt(check *corev2.CheckConfig) {
 
 // Stop stops the scheduler
 func (s *RoundRobinIntervalScheduler) Stop() error {
+	rrIntervalCounter.WithLabelValues(s.check.Namespace).Dec()
 	s.logger.Info("stopping scheduler")
 	s.cancel()
 	return nil
