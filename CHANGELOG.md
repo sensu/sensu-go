@@ -11,6 +11,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added the `APIKey` resource and HTTP API support for POST, GET, and DELETE.
 - Added sensuctl commands to manage the `APIKey` resource.
 - Added support for api keys to be used in api authentication.
+- Added prometheus gauges for check schedulers.
 
 ### Fixed
 - Opening an already open Bolt database should not cause sensu-agent to hang
