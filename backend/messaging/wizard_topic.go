@@ -36,7 +36,7 @@ func (t *wizardTopic) Send(msg interface{}) {
 // cancelling a subscription can lead to a send on a closed channel.
 func safeSend(c chan<- interface{}, message interface{}, done chan struct{}) {
 	defer func() {
-		recover()
+		_ = recover()
 	}()
 	select {
 	case c <- message:
