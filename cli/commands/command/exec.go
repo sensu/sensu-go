@@ -1,6 +1,7 @@
 package command
 
 import (
+	"context"
 	"errors"
 
 	"github.com/sensu/sensu-go/cli"
@@ -32,7 +33,8 @@ func execCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []strin
 			return err
 		}
 
-		if err = manager.ExecCommand(args[0], args[1:]); err != nil {
+		ctx := context.TODO()
+		if err = manager.ExecCommand(ctx, args[0], args[1:]); err != nil {
 			return err
 		}
 

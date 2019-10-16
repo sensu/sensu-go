@@ -177,7 +177,7 @@ func (m *CommandManager) installCommand(alias string, commandAsset *corev2.Asset
 	return nil
 }
 
-func (m *CommandManager) ExecCommand(alias string, args []string) error {
+func (m *CommandManager) ExecCommand(ctx context.Context, alias string, args []string) error {
 	commandPlugin, err := m.fetchCommandPlugin(alias)
 	if err != nil {
 		return err
@@ -187,7 +187,6 @@ func (m *CommandManager) ExecCommand(alias string, args []string) error {
 		return errors.New("the alias specified does not exist")
 	}
 
-	ctx := context.TODO()
 	runtimeAsset, err := m.assetGetter.Get(ctx, &commandPlugin.Asset)
 	if err != nil {
 		return err
