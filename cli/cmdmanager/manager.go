@@ -323,3 +323,16 @@ func (m *CommandManager) FetchCommandPlugins() ([]*CommandPlugin, error) {
 
 	return localCommandPlugins, nil
 }
+
+func (m *CommandManager) DeleteCommandPlugin(alias string) error {
+	key := []byte(alias)
+
+	return m.db.Batch(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket(commandBucketName)
+		if bucket == nil {
+			return nil
+		}
+
+		return bucket.Delete(key)
+	})
+}
