@@ -61,6 +61,7 @@ func (s *CronScheduler) schedule(timer *CronTimer, executor *CheckExecutor) {
 
 // Start starts the cron scheduler.
 func (s *CronScheduler) Start() {
+	cronCounter.WithLabelValues(s.check.Namespace).Inc()
 	go s.start()
 }
 
@@ -97,6 +98,7 @@ func (s *CronScheduler) Interrupt(check *corev2.CheckConfig) {
 
 // Stop stops the cron scheduler.
 func (s *CronScheduler) Stop() error {
+	cronCounter.WithLabelValues(s.check.Namespace).Dec()
 	logger.Info("stopping cron scheduler")
 	s.cancel()
 
