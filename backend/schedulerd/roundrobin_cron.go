@@ -54,6 +54,7 @@ func NewRoundRobinCronScheduler(ctx context.Context, store store.Store, bus mess
 
 // Start starts the scheduler.
 func (s *RoundRobinCronScheduler) Start() {
+	rrCronCounter.WithLabelValues(s.check.Namespace).Inc()
 	go s.start()
 }
 
@@ -192,6 +193,7 @@ func (s *RoundRobinCronScheduler) Interrupt(check *corev2.CheckConfig) {
 
 // Stop stops the scheduler
 func (s *RoundRobinCronScheduler) Stop() error {
+	rrCronCounter.WithLabelValues(s.check.Namespace).Dec()
 	s.logger.Info("stopping scheduler")
 	s.cancel()
 	return nil
