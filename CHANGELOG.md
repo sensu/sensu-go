@@ -16,6 +16,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 indefinitely.
 - [CLI] Dump multiple types as YAML to a file would print separator STDOUT
 instead of specified file
+- Fixed a bug where Sensu would crash with a panic due to a send on a closed channel.
 
 ## [5.14.0] - 2019-10-08
 
