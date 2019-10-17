@@ -79,6 +79,12 @@ func dumpResource(client client, cfg namespaceFormat, typeName string, key []str
 			Namespace: cfg.Namespace(),
 			Name:      key[0],
 		})
+	case *corev2.ClusterRoleBinding, *corev2.ClusterRole, *corev2.TessenConfig:
+		// These resources don't validate cleanly if their namespace is set
+		if len(key) != 1 {
+			return errors.New("resource name missing")
+		}
+		resource.SetObjectMeta(corev2.ObjectMeta{Name: key[0]})
 	default:
 		if len(key) != 1 {
 			return errors.New("resource name missing")
