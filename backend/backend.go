@@ -294,7 +294,7 @@ func Initialize(config *Config) (*Backend, error) {
 	}
 
 	// Load the JWT key pair
-	jwt.LoadKeyPair(viper.GetString(FlagJWTPrivateKeyFile), viper.GetString(FlagJWTPublicKeysFile))
+	jwt.LoadKeyPair(viper.GetString(FlagJWTPrivateKeyFile), viper.GetString(FlagJWTPublicKeyFile))
 
 	// Initialize apid
 	apidConfig := apid.Config{

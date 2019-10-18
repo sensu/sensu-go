@@ -26,8 +26,7 @@ const (
 )
 
 var (
-	// TODO(palourde) Set to 5 minutes
-	defaultExpiration = time.Second * 15
+	defaultExpiration = time.Minute * 5
 	secret            []byte
 	privateKey        *ecdsa.PrivateKey
 	publicKey         *ecdsa.PublicKey

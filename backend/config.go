@@ -35,9 +35,9 @@ const (
 	// FlagJWTPrivateKeyFile defines the path to the private key file for JWT
 	// signatures
 	FlagJWTPrivateKeyFile = "jwt-private-key-file"
-	// FlagJWTPublicKeysFile defines the path to the public keys file for JWT
+	// FlagJWTPublicKeyFile defines the path to the public key file for JWT
 	// signatures validation
-	FlagJWTPublicKeysFile = "jwt-public-keys-file"
+	FlagJWTPublicKeyFile = "jwt-public-key-file"
 )
 
 // Config specifies a Backend configuration.
