@@ -70,7 +70,7 @@ type AuthenticationAPIClient interface {
 	CreateAccessToken(url string, userid string, secret string) (*corev2.Tokens, error)
 	TestCreds(userid string, secret string) error
 	Logout(token string) error
-	RefreshAccessToken(refreshToken string) (*corev2.Tokens, error)
+	RefreshAccessToken(tokens *corev2.Tokens) (*corev2.Tokens, error)
 }
 
 // AssetAPIClient client methods for assets

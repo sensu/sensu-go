@@ -18,8 +18,16 @@ import (
 	utilbytes "github.com/sensu/sensu-go/util/bytes"
 )
 
+type key int
+
+const (
+	// IssuerURLKey specifies the URL on which the JWT is issued
+	IssuerURLKey key = iota
+)
+
 var (
-	defaultExpiration = time.Minute * 5
+	// TODO(palourde) Set to 5 minutes
+	defaultExpiration = time.Second * 15
 	secret            []byte
 	privateKey        *ecdsa.PrivateKey
 	publicKey         *ecdsa.PublicKey

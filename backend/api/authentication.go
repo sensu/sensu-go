@@ -35,6 +35,11 @@ func (a *AuthenticationClient) CreateAccessToken(ctx context.Context, username, 
 	// Add the 'system:users' group to this user
 	claims.Groups = append(claims.Groups, "system:users")
 
+	// Add the issuer URL
+	if issuer := ctx.Value(jwt.IssuerURLKey); issuer != nil {
+		claims.Issuer = issuer.(string)
+	}
+
 	// Create an access token and its signed version
 	_, tokenString, err := jwt.AccessToken(claims)
 	if err != nil {
@@ -132,6 +137,11 @@ func (a *AuthenticationClient) RefreshAccessToken(ctx context.Context) (*corev2.
 
 	// Ensure the 'system:users' group is present
 	claims.Groups = append(claims.Groups, "system:users")
+
+	// Add the issuer URL
+	if issuer := ctx.Value(jwt.IssuerURLKey); issuer != nil {
+		claims.Issuer = issuer.(string)
+	}
 
 	// Issue a new access token
 	_, accessTokenString, err := jwt.AccessToken(claims)
