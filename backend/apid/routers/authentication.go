@@ -91,13 +91,7 @@ func (a *AuthenticationRouter) test(w http.ResponseWriter, r *http.Request) {
 // logout handles the logout flow
 func (a *AuthenticationRouter) logout(w http.ResponseWriter, r *http.Request) {
 	client := api.NewAuthenticationClient(a.authenticator)
-	err := client.Logout(r.Context())
-	if err == nil {
-		return
-	}
-
-	if err == corev2.ErrInvalidToken {
-		http.Error(w, "invalid refresh token", http.StatusBadRequest)
+	if err := client.Logout(r.Context()); err == nil {
 		return
 	}
 
