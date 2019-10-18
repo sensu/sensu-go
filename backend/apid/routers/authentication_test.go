@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/gorilla/mux"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
@@ -115,7 +115,7 @@ func TestTestSuccessful(t *testing.T) {
 
 func authenticationRouter(store realStore.Store) *AuthenticationRouter {
 	authenticator := &authentication.Authenticator{}
-	provider := &basic.Provider{Store: store, ObjectMeta: v2.ObjectMeta{Name: basic.Type}}
+	provider := &basic.Provider{Store: store, ObjectMeta: corev2.ObjectMeta{Name: basic.Type}}
 	authenticator.AddProvider(provider)
 	return &AuthenticationRouter{store: store, authenticator: authenticator}
 }
