@@ -17,6 +17,7 @@ yarn-error.log*
 coverage.out
 *.csr
 *.pem
+!backend/authentication/testdata/*
 ca-config.json
 
 # packaging
