@@ -132,7 +132,7 @@ func (a *AuthenticationClient) RefreshAccessToken(ctx context.Context) (*corev2.
 	// Refresh the user claims
 	claims, err := a.auth.Refresh(ctx, accessClaims)
 	if err != nil {
-		return nil, corev2.ErrUnauthorized
+		return nil, err
 	}
 
 	// Ensure the 'system:users' group is present

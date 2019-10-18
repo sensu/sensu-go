@@ -112,11 +112,7 @@ func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "invalid access token", http.StatusBadRequest)
 			return
 		}
-		if _, ok := err.(*store.ErrNotFound); ok {
-			logger.WithError(err).Info("refresh token unauthorized")
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-			return
-		}
+
 		logger.WithError(err).Info("unexpected error while authorizing refresh token")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
