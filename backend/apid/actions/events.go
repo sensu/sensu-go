@@ -82,6 +82,22 @@ func (a EventController) Delete(ctx context.Context, entity, check string) error
 		return NewErrorf(NotFound)
 	}
 
+	if result.HasCheck() && result.Check.Ttl > 0 {
+		// Disable check TTL for this event, and inform eventd
+		result.Check.Ttl = -1
+		if err := a.bus.Publish(messaging.TopicEventRaw, result); err != nil {
+			return NewError(InternalErr, err)
+		}
+	}
+
+	if result.HasCheck() && result.Check.Name == "keepalive" {
+		// Notify keepalived that the keepalive was deleted
+		result.Timestamp = -1
+		if err := a.bus.Publish(messaging.TopicKeepalive, result); err != nil {
+			return NewError(InternalErr, err)
+		}
+	}
+
 	if err := a.store.DeleteEventByEntityCheck(ctx, entity, check); err != nil {
 		return NewError(InternalErr, err)
 	}
