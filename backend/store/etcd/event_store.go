@@ -182,7 +182,7 @@ func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName
 		return nil, err
 	}
 
-	resp, err := s.client.Get(ctx, path, clientv3.WithPrefix())
+	resp, err := s.client.Get(ctx, path, clientv3.WithPrefix(), clientv3.WithSerializable())
 	if err != nil {
 		return nil, err
 	}
