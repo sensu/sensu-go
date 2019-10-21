@@ -226,7 +226,7 @@ func parseToken(tokenString string) (*jwt.Token, error) {
 
 		// Validate the algorith used
 		switch alg := token.Header["alg"]; alg {
-		case jwt.SigningMethodHS256.Alg(), jwt.SigningMethodES384.Alg(), jwt.SigningMethodES512.Alg():
+		case jwt.SigningMethodES256.Alg(), jwt.SigningMethodES384.Alg(), jwt.SigningMethodES512.Alg():
 		default:
 			return nil, fmt.Errorf("unexpected algorith %q found in token header", alg)
 		}
