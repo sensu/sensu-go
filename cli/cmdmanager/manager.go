@@ -146,6 +146,22 @@ func (m *CommandManager) InstallCommandFromBonsai(alias, bonsaiAssetName string)
 		return err
 	}
 
+	if val, ok := asset.Annotations["io.sensu.bonsai.type"]; ok {
+		if val != "sensuctl" {
+			return errors.New("requested asset is not a sensuctl asset")
+		}
+	} else {
+		return errors.New("requested asset does not have a type annotation set")
+	}
+
+	if val, ok := asset.Annotations["io.sensu.bonsai.provider"]; ok {
+		if val != "sensuctl/command" {
+			return errors.New("requested asset is not a sensuctl/command asset")
+		}
+	} else {
+		return errors.New("requested asset does not have a provider annotation set")
+	}
+
 	return m.installCommand(alias, &asset)
 }
 
