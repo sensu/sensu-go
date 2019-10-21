@@ -13,6 +13,13 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added support for api keys to be used in api authentication.
 - Added support for sensu-backend service environment variables
 
+### Changed
+- Upgraded etcd to 3.3.17
+
+### Fixed
+- As a result of upgrading etcd, TLS etcd clients that lose their connection will
+successfully reconnect when using --no-embed-etcd.
+
 ## [5.14.1] - 2019-10-16
 
 ### Added
