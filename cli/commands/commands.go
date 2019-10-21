@@ -2,6 +2,7 @@ package commands
 
 import (
 	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/apikey"
 	"github.com/sensu/sensu-go/cli/commands/asset"
 	"github.com/sensu/sensu-go/cli/commands/check"
 	"github.com/sensu/sensu-go/cli/commands/cluster"
@@ -41,6 +42,7 @@ func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 
 		// Management Commands
 		asset.HelpCommand(cli),
+		apikey.HelpCommand(cli),
 		check.HelpCommand(cli),
 		config.HelpCommand(cli),
 		clusterrole.HelpCommand(cli),

@@ -7,9 +7,23 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Added the `APIKey` resource and HTTP API support for POST, GET, and DELETE.
+- Added sensuctl commands to manage the `APIKey` resource.
+- Added support for api keys to be used in api authentication.
+- Added support for sensu-backend service environment variables
+
+## [5.14.1] - 2019-10-16
+
+### Added
+- Added prometheus gauges for check schedulers.
+
 ### Fixed
 - Opening an already open Bolt database should not cause sensu-agent to hang
 indefinitely.
+- [CLI] Dump multiple types as YAML to a file would print separator STDOUT
+instead of specified file
+- Fixed a bug where Sensu would crash with a panic due to a send on a closed channel.
 
 ## [5.14.0] - 2019-10-08
 

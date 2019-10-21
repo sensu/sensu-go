@@ -148,7 +148,7 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		router.PathPrefix("/api/{group:core}/{version:v2}/"),
 		middlewares.SimpleLogger{},
 		middlewares.Namespace{},
-		middlewares.Authentication{},
+		middlewares.Authentication{Store: cfg.Store},
 		middlewares.AuthorizationAttributes{},
 		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},
 		middlewares.LimitRequest{},
@@ -157,6 +157,7 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	mountRouters(
 		subrouter,
 		routers.NewAssetRouter(cfg.Store),
+		routers.NewAPIKeysRouter(cfg.Store),
 		routers.NewChecksRouter(cfg.Store, cfg.QueueGetter),
 		routers.NewClusterRolesRouter(cfg.Store),
 		routers.NewClusterRoleBindingsRouter(cfg.Store),
@@ -194,7 +195,7 @@ func GraphQLSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		//
 		//       https://github.com/graphql/graphiql
 		//       https://graphql.org/learn/introspection/
-		middlewares.Authentication{IgnoreUnauthorized: false},
+		middlewares.Authentication{IgnoreUnauthorized: false, Store: cfg.Store},
 	)
 
 	mountRouters(

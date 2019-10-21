@@ -107,3 +107,13 @@ func (p *Provider) claims(username string) corev2.AuthProviderClaims {
 func (p *Provider) SetNamespace(namespace string) {
 	p.Namespace = namespace
 }
+
+// RBACName is not implemented
+func (p *Provider) RBACName() string {
+	return ""
+}
+
+// SetObjectMeta sets the meta of the resource.
+func (p *Provider) SetObjectMeta(meta corev2.ObjectMeta) {
+	p.ObjectMeta = meta
+}

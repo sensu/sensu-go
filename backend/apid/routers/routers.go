@@ -190,9 +190,9 @@ func (r *ResourceRoute) Post(fn actionHandlerFunc) *mux.Route {
 // TODO: uncomment this and use it once controller update fits
 // http patch semantics.
 // Patch updates/modifies
-//func (r *ResourceRoute) Patch(fn actionHandlerFunc) *mux.Route {
-//	return r.path("{id}", fn).Methods(http.MethodPatch)
-//}
+// func (r *ResourceRoute) Patch(fn actionHandlerFunc) *mux.Route {
+// 	return r.Path("{id}", fn).Methods(http.MethodPatch)
+// }
 
 // Put updates/replaces
 func (r *ResourceRoute) Put(fn actionHandlerFunc) *mux.Route {

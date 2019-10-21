@@ -25,6 +25,7 @@ type ListOptions struct {
 
 // APIClient client methods across the Sensu API
 type APIClient interface {
+	APIKeyClient
 	AuthenticationAPIClient
 	AssetAPIClient
 	CheckAPIClient
@@ -46,6 +47,12 @@ type APIClient interface {
 	GenericClient
 	ClusterMemberClient
 	LicenseClient
+}
+
+// APIKeyClient exposes client methods for api keys.
+type APIKeyClient interface {
+	// PostAPIKey creates an api key and returns the location header.
+	PostAPIKey(path string, obj interface{}) (string, error)
 }
 
 // GenericClient exposes generic resource methods.

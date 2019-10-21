@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -413,6 +414,10 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	viper.RegisterAlias(deprecatedFlagEtcdInitialClusterToken, flagEtcdInitialClusterToken)
 	viper.RegisterAlias(deprecatedFlagEtcdNodeName, flagEtcdNodeName)
 	viper.RegisterAlias(deprecatedFlagEtcdPeerURLs, flagEtcdPeerURLs)
+
+	viper.SetEnvPrefix("sensu_backend")
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	viper.AutomaticEnv()
 
 	// Use our custom template for the start command
 	cobra.AddTemplateFunc("categoryFlags", categoryFlags)
