@@ -86,14 +86,15 @@ func (client *RestClient) RefreshAccessToken(tokens *corev2.Tokens) (*corev2.Tok
 	claims := &corev2.Claims{}
 	_, _, _ = parser.ParseUnverified(tokens.Access, claims)
 
+	request := client.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(map[string]string{"refresh_token": tokens.Refresh}).
+		SetResult(&corev2.Tokens{})
+
 	switch issuer := claims.Issuer; {
 	case issuer != "":
 		// Attempt to renew the access token with the issuer
-		res, err = client.R().
-			SetHeader("Content-Type", "application/json").
-			SetBody(map[string]string{"refresh_token": tokens.Refresh}).
-			SetResult(&corev2.Tokens{}).
-			Post(claims.Issuer + url)
+		res, err = request.Post(claims.Issuer + url)
 
 		// If we received a successful response, break of this switch and directly
 		// decode the response body
@@ -106,11 +107,7 @@ func (client *RestClient) RefreshAccessToken(tokens *corev2.Tokens) (*corev2.Tok
 		// API URL instead
 		fallthrough
 	default:
-		res, err = client.R().
-			SetHeader("Content-Type", "application/json").
-			SetBody(map[string]string{"refresh_token": tokens.Refresh}).
-			SetResult(&corev2.Tokens{}).
-			Post(url)
+		res, err = request.Post(url)
 	}
 
 	if err != nil {
