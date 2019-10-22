@@ -335,6 +335,8 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	cmd.Flags().Int(backend.FlagPipelinedWorkers, viper.GetInt(backend.FlagPipelinedWorkers), "number of workers spawned for handling events through the event pipeline")
 	cmd.Flags().Int(backend.FlagPipelinedBufferSize, viper.GetInt(backend.FlagPipelinedBufferSize), "number of events to handle that can be buffered")
 	cmd.Flags().Int(backend.FlagAgentWriteTimeout, viper.GetInt(backend.FlagAgentWriteTimeout), "timeout in seconds for agent writes")
+	cmd.Flags().String(backend.FlagJWTPrivateKeyFile, viper.GetString(backend.FlagJWTPrivateKeyFile), "path to the PEM-encoded private key to use to sign JWTs")
+	cmd.Flags().String(backend.FlagJWTPublicKeyFile, viper.GetString(backend.FlagJWTPublicKeyFile), "path to the PEM-encoded public key to use to verify JWT signatures")
 
 	// Etcd flags
 	cmd.Flags().StringSlice(flagEtcdAdvertiseClientURLs, viper.GetStringSlice(flagEtcdAdvertiseClientURLs), "list of this member's client URLs to advertise to the rest of the cluster.")

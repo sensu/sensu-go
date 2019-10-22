@@ -89,10 +89,6 @@ func (s *Store) DeleteUser(ctx context.Context, user *corev2.User) error {
 		// If key exists, delete user & any access token from allow list
 		Then(
 			clientv3.OpPut(userKey, string(userBytes)),
-			clientv3.OpDelete(
-				getTokenPath(user.Username, ""),
-				clientv3.WithPrefix(),
-			),
 		)
 
 	res, serr := txn.Commit()

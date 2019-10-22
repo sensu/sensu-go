@@ -1,8 +1,11 @@
 package routers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/backend/api"
@@ -40,9 +43,12 @@ func (a *AuthenticationRouter) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := api.NewAuthenticationClient(a.store, a.authenticator)
-	tokens, err := client.CreateAccessToken(r.Context(), username, password)
+	// Determine the URL that serves this request so it can be later used as the
+	// issuer URL
+	ctx := context.WithValue(r.Context(), jwt.IssuerURLKey, issuerURL(r))
 
+	client := api.NewAuthenticationClient(a.authenticator)
+	tokens, err := client.CreateAccessToken(ctx, username, password)
 	if err != nil {
 		if err == corev2.ErrUnauthorized {
 			logger.WithError(err).WithField("user", username).
@@ -70,7 +76,7 @@ func (a *AuthenticationRouter) test(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := api.NewAuthenticationClient(a.store, a.authenticator)
+	client := api.NewAuthenticationClient(a.authenticator)
 	err := client.TestCreds(r.Context(), username, password)
 	if err == nil {
 		return
@@ -84,14 +90,8 @@ func (a *AuthenticationRouter) test(w http.ResponseWriter, r *http.Request) {
 
 // logout handles the logout flow
 func (a *AuthenticationRouter) logout(w http.ResponseWriter, r *http.Request) {
-	client := api.NewAuthenticationClient(a.store, a.authenticator)
-	err := client.Logout(r.Context())
-	if err == nil {
-		return
-	}
-
-	if err == corev2.ErrInvalidToken {
-		http.Error(w, "invalid refresh token", http.StatusBadRequest)
+	client := api.NewAuthenticationClient(a.authenticator)
+	if err := client.Logout(r.Context()); err == nil {
 		return
 	}
 
@@ -100,18 +100,19 @@ func (a *AuthenticationRouter) logout(w http.ResponseWriter, r *http.Request) {
 
 // token handles logic for issuing new access tokens
 func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
-	client := api.NewAuthenticationClient(a.store, a.authenticator)
-	tokens, err := client.RefreshAccessToken(r.Context())
+	client := api.NewAuthenticationClient(a.authenticator)
+
+	// Determine the URL that serves this request so it can be later used as the
+	// issuer URL
+	ctx := context.WithValue(r.Context(), jwt.IssuerURLKey, issuerURL(r))
+
+	tokens, err := client.RefreshAccessToken(ctx)
 	if err != nil {
 		if err == corev2.ErrInvalidToken {
 			http.Error(w, "invalid access token", http.StatusBadRequest)
 			return
 		}
-		if _, ok := err.(*store.ErrNotFound); ok {
-			logger.WithError(err).Info("refresh token unauthorized")
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
-			return
-		}
+
 		logger.WithError(err).Info("unexpected error while authorizing refresh token")
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
@@ -121,4 +122,17 @@ func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(tokens); err != nil {
 		logger.WithError(err).Error("couldn't write response body")
 	}
+}
+
+// issuerURL determines the URL used by the client to authenticate and renew its
+// access token, so it can be later re-used by the client in case the access
+// token is used against a different cluster
+func issuerURL(r *http.Request) string {
+	issuerURL := r.Host
+	if r.TLS == nil {
+		issuerURL = "http://" + issuerURL
+	} else {
+		issuerURL = "https://" + issuerURL
+	}
+	return issuerURL
 }

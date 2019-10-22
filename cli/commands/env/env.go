@@ -136,7 +136,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 // refreshAccessToken attempts to silently refresh the access token
 func refreshAccessToken(cli *cli.SensuCli) func(*cobra.Command, []string) {
 	return func(cmd *cobra.Command, args []string) {
-		tokens, err := cli.Client.RefreshAccessToken(cli.Config.Tokens().Refresh)
+		tokens, err := cli.Client.RefreshAccessToken(cli.Config.Tokens())
 		if err != nil {
 			return
 		}
