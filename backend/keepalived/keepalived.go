@@ -36,6 +36,8 @@ const (
 	RegistrationHandlerName = "registration"
 )
 
+const deletedEventSentinel = -1
+
 // Keepalived is responsible for monitoring keepalive events and recording
 // keepalives for entities.
 type Keepalived struct {
@@ -224,7 +226,7 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 			continue
 		}
 
-		if event.Timestamp == -1 {
+		if event.Timestamp == deletedEventSentinel {
 			// The keepalive event was deleted, so we should bury its associated switch
 			id := path.Join(entity.Namespace, entity.Name)
 			if err := switches.Bury(ctx, id); err != nil {

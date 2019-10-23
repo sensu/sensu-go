@@ -49,6 +49,8 @@ var (
 	)
 )
 
+const deletedEventSentinel = -1
+
 // Eventd handles incoming sensu events and stores them in etcd.
 type Eventd struct {
 	ctx             context.Context
@@ -236,7 +238,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		if err := switches.Alive(context.TODO(), switchKey, timeout); err != nil {
 			return err
 		}
-	} else if (prevEvent != nil && prevEvent.Check.Ttl > 0) || event.Check.Ttl == -1 {
+	} else if (prevEvent != nil && prevEvent.Check.Ttl > 0) || event.Check.Ttl == deletedEventSentinel {
 		// The check TTL has been disabled, there is no longer a need to track it
 		if err := switches.Bury(context.TODO(), switchKey); err != nil {
 			// It's better to publish the event even if this fails, so
