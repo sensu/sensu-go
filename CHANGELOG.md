@@ -18,6 +18,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - As a result of upgrading etcd, TLS etcd clients that lose their connection will
 successfully reconnect when using --no-embed-etcd.
+- Check TTL switches are now correctly buried when associated events and entities
+are deleted.
+- Keepalive switches are now correctly buried when the keepalive event is deleted.
 
 ## [5.14.1] - 2019-10-16
 

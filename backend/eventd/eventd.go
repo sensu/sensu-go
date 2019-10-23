@@ -49,6 +49,8 @@ var (
 	)
 )
 
+const deletedEventSentinel = -1
+
 // Eventd handles incoming sensu events and stores them in etcd.
 type Eventd struct {
 	ctx             context.Context
@@ -236,7 +238,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		if err := switches.Alive(context.TODO(), switchKey, timeout); err != nil {
 			return err
 		}
-	} else if prevEvent != nil && prevEvent.Check.Ttl > 0 {
+	} else if (prevEvent != nil && prevEvent.Check.Ttl > 0) || event.Check.Ttl == deletedEventSentinel {
 		// The check TTL has been disabled, there is no longer a need to track it
 		if err := switches.Bury(context.TODO(), switchKey); err != nil {
 			// It's better to publish the event even if this fails, so
@@ -292,8 +294,8 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 	// NOTE: To support check TTL for round robin scheduling, load all events
 	// here, filter by check, and update all events involved in the round robin
 	if entity == "" {
-		lager.Error("round robin check TTL not supported")
-		return false
+		lager.Error("round robin check ttl not supported")
+		return true
 	}
 
 	ctx := store.NamespaceContext(context.Background(), namespace)
@@ -302,18 +304,20 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 	// TTL for it anymore.
 	if ent, err := e.store.GetEntityByName(ctx, entity); err == nil && ent == nil {
 		return true
+	} else if err != nil {
+		lager.WithError(err).Error("check ttl: error retrieving entity")
+		return false
 	}
 
 	event, err := e.eventStore.GetEventByEntityCheck(ctx, entity, check)
 	if err != nil {
-		lager.WithError(err).Error("can't handle check TTL failure")
+		lager.WithError(err).Error("check ttl: error retrieving event")
 		return false
 	}
 
 	if event == nil {
 		// The user deleted the check event but not the entity
-		lager.Error("event is nil")
-		return false
+		return true
 	}
 
 	if leader {

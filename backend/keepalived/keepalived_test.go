@@ -274,7 +274,6 @@ func TestCreateKeepaliveEvent(t *testing.T) {
 }
 
 func TestDeadCallbackNoEntity(t *testing.T) {
-	// Make sure the dead callback doesn't crash when entity is missing
 	messageBus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	if err != nil {
 		t.Fatal(err)
@@ -295,12 +294,12 @@ func TestDeadCallbackNoEntity(t *testing.T) {
 	}
 	store.On("GetEntityByName", mock.Anything, mock.Anything).Return((*corev2.Entity)(nil), nil)
 
-	// Smoke test - just want to make sure there is no panic
-	keepalived.dead("default/testSubscriber", liveness.Alive, true)
+	if got, want := keepalived.dead("default/testSubscriber", liveness.Alive, true), true; got != want {
+		t.Fatalf("got bury: %v, want bury: %v", got, want)
+	}
 }
 
 func TestDeadCallbackNoEvent(t *testing.T) {
-	// Make sure the dead callback doesn't crash when entity is missing
 	messageBus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	if err != nil {
 		t.Fatal(err)
@@ -322,6 +321,8 @@ func TestDeadCallbackNoEvent(t *testing.T) {
 	store.On("GetEntityByName", mock.Anything, mock.Anything).Return(corev2.FixtureEntity("foo"), nil)
 	store.On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).Return((*corev2.Event)(nil), nil)
 
-	// Smoke test - just want to make sure there is no panic
-	keepalived.dead("default/testSubscriber", liveness.Alive, true)
+	// The switch should be buried since the event is nil
+	if got, want := keepalived.dead("default/testSubscriber", liveness.Alive, true), true; got != want {
+		t.Fatalf("got bury: %v, want bury: %v", got, want)
+	}
 }

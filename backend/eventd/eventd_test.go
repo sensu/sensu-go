@@ -276,3 +276,75 @@ func TestCheckTTL(t *testing.T) {
 		})
 	}
 }
+
+func TestBuryConditions(t *testing.T) {
+	tests := []struct {
+		name  string
+		key   string
+		store func(*mockstore.MockStore)
+		bury  bool
+	}{
+		{
+			// TODO: this test case should have bury: false when round robin check
+			// TTL is supported
+			name: "bury switch on round robin",
+			key:  "default/foo",
+			bury: true,
+		},
+		{
+			name: "bury switch on nil entity",
+			key:  "default/foo/bar",
+			store: func(store *mockstore.MockStore) {
+				store.On("GetEntityByName", mock.Anything, "bar").Return((*corev2.Entity)(nil), nil)
+			},
+			bury: true,
+		},
+		{
+			name: "do not bury switch on entity lookup error",
+			key:  "default/foo/bar",
+			store: func(store *mockstore.MockStore) {
+				store.On("GetEntityByName", mock.Anything, "bar").Return((*corev2.Entity)(nil), errors.New("!"))
+			},
+			bury: false,
+		},
+		{
+			name: "bury switch on nil event",
+			key:  "default/foo/bar",
+			store: func(store *mockstore.MockStore) {
+				store.On("GetEntityByName", mock.Anything, "bar").Return(corev2.FixtureEntity("bar"), nil)
+				store.On("GetEventByEntityCheck", mock.Anything, "bar", "foo").Return((*corev2.Event)(nil), nil)
+			},
+			bury: true,
+		},
+		{
+			name: "do not bury switch on event lookup error",
+			key:  "default/foo/bar",
+			store: func(store *mockstore.MockStore) {
+				store.On("GetEntityByName", mock.Anything, "bar").Return(corev2.FixtureEntity("bar"), nil)
+				store.On("GetEventByEntityCheck", mock.Anything, "bar", "foo").Return((*corev2.Event)(nil), errors.New("!"))
+			},
+			bury: false,
+		},
+		{
+			name: "do not bury switch otherwise",
+			key:  "default/foo/bar",
+			store: func(store *mockstore.MockStore) {
+				store.On("GetEntityByName", mock.Anything, "bar").Return(corev2.FixtureEntity("bar"), nil)
+				store.On("GetEventByEntityCheck", mock.Anything, "bar", "foo").Return(corev2.FixtureEvent("bar", "foo"), nil)
+			},
+			bury: false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			store := new(mockstore.MockStore)
+			if test.store != nil {
+				test.store(store)
+			}
+			eventd := &Eventd{store: store, eventStore: store}
+			if got, want := eventd.dead(test.key, liveness.Alive, false), test.bury; got != want {
+				t.Fatalf("bad bury result: got %v, want %v", got, want)
+			}
+		})
+	}
+}

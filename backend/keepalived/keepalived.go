@@ -36,6 +36,8 @@ const (
 	RegistrationHandlerName = "registration"
 )
 
+const deletedEventSentinel = -1
+
 // Keepalived is responsible for monitoring keepalive events and recording
 // keepalives for entities.
 type Keepalived struct {
@@ -158,8 +160,13 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 			return err
 		}
 
+		id := path.Join(keepalive.Namespace, keepalive.Name)
+
 		// if there's no event, the entity was deregistered/deleted.
 		if event == nil {
+			if err := switches.Bury(ctx, id); err != nil {
+				return err
+			}
 			continue
 		}
 
@@ -174,7 +181,6 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 		}
 
 		ttl := int64(event.Check.Timeout)
-		id := path.Join(keepalive.Namespace, keepalive.Name)
 		if err := switches.Dead(ctx, id, ttl); err != nil {
 			return fmt.Errorf("error initializing keepalive %q: %s", id, err)
 		}
@@ -211,12 +217,21 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 
 		entity := event.Entity
 		if entity == nil {
-			logger.Error("received keepalive with nil entity")
+			logger.Error("keepalive channel received keepalive with nil event")
 			continue
 		}
 
 		if err := entity.Validate(); err != nil {
 			logger.WithError(err).Error("invalid keepalive event")
+			continue
+		}
+
+		if event.Timestamp == deletedEventSentinel {
+			// The keepalive event was deleted, so we should bury its associated switch
+			id := path.Join(entity.Namespace, entity.Name)
+			if err := switches.Bury(ctx, id); err != nil {
+				logger.WithError(err).Error("error deleting keepalive")
+			}
 			continue
 		}
 
@@ -398,8 +413,8 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 		return false
 	}
 	if currentEvent == nil {
-		lager.Error("keepalive event not found")
-		return false
+		// The keepalive was deleted, so bury the switch
+		return true
 	}
 
 	// this is a real keepalive event, emit it.
