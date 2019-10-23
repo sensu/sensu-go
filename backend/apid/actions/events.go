@@ -9,6 +9,8 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
+const deletedEventSentinel = -1
+
 // EventController expose actions in which a viewer can perform.
 type EventController struct {
 	store store.EventStore
@@ -80,6 +82,22 @@ func (a EventController) Delete(ctx context.Context, entity, check string) error
 
 	if result == nil {
 		return NewErrorf(NotFound)
+	}
+
+	if result.HasCheck() && result.Check.Ttl > 0 {
+		// Disable check TTL for this event, and inform eventd
+		result.Check.Ttl = deletedEventSentinel
+		if err := a.bus.Publish(messaging.TopicEventRaw, result); err != nil {
+			return NewError(InternalErr, err)
+		}
+	}
+
+	if result.HasCheck() && result.Check.Name == "keepalive" {
+		// Notify keepalived that the keepalive was deleted
+		result.Timestamp = deletedEventSentinel
+		if err := a.bus.Publish(messaging.TopicKeepalive, result); err != nil {
+			return NewError(InternalErr, err)
+		}
 	}
 
 	if err := a.store.DeleteEventByEntityCheck(ctx, entity, check); err != nil {
