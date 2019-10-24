@@ -87,6 +87,9 @@ func NewCommandManager() (*CommandManager, error) {
 
 	cacheDir := path.UserCacheDir("sensuctl")
 	m.db, err = bolt.Open(filepath.Join(cacheDir, dbName), 0600, &bolt.Options{})
+	if err != nil {
+		return nil, err
+	}
 
 	// start the asset manager
 	ctx := context.TODO()
@@ -319,7 +322,7 @@ func (m *CommandManager) FetchCommandPlugins() ([]*CommandPlugin, error) {
 			return nil
 		}
 
-		b.ForEach(func(k, v []byte) error {
+		if err := b.ForEach(func(k, v []byte) error {
 			var localCommandPlugin *CommandPlugin
 
 			// deserialize command plugin
@@ -329,7 +332,9 @@ func (m *CommandManager) FetchCommandPlugins() ([]*CommandPlugin, error) {
 			localCommandPlugins = append(localCommandPlugins, localCommandPlugin)
 
 			return nil
-		})
+		}); err != nil {
+			return err
+		}
 
 		return nil
 	}); err != nil {
