@@ -8,52 +8,21 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
+	"github.com/graphql-go/graphql"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/api"
-	"github.com/sensu/sensu-go/backend/apid/actions"
-	graphql "github.com/sensu/sensu-go/backend/apid/graphql"
-	"github.com/sensu/sensu-go/backend/authorization"
-	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 var (
 	defaultExpiration = time.Second * 30
 )
 
-// GraphQLRouter handles requests for /events
-type GraphQLRouter struct {
-	service *graphql.Service
-	store   store.Store
+type GraphQLService interface {
+	Do(ctx context.Context, q string, vars map[string]interface{}) *graphql.Result
 }
 
-// NewGraphQLRouter instantiates new events controller
-func NewGraphQLRouter(store store.Store, eventStore store.EventStore, auth authorization.Authorizer, qGetter types.QueueGetter, bus messaging.MessageBus) *GraphQLRouter {
-	service, err := graphql.NewService(graphql.ServiceConfig{
-		AssetClient:       api.NewAssetClient(store, auth),
-		CheckClient:       api.NewCheckClient(store, actions.NewCheckController(store, qGetter), auth),
-		EntityClient:      api.NewEntityClient(store, eventStore, auth),
-		EventClient:       api.NewEventClient(eventStore, auth, bus),
-		EventFilterClient: api.NewEventFilterClient(store, auth),
-		HandlerClient:     api.NewHandlerClient(store, auth),
-		MutatorClient:     api.NewMutatorClient(store, auth),
-		SilencedClient:    api.NewSilencedClient(store, auth),
-		NamespaceClient:   api.NewNamespaceClient(store, auth),
-		HookClient:        api.NewHookConfigClient(store, auth),
-		UserClient:        api.NewUserClient(store, auth),
-		RBACClient:        api.NewRBACClient(store, auth),
-		GenericClient:     &api.GenericClient{Store: store, Auth: auth},
-	})
-	if err != nil {
-		logger.WithError(err).Panic("unable to configure graphql service")
-	}
-
-	router := GraphQLRouter{
-		service: service,
-		store:   store,
-	}
-	return &router
+// GraphQLRouter handles requests for /events
+type GraphQLRouter struct {
+	Service GraphQLService
 }
 
 // Mount the GraphQLRouter to a parent Router
@@ -96,7 +65,7 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 		queryVars, _ := op["variables"].(map[string]interface{})
 
 		// Execute given query
-		result := r.service.Do(ctx, query, queryVars)
+		result := r.Service.Do(ctx, query, queryVars)
 		results = append(results, result)
 		if len(result.Errors) > 0 {
 			logger.
