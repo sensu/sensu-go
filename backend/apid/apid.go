@@ -192,7 +192,6 @@ func EntityLimitedCoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},
 		middlewares.LimitRequest{},
 		middlewares.Pagination{},
-		middlewares.EntityLimiter{},
 	)
 	mountRouters(
 		subrouter,
