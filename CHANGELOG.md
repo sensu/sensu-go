@@ -22,6 +22,8 @@ successfully reconnect when using --no-embed-etcd.
 - Check TTL switches are now correctly buried when associated events and entities
 are deleted.
 - Keepalive switches are now correctly buried when the keepalive event is deleted.
+- Sensu now uses far fewer leases for keepalives and check TTLs, resulting in a
+stability improvement for most deployments.
 
 ## [5.14.1] - 2019-10-16
 
