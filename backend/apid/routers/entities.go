@@ -43,6 +43,34 @@ func (r *EntitiesRouter) Mount(parent *mux.Router) {
 	routes.Get(r.handlers.GetResource)
 	routes.List(r.handlers.ListResources, corev2.EntityFields)
 	routes.ListAllNamespaces(r.handlers.ListResources, "/{resource:entities}", corev2.EntityFields)
+}
+
+// EntitiesCreateRouter handles PUT/POST requests for /entities
+type EntitiesCreateRouter struct {
+	handlers   handlers.Handlers
+	store      store.Store
+	eventStore store.EventStore
+}
+
+// NewEntitiesCreateRouter instantiates new router for creating entities resources
+func NewEntitiesCreateRouter(store store.Store, events store.EventStore) *EntitiesCreateRouter {
+	return &EntitiesCreateRouter{
+		handlers: handlers.Handlers{
+			Resource: &corev2.Entity{},
+			Store:    store,
+		},
+		store:      store,
+		eventStore: events,
+	}
+}
+
+// Mount the EntitiesRouter to a parent Router
+func (r *EntitiesCreateRouter) Mount(parent *mux.Router) {
+	routes := ResourceRoute{
+		Router:     parent,
+		PathPrefix: "/namespaces/{namespace}/{resource:entities}",
+	}
+
 	routes.Post(r.handlers.CreateResource)
 	routes.Put(r.handlers.CreateOrUpdateResource)
 }

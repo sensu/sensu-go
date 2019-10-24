@@ -21,7 +21,6 @@ type EventsRouter struct {
 
 // eventController represents the controller needs of the EventsRouter.
 type eventController interface {
-	CreateOrReplace(ctx context.Context, check *corev2.Event) error
 	Delete(ctx context.Context, entity, check string) error
 	Get(ctx context.Context, entity, check string) (*corev2.Event, error)
 	List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error)
@@ -41,12 +40,10 @@ func (r *EventsRouter) Mount(parent *mux.Router) {
 		PathPrefix: "/namespaces/{namespace}/{resource:events}",
 	}
 
-	routes.Post(r.create)
 	routes.List(r.controller.List, corev2.EventFields)
 	routes.ListAllNamespaces(r.controller.List, "/{resource:events}", corev2.EventFields)
 	routes.Path("{entity}/{check}", r.get).Methods(http.MethodGet)
 	routes.Path("{entity}/{check}", r.delete).Methods(http.MethodDelete)
-	routes.Path("{entity}/{check}", r.createOrReplace).Methods(http.MethodPost, http.MethodPut)
 
 	// Additionaly allow a subcollection to be specified when listing events,
 	// which correspond to the entity name here
@@ -69,7 +66,35 @@ func (r *EventsRouter) delete(req *http.Request) (interface{}, error) {
 	return nil, r.controller.Delete(req.Context(), entity, check)
 }
 
-func (r *EventsRouter) create(req *http.Request) (interface{}, error) {
+// EventsCreateRouter handles requests for /events
+type EventsCreateRouter struct {
+	controller eventCreateController
+}
+
+// eventCreateController represents the controller needs of the EventsCreateRouter.
+type eventCreateController interface {
+	CreateOrReplace(ctx context.Context, check *corev2.Event) error
+}
+
+// NewEventsCreateRouter instantiates new events controller
+func NewEventsCreateRouter(store store.EventStore, bus messaging.MessageBus) *EventsCreateRouter {
+	return &EventsCreateRouter{
+		controller: actions.NewEventController(store, bus),
+	}
+}
+
+// Mount the EventsRouter to a parent Router
+func (r *EventsCreateRouter) Mount(parent *mux.Router) {
+	routes := ResourceRoute{
+		Router:     parent,
+		PathPrefix: "/namespaces/{namespace}/{resource:events}",
+	}
+
+	routes.Post(r.create)
+	routes.Path("{entity}/{check}", r.createOrReplace).Methods(http.MethodPost, http.MethodPut)
+}
+
+func (r *EventsCreateRouter) create(req *http.Request) (interface{}, error) {
 	event := &corev2.Event{}
 	if err := UnmarshalBody(req, event); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
@@ -83,7 +108,7 @@ func (r *EventsRouter) create(req *http.Request) (interface{}, error) {
 	return nil, err
 }
 
-func (r *EventsRouter) createOrReplace(req *http.Request) (interface{}, error) {
+func (r *EventsCreateRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	event := &corev2.Event{}
 	if err := UnmarshalBody(req, event); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
