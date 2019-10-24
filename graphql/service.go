@@ -10,8 +10,10 @@ import (
 	"github.com/graphql-go/graphql/language/source"
 )
 
-// Service ...TODO...
+// Service describes the whole of a GraphQL schema, validation, and execution.
 type Service struct {
+	// Executor evaluates a given request and returns a result. If none
+	// the default executor is used.
 	Executor func(p graphql.ExecuteParams) *graphql.Result
 
 	schema graphql.Schema
