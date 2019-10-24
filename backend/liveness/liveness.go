@@ -102,6 +102,7 @@ func EtcdFactory(ctx context.Context, client *clientv3.Client) Factory {
 type SwitchSet struct {
 	client      *clientv3.Client
 	prefix      string
+	leaseKey    string
 	notifyDead  EventFunc
 	notifyAlive EventFunc
 	logger      logrus.FieldLogger
@@ -131,6 +132,7 @@ func NewSwitchSet(client *clientv3.Client, name string, dead, alive EventFunc, l
 	return &SwitchSet{
 		client:      client,
 		prefix:      path.Join(SwitchPrefix, name),
+		leaseKey:    path.Join(SwitchPrefix, "lease", name),
 		notifyDead:  dead,
 		notifyAlive: alive,
 		logger:      logger,
@@ -205,12 +207,41 @@ func (t *SwitchSet) ping(ctx context.Context, id string, ttl int64, alive bool) 
 
 	key := path.Join(t.prefix, id)
 	val := fmt.Sprintf("%d", putVal)
-	lease, err := t.client.Grant(ctx, ttl)
+
+	leaseID, ops, err := t.getLeaseID(ctx, ttl, id)
 	if err != nil {
 		return err
 	}
-	_, err = t.client.Put(ctx, key, val, clientv3.WithLease(lease.ID), clientv3.WithPrevKV())
+
+	ops = append(ops, clientv3.OpPut(key, val, clientv3.WithLease(leaseID), clientv3.WithPrevKV()))
+	_, err = t.client.Txn(ctx).Then(ops...).Commit()
+
 	return err
+}
+
+func (t *SwitchSet) getLeaseID(ctx context.Context, ttl int64, switchID string) (clientv3.LeaseID, []clientv3.Op, error) {
+	resp, err := t.client.Get(ctx, t.leaseKey)
+	if err != nil {
+		return 0, nil, err
+	}
+
+	var leaseID clientv3.LeaseID
+	var ops []clientv3.Op
+	if len(resp.Kvs) > 0 {
+		_, err = fmt.Sscanf(string(resp.Kvs[0].Value), "%x", &leaseID)
+		if err == nil {
+			_, err = t.client.KeepAliveOnce(ctx, leaseID)
+		}
+	}
+	if len(resp.Kvs) == 0 || err != nil {
+		lease, err := t.client.Grant(ctx, ttl)
+		if err != nil {
+			return 0, nil, err
+		}
+		leaseID = lease.ID
+		ops = append(ops, clientv3.OpPut(t.leaseKey, fmt.Sprintf("%x", lease.ID)))
+	}
+	return leaseID, ops, nil
 }
 
 func (t *SwitchSet) getTTLFromEvent(event *clientv3.Event) (int64, State) {
@@ -324,7 +355,7 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 		}
 
 		t.logger.Debugf("creating a lease for %s with TTL %d", key, leaseTTL)
-		lease, err := t.client.Grant(ctx, leaseTTL)
+		leaseID, leaseOps, err := t.getLeaseID(ctx, leaseTTL, path.Base(key))
 		if err != nil {
 			t.logger.WithError(err).Errorf("error while granting lease for %s", key)
 			return
@@ -332,8 +363,8 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 
 		// Store a negative value for the TTL to indicate that the
 		// entity is not alive.
-		put := clientv3.OpPut(key, fmt.Sprintf("%d", ttl), clientv3.WithLease(lease.ID))
-		resp, err := t.client.Txn(ctx).If(cmp).Then(put).Commit()
+		put := clientv3.OpPut(key, fmt.Sprintf("%d", ttl), clientv3.WithLease(leaseID))
+		resp, err := t.client.Txn(ctx).If(cmp).Then(append(leaseOps, put)...).Commit()
 		if err != nil {
 			t.logger.WithError(err).Errorf("error commiting keepalive tx for %s", key)
 			return
