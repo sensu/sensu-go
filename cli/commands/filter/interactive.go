@@ -66,7 +66,7 @@ func (opts *filterOpts) administerQuestionnaire(editing bool) error {
 		{
 			Name: "runtimeAssets",
 			Prompt: &survey.Input{
-				Message: "Runtime Assets",
+				Message: "Runtime Assets:",
 				Default: "",
 			},
 		},

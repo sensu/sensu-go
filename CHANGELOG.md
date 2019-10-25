@@ -23,6 +23,7 @@ are deleted.
 - Keepalive switches are now correctly buried when the keepalive event is deleted.
 - Sensu now uses far fewer leases for keepalives and check TTLs, resulting in a
 stability improvement for most deployments.
+- Fixed a minor UX issue in interactive filter commands in sensuctl.
 
 ## [5.14.1] - 2019-10-16
 
