@@ -31,7 +31,7 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			manager, err := cmdmanager.NewCommandManager()
+			manager, err := cmdmanager.NewCommandManager(cli)
 			if err != nil {
 				return err
 			}

@@ -45,7 +45,7 @@ func installCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []st
 
 		alias := args[0]
 
-		manager, err := cmdmanager.NewCommandManager()
+		manager, err := cmdmanager.NewCommandManager(cli)
 		if err != nil {
 			return err
 		}

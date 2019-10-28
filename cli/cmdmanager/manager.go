@@ -1,10 +1,14 @@
 package cmdmanager
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sort"
@@ -13,8 +17,11 @@ import (
 
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/bonsai"
+	"github.com/sensu/sensu-go/cli"
+	"github.com/sensu/sensu-go/cli/commands/create"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/system"
+	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/environment"
 	"github.com/sensu/sensu-go/util/path"
 
@@ -35,6 +42,7 @@ type CommandManager struct {
 	assetManager *asset.Manager
 	assetGetter  asset.Getter
 	db           *bolt.DB
+	cli          *cli.SensuCli
 }
 
 type CommandPlugin struct {
@@ -70,8 +78,10 @@ func (p *CommandPlugin) SetObjectMeta(meta corev2.ObjectMeta) {
 	// no-op
 }
 
-func NewCommandManager() (*CommandManager, error) {
-	m := CommandManager{}
+func NewCommandManager(cli *cli.SensuCli) (*CommandManager, error) {
+	m := CommandManager{
+		cli: cli,
+	}
 
 	// create an entity for using with command asset filtering
 	systemInfo, err := system.Info()
@@ -168,21 +178,44 @@ func (m *CommandManager) InstallCommandFromBonsai(alias, bonsaiAssetName string)
 	return m.installCommand(alias, &asset)
 }
 
-func (m *CommandManager) InstallCommandFromURL(alias, url, sha512 string) error {
-	commandAsset := &corev2.Asset{
-		ObjectMeta: corev2.ObjectMeta{
-			Name:      alias,
-			Namespace: "",
-		},
-		Builds: []*corev2.AssetBuild{
-			{
-				URL:     url,
-				Sha512:  sha512,
-				Filters: []string{},
-			},
-		},
+func (m *CommandManager) InstallCommandFromURL(alias, assetURL, sha512 string) error {
+	parsedAssetURL, err := url.Parse(assetURL)
+	if err != nil {
+		return err
 	}
-	return m.installCommand(alias, commandAsset)
+	req, err := http.NewRequest("GET", parsedAssetURL.String(), nil)
+	if err != nil {
+		return err
+	}
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		buf := new(bytes.Buffer)
+		_, _ = io.Copy(buf, resp.Body)
+		return errors.New(buf.String())
+	}
+
+	resources, err := create.ParseResources(resp.Body)
+	if err != nil {
+		return fmt.Errorf("in %s: %s", assetURL, err)
+	}
+	resources[0].Value.SetNamespace("sensuctl")
+	if err := create.ValidateResources([]types.Wrapper{resources[0]}, ""); err != nil {
+		return err
+	}
+
+	// a command alias can only be mapped to one asset, use the first resource if more than
+	// one is found.
+	resource, ok := resources[0].Value.(*corev2.Asset)
+	if !ok {
+		return errors.New("resource is not a valid asset")
+	}
+
+	return m.installCommand(alias, resource)
 }
 
 func (m *CommandManager) installCommand(alias string, commandAsset *corev2.Asset) error {

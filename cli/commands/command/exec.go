@@ -28,7 +28,7 @@ func execCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []strin
 			return errors.New("invalid argument(s) received")
 		}
 
-		manager, err := cmdmanager.NewCommandManager()
+		manager, err := cmdmanager.NewCommandManager(cli)
 		if err != nil {
 			return err
 		}
