@@ -164,9 +164,7 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		routers.NewClusterRolesRouter(cfg.Store),
 		routers.NewClusterRoleBindingsRouter(cfg.Store),
 		routers.NewClusterRouter(actions.NewClusterController(cfg.Cluster, cfg.Store)),
-		routers.NewEntitiesRouter(cfg.Store, cfg.EventStore),
 		routers.NewEventFiltersRouter(cfg.Store),
-		routers.NewEventsRouter(cfg.EventStore, cfg.Bus),
 		routers.NewExtensionsRouter(cfg.Store),
 		routers.NewHandlersRouter(cfg.Store),
 		routers.NewHooksRouter(cfg.Store),
@@ -197,8 +195,8 @@ func EntityLimitedCoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	)
 	mountRouters(
 		subrouter,
-		routers.NewEntitiesCreateRouter(cfg.Store, cfg.EventStore),
-		routers.NewEventsCreateRouter(cfg.EventStore, cfg.Bus),
+		routers.NewEntitiesRouter(cfg.Store, cfg.EventStore),
+		routers.NewEventsRouter(cfg.EventStore, cfg.Bus),
 	)
 
 	return subrouter
