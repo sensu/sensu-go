@@ -62,6 +62,39 @@ func TestCacheGet(t *testing.T) {
 	}
 }
 
+func TestCacheGetAll(t *testing.T) {
+	cache := Resource{
+		cache: buildCache([]corev2.Resource{
+			fixtureEntity("a", "1"),
+			fixtureEntity("a", "2"),
+			fixtureEntity("b", "1"),
+			fixtureEntity("b", "2"),
+			fixtureEntity("b", "3"),
+			fixtureEntity("c", "1"),
+			fixtureEntity("c", "2"),
+			fixtureEntity("c", "3"),
+			fixtureEntity("c", "4"),
+		},
+			false,
+		),
+	}
+	want := []Value{
+		{Resource: fixtureEntity("a", "1")},
+		{Resource: fixtureEntity("a", "2")},
+		{Resource: fixtureEntity("b", "1")},
+		{Resource: fixtureEntity("b", "2")},
+		{Resource: fixtureEntity("b", "3")},
+		{Resource: fixtureEntity("c", "1")},
+		{Resource: fixtureEntity("c", "2")},
+		{Resource: fixtureEntity("c", "3")},
+		{Resource: fixtureEntity("c", "4")},
+	}
+	got := cache.GetAll()
+	if !reflect.DeepEqual(got, want) {
+		t.Fatalf("bad resources: got %v, want %v", got, want)
+	}
+}
+
 func TestBuildCache(t *testing.T) {
 	resource1 := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "resource1", Namespace: "default"}}
 	resource2 := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "resource2", Namespace: "default"}}
