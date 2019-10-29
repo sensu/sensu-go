@@ -275,6 +275,14 @@ func ValidateOutputMetricFormat(format string) error {
 	return errors.New("output metric format is not valid")
 }
 
+// previousOccurrence returns the most recent CheckHistory item, excluding the current result.
+func (c *Check) previousOccurrence() *CheckHistory {
+	if len(c.History) < 2 {
+		return nil
+	}
+	return &c.History[len(c.History)-2]
+}
+
 // ByExecuted implements the sort.Interface for []CheckHistory based on the
 // Executed field.
 //

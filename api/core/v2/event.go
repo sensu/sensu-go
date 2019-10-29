@@ -139,7 +139,7 @@ func (e *Event) previousOccurrence() *CheckHistory {
 	if !e.HasCheck() || len(e.Check.History) < 2 {
 		return nil
 	}
-	return &e.Check.History[len(e.Check.History)-2]
+	return e.Check.previousOccurrence()
 }
 
 // SynthesizeExtras implements dynamic.SynthesizeExtras
