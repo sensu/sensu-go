@@ -136,7 +136,7 @@ func (e *Event) IsFlappingEnd() bool {
 
 // previousOccurrence returns the most recent CheckHistory item, excluding the current event.
 func (e *Event) previousOccurrence() *CheckHistory {
-	if !e.HasCheck() || len(e.Check.History) < 1 {
+	if !e.HasCheck() || len(e.Check.History) < 2 {
 		return nil
 	}
 	return &e.Check.History[len(e.Check.History)-2]
