@@ -94,6 +94,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 	// public variables so they can be overriden from the enterprise codebase
 	AuthenticationMiddleware = a.AuthenticationMiddleware
 	AuthorizationMiddleware = a.AuthorizationMiddleware
+	EntityLimiterMiddleware = a.EntityLimiterMiddleware
 
 	// Initialize a mux router that indirectly uses our middlewares defined above.
 	// We can't directly use them because mux will keep a copy of the middleware
@@ -101,7 +102,10 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 	// runtime, so we need this workaround
 	router := mux.NewRouter()
 	router.HandleFunc("/", a.webSocketHandler)
-	router.Use(authenticate, authorize)
+	limiter := EntityLimiter{
+		Store: a.store,
+	}
+	router.Use(authenticate, authorize, limiter.limit)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
@@ -301,5 +305,13 @@ func (a *Agentd) AuthorizationMiddleware(next http.Handler) http.Handler {
 			return
 		}
 		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// EntityLimiterMiddleware is a placeholder middleware for the agent
+// HTTP session. It will be overwritten by an enterprise middleware.
+func (a *Agentd) EntityLimiterMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		next.ServeHTTP(w, r)
 	})
 }

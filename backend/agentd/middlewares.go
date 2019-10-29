@@ -6,6 +6,7 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/store"
 )
 
 // AuthenticationMiddleware represents the middleware used for authentication
@@ -13,6 +14,10 @@ var AuthenticationMiddleware mux.MiddlewareFunc
 
 // AuthorizationMiddleware represents the middleware used for authorization
 var AuthorizationMiddleware mux.MiddlewareFunc
+
+// EntityLimiterMiddleware represents the middleware used to limit agent
+// sessions if the entity limit has been reached.
+var EntityLimiterMiddleware mux.MiddlewareFunc
 
 // authenticate is the abstraction layer required to be able to change at
 // runtime the actual function assigned to AuthenticationMiddleware above
@@ -24,6 +29,17 @@ func authenticate(next http.Handler) http.Handler {
 // runtime the actual function assigned to AuthenticationMiddleware above
 func authorize(next http.Handler) http.Handler {
 	return AuthorizationMiddleware(next)
+}
+
+// EntityLimiter is the struct to be used by the enterprise entity limiter.
+type EntityLimiter struct {
+	Store store.Store
+}
+
+// limit is the abstraction layer required to be able to change at
+// runtime the actual function assigned to EntityLimiterMiddleware above
+func (e *EntityLimiter) limit(next http.Handler) http.Handler {
+	return EntityLimiterMiddleware(next)
 }
 
 // AuthStore specifies the storage requirements for authentication and
