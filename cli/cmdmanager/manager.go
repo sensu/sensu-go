@@ -3,10 +3,13 @@ package cmdmanager
 import (
 	"bytes"
 	"context"
+	"crypto/sha512"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
@@ -178,7 +181,7 @@ func (m *CommandManager) InstallCommandFromBonsai(alias, bonsaiAssetName string)
 	return m.installCommand(alias, &asset)
 }
 
-func (m *CommandManager) InstallCommandFromURL(alias, assetURL, sha512 string) error {
+func (m *CommandManager) InstallCommandFromURL(alias, assetURL, checksum string) error {
 	parsedAssetURL, err := url.Parse(assetURL)
 	if err != nil {
 		return err
@@ -199,7 +202,19 @@ func (m *CommandManager) InstallCommandFromURL(alias, assetURL, sha512 string) e
 		return errors.New(buf.String())
 	}
 
-	resources, err := create.ParseResources(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	shaBytes := sha512.Sum512(body)
+	sha := hex.EncodeToString(shaBytes[:])
+
+	if checksum != sha {
+		return fmt.Errorf("invalid checksum: wanted %s but got %s\n", checksum, sha)
+	}
+
+	resources, err := create.ParseResources(strings.NewReader(string(body)))
 	if err != nil {
 		return fmt.Errorf("in %s: %s", assetURL, err)
 	}
