@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/apid/graphql"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/apid/routers"
 	"github.com/sensu/sensu-go/backend/authentication"
@@ -60,6 +61,7 @@ type Config struct {
 	EtcdClientTLSConfig *tls.Config
 	Authenticator       *authentication.Authenticator
 	ClusterVersion      string
+	GraphQLService      *graphql.Service
 }
 
 // New creates a new APId.
@@ -200,9 +202,7 @@ func GraphQLSubrouter(router *mux.Router, cfg Config) *mux.Router {
 
 	mountRouters(
 		subrouter,
-		routers.NewGraphQLRouter(
-			cfg.Store, cfg.EventStore, &rbac.Authorizer{Store: cfg.Store}, cfg.QueueGetter, cfg.Bus,
-		),
+		&routers.GraphQLRouter{Service: cfg.GraphQLService},
 	)
 
 	return subrouter

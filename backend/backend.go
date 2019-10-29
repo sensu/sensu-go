@@ -14,10 +14,14 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
+	"github.com/sensu/sensu-go/backend/api"
 	"github.com/sensu/sensu-go/backend/apid"
+	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/apid/graphql"
 	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
+	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/daemon"
 	"github.com/sensu/sensu-go/backend/dashboardd"
 	"github.com/sensu/sensu-go/backend/etcd"
@@ -42,11 +46,12 @@ import (
 // Backend represents the backend server, which is used to hold the datastore
 // and coordinating the daemons
 type Backend struct {
-	Client     *clientv3.Client
-	Daemons    []daemon.Daemon
-	Etcd       *etcd.Etcd
-	Store      store.Store
-	EventStore EventStoreUpdater
+	Client         *clientv3.Client
+	Daemons        []daemon.Daemon
+	Etcd           *etcd.Etcd
+	Store          store.Store
+	EventStore     EventStoreUpdater
+	GraphQLService *graphql.Service
 
 	done   chan struct{}
 	ctx    context.Context
@@ -298,6 +303,27 @@ func Initialize(config *Config) (*Backend, error) {
 		logger.WithError(err).Error("could not load the key pair for the JWT signature")
 	}
 
+	// Initialize GraphQL service
+	auth := &rbac.Authorizer{Store: stor}
+	b.GraphQLService, err = graphql.NewService(graphql.ServiceConfig{
+		AssetClient:       api.NewAssetClient(stor, auth),
+		CheckClient:       api.NewCheckClient(stor, actions.NewCheckController(stor, queueGetter), auth),
+		EntityClient:      api.NewEntityClient(stor, eventStoreProxy, auth),
+		EventClient:       api.NewEventClient(eventStoreProxy, auth, bus),
+		EventFilterClient: api.NewEventFilterClient(stor, auth),
+		HandlerClient:     api.NewHandlerClient(stor, auth),
+		MutatorClient:     api.NewMutatorClient(stor, auth),
+		SilencedClient:    api.NewSilencedClient(stor, auth),
+		NamespaceClient:   api.NewNamespaceClient(stor, auth),
+		HookClient:        api.NewHookConfigClient(stor, auth),
+		UserClient:        api.NewUserClient(stor, auth),
+		RBACClient:        api.NewRBACClient(stor, auth),
+		GenericClient:     &api.GenericClient{Store: stor, Auth: auth},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error initializing graphql.Service: %s", err)
+	}
+
 	// Initialize apid
 	apidConfig := apid.Config{
 		ListenAddress:       config.APIListenAddress,
@@ -311,6 +337,7 @@ func Initialize(config *Config) (*Backend, error) {
 		EtcdClientTLSConfig: etcdClientTLSConfig,
 		Authenticator:       authenticator,
 		ClusterVersion:      clusterVersion,
+		GraphQLService:      b.GraphQLService,
 	}
 	api, err := apid.New(apidConfig)
 	if err != nil {

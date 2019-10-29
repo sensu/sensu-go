@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/graphql-go/graphql/testutil"
-	"github.com/sensu/sensu-go/testing/mockqueue"
+	"github.com/sensu/sensu-go/backend/apid/graphql"
 )
 
 func setupRequest(method string, path string, payload interface{}) (*http.Request, error) {
@@ -23,10 +23,12 @@ func setupRequest(method string, path string, payload interface{}) (*http.Reques
 }
 
 func TestHttpGraphQLRequest(t *testing.T) {
-	queue := &mockqueue.MockQueue{}
-	getter := &mockqueue.Getter{}
-	getter.On("GetQueue", "adhocRequest").Return(queue)
-	router := NewGraphQLRouter(nil, nil, nil, getter, nil)
+	service, err := graphql.NewService(graphql.ServiceConfig{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	router := &GraphQLRouter{Service: service}
 	body := map[string]interface{}{
 		"operationName": "intrsopection",
 		"query":         testutil.IntrospectionQuery,
@@ -43,10 +45,12 @@ func TestHttpGraphQLRequest(t *testing.T) {
 }
 
 func TestHttpGraphQLBatchRequest(t *testing.T) {
-	queue := &mockqueue.MockQueue{}
-	getter := &mockqueue.Getter{}
-	getter.On("GetQueue", "adhocRequest").Return(queue)
-	router := NewGraphQLRouter(nil, nil, nil, getter, nil)
+	service, err := graphql.NewService(graphql.ServiceConfig{})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	router := &GraphQLRouter{Service: service}
 	body := []map[string]interface{}{
 		map[string]interface{}{
 			"operationName": "intrsopection",
