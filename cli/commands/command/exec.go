@@ -3,6 +3,8 @@ package command
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strconv"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/cmdmanager"
@@ -33,8 +35,30 @@ func execCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []strin
 			return err
 		}
 
+		// refresh the access token
+		tokens, err := cli.Client.RefreshAccessToken(cli.Config.Tokens().Refresh)
+		if err != nil {
+			return err
+		}
+
+		// save new tokens to disk
+		if err := cli.Config.SaveTokens(tokens); err != nil {
+			return err
+		}
+
+		commandEnv := []string{
+			fmt.Sprintf("SENSU_API_URL=%s", cli.Config.APIUrl()),
+			fmt.Sprintf("SENSU_NAMESPACE=%s", cli.Config.Namespace()),
+			fmt.Sprintf("SENSU_FORMAT=%s", cli.Config.Format()),
+			fmt.Sprintf("SENSU_ACCESS_TOKEN=%s", cli.Config.Tokens().Access),
+			fmt.Sprintf("SENSU_ACCESS_TOKEN_EXPIRES_AT=%d", cli.Config.Tokens().ExpiresAt),
+			fmt.Sprintf("SENSU_REFRESH_TOKEN=%s", cli.Config.Tokens().Refresh),
+			fmt.Sprintf("SENSU_TRUSTED_CA_FILE=%s", cli.Config.TrustedCAFile()),
+			fmt.Sprintf("SENSU_INSECURE_SKIP_TLS_VERIFY=%s", strconv.FormatBool(cli.Config.InsecureSkipTLSVerify())),
+		}
+
 		ctx := context.TODO()
-		if err = manager.ExecCommand(ctx, args[0], args[1:]); err != nil {
+		if err = manager.ExecCommand(ctx, args[0], args[1:], commandEnv); err != nil {
 			return err
 		}
 

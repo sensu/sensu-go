@@ -244,7 +244,7 @@ func (m *CommandManager) installCommand(alias string, commandAsset *corev2.Asset
 	return nil
 }
 
-func (m *CommandManager) ExecCommand(ctx context.Context, alias string, args []string) error {
+func (m *CommandManager) ExecCommand(ctx context.Context, alias string, args []string, commandEnv []string) error {
 	commandPlugin, err := m.fetchCommandPlugin(alias)
 	if err != nil {
 		return err
@@ -263,7 +263,8 @@ func (m *CommandManager) ExecCommand(ctx context.Context, alias string, args []s
 		return errors.New("no asset filters were matched")
 	}
 
-	env := environment.MergeEnvironments(os.Environ(), runtimeAsset.Env())
+	env := environment.MergeEnvironments(os.Environ(), commandEnv)
+	env = environment.MergeEnvironments(env, runtimeAsset.Env())
 
 	executor := command.NewExecutor()
 
