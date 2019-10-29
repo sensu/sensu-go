@@ -34,6 +34,10 @@ func TestExerciseService(t *testing.T) {
 	err := svc.Regenerate()
 	require.NoError(t, err)
 
+	// regenerate should be idempotent
+	err = svc.Regenerate()
+	require.NoError(t, err)
+
 	ctx := context.Background()
 	res := svc.Do(ctx, `
 		query {
