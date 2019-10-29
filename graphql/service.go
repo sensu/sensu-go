@@ -5,10 +5,17 @@ import (
 	"fmt"
 
 	"github.com/graphql-go/graphql"
+	"github.com/graphql-go/graphql/gqlerrors"
+	"github.com/graphql-go/graphql/language/parser"
+	"github.com/graphql-go/graphql/language/source"
 )
 
-// Service ...TODO...
+// Service describes the whole of a GraphQL schema, validation, and execution.
 type Service struct {
+	// Executor evaluates a given request and returns a result. If none
+	// the default executor is used.
+	Executor func(p graphql.ExecuteParams) *graphql.Result
+
 	schema graphql.Schema
 	types  *typeRegister
 	mware  []Middleware
@@ -17,7 +24,8 @@ type Service struct {
 // NewService returns new instance of Service
 func NewService() *Service {
 	return &Service{
-		types: newTypeRegister(),
+		Executor: graphql.Execute,
+		types:    newTypeRegister(),
 	}
 }
 
@@ -140,18 +148,45 @@ func (service *Service) Regenerate() error {
 }
 
 // Do executes request given query string
-func (service *Service) Do(
-	ctx context.Context,
-	q string,
-	vars map[string]interface{},
-) *graphql.Result {
+func (service *Service) Do(ctx context.Context, q string, vars map[string]interface{}) *graphql.Result {
+	schema := service.schema
 	params := graphql.Params{
-		Schema:         service.schema,
+		Schema:         schema,
 		VariableValues: vars,
 		Context:        ctx,
 		RequestString:  q,
 	}
-	return graphql.Do(params)
+
+	// run init middleware
+	MiddlewareHandleInits(service, &params)
+
+	// parse the source
+	parseFinishFn := MiddlewareHandleParseDidStart(service, &params)
+	source := source.NewSource(&source.Source{
+		Body: []byte(q),
+		Name: "GraphQL request",
+	})
+	AST, err := parser.Parse(parser.ParseParams{Source: source})
+	parseFinishFn(err)
+	if err != nil {
+		return &graphql.Result{Errors: gqlerrors.FormatErrors(err)}
+	}
+
+	// validate document
+	validationFinishFn := MiddlewareHandleValidationDidStart(service, &params)
+	validationResult := graphql.ValidateDocument(&schema, AST, nil)
+	validationFinishFn(validationResult.Errors)
+	if !validationResult.IsValid {
+		return &graphql.Result{Errors: validationResult.Errors}
+	}
+
+	// execute query
+	return service.Executor(graphql.ExecuteParams{
+		Schema:  schema,
+		AST:     AST,
+		Args:    vars,
+		Context: ctx,
+	})
 }
 
 type typeRegister struct {
