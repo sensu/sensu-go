@@ -26,10 +26,11 @@ import (
 
 // APId is the backend HTTP API.
 type APId struct {
-	Authenticator    *authentication.Authenticator
-	HTTPServer       *http.Server
-	CoreSubrouter    *mux.Router
-	GraphQLSubrouter *mux.Router
+	Authenticator              *authentication.Authenticator
+	HTTPServer                 *http.Server
+	CoreSubrouter              *mux.Router
+	EntityLimitedCoreSubrouter *mux.Router
+	GraphQLSubrouter           *mux.Router
 
 	stopping            chan struct{}
 	running             *atomic.Value
@@ -97,6 +98,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	a.GraphQLSubrouter = GraphQLSubrouter(router, c)
 	_ = AuthenticationSubrouter(router, c)
 	a.CoreSubrouter = CoreSubrouter(router, c)
+	a.EntityLimitedCoreSubrouter = EntityLimitedCoreSubrouter(router, c)
 
 	a.HTTPServer = &http.Server{
 		Addr:         c.ListenAddress,
@@ -164,9 +166,7 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		routers.NewClusterRolesRouter(cfg.Store),
 		routers.NewClusterRoleBindingsRouter(cfg.Store),
 		routers.NewClusterRouter(actions.NewClusterController(cfg.Cluster, cfg.Store)),
-		routers.NewEntitiesRouter(cfg.Store, cfg.EventStore),
 		routers.NewEventFiltersRouter(cfg.Store),
-		routers.NewEventsRouter(cfg.EventStore, cfg.Bus),
 		routers.NewExtensionsRouter(cfg.Store),
 		routers.NewHandlersRouter(cfg.Store),
 		routers.NewHooksRouter(cfg.Store),
@@ -177,6 +177,28 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		routers.NewSilencedRouter(cfg.Store),
 		routers.NewTessenRouter(actions.NewTessenController(cfg.Store, cfg.Bus)),
 		routers.NewUsersRouter(cfg.Store),
+	)
+
+	return subrouter
+}
+
+// EntityLimitedCoreSubrouter initializes a subrouter that handles all requests
+// coming to /api/core/v2 that must be gated by entity limits.
+func EntityLimitedCoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
+	subrouter := NewSubrouter(
+		router.PathPrefix("/api/{group:core}/{version:v2}/"),
+		middlewares.SimpleLogger{},
+		middlewares.Namespace{},
+		middlewares.Authentication{Store: cfg.Store},
+		middlewares.AuthorizationAttributes{},
+		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},
+		middlewares.LimitRequest{},
+		middlewares.Pagination{},
+	)
+	mountRouters(
+		subrouter,
+		routers.NewEntitiesRouter(cfg.Store, cfg.EventStore),
+		routers.NewEventsRouter(cfg.EventStore, cfg.Bus),
 	)
 
 	return subrouter

@@ -176,6 +176,17 @@ func (r *Resource) Get(namespace string) []Value {
 	return r.cache[namespace]
 }
 
+// GetAll returns all cached resources across all namespaces.
+func (r *Resource) GetAll() []Value {
+	values := []Value{}
+	r.cacheMu.Lock()
+	defer r.cacheMu.Unlock()
+	for _, n := range r.cache {
+		values = append(values, n...)
+	}
+	return values
+}
+
 // Watch allows cache users to get notified when the cache has new values.
 // When the context is canceled, the channel will be closed.
 func (r *Resource) Watch(ctx context.Context) <-chan struct{} {
