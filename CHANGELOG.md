@@ -12,6 +12,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added sensuctl commands to manage the `APIKey` resource.
 - Added support for api keys to be used in api authentication.
 - Added support for sensu-backend service environment variables
+- Added `flapping` field to check history, along with `is_flapping_start` and
+  `is_flapping_end` event properties for use by filters.
 
 ### Changed
 - Upgraded etcd to 3.3.17
@@ -25,6 +27,8 @@ are deleted.
 - Sensu now uses far fewer leases for keepalives and check TTLs, resulting in a
 stability improvement for most deployments.
 - Fixed a minor UX issue in interactive filter commands in sensuctl.
+- Fixed bug where flapping would incorrectly end when `total_state_change` was below
+  `high_flap_threshold` instead of below `low_flap_threshold`.
 
 ## [5.14.1] - 2019-10-16
 
