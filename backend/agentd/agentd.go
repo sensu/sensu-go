@@ -102,10 +102,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 	// runtime, so we need this workaround
 	router := mux.NewRouter()
 	router.HandleFunc("/", a.webSocketHandler)
-	limiter := EntityLimiter{
-		Store: a.store,
-	}
-	router.Use(authenticate, authorize, limiter.limit)
+	router.Use(authenticate, authorize, limit)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
