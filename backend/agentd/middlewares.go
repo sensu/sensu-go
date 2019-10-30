@@ -14,6 +14,14 @@ var AuthenticationMiddleware mux.MiddlewareFunc
 // AuthorizationMiddleware represents the middleware used for authorization
 var AuthorizationMiddleware mux.MiddlewareFunc
 
+// AgentLimiterMiddleware represents the middleware used to limit agent
+// sessions if the entity limit has been reached.
+var AgentLimiterMiddleware mux.MiddlewareFunc
+
+// EntityLimiterMiddleware represents the middleware used to add entity limit
+// headers if the entity limit has been reached.
+var EntityLimiterMiddleware mux.MiddlewareFunc
+
 // authenticate is the abstraction layer required to be able to change at
 // runtime the actual function assigned to AuthenticationMiddleware above
 func authenticate(next http.Handler) http.Handler {
@@ -24,6 +32,18 @@ func authenticate(next http.Handler) http.Handler {
 // runtime the actual function assigned to AuthenticationMiddleware above
 func authorize(next http.Handler) http.Handler {
 	return AuthorizationMiddleware(next)
+}
+
+// agentLimit is the abstraction layer required to be able to change at
+// runtime the actual function assigned to AgentLimiterMiddleware above.
+func agentLimit(next http.Handler) http.Handler {
+	return AgentLimiterMiddleware(next)
+}
+
+// entityLimit is the abstraction layer required to be able to change at
+// runtime the actual function assigned to EntityLimiterMiddleware above.
+func entityLimit(next http.Handler) http.Handler {
+	return EntityLimiterMiddleware(next)
 }
 
 // AuthStore specifies the storage requirements for authentication and
