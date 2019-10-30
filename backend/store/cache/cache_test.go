@@ -80,6 +80,20 @@ func TestCacheGetAll(t *testing.T) {
 	}
 	got := cache.GetAll()
 	assert.Equal(t, 9, len(got))
+	want := []Value{
+		{Resource: fixtureEntity("a", "1")},
+		{Resource: fixtureEntity("a", "2")},
+		{Resource: fixtureEntity("b", "1")},
+		{Resource: fixtureEntity("b", "2")},
+		{Resource: fixtureEntity("b", "3")},
+		{Resource: fixtureEntity("c", "1")},
+		{Resource: fixtureEntity("c", "2")},
+		{Resource: fixtureEntity("c", "3")},
+		{Resource: fixtureEntity("c", "4")},
+	}
+	for _, v := range want {
+		assert.Contains(t, got, v)
+	}
 }
 
 func TestBuildCache(t *testing.T) {
