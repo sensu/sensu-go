@@ -36,7 +36,7 @@ func execCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []strin
 		}
 
 		// refresh the access token
-		tokens, err := cli.Client.RefreshAccessToken(cli.Config.Tokens().Refresh)
+		tokens, err := cli.Client.RefreshAccessToken(cli.Config.Tokens())
 		if err != nil {
 			return err
 		}
