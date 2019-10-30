@@ -33,6 +33,7 @@ install:
   - go version
   - go env
   - mkdir %GOPATH%\bin
+  - go mod verify
 
 platform:
   - x64
