@@ -17,6 +17,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/bonsai"
@@ -99,7 +100,9 @@ func NewCommandManager(cli *cli.SensuCli) (*CommandManager, error) {
 	}
 
 	cacheDir := path.UserCacheDir("sensuctl")
-	m.db, err = bolt.Open(filepath.Join(cacheDir, dbName), 0600, &bolt.Options{})
+	m.db, err = bolt.Open(filepath.Join(cacheDir, dbName), 0600, &bolt.Options{
+		Timeout: 60 * time.Second,
+	})
 	if err != nil {
 		return nil, err
 	}
