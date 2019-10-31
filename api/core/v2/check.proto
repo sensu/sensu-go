@@ -319,4 +319,12 @@ message CheckHistory {
 
     // Executed describes the time in which the check request was executed
     int64 executed = 2 [(gogoproto.jsontag) = "executed"];
+
+    // Reserved for Flapping field proposed in
+    // https://github.com/sensu/sensu-go/pull/3363
+    // If that PR is not merged, this can be removed.
+    reserved 3;
+
+    // Output contains the check output from this execution.
+    string output = 4 [(gogoproto.jsontag) = "output"];
 }

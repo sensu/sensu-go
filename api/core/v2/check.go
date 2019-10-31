@@ -233,6 +233,7 @@ func (c *Check) MergeWith(prevCheck *Check) {
 	histEntry := CheckHistory{
 		Status:   c.Status,
 		Executed: c.Executed,
+		Output:   c.Output,
 	}
 
 	history = append(history, histEntry)
