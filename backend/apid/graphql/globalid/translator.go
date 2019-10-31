@@ -1,5 +1,7 @@
 package globalid
 
+import "context"
+
 //
 // Translators
 //
@@ -7,8 +9,8 @@ package globalid
 // An Encoder can encode global IDs for a specific resource
 type Encoder interface {
 	IsResponsible(interface{}) bool
-	Encode(interface{}) Components
-	EncodeToString(interface{}) string
+	Encode(context.Context, interface{}) Components
+	EncodeToString(context.Context, interface{}) string
 }
 
 // A Decoder can decode global IDs for a specific resource

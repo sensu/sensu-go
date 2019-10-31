@@ -7,7 +7,7 @@ package globalid
 // Register & friends
 var register = NewRegister()
 var registrar = NewRegistrar(register)
-var registerTranslator = registrar.Add
+var RegisterTranslator = registrar.Add
 
 // Lookup given ID components return applicable encoder
 var Lookup = register.Lookup
@@ -22,11 +22,11 @@ func Decode(gid string) (Components, error) {
 		return standardComponents, err
 	}
 
-	decoder, err := Lookup(standardComponents)
+	decoder, err := Lookup(*standardComponents)
 	if err != nil {
 		return standardComponents, err
 	}
 
-	components := decoder.Decode(standardComponents)
+	components := decoder.Decode(*standardComponents)
 	return components, nil
 }

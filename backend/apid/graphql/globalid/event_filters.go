@@ -20,4 +20,4 @@ var EventFilterTranslator = commonTranslator{
 }
 
 // Register event filter encoder/decoder
-func init() { registerTranslator(EventFilterTranslator) }
+func init() { RegisterTranslator(EventFilterTranslator) }

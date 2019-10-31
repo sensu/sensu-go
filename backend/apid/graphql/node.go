@@ -16,7 +16,7 @@ import (
 //
 
 type nodeResolver struct {
-	register relay.NodeRegister
+	register *relay.NodeRegister
 }
 
 func newNodeResolver(cfg ServiceConfig) *nodeResolver {
@@ -38,16 +38,16 @@ func newNodeResolver(cfg ServiceConfig) *nodeResolver {
 	registerNamespaceNodeResolver(register, cfg.NamespaceClient)
 	registerSilencedNodeResolver(register, cfg.SilencedClient)
 
-	return &nodeResolver{register}
+	return &nodeResolver{&register}
 }
 
-func (r *nodeResolver) FindType(i interface{}) *graphql.Type {
+func (r *nodeResolver) FindType(ctx context.Context, i interface{}) *graphql.Type {
 	translator, err := globalid.ReverseLookup(i)
 	if err != nil {
 		return nil
 	}
 
-	components := translator.Encode(i)
+	components := translator.Encode(ctx, i)
 	resolver := r.register.Lookup(components)
 	if resolver == nil {
 		logger := logger.WithField("translator", fmt.Sprintf("%#v", translator))

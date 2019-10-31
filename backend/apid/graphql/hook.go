@@ -36,7 +36,7 @@ type hookCfgImpl struct {
 
 // ID implements response to request for 'id' field.
 func (*hookCfgImpl) ID(p graphql.ResolveParams) (string, error) {
-	return globalid.HookTranslator.EncodeToString(p.Source), nil
+	return globalid.HookTranslator.EncodeToString(p.Context, p.Source), nil
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type

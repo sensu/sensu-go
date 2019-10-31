@@ -4,6 +4,7 @@ import (
 	"context"
 
 	gql "github.com/graphql-go/graphql"
+	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/graphql"
@@ -40,15 +41,20 @@ type ServiceConfig struct {
 
 // Service describes the Sensu GraphQL service capable of handling queries.
 type Service struct {
-	Target *graphql.Service
-	Config ServiceConfig
+	Target       *graphql.Service
+	Config       ServiceConfig
+	NodeRegister *relay.NodeRegister
 }
 
 // NewService instantiates new GraphQL service
 func NewService(cfg ServiceConfig) (*Service, error) {
 	svc := graphql.NewService()
-	wrapper := Service{Target: svc, Config: cfg}
 	nodeResolver := newNodeResolver(cfg)
+	wrapper := Service{
+		Target:       svc,
+		Config:       cfg,
+		NodeRegister: nodeResolver.register,
+	}
 
 	// Register types
 	schema.RegisterAsset(svc, &assetImpl{})

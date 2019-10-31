@@ -53,8 +53,6 @@ require (
 	github.com/mholt/archiver v0.0.0-20180816053333-85d3d0b511ea
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
-	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/nwaples/rardecode v0.0.0-20170112110516-f22b7ef81a0a // indirect
 	github.com/olekukonko/tablewriter v0.0.0-20180506121414-d4647c9c7a84
 	github.com/pierrec/lz4 v0.0.0-20171218195038-2fcda4cb7018 // indirect
@@ -81,7 +79,6 @@ require (
 	golang.org/x/sys v0.0.0-20191010194322-b09406accb47
 	golang.org/x/text v0.3.2 // indirect
 	golang.org/x/time v0.0.0-20190921001708-c4c64cad1fd0
-	google.golang.org/appengine v1.4.0 // indirect
 	google.golang.org/genproto v0.0.0-20191009194640-548a555dbc03 // indirect
 	google.golang.org/grpc v1.24.0
 	gopkg.in/AlecAivazis/survey.v1 v1.4.0 // indirect

@@ -22,4 +22,4 @@ var EntityTranslator = commonTranslator{
 }
 
 // Register entity encoder/decoder
-func init() { registerTranslator(EntityTranslator) }
+func init() { RegisterTranslator(EntityTranslator) }

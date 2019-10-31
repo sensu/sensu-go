@@ -25,7 +25,7 @@ type namespaceImpl struct {
 
 // ID implements response to request for 'id' field.
 func (r *namespaceImpl) ID(p graphql.ResolveParams) (string, error) {
-	return globalid.NamespaceTranslator.EncodeToString(p.Source), nil
+	return globalid.NamespaceTranslator.EncodeToString(p.Context, p.Source), nil
 }
 
 // Name implements response to request for 'name' field.

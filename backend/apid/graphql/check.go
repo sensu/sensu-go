@@ -26,7 +26,7 @@ type checkCfgImpl struct {
 
 // ID implements response to request for 'id' field.
 func (r *checkCfgImpl) ID(p graphql.ResolveParams) (string, error) {
-	return globalid.CheckTranslator.EncodeToString(p.Source), nil
+	return globalid.CheckTranslator.EncodeToString(p.Context, p.Source), nil
 }
 
 // Handlers implements response to request for 'handlers' field.
@@ -132,7 +132,7 @@ func (r *checkImpl) NodeID(p graphql.ResolveParams) (string, error) {
 			Name:      check.Name,
 		},
 	}
-	return globalid.CheckTranslator.EncodeToString(&config), nil
+	return globalid.CheckTranslator.EncodeToString(p.Context, &config), nil
 }
 
 // Executed implements response to request for 'executed' field.

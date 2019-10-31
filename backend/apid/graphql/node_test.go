@@ -29,7 +29,7 @@ func TestNodeResolverFindType(t *testing.T) {
 	resolver := newNodeResolver(cfg)
 
 	check := corev2.FixtureCheckConfig("http-check")
-	typeID := resolver.FindType(check)
+	typeID := resolver.FindType(context.Background(), check)
 	assert.NotNil(t, typeID)
 }
 
@@ -42,7 +42,7 @@ func TestNodeResolverFind(t *testing.T) {
 	info := graphql.ResolveInfo{}
 
 	check := corev2.FixtureCheckConfig("http-check")
-	gid := globalid.CheckTranslator.EncodeToString(check)
+	gid := globalid.CheckTranslator.EncodeToString(context.Background(), check)
 
 	// Success
 	client.On("FetchCheck", mock.Anything, check.Name).Return(check, nil).Once()
@@ -98,7 +98,7 @@ func TestAssetNodeResolver(t *testing.T) {
 				return corev2.FixtureAsset("name")
 			},
 			setupID: func(r interface{}) string {
-				return globalid.AssetTranslator.EncodeToString(r)
+				return globalid.AssetTranslator.EncodeToString(context.Background(), r)
 			},
 			setup: func(r interface{}) {
 				cfg.AssetClient.(onner).On("FetchAsset", mock.Anything, "name").Return(r, nil).Once()
@@ -110,7 +110,7 @@ func TestAssetNodeResolver(t *testing.T) {
 				return corev2.FixtureCheckConfig("name")
 			},
 			setupID: func(r interface{}) string {
-				return globalid.CheckTranslator.EncodeToString(r)
+				return globalid.CheckTranslator.EncodeToString(context.Background(), r)
 			},
 			setup: func(r interface{}) {
 				cfg.CheckClient.(onner).On("FetchCheck", mock.Anything, "name").Return(r, nil).Once()
@@ -122,7 +122,7 @@ func TestAssetNodeResolver(t *testing.T) {
 				return corev2.FixtureEntity("name")
 			},
 			setupID: func(r interface{}) string {
-				return globalid.EntityTranslator.EncodeToString(r)
+				return globalid.EntityTranslator.EncodeToString(context.Background(), r)
 			},
 			setup: func(r interface{}) {
 				cfg.EntityClient.(onner).On("FetchEntity", mock.Anything, "name").Return(r, nil).Once()
@@ -134,7 +134,7 @@ func TestAssetNodeResolver(t *testing.T) {
 				return corev2.FixtureEventFilter("name")
 			},
 			setupID: func(r interface{}) string {
-				return globalid.EventFilterTranslator.EncodeToString(r)
+				return globalid.EventFilterTranslator.EncodeToString(context.Background(), r)
 			},
 			setup: func(r interface{}) {
 				cfg.EventFilterClient.(onner).On("FetchEventFilter", mock.Anything, "name").Return(r, nil).Once()
@@ -146,7 +146,7 @@ func TestAssetNodeResolver(t *testing.T) {
 				return corev2.FixtureHandler("name")
 			},
 			setupID: func(r interface{}) string {
-				return globalid.HandlerTranslator.EncodeToString(r)
+				return globalid.HandlerTranslator.EncodeToString(context.Background(), r)
 			},
 			setup: func(r interface{}) {
 				cfg.HandlerClient.(onner).On("FetchHandler", mock.Anything, "name").Return(r, nil).Once()
@@ -158,7 +158,7 @@ func TestAssetNodeResolver(t *testing.T) {
 				return corev2.FixtureMutator("name")
 			},
 			setupID: func(r interface{}) string {
-				return globalid.MutatorTranslator.EncodeToString(r)
+				return globalid.MutatorTranslator.EncodeToString(context.Background(), r)
 			},
 			setup: func(r interface{}) {
 				cfg.MutatorClient.(onner).On("FetchMutator", mock.Anything, "name").Return(r, nil).Once()
@@ -170,7 +170,7 @@ func TestAssetNodeResolver(t *testing.T) {
 				return corev2.FixtureUser("name")
 			},
 			setupID: func(r interface{}) string {
-				return globalid.UserTranslator.EncodeToString(r)
+				return globalid.UserTranslator.EncodeToString(context.Background(), r)
 			},
 			setup: func(r interface{}) {
 				cfg.UserClient.(onner).On("FetchUser", mock.Anything, "name").Return(r, nil).Once()
@@ -182,7 +182,7 @@ func TestAssetNodeResolver(t *testing.T) {
 				return corev2.FixtureEvent("a", "b")
 			},
 			setupID: func(r interface{}) string {
-				return globalid.EventTranslator.EncodeToString(r)
+				return globalid.EventTranslator.EncodeToString(context.Background(), r)
 			},
 			setup: func(r interface{}) {
 				cfg.EventClient.(onner).On("FetchEvent", mock.Anything, "a", "b").Return(r, nil).Once()
@@ -194,7 +194,7 @@ func TestAssetNodeResolver(t *testing.T) {
 				return corev2.FixtureNamespace("sensu")
 			},
 			setupID: func(r interface{}) string {
-				return globalid.NamespaceTranslator.EncodeToString(r)
+				return globalid.NamespaceTranslator.EncodeToString(context.Background(), r)
 			},
 			setup: func(r interface{}) {
 				cfg.NamespaceClient.(onner).On("FetchNamespace", mock.Anything, "sensu").Return(r, nil).Once()

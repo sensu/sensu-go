@@ -1,6 +1,7 @@
 package globalid
 
 import (
+	"net/url"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -26,16 +27,22 @@ func TestParse(t *testing.T) {
 		{"srn:users:123", wants{res: "users", id: "123"}},
 		{"srn:u:ns:1", wants{res: "u", nsp: "ns", id: "1"}},
 		{"srn:users:cat/123", wants{res: "users", resType: "cat", id: "123"}},
-		{"srn:x:y:*:z", wants{res: "x", nsp: "y", id: "*:z"}},
+		{"srn:a:b:c:d", wants{res: "a", nsp: "b", id: "c:d"}},
+		{"srn:a:b:c:d?entity=fred", wants{res: "a", nsp: "b", id: "c:d"}},
+		{"srn:events:default:x?check=disk&entity=proxy", wants{res: "events", nsp: "default", id: "x"}},
+		{"srn:x:y:z", wants{res: "x", nsp: "y", id: "z"}},
 	}
 	for _, tc := range testCases {
 		t.Run(tc.gid, func(t *testing.T) {
 			components, err := Parse(tc.gid)
 			assert.Equal(tc.want.err, err != nil, "error was expected in result")
-			assert.Equal(tc.want.res, components.Resource())
-			assert.Equal(tc.want.nsp, components.Namespace())
-			assert.Equal(tc.want.resType, components.ResourceType())
-			assert.Equal(tc.want.id, components.UniqueComponent())
+			if !tc.want.err {
+				assert.Equal(tc.want.res, components.Resource())
+				assert.Equal(tc.want.nsp, components.Namespace())
+				assert.Equal(tc.want.resType, components.ResourceType())
+				assert.Equal(tc.want.id, components.UniqueComponent())
+				assert.Equal(tc.gid, components.String())
+			}
 		})
 	}
 }
@@ -93,6 +100,17 @@ func TestStandardComponentsString(t *testing.T) {
 				uniqueComponent: "123:456",
 			},
 			"srn:silences:default:123:456",
+		},
+		{
+			StandardComponents{
+				resource:        "events",
+				namespace:       "default",
+				uniqueComponent: "xyz",
+				extras: url.Values{
+					"cat": []string{"dog"},
+				},
+			},
+			"srn:events:default:xyz?cat=dog",
 		},
 	}
 	for _, tc := range testCases {

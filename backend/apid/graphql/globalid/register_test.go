@@ -25,7 +25,7 @@ func TestRegisterLookup(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.gid, func(t *testing.T) {
 			components, _ := Parse(tc.gid)
-			decoder, err := register.Lookup(components)
+			decoder, err := register.Lookup(*components)
 			assert.Equal(t, tc.want, decoder)
 			assert.Equal(t, tc.wantErr, err != nil)
 		})
