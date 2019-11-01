@@ -120,3 +120,14 @@ func TestStandardComponentsString(t *testing.T) {
 		})
 	}
 }
+
+func TestStandardComponents_Extras(t *testing.T) {
+	id := &StandardComponents{}
+	assert.Empty(t, id.Extras().Get("key"))
+
+	id.Extras().Set("key", "val")
+	assert.Equal(t, id.Extras().Get("key"), "val")
+
+	id.Extras().Clear()
+	assert.Empty(t, id.Extras().Get("key"))
+}

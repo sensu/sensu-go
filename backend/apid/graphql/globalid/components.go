@@ -44,14 +44,24 @@ type Components interface {
 	// this is the resource's name.
 	UniqueComponent() string
 
-	// Extra return value for given key within extras dict
-	Extra(key string) string
-
-	// SetExtra sets value for given key within extras dict
-	SetExtra(key, val string)
+	// Extras returns interface with access to extra values
+	Extras() Values
 
 	// String return string representation of ID
 	String() string
+}
+
+type Values interface {
+	// Get gets the first value associated with the given key. If there are no
+	// values associated with the key, Get returns the empty string. To access
+	// multiple values, use the map directly.
+	Get(key string) string
+
+	// Set sets the key to value. It replaces any existing values.
+	Set(key, val string)
+
+	// Clear removes all keys
+	Clear()
 }
 
 // StandardComponents describes the standard components of a global identifier.
@@ -111,16 +121,11 @@ func (id *StandardComponents) UniqueComponent() string {
 }
 
 // Extra returns the extra value associated with the given key.
-func (id *StandardComponents) Extra(key string) string {
-	return id.extras.Get(key)
-}
-
-// SetExtra sets the extra value associated with the given key.
-func (id *StandardComponents) SetExtra(key, val string) {
+func (id *StandardComponents) Extras() Values {
 	if id.extras == nil {
 		id.extras = url.Values{}
 	}
-	id.extras.Set(key, val)
+	return &dict{id.extras}
 }
 
 // Parse takes a global ID string, decodes it and returns it's components.
@@ -187,4 +192,14 @@ func omitEmpty(in []string) (out []string) {
 	}
 
 	return
+}
+
+type dict struct {
+	url.Values
+}
+
+func (d *dict) Clear() {
+	for key := range d.Values {
+		d.Values.Del(key)
+	}
 }
