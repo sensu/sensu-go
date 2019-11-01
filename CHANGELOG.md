@@ -12,6 +12,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added sensuctl commands to manage the `APIKey` resource.
 - Added support for api keys to be used in api authentication.
 - Added support for sensu-backend service environment variables
+- Added `output` field to check history, containing check output from that specific
+  execution/event.
 
 ### Changed
 - Upgraded etcd to 3.3.17
