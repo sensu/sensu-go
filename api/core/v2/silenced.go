@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	stringsutil "github.com/sensu/sensu-go/util/strings"
 )
 
 const (
@@ -82,6 +84,27 @@ func (s *Silenced) Prepare(ctx context.Context) {
 			s.Creator = claims.Subject
 		}
 	}
+}
+
+// Matches returns true if the given check name and subscription match the silence.
+//
+// The two properties compared, Subscription and Check, are only compared if they are
+// not empty. An empty value for either of those fields is considered a wildcard,
+// ie: s.Check = "foo" && s.Subscription = "" will return true for s.Matches("foo", <anything>).
+func (s *Silenced) Matches(check, subscription string) bool {
+	if s == nil {
+		return false
+	}
+
+	if !stringsutil.InArray(s.Subscription, []string{"", "*", subscription}) {
+		return false
+	}
+
+	if !stringsutil.InArray(s.Check, []string{"", "*", check}) {
+		return false
+	}
+
+	return true
 }
 
 // NewSilenced creates a new Silenced entry.
