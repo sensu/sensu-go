@@ -20,6 +20,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - Upgraded etcd to 3.3.17
+- Listing namespaces is now done implicitly based on access to resources within
+a namespace. Users will no longer be able to list all namespaces by default, in
+new installations. Existing installations will function as before. Operators can
+change to the new behaviour, by modifying the system:user role.
 
 ### Fixed
 - As a result of upgrading etcd, TLS etcd clients that lose their connection will
