@@ -7,11 +7,16 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Added better error logging for mutator execution.
+
 ### Added
 - Added the `APIKey` resource and HTTP API support for POST, GET, and DELETE.
 - Added sensuctl commands to manage the `APIKey` resource.
 - Added support for api keys to be used in api authentication.
-- Added support for sensu-backend service environment variables
+- Added support for sensu-backend service environment variables.
+
+## [5.14.2] - 2019-11-04
 
 ### Changed
 - Upgraded etcd to 3.3.17

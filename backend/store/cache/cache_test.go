@@ -78,6 +78,8 @@ func TestCacheGetAll(t *testing.T) {
 			false,
 		),
 	}
+	got := cache.GetAll()
+	assert.Equal(t, 9, len(got))
 	want := []Value{
 		{Resource: fixtureEntity("a", "1")},
 		{Resource: fixtureEntity("a", "2")},
@@ -89,9 +91,8 @@ func TestCacheGetAll(t *testing.T) {
 		{Resource: fixtureEntity("c", "3")},
 		{Resource: fixtureEntity("c", "4")},
 	}
-	got := cache.GetAll()
-	if !reflect.DeepEqual(got, want) {
-		t.Fatalf("bad resources: got %v, want %v", got, want)
+	for _, v := range want {
+		assert.Contains(t, got, v)
 	}
 }
 

@@ -51,6 +51,7 @@ func (service *Service) RegisterEnum(t EnumDesc) {
 func (service *Service) RegisterInput(t InputDesc) {
 	cfg := t.Config()
 	registrar := func(m graphql.TypeMap) graphql.Type {
+		cfg = t.Config()
 		fields := cfg.Fields.(graphql.InputObjectConfigFieldMap)
 		cfg.Fields = inputFieldsThunk(m, fields)
 		return graphql.NewInputObject(cfg)
@@ -62,6 +63,7 @@ func (service *Service) RegisterInput(t InputDesc) {
 func (service *Service) RegisterInterface(t InterfaceDesc, impl InterfaceTypeResolver) {
 	cfg := t.Config()
 	registrar := func(m graphql.TypeMap) graphql.Type {
+		cfg = t.Config()
 		cfg.ResolveType = nil
 		if impl != nil {
 			cfg.ResolveType = newResolveTypeFn(m, impl)
@@ -76,6 +78,7 @@ func (service *Service) RegisterInterface(t InterfaceDesc, impl InterfaceTypeRes
 func (service *Service) RegisterObject(t ObjectDesc, impl interface{}) {
 	cfg := t.Config()
 	registrar := func(m graphql.TypeMap) graphql.Type {
+		cfg = t.Config()
 		fields := cfg.Fields.(graphql.Fields)
 		for fieldName, handler := range t.FieldHandlers {
 			fields[fieldName].Resolve = handler(impl)
@@ -112,6 +115,7 @@ func (service *Service) RegisterObjectExtension(t ObjectDesc, impl interface{}) 
 func (service *Service) RegisterUnion(t UnionDesc, impl UnionTypeResolver) {
 	cfg := t.Config()
 	registrar := func(m graphql.TypeMap) graphql.Type {
+		cfg = t.Config()
 		newTypes := make([]*graphql.Object, len(cfg.Types))
 		for i, t := range cfg.Types {
 			objType := m[t.PrivateName].(*graphql.Object)
