@@ -102,7 +102,7 @@ func EtcdFactory(ctx context.Context, client *clientv3.Client) Factory {
 type SwitchSet struct {
 	client      *clientv3.Client
 	prefix      string
-	leaseKey    string
+	leasePrefix string
 	notifyDead  EventFunc
 	notifyAlive EventFunc
 	logger      logrus.FieldLogger
@@ -132,7 +132,7 @@ func NewSwitchSet(client *clientv3.Client, name string, dead, alive EventFunc, l
 	return &SwitchSet{
 		client:      client,
 		prefix:      path.Join(SwitchPrefix, name),
-		leaseKey:    path.Join(SwitchPrefix, "lease", name),
+		leasePrefix: path.Join(SwitchPrefix, "lease", name),
 		notifyDead:  dead,
 		notifyAlive: alive,
 		logger:      logger,
@@ -220,7 +220,8 @@ func (t *SwitchSet) ping(ctx context.Context, id string, ttl int64, alive bool) 
 }
 
 func (t *SwitchSet) getLeaseID(ctx context.Context, ttl int64, switchID string) (clientv3.LeaseID, []clientv3.Op, error) {
-	resp, err := t.client.Get(ctx, t.leaseKey)
+	leaseKey := path.Join(t.leasePrefix, switchID)
+	resp, err := t.client.Get(ctx, leaseKey)
 	if err != nil {
 		return 0, nil, err
 	}
@@ -239,7 +240,7 @@ func (t *SwitchSet) getLeaseID(ctx context.Context, ttl int64, switchID string) 
 			return 0, nil, err
 		}
 		leaseID = lease.ID
-		ops = append(ops, clientv3.OpPut(t.leaseKey, fmt.Sprintf("%x", lease.ID)))
+		ops = append(ops, clientv3.OpPut(leaseKey, fmt.Sprintf("%x", lease.ID)))
 	}
 	return leaseID, ops, nil
 }
@@ -355,7 +356,7 @@ func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
 		}
 
 		t.logger.Debugf("creating a lease for %s with TTL %d", key, leaseTTL)
-		leaseID, leaseOps, err := t.getLeaseID(ctx, leaseTTL, path.Base(key))
+		leaseID, leaseOps, err := t.getLeaseID(ctx, leaseTTL, strings.TrimPrefix(key, t.prefix))
 		if err != nil {
 			t.logger.WithError(err).Errorf("error while granting lease for %s", key)
 			return
