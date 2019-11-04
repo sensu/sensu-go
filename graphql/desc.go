@@ -19,6 +19,9 @@ type ResolveInfo = graphql.ResolveInfo
 // FieldHandler given implementation configures field resolver
 type FieldHandler func(impl interface{}) graphql.FieldResolveFn
 
+// Result has the response, errors and extensions from the resolved schema
+type Result = graphql.Result
+
 // ObjectDesc describes object configuration and handlers for use by service.
 type ObjectDesc struct {
 	// Config thunk returns copy of config

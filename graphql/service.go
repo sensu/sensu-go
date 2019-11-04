@@ -151,14 +151,25 @@ func (service *Service) Regenerate() error {
 	return err
 }
 
-// Do executes request given query string
-func (service *Service) Do(ctx context.Context, q string, vars map[string]interface{}) *graphql.Result {
+// QueryParams describe parameters of a GraphQL query.
+type QueryParams struct {
+	OperationName  string
+	Query          string
+	RootObject     map[string]interface{}
+	SkipValidation bool
+	Variables      map[string]interface{}
+}
+
+// Do executes given query.
+func (service *Service) Do(ctx context.Context, p QueryParams) *Result {
 	schema := service.schema
 	params := graphql.Params{
-		Schema:         schema,
-		VariableValues: vars,
 		Context:        ctx,
-		RequestString:  q,
+		OperationName:  p.OperationName,
+		RequestString:  p.Query,
+		RootObject:     p.RootObject,
+		Schema:         schema,
+		VariableValues: p.Variables,
 	}
 
 	// run init middleware
@@ -167,7 +178,7 @@ func (service *Service) Do(ctx context.Context, q string, vars map[string]interf
 	// parse the source
 	parseFinishFn := MiddlewareHandleParseDidStart(service, &params)
 	source := source.NewSource(&source.Source{
-		Body: []byte(q),
+		Body: []byte(p.Query),
 		Name: "GraphQL request",
 	})
 	AST, err := parser.Parse(parser.ParseParams{Source: source})
@@ -177,18 +188,20 @@ func (service *Service) Do(ctx context.Context, q string, vars map[string]interf
 	}
 
 	// validate document
-	validationFinishFn := MiddlewareHandleValidationDidStart(service, &params)
-	validationResult := graphql.ValidateDocument(&schema, AST, nil)
-	validationFinishFn(validationResult.Errors)
-	if !validationResult.IsValid {
-		return &graphql.Result{Errors: validationResult.Errors}
+	if !p.SkipValidation {
+		validationFinishFn := MiddlewareHandleValidationDidStart(service, &params)
+		validationResult := graphql.ValidateDocument(&schema, AST, nil)
+		validationFinishFn(validationResult.Errors)
+		if !validationResult.IsValid {
+			return &graphql.Result{Errors: validationResult.Errors}
+		}
 	}
 
 	// execute query
 	return service.Executor(graphql.ExecuteParams{
 		Schema:  schema,
 		AST:     AST,
-		Args:    vars,
+		Args:    p.Variables,
 		Context: ctx,
 	})
 }

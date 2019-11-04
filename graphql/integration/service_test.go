@@ -39,14 +39,14 @@ func TestExerciseService(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx := context.Background()
-	res := svc.Do(ctx, `
+	res := svc.Do(ctx, graphql.QueryParams{Query: `
 		query {
 			myBar {
 				one
 			}
 			order
 		}
-	`, nil)
+	`})
 
 	require.Empty(t, res.Errors)
 	require.NotEmpty(t, res.Data)
