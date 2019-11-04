@@ -3,12 +3,15 @@ package edit
 import (
 	"bufio"
 	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"path"
+	"reflect"
 	"strings"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -47,11 +50,14 @@ type client interface {
 }
 
 func dumpResource(client client, cfg namespaceFormat, typeName string, key []string, to io.Writer) error {
-	resource, err := dump.ResolveResource(typeName)
+	// Determine the requested resource type. We will use this resource only to
+	// determine it's path in the store
+	requested, err := dump.ResolveResource(typeName)
 	if err != nil {
 		return fmt.Errorf("invalid resource type: %s", typeName)
 	}
-	switch r := resource.(type) {
+
+	switch r := requested.(type) {
 	case *corev2.Event:
 		// Need an exception for event, because it's a special little type
 		if len(key) != 2 {
@@ -71,35 +77,61 @@ func dumpResource(client client, cfg namespaceFormat, typeName string, key []str
 		}
 	case *corev2.Check:
 		// Special case here takes care of the check naming boondoggle
-		resource = &corev2.CheckConfig{}
+		requested = &corev2.CheckConfig{}
 		if len(key) != 1 {
 			return errors.New("resource name missing")
 		}
-		resource.SetObjectMeta(corev2.ObjectMeta{
+		requested.SetObjectMeta(corev2.ObjectMeta{
 			Namespace: cfg.Namespace(),
 			Name:      key[0],
 		})
-	case *corev2.ClusterRoleBinding, *corev2.ClusterRole, *corev2.TessenConfig:
-		// These resources don't validate cleanly if their namespace is set
-		if len(key) != 1 {
-			return errors.New("resource name missing")
-		}
-		resource.SetObjectMeta(corev2.ObjectMeta{Name: key[0]})
 	default:
 		if len(key) != 1 {
 			return errors.New("resource name missing")
 		}
-		resource.SetObjectMeta(corev2.ObjectMeta{
+		requested.SetObjectMeta(corev2.ObjectMeta{
 			Namespace: cfg.Namespace(),
 			Name:      key[0],
 		})
 	}
-	if lifter, ok := resource.(lifter); ok {
-		resource = lifter.Lift()
+	if lifter, ok := requested.(lifter); ok {
+		requested = lifter.Lift()
 	}
-	if err := client.Get(resource.URIPath(), &resource); err != nil {
+
+	// Determine the expected type for the store response between a
+	// corev2.Resource & a types.Wrapper. We will assume that all resources
+	// outside core/v2 are stored as wrapped value
+	var response interface{}
+	if types.ApiVersion(reflect.Indirect(reflect.ValueOf(requested)).Type().PkgPath()) == path.Join(corev2.APIGroupName, corev2.APIVersion) {
+		response, _ = dump.ResolveResource(typeName)
+	} else {
+		response = types.Wrapper{}
+	}
+
+	if err := client.Get(requested.URIPath(), &response); err != nil {
 		return err
 	}
+
+	// Retrieve the concrete resource value from the response
+	var resource corev2.Resource
+	switch r := response.(type) {
+	case corev2.Resource:
+		resource = r
+	case map[string]interface{}:
+		w := types.Wrapper{}
+		bytes, err := json.Marshal(response)
+		if err != nil {
+			return fmt.Errorf("could not encode the response: %s", err)
+		}
+
+		if err := json.Unmarshal(bytes, &w); err != nil {
+			return fmt.Errorf("could not decode the response: %s", err)
+		}
+		resource = w.Value
+	default:
+		return fmt.Errorf("unexpected response type %T. Make sure the resource type is valid", response)
+	}
+
 	format := cfg.Format()
 	switch format {
 	case "wrapped-json", "json":
