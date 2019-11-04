@@ -15,13 +15,13 @@ var assetChecksum string
 // via Bonsai or a URL.
 func InstallCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "install [ALIAS] [NAME][:VERSION]",
+		Use:   "install [ALIAS] ([NAME]:[VERSION] | --url [ARCHIVE_URL] --checksum [ARCHIVE_CHECKSUM])",
 		Short: "installs a sensuctl command from Bonsai or a URL",
 		RunE:  installCommandExecute(cli),
 	}
 
-	cmd.Flags().StringVarP(&assetURL, "url", "", "", "specifies a URL to fetch a sensuctl command asset from")
-	cmd.Flags().StringVarP(&assetChecksum, "checksum", "", "", "specifies the checksum (SHA512) of a URL asset")
+	cmd.Flags().StringVarP(&assetURL, "url", "", "", "specifies a URL to fetch a sensuctl command archive from")
+	cmd.Flags().StringVarP(&assetChecksum, "checksum", "", "", "specifies the checksum (SHA512) of the command archive from the --url flag")
 
 	return cmd
 }
@@ -32,6 +32,11 @@ func installCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []st
 		if len(args) < 1 || len(args) > 2 {
 			_ = cmd.Help()
 			return errors.New("invalid argument(s) received")
+		}
+
+		if len(args) > 1 && (assetURL != "" || assetChecksum != "") {
+			_ = cmd.Help()
+			return errors.New("the url and checksum flags can only be used when NAME is not specified")
 		}
 
 		if len(args) == 1 {
