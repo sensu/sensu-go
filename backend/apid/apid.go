@@ -14,6 +14,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/apid/graphql"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/apid/routers"
 	"github.com/sensu/sensu-go/backend/authentication"
@@ -25,10 +26,11 @@ import (
 
 // APId is the backend HTTP API.
 type APId struct {
-	Authenticator    *authentication.Authenticator
-	HTTPServer       *http.Server
-	CoreSubrouter    *mux.Router
-	GraphQLSubrouter *mux.Router
+	Authenticator              *authentication.Authenticator
+	HTTPServer                 *http.Server
+	CoreSubrouter              *mux.Router
+	EntityLimitedCoreSubrouter *mux.Router
+	GraphQLSubrouter           *mux.Router
 
 	stopping            chan struct{}
 	running             *atomic.Value
@@ -60,6 +62,7 @@ type Config struct {
 	EtcdClientTLSConfig *tls.Config
 	Authenticator       *authentication.Authenticator
 	ClusterVersion      string
+	GraphQLService      *graphql.Service
 }
 
 // New creates a new APId.
@@ -95,6 +98,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	a.GraphQLSubrouter = GraphQLSubrouter(router, c)
 	_ = AuthenticationSubrouter(router, c)
 	a.CoreSubrouter = CoreSubrouter(router, c)
+	a.EntityLimitedCoreSubrouter = EntityLimitedCoreSubrouter(router, c)
 
 	a.HTTPServer = &http.Server{
 		Addr:         c.ListenAddress,
@@ -148,8 +152,7 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		router.PathPrefix("/api/{group:core}/{version:v2}/"),
 		middlewares.SimpleLogger{},
 		middlewares.Namespace{},
-		middlewares.Authentication{},
-		middlewares.AllowList{Store: cfg.Store},
+		middlewares.Authentication{Store: cfg.Store},
 		middlewares.AuthorizationAttributes{},
 		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},
 		middlewares.LimitRequest{},
@@ -158,13 +161,12 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	mountRouters(
 		subrouter,
 		routers.NewAssetRouter(cfg.Store),
+		routers.NewAPIKeysRouter(cfg.Store),
 		routers.NewChecksRouter(cfg.Store, cfg.QueueGetter),
 		routers.NewClusterRolesRouter(cfg.Store),
 		routers.NewClusterRoleBindingsRouter(cfg.Store),
 		routers.NewClusterRouter(actions.NewClusterController(cfg.Cluster, cfg.Store)),
-		routers.NewEntitiesRouter(cfg.Store, cfg.EventStore),
 		routers.NewEventFiltersRouter(cfg.Store),
-		routers.NewEventsRouter(cfg.EventStore, cfg.Bus),
 		routers.NewExtensionsRouter(cfg.Store),
 		routers.NewHandlersRouter(cfg.Store),
 		routers.NewHooksRouter(cfg.Store),
@@ -175,6 +177,28 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		routers.NewSilencedRouter(cfg.Store),
 		routers.NewTessenRouter(actions.NewTessenController(cfg.Store, cfg.Bus)),
 		routers.NewUsersRouter(cfg.Store),
+	)
+
+	return subrouter
+}
+
+// EntityLimitedCoreSubrouter initializes a subrouter that handles all requests
+// coming to /api/core/v2 that must be gated by entity limits.
+func EntityLimitedCoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
+	subrouter := NewSubrouter(
+		router.PathPrefix("/api/{group:core}/{version:v2}/"),
+		middlewares.SimpleLogger{},
+		middlewares.Namespace{},
+		middlewares.Authentication{Store: cfg.Store},
+		middlewares.AuthorizationAttributes{},
+		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},
+		middlewares.LimitRequest{},
+		middlewares.Pagination{},
+	)
+	mountRouters(
+		subrouter,
+		routers.NewEntitiesRouter(cfg.Store, cfg.EventStore),
+		routers.NewEventsRouter(cfg.EventStore, cfg.Bus),
 	)
 
 	return subrouter
@@ -195,15 +219,12 @@ func GraphQLSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		//
 		//       https://github.com/graphql/graphiql
 		//       https://graphql.org/learn/introspection/
-		middlewares.Authentication{IgnoreUnauthorized: false},
-		middlewares.AllowList{Store: cfg.Store, IgnoreMissingClaims: true},
+		middlewares.Authentication{IgnoreUnauthorized: false, Store: cfg.Store},
 	)
 
 	mountRouters(
 		subrouter,
-		routers.NewGraphQLRouter(
-			cfg.Store, cfg.EventStore, &rbac.Authorizer{Store: cfg.Store}, cfg.QueueGetter, cfg.Bus,
-		),
+		&routers.GraphQLRouter{Service: cfg.GraphQLService},
 	)
 
 	return subrouter

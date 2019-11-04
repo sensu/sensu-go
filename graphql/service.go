@@ -5,10 +5,17 @@ import (
 	"fmt"
 
 	"github.com/graphql-go/graphql"
+	"github.com/graphql-go/graphql/gqlerrors"
+	"github.com/graphql-go/graphql/language/parser"
+	"github.com/graphql-go/graphql/language/source"
 )
 
-// Service ...TODO...
+// Service describes the whole of a GraphQL schema, validation, and execution.
 type Service struct {
+	// Executor evaluates a given request and returns a result. If none
+	// the default executor is used.
+	Executor func(p graphql.ExecuteParams) *graphql.Result
+
 	schema graphql.Schema
 	types  *typeRegister
 	mware  []Middleware
@@ -17,7 +24,8 @@ type Service struct {
 // NewService returns new instance of Service
 func NewService() *Service {
 	return &Service{
-		types: newTypeRegister(),
+		Executor: graphql.Execute,
+		types:    newTypeRegister(),
 	}
 }
 
@@ -43,6 +51,7 @@ func (service *Service) RegisterEnum(t EnumDesc) {
 func (service *Service) RegisterInput(t InputDesc) {
 	cfg := t.Config()
 	registrar := func(m graphql.TypeMap) graphql.Type {
+		cfg = t.Config()
 		fields := cfg.Fields.(graphql.InputObjectConfigFieldMap)
 		cfg.Fields = inputFieldsThunk(m, fields)
 		return graphql.NewInputObject(cfg)
@@ -54,6 +63,7 @@ func (service *Service) RegisterInput(t InputDesc) {
 func (service *Service) RegisterInterface(t InterfaceDesc, impl InterfaceTypeResolver) {
 	cfg := t.Config()
 	registrar := func(m graphql.TypeMap) graphql.Type {
+		cfg = t.Config()
 		cfg.ResolveType = nil
 		if impl != nil {
 			cfg.ResolveType = newResolveTypeFn(m, impl)
@@ -68,6 +78,7 @@ func (service *Service) RegisterInterface(t InterfaceDesc, impl InterfaceTypeRes
 func (service *Service) RegisterObject(t ObjectDesc, impl interface{}) {
 	cfg := t.Config()
 	registrar := func(m graphql.TypeMap) graphql.Type {
+		cfg = t.Config()
 		fields := cfg.Fields.(graphql.Fields)
 		for fieldName, handler := range t.FieldHandlers {
 			fields[fieldName].Resolve = handler(impl)
@@ -104,6 +115,7 @@ func (service *Service) RegisterObjectExtension(t ObjectDesc, impl interface{}) 
 func (service *Service) RegisterUnion(t UnionDesc, impl UnionTypeResolver) {
 	cfg := t.Config()
 	registrar := func(m graphql.TypeMap) graphql.Type {
+		cfg = t.Config()
 		newTypes := make([]*graphql.Object, len(cfg.Types))
 		for i, t := range cfg.Types {
 			objType := m[t.PrivateName].(*graphql.Object)
@@ -140,18 +152,45 @@ func (service *Service) Regenerate() error {
 }
 
 // Do executes request given query string
-func (service *Service) Do(
-	ctx context.Context,
-	q string,
-	vars map[string]interface{},
-) *graphql.Result {
+func (service *Service) Do(ctx context.Context, q string, vars map[string]interface{}) *graphql.Result {
+	schema := service.schema
 	params := graphql.Params{
-		Schema:         service.schema,
+		Schema:         schema,
 		VariableValues: vars,
 		Context:        ctx,
 		RequestString:  q,
 	}
-	return graphql.Do(params)
+
+	// run init middleware
+	MiddlewareHandleInits(service, &params)
+
+	// parse the source
+	parseFinishFn := MiddlewareHandleParseDidStart(service, &params)
+	source := source.NewSource(&source.Source{
+		Body: []byte(q),
+		Name: "GraphQL request",
+	})
+	AST, err := parser.Parse(parser.ParseParams{Source: source})
+	parseFinishFn(err)
+	if err != nil {
+		return &graphql.Result{Errors: gqlerrors.FormatErrors(err)}
+	}
+
+	// validate document
+	validationFinishFn := MiddlewareHandleValidationDidStart(service, &params)
+	validationResult := graphql.ValidateDocument(&schema, AST, nil)
+	validationFinishFn(validationResult.Errors)
+	if !validationResult.IsValid {
+		return &graphql.Result{Errors: validationResult.Errors}
+	}
+
+	// execute query
+	return service.Executor(graphql.ExecuteParams{
+		Schema:  schema,
+		AST:     AST,
+		Args:    vars,
+		Context: ctx,
+	})
 }
 
 type typeRegister struct {

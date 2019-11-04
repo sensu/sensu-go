@@ -8,8 +8,40 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Fixed
+- Added better error logging for mutator execution.
+
+### Added
+- Added the `APIKey` resource and HTTP API support for POST, GET, and DELETE.
+- Added sensuctl commands to manage the `APIKey` resource.
+- Added support for api keys to be used in api authentication.
+- Added support for sensu-backend service environment variables.
+
+## [5.14.2] - 2019-11-04
+
+### Changed
+- Upgraded etcd to 3.3.17
+
+### Fixed
+- As a result of upgrading etcd, TLS etcd clients that lose their connection will
+successfully reconnect when using --no-embed-etcd.
+- Check TTL switches are now correctly buried when associated events and entities
+are deleted.
+- Keepalive switches are now correctly buried when the keepalive event is deleted.
+- Sensu now uses far fewer leases for keepalives and check TTLs, resulting in a
+stability improvement for most deployments.
+- Fixed a minor UX issue in interactive filter commands in sensuctl.
+
+## [5.14.1] - 2019-10-16
+
+### Added
+- Added prometheus gauges for check schedulers.
+
+### Fixed
 - Opening an already open Bolt database should not cause sensu-agent to hang
 indefinitely.
+- [CLI] Dump multiple types as YAML to a file would print separator STDOUT
+instead of specified file
+- Fixed a bug where Sensu would crash with a panic due to a send on a closed channel.
 
 ## [5.14.0] - 2019-10-08
 

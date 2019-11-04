@@ -146,6 +146,7 @@ func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) 
 			if err := c.startScheduler(check); err != nil {
 				logger.WithError(err).Error("unable to start check scheduler")
 			}
+			return
 		}
 		if sched.Type() == GetSchedulerType(check) {
 			logger.Info("restarting scheduler")
@@ -155,6 +156,7 @@ func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) 
 			if err := sched.Stop(); err != nil {
 				logger.WithError(err).Error("error stopping check scheduler")
 			}
+			delete(c.items, key)
 			if err := c.startScheduler(check); err != nil {
 				logger.WithError(err).Error("unable to start check scheduler")
 			}

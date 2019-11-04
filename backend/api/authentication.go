@@ -9,21 +9,18 @@ import (
 	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
-	"github.com/sensu/sensu-go/backend/store"
 )
 
 // AuthenticationClient is an API client for authentication.
 type AuthenticationClient struct {
-	store store.TokenStore
-	auth  *authentication.Authenticator
+	auth *authentication.Authenticator
 }
 
 // NewAuthenticationClient creates a new AuthenticationClient, given a a store
 // and an authenticator.
-func NewAuthenticationClient(store store.TokenStore, auth *authentication.Authenticator) *AuthenticationClient {
+func NewAuthenticationClient(auth *authentication.Authenticator) *AuthenticationClient {
 	return &AuthenticationClient{
-		store: store,
-		auth:  auth,
+		auth: auth,
 	}
 }
 
@@ -38,22 +35,22 @@ func (a *AuthenticationClient) CreateAccessToken(ctx context.Context, username, 
 	// Add the 'system:users' group to this user
 	claims.Groups = append(claims.Groups, "system:users")
 
+	// Add the issuer URL
+	if issuer := ctx.Value(jwt.IssuerURLKey); issuer != nil {
+		claims.Issuer = issuer.(string)
+	}
+
 	// Create an access token and its signed version
-	token, tokenString, err := jwt.AccessToken(claims)
+	_, tokenString, err := jwt.AccessToken(claims)
 	if err != nil {
 		return nil, fmt.Errorf("error creating access token: %s", err)
 	}
 
 	// Create a refresh token and its signed version
 	refreshClaims := &corev2.Claims{StandardClaims: corev2.StandardClaims(claims.Subject)}
-	refreshToken, refreshTokenString, err := jwt.RefreshToken(refreshClaims)
+	_, refreshTokenString, err := jwt.RefreshToken(refreshClaims)
 	if err != nil {
 		return nil, fmt.Errorf("error creating access token: %s", err)
-	}
-
-	// Add the tokens in the access list
-	if err := a.store.AllowTokens(token, refreshToken); err != nil {
-		return nil, err
 	}
 
 	result := &corev2.Tokens{
@@ -87,24 +84,7 @@ func (a *AuthenticationClient) TestCreds(ctx context.Context, username, password
 // corev2.AccessTokenClaims -> *corev2.Claims
 // corev2.RefreshTokenClaims -> *corev2.Claims
 func (a *AuthenticationClient) Logout(ctx context.Context) error {
-	var accessClaims, refreshClaims *corev2.Claims
-
-	// Get the access token claims
-	if value := ctx.Value(corev2.AccessTokenClaims); value != nil {
-		accessClaims = value.(*corev2.Claims)
-	} else {
-		return corev2.ErrInvalidToken
-	}
-
-	// Get the refresh token claims
-	if value := ctx.Value(corev2.RefreshTokenClaims); value != nil {
-		refreshClaims = value.(*corev2.Claims)
-	} else {
-		return corev2.ErrInvalidToken
-	}
-
-	// Remove the access & refresh tokens from the access list
-	return a.store.RevokeTokens(accessClaims, refreshClaims)
+	return nil
 }
 
 // RefreshAccessToken refreshes an access token. The context must carry the
@@ -115,7 +95,7 @@ func (a *AuthenticationClient) Logout(ctx context.Context) error {
 // corev2.RefreshTokenClaims -> *corev2.Claims
 // corev2.RefreshTokenString -> string
 func (a *AuthenticationClient) RefreshAccessToken(ctx context.Context) (*corev2.Tokens, error) {
-	var accessClaims, refreshClaims *corev2.Claims
+	var accessClaims *corev2.Claims
 
 	// Get the access token claims
 	if value := ctx.Value(corev2.AccessTokenClaims); value != nil {
@@ -125,9 +105,7 @@ func (a *AuthenticationClient) RefreshAccessToken(ctx context.Context) (*corev2.
 	}
 
 	// Get the refresh token claims
-	if value := ctx.Value(corev2.RefreshTokenClaims); value != nil {
-		refreshClaims = value.(*corev2.Claims)
-	} else {
+	if value := ctx.Value(corev2.RefreshTokenClaims); value == nil {
 		return nil, corev2.ErrInvalidToken
 	}
 
@@ -137,21 +115,6 @@ func (a *AuthenticationClient) RefreshAccessToken(ctx context.Context) (*corev2.
 		refreshTokenString = value.(string)
 	} else {
 		return nil, corev2.ErrInvalidToken
-	}
-
-	// Make sure the refresh token is authorized in the access list
-	if _, err := a.store.GetToken(refreshClaims.Subject, refreshClaims.Id); err != nil {
-		switch err := err.(type) {
-		case *store.ErrNotFound:
-			return nil, err
-		default:
-			return nil, fmt.Errorf("unexpected error while authorizing refresh token ID %q: %s", refreshClaims.Id, err)
-		}
-	}
-
-	// Revoke the old access token from the access list
-	if err := a.store.RevokeTokens(accessClaims); err != nil {
-		return nil, err
 	}
 
 	// Ensure backward compatibility by filling the provider claims if missing
@@ -169,20 +132,20 @@ func (a *AuthenticationClient) RefreshAccessToken(ctx context.Context) (*corev2.
 	// Refresh the user claims
 	claims, err := a.auth.Refresh(ctx, accessClaims)
 	if err != nil {
-		return nil, corev2.ErrUnauthorized
+		return nil, err
 	}
 
 	// Ensure the 'system:users' group is present
 	claims.Groups = append(claims.Groups, "system:users")
 
-	// Issue a new access token
-	accessToken, accessTokenString, err := jwt.AccessToken(claims)
-	if err != nil {
-		return nil, err
+	// Add the issuer URL
+	if issuer := ctx.Value(jwt.IssuerURLKey); issuer != nil {
+		claims.Issuer = issuer.(string)
 	}
 
-	// store the new access token in the access list
-	if err := a.store.AllowTokens(accessToken); err != nil {
+	// Issue a new access token
+	_, accessTokenString, err := jwt.AccessToken(claims)
+	if err != nil {
 		return nil, err
 	}
 

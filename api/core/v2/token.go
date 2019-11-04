@@ -18,6 +18,7 @@ type Claims struct {
 	// Custom claims
 	Groups   []string           `json:"groups"`
 	Provider AuthProviderClaims `json:"provider"`
+	APIKey   bool               `json:"api_key"`
 }
 
 // AuthProviderClaims contains information from the authentication provider

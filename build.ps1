@@ -75,11 +75,6 @@ function build_binary([string]$goos, [string]$goarch, [string]$bin, [string]$cmd
     $ldflags = $ldflags + " -X $version_pkg.BuildDate=$build_date"
     $ldflags = $ldflags + " -X $version_pkg.BuildSHA=$build_sha"
 
-    If ($build_type -ne "nightly" -And $build_type -ne "stable") {
-        $prerelease = &"go" "run" "./version/cmd/version/version.go" "-p" | Out-String
-        $ldflags = $ldflags + " -X $version_pkg.PreReleaseIdentifier=$prerelease"
-    }
-
     $main_pkg = "cmd/$cmd_name"
 
     go build -ldflags "$ldflags" -o $outfile "$REPO_PATH/$main_pkg"

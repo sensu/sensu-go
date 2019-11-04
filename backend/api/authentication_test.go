@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"errors"
-	"fmt"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -12,7 +11,6 @@ import (
 	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -77,7 +75,6 @@ func TestCreateAccessToken(t *testing.T) {
 			Store: func() store.Store {
 				store := &mockstore.MockStore{}
 				user := corev2.FixtureUser("foo")
-				store.On("AllowTokens", mock.AnythingOfType("[]*jwt.Token")).Return(nil)
 				store.On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").Return(user, nil)
 				return store
 			},
@@ -88,7 +85,7 @@ func TestCreateAccessToken(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			store := test.Store()
-			authn := NewAuthenticationClient(store, test.Authenticator(store))
+			authn := NewAuthenticationClient(test.Authenticator(store))
 			tokens, err := authn.CreateAccessToken(test.Context(), test.Username, test.Password)
 			if test.WantError && err == nil {
 				t.Fatal("want error, got nil")
@@ -150,7 +147,6 @@ func TestTestCreds(t *testing.T) {
 			Store: func() store.Store {
 				store := &mockstore.MockStore{}
 				user := corev2.FixtureUser("foo")
-				store.On("AllowTokens", mock.AnythingOfType("[]*jwt.Token")).Return(nil)
 				store.On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").Return(user, nil)
 				return store
 			},
@@ -160,7 +156,7 @@ func TestTestCreds(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
 			store := test.Store()
-			authn := NewAuthenticationClient(store, test.Authenticator(store))
+			authn := NewAuthenticationClient(test.Authenticator(store))
 			err := authn.TestCreds(test.Context(), test.Username, test.Password)
 			if test.WantError && err == nil {
 				t.Fatal("want error, got nil")
@@ -169,64 +165,6 @@ func TestTestCreds(t *testing.T) {
 				}
 			}
 			if !test.WantError && err != nil {
-				t.Fatal(err)
-			}
-		})
-	}
-}
-
-func TestLogout(t *testing.T) {
-	tests := []struct {
-		Name          string
-		Store         func() store.Store
-		Authenticator func(store.Store) *authentication.Authenticator
-		Context       func(*corev2.Claims) context.Context
-		WantError     bool
-		Error         error
-	}{
-		{
-			Name:          "invalid token",
-			Store:         defaultStore,
-			Authenticator: defaultAuth,
-			Context:       func(*corev2.Claims) context.Context { return context.Background() },
-			WantError:     true,
-			Error:         corev2.ErrInvalidToken,
-		},
-		{
-			Name: "not whitelisted",
-			Store: func() store.Store {
-				store := &mockstore.MockStore{}
-				store.On("RevokeTokens", mock.AnythingOfType("[]*v2.Claims")).Return(fmt.Errorf("error"))
-				return store
-			},
-			Authenticator: defaultAuth,
-			Context:       contextWithClaims,
-			WantError:     true,
-		},
-		{
-			Name: "success",
-			Store: func() store.Store {
-				store := &mockstore.MockStore{}
-				store.On("RevokeTokens", mock.AnythingOfType("[]*v2.Claims")).Return(nil)
-				return store
-			},
-			Authenticator: defaultAuth,
-			Context:       contextWithClaims,
-		},
-	}
-
-	for _, test := range tests {
-		t.Run(test.Name, func(t *testing.T) {
-			claims := corev2.FixtureClaims("foo", nil)
-			ctx := test.Context(claims)
-			store := test.Store()
-			authenticator := test.Authenticator(store)
-			auth := NewAuthenticationClient(store, authenticator)
-			err := auth.Logout(ctx)
-			if err == nil && test.WantError {
-				t.Fatal("got non-nil error")
-			}
-			if err != nil && !test.WantError {
 				t.Fatal(err)
 			}
 		})
@@ -243,52 +181,10 @@ func TestRefreshAccessToken(t *testing.T) {
 		Error         error
 	}{
 		{
-			Name: "not whitelisted",
-			Store: func() store.Store {
-				st := &mockstore.MockStore{}
-				user := &corev2.User{Username: "foo"}
-				st.On(
-					"GetToken",
-					mock.AnythingOfType("string"),
-					mock.AnythingOfType("string"),
-				).Return(&corev2.Claims{}, &store.ErrNotFound{})
-				st.On("GetUser",
-					mock.Anything,
-					mock.AnythingOfType("string")).Return(user, nil)
-				return st
-			},
-			Authenticator: defaultAuth,
-			Context:       contextWithClaims,
-			WantError:     true,
-			Error:         corev2.ErrUnauthorized,
-		},
-		{
-			Name: "cannot whitelist access token",
-			Store: func() store.Store {
-				st := &mockstore.MockStore{}
-				user := &corev2.User{Username: "foo"}
-				st.On("AllowTokens", mock.AnythingOfType("[]*jwt.Token")).Return(fmt.Errorf("error"))
-				st.On("RevokeTokens", mock.AnythingOfType("[]*v2.Claims")).Return(nil)
-				st.On("GetToken",
-					mock.AnythingOfType("string"), mock.AnythingOfType("string")).Return(&corev2.Claims{}, nil)
-				st.On("GetUser",
-					mock.Anything, mock.AnythingOfType("string")).Return(user, nil)
-				return st
-			},
-			Authenticator: defaultAuth,
-			Context:       contextWithClaims,
-			WantError:     true,
-		},
-		{
 			Name: "success",
 			Store: func() store.Store {
 				st := &mockstore.MockStore{}
 				user := &corev2.User{Username: "foo"}
-				st.On("AllowTokens", mock.AnythingOfType("[]*jwt.Token")).Return(nil)
-				st.On("RevokeTokens", mock.AnythingOfType("[]*v2.Claims")).Return(nil)
-				st.On("GetToken",
-					mock.AnythingOfType("string"), mock.AnythingOfType("string"),
-				).Return(&types.Claims{}, nil)
 				st.On("GetUser",
 					mock.AnythingOfType("*context.valueCtx"), mock.AnythingOfType("string"),
 				).Return(user, nil)
@@ -310,7 +206,7 @@ func TestRefreshAccessToken(t *testing.T) {
 			ctx := test.Context(claims)
 			store := test.Store()
 			authenticator := test.Authenticator(store)
-			auth := NewAuthenticationClient(store, authenticator)
+			auth := NewAuthenticationClient(authenticator)
 			_, err := auth.RefreshAccessToken(ctx)
 			if err == nil && test.WantError {
 				t.Fatal("got non-nil error")

@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
 
@@ -77,11 +76,7 @@ func newVersionCommand() *cobra.Command {
 		Use:   "version",
 		Short: "Show the sensu-agent version information",
 		Run: func(cmd *cobra.Command, args []string) {
-			fmt.Printf("sensu-agent version %s, build %s, built %s\n",
-				version.Semver(),
-				version.BuildSHA,
-				version.BuildDate,
-			)
+			version.Println("sensu-agent")
 		},
 	}
 

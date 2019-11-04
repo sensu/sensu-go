@@ -7,7 +7,6 @@ import (
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
-	jwt "github.com/dgrijalva/jwt-go"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
@@ -179,9 +178,6 @@ type Store interface {
 
 	// TessenConfigStore provides an interface for managing the tessen configuration
 	TessenConfigStore
-
-	// TokenStore provides an interface for managing the JWT access list
-	TokenStore
 
 	// UserStore provides an interface for managing users
 	UserStore
@@ -568,20 +564,6 @@ type TessenConfigStore interface {
 
 	// GetTessenConfigWatcher returns a tessen config watcher
 	GetTessenConfigWatcher(context.Context) <-chan WatchEventTessenConfig
-}
-
-// TokenStore provides methods for managing the JWT access list
-type TokenStore interface {
-	// AllowTokens adds the provided tokens to the JWT access list
-	AllowTokens(tokens ...*jwt.Token) error
-
-	// RevokeTokens removes tokens using the provided claims from the JWT access
-	// list
-	RevokeTokens(claims ...*corev2.Claims) error
-
-	// GetToken returns the claims of a given token ID, belonging to the given
-	// subject. An error is returned if no claims were found.
-	GetToken(subject, id string) (*types.Claims, error)
 }
 
 // UserStore provides methods for managing users

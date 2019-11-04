@@ -2,203 +2,246 @@ package tracing
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/echlebek/crock"
 	time "github.com/echlebek/timeproxy"
-	"github.com/gogo/protobuf/proto"
 	"github.com/graphql-go/graphql"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/assert"
+	"github.com/prometheus/client_golang/prometheus/testutil"
 )
 
-func TestPrometheusTracerParseDidStart(t *testing.T) {
+const summaryMetadata = `
+  # HELP graphql_duration_seconds Time spent in GraphQL operations, in seconds
+  # TYPE graphql_duration_seconds summary
+`
+
+func TestPrometheusTracer_ParseDidStart(t *testing.T) {
 	mockTime, cleanup := mockTime()
 	defer cleanup()
 
-	trace := NewPrometheusTracer()
-	trace.AllowList = []string{KeyParse}
-
-	_, fn := trace.ParseDidStart(context.Background())
-	mockTime.Set(time.Now().Add(7 * time.Millisecond))
-	fn(nil)
-
-	got := mustGather(t, trace.Collector())
-	assert.Contains(t, got, `
-  label: <
-    name: "key"
-    value: "parse"
-  >
-  label: <
-    name: "platform_key"
-    value: "graphql.parse"
-  >
-  summary: <
-    sample_count: 1
-    sample_sum: 7
-    quantile: <
-      quantile: 0.5
-      value: 7
-    >
-    quantile: <
-      quantile: 0.9
-      value: 7
-    >
-    quantile: <
-      quantile: 0.99
-      value: 7
-    >
-  >`)
-
-	trace.AllowList = []string{}
-	_, fn = trace.ParseDidStart(context.Background())
-	fn(nil)
-
-	got = mustGather(t, trace.Collector())
-	assert.Contains(t, got, "sample_count: 1")
-}
-
-func TestPrometheusTracerValidateDidStart(t *testing.T) {
-	mockTime, cleanup := mockTime()
-	defer cleanup()
-
-	trace := NewPrometheusTracer()
-	trace.AllowList = []string{KeyValidate}
-
-	_, fn := trace.ValidationDidStart(context.Background())
-	mockTime.Set(time.Now().Add(540 * time.Millisecond))
-	fn(nil)
-
-	got := mustGather(t, trace.Collector())
-	assert.Contains(t, got, `
-  label: <
-    name: "key"
-    value: "validate"
-  >
-  label: <
-    name: "platform_key"
-    value: "graphql.validate"
-  >
-  summary: <
-    sample_count: 1
-    sample_sum: 540
-    quantile: <
-      quantile: 0.5
-      value: 540
-    >
-    quantile: <
-      quantile: 0.9
-      value: 540
-    >
-    quantile: <
-      quantile: 0.99
-      value: 540
-    >
-  >`)
-
-	trace.AllowList = []string{}
-	_, fn = trace.ValidationDidStart(context.Background())
-	fn(nil)
-
-	got = mustGather(t, trace.Collector())
-	assert.Contains(t, got, "sample_count: 1")
-}
-
-func TestPrometheusTracerExecutionDidStart(t *testing.T) {
-	mockTime, cleanup := mockTime()
-	defer cleanup()
-
-	trace := NewPrometheusTracer()
-	trace.AllowList = []string{KeyExecuteQuery}
-
-	_, fn := trace.ExecutionDidStart(context.Background())
-	mockTime.Set(time.Now().Add(720 * time.Millisecond))
-	fn(nil)
-
-	got := mustGather(t, trace.Collector())
-	assert.Contains(t, got, `
-  label: <
-    name: "key"
-    value: "execute_query"
-  >
-  label: <
-    name: "platform_key"
-    value: "graphql.execute"
-  >
-  summary: <
-    sample_count: 1
-    sample_sum: 720
-    quantile: <
-      quantile: 0.5
-      value: 720
-    >
-    quantile: <
-      quantile: 0.9
-      value: 720
-    >
-    quantile: <
-      quantile: 0.99
-      value: 720
-    >
-  >`)
-
-	trace.AllowList = []string{}
-	_, fn = trace.ExecutionDidStart(context.Background())
-	fn(nil)
-
-	got = mustGather(t, trace.Collector())
-	assert.Contains(t, got, "sample_count: 1")
-}
-
-func TestPrometheusTracerFieldDidStart(t *testing.T) {
-	mockTime, cleanup := mockTime()
-	defer cleanup()
-
-	trace := NewPrometheusTracer()
-	trace.AllowList = []string{KeyExecuteField}
-
-	info := &graphql.ResolveInfo{
-		FieldName:  "interval",
-		ParentType: &checkType{},
+	tests := []struct {
+		name      string
+		allowList []string
+		delta     time.Duration
+		runs      int
+		want      string
+	}{
+		{
+			name:      "omitted from allow list",
+			allowList: []string{KeyValidate},
+			delta:     10,
+			runs:      5,
+			want:      "",
+		},
+		{
+			name:      "single run",
+			allowList: []string{KeyParse},
+			delta:     200,
+			runs:      1,
+			want: summaryMetadata + `
+        graphql_duration_seconds_sum{key="parse",platform_key="graphql.parse"} 200
+        graphql_duration_seconds_count{key="parse",platform_key="graphql.parse"} 1
+      `,
+		},
+		{
+			name:      "multiple runs",
+			allowList: []string{KeyParse},
+			delta:     20,
+			runs:      5,
+			want: summaryMetadata + `
+        graphql_duration_seconds_sum{key="parse",platform_key="graphql.parse"} 100
+        graphql_duration_seconds_count{key="parse",platform_key="graphql.parse"} 5
+      `,
+		},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			trace := newTracer(tt.allowList)
 
-	_, fn := trace.ResolveFieldDidStart(context.Background(), info)
-	mockTime.Set(time.Now().Add(1530 * time.Millisecond))
-	fn(nil, nil)
+			for i := 0; i < tt.runs; i++ {
+				_, fn := trace.ParseDidStart(context.Background())
+				mockTime.Set(time.Now().Add(tt.delta * time.Millisecond))
+				fn(nil)
+			}
 
-	got := mustGather(t, trace.Collector())
-	assert.Contains(t, got, `
-  label: <
-    name: "key"
-    value: "execute_field"
-  >
-  label: <
-    name: "platform_key"
-    value: "Check.interval"
-  >
-  summary: <
-    sample_count: 1
-    sample_sum: 1530
-    quantile: <
-      quantile: 0.5
-      value: 1530
-    >
-    quantile: <
-      quantile: 0.9
-      value: 1530
-    >
-    quantile: <
-      quantile: 0.99
-      value: 1530
-    >
-  >`)
+			if err := testutil.CollectAndCompare(trace.Collector(), strings.NewReader(tt.want), "graphql_duration_seconds"); err != nil {
+				t.Errorf("unexpected collecting result:\n%s", err)
+			}
+		})
+	}
+}
 
-	trace.AllowList = []string{}
-	_, fn = trace.ResolveFieldDidStart(context.Background(), info)
-	fn(nil, nil)
+func TestPrometheusTracer_ValidationDidStart(t *testing.T) {
+	mockTime, cleanup := mockTime()
+	defer cleanup()
 
-	got = mustGather(t, trace.Collector())
-	assert.Contains(t, got, "sample_count: 1")
+	tests := []struct {
+		name      string
+		allowList []string
+		delta     time.Duration
+		runs      int
+		want      string
+	}{
+		{
+			name:      "omitted from allow list",
+			allowList: []string{KeyParse},
+			delta:     10,
+			runs:      50,
+			want:      "",
+		},
+		{
+			name:      "single run",
+			allowList: []string{KeyValidate},
+			delta:     150,
+			runs:      1,
+			want: summaryMetadata + `
+        graphql_duration_seconds_sum{key="validate",platform_key="graphql.validate"} 150
+        graphql_duration_seconds_count{key="validate",platform_key="graphql.validate"} 1
+      `,
+		},
+		{
+			name:      "multiple runs",
+			allowList: []string{KeyValidate},
+			delta:     15,
+			runs:      8,
+			want: summaryMetadata + `
+        graphql_duration_seconds_sum{key="validate",platform_key="graphql.validate"} 120
+        graphql_duration_seconds_count{key="validate",platform_key="graphql.validate"} 8
+      `,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			trace := newTracer(tt.allowList)
+
+			for i := 0; i < tt.runs; i++ {
+				_, fn := trace.ValidationDidStart(context.Background())
+				mockTime.Set(time.Now().Add(tt.delta * time.Millisecond))
+				fn(nil)
+			}
+
+			if err := testutil.CollectAndCompare(trace.Collector(), strings.NewReader(tt.want), "graphql_duration_seconds"); err != nil {
+				t.Errorf("unexpected collecting result:\n%s", err)
+			}
+		})
+	}
+}
+
+func TestPrometheusTracer_ExecutionDidStart(t *testing.T) {
+	mockTime, cleanup := mockTime()
+	defer cleanup()
+
+	tests := []struct {
+		name      string
+		allowList []string
+		delta     time.Duration
+		runs      int
+		want      string
+	}{
+		{
+			name:      "omitted from allow list",
+			allowList: []string{KeyParse, KeyValidate},
+			delta:     10,
+			runs:      50,
+			want:      "",
+		},
+		{
+			name:      "single run",
+			allowList: []string{KeyExecuteQuery},
+			delta:     120,
+			runs:      1,
+			want: summaryMetadata + `
+        graphql_duration_seconds_sum{key="execute_query",platform_key="graphql.execute"} 120
+        graphql_duration_seconds_count{key="execute_query",platform_key="graphql.execute"} 1
+      `,
+		},
+		{
+			name:      "multiple runs",
+			allowList: []string{KeyExecuteQuery},
+			delta:     12,
+			runs:      9,
+			want: summaryMetadata + `
+        graphql_duration_seconds_sum{key="execute_query",platform_key="graphql.execute"} 108
+        graphql_duration_seconds_count{key="execute_query",platform_key="graphql.execute"} 9
+      `,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			trace := newTracer(tt.allowList)
+
+			for i := 0; i < tt.runs; i++ {
+				_, fn := trace.ExecutionDidStart(context.Background())
+				mockTime.Set(time.Now().Add(tt.delta * time.Millisecond))
+				fn(nil)
+			}
+
+			if err := testutil.CollectAndCompare(trace.Collector(), strings.NewReader(tt.want), "graphql_duration_seconds"); err != nil {
+				t.Errorf("unexpected collecting result:\n%s", err)
+			}
+		})
+	}
+}
+
+func TestPrometheusTracer_ResolveFieldDidStart(t *testing.T) {
+	mockTime, cleanup := mockTime()
+	defer cleanup()
+
+	tests := []struct {
+		name      string
+		allowList []string
+		delta     time.Duration
+		runs      int
+		want      string
+	}{
+		{
+			name:      "omitted from allow list",
+			allowList: []string{KeyExecuteQuery},
+			delta:     10,
+			runs:      20,
+			want:      "",
+		},
+		{
+			name:      "single run",
+			allowList: []string{KeyExecuteField},
+			delta:     120,
+			runs:      1,
+			want: summaryMetadata + `
+        graphql_duration_seconds_sum{key="execute_field",platform_key="Check.interval"} 120
+        graphql_duration_seconds_count{key="execute_field",platform_key="Check.interval"} 1
+      `,
+		},
+		{
+			name:      "multiple runs",
+			allowList: []string{KeyExecuteField},
+			delta:     15,
+			runs:      7,
+			want: summaryMetadata + `
+        graphql_duration_seconds_sum{key="execute_field",platform_key="Check.interval"} 105
+        graphql_duration_seconds_count{key="execute_field",platform_key="Check.interval"} 7
+      `,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			trace := newTracer(tt.allowList)
+			info := &graphql.ResolveInfo{
+				FieldName:  "interval",
+				ParentType: &checkType{},
+			}
+
+			for i := 0; i < tt.runs; i++ {
+				_, fn := trace.ResolveFieldDidStart(context.Background(), info)
+				mockTime.Set(time.Now().Add(tt.delta * time.Millisecond))
+				fn(nil, nil)
+			}
+
+			if err := testutil.CollectAndCompare(trace.Collector(), strings.NewReader(tt.want), "graphql_duration_seconds"); err != nil {
+				t.Errorf("unexpected collecting result:\n%s", err)
+			}
+		})
+	}
 }
 
 func mockTime() (*crock.Time, func()) {
@@ -209,22 +252,11 @@ func mockTime() (*crock.Time, func()) {
 	}
 }
 
-func mustGather(t *testing.T, collector prometheus.Collector) string {
-	reg := prometheus.NewRegistry()
-	err := reg.Register(collector)
-	if err != nil {
-		t.Error("unable to register tracer")
-		t.FailNow()
-	}
-	metricFamilies, err := reg.Gather()
-	if err != nil {
-		t.Errorf("unexpected behavior of custom test registry.\n%#v", metricFamilies)
-		t.FailNow()
-	}
-	if len(metricFamilies) == 0 {
-		return ""
-	}
-	return proto.MarshalTextString(metricFamilies[0])
+func newTracer(allowList []string) *PrometheusTracer {
+	Collector.Reset() // prevent metrics from leaking between tests
+	trace := NewPrometheusTracer()
+	trace.AllowList = allowList
+	return trace
 }
 
 type checkType struct{}

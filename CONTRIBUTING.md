@@ -224,51 +224,6 @@ Once you make a change to any `*.proto` file within the **types** package, you w
 Sensu uses [Go modules](https://github.com/golang/go/wiki/Modules) for managing
 its dependencies.
 
-## Building
-
-### Docker
-
-The simplest way to the build Sensu is with the `sensu-go-build` image. The
-image contains all the required tools to build the agent, backend and sensuctl.
-
-```sh
-docker pull sensu/sensu-go-build
-docker run -it -e GOOS=darwin -v `pwd`:/go/src/github.com/sensu/sensu-go --entrypoint='/go/src/github.com/sensu/sensu-go/build.sh' sensu/sensu-go-build
-```
-
-If you would like to build for different platforms and architectures use GOOS
-and GOARCH env variables. See [Optional environment variables](https://golang.org/doc/install/source#environment) for more.
-
-When complete your binaries will be present in the `target` directory.
-
-### Manually
-
-First ensure that you have the required tools installed to build the programs.
-
-* Ensure that you have the Go tools installed and your environment configured.
-  If not follow the official
-  [Install the Go tools](https://golang.org/doc/install#install) guide.
-* When building the Sensu backend you will need NodeJS and Yarn installed so
-  that the web UI may be included in the binary. Follow
-  [Installing Node.js](https://nodejs.org/en/download/package-manager/) and
-  [Yarn Installation](https://yarnpkg.com/en/docs/install) for installation
-  instructions for your platform.
-
-Once all the tools are installed you are now ready to use the build script. To
-build the Sensu backend, agent and sensuctl, run:
-
-```sh
-./build.sh build
-```
-
-Each product can built separately, with one of the following:
-
-```sh
-./build.sh build_agent
-./build.sh build_backend
-./build.sh build_cli
-```
-
 ## Testing
 
 Run test suites:

@@ -79,7 +79,7 @@ func New(config config.Config) *RestClient {
 
 		// TODO: Move this into it's own file / package
 		// Request a new access token from the server
-		tokens, err := client.RefreshAccessToken(tokens.Refresh)
+		tokens, err := client.RefreshAccessToken(tokens)
 		if err != nil {
 			return fmt.Errorf(
 				"failed to request new refresh token; client returned '%s'",

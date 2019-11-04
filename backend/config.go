@@ -31,6 +31,13 @@ const (
 	// FlagAgentWriteTimeout specifies the time in seconds to wait before
 	// giving up on a write to an agent and disposing of the connection.
 	FlagAgentWriteTimeout = "agent-write-timeout"
+
+	// FlagJWTPrivateKeyFile defines the path to the private key file for JWT
+	// signatures
+	FlagJWTPrivateKeyFile = "jwt-private-key-file"
+	// FlagJWTPublicKeyFile defines the path to the public key file for JWT
+	// signatures validation
+	FlagJWTPublicKeyFile = "jwt-public-key-file"
 )
 
 // Config specifies a Backend configuration.

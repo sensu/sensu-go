@@ -153,15 +153,16 @@ func (p *Pipelined) pipeMutator(mutator *types.Mutator, event *types.Event) ([]b
 
 	result, err := p.executor.Execute(context.Background(), mutatorExec)
 
+	fields["status"] = result.Status
+	fields["output"] = result.Output
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Error("failed to execute event pipe mutator")
 		return nil, err
 	} else if result.Status != 0 {
+		logger.WithFields(fields).Error("failure in event pipe mutator execution")
 		return nil, errors.New("pipe mutator execution returned non-zero exit status")
 	}
 
-	fields["status"] = result.Status
-	fields["output"] = result.Output
 	logger.WithFields(fields).Debug("event pipe mutator executed")
 
 	return []byte(result.Output), nil
