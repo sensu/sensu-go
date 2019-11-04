@@ -89,6 +89,12 @@ func (r *NamespacesRouter) get(req *http.Request) (interface{}, error) {
 			return false
 		}
 		if !rule.ResourceMatches(corev2.NamespacesResource) {
+			// Find namespaces with implicit access
+			ns := binding.GetObjectMeta().Namespace
+			if namespace, ok := namespaceMap[ns]; ok {
+				namespaces = append(namespaces, namespace)
+				delete(namespaceMap, ns)
+			}
 			return false
 		}
 		if len(rule.ResourceNames) == 0 {

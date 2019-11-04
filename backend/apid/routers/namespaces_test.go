@@ -214,6 +214,76 @@ func TestNamespaceRouterGet(t *testing.T) {
 				namespaces[4],
 			},
 		},
+		{
+			Name: "implicit access via resources in namespace",
+			Attrs: &authorization.Attributes{
+				APIGroup:     "core",
+				APIVersion:   "v2",
+				Namespace:    "a",
+				Resource:     corev2.ChecksResource,
+				ResourceName: "",
+				User: corev2.User{
+					Username: "regular-user",
+					Groups:   []string{"plebs"},
+				},
+			},
+			ClusterRoles: []*corev2.ClusterRole{
+				{
+					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+					Rules: []corev2.Rule{
+						{
+							Verbs:     []string{corev2.VerbAll},
+							Resources: []string{corev2.ResourceAll},
+						},
+					},
+				},
+			},
+			ClusterRoleBindings: []*corev2.ClusterRoleBinding{
+				{
+					Subjects: []corev2.Subject{
+						{
+							Type: "Group",
+							Name: "cluster-admins",
+						},
+					},
+					RoleRef: corev2.RoleRef{
+						Type: "ClusterRole",
+						Name: "cluster-admin",
+					},
+					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+				},
+			},
+			Roles: []*corev2.Role{
+				{
+					ObjectMeta: corev2.NewObjectMeta("pleb", "a"),
+					Rules: []corev2.Rule{
+						{
+							Verbs:     []string{"get"},
+							Resources: []string{corev2.ChecksResource},
+						},
+					},
+				},
+			},
+			RoleBindings: []*corev2.RoleBinding{
+				{
+					Subjects: []corev2.Subject{
+						{
+							Type: "Group",
+							Name: "plebs",
+						},
+					},
+					RoleRef: corev2.RoleRef{
+						Type: "Role",
+						Name: "pleb",
+					},
+					ObjectMeta: corev2.NewObjectMeta("pleb", "a"),
+				},
+			},
+			AllNamespaces: namespaces,
+			ExpNamespaces: []*corev2.Namespace{
+				namespaces[0],
+			},
+		},
 	}
 
 	for _, test := range tests {
