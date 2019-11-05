@@ -46,12 +46,39 @@ func TestPipelinedFilter(t *testing.T) {
 		Action:      types.EventFilterActionDeny,
 		Expressions: []string{`event.check.output == "foo"`},
 	}
+	denyFilterBySilences := &types.EventFilter{
+		ObjectMeta: types.ObjectMeta{
+			Name: "denyFilterBySilences",
+		},
+		Action:      types.EventFilterActionDeny,
+		Expressions: []string{`event.silences.length == 1 && event.silences[0].labels["colo"] === "foo"`},
+	}
+	silencedWithColoLabel := &types.Silenced{
+		ObjectMeta: types.ObjectMeta{
+			Labels: map[string]string{
+				"colo": "foo",
+			},
+		},
+	}
+	silencedWithoutColoLabel := &types.Silenced{}
+	silencedWithBadColoLabel := &types.Silenced{
+		ObjectMeta: types.ObjectMeta{
+			Labels: map[string]string{
+				"colo": "no match",
+			},
+		},
+	}
 	store.On("GetEventFilterByName", mock.Anything, "allowFilterBar").Return(allowFilterBar, nil)
 	store.On("GetEventFilterByName", mock.Anything, "allowFilterFoo").Return(allowFilterFoo, nil)
 	store.On("GetEventFilterByName", mock.Anything, "denyFilterBar").Return(denyFilterBar, nil)
 	store.On("GetEventFilterByName", mock.Anything, "denyFilterFoo").Return(denyFilterFoo, nil)
+	store.On("GetEventFilterByName", mock.Anything, "denyFilterBySilences").Return(denyFilterBySilences, nil)
 	store.On("GetEventFilterByName", mock.Anything, "extension_filter").Return((*types.EventFilter)(nil), nil)
 	store.On("GetExtension", mock.Anything, "extension_filter").Return(&types.Extension{URL: "http://127.0.0.1"}, nil)
+	store.On("GetSilencedEntryByName", mock.Anything, "with_colo").Return(silencedWithColoLabel, nil)
+	store.On("GetSilencedEntryByName", mock.Anything, "bad_colo").Return(silencedWithBadColoLabel, nil)
+	store.On("GetSilencedEntryByName", mock.Anything, "no_colo").Return(silencedWithoutColoLabel, nil)
+	store.On("GetSilencedEntryByName", mock.Anything, mock.Anything).Return(silencedWithoutColoLabel, nil)
 
 	p.extensionExecutor = func(ext *types.Extension) (rpc.ExtensionExecutor, error) {
 		m := &mockExec{}
@@ -184,6 +211,30 @@ func TestPipelinedFilter(t *testing.T) {
 			name:     "Extension filter",
 			filters:  []string{"extension_filter"},
 			expected: true,
+		},
+		{
+			name:     "Silenced by colo label",
+			status:   1,
+			metrics:  nil,
+			silenced: []string{"with_colo"},
+			filters:  []string{"denyFilterBySilences"},
+			expected: true,
+		},
+		{
+			name:     "Silenced by colo label, colo doesn't match",
+			status:   1,
+			metrics:  nil,
+			silenced: []string{"bad_colo"},
+			filters:  []string{"denyFilterBySilences"},
+			expected: false,
+		},
+		{
+			name:     "Silenced by colo label, colo not present",
+			status:   1,
+			metrics:  nil,
+			silenced: []string{"no_colo"},
+			filters:  []string{"denyFilterBySilences"},
+			expected: false,
 		},
 	}
 
