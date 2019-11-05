@@ -367,6 +367,11 @@ func (m *CommandManager) DeleteCommandPlugin(alias string) error {
 			return nil
 		}
 
+		value := bucket.Get(key)
+		if value == nil {
+			return errors.New("a command by that name does not exist")
+		}
+
 		return bucket.Delete(key)
 	})
 }
