@@ -122,6 +122,10 @@ func (e *Event) SynthesizeExtras() map[string]interface{} {
 		"is_incident":   e.IsIncident(),
 		"is_resolution": e.IsResolution(),
 		"is_silenced":   e.IsSilenced(),
+		// This is populated outside of this scope, in pipelined where the function
+		// has access to a store.Store object, but add an empty list here to ensure that
+		// this key is always present.
+		"silences": []*Silenced{},
 	}
 }
 

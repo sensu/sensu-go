@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/asset"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/dynamic"
@@ -22,7 +23,7 @@ func evaluateJSFilter(event interface{}, expr string, assets asset.RuntimeAssetS
 }
 
 // Returns true if the event should be filtered/denied.
-func evaluateEventFilter(event *types.Event, filter *types.EventFilter, assets asset.RuntimeAssetSet) bool {
+func evaluateEventFilter(store store.Store, event *types.Event, filter *types.EventFilter, assets asset.RuntimeAssetSet) bool {
 	// Redact the entity to avoid leaking sensitive information
 	event.Entity = event.Entity.GetRedactedEntity()
 
@@ -50,6 +51,10 @@ func evaluateEventFilter(event *types.Event, filter *types.EventFilter, assets a
 	}
 
 	synth := dynamic.Synthesize(event)
+	// Add silences as they require the store to be passed in
+	if v, ok := synth.(map[string]interface{}); ok {
+		v["silences"] = dynamic.Synthesize(getSilencedForEvent(store, event))
+	}
 
 	for _, expression := range filter.Expressions {
 		match := evaluateJSFilter(synth, expression, assets)
@@ -137,7 +142,7 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 				if err != nil {
 					logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for filter")
 				}
-				filtered := evaluateEventFilter(event, filter, assets)
+				filtered := evaluateEventFilter(p.store, event, filter, assets)
 				if filtered {
 					logger.WithFields(fields).Debug("denying event with custom filter")
 					return true
@@ -179,4 +184,28 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 
 	logger.WithFields(fields).Debug("allowing event")
 	return false
+}
+
+// Silences returns a slice of Silenced entries by looking up the names in event.Check.Silenced
+// in the store.
+func getSilencedForEvent(store store.Store, event *types.Event) []*types.Silenced {
+	// Retrieve all silences from the store by name.
+	// This lookup is duplicated (as silence lookups are already done by eventd on
+	// initial processing of an event before storing it), but since the event being
+	// processed at this step is received via the message bus (and hence has gone
+	// through a round of marshalling/unmarshalling) and we don't want to add these full
+	// details as a new property in the proto definition, we are forced to perform the
+	// lookup again.
+	ctx := types.SetContextFromResource(context.Background(), event.Entity)
+	silences := make([]*types.Silenced, 0, len(event.Check.Silenced))
+	for _, name := range event.Check.Silenced {
+		silence, err := store.GetSilencedEntryByName(ctx, name)
+		if err != nil {
+			logger.WithField("silence_name", name).WithError(err).
+				Warning("could not retrieve silence, skipping")
+			continue
+		}
+		silences = append(silences, silence)
+	}
+	return silences
 }
