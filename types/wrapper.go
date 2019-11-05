@@ -120,7 +120,7 @@ func WrapResource(r Resource) Wrapper {
 		typ := reflect.Indirect(reflect.ValueOf(r)).Type()
 		tm = TypeMeta{
 			Type:       typ.Name(),
-			APIVersion: apiVersion(typ.PkgPath()),
+			APIVersion: ApiVersion(typ.PkgPath()),
 		}
 	}
 	return Wrapper{
@@ -149,7 +149,7 @@ func ResolveType(apiVersion string, typename string) (Resource, error) {
 	return resolver(typename)
 }
 
-func apiVersion(version string) string {
+func ApiVersion(version string) string {
 	parts := strings.Split(version, "/")
 	if len(parts) == 0 {
 		return ""
