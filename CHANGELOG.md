@@ -16,6 +16,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added sensuctl commands to manage the `APIKey` resource.
 - Added support for api keys to be used in api authentication.
 - Added support for sensu-backend service environment variables.
+- Added `event.silences` synthesized field in filter context, containing the details
+  of all silences applied to the event.
 
 ## [5.14.2] - 2019-11-04
 
