@@ -3,7 +3,6 @@ package edit
 import (
 	"bufio"
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
@@ -105,7 +104,7 @@ func dumpResource(client client, cfg namespaceFormat, typeName string, key []str
 	if types.ApiVersion(reflect.Indirect(reflect.ValueOf(requested)).Type().PkgPath()) == path.Join(corev2.APIGroupName, corev2.APIVersion) {
 		response, _ = dump.ResolveResource(typeName)
 	} else {
-		response = types.Wrapper{}
+		response = &types.Wrapper{}
 	}
 
 	if err := client.Get(requested.URIPath(), &response); err != nil {
@@ -117,17 +116,8 @@ func dumpResource(client client, cfg namespaceFormat, typeName string, key []str
 	switch r := response.(type) {
 	case corev2.Resource:
 		resource = r
-	case map[string]interface{}:
-		w := types.Wrapper{}
-		bytes, err := json.Marshal(response)
-		if err != nil {
-			return fmt.Errorf("could not encode the response: %s", err)
-		}
-
-		if err := json.Unmarshal(bytes, &w); err != nil {
-			return fmt.Errorf("could not decode the response: %s", err)
-		}
-		resource = w.Value
+	case *types.Wrapper:
+		resource = r.Value
 	default:
 		return fmt.Errorf("unexpected response type %T. Make sure the resource type is valid", response)
 	}
