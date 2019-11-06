@@ -17,6 +17,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added support for api keys to be used in api authentication.
 - Added support for sensu-backend service environment variables.
 
+### Changed
+- Moved `corev2.BonsaiAsset` to `bonsai.Asset` and moved
+`corev2.OutdatedBonsaiAsset` to `bonsai.OutdatedAsset` along with subsequent
+bonsai package refactors.
+
 ## [5.14.2] - 2019-11-04
 
 ### Changed

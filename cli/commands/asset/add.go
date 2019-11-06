@@ -12,7 +12,6 @@ import (
 	"github.com/spf13/cobra"
 
 	goversion "github.com/hashicorp/go-version"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli/commands/create"
 )
 
@@ -41,7 +40,7 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 
 		name := args[0]
 
-		bAsset, err := corev2.NewBonsaiBaseAsset(name)
+		bAsset, err := bonsai.NewBaseAsset(name)
 		if err != nil {
 			return err
 		}
@@ -54,7 +53,7 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 			}
 		}
 
-		bonsaiClient := bonsai.New(bonsai.BonsaiConfig{})
+		bonsaiClient := bonsai.New(bonsai.Config{})
 		bonsaiAsset, err := bonsaiClient.FetchAsset(bAsset.Namespace, bAsset.Name)
 		if err != nil {
 			return err

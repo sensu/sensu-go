@@ -61,9 +61,9 @@ func outdatedCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []s
 			return err
 		}
 
-		bonsaiClient := bonsai.New(bonsai.BonsaiConfig{})
+		bonsaiClient := bonsai.New(bonsai.Config{})
 
-		outdatedAssets := []corev2.OutdatedBonsaiAsset{}
+		outdatedAssets := []bonsai.OutdatedAsset{}
 
 		for _, asset := range results {
 			annotations := asset.GetObjectMeta().Annotations
@@ -95,12 +95,12 @@ func outdatedCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []s
 				latestVersion := bonsaiAsset.LatestVersion()
 
 				if installedVersion.LessThan(latestVersion) {
-					outdatedAssets = append(outdatedAssets, corev2.OutdatedBonsaiAsset{
-						BonsaiName:      bonsaiName,
-						BonsaiNamespace: bonsaiNamespace,
-						AssetName:       asset.Name,
-						CurrentVersion:  installedVersion.String(),
-						LatestVersion:   latestVersion.String(),
+					outdatedAssets = append(outdatedAssets, bonsai.OutdatedAsset{
+						Name:           bonsaiName,
+						Namespace:      bonsaiNamespace,
+						AssetName:      asset.Name,
+						CurrentVersion: installedVersion.String(),
+						LatestVersion:  latestVersion.String(),
 					})
 				}
 			}
@@ -122,7 +122,7 @@ func printOutdatedToTable(results interface{}, writer io.Writer) {
 			Title:       "Asset Name",
 			ColumnStyle: table.PrimaryTextStyle,
 			CellTransformer: func(data interface{}) string {
-				outdatedAsset, ok := data.(corev2.OutdatedBonsaiAsset)
+				outdatedAsset, ok := data.(bonsai.OutdatedAsset)
 				if !ok {
 					return cli.TypeError
 				}
@@ -132,17 +132,17 @@ func printOutdatedToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Bonsai Asset",
 			CellTransformer: func(data interface{}) string {
-				outdatedAsset, ok := data.(corev2.OutdatedBonsaiAsset)
+				outdatedAsset, ok := data.(bonsai.OutdatedAsset)
 				if !ok {
 					return cli.TypeError
 				}
-				return fmt.Sprintf("%s/%s", outdatedAsset.BonsaiNamespace, outdatedAsset.BonsaiName)
+				return fmt.Sprintf("%s/%s", outdatedAsset.Namespace, outdatedAsset.Name)
 			},
 		},
 		{
 			Title: "Current Version",
 			CellTransformer: func(data interface{}) string {
-				outdatedAsset, ok := data.(corev2.OutdatedBonsaiAsset)
+				outdatedAsset, ok := data.(bonsai.OutdatedAsset)
 				if !ok {
 					return cli.TypeError
 				}
@@ -152,7 +152,7 @@ func printOutdatedToTable(results interface{}, writer io.Writer) {
 		{
 			Title: "Latest Version",
 			CellTransformer: func(data interface{}) string {
-				outdatedAsset, ok := data.(corev2.OutdatedBonsaiAsset)
+				outdatedAsset, ok := data.(bonsai.OutdatedAsset)
 				if !ok {
 					return cli.TypeError
 				}
