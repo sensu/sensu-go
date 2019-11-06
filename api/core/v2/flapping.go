@@ -46,9 +46,9 @@ func totalStateChange(check *Check) uint32 {
 
 	stateChanges := 0.00
 	changeWeight := 0.80
-	previousStatus := check.History[len(check.History)-1].Status
+	previousStatus := check.History[0].Status
 
-	for i := len(check.History) - 2; i >= 0; i-- {
+	for i := 1; i <= len(check.History)-1; i++ {
 		if check.History[i].Status != previousStatus {
 			stateChanges += changeWeight
 		}
