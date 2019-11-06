@@ -66,10 +66,13 @@ func (s *Silenced) StartSilence(currentTime int64) bool {
 
 // Prepare prepares a silenced entry for storage
 func (s *Silenced) Prepare(ctx context.Context) {
-	// Populate newSilence.Name with the subscription and checkName. Substitute a
-	// splat if one of the values does not exist. If both values are empty, the
-	// validator will return an error when attempting to update it in the store.
-	s.Name, _ = SilencedName(s.Subscription, s.Check)
+	// If a name wasn't explicitly provided, construct one from the subscription
+	// and check name substituting a splat if one of the values doesn't exist.
+	// If both values are empty, the validator will return an error when attempting
+	// to update it in the store.
+	if s.Name == "" {
+		s.Name, _ = SilencedName(s.Subscription, s.Check)
+	}
 
 	// If begin timestamp was not already provided set it to the current time.
 	if s.Begin == 0 {

@@ -2,6 +2,7 @@ package actions
 
 import (
 	"context"
+	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
@@ -49,6 +50,7 @@ func (c SilencedController) List(ctx context.Context, sub, check string) ([]*cor
 // Create creates a new silenced entry. It returns an error if the entry already exists.
 func (c SilencedController) Create(ctx context.Context, entry *corev2.Silenced) error {
 	// Prepare the silenced entry for storage
+	customName := entry.Name != ""
 	entry.Prepare(ctx)
 
 	// Validate the silenced entry
@@ -56,11 +58,29 @@ func (c SilencedController) Create(ctx context.Context, entry *corev2.Silenced) 
 		return NewError(InvalidArgument, err)
 	}
 
-	// Check for existing
-	if e, serr := c.Store.GetSilencedEntryByName(ctx, entry.Name); serr != nil {
-		return NewError(InternalErr, serr)
-	} else if e != nil {
-		return NewErrorf(AlreadyExistsErr)
+	// Check for existing, and if found try to create a new silence by incrementing
+	// a suffix on the name by 1.
+	// A limit of 20 was chosen arbitrarily to limit the runaway worst-case, while still
+	// supporting what seems like a sane number of silenced entries. This may need to be
+	// revisited later.
+	originalName := entry.Name
+	for i := 0; ; i++ {
+		if i > 0 {
+			if customName {
+				return NewErrorf(AlreadyExistsErr)
+			}
+			// There was a conflict with an existing silence, try with a higher number.
+			entry.Name = fmt.Sprintf("%s_%d", originalName, i)
+		}
+		if e, serr := c.Store.GetSilencedEntryByName(ctx, entry.Name); serr != nil {
+			return NewError(InternalErr, serr)
+		} else if e != nil {
+			if i >= 20 {
+				return NewErrorf(AlreadyExistsErr, "too many silences with this name already exist")
+			}
+			continue
+		}
+		break
 	}
 
 	// Persist
