@@ -35,6 +35,7 @@ import (
 	"github.com/sensu/sensu-go/backend/schedulerd"
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/backend/tessend"
 	"github.com/sensu/sensu-go/rpc"
@@ -191,6 +192,21 @@ func Initialize(config *Config) (*Backend, error) {
 		return nil, fmt.Errorf("error initializing asset manager: %s", err)
 	}
 
+	// Create any common caches
+	logger.Debug("Initializing common caches...")
+	commonCache := map[string]*cache.Resource{}
+	toCreate := map[string]corev2.Resource{
+		"silenced": &corev2.Silenced{},
+	}
+	for k, v := range toCreate {
+		if c, err := cache.New(b.ctx, b.Client, v, false); err != nil {
+			return nil, fmt.Errorf("error initializing common cache for %s: %s", k, err)
+		} else {
+			commonCache[k] = c
+		}
+	}
+	logger.Debug("Done initializing common caches.")
+
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
 		Store:                   stor,
@@ -199,6 +215,7 @@ func Initialize(config *Config) (*Backend, error) {
 		AssetGetter:             assetGetter,
 		BufferSize:              viper.GetInt(FlagPipelinedBufferSize),
 		WorkerCount:             viper.GetInt(FlagPipelinedWorkers),
+		Cache:                   commonCache,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", pipeline.Name(), err)
@@ -216,6 +233,7 @@ func Initialize(config *Config) (*Backend, error) {
 			Client:          b.Client,
 			BufferSize:      viper.GetInt(FlagEventdBufferSize),
 			WorkerCount:     viper.GetInt(FlagEventdWorkers),
+			Cache:           commonCache,
 		},
 	)
 	if err != nil {

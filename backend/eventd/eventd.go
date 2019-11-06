@@ -67,7 +67,7 @@ type Eventd struct {
 	shutdownChan    chan struct{}
 	wg              *sync.WaitGroup
 	Logger          Logger
-	silencedCache   *cache.Resource
+	cache           map[string]*cache.Resource
 }
 
 // Option is a functional option.
@@ -82,6 +82,7 @@ type Config struct {
 	Client          *clientv3.Client
 	BufferSize      int
 	WorkerCount     int
+	Cache           map[string]*cache.Resource
 }
 
 // New creates a new Eventd.
@@ -105,14 +106,10 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 		wg:              &sync.WaitGroup{},
 		mu:              &sync.Mutex{},
 		Logger:          &RawLogger{},
+		cache:           c.Cache,
 	}
 
 	e.ctx, e.cancel = context.WithCancel(ctx)
-	cache, err := cache.New(e.ctx, c.Client, &corev2.Silenced{}, false)
-	if err != nil {
-		return nil, err
-	}
-	e.silencedCache = cache
 
 	for _, o := range opts {
 		if err := o(e); err != nil {
@@ -219,7 +216,11 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 
 	// Add any silenced subscriptions to the event
-	getSilenced(ctx, event, e.silencedCache)
+	silencedIDs := []string{}
+	for _, s := range event.SilencedBy(cache.GetSilencedByEvent(event, e.cache["silenced"])) {
+		silencedIDs = append(silencedIDs, s.ObjectMeta.Name)
+	}
+	event.Check.Silenced = silencedIDs
 
 	// Merge the new event with the stored event if a match is found
 	event, prevEvent, err := e.eventStore.UpdateEvent(ctx, event)

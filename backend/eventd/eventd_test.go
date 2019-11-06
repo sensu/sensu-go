@@ -55,7 +55,9 @@ func newEventd(store store.Store, bus messaging.MessageBus, livenessFactory live
 		mu:              &sync.Mutex{},
 		Logger:          &RawLogger{},
 		workerCount:     5,
-		silencedCache:   &cache.Resource{},
+		cache: map[string]*cache.Resource{
+			"silenced": &cache.Resource{},
+		},
 	}
 }
 
@@ -255,7 +257,9 @@ func TestCheckTTL(t *testing.T) {
 				workerCount:     1,
 				wg:              &sync.WaitGroup{},
 				Logger:          &RawLogger{},
-				silencedCache:   &cache.Resource{},
+				cache: map[string]*cache.Resource{
+					"silenced": &cache.Resource{},
+				},
 			}
 			var err error
 			e.bus, err = messaging.NewWizardBus(messaging.WizardBusConfig{})

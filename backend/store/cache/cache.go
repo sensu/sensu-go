@@ -356,3 +356,17 @@ func makeNewUpdates(values []Value) []store.WatchEventResource {
 	}
 	return result
 }
+
+func MockCacheResource(namespace string, resource ...corev2.Resource) *Resource {
+	c := &Resource{
+		cache: map[string][]Value{
+			namespace: []Value{},
+		},
+	}
+	for _, r := range resource {
+		c.cache[namespace] = append(c.cache[namespace], Value{
+			Resource: r,
+		})
+	}
+	return c
+}

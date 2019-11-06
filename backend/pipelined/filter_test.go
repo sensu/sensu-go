@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
@@ -55,14 +56,20 @@ func TestPipelinedFilter(t *testing.T) {
 	}
 	silencedWithColoLabel := &types.Silenced{
 		ObjectMeta: types.ObjectMeta{
+			Name: "with_colo",
 			Labels: map[string]string{
 				"colo": "foo",
 			},
 		},
 	}
-	silencedWithoutColoLabel := &types.Silenced{}
+	silencedWithoutColoLabel := &types.Silenced{
+		ObjectMeta: types.ObjectMeta{
+			Name: "no_colo",
+		},
+	}
 	silencedWithBadColoLabel := &types.Silenced{
 		ObjectMeta: types.ObjectMeta{
+			Name: "bad_colo",
 			Labels: map[string]string{
 				"colo": "no match",
 			},
@@ -75,15 +82,16 @@ func TestPipelinedFilter(t *testing.T) {
 	store.On("GetEventFilterByName", mock.Anything, "denyFilterBySilences").Return(denyFilterBySilences, nil)
 	store.On("GetEventFilterByName", mock.Anything, "extension_filter").Return((*types.EventFilter)(nil), nil)
 	store.On("GetExtension", mock.Anything, "extension_filter").Return(&types.Extension{URL: "http://127.0.0.1"}, nil)
-	store.On("GetSilencedEntryByName", mock.Anything, "with_colo").Return(silencedWithColoLabel, nil)
-	store.On("GetSilencedEntryByName", mock.Anything, "bad_colo").Return(silencedWithBadColoLabel, nil)
-	store.On("GetSilencedEntryByName", mock.Anything, "no_colo").Return(silencedWithoutColoLabel, nil)
-	store.On("GetSilencedEntryByName", mock.Anything, mock.Anything).Return(silencedWithoutColoLabel, nil)
 
 	p.extensionExecutor = func(ext *types.Extension) (rpc.ExtensionExecutor, error) {
 		m := &mockExec{}
 		m.On("FilterEvent", mock.Anything).Return(true, nil)
 		return m, nil
+	}
+
+	p.cache = map[string]*cache.Resource{
+		"silenced": cache.MockCacheResource("default", silencedWithColoLabel,
+			silencedWithoutColoLabel, silencedWithBadColoLabel),
 	}
 
 	testCases := []struct {
@@ -271,6 +279,9 @@ func TestPipelinedWhenFilter(t *testing.T) {
 	p := &Pipelined{}
 	store := &mockstore.MockStore{}
 	p.store = store
+	p.cache = map[string]*cache.Resource{
+		"silenced": &cache.Resource{},
+	}
 
 	event := &types.Event{
 		Check: &types.Check{

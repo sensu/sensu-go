@@ -8,6 +8,7 @@ import (
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/types"
@@ -34,6 +35,7 @@ type Pipelined struct {
 	extensionExecutor ExtensionExecutorGetterFunc
 	executor          command.Executor
 	workerCount       int
+	cache             map[string]*cache.Resource
 }
 
 // Config configures a Pipelined.
@@ -44,6 +46,7 @@ type Config struct {
 	AssetGetter             asset.Getter
 	BufferSize              int
 	WorkerCount             int
+	Cache                   map[string]*cache.Resource
 }
 
 // Option is a functional option used to configure Pipelined.
@@ -70,6 +73,7 @@ func New(c Config, options ...Option) (*Pipelined, error) {
 		workerCount:       c.WorkerCount,
 		executor:          command.NewExecutor(),
 		assetGetter:       c.AssetGetter,
+		cache:             c.Cache,
 	}
 	for _, o := range options {
 		if err := o(p); err != nil {
