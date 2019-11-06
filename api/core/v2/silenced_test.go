@@ -80,3 +80,69 @@ func TestSortSilencedByBegin(t *testing.T) {
 	sort.Sort(SortSilencedByBegin(in))
 	assert.EqualValues(t, []*Silenced{a, b, c}, in)
 }
+
+func TestSilencedMatches(t *testing.T) {
+	testCases := []struct {
+		name         string
+		silenced     *Silenced
+		check        string
+		subscription string
+		expected     bool
+	}{
+		{
+			name:         "nil silence",
+			silenced:     nil,
+			check:        "",
+			subscription: "",
+			expected:     false,
+		},
+		{
+			name:         "No subscription or check",
+			silenced:     FixtureSilenced("*:*"),
+			subscription: "matches",
+			check:        "anything",
+			expected:     true,
+		},
+		{
+			name:         "Subscription matches, no check",
+			silenced:     FixtureSilenced("foo:*"),
+			subscription: "foo",
+			check:        "wildcard",
+			expected:     true,
+		},
+		{
+			name:         "Subscription matches, check doesn't",
+			silenced:     FixtureSilenced("foo:bar"),
+			subscription: "foo",
+			check:        "nomatch",
+			expected:     false,
+		},
+		{
+			name:         "Check matches, no subscription",
+			silenced:     FixtureSilenced("*:foo"),
+			subscription: "anything",
+			check:        "foo",
+			expected:     true,
+		},
+		{
+			name:         "Check matches, subscription doesn't",
+			silenced:     FixtureSilenced("foo:bar"),
+			subscription: "nomatch",
+			check:        "bar",
+			expected:     false,
+		},
+		{
+			name:         "Both check and subscription match",
+			silenced:     FixtureSilenced("foo:bar"),
+			subscription: "foo",
+			check:        "bar",
+			expected:     true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, tc.silenced.Matches(tc.check, tc.subscription))
+		})
+	}
+}

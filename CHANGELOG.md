@@ -30,6 +30,8 @@ are deleted.
 - Sensu now uses far fewer leases for keepalives and check TTLs, resulting in a
 stability improvement for most deployments.
 - Fixed a minor UX issue in interactive filter commands in sensuctl.
+- Silences now successfully apply to proxy entities where the check doesn't contain
+  the same subscriptions as the entity (#3356)
 
 ## [5.14.1] - 2019-10-16
 

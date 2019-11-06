@@ -200,6 +200,88 @@ func TestEventIsSilenced(t *testing.T) {
 	}
 }
 
+func TestEventIsSilencedBy(t *testing.T) {
+	testCases := []struct {
+		name     string
+		event    *Event
+		silenced *Silenced
+		expected bool
+	}{
+		{
+			name:     "nil silenced",
+			event:    FixtureEvent("entity1", "check1"),
+			silenced: nil,
+			expected: false,
+		},
+		{
+			name:     "Metric without a check",
+			event:    &Event{},
+			silenced: nil,
+			expected: false,
+		},
+		{
+			name:     "Check provided and doesn't match, no subscription",
+			event:    FixtureEvent("entity1", "check1"),
+			silenced: FixtureSilenced("*:check2"),
+			expected: false,
+		},
+		{
+			name:     "Check provided and matches, no subscription",
+			event:    FixtureEvent("entity1", "check1"),
+			silenced: FixtureSilenced("*:check1"),
+			expected: true,
+		},
+		{
+			name:     "Subscription provided and doesn't match, no check",
+			event:    FixtureEvent("entity1", "check1"),
+			silenced: FixtureSilenced("entity:entity2:*"),
+			expected: false,
+		},
+		{
+			name:     "Subscription provided and matches, no check",
+			event:    FixtureEvent("entity1", "check1"),
+			silenced: FixtureSilenced("entity:entity1:*"),
+			expected: true,
+		},
+		{
+			name:     "Check provided and doesn't match, subscription matches",
+			event:    FixtureEvent("entity1", "check1"),
+			silenced: FixtureSilenced("entity:entity1:check2"),
+			expected: false,
+		},
+		{
+			name:     "Check provided and matches, subscription doesn't match",
+			event:    FixtureEvent("entity1", "check1"),
+			silenced: FixtureSilenced("entity:entity2:check1"),
+			expected: false,
+		},
+		{
+			name:     "Check and subscription both provided and match",
+			event:    FixtureEvent("entity1", "check1"),
+			silenced: FixtureSilenced("entity:entity1:check1"),
+			expected: true,
+		},
+		{
+			name:     "Subscription provided and doesn't match, check matches",
+			event:    FixtureEvent("entity1", "check1"),
+			silenced: FixtureSilenced("entity:entity2:check1"),
+			expected: false,
+		},
+		{
+			name:     "Subscription provided and matches, check doesn't match",
+			event:    FixtureEvent("entity1", "check1"),
+			silenced: FixtureSilenced("entity:entity1:check2"),
+			expected: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, tc.event.IsSilencedBy(tc.silenced))
+		})
+	}
+}
+
 func TestEventsBySeverity(t *testing.T) {
 	critical := FixtureEvent("entity", "check")
 	critical.Check.Status = 2 // crit
@@ -566,7 +648,10 @@ func TestIsSilencedBy(t *testing.T) {
 					Subscriptions: []string{"windows"},
 				},
 			},
-			silence:        FixtureSilenced("check:check_cpu"),
+			silence: &Silenced{
+				Subscription: "check",
+				Check:        "check_cpu",
+			},
 			expectedResult: false,
 		},
 		{

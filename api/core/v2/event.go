@@ -2,7 +2,6 @@ package v2
 
 import (
 	"errors"
-	fmt "fmt"
 	"net/url"
 	"path"
 	"sort"
@@ -318,7 +317,7 @@ func (e *Event) SilencedBy(entries []*Silenced) []*Silenced {
 
 // IsSilencedBy returns true if given silence will silence the event.
 func (e *Event) IsSilencedBy(entry *Silenced) bool {
-	if !e.HasCheck() {
+	if !e.HasCheck() || entry == nil {
 		return false
 	}
 
@@ -329,37 +328,52 @@ func (e *Event) IsSilencedBy(entry *Silenced) bool {
 	}
 
 	// Is this event silenced for all subscriptions? (e.g. *:check_cpu)
-	if entry.Name == fmt.Sprintf("*:%s", e.Check.Name) {
+	// Is this event silenced by the entity subscription? (e.g. entity:id:* or entity:id:check_cpu)
+	// This check being explicit here is probably not strictly necessary, as the presence
+	// of the `entity:name` subscription seems to be enforced on entity creation, and
+	// would be handled correctly the the subscription iteration logic below.
+	if entry.Matches(e.Check.Name, GetEntitySubscription(e.Entity.Name)) {
 		return true
 	}
 
-	// Is this event silenced by the entity subscription? (e.g. entity:id:*)
-	if entry.Name == fmt.Sprintf("%s:*", GetEntitySubscription(e.Entity.Name)) {
-		return true
-	}
-
-	// Is this event silenced for this particular entity? (e.g.
-	// entity:id:check_cpu)
-	if entry.Name == fmt.Sprintf("%s:%s", GetEntitySubscription(e.Entity.Name), e.Check.Name) {
-		return true
-	}
-
-	for _, subscription := range e.Check.Subscriptions {
-		// Make sure the entity is subscribed to this specific subscription
-		if !stringsutil.InArray(subscription, e.Entity.Subscriptions) {
-			continue
+	// Alternatively, check whether any of the subscriptions of the entity match the silence.
+	// It is not necessary to check the check subscriptions, because they are expected to
+	// be a subset of the entity subscriptions for proxy entities, and an intersection
+	// of entity and check subscriptions for non-proxy entities.
+	//
+	// Eg a proxy entity may have many subscriptions, but the check config that targets
+	// that entity is likely to only use one of them in order to target the check at
+	// a specific agent.
+	//
+	// Check configs for non-proxy entities on the other hand use their subscriptions to
+	// both target entities and agents (as they are the same thing), and as a result
+	// may have subscriptions present in the check config that are not present in the
+	// entity.
+	// Consider the following example:
+	//    - check has subscriptions `linux` and `windows`
+	//    - silence is for `windows` subscription
+	//    - event is for an entity with the `linux` subscription
+	// In this case, we don't want to match `linux` from the check, because the silence
+	// is targeted at windows machines and the event is for a linux machine.
+	//
+	// To handle both of these cases correctly, we need to rely on the presence of the
+	// event.check.proxy_entity_name field.
+	if e.Check.ProxyEntityName != "" {
+		// Proxy entity
+		for _, subscription := range e.Entity.Subscriptions {
+			if entry.Matches(e.Check.Name, subscription) {
+				return true
+			}
 		}
-
-		// Is this event silenced by one of the check subscription? (e.g.
-		// load-balancer:*)
-		if entry.Name == fmt.Sprintf("%s:*", subscription) {
-			return true
-		}
-
-		// Is this event silenced by one of the check subscription for this
-		// particular check? (e.g. load-balancer:check_cpu)
-		if entry.Name == fmt.Sprintf("%s:%s", subscription, e.Check.Name) {
-			return true
+	} else {
+		// Non-proxy entity
+		for _, subscription := range e.Check.Subscriptions {
+			if !stringsutil.InArray(subscription, e.Entity.Subscriptions) {
+				continue
+			}
+			if entry.Matches(e.Check.Name, subscription) {
+				return true
+			}
 		}
 	}
 
