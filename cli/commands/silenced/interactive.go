@@ -148,33 +148,6 @@ func (o *silencedOpts) administerQuestionnaire(editing bool) error {
 	return nil
 }
 
-type silencedTarget struct {
-	Subscription string
-	Check        string
-}
-
-func getTarget(help string) (*silencedTarget, error) {
-	questions := []*survey.Question{
-		{
-			Name: "Subscription",
-			Prompt: &survey.Input{
-				Message: "Subscription:",
-				Help:    help,
-			},
-		},
-		{
-			Name: "Check",
-			Prompt: &survey.Input{
-				Message: "Check:",
-				Help:    help,
-			},
-		},
-	}
-
-	var target silencedTarget
-	return &target, survey.Ask(questions, &target)
-}
-
 func toOpts(s *types.Silenced) *silencedOpts {
 	var o silencedOpts
 	o.Name = s.ObjectMeta.Name
