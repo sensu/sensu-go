@@ -19,12 +19,13 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 				_ = cmd.Help()
 				return errors.New("invalid argument(s) received")
 			}
-			name, err := getName(cmd, args)
-			if err != nil {
-				return err
+
+			if len(args) == 0 {
+				_ = cmd.Help()
+				return errors.New("must provide silence name")
 			}
 
-			silenced, err := cli.Client.FetchSilenced(name)
+			silenced, err := cli.Client.FetchSilenced(args[0])
 			if err != nil {
 				return err
 			}

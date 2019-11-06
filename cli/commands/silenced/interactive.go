@@ -18,6 +18,7 @@ const (
 )
 
 type silencedOpts struct {
+	Name            string `survey:"name"`
 	Check           string `survey:"check"`
 	Subscription    string `survey:"subscription"`
 	Expire          string `survey:"expire"`
@@ -38,6 +39,7 @@ func newSilencedOpts() *silencedOpts {
 
 func (o *silencedOpts) Apply(s *types.Silenced) (err error) {
 	s.Subscription = o.Subscription
+	s.ObjectMeta.Name = o.Name
 	s.Check = o.Check
 	s.Creator = o.Creator
 	s.Reason = o.Reason
@@ -56,6 +58,7 @@ func (o *silencedOpts) withFlags(flags *pflag.FlagSet) {
 	o.ExpireOnResolve, _ = flags.GetBool("expire-on-resolve")
 	o.Reason, _ = flags.GetString("reason")
 	o.Subscription, _ = flags.GetString("subscription")
+	o.Name, _ = flags.GetString("name")
 	o.Check, _ = flags.GetString("check")
 	o.Begin, _ = flags.GetString("begin")
 
@@ -76,6 +79,14 @@ func (o *silencedOpts) administerQuestionnaire(editing bool) error {
 					Default: o.Namespace,
 				},
 				Validate: survey.Required,
+			},
+			{
+				Name: "name",
+				Prompt: &survey.Input{
+					Message: "Name:",
+					Default: o.Name,
+					Help:    "Name to give the silence, must be unique. Backend will generate a unique name if omitted.",
+				},
 			},
 			{
 				Name: "subscription",
@@ -137,12 +148,12 @@ func (o *silencedOpts) administerQuestionnaire(editing bool) error {
 	return nil
 }
 
-type silencedName struct {
+type silencedTarget struct {
 	Subscription string
 	Check        string
 }
 
-func askName(help string) (string, error) {
+func getTarget(help string) (*silencedTarget, error) {
 	questions := []*survey.Question{
 		{
 			Name: "Subscription",
@@ -160,15 +171,13 @@ func askName(help string) (string, error) {
 		},
 	}
 
-	var name silencedName
-	if err := survey.Ask(questions, &name); err != nil {
-		return "", err
-	}
-	return types.SilencedName(name.Subscription, name.Check)
+	var target silencedTarget
+	return &target, survey.Ask(questions, &target)
 }
 
 func toOpts(s *types.Silenced) *silencedOpts {
 	var o silencedOpts
+	o.Name = s.ObjectMeta.Name
 	o.Subscription = s.Subscription
 	o.Check = s.Check
 	o.Creator = s.Creator

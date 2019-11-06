@@ -21,10 +21,13 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				_ = cmd.Help()
 				return errors.New("invalid argument(s) received")
 			}
-			name, err := getName(cmd, args)
-			if err != nil {
-				return err
+
+			if len(args) == 0 {
+				_ = cmd.Help()
+				return errors.New("must provide silence name")
 			}
+			name := args[0]
+
 			namespace := cli.Config.Namespace()
 
 			if skipConfirm, _ := cmd.Flags().GetBool("skip-confirm"); !skipConfirm {
@@ -34,7 +37,7 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
-			err = cli.Client.DeleteSilenced(namespace, name)
+			err := cli.Client.DeleteSilenced(namespace, name)
 			if err != nil {
 				return err
 			}
@@ -45,8 +48,6 @@ func DeleteCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	cmd.Flags().Bool("skip-confirm", false, "skip interactive confirmation prompt")
-	cmd.Flags().StringP("subscription", "s", "", "silenced subscription")
-	cmd.Flags().StringP("check", "c", "", "silenced check")
 
 	return cmd
 }

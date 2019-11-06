@@ -34,7 +34,6 @@ func TestDeleteCommandRunEClosureWithoutName(t *testing.T) {
 	client.On("DeleteSilenced", mock.Anything, mock.Anything).Return(nil)
 	cmd := DeleteCommand(cli)
 	require.NoError(t, cmd.Flags().Set("skip-confirm", "t"))
-	require.NoError(t, cmd.Flags().Set("subscription", "nytimes"))
 	out, err := test.RunCmd(cmd, []string{"a", "b"})
 
 	require.Error(t, err)

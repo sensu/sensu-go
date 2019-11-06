@@ -35,17 +35,22 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 			opts := newSilencedOpts()
 
 			opts.Namespace = cli.Config.Namespace()
+			opts.withFlags(cmd.Flags())
 
 			if isInteractive {
 				if err := opts.administerQuestionnaire(false); err != nil {
 					return err
 				}
 			} else {
-				opts.withFlags(cmd.Flags())
 				if opts.Check == "" && opts.Subscription == "" {
 					return fmt.Errorf("must specify --check or --subscription")
 				}
 			}
+			// Let the backend automatically generate a name if one wasn't provided
+			if opts.Name == "auto" {
+				opts.Name = ""
+			}
+
 			var silenced types.Silenced
 			if err := opts.Apply(&silenced); err != nil {
 				return err
@@ -65,6 +70,7 @@ func CreateCommand(cli *cli.SensuCli) *cobra.Command {
 	_ = cmd.Flags().StringP("reason", "r", "", "reason for the silenced entry")
 	_ = cmd.Flags().BoolP("expire-on-resolve", "x", false, "clear silenced entry on resolution")
 	_ = cmd.Flags().StringP("expire", "e", expireDefault, "expiry in seconds")
+	_ = cmd.Flags().StringP("name", "n", "auto", "name for the silence")
 	_ = cmd.Flags().StringP("subscription", "s", "", "silence subscription")
 	_ = cmd.Flags().StringP("check", "c", "", "silence check")
 	_ = cmd.Flags().StringP("begin", "b", beginDefault, "silence begin in human readable time (Format: Jan 02 2006 3:04PM MST)")

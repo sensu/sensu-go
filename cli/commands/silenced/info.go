@@ -25,11 +25,12 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 				return errors.New("invalid argument(s) received")
 			}
 
-			name, err := getName(cmd, args)
-			if err != nil {
-				return err
+			if len(args) == 0 {
+				_ = cmd.Help()
+				return errors.New("must provide silence name")
 			}
-			r, err := cli.Client.FetchSilenced(name)
+
+			r, err := cli.Client.FetchSilenced(args[0])
 			if err != nil {
 				return err
 			}
@@ -42,8 +43,6 @@ func InfoCommand(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	helpers.AddFormatFlag(cmd.Flags())
-	cmd.Flags().StringP("subscription", "s", "*", "name of the silenced subscription")
-	cmd.Flags().StringP("check", "c", "*", "name of the silenced check")
 
 	return cmd
 
