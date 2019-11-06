@@ -96,11 +96,11 @@ func outdatedCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []s
 
 				if installedVersion.LessThan(latestVersion) {
 					outdatedAssets = append(outdatedAssets, bonsai.OutdatedAsset{
-						Name:           bonsaiName,
-						Namespace:      bonsaiNamespace,
-						AssetName:      asset.Name,
-						CurrentVersion: installedVersion.String(),
-						LatestVersion:  latestVersion.String(),
+						BonsaiName:      bonsaiName,
+						BonsaiNamespace: bonsaiNamespace,
+						AssetName:       asset.Name,
+						CurrentVersion:  installedVersion.String(),
+						LatestVersion:   latestVersion.String(),
 					})
 				}
 			}
@@ -136,7 +136,7 @@ func printOutdatedToTable(results interface{}, writer io.Writer) {
 				if !ok {
 					return cli.TypeError
 				}
-				return fmt.Sprintf("%s/%s", outdatedAsset.Namespace, outdatedAsset.Name)
+				return fmt.Sprintf("%s/%s", outdatedAsset.BonsaiNamespace, outdatedAsset.BonsaiName)
 			},
 		},
 		{

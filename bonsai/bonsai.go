@@ -43,10 +43,10 @@ type BaseAsset struct {
 
 // OutdatedAsset has information about new assets in bonsai
 type OutdatedAsset struct {
-	// Name is the name of the Bonsai asset
-	Name string `json:"bonsai_name,omitempty"`
-	// Namespace is the Bonsai namespace (aka username)
-	Namespace string `json:"bonsai_namespace,omitempty"`
+	// BonsaiName is the name of the Bonsai asset
+	BonsaiName string `json:"bonsai_name,omitempty"`
+	// BonsaiNamespace is the Bonsai namespace (aka username)
+	BonsaiNamespace string `json:"bonsai_namespace,omitempty"`
 	// AssetName is the name of the Sensu asset
 	AssetName string `json:"asset_name,omitempty"`
 	// CurrentVersion is the version of the Sensu asset currently installed
