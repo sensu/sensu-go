@@ -15,6 +15,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added sensuctl commands to manage the `APIKey` resource.
 - Added support for api keys to be used in api authentication.
 - Added support for sensu-backend service environment variables.
+- Added support for multiple overlapping silences sharing a common subscription
+  and/or check.
 
 ## [5.14.2] - 2019-11-04
 
