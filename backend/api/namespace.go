@@ -71,16 +71,16 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespa
 
 	var funcErr error
 
-	visitor.VisitRulesFor(ctx, attrs, func(binding rbac.RoleBinding, rule corev2.Rule, err error) (terminate bool) {
+	visitor.VisitRulesFor(ctx, attrs, func(binding rbac.RoleBinding, rule corev2.Rule, err error) (cont bool) {
 		if err != nil {
 			funcErr = err
-			return true
+			return false
 		}
 		if len(namespaceMap) == 0 {
-			return true
+			return false
 		}
 		if !rule.VerbMatches("get") {
-			return false
+			return true
 		}
 		if !rule.ResourceMatches(corev2.NamespacesResource) {
 			// Find namespaces with implicit access
@@ -89,12 +89,12 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespa
 				namespaces = append(namespaces, namespace)
 				delete(namespaceMap, ns)
 			}
-			return false
+			return true
 		}
 		if len(rule.ResourceNames) == 0 {
 			// All resources of type "namespace" are allowed
 			namespaces = resources
-			return true
+			return false
 		}
 		for name, namespace := range namespaceMap {
 			if rule.ResourceNameMatches(name) {
@@ -102,7 +102,7 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespa
 				delete(namespaceMap, name)
 			}
 		}
-		return false
+		return true
 	})
 
 	if funcErr != nil {
