@@ -138,6 +138,20 @@ func TestSilencedMatches(t *testing.T) {
 			check:        "bar",
 			expected:     true,
 		},
+		{
+			name:         "empty subscription is the same as wildcard",
+			silenced:     &Silenced{Subscription: "", Check: "foo"},
+			subscription: "",
+			check:        "foo",
+			expected:     true,
+		},
+		{
+			name:         "empty check is the same as wildcard",
+			silenced:     &Silenced{Subscription: "foo", Check: ""},
+			subscription: "foo",
+			check:        "",
+			expected:     true,
+		},
 	}
 
 	for _, tc := range testCases {
