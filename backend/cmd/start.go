@@ -237,7 +237,7 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 
 			if viper.GetBool(flagDebug) {
 				go func() {
-					log.Println(http.ListenAndServe(":6060", nil))
+					log.Println(http.ListenAndServe("127.0.0.1:6060", nil))
 				}()
 			}
 
