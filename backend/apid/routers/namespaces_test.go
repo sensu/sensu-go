@@ -139,7 +139,7 @@ func TestNamespaceRouterGet(t *testing.T) {
 			},
 			RoleBindings:  []*corev2.RoleBinding{},
 			AllNamespaces: namespaces,
-			ExpNamespaces: []*corev2.Namespace{},
+			ExpNamespaces: nil,
 		},
 		{
 			Name: "partial access",
@@ -287,40 +287,43 @@ func TestNamespaceRouterGet(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		store := new(mockstore.MockStore)
-		store.On("ListClusterRoles", mock.Anything, mock.Anything).Return(test.ClusterRoles, nil)
-		store.On("ListClusterRoleBindings", mock.Anything, mock.Anything).Return(test.ClusterRoleBindings, nil)
-		store.On("ListRoles", mock.Anything, mock.Anything).Return(test.Roles, nil)
-		store.On("ListRoleBindings", mock.Anything, mock.Anything).Return(test.RoleBindings, nil)
-		store.On("ListResources", mock.Anything, corev2.NamespacesResource, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
-			resources := args[2].(*[]*corev2.Namespace)
-			*resources = append(*resources, test.AllNamespaces...)
-		}).Return(nil)
-		setupGetClusterRoleAndGetRole(store, test.ClusterRoles, test.Roles)
+		t.Run(test.Name, func(t *testing.T) {
+			store := new(mockstore.MockStore)
+			store.On("ListClusterRoles", mock.Anything, mock.Anything).Return(test.ClusterRoles, nil)
+			store.On("ListClusterRoleBindings", mock.Anything, mock.Anything).Return(test.ClusterRoleBindings, nil)
+			store.On("ListRoles", mock.Anything, mock.Anything).Return(test.Roles, nil)
+			store.On("ListRoleBindings", mock.Anything, mock.Anything).Return(test.RoleBindings, nil)
+			store.On("ListResources", mock.Anything, corev2.NamespacesResource, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+				resources := args[2].(*[]*corev2.Namespace)
+				*resources = append(*resources, test.AllNamespaces...)
+			}).Return(nil)
+			setupGetClusterRoleAndGetRole(store, test.ClusterRoles, test.Roles)
 
-		ctx := authorization.SetAttributes(context.Background(), test.Attrs)
+			ctx := context.Background()
+			ctx = context.WithValue(ctx, corev2.ClaimsKey, corev2.FixtureClaims(test.Attrs.User.Username, test.Attrs.User.Groups))
 
-		// The path doesn't matter as we really only are extracting the context from
-		// the request here.
-		req, err := http.NewRequest("GET", "/asdf", nil)
-		if err != nil {
-			t.Fatal(err)
-		}
-		req = req.WithContext(ctx)
+			// The path doesn't matter as we really only are extracting the context from
+			// the request here.
+			req, err := http.NewRequest("GET", "/asdf", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			req = req.WithContext(ctx)
 
-		auth := &rbac.Authorizer{Store: store}
-		router := NewNamespacesRouter(store, auth)
+			auth := &rbac.Authorizer{Store: store}
+			router := NewNamespacesRouter(store, auth)
 
-		got, err := router.get(req)
-		if err != nil {
-			t.Fatal(err)
-		}
+			got, err := router.get(req)
+			if err != nil {
+				t.Fatal(err)
+			}
 
-		sort.Slice(got, sortFunc(got.([]*corev2.Namespace)))
+			sort.Slice(got, sortFunc(got.([]*corev2.Namespace)))
 
-		if got, want := got, test.ExpNamespaces; !reflect.DeepEqual(got, want) {
-			t.Fatalf("bad namespaces: got %+v, want %+v", got, want)
-		}
+			if got, want := got, test.ExpNamespaces; !reflect.DeepEqual(got, want) {
+				t.Fatalf("bad namespaces: got %+v, want %+v", got, want)
+			}
+		})
 	}
 }
 

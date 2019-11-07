@@ -2,11 +2,17 @@ package api
 
 import (
 	"context"
+	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization"
+	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/store"
 )
+
+type ruleVisitor interface {
+	VisitRulesFor(ctx context.Context, attrs *authorization.Attributes, fn rbac.RuleVisitFunc)
+}
 
 // NamespaceClient is an API client for namespaces.
 type NamespaceClient struct {
@@ -28,17 +34,82 @@ func NewNamespaceClient(store store.ResourceStore, auth authorization.Authorizer
 	}
 }
 
-// ListNamespaces fetches a list of namespace resources, if authorized.
+// ListNamespaces fetches a list of the namespace resources that are authorized
+// by the supplied credentials. This may include implicit access via resources
+// that are in a namespace that the credentials are authorized to get.
 func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespace, error) {
+	var resources, namespaces []*corev2.Namespace
 	pred := &store.SelectionPredicate{
 		Continue: corev2.PageContinueFromContext(ctx),
 		Limit:    int64(corev2.PageSizeFromContext(ctx)),
 	}
-	slice := []*corev2.Namespace{}
-	if err := a.client.List(ctx, &slice, pred); err != nil {
+	visitor, ok := a.auth.(ruleVisitor)
+	if !ok {
+		if err := a.client.List(ctx, &namespaces, pred); err != nil {
+			return nil, err
+		}
+		return namespaces, nil
+	}
+	if err := a.client.Store.ListResources(ctx, a.client.Kind.StorePrefix(), &resources, pred); err != nil {
 		return nil, err
 	}
-	return slice, nil
+	namespaceMap := make(map[string]*corev2.Namespace, len(resources))
+	for _, namespace := range resources {
+		namespaceMap[namespace.Name] = namespace
+	}
+	attrs := &authorization.Attributes{
+		APIGroup:   a.client.APIGroup,
+		APIVersion: a.client.APIVersion,
+		Resource:   a.client.Kind.RBACName(),
+		Namespace:  corev2.ContextNamespace(ctx),
+		Verb:       "list",
+	}
+
+	if err := addAuthUser(ctx, attrs); err != nil {
+		return nil, err
+	}
+
+	var funcErr error
+
+	visitor.VisitRulesFor(ctx, attrs, func(binding rbac.RoleBinding, rule corev2.Rule, err error) (terminate bool) {
+		if err != nil {
+			funcErr = err
+			return true
+		}
+		if len(namespaceMap) == 0 {
+			return true
+		}
+		if !rule.VerbMatches("get") {
+			return false
+		}
+		if !rule.ResourceMatches(corev2.NamespacesResource) {
+			// Find namespaces with implicit access
+			ns := binding.GetObjectMeta().Namespace
+			if namespace, ok := namespaceMap[ns]; ok {
+				namespaces = append(namespaces, namespace)
+				delete(namespaceMap, ns)
+			}
+			return false
+		}
+		if len(rule.ResourceNames) == 0 {
+			// All resources of type "namespace" are allowed
+			namespaces = resources
+			return true
+		}
+		for name, namespace := range namespaceMap {
+			if rule.ResourceNameMatches(name) {
+				namespaces = append(namespaces, namespace)
+				delete(namespaceMap, name)
+			}
+		}
+		return false
+	})
+
+	if funcErr != nil {
+		return nil, fmt.Errorf("error listing namespaces: %s", funcErr)
+	}
+
+	return namespaces, nil
 }
 
 // FetchNamespace fetches a namespace resource from the backend, if authorized.
