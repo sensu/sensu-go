@@ -11,7 +11,7 @@ type ConstrainedResource interface {
 }
 
 // NameRegex is used to validate the name of a resource
-var NameRegex = regexp.MustCompile(`\A[\w\.\-]+\z`)
+var NameRegex = regexp.MustCompile(`\A[\w\.\-\:]+\z`)
 
 // StrictNameRegex is used to validate names of resources using a strict subset
 // of charset.
