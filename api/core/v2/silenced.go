@@ -96,11 +96,11 @@ func (s *Silenced) Matches(check, subscription string) bool {
 		return false
 	}
 
-	if !stringsutil.InArray(s.Subscription, []string{"", "*", subscription}) {
+	if !stringsutil.InArray(s.Subscription, []string{"*", subscription}) && s.Subscription != "" {
 		return false
 	}
 
-	if !stringsutil.InArray(s.Check, []string{"", "*", check}) {
+	if !stringsutil.InArray(s.Check, []string{"*", check}) && s.Check != "" {
 		return false
 	}
 
