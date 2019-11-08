@@ -10,6 +10,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Added better error logging for mutator execution.
 - Fixed the order of flap detection weighting for checks.
+- The pprof server now only binds to localhost.
 
 ### Added
 - Added the `APIKey` resource and HTTP API support for POST, GET, and DELETE.
@@ -20,7 +21,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - Moved `corev2.BonsaiAsset` to `bonsai.Asset` and moved
 `corev2.OutdatedBonsaiAsset` to `bonsai.OutdatedAsset` along with subsequent
-bonsai package refactors.
+- Colons and periods are now allowed to be used in all resource names, with
+the exception of users.
 
 ## [5.14.2] - 2019-11-04
 

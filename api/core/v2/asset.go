@@ -19,7 +19,7 @@ const (
 
 var (
 	// AssetNameRegexStr used to validate name of asset
-	AssetNameRegexStr = `[a-z0-9\/\_\.\-]+`
+	AssetNameRegexStr = `[a-z0-9\/\_\.\-\:]+`
 
 	// AssetNameRegex used to validate name of asset
 	AssetNameRegex = regexp.MustCompile("^" + AssetNameRegexStr + "$")
