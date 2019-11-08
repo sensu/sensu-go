@@ -3,6 +3,7 @@ package middlewares
 import (
 	"net/http"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/authorization"
 )
@@ -24,6 +25,12 @@ func (a Authorization) Then(next http.Handler) http.Handler {
 				actions.InternalErr,
 				"could not retrieve the request info",
 			))
+			return
+		}
+
+		if attrs.APIGroup == "core" && attrs.APIVersion == "v2" && attrs.Resource == (&corev2.Namespace{}).RBACName() && attrs.Verb == "get" {
+			// Special case for getting namespaces - it is up to the router to handle authz
+			next.ServeHTTP(w, r.WithContext(ctx))
 			return
 		}
 
