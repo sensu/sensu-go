@@ -13,6 +13,14 @@ type Authorization struct {
 	Authorizer authorization.Authorizer
 }
 
+func namespaceGetAttrs(attrs *authorization.Attributes) bool {
+	return (attrs.APIGroup == "core" &&
+		attrs.APIVersion == "v2" &&
+		attrs.Resource == (&corev2.Namespace{}).RBACName() &&
+		(attrs.Verb == "get" || attrs.Verb == "list"))
+
+}
+
 // Then middleware
 func (a Authorization) Then(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -28,7 +36,7 @@ func (a Authorization) Then(next http.Handler) http.Handler {
 			return
 		}
 
-		if attrs.APIGroup == "core" && attrs.APIVersion == "v2" && attrs.Resource == (&corev2.Namespace{}).RBACName() && attrs.Verb == "get" {
+		if namespaceGetAttrs(attrs) {
 			// Special case for getting namespaces - it is up to the router to handle authz
 			next.ServeHTTP(w, r.WithContext(ctx))
 			return
