@@ -1,7 +1,7 @@
 package routers
 
 import (
-	"net/http"
+	"context"
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -38,13 +38,21 @@ func (r *NamespacesRouter) Mount(parent *mux.Router) {
 	}
 
 	routes.Del(r.handlers.DeleteResource)
-	routes.Get(r.get)
-	routes.List(r.handlers.ListResources, corev2.NamespaceFields)
+	routes.Get(r.handlers.GetResource)
+	routes.List(r.list, corev2.NamespaceFields)
 	routes.Post(r.handlers.CreateResource)
 	routes.Put(r.handlers.CreateOrUpdateResource)
 }
 
-func (r *NamespacesRouter) get(req *http.Request) (interface{}, error) {
+func (r *NamespacesRouter) list(ctx context.Context, _ *store.SelectionPredicate) ([]corev2.Resource, error) {
 	client := api.NewNamespaceClient(r.store, r.auth)
-	return client.ListNamespaces(req.Context())
+	namespaces, err := client.ListNamespaces(ctx)
+	if err != nil {
+		return nil, err
+	}
+	result := make([]corev2.Resource, len(namespaces))
+	for i := range namespaces {
+		result[i] = namespaces[i]
+	}
+	return result, nil
 }

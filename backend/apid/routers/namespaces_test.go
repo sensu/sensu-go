@@ -2,7 +2,6 @@ package routers
 
 import (
 	"context"
-	"net/http"
 	"reflect"
 	"sort"
 	"testing"
@@ -26,7 +25,7 @@ func TestNamespacesRouter(t *testing.T) {
 	fixture := corev2.FixtureNamespace("foo")
 
 	tests := []routerTestCase{}
-	tests = append(tests, listTestCases(empty)...)
+	tests = append(tests, getTestCases(fixture)...)
 	tests = append(tests, createTestCases(empty)...)
 	tests = append(tests, updateTestCases(fixture)...)
 	tests = append(tests, deleteTestCases(fixture)...)
@@ -35,7 +34,15 @@ func TestNamespacesRouter(t *testing.T) {
 	}
 }
 
-func TestNamespaceRouterGet(t *testing.T) {
+func namespaceToResource(ns []*corev2.Namespace) []corev2.Resource {
+	result := make([]corev2.Resource, len(ns))
+	for i := range ns {
+		result[i] = ns[i]
+	}
+	return result
+}
+
+func TestNamespaceRouterList(t *testing.T) {
 	namespaces := []*corev2.Namespace{
 		corev2.FixtureNamespace("a"),
 		corev2.FixtureNamespace("b"),
@@ -52,7 +59,7 @@ func TestNamespaceRouterGet(t *testing.T) {
 		Roles               []*corev2.Role
 		RoleBindings        []*corev2.RoleBinding
 		AllNamespaces       []*corev2.Namespace
-		ExpNamespaces       []*corev2.Namespace
+		ExpNamespaces       []corev2.Resource
 		ExpError            bool
 	}{
 		{
@@ -96,7 +103,7 @@ func TestNamespaceRouterGet(t *testing.T) {
 			},
 			RoleBindings:  []*corev2.RoleBinding{},
 			AllNamespaces: namespaces,
-			ExpNamespaces: namespaces,
+			ExpNamespaces: namespaceToResource(namespaces),
 		},
 		{
 			Name: "no access",
@@ -139,7 +146,7 @@ func TestNamespaceRouterGet(t *testing.T) {
 			},
 			RoleBindings:  []*corev2.RoleBinding{},
 			AllNamespaces: namespaces,
-			ExpNamespaces: nil,
+			ExpNamespaces: []corev2.Resource{},
 		},
 		{
 			Name: "partial access",
@@ -208,7 +215,7 @@ func TestNamespaceRouterGet(t *testing.T) {
 				},
 			},
 			AllNamespaces: namespaces,
-			ExpNamespaces: []*corev2.Namespace{
+			ExpNamespaces: []corev2.Resource{
 				namespaces[0],
 				namespaces[2],
 				namespaces[4],
@@ -280,7 +287,7 @@ func TestNamespaceRouterGet(t *testing.T) {
 				},
 			},
 			AllNamespaces: namespaces,
-			ExpNamespaces: []*corev2.Namespace{
+			ExpNamespaces: []corev2.Resource{
 				namespaces[0],
 			},
 		},
@@ -302,23 +309,15 @@ func TestNamespaceRouterGet(t *testing.T) {
 			ctx := context.Background()
 			ctx = context.WithValue(ctx, corev2.ClaimsKey, corev2.FixtureClaims(test.Attrs.User.Username, test.Attrs.User.Groups))
 
-			// The path doesn't matter as we really only are extracting the context from
-			// the request here.
-			req, err := http.NewRequest("GET", "/asdf", nil)
-			if err != nil {
-				t.Fatal(err)
-			}
-			req = req.WithContext(ctx)
-
 			auth := &rbac.Authorizer{Store: store}
 			router := NewNamespacesRouter(store, auth)
 
-			got, err := router.get(req)
+			got, err := router.list(ctx, nil)
 			if err != nil {
 				t.Fatal(err)
 			}
 
-			sort.Slice(got, sortFunc(got.([]*corev2.Namespace)))
+			sort.Slice(got, sortFunc(got))
 
 			if got, want := got, test.ExpNamespaces; !reflect.DeepEqual(got, want) {
 				t.Fatalf("bad namespaces: got %+v, want %+v", got, want)
@@ -327,9 +326,9 @@ func TestNamespaceRouterGet(t *testing.T) {
 	}
 }
 
-func sortFunc(namespaces []*corev2.Namespace) func(i, j int) bool {
+func sortFunc(namespaces []corev2.Resource) func(i, j int) bool {
 	return func(i, j int) bool {
-		return namespaces[i].Name < namespaces[j].Name
+		return namespaces[i].GetObjectMeta().Name < namespaces[j].GetObjectMeta().Name
 	}
 }
 
