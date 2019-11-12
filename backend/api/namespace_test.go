@@ -1,48 +1,19 @@
-package routers
+package api
 
 import (
-	"context"
 	"reflect"
 	"sort"
 	"testing"
 
-	"github.com/gorilla/mux"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/mock"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
-func TestNamespacesRouter(t *testing.T) {
-	// Setup the router
-	s := &mockstore.MockStore{}
-	router := NewNamespacesRouter(s, nil)
-	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
-	router.Mount(parentRouter)
-
-	empty := &corev2.Namespace{}
-	fixture := corev2.FixtureNamespace("foo")
-
-	tests := []routerTestCase{}
-	tests = append(tests, getTestCases(fixture)...)
-	tests = append(tests, createTestCases(empty)...)
-	tests = append(tests, updateTestCases(fixture)...)
-	tests = append(tests, deleteTestCases(fixture)...)
-	for _, tt := range tests {
-		run(t, tt, parentRouter, s)
-	}
-}
-
-func namespaceToResource(ns []*corev2.Namespace) []corev2.Resource {
-	result := make([]corev2.Resource, len(ns))
-	for i := range ns {
-		result[i] = ns[i]
-	}
-	return result
-}
-
-func TestNamespaceRouterList(t *testing.T) {
+func TestNamespaceList(t *testing.T) {
 	namespaces := []*corev2.Namespace{
 		corev2.FixtureNamespace("a"),
 		corev2.FixtureNamespace("b"),
@@ -59,7 +30,7 @@ func TestNamespaceRouterList(t *testing.T) {
 		Roles               []*corev2.Role
 		RoleBindings        []*corev2.RoleBinding
 		AllNamespaces       []*corev2.Namespace
-		ExpNamespaces       []corev2.Resource
+		ExpNamespaces       []*corev2.Namespace
 		ExpError            bool
 	}{
 		{
@@ -103,7 +74,7 @@ func TestNamespaceRouterList(t *testing.T) {
 			},
 			RoleBindings:  []*corev2.RoleBinding{},
 			AllNamespaces: namespaces,
-			ExpNamespaces: namespaceToResource(namespaces),
+			ExpNamespaces: namespaces,
 		},
 		{
 			Name: "no access",
@@ -146,7 +117,7 @@ func TestNamespaceRouterList(t *testing.T) {
 			},
 			RoleBindings:  []*corev2.RoleBinding{},
 			AllNamespaces: namespaces,
-			ExpNamespaces: []corev2.Resource{},
+			ExpNamespaces: nil,
 		},
 		{
 			Name: "partial access",
@@ -215,7 +186,7 @@ func TestNamespaceRouterList(t *testing.T) {
 				},
 			},
 			AllNamespaces: namespaces,
-			ExpNamespaces: []corev2.Resource{
+			ExpNamespaces: []*corev2.Namespace{
 				namespaces[0],
 				namespaces[2],
 				namespaces[4],
@@ -265,6 +236,10 @@ func TestNamespaceRouterList(t *testing.T) {
 					ObjectMeta: corev2.NewObjectMeta("pleb", "a"),
 					Rules: []corev2.Rule{
 						{
+							Verbs:     []string{"delete"},
+							Resources: []string{corev2.ChecksResource},
+						},
+						{
 							Verbs:     []string{"get"},
 							Resources: []string{corev2.ChecksResource},
 						},
@@ -287,7 +262,7 @@ func TestNamespaceRouterList(t *testing.T) {
 				},
 			},
 			AllNamespaces: namespaces,
-			ExpNamespaces: []corev2.Resource{
+			ExpNamespaces: []*corev2.Namespace{
 				namespaces[0],
 			},
 		},
@@ -306,13 +281,12 @@ func TestNamespaceRouterList(t *testing.T) {
 			}).Return(nil)
 			setupGetClusterRoleAndGetRole(store, test.ClusterRoles, test.Roles)
 
-			ctx := context.Background()
-			ctx = context.WithValue(ctx, corev2.ClaimsKey, corev2.FixtureClaims(test.Attrs.User.Username, test.Attrs.User.Groups))
+			ctx := contextWithUser(defaultContext(), test.Attrs.User.Username, test.Attrs.User.Groups)
 
 			auth := &rbac.Authorizer{Store: store}
-			router := NewNamespacesRouter(store, auth)
+			client := NewNamespaceClient(store, auth)
 
-			got, err := router.list(ctx, nil)
+			got, err := client.ListNamespaces(ctx)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -326,12 +300,6 @@ func TestNamespaceRouterList(t *testing.T) {
 	}
 }
 
-func sortFunc(namespaces []corev2.Resource) func(i, j int) bool {
-	return func(i, j int) bool {
-		return namespaces[i].GetObjectMeta().Name < namespaces[j].GetObjectMeta().Name
-	}
-}
-
 func setupGetClusterRoleAndGetRole(store *mockstore.MockStore, clusterRoles []*corev2.ClusterRole, roles []*corev2.Role) {
 	for _, role := range clusterRoles {
 		store.On("GetClusterRole", mock.Anything, role.Name).Return(role, nil)
@@ -339,5 +307,11 @@ func setupGetClusterRoleAndGetRole(store *mockstore.MockStore, clusterRoles []*c
 
 	for _, role := range roles {
 		store.On("GetRole", mock.Anything, role.Name).Return(role, nil)
+	}
+}
+
+func sortFunc(namespaces []*corev2.Namespace) func(i, j int) bool {
+	return func(i, j int) bool {
+		return namespaces[i].Name < namespaces[j].Name
 	}
 }

@@ -80,7 +80,7 @@ func TestAuthorize(t *testing.T) {
 							types.Subject{Type: types.UserType, Name: "foo"},
 						},
 					}}, nil)
-				s.On("GetClusterRole", mock.AnythingOfType("*context.emptyCtx"), "admin", mock.Anything).
+				s.On("GetClusterRole", mock.Anything, "admin").
 					Return(nil, errors.New("error"))
 			},
 			wantErr: true,
@@ -106,7 +106,7 @@ func TestAuthorize(t *testing.T) {
 							types.Subject{Type: types.UserType, Name: "foo"},
 						},
 					}}, nil)
-				s.On("GetClusterRole", mock.AnythingOfType("*context.emptyCtx"), "admin", mock.Anything).
+				s.On("GetClusterRole", mock.Anything, "admin").
 					Return(&types.ClusterRole{Rules: []types.Rule{
 						types.Rule{
 							Verbs:         []string{"create"},
@@ -240,7 +240,7 @@ func TestAuthorize(t *testing.T) {
 							types.Subject{Type: types.UserType, Name: "foo"},
 						},
 					}}, nil)
-				s.On("GetClusterRole", mock.AnythingOfType("*context.emptyCtx"), "cluster-admin", mock.Anything).
+				s.On("GetClusterRole", mock.Anything, "cluster-admin").
 					Return(&types.ClusterRole{Rules: []types.Rule{
 						types.Rule{
 							Verbs:     []string{"*"},
@@ -424,7 +424,7 @@ func TestVisitRulesFor(t *testing.T) {
 				ResourceNames: []string{"check-cpu"},
 			},
 		}}, nil)
-	stor.On("GetClusterRole", mock.AnythingOfType("*context.emptyCtx"), "admin", mock.Anything).
+	stor.On("GetClusterRole", mock.Anything, "admin").
 		Return(&types.ClusterRole{Rules: []types.Rule{
 			types.Rule{
 				Verbs:         []string{"delete"},

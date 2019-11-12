@@ -223,7 +223,7 @@ func setupClusterRoles(store store.Store) error {
 	}
 
 	// The systemAgent ClusterRole is used by Sensu agents and should not be
-	// modified by the users. Modification to his ClusterRole can result in
+	// modified by the users. Modification to this ClusterRole can result in
 	// non-functional Sensu agents.
 	systemAgent := &types.ClusterRole{
 		ObjectMeta: corev2.NewObjectMeta("system:agent", ""),
@@ -248,12 +248,6 @@ func setupClusterRoles(store store.Store) error {
 			types.Rule{
 				Verbs:     []string{"get", "update"},
 				Resources: []string{types.LocalSelfUserResource},
-			},
-			types.Rule{
-				Verbs: []string{"get", "list"},
-				Resources: []string{
-					"namespaces",
-				},
 			},
 		},
 	}
