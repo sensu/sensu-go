@@ -3,12 +3,10 @@ package bonsai
 import (
 	"encoding/json"
 	"fmt"
-
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 // FetchAsset fetches an asset (list of versions)
-func (client *RestClient) FetchAsset(namespace, name string) (*corev2.BonsaiAsset, error) {
+func (client *RestClient) FetchAsset(namespace, name string) (*Asset, error) {
 	path := fmt.Sprintf("/%s/%s", namespace, name)
 	res, err := client.R().Get(path)
 	if err != nil {
@@ -20,7 +18,7 @@ func (client *RestClient) FetchAsset(namespace, name string) (*corev2.BonsaiAsse
 		return nil, err
 	}
 
-	var asset corev2.BonsaiAsset
+	var asset Asset
 	if err = json.Unmarshal(res.Body(), &asset); err != nil {
 		return nil, err
 	}

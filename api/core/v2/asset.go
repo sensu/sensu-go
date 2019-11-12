@@ -73,11 +73,10 @@ func (a *Asset) Validate() error {
 		}
 
 		return js.ParseExpressions(a.Filters)
-	} else {
-		for _, build := range a.Builds {
-			if err := build.Validate(); err != nil {
-				return err
-			}
+	}
+	for _, build := range a.Builds {
+		if err := build.Validate(); err != nil {
+			return err
 		}
 	}
 

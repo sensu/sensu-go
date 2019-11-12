@@ -19,6 +19,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added support for sensu-backend service environment variables.
 
 ### Changed
+- Moved `corev2.BonsaiAsset` to `bonsai.Asset` and moved
+`corev2.OutdatedBonsaiAsset` to `bonsai.OutdatedAsset` along with subsequent
 - Colons and periods are now allowed to be used in all resource names, with
 the exception of users.
 
