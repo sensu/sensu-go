@@ -129,5 +129,7 @@ func TestStandardComponents_Extras(t *testing.T) {
 	assert.Equal(t, id.Extras().Get("key"), "val")
 
 	id.Extras().Clear()
+	id.Extras().Set("key", "bum")
+	id.Extras().Clear()
 	assert.Empty(t, id.Extras().Get("key"))
 }

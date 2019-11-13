@@ -125,7 +125,7 @@ func (id *StandardComponents) Extras() Values {
 	if id.extras == nil {
 		id.extras = url.Values{}
 	}
-	return &dict{id.extras}
+	return &dict{&id.extras}
 }
 
 // Parse takes a global ID string, decodes it and returns it's components.
@@ -195,11 +195,9 @@ func omitEmpty(in []string) (out []string) {
 }
 
 type dict struct {
-	url.Values
+	*url.Values
 }
 
 func (d *dict) Clear() {
-	for key := range d.Values {
-		d.Values.Del(key)
-	}
+	*d.Values = make(url.Values, len(*d.Values))
 }
