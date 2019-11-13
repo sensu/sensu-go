@@ -21,6 +21,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - Moved `corev2.BonsaiAsset` to `bonsai.Asset` and moved
 `corev2.OutdatedBonsaiAsset` to `bonsai.OutdatedAsset` along with subsequent
+bonsai package refactors.
 - Colons and periods are now allowed to be used in all resource names, with
 the exception of users.
 
