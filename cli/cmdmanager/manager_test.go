@@ -16,9 +16,28 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	bolt "go.etcd.io/bbolt"
 
+	"github.com/sensu/sensu-go/bonsai"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
+
+func setupCommandManager() (CommandManager, error) {
+	m := CommandManager{}
+
+	cacheDir, err := ioutil.TempDir("", "")
+	if err != nil {
+		return m, err
+	}
+
+	m.db, err = bolt.Open(filepath.Join(cacheDir, dbName), 0600, &bolt.Options{
+		Timeout: 5 * time.Second,
+	})
+	if err != nil {
+		return m, err
+	}
+
+	return m, nil
+}
 
 func nextPatchVersion(version string) (string, error) {
 	versions := strings.Split(version, ".")
@@ -34,9 +53,9 @@ type MockBonsaiClient struct {
 	mock.Mock
 }
 
-func (m *MockBonsaiClient) FetchAsset(namespace, name string) (*corev2.BonsaiAsset, error) {
+func (m *MockBonsaiClient) FetchAsset(namespace, name string) (*bonsai.Asset, error) {
 	args := m.Called(namespace, name)
-	return args.Get(0).(*corev2.BonsaiAsset), args.Error(1)
+	return args.Get(0).(*bonsai.Asset), args.Error(1)
 }
 
 func (m *MockBonsaiClient) FetchAssetVersion(namespace, name, version string) (string, error) {
@@ -47,7 +66,7 @@ func (m *MockBonsaiClient) FetchAssetVersion(namespace, name, version string) (s
 func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 	type bonsaiClientFunc func(*MockBonsaiClient)
 
-	var nilBonsaiAsset *corev2.BonsaiAsset
+	var nilBonsaiAsset *bonsai.Asset
 
 	bAsset := struct {
 		name                string
@@ -67,16 +86,7 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 	bAsset.fullName = fmt.Sprintf("%s/%s", bAsset.namespace, bAsset.name)
 	bAsset.fullNameWithVersion = fmt.Sprintf("%s:%s", bAsset.fullName, bAsset.version)
 
-	m := CommandManager{}
-
-	cacheDir, err := ioutil.TempDir("", "")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	m.db, err = bolt.Open(filepath.Join(cacheDir, dbName), 0600, &bolt.Options{
-		Timeout: 5 * time.Second,
-	})
+	m, err := setupCommandManager()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -125,8 +135,8 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 			alias:           "testalias",
 			bonsaiAssetName: bAsset.fullNameWithVersion,
 			bonsaiClientFunc: func(m *MockBonsaiClient) {
-				bonsaiAsset := &corev2.BonsaiAsset{
-					Versions: []*corev2.BonsaiAssetVersionGrouping{
+				bonsaiAsset := &bonsai.Asset{
+					Versions: []*bonsai.AssetVersionGrouping{
 						{Version: "0.1.0"},
 					},
 				}
@@ -142,8 +152,8 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 			alias:           "testalias",
 			bonsaiAssetName: bAsset.fullNameWithVersion,
 			bonsaiClientFunc: func(m *MockBonsaiClient) {
-				bonsaiAsset := &corev2.BonsaiAsset{
-					Versions: []*corev2.BonsaiAssetVersionGrouping{
+				bonsaiAsset := &bonsai.Asset{
+					Versions: []*bonsai.AssetVersionGrouping{
 						{Version: bAsset.version},
 					},
 				}
@@ -161,8 +171,8 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 			alias:           "testalias",
 			bonsaiAssetName: bAsset.fullNameWithVersion,
 			bonsaiClientFunc: func(m *MockBonsaiClient) {
-				bonsaiAsset := &corev2.BonsaiAsset{
-					Versions: []*corev2.BonsaiAssetVersionGrouping{
+				bonsaiAsset := &bonsai.Asset{
+					Versions: []*bonsai.AssetVersionGrouping{
 						{Version: bAsset.version},
 					},
 				}
@@ -180,8 +190,8 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 			alias:           "testalias",
 			bonsaiAssetName: bAsset.fullNameWithVersion,
 			bonsaiClientFunc: func(m *MockBonsaiClient) {
-				bonsaiAsset := &corev2.BonsaiAsset{
-					Versions: []*corev2.BonsaiAssetVersionGrouping{
+				bonsaiAsset := &bonsai.Asset{
+					Versions: []*bonsai.AssetVersionGrouping{
 						{Version: bAsset.version},
 					},
 				}
@@ -199,8 +209,8 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 			alias:           "testalias",
 			bonsaiAssetName: bAsset.fullNameWithVersion,
 			bonsaiClientFunc: func(m *MockBonsaiClient) {
-				bonsaiAsset := &corev2.BonsaiAsset{
-					Versions: []*corev2.BonsaiAssetVersionGrouping{
+				bonsaiAsset := &bonsai.Asset{
+					Versions: []*bonsai.AssetVersionGrouping{
 						{Version: bAsset.version},
 					},
 				}
@@ -227,9 +237,9 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 			alias:           "testalias",
 			bonsaiAssetName: bAsset.fullNameWithVersion,
 			bonsaiClientFunc: func(m *MockBonsaiClient) {
-				bonsaiAsset := &corev2.BonsaiAsset{
+				bonsaiAsset := &bonsai.Asset{
 					Name: bAsset.fullName,
-					Versions: []*corev2.BonsaiAssetVersionGrouping{
+					Versions: []*bonsai.AssetVersionGrouping{
 						{Version: bAsset.version},
 					},
 				}
@@ -263,9 +273,9 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 			alias:           "testalias",
 			bonsaiAssetName: bAsset.fullNameWithVersion,
 			bonsaiClientFunc: func(m *MockBonsaiClient) {
-				bonsaiAsset := &corev2.BonsaiAsset{
+				bonsaiAsset := &bonsai.Asset{
 					Name: bAsset.fullName,
-					Versions: []*corev2.BonsaiAssetVersionGrouping{
+					Versions: []*bonsai.AssetVersionGrouping{
 						{Version: bAsset.version},
 					},
 				}
@@ -302,9 +312,9 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 			alias:           "testalias",
 			bonsaiAssetName: bAsset.fullNameWithVersion,
 			bonsaiClientFunc: func(m *MockBonsaiClient) {
-				bonsaiAsset := &corev2.BonsaiAsset{
+				bonsaiAsset := &bonsai.Asset{
 					Name: bAsset.fullName,
-					Versions: []*corev2.BonsaiAssetVersionGrouping{
+					Versions: []*bonsai.AssetVersionGrouping{
 						{Version: bAsset.version},
 					},
 				}
@@ -341,9 +351,9 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 			alias:           "testalias",
 			bonsaiAssetName: bAsset.fullNameWithVersion,
 			bonsaiClientFunc: func(m *MockBonsaiClient) {
-				bonsaiAsset := &corev2.BonsaiAsset{
+				bonsaiAsset := &bonsai.Asset{
 					Name: bAsset.fullName,
-					Versions: []*corev2.BonsaiAssetVersionGrouping{
+					Versions: []*bonsai.AssetVersionGrouping{
 						{Version: bAsset.version},
 					},
 				}
@@ -383,9 +393,9 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				bonsaiAsset := &corev2.BonsaiAsset{
+				bonsaiAsset := &bonsai.Asset{
 					Name: bAsset.fullName,
-					Versions: []*corev2.BonsaiAssetVersionGrouping{
+					Versions: []*bonsai.AssetVersionGrouping{
 						{Version: bAsset.version},
 						{Version: newerVersion},
 					},
@@ -422,9 +432,9 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 			alias:           "testalias2",
 			bonsaiAssetName: bAsset.fullNameWithVersion,
 			bonsaiClientFunc: func(m *MockBonsaiClient) {
-				bonsaiAsset := &corev2.BonsaiAsset{
+				bonsaiAsset := &bonsai.Asset{
 					Name: bAsset.fullName,
-					Versions: []*corev2.BonsaiAssetVersionGrouping{
+					Versions: []*bonsai.AssetVersionGrouping{
 						{Version: bAsset.version},
 					},
 				}
@@ -462,9 +472,9 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 			alias:           "testalias",
 			bonsaiAssetName: bAsset.fullNameWithVersion,
 			bonsaiClientFunc: func(m *MockBonsaiClient) {
-				bonsaiAsset := &corev2.BonsaiAsset{
+				bonsaiAsset := &bonsai.Asset{
 					Name: bAsset.fullName,
-					Versions: []*corev2.BonsaiAssetVersionGrouping{
+					Versions: []*bonsai.AssetVersionGrouping{
 						{Version: bAsset.version},
 					},
 				}
@@ -516,39 +526,94 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 					assert.Contains(t, "", tt.errMatch)
 				}
 			}
-
-			// if tt.errMatch != "" {
-			// 	if err == nil || !strings.Contains(fmt.Sprintf("%v", err), tt.errMatch) {
-			// 		t.Errorf("CommandManager.InstallCommandFromBonsai() error = %v, want errMatch %v", err, tt.errMatch)
-			// 	}
-			// }
 		})
 	}
 }
 
 func TestCommandManager_InstallCommandFromURL(t *testing.T) {
-	type args struct {
-		alias      string
-		archiveURL string
-		checksum   string
+	m, err := setupCommandManager()
+	if err != nil {
+		t.Fatal(err)
 	}
+	defer m.db.Close()
+
+	checksum := "2842ea31d1b9b68f25a76a3a323f9b480a6e8a499729cbd7d9ff42dd15a233951bfd7b1b14667edad979324476c9f9127ec74662795f37210291d5803d7647db"
+
 	tests := []struct {
-		name    string
-		m       *CommandManager
-		args    args
-		wantErr bool
+		name                  string
+		m                     *CommandManager
+		alias                 string
+		archiveURL            string
+		checksum              string
+		wantErr               bool
+		errMatch              string
+		expectedCommandPlugin *CommandPlugin
 	}{
-		// TODO: Add test cases.
+		{
+			name:    "invalid asset",
+			m:       &m,
+			alias:   "",
+			wantErr: true,
+		},
+		{
+			name:       "valid asset",
+			m:          &m,
+			alias:      "testasset",
+			checksum:   checksum,
+			archiveURL: "https://fake",
+			expectedCommandPlugin: &CommandPlugin{
+				Alias: "testasset",
+				Asset: corev2.Asset{
+					Builds: []*corev2.AssetBuild{
+						{
+							URL:    "https://fake",
+							Sha512: checksum,
+						},
+					},
+					ObjectMeta: corev2.ObjectMeta{
+						Name:      "testasset",
+						Namespace: "sensuctl",
+					},
+				},
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.m.InstallCommandFromURL(tt.args.alias, tt.args.archiveURL, tt.args.checksum)
+			err := tt.m.InstallCommandFromURL(tt.alias, tt.archiveURL, tt.checksum)
 			if err != nil {
 				t.Logf("error: %v", err)
 			}
 			if (err != nil) != tt.wantErr {
-				t.Errorf("CommandManager.InstallCommandFromURL() error = %v, wantErr %v", err, tt.wantErr)
+				t.Fatalf("CommandManager.InstallCommandFromURL() error = %v, wantErr %v", err, tt.wantErr)
 			}
+
+			// skip asserting against boltdb if expectedCommandPlugin is nil
+			if tt.expectedCommandPlugin == nil {
+				return
+			}
+
+			var localCommandPlugin CommandPlugin
+
+			if err := m.db.View(func(tx *bolt.Tx) error {
+				bucket := tx.Bucket(commandBucketName)
+				if bucket == nil {
+					return nil
+				}
+
+				value := bucket.Get([]byte(tt.alias))
+				if value != nil {
+					if err := json.Unmarshal(value, &localCommandPlugin); err == nil {
+						return nil
+					}
+				}
+
+				return nil
+			}); err != nil {
+				t.Fatal(err)
+			}
+
+			assert.EqualValues(t, *tt.expectedCommandPlugin, localCommandPlugin)
 		})
 	}
 }

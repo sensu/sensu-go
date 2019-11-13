@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/go-resty/resty"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,7 +19,7 @@ type Config struct {
 }
 
 type Client interface {
-	FetchAsset(string, string) (*corev2.BonsaiAsset, error)
+	FetchAsset(string, string) (*Asset, error)
 	FetchAssetVersion(string, string, string) (string, error)
 }
 

@@ -77,7 +77,7 @@ func (p *CommandPlugin) SetObjectMeta(meta corev2.ObjectMeta) {
 func NewCommandManager(cli *cli.SensuCli) (*CommandManager, error) {
 	m := CommandManager{
 		cli:          cli,
-		bonsaiClient: bonsai.New(bonsai.BonsaiConfig{}),
+		bonsaiClient: bonsai.New(bonsai.Config{}),
 	}
 
 	// create an entity for using with command asset filtering
@@ -114,7 +114,7 @@ func NewCommandManager(cli *cli.SensuCli) (*CommandManager, error) {
 }
 
 func (m *CommandManager) InstallCommandFromBonsai(alias, bonsaiAssetName string) error {
-	bAsset, err := corev2.NewBonsaiBaseAsset(bonsaiAssetName)
+	bAsset, err := bonsai.NewBaseAsset(bonsaiAssetName)
 	if err != nil {
 		return err
 	}
