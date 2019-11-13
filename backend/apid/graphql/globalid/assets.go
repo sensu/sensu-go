@@ -20,4 +20,4 @@ var AssetTranslator = commonTranslator{
 }
 
 // Register asset encoder/decoder
-func init() { registerTranslator(AssetTranslator) }
+func init() { RegisterTranslator(AssetTranslator) }

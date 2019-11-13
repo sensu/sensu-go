@@ -1,6 +1,10 @@
 package globalid
 
-import "github.com/sensu/sensu-go/types"
+import (
+	"context"
+
+	"github.com/sensu/sensu-go/types"
+)
 
 //
 // Namespaces
@@ -23,19 +27,12 @@ var NamespaceTranslator = commonTranslator{
 	//   srn:namespaces:myns
 	//   srn:namespaces:myns
 	//
-	encodeFunc: func(record interface{}) Components {
-		nsp, ok := record.(*types.Namespace)
-		if !ok {
-			return nil
-		}
-
-		components := StandardComponents{
-			resource:        namespaceName,
-			uniqueComponent: nsp.Name,
-		}
-		return &components
+	encodeFunc: func(ctx context.Context, record interface{}) Components {
+		components := Encode(ctx, record)
+		components.resource = namespaceName
+		return components
 	},
 }
 
 // Register entity encoder/decoder
-func init() { registerTranslator(NamespaceTranslator) }
+func init() { RegisterTranslator(NamespaceTranslator) }

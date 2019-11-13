@@ -34,7 +34,7 @@ type roleImpl struct {
 
 // ID implements response to request for 'id' field.
 func (*roleImpl) ID(p graphql.ResolveParams) (string, error) {
-	return globalid.RoleTranslator.EncodeToString(p.Source), nil
+	return globalid.RoleTranslator.EncodeToString(p.Context, p.Source), nil
 }
 
 // IsTypeOf is used to determine if a given value is associated with the type

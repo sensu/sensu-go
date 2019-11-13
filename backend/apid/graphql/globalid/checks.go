@@ -20,4 +20,4 @@ var CheckTranslator = commonTranslator{
 }
 
 // Register entity encoder/decoder
-func init() { registerTranslator(CheckTranslator) }
+func init() { RegisterTranslator(CheckTranslator) }

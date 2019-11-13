@@ -123,7 +123,7 @@ func GetEntitySubscription(entityName string) string {
 func FixtureEntity(name string) *Entity {
 	return &Entity{
 		EntityClass:   "host",
-		Subscriptions: []string{"linux"},
+		Subscriptions: []string{"linux", GetEntitySubscription(name)},
 		ObjectMeta: ObjectMeta{
 			Namespace: "default",
 			Name:      name,

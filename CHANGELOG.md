@@ -9,6 +9,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Added better error logging for mutator execution.
+- Fixed the order of flap detection weighting for checks.
+- The pprof server now only binds to localhost.
 
 ### Added
 - Added the `APIKey` resource and HTTP API support for POST, GET, and DELETE.
@@ -16,10 +18,21 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added support for api keys to be used in api authentication.
 - Added support for sensu-backend service environment variables.
 
+### Changed
+- Moved `corev2.BonsaiAsset` to `bonsai.Asset` and moved
+`corev2.OutdatedBonsaiAsset` to `bonsai.OutdatedAsset` along with subsequent
+bonsai package refactors.
+- Colons and periods are now allowed to be used in all resource names, with
+the exception of users.
+
 ## [5.14.2] - 2019-11-04
 
 ### Changed
 - Upgraded etcd to 3.3.17
+- Listing namespaces is now done implicitly based on access to resources within
+a namespace. Users will no longer be able to list all namespaces by default, in
+new installations. Existing installations will function as before. Operators can
+change to the new behaviour, by modifying the system:user role.
 
 ### Fixed
 - As a result of upgrading etcd, TLS etcd clients that lose their connection will
@@ -30,6 +43,8 @@ are deleted.
 - Sensu now uses far fewer leases for keepalives and check TTLs, resulting in a
 stability improvement for most deployments.
 - Fixed a minor UX issue in interactive filter commands in sensuctl.
+- Silences now successfully apply to proxy entities where the check doesn't contain
+  the same subscriptions as the entity (#3356)
 
 ## [5.14.1] - 2019-10-16
 

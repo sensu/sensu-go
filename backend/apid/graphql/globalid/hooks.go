@@ -20,4 +20,4 @@ var HookTranslator = commonTranslator{
 }
 
 // Register entity encoder/decoder
-func init() { registerTranslator(HookTranslator) }
+func init() { RegisterTranslator(HookTranslator) }

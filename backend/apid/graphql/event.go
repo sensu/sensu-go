@@ -22,7 +22,7 @@ type eventImpl struct {
 
 // ID implements response to request for 'id' field.
 func (r *eventImpl) ID(p graphql.ResolveParams) (string, error) {
-	return globalid.EventTranslator.EncodeToString(p.Source), nil
+	return globalid.EventTranslator.EncodeToString(p.Context, p.Source), nil
 }
 
 // Namespace implements response to request for 'namespace' field.

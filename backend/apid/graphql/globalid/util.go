@@ -1,6 +1,7 @@
 package globalid
 
 import (
+	"context"
 	"reflect"
 
 	"github.com/sensu/sensu-go/types"
@@ -12,7 +13,7 @@ import (
 
 // NamedComponents adds Name method that returns first element of
 // global ID's uniqueComponents.
-type NamedComponents struct{ StandardComponents }
+type NamedComponents struct{ *StandardComponents }
 
 // Name method returns first element of global ID's uniqueComponents. Congurent
 // with most Sensu records Check#Name, Entity#ID, Asset#name, etc.
@@ -24,7 +25,7 @@ func (n NamedComponents) Name() string {
 // Standard Translator
 //
 
-type encoderFunc func(interface{}) Components
+type encoderFunc func(context.Context, interface{}) Components
 type decoderFunc func(StandardComponents) Components
 
 type commonTranslator struct {
@@ -42,13 +43,13 @@ func (r commonTranslator) IsResponsible(record interface{}) bool {
 	return r.isResponsibleFunc(record)
 }
 
-func (r commonTranslator) Encode(record interface{}) Components {
-	components := r.encodeFunc(record)
+func (r commonTranslator) Encode(ctx context.Context, record interface{}) Components {
+	components := r.encodeFunc(ctx, record)
 	return components
 }
 
-func (r commonTranslator) EncodeToString(record interface{}) string {
-	components := r.Encode(record)
+func (r commonTranslator) EncodeToString(ctx context.Context, record interface{}) string {
+	components := r.Encode(ctx, record)
 	return components.String()
 }
 
@@ -64,30 +65,14 @@ func addMultitenantFields(c *StandardComponents, r types.MultitenantResource) {
 	c.namespace = r.GetNamespace()
 }
 
-// newComponentsWith returns new instance of StandardComponents w/ name and ids
-func newComponentsWith(resourceName string, uids ...string) StandardComponents {
-	var t, name string
-	if len(uids) > 1 {
-		t, name = uids[0], uids[1]
-	} else {
-		name = uids[0]
-	}
-
-	return StandardComponents{
-		resource:        resourceName,
-		resourceType:    t,
-		uniqueComponent: name,
-	}
-}
-
 // standardDecoder instantiates new NamedComponents composite.
 func standardDecoder(components StandardComponents) Components {
-	return NamedComponents{components}
+	return NamedComponents{&components}
 }
 
 // standardEncoder encodes record given name and unique field name
 func standardEncoder(name string, fNames ...string) encoderFunc {
-	return func(record interface{}) Components {
+	return func(ctx context.Context, record interface{}) Components {
 		// Retrieve the value of the specified field
 		fVal := reflect.ValueOf(record)
 		for _, fName := range fNames {
@@ -96,11 +81,13 @@ func standardEncoder(name string, fNames ...string) encoderFunc {
 		}
 
 		// Add string value of field to global id components
-		components := newComponentsWith(name, fVal.String())
+		components := Encode(ctx, record)
+		components.resource = name
+		components.uniqueComponent = fVal.String()
 
 		// Add namespace to global id components
 		if multiRecord, ok := record.(types.MultitenantResource); ok {
-			addMultitenantFields(&components, multiRecord)
+			addMultitenantFields(components, multiRecord)
 		}
 
 		return components

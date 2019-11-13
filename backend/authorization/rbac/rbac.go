@@ -72,7 +72,7 @@ func (a *Authorizer) VisitRulesFor(ctx context.Context, attrs *authorization.Att
 		}
 	}
 
-	if len(attrs.Namespace) == 0 {
+	if attrs.Namespace == "" && attrs.Resource != (&corev2.Namespace{}).RBACName() {
 		return
 	}
 

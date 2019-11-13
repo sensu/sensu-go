@@ -23,7 +23,7 @@ type handlerImpl struct {
 
 // ID implements response to request for 'id' field.
 func (*handlerImpl) ID(p graphql.ResolveParams) (string, error) {
-	return globalid.HandlerTranslator.EncodeToString(p.Source), nil
+	return globalid.HandlerTranslator.EncodeToString(p.Context, p.Source), nil
 }
 
 // Mutator implements response to request for 'mutator' field.

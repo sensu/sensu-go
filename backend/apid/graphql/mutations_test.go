@@ -1,6 +1,7 @@
 package graphql
 
 import (
+	"context"
 	"errors"
 	"testing"
 
@@ -181,7 +182,7 @@ func TestMutationTypeDeleteEntityField(t *testing.T) {
 
 func TestMutationTypeDeleteEventField(t *testing.T) {
 	evt := corev2.FixtureEvent("a", "b")
-	gid := globalid.EventTranslator.EncodeToString(evt)
+	gid := globalid.EventTranslator.EncodeToString(context.Background(), evt)
 
 	inputs := schema.DeleteRecordInput{ID: gid}
 	params := schema.MutationDeleteEventFieldResolverParams{}
@@ -212,7 +213,7 @@ func TestMutationTypeDeleteEventField(t *testing.T) {
 
 func TestMutationTypeDeleteHandlerField(t *testing.T) {
 	hd := corev2.FixtureHandler("a")
-	gid := globalid.HandlerTranslator.EncodeToString(hd)
+	gid := globalid.HandlerTranslator.EncodeToString(context.Background(), hd)
 
 	inputs := schema.DeleteRecordInput{ID: gid}
 	params := schema.MutationDeleteHandlerFieldResolverParams{}
@@ -237,7 +238,7 @@ func TestMutationTypeDeleteHandlerField(t *testing.T) {
 
 func TestMutationTypeDeleteMutatorField(t *testing.T) {
 	mut := corev2.FixtureMutator("a")
-	gid := globalid.MutatorTranslator.EncodeToString(mut)
+	gid := globalid.MutatorTranslator.EncodeToString(context.Background(), mut)
 
 	inputs := schema.DeleteRecordInput{ID: gid}
 	params := schema.MutationDeleteMutatorFieldResolverParams{}
@@ -262,7 +263,7 @@ func TestMutationTypeDeleteMutatorField(t *testing.T) {
 
 func TestMutationTypeDeleteEventFilterField(t *testing.T) {
 	flr := corev2.FixtureEventFilter("a")
-	gid := globalid.EventFilterTranslator.EncodeToString(flr)
+	gid := globalid.EventFilterTranslator.EncodeToString(context.Background(), flr)
 
 	inputs := schema.DeleteRecordInput{ID: gid}
 	params := schema.MutationDeleteEventFilterFieldResolverParams{}

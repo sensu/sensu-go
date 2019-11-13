@@ -59,3 +59,9 @@ func TestValidator(t *testing.T) {
 	asset.Sha512 = "nope"
 	assert.Error(asset.Validate())
 }
+
+func TestValidateName_GH3344(t *testing.T) {
+	assert := assert.New(t)
+	asset := FixtureAsset("my-asset:1.0.2")
+	assert.NoError(asset.Validate())
+}

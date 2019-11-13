@@ -1,6 +1,7 @@
 package globalid
 
 import (
+	"context"
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
@@ -11,10 +12,12 @@ import (
 func TestNamespaceTranslator(t *testing.T) {
 	assert := assert.New(t)
 	require := require.New(t)
+
+	ctx := context.Background()
 	nsp := &types.Namespace{Name: "myns"}
 
 	// Encode
-	gid := NamespaceTranslator.EncodeToString(nsp)
+	gid := NamespaceTranslator.EncodeToString(ctx, nsp)
 	assert.Equal("srn:namespaces:myns", gid)
 
 	// Decode

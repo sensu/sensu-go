@@ -20,4 +20,4 @@ var SilenceTranslator = commonTranslator{
 }
 
 // Register silence encoder/decoder
-func init() { registerTranslator(SilenceTranslator) }
+func init() { RegisterTranslator(SilenceTranslator) }

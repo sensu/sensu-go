@@ -47,7 +47,7 @@ func (r *silencedImpl) Expires(p graphql.ResolveParams) (*time.Time, error) {
 
 // ID implements response to request for 'id' field.
 func (r *silencedImpl) ID(p graphql.ResolveParams) (string, error) {
-	return globalid.SilenceTranslator.EncodeToString(p.Source), nil
+	return globalid.SilenceTranslator.EncodeToString(p.Context, p.Source), nil
 }
 
 // ToJSON implements response to request for 'toJSON' field.

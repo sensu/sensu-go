@@ -19,7 +19,7 @@ const (
 
 var (
 	// AssetNameRegexStr used to validate name of asset
-	AssetNameRegexStr = `[a-z0-9\/\_\.\-]+`
+	AssetNameRegexStr = `[a-z0-9\/\_\.\-\:]+`
 
 	// AssetNameRegex used to validate name of asset
 	AssetNameRegex = regexp.MustCompile("^" + AssetNameRegexStr + "$")
@@ -73,11 +73,10 @@ func (a *Asset) Validate() error {
 		}
 
 		return js.ParseExpressions(a.Filters)
-	} else {
-		for _, build := range a.Builds {
-			if err := build.Validate(); err != nil {
-				return err
-			}
+	}
+	for _, build := range a.Builds {
+		if err := build.Validate(); err != nil {
+			return err
 		}
 	}
 
