@@ -19,7 +19,7 @@ type userImpl struct {
 
 // ID implements response to request for 'id' field.
 func (*userImpl) ID(p graphql.ResolveParams) (string, error) {
-	return globalid.UserTranslator.EncodeToString(p.Source), nil
+	return globalid.UserTranslator.EncodeToString(p.Context, p.Source), nil
 }
 
 // AuthorId implements response to request for 'hasPassword' field.

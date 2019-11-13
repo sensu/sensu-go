@@ -175,7 +175,7 @@ type nodeImpl struct {
 	nodeResolver *nodeResolver
 }
 
-func (impl *nodeImpl) ResolveType(i interface{}, _ graphql.ResolveTypeParams) *graphql.Type {
+func (impl *nodeImpl) ResolveType(i interface{}, p graphql.ResolveTypeParams) *graphql.Type {
 	resolver := impl.nodeResolver
-	return resolver.FindType(i)
+	return resolver.FindType(p.Context, i)
 }

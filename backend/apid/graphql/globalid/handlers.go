@@ -20,4 +20,4 @@ var HandlerTranslator = commonTranslator{
 }
 
 // Register handler encoder/decoder
-func init() { registerTranslator(HandlerTranslator) }
+func init() { RegisterTranslator(HandlerTranslator) }

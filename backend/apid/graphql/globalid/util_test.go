@@ -1,6 +1,7 @@
 package globalid
 
 import (
+	"context"
 	"testing"
 
 	"github.com/sensu/sensu-go/types"
@@ -10,9 +11,10 @@ import (
 func TestStandardDecoder(t *testing.T) {
 	assert := assert.New(t)
 
+	ctx := context.Background()
 	handler := types.FixtureHandler("myHandler")
 	encoderFn := standardEncoder("handlers", "Name")
-	components := encoderFn(handler)
+	components := encoderFn(ctx, handler)
 
 	assert.Equal("handlers", components.Resource())
 	assert.Equal("default", components.Namespace())

@@ -1,6 +1,7 @@
 package globalid
 
 import (
+	"context"
 	"encoding/base64"
 	"encoding/json"
 
@@ -17,12 +18,12 @@ const eventMetricType = "metric"
 
 // EventComponents adds methods to easily access unique elements of event.
 type EventComponents struct {
-	StandardComponents
+	*StandardComponents
 	uniqueComponents []string
 }
 
 // NewEventComponents instantiates new EventComponents composite.
-func NewEventComponents(components StandardComponents) EventComponents {
+func NewEventComponents(components *StandardComponents) EventComponents {
 	return EventComponents{components, []string{}}
 }
 
@@ -61,12 +62,11 @@ func (n *EventComponents) getUniqueComponents(i int) string {
 var EventTranslator = commonTranslator{
 	name: eventName,
 	decodeFunc: func(c StandardComponents) Components {
-		return NewEventComponents(c)
+		return NewEventComponents(&c)
 	},
-	encodeFunc: func(record interface{}) Components {
+	encodeFunc: func(ctx context.Context, record interface{}) Components {
 		event := record.(*types.Event)
-		components := encodeEvent(event)
-		return components
+		return encodeEvent(ctx, event)
 	},
 	isResponsibleFunc: func(record interface{}) bool {
 		_, ok := record.(*types.Event)
@@ -75,7 +75,7 @@ var EventTranslator = commonTranslator{
 }
 
 // Register event encoder/decoder
-func init() { registerTranslator(EventTranslator) }
+func init() { RegisterTranslator(EventTranslator) }
 
 //
 // Example output:
@@ -83,10 +83,9 @@ func init() { registerTranslator(EventTranslator) }
 //   srn:events:myns:check/d2h5IGFyZSB5b3UgZGVjb2RpbmcgdGhpcz8hCg==
 //   srn:events:myns:metric/Y29vbC4gY29vbCBjb29sIGNvb2wuCg==
 //
-func encodeEvent(event *types.Event) StandardComponents {
-	components := StandardComponents{}
+func encodeEvent(ctx context.Context, event *types.Event) *StandardComponents {
+	components := Encode(ctx, event)
 	components.resource = eventName
-	addMultitenantFields(&components, event.Entity)
 
 	if event.HasCheck() {
 		components.resourceType = eventCheckType

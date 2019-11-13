@@ -20,4 +20,4 @@ var UserTranslator = commonTranslator{
 }
 
 // Register user encoder/decoder
-func init() { registerTranslator(UserTranslator) }
+func init() { RegisterTranslator(UserTranslator) }
