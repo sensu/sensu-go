@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/go-resty/resty"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -16,6 +17,11 @@ const DefaultEndpointURL = "https://bonsai.sensu.io/api/v1/assets"
 // Config is the configuration for bonsai.
 type Config struct {
 	EndpointURL string
+}
+
+type Client interface {
+	FetchAsset(string, string) (*corev2.BonsaiAsset, error)
+	FetchAssetVersion(string, string, string) (string, error)
 }
 
 // RestClient wraps resty.Client

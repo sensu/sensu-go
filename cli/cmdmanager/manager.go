@@ -38,6 +38,7 @@ type CommandManager struct {
 	assetGetter  asset.Getter
 	db           *bolt.DB
 	cli          *cli.SensuCli
+	bonsaiClient bonsai.Client
 }
 
 type CommandPlugin struct {
@@ -75,7 +76,8 @@ func (p *CommandPlugin) SetObjectMeta(meta corev2.ObjectMeta) {
 
 func NewCommandManager(cli *cli.SensuCli) (*CommandManager, error) {
 	m := CommandManager{
-		cli: cli,
+		cli:          cli,
+		bonsaiClient: bonsai.New(bonsai.BonsaiConfig{}),
 	}
 
 	// create an entity for using with command asset filtering
@@ -125,8 +127,7 @@ func (m *CommandManager) InstallCommandFromBonsai(alias, bonsaiAssetName string)
 		}
 	}
 
-	bonsaiClient := bonsai.New(bonsai.BonsaiConfig{})
-	bonsaiAsset, err := bonsaiClient.FetchAsset(bAsset.Namespace, bAsset.Name)
+	bonsaiAsset, err := m.bonsaiClient.FetchAsset(bAsset.Namespace, bAsset.Name)
 	if err != nil {
 		return err
 	}
@@ -147,13 +148,21 @@ func (m *CommandManager) InstallCommandFromBonsai(alias, bonsaiAssetName string)
 
 	fmt.Printf("fetching bonsai asset: %s/%s:%s\n", bAsset.Namespace, bAsset.Name, version)
 
-	assetJSON, err := bonsaiClient.FetchAssetVersion(bAsset.Namespace, bAsset.Name, version.String())
+	assetJSON, err := m.bonsaiClient.FetchAssetVersion(bAsset.Namespace, bAsset.Name, version.String())
 	if err != nil {
 		return err
 	}
 
 	var asset corev2.Asset
 	if err := json.Unmarshal([]byte(assetJSON), &asset); err != nil {
+		return err
+	}
+
+	if len(asset.Builds) == 0 {
+		return errors.New("one or more asset builds are required")
+	}
+
+	if err := asset.Validate(); err != nil {
 		return err
 	}
 

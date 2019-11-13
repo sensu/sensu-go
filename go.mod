@@ -76,7 +76,7 @@ require (
 	go.uber.org/multierr v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	golang.org/x/net v0.0.0-20191014212845-da9a3fd4c582
-	golang.org/x/sys v0.0.0-20191010194322-b09406accb47
+	golang.org/x/sys v0.0.0-20191113165036-4c7a9d0fe056
 	golang.org/x/text v0.3.2 // indirect
 	golang.org/x/time v0.0.0-20190921001708-c4c64cad1fd0
 	google.golang.org/genproto v0.0.0-20191009194640-548a555dbc03 // indirect
