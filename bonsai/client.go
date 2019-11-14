@@ -18,6 +18,11 @@ type Config struct {
 	EndpointURL string
 }
 
+type Client interface {
+	FetchAsset(string, string) (*Asset, error)
+	FetchAssetVersion(string, string, string) (string, error)
+}
+
 // RestClient wraps resty.Client
 type RestClient struct {
 	resty  *resty.Client

@@ -13,7 +13,7 @@ cache:
 
 environment:
   GOPATH: c:\gopath
-  GOVERSION: 1.13.1
+  GOVERSION: 1.13.3
   GO111MODULE: 'on'
   GOPROXY: 'https://proxy.golang.org'
 
@@ -33,6 +33,7 @@ install:
   - go version
   - go env
   - mkdir %GOPATH%\bin
+  - go mod download
 
 platform:
   - x64
