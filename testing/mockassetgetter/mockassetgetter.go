@@ -14,7 +14,7 @@ type MockAssetGetter struct {
 }
 
 // Get ...
-func (m MockAssetGetter) Get(ctx context.Context, a *corev2.Asset) (*asset.RuntimeAsset, error) {
+func (m *MockAssetGetter) Get(ctx context.Context, a *corev2.Asset) (*asset.RuntimeAsset, error) {
 	args := m.Called(ctx, a)
 	return args.Get(0).(*asset.RuntimeAsset), args.Error(1)
 }
