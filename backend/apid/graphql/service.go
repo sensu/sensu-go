@@ -3,7 +3,6 @@ package graphql
 import (
 	"context"
 
-	gql "github.com/graphql-go/graphql"
 	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/cli/client"
@@ -180,10 +179,10 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 }
 
 // Do executes given query string and variables
-func (svc *Service) Do(ctx context.Context, q string, vars map[string]interface{}) *gql.Result {
+func (svc *Service) Do(ctx context.Context, p graphql.QueryParams) *graphql.Result {
 	// Instantiate loaders and lift them into the context
 	qryCtx := contextWithLoaders(ctx, svc.Config)
 
 	// Execute query inside context
-	return svc.Target.Do(qryCtx, q, vars)
+	return svc.Target.Do(qryCtx, p)
 }

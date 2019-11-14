@@ -8,8 +8,8 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/graphql-go/graphql"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/graphql"
 )
 
 var (
@@ -17,7 +17,7 @@ var (
 )
 
 type GraphQLService interface {
-	Do(ctx context.Context, q string, vars map[string]interface{}) *graphql.Result
+	Do(context.Context, graphql.QueryParams) *graphql.Result
 }
 
 // GraphQLRouter handles requests for /events
@@ -63,9 +63,14 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 		// Extract query and variables
 		query, _ := op["query"].(string)
 		queryVars, _ := op["variables"].(map[string]interface{})
+		skipValidate, _ := op["skip_validation"].(bool)
 
 		// Execute given query
-		result := r.Service.Do(ctx, query, queryVars)
+		result := r.Service.Do(ctx, graphql.QueryParams{
+			Query:          query,
+			Variables:      queryVars,
+			SkipValidation: skipValidate,
+		})
 		results = append(results, result)
 		if len(result.Errors) > 0 {
 			logger.
