@@ -39,6 +39,7 @@ type CommandManager struct {
 	db           *bolt.DB
 	cli          *cli.SensuCli
 	bonsaiClient bonsai.Client
+	executor     command.Executor
 }
 
 type CommandPlugin struct {
@@ -74,25 +75,33 @@ func (p *CommandPlugin) SetObjectMeta(meta corev2.ObjectMeta) {
 	// no-op
 }
 
-func NewCommandManager(cli *cli.SensuCli) (*CommandManager, error) {
-	m := CommandManager{
-		cli:          cli,
-		bonsaiClient: bonsai.New(bonsai.Config{}),
-	}
-
+func getEntity() (*corev2.Entity, error) {
 	// create an entity for using with command asset filtering
 	systemInfo, err := system.Info()
 	if err != nil {
 		return nil, err
 	}
 	meta := corev2.NewObjectMeta("sensuctl", "")
-	entity := &corev2.Entity{
+	return &corev2.Entity{
 		EntityClass: "sensuctl",
 		ObjectMeta:  meta,
 		System:      systemInfo,
+	}, nil
+}
+
+func NewCommandManager(cli *cli.SensuCli) (*CommandManager, error) {
+	m := CommandManager{
+		cli:          cli,
+		bonsaiClient: bonsai.New(bonsai.Config{}),
+		executor:     command.NewExecutor(),
 	}
 
 	cacheDir := path.UserCacheDir("sensuctl")
+
+	entity, err := getEntity()
+	if err != nil {
+		return &m, err
+	}
 
 	// start the asset manager
 	ctx := context.TODO()
@@ -240,8 +249,6 @@ func (m *CommandManager) ExecCommand(ctx context.Context, alias string, args []s
 	env := environment.MergeEnvironments(os.Environ(), commandEnv)
 	env = environment.MergeEnvironments(env, runtimeAsset.Env())
 
-	executor := command.NewExecutor()
-
 	ex := command.ExecutionRequest{
 		Env:     env,
 		Command: "entrypoint",
@@ -249,7 +256,7 @@ func (m *CommandManager) ExecCommand(ctx context.Context, alias string, args []s
 		Name:    commandPlugin.Alias,
 	}
 
-	checkExec, err := executor.Execute(context.Background(), ex)
+	checkExec, err := m.executor.Execute(ctx, ex)
 	if err != nil {
 		return err
 	} else {
