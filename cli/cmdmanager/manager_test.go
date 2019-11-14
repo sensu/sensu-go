@@ -728,7 +728,7 @@ func TestCommandManager_ExecCommand(t *testing.T) {
 			},
 		},
 		{
-			name:  "executor success",
+			name:  "executor success without args",
 			alias: alias,
 			commandEnv: []string{
 				"EXAMPLE_SENSU_ENV_VAR=1234",
@@ -762,6 +762,26 @@ func TestCommandManager_ExecCommand(t *testing.T) {
 				assert.Equal(t, "entrypoint", execution.Command)
 				assert.Equal(t, 30, execution.Timeout)
 				assert.Equal(t, env, execution.Env)
+			},
+		},
+		{
+			name:  "executor success with args",
+			alias: alias,
+			args:  []string{"arg1", "arg2"},
+			assetGetterFunc: func(m *mockassetgetter.MockAssetGetter) {
+				runtimeAsset := asset.RuntimeAsset{
+					Path:   assetPath,
+					SHA512: checksum,
+				}
+				m.On("Get", ctx, &testAsset).
+					Return(&runtimeAsset, nil)
+			},
+			executorFunc: func(m *mockexecutor.MockExecutor) {
+				executionResponse := command.FixtureExecutionResponse(0, "success\n")
+				m.Return(executionResponse, nil)
+			},
+			executionRequestFunc: func(c context.Context, execution command.ExecutionRequest) {
+				assert.Equal(t, "entrypoint arg1 arg2", execution.Command)
 			},
 		},
 	}

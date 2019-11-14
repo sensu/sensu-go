@@ -26,7 +26,8 @@ import (
 )
 
 const (
-	dbName = "commands.db"
+	dbName      = "commands.db"
+	commandName = "entrypoint"
 )
 
 var (
@@ -249,9 +250,11 @@ func (m *CommandManager) ExecCommand(ctx context.Context, alias string, args []s
 	env := environment.MergeEnvironments(os.Environ(), commandEnv)
 	env = environment.MergeEnvironments(env, runtimeAsset.Env())
 
+	commandWithArgs := append([]string{commandName}, args...)
+
 	ex := command.ExecutionRequest{
 		Env:     env,
-		Command: "entrypoint",
+		Command: strings.Join(commandWithArgs, " "),
 		Timeout: 30,
 		Name:    commandPlugin.Alias,
 	}
