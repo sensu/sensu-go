@@ -60,7 +60,7 @@ require (
 	github.com/prometheus/client_golang v1.2.0
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4
 	github.com/robertkrimen/otto v0.0.0-20180617131154-15f95af6e78d
-	github.com/robfig/cron v0.0.0-20171101201047-2315d5715e36
+	github.com/robfig/cron/v3 v3.0.0
 	github.com/sensu/lasr v1.2.1
 	github.com/shirou/gopsutil v0.0.0-20180801053943-8048a2e9c577
 	github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4 // indirect

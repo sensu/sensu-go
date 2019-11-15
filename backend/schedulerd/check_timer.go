@@ -5,7 +5,7 @@ import (
 	"encoding/binary"
 
 	time "github.com/echlebek/timeproxy"
-	"github.com/robfig/cron"
+	cron "github.com/robfig/cron/v3"
 )
 
 // A CheckTimer handles starting and stopping timers for a given check
