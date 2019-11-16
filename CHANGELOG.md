@@ -11,6 +11,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added better error logging for mutator execution.
 - Fixed the order of flap detection weighting for checks.
 - The pprof server now only binds to localhost.
+- Updated CONTRIBUTING.md to reflect README.md instructions.
 
 ### Added
 - Added the `APIKey` resource and HTTP API support for POST, GET, and DELETE.

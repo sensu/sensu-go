@@ -10,7 +10,7 @@ branch to base your changes on, and so on.
 
 1. Open an issue to describe your proposed improvement or feature
 1. Fork https://github.com/sensu/sensu-go
-1. Clone the fork to $GOPATH/src/github.com/sensu/sensu-go. (This exact path must be used. If GOPATH is undefined, use /home/go.)
+1. Clone the fork **outside** of the $GOPATH since Sensu Go uses [Go Modules](https://github.com/golang/go/wiki/Modules)
 1. Create your feature branch (`git checkout -b my-new-feature`)
 1. If applicable, add a [CHANGELOG.md entry](#changelog) describing your change.
 1. Commit your changes with a [DCO Signed-off-by statement](#dco) (`git commit --signoff`)
@@ -192,7 +192,7 @@ Here are the highlights:
 
 ## Development
 
-Sensu is written in Go, and targets the 1.10.x branch of the compiler and
+Sensu is written in Go, and targets the 1.13.1 branch of the compiler and
 toolchain. When working on Sensu, you should use this version of Go.
 
 [Go installation instructions](https://golang.org/doc/install)
