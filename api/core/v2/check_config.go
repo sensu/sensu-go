@@ -11,7 +11,7 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
-	"github.com/robfig/cron"
+	cron "github.com/robfig/cron/v3"
 )
 
 // FixtureCheckConfig returns a fixture for a CheckConfig object.

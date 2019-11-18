@@ -17,6 +17,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added sensuctl commands to manage the `APIKey` resource.
 - Added support for api keys to be used in api authentication.
 - Added support for sensu-backend service environment variables.
+- Added support for timezones in check cron strings.
 
 ### Changed
 - Moved `corev2.BonsaiAsset` to `bonsai.Asset` and moved
@@ -1223,9 +1224,6 @@ and times of the week.
 ### Added
 - Logging redaction for entities
 
-### Changed
-- Removed the Visual Studio 2017 image in AppVeyor to prevent random failures
-
 ### Fixed
 - Fixed e2e test for token substitution on Windows
 - Fixed check subdue unit test for token substitution on Windows
@@ -1237,14 +1235,6 @@ current time
 ### Changed
 - Removed the Visual Studio 2017 image in AppVeyor to prevent random failures
 - Made some slight quality-of-life adjustments to build-gcs-release.sh.
-
-### Fixed
-- Fixed e2e test for token substitution on Windows
-- Fixed check subdue unit test for token substitution on Windows
-- Consider the first and last seconds of a time window when comparing the
-current time
-- Fixed Travis deploy stage by removing caching for $GOPATH
-- Parse for [traditional cron](https://en.wikipedia.org/wiki/Cron) strings, rather than [GoDoc cron](https://godoc.org/github.com/robfig/cron) strings.
 
 ## [2.0.0-alpha.12] - 2018-01-09
 ### Added

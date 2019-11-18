@@ -9,7 +9,7 @@ import (
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
-	"github.com/robfig/cron"
+	cron "github.com/robfig/cron/v3"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
 )
 

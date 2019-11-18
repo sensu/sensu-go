@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/AlecAivazis/survey"
-	"github.com/robfig/cron"
+	cron "github.com/robfig/cron/v3"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
