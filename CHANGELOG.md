@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.15.0] - 2019-11-18
+
 ### Fixed
 - Added better error logging for mutator execution.
 - Fixed the order of flap detection weighting for checks.
@@ -18,6 +20,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added support for api keys to be used in api authentication.
 - Added support for sensu-backend service environment variables.
 - Added support for timezones in check cron strings.
+- Added support for extending sensuctl support with commands.
 
 ### Changed
 - Moved `corev2.BonsaiAsset` to `bonsai.Asset` and moved
