@@ -66,7 +66,10 @@ func (s *Store) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, 
 			_ = cli.Close()
 		}()
 
-		_, getErr := cli.Get(context.Background(), "health")
+		// Specify the client request timeout to get the health
+		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		_, getErr := cli.Get(ctx, "health")
+		cancel()
 
 		if getErr == nil || getErr == rpctypes.ErrPermissionDenied {
 			health.Err = ""
