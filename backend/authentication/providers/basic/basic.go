@@ -52,6 +52,9 @@ func (p *Provider) Refresh(ctx context.Context, claims *corev2.Claims) (*corev2.
 	if user == nil {
 		return nil, fmt.Errorf("user %q does not exist", claims.Provider.UserID)
 	}
+	if user.Disabled {
+		return nil, fmt.Errorf("user %q is disabled", claims.Provider.UserID)
+	}
 
 	newClaims, err := jwt.NewClaims(user)
 	if err != nil {
