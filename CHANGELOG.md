@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Add a timeout to etcd requests when retrieving the nodes health
+
 ## [5.15.0] - 2019-11-18
 
 ### Fixed
