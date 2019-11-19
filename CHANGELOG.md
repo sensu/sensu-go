@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Display the JWT expiration Unix timestamp in `sensuctl config view`.
+
 ### Fixed
 - Add a timeout to etcd requests when retrieving the nodes health
 

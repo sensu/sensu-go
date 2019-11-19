@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"strconv"
 
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
@@ -24,10 +25,11 @@ func ViewCommand(cli *cli.SensuCli) *cobra.Command {
 				return errors.New("no active configuration found")
 			}
 			activeConfig := map[string]string{
-				"api-url":   cli.Config.APIUrl(),
-				"namespace": cli.Config.Namespace(),
-				"format":    cli.Config.Format(),
-				"username":  helpers.GetCurrentUsername(cli.Config),
+				"api-url":        cli.Config.APIUrl(),
+				"namespace":      cli.Config.Namespace(),
+				"format":         cli.Config.Format(),
+				"username":       helpers.GetCurrentUsername(cli.Config),
+				"jwt_expires_at": strconv.Itoa(int(cli.Config.Tokens().GetExpiresAt())),
 			}
 
 			// Determine the format to use to output the data
@@ -71,6 +73,10 @@ func printToList(v interface{}, writer io.Writer) error {
 			{
 				Label: "Username",
 				Value: r["username"],
+			},
+			{
+				Label: "JWT Expiration Timestamp",
+				Value: r["jwt_expires_at"],
 			},
 		},
 	}
