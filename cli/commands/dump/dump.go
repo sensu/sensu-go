@@ -99,7 +99,11 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	helpers.AddAllNamespace(cmd.Flags())
-	_ = cmd.Flags().StringP("format", "", cli.Config.Format(), fmt.Sprintf(`format of data returned ("%s"|"%s")`, config.FormatWrappedJSON, config.FormatYAML))
+	format := cli.Config.Format()
+	if format != config.FormatWrappedJSON && format != config.FormatYAML {
+		format = config.FormatYAML
+	}
+	_ = cmd.Flags().StringP("format", "", format, fmt.Sprintf(`format of data returned ("%s"|"%s")`, config.FormatWrappedJSON, config.FormatYAML))
 	_ = cmd.Flags().StringP("file", "f", "", "file to dump resources to")
 	_ = cmd.Flags().BoolP("types", "t", false, "list supported resource types")
 
