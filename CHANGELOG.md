@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Display the JWT expiration Unix timestamp in `sensuctl config view`.
+
 ### Fixed
 - Listing assets with no results returns an empty array.
 - Fixed a panic that could occur when creating resources in a namespace that
