@@ -115,7 +115,6 @@ func (client *RestClient) List(path string, objs interface{}, options *ListOptio
 			break
 		}
 	}
-
 	return nil
 }
 

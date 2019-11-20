@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Listing assets with no results returns an empty array
+
 ## [5.15.0] - 2019-11-18
 
 ### Fixed
