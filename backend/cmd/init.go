@@ -12,7 +12,6 @@ import (
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/seeds"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
-	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -62,14 +61,6 @@ func InitCommand() *cobra.Command {
 		Short:         "initialize a new sensu installation",
 		SilenceErrors: true,
 		SilenceUsage:  true,
-		PreRun: func(cmd *cobra.Command, args []string) {
-			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
-			if !isInteractive {
-				// Mark flags are required for bash-completions
-				_ = cmd.MarkFlagRequired(flagInitAdminUsername)
-				_ = cmd.MarkFlagRequired(flagInitAdminPassword)
-			}
-		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_ = viper.BindPFlags(cmd.Flags())
 			if setupErr != nil {
