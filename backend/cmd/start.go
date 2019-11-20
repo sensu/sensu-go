@@ -27,8 +27,6 @@ const (
 	flagConfigFile            = "config-file"
 	flagAgentHost             = "agent-host"
 	flagAgentPort             = "agent-port"
-	deprecatedFlagAPIHost     = "api-host"
-	deprecatedFlagAPIPort     = "api-port"
 	flagAPIListenAddress      = "api-listen-address"
 	flagAPIURL                = "api-url"
 	flagDashboardHost         = "dashboard-host"
@@ -46,24 +44,17 @@ const (
 	flagLogLevel              = "log-level"
 
 	// Etcd flag constants
-	deprecatedFlagEtcdClientURLs               = "listen-client-urls"
-	flagEtcdClientURLs                         = "etcd-listen-client-urls"
-	deprecatedFlagEtcdPeerURLs                 = "listen-peer-urls"
-	flagEtcdPeerURLs                           = "etcd-listen-peer-urls"
-	deprecatedFlagEtcdInitialCluster           = "initial-cluster"
-	flagEtcdInitialCluster                     = "etcd-initial-cluster"
-	deprecatedFlagEtcdInitialAdvertisePeerURLs = "initial-advertise-peer-urls"
-	flagEtcdInitialAdvertisePeerURLs           = "etcd-initial-advertise-peer-urls"
-	deprecatedFlagEtcdInitialClusterState      = "initial-cluster-state"
-	flagEtcdInitialClusterState                = "etcd-initial-cluster-state"
-	deprecatedFlagEtcdInitialClusterToken      = "initial-cluster-token"
-	flagEtcdInitialClusterToken                = "etcd-initial-cluster-token"
-	deprecatedFlagEtcdNodeName                 = "name"
-	flagEtcdNodeName                           = "etcd-name"
-	flagNoEmbedEtcd                            = "no-embed-etcd"
-	flagEtcdAdvertiseClientURLs                = "etcd-advertise-client-urls"
-	flagEtcdHeartbeatInterval                  = "etcd-heartbeat-interval"
-	flagEtcdElectionTimeout                    = "etcd-election-timeout"
+	flagEtcdClientURLs               = "etcd-listen-client-urls"
+	flagEtcdPeerURLs                 = "etcd-listen-peer-urls"
+	flagEtcdInitialCluster           = "etcd-initial-cluster"
+	flagEtcdInitialAdvertisePeerURLs = "etcd-initial-advertise-peer-urls"
+	flagEtcdInitialClusterState      = "etcd-initial-cluster-state"
+	flagEtcdInitialClusterToken      = "etcd-initial-cluster-token"
+	flagEtcdNodeName                 = "etcd-name"
+	flagNoEmbedEtcd                  = "no-embed-etcd"
+	flagEtcdAdvertiseClientURLs      = "etcd-advertise-client-urls"
+	flagEtcdHeartbeatInterval        = "etcd-heartbeat-interval"
+	flagEtcdElectionTimeout          = "etcd-election-timeout"
 
 	// Etcd TLS flag constants
 	flagEtcdCertFile           = "etcd-cert-file"
@@ -140,14 +131,6 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 			_ = viper.BindPFlags(cmd.Flags())
 			if setupErr != nil {
 				return setupErr
-			}
-
-			// Make sure the deprecated API flags are no longer used
-			if host := viper.GetString(deprecatedFlagAPIHost); host != "[::]" {
-				logger.Fatalf("Flag --%s has been deprecated, please use --%s instead", deprecatedFlagAPIHost, flagAPIListenAddress)
-			}
-			if port := viper.GetInt(deprecatedFlagAPIPort); port != 8080 {
-				logger.Fatalf("Flag --%s has been deprecated, please use --%s instead", deprecatedFlagAPIPort, flagAPIListenAddress)
 			}
 
 			level, err := logrus.ParseLevel(viper.GetString(flagLogLevel))
@@ -273,8 +256,6 @@ func handleConfig(cmd *cobra.Command) error {
 	// Flag defaults
 	viper.SetDefault(flagAgentHost, "[::]")
 	viper.SetDefault(flagAgentPort, 8081)
-	viper.SetDefault(deprecatedFlagAPIHost, "[::]")
-	viper.SetDefault(deprecatedFlagAPIPort, 8080)
 	viper.SetDefault(flagAPIListenAddress, "[::]:8080")
 	viper.SetDefault(flagAPIURL, "http://localhost:8080")
 	viper.SetDefault(flagDashboardHost, "[::]")
@@ -392,34 +373,10 @@ func handleConfig(cmd *cobra.Command) error {
 	cmd.Flags().String(flagEtcdPeerTrustedCAFile, viper.GetString(flagEtcdPeerTrustedCAFile), "path to the peer server TLS trusted CA file")
 	_ = cmd.Flags().SetAnnotation(flagEtcdPeerTrustedCAFile, "categories", []string{"store"})
 
-	// Make sure some deprecated flags are no longer used
-	cmd.Flags().String(deprecatedFlagAPIHost, viper.GetString(deprecatedFlagAPIHost), "http api listener host")
-	cmd.Flags().Int(deprecatedFlagAPIPort, viper.GetInt(deprecatedFlagAPIPort), "http api port")
-	_ = cmd.Flags().MarkHidden(deprecatedFlagAPIHost)
-	_ = cmd.Flags().MarkHidden(deprecatedFlagAPIPort)
-
-	_ = cmd.Flags().MarkDeprecated(deprecatedFlagAPIHost, fmt.Sprintf("please use --%s instead", flagAPIListenAddress))
-	_ = cmd.Flags().MarkDeprecated(deprecatedFlagAPIPort, fmt.Sprintf("please use --%s instead", flagAPIListenAddress))
-
-	// Mark the old etcd flags as deprecated and maintain backward compability
-	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc)
-
 	// Load the configuration file but only error out if flagConfigFile is used
 	if err := viper.ReadInConfig(); err != nil && configFile != "" {
 		return err
 	}
-
-	// Mark the old etcd keys as deprecated in the config file and then register
-	// aliases for older etcd attributes in config file to maintain backward
-	// compatiblity
-	deprecatedConfigAttributes()
-	viper.RegisterAlias(deprecatedFlagEtcdClientURLs, flagEtcdClientURLs)
-	viper.RegisterAlias(deprecatedFlagEtcdInitialAdvertisePeerURLs, flagEtcdInitialAdvertisePeerURLs)
-	viper.RegisterAlias(deprecatedFlagEtcdInitialCluster, flagEtcdInitialCluster)
-	viper.RegisterAlias(deprecatedFlagEtcdInitialClusterState, flagEtcdInitialClusterState)
-	viper.RegisterAlias(deprecatedFlagEtcdInitialClusterToken, flagEtcdInitialClusterToken)
-	viper.RegisterAlias(deprecatedFlagEtcdNodeName, flagEtcdNodeName)
-	viper.RegisterAlias(deprecatedFlagEtcdPeerURLs, flagEtcdPeerURLs)
 
 	viper.SetEnvPrefix("sensu_backend")
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
@@ -447,64 +404,4 @@ func categoryFlags(category string, flags *pflag.FlagSet) *pflag.FlagSet {
 	})
 
 	return flagSet
-}
-
-func aliasNormalizeFunc(f *pflag.FlagSet, name string) pflag.NormalizedName {
-	// Wait until the command-line flags have been parsed
-	if !f.Parsed() {
-		return pflag.NormalizedName(name)
-	}
-
-	switch name {
-	case deprecatedFlagEtcdClientURLs:
-		deprecatedFlagMessage(name, flagEtcdClientURLs)
-		name = flagEtcdClientURLs
-	case deprecatedFlagEtcdInitialAdvertisePeerURLs:
-		deprecatedFlagMessage(name, flagEtcdInitialAdvertisePeerURLs)
-		name = flagEtcdInitialAdvertisePeerURLs
-	case deprecatedFlagEtcdInitialCluster:
-		deprecatedFlagMessage(name, flagEtcdInitialCluster)
-		name = flagEtcdInitialCluster
-	case deprecatedFlagEtcdInitialClusterState:
-		deprecatedFlagMessage(name, flagEtcdInitialCluster)
-		name = flagEtcdInitialClusterState
-	case deprecatedFlagEtcdInitialClusterToken:
-		deprecatedFlagMessage(name, flagEtcdInitialClusterToken)
-		name = flagEtcdInitialClusterToken
-	case deprecatedFlagEtcdNodeName:
-		deprecatedFlagMessage(name, flagEtcdNodeName)
-		name = flagEtcdNodeName
-	case deprecatedFlagEtcdPeerURLs:
-		deprecatedFlagMessage(name, flagEtcdPeerURLs)
-		name = flagEtcdPeerURLs
-	}
-	return pflag.NormalizedName(name)
-}
-
-// Look up the deprecated attributes in our config file and print a warning
-// message if set
-func deprecatedConfigAttributes() {
-	attributes := map[string]string{
-		deprecatedFlagEtcdClientURLs:               flagEtcdClientURLs,
-		deprecatedFlagEtcdInitialAdvertisePeerURLs: flagEtcdInitialAdvertisePeerURLs,
-		deprecatedFlagEtcdInitialCluster:           flagEtcdInitialCluster,
-		deprecatedFlagEtcdInitialClusterState:      flagEtcdInitialClusterState,
-		deprecatedFlagEtcdInitialClusterToken:      flagEtcdInitialClusterToken,
-		deprecatedFlagEtcdNodeName:                 flagEtcdNodeName,
-		deprecatedFlagEtcdPeerURLs:                 flagEtcdPeerURLs,
-	}
-
-	for old, new := range attributes {
-		if viper.IsSet(old) {
-			logger.Warningf(
-				"config attribute %s has been deprecated, please use %s instead",
-				old, new,
-			)
-		}
-	}
-}
-
-func deprecatedFlagMessage(oldFlag, newFlag string) {
-	logger.Warningf("flag --%s has been deprecated, please use --%s instead",
-		oldFlag, newFlag)
 }
