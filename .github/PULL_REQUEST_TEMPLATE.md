@@ -46,3 +46,11 @@ Aside from unit/integration tests, please describe the e2e steps to verify this 
 Eng@Sensu: Add the test case to the TestRail QA plan, and write an automated Rspec test, if applicable.
 The corresponding sensu-go-qa-crucible PR or issue should be linked here.
 -->
+
+## Is this change a patch?
+
+<!--
+If so, you should be submitting this against the current release branch. Remember to merge the release branch back into master after merging this patch!
+
+If not, this feature work can go directly into the master branch.
+-->
