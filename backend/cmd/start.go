@@ -245,6 +245,12 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 		},
 	}
 
+	setupErr = handleConfig(cmd)
+
+	return cmd
+}
+
+func handleConfig(cmd *cobra.Command) error {
 	// Set up distinct flagset for handling config file
 	configFlagSet := pflag.NewFlagSet("sensu", pflag.ContinueOnError)
 	configFlagSet.StringP(flagConfigFile, "c", "", "path to sensu-backend config file")
@@ -400,7 +406,7 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 
 	// Load the configuration file but only error out if flagConfigFile is used
 	if err := viper.ReadInConfig(); err != nil && configFile != "" {
-		setupErr = err
+		return err
 	}
 
 	// Mark the old etcd keys as deprecated in the config file and then register
@@ -423,7 +429,7 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	cobra.AddTemplateFunc("categoryFlags", categoryFlags)
 	cmd.SetUsageTemplate(startUsageTemplate)
 
-	return cmd
+	return nil
 }
 
 func categoryFlags(category string, flags *pflag.FlagSet) *pflag.FlagSet {
