@@ -9,11 +9,18 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Display the JWT expiration Unix timestamp in `sensuctl config view`.
+- Added the 'sensu-backend init' subcommand.
 
 ### Fixed
 - Add a timeout to etcd requests when retrieving the nodes health.
 - Show the correct default value for the format flag in `sensuctl dump` help
 usage.
+
+### Changed
+- The backend will no longer automatically be seeded with a default admin
+username and password. Users will need to run 'sensu-backend init' on every
+new installation.
+- Several deprecated flags were removed from sensu-backend.
 
 ## [5.15.0] - 2019-11-18
 
