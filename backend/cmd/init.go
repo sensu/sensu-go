@@ -15,8 +15,14 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	flagInitAdminUsername = "admin-username"
+	flagInitAdminPassword = "admin-password"
+)
+
 type seedConfig struct {
 	backend.Config
+	SeedConfig seeds.Config
 }
 
 // InitCommand is the 'sensu-backend init' subcommand.
@@ -91,14 +97,30 @@ func InitCommand() *cobra.Command {
 			})
 
 			if err != nil {
-				return fmt.Errorf("error initializing cluster: %s", err)
+				return fmt.Errorf("error connecting to cluster: %s", err)
 			}
 
-			seedConfig := seedConfig{Config: *cfg}
+			uname := viper.GetString(flagInitAdminUsername)
+			pword := viper.GetString(flagInitAdminPassword)
+
+			if uname == "" || pword == "" {
+				return fmt.Errorf("both %s and %s are required to be set", flagInitAdminUsername, flagInitAdminPassword)
+			}
+
+			seedConfig := seedConfig{
+				Config: *cfg,
+				SeedConfig: seeds.Config{
+					AdminUsername: uname,
+					AdminPassword: pword,
+				},
+			}
 
 			return seedCluster(client, seedConfig)
 		},
 	}
+
+	cmd.Flags().String(flagInitAdminUsername, "", "cluster admin username")
+	cmd.Flags().String(flagInitAdminPassword, "", "cluster admin password")
 
 	setupErr = handleConfig(cmd)
 
