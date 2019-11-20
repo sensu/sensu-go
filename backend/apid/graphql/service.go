@@ -29,12 +29,14 @@ type ServiceConfig struct {
 	EventClient       EventClient
 	EventFilterClient EventFilterClient
 	HandlerClient     HandlerClient
+	HealthController  EtcdHealthController
 	MutatorClient     MutatorClient
 	SilencedClient    SilencedClient
 	NamespaceClient   NamespaceClient
 	HookClient        HookClient
 	UserClient        UserClient
 	RBACClient        RBACClient
+	VersionController VersionController
 	GenericClient     GenericClient
 }
 
@@ -127,6 +129,13 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterHandlerConnection(svc, &schema.HandlerConnectionAliases{})
 	schema.RegisterHandlerSocket(svc, &handlerSocketImpl{})
 
+	// Register health types
+	schema.RegisterClusterHealth(svc, &clusterHealthImpl{})
+	schema.RegisterEtcdAlarmMember(svc, &etcdAlarmMemberImpl{})
+	schema.RegisterEtcdAlarmType(svc)
+	schema.RegisterEtcdClusterHealth(svc, &etcdClusterHealthImpl{})
+	schema.RegisterEtcdClusterMemberHealth(svc, &schema.EtcdClusterMemberHealthAliases{})
+
 	// Register time window
 	schema.RegisterTimeWindowDays(svc, &schema.TimeWindowDaysAliases{})
 	schema.RegisterTimeWindowWhen(svc, &schema.TimeWindowWhenAliases{})
@@ -143,6 +152,11 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 
 	// Register user types
 	schema.RegisterUser(svc, &userImpl{})
+
+	// Register version types
+	schema.RegisterVersions(svc, &versionsImpl{})
+	schema.RegisterEtcdVersions(svc, &schema.EtcdVersionsAliases{})
+	schema.RegisterSensuBackendVersion(svc, &sensuBackendVersionImpl{})
 
 	// Register mutations
 	schema.RegisterMutation(svc, &mutationsImpl{svc: cfg})

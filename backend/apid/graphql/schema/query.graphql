@@ -91,6 +91,12 @@ type Query {
     order: SuggestionOrder = FREQUENCY,
   ): SuggestionResultSet
 
+  "Describes the health of the cluster."
+  health: ClusterHealth!
+
+  "Describes the versions of each component of the backend."
+  version: Versions!
+
   """
   Node fetches an object given its ID.
   """

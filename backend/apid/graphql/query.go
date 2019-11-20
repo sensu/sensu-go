@@ -151,6 +151,18 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 	return results, nil
 }
 
+// Version implements response to request for 'version' field.
+func (r *queryImpl) Version(p graphql.ResolveParams) (interface{}, error) {
+	resp := r.svc.VersionController.GetVersion(p.Context)
+	return resp, nil
+}
+
+// Health implements response to request for 'health' field.
+func (r *queryImpl) Health(p graphql.ResolveParams) (interface{}, error) {
+	resp := r.svc.HealthController.GetClusterHealth(p.Context)
+	return resp, nil
+}
+
 // Node implements response to request for 'node' field.
 func (r *queryImpl) Node(p schema.QueryNodeFieldResolverParams) (interface{}, error) {
 	resolver := r.nodeResolver

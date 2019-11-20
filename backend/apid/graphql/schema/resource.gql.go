@@ -21,7 +21,7 @@ func _InterfaceTypeResourceConfigFn() graphql1.InterfaceConfig {
 			"metadata": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
-				Description:       "Metadata contains the name, namespace, labels and annotations of the resource,",
+				Description:       "Metadata contains the name, namespace, labels and annotations of the resource.",
 				Name:              "metadata",
 				Type:              graphql1.NewNonNull(graphql.OutputType("ObjectMeta")),
 			},
