@@ -134,7 +134,7 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterEtcdAlarmMember(svc, &etcdAlarmMemberImpl{})
 	schema.RegisterEtcdAlarmType(svc)
 	schema.RegisterEtcdClusterHealth(svc, &etcdClusterHealthImpl{})
-	schema.RegisterEtcdClusterMemberHealth(svc, &schema.EtcdClusterMemberHealthAliases{})
+	schema.RegisterEtcdClusterMemberHealth(svc, &etcdClusterMemberHealthImpl{})
 
 	// Register time window
 	schema.RegisterTimeWindowDays(svc, &schema.TimeWindowDaysAliases{})

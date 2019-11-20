@@ -10,6 +10,7 @@ import (
 var _ schema.ClusterHealthFieldResolvers = (*clusterHealthImpl)(nil)
 var _ schema.EtcdAlarmMemberFieldResolvers = (*etcdAlarmMemberImpl)(nil)
 var _ schema.EtcdClusterHealthFieldResolvers = (*etcdClusterHealthImpl)(nil)
+var _ schema.EtcdClusterMemberHealthFieldResolvers = (*etcdClusterMemberHealthImpl)(nil)
 
 //
 // Implement ClusterHealthFieldResolvers
@@ -38,6 +39,20 @@ func (r *etcdClusterHealthImpl) Alarms(p graphql.ResolveParams) (interface{}, er
 func (r *etcdClusterHealthImpl) Members(p graphql.ResolveParams) (interface{}, error) {
 	resp := p.Source.(*corev2.HealthResponse)
 	return resp.ClusterHealth, nil
+}
+
+//
+// Implement EtcdClusterMemberHealthFieldResolvers
+//
+
+type etcdClusterMemberHealthImpl struct {
+	schema.EtcdClusterMemberHealthAliases
+}
+
+// MemberID implements response to request for 'memberID' field.
+func (r *etcdClusterMemberHealthImpl) MemberID(p graphql.ResolveParams) (string, error) {
+	resp := p.Source.(*corev2.ClusterHealth)
+	return string(resp.MemberID), nil
 }
 
 //

@@ -158,3 +158,33 @@ func Test_etcdAlarmMemberImpl_Alarm(t *testing.T) {
 		})
 	}
 }
+
+func Test_etcdClusterMemberHealthImpl_MemberID(t *testing.T) {
+	defaultResp := corev2.FixtureHealthResponse(true)
+	tests := []struct {
+		name    string
+		source  *corev2.ClusterHealth
+		want    string
+		wantErr bool
+	}{
+		{
+			name:    "main",
+			source:  defaultResp.ClusterHealth[0],
+			want:    string(defaultResp.ClusterHealth[0].MemberID),
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &etcdClusterMemberHealthImpl{}
+			got, err := r.MemberID(graphql.ResolveParams{Source: tt.source})
+			if (err != nil) != tt.wantErr {
+				t.Errorf("etcdClusterMemberHealthImpl.MemberID() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
+				t.Errorf("etcdClusterMemberHealthImpl.MemberID() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
