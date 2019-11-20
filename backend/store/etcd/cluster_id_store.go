@@ -2,7 +2,6 @@ package etcd
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
@@ -20,13 +19,10 @@ var (
 func (s *Store) CreateClusterID(ctx context.Context, id string) error {
 	key := clusterIDKeyBuilder.Build("")
 	req := clientv3.OpPut(key, id)
-	resp, err := s.client.Txn(ctx).Then(req).Commit()
-	if err != nil {
-		return err
-	}
-	if !resp.Succeeded {
+	cmp := clientv3.Compare(clientv3.Value(key), "=", "")
+	if _, err := s.client.Txn(ctx).If(cmp).Then(req).Commit(); err != nil {
 		return &store.ErrInternal{
-			Message: fmt.Sprintf("could not update the key %s", key),
+			Message: err.Error(),
 		}
 	}
 
