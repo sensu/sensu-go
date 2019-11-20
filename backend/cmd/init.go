@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/AlecAivazis/survey"
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/pkg/transport"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -11,6 +12,7 @@ import (
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sensu/sensu-go/backend/seeds"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
+	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -18,11 +20,38 @@ import (
 const (
 	flagInitAdminUsername = "admin-username"
 	flagInitAdminPassword = "admin-password"
+	flagInteractive       = "interactive"
 )
 
 type seedConfig struct {
 	backend.Config
 	SeedConfig seeds.Config
+}
+
+type initOpts struct {
+	AdminUsername string `survey:"admin-username"`
+	AdminPassword string `survey:"admin-password"`
+}
+
+func (i *initOpts) administerQuestionnaire() error {
+	qs := []*survey.Question{
+		{
+			Name: "admin-username",
+			Prompt: &survey.Input{
+				Message: "Admin Username:",
+			},
+			Validate: survey.Required,
+		},
+		{
+			Name: "admin-password",
+			Prompt: &survey.Password{
+				Message: "Admin Password:",
+			},
+			Validate: survey.Required,
+		},
+	}
+
+	return survey.Ask(qs, i)
 }
 
 // InitCommand is the 'sensu-backend init' subcommand.
@@ -33,6 +62,14 @@ func InitCommand() *cobra.Command {
 		Short:         "initialize a new sensu installation",
 		SilenceErrors: true,
 		SilenceUsage:  true,
+		PreRun: func(cmd *cobra.Command, args []string) {
+			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
+			if !isInteractive {
+				// Mark flags are required for bash-completions
+				_ = cmd.MarkFlagRequired(flagInitAdminUsername)
+				_ = cmd.MarkFlagRequired(flagInitAdminPassword)
+			}
+		},
 		RunE: func(cmd *cobra.Command, args []string) error {
 			_ = viper.BindPFlags(cmd.Flags())
 			if setupErr != nil {
@@ -103,6 +140,15 @@ func InitCommand() *cobra.Command {
 			uname := viper.GetString(flagInitAdminUsername)
 			pword := viper.GetString(flagInitAdminPassword)
 
+			if viper.GetBool(flagInteractive) {
+				var opts initOpts
+				if err := opts.administerQuestionnaire(); err != nil {
+					return err
+				}
+				uname = opts.AdminUsername
+				pword = opts.AdminPassword
+			}
+
 			if uname == "" || pword == "" {
 				return fmt.Errorf("both %s and %s are required to be set", flagInitAdminUsername, flagInitAdminPassword)
 			}
@@ -121,6 +167,7 @@ func InitCommand() *cobra.Command {
 
 	cmd.Flags().String(flagInitAdminUsername, "", "cluster admin username")
 	cmd.Flags().String(flagInitAdminPassword, "", "cluster admin password")
+	cmd.Flags().Bool(flagInteractive, false, "interactive mode")
 
 	setupErr = handleConfig(cmd)
 
