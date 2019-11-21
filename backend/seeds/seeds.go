@@ -18,7 +18,7 @@ type Config struct {
 	AdminPassword string
 }
 
-// SeedClusters seeds the cluster according to the provided config.
+// SeedCluster seeds the cluster according to the provided config.
 func SeedCluster(store store.Store, config Config) error {
 	initializer, err := store.NewInitializer()
 	if err != nil {
