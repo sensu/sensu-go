@@ -14,6 +14,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Add a timeout to etcd requests when retrieving the nodes health.
 - Show the correct default value for the format flag in `sensuctl dump` help
 usage.
+### Fixed
+- Listing assets with no results returns an empty array
 
 ## [5.15.0] - 2019-11-18
 
