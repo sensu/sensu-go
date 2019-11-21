@@ -1,4 +1,4 @@
-// +build integration
+// +build integration,!solaris
 
 package agent
 
@@ -23,7 +23,7 @@ func TestNewStatsdServer(t *testing.T) {
 	assert.NotNil(t, s)
 	assert.Equal(t, BackendName, s.Backends[0].Name())
 	assert.Equal(t, DefaultStatsdFlushInterval*time.Second, s.FlushInterval)
-	assert.Equal(t, "127.0.0.1:8125", s.MetricsAddr)
+	assert.Equal(t, "127.0.0.1:8125", GetMetricsAddr(s))
 
 	c.StatsdServer.FlushInterval = 20
 	c.StatsdServer.Port = 8126
@@ -33,7 +33,7 @@ func TestNewStatsdServer(t *testing.T) {
 	assert.NotNil(t, s)
 	assert.Equal(t, BackendName, s.Backends[0].Name())
 	assert.Equal(t, 20*time.Second, s.FlushInterval)
-	assert.Equal(t, "foo:8126", s.MetricsAddr)
+	assert.Equal(t, "foo:8126", GetMetricsAddr(s))
 }
 
 func TestComposeMetricTags(t *testing.T) {
@@ -164,7 +164,7 @@ func TestReceiveMetrics(t *testing.T) {
 	// Give the server a second to start up
 	time.Sleep(time.Second * 1)
 
-	udpClient, err := net.Dial("udp", ta.statsdServer.MetricsAddr)
+	udpClient, err := net.Dial("udp", GetMetricsAddr(ta.statsdServer))
 	if err != nil {
 		assert.FailNow("failed to create UDP connection")
 	}
