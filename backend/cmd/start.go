@@ -52,6 +52,8 @@ const (
 	flagEtcdPeerURLs                           = "etcd-listen-peer-urls"
 	deprecatedFlagEtcdInitialCluster           = "initial-cluster"
 	flagEtcdInitialCluster                     = "etcd-initial-cluster"
+	flagEtcdDiscovery                          = "etcd-discovery"
+	flagEtcdDiscoverySrv                       = "etcd-discovery-srv"
 	deprecatedFlagEtcdInitialAdvertisePeerURLs = "initial-advertise-peer-urls"
 	flagEtcdInitialAdvertisePeerURLs           = "etcd-initial-advertise-peer-urls"
 	deprecatedFlagEtcdInitialClusterState      = "initial-cluster-state"
@@ -156,6 +158,16 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 			}
 			logrus.SetLevel(level)
 
+			// If no clustering options are provided, default to a static
+			// cluster 'defaultEtcdName=defaultEtcdPeerURL'.
+			initialCluster := viper.GetString(flagEtcdInitialCluster)
+			etcdDiscovery := viper.GetString(flagEtcdDiscovery)
+			SrvDiscovery := viper.GetString(flagEtcdDiscoverySrv)
+
+			if initialCluster == "" && etcdDiscovery == "" && SrvDiscovery == "" {
+				initialCluster = fmt.Sprintf("%s=%s", defaultEtcdName, defaultEtcdPeerURL)
+			}
+
 			cfg := &backend.Config{
 				AgentHost:             viper.GetString(flagAgentHost),
 				AgentPort:             viper.GetInt(flagAgentPort),
@@ -173,8 +185,10 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 				EtcdAdvertiseClientURLs:      viper.GetStringSlice(flagEtcdAdvertiseClientURLs),
 				EtcdListenClientURLs:         viper.GetStringSlice(flagEtcdClientURLs),
 				EtcdListenPeerURLs:           viper.GetStringSlice(flagEtcdPeerURLs),
-				EtcdInitialCluster:           viper.GetString(flagEtcdInitialCluster),
+				EtcdInitialCluster:           initialCluster,
 				EtcdInitialClusterState:      viper.GetString(flagEtcdInitialClusterState),
+				EtcdDiscovery:                etcdDiscovery,
+				EtcdDiscoverySrv:             SrvDiscovery,
 				EtcdInitialAdvertisePeerURLs: viper.GetStringSlice(flagEtcdInitialAdvertisePeerURLs),
 				EtcdInitialClusterToken:      viper.GetString(flagEtcdInitialClusterToken),
 				EtcdName:                     viper.GetString(flagEtcdNodeName),
@@ -295,8 +309,9 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	viper.SetDefault(flagEtcdAdvertiseClientURLs, defaultEtcdAdvertiseClientURL)
 	viper.SetDefault(flagEtcdClientURLs, defaultEtcdClientURL)
 	viper.SetDefault(flagEtcdPeerURLs, defaultEtcdPeerURL)
-	viper.SetDefault(flagEtcdInitialCluster,
-		fmt.Sprintf("%s=%s", defaultEtcdName, defaultEtcdPeerURL))
+	viper.SetDefault(flagEtcdInitialCluster, "")
+	viper.SetDefault(flagEtcdDiscovery, "")
+	viper.SetDefault(flagEtcdDiscoverySrv, "")
 	viper.SetDefault(flagEtcdInitialAdvertisePeerURLs, defaultEtcdPeerURL)
 	viper.SetDefault(flagEtcdInitialClusterState, etcd.ClusterStateNew)
 	viper.SetDefault(flagEtcdInitialClusterToken, "")
@@ -347,6 +362,10 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	_ = cmd.Flags().SetAnnotation(flagEtcdPeerURLs, "categories", []string{"store"})
 	cmd.Flags().String(flagEtcdInitialCluster, viper.GetString(flagEtcdInitialCluster), "initial cluster configuration for bootstrapping")
 	_ = cmd.Flags().SetAnnotation(flagEtcdInitialCluster, "categories", []string{"store"})
+	cmd.Flags().String(flagEtcdDiscovery, viper.GetString(flagEtcdDiscovery), "discovery URL used to bootstrap the cluster")
+	_ = cmd.Flags().SetAnnotation(flagEtcdDiscovery, "categories", []string{"store"})
+	cmd.Flags().String(flagEtcdDiscoverySrv, viper.GetString(flagEtcdDiscoverySrv), "DNS SRV record used to bootstrap the cluster")
+	_ = cmd.Flags().SetAnnotation(flagEtcdDiscoverySrv, "categories", []string{"store"})
 	cmd.Flags().StringSlice(flagEtcdInitialAdvertisePeerURLs, viper.GetStringSlice(flagEtcdInitialAdvertisePeerURLs), "list of this member's peer URLs to advertise to the rest of the cluster")
 	_ = cmd.Flags().SetAnnotation(flagEtcdInitialAdvertisePeerURLs, "categories", []string{"store"})
 	cmd.Flags().String(flagEtcdInitialClusterState, viper.GetString(flagEtcdInitialClusterState), "initial cluster state (\"new\" or \"existing\")")
