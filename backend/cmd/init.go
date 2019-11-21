@@ -167,7 +167,7 @@ func InitCommand() *cobra.Command {
 
 func seedCluster(client *clientv3.Client, config seedConfig) error {
 	store := etcdstore.NewStore(client, config.EtcdName)
-	if err := seeds.SeedInitialData(store); err != nil {
+	if err := seeds.SeedCluster(store, config.SeedConfig); err != nil {
 		return fmt.Errorf("error initializing cluster: %s", err)
 	}
 	return nil
