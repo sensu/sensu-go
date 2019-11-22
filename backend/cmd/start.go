@@ -44,7 +44,8 @@ const (
 	flagLogLevel              = "log-level"
 
 	// Etcd flag constants
-	flagEtcdClientURLs               = "etcd-listen-client-urls"
+	flagEtcdClientURLs               = "etcd-client-urls"
+	flagEtcdListenClientURLs         = "etcd-listen-client-urls"
 	flagEtcdPeerURLs                 = "etcd-listen-peer-urls"
 	flagEtcdInitialCluster           = "etcd-initial-cluster"
 	flagEtcdInitialAdvertisePeerURLs = "etcd-initial-advertise-peer-urls"
@@ -118,6 +119,14 @@ Use "{{.CommandPath}} [command] --help" for more information about a command.{{e
 // to initialize the backend
 type initializeFunc func(*backend.Config) (*backend.Backend, error)
 
+func fallbackStringSlice(newFlag, oldFlag string) []string {
+	slice := viper.GetStringSlice(newFlag)
+	if len(slice) == 0 {
+		slice = viper.GetStringSlice(oldFlag)
+	}
+	return slice
+}
+
 // StartCommand ...
 func StartCommand(initialize initializeFunc) *cobra.Command {
 	var setupErr error
@@ -154,7 +163,8 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 				StateDir:              viper.GetString(flagStateDir),
 
 				EtcdAdvertiseClientURLs:      viper.GetStringSlice(flagEtcdAdvertiseClientURLs),
-				EtcdListenClientURLs:         viper.GetStringSlice(flagEtcdClientURLs),
+				EtcdListenClientURLs:         viper.GetStringSlice(flagEtcdListenClientURLs),
+				EtcdClientURLs:               fallbackStringSlice(flagEtcdClientURLs, flagEtcdAdvertiseClientURLs),
 				EtcdListenPeerURLs:           viper.GetStringSlice(flagEtcdPeerURLs),
 				EtcdInitialCluster:           viper.GetString(flagEtcdInitialCluster),
 				EtcdInitialClusterState:      viper.GetString(flagEtcdInitialClusterState),
@@ -282,7 +292,7 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 
 	// Etcd defaults
 	viper.SetDefault(flagEtcdAdvertiseClientURLs, defaultEtcdAdvertiseClientURL)
-	viper.SetDefault(flagEtcdClientURLs, defaultEtcdClientURL)
+	viper.SetDefault(flagEtcdListenClientURLs, defaultEtcdClientURL)
 	viper.SetDefault(flagEtcdPeerURLs, defaultEtcdPeerURL)
 	viper.SetDefault(flagEtcdInitialCluster,
 		fmt.Sprintf("%s=%s", defaultEtcdName, defaultEtcdPeerURL))
@@ -332,8 +342,6 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 		cmd.Flags().String(backend.FlagJWTPublicKeyFile, viper.GetString(backend.FlagJWTPublicKeyFile), "path to the PEM-encoded public key to use to verify JWT signatures")
 
 		// Etcd server flags
-		cmd.Flags().StringSlice(flagEtcdAdvertiseClientURLs, viper.GetStringSlice(flagEtcdAdvertiseClientURLs), "list of this member's client URLs to advertise to clients")
-		_ = cmd.Flags().SetAnnotation(flagEtcdAdvertiseClientURLs, "categories", []string{"store"})
 		cmd.Flags().StringSlice(flagEtcdPeerURLs, viper.GetStringSlice(flagEtcdPeerURLs), "list of URLs to listen on for peer traffic")
 		_ = cmd.Flags().SetAnnotation(flagEtcdPeerURLs, "categories", []string{"store"})
 		cmd.Flags().String(flagEtcdInitialCluster, viper.GetString(flagEtcdInitialCluster), "initial cluster configuration for bootstrapping")
@@ -344,6 +352,8 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 		_ = cmd.Flags().SetAnnotation(flagEtcdInitialClusterState, "categories", []string{"store"})
 		cmd.Flags().String(flagEtcdInitialClusterToken, viper.GetString(flagEtcdInitialClusterToken), "initial cluster token for the etcd cluster during bootstrap")
 		_ = cmd.Flags().SetAnnotation(flagEtcdInitialClusterToken, "categories", []string{"store"})
+		cmd.Flags().StringSlice(flagEtcdListenClientURLs, viper.GetStringSlice(flagEtcdListenClientURLs), "list of etcd client URLs to listen on")
+		_ = cmd.Flags().SetAnnotation(flagEtcdListenClientURLs, "categories", []string{"store"})
 		cmd.Flags().Bool(flagNoEmbedEtcd, viper.GetBool(flagNoEmbedEtcd), "don't embed etcd, use external etcd instead")
 		_ = cmd.Flags().SetAnnotation(flagNoEmbedEtcd, "categories", []string{"store"})
 		cmd.Flags().Int64(flagEtcdQuotaBackendBytes, viper.GetInt64(flagEtcdQuotaBackendBytes), "maximum etcd database size in bytes (use with caution)")
@@ -364,11 +374,15 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 		_ = cmd.Flags().SetAnnotation(flagEtcdPeerTrustedCAFile, "categories", []string{"store"})
 	}
 
-	// Etcd client flags
-	cmd.Flags().StringSlice(flagEtcdClientURLs, viper.GetStringSlice(flagEtcdClientURLs), "list of etcd client URLs")
-	_ = cmd.Flags().SetAnnotation(flagEtcdClientURLs, "categories", []string{"store"})
+	// Etcd client/server flags
 	cmd.Flags().StringSlice(flagEtcdCipherSuites, nil, "list of ciphers to use for etcd TLS configuration")
 	_ = cmd.Flags().SetAnnotation(flagEtcdCipherSuites, "categories", []string{"store"})
+
+	// This one is really only a server flag, but because we lacked
+	// --etcd-client-urls until recently, it's used as a fallback.
+	cmd.Flags().StringSlice(flagEtcdAdvertiseClientURLs, viper.GetStringSlice(flagEtcdAdvertiseClientURLs), "list of this member's client URLs to advertise to clients")
+	_ = cmd.Flags().SetAnnotation(flagEtcdAdvertiseClientURLs, "categories", []string{"store"})
+
 	cmd.Flags().Uint(flagEtcdMaxRequestBytes, viper.GetUint(flagEtcdMaxRequestBytes), "maximum etcd request size in bytes (use with caution)")
 	_ = cmd.Flags().SetAnnotation(flagEtcdMaxRequestBytes, "categories", []string{"store"})
 
@@ -381,6 +395,8 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 	_ = cmd.Flags().SetAnnotation(flagEtcdClientCertAuth, "categories", []string{"store"})
 	cmd.Flags().String(flagEtcdTrustedCAFile, viper.GetString(flagEtcdTrustedCAFile), "path to the client server TLS trusted CA cert file")
 	_ = cmd.Flags().SetAnnotation(flagEtcdTrustedCAFile, "categories", []string{"store"})
+	cmd.Flags().String(flagEtcdClientURLs, viper.GetString(flagEtcdClientURLs), "client URLs to use when operating as an etcd client")
+	_ = cmd.Flags().SetAnnotation(flagEtcdClientURLs, "categories", []string{"store"})
 
 	// Load the configuration file but only error out if flagConfigFile is used
 	if err := viper.ReadInConfig(); err != nil && configFile != "" {

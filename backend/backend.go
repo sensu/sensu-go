@@ -71,10 +71,15 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 			return nil, err
 		}
 
+		clientURLs := config.EtcdClientURLs
+		if len(clientURLs) == 0 {
+			clientURLs = config.EtcdAdvertiseClientURLs
+		}
+
 		// Don't start up an embedded etcd, return a client that connects to an
 		// external etcd instead.
 		return clientv3.New(clientv3.Config{
-			Endpoints:   config.EtcdAdvertiseClientURLs,
+			Endpoints:   clientURLs,
 			DialTimeout: 5 * time.Second,
 			TLS:         tlsConfig,
 		})

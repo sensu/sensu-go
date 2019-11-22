@@ -69,20 +69,11 @@ func InitCommand() *cobra.Command {
 			}
 
 			cfg := &backend.Config{
-				EtcdAdvertiseClientURLs:      viper.GetStringSlice(flagEtcdAdvertiseClientURLs),
-				EtcdListenClientURLs:         viper.GetStringSlice(flagEtcdClientURLs),
-				EtcdListenPeerURLs:           viper.GetStringSlice(flagEtcdPeerURLs),
-				EtcdInitialCluster:           viper.GetString(flagEtcdInitialCluster),
-				EtcdInitialClusterState:      viper.GetString(flagEtcdInitialClusterState),
-				EtcdInitialAdvertisePeerURLs: viper.GetStringSlice(flagEtcdInitialAdvertisePeerURLs),
-				EtcdInitialClusterToken:      viper.GetString(flagEtcdInitialClusterToken),
-				EtcdName:                     viper.GetString(flagEtcdNodeName),
-				EtcdCipherSuites:             viper.GetStringSlice(flagEtcdCipherSuites),
-				EtcdQuotaBackendBytes:        viper.GetInt64(flagEtcdQuotaBackendBytes),
-				EtcdMaxRequestBytes:          viper.GetUint(flagEtcdMaxRequestBytes),
-				EtcdHeartbeatInterval:        viper.GetUint(flagEtcdHeartbeatInterval),
-				EtcdElectionTimeout:          viper.GetUint(flagEtcdElectionTimeout),
-				NoEmbedEtcd:                  true,
+				EtcdClientURLs:      fallbackStringSlice(flagEtcdClientURLs, flagEtcdAdvertiseClientURLs),
+				EtcdName:            viper.GetString(flagEtcdNodeName),
+				EtcdCipherSuites:    viper.GetStringSlice(flagEtcdCipherSuites),
+				EtcdMaxRequestBytes: viper.GetUint(flagEtcdMaxRequestBytes),
+				NoEmbedEtcd:         true,
 			}
 
 			// Sensu APIs TLS config
@@ -119,8 +110,13 @@ func InitCommand() *cobra.Command {
 				return err
 			}
 
+			clientURLs := viper.GetStringSlice(flagEtcdClientURLs)
+			if len(clientURLs) == 0 {
+				clientURLs = viper.GetStringSlice(flagEtcdAdvertiseClientURLs)
+			}
+
 			client, err := clientv3.New(clientv3.Config{
-				Endpoints:   cfg.EtcdAdvertiseClientURLs,
+				Endpoints:   clientURLs,
 				DialTimeout: 5 * time.Second,
 				TLS:         tlsConfig,
 			})
