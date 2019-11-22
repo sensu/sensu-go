@@ -1,6 +1,8 @@
 package graphql
 
 import (
+	"strconv"
+
 	"github.com/coreos/etcd/etcdserver/etcdserverpb"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
@@ -52,7 +54,7 @@ type etcdClusterMemberHealthImpl struct {
 // MemberID implements response to request for 'memberID' field.
 func (r *etcdClusterMemberHealthImpl) MemberID(p graphql.ResolveParams) (string, error) {
 	resp := p.Source.(*corev2.ClusterHealth)
-	return string(resp.MemberID), nil
+	return strconv.FormatUint(resp.MemberID, 10), nil
 }
 
 //
@@ -64,7 +66,7 @@ type etcdAlarmMemberImpl struct{}
 // MemberID implements response to request for 'memberID' field.
 func (r *etcdAlarmMemberImpl) MemberID(p graphql.ResolveParams) (string, error) {
 	resp := p.Source.(*etcdserverpb.AlarmMember)
-	return string(resp.MemberID), nil
+	return strconv.FormatUint(resp.MemberID, 10), nil
 }
 
 // MemberID implements response to request for 'memberID' field.

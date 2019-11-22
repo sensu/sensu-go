@@ -2,6 +2,7 @@ package graphql
 
 import (
 	"reflect"
+	"strconv"
 	"testing"
 
 	"github.com/coreos/etcd/etcdserver/etcdserverpb"
@@ -110,7 +111,7 @@ func Test_etcdAlarmMemberImpl_MemberID(t *testing.T) {
 		{
 			name:    "main",
 			source:  defaultResp.Alarms[0],
-			want:    string(defaultResp.Alarms[0].MemberID),
+			want:    strconv.FormatUint(defaultResp.Alarms[0].MemberID, 10),
 			wantErr: false,
 		},
 	}
@@ -170,7 +171,7 @@ func Test_etcdClusterMemberHealthImpl_MemberID(t *testing.T) {
 		{
 			name:    "main",
 			source:  defaultResp.ClusterHealth[0],
-			want:    string(defaultResp.ClusterHealth[0].MemberID),
+			want:    strconv.FormatUint(defaultResp.ClusterHealth[0].MemberID, 10),
 			wantErr: false,
 		},
 	}
