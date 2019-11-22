@@ -161,7 +161,7 @@ func InitCommand() *cobra.Command {
 	cmd.Flags().String(flagInitAdminPassword, "", "cluster admin password")
 	cmd.Flags().Bool(flagInteractive, false, "interactive mode")
 
-	setupErr = handleConfig(cmd)
+	setupErr = handleConfig(cmd, false)
 
 	return cmd
 }
