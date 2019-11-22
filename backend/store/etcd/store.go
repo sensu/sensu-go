@@ -60,6 +60,7 @@ func Create(ctx context.Context, client *clientv3.Client, key, namespace string,
 		return err
 	}
 	if !resp.Succeeded {
+		fmt.Printf("%#v\n", resp.Responses)
 		// Check if the namespace was missing
 		if namespace != "" && len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
 			return &store.ErrNamespaceMissing{Namespace: namespace}
@@ -119,7 +120,7 @@ func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace
 	}
 	if !resp.Succeeded {
 		// Check if the namespace was missing
-		if namespace != "" && len(resp.Responses[0].GetResponseRange().Kvs) == 0 {
+		if namespace != "" && (len(resp.Responses) == 0 || len(resp.Responses[0].GetResponseRange().Kvs) == 0) {
 			return &store.ErrNamespaceMissing{Namespace: namespace}
 		}
 
