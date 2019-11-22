@@ -18,8 +18,8 @@ import (
 )
 
 const (
-	flagInitAdminUsername = "admin-username"
-	flagInitAdminPassword = "admin-password"
+	flagInitAdminUsername = "cluster-admin-username"
+	flagInitAdminPassword = "cluster-admin-password"
 	flagInteractive       = "interactive"
 )
 
@@ -29,21 +29,21 @@ type seedConfig struct {
 }
 
 type initOpts struct {
-	AdminUsername string `survey:"admin-username"`
-	AdminPassword string `survey:"admin-password"`
+	AdminUsername string `survey:"cluster-admin-username"`
+	AdminPassword string `survey:"cluster-admin-password"`
 }
 
 func (i *initOpts) administerQuestionnaire() error {
 	qs := []*survey.Question{
 		{
-			Name: "admin-username",
+			Name: "cluster-admin-username",
 			Prompt: &survey.Input{
 				Message: "Admin Username:",
 			},
 			Validate: survey.Required,
 		},
 		{
-			Name: "admin-password",
+			Name: "cluster-admin-password",
 			Prompt: &survey.Password{
 				Message: "Admin Password:",
 			},
