@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/backend/etcd"
+	"github.com/sensu/sensu-go/backend/seeds"
+	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -76,7 +78,7 @@ func TestBackendHTTPListener(t *testing.T) {
 				}
 			}
 
-			b, err := Initialize(&Config{
+			cfg := &Config{
 				AgentHost:        "127.0.0.1",
 				AgentPort:        agentPort,
 				APIListenAddress: fmt.Sprintf("127.0.0.1:%d", apiPort),
@@ -94,10 +96,15 @@ func TestBackendHTTPListener(t *testing.T) {
 				EtcdName:                     "default",
 				EtcdClientTLSInfo:            tlsInfo,
 				EtcdPeerTLSInfo:              tlsInfo,
-			})
-			assert.NoError(t, err)
+			}
+			b, err := Initialize(cfg)
 			if err != nil {
-				assert.FailNow(t, "failed to start backend")
+				t.Fatalf("failed to start backend: %s", err)
+			}
+
+			store := etcdstore.NewStore(b.Client, cfg.EtcdName)
+			if err := seeds.SeedInitialData(store); err != nil {
+				t.Fatal(err)
 			}
 
 			var runError error

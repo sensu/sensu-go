@@ -21,6 +21,7 @@ func main() {
 	}
 	rootCmd.AddCommand(cmd.StartCommand(backend.Initialize))
 	rootCmd.AddCommand(cmd.VersionCommand())
+	rootCmd.AddCommand(cmd.InitCommand())
 
 	if err := rootCmd.Execute(); err != nil {
 		logger.WithError(err).Fatal("error executing sensu-backend")
