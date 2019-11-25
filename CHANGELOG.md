@@ -15,7 +15,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Show the correct default value for the format flag in `sensuctl dump` help
 usage.
 ### Fixed
-- Listing assets with no results returns an empty array
+- Listing assets with no results returns an empty array.
+- Fixed a panic that could occur when creating resources in a namespace that
+does not exist.
 
 ## [5.15.0] - 2019-11-18
 
