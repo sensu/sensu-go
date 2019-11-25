@@ -38,14 +38,14 @@ func (i *initOpts) administerQuestionnaire() error {
 		{
 			Name: "cluster-admin-username",
 			Prompt: &survey.Input{
-				Message: "Admin Username:",
+				Message: "Cluster Admin Username:",
 			},
 			Validate: survey.Required,
 		},
 		{
 			Name: "cluster-admin-password",
 			Prompt: &survey.Password{
-				Message: "Admin Password:",
+				Message: "Cluster Admin Password:",
 			},
 			Validate: survey.Required,
 		},
