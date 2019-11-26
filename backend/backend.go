@@ -191,8 +191,8 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
-		Store: stor,
-		Bus:   bus,
+		Store:                   stor,
+		Bus:                     bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 		AssetGetter:             assetGetter,
 		BufferSize:              viper.GetInt(FlagPipelinedBufferSize),
@@ -262,13 +262,13 @@ func Initialize(config *Config) (*Backend, error) {
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:             bus,
-		Store:           stor,
-		EventStore:      stor,
-		LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
-		RingPool:        ringPool,
-		BufferSize:      viper.GetInt(FlagKeepalivedBufferSize),
-		WorkerCount:     viper.GetInt(FlagKeepalivedWorkers),
+		Bus:                   bus,
+		Store:                 stor,
+		EventStore:            stor,
+		LivenessFactory:       liveness.EtcdFactory(b.ctx, b.Client),
+		RingPool:              ringPool,
+		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
+		WorkerCount:           viper.GetInt(FlagKeepalivedWorkers),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
@@ -387,8 +387,24 @@ func Initialize(config *Config) (*Backend, error) {
 	return b, nil
 }
 
-// Run starts all of the Backend server's daemons
-func (b *Backend) Run() error {
+func (b *Backend) runOnce() error {
+	var derr error
+
+	if b.Etcd != nil {
+		logger.Info("shutting down etcd")
+		defer func() {
+			if err := recover(); err != nil {
+				trace := string(debug.Stack())
+				logger.WithField("panic", trace).WithError(err.(error)).
+					Error("recovering from panic due to error, shutting down etcd")
+			}
+			err := b.Etcd.Shutdown()
+			if derr == nil {
+				derr = err
+			}
+		}()
+	}
+
 	eg := errGroup{
 		out: make(chan error),
 	}
@@ -425,39 +441,33 @@ func (b *Backend) Run() error {
 
 	select {
 	case err := <-eg.Err():
-		logger.WithError(err).Error("error in error group")
+		logger.WithError(err).Error("backend stopped working and is restarting")
 	case <-b.ctx.Done():
 		logger.Info("backend shutting down")
 	}
-
-	var derr error
-
 	if err := sg.Stop(); err != nil {
 		if derr == nil {
 			derr = err
 		}
 	}
 
-	if b.Etcd != nil {
-		logger.Info("shutting down etcd")
-		defer func() {
-			if err := recover(); err != nil {
-				trace := string(debug.Stack())
-				logger.WithField("panic", trace).WithError(err.(error)).
-					Error("recovering from panic due to error, shutting down etcd")
-			}
-			err := b.Etcd.Shutdown()
-			if derr == nil {
-				derr = err
-			}
-		}()
-	}
+	return derr
+}
 
+// Run starts all of the Backend server's daemons
+func (b *Backend) Run() error {
 	// we allow inErrChan to leak to avoid panics from other
 	// goroutines writing errors to either after shutdown has been initiated.
-	close(b.done)
+	defer close(b.done)
 
-	return derr
+	for {
+		if err := b.ctx.Err(); err != nil {
+			return nil
+		}
+		if err := b.runOnce(); err != nil {
+			logger.Error(err)
+		}
+	}
 }
 
 type stopper interface {
