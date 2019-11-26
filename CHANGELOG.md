@@ -9,6 +9,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Display the JWT expiration Unix timestamp in `sensuctl config view`.
+- Added the 'sensu-backend init' subcommand.
+- Added a new flag, --etcd-client-urls, which should be used with sensu-backend
+when it is not operating as an etcd member. The flag is also used by the new
+sensu-backend init tool.
 
 ### Fixed
 - Add a timeout to etcd requests when retrieving the nodes health.
@@ -20,6 +24,15 @@ usage.
 
 ### Fixed
 - Listing assets with no results returns an empty array
+- Listing assets with no results returns an empty array.
+- Fixed a panic that could occur when creating resources in a namespace that
+does not exist.
+
+### Changed
+- The backend will no longer automatically be seeded with a default admin
+username and password. Users will need to run 'sensu-backend init' on every
+new installation.
+- Several deprecated flags were removed from sensu-backend.
 
 ## [5.15.0] - 2019-11-18
 
