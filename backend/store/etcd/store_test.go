@@ -107,26 +107,36 @@ func TestCreate(t *testing.T) {
 }
 
 func TestCreateOrUpdate(t *testing.T) {
-	testWithEtcdStore(t, func(store *Store) {
+	testWithEtcdStore(t, func(s *Store) {
 		// Creating a namespaced key that does not exist should work
 		obj := &GenericObject{Revision: 1}
 		ctx := context.WithValue(context.Background(), types.NamespaceKey, "default")
-		err := CreateOrUpdate(ctx, store.client, "/default/foo", "default", obj)
+		err := CreateOrUpdate(ctx, s.client, "/default/foo", "default", obj)
 		assert.NoError(t, err)
+
+		// Creating a namespaced key in a missing namespace should return an error
+		ctx = context.WithValue(context.Background(), types.NamespaceKey, "acme")
+		err = CreateOrUpdate(ctx, s.client, "/acme/foo", "acme", obj)
+		switch err := err.(type) {
+		case *store.ErrNamespaceMissing:
+			break
+		default:
+			t.Errorf("Expected error ErrNamespaceMissing, received %v", err)
+		}
 
 		// Creating this same key should also work, but the revision should be
 		// different
 		obj2 := &GenericObject{Revision: 2}
-		err = CreateOrUpdate(ctx, store.client, "/default/foo", "default", obj)
+		err = CreateOrUpdate(ctx, s.client, "/default/foo", "default", obj)
 		assert.NoError(t, err)
 		result := &GenericObject{}
-		err = Get(ctx, store.client, "/default/foo", obj2)
+		err = Get(ctx, s.client, "/default/foo", obj2)
 		assert.NoError(t, err)
 		assert.NotEqual(t, obj.Revision, result.Revision)
 
 		// We should also be able to create a global object
 		ctx = context.WithValue(context.Background(), types.NamespaceKey, "")
-		err = CreateOrUpdate(ctx, store.client, "/foo", "", obj)
+		err = CreateOrUpdate(ctx, s.client, "/foo", "", obj)
 		assert.NoError(t, err)
 	})
 }

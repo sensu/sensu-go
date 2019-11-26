@@ -56,7 +56,7 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 
 			// Print the results based on the user preferences
 			resources := []corev2.Resource{}
-			var resultsWithBuilds []interface{}
+			resultsWithBuilds := []interface{}{}
 			for i := range results {
 				// Break the builds into multiple assets if we use the tabular format
 				if len(results[i].Builds) > 0 && format == config.FormatTabular {
