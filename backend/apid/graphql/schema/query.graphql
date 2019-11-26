@@ -95,7 +95,7 @@ type Query {
   health: ClusterHealth!
 
   "Describes the versions of each component of the backend."
-  version: Versions!
+  versions: Versions!
 
   """
   Node fetches an object given its ID.

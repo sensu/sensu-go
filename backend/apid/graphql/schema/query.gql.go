@@ -192,10 +192,10 @@ type QueryHealthFieldResolver interface {
 	Health(p graphql.ResolveParams) (interface{}, error)
 }
 
-// QueryVersionFieldResolver implement to resolve requests for the Query's version field.
-type QueryVersionFieldResolver interface {
-	// Version implements response to request for version field.
-	Version(p graphql.ResolveParams) (interface{}, error)
+// QueryVersionsFieldResolver implement to resolve requests for the Query's versions field.
+type QueryVersionsFieldResolver interface {
+	// Versions implements response to request for versions field.
+	Versions(p graphql.ResolveParams) (interface{}, error)
 }
 
 // QueryNodeFieldResolverArgs contains arguments provided to node when selected
@@ -304,7 +304,7 @@ type QueryFieldResolvers interface {
 	QueryHandlerFieldResolver
 	QuerySuggestFieldResolver
 	QueryHealthFieldResolver
-	QueryVersionFieldResolver
+	QueryVersionsFieldResolver
 	QueryNodeFieldResolver
 	QueryWrappedNodeFieldResolver
 }
@@ -416,8 +416,8 @@ func (_ QueryAliases) Health(p graphql.ResolveParams) (interface{}, error) {
 	return val, err
 }
 
-// Version implements response to request for 'version' field.
-func (_ QueryAliases) Version(p graphql.ResolveParams) (interface{}, error) {
+// Versions implements response to request for 'versions' field.
+func (_ QueryAliases) Versions(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -559,10 +559,10 @@ func _ObjTypeQueryHealthHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
-func _ObjTypeQueryVersionHandler(impl interface{}) graphql1.FieldResolveFn {
-	resolver := impl.(QueryVersionFieldResolver)
+func _ObjTypeQueryVersionsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(QueryVersionsFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Version(frp)
+		return resolver.Versions(frp)
 	}
 }
 
@@ -754,11 +754,11 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 				Name:              "suggest",
 				Type:              graphql.OutputType("SuggestionResultSet"),
 			},
-			"version": &graphql1.Field{
+			"versions": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "Describes the versions of each component of the backend.",
-				Name:              "version",
+				Name:              "versions",
 				Type:              graphql1.NewNonNull(graphql.OutputType("Versions")),
 			},
 			"viewer": &graphql1.Field{
@@ -806,7 +806,7 @@ var _ObjectTypeQueryDesc = graphql.ObjectDesc{
 		"namespace":   _ObjTypeQueryNamespaceHandler,
 		"node":        _ObjTypeQueryNodeHandler,
 		"suggest":     _ObjTypeQuerySuggestHandler,
-		"version":     _ObjTypeQueryVersionHandler,
+		"versions":    _ObjTypeQueryVersionsHandler,
 		"viewer":      _ObjTypeQueryViewerHandler,
 		"wrappedNode": _ObjTypeQueryWrappedNodeHandler,
 	},

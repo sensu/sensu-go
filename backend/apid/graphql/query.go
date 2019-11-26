@@ -151,8 +151,8 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 	return results, nil
 }
 
-// Version implements response to request for 'version' field.
-func (r *queryImpl) Version(p graphql.ResolveParams) (interface{}, error) {
+// Versions implements response to request for 'versions' field.
+func (r *queryImpl) Versions(p graphql.ResolveParams) (interface{}, error) {
 	resp := r.svc.VersionController.GetVersion(p.Context)
 	return resp, nil
 }
