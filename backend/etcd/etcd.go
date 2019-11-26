@@ -77,6 +77,8 @@ type Config struct {
 	InitialClusterState      string
 	InitialClusterToken      string
 	InitialAdvertisePeerURLs []string
+	Discovery                string
+	DiscoverySrv             string
 
 	ClientTLSInfo TLSInfo
 	PeerTLSInfo   TLSInfo
@@ -201,6 +203,8 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	cfg.InitialClusterToken = config.InitialClusterToken
 	cfg.InitialCluster = config.InitialCluster
 	cfg.ClusterState = config.InitialClusterState
+	cfg.Durl = config.Discovery
+	cfg.DNSCluster = config.DiscoverySrv
 
 	// Every 5 minutes, we will prune all values in etcd to only their latest
 	// revision.

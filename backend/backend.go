@@ -95,6 +95,8 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 	cfg.InitialClusterState = config.EtcdInitialClusterState
 	cfg.InitialAdvertisePeerURLs = config.EtcdInitialAdvertisePeerURLs
 	cfg.AdvertiseClientURLs = config.EtcdAdvertiseClientURLs
+	cfg.Discovery = config.EtcdDiscovery
+	cfg.DiscoverySrv = config.EtcdDiscoverySrv
 	cfg.Name = config.EtcdName
 
 	// Heartbeat interval

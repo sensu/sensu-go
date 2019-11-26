@@ -18,6 +18,12 @@ sensu-backend init tool.
 - Add a timeout to etcd requests when retrieving the nodes health.
 - Show the correct default value for the format flag in `sensuctl dump` help
 usage.
+- Added the `--etcd-discovery` and `--etcd-discovery-srv` flags to
+  `sensu-backend`. These are used to take advantage of the embedded etcd's
+  auto-discovery features.
+
+### Fixed
+- Listing assets with no results returns an empty array
 - Listing assets with no results returns an empty array.
 - Fixed a panic that could occur when creating resources in a namespace that
 does not exist.

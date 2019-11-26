@@ -48,6 +48,8 @@ const (
 	flagEtcdListenClientURLs         = "etcd-listen-client-urls"
 	flagEtcdPeerURLs                 = "etcd-listen-peer-urls"
 	flagEtcdInitialCluster           = "etcd-initial-cluster"
+	flagEtcdDiscovery                = "etcd-discovery"
+	flagEtcdDiscoverySrv             = "etcd-discovery-srv"
 	flagEtcdInitialAdvertisePeerURLs = "etcd-initial-advertise-peer-urls"
 	flagEtcdInitialClusterState      = "etcd-initial-cluster-state"
 	flagEtcdInitialClusterToken      = "etcd-initial-cluster-token"
@@ -148,6 +150,16 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 			}
 			logrus.SetLevel(level)
 
+			// If no clustering options are provided, default to a static
+			// cluster 'defaultEtcdName=defaultEtcdPeerURL'.
+			initialCluster := viper.GetString(flagEtcdInitialCluster)
+			etcdDiscovery := viper.GetString(flagEtcdDiscovery)
+			SrvDiscovery := viper.GetString(flagEtcdDiscoverySrv)
+
+			if initialCluster == "" && etcdDiscovery == "" && SrvDiscovery == "" {
+				initialCluster = fmt.Sprintf("%s=%s", defaultEtcdName, defaultEtcdPeerURL)
+			}
+
 			cfg := &backend.Config{
 				AgentHost:             viper.GetString(flagAgentHost),
 				AgentPort:             viper.GetInt(flagAgentPort),
@@ -166,8 +178,10 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 				EtcdListenClientURLs:         viper.GetStringSlice(flagEtcdListenClientURLs),
 				EtcdClientURLs:               fallbackStringSlice(flagEtcdClientURLs, flagEtcdAdvertiseClientURLs),
 				EtcdListenPeerURLs:           viper.GetStringSlice(flagEtcdPeerURLs),
-				EtcdInitialCluster:           viper.GetString(flagEtcdInitialCluster),
+				EtcdInitialCluster:           initialCluster,
 				EtcdInitialClusterState:      viper.GetString(flagEtcdInitialClusterState),
+				EtcdDiscovery:                etcdDiscovery,
+				EtcdDiscoverySrv:             SrvDiscovery,
 				EtcdInitialAdvertisePeerURLs: viper.GetStringSlice(flagEtcdInitialAdvertisePeerURLs),
 				EtcdInitialClusterToken:      viper.GetString(flagEtcdInitialClusterToken),
 				EtcdName:                     viper.GetString(flagEtcdNodeName),
@@ -294,8 +308,9 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 	viper.SetDefault(flagEtcdAdvertiseClientURLs, defaultEtcdAdvertiseClientURL)
 	viper.SetDefault(flagEtcdListenClientURLs, defaultEtcdClientURL)
 	viper.SetDefault(flagEtcdPeerURLs, defaultEtcdPeerURL)
-	viper.SetDefault(flagEtcdInitialCluster,
-		fmt.Sprintf("%s=%s", defaultEtcdName, defaultEtcdPeerURL))
+	viper.SetDefault(flagEtcdInitialCluster, "")
+	viper.SetDefault(flagEtcdDiscovery, "")
+	viper.SetDefault(flagEtcdDiscoverySrv, "")
 	viper.SetDefault(flagEtcdInitialAdvertisePeerURLs, defaultEtcdPeerURL)
 	viper.SetDefault(flagEtcdInitialClusterState, etcd.ClusterStateNew)
 	viper.SetDefault(flagEtcdInitialClusterToken, "")
@@ -350,6 +365,10 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 		_ = cmd.Flags().SetAnnotation(flagEtcdInitialAdvertisePeerURLs, "categories", []string{"store"})
 		cmd.Flags().String(flagEtcdInitialClusterState, viper.GetString(flagEtcdInitialClusterState), "initial cluster state (\"new\" or \"existing\")")
 		_ = cmd.Flags().SetAnnotation(flagEtcdInitialClusterState, "categories", []string{"store"})
+		cmd.Flags().String(flagEtcdDiscovery, viper.GetString(flagEtcdDiscovery), "discovery URL used to bootstrap the cluster")
+		_ = cmd.Flags().SetAnnotation(flagEtcdDiscovery, "categories", []string{"store"})
+		cmd.Flags().String(flagEtcdDiscoverySrv, viper.GetString(flagEtcdDiscoverySrv), "DNS SRV record used to bootstrap the cluster")
+		_ = cmd.Flags().SetAnnotation(flagEtcdDiscoverySrv, "categories", []string{"store"})
 		cmd.Flags().String(flagEtcdInitialClusterToken, viper.GetString(flagEtcdInitialClusterToken), "initial cluster token for the etcd cluster during bootstrap")
 		_ = cmd.Flags().SetAnnotation(flagEtcdInitialClusterToken, "categories", []string{"store"})
 		cmd.Flags().StringSlice(flagEtcdListenClientURLs, viper.GetStringSlice(flagEtcdListenClientURLs), "list of etcd client URLs to listen on")
