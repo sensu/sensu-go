@@ -391,6 +391,8 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 		_ = cmd.Flags().SetAnnotation(flagEtcdPeerClientCertAuth, "categories", []string{"store"})
 		cmd.Flags().String(flagEtcdPeerTrustedCAFile, viper.GetString(flagEtcdPeerTrustedCAFile), "path to the peer server TLS trusted CA file")
 		_ = cmd.Flags().SetAnnotation(flagEtcdPeerTrustedCAFile, "categories", []string{"store"})
+		cmd.Flags().String(flagEtcdNodeName, viper.GetString(flagEtcdNodeName), "name for this etcd node")
+		_ = cmd.Flags().SetAnnotation(flagEtcdNodeName, "categories", []string{"store"})
 	}
 
 	// Etcd client/server flags
