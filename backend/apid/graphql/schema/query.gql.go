@@ -186,6 +186,18 @@ type QuerySuggestFieldResolver interface {
 	Suggest(p QuerySuggestFieldResolverParams) (interface{}, error)
 }
 
+// QueryHealthFieldResolver implement to resolve requests for the Query's health field.
+type QueryHealthFieldResolver interface {
+	// Health implements response to request for health field.
+	Health(p graphql.ResolveParams) (interface{}, error)
+}
+
+// QueryVersionsFieldResolver implement to resolve requests for the Query's versions field.
+type QueryVersionsFieldResolver interface {
+	// Versions implements response to request for versions field.
+	Versions(p graphql.ResolveParams) (interface{}, error)
+}
+
 // QueryNodeFieldResolverArgs contains arguments provided to node when selected
 type QueryNodeFieldResolverArgs struct {
 	ID string // ID - The ID of an object.
@@ -291,6 +303,8 @@ type QueryFieldResolvers interface {
 	QueryEventFilterFieldResolver
 	QueryHandlerFieldResolver
 	QuerySuggestFieldResolver
+	QueryHealthFieldResolver
+	QueryVersionsFieldResolver
 	QueryNodeFieldResolver
 	QueryWrappedNodeFieldResolver
 }
@@ -392,6 +406,18 @@ func (_ QueryAliases) Handler(p QueryHandlerFieldResolverParams) (interface{}, e
 
 // Suggest implements response to request for 'suggest' field.
 func (_ QueryAliases) Suggest(p QuerySuggestFieldResolverParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Health implements response to request for 'health' field.
+func (_ QueryAliases) Health(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Versions implements response to request for 'versions' field.
+func (_ QueryAliases) Versions(p graphql.ResolveParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -526,6 +552,20 @@ func _ObjTypeQuerySuggestHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeQueryHealthHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(QueryHealthFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Health(frp)
+	}
+}
+
+func _ObjTypeQueryVersionsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(QueryVersionsFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Versions(frp)
+	}
+}
+
 func _ObjTypeQueryNodeHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(QueryNodeFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
@@ -640,6 +680,13 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 				Name:              "handler",
 				Type:              graphql.OutputType("Handler"),
 			},
+			"health": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Describes the health of the cluster.",
+				Name:              "health",
+				Type:              graphql1.NewNonNull(graphql.OutputType("ClusterHealth")),
+			},
 			"mutator": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
 					"name": &graphql1.ArgumentConfig{
@@ -707,6 +754,13 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 				Name:              "suggest",
 				Type:              graphql.OutputType("SuggestionResultSet"),
 			},
+			"versions": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Describes the versions of each component of the backend.",
+				Name:              "versions",
+				Type:              graphql1.NewNonNull(graphql.OutputType("Versions")),
+			},
 			"viewer": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -747,10 +801,12 @@ var _ObjectTypeQueryDesc = graphql.ObjectDesc{
 		"event":       _ObjTypeQueryEventHandler,
 		"eventFilter": _ObjTypeQueryEventFilterHandler,
 		"handler":     _ObjTypeQueryHandlerHandler,
+		"health":      _ObjTypeQueryHealthHandler,
 		"mutator":     _ObjTypeQueryMutatorHandler,
 		"namespace":   _ObjTypeQueryNamespaceHandler,
 		"node":        _ObjTypeQueryNodeHandler,
 		"suggest":     _ObjTypeQuerySuggestHandler,
+		"versions":    _ObjTypeQueryVersionsHandler,
 		"viewer":      _ObjTypeQueryViewerHandler,
 		"wrappedNode": _ObjTypeQueryWrappedNodeHandler,
 	},
