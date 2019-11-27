@@ -3,7 +3,6 @@ package etcd
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
@@ -48,12 +47,12 @@ func (s *Store) GetHookConfigs(ctx context.Context, pred *store.SelectionPredica
 // GetHookConfigByName gets a HookConfig by name.
 func (s *Store) GetHookConfigByName(ctx context.Context, name string) (*types.HookConfig, error) {
 	if name == "" {
-		return nil, errors.New("must specify name")
+		return nil, &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 
 	resp, err := s.client.Get(ctx, GetHookConfigsPath(ctx, name))
 	if err != nil {
-		return nil, err
+		return nil, &store.ErrInternal{Message: err.Error()}
 	}
 	if len(resp.Kvs) == 0 {
 		return nil, nil
@@ -62,7 +61,7 @@ func (s *Store) GetHookConfigByName(ctx context.Context, name string) (*types.Ho
 	hookBytes := resp.Kvs[0].Value
 	hook := &types.HookConfig{}
 	if err := unmarshal(hookBytes, hook); err != nil {
-		return nil, err
+		return nil, &store.ErrDecode{Err: err}
 	}
 
 	return hook, nil
@@ -71,26 +70,22 @@ func (s *Store) GetHookConfigByName(ctx context.Context, name string) (*types.Ho
 // UpdateHookConfig updates a HookConfig.
 func (s *Store) UpdateHookConfig(ctx context.Context, hook *types.HookConfig) error {
 	if err := hook.Validate(); err != nil {
-		return err
+		return &store.ErrNotValid{Err: err}
 	}
 
 	hookBytes, err := proto.Marshal(hook)
 	if err != nil {
-		return err
+		return &store.ErrEncode{Err: err}
 	}
 
 	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(hook.Namespace)), ">", 0)
 	req := clientv3.OpPut(getHookConfigPath(hook), string(hookBytes))
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
-		return err
+		return &store.ErrInternal{Message: err.Error()}
 	}
 	if !res.Succeeded {
-		return fmt.Errorf(
-			"could not create the hook %s in namespace %s",
-			hook.Name,
-			hook.Namespace,
-		)
+		return &store.ErrNamespaceMissing{Namespace: hook.Namespace}
 	}
 
 	return nil

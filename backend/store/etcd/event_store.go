@@ -54,15 +54,17 @@ func GetEventsPath(ctx context.Context, entity string) string {
 // DeleteEventByEntityCheck deletes an event by entity name and check name.
 func (s *Store) DeleteEventByEntityCheck(ctx context.Context, entityName, checkName string) error {
 	if entityName == "" || checkName == "" {
-		return errors.New("must specify entity and check name")
+		return &store.ErrNotValid{Err: errors.New("must specify entity and check name")}
 	}
 
 	path, err := getEventWithCheckPath(ctx, entityName, checkName)
 	if err != nil {
-		return err
+		return &store.ErrNotValid{Err: err}
 	}
 
-	_, err = s.client.Delete(ctx, path)
+	if _, err := s.client.Delete(ctx, path); err != nil {
+		return &store.ErrInternal{Message: err.Error()}
+	}
 	return err
 }
 
@@ -88,7 +90,7 @@ func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) (
 
 	resp, err := s.client.Get(ctx, key, opts...)
 	if err != nil {
-		return nil, err
+		return nil, &store.ErrInternal{Message: err.Error()}
 	}
 
 	if len(resp.Kvs) == 0 {
@@ -99,7 +101,7 @@ func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) (
 	for _, kv := range resp.Kvs {
 		event := &corev2.Event{}
 		if err := unmarshal(kv.Value, event); err != nil {
-			return nil, err
+			return nil, &store.ErrDecode{Err: err}
 		}
 
 		if event.Labels == nil {
@@ -124,7 +126,7 @@ func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) (
 // GetEventsByEntity gets all events matching a given entity name.
 func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
 	if entityName == "" {
-		return nil, errors.New("must specify entity name")
+		return nil, &store.ErrNotValid{Err: errors.New("must specify entity name")}
 	}
 
 	opts := []clientv3.OpOption{
@@ -137,7 +139,7 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *
 
 	resp, err := s.client.Get(ctx, path.Join(keyPrefix, pred.Continue), opts...)
 	if err != nil {
-		return nil, err
+		return nil, &store.ErrInternal{Message: err.Error()}
 	}
 
 	if len(resp.Kvs) == 0 {
@@ -148,7 +150,7 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *
 	for _, kv := range resp.Kvs {
 		event := &corev2.Event{}
 		if err := unmarshal(kv.Value, event); err != nil {
-			return nil, err
+			return nil, &store.ErrDecode{Err: err}
 		}
 
 		if event.Labels == nil {
@@ -174,17 +176,17 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *
 // GetEventByEntityCheck gets an event by entity and check name.
 func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName string) (*corev2.Event, error) {
 	if entityName == "" || checkName == "" {
-		return nil, errors.New("must specify entity and check name")
+		return nil, &store.ErrNotValid{Err: errors.New("must specify entity and check name")}
 	}
 
 	path, err := getEventWithCheckPath(ctx, entityName, checkName)
 	if err != nil {
-		return nil, err
+		return nil, &store.ErrNotValid{Err: err}
 	}
 
 	resp, err := s.client.Get(ctx, path, clientv3.WithPrefix(), clientv3.WithSerializable())
 	if err != nil {
-		return nil, err
+		return nil, &store.ErrInternal{Message: err.Error()}
 	}
 	if len(resp.Kvs) == 0 {
 		return nil, nil
@@ -193,7 +195,7 @@ func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName
 	eventBytes := resp.Kvs[0].Value
 	event := &corev2.Event{}
 	if err := unmarshal(eventBytes, event); err != nil {
-		return nil, err
+		return nil, &store.ErrDecode{Err: err}
 	}
 
 	if event.Labels == nil {
@@ -209,15 +211,15 @@ func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName
 // UpdateEvent updates an event.
 func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.Event, *corev2.Event, error) {
 	if event == nil || event.Check == nil {
-		return nil, nil, errors.New("event has no check")
+		return nil, nil, &store.ErrNotValid{Err: errors.New("event has no check")}
 	}
 
 	if err := event.Check.Validate(); err != nil {
-		return nil, nil, err
+		return nil, nil, &store.ErrNotValid{Err: err}
 	}
 
 	if err := event.Entity.Validate(); err != nil {
-		return nil, nil, err
+		return nil, nil, &store.ErrNotValid{Err: err}
 	}
 
 	ctx = store.NamespaceContext(ctx, event.Entity.Namespace)
@@ -232,7 +234,7 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 	// Maintain check history.
 	if prevEvent != nil {
 		if !prevEvent.HasCheck() {
-			return nil, nil, errors.New("invalid previous event")
+			return nil, nil, &store.ErrNotValid{Err: errors.New("invalid previous event")}
 		}
 
 		event.Check.MergeWith(prevEvent.Check)
@@ -276,22 +278,17 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 	// marshal the new event and store it.
 	eventBytes, err := proto.Marshal(persistEvent)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, &store.ErrEncode{Err: err}
 	}
 
 	cmp := namespaceExistsForResource(event.Entity)
 	req := clientv3.OpPut(getEventPath(event), string(eventBytes))
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, &store.ErrInternal{Message: err.Error()}
 	}
 	if !res.Succeeded {
-		return nil, nil, fmt.Errorf(
-			"could not create the event %s/%s in namespace %s",
-			event.Entity.Name,
-			event.Check.Name,
-			event.Entity.Namespace,
-		)
+		return nil, nil, &store.ErrNamespaceMissing{Namespace: event.Entity.Namespace}
 	}
 
 	return event, prevEvent, nil
@@ -323,15 +320,15 @@ func updateOccurrences(check *corev2.Check) {
 	}
 }
 
-func handleExpireOnResolveEntries(ctx context.Context, event *corev2.Event, store store.Store) error {
+func handleExpireOnResolveEntries(ctx context.Context, event *corev2.Event, st store.Store) error {
 	// Make sure we have a check and that the event is a resolution
 	if !event.HasCheck() || !event.IsResolution() {
 		return nil
 	}
 
-	entries, err := store.GetSilencedEntriesByName(ctx, event.Check.Silenced...)
+	entries, err := st.GetSilencedEntriesByName(ctx, event.Check.Silenced...)
 	if err != nil {
-		return fmt.Errorf("couldn't resolve silences: %s", err)
+		return &store.ErrInternal{Message: fmt.Sprintf("couldn't resolve silences: %s", err)}
 	}
 	toDelete := []string{}
 	toRetain := []string{}
@@ -343,8 +340,8 @@ func handleExpireOnResolveEntries(ctx context.Context, event *corev2.Event, stor
 		}
 	}
 
-	if err := store.DeleteSilencedEntryByName(ctx, toDelete...); err != nil {
-		return fmt.Errorf("couldn't resolve silences: %s", err)
+	if err := st.DeleteSilencedEntryByName(ctx, toDelete...); err != nil {
+		return &store.ErrInternal{Message: fmt.Sprintf("couldn't resolve silences: %s", err)}
 	}
 	event.Check.Silenced = toRetain
 

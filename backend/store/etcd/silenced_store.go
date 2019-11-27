@@ -41,7 +41,7 @@ func (s *Store) DeleteSilencedEntryByName(ctx context.Context, silencedNames ...
 
 	_, err := s.client.Txn(ctx).Then(ops...).Commit()
 	if err != nil {
-		return fmt.Errorf("error deleting silenced entries: %s", err)
+		return &store.ErrInternal{Message: fmt.Sprintf("error deleting silenced entries: %s", err)}
 	}
 	return nil
 }
@@ -50,7 +50,7 @@ func (s *Store) DeleteSilencedEntryByName(ctx context.Context, silencedNames ...
 func (s *Store) GetSilencedEntries(ctx context.Context) ([]*corev2.Silenced, error) {
 	resp, err := s.client.Get(ctx, GetSilencedPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
-		return nil, err
+		return nil, &store.ErrInternal{Message: err.Error()}
 	}
 	silencedArray, err := s.arraySilencedEntries(ctx, resp)
 	if err != nil {
@@ -62,7 +62,7 @@ func (s *Store) GetSilencedEntries(ctx context.Context) ([]*corev2.Silenced, err
 // GetSilencedEntriesBySubscription gets all silenced entries that match a set of subscriptions.
 func (s *Store) GetSilencedEntriesBySubscription(ctx context.Context, subscriptions ...string) ([]*corev2.Silenced, error) {
 	if len(subscriptions) == 0 {
-		return nil, errors.New("couldn't get silenced entries: must specify at least one subscription")
+		return nil, &store.ErrNotValid{Err: errors.New("couldn't get silenced entries: must specify at least one subscription")}
 	}
 	var ops []clientv3.Op
 	for _, subscription := range subscriptions {
@@ -71,7 +71,7 @@ func (s *Store) GetSilencedEntriesBySubscription(ctx context.Context, subscripti
 
 	resp, err := s.client.Txn(ctx).Then(ops...).Commit()
 	if err != nil {
-		return nil, fmt.Errorf("couldn't get silenced entries: %s", err)
+		return nil, &store.ErrInternal{Message: fmt.Sprintf("couldn't get silenced entries: %s", err)}
 	}
 
 	return s.arrayTxnSilencedEntries(ctx, resp)
@@ -80,11 +80,11 @@ func (s *Store) GetSilencedEntriesBySubscription(ctx context.Context, subscripti
 // GetSilencedEntriesByCheckName gets all silenced entries that match a check name.
 func (s *Store) GetSilencedEntriesByCheckName(ctx context.Context, checkName string) ([]*corev2.Silenced, error) {
 	if checkName == "" {
-		return nil, errors.New("must specify check name")
+		return nil, &store.ErrNotValid{Err: errors.New("must specify check name")}
 	}
 	resp, err := s.client.Get(ctx, GetSilencedPath(ctx, ""), clientv3.WithPrefix())
 	if err != nil {
-		return nil, err
+		return nil, &store.ErrInternal{Message: err.Error()}
 	}
 
 	// iterate through response entries
@@ -94,7 +94,7 @@ func (s *Store) GetSilencedEntriesByCheckName(ctx context.Context, checkName str
 		silencedEntry := &corev2.Silenced{}
 		err := unmarshal(kv.Value, silencedEntry)
 		if err != nil {
-			return nil, err
+			return nil, &store.ErrDecode{Err: err}
 		}
 		if silencedEntry.Check == checkName {
 			silencedArray = append(silencedArray, silencedEntry)
@@ -107,12 +107,12 @@ func (s *Store) GetSilencedEntriesByCheckName(ctx context.Context, checkName str
 // GetSilencedEntryByName gets a silenced entry by name.
 func (s *Store) GetSilencedEntryByName(ctx context.Context, name string) (*corev2.Silenced, error) {
 	if name == "" {
-		return nil, errors.New("must specify name")
+		return nil, &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 
 	resp, err := s.client.Get(ctx, GetSilencedPath(ctx, name))
 	if err != nil {
-		return nil, err
+		return nil, &store.ErrInternal{Message: err.Error()}
 	}
 	silencedArray, err := s.arraySilencedEntries(ctx, resp)
 	if err != nil {
@@ -136,7 +136,7 @@ func (s *Store) GetSilencedEntriesByName(ctx context.Context, names ...string) (
 	}
 	resp, err := s.client.Txn(ctx).Then(ops...).Commit()
 	if err != nil {
-		return nil, fmt.Errorf("couldn't get silenced entries: %s", err)
+		return nil, &store.ErrInternal{Message: fmt.Sprintf("couldn't get silenced entries: %s", err)}
 	}
 	return s.arrayTxnSilencedEntries(ctx, resp)
 }
@@ -144,12 +144,12 @@ func (s *Store) GetSilencedEntriesByName(ctx context.Context, names ...string) (
 // UpdateSilencedEntry updates a Silenced.
 func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenced) error {
 	if err := silenced.Validate(); err != nil {
-		return err
+		return &store.ErrNotValid{Err: err}
 	}
 
 	silencedBytes, err := proto.Marshal(silenced)
 	if err != nil {
-		return err
+		return &store.ErrEncode{Err: err}
 	}
 	var req clientv3.Op
 	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(silenced.Namespace)), ">", 0)
@@ -169,7 +169,7 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenc
 
 		lease, err := s.client.Grant(ctx, expireTime)
 		if err != nil {
-			return err
+			return &store.ErrInternal{Message: err.Error()}
 		}
 
 		req = clientv3.OpPut(GetSilencedPath(ctx, silenced.Name), string(silencedBytes), clientv3.WithLease(lease.ID))
@@ -178,14 +178,10 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenc
 	}
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
-		return err
+		return &store.ErrInternal{Message: err.Error()}
 	}
 	if !res.Succeeded {
-		return fmt.Errorf(
-			"could not create the silenced entry %s in namespace %s",
-			silenced.Name,
-			silenced.Namespace,
-		)
+		return &store.ErrNamespaceMissing{Namespace: silenced.Namespace}
 	}
 
 	return nil
@@ -202,12 +198,12 @@ func (s *Store) arraySilencedEntries(ctx context.Context, resp *clientv3.GetResp
 		leaseID := clientv3.LeaseID(kv.Lease)
 		ttl, err := s.client.TimeToLive(ctx, leaseID)
 		if err != nil {
-			return nil, err
+			return nil, &store.ErrInternal{Message: err.Error()}
 		}
 		silencedEntry := &corev2.Silenced{}
 		err = unmarshal(kv.Value, silencedEntry)
 		if err != nil {
-			return nil, err
+			return nil, &store.ErrDecode{Err: err}
 		}
 		silencedEntry.Expire = ttl.TTL
 		silencedArray[i] = silencedEntry
@@ -222,11 +218,11 @@ func (s *Store) arrayTxnSilencedEntries(ctx context.Context, resp *clientv3.TxnR
 			leaseID := clientv3.LeaseID(kv.Lease)
 			ttl, err := s.client.TimeToLive(ctx, leaseID)
 			if err != nil {
-				return nil, fmt.Errorf("couldn't get silenced entries: %s", err)
+				return nil, &store.ErrInternal{Message: fmt.Sprintf("couldn't get silenced entries: %s", err)}
 			}
 			var silenced corev2.Silenced
 			if err := unmarshal(kv.Value, &silenced); err != nil {
-				return nil, fmt.Errorf("couldn't get silenced entries: %s", err)
+				return nil, &store.ErrDecode{Err: fmt.Errorf("couldn't get silenced entries: %s", err)}
 			}
 			silenced.Expire = ttl.TTL
 			results = append(results, &silenced)
