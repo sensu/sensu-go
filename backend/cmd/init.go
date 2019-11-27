@@ -70,7 +70,6 @@ func InitCommand() *cobra.Command {
 
 			cfg := &backend.Config{
 				EtcdClientURLs:      fallbackStringSlice(flagEtcdClientURLs, flagEtcdAdvertiseClientURLs),
-				EtcdName:            viper.GetString(flagEtcdNodeName),
 				EtcdCipherSuites:    viper.GetStringSlice(flagEtcdCipherSuites),
 				EtcdMaxRequestBytes: viper.GetUint(flagEtcdMaxRequestBytes),
 				NoEmbedEtcd:         true,
@@ -163,7 +162,7 @@ func InitCommand() *cobra.Command {
 }
 
 func seedCluster(client *clientv3.Client, config seedConfig) error {
-	store := etcdstore.NewStore(client, config.EtcdName)
+	store := etcdstore.NewStore(client, "")
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 	if err := seeds.SeedCluster(ctx, store, config.SeedConfig); err != nil {
