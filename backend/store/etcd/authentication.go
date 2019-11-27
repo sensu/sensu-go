@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/sensu/sensu-go/backend/store"
 )
 
 func getAuthenticationPath(id string) string {
@@ -20,10 +21,10 @@ func (s *Store) CreateJWTSecret(secret []byte) error {
 	req := clientv3.OpPut(getAuthenticationPath("secret"), string(secret))
 	res, err := s.client.Txn(context.TODO()).If(cmp).Then(req).Commit()
 	if err != nil {
-		return err
+		return &store.ErrInternal{Message: err.Error()}
 	}
 	if !res.Succeeded {
-		return fmt.Errorf("a secret already exist")
+		return &store.ErrAlreadyExists{Key: "(secret already exists)"}
 	}
 
 	return nil
@@ -33,10 +34,10 @@ func (s *Store) CreateJWTSecret(secret []byte) error {
 func (s *Store) GetJWTSecret() ([]byte, error) {
 	resp, err := s.client.Get(context.TODO(), getAuthenticationPath("secret"), clientv3.WithLimit(1))
 	if err != nil {
-		return nil, err
+		return nil, &store.ErrInternal{Message: err.Error()}
 	}
 	if len(resp.Kvs) != 1 {
-		return nil, fmt.Errorf("secret does not exist")
+		return nil, &store.ErrNotFound{Key: "(secret does not exist)"}
 	}
 
 	return resp.Kvs[0].Value, nil
@@ -44,6 +45,8 @@ func (s *Store) GetJWTSecret() ([]byte, error) {
 
 // UpdateJWTSecret replaces the jwt secret with a new one.
 func (s *Store) UpdateJWTSecret(secret []byte) error {
-	_, err := s.client.Put(context.TODO(), getAuthenticationPath("secret"), string(secret))
-	return err
+	if _, err := s.client.Put(context.TODO(), getAuthenticationPath("secret"), string(secret)); err != nil {
+		return &store.ErrInternal{Message: err.Error()}
+	}
+	return nil
 }

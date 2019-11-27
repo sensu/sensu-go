@@ -57,7 +57,7 @@ func Create(ctx context.Context, client *clientv3.Client, key, namespace string,
 		getNamespace(namespace), getKey(key),
 	).Commit()
 	if err != nil {
-		return err
+		return &store.ErrInternal{Message: err.Error()}
 	}
 	if !resp.Succeeded {
 		// Check if the namespace was missing
@@ -71,8 +71,8 @@ func Create(ctx context.Context, client *clientv3.Client, key, namespace string,
 		}
 
 		// Unknown error
-		return &store.ErrInternal{
-			Message: fmt.Sprintf("could not create the key %s", key),
+		return &store.ErrNotValid{
+			Err: fmt.Errorf("could not create the key %s", key),
 		}
 	}
 
@@ -115,7 +115,7 @@ func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace
 	req := clientv3.OpPut(key, string(bytes))
 	resp, err := client.Txn(ctx).If(comparisons...).Then(req).Commit()
 	if err != nil {
-		return err
+		return &store.ErrInternal{Message: err.Error()}
 	}
 	if !resp.Succeeded {
 		// Check if the namespace was missing
@@ -124,8 +124,8 @@ func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace
 		}
 
 		// Unknown error
-		return &store.ErrInternal{
-			Message: fmt.Sprintf("could not update the key %s", key),
+		return &store.ErrNotValid{
+			Err: fmt.Errorf("could not update the key %s", key),
 		}
 	}
 
@@ -136,14 +136,10 @@ func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace
 func Delete(ctx context.Context, client *clientv3.Client, key string) error {
 	resp, err := client.Delete(ctx, key)
 	if err != nil {
-		return err
+		return &store.ErrInternal{Message: err.Error()}
 	}
 	if resp.Deleted == 0 {
 		return &store.ErrNotFound{Key: key}
-	} else if resp.Deleted > 1 {
-		return &store.ErrInternal{
-			Message: fmt.Sprintf("expected to delete exactly 1 key, deleted %d", resp.Deleted),
-		}
 	}
 
 	return nil
@@ -154,7 +150,7 @@ func Get(ctx context.Context, client *clientv3.Client, key string, object interf
 	// Fetch the key from the store
 	resp, err := client.Get(ctx, key, clientv3.WithLimit(1))
 	if err != nil {
-		return err
+		return &store.ErrInternal{Message: err.Error()}
 	}
 
 	// Ensure we only received a single item
@@ -180,10 +176,10 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 	// is a slice.
 	v := reflect.ValueOf(objsPtr)
 	if v.Kind() != reflect.Ptr {
-		return fmt.Errorf("expected pointer, but got %v type", v.Type())
+		return &store.ErrNotValid{Err: fmt.Errorf("expected pointer, but got %v type", v.Type())}
 	}
 	if v.Elem().Kind() != reflect.Slice {
-		return fmt.Errorf("expected slice, but got %s", v.Elem().Kind())
+		return &store.ErrNotValid{Err: fmt.Errorf("expected slice, but got %s", v.Elem().Kind())}
 	}
 	v = v.Elem()
 
@@ -206,7 +202,7 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 
 	resp, err := client.Get(ctx, key, opts...)
 	if err != nil {
-		return err
+		return &store.ErrInternal{Message: err.Error()}
 	}
 
 	for _, kv := range resp.Kvs {
@@ -271,7 +267,7 @@ func Update(ctx context.Context, client *clientv3.Client, key, namespace string,
 		getNamespace(namespace), getKey(key),
 	).Commit()
 	if err != nil {
-		return err
+		return &store.ErrInternal{Message: err.Error()}
 	}
 	if !resp.Succeeded {
 		// Check if the namespace was missing
@@ -285,8 +281,8 @@ func Update(ctx context.Context, client *clientv3.Client, key, namespace string,
 		}
 
 		// Unknown error
-		return &store.ErrInternal{
-			Message: fmt.Sprintf("could not update the key %s", key),
+		return &store.ErrNotValid{
+			Err: fmt.Errorf("could not update the key %s", key),
 		}
 	}
 
@@ -303,7 +299,7 @@ func Count(ctx context.Context, client *clientv3.Client, key string) (int64, err
 
 	resp, err := client.Get(ctx, key, opts...)
 	if err != nil {
-		return 0, err
+		return 0, &store.ErrInternal{Message: err.Error()}
 	}
 
 	return resp.Count, nil

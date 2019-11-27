@@ -26,19 +26,20 @@ func GetUsersPath(ctx context.Context, id string) string {
 // AuthenticateUser authenticates a User by username and password.
 func (s *Store) AuthenticateUser(ctx context.Context, username, password string) (*corev2.User, error) {
 	user, err := s.GetUser(ctx, username)
+	if err != nil {
+		return nil, &store.ErrInternal{Message: err.Error()}
+	}
 	if user == nil {
-		return nil, fmt.Errorf("user %s does not exist", username)
-	} else if err != nil {
-		return nil, err
+		return nil, &store.ErrNotFound{Key: username}
 	}
 
 	if user.Disabled {
-		return nil, fmt.Errorf("user %s is disabled", username)
+		return nil, &store.ErrNotValid{Err: fmt.Errorf("user %s is disabled", username)}
 	}
 
 	ok := bcrypt.CheckPassword(user.Password, password)
 	if !ok {
-		return nil, fmt.Errorf("wrong password for user %s", username)
+		return nil, &store.ErrNotValid{Err: fmt.Errorf("wrong password for user %s", username)}
 	}
 
 	return user, nil
@@ -48,7 +49,7 @@ func (s *Store) AuthenticateUser(ctx context.Context, username, password string)
 func (s *Store) CreateUser(u *corev2.User) error {
 	userBytes, err := proto.Marshal(u)
 	if err != nil {
-		return err
+		return &store.ErrNotValid{Err: err}
 	}
 
 	// We need to prepare a transaction to verify the version of the key
@@ -58,10 +59,10 @@ func (s *Store) CreateUser(u *corev2.User) error {
 	req := clientv3.OpPut(getUserPath(u.Username), string(userBytes))
 	res, err := s.client.Txn(context.TODO()).If(cmp).Then(req).Commit()
 	if err != nil {
-		return err
+		return &store.ErrInternal{Message: err.Error()}
 	}
 	if !res.Succeeded {
-		return fmt.Errorf("user %s already exists", u.Username)
+		return &store.ErrAlreadyExists{Key: u.Username}
 	}
 
 	return nil
@@ -78,7 +79,7 @@ func (s *Store) DeleteUser(ctx context.Context, user *corev2.User) error {
 	// Marshal the user struct
 	userBytes, err := proto.Marshal(user)
 	if err != nil {
-		return err
+		return &store.ErrEncode{Err: err}
 	}
 
 	// Construct the list of operations to make in the transaction
@@ -93,7 +94,7 @@ func (s *Store) DeleteUser(ctx context.Context, user *corev2.User) error {
 
 	res, serr := txn.Commit()
 	if serr != nil {
-		return err
+		return &store.ErrInternal{Message: err.Error()}
 	}
 
 	if !res.Succeeded {
@@ -109,7 +110,7 @@ func (s *Store) DeleteUser(ctx context.Context, user *corev2.User) error {
 func (s *Store) GetUser(ctx context.Context, username string) (*corev2.User, error) {
 	resp, err := s.client.Get(ctx, getUserPath(username), clientv3.WithLimit(1))
 	if err != nil {
-		return nil, err
+		return nil, &store.ErrInternal{Message: err.Error()}
 	}
 	if len(resp.Kvs) != 1 {
 		return nil, nil
@@ -118,7 +119,7 @@ func (s *Store) GetUser(ctx context.Context, username string) (*corev2.User, err
 	user := &corev2.User{}
 	err = unmarshal(resp.Kvs[0].Value, user)
 	if err != nil {
-		return nil, err
+		return nil, &store.ErrDecode{Err: err}
 	}
 
 	return user, nil
@@ -153,9 +154,12 @@ func (s *Store) GetAllUsers(pred *store.SelectionPredicate) ([]*corev2.User, err
 func (s *Store) UpdateUser(u *corev2.User) error {
 	bytes, err := proto.Marshal(u)
 	if err != nil {
-		return err
+		return &store.ErrEncode{Err: err}
 	}
 
 	_, err = s.client.Put(context.TODO(), getUserPath(u.Username), string(bytes))
-	return err
+	if err != nil {
+		return &store.ErrInternal{Message: err.Error()}
+	}
+	return nil
 }

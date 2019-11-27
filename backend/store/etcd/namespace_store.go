@@ -3,7 +3,6 @@ package etcd
 import (
 	"context"
 	"errors"
-	"fmt"
 	"path"
 
 	v3 "github.com/coreos/etcd/clientv3"
@@ -29,12 +28,12 @@ func GetNamespacesPath(ctx context.Context, name string) string {
 // CreateNamespace creates a namespace with the provided namespace
 func (s *Store) CreateNamespace(ctx context.Context, namespace *types.Namespace) error {
 	if err := namespace.Validate(); err != nil {
-		return err
+		return &store.ErrNotValid{Err: err}
 	}
 
 	namespaceBytes, err := proto.Marshal(namespace)
 	if err != nil {
-		return err
+		return &store.ErrEncode{Err: err}
 	}
 
 	namespaceKey := getNamespacePath(namespace.Name)
@@ -48,23 +47,20 @@ func (s *Store) CreateNamespace(ctx context.Context, namespace *types.Namespace)
 			v3.OpPut(namespaceKey, string(namespaceBytes)),
 		).Commit()
 	if err != nil {
-		return err
+		return &store.ErrInternal{Message: err.Error()}
 	}
 
 	if !res.Succeeded {
-		return fmt.Errorf(
-			"could not create the namespace %s",
-			namespace.Name,
-		)
+		return &store.ErrAlreadyExists{Key: namespaceKey}
 	}
 
-	return err
+	return nil
 }
 
 // DeleteNamespace deletes the namespace with the given name
 func (s *Store) DeleteNamespace(ctx context.Context, name string) error {
 	if name == "" {
-		return errors.New("must specify name")
+		return &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 
 	// Validate whether there are any resources referencing the namespace
@@ -80,18 +76,18 @@ func (s *Store) DeleteNamespace(ctx context.Context, name string) error {
 	}
 	for _, r := range getresp.Responses {
 		if r.GetResponseRange().Count > 0 {
-			return errors.New("namespace is not empty")
+			return &store.ErrNotValid{Err: errors.New("namespace is not empty")}
 		}
 	}
 
 	// Delete the resource
 	resp, err := s.client.Delete(ctx, getNamespacePath(name), v3.WithPrefix())
 	if err != nil {
-		return err
+		return &store.ErrInternal{Message: err.Error()}
 	}
 
 	if resp.Deleted != 1 {
-		return fmt.Errorf("namespace %s does not exist", name)
+		return &store.ErrNotFound{Key: getNamespacePath(name)}
 	}
 
 	return nil
@@ -105,7 +101,7 @@ func (s *Store) GetNamespace(ctx context.Context, name string) (*types.Namespace
 		v3.WithLimit(1),
 	)
 	if err != nil {
-		return nil, err
+		return nil, &store.ErrInternal{Message: err.Error()}
 	}
 
 	if len(resp.Kvs) == 0 {
@@ -130,17 +126,19 @@ func (s *Store) ListNamespaces(ctx context.Context, pred *store.SelectionPredica
 // UpdateNamespace updates a namespace with the given object
 func (s *Store) UpdateNamespace(ctx context.Context, namespace *types.Namespace) error {
 	if err := namespace.Validate(); err != nil {
-		return err
+		return &store.ErrNotValid{Err: err}
 	}
 
 	bytes, err := proto.Marshal(namespace)
 	if err != nil {
-		return err
+		return &store.ErrEncode{Err: err}
 	}
 
-	_, err = s.client.Put(ctx, getNamespacePath(namespace.Name), string(bytes))
+	if _, err := s.client.Put(ctx, getNamespacePath(namespace.Name), string(bytes)); err != nil {
+		return &store.ErrInternal{Message: err.Error()}
+	}
 
-	return err
+	return nil
 }
 
 func unmarshalNamespaces(kvs []*mvccpb.KeyValue) ([]*types.Namespace, error) {
@@ -149,7 +147,7 @@ func unmarshalNamespaces(kvs []*mvccpb.KeyValue) ([]*types.Namespace, error) {
 		namespace := &types.Namespace{}
 		s[i] = namespace
 		if err := unmarshal(kv.Value, namespace); err != nil {
-			return nil, err
+			return nil, &store.ErrDecode{Err: err}
 		}
 	}
 
