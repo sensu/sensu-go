@@ -46,6 +46,7 @@ func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]b
 
 	mutator, err := p.store.GetMutatorByName(ctx, handler.Mutator)
 	if err != nil {
+		// Warning: do not wrap this error
 		logger.WithFields(fields).WithError(err).Error("failed to retrieve mutator")
 		return nil, err
 	}
@@ -57,6 +58,7 @@ func (p *Pipelined) mutateEvent(handler *types.Handler, event *types.Event) ([]b
 			if err == store.ErrNoExtension {
 				return nil, nil
 			}
+			// Warning: do not wrap this error
 			return nil, err
 		}
 		executor, err := p.extensionExecutor(extension)

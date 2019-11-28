@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/asset"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/types"
@@ -129,6 +130,10 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 					WithFields(fields).
 					WithError(err).
 					Error("failed to retrieve a handler"))
+				if _, ok := err.(*store.ErrInternal); ok {
+					// Fatal error
+					return nil, err
+				}
 				continue
 			}
 
@@ -164,6 +169,9 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 					WithFields(fields).
 					WithError(err).
 					Error("failed to expand handler set")
+				if _, ok := err.(*store.ErrInternal); ok {
+					return nil, err
+				}
 			} else {
 				for name, u := range setHandlers {
 					if _, ok := expanded[name]; !ok {
@@ -210,6 +218,10 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 		assets, err := asset.GetAll(context.TODO(), p.assetGetter, matchedAssets)
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for handler")
+			if _, ok := err.(*store.ErrInternal); ok {
+				// Fatal error
+				return nil, err
+			}
 		} else {
 			handlerExec.Env = environment.MergeEnvironments(os.Environ(), assets.Env(), handler.EnvVars)
 		}

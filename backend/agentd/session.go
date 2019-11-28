@@ -104,9 +104,7 @@ type SessionConfig struct {
 func NewSession(ctx context.Context, cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store store.Store, unmarshal UnmarshalFunc, marshal MarshalFunc) (*Session, error) {
 	// Validate the agent namespace
 	if _, err := store.GetNamespace(ctx, cfg.Namespace); err != nil {
-		return nil, fmt.Errorf(
-			"could not retrieve the namespace '%s': %s", cfg.Namespace, err.Error(),
-		)
+		return nil, err
 	}
 
 	logger.WithFields(logrus.Fields{

@@ -164,14 +164,11 @@ func (e *Eventd) startHandlers() {
 					// we will end up reading from a closed channel. If it's closed,
 					// return from this goroutine and emit a fatal error. It is then
 					// the responsility of eventd's parent to shutdown eventd.
-					//
-					// NOTE: Should that be the case? If eventd is signalling that it has,
-					// effectively, shutdown, why would something else be responsible for
-					// shutting it down.
 					if !ok {
-						// This only buffers a single error. We can't block on
-						// sending these or shutdown will block indefinitely.
 						select {
+						// If this channel send doesn't occur immediately it means
+						// another goroutine has placed an error there already; we
+						// don't need to send another.
 						case e.errChan <- errors.New("event channel closed"):
 						default:
 						}
@@ -306,12 +303,26 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 		return true
 	} else if err != nil {
 		lager.WithError(err).Error("check ttl: error retrieving entity")
+		if _, ok := err.(*store.ErrInternal); ok {
+			// Fatal error
+			select {
+			case e.errChan <- err:
+			case <-e.ctx.Done():
+			}
+		}
 		return false
 	}
 
 	event, err := e.eventStore.GetEventByEntityCheck(ctx, entity, check)
 	if err != nil {
 		lager.WithError(err).Error("check ttl: error retrieving event")
+		if _, ok := err.(*store.ErrInternal); ok {
+			// Fatal error
+			select {
+			case e.errChan <- err:
+			case <-e.ctx.Done():
+			}
+		}
 		return false
 	}
 
@@ -352,6 +363,13 @@ func (e *Eventd) handleFailure(event *corev2.Event) error {
 	}
 	updatedEvent, _, err := e.eventStore.UpdateEvent(ctx, failedCheckEvent)
 	if err != nil {
+		if _, ok := err.(*store.ErrInternal); ok {
+			// Fatal error
+			select {
+			case e.errChan <- err:
+			case <-e.ctx.Done():
+			}
+		}
 		return err
 	}
 
@@ -367,6 +385,13 @@ func (e *Eventd) createFailedCheckEvent(ctx context.Context, event *corev2.Event
 		ctx, event.Entity.Name, event.Check.Name,
 	)
 	if err != nil {
+		if _, ok := err.(*store.ErrInternal); ok {
+			// Fatal error
+			select {
+			case e.errChan <- err:
+			case <-e.ctx.Done():
+			}
+		}
 		return nil, err
 	}
 
