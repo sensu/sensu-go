@@ -1,0 +1,59 @@
+"""
+Describes the health of an Etcd cluster member
+"""
+type EtcdClusterMemberHealth {
+	"MemberID is the etcd cluster member's ID."
+  memberID: String!
+
+	"Name is the cluster member's name."
+  name: String!
+
+	"Err holds the string representation of any errors encountered while checking the member's health."
+  err: String
+
+	"Healthy describes the health of the cluster member."
+  healthy: Boolean!
+}
+
+"""
+Describes the health of an Etcd cluster
+"""
+type EtcdClusterHealth {
+	"Alarms is the list of active etcd alarms."
+  alarms: [EtcdAlarmMember!]!
+
+	"Returns list of health status for every cluster member."
+  members: [EtcdClusterMemberHealth!]!
+}
+
+"""
+Describes the state of an Etcd alarm
+"""
+type EtcdAlarmMember {
+  "ID of the member associated with the raised alarm."
+  memberID: String!
+
+	"The type of alarm which has been raised."
+  alarm: EtcdAlarmType!
+}
+
+"""
+Alarm describes the type of alarm which has been raised.
+"""
+enum EtcdAlarmType {
+  NONE
+  NOSPACE
+  CORRUPT
+}
+
+"""
+Describes the health of the Sensu backend and it's components
+"""
+type ClusterHealth {
+  "Returns health of the etcd cluster."
+  etcd: EtcdClusterHealth
+
+  # The store interface does not currently return an error if one occurs.
+  # "Holds the string representation of any errors encountered while checking the member's health."
+  # etcdErr: String
+}
