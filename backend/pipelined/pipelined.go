@@ -139,6 +139,13 @@ func (p *Pipelined) createPipelines(count int, channel chan interface{}) {
 					}
 
 					if err := p.handleEvent(event); err != nil {
+						if _, ok := err.(*store.ErrInternal); ok {
+							select {
+							case p.errChan <- err:
+							case <-p.stopping:
+							}
+							return
+						}
 						logger.Error(err)
 					}
 				}

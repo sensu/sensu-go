@@ -53,6 +53,8 @@ type Keepalived struct {
 	errChan               chan error
 	livenessFactory       liveness.Factory
 	ringPool              *ringv2.Pool
+	ctx                   context.Context
+	cancel                context.CancelFunc
 }
 
 // Option is a functional option.
@@ -79,6 +81,8 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 		c.WorkerCount = 1
 	}
 
+	ctx, cancel := context.WithCancel(context.Background())
+
 	k := &Keepalived{
 		store:                 c.Store,
 		eventStore:            c.EventStore,
@@ -90,6 +94,8 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 		mu:                    &sync.Mutex{},
 		errChan:               make(chan error, 1),
 		ringPool:              c.RingPool,
+		ctx:                   ctx,
+		cancel:                cancel,
 	}
 	for _, o := range opts {
 		if err := o(k); err != nil {
@@ -126,6 +132,7 @@ func (k *Keepalived) Start() error {
 // Stop stops the daemon, returning an error if one was encountered during
 // shutdown.
 func (k *Keepalived) Stop() error {
+	k.cancel()
 	err := k.subscription.Cancel()
 	close(k.keepaliveChan)
 	k.wg.Wait()
@@ -146,7 +153,7 @@ func (k *Keepalived) Name() string {
 
 func (k *Keepalived) initFromStore(ctx context.Context) error {
 	// For which clients were we previously alerting?
-	keepalives, err := k.store.GetFailingKeepalives(context.TODO())
+	keepalives, err := k.store.GetFailingKeepalives(ctx)
 	if err != nil {
 		return err
 	}
@@ -154,7 +161,7 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 	switches := k.livenessFactory(k.Name(), k.dead, k.alive, logger)
 
 	for _, keepalive := range keepalives {
-		entityCtx := context.WithValue(context.TODO(), types.NamespaceKey, keepalive.Namespace)
+		entityCtx := context.WithValue(ctx, types.NamespaceKey, keepalive.Namespace)
 		event, err := k.store.GetEventByEntityCheck(entityCtx, keepalive.Name, "keepalive")
 		if err != nil {
 			return err
@@ -230,6 +237,14 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 			// The keepalive event was deleted, so we should bury its associated switch
 			id := path.Join(entity.Namespace, entity.Name)
 			if err := switches.Bury(ctx, id); err != nil {
+				if _, ok := err.(*store.ErrInternal); ok {
+					// Fatal error
+					select {
+					case k.errChan <- err:
+					case <-k.ctx.Done():
+					}
+					return
+				}
 				logger.WithError(err).Error("error deleting keepalive")
 			}
 			continue
@@ -237,6 +252,14 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 
 		if err := k.handleEntityRegistration(entity); err != nil {
 			logger.WithError(err).Error("error handling entity registration")
+			if _, ok := err.(*store.ErrInternal); ok {
+				// Fatal error
+				select {
+				case k.errChan <- err:
+				case <-k.ctx.Done():
+				}
+				return
+			}
 		}
 
 		// Retrieve the keepalive timeout or use a default value in case an older
@@ -250,11 +273,27 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 
 		if err := switches.Alive(ctx, key, ttl); err != nil {
 			logger.WithError(err).Errorf("error on switch %q", key)
+			if _, ok := err.(*store.ErrInternal); ok {
+				// Fatal error
+				select {
+				case k.errChan <- err:
+				case <-k.ctx.Done():
+				}
+				return
+			}
 			continue
 		}
 
 		if err := k.handleUpdate(event); err != nil {
 			logger.WithError(err).Error("error updating event")
+			if _, ok := err.(*store.ErrInternal); ok {
+				// Fatal error
+				select {
+				case k.errChan <- err:
+				case <-k.ctx.Done():
+				}
+				return
+			}
 		}
 	}
 }
@@ -269,10 +308,11 @@ func (k *Keepalived) handleEntityRegistration(entity *types.Entity) error {
 		return nil
 	}
 
-	ctx := types.SetContextFromResource(context.Background(), entity)
+	ctx := types.SetContextFromResource(k.ctx, entity)
 	fetchedEntity, err := k.store.GetEntityByName(ctx, entity.Name)
 
 	if err != nil {
+		// Warning: do not wrap this error
 		return err
 	}
 
@@ -349,6 +389,7 @@ func (k *Keepalived) alive(key string, prev liveness.State, leader bool) bool {
 	return false
 }
 
+// this is a callback - it should not write to k.errChan
 func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 	// Parse the key to determine the namespace and entity name. The error will be
 	// verified later
@@ -380,7 +421,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 		return true
 	}
 
-	ctx := store.NamespaceContext(context.Background(), namespace)
+	ctx := store.NamespaceContext(k.ctx, namespace)
 
 	entity, err := k.store.GetEntityByName(ctx, name)
 	if err != nil {
@@ -464,6 +505,7 @@ func (k *Keepalived) handleUpdate(e *types.Event) error {
 
 	ctx := types.SetContextFromResource(context.Background(), entity)
 	if err := k.store.DeleteFailingKeepalive(ctx, e.Entity); err != nil {
+		// Warning: do not wrap this error
 		return err
 	}
 
@@ -471,6 +513,7 @@ func (k *Keepalived) handleUpdate(e *types.Event) error {
 
 	if err := k.store.UpdateEntity(ctx, entity); err != nil {
 		logger.WithError(err).Error("error updating entity in store")
+		// Warning: do not wrap this error
 		return err
 	}
 	event := createKeepaliveEvent(e)
@@ -496,6 +539,9 @@ func (k *Keepalived) handleUpdate(e *types.Event) error {
 					"subscription": sub,
 				})
 				lager.WithError(err).Error("error adding entity to ring")
+				if _, ok := err.(*store.ErrInternal); ok {
+					return err
+				}
 			}
 		}
 	}

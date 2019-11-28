@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/asset"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/dynamic"
@@ -124,6 +125,13 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 			if err != nil {
 				logger.WithFields(fields).WithError(err).
 					Warning("could not retrieve filter")
+				if _, ok := err.(*store.ErrInternal); ok {
+					// Fatal error
+					select {
+					case p.errChan <- err:
+					case <-p.stopping:
+					}
+				}
 				return false
 			}
 
@@ -150,6 +158,14 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 			if err != nil {
 				logger.WithFields(fields).WithError(err).
 					Warning("could not retrieve filter")
+				if _, ok := err.(*store.ErrInternal); ok {
+					// Fatal error
+					select {
+					case p.errChan <- err:
+					case <-p.stopping:
+					}
+					return false
+				}
 				continue
 			}
 

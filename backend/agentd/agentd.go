@@ -220,13 +220,17 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.WithError(err).Error("failed to create session")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		// There was an error retrieving the namespace from
+		// etcd, indicating that this backend has a potentially
+		// unrecoverable issue.
+		a.errChan <- err
 		return
 	}
 
-	err = session.Start()
-	if err != nil {
+	if err := session.Start(); err != nil {
 		logger.WithError(err).Error("failed to start session")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		a.errChan <- err
 		return
 	}
 }
@@ -249,6 +253,9 @@ func (a *Agentd) AuthenticationMiddleware(next http.Handler) http.Handler {
 				WithError(err).
 				Error("invalid username and/or password")
 			http.Error(w, "bad credentials", http.StatusUnauthorized)
+			if _, ok := err.(*store.ErrInternal); ok {
+				a.errChan <- err
+			}
 			return
 		}
 
@@ -296,6 +303,9 @@ func (a *Agentd) AuthorizationMiddleware(next http.Handler) http.Handler {
 		if err != nil {
 			logger.WithError(err).Error("unexpected error while authorization the session")
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
+			if _, ok := err.(*store.ErrInternal); ok {
+				a.errChan <- err
+			}
 			return
 		}
 		if !authorized {
