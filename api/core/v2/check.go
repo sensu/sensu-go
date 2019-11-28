@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -8,7 +9,6 @@ import (
 	"sort"
 	"time"
 
-	jsoniter "github.com/json-iterator/go"
 	cron "github.com/robfig/cron/v3"
 	utilstrings "github.com/sensu/sensu-go/util/strings"
 )
@@ -223,7 +223,7 @@ func (c *Check) MarshalJSON() ([]byte, error) {
 	clone := &Clone{}
 	*clone = Clone(*c)
 
-	return jsoniter.Marshal(clone)
+	return json.Marshal(clone)
 }
 
 // MergeWith updates the current Check with the history of the check given as

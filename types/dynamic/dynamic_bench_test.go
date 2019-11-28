@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	jsoniter "github.com/json-iterator/go"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/types/dynamic"
 )
@@ -21,6 +20,6 @@ func BenchmarkCheckMarshalRoundtrip(b *testing.B) {
 	bytez, _ := json.Marshal(c)
 	for i := 0; i < b.N; i++ {
 		var check types.Check
-		_ = jsoniter.Unmarshal(bytez, &check)
+		_ = json.Unmarshal(bytez, &check)
 	}
 }

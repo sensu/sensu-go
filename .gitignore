@@ -3,6 +3,9 @@ target/
 coverage.txt
 *~
 \#*
+/sensu-agent
+/sensu-backend
+/sensuctl
 
 # dashboard
 .env

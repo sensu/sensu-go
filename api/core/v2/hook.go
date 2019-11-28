@@ -1,14 +1,13 @@
 package v2
 
 import (
+	"encoding/json"
 	"errors"
 	fmt "fmt"
 	"net/url"
 	"path"
 	"regexp"
 	"time"
-
-	jsoniter "github.com/json-iterator/go"
 )
 
 const (
@@ -108,13 +107,13 @@ func isSeverity(name string) bool {
 // MarshalJSON implements the json.Marshaler interface.
 func (h *HookList) MarshalJSON() ([]byte, error) {
 	result := map[string][]string{h.Type: h.Hooks}
-	return jsoniter.Marshal(result)
+	return json.Marshal(result)
 }
 
 // UnmarshalJSON implements the json.Marshaler interface.
 func (h *HookList) UnmarshalJSON(b []byte) error {
 	result := map[string][]string{}
-	if err := jsoniter.Unmarshal(b, &result); err != nil {
+	if err := json.Unmarshal(b, &result); err != nil {
 		return err
 	}
 	for k, v := range result {

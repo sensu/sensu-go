@@ -1,16 +1,52 @@
 package dynamic
 
 import (
+	"io"
 	"reflect"
 	"sort"
 	"strings"
-
-	jsoniter "github.com/json-iterator/go"
 )
+
+type ValueType int
+
+type Config struct{}
+
+type frozenConfig struct{}
+
+type Stream struct {
+	cfg        *frozenConfig
+	out        io.Writer
+	buf        []byte
+	Error      error
+	indention  int
+	Attachment interface{} // open for customized encoder
+}
+
+type Any interface {
+	LastError() error
+	ValueType() ValueType
+	MustBeValid() Any
+	ToBool() bool
+	ToInt() int
+	ToInt32() int32
+	ToInt64() int64
+	ToUint() uint
+	ToUint32() uint32
+	ToUint64() uint64
+	ToFloat32() float32
+	ToFloat64() float64
+	ToString() string
+	ToVal(val interface{})
+	Get(path ...interface{}) Any
+	Size() int
+	Keys() []string
+	GetInterface() interface{}
+	WriteTo(stream *Stream)
+}
 
 // extractNonPathValues finds all the values in any that do not correspond to
 // the path specified by parts.
-func extractNonPathValues(any jsoniter.Any, parts []string) map[string]interface{} {
+func extractNonPathValues(any Any, parts []string) map[string]interface{} {
 	keys := any.Keys()
 	sort.Strings(keys)
 	result := make(map[string]interface{}, len(keys))
@@ -65,7 +101,7 @@ func isEmpty(value reflect.Value) bool {
 
 // makeEnvelope makes an envelope of map[string]interface{} around any,
 // according to parts. The nesting depth will be equal to the length of parts.
-func makeEnvelope(any jsoniter.Any, parts []string, value interface{}) map[string]interface{} {
+func makeEnvelope(any Any, parts []string, value interface{}) map[string]interface{} {
 	remainingParts := parts
 	result := extractNonPathValues(any, parts)
 	envelope := result
@@ -124,10 +160,10 @@ func mapOfExtendedAttributes(v interface{}) map[string]interface{} {
 
 type anyT struct {
 	Name string
-	jsoniter.Any
+	Any
 }
 
-func sortAnys(m map[string]jsoniter.Any) []anyT {
+func sortAnys(m map[string]Any) []anyT {
 	anys := make([]anyT, 0, len(m))
 	for key, any := range m {
 		anys = append(anys, anyT{Name: key, Any: any})
