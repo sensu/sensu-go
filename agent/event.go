@@ -34,6 +34,10 @@ func prepareEvent(a *Agent, event *corev2.Event) error {
 		event.Check.Namespace = a.config.Namespace
 	}
 
+	if event.ObjectMeta.Namespace == "" {
+		event.ObjectMeta.Namespace = a.config.Namespace
+	}
+
 	if event.Check.Executed == 0 {
 		event.Check.Executed = time.Now().Unix()
 	}

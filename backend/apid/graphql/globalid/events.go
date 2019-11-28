@@ -87,6 +87,10 @@ func encodeEvent(ctx context.Context, event *types.Event) *StandardComponents {
 	components := Encode(ctx, event)
 	components.resource = eventName
 
+	if components.namespace == "" && event.Entity != nil {
+		components.namespace = event.Entity.Namespace
+	}
+
 	if event.HasCheck() {
 		components.resourceType = eventCheckType
 		components.uniqueComponent = encodeUniqueComponents(
