@@ -513,9 +513,10 @@ func (t *Tessend) getDataPayload() *Data {
 	// populate data payload
 	data := &Data{
 		Cluster: Cluster{
-			ID:      clusterID,
-			Version: version.Semver(),
-			License: wrapper.Value.License,
+			ID:           clusterID,
+			Distribution: Distribution,
+			Version:      version.Semver(),
+			License:      wrapper.Value.License,
 		},
 	}
 
