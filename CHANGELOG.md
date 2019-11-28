@@ -21,12 +21,11 @@ usage.
 - Added the `--etcd-discovery` and `--etcd-discovery-srv` flags to
   `sensu-backend`. These are used to take advantage of the embedded etcd's
   auto-discovery features.
-
-### Fixed
-- Listing assets with no results returns an empty array
 - Listing assets with no results returns an empty array.
 - Fixed a panic that could occur when creating resources in a namespace that
 does not exist.
+- Fixed issue where keepalive events and events created through the agent's
+socket interface could be missing a namespace.
 
 ### Changed
 - The backend will no longer automatically be seeded with a default admin
