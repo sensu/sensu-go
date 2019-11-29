@@ -7,15 +7,11 @@ import (
 
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/pipeline"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
-	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/types"
 )
-
-// ExtensionExecutorGetterFunc gets an ExtensionExecutor. Used to decouple
-// Pipelined from gRPC.
-type ExtensionExecutorGetterFunc func(*types.Extension) (rpc.ExtensionExecutor, error)
 
 // Pipelined handles incoming Sensu events and puts them through a
 // Sensu event pipeline, i.e. filter -> mutator -> handler. The Sensu
@@ -31,7 +27,7 @@ type Pipelined struct {
 	subscription      messaging.Subscription
 	store             store.Store
 	bus               messaging.MessageBus
-	extensionExecutor ExtensionExecutorGetterFunc
+	extensionExecutor pipeline.ExtensionExecutorGetterFunc
 	executor          command.Executor
 	workerCount       int
 }
@@ -40,7 +36,7 @@ type Pipelined struct {
 type Config struct {
 	Store                   store.Store
 	Bus                     messaging.MessageBus
-	ExtensionExecutorGetter ExtensionExecutorGetterFunc
+	ExtensionExecutorGetter pipeline.ExtensionExecutorGetterFunc
 	AssetGetter             asset.Getter
 	BufferSize              int
 	WorkerCount             int
@@ -125,6 +121,11 @@ func (p *Pipelined) Name() string {
 // and for handling them.
 func (p *Pipelined) createPipelines(count int, channel chan interface{}) {
 	for i := 1; i <= count; i++ {
+		pipeline := pipeline.New(pipeline.Config{
+			Store:                   p.store,
+			ExtensionExecutorGetter: p.extensionExecutor,
+			AssetGetter:             p.assetGetter,
+		})
 		p.wg.Add(1)
 		go func() {
 			defer p.wg.Done()
@@ -138,7 +139,7 @@ func (p *Pipelined) createPipelines(count int, channel chan interface{}) {
 						continue
 					}
 
-					if err := p.handleEvent(event); err != nil {
+					if err := pipeline.HandleEvent(event); err != nil {
 						if _, ok := err.(*store.ErrInternal); ok {
 							select {
 							case p.errChan <- err:

@@ -1,5 +1,4 @@
-// Package pipelined provides the traditional Sensu event pipeline.
-package pipelined
+package pipeline
 
 import (
 	"testing"
@@ -12,8 +11,8 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-func TestPipelinedFilter(t *testing.T) {
-	p := &Pipelined{}
+func TestPipelineFilter(t *testing.T) {
+	p := &Pipeline{}
 	store := &mockstore.MockStore{}
 	p.store = store
 
@@ -210,14 +209,14 @@ func TestPipelinedFilter(t *testing.T) {
 				Metrics: tc.metrics,
 			}
 
-			filtered := p.filterEvent(handler, event)
+			filtered, _ := p.filterEvent(handler, event)
 			assert.Equal(t, tc.expected, filtered)
 		})
 	}
 }
 
-func TestPipelinedWhenFilter(t *testing.T) {
-	p := &Pipelined{}
+func TestPipelineWhenFilter(t *testing.T) {
+	p := &Pipeline{}
 	store := &mockstore.MockStore{}
 	p.store = store
 
@@ -304,7 +303,7 @@ func TestPipelinedWhenFilter(t *testing.T) {
 				Filters: []string{tc.filterName},
 			}
 
-			filtered := p.filterEvent(handler, event)
+			filtered, _ := p.filterEvent(handler, event)
 			assert.Equal(t, tc.expected, filtered)
 		})
 	}
