@@ -23,12 +23,11 @@ usage.
 auto-discovery features.
 - Installing sensuctl commands via Bonsai will now check for correct labels
 before checking if the asset has 1 or more builds.
-
-### Fixed
-- Listing assets with no results returns an empty array
 - Listing assets with no results returns an empty array.
 - Fixed a panic that could occur when creating resources in a namespace that
 does not exist.
+- Fixed issue where keepalive events and events created through the agent's
+socket interface could be missing a namespace.
 
 ### Changed
 - The backend will no longer automatically be seeded with a default admin
