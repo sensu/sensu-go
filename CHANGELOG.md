@@ -21,18 +21,24 @@ usage.
 - Added the `--etcd-discovery` and `--etcd-discovery-srv` flags to
   `sensu-backend`. These are used to take advantage of the embedded etcd's
   auto-discovery features.
-
-### Fixed
-- Listing assets with no results returns an empty array
 - Listing assets with no results returns an empty array.
 - Fixed a panic that could occur when creating resources in a namespace that
 does not exist.
+- [Web] Links to documentation now point to the version of the product being run
+instead of the latest; helpful when running an older version of Sensu.
 
 ### Changed
 - The backend will no longer automatically be seeded with a default admin
 username and password. Users will need to run 'sensu-backend init' on every
 new installation.
 - Several deprecated flags were removed from sensu-backend.
+- [Web] Changes to navigation. The app bar has been replaced by an omnipresent
+drawer increasing the available space for content. Additionally, each page now
+includes breadcrumbs.
+- [Web] Switching namespaces is easier than ever, with the new and improved
+switcher. The new component can be accessed from the drawer or with the shortcut
+ctrl+k. For those with many namespaces the switcher now includes fuzzy search
+and improved keyboard navigation.
 
 ## [5.15.0] - 2019-11-18
 
