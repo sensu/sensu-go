@@ -168,6 +168,10 @@ func (s *Session) receiver() {
 			logger.WithError(err).WithFields(logrus.Fields{
 				"type":    msg.Type,
 				"payload": string(msg.Payload)}).Error("error handling message")
+			if _, ok := err.(*store.ErrInternal); ok {
+				// Fatal error - boot the agent out of the session
+				go s.Stop()
+			}
 		}
 	}
 }
