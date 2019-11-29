@@ -19,8 +19,10 @@ sensu-backend init tool.
 - Show the correct default value for the format flag in `sensuctl dump` help
 usage.
 - Added the `--etcd-discovery` and `--etcd-discovery-srv` flags to
-  `sensu-backend`. These are used to take advantage of the embedded etcd's
-  auto-discovery features.
+`sensu-backend`. These are used to take advantage of the embedded etcd's
+auto-discovery features.
+- Installing sensuctl commands via Bonsai will now check for correct labels
+before checking if the asset has 1 or more builds.
 - Listing assets with no results returns an empty array.
 - Fixed a panic that could occur when creating resources in a namespace that
 does not exist.
