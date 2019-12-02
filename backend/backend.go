@@ -40,6 +40,7 @@ import (
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/util/retry"
 	"github.com/spf13/viper"
 )
 
@@ -462,14 +463,24 @@ func (b *Backend) Run() error {
 	// goroutines writing errors to either after shutdown has been initiated.
 	defer close(b.done)
 
-	for {
-		if err := b.ctx.Err(); err != nil {
-			return nil
-		}
+	backoff := retry.ExponentialBackoff{
+		Ctx:                  b.ctx,
+		InitialDelayInterval: time.Second,
+		MaxDelayInterval:     time.Second,
+	}
+
+	err := backoff.Retry(func(int) (bool, error) {
 		if err := b.runOnce(); err != nil {
 			logger.Error(err)
 		}
+		return false, nil
+	})
+
+	if err == context.Canceled {
+		return nil
 	}
+
+	return err
 }
 
 type stopper interface {
