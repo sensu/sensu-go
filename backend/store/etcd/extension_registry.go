@@ -51,7 +51,7 @@ func (s *Store) RegisterExtension(ctx context.Context, ext *types.Extension) err
 // DeregisterExtension deregisters an extension
 func (s *Store) DeregisterExtension(ctx context.Context, name string) error {
 	if name == "" {
-		return &store.ErrNotValid{errors.New("no extension name specified")}
+		return &store.ErrNotValid{Err: errors.New("no extension name specified")}
 	}
 
 	if _, err := s.client.Delete(ctx, getExtensionPath(ctx, name)); err != nil {

@@ -68,6 +68,7 @@ func (p *Pipeline) HandleEvent(event *corev2.Event) error {
 				// Fatal error
 				return err
 			}
+			logger.WithError(err).Warn("error filtering event")
 		}
 		if filtered {
 			logger.WithFields(fields).Info("event filtered")
