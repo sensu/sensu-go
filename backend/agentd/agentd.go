@@ -223,14 +223,24 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 		// There was an error retrieving the namespace from
 		// etcd, indicating that this backend has a potentially
 		// unrecoverable issue.
-		a.errChan <- err
+		if _, ok := err.(*store.ErrInternal); ok {
+			select {
+			case a.errChan <- err:
+			case <-a.ctx.Done():
+			}
+		}
 		return
 	}
 
 	if err := session.Start(); err != nil {
 		logger.WithError(err).Error("failed to start session")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
-		a.errChan <- err
+		if _, ok := err.(*store.ErrInternal); ok {
+			select {
+			case a.errChan <- err:
+			case <-a.ctx.Done():
+			}
+		}
 		return
 	}
 }
