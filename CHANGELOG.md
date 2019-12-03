@@ -13,6 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added a new flag, --etcd-client-urls, which should be used with sensu-backend
 when it is not operating as an etcd member. The flag is also used by the new
 sensu-backend init tool.
+- Added the cluster's distribution to Tessen data.
 
 ### Fixed
 - Add a timeout to etcd requests when retrieving the nodes health.
@@ -28,6 +29,15 @@ before checking if the asset has 1 or more builds.
 does not exist.
 - [Web] Links to documentation now point to the version of the product being run
 instead of the latest; helpful when running an older version of Sensu.
+`sensu-backend`. These are used to take advantage of the embedded etcd's
+auto-discovery features.
+- Installing sensuctl commands via Bonsai will now check for correct labels
+before checking if the asset has 1 or more builds.
+- Listing assets with no results returns an empty array.
+- Fixed a panic that could occur when creating resources in a namespace that
+does not exist.
+- Fixed issue where keepalive events and events created through the agent's
+socket interface could be missing a namespace.
 
 ### Changed
 - The backend will no longer automatically be seeded with a default admin
