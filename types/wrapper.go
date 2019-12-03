@@ -42,14 +42,21 @@ type lifter interface {
 
 // UnmarshalJSON implements json.Unmarshaler
 func (w *Wrapper) UnmarshalJSON(b []byte) error {
+	// Decode the top-level fields only of the incoming data into a temporary
+	// rawWrapper variable
 	var wrapper rawWrapper
 	if err := json.Unmarshal(b, &wrapper); err != nil {
-		return fmt.Errorf("error parsing spec: %s", err)
+		return fmt.Errorf("error parsing data as wrapped-json: %s", err)
 	}
+
+	// Set the TypeMeta on the wrapper
 	w.TypeMeta = wrapper.TypeMeta
 	if w.APIVersion == "" {
 		w.APIVersion = "core/v2"
 	}
+
+	// Use the TypeMeta to resolve the type of the resource contained in the Value
+	// field as a *json.RawMessage
 	resource, err := ResolveType(w.TypeMeta.APIVersion, w.TypeMeta.Type)
 	if err != nil {
 		return fmt.Errorf("error parsing spec: %s", err)
@@ -62,11 +69,15 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 	if err := dec.Decode(&resource); err != nil {
 		return err
 	}
+
+	// Special case for the Namespace resource
 	if _, ok := resource.(*Namespace); ok {
-		// Special case for Namespace
 		w.Value = resource
 		return nil
 	}
+
+	// Use the outer ObjectMeta to fill the inner ObjectMeta that's part of the
+	// resource if it's empty
 	outerMeta := wrapper.ObjectMeta
 	innerMeta := resource.GetObjectMeta()
 	if outerMeta.Namespace != "" {
@@ -87,6 +98,11 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 		}
 		innerMeta.Annotations[k] = v
 	}
+
+	// Set the outer ObjectMeta of the wrapper
+	w.ObjectMeta = outerMeta
+
+	// Set the inner ObjectMeta
 	val := reflect.Indirect(reflect.ValueOf(resource))
 	objectMeta := val.FieldByName("ObjectMeta")
 	if objectMeta.Kind() == reflect.Invalid {
@@ -97,10 +113,17 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 		return nil
 	}
 	val.FieldByName("ObjectMeta").Set(reflect.ValueOf(innerMeta))
+
+	// Determine if the resource implements the Lifter interface, which has a Lift
+	// method. This is useful when a resource can be polymorphic, such as
+	// providers.
 	if lifter, ok := resource.(lifter); ok {
 		resource = lifter.Lift()
 	}
+
+	// Set the resource as the wrapper's value
 	w.Value = resource
+
 	return nil
 }
 
