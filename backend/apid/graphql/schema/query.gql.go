@@ -198,6 +198,23 @@ type QueryVersionsFieldResolver interface {
 	Versions(p graphql.ResolveParams) (interface{}, error)
 }
 
+// QueryMetricsFieldResolverArgs contains arguments provided to metrics when selected
+type QueryMetricsFieldResolverArgs struct {
+	Name []string // Name - Use to only return metrics with the given name(s).
+}
+
+// QueryMetricsFieldResolverParams contains contextual info to resolve metrics field
+type QueryMetricsFieldResolverParams struct {
+	graphql.ResolveParams
+	Args QueryMetricsFieldResolverArgs
+}
+
+// QueryMetricsFieldResolver implement to resolve requests for the Query's metrics field.
+type QueryMetricsFieldResolver interface {
+	// Metrics implements response to request for metrics field.
+	Metrics(p QueryMetricsFieldResolverParams) (interface{}, error)
+}
+
 // QueryNodeFieldResolverArgs contains arguments provided to node when selected
 type QueryNodeFieldResolverArgs struct {
 	ID string // ID - The ID of an object.
@@ -305,6 +322,7 @@ type QueryFieldResolvers interface {
 	QuerySuggestFieldResolver
 	QueryHealthFieldResolver
 	QueryVersionsFieldResolver
+	QueryMetricsFieldResolver
 	QueryNodeFieldResolver
 	QueryWrappedNodeFieldResolver
 }
@@ -418,6 +436,12 @@ func (_ QueryAliases) Health(p graphql.ResolveParams) (interface{}, error) {
 
 // Versions implements response to request for 'versions' field.
 func (_ QueryAliases) Versions(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
+// Metrics implements response to request for 'metrics' field.
+func (_ QueryAliases) Metrics(p QueryMetricsFieldResolverParams) (interface{}, error) {
 	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
 	return val, err
 }
@@ -566,6 +590,19 @@ func _ObjTypeQueryVersionsHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeQueryMetricsHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(QueryMetricsFieldResolver)
+	return func(p graphql1.ResolveParams) (interface{}, error) {
+		frp := QueryMetricsFieldResolverParams{ResolveParams: p}
+		err := mapstructure.Decode(p.Args, &frp.Args)
+		if err != nil {
+			return nil, err
+		}
+
+		return resolver.Metrics(frp)
+	}
+}
+
 func _ObjTypeQueryNodeHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(QueryNodeFieldResolver)
 	return func(p graphql1.ResolveParams) (interface{}, error) {
@@ -687,6 +724,17 @@ func _ObjectTypeQueryConfigFn() graphql1.ObjectConfig {
 				Name:              "health",
 				Type:              graphql1.NewNonNull(graphql.OutputType("ClusterHealth")),
 			},
+			"metrics": &graphql1.Field{
+				Args: graphql1.FieldConfigArgument{"name": &graphql1.ArgumentConfig{
+					DefaultValue: []interface{}{},
+					Description:  "Use to only return metrics with the given name(s).",
+					Type:         graphql1.NewList(graphql1.NewNonNull(graphql1.String)),
+				}},
+				DeprecationReason: "",
+				Description:       "Returns metrics from the node.",
+				Name:              "metrics",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("MetricFamily")))),
+			},
 			"mutator": &graphql1.Field{
 				Args: graphql1.FieldConfigArgument{
 					"name": &graphql1.ArgumentConfig{
@@ -802,6 +850,7 @@ var _ObjectTypeQueryDesc = graphql.ObjectDesc{
 		"eventFilter": _ObjTypeQueryEventFilterHandler,
 		"handler":     _ObjTypeQueryHandlerHandler,
 		"health":      _ObjTypeQueryHealthHandler,
+		"metrics":     _ObjTypeQueryMetricsHandler,
 		"mutator":     _ObjTypeQueryMutatorHandler,
 		"namespace":   _ObjTypeQueryNamespaceHandler,
 		"node":        _ObjTypeQueryNodeHandler,

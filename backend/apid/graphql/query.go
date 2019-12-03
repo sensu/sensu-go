@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	dto "github.com/prometheus/client_model/go"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/apid/graphql/suggest"
@@ -161,6 +162,30 @@ func (r *queryImpl) Versions(p graphql.ResolveParams) (interface{}, error) {
 func (r *queryImpl) Health(p graphql.ResolveParams) (interface{}, error) {
 	resp := r.svc.HealthController.GetClusterHealth(p.Context)
 	return resp, nil
+}
+
+// Metrics implements response to request for 'metrics' field.
+func (r *queryImpl) Metrics(p schema.QueryMetricsFieldResolverParams) (interface{}, error) {
+	reg := r.svc.MetricGatherer
+	mfs, err := reg.Gather()
+	if err != nil {
+		logger.WithError(err).Error("Query#metrics err while gathering metrics")
+		if len(mfs) == 0 {
+			return []interface{}{}, err
+		}
+	}
+	mfsLen := len(mfs)
+	if len(p.Args.Name) > 0 {
+		mfsLen = len(p.Args.Name)
+	}
+	ret := make([]*dto.MetricFamily, 0, mfsLen)
+	for _, mf := range mfs {
+		if len(p.Args.Name) > 0 && !utilstrings.InArray(mf.GetName(), p.Args.Name) {
+			continue
+		}
+		ret = append(ret, mf)
+	}
+	return ret, nil
 }
 
 // Node implements response to request for 'node' field.

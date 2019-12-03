@@ -3,7 +3,7 @@ package graphql
 import (
 	"sort"
 
-	"github.com/sensu/sensu-go/api/core/v2"
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/graphql"
 )
@@ -18,7 +18,7 @@ type objectMetaImpl struct {
 	schema.ObjectMetaAliases
 }
 
-// KVPairString pair of values&
+// KVPairString pair of values
 type KVPairString struct {
 	Key string
 	Val string
