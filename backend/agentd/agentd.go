@@ -258,17 +258,19 @@ func (a *Agentd) AuthenticationMiddleware(next http.Handler) http.Handler {
 		// Authenticate against the provider
 		user, err := a.store.AuthenticateUser(r.Context(), username, password)
 		if err != nil {
-			logger.
-				WithField("user", username).
-				WithError(err).
-				Error("invalid username and/or password")
-			http.Error(w, "bad credentials", http.StatusUnauthorized)
 			if _, ok := err.(*store.ErrInternal); ok {
 				select {
 				case a.errChan <- err:
 				case <-a.ctx.Done():
 				}
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
 			}
+			logger.
+				WithField("user", username).
+				WithError(err).
+				Error("invalid username and/or password")
+			http.Error(w, "bad credentials", http.StatusUnauthorized)
 			return
 		}
 
@@ -314,14 +316,16 @@ func (a *Agentd) AuthorizationMiddleware(next http.Handler) http.Handler {
 		}
 		authorized, err := auth.Authorize(ctx, attrs)
 		if err != nil {
-			logger.WithError(err).Error("unexpected error while authorization the session")
-			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			if _, ok := err.(*store.ErrInternal); ok {
 				select {
 				case a.errChan <- err:
 				case <-a.ctx.Done():
 				}
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
 			}
+			logger.WithError(err).Error("unexpected error while authorizing the session")
+			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
 		}
 		if !authorized {
