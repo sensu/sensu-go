@@ -264,7 +264,10 @@ func (a *Agentd) AuthenticationMiddleware(next http.Handler) http.Handler {
 				Error("invalid username and/or password")
 			http.Error(w, "bad credentials", http.StatusUnauthorized)
 			if _, ok := err.(*store.ErrInternal); ok {
-				a.errChan <- err
+				select {
+				case a.errChan <- err:
+				case <-a.ctx.Done():
+				}
 			}
 			return
 		}
@@ -314,7 +317,10 @@ func (a *Agentd) AuthorizationMiddleware(next http.Handler) http.Handler {
 			logger.WithError(err).Error("unexpected error while authorization the session")
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			if _, ok := err.(*store.ErrInternal); ok {
-				a.errChan <- err
+				select {
+				case a.errChan <- err:
+				case <-a.ctx.Done():
+				}
 			}
 			return
 		}
