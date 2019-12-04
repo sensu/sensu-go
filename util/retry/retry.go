@@ -29,12 +29,14 @@ type ExponentialBackoff struct {
 	MaxRetryAttempts int
 
 	// Multiplier is used to increment the current interval by multiplying it with
-	// this multiplier
+	// this multiplier. If not supplied, it will be set to DefaultMultiplier.
 	Multiplier float64
 
 	// start contains the starting time of the retry attempts
 	start time.Time
 }
+
+const DefaultMultiplier float64 = 2.0
 
 // Func represents a function to retry, which returns true if the attempt is
 // successful, or an error if the retry should be aborted
@@ -75,7 +77,11 @@ func (b *ExponentialBackoff) Retry(fn Func) error {
 			}
 
 			// Exponentially increase that sleep duration
-			wait = time.Duration(float64(wait) * b.Multiplier)
+			multiplier := b.Multiplier
+			if multiplier == 0 {
+				multiplier = DefaultMultiplier
+			}
+			wait = time.Duration(float64(wait) * multiplier)
 
 			// Add a jitter (randomized delay) for the next attempt, to prevent
 			// potential collisions
