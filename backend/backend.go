@@ -57,6 +57,7 @@ type Backend struct {
 	done   chan struct{}
 	ctx    context.Context
 	cancel context.CancelFunc
+	cfg    *Config
 }
 
 // EventStoreUpdater offers a way to update an event store to a different
@@ -135,7 +136,7 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 func Initialize(config *Config) (*Backend, error) {
 	var err error
 	// Initialize a Backend struct
-	b := &Backend{}
+	b := &Backend{cfg: config}
 
 	b.done = make(chan struct{})
 	b.ctx, b.cancel = context.WithCancel(context.Background())
@@ -200,6 +201,7 @@ func Initialize(config *Config) (*Backend, error) {
 		AssetGetter:             assetGetter,
 		BufferSize:              viper.GetInt(FlagPipelinedBufferSize),
 		WorkerCount:             viper.GetInt(FlagPipelinedWorkers),
+		StoreTimeout:            2 * time.Minute,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", pipeline.Name(), err)
@@ -217,6 +219,7 @@ func Initialize(config *Config) (*Backend, error) {
 			Client:          b.Client,
 			BufferSize:      viper.GetInt(FlagEventdBufferSize),
 			WorkerCount:     viper.GetInt(FlagEventdWorkers),
+			StoreTimeout:    2 * time.Minute,
 		},
 	)
 	if err != nil {
@@ -272,6 +275,7 @@ func Initialize(config *Config) (*Backend, error) {
 		RingPool:              ringPool,
 		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
 		WorkerCount:           viper.GetInt(FlagKeepalivedWorkers),
+		StoreTimeout:          2 * time.Minute,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
@@ -467,12 +471,24 @@ func (b *Backend) Run() error {
 		Ctx:                  b.ctx,
 		InitialDelayInterval: time.Second,
 		MaxDelayInterval:     time.Second,
+		Multiplier:           1,
 	}
 
 	err := backoff.Retry(func(int) (bool, error) {
 		if err := b.runOnce(); err != nil {
 			logger.Error(err)
+			if err == context.Canceled {
+				return true, err
+			}
 		}
+		backend, err := Initialize(b.cfg)
+		if err != nil {
+			logger.Error(err)
+			return true, err
+		}
+		// Replace b with a new backend - this is done to ensure that there is
+		// no side effects from the execution of b that have carried over
+		*b = *backend
 		return false, nil
 	})
 
