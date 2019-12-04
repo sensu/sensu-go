@@ -55,6 +55,7 @@ type Keepalived struct {
 	ringPool              *ringv2.Pool
 	ctx                   context.Context
 	cancel                context.CancelFunc
+	storeTimeout          time.Duration
 }
 
 // Option is a functional option.
@@ -70,15 +71,22 @@ type Config struct {
 	RingPool              *ringv2.Pool
 	BufferSize            int
 	WorkerCount           int
+	StoreTimeout          time.Duration
 }
 
 // New creates a new Keepalived.
 func New(c Config, opts ...Option) (*Keepalived, error) {
 	if c.BufferSize == 0 {
+		logger.Warn("BufferSize not set")
 		c.BufferSize = 1
 	}
 	if c.WorkerCount == 0 {
+		logger.Warn("WorkerCount not set")
 		c.WorkerCount = 1
+	}
+	if c.StoreTimeout == 0 {
+		logger.Warn("StoreTimeout not set")
+		c.StoreTimeout = time.Minute
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -96,6 +104,7 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 		ringPool:              c.RingPool,
 		ctx:                   ctx,
 		cancel:                cancel,
+		storeTimeout:          c.StoreTimeout,
 	}
 	for _, o := range opts {
 		if err := o(k); err != nil {
@@ -153,7 +162,9 @@ func (k *Keepalived) Name() string {
 
 func (k *Keepalived) initFromStore(ctx context.Context) error {
 	// For which clients were we previously alerting?
-	keepalives, err := k.store.GetFailingKeepalives(ctx)
+	tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
+	defer cancel()
+	keepalives, err := k.store.GetFailingKeepalives(tctx)
 	if err != nil {
 		return err
 	}
@@ -162,7 +173,9 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 
 	for _, keepalive := range keepalives {
 		entityCtx := context.WithValue(ctx, types.NamespaceKey, keepalive.Namespace)
-		event, err := k.store.GetEventByEntityCheck(entityCtx, keepalive.Name, "keepalive")
+		tctx, cancel := context.WithTimeout(entityCtx, k.storeTimeout)
+		defer cancel()
+		event, err := k.store.GetEventByEntityCheck(tctx, keepalive.Name, "keepalive")
 		if err != nil {
 			return err
 		}
@@ -171,7 +184,9 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 
 		// if there's no event, the entity was deregistered/deleted.
 		if event == nil {
-			if err := switches.Bury(ctx, id); err != nil {
+			tctx, cancel := context.WithTimeout(entityCtx, k.storeTimeout)
+			defer cancel()
+			if err := switches.Bury(tctx, id); err != nil {
 				return err
 			}
 			continue
@@ -188,7 +203,9 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 		}
 
 		ttl := int64(event.Check.Timeout)
-		if err := switches.Dead(ctx, id, ttl); err != nil {
+		tctx, cancel = context.WithTimeout(entityCtx, k.storeTimeout)
+		defer cancel()
+		if err := switches.Dead(tctx, id, ttl); err != nil {
 			return fmt.Errorf("error initializing keepalive %q: %s", id, err)
 		}
 	}
@@ -236,7 +253,10 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 		if event.Timestamp == deletedEventSentinel {
 			// The keepalive event was deleted, so we should bury its associated switch
 			id := path.Join(entity.Namespace, entity.Name)
-			if err := switches.Bury(ctx, id); err != nil {
+			tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
+			err := switches.Bury(tctx, id)
+			cancel()
+			if err != nil {
 				if _, ok := err.(*store.ErrInternal); ok {
 					// Fatal error
 					select {
@@ -271,7 +291,10 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 
 		key := path.Join(entity.Namespace, entity.Name)
 
-		if err := switches.Alive(ctx, key, ttl); err != nil {
+		tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
+		err := switches.Alive(tctx, key, ttl)
+		cancel()
+		if err != nil {
 			logger.WithError(err).Errorf("error on switch %q", key)
 			if _, ok := err.(*store.ErrInternal); ok {
 				// Fatal error
@@ -309,7 +332,9 @@ func (k *Keepalived) handleEntityRegistration(entity *types.Entity) error {
 	}
 
 	ctx := types.SetContextFromResource(k.ctx, entity)
-	fetchedEntity, err := k.store.GetEntityByName(ctx, entity.Name)
+	tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
+	defer cancel()
+	fetchedEntity, err := k.store.GetEntityByName(tctx, entity.Name)
 
 	if err != nil {
 		// Warning: do not wrap this error
@@ -435,13 +460,13 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 		return true
 	}
 
-	deregisterer := &Deregistration{
-		EntityStore: k.store,
-		EventStore:  k.eventStore,
-		MessageBus:  k.bus,
-	}
-
 	if entity.Deregister {
+		deregisterer := &Deregistration{
+			EntityStore:  k.store,
+			EventStore:   k.eventStore,
+			MessageBus:   k.bus,
+			StoreTimeout: k.storeTimeout,
+		}
 		if err := deregisterer.Deregister(entity); err != nil {
 			lager.WithError(err).Error("error deregistering entity")
 		}
@@ -532,7 +557,9 @@ func (k *Keepalived) handleUpdate(e *types.Event) error {
 				// This should never happen but guards against a crash
 				e.Check.Timeout = corev2.DefaultKeepaliveTimeout
 			}
-			if err := ring.Add(ctx, entity.Name, int64(e.Check.Timeout)); err != nil {
+			tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
+			defer cancel()
+			if err := ring.Add(tctx, entity.Name, int64(e.Check.Timeout)); err != nil {
 				lager := logger.WithFields(logrus.Fields{
 					"entity":       entity.Name,
 					"namespace":    entity.Namespace,

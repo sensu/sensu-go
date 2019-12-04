@@ -2,8 +2,10 @@
 package pipelined
 
 import (
+	"context"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -12,6 +14,8 @@ import (
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/types"
 )
+
+var defaultStoreTimeout = time.Minute
 
 // Pipelined handles incoming Sensu events and puts them through a
 // Sensu event pipeline, i.e. filter -> mutator -> handler. The Sensu
@@ -30,6 +34,7 @@ type Pipelined struct {
 	extensionExecutor pipeline.ExtensionExecutorGetterFunc
 	executor          command.Executor
 	workerCount       int
+	storeTimeout      time.Duration
 }
 
 // Config configures a Pipelined.
@@ -40,6 +45,7 @@ type Config struct {
 	AssetGetter             asset.Getter
 	BufferSize              int
 	WorkerCount             int
+	StoreTimeout            time.Duration
 }
 
 // Option is a functional option used to configure Pipelined.
@@ -48,10 +54,16 @@ type Option func(*Pipelined) error
 // New creates a new Pipelined with supplied Options applied.
 func New(c Config, options ...Option) (*Pipelined, error) {
 	if c.BufferSize == 0 {
+		logger.Warn("BufferSize not configured")
 		c.BufferSize = 1
 	}
 	if c.WorkerCount == 0 {
+		logger.Warn("WorkerCount not configured")
 		c.WorkerCount = 1
+	}
+	if c.StoreTimeout == 0 {
+		logger.Warn("StoreTimeout not configured")
+		c.StoreTimeout = defaultStoreTimeout
 	}
 
 	p := &Pipelined{
@@ -66,6 +78,7 @@ func New(c Config, options ...Option) (*Pipelined, error) {
 		workerCount:       c.WorkerCount,
 		executor:          command.NewExecutor(),
 		assetGetter:       c.AssetGetter,
+		storeTimeout:      c.StoreTimeout,
 	}
 	for _, o := range options {
 		if err := o(p); err != nil {
@@ -125,6 +138,7 @@ func (p *Pipelined) createPipelines(count int, channel chan interface{}) {
 			Store:                   p.store,
 			ExtensionExecutorGetter: p.extensionExecutor,
 			AssetGetter:             p.assetGetter,
+			StoreTimeout:            p.storeTimeout,
 		})
 		p.wg.Add(1)
 		go func() {
@@ -139,7 +153,10 @@ func (p *Pipelined) createPipelines(count int, channel chan interface{}) {
 						continue
 					}
 
-					if err := pipeline.HandleEvent(event); err != nil {
+					ctx, cancel := context.WithCancel(context.Background())
+					err := pipeline.HandleEvent(ctx, event)
+					cancel()
+					if err != nil {
 						if _, ok := err.(*store.ErrInternal); ok {
 							select {
 							case p.errChan <- err:

@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
@@ -164,7 +165,8 @@ func (s *Session) receiver() {
 			}
 			return
 		}
-		if err := s.handler.Handle(s.ctx, msg.Type, msg.Payload); err != nil {
+		ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.WriteTimeout)*time.Second)
+		if err := s.handler.Handle(ctx, msg.Type, msg.Payload); err != nil {
 			logger.WithError(err).WithFields(logrus.Fields{
 				"type":    msg.Type,
 				"payload": string(msg.Payload)}).Error("error handling message")
@@ -173,6 +175,7 @@ func (s *Session) receiver() {
 				go s.Stop()
 			}
 		}
+		cancel()
 	}
 }
 

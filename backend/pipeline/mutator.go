@@ -43,7 +43,9 @@ func (p *Pipeline) mutateEvent(handler *types.Handler, event *types.Event) ([]by
 	ctx := context.WithValue(context.Background(), types.NamespaceKey, event.Entity.Namespace)
 	fields["mutator"] = handler.Mutator
 
-	mutator, err := p.store.GetMutatorByName(ctx, handler.Mutator)
+	tctx, cancel := context.WithTimeout(ctx, p.storeTimeout)
+	defer cancel()
+	mutator, err := p.store.GetMutatorByName(tctx, handler.Mutator)
 	if err != nil {
 		// Warning: do not wrap this error
 		logger.WithFields(fields).WithError(err).Error("failed to retrieve mutator")
@@ -52,7 +54,9 @@ func (p *Pipeline) mutateEvent(handler *types.Handler, event *types.Event) ([]by
 
 	if mutator == nil {
 		// Check to see if there is an extension matching the mutator
-		extension, err := p.store.GetExtension(ctx, handler.Mutator)
+		tctx, cancel := context.WithTimeout(ctx, p.storeTimeout)
+		defer cancel()
+		extension, err := p.store.GetExtension(tctx, handler.Mutator)
 		if err != nil {
 			if err == store.ErrNoExtension {
 				return nil, nil

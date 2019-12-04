@@ -110,7 +110,9 @@ func (p *Pipeline) filterEvent(handler *corev2.Handler, event *corev2.Event) (bo
 		default:
 			// Retrieve the filter from the store with its name
 			ctx := corev2.SetContextFromResource(context.Background(), event.Entity)
-			filter, err := p.store.GetEventFilterByName(ctx, filterName)
+			tctx, cancel := context.WithTimeout(ctx, p.storeTimeout)
+			filter, err := p.store.GetEventFilterByName(tctx, filterName)
+			cancel()
 			if err != nil {
 				logger.WithFields(fields).WithError(err).
 					Warning("could not retrieve filter")

@@ -28,8 +28,8 @@ type handlerExtensionUnion struct {
 // -> mutator -> handler. An event may have one or more handlers. Most
 // errors are only logged and used for flow control, they will not
 // interupt event handling.
-func (p *Pipeline) HandleEvent(event *corev2.Event) error {
-	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
+func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
+	ctx = context.WithValue(ctx, corev2.NamespaceKey, event.Entity.Namespace)
 
 	// Prepare debug log entry
 	debugFields := utillogging.EventFields(event, true)
@@ -134,7 +134,12 @@ func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level 
 	}
 
 	for _, handlerName := range handlers {
-		handler, err := p.store.GetHandlerByName(ctx, handlerName)
+		tctx, cancel := context.WithTimeout(ctx, p.storeTimeout)
+		fmt.Println("GETTING HANDLER")
+		tnow := time.Now()
+		handler, err := p.store.GetHandlerByName(tctx, handlerName)
+		fmt.Println("CALL DONE AT", time.Since(tnow), "ERROR:", err)
+		cancel()
 		var extension *corev2.Extension
 
 		// Add handler name to log entry

@@ -87,7 +87,7 @@ func TestPipelineHandleEvent(t *testing.T) {
 	// Currently fire and forget. You may choose to return a map
 	// of handler execution information in the future, don't know
 	// how useful this would be.
-	assert.NoError(t, p.HandleEvent(event))
+	assert.NoError(t, p.HandleEvent(context.Background(), event))
 
 	event.Check.Handlers = []string{"handler1", "handler2"}
 
@@ -103,7 +103,7 @@ func TestPipelineHandleEvent(t *testing.T) {
 		return m, nil
 	}
 
-	assert.NoError(t, p.HandleEvent(event))
+	assert.NoError(t, p.HandleEvent(context.Background(), event))
 	m.AssertCalled(t, "HandleEvent", event, mock.Anything)
 }
 

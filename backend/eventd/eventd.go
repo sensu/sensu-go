@@ -32,6 +32,9 @@ const (
 
 	// EventsProcessedLabelSuccess is the name of the label used to count events processed successfully.
 	EventsProcessedLabelSuccess = "success"
+
+	// defaultStoreTimeout is the store timeout used if the backend did not configure one
+	defaultStoreTimeout = time.Minute
 )
 
 var (
@@ -68,6 +71,7 @@ type Eventd struct {
 	wg              *sync.WaitGroup
 	Logger          Logger
 	silencedCache   *cache.Resource
+	storeTimeout    time.Duration
 }
 
 // Option is a functional option.
@@ -82,15 +86,22 @@ type Config struct {
 	Client          *clientv3.Client
 	BufferSize      int
 	WorkerCount     int
+	StoreTimeout    time.Duration
 }
 
 // New creates a new Eventd.
 func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 	if c.BufferSize == 0 {
+		logger.Warn("BufferSize not configured")
 		c.BufferSize = 1
 	}
 	if c.WorkerCount == 0 {
+		logger.Warn("WorkerCount not configured")
 		c.WorkerCount = 1
+	}
+	if c.StoreTimeout == 0 {
+		logger.Warn("StoreTimeout not configured")
+		c.StoreTimeout = defaultStoreTimeout
 	}
 
 	e := &Eventd{
@@ -105,6 +116,7 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 		wg:              &sync.WaitGroup{},
 		mu:              &sync.Mutex{},
 		Logger:          &RawLogger{},
+		storeTimeout:    c.StoreTimeout,
 	}
 
 	e.ctx, e.cancel = context.WithCancel(ctx)
@@ -296,6 +308,10 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 	}
 
 	ctx := store.NamespaceContext(context.Background(), namespace)
+	// TODO(eric): make this configurable? Or dynamic based on some property?
+	// 120s seems like a reasonable, it not somewhat large, timeout for check TTL processing.
+	ctx, cancel := context.WithTimeout(ctx, e.storeTimeout)
+	defer cancel()
 
 	// The entity has been deleted, and so there is no reason to track check
 	// TTL for it anymore.
@@ -332,7 +348,7 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 	}
 
 	if leader {
-		if err := e.handleFailure(event); err != nil {
+		if err := e.handleFailure(ctx, event); err != nil {
 			lager.WithError(err).Error("can't handle check TTL failure")
 		}
 	}
@@ -353,9 +369,9 @@ func parseKey(key string) (namespace, check, entity string, err error) {
 
 // handleFailure creates a check event with a warn status and publishes it to
 // TopicEvent.
-func (e *Eventd) handleFailure(event *corev2.Event) error {
+func (e *Eventd) handleFailure(ctx context.Context, event *corev2.Event) error {
 	entity := event.Entity
-	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, entity.Namespace)
+	ctx = context.WithValue(ctx, corev2.NamespaceKey, entity.Namespace)
 
 	failedCheckEvent, err := e.createFailedCheckEvent(ctx, event)
 	if err != nil {

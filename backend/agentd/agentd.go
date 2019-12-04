@@ -216,7 +216,9 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	cfg.Subscriptions = addEntitySubscription(cfg.AgentName, cfg.Subscriptions)
 
-	session, err := NewSession(a.ctx, cfg, transport.NewTransport(conn), a.bus, a.store, unmarshal, marshal)
+	ctx, cancel := context.WithTimeout(a.ctx, time.Second*time.Duration(cfg.WriteTimeout))
+	session, err := NewSession(ctx, cfg, transport.NewTransport(conn), a.bus, a.store, unmarshal, marshal)
+	cancel()
 	if err != nil {
 		logger.WithError(err).Error("failed to create session")
 		http.Error(w, err.Error(), http.StatusInternalServerError)

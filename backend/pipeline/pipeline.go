@@ -1,6 +1,8 @@
 package pipeline
 
 import (
+	"time"
+
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
@@ -16,6 +18,7 @@ type Pipeline struct {
 	assetGetter       asset.Getter
 	extensionExecutor ExtensionExecutorGetterFunc
 	executor          command.Executor
+	storeTimeout      time.Duration
 }
 
 // Config holds the configuration for a Pipeline.
@@ -23,6 +26,7 @@ type Config struct {
 	Store                   store.Store
 	ExtensionExecutorGetter ExtensionExecutorGetterFunc
 	AssetGetter             asset.Getter
+	StoreTimeout            time.Duration
 }
 
 // Option is a functional option used to configure Pipelines.
@@ -35,6 +39,7 @@ func New(c Config, options ...Option) *Pipeline {
 		assetGetter:       c.AssetGetter,
 		extensionExecutor: c.ExtensionExecutorGetter,
 		executor:          command.NewExecutor(),
+		storeTimeout:      c.StoreTimeout,
 	}
 	for _, o := range options {
 		o(pipeline)
