@@ -117,9 +117,13 @@ type Config struct {
 	KeepaliveInterval uint32
 
 	// KeepaliveTimeout is the time after which a sensu-agent is considered dead
-	// by the backend. See DefaultKeepaliveTimeout in corev2 package for default
-	// value.
+	// by the backend to create a warning event. See DefaultKeepaliveTimeout in
+	// corev2 package for default value.
 	KeepaliveTimeout uint32
+
+	// KeepaliveCriticalTimeout is the time after which a sensu-agent is considered dead
+	// by the backend to create a critical event.
+	KeepaliveCriticalTimeout uint32
 
 	// Labels are key-value pairs that users can provide to agent entities
 	Labels map[string]string

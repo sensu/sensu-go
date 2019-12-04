@@ -31,6 +31,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// KeepaliveCriticalTimeoutLabel is the label key used to store the keepalive critical timeout.
+const KeepaliveCriticalTimeoutLabel = "keepalive-critical-timeout"
+
 // GetDefaultAgentName returns the default agent name
 func GetDefaultAgentName() string {
 	defaultAgentName, err := os.Hostname()
@@ -188,6 +191,9 @@ func (a *Agent) Run(ctx context.Context) error {
 	if timeout := a.config.KeepaliveTimeout; timeout < 5 {
 		return fmt.Errorf("bad keepalive timeout: %d (minimum value is 5 seconds)", timeout)
 	}
+	if timeout := a.config.KeepaliveCriticalTimeout; timeout > 0 && timeout < 5 {
+		return fmt.Errorf("bad keepalive critical timeout: %d (minimum value is 5 seconds)", timeout)
+	}
 
 	if !a.config.DisableAssets {
 		assetManager := asset.NewManager(a.config.CacheDir, a.getAgentEntity(), &a.wg)
@@ -312,6 +318,7 @@ func (a *Agent) newKeepalive() *transport.Message {
 		ObjectMeta: corev2.NewObjectMeta("keepalive", entity.Namespace),
 		Interval:   a.config.KeepaliveInterval,
 		Timeout:    a.config.KeepaliveTimeout,
+		Ttl:        int64(a.config.KeepaliveCriticalTimeout),
 	}
 	keepalive.Entity = a.getAgentEntity()
 	keepalive.Timestamp = time.Now().Unix()

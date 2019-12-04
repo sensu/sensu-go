@@ -39,6 +39,7 @@ const (
 	flagEventsBurstLimit         = "events-burst-limit"
 	flagKeepaliveInterval        = "keepalive-interval"
 	flagKeepaliveTimeout         = "keepalive-timeout"
+	flagKeepaliveCriticalTimeout = "keepalive-critical-timeout"
 	flagNamespace                = "namespace"
 	flagPassword                 = "password"
 	flagRedact                   = "redact"
@@ -115,6 +116,7 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 			cfg.EventsAPIBurstLimit = viper.GetInt(flagEventsBurstLimit)
 			cfg.KeepaliveInterval = uint32(viper.GetInt(flagKeepaliveInterval))
 			cfg.KeepaliveTimeout = uint32(viper.GetInt(flagKeepaliveTimeout))
+			cfg.KeepaliveCriticalTimeout = uint32(viper.GetInt(flagKeepaliveCriticalTimeout))
 			cfg.Namespace = viper.GetString(flagNamespace)
 			cfg.Password = viper.GetString(flagPassword)
 			cfg.Socket.Host = viper.GetString(flagSocketHost)
@@ -217,6 +219,7 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	viper.SetDefault(flagEventsBurstLimit, agent.DefaultEventsAPIBurstLimit)
 	viper.SetDefault(flagKeepaliveInterval, agent.DefaultKeepaliveInterval)
 	viper.SetDefault(flagKeepaliveTimeout, corev2.DefaultKeepaliveTimeout)
+	viper.SetDefault(flagKeepaliveCriticalTimeout, 0)
 	viper.SetDefault(flagNamespace, agent.DefaultNamespace)
 	viper.SetDefault(flagPassword, agent.DefaultPassword)
 	viper.SetDefault(flagRedact, corev2.DefaultRedactFields)
@@ -263,7 +266,8 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	cmd.Flags().StringSlice(flagSubscriptions, viper.GetStringSlice(flagSubscriptions), "comma-delimited list of agent subscriptions")
 	cmd.Flags().String(flagUser, viper.GetString(flagUser), "agent user")
 	cmd.Flags().StringSlice(flagBackendURL, viper.GetStringSlice(flagBackendURL), "ws/wss URL of Sensu backend server (to specify multiple backends use this flag multiple times)")
-	cmd.Flags().Uint32(flagKeepaliveTimeout, uint32(viper.GetInt(flagKeepaliveTimeout)), "number of seconds until agent is considered dead by backend")
+	cmd.Flags().Uint32(flagKeepaliveTimeout, uint32(viper.GetInt(flagKeepaliveTimeout)), "number of seconds until agent is considered dead by backend to create a warning event")
+	cmd.Flags().Uint32(flagKeepaliveCriticalTimeout, uint32(viper.GetInt(flagKeepaliveCriticalTimeout)), "number of seconds until agent is considered dead by backend to create a critical event")
 	cmd.Flags().Bool(flagDisableAPI, viper.GetBool(flagDisableAPI), "disable the Agent HTTP API")
 	cmd.Flags().Bool(flagDisableAssets, viper.GetBool(flagDisableAssets), "disable check assets on this agent")
 	cmd.Flags().Bool(flagDisableSockets, viper.GetBool(flagDisableSockets), "disable the Agent TCP and UDP event sockets")
