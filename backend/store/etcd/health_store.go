@@ -3,12 +3,15 @@ package etcd
 import (
 	"context"
 	"crypto/tls"
+	"fmt"
+	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 func isEmbeddedClient(clientURLs []string) bool {
@@ -22,71 +25,99 @@ func isEmbeddedClient(clientURLs []string) bool {
 	return false
 }
 
+func (s *Store) getHealth(ctx context.Context, id uint64, name string, urls []string, tls *tls.Config) *corev2.ClusterHealth {
+	health := &corev2.ClusterHealth{
+		MemberID: id,
+		Name:     name,
+	}
+
+	var cli *clientv3.Client
+	var cliErr error
+
+	if isEmbeddedClient(urls) {
+		cli = s.client
+	} else {
+		cli, cliErr = clientv3.New(clientv3.Config{
+			Endpoints:   urls,
+			DialTimeout: 5 * time.Second,
+			TLS:         tls,
+		})
+	}
+
+	if cliErr != nil {
+		logger.WithField("member", id).WithField("name", name).WithError(cliErr).Error("unhealthy cluster member")
+		health.Err = cliErr.Error()
+		return health
+	}
+	defer func() {
+		_ = cli.Close()
+	}()
+
+	_, getErr := cli.Get(ctx, "health")
+
+	if getErr == nil || getErr == rpctypes.ErrPermissionDenied {
+		health.Err = ""
+		health.Healthy = true
+	} else {
+		health.Err = getErr.Error()
+	}
+
+	return health
+}
+
 // GetClusterHealth retrieves the cluster health
-func (s *Store) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, etcdClientTLSConfig *tls.Config) *types.HealthResponse {
-	healthResponse := &types.HealthResponse{}
+func (s *Store) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, etcdClientTLSConfig *tls.Config) *corev2.HealthResponse {
+	healthResponse := &corev2.HealthResponse{}
 
 	// Do a get op against every cluster member. Collect the  memberIDs and
 	// op errors into a response map, and return this map as etcd health
 	// information.
 	mList, err := cluster.MemberList(ctx)
 	if err != nil {
-		logger.WithError(err).Warning("could not get the cluster member list")
+		logger.WithError(err).Error("could not get the cluster member list")
+		healthResponse.ClusterHealth = []*corev2.ClusterHealth{&corev2.ClusterHealth{
+			Name: "etcd client",
+			Err:  fmt.Sprintf("error getting cluster member list: %s", err.Error()),
+		}}
 		return healthResponse
 	}
+	logger.WithField("members", mList.Members).Info("retrieved cluster members")
 	healthResponse.Header = mList.Header
 
+	healths := make(chan *corev2.ClusterHealth, len(mList.Members))
+	var wg sync.WaitGroup
+	wg.Add(len(mList.Members))
+
+	go func() {
+		wg.Wait()
+		close(healths)
+	}()
+
 	for _, member := range mList.Members {
-		health := &types.ClusterHealth{
-			MemberID: member.ID,
-			Name:     member.Name,
-		}
+		go func(id uint64, name string, urls []string) {
+			defer wg.Done()
+			select {
+			case healths <- s.getHealth(ctx, id, name, urls, etcdClientTLSConfig):
+			case <-ctx.Done():
+			}
+		}(member.ID, member.Name, member.ClientURLs)
+	}
 
-		var cli *clientv3.Client
-		var cliErr error
-
-		if isEmbeddedClient(member.ClientURLs) {
-			cli = s.client
-		} else {
-			cli, cliErr = clientv3.New(clientv3.Config{
-				Endpoints:   member.ClientURLs,
-				DialTimeout: 5 * time.Second,
-				TLS:         etcdClientTLSConfig,
-			})
-		}
-
-		if cliErr != nil {
-			logger.WithField("member", member.ID).WithError(cliErr).Error("unhealthy cluster member")
-			health.Err = cliErr.Error()
-			health.Healthy = false
-			healthResponse.ClusterHealth = append(healthResponse.ClusterHealth, health)
-			continue
-		}
-		defer func() {
-			_ = cli.Close()
-		}()
-
-		// Specify the client request timeout to get the health
-		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
-		_, getErr := cli.Get(ctx, "health")
-		cancel()
-
-		if getErr == nil || getErr == rpctypes.ErrPermissionDenied {
-			health.Err = ""
-			health.Healthy = true
-		} else {
-			health.Err = getErr.Error()
-			health.Healthy = false
-		}
-
+	for health := range healths {
+		logger.WithField("health", health).Info("cluster member health")
 		healthResponse.ClusterHealth = append(healthResponse.ClusterHealth, health)
 	}
 
-	alarmResponse, err := s.client.Maintenance.AlarmList(ctx)
+	sort.Slice(healthResponse.ClusterHealth, func(i, j int) bool {
+		return healthResponse.ClusterHealth[i].Name < healthResponse.ClusterHealth[j].Name
+	})
 
+	alarmResponse, err := s.client.Maintenance.AlarmList(ctx)
 	if err != nil {
 		logger.WithError(err).Error("failed to fetch etcd alarm list")
 	}
+
+	logger.WithField("alarms", len(alarmResponse.Alarms)).Info("cluster alarms")
 
 	healthResponse.Alarms = alarmResponse.Alarms
 	return healthResponse

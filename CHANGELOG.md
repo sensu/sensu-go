@@ -14,6 +14,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 when it is not operating as an etcd member. The flag is also used by the new
 sensu-backend init tool.
 - Added the cluster's distribution to Tessen data.
+- Added a new field, ClusterIDHex, to the ClusterHealth datatype.
 
 ### Fixed
 - Add a timeout to etcd requests when retrieving the nodes health.
@@ -29,12 +30,16 @@ before checking if the asset has 1 or more builds.
 does not exist.
 - Fixed issue where keepalive events and events created through the agent's
 socket interface could be missing a namespace.
+- Fixed an issue where 'sensuctl cluster health' would hang indefinitely.
 
 ### Changed
 - The backend will no longer automatically be seeded with a default admin
 username and password. Users will need to run 'sensu-backend init' on every
 new installation.
 - Several deprecated flags were removed from sensu-backend.
+- 'sensuctl cluster health' will now use a 3s timeout when gathering cluster
+health information.
+- 'sensuctl cluster health' now collects cluster health information concurrently.
 
 ## [5.15.0] - 2019-11-18
 
