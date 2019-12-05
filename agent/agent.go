@@ -31,9 +31,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// KeepaliveCriticalTimeoutLabel is the label key used to store the keepalive critical timeout.
-const KeepaliveCriticalTimeoutLabel = "keepalive-critical-timeout"
-
 // GetDefaultAgentName returns the default agent name
 func GetDefaultAgentName() string {
 	defaultAgentName, err := os.Hostname()
