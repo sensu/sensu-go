@@ -19,6 +19,13 @@ func TestEncodeEvent(t *testing.T) {
 	assert.Equal("check", components.ResourceType())
 	assert.NotEmpty(components.UniqueComponent())
 
+	event.ObjectMeta.Namespace = ""
+	components = encodeEvent(ctx, event)
+	assert.Equal("events", components.Resource())
+	assert.Equal("default", components.Namespace())
+	assert.Equal("check", components.ResourceType())
+	assert.NotEmpty(components.UniqueComponent())
+
 	event.Check = nil
 	event.Metrics = &types.Metrics{}
 	components = encodeEvent(ctx, event)

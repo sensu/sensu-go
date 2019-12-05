@@ -27,8 +27,6 @@ const (
 	flagConfigFile            = "config-file"
 	flagAgentHost             = "agent-host"
 	flagAgentPort             = "agent-port"
-	deprecatedFlagAPIHost     = "api-host"
-	deprecatedFlagAPIPort     = "api-port"
 	flagAPIListenAddress      = "api-listen-address"
 	flagAPIURL                = "api-url"
 	flagDashboardHost         = "dashboard-host"
@@ -46,24 +44,20 @@ const (
 	flagLogLevel              = "log-level"
 
 	// Etcd flag constants
-	deprecatedFlagEtcdClientURLs               = "listen-client-urls"
-	flagEtcdClientURLs                         = "etcd-listen-client-urls"
-	deprecatedFlagEtcdPeerURLs                 = "listen-peer-urls"
-	flagEtcdPeerURLs                           = "etcd-listen-peer-urls"
-	deprecatedFlagEtcdInitialCluster           = "initial-cluster"
-	flagEtcdInitialCluster                     = "etcd-initial-cluster"
-	deprecatedFlagEtcdInitialAdvertisePeerURLs = "initial-advertise-peer-urls"
-	flagEtcdInitialAdvertisePeerURLs           = "etcd-initial-advertise-peer-urls"
-	deprecatedFlagEtcdInitialClusterState      = "initial-cluster-state"
-	flagEtcdInitialClusterState                = "etcd-initial-cluster-state"
-	deprecatedFlagEtcdInitialClusterToken      = "initial-cluster-token"
-	flagEtcdInitialClusterToken                = "etcd-initial-cluster-token"
-	deprecatedFlagEtcdNodeName                 = "name"
-	flagEtcdNodeName                           = "etcd-name"
-	flagNoEmbedEtcd                            = "no-embed-etcd"
-	flagEtcdAdvertiseClientURLs                = "etcd-advertise-client-urls"
-	flagEtcdHeartbeatInterval                  = "etcd-heartbeat-interval"
-	flagEtcdElectionTimeout                    = "etcd-election-timeout"
+	flagEtcdClientURLs               = "etcd-client-urls"
+	flagEtcdListenClientURLs         = "etcd-listen-client-urls"
+	flagEtcdPeerURLs                 = "etcd-listen-peer-urls"
+	flagEtcdInitialCluster           = "etcd-initial-cluster"
+	flagEtcdDiscovery                = "etcd-discovery"
+	flagEtcdDiscoverySrv             = "etcd-discovery-srv"
+	flagEtcdInitialAdvertisePeerURLs = "etcd-initial-advertise-peer-urls"
+	flagEtcdInitialClusterState      = "etcd-initial-cluster-state"
+	flagEtcdInitialClusterToken      = "etcd-initial-cluster-token"
+	flagEtcdNodeName                 = "etcd-name"
+	flagNoEmbedEtcd                  = "no-embed-etcd"
+	flagEtcdAdvertiseClientURLs      = "etcd-advertise-client-urls"
+	flagEtcdHeartbeatInterval        = "etcd-heartbeat-interval"
+	flagEtcdElectionTimeout          = "etcd-election-timeout"
 
 	// Etcd TLS flag constants
 	flagEtcdCertFile           = "etcd-cert-file"
@@ -127,6 +121,14 @@ Use "{{.CommandPath}} [command] --help" for more information about a command.{{e
 // to initialize the backend
 type initializeFunc func(*backend.Config) (*backend.Backend, error)
 
+func fallbackStringSlice(newFlag, oldFlag string) []string {
+	slice := viper.GetStringSlice(newFlag)
+	if len(slice) == 0 {
+		slice = viper.GetStringSlice(oldFlag)
+	}
+	return slice
+}
+
 // StartCommand ...
 func StartCommand(initialize initializeFunc) *cobra.Command {
 	var setupErr error
@@ -142,19 +144,21 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 				return setupErr
 			}
 
-			// Make sure the deprecated API flags are no longer used
-			if host := viper.GetString(deprecatedFlagAPIHost); host != "[::]" {
-				logger.Fatalf("Flag --%s has been deprecated, please use --%s instead", deprecatedFlagAPIHost, flagAPIListenAddress)
-			}
-			if port := viper.GetInt(deprecatedFlagAPIPort); port != 8080 {
-				logger.Fatalf("Flag --%s has been deprecated, please use --%s instead", deprecatedFlagAPIPort, flagAPIListenAddress)
-			}
-
 			level, err := logrus.ParseLevel(viper.GetString(flagLogLevel))
 			if err != nil {
 				return err
 			}
 			logrus.SetLevel(level)
+
+			// If no clustering options are provided, default to a static
+			// cluster 'defaultEtcdName=defaultEtcdPeerURL'.
+			initialCluster := viper.GetString(flagEtcdInitialCluster)
+			etcdDiscovery := viper.GetString(flagEtcdDiscovery)
+			SrvDiscovery := viper.GetString(flagEtcdDiscoverySrv)
+
+			if initialCluster == "" && etcdDiscovery == "" && SrvDiscovery == "" {
+				initialCluster = fmt.Sprintf("%s=%s", defaultEtcdName, defaultEtcdPeerURL)
+			}
 
 			cfg := &backend.Config{
 				AgentHost:             viper.GetString(flagAgentHost),
@@ -171,10 +175,13 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 				StateDir:              viper.GetString(flagStateDir),
 
 				EtcdAdvertiseClientURLs:      viper.GetStringSlice(flagEtcdAdvertiseClientURLs),
-				EtcdListenClientURLs:         viper.GetStringSlice(flagEtcdClientURLs),
+				EtcdListenClientURLs:         viper.GetStringSlice(flagEtcdListenClientURLs),
+				EtcdClientURLs:               fallbackStringSlice(flagEtcdClientURLs, flagEtcdAdvertiseClientURLs),
 				EtcdListenPeerURLs:           viper.GetStringSlice(flagEtcdPeerURLs),
-				EtcdInitialCluster:           viper.GetString(flagEtcdInitialCluster),
+				EtcdInitialCluster:           initialCluster,
 				EtcdInitialClusterState:      viper.GetString(flagEtcdInitialClusterState),
+				EtcdDiscovery:                etcdDiscovery,
+				EtcdDiscoverySrv:             SrvDiscovery,
 				EtcdInitialAdvertisePeerURLs: viper.GetStringSlice(flagEtcdInitialAdvertisePeerURLs),
 				EtcdInitialClusterToken:      viper.GetString(flagEtcdInitialClusterToken),
 				EtcdName:                     viper.GetString(flagEtcdNodeName),
@@ -245,6 +252,12 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 		},
 	}
 
+	setupErr = handleConfig(cmd, true)
+
+	return cmd
+}
+
+func handleConfig(cmd *cobra.Command, server bool) error {
 	// Set up distinct flagset for handling config file
 	configFlagSet := pflag.NewFlagSet("sensu", pflag.ContinueOnError)
 	configFlagSet.StringP(flagConfigFile, "c", "", "path to sensu-backend config file")
@@ -264,39 +277,40 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	viper.SetConfigType("yaml")
 	viper.SetConfigFile(configFilePath)
 
-	// Flag defaults
-	viper.SetDefault(flagAgentHost, "[::]")
-	viper.SetDefault(flagAgentPort, 8081)
-	viper.SetDefault(deprecatedFlagAPIHost, "[::]")
-	viper.SetDefault(deprecatedFlagAPIPort, 8080)
-	viper.SetDefault(flagAPIListenAddress, "[::]:8080")
-	viper.SetDefault(flagAPIURL, "http://localhost:8080")
-	viper.SetDefault(flagDashboardHost, "[::]")
-	viper.SetDefault(flagDashboardPort, 3000)
-	viper.SetDefault(flagDashboardCertFile, "")
-	viper.SetDefault(flagDashboardKeyFile, "")
-	viper.SetDefault(flagDeregistrationHandler, "")
-	viper.SetDefault(flagCacheDir, path.SystemCacheDir("sensu-backend"))
-	viper.SetDefault(flagStateDir, path.SystemDataDir("sensu-backend"))
-	viper.SetDefault(flagCertFile, "")
-	viper.SetDefault(flagKeyFile, "")
-	viper.SetDefault(flagTrustedCAFile, "")
-	viper.SetDefault(flagInsecureSkipTLSVerify, false)
-	viper.SetDefault(flagLogLevel, "warn")
-	viper.SetDefault(backend.FlagEventdWorkers, 100)
-	viper.SetDefault(backend.FlagEventdBufferSize, 100)
-	viper.SetDefault(backend.FlagKeepalivedWorkers, 100)
-	viper.SetDefault(backend.FlagKeepalivedBufferSize, 100)
-	viper.SetDefault(backend.FlagPipelinedWorkers, 100)
-	viper.SetDefault(backend.FlagPipelinedBufferSize, 100)
-	viper.SetDefault(backend.FlagAgentWriteTimeout, 15)
+	if server {
+		// Flag defaults
+		viper.SetDefault(flagAgentHost, "[::]")
+		viper.SetDefault(flagAgentPort, 8081)
+		viper.SetDefault(flagAPIListenAddress, "[::]:8080")
+		viper.SetDefault(flagAPIURL, "http://localhost:8080")
+		viper.SetDefault(flagDashboardHost, "[::]")
+		viper.SetDefault(flagDashboardPort, 3000)
+		viper.SetDefault(flagDashboardCertFile, "")
+		viper.SetDefault(flagDashboardKeyFile, "")
+		viper.SetDefault(flagDeregistrationHandler, "")
+		viper.SetDefault(flagCacheDir, path.SystemCacheDir("sensu-backend"))
+		viper.SetDefault(flagStateDir, path.SystemDataDir("sensu-backend"))
+		viper.SetDefault(flagCertFile, "")
+		viper.SetDefault(flagKeyFile, "")
+		viper.SetDefault(flagTrustedCAFile, "")
+		viper.SetDefault(flagInsecureSkipTLSVerify, false)
+		viper.SetDefault(flagLogLevel, "warn")
+		viper.SetDefault(backend.FlagEventdWorkers, 100)
+		viper.SetDefault(backend.FlagEventdBufferSize, 100)
+		viper.SetDefault(backend.FlagKeepalivedWorkers, 100)
+		viper.SetDefault(backend.FlagKeepalivedBufferSize, 100)
+		viper.SetDefault(backend.FlagPipelinedWorkers, 100)
+		viper.SetDefault(backend.FlagPipelinedBufferSize, 100)
+		viper.SetDefault(backend.FlagAgentWriteTimeout, 15)
+	}
 
 	// Etcd defaults
 	viper.SetDefault(flagEtcdAdvertiseClientURLs, defaultEtcdAdvertiseClientURL)
-	viper.SetDefault(flagEtcdClientURLs, defaultEtcdClientURL)
+	viper.SetDefault(flagEtcdListenClientURLs, defaultEtcdClientURL)
 	viper.SetDefault(flagEtcdPeerURLs, defaultEtcdPeerURL)
-	viper.SetDefault(flagEtcdInitialCluster,
-		fmt.Sprintf("%s=%s", defaultEtcdName, defaultEtcdPeerURL))
+	viper.SetDefault(flagEtcdInitialCluster, "")
+	viper.SetDefault(flagEtcdDiscovery, "")
+	viper.SetDefault(flagEtcdDiscoverySrv, "")
 	viper.SetDefault(flagEtcdInitialAdvertisePeerURLs, defaultEtcdPeerURL)
 	viper.SetDefault(flagEtcdInitialClusterState, etcd.ClusterStateNew)
 	viper.SetDefault(flagEtcdInitialClusterToken, "")
@@ -305,70 +319,95 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	viper.SetDefault(flagEtcdMaxRequestBytes, etcd.DefaultMaxRequestBytes)
 	viper.SetDefault(flagEtcdHeartbeatInterval, etcd.DefaultTickMs)
 	viper.SetDefault(flagEtcdElectionTimeout, etcd.DefaultElectionMs)
-	viper.SetDefault(flagNoEmbedEtcd, false)
+
+	if server {
+		viper.SetDefault(flagNoEmbedEtcd, false)
+	}
 
 	// Merge in config flag set so that it appears in command usage
 	cmd.Flags().AddFlagSet(configFlagSet)
 
-	// Main Flags
-	cmd.Flags().String(flagAgentHost, viper.GetString(flagAgentHost), "agent listener host")
-	cmd.Flags().Int(flagAgentPort, viper.GetInt(flagAgentPort), "agent listener port")
-	cmd.Flags().String(flagAPIListenAddress, viper.GetString(flagAPIListenAddress), "address to listen on for api traffic")
-	cmd.Flags().String(flagAPIURL, viper.GetString(flagAPIURL), "url of the api to connect to")
-	cmd.Flags().String(flagDashboardHost, viper.GetString(flagDashboardHost), "dashboard listener host")
-	cmd.Flags().Int(flagDashboardPort, viper.GetInt(flagDashboardPort), "dashboard listener port")
-	cmd.Flags().String(flagDashboardCertFile, viper.GetString(flagDashboardCertFile), "dashboard TLS certificate in PEM format")
-	cmd.Flags().String(flagDashboardKeyFile, viper.GetString(flagDashboardKeyFile), "dashboard TLS certificate key in PEM format")
-	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "default deregistration handler")
-	cmd.Flags().String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
-	cmd.Flags().StringP(flagStateDir, "d", viper.GetString(flagStateDir), "path to sensu state storage")
-	cmd.Flags().String(flagCertFile, viper.GetString(flagCertFile), "TLS certificate in PEM format")
-	cmd.Flags().String(flagKeyFile, viper.GetString(flagKeyFile), "TLS certificate key in PEM format")
-	cmd.Flags().String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format")
-	cmd.Flags().Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")
-	cmd.Flags().Bool(flagDebug, false, "enable debugging and profiling features")
-	cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
-	cmd.Flags().Int(backend.FlagEventdWorkers, viper.GetInt(backend.FlagEventdWorkers), "number of workers spawned for processing incoming events")
-	cmd.Flags().Int(backend.FlagEventdBufferSize, viper.GetInt(backend.FlagEventdBufferSize), "number of incoming events that can be buffered")
-	cmd.Flags().Int(backend.FlagKeepalivedWorkers, viper.GetInt(backend.FlagKeepalivedWorkers), "number of workers spawned for processing incoming keepalives")
-	cmd.Flags().Int(backend.FlagKeepalivedBufferSize, viper.GetInt(backend.FlagKeepalivedBufferSize), "number of incoming keepalives that can be buffered")
-	cmd.Flags().Int(backend.FlagPipelinedWorkers, viper.GetInt(backend.FlagPipelinedWorkers), "number of workers spawned for handling events through the event pipeline")
-	cmd.Flags().Int(backend.FlagPipelinedBufferSize, viper.GetInt(backend.FlagPipelinedBufferSize), "number of events to handle that can be buffered")
-	cmd.Flags().Int(backend.FlagAgentWriteTimeout, viper.GetInt(backend.FlagAgentWriteTimeout), "timeout in seconds for agent writes")
-	cmd.Flags().String(backend.FlagJWTPrivateKeyFile, viper.GetString(backend.FlagJWTPrivateKeyFile), "path to the PEM-encoded private key to use to sign JWTs")
-	cmd.Flags().String(backend.FlagJWTPublicKeyFile, viper.GetString(backend.FlagJWTPublicKeyFile), "path to the PEM-encoded public key to use to verify JWT signatures")
+	if server {
+		// Main Flags
+		cmd.Flags().String(flagAgentHost, viper.GetString(flagAgentHost), "agent listener host")
+		cmd.Flags().Int(flagAgentPort, viper.GetInt(flagAgentPort), "agent listener port")
+		cmd.Flags().String(flagAPIListenAddress, viper.GetString(flagAPIListenAddress), "address to listen on for api traffic")
+		cmd.Flags().String(flagAPIURL, viper.GetString(flagAPIURL), "url of the api to connect to")
+		cmd.Flags().String(flagDashboardHost, viper.GetString(flagDashboardHost), "dashboard listener host")
+		cmd.Flags().Int(flagDashboardPort, viper.GetInt(flagDashboardPort), "dashboard listener port")
+		cmd.Flags().String(flagDashboardCertFile, viper.GetString(flagDashboardCertFile), "dashboard TLS certificate in PEM format")
+		cmd.Flags().String(flagDashboardKeyFile, viper.GetString(flagDashboardKeyFile), "dashboard TLS certificate key in PEM format")
+		cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "default deregistration handler")
+		cmd.Flags().String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
+		cmd.Flags().StringP(flagStateDir, "d", viper.GetString(flagStateDir), "path to sensu state storage")
+		cmd.Flags().String(flagCertFile, viper.GetString(flagCertFile), "TLS certificate in PEM format")
+		cmd.Flags().String(flagKeyFile, viper.GetString(flagKeyFile), "TLS certificate key in PEM format")
+		cmd.Flags().String(flagTrustedCAFile, viper.GetString(flagTrustedCAFile), "TLS CA certificate bundle in PEM format")
+		cmd.Flags().Bool(flagInsecureSkipTLSVerify, viper.GetBool(flagInsecureSkipTLSVerify), "skip TLS verification (not recommended!)")
+		cmd.Flags().Bool(flagDebug, false, "enable debugging and profiling features")
+		cmd.Flags().String(flagLogLevel, viper.GetString(flagLogLevel), "logging level [panic, fatal, error, warn, info, debug]")
+		cmd.Flags().Int(backend.FlagEventdWorkers, viper.GetInt(backend.FlagEventdWorkers), "number of workers spawned for processing incoming events")
+		cmd.Flags().Int(backend.FlagEventdBufferSize, viper.GetInt(backend.FlagEventdBufferSize), "number of incoming events that can be buffered")
+		cmd.Flags().Int(backend.FlagKeepalivedWorkers, viper.GetInt(backend.FlagKeepalivedWorkers), "number of workers spawned for processing incoming keepalives")
+		cmd.Flags().Int(backend.FlagKeepalivedBufferSize, viper.GetInt(backend.FlagKeepalivedBufferSize), "number of incoming keepalives that can be buffered")
+		cmd.Flags().Int(backend.FlagPipelinedWorkers, viper.GetInt(backend.FlagPipelinedWorkers), "number of workers spawned for handling events through the event pipeline")
+		cmd.Flags().Int(backend.FlagPipelinedBufferSize, viper.GetInt(backend.FlagPipelinedBufferSize), "number of events to handle that can be buffered")
+		cmd.Flags().Int(backend.FlagAgentWriteTimeout, viper.GetInt(backend.FlagAgentWriteTimeout), "timeout in seconds for agent writes")
+		cmd.Flags().String(backend.FlagJWTPrivateKeyFile, viper.GetString(backend.FlagJWTPrivateKeyFile), "path to the PEM-encoded private key to use to sign JWTs")
+		cmd.Flags().String(backend.FlagJWTPublicKeyFile, viper.GetString(backend.FlagJWTPublicKeyFile), "path to the PEM-encoded public key to use to verify JWT signatures")
 
-	// Etcd flags
-	cmd.Flags().StringSlice(flagEtcdAdvertiseClientURLs, viper.GetStringSlice(flagEtcdAdvertiseClientURLs), "list of this member's client URLs to advertise to the rest of the cluster.")
-	_ = cmd.Flags().SetAnnotation(flagEtcdAdvertiseClientURLs, "categories", []string{"store"})
-	cmd.Flags().StringSlice(flagEtcdClientURLs, viper.GetStringSlice(flagEtcdClientURLs), "list of URLs to listen on for client traffic")
-	_ = cmd.Flags().SetAnnotation(flagEtcdClientURLs, "categories", []string{"store"})
-	cmd.Flags().StringSlice(flagEtcdPeerURLs, viper.GetStringSlice(flagEtcdPeerURLs), "list of URLs to listen on for peer traffic")
-	_ = cmd.Flags().SetAnnotation(flagEtcdPeerURLs, "categories", []string{"store"})
-	cmd.Flags().String(flagEtcdInitialCluster, viper.GetString(flagEtcdInitialCluster), "initial cluster configuration for bootstrapping")
-	_ = cmd.Flags().SetAnnotation(flagEtcdInitialCluster, "categories", []string{"store"})
-	cmd.Flags().StringSlice(flagEtcdInitialAdvertisePeerURLs, viper.GetStringSlice(flagEtcdInitialAdvertisePeerURLs), "list of this member's peer URLs to advertise to the rest of the cluster")
-	_ = cmd.Flags().SetAnnotation(flagEtcdInitialAdvertisePeerURLs, "categories", []string{"store"})
-	cmd.Flags().String(flagEtcdInitialClusterState, viper.GetString(flagEtcdInitialClusterState), "initial cluster state (\"new\" or \"existing\")")
-	_ = cmd.Flags().SetAnnotation(flagEtcdInitialClusterState, "categories", []string{"store"})
-	cmd.Flags().String(flagEtcdInitialClusterToken, viper.GetString(flagEtcdInitialClusterToken), "initial cluster token for the etcd cluster during bootstrap")
-	_ = cmd.Flags().SetAnnotation(flagEtcdInitialClusterToken, "categories", []string{"store"})
-	cmd.Flags().String(flagEtcdNodeName, viper.GetString(flagEtcdNodeName), "human-readable name for this member")
-	_ = cmd.Flags().SetAnnotation(flagEtcdNodeName, "categories", []string{"store"})
-	cmd.Flags().Bool(flagNoEmbedEtcd, viper.GetBool(flagNoEmbedEtcd), "don't embed etcd, use external etcd instead")
-	_ = cmd.Flags().SetAnnotation(flagNoEmbedEtcd, "categories", []string{"store"})
+		// Etcd server flags
+		cmd.Flags().StringSlice(flagEtcdPeerURLs, viper.GetStringSlice(flagEtcdPeerURLs), "list of URLs to listen on for peer traffic")
+		_ = cmd.Flags().SetAnnotation(flagEtcdPeerURLs, "categories", []string{"store"})
+		cmd.Flags().String(flagEtcdInitialCluster, viper.GetString(flagEtcdInitialCluster), "initial cluster configuration for bootstrapping")
+		_ = cmd.Flags().SetAnnotation(flagEtcdInitialCluster, "categories", []string{"store"})
+		cmd.Flags().StringSlice(flagEtcdInitialAdvertisePeerURLs, viper.GetStringSlice(flagEtcdInitialAdvertisePeerURLs), "list of this member's peer URLs to advertise to the rest of the cluster")
+		_ = cmd.Flags().SetAnnotation(flagEtcdInitialAdvertisePeerURLs, "categories", []string{"store"})
+		cmd.Flags().String(flagEtcdInitialClusterState, viper.GetString(flagEtcdInitialClusterState), "initial cluster state (\"new\" or \"existing\")")
+		_ = cmd.Flags().SetAnnotation(flagEtcdInitialClusterState, "categories", []string{"store"})
+		cmd.Flags().String(flagEtcdDiscovery, viper.GetString(flagEtcdDiscovery), "discovery URL used to bootstrap the cluster")
+		_ = cmd.Flags().SetAnnotation(flagEtcdDiscovery, "categories", []string{"store"})
+		cmd.Flags().String(flagEtcdDiscoverySrv, viper.GetString(flagEtcdDiscoverySrv), "DNS SRV record used to bootstrap the cluster")
+		_ = cmd.Flags().SetAnnotation(flagEtcdDiscoverySrv, "categories", []string{"store"})
+		cmd.Flags().String(flagEtcdInitialClusterToken, viper.GetString(flagEtcdInitialClusterToken), "initial cluster token for the etcd cluster during bootstrap")
+		_ = cmd.Flags().SetAnnotation(flagEtcdInitialClusterToken, "categories", []string{"store"})
+		cmd.Flags().StringSlice(flagEtcdListenClientURLs, viper.GetStringSlice(flagEtcdListenClientURLs), "list of etcd client URLs to listen on")
+		_ = cmd.Flags().SetAnnotation(flagEtcdListenClientURLs, "categories", []string{"store"})
+		cmd.Flags().Bool(flagNoEmbedEtcd, viper.GetBool(flagNoEmbedEtcd), "don't embed etcd, use external etcd instead")
+		_ = cmd.Flags().SetAnnotation(flagNoEmbedEtcd, "categories", []string{"store"})
+		cmd.Flags().Int64(flagEtcdQuotaBackendBytes, viper.GetInt64(flagEtcdQuotaBackendBytes), "maximum etcd database size in bytes (use with caution)")
+		_ = cmd.Flags().SetAnnotation(flagEtcdQuotaBackendBytes, "categories", []string{"store"})
+		cmd.Flags().Uint(flagEtcdHeartbeatInterval, viper.GetUint(flagEtcdHeartbeatInterval), "interval in ms with which the etcd leader will notify followers that it is still the leader")
+		_ = cmd.Flags().SetAnnotation(flagEtcdHeartbeatInterval, "categories", []string{"store"})
+		cmd.Flags().Uint(flagEtcdElectionTimeout, viper.GetUint(flagEtcdElectionTimeout), "time in ms a follower node will go without hearing a heartbeat before attempting to become leader itself")
+		_ = cmd.Flags().SetAnnotation(flagEtcdElectionTimeout, "categories", []string{"store"})
+
+		// Etcd server TLS flags
+		cmd.Flags().String(flagEtcdPeerCertFile, viper.GetString(flagEtcdPeerCertFile), "path to the peer server TLS cert file")
+		_ = cmd.Flags().SetAnnotation(flagEtcdPeerCertFile, "categories", []string{"store"})
+		cmd.Flags().String(flagEtcdPeerKeyFile, viper.GetString(flagEtcdPeerKeyFile), "path to the peer server TLS key file")
+		_ = cmd.Flags().SetAnnotation(flagEtcdPeerKeyFile, "categories", []string{"store"})
+		cmd.Flags().Bool(flagEtcdPeerClientCertAuth, viper.GetBool(flagEtcdPeerClientCertAuth), "enable peer client cert authentication")
+		_ = cmd.Flags().SetAnnotation(flagEtcdPeerClientCertAuth, "categories", []string{"store"})
+		cmd.Flags().String(flagEtcdPeerTrustedCAFile, viper.GetString(flagEtcdPeerTrustedCAFile), "path to the peer server TLS trusted CA file")
+		_ = cmd.Flags().SetAnnotation(flagEtcdPeerTrustedCAFile, "categories", []string{"store"})
+		cmd.Flags().String(flagEtcdNodeName, viper.GetString(flagEtcdNodeName), "name for this etcd node")
+		_ = cmd.Flags().SetAnnotation(flagEtcdNodeName, "categories", []string{"store"})
+	}
+
+	// Etcd client/server flags
 	cmd.Flags().StringSlice(flagEtcdCipherSuites, nil, "list of ciphers to use for etcd TLS configuration")
 	_ = cmd.Flags().SetAnnotation(flagEtcdCipherSuites, "categories", []string{"store"})
-	cmd.Flags().Int64(flagEtcdQuotaBackendBytes, viper.GetInt64(flagEtcdQuotaBackendBytes), "maximum etcd database size in bytes (use with caution)")
-	_ = cmd.Flags().SetAnnotation(flagEtcdQuotaBackendBytes, "categories", []string{"store"})
+
+	// This one is really only a server flag, but because we lacked
+	// --etcd-client-urls until recently, it's used as a fallback.
+	cmd.Flags().StringSlice(flagEtcdAdvertiseClientURLs, viper.GetStringSlice(flagEtcdAdvertiseClientURLs), "list of this member's client URLs to advertise to clients")
+	_ = cmd.Flags().SetAnnotation(flagEtcdAdvertiseClientURLs, "categories", []string{"store"})
+
 	cmd.Flags().Uint(flagEtcdMaxRequestBytes, viper.GetUint(flagEtcdMaxRequestBytes), "maximum etcd request size in bytes (use with caution)")
 	_ = cmd.Flags().SetAnnotation(flagEtcdMaxRequestBytes, "categories", []string{"store"})
-	cmd.Flags().Uint(flagEtcdHeartbeatInterval, viper.GetUint(flagEtcdHeartbeatInterval), "interval in ms with which the etcd leader will notify followers that it is still the leader")
-	_ = cmd.Flags().SetAnnotation(flagEtcdHeartbeatInterval, "categories", []string{"store"})
-	cmd.Flags().Uint(flagEtcdElectionTimeout, viper.GetUint(flagEtcdElectionTimeout), "time in ms a follower node will go without hearing a heartbeat before attempting to become leader itself")
-	_ = cmd.Flags().SetAnnotation(flagEtcdElectionTimeout, "categories", []string{"store"})
 
-	// Etcd TLS flags
+	// Etcd client/server TLS flags
 	cmd.Flags().String(flagEtcdCertFile, viper.GetString(flagEtcdCertFile), "path to the client server TLS cert file")
 	_ = cmd.Flags().SetAnnotation(flagEtcdCertFile, "categories", []string{"store"})
 	cmd.Flags().String(flagEtcdKeyFile, viper.GetString(flagEtcdKeyFile), "path to the client server TLS key file")
@@ -377,43 +416,13 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	_ = cmd.Flags().SetAnnotation(flagEtcdClientCertAuth, "categories", []string{"store"})
 	cmd.Flags().String(flagEtcdTrustedCAFile, viper.GetString(flagEtcdTrustedCAFile), "path to the client server TLS trusted CA cert file")
 	_ = cmd.Flags().SetAnnotation(flagEtcdTrustedCAFile, "categories", []string{"store"})
-	cmd.Flags().String(flagEtcdPeerCertFile, viper.GetString(flagEtcdPeerCertFile), "path to the peer server TLS cert file")
-	_ = cmd.Flags().SetAnnotation(flagEtcdPeerCertFile, "categories", []string{"store"})
-	cmd.Flags().String(flagEtcdPeerKeyFile, viper.GetString(flagEtcdPeerKeyFile), "path to the peer server TLS key file")
-	_ = cmd.Flags().SetAnnotation(flagEtcdPeerKeyFile, "categories", []string{"store"})
-	cmd.Flags().Bool(flagEtcdPeerClientCertAuth, viper.GetBool(flagEtcdPeerClientCertAuth), "enable peer client cert authentication")
-	_ = cmd.Flags().SetAnnotation(flagEtcdPeerClientCertAuth, "categories", []string{"store"})
-	cmd.Flags().String(flagEtcdPeerTrustedCAFile, viper.GetString(flagEtcdPeerTrustedCAFile), "path to the peer server TLS trusted CA file")
-	_ = cmd.Flags().SetAnnotation(flagEtcdPeerTrustedCAFile, "categories", []string{"store"})
-
-	// Make sure some deprecated flags are no longer used
-	cmd.Flags().String(deprecatedFlagAPIHost, viper.GetString(deprecatedFlagAPIHost), "http api listener host")
-	cmd.Flags().Int(deprecatedFlagAPIPort, viper.GetInt(deprecatedFlagAPIPort), "http api port")
-	_ = cmd.Flags().MarkHidden(deprecatedFlagAPIHost)
-	_ = cmd.Flags().MarkHidden(deprecatedFlagAPIPort)
-
-	_ = cmd.Flags().MarkDeprecated(deprecatedFlagAPIHost, fmt.Sprintf("please use --%s instead", flagAPIListenAddress))
-	_ = cmd.Flags().MarkDeprecated(deprecatedFlagAPIPort, fmt.Sprintf("please use --%s instead", flagAPIListenAddress))
-
-	// Mark the old etcd flags as deprecated and maintain backward compability
-	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc)
+	cmd.Flags().String(flagEtcdClientURLs, viper.GetString(flagEtcdClientURLs), "client URLs to use when operating as an etcd client")
+	_ = cmd.Flags().SetAnnotation(flagEtcdClientURLs, "categories", []string{"store"})
 
 	// Load the configuration file but only error out if flagConfigFile is used
 	if err := viper.ReadInConfig(); err != nil && configFile != "" {
-		setupErr = err
+		return err
 	}
-
-	// Mark the old etcd keys as deprecated in the config file and then register
-	// aliases for older etcd attributes in config file to maintain backward
-	// compatiblity
-	deprecatedConfigAttributes()
-	viper.RegisterAlias(deprecatedFlagEtcdClientURLs, flagEtcdClientURLs)
-	viper.RegisterAlias(deprecatedFlagEtcdInitialAdvertisePeerURLs, flagEtcdInitialAdvertisePeerURLs)
-	viper.RegisterAlias(deprecatedFlagEtcdInitialCluster, flagEtcdInitialCluster)
-	viper.RegisterAlias(deprecatedFlagEtcdInitialClusterState, flagEtcdInitialClusterState)
-	viper.RegisterAlias(deprecatedFlagEtcdInitialClusterToken, flagEtcdInitialClusterToken)
-	viper.RegisterAlias(deprecatedFlagEtcdNodeName, flagEtcdNodeName)
-	viper.RegisterAlias(deprecatedFlagEtcdPeerURLs, flagEtcdPeerURLs)
 
 	viper.SetEnvPrefix("sensu_backend")
 	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
@@ -423,7 +432,7 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 	cobra.AddTemplateFunc("categoryFlags", categoryFlags)
 	cmd.SetUsageTemplate(startUsageTemplate)
 
-	return cmd
+	return nil
 }
 
 func categoryFlags(category string, flags *pflag.FlagSet) *pflag.FlagSet {
@@ -441,64 +450,4 @@ func categoryFlags(category string, flags *pflag.FlagSet) *pflag.FlagSet {
 	})
 
 	return flagSet
-}
-
-func aliasNormalizeFunc(f *pflag.FlagSet, name string) pflag.NormalizedName {
-	// Wait until the command-line flags have been parsed
-	if !f.Parsed() {
-		return pflag.NormalizedName(name)
-	}
-
-	switch name {
-	case deprecatedFlagEtcdClientURLs:
-		deprecatedFlagMessage(name, flagEtcdClientURLs)
-		name = flagEtcdClientURLs
-	case deprecatedFlagEtcdInitialAdvertisePeerURLs:
-		deprecatedFlagMessage(name, flagEtcdInitialAdvertisePeerURLs)
-		name = flagEtcdInitialAdvertisePeerURLs
-	case deprecatedFlagEtcdInitialCluster:
-		deprecatedFlagMessage(name, flagEtcdInitialCluster)
-		name = flagEtcdInitialCluster
-	case deprecatedFlagEtcdInitialClusterState:
-		deprecatedFlagMessage(name, flagEtcdInitialCluster)
-		name = flagEtcdInitialClusterState
-	case deprecatedFlagEtcdInitialClusterToken:
-		deprecatedFlagMessage(name, flagEtcdInitialClusterToken)
-		name = flagEtcdInitialClusterToken
-	case deprecatedFlagEtcdNodeName:
-		deprecatedFlagMessage(name, flagEtcdNodeName)
-		name = flagEtcdNodeName
-	case deprecatedFlagEtcdPeerURLs:
-		deprecatedFlagMessage(name, flagEtcdPeerURLs)
-		name = flagEtcdPeerURLs
-	}
-	return pflag.NormalizedName(name)
-}
-
-// Look up the deprecated attributes in our config file and print a warning
-// message if set
-func deprecatedConfigAttributes() {
-	attributes := map[string]string{
-		deprecatedFlagEtcdClientURLs:               flagEtcdClientURLs,
-		deprecatedFlagEtcdInitialAdvertisePeerURLs: flagEtcdInitialAdvertisePeerURLs,
-		deprecatedFlagEtcdInitialCluster:           flagEtcdInitialCluster,
-		deprecatedFlagEtcdInitialClusterState:      flagEtcdInitialClusterState,
-		deprecatedFlagEtcdInitialClusterToken:      flagEtcdInitialClusterToken,
-		deprecatedFlagEtcdNodeName:                 flagEtcdNodeName,
-		deprecatedFlagEtcdPeerURLs:                 flagEtcdPeerURLs,
-	}
-
-	for old, new := range attributes {
-		if viper.IsSet(old) {
-			logger.Warningf(
-				"config attribute %s has been deprecated, please use %s instead",
-				old, new,
-			)
-		}
-	}
-}
-
-func deprecatedFlagMessage(oldFlag, newFlag string) {
-	logger.Warningf("flag --%s has been deprecated, please use --%s instead",
-		oldFlag, newFlag)
 }

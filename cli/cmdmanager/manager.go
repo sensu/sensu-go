@@ -168,10 +168,6 @@ func (m *CommandManager) InstallCommandFromBonsai(alias, bonsaiAssetName string)
 		return err
 	}
 
-	if len(asset.Builds) == 0 {
-		return errors.New("one or more asset builds are required")
-	}
-
 	if err := asset.Validate(); err != nil {
 		return err
 	}
@@ -190,6 +186,10 @@ func (m *CommandManager) InstallCommandFromBonsai(alias, bonsaiAssetName string)
 		}
 	} else {
 		return errors.New("requested asset does not have a provider annotation set")
+	}
+
+	if len(asset.Builds) == 0 {
+		return errors.New("one or more asset builds are required")
 	}
 
 	return m.installCommand(alias, &asset)

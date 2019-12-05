@@ -71,12 +71,15 @@ type Config struct {
 	EtcdInitialClusterToken      string
 	EtcdInitialClusterState      string
 	EtcdInitialCluster           string
+	EtcdClientURLs               []string
 	EtcdListenClientURLs         []string
 	EtcdListenPeerURLs           []string
 	EtcdName                     string
 	NoEmbedEtcd                  bool
 	EtcdHeartbeatInterval        uint
 	EtcdElectionTimeout          uint
+	EtcdDiscovery                string
+	EtcdDiscoverySrv             string
 
 	// Etcd TLS configuration
 	EtcdClientTLSInfo     etcd.TLSInfo

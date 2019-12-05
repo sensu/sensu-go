@@ -189,51 +189,6 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 			},
 		},
 		{
-			name:            "asset without builds",
-			wantErr:         true,
-			errMatch:        "one or more asset builds are required",
-			alias:           "testalias",
-			bonsaiAssetName: bAsset.fullNameWithVersion,
-			bonsaiClientFunc: func(m *MockBonsaiClient) {
-				bonsaiAsset := &bonsai.Asset{
-					Versions: []*bonsai.AssetVersionGrouping{
-						{Version: bAsset.version},
-					},
-				}
-				m.On("FetchAsset", bAsset.namespace, bAsset.name).
-					Return(bonsaiAsset, nil)
-				m.On("FetchAssetVersion", bAsset.namespace, bAsset.name, bAsset.version).
-					Return("{}", nil)
-			},
-		},
-		{
-			name:            "invalid asset",
-			wantErr:         true,
-			errMatch:        "name cannot be empty",
-			alias:           "testalias",
-			bonsaiAssetName: bAsset.fullNameWithVersion,
-			bonsaiClientFunc: func(m *MockBonsaiClient) {
-				bonsaiAsset := &bonsai.Asset{
-					Versions: []*bonsai.AssetVersionGrouping{
-						{Version: bAsset.version},
-					},
-				}
-				asset := corev2.Asset{
-					Builds: []*corev2.AssetBuild{
-						{},
-					},
-				}
-				assetJSON, err := json.Marshal(asset)
-				if err != nil {
-					t.Fatal(err)
-				}
-				m.On("FetchAsset", bAsset.namespace, bAsset.name).
-					Return(bonsaiAsset, nil)
-				m.On("FetchAssetVersion", bAsset.namespace, bAsset.name, bAsset.version).
-					Return(string(assetJSON), nil)
-			},
-		},
-		{
 			name:            "no type annotation",
 			wantErr:         true,
 			errMatch:        "requested asset does not have a type annotation set",
@@ -251,12 +206,8 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 						Name:      bAsset.name,
 						Namespace: bAsset.namespace,
 					},
-					Builds: []*corev2.AssetBuild{
-						{
-							URL:    bAsset.url,
-							Sha512: bAsset.sha512,
-						},
-					},
+					URL:    bAsset.url,
+					Sha512: bAsset.sha512,
 				}
 				assetJSON, err := json.Marshal(asset)
 				if err != nil {
@@ -289,12 +240,8 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 							"io.sensu.bonsai.type": "backend",
 						},
 					},
-					Builds: []*corev2.AssetBuild{
-						{
-							URL:    bAsset.url,
-							Sha512: bAsset.sha512,
-						},
-					},
+					URL:    bAsset.url,
+					Sha512: bAsset.sha512,
 				}
 				assetJSON, err := json.Marshal(asset)
 				if err != nil {
@@ -327,12 +274,8 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 							"io.sensu.bonsai.type": "sensuctl",
 						},
 					},
-					Builds: []*corev2.AssetBuild{
-						{
-							URL:    bAsset.url,
-							Sha512: bAsset.sha512,
-						},
-					},
+					URL:    bAsset.url,
+					Sha512: bAsset.sha512,
 				}
 				assetJSON, err := json.Marshal(asset)
 				if err != nil {
@@ -366,11 +309,68 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 							"io.sensu.bonsai.provider": "backend/handler",
 						},
 					},
-					Builds: []*corev2.AssetBuild{
-						{
-							URL:    bAsset.url,
-							Sha512: bAsset.sha512,
+					URL:    bAsset.url,
+					Sha512: bAsset.sha512,
+				}
+				assetJSON, err := json.Marshal(asset)
+				if err != nil {
+					t.Fatal(err)
+				}
+				m.On("FetchAsset", bAsset.namespace, bAsset.name).
+					Return(bonsaiAsset, nil)
+				m.On("FetchAssetVersion", bAsset.namespace, bAsset.name, bAsset.version).
+					Return(string(assetJSON), nil)
+			},
+		},
+		{
+			name:            "asset without builds",
+			wantErr:         true,
+			errMatch:        "one or more asset builds are required",
+			alias:           "testalias",
+			bonsaiAssetName: bAsset.fullNameWithVersion,
+			bonsaiClientFunc: func(m *MockBonsaiClient) {
+				bonsaiAsset := &bonsai.Asset{
+					Versions: []*bonsai.AssetVersionGrouping{
+						{Version: bAsset.version},
+					},
+				}
+				asset := corev2.Asset{
+					ObjectMeta: corev2.ObjectMeta{
+						Name:      bAsset.fullName,
+						Namespace: bAsset.namespace,
+						Annotations: map[string]string{
+							"io.sensu.bonsai.type":     "sensuctl",
+							"io.sensu.bonsai.provider": "sensuctl/command",
 						},
+					},
+					URL:    bAsset.url,
+					Sha512: bAsset.sha512,
+				}
+				assetJSON, err := json.Marshal(asset)
+				if err != nil {
+					t.Fatal(err)
+				}
+				m.On("FetchAsset", bAsset.namespace, bAsset.name).
+					Return(bonsaiAsset, nil)
+				m.On("FetchAssetVersion", bAsset.namespace, bAsset.name, bAsset.version).
+					Return(string(assetJSON), nil)
+			},
+		},
+		{
+			name:            "invalid asset",
+			wantErr:         true,
+			errMatch:        "name cannot be empty",
+			alias:           "testalias",
+			bonsaiAssetName: bAsset.fullNameWithVersion,
+			bonsaiClientFunc: func(m *MockBonsaiClient) {
+				bonsaiAsset := &bonsai.Asset{
+					Versions: []*bonsai.AssetVersionGrouping{
+						{Version: bAsset.version},
+					},
+				}
+				asset := corev2.Asset{
+					Builds: []*corev2.AssetBuild{
+						{},
 					},
 				}
 				assetJSON, err := json.Marshal(asset)

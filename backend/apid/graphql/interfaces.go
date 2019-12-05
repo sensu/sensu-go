@@ -119,3 +119,11 @@ type GenericClient interface {
 	Get(ctx context.Context, name string, val corev2.Resource) error
 	List(ctx context.Context, resources interface{}, pred *store.SelectionPredicate) error
 }
+
+type EtcdHealthController interface {
+	GetClusterHealth(ctx context.Context) *corev2.HealthResponse
+}
+
+type VersionController interface {
+	GetVersion(ctx context.Context) *corev2.Version
+}

@@ -1,3 +1,5 @@
+// +build !solaris
+
 // Package agent is the running Sensu agent. Agents connect to a Sensu backend,
 // register their presence, subscribe to check channels, download relevant
 // check packages, execute checks, and send results to the Sensu backend via
@@ -18,6 +20,15 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/time/rate"
 )
+
+// GetMetricsAddr gets the metrics address of the statsd server.
+func GetMetricsAddr(s StatsdServer) string {
+	server, ok := s.(*statsd.Server)
+	if !ok {
+		return ""
+	}
+	return server.MetricsAddr
+}
 
 // NewStatsdServer provides a new statsd server for the sensu-agent.
 func NewStatsdServer(a *Agent) *statsd.Server {

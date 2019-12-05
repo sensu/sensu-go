@@ -7,6 +7,7 @@ import (
 
 	time "github.com/echlebek/timeproxy"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	v2 "github.com/sensu/sensu-go/api/core/v2"
 	corev1 "github.com/sensu/sensu-go/types/v1"
 )
 
@@ -199,6 +200,87 @@ func TestTranslateToEvent(t *testing.T) {
 
 			if got, want := fmt.Sprintf("%v", event), fmt.Sprintf("%v", test.ExpOutput); got != want {
 				t.Errorf("bad output: got %v, want %v", got, want)
+			}
+		})
+	}
+}
+
+func Test_prepareEvent(t *testing.T) {
+	type args struct {
+		agent *Agent
+		event *corev2.Event
+	}
+	tests := []struct {
+		name          string
+		args          args
+		wantNamespace string
+		wantErr       bool
+	}{
+		{
+			name: "no event",
+			args: args{
+				agent: &Agent{},
+				event: nil,
+			},
+			wantErr: true,
+		},
+		{
+			name: "missing check",
+			args: args{
+				agent: &Agent{},
+				event: &v2.Event{
+					ObjectMeta: v2.ObjectMeta{Namespace: "default"},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid check",
+			args: args{
+				agent: &Agent{
+					config: &Config{
+						Namespace: "jamespace",
+					},
+				},
+				event: &v2.Event{
+					ObjectMeta: v2.ObjectMeta{
+						Namespace: "default",
+					},
+					Check: &v2.Check{
+						ProxyEntityName: "john",
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "inserts missing namespace",
+			args: args{
+				agent: &Agent{
+					config: &Config{
+						Namespace: "jamespace",
+					},
+					entity: v2.FixtureEntity("agent1"),
+				},
+				event: &v2.Event{
+					Check:  v2.FixtureCheck("check1"),
+					Entity: v2.FixtureEntity("entity1"),
+				},
+			},
+			wantErr:       false,
+			wantNamespace: "jamespace",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := prepareEvent(tt.args.agent, tt.args.event); (err != nil) != tt.wantErr {
+				t.Errorf("prepareEvent() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if tt.wantErr {
+				return
+			}
+			if ns := tt.args.event.GetNamespace(); ns != tt.wantNamespace {
+				t.Errorf("prepareEvent() ObjectMeta.GetNamespace() = %v, want %v", ns, tt.wantNamespace)
 			}
 		})
 	}

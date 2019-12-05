@@ -369,9 +369,10 @@ func createKeepaliveEvent(rawEvent *types.Event) *types.Event {
 		Issued:   time.Now().Unix(),
 	}
 	keepaliveEvent := &types.Event{
-		Timestamp: time.Now().Unix(),
-		Entity:    rawEvent.Entity,
-		Check:     keepaliveCheck,
+		ObjectMeta: rawEvent.ObjectMeta,
+		Timestamp:  time.Now().Unix(),
+		Entity:     rawEvent.Entity,
+		Check:      keepaliveCheck,
 	}
 
 	return keepaliveEvent
@@ -388,6 +389,9 @@ func createRegistrationEvent(entity *types.Entity) *types.Event {
 		Status:   1,
 	}
 	registrationEvent := &types.Event{
+		ObjectMeta: types.ObjectMeta{
+			Namespace: entity.Namespace,
+		},
 		Timestamp: time.Now().Unix(),
 		Entity:    entity,
 		Check:     registrationCheck,

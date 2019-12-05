@@ -87,6 +87,14 @@ func encodeEvent(ctx context.Context, event *types.Event) *StandardComponents {
 	components := Encode(ctx, event)
 	components.resource = eventName
 
+	// A previous bug meant that some events were persisted without the event's
+	// Namespace field being filled. To compensate for events stored before a
+	// fix was introduced, we fallback to the entity's namespace field if the
+	// event's field was empty.
+	if components.namespace == "" && event.Entity != nil {
+		components.namespace = event.Entity.Namespace
+	}
+
 	if event.HasCheck() {
 		components.resourceType = eventCheckType
 		components.uniqueComponent = encodeUniqueComponents(

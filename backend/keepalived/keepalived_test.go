@@ -275,6 +275,8 @@ func TestCreateKeepaliveEvent(t *testing.T) {
 	assert.Equal(t, uint32(60), keepaliveEvent.Check.Interval)
 	assert.Equal(t, []string{"keepalive"}, keepaliveEvent.Check.Handlers)
 	assert.Equal(t, uint32(0), keepaliveEvent.Check.Status)
+	assert.Equal(t, "default", keepaliveEvent.Check.Namespace)
+	assert.Equal(t, "default", keepaliveEvent.ObjectMeta.Namespace)
 	assert.NotEqual(t, int64(0), keepaliveEvent.Check.Issued)
 
 	event.Check = nil
@@ -282,6 +284,17 @@ func TestCreateKeepaliveEvent(t *testing.T) {
 	assert.Equal(t, "keepalive", keepaliveEvent.Check.Name)
 	assert.Equal(t, uint32(20), keepaliveEvent.Check.Interval)
 	assert.Equal(t, uint32(120), keepaliveEvent.Check.Timeout)
+}
+
+func TestCreateRegistrationEvent(t *testing.T) {
+	event := corev2.FixtureEntity("entity1")
+	keepaliveEvent := createRegistrationEvent(event)
+	assert.Equal(t, RegistrationCheckName, keepaliveEvent.Check.Name)
+	assert.Equal(t, uint32(1), keepaliveEvent.Check.Interval)
+	assert.Equal(t, []string{RegistrationHandlerName}, keepaliveEvent.Check.Handlers)
+	assert.Equal(t, uint32(1), keepaliveEvent.Check.Status)
+	assert.Equal(t, "default", keepaliveEvent.Check.Namespace)
+	assert.Equal(t, "default", keepaliveEvent.ObjectMeta.Namespace)
 }
 
 func TestDeadCallbackNoEntity(t *testing.T) {

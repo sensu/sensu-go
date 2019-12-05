@@ -33,7 +33,6 @@ import (
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/schedulerd"
-	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/backend/tessend"
@@ -74,10 +73,15 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 			return nil, err
 		}
 
+		clientURLs := config.EtcdClientURLs
+		if len(clientURLs) == 0 {
+			clientURLs = config.EtcdAdvertiseClientURLs
+		}
+
 		// Don't start up an embedded etcd, return a client that connects to an
 		// external etcd instead.
 		return clientv3.New(clientv3.Config{
-			Endpoints:   config.EtcdAdvertiseClientURLs,
+			Endpoints:   clientURLs,
 			DialTimeout: 5 * time.Second,
 			TLS:         tlsConfig,
 		})
@@ -93,6 +97,8 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 	cfg.InitialClusterState = config.EtcdInitialClusterState
 	cfg.InitialAdvertisePeerURLs = config.EtcdInitialAdvertisePeerURLs
 	cfg.AdvertiseClientURLs = config.EtcdAdvertiseClientURLs
+	cfg.Discovery = config.EtcdDiscovery
+	cfg.DiscoverySrv = config.EtcdDiscoverySrv
 	cfg.Name = config.EtcdName
 
 	// Heartbeat interval
@@ -146,17 +152,11 @@ func Initialize(config *Config) (*Backend, error) {
 		return nil, err
 	}
 
-	// Initialize the store, which lives on top of etcd
-	logger.Debug("Initializing store...")
+	// Create the store, which lives on top of etcd
 	stor := etcdstore.NewStore(b.Client, config.EtcdName)
-	if err = seeds.SeedInitialData(stor); err != nil {
-		return nil, fmt.Errorf("error initializing the store: %s", err)
-	}
-	logger.Debug("Done initializing store")
 	b.Store = stor
 
-	_, err = stor.GetClusterID(b.ctx)
-	if err != nil {
+	if _, err := stor.GetClusterID(b.ctx); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
 			if storeErr := stor.CreateClusterID(b.ctx, uuid.New().String()); storeErr != nil {
@@ -317,12 +317,14 @@ func Initialize(config *Config) (*Backend, error) {
 		EventClient:       api.NewEventClient(eventStoreProxy, auth, bus),
 		EventFilterClient: api.NewEventFilterClient(stor, auth),
 		HandlerClient:     api.NewHandlerClient(stor, auth),
+		HealthController:  actions.NewHealthController(stor, b.Client.Cluster, etcdClientTLSConfig),
 		MutatorClient:     api.NewMutatorClient(stor, auth),
 		SilencedClient:    api.NewSilencedClient(stor, auth),
 		NamespaceClient:   api.NewNamespaceClient(stor, auth),
 		HookClient:        api.NewHookConfigClient(stor, auth),
 		UserClient:        api.NewUserClient(stor, auth),
 		RBACClient:        api.NewRBACClient(stor, auth),
+		VersionController: actions.NewVersionController(clusterVersion),
 		GenericClient:     &api.GenericClient{Store: stor, Auth: auth},
 	})
 	if err != nil {
