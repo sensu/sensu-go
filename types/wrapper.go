@@ -9,7 +9,8 @@ import (
 	"strings"
 	"sync"
 
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	jsoniter "github.com/json-iterator/go"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 // Wrapper is a generic wrapper, with a type field for distinguishing its
@@ -31,13 +32,80 @@ type rawWrapper struct {
 
 // PackageMap contains a list of packages with their Resource Resolver func
 var packageMap = map[string]func(string) (Resource, error){
-	"core/v2": v2.ResolveResource,
+	"core/v2": corev2.ResolveResource,
 }
 
 var packageMapMu = &sync.RWMutex{}
 
 type lifter interface {
 	Lift() Resource
+}
+
+// toMap produces a map from a struct by serializing it to JSON and then
+// deserializing the JSON into a map. This is done to preserve business logic
+// expressed in customer marshalers, and JSON struct tag semantics.
+func toMap(v interface{}) (map[string]interface{}, error) {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return nil, err
+	}
+	result := map[string]interface{}{}
+	dec := json.NewDecoder(bytes.NewReader(b))
+	dec.UseNumber()
+	err = dec.Decode(&result)
+	return result, err
+}
+
+// MarshalJSON implements json.Marshaler
+func (w *Wrapper) MarshalJSON() ([]byte, error) {
+	wrapper := struct {
+		TypeMeta
+		ObjectMeta ObjectMeta             `json:"metadata"`
+		Value      map[string]interface{} `json:"spec"`
+	}{
+		TypeMeta:   w.TypeMeta,
+		ObjectMeta: w.ObjectMeta,
+	}
+
+	// Remove the innerMeta
+	value, err := toMap(w.Value)
+	if err != nil {
+		return nil, err
+	}
+	delete(value, "metadata")
+
+	wrapper.Value = value
+
+	return jsoniter.Marshal(wrapper)
+}
+
+// MarshalYAML implements yaml.Marshaler
+func (w *Wrapper) MarshalYAML() (interface{}, error) {
+	wrapper := struct {
+		Type       string                 `yaml:"type"`
+		APIVersion string                 `yaml:"api_version"`
+		ObjectMeta map[string]interface{} `yaml:"metadata"`
+		Value      map[string]interface{} `yaml:"spec"`
+	}{
+		Type:       w.Type,
+		APIVersion: w.APIVersion,
+	}
+
+	meta, err := toMap(w.ObjectMeta)
+	if err != nil {
+		return nil, err
+	}
+	wrapper.ObjectMeta = meta
+
+	// Remove the innerMeta
+	value, err := toMap(w.Value)
+	if err != nil {
+		return nil, err
+	}
+	delete(value, "metadata")
+	wrapper.Value = value
+
+	return wrapper, nil
 }
 
 // UnmarshalJSON implements json.Unmarshaler
@@ -100,7 +168,7 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 	}
 
 	// Set the outer ObjectMeta of the wrapper
-	w.ObjectMeta = outerMeta
+	w.ObjectMeta = innerMeta
 
 	// Set the inner ObjectMeta
 	val := reflect.Indirect(reflect.ValueOf(resource))
@@ -123,7 +191,6 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 
 	// Set the resource as the wrapper's value
 	w.Value = resource
-
 	return nil
 }
 
