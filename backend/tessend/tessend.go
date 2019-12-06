@@ -162,16 +162,20 @@ func (t *Tessend) Start() error {
 
 // Stop the Tessen daemon.
 func (t *Tessend) Stop() error {
-	if err := t.ring.Remove(t.ctx, t.backendID); err != nil {
-		logger.WithField("key", t.backendID).WithError(err).Error("error removing key from the ring")
-	} else {
-		logger.WithField("key", t.backendID).Debug("removed a key from the ring")
-	}
-	for _, sub := range t.subscription {
-		if err := sub.Cancel(); err != nil {
-			logger.WithError(err).Error("unable to unsubscribe from message bus")
+	defer func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := t.ring.Remove(ctx, t.backendID); err != nil {
+			logger.WithField("key", t.backendID).WithError(err).Error("error removing key from the ring")
+		} else {
+			logger.WithField("key", t.backendID).Debug("removed a key from the ring")
 		}
-	}
+		for _, sub := range t.subscription {
+			if err := sub.Cancel(); err != nil {
+				logger.WithError(err).Error("unable to unsubscribe from message bus")
+			}
+		}
+	}()
 	t.cancel()
 	close(t.messageChan)
 	return nil
@@ -531,6 +535,15 @@ func (t *Tessend) getPerResourceMetrics(now int64, data *Data) {
 	cluster, err := t.client.Cluster.MemberList(t.ctx)
 	if err != nil {
 		logger.WithError(err).Error("unable to retrieve backend count")
+		if _, ok := err.(*store.ErrInternal); ok {
+			go func() {
+				select {
+				case <-t.ctx.Done():
+				case t.errChan <- err:
+				}
+			}()
+			return
+		}
 	}
 	if cluster != nil {
 		backendCount = float64(len(cluster.Members))
@@ -553,7 +566,7 @@ func (t *Tessend) getPerResourceMetrics(now int64, data *Data) {
 		count, err := etcd.Count(t.ctx, t.client, metricFunc(t.ctx, ""))
 		if err != nil {
 			logger.WithError(err).Error("unable to retrieve resource count")
-			continue
+			return
 		}
 
 		mp = &corev2.MetricPoint{
