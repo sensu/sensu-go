@@ -172,6 +172,7 @@ func (s *Session) receiver() {
 				"payload": string(msg.Payload)}).Error("error handling message")
 			if _, ok := err.(*store.ErrInternal); ok {
 				// Fatal error - boot the agent out of the session
+				logger.Error("internal error - stopping session")
 				go s.Stop()
 			}
 		}

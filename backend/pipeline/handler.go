@@ -135,10 +135,8 @@ func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level 
 
 	for _, handlerName := range handlers {
 		tctx, cancel := context.WithTimeout(ctx, p.storeTimeout)
-		fmt.Println("GETTING HANDLER")
 		tnow := time.Now()
 		handler, err := p.store.GetHandlerByName(tctx, handlerName)
-		fmt.Println("CALL DONE AT", time.Since(tnow), "ERROR:", err)
 		cancel()
 		var extension *corev2.Extension
 

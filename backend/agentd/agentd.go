@@ -39,17 +39,18 @@ type Agentd struct {
 	// Port is the port Agentd is running on.
 	Port int
 
-	stopping   chan struct{}
-	running    *atomic.Value
-	wg         *sync.WaitGroup
-	errChan    chan error
-	httpServer *http.Server
-	store      store.Store
-	bus        messaging.MessageBus
-	tls        *corev2.TLSOptions
-	ringPool   *ringv2.Pool
-	ctx        context.Context
-	cancel     context.CancelFunc
+	stopping     chan struct{}
+	running      *atomic.Value
+	wg           *sync.WaitGroup
+	errChan      chan error
+	httpServer   *http.Server
+	store        store.Store
+	bus          messaging.MessageBus
+	tls          *corev2.TLSOptions
+	ringPool     *ringv2.Pool
+	ctx          context.Context
+	cancel       context.CancelFunc
+	writeTimeout int
 }
 
 // Config configures an Agentd.
@@ -70,18 +71,19 @@ type Option func(*Agentd) error
 func New(c Config, opts ...Option) (*Agentd, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	a := &Agentd{
-		Host:     c.Host,
-		Port:     c.Port,
-		bus:      c.Bus,
-		store:    c.Store,
-		tls:      c.TLS,
-		stopping: make(chan struct{}, 1),
-		running:  &atomic.Value{},
-		wg:       &sync.WaitGroup{},
-		errChan:  make(chan error, 1),
-		ringPool: c.RingPool,
-		ctx:      ctx,
-		cancel:   cancel,
+		Host:         c.Host,
+		Port:         c.Port,
+		bus:          c.Bus,
+		store:        c.Store,
+		tls:          c.TLS,
+		stopping:     make(chan struct{}, 1),
+		running:      &atomic.Value{},
+		wg:           &sync.WaitGroup{},
+		errChan:      make(chan error, 1),
+		ringPool:     c.RingPool,
+		ctx:          ctx,
+		cancel:       cancel,
+		writeTimeout: c.WriteTimeout,
 	}
 
 	// prepare server TLS config
@@ -212,13 +214,12 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 		Subscriptions: strings.Split(r.Header.Get(transport.HeaderKeySubscriptions), ","),
 		RingPool:      a.ringPool,
 		ContentType:   contentType,
+		WriteTimeout:  a.writeTimeout,
 	}
 
 	cfg.Subscriptions = addEntitySubscription(cfg.AgentName, cfg.Subscriptions)
 
-	ctx, cancel := context.WithTimeout(a.ctx, time.Second*time.Duration(cfg.WriteTimeout))
-	session, err := NewSession(ctx, cfg, transport.NewTransport(conn), a.bus, a.store, unmarshal, marshal)
-	cancel()
+	session, err := NewSession(a.ctx, cfg, transport.NewTransport(conn), a.bus, a.store, unmarshal, marshal)
 	if err != nil {
 		logger.WithError(err).Error("failed to create session")
 		http.Error(w, err.Error(), http.StatusInternalServerError)

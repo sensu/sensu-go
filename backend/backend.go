@@ -400,8 +400,8 @@ func (b *Backend) runOnce() error {
 	var derr error
 
 	if b.Etcd != nil {
-		logger.Info("shutting down etcd")
 		defer func() {
+			logger.Info("shutting down etcd")
 			if err := recover(); err != nil {
 				trace := string(debug.Stack())
 				logger.WithField("panic", trace).WithError(err.(error)).
