@@ -34,7 +34,7 @@ func TestPrintWrappedJSON(t *testing.T) {
 	check.Command = "echo foo >> output.txt"
 
 	w := types.WrapResource(check)
-	output, err := json.Marshal(&w)
+	output, err := json.Marshal(w)
 	assert.NoError(err)
 
 	buf := new(bytes.Buffer)
@@ -51,9 +51,9 @@ func TestPrintWrappedJSONList(t *testing.T) {
 	w1 := types.WrapResource(check1)
 	w2 := types.WrapResource(check2)
 
-	output1, err := json.Marshal(&w1)
+	output1, err := json.Marshal(w1)
 	assert.NoError(err)
-	output2, err := json.Marshal(&w2)
+	output2, err := json.Marshal(w2)
 	assert.NoError(err)
 
 	buf := new(bytes.Buffer)
@@ -73,7 +73,7 @@ func TestPrintFormatted(t *testing.T) {
 	w := types.WrapResource(check)
 
 	// test wrapped-json format
-	output, err := json.Marshal(&w)
+	output, err := json.Marshal(w)
 	assert.NoError(err)
 
 	buf := new(bytes.Buffer)

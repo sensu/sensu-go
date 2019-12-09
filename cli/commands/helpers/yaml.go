@@ -23,7 +23,7 @@ func PrintYAML(v interface{}, w io.Writer) (err error) {
 		}
 		for _, r := range resources {
 			i := types.WrapResource(r)
-			if err := enc.Encode(&i); err != nil {
+			if err := enc.Encode(i); err != nil {
 				return err
 			}
 		}
@@ -33,5 +33,5 @@ func PrintYAML(v interface{}, w io.Writer) (err error) {
 		v = types.WrapResource(r)
 	}
 
-	return enc.Encode(&v)
+	return enc.Encode(v)
 }

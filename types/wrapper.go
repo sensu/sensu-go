@@ -57,7 +57,7 @@ func toMap(v interface{}) (map[string]interface{}, error) {
 }
 
 // MarshalJSON implements json.Marshaler
-func (w *Wrapper) MarshalJSON() ([]byte, error) {
+func (w Wrapper) MarshalJSON() ([]byte, error) {
 	wrapper := struct {
 		TypeMeta
 		ObjectMeta ObjectMeta             `json:"metadata"`
@@ -80,7 +80,7 @@ func (w *Wrapper) MarshalJSON() ([]byte, error) {
 }
 
 // MarshalYAML implements yaml.Marshaler
-func (w *Wrapper) MarshalYAML() (interface{}, error) {
+func (w Wrapper) MarshalYAML() (interface{}, error) {
 	wrapper := struct {
 		Type       string                 `yaml:"type"`
 		APIVersion string                 `yaml:"api_version"`

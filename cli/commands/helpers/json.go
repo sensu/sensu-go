@@ -42,7 +42,7 @@ func PrintWrappedJSON(r types.Resource, wr io.Writer) error {
 	encoder.SetIndent("", "  ")
 	encoder.SetEscapeHTML(false)
 
-	if err := encoder.Encode(&w); err != nil {
+	if err := encoder.Encode(w); err != nil {
 		return err
 	}
 
