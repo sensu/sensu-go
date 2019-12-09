@@ -14,6 +14,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 when it is not operating as an etcd member. The flag is also used by the new
 sensu-backend init tool.
 - Added the cluster's distribution to Tessen data.
+- Added `--keepalive-critical-timeout` to define the time after which a
+critical keepalive event should be created for an agent.
+- Added `--keepalive-warning-timeout` which is an alias of `--keepalive-timeout`
+for backwards compatibility.
 
 ### Fixed
 - Add a timeout to etcd requests when retrieving the nodes health.

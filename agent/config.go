@@ -116,10 +116,14 @@ type Config struct {
 	// KeepaliveInterval is the interval between keepalive events.
 	KeepaliveInterval uint32
 
-	// KeepaliveTimeout is the time after which a sensu-agent is considered dead
-	// by the backend. See DefaultKeepaliveTimeout in corev2 package for default
-	// value.
-	KeepaliveTimeout uint32
+	// KeepaliveWarningTimeout is the time after which a sensu-agent is considered dead
+	// by the backend to create a warning event. See DefaultKeepaliveTimeout in
+	// corev2 package for default value.
+	KeepaliveWarningTimeout uint32
+
+	// KeepaliveCriticalTimeout is the time after which a sensu-agent is considered dead
+	// by the backend to create a critical event.
+	KeepaliveCriticalTimeout uint32
 
 	// Labels are key-value pairs that users can provide to agent entities
 	Labels map[string]string
@@ -197,14 +201,14 @@ func FixtureConfig() (*Config, func()) {
 			Host: DefaultAPIHost,
 			Port: DefaultAPIPort,
 		},
-		BackendURLs:         []string{},
-		CacheDir:            cacheDir,
-		EventsAPIRateLimit:  DefaultEventsAPIRateLimit,
-		EventsAPIBurstLimit: DefaultEventsAPIBurstLimit,
-		KeepaliveInterval:   DefaultKeepaliveInterval,
-		KeepaliveTimeout:    corev2.DefaultKeepaliveTimeout,
-		Namespace:           DefaultNamespace,
-		Password:            DefaultPassword,
+		BackendURLs:             []string{},
+		CacheDir:                cacheDir,
+		EventsAPIRateLimit:      DefaultEventsAPIRateLimit,
+		EventsAPIBurstLimit:     DefaultEventsAPIBurstLimit,
+		KeepaliveInterval:       DefaultKeepaliveInterval,
+		KeepaliveWarningTimeout: corev2.DefaultKeepaliveTimeout,
+		Namespace:               DefaultNamespace,
+		Password:                DefaultPassword,
 		Socket: &SocketConfig{
 			Host: DefaultSocketHost,
 			Port: DefaultSocketPort,
