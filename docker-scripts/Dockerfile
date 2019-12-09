@@ -1,0 +1,38 @@
+FROM ubuntu:18.04
+
+#Build in this directory with sudo docker build . or docker build . (depending on your OS)
+ENV GOROOT=/usr/local/go
+ENV GOPATH=/opt/sensu
+ENV PATH=$GOPATH:/bin:$GOROOT/bin:/opt/sensu/bin/:$PATH
+
+WORKDIR /opt/sensu
+COPY ./sensu-entrypoint.sh /opt/sensu/bin/
+
+RUN apt update &&\
+    apt -y upgrade &&\
+    apt -y install git wget 
+
+#Download and install Go 1.13.3 for Go modules.
+RUN wget https://dl.google.com/go/go1.13.3.linux-amd64.tar.gz && tar -xvf go1.13.3.linux-amd64.tar.gz &&\
+    mv go /usr/local/ &&\
+    rm go1.13.3.linux-amd64.tar.gz
+
+#Build OSS only sensu features, enterprise features are built in the Sensu supported images:
+#docker pull sensu/sensu (Alpine based container) or 
+#docker pull sensu/sensu-rhel (Red Hat based container)
+RUN git clone --depth=1 https://github.com/sensu/sensu-go.git &&\ 
+    cd sensu-go &&\
+    go build -o ../bin/sensu-agent ./cmd/sensu-agent &&\
+    go build -o ../bin/sensu-backend ./cmd/sensu-backend &&\
+    go build -o ../bin/sensuctl ./cmd/sensuctl &&\
+    rm -rf /opt/sensu/sensu-go
+
+#State directory lives outside container for persistent data.
+VOLUME [/var/lib/sensu]
+#Port 3000 for Sensu Go UI and port 8081 for sensu-agent communication.  
+EXPOSE 3000 8081
+
+#From https://github.com/sensu/sensu-go/blob/master/docker-scripts/sensu-entrypoint.sh
+ENTRYPOINT ["/opt/sensu/bin/sensu-entrypoint.sh"]
+#Use Docker logs to see stdout of sensu-backend (ie. docker logs --details -f  `docker ps -q` )
+CMD ["sensu-backend"]
