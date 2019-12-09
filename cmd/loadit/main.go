@@ -51,7 +51,7 @@ func main() {
 			FlushInterval: 10,
 		}
 		cfg.KeepaliveInterval = uint32(*flagKeepaliveInterval)
-		cfg.KeepaliveTimeout = uint32(*flagKeepaliveTimeout)
+		cfg.KeepaliveWarningTimeout = uint32(*flagKeepaliveTimeout)
 		cfg.Namespace = agent.DefaultNamespace
 		cfg.Password = agent.DefaultPassword
 		cfg.Socket.Host = agent.DefaultAPIHost
