@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"path/filepath"
 
@@ -143,8 +142,10 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 			cfg.TLS.CertFile = viper.GetString(flagCertFile)
 			cfg.TLS.KeyFile = viper.GetString(flagKeyFile)
 
-			fmt.Println("warning timeout")
-			fmt.Println(cfg.KeepaliveWarningTimeout)
+			if cfg.KeepaliveCriticalTimeout != 0 && cfg.KeepaliveCriticalTimeout < cfg.KeepaliveWarningTimeout {
+				logger.Fatalf("if set, --%s must be greater than --%s",
+					flagKeepaliveCriticalTimeout, flagKeepaliveWarningTimeout)
+			}
 
 			agentName := viper.GetString(flagAgentName)
 			if agentName != "" {
