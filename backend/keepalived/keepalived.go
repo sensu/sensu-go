@@ -364,6 +364,7 @@ func createKeepaliveEvent(rawEvent *types.Event) *types.Event {
 		},
 		Interval: check.Interval,
 		Timeout:  check.Timeout,
+		Ttl:      check.Ttl,
 		Handlers: []string{KeepaliveHandlerName},
 		Executed: time.Now().Unix(),
 		Issued:   time.Now().Unix(),
@@ -489,8 +490,21 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 
 	// this is a real keepalive event, emit it.
 	event := createKeepaliveEvent(currentEvent)
-	event.Check.Status = 1
-	event.Check.Output = fmt.Sprintf("No keepalive sent from %s for %v seconds (>= %v)", entity.Name, time.Now().Unix()-entity.LastSeen, event.Check.Timeout)
+	timeSinceLastSeen := time.Now().Unix() - entity.LastSeen
+	warningTimeout := int64(event.Check.Timeout)
+	criticalTimeout := event.Check.Ttl
+	var timeout int64
+	if warningTimeout != 0 && timeSinceLastSeen >= warningTimeout {
+		// warning keepalive
+		timeout = warningTimeout
+		event.Check.Status = 1
+	}
+	if criticalTimeout != 0 && timeSinceLastSeen >= criticalTimeout {
+		// critical keepalive
+		timeout = criticalTimeout
+		event.Check.Status = 2
+	}
+	event.Check.Output = fmt.Sprintf("No keepalive sent from %s for %v seconds (>= %v)", entity.Name, timeSinceLastSeen, timeout)
 
 	if err := k.bus.Publish(messaging.TopicEventRaw, event); err != nil {
 		lager.WithError(err).Error("error publishing event")
