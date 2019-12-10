@@ -137,7 +137,7 @@ func TestBackendHTTPListener(t *testing.T) {
 			require.NotNil(t, client)
 
 			assert.NoError(t, client.Close())
-			b.Stop()
+			b.Terminate()
 
 		})
 	}
