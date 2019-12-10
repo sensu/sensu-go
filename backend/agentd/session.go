@@ -65,6 +65,7 @@ type Session struct {
 	store        SessionStore
 	handler      *handler.MessageHandler
 	wg           *sync.WaitGroup
+	stopWG       sync.WaitGroup
 	sendq        chan *transport.Message
 	checkChannel chan interface{}
 	bus          messaging.MessageBus
@@ -228,6 +229,7 @@ func (s *Session) Start() (err error) {
 	sessionCounter.WithLabelValues(s.cfg.Namespace).Inc()
 	s.wg = &sync.WaitGroup{}
 	s.wg.Add(2)
+	s.stopWG.Add(1)
 	go s.sender()
 	go s.receiver()
 	go func() {
@@ -269,9 +271,11 @@ func (s *Session) Start() (err error) {
 func (s *Session) Stop() {
 	s.cancel()
 	s.wg.Wait()
+	s.stopWG.Wait()
 }
 
 func (s *Session) stop() {
+	defer s.stopWG.Done()
 	defer func() {
 		if err := s.conn.Close(); err != nil {
 			logger.WithError(err).Error("error closing session")
@@ -292,16 +296,24 @@ func (s *Session) stop() {
 		// of the tests.
 		return
 	}
+	var ringWG sync.WaitGroup
+	ringWG.Add(len(s.cfg.Subscriptions))
 	for _, sub := range s.cfg.Subscriptions {
-		ring := s.ringPool.Get(ringv2.Path(s.cfg.Namespace, sub))
-		logger.WithFields(logrus.Fields{
-			"namespace": s.cfg.Namespace,
-			"agent":     s.cfg.AgentName,
-		}).Info("removing agent from ring")
-		if err := ring.Remove(context.Background(), s.cfg.AgentName); err != nil {
-			logger.WithError(err).Error("unable to remove agent from ring")
-		}
+		go func(sub string) {
+			defer ringWG.Done()
+			ring := s.ringPool.Get(ringv2.Path(s.cfg.Namespace, sub))
+			logger.WithFields(logrus.Fields{
+				"namespace": s.cfg.Namespace,
+				"agent":     s.cfg.AgentName,
+			}).Info("removing agent from ring")
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+			if err := ring.Remove(ctx, s.cfg.AgentName); err != nil {
+				logger.WithError(err).Error("unable to remove agent from ring")
+			}
+		}(sub)
 	}
+	ringWG.Wait()
 }
 
 // handleKeepalive is the keepalive message handler.
