@@ -75,6 +75,11 @@ $ go build -ldflags '-X "github.com/sensu/sensu-go/version.Version=5.14.0" -X "g
 # sensuctl
 $ go build -ldflags '-X "github.com/sensu/sensu-go/version.Version=5.14.0" -X "github.com/sensu/sensu-go/version.BuildDate=2019-10-08" -X "github.com/sensu/sensu-go/version.BuildSHA='`git rev-parse HEAD`'"' -o bin/sensuctl ./cmd/sensuctl
 ```
+To build a OSS only docker image without the 100 entity restiction and without Sensu enterprise features, run these commands:
+```
+$ cd docker-scripts
+$ sudo docker build .
+```
 
 ## Contributing
 
