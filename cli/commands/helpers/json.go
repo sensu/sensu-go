@@ -35,7 +35,7 @@ func PrintJSON(r interface{}, io io.Writer) error {
 // then prints the result to the given writer. Unescapes any &, <, or >
 // characters it finds.
 func PrintWrappedJSON(r types.Resource, wr io.Writer) error {
-	w := wrapResource(r)
+	w := types.WrapResource(r)
 
 	buf := new(bytes.Buffer)
 	encoder := json.NewEncoder(buf)

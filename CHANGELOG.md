@@ -15,14 +15,18 @@ when it is not operating as an etcd member. The flag is also used by the new
 sensu-backend init tool.
 - Added the cluster's distribution to Tessen data.
 - Added a new field, ClusterIDHex, to the ClusterHealth datatype.
+- Added the `--etcd-discovery` and `--etcd-discovery-srv` flags to
+`sensu-backend`. These are used to take advantage of the embedded etcd's
+auto-discovery features.
+- Added `--keepalive-critical-timeout` to define the time after which a
+critical keepalive event should be created for an agent.
+- Added `--keepalive-warning-timeout` which is an alias of `--keepalive-timeout`
+for backwards compatibility.
 
 ### Fixed
 - Add a timeout to etcd requests when retrieving the nodes health.
 - Show the correct default value for the format flag in `sensuctl dump` help
 usage.
-- Added the `--etcd-discovery` and `--etcd-discovery-srv` flags to
-`sensu-backend`. These are used to take advantage of the embedded etcd's
-auto-discovery features.
 - Installing sensuctl commands via Bonsai will now check for correct labels
 before checking if the asset has 1 or more builds.
 - Listing assets with no results returns an empty array.
@@ -31,6 +35,9 @@ does not exist.
 - Fixed issue where keepalive events and events created through the agent's
 socket interface could be missing a namespace.
 - Fixed an issue where 'sensuctl cluster health' would hang indefinitely.
+- Fixed several issues around the metadata of resources encoded using the
+wrapped-json format, where the metadata would go missing when listing
+resources or prevent resources from being created.
 
 ### Changed
 - The backend will no longer automatically be seeded with a default admin
