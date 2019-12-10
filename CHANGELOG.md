@@ -34,7 +34,6 @@ before checking if the asset has 1 or more builds.
 does not exist.
 - [Web] Links to documentation now point to the version of the product being run
 instead of the latest; helpful when running an older version of Sensu.
-does not exist.
 - Fixed issue where keepalive events and events created through the agent's
 socket interface could be missing a namespace.
 - Fixed an issue where 'sensuctl cluster health' would hang indefinitely.
