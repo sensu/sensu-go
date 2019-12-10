@@ -30,6 +30,9 @@ var (
 	// upgrader is safe for concurrent use, and we don't need any particularly
 	// specialized configurations for different uses.
 	upgrader = &websocket.Upgrader{}
+
+	// used for registering prometheus session counter
+	sessionCounterOnce sync.Once
 )
 
 // Agentd is the backend HTTP API.
@@ -149,9 +152,12 @@ func (a *Agentd) Start() error {
 		}
 	}()
 
-	if err := prometheus.Register(sessionCounter); err != nil {
-		return err
-	}
+	sessionCounterOnce.Do(func() {
+		if err := prometheus.Register(sessionCounter); err != nil {
+			logger.WithError(err).Error("error registering session counter")
+			a.errChan <- err
+		}
+	})
 
 	return nil
 }

@@ -99,7 +99,7 @@ func New(cfg Config, opts ...Option) (*Dashboardd, error) {
 // Start dashboardd
 func (d *Dashboardd) Start() error {
 	d.logger.Info("starting dashboardd on address: ", d.httpServer.Addr)
-	ln, err := net.Listen("tcp", a.httpServer.Addr)
+	ln, err := net.Listen("tcp", d.httpServer.Addr)
 	if err != nil {
 		return fmt.Errorf("failed to start dashboardd: %s", err)
 	}
