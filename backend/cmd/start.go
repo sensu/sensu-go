@@ -239,7 +239,7 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 			go func() {
 				sig := <-sigs
 				logger.Info("signal received: ", sig)
-				sensuBackend.Stop()
+				sensuBackend.Terminate()
 			}()
 
 			if viper.GetBool(flagDebug) {

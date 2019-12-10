@@ -62,9 +62,11 @@ type Backend struct {
 	EventStore     EventStoreUpdater
 	GraphQLService *graphql.Service
 
-	ctx    context.Context
-	cancel context.CancelFunc
-	cfg    *Config
+	ctx       context.Context
+	cancel    context.CancelFunc
+	runCtx    context.Context
+	runCancel context.CancelFunc
+	cfg       *Config
 }
 
 // EventStoreUpdater offers a way to update an event store to a different
@@ -89,11 +91,16 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 
 		// Don't start up an embedded etcd, return a client that connects to an
 		// external etcd instead.
-		return clientv3.New(clientv3.Config{
+		client, err := clientv3.New(clientv3.Config{
 			Endpoints:   clientURLs,
 			DialTimeout: 5 * time.Second,
 			TLS:         tlsConfig,
 		})
+		fmt.Println("CLIENT", client, err)
+		if err != nil {
+			return nil, err
+		}
+		return client, nil
 	}
 
 	// Initialize and start etcd, because we'll need to provide an etcd client to
@@ -154,6 +161,7 @@ func Initialize(config *Config) (*Backend, error) {
 	b := &Backend{cfg: config}
 
 	b.ctx, b.cancel = context.WithCancel(context.Background())
+	b.runCtx, b.runCancel = context.WithCancel(b.ctx)
 
 	b.Client, err = newClient(config, b)
 	if err != nil {
@@ -164,10 +172,10 @@ func Initialize(config *Config) (*Backend, error) {
 	stor := etcdstore.NewStore(b.Client, config.EtcdName)
 	b.Store = stor
 
-	if _, err := stor.GetClusterID(b.ctx); err != nil {
+	if _, err := stor.GetClusterID(b.runCtx); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
-			if storeErr := stor.CreateClusterID(b.ctx, uuid.New().String()); storeErr != nil {
+			if storeErr := stor.CreateClusterID(b.runCtx, uuid.New().String()); storeErr != nil {
 				return nil, fmt.Errorf("error assigning a sensu cluster id: %s", err)
 			}
 		default:
@@ -180,7 +188,7 @@ func Initialize(config *Config) (*Backend, error) {
 
 	logger.Debug("Registering backend...")
 
-	tctx, cancel := context.WithTimeout(b.ctx, time.Second*3)
+	tctx, cancel := context.WithTimeout(b.runCtx, time.Second*3)
 	defer cancel()
 	backendID := etcd.NewBackendIDGetter(tctx, b.Client)
 	logger.Debug("Done registering backend.")
@@ -199,15 +207,15 @@ func Initialize(config *Config) (*Backend, error) {
 	backendEntity := b.getBackendEntity(config)
 	logger.WithField("entity", backendEntity).Info("backend entity information")
 	assetManager := asset.NewManager(config.CacheDir, backendEntity, &sync.WaitGroup{})
-	assetGetter, err := assetManager.StartAssetManager(b.ctx)
+	assetGetter, err := assetManager.StartAssetManager(b.runCtx)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing asset manager: %s", err)
 	}
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
-		Store:                   stor,
-		Bus:                     bus,
+		Store: stor,
+		Bus:   bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 		AssetGetter:             assetGetter,
 		BufferSize:              viper.GetInt(FlagPipelinedBufferSize),
@@ -221,12 +229,12 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize eventd
 	event, err := eventd.New(
-		b.ctx,
+		b.runCtx,
 		eventd.Config{
 			Store:           stor,
 			EventStore:      eventStoreProxy,
 			Bus:             bus,
-			LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
+			LivenessFactory: liveness.EtcdFactory(b.runCtx, b.Client),
 			Client:          b.Client,
 			BufferSize:      viper.GetInt(FlagEventdBufferSize),
 			WorkerCount:     viper.GetInt(FlagEventdWorkers),
@@ -242,7 +250,7 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize schedulerd
 	scheduler, err := schedulerd.New(
-		b.ctx,
+		b.runCtx,
 		schedulerd.Config{
 			Store:       stor,
 			Bus:         bus,
@@ -279,14 +287,14 @@ func Initialize(config *Config) (*Backend, error) {
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:                   bus,
-		Store:                 stor,
-		EventStore:            stor,
-		LivenessFactory:       liveness.EtcdFactory(b.ctx, b.Client),
-		RingPool:              ringPool,
-		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
-		WorkerCount:           viper.GetInt(FlagKeepalivedWorkers),
-		StoreTimeout:          2 * time.Minute,
+		Bus:             bus,
+		Store:           stor,
+		EventStore:      stor,
+		LivenessFactory: liveness.EtcdFactory(b.runCtx, b.Client),
+		RingPool:        ringPool,
+		BufferSize:      viper.GetInt(FlagKeepalivedBufferSize),
+		WorkerCount:     viper.GetInt(FlagKeepalivedWorkers),
+		StoreTimeout:    2 * time.Minute,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
@@ -365,7 +373,7 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize tessend
 	tessen, err := tessend.New(
-		b.ctx,
+		b.runCtx,
 		tessend.Config{
 			Store:    stor,
 			RingPool: ringPool,
@@ -462,7 +470,7 @@ func (b *Backend) runOnce() error {
 	select {
 	case err := <-eg.Err():
 		logger.WithError(err).Error("backend stopped working and is restarting")
-	case <-b.ctx.Done():
+	case <-b.runCtx.Done():
 		logger.Info("backend shutting down")
 	}
 	if err := sg.Stop(); err != nil {
@@ -562,6 +570,11 @@ func (e errGroup) Err() <-chan error {
 
 // Stop the Backend cleanly.
 func (b *Backend) Stop() {
+	b.runCancel()
+}
+
+// Terminate stops the backend and does not allow it to be restarted.
+func (b *Backend) Terminate() {
 	b.cancel()
 }
 
