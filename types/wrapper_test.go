@@ -37,47 +37,74 @@ func mustMarshal(t *testing.T, value interface{}) []byte {
 	return b
 }
 
-func TestUnmarshalBody(t *testing.T) {
-	asset := FixtureAsset("bar")
-	asset.Labels["foo"] = "bar"
-	var (
-		wrappedAsset = Wrapper{
-			TypeMeta: corev2.TypeMeta{
-				Type:       "Asset",
-				APIVersion: "core/v2",
-			},
-			ObjectMeta: ObjectMeta{
-				Labels: map[string]string{
-					"bar": "baz",
-				},
-			},
-			Value: FixtureAsset("bar"),
-		}
-	)
-
-	wrappedAssetB := mustMarshal(t, wrappedAsset)
-
+func TestWrapper_UnmarshalJSON(t *testing.T) {
 	tests := []struct {
-		Name   string
-		Body   []byte
-		Value  interface{}
-		ExpErr bool
+		name    string
+		bytes   []byte
+		wantErr bool
+		want    Wrapper
 	}{
 		{
-			Name:  "wrapped regular type, no extras",
-			Body:  wrappedAssetB,
-			Value: &wrappedAsset,
+			name:    "not a wrapped-json struct",
+			bytes:   []byte(`"foo"`),
+			wantErr: true,
+		},
+		{
+			name:    "unresolved type",
+			bytes:   []byte(`{"type": "Foo"}`),
+			wantErr: true,
+		},
+		{
+			name:    "no spec object",
+			bytes:   []byte(`{"type": "CheckConfig"}`),
+			wantErr: true,
+		},
+		{
+			name:    "invalid spec",
+			bytes:   []byte(`{"type": "CheckConfig", "spec": "foo"}`),
+			wantErr: true,
+		},
+		{
+			name:  "namespace resource",
+			bytes: []byte(`{"type": "Namespace", "spec": {"name": "foo"}}`),
+			want: Wrapper{
+				TypeMeta: corev2.TypeMeta{Type: "Namespace", APIVersion: "core/v2"},
+				Value:    &corev2.Namespace{Name: "foo"},
+			},
+		},
+		{
+			name:  "inner and outer ObjectMeta are filled",
+			bytes: []byte(`{"type": "CheckConfig", "metadata": {"name": "foo", "namespace": "dev", "labels": {"region": "us-west-2"}, "annotations": {"managed-by": "ops"}}, "spec": {"command": "echo"}}`),
+			want: Wrapper{
+				TypeMeta: corev2.TypeMeta{Type: "CheckConfig", APIVersion: "core/v2"},
+				ObjectMeta: v2.ObjectMeta{
+					Name:        "foo",
+					Namespace:   "dev",
+					Labels:      map[string]string{"region": "us-west-2"},
+					Annotations: map[string]string{"managed-by": "ops"},
+				},
+				Value: &corev2.CheckConfig{
+					ObjectMeta: v2.ObjectMeta{
+						Name:        "foo",
+						Namespace:   "dev",
+						Labels:      map[string]string{"region": "us-west-2"},
+						Annotations: map[string]string{"managed-by": "ops"},
+					},
+					Command: "echo",
+				},
+			},
 		},
 	}
-
-	for _, test := range tests {
-		t.Run(test.Name, func(t *testing.T) {
-			err := json.Unmarshal(test.Body, test.Value)
-			if err != nil && !test.ExpErr {
-				t.Fatal(err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := &Wrapper{}
+			err := w.UnmarshalJSON(tt.bytes)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Wrapper.UnmarshalJSON() error = %v, wantErr %v", err, tt.wantErr)
 			}
-			if err == nil && test.ExpErr {
-				t.Fatal("expected an error")
+
+			if err == nil && !reflect.DeepEqual(w, &tt.want) {
+				t.Errorf("Wrapper.UnmarshalJSON() = %#v, want %#v", *w, tt.want)
 			}
 		})
 	}
