@@ -34,7 +34,6 @@ before checking if the asset has 1 or more builds.
 does not exist.
 - [Web] Links to documentation now point to the version of the product being run
 instead of the latest; helpful when running an older version of Sensu.
-before checking if the asset has 1 or more builds.
 - Listing assets with no results returns an empty array.
 - Fixed a panic that could occur when creating resources in a namespace that
 does not exist.
