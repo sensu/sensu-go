@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -127,6 +128,11 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 // Start Agentd.
 func (a *Agentd) Start() error {
 	logger.Info("starting agentd on address: ", a.httpServer.Addr)
+	ln, err := net.Listen("tcp", a.httpServer.Addr)
+	if err != nil {
+		return fmt.Errorf("failed to start agentd: %s", err)
+	}
+
 	a.wg.Add(1)
 
 	go func() {
@@ -134,16 +140,18 @@ func (a *Agentd) Start() error {
 		var err error
 		if a.tls != nil {
 			// TLS configuration comes from ToServerTLSConfig
-			err = a.httpServer.ListenAndServeTLS("", "")
+			err = a.httpServer.ServeTLS(ln, "", "")
 		} else {
-			err = a.httpServer.ListenAndServe()
+			err = a.httpServer.Serve(ln)
 		}
 		if err != nil && err != http.ErrServerClosed {
-			logger.WithError(err).Error("failed to start http/https server")
+			a.errChan <- fmt.Errorf("agentd failed while serving: %s", err)
 		}
 	}()
 
-	_ = prometheus.Register(sessionCounter)
+	if err := prometheus.Register(sessionCounter); err != nil {
+		return err
+	}
 
 	return nil
 }

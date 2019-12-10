@@ -43,6 +43,15 @@ import (
 	"github.com/spf13/viper"
 )
 
+type ErrStartup struct {
+	Err  error
+	Name string
+}
+
+func (e ErrStartup) Error() string {
+	return fmt.Sprintf("error starting %s: %s", e.Name, e.Err)
+}
+
 // Backend represents the backend server, which is used to hold the datastore
 // and coordinating the daemons
 type Backend struct {
@@ -423,7 +432,7 @@ func (b *Backend) runOnce() error {
 	// Loop across the daemons in order to start them, then add them to our groups
 	for _, d := range b.Daemons {
 		if err := d.Start(); err != nil {
-			return fmt.Errorf("error starting %s: %s", d.Name(), err)
+			return ErrStartup{Err: err, Name: d.Name()}
 		}
 
 		// Add the daemon to our errGroup
@@ -481,6 +490,9 @@ func (b *Backend) Run() error {
 		if err := b.runOnce(); err != nil {
 			logger.Error(err)
 			if err == context.Canceled {
+				return true, err
+			}
+			if _, ok := err.(ErrStartup); ok {
 				return true, err
 			}
 		}
