@@ -10,7 +10,7 @@ COPY ./sensu-entrypoint.sh /opt/sensu/bin/
 
 RUN apt update &&\
     apt -y upgrade &&\
-    apt -y install git wget 
+    apt -y install git wget
 
 #Download and install Go 1.13.3 for Go modules.
 RUN wget https://dl.google.com/go/go1.13.3.linux-amd64.tar.gz && tar -xvf go1.13.3.linux-amd64.tar.gz &&\
@@ -29,10 +29,8 @@ RUN git clone --depth=1 https://github.com/sensu/sensu-go.git &&\
 
 #State directory lives outside container for persistent data.
 VOLUME [/var/lib/sensu]
-#Port 3000 for Sensu Go UI and port 8081 for sensu-agent communication.  
-EXPOSE 3000 8081
+#Port 3000 for Sensu Go UI, 8080 for Sensu API, and port 8081 for sensu-agent websocket API communication.  
+EXPOSE 3000 8080 8081
 
-#From https://github.com/sensu/sensu-go/blob/master/docker-scripts/sensu-entrypoint.sh
-ENTRYPOINT ["/opt/sensu/bin/sensu-entrypoint.sh"]
 #Use Docker logs to see stdout of sensu-backend (ie. docker logs --details -f  `docker ps -q` )
-CMD ["sensu-backend"]
+CMD ["/opt/sensu/bin/sensu-backend","start"]
