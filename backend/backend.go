@@ -67,6 +67,7 @@ type EventStoreUpdater interface {
 
 func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 	if config.NoEmbedEtcd {
+		logger.Info("dialing etcd server")
 		tlsInfo := (transport.TLSInfo)(config.EtcdClientTLSInfo)
 		tlsConfig, err := tlsInfo.ClientConfig()
 		if err != nil {
