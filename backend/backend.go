@@ -62,7 +62,6 @@ type Backend struct {
 	EventStore     EventStoreUpdater
 	GraphQLService *graphql.Service
 
-	done   chan struct{}
 	ctx    context.Context
 	cancel context.CancelFunc
 	cfg    *Config
@@ -154,7 +153,6 @@ func Initialize(config *Config) (*Backend, error) {
 	// Initialize a Backend struct
 	b := &Backend{cfg: config}
 
-	b.done = make(chan struct{})
 	b.ctx, b.cancel = context.WithCancel(context.Background())
 
 	b.Client, err = newClient(config, b)
@@ -480,8 +478,6 @@ func (b *Backend) runOnce() error {
 func (b *Backend) Run() error {
 	// we allow inErrChan to leak to avoid panics from other
 	// goroutines writing errors to either after shutdown has been initiated.
-	defer close(b.done)
-
 	backoff := retry.ExponentialBackoff{
 		Ctx:                  b.ctx,
 		InitialDelayInterval: time.Second,
@@ -567,7 +563,6 @@ func (e errGroup) Err() <-chan error {
 // Stop the Backend cleanly.
 func (b *Backend) Stop() {
 	b.cancel()
-	<-b.done
 }
 
 func (b *Backend) getBackendEntity(config *Config) *corev2.Entity {
