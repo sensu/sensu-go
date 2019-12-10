@@ -115,10 +115,10 @@ func (s *Store) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, 
 	alarmResponse, err := s.client.Maintenance.AlarmList(ctx)
 	if err != nil {
 		logger.WithError(err).Error("failed to fetch etcd alarm list")
+	} else {
+		logger.WithField("alarms", len(alarmResponse.Alarms)).Info("cluster alarms")
+		healthResponse.Alarms = alarmResponse.Alarms
 	}
 
-	logger.WithField("alarms", len(alarmResponse.Alarms)).Info("cluster alarms")
-
-	healthResponse.Alarms = alarmResponse.Alarms
 	return healthResponse
 }
