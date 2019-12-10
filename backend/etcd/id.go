@@ -85,6 +85,9 @@ func (b *BackendIDGetter) retryAcquireLease() {
 			id, ch, err = b.getLease()
 			if err != nil {
 				logger.WithError(err).Error("error generating backend ID")
+				if err := b.ctx.Err(); err != nil {
+					return true, err
+				}
 				return false, nil
 			}
 			atomic.StoreInt64(&b.id, id)

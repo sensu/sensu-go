@@ -181,7 +181,10 @@ func Initialize(config *Config) (*Backend, error) {
 	b.EventStore = eventStoreProxy
 
 	logger.Debug("Registering backend...")
-	backendID := etcd.NewBackendIDGetter(b.ctx, b.Client)
+
+	tctx, cancel := context.WithTimeout(b.ctx, time.Second*3)
+	defer cancel()
+	backendID := etcd.NewBackendIDGetter(tctx, b.Client)
 	logger.Debug("Done registering backend.")
 
 	// Initialize an etcd getter
@@ -496,6 +499,9 @@ func (b *Backend) Run() error {
 				return true, err
 			}
 		}
+
+		b.Stop()
+
 		backend, err := Initialize(b.cfg)
 		if err != nil {
 			logger.Error(err)
