@@ -38,7 +38,8 @@ const (
 	flagEventsRateLimit          = "events-rate-limit"
 	flagEventsBurstLimit         = "events-burst-limit"
 	flagKeepaliveInterval        = "keepalive-interval"
-	flagKeepaliveTimeout         = "keepalive-timeout"
+	flagKeepaliveWarningTimeout  = "keepalive-warning-timeout"
+	flagKeepaliveCriticalTimeout = "keepalive-critical-timeout"
 	flagNamespace                = "namespace"
 	flagPassword                 = "password"
 	flagRedact                   = "redact"
@@ -68,7 +69,8 @@ const (
 	flagCertFile              = "cert-file"
 	flagKeyFile               = "key-file"
 
-	deprecatedFlagAgentID = "id"
+	deprecatedFlagAgentID          = "id"
+	deprecatedFlagKeepaliveTimeout = "keepalive-timeout"
 )
 
 func newVersionCommand() *cobra.Command {
@@ -114,7 +116,8 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 			cfg.EventsAPIRateLimit = rate.Limit(viper.GetFloat64(flagEventsRateLimit))
 			cfg.EventsAPIBurstLimit = viper.GetInt(flagEventsBurstLimit)
 			cfg.KeepaliveInterval = uint32(viper.GetInt(flagKeepaliveInterval))
-			cfg.KeepaliveTimeout = uint32(viper.GetInt(flagKeepaliveTimeout))
+			cfg.KeepaliveWarningTimeout = uint32(viper.GetInt(flagKeepaliveWarningTimeout))
+			cfg.KeepaliveCriticalTimeout = uint32(viper.GetInt(flagKeepaliveCriticalTimeout))
 			cfg.Namespace = viper.GetString(flagNamespace)
 			cfg.Password = viper.GetString(flagPassword)
 			cfg.Socket.Host = viper.GetString(flagSocketHost)
@@ -138,6 +141,11 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 			cfg.TLS.InsecureSkipVerify = viper.GetBool(flagInsecureSkipTLSVerify)
 			cfg.TLS.CertFile = viper.GetString(flagCertFile)
 			cfg.TLS.KeyFile = viper.GetString(flagKeyFile)
+
+			if cfg.KeepaliveCriticalTimeout != 0 && cfg.KeepaliveCriticalTimeout < cfg.KeepaliveWarningTimeout {
+				logger.Fatalf("if set, --%s must be greater than --%s",
+					flagKeepaliveCriticalTimeout, flagKeepaliveWarningTimeout)
+			}
 
 			agentName := viper.GetString(flagAgentName)
 			if agentName != "" {
@@ -216,7 +224,8 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	viper.SetDefault(flagEventsRateLimit, agent.DefaultEventsAPIRateLimit)
 	viper.SetDefault(flagEventsBurstLimit, agent.DefaultEventsAPIBurstLimit)
 	viper.SetDefault(flagKeepaliveInterval, agent.DefaultKeepaliveInterval)
-	viper.SetDefault(flagKeepaliveTimeout, corev2.DefaultKeepaliveTimeout)
+	viper.SetDefault(flagKeepaliveWarningTimeout, corev2.DefaultKeepaliveTimeout)
+	viper.SetDefault(flagKeepaliveCriticalTimeout, 0)
 	viper.SetDefault(flagNamespace, agent.DefaultNamespace)
 	viper.SetDefault(flagPassword, agent.DefaultPassword)
 	viper.SetDefault(flagRedact, corev2.DefaultRedactFields)
@@ -263,7 +272,8 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	cmd.Flags().StringSlice(flagSubscriptions, viper.GetStringSlice(flagSubscriptions), "comma-delimited list of agent subscriptions")
 	cmd.Flags().String(flagUser, viper.GetString(flagUser), "agent user")
 	cmd.Flags().StringSlice(flagBackendURL, viper.GetStringSlice(flagBackendURL), "ws/wss URL of Sensu backend server (to specify multiple backends use this flag multiple times)")
-	cmd.Flags().Uint32(flagKeepaliveTimeout, uint32(viper.GetInt(flagKeepaliveTimeout)), "number of seconds until agent is considered dead by backend")
+	cmd.Flags().Uint32(flagKeepaliveWarningTimeout, uint32(viper.GetInt(flagKeepaliveWarningTimeout)), "number of seconds until agent is considered dead by backend to create a warning event")
+	cmd.Flags().Uint32(flagKeepaliveCriticalTimeout, uint32(viper.GetInt(flagKeepaliveCriticalTimeout)), "number of seconds until agent is considered dead by backend to create a critical event")
 	cmd.Flags().Bool(flagDisableAPI, viper.GetBool(flagDisableAPI), "disable the Agent HTTP API")
 	cmd.Flags().Bool(flagDisableAssets, viper.GetBool(flagDisableAssets), "disable check assets on this agent")
 	cmd.Flags().Bool(flagDisableSockets, viper.GetBool(flagDisableSockets), "disable the Agent TCP and UDP event sockets")
@@ -287,6 +297,7 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 
 	deprecatedConfigAttributes(logger)
 	viper.RegisterAlias(deprecatedFlagAgentID, flagAgentName)
+	viper.RegisterAlias(deprecatedFlagKeepaliveTimeout, flagKeepaliveWarningTimeout)
 
 	return cmd
 }
@@ -302,6 +313,9 @@ func aliasNormalizeFunc(logger *logrus.Entry) func(*pflag.FlagSet, string) pflag
 		case deprecatedFlagAgentID:
 			deprecatedFlagMessage(name, flagAgentName, logger)
 			name = flagAgentName
+		case deprecatedFlagKeepaliveTimeout:
+			deprecatedFlagMessage(name, flagKeepaliveWarningTimeout, logger)
+			name = flagKeepaliveWarningTimeout
 		}
 		return pflag.NormalizedName(name)
 	}
@@ -311,7 +325,8 @@ func aliasNormalizeFunc(logger *logrus.Entry) func(*pflag.FlagSet, string) pflag
 // message if set
 func deprecatedConfigAttributes(logger *logrus.Entry) {
 	attributes := map[string]string{
-		deprecatedFlagAgentID: flagAgentName,
+		deprecatedFlagAgentID:          flagAgentName,
+		deprecatedFlagKeepaliveTimeout: flagKeepaliveWarningTimeout,
 	}
 
 	for old, new := range attributes {

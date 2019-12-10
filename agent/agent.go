@@ -185,8 +185,11 @@ func (a *Agent) Run(ctx context.Context) error {
 	if err := corev2.ValidateName(a.config.AgentName); err != nil {
 		return fmt.Errorf("invalid agent name: %v", err)
 	}
-	if timeout := a.config.KeepaliveTimeout; timeout < 5 {
+	if timeout := a.config.KeepaliveWarningTimeout; timeout < 5 {
 		return fmt.Errorf("bad keepalive timeout: %d (minimum value is 5 seconds)", timeout)
+	}
+	if timeout := a.config.KeepaliveCriticalTimeout; timeout > 0 && timeout < 5 {
+		return fmt.Errorf("bad keepalive critical timeout: %d (minimum value is 5 seconds)", timeout)
 	}
 
 	if !a.config.DisableAssets {
@@ -311,7 +314,8 @@ func (a *Agent) newKeepalive() *transport.Message {
 	keepalive.Check = &corev2.Check{
 		ObjectMeta: corev2.NewObjectMeta("keepalive", entity.Namespace),
 		Interval:   a.config.KeepaliveInterval,
-		Timeout:    a.config.KeepaliveTimeout,
+		Timeout:    a.config.KeepaliveWarningTimeout,
+		Ttl:        int64(a.config.KeepaliveCriticalTimeout),
 	}
 	keepalive.Entity = a.getAgentEntity()
 	keepalive.Timestamp = time.Now().Unix()

@@ -14,14 +14,19 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 when it is not operating as an etcd member. The flag is also used by the new
 sensu-backend init tool.
 - Added the cluster's distribution to Tessen data.
+- Added a new field, ClusterIDHex, to the ClusterHealth datatype.
+- Added the `--etcd-discovery` and `--etcd-discovery-srv` flags to
+`sensu-backend`. These are used to take advantage of the embedded etcd's
+auto-discovery features.
+- Added `--keepalive-critical-timeout` to define the time after which a
+critical keepalive event should be created for an agent.
+- Added `--keepalive-warning-timeout` which is an alias of `--keepalive-timeout`
+for backwards compatibility.
 
 ### Fixed
 - Add a timeout to etcd requests when retrieving the nodes health.
 - Show the correct default value for the format flag in `sensuctl dump` help
 usage.
-- Added the `--etcd-discovery` and `--etcd-discovery-srv` flags to
-`sensu-backend`. These are used to take advantage of the embedded etcd's
-auto-discovery features.
 - Installing sensuctl commands via Bonsai will now check for correct labels
 before checking if the asset has 1 or more builds.
 - Listing assets with no results returns an empty array.
@@ -29,8 +34,6 @@ before checking if the asset has 1 or more builds.
 does not exist.
 - [Web] Links to documentation now point to the version of the product being run
 instead of the latest; helpful when running an older version of Sensu.
-`sensu-backend`. These are used to take advantage of the embedded etcd's
-auto-discovery features.
 - Installing sensuctl commands via Bonsai will now check for correct labels
 before checking if the asset has 1 or more builds.
 - Listing assets with no results returns an empty array.
@@ -38,6 +41,10 @@ before checking if the asset has 1 or more builds.
 does not exist.
 - Fixed issue where keepalive events and events created through the agent's
 socket interface could be missing a namespace.
+- Fixed an issue where 'sensuctl cluster health' would hang indefinitely.
+- Fixed several issues around the metadata of resources encoded using the
+wrapped-json format, where the metadata would go missing when listing
+resources or prevent resources from being created.
 
 ### Changed
 - The backend will no longer automatically be seeded with a default admin
@@ -51,6 +58,9 @@ includes breadcrumbs.
 switcher. The new component can be accessed from the drawer or with the shortcut
 ctrl+k. For those with many namespaces the switcher now includes fuzzy search
 and improved keyboard navigation.
+- 'sensuctl cluster health' will now use a 3s timeout when gathering cluster
+health information.
+- 'sensuctl cluster health' now collects cluster health information concurrently.
 
 ## [5.15.0] - 2019-11-18
 
