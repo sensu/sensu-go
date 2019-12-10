@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -263,6 +264,11 @@ func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 // Start APId.
 func (a *APId) Start() error {
 	logger.Info("starting apid on address: ", a.HTTPServer.Addr)
+	ln, err := net.Listen("tcp", a.HTTPServer.Addr)
+	if err != nil {
+		return fmt.Errorf("failed to start apid: %s", err)
+	}
+
 	a.wg.Add(1)
 
 	go func() {
@@ -270,12 +276,12 @@ func (a *APId) Start() error {
 		var err error
 		if a.tls != nil {
 			// TLS configuration comes from ToServerTLSConfig
-			err = a.HTTPServer.ListenAndServeTLS("", "")
+			err = a.HTTPServer.ServeTLS(ln, "", "")
 		} else {
-			err = a.HTTPServer.ListenAndServe()
+			err = a.HTTPServer.Serve(ln)
 		}
 		if err != nil && err != http.ErrServerClosed {
-			a.errChan <- fmt.Errorf("failed to start http/https server %s", err)
+			a.errChan <- fmt.Errorf("failure while serving api: %s", err)
 		}
 	}()
 
