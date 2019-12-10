@@ -32,6 +32,8 @@ before checking if the asset has 1 or more builds.
 - Listing assets with no results returns an empty array.
 - Fixed a panic that could occur when creating resources in a namespace that
 does not exist.
+- [Web] Links to documentation now point to the version of the product being run
+instead of the latest; helpful when running an older version of Sensu.
 - Fixed issue where keepalive events and events created through the agent's
 socket interface could be missing a namespace.
 - Fixed an issue where 'sensuctl cluster health' would hang indefinitely.
@@ -44,6 +46,13 @@ resources or prevent resources from being created.
 username and password. Users will need to run 'sensu-backend init' on every
 new installation.
 - Several deprecated flags were removed from sensu-backend.
+- [Web] Changes to navigation. The app bar has been replaced by an omnipresent
+drawer increasing the available space for content. Additionally, each page now
+includes breadcrumbs.
+- [Web] Switching namespaces is easier than ever, with the new and improved
+switcher. The new component can be accessed from the drawer or with the shortcut
+ctrl+k. For those with many namespaces the switcher now includes fuzzy search
+and improved keyboard navigation.
 - 'sensuctl cluster health' will now use a 3s timeout when gathering cluster
 health information.
 - 'sensuctl cluster health' now collects cluster health information concurrently.

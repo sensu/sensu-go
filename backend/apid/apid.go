@@ -211,15 +211,14 @@ func GraphQLSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		router.NewRoute(),
 		middlewares.SimpleLogger{},
 		middlewares.LimitRequest{},
-		// TODO: Currently the web app relies on receiving a 401 to determine if
-		//       a user is not authenticated. However, in the future we should
-		//       allow requests without an access token to continue so that
-		//       unauthenticated clients can still fetch the schema. Useful for
-		//       implementing tools like GraphiQL.
+		// We permit requests that do not include an access token or API key,
+		// this allows unauthenticated clients to run introspecton queries or
+		// query resources that do not require authorization, such as health
+		// and version info.
 		//
-		//       https://github.com/graphql/graphiql
-		//       https://graphql.org/learn/introspection/
-		middlewares.Authentication{IgnoreUnauthorized: false, Store: cfg.Store},
+		// https://github.com/graphql/graphiql
+		// https://graphql.org/learn/introspection/
+		middlewares.Authentication{IgnoreUnauthorized: true, Store: cfg.Store},
 	)
 
 	mountRouters(
