@@ -4,6 +4,8 @@ FROM ubuntu:18.04
 ENV GOROOT=/usr/local/go
 ENV GOPATH=/opt/sensu
 ENV PATH=$GOPATH:/bin:$GOROOT/bin:/opt/sensu/bin/:$PATH
+#Using Go 1.13.3 for Go modules, change for your needs.
+ARG GO_VER=1.13.3
 
 WORKDIR /opt/sensu
 COPY ./sensu-entrypoint.sh /opt/sensu/bin/
@@ -12,10 +14,10 @@ RUN apt update &&\
     apt -y upgrade &&\
     apt -y install git wget
 
-#Download and install Go 1.13.3 for Go modules.
-RUN wget https://dl.google.com/go/go1.13.3.linux-amd64.tar.gz && tar -xvf go1.13.3.linux-amd64.tar.gz &&\
+#Download and install Go using the GO_VER argument.
+RUN wget https://dl.google.com/go/go$GO_VER.linux-amd64.tar.gz && tar -xvf go$GO_VER.linux-amd64.tar.gz &&\
     mv go /usr/local/ &&\
-    rm go1.13.3.linux-amd64.tar.gz
+    rm go$GO_VER.linux-amd64.tar.gz
 
 #Build OSS only sensu features, enterprise features are built in the Sensu supported images:
 #docker pull sensu/sensu (Alpine based container) or 
