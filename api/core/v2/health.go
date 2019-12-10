@@ -30,8 +30,7 @@ func (h ClusterHealth) MarshalJSON() ([]byte, error) {
 		h.MemberIDHex = fmt.Sprintf("%x", h.MemberID)
 	}
 	type Clone ClusterHealth
-	var clone *Clone
-	clone = (*Clone)(&h)
+	var clone *Clone = (*Clone)(&h)
 	return json.Marshal(clone)
 }
 

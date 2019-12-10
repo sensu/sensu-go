@@ -140,7 +140,7 @@ func (r *ClusterRouter) memberRemove(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	resp, err := r.controller.MemberRemove(req.Context(), id)
+	resp, err := r.controller.MemberRemove(ctx, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
