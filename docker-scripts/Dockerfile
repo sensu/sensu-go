@@ -34,5 +34,6 @@ VOLUME [/var/lib/sensu]
 #Port 3000 for Sensu Go UI, 8080 for Sensu API, and port 8081 for sensu-agent websocket API communication.  
 EXPOSE 3000 8080 8081
 
-#Use Docker logs to see stdout of sensu-backend (ie. docker logs --details -f  `docker ps -q` )
+#Run the container passing the binary and args to the container (ie. sudo docker run -d <new_image> sensu-backend init), see README.md for more examples.
+#Use Docker logs to see stdout of process passed (ie. sudo docker logs --details -f  `docker ps -q` ).
 CMD ["/opt/sensu/bin/sensu-entrypoint.sh"]
