@@ -85,17 +85,6 @@ func TestInitSecret(t *testing.T) {
 	assert.NotEqual(t, nil, secret)
 }
 
-func TestInitSecretMissingSecret(t *testing.T) {
-	secret = nil
-	store := &mockstore.MockStore{}
-	store.On("GetJWTSecret").Return("", fmt.Errorf(""))
-	store.On("CreateJWTSecret").Return(nil)
-
-	err := InitSecret(store)
-	assert.NoError(t, err)
-	assert.NotEqual(t, nil, secret)
-}
-
 func TestInitSecretEtcdError(t *testing.T) {
 	secret = nil
 	store := &mockstore.MockStore{}
