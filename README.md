@@ -79,6 +79,12 @@ To build a OSS only docker image without the 100 entity restriction and without 
 ```
 $ cd docker-scripts
 $ sudo docker build .
+# sensu-backend initialization 
+$ sudo docker run -d <new_image> sensu-backend init
+# sensu-backend run post initialization
+$ sudo docker run -d <new_image> sensu-backend start
+# sensu-agent for running docker image as a client
+$ sudo docker run -d <new_image> sensu-agent start
 ```
 
 ## Contributing

@@ -35,4 +35,4 @@ VOLUME [/var/lib/sensu]
 EXPOSE 3000 8080 8081
 
 #Use Docker logs to see stdout of sensu-backend (ie. docker logs --details -f  `docker ps -q` )
-CMD ["/opt/sensu/bin/sensu-backend","start"]
+CMD ["/opt/sensu/bin/sensu-entrypoint.sh"]
