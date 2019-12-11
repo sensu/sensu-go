@@ -6,7 +6,6 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
-	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -47,18 +46,12 @@ func SeedCluster(ctx context.Context, store store.Store, config Config) error {
 			}
 		}()
 
-		// Initialize the JWT secret. This method is idempotent and needs to be ran
-		// at every startup so the JWT signatures remain valid
-		if err = jwt.InitSecret(store); err != nil {
-			return
-		}
-
 		// Check that the store hasn't already been seeded
 		initialized, err := initializer.IsInitialized()
 		if err != nil || initialized {
 			return
 		}
-		logger.Info("seeding etcd store w/ intial data")
+		logger.Info("seeding etcd store with intial data")
 
 		// Create the default namespace
 		if err = setupDefaultNamespace(store); err != nil {
