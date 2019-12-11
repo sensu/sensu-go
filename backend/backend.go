@@ -41,6 +41,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/retry"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 )
 
 type ErrStartup struct {
@@ -91,16 +92,14 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 
 		// Don't start up an embedded etcd, return a client that connects to an
 		// external etcd instead.
-		client, err := clientv3.New(clientv3.Config{
+		return clientv3.New(clientv3.Config{
 			Endpoints:   clientURLs,
 			DialTimeout: 5 * time.Second,
 			TLS:         tlsConfig,
+			DialOptions: []grpc.DialOption{
+				grpc.WithBlock(),
+			},
 		})
-		fmt.Println("CLIENT", client, err)
-		if err != nil {
-			return nil, err
-		}
-		return client, nil
 	}
 
 	// Initialize and start etcd, because we'll need to provide an etcd client to
@@ -506,14 +505,24 @@ func (b *Backend) Run() error {
 
 		b.Stop()
 
-		backend, err := Initialize(b.cfg)
+		// Yes, two levels of retry... this could improve. Unfortunately Intialize()
+		// is called elsewhere.
+		err := backoff.Retry(func(int) (bool, error) {
+			backend, err := Initialize(b.cfg)
+			if err != nil && err != context.Canceled {
+				logger.Error(err)
+				return false, nil
+			} else if err == context.Canceled {
+				return true, err
+			}
+			// Replace b with a new backend - this is done to ensure that there is
+			// no side effects from the execution of b that have carried over
+			*b = *backend
+			return true, nil
+		})
 		if err != nil {
-			logger.Error(err)
 			return true, err
 		}
-		// Replace b with a new backend - this is done to ensure that there is
-		// no side effects from the execution of b that have carried over
-		*b = *backend
 		return false, nil
 	})
 
