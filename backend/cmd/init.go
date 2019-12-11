@@ -15,6 +15,7 @@ import (
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -118,6 +119,9 @@ func InitCommand() *cobra.Command {
 				Endpoints:   clientURLs,
 				DialTimeout: 5 * time.Second,
 				TLS:         tlsConfig,
+				DialOptions: []grpc.DialOption{
+					grpc.WithBlock(),
+				},
 			})
 
 			if err != nil {
