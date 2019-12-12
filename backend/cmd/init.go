@@ -170,7 +170,7 @@ func seedCluster(client *clientv3.Client, config seedConfig) error {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 	defer cancel()
 	if err := seeds.SeedCluster(ctx, store, config.SeedConfig); err != nil {
-		return fmt.Errorf("error initializing cluster: %s", err)
+		return err
 	}
 	return nil
 }
