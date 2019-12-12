@@ -22,7 +22,9 @@ func TestSeedInitialData(t *testing.T) {
 	require.NoError(t, err, "seeding process should not raise an error")
 
 	err = SeedInitialData(st)
-	require.NoError(t, err, "seeding process should be able to be run more than once without error")
+	if err != ErrAlreadyInitialized {
+		require.NoError(t, err, "seeding process should be able to be run more than once without error")
+	}
 
 	admin, err := st.GetUser(ctx, "admin")
 	require.NoError(t, err)
