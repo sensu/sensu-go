@@ -26,9 +26,7 @@ func (m *mockProvider) GetObjectMeta() corev2.ObjectMeta {
 }
 
 // SetObjectMeta ...
-func (m *mockProvider) SetObjectMeta(meta corev2.ObjectMeta) {
-	return
-}
+func (m *mockProvider) SetObjectMeta(meta corev2.ObjectMeta) {}
 
 // RBACName ...
 func (m *mockProvider) RBACName() string {
@@ -37,9 +35,7 @@ func (m *mockProvider) RBACName() string {
 }
 
 // SetNamespace ...
-func (m *mockProvider) SetNamespace(namespace string) {
-	return
-}
+func (m *mockProvider) SetNamespace(namespace string) {}
 
 // StorePrefix ...
 func (m *mockProvider) StorePrefix() string {
