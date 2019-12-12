@@ -5,40 +5,43 @@ import (
 	"strings"
 	"sync"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/secrets"
 )
 
 // CheckWatcher manages all the check schedulers
 type CheckWatcher struct {
-	items       map[string]Scheduler
-	store       store.Store
-	bus         messaging.MessageBus
-	mu          sync.Mutex
-	ctx         context.Context
-	ringPool    *ringv2.Pool
-	entityCache *cache.Resource
+	items                  map[string]Scheduler
+	store                  store.Store
+	bus                    messaging.MessageBus
+	mu                     sync.Mutex
+	ctx                    context.Context
+	ringPool               *ringv2.Pool
+	entityCache            *cache.Resource
+	secretsProviderManager *secrets.ProviderManager
 }
 
 // NewCheckWatcher creates a new ScheduleManager.
-func NewCheckWatcher(ctx context.Context, msgBus messaging.MessageBus, store store.Store, pool *ringv2.Pool, cache *cache.Resource) *CheckWatcher {
+func NewCheckWatcher(ctx context.Context, msgBus messaging.MessageBus, store store.Store, pool *ringv2.Pool, cache *cache.Resource, secretsProviderManager *secrets.ProviderManager) *CheckWatcher {
 	watcher := &CheckWatcher{
-		store:       store,
-		items:       make(map[string]Scheduler),
-		bus:         msgBus,
-		ctx:         ctx,
-		ringPool:    pool,
-		entityCache: cache,
+		store:                  store,
+		items:                  make(map[string]Scheduler),
+		bus:                    msgBus,
+		ctx:                    ctx,
+		ringPool:               pool,
+		entityCache:            cache,
+		secretsProviderManager: secretsProviderManager,
 	}
 
 	return watcher
 }
 
 // startScheduler starts a new scheduler for the given check. It assumes mu is locked.
-func (c *CheckWatcher) startScheduler(check *types.CheckConfig) error {
+func (c *CheckWatcher) startScheduler(check *corev2.CheckConfig) error {
 	// Guard against updates while the daemon is shutting down
 	if err := c.ctx.Err(); err != nil {
 		return err
@@ -61,16 +64,16 @@ func (c *CheckWatcher) startScheduler(check *types.CheckConfig) error {
 
 	switch GetSchedulerType(check) {
 	case IntervalType:
-		scheduler = NewIntervalScheduler(c.ctx, c.store, c.bus, check, c.entityCache)
+		scheduler = NewIntervalScheduler(c.ctx, c.store, c.bus, check, c.entityCache, c.secretsProviderManager)
 	case CronType:
-		scheduler = NewCronScheduler(c.ctx, c.store, c.bus, check, c.entityCache)
+		scheduler = NewCronScheduler(c.ctx, c.store, c.bus, check, c.entityCache, c.secretsProviderManager)
 	case RoundRobinIntervalType:
-		scheduler = NewRoundRobinIntervalScheduler(c.ctx, c.store, c.bus, c.ringPool, check, c.entityCache)
+		scheduler = NewRoundRobinIntervalScheduler(c.ctx, c.store, c.bus, c.ringPool, check, c.entityCache, c.secretsProviderManager)
 	case RoundRobinCronType:
-		scheduler = NewRoundRobinCronScheduler(c.ctx, c.store, c.bus, c.ringPool, check, c.entityCache)
+		scheduler = NewRoundRobinCronScheduler(c.ctx, c.store, c.bus, c.ringPool, check, c.entityCache, c.secretsProviderManager)
 	default:
 		logger.Error("bad scheduler type, falling back to interval scheduler")
-		scheduler = NewIntervalScheduler(c.ctx, c.store, c.bus, check, c.entityCache)
+		scheduler = NewIntervalScheduler(c.ctx, c.store, c.bus, check, c.entityCache, c.secretsProviderManager)
 	}
 
 	// Start scheduling check

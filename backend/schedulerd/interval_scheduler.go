@@ -7,25 +7,26 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/secrets"
 	"github.com/sirupsen/logrus"
 )
 
 // IntervalScheduler schedules checks to be executed on a timer
 type IntervalScheduler struct {
-	lastIntervalState uint32
-	check             *types.CheckConfig
-	store             store.Store
-	bus               messaging.MessageBus
-	logger            *logrus.Entry
-	ctx               context.Context
-	cancel            context.CancelFunc
-	interrupt         chan *corev2.CheckConfig
-	entityCache       *cache.Resource
+	lastIntervalState      uint32
+	check                  *corev2.CheckConfig
+	store                  store.Store
+	bus                    messaging.MessageBus
+	logger                 *logrus.Entry
+	ctx                    context.Context
+	cancel                 context.CancelFunc
+	interrupt              chan *corev2.CheckConfig
+	entityCache            *cache.Resource
+	secretsProviderManager *secrets.ProviderManager
 }
 
 // NewIntervalScheduler initializes an IntervalScheduler
-func NewIntervalScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, check *types.CheckConfig, cache *cache.Resource) *IntervalScheduler {
+func NewIntervalScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, check *corev2.CheckConfig, cache *cache.Resource, secretsProviderManager *secrets.ProviderManager) *IntervalScheduler {
 	sched := &IntervalScheduler{
 		store:             store,
 		bus:               bus,
@@ -37,10 +38,11 @@ func NewIntervalScheduler(ctx context.Context, store store.Store, bus messaging.
 			"namespace":      check.Namespace,
 			"scheduler_type": IntervalType.String(),
 		}),
-		entityCache: cache,
+		entityCache:            cache,
+		secretsProviderManager: secretsProviderManager,
 	}
 	sched.ctx, sched.cancel = context.WithCancel(ctx)
-	sched.ctx = types.SetContextFromResource(sched.ctx, check)
+	sched.ctx = corev2.SetContextFromResource(sched.ctx, check)
 	return sched
 }
 
@@ -68,7 +70,7 @@ func (s *IntervalScheduler) Start() {
 func (s *IntervalScheduler) start() {
 	s.logger.Info("starting new interval scheduler")
 	timer := NewIntervalTimer(s.check.Name, uint(s.check.Interval))
-	executor := NewCheckExecutor(s.bus, s.check.Namespace, s.store, s.entityCache)
+	executor := NewCheckExecutor(s.bus, s.check.Namespace, s.store, s.entityCache, s.secretsProviderManager)
 
 	timer.Start()
 

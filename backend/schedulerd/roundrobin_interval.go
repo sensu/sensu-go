@@ -9,7 +9,7 @@ import (
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/secrets"
 	"github.com/sirupsen/logrus"
 )
 
@@ -23,7 +23,7 @@ type ringCancel struct {
 type RoundRobinIntervalScheduler struct {
 	lastIntervalState      uint32
 	lastSubscriptionsState []string
-	check                  *types.CheckConfig
+	check                  *corev2.CheckConfig
 	store                  store.Store
 	bus                    messaging.MessageBus
 	logger                 *logrus.Entry
@@ -37,7 +37,7 @@ type RoundRobinIntervalScheduler struct {
 }
 
 // NewRoundRobinIntervalScheduler initializes a RoundRobinIntervalScheduler
-func NewRoundRobinIntervalScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, pool *ringv2.Pool, check *corev2.CheckConfig, cache *cache.Resource) *RoundRobinIntervalScheduler {
+func NewRoundRobinIntervalScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, pool *ringv2.Pool, check *corev2.CheckConfig, cache *cache.Resource, secretsProviderManager *secrets.ProviderManager) *RoundRobinIntervalScheduler {
 	sched := &RoundRobinIntervalScheduler{
 		store:             store,
 		bus:               bus,
@@ -51,7 +51,7 @@ func NewRoundRobinIntervalScheduler(ctx context.Context, store store.Store, bus 
 		}),
 		ringPool:    pool,
 		cancels:     make(map[string]ringCancel),
-		executor:    NewCheckExecutor(bus, check.Namespace, store, cache),
+		executor:    NewCheckExecutor(bus, check.Namespace, store, cache, secretsProviderManager),
 		entityCache: cache,
 	}
 	sched.ctx, sched.cancel = context.WithCancel(ctx)

@@ -7,19 +7,20 @@ import (
 	"testing"
 	"time"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
+	"github.com/sensu/sensu-go/secrets"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
 
 type TestIntervalScheduler struct {
-	check     *types.CheckConfig
+	check     *corev2.CheckConfig
 	exec      Executor
 	msgBus    *messaging.WizardBus
 	scheduler *IntervalScheduler
@@ -31,7 +32,7 @@ func (tcs *TestIntervalScheduler) Receiver() chan<- interface{} {
 }
 
 type TestCronScheduler struct {
-	check     *types.CheckConfig
+	check     *corev2.CheckConfig
 	exec      Executor
 	msgBus    *messaging.WizardBus
 	scheduler *CronScheduler
@@ -50,29 +51,29 @@ func newIntervalScheduler(ctx context.Context, t *testing.T, executor string) *T
 	scheduler := &TestIntervalScheduler{}
 	scheduler.channel = make(chan interface{}, 2)
 
-	request := types.FixtureCheckRequest("check1")
+	request := corev2.FixtureCheckRequest("check1")
 	asset := request.Assets[0]
 	hook := request.Hooks[0]
 	scheduler.check = request.Config
 	scheduler.check.Interval = 1
 	s := &mockstore.MockStore{}
-	s.On("GetAssets", mock.Anything, &store.SelectionPredicate{}).Return([]*types.Asset{&asset}, nil)
-	s.On("GetHookConfigs", mock.Anything, &store.SelectionPredicate{}).Return([]*types.HookConfig{&hook}, nil)
+	s.On("GetAssets", mock.Anything, &store.SelectionPredicate{}).Return([]*corev2.Asset{&asset}, nil)
+	s.On("GetHookConfigs", mock.Anything, &store.SelectionPredicate{}).Return([]*corev2.HookConfig{&hook}, nil)
 	s.On("GetCheckConfigByName", mock.Anything, mock.Anything).Return(scheduler.check, nil)
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	scheduler.msgBus = bus
 
-	scheduler.scheduler = NewIntervalScheduler(ctx, s, scheduler.msgBus, scheduler.check, &cache.Resource{})
+	scheduler.scheduler = NewIntervalScheduler(ctx, s, scheduler.msgBus, scheduler.check, &cache.Resource{}, &secrets.ProviderManager{})
 
 	assert.NoError(scheduler.msgBus.Start())
 
 	switch executor {
 	case "adhoc":
-		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, &cache.Resource{})
+		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, &cache.Resource{}, &secrets.ProviderManager{})
 	default:
-		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, &cache.Resource{})
+		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, &cache.Resource{}, &secrets.ProviderManager{})
 	}
 
 	return scheduler
@@ -86,30 +87,30 @@ func newCronScheduler(ctx context.Context, t *testing.T, executor string) *TestC
 	scheduler := &TestCronScheduler{}
 	scheduler.channel = make(chan interface{}, 2)
 
-	request := types.FixtureCheckRequest("check1")
+	request := corev2.FixtureCheckRequest("check1")
 	asset := request.Assets[0]
 	hook := request.Hooks[0]
 	scheduler.check = request.Config
 	scheduler.check.Interval = 1
 	scheduler.check.Cron = "* * * * *"
 	s := &mockstore.MockStore{}
-	s.On("GetAssets", mock.Anything, &store.SelectionPredicate{}).Return([]*types.Asset{&asset}, nil)
-	s.On("GetHookConfigs", mock.Anything, &store.SelectionPredicate{}).Return([]*types.HookConfig{&hook}, nil)
+	s.On("GetAssets", mock.Anything, &store.SelectionPredicate{}).Return([]*corev2.Asset{&asset}, nil)
+	s.On("GetHookConfigs", mock.Anything, &store.SelectionPredicate{}).Return([]*corev2.HookConfig{&hook}, nil)
 	s.On("GetCheckConfigByName", mock.Anything, mock.Anything).Return(scheduler.check, nil)
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	scheduler.msgBus = bus
 
-	scheduler.scheduler = NewCronScheduler(ctx, s, scheduler.msgBus, scheduler.check, &cache.Resource{})
+	scheduler.scheduler = NewCronScheduler(ctx, s, scheduler.msgBus, scheduler.check, &cache.Resource{}, &secrets.ProviderManager{})
 
 	assert.NoError(scheduler.msgBus.Start())
 
 	switch executor {
 	case "adhoc":
-		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, &cache.Resource{})
+		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, &cache.Resource{}, &secrets.ProviderManager{})
 	default:
-		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, &cache.Resource{})
+		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, &cache.Resource{}, &secrets.ProviderManager{})
 	}
 
 	return scheduler
@@ -142,7 +143,7 @@ func TestIntervalScheduling(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		msg := <-scheduler.channel
-		res, ok := msg.(*types.CheckRequest)
+		res, ok := msg.(*corev2.CheckRequest)
 		assert.True(ok)
 		assert.Equal("check1", res.Config.Name)
 		wg.Done()
@@ -166,9 +167,9 @@ func TestCheckSubdueInterval(t *testing.T) {
 	// Set interval to smallest valid value
 	check := scheduler.check
 	check.Subscriptions = []string{"subscription1"}
-	check.Subdue = &types.TimeWindowWhen{
-		Days: types.TimeWindowDays{
-			All: []*types.TimeWindowTimeRange{
+	check.Subdue = &corev2.TimeWindowWhen{
+		Days: corev2.TimeWindowDays{
+			All: []*corev2.TimeWindowTimeRange{
 				{
 					Begin: "1:00 AM",
 					End:   "11:00 PM",
@@ -236,7 +237,7 @@ func TestCronScheduling(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		msg := <-scheduler.channel
-		res, ok := msg.(*types.CheckRequest)
+		res, ok := msg.(*corev2.CheckRequest)
 		assert.True(ok)
 		assert.Equal("check1", res.Config.Name)
 		wg.Done()
@@ -261,9 +262,9 @@ func TestCheckSubdueCron(t *testing.T) {
 	check := scheduler.check
 	check.Cron = "* * * * *"
 	check.Subscriptions = []string{"subscription1"}
-	check.Subdue = &types.TimeWindowWhen{
-		Days: types.TimeWindowDays{
-			All: []*types.TimeWindowTimeRange{
+	check.Subdue = &corev2.TimeWindowWhen{
+		Days: corev2.TimeWindowDays{
+			All: []*corev2.TimeWindowTimeRange{
 				{
 					Begin: "1:00 AM",
 					End:   "11:00 PM",

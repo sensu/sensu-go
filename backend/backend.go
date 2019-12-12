@@ -37,20 +37,21 @@ import (
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/backend/tessend"
 	"github.com/sensu/sensu-go/rpc"
+	"github.com/sensu/sensu-go/secrets"
 	"github.com/sensu/sensu-go/system"
-	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/viper"
 )
 
 // Backend represents the backend server, which is used to hold the datastore
 // and coordinating the daemons
 type Backend struct {
-	Client         *clientv3.Client
-	Daemons        []daemon.Daemon
-	Etcd           *etcd.Etcd
-	Store          store.Store
-	EventStore     EventStoreUpdater
-	GraphQLService *graphql.Service
+	Client                 *clientv3.Client
+	Daemons                []daemon.Daemon
+	Etcd                   *etcd.Etcd
+	Store                  store.Store
+	EventStore             EventStoreUpdater
+	GraphQLService         *graphql.Service
+	SecretsProviderManager *secrets.ProviderManager
 
 	done   chan struct{}
 	ctx    context.Context
@@ -197,6 +198,9 @@ func Initialize(config *Config) (*Backend, error) {
 		return nil, fmt.Errorf("error initializing asset manager: %s", err)
 	}
 
+	// Initialize the secrets provider manager
+	b.SecretsProviderManager = &secrets.ProviderManager{}
+
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
 		Store:                   stor,
@@ -205,6 +209,7 @@ func Initialize(config *Config) (*Backend, error) {
 		AssetGetter:             assetGetter,
 		BufferSize:              viper.GetInt(FlagPipelinedBufferSize),
 		WorkerCount:             viper.GetInt(FlagPipelinedWorkers),
+		SecretsProviderManager:  b.SecretsProviderManager,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", pipeline.Name(), err)
@@ -235,11 +240,12 @@ func Initialize(config *Config) (*Backend, error) {
 	scheduler, err := schedulerd.New(
 		b.ctx,
 		schedulerd.Config{
-			Store:       stor,
-			Bus:         bus,
-			QueueGetter: queueGetter,
-			RingPool:    ringPool,
-			Client:      b.Client,
+			Store:                  stor,
+			Bus:                    bus,
+			QueueGetter:            queueGetter,
+			RingPool:               ringPool,
+			Client:                 b.Client,
+			SecretsProviderManager: b.SecretsProviderManager,
 		})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", scheduler.Name(), err)
@@ -368,17 +374,17 @@ func Initialize(config *Config) (*Backend, error) {
 	b.Daemons = append(b.Daemons, tessen)
 
 	// Initialize dashboardd TLS config
-	var dashboardTLSConfig *types.TLSOptions
+	var dashboardTLSConfig *corev2.TLSOptions
 
 	// Always use dashboard tls options when they are specified
 	if config.DashboardTLSCertFile != "" && config.DashboardTLSKeyFile != "" {
-		dashboardTLSConfig = &types.TLSOptions{
+		dashboardTLSConfig = &corev2.TLSOptions{
 			CertFile: config.DashboardTLSCertFile,
 			KeyFile:  config.DashboardTLSKeyFile,
 		}
 	} else if config.TLS != nil {
 		// use apid tls config if no dashboard tls options are specified
-		dashboardTLSConfig = &types.TLSOptions{
+		dashboardTLSConfig = &corev2.TLSOptions{
 			CertFile: config.TLS.GetCertFile(),
 			KeyFile:  config.TLS.GetKeyFile(),
 		}

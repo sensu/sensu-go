@@ -6,11 +6,12 @@ import (
 	"context"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
+	"github.com/sensu/sensu-go/secrets"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 )
@@ -26,21 +27,21 @@ func TestCheckWatcherSmoke(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	checkA := types.FixtureCheckConfig("a")
-	checkB := types.FixtureCheckConfig("b")
-	st.On("GetCheckConfigs", mock.Anything, &store.SelectionPredicate{}).Return([]*types.CheckConfig{checkA, checkB}, nil)
+	checkA := corev2.FixtureCheckConfig("a")
+	checkB := corev2.FixtureCheckConfig("b")
+	st.On("GetCheckConfigs", mock.Anything, &store.SelectionPredicate{}).Return([]*corev2.CheckConfig{checkA, checkB}, nil)
 	st.On("GetCheckConfigByName", mock.Anything, "a").Return(checkA, nil)
 	st.On("GetCheckConfigByName", mock.Anything, "b").Return(checkB, nil)
-	st.On("GetAssets", mock.Anything, &store.SelectionPredicate{}).Return([]*types.Asset{}, nil)
-	st.On("GetHookConfigs", mock.Anything, &store.SelectionPredicate{}).Return([]*types.HookConfig{}, nil)
+	st.On("GetAssets", mock.Anything, &store.SelectionPredicate{}).Return([]*corev2.Asset{}, nil)
+	st.On("GetHookConfigs", mock.Anything, &store.SelectionPredicate{}).Return([]*corev2.HookConfig{}, nil)
 
 	watcherChan := make(chan store.WatchEventCheckConfig)
 	st.On("GetCheckConfigWatcher", mock.Anything).Return((<-chan store.WatchEventCheckConfig)(watcherChan), nil)
 
-	watcher := NewCheckWatcher(ctx, bus, st, nil, &cache.Resource{})
+	watcher := NewCheckWatcher(ctx, bus, st, nil, &cache.Resource{}, &secrets.ProviderManager{})
 	require.NoError(t, watcher.Start())
 
-	checkAA := types.FixtureCheckConfig("a")
+	checkAA := corev2.FixtureCheckConfig("a")
 	checkAA.Interval = 5
 	watcherChan <- store.WatchEventCheckConfig{
 		CheckConfig: checkAA,
