@@ -137,6 +137,15 @@ func (e *Etcd) BackendID() (result string) {
 
 // GetClusterVersion returns the cluster version of the etcd server
 func (e *Etcd) GetClusterVersion() string {
+	if e == nil {
+		panic("nil Etcd has no version")
+	}
+	if e.etcd == nil {
+		panic("nil Etcd.etcd has no version")
+	}
+	if e.etcd.Server == nil {
+		panic("nil Etcd.etcd.Server has no version")
+	}
 	return e.etcd.Server.ClusterVersion().String()
 }
 
