@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -67,7 +67,7 @@ func (d *Deregistration) Deregister(entity *types.Entity) error {
 
 	if entity.Deregistration.Handler != "" {
 		deregistrationCheck := &types.Check{
-			ObjectMeta:    v2.NewObjectMeta("deregistration", entity.Namespace),
+			ObjectMeta:    corev2.NewObjectMeta("deregistration", entity.Namespace),
 			Interval:      1,
 			Subscriptions: []string{""},
 			Command:       "",
