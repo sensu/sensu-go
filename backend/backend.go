@@ -10,7 +10,6 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/pkg/transport"
-	"github.com/google/uuid"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
@@ -64,7 +63,6 @@ type Backend struct {
 	GraphQLService *graphql.Service
 
 	ctx       context.Context
-	cancel    context.CancelFunc
 	runCtx    context.Context
 	runCancel context.CancelFunc
 	cfg       *Config
@@ -154,12 +152,12 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 // configuring etcd and establishing a list of daemons, which constitute our
 // backend. The daemons will later be started according to their position in the
 // b.Daemons list, and stopped in reverse order
-func Initialize(config *Config) (*Backend, error) {
+func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	var err error
 	// Initialize a Backend struct
 	b := &Backend{cfg: config}
 
-	b.ctx, b.cancel = context.WithCancel(context.Background())
+	b.ctx = ctx
 	b.runCtx, b.runCancel = context.WithCancel(b.ctx)
 
 	b.Client, err = newClient(config, b)
@@ -181,26 +179,14 @@ func Initialize(config *Config) (*Backend, error) {
 		return nil, err
 	}
 
-	if _, err := stor.GetClusterID(b.ctx); err != nil {
-		switch err := err.(type) {
-		case *store.ErrNotFound:
-			if storeErr := stor.CreateClusterID(b.runCtx, uuid.New().String()); storeErr != nil {
-				return nil, fmt.Errorf("error assigning a sensu cluster id: %s", err)
-			}
-		default:
-			return nil, fmt.Errorf("error retrieving sensu cluster id: %s", err)
-		}
-	}
-
 	eventStoreProxy := store.NewEventStoreProxy(stor)
 	b.EventStore = eventStoreProxy
 
 	logger.Debug("Registering backend...")
 
-	tctx, cancel := context.WithTimeout(b.runCtx, time.Second*3)
-	defer cancel()
-	backendID := etcd.NewBackendIDGetter(tctx, b.Client)
+	backendID := etcd.NewBackendIDGetter(b.runCtx, b.Client)
 	logger.Debug("Done registering backend.")
+	b.Daemons = append(b.Daemons, backendID)
 
 	// Initialize an etcd getter
 	queueGetter := queue.EtcdGetter{Client: b.Client, BackendIDGetter: backendID}
@@ -488,6 +474,10 @@ func (b *Backend) runOnce() error {
 		}
 	}
 
+	if derr == nil {
+		derr = b.runCtx.Err()
+	}
+
 	return derr
 }
 
@@ -503,22 +493,23 @@ func (b *Backend) Run() error {
 	}
 
 	err := backoff.Retry(func(int) (bool, error) {
-		if err := b.runOnce(); err != nil {
-			logger.Error(err)
-			if err == context.Canceled {
-				return true, err
+		err := b.runOnce()
+		b.Stop()
+		if err != nil {
+			if b.ctx.Err() != nil {
+				logger.Warn("shutting down")
+				return true, b.ctx.Err()
 			}
+			logger.Error(err)
 			if _, ok := err.(ErrStartup); ok {
 				return true, err
 			}
 		}
 
-		b.Stop()
-
 		// Yes, two levels of retry... this could improve. Unfortunately Intialize()
 		// is called elsewhere.
-		err := backoff.Retry(func(int) (bool, error) {
-			backend, err := Initialize(b.cfg)
+		err = backoff.Retry(func(int) (bool, error) {
+			backend, err := Initialize(b.ctx, b.cfg)
 			if err != nil && err != context.Canceled {
 				logger.Error(err)
 				return false, nil
@@ -590,11 +581,6 @@ func (e errGroup) Err() <-chan error {
 // Stop the Backend cleanly.
 func (b *Backend) Stop() {
 	b.runCancel()
-}
-
-// Terminate stops the backend and does not allow it to be restarted.
-func (b *Backend) Terminate() {
-	b.cancel()
 }
 
 func (b *Backend) getBackendEntity(config *Config) *corev2.Entity {
