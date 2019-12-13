@@ -99,6 +99,13 @@ func (s *Store) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, 
 			select {
 			case healths <- s.getHealth(ctx, id, name, urls, etcdClientTLSConfig):
 			case <-ctx.Done():
+				health := &corev2.ClusterHealth{
+					MemberID: id,
+					Name:     name,
+					Healthy:  false,
+					Err:      "timeout",
+				}
+				healths <- health
 			}
 		}(member.ID, member.Name, member.ClientURLs)
 	}
