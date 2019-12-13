@@ -36,9 +36,6 @@ const (
 
 	// PageSizeKey contains the page size used in pagination
 	PageSizeKey
-
-	// TimeoutKey contains a request timeout value
-	TimeoutKey
 )
 
 // ContextNamespace returns the namespace injected in the context
