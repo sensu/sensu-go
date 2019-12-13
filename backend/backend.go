@@ -172,6 +172,16 @@ func Initialize(config *Config) (*Backend, error) {
 	b.Store = stor
 
 	if _, err := stor.GetClusterID(b.runCtx); err != nil {
+		return nil, err
+	}
+
+	// Initialize the JWT secret. This method is idempotent and needs to be ran
+	// at every startup so the JWT signatures remain valid
+	if err := jwt.InitSecret(b.Store); err != nil {
+		return nil, err
+	}
+
+	if _, err := stor.GetClusterID(b.ctx); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotFound:
 			if storeErr := stor.CreateClusterID(b.runCtx, uuid.New().String()); storeErr != nil {
@@ -213,8 +223,8 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
-		Store: stor,
-		Bus:   bus,
+		Store:                   stor,
+		Bus:                     bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 		AssetGetter:             assetGetter,
 		BufferSize:              viper.GetInt(FlagPipelinedBufferSize),
@@ -286,14 +296,14 @@ func Initialize(config *Config) (*Backend, error) {
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:             bus,
-		Store:           stor,
-		EventStore:      stor,
-		LivenessFactory: liveness.EtcdFactory(b.runCtx, b.Client),
-		RingPool:        ringPool,
-		BufferSize:      viper.GetInt(FlagKeepalivedBufferSize),
-		WorkerCount:     viper.GetInt(FlagKeepalivedWorkers),
-		StoreTimeout:    2 * time.Minute,
+		Bus:                   bus,
+		Store:                 stor,
+		EventStore:            stor,
+		LivenessFactory:       liveness.EtcdFactory(b.runCtx, b.Client),
+		RingPool:              ringPool,
+		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
+		WorkerCount:           viper.GetInt(FlagKeepalivedWorkers),
+		StoreTimeout:          2 * time.Minute,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)

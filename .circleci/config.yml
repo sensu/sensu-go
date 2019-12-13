@@ -11,7 +11,7 @@ sensu_go_build_env: &sensu_go_build_env
   ####   /go/src/bitbucket.org/circleci/go-tool
   working_directory: /go/src/github.com/sensu/sensu-go
   docker:
-    - image: circleci/golang:1.13.3
+    - image: circleci/golang:1.13.5
 
 jobs:
   test:
