@@ -69,10 +69,22 @@ func (s *Store) getHealth(ctx context.Context, id uint64, name string, urls []st
 func (s *Store) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, etcdClientTLSConfig *tls.Config) *corev2.HealthResponse {
 	healthResponse := &corev2.HealthResponse{}
 
+	var timeout time.Duration
+	if val := ctx.Value("timeout"); val != nil {
+		timeout, _ = val.(time.Duration)
+	}
+
 	// Do a get op against every cluster member. Collect the  memberIDs and
 	// op errors into a response map, and return this map as etcd health
 	// information.
-	mList, err := cluster.MemberList(ctx)
+	tctx := ctx
+	if timeout > 0 {
+		var cancel context.CancelFunc
+		tctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+
+	mList, err := cluster.MemberList(tctx)
 	if err != nil {
 		logger.WithError(err).Error("could not get the cluster member list")
 		healthResponse.ClusterHealth = []*corev2.ClusterHealth{&corev2.ClusterHealth{
@@ -96,17 +108,13 @@ func (s *Store) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, 
 	for _, member := range mList.Members {
 		go func(id uint64, name string, urls []string) {
 			defer wg.Done()
-			select {
-			case healths <- s.getHealth(ctx, id, name, urls, etcdClientTLSConfig):
-			case <-ctx.Done():
-				health := &corev2.ClusterHealth{
-					MemberID: id,
-					Name:     name,
-					Healthy:  false,
-					Err:      "timeout",
-				}
-				healths <- health
+			tctx := ctx
+			if timeout > 0 {
+				var cancel context.CancelFunc
+				tctx, cancel = context.WithTimeout(ctx, timeout)
+				defer cancel()
 			}
+			healths <- s.getHealth(tctx, id, name, urls, etcdClientTLSConfig)
 		}(member.ID, member.Name, member.ClientURLs)
 	}
 
@@ -119,7 +127,13 @@ func (s *Store) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, 
 		return healthResponse.ClusterHealth[i].Name < healthResponse.ClusterHealth[j].Name
 	})
 
-	alarmResponse, err := s.client.Maintenance.AlarmList(ctx)
+	if timeout > 0 {
+		var cancel context.CancelFunc
+		tctx, cancel = context.WithTimeout(ctx, timeout)
+		defer cancel()
+	}
+
+	alarmResponse, err := s.client.Maintenance.AlarmList(tctx)
 	if err != nil {
 		logger.WithError(err).Error("failed to fetch etcd alarm list")
 	} else {
