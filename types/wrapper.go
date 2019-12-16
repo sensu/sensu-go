@@ -9,7 +9,6 @@ import (
 	"strings"
 	"sync"
 
-	jsoniter "github.com/json-iterator/go"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
@@ -76,7 +75,7 @@ func (w Wrapper) MarshalJSON() ([]byte, error) {
 
 	wrapper.Value = value
 
-	return jsoniter.Marshal(wrapper)
+	return json.Marshal(wrapper)
 }
 
 // MarshalYAML implements yaml.Marshaler

@@ -2,6 +2,7 @@ package seeds
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -17,6 +18,8 @@ type Config struct {
 	// AdminPassword is the password of the cluster admin.
 	AdminPassword string
 }
+
+var ErrAlreadyInitialized = errors.New("sensu-backend already initialized")
 
 // SeedCluster seeds the cluster according to the provided config.
 func SeedCluster(ctx context.Context, store store.Store, config Config) error {
@@ -47,10 +50,17 @@ func SeedCluster(ctx context.Context, store store.Store, config Config) error {
 		}()
 
 		// Check that the store hasn't already been seeded
-		initialized, err := initializer.IsInitialized()
-		if err != nil || initialized {
+		var initialized bool
+		initialized, err = initializer.IsInitialized()
+		if err != nil {
 			return
 		}
+		if initialized {
+			logger.Info("store already initialized")
+			err = ErrAlreadyInitialized
+			return
+		}
+
 		logger.Info("seeding etcd store with intial data")
 
 		// Create the default namespace
