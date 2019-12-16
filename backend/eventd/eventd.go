@@ -121,6 +121,8 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 		}
 	}
 
+	// Initialize the most likely labels
+	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess)
 	_ = prometheus.Register(EventsProcessed)
 
 	return e, nil
