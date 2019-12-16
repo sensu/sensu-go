@@ -8,7 +8,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Fixed
-- Initialize the sensu_go_events_processed counter with zthe `success` label so
+- Initialize the sensu_go_events_processed counter with the `success` label so
 it's always displayed.
 
 ## [5.16.0] - 2019-12-11
