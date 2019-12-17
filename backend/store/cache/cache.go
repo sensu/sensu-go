@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"sort"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
@@ -97,6 +98,7 @@ type Resource struct {
 	synthesize bool
 	resourceT  corev2.Resource
 	client     *clientv3.Client
+	count      int64
 }
 
 // getResources retrieves the resources from the store
@@ -154,6 +156,8 @@ func New(ctx context.Context, client *clientv3.Client, resource corev2.Resource,
 		resourceT:  resource,
 		client:     client,
 	}
+	atomic.StoreInt64(&cacher.count, int64(len(resources)))
+
 	go cacher.start(ctx)
 
 	return cacher, nil
@@ -185,6 +189,11 @@ func (r *Resource) GetAll() []Value {
 		values = append(values, n...)
 	}
 	return values
+}
+
+// Count returns the total count of all cached resources across all namespaces.
+func (r *Resource) Count() int64 {
+	return atomic.LoadInt64(&r.count)
 }
 
 // Watch allows cache users to get notified when the cache has new values.
@@ -249,6 +258,7 @@ func (r *Resource) start(ctx context.Context) {
 func (r *Resource) rebuild(ctx context.Context) error {
 	logger.Infof("rebuilding the cache for resource type %T", r.resourceT)
 	resources, err := getResources(ctx, r.client, r.resourceT)
+	atomic.StoreInt64(&r.count, int64(len(resources)))
 	if err != nil {
 		return err
 	}
@@ -313,6 +323,7 @@ func (r *Resource) updateCache(ctx context.Context) {
 		case store.WatchCreate:
 			// Append the new resource to the corresponding namespace
 			r.cache[key] = append(r.cache[key], getCacheValue(resource, r.synthesize))
+			atomic.AddInt64(&r.count, 1)
 		case store.WatchUpdate:
 			// Loop through the resources of the resource's namespace to find the
 			// exact resource and update it
@@ -328,6 +339,7 @@ func (r *Resource) updateCache(ctx context.Context) {
 			for i := range r.cache[key] {
 				if r.cache[key][i].Resource.GetObjectMeta().Name == resource.GetObjectMeta().Name {
 					r.cache[key] = append(r.cache[key][:i], r.cache[key][i+1:]...)
+					atomic.AddInt64(&r.count, -1)
 					break
 				}
 			}
