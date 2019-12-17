@@ -74,12 +74,22 @@ func (m *ProviderManager) RemoveProvider(name string) error {
 // SubSecrets substitutes all secret tokens with the value of the secret.
 func (m *ProviderManager) SubSecrets(command string) ([]string, error) {
 	secretVars := []string{}
+
+	// Make sure the providers map is not nil
+	if m.providers == nil {
+		m.providers = map[string]Provider{}
+	}
+	providers := m.Providers()
+	// short circuit the function if there are no secrets providers
+	if len(providers) == 0 {
+		return secretVars, nil
+	}
+
 	// iterate through each argument in the command
 	args := strings.Split(command, " ")
 	for _, a := range args {
 		// if the arg starts with $, find the secret
 		if strings.HasPrefix(a, "$") {
-			providers := m.Providers()
 			// iterate through each secrets provider
 			for name, p := range providers {
 				// ask the provider to retrieve the secret
