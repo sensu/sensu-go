@@ -40,7 +40,7 @@ type CheckExecutor struct {
 
 // NewCheckExecutor creates a new check executor
 func NewCheckExecutor(bus messaging.MessageBus, namespace string, store store.Store, cache *cache.Resource, secretsProviderManager *secrets.ProviderManager) *CheckExecutor {
-	return &CheckExecutor{bus: bus, namespace: namespace, store: store, entityCache: cache}
+	return &CheckExecutor{bus: bus, namespace: namespace, store: store, entityCache: cache, secretsProviderManager: secretsProviderManager}
 }
 
 // ProcessCheck processes a check by publishing its proxy requests (if any)
