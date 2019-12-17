@@ -40,9 +40,9 @@ func (r *HealthRouter) health(w http.ResponseWriter, req *http.Request) {
 	}
 	ctx := req.Context()
 	if timeout > 0 {
-		tctx, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
-		defer cancel()
-		ctx = tctx
+		// We're storing the timeout as a value so it can be used by several
+		// contexts in GetClusterHealth, which is a concurrent gatherer.
+		ctx = context.WithValue(ctx, "timeout", time.Duration(timeout)*time.Second)
 	}
 	clusterHealth := r.controller.GetClusterHealth(ctx)
 	_ = json.NewEncoder(w).Encode(clusterHealth)

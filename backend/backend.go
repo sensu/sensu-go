@@ -40,6 +40,7 @@ import (
 	"github.com/sensu/sensu-go/secrets"
 	"github.com/sensu/sensu-go/system"
 	"github.com/spf13/viper"
+	"google.golang.org/grpc"
 )
 
 // Backend represents the backend server, which is used to hold the datastore
@@ -64,7 +65,7 @@ type EventStoreUpdater interface {
 	UpdateEventStore(to store.EventStore)
 }
 
-func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
+func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3.Client, error) {
 	if config.NoEmbedEtcd {
 		tlsInfo := (transport.TLSInfo)(config.EtcdClientTLSInfo)
 		tlsConfig, err := tlsInfo.ClientConfig()
@@ -79,11 +80,21 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 
 		// Don't start up an embedded etcd, return a client that connects to an
 		// external etcd instead.
-		return clientv3.New(clientv3.Config{
+		client, err := clientv3.New(clientv3.Config{
 			Endpoints:   clientURLs,
 			DialTimeout: 5 * time.Second,
 			TLS:         tlsConfig,
+			DialOptions: []grpc.DialOption{
+				grpc.WithBlock(),
+			},
 		})
+		if err != nil {
+			return nil, err
+		}
+		if _, err := client.Get(ctx, "/sensu.io"); err != nil {
+			return nil, err
+		}
+		return client, nil
 	}
 
 	// Initialize and start etcd, because we'll need to provide an etcd client to
@@ -131,7 +142,14 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 	backend.Etcd = e
 
 	// Create an etcd client
-	return e.NewClient()
+	client, err := e.NewClient()
+	if err != nil {
+		return nil, err
+	}
+	if _, err := client.Get(ctx, "/sensu.io"); err != nil {
+		return nil, err
+	}
+	return client, nil
 }
 
 // Initialize instantiates a Backend struct with the provided config, by
@@ -146,7 +164,7 @@ func Initialize(config *Config) (*Backend, error) {
 	b.done = make(chan struct{})
 	b.ctx, b.cancel = context.WithCancel(context.Background())
 
-	b.Client, err = newClient(config, b)
+	b.Client, err = newClient(b.ctx, config, b)
 	if err != nil {
 		return nil, err
 	}

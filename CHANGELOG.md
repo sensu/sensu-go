@@ -11,6 +11,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added the secrets provider interface and secrets provider manager to be used
 by commerical secrets providers. Implemented for checks, mutators, and handlers.
 
+### Fixed
+- Initialize the sensu_go_events_processed counter with the `success` label so
+it's always displayed.
+
 ## [5.16.0] - 2019-12-11
 
 ### Added
