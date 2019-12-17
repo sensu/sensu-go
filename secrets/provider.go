@@ -39,7 +39,7 @@ func (m *ProviderManager) Providers() map[string]Provider {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
-	// Create a new map and copy the authenticator providers into it in order to
+	// Create a new map and copy the secrets providers into it in order to
 	// prevent race conditions
 	providers := make(map[string]Provider, len(m.providers))
 	for k, v := range m.providers {
