@@ -72,7 +72,7 @@ require (
 	github.com/ulikunitz/xz v0.5.4 // indirect
 	github.com/whyrusleeping/go-logging v0.0.0-20170515211332-0457bb6b88fc // indirect
 	github.com/willf/pad v0.0.0-20160331131008-b3d780601022
-	go.etcd.io/bbolt v1.3.2
+	go.etcd.io/bbolt v1.3.4-0.20191128235701-0b7b41e21b57
 	go.uber.org/multierr v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	golang.org/x/net v0.0.0-20191014212845-da9a3fd4c582
