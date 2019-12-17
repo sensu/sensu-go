@@ -176,15 +176,15 @@ func (r *Resource) Get(namespace string) []Value {
 	return r.cache[namespace]
 }
 
-// GetAll returns all cached resources across all namespaces.
-func (r *Resource) GetAll() []Value {
-	values := []Value{}
+// Size returns the size of all cached resources across all namespaces.
+func (r *Resource) Size() int {
+	var size int
 	r.cacheMu.Lock()
 	defer r.cacheMu.Unlock()
 	for _, n := range r.cache {
-		values = append(values, n...)
+		size += len(n)
 	}
-	return values
+	return size
 }
 
 // Watch allows cache users to get notified when the cache has new values.
