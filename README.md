@@ -76,6 +76,8 @@ $ go build -ldflags '-X "github.com/sensu/sensu-go/version.Version=5.14.0" -X "g
 $ go build -ldflags '-X "github.com/sensu/sensu-go/version.Version=5.14.0" -X "github.com/sensu/sensu-go/version.BuildDate=2019-10-08" -X "github.com/sensu/sensu-go/version.BuildSHA='`git rev-parse HEAD`'"' -o bin/sensuctl ./cmd/sensuctl
 ```
 
+To build an open source only docker image without the 100 entity restriction and without Sensu enterprise features, please refer to [this repo](https://github.com/georgespatton/sensu-go-oss-docker) for instructions.
+
 ## Contributing
 
 For guidelines on how to contribute to this project, how to hack on Sensu, and
