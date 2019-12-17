@@ -17,8 +17,16 @@ type Provider interface {
 
 // ProviderManager manages the list of secrets providers.
 type ProviderManager struct {
-	mu        sync.RWMutex
+	mu        *sync.RWMutex
 	providers map[string]Provider
+}
+
+// NewProviderManager instantiates a new provider manager.
+func NewProviderManager() *ProviderManager {
+	return &ProviderManager{
+		providers: map[string]Provider{},
+		mu:        &sync.RWMutex{},
+	}
 }
 
 // AddProvider adds a provider to the list of configured providers.

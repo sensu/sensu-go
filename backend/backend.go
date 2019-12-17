@@ -217,7 +217,7 @@ func Initialize(config *Config) (*Backend, error) {
 	}
 
 	// Initialize the secrets provider manager
-	b.SecretsProviderManager = &secrets.ProviderManager{}
+	b.SecretsProviderManager = secrets.NewProviderManager()
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{

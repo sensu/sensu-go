@@ -38,7 +38,8 @@ func TestCheckWatcherSmoke(t *testing.T) {
 	watcherChan := make(chan store.WatchEventCheckConfig)
 	st.On("GetCheckConfigWatcher", mock.Anything).Return((<-chan store.WatchEventCheckConfig)(watcherChan), nil)
 
-	watcher := NewCheckWatcher(ctx, bus, st, nil, &cache.Resource{}, &secrets.ProviderManager{})
+	pm := secrets.NewProviderManager()
+	watcher := NewCheckWatcher(ctx, bus, st, nil, &cache.Resource{}, pm)
 	require.NoError(t, watcher.Start())
 
 	checkAA := corev2.FixtureCheckConfig("a")

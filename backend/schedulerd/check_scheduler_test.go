@@ -64,16 +64,17 @@ func newIntervalScheduler(ctx context.Context, t *testing.T, executor string) *T
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	scheduler.msgBus = bus
+	pm := secrets.NewProviderManager()
 
-	scheduler.scheduler = NewIntervalScheduler(ctx, s, scheduler.msgBus, scheduler.check, &cache.Resource{}, &secrets.ProviderManager{})
+	scheduler.scheduler = NewIntervalScheduler(ctx, s, scheduler.msgBus, scheduler.check, &cache.Resource{}, pm)
 
 	assert.NoError(scheduler.msgBus.Start())
 
 	switch executor {
 	case "adhoc":
-		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, &cache.Resource{}, &secrets.ProviderManager{})
+		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, &cache.Resource{}, pm)
 	default:
-		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, &cache.Resource{}, &secrets.ProviderManager{})
+		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, &cache.Resource{}, pm)
 	}
 
 	return scheduler
@@ -101,16 +102,17 @@ func newCronScheduler(ctx context.Context, t *testing.T, executor string) *TestC
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	scheduler.msgBus = bus
+	pm := secrets.NewProviderManager()
 
-	scheduler.scheduler = NewCronScheduler(ctx, s, scheduler.msgBus, scheduler.check, &cache.Resource{}, &secrets.ProviderManager{})
+	scheduler.scheduler = NewCronScheduler(ctx, s, scheduler.msgBus, scheduler.check, &cache.Resource{}, pm)
 
 	assert.NoError(scheduler.msgBus.Start())
 
 	switch executor {
 	case "adhoc":
-		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, &cache.Resource{}, &secrets.ProviderManager{})
+		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, &cache.Resource{}, pm)
 	default:
-		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, &cache.Resource{}, &secrets.ProviderManager{})
+		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, &cache.Resource{}, pm)
 	}
 
 	return scheduler

@@ -56,7 +56,7 @@ func (m *mockProvider) Validate() error {
 }
 
 func TestProviderManager(t *testing.T) {
-	pm := &ProviderManager{}
+	pm := NewProviderManager()
 	mp := &mockProvider{}
 	mp.On("GetObjectMeta", mock.Anything).Return(corev2.ObjectMeta{Name: "env"})
 	pm.AddProvider(mp)
@@ -72,7 +72,7 @@ func TestProviderManager(t *testing.T) {
 }
 
 func TestSubSecrets(t *testing.T) {
-	pm := &ProviderManager{}
+	pm := NewProviderManager()
 
 	// create provider env
 	mp1 := &mockProvider{}
