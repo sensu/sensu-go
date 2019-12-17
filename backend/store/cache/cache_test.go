@@ -78,8 +78,22 @@ func TestCacheGetAll(t *testing.T) {
 			false,
 		),
 	}
-	size := cache.Size()
-	assert.Equal(t, 9, size)
+	got := cache.GetAll()
+	assert.Equal(t, 9, len(got))
+	want := []Value{
+		{Resource: fixtureEntity("a", "1")},
+		{Resource: fixtureEntity("a", "2")},
+		{Resource: fixtureEntity("b", "1")},
+		{Resource: fixtureEntity("b", "2")},
+		{Resource: fixtureEntity("b", "3")},
+		{Resource: fixtureEntity("c", "1")},
+		{Resource: fixtureEntity("c", "2")},
+		{Resource: fixtureEntity("c", "3")},
+		{Resource: fixtureEntity("c", "4")},
+	}
+	for _, v := range want {
+		assert.Contains(t, got, v)
+	}
 }
 
 func TestBuildCache(t *testing.T) {
@@ -110,6 +124,7 @@ func TestResourceUpdateCache(t *testing.T) {
 	})
 	cacher.updateCache(context.Background())
 	assert.Len(t, cacher.cache["default"], 1)
+	assert.Equal(t, int64(1), cacher.Count())
 
 	// Add a second resource. It should be alphabetically sorted and therefore at
 	// the beginning of the namespace cache values even if it was appended at the
@@ -119,6 +134,7 @@ func TestResourceUpdateCache(t *testing.T) {
 	})
 	cacher.updateCache(context.Background())
 	assert.Len(t, cacher.cache["default"], 2)
+	assert.Equal(t, int64(2), cacher.Count())
 	assert.Equal(t, resource0, cacher.cache["default"][0].Resource)
 	assert.Equal(t, resource1, cacher.cache["default"][1].Resource)
 
@@ -130,6 +146,7 @@ func TestResourceUpdateCache(t *testing.T) {
 	cacher.updates = append(cacher.updates, updates...)
 	cacher.updateCache(context.Background())
 	assert.Len(t, cacher.cache["default"], 2)
+	assert.Equal(t, int64(2), cacher.Count())
 	assert.Equal(t, resource0Bis, cacher.cache["default"][0].Resource.(*fixture.Resource))
 	assert.Equal(t, resource1Bis, cacher.cache["default"][1].Resource.(*fixture.Resource))
 
@@ -141,6 +158,7 @@ func TestResourceUpdateCache(t *testing.T) {
 	cacher.updates = append(cacher.updates, deletes...)
 	cacher.updateCache(context.Background())
 	assert.Len(t, cacher.cache["default"], 0)
+	assert.Equal(t, int64(0), cacher.Count())
 
 	// Invalid watch event
 	var nilResource *fixture.Resource
@@ -150,6 +168,7 @@ func TestResourceUpdateCache(t *testing.T) {
 	})
 	cacher.updateCache(context.Background())
 	assert.Len(t, cacher.cache["default"], 0)
+	assert.Equal(t, int64(0), cacher.Count())
 }
 
 func TestResourceRebuild(t *testing.T) {
@@ -172,6 +191,7 @@ func TestResourceRebuild(t *testing.T) {
 	})
 	cacher.updateCache(ctx)
 	assert.Len(t, cacher.cache["default"], 0)
+	assert.Equal(t, int64(0), cacher.Count())
 
 	// Resource added to a new namespace
 	foo := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}}
@@ -183,6 +203,7 @@ func TestResourceRebuild(t *testing.T) {
 	})
 	cacher.updateCache(ctx)
 	assert.Len(t, cacher.cache["default"], 1)
+	assert.Equal(t, int64(1), cacher.Count())
 
 	// Resource added to an existing namespace
 	bar := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "bar", Namespace: "default"}}
@@ -194,6 +215,7 @@ func TestResourceRebuild(t *testing.T) {
 	})
 	cacher.updateCache(ctx)
 	assert.Len(t, cacher.cache["default"], 2)
+	assert.Equal(t, int64(2), cacher.Count())
 
 	// Resource updated
 	bar.Foo = "acme"
@@ -205,6 +227,7 @@ func TestResourceRebuild(t *testing.T) {
 	})
 	cacher.updateCache(ctx)
 	assert.Len(t, cacher.cache["default"], 2)
+	assert.Equal(t, int64(2), cacher.Count())
 
 	// Resource deleted
 	if err := s.DeleteResource(ctx, bar.StorePrefix(), bar.GetObjectMeta().Name); err != nil {
@@ -215,4 +238,5 @@ func TestResourceRebuild(t *testing.T) {
 	})
 	cacher.updateCache(ctx)
 	assert.Len(t, cacher.cache["default"], 1)
+	assert.Equal(t, int64(1), cacher.Count())
 }
