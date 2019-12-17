@@ -12,7 +12,7 @@ import (
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
-	"github.com/sensu/sensu-go/secrets"
+	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"

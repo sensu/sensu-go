@@ -11,7 +11,7 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
-	"github.com/sensu/sensu-go/secrets"
+	"github.com/sensu/sensu-go/backend/secrets"
 )
 
 // ExtensionExecutorGetterFunc gets an ExtensionExecutor. Used to decouple

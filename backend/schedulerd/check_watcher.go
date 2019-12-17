@@ -10,7 +10,7 @@ import (
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
-	"github.com/sensu/sensu-go/secrets"
+	"github.com/sensu/sensu-go/backend/secrets"
 )
 
 // CheckWatcher manages all the check schedulers

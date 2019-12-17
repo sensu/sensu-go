@@ -37,7 +37,7 @@ import (
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/backend/tessend"
 	"github.com/sensu/sensu-go/rpc"
-	"github.com/sensu/sensu-go/secrets"
+	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/system"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
