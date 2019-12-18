@@ -71,6 +71,7 @@ func NewServer() *statsd.Server {
 		ConnPerReader:       statsd.DefaultConnPerReader,
 		HeartbeatEnabled:    statsd.DefaultHeartbeatEnabled,
 		ReceiveBatchSize:    statsd.DefaultReceiveBatchSize,
+		ServerMode:          statsd.DefaultServerMode,
 		CacheOptions: statsd.CacheOptions{
 			CacheRefreshPeriod:        statsd.DefaultCacheRefreshPeriod,
 			CacheEvictAfterIdlePeriod: statsd.DefaultCacheEvictAfterIdlePeriod,
