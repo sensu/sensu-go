@@ -7,9 +7,13 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.16.1] - 2019-12-18
+
 ### Fixed
 - Initialize the sensu_go_events_processed counter with the `success` label so
 it's always displayed.
+- Fixed a performance regression that was introduced in 5.15.0, which would
+cause the API to timeout past 20k agent sessions.
 
 ## [5.16.0] - 2019-12-11
 
