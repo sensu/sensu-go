@@ -45,7 +45,7 @@ unit_test_commands () {
 integration_test_commands () {
     echo "Running integration tests..."
 
-    go test -v -timeout=180s -tags=integration $(go list ./... | egrep -v '(testing|vendor|scripts)')
+    go test -v -timeout=180s -tags=integration ./agent
     if [ $? -ne 0 ]; then
         echo "Integration testing failed..."
         exit 1
