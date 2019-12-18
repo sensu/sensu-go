@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Added support for building on `aix/ppc64`.
+
 ### Fixed
 - Initialize the sensu_go_events_processed counter with the `success` label so
 it's always displayed.
