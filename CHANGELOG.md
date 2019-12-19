@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Added the secrets provider interface and secrets provider manager to be used
+by commerical secrets providers. Implemented for checks, mutators, and handlers.
+
 ## [5.16.1] - 2019-12-18
 
 ### Fixed

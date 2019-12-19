@@ -5,35 +5,37 @@ import (
 	"sync"
 	"sync/atomic"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/backend/secrets"
 )
 
 // ExtensionExecutorGetterFunc gets an ExtensionExecutor. Used to decouple
 // Pipelined from gRPC.
-type ExtensionExecutorGetterFunc func(*types.Extension) (rpc.ExtensionExecutor, error)
+type ExtensionExecutorGetterFunc func(*corev2.Extension) (rpc.ExtensionExecutor, error)
 
 // Pipelined handles incoming Sensu events and puts them through a
 // Sensu event pipeline, i.e. filter -> mutator -> handler. The Sensu
 // handler configuration determines which Sensu filters and mutator
 // are used.
 type Pipelined struct {
-	assetGetter       asset.Getter
-	stopping          chan struct{}
-	running           *atomic.Value
-	wg                *sync.WaitGroup
-	errChan           chan error
-	eventChan         chan interface{}
-	subscription      messaging.Subscription
-	store             store.Store
-	bus               messaging.MessageBus
-	extensionExecutor ExtensionExecutorGetterFunc
-	executor          command.Executor
-	workerCount       int
+	assetGetter            asset.Getter
+	stopping               chan struct{}
+	running                *atomic.Value
+	wg                     *sync.WaitGroup
+	errChan                chan error
+	eventChan              chan interface{}
+	subscription           messaging.Subscription
+	store                  store.Store
+	bus                    messaging.MessageBus
+	extensionExecutor      ExtensionExecutorGetterFunc
+	executor               command.Executor
+	workerCount            int
+	secretsProviderManager *secrets.ProviderManager
 }
 
 // Config configures a Pipelined.
@@ -44,6 +46,7 @@ type Config struct {
 	AssetGetter             asset.Getter
 	BufferSize              int
 	WorkerCount             int
+	SecretsProviderManager  *secrets.ProviderManager
 }
 
 // Option is a functional option used to configure Pipelined.
@@ -59,17 +62,18 @@ func New(c Config, options ...Option) (*Pipelined, error) {
 	}
 
 	p := &Pipelined{
-		store:             c.Store,
-		bus:               c.Bus,
-		extensionExecutor: c.ExtensionExecutorGetter,
-		stopping:          make(chan struct{}, 1),
-		running:           &atomic.Value{},
-		wg:                &sync.WaitGroup{},
-		errChan:           make(chan error, 1),
-		eventChan:         make(chan interface{}, c.BufferSize),
-		workerCount:       c.WorkerCount,
-		executor:          command.NewExecutor(),
-		assetGetter:       c.AssetGetter,
+		store:                  c.Store,
+		bus:                    c.Bus,
+		extensionExecutor:      c.ExtensionExecutorGetter,
+		stopping:               make(chan struct{}, 1),
+		running:                &atomic.Value{},
+		wg:                     &sync.WaitGroup{},
+		errChan:                make(chan error, 1),
+		eventChan:              make(chan interface{}, c.BufferSize),
+		workerCount:            c.WorkerCount,
+		executor:               command.NewExecutor(),
+		assetGetter:            c.AssetGetter,
+		secretsProviderManager: c.SecretsProviderManager,
 	}
 	for _, o := range options {
 		if err := o(p); err != nil {
@@ -133,7 +137,7 @@ func (p *Pipelined) createPipelines(count int, channel chan interface{}) {
 				case <-p.stopping:
 					return
 				case msg := <-channel:
-					event, ok := msg.(*types.Event)
+					event, ok := msg.(*corev2.Event)
 					if !ok {
 						continue
 					}
