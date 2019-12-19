@@ -32,6 +32,9 @@ message CheckRequest {
 
     // HookAssets is a map of assets required to execute hooks.
     map<string, AssetList> hook_assets = 5 [(gogoproto.jsontag) = "hook_assets"];
+
+    // Secrets is a list of kv to be added to the env vars of a check.
+    repeated string secrets = 6;
 }
 
 // An AssetList represents a list of assets for a CheckRequest.

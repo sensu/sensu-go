@@ -11,6 +11,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
+	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 )
@@ -21,29 +22,30 @@ var (
 
 // Executor executes scheduled or adhoc checks
 type Executor interface {
-	processCheck(ctx context.Context, check *types.CheckConfig) error
+	processCheck(ctx context.Context, check *corev2.CheckConfig) error
 	getEntities(ctx context.Context) ([]cache.Value, error)
-	publishProxyCheckRequests(entities []*types.Entity, check *types.CheckConfig) error
-	execute(check *types.CheckConfig) error
-	buildRequest(check *types.CheckConfig) (*types.CheckRequest, error)
+	publishProxyCheckRequests(entities []*corev2.Entity, check *corev2.CheckConfig) error
+	execute(check *corev2.CheckConfig) error
+	buildRequest(check *corev2.CheckConfig) (*corev2.CheckRequest, error)
 }
 
 // CheckExecutor executes scheduled checks in the check scheduler
 type CheckExecutor struct {
-	bus         messaging.MessageBus
-	store       store.Store
-	namespace   string
-	entityCache *cache.Resource
+	bus                    messaging.MessageBus
+	store                  store.Store
+	namespace              string
+	entityCache            *cache.Resource
+	secretsProviderManager *secrets.ProviderManager
 }
 
 // NewCheckExecutor creates a new check executor
-func NewCheckExecutor(bus messaging.MessageBus, namespace string, store store.Store, cache *cache.Resource) *CheckExecutor {
-	return &CheckExecutor{bus: bus, namespace: namespace, store: store, entityCache: cache}
+func NewCheckExecutor(bus messaging.MessageBus, namespace string, store store.Store, cache *cache.Resource, secretsProviderManager *secrets.ProviderManager) *CheckExecutor {
+	return &CheckExecutor{bus: bus, namespace: namespace, store: store, entityCache: cache, secretsProviderManager: secretsProviderManager}
 }
 
 // ProcessCheck processes a check by publishing its proxy requests (if any)
 // and publishing the check itself
-func (c *CheckExecutor) processCheck(ctx context.Context, check *types.CheckConfig) error {
+func (c *CheckExecutor) processCheck(ctx context.Context, check *corev2.CheckConfig) error {
 	return processCheck(ctx, c, check)
 }
 
@@ -51,11 +53,11 @@ func (c *CheckExecutor) getEntities(ctx context.Context) ([]cache.Value, error) 
 	return c.entityCache.Get(store.NewNamespaceFromContext(ctx)), nil
 }
 
-func (c *CheckExecutor) publishProxyCheckRequests(entities []*types.Entity, check *types.CheckConfig) error {
+func (c *CheckExecutor) publishProxyCheckRequests(entities []*corev2.Entity, check *corev2.CheckConfig) error {
 	return publishProxyCheckRequests(c, entities, check)
 }
 
-func (c *CheckExecutor) execute(check *types.CheckConfig) error {
+func (c *CheckExecutor) execute(check *corev2.CheckConfig) error {
 	// Ensure the check is configured to publish check requests
 	if !check.Publish {
 		return nil
@@ -104,11 +106,11 @@ func (c *CheckExecutor) executeOnEntity(check *corev2.CheckConfig, entity string
 	return c.bus.Publish(topic, request)
 }
 
-func (c *CheckExecutor) buildRequest(check *types.CheckConfig) (*types.CheckRequest, error) {
-	return buildRequest(check, c.store)
+func (c *CheckExecutor) buildRequest(check *corev2.CheckConfig) (*corev2.CheckRequest, error) {
+	return buildRequest(check, c.store, c.secretsProviderManager)
 }
 
-func assetIsRelevant(asset *types.Asset, assets []string) bool {
+func assetIsRelevant(asset *corev2.Asset, assets []string) bool {
 	for _, assetName := range assets {
 		if strings.HasPrefix(asset.Name, assetName) {
 			return true
@@ -118,7 +120,7 @@ func assetIsRelevant(asset *types.Asset, assets []string) bool {
 	return false
 }
 
-func hookIsRelevant(hook *types.HookConfig, check *types.CheckConfig) bool {
+func hookIsRelevant(hook *corev2.HookConfig, check *corev2.CheckConfig) bool {
 	for _, checkHook := range check.CheckHooks {
 		for _, hookName := range checkHook.Hooks {
 			if hookName == hook.Name {
@@ -133,25 +135,27 @@ func hookIsRelevant(hook *types.HookConfig, check *types.CheckConfig) bool {
 // AdhocRequestExecutor takes new check requests from the adhoc queue and runs
 // them
 type AdhocRequestExecutor struct {
-	adhocQueue     types.Queue
-	store          store.Store
-	bus            messaging.MessageBus
-	ctx            context.Context
-	cancel         context.CancelFunc
-	listenQueueErr chan error
-	entityCache    *cache.Resource
+	adhocQueue             types.Queue
+	store                  store.Store
+	bus                    messaging.MessageBus
+	ctx                    context.Context
+	cancel                 context.CancelFunc
+	listenQueueErr         chan error
+	entityCache            *cache.Resource
+	secretsProviderManager *secrets.ProviderManager
 }
 
 // NewAdhocRequestExecutor returns a new AdhocRequestExecutor.
-func NewAdhocRequestExecutor(ctx context.Context, store store.Store, queue types.Queue, bus messaging.MessageBus, cache *cache.Resource) *AdhocRequestExecutor {
+func NewAdhocRequestExecutor(ctx context.Context, store store.Store, queue types.Queue, bus messaging.MessageBus, cache *cache.Resource, secretsProviderManager *secrets.ProviderManager) *AdhocRequestExecutor {
 	ctx, cancel := context.WithCancel(ctx)
 	executor := &AdhocRequestExecutor{
-		adhocQueue:  queue,
-		store:       store,
-		bus:         bus,
-		ctx:         ctx,
-		cancel:      cancel,
-		entityCache: cache,
+		adhocQueue:             queue,
+		store:                  store,
+		bus:                    bus,
+		ctx:                    ctx,
+		cancel:                 cancel,
+		entityCache:            cache,
+		secretsProviderManager: secretsProviderManager,
 	}
 	go executor.listenQueue(ctx)
 	return executor
@@ -173,7 +177,7 @@ func (a *AdhocRequestExecutor) listenQueue(ctx context.Context) {
 			a.listenQueueErr <- err
 			continue
 		}
-		var check types.CheckConfig
+		var check corev2.CheckConfig
 		if err := json.NewDecoder(strings.NewReader(item.Value())).Decode(&check); err != nil {
 			a.listenQueueErr <- fmt.Errorf("unable to process invalid check: %s", err)
 			if ackErr := item.Ack(ctx); ackErr != nil {
@@ -198,7 +202,7 @@ func (a *AdhocRequestExecutor) listenQueue(ctx context.Context) {
 
 // processCheck processes a check by publishing its proxy requests (if any)
 // and publishing the check itself
-func (a *AdhocRequestExecutor) processCheck(ctx context.Context, check *types.CheckConfig) error {
+func (a *AdhocRequestExecutor) processCheck(ctx context.Context, check *corev2.CheckConfig) error {
 	return processCheck(ctx, a, check)
 }
 
@@ -206,11 +210,11 @@ func (a *AdhocRequestExecutor) getEntities(ctx context.Context) ([]cache.Value, 
 	return a.entityCache.Get(store.NewNamespaceFromContext(ctx)), nil
 }
 
-func (a *AdhocRequestExecutor) publishProxyCheckRequests(entities []*types.Entity, check *types.CheckConfig) error {
+func (a *AdhocRequestExecutor) publishProxyCheckRequests(entities []*corev2.Entity, check *corev2.CheckConfig) error {
 	return publishProxyCheckRequests(a, entities, check)
 }
 
-func (a *AdhocRequestExecutor) execute(check *types.CheckConfig) error {
+func (a *AdhocRequestExecutor) execute(check *corev2.CheckConfig) error {
 	var err error
 	request, err := a.buildRequest(check)
 	if err != nil {
@@ -232,11 +236,11 @@ func (a *AdhocRequestExecutor) execute(check *types.CheckConfig) error {
 	return err
 }
 
-func (a *AdhocRequestExecutor) buildRequest(check *types.CheckConfig) (*types.CheckRequest, error) {
-	return buildRequest(check, a.store)
+func (a *AdhocRequestExecutor) buildRequest(check *corev2.CheckConfig) (*corev2.CheckRequest, error) {
+	return buildRequest(check, a.store, a.secretsProviderManager)
 }
 
-func publishProxyCheckRequests(e Executor, entities []*types.Entity, check *types.CheckConfig) error {
+func publishProxyCheckRequests(e Executor, entities []*corev2.Entity, check *corev2.CheckConfig) error {
 	var splay time.Duration
 	if check.ProxyRequests.Splay {
 		var err error
@@ -258,7 +262,7 @@ func publishProxyCheckRequests(e Executor, entities []*types.Entity, check *type
 	return nil
 }
 
-func processCheck(ctx context.Context, executor Executor, check *types.CheckConfig) error {
+func processCheck(ctx context.Context, executor Executor, check *corev2.CheckConfig) error {
 	fields := logrus.Fields{
 		"check":     check.Name,
 		"namespace": check.Namespace,
@@ -320,12 +324,26 @@ func publishRoundRobinProxyCheckRequests(executor *CheckExecutor, check *corev2.
 	return nil
 }
 
-func buildRequest(check *types.CheckConfig, s store.Store) (*types.CheckRequest, error) {
-	request := &types.CheckRequest{}
+func buildRequest(check *corev2.CheckConfig, s store.Store, secretsProviderManager *secrets.ProviderManager) (*corev2.CheckRequest, error) {
+	request := &corev2.CheckRequest{}
 	request.Config = check
 	request.HookAssets = make(map[string]*corev2.AssetList)
 
-	ctx := types.SetContextFromResource(context.Background(), check)
+	// Prepare log entry
+	fields := logrus.Fields{
+		"namespace": check.Namespace,
+		"mutator":   check.Name,
+		"assets":    check.RuntimeAssets,
+	}
+
+	secrets, err := secretsProviderManager.SubSecrets(check.Command)
+	if err != nil {
+		logger.WithFields(fields).WithError(err).Error("failed to retrieve secrets for check")
+		return nil, err
+	}
+	request.Secrets = secrets
+
+	ctx := corev2.SetContextFromResource(context.Background(), check)
 
 	assets, err := s.GetAssets(ctx, &store.SelectionPredicate{})
 	if err != nil {

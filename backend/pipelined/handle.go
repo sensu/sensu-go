@@ -9,10 +9,10 @@ import (
 	"os"
 	"time"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/environment"
 	utillogging "github.com/sensu/sensu-go/util/logging"
 	"github.com/sirupsen/logrus"
@@ -25,16 +25,16 @@ const (
 )
 
 type handlerExtensionUnion struct {
-	*types.Extension
-	*types.Handler
+	*corev2.Extension
+	*corev2.Handler
 }
 
 // handleEvent takes a Sensu event through a Sensu pipeline, filters
 // -> mutator -> handler. An event may have one or more handlers. Most
 // errors are only logged and used for flow control, they will not
 // interupt event handling.
-func (p *Pipelined) handleEvent(event *types.Event) error {
-	ctx := context.WithValue(context.Background(), types.NamespaceKey, event.Entity.Namespace)
+func (p *Pipelined) handleEvent(event *corev2.Event) error {
+	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 
 	// Prepare debug log entry
 	debugFields := utillogging.EventFields(event, true)
@@ -111,14 +111,14 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 	expanded := map[string]handlerExtensionUnion{}
 
 	// Prepare log entry
-	namespace := types.ContextNamespace(ctx)
+	namespace := corev2.ContextNamespace(ctx)
 	fields := logrus.Fields{
 		"namespace": namespace,
 	}
 
 	for _, handlerName := range handlers {
 		handler, err := p.store.GetHandlerByName(ctx, handlerName)
-		var extension *types.Extension
+		var extension *corev2.Extension
 
 		// Add handler name to log entry
 		fields["handler"] = handlerName
@@ -148,8 +148,8 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 			// 		Error("failed to retrieve an extension"))
 			// 	continue
 			// }
-			// handler = &types.Handler{
-			// 	ObjectMeta: types.ObjectMeta{
+			// handler = &corev2.Handler{
+			// 	ObjectMeta: corev2.ObjectMeta{
 			// 		Name: extension.URL,
 			// 	},
 			// 	Type: "grpc",
@@ -183,16 +183,7 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 
 // pipeHandler fork/executes a child process for a Sensu pipe handler
 // command and writes the mutated eventData to it via STDIN.
-func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*command.ExecutionResponse, error) {
-	// Prepare environment variables
-	env := environment.MergeEnvironments(os.Environ(), handler.EnvVars)
-
-	handlerExec := command.ExecutionRequest{}
-	handlerExec.Command = handler.Command
-	handlerExec.Timeout = int(handler.Timeout)
-	handlerExec.Env = env
-	handlerExec.Input = string(eventData[:])
-
+func (p *Pipelined) pipeHandler(handler *corev2.Handler, eventData []byte) (*command.ExecutionResponse, error) {
 	// Prepare log entry
 	fields := logrus.Fields{
 		"namespace": handler.Namespace,
@@ -200,11 +191,26 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 		"assets":    handler.RuntimeAssets,
 	}
 
+	secrets, err := p.secretsProviderManager.SubSecrets(handler.Command)
+	if err != nil {
+		logger.WithFields(fields).WithError(err).Error("failed to retrieve secrets for handler")
+		return nil, err
+	}
+
+	// Prepare environment variables
+	env := environment.MergeEnvironments(os.Environ(), handler.EnvVars, secrets)
+
+	handlerExec := command.ExecutionRequest{}
+	handlerExec.Command = handler.Command
+	handlerExec.Timeout = int(handler.Timeout)
+	handlerExec.Env = env
+	handlerExec.Input = string(eventData[:])
+
 	// Only add assets to execution context if handler requires them
 	if len(handler.RuntimeAssets) != 0 {
 		logger.WithFields(fields).Debug("fetching assets for handler")
 		// Fetch and install all assets required for handler execution
-		ctx := types.SetContextFromResource(context.Background(), handler)
+		ctx := corev2.SetContextFromResource(context.Background(), handler)
 		matchedAssets := asset.GetAssets(ctx, p.store, handler.RuntimeAssets)
 
 		assets, err := asset.GetAll(context.TODO(), p.assetGetter, matchedAssets)
@@ -230,7 +236,7 @@ func (p *Pipelined) pipeHandler(handler *types.Handler, eventData []byte) (*comm
 
 // socketHandler creates either a TCP or UDP client to write eventData
 // to a socket. The provided handler Type determines the protocol.
-func (p *Pipelined) socketHandler(handler *types.Handler, eventData []byte) (conn net.Conn, err error) {
+func (p *Pipelined) socketHandler(handler *corev2.Handler, eventData []byte) (conn net.Conn, err error) {
 	protocol := handler.Type
 	host := handler.Socket.Host
 	port := handler.Socket.Port
@@ -276,7 +282,7 @@ func (p *Pipelined) socketHandler(handler *types.Handler, eventData []byte) (con
 	return conn, nil
 }
 
-func (p *Pipelined) grpcHandler(ext *types.Extension, evt *types.Event, mutated []byte) (rpc.HandleEventResponse, error) {
+func (p *Pipelined) grpcHandler(ext *corev2.Extension, evt *corev2.Event, mutated []byte) (rpc.HandleEventResponse, error) {
 	// Prepare log entry
 	fields := logrus.Fields{
 		"namespace": ext.GetNamespace(),

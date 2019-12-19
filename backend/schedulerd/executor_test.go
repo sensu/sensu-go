@@ -8,11 +8,12 @@ import (
 	"fmt"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -25,11 +26,12 @@ func TestAdhocExecutor(t *testing.T) {
 	}
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
-	newAdhocExec := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus, &cache.Resource{})
+	pm := secrets.NewProviderManager()
+	newAdhocExec := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus, &cache.Resource{}, pm)
 	defer newAdhocExec.Stop()
 	assert.NoError(t, newAdhocExec.bus.Start())
 
-	goodCheck := types.FixtureCheckConfig("goodCheck")
+	goodCheck := corev2.FixtureCheckConfig("goodCheck")
 
 	// set labels and annotations to nil to avoid value comparison issues
 	goodCheck.Labels = nil
@@ -37,7 +39,7 @@ func TestAdhocExecutor(t *testing.T) {
 
 	goodCheck.Subscriptions = []string{"subscription1"}
 
-	goodCheckRequest := &types.CheckRequest{}
+	goodCheckRequest := &corev2.CheckRequest{}
 	goodCheckRequest.Config = goodCheck
 	ch := make(chan interface{}, 1)
 	tsub := testSubscriber{ch}
@@ -63,7 +65,7 @@ func TestAdhocExecutor(t *testing.T) {
 	}
 
 	msg := <-ch
-	result, ok := msg.(*types.CheckRequest)
+	result, ok := msg.(*corev2.CheckRequest)
 	assert.True(t, ok)
 	assert.EqualValues(t, goodCheckRequest.Config, result.Config)
 	assert.EqualValues(t, goodCheckRequest.Assets, result.Assets)
@@ -81,10 +83,10 @@ func TestPublishProxyCheckRequest(t *testing.T) {
 	defer cancel()
 	scheduler := newIntervalScheduler(ctx, t, "check")
 
-	entity := types.FixtureEntity("entity1")
+	entity := corev2.FixtureEntity("entity1")
 	check := scheduler.check
 	check.Subscriptions = []string{"subscription1"}
-	check.ProxyRequests = types.FixtureProxyRequests(true)
+	check.ProxyRequests = corev2.FixtureProxyRequests(true)
 
 	c1 := make(chan interface{}, 10)
 	topic := fmt.Sprintf(
@@ -109,14 +111,14 @@ func TestPublishProxyCheckRequest(t *testing.T) {
 	go func() {
 		select {
 		case msg := <-c1:
-			res, ok := msg.(*types.CheckRequest)
+			res, ok := msg.(*corev2.CheckRequest)
 			assert.True(ok)
 			assert.Equal("check1", res.Config.Name)
 			assert.Equal("entity1", res.Config.ProxyEntityName)
 		}
 	}()
 
-	assert.NoError(scheduler.exec.publishProxyCheckRequests([]*types.Entity{entity}, check))
+	assert.NoError(scheduler.exec.publishProxyCheckRequests([]*corev2.Entity{entity}, check))
 }
 
 func TestPublishProxyCheckRequestsInterval(t *testing.T) {
@@ -129,13 +131,13 @@ func TestPublishProxyCheckRequestsInterval(t *testing.T) {
 	defer cancel()
 	scheduler := newIntervalScheduler(ctx, t, "check")
 
-	entity1 := types.FixtureEntity("entity1")
-	entity2 := types.FixtureEntity("entity2")
-	entity3 := types.FixtureEntity("entity3")
-	entities := []*types.Entity{entity1, entity2, entity3}
+	entity1 := corev2.FixtureEntity("entity1")
+	entity2 := corev2.FixtureEntity("entity2")
+	entity3 := corev2.FixtureEntity("entity3")
+	entities := []*corev2.Entity{entity1, entity2, entity3}
 	check := scheduler.check
 	check.Subscriptions = []string{"subscription1"}
-	check.ProxyRequests = types.FixtureProxyRequests(true)
+	check.ProxyRequests = corev2.FixtureProxyRequests(true)
 
 	c1 := make(chan interface{}, 10)
 	topic := fmt.Sprintf(
@@ -163,7 +165,7 @@ func TestPublishProxyCheckRequestsInterval(t *testing.T) {
 			entityName := fmt.Sprintf("entity%d", i+1)
 			select {
 			case msg := <-c1:
-				res, ok := msg.(*types.CheckRequest)
+				res, ok := msg.(*corev2.CheckRequest)
 				assert.True(ok)
 				assert.Equal("check1", res.Config.Name)
 				assert.Equal(entityName, res.Config.ProxyEntityName)
@@ -184,13 +186,13 @@ func TestPublishProxyCheckRequestsCron(t *testing.T) {
 	defer cancel()
 	scheduler := newCronScheduler(ctx, t, "check")
 
-	entity1 := types.FixtureEntity("entity1")
-	entity2 := types.FixtureEntity("entity2")
-	entity3 := types.FixtureEntity("entity3")
-	entities := []*types.Entity{entity1, entity2, entity3}
+	entity1 := corev2.FixtureEntity("entity1")
+	entity2 := corev2.FixtureEntity("entity2")
+	entity3 := corev2.FixtureEntity("entity3")
+	entities := []*corev2.Entity{entity1, entity2, entity3}
 	check := scheduler.check
 	check.Subscriptions = []string{"subscription1"}
-	check.ProxyRequests = types.FixtureProxyRequests(true)
+	check.ProxyRequests = corev2.FixtureProxyRequests(true)
 	check.Cron = "* * * * *"
 
 	c1 := make(chan interface{}, 10)
@@ -217,7 +219,7 @@ func TestPublishProxyCheckRequestsCron(t *testing.T) {
 			entityName := fmt.Sprintf("entity%d", i+1)
 			select {
 			case msg := <-c1:
-				res, ok := msg.(*types.CheckRequest)
+				res, ok := msg.(*corev2.CheckRequest)
 				assert.True(ok)
 				assert.Equal("check1", res.Config.Name)
 				assert.Equal(entityName, res.Config.ProxyEntityName)
@@ -251,7 +253,7 @@ func TestCheckBuildRequestInterval(t *testing.T) {
 	assert.Len(request.Hooks, 1)
 
 	check.RuntimeAssets = []string{}
-	check.CheckHooks = []types.HookList{}
+	check.CheckHooks = []corev2.HookList{}
 	request, err = scheduler.exec.buildRequest(check)
 	require.NoError(t, err)
 	assert.NotNil(request)
@@ -288,7 +290,7 @@ func TestCheckBuildRequestCron(t *testing.T) {
 	assert.Len(request.Hooks, 1)
 
 	check.RuntimeAssets = []string{}
-	check.CheckHooks = []types.HookList{}
+	check.CheckHooks = []corev2.HookList{}
 	request, err = scheduler.exec.buildRequest(check)
 	require.NoError(t, err)
 	assert.NotNil(request)
@@ -324,7 +326,7 @@ func TestCheckBuildRequestAdhoc_GH2201(t *testing.T) {
 	assert.Len(request.Hooks, 1)
 
 	check.RuntimeAssets = []string{}
-	check.CheckHooks = []types.HookList{}
+	check.CheckHooks = []corev2.HookList{}
 	request, err = scheduler.exec.buildRequest(check)
 	require.NoError(t, err)
 	assert.NotNil(request)
