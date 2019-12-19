@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
@@ -123,7 +124,7 @@ func TestPipelinedExtensionMutator(t *testing.T) {
 }
 
 func TestPipelinedPipeMutator(t *testing.T) {
-	p, err := New(Config{Store: nil, Bus: nil})
+	p, err := New(Config{Store: nil, Bus: nil, SecretsProviderManager: secrets.NewProviderManager()})
 	require.NoError(t, err)
 
 	mutator := types.FakeMutatorCommand("cat")
