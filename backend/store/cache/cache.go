@@ -257,7 +257,9 @@ func (r *Resource) start(ctx context.Context) {
 			//	r.updateCache(ctx)
 			//	r.notifyWatchers()
 			//}
+			r.cacheMu.Lock()
 			r.rebuild(ctx)
+			r.cacheMu.Unlock()
 			r.notifyWatchers()
 		}
 	}
@@ -274,6 +276,9 @@ func (r *Resource) rebuild(ctx context.Context) error {
 	newCache := buildCache(resources, r.synthesize)
 	for key, values := range newCache {
 		oldValues, ok := r.cache[key]
+		defer func(key string, oldValues resourceSlice) {
+			delete(r.cache, key)
+		}(key, oldValues)
 		if !ok {
 			// Apparently we have an entire namespace's worth of values that
 			// just appeared out of nowhere...
