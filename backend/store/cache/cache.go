@@ -104,31 +104,38 @@ type Resource struct {
 // getResources retrieves the resources from the store
 func getResources(ctx context.Context, client *clientv3.Client, resource corev2.Resource) ([]corev2.Resource, error) {
 	// Get the type of the resource and create a slice type of []type
-	typeOfResource := reflect.TypeOf(resource)
-	sliceOfResource := reflect.SliceOf(typeOfResource)
-	// Create a pointer to our slice type and then set the slice value
-	ptr := reflect.New(sliceOfResource)
-	ptr.Elem().Set(reflect.MakeSlice(sliceOfResource, 0, 0))
+	resources := make([]corev2.Resource, 0, 40000)
+	for {
+		typeOfResource := reflect.TypeOf(resource)
+		sliceOfResource := reflect.SliceOf(typeOfResource)
+		// Create a pointer to our slice type and then set the slice value
+		ptr := reflect.New(sliceOfResource)
+		ptr.Elem().Set(reflect.MakeSlice(sliceOfResource, 0, 0))
 
-	// Get a keybuilderFunc for this resource
-	keyBuilderFunc := func(ctx context.Context, name string) string {
-		return store.NewKeyBuilder(resource.StorePrefix()).WithContext(ctx).Build("")
-	}
-
-	err := etcd.List(ctx, client, keyBuilderFunc, ptr.Interface(), &store.SelectionPredicate{})
-	if err != nil {
-		return nil, fmt.Errorf("error creating ResourceCacher: %s", err)
-	}
-
-	results := ptr.Elem()
-	resources := make([]corev2.Resource, results.Len())
-	for i := 0; i < results.Len(); i++ {
-		r, ok := results.Index(i).Interface().(corev2.Resource)
-		if !ok {
-			logger.Errorf("%T is not core2.Resource", results.Index(i).Interface())
-			continue
+		// Get a keybuilderFunc for this resource
+		keyBuilderFunc := func(ctx context.Context, name string) string {
+			return store.NewKeyBuilder(resource.StorePrefix()).WithContext(ctx).Build("")
 		}
-		resources[i] = r
+
+		pred := &store.SelectionPredicate{Limit: 1000}
+		err := etcd.List(ctx, client, keyBuilderFunc, ptr.Interface(), pred)
+		if err != nil {
+			return nil, fmt.Errorf("error creating ResourceCacher: %s", err)
+		}
+
+		results := ptr.Elem()
+		for i := 0; i < results.Len(); i++ {
+			r, ok := results.Index(i).Interface().(corev2.Resource)
+			if !ok {
+				logger.Errorf("%T is not core2.Resource", results.Index(i).Interface())
+				continue
+			}
+			resources = append(resources, r)
+		}
+
+		if pred.Continue == "" {
+			break
+		}
 	}
 	return resources, nil
 }
