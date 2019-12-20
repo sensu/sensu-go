@@ -144,14 +144,14 @@ func New(ctx context.Context, client *clientv3.Client, resource corev2.Resource,
 	cache := buildCache(resources, synthesize)
 
 	// Get a keybuilderFunc for this resource
-	keyBuilderFunc := func(ctx context.Context, name string) string {
-		return store.NewKeyBuilder(resource.StorePrefix()).WithContext(ctx).Build("")
-	}
-	typeOfResource := reflect.TypeOf(resource)
+	//keyBuilderFunc := func(ctx context.Context, name string) string {
+	//	return store.NewKeyBuilder(resource.StorePrefix()).WithContext(ctx).Build("")
+	//}
+	//typeOfResource := reflect.TypeOf(resource)
 
 	cacher := &Resource{
-		cache:      cache,
-		watcher:    etcd.GetResourceWatcher(ctx, client, keyBuilderFunc(ctx, ""), typeOfResource),
+		cache: cache,
+		//watcher:    etcd.GetResourceWatcher(ctx, client, keyBuilderFunc(ctx, ""), typeOfResource),
 		synthesize: synthesize,
 		resourceT:  resource,
 		client:     client,
@@ -243,13 +243,15 @@ func (r *Resource) start(ctx context.Context) {
 		select {
 		case <-ctx.Done():
 			return
-		case event := <-r.watcher:
-			r.updates = append(r.updates, event)
+		//case event := <-r.watcher:
+		//	r.updates = append(r.updates, event)
 		case <-ticker.C:
-			if len(r.updates) > 0 {
-				r.updateCache(ctx)
-				r.notifyWatchers()
-			}
+			//if len(r.updates) > 0 {
+			//	r.updateCache(ctx)
+			//	r.notifyWatchers()
+			//}
+			r.rebuild(ctx)
+			r.notifyWatchers()
 		}
 	}
 }
