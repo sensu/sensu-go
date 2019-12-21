@@ -274,10 +274,11 @@ func (r *Resource) rebuild(ctx context.Context) error {
 		return err
 	}
 	newCache := buildCache(resources, r.synthesize)
+	oldCache := r.cache
 	for key, values := range newCache {
 		oldValues, ok := r.cache[key]
 		defer func(key string, oldValues resourceSlice) {
-			delete(r.cache, key)
+			delete(oldCache, key)
 		}(key, oldValues)
 		if !ok {
 			// Apparently we have an entire namespace's worth of values that
@@ -317,6 +318,8 @@ func (r *Resource) rebuild(ctx context.Context) error {
 
 func (r *Resource) updateCache(ctx context.Context) {
 	r.cacheMu.Lock()
+	defer r.cacheMu.Unlock()
+
 	for _, event := range r.updates {
 		if event.Action == store.WatchError {
 			// Rebuild the cache
@@ -369,7 +372,6 @@ func (r *Resource) updateCache(ctx context.Context) {
 		sort.Sort(resourceSlice(v))
 	}
 
-	r.cacheMu.Unlock()
 }
 
 func makeNewUpdates(values []Value) []store.WatchEventResource {

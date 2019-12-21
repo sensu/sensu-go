@@ -101,6 +101,9 @@ func TestEntityCacheIntegration(t *testing.T) {
 
 	got := cache.Get("default")
 
+	if len(got) == 0 {
+		t.Fatal("empty cache")
+	}
 	if got, want := got[len(got)-1], getCacheValue(newEntity, true); got.Resource.GetObjectMeta().Name != want.Resource.GetObjectMeta().Name {
 		t.Errorf("bad entity: got %s, want %s", got.Resource.GetObjectMeta().Name, want.Resource.GetObjectMeta().Name)
 	}
