@@ -73,6 +73,7 @@ require (
 	github.com/whyrusleeping/go-logging v0.0.0-20170515211332-0457bb6b88fc // indirect
 	github.com/willf/pad v0.0.0-20160331131008-b3d780601022
 	go.etcd.io/bbolt v1.3.2
+	go.etcd.io/etcd v3.3.18+incompatible
 	go.uber.org/multierr v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	golang.org/x/net v0.0.0-20191014212845-da9a3fd4c582
@@ -83,6 +84,7 @@ require (
 	google.golang.org/grpc v1.24.0
 	gopkg.in/AlecAivazis/survey.v1 v1.4.0 // indirect
 	gopkg.in/h2non/filetype.v1 v1.0.3
+	gopkg.in/readline.v1 v1.0.0-20160726135117-62c6fe619375 // indirect
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	gopkg.in/yaml.v2 v2.2.4
 	gotest.tools v2.2.0+incompatible // indirect
