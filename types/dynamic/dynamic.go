@@ -105,12 +105,14 @@ func reflectMapToMapParameters(v reflect.Value) interface{} {
 }
 
 // Synthesize recursively turns structs into map[string]interface{}
-// values. It works on most datatypes. Synthesize panics if it is
-// called on channels.
+// values. It works on most datatypes.
 //
 // Synthesize will use the json tag from struct fields to name map
 // keys, if the json tag is present.
 func Synthesize(v interface{}) interface{} {
+	if err, ok := v.(error); ok {
+		return err
+	}
 	value := reflect.Indirect(reflect.ValueOf(v))
 	switch value.Kind() {
 	case reflect.Struct:
@@ -125,16 +127,8 @@ func Synthesize(v interface{}) interface{} {
 		return synthesizeSlice(value)
 	case reflect.Map:
 		return synthesizeMap(value)
-	case reflect.Chan:
-		panic("can't synthesize channel")
-	case reflect.Invalid:
-		// We got passed a nil
-		return nil
 	default:
-		if value.CanInterface() {
-			return value.Interface()
-		}
-		return nil
+		return v
 	}
 }
 
@@ -167,7 +161,11 @@ func synthesizeMap(value reflect.Value) interface{} {
 		if val.CanInterface() {
 			elt = val.Interface()
 		}
-		out[key.Interface().(string)] = Synthesize(elt)
+		mapKey := key.Interface().(string)
+		if mapKey == "-" {
+			continue
+		}
+		out[mapKey] = Synthesize(elt)
 	}
 	return out
 }
@@ -184,6 +182,10 @@ func synthesizeStruct(value reflect.Value) map[string]interface{} {
 		}
 		s := structField{Field: field}
 		fieldName, omitEmpty := s.jsonFieldName()
+		if fieldName == "-" {
+			// we don't want fields with a JSON tag of '-'
+			continue
+		}
 		fieldValue := value.Field(i)
 
 		// Don't add empty/nil fields to the map if omitempty is specified
@@ -216,6 +218,10 @@ func synthesizeStruct(value reflect.Value) map[string]interface{} {
 				out[fieldName] = nil
 			}
 		}
+	}
+	numMethod := t.NumMethod()
+	for i := 0; i < numMethod; i++ {
+		out[t.Method(i).Name] = value.Method(i)
 	}
 
 	return out
