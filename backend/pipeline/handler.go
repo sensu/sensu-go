@@ -13,15 +13,14 @@ import (
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/environment"
 	utillogging "github.com/sensu/sensu-go/util/logging"
 	"github.com/sirupsen/logrus"
 )
 
 type handlerExtensionUnion struct {
-	*types.Extension
-	*types.Handler
+	*corev2.Extension
+	*corev2.Handler
 }
 
 // HandleEvent takes a Sensu event through a Sensu pipeline, filters
@@ -172,7 +171,7 @@ func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level 
 			// 	continue
 			// }
 			// handler = &corev2.Handler{
-			// 	ObjectMeta: types.ObjectMeta{
+			// 	ObjectMeta: corev2.ObjectMeta{
 			// 		Name: extension.URL,
 			// 	},
 			// 	Type: "grpc",
@@ -209,16 +208,7 @@ func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level 
 
 // pipeHandler fork/executes a child process for a Sensu pipe handler
 // command and writes the mutated eventData to it via STDIN.
-func (p *Pipeline) pipeHandler(handler *types.Handler, eventData []byte) (*command.ExecutionResponse, error) {
-	// Prepare environment variables
-	env := environment.MergeEnvironments(os.Environ(), handler.EnvVars)
-
-	handlerExec := command.ExecutionRequest{}
-	handlerExec.Command = handler.Command
-	handlerExec.Timeout = int(handler.Timeout)
-	handlerExec.Env = env
-	handlerExec.Input = string(eventData[:])
-
+func (p *Pipeline) pipeHandler(handler *corev2.Handler, eventData []byte) (*command.ExecutionResponse, error) {
 	// Prepare log entry
 	fields := logrus.Fields{
 		"namespace": handler.Namespace,
@@ -226,11 +216,26 @@ func (p *Pipeline) pipeHandler(handler *types.Handler, eventData []byte) (*comma
 		"assets":    handler.RuntimeAssets,
 	}
 
+	secrets, err := p.secretsProviderManager.SubSecrets(handler.Command)
+	if err != nil {
+		logger.WithFields(fields).WithError(err).Error("failed to retrieve secrets for handler")
+		return nil, err
+	}
+
+	// Prepare environment variables
+	env := environment.MergeEnvironments(os.Environ(), handler.EnvVars, secrets)
+
+	handlerExec := command.ExecutionRequest{}
+	handlerExec.Command = handler.Command
+	handlerExec.Timeout = int(handler.Timeout)
+	handlerExec.Env = env
+	handlerExec.Input = string(eventData[:])
+
 	// Only add assets to execution context if handler requires them
 	if len(handler.RuntimeAssets) != 0 {
 		logger.WithFields(fields).Debug("fetching assets for handler")
 		// Fetch and install all assets required for handler execution
-		ctx := types.SetContextFromResource(context.Background(), handler)
+		ctx := corev2.SetContextFromResource(context.Background(), handler)
 		matchedAssets := asset.GetAssets(ctx, p.store, handler.RuntimeAssets)
 
 		assets, err := asset.GetAll(context.TODO(), p.assetGetter, matchedAssets)
@@ -258,7 +263,7 @@ func (p *Pipeline) pipeHandler(handler *types.Handler, eventData []byte) (*comma
 	return result, err
 }
 
-func (p *Pipeline) grpcHandler(ext *types.Extension, evt *types.Event, mutated []byte) (rpc.HandleEventResponse, error) {
+func (p *Pipeline) grpcHandler(ext *corev2.Extension, evt *corev2.Event, mutated []byte) (rpc.HandleEventResponse, error) {
 	// Prepare log entry
 	fields := logrus.Fields{
 		"namespace": ext.GetNamespace(),
@@ -291,7 +296,7 @@ func (p *Pipeline) grpcHandler(ext *types.Extension, evt *types.Event, mutated [
 
 // socketHandler creates either a TCP or UDP client to write eventData
 // to a socket. The provided handler Type determines the protocol.
-func (p *Pipeline) socketHandler(handler *types.Handler, eventData []byte) (conn net.Conn, err error) {
+func (p *Pipeline) socketHandler(handler *corev2.Handler, eventData []byte) (conn net.Conn, err error) {
 	protocol := handler.Type
 	host := handler.Socket.Host
 	port := handler.Socket.Port

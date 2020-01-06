@@ -6,6 +6,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
+	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sirupsen/logrus"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -13,19 +14,20 @@ import (
 
 // CronScheduler schedules checks to be executed on a cron schedule.
 type CronScheduler struct {
-	lastCronState string
-	check         *corev2.CheckConfig
-	store         store.Store
-	bus           messaging.MessageBus
-	logger        *logrus.Entry
-	ctx           context.Context
-	cancel        context.CancelFunc
-	interrupt     chan *corev2.CheckConfig
-	entityCache   *cache.Resource
+	lastCronState          string
+	check                  *corev2.CheckConfig
+	store                  store.Store
+	bus                    messaging.MessageBus
+	logger                 *logrus.Entry
+	ctx                    context.Context
+	cancel                 context.CancelFunc
+	interrupt              chan *corev2.CheckConfig
+	entityCache            *cache.Resource
+	secretsProviderManager *secrets.ProviderManager
 }
 
 // NewCronScheduler initializes a CronScheduler
-func NewCronScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, check *corev2.CheckConfig, cache *cache.Resource) *CronScheduler {
+func NewCronScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, check *corev2.CheckConfig, cache *cache.Resource, secretsProviderManager *secrets.ProviderManager) *CronScheduler {
 	sched := &CronScheduler{
 		store:         store,
 		bus:           bus,
@@ -37,7 +39,8 @@ func NewCronScheduler(ctx context.Context, store store.Store, bus messaging.Mess
 			"namespace":      check.Namespace,
 			"scheduler_type": CronType.String(),
 		}),
-		entityCache: cache,
+		entityCache:            cache,
+		secretsProviderManager: secretsProviderManager,
 	}
 	sched.ctx, sched.cancel = context.WithCancel(ctx)
 	sched.ctx = corev2.SetContextFromResource(sched.ctx, check)
@@ -68,7 +71,7 @@ func (s *CronScheduler) Start() {
 func (s *CronScheduler) start() {
 	s.logger.Info("starting new cron scheduler")
 	timer := NewCronTimer(s.check.Name, s.check.Cron)
-	executor := NewCheckExecutor(s.bus, s.check.Namespace, s.store, s.entityCache)
+	executor := NewCheckExecutor(s.bus, s.check.Namespace, s.store, s.entityCache, s.secretsProviderManager)
 	timer.Start()
 
 	for {

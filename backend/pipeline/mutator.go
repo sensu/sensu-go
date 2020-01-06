@@ -6,10 +6,10 @@ import (
 	"errors"
 	"os"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/environment"
 	utillogging "github.com/sensu/sensu-go/util/logging"
 	"github.com/sirupsen/logrus"
@@ -17,7 +17,7 @@ import (
 
 // mutateEvent mutates (transforms) a Sensu event into a serialized
 // format (byte slice) to be provided to a Sensu event handler.
-func (p *Pipeline) mutateEvent(handler *types.Handler, event *types.Event) ([]byte, error) {
+func (p *Pipeline) mutateEvent(handler *corev2.Handler, event *corev2.Event) ([]byte, error) {
 	// Prepare log entry
 	fields := utillogging.EventFields(event, false)
 	fields["handler"] = handler.Name
@@ -40,7 +40,7 @@ func (p *Pipeline) mutateEvent(handler *types.Handler, event *types.Event) ([]by
 		}
 	}
 
-	ctx := context.WithValue(context.Background(), types.NamespaceKey, event.Entity.Namespace)
+	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 	fields["mutator"] = handler.Mutator
 
 	tctx, cancel := context.WithTimeout(ctx, p.storeTimeout)
@@ -92,7 +92,7 @@ func (p *Pipeline) mutateEvent(handler *types.Handler, event *types.Event) ([]by
 
 // jsonMutator produces the JSON encoding of the Sensu event. This
 // mutator is used when a Sensu handler does not specify one.
-func (p *Pipeline) jsonMutator(event *types.Event) ([]byte, error) {
+func (p *Pipeline) jsonMutator(event *corev2.Event) ([]byte, error) {
 	eventData, err := json.Marshal(event)
 
 	if err != nil {
@@ -107,7 +107,7 @@ func (p *Pipeline) jsonMutator(event *types.Event) ([]byte, error) {
 // is most commonly used by tcp/udp handlers (e.g. influxdb). This
 // mutator can probably be removed/replaced when 2.0 has extension
 // support.
-func (p *Pipeline) onlyCheckOutputMutator(event *types.Event) []byte {
+func (p *Pipeline) onlyCheckOutputMutator(event *corev2.Event) []byte {
 	if event.HasCheck() {
 		return []byte(event.Check.Output)
 	}
@@ -118,9 +118,22 @@ func (p *Pipeline) onlyCheckOutputMutator(event *types.Event) []byte {
 // command, writes the JSON encoding of the Sensu event to it via
 // STDIN, and captures the command output (STDOUT/ERR) to be used as
 // the mutated event data for a Sensu event handler.
-func (p *Pipeline) pipeMutator(mutator *types.Mutator, event *types.Event) ([]byte, error) {
+func (p *Pipeline) pipeMutator(mutator *corev2.Mutator, event *corev2.Event) ([]byte, error) {
+	// Prepare log entry
+	fields := logrus.Fields{
+		"namespace": mutator.Namespace,
+		"mutator":   mutator.Name,
+		"assets":    mutator.RuntimeAssets,
+	}
+
+	secrets, err := p.secretsProviderManager.SubSecrets(mutator.Command)
+	if err != nil {
+		logger.WithFields(fields).WithError(err).Error("failed to retrieve secrets for mutator")
+		return nil, err
+	}
+
 	// Prepare environment variables
-	env := environment.MergeEnvironments(os.Environ(), mutator.EnvVars)
+	env := environment.MergeEnvironments(os.Environ(), mutator.EnvVars, secrets)
 
 	mutatorExec := command.ExecutionRequest{}
 	mutatorExec.Command = mutator.Command
@@ -134,18 +147,11 @@ func (p *Pipeline) pipeMutator(mutator *types.Mutator, event *types.Event) ([]by
 
 	mutatorExec.Input = string(eventData[:])
 
-	// Prepare log entry
-	fields := logrus.Fields{
-		"namespace": mutator.Namespace,
-		"mutator":   mutator.Name,
-		"assets":    mutator.RuntimeAssets,
-	}
-
 	// Only add assets to execution context if handler requires them
 	if len(mutator.RuntimeAssets) != 0 {
 		logger.WithFields(fields).Debug("fetching assets for mutator")
 		// Fetch and install all assets required for handler execution
-		ctx := types.SetContextFromResource(context.Background(), mutator)
+		ctx := corev2.SetContextFromResource(context.Background(), mutator)
 		matchedAssets := asset.GetAssets(ctx, p.store, mutator.RuntimeAssets)
 
 		assets, err := asset.GetAll(context.TODO(), p.assetGetter, matchedAssets)

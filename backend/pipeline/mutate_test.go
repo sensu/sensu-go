@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
@@ -117,7 +118,7 @@ func TestPipelineExtensionMutator(t *testing.T) {
 }
 
 func TestPipelinePipeMutator(t *testing.T) {
-	p := New(Config{})
+	p := New(Config{SecretsProviderManager: secrets.NewProviderManager()})
 
 	mutator := types.FakeMutatorCommand("cat")
 

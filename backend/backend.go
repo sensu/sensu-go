@@ -32,12 +32,12 @@ import (
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/schedulerd"
+	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/backend/tessend"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/system"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/retry"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -55,12 +55,13 @@ func (e ErrStartup) Error() string {
 // Backend represents the backend server, which is used to hold the datastore
 // and coordinating the daemons
 type Backend struct {
-	Client         *clientv3.Client
-	Daemons        []daemon.Daemon
-	Etcd           *etcd.Etcd
-	Store          store.Store
-	EventStore     EventStoreUpdater
-	GraphQLService *graphql.Service
+	Client                 *clientv3.Client
+	Daemons                []daemon.Daemon
+	Etcd                   *etcd.Etcd
+	Store                  store.Store
+	EventStore             EventStoreUpdater
+	GraphQLService         *graphql.Service
+	SecretsProviderManager *secrets.ProviderManager
 
 	ctx       context.Context
 	runCtx    context.Context
@@ -74,7 +75,7 @@ type EventStoreUpdater interface {
 	UpdateEventStore(to store.EventStore)
 }
 
-func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
+func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3.Client, error) {
 	if config.NoEmbedEtcd {
 		logger.Info("dialing etcd server")
 		tlsInfo := (transport.TLSInfo)(config.EtcdClientTLSInfo)
@@ -90,7 +91,7 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 
 		// Don't start up an embedded etcd, return a client that connects to an
 		// external etcd instead.
-		return clientv3.New(clientv3.Config{
+		client, err := clientv3.New(clientv3.Config{
 			Endpoints:   clientURLs,
 			DialTimeout: 5 * time.Second,
 			TLS:         tlsConfig,
@@ -98,6 +99,13 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 				grpc.WithBlock(),
 			},
 		})
+		if err != nil {
+			return nil, err
+		}
+		if _, err := client.Get(ctx, "/sensu.io"); err != nil {
+			return nil, err
+		}
+		return client, nil
 	}
 
 	// Initialize and start etcd, because we'll need to provide an etcd client to
@@ -145,7 +153,14 @@ func newClient(config *Config, backend *Backend) (*clientv3.Client, error) {
 	backend.Etcd = e
 
 	// Create an etcd client
-	return e.NewClient()
+	client, err := e.NewClient()
+	if err != nil {
+		return nil, err
+	}
+	if _, err := client.Get(ctx, "/sensu.io"); err != nil {
+		return nil, err
+	}
+	return client, nil
 }
 
 // Initialize instantiates a Backend struct with the provided config, by
@@ -160,7 +175,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	b.ctx = ctx
 	b.runCtx, b.runCancel = context.WithCancel(b.ctx)
 
-	b.Client, err = newClient(config, b)
+	b.Client, err = newClient(b.ctx, config, b)
 	if err != nil {
 		return nil, err
 	}
@@ -207,6 +222,9 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		return nil, fmt.Errorf("error initializing asset manager: %s", err)
 	}
 
+	// Initialize the secrets provider manager
+	b.SecretsProviderManager = secrets.NewProviderManager()
+
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
 		Store:                   stor,
@@ -216,6 +234,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		BufferSize:              viper.GetInt(FlagPipelinedBufferSize),
 		WorkerCount:             viper.GetInt(FlagPipelinedWorkers),
 		StoreTimeout:            2 * time.Minute,
+		SecretsProviderManager:  b.SecretsProviderManager,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", pipeline.Name(), err)
@@ -247,11 +266,12 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	scheduler, err := schedulerd.New(
 		b.runCtx,
 		schedulerd.Config{
-			Store:       stor,
-			Bus:         bus,
-			QueueGetter: queueGetter,
-			RingPool:    ringPool,
-			Client:      b.Client,
+			Store:                  stor,
+			Bus:                    bus,
+			QueueGetter:            queueGetter,
+			RingPool:               ringPool,
+			Client:                 b.Client,
+			SecretsProviderManager: b.SecretsProviderManager,
 		})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", scheduler.Name(), err)
@@ -381,17 +401,17 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	b.Daemons = append(b.Daemons, tessen)
 
 	// Initialize dashboardd TLS config
-	var dashboardTLSConfig *types.TLSOptions
+	var dashboardTLSConfig *corev2.TLSOptions
 
 	// Always use dashboard tls options when they are specified
 	if config.DashboardTLSCertFile != "" && config.DashboardTLSKeyFile != "" {
-		dashboardTLSConfig = &types.TLSOptions{
+		dashboardTLSConfig = &corev2.TLSOptions{
 			CertFile: config.DashboardTLSCertFile,
 			KeyFile:  config.DashboardTLSKeyFile,
 		}
 	} else if config.TLS != nil {
 		// use apid tls config if no dashboard tls options are specified
-		dashboardTLSConfig = &types.TLSOptions{
+		dashboardTLSConfig = &corev2.TLSOptions{
 			CertFile: config.TLS.GetCertFile(),
 			KeyFile:  config.TLS.GetKeyFile(),
 		}

@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -202,7 +203,7 @@ func TestPipelineExpandHandlers(t *testing.T) {
 }
 
 func TestPipelinePipeHandler(t *testing.T) {
-	p := &Pipeline{}
+	p := &Pipeline{secretsProviderManager: secrets.NewProviderManager()}
 	p.executor = &command.ExecutionRequest{}
 
 	handler := types.FakeHandlerCommand("cat")
@@ -222,7 +223,7 @@ func TestPipelineTcpHandler(t *testing.T) {
 	ready := make(chan struct{})
 	done := make(chan struct{})
 
-	p := &Pipeline{}
+	p := &Pipeline{secretsProviderManager: secrets.NewProviderManager()}
 
 	handlerSocket := &types.HandlerSocket{
 		Host: "127.0.0.1",

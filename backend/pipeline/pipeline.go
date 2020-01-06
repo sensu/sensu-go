@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/asset"
+	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/js"
@@ -14,11 +15,12 @@ import (
 // Pipeline takes events as inputs, and treats them in various ways according
 // to the event's check configuration.
 type Pipeline struct {
-	store             store.Store
-	assetGetter       asset.Getter
-	extensionExecutor ExtensionExecutorGetterFunc
-	executor          command.Executor
-	storeTimeout      time.Duration
+	store                  store.Store
+	assetGetter            asset.Getter
+	extensionExecutor      ExtensionExecutorGetterFunc
+	executor               command.Executor
+	storeTimeout           time.Duration
+	secretsProviderManager *secrets.ProviderManager
 }
 
 // Config holds the configuration for a Pipeline.
@@ -27,6 +29,7 @@ type Config struct {
 	ExtensionExecutorGetter ExtensionExecutorGetterFunc
 	AssetGetter             asset.Getter
 	StoreTimeout            time.Duration
+	SecretsProviderManager  *secrets.ProviderManager
 }
 
 // Option is a functional option used to configure Pipelines.
@@ -35,11 +38,12 @@ type Option func(*Pipeline)
 // New creates a new Pipeline from the provided configuration.
 func New(c Config, options ...Option) *Pipeline {
 	pipeline := &Pipeline{
-		store:             c.Store,
-		assetGetter:       c.AssetGetter,
-		extensionExecutor: c.ExtensionExecutorGetter,
-		executor:          command.NewExecutor(),
-		storeTimeout:      c.StoreTimeout,
+		store:                  c.Store,
+		assetGetter:            c.AssetGetter,
+		extensionExecutor:      c.ExtensionExecutorGetter,
+		executor:               command.NewExecutor(),
+		storeTimeout:           c.StoreTimeout,
+		secretsProviderManager: c.SecretsProviderManager,
 	}
 	for _, o := range options {
 		o(pipeline)

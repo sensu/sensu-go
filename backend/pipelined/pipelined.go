@@ -7,34 +7,41 @@ import (
 	"sync/atomic"
 	"time"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/pipeline"
+	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/rpc"
 )
 
 var defaultStoreTimeout = time.Minute
+
+// ExtensionExecutorGetterFunc gets an ExtensionExecutor. Used to decouple
+// Pipelined from gRPC.
+type ExtensionExecutorGetterFunc func(*corev2.Extension) (rpc.ExtensionExecutor, error)
 
 // Pipelined handles incoming Sensu events and puts them through a
 // Sensu event pipeline, i.e. filter -> mutator -> handler. The Sensu
 // handler configuration determines which Sensu filters and mutator
 // are used.
 type Pipelined struct {
-	assetGetter       asset.Getter
-	stopping          chan struct{}
-	running           *atomic.Value
-	wg                *sync.WaitGroup
-	errChan           chan error
-	eventChan         chan interface{}
-	subscription      messaging.Subscription
-	store             store.Store
-	bus               messaging.MessageBus
-	extensionExecutor pipeline.ExtensionExecutorGetterFunc
-	executor          command.Executor
-	workerCount       int
-	storeTimeout      time.Duration
+	assetGetter            asset.Getter
+	stopping               chan struct{}
+	running                *atomic.Value
+	wg                     *sync.WaitGroup
+	errChan                chan error
+	eventChan              chan interface{}
+	subscription           messaging.Subscription
+	store                  store.Store
+	bus                    messaging.MessageBus
+	extensionExecutor      pipeline.ExtensionExecutorGetterFunc
+	executor               command.Executor
+	workerCount            int
+	storeTimeout           time.Duration
+	secretsProviderManager *secrets.ProviderManager
 }
 
 // Config configures a Pipelined.
@@ -46,6 +53,7 @@ type Config struct {
 	BufferSize              int
 	WorkerCount             int
 	StoreTimeout            time.Duration
+	SecretsProviderManager  *secrets.ProviderManager
 }
 
 // Option is a functional option used to configure Pipelined.
@@ -67,18 +75,19 @@ func New(c Config, options ...Option) (*Pipelined, error) {
 	}
 
 	p := &Pipelined{
-		store:             c.Store,
-		bus:               c.Bus,
-		extensionExecutor: c.ExtensionExecutorGetter,
-		stopping:          make(chan struct{}, 1),
-		running:           &atomic.Value{},
-		wg:                &sync.WaitGroup{},
-		errChan:           make(chan error, 1),
-		eventChan:         make(chan interface{}, c.BufferSize),
-		workerCount:       c.WorkerCount,
-		executor:          command.NewExecutor(),
-		assetGetter:       c.AssetGetter,
-		storeTimeout:      c.StoreTimeout,
+		store:                  c.Store,
+		bus:                    c.Bus,
+		extensionExecutor:      c.ExtensionExecutorGetter,
+		stopping:               make(chan struct{}, 1),
+		running:                &atomic.Value{},
+		wg:                     &sync.WaitGroup{},
+		errChan:                make(chan error, 1),
+		eventChan:              make(chan interface{}, c.BufferSize),
+		workerCount:            c.WorkerCount,
+		executor:               command.NewExecutor(),
+		assetGetter:            c.AssetGetter,
+		storeTimeout:           c.StoreTimeout,
+		secretsProviderManager: c.SecretsProviderManager,
 	}
 	for _, o := range options {
 		if err := o(p); err != nil {
@@ -139,6 +148,7 @@ func (p *Pipelined) createPipelines(count int, channel chan interface{}) {
 			ExtensionExecutorGetter: p.extensionExecutor,
 			AssetGetter:             p.assetGetter,
 			StoreTimeout:            p.storeTimeout,
+			SecretsProviderManager:  p.secretsProviderManager,
 		})
 		p.wg.Add(1)
 		go func() {
@@ -148,7 +158,7 @@ func (p *Pipelined) createPipelines(count int, channel chan interface{}) {
 				case <-p.stopping:
 					return
 				case msg := <-channel:
-					event, ok := msg.(*types.Event)
+					event, ok := msg.(*corev2.Event)
 					if !ok {
 						continue
 					}
