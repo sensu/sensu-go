@@ -51,6 +51,9 @@ func (s *Store) GetRole(ctx context.Context, name string) (*types.Role, error) {
 
 // ListRoles ...
 func (s *Store) ListRoles(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Role, error) {
+	if pred == nil {
+		pred = &store.SelectionPredicate{}
+	}
 	roles := []*types.Role{}
 	err := List(ctx, s.client, GetRolesPath, &roles, pred)
 	return roles, err

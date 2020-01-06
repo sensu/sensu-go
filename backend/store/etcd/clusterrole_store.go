@@ -51,6 +51,9 @@ func (s *Store) GetClusterRole(ctx context.Context, name string) (*types.Cluster
 
 // ListClusterRoles ...
 func (s *Store) ListClusterRoles(ctx context.Context, pred *store.SelectionPredicate) ([]*types.ClusterRole, error) {
+	if pred == nil {
+		pred = &store.SelectionPredicate{}
+	}
 	clusterRoles := []*types.ClusterRole{}
 	err := List(ctx, s.client, GetClusterRolesPath, &clusterRoles, pred)
 	return clusterRoles, err

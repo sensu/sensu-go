@@ -51,6 +51,9 @@ func (s *Store) GetRoleBinding(ctx context.Context, name string) (*types.RoleBin
 
 // ListRoleBindings ...
 func (s *Store) ListRoleBindings(ctx context.Context, pred *store.SelectionPredicate) ([]*types.RoleBinding, error) {
+	if pred == nil {
+		pred = &store.SelectionPredicate{}
+	}
 	roles := []*types.RoleBinding{}
 	err := List(ctx, s.client, GetRoleBindingsPath, &roles, pred)
 	return roles, err

@@ -51,6 +51,9 @@ func (s *Store) GetClusterRoleBinding(ctx context.Context, name string) (*types.
 
 // ListClusterRoleBindings ...
 func (s *Store) ListClusterRoleBindings(ctx context.Context, pred *store.SelectionPredicate) ([]*types.ClusterRoleBinding, error) {
+	if pred == nil {
+		pred = &store.SelectionPredicate{}
+	}
 	roles := []*types.ClusterRoleBinding{}
 	err := List(ctx, s.client, GetClusterRoleBindingsPath, &roles, pred)
 	return roles, err

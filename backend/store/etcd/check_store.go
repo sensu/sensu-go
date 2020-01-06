@@ -40,6 +40,9 @@ func (s *Store) DeleteCheckConfigByName(ctx context.Context, name string) error 
 
 // GetCheckConfigs returns check configurations for an (optional) namespace.
 func (s *Store) GetCheckConfigs(ctx context.Context, pred *store.SelectionPredicate) ([]*types.CheckConfig, error) {
+	if pred == nil {
+		pred = &store.SelectionPredicate{}
+	}
 	checks := []*types.CheckConfig{}
 	err := List(ctx, s.client, GetCheckConfigsPath, &checks, pred)
 	return checks, err

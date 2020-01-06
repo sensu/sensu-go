@@ -40,6 +40,9 @@ func (s *Store) DeleteHookConfigByName(ctx context.Context, name string) error {
 
 // GetHookConfigs returns hook configurations for a namespace.
 func (s *Store) GetHookConfigs(ctx context.Context, pred *store.SelectionPredicate) ([]*types.HookConfig, error) {
+	if pred == nil {
+		pred = &store.SelectionPredicate{}
+	}
 	hooks := []*types.HookConfig{}
 	err := List(ctx, s.client, GetHookConfigsPath, &hooks, pred)
 	return hooks, err

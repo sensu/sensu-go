@@ -37,6 +37,9 @@ func (s *Store) DeleteMutatorByName(ctx context.Context, name string) error {
 
 // GetMutators gets the list of mutators for a namespace.
 func (s *Store) GetMutators(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Mutator, error) {
+	if pred == nil {
+		pred = &store.SelectionPredicate{}
+	}
 	mutators := []*types.Mutator{}
 	err := List(ctx, s.client, GetMutatorsPath, &mutators, pred)
 	return mutators, err

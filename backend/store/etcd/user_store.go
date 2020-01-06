@@ -144,6 +144,9 @@ func (s *Store) GetUsers() ([]*corev2.User, error) {
 
 // GetAllUsers retrieves all users
 func (s *Store) GetAllUsers(pred *store.SelectionPredicate) ([]*corev2.User, error) {
+	if pred == nil {
+		pred = &store.SelectionPredicate{}
+	}
 	users := []*corev2.User{}
 	err := List(context.Background(), s.client, GetUsersPath, &users, pred)
 	return users, err

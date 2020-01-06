@@ -37,6 +37,9 @@ func (s *Store) DeleteHandlerByName(ctx context.Context, name string) error {
 
 // GetHandlers gets the list of handlers for a namespace.
 func (s *Store) GetHandlers(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Handler, error) {
+	if pred == nil {
+		pred = &store.SelectionPredicate{}
+	}
 	handlers := []*types.Handler{}
 	err := List(ctx, s.client, GetHandlersPath, &handlers, pred)
 	return handlers, err

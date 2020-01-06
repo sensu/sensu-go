@@ -122,6 +122,9 @@ func (s *Store) GetNamespace(ctx context.Context, name string) (*types.Namespace
 
 // ListNamespaces returns all namespaces
 func (s *Store) ListNamespaces(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Namespace, error) {
+	if pred == nil {
+		pred = &store.SelectionPredicate{}
+	}
 	namespaces := []*types.Namespace{}
 	err := List(ctx, s.client, GetNamespacesPath, &namespaces, pred)
 	return namespaces, err

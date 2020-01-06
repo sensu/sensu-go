@@ -42,6 +42,9 @@ func (s *Store) DeleteAssetByName(ctx context.Context, name string) error {
 
 // GetAssets fetches all assets from the store
 func (s *Store) GetAssets(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Asset, error) {
+	if pred == nil {
+		pred = &store.SelectionPredicate{}
+	}
 	assets := []*types.Asset{}
 	err := List(ctx, s.client, GetAssetsPath, &assets, pred)
 	return assets, err

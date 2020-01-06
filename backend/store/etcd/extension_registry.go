@@ -82,6 +82,7 @@ func (s *Store) GetExtension(ctx context.Context, name string) (*types.Extension
 
 // GetExtensions gets an extension
 func (s *Store) GetExtensions(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Extension, error) {
+	pred = &store.SelectionPredicate{}
 	extensions := []*types.Extension{}
 	err := List(ctx, s.client, getExtensionPath, &extensions, pred)
 	return extensions, err

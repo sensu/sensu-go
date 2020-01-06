@@ -69,6 +69,9 @@ func (s *Store) DeleteEventByEntityCheck(ctx context.Context, entityName, checkN
 // GetEvents returns the events for an (optional) namespace. If namespace is the
 // empty string, GetEvents returns all events for all namespaces.
 func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Event, error) {
+	if pred == nil {
+		pred = &store.SelectionPredicate{}
+	}
 	opts := []clientv3.OpOption{
 		clientv3.WithLimit(pred.Limit),
 	}
