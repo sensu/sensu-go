@@ -108,69 +108,6 @@ func TestBuildCache(t *testing.T) {
 	assert.Len(t, cache, 2)
 }
 
-func TestResourceUpdateCache(t *testing.T) {
-	cacher := Resource{
-		cache: make(map[string][]Value),
-	}
-	resource0 := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "resource0", Namespace: "default"}, Foo: "bar"}
-	resource1 := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "resource1", Namespace: "default"}, Foo: "bar"}
-	resource0Bis := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "resource0", Namespace: "default"}, Foo: "baz"}
-	resource1Bis := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "resource1", Namespace: "default"}, Foo: "qux"}
-
-	// Add a resource
-	cacher.updates = append(cacher.updates, store.WatchEventResource{
-		Resource: resource1,
-		Action:   store.WatchCreate,
-	})
-	cacher.updateCache(context.Background())
-	assert.Len(t, cacher.cache["default"], 1)
-	assert.Equal(t, int64(1), cacher.Count())
-
-	// Add a second resource. It should be alphabetically sorted and therefore at
-	// the beginning of the namespace cache values even if it was appended at the
-	// end
-	cacher.updates = append(cacher.updates, store.WatchEventResource{
-		Resource: resource0, Action: store.WatchCreate,
-	})
-	cacher.updateCache(context.Background())
-	assert.Len(t, cacher.cache["default"], 2)
-	assert.Equal(t, int64(2), cacher.Count())
-	assert.Equal(t, resource0, cacher.cache["default"][0].Resource)
-	assert.Equal(t, resource1, cacher.cache["default"][1].Resource)
-
-	// Update the resources
-	updates := []store.WatchEventResource{
-		store.WatchEventResource{Resource: resource0Bis, Action: store.WatchUpdate},
-		store.WatchEventResource{Resource: resource1Bis, Action: store.WatchUpdate},
-	}
-	cacher.updates = append(cacher.updates, updates...)
-	cacher.updateCache(context.Background())
-	assert.Len(t, cacher.cache["default"], 2)
-	assert.Equal(t, int64(2), cacher.Count())
-	assert.Equal(t, resource0Bis, cacher.cache["default"][0].Resource.(*fixture.Resource))
-	assert.Equal(t, resource1Bis, cacher.cache["default"][1].Resource.(*fixture.Resource))
-
-	// Delete the resources
-	deletes := []store.WatchEventResource{
-		store.WatchEventResource{Resource: resource1Bis, Action: store.WatchDelete},
-		store.WatchEventResource{Resource: resource0Bis, Action: store.WatchDelete},
-	}
-	cacher.updates = append(cacher.updates, deletes...)
-	cacher.updateCache(context.Background())
-	assert.Len(t, cacher.cache["default"], 0)
-	assert.Equal(t, int64(0), cacher.Count())
-
-	// Invalid watch event
-	var nilResource *fixture.Resource
-	cacher.updates = append(cacher.updates, store.WatchEventResource{
-		Resource: nilResource,
-		Action:   store.WatchCreate,
-	})
-	cacher.updateCache(context.Background())
-	assert.Len(t, cacher.cache["default"], 0)
-	assert.Equal(t, int64(0), cacher.Count())
-}
-
 func TestResourceRebuild(t *testing.T) {
 	c := integration.NewClusterV3(t, &integration.ClusterConfig{Size: 1})
 	defer c.Terminate(t)
@@ -185,23 +122,16 @@ func TestResourceRebuild(t *testing.T) {
 		resourceT: &fixture.Resource{},
 	}
 
-	// Empty store
-	cacher.updates = append(cacher.updates, store.WatchEventResource{
-		Action: store.WatchError,
-	})
-	cacher.updateCache(ctx)
-	assert.Len(t, cacher.cache["default"], 0)
-	assert.Equal(t, int64(0), cacher.Count())
-
 	// Resource added to a new namespace
 	foo := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}}
 	if err := s.CreateOrUpdateResource(ctx, foo); err != nil {
 		t.Fatal(err)
 	}
-	cacher.updates = append(cacher.updates, store.WatchEventResource{
-		Action: store.WatchError,
-	})
-	cacher.updateCache(ctx)
+	if updates, err := cacher.rebuild(ctx); err != nil {
+		t.Fatal(err)
+	} else if !updates {
+		t.Fatal("expected updates")
+	}
 	assert.Len(t, cacher.cache["default"], 1)
 	assert.Equal(t, int64(1), cacher.Count())
 
@@ -210,10 +140,11 @@ func TestResourceRebuild(t *testing.T) {
 	if err := s.CreateOrUpdateResource(ctx, bar); err != nil {
 		t.Fatal(err)
 	}
-	cacher.updates = append(cacher.updates, store.WatchEventResource{
-		Action: store.WatchError,
-	})
-	cacher.updateCache(ctx)
+	if updates, err := cacher.rebuild(ctx); err != nil {
+		t.Fatal(err)
+	} else if !updates {
+		t.Fatal("expected updates")
+	}
 	assert.Len(t, cacher.cache["default"], 2)
 	assert.Equal(t, int64(2), cacher.Count())
 
@@ -222,10 +153,11 @@ func TestResourceRebuild(t *testing.T) {
 	if err := s.CreateOrUpdateResource(ctx, bar); err != nil {
 		t.Fatal(err)
 	}
-	cacher.updates = append(cacher.updates, store.WatchEventResource{
-		Action: store.WatchError,
-	})
-	cacher.updateCache(ctx)
+	if updates, err := cacher.rebuild(ctx); err != nil {
+		t.Fatal(err)
+	} else if !updates {
+		t.Fatal("expected updates")
+	}
 	assert.Len(t, cacher.cache["default"], 2)
 	assert.Equal(t, int64(2), cacher.Count())
 
@@ -233,10 +165,11 @@ func TestResourceRebuild(t *testing.T) {
 	if err := s.DeleteResource(ctx, bar.StorePrefix(), bar.GetObjectMeta().Name); err != nil {
 		t.Fatal(err)
 	}
-	cacher.updates = append(cacher.updates, store.WatchEventResource{
-		Action: store.WatchError,
-	})
-	cacher.updateCache(ctx)
+	if updates, err := cacher.rebuild(ctx); err != nil {
+		t.Fatal(err)
+	} else if !updates {
+		t.Fatal("expected updates")
+	}
 	assert.Len(t, cacher.cache["default"], 1)
 	assert.Equal(t, int64(1), cacher.Count())
 }

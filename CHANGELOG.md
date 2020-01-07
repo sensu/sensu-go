@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Fixed a memory leak in the entity cache
+
 ## [5.16.1] - 2019-12-18
 
 ### Fixed
