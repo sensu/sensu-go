@@ -185,6 +185,7 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 
 	opts := []clientv3.OpOption{
 		clientv3.WithLimit(pred.Limit),
+		clientv3.WithSerializable(),
 	}
 
 	keyPrefix := keyBuilder(ctx, "")
