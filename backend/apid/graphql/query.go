@@ -183,6 +183,7 @@ func (r *queryImpl) Metrics(p schema.QueryMetricsFieldResolverParams) (interface
 		if len(p.Args.Name) > 0 && !utilstrings.InArray(mf.GetName(), p.Args.Name) {
 			continue
 		}
+		logger.WithField("fam", mf).Debug("has family")
 		ret = append(ret, mf)
 	}
 	return ret, nil

@@ -133,12 +133,26 @@ func (*histogramMetricImpl) Bucket(p graphql.ResolveParams) (interface{}, error)
 //
 
 type metricFamilyImpl struct {
-	*schema.MetricFamilyAliases
+}
+
+func (*metricFamilyImpl) Name(p graphql.ResolveParams) (string, error) {
+	v := p.Source.(*dto.MetricFamily)
+	return v.GetName(), nil
+}
+
+func (*metricFamilyImpl) Help(p graphql.ResolveParams) (string, error) {
+	v := p.Source.(*dto.MetricFamily)
+	return v.GetHelp(), nil
 }
 
 func (*metricFamilyImpl) Type(p graphql.ResolveParams) (schema.MetricKind, error) {
 	v := p.Source.(*dto.MetricFamily)
 	return schema.MetricKind(v.Type.String()), nil
+}
+
+func (*metricFamilyImpl) Metric(p graphql.ResolveParams) (interface{}, error) {
+	v := p.Source.(*dto.MetricFamily)
+	return v.GetMetric(), nil
 }
 
 type commonMetricImpl struct{}
