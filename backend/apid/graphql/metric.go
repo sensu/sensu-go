@@ -174,11 +174,11 @@ func (*commonMetricImpl) Labels(p graphql.ResolveParams) (interface{}, error) {
 
 func (*commonMetricImpl) Timestamp(p graphql.ResolveParams) (*time.Time, error) {
 	v := p.Source.(*dto.Metric)
-	if v.TimestampMs == nil {
-		return nil, nil
+	if ms := v.GetTimestampMs(); ms > 0 {
+		ts := unixTimeMs(time.Duration(ms))
+		return &ts, nil
 	}
-	ts := unixTimeMs(time.Duration(*v.TimestampMs))
-	return &ts, nil
+	return nil, nil
 }
 
 func unixTimeMs(ms time.Duration) time.Time {

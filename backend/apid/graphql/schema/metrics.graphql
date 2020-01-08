@@ -58,6 +58,6 @@ type HistogramMetric implements Metric {
 type MetricFamily {
   name: String
   help: String
-  type: MetricKind
+  type: MetricKind!
   metric: [Metric]!
 }

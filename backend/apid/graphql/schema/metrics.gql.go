@@ -2089,7 +2089,9 @@ func _ObjTypeMetricFamilyHelpHandler(impl interface{}) graphql1.FieldResolveFn {
 func _ObjTypeMetricFamilyTypeHandler(impl interface{}) graphql1.FieldResolveFn {
 	resolver := impl.(MetricFamilyTypeFieldResolver)
 	return func(frp graphql1.ResolveParams) (interface{}, error) {
-		return resolver.Type(frp)
+
+		val, err := resolver.Type(frp)
+		return string(val), err
 	}
 }
 
@@ -2116,7 +2118,7 @@ func _ObjectTypeMetricFamilyConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "metric",
-				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Metric")))),
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql.OutputType("Metric"))),
 			},
 			"name": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
@@ -2130,7 +2132,7 @@ func _ObjectTypeMetricFamilyConfigFn() graphql1.ObjectConfig {
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "type",
-				Type:              graphql.OutputType("MetricKind"),
+				Type:              graphql1.NewNonNull(graphql.OutputType("MetricKind")),
 			},
 		},
 		Interfaces: []*graphql1.Interface{},
