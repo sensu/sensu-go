@@ -12,6 +12,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/keepalived"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
@@ -120,6 +121,8 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 		}
 	}
 
+	// Initialize the most likely labels
+	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess)
 	_ = prometheus.Register(EventsProcessed)
 
 	return e, nil
@@ -343,6 +346,12 @@ func parseKey(key string) (namespace, check, entity string, err error) {
 // handleFailure creates a check event with a warn status and publishes it to
 // TopicEvent.
 func (e *Eventd) handleFailure(event *corev2.Event) error {
+	// don't update the event with ttl output for keepalives,
+	// there is a different mechanism for that
+	if event.Check.Name == keepalived.KeepaliveCheckName {
+		return nil
+	}
+
 	entity := event.Entity
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, entity.Namespace)
 

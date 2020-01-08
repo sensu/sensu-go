@@ -8,31 +8,70 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+- Added the secrets provider interface and secrets provider manager to be used
+by commerical secrets providers. Implemented for checks, mutators, and handlers.
+### Fixed
+- Fixed a memory leak in the entity cache
+
+## [5.16.1] - 2019-12-18
+
+### Fixed
+- Initialize the sensu_go_events_processed counter with the `success` label so
+it's always displayed.
+- Fixed a performance regression that was introduced in 5.15.0, which would
+cause the API to timeout past 20k agent sessions.
+
+## [5.16.0] - 2019-12-11
+
+### Added
 - Display the JWT expiration Unix timestamp in `sensuctl config view`.
 - Added the 'sensu-backend init' subcommand.
 - Added a new flag, --etcd-client-urls, which should be used with sensu-backend
 when it is not operating as an etcd member. The flag is also used by the new
 sensu-backend init tool.
+- Added the cluster's distribution to Tessen data.
+- Added a new field, ClusterIDHex, to the ClusterHealth datatype.
+- Added the `--etcd-discovery` and `--etcd-discovery-srv` flags to
+`sensu-backend`. These are used to take advantage of the embedded etcd's
+auto-discovery features.
+- Added `--keepalive-critical-timeout` to define the time after which a
+critical keepalive event should be created for an agent.
+- Added `--keepalive-warning-timeout` which is an alias of `--keepalive-timeout`
+for backwards compatibility.
 
 ### Fixed
 - Add a timeout to etcd requests when retrieving the nodes health.
 - Show the correct default value for the format flag in `sensuctl dump` help
 usage.
-- Added the `--etcd-discovery` and `--etcd-discovery-srv` flags to
-  `sensu-backend`. These are used to take advantage of the embedded etcd's
-  auto-discovery features.
-
-### Fixed
-- Listing assets with no results returns an empty array
+- Installing sensuctl commands via Bonsai will now check for correct labels
+before checking if the asset has 1 or more builds.
 - Listing assets with no results returns an empty array.
 - Fixed a panic that could occur when creating resources in a namespace that
 does not exist.
+- [Web] Links to documentation now point to the version of the product being run
+instead of the latest; helpful when running an older version of Sensu.
+- Fixed issue where keepalive events and events created through the agent's
+socket interface could be missing a namespace.
+- Fixed an issue where 'sensuctl cluster health' would hang indefinitely.
+- Fixed several issues around the metadata of resources encoded using the
+wrapped-json format, where the metadata would go missing when listing
+resources or prevent resources from being created.
 
 ### Changed
 - The backend will no longer automatically be seeded with a default admin
 username and password. Users will need to run 'sensu-backend init' on every
 new installation.
 - Several deprecated flags were removed from sensu-backend.
+- [Web] Changes to navigation. The app bar has been replaced by an omnipresent
+drawer increasing the available space for content. Additionally, each page now
+includes breadcrumbs.
+- [Web] Switching namespaces is easier than ever, with the new and improved
+switcher. The new component can be accessed from the drawer or with the shortcut
+ctrl+k. For those with many namespaces the switcher now includes fuzzy search
+and improved keyboard navigation.
+- 'sensuctl cluster health' will now use a 3s timeout when gathering cluster
+health information.
+- 'sensuctl cluster health' now collects cluster health information concurrently.
 
 ## [5.15.0] - 2019-11-18
 

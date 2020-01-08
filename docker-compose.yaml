@@ -24,7 +24,7 @@ services:
       - "18081:8081"
   backend3:
     image: sensu/sensu:latest
-    command: sensu-backend start --etcd-listen-client-urls http://0.0.0.0:2379 --name backend3 --etcd-advertise-client-urls http://backend3:2379 --etcd-initial-cluster backend1=http://backend1:2380,backend2=http://backend2:2380,backend3=http://backend3:2380 --etcd-initial-cluster-state new --etcd-initial-advertise-peer-urls http://backend3:2380 --state-dir /var/lib/sensu/sensu-backend/etcd3 --etcd-listen-peer-urls http://0.0.0.0:2380 --log-level debug
+    command: sensu-backend start --etcd-listen-client-urls http://0.0.0.0:2379 --etcd-name backend3 --etcd-advertise-client-urls http://backend3:2379 --etcd-initial-cluster backend1=http://backend1:2380,backend2=http://backend2:2380,backend3=http://backend3:2380 --etcd-initial-cluster-state new --etcd-initial-advertise-peer-urls http://backend3:2380 --state-dir /var/lib/sensu/sensu-backend/etcd3 --etcd-listen-peer-urls http://0.0.0.0:2380 --log-level debug
     hostname: backend3
     restart: always
     ports:

@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/graphql"
 )
 
@@ -57,6 +58,8 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 		return nil, errors.New("received unexpected request body")
 	}
 
+	claims := jwt.GetClaimsFromContext(req.Context())
+
 	// Execute each operation; maybe this could be done in parallel in the future.
 	results := make([]interface{}, 0, len(ops))
 	for _, op := range ops {
@@ -71,7 +74,11 @@ func (r *GraphQLRouter) query(req *http.Request) (interface{}, error) {
 			Variables:      queryVars,
 			SkipValidation: skipValidate,
 		})
-		results = append(results, result)
+		results = append(results, map[string]interface{}{
+			"data":   result.Data,
+			"errors": result.Errors,
+			"auth":   claims != nil,
+		})
 		if len(result.Errors) > 0 {
 			logger.
 				WithField("errors", result.Errors).

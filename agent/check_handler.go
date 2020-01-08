@@ -105,6 +105,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	checkConfig := request.Config
 	checkHooks := request.Hooks
 	hookAssets := request.HookAssets
+	secrets := request.Secrets
 
 	// Before token subsitution we retain copy of the command
 	origCommand := checkConfig.Command
@@ -166,9 +167,9 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	var env []string
 	if match && !matchedEntry.EnableEnv {
 		logger.WithFields(fields).Debug("disabling check env vars per the agent allow list")
-		env = environment.MergeEnvironments(os.Environ(), assets.Env())
+		env = environment.MergeEnvironments(os.Environ(), assets.Env(), secrets)
 	} else {
-		env = environment.MergeEnvironments(os.Environ(), assets.Env(), checkConfig.EnvVars)
+		env = environment.MergeEnvironments(os.Environ(), assets.Env(), secrets, checkConfig.EnvVars)
 	}
 
 	// Verify sha against the allow list

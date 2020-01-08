@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gorilla/mux"
@@ -69,8 +70,27 @@ func parsePeerAddrs(req *http.Request) ([]string, error) {
 	return strings.Split(peerAddrsValue, ","), nil
 }
 
+func parseTimeout(req *http.Request) (int, error) {
+	val := req.FormValue("timeout")
+	if len(val) == 0 {
+		return 0, nil
+	}
+	return strconv.Atoi(val)
+}
+
 func (r *ClusterRouter) list(w http.ResponseWriter, req *http.Request) {
-	resp, err := r.controller.MemberList(req.Context())
+	timeout, err := parseTimeout(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	ctx := req.Context()
+	if timeout > 0 {
+		tctx, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
+		defer cancel()
+		ctx = tctx
+	}
+	resp, err := r.controller.MemberList(ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -79,12 +99,23 @@ func (r *ClusterRouter) list(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *ClusterRouter) memberAdd(w http.ResponseWriter, req *http.Request) {
+	timeout, err := parseTimeout(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	ctx := req.Context()
+	if timeout > 0 {
+		tctx, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
+		defer cancel()
+		ctx = tctx
+	}
 	peerAddrs, err := parsePeerAddrs(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	resp, err := r.controller.MemberAdd(req.Context(), peerAddrs)
+	resp, err := r.controller.MemberAdd(ctx, peerAddrs)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -93,12 +124,23 @@ func (r *ClusterRouter) memberAdd(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *ClusterRouter) memberRemove(w http.ResponseWriter, req *http.Request) {
+	timeout, err := parseTimeout(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	ctx := req.Context()
+	if timeout > 0 {
+		tctx, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
+		defer cancel()
+		ctx = tctx
+	}
 	id, err := parseID(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	resp, err := r.controller.MemberRemove(req.Context(), id)
+	resp, err := r.controller.MemberRemove(ctx, id)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -107,6 +149,17 @@ func (r *ClusterRouter) memberRemove(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *ClusterRouter) memberUpdate(w http.ResponseWriter, req *http.Request) {
+	timeout, err := parseTimeout(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	ctx := req.Context()
+	if timeout > 0 {
+		tctx, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
+		defer cancel()
+		ctx = tctx
+	}
 	id, err := parseID(req)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -117,7 +170,7 @@ func (r *ClusterRouter) memberUpdate(w http.ResponseWriter, req *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	resp, err := r.controller.MemberUpdate(req.Context(), id, peerAddrs)
+	resp, err := r.controller.MemberUpdate(ctx, id, peerAddrs)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -126,7 +179,18 @@ func (r *ClusterRouter) memberUpdate(w http.ResponseWriter, req *http.Request) {
 }
 
 func (r *ClusterRouter) clusterID(w http.ResponseWriter, req *http.Request) {
-	resp, err := r.controller.ClusterID(req.Context())
+	timeout, err := parseTimeout(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	ctx := req.Context()
+	if timeout > 0 {
+		tctx, cancel := context.WithTimeout(ctx, time.Duration(timeout)*time.Second)
+		defer cancel()
+		ctx = tctx
+	}
+	resp, err := r.controller.ClusterID(ctx)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return

@@ -2,11 +2,11 @@ package seeds
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
-	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -18,6 +18,8 @@ type Config struct {
 	// AdminPassword is the password of the cluster admin.
 	AdminPassword string
 }
+
+var ErrAlreadyInitialized = errors.New("sensu-backend already initialized")
 
 // SeedCluster seeds the cluster according to the provided config.
 func SeedCluster(ctx context.Context, store store.Store, config Config) error {
@@ -47,18 +49,19 @@ func SeedCluster(ctx context.Context, store store.Store, config Config) error {
 			}
 		}()
 
-		// Initialize the JWT secret. This method is idempotent and needs to be ran
-		// at every startup so the JWT signatures remain valid
-		if err = jwt.InitSecret(store); err != nil {
+		// Check that the store hasn't already been seeded
+		var initialized bool
+		initialized, err = initializer.IsInitialized()
+		if err != nil {
+			return
+		}
+		if initialized {
+			logger.Info("store already initialized")
+			err = ErrAlreadyInitialized
 			return
 		}
 
-		// Check that the store hasn't already been seeded
-		initialized, err := initializer.IsInitialized()
-		if err != nil || initialized {
-			return
-		}
-		logger.Info("seeding etcd store w/ intial data")
+		logger.Info("seeding etcd store with intial data")
 
 		// Create the default namespace
 		if err = setupDefaultNamespace(store); err != nil {
