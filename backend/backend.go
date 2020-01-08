@@ -11,6 +11,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/pkg/transport"
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
@@ -33,11 +34,11 @@ import (
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/schedulerd"
+	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/backend/tessend"
 	"github.com/sensu/sensu-go/rpc"
-	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/system"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
@@ -350,6 +351,7 @@ func Initialize(config *Config) (*Backend, error) {
 		UserClient:        api.NewUserClient(stor, auth),
 		RBACClient:        api.NewRBACClient(stor, auth),
 		VersionController: actions.NewVersionController(clusterVersion),
+		MetricGatherer:    prometheus.DefaultGatherer,
 		GenericClient:     &api.GenericClient{Store: stor, Auth: auth},
 	})
 	if err != nil {
