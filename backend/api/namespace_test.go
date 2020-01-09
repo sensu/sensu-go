@@ -13,6 +13,164 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
+func TestNamespaceGet(t *testing.T) {
+	tests := []struct {
+		name                string
+		namespace           string
+		attrs               *authorization.Attributes
+		clusterRoles        []*corev2.ClusterRole
+		clusterRoleBindings []*corev2.ClusterRoleBinding
+		roles               []*corev2.Role
+		roleBindings        []*corev2.RoleBinding
+		wantNamespace       bool
+		wantErr             bool
+	}{
+		{
+			name:      "no access",
+			namespace: "dev",
+			attrs: &authorization.Attributes{
+				User: corev2.User{
+					Username: "foo",
+				},
+			},
+			clusterRoles: []*corev2.ClusterRole{
+				{
+					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+					Rules: []corev2.Rule{
+						{
+							Verbs:     []string{corev2.VerbAll},
+							Resources: []string{corev2.ResourceAll},
+						},
+					},
+				},
+			},
+			clusterRoleBindings: []*corev2.ClusterRoleBinding{
+				{
+					Subjects: []corev2.Subject{
+						{
+							Type: "Group",
+							Name: "cluster-admins",
+						},
+					},
+					RoleRef: corev2.RoleRef{
+						Type: "ClusterRole",
+						Name: "cluster-admin",
+					},
+					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+				},
+			},
+			wantNamespace: false,
+			wantErr:       true,
+		},
+		{
+			name:      "explicit access",
+			namespace: "dev",
+			attrs: &authorization.Attributes{
+				User: corev2.User{
+					Username: "foo",
+					Groups:   []string{"cluster-admins"},
+				},
+			},
+			clusterRoles: []*corev2.ClusterRole{
+				{
+					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+					Rules: []corev2.Rule{
+						{
+							Verbs:     []string{corev2.VerbAll},
+							Resources: []string{corev2.ResourceAll},
+						},
+					},
+				},
+			},
+			clusterRoleBindings: []*corev2.ClusterRoleBinding{
+				{
+					Subjects: []corev2.Subject{
+						{
+							Type: "Group",
+							Name: "cluster-admins",
+						},
+					},
+					RoleRef: corev2.RoleRef{
+						Type: "ClusterRole",
+						Name: "cluster-admin",
+					},
+					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+				},
+			},
+			wantNamespace: true,
+			wantErr:       false,
+		},
+		{
+			name:      "implicit access",
+			namespace: "dev",
+			attrs: &authorization.Attributes{
+				User: corev2.User{
+					Username: "foo",
+					Groups:   []string{"check-reader"},
+				},
+			},
+			roles: []*corev2.Role{
+				{
+					ObjectMeta: corev2.NewObjectMeta("check-reader", "dev"),
+					Rules: []corev2.Rule{
+						{
+							Verbs:     []string{"get"},
+							Resources: []string{corev2.ChecksResource},
+						},
+					},
+				},
+			},
+			roleBindings: []*corev2.RoleBinding{
+				{
+					Subjects: []corev2.Subject{
+						{
+							Type: "User",
+							Name: "foo",
+						},
+					},
+					RoleRef: corev2.RoleRef{
+						Type: "Role",
+						Name: "check-reader",
+					},
+					ObjectMeta: corev2.NewObjectMeta("check-reader", "dev"),
+				},
+			},
+			wantNamespace: true,
+			wantErr:       false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := new(mockstore.MockStore)
+			store.On("ListClusterRoles", mock.Anything, mock.Anything).Return(tt.clusterRoles, nil)
+			store.On("ListClusterRoleBindings", mock.Anything, mock.Anything).Return(tt.clusterRoleBindings, nil)
+			store.On("ListRoles", mock.Anything, mock.Anything).Return(tt.roles, nil)
+			store.On("ListRoleBindings", mock.Anything, mock.Anything).Return(tt.roleBindings, nil)
+			store.On("GetResource", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Run(func(args mock.Arguments) {
+				resource := args[2].(*corev2.Namespace)
+				*resource = *corev2.FixtureNamespace("dev")
+			}).Return(nil)
+			setupGetClusterRoleAndGetRole(store, tt.clusterRoles, tt.roles)
+
+			ctx := contextWithUser(defaultContext(), tt.attrs.User.Username, tt.attrs.User.Groups)
+
+			auth := &rbac.Authorizer{Store: store}
+			client := NewNamespaceClient(store, auth)
+
+			got, err := client.FetchNamespace(ctx, tt.namespace)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("NamespaceClient.FetchNamespace() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.wantNamespace && (got == nil) {
+				t.Fatalf("permission error: want access to namespace? %+v, got %+v", tt.wantNamespace, got)
+			}
+		})
+	}
+}
+
 func TestNamespaceList(t *testing.T) {
 	namespaces := []*corev2.Namespace{
 		corev2.FixtureNamespace("a"),
