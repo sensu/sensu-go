@@ -9,6 +9,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Fixed a memory leak in the entity cache
+- Users with implicit permissions to a namespace can now display resources
+within that namespace via the Web UI.
 
 ## [5.16.1] - 2019-12-18
 
