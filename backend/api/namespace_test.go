@@ -189,7 +189,7 @@ func TestNamespaceList(t *testing.T) {
 		RoleBindings        []*corev2.RoleBinding
 		AllNamespaces       []*corev2.Namespace
 		ExpNamespaces       []*corev2.Namespace
-		ExpError            bool
+		WantErr             bool
 	}{
 		{
 			Name: "all access",
@@ -276,6 +276,7 @@ func TestNamespaceList(t *testing.T) {
 			RoleBindings:  []*corev2.RoleBinding{},
 			AllNamespaces: namespaces,
 			ExpNamespaces: nil,
+			WantErr:       true,
 		},
 		{
 			Name: "partial access",
@@ -300,6 +301,16 @@ func TestNamespaceList(t *testing.T) {
 						},
 					},
 				},
+				{
+					ObjectMeta: corev2.NewObjectMeta("pleb", ""),
+					Rules: []corev2.Rule{
+						{
+							Verbs:         []string{"get"},
+							Resources:     []string{corev2.NamespacesResource},
+							ResourceNames: []string{"a", "c", "e"},
+						},
+					},
+				},
 			},
 			ClusterRoleBindings: []*corev2.ClusterRoleBinding{
 				{
@@ -315,20 +326,6 @@ func TestNamespaceList(t *testing.T) {
 					},
 					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
 				},
-			},
-			Roles: []*corev2.Role{
-				{
-					ObjectMeta: corev2.NewObjectMeta("pleb", "default"),
-					Rules: []corev2.Rule{
-						{
-							Verbs:         []string{"get"},
-							Resources:     []string{corev2.NamespacesResource},
-							ResourceNames: []string{"a", "c", "e"},
-						},
-					},
-				},
-			},
-			RoleBindings: []*corev2.RoleBinding{
 				{
 					Subjects: []corev2.Subject{
 						{
@@ -337,10 +334,10 @@ func TestNamespaceList(t *testing.T) {
 						},
 					},
 					RoleRef: corev2.RoleRef{
-						Type: "Role",
+						Type: "ClusterRole",
 						Name: "pleb",
 					},
-					ObjectMeta: corev2.NewObjectMeta("pleb", "default"),
+					ObjectMeta: corev2.NewObjectMeta("pleb", ""),
 				},
 			},
 			AllNamespaces: namespaces,
@@ -424,6 +421,47 @@ func TestNamespaceList(t *testing.T) {
 				namespaces[0],
 			},
 		},
+		{
+			Name: "explicit access should only work via ClusterRoleBindings",
+			Attrs: &authorization.Attributes{
+				APIGroup:   "core",
+				APIVersion: "v2",
+				Resource:   corev2.NamespacesResource,
+				User: corev2.User{
+					Username: "operator",
+					Groups:   []string{"local-admins"},
+				},
+			},
+			Roles: []*corev2.Role{
+				{
+					ObjectMeta: corev2.NewObjectMeta("local-admin", "default"),
+					Rules: []corev2.Rule{
+						{
+							Verbs:     []string{corev2.VerbAll},
+							Resources: []string{corev2.ResourceAll},
+						},
+					},
+				},
+			},
+			RoleBindings: []*corev2.RoleBinding{
+				{
+					Subjects: []corev2.Subject{
+						{
+							Type: "Group",
+							Name: "local-admins",
+						},
+					},
+					RoleRef: corev2.RoleRef{
+						Type: "Role",
+						Name: "local-admin",
+					},
+					ObjectMeta: corev2.NewObjectMeta("local-admin", "default"),
+				},
+			},
+			AllNamespaces: namespaces,
+			ExpNamespaces: nil,
+			WantErr:       true,
+		},
 	}
 
 	for _, test := range tests {
@@ -445,8 +483,9 @@ func TestNamespaceList(t *testing.T) {
 			client := NewNamespaceClient(store, auth)
 
 			got, err := client.ListNamespaces(ctx)
-			if err != nil {
-				t.Fatal(err)
+			if (err != nil) != test.WantErr {
+				t.Errorf("NamespaceClient.ListNamespaces() error = %v, wantErr %v", err, test.WantErr)
+				return
 			}
 
 			sort.Slice(got, sortFunc(got))
