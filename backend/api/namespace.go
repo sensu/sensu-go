@@ -109,7 +109,6 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespa
 		}
 
 		// Only ClusterRoleBindings can grant explicit access to a namespace
-		fmt.Println(binding.GetObjectMeta().Namespace)
 		if binding.GetObjectMeta().Namespace == "" {
 			// If this rule applies to namespaces, determine if all resources of type "namespace" are allowed
 			if len(rule.ResourceNames) == 0 {
@@ -209,19 +208,22 @@ func (a *NamespaceClient) FetchNamespace(ctx context.Context, name string) (*cor
 			return true
 		}
 
-		// If this rule applies to namespaces, determine if all resources of type "namespace" are allowed
-		if len(rule.ResourceNames) == 0 {
-			logger.Debugf("request authorized by the binding %s", binding.GetObjectMeta().Name)
-			authorized = true
-			return false
-		}
+		// Only ClusterRoleBindings can grant explicit access to a namespace
+		if binding.GetObjectMeta().Namespace == "" {
+			// If this rule applies to namespaces, determine if all resources of type "namespace" are allowed
+			if len(rule.ResourceNames) == 0 {
+				logger.Debugf("request authorized by the binding %s", binding.GetObjectMeta().Name)
+				authorized = true
+				return false
+			}
 
-		// If this rule applies to namespaces, and only certain namespaces are
-		// specified, determine if it matches this current namespace
-		if rule.ResourceNameMatches(name) {
-			logger.Debugf("request authorized by the binding %s", binding.GetObjectMeta().Name)
-			authorized = true
-			return false
+			// If this rule applies to namespaces, and only certain namespaces are
+			// specified, determine if it matches this current namespace
+			if rule.ResourceNameMatches(name) {
+				logger.Debugf("request authorized by the binding %s", binding.GetObjectMeta().Name)
+				authorized = true
+				return false
+			}
 		}
 
 		return true

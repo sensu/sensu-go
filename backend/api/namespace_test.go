@@ -138,6 +138,44 @@ func TestNamespaceGet(t *testing.T) {
 			wantNamespace: true,
 			wantErr:       false,
 		},
+		{
+			name:      "explicit access can only be granted via cluster resources",
+			namespace: "dev",
+			attrs: &authorization.Attributes{
+				User: corev2.User{
+					Username: "foo",
+					Groups:   []string{"local-admins"},
+				},
+			},
+			roles: []*corev2.Role{
+				{
+					ObjectMeta: corev2.NewObjectMeta("local-admin", "dev"),
+					Rules: []corev2.Rule{
+						{
+							Verbs:     []string{corev2.VerbAll},
+							Resources: []string{corev2.ResourceAll},
+						},
+					},
+				},
+			},
+			roleBindings: []*corev2.RoleBinding{
+				{
+					Subjects: []corev2.Subject{
+						{
+							Type: "Group",
+							Name: "local-admins",
+						},
+					},
+					RoleRef: corev2.RoleRef{
+						Type: "Role",
+						Name: "local-admin",
+					},
+					ObjectMeta: corev2.NewObjectMeta("local-admin", "dev"),
+				},
+			},
+			wantNamespace: false,
+			wantErr:       true,
+		},
 	}
 
 	for _, tt := range tests {
@@ -422,7 +460,7 @@ func TestNamespaceList(t *testing.T) {
 			},
 		},
 		{
-			Name: "explicit access should only work via ClusterRoleBindings",
+			Name: "explicit access can only be granted via cluster resources",
 			Attrs: &authorization.Attributes{
 				APIGroup:   "core",
 				APIVersion: "v2",
