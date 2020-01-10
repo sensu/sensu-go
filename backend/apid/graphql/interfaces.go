@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 
+	dto "github.com/prometheus/client_model/go"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 )
@@ -126,4 +127,8 @@ type EtcdHealthController interface {
 
 type VersionController interface {
 	GetVersion(ctx context.Context) *corev2.Version
+}
+
+type MetricGatherer interface {
+	Gather() ([]*dto.MetricFamily, error)
 }

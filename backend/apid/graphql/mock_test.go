@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 
+	dto "github.com/prometheus/client_model/go"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/stretchr/testify/mock"
@@ -283,4 +284,13 @@ func (c *MockUserClient) CreateUser(ctx context.Context, user *corev2.User) erro
 
 func (c *MockUserClient) UpdateUser(ctx context.Context, user *corev2.User) error {
 	return c.Called(ctx, user).Error(0)
+}
+
+type MockMetricGatherer struct {
+	mock.Mock
+}
+
+func (m *MockMetricGatherer) Gather() ([]*dto.MetricFamily, error) {
+	args := m.Called()
+	return args.Get(0).([]*dto.MetricFamily), args.Error(1)
 }

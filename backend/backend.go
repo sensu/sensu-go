@@ -10,6 +10,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/pkg/transport"
+	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
@@ -359,6 +360,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		UserClient:        api.NewUserClient(stor, auth),
 		RBACClient:        api.NewRBACClient(stor, auth),
 		VersionController: actions.NewVersionController(clusterVersion),
+		MetricGatherer:    prometheus.DefaultGatherer,
 		GenericClient:     &api.GenericClient{Store: stor, Auth: auth},
 	})
 	if err != nil {

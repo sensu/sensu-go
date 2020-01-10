@@ -38,6 +38,7 @@ type ServiceConfig struct {
 	RBACClient        RBACClient
 	VersionController VersionController
 	GenericClient     GenericClient
+	MetricGatherer    MetricGatherer
 }
 
 // Service describes the Sensu GraphQL service capable of handling queries.
@@ -135,6 +136,18 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterEtcdAlarmType(svc)
 	schema.RegisterEtcdClusterHealth(svc, &etcdClusterHealthImpl{})
 	schema.RegisterEtcdClusterMemberHealth(svc, &etcdClusterMemberHealthImpl{})
+
+	// Register metrics
+	schema.RegisterBucketMetric(svc, &schema.BucketMetricAliases{})
+	schema.RegisterCounterMetric(svc, &counterMetricImpl{})
+	schema.RegisterGaugeMetric(svc, &gaugeMetricImpl{})
+	schema.RegisterHistogramMetric(svc, &histogramMetricImpl{})
+	schema.RegisterMetric(svc, &metricImpl{})
+	schema.RegisterMetricFamily(svc, &metricFamilyImpl{})
+	schema.RegisterMetricKind(svc)
+	schema.RegisterQuantileMetric(svc, &schema.QuantileMetricAliases{})
+	schema.RegisterSummaryMetric(svc, &summaryMetricImpl{})
+	schema.RegisterUntypedMetric(svc, &untypedMetricImpl{})
 
 	// Register time window
 	schema.RegisterTimeWindowDays(svc, &schema.TimeWindowDaysAliases{})

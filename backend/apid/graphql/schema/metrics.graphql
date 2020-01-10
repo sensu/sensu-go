@@ -1,0 +1,63 @@
+interface Metric {
+  labels: [KVPairString!]!
+  timestamp: DateTime
+}
+
+enum MetricKind {
+  COUNTER
+  GAUGE
+  SUMMARY
+  UNTYPED
+  HISTOGRAM
+}
+
+type QuantileMetric {
+  quantile: Float
+  value: Float
+}
+
+type BucketMetric {
+  cumulativeCount: Int
+  upperBound: Float
+}
+
+type CounterMetric implements Metric {
+  labels: [KVPairString!]!
+  timestamp: DateTime
+  value: Float
+}
+
+type GaugeMetric implements Metric {
+  labels: [KVPairString!]!
+  timestamp: DateTime
+  value: Float
+}
+
+type SummaryMetric implements Metric {
+  labels: [KVPairString!]!
+  timestamp: DateTime
+  sampleCount: Int
+  sampleSum: Float
+  quantile: [QuantileMetric]!
+}
+
+type UntypedMetric implements Metric {
+  labels: [KVPairString!]!
+  timestamp: DateTime
+  value: Float
+}
+
+type HistogramMetric implements Metric {
+  labels: [KVPairString!]!
+  timestamp: DateTime
+  sampleCount: Int
+  sampleSum: Float
+  bucket: [BucketMetric]!
+}
+
+type MetricFamily {
+  name: String
+  help: String
+  type: MetricKind!
+  metric: [Metric]!
+}
