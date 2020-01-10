@@ -1,5 +1,4 @@
-// Package pipelined provides the traditional Sensu event pipeline.
-package pipelined
+package pipeline
 
 import (
 	"encoding/json"
@@ -33,9 +32,8 @@ func TestHelperMutatorProcess(t *testing.T) {
 	os.Exit(0)
 }
 
-func TestPipelinedMutate(t *testing.T) {
-	p, err := New(Config{Store: nil, Bus: nil})
-	require.NoError(t, err)
+func TestPipelineMutate(t *testing.T) {
+	p := New(Config{})
 
 	handler := types.FakeHandlerCommand("cat")
 	handler.Type = "pipe"
@@ -50,9 +48,8 @@ func TestPipelinedMutate(t *testing.T) {
 	assert.Equal(t, expected, eventData)
 }
 
-func TestPipelinedJsonMutator(t *testing.T) {
-	p, err := New(Config{Store: nil, Bus: nil})
-	require.NoError(t, err)
+func TestPipelineJsonMutator(t *testing.T) {
+	p := New(Config{})
 
 	event := &types.Event{}
 
@@ -64,9 +61,8 @@ func TestPipelinedJsonMutator(t *testing.T) {
 	assert.Equal(t, expected, output)
 }
 
-func TestPipelinedOnlyCheckOutputMutator(t *testing.T) {
-	p, err := New(Config{Store: nil, Bus: nil})
-	require.NoError(t, err)
+func TestPipelineOnlyCheckOutputMutator(t *testing.T) {
+	p := New(Config{})
 
 	event := &types.Event{}
 	event.Check = &types.Check{}
@@ -78,9 +74,8 @@ func TestPipelinedOnlyCheckOutputMutator(t *testing.T) {
 	assert.Equal(t, expected, output)
 }
 
-func TestPipelinedOnlyCheckOutputMutate(t *testing.T) {
-	p, err := New(Config{Store: nil, Bus: nil})
-	require.NoError(t, err)
+func TestPipelineOnlyCheckOutputMutate(t *testing.T) {
+	p := New(Config{})
 
 	handler := types.FakeHandlerCommand("cat")
 	handler.Type = "pipe"
@@ -98,7 +93,7 @@ func TestPipelinedOnlyCheckOutputMutate(t *testing.T) {
 	assert.Equal(t, expected, eventData)
 }
 
-func TestPipelinedExtensionMutator(t *testing.T) {
+func TestPipelineExtensionMutator(t *testing.T) {
 	m := &mockExec{}
 	ext := &types.Extension{URL: "http://127.0.0.1"}
 	store := &mockstore.MockStore{}
@@ -112,8 +107,7 @@ func TestPipelinedExtensionMutator(t *testing.T) {
 		return m, nil
 	}
 
-	p, err := New(Config{ExtensionExecutorGetter: getter, Store: store})
-	require.NoError(t, err)
+	p := New(Config{ExtensionExecutorGetter: getter, Store: store})
 
 	handler := &types.Handler{}
 	handler.Mutator = "extension"
@@ -123,9 +117,8 @@ func TestPipelinedExtensionMutator(t *testing.T) {
 	require.Equal(t, []byte("remote"), eventData)
 }
 
-func TestPipelinedPipeMutator(t *testing.T) {
-	p, err := New(Config{Store: nil, Bus: nil, SecretsProviderManager: secrets.NewProviderManager()})
-	require.NoError(t, err)
+func TestPipelinePipeMutator(t *testing.T) {
+	p := New(Config{SecretsProviderManager: secrets.NewProviderManager()})
 
 	mutator := types.FakeMutatorCommand("cat")
 

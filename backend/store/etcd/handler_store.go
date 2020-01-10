@@ -3,7 +3,6 @@ package etcd
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
@@ -28,11 +27,13 @@ func GetHandlersPath(ctx context.Context, name string) string {
 // DeleteHandlerByName deletes a Handler by name.
 func (s *Store) DeleteHandlerByName(ctx context.Context, name string) error {
 	if name == "" {
-		return errors.New("must specify name of handler")
+		return &store.ErrNotValid{Err: errors.New("must specify name of handler")}
 	}
 
-	_, err := s.client.Delete(ctx, GetHandlersPath(ctx, name))
-	return err
+	if _, err := s.client.Delete(ctx, GetHandlersPath(ctx, name)); err != nil {
+		return &store.ErrInternal{Message: err.Error()}
+	}
+	return nil
 }
 
 // GetHandlers gets the list of handlers for a namespace.
@@ -45,12 +46,12 @@ func (s *Store) GetHandlers(ctx context.Context, pred *store.SelectionPredicate)
 // GetHandlerByName gets a Handler by name.
 func (s *Store) GetHandlerByName(ctx context.Context, name string) (*types.Handler, error) {
 	if name == "" {
-		return nil, errors.New("must specify name of handler")
+		return nil, &store.ErrNotValid{Err: errors.New("must specify name of handler")}
 	}
 
 	resp, err := s.client.Get(ctx, GetHandlersPath(ctx, name))
 	if err != nil {
-		return nil, err
+		return nil, &store.ErrInternal{Message: err.Error()}
 	}
 	if len(resp.Kvs) == 0 {
 		return nil, nil
@@ -59,7 +60,7 @@ func (s *Store) GetHandlerByName(ctx context.Context, name string) (*types.Handl
 	handlerBytes := resp.Kvs[0].Value
 	handler := &types.Handler{}
 	if err := unmarshal(handlerBytes, handler); err != nil {
-		return nil, err
+		return nil, &store.ErrDecode{Err: err}
 	}
 
 	return handler, nil
@@ -68,26 +69,22 @@ func (s *Store) GetHandlerByName(ctx context.Context, name string) (*types.Handl
 // UpdateHandler updates a Handler.
 func (s *Store) UpdateHandler(ctx context.Context, handler *types.Handler) error {
 	if err := handler.Validate(); err != nil {
-		return err
+		return &store.ErrNotValid{Err: err}
 	}
 
 	handlerBytes, err := proto.Marshal(handler)
 	if err != nil {
-		return err
+		return &store.ErrEncode{Err: err}
 	}
 
 	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(handler.Namespace)), ">", 0)
 	req := clientv3.OpPut(getHandlerPath(handler), string(handlerBytes))
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
-		return err
+		return &store.ErrInternal{Message: err.Error()}
 	}
 	if !res.Succeeded {
-		return fmt.Errorf(
-			"could not create the handler %s in namespace %s",
-			handler.Name,
-			handler.Namespace,
-		)
+		return &store.ErrNamespaceMissing{Namespace: handler.Namespace}
 	}
 
 	return nil

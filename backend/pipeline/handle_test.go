@@ -1,5 +1,4 @@
-// Package pipelined provides the traditional Sensu event pipeline.
-package pipelined
+package pipeline
 
 import (
 	"context"
@@ -63,9 +62,9 @@ func TestHelperHandlerProcess(t *testing.T) {
 	os.Exit(0)
 }
 
-func TestPipelinedHandleEvent(t *testing.T) {
+func TestPipelineHandleEvent(t *testing.T) {
 	t.SkipNow()
-	p := &Pipelined{}
+	p := &Pipeline{}
 
 	store := &mockstore.MockStore{}
 	p.store = store
@@ -89,7 +88,7 @@ func TestPipelinedHandleEvent(t *testing.T) {
 	// Currently fire and forget. You may choose to return a map
 	// of handler execution information in the future, don't know
 	// how useful this would be.
-	assert.NoError(t, p.handleEvent(event))
+	assert.NoError(t, p.HandleEvent(context.Background(), event))
 
 	event.Check.Handlers = []string{"handler1", "handler2"}
 
@@ -105,11 +104,11 @@ func TestPipelinedHandleEvent(t *testing.T) {
 		return m, nil
 	}
 
-	assert.NoError(t, p.handleEvent(event))
+	assert.NoError(t, p.HandleEvent(context.Background(), event))
 	m.AssertCalled(t, "HandleEvent", event, mock.Anything)
 }
 
-func TestPipelinedExpandHandlers(t *testing.T) {
+func TestPipelineExpandHandlers(t *testing.T) {
 	type storeFunc func(*mockstore.MockStore)
 
 	var nilHandler *corev2.Handler
@@ -194,17 +193,17 @@ func TestPipelinedExpandHandlers(t *testing.T) {
 				tt.storeFunc(store)
 			}
 
-			p := &Pipelined{store: store}
+			p := &Pipeline{store: store}
 			got, _ := p.expandHandlers(context.Background(), tt.handlers, 1)
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Pipelined.expandHandlers() = %#v, want %#v", got, tt.want)
+				t.Errorf("Pipeline.expandHandlers() = %#v, want %#v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestPipelinedPipeHandler(t *testing.T) {
-	p := &Pipelined{secretsProviderManager: secrets.NewProviderManager()}
+func TestPipelinePipeHandler(t *testing.T) {
+	p := &Pipeline{secretsProviderManager: secrets.NewProviderManager()}
 	p.executor = &command.ExecutionRequest{}
 
 	handler := types.FakeHandlerCommand("cat")
@@ -220,11 +219,11 @@ func TestPipelinedPipeHandler(t *testing.T) {
 	assert.Equal(t, 0, handlerExec.Status)
 }
 
-func TestPipelinedTcpHandler(t *testing.T) {
+func TestPipelineTcpHandler(t *testing.T) {
 	ready := make(chan struct{})
 	done := make(chan struct{})
 
-	p := &Pipelined{secretsProviderManager: secrets.NewProviderManager()}
+	p := &Pipeline{secretsProviderManager: secrets.NewProviderManager()}
 
 	handlerSocket := &types.HandlerSocket{
 		Host: "127.0.0.1",
@@ -276,11 +275,11 @@ func TestPipelinedTcpHandler(t *testing.T) {
 	<-done
 }
 
-func TestPipelinedUdpHandler(t *testing.T) {
+func TestPipelineUdpHandler(t *testing.T) {
 	ready := make(chan struct{})
 	done := make(chan struct{})
 
-	p := &Pipelined{}
+	p := &Pipeline{}
 
 	handlerSocket := &types.HandlerSocket{
 		Host: "127.0.0.1",
@@ -324,7 +323,7 @@ func TestPipelinedUdpHandler(t *testing.T) {
 	<-done
 }
 
-func TestPipelinedGRPCHandler(t *testing.T) {
+func TestPipelineGRPCHandler(t *testing.T) {
 	extension := &types.Extension{}
 	event := types.FixtureEvent("foo", "bar")
 	execFn := func(ext *types.Extension) (rpc.ExtensionExecutor, error) {
@@ -335,7 +334,7 @@ func TestPipelinedGRPCHandler(t *testing.T) {
 		}, nil)
 		return mock, nil
 	}
-	p := &Pipelined{
+	p := &Pipeline{
 		extensionExecutor: execFn,
 	}
 	result, err := p.grpcHandler(extension, event, nil)

@@ -2,11 +2,11 @@ package etcd
 
 import (
 	"context"
-	"fmt"
 	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -28,7 +28,7 @@ func (s *Store) DeleteFailingKeepalive(ctx context.Context, entity *types.Entity
 func (s *Store) GetFailingKeepalives(ctx context.Context) ([]*types.KeepaliveRecord, error) {
 	resp, err := s.client.Get(ctx, s.keepalivesPath, clientv3.WithPrefix())
 	if err != nil {
-		return nil, err
+		return nil, &store.ErrInternal{Message: err.Error()}
 	}
 
 	keepalives := []*types.KeepaliveRecord{}
@@ -37,6 +37,7 @@ func (s *Store) GetFailingKeepalives(ctx context.Context) ([]*types.KeepaliveRec
 		if err := unmarshal(kv.Value, keepalive); err != nil {
 			// if we have a problem deserializing a keepalive record, delete that record
 			// ignoring any errors we have along the way.
+			// TODO(eric): the above is questionable, consider removing this logic
 			if _, err := s.client.Delete(ctx, string(kv.Key)); err != nil {
 				logger.Debug(err)
 			}
@@ -53,21 +54,17 @@ func (s *Store) UpdateFailingKeepalive(ctx context.Context, entity *types.Entity
 	kr := types.NewKeepaliveRecord(entity, expiration)
 	krBytes, err := proto.Marshal(kr)
 	if err != nil {
-		return err
+		return &store.ErrDecode{Err: err}
 	}
 
 	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(entity.Namespace)), ">", 0)
 	req := clientv3.OpPut(getKeepalivePath(s.keepalivesPath, entity), string(krBytes))
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
-		return err
+		return &store.ErrInternal{Message: err.Error()}
 	}
 	if !res.Succeeded {
-		return fmt.Errorf(
-			"could not create the keepalive for entity %s in namespace %s",
-			entity.Name,
-			entity.Namespace,
-		)
+		return &store.ErrNamespaceMissing{Namespace: entity.Namespace}
 	}
 
 	return err

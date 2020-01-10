@@ -74,36 +74,3 @@ func TestBackendIDGetter(t *testing.T) {
 		t.Fatalf("bad backend id: got %d, want %d", got, want)
 	}
 }
-
-func TestBackendIDGetterRetry(t *testing.T) {
-	// Look, there are some frankly quite concerning concurrency constructs
-	// present in this test. I'm sure you aren't thrilled to see them.
-	// However they were necessary for me to safely test this thing.
-	// Change at your peril :)
-	client := newMockBackendIDGetterClient()
-	getter := NewBackendIDGetter(context.TODO(), client)
-
-	got := getter.GetBackendID()
-	if want := int64(1234); got != want {
-		t.Fatalf("bad backend id: got %d, want %d", got, want)
-	}
-
-	client.Lock()
-	// We need an empty grantCh before progressing
-	client.clearGrantCh()
-
-	close(client.keepaliveCh)
-	client.grantResp = &clientv3.LeaseGrantResponse{
-		ID: clientv3.LeaseID(2345),
-	}
-	client.keepaliveCh = make(chan *clientv3.LeaseKeepAliveResponse)
-	client.Unlock()
-
-	// Wait for Grant() to get called before progressing with the test
-	<-client.grantCh
-
-	got = getter.GetBackendID()
-	if want := int64(2345); got != want {
-		t.Fatalf("bad backend id: got %d, want %d", got, want)
-	}
-}

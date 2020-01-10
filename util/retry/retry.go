@@ -11,6 +11,8 @@ import (
 	"unsafe"
 )
 
+const DefaultMultiplier float64 = 2.0
+
 // JSONTimeDuration is like time.Duration, but with friendly JSON methods.
 type JSONTimeDuration time.Duration
 
@@ -65,7 +67,7 @@ type ExponentialBackoff struct {
 	MaxRetryAttempts int `json:"max_retry_attempts,omitempty"`
 
 	// Multiplier is used to increment the current interval by multiplying it with
-	// this multiplier
+	// this multiplier. If not supplied, it will be set to DefaultMultiplier.
 	Multiplier float64 `json:"multiplier"`
 
 	// start contains the starting time of the retry attempts
@@ -169,7 +171,11 @@ func (b *ExponentialBackoff) Retry(fn Func) error {
 			}
 
 			// Exponentially increase that sleep duration
-			wait = time.Duration(float64(wait) * b.Multiplier)
+			multiplier := b.Multiplier
+			if multiplier == 0 {
+				multiplier = DefaultMultiplier
+			}
+			wait = time.Duration(float64(wait) * multiplier)
 
 			// Add a jitter (randomized delay) for the next attempt, to prevent
 			// potential collisions

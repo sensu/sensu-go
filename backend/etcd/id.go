@@ -2,6 +2,7 @@ package etcd
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"path"
 	"sync"
@@ -10,7 +11,6 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/util/retry"
 )
 
 var (
@@ -35,6 +35,7 @@ type BackendIDGetter struct {
 	wg     sync.WaitGroup
 	ctx    context.Context
 	client BackendIDGetterClient
+	errors chan error
 }
 
 func (b *BackendIDGetter) GetBackendID() int64 {
@@ -53,12 +54,13 @@ func NewBackendIDGetter(ctx context.Context, client BackendIDGetterClient) *Back
 	getter := &BackendIDGetter{
 		client: client,
 		ctx:    ctx,
+		errors: make(chan error, 1),
 	}
 	// Wait until the backend ID has been created
 	getter.wg.Add(1)
 
 	// Start the async worker that populates the backend ID
-	go getter.retryAcquireLease()
+	go getter.keepAliveLease(ctx)
 
 	// Wait until the worker has acquired a backend ID
 	getter.wg.Wait()
@@ -66,42 +68,32 @@ func NewBackendIDGetter(ctx context.Context, client BackendIDGetterClient) *Back
 	return getter
 }
 
-func leaseRetryBackoff() *retry.ExponentialBackoff {
-	return &retry.ExponentialBackoff{
-		InitialDelayInterval: minRetryLeaseDelay,
-		MaxDelayInterval:     maxRetryLeaseDelay,
-		MaxElapsedTime:       retryLeaseTimeout,
-		Multiplier:           retryLeaseMultiplier,
+func (b *BackendIDGetter) keepAliveLease(ctx context.Context) {
+	id, ch, err := b.getLease()
+	if err != nil {
+		if err != ctx.Err() {
+			logger.WithError(err).Error("error generating backend ID")
+			b.errors <- err
+		}
+		return
 	}
-}
-
-func (b *BackendIDGetter) retryAcquireLease() {
-	backoff := leaseRetryBackoff()
+	atomic.StoreInt64(&b.id, id)
+	b.wg.Done()
 	for {
-		var ch <-chan *clientv3.LeaseKeepAliveResponse
-		err := backoff.Retry(func(retries int) (bool, error) {
-			var err error
-			var id int64
-			id, ch, err = b.getLease()
-			if err != nil {
-				logger.WithError(err).Error("error generating backend ID")
-				return false, nil
+		select {
+		case resp, ok := <-ch:
+			if !ok {
+				if ctx.Err() == nil {
+					b.errors <- errors.New("keeplive channel closed")
+				}
+				return
 			}
-			atomic.StoreInt64(&b.id, id)
-			b.wg.Done()
-			return true, nil
-		})
-		if err != nil && err != b.ctx.Err() {
-			// Crash at this point. The system could not acquire a lease for
-			// retryLeaseTimeout duration.
-			panic(fmt.Sprintf("couldn't acquire an etcd lease for %v", retryLeaseTimeout))
-		}
-		for resp := range ch {
 			if resp.ID == clientv3.NoLease {
-				break
+				b.errors <- errors.New("no lease")
 			}
+		case <-ctx.Done():
+			return
 		}
-		b.wg.Add(1)
 	}
 }
 
@@ -111,18 +103,37 @@ func (b *BackendIDGetter) getLease() (int64, <-chan *clientv3.LeaseKeepAliveResp
 	if err != nil {
 		return 0, nil, fmt.Errorf("error creating backend ID: error granting lease: %s", err)
 	}
+	leaseID := resp.ID
 
 	// Register the backend's lease - this is for clients that need to be
 	// able to send specific backends messages
-	value := fmt.Sprintf("%x", resp.ID)
+	value := fmt.Sprintf("%x", leaseID)
 	key := path.Join(backendIDKeyPrefix, value)
-	_, err = b.client.Put(b.ctx, key, value, clientv3.WithLease(resp.ID))
+	_, err = b.client.Put(b.ctx, key, value, clientv3.WithLease(leaseID))
 	if err != nil {
 		return 0, nil, fmt.Errorf("error creating backend ID: error creating key: %s", err)
 	}
 
 	// Keep the lease alive
-	ch, err := b.client.KeepAlive(b.ctx, resp.ID)
+	ch, err := b.client.KeepAlive(b.ctx, leaseID)
 
-	return int64(resp.ID), ch, err
+	return int64(leaseID), ch, err
+}
+
+func (b *BackendIDGetter) Stop() error {
+	// no-op as we're controlled by the context
+	return nil
+}
+
+func (b *BackendIDGetter) Start() error {
+	// no-op as we start on New
+	return nil
+}
+
+func (b *BackendIDGetter) Err() <-chan error {
+	return b.errors
+}
+
+func (b *BackendIDGetter) Name() string {
+	return "backend_id_getter"
 }

@@ -1,5 +1,4 @@
-// Package pipelined provides the traditional Sensu event pipeline.
-package pipelined
+package pipeline
 
 import (
 	"context"
@@ -11,6 +10,7 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/util/environment"
@@ -18,23 +18,17 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const (
-	// DefaultSocketTimeout specifies the default socket dial
-	// timeout in seconds for TCP and UDP handlers.
-	DefaultSocketTimeout uint32 = 60
-)
-
 type handlerExtensionUnion struct {
 	*corev2.Extension
 	*corev2.Handler
 }
 
-// handleEvent takes a Sensu event through a Sensu pipeline, filters
+// HandleEvent takes a Sensu event through a Sensu pipeline, filters
 // -> mutator -> handler. An event may have one or more handlers. Most
 // errors are only logged and used for flow control, they will not
 // interupt event handling.
-func (p *Pipelined) handleEvent(event *corev2.Event) error {
-	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
+func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
+	ctx = context.WithValue(ctx, corev2.NamespaceKey, event.Entity.Namespace)
 
 	// Prepare debug log entry
 	debugFields := utillogging.EventFields(event, true)
@@ -67,13 +61,26 @@ func (p *Pipelined) handleEvent(event *corev2.Event) error {
 		handler := u.Handler
 		fields["handler"] = handler.Name
 
-		if filtered := p.filterEvent(handler, event); filtered {
+		filtered, err := p.filterEvent(handler, event)
+		if err != nil {
+			if _, ok := err.(*store.ErrInternal); ok {
+				// Fatal error
+				return err
+			}
+			logger.WithError(err).Warn("error filtering event")
+		}
+		if filtered {
 			logger.WithFields(fields).Info("event filtered")
 			continue
 		}
 
 		eventData, err := p.mutateEvent(handler, event)
 		if err != nil {
+			logger.WithError(err).Warn("error mutating event")
+			if _, ok := err.(*store.ErrInternal); ok {
+				// Fatal error
+				return err
+			}
 			continue
 		}
 
@@ -83,14 +90,23 @@ func (p *Pipelined) handleEvent(event *corev2.Event) error {
 		case "pipe":
 			if _, err := p.pipeHandler(handler, eventData); err != nil {
 				logger.WithFields(fields).Error(err)
+				if _, ok := err.(*store.ErrInternal); ok {
+					return err
+				}
 			}
 		case "tcp", "udp":
 			if _, err := p.socketHandler(handler, eventData); err != nil {
 				logger.WithFields(fields).Error(err)
+				if _, ok := err.(*store.ErrInternal); ok {
+					return err
+				}
 			}
 		case "grpc":
 			if _, err := p.grpcHandler(u.Extension, event, eventData); err != nil {
 				logger.WithFields(fields).Error(err)
+				if _, ok := err.(*store.ErrInternal); ok {
+					return err
+				}
 			}
 		default:
 			return errors.New("unknown handler type")
@@ -103,7 +119,7 @@ func (p *Pipelined) handleEvent(event *corev2.Event) error {
 // expandHandlers turns a list of Sensu handler names into a list of
 // handlers, while expanding handler sets with support for some
 // nesting. Handlers are fetched from etcd.
-func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level int) (map[string]handlerExtensionUnion, error) {
+func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level int) (map[string]handlerExtensionUnion, error) {
 	if level > 3 {
 		return nil, errors.New("handler sets cannot be deeply nested")
 	}
@@ -117,7 +133,9 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 	}
 
 	for _, handlerName := range handlers {
-		handler, err := p.store.GetHandlerByName(ctx, handlerName)
+		tctx, cancel := context.WithTimeout(ctx, p.storeTimeout)
+		handler, err := p.store.GetHandlerByName(tctx, handlerName)
+		cancel()
 		var extension *corev2.Extension
 
 		// Add handler name to log entry
@@ -129,6 +147,10 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 					WithFields(fields).
 					WithError(err).
 					Error("failed to retrieve a handler"))
+				if _, ok := err.(*store.ErrInternal); ok {
+					// Fatal error
+					return nil, err
+				}
 				continue
 			}
 
@@ -164,6 +186,9 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 					WithFields(fields).
 					WithError(err).
 					Error("failed to expand handler set")
+				if _, ok := err.(*store.ErrInternal); ok {
+					return nil, err
+				}
 			} else {
 				for name, u := range setHandlers {
 					if _, ok := expanded[name]; !ok {
@@ -183,7 +208,7 @@ func (p *Pipelined) expandHandlers(ctx context.Context, handlers []string, level
 
 // pipeHandler fork/executes a child process for a Sensu pipe handler
 // command and writes the mutated eventData to it via STDIN.
-func (p *Pipelined) pipeHandler(handler *corev2.Handler, eventData []byte) (*command.ExecutionResponse, error) {
+func (p *Pipeline) pipeHandler(handler *corev2.Handler, eventData []byte) (*command.ExecutionResponse, error) {
 	// Prepare log entry
 	fields := logrus.Fields{
 		"namespace": handler.Namespace,
@@ -216,6 +241,10 @@ func (p *Pipelined) pipeHandler(handler *corev2.Handler, eventData []byte) (*com
 		assets, err := asset.GetAll(context.TODO(), p.assetGetter, matchedAssets)
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for handler")
+			if _, ok := err.(*store.ErrInternal); ok {
+				// Fatal error
+				return nil, err
+			}
 		} else {
 			handlerExec.Env = environment.MergeEnvironments(os.Environ(), assets.Env(), handler.EnvVars)
 		}
@@ -234,9 +263,40 @@ func (p *Pipelined) pipeHandler(handler *corev2.Handler, eventData []byte) (*com
 	return result, err
 }
 
+func (p *Pipeline) grpcHandler(ext *corev2.Extension, evt *corev2.Event, mutated []byte) (rpc.HandleEventResponse, error) {
+	// Prepare log entry
+	fields := logrus.Fields{
+		"namespace": ext.GetNamespace(),
+		"handler":   ext.GetName(),
+	}
+
+	logger.WithFields(fields).Debug("sending event to handler extension")
+
+	executor, err := p.extensionExecutor(ext)
+	if err != nil {
+		logger.WithFields(fields).WithError(err).Error("failed to execute event handler extension")
+		return rpc.HandleEventResponse{}, err
+	}
+	defer func() {
+		if err := executor.Close(); err != nil {
+			logger.WithError(err).Debug("error closing grpc client conn")
+		}
+	}()
+
+	result, err := executor.HandleEvent(evt, mutated)
+	if err != nil {
+		logger.WithFields(fields).WithError(err).Error("failed to execute event handler extension")
+	} else {
+		fields["output"] = result.Output
+		logger.WithFields(fields).Info("event handler extension executed")
+	}
+
+	return result, err
+}
+
 // socketHandler creates either a TCP or UDP client to write eventData
 // to a socket. The provided handler Type determines the protocol.
-func (p *Pipelined) socketHandler(handler *corev2.Handler, eventData []byte) (conn net.Conn, err error) {
+func (p *Pipeline) socketHandler(handler *corev2.Handler, eventData []byte) (conn net.Conn, err error) {
 	protocol := handler.Type
 	host := handler.Socket.Host
 	port := handler.Socket.Port
@@ -280,35 +340,4 @@ func (p *Pipelined) socketHandler(handler *corev2.Handler, eventData []byte) (co
 	}
 
 	return conn, nil
-}
-
-func (p *Pipelined) grpcHandler(ext *corev2.Extension, evt *corev2.Event, mutated []byte) (rpc.HandleEventResponse, error) {
-	// Prepare log entry
-	fields := logrus.Fields{
-		"namespace": ext.GetNamespace(),
-		"handler":   ext.GetName(),
-	}
-
-	logger.WithFields(fields).Debug("sending event to handler extension")
-
-	executor, err := p.extensionExecutor(ext)
-	if err != nil {
-		logger.WithFields(fields).WithError(err).Error("failed to execute event handler extension")
-		return rpc.HandleEventResponse{}, err
-	}
-	defer func() {
-		if err := executor.Close(); err != nil {
-			logger.WithError(err).Debug("error closing grpc client conn")
-		}
-	}()
-
-	result, err := executor.HandleEvent(evt, mutated)
-	if err != nil {
-		logger.WithFields(fields).WithError(err).Error("failed to execute event handler extension")
-	} else {
-		fields["output"] = result.Output
-		logger.WithFields(fields).Info("event handler extension executed")
-	}
-
-	return result, err
 }

@@ -8,38 +8,30 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestClusterIDStorage(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		ctx := context.Background()
 
-		// We should receive an empty string if none exists
+		// The first call to GetClusterID creates a new cluster ID
 		id, err := store.GetClusterID(ctx)
-		assert.Error(t, err)
-		assert.Empty(t, id)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-		// We should not receive an error adding a uuid
-		u := uuid.New().String()
-		err = store.CreateClusterID(ctx, u)
-		assert.NoError(t, err)
+		// The id is a valid UUID
+		if _, err := uuid.Parse(id); err != nil {
+			t.Fatal(err)
+		}
 
-		// We should get a matching uuid
-		id, err = store.GetClusterID(ctx)
-		assert.NoError(t, err)
-		assert.NotEmpty(t, id)
-		assert.Equal(t, id, u)
+		id2, err := store.GetClusterID(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
 
-		// We should not receive an error updating the uuid
-		u = uuid.New().String()
-		err = store.CreateClusterID(ctx, u)
-		assert.NoError(t, err)
-
-		// We should get a matching uuid
-		id, err = store.GetClusterID(ctx)
-		assert.NoError(t, err)
-		assert.NotEmpty(t, id)
-		assert.Equal(t, id, u)
+		if got, want := id2, id; got != want {
+			t.Fatal("cluster IDs differ")
+		}
 	})
 }

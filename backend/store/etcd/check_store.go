@@ -3,7 +3,6 @@ package etcd
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
@@ -31,11 +30,13 @@ func GetCheckConfigsPath(ctx context.Context, name string) string {
 // DeleteCheckConfigByName deletes a CheckConfig by name.
 func (s *Store) DeleteCheckConfigByName(ctx context.Context, name string) error {
 	if name == "" {
-		return errors.New("must specify name")
+		return &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 
-	_, err := s.client.Delete(ctx, GetCheckConfigsPath(ctx, name))
-	return err
+	if _, err := s.client.Delete(ctx, GetCheckConfigsPath(ctx, name)); err != nil {
+		return &store.ErrInternal{Message: err.Error()}
+	}
+	return nil
 }
 
 // GetCheckConfigs returns check configurations for an (optional) namespace.
@@ -48,12 +49,12 @@ func (s *Store) GetCheckConfigs(ctx context.Context, pred *store.SelectionPredic
 // GetCheckConfigByName gets a CheckConfig by name.
 func (s *Store) GetCheckConfigByName(ctx context.Context, name string) (*types.CheckConfig, error) {
 	if name == "" {
-		return nil, errors.New("must specify name")
+		return nil, &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 
 	resp, err := s.client.Get(ctx, GetCheckConfigsPath(ctx, name))
 	if err != nil {
-		return nil, err
+		return nil, &store.ErrInternal{Message: err.Error()}
 	}
 	if len(resp.Kvs) == 0 {
 		return nil, nil
@@ -62,7 +63,7 @@ func (s *Store) GetCheckConfigByName(ctx context.Context, name string) (*types.C
 	checkBytes := resp.Kvs[0].Value
 	check := &types.CheckConfig{}
 	if err := unmarshal(checkBytes, check); err != nil {
-		return nil, err
+		return nil, &store.ErrDecode{Err: err}
 	}
 	if check.Labels == nil {
 		check.Labels = make(map[string]string)
@@ -77,26 +78,22 @@ func (s *Store) GetCheckConfigByName(ctx context.Context, name string) (*types.C
 // UpdateCheckConfig updates a CheckConfig.
 func (s *Store) UpdateCheckConfig(ctx context.Context, check *types.CheckConfig) error {
 	if err := check.Validate(); err != nil {
-		return err
+		return &store.ErrNotValid{Err: err}
 	}
 
 	checkBytes, err := proto.Marshal(check)
 	if err != nil {
-		return err
+		return &store.ErrEncode{Err: err}
 	}
 
 	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(check.Namespace)), ">", 0)
 	req := clientv3.OpPut(getCheckConfigPath(check), string(checkBytes))
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
-		return err
+		return &store.ErrInternal{Message: err.Error()}
 	}
 	if !res.Succeeded {
-		return fmt.Errorf(
-			"could not create the check %s in namespace %s",
-			check.Name,
-			check.Namespace,
-		)
+		return &store.ErrNamespaceMissing{Namespace: check.Namespace}
 	}
 
 	return nil

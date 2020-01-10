@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -119,7 +120,7 @@ Use "{{.CommandPath}} [command] --help" for more information about a command.{{e
 
 // initializeFunc represents the signature of an initialization function, used
 // to initialize the backend
-type initializeFunc func(*backend.Config) (*backend.Backend, error)
+type InitializeFunc func(context.Context, *backend.Config) (*backend.Backend, error)
 
 func fallbackStringSlice(newFlag, oldFlag string) []string {
 	slice := viper.GetStringSlice(newFlag)
@@ -130,7 +131,7 @@ func fallbackStringSlice(newFlag, oldFlag string) []string {
 }
 
 // StartCommand ...
-func StartCommand(initialize initializeFunc) *cobra.Command {
+func StartCommand(initialize InitializeFunc) *cobra.Command {
 	var setupErr error
 
 	cmd := &cobra.Command{
@@ -228,7 +229,9 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 				ClientCertAuth: viper.GetBool(flagEtcdPeerClientCertAuth),
 			}
 
-			sensuBackend, err := initialize(cfg)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			sensuBackend, err := initialize(ctx, cfg)
 			if err != nil {
 				return err
 			}
@@ -238,8 +241,8 @@ func StartCommand(initialize initializeFunc) *cobra.Command {
 			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 			go func() {
 				sig := <-sigs
-				logger.Info("signal received: ", sig)
-				sensuBackend.Stop()
+				logger.Warn("signal received: ", sig)
+				cancel()
 			}()
 
 			if viper.GetBool(flagDebug) {

@@ -3,7 +3,6 @@ package etcd
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
@@ -28,16 +27,16 @@ func GetEventFiltersPath(ctx context.Context, name string) string {
 // DeleteEventFilterByName deletes an EventFilter by name.
 func (s *Store) DeleteEventFilterByName(ctx context.Context, name string) error {
 	if name == "" {
-		return errors.New("must specify name of filter")
+		return &store.ErrNotValid{Err: errors.New("must specify name of filter")}
 	}
 
 	resp, err := s.client.Delete(ctx, GetEventFiltersPath(ctx, name))
 	if err != nil {
-		return err
+		return &store.ErrInternal{Message: err.Error()}
 	}
 
 	if resp.Deleted != 1 {
-		return fmt.Errorf("filter %s does not exist", name)
+		return &store.ErrNotFound{Key: name}
 	}
 
 	return nil
@@ -53,12 +52,12 @@ func (s *Store) GetEventFilters(ctx context.Context, pred *store.SelectionPredic
 // GetEventFilterByName gets an EventFilter by name.
 func (s *Store) GetEventFilterByName(ctx context.Context, name string) (*types.EventFilter, error) {
 	if name == "" {
-		return nil, errors.New("must specify name of filter")
+		return nil, &store.ErrNotValid{Err: errors.New("must specify name of filter")}
 	}
 
 	resp, err := s.client.Get(ctx, GetEventFiltersPath(ctx, name))
 	if err != nil {
-		return nil, err
+		return nil, &store.ErrInternal{Message: err.Error()}
 	}
 	if len(resp.Kvs) == 0 {
 		return nil, nil
@@ -67,7 +66,7 @@ func (s *Store) GetEventFilterByName(ctx context.Context, name string) (*types.E
 	filterBytes := resp.Kvs[0].Value
 	filter := &types.EventFilter{}
 	if err := unmarshal(filterBytes, filter); err != nil {
-		return nil, err
+		return nil, &store.ErrDecode{Err: err}
 	}
 
 	return filter, nil
@@ -76,26 +75,22 @@ func (s *Store) GetEventFilterByName(ctx context.Context, name string) (*types.E
 // UpdateEventFilter updates an EventFilter.
 func (s *Store) UpdateEventFilter(ctx context.Context, filter *types.EventFilter) error {
 	if err := filter.Validate(); err != nil {
-		return err
+		return &store.ErrNotValid{Err: err}
 	}
 
 	filterBytes, err := proto.Marshal(filter)
 	if err != nil {
-		return err
+		return &store.ErrEncode{Err: err}
 	}
 
 	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(filter.Namespace)), ">", 0)
 	req := clientv3.OpPut(getEventFilterPath(filter), string(filterBytes))
 	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
 	if err != nil {
-		return err
+		return &store.ErrInternal{Message: err.Error()}
 	}
 	if !res.Succeeded {
-		return fmt.Errorf(
-			"could not create the filter %s in namespace %s",
-			filter.Name,
-			filter.Namespace,
-		)
+		return &store.ErrNamespaceMissing{Namespace: filter.Namespace}
 	}
 
 	return nil

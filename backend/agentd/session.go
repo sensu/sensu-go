@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
@@ -64,6 +65,7 @@ type Session struct {
 	store        SessionStore
 	handler      *handler.MessageHandler
 	wg           *sync.WaitGroup
+	stopWG       sync.WaitGroup
 	sendq        chan *transport.Message
 	checkChannel chan interface{}
 	bus          messaging.MessageBus
@@ -104,9 +106,7 @@ type SessionConfig struct {
 func NewSession(ctx context.Context, cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store store.Store, unmarshal UnmarshalFunc, marshal MarshalFunc) (*Session, error) {
 	// Validate the agent namespace
 	if _, err := store.GetNamespace(ctx, cfg.Namespace); err != nil {
-		return nil, fmt.Errorf(
-			"could not retrieve the namespace '%s': %s", cfg.Namespace, err.Error(),
-		)
+		return nil, err
 	}
 
 	logger.WithFields(logrus.Fields{
@@ -166,11 +166,18 @@ func (s *Session) receiver() {
 			}
 			return
 		}
-		if err := s.handler.Handle(s.ctx, msg.Type, msg.Payload); err != nil {
+		ctx, cancel := context.WithTimeout(s.ctx, time.Duration(s.cfg.WriteTimeout)*time.Second)
+		if err := s.handler.Handle(ctx, msg.Type, msg.Payload); err != nil {
 			logger.WithError(err).WithFields(logrus.Fields{
 				"type":    msg.Type,
 				"payload": string(msg.Payload)}).Error("error handling message")
+			if _, ok := err.(*store.ErrInternal); ok {
+				// Fatal error - boot the agent out of the session
+				logger.Error("internal error - stopping session")
+				go s.Stop()
+			}
 		}
+		cancel()
 	}
 }
 
@@ -222,6 +229,7 @@ func (s *Session) Start() (err error) {
 	sessionCounter.WithLabelValues(s.cfg.Namespace).Inc()
 	s.wg = &sync.WaitGroup{}
 	s.wg.Add(2)
+	s.stopWG.Add(1)
 	go s.sender()
 	go s.receiver()
 	go func() {
@@ -263,9 +271,11 @@ func (s *Session) Start() (err error) {
 func (s *Session) Stop() {
 	s.cancel()
 	s.wg.Wait()
+	s.stopWG.Wait()
 }
 
 func (s *Session) stop() {
+	defer s.stopWG.Done()
 	defer func() {
 		if err := s.conn.Close(); err != nil {
 			logger.WithError(err).Error("error closing session")
@@ -286,16 +296,24 @@ func (s *Session) stop() {
 		// of the tests.
 		return
 	}
+	var ringWG sync.WaitGroup
+	ringWG.Add(len(s.cfg.Subscriptions))
 	for _, sub := range s.cfg.Subscriptions {
-		ring := s.ringPool.Get(ringv2.Path(s.cfg.Namespace, sub))
-		logger.WithFields(logrus.Fields{
-			"namespace": s.cfg.Namespace,
-			"agent":     s.cfg.AgentName,
-		}).Info("removing agent from ring")
-		if err := ring.Remove(context.Background(), s.cfg.AgentName); err != nil {
-			logger.WithError(err).Error("unable to remove agent from ring")
-		}
+		go func(sub string) {
+			defer ringWG.Done()
+			ring := s.ringPool.Get(ringv2.Path(s.cfg.Namespace, sub))
+			logger.WithFields(logrus.Fields{
+				"namespace": s.cfg.Namespace,
+				"agent":     s.cfg.AgentName,
+			}).Info("removing agent from ring")
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+			defer cancel()
+			if err := ring.Remove(ctx, s.cfg.AgentName); err != nil {
+				logger.WithError(err).Error("unable to remove agent from ring")
+			}
+		}(sub)
 	}
+	ringWG.Wait()
 }
 
 // handleKeepalive is the keepalive message handler.

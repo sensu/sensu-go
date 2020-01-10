@@ -9,9 +9,9 @@ import (
 	time "github.com/echlebek/timeproxy"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
-	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 )
@@ -336,12 +336,14 @@ func buildRequest(check *corev2.CheckConfig, s store.Store, secretsProviderManag
 		"assets":    check.RuntimeAssets,
 	}
 
-	secrets, err := secretsProviderManager.SubSecrets(check.Command)
-	if err != nil {
-		logger.WithFields(fields).WithError(err).Error("failed to retrieve secrets for check")
-		return nil, err
+	if secretsProviderManager.TLSenabled {
+		secrets, err := secretsProviderManager.SubSecrets(check.Command)
+		if err != nil {
+			logger.WithFields(fields).WithError(err).Error("failed to retrieve secrets for check")
+			return nil, err
+		}
+		request.Secrets = secrets
 	}
-	request.Secrets = secrets
 
 	ctx := corev2.SetContextFromResource(context.Background(), check)
 
