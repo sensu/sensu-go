@@ -13,6 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 within that namespace via the Web UI.
 - Explicit access to namespaces can only be granted via cluster-wide RBAC
 resources.
+- Split rules ClusterRole and Role verbs, resources and resource names on comma.
 
 ## [5.16.1] - 2019-12-18
 

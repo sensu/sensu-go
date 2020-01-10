@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -55,9 +56,9 @@ func TestRuleResourceNameMatches(t *testing.T) {
 		want                  bool
 	}{
 		{
-			name: "rule allows all names",
+			name:                  "rule allows all names",
 			requestedResourceName: "checks",
-			want: true,
+			want:                  true,
 		},
 		{
 			name:          "rule only allows a specific name none specified in req",
@@ -68,13 +69,13 @@ func TestRuleResourceNameMatches(t *testing.T) {
 			name:                  "does not match",
 			resourceNames:         []string{"foo"},
 			requestedResourceName: "bar",
-			want: false,
+			want:                  false,
 		},
 		{
 			name:                  "matches",
 			resourceNames:         []string{"foo", "bar"},
 			requestedResourceName: "bar",
-			want: true,
+			want:                  true,
 		},
 	}
 	for _, tc := range tests {
@@ -127,6 +128,63 @@ func TestRuleVerbMatches(t *testing.T) {
 			}
 			if got := r.VerbMatches(tc.requestedVerb); got != tc.want {
 				t.Errorf("Rule.VerbMatches() = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func Test_validateVerbs(t *testing.T) {
+	tests := []struct {
+		name    string
+		verbs   []string
+		wantErr bool
+	}{
+		{
+			name:    "verb all",
+			verbs:   []string{VerbAll},
+			wantErr: false,
+		},
+		{
+			name:    "read-only verbs",
+			verbs:   []string{"get", "list"},
+			wantErr: false,
+		},
+		{
+			name:    "invalid verbs",
+			verbs:   []string{"get", "put"},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := validateVerbs(tt.verbs); (err != nil) != tt.wantErr {
+				t.Errorf("validateVerbs() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func Test_split(t *testing.T) {
+	tests := []struct {
+		name string
+		list []string
+		want []string
+	}{
+		{
+			name: "single verb",
+			list: []string{VerbAll},
+			want: []string{VerbAll},
+		},
+		{
+			name: "multiple verbs in single string",
+			list: []string{"get,list,create"},
+			want: []string{"get", "list", "create"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := split(tt.list); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("splitVerbs() = %v, want %v", got, tt.want)
 			}
 		})
 	}
