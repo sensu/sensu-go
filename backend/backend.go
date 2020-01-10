@@ -10,7 +10,6 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/pkg/transport"
-	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
@@ -40,9 +39,19 @@ import (
 	"github.com/sensu/sensu-go/backend/tessend"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/system"
+	"github.com/sensu/sensu-go/util/retry"
 	"github.com/spf13/viper"
 	"google.golang.org/grpc"
 )
+
+type ErrStartup struct {
+	Err  error
+	Name string
+}
+
+func (e ErrStartup) Error() string {
+	return fmt.Sprintf("error starting %s: %s", e.Name, e.Err)
+}
 
 // Backend represents the backend server, which is used to hold the datastore
 // and coordinating the daemons
@@ -55,9 +64,10 @@ type Backend struct {
 	GraphQLService         *graphql.Service
 	SecretsProviderManager *secrets.ProviderManager
 
-	done   chan struct{}
-	ctx    context.Context
-	cancel context.CancelFunc
+	ctx       context.Context
+	runCtx    context.Context
+	runCancel context.CancelFunc
+	cfg       *Config
 }
 
 // EventStoreUpdater offers a way to update an event store to a different
@@ -68,6 +78,7 @@ type EventStoreUpdater interface {
 
 func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3.Client, error) {
 	if config.NoEmbedEtcd {
+		logger.Info("dialing etcd server")
 		tlsInfo := (transport.TLSInfo)(config.EtcdClientTLSInfo)
 		tlsConfig, err := tlsInfo.ClientConfig()
 		if err != nil {
@@ -157,13 +168,13 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 // configuring etcd and establishing a list of daemons, which constitute our
 // backend. The daemons will later be started according to their position in the
 // b.Daemons list, and stopped in reverse order
-func Initialize(config *Config) (*Backend, error) {
+func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	var err error
 	// Initialize a Backend struct
-	b := &Backend{}
+	b := &Backend{cfg: config}
 
-	b.done = make(chan struct{})
-	b.ctx, b.cancel = context.WithCancel(context.Background())
+	b.ctx = ctx
+	b.runCtx, b.runCancel = context.WithCancel(b.ctx)
 
 	b.Client, err = newClient(b.ctx, config, b)
 	if err != nil {
@@ -174,29 +185,24 @@ func Initialize(config *Config) (*Backend, error) {
 	stor := etcdstore.NewStore(b.Client, config.EtcdName)
 	b.Store = stor
 
+	if _, err := stor.GetClusterID(b.runCtx); err != nil {
+		return nil, err
+	}
+
 	// Initialize the JWT secret. This method is idempotent and needs to be ran
 	// at every startup so the JWT signatures remain valid
 	if err := jwt.InitSecret(b.Store); err != nil {
 		return nil, err
 	}
 
-	if _, err := stor.GetClusterID(b.ctx); err != nil {
-		switch err := err.(type) {
-		case *store.ErrNotFound:
-			if storeErr := stor.CreateClusterID(b.ctx, uuid.New().String()); storeErr != nil {
-				return nil, fmt.Errorf("error assigning a sensu cluster id: %s", err)
-			}
-		default:
-			return nil, fmt.Errorf("error retrieving sensu cluster id: %s", err)
-		}
-	}
-
 	eventStoreProxy := store.NewEventStoreProxy(stor)
 	b.EventStore = eventStoreProxy
 
 	logger.Debug("Registering backend...")
-	backendID := etcd.NewBackendIDGetter(b.ctx, b.Client)
+
+	backendID := etcd.NewBackendIDGetter(b.runCtx, b.Client)
 	logger.Debug("Done registering backend.")
+	b.Daemons = append(b.Daemons, backendID)
 
 	// Initialize an etcd getter
 	queueGetter := queue.EtcdGetter{Client: b.Client, BackendIDGetter: backendID}
@@ -212,7 +218,7 @@ func Initialize(config *Config) (*Backend, error) {
 	backendEntity := b.getBackendEntity(config)
 	logger.WithField("entity", backendEntity).Info("backend entity information")
 	assetManager := asset.NewManager(config.CacheDir, backendEntity, &sync.WaitGroup{})
-	assetGetter, err := assetManager.StartAssetManager(b.ctx)
+	assetGetter, err := assetManager.StartAssetManager(b.runCtx)
 	if err != nil {
 		return nil, fmt.Errorf("error initializing asset manager: %s", err)
 	}
@@ -228,6 +234,7 @@ func Initialize(config *Config) (*Backend, error) {
 		AssetGetter:             assetGetter,
 		BufferSize:              viper.GetInt(FlagPipelinedBufferSize),
 		WorkerCount:             viper.GetInt(FlagPipelinedWorkers),
+		StoreTimeout:            2 * time.Minute,
 		SecretsProviderManager:  b.SecretsProviderManager,
 	})
 	if err != nil {
@@ -237,15 +244,16 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize eventd
 	event, err := eventd.New(
-		b.ctx,
+		b.runCtx,
 		eventd.Config{
 			Store:           stor,
 			EventStore:      eventStoreProxy,
 			Bus:             bus,
-			LivenessFactory: liveness.EtcdFactory(b.ctx, b.Client),
+			LivenessFactory: liveness.EtcdFactory(b.runCtx, b.Client),
 			Client:          b.Client,
 			BufferSize:      viper.GetInt(FlagEventdBufferSize),
 			WorkerCount:     viper.GetInt(FlagEventdWorkers),
+			StoreTimeout:    2 * time.Minute,
 		},
 	)
 	if err != nil {
@@ -257,7 +265,7 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize schedulerd
 	scheduler, err := schedulerd.New(
-		b.ctx,
+		b.runCtx,
 		schedulerd.Config{
 			Store:                  stor,
 			Bus:                    bus,
@@ -298,10 +306,11 @@ func Initialize(config *Config) (*Backend, error) {
 		Bus:                   bus,
 		Store:                 stor,
 		EventStore:            stor,
-		LivenessFactory:       liveness.EtcdFactory(b.ctx, b.Client),
+		LivenessFactory:       liveness.EtcdFactory(b.runCtx, b.Client),
 		RingPool:              ringPool,
 		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
 		WorkerCount:           viper.GetInt(FlagKeepalivedWorkers),
+		StoreTimeout:          2 * time.Minute,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
@@ -381,7 +390,7 @@ func Initialize(config *Config) (*Backend, error) {
 
 	// Initialize tessend
 	tessen, err := tessend.New(
-		b.ctx,
+		b.runCtx,
 		tessend.Config{
 			Store:    stor,
 			RingPool: ringPool,
@@ -423,8 +432,24 @@ func Initialize(config *Config) (*Backend, error) {
 	return b, nil
 }
 
-// Run starts all of the Backend server's daemons
-func (b *Backend) Run() error {
+func (b *Backend) runOnce() error {
+	var derr error
+
+	if b.Etcd != nil {
+		defer func() {
+			logger.Info("shutting down etcd")
+			if err := recover(); err != nil {
+				trace := string(debug.Stack())
+				logger.WithField("panic", trace).WithError(err.(error)).
+					Error("recovering from panic due to error, shutting down etcd")
+			}
+			err := b.Etcd.Shutdown()
+			if derr == nil {
+				derr = err
+			}
+		}()
+	}
+
 	eg := errGroup{
 		out: make(chan error),
 	}
@@ -433,7 +458,7 @@ func (b *Backend) Run() error {
 	// Loop across the daemons in order to start them, then add them to our groups
 	for _, d := range b.Daemons {
 		if err := d.Start(); err != nil {
-			return fmt.Errorf("error starting %s: %s", d.Name(), err)
+			return ErrStartup{Err: err, Name: d.Name()}
 		}
 
 		// Add the daemon to our errGroup
@@ -461,39 +486,74 @@ func (b *Backend) Run() error {
 
 	select {
 	case err := <-eg.Err():
-		logger.WithError(err).Error("error in error group")
-	case <-b.ctx.Done():
+		logger.WithError(err).Error("backend stopped working and is restarting")
+	case <-b.runCtx.Done():
 		logger.Info("backend shutting down")
 	}
-
-	var derr error
-
 	if err := sg.Stop(); err != nil {
 		if derr == nil {
 			derr = err
 		}
 	}
 
-	if b.Etcd != nil {
-		logger.Info("shutting down etcd")
-		defer func() {
-			if err := recover(); err != nil {
-				trace := string(debug.Stack())
-				logger.WithField("panic", trace).WithError(err.(error)).
-					Error("recovering from panic due to error, shutting down etcd")
-			}
-			err := b.Etcd.Shutdown()
-			if derr == nil {
-				derr = err
-			}
-		}()
+	if derr == nil {
+		derr = b.runCtx.Err()
 	}
 
+	return derr
+}
+
+// Run starts all of the Backend server's daemons
+func (b *Backend) Run() error {
 	// we allow inErrChan to leak to avoid panics from other
 	// goroutines writing errors to either after shutdown has been initiated.
-	close(b.done)
+	backoff := retry.ExponentialBackoff{
+		Ctx:                  b.ctx,
+		InitialDelayInterval: time.Second,
+		MaxDelayInterval:     time.Second,
+		Multiplier:           1,
+	}
 
-	return derr
+	err := backoff.Retry(func(int) (bool, error) {
+		err := b.runOnce()
+		b.Stop()
+		if err != nil {
+			if b.ctx.Err() != nil {
+				logger.Warn("shutting down")
+				return true, b.ctx.Err()
+			}
+			logger.Error(err)
+			if _, ok := err.(ErrStartup); ok {
+				return true, err
+			}
+		}
+
+		// Yes, two levels of retry... this could improve. Unfortunately Intialize()
+		// is called elsewhere.
+		err = backoff.Retry(func(int) (bool, error) {
+			backend, err := Initialize(b.ctx, b.cfg)
+			if err != nil && err != context.Canceled {
+				logger.Error(err)
+				return false, nil
+			} else if err == context.Canceled {
+				return true, err
+			}
+			// Replace b with a new backend - this is done to ensure that there is
+			// no side effects from the execution of b that have carried over
+			*b = *backend
+			return true, nil
+		})
+		if err != nil {
+			return true, err
+		}
+		return false, nil
+	})
+
+	if err == context.Canceled {
+		return nil
+	}
+
+	return err
 }
 
 type stopper interface {
@@ -542,8 +602,7 @@ func (e errGroup) Err() <-chan error {
 
 // Stop the Backend cleanly.
 func (b *Backend) Stop() {
-	b.cancel()
-	<-b.done
+	b.runCancel()
 }
 
 func (b *Backend) getBackendEntity(config *Config) *corev2.Entity {

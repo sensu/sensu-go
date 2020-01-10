@@ -2,17 +2,22 @@
 package pipelined
 
 import (
+	"context"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/pipeline"
+	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
-	"github.com/sensu/sensu-go/backend/secrets"
 )
+
+var defaultStoreTimeout = time.Minute
 
 // ExtensionExecutorGetterFunc gets an ExtensionExecutor. Used to decouple
 // Pipelined from gRPC.
@@ -32,9 +37,10 @@ type Pipelined struct {
 	subscription           messaging.Subscription
 	store                  store.Store
 	bus                    messaging.MessageBus
-	extensionExecutor      ExtensionExecutorGetterFunc
+	extensionExecutor      pipeline.ExtensionExecutorGetterFunc
 	executor               command.Executor
 	workerCount            int
+	storeTimeout           time.Duration
 	secretsProviderManager *secrets.ProviderManager
 }
 
@@ -42,10 +48,11 @@ type Pipelined struct {
 type Config struct {
 	Store                   store.Store
 	Bus                     messaging.MessageBus
-	ExtensionExecutorGetter ExtensionExecutorGetterFunc
+	ExtensionExecutorGetter pipeline.ExtensionExecutorGetterFunc
 	AssetGetter             asset.Getter
 	BufferSize              int
 	WorkerCount             int
+	StoreTimeout            time.Duration
 	SecretsProviderManager  *secrets.ProviderManager
 }
 
@@ -55,10 +62,16 @@ type Option func(*Pipelined) error
 // New creates a new Pipelined with supplied Options applied.
 func New(c Config, options ...Option) (*Pipelined, error) {
 	if c.BufferSize == 0 {
+		logger.Warn("BufferSize not configured")
 		c.BufferSize = 1
 	}
 	if c.WorkerCount == 0 {
+		logger.Warn("WorkerCount not configured")
 		c.WorkerCount = 1
+	}
+	if c.StoreTimeout == 0 {
+		logger.Warn("StoreTimeout not configured")
+		c.StoreTimeout = defaultStoreTimeout
 	}
 
 	p := &Pipelined{
@@ -73,6 +86,7 @@ func New(c Config, options ...Option) (*Pipelined, error) {
 		workerCount:            c.WorkerCount,
 		executor:               command.NewExecutor(),
 		assetGetter:            c.AssetGetter,
+		storeTimeout:           c.StoreTimeout,
 		secretsProviderManager: c.SecretsProviderManager,
 	}
 	for _, o := range options {
@@ -129,6 +143,13 @@ func (p *Pipelined) Name() string {
 // and for handling them.
 func (p *Pipelined) createPipelines(count int, channel chan interface{}) {
 	for i := 1; i <= count; i++ {
+		pipeline := pipeline.New(pipeline.Config{
+			Store:                   p.store,
+			ExtensionExecutorGetter: p.extensionExecutor,
+			AssetGetter:             p.assetGetter,
+			StoreTimeout:            p.storeTimeout,
+			SecretsProviderManager:  p.secretsProviderManager,
+		})
 		p.wg.Add(1)
 		go func() {
 			defer p.wg.Done()
@@ -142,7 +163,17 @@ func (p *Pipelined) createPipelines(count int, channel chan interface{}) {
 						continue
 					}
 
-					if err := p.handleEvent(event); err != nil {
+					ctx, cancel := context.WithCancel(context.Background())
+					err := pipeline.HandleEvent(ctx, event)
+					cancel()
+					if err != nil {
+						if _, ok := err.(*store.ErrInternal); ok {
+							select {
+							case p.errChan <- err:
+							case <-p.stopping:
+							}
+							return
+						}
 						logger.Error(err)
 					}
 				}

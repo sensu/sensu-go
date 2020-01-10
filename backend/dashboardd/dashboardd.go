@@ -99,6 +99,10 @@ func New(cfg Config, opts ...Option) (*Dashboardd, error) {
 // Start dashboardd
 func (d *Dashboardd) Start() error {
 	d.logger.Info("starting dashboardd on address: ", d.httpServer.Addr)
+	ln, err := net.Listen("tcp", d.httpServer.Addr)
+	if err != nil {
+		return fmt.Errorf("failed to start dashboardd: %s", err)
+	}
 	d.wg.Add(1)
 
 	go func() {
@@ -107,12 +111,12 @@ func (d *Dashboardd) Start() error {
 		TLS := d.Config.TLS
 		if TLS != nil {
 			// TLS configuration comes from ToServerTLSConfig
-			err = d.httpServer.ListenAndServeTLS("", "")
+			err = d.httpServer.ServeTLS(ln, "", "")
 		} else {
-			err = d.httpServer.ListenAndServe()
+			err = d.httpServer.Serve(ln)
 		}
 		if err != nil && err != http.ErrServerClosed {
-			d.errChan <- fmt.Errorf("failed to start http/https server %s", err)
+			d.errChan <- fmt.Errorf("dashboardd failed while serving: %s", err)
 		}
 	}()
 

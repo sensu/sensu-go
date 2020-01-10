@@ -80,7 +80,15 @@ func TestKeepaliveMonitor(t *testing.T) {
 
 	factory := liveness.EtcdFactory(context.Background(), client)
 
-	k, err := New(Config{Store: store, EventStore: store, Bus: bus, LivenessFactory: factory})
+	k, err := New(Config{
+		Store:           store,
+		EventStore:      store,
+		Bus:             bus,
+		LivenessFactory: factory,
+		BufferSize:      1,
+		WorkerCount:     1,
+		StoreTimeout:    time.Minute,
+	})
 	require.NoError(t, err)
 
 	if err := k.Start(); err != nil {

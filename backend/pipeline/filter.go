@@ -1,28 +1,18 @@
-// Package pipelined provides the traditional Sensu event pipeline.
-package pipelined
+package pipeline
 
 import (
 	"context"
 	"time"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
-	"github.com/sensu/sensu-go/js"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types/dynamic"
 	utillogging "github.com/sensu/sensu-go/util/logging"
 )
 
-func evaluateJSFilter(event interface{}, expr string, assets asset.RuntimeAssetSet) bool {
-	parameters := map[string]interface{}{"event": event}
-	result, err := js.Evaluate(expr, parameters, assets)
-	if err != nil {
-		logger.WithError(err).Error("error executing JS")
-	}
-	return result
-}
-
 // Returns true if the event should be filtered/denied.
-func evaluateEventFilter(event *types.Event, filter *types.EventFilter, assets asset.RuntimeAssetSet) bool {
+func evaluateEventFilter(event *corev2.Event, filter *corev2.EventFilter, assets asset.RuntimeAssetSet) bool {
 	// Redact the entity to avoid leaking sensitive information
 	event.Entity = event.Entity.GetRedactedEntity()
 
@@ -38,12 +28,12 @@ func evaluateEventFilter(event *types.Event, filter *types.EventFilter, assets a
 			return false
 		}
 
-		if filter.Action == types.EventFilterActionAllow && !inWindows {
+		if filter.Action == corev2.EventFilterActionAllow && !inWindows {
 			logger.WithFields(fields).Debug("denying event outside of filtering window")
 			return true
 		}
 
-		if filter.Action == types.EventFilterActionDeny && !inWindows {
+		if filter.Action == corev2.EventFilterActionDeny && !inWindows {
 			logger.WithFields(fields).Debug("allowing event outside of filtering window")
 			return false
 		}
@@ -55,26 +45,26 @@ func evaluateEventFilter(event *types.Event, filter *types.EventFilter, assets a
 		match := evaluateJSFilter(synth, expression, assets)
 
 		// Allow - One of the expressions did not match, filter the event
-		if filter.Action == types.EventFilterActionAllow && !match {
+		if filter.Action == corev2.EventFilterActionAllow && !match {
 			logger.WithFields(fields).Debug("denying event that does not match filter")
 			return true
 		}
 
 		// Deny - One of the expressions did not match, do not filter the event
-		if filter.Action == types.EventFilterActionDeny && !match {
+		if filter.Action == corev2.EventFilterActionDeny && !match {
 			logger.WithFields(fields).Debug("allowing event that does not match filter")
 			return false
 		}
 	}
 
 	// Allow - All of the expressions matched, do not filter the event
-	if filter.Action == types.EventFilterActionAllow {
+	if filter.Action == corev2.EventFilterActionAllow {
 		logger.WithFields(fields).Debug("allowing event that matches filter")
 		return false
 	}
 
 	// Deny - All of the expressions matched, filter the event
-	if filter.Action == types.EventFilterActionDeny {
+	if filter.Action == corev2.EventFilterActionDeny {
 		logger.WithFields(fields).Debug("denying event that matches filter")
 		return true
 	}
@@ -88,7 +78,7 @@ func evaluateEventFilter(event *types.Event, filter *types.EventFilter, assets a
 
 // filterEvent filters a Sensu event, determining if it will continue
 // through the Sensu pipeline. Returns true if the event should be filtered/denied.
-func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool {
+func (p *Pipeline) filterEvent(handler *corev2.Handler, event *corev2.Event) (bool, error) {
 	// Prepare the logging
 	fields := utillogging.EventFields(event, false)
 	fields["handler"] = handler.Name
@@ -103,44 +93,50 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 			// Deny an event if it is neither an incident nor resolution.
 			if !event.IsIncident() && !event.IsResolution() {
 				logger.WithFields(fields).Debug("denying event that is not an incident/resolution")
-				return true
+				return true, nil
 			}
 		case "has_metrics":
 			// Deny an event if it does not have metrics
 			if !event.HasMetrics() {
 				logger.WithFields(fields).Debug("denying event without metrics")
-				return true
+				return true, nil
 			}
 		case "not_silenced":
 			// Deny event that is silenced.
 			if event.IsSilenced() {
 				logger.WithFields(fields).Debug("denying event that is silenced")
-				return true
+				return true, nil
 			}
 		default:
 			// Retrieve the filter from the store with its name
-			ctx := types.SetContextFromResource(context.Background(), event.Entity)
-			filter, err := p.store.GetEventFilterByName(ctx, filterName)
+			ctx := corev2.SetContextFromResource(context.Background(), event.Entity)
+			tctx, cancel := context.WithTimeout(ctx, p.storeTimeout)
+			filter, err := p.store.GetEventFilterByName(tctx, filterName)
+			cancel()
 			if err != nil {
 				logger.WithFields(fields).WithError(err).
 					Warning("could not retrieve filter")
-				return false
+				return false, err
 			}
 
 			if filter != nil {
 				// Execute the filter, evaluating each of its
 				// expressions against the event. The event is rejected
 				// if the product of all expressions is true.
-				ctx := types.SetContextFromResource(context.Background(), filter)
+				ctx := corev2.SetContextFromResource(context.Background(), filter)
 				matchedAssets := asset.GetAssets(ctx, p.store, filter.RuntimeAssets)
 				assets, err := asset.GetAll(context.TODO(), p.assetGetter, matchedAssets)
 				if err != nil {
 					logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for filter")
+					if _, ok := err.(*store.ErrInternal); ok {
+						// Fatal error
+						return false, err
+					}
 				}
 				filtered := evaluateEventFilter(event, filter, assets)
 				if filtered {
 					logger.WithFields(fields).Debug("denying event with custom filter")
-					return true
+					return true, nil
 				}
 				continue
 			}
@@ -150,6 +146,10 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 			if err != nil {
 				logger.WithFields(fields).WithError(err).
 					Warning("could not retrieve filter")
+				if _, ok := err.(*store.ErrInternal); ok {
+					// Fatal error
+					return false, err
+				}
 				continue
 			}
 
@@ -172,11 +172,11 @@ func (p *Pipelined) filterEvent(handler *types.Handler, event *types.Event) bool
 			}
 			if filtered {
 				logger.WithFields(fields).Debug("denying event with custom filter extension")
-				return true
+				return true, nil
 			}
 		}
 	}
 
 	logger.WithFields(fields).Debug("allowing event")
-	return false
+	return false, nil
 }

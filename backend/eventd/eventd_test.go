@@ -55,6 +55,7 @@ func newEventd(store store.Store, bus messaging.MessageBus, livenessFactory live
 		mu:              &sync.Mutex{},
 		Logger:          &RawLogger{},
 		workerCount:     5,
+		storeTimeout:    time.Minute,
 		silencedCache:   &cache.Resource{},
 	}
 }

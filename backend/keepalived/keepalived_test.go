@@ -3,6 +3,7 @@ package keepalived
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -62,6 +63,9 @@ func newKeepalivedTest(t *testing.T) *keepalivedTest {
 		Store:           store,
 		Bus:             bus,
 		LivenessFactory: fakeFactory,
+		BufferSize:      1,
+		WorkerCount:     1,
+		StoreTimeout:    time.Second,
 	})
 	require.NoError(t, err)
 	test := &keepalivedTest{
@@ -244,7 +248,14 @@ func TestProcessRegistration(t *testing.T) {
 			subscription, err := messageBus.Subscribe(messaging.TopicEvent, "testSubscriber", tsub)
 			require.NoError(t, err)
 
-			keepalived, err := New(Config{Store: store, Bus: messageBus, LivenessFactory: fakeFactory})
+			keepalived, err := New(Config{
+				Store:           store,
+				Bus:             messageBus,
+				LivenessFactory: fakeFactory,
+				WorkerCount:     1,
+				BufferSize:      1,
+				StoreTimeout:    time.Minute,
+			})
 			require.NoError(t, err)
 
 			store.On("GetEntityByName", mock.Anything, "agent1").Return(tc.storeEntity, nil)
@@ -301,7 +312,14 @@ func TestDeadCallbackNoEntity(t *testing.T) {
 		t.Fatal(err)
 	}
 	store := &mockstore.MockStore{}
-	keepalived, err := New(Config{Store: store, Bus: messageBus, LivenessFactory: fakeFactory})
+	keepalived, err := New(Config{
+		Store:           store,
+		Bus:             messageBus,
+		LivenessFactory: fakeFactory,
+		WorkerCount:     1,
+		BufferSize:      1,
+		StoreTimeout:    time.Minute,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -327,7 +345,14 @@ func TestDeadCallbackNoEvent(t *testing.T) {
 		t.Fatal(err)
 	}
 	store := &mockstore.MockStore{}
-	keepalived, err := New(Config{Store: store, Bus: messageBus, LivenessFactory: fakeFactory})
+	keepalived, err := New(Config{
+		Store:           store,
+		Bus:             messageBus,
+		LivenessFactory: fakeFactory,
+		WorkerCount:     1,
+		BufferSize:      1,
+		StoreTimeout:    time.Minute,
+	})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,5 +1,4 @@
-// Package pipelined provides the traditional Sensu event pipeline.
-package pipelined
+package pipeline
 
 import (
 	"context"
@@ -7,10 +6,10 @@ import (
 	"errors"
 	"os"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/util/environment"
 	utillogging "github.com/sensu/sensu-go/util/logging"
 	"github.com/sirupsen/logrus"
@@ -18,7 +17,7 @@ import (
 
 // mutateEvent mutates (transforms) a Sensu event into a serialized
 // format (byte slice) to be provided to a Sensu event handler.
-func (p *Pipelined) mutateEvent(handler *corev2.Handler, event *corev2.Event) ([]byte, error) {
+func (p *Pipeline) mutateEvent(handler *corev2.Handler, event *corev2.Event) ([]byte, error) {
 	// Prepare log entry
 	fields := utillogging.EventFields(event, false)
 	fields["handler"] = handler.Name
@@ -44,19 +43,25 @@ func (p *Pipelined) mutateEvent(handler *corev2.Handler, event *corev2.Event) ([
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 	fields["mutator"] = handler.Mutator
 
-	mutator, err := p.store.GetMutatorByName(ctx, handler.Mutator)
+	tctx, cancel := context.WithTimeout(ctx, p.storeTimeout)
+	defer cancel()
+	mutator, err := p.store.GetMutatorByName(tctx, handler.Mutator)
 	if err != nil {
+		// Warning: do not wrap this error
 		logger.WithFields(fields).WithError(err).Error("failed to retrieve mutator")
 		return nil, err
 	}
 
 	if mutator == nil {
 		// Check to see if there is an extension matching the mutator
-		extension, err := p.store.GetExtension(ctx, handler.Mutator)
+		tctx, cancel := context.WithTimeout(ctx, p.storeTimeout)
+		defer cancel()
+		extension, err := p.store.GetExtension(tctx, handler.Mutator)
 		if err != nil {
 			if err == store.ErrNoExtension {
 				return nil, nil
 			}
+			// Warning: do not wrap this error
 			return nil, err
 		}
 		executor, err := p.extensionExecutor(extension)
@@ -87,7 +92,7 @@ func (p *Pipelined) mutateEvent(handler *corev2.Handler, event *corev2.Event) ([
 
 // jsonMutator produces the JSON encoding of the Sensu event. This
 // mutator is used when a Sensu handler does not specify one.
-func (p *Pipelined) jsonMutator(event *corev2.Event) ([]byte, error) {
+func (p *Pipeline) jsonMutator(event *corev2.Event) ([]byte, error) {
 	eventData, err := json.Marshal(event)
 
 	if err != nil {
@@ -102,7 +107,7 @@ func (p *Pipelined) jsonMutator(event *corev2.Event) ([]byte, error) {
 // is most commonly used by tcp/udp handlers (e.g. influxdb). This
 // mutator can probably be removed/replaced when 2.0 has extension
 // support.
-func (p *Pipelined) onlyCheckOutputMutator(event *corev2.Event) []byte {
+func (p *Pipeline) onlyCheckOutputMutator(event *corev2.Event) []byte {
 	if event.HasCheck() {
 		return []byte(event.Check.Output)
 	}
@@ -113,7 +118,7 @@ func (p *Pipelined) onlyCheckOutputMutator(event *corev2.Event) []byte {
 // command, writes the JSON encoding of the Sensu event to it via
 // STDIN, and captures the command output (STDOUT/ERR) to be used as
 // the mutated event data for a Sensu event handler.
-func (p *Pipelined) pipeMutator(mutator *corev2.Mutator, event *corev2.Event) ([]byte, error) {
+func (p *Pipeline) pipeMutator(mutator *corev2.Mutator, event *corev2.Event) ([]byte, error) {
 	// Prepare log entry
 	fields := logrus.Fields{
 		"namespace": mutator.Namespace,

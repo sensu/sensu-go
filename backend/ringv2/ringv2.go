@@ -344,6 +344,9 @@ func (w *watcher) ensureActiveTrigger(ctx context.Context) error {
 	err := backoff.Retry(func(retry int) (bool, error) {
 		has, next, err := w.hasTrigger(ctx)
 		if err != nil {
+			if err == context.Canceled {
+				return true, err
+			}
 			logger.WithError(err).Error("can't check ring trigger, retrying")
 			return false, nil
 		}

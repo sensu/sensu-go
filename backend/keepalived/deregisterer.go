@@ -3,8 +3,9 @@ package keepalived
 import (
 	"context"
 	"fmt"
+	"time"
 
-	"github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
@@ -21,16 +22,19 @@ type Deregisterer interface {
 // Deregistration is an adapter for deregistering an entity from the store and
 // publishing a deregistration event to WizardBus.
 type Deregistration struct {
-	EntityStore store.EntityStore
-	EventStore  store.EventStore
-	MessageBus  messaging.MessageBus
+	EntityStore  store.EntityStore
+	EventStore   store.EventStore
+	MessageBus   messaging.MessageBus
+	StoreTimeout time.Duration
 }
 
 // Deregister an entity and all of its associated events.
 func (d *Deregistration) Deregister(entity *types.Entity) error {
 	ctx := context.WithValue(context.Background(), types.NamespaceKey, entity.Namespace)
+	tctx, cancel := context.WithTimeout(ctx, d.StoreTimeout)
+	defer cancel()
 
-	if err := d.EntityStore.DeleteEntity(ctx, entity); err != nil {
+	if err := d.EntityStore.DeleteEntity(tctx, entity); err != nil {
 		return fmt.Errorf("error deleting entity in store: %s", err)
 	}
 
@@ -44,8 +48,10 @@ func (d *Deregistration) Deregister(entity *types.Entity) error {
 			return fmt.Errorf("error deleting event without check")
 		}
 
+		tctx, cancel := context.WithTimeout(ctx, d.StoreTimeout)
+		defer cancel()
 		if err := d.EventStore.DeleteEventByEntityCheck(
-			ctx, entity.Name, event.Check.Name,
+			tctx, entity.Name, event.Check.Name,
 		); err != nil {
 			return fmt.Errorf("error deleting event for entity: %s", err)
 		}
@@ -61,7 +67,7 @@ func (d *Deregistration) Deregister(entity *types.Entity) error {
 
 	if entity.Deregistration.Handler != "" {
 		deregistrationCheck := &types.Check{
-			ObjectMeta:    v2.NewObjectMeta("deregistration", entity.Namespace),
+			ObjectMeta:    corev2.NewObjectMeta("deregistration", entity.Namespace),
 			Interval:      1,
 			Subscriptions: []string{""},
 			Command:       "",

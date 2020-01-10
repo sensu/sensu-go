@@ -3,6 +3,7 @@
 package backend
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"net"
@@ -79,14 +80,14 @@ func TestBackendHTTPListener(t *testing.T) {
 			}
 
 			cfg := &Config{
-				AgentHost:        "127.0.0.1",
-				AgentPort:        agentPort,
-				APIListenAddress: fmt.Sprintf("127.0.0.1:%d", apiPort),
-				DashboardHost:    "127.0.0.1",
-				DashboardPort:    dashboardPort,
-				StateDir:         dataPath,
-				CacheDir:         cachePath,
-				TLS:              tc.tls,
+				AgentHost:                    "127.0.0.1",
+				AgentPort:                    agentPort,
+				APIListenAddress:             fmt.Sprintf("127.0.0.1:%d", apiPort),
+				DashboardHost:                "127.0.0.1",
+				DashboardPort:                dashboardPort,
+				StateDir:                     dataPath,
+				CacheDir:                     cachePath,
+				TLS:                          tc.tls,
 				EtcdAdvertiseClientURLs:      []string{clURL},
 				EtcdListenClientURLs:         []string{clURL},
 				EtcdListenPeerURLs:           []string{apURL},
@@ -97,7 +98,8 @@ func TestBackendHTTPListener(t *testing.T) {
 				EtcdClientTLSInfo:            tlsInfo,
 				EtcdPeerTLSInfo:              tlsInfo,
 			}
-			b, err := Initialize(cfg)
+			ctx, cancel := context.WithCancel(context.Background())
+			b, err := Initialize(ctx, cfg)
 			if err != nil {
 				t.Fatalf("failed to start backend: %s", err)
 			}
@@ -137,8 +139,7 @@ func TestBackendHTTPListener(t *testing.T) {
 			require.NotNil(t, client)
 
 			assert.NoError(t, client.Close())
-			b.Stop()
-
+			cancel()
 		})
 	}
 }
