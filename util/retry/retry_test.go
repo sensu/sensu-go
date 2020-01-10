@@ -1,6 +1,7 @@
 package retry
 
 import (
+	"encoding/json"
 	"errors"
 	"testing"
 	"time"
@@ -59,4 +60,70 @@ func TestExponentialBackoff(t *testing.T) {
 	b.MaxElapsedTime = 60 * time.Millisecond
 	sleepFn := mockBackoffFuncSleep()
 	assert.Equal(t, ErrMaxElapsedTime, b.Retry(sleepFn))
+}
+
+func TestJSONTimeDurationUnmarshal(t *testing.T) {
+	data := []byte(`"5s"`)
+	var tm JSONTimeDuration
+	if err := json.Unmarshal(data, &tm); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := tm, JSONTimeDuration(time.Second*5); got != want {
+		t.Fatalf("bad JSONTimeDuration: got %s, want %s", got, want)
+	}
+}
+
+func TestJSONTimeDurationMarshal(t *testing.T) {
+	tm := JSONTimeDuration(time.Second * 5)
+	b, err := json.Marshal(tm)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := string(b), `"5s"`; got != want {
+		t.Fatalf("bad JSONTimeDuration: got %s, want %s", got, want)
+	}
+}
+
+func TestUnmarshalExponentialBackoff(t *testing.T) {
+	var doc = []byte(`{
+	"initial_delay_interval": "10ms",
+	"max_delay_interval": 0,
+	"max_elapsed_time": "1h",
+	"max_retry_attempts": 5,
+	"multiplier": 1.5
+	}`)
+	var eb ExponentialBackoff
+	if err := json.Unmarshal(doc, &eb); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := eb.InitialDelayInterval, 10*time.Millisecond; got != want {
+		t.Fatalf("bad InitialDelayInterval: got %s, want %s", got, want)
+	}
+	if got, want := eb.MaxDelayInterval, time.Duration(0); got != want {
+		t.Fatalf("bad MaxDelayInterval: got %s, want %s", got, want)
+	}
+	if got, want := eb.MaxElapsedTime, time.Hour; got != want {
+		t.Fatalf("bad MaxElapsedTime: got %s, want %s", got, want)
+	}
+}
+
+func TestMarshalExponentialBackoff(t *testing.T) {
+	eb := &ExponentialBackoff{
+		InitialDelayInterval: time.Second,
+		Multiplier:           1.5,
+	}
+	b, err := json.Marshal(eb)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rm := make(map[string]*json.RawMessage)
+	if err := json.Unmarshal(b, &rm); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := rm["multiplier"]; !ok {
+		t.Fatal("missing multiplier")
+	}
+	if _, ok := rm["initial_delay_interval"]; !ok {
+		t.Fatal("missing initial_delay_interval")
+	}
 }
