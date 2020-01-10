@@ -14,8 +14,8 @@ type mockProvider struct {
 }
 
 // Get ...
-func (m *mockProvider) Get(name string) (secret string, err error) {
-	args := m.Called(name)
+func (m *mockProvider) Get(name string, namespace string) (secret string, err error) {
+	args := m.Called(name, namespace)
 	return args.Get(0).(string), args.Error(1)
 }
 
@@ -77,15 +77,15 @@ func TestSubSecrets(t *testing.T) {
 	// create provider env
 	mp1 := &mockProvider{}
 	mp1.On("GetObjectMeta", mock.Anything).Return(corev2.ObjectMeta{Name: "env"})
-	mp1.On("Get", "foo").Return("bar", nil)
-	mp1.On("Get", "baby").Return("", nil)
-	mp1.On("Get", "baz").Return("boo", nil)
-	mp1.On("Get", "err").Return("", fmt.Errorf("err on provider"))
+	mp1.On("Get", "foo", mock.Anything).Return("bar", nil)
+	mp1.On("Get", "baby", mock.Anything).Return("", nil)
+	mp1.On("Get", "baz", mock.Anything).Return("boo", nil)
+	mp1.On("Get", "err", mock.Anything).Return("", fmt.Errorf("err on provider"))
 	pm.AddProvider(mp1)
 	require.Equal(t, 1, len(pm.Providers()))
 
 	// all found secrets are returned from a single provider
-	secretVars, err := pm.SubSecrets([]*corev2.Secret{
+	secretVars, err := pm.SubSecrets("default", []*corev2.Secret{
 		&corev2.Secret{
 			Name:   "FOO",
 			Secret: "foo",
@@ -103,7 +103,7 @@ func TestSubSecrets(t *testing.T) {
 	require.Equal(t, []string{"FOO=bar", "BAZ=boo"}, secretVars)
 
 	// an error is returned if the provider errors
-	secretVars, err = pm.SubSecrets([]*corev2.Secret{
+	secretVars, err = pm.SubSecrets("default", []*corev2.Secret{
 		&corev2.Secret{
 			Name:   "FOO",
 			Secret: "foo",
@@ -117,25 +117,25 @@ func TestSubSecrets(t *testing.T) {
 	require.Equal(t, []string{}, secretVars)
 
 	// no secrets/no error if no secrets are provided
-	secretVars, err = pm.SubSecrets([]*corev2.Secret{})
+	secretVars, err = pm.SubSecrets("default", []*corev2.Secret{})
 	require.NoError(t, err)
 	require.Equal(t, []string{}, secretVars)
 
 	// no secrets/no error on nil
-	secretVars, err = pm.SubSecrets(nil)
+	secretVars, err = pm.SubSecrets("default", nil)
 	require.NoError(t, err)
 	require.Equal(t, []string{}, secretVars)
 
 	// create provider vault
 	mp2 := &mockProvider{}
 	mp2.On("GetObjectMeta", mock.Anything).Return(corev2.ObjectMeta{Name: "vault"})
-	mp2.On("Get", "baby").Return("yoda", nil)
-	mp2.On("Get", "foo").Return("", nil)
+	mp2.On("Get", "baby", mock.Anything).Return("yoda", nil)
+	mp2.On("Get", "foo", mock.Anything).Return("", nil)
 	pm.AddProvider(mp2)
 	require.Equal(t, 2, len(pm.Providers()))
 
 	// all found secrets are returned from all providers
-	secretVars, err = pm.SubSecrets([]*corev2.Secret{
+	secretVars, err = pm.SubSecrets("default", []*corev2.Secret{
 		&corev2.Secret{
 			Name:   "FOO",
 			Secret: "foo",
@@ -151,7 +151,7 @@ func TestSubSecrets(t *testing.T) {
 	// no secrets/no error with no providers
 	require.NoError(t, pm.RemoveProvider("env"))
 	require.NoError(t, pm.RemoveProvider("vault"))
-	secretVars, err = pm.SubSecrets([]*corev2.Secret{
+	secretVars, err = pm.SubSecrets("default", []*corev2.Secret{
 		&corev2.Secret{
 			Name:   "FOO",
 			Secret: "foo",

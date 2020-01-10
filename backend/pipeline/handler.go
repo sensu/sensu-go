@@ -216,7 +216,7 @@ func (p *Pipeline) pipeHandler(handler *corev2.Handler, eventData []byte) (*comm
 		"assets":    handler.RuntimeAssets,
 	}
 
-	secrets, err := p.secretsProviderManager.SubSecrets(handler.Secrets)
+	secrets, err := p.secretsProviderManager.SubSecrets(handler.Namespace, handler.Secrets)
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Error("failed to retrieve secrets for handler")
 		return nil, err

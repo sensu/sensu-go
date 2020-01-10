@@ -126,7 +126,7 @@ func (p *Pipeline) pipeMutator(mutator *corev2.Mutator, event *corev2.Event) ([]
 		"assets":    mutator.RuntimeAssets,
 	}
 
-	secrets, err := p.secretsProviderManager.SubSecrets(mutator.Secrets)
+	secrets, err := p.secretsProviderManager.SubSecrets(mutator.Namespace, mutator.Secrets)
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Error("failed to retrieve secrets for mutator")
 		return nil, err

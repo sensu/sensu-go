@@ -11,7 +11,7 @@ import (
 type Provider interface {
 	corev2.Resource
 	// Get gets the value of the secret associated with the Sensu resource name.
-	Get(name string) (secret string, err error)
+	Get(name string, namespace string) (secret string, err error)
 }
 
 // ProviderManager manages the list of secrets providers.
@@ -72,7 +72,7 @@ func (m *ProviderManager) RemoveProvider(name string) error {
 }
 
 // SubSecrets substitutes all secret tokens with the value of the secret.
-func (m *ProviderManager) SubSecrets(secrets []*corev2.Secret) ([]string, error) {
+func (m *ProviderManager) SubSecrets(namespace string, secrets []*corev2.Secret) ([]string, error) {
 	secretVars := []string{}
 
 	// Make sure the providers map is not nil
@@ -91,7 +91,7 @@ func (m *ProviderManager) SubSecrets(secrets []*corev2.Secret) ([]string, error)
 		for name, p := range providers {
 			// ask the provider to retrieve the secret
 			secretKey := secret.Name
-			secretValue, err := p.Get(secret.Secret)
+			secretValue, err := p.Get(secret.Secret, namespace)
 			if err != nil {
 				logger.WithField("provider", name).WithError(err).Error("unable to retrieve secrets from provider")
 				return []string{}, err

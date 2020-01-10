@@ -337,7 +337,7 @@ func buildRequest(check *corev2.CheckConfig, s store.Store, secretsProviderManag
 	}
 
 	if secretsProviderManager.TLSenabled {
-		secrets, err := secretsProviderManager.SubSecrets(check.Secrets)
+		secrets, err := secretsProviderManager.SubSecrets(check.Namespace, check.Secrets)
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("failed to retrieve secrets for check")
 			return nil, err
