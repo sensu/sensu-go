@@ -10,6 +10,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Fixed a memory leak in the entity cache
 - Split rules ClusterRole and Role verbs, resources and resource names on comma.
+- Add support for the `--format` flag in the `sensuctl command list` subcommand.
 
 ## [5.16.1] - 2019-12-18
 
