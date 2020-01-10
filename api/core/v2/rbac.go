@@ -2,8 +2,12 @@ package v2
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"path"
+	"strings"
+
+	stringsutil "github.com/sensu/sensu-go/util/strings"
 )
 
 const (
@@ -47,6 +51,14 @@ var CommonCoreResources = []string{
 	"hooks",
 	"mutators",
 	"silenced",
+}
+
+var allowedVerbs = []string{
+	VerbAll,
+	"get",
+	"list",
+	"update",
+	"delete",
 }
 
 // FixtureSubject creates a Subject for testing
@@ -135,6 +147,17 @@ func (r *ClusterRole) Validate() error {
 		return errors.New("ClusterRole cannot have a namespace")
 	}
 
+	for i := range r.Rules {
+		// Split the verbs, resources and resource names
+		r.Rules[i].Verbs = split(r.Rules[i].Verbs)
+		r.Rules[i].Resources = split(r.Rules[i].Resources)
+
+		// Validate the verbs
+		if err := validateVerbs(r.Rules[i].Verbs); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -195,6 +218,17 @@ func (r *Role) Validate() error {
 
 	if len(r.Rules) == 0 {
 		return errors.New("a Role must have at least one rule")
+	}
+
+	for i := range r.Rules {
+		// Split the verbs, resources and resource names
+		r.Rules[i].Verbs = split(r.Rules[i].Verbs)
+		r.Rules[i].Resources = split(r.Rules[i].Resources)
+
+		// Validate the verbs
+		if err := validateVerbs(r.Rules[i].Verbs); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -382,4 +416,27 @@ func (*ClusterRole) RBACName() string {
 
 func (*Role) RBACName() string {
 	return "roles"
+}
+
+// split splits each string within a list using the comma seperator
+func split(list []string) []string {
+	var splitted []string
+
+	for _, elem := range list {
+		v := strings.Split(elem, ",")
+		splitted = append(splitted, v...)
+	}
+
+	return splitted
+}
+
+// validateVerbs ensures the provided verbs are valid
+func validateVerbs(verbs []string) error {
+	for _, verb := range verbs {
+		if !stringsutil.InArray(verb, allowedVerbs) {
+			return fmt.Errorf("the verb %q is not valid", verb)
+		}
+	}
+
+	return nil
 }
