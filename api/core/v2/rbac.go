@@ -151,7 +151,6 @@ func (r *ClusterRole) Validate() error {
 		// Split the verbs, resources and resource names
 		r.Rules[i].Verbs = split(r.Rules[i].Verbs)
 		r.Rules[i].Resources = split(r.Rules[i].Resources)
-		r.Rules[i].ResourceNames = split(r.Rules[i].ResourceNames)
 
 		// Validate the verbs
 		if err := validateVerbs(r.Rules[i].Verbs); err != nil {
@@ -225,7 +224,6 @@ func (r *Role) Validate() error {
 		// Split the verbs, resources and resource names
 		r.Rules[i].Verbs = split(r.Rules[i].Verbs)
 		r.Rules[i].Resources = split(r.Rules[i].Resources)
-		r.Rules[i].ResourceNames = split(r.Rules[i].ResourceNames)
 
 		// Validate the verbs
 		if err := validateVerbs(r.Rules[i].Verbs); err != nil {
