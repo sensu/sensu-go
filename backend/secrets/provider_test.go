@@ -85,22 +85,44 @@ func TestSubSecrets(t *testing.T) {
 	require.Equal(t, 1, len(pm.Providers()))
 
 	// all found secrets are returned from a single provider
-	secretVars, err := pm.SubSecrets("hi $foo $baby $baz blah")
+	secretVars, err := pm.SubSecrets([]*corev2.Secret{
+		&corev2.Secret{
+			Name:   "FOO",
+			Secret: "foo",
+		},
+		&corev2.Secret{
+			Name:   "BABY",
+			Secret: "baby",
+		},
+		&corev2.Secret{
+			Name:   "BAZ",
+			Secret: "baz",
+		},
+	})
 	require.NoError(t, err)
-	require.Equal(t, []string{"foo=bar", "baz=boo"}, secretVars)
+	require.Equal(t, []string{"FOO=bar", "BAZ=boo"}, secretVars)
 
 	// an error is returned if the provider errors
-	secretVars, err = pm.SubSecrets("hi $foo $err")
+	secretVars, err = pm.SubSecrets([]*corev2.Secret{
+		&corev2.Secret{
+			Name:   "FOO",
+			Secret: "foo",
+		},
+		&corev2.Secret{
+			Name:   "ERR",
+			Secret: "err",
+		},
+	})
 	require.Error(t, err)
 	require.Equal(t, []string{}, secretVars)
 
 	// no secrets/no error if no secrets are provided
-	secretVars, err = pm.SubSecrets("no secrets")
+	secretVars, err = pm.SubSecrets([]*corev2.Secret{})
 	require.NoError(t, err)
 	require.Equal(t, []string{}, secretVars)
 
-	// no secrets/no error on an empty string
-	secretVars, err = pm.SubSecrets("")
+	// no secrets/no error on nil
+	secretVars, err = pm.SubSecrets(nil)
 	require.NoError(t, err)
 	require.Equal(t, []string{}, secretVars)
 
@@ -113,14 +135,28 @@ func TestSubSecrets(t *testing.T) {
 	require.Equal(t, 2, len(pm.Providers()))
 
 	// all found secrets are returned from all providers
-	secretVars, err = pm.SubSecrets("hi $foo $baby blah")
+	secretVars, err = pm.SubSecrets([]*corev2.Secret{
+		&corev2.Secret{
+			Name:   "FOO",
+			Secret: "foo",
+		},
+		&corev2.Secret{
+			Name:   "BABY",
+			Secret: "baby",
+		},
+	})
 	require.NoError(t, err)
-	require.Equal(t, []string{"foo=bar", "baby=yoda"}, secretVars)
+	require.Equal(t, []string{"FOO=bar", "BABY=yoda"}, secretVars)
 
 	// no secrets/no error with no providers
 	require.NoError(t, pm.RemoveProvider("env"))
 	require.NoError(t, pm.RemoveProvider("vault"))
-	secretVars, err = pm.SubSecrets("hi $foo")
+	secretVars, err = pm.SubSecrets([]*corev2.Secret{
+		&corev2.Secret{
+			Name:   "FOO",
+			Secret: "foo",
+		},
+	})
 	require.NoError(t, err)
 	require.Equal(t, []string{}, secretVars)
 }

@@ -2,7 +2,6 @@ package secrets
 
 import (
 	"fmt"
-	"strings"
 	"sync"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -73,7 +72,7 @@ func (m *ProviderManager) RemoveProvider(name string) error {
 }
 
 // SubSecrets substitutes all secret tokens with the value of the secret.
-func (m *ProviderManager) SubSecrets(command string) ([]string, error) {
+func (m *ProviderManager) SubSecrets(secrets []*corev2.Secret) ([]string, error) {
 	secretVars := []string{}
 
 	// Make sure the providers map is not nil
@@ -86,23 +85,19 @@ func (m *ProviderManager) SubSecrets(command string) ([]string, error) {
 		return secretVars, nil
 	}
 
-	// iterate through each argument in the command
-	args := strings.Split(command, " ")
-	for _, a := range args {
-		// if the arg starts with $, find the secret
-		if strings.HasPrefix(a, "$") {
-			// iterate through each secrets provider
-			for name, p := range providers {
-				// ask the provider to retrieve the secret
-				secretKey := strings.TrimLeft(a, "$")
-				secretValue, err := p.Get(secretKey)
-				if err != nil {
-					logger.WithField("provider", name).WithError(err).Error("unable to retrieve secrets from provider")
-					return []string{}, err
-				}
-				if secretValue != "" {
-					secretVars = append(secretVars, fmt.Sprintf("%s=%s", secretKey, secretValue))
-				}
+	// iterate through each secret in the config
+	for _, secret := range secrets {
+		// iterate through each secrets provider
+		for name, p := range providers {
+			// ask the provider to retrieve the secret
+			secretKey := secret.Name
+			secretValue, err := p.Get(secret.Secret)
+			if err != nil {
+				logger.WithField("provider", name).WithError(err).Error("unable to retrieve secrets from provider")
+				return []string{}, err
+			}
+			if secretValue != "" {
+				secretVars = append(secretVars, fmt.Sprintf("%s=%s", secretKey, secretValue))
 			}
 		}
 	}

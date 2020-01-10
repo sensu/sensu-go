@@ -10,8 +10,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Added the secrets provider interface and secrets provider manager to be used
 by commerical secrets providers. Implemented for checks, mutators, and handlers.
+- Added the `secrets` field to checks, mutators, and handlers.
+
 ### Fixed
-- Fixed a memory leak in the entity cache
+- Fixed a memory leak in the entity cache.
 
 ## [5.16.1] - 2019-12-18
 

@@ -89,6 +89,8 @@ var typeMap = map[string]interface{}{
 	"role_ref":               &RoleRef{},
 	"Rule":                   &Rule{},
 	"rule":                   &Rule{},
+	"Secret":                 &Secret{},
+	"secret":                 &Secret{},
 	"Silenced":               &Silenced{},
 	"silenced":               &Silenced{},
 	"Subject":                &Subject{},
