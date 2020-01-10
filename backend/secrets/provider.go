@@ -17,8 +17,9 @@ type Provider interface {
 
 // ProviderManager manages the list of secrets providers.
 type ProviderManager struct {
-	mu        *sync.RWMutex
-	providers map[string]Provider
+	mu         *sync.RWMutex
+	providers  map[string]Provider
+	TLSenabled bool
 }
 
 // NewProviderManager instantiates a new provider manager.
