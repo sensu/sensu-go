@@ -10,8 +10,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Added the secrets provider interface and secrets provider manager to be used
 by commerical secrets providers. Implemented for checks, mutators, and handlers.
+- [Web] Labels with links can now be followed.
 ### Fixed
 - Fixed a memory leak in the entity cache
+- [Web] Fixed a inconsistent crash that occurred in Firefox browsers
+- [Web] Fixed bug where event history was duplicated in the event timeline
+chart.
 
 ## [5.16.1] - 2019-12-18
 
