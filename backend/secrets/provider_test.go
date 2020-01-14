@@ -104,6 +104,7 @@ func TestSubSecrets(t *testing.T) {
 	})
 	require.Error(t, err)
 	require.Equal(t, 0, len(pm.Providers()))
+	require.Equal(t, []string{}, secretVars)
 
 	// create provider env
 	env := &mockProvider{}
