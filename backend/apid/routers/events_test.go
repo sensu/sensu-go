@@ -115,13 +115,6 @@ func TestEventsRouter(t *testing.T) {
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
-			name:           "it returns 400 if the event metadata to create is invalid",
-			method:         http.MethodPost,
-			path:           empty.URIPath(),
-			body:           []byte(`{"entity": {"namespace":"acme"}}`),
-			wantStatusCode: http.StatusBadRequest,
-		},
-		{
 			name:   "it returns 400 if the event to create is not valid",
 			method: http.MethodPost,
 			path:   empty.URIPath(),

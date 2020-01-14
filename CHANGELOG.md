@@ -15,6 +15,8 @@ within that namespace via the Web UI.
 resources.
 - Split rules ClusterRole and Role verbs, resources and resource names on comma.
 - Add support for the `--format` flag in the `sensuctl command list` subcommand.
+- Namespace can be ommited from event when performing an HTTP POST request to
+the `/events` endpoint.
 
 ## [5.16.1] - 2019-12-18
 
