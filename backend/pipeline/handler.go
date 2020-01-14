@@ -246,7 +246,7 @@ func (p *Pipeline) pipeHandler(handler *corev2.Handler, eventData []byte) (*comm
 				return nil, err
 			}
 		} else {
-			handlerExec.Env = environment.MergeEnvironments(os.Environ(), assets.Env(), handler.EnvVars)
+			handlerExec.Env = environment.MergeEnvironments(os.Environ(), assets.Env(), handler.EnvVars, secrets)
 		}
 	}
 

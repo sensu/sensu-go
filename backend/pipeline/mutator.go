@@ -158,7 +158,7 @@ func (p *Pipeline) pipeMutator(mutator *corev2.Mutator, event *corev2.Event) ([]
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for mutator")
 		} else {
-			mutatorExec.Env = environment.MergeEnvironments(os.Environ(), assets.Env(), mutator.EnvVars)
+			mutatorExec.Env = environment.MergeEnvironments(os.Environ(), assets.Env(), mutator.EnvVars, secrets)
 		}
 	}
 
