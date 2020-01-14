@@ -104,8 +104,9 @@ func (m *ProviderManager) SubSecrets(ctx context.Context, secrets []*corev2.Secr
 		}
 		provider := providers[providerName]
 		if provider == nil {
-			logger.WithField("provider", providerName).WithError(err).Error("provider does not exist")
-			return []string{}, fmt.Errorf("provider does not exist")
+			err = fmt.Errorf("provider does not exist")
+			logger.WithField("provider", providerName).WithError(err).Error("unable to retrieve secrets from provider")
+			return []string{}, err
 		}
 		// ask the provider to retrieve the secret
 		secretKey := secret.Name
