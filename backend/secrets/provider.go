@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sirupsen/logrus"
 )
 
 // Provider represents an abstracted secrets provider.
@@ -99,20 +100,29 @@ func (m *ProviderManager) SubSecrets(ctx context.Context, secrets []*corev2.Secr
 		// get the provider name and secret ID associated with the Sensu secret
 		providerName, secretID, err := m.Getter.Get(ctx, secret.Secret)
 		if err != nil {
-			logger.WithField("provider", providerName).WithError(err).Error("unable to retrieve secrets from provider")
+			logger.WithFields(logrus.Fields{
+				"provider": providerName,
+				"secret":   secret.Secret,
+			}).WithError(err).Error("unable to retrieve secret from provider")
 			return []string{}, err
 		}
 		provider := providers[providerName]
 		if provider == nil {
 			err = fmt.Errorf("provider does not exist")
-			logger.WithField("provider", providerName).WithError(err).Error("unable to retrieve secrets from provider")
+			logger.WithFields(logrus.Fields{
+				"provider": providerName,
+				"secret":   secret.Secret,
+			}).WithError(err).Error("unable to retrieve secret from provider")
 			return []string{}, err
 		}
 		// ask the provider to retrieve the secret
 		secretKey := secret.Name
 		secretValue, err := provider.Get(secretID)
 		if err != nil {
-			logger.WithField("provider", providerName).WithError(err).Error("unable to retrieve secrets from provider")
+			logger.WithFields(logrus.Fields{
+				"provider": providerName,
+				"secretID": secretID,
+			}).WithError(err).Error("unable to retrieve secret from provider")
 			return []string{}, err
 		}
 		if secretValue != "" {
