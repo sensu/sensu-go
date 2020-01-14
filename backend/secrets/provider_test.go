@@ -91,16 +91,18 @@ func TestSubSecrets(t *testing.T) {
 	mg.On("Get", ctx, "sensu-empty").Return("env", "SENSU_EMPTY", nil)
 	mg.On("Get", ctx, "sensu-baz").Return("env", "SENSU_BAZ", nil)
 	mg.On("Get", ctx, "sensu-err").Return("", "", fmt.Errorf("err on secrets store"))
+	mg.On("Get", ctx, "sensu-no-provider").Return("foo", "SENSU_NO_PROVIDER", nil)
+	mg.On("Get", ctx, "sensu-provider-err").Return("vault", "SENSU_PROVIDER_ERR", nil)
 	pm.Getter = mg
 
-	// no providers returns nil
+	// no providers with secrets defined returns error
 	secretVars, err := pm.SubSecrets(ctx, []*corev2.Secret{
 		&corev2.Secret{
 			Name:   "FOO",
 			Secret: "sensu-foo",
 		},
 	})
-	require.Nil(t, err)
+	require.Error(t, err)
 	require.Equal(t, 0, len(pm.Providers()))
 
 	// create provider env
@@ -160,6 +162,7 @@ func TestSubSecrets(t *testing.T) {
 	vault.On("GetObjectMeta", mock.Anything).Return(corev2.ObjectMeta{Name: "vault"})
 	vault.On("Get", "SENSU_BABY").Return("yoda", nil)
 	vault.On("Get", "SENSU_FOO").Return("", nil)
+	vault.On("Get", "SENSU_PROVIDER_ERR").Return("", fmt.Errorf("err on provider"))
 	pm.AddProvider(vault)
 	require.Equal(t, 2, len(pm.Providers()))
 
@@ -177,15 +180,23 @@ func TestSubSecrets(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, []string{"FOO=bar", "BABY=yoda"}, secretVars)
 
-	// no secrets/no error with no providers
-	require.NoError(t, pm.RemoveProvider("env"))
-	require.NoError(t, pm.RemoveProvider("vault"))
+	// provider does not exist
 	secretVars, err = pm.SubSecrets(ctx, []*corev2.Secret{
 		&corev2.Secret{
-			Name:   "FOO",
-			Secret: "foo",
+			Name:   "NO_PROVIDER",
+			Secret: "sensu-no-provider",
 		},
 	})
-	require.NoError(t, err)
+	require.Error(t, err)
+	require.Equal(t, []string{}, secretVars)
+
+	// provider error getting secret
+	secretVars, err = pm.SubSecrets(ctx, []*corev2.Secret{
+		&corev2.Secret{
+			Name:   "PROVIDER_ERR",
+			Secret: "sensu-provider-err",
+		},
+	})
+	require.Error(t, err)
 	require.Equal(t, []string{}, secretVars)
 }
