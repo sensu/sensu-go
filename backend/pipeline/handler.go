@@ -209,6 +209,7 @@ func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level 
 // pipeHandler fork/executes a child process for a Sensu pipe handler
 // command and writes the mutated eventData to it via STDIN.
 func (p *Pipeline) pipeHandler(handler *corev2.Handler, eventData []byte) (*command.ExecutionResponse, error) {
+	ctx := corev2.SetContextFromResource(context.Background(), handler)
 	// Prepare log entry
 	fields := logrus.Fields{
 		"namespace": handler.Namespace,
@@ -216,7 +217,7 @@ func (p *Pipeline) pipeHandler(handler *corev2.Handler, eventData []byte) (*comm
 		"assets":    handler.RuntimeAssets,
 	}
 
-	secrets, err := p.secretsProviderManager.SubSecrets(handler.Namespace, handler.Secrets)
+	secrets, err := p.secretsProviderManager.SubSecrets(ctx, handler.Secrets)
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Error("failed to retrieve secrets for handler")
 		return nil, err
@@ -235,7 +236,6 @@ func (p *Pipeline) pipeHandler(handler *corev2.Handler, eventData []byte) (*comm
 	if len(handler.RuntimeAssets) != 0 {
 		logger.WithFields(fields).Debug("fetching assets for handler")
 		// Fetch and install all assets required for handler execution
-		ctx := corev2.SetContextFromResource(context.Background(), handler)
 		matchedAssets := asset.GetAssets(ctx, p.store, handler.RuntimeAssets)
 
 		assets, err := asset.GetAll(context.TODO(), p.assetGetter, matchedAssets)

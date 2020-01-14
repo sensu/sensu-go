@@ -325,6 +325,7 @@ func publishRoundRobinProxyCheckRequests(executor *CheckExecutor, check *corev2.
 }
 
 func buildRequest(check *corev2.CheckConfig, s store.Store, secretsProviderManager *secrets.ProviderManager) (*corev2.CheckRequest, error) {
+	ctx := corev2.SetContextFromResource(context.Background(), check)
 	request := &corev2.CheckRequest{}
 	request.Config = check
 	request.HookAssets = make(map[string]*corev2.AssetList)
@@ -337,15 +338,13 @@ func buildRequest(check *corev2.CheckConfig, s store.Store, secretsProviderManag
 	}
 
 	if secretsProviderManager.TLSenabled {
-		secrets, err := secretsProviderManager.SubSecrets(check.Namespace, check.Secrets)
+		secrets, err := secretsProviderManager.SubSecrets(ctx, check.Secrets)
 		if err != nil {
 			logger.WithFields(fields).WithError(err).Error("failed to retrieve secrets for check")
 			return nil, err
 		}
 		request.Secrets = secrets
 	}
-
-	ctx := corev2.SetContextFromResource(context.Background(), check)
 
 	assets, err := s.GetAssets(ctx, &store.SelectionPredicate{})
 	if err != nil {

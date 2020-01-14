@@ -119,6 +119,7 @@ func (p *Pipeline) onlyCheckOutputMutator(event *corev2.Event) []byte {
 // STDIN, and captures the command output (STDOUT/ERR) to be used as
 // the mutated event data for a Sensu event handler.
 func (p *Pipeline) pipeMutator(mutator *corev2.Mutator, event *corev2.Event) ([]byte, error) {
+	ctx := corev2.SetContextFromResource(context.Background(), mutator)
 	// Prepare log entry
 	fields := logrus.Fields{
 		"namespace": mutator.Namespace,
@@ -126,7 +127,7 @@ func (p *Pipeline) pipeMutator(mutator *corev2.Mutator, event *corev2.Event) ([]
 		"assets":    mutator.RuntimeAssets,
 	}
 
-	secrets, err := p.secretsProviderManager.SubSecrets(mutator.Namespace, mutator.Secrets)
+	secrets, err := p.secretsProviderManager.SubSecrets(ctx, mutator.Secrets)
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Error("failed to retrieve secrets for mutator")
 		return nil, err
@@ -151,7 +152,6 @@ func (p *Pipeline) pipeMutator(mutator *corev2.Mutator, event *corev2.Event) ([]
 	if len(mutator.RuntimeAssets) != 0 {
 		logger.WithFields(fields).Debug("fetching assets for mutator")
 		// Fetch and install all assets required for handler execution
-		ctx := corev2.SetContextFromResource(context.Background(), mutator)
 		matchedAssets := asset.GetAssets(ctx, p.store, mutator.RuntimeAssets)
 
 		assets, err := asset.GetAll(context.TODO(), p.assetGetter, matchedAssets)
