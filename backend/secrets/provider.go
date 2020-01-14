@@ -1,18 +1,19 @@
 package secrets
 
 import (
+	"context"
 	"fmt"
-	"strings"
 	"sync"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sirupsen/logrus"
 )
 
-// A Provider gets all secrets from a secrets provider.
+// Provider represents an abstracted secrets provider.
 type Provider interface {
 	corev2.Resource
-	// Get gets the value of the secret associated with the Sensu resource name.
-	Get(name string) (secret string, err error)
+	// Get gets the value of the secret associated with the secret ID.
+	Get(id string) (string, error)
 }
 
 // ProviderManager manages the list of secrets providers.
@@ -20,6 +21,7 @@ type ProviderManager struct {
 	mu         *sync.RWMutex
 	providers  map[string]Provider
 	TLSenabled bool
+	Getter     Getter
 }
 
 // NewProviderManager instantiates a new provider manager.
@@ -73,8 +75,12 @@ func (m *ProviderManager) RemoveProvider(name string) error {
 }
 
 // SubSecrets substitutes all secret tokens with the value of the secret.
-func (m *ProviderManager) SubSecrets(command string) ([]string, error) {
+func (m *ProviderManager) SubSecrets(ctx context.Context, secrets []*corev2.Secret) ([]string, error) {
 	secretVars := []string{}
+	// short circuit the function if there are no secrets
+	if len(secrets) == 0 {
+		return secretVars, nil
+	}
 
 	// Make sure the providers map is not nil
 	if m.providers == nil {
@@ -83,27 +89,44 @@ func (m *ProviderManager) SubSecrets(command string) ([]string, error) {
 	providers := m.Providers()
 	// short circuit the function if there are no secrets providers
 	if len(providers) == 0 {
-		return secretVars, nil
+		return secretVars, fmt.Errorf("no secrets providers defined")
+	}
+	if m.Getter == nil {
+		return []string{}, fmt.Errorf("secrets management is not supported")
 	}
 
-	// iterate through each argument in the command
-	args := strings.Split(command, " ")
-	for _, a := range args {
-		// if the arg starts with $, find the secret
-		if strings.HasPrefix(a, "$") {
-			// iterate through each secrets provider
-			for name, p := range providers {
-				// ask the provider to retrieve the secret
-				secretKey := strings.TrimLeft(a, "$")
-				secretValue, err := p.Get(secretKey)
-				if err != nil {
-					logger.WithField("provider", name).WithError(err).Error("unable to retrieve secrets from provider")
-					return []string{}, err
-				}
-				if secretValue != "" {
-					secretVars = append(secretVars, fmt.Sprintf("%s=%s", secretKey, secretValue))
-				}
-			}
+	// iterate through each secret in the config
+	for _, secret := range secrets {
+		// get the provider name and secret ID associated with the Sensu secret
+		providerName, secretID, err := m.Getter.Get(ctx, secret.Secret)
+		if err != nil {
+			logger.WithFields(logrus.Fields{
+				"provider": providerName,
+				"secret":   secret.Secret,
+			}).WithError(err).Error("unable to retrieve secret from provider")
+			return []string{}, err
+		}
+		provider := providers[providerName]
+		if provider == nil {
+			err = fmt.Errorf("provider does not exist")
+			logger.WithFields(logrus.Fields{
+				"provider": providerName,
+				"secret":   secret.Secret,
+			}).WithError(err).Error("unable to retrieve secret from provider")
+			return []string{}, err
+		}
+		// ask the provider to retrieve the secret
+		secretKey := secret.Name
+		secretValue, err := provider.Get(secretID)
+		if err != nil {
+			logger.WithFields(logrus.Fields{
+				"provider": providerName,
+				"secretID": secretID,
+			}).WithError(err).Error("unable to retrieve secret from provider")
+			return []string{}, err
+		}
+		if secretValue != "" {
+			secretVars = append(secretVars, fmt.Sprintf("%s=%s", secretKey, secretValue))
 		}
 	}
 
