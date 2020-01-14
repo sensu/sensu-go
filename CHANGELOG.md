@@ -14,6 +14,7 @@ within that namespace via the Web UI.
 - Explicit access to namespaces can only be granted via cluster-wide RBAC
 resources.
 - Split rules ClusterRole and Role verbs, resources and resource names on comma.
+- Add support for the `--format` flag in the `sensuctl command list` subcommand.
 
 ## [5.16.1] - 2019-12-18
 
