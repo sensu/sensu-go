@@ -401,8 +401,7 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 				}
 				asset := corev2.Asset{
 					ObjectMeta: corev2.ObjectMeta{
-						Name:      bAsset.name,
-						Namespace: bAsset.namespace,
+						Name: bAsset.name,
 						Annotations: map[string]string{
 							"io.sensu.bonsai.type":     "sensuctl",
 							"io.sensu.bonsai.provider": "sensuctl/command",
