@@ -51,7 +51,7 @@ func CheckMeta(resource interface{}, vars map[string]string) error {
 	return nil
 }
 
-// resource is used to set metadata values, e.g. in MetaPathValues()
+// Resource is used to set metadata values, e.g. in MetaPathValues()
 type Resource interface {
 	GetObjectMeta() corev2.ObjectMeta
 	SetNamespace(string)
