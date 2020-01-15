@@ -15,6 +15,7 @@ func TestEntitiesRouter(t *testing.T) {
 	s.On("GetEventsByEntity", mock.Anything, "foo", mock.Anything).Return([]*corev2.Event{corev2.FixtureEvent("foo", "bar")}, nil)
 	s.On("DeleteEventByEntityCheck", mock.Anything, "foo", "bar").Return(nil)
 	s.On("DeleteEntityByName", mock.Anything, "foo").Return(nil)
+	s.On("GetEntityByName", mock.Anything, "foo").Return(corev2.FixtureEntity("foo"), nil)
 	router := NewEntitiesRouter(s, s)
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)
