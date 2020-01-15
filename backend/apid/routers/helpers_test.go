@@ -434,7 +434,7 @@ var deleteResourceStoreErrTestCase = func(resource corev2.Resource) routerTestCa
 
 var deleteResourceSuccessTestCase = func(resource corev2.Resource) routerTestCase {
 	return routerTestCase{
-		name:   "it returns 204 if the resource was delete",
+		name:   "it returns 204 if the resource was deleted",
 		method: http.MethodDelete,
 		path:   resource.URIPath(),
 		body:   []byte(`{"metadata": {"namespace":"default","name":"foo"}}`),

@@ -18,6 +18,8 @@ by commerical secrets providers. Implemented for checks, mutators, and handlers.
 - [Web] Fixed a inconsistent crash that occurred in Firefox browsers.
 - [Web] Fixed bug where event history was duplicated in the event timeline
 chart.
+- Fixed a bug where `sensuctl entity delete` was not returning an error
+when attempting to delete a non-existent entity.
 
 ## [5.16.1] - 2019-12-18
 

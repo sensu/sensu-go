@@ -35,8 +35,7 @@ func (r *EntitiesRouter) Mount(parent *mux.Router) {
 	}
 
 	deleter := actions.EntityDeleter{
-		EntityStore: r.store,
-		EventStore:  r.eventStore,
+		Store: r.store,
 	}
 
 	routes.Del(deleter.Delete)
