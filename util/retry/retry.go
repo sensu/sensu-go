@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"math/rand"
 	"time"
-	"unsafe"
 )
 
 const DefaultMultiplier float64 = 2.0
@@ -115,20 +114,19 @@ func (e *ExponentialBackoff) UnmarshalJSON(b []byte) error {
 
 func (e ExponentialBackoff) MarshalJSON() (out []byte, err error) {
 	type ebFacade struct {
-		Ctx                  context.Context  `json:"-"`
 		InitialDelayInterval JSONTimeDuration `json:"initial_delay_interval,omitempty"`
 		MaxDelayInterval     JSONTimeDuration `json:"max_delay_interval,omitempty"`
 		MaxElapsedTime       JSONTimeDuration `json:"max_elapsed_time,omitempty"`
 		MaxRetryAttempts     int              `json:"max_retry_attempts,omitempty"`
 		Multiplier           float64          `json:"multiplier"`
-		start                time.Time
 	}
-	defer func() {
-		if e := recover(); e != nil {
-			err = fmt.Errorf("couldn't marshal value: %s", err)
-		}
-	}()
-	var eb = (*ebFacade)(unsafe.Pointer(&e))
+	eb := ebFacade{
+		InitialDelayInterval: JSONTimeDuration(e.InitialDelayInterval),
+		MaxDelayInterval:     JSONTimeDuration(e.MaxDelayInterval),
+		MaxElapsedTime:       JSONTimeDuration(e.MaxElapsedTime),
+		MaxRetryAttempts:     e.MaxRetryAttempts,
+		Multiplier:           e.Multiplier,
+	}
 	return json.Marshal(eb)
 }
 
