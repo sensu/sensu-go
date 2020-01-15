@@ -11,7 +11,8 @@ import (
 )
 
 type EntityDeleter struct {
-	Store store.Store
+	EntityStore store.EntityStore
+	EventStore  store.EventStore
 }
 
 func (d EntityDeleter) Delete(req *http.Request) (interface{}, error) {
@@ -21,7 +22,7 @@ func (d EntityDeleter) Delete(req *http.Request) (interface{}, error) {
 		return nil, NewError(InvalidArgument, err)
 	}
 
-	events, err := d.Store.GetEventsByEntity(req.Context(), entityName, &store.SelectionPredicate{})
+	events, err := d.EventStore.GetEventsByEntity(req.Context(), entityName, &store.SelectionPredicate{})
 	if err != nil {
 		return nil, fmt.Errorf("error fetching events for entity: %s", err)
 	}
@@ -31,7 +32,7 @@ func (d EntityDeleter) Delete(req *http.Request) (interface{}, error) {
 			// improbable
 			continue
 		}
-		err := d.Store.DeleteEventByEntityCheck(req.Context(), entityName, event.Check.Name)
+		err := d.EventStore.DeleteEventByEntityCheck(req.Context(), entityName, event.Check.Name)
 		if err != nil {
 			logger := logger.WithFields(logrus.Fields{
 				"entity":    entityName,
@@ -42,7 +43,7 @@ func (d EntityDeleter) Delete(req *http.Request) (interface{}, error) {
 		}
 	}
 
-	result, err := d.Store.GetEntityByName(req.Context(), entityName)
+	result, err := d.EntityStore.GetEntityByName(req.Context(), entityName)
 	if err != nil {
 		return nil, NewError(InternalErr, err)
 	}
@@ -51,5 +52,5 @@ func (d EntityDeleter) Delete(req *http.Request) (interface{}, error) {
 		return nil, NewErrorf(NotFound)
 	}
 
-	return nil, d.Store.DeleteEntityByName(req.Context(), entityName)
+	return nil, d.EntityStore.DeleteEntityByName(req.Context(), entityName)
 }
