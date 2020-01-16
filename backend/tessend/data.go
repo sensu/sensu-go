@@ -8,6 +8,12 @@ const (
 	licenseStorePath = "/sensu.io/api/enterprise/licensing/v2/license"
 )
 
+var (
+	// Distribution indicates that Sensu Go was distributed from OSS but can be
+	// overridden
+	Distribution = "oss"
+)
+
 // Data is the payload sent to tessen
 type Data struct {
 	// General information about the Sensu installation.
@@ -21,6 +27,9 @@ type Data struct {
 type Cluster struct {
 	// ID is the ID of the sensu-enterprise-go cluster.
 	ID string `json:"id"`
+
+	// Distribution indicates how Sensu Go was distributed
+	Distribution string `json:"distribution"`
 
 	// Version is the Sensu release version (e.g. "1.4.1").
 	Version string `json:"version"`

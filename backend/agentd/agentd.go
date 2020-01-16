@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"strings"
 	"sync"
@@ -29,6 +30,9 @@ var (
 	// upgrader is safe for concurrent use, and we don't need any particularly
 	// specialized configurations for different uses.
 	upgrader = &websocket.Upgrader{}
+
+	// used for registering prometheus session counter
+	sessionCounterOnce sync.Once
 )
 
 // Agentd is the backend HTTP API.
@@ -39,17 +43,18 @@ type Agentd struct {
 	// Port is the port Agentd is running on.
 	Port int
 
-	stopping   chan struct{}
-	running    *atomic.Value
-	wg         *sync.WaitGroup
-	errChan    chan error
-	httpServer *http.Server
-	store      store.Store
-	bus        messaging.MessageBus
-	tls        *corev2.TLSOptions
-	ringPool   *ringv2.Pool
-	ctx        context.Context
-	cancel     context.CancelFunc
+	stopping     chan struct{}
+	running      *atomic.Value
+	wg           *sync.WaitGroup
+	errChan      chan error
+	httpServer   *http.Server
+	store        store.Store
+	bus          messaging.MessageBus
+	tls          *corev2.TLSOptions
+	ringPool     *ringv2.Pool
+	ctx          context.Context
+	cancel       context.CancelFunc
+	writeTimeout int
 }
 
 // Config configures an Agentd.
@@ -70,18 +75,19 @@ type Option func(*Agentd) error
 func New(c Config, opts ...Option) (*Agentd, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	a := &Agentd{
-		Host:     c.Host,
-		Port:     c.Port,
-		bus:      c.Bus,
-		store:    c.Store,
-		tls:      c.TLS,
-		stopping: make(chan struct{}, 1),
-		running:  &atomic.Value{},
-		wg:       &sync.WaitGroup{},
-		errChan:  make(chan error, 1),
-		ringPool: c.RingPool,
-		ctx:      ctx,
-		cancel:   cancel,
+		Host:         c.Host,
+		Port:         c.Port,
+		bus:          c.Bus,
+		store:        c.Store,
+		tls:          c.TLS,
+		stopping:     make(chan struct{}, 1),
+		running:      &atomic.Value{},
+		wg:           &sync.WaitGroup{},
+		errChan:      make(chan error, 1),
+		ringPool:     c.RingPool,
+		ctx:          ctx,
+		cancel:       cancel,
+		writeTimeout: c.WriteTimeout,
 	}
 
 	// prepare server TLS config
@@ -94,6 +100,8 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 	// public variables so they can be overriden from the enterprise codebase
 	AuthenticationMiddleware = a.AuthenticationMiddleware
 	AuthorizationMiddleware = a.AuthorizationMiddleware
+	AgentLimiterMiddleware = a.AgentLimiterMiddleware
+	EntityLimiterMiddleware = a.EntityLimiterMiddleware
 
 	// Initialize a mux router that indirectly uses our middlewares defined above.
 	// We can't directly use them because mux will keep a copy of the middleware
@@ -101,7 +109,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 	// runtime, so we need this workaround
 	router := mux.NewRouter()
 	router.HandleFunc("/", a.webSocketHandler)
-	router.Use(authenticate, authorize)
+	router.Use(authenticate, authorize, entityLimit, agentLimit)
 
 	a.httpServer = &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", a.Host, a.Port),
@@ -123,6 +131,11 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 // Start Agentd.
 func (a *Agentd) Start() error {
 	logger.Info("starting agentd on address: ", a.httpServer.Addr)
+	ln, err := net.Listen("tcp", a.httpServer.Addr)
+	if err != nil {
+		return fmt.Errorf("failed to start agentd: %s", err)
+	}
+
 	a.wg.Add(1)
 
 	go func() {
@@ -130,16 +143,21 @@ func (a *Agentd) Start() error {
 		var err error
 		if a.tls != nil {
 			// TLS configuration comes from ToServerTLSConfig
-			err = a.httpServer.ListenAndServeTLS("", "")
+			err = a.httpServer.ServeTLS(ln, "", "")
 		} else {
-			err = a.httpServer.ListenAndServe()
+			err = a.httpServer.Serve(ln)
 		}
 		if err != nil && err != http.ErrServerClosed {
-			logger.WithError(err).Error("failed to start http/https server")
+			a.errChan <- fmt.Errorf("agentd failed while serving: %s", err)
 		}
 	}()
 
-	_ = prometheus.Register(sessionCounter)
+	sessionCounterOnce.Do(func() {
+		if err := prometheus.Register(sessionCounter); err != nil {
+			logger.WithError(err).Error("error registering session counter")
+			a.errChan <- err
+		}
+	})
 
 	return nil
 }
@@ -210,6 +228,7 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 		Subscriptions: strings.Split(r.Header.Get(transport.HeaderKeySubscriptions), ","),
 		RingPool:      a.ringPool,
 		ContentType:   contentType,
+		WriteTimeout:  a.writeTimeout,
 	}
 
 	cfg.Subscriptions = addEntitySubscription(cfg.AgentName, cfg.Subscriptions)
@@ -218,13 +237,27 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.WithError(err).Error("failed to create session")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		// There was an error retrieving the namespace from
+		// etcd, indicating that this backend has a potentially
+		// unrecoverable issue.
+		if _, ok := err.(*store.ErrInternal); ok {
+			select {
+			case a.errChan <- err:
+			case <-a.ctx.Done():
+			}
+		}
 		return
 	}
 
-	err = session.Start()
-	if err != nil {
+	if err := session.Start(); err != nil {
 		logger.WithError(err).Error("failed to start session")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		if _, ok := err.(*store.ErrInternal); ok {
+			select {
+			case a.errChan <- err:
+			case <-a.ctx.Done():
+			}
+		}
 		return
 	}
 }
@@ -242,6 +275,14 @@ func (a *Agentd) AuthenticationMiddleware(next http.Handler) http.Handler {
 		// Authenticate against the provider
 		user, err := a.store.AuthenticateUser(r.Context(), username, password)
 		if err != nil {
+			if _, ok := err.(*store.ErrInternal); ok {
+				select {
+				case a.errChan <- err:
+				case <-a.ctx.Done():
+				}
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
+			}
 			logger.
 				WithField("user", username).
 				WithError(err).
@@ -292,7 +333,15 @@ func (a *Agentd) AuthorizationMiddleware(next http.Handler) http.Handler {
 		}
 		authorized, err := auth.Authorize(ctx, attrs)
 		if err != nil {
-			logger.WithError(err).Error("unexpected error while authorization the session")
+			if _, ok := err.(*store.ErrInternal); ok {
+				select {
+				case a.errChan <- err:
+				case <-a.ctx.Done():
+				}
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
+			}
+			logger.WithError(err).Error("unexpected error while authorizing the session")
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
 		}
@@ -301,5 +350,21 @@ func (a *Agentd) AuthorizationMiddleware(next http.Handler) http.Handler {
 			return
 		}
 		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+// AgentLimiterMiddleware is a placeholder middleware for the agent
+// HTTP session. It will be overwritten by an enterprise middleware.
+func (a *Agentd) AgentLimiterMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		next.ServeHTTP(w, r)
+	})
+}
+
+// EntityLimiterMiddleware is a placeholder middleware for the agent
+// HTTP session. It will be overwritten by an enterprise middleware.
+func (a *Agentd) EntityLimiterMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		next.ServeHTTP(w, r)
 	})
 }

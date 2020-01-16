@@ -8,6 +8,7 @@ import (
 	"github.com/sensu/sensu-go/cli/commands/cluster"
 	"github.com/sensu/sensu-go/cli/commands/clusterrole"
 	"github.com/sensu/sensu-go/cli/commands/clusterrolebinding"
+	"github.com/sensu/sensu-go/cli/commands/command"
 	"github.com/sensu/sensu-go/cli/commands/completion"
 	"github.com/sensu/sensu-go/cli/commands/config"
 	"github.com/sensu/sensu-go/cli/commands/configure"
@@ -65,6 +66,7 @@ func AddCommands(rootCmd *cobra.Command, cli *cli.SensuCli) {
 		edit.Command(cli),
 		tessen.HelpCommand(cli),
 		dump.Command(cli),
+		command.HelpCommand(cli),
 	)
 
 	for _, cmd := range rootCmd.Commands() {

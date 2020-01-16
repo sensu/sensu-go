@@ -35,6 +35,15 @@ var (
 
 func init() {
 	signingMethod = jwt.SigningMethodHS256
+
+	var err error
+
+	// secret should be initialized and persisted, but in case that fails,
+	// it's critical to have a non-empty jwt secret
+	secret, err = utilbytes.Random(32)
+	if err != nil {
+		panic(err)
+	}
 }
 
 // AccessToken creates a new access token and returns it in both JWT and
@@ -174,26 +183,10 @@ func LoadKeyPair(privatePath, publicPath string) error {
 
 // InitSecret initializes and retrieves the secret for our signing tokens
 func InitSecret(store store.Store) error {
-	var s []byte
-	var err error
-
 	// Retrieve the secret
-	if secret == nil {
-		s, err = store.GetJWTSecret()
-		if err != nil {
-			// The secret does not exist, we need to create one
-			s, err = utilbytes.Random(32)
-			if err != nil {
-				return err
-			}
-
-			// Add the secret to the store
-			err = store.CreateJWTSecret(s)
-			if err != nil {
-				return err
-			}
-		}
-
+	if s, err := store.GetJWTSecret(); err != nil {
+		return err
+	} else {
 		// Set the secret so it's available accross the package
 		secret = s
 	}

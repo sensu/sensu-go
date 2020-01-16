@@ -11,6 +11,7 @@ func TestValidateName(t *testing.T) {
 	assert.Error(t, ValidateName("foo bar"))
 	assert.Error(t, ValidateName("foo@bar"))
 	assert.NoError(t, ValidateName("foo-bar"))
+	assert.NoError(t, ValidateName("foo:bar"))
 }
 
 func TestValidateNameStrict(t *testing.T) {
@@ -19,6 +20,7 @@ func TestValidateNameStrict(t *testing.T) {
 	assert.Error(t, ValidateNameStrict("foo@bar"))
 	assert.Error(t, ValidateNameStrict("FOO-bar"))
 	assert.NoError(t, ValidateNameStrict("foo-bar_2"))
+	assert.Error(t, ValidateNameStrict("foo:bar"))
 }
 
 func TestValidateSubscriptionName(t *testing.T) {

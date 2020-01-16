@@ -91,6 +91,18 @@ type Query {
     order: SuggestionOrder = FREQUENCY,
   ): SuggestionResultSet
 
+  "Describes the health of the cluster."
+  health: ClusterHealth!
+
+  "Describes the versions of each component of the backend."
+  versions: Versions!
+
+  "Returns metrics from the node."
+  metrics(
+    "Use to only return metrics with the given name(s)."
+    name: [String!] = []
+  ): [MetricFamily!]!
+
   """
   Node fetches an object given its ID.
   """

@@ -77,6 +77,8 @@ type Config struct {
 	InitialClusterState      string
 	InitialClusterToken      string
 	InitialAdvertisePeerURLs []string
+	Discovery                string
+	DiscoverySrv             string
 
 	ClientTLSInfo TLSInfo
 	PeerTLSInfo   TLSInfo
@@ -135,7 +137,12 @@ func (e *Etcd) BackendID() (result string) {
 
 // GetClusterVersion returns the cluster version of the etcd server
 func (e *Etcd) GetClusterVersion() string {
-	return e.etcd.Server.ClusterVersion().String()
+	version := e.etcd.Server.ClusterVersion()
+	if version == nil {
+		logger.Error("nil cluster version!")
+		return "UNKNOWN"
+	}
+	return version.String()
 }
 
 // NewEtcd returns a new, configured, and running Etcd. The running Etcd will
@@ -201,6 +208,8 @@ func NewEtcd(config *Config) (*Etcd, error) {
 	cfg.InitialClusterToken = config.InitialClusterToken
 	cfg.InitialCluster = config.InitialCluster
 	cfg.ClusterState = config.InitialClusterState
+	cfg.Durl = config.Discovery
+	cfg.DNSCluster = config.DiscoverySrv
 
 	// Every 5 minutes, we will prune all values in etcd to only their latest
 	// revision.

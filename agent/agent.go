@@ -19,7 +19,6 @@ import (
 	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
 
-	"github.com/atlassian/gostatsd/pkg/statsd"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
@@ -58,7 +57,7 @@ type Agent struct {
 	header          http.Header
 	inProgress      map[string]*corev2.CheckConfig
 	inProgressMu    *sync.Mutex
-	statsdServer    *statsd.Server
+	statsdServer    StatsdServer
 	sendq           chan *transport.Message
 	systemInfo      *corev2.System
 	systemInfoMu    sync.RWMutex
@@ -186,8 +185,11 @@ func (a *Agent) Run(ctx context.Context) error {
 	if err := corev2.ValidateName(a.config.AgentName); err != nil {
 		return fmt.Errorf("invalid agent name: %v", err)
 	}
-	if timeout := a.config.KeepaliveTimeout; timeout < 5 {
+	if timeout := a.config.KeepaliveWarningTimeout; timeout < 5 {
 		return fmt.Errorf("bad keepalive timeout: %d (minimum value is 5 seconds)", timeout)
+	}
+	if timeout := a.config.KeepaliveCriticalTimeout; timeout > 0 && timeout < 5 {
+		return fmt.Errorf("bad keepalive critical timeout: %d (minimum value is 5 seconds)", timeout)
 	}
 
 	if !a.config.DisableAssets {
@@ -312,7 +314,8 @@ func (a *Agent) newKeepalive() *transport.Message {
 	keepalive.Check = &corev2.Check{
 		ObjectMeta: corev2.NewObjectMeta("keepalive", entity.Namespace),
 		Interval:   a.config.KeepaliveInterval,
-		Timeout:    a.config.KeepaliveTimeout,
+		Timeout:    a.config.KeepaliveWarningTimeout,
+		Ttl:        int64(a.config.KeepaliveCriticalTimeout),
 	}
 	keepalive.Entity = a.getAgentEntity()
 	keepalive.Timestamp = time.Now().Unix()
@@ -381,11 +384,14 @@ func (a *Agent) StartSocketListeners(ctx context.Context) {
 // StartStatsd starts up a StatsD listener on the agent, logs an error for any
 // failures.
 func (a *Agent) StartStatsd(ctx context.Context) {
-	logger.Info("starting statsd server on address: ", a.statsdServer.MetricsAddr)
+	metricsAddr := GetMetricsAddr(a.statsdServer)
+	logger.Info("starting statsd server on address: ", metricsAddr)
 
 	go func() {
 		if err := a.statsdServer.Run(ctx); err != nil && err != context.Canceled {
-			logger.WithError(err).Errorf("error with statsd server on address: %s, statsd listener will not run", a.statsdServer.MetricsAddr)
+			if err != StatsdUnsupported {
+				logger.WithError(err).Errorf("statsd listener failed on %s", metricsAddr)
+			}
 		}
 	}()
 }

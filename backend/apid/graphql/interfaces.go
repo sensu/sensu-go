@@ -3,6 +3,7 @@ package graphql
 import (
 	"context"
 
+	dto "github.com/prometheus/client_model/go"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 )
@@ -118,4 +119,16 @@ type GenericClient interface {
 	Delete(ctx context.Context, name string) error
 	Get(ctx context.Context, name string, val corev2.Resource) error
 	List(ctx context.Context, resources interface{}, pred *store.SelectionPredicate) error
+}
+
+type EtcdHealthController interface {
+	GetClusterHealth(ctx context.Context) *corev2.HealthResponse
+}
+
+type VersionController interface {
+	GetVersion(ctx context.Context) *corev2.Version
+}
+
+type MetricGatherer interface {
+	Gather() ([]*dto.MetricFamily, error)
 }

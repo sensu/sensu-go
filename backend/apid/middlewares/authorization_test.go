@@ -439,12 +439,12 @@ func TestAuthorization(t *testing.T) {
 			expectedCode:        403,
 		},
 		{
-			description:         "system:agents can't list namespaces",
+			description:         "system:agents can list namespaces",
 			method:              "GET",
 			url:                 "/api/core/v2/namespaces",
 			group:               "system:agents",
 			attibutesMiddleware: AuthorizationAttributes{},
-			expectedCode:        403,
+			expectedCode:        200,
 		},
 		{
 			description:         "system:agents can create events",

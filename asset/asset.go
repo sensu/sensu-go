@@ -14,7 +14,10 @@ package asset
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"path/filepath"
+	"strings"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
@@ -57,4 +60,29 @@ func (r *RuntimeAsset) LibDir() string {
 // IncludeDir returns the full path to the asset's include directory.
 func (r *RuntimeAsset) IncludeDir() string {
 	return filepath.Join(r.Path, includeDir)
+}
+
+// Env returns a list of environment variables (e.g. 'PATH=...', 'CPATH=...')
+// with asset-specific paths prepended to the parent environment paths for
+// each variable, allowing an asset to be used during execution.
+func (r *RuntimeAsset) Env() []string {
+	assetEnv := []string{
+		fmt.Sprintf("PATH=%s${PATH}", r.joinPaths((*RuntimeAsset).BinDir)),
+		fmt.Sprintf("LD_LIBRARY_PATH=%s${LD_LIBRARY_PATH}", r.joinPaths((*RuntimeAsset).LibDir)),
+		fmt.Sprintf("CPATH=%s${CPATH}", r.joinPaths((*RuntimeAsset).IncludeDir)),
+	}
+	for i, envVar := range assetEnv {
+		// ExpandEnv replaces ${var} with the contents of var from the current
+		// environment, or an empty string if var doesn't exist.
+		assetEnv[i] = os.ExpandEnv(envVar)
+	}
+	return assetEnv
+}
+
+// joinPaths joins all paths of a given type for each asset in RuntimeAssetSet.
+func (r *RuntimeAsset) joinPaths(pathFunc func(*RuntimeAsset) string) string {
+	var sb strings.Builder
+	sb.WriteString(pathFunc(r))
+	sb.WriteRune(os.PathListSeparator)
+	return sb.String()
 }

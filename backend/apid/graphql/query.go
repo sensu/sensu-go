@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strings"
 
+	dto "github.com/prometheus/client_model/go"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/backend/apid/graphql/suggest"
@@ -151,6 +152,43 @@ func (r *queryImpl) Suggest(p schema.QuerySuggestFieldResolverParams) (interface
 	return results, nil
 }
 
+// Versions implements response to request for 'versions' field.
+func (r *queryImpl) Versions(p graphql.ResolveParams) (interface{}, error) {
+	resp := r.svc.VersionController.GetVersion(p.Context)
+	return resp, nil
+}
+
+// Health implements response to request for 'health' field.
+func (r *queryImpl) Health(p graphql.ResolveParams) (interface{}, error) {
+	resp := r.svc.HealthController.GetClusterHealth(p.Context)
+	return resp, nil
+}
+
+// Metrics implements response to request for 'metrics' field.
+func (r *queryImpl) Metrics(p schema.QueryMetricsFieldResolverParams) (interface{}, error) {
+	reg := r.svc.MetricGatherer
+	mfs, err := reg.Gather()
+	if err != nil {
+		logger.WithError(err).Error("Query#metrics err while gathering metrics")
+		if len(mfs) == 0 {
+			return []interface{}{}, err
+		}
+	}
+	mfsLen := len(mfs)
+	if len(p.Args.Name) > 0 {
+		mfsLen = len(p.Args.Name)
+	}
+	ret := make([]*dto.MetricFamily, 0, mfsLen)
+	for _, mf := range mfs {
+		if len(p.Args.Name) > 0 && !utilstrings.InArray(mf.GetName(), p.Args.Name) {
+			continue
+		}
+		logger.WithField("fam", mf).Debug("has family")
+		ret = append(ret, mf)
+	}
+	return ret, nil
+}
+
 // Node implements response to request for 'node' field.
 func (r *queryImpl) Node(p schema.QueryNodeFieldResolverParams) (interface{}, error) {
 	resolver := r.nodeResolver
@@ -175,7 +213,7 @@ type nodeImpl struct {
 	nodeResolver *nodeResolver
 }
 
-func (impl *nodeImpl) ResolveType(i interface{}, _ graphql.ResolveTypeParams) *graphql.Type {
+func (impl *nodeImpl) ResolveType(i interface{}, p graphql.ResolveTypeParams) *graphql.Type {
 	resolver := impl.nodeResolver
-	return resolver.FindType(i)
+	return resolver.FindType(p.Context, i)
 }

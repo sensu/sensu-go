@@ -5,6 +5,7 @@ import "asset.proto";
 import "hook.proto";
 import "meta.proto";
 import "time_window.proto";
+import "secret.proto";
 
 package sensu.core.v2;
 
@@ -32,6 +33,9 @@ message CheckRequest {
 
     // HookAssets is a map of assets required to execute hooks.
     map<string, AssetList> hook_assets = 5 [(gogoproto.jsontag) = "hook_assets"];
+
+    // Secrets is a list of kv to be added to the env vars of a check.
+    repeated string secrets = 6;
 }
 
 // An AssetList represents a list of assets for a CheckRequest.
@@ -158,6 +162,10 @@ message CheckConfig {
     // DiscardOutput causes agents to discard check output. No check output is
     // written to the backend, but metrics extraction is still performed.
     bool discard_output = 28;
+
+    // Secrets is the list of Sensu secrets to set for the check's
+    // execution environment.
+    repeated Secret secrets = 29 [(gogoproto.jsontag) = "secrets"];
 }
 
 // A Check is a check specification and optionally the results of the check's
@@ -307,6 +315,10 @@ message Check {
     // DiscardOutput causes agents to discard check output. No check output is
     // written to the backend, but metrics extraction is still performed.
     bool discard_output = 40;
+
+    // Secrets is the list of Sensu secrets to set for the check's
+    // execution environment.
+    repeated Secret secrets = 41 [(gogoproto.jsontag) = "secrets"];
 
     // ExtendedAttributes store serialized arbitrary JSON-encoded data
     bytes ExtendedAttributes = 99 [(gogoproto.jsontag) = "-"];

@@ -2,9 +2,11 @@ package main
 
 import (
 	_ "net/http/pprof"
+	"os"
 
 	"github.com/sensu/sensu-go/backend"
 	"github.com/sensu/sensu-go/backend/cmd"
+	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
@@ -21,8 +23,12 @@ func main() {
 	}
 	rootCmd.AddCommand(cmd.StartCommand(backend.Initialize))
 	rootCmd.AddCommand(cmd.VersionCommand())
+	rootCmd.AddCommand(cmd.InitCommand())
 
 	if err := rootCmd.Execute(); err != nil {
+		if err == seeds.ErrAlreadyInitialized {
+			os.Exit(3)
+		}
 		logger.WithError(err).Fatal("error executing sensu-backend")
 	}
 }

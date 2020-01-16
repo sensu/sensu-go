@@ -34,15 +34,19 @@ func TestExerciseService(t *testing.T) {
 	err := svc.Regenerate()
 	require.NoError(t, err)
 
+	// regenerate should be idempotent
+	err = svc.Regenerate()
+	require.NoError(t, err)
+
 	ctx := context.Background()
-	res := svc.Do(ctx, `
+	res := svc.Do(ctx, graphql.QueryParams{Query: `
 		query {
 			myBar {
 				one
 			}
 			order
 		}
-	`, nil)
+	`})
 
 	require.Empty(t, res.Errors)
 	require.NotEmpty(t, res.Data)

@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"sort"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
@@ -90,13 +91,13 @@ type cacheWatcher struct {
 type Resource struct {
 	watcher    <-chan store.WatchEventResource
 	cache      cache
-	updates    []store.WatchEventResource
 	cacheMu    sync.Mutex
 	watchers   []cacheWatcher
 	watchersMu sync.Mutex
 	synthesize bool
 	resourceT  corev2.Resource
 	client     *clientv3.Client
+	count      int64
 }
 
 // getResources retrieves the resources from the store
@@ -141,19 +142,14 @@ func New(ctx context.Context, client *clientv3.Client, resource corev2.Resource,
 
 	cache := buildCache(resources, synthesize)
 
-	// Get a keybuilderFunc for this resource
-	keyBuilderFunc := func(ctx context.Context, name string) string {
-		return store.NewKeyBuilder(resource.StorePrefix()).WithContext(ctx).Build("")
-	}
-	typeOfResource := reflect.TypeOf(resource)
-
 	cacher := &Resource{
 		cache:      cache,
-		watcher:    etcd.GetResourceWatcher(ctx, client, keyBuilderFunc(ctx, ""), typeOfResource),
 		synthesize: synthesize,
 		resourceT:  resource,
 		client:     client,
 	}
+	atomic.StoreInt64(&cacher.count, int64(len(resources)))
+
 	go cacher.start(ctx)
 
 	return cacher, nil
@@ -174,6 +170,22 @@ func (r *Resource) Get(namespace string) []Value {
 	r.cacheMu.Lock()
 	defer r.cacheMu.Unlock()
 	return r.cache[namespace]
+}
+
+// GetAll returns all cached resources across all namespaces.
+func (r *Resource) GetAll() []Value {
+	values := []Value{}
+	r.cacheMu.Lock()
+	defer r.cacheMu.Unlock()
+	for _, n := range r.cache {
+		values = append(values, n...)
+	}
+	return values
+}
+
+// Count returns the total count of all cached resources across all namespaces.
+func (r *Resource) Count() int64 {
+	return atomic.LoadInt64(&r.count)
 }
 
 // Watch allows cache users to get notified when the cache has new values.
@@ -217,17 +229,18 @@ func (r *Resource) notifyWatchers() {
 func (r *Resource) start(ctx context.Context) {
 	// 1s is the minimum scheduling interval, and so is the rate that
 	// the cache will update at.
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(time.Second * 5)
 	defer ticker.Stop()
 	for {
 		select {
 		case <-ctx.Done():
 			return
-		case event := <-r.watcher:
-			r.updates = append(r.updates, event)
 		case <-ticker.C:
-			if len(r.updates) > 0 {
-				r.updateCache(ctx)
+			updates, err := r.rebuild(ctx)
+			if err != nil {
+				logger.WithError(err).Error("couldn't rebuild cache")
+			}
+			if updates {
 				r.notifyWatchers()
 			}
 		}
@@ -235,104 +248,46 @@ func (r *Resource) start(ctx context.Context) {
 }
 
 // rebuild the cache using the store as the source of truth
-func (r *Resource) rebuild(ctx context.Context) error {
-	logger.Infof("rebuilding the cache for resource type %T", r.resourceT)
+func (r *Resource) rebuild(ctx context.Context) (bool, error) {
+	logger.Debugf("rebuilding the cache for resource type %T", r.resourceT)
 	resources, err := getResources(ctx, r.client, r.resourceT)
 	if err != nil {
-		return err
+		return false, err
 	}
+	atomic.StoreInt64(&r.count, int64(len(resources)))
 	newCache := buildCache(resources, r.synthesize)
+	var hasUpdates bool
+	r.cacheMu.Lock()
+	defer r.cacheMu.Unlock()
 	for key, values := range newCache {
 		oldValues, ok := r.cache[key]
 		if !ok {
 			// Apparently we have an entire namespace's worth of values that
 			// just appeared out of nowhere...
-			r.updates = append(r.updates, makeNewUpdates(values)...)
+			hasUpdates = true
 			continue
-		}
-		for _, value := range values {
-			oldValue := resourceSlice(oldValues).Find(value)
-			if oldValue.Resource == nil {
-				r.updates = append(r.updates, store.WatchEventResource{
-					Resource: value.Resource,
-					Action:   store.WatchCreate,
-				})
-				continue
-			}
-			if !reflect.DeepEqual(oldValue.Resource, value.Resource) {
-				r.updates = append(r.updates, store.WatchEventResource{
-					Resource: value.Resource,
-					Action:   store.WatchUpdate,
-				})
-			}
 		}
 		for _, value := range oldValues {
 			newValue := resourceSlice(values).Find(value)
 			if newValue.Resource == nil {
-				r.updates = append(r.updates, store.WatchEventResource{
-					Resource: value.Resource,
-					Action:   store.WatchDelete,
-				})
+				hasUpdates = true
+				continue
+			}
+		}
+		for _, value := range values {
+			oldValue := resourceSlice(oldValues).Find(value)
+			if oldValue.Resource == nil {
+				hasUpdates = true
+				continue
+			}
+			if !reflect.DeepEqual(oldValue.Resource, value.Resource) {
+				hasUpdates = true
+				continue
 			}
 		}
 	}
 	r.cache = newCache
-	return nil
-}
-
-func (r *Resource) updateCache(ctx context.Context) {
-	r.cacheMu.Lock()
-	for _, event := range r.updates {
-		if event.Action == store.WatchError {
-			// Rebuild the cache
-			if err := r.rebuild(ctx); err != nil {
-				logger.WithError(err).Error("could not rebuild the cache")
-			}
-			continue
-		}
-
-		resource := event.Resource
-		if resource == nil || reflect.ValueOf(resource).IsNil() {
-			logger.Error("nil resource in watch event")
-			continue
-		}
-		key := getCacheKey(resource)
-
-		switch event.Action {
-		case store.WatchCreate:
-			// Append the new resource to the corresponding namespace
-			r.cache[key] = append(r.cache[key], getCacheValue(resource, r.synthesize))
-		case store.WatchUpdate:
-			// Loop through the resources of the resource's namespace to find the
-			// exact resource and update it
-			for i := range r.cache[key] {
-				if r.cache[key][i].Resource.GetObjectMeta().Name == resource.GetObjectMeta().Name {
-					r.cache[key][i] = getCacheValue(resource, r.synthesize)
-					break
-				}
-			}
-		case store.WatchDelete:
-			// Loop through the resources of the resource's namespace to find the
-			// exact resource and delete it
-			for i := range r.cache[key] {
-				if r.cache[key][i].Resource.GetObjectMeta().Name == resource.GetObjectMeta().Name {
-					r.cache[key] = append(r.cache[key][:i], r.cache[key][i+1:]...)
-					break
-				}
-			}
-		default:
-			logger.Error("error in resource watcher")
-		}
-	}
-
-	r.updates = nil
-
-	// Sort the resources alphabetically in each namespace
-	for _, v := range r.cache {
-		sort.Sort(resourceSlice(v))
-	}
-
-	r.cacheMu.Unlock()
+	return hasUpdates, nil
 }
 
 func makeNewUpdates(values []Value) []store.WatchEventResource {

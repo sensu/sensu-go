@@ -29,7 +29,7 @@ type entityImpl struct {
 
 // ID implements response to request for 'id' field.
 func (*entityImpl) ID(p graphql.ResolveParams) (string, error) {
-	return globalid.EntityTranslator.EncodeToString(p.Source), nil
+	return globalid.EntityTranslator.EncodeToString(p.Context, p.Source), nil
 }
 
 // Metadata implements response to request for 'metadata' field.

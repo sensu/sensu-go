@@ -11,7 +11,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
-	"github.com/robfig/cron"
+	cron "github.com/robfig/cron/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/util/retry"
 	"github.com/sirupsen/logrus"
@@ -344,6 +344,9 @@ func (w *watcher) ensureActiveTrigger(ctx context.Context) error {
 	err := backoff.Retry(func(retry int) (bool, error) {
 		has, next, err := w.hasTrigger(ctx)
 		if err != nil {
+			if err == context.Canceled {
+				return true, err
+			}
 			logger.WithError(err).Error("can't check ring trigger, retrying")
 			return false, nil
 		}

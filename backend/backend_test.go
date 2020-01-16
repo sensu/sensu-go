@@ -3,6 +3,7 @@
 package backend
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
 	"net"
@@ -12,6 +13,8 @@ import (
 	"time"
 
 	"github.com/sensu/sensu-go/backend/etcd"
+	"github.com/sensu/sensu-go/backend/seeds"
+	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
@@ -76,15 +79,15 @@ func TestBackendHTTPListener(t *testing.T) {
 				}
 			}
 
-			b, err := Initialize(&Config{
-				AgentHost:        "127.0.0.1",
-				AgentPort:        agentPort,
-				APIListenAddress: fmt.Sprintf("127.0.0.1:%d", apiPort),
-				DashboardHost:    "127.0.0.1",
-				DashboardPort:    dashboardPort,
-				StateDir:         dataPath,
-				CacheDir:         cachePath,
-				TLS:              tc.tls,
+			cfg := &Config{
+				AgentHost:                    "127.0.0.1",
+				AgentPort:                    agentPort,
+				APIListenAddress:             fmt.Sprintf("127.0.0.1:%d", apiPort),
+				DashboardHost:                "127.0.0.1",
+				DashboardPort:                dashboardPort,
+				StateDir:                     dataPath,
+				CacheDir:                     cachePath,
+				TLS:                          tc.tls,
 				EtcdAdvertiseClientURLs:      []string{clURL},
 				EtcdListenClientURLs:         []string{clURL},
 				EtcdListenPeerURLs:           []string{apURL},
@@ -94,10 +97,16 @@ func TestBackendHTTPListener(t *testing.T) {
 				EtcdName:                     "default",
 				EtcdClientTLSInfo:            tlsInfo,
 				EtcdPeerTLSInfo:              tlsInfo,
-			})
-			assert.NoError(t, err)
+			}
+			ctx, cancel := context.WithCancel(context.Background())
+			b, err := Initialize(ctx, cfg)
 			if err != nil {
-				assert.FailNow(t, "failed to start backend")
+				t.Fatalf("failed to start backend: %s", err)
+			}
+
+			store := etcdstore.NewStore(b.Client, cfg.EtcdName)
+			if err := seeds.SeedInitialData(store); err != nil {
+				t.Fatal(err)
 			}
 
 			var runError error
@@ -130,8 +139,7 @@ func TestBackendHTTPListener(t *testing.T) {
 			require.NotNil(t, client)
 
 			assert.NoError(t, client.Close())
-			b.Stop()
-
+			cancel()
 		})
 	}
 }

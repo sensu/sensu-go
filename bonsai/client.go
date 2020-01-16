@@ -10,16 +10,23 @@ import (
 
 var logger *logrus.Entry
 
+// DefaultEndpointURL is the default url for bonsai assets.
 const DefaultEndpointURL = "https://bonsai.sensu.io/api/v1/assets"
 
-type BonsaiConfig struct {
+// Config is the configuration for bonsai.
+type Config struct {
 	EndpointURL string
+}
+
+type Client interface {
+	FetchAsset(string, string) (*Asset, error)
+	FetchAssetVersion(string, string, string) (string, error)
 }
 
 // RestClient wraps resty.Client
 type RestClient struct {
 	resty  *resty.Client
-	config BonsaiConfig
+	config Config
 
 	configured bool
 }
@@ -31,7 +38,7 @@ func init() {
 }
 
 // New builds a new client with defaults
-func New(config BonsaiConfig) *RestClient {
+func New(config Config) *RestClient {
 	restyInst := resty.New()
 
 	if config.EndpointURL == "" {

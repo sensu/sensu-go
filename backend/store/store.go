@@ -69,8 +69,12 @@ func (e *ErrNotValid) Error() string {
 }
 
 // ErrInternal is returned when something generally bad happened while
-// interacting with the store. Other, more specific errors should preferably be
+// interacting with the store. Other, more specific errors should be
 // returned when appropriate.
+//
+// The backend will use ErrInternal to detect if an error is unrecoverable.
+// It should only be used to signal that the underlying database is not
+// functional
 type ErrInternal struct {
 	Message string
 }

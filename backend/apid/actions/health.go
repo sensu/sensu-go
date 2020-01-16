@@ -4,8 +4,8 @@ import (
 	"crypto/tls"
 
 	"github.com/coreos/etcd/clientv3"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 	"golang.org/x/net/context"
 )
 
@@ -26,6 +26,6 @@ func NewHealthController(store store.HealthStore, cluster clientv3.Cluster, etcd
 }
 
 // GetClusterHealth returns health information
-func (h HealthController) GetClusterHealth(ctx context.Context) *types.HealthResponse {
+func (h HealthController) GetClusterHealth(ctx context.Context) *corev2.HealthResponse {
 	return h.store.GetClusterHealth(ctx, h.cluster, h.etcdClientTLSConfig)
 }

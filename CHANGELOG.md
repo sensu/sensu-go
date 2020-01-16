@@ -8,15 +8,114 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+- Added the secrets provider interface and secrets provider manager to be used
+by commerical secrets providers. Implemented for checks, mutators, and handlers.
+- Added the `secrets` field to checks, mutators, and handlers.
+- Added `flapping` field to check history, along with `is_flapping_start` and
+  `is_flapping_end` event properties for use by filters.
+
+### Fixed
+- Fixed a memory leak in the entity cache.
+- [Web] Labels with links can now be followed.
+- [Web] Fixed a inconsistent crash that occurred in Firefox browsers.
+- [Web] Fixed bug where event history was duplicated in the event timeline
+chart.
+- Fixed a bug where `sensuctl entity delete` was not returning an error
+when attempting to delete a non-existent entity.
+- Fixed bug where flapping would incorrectly end when `total_state_change` was below
+  `high_flap_threshold` instead of below `low_flap_threshold`.
+
+## [5.16.1] - 2019-12-18
+
+### Fixed
+- Initialize the sensu_go_events_processed counter with the `success` label so
+it's always displayed.
+- Fixed a performance regression that was introduced in 5.15.0, which would
+cause the API to timeout past 20k agent sessions.
+
+## [5.16.0] - 2019-12-11
+
+### Added
+- Display the JWT expiration Unix timestamp in `sensuctl config view`.
+- Added the 'sensu-backend init' subcommand.
+- Added a new flag, --etcd-client-urls, which should be used with sensu-backend
+when it is not operating as an etcd member. The flag is also used by the new
+sensu-backend init tool.
+- Added the cluster's distribution to Tessen data.
+- Added a new field, ClusterIDHex, to the ClusterHealth datatype.
+- Added the `--etcd-discovery` and `--etcd-discovery-srv` flags to
+`sensu-backend`. These are used to take advantage of the embedded etcd's
+auto-discovery features.
+- Added `--keepalive-critical-timeout` to define the time after which a
+critical keepalive event should be created for an agent.
+- Added `--keepalive-warning-timeout` which is an alias of `--keepalive-timeout`
+for backwards compatibility.
+
+### Fixed
+- Add a timeout to etcd requests when retrieving the nodes health.
+- Show the correct default value for the format flag in `sensuctl dump` help
+usage.
+- Installing sensuctl commands via Bonsai will now check for correct labels
+before checking if the asset has 1 or more builds.
+- Listing assets with no results returns an empty array.
+- Fixed a panic that could occur when creating resources in a namespace that
+does not exist.
+- [Web] Links to documentation now point to the version of the product being run
+instead of the latest; helpful when running an older version of Sensu.
+- Fixed issue where keepalive events and events created through the agent's
+socket interface could be missing a namespace.
+- Fixed an issue where 'sensuctl cluster health' would hang indefinitely.
+- Fixed several issues around the metadata of resources encoded using the
+wrapped-json format, where the metadata would go missing when listing
+resources or prevent resources from being created.
+
+### Changed
+- The backend will no longer automatically be seeded with a default admin
+username and password. Users will need to run 'sensu-backend init' on every
+new installation.
+- Several deprecated flags were removed from sensu-backend.
+- [Web] Changes to navigation. The app bar has been replaced by an omnipresent
+drawer increasing the available space for content. Additionally, each page now
+includes breadcrumbs.
+- [Web] Switching namespaces is easier than ever, with the new and improved
+switcher. The new component can be accessed from the drawer or with the shortcut
+ctrl+k. For those with many namespaces the switcher now includes fuzzy search
+and improved keyboard navigation.
+- 'sensuctl cluster health' will now use a 3s timeout when gathering cluster
+health information.
+- 'sensuctl cluster health' now collects cluster health information concurrently.
+
+## [5.15.0] - 2019-11-18
+
+### Fixed
+- Added better error logging for mutator execution.
+- Fixed the order of flap detection weighting for checks.
+- The pprof server now only binds to localhost.
+
+### Added
 - Added the `APIKey` resource and HTTP API support for POST, GET, and DELETE.
 - Added sensuctl commands to manage the `APIKey` resource.
 - Added support for api keys to be used in api authentication.
 - Added support for sensu-backend service environment variables
-- Added `flapping` field to check history, along with `is_flapping_start` and
-  `is_flapping_end` event properties for use by filters.
+- Added support for sensu-backend service environment variables.
+- Added support for timezones in check cron strings.
+- Added support for extending sensuctl support with commands.
+
+### Changed
+- Moved `corev2.BonsaiAsset` to `bonsai.Asset` and moved
+`corev2.OutdatedBonsaiAsset` to `bonsai.OutdatedAsset` along with subsequent
+bonsai package refactors.
+- Colons and periods are now allowed to be used in all resource names, with
+the exception of users.
+
+## [5.14.2] - 2019-11-04
 
 ### Changed
 - Upgraded etcd to 3.3.17
+- Listing namespaces is now done implicitly based on access to resources within
+a namespace. Users will no longer be able to list all namespaces by default, in
+new installations. Existing installations will function as before. Operators can
+change to the new behaviour, by modifying the system:user role.
 
 ### Fixed
 - As a result of upgrading etcd, TLS etcd clients that lose their connection will
@@ -27,8 +126,8 @@ are deleted.
 - Sensu now uses far fewer leases for keepalives and check TTLs, resulting in a
 stability improvement for most deployments.
 - Fixed a minor UX issue in interactive filter commands in sensuctl.
-- Fixed bug where flapping would incorrectly end when `total_state_change` was below
-  `high_flap_threshold` instead of below `low_flap_threshold`.
+- Silences now successfully apply to proxy entities where the check doesn't contain
+  the same subscriptions as the entity (#3356)
 
 ## [5.14.1] - 2019-10-16
 
@@ -1207,9 +1306,6 @@ and times of the week.
 ### Added
 - Logging redaction for entities
 
-### Changed
-- Removed the Visual Studio 2017 image in AppVeyor to prevent random failures
-
 ### Fixed
 - Fixed e2e test for token substitution on Windows
 - Fixed check subdue unit test for token substitution on Windows
@@ -1221,14 +1317,6 @@ current time
 ### Changed
 - Removed the Visual Studio 2017 image in AppVeyor to prevent random failures
 - Made some slight quality-of-life adjustments to build-gcs-release.sh.
-
-### Fixed
-- Fixed e2e test for token substitution on Windows
-- Fixed check subdue unit test for token substitution on Windows
-- Consider the first and last seconds of a time window when comparing the
-current time
-- Fixed Travis deploy stage by removing caching for $GOPATH
-- Parse for [traditional cron](https://en.wikipedia.org/wiki/Cron) strings, rather than [GoDoc cron](https://godoc.org/github.com/robfig/cron) strings.
 
 ## [2.0.0-alpha.12] - 2018-01-09
 ### Added

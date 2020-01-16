@@ -1,0 +1,28 @@
+"""
+Describes the version of different components of the system.
+"""
+type Versions {
+  etcd: EtcdVersions
+  backend: SensuBackendVersion
+}
+
+"""
+Describes the version of Etcd instance and the Etcd cluster.
+"""
+type EtcdVersions {
+  "Etcd version; adheres to semver."
+  server: String!
+
+  "Etcd cluster version; adheres to semver."
+  cluster: String!
+}
+
+"""
+Describes the version of the Sensu backend node.
+"""
+type SensuBackendVersion {
+  "Version of the current node; adheres to semver."
+  version: String
+  buildSHA: String
+  buildDate: DateTime
+}

@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
+	"net"
 	"net/http"
 	"sync"
 	"sync/atomic"
@@ -14,6 +15,7 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/apid/graphql"
 	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/apid/routers"
 	"github.com/sensu/sensu-go/backend/authentication"
@@ -25,10 +27,11 @@ import (
 
 // APId is the backend HTTP API.
 type APId struct {
-	Authenticator    *authentication.Authenticator
-	HTTPServer       *http.Server
-	CoreSubrouter    *mux.Router
-	GraphQLSubrouter *mux.Router
+	Authenticator              *authentication.Authenticator
+	HTTPServer                 *http.Server
+	CoreSubrouter              *mux.Router
+	EntityLimitedCoreSubrouter *mux.Router
+	GraphQLSubrouter           *mux.Router
 
 	stopping            chan struct{}
 	running             *atomic.Value
@@ -60,6 +63,7 @@ type Config struct {
 	EtcdClientTLSConfig *tls.Config
 	Authenticator       *authentication.Authenticator
 	ClusterVersion      string
+	GraphQLService      *graphql.Service
 }
 
 // New creates a new APId.
@@ -95,6 +99,7 @@ func New(c Config, opts ...Option) (*APId, error) {
 	a.GraphQLSubrouter = GraphQLSubrouter(router, c)
 	_ = AuthenticationSubrouter(router, c)
 	a.CoreSubrouter = CoreSubrouter(router, c)
+	a.EntityLimitedCoreSubrouter = EntityLimitedCoreSubrouter(router, c)
 
 	a.HTTPServer = &http.Server{
 		Addr:         c.ListenAddress,
@@ -162,19 +167,39 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		routers.NewClusterRolesRouter(cfg.Store),
 		routers.NewClusterRoleBindingsRouter(cfg.Store),
 		routers.NewClusterRouter(actions.NewClusterController(cfg.Cluster, cfg.Store)),
-		routers.NewEntitiesRouter(cfg.Store, cfg.EventStore),
 		routers.NewEventFiltersRouter(cfg.Store),
-		routers.NewEventsRouter(cfg.EventStore, cfg.Bus),
 		routers.NewExtensionsRouter(cfg.Store),
 		routers.NewHandlersRouter(cfg.Store),
 		routers.NewHooksRouter(cfg.Store),
 		routers.NewMutatorsRouter(cfg.Store),
-		routers.NewNamespacesRouter(cfg.Store),
+		routers.NewNamespacesRouter(cfg.Store, &rbac.Authorizer{Store: cfg.Store}),
 		routers.NewRolesRouter(cfg.Store),
 		routers.NewRoleBindingsRouter(cfg.Store),
 		routers.NewSilencedRouter(cfg.Store),
 		routers.NewTessenRouter(actions.NewTessenController(cfg.Store, cfg.Bus)),
 		routers.NewUsersRouter(cfg.Store),
+	)
+
+	return subrouter
+}
+
+// EntityLimitedCoreSubrouter initializes a subrouter that handles all requests
+// coming to /api/core/v2 that must be gated by entity limits.
+func EntityLimitedCoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
+	subrouter := NewSubrouter(
+		router.PathPrefix("/api/{group:core}/{version:v2}/"),
+		middlewares.SimpleLogger{},
+		middlewares.Namespace{},
+		middlewares.Authentication{Store: cfg.Store},
+		middlewares.AuthorizationAttributes{},
+		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},
+		middlewares.LimitRequest{},
+		middlewares.Pagination{},
+	)
+	mountRouters(
+		subrouter,
+		routers.NewEntitiesRouter(cfg.Store, cfg.EventStore),
+		routers.NewEventsRouter(cfg.EventStore, cfg.Bus),
 	)
 
 	return subrouter
@@ -187,22 +212,19 @@ func GraphQLSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		router.NewRoute(),
 		middlewares.SimpleLogger{},
 		middlewares.LimitRequest{},
-		// TODO: Currently the web app relies on receiving a 401 to determine if
-		//       a user is not authenticated. However, in the future we should
-		//       allow requests without an access token to continue so that
-		//       unauthenticated clients can still fetch the schema. Useful for
-		//       implementing tools like GraphiQL.
+		// We permit requests that do not include an access token or API key,
+		// this allows unauthenticated clients to run introspecton queries or
+		// query resources that do not require authorization, such as health
+		// and version info.
 		//
-		//       https://github.com/graphql/graphiql
-		//       https://graphql.org/learn/introspection/
-		middlewares.Authentication{IgnoreUnauthorized: false, Store: cfg.Store},
+		// https://github.com/graphql/graphiql
+		// https://graphql.org/learn/introspection/
+		middlewares.Authentication{IgnoreUnauthorized: true, Store: cfg.Store},
 	)
 
 	mountRouters(
 		subrouter,
-		routers.NewGraphQLRouter(
-			cfg.Store, cfg.EventStore, &rbac.Authorizer{Store: cfg.Store}, cfg.QueueGetter, cfg.Bus,
-		),
+		&routers.GraphQLRouter{Service: cfg.GraphQLService},
 	)
 
 	return subrouter
@@ -241,6 +263,11 @@ func notFoundHandler(w http.ResponseWriter, req *http.Request) {
 // Start APId.
 func (a *APId) Start() error {
 	logger.Info("starting apid on address: ", a.HTTPServer.Addr)
+	ln, err := net.Listen("tcp", a.HTTPServer.Addr)
+	if err != nil {
+		return fmt.Errorf("failed to start apid: %s", err)
+	}
+
 	a.wg.Add(1)
 
 	go func() {
@@ -248,12 +275,12 @@ func (a *APId) Start() error {
 		var err error
 		if a.tls != nil {
 			// TLS configuration comes from ToServerTLSConfig
-			err = a.HTTPServer.ListenAndServeTLS("", "")
+			err = a.HTTPServer.ServeTLS(ln, "", "")
 		} else {
-			err = a.HTTPServer.ListenAndServe()
+			err = a.HTTPServer.Serve(ln)
 		}
 		if err != nil && err != http.ErrServerClosed {
-			a.errChan <- fmt.Errorf("failed to start http/https server %s", err)
+			a.errChan <- fmt.Errorf("failure while serving api: %s", err)
 		}
 	}()
 

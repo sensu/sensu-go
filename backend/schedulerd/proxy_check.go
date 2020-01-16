@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	time "github.com/echlebek/timeproxy"
-	"github.com/robfig/cron"
+	cron "github.com/robfig/cron/v3"
 	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store/cache"

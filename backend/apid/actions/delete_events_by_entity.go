@@ -43,5 +43,14 @@ func (d EntityDeleter) Delete(req *http.Request) (interface{}, error) {
 		}
 	}
 
+	result, err := d.EntityStore.GetEntityByName(req.Context(), entityName)
+	if err != nil {
+		return nil, NewError(InternalErr, err)
+	}
+
+	if result == nil {
+		return nil, NewErrorf(NotFound)
+	}
+
 	return nil, d.EntityStore.DeleteEntityByName(req.Context(), entityName)
 }

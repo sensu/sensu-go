@@ -60,7 +60,9 @@ type lifter interface {
 
 var resourceRE = regexp.MustCompile(`(\w+\/v\d+\.)?(\w+)`)
 
-func resolveResource(resource string) (types.Resource, error) {
+// ResolveResource resolves a named resource to an empty concrete type.
+// The value is boxed within a types.Resource interface value.
+func ResolveResource(resource string) (types.Resource, error) {
 	if resource, ok := synonyms[resource]; ok {
 		return resource, nil
 	}
@@ -97,7 +99,11 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 	}
 
 	helpers.AddAllNamespace(cmd.Flags())
-	_ = cmd.Flags().StringP("format", "", cli.Config.Format(), fmt.Sprintf(`format of data returned ("%s"|"%s")`, config.FormatWrappedJSON, config.FormatYAML))
+	format := cli.Config.Format()
+	if format != config.FormatWrappedJSON && format != config.FormatYAML {
+		format = config.FormatYAML
+	}
+	_ = cmd.Flags().StringP("format", "", format, fmt.Sprintf(`format of data returned ("%s"|"%s")`, config.FormatWrappedJSON, config.FormatYAML))
 	_ = cmd.Flags().StringP("file", "f", "", "file to dump resources to")
 	_ = cmd.Flags().BoolP("types", "t", false, "list supported resource types")
 
@@ -129,7 +135,7 @@ func getResourceRequests(actionSpec string) ([]types.Resource, error) {
 
 	// build resource requests for sensuctl
 	for _, t := range types {
-		resource, err := resolveResource(t)
+		resource, err := ResolveResource(t)
 		if err != nil {
 			return nil, fmt.Errorf("invalid resource type: %s", t)
 		}

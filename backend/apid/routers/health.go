@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/sensu/sensu-go/types"
@@ -31,7 +32,18 @@ func (r *HealthRouter) Mount(parent *mux.Router) {
 	parent.HandleFunc("/health", r.health).Methods(http.MethodGet)
 }
 
-func (r *HealthRouter) health(w http.ResponseWriter, _ *http.Request) {
-	clusterHealth := r.controller.GetClusterHealth(context.Background())
+func (r *HealthRouter) health(w http.ResponseWriter, req *http.Request) {
+	timeout, err := parseTimeout(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	ctx := req.Context()
+	if timeout > 0 {
+		// We're storing the timeout as a value so it can be used by several
+		// contexts in GetClusterHealth, which is a concurrent gatherer.
+		ctx = context.WithValue(ctx, "timeout", time.Duration(timeout)*time.Second)
+	}
+	clusterHealth := r.controller.GetClusterHealth(ctx)
 	_ = json.NewEncoder(w).Encode(clusterHealth)
 }

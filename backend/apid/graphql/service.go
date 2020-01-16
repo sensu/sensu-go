@@ -3,7 +3,7 @@ package graphql
 import (
 	"context"
 
-	gql "github.com/graphql-go/graphql"
+	"github.com/sensu/sensu-go/backend/apid/graphql/relay"
 	"github.com/sensu/sensu-go/backend/apid/graphql/schema"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/graphql"
@@ -29,26 +29,34 @@ type ServiceConfig struct {
 	EventClient       EventClient
 	EventFilterClient EventFilterClient
 	HandlerClient     HandlerClient
+	HealthController  EtcdHealthController
 	MutatorClient     MutatorClient
 	SilencedClient    SilencedClient
 	NamespaceClient   NamespaceClient
 	HookClient        HookClient
 	UserClient        UserClient
 	RBACClient        RBACClient
+	VersionController VersionController
 	GenericClient     GenericClient
+	MetricGatherer    MetricGatherer
 }
 
 // Service describes the Sensu GraphQL service capable of handling queries.
 type Service struct {
-	target *graphql.Service
-	cfg    ServiceConfig
+	Target       *graphql.Service
+	Config       ServiceConfig
+	NodeRegister *relay.NodeRegister
 }
 
 // NewService instantiates new GraphQL service
 func NewService(cfg ServiceConfig) (*Service, error) {
 	svc := graphql.NewService()
-	wrapper := Service{target: svc, cfg: cfg}
 	nodeResolver := newNodeResolver(cfg)
+	wrapper := Service{
+		Target:       svc,
+		Config:       cfg,
+		NodeRegister: nodeResolver.register,
+	}
 
 	// Register types
 	schema.RegisterAsset(svc, &assetImpl{})
@@ -122,6 +130,25 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterHandlerConnection(svc, &schema.HandlerConnectionAliases{})
 	schema.RegisterHandlerSocket(svc, &handlerSocketImpl{})
 
+	// Register health types
+	schema.RegisterClusterHealth(svc, &clusterHealthImpl{})
+	schema.RegisterEtcdAlarmMember(svc, &etcdAlarmMemberImpl{})
+	schema.RegisterEtcdAlarmType(svc)
+	schema.RegisterEtcdClusterHealth(svc, &etcdClusterHealthImpl{})
+	schema.RegisterEtcdClusterMemberHealth(svc, &etcdClusterMemberHealthImpl{})
+
+	// Register metrics
+	schema.RegisterBucketMetric(svc, &schema.BucketMetricAliases{})
+	schema.RegisterCounterMetric(svc, &counterMetricImpl{})
+	schema.RegisterGaugeMetric(svc, &gaugeMetricImpl{})
+	schema.RegisterHistogramMetric(svc, &histogramMetricImpl{})
+	schema.RegisterMetric(svc, &metricImpl{})
+	schema.RegisterMetricFamily(svc, &metricFamilyImpl{})
+	schema.RegisterMetricKind(svc)
+	schema.RegisterQuantileMetric(svc, &schema.QuantileMetricAliases{})
+	schema.RegisterSummaryMetric(svc, &summaryMetricImpl{})
+	schema.RegisterUntypedMetric(svc, &untypedMetricImpl{})
+
 	// Register time window
 	schema.RegisterTimeWindowDays(svc, &schema.TimeWindowDaysAliases{})
 	schema.RegisterTimeWindowWhen(svc, &schema.TimeWindowWhenAliases{})
@@ -138,6 +165,11 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 
 	// Register user types
 	schema.RegisterUser(svc, &userImpl{})
+
+	// Register version types
+	schema.RegisterVersions(svc, &versionsImpl{})
+	schema.RegisterEtcdVersions(svc, &schema.EtcdVersionsAliases{})
+	schema.RegisterSensuBackendVersion(svc, &sensuBackendVersionImpl{})
 
 	// Register mutations
 	schema.RegisterMutation(svc, &mutationsImpl{svc: cfg})
@@ -174,10 +206,10 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 }
 
 // Do executes given query string and variables
-func (svc *Service) Do(ctx context.Context, q string, vars map[string]interface{}) *gql.Result {
+func (svc *Service) Do(ctx context.Context, p graphql.QueryParams) *graphql.Result {
 	// Instantiate loaders and lift them into the context
-	qryCtx := contextWithLoaders(ctx, svc.cfg)
+	qryCtx := contextWithLoaders(ctx, svc.Config)
 
 	// Execute query inside context
-	return svc.target.Do(qryCtx, q, vars)
+	return svc.Target.Do(qryCtx, p)
 }

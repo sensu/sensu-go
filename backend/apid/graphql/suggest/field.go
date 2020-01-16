@@ -1,8 +1,6 @@
 package suggest
 
 import (
-	"fmt"
-
 	v2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
@@ -55,7 +53,6 @@ func (f *MapField) Value(res v2.Resource, path string) []string {
 		return collectKeys(fld)
 	}
 	val, ok := fld[key]
-	fmt.Println("key", val, key, ok)
 	if ok {
 		return []string{val}
 	}

@@ -1,5 +1,5 @@
 interface Resource {
-  "Metadata contains the name, namespace, labels and annotations of the resource,"
+  "Metadata contains the name, namespace, labels and annotations of the resource."
   metadata: ObjectMeta!
 
   """

@@ -19,4 +19,4 @@ var RoleBindingTranslator = commonTranslator{
 }
 
 // Register entity encoder/decoder
-func init() { registerTranslator(RoleBindingTranslator) }
+func init() { RegisterTranslator(RoleBindingTranslator) }
