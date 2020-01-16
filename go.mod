@@ -50,12 +50,12 @@ require (
 	github.com/mattn/go-isatty v0.0.2 // indirect
 	github.com/mattn/go-runewidth v0.0.2 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
-	github.com/mholt/archiver v0.0.0-20180816053333-85d3d0b511ea
+	github.com/mholt/archiver v3.1.1+incompatible
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/nwaples/rardecode v0.0.0-20170112110516-f22b7ef81a0a // indirect
 	github.com/olekukonko/tablewriter v0.0.0-20180506121414-d4647c9c7a84
-	github.com/pierrec/lz4 v0.0.0-20171218195038-2fcda4cb7018 // indirect
+	github.com/pierrec/lz4 v2.4.0+incompatible // indirect
 	github.com/pierrec/xxHash v0.1.1 // indirect
 	github.com/prometheus/client_golang v1.2.0
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4
@@ -72,6 +72,7 @@ require (
 	github.com/ulikunitz/xz v0.5.4 // indirect
 	github.com/whyrusleeping/go-logging v0.0.0-20170515211332-0457bb6b88fc // indirect
 	github.com/willf/pad v0.0.0-20160331131008-b3d780601022
+	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.etcd.io/bbolt v1.3.2
 	go.uber.org/multierr v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
