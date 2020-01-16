@@ -357,6 +357,14 @@ func createKeepaliveEvent(rawEvent *types.Event) *types.Event {
 			Timeout:  types.DefaultKeepaliveTimeout,
 		}
 	}
+
+	// Use the entity keepalive handlers if defined, otherwise fallback to the
+	// default keepalive handler
+	handlers := []string{KeepaliveHandlerName}
+	if len(rawEvent.Entity.KeepaliveHandlers) > 0 {
+		handlers = rawEvent.Entity.KeepaliveHandlers
+	}
+
 	keepaliveCheck := &types.Check{
 		ObjectMeta: types.ObjectMeta{
 			Name:      KeepaliveCheckName,
@@ -365,7 +373,7 @@ func createKeepaliveEvent(rawEvent *types.Event) *types.Event {
 		Interval: check.Interval,
 		Timeout:  check.Timeout,
 		Ttl:      check.Ttl,
-		Handlers: []string{KeepaliveHandlerName},
+		Handlers: handlers,
 		Executed: time.Now().Unix(),
 		Issued:   time.Now().Unix(),
 	}
