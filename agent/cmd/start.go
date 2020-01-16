@@ -37,7 +37,7 @@ const (
 	flagDeregistrationHandler    = "deregistration-handler"
 	flagEventsRateLimit          = "events-rate-limit"
 	flagEventsBurstLimit         = "events-burst-limit"
-	flagKeepaliveHandler         = "keepalive-handler"
+	flagKeepaliveHandlers        = "keepalive-handlers"
 	flagKeepaliveInterval        = "keepalive-interval"
 	flagKeepaliveWarningTimeout  = "keepalive-warning-timeout"
 	flagKeepaliveCriticalTimeout = "keepalive-critical-timeout"
@@ -116,7 +116,7 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 			cfg.DisableAssets = viper.GetBool(flagDisableAssets)
 			cfg.EventsAPIRateLimit = rate.Limit(viper.GetFloat64(flagEventsRateLimit))
 			cfg.EventsAPIBurstLimit = viper.GetInt(flagEventsBurstLimit)
-			cfg.KeepaliveHandlers = viper.GetStringSlice(flagKeepaliveHandler)
+			cfg.KeepaliveHandlers = viper.GetStringSlice(flagKeepaliveHandlers)
 			cfg.KeepaliveInterval = uint32(viper.GetInt(flagKeepaliveInterval))
 			cfg.KeepaliveWarningTimeout = uint32(viper.GetInt(flagKeepaliveWarningTimeout))
 			cfg.KeepaliveCriticalTimeout = uint32(viper.GetInt(flagKeepaliveCriticalTimeout))
@@ -273,7 +273,7 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	cmd.Flags().StringSlice(flagSubscriptions, viper.GetStringSlice(flagSubscriptions), "comma-delimited list of agent subscriptions. This flag can also be invoked multiple times")
 	cmd.Flags().String(flagUser, viper.GetString(flagUser), "agent user")
 	cmd.Flags().StringSlice(flagBackendURL, viper.GetStringSlice(flagBackendURL), "comma-delimited list of ws/wss URLs of Sensu backend servers. This flag can also be invoked multiple times")
-	cmd.Flags().StringSlice(flagKeepaliveHandler, viper.GetStringSlice(flagKeepaliveHandler), "comma-delimited list of keepalive handlers for this entity. This flag can also be invoked multiple times")
+	cmd.Flags().StringSlice(flagKeepaliveHandlers, viper.GetStringSlice(flagKeepaliveHandlers), "comma-delimited list of keepalive handlers for this entity. This flag can also be invoked multiple times")
 	cmd.Flags().Int(flagKeepaliveInterval, viper.GetInt(flagKeepaliveInterval), "number of seconds to send between keepalive events")
 	cmd.Flags().Uint32(flagKeepaliveWarningTimeout, uint32(viper.GetInt(flagKeepaliveWarningTimeout)), "number of seconds until agent is considered dead by backend to create a warning event")
 	cmd.Flags().Uint32(flagKeepaliveCriticalTimeout, uint32(viper.GetInt(flagKeepaliveCriticalTimeout)), "number of seconds until agent is considered dead by backend to create a critical event")
