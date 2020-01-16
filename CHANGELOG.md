@@ -96,7 +96,6 @@ health information.
 - Added the `APIKey` resource and HTTP API support for POST, GET, and DELETE.
 - Added sensuctl commands to manage the `APIKey` resource.
 - Added support for api keys to be used in api authentication.
-- Added support for sensu-backend service environment variables
 - Added support for sensu-backend service environment variables.
 - Added support for timezones in check cron strings.
 - Added support for extending sensuctl support with commands.
