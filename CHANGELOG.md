@@ -22,6 +22,8 @@ entity's keepalive handlers.
 chart.
 - Fixed a bug where `sensuctl entity delete` was not returning an error
 when attempting to delete a non-existent entity.
+- sensuctl command assets installed via Bonsai will now use the "sensuctl"
+namespace.
 
 ## [5.16.1] - 2019-12-18
 

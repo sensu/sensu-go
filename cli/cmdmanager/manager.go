@@ -26,8 +26,9 @@ import (
 )
 
 const (
-	dbName      = "commands.db"
-	commandName = "entrypoint"
+	dbName                 = "commands.db"
+	commandName            = "entrypoint"
+	sensuctlAssetNamespace = "sensuctl"
 )
 
 var (
@@ -168,6 +169,8 @@ func (m *CommandManager) InstallCommandFromBonsai(alias, bonsaiAssetName string)
 		return err
 	}
 
+	asset.Namespace = sensuctlAssetNamespace
+
 	if err := asset.Validate(); err != nil {
 		return err
 	}
@@ -198,7 +201,7 @@ func (m *CommandManager) InstallCommandFromBonsai(alias, bonsaiAssetName string)
 func (m *CommandManager) InstallCommandFromURL(alias, archiveURL, checksum string) error {
 	meta := corev2.ObjectMeta{
 		Name:      alias,
-		Namespace: "sensuctl",
+		Namespace: sensuctlAssetNamespace,
 	}
 	asset := corev2.Asset{
 		Builds: []*corev2.AssetBuild{
