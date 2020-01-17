@@ -34,6 +34,9 @@ message Entity {
   ObjectMeta metadata = 14 [(gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false];
   // SensuAgentVersion is the sensu-agent version.
   string sensu_agent_version = 15 [(gogoproto.jsontag) = "sensu_agent_version"];
+  // KeepaliveHandlers contains a list of handlers to use for the entity's
+  // keepalive events
+  repeated string keepalive_handlers = 16;
 }
 
 // System contains information about the system that the Agent process

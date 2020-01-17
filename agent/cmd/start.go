@@ -37,6 +37,7 @@ const (
 	flagDeregistrationHandler    = "deregistration-handler"
 	flagEventsRateLimit          = "events-rate-limit"
 	flagEventsBurstLimit         = "events-burst-limit"
+	flagKeepaliveHandlers        = "keepalive-handlers"
 	flagKeepaliveInterval        = "keepalive-interval"
 	flagKeepaliveWarningTimeout  = "keepalive-warning-timeout"
 	flagKeepaliveCriticalTimeout = "keepalive-critical-timeout"
@@ -115,6 +116,7 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 			cfg.DisableAssets = viper.GetBool(flagDisableAssets)
 			cfg.EventsAPIRateLimit = rate.Limit(viper.GetFloat64(flagEventsRateLimit))
 			cfg.EventsAPIBurstLimit = viper.GetInt(flagEventsBurstLimit)
+			cfg.KeepaliveHandlers = viper.GetStringSlice(flagKeepaliveHandlers)
 			cfg.KeepaliveInterval = uint32(viper.GetInt(flagKeepaliveInterval))
 			cfg.KeepaliveWarningTimeout = uint32(viper.GetInt(flagKeepaliveWarningTimeout))
 			cfg.KeepaliveCriticalTimeout = uint32(viper.GetInt(flagKeepaliveCriticalTimeout))
@@ -252,26 +254,27 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	// Load the configuration file but only error out if flagConfigFile is used
 	cmd.Flags().Bool(flagDeregister, viper.GetBool(flagDeregister), "ephemeral agent")
 	cmd.Flags().Int(flagAPIPort, viper.GetInt(flagAPIPort), "port the Sensu client HTTP API listens on")
-	cmd.Flags().Int(flagKeepaliveInterval, viper.GetInt(flagKeepaliveInterval), "number of seconds to send between keepalive events")
 	cmd.Flags().Int(flagSocketPort, viper.GetInt(flagSocketPort), "port the Sensu client socket listens on")
 	cmd.Flags().String(flagAgentName, viper.GetString(flagAgentName), "agent name (defaults to hostname)")
 	cmd.Flags().String(flagAPIHost, viper.GetString(flagAPIHost), "address to bind the Sensu client HTTP API to")
 	cmd.Flags().String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
-	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "deregistration handler that should process the entity deregistration event.")
+	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "deregistration handler that should process the entity deregistration event")
 	cmd.Flags().Float64(flagEventsRateLimit, viper.GetFloat64(flagEventsRateLimit), "maximum number of events transmitted to the backend through the /events api")
 	cmd.Flags().Int(flagEventsBurstLimit, viper.GetInt(flagEventsBurstLimit), "/events api burst limit")
 	cmd.Flags().String(flagNamespace, viper.GetString(flagNamespace), "agent namespace")
 	cmd.Flags().String(flagPassword, viper.GetString(flagPassword), "agent password")
-	cmd.Flags().StringSlice(flagRedact, viper.GetStringSlice(flagRedact), "comma-delimited customized list of fields to redact")
+	cmd.Flags().StringSlice(flagRedact, viper.GetStringSlice(flagRedact), "comma-delimited list of fields to redact, overwrites the default fields. This flag can also be invoked multiple times")
 	cmd.Flags().String(flagSocketHost, viper.GetString(flagSocketHost), "address to bind the Sensu client socket to")
 	cmd.Flags().Bool(flagStatsdDisable, viper.GetBool(flagStatsdDisable), "disables the statsd listener and metrics server")
-	cmd.Flags().StringSlice(flagStatsdEventHandlers, viper.GetStringSlice(flagStatsdEventHandlers), "event handlers for statsd metrics, one per flag")
+	cmd.Flags().StringSlice(flagStatsdEventHandlers, viper.GetStringSlice(flagStatsdEventHandlers), "comma-delimited list of event handlers for statsd metrics. This flag can also be invoked multiple times")
 	cmd.Flags().Int(flagStatsdFlushInterval, viper.GetInt(flagStatsdFlushInterval), "number of seconds between statsd flush")
 	cmd.Flags().String(flagStatsdMetricsHost, viper.GetString(flagStatsdMetricsHost), "address used for the statsd metrics server")
 	cmd.Flags().Int(flagStatsdMetricsPort, viper.GetInt(flagStatsdMetricsPort), "port used for the statsd metrics server")
-	cmd.Flags().StringSlice(flagSubscriptions, viper.GetStringSlice(flagSubscriptions), "comma-delimited list of agent subscriptions")
+	cmd.Flags().StringSlice(flagSubscriptions, viper.GetStringSlice(flagSubscriptions), "comma-delimited list of agent subscriptions. This flag can also be invoked multiple times")
 	cmd.Flags().String(flagUser, viper.GetString(flagUser), "agent user")
-	cmd.Flags().StringSlice(flagBackendURL, viper.GetStringSlice(flagBackendURL), "ws/wss URL of Sensu backend server (to specify multiple backends use this flag multiple times)")
+	cmd.Flags().StringSlice(flagBackendURL, viper.GetStringSlice(flagBackendURL), "comma-delimited list of ws/wss URLs of Sensu backend servers. This flag can also be invoked multiple times")
+	cmd.Flags().StringSlice(flagKeepaliveHandlers, viper.GetStringSlice(flagKeepaliveHandlers), "comma-delimited list of keepalive handlers for this entity. This flag can also be invoked multiple times")
+	cmd.Flags().Int(flagKeepaliveInterval, viper.GetInt(flagKeepaliveInterval), "number of seconds to send between keepalive events")
 	cmd.Flags().Uint32(flagKeepaliveWarningTimeout, uint32(viper.GetInt(flagKeepaliveWarningTimeout)), "number of seconds until agent is considered dead by backend to create a warning event")
 	cmd.Flags().Uint32(flagKeepaliveCriticalTimeout, uint32(viper.GetInt(flagKeepaliveCriticalTimeout)), "number of seconds until agent is considered dead by backend to create a critical event")
 	cmd.Flags().Bool(flagDisableAPI, viper.GetBool(flagDisableAPI), "disable the Agent HTTP API")

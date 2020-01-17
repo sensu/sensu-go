@@ -11,6 +11,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Added the secrets provider interface and secrets provider manager to be used
 by commerical secrets providers. Implemented for checks, mutators, and handlers.
 - Added the `secrets` field to checks, mutators, and handlers.
+- Added the `keepalive-handlers` configuration flag on the agent to specify the
+entity's keepalive handlers.
 
 ### Fixed
 - Fixed a memory leak in the entity cache.
