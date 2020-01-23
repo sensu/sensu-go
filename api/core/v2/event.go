@@ -394,6 +394,7 @@ func EventFields(r Resource) map[string]string {
 		"event.check.status":         strconv.Itoa(int(resource.Check.Status)),
 		"event.check.subscriptions":  strings.Join(resource.Check.Subscriptions, ","),
 		"event.entity.deregister":    strconv.FormatBool(resource.Entity.Deregister),
+		"event.entity.name":          resource.Entity.ObjectMeta.Name,
 		"event.entity.entity_class":  resource.Entity.EntityClass,
 		"event.entity.subscriptions": strings.Join(resource.Entity.Subscriptions, ","),
 	}
