@@ -156,7 +156,7 @@ func (a *Authorizer) Authorize(ctx context.Context, attrs *authorization.Attribu
 	})
 
 	if !authorized {
-		logger.Debugf("unauthorized request")
+		logger.Debug("unauthorized request")
 	}
 
 	return authorized, visitErr

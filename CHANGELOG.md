@@ -25,6 +25,17 @@ chart.
 when attempting to delete a non-existent entity.
 - sensuctl command assets installed via Bonsai will now use the "sensuctl"
 namespace.
+- Fixed a memory leak in the entity cache
+- Users with implicit permissions to a namespace can now display resources
+within that namespace via the Web UI.
+- Explicit access to namespaces can only be granted via cluster-wide RBAC
+resources.
+- Split rules ClusterRole and Role verbs, resources and resource names on comma.
+- Add support for the `--format` flag in the `sensuctl command list` subcommand.
+- Namespace can be ommited from event when performing an HTTP POST request to
+the `/events` endpoint.
+- Fixed a bug where failing check TTL events could occur event if keepalive
+failures had already occurred.
 
 ## [5.16.1] - 2019-12-18
 

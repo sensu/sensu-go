@@ -297,6 +297,7 @@ func TestBuryConditions(t *testing.T) {
 			key:  "default/foo/bar",
 			store: func(store *mockstore.MockStore) {
 				store.On("GetEntityByName", mock.Anything, "bar").Return((*corev2.Entity)(nil), nil)
+				store.On("GetEventByEntityCheck", mock.Anything, "bar", "keepalive").Return(corev2.FixtureEvent("bar", "keepalive"), nil)
 			},
 			bury: true,
 		},
@@ -305,6 +306,7 @@ func TestBuryConditions(t *testing.T) {
 			key:  "default/foo/bar",
 			store: func(store *mockstore.MockStore) {
 				store.On("GetEntityByName", mock.Anything, "bar").Return((*corev2.Entity)(nil), errors.New("!"))
+				store.On("GetEventByEntityCheck", mock.Anything, "bar", "keepalive").Return(corev2.FixtureEvent("bar", "keepalive"), nil)
 			},
 			bury: false,
 		},
@@ -314,6 +316,7 @@ func TestBuryConditions(t *testing.T) {
 			store: func(store *mockstore.MockStore) {
 				store.On("GetEntityByName", mock.Anything, "bar").Return(corev2.FixtureEntity("bar"), nil)
 				store.On("GetEventByEntityCheck", mock.Anything, "bar", "foo").Return((*corev2.Event)(nil), nil)
+				store.On("GetEventByEntityCheck", mock.Anything, "bar", "keepalive").Return(corev2.FixtureEvent("bar", "keepalive"), nil)
 			},
 			bury: true,
 		},
@@ -323,6 +326,7 @@ func TestBuryConditions(t *testing.T) {
 			store: func(store *mockstore.MockStore) {
 				store.On("GetEntityByName", mock.Anything, "bar").Return(corev2.FixtureEntity("bar"), nil)
 				store.On("GetEventByEntityCheck", mock.Anything, "bar", "foo").Return((*corev2.Event)(nil), errors.New("!"))
+				store.On("GetEventByEntityCheck", mock.Anything, "bar", "keepalive").Return(corev2.FixtureEvent("bar", "keepalive"), nil)
 			},
 			bury: false,
 		},
@@ -331,6 +335,34 @@ func TestBuryConditions(t *testing.T) {
 			key:  "default/foo/bar",
 			store: func(store *mockstore.MockStore) {
 				store.On("GetEntityByName", mock.Anything, "bar").Return(corev2.FixtureEntity("bar"), nil)
+				store.On("GetEventByEntityCheck", mock.Anything, "bar", "foo").Return(corev2.FixtureEvent("bar", "foo"), nil)
+				store.On("GetEventByEntityCheck", mock.Anything, "bar", "keepalive").Return(corev2.FixtureEvent("bar", "keepalive"), nil)
+			},
+			bury: false,
+		},
+		{
+			name: "bury when failing keepalive exists",
+			key:  "default/foo/bar",
+			store: func(store *mockstore.MockStore) {
+				store.On("GetEntityByName", mock.Anything, "bar").Return(corev2.FixtureEntity("bar"), nil)
+				store.On("GetEventByEntityCheck", mock.Anything, "bar", "keepalive").Return(&corev2.Event{
+					Check: &corev2.Check{
+						Status: 1,
+					},
+				}, nil)
+			},
+			bury: true,
+		},
+		{
+			name: "do not bury when passing keepalive exists",
+			key:  "default/foo/bar",
+			store: func(store *mockstore.MockStore) {
+				store.On("GetEntityByName", mock.Anything, "bar").Return(corev2.FixtureEntity("bar"), nil)
+				store.On("GetEventByEntityCheck", mock.Anything, "bar", "keepalive").Return(&corev2.Event{
+					Check: &corev2.Check{
+						Status: 0,
+					},
+				}, nil)
 				store.On("GetEventByEntityCheck", mock.Anything, "bar", "foo").Return(corev2.FixtureEvent("bar", "foo"), nil)
 			},
 			bury: false,

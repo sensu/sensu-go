@@ -332,6 +332,18 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 		return false
 	}
 
+	keepalive, err := e.eventStore.GetEventByEntityCheck(ctx, entity, "keepalive")
+	if err != nil {
+		lager.WithError(err).Error("check ttl: error retrieving keepalive event")
+		return false
+	}
+
+	if keepalive != nil && keepalive.Check.Status > 0 {
+		// The keepalive is failing. We don't want to also alert for check TTL,
+		// or keep track of check TTL until the entity returns to life.
+		return true
+	}
+
 	event, err := e.eventStore.GetEventByEntityCheck(ctx, entity, check)
 	if err != nil {
 		lager.WithError(err).Error("check ttl: error retrieving event")
