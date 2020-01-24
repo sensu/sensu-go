@@ -2,6 +2,7 @@ package pipeline
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -93,19 +94,19 @@ func (p *Pipeline) filterEvent(handler *corev2.Handler, event *corev2.Event) (bo
 			// Deny an event if it is neither an incident nor resolution.
 			if !event.IsIncident() && !event.IsResolution() {
 				logger.WithFields(fields).Debug("denying event that is not an incident/resolution")
-				return true, nil
+				return true, fmt.Errorf("dropped by filter %q", filterName)
 			}
 		case "has_metrics":
 			// Deny an event if it does not have metrics
 			if !event.HasMetrics() {
 				logger.WithFields(fields).Debug("denying event without metrics")
-				return true, nil
+				return true, fmt.Errorf("dropped by filter %q", filterName)
 			}
 		case "not_silenced":
 			// Deny event that is silenced.
 			if event.IsSilenced() {
 				logger.WithFields(fields).Debug("denying event that is silenced")
-				return true, nil
+				return true, fmt.Errorf("dropped by filter %q", filterName)
 			}
 		default:
 			// Retrieve the filter from the store with its name
@@ -136,7 +137,7 @@ func (p *Pipeline) filterEvent(handler *corev2.Handler, event *corev2.Event) (bo
 				filtered := evaluateEventFilter(event, filter, assets)
 				if filtered {
 					logger.WithFields(fields).Debug("denying event with custom filter")
-					return true, nil
+					return true, fmt.Errorf("dropped by filter %q", filterName)
 				}
 				continue
 			}
@@ -172,7 +173,7 @@ func (p *Pipeline) filterEvent(handler *corev2.Handler, event *corev2.Event) (bo
 			}
 			if filtered {
 				logger.WithFields(fields).Debug("denying event with custom filter extension")
-				return true, nil
+				return true, fmt.Errorf("dropped by filter %q", filterName)
 			}
 		}
 	}
