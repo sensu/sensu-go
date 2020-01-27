@@ -154,6 +154,11 @@ func Test_validateVerbs(t *testing.T) {
 			verbs:   []string{"get", "put"},
 			wantErr: true,
 		},
+		{
+			name:    "explicit verbs",
+			verbs:   []string{"get", "list", "create", "update", "delete"},
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

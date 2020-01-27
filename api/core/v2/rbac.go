@@ -57,6 +57,7 @@ var allowedVerbs = []string{
 	VerbAll,
 	"get",
 	"list",
+	"create",
 	"update",
 	"delete",
 }
