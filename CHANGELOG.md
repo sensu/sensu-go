@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- [Web] Fixed issue where silenced entries with a start date would result in a
+crash.
+
 ## [5.17.0] - 2020-01-28
 
 ### Added
