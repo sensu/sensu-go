@@ -10,6 +10,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - [Web] Fixed issue where silenced entries with a start date would result in a
 crash.
+- Some namespaces would not appear in the curated namespace functionality under
+certain circonstances.
 
 ## [5.17.0] - 2020-01-28
 
