@@ -40,6 +40,7 @@ func NewNamespaceClient(store store.ResourceStore, auth authorization.Authorizer
 // by the supplied credentials. This may include implicit access via resources
 // that are in a namespace that the credentials are authorized to get.
 func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespace, error) {
+	fmt.Println("ListNamespaces")
 	var resources, namespaces []*corev2.Namespace
 	pred := &store.SelectionPredicate{
 		Continue: corev2.PageContinueFromContext(ctx),
@@ -158,6 +159,7 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespa
 
 // FetchNamespace fetches a namespace resource from the backend, if authorized.
 func (a *NamespaceClient) FetchNamespace(ctx context.Context, name string) (*corev2.Namespace, error) {
+	fmt.Println("FetchNamespace")
 	var namespace corev2.Namespace
 	visitor, ok := a.auth.(ruleVisitor)
 	if !ok {

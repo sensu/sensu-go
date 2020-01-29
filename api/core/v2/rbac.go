@@ -50,8 +50,6 @@ var CommonCoreResources = []string{
 	"handlers",
 	"hooks",
 	"mutators",
-	"rolebindings",
-	"roles",
 	"silenced",
 }
 
