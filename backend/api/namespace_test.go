@@ -63,7 +63,7 @@ func TestFetchNamespace(t *testing.T) {
 			wantErr:       true,
 		},
 		{
-			name:      "explicit access through cluster role & cluster binding",
+			name:      "explicit access through ClusterRole & ClusterRoleBinding",
 			namespace: "dev",
 			attrs: &authorization.Attributes{
 				User: corev2.User{
@@ -101,7 +101,7 @@ func TestFetchNamespace(t *testing.T) {
 			wantErr:       false,
 		},
 		{
-			name:      "explicit access to a single namespace through cluster role & cluster binding",
+			name:      "explicit access to a single namespace through ClusterRole & ClusterRoleBinding",
 			namespace: "dev",
 			attrs: &authorization.Attributes{
 				User: corev2.User{
@@ -140,7 +140,7 @@ func TestFetchNamespace(t *testing.T) {
 			wantErr:       false,
 		},
 		{
-			name:      "explicit access to a single namespace through cluster role & cluster binding should match the namespace",
+			name:      "explicit access to a single namespace through ClusterRole & ClusterRoleBinding should match the namespace",
 			namespace: "dev",
 			attrs: &authorization.Attributes{
 				User: corev2.User{
@@ -179,7 +179,7 @@ func TestFetchNamespace(t *testing.T) {
 			wantErr:       true,
 		},
 		{
-			name:      "implicit access through cluster role & cluster binding",
+			name:      "implicit access through ClusterRole & ClusterRoleBinding",
 			namespace: "dev",
 			attrs: &authorization.Attributes{
 				User: corev2.User{
@@ -217,7 +217,7 @@ func TestFetchNamespace(t *testing.T) {
 			wantErr:       false,
 		},
 		{
-			name:      "implicit access through cluster role & cluster binding should only work for namespaced resources",
+			name:      "implicit access through ClusterRole & ClusterRoleBinding should only work for namespaced resources",
 			namespace: "dev",
 			attrs: &authorization.Attributes{
 				User: corev2.User{
@@ -255,7 +255,7 @@ func TestFetchNamespace(t *testing.T) {
 			wantErr:       true,
 		},
 		{
-			name:      "implicit access through binding & role",
+			name:      "implicit access through Role & RoleBinding",
 			namespace: "dev",
 			attrs: &authorization.Attributes{
 				User: corev2.User{
@@ -293,7 +293,7 @@ func TestFetchNamespace(t *testing.T) {
 			wantErr:       false,
 		},
 		{
-			name:      "implicit access through cluster role & binding",
+			name:      "implicit access through ClusterRole & RoleBinding",
 			namespace: "dev",
 			attrs: &authorization.Attributes{
 				User: corev2.User{
@@ -331,7 +331,7 @@ func TestFetchNamespace(t *testing.T) {
 			wantErr:       false,
 		},
 		{
-			name:      "explicit access to all namespaces can only be granted via cluster binding",
+			name:      "explicit access to all namespaces can only be granted through ClusterRoleBindings",
 			namespace: "default",
 			attrs: &authorization.Attributes{
 				User: corev2.User{
@@ -422,7 +422,7 @@ func TestNamespaceList(t *testing.T) {
 		WantErr             bool
 	}{
 		{
-			Name: "all access",
+			Name: "explicit access to all namespaces through ClusterRole & ClusterRoleBinding",
 			Attrs: &authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -509,7 +509,7 @@ func TestNamespaceList(t *testing.T) {
 			WantErr:       true,
 		},
 		{
-			Name: "partial access",
+			Name: "explicit partial access through ClusterRole & ClusterRoleBinding",
 			Attrs: &authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -523,15 +523,6 @@ func TestNamespaceList(t *testing.T) {
 			},
 			ClusterRoles: []*corev2.ClusterRole{
 				{
-					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
-					Rules: []corev2.Rule{
-						{
-							Verbs:     []string{corev2.VerbAll},
-							Resources: []string{corev2.ResourceAll},
-						},
-					},
-				},
-				{
 					ObjectMeta: corev2.NewObjectMeta("pleb", ""),
 					Rules: []corev2.Rule{
 						{
@@ -543,19 +534,6 @@ func TestNamespaceList(t *testing.T) {
 				},
 			},
 			ClusterRoleBindings: []*corev2.ClusterRoleBinding{
-				{
-					Subjects: []corev2.Subject{
-						{
-							Type: "Group",
-							Name: "cluster-admins",
-						},
-					},
-					RoleRef: corev2.RoleRef{
-						Type: "ClusterRole",
-						Name: "cluster-admin",
-					},
-					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
-				},
 				{
 					Subjects: []corev2.Subject{
 						{
@@ -578,12 +556,12 @@ func TestNamespaceList(t *testing.T) {
 			},
 		},
 		{
-			Name: "implicit access via resources in namespace",
+			Name: "implicit access through ClusterRole & ClusterRoleBinding",
 			Attrs: &authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
-				Namespace:    "a",
-				Resource:     corev2.ChecksResource,
+				Namespace:    "default",
+				Resource:     corev2.NamespacesResource,
 				ResourceName: "",
 				User: corev2.User{
 					Username: "regular-user",
@@ -592,11 +570,11 @@ func TestNamespaceList(t *testing.T) {
 			},
 			ClusterRoles: []*corev2.ClusterRole{
 				{
-					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+					ObjectMeta: corev2.NewObjectMeta("pleb", ""),
 					Rules: []corev2.Rule{
 						{
-							Verbs:     []string{corev2.VerbAll},
-							Resources: []string{corev2.ResourceAll},
+							Verbs:     []string{"get", "list"},
+							Resources: []string{corev2.ChecksResource},
 						},
 					},
 				},
@@ -606,14 +584,30 @@ func TestNamespaceList(t *testing.T) {
 					Subjects: []corev2.Subject{
 						{
 							Type: "Group",
-							Name: "cluster-admins",
+							Name: "plebs",
 						},
 					},
 					RoleRef: corev2.RoleRef{
 						Type: "ClusterRole",
-						Name: "cluster-admin",
+						Name: "pleb",
 					},
-					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+					ObjectMeta: corev2.NewObjectMeta("pleb", ""),
+				},
+			},
+			AllNamespaces: namespaces,
+			ExpNamespaces: namespaces,
+		},
+		{
+			Name: "implicit access through Role & RoleBinding",
+			Attrs: &authorization.Attributes{
+				APIGroup:     "core",
+				APIVersion:   "v2",
+				Namespace:    "a",
+				Resource:     corev2.ChecksResource,
+				ResourceName: "",
+				User: corev2.User{
+					Username: "regular-user",
+					Groups:   []string{"plebs"},
 				},
 			},
 			Roles: []*corev2.Role{
@@ -652,7 +646,51 @@ func TestNamespaceList(t *testing.T) {
 			},
 		},
 		{
-			Name: "explicit access can only be granted via cluster resources",
+			Name: "implicit access through ClusterRole & RoleBinding",
+			Attrs: &authorization.Attributes{
+				APIGroup:     "core",
+				APIVersion:   "v2",
+				Namespace:    "a",
+				Resource:     corev2.ChecksResource,
+				ResourceName: "",
+				User: corev2.User{
+					Username: "regular-user",
+					Groups:   []string{"plebs"},
+				},
+			},
+			ClusterRoles: []*corev2.ClusterRole{
+				{
+					ObjectMeta: corev2.NewObjectMeta("pleb", ""),
+					Rules: []corev2.Rule{
+						{
+							Verbs:     []string{"get", "list"},
+							Resources: []string{corev2.ChecksResource},
+						},
+					},
+				},
+			},
+			RoleBindings: []*corev2.RoleBinding{
+				{
+					Subjects: []corev2.Subject{
+						{
+							Type: "Group",
+							Name: "plebs",
+						},
+					},
+					RoleRef: corev2.RoleRef{
+						Type: "ClusterRole",
+						Name: "pleb",
+					},
+					ObjectMeta: corev2.NewObjectMeta("pleb", "a"),
+				},
+			},
+			AllNamespaces: namespaces,
+			ExpNamespaces: []*corev2.Namespace{
+				namespaces[0],
+			},
+		},
+		{
+			Name: "explicit access to all namespaces can only be granted through ClusterRoleBindings",
 			Attrs: &authorization.Attributes{
 				APIGroup:   "core",
 				APIVersion: "v2",
@@ -664,7 +702,7 @@ func TestNamespaceList(t *testing.T) {
 			},
 			Roles: []*corev2.Role{
 				{
-					ObjectMeta: corev2.NewObjectMeta("local-admin", "default"),
+					ObjectMeta: corev2.NewObjectMeta("local-admin", "a"),
 					Rules: []corev2.Rule{
 						{
 							Verbs:     []string{corev2.VerbAll},
@@ -685,12 +723,14 @@ func TestNamespaceList(t *testing.T) {
 						Type: "Role",
 						Name: "local-admin",
 					},
-					ObjectMeta: corev2.NewObjectMeta("local-admin", "default"),
+					ObjectMeta: corev2.NewObjectMeta("local-admin", "a"),
 				},
 			},
 			AllNamespaces: namespaces,
-			ExpNamespaces: nil,
-			WantErr:       true,
+			ExpNamespaces: []*corev2.Namespace{
+				namespaces[0],
+			},
+			WantErr: false,
 		},
 	}
 

@@ -96,21 +96,9 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespa
 			return true
 		}
 
-		// If this rule doesn't applies to namespaces, determine if the user has
-		// implicit access via a resource within that namespace
-		if !rule.ResourceMatches(corev2.NamespacesResource) {
-			// Find namespaces with implicit access
-			ns := binding.GetObjectMeta().Namespace
-			if namespace, ok := namespaceMap[ns]; ok {
-				logger.Debugf("namespace %s implicitely authorized by the binding %s", namespace.Name, binding.GetObjectMeta().Name)
-				namespaces = append(namespaces, namespace)
-				delete(namespaceMap, ns)
-			}
-			return true
-		}
-
-		// Only ClusterRoleBindings can grant explicit access to a namespace
-		if binding.GetObjectMeta().Namespace == "" {
+		// Explicit access to namespaces can only be granted via a
+		// ClusterRoleBinding
+		if rule.ResourceMatches(corev2.NamespacesResource) && binding.GetObjectMeta().Namespace == "" {
 			// If this rule applies to namespaces, determine if all resources of type "namespace" are allowed
 			if len(rule.ResourceNames) == 0 {
 				// All resources of type "namespace" are allowed
@@ -128,6 +116,29 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespa
 					delete(namespaceMap, name)
 				}
 			}
+
+			return true
+		}
+
+		// Determine if this ClusterRoleBinding provides implicit access to
+		// namespaced resources
+		if binding.GetObjectMeta().Namespace == "" {
+			for _, resource := range rule.Resources {
+				if stringsutil.InArray(resource, corev2.CommonCoreResources) {
+					// All resources of type "namespace" are allowed
+					logger.Debugf("all namespaces implicitely authorized by the binding %s", binding.GetObjectMeta().Name)
+					namespaces = resources
+					return false
+				}
+			}
+		}
+
+		// Determine if this RoleBinding matches the namespace
+		bindingNamespace := binding.GetObjectMeta().Namespace
+		if namespace, ok := namespaceMap[bindingNamespace]; ok {
+			logger.Debugf("namespace %s implicitely authorized by the binding %s", namespace.Name, binding.GetObjectMeta().Name)
+			namespaces = append(namespaces, namespace)
+			delete(namespaceMap, bindingNamespace)
 		}
 
 		return true
