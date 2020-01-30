@@ -17,7 +17,6 @@ require (
 	github.com/dave/jennifer v0.0.0-20171207062344-d8bdbdbee4e1
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/docker/docker v0.0.0-20180409082103-cbde00b44273
-	github.com/dsnet/compress v0.0.0-20170928175515-f41072d47fff // indirect
 	github.com/echlebek/crock v1.0.1
 	github.com/echlebek/timeproxy v1.0.0
 	github.com/emicklei/proto v1.1.0
@@ -28,7 +27,6 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/groupcache v0.0.0-20191002201903-404acd9df4cc // indirect
 	github.com/golang/protobuf v1.3.2
-	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/context v0.0.0-20160226214623-1ea25387ff6f // indirect
 	github.com/gorilla/mux v1.6.2
@@ -51,12 +49,10 @@ require (
 	github.com/mattn/go-isatty v0.0.2 // indirect
 	github.com/mattn/go-runewidth v0.0.2 // indirect
 	github.com/mgutz/ansi v0.0.0-20170206155736-9520e82c474b
-	github.com/mholt/archiver v3.1.1+incompatible
+	github.com/mholt/archiver/v3 v3.3.1-0.20191129193105-44285f7ed244
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.1.2
-	github.com/nwaples/rardecode v0.0.0-20170112110516-f22b7ef81a0a // indirect
 	github.com/olekukonko/tablewriter v0.0.0-20180506121414-d4647c9c7a84
-	github.com/pierrec/lz4 v2.4.0+incompatible // indirect
 	github.com/prometheus/client_golang v1.2.0
 	github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4
 	github.com/robertkrimen/otto v0.0.0-20180617131154-15f95af6e78d
@@ -69,10 +65,8 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.4.0
 	github.com/stretchr/testify v1.4.0
-	github.com/ulikunitz/xz v0.5.4 // indirect
 	github.com/whyrusleeping/go-logging v0.0.0-20170515211332-0457bb6b88fc // indirect
 	github.com/willf/pad v0.0.0-20160331131008-b3d780601022
-	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	go.etcd.io/bbolt v1.3.2
 	go.uber.org/multierr v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
