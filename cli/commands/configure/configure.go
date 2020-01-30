@@ -13,11 +13,13 @@ import (
 )
 
 type configureAnswers struct {
-	URL       string `survey:"url"`
-	Username  string `survey:"username"`
-	Password  string
-	Format    string `survey:"format"`
-	Namespace string `survey:"namespace"`
+	URL                   string `survey:"url"`
+	Username              string `survey:"username"`
+	Password              string
+	Format                string `survey:"format"`
+	Namespace             string `survey:"namespace"`
+	InsecureSkipTLSVerify bool
+	TrustedCAFile         string
 }
 
 // Command defines new configuration command
@@ -103,6 +105,26 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 					"unable to write new configuration file with error: %s",
 					err,
 				)
+			}
+
+			// Write the TLS preferences to disk
+			if value, err := flags.GetBool("insecure-skip-tls-verify"); err == nil {
+				if err = cli.Config.SaveInsecureSkipTLSVerify(value); err != nil {
+					fmt.Fprintln(cmd.OutOrStderr())
+					return fmt.Errorf(
+						"unable to write new configuration file with error: %s",
+						err,
+					)
+				}
+			}
+			if value, err := flags.GetString("trusted-ca-file"); err == nil {
+				if err = cli.Config.SaveTrustedCAFile(value); err != nil {
+					fmt.Fprintln(cmd.OutOrStderr())
+					return fmt.Errorf(
+						"unable to write new configuration file with error: %s",
+						err,
+					)
+				}
 			}
 
 			return nil

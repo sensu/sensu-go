@@ -1,6 +1,7 @@
 package configure
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -8,6 +9,7 @@ import (
 
 	"github.com/sensu/sensu-go/cli/client/config"
 	client "github.com/sensu/sensu-go/cli/client/testing"
+	"github.com/sensu/sensu-go/cli/commands/root"
 	test "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/sensu/sensu-go/types"
 
@@ -44,13 +46,29 @@ func TestCommandRunEClosureWithFlags(t *testing.T) {
 	mockConfig.On("SaveFormat", mock.Anything).Return(nil)
 	mockClient.On("FetchUser", mock.Anything).Return(&types.User{}, nil)
 	mockConfig.On("SaveNamespace", mock.Anything).Return(nil)
+	mockConfig.On("SaveInsecureSkipTLSVerify", mock.Anything).Return(nil)
+	mockConfig.On("SaveTrustedCAFile", mock.Anything).Return(nil)
 
+	// We need to call the "configure" command via the rootCmd so the global flags
+	// are set
+	rootCmd := root.Command()
 	cmd := Command(cli)
 	require.NoError(t, cmd.Flags().Set("non-interactive", "true"))
 	require.NoError(t, cmd.Flags().Set("password", "my-password"))
 	require.NoError(t, cmd.Flags().Set("username", "my-user"))
 	require.NoError(t, cmd.Flags().Set("url", "http://127.0.0.1:8080"))
-	out, err := test.RunCmd(cmd, []string{})
+	rootCmd.AddCommand(cmd)
+
+	buf := new(bytes.Buffer)
+	rootCmd.SetOutput(buf)
+	rootCmd.SetArgs([]string{"configure"})
+	_, err := rootCmd.ExecuteC()
+	out := buf.String()
+
 	assert.NoError(err)
 	assert.Empty(out)
+
+	// Make sure the TLS configuration has been saved
+	mockConfig.AssertCalled(t, "SaveInsecureSkipTLSVerify", false)
+	mockConfig.AssertCalled(t, "SaveTrustedCAFile", "")
 }
