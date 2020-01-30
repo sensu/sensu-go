@@ -10,6 +10,7 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -21,7 +22,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // TimeWindowWhen defines the "when" attributes for time windows
 type TimeWindowWhen struct {
@@ -46,7 +47,7 @@ func (m *TimeWindowWhen) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return xxx_messageInfo_TimeWindowWhen.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -101,7 +102,7 @@ func (m *TimeWindowDays) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return xxx_messageInfo_TimeWindowDays.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -203,7 +204,7 @@ func (m *TimeWindowTimeRange) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return xxx_messageInfo_TimeWindowTimeRange.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -420,7 +421,7 @@ func (this *TimeWindowTimeRange) Equal(that interface{}) bool {
 func (m *TimeWindowWhen) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -428,28 +429,36 @@ func (m *TimeWindowWhen) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *TimeWindowWhen) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *TimeWindowWhen) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	dAtA[i] = 0xa
-	i++
-	i = encodeVarintTimeWindow(dAtA, i, uint64(m.Days.Size()))
-	n1, err := m.Days.MarshalTo(dAtA[i:])
-	if err != nil {
-		return 0, err
-	}
-	i += n1
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	{
+		size, err := m.Days.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintTimeWindow(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
 }
 
 func (m *TimeWindowDays) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -457,116 +466,138 @@ func (m *TimeWindowDays) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *TimeWindowDays) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *TimeWindowDays) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.All) > 0 {
-		for _, msg := range m.All {
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintTimeWindow(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	if len(m.Sunday) > 0 {
-		for _, msg := range m.Sunday {
-			dAtA[i] = 0x12
-			i++
-			i = encodeVarintTimeWindow(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
+	if len(m.Saturday) > 0 {
+		for iNdEx := len(m.Saturday) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Saturday[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTimeWindow(dAtA, i, uint64(size))
 			}
-			i += n
-		}
-	}
-	if len(m.Monday) > 0 {
-		for _, msg := range m.Monday {
-			dAtA[i] = 0x1a
-			i++
-			i = encodeVarintTimeWindow(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if len(m.Tuesday) > 0 {
-		for _, msg := range m.Tuesday {
-			dAtA[i] = 0x22
-			i++
-			i = encodeVarintTimeWindow(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if len(m.Wednesday) > 0 {
-		for _, msg := range m.Wednesday {
-			dAtA[i] = 0x2a
-			i++
-			i = encodeVarintTimeWindow(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if len(m.Thursday) > 0 {
-		for _, msg := range m.Thursday {
-			dAtA[i] = 0x32
-			i++
-			i = encodeVarintTimeWindow(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
+			i--
+			dAtA[i] = 0x42
 		}
 	}
 	if len(m.Friday) > 0 {
-		for _, msg := range m.Friday {
+		for iNdEx := len(m.Friday) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Friday[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTimeWindow(dAtA, i, uint64(size))
+			}
+			i--
 			dAtA[i] = 0x3a
-			i++
-			i = encodeVarintTimeWindow(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
 		}
 	}
-	if len(m.Saturday) > 0 {
-		for _, msg := range m.Saturday {
-			dAtA[i] = 0x42
-			i++
-			i = encodeVarintTimeWindow(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
+	if len(m.Thursday) > 0 {
+		for iNdEx := len(m.Thursday) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Thursday[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTimeWindow(dAtA, i, uint64(size))
 			}
-			i += n
+			i--
+			dAtA[i] = 0x32
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.Wednesday) > 0 {
+		for iNdEx := len(m.Wednesday) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Wednesday[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTimeWindow(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x2a
+		}
 	}
-	return i, nil
+	if len(m.Tuesday) > 0 {
+		for iNdEx := len(m.Tuesday) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Tuesday[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTimeWindow(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x22
+		}
+	}
+	if len(m.Monday) > 0 {
+		for iNdEx := len(m.Monday) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Monday[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTimeWindow(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.Sunday) > 0 {
+		for iNdEx := len(m.Sunday) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Sunday[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTimeWindow(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	if len(m.All) > 0 {
+		for iNdEx := len(m.All) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.All[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTimeWindow(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *TimeWindowTimeRange) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -574,36 +605,46 @@ func (m *TimeWindowTimeRange) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *TimeWindowTimeRange) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *TimeWindowTimeRange) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Begin) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintTimeWindow(dAtA, i, uint64(len(m.Begin)))
-		i += copy(dAtA[i:], m.Begin)
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if len(m.End) > 0 {
-		dAtA[i] = 0x12
-		i++
+		i -= len(m.End)
+		copy(dAtA[i:], m.End)
 		i = encodeVarintTimeWindow(dAtA, i, uint64(len(m.End)))
-		i += copy(dAtA[i:], m.End)
+		i--
+		dAtA[i] = 0x12
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.Begin) > 0 {
+		i -= len(m.Begin)
+		copy(dAtA[i:], m.Begin)
+		i = encodeVarintTimeWindow(dAtA, i, uint64(len(m.Begin)))
+		i--
+		dAtA[i] = 0xa
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func encodeVarintTimeWindow(dAtA []byte, offset int, v uint64) int {
+	offset -= sovTimeWindow(v)
+	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return offset + 1
+	return base
 }
 func NewPopulatedTimeWindowWhen(r randyTimeWindow, easy bool) *TimeWindowWhen {
 	this := &TimeWindowWhen{}
@@ -617,56 +658,56 @@ func NewPopulatedTimeWindowWhen(r randyTimeWindow, easy bool) *TimeWindowWhen {
 
 func NewPopulatedTimeWindowDays(r randyTimeWindow, easy bool) *TimeWindowDays {
 	this := &TimeWindowDays{}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v2 := r.Intn(5)
 		this.All = make([]*TimeWindowTimeRange, v2)
 		for i := 0; i < v2; i++ {
 			this.All[i] = NewPopulatedTimeWindowTimeRange(r, easy)
 		}
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v3 := r.Intn(5)
 		this.Sunday = make([]*TimeWindowTimeRange, v3)
 		for i := 0; i < v3; i++ {
 			this.Sunday[i] = NewPopulatedTimeWindowTimeRange(r, easy)
 		}
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v4 := r.Intn(5)
 		this.Monday = make([]*TimeWindowTimeRange, v4)
 		for i := 0; i < v4; i++ {
 			this.Monday[i] = NewPopulatedTimeWindowTimeRange(r, easy)
 		}
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v5 := r.Intn(5)
 		this.Tuesday = make([]*TimeWindowTimeRange, v5)
 		for i := 0; i < v5; i++ {
 			this.Tuesday[i] = NewPopulatedTimeWindowTimeRange(r, easy)
 		}
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v6 := r.Intn(5)
 		this.Wednesday = make([]*TimeWindowTimeRange, v6)
 		for i := 0; i < v6; i++ {
 			this.Wednesday[i] = NewPopulatedTimeWindowTimeRange(r, easy)
 		}
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v7 := r.Intn(5)
 		this.Thursday = make([]*TimeWindowTimeRange, v7)
 		for i := 0; i < v7; i++ {
 			this.Thursday[i] = NewPopulatedTimeWindowTimeRange(r, easy)
 		}
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v8 := r.Intn(5)
 		this.Friday = make([]*TimeWindowTimeRange, v8)
 		for i := 0; i < v8; i++ {
 			this.Friday[i] = NewPopulatedTimeWindowTimeRange(r, easy)
 		}
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v9 := r.Intn(5)
 		this.Saturday = make([]*TimeWindowTimeRange, v9)
 		for i := 0; i < v9; i++ {
@@ -856,14 +897,7 @@ func (m *TimeWindowTimeRange) Size() (n int) {
 }
 
 func sovTimeWindow(x uint64) (n int) {
-	for {
-		n++
-		x >>= 7
-		if x == 0 {
-			break
-		}
-	}
-	return n
+	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozTimeWindow(x uint64) (n int) {
 	return sovTimeWindow(uint64((x << 1) ^ uint64((int64(x) >> 63))))
