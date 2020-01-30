@@ -23,6 +23,13 @@ func (c *Config) SaveFormat(format string) error {
 	return write(c.Profile, filepath.Join(c.path, profileFilename))
 }
 
+// SaveInsecureSkipTLSVerify saves the InsecureSkipTLSVerify preference
+func (c *Config) SaveInsecureSkipTLSVerify(verify bool) error {
+	c.Cluster.InsecureSkipTLSVerify = verify
+
+	return write(c.Cluster, filepath.Join(c.path, clusterFilename))
+}
+
 // SaveNamespace saves the user's default namespace to a configuration file
 func (c *Config) SaveNamespace(namespace string) error {
 	c.Profile.Namespace = namespace
@@ -42,6 +49,13 @@ func (c *Config) SaveTokens(tokens *types.Tokens) error {
 	savedConfig.Cluster.Tokens = tokens
 
 	return write(savedConfig.Cluster, filepath.Join(c.path, clusterFilename))
+}
+
+// SaveTrustedCAFile saves the Trusted CA file
+func (c *Config) SaveTrustedCAFile(file string) error {
+	c.Cluster.TrustedCAFile = file
+
+	return write(c.Cluster, filepath.Join(c.path, clusterFilename))
 }
 
 func write(data interface{}, path string) error {

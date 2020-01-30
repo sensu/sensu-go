@@ -8,8 +8,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Fixed
-- [Web] Fixed issue where silenced entries with a start date would result in a
-crash.
+- Cluster configuration of sensuctl should be reset when `configure` is called.
 - Some namespaces would not appear in the curated namespace functionality under
 certain circonstances.
 - Fix a bug with tar assets that contain hardlinked files.
@@ -31,6 +30,8 @@ entity's keepalive handlers.
 - [Web] Fixed a inconsistent crash that occurred in Firefox browsers.
 - [Web] Fixed bug where event history was duplicated in the event timeline
 chart.
+- [Web] Fixed issue where silenced entries with a start date would result in a
+crash.
 - Fixed a bug where `sensuctl entity delete` was not returning an error
 when attempting to delete a non-existent entity.
 - sensuctl command assets installed via Bonsai will now use the "sensuctl"
