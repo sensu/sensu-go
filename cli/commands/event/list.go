@@ -130,7 +130,7 @@ func printToTable(results interface{}, writer io.Writer) {
 			},
 		},
 		{
-			Title: "ID",
+			Title: "UUID",
 			CellTransformer: func(data interface{}) string {
 				event, ok := data.(corev2.Event)
 				if !ok {

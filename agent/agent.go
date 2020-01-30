@@ -270,8 +270,8 @@ func (a *Agent) receiveLoop(ctx context.Context, cancel context.CancelFunc, conn
 
 func logEvent(e *corev2.Event) {
 	fields := logrus.Fields{
-		"event_id": e.GetUUID().String(),
-		"entity":   e.Entity.Name,
+		"event_uuid": e.GetUUID().String(),
+		"entity":     e.Entity.Name,
 	}
 	if e.HasCheck() {
 		fields["check"] = e.Check.Name

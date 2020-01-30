@@ -101,7 +101,7 @@ func printToList(v interface{}, writer io.Writer) error {
 			Value: time.Unix(event.Timestamp, 0).String(),
 		},
 		{
-			Label: "ID",
+			Label: "UUID",
 			Value: event.GetUUID().String(),
 		}}...)
 
