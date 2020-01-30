@@ -307,8 +307,11 @@ func (a *Agent) newKeepalive() *transport.Message {
 	}
 	entity := a.getAgentEntity()
 
+	uid, _ := uuid.NewRandom()
+
 	keepalive := &corev2.Event{
 		ObjectMeta: corev2.NewObjectMeta("", entity.Namespace),
+		ID:         uid[:],
 	}
 
 	keepalive.Check = &corev2.Check{
