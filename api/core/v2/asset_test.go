@@ -58,6 +58,10 @@ func TestValidator(t *testing.T) {
 	asset = FixtureAsset("name")
 	asset.Sha512 = "nope"
 	assert.Error(asset.Validate())
+
+	// Bonsai assets with uppercases should pass
+	asset = FixtureAsset("Username/asset_name:0.0.1")
+	assert.NoError(asset.Validate())
 }
 
 func TestValidateName_GH3344(t *testing.T) {

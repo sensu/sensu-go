@@ -12,6 +12,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 crash.
 - Some namespaces would not appear in the curated namespace functionality under
 certain circonstances.
+- Fix a bug with tar assets that contain hardlinked files.
+- Assets name may contain capital letters.
 
 ## [5.17.0] - 2020-01-28
 

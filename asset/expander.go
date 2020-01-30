@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/mholt/archiver"
+	archiver "github.com/mholt/archiver/v3"
 
 	filetype "gopkg.in/h2non/filetype.v1"
 	filetype_types "gopkg.in/h2non/filetype.v1/types"
