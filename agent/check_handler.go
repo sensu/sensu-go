@@ -270,7 +270,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 		Payload: msg,
 	}
 
-	logger.WithField("event_id", event.GetUUID().String()).Info("sending event to backend")
+	logEvent(event)
 
 	a.sendMessage(tm)
 }

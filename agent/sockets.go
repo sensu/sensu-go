@@ -166,7 +166,7 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 			return
 		}
 
-		logger.WithField("event_id", event.GetUUID().String()).Info("sending event to backend")
+		logEvent(&event)
 
 		tm := &transport.Message{
 			Type:    transport.MessageTypeEvent,
@@ -249,7 +249,7 @@ func (a *Agent) handleUDPMessages(ctx context.Context, c net.PacketConn) {
 				return
 			}
 
-			logger.WithField("event_id", event.GetUUID().String()).Info("sending event to backend")
+			logEvent(&event)
 
 			tm := &transport.Message{
 				Type:    transport.MessageTypeEvent,
