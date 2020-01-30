@@ -13,6 +13,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 certain circonstances.
 - Fix a bug with tar assets that contain hardlinked files.
 - Assets name may contain capital letters.
+- When `--trusted-ca-file` is used to configure sensuctl, it now detects and saves
+the absolute file path in the cluster config.
 
 ## [5.17.0] - 2020-01-28
 
