@@ -84,10 +84,6 @@ func printToList(v interface{}, writer io.Writer) error {
 				Label: "Silenced",
 				Value: strconv.FormatBool(len(event.Check.Silenced) > 0),
 			},
-			{
-				Label: "Timestamp",
-				Value: time.Unix(event.Timestamp, 0).String(),
-			},
 		},
 	}
 
@@ -96,8 +92,18 @@ func printToList(v interface{}, writer io.Writer) error {
 			Label: "Silenced By",
 			Value: strings.Join(event.Check.Silenced, ", "),
 		}
-		cfg.Rows = append(cfg.Rows[:len(cfg.Rows)-1], silencedBy, cfg.Rows[len(cfg.Rows)-1])
+		cfg.Rows = append(cfg.Rows, silencedBy)
 	}
+
+	cfg.Rows = append(cfg.Rows, []*list.Row{
+		{
+			Label: "Timestamp",
+			Value: time.Unix(event.Timestamp, 0).String(),
+		},
+		{
+			Label: "ID",
+			Value: event.GetUUID().String(),
+		}}...)
 
 	return list.Print(writer, cfg)
 }

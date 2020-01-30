@@ -129,6 +129,16 @@ func printToTable(results interface{}, writer io.Writer) {
 				return time.String()
 			},
 		},
+		{
+			Title: "ID",
+			CellTransformer: func(data interface{}) string {
+				event, ok := data.(corev2.Event)
+				if !ok {
+					return cli.TypeError
+				}
+				return event.GetUUID().String()
+			},
+		},
 	})
 
 	table.Render(writer, results)
