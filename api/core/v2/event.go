@@ -2,6 +2,7 @@ package v2
 
 import (
 	"errors"
+	"fmt"
 	"net/url"
 	"path"
 	"sort"
@@ -9,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
 )
 
@@ -70,6 +72,12 @@ func (e *Event) Validate() error {
 
 	if e.Name != "" {
 		return errors.New("events cannot be named")
+	}
+
+	if len(e.ID) > 0 {
+		if _, err := uuid.FromBytes(e.ID); err != nil {
+			return fmt.Errorf("event ID is invalid: %s", err)
+		}
 	}
 
 	return nil
@@ -412,4 +420,11 @@ func (e *Event) SetObjectMeta(meta ObjectMeta) {
 
 func (e *Event) RBACName() string {
 	return "events"
+}
+
+// GetUUID parses a UUID from the ID bytes. It does not check errors, assuming
+// that the event has already passed validation.
+func (e *Event) GetUUID() uuid.UUID {
+	id, _ := uuid.FromBytes(e.ID)
+	return id
 }
