@@ -102,7 +102,7 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespa
 			// If this rule applies to namespaces, determine if all resources of type "namespace" are allowed
 			if len(rule.ResourceNames) == 0 {
 				// All resources of type "namespace" are allowed
-				logger.Debugf("all namespaces explicitely authorized by the binding %s", binding.GetObjectMeta().Name)
+				logger.Debugf("all namespaces explicitly authorized by the binding %s", binding.GetObjectMeta().Name)
 				namespaces = resources
 				return false
 			}
@@ -111,7 +111,7 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespa
 			// specified, determine if it matches this current namespace
 			for name, namespace := range namespaceMap {
 				if rule.ResourceNameMatches(name) {
-					logger.Debugf("namespace %s explicitely authorized by the binding %s", namespace.Name, binding.GetObjectMeta().Name)
+					logger.Debugf("namespace %s explicitly authorized by the binding %s", namespace.Name, binding.GetObjectMeta().Name)
 					namespaces = append(namespaces, namespace)
 					delete(namespaceMap, name)
 				}
@@ -126,7 +126,7 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespa
 			for _, resource := range rule.Resources {
 				if stringsutil.InArray(resource, corev2.CommonCoreResources) {
 					// All resources of type "namespace" are allowed
-					logger.Debugf("all namespaces implicitely authorized by the binding %s", binding.GetObjectMeta().Name)
+					logger.Debugf("all namespaces implicitly authorized by the binding %s", binding.GetObjectMeta().Name)
 					namespaces = resources
 					return false
 				}
@@ -136,7 +136,7 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespa
 		// Determine if this RoleBinding matches the namespace
 		bindingNamespace := binding.GetObjectMeta().Namespace
 		if namespace, ok := namespaceMap[bindingNamespace]; ok {
-			logger.Debugf("namespace %s implicitely authorized by the binding %s", namespace.Name, binding.GetObjectMeta().Name)
+			logger.Debugf("namespace %s implicitly authorized by the binding %s", namespace.Name, binding.GetObjectMeta().Name)
 			namespaces = append(namespaces, namespace)
 			delete(namespaceMap, bindingNamespace)
 		}
