@@ -19,7 +19,7 @@ const (
 
 var (
 	// AssetNameRegexStr used to validate name of asset
-	AssetNameRegexStr = `[a-z0-9\/\_\.\-\:]+`
+	AssetNameRegexStr = `[\w\/\_\.\-\:]+`
 
 	// AssetNameRegex used to validate name of asset
 	AssetNameRegex = regexp.MustCompile("^" + AssetNameRegexStr + "$")
@@ -119,7 +119,7 @@ func ValidateAssetName(name string) error {
 
 	if !AssetNameRegex.MatchString(name) {
 		return errors.New(
-			"name must be lowercase and may only contain forward slashes, underscores, dashes and numbers",
+			"name may only contain letters, forward slashes, underscores, dashes and numbers",
 		)
 	}
 
