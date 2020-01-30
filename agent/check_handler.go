@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/agent/transformers"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
@@ -229,6 +230,10 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 
 	event.Entity = a.getAgentEntity()
 	event.Timestamp = time.Now().Unix()
+	id, err := uuid.NewRandom()
+	if err == nil {
+		event.ID = id[:]
+	}
 
 	// Instantiate metrics in the event if the check is attempting to extract metrics
 	if check.OutputMetricFormat != "" || len(check.OutputMetricHandlers) != 0 {
@@ -264,6 +269,9 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 		Type:    transport.MessageTypeEvent,
 		Payload: msg,
 	}
+
+	logger.WithField("event_id", event.GetUUID().String()).Info("sending event to backend")
+
 	a.sendMessage(tm)
 }
 

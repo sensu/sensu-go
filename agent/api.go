@@ -131,6 +131,8 @@ func addEvent(a *Agent) http.HandlerFunc {
 			return
 		}
 
+		logger.WithField("event_id", event.GetUUID().String()).Info("sending event to backend")
+
 		if _, err := a.apiQueue.Send(compressMessage(payload)); err != nil {
 			logger.WithError(err).Error("error queueing message")
 			http.Error(w, "error queueing message", http.StatusInternalServerError)
