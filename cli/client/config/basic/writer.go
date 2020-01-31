@@ -53,7 +53,11 @@ func (c *Config) SaveTokens(tokens *types.Tokens) error {
 
 // SaveTrustedCAFile saves the Trusted CA file
 func (c *Config) SaveTrustedCAFile(file string) error {
-	c.Cluster.TrustedCAFile = file
+	absolute, err := filepath.Abs(file)
+	if err != nil {
+		return err
+	}
+	c.Cluster.TrustedCAFile = absolute
 
 	return write(c.Cluster, filepath.Join(c.path, clusterFilename))
 }
