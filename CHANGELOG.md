@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.17.1] - 2020-01-31
+
 ### Fixed
 - Cluster configuration of sensuctl should be reset when `configure` is called.
 - Some namespaces would not appear in the curated namespace functionality under
