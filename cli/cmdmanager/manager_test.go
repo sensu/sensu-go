@@ -500,6 +500,43 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 					Return(string(assetJSON), nil)
 			},
 		},
+		{
+			name:            "valid asset with version specified using the v prefix",
+			alias:           "testaliasprefixed",
+			bonsaiAssetName: bAsset.fullName,
+			bonsaiClientFunc: func(m *MockBonsaiClient) {
+				bonsaiAsset := &bonsai.Asset{
+					Name: bAsset.fullName,
+					Versions: []*bonsai.AssetVersionGrouping{
+						{Version: "v1.0.0"},
+					},
+				}
+				asset := corev2.Asset{
+					ObjectMeta: corev2.ObjectMeta{
+						Name:      bAsset.name,
+						Namespace: bAsset.namespace,
+						Annotations: map[string]string{
+							"io.sensu.bonsai.type":     "sensuctl",
+							"io.sensu.bonsai.provider": "sensuctl/command",
+						},
+					},
+					Builds: []*corev2.AssetBuild{
+						{
+							URL:    bAsset.url,
+							Sha512: bAsset.sha512,
+						},
+					},
+				}
+				assetJSON, err := json.Marshal(asset)
+				if err != nil {
+					t.Fatal(err)
+				}
+				m.On("FetchAsset", bAsset.namespace, bAsset.name).
+					Return(bonsaiAsset, nil)
+				m.On("FetchAssetVersion", bAsset.namespace, bAsset.name, "v1.0.0").
+					Return(string(assetJSON), nil)
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
