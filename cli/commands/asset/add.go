@@ -60,22 +60,22 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 		}
 
 		if version == nil {
-			fmt.Println("no version specified, using latest:", bonsaiAsset.LatestVersion())
 			version = bonsaiAsset.LatestVersion()
+			fmt.Println("no version specified, using latest:", version.Original())
 		} else if !bonsaiAsset.HasVersion(version) {
 			availableVersions := bonsaiAsset.ValidVersions()
 			sort.Sort(goversion.Collection(availableVersions))
 			availableVersionStrs := []string{}
 			for _, v := range availableVersions {
-				availableVersionStrs = append(availableVersionStrs, v.String())
+				availableVersionStrs = append(availableVersionStrs, v.Original())
 			}
 			return fmt.Errorf("version \"%s\" of asset \"%s/%s\" does not exist\navailable versions: %s",
-				version, bAsset.Namespace, bAsset.Name, strings.Join(availableVersionStrs, ", "))
+				version.Original(), bAsset.Namespace, bAsset.Name, strings.Join(availableVersionStrs, ", "))
 		}
 
-		fmt.Printf("fetching bonsai asset: %s/%s:%s\n", bAsset.Namespace, bAsset.Name, version)
+		fmt.Printf("fetching bonsai asset: %s/%s:%s\n", bAsset.Namespace, bAsset.Name, version.Original())
 
-		asset, err := bonsaiClient.FetchAssetVersion(bAsset.Namespace, bAsset.Name, version.String())
+		asset, err := bonsaiClient.FetchAssetVersion(bAsset.Namespace, bAsset.Name, version.Original())
 		if err != nil {
 			return err
 		}
@@ -100,7 +100,7 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 			return err
 		}
 
-		fmt.Printf("added asset: %s/%s:%s\n", bAsset.Namespace, bAsset.Name, version)
+		fmt.Printf("added asset: %s/%s:%s\n", bAsset.Namespace, bAsset.Name, version.Original())
 		return nil
 	}
 }

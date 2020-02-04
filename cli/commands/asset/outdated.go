@@ -99,8 +99,8 @@ func outdatedCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []s
 						BonsaiName:      bonsaiName,
 						BonsaiNamespace: bonsaiNamespace,
 						AssetName:       asset.Name,
-						CurrentVersion:  installedVersion.String(),
-						LatestVersion:   latestVersion.String(),
+						CurrentVersion:  installedVersion.Original(),
+						LatestVersion:   latestVersion.Original(),
 					})
 				}
 			}

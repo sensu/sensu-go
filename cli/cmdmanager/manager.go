@@ -144,22 +144,22 @@ func (m *CommandManager) InstallCommandFromBonsai(alias, bonsaiAssetName string)
 	}
 
 	if version == nil {
-		fmt.Println("no version specified, using latest:", bonsaiAsset.LatestVersion())
 		version = bonsaiAsset.LatestVersion()
+		fmt.Println("no version specified, using latest:", version.Original())
 	} else if !bonsaiAsset.HasVersion(version) {
 		availableVersions := bonsaiAsset.ValidVersions()
 		sort.Sort(goversion.Collection(availableVersions))
 		availableVersionStrs := []string{}
 		for _, v := range availableVersions {
-			availableVersionStrs = append(availableVersionStrs, v.String())
+			availableVersionStrs = append(availableVersionStrs, v.Original())
 		}
 		return fmt.Errorf("version \"%s\" of asset \"%s/%s\" does not exist\navailable versions: %s",
 			version, bAsset.Namespace, bAsset.Name, strings.Join(availableVersionStrs, ", "))
 	}
 
-	fmt.Printf("fetching bonsai asset: %s/%s:%s\n", bAsset.Namespace, bAsset.Name, version)
+	fmt.Printf("fetching bonsai asset: %s/%s:%s\n", bAsset.Namespace, bAsset.Name, version.Original())
 
-	assetJSON, err := m.bonsaiClient.FetchAssetVersion(bAsset.Namespace, bAsset.Name, version.String())
+	assetJSON, err := m.bonsaiClient.FetchAssetVersion(bAsset.Namespace, bAsset.Name, version.Original())
 	if err != nil {
 		return err
 	}
