@@ -7,12 +7,16 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.17.1] - 2020-01-31
+
 ### Fixed
 - Cluster configuration of sensuctl should be reset when `configure` is called.
 - Some namespaces would not appear in the curated namespace functionality under
 certain circonstances.
 - Fix a bug with tar assets that contain hardlinked files.
 - Assets name may contain capital letters.
+- When `--trusted-ca-file` is used to configure sensuctl, it now detects and saves
+the absolute file path in the cluster config.
 
 ## [5.17.0] - 2020-01-28
 
