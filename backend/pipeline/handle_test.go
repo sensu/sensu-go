@@ -17,7 +17,6 @@ import (
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -27,17 +26,17 @@ type mockExec struct {
 	mock.Mock
 }
 
-func (m *mockExec) HandleEvent(evt *types.Event, mut []byte) (rpc.HandleEventResponse, error) {
+func (m *mockExec) HandleEvent(evt *corev2.Event, mut []byte) (rpc.HandleEventResponse, error) {
 	args := m.Called(evt, mut)
 	return args.Get(0).(rpc.HandleEventResponse), args.Error(1)
 }
 
-func (m *mockExec) MutateEvent(evt *types.Event) ([]byte, error) {
+func (m *mockExec) MutateEvent(evt *corev2.Event) ([]byte, error) {
 	args := m.Called(evt)
 	return args.Get(0).([]byte), args.Error(1)
 }
 
-func (m *mockExec) FilterEvent(evt *types.Event) (bool, error) {
+func (m *mockExec) FilterEvent(evt *corev2.Event) (bool, error) {
 	args := m.Called(evt)
 	return args.Get(0).(bool), args.Error(1)
 }
@@ -69,19 +68,19 @@ func TestPipelineHandleEvent(t *testing.T) {
 	store := &mockstore.MockStore{}
 	p.store = store
 
-	entity := types.FixtureEntity("entity1")
-	check := types.FixtureCheck("check1")
-	handler := types.FixtureHandler("handler1")
+	entity := corev2.FixtureEntity("entity1")
+	check := corev2.FixtureCheck("check1")
+	handler := corev2.FixtureHandler("handler1")
 	handler.Type = "udp"
-	handler.Socket = &types.HandlerSocket{
+	handler.Socket = &corev2.HandlerSocket{
 		Host: "127.0.0.1",
 		Port: 6789,
 	}
-	event := &types.Event{
+	event := &corev2.Event{
 		Entity: entity,
 		Check:  check,
 	}
-	extension := &types.Extension{
+	extension := &corev2.Extension{
 		URL: "http://127.0.0.1",
 	}
 
@@ -93,14 +92,14 @@ func TestPipelineHandleEvent(t *testing.T) {
 	event.Check.Handlers = []string{"handler1", "handler2"}
 
 	store.On("GetHandlerByName", mock.Anything, "handler1").Return(handler, nil)
-	store.On("GetHandlerByName", mock.Anything, "handler2").Return((*types.Handler)(nil), nil)
+	store.On("GetHandlerByName", mock.Anything, "handler2").Return((*corev2.Handler)(nil), nil)
 	store.On("GetExtension", mock.Anything, "handler2").Return(extension, nil)
 	m := &mockExec{}
 	m.On("HandleEvent", event, mock.Anything).Return(rpc.HandleEventResponse{
 		Output: "ok",
 		Error:  "",
 	}, nil)
-	p.extensionExecutor = func(*types.Extension) (rpc.ExtensionExecutor, error) {
+	p.extensionExecutor = func(*corev2.Extension) (rpc.ExtensionExecutor, error) {
 		return m, nil
 	}
 
@@ -206,13 +205,13 @@ func TestPipelinePipeHandler(t *testing.T) {
 	p := &Pipeline{secretsProviderManager: secrets.NewProviderManager()}
 	p.executor = &command.ExecutionRequest{}
 
-	handler := types.FakeHandlerCommand("cat")
+	handler := corev2.FakeHandlerCommand("cat")
 	handler.Type = "pipe"
 
-	event := &types.Event{}
+	event := corev2.FixtureEvent("test", "test")
 	eventData, _ := json.Marshal(event)
 
-	handlerExec, err := p.pipeHandler(handler, eventData)
+	handlerExec, err := p.pipeHandler(handler, event, eventData)
 
 	assert.NoError(t, err)
 	assert.Equal(t, string(eventData[:]), handlerExec.Output)
@@ -225,17 +224,17 @@ func TestPipelineTcpHandler(t *testing.T) {
 
 	p := &Pipeline{secretsProviderManager: secrets.NewProviderManager()}
 
-	handlerSocket := &types.HandlerSocket{
+	handlerSocket := &corev2.HandlerSocket{
 		Host: "127.0.0.1",
 		Port: 5678,
 	}
 
-	handler := &types.Handler{
+	handler := &corev2.Handler{
 		Type:   "tcp",
 		Socket: handlerSocket,
 	}
 
-	event := &types.Event{}
+	event := corev2.FixtureEvent("test", "test")
 	eventData, _ := json.Marshal(event)
 
 	go func() {
@@ -269,7 +268,7 @@ func TestPipelineTcpHandler(t *testing.T) {
 	}()
 
 	<-ready
-	_, err := p.socketHandler(handler, eventData)
+	_, err := p.socketHandler(handler, event, eventData)
 
 	assert.NoError(t, err)
 	<-done
@@ -281,17 +280,17 @@ func TestPipelineUdpHandler(t *testing.T) {
 
 	p := &Pipeline{}
 
-	handlerSocket := &types.HandlerSocket{
+	handlerSocket := &corev2.HandlerSocket{
 		Host: "127.0.0.1",
 		Port: 5678,
 	}
 
-	handler := &types.Handler{
+	handler := &corev2.Handler{
 		Type:   "udp",
 		Socket: handlerSocket,
 	}
 
-	event := &types.Event{}
+	event := corev2.FixtureEvent("test", "test")
 	eventData, _ := json.Marshal(event)
 
 	go func() {
@@ -307,7 +306,7 @@ func TestPipelineUdpHandler(t *testing.T) {
 
 		ready <- struct{}{}
 
-		buffer := make([]byte, 1024)
+		buffer := make([]byte, 8192)
 		rlen, _, err := listener.ReadFrom(buffer)
 
 		assert.NoError(t, err)
@@ -317,16 +316,16 @@ func TestPipelineUdpHandler(t *testing.T) {
 
 	<-ready
 
-	_, err := p.socketHandler(handler, eventData)
+	_, err := p.socketHandler(handler, event, eventData)
 
 	assert.NoError(t, err)
 	<-done
 }
 
 func TestPipelineGRPCHandler(t *testing.T) {
-	extension := &types.Extension{}
-	event := types.FixtureEvent("foo", "bar")
-	execFn := func(ext *types.Extension) (rpc.ExtensionExecutor, error) {
+	extension := &corev2.Extension{}
+	event := corev2.FixtureEvent("foo", "bar")
+	execFn := func(ext *corev2.Extension) (rpc.ExtensionExecutor, error) {
 		mock := &mockExec{}
 		mock.On("HandleEvent", event, []byte(nil)).Return(rpc.HandleEventResponse{
 			Output: "ok",

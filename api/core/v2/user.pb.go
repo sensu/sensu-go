@@ -10,6 +10,7 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -21,7 +22,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // User describes an authenticated user
 type User struct {
@@ -48,7 +49,7 @@ func (m *User) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_User.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -163,7 +164,7 @@ func (this *User) Equal(that interface{}) bool {
 func (m *User) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -171,61 +172,65 @@ func (m *User) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *User) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *User) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Username) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintUser(dAtA, i, uint64(len(m.Username)))
-		i += copy(dAtA[i:], m.Username)
-	}
-	if len(m.Password) > 0 {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintUser(dAtA, i, uint64(len(m.Password)))
-		i += copy(dAtA[i:], m.Password)
-	}
-	if len(m.Groups) > 0 {
-		for _, s := range m.Groups {
-			dAtA[i] = 0x1a
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
-		}
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.Disabled {
-		dAtA[i] = 0x20
-		i++
+		i--
 		if m.Disabled {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
 		}
-		i++
+		i--
+		dAtA[i] = 0x20
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.Groups) > 0 {
+		for iNdEx := len(m.Groups) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Groups[iNdEx])
+			copy(dAtA[i:], m.Groups[iNdEx])
+			i = encodeVarintUser(dAtA, i, uint64(len(m.Groups[iNdEx])))
+			i--
+			dAtA[i] = 0x1a
+		}
 	}
-	return i, nil
+	if len(m.Password) > 0 {
+		i -= len(m.Password)
+		copy(dAtA[i:], m.Password)
+		i = encodeVarintUser(dAtA, i, uint64(len(m.Password)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Username) > 0 {
+		i -= len(m.Username)
+		copy(dAtA[i:], m.Username)
+		i = encodeVarintUser(dAtA, i, uint64(len(m.Username)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func encodeVarintUser(dAtA []byte, offset int, v uint64) int {
+	offset -= sovUser(v)
+	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return offset + 1
+	return base
 }
 func NewPopulatedUser(r randyUser, easy bool) *User {
 	this := &User{}
@@ -345,14 +350,7 @@ func (m *User) Size() (n int) {
 }
 
 func sovUser(x uint64) (n int) {
-	for {
-		n++
-		x >>= 7
-		if x == 0 {
-			break
-		}
-	}
-	return n
+	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozUser(x uint64) (n int) {
 	return sovUser(uint64((x << 1) ^ uint64((int64(x) >> 63))))
