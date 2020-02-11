@@ -30,6 +30,7 @@ by commercial secrets providers. Implemented for checks, mutators, and handlers.
 - Added the `keepalive-handlers` configuration flag on the agent to specify the
 entity's keepalive handlers.
 - Added `event.entity.name` as a supported field selector.
+- Indicate in log messages which filter dropped an event.
 
 ### Fixed
 - Fixed a memory leak in the entity cache.

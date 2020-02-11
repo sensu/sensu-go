@@ -61,7 +61,7 @@ func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
 		handler := u.Handler
 		fields["handler"] = handler.Name
 
-		filtered, err := p.filterEvent(handler, event)
+		filter, err := p.filterEvent(handler, event)
 		if err != nil {
 			if _, ok := err.(*store.ErrInternal); ok {
 				// Fatal error
@@ -69,8 +69,8 @@ func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
 			}
 			logger.WithError(err).Warn("error filtering event")
 		}
-		if filtered {
-			logger.WithFields(fields).Info("event filtered")
+		if filter != "" {
+			logger.WithFields(fields).Infof("event filtered by filter %q", filter)
 			continue
 		}
 
