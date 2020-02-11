@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/list"
@@ -95,6 +96,11 @@ func printToList(v interface{}, writer io.Writer) error {
 		cfg.Rows = append(cfg.Rows, silencedBy)
 	}
 
+	var uuidVal string
+	if id := event.GetUUID(); id != uuid.Nil {
+		// Only populate the uuid if it's nonzero
+		uuidVal = id.String()
+	}
 	cfg.Rows = append(cfg.Rows, []*list.Row{
 		{
 			Label: "Timestamp",
@@ -102,7 +108,7 @@ func printToList(v interface{}, writer io.Writer) error {
 		},
 		{
 			Label: "UUID",
-			Value: event.GetUUID().String(),
+			Value: uuidVal,
 		}}...)
 
 	return list.Print(writer, cfg)
