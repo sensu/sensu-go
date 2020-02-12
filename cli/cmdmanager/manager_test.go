@@ -139,11 +139,12 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 		{
 			name:            "non-existent version",
 			wantErr:         true,
-			errMatch:        fmt.Sprintf("version \"%s\" of asset \"%s\" does not exist", bAsset.version, bAsset.fullName),
+			errMatch:        fmt.Sprintf("version %q of asset %q does not exist", bAsset.version, bAsset.fullName),
 			alias:           "testalias",
 			bonsaiAssetName: bAsset.fullNameWithVersion,
 			bonsaiClientFunc: func(m *MockBonsaiClient) {
 				bonsaiAsset := &bonsai.Asset{
+					Name: fmt.Sprintf("%s/%s", bAsset.namespace, bAsset.name),
 					Versions: []*bonsai.AssetVersionGrouping{
 						{Version: "0.1.0"},
 					},
