@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - Updated Go version from 1.13.5 to 1.13.7.
+- Default `event.entity.entity_class` to `proxy` in the POST/PUT `/events` API.
 
 ## [5.17.1] - 2020-01-31
 
