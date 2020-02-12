@@ -2,6 +2,7 @@ package bonsai
 
 import (
 	"errors"
+	"fmt"
 	"sort"
 	"strings"
 
@@ -78,14 +79,42 @@ func NewBaseAsset(name string) (*BaseAsset, error) {
 	return &bAsset, nil
 }
 
+// BonsaiVersion returns the Bonsai version for a given requested version, and
+// fallbacks to the latest version if the requested version is nil. An error is
+// returned if the requested version does not exist
+func (b *Asset) BonsaiVersion(version *goversion.Version) (*goversion.Version, error) {
+	if version == nil {
+		// No version was requested, therefore return the latest version
+		v := b.LatestVersion()
+		fmt.Println("no version specified, using latest:", v.Original())
+		return v, nil
+	} else if ok, v := b.HasVersion(version); ok {
+		// The request version exists, but return the *goversion.Version provided by
+		// Bonsai, since its original format might differ from the requested version
+		// (e.g. v0.4.0 != 0.4.0), so we don't get a 404
+		return v, nil
+	}
+
+	// The version requested does not exists. List the available versions and
+	// return an error
+	availableVersions := b.ValidVersions()
+	sort.Sort(goversion.Collection(availableVersions))
+	availableVersionStrs := []string{}
+	for _, v := range availableVersions {
+		availableVersionStrs = append(availableVersionStrs, v.Original())
+	}
+	return nil, fmt.Errorf("version %q of asset %q does not exist\navailable versions: %s",
+		version, b.Name, strings.Join(availableVersionStrs, ", "))
+}
+
 // HasVersion will return whether or not a Bonsai asset contains a specific version.
-func (b *Asset) HasVersion(version *goversion.Version) bool {
+func (b *Asset) HasVersion(version *goversion.Version) (bool, *goversion.Version) {
 	for _, validVersion := range b.ValidVersions() {
 		if validVersion.Equal(version) {
-			return true
+			return true, validVersion
 		}
 	}
-	return false
+	return false, nil
 }
 
 // ValidVersions will return a list of unsorted semver-compliant versions.

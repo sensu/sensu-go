@@ -84,12 +84,12 @@ func outdatedCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []s
 
 				bonsaiAsset, err := bonsaiClient.FetchAsset(bonsaiNamespace, bonsaiName)
 				if err != nil {
-					return err
+					return fmt.Errorf("could not fetch asset %s: %s", asset.Name, err)
 				}
 
 				installedVersion, err := goversion.NewVersion(bonsaiVersion)
 				if err != nil {
-					return err
+					return fmt.Errorf("could not parse version %q of asset %s: %s", bonsaiVersion, asset.Name, err)
 				}
 
 				latestVersion := bonsaiAsset.LatestVersion()

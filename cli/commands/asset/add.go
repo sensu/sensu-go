@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"sort"
-	"strings"
 
 	"github.com/sensu/sensu-go/bonsai"
 	"github.com/sensu/sensu-go/cli"
@@ -59,23 +57,14 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 			return err
 		}
 
-		if version == nil {
-			version = bonsaiAsset.LatestVersion()
-			fmt.Println("no version specified, using latest:", version.Original())
-		} else if !bonsaiAsset.HasVersion(version) {
-			availableVersions := bonsaiAsset.ValidVersions()
-			sort.Sort(goversion.Collection(availableVersions))
-			availableVersionStrs := []string{}
-			for _, v := range availableVersions {
-				availableVersionStrs = append(availableVersionStrs, v.Original())
-			}
-			return fmt.Errorf("version \"%s\" of asset \"%s/%s\" does not exist\navailable versions: %s",
-				version.Original(), bAsset.Namespace, bAsset.Name, strings.Join(availableVersionStrs, ", "))
+		bonsaiVersion, err := bonsaiAsset.BonsaiVersion(version)
+		if err != nil {
+			return err
 		}
 
-		fmt.Printf("fetching bonsai asset: %s/%s:%s\n", bAsset.Namespace, bAsset.Name, version.Original())
+		fmt.Printf("fetching bonsai asset: %s/%s:%s\n", bAsset.Namespace, bAsset.Name, bonsaiVersion.Original())
 
-		asset, err := bonsaiClient.FetchAssetVersion(bAsset.Namespace, bAsset.Name, version.Original())
+		asset, err := bonsaiClient.FetchAssetVersion(bAsset.Namespace, bAsset.Name, bonsaiVersion.Original())
 		if err != nil {
 			return err
 		}
@@ -100,7 +89,7 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 			return err
 		}
 
-		fmt.Printf("added asset: %s/%s:%s\n", bAsset.Namespace, bAsset.Name, version.Original())
+		fmt.Printf("added asset: %s/%s:%s\n", bAsset.Namespace, bAsset.Name, bonsaiVersion.Original())
 		return nil
 	}
 }
