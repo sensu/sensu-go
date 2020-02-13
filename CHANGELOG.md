@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- sensuctl now supports the http_proxy, https_proxy, and no_proxy environment
+variables.
+
 ### Changed
 - Updated Go version from 1.13.5 to 1.13.7.
 
