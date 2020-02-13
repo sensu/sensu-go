@@ -80,9 +80,6 @@ github.com/go-logfmt/logfmt v0.3.0/go.mod h1:Qt1PoO58o5twSAckw1HlFXLmHsOX5/0LbT9
 github.com/go-logfmt/logfmt v0.4.0/go.mod h1:3RMwSq7FuexP4Kalkev3ejPJsZTpXXBr9+V4qmtdjCk=
 github.com/go-ole/go-ole v0.0.0-20170209151332-de8695c8edbf h1:ofRt4uynuRg/S2LGi1IM6mBu7HqzNrxYfoPLcFzteb0=
 github.com/go-ole/go-ole v0.0.0-20170209151332-de8695c8edbf/go.mod h1:7FAglXiTm7HKlQRDeOQ6ZNUHidzCWXuZWq/1dTyBNF8=
-github.com/go-resty/resty v0.0.0-20170925192930-9ac9c42358f7 h1:lbvF7dIiXWPjUxm0zpBdesefB7W9WKJz24nsQoeoRXA=
-github.com/go-resty/resty v0.0.0-20170925192930-9ac9c42358f7/go.mod h1:xMECeum3O2uZ1/noW5020CuR+OfNI3xjv3MVVCNVGYI=
-github.com/go-resty/resty v1.12.0 h1:L1P5qymrXL5H/doXe2pKUr1wxovAI5ilm2LdVLbwThc=
 github.com/go-resty/resty/v2 v2.1.0 h1:Z6IefCpUMfnvItVJaJXWv/pMiiD11So35QgwEELsldE=
 github.com/go-resty/resty/v2 v2.1.0/go.mod h1:dZGr0i9PLlaaTD4H/hoZIDjQ+r6xq8mgbRzHZf7f2J8=
 github.com/go-stack/stack v1.8.0/go.mod h1:v0f6uXyyMGvRgIKkXu+yp6POWl0qKG85gN/melR3HDY=
