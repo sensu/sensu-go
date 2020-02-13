@@ -10,6 +10,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Changed
 - Updated Go version from 1.13.5 to 1.13.7.
 
+### Fixed
+- The `auth/test` endpoint now returns the correct error messages.
+
 ## [5.17.1] - 2020-01-31
 
 ### Fixed
