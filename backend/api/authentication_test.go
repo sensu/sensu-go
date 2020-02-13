@@ -158,14 +158,13 @@ func TestTestCreds(t *testing.T) {
 			store := test.Store()
 			authn := NewAuthenticationClient(test.Authenticator(store))
 			err := authn.TestCreds(test.Context(), test.Username, test.Password)
-			if test.WantError && err == nil {
-				t.Fatal("want error, got nil")
-				if test.Error != nil && test.Error != err {
-					t.Fatalf("bad error: got %v, want %v", err, test.Error)
-				}
+
+			if test.WantError && test.Error != err {
+				t.Fatalf("bad error: got %v, want %v", err, test.Error)
 			}
+
 			if !test.WantError && err != nil {
-				t.Fatal(err)
+				t.Fatalf("expected no error, go %v", err)
 			}
 		})
 	}
