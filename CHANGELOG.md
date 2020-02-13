@@ -9,6 +9,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Changed
 - Updated Go version from 1.13.5 to 1.13.7.
+### Fixed
+- Support Bonsai assets versions prefixed with the letter `v`.
 
 ## [5.17.1] - 2020-01-31
 
