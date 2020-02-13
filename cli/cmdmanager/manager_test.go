@@ -139,11 +139,12 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 		{
 			name:            "non-existent version",
 			wantErr:         true,
-			errMatch:        fmt.Sprintf("version \"%s\" of asset \"%s\" does not exist", bAsset.version, bAsset.fullName),
+			errMatch:        fmt.Sprintf("version %q of asset %q does not exist", bAsset.version, bAsset.fullName),
 			alias:           "testalias",
 			bonsaiAssetName: bAsset.fullNameWithVersion,
 			bonsaiClientFunc: func(m *MockBonsaiClient) {
 				bonsaiAsset := &bonsai.Asset{
+					Name: fmt.Sprintf("%s/%s", bAsset.namespace, bAsset.name),
 					Versions: []*bonsai.AssetVersionGrouping{
 						{Version: "0.1.0"},
 					},
@@ -497,6 +498,43 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 				m.On("FetchAsset", bAsset.namespace, bAsset.name).
 					Return(bonsaiAsset, nil)
 				m.On("FetchAssetVersion", bAsset.namespace, bAsset.name, bAsset.version).
+					Return(string(assetJSON), nil)
+			},
+		},
+		{
+			name:            "valid asset with version specified using the v prefix",
+			alias:           "testaliasprefixed",
+			bonsaiAssetName: bAsset.fullName,
+			bonsaiClientFunc: func(m *MockBonsaiClient) {
+				bonsaiAsset := &bonsai.Asset{
+					Name: bAsset.fullName,
+					Versions: []*bonsai.AssetVersionGrouping{
+						{Version: "v1.0.0"},
+					},
+				}
+				asset := corev2.Asset{
+					ObjectMeta: corev2.ObjectMeta{
+						Name:      bAsset.name,
+						Namespace: bAsset.namespace,
+						Annotations: map[string]string{
+							"io.sensu.bonsai.type":     "sensuctl",
+							"io.sensu.bonsai.provider": "sensuctl/command",
+						},
+					},
+					Builds: []*corev2.AssetBuild{
+						{
+							URL:    bAsset.url,
+							Sha512: bAsset.sha512,
+						},
+					},
+				}
+				assetJSON, err := json.Marshal(asset)
+				if err != nil {
+					t.Fatal(err)
+				}
+				m.On("FetchAsset", bAsset.namespace, bAsset.name).
+					Return(bonsaiAsset, nil)
+				m.On("FetchAssetVersion", bAsset.namespace, bAsset.name, "v1.0.0").
 					Return(string(assetJSON), nil)
 			},
 		},

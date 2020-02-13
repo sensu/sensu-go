@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- returns 401 instead of 500 when issues occur refreshing the access token.
+- Support Bonsai assets versions prefixed with the letter `v`.
+
 ### Changed
 - Updated Go version from 1.13.5 to 1.13.7.
 - Default `event.entity.entity_class` to `proxy` in the POST/PUT `/events` API.
