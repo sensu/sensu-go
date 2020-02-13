@@ -62,6 +62,10 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 			return err
 		}
 
+		if version == nil {
+			fmt.Println("no version specified, using latest:", bonsaiVersion.Original())
+		}
+
 		fmt.Printf("fetching bonsai asset: %s/%s:%s\n", bAsset.Namespace, bAsset.Name, bonsaiVersion.Original())
 
 		asset, err := bonsaiClient.FetchAssetVersion(bAsset.Namespace, bAsset.Name, bonsaiVersion.Original())

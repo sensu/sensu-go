@@ -147,6 +147,10 @@ func (m *CommandManager) InstallCommandFromBonsai(alias, bonsaiAssetName string)
 		return err
 	}
 
+	if version == nil {
+		fmt.Println("no version specified, using latest:", bonsaiVersion.Original())
+	}
+
 	fmt.Printf("fetching bonsai asset: %s/%s:%s\n", bAsset.Namespace, bAsset.Name, bonsaiVersion.Original())
 
 	assetJSON, err := m.bonsaiClient.FetchAssetVersion(bAsset.Namespace, bAsset.Name, bonsaiVersion.Original())

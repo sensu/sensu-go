@@ -104,7 +104,6 @@ func (b *Asset) BonsaiVersion(version *goversion.Version) (*goversion.Version, e
 			return nil, fmt.Errorf("asset %q does not have any available versions", b.Name)
 		}
 
-		fmt.Println("no version specified, using latest:", v.Original())
 		return v, nil
 	} else if ok, v := b.HasVersion(version); ok {
 		// The request version exists, but return the *goversion.Version provided by
