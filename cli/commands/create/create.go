@@ -250,15 +250,6 @@ func ValidateResources(resources []types.Wrapper, namespace string) error {
 		if resource.GetObjectMeta().Namespace == "" {
 			resource.SetNamespace(namespace)
 		}
-		if verr := resource.Validate(); verr != nil {
-			errCount++
-			fmt.Fprintf(os.Stderr, "error validating resource %d (%s): %s\n", i, resource.URIPath(), verr)
-			if errCount >= 10 {
-				err = errors.New("too many errors")
-				break
-			}
-			err = errors.New("resource validation failed")
-		}
 	}
 	return err
 }
