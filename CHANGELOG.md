@@ -8,6 +8,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Fixed
+- sensuctl now supports the http_proxy, https_proxy, and no_proxy environment
+variables.
 - returns 401 instead of 500 when issues occur refreshing the access token.
 - Support Bonsai assets versions prefixed with the letter `v`.
 
