@@ -10,6 +10,20 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
+const (
+	// NameAnnotation represents a Bonsai asset name
+	NameAnnotation = "io.sensu.bonsai.name"
+
+	// NamespaceAnnotation represents a Bonsai asset namenamespace
+	NamespaceAnnotation = "io.sensu.bonsai.namespace"
+
+	// URLAnnotation represents the Bonsai API URL
+	URLAnnotation = "io.sensu.bonsai.api_url"
+
+	// VersionAnnotation represents a Bonsai asset version
+	VersionAnnotation = "io.sensu.bonsai.version"
+)
+
 // Asset stores information about an asset (metadata, versions, etc.) from Bonsai
 type Asset struct {
 	// Name is the full name (including namespace) of the asset
@@ -86,6 +100,10 @@ func (b *Asset) BonsaiVersion(version *goversion.Version) (*goversion.Version, e
 	if version == nil {
 		// No version was requested, therefore return the latest version
 		v := b.LatestVersion()
+		if v == nil {
+			return nil, fmt.Errorf("asset %q does not have any available versions", b.Name)
+		}
+
 		fmt.Println("no version specified, using latest:", v.Original())
 		return v, nil
 	} else if ok, v := b.HasVersion(version); ok {
@@ -134,6 +152,10 @@ func (b *Asset) ValidVersions() []*goversion.Version {
 // LatestVersion will return the highest semver-compliant version.
 func (b *Asset) LatestVersion() *goversion.Version {
 	versions := b.ValidVersions()
+	if len(versions) == 0 {
+		return nil
+	}
+
 	sort.Sort(goversion.Collection(versions))
 	return versions[len(versions)-1]
 }

@@ -103,3 +103,40 @@ func TestAsset_BonsaiVersion(t *testing.T) {
 		})
 	}
 }
+
+func TestAsset_LatestVersion(t *testing.T) {
+	tests := []struct {
+		name     string
+		Versions []*AssetVersionGrouping
+		want     string
+	}{
+		{
+			name:     "no version is returned if there are no available versions",
+			Versions: []*AssetVersionGrouping{},
+		},
+		{
+			name: "the only version is returned",
+			Versions: []*AssetVersionGrouping{
+				&AssetVersionGrouping{Version: "0.1.0"},
+			},
+			want: "0.1.0",
+		},
+		{
+			name: "the latest version is returned",
+			Versions: []*AssetVersionGrouping{
+				&AssetVersionGrouping{Version: "0.1.0"},
+				&AssetVersionGrouping{Version: "v0.1.0"},
+			},
+			want: "v0.1.0",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := &Asset{Versions: tt.Versions}
+			want, _ := goversion.NewVersion(tt.want)
+			if got := b.LatestVersion(); !reflect.DeepEqual(got, want) {
+				t.Errorf("Asset.LatestVersion() = %v, want %v", got.Original(), want.Original())
+			}
+		})
+	}
+}

@@ -63,47 +63,10 @@ func outdatedCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []s
 
 		bonsaiClient := bonsai.New(bonsai.Config{})
 
-		outdatedAssets := []bonsai.OutdatedAsset{}
-
-		for _, asset := range results {
-			annotations := asset.GetObjectMeta().Annotations
-			if annotations["io.sensu.bonsai.api_url"] != "" {
-				bonsaiVersion := asset.GetObjectMeta().Annotations["io.sensu.bonsai.version"]
-				bonsaiNamespace := asset.GetObjectMeta().Annotations["io.sensu.bonsai.namespace"]
-				bonsaiName := asset.GetObjectMeta().Annotations["io.sensu.bonsai.name"]
-
-				if bonsaiVersion == "" {
-					return fmt.Errorf("asset missing io.sensu.bonsai.version annotation: %s", asset.Name)
-				}
-				if bonsaiNamespace == "" {
-					return fmt.Errorf("asset missing io.sensu.bonsai.namespace annotation: %s", asset.Name)
-				}
-				if bonsaiName == "" {
-					return fmt.Errorf("asset missing io.sensu.bonsai.name annotation: %s", asset.Name)
-				}
-
-				bonsaiAsset, err := bonsaiClient.FetchAsset(bonsaiNamespace, bonsaiName)
-				if err != nil {
-					return fmt.Errorf("could not fetch asset %s: %s", asset.Name, err)
-				}
-
-				installedVersion, err := goversion.NewVersion(bonsaiVersion)
-				if err != nil {
-					return fmt.Errorf("could not parse version %q of asset %s: %s", bonsaiVersion, asset.Name, err)
-				}
-
-				latestVersion := bonsaiAsset.LatestVersion()
-
-				if installedVersion.LessThan(latestVersion) {
-					outdatedAssets = append(outdatedAssets, bonsai.OutdatedAsset{
-						BonsaiName:      bonsaiName,
-						BonsaiNamespace: bonsaiNamespace,
-						AssetName:       asset.Name,
-						CurrentVersion:  installedVersion.Original(),
-						LatestVersion:   latestVersion.Original(),
-					})
-				}
-			}
+		// Determine which local assets are outdated
+		outdatedAssets, err := outdatedAssets(results, bonsaiClient)
+		if err != nil {
+			return err
 		}
 
 		// Print the results based on user preferences
@@ -114,6 +77,58 @@ func outdatedCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []s
 
 		return helpers.PrintList(cmd, cli.Config.Format(), printOutdatedToTable, resources, outdatedAssets, header)
 	}
+}
+
+// outdatedAssets compares the local Bonsai assets against the latest versions
+// on Bonsai and returns a list of assets that can be upgraded
+func outdatedAssets(assets []corev2.Asset, client bonsai.Client) ([]bonsai.OutdatedAsset, error) {
+	outdatedAssets := []bonsai.OutdatedAsset{}
+
+	for _, asset := range assets {
+		annotations := asset.GetObjectMeta().Annotations
+		if annotations[bonsai.URLAnnotation] != "" {
+			bonsaiVersion := asset.GetObjectMeta().Annotations[bonsai.VersionAnnotation]
+			bonsaiNamespace := asset.GetObjectMeta().Annotations[bonsai.NamespaceAnnotation]
+			bonsaiName := asset.GetObjectMeta().Annotations[bonsai.NameAnnotation]
+
+			if bonsaiVersion == "" {
+				return nil, fmt.Errorf("asset missing %s annotation: %s", bonsai.VersionAnnotation, asset.Name)
+			}
+			if bonsaiNamespace == "" {
+				return nil, fmt.Errorf("asset missing %s annotation: %s", bonsai.NamespaceAnnotation, asset.Name)
+			}
+			if bonsaiName == "" {
+				return nil, fmt.Errorf("asset missing %s annotation: %s", bonsai.NameAnnotation, asset.Name)
+			}
+
+			installedVersion, err := goversion.NewVersion(bonsaiVersion)
+			if err != nil {
+				return nil, fmt.Errorf("could not parse version %q of asset %s: %s", bonsaiVersion, asset.Name, err)
+			}
+
+			bonsaiAsset, err := client.FetchAsset(bonsaiNamespace, bonsaiName)
+			if err != nil {
+				return nil, fmt.Errorf("could not fetch asset %s: %s", asset.Name, err)
+			}
+
+			latestVersion := bonsaiAsset.LatestVersion()
+			if latestVersion == nil {
+				return nil, fmt.Errorf("could not parse the latest version of asset %s", asset.Name)
+			}
+
+			if installedVersion.LessThan(latestVersion) {
+				outdatedAssets = append(outdatedAssets, bonsai.OutdatedAsset{
+					BonsaiName:      bonsaiName,
+					BonsaiNamespace: bonsaiNamespace,
+					AssetName:       asset.Name,
+					CurrentVersion:  installedVersion.Original(),
+					LatestVersion:   latestVersion.Original(),
+				})
+			}
+		}
+	}
+
+	return outdatedAssets, nil
 }
 
 func printOutdatedToTable(results interface{}, writer io.Writer) {
