@@ -21,11 +21,12 @@ import (
 )
 
 const helpText = `
-The Sensu Software Development Kit
-==================================
+The Sensu Interactive Console
+=============================
 
-This software development kit is written as a Javascript REPL. You can use this
-REPL to write Sensu filters, and try them out.
+This interactive console is a Javascript REPL. You can use this tool to write
+Sensu filters, inspect events, entities or other stored resources, or craft
+scripts that use parts of the Go standard library.
 
 
 Store access
