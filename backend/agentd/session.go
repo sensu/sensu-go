@@ -351,12 +351,9 @@ func (s *Session) handleEvent(ctx context.Context, payload []byte) error {
 		return err
 	}
 
-	// Verify if we have a source in the event and if so, use it as the entity by
-	// creating or retrieving it from the store
-	if event.HasCheck() {
-		if err := getProxyEntity(event, s.store); err != nil {
-			return err
-		}
+	// Create a proxy entity if required and update the event's entity with it
+	if err := createProxyEntity(event, s.store); err != nil {
+		return err
 	}
 
 	// Add the entity subscription to the subscriptions of this entity

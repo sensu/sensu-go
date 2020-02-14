@@ -2,98 +2,146 @@ package agentd
 
 import (
 	"errors"
+	"reflect"
 	"testing"
 
-	"github.com/sensu/sensu-go/api/core/v2"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-func TestGetProxyEntity(t *testing.T) {
-	assert := assert.New(t)
-
-	store := &mockstore.MockStore{}
-	store.On("GetEntityByName", mock.Anything, "bar").Return(types.FixtureEntity("bar"), nil)
-
-	var nilEntity *types.Entity
-	store.On("GetEntityByName", mock.Anything, "baz").Return(nilEntity, nil)
-	store.On("UpdateEntity", mock.Anything, mock.Anything).Once().Return(nil)
-
-	store.On("GetEntityByName", mock.Anything, "quux").Return(nilEntity, errors.New("error"))
-
-	store.On("GetEntityByName", mock.Anything, "qux").Return(nilEntity, nil)
-	store.On("UpdateEntity", mock.Anything, mock.Anything).Once().Return(errors.New("error"))
-
-	testCases := []struct {
-		name           string
-		event          *types.Event
-		expectedError  bool
-		expectedEntity string
+func TestAddEntitySubscription(t *testing.T) {
+	tests := []struct {
+		name          string
+		entityName    string
+		subscriptions []string
+		want          []string
 	}{
 		{
-			name:           "The event has no proxy entity",
-			event:          types.FixtureEvent("foo", "check_cpu"),
-			expectedError:  false,
-			expectedEntity: "foo",
+			name:          "the entity subscription is added if missing",
+			entityName:    "foo",
+			subscriptions: []string{},
+			want:          []string{"entity:foo"},
 		},
 		{
-			name: "The event has a proxy entity with a corresponding entity",
-			event: &types.Event{
-				ObjectMeta: v2.NewObjectMeta("", "default"),
-				Check: &types.Check{
-					ProxyEntityName: "bar",
-				},
-				Entity: types.FixtureEntity("foo"),
-			},
-			expectedError:  false,
-			expectedEntity: "bar",
-		},
-		{
-			name: "The event has a proxy entity with no corresponding entity",
-			event: &types.Event{
-				ObjectMeta: v2.NewObjectMeta("", "default"),
-				Check: &types.Check{
-					ProxyEntityName: "baz",
-				},
-				Entity: types.FixtureEntity("foo"),
-			},
-			expectedError:  false,
-			expectedEntity: "baz",
-		},
-		{
-			name: "The proxy entity can't be queried",
-			event: &types.Event{
-				ObjectMeta: v2.NewObjectMeta("", "default"),
-				Check: &types.Check{
-					ProxyEntityName: "quux",
-				},
-				Entity: types.FixtureEntity("foo"),
-			},
-			expectedError: true,
-		},
-		{
-			name: "The proxy entity can't be created",
-			event: &types.Event{
-				ObjectMeta: v2.NewObjectMeta("", "default"),
-				Check: &types.Check{
-					ProxyEntityName: "qux",
-				},
-				Entity: types.FixtureEntity("foo"),
-			},
-			expectedError: true,
+			name:          "the entity subscription is not added if already present",
+			entityName:    "foo",
+			subscriptions: []string{"entity:foo"},
+			want:          []string{"entity:foo"},
 		},
 	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := addEntitySubscription(tt.entityName, tt.subscriptions); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("addEntitySubscription() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			err := getProxyEntity(tc.event, store)
-			testutil.CompareError(err, tc.expectedError, t)
+func TestCreateProxyEntity(t *testing.T) {
+	type storeFunc func(*mockstore.MockStore)
+	var nilEntity *types.Entity
 
-			if tc.expectedEntity != "" {
-				assert.Equal(tc.expectedEntity, tc.event.Entity.Name)
+	tests := []struct {
+		name       string
+		event      *corev2.Event
+		storeFunc  storeFunc
+		wantEntity string
+		wantErr    bool
+	}{
+		{
+			name:  "entity exists",
+			event: corev2.FixtureEvent("foo", "check-cpu"),
+			storeFunc: func(store *mockstore.MockStore) {
+				store.On("GetEntityByName", mock.Anything, "foo").
+					Return(corev2.FixtureEntity("foo"), nil)
+			},
+			wantEntity: "foo",
+		},
+		{
+			name:  "entity does not exist",
+			event: corev2.FixtureEvent("foo", "check-cpu"),
+			storeFunc: func(store *mockstore.MockStore) {
+				store.On("GetEntityByName", mock.Anything, "foo").
+					Return(nilEntity, nil)
+				store.On("UpdateEntity", mock.Anything, mock.AnythingOfType("*v2.Entity")).
+					Return(nil)
+			},
+			wantEntity: "foo",
+		},
+		{
+			name:  "store error while getting an entity",
+			event: corev2.FixtureEvent("foo", "check-cpu"),
+			storeFunc: func(store *mockstore.MockStore) {
+				store.On("GetEntityByName", mock.Anything, "foo").
+					Return(&corev2.Entity{}, errors.New("error"))
+			},
+			wantEntity: "foo",
+			wantErr:    true,
+		},
+		{
+			name: "proxy entity exists",
+			event: &corev2.Event{
+				Check: &corev2.Check{
+					ProxyEntityName: "bar",
+				},
+				Entity: corev2.FixtureEntity("foo"),
+			},
+			storeFunc: func(store *mockstore.MockStore) {
+				store.On("GetEntityByName", mock.Anything, "bar").
+					Return(corev2.FixtureEntity("bar"), nil)
+			},
+			wantEntity: "bar",
+		},
+		{
+			name: "proxy entity does not exist",
+			event: &corev2.Event{
+				Check: &corev2.Check{
+					ProxyEntityName: "bar",
+				},
+				Entity: corev2.FixtureEntity("foo"),
+			},
+			storeFunc: func(store *mockstore.MockStore) {
+				store.On("GetEntityByName", mock.Anything, "bar").
+					Return(nilEntity, nil)
+				store.On("UpdateEntity", mock.Anything, mock.AnythingOfType("*v2.Entity")).
+					Return(nil)
+			},
+			wantEntity: "bar",
+		},
+		{
+			name: "store error while updating entity",
+			event: &corev2.Event{
+				Check: &corev2.Check{
+					ProxyEntityName: "bar",
+				},
+				Entity: corev2.FixtureEntity("foo"),
+			},
+			storeFunc: func(store *mockstore.MockStore) {
+				store.On("GetEntityByName", mock.Anything, "bar").
+					Return(nilEntity, nil)
+				store.On("UpdateEntity", mock.Anything, mock.AnythingOfType("*v2.Entity")).
+					Return(errors.New("error"))
+			},
+			wantEntity: "foo",
+			wantErr:    true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := &mockstore.MockStore{}
+			if tt.storeFunc != nil {
+				tt.storeFunc(store)
+			}
+
+			if err := createProxyEntity(tt.event, store); (err != nil) != tt.wantErr {
+				t.Errorf("createProxyEntity() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(tt.event.Entity.Name, tt.wantEntity) {
+				t.Errorf("createProxyEntity() entity name = %v, want %v", tt.event.Entity.Name, tt.wantEntity)
 			}
 		})
 	}
