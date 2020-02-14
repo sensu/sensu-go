@@ -16,6 +16,8 @@ variables.
 ### Changed
 - Updated Go version from 1.13.5 to 1.13.7.
 - Default `event.entity.entity_class` to `proxy` in the POST/PUT `/events` API.
+- Proxy entities are now automatically created when events are published with an
+entity that does not exist.
 
 ## [5.17.1] - 2020-01-31
 
