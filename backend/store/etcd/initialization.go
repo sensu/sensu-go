@@ -48,14 +48,17 @@ func (s *StoreInitializer) Lock() error {
 func (s *StoreInitializer) IsInitialized() (bool, error) {
 	r, err := s.client.Get(s.ctx, path.Join(EtcdRoot, initializationKey))
 	if err != nil {
+		return false, err
+	}
+
+	// if there is no result, test the fallback and return using same logic
+	if len(r.Kvs) == 0 {
 		fallback, err := s.client.Get(s.ctx, initializationKey)
 		if err != nil {
 			return false, err
 		} else {
 			return fallback.Count > 0, nil
 		}
-
-		return false, err
 	}
 
 	return r.Count > 0, nil
