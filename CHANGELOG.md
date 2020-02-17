@@ -13,6 +13,7 @@ variables.
 - returns 401 instead of 500 when issues occur refreshing the access token.
 - Support Bonsai assets versions prefixed with the letter `v`.
 - read/writes `initializationKey` to/from `EtcdRoot`, while support legacy as fallback (read-only)
+- check for a non-200 response when fetching assets
 
 ### Changed
 - Updated Go version from 1.13.5 to 1.13.7.
