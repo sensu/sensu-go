@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/sensu/sensu-go/version"
 	"math"
 	"net/http"
 	"time"
@@ -14,6 +13,7 @@ import (
 	"github.com/sensu/lasr"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/version"
 	"golang.org/x/time/rate"
 )
 
