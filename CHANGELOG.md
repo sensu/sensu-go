@@ -12,6 +12,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 variables.
 - returns 401 instead of 500 when issues occur refreshing the access token.
 - Support Bonsai assets versions prefixed with the letter `v`.
+- Fixed a bug where wrapped resources were not getting their namespaces set by
+the default sensuctl configuration.
 - read/writes `initializationKey` to/from `EtcdRoot`, while support legacy as fallback (read-only)
 - check for a non-200 response when fetching assets
 
