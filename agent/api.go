@@ -23,7 +23,7 @@ type APIConfig struct {
 	Port int
 }
 
-// APIConfig contains the API configuration
+// sensuVersion contains the API response for version
 type sensuVersion struct {
 	Version string `json:"version"`
 }
