@@ -2,6 +2,7 @@ package etcd
 
 import (
 	"context"
+	"path"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/clientv3/concurrency"
@@ -45,9 +46,19 @@ func (s *StoreInitializer) Lock() error {
 
 // IsInitialized checks the state of the .initialized key
 func (s *StoreInitializer) IsInitialized() (bool, error) {
-	r, err := s.client.Get(s.ctx, initializationKey)
+	r, err := s.client.Get(s.ctx, path.Join(EtcdRoot, initializationKey))
 	if err != nil {
 		return false, err
+	}
+
+	// if there is no result, test the fallback and return using same logic
+	if len(r.Kvs) == 0 {
+		fallback, err := s.client.Get(s.ctx, initializationKey)
+		if err != nil {
+			return false, err
+		} else {
+			return fallback.Count > 0, nil
+		}
 	}
 
 	return r.Count > 0, nil
@@ -55,7 +66,7 @@ func (s *StoreInitializer) IsInitialized() (bool, error) {
 
 // FlagAsInitialized - set .initialized key
 func (s *StoreInitializer) FlagAsInitialized() error {
-	_, err := s.client.Put(s.ctx, initializationKey, "1")
+	_, err := s.client.Put(s.ctx, path.Join(EtcdRoot, initializationKey), "1")
 	return err
 }
 
