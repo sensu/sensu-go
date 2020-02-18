@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- [agent] Added `/version` API
+
 ### Fixed
 - sensuctl now supports the http_proxy, https_proxy, and no_proxy environment
 variables.
