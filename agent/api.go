@@ -76,7 +76,11 @@ func versionShow() http.HandlerFunc {
 			return
 		}
 
-		w.Write(json)
+		_, err = w.Write(json)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
