@@ -9,10 +9,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Support Bonsai assets versions prefixed with the letter `v`.
-
-## [5.17.2] - TBD
-
-### Fixed
 - Fixed a bug where on an internal restart, enterprise HTTP routes could fail
 to intialize.
 
