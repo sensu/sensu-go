@@ -11,11 +11,9 @@ import (
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/mocktransport"
 	"github.com/sensu/sensu-go/transport"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -198,104 +196,104 @@ func (c channelSubscriber) Receiver() chan<- interface{} {
 	return c.ch
 }
 
-func TestSession_handleEvent(t *testing.T) {
-	type busFunc func(*testing.T, *mockbus.MockBus)
-	type storeFunc func(*mockstore.MockStore)
+// func TestSession_handleEvent(t *testing.T) {
+// 	type busFunc func(*testing.T, *mockbus.MockBus)
+// 	type storeFunc func(*mockstore.MockStore)
 
-	var nilEntity *types.Entity
-	event := corev2.FixtureEvent("foo", "check-cpu")
-	proxyEvent := corev2.FixtureEvent("bar", "check-cpu")
-	proxyEvent.Check.ProxyEntityName = "baz"
+// 	var nilEntity *types.Entity
+// 	event := corev2.FixtureEvent("foo", "check-cpu")
+// 	proxyEvent := corev2.FixtureEvent("bar", "check-cpu")
+// 	proxyEvent.Check.ProxyEntityName = "baz"
 
-	tests := []struct {
-		name       string
-		event      *corev2.Event
-		busFunc    busFunc
-		storeFunc  storeFunc
-		wantEntity string
-		wantErr    bool
-	}{
-		{
-			name:  "event with existing entity gets published",
-			event: event,
-			busFunc: func(t *testing.T, bus *mockbus.MockBus) {
-				bus.On("Publish", messaging.TopicEventRaw, mock.AnythingOfType("*v2.Event")).
-					Return(nil)
-			},
-			storeFunc: func(store *mockstore.MockStore) {
-				store.On("GetEntityByName", mock.Anything, "foo").
-					Return(event.Entity, nil)
-			},
-		},
-		{
-			name:  "event with missing entity gets published",
-			event: event,
-			busFunc: func(t *testing.T, bus *mockbus.MockBus) {
-				bus.On("Publish", messaging.TopicEventRaw, mock.AnythingOfType("*v2.Event")).
-					Return(nil)
-			},
-			storeFunc: func(store *mockstore.MockStore) {
-				store.On("GetEntityByName", mock.Anything, "foo").
-					Return(nilEntity, nil)
-				store.On("UpdateEntity", mock.Anything, mock.AnythingOfType("*v2.Entity")).
-					Return(nil)
-			},
-		},
-		{
-			name:  "event with existing proxy entity gets published",
-			event: proxyEvent,
-			busFunc: func(t *testing.T, bus *mockbus.MockBus) {
-				bus.On("Publish", messaging.TopicEventRaw, mock.AnythingOfType("*v2.Event")).
-					Return(nil)
-			},
-			storeFunc: func(store *mockstore.MockStore) {
-				store.On("GetEntityByName", mock.Anything, "baz").
-					Return(proxyEvent.Entity, nil)
-			},
-		},
-		{
-			name:  "event with missing proxy entity gets published",
-			event: proxyEvent,
-			busFunc: func(t *testing.T, bus *mockbus.MockBus) {
-				bus.On("Publish", messaging.TopicEventRaw, mock.AnythingOfType("*v2.Event")).
-					Return(nil)
-			},
-			storeFunc: func(store *mockstore.MockStore) {
-				store.On("GetEntityByName", mock.Anything, "baz").
-					Return(nilEntity, nil)
-				store.On("UpdateEntity", mock.Anything, mock.AnythingOfType("*v2.Entity")).
-					Return(nil)
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			store := &mockstore.MockStore{}
-			if tt.storeFunc != nil {
-				tt.storeFunc(store)
-			}
-			defer store.AssertExpectations(t)
+// 	tests := []struct {
+// 		name       string
+// 		event      *corev2.Event
+// 		busFunc    busFunc
+// 		storeFunc  storeFunc
+// 		wantEntity string
+// 		wantErr    bool
+// 	}{
+// 		{
+// 			name:  "event with existing entity gets published",
+// 			event: event,
+// 			busFunc: func(t *testing.T, bus *mockbus.MockBus) {
+// 				bus.On("Publish", messaging.TopicEventRaw, mock.AnythingOfType("*v2.Event")).
+// 					Return(nil)
+// 			},
+// 			storeFunc: func(store *mockstore.MockStore) {
+// 				store.On("GetEntityByName", mock.Anything, "foo").
+// 					Return(event.Entity, nil)
+// 			},
+// 		},
+// 		{
+// 			name:  "event with missing entity gets published",
+// 			event: event,
+// 			busFunc: func(t *testing.T, bus *mockbus.MockBus) {
+// 				bus.On("Publish", messaging.TopicEventRaw, mock.AnythingOfType("*v2.Event")).
+// 					Return(nil)
+// 			},
+// 			storeFunc: func(store *mockstore.MockStore) {
+// 				store.On("GetEntityByName", mock.Anything, "foo").
+// 					Return(nilEntity, nil)
+// 				store.On("UpdateEntity", mock.Anything, mock.AnythingOfType("*v2.Entity")).
+// 					Return(nil)
+// 			},
+// 		},
+// 		{
+// 			name:  "event with existing proxy entity gets published",
+// 			event: proxyEvent,
+// 			busFunc: func(t *testing.T, bus *mockbus.MockBus) {
+// 				bus.On("Publish", messaging.TopicEventRaw, mock.AnythingOfType("*v2.Event")).
+// 					Return(nil)
+// 			},
+// 			storeFunc: func(store *mockstore.MockStore) {
+// 				store.On("GetEntityByName", mock.Anything, "baz").
+// 					Return(proxyEvent.Entity, nil)
+// 			},
+// 		},
+// 		{
+// 			name:  "event with missing proxy entity gets published",
+// 			event: proxyEvent,
+// 			busFunc: func(t *testing.T, bus *mockbus.MockBus) {
+// 				bus.On("Publish", messaging.TopicEventRaw, mock.AnythingOfType("*v2.Event")).
+// 					Return(nil)
+// 			},
+// 			storeFunc: func(store *mockstore.MockStore) {
+// 				store.On("GetEntityByName", mock.Anything, "baz").
+// 					Return(nilEntity, nil)
+// 				store.On("UpdateEntity", mock.Anything, mock.AnythingOfType("*v2.Entity")).
+// 					Return(nil)
+// 			},
+// 		},
+// 	}
+// 	for _, tt := range tests {
+// 		t.Run(tt.name, func(t *testing.T) {
+// 			store := &mockstore.MockStore{}
+// 			if tt.storeFunc != nil {
+// 				tt.storeFunc(store)
+// 			}
+// 			defer store.AssertExpectations(t)
 
-			bus := &mockbus.MockBus{}
-			if tt.busFunc != nil {
-				tt.busFunc(t, bus)
-			}
-			defer bus.AssertExpectations(t)
+// 			bus := &mockbus.MockBus{}
+// 			if tt.busFunc != nil {
+// 				tt.busFunc(t, bus)
+// 			}
+// 			defer bus.AssertExpectations(t)
 
-			s := &Session{
-				bus:       bus,
-				store:     store,
-				unmarshal: UnmarshalJSON,
-			}
+// 			s := &Session{
+// 				bus:       bus,
+// 				store:     store,
+// 				unmarshal: UnmarshalJSON,
+// 			}
 
-			payload, err := json.Marshal(tt.event)
-			if err != nil {
-				t.Fatal(err)
-			}
-			ctx := context.WithValue(context.Background(), corev2.NamespaceKey, tt.event.Entity.Namespace)
-			if err := s.handleEvent(ctx, payload); (err != nil) != tt.wantErr {
-				t.Errorf("Session.handleEvent() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
+// 			payload, err := json.Marshal(tt.event)
+// 			if err != nil {
+// 				t.Fatal(err)
+// 			}
+// 			ctx := context.WithValue(context.Background(), corev2.NamespaceKey, tt.event.Entity.Namespace)
+// 			if err := s.handleEvent(ctx, payload); (err != nil) != tt.wantErr {
+// 				t.Errorf("Session.handleEvent() error = %v, wantErr %v", err, tt.wantErr)
+// 			}
+// 		})
+// 	}
+// }

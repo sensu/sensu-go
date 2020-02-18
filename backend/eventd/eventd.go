@@ -246,6 +246,11 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 
+	// Create a proxy entity if required and update the event's entity with it
+	if err := createProxyEntity(event, e.store); err != nil {
+		return err
+	}
+
 	// Add any silenced subscriptions to the event
 	getSilenced(ctx, event, e.silencedCache)
 
