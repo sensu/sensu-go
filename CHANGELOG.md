@@ -16,12 +16,12 @@ variables.
 the default sensuctl configuration.
 - read/writes `initializationKey` to/from `EtcdRoot`, while support legacy as fallback (read-only)
 - check for a non-200 response when fetching assets
+- Fixed a bug where on an internal restart, enterprise HTTP routes could fail
+to intialize.
 
 ### Changed
 - Updated Go version from 1.13.5 to 1.13.7.
 - Default `event.entity.entity_class` to `proxy` in the POST/PUT `/events` API.
-- Fixed a bug where on an internal restart, enterprise HTTP routes could fail
-to intialize.
 
 ## [5.17.1] - 2020-01-31
 
