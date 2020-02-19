@@ -251,7 +251,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				}()
 			}
 
-			return sensuBackend.Run()
+			return sensuBackend.RunWithInitializer(initialize)
 		},
 	}
 
