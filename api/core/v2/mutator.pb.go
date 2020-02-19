@@ -11,6 +11,7 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -22,7 +23,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // A Mutator is a mutator specification.
 type Mutator struct {
@@ -58,7 +59,7 @@ func (m *Mutator) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_Mutator.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -224,7 +225,7 @@ func NewMutatorFromFace(that MutatorFace) *Mutator {
 func (m *Mutator) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -232,85 +233,86 @@ func (m *Mutator) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Mutator) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Mutator) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	dAtA[i] = 0xa
-	i++
-	i = encodeVarintMutator(dAtA, i, uint64(m.ObjectMeta.Size()))
-	n1, err := m.ObjectMeta.MarshalTo(dAtA[i:])
-	if err != nil {
-		return 0, err
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	i += n1
-	if len(m.Command) > 0 {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintMutator(dAtA, i, uint64(len(m.Command)))
-		i += copy(dAtA[i:], m.Command)
-	}
-	if m.Timeout != 0 {
-		dAtA[i] = 0x18
-		i++
-		i = encodeVarintMutator(dAtA, i, uint64(m.Timeout))
-	}
-	if len(m.EnvVars) > 0 {
-		for _, s := range m.EnvVars {
-			dAtA[i] = 0x22
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
+	if len(m.Secrets) > 0 {
+		for iNdEx := len(m.Secrets) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Secrets[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintMutator(dAtA, i, uint64(size))
 			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
+			i--
+			dAtA[i] = 0x4a
 		}
 	}
 	if len(m.RuntimeAssets) > 0 {
-		for _, s := range m.RuntimeAssets {
+		for iNdEx := len(m.RuntimeAssets) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.RuntimeAssets[iNdEx])
+			copy(dAtA[i:], m.RuntimeAssets[iNdEx])
+			i = encodeVarintMutator(dAtA, i, uint64(len(m.RuntimeAssets[iNdEx])))
+			i--
 			dAtA[i] = 0x42
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
 		}
 	}
-	if len(m.Secrets) > 0 {
-		for _, msg := range m.Secrets {
-			dAtA[i] = 0x4a
-			i++
-			i = encodeVarintMutator(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
+	if len(m.EnvVars) > 0 {
+		for iNdEx := len(m.EnvVars) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.EnvVars[iNdEx])
+			copy(dAtA[i:], m.EnvVars[iNdEx])
+			i = encodeVarintMutator(dAtA, i, uint64(len(m.EnvVars[iNdEx])))
+			i--
+			dAtA[i] = 0x22
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.Timeout != 0 {
+		i = encodeVarintMutator(dAtA, i, uint64(m.Timeout))
+		i--
+		dAtA[i] = 0x18
 	}
-	return i, nil
+	if len(m.Command) > 0 {
+		i -= len(m.Command)
+		copy(dAtA[i:], m.Command)
+		i = encodeVarintMutator(dAtA, i, uint64(len(m.Command)))
+		i--
+		dAtA[i] = 0x12
+	}
+	{
+		size, err := m.ObjectMeta.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintMutator(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
 }
 
 func encodeVarintMutator(dAtA []byte, offset int, v uint64) int {
+	offset -= sovMutator(v)
+	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return offset + 1
+	return base
 }
 func NewPopulatedMutator(r randyMutator, easy bool) *Mutator {
 	this := &Mutator{}
@@ -328,7 +330,7 @@ func NewPopulatedMutator(r randyMutator, easy bool) *Mutator {
 	for i := 0; i < v3; i++ {
 		this.RuntimeAssets[i] = string(randStringMutator(r))
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v4 := r.Intn(5)
 		this.Secrets = make([]*Secret, v4)
 		for i := 0; i < v4; i++ {
@@ -453,14 +455,7 @@ func (m *Mutator) Size() (n int) {
 }
 
 func sovMutator(x uint64) (n int) {
-	for {
-		n++
-		x >>= 7
-		if x == 0 {
-			break
-		}
-	}
-	return n
+	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozMutator(x uint64) (n int) {
 	return sovMutator(uint64((x << 1) ^ uint64((int64(x) >> 63))))

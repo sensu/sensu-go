@@ -1,7 +1,9 @@
 package v2
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 	"path"
 	"sort"
@@ -9,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	stringsutil "github.com/sensu/sensu-go/util/strings"
 )
 
@@ -72,6 +75,12 @@ func (e *Event) Validate() error {
 		return errors.New("events cannot be named")
 	}
 
+	if len(e.ID) > 0 {
+		if _, err := uuid.FromBytes(e.ID); err != nil {
+			return fmt.Errorf("event ID is invalid: %s", err)
+		}
+	}
+
 	return nil
 }
 
@@ -127,11 +136,13 @@ func (e *Event) SynthesizeExtras() map[string]interface{} {
 
 // FixtureEvent returns a testing fixture for an Event object.
 func FixtureEvent(entityName, checkID string) *Event {
+	id := uuid.New()
 	return &Event{
 		ObjectMeta: NewObjectMeta("", "default"),
 		Timestamp:  time.Now().Unix(),
 		Entity:     FixtureEntity(entityName),
 		Check:      FixtureCheck(checkID),
+		ID:         id[:],
 	}
 }
 
@@ -412,4 +423,63 @@ func (e *Event) SetObjectMeta(meta ObjectMeta) {
 
 func (e *Event) RBACName() string {
 	return "events"
+}
+
+// GetUUID parses a UUID from the ID bytes. It does not check errors, assuming
+// that the event has already passed validation.
+func (e *Event) GetUUID() uuid.UUID {
+	id, _ := uuid.FromBytes(e.ID)
+	return id
+}
+
+func (e Event) MarshalJSON() ([]byte, error) {
+	type clone Event
+	b, err := json.Marshal((*clone)(&e))
+	if err != nil {
+		return nil, err
+	}
+	if len(e.ID) == 0 {
+		return b, nil
+	}
+	var msg map[string]*json.RawMessage
+	_ = json.Unmarshal(b, &msg) // error impossible
+	if len(e.ID) > 0 {
+		uid, err := uuid.FromBytes(e.ID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid event ID: %s", err)
+		}
+		idBytes, _ := json.Marshal(uid.String())
+		msg["id"] = (*json.RawMessage)(&idBytes)
+	}
+	return json.Marshal(msg)
+}
+
+func (e *Event) UnmarshalJSON(b []byte) error {
+	type clone Event
+	var msg map[string]*json.RawMessage
+	if err := json.Unmarshal(b, &msg); err != nil {
+		return err
+	}
+	if msg["id"] == nil {
+		return json.Unmarshal(b, (*clone)(e))
+	}
+	var id string
+	if err := json.Unmarshal(*msg["id"], &id); err != nil {
+		return err
+	}
+	if len(id) > 0 {
+		delete(msg, "id")
+		b, _ = json.Marshal(msg)
+	}
+	if err := json.Unmarshal(b, (*clone)(e)); err != nil {
+		return err
+	}
+	if len(id) > 0 {
+		uid, err := uuid.Parse(id)
+		if err != nil {
+			return fmt.Errorf("invalid event id: %s", err)
+		}
+		e.ID = uid[:]
+	}
+	return nil
 }

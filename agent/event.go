@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	time "github.com/echlebek/timeproxy"
+	"github.com/google/uuid"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev1 "github.com/sensu/sensu-go/types/v1"
@@ -52,6 +53,13 @@ func prepareEvent(a *Agent, event *corev2.Event) error {
 	// so it can be properly handled by the backend. Othewise we need to inject
 	// the agent's entity into this event
 	a.getEntities(event)
+
+	if len(event.ID) == 0 {
+		id, err := uuid.NewRandom()
+		if err == nil {
+			event.ID = id[:]
+		}
+	}
 
 	// The entity should pass validation at this point
 	return event.Entity.Validate()
