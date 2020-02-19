@@ -187,11 +187,3 @@ func TestSessionTerminateOnSendError(t *testing.T) {
 		t.Fatal("broken session never stopped")
 	}
 }
-
-type channelSubscriber struct {
-	ch chan interface{}
-}
-
-func (c channelSubscriber) Receiver() chan<- interface{} {
-	return c.ch
-}
