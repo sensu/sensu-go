@@ -210,27 +210,11 @@ func eventKey(event *corev2.Event) string {
 	return path.Join(event.Entity.Namespace, event.Check.Name, event.Entity.Name)
 }
 
-func logEvent(e *corev2.Event) {
-	fields := logrus.Fields{
-		"event_uuid": e.GetUUID().String(),
-		"entity":     e.Entity.Name,
-	}
-	if e.HasCheck() {
-		fields["check"] = e.Check.Name
-	}
-	if e.HasMetrics() {
-		fields["metrics"] = true
-	}
-	logger.WithFields(fields).Info("eventd received event")
-}
-
 func (e *Eventd) handleMessage(msg interface{}) error {
 	event, ok := msg.(*corev2.Event)
 	if !ok {
 		return errors.New("received non-Event on event channel")
 	}
-
-	logEvent(event)
 
 	// Validate the received event
 	if err := event.Validate(); err != nil {

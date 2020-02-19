@@ -11,7 +11,6 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
-	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -23,7 +22,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Entity is the Entity supplying the event. The default Entity for any
 // Event is the running Agent process--if the Event is sent by an Agent.
@@ -65,7 +64,7 @@ func (m *Entity) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_Entity.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := m.MarshalTo(b)
 		if err != nil {
 			return nil, err
 		}
@@ -114,7 +113,7 @@ func (m *System) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_System.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := m.MarshalTo(b)
 		if err != nil {
 			return nil, err
 		}
@@ -213,7 +212,7 @@ func (m *Network) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_Network.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := m.MarshalTo(b)
 		if err != nil {
 			return nil, err
 		}
@@ -264,7 +263,7 @@ func (m *NetworkInterface) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return xxx_messageInfo_NetworkInterface.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := m.MarshalTo(b)
 		if err != nil {
 			return nil, err
 		}
@@ -326,7 +325,7 @@ func (m *Deregistration) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return xxx_messageInfo_Deregistration.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := m.MarshalTo(b)
 		if err != nil {
 			return nil, err
 		}
@@ -727,7 +726,7 @@ func NewEntityFromFace(that EntityFace) *Entity {
 func (m *Entity) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalTo(dAtA)
 	if err != nil {
 		return nil, err
 	}
@@ -735,128 +734,130 @@ func (m *Entity) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Entity) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *Entity) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
+	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.EntityClass) > 0 {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.EntityClass)))
+		i += copy(dAtA[i:], m.EntityClass)
 	}
-	if len(m.KeepaliveHandlers) > 0 {
-		for iNdEx := len(m.KeepaliveHandlers) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.KeepaliveHandlers[iNdEx])
-			copy(dAtA[i:], m.KeepaliveHandlers[iNdEx])
-			i = encodeVarintEntity(dAtA, i, uint64(len(m.KeepaliveHandlers[iNdEx])))
-			i--
-			dAtA[i] = 0x1
-			i--
-			dAtA[i] = 0x82
+	dAtA[i] = 0x1a
+	i++
+	i = encodeVarintEntity(dAtA, i, uint64(m.System.Size()))
+	n1, err := m.System.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n1
+	if len(m.Subscriptions) > 0 {
+		for _, s := range m.Subscriptions {
+			dAtA[i] = 0x22
+			i++
+			l = len(s)
+			for l >= 1<<7 {
+				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
+				l >>= 7
+				i++
+			}
+			dAtA[i] = uint8(l)
+			i++
+			i += copy(dAtA[i:], s)
 		}
 	}
-	if len(m.SensuAgentVersion) > 0 {
-		i -= len(m.SensuAgentVersion)
-		copy(dAtA[i:], m.SensuAgentVersion)
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.SensuAgentVersion)))
-		i--
-		dAtA[i] = 0x7a
+	if m.LastSeen != 0 {
+		dAtA[i] = 0x28
+		i++
+		i = encodeVarintEntity(dAtA, i, uint64(m.LastSeen))
 	}
-	{
-		size, err := m.ObjectMeta.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintEntity(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x72
-	if len(m.Redact) > 0 {
-		for iNdEx := len(m.Redact) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Redact[iNdEx])
-			copy(dAtA[i:], m.Redact[iNdEx])
-			i = encodeVarintEntity(dAtA, i, uint64(len(m.Redact[iNdEx])))
-			i--
-			dAtA[i] = 0x6a
-		}
-	}
-	if len(m.ExtendedAttributes) > 0 {
-		i -= len(m.ExtendedAttributes)
-		copy(dAtA[i:], m.ExtendedAttributes)
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.ExtendedAttributes)))
-		i--
-		dAtA[i] = 0x62
-	}
-	if len(m.User) > 0 {
-		i -= len(m.User)
-		copy(dAtA[i:], m.User)
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.User)))
-		i--
-		dAtA[i] = 0x5a
-	}
-	{
-		size, err := m.Deregistration.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintEntity(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x3a
 	if m.Deregister {
-		i--
+		dAtA[i] = 0x30
+		i++
 		if m.Deregister {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
 		}
-		i--
-		dAtA[i] = 0x30
+		i++
 	}
-	if m.LastSeen != 0 {
-		i = encodeVarintEntity(dAtA, i, uint64(m.LastSeen))
-		i--
-		dAtA[i] = 0x28
+	dAtA[i] = 0x3a
+	i++
+	i = encodeVarintEntity(dAtA, i, uint64(m.Deregistration.Size()))
+	n2, err := m.Deregistration.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
 	}
-	if len(m.Subscriptions) > 0 {
-		for iNdEx := len(m.Subscriptions) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Subscriptions[iNdEx])
-			copy(dAtA[i:], m.Subscriptions[iNdEx])
-			i = encodeVarintEntity(dAtA, i, uint64(len(m.Subscriptions[iNdEx])))
-			i--
-			dAtA[i] = 0x22
+	i += n2
+	if len(m.User) > 0 {
+		dAtA[i] = 0x5a
+		i++
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.User)))
+		i += copy(dAtA[i:], m.User)
+	}
+	if len(m.ExtendedAttributes) > 0 {
+		dAtA[i] = 0x62
+		i++
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.ExtendedAttributes)))
+		i += copy(dAtA[i:], m.ExtendedAttributes)
+	}
+	if len(m.Redact) > 0 {
+		for _, s := range m.Redact {
+			dAtA[i] = 0x6a
+			i++
+			l = len(s)
+			for l >= 1<<7 {
+				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
+				l >>= 7
+				i++
+			}
+			dAtA[i] = uint8(l)
+			i++
+			i += copy(dAtA[i:], s)
 		}
 	}
-	{
-		size, err := m.System.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
+	dAtA[i] = 0x72
+	i++
+	i = encodeVarintEntity(dAtA, i, uint64(m.ObjectMeta.Size()))
+	n3, err := m.ObjectMeta.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n3
+	if len(m.SensuAgentVersion) > 0 {
+		dAtA[i] = 0x7a
+		i++
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.SensuAgentVersion)))
+		i += copy(dAtA[i:], m.SensuAgentVersion)
+	}
+	if len(m.KeepaliveHandlers) > 0 {
+		for _, s := range m.KeepaliveHandlers {
+			dAtA[i] = 0x82
+			i++
+			dAtA[i] = 0x1
+			i++
+			l = len(s)
+			for l >= 1<<7 {
+				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
+				l >>= 7
+				i++
+			}
+			dAtA[i] = uint8(l)
+			i++
+			i += copy(dAtA[i:], s)
 		}
-		i -= size
-		i = encodeVarintEntity(dAtA, i, uint64(size))
 	}
-	i--
-	dAtA[i] = 0x1a
-	if len(m.EntityClass) > 0 {
-		i -= len(m.EntityClass)
-		copy(dAtA[i:], m.EntityClass)
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.EntityClass)))
-		i--
-		dAtA[i] = 0xa
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return len(dAtA) - i, nil
+	return i, nil
 }
 
 func (m *System) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalTo(dAtA)
 	if err != nil {
 		return nil, err
 	}
@@ -864,83 +865,69 @@ func (m *System) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *System) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *System) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
+	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if m.ARMVersion != 0 {
-		i = encodeVarintEntity(dAtA, i, uint64(m.ARMVersion))
-		i--
-		dAtA[i] = 0x40
-	}
-	if len(m.Arch) > 0 {
-		i -= len(m.Arch)
-		copy(dAtA[i:], m.Arch)
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.Arch)))
-		i--
-		dAtA[i] = 0x3a
-	}
-	{
-		size, err := m.Network.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintEntity(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x32
-	if len(m.PlatformVersion) > 0 {
-		i -= len(m.PlatformVersion)
-		copy(dAtA[i:], m.PlatformVersion)
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.PlatformVersion)))
-		i--
-		dAtA[i] = 0x2a
-	}
-	if len(m.PlatformFamily) > 0 {
-		i -= len(m.PlatformFamily)
-		copy(dAtA[i:], m.PlatformFamily)
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.PlatformFamily)))
-		i--
-		dAtA[i] = 0x22
-	}
-	if len(m.Platform) > 0 {
-		i -= len(m.Platform)
-		copy(dAtA[i:], m.Platform)
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.Platform)))
-		i--
-		dAtA[i] = 0x1a
+	if len(m.Hostname) > 0 {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.Hostname)))
+		i += copy(dAtA[i:], m.Hostname)
 	}
 	if len(m.OS) > 0 {
-		i -= len(m.OS)
-		copy(dAtA[i:], m.OS)
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.OS)))
-		i--
 		dAtA[i] = 0x12
+		i++
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.OS)))
+		i += copy(dAtA[i:], m.OS)
 	}
-	if len(m.Hostname) > 0 {
-		i -= len(m.Hostname)
-		copy(dAtA[i:], m.Hostname)
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.Hostname)))
-		i--
-		dAtA[i] = 0xa
+	if len(m.Platform) > 0 {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.Platform)))
+		i += copy(dAtA[i:], m.Platform)
 	}
-	return len(dAtA) - i, nil
+	if len(m.PlatformFamily) > 0 {
+		dAtA[i] = 0x22
+		i++
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.PlatformFamily)))
+		i += copy(dAtA[i:], m.PlatformFamily)
+	}
+	if len(m.PlatformVersion) > 0 {
+		dAtA[i] = 0x2a
+		i++
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.PlatformVersion)))
+		i += copy(dAtA[i:], m.PlatformVersion)
+	}
+	dAtA[i] = 0x32
+	i++
+	i = encodeVarintEntity(dAtA, i, uint64(m.Network.Size()))
+	n4, err := m.Network.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n4
+	if len(m.Arch) > 0 {
+		dAtA[i] = 0x3a
+		i++
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.Arch)))
+		i += copy(dAtA[i:], m.Arch)
+	}
+	if m.ARMVersion != 0 {
+		dAtA[i] = 0x40
+		i++
+		i = encodeVarintEntity(dAtA, i, uint64(m.ARMVersion))
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
 }
 
 func (m *Network) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalTo(dAtA)
 	if err != nil {
 		return nil, err
 	}
@@ -948,40 +935,32 @@ func (m *Network) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Network) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *Network) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
+	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
 	if len(m.Interfaces) > 0 {
-		for iNdEx := len(m.Interfaces) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Interfaces[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintEntity(dAtA, i, uint64(size))
-			}
-			i--
+		for _, msg := range m.Interfaces {
 			dAtA[i] = 0xa
+			i++
+			i = encodeVarintEntity(dAtA, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
 		}
 	}
-	return len(dAtA) - i, nil
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
 }
 
 func (m *NetworkInterface) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalTo(dAtA)
 	if err != nil {
 		return nil, err
 	}
@@ -989,49 +968,47 @@ func (m *NetworkInterface) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *NetworkInterface) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *NetworkInterface) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
+	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if len(m.Addresses) > 0 {
-		for iNdEx := len(m.Addresses) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Addresses[iNdEx])
-			copy(dAtA[i:], m.Addresses[iNdEx])
-			i = encodeVarintEntity(dAtA, i, uint64(len(m.Addresses[iNdEx])))
-			i--
-			dAtA[i] = 0x1a
-		}
+	if len(m.Name) > 0 {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.Name)))
+		i += copy(dAtA[i:], m.Name)
 	}
 	if len(m.MAC) > 0 {
-		i -= len(m.MAC)
-		copy(dAtA[i:], m.MAC)
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.MAC)))
-		i--
 		dAtA[i] = 0x12
+		i++
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.MAC)))
+		i += copy(dAtA[i:], m.MAC)
 	}
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.Name)))
-		i--
-		dAtA[i] = 0xa
+	if len(m.Addresses) > 0 {
+		for _, s := range m.Addresses {
+			dAtA[i] = 0x1a
+			i++
+			l = len(s)
+			for l >= 1<<7 {
+				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
+				l >>= 7
+				i++
+			}
+			dAtA[i] = uint8(l)
+			i++
+			i += copy(dAtA[i:], s)
+		}
 	}
-	return len(dAtA) - i, nil
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
 }
 
 func (m *Deregistration) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalTo(dAtA)
 	if err != nil {
 		return nil, err
 	}
@@ -1039,39 +1016,30 @@ func (m *Deregistration) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Deregistration) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *Deregistration) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
+	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
 	if len(m.Handler) > 0 {
-		i -= len(m.Handler)
-		copy(dAtA[i:], m.Handler)
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.Handler)))
-		i--
 		dAtA[i] = 0xa
+		i++
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.Handler)))
+		i += copy(dAtA[i:], m.Handler)
 	}
-	return len(dAtA) - i, nil
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
 }
 
 func encodeVarintEntity(dAtA []byte, offset int, v uint64) int {
-	offset -= sovEntity(v)
-	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return base
+	return offset + 1
 }
 func NewPopulatedEntity(r randyEntity, easy bool) *Entity {
 	this := &Entity{}
@@ -1137,7 +1105,7 @@ func NewPopulatedSystem(r randyEntity, easy bool) *System {
 
 func NewPopulatedNetwork(r randyEntity, easy bool) *Network {
 	this := &Network{}
-	if r.Intn(5) != 0 {
+	if r.Intn(10) != 0 {
 		v9 := r.Intn(5)
 		this.Interfaces = make([]NetworkInterface, v9)
 		for i := 0; i < v9; i++ {
@@ -1407,7 +1375,14 @@ func (m *Deregistration) Size() (n int) {
 }
 
 func sovEntity(x uint64) (n int) {
-	return (math_bits.Len64(x|1) + 6) / 7
+	for {
+		n++
+		x >>= 7
+		if x == 0 {
+			break
+		}
+	}
+	return n
 }
 func sozEntity(x uint64) (n int) {
 	return sovEntity(uint64((x << 1) ^ uint64((int64(x) >> 63))))

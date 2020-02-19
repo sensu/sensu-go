@@ -11,7 +11,6 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
-	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -23,7 +22,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Rule holds information that describes an action that can be taken
 type Rule struct {
@@ -57,7 +56,7 @@ func (m *Rule) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_Rule.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := m.MarshalTo(b)
 		if err != nil {
 			return nil, err
 		}
@@ -121,7 +120,7 @@ func (m *ClusterRole) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return xxx_messageInfo_ClusterRole.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := m.MarshalTo(b)
 		if err != nil {
 			return nil, err
 		}
@@ -164,7 +163,7 @@ func (m *Role) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_Role.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := m.MarshalTo(b)
 		if err != nil {
 			return nil, err
 		}
@@ -208,7 +207,7 @@ func (m *RoleRef) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_RoleRef.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := m.MarshalTo(b)
 		if err != nil {
 			return nil, err
 		}
@@ -265,7 +264,7 @@ func (m *Subject) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_Subject.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := m.MarshalTo(b)
 		if err != nil {
 			return nil, err
 		}
@@ -326,7 +325,7 @@ func (m *ClusterRoleBinding) XXX_Marshal(b []byte, deterministic bool) ([]byte, 
 		return xxx_messageInfo_ClusterRoleBinding.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := m.MarshalTo(b)
 		if err != nil {
 			return nil, err
 		}
@@ -373,7 +372,7 @@ func (m *RoleBinding) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return xxx_messageInfo_RoleBinding.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := m.MarshalTo(b)
 		if err != nil {
 			return nil, err
 		}
@@ -824,7 +823,7 @@ func NewRoleBindingFromFace(that RoleBindingFace) *RoleBinding {
 func (m *Rule) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalTo(dAtA)
 	if err != nil {
 		return nil, err
 	}
@@ -832,53 +831,65 @@ func (m *Rule) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Rule) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *Rule) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
+	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if len(m.ResourceNames) > 0 {
-		for iNdEx := len(m.ResourceNames) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.ResourceNames[iNdEx])
-			copy(dAtA[i:], m.ResourceNames[iNdEx])
-			i = encodeVarintRbac(dAtA, i, uint64(len(m.ResourceNames[iNdEx])))
-			i--
-			dAtA[i] = 0x1a
+	if len(m.Verbs) > 0 {
+		for _, s := range m.Verbs {
+			dAtA[i] = 0xa
+			i++
+			l = len(s)
+			for l >= 1<<7 {
+				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
+				l >>= 7
+				i++
+			}
+			dAtA[i] = uint8(l)
+			i++
+			i += copy(dAtA[i:], s)
 		}
 	}
 	if len(m.Resources) > 0 {
-		for iNdEx := len(m.Resources) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Resources[iNdEx])
-			copy(dAtA[i:], m.Resources[iNdEx])
-			i = encodeVarintRbac(dAtA, i, uint64(len(m.Resources[iNdEx])))
-			i--
+		for _, s := range m.Resources {
 			dAtA[i] = 0x12
+			i++
+			l = len(s)
+			for l >= 1<<7 {
+				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
+				l >>= 7
+				i++
+			}
+			dAtA[i] = uint8(l)
+			i++
+			i += copy(dAtA[i:], s)
 		}
 	}
-	if len(m.Verbs) > 0 {
-		for iNdEx := len(m.Verbs) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Verbs[iNdEx])
-			copy(dAtA[i:], m.Verbs[iNdEx])
-			i = encodeVarintRbac(dAtA, i, uint64(len(m.Verbs[iNdEx])))
-			i--
-			dAtA[i] = 0xa
+	if len(m.ResourceNames) > 0 {
+		for _, s := range m.ResourceNames {
+			dAtA[i] = 0x1a
+			i++
+			l = len(s)
+			for l >= 1<<7 {
+				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
+				l >>= 7
+				i++
+			}
+			dAtA[i] = uint8(l)
+			i++
+			i += copy(dAtA[i:], s)
 		}
 	}
-	return len(dAtA) - i, nil
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
 }
 
 func (m *ClusterRole) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalTo(dAtA)
 	if err != nil {
 		return nil, err
 	}
@@ -886,50 +897,40 @@ func (m *ClusterRole) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *ClusterRole) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *ClusterRole) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
+	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	{
-		size, err := m.ObjectMeta.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintRbac(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x1a
 	if len(m.Rules) > 0 {
-		for iNdEx := len(m.Rules) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Rules[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintRbac(dAtA, i, uint64(size))
-			}
-			i--
+		for _, msg := range m.Rules {
 			dAtA[i] = 0xa
+			i++
+			i = encodeVarintRbac(dAtA, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
 		}
 	}
-	return len(dAtA) - i, nil
+	dAtA[i] = 0x1a
+	i++
+	i = encodeVarintRbac(dAtA, i, uint64(m.ObjectMeta.Size()))
+	n1, err := m.ObjectMeta.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n1
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
 }
 
 func (m *Role) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalTo(dAtA)
 	if err != nil {
 		return nil, err
 	}
@@ -937,50 +938,40 @@ func (m *Role) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Role) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *Role) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
+	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	{
-		size, err := m.ObjectMeta.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintRbac(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x22
 	if len(m.Rules) > 0 {
-		for iNdEx := len(m.Rules) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Rules[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintRbac(dAtA, i, uint64(size))
-			}
-			i--
+		for _, msg := range m.Rules {
 			dAtA[i] = 0xa
+			i++
+			i = encodeVarintRbac(dAtA, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
 		}
 	}
-	return len(dAtA) - i, nil
+	dAtA[i] = 0x22
+	i++
+	i = encodeVarintRbac(dAtA, i, uint64(m.ObjectMeta.Size()))
+	n2, err := m.ObjectMeta.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n2
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
 }
 
 func (m *RoleRef) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalTo(dAtA)
 	if err != nil {
 		return nil, err
 	}
@@ -988,40 +979,32 @@ func (m *RoleRef) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *RoleRef) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *RoleRef) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
+	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.Type) > 0 {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintRbac(dAtA, i, uint64(len(m.Type)))
+		i += copy(dAtA[i:], m.Type)
 	}
 	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarintRbac(dAtA, i, uint64(len(m.Name)))
-		i--
 		dAtA[i] = 0x12
+		i++
+		i = encodeVarintRbac(dAtA, i, uint64(len(m.Name)))
+		i += copy(dAtA[i:], m.Name)
 	}
-	if len(m.Type) > 0 {
-		i -= len(m.Type)
-		copy(dAtA[i:], m.Type)
-		i = encodeVarintRbac(dAtA, i, uint64(len(m.Type)))
-		i--
-		dAtA[i] = 0xa
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return len(dAtA) - i, nil
+	return i, nil
 }
 
 func (m *Subject) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalTo(dAtA)
 	if err != nil {
 		return nil, err
 	}
@@ -1029,40 +1012,32 @@ func (m *Subject) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Subject) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *Subject) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
+	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.Type) > 0 {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintRbac(dAtA, i, uint64(len(m.Type)))
+		i += copy(dAtA[i:], m.Type)
 	}
 	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarintRbac(dAtA, i, uint64(len(m.Name)))
-		i--
 		dAtA[i] = 0x12
+		i++
+		i = encodeVarintRbac(dAtA, i, uint64(len(m.Name)))
+		i += copy(dAtA[i:], m.Name)
 	}
-	if len(m.Type) > 0 {
-		i -= len(m.Type)
-		copy(dAtA[i:], m.Type)
-		i = encodeVarintRbac(dAtA, i, uint64(len(m.Type)))
-		i--
-		dAtA[i] = 0xa
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return len(dAtA) - i, nil
+	return i, nil
 }
 
 func (m *ClusterRoleBinding) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalTo(dAtA)
 	if err != nil {
 		return nil, err
 	}
@@ -1070,60 +1045,48 @@ func (m *ClusterRoleBinding) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *ClusterRoleBinding) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *ClusterRoleBinding) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
+	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	{
-		size, err := m.ObjectMeta.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintRbac(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x22
-	{
-		size, err := m.RoleRef.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintRbac(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x12
 	if len(m.Subjects) > 0 {
-		for iNdEx := len(m.Subjects) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Subjects[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintRbac(dAtA, i, uint64(size))
-			}
-			i--
+		for _, msg := range m.Subjects {
 			dAtA[i] = 0xa
+			i++
+			i = encodeVarintRbac(dAtA, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
 		}
 	}
-	return len(dAtA) - i, nil
+	dAtA[i] = 0x12
+	i++
+	i = encodeVarintRbac(dAtA, i, uint64(m.RoleRef.Size()))
+	n3, err := m.RoleRef.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n3
+	dAtA[i] = 0x22
+	i++
+	i = encodeVarintRbac(dAtA, i, uint64(m.ObjectMeta.Size()))
+	n4, err := m.ObjectMeta.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n4
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
 }
 
 func (m *RoleBinding) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalTo(dAtA)
 	if err != nil {
 		return nil, err
 	}
@@ -1131,66 +1094,52 @@ func (m *RoleBinding) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *RoleBinding) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *RoleBinding) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
+	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	{
-		size, err := m.ObjectMeta.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintRbac(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x2a
-	{
-		size, err := m.RoleRef.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintRbac(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x12
 	if len(m.Subjects) > 0 {
-		for iNdEx := len(m.Subjects) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Subjects[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintRbac(dAtA, i, uint64(size))
-			}
-			i--
+		for _, msg := range m.Subjects {
 			dAtA[i] = 0xa
+			i++
+			i = encodeVarintRbac(dAtA, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
 		}
 	}
-	return len(dAtA) - i, nil
+	dAtA[i] = 0x12
+	i++
+	i = encodeVarintRbac(dAtA, i, uint64(m.RoleRef.Size()))
+	n5, err := m.RoleRef.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n5
+	dAtA[i] = 0x2a
+	i++
+	i = encodeVarintRbac(dAtA, i, uint64(m.ObjectMeta.Size()))
+	n6, err := m.ObjectMeta.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n6
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
 }
 
 func encodeVarintRbac(dAtA []byte, offset int, v uint64) int {
-	offset -= sovRbac(v)
-	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return base
+	return offset + 1
 }
 func NewPopulatedRule(r randyRbac, easy bool) *Rule {
 	this := &Rule{}
@@ -1217,7 +1166,7 @@ func NewPopulatedRule(r randyRbac, easy bool) *Rule {
 
 func NewPopulatedClusterRole(r randyRbac, easy bool) *ClusterRole {
 	this := &ClusterRole{}
-	if r.Intn(5) != 0 {
+	if r.Intn(10) != 0 {
 		v4 := r.Intn(5)
 		this.Rules = make([]Rule, v4)
 		for i := 0; i < v4; i++ {
@@ -1235,7 +1184,7 @@ func NewPopulatedClusterRole(r randyRbac, easy bool) *ClusterRole {
 
 func NewPopulatedRole(r randyRbac, easy bool) *Role {
 	this := &Role{}
-	if r.Intn(5) != 0 {
+	if r.Intn(10) != 0 {
 		v7 := r.Intn(5)
 		this.Rules = make([]Rule, v7)
 		for i := 0; i < v7; i++ {
@@ -1273,7 +1222,7 @@ func NewPopulatedSubject(r randyRbac, easy bool) *Subject {
 
 func NewPopulatedClusterRoleBinding(r randyRbac, easy bool) *ClusterRoleBinding {
 	this := &ClusterRoleBinding{}
-	if r.Intn(5) != 0 {
+	if r.Intn(10) != 0 {
 		v10 := r.Intn(5)
 		this.Subjects = make([]Subject, v10)
 		for i := 0; i < v10; i++ {
@@ -1293,7 +1242,7 @@ func NewPopulatedClusterRoleBinding(r randyRbac, easy bool) *ClusterRoleBinding 
 
 func NewPopulatedRoleBinding(r randyRbac, easy bool) *RoleBinding {
 	this := &RoleBinding{}
-	if r.Intn(5) != 0 {
+	if r.Intn(10) != 0 {
 		v14 := r.Intn(5)
 		this.Subjects = make([]Subject, v14)
 		for i := 0; i < v14; i++ {
@@ -1538,7 +1487,14 @@ func (m *RoleBinding) Size() (n int) {
 }
 
 func sovRbac(x uint64) (n int) {
-	return (math_bits.Len64(x|1) + 6) / 7
+	for {
+		n++
+		x >>= 7
+		if x == 0 {
+			break
+		}
+	}
+	return n
 }
 func sozRbac(x uint64) (n int) {
 	return sovRbac(uint64((x << 1) ^ uint64((int64(x) >> 63))))

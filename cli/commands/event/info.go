@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/elements/list"
@@ -85,6 +84,10 @@ func printToList(v interface{}, writer io.Writer) error {
 				Label: "Silenced",
 				Value: strconv.FormatBool(len(event.Check.Silenced) > 0),
 			},
+			{
+				Label: "Timestamp",
+				Value: time.Unix(event.Timestamp, 0).String(),
+			},
 		},
 	}
 
@@ -93,23 +96,8 @@ func printToList(v interface{}, writer io.Writer) error {
 			Label: "Silenced By",
 			Value: strings.Join(event.Check.Silenced, ", "),
 		}
-		cfg.Rows = append(cfg.Rows, silencedBy)
+		cfg.Rows = append(cfg.Rows[:len(cfg.Rows)-1], silencedBy, cfg.Rows[len(cfg.Rows)-1])
 	}
-
-	var uuidVal string
-	if id := event.GetUUID(); id != uuid.Nil {
-		// Only populate the uuid if it's nonzero
-		uuidVal = id.String()
-	}
-	cfg.Rows = append(cfg.Rows, []*list.Row{
-		{
-			Label: "Timestamp",
-			Value: time.Unix(event.Timestamp, 0).String(),
-		},
-		{
-			Label: "UUID",
-			Value: uuidVal,
-		}}...)
 
 	return list.Print(writer, cfg)
 }

@@ -11,7 +11,6 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
-	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -23,7 +22,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // A Metrics is an event metrics payload specification.
 type Metrics struct {
@@ -50,7 +49,7 @@ func (m *Metrics) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_Metrics.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := m.MarshalTo(b)
 		if err != nil {
 			return nil, err
 		}
@@ -112,7 +111,7 @@ func (m *MetricPoint) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return xxx_messageInfo_MetricPoint.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := m.MarshalTo(b)
 		if err != nil {
 			return nil, err
 		}
@@ -184,7 +183,7 @@ func (m *MetricTag) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_MetricTag.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := m.MarshalTo(b)
 		if err != nil {
 			return nil, err
 		}
@@ -363,7 +362,7 @@ func (this *MetricTag) Equal(that interface{}) bool {
 func (m *Metrics) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalTo(dAtA)
 	if err != nil {
 		return nil, err
 	}
@@ -371,49 +370,47 @@ func (m *Metrics) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Metrics) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *Metrics) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
+	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.Handlers) > 0 {
+		for _, s := range m.Handlers {
+			dAtA[i] = 0xa
+			i++
+			l = len(s)
+			for l >= 1<<7 {
+				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
+				l >>= 7
+				i++
+			}
+			dAtA[i] = uint8(l)
+			i++
+			i += copy(dAtA[i:], s)
+		}
 	}
 	if len(m.Points) > 0 {
-		for iNdEx := len(m.Points) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Points[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintMetrics(dAtA, i, uint64(size))
-			}
-			i--
+		for _, msg := range m.Points {
 			dAtA[i] = 0x12
+			i++
+			i = encodeVarintMetrics(dAtA, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
 		}
 	}
-	if len(m.Handlers) > 0 {
-		for iNdEx := len(m.Handlers) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Handlers[iNdEx])
-			copy(dAtA[i:], m.Handlers[iNdEx])
-			i = encodeVarintMetrics(dAtA, i, uint64(len(m.Handlers[iNdEx])))
-			i--
-			dAtA[i] = 0xa
-		}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return len(dAtA) - i, nil
+	return i, nil
 }
 
 func (m *MetricPoint) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalTo(dAtA)
 	if err != nil {
 		return nil, err
 	}
@@ -421,58 +418,49 @@ func (m *MetricPoint) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *MetricPoint) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MetricPoint) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
+	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if len(m.Tags) > 0 {
-		for iNdEx := len(m.Tags) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Tags[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintMetrics(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0x22
-		}
-	}
-	if m.Timestamp != 0 {
-		i = encodeVarintMetrics(dAtA, i, uint64(m.Timestamp))
-		i--
-		dAtA[i] = 0x18
+	if len(m.Name) > 0 {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintMetrics(dAtA, i, uint64(len(m.Name)))
+		i += copy(dAtA[i:], m.Name)
 	}
 	if m.Value != 0 {
-		i -= 8
-		encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Value))))
-		i--
 		dAtA[i] = 0x11
+		i++
+		encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Value))))
+		i += 8
 	}
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarintMetrics(dAtA, i, uint64(len(m.Name)))
-		i--
-		dAtA[i] = 0xa
+	if m.Timestamp != 0 {
+		dAtA[i] = 0x18
+		i++
+		i = encodeVarintMetrics(dAtA, i, uint64(m.Timestamp))
 	}
-	return len(dAtA) - i, nil
+	if len(m.Tags) > 0 {
+		for _, msg := range m.Tags {
+			dAtA[i] = 0x22
+			i++
+			i = encodeVarintMetrics(dAtA, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
 }
 
 func (m *MetricTag) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalTo(dAtA)
 	if err != nil {
 		return nil, err
 	}
@@ -480,46 +468,36 @@ func (m *MetricTag) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *MetricTag) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MetricTag) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
+	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.Name) > 0 {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintMetrics(dAtA, i, uint64(len(m.Name)))
+		i += copy(dAtA[i:], m.Name)
 	}
 	if len(m.Value) > 0 {
-		i -= len(m.Value)
-		copy(dAtA[i:], m.Value)
-		i = encodeVarintMetrics(dAtA, i, uint64(len(m.Value)))
-		i--
 		dAtA[i] = 0x12
+		i++
+		i = encodeVarintMetrics(dAtA, i, uint64(len(m.Value)))
+		i += copy(dAtA[i:], m.Value)
 	}
-	if len(m.Name) > 0 {
-		i -= len(m.Name)
-		copy(dAtA[i:], m.Name)
-		i = encodeVarintMetrics(dAtA, i, uint64(len(m.Name)))
-		i--
-		dAtA[i] = 0xa
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return len(dAtA) - i, nil
+	return i, nil
 }
 
 func encodeVarintMetrics(dAtA []byte, offset int, v uint64) int {
-	offset -= sovMetrics(v)
-	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return base
+	return offset + 1
 }
 func NewPopulatedMetrics(r randyMetrics, easy bool) *Metrics {
 	this := &Metrics{}
@@ -528,7 +506,7 @@ func NewPopulatedMetrics(r randyMetrics, easy bool) *Metrics {
 	for i := 0; i < v1; i++ {
 		this.Handlers[i] = string(randStringMetrics(r))
 	}
-	if r.Intn(5) != 0 {
+	if r.Intn(10) != 0 {
 		v2 := r.Intn(5)
 		this.Points = make([]*MetricPoint, v2)
 		for i := 0; i < v2; i++ {
@@ -552,7 +530,7 @@ func NewPopulatedMetricPoint(r randyMetrics, easy bool) *MetricPoint {
 	if r.Intn(2) == 0 {
 		this.Timestamp *= -1
 	}
-	if r.Intn(5) != 0 {
+	if r.Intn(10) != 0 {
 		v3 := r.Intn(5)
 		this.Tags = make([]*MetricTag, v3)
 		for i := 0; i < v3; i++ {
@@ -720,7 +698,14 @@ func (m *MetricTag) Size() (n int) {
 }
 
 func sovMetrics(x uint64) (n int) {
-	return (math_bits.Len64(x|1) + 6) / 7
+	for {
+		n++
+		x >>= 7
+		if x == 0 {
+			break
+		}
+	}
+	return n
 }
 func sozMetrics(x uint64) (n int) {
 	return sovMetrics(uint64((x << 1) ^ uint64((int64(x) >> 63))))

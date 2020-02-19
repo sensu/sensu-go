@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/liveness"
@@ -383,12 +382,6 @@ func createKeepaliveEvent(rawEvent *types.Event) *types.Event {
 		Timestamp:  time.Now().Unix(),
 		Entity:     rawEvent.Entity,
 		Check:      keepaliveCheck,
-		ID:         rawEvent.ID,
-	}
-
-	if len(keepaliveEvent.ID) == 0 {
-		uid, _ := uuid.NewRandom()
-		keepaliveEvent.ID = uid[:]
 	}
 
 	return keepaliveEvent

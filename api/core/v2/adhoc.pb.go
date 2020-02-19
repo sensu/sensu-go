@@ -10,7 +10,6 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
-	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -22,7 +21,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 type AdhocRequest struct {
 	// Subscriptions is the list of entity subscriptions.
@@ -52,7 +51,7 @@ func (m *AdhocRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return xxx_messageInfo_AdhocRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := m.MarshalTo(b)
 		if err != nil {
 			return nil, err
 		}
@@ -163,7 +162,7 @@ func (this *AdhocRequest) Equal(that interface{}) bool {
 func (m *AdhocRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalTo(dAtA)
 	if err != nil {
 		return nil, err
 	}
@@ -171,65 +170,59 @@ func (m *AdhocRequest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *AdhocRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *AdhocRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
+	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	{
-		size, err := m.ObjectMeta.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
+	if len(m.Subscriptions) > 0 {
+		for _, s := range m.Subscriptions {
+			dAtA[i] = 0x12
+			i++
+			l = len(s)
+			for l >= 1<<7 {
+				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
+				l >>= 7
+				i++
+			}
+			dAtA[i] = uint8(l)
+			i++
+			i += copy(dAtA[i:], s)
 		}
-		i -= size
-		i = encodeVarintAdhoc(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x2a
-	if len(m.Reason) > 0 {
-		i -= len(m.Reason)
-		copy(dAtA[i:], m.Reason)
-		i = encodeVarintAdhoc(dAtA, i, uint64(len(m.Reason)))
-		i--
-		dAtA[i] = 0x22
 	}
 	if len(m.Creator) > 0 {
-		i -= len(m.Creator)
-		copy(dAtA[i:], m.Creator)
-		i = encodeVarintAdhoc(dAtA, i, uint64(len(m.Creator)))
-		i--
 		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintAdhoc(dAtA, i, uint64(len(m.Creator)))
+		i += copy(dAtA[i:], m.Creator)
 	}
-	if len(m.Subscriptions) > 0 {
-		for iNdEx := len(m.Subscriptions) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Subscriptions[iNdEx])
-			copy(dAtA[i:], m.Subscriptions[iNdEx])
-			i = encodeVarintAdhoc(dAtA, i, uint64(len(m.Subscriptions[iNdEx])))
-			i--
-			dAtA[i] = 0x12
-		}
+	if len(m.Reason) > 0 {
+		dAtA[i] = 0x22
+		i++
+		i = encodeVarintAdhoc(dAtA, i, uint64(len(m.Reason)))
+		i += copy(dAtA[i:], m.Reason)
 	}
-	return len(dAtA) - i, nil
+	dAtA[i] = 0x2a
+	i++
+	i = encodeVarintAdhoc(dAtA, i, uint64(m.ObjectMeta.Size()))
+	n1, err := m.ObjectMeta.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n1
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
 }
 
 func encodeVarintAdhoc(dAtA []byte, offset int, v uint64) int {
-	offset -= sovAdhoc(v)
-	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return base
+	return offset + 1
 }
 func NewPopulatedAdhocRequest(r randyAdhoc, easy bool) *AdhocRequest {
 	this := &AdhocRequest{}
@@ -349,7 +342,14 @@ func (m *AdhocRequest) Size() (n int) {
 }
 
 func sovAdhoc(x uint64) (n int) {
-	return (math_bits.Len64(x|1) + 6) / 7
+	for {
+		n++
+		x >>= 7
+		if x == 0 {
+			break
+		}
+	}
+	return n
 }
 func sozAdhoc(x uint64) (n int) {
 	return sovAdhoc(uint64((x << 1) ^ uint64((int64(x) >> 63))))
