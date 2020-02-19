@@ -503,8 +503,9 @@ func (b *Backend) runOnce() error {
 	return derr
 }
 
-// Run starts all of the Backend server's daemons
-func (b *Backend) Run() error {
+// RunWithInitializer is like Run but accepts an initialization function to use
+// for initialization, instead of using the default Initialize().
+func (b *Backend) RunWithInitializer(initialize func(context.Context, *Config) (*Backend, error)) error {
 	// we allow inErrChan to leak to avoid panics from other
 	// goroutines writing errors to either after shutdown has been initiated.
 	backoff := retry.ExponentialBackoff{
@@ -531,7 +532,7 @@ func (b *Backend) Run() error {
 		// Yes, two levels of retry... this could improve. Unfortunately Intialize()
 		// is called elsewhere.
 		err = backoff.Retry(func(int) (bool, error) {
-			backend, err := Initialize(b.ctx, b.cfg)
+			backend, err := initialize(b.ctx, b.cfg)
 			if err != nil && err != context.Canceled {
 				logger.Error(err)
 				return false, nil
@@ -554,6 +555,11 @@ func (b *Backend) Run() error {
 	}
 
 	return err
+}
+
+// Run starts all of the Backend server's daemons
+func (b *Backend) Run() error {
+	return b.RunWithInitializer(Initialize)
 }
 
 type stopper interface {
