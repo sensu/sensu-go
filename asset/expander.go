@@ -1,10 +1,11 @@
 package asset
 
 import (
+	"errors"
 	"fmt"
 	"io"
 
-	"github.com/mholt/archiver"
+	archiver "github.com/mholt/archiver/v3"
 
 	filetype "gopkg.in/h2non/filetype.v1"
 	filetype_types "gopkg.in/h2non/filetype.v1/types"
@@ -32,6 +33,10 @@ type Expander interface {
 // - tar-gzip
 type archiveExpander struct{}
 
+type namer interface {
+	Name() string
+}
+
 // Expand an archive to a target directory.
 func (a *archiveExpander) Expand(archive io.ReadSeeker, targetDirectory string) error {
 	// detect the type of archive the asset is
@@ -40,14 +45,15 @@ func (a *archiveExpander) Expand(archive io.ReadSeeker, targetDirectory string) 
 		return err
 	}
 
-	var ar archiver.Archiver
+	var ar archiver.Unarchiver
 
 	// If the file is not an archive, exit with an error.
 	switch ft.MIME.Value {
 	case "application/x-tar":
-		ar = archiver.Tar
+		ar = archiver.NewTar()
 	case "application/gzip":
-		ar = archiver.TarGz
+		ar = archiver.NewTarGz()
+
 	default:
 		return fmt.Errorf(
 			"given file of format '%s' does not appear valid",
@@ -55,8 +61,13 @@ func (a *archiveExpander) Expand(archive io.ReadSeeker, targetDirectory string) 
 		)
 	}
 
+	namer, ok := archive.(namer)
+	if !ok {
+		return errors.New("couldn't get path to archive")
+	}
+
 	// Extract the archive to the desired path
-	if err := ar.Read(archive, targetDirectory); err != nil {
+	if err := ar.Unarchive(namer.Name(), targetDirectory); err != nil {
 		return fmt.Errorf("error extracting asset: %s", err)
 	}
 

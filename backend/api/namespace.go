@@ -8,6 +8,8 @@ import (
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
 	"github.com/sensu/sensu-go/backend/store"
+	stringsutil "github.com/sensu/sensu-go/util/strings"
+	"github.com/sirupsen/logrus"
 )
 
 type ruleVisitor interface {
@@ -20,7 +22,7 @@ type NamespaceClient struct {
 	auth   authorization.Authorizer
 }
 
-// NewnamespaceClient creates a new NamespaceClient, given a store and authorizer.
+// NewNamespaceClient creates a new NamespaceClient, given a store and authorizer.
 func NewNamespaceClient(store store.ResourceStore, auth authorization.Authorizer) *NamespaceClient {
 	return &NamespaceClient{
 		client: GenericClient{
@@ -57,6 +59,7 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespa
 	for _, namespace := range resources {
 		namespaceMap[namespace.Name] = namespace
 	}
+
 	attrs := &authorization.Attributes{
 		APIGroup:   a.client.APIGroup,
 		APIVersion: a.client.APIVersion,
@@ -64,10 +67,20 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespa
 		Namespace:  corev2.ContextNamespace(ctx),
 		Verb:       "list",
 	}
-
 	if err := addAuthUser(ctx, attrs); err != nil {
 		return nil, err
 	}
+	logger = logger.WithFields(logrus.Fields{
+		"zz_request": map[string]string{
+			"apiGroup":     attrs.APIGroup,
+			"apiVersion":   attrs.APIVersion,
+			"namespace":    attrs.Namespace,
+			"resource":     attrs.Resource,
+			"resourceName": attrs.ResourceName,
+			"username":     attrs.User.Username,
+			"verb":         attrs.Verb,
+		},
+	})
 
 	var funcErr error
 
@@ -82,31 +95,62 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespa
 		if !rule.VerbMatches("get") {
 			return true
 		}
-		if !rule.ResourceMatches(corev2.NamespacesResource) {
-			// Find namespaces with implicit access
-			ns := binding.GetObjectMeta().Namespace
-			if namespace, ok := namespaceMap[ns]; ok {
-				namespaces = append(namespaces, namespace)
-				delete(namespaceMap, ns)
+
+		// Explicit access to namespaces can only be granted via a
+		// ClusterRoleBinding
+		if rule.ResourceMatches(corev2.NamespacesResource) && binding.GetObjectMeta().Namespace == "" {
+			// If this rule applies to namespaces, determine if all resources of type "namespace" are allowed
+			if len(rule.ResourceNames) == 0 {
+				// All resources of type "namespace" are allowed
+				logger.Debugf("all namespaces explicitly authorized by the binding %s", binding.GetObjectMeta().Name)
+				namespaces = resources
+				return false
 			}
+
+			// If this rule applies to namespaces, and only certain namespaces are
+			// specified, determine if it matches this current namespace
+			for name, namespace := range namespaceMap {
+				if rule.ResourceNameMatches(name) {
+					logger.Debugf("namespace %s explicitly authorized by the binding %s", namespace.Name, binding.GetObjectMeta().Name)
+					namespaces = append(namespaces, namespace)
+					delete(namespaceMap, name)
+				}
+			}
+
 			return true
 		}
-		if len(rule.ResourceNames) == 0 {
-			// All resources of type "namespace" are allowed
-			namespaces = resources
-			return false
-		}
-		for name, namespace := range namespaceMap {
-			if rule.ResourceNameMatches(name) {
-				namespaces = append(namespaces, namespace)
-				delete(namespaceMap, name)
+
+		// Determine if this ClusterRoleBinding provides implicit access to
+		// namespaced resources
+		if binding.GetObjectMeta().Namespace == "" {
+			for _, resource := range rule.Resources {
+				if stringsutil.InArray(resource, corev2.CommonCoreResources) {
+					// All resources of type "namespace" are allowed
+					logger.Debugf("all namespaces implicitly authorized by the binding %s", binding.GetObjectMeta().Name)
+					namespaces = resources
+					return false
+				}
 			}
 		}
+
+		// Determine if this RoleBinding matches the namespace
+		bindingNamespace := binding.GetObjectMeta().Namespace
+		if namespace, ok := namespaceMap[bindingNamespace]; ok {
+			logger.Debugf("namespace %s implicitly authorized by the binding %s", namespace.Name, binding.GetObjectMeta().Name)
+			namespaces = append(namespaces, namespace)
+			delete(namespaceMap, bindingNamespace)
+		}
+
 		return true
 	})
 
 	if funcErr != nil {
 		return nil, fmt.Errorf("error listing namespaces: %s", funcErr)
+	}
+
+	if len(namespaces) == 0 {
+		logger.Debug("unauthorized request")
+		return nil, authorization.ErrUnauthorized
 	}
 
 	return namespaces, nil
@@ -115,9 +159,105 @@ func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespa
 // FetchNamespace fetches a namespace resource from the backend, if authorized.
 func (a *NamespaceClient) FetchNamespace(ctx context.Context, name string) (*corev2.Namespace, error) {
 	var namespace corev2.Namespace
-	if err := a.client.Get(ctx, name, &namespace); err != nil {
+	visitor, ok := a.auth.(ruleVisitor)
+	if !ok {
+		if err := a.client.Get(ctx, name, &namespace); err != nil {
+			return nil, err
+		}
+		return &namespace, nil
+	}
+	if err := a.client.Store.GetResource(ctx, name, &namespace); err != nil {
 		return nil, err
 	}
+
+	attrs := &authorization.Attributes{
+		APIGroup:     a.client.APIGroup,
+		APIVersion:   a.client.APIVersion,
+		Resource:     a.client.Kind.RBACName(),
+		ResourceName: name,
+		Namespace:    name,
+		Verb:         "get",
+	}
+	if err := addAuthUser(ctx, attrs); err != nil {
+		return nil, err
+	}
+	logger = logger.WithFields(logrus.Fields{
+		"zz_request": map[string]string{
+			"apiGroup":     attrs.APIGroup,
+			"apiVersion":   attrs.APIVersion,
+			"namespace":    attrs.Namespace,
+			"resource":     attrs.Resource,
+			"resourceName": attrs.ResourceName,
+			"username":     attrs.User.Username,
+			"verb":         attrs.Verb,
+		},
+	})
+
+	var funcErr error
+	var authorized bool
+
+	visitor.VisitRulesFor(ctx, attrs, func(binding rbac.RoleBinding, rule corev2.Rule, err error) (cont bool) {
+		if err != nil {
+			funcErr = err
+			logger.WithError(err).Warning("could not retrieve the ClusterRoleBindings or RoleBindings")
+			return false
+		}
+
+		// If the rule verb doesn't match "get", ignore this rule and continue
+		if !rule.VerbMatches("get") {
+			return true
+		}
+
+		// Explicit access to namespaces can only be granted via a
+		// ClusterRoleBinding
+		if rule.ResourceMatches(corev2.NamespacesResource) && binding.GetObjectMeta().Namespace == "" {
+			// If this rule applies to namespaces, determine if all resources of type "namespace" are allowed
+			if len(rule.ResourceNames) == 0 {
+				logger.Debugf("request authorized by the binding %s", binding.GetObjectMeta().Name)
+				authorized = true
+				return false
+			}
+
+			// If this rule applies to namespaces, and only certain namespaces are
+			// specified, determine if it matches this current namespace
+			if rule.ResourceNameMatches(name) {
+				logger.Debugf("request authorized by the binding %s", binding.GetObjectMeta().Name)
+				authorized = true
+				return false
+			}
+		}
+
+		// Determine if this ClusterRoleBinding provides implicit access to
+		// namespaced resources
+		if binding.GetObjectMeta().Namespace == "" {
+			for _, resource := range rule.Resources {
+				if stringsutil.InArray(resource, corev2.CommonCoreResources) {
+					logger.Debugf("request authorized by the binding %s", binding.GetObjectMeta().Name)
+					authorized = true
+					return false
+				}
+			}
+		}
+
+		// Determine if this RoleBinding matches the namespace
+		if binding.GetObjectMeta().Namespace == name {
+			logger.Debugf("request authorized by the binding %s", binding.GetObjectMeta().Name)
+			authorized = true
+			return false
+		}
+
+		return true
+	})
+
+	if funcErr != nil {
+		return nil, fmt.Errorf("error getting namespace: %s", funcErr)
+	}
+
+	if !authorized {
+		logger.Debug("unauthorized request")
+		return nil, authorization.ErrUnauthorized
+	}
+
 	return &namespace, nil
 }
 

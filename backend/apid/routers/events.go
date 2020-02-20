@@ -75,8 +75,26 @@ func (r *EventsRouter) create(req *http.Request) (interface{}, error) {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	if err := handlers.CheckMeta(event.Entity, mux.Vars(req)); err != nil {
-		return nil, actions.NewError(actions.InvalidArgument, err)
+	vars := mux.Vars(req)
+
+	if event.Entity != nil {
+		if err := handlers.MetaPathValues(event.Entity, vars, "entity"); err != nil {
+			return nil, err
+		}
+
+		if err := handlers.CheckMeta(event.Entity, vars); err != nil {
+			return nil, actions.NewError(actions.InvalidArgument, err)
+		}
+	}
+
+	if event.Check != nil {
+		if err := handlers.MetaPathValues(event.Check, vars, "check"); err != nil {
+			return nil, err
+		}
+
+		if err := handlers.CheckMeta(event.Check, vars); err != nil {
+			return nil, actions.NewError(actions.InvalidArgument, err)
+		}
 	}
 
 	err := r.controller.CreateOrReplace(req.Context(), event)

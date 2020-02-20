@@ -113,6 +113,10 @@ type Config struct {
 	// interval.
 	EventsAPIBurstLimit int
 
+	// KeepaliveHandlers contains the handlers to use for the agent's keepalive
+	// events
+	KeepaliveHandlers []string
+
 	// KeepaliveInterval is the interval between keepalive events.
 	KeepaliveInterval uint32
 

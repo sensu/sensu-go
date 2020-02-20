@@ -28,7 +28,7 @@ func NewSilencedController(store store.SilencedStore) SilencedController {
 	}
 }
 
-// Query returns resources available to the viewer.
+// List returns resources available to the viewer.
 func (c SilencedController) List(ctx context.Context, sub, check string) ([]*corev2.Silenced, error) {
 	var results []*types.Silenced
 	var serr error

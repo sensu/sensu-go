@@ -21,6 +21,7 @@ func (a *Agent) getAgentEntity() *corev2.Entity {
 			User:              a.config.User,
 			ObjectMeta:        meta,
 			SensuAgentVersion: version.Semver(),
+			KeepaliveHandlers: a.config.KeepaliveHandlers,
 		}
 
 		if a.config.DeregistrationHandler != "" {

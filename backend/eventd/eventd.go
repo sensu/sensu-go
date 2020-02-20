@@ -230,6 +230,11 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 
+	// Create a proxy entity if required and update the event's entity with it
+	if err := createProxyEntity(event, e.store); err != nil {
+		return err
+	}
+
 	// Add any silenced subscriptions to the event
 	getSilenced(ctx, event, e.silencedCache)
 
@@ -330,6 +335,18 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 			}
 		}
 		return false
+	}
+
+	keepalive, err := e.eventStore.GetEventByEntityCheck(ctx, entity, "keepalive")
+	if err != nil {
+		lager.WithError(err).Error("check ttl: error retrieving keepalive event")
+		return false
+	}
+
+	if keepalive != nil && keepalive.Check.Status > 0 {
+		// The keepalive is failing. We don't want to also alert for check TTL,
+		// or keep track of check TTL until the entity returns to life.
+		return true
 	}
 
 	event, err := e.eventStore.GetEventByEntityCheck(ctx, entity, check)

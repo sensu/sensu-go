@@ -7,12 +7,64 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.18.0] - 2020-02-24
+
+### Added
+- [agent] Added `/version` API
+
+### Fixed
+- Support Bonsai assets versions prefixed with the letter `v`.
+- Fixed a bug where wrapped resources were not getting their namespaces set by
+the default sensuctl configuration.
+- read/writes `initializationKey` to/from `EtcdRoot`, while support legacy as fallback (read-only)
+- check for a non-200 response when fetching assets
+- `/silenced` now supports API filtering (commercial feature).
+
+### Changed
+- Updated Go version from 1.13.5 to 1.13.7.
+- Default `event.entity.entity_class` to `proxy` in the POST/PUT `/events` API.
+- Proxy entities are now automatically created when events are published with an
+entity that does not exist.
+
+## [5.17.2] - 2020-02-19
+
+### Fixed
+
+- Fixed a bug where on an internal restart, enterprise HTTP routes could fail
+to intialize.
+
+### Fixed
+- The `auth/test` endpoint now returns the correct error messages.
+## [5.17.2] - 2020-02-19
+
+### Fixed
+- Fixed a bug where on an internal restart, enterprise HTTP routes could fail
+to intialize.
+
+## [5.17.1] - 2020-01-31
+
+### Fixed
+- Cluster configuration of sensuctl should be reset when `configure` is called.
+- Some namespaces would not appear in the curated namespace functionality under
+certain circonstances.
+- Fix a bug with tar assets that contain hardlinked files.
+- Assets name may contain capital letters.
+- When `--trusted-ca-file` is used to configure sensuctl, it now detects and saves
+the absolute file path in the cluster config.
+- [Web] Changing order on event list will no longer cause filters to be reset.
+- [Web] URLs inside annotations are now rendered as links.
+
+## [5.17.0] - 2020-01-28
+
 ### Added
 - Added the secrets provider interface and secrets provider manager to be used
-by commerical secrets providers. Implemented for checks, mutators, and handlers.
+by commercial secrets providers. Implemented for checks, mutators, and handlers.
 - Added the `secrets` field to checks, mutators, and handlers.
 - Added `flapping` field to check history, along with `is_flapping_start` and
   `is_flapping_end` event properties for use by filters.
+- Added the `keepalive-handlers` configuration flag on the agent to specify the
+entity's keepalive handlers.
+- Added `event.entity.name` as a supported field selector.
 
 ### Fixed
 - Fixed a memory leak in the entity cache.
@@ -20,10 +72,25 @@ by commerical secrets providers. Implemented for checks, mutators, and handlers.
 - [Web] Fixed a inconsistent crash that occurred in Firefox browsers.
 - [Web] Fixed bug where event history was duplicated in the event timeline
 chart.
+- [Web] Fixed issue where silenced entries with a start date would result in a
+crash.
 - Fixed a bug where `sensuctl entity delete` was not returning an error
 when attempting to delete a non-existent entity.
 - Fixed bug where flapping would incorrectly end when `total_state_change` was below
   `high_flap_threshold` instead of below `low_flap_threshold`.
+- sensuctl command assets installed via Bonsai will now use the "sensuctl"
+namespace.
+- Fixed a memory leak in the entity cache
+- Users with implicit permissions to a namespace can now display resources
+within that namespace via the Web UI.
+- Explicit access to namespaces can only be granted via cluster-wide RBAC
+resources.
+- Split rules ClusterRole and Role verbs, resources and resource names on comma.
+- Add support for the `--format` flag in the `sensuctl command list` subcommand.
+- Namespace can be ommited from event when performing an HTTP POST request to
+the `/events` endpoint.
+- Fixed a bug where failing check TTL events could occur event if keepalive
+failures had already occurred.
 
 ## [5.16.1] - 2019-12-18
 

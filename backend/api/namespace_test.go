@@ -13,6 +13,394 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
+func TestFetchNamespace(t *testing.T) {
+	tests := []struct {
+		name                string
+		namespace           string
+		attrs               *authorization.Attributes
+		clusterRoles        []*corev2.ClusterRole
+		clusterRoleBindings []*corev2.ClusterRoleBinding
+		roles               []*corev2.Role
+		roleBindings        []*corev2.RoleBinding
+		wantNamespace       bool
+		wantErr             bool
+	}{
+		{
+			name:      "no access",
+			namespace: "dev",
+			attrs: &authorization.Attributes{
+				User: corev2.User{
+					Username: "foo",
+				},
+			},
+			clusterRoles: []*corev2.ClusterRole{
+				{
+					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+					Rules: []corev2.Rule{
+						{
+							Verbs:     []string{corev2.VerbAll},
+							Resources: []string{corev2.ResourceAll},
+						},
+					},
+				},
+			},
+			clusterRoleBindings: []*corev2.ClusterRoleBinding{
+				{
+					Subjects: []corev2.Subject{
+						{
+							Type: "Group",
+							Name: "cluster-admins",
+						},
+					},
+					RoleRef: corev2.RoleRef{
+						Type: "ClusterRole",
+						Name: "cluster-admin",
+					},
+					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+				},
+			},
+			wantNamespace: false,
+			wantErr:       true,
+		},
+		{
+			name:      "explicit access through ClusterRole & ClusterRoleBinding",
+			namespace: "dev",
+			attrs: &authorization.Attributes{
+				User: corev2.User{
+					Username: "foo",
+					Groups:   []string{"cluster-admins"},
+				},
+			},
+			clusterRoles: []*corev2.ClusterRole{
+				{
+					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+					Rules: []corev2.Rule{
+						{
+							Verbs:     []string{corev2.VerbAll},
+							Resources: []string{corev2.ResourceAll},
+						},
+					},
+				},
+			},
+			clusterRoleBindings: []*corev2.ClusterRoleBinding{
+				{
+					Subjects: []corev2.Subject{
+						{
+							Type: "Group",
+							Name: "cluster-admins",
+						},
+					},
+					RoleRef: corev2.RoleRef{
+						Type: "ClusterRole",
+						Name: "cluster-admin",
+					},
+					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+				},
+			},
+			wantNamespace: true,
+			wantErr:       false,
+		},
+		{
+			name:      "explicit access to a single namespace through ClusterRole & ClusterRoleBinding",
+			namespace: "dev",
+			attrs: &authorization.Attributes{
+				User: corev2.User{
+					Username: "foo",
+					Groups:   []string{"cluster-admins"},
+				},
+			},
+			clusterRoles: []*corev2.ClusterRole{
+				{
+					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+					Rules: []corev2.Rule{
+						{
+							Verbs:         []string{corev2.VerbAll},
+							Resources:     []string{corev2.NamespacesResource},
+							ResourceNames: []string{"dev"},
+						},
+					},
+				},
+			},
+			clusterRoleBindings: []*corev2.ClusterRoleBinding{
+				{
+					Subjects: []corev2.Subject{
+						{
+							Type: "Group",
+							Name: "cluster-admins",
+						},
+					},
+					RoleRef: corev2.RoleRef{
+						Type: "ClusterRole",
+						Name: "cluster-admin",
+					},
+					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+				},
+			},
+			wantNamespace: true,
+			wantErr:       false,
+		},
+		{
+			name:      "explicit access to a single namespace through ClusterRole & ClusterRoleBinding should match the namespace",
+			namespace: "dev",
+			attrs: &authorization.Attributes{
+				User: corev2.User{
+					Username: "foo",
+					Groups:   []string{"cluster-admins"},
+				},
+			},
+			clusterRoles: []*corev2.ClusterRole{
+				{
+					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+					Rules: []corev2.Rule{
+						{
+							Verbs:         []string{corev2.VerbAll},
+							Resources:     []string{corev2.NamespacesResource},
+							ResourceNames: []string{"default"},
+						},
+					},
+				},
+			},
+			clusterRoleBindings: []*corev2.ClusterRoleBinding{
+				{
+					Subjects: []corev2.Subject{
+						{
+							Type: "Group",
+							Name: "cluster-admins",
+						},
+					},
+					RoleRef: corev2.RoleRef{
+						Type: "ClusterRole",
+						Name: "cluster-admin",
+					},
+					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+				},
+			},
+			wantNamespace: false,
+			wantErr:       true,
+		},
+		{
+			name:      "implicit access through ClusterRole & ClusterRoleBinding",
+			namespace: "dev",
+			attrs: &authorization.Attributes{
+				User: corev2.User{
+					Username: "foo",
+					Groups:   []string{"cluster-admins"},
+				},
+			},
+			clusterRoles: []*corev2.ClusterRole{
+				{
+					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+					Rules: []corev2.Rule{
+						{
+							Verbs:     []string{corev2.VerbAll},
+							Resources: []string{corev2.ChecksResource},
+						},
+					},
+				},
+			},
+			clusterRoleBindings: []*corev2.ClusterRoleBinding{
+				{
+					Subjects: []corev2.Subject{
+						{
+							Type: "Group",
+							Name: "cluster-admins",
+						},
+					},
+					RoleRef: corev2.RoleRef{
+						Type: "ClusterRole",
+						Name: "cluster-admin",
+					},
+					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+				},
+			},
+			wantNamespace: true,
+			wantErr:       false,
+		},
+		{
+			name:      "implicit access through ClusterRole & ClusterRoleBinding should only work for namespaced resources",
+			namespace: "dev",
+			attrs: &authorization.Attributes{
+				User: corev2.User{
+					Username: "foo",
+					Groups:   []string{"cluster-admins"},
+				},
+			},
+			clusterRoles: []*corev2.ClusterRole{
+				{
+					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+					Rules: []corev2.Rule{
+						{
+							Verbs:     []string{corev2.VerbAll},
+							Resources: []string{corev2.UsersResource},
+						},
+					},
+				},
+			},
+			clusterRoleBindings: []*corev2.ClusterRoleBinding{
+				{
+					Subjects: []corev2.Subject{
+						{
+							Type: "Group",
+							Name: "cluster-admins",
+						},
+					},
+					RoleRef: corev2.RoleRef{
+						Type: "ClusterRole",
+						Name: "cluster-admin",
+					},
+					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+				},
+			},
+			wantNamespace: false,
+			wantErr:       true,
+		},
+		{
+			name:      "implicit access through Role & RoleBinding",
+			namespace: "dev",
+			attrs: &authorization.Attributes{
+				User: corev2.User{
+					Username: "foo",
+					Groups:   []string{"check-reader"},
+				},
+			},
+			roles: []*corev2.Role{
+				{
+					ObjectMeta: corev2.NewObjectMeta("check-reader", "dev"),
+					Rules: []corev2.Rule{
+						{
+							Verbs:     []string{"get"},
+							Resources: []string{corev2.ChecksResource},
+						},
+					},
+				},
+			},
+			roleBindings: []*corev2.RoleBinding{
+				{
+					Subjects: []corev2.Subject{
+						{
+							Type: "User",
+							Name: "foo",
+						},
+					},
+					RoleRef: corev2.RoleRef{
+						Type: "Role",
+						Name: "check-reader",
+					},
+					ObjectMeta: corev2.NewObjectMeta("check-reader", "dev"),
+				},
+			},
+			wantNamespace: true,
+			wantErr:       false,
+		},
+		{
+			name:      "implicit access through ClusterRole & RoleBinding",
+			namespace: "dev",
+			attrs: &authorization.Attributes{
+				User: corev2.User{
+					Username: "foo",
+					Groups:   []string{"ops"},
+				},
+			},
+			clusterRoles: []*corev2.ClusterRole{
+				{
+					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+					Rules: []corev2.Rule{
+						{
+							Verbs:     []string{corev2.VerbAll},
+							Resources: []string{corev2.ResourceAll},
+						},
+					},
+				},
+			},
+			roleBindings: []*corev2.RoleBinding{
+				{
+					Subjects: []corev2.Subject{
+						{
+							Type: "Group",
+							Name: "ops",
+						},
+					},
+					RoleRef: corev2.RoleRef{
+						Type: "ClusterRole",
+						Name: "cluster-admin",
+					},
+					ObjectMeta: corev2.NewObjectMeta("ops", "dev"),
+				},
+			},
+			wantNamespace: true,
+			wantErr:       false,
+		},
+		{
+			name:      "explicit access to all namespaces can only be granted through ClusterRoleBindings",
+			namespace: "default",
+			attrs: &authorization.Attributes{
+				User: corev2.User{
+					Username: "foo",
+					Groups:   []string{"local-admins"},
+				},
+			},
+			roles: []*corev2.Role{
+				{
+					ObjectMeta: corev2.NewObjectMeta("local-admin", "dev"),
+					Rules: []corev2.Rule{
+						{
+							Verbs:     []string{corev2.VerbAll},
+							Resources: []string{corev2.ResourceAll},
+						},
+					},
+				},
+			},
+			roleBindings: []*corev2.RoleBinding{
+				{
+					Subjects: []corev2.Subject{
+						{
+							Type: "Group",
+							Name: "local-admins",
+						},
+					},
+					RoleRef: corev2.RoleRef{
+						Type: "Role",
+						Name: "local-admin",
+					},
+					ObjectMeta: corev2.NewObjectMeta("local-admin", "dev"),
+				},
+			},
+			wantNamespace: false,
+			wantErr:       true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			store := new(mockstore.MockStore)
+			store.On("ListClusterRoles", mock.Anything, mock.Anything).Return(tt.clusterRoles, nil)
+			store.On("ListClusterRoleBindings", mock.Anything, mock.Anything).Return(tt.clusterRoleBindings, nil)
+			store.On("ListRoles", mock.Anything, mock.Anything).Return(tt.roles, nil)
+			store.On("ListRoleBindings", mock.Anything, mock.Anything).Return(tt.roleBindings, nil)
+			store.On("GetResource", mock.Anything, mock.AnythingOfType("string"), mock.Anything).Run(func(args mock.Arguments) {
+				resource := args[2].(*corev2.Namespace)
+				*resource = *corev2.FixtureNamespace("dev")
+			}).Return(nil)
+			setupGetClusterRoleAndGetRole(store, tt.clusterRoles, tt.roles)
+
+			ctx := contextWithUser(defaultContext(), tt.attrs.User.Username, tt.attrs.User.Groups)
+
+			auth := &rbac.Authorizer{Store: store}
+			client := NewNamespaceClient(store, auth)
+
+			got, err := client.FetchNamespace(ctx, tt.namespace)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("NamespaceClient.FetchNamespace() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+
+			if tt.wantNamespace && (got == nil) {
+				t.Fatalf("permission error: want access to namespace? %+v, got %+v", tt.wantNamespace, got)
+			}
+		})
+	}
+}
+
 func TestNamespaceList(t *testing.T) {
 	namespaces := []*corev2.Namespace{
 		corev2.FixtureNamespace("a"),
@@ -31,10 +419,10 @@ func TestNamespaceList(t *testing.T) {
 		RoleBindings        []*corev2.RoleBinding
 		AllNamespaces       []*corev2.Namespace
 		ExpNamespaces       []*corev2.Namespace
-		ExpError            bool
+		WantErr             bool
 	}{
 		{
-			Name: "all access",
+			Name: "explicit access to all namespaces through ClusterRole & ClusterRoleBinding",
 			Attrs: &authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -118,9 +506,10 @@ func TestNamespaceList(t *testing.T) {
 			RoleBindings:  []*corev2.RoleBinding{},
 			AllNamespaces: namespaces,
 			ExpNamespaces: nil,
+			WantErr:       true,
 		},
 		{
-			Name: "partial access",
+			Name: "explicit partial access through ClusterRole & ClusterRoleBinding",
 			Attrs: &authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
@@ -134,33 +523,7 @@ func TestNamespaceList(t *testing.T) {
 			},
 			ClusterRoles: []*corev2.ClusterRole{
 				{
-					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
-					Rules: []corev2.Rule{
-						{
-							Verbs:     []string{corev2.VerbAll},
-							Resources: []string{corev2.ResourceAll},
-						},
-					},
-				},
-			},
-			ClusterRoleBindings: []*corev2.ClusterRoleBinding{
-				{
-					Subjects: []corev2.Subject{
-						{
-							Type: "Group",
-							Name: "cluster-admins",
-						},
-					},
-					RoleRef: corev2.RoleRef{
-						Type: "ClusterRole",
-						Name: "cluster-admin",
-					},
-					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
-				},
-			},
-			Roles: []*corev2.Role{
-				{
-					ObjectMeta: corev2.NewObjectMeta("pleb", "default"),
+					ObjectMeta: corev2.NewObjectMeta("pleb", ""),
 					Rules: []corev2.Rule{
 						{
 							Verbs:         []string{"get"},
@@ -170,7 +533,7 @@ func TestNamespaceList(t *testing.T) {
 					},
 				},
 			},
-			RoleBindings: []*corev2.RoleBinding{
+			ClusterRoleBindings: []*corev2.ClusterRoleBinding{
 				{
 					Subjects: []corev2.Subject{
 						{
@@ -179,10 +542,10 @@ func TestNamespaceList(t *testing.T) {
 						},
 					},
 					RoleRef: corev2.RoleRef{
-						Type: "Role",
+						Type: "ClusterRole",
 						Name: "pleb",
 					},
-					ObjectMeta: corev2.NewObjectMeta("pleb", "default"),
+					ObjectMeta: corev2.NewObjectMeta("pleb", ""),
 				},
 			},
 			AllNamespaces: namespaces,
@@ -193,12 +556,12 @@ func TestNamespaceList(t *testing.T) {
 			},
 		},
 		{
-			Name: "implicit access via resources in namespace",
+			Name: "implicit access through ClusterRole & ClusterRoleBinding",
 			Attrs: &authorization.Attributes{
 				APIGroup:     "core",
 				APIVersion:   "v2",
-				Namespace:    "a",
-				Resource:     corev2.ChecksResource,
+				Namespace:    "default",
+				Resource:     corev2.NamespacesResource,
 				ResourceName: "",
 				User: corev2.User{
 					Username: "regular-user",
@@ -207,11 +570,11 @@ func TestNamespaceList(t *testing.T) {
 			},
 			ClusterRoles: []*corev2.ClusterRole{
 				{
-					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+					ObjectMeta: corev2.NewObjectMeta("pleb", ""),
 					Rules: []corev2.Rule{
 						{
-							Verbs:     []string{corev2.VerbAll},
-							Resources: []string{corev2.ResourceAll},
+							Verbs:     []string{"get", "list"},
+							Resources: []string{corev2.ChecksResource},
 						},
 					},
 				},
@@ -221,14 +584,30 @@ func TestNamespaceList(t *testing.T) {
 					Subjects: []corev2.Subject{
 						{
 							Type: "Group",
-							Name: "cluster-admins",
+							Name: "plebs",
 						},
 					},
 					RoleRef: corev2.RoleRef{
 						Type: "ClusterRole",
-						Name: "cluster-admin",
+						Name: "pleb",
 					},
-					ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
+					ObjectMeta: corev2.NewObjectMeta("pleb", ""),
+				},
+			},
+			AllNamespaces: namespaces,
+			ExpNamespaces: namespaces,
+		},
+		{
+			Name: "implicit access through Role & RoleBinding",
+			Attrs: &authorization.Attributes{
+				APIGroup:     "core",
+				APIVersion:   "v2",
+				Namespace:    "a",
+				Resource:     corev2.ChecksResource,
+				ResourceName: "",
+				User: corev2.User{
+					Username: "regular-user",
+					Groups:   []string{"plebs"},
 				},
 			},
 			Roles: []*corev2.Role{
@@ -266,6 +645,93 @@ func TestNamespaceList(t *testing.T) {
 				namespaces[0],
 			},
 		},
+		{
+			Name: "implicit access through ClusterRole & RoleBinding",
+			Attrs: &authorization.Attributes{
+				APIGroup:     "core",
+				APIVersion:   "v2",
+				Namespace:    "a",
+				Resource:     corev2.ChecksResource,
+				ResourceName: "",
+				User: corev2.User{
+					Username: "regular-user",
+					Groups:   []string{"plebs"},
+				},
+			},
+			ClusterRoles: []*corev2.ClusterRole{
+				{
+					ObjectMeta: corev2.NewObjectMeta("pleb", ""),
+					Rules: []corev2.Rule{
+						{
+							Verbs:     []string{"get", "list"},
+							Resources: []string{corev2.ChecksResource},
+						},
+					},
+				},
+			},
+			RoleBindings: []*corev2.RoleBinding{
+				{
+					Subjects: []corev2.Subject{
+						{
+							Type: "Group",
+							Name: "plebs",
+						},
+					},
+					RoleRef: corev2.RoleRef{
+						Type: "ClusterRole",
+						Name: "pleb",
+					},
+					ObjectMeta: corev2.NewObjectMeta("pleb", "a"),
+				},
+			},
+			AllNamespaces: namespaces,
+			ExpNamespaces: []*corev2.Namespace{
+				namespaces[0],
+			},
+		},
+		{
+			Name: "explicit access to all namespaces can only be granted through ClusterRoleBindings",
+			Attrs: &authorization.Attributes{
+				APIGroup:   "core",
+				APIVersion: "v2",
+				Resource:   corev2.NamespacesResource,
+				User: corev2.User{
+					Username: "operator",
+					Groups:   []string{"local-admins"},
+				},
+			},
+			Roles: []*corev2.Role{
+				{
+					ObjectMeta: corev2.NewObjectMeta("local-admin", "a"),
+					Rules: []corev2.Rule{
+						{
+							Verbs:     []string{corev2.VerbAll},
+							Resources: []string{corev2.ResourceAll},
+						},
+					},
+				},
+			},
+			RoleBindings: []*corev2.RoleBinding{
+				{
+					Subjects: []corev2.Subject{
+						{
+							Type: "Group",
+							Name: "local-admins",
+						},
+					},
+					RoleRef: corev2.RoleRef{
+						Type: "Role",
+						Name: "local-admin",
+					},
+					ObjectMeta: corev2.NewObjectMeta("local-admin", "a"),
+				},
+			},
+			AllNamespaces: namespaces,
+			ExpNamespaces: []*corev2.Namespace{
+				namespaces[0],
+			},
+			WantErr: false,
+		},
 	}
 
 	for _, test := range tests {
@@ -287,8 +753,9 @@ func TestNamespaceList(t *testing.T) {
 			client := NewNamespaceClient(store, auth)
 
 			got, err := client.ListNamespaces(ctx)
-			if err != nil {
-				t.Fatal(err)
+			if (err != nil) != test.WantErr {
+				t.Errorf("NamespaceClient.ListNamespaces() error = %v, wantErr %v", err, test.WantErr)
+				return
 			}
 
 			sort.Slice(got, sortFunc(got))

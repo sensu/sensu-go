@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -26,8 +25,9 @@ import (
 )
 
 const (
-	dbName      = "commands.db"
-	commandName = "entrypoint"
+	dbName                 = "commands.db"
+	commandName            = "entrypoint"
+	sensuctlAssetNamespace = "sensuctl"
 )
 
 var (
@@ -142,23 +142,18 @@ func (m *CommandManager) InstallCommandFromBonsai(alias, bonsaiAssetName string)
 		return err
 	}
 
-	if version == nil {
-		fmt.Println("no version specified, using latest:", bonsaiAsset.LatestVersion())
-		version = bonsaiAsset.LatestVersion()
-	} else if !bonsaiAsset.HasVersion(version) {
-		availableVersions := bonsaiAsset.ValidVersions()
-		sort.Sort(goversion.Collection(availableVersions))
-		availableVersionStrs := []string{}
-		for _, v := range availableVersions {
-			availableVersionStrs = append(availableVersionStrs, v.String())
-		}
-		return fmt.Errorf("version \"%s\" of asset \"%s/%s\" does not exist\navailable versions: %s",
-			version, bAsset.Namespace, bAsset.Name, strings.Join(availableVersionStrs, ", "))
+	bonsaiVersion, err := bonsaiAsset.BonsaiVersion(version)
+	if err != nil {
+		return err
 	}
 
-	fmt.Printf("fetching bonsai asset: %s/%s:%s\n", bAsset.Namespace, bAsset.Name, version)
+	if version == nil {
+		fmt.Println("no version specified, using latest:", bonsaiVersion.Original())
+	}
 
-	assetJSON, err := m.bonsaiClient.FetchAssetVersion(bAsset.Namespace, bAsset.Name, version.String())
+	fmt.Printf("fetching bonsai asset: %s/%s:%s\n", bAsset.Namespace, bAsset.Name, bonsaiVersion.Original())
+
+	assetJSON, err := m.bonsaiClient.FetchAssetVersion(bAsset.Namespace, bAsset.Name, bonsaiVersion.Original())
 	if err != nil {
 		return err
 	}
@@ -167,6 +162,8 @@ func (m *CommandManager) InstallCommandFromBonsai(alias, bonsaiAssetName string)
 	if err := json.Unmarshal([]byte(assetJSON), &asset); err != nil {
 		return err
 	}
+
+	asset.Namespace = sensuctlAssetNamespace
 
 	if err := asset.Validate(); err != nil {
 		return err
@@ -198,7 +195,7 @@ func (m *CommandManager) InstallCommandFromBonsai(alias, bonsaiAssetName string)
 func (m *CommandManager) InstallCommandFromURL(alias, archiveURL, checksum string) error {
 	meta := corev2.ObjectMeta{
 		Name:      alias,
-		Namespace: "sensuctl",
+		Namespace: sensuctlAssetNamespace,
 	}
 	asset := corev2.Asset{
 		Builds: []*corev2.AssetBuild{

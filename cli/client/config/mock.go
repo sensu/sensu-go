@@ -56,6 +56,12 @@ func (m *MockConfig) SaveFormat(format string) error {
 	return args.Error(0)
 }
 
+// SaveInsecureSkipTLSVerify ...
+func (m *MockConfig) SaveInsecureSkipTLSVerify(verify bool) error {
+	args := m.Called(verify)
+	return args.Error(0)
+}
+
 // SaveNamespace mocks saving the namespace
 func (m *MockConfig) SaveNamespace(namespace string) error {
 	args := m.Called(namespace)
@@ -65,6 +71,12 @@ func (m *MockConfig) SaveNamespace(namespace string) error {
 // SaveTokens mocks saving the tokens
 func (m *MockConfig) SaveTokens(tokens *corev2.Tokens) error {
 	args := m.Called(tokens)
+	return args.Error(0)
+}
+
+// SaveTrustedCAFile ...
+func (m *MockConfig) SaveTrustedCAFile(file string) error {
+	args := m.Called(file)
 	return args.Error(0)
 }
 

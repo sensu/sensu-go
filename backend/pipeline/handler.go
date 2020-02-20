@@ -154,6 +154,7 @@ func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level 
 				continue
 			}
 
+			logger.WithFields(fields).Info("handler does not exist, will be ignored")
 			continue // remove this line if you enable the stuff below
 
 			// TODO: this code enables extension handler lookups, but for now,

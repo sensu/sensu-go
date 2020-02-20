@@ -25,6 +25,8 @@ func ListCommand(cli *cli.SensuCli) *cobra.Command {
 		RunE:  listCommandExecute(cli),
 	}
 
+	helpers.AddFormatFlag(cmd.Flags())
+
 	return cmd
 }
 

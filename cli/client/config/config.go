@@ -45,6 +45,8 @@ type Read interface {
 type Write interface {
 	SaveAPIUrl(string) error
 	SaveFormat(string) error
+	SaveInsecureSkipTLSVerify(bool) error
 	SaveNamespace(string) error
 	SaveTokens(*types.Tokens) error
+	SaveTrustedCAFile(string) error
 }
