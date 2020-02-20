@@ -6,6 +6,10 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- Added `flapping` field to check history, along with `is_flapping_start` and
+  `is_flapping_end` event properties for use by filters.
+- Fixed bug where flapping would incorrectly end when `total_state_change` was below
+  `high_flap_threshold` instead of below `low_flap_threshold`.
 
 ## [5.18.0] - 2020-02-24
 
@@ -60,8 +64,6 @@ the absolute file path in the cluster config.
 - Added the secrets provider interface and secrets provider manager to be used
 by commercial secrets providers. Implemented for checks, mutators, and handlers.
 - Added the `secrets` field to checks, mutators, and handlers.
-- Added `flapping` field to check history, along with `is_flapping_start` and
-  `is_flapping_end` event properties for use by filters.
 - Added the `keepalive-handlers` configuration flag on the agent to specify the
 entity's keepalive handlers.
 - Added `event.entity.name` as a supported field selector.
@@ -76,8 +78,6 @@ chart.
 crash.
 - Fixed a bug where `sensuctl entity delete` was not returning an error
 when attempting to delete a non-existent entity.
-- Fixed bug where flapping would incorrectly end when `total_state_change` was below
-  `high_flap_threshold` instead of below `low_flap_threshold`.
 - sensuctl command assets installed via Bonsai will now use the "sensuctl"
 namespace.
 - Fixed a memory leak in the entity cache
