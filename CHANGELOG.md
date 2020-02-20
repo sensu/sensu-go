@@ -24,6 +24,8 @@ the default sensuctl configuration.
 ### Changed
 - Updated Go version from 1.13.5 to 1.13.7.
 - Default `event.entity.entity_class` to `proxy` in the POST/PUT `/events` API.
+- Proxy entities are now automatically created when events are published with an
+entity that does not exist.
 
 ## [5.17.2] - 2020-02-19
 

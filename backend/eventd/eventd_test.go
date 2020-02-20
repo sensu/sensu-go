@@ -81,6 +81,9 @@ func TestEventHandling(t *testing.T) {
 
 	event := corev2.FixtureEvent("entity", "check")
 
+	mockStore.On("GetEntityByName", mock.Anything, "entity").
+		Return(event.Entity, nil)
+
 	var nilEvent *corev2.Event
 	// no previous event.
 	mockStore.On(
@@ -132,6 +135,9 @@ func TestEventMonitor(t *testing.T) {
 
 	event := corev2.FixtureEvent("entity", "check")
 	event.Check.Ttl = 90
+
+	mockStore.On("GetEntityByName", mock.Anything, "entity").
+		Return(event.Entity, nil)
 
 	var nilEvent *corev2.Event
 	// no previous event.
@@ -247,7 +253,7 @@ func TestCheckTTL(t *testing.T) {
 				tt.switchesFunc(switches)
 			}
 
-			mockEvent := corev2.FixtureEvent("default", "mock")
+			mockEvent := corev2.FixtureEvent("entity", "mock")
 
 			e := &Eventd{
 				store:           store,
@@ -263,6 +269,8 @@ func TestCheckTTL(t *testing.T) {
 			require.NoError(t, err)
 			require.NoError(t, e.bus.Start())
 
+			store.On("GetEntityByName", mock.Anything, "entity").
+				Return(mockEvent.Entity, nil)
 			store.On("GetEventByEntityCheck", mock.Anything, "entity", "check").
 				Return(tt.previousEvent, tt.previousEventErr)
 			store.On("GetSilencedEntriesBySubscription", mock.Anything, mock.Anything).
@@ -305,7 +313,7 @@ func TestBuryConditions(t *testing.T) {
 			name: "do not bury switch on entity lookup error",
 			key:  "default/foo/bar",
 			store: func(store *mockstore.MockStore) {
-				store.On("GetEntityByName", mock.Anything, "bar").Return((*corev2.Entity)(nil), errors.New("!"))
+				store.On("GetEntityByName", mock.Anything, "bar").Return((*corev2.Entity)(nil), errors.New("error"))
 				store.On("GetEventByEntityCheck", mock.Anything, "bar", "keepalive").Return(corev2.FixtureEvent("bar", "keepalive"), nil)
 			},
 			bury: false,
