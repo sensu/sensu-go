@@ -180,6 +180,10 @@ func (c *Check) Validate() error {
 		}
 	}
 
+	if c.Command == "" {
+		return errors.New("command can not be empty")
+	}
+
 	if c.ProxyRequests != nil {
 		if err := c.ProxyRequests.Validate(); err != nil {
 			return err
