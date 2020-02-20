@@ -16,7 +16,7 @@ type Handlers struct {
 
 // CheckMeta inspects the resource metadata and ensures it matches what was
 // specified in the request URL
-func CheckMeta(resource interface{}, vars map[string]string) error {
+func CheckMeta(resource interface{}, vars map[string]string, idVar string) error {
 	v, ok := resource.(interface{ GetObjectMeta() corev2.ObjectMeta })
 	if !ok {
 		// We are not dealing with a corev2.Resource interface
@@ -27,10 +27,6 @@ func CheckMeta(resource interface{}, vars map[string]string) error {
 	if err != nil {
 		return err
 	}
-	id, err := url.PathUnescape(vars["id"])
-	if err != nil {
-		return err
-	}
 
 	if meta.Namespace != namespace && namespace != "" {
 		return fmt.Errorf(
@@ -38,6 +34,17 @@ func CheckMeta(resource interface{}, vars map[string]string) error {
 			meta.Namespace,
 			namespace,
 		)
+	}
+
+	// The URL path name that holds the resource ID might differ, but fallback
+	// to "id" if not provided
+	if idVar == "" {
+		idVar = "id"
+	}
+
+	id, err := url.PathUnescape(vars[idVar])
+	if err != nil {
+		return err
 	}
 
 	if meta.Name != id && id != "" {
