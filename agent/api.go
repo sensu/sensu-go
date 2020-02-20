@@ -13,6 +13,7 @@ import (
 	"github.com/sensu/lasr"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/version"
 	"golang.org/x/time/rate"
 )
 
@@ -20,6 +21,11 @@ import (
 type APIConfig struct {
 	Host string
 	Port int
+}
+
+// sensuVersion contains the API response for version
+type sensuVersion struct {
+	Version string `json:"version"`
 }
 
 // newServer returns a new HTTP server
@@ -40,6 +46,7 @@ func newServer(a *Agent) *http.Server {
 func registerRoutes(a *Agent, r *mux.Router) {
 	r.HandleFunc("/events", addEvent(a)).Methods(http.MethodPost)
 	r.HandleFunc("/healthz", healthz(a.Connected)).Methods(http.MethodGet)
+	r.HandleFunc("/version", versionShow()).Methods(http.MethodGet)
 	r.Handle("/metrics", promhttp.Handler())
 }
 
@@ -53,6 +60,27 @@ func healthz(connected func() bool) http.HandlerFunc {
 			return
 		}
 		_, _ = fmt.Fprint(w, "ok")
+	}
+}
+
+// sensuVersion returns the version of Sensu
+func versionShow() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		versionJSON := sensuVersion{Version: version.Semver()}
+
+		// Encode response
+		w.Header().Set("Content-Type", "application/json")
+		json, err := json.Marshal(versionJSON)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		_, err = w.Write(json)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
 	}
 }
 
