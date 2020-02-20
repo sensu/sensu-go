@@ -213,6 +213,7 @@ func FixtureConfig() (*Config, func()) {
 		KeepaliveWarningTimeout: corev2.DefaultKeepaliveTimeout,
 		Namespace:               DefaultNamespace,
 		Password:                DefaultPassword,
+		Subscriptions: 		     []string{"linux"},
 		Socket: &SocketConfig{
 			Host: DefaultSocketHost,
 			Port: DefaultSocketPort,

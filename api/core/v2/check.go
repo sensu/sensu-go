@@ -196,6 +196,10 @@ func (c *Check) Validate() error {
 		return errors.New("invalid flap thresholds")
 	}
 
+	if len(c.Subscriptions)	== 0 {
+		return errors.New("subscriptions can not be empty")
+	}
+
 	if err := ValidateEnvVars(c.EnvVars); err != nil {
 		return err
 	}

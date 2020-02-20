@@ -17,7 +17,7 @@ func TestCheckValidate(t *testing.T) {
 	c.Interval = 10
 
 	c.Name = "test"
-
+	c.Subscriptions = []string{"linux"}
 	assert.NoError(t, c.Validate())
 }
 
@@ -98,6 +98,16 @@ func TestCheckHasNonNilSubscriptions(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, json.Unmarshal(b, &c))
 	require.NotNil(t, c.Subscriptions)
+}
+
+func TestCheckHasEmptySubscriptionsError(t *testing.T) {
+	c := FixtureCheck("foo")
+	c.Subscriptions = []string{}
+	b, err := json.Marshal(&c)
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(b, &c))
+	err = c.Validate()
+	require.EqualError(t, err, "subscriptions can not be empty")
 }
 
 func TestCheckHasNonNilHandlers(t *testing.T) {

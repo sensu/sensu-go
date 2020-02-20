@@ -67,6 +67,7 @@ func TestKeepaliveMonitor(t *testing.T) {
 				Name:      "keepalive",
 				Namespace: "default",
 			},
+			Subscriptions: []string{"linux"},
 			Interval: 1,
 			Timeout:  5,
 		},

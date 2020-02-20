@@ -39,6 +39,7 @@ func TestCheckConfig(t *testing.T) {
 
 	// Valid check
 	c.Ttl = 90
+	c.Subscriptions = []string{"linux"}
 	assert.NoError(t, c.Validate())
 }
 
@@ -56,6 +57,16 @@ func TestCheckConfigHasNonNilHandlers(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, json.Unmarshal(b, &c))
 	require.NotNil(t, c.Handlers)
+}
+
+func TestCheckConfigHasEmptySubscriptionsError(t *testing.T) {
+	c := FixtureCheckConfig("foo")
+	c.Subscriptions = []string{}
+	b, err := json.Marshal(&c)
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(b, &c))
+	err = c.Validate()
+	require.EqualError(t, err, "subscriptions can not be empty")
 }
 
 func TestCheckConfigFlapThresholdValidation(t *testing.T) {

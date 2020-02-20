@@ -106,6 +106,10 @@ func (c *CheckConfig) Validate() error {
 		return errors.New("namespace must be set")
 	}
 
+	if len(c.Subscriptions)	== 0 {
+		return errors.New("subscriptions can not be empty")
+	}
+
 	if c.Ttl > 0 && c.Ttl <= int64(c.Interval) {
 		return errors.New("ttl must be greater than check interval")
 	}
