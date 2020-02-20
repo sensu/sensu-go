@@ -71,11 +71,12 @@ func (a *AuthenticationClient) TestCreds(ctx context.Context, username, password
 	if basic, ok := providers[basic.Type]; ok {
 		if _, err := basic.Authenticate(ctx, username, password); err == nil {
 			return nil
+		} else {
+			return err
 		}
-		return errors.New("basic provider is disabled")
 	}
 
-	return errors.New("invalid username and/or password")
+	return errors.New("basic provider is disabled")
 }
 
 // Logout logs a user out. The context must carry the user's access and refresh

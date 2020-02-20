@@ -13,6 +13,10 @@ import (
 // Type represents the type of the basic authentication provider
 const Type = "basic"
 
+// ErrEmptyUsernamePassword is the error returned by the provider when one tries
+// to authenticate with empty username and password.
+var ErrEmptyUsernamePassword = errors.New("the username and the password must not be empty")
+
 // Provider represents the basic internal authentication provider
 type Provider struct {
 	Store store.Store
@@ -24,7 +28,7 @@ type Provider struct {
 // Authenticate a user, with the provided credentials, against the Sensu store
 func (p *Provider) Authenticate(ctx context.Context, username, password string) (*corev2.Claims, error) {
 	if username == "" || password == "" {
-		return nil, errors.New("the username and the password must not be empty")
+		return nil, ErrEmptyUsernamePassword
 	}
 
 	user, err := p.Store.AuthenticateUser(ctx, username, password)

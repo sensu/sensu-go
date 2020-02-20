@@ -28,6 +28,9 @@ the default sensuctl configuration.
 - Fixed a bug where on an internal restart, enterprise HTTP routes could fail
 to intialize.
 
+### Fixed
+- The `auth/test` endpoint now returns the correct error messages.
+
 ## [5.17.1] - 2020-01-31
 
 ### Fixed

@@ -106,6 +106,8 @@ func TestCreateAccessToken(t *testing.T) {
 }
 
 func TestTestCreds(t *testing.T) {
+	mockError := errors.New("error")
+
 	tests := []struct {
 		Name          string
 		Username      string
@@ -122,22 +124,22 @@ func TestTestCreds(t *testing.T) {
 			Authenticator: defaultAuth,
 			Context:       context.Background,
 			WantError:     true,
-			Error:         corev2.ErrUnauthorized,
+			Error:         basic.ErrEmptyUsernamePassword,
 		},
 		{
-			Name:     "invalid credentials",
+			Name:     "bubble up authentication error",
 			Username: "foo",
 			Password: "P@ssw0rd!",
 			Store: func() store.Store {
+				s := &mockstore.MockStore{}
 				user := corev2.FixtureUser("foo")
-				store := &mockstore.MockStore{}
-				store.On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").Return(user, errors.New("error"))
-				return store
+				s.On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").Return(user, mockError)
+				return s
 			},
 			Authenticator: defaultAuth,
 			Context:       context.Background,
 			WantError:     true,
-			Error:         corev2.ErrUnauthorized,
+			Error:         mockError,
 		},
 		{
 			Name:     "success",
@@ -145,10 +147,10 @@ func TestTestCreds(t *testing.T) {
 			Password: "P@ssw0rd!",
 			Context:  context.Background,
 			Store: func() store.Store {
-				store := &mockstore.MockStore{}
+				s := &mockstore.MockStore{}
 				user := corev2.FixtureUser("foo")
-				store.On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").Return(user, nil)
-				return store
+				s.On("AuthenticateUser", mock.Anything, "foo", "P@ssw0rd!").Return(user, nil)
+				return s
 			},
 			Authenticator: defaultAuth,
 		},
@@ -158,14 +160,13 @@ func TestTestCreds(t *testing.T) {
 			store := test.Store()
 			authn := NewAuthenticationClient(test.Authenticator(store))
 			err := authn.TestCreds(test.Context(), test.Username, test.Password)
-			if test.WantError && err == nil {
-				t.Fatal("want error, got nil")
-				if test.Error != nil && test.Error != err {
-					t.Fatalf("bad error: got %v, want %v", err, test.Error)
-				}
+
+			if test.WantError && test.Error != err {
+				t.Fatalf("bad error: got %v, want %v", err, test.Error)
 			}
+
 			if !test.WantError && err != nil {
-				t.Fatal(err)
+				t.Fatalf("expected no error, go %v", err)
 			}
 		})
 	}
