@@ -16,6 +16,7 @@ certain circonstances.
 - When `--trusted-ca-file` is used to configure sensuctl, it now detects and saves
 the absolute file path in the cluster config.
 - [Web] Changing order on event list will no longer cause filters to be reset.
+- [Web] URLs inside annotations are now rendered as links.
 
 ## [5.17.0] - 2020-01-28
 
