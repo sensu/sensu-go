@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.18.0] - 2020-02-24
+
 ### Added
 - [agent] Added `/version` API
 
