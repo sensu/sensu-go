@@ -11,7 +11,6 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
-	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -23,7 +22,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // Asset defines an asset and optionally a list of assets (builds) that agents install as a dependency for a check, handler, mutator, etc.
 type Asset struct {
@@ -61,7 +60,7 @@ func (m *Asset) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_Asset.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := m.MarshalTo(b)
 		if err != nil {
 			return nil, err
 		}
@@ -112,7 +111,7 @@ func (m *AssetBuild) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_AssetBuild.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := m.MarshalTo(b)
 		if err != nil {
 			return nil, err
 		}
@@ -371,7 +370,7 @@ func NewAssetBuildFromFace(that AssetBuildFace) *AssetBuild {
 func (m *Asset) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalTo(dAtA)
 	if err != nil {
 		return nil, err
 	}
@@ -379,92 +378,84 @@ func (m *Asset) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Asset) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *Asset) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
+	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if len(m.Headers) > 0 {
-		for k := range m.Headers {
-			v := m.Headers[k]
-			baseI := i
-			i -= len(v)
-			copy(dAtA[i:], v)
-			i = encodeVarintAsset(dAtA, i, uint64(len(v)))
-			i--
-			dAtA[i] = 0x12
-			i -= len(k)
-			copy(dAtA[i:], k)
-			i = encodeVarintAsset(dAtA, i, uint64(len(k)))
-			i--
-			dAtA[i] = 0xa
-			i = encodeVarintAsset(dAtA, i, uint64(baseI-i))
-			i--
-			dAtA[i] = 0x4a
-		}
-	}
-	{
-		size, err := m.ObjectMeta.MarshalToSizedBuffer(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = encodeVarintAsset(dAtA, i, uint64(size))
-	}
-	i--
-	dAtA[i] = 0x42
-	if len(m.Builds) > 0 {
-		for iNdEx := len(m.Builds) - 1; iNdEx >= 0; iNdEx-- {
-			{
-				size, err := m.Builds[iNdEx].MarshalToSizedBuffer(dAtA[:i])
-				if err != nil {
-					return 0, err
-				}
-				i -= size
-				i = encodeVarintAsset(dAtA, i, uint64(size))
-			}
-			i--
-			dAtA[i] = 0x32
-		}
-	}
-	if len(m.Filters) > 0 {
-		for iNdEx := len(m.Filters) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Filters[iNdEx])
-			copy(dAtA[i:], m.Filters[iNdEx])
-			i = encodeVarintAsset(dAtA, i, uint64(len(m.Filters[iNdEx])))
-			i--
-			dAtA[i] = 0x2a
-		}
+	if len(m.URL) > 0 {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintAsset(dAtA, i, uint64(len(m.URL)))
+		i += copy(dAtA[i:], m.URL)
 	}
 	if len(m.Sha512) > 0 {
-		i -= len(m.Sha512)
-		copy(dAtA[i:], m.Sha512)
-		i = encodeVarintAsset(dAtA, i, uint64(len(m.Sha512)))
-		i--
 		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintAsset(dAtA, i, uint64(len(m.Sha512)))
+		i += copy(dAtA[i:], m.Sha512)
 	}
-	if len(m.URL) > 0 {
-		i -= len(m.URL)
-		copy(dAtA[i:], m.URL)
-		i = encodeVarintAsset(dAtA, i, uint64(len(m.URL)))
-		i--
-		dAtA[i] = 0x12
+	if len(m.Filters) > 0 {
+		for _, s := range m.Filters {
+			dAtA[i] = 0x2a
+			i++
+			l = len(s)
+			for l >= 1<<7 {
+				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
+				l >>= 7
+				i++
+			}
+			dAtA[i] = uint8(l)
+			i++
+			i += copy(dAtA[i:], s)
+		}
 	}
-	return len(dAtA) - i, nil
+	if len(m.Builds) > 0 {
+		for _, msg := range m.Builds {
+			dAtA[i] = 0x32
+			i++
+			i = encodeVarintAsset(dAtA, i, uint64(msg.Size()))
+			n, err := msg.MarshalTo(dAtA[i:])
+			if err != nil {
+				return 0, err
+			}
+			i += n
+		}
+	}
+	dAtA[i] = 0x42
+	i++
+	i = encodeVarintAsset(dAtA, i, uint64(m.ObjectMeta.Size()))
+	n1, err := m.ObjectMeta.MarshalTo(dAtA[i:])
+	if err != nil {
+		return 0, err
+	}
+	i += n1
+	if len(m.Headers) > 0 {
+		for k, _ := range m.Headers {
+			dAtA[i] = 0x4a
+			i++
+			v := m.Headers[k]
+			mapSize := 1 + len(k) + sovAsset(uint64(len(k))) + 1 + len(v) + sovAsset(uint64(len(v)))
+			i = encodeVarintAsset(dAtA, i, uint64(mapSize))
+			dAtA[i] = 0xa
+			i++
+			i = encodeVarintAsset(dAtA, i, uint64(len(k)))
+			i += copy(dAtA[i:], k)
+			dAtA[i] = 0x12
+			i++
+			i = encodeVarintAsset(dAtA, i, uint64(len(v)))
+			i += copy(dAtA[i:], v)
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
 }
 
 func (m *AssetBuild) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalTo(dAtA)
 	if err != nil {
 		return nil, err
 	}
@@ -472,74 +463,68 @@ func (m *AssetBuild) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *AssetBuild) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *AssetBuild) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
+	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	if len(m.Headers) > 0 {
-		for k := range m.Headers {
-			v := m.Headers[k]
-			baseI := i
-			i -= len(v)
-			copy(dAtA[i:], v)
-			i = encodeVarintAsset(dAtA, i, uint64(len(v)))
-			i--
-			dAtA[i] = 0x12
-			i -= len(k)
-			copy(dAtA[i:], k)
-			i = encodeVarintAsset(dAtA, i, uint64(len(k)))
-			i--
-			dAtA[i] = 0xa
-			i = encodeVarintAsset(dAtA, i, uint64(baseI-i))
-			i--
-			dAtA[i] = 0x4a
-		}
-	}
-	if len(m.Filters) > 0 {
-		for iNdEx := len(m.Filters) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Filters[iNdEx])
-			copy(dAtA[i:], m.Filters[iNdEx])
-			i = encodeVarintAsset(dAtA, i, uint64(len(m.Filters[iNdEx])))
-			i--
-			dAtA[i] = 0x2a
-		}
+	if len(m.URL) > 0 {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintAsset(dAtA, i, uint64(len(m.URL)))
+		i += copy(dAtA[i:], m.URL)
 	}
 	if len(m.Sha512) > 0 {
-		i -= len(m.Sha512)
-		copy(dAtA[i:], m.Sha512)
-		i = encodeVarintAsset(dAtA, i, uint64(len(m.Sha512)))
-		i--
 		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintAsset(dAtA, i, uint64(len(m.Sha512)))
+		i += copy(dAtA[i:], m.Sha512)
 	}
-	if len(m.URL) > 0 {
-		i -= len(m.URL)
-		copy(dAtA[i:], m.URL)
-		i = encodeVarintAsset(dAtA, i, uint64(len(m.URL)))
-		i--
-		dAtA[i] = 0x12
+	if len(m.Filters) > 0 {
+		for _, s := range m.Filters {
+			dAtA[i] = 0x2a
+			i++
+			l = len(s)
+			for l >= 1<<7 {
+				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
+				l >>= 7
+				i++
+			}
+			dAtA[i] = uint8(l)
+			i++
+			i += copy(dAtA[i:], s)
+		}
 	}
-	return len(dAtA) - i, nil
+	if len(m.Headers) > 0 {
+		for k, _ := range m.Headers {
+			dAtA[i] = 0x4a
+			i++
+			v := m.Headers[k]
+			mapSize := 1 + len(k) + sovAsset(uint64(len(k))) + 1 + len(v) + sovAsset(uint64(len(v)))
+			i = encodeVarintAsset(dAtA, i, uint64(mapSize))
+			dAtA[i] = 0xa
+			i++
+			i = encodeVarintAsset(dAtA, i, uint64(len(k)))
+			i += copy(dAtA[i:], k)
+			dAtA[i] = 0x12
+			i++
+			i = encodeVarintAsset(dAtA, i, uint64(len(v)))
+			i += copy(dAtA[i:], v)
+		}
+	}
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	return i, nil
 }
 
 func encodeVarintAsset(dAtA []byte, offset int, v uint64) int {
-	offset -= sovAsset(v)
-	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return base
+	return offset + 1
 }
 func NewPopulatedAsset(r randyAsset, easy bool) *Asset {
 	this := &Asset{}
@@ -550,7 +535,7 @@ func NewPopulatedAsset(r randyAsset, easy bool) *Asset {
 	for i := 0; i < v1; i++ {
 		this.Filters[i] = string(randStringAsset(r))
 	}
-	if r.Intn(5) != 0 {
+	if r.Intn(10) != 0 {
 		v2 := r.Intn(5)
 		this.Builds = make([]*AssetBuild, v2)
 		for i := 0; i < v2; i++ {
@@ -559,7 +544,7 @@ func NewPopulatedAsset(r randyAsset, easy bool) *Asset {
 	}
 	v3 := NewPopulatedObjectMeta(r, easy)
 	this.ObjectMeta = *v3
-	if r.Intn(5) != 0 {
+	if r.Intn(10) != 0 {
 		v4 := r.Intn(10)
 		this.Headers = make(map[string]string)
 		for i := 0; i < v4; i++ {
@@ -581,7 +566,7 @@ func NewPopulatedAssetBuild(r randyAsset, easy bool) *AssetBuild {
 	for i := 0; i < v5; i++ {
 		this.Filters[i] = string(randStringAsset(r))
 	}
-	if r.Intn(5) != 0 {
+	if r.Intn(10) != 0 {
 		v6 := r.Intn(10)
 		this.Headers = make(map[string]string)
 		for i := 0; i < v6; i++ {
@@ -743,7 +728,14 @@ func (m *AssetBuild) Size() (n int) {
 }
 
 func sovAsset(x uint64) (n int) {
-	return (math_bits.Len64(x|1) + 6) / 7
+	for {
+		n++
+		x >>= 7
+		if x == 0 {
+			break
+		}
+	}
+	return n
 }
 func sozAsset(x uint64) (n int) {
 	return sovAsset(uint64((x << 1) ^ uint64((int64(x) >> 63))))

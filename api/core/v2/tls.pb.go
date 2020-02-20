@@ -10,7 +10,6 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
-	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -22,7 +21,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // TLSOptions holds TLS options that are used across the varying Sensu
 // components
@@ -51,7 +50,7 @@ func (m *TLSOptions) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_TLSOptions.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
+		n, err := m.MarshalTo(b)
 		if err != nil {
 			return nil, err
 		}
@@ -177,7 +176,7 @@ func (this *TLSOptions) Equal(that interface{}) bool {
 func (m *TLSOptions) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	n, err := m.MarshalTo(dAtA)
 	if err != nil {
 		return nil, err
 	}
@@ -185,73 +184,62 @@ func (m *TLSOptions) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *TLSOptions) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *TLSOptions) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
+	var i int
 	_ = i
 	var l int
 	_ = l
-	if m.XXX_unrecognized != nil {
-		i -= len(m.XXX_unrecognized)
-		copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.CertFile) > 0 {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintTls(dAtA, i, uint64(len(m.CertFile)))
+		i += copy(dAtA[i:], m.CertFile)
 	}
-	if m.ClientAuthType {
-		i--
-		if m.ClientAuthType {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x28
+	if len(m.KeyFile) > 0 {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintTls(dAtA, i, uint64(len(m.KeyFile)))
+		i += copy(dAtA[i:], m.KeyFile)
+	}
+	if len(m.TrustedCAFile) > 0 {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintTls(dAtA, i, uint64(len(m.TrustedCAFile)))
+		i += copy(dAtA[i:], m.TrustedCAFile)
 	}
 	if m.InsecureSkipVerify {
-		i--
+		dAtA[i] = 0x20
+		i++
 		if m.InsecureSkipVerify {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
 		}
-		i--
-		dAtA[i] = 0x20
+		i++
 	}
-	if len(m.TrustedCAFile) > 0 {
-		i -= len(m.TrustedCAFile)
-		copy(dAtA[i:], m.TrustedCAFile)
-		i = encodeVarintTls(dAtA, i, uint64(len(m.TrustedCAFile)))
-		i--
-		dAtA[i] = 0x1a
+	if m.ClientAuthType {
+		dAtA[i] = 0x28
+		i++
+		if m.ClientAuthType {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i++
 	}
-	if len(m.KeyFile) > 0 {
-		i -= len(m.KeyFile)
-		copy(dAtA[i:], m.KeyFile)
-		i = encodeVarintTls(dAtA, i, uint64(len(m.KeyFile)))
-		i--
-		dAtA[i] = 0x12
+	if m.XXX_unrecognized != nil {
+		i += copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	if len(m.CertFile) > 0 {
-		i -= len(m.CertFile)
-		copy(dAtA[i:], m.CertFile)
-		i = encodeVarintTls(dAtA, i, uint64(len(m.CertFile)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
+	return i, nil
 }
 
 func encodeVarintTls(dAtA []byte, offset int, v uint64) int {
-	offset -= sovTls(v)
-	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return base
+	return offset + 1
 }
 func NewPopulatedTLSOptions(r randyTls, easy bool) *TLSOptions {
 	this := &TLSOptions{}
@@ -369,7 +357,14 @@ func (m *TLSOptions) Size() (n int) {
 }
 
 func sovTls(x uint64) (n int) {
-	return (math_bits.Len64(x|1) + 6) / 7
+	for {
+		n++
+		x >>= 7
+		if x == 0 {
+			break
+		}
+	}
+	return n
 }
 func sozTls(x uint64) (n int) {
 	return sovTls(uint64((x << 1) ^ uint64((int64(x) >> 63))))

@@ -263,9 +263,6 @@ func TestEventCreateOrReplace(t *testing.T) {
 	badEvent := corev2.FixtureEvent("entity1", "check1")
 	badEvent.Check.Name = "!@#!#$@#^$%&$%&$&$%&%^*%&(%@###"
 
-	eventNoClass := corev2.FixtureEvent("entity1", "check1")
-	eventNoClass.Entity.EntityClass = ""
-
 	testCases := []struct {
 		name            string
 		ctx             context.Context
@@ -302,12 +299,6 @@ func TestEventCreateOrReplace(t *testing.T) {
 			busErr:          errors.New("where's the wizard"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
-		},
-		{
-			name:        "Default entity class",
-			ctx:         defaultCtx,
-			argument:    eventNoClass,
-			expectedErr: false,
 		},
 	}
 

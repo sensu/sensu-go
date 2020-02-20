@@ -23,7 +23,7 @@ require (
 	github.com/frankban/quicktest v1.7.2 // indirect
 	github.com/ghodss/yaml v1.0.0
 	github.com/go-ole/go-ole v0.0.0-20170209151332-de8695c8edbf // indirect
-	github.com/go-resty/resty/v2 v2.1.0
+	github.com/go-resty/resty v0.0.0-20170925192930-9ac9c42358f7
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/groupcache v0.0.0-20191002201903-404acd9df4cc // indirect
 	github.com/golang/protobuf v1.3.2

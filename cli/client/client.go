@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/go-resty/resty/v2"
+	"github.com/go-resty/resty"
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sirupsen/logrus"
 )
@@ -104,7 +104,12 @@ func New(config config.Config) *RestClient {
 		return nil
 	})
 
-	restyInst.SetLogger(logger)
+	// logging
+	w := logger.Writer()
+	defer func() {
+		_ = w.Close()
+	}()
+	restyInst.SetLogger(w)
 
 	return client
 }

@@ -46,9 +46,6 @@ func httpGet(ctx context.Context, path string, headers map[string]string) (io.Re
 	if err != nil {
 		return nil, fmt.Errorf("error fetching asset: %s", err)
 	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("error fetching asset: Response Code %d", resp.StatusCode)
-	}
 
 	return resp.Body, nil
 }

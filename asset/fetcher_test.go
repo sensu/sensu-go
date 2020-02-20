@@ -71,17 +71,3 @@ func TestHTTPGet(t *testing.T) {
 	assert.NotNil(t, closer)
 	assert.NoError(t, err)
 }
-
-func TestHTTPGetNon200(t *testing.T) {
-	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, []string{"bar"}, r.Header["Foo"])
-		assert.Equal(t, []string{"hello", "sup"}, r.Header["Hi"])
-		w.WriteHeader(http.StatusNotFound)
-	}))
-	defer ts.Close()
-
-	headers := map[string]string{"foo": "bar", "hi": "hello, sup"}
-	closer, err := httpGet(context.Background(), ts.URL, headers)
-	assert.Nil(t, closer)
-	assert.EqualError(t, err, "error fetching asset: Response Code 404")
-}

@@ -11,9 +11,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - [agent] Added `/version` API
 
 ### Fixed
-- sensuctl now supports the http_proxy, https_proxy, and no_proxy environment
-variables.
-- returns 401 instead of 500 when issues occur refreshing the access token.
 - Support Bonsai assets versions prefixed with the letter `v`.
 - Fixed a bug where wrapped resources were not getting their namespaces set by
 the default sensuctl configuration.
@@ -36,6 +33,11 @@ to intialize.
 
 ### Fixed
 - The `auth/test` endpoint now returns the correct error messages.
+## [5.17.2] - 2020-02-19
+
+### Fixed
+- Fixed a bug where on an internal restart, enterprise HTTP routes could fail
+to intialize.
 
 ## [5.17.1] - 2020-01-31
 
@@ -59,7 +61,6 @@ by commercial secrets providers. Implemented for checks, mutators, and handlers.
 - Added the `keepalive-handlers` configuration flag on the agent to specify the
 entity's keepalive handlers.
 - Added `event.entity.name` as a supported field selector.
-- Indicate in log messages which filter dropped an event.
 
 ### Fixed
 - Fixed a memory leak in the entity cache.

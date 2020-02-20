@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/go-resty/resty/v2"
+	"github.com/go-resty/resty"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 

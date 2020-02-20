@@ -76,10 +76,9 @@ func evaluateEventFilter(event *corev2.Event, filter *corev2.EventFilter, assets
 	return false
 }
 
-// filterEvent filters a Sensu event, determining if it will continue through
-// the Sensu pipeline. Returns the filter's name if the event was filtered and
-// any error encountered
-func (p *Pipeline) filterEvent(handler *corev2.Handler, event *corev2.Event) (string, error) {
+// filterEvent filters a Sensu event, determining if it will continue
+// through the Sensu pipeline. Returns true if the event should be filtered/denied.
+func (p *Pipeline) filterEvent(handler *corev2.Handler, event *corev2.Event) (bool, error) {
 	// Prepare the logging
 	fields := utillogging.EventFields(event, false)
 	fields["handler"] = handler.Name
@@ -94,19 +93,19 @@ func (p *Pipeline) filterEvent(handler *corev2.Handler, event *corev2.Event) (st
 			// Deny an event if it is neither an incident nor resolution.
 			if !event.IsIncident() && !event.IsResolution() {
 				logger.WithFields(fields).Debug("denying event that is not an incident/resolution")
-				return filterName, nil
+				return true, nil
 			}
 		case "has_metrics":
 			// Deny an event if it does not have metrics
 			if !event.HasMetrics() {
 				logger.WithFields(fields).Debug("denying event without metrics")
-				return filterName, nil
+				return true, nil
 			}
 		case "not_silenced":
 			// Deny event that is silenced.
 			if event.IsSilenced() {
 				logger.WithFields(fields).Debug("denying event that is silenced")
-				return filterName, nil
+				return true, nil
 			}
 		default:
 			// Retrieve the filter from the store with its name
@@ -117,7 +116,7 @@ func (p *Pipeline) filterEvent(handler *corev2.Handler, event *corev2.Event) (st
 			if err != nil {
 				logger.WithFields(fields).WithError(err).
 					Warning("could not retrieve filter")
-				return "", err
+				return false, err
 			}
 
 			if filter != nil {
@@ -131,13 +130,13 @@ func (p *Pipeline) filterEvent(handler *corev2.Handler, event *corev2.Event) (st
 					logger.WithFields(fields).WithError(err).Error("failed to retrieve assets for filter")
 					if _, ok := err.(*store.ErrInternal); ok {
 						// Fatal error
-						return "", err
+						return false, err
 					}
 				}
 				filtered := evaluateEventFilter(event, filter, assets)
 				if filtered {
 					logger.WithFields(fields).Debug("denying event with custom filter")
-					return filterName, nil
+					return true, nil
 				}
 				continue
 			}
@@ -149,7 +148,7 @@ func (p *Pipeline) filterEvent(handler *corev2.Handler, event *corev2.Event) (st
 					Warning("could not retrieve filter")
 				if _, ok := err.(*store.ErrInternal); ok {
 					// Fatal error
-					return "", err
+					return false, err
 				}
 				continue
 			}
@@ -173,11 +172,11 @@ func (p *Pipeline) filterEvent(handler *corev2.Handler, event *corev2.Event) (st
 			}
 			if filtered {
 				logger.WithFields(fields).Debug("denying event with custom filter extension")
-				return filterName, nil
+				return true, nil
 			}
 		}
 	}
 
 	logger.WithFields(fields).Debug("allowing event")
-	return "", nil
+	return false, nil
 }

@@ -114,7 +114,7 @@ func (a *AuthenticationRouter) token(w http.ResponseWriter, r *http.Request) {
 		}
 
 		logger.WithError(err).Info("unexpected error while authorizing refresh token")
-		http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 

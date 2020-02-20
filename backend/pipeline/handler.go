@@ -61,7 +61,7 @@ func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
 		handler := u.Handler
 		fields["handler"] = handler.Name
 
-		filter, err := p.filterEvent(handler, event)
+		filtered, err := p.filterEvent(handler, event)
 		if err != nil {
 			if _, ok := err.(*store.ErrInternal); ok {
 				// Fatal error
@@ -69,8 +69,8 @@ func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
 			}
 			logger.WithError(err).Warn("error filtering event")
 		}
-		if filter != "" {
-			logger.WithFields(fields).Infof("event filtered by filter %q", filter)
+		if filtered {
+			logger.WithFields(fields).Info("event filtered")
 			continue
 		}
 
@@ -88,14 +88,14 @@ func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
 
 		switch handler.Type {
 		case "pipe":
-			if _, err := p.pipeHandler(handler, event, eventData); err != nil {
+			if _, err := p.pipeHandler(handler, eventData); err != nil {
 				logger.WithFields(fields).Error(err)
 				if _, ok := err.(*store.ErrInternal); ok {
 					return err
 				}
 			}
 		case "tcp", "udp":
-			if _, err := p.socketHandler(handler, event, eventData); err != nil {
+			if _, err := p.socketHandler(handler, eventData); err != nil {
 				logger.WithFields(fields).Error(err)
 				if _, ok := err.(*store.ErrInternal); ok {
 					return err
@@ -209,19 +209,13 @@ func (p *Pipeline) expandHandlers(ctx context.Context, handlers []string, level 
 
 // pipeHandler fork/executes a child process for a Sensu pipe handler
 // command and writes the mutated eventData to it via STDIN.
-func (p *Pipeline) pipeHandler(handler *corev2.Handler, event *corev2.Event, eventData []byte) (*command.ExecutionResponse, error) {
+func (p *Pipeline) pipeHandler(handler *corev2.Handler, eventData []byte) (*command.ExecutionResponse, error) {
 	ctx := corev2.SetContextFromResource(context.Background(), handler)
 	// Prepare log entry
 	fields := logrus.Fields{
-		"namespace":  handler.Namespace,
-		"handler":    handler.Name,
-		"assets":     handler.RuntimeAssets,
-		"event_uuid": event.GetUUID().String(),
-		"entity":     event.Entity.Name,
-	}
-
-	if event.HasCheck() {
-		fields["check"] = event.Check.Name
+		"namespace": handler.Namespace,
+		"handler":   handler.Name,
+		"assets":    handler.RuntimeAssets,
 	}
 
 	secrets, err := p.secretsProviderManager.SubSecrets(ctx, handler.Secrets)
@@ -303,7 +297,7 @@ func (p *Pipeline) grpcHandler(ext *corev2.Extension, evt *corev2.Event, mutated
 
 // socketHandler creates either a TCP or UDP client to write eventData
 // to a socket. The provided handler Type determines the protocol.
-func (p *Pipeline) socketHandler(handler *corev2.Handler, event *corev2.Event, eventData []byte) (conn net.Conn, err error) {
+func (p *Pipeline) socketHandler(handler *corev2.Handler, eventData []byte) (conn net.Conn, err error) {
 	protocol := handler.Type
 	host := handler.Socket.Host
 	port := handler.Socket.Port
@@ -311,15 +305,9 @@ func (p *Pipeline) socketHandler(handler *corev2.Handler, event *corev2.Event, e
 
 	// Prepare log entry
 	fields := logrus.Fields{
-		"namespace":  handler.Namespace,
-		"handler":    handler.Name,
-		"protocol":   protocol,
-		"event_uuid": event.GetUUID().String(),
-		"entity":     event.Entity.Name,
-	}
-
-	if event.HasCheck() {
-		fields["check"] = event.Check.Name
+		"namespace": handler.Namespace,
+		"handler":   handler.Name,
+		"protocol":  protocol,
 	}
 
 	// If Timeout is not specified, use the default.
