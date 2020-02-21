@@ -12,6 +12,7 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -23,7 +24,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // A CheckRequest represents a request to execute a check
 type CheckRequest struct {
@@ -58,7 +59,7 @@ func (m *CheckRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return xxx_messageInfo_CheckRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -142,7 +143,7 @@ func (m *AssetList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_AssetList.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -198,7 +199,7 @@ func (m *ProxyRequests) XXX_Marshal(b []byte, deterministic bool) ([]byte, error
 		return xxx_messageInfo_ProxyRequests.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -324,7 +325,7 @@ func (m *CheckConfig) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return xxx_messageInfo_CheckConfig.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -461,7 +462,7 @@ func (m *Check) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_Check.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -505,7 +506,7 @@ func (m *CheckHistory) XXX_Marshal(b []byte, deterministic bool) ([]byte, error)
 		return xxx_messageInfo_CheckHistory.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -1546,7 +1547,7 @@ func NewCheckFromFace(that CheckFace) *Check {
 func (m *CheckRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -1554,102 +1555,106 @@ func (m *CheckRequest) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *CheckRequest) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *CheckRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Config != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.Config.Size()))
-		n1, err := m.Config.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n1
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	if len(m.Assets) > 0 {
-		for _, msg := range m.Assets {
-			dAtA[i] = 0x12
-			i++
-			i = encodeVarintCheck(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
+	if len(m.Secrets) > 0 {
+		for iNdEx := len(m.Secrets) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Secrets[iNdEx])
+			copy(dAtA[i:], m.Secrets[iNdEx])
+			i = encodeVarintCheck(dAtA, i, uint64(len(m.Secrets[iNdEx])))
+			i--
+			dAtA[i] = 0x32
 		}
 	}
-	if len(m.Hooks) > 0 {
-		for _, msg := range m.Hooks {
-			dAtA[i] = 0x1a
-			i++
-			i = encodeVarintCheck(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
+	if len(m.HookAssets) > 0 {
+		for k := range m.HookAssets {
+			v := m.HookAssets[k]
+			baseI := i
+			if v != nil {
+				{
+					size, err := v.MarshalToSizedBuffer(dAtA[:i])
+					if err != nil {
+						return 0, err
+					}
+					i -= size
+					i = encodeVarintCheck(dAtA, i, uint64(size))
+				}
+				i--
+				dAtA[i] = 0x12
 			}
-			i += n
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = encodeVarintCheck(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = encodeVarintCheck(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0x2a
 		}
 	}
 	if m.Issued != 0 {
-		dAtA[i] = 0x20
-		i++
 		i = encodeVarintCheck(dAtA, i, uint64(m.Issued))
+		i--
+		dAtA[i] = 0x20
 	}
-	if len(m.HookAssets) > 0 {
-		for k, _ := range m.HookAssets {
-			dAtA[i] = 0x2a
-			i++
-			v := m.HookAssets[k]
-			msgSize := 0
-			if v != nil {
-				msgSize = v.Size()
-				msgSize += 1 + sovCheck(uint64(msgSize))
-			}
-			mapSize := 1 + len(k) + sovCheck(uint64(len(k))) + msgSize
-			i = encodeVarintCheck(dAtA, i, uint64(mapSize))
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintCheck(dAtA, i, uint64(len(k)))
-			i += copy(dAtA[i:], k)
-			if v != nil {
-				dAtA[i] = 0x12
-				i++
-				i = encodeVarintCheck(dAtA, i, uint64(v.Size()))
-				n2, err := v.MarshalTo(dAtA[i:])
+	if len(m.Hooks) > 0 {
+		for iNdEx := len(m.Hooks) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Hooks[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
-				i += n2
+				i -= size
+				i = encodeVarintCheck(dAtA, i, uint64(size))
 			}
+			i--
+			dAtA[i] = 0x1a
 		}
 	}
-	if len(m.Secrets) > 0 {
-		for _, s := range m.Secrets {
-			dAtA[i] = 0x32
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
+	if len(m.Assets) > 0 {
+		for iNdEx := len(m.Assets) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Assets[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintCheck(dAtA, i, uint64(size))
 			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
+			i--
+			dAtA[i] = 0x12
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.Config != nil {
+		{
+			size, err := m.Config.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintCheck(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *AssetList) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -1657,32 +1662,40 @@ func (m *AssetList) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *AssetList) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AssetList) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	if len(m.Assets) > 0 {
-		for _, msg := range m.Assets {
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintCheck(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
+		for iNdEx := len(m.Assets) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Assets[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintCheck(dAtA, i, uint64(size))
 			}
-			i += n
+			i--
+			dAtA[i] = 0xa
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *ProxyRequests) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -1690,50 +1703,50 @@ func (m *ProxyRequests) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *ProxyRequests) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *ProxyRequests) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.EntityAttributes) > 0 {
-		for _, s := range m.EntityAttributes {
-			dAtA[i] = 0xa
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
-		}
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
+	if m.SplayCoverage != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.SplayCoverage))
+		i--
+		dAtA[i] = 0x18
 	}
 	if m.Splay {
-		dAtA[i] = 0x10
-		i++
+		i--
 		if m.Splay {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
 		}
-		i++
+		i--
+		dAtA[i] = 0x10
 	}
-	if m.SplayCoverage != 0 {
-		dAtA[i] = 0x18
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.SplayCoverage))
+	if len(m.EntityAttributes) > 0 {
+		for iNdEx := len(m.EntityAttributes) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.EntityAttributes[iNdEx])
+			copy(dAtA[i:], m.EntityAttributes[iNdEx])
+			i = encodeVarintCheck(dAtA, i, uint64(len(m.EntityAttributes[iNdEx])))
+			i--
+			dAtA[i] = 0xa
+		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *CheckConfig) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -1741,273 +1754,264 @@ func (m *CheckConfig) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *CheckConfig) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *CheckConfig) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Command) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(len(m.Command)))
-		i += copy(dAtA[i:], m.Command)
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	if len(m.Handlers) > 0 {
-		for _, s := range m.Handlers {
-			dAtA[i] = 0x1a
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
+	if len(m.Secrets) > 0 {
+		for iNdEx := len(m.Secrets) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Secrets[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintCheck(dAtA, i, uint64(size))
 			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
-		}
-	}
-	if m.HighFlapThreshold != 0 {
-		dAtA[i] = 0x20
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.HighFlapThreshold))
-	}
-	if m.Interval != 0 {
-		dAtA[i] = 0x28
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.Interval))
-	}
-	if m.LowFlapThreshold != 0 {
-		dAtA[i] = 0x30
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.LowFlapThreshold))
-	}
-	if m.Publish {
-		dAtA[i] = 0x48
-		i++
-		if m.Publish {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if len(m.RuntimeAssets) > 0 {
-		for _, s := range m.RuntimeAssets {
-			dAtA[i] = 0x52
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
-		}
-	}
-	if len(m.Subscriptions) > 0 {
-		for _, s := range m.Subscriptions {
-			dAtA[i] = 0x5a
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
-		}
-	}
-	if len(m.ExtendedAttributes) > 0 {
-		dAtA[i] = 0x62
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(len(m.ExtendedAttributes)))
-		i += copy(dAtA[i:], m.ExtendedAttributes)
-	}
-	if len(m.ProxyEntityName) > 0 {
-		dAtA[i] = 0x6a
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(len(m.ProxyEntityName)))
-		i += copy(dAtA[i:], m.ProxyEntityName)
-	}
-	if len(m.CheckHooks) > 0 {
-		for _, msg := range m.CheckHooks {
-			dAtA[i] = 0x72
-			i++
-			i = encodeVarintCheck(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if m.Stdin {
-		dAtA[i] = 0x78
-		i++
-		if m.Stdin {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.Subdue != nil {
-		dAtA[i] = 0x82
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.Subdue.Size()))
-		n3, err := m.Subdue.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n3
-	}
-	if len(m.Cron) > 0 {
-		dAtA[i] = 0x8a
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(len(m.Cron)))
-		i += copy(dAtA[i:], m.Cron)
-	}
-	if m.Ttl != 0 {
-		dAtA[i] = 0x90
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.Ttl))
-	}
-	if m.Timeout != 0 {
-		dAtA[i] = 0x98
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.Timeout))
-	}
-	if m.ProxyRequests != nil {
-		dAtA[i] = 0xa2
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.ProxyRequests.Size()))
-		n4, err := m.ProxyRequests.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n4
-	}
-	if m.RoundRobin {
-		dAtA[i] = 0xa8
-		i++
-		dAtA[i] = 0x1
-		i++
-		if m.RoundRobin {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if len(m.OutputMetricFormat) > 0 {
-		dAtA[i] = 0xb2
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(len(m.OutputMetricFormat)))
-		i += copy(dAtA[i:], m.OutputMetricFormat)
-	}
-	if len(m.OutputMetricHandlers) > 0 {
-		for _, s := range m.OutputMetricHandlers {
-			dAtA[i] = 0xba
-			i++
+			i--
 			dAtA[i] = 0x1
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
+			i--
+			dAtA[i] = 0xea
 		}
-	}
-	if len(m.EnvVars) > 0 {
-		for _, s := range m.EnvVars {
-			dAtA[i] = 0xc2
-			i++
-			dAtA[i] = 0x1
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
-		}
-	}
-	dAtA[i] = 0xd2
-	i++
-	dAtA[i] = 0x1
-	i++
-	i = encodeVarintCheck(dAtA, i, uint64(m.ObjectMeta.Size()))
-	n5, err := m.ObjectMeta.MarshalTo(dAtA[i:])
-	if err != nil {
-		return 0, err
-	}
-	i += n5
-	if m.MaxOutputSize != 0 {
-		dAtA[i] = 0xd8
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.MaxOutputSize))
 	}
 	if m.DiscardOutput {
-		dAtA[i] = 0xe0
-		i++
-		dAtA[i] = 0x1
-		i++
+		i--
 		if m.DiscardOutput {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
 		}
-		i++
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xe0
 	}
-	if len(m.Secrets) > 0 {
-		for _, msg := range m.Secrets {
-			dAtA[i] = 0xea
-			i++
+	if m.MaxOutputSize != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.MaxOutputSize))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xd8
+	}
+	{
+		size, err := m.ObjectMeta.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintCheck(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x1
+	i--
+	dAtA[i] = 0xd2
+	if len(m.EnvVars) > 0 {
+		for iNdEx := len(m.EnvVars) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.EnvVars[iNdEx])
+			copy(dAtA[i:], m.EnvVars[iNdEx])
+			i = encodeVarintCheck(dAtA, i, uint64(len(m.EnvVars[iNdEx])))
+			i--
 			dAtA[i] = 0x1
-			i++
-			i = encodeVarintCheck(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
+			i--
+			dAtA[i] = 0xc2
+		}
+	}
+	if len(m.OutputMetricHandlers) > 0 {
+		for iNdEx := len(m.OutputMetricHandlers) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.OutputMetricHandlers[iNdEx])
+			copy(dAtA[i:], m.OutputMetricHandlers[iNdEx])
+			i = encodeVarintCheck(dAtA, i, uint64(len(m.OutputMetricHandlers[iNdEx])))
+			i--
+			dAtA[i] = 0x1
+			i--
+			dAtA[i] = 0xba
+		}
+	}
+	if len(m.OutputMetricFormat) > 0 {
+		i -= len(m.OutputMetricFormat)
+		copy(dAtA[i:], m.OutputMetricFormat)
+		i = encodeVarintCheck(dAtA, i, uint64(len(m.OutputMetricFormat)))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xb2
+	}
+	if m.RoundRobin {
+		i--
+		if m.RoundRobin {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xa8
+	}
+	if m.ProxyRequests != nil {
+		{
+			size, err := m.ProxyRequests.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
-			i += n
+			i -= size
+			i = encodeVarintCheck(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xa2
+	}
+	if m.Timeout != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.Timeout))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x98
+	}
+	if m.Ttl != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.Ttl))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x90
+	}
+	if len(m.Cron) > 0 {
+		i -= len(m.Cron)
+		copy(dAtA[i:], m.Cron)
+		i = encodeVarintCheck(dAtA, i, uint64(len(m.Cron)))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x8a
+	}
+	if m.Subdue != nil {
+		{
+			size, err := m.Subdue.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintCheck(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x82
+	}
+	if m.Stdin {
+		i--
+		if m.Stdin {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x78
+	}
+	if len(m.CheckHooks) > 0 {
+		for iNdEx := len(m.CheckHooks) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.CheckHooks[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintCheck(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x72
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.ProxyEntityName) > 0 {
+		i -= len(m.ProxyEntityName)
+		copy(dAtA[i:], m.ProxyEntityName)
+		i = encodeVarintCheck(dAtA, i, uint64(len(m.ProxyEntityName)))
+		i--
+		dAtA[i] = 0x6a
 	}
-	return i, nil
+	if len(m.ExtendedAttributes) > 0 {
+		i -= len(m.ExtendedAttributes)
+		copy(dAtA[i:], m.ExtendedAttributes)
+		i = encodeVarintCheck(dAtA, i, uint64(len(m.ExtendedAttributes)))
+		i--
+		dAtA[i] = 0x62
+	}
+	if len(m.Subscriptions) > 0 {
+		for iNdEx := len(m.Subscriptions) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Subscriptions[iNdEx])
+			copy(dAtA[i:], m.Subscriptions[iNdEx])
+			i = encodeVarintCheck(dAtA, i, uint64(len(m.Subscriptions[iNdEx])))
+			i--
+			dAtA[i] = 0x5a
+		}
+	}
+	if len(m.RuntimeAssets) > 0 {
+		for iNdEx := len(m.RuntimeAssets) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.RuntimeAssets[iNdEx])
+			copy(dAtA[i:], m.RuntimeAssets[iNdEx])
+			i = encodeVarintCheck(dAtA, i, uint64(len(m.RuntimeAssets[iNdEx])))
+			i--
+			dAtA[i] = 0x52
+		}
+	}
+	if m.Publish {
+		i--
+		if m.Publish {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x48
+	}
+	if m.LowFlapThreshold != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.LowFlapThreshold))
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.Interval != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.Interval))
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.HighFlapThreshold != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.HighFlapThreshold))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.Handlers) > 0 {
+		for iNdEx := len(m.Handlers) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Handlers[iNdEx])
+			copy(dAtA[i:], m.Handlers[iNdEx])
+			i = encodeVarintCheck(dAtA, i, uint64(len(m.Handlers[iNdEx])))
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.Command) > 0 {
+		i -= len(m.Command)
+		copy(dAtA[i:], m.Command)
+		i = encodeVarintCheck(dAtA, i, uint64(len(m.Command)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *Check) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2015,393 +2019,384 @@ func (m *Check) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Check) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Check) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Command) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(len(m.Command)))
-		i += copy(dAtA[i:], m.Command)
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	if len(m.Handlers) > 0 {
-		for _, s := range m.Handlers {
-			dAtA[i] = 0x1a
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
-		}
-	}
-	if m.HighFlapThreshold != 0 {
-		dAtA[i] = 0x20
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.HighFlapThreshold))
-	}
-	if m.Interval != 0 {
-		dAtA[i] = 0x28
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.Interval))
-	}
-	if m.LowFlapThreshold != 0 {
-		dAtA[i] = 0x30
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.LowFlapThreshold))
-	}
-	if m.Publish {
-		dAtA[i] = 0x48
-		i++
-		if m.Publish {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if len(m.RuntimeAssets) > 0 {
-		for _, s := range m.RuntimeAssets {
-			dAtA[i] = 0x52
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
-		}
-	}
-	if len(m.Subscriptions) > 0 {
-		for _, s := range m.Subscriptions {
-			dAtA[i] = 0x5a
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
-		}
-	}
-	if len(m.ProxyEntityName) > 0 {
-		dAtA[i] = 0x6a
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(len(m.ProxyEntityName)))
-		i += copy(dAtA[i:], m.ProxyEntityName)
-	}
-	if len(m.CheckHooks) > 0 {
-		for _, msg := range m.CheckHooks {
-			dAtA[i] = 0x72
-			i++
-			i = encodeVarintCheck(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if m.Stdin {
-		dAtA[i] = 0x78
-		i++
-		if m.Stdin {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.Subdue != nil {
-		dAtA[i] = 0x82
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.Subdue.Size()))
-		n6, err := m.Subdue.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n6
-	}
-	if len(m.Cron) > 0 {
-		dAtA[i] = 0x8a
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(len(m.Cron)))
-		i += copy(dAtA[i:], m.Cron)
-	}
-	if m.Ttl != 0 {
-		dAtA[i] = 0x90
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.Ttl))
-	}
-	if m.Timeout != 0 {
-		dAtA[i] = 0x98
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.Timeout))
-	}
-	if m.ProxyRequests != nil {
-		dAtA[i] = 0xa2
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.ProxyRequests.Size()))
-		n7, err := m.ProxyRequests.MarshalTo(dAtA[i:])
-		if err != nil {
-			return 0, err
-		}
-		i += n7
-	}
-	if m.RoundRobin {
-		dAtA[i] = 0xa8
-		i++
-		dAtA[i] = 0x1
-		i++
-		if m.RoundRobin {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i++
-	}
-	if m.Duration != 0 {
-		dAtA[i] = 0xb1
-		i++
-		dAtA[i] = 0x1
-		i++
-		encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Duration))))
-		i += 8
-	}
-	if m.Executed != 0 {
-		dAtA[i] = 0xb8
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.Executed))
-	}
-	if len(m.History) > 0 {
-		for _, msg := range m.History {
-			dAtA[i] = 0xc2
-			i++
-			dAtA[i] = 0x1
-			i++
-			i = encodeVarintCheck(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if m.Issued != 0 {
-		dAtA[i] = 0xc8
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.Issued))
-	}
-	if len(m.Output) > 0 {
-		dAtA[i] = 0xd2
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(len(m.Output)))
-		i += copy(dAtA[i:], m.Output)
-	}
-	if len(m.State) > 0 {
-		dAtA[i] = 0xda
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(len(m.State)))
-		i += copy(dAtA[i:], m.State)
-	}
-	if m.Status != 0 {
-		dAtA[i] = 0xe0
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.Status))
-	}
-	if m.TotalStateChange != 0 {
-		dAtA[i] = 0xe8
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.TotalStateChange))
-	}
-	if m.LastOK != 0 {
-		dAtA[i] = 0xf0
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.LastOK))
-	}
-	if m.Occurrences != 0 {
-		dAtA[i] = 0xf8
-		i++
-		dAtA[i] = 0x1
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.Occurrences))
-	}
-	if m.OccurrencesWatermark != 0 {
-		dAtA[i] = 0x80
-		i++
-		dAtA[i] = 0x2
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.OccurrencesWatermark))
-	}
-	if len(m.Silenced) > 0 {
-		for _, s := range m.Silenced {
-			dAtA[i] = 0x8a
-			i++
-			dAtA[i] = 0x2
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
-		}
-	}
-	if len(m.Hooks) > 0 {
-		for _, msg := range m.Hooks {
-			dAtA[i] = 0x92
-			i++
-			dAtA[i] = 0x2
-			i++
-			i = encodeVarintCheck(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if len(m.OutputMetricFormat) > 0 {
+	if len(m.ExtendedAttributes) > 0 {
+		i -= len(m.ExtendedAttributes)
+		copy(dAtA[i:], m.ExtendedAttributes)
+		i = encodeVarintCheck(dAtA, i, uint64(len(m.ExtendedAttributes)))
+		i--
+		dAtA[i] = 0x6
+		i--
 		dAtA[i] = 0x9a
-		i++
-		dAtA[i] = 0x2
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(len(m.OutputMetricFormat)))
-		i += copy(dAtA[i:], m.OutputMetricFormat)
 	}
-	if len(m.OutputMetricHandlers) > 0 {
-		for _, s := range m.OutputMetricHandlers {
-			dAtA[i] = 0xa2
-			i++
-			dAtA[i] = 0x2
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
+	if len(m.Secrets) > 0 {
+		for iNdEx := len(m.Secrets) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Secrets[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintCheck(dAtA, i, uint64(size))
 			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
-		}
-	}
-	if len(m.EnvVars) > 0 {
-		for _, s := range m.EnvVars {
-			dAtA[i] = 0xaa
-			i++
+			i--
 			dAtA[i] = 0x2
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
+			i--
+			dAtA[i] = 0xca
 		}
-	}
-	dAtA[i] = 0xb2
-	i++
-	dAtA[i] = 0x2
-	i++
-	i = encodeVarintCheck(dAtA, i, uint64(m.ObjectMeta.Size()))
-	n8, err := m.ObjectMeta.MarshalTo(dAtA[i:])
-	if err != nil {
-		return 0, err
-	}
-	i += n8
-	if m.MaxOutputSize != 0 {
-		dAtA[i] = 0xb8
-		i++
-		dAtA[i] = 0x2
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.MaxOutputSize))
 	}
 	if m.DiscardOutput {
-		dAtA[i] = 0xc0
-		i++
-		dAtA[i] = 0x2
-		i++
+		i--
 		if m.DiscardOutput {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
 		}
-		i++
+		i--
+		dAtA[i] = 0x2
+		i--
+		dAtA[i] = 0xc0
 	}
-	if len(m.Secrets) > 0 {
-		for _, msg := range m.Secrets {
-			dAtA[i] = 0xca
-			i++
+	if m.MaxOutputSize != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.MaxOutputSize))
+		i--
+		dAtA[i] = 0x2
+		i--
+		dAtA[i] = 0xb8
+	}
+	{
+		size, err := m.ObjectMeta.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintCheck(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x2
+	i--
+	dAtA[i] = 0xb2
+	if len(m.EnvVars) > 0 {
+		for iNdEx := len(m.EnvVars) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.EnvVars[iNdEx])
+			copy(dAtA[i:], m.EnvVars[iNdEx])
+			i = encodeVarintCheck(dAtA, i, uint64(len(m.EnvVars[iNdEx])))
+			i--
 			dAtA[i] = 0x2
-			i++
-			i = encodeVarintCheck(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
+			i--
+			dAtA[i] = 0xaa
+		}
+	}
+	if len(m.OutputMetricHandlers) > 0 {
+		for iNdEx := len(m.OutputMetricHandlers) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.OutputMetricHandlers[iNdEx])
+			copy(dAtA[i:], m.OutputMetricHandlers[iNdEx])
+			i = encodeVarintCheck(dAtA, i, uint64(len(m.OutputMetricHandlers[iNdEx])))
+			i--
+			dAtA[i] = 0x2
+			i--
+			dAtA[i] = 0xa2
+		}
+	}
+	if len(m.OutputMetricFormat) > 0 {
+		i -= len(m.OutputMetricFormat)
+		copy(dAtA[i:], m.OutputMetricFormat)
+		i = encodeVarintCheck(dAtA, i, uint64(len(m.OutputMetricFormat)))
+		i--
+		dAtA[i] = 0x2
+		i--
+		dAtA[i] = 0x9a
+	}
+	if len(m.Hooks) > 0 {
+		for iNdEx := len(m.Hooks) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Hooks[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintCheck(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x2
+			i--
+			dAtA[i] = 0x92
+		}
+	}
+	if len(m.Silenced) > 0 {
+		for iNdEx := len(m.Silenced) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Silenced[iNdEx])
+			copy(dAtA[i:], m.Silenced[iNdEx])
+			i = encodeVarintCheck(dAtA, i, uint64(len(m.Silenced[iNdEx])))
+			i--
+			dAtA[i] = 0x2
+			i--
+			dAtA[i] = 0x8a
+		}
+	}
+	if m.OccurrencesWatermark != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.OccurrencesWatermark))
+		i--
+		dAtA[i] = 0x2
+		i--
+		dAtA[i] = 0x80
+	}
+	if m.Occurrences != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.Occurrences))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xf8
+	}
+	if m.LastOK != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.LastOK))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xf0
+	}
+	if m.TotalStateChange != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.TotalStateChange))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xe8
+	}
+	if m.Status != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.Status))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xe0
+	}
+	if len(m.State) > 0 {
+		i -= len(m.State)
+		copy(dAtA[i:], m.State)
+		i = encodeVarintCheck(dAtA, i, uint64(len(m.State)))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xda
+	}
+	if len(m.Output) > 0 {
+		i -= len(m.Output)
+		copy(dAtA[i:], m.Output)
+		i = encodeVarintCheck(dAtA, i, uint64(len(m.Output)))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xd2
+	}
+	if m.Issued != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.Issued))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xc8
+	}
+	if len(m.History) > 0 {
+		for iNdEx := len(m.History) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.History[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintCheck(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1
+			i--
+			dAtA[i] = 0xc2
+		}
+	}
+	if m.Executed != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.Executed))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xb8
+	}
+	if m.Duration != 0 {
+		i -= 8
+		encoding_binary.LittleEndian.PutUint64(dAtA[i:], uint64(math.Float64bits(float64(m.Duration))))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xb1
+	}
+	if m.RoundRobin {
+		i--
+		if m.RoundRobin {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xa8
+	}
+	if m.ProxyRequests != nil {
+		{
+			size, err := m.ProxyRequests.MarshalToSizedBuffer(dAtA[:i])
 			if err != nil {
 				return 0, err
 			}
-			i += n
+			i -= size
+			i = encodeVarintCheck(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xa2
+	}
+	if m.Timeout != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.Timeout))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x98
+	}
+	if m.Ttl != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.Ttl))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x90
+	}
+	if len(m.Cron) > 0 {
+		i -= len(m.Cron)
+		copy(dAtA[i:], m.Cron)
+		i = encodeVarintCheck(dAtA, i, uint64(len(m.Cron)))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x8a
+	}
+	if m.Subdue != nil {
+		{
+			size, err := m.Subdue.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintCheck(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0x82
+	}
+	if m.Stdin {
+		i--
+		if m.Stdin {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x78
+	}
+	if len(m.CheckHooks) > 0 {
+		for iNdEx := len(m.CheckHooks) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.CheckHooks[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintCheck(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x72
 		}
 	}
-	if len(m.ExtendedAttributes) > 0 {
-		dAtA[i] = 0x9a
-		i++
-		dAtA[i] = 0x6
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(len(m.ExtendedAttributes)))
-		i += copy(dAtA[i:], m.ExtendedAttributes)
+	if len(m.ProxyEntityName) > 0 {
+		i -= len(m.ProxyEntityName)
+		copy(dAtA[i:], m.ProxyEntityName)
+		i = encodeVarintCheck(dAtA, i, uint64(len(m.ProxyEntityName)))
+		i--
+		dAtA[i] = 0x6a
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.Subscriptions) > 0 {
+		for iNdEx := len(m.Subscriptions) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Subscriptions[iNdEx])
+			copy(dAtA[i:], m.Subscriptions[iNdEx])
+			i = encodeVarintCheck(dAtA, i, uint64(len(m.Subscriptions[iNdEx])))
+			i--
+			dAtA[i] = 0x5a
+		}
 	}
-	return i, nil
+	if len(m.RuntimeAssets) > 0 {
+		for iNdEx := len(m.RuntimeAssets) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.RuntimeAssets[iNdEx])
+			copy(dAtA[i:], m.RuntimeAssets[iNdEx])
+			i = encodeVarintCheck(dAtA, i, uint64(len(m.RuntimeAssets[iNdEx])))
+			i--
+			dAtA[i] = 0x52
+		}
+	}
+	if m.Publish {
+		i--
+		if m.Publish {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x48
+	}
+	if m.LowFlapThreshold != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.LowFlapThreshold))
+		i--
+		dAtA[i] = 0x30
+	}
+	if m.Interval != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.Interval))
+		i--
+		dAtA[i] = 0x28
+	}
+	if m.HighFlapThreshold != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.HighFlapThreshold))
+		i--
+		dAtA[i] = 0x20
+	}
+	if len(m.Handlers) > 0 {
+		for iNdEx := len(m.Handlers) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Handlers[iNdEx])
+			copy(dAtA[i:], m.Handlers[iNdEx])
+			i = encodeVarintCheck(dAtA, i, uint64(len(m.Handlers[iNdEx])))
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.Command) > 0 {
+		i -= len(m.Command)
+		copy(dAtA[i:], m.Command)
+		i = encodeVarintCheck(dAtA, i, uint64(len(m.Command)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *CheckHistory) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -2409,41 +2404,49 @@ func (m *CheckHistory) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *CheckHistory) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *CheckHistory) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.Status != 0 {
-		dAtA[i] = 0x8
-		i++
-		i = encodeVarintCheck(dAtA, i, uint64(m.Status))
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if m.Executed != 0 {
-		dAtA[i] = 0x10
-		i++
 		i = encodeVarintCheck(dAtA, i, uint64(m.Executed))
+		i--
+		dAtA[i] = 0x10
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if m.Status != 0 {
+		i = encodeVarintCheck(dAtA, i, uint64(m.Status))
+		i--
+		dAtA[i] = 0x8
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func encodeVarintCheck(dAtA []byte, offset int, v uint64) int {
+	offset -= sovCheck(v)
+	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return offset + 1
+	return base
 }
 func NewPopulatedCheckRequest(r randyCheck, easy bool) *CheckRequest {
 	this := &CheckRequest{}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		this.Config = NewPopulatedCheckConfig(r, easy)
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v1 := r.Intn(5)
 		this.Assets = make([]Asset, v1)
 		for i := 0; i < v1; i++ {
@@ -2451,7 +2454,7 @@ func NewPopulatedCheckRequest(r randyCheck, easy bool) *CheckRequest {
 			this.Assets[i] = *v2
 		}
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v3 := r.Intn(5)
 		this.Hooks = make([]HookConfig, v3)
 		for i := 0; i < v3; i++ {
@@ -2463,7 +2466,7 @@ func NewPopulatedCheckRequest(r randyCheck, easy bool) *CheckRequest {
 	if r.Intn(2) == 0 {
 		this.Issued *= -1
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v5 := r.Intn(10)
 		this.HookAssets = make(map[string]*AssetList)
 		for i := 0; i < v5; i++ {
@@ -2483,7 +2486,7 @@ func NewPopulatedCheckRequest(r randyCheck, easy bool) *CheckRequest {
 
 func NewPopulatedAssetList(r randyCheck, easy bool) *AssetList {
 	this := &AssetList{}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v7 := r.Intn(5)
 		this.Assets = make([]Asset, v7)
 		for i := 0; i < v7; i++ {
@@ -2540,7 +2543,7 @@ func NewPopulatedCheckConfig(r randyCheck, easy bool) *CheckConfig {
 		this.ExtendedAttributes[i] = byte(r.Intn(256))
 	}
 	this.ProxyEntityName = string(randStringCheck(r))
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v14 := r.Intn(5)
 		this.CheckHooks = make([]HookList, v14)
 		for i := 0; i < v14; i++ {
@@ -2549,7 +2552,7 @@ func NewPopulatedCheckConfig(r randyCheck, easy bool) *CheckConfig {
 		}
 	}
 	this.Stdin = bool(bool(r.Intn(2) == 0))
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		this.Subdue = NewPopulatedTimeWindowWhen(r, easy)
 	}
 	this.Cron = string(randStringCheck(r))
@@ -2558,7 +2561,7 @@ func NewPopulatedCheckConfig(r randyCheck, easy bool) *CheckConfig {
 		this.Ttl *= -1
 	}
 	this.Timeout = uint32(r.Uint32())
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		this.ProxyRequests = NewPopulatedProxyRequests(r, easy)
 	}
 	this.RoundRobin = bool(bool(r.Intn(2) == 0))
@@ -2580,7 +2583,7 @@ func NewPopulatedCheckConfig(r randyCheck, easy bool) *CheckConfig {
 		this.MaxOutputSize *= -1
 	}
 	this.DiscardOutput = bool(bool(r.Intn(2) == 0))
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v19 := r.Intn(5)
 		this.Secrets = make([]*Secret, v19)
 		for i := 0; i < v19; i++ {
@@ -2616,7 +2619,7 @@ func NewPopulatedCheck(r randyCheck, easy bool) *Check {
 		this.Subscriptions[i] = string(randStringCheck(r))
 	}
 	this.ProxyEntityName = string(randStringCheck(r))
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v23 := r.Intn(5)
 		this.CheckHooks = make([]HookList, v23)
 		for i := 0; i < v23; i++ {
@@ -2625,7 +2628,7 @@ func NewPopulatedCheck(r randyCheck, easy bool) *Check {
 		}
 	}
 	this.Stdin = bool(bool(r.Intn(2) == 0))
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		this.Subdue = NewPopulatedTimeWindowWhen(r, easy)
 	}
 	this.Cron = string(randStringCheck(r))
@@ -2634,7 +2637,7 @@ func NewPopulatedCheck(r randyCheck, easy bool) *Check {
 		this.Ttl *= -1
 	}
 	this.Timeout = uint32(r.Uint32())
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		this.ProxyRequests = NewPopulatedProxyRequests(r, easy)
 	}
 	this.RoundRobin = bool(bool(r.Intn(2) == 0))
@@ -2646,7 +2649,7 @@ func NewPopulatedCheck(r randyCheck, easy bool) *Check {
 	if r.Intn(2) == 0 {
 		this.Executed *= -1
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v25 := r.Intn(5)
 		this.History = make([]CheckHistory, v25)
 		for i := 0; i < v25; i++ {
@@ -2679,7 +2682,7 @@ func NewPopulatedCheck(r randyCheck, easy bool) *Check {
 	for i := 0; i < v27; i++ {
 		this.Silenced[i] = string(randStringCheck(r))
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v28 := r.Intn(5)
 		this.Hooks = make([]*Hook, v28)
 		for i := 0; i < v28; i++ {
@@ -2704,7 +2707,7 @@ func NewPopulatedCheck(r randyCheck, easy bool) *Check {
 		this.MaxOutputSize *= -1
 	}
 	this.DiscardOutput = bool(bool(r.Intn(2) == 0))
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v32 := r.Intn(5)
 		this.Secrets = make([]*Secret, v32)
 		for i := 0; i < v32; i++ {
@@ -3196,14 +3199,7 @@ func (m *CheckHistory) Size() (n int) {
 }
 
 func sovCheck(x uint64) (n int) {
-	for {
-		n++
-		x >>= 7
-		if x == 0 {
-			break
-		}
-	}
-	return n
+	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozCheck(x uint64) (n int) {
 	return sovCheck(uint64((x << 1) ^ uint64((int64(x) >> 63))))

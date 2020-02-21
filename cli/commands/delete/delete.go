@@ -56,7 +56,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 }
 
 // DeleteResources deletes all of the parsed resources.
-func DeleteResources(client client.GenericClient, resources []types.Wrapper) error {
+func DeleteResources(client client.GenericClient, resources []*types.Wrapper) error {
 	for i, resource := range resources {
 		path := resource.Value.URIPath()
 		if err := client.Delete(path); err != nil {
