@@ -25,6 +25,7 @@ the default sensuctl configuration.
 - Default `event.entity.entity_class` to `proxy` in the POST/PUT `/events` API.
 - Proxy entities are now automatically created when events are published with an
 entity that does not exist.
+- Fixed event payload validation on the backend events API to validate the payload with the URL parameters on the /events/:entity/:check endpoint and reject events that do not match.
 
 ## [5.17.2] - 2020-02-19
 
