@@ -166,6 +166,8 @@ func (a *Agent) handleTCPMessages(c net.Conn) {
 			return
 		}
 
+		logEvent(&event)
+
 		tm := &transport.Message{
 			Type:    transport.MessageTypeEvent,
 			Payload: payload,
@@ -246,6 +248,9 @@ func (a *Agent) handleUDPMessages(ctx context.Context, c net.PacketConn) {
 			if err != nil {
 				return
 			}
+
+			logEvent(&event)
+
 			tm := &transport.Message{
 				Type:    transport.MessageTypeEvent,
 				Payload: payload,

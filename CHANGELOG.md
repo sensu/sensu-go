@@ -13,6 +13,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - [agent] Added `/version` API
 
 ### Fixed
+- sensuctl now supports the http_proxy, https_proxy, and no_proxy environment
+variables.
+- returns 401 instead of 500 when issues occur refreshing the access token.
 - Support Bonsai assets versions prefixed with the letter `v`.
 - Fixed a bug where wrapped resources were not getting their namespaces set by
 the default sensuctl configuration.
@@ -41,6 +44,14 @@ to intialize.
 ### Fixed
 - Fixed a bug where on an internal restart, enterprise HTTP routes could fail
 to intialize.
+- Fixed a bug where wrapped resources were not getting their namespaces set by
+the default sensuctl configuration.
+- read/writes `initializationKey` to/from `EtcdRoot`, while support legacy as fallback (read-only)
+- check for a non-200 response when fetching assets
+
+### Changed
+- Updated Go version from 1.13.5 to 1.13.7.
+- Default `event.entity.entity_class` to `proxy` in the POST/PUT `/events` API.
 
 ## [5.17.1] - 2020-01-31
 
@@ -64,6 +75,7 @@ by commercial secrets providers. Implemented for checks, mutators, and handlers.
 - Added the `keepalive-handlers` configuration flag on the agent to specify the
 entity's keepalive handlers.
 - Added `event.entity.name` as a supported field selector.
+- Indicate in log messages which filter dropped an event.
 
 ### Fixed
 - Fixed a memory leak in the entity cache.
