@@ -2,10 +2,12 @@ package v2
 
 import (
 	"encoding/json"
+	"fmt"
 	"sort"
 	"testing"
 	time "time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -666,6 +668,98 @@ func TestIsSilencedBy(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			result := tc.event.IsSilencedBy(tc.silence)
 			assert.EqualValues(t, tc.expectedResult, result)
+		})
+	}
+}
+
+func fixtureNoID() *Event {
+	e := FixtureEvent("foo", "bar")
+	e.ID = nil
+	return e
+}
+
+func fixtureBadID() *Event {
+	e := FixtureEvent("foo", "bar")
+	e.ID = []byte("not a uuid")
+	return e
+}
+
+func TestMarshalUnmarshal(t *testing.T) {
+	tests := []struct {
+		Name         string
+		Event        *Event
+		MarshalError bool
+	}{
+		{
+			Name:  "event with no ID",
+			Event: fixtureNoID(),
+		},
+		{
+			Name:  "event with ID",
+			Event: FixtureEvent("foo", "bar"),
+		},
+		{
+			Name:         "event with invalid ID",
+			Event:        fixtureBadID(),
+			MarshalError: true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			b, err := json.Marshal(test.Event)
+			if test.MarshalError {
+				if err == nil {
+					t.Fatal("expected non-nil error")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			var e Event
+			if err := json.Unmarshal(b, &e); err != nil {
+				t.Fatal(err)
+			}
+			if err := e.Validate(); err != nil {
+				t.Fatal(err)
+			}
+		})
+	}
+}
+
+func TestUnmarshalID(t *testing.T) {
+	tests := []struct {
+		Name           string
+		Data           string
+		UnmarshalError bool
+	}{
+		{
+			Name: "no id",
+			Data: `{}`,
+		},
+		{
+			Name: "has id",
+			Data: fmt.Sprintf(`{"id": %q}`, uuid.NameSpaceDNS),
+		},
+		{
+			Name:           "invalid id",
+			Data:           `{"id": "not a uuid"}`,
+			UnmarshalError: true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			var e Event
+			err := json.Unmarshal([]byte(test.Data), &e)
+			if test.UnmarshalError {
+				if err == nil {
+					t.Fatal("expected non-nil error")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
 		})
 	}
 }

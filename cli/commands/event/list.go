@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/google/uuid"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
@@ -127,6 +128,20 @@ func printToTable(results interface{}, writer io.Writer) {
 				}
 				time := time.Unix(event.Timestamp, 0)
 				return time.String()
+			},
+		},
+		{
+			Title: "UUID",
+			CellTransformer: func(data interface{}) string {
+				event, ok := data.(corev2.Event)
+				if !ok {
+					return cli.TypeError
+				}
+				if id := event.GetUUID(); id == uuid.Nil {
+					return ""
+				} else {
+					return id.String()
+				}
 			},
 		},
 	})

@@ -11,6 +11,7 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -22,7 +23,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // EventFilter is a filter specification.
 type EventFilter struct {
@@ -57,7 +58,7 @@ func (m *EventFilter) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) 
 		return xxx_messageInfo_EventFilter.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -208,7 +209,7 @@ func NewEventFilterFromFace(that EventFilterFace) *EventFilter {
 func (m *EventFilter) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -216,78 +217,79 @@ func (m *EventFilter) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *EventFilter) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *EventFilter) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	dAtA[i] = 0xa
-	i++
-	i = encodeVarintFilter(dAtA, i, uint64(m.ObjectMeta.Size()))
-	n1, err := m.ObjectMeta.MarshalTo(dAtA[i:])
-	if err != nil {
-		return 0, err
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	i += n1
-	if len(m.Action) > 0 {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintFilter(dAtA, i, uint64(len(m.Action)))
-		i += copy(dAtA[i:], m.Action)
-	}
-	if len(m.Expressions) > 0 {
-		for _, s := range m.Expressions {
-			dAtA[i] = 0x1a
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
+	if len(m.RuntimeAssets) > 0 {
+		for iNdEx := len(m.RuntimeAssets) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.RuntimeAssets[iNdEx])
+			copy(dAtA[i:], m.RuntimeAssets[iNdEx])
+			i = encodeVarintFilter(dAtA, i, uint64(len(m.RuntimeAssets[iNdEx])))
+			i--
+			dAtA[i] = 0x42
 		}
 	}
 	if m.When != nil {
+		{
+			size, err := m.When.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintFilter(dAtA, i, uint64(size))
+		}
+		i--
 		dAtA[i] = 0x32
-		i++
-		i = encodeVarintFilter(dAtA, i, uint64(m.When.Size()))
-		n2, err := m.When.MarshalTo(dAtA[i:])
+	}
+	if len(m.Expressions) > 0 {
+		for iNdEx := len(m.Expressions) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Expressions[iNdEx])
+			copy(dAtA[i:], m.Expressions[iNdEx])
+			i = encodeVarintFilter(dAtA, i, uint64(len(m.Expressions[iNdEx])))
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.Action) > 0 {
+		i -= len(m.Action)
+		copy(dAtA[i:], m.Action)
+		i = encodeVarintFilter(dAtA, i, uint64(len(m.Action)))
+		i--
+		dAtA[i] = 0x12
+	}
+	{
+		size, err := m.ObjectMeta.MarshalToSizedBuffer(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
-		i += n2
+		i -= size
+		i = encodeVarintFilter(dAtA, i, uint64(size))
 	}
-	if len(m.RuntimeAssets) > 0 {
-		for _, s := range m.RuntimeAssets {
-			dAtA[i] = 0x42
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
-		}
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
 }
 
 func encodeVarintFilter(dAtA []byte, offset int, v uint64) int {
+	offset -= sovFilter(v)
+	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return offset + 1
+	return base
 }
 func NewPopulatedEventFilter(r randyFilter, easy bool) *EventFilter {
 	this := &EventFilter{}
@@ -299,7 +301,7 @@ func NewPopulatedEventFilter(r randyFilter, easy bool) *EventFilter {
 	for i := 0; i < v2; i++ {
 		this.Expressions[i] = string(randStringFilter(r))
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		this.When = NewPopulatedTimeWindowWhen(r, easy)
 	}
 	v3 := r.Intn(10)
@@ -420,14 +422,7 @@ func (m *EventFilter) Size() (n int) {
 }
 
 func sovFilter(x uint64) (n int) {
-	for {
-		n++
-		x >>= 7
-		if x == 0 {
-			break
-		}
-	}
-	return n
+	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozFilter(x uint64) (n int) {
 	return sovFilter(uint64((x << 1) ^ uint64((int64(x) >> 63))))

@@ -3,6 +3,7 @@ package actions
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 
@@ -110,8 +111,20 @@ func (a EventController) Delete(ctx context.Context, entity, check string) error
 // CreateOrReplace creates the event indicated by the supplied entity and check.
 // If an event already exists for the entity and check, it updates that event.
 func (a EventController) CreateOrReplace(ctx context.Context, event *corev2.Event) error {
+	if event.Entity != nil && event.Entity.EntityClass == "" {
+		event.Entity.EntityClass = corev2.EntityProxyClass
+	}
+
 	if err := event.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
+	}
+
+	if len(event.ID) == 0 {
+		id, err := uuid.NewRandom()
+		if err != nil {
+			return NewError(InternalErr, err)
+		}
+		event.ID = id[:]
 	}
 
 	// Publish to event pipeline
