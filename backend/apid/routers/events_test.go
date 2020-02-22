@@ -63,6 +63,9 @@ func TestEventsRouter(t *testing.T) {
 		controllerFunc controllerFunc
 		wantStatusCode int
 	}{
+		//
+		// GET
+		//
 		{
 			name:   "it returns 404 if a resource is not found",
 			method: http.MethodGet,
@@ -150,6 +153,9 @@ func TestEventsRouter(t *testing.T) {
 			},
 			wantStatusCode: http.StatusCreated,
 		},
+		//
+		// PUT
+		//
 		{
 			name:           "it returns 400 if the payload to update is not decodable",
 			method:         http.MethodPut,
@@ -220,6 +226,37 @@ func TestEventsRouter(t *testing.T) {
 			wantStatusCode: http.StatusCreated,
 		},
 		{
+			name:           "it returns 400 if the entity name to PUT does not match the URL parameter",
+			method:         http.MethodPut,
+			path:           fixture.URIPath(),
+			body:           []byte(`{"entity": {"metadata": {"name": "bar", "namespace": "default"}}, "check": {"metadata": {"name": "check-cpu", "namespace":"default"}}}`),
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:           "it returns 400 if the entity namespace to PUT does not match the URL parameter",
+			method:         http.MethodPut,
+			path:           fixture.URIPath(),
+			body:           []byte(`{"entity": {"metadata": {"name": "foo", "namespace": "dev"}}, "check": {"metadata": {"name": "check-cpu", "namespace":"default"}}}`),
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:           "it returns 400 if the check name to PUT does not match the URL parameter",
+			method:         http.MethodPut,
+			path:           fixture.URIPath(),
+			body:           []byte(`{"entity": {"metadata": {"name": "foo", "namespace": "default"}}, "check": {"metadata": {"name": "check-mem", "namespace":"default"}}}`),
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:           "it returns 400 if the check namespace to PUT does not match the URL parameter",
+			method:         http.MethodPut,
+			path:           fixture.URIPath(),
+			body:           []byte(`{"entity": {"metadata": {"name": "foo", "namespace": "default"}}, "check": {"metadata": {"name": "check-cpu", "namespace":"dev"}}}`),
+			wantStatusCode: http.StatusBadRequest,
+		},
+		//
+		// POST
+		//
+		{
 			name:           "it returns 400 if the payload to update is not decodable (post)",
 			method:         http.MethodPost,
 			path:           fixture.URIPath(),
@@ -234,14 +271,14 @@ func TestEventsRouter(t *testing.T) {
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
-			name:           "it returns 400 if the event metadata to update is invalid (post)",
+			name:           "it returns 400 if the event metadata to POST is invalid (post)",
 			method:         http.MethodPost,
 			path:           fixture.URIPath(),
 			body:           []byte(`{"entity": {}, "check": {"metadata": {"namespace":"acme"}}}`),
 			wantStatusCode: http.StatusBadRequest,
 		},
 		{
-			name:   "it returns 400 if the event to update is not valid (post)",
+			name:   "it returns 400 if the event to update is invalid (post)",
 			method: http.MethodPost,
 			path:   fixture.URIPath(),
 			body:   marshal(fixture),
@@ -276,6 +313,37 @@ func TestEventsRouter(t *testing.T) {
 			},
 			wantStatusCode: http.StatusCreated,
 		},
+		{
+			name:           "it returns 400 if the entity name to POST does not match the URL parameter",
+			method:         http.MethodPost,
+			path:           fixture.URIPath(),
+			body:           []byte(`{"entity": {"metadata": {"name": "bar", "namespace": "default"}}, "check": {"metadata": {"name": "check-cpu", "namespace":"default"}}}`),
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:           "it returns 400 if the entity namespace to POST does not match the URL parameter",
+			method:         http.MethodPost,
+			path:           fixture.URIPath(),
+			body:           []byte(`{"entity": {"metadata": {"name": "foo", "namespace": "dev"}}, "check": {"metadata": {"name": "check-cpu", "namespace":"default"}}}`),
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:           "it returns 400 if the check name to POST does not match the URL parameter",
+			method:         http.MethodPost,
+			path:           fixture.URIPath(),
+			body:           []byte(`{"entity": {"metadata": {"name": "foo", "namespace": "default"}}, "check": {"metadata": {"name": "check-mem", "namespace":"default"}}}`),
+			wantStatusCode: http.StatusBadRequest,
+		},
+		{
+			name:           "it returns 400 if the check namespace to POST does not match the URL parameter",
+			method:         http.MethodPost,
+			path:           fixture.URIPath(),
+			body:           []byte(`{"entity": {"metadata": {"name": "foo", "namespace": "default"}}, "check": {"metadata": {"name": "check-cpu", "namespace":"dev"}}}`),
+			wantStatusCode: http.StatusBadRequest,
+		},
+		//
+		// DELETE
+		//
 		{
 			name:   "it returns 404 if the event to delete does not exist",
 			method: http.MethodDelete,

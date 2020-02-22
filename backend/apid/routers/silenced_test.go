@@ -22,11 +22,13 @@ func TestSilencedRouter(t *testing.T) {
 	parentRouter := mux.NewRouter().PathPrefix(corev2.URLPrefix).Subrouter()
 	router.Mount(parentRouter)
 
+	empty := &corev2.Silenced{}
 	fixture := corev2.FixtureSilenced("*:bar")
 
 	tests := []routerTestCase{}
 	tests = append(tests, getTestCases(fixture)...)
 	tests = append(tests, deleteTestCases(fixture)...)
+	tests = append(tests, listTestCases(empty)...)
 	for _, tt := range tests {
 		run(t, tt, parentRouter, s)
 	}
@@ -70,28 +72,6 @@ func TestSilencedRouterCustomRoutes(t *testing.T) {
 		controllerFunc controllerFunc
 		wantStatusCode int
 	}{
-		{
-			name:   "it returns 500 if the store encounters an error while listing silenced entries",
-			method: http.MethodGet,
-			path:   empty.URIPath(),
-			controllerFunc: func(c *mockSilencedController) {
-				c.On("List", mock.Anything, "", "").
-					Return([]*corev2.Silenced{}, actions.NewErrorf(actions.InternalErr)).
-					Once()
-			},
-			wantStatusCode: http.StatusInternalServerError,
-		},
-		{
-			name:   "it returns 200 and lists resources",
-			method: http.MethodGet,
-			path:   empty.URIPath(),
-			controllerFunc: func(c *mockSilencedController) {
-				c.On("List", mock.Anything, "", "").
-					Return([]*corev2.Silenced{fixture}, nil).
-					Once()
-			},
-			wantStatusCode: http.StatusOK,
-		},
 		{
 			name:           "it returns 400 if the payload to create is not decodable",
 			method:         http.MethodPost,

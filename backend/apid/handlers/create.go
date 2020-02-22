@@ -19,7 +19,7 @@ func (h Handlers) CreateResource(r *http.Request) (interface{}, error) {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	if err := CheckMeta(payload.Interface(), mux.Vars(r)); err != nil {
+	if err := CheckMeta(payload.Interface(), mux.Vars(r), "id"); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 

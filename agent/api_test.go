@@ -110,3 +110,50 @@ func TestHealthz(t *testing.T) {
 		})
 	}
 }
+
+func TestVersion(t *testing.T) {
+	var (
+		versionResponse = `{"version":""}`
+	)
+
+	testCases := []struct {
+		desc             string
+		expectedResponse int
+		json             string
+		closed           bool
+	}{
+		{
+			"version returns success",
+			http.StatusOK,
+			versionResponse,
+			true,
+		},
+	}
+
+	for _, tc := range testCases {
+		testName := fmt.Sprintf("test agent %s", tc.desc)
+
+		t.Run(testName, func(t *testing.T) {
+			// need to figure out how to pass the mock transport into the agent
+			config, cleanup := FixtureConfig()
+			defer cleanup()
+			agent, err := NewAgent(config)
+			if err != nil {
+				t.Fatal(err)
+			}
+			agent.connected = tc.closed
+
+			r, err := http.NewRequest("GET", "/version", nil)
+			assert.NoError(t, err)
+
+			router := mux.NewRouter()
+			registerRoutes(agent, router)
+			w := httptest.NewRecorder()
+			router.ServeHTTP(w, r)
+
+
+			assert.Equal(t, tc.expectedResponse, w.Code)
+			assert.Equal(t, tc.json, w.Body.String())
+		})
+	}
+}

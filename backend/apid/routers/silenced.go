@@ -46,9 +46,8 @@ func (r *SilencedRouter) Mount(parent *mux.Router) {
 	routes.Get(r.handlers.GetResource)
 	routes.Post(r.create)
 	routes.Put(r.createOrReplace)
-
-	routes.Router.HandleFunc(routes.PathPrefix, listHandler(r.list)).Methods(http.MethodGet)
-	routes.Router.HandleFunc("/{resource:silenced}", listHandler(r.list)).Methods(http.MethodGet)
+	routes.List(r.handlers.ListResources, corev2.SilencedFields)
+	routes.ListAllNamespaces(r.handlers.ListResources, "/{resource:silenced}", corev2.SilencedFields)
 
 	// Custom routes for listing by subscription and checks for a specific
 	// namespace, in addition to all namespaces for checks.
@@ -63,7 +62,7 @@ func (r *SilencedRouter) create(req *http.Request) (interface{}, error) {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	if err := handlers.CheckMeta(entry, mux.Vars(req)); err != nil {
+	if err := handlers.CheckMeta(entry, mux.Vars(req), "id"); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
@@ -77,7 +76,7 @@ func (r *SilencedRouter) createOrReplace(req *http.Request) (interface{}, error)
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	if err := handlers.CheckMeta(entry, mux.Vars(req)); err != nil {
+	if err := handlers.CheckMeta(entry, mux.Vars(req), "id"); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 

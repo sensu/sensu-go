@@ -48,12 +48,6 @@ func UnmarshalJSON(b []byte, msg proto.Message) error { return json.Unmarshal(b,
 // MarshalJSON is a wrapper to serialize proto messages with JSON.
 func MarshalJSON(msg proto.Message) ([]byte, error) { return json.Marshal(msg) }
 
-// SessionStore specifies the storage requirements of the Session.
-type SessionStore interface {
-	store.EntityStore
-	store.NamespaceStore
-}
-
 // A Session is a server-side connection between a Sensu backend server and
 // the Sensu agent process via the Sensu transport. It is responsible for
 // relaying messages to the message bus on behalf of the agent and from the
@@ -62,7 +56,7 @@ type SessionStore interface {
 type Session struct {
 	cfg          SessionConfig
 	conn         transport.Transport
-	store        SessionStore
+	store        store.EntityStore
 	handler      *handler.MessageHandler
 	wg           *sync.WaitGroup
 	stopWG       sync.WaitGroup
@@ -349,14 +343,6 @@ func (s *Session) handleEvent(ctx context.Context, payload []byte) error {
 	// Validate the received event
 	if err := event.Validate(); err != nil {
 		return err
-	}
-
-	// Verify if we have a source in the event and if so, use it as the entity by
-	// creating or retrieving it from the store
-	if event.HasCheck() {
-		if err := getProxyEntity(event, s.store); err != nil {
-			return err
-		}
 	}
 
 	// Add the entity subscription to the subscriptions of this entity

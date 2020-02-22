@@ -163,11 +163,8 @@ func TestSessionTerminateOnSendError(t *testing.T) {
 	}
 
 	st := &mockstore.MockStore{}
-	st.On(
-		"GetNamespace",
-		mock.Anything,
-		"acme",
-	).Return(&corev2.Namespace{}, nil)
+	st.On("GetNamespace", mock.Anything, "acme").Return(&corev2.Namespace{}, nil)
+	st.On("GetEntityByName", mock.Anything, "acme").Return(event.Entity, nil)
 
 	cfg := SessionConfig{
 		AgentName:     "testing",

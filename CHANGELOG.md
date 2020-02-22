@@ -8,6 +8,15 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Fixed
+- ensure that check/check config have a non-empty command
+
+## [5.18.0] - 2020-02-24
+
+### Added
+- Added the `/version` API in sensu-agent.
+- Indicate in log messages which filter dropped an event.
+
+### Fixed
 - sensuctl now supports the http_proxy, https_proxy, and no_proxy environment
 variables.
 - returns 401 instead of 500 when issues occur refreshing the access token.
@@ -16,11 +25,15 @@ variables.
 the default sensuctl configuration.
 - read/writes `initializationKey` to/from `EtcdRoot`, while support legacy as fallback (read-only)
 - check for a non-200 response when fetching assets
-- ensure that check/check config have a non-empty command
+- `/silenced` now supports API filtering (commercial feature).
+- Fix event payload validation on the backend events API.
+- The `auth/test` endpoint now returns the correct error messages.
 
 ### Changed
 - Updated Go version from 1.13.5 to 1.13.7.
 - Default `event.entity.entity_class` to `proxy` in the POST/PUT `/events` API.
+- Proxy entities are now automatically created when events are published with an
+entity that does not exist.
 
 ## [5.17.2] - 2020-02-19
 
@@ -28,9 +41,6 @@ the default sensuctl configuration.
 
 - Fixed a bug where on an internal restart, enterprise HTTP routes could fail
 to intialize.
-
-### Fixed
-- The `auth/test` endpoint now returns the correct error messages.
 
 ## [5.17.1] - 2020-01-31
 
@@ -42,6 +52,8 @@ certain circonstances.
 - Assets name may contain capital letters.
 - When `--trusted-ca-file` is used to configure sensuctl, it now detects and saves
 the absolute file path in the cluster config.
+- [Web] Changing order on event list will no longer cause filters to be reset.
+- [Web] URLs inside annotations are now rendered as links.
 
 ## [5.17.0] - 2020-01-28
 
@@ -52,7 +64,6 @@ by commercial secrets providers. Implemented for checks, mutators, and handlers.
 - Added the `keepalive-handlers` configuration flag on the agent to specify the
 entity's keepalive handlers.
 - Added `event.entity.name` as a supported field selector.
-- Indicate in log messages which filter dropped an event.
 
 ### Fixed
 - Fixed a memory leak in the entity cache.
