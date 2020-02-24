@@ -238,21 +238,31 @@ func filterCheckSubdue(resources []*types.Wrapper) {
 // ValidateResources loops through a list of resources, appends a namespace
 // if one is not already declared, and validates the resource.
 func ValidateResources(resources []*types.Wrapper, namespace string) error {
-	var err error
 	errCount := 0
 	for i, r := range resources {
 		resource := r.Value
 		if resource == nil {
 			errCount++
-			fmt.Fprintf(os.Stderr, "error validating resource %d: resource is nil\n", i)
+			fmt.Fprintf(
+				os.Stderr,
+				"error validating resource #%d with name %q and namespace %q: resource is nil\n",
+				i, r.ObjectMeta.Name, r.ObjectMeta.Namespace,
+			)
 			continue
 		}
 		if resource.GetObjectMeta().Namespace == "" {
 			resource.SetNamespace(namespace)
-			r.ObjectMeta.Namespace = namespace
+			// We just set the namespace within the underlying wrapped value. We also
+			// need to set it to the outer ObjectMeta for consistency, but only if the
+			// resource has a namespace; some resources are cluster-wide and should
+			// not be namespaced
+			if ns := resource.GetObjectMeta().Namespace; ns != "" {
+				r.ObjectMeta.Namespace = ns
+			}
 		}
 	}
-	return err
+
+	return nil
 }
 
 func describeError(index int, err error) {
@@ -268,7 +278,10 @@ func describeError(index int, err error) {
 func PutResources(client client.GenericClient, resources []*types.Wrapper) error {
 	for i, resource := range resources {
 		if err := client.PutResource(*resource); err != nil {
-			return fmt.Errorf("error putting resource %d (%s): %s", i, resource.Value.URIPath(), err)
+			return fmt.Errorf(
+				"error putting resource #%d with name %q and namespace %q (%s): %s",
+				i, resource.ObjectMeta.Name, resource.ObjectMeta.Namespace, resource.Value.URIPath(), err,
+			)
 		}
 	}
 	return nil

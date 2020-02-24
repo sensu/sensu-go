@@ -3,20 +3,21 @@ package create
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
-
 	"text/template"
 
 	"github.com/ghodss/yaml"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	mockclient "github.com/sensu/sensu-go/cli/client/testing"
+	cmdtesting "github.com/sensu/sensu-go/cli/commands/testing"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-
-	mockclient "github.com/sensu/sensu-go/cli/client/testing"
-	cmdtesting "github.com/sensu/sensu-go/cli/commands/testing"
 )
 
 var resourceSpecTmpl = template.Must(template.New("test").Parse(`
@@ -179,4 +180,90 @@ func TestCreateCommandStdin(t *testing.T) {
 	client.AssertCalled(t, "PutResource", mock.Anything)
 	client.AssertCalled(t, "PutResource", mock.Anything)
 	client.AssertCalled(t, "PutResource", mock.Anything)
+}
+
+func TestValidateResources(t *testing.T) {
+	tests := []struct {
+		name          string
+		resource      *types.Wrapper
+		namespace     string
+		wantNamespace string
+	}{
+		{
+			name: "a namespaced resource with a configured namespace should not be modified",
+			resource: &types.Wrapper{
+				ObjectMeta: corev2.NewObjectMeta("check-cpu", "default"),
+				Value: &corev2.CheckConfig{
+					ObjectMeta: corev2.NewObjectMeta("check-cpu", "default"),
+				},
+			},
+			namespace:     "dev",
+			wantNamespace: "default",
+		},
+		{
+			name: "a namespaced resource without a configured namespace should use the provided namespace",
+			resource: &types.Wrapper{
+				ObjectMeta: corev2.NewObjectMeta("check-cpu", ""),
+				Value: &corev2.CheckConfig{
+					ObjectMeta: corev2.NewObjectMeta("check-cpu", ""),
+				},
+			},
+			namespace:     "dev",
+			wantNamespace: "dev",
+		},
+		{
+			name: "a global resource should not have a namespace configured",
+			resource: &types.Wrapper{
+				ObjectMeta: corev2.NewObjectMeta("admin-role", ""),
+				Value: &corev2.ClusterRole{
+					ObjectMeta: corev2.NewObjectMeta("admin-role", ""),
+				},
+			},
+			namespace:     "dev",
+			wantNamespace: "",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resources := []*types.Wrapper{tt.resource}
+			_ = ValidateResources(resources, tt.namespace)
+
+			if tt.resource.ObjectMeta.Namespace != tt.wantNamespace {
+				t.Errorf("ValidateResources() wrapper namespace = %q, want namespace %q", tt.resource.ObjectMeta.Namespace, tt.wantNamespace)
+			}
+			if tt.resource.Value != nil && tt.resource.Value.GetObjectMeta().Namespace != tt.wantNamespace {
+				t.Errorf("ValidateResources() wrapper's resource namespace = %q, want namespace %q", tt.resource.Value.GetObjectMeta().Namespace, tt.wantNamespace)
+			}
+		})
+	}
+}
+
+func TestValidateResourcesStderr(t *testing.T) {
+	oldStderr := os.Stderr
+	r, w, _ := os.Pipe()
+	os.Stderr = w
+
+	ch := make(chan string)
+	// copy the output in a separate goroutine so printing can't block indefinitely
+	go func() {
+		var buf bytes.Buffer
+		io.Copy(&buf, r)
+		ch <- buf.String()
+	}()
+
+	resources := []*types.Wrapper{&types.Wrapper{
+		ObjectMeta: corev2.NewObjectMeta("check-cpu", "default"),
+	}}
+	_ = ValidateResources(resources, "default")
+
+	// Reset stderr
+	w.Close()
+	os.Stderr = oldStderr
+
+	errMsg := <-ch
+	errMsg = strings.TrimSpace(errMsg)
+	wantErr := `error validating resource #0 with name "check-cpu" and namespace "default": resource is nil`
+	if errMsg != wantErr {
+		t.Errorf("ValidateResources() err = %s, want %s", errMsg, wantErr)
+	}
 }
