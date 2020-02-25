@@ -246,7 +246,8 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 
-	// Create a proxy entity if required and update the event's entity with it
+	// Create a proxy entity if required and update the event's entity with it,
+	// but only if the event's entity is not an agent.
 	if err := createProxyEntity(event, e.store); err != nil {
 		return err
 	}

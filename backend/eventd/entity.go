@@ -15,6 +15,8 @@ func createProxyEntity(event *corev2.Event, s store.EntityStore) error {
 	// Override the entity name with proxy_entity_name if it was provided
 	if event.HasCheck() && event.Check.ProxyEntityName != "" {
 		entityName = event.Check.ProxyEntityName
+	} else if event.Entity.EntityClass == corev2.EntityAgentClass {
+		return nil
 	}
 
 	// Determine if the entity exists
