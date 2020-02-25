@@ -248,10 +248,8 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 
 	// Create a proxy entity if required and update the event's entity with it,
 	// but only if the event's entity is not an agent.
-	if event.Entity.EntityClass != corev2.EntityAgentClass {
-		if err := createProxyEntity(event, e.store); err != nil {
-			return err
-		}
+	if err := createProxyEntity(event, e.store); err != nil {
+		return err
 	}
 
 	// Add any silenced subscriptions to the event
