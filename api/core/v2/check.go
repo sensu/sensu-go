@@ -257,10 +257,9 @@ func (c *Check) MergeWith(prevCheck *Check) {
 	// This may happen when events are received out of order.
 	// Normally we would expect it to be the last item though, so iterate backwards to
 	// minimise number of iterations in the expected case.
-	histEntry.Flapping = c.State == EventFlappingState
 	for i := len(history) - 1; i >= 0; i-- {
 		if c.History[i].Executed == histEntry.Executed && c.History[i].Status == histEntry.Status {
-			c.History[i] = histEntry
+			c.History[i].Flapping = c.State == EventFlappingState
 			break
 		}
 	}
