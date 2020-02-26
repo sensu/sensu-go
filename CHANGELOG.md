@@ -29,6 +29,8 @@ the default sensuctl configuration.
 - `/silenced` now supports API filtering (commercial feature).
 - Fix event payload validation on the backend events API.
 - The `auth/test` endpoint now returns the correct error messages.
+- The `log-level` configuration option is now properly applied when running the
+Sensu Agent Windows service.
 
 ### Changed
 - Updated Go version from 1.13.5 to 1.13.7.
