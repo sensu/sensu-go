@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/sensu/sensu-go/types"
 	bolt "go.etcd.io/bbolt"
@@ -39,7 +40,7 @@ func (m *Manager) StartAssetManager(ctx context.Context) (Getter, error) {
 	}
 
 	logger.WithField("cache", m.cacheDir).Debug("initializing cache directory")
-	db, err := bolt.Open(filepath.Join(m.cacheDir, dbName), 0600, &bolt.Options{})
+	db, err := bolt.Open(filepath.Join(m.cacheDir, dbName), 0600, &bolt.Options{Timeout: 60 * time.Second})
 	if err != nil {
 		return nil, err
 	}
