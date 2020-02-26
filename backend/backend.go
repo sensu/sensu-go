@@ -2,6 +2,7 @@ package backend
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"os"
 	"runtime/debug"
@@ -18,6 +19,7 @@ import (
 	"github.com/sensu/sensu-go/backend/apid"
 	"github.com/sensu/sensu-go/backend/apid/actions"
 	"github.com/sensu/sensu-go/backend/apid/graphql"
+	"github.com/sensu/sensu-go/backend/apid/routers"
 	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
@@ -63,6 +65,8 @@ type Backend struct {
 	EventStore             EventStoreUpdater
 	GraphQLService         *graphql.Service
 	SecretsProviderManager *secrets.ProviderManager
+	HealthRouter           *routers.HealthRouter
+	EtcdClientTLSConfig    *tls.Config
 
 	ctx       context.Context
 	runCtx    context.Context
@@ -323,6 +327,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	if err != nil {
 		return nil, err
 	}
+	b.EtcdClientTLSConfig = etcdClientTLSConfig
 
 	// Prepare the authentication providers
 	authenticator := &authentication.Authenticator{}
@@ -342,6 +347,9 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	if err := jwt.LoadKeyPair(viper.GetString(FlagJWTPrivateKeyFile), viper.GetString(FlagJWTPublicKeyFile)); err != nil {
 		logger.WithError(err).Error("could not load the key pair for the JWT signature")
 	}
+
+	// Initialize the health router
+	b.HealthRouter = routers.NewHealthRouter(actions.NewHealthController(stor, b.Client.Cluster, b.EtcdClientTLSConfig))
 
 	// Initialize GraphQL service
 	auth := &rbac.Authorizer{Store: stor}
@@ -381,6 +389,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		Authenticator:       authenticator,
 		ClusterVersion:      clusterVersion,
 		GraphQLService:      b.GraphQLService,
+		HealthRouter:        b.HealthRouter,
 	}
 	api, err := apid.New(apidConfig)
 	if err != nil {

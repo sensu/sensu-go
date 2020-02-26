@@ -4,20 +4,22 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 // HealthController represents the controller needs of the HealthRouter
 type HealthController interface {
-	GetClusterHealth(ctx context.Context) *types.HealthResponse
+	GetClusterHealth(ctx context.Context) *corev2.HealthResponse
 }
 
 // HealthRouter handles requests for /health
 type HealthRouter struct {
 	controller HealthController
+	mu         sync.Mutex
 }
 
 // NewHealthRouter instantiates new router for controlling health info
@@ -44,6 +46,15 @@ func (r *HealthRouter) health(w http.ResponseWriter, req *http.Request) {
 		// contexts in GetClusterHealth, which is a concurrent gatherer.
 		ctx = context.WithValue(ctx, "timeout", time.Duration(timeout)*time.Second)
 	}
+	r.mu.Lock()
 	clusterHealth := r.controller.GetClusterHealth(ctx)
+	r.mu.Unlock()
 	_ = json.NewEncoder(w).Encode(clusterHealth)
+}
+
+// Swap swaps the health controller of the health router.
+func (r *HealthRouter) Swap(newCtl HealthController) {
+	r.mu.Lock()
+	r.controller = newCtl
+	r.mu.Unlock()
 }
