@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- ensure that check/check config have a non-empty command
+
 ## [5.18.0] - 2020-02-24
 
 ### Added

@@ -17,6 +17,7 @@ func TestCheckValidate(t *testing.T) {
 	c.Interval = 10
 
 	c.Name = "test"
+	c.Command = "command"
 
 	assert.NoError(t, c.Validate())
 }
@@ -106,6 +107,17 @@ func TestCheckHasNonNilHandlers(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, json.Unmarshal(b, &c))
 	require.NotNil(t, c.Handlers)
+}
+
+func TestCheckHasEmptyCommandError(t *testing.T) {
+	c := FixtureCheckConfig("foo")
+	c.Subscriptions = []string{}
+	c.Command = ""
+	b, err := json.Marshal(&c)
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(b, &c))
+	err = c.Validate()
+	require.EqualError(t, err, "command can not be empty")
 }
 
 func TestCheckFlapThresholdValidation(t *testing.T) {

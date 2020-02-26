@@ -23,7 +23,7 @@ func TestSetCommandCommand(t *testing.T) {
 		{"no args", []string{}, nil, nil, "Usage", true},
 		{"fetch error", []string{"foo", "echo foo"}, fmt.Errorf("error"), nil, "", true},
 		{"update error", []string{"bar", "echo bar"}, nil, fmt.Errorf("error"), "", true},
-		{"invalid input", []string{"checky", ""}, nil, nil, "", false},
+		{"invalid input", []string{"checky", "foo"}, nil, nil, "", false},
 		{"valid input", []string{"checky", "echo checky"}, nil, nil, "Updated", false},
 	}
 
