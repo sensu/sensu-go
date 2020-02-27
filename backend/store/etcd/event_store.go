@@ -11,12 +11,15 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/provider"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 const (
 	eventsPathPrefix = "events"
+	// Type is the type of an etcd store provider.
+	Type = "etcd"
 )
 
 var (
@@ -292,6 +295,19 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 	}
 
 	return event, prevEvent, nil
+}
+
+// GetProviderInfo returns the info of an etcd store provider.
+func (s *Store) GetProviderInfo() *provider.Info {
+	return &provider.Info{
+		TypeMeta: corev2.TypeMeta{
+			Type:       Type,
+			APIVersion: "store/v1",
+		},
+		ObjectMeta: corev2.ObjectMeta{
+			Name: Type,
+		},
+	}
 }
 
 func updateOccurrences(check *corev2.Check) {
