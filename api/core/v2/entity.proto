@@ -50,6 +50,18 @@ message System {
   Network network = 6 [(gogoproto.nullable) = false];
   string arch = 7;
   int32 arm_version = 8 [(gogoproto.customname) = "ARMVersion"];
+
+  // LibCType indicates the type of libc the agent has access to (glibc, musl, etc)
+  string LibCType = 9 [(gogoproto.jsontag) = "libc_type"];
+
+  // VMSystem indicates the VM system of the agent (kvm, vbox, etc)
+  string VMSystem = 10 [(gogoproto.jsontag) = "vm_system"];
+
+  // VMRole indicates the VM role of the agent (host/guest)
+  string VMRole = 11 [(gogoproto.jsontag) = "vm_role"];
+
+  // CloudProvider indicates the public cloud the agent is running on.
+  string CloudProvider = 12 [(gogoproto.jsontag) = "cloud_provider"];
 }
 
 // Network contains information about the system network interfaces

@@ -79,6 +79,8 @@ var typeMap = map[string]interface{}{
 	"network_interface":      &NetworkInterface{},
 	"ObjectMeta":             &ObjectMeta{},
 	"object_meta":            &ObjectMeta{},
+	"PostgresHealth":         &PostgresHealth{},
+	"postgres_health":        &PostgresHealth{},
 	"ProxyRequests":          &ProxyRequests{},
 	"proxy_requests":         &ProxyRequests{},
 	"Role":                   &Role{},
