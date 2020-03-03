@@ -38,6 +38,14 @@ const (
 	// InfluxDBOutputMetricFormat is the accepted string to represent the output metric format of
 	// InfluxDB Line
 	InfluxDBOutputMetricFormat = "influxdb_line"
+
+	// KeepaliveCheckName is the name of the check that is created when a
+	// keepalive timeout occurs.
+	KeepaliveCheckName = "keepalive"
+
+	// RegistrationCheckName is the name of the check that is created when an
+	// entity sends a keepalive and the entity does not yet exist in the store.
+	RegistrationCheckName = "registration"
 )
 
 // OutputMetricFormats represents all the accepted output_metric_format's a check can have
@@ -180,7 +188,7 @@ func (c *Check) Validate() error {
 		}
 	}
 
-	if c.Command == "" {
+	if c.Command == "" && c.Name != KeepaliveCheckName && c.Name != RegistrationCheckName {
 		return errors.New("command can not be empty")
 	}
 
