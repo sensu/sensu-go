@@ -1,5 +1,10 @@
 package v2
 
+// TODO: go build will build the latest version of the protoc-gen-gofast module
+// used by the project. We need a way to pin the exact version of
+// protoc-gen-gofast used in this generator. We could not find a way of doing
+// this at the time of this writing.
+
 //go:generate go run ../../../scripts/check_protoc/main.go
 //go:generate go build -o $GOPATH/bin/protoc-gen-gofast github.com/gogo/protobuf/protoc-gen-gofast
 //go:generate -command protoc protoc --plugin $GOPATH/bin/protoc-gen-gofast --gofast_out=plugins:. -I=$GOPATH/pkg/mod -I=./ -I=$GOPATH/pkg/mod/github.com/gogo/protobuf@v1.3.1/protobuf
