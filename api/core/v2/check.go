@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/url"
 	"path"
-	"sort"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
@@ -248,7 +247,6 @@ func (c *Check) MergeWith(prevCheck *Check) {
 	}
 
 	history = append(history, histEntry)
-	sort.Sort(ByExecuted(history))
 	if len(history) > 21 {
 		history = history[1:]
 	}
@@ -269,6 +267,7 @@ func ValidateOutputMetricFormat(format string) error {
 	return errors.New("output metric format is not valid")
 }
 
+// DEPRECATED, DO NOT USE! Events should be ordered FIFO.
 // ByExecuted implements the sort.Interface for []CheckHistory based on the
 // Executed field.
 //
