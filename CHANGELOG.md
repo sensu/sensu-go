@@ -31,7 +31,9 @@ the default sensuctl configuration.
 - read/writes `initializationKey` to/from `EtcdRoot`, while support legacy as fallback (read-only)
 - check for a non-200 response when fetching assets
 - `/silenced` now supports API filtering (commercial feature).
-- Fix event payload validation on the backend events API.
+- Fixed event payload validation on the backend events API to validate the
+payload with the URL parameters on the /events/:entity/:check endpoint and
+reject events that do not match.
 - The `auth/test` endpoint now returns the correct error messages.
 
 ### Changed
