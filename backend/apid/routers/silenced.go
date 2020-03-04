@@ -62,7 +62,7 @@ func (r *SilencedRouter) create(req *http.Request) (interface{}, error) {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	if err := handlers.CheckMeta(entry, mux.Vars(req)); err != nil {
+	if err := handlers.CheckMeta(entry, mux.Vars(req), "id"); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
@@ -76,7 +76,7 @@ func (r *SilencedRouter) createOrReplace(req *http.Request) (interface{}, error)
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 
-	if err := handlers.CheckMeta(entry, mux.Vars(req)); err != nil {
+	if err := handlers.CheckMeta(entry, mux.Vars(req), "id"); err != nil {
 		return nil, actions.NewError(actions.InvalidArgument, err)
 	}
 

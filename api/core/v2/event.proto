@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-import "github.com/gogo/protobuf@v1.2.1/gogoproto/gogo.proto";
+import "github.com/gogo/protobuf@v1.3.1/gogoproto/gogo.proto";
 import "entity.proto";
 import "check.proto";
 import "metrics.proto";
@@ -35,4 +35,7 @@ message Event {
 
   // Metadata contains name, namespace, labels and annotations
   ObjectMeta metadata = 5 [(gogoproto.embed) = true, (gogoproto.jsontag) = "metadata", (gogoproto.nullable) = false];
+
+  // ID is the unique identifier of the event.
+  bytes ID = 6 [(gogoproto.jsontag) = "id"];
 }

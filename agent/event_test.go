@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	time "github.com/echlebek/timeproxy"
+	"github.com/google/uuid"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	v2 "github.com/sensu/sensu-go/api/core/v2"
 	corev1 "github.com/sensu/sensu-go/types/v1"
@@ -281,6 +282,9 @@ func Test_prepareEvent(t *testing.T) {
 			}
 			if ns := tt.args.event.GetNamespace(); ns != tt.wantNamespace {
 				t.Errorf("prepareEvent() ObjectMeta.GetNamespace() = %v, want %v", ns, tt.wantNamespace)
+			}
+			if id := tt.args.event.GetUUID(); id == uuid.Nil {
+				t.Errorf("bad uuid: %s", id.String())
 			}
 		})
 	}

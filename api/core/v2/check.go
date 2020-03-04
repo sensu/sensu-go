@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/url"
 	"path"
-	"sort"
 	"time"
 
 	jsoniter "github.com/json-iterator/go"
@@ -38,6 +37,14 @@ const (
 	// InfluxDBOutputMetricFormat is the accepted string to represent the output metric format of
 	// InfluxDB Line
 	InfluxDBOutputMetricFormat = "influxdb_line"
+
+	// KeepaliveCheckName is the name of the check that is created when a
+	// keepalive timeout occurs.
+	KeepaliveCheckName = "keepalive"
+
+	// RegistrationCheckName is the name of the check that is created when an
+	// entity sends a keepalive and the entity does not yet exist in the store.
+	RegistrationCheckName = "registration"
 )
 
 // OutputMetricFormats represents all the accepted output_metric_format's a check can have
@@ -180,6 +187,10 @@ func (c *Check) Validate() error {
 		}
 	}
 
+	if c.Command == "" && c.Name != KeepaliveCheckName && c.Name != RegistrationCheckName {
+		return errors.New("command can not be empty")
+	}
+
 	if c.ProxyRequests != nil {
 		if err := c.ProxyRequests.Validate(); err != nil {
 			return err
@@ -236,7 +247,6 @@ func (c *Check) MergeWith(prevCheck *Check) {
 	}
 
 	history = append(history, histEntry)
-	sort.Sort(ByExecuted(history))
 	if len(history) > 21 {
 		history = history[1:]
 	}
@@ -282,6 +292,7 @@ func (c *Check) previousOccurrence() *CheckHistory {
 	return &c.History[len(c.History)-2]
 }
 
+// DEPRECATED, DO NOT USE! Events should be ordered FIFO.
 // ByExecuted implements the sort.Interface for []CheckHistory based on the
 // Executed field.
 //

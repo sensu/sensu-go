@@ -10,6 +10,7 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -21,7 +22,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // TimeWindowWhen defines the "when" attributes for time windows
 type TimeWindowWhen struct {
@@ -46,7 +47,7 @@ func (m *TimeWindowWhen) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return xxx_messageInfo_TimeWindowWhen.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -101,7 +102,7 @@ func (m *TimeWindowDays) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return xxx_messageInfo_TimeWindowDays.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -203,7 +204,7 @@ func (m *TimeWindowTimeRange) XXX_Marshal(b []byte, deterministic bool) ([]byte,
 		return xxx_messageInfo_TimeWindowTimeRange.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -245,31 +246,31 @@ func init() {
 func init() { proto.RegisterFile("time_window.proto", fileDescriptor_ad1ed7030b1eedfe) }
 
 var fileDescriptor_ad1ed7030b1eedfe = []byte{
-	// 379 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x92, 0xcf, 0x4a, 0xeb, 0x40,
-	0x14, 0x87, 0x3b, 0x4d, 0xfa, 0x6f, 0x7a, 0xef, 0x85, 0x3b, 0x77, 0x93, 0x2b, 0x98, 0x94, 0xac,
-	0xba, 0x9a, 0xd2, 0xe8, 0xca, 0x8d, 0x25, 0x14, 0xf7, 0x0d, 0x42, 0xc1, 0x8d, 0x24, 0xcd, 0x34,
-	0x0d, 0x34, 0x33, 0x92, 0x64, 0x5a, 0xfa, 0x26, 0x3e, 0x82, 0xf8, 0x04, 0x3e, 0x42, 0x97, 0x3e,
-	0x41, 0xd0, 0xb8, 0xeb, 0x13, 0xb8, 0x94, 0x99, 0x58, 0xab, 0xa0, 0x8b, 0xd9, 0x4c, 0x26, 0x27,
-	0xbf, 0xef, 0xcb, 0xe1, 0x70, 0xe0, 0xdf, 0x3c, 0x4e, 0xc8, 0xf5, 0x3a, 0xa6, 0x21, 0x5b, 0xe3,
-	0x9b, 0x94, 0xe5, 0x0c, 0xfd, 0xce, 0x08, 0xcd, 0x38, 0x9e, 0xb1, 0x94, 0xe0, 0x95, 0x73, 0x74,
-	0x1a, 0xc5, 0xf9, 0x82, 0x07, 0x78, 0xc6, 0x92, 0x41, 0xc4, 0x22, 0x36, 0x90, 0xa9, 0x80, 0xcf,
-	0x47, 0xab, 0x21, 0x76, 0xf0, 0x50, 0x16, 0x65, 0x4d, 0xde, 0x2a, 0x89, 0x3d, 0x81, 0x7f, 0x2e,
-	0xe3, 0x84, 0x4c, 0xa5, 0x78, 0xba, 0x20, 0x14, 0x9d, 0x43, 0x3d, 0xf4, 0x37, 0x99, 0x01, 0x7a,
-	0xa0, 0xdf, 0x75, 0x8e, 0xf1, 0x97, 0xbf, 0xe0, 0x43, 0x78, 0xec, 0x6f, 0x32, 0xf7, 0xd7, 0xb6,
-	0xb0, 0x6a, 0xbb, 0xc2, 0x92, 0x88, 0x27, 0x4f, 0xfb, 0x5e, 0xff, 0xec, 0x14, 0x31, 0x74, 0x06,
-	0x35, 0x7f, 0xb9, 0x34, 0x40, 0x4f, 0xeb, 0x77, 0x1d, 0xfb, 0x47, 0xa5, 0xb8, 0x79, 0x3e, 0x8d,
-	0x88, 0xab, 0x6f, 0x0b, 0x0b, 0x78, 0x02, 0x42, 0x23, 0xd8, 0xcc, 0x38, 0x0d, 0xfd, 0x8d, 0x51,
-	0x57, 0xc4, 0xdf, 0x39, 0x61, 0x48, 0x98, 0x34, 0x68, 0xaa, 0x86, 0x8a, 0x43, 0x2e, 0x6c, 0xe5,
-	0x9c, 0x64, 0x42, 0xa1, 0x2b, 0x2a, 0xf6, 0x20, 0xba, 0x80, 0x9d, 0x35, 0x09, 0x69, 0x65, 0x69,
-	0x28, 0x5a, 0x0e, 0x28, 0x1a, 0xc3, 0x76, 0xbe, 0xe0, 0xa9, 0xd4, 0x34, 0x15, 0x35, 0x1f, 0xa4,
-	0x98, 0xc9, 0x3c, 0x8d, 0x85, 0xa3, 0xa5, 0x3a, 0x93, 0x8a, 0x13, 0x7d, 0x64, 0x7e, 0xce, 0x53,
-	0xe1, 0x68, 0xab, 0xf6, 0xb1, 0x27, 0xed, 0x09, 0xfc, 0xf7, 0x4d, 0x0c, 0x59, 0xb0, 0x11, 0x90,
-	0x28, 0xa6, 0x72, 0x0b, 0x3b, 0x6e, 0x67, 0x57, 0x58, 0x55, 0xc1, 0xab, 0x1e, 0xe8, 0x3f, 0xd4,
-	0x08, 0x0d, 0x8d, 0xba, 0xfc, 0xdc, 0xda, 0x15, 0x96, 0x78, 0xf5, 0xc4, 0xe1, 0xf6, 0x5e, 0x9f,
-	0x4d, 0x70, 0x57, 0x9a, 0xe0, 0xa1, 0x34, 0xc1, 0xb6, 0x34, 0xc1, 0x63, 0x69, 0x82, 0xa7, 0xd2,
-	0x04, 0xb7, 0x2f, 0x66, 0xed, 0xaa, 0xbe, 0x72, 0x82, 0xa6, 0xdc, 0xfd, 0x93, 0xb7, 0x00, 0x00,
-	0x00, 0xff, 0xff, 0x1c, 0x98, 0x00, 0xaa, 0x55, 0x03, 0x00, 0x00,
+	// 376 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x92, 0x4d, 0x4a, 0xc3, 0x40,
+	0x14, 0xc7, 0x3b, 0x4d, 0xfa, 0x35, 0x55, 0xc1, 0x71, 0x13, 0x05, 0x93, 0x92, 0x55, 0x57, 0x53,
+	0x9a, 0xba, 0x72, 0x63, 0x09, 0xc5, 0x7d, 0x83, 0x50, 0x70, 0x23, 0x49, 0x33, 0x4d, 0x03, 0xcd,
+	0x8c, 0xe4, 0xa3, 0xa5, 0x37, 0xf1, 0x08, 0xe2, 0x09, 0x3c, 0x42, 0x97, 0x9e, 0x20, 0x68, 0xdc,
+	0xf5, 0x04, 0x2e, 0x65, 0x26, 0xd6, 0x2a, 0xe8, 0x62, 0x36, 0x93, 0xc9, 0xcb, 0xff, 0xf7, 0xcb,
+	0xe3, 0xf1, 0xe0, 0x71, 0x1a, 0x46, 0xe4, 0x6e, 0x15, 0x52, 0x9f, 0xad, 0xf0, 0x7d, 0xcc, 0x52,
+	0x86, 0x0e, 0x13, 0x42, 0x93, 0x0c, 0x4f, 0x59, 0x4c, 0xf0, 0xd2, 0x3a, 0xbb, 0x08, 0xc2, 0x74,
+	0x9e, 0x79, 0x78, 0xca, 0xa2, 0x5e, 0xc0, 0x02, 0xd6, 0x13, 0x29, 0x2f, 0x9b, 0x0d, 0x97, 0x7d,
+	0x3c, 0xc0, 0x7d, 0x51, 0x14, 0x35, 0x71, 0x2b, 0x25, 0xe6, 0x18, 0x1e, 0xdd, 0x84, 0x11, 0x99,
+	0x08, 0xf1, 0x64, 0x4e, 0x28, 0xba, 0x82, 0xaa, 0xef, 0xae, 0x13, 0x0d, 0x74, 0x40, 0xb7, 0x6d,
+	0x9d, 0xe3, 0x5f, 0x7f, 0xc1, 0xfb, 0xf0, 0xc8, 0x5d, 0x27, 0xf6, 0xc1, 0x26, 0x37, 0x2a, 0xdb,
+	0xdc, 0x10, 0x88, 0x23, 0x4e, 0xf3, 0x49, 0xfd, 0xe9, 0xe4, 0x31, 0x74, 0x09, 0x15, 0x77, 0xb1,
+	0xd0, 0x40, 0x47, 0xe9, 0xb6, 0x2d, 0xf3, 0x5f, 0x25, 0xbf, 0x39, 0x2e, 0x0d, 0x88, 0xad, 0x6e,
+	0x72, 0x03, 0x38, 0x1c, 0x42, 0x43, 0x58, 0x4f, 0x32, 0xea, 0xbb, 0x6b, 0xad, 0x2a, 0x89, 0x7f,
+	0x71, 0xdc, 0x10, 0x31, 0x61, 0x50, 0x64, 0x0d, 0x25, 0x87, 0x6c, 0xd8, 0x48, 0x33, 0x92, 0x70,
+	0x85, 0x2a, 0xa9, 0xd8, 0x81, 0xe8, 0x1a, 0xb6, 0x56, 0xc4, 0xa7, 0xa5, 0xa5, 0x26, 0x69, 0xd9,
+	0xa3, 0x68, 0x04, 0x9b, 0xe9, 0x3c, 0x8b, 0x85, 0xa6, 0x2e, 0xa9, 0xf9, 0x26, 0xf9, 0x4c, 0x66,
+	0x71, 0xc8, 0x1d, 0x0d, 0xd9, 0x99, 0x94, 0x1c, 0xef, 0x23, 0x71, 0xd3, 0x2c, 0xe6, 0x8e, 0xa6,
+	0x6c, 0x1f, 0x3b, 0xd2, 0x1c, 0xc3, 0x93, 0x3f, 0x62, 0xc8, 0x80, 0x35, 0x8f, 0x04, 0x21, 0x15,
+	0x5b, 0xd8, 0xb2, 0x5b, 0xdb, 0xdc, 0x28, 0x0b, 0x4e, 0xf9, 0x40, 0xa7, 0x50, 0x21, 0xd4, 0xd7,
+	0xaa, 0xe2, 0x73, 0x63, 0x9b, 0x1b, 0xfc, 0xd5, 0xe1, 0x87, 0xdd, 0xf9, 0x78, 0xd3, 0xc1, 0x63,
+	0xa1, 0x83, 0xe7, 0x42, 0x07, 0x9b, 0x42, 0x07, 0x2f, 0x85, 0x0e, 0x5e, 0x0b, 0x1d, 0x3c, 0xbc,
+	0xeb, 0x95, 0xdb, 0xea, 0xd2, 0xf2, 0xea, 0x62, 0xf7, 0x07, 0x9f, 0x01, 0x00, 0x00, 0xff, 0xff,
+	0xa5, 0xec, 0x40, 0x62, 0x55, 0x03, 0x00, 0x00,
 }
 
 func (this *TimeWindowWhen) Equal(that interface{}) bool {
@@ -420,7 +421,7 @@ func (this *TimeWindowTimeRange) Equal(that interface{}) bool {
 func (m *TimeWindowWhen) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -428,28 +429,36 @@ func (m *TimeWindowWhen) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *TimeWindowWhen) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *TimeWindowWhen) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	dAtA[i] = 0xa
-	i++
-	i = encodeVarintTimeWindow(dAtA, i, uint64(m.Days.Size()))
-	n1, err := m.Days.MarshalTo(dAtA[i:])
-	if err != nil {
-		return 0, err
-	}
-	i += n1
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	{
+		size, err := m.Days.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintTimeWindow(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
 }
 
 func (m *TimeWindowDays) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -457,116 +466,138 @@ func (m *TimeWindowDays) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *TimeWindowDays) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *TimeWindowDays) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.All) > 0 {
-		for _, msg := range m.All {
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintTimeWindow(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	if len(m.Sunday) > 0 {
-		for _, msg := range m.Sunday {
-			dAtA[i] = 0x12
-			i++
-			i = encodeVarintTimeWindow(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
+	if len(m.Saturday) > 0 {
+		for iNdEx := len(m.Saturday) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Saturday[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTimeWindow(dAtA, i, uint64(size))
 			}
-			i += n
-		}
-	}
-	if len(m.Monday) > 0 {
-		for _, msg := range m.Monday {
-			dAtA[i] = 0x1a
-			i++
-			i = encodeVarintTimeWindow(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if len(m.Tuesday) > 0 {
-		for _, msg := range m.Tuesday {
-			dAtA[i] = 0x22
-			i++
-			i = encodeVarintTimeWindow(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if len(m.Wednesday) > 0 {
-		for _, msg := range m.Wednesday {
-			dAtA[i] = 0x2a
-			i++
-			i = encodeVarintTimeWindow(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
-		}
-	}
-	if len(m.Thursday) > 0 {
-		for _, msg := range m.Thursday {
-			dAtA[i] = 0x32
-			i++
-			i = encodeVarintTimeWindow(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
+			i--
+			dAtA[i] = 0x42
 		}
 	}
 	if len(m.Friday) > 0 {
-		for _, msg := range m.Friday {
+		for iNdEx := len(m.Friday) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Friday[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTimeWindow(dAtA, i, uint64(size))
+			}
+			i--
 			dAtA[i] = 0x3a
-			i++
-			i = encodeVarintTimeWindow(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
-			}
-			i += n
 		}
 	}
-	if len(m.Saturday) > 0 {
-		for _, msg := range m.Saturday {
-			dAtA[i] = 0x42
-			i++
-			i = encodeVarintTimeWindow(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
+	if len(m.Thursday) > 0 {
+		for iNdEx := len(m.Thursday) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Thursday[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTimeWindow(dAtA, i, uint64(size))
 			}
-			i += n
+			i--
+			dAtA[i] = 0x32
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.Wednesday) > 0 {
+		for iNdEx := len(m.Wednesday) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Wednesday[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTimeWindow(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x2a
+		}
 	}
-	return i, nil
+	if len(m.Tuesday) > 0 {
+		for iNdEx := len(m.Tuesday) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Tuesday[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTimeWindow(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x22
+		}
+	}
+	if len(m.Monday) > 0 {
+		for iNdEx := len(m.Monday) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Monday[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTimeWindow(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.Sunday) > 0 {
+		for iNdEx := len(m.Sunday) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Sunday[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTimeWindow(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	if len(m.All) > 0 {
+		for iNdEx := len(m.All) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.All[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTimeWindow(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *TimeWindowTimeRange) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -574,36 +605,46 @@ func (m *TimeWindowTimeRange) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *TimeWindowTimeRange) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *TimeWindowTimeRange) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Begin) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintTimeWindow(dAtA, i, uint64(len(m.Begin)))
-		i += copy(dAtA[i:], m.Begin)
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if len(m.End) > 0 {
-		dAtA[i] = 0x12
-		i++
+		i -= len(m.End)
+		copy(dAtA[i:], m.End)
 		i = encodeVarintTimeWindow(dAtA, i, uint64(len(m.End)))
-		i += copy(dAtA[i:], m.End)
+		i--
+		dAtA[i] = 0x12
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.Begin) > 0 {
+		i -= len(m.Begin)
+		copy(dAtA[i:], m.Begin)
+		i = encodeVarintTimeWindow(dAtA, i, uint64(len(m.Begin)))
+		i--
+		dAtA[i] = 0xa
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func encodeVarintTimeWindow(dAtA []byte, offset int, v uint64) int {
+	offset -= sovTimeWindow(v)
+	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return offset + 1
+	return base
 }
 func NewPopulatedTimeWindowWhen(r randyTimeWindow, easy bool) *TimeWindowWhen {
 	this := &TimeWindowWhen{}
@@ -617,56 +658,56 @@ func NewPopulatedTimeWindowWhen(r randyTimeWindow, easy bool) *TimeWindowWhen {
 
 func NewPopulatedTimeWindowDays(r randyTimeWindow, easy bool) *TimeWindowDays {
 	this := &TimeWindowDays{}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v2 := r.Intn(5)
 		this.All = make([]*TimeWindowTimeRange, v2)
 		for i := 0; i < v2; i++ {
 			this.All[i] = NewPopulatedTimeWindowTimeRange(r, easy)
 		}
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v3 := r.Intn(5)
 		this.Sunday = make([]*TimeWindowTimeRange, v3)
 		for i := 0; i < v3; i++ {
 			this.Sunday[i] = NewPopulatedTimeWindowTimeRange(r, easy)
 		}
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v4 := r.Intn(5)
 		this.Monday = make([]*TimeWindowTimeRange, v4)
 		for i := 0; i < v4; i++ {
 			this.Monday[i] = NewPopulatedTimeWindowTimeRange(r, easy)
 		}
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v5 := r.Intn(5)
 		this.Tuesday = make([]*TimeWindowTimeRange, v5)
 		for i := 0; i < v5; i++ {
 			this.Tuesday[i] = NewPopulatedTimeWindowTimeRange(r, easy)
 		}
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v6 := r.Intn(5)
 		this.Wednesday = make([]*TimeWindowTimeRange, v6)
 		for i := 0; i < v6; i++ {
 			this.Wednesday[i] = NewPopulatedTimeWindowTimeRange(r, easy)
 		}
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v7 := r.Intn(5)
 		this.Thursday = make([]*TimeWindowTimeRange, v7)
 		for i := 0; i < v7; i++ {
 			this.Thursday[i] = NewPopulatedTimeWindowTimeRange(r, easy)
 		}
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v8 := r.Intn(5)
 		this.Friday = make([]*TimeWindowTimeRange, v8)
 		for i := 0; i < v8; i++ {
 			this.Friday[i] = NewPopulatedTimeWindowTimeRange(r, easy)
 		}
 	}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v9 := r.Intn(5)
 		this.Saturday = make([]*TimeWindowTimeRange, v9)
 		for i := 0; i < v9; i++ {
@@ -856,14 +897,7 @@ func (m *TimeWindowTimeRange) Size() (n int) {
 }
 
 func sovTimeWindow(x uint64) (n int) {
-	for {
-		n++
-		x >>= 7
-		if x == 0 {
-			break
-		}
-	}
-	return n
+	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozTimeWindow(x uint64) (n int) {
 	return sovTimeWindow(uint64((x << 1) ^ uint64((int64(x) >> 63))))
@@ -1402,6 +1436,7 @@ func (m *TimeWindowTimeRange) Unmarshal(dAtA []byte) error {
 func skipTimeWindow(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
+	depth := 0
 	for iNdEx < l {
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
@@ -1433,10 +1468,8 @@ func skipTimeWindow(dAtA []byte) (n int, err error) {
 					break
 				}
 			}
-			return iNdEx, nil
 		case 1:
 			iNdEx += 8
-			return iNdEx, nil
 		case 2:
 			var length int
 			for shift := uint(0); ; shift += 7 {
@@ -1457,55 +1490,30 @@ func skipTimeWindow(dAtA []byte) (n int, err error) {
 				return 0, ErrInvalidLengthTimeWindow
 			}
 			iNdEx += length
-			if iNdEx < 0 {
-				return 0, ErrInvalidLengthTimeWindow
-			}
-			return iNdEx, nil
 		case 3:
-			for {
-				var innerWire uint64
-				var start int = iNdEx
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return 0, ErrIntOverflowTimeWindow
-					}
-					if iNdEx >= l {
-						return 0, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					innerWire |= (uint64(b) & 0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				innerWireType := int(innerWire & 0x7)
-				if innerWireType == 4 {
-					break
-				}
-				next, err := skipTimeWindow(dAtA[start:])
-				if err != nil {
-					return 0, err
-				}
-				iNdEx = start + next
-				if iNdEx < 0 {
-					return 0, ErrInvalidLengthTimeWindow
-				}
-			}
-			return iNdEx, nil
+			depth++
 		case 4:
-			return iNdEx, nil
+			if depth == 0 {
+				return 0, ErrUnexpectedEndOfGroupTimeWindow
+			}
+			depth--
 		case 5:
 			iNdEx += 4
-			return iNdEx, nil
 		default:
 			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
 		}
+		if iNdEx < 0 {
+			return 0, ErrInvalidLengthTimeWindow
+		}
+		if depth == 0 {
+			return iNdEx, nil
+		}
 	}
-	panic("unreachable")
+	return 0, io.ErrUnexpectedEOF
 }
 
 var (
-	ErrInvalidLengthTimeWindow = fmt.Errorf("proto: negative length found during unmarshaling")
-	ErrIntOverflowTimeWindow   = fmt.Errorf("proto: integer overflow")
+	ErrInvalidLengthTimeWindow        = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowTimeWindow          = fmt.Errorf("proto: integer overflow")
+	ErrUnexpectedEndOfGroupTimeWindow = fmt.Errorf("proto: unexpected end of group")
 )

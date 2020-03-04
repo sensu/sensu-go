@@ -106,6 +106,10 @@ func (c *CheckConfig) Validate() error {
 		return errors.New("namespace must be set")
 	}
 
+	if c.Command == "" {
+		return errors.New("command can not be empty")
+	}
+
 	if c.Ttl > 0 && c.Ttl <= int64(c.Interval) {
 		return errors.New("ttl must be greater than check interval")
 	}

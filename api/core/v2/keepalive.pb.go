@@ -11,6 +11,7 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -22,7 +23,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // A KeepaliveRecord is a tuple of an entity name and the time at which the
 // entity's keepalive will next expire.
@@ -49,7 +50,7 @@ func (m *KeepaliveRecord) XXX_Marshal(b []byte, deterministic bool) ([]byte, err
 		return xxx_messageInfo_KeepaliveRecord.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -80,7 +81,7 @@ var fileDescriptor_651011d70a099262 = []byte{
 	0x48, 0xcc, 0xc9, 0x2c, 0x4b, 0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2d, 0x4e, 0xcd,
 	0x2b, 0x2e, 0xd5, 0x4b, 0xce, 0x2f, 0x4a, 0xd5, 0x2b, 0x33, 0x92, 0x32, 0x49, 0xcf, 0x2c, 0xc9,
 	0x28, 0x4d, 0xd2, 0x4b, 0xce, 0xcf, 0xd5, 0x4f, 0xcf, 0x4f, 0xcf, 0xd7, 0x07, 0xab, 0x4a, 0x2a,
-	0x4d, 0x73, 0x28, 0x33, 0xd4, 0x33, 0xd2, 0x33, 0x04, 0x0b, 0x82, 0xc5, 0xc0, 0x2c, 0x88, 0x21,
+	0x4d, 0x73, 0x28, 0x33, 0xd4, 0x33, 0xd6, 0x33, 0x04, 0x0b, 0x82, 0xc5, 0xc0, 0x2c, 0x88, 0x21,
 	0x52, 0x5c, 0xb9, 0xa9, 0x25, 0x89, 0x10, 0xb6, 0xd2, 0x04, 0x46, 0x2e, 0x7e, 0x6f, 0x98, 0x25,
 	0x41, 0xa9, 0xc9, 0xf9, 0x45, 0x29, 0x42, 0xa1, 0x5c, 0x1c, 0x20, 0x15, 0x29, 0x89, 0x25, 0x89,
 	0x12, 0x8c, 0x0a, 0x8c, 0x1a, 0xdc, 0x46, 0x92, 0x7a, 0x28, 0xf6, 0xea, 0xf9, 0x27, 0x65, 0xa5,
@@ -91,7 +92,7 @@ var fileDescriptor_651011d70a099262 = []byte{
 	0x79, 0x86, 0x15, 0x0b, 0xe4, 0x19, 0x9d, 0x14, 0x7e, 0x3c, 0x94, 0x63, 0x5c, 0xf1, 0x48, 0x8e,
 	0x71, 0xc7, 0x23, 0x39, 0xc6, 0x13, 0x8f, 0xe4, 0x18, 0x2f, 0x3c, 0x92, 0x63, 0x7c, 0xf0, 0x48,
 	0x8e, 0x71, 0xc6, 0x63, 0x39, 0x86, 0x28, 0xa6, 0x32, 0xa3, 0x24, 0x36, 0xb0, 0xdb, 0x8d, 0x01,
-	0x01, 0x00, 0x00, 0xff, 0xff, 0xc9, 0xa4, 0x86, 0x45, 0x1f, 0x01, 0x00, 0x00,
+	0x01, 0x00, 0x00, 0xff, 0xff, 0x5e, 0x9c, 0x19, 0xaa, 0x1f, 0x01, 0x00, 0x00,
 }
 
 func (this *KeepaliveRecord) Equal(that interface{}) bool {
@@ -157,7 +158,7 @@ func NewKeepaliveRecordFromFace(that KeepaliveRecordFace) *KeepaliveRecord {
 func (m *KeepaliveRecord) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -165,37 +166,47 @@ func (m *KeepaliveRecord) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *KeepaliveRecord) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *KeepaliveRecord) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	dAtA[i] = 0xa
-	i++
-	i = encodeVarintKeepalive(dAtA, i, uint64(m.ObjectMeta.Size()))
-	n1, err := m.ObjectMeta.MarshalTo(dAtA[i:])
-	if err != nil {
-		return 0, err
-	}
-	i += n1
-	if m.Time != 0 {
-		dAtA[i] = 0x20
-		i++
-		i = encodeVarintKeepalive(dAtA, i, uint64(m.Time))
-	}
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	if m.Time != 0 {
+		i = encodeVarintKeepalive(dAtA, i, uint64(m.Time))
+		i--
+		dAtA[i] = 0x20
+	}
+	{
+		size, err := m.ObjectMeta.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintKeepalive(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0xa
+	return len(dAtA) - i, nil
 }
 
 func encodeVarintKeepalive(dAtA []byte, offset int, v uint64) int {
+	offset -= sovKeepalive(v)
+	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return offset + 1
+	return base
 }
 func NewPopulatedKeepaliveRecord(r randyKeepalive, easy bool) *KeepaliveRecord {
 	this := &KeepaliveRecord{}
@@ -301,14 +312,7 @@ func (m *KeepaliveRecord) Size() (n int) {
 }
 
 func sovKeepalive(x uint64) (n int) {
-	for {
-		n++
-		x >>= 7
-		if x == 0 {
-			break
-		}
-	}
-	return n
+	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozKeepalive(x uint64) (n int) {
 	return sovKeepalive(uint64((x << 1) ^ uint64((int64(x) >> 63))))
@@ -422,6 +426,7 @@ func (m *KeepaliveRecord) Unmarshal(dAtA []byte) error {
 func skipKeepalive(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
+	depth := 0
 	for iNdEx < l {
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
@@ -453,10 +458,8 @@ func skipKeepalive(dAtA []byte) (n int, err error) {
 					break
 				}
 			}
-			return iNdEx, nil
 		case 1:
 			iNdEx += 8
-			return iNdEx, nil
 		case 2:
 			var length int
 			for shift := uint(0); ; shift += 7 {
@@ -477,55 +480,30 @@ func skipKeepalive(dAtA []byte) (n int, err error) {
 				return 0, ErrInvalidLengthKeepalive
 			}
 			iNdEx += length
-			if iNdEx < 0 {
-				return 0, ErrInvalidLengthKeepalive
-			}
-			return iNdEx, nil
 		case 3:
-			for {
-				var innerWire uint64
-				var start int = iNdEx
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return 0, ErrIntOverflowKeepalive
-					}
-					if iNdEx >= l {
-						return 0, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					innerWire |= (uint64(b) & 0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				innerWireType := int(innerWire & 0x7)
-				if innerWireType == 4 {
-					break
-				}
-				next, err := skipKeepalive(dAtA[start:])
-				if err != nil {
-					return 0, err
-				}
-				iNdEx = start + next
-				if iNdEx < 0 {
-					return 0, ErrInvalidLengthKeepalive
-				}
-			}
-			return iNdEx, nil
+			depth++
 		case 4:
-			return iNdEx, nil
+			if depth == 0 {
+				return 0, ErrUnexpectedEndOfGroupKeepalive
+			}
+			depth--
 		case 5:
 			iNdEx += 4
-			return iNdEx, nil
 		default:
 			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
 		}
+		if iNdEx < 0 {
+			return 0, ErrInvalidLengthKeepalive
+		}
+		if depth == 0 {
+			return iNdEx, nil
+		}
 	}
-	panic("unreachable")
+	return 0, io.ErrUnexpectedEOF
 }
 
 var (
-	ErrInvalidLengthKeepalive = fmt.Errorf("proto: negative length found during unmarshaling")
-	ErrIntOverflowKeepalive   = fmt.Errorf("proto: integer overflow")
+	ErrInvalidLengthKeepalive        = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowKeepalive          = fmt.Errorf("proto: integer overflow")
+	ErrUnexpectedEndOfGroupKeepalive = fmt.Errorf("proto: unexpected end of group")
 )

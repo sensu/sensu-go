@@ -42,6 +42,7 @@ func TestHandleTCPMessages(t *testing.T) {
 		Name:   "app_01",
 		Output: "could not connect to something",
 		Source: "proxyEnt",
+		Command: "command",
 	}
 	bytes, _ := json.Marshal(payload)
 
@@ -94,6 +95,7 @@ func TestHandleTCPMessagesWithClient(t *testing.T) {
 		Name:   "app_01",
 		Output: "could not connect to something",
 		Client: "proxyEnt",
+		Command: "command",
 	}
 	bytes, _ := json.Marshal(payload)
 
@@ -146,6 +148,7 @@ func TestHandleTCPMessagesWithAgent(t *testing.T) {
 		Name:   "app_01",
 		Output: "could not connect to something",
 		Source: cfg.AgentName,
+		Command: "command",
 	}
 	bytes, _ := json.Marshal(payload)
 
@@ -197,6 +200,7 @@ func TestHandleTCPMessagesNoSource(t *testing.T) {
 	payload := corev1.CheckResult{
 		Name:   "app_01",
 		Output: "could not connect to something",
+		Command: "command",
 	}
 	bytes, _ := json.Marshal(payload)
 
@@ -250,6 +254,7 @@ func TestHandleUDPMessages(t *testing.T) {
 		Name:   "app_01",
 		Output: "could not connect to something",
 		Source: "proxyEnt",
+		Command: "command",
 	}
 	bytes, _ := json.Marshal(payload)
 
@@ -347,6 +352,7 @@ func TestReceiveMultiWriteTCP(t *testing.T) {
 		Name:   "app_01",
 		Output: "could not connect to something",
 		Source: "proxyEnt",
+		Command: "command",
 	}
 	bytes, _ := json.Marshal(payload)
 
