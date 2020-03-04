@@ -76,25 +76,8 @@ func (r *EventsRouter) create(req *http.Request) (interface{}, error) {
 	}
 
 	vars := mux.Vars(req)
-
-	if event.Entity != nil {
-		if err := handlers.MetaPathValues(event.Entity, vars, "entity"); err != nil {
-			return nil, err
-		}
-
-		if err := handlers.CheckMeta(event.Entity, vars); err != nil {
-			return nil, actions.NewError(actions.InvalidArgument, err)
-		}
-	}
-
-	if event.Check != nil {
-		if err := handlers.MetaPathValues(event.Check, vars, "check"); err != nil {
-			return nil, err
-		}
-
-		if err := handlers.CheckMeta(event.Check, vars); err != nil {
-			return nil, actions.NewError(actions.InvalidArgument, err)
-		}
+	if err := validateEventPayload(event, vars); err != nil {
+		return nil, err
 	}
 
 	err := r.controller.CreateOrReplace(req.Context(), event)
@@ -108,27 +91,39 @@ func (r *EventsRouter) createOrReplace(req *http.Request) (interface{}, error) {
 	}
 
 	vars := mux.Vars(req)
-
-	if event.Entity != nil {
-		if err := handlers.MetaPathValues(event.Entity, vars, "entity"); err != nil {
-			return nil, err
-		}
-
-		if err := handlers.CheckMeta(event.Entity, vars); err != nil {
-			return nil, actions.NewError(actions.InvalidArgument, err)
-		}
-	}
-
-	if event.Check != nil {
-		if err := handlers.MetaPathValues(event.Check, vars, "check"); err != nil {
-			return nil, err
-		}
-
-		if err := handlers.CheckMeta(event.Check, vars); err != nil {
-			return nil, actions.NewError(actions.InvalidArgument, err)
-		}
+	if err := validateEventPayload(event, vars); err != nil {
+		return nil, err
 	}
 
 	err := r.controller.CreateOrReplace(req.Context(), event)
 	return nil, err
+}
+
+// validateEventPayload validates the event payload against the URL path values
+func validateEventPayload(event *corev2.Event, vars map[string]string) error {
+	if event.Entity != nil {
+		// Fill any missing entity metadata with the URL path values
+		if err := handlers.MetaPathValues(event.Entity, vars, "entity"); err != nil {
+			return err
+		}
+
+		// Ensure the entity metadata matches the URL path values
+		if err := handlers.CheckMeta(event.Entity, vars, "entity"); err != nil {
+			return actions.NewError(actions.InvalidArgument, err)
+		}
+	}
+
+	if event.Check != nil {
+		// Fill any missing check metadata with the URL path values
+		if err := handlers.MetaPathValues(event.Check, vars, "check"); err != nil {
+			return err
+		}
+
+		// Ensure the check metadata matches the URL path values
+		if err := handlers.CheckMeta(event.Check, vars, "check"); err != nil {
+			return actions.NewError(actions.InvalidArgument, err)
+		}
+	}
+
+	return nil
 }

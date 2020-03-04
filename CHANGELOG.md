@@ -6,13 +6,25 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- Added `flapping` field to check history, along with `is_flapping_start` and
+  `is_flapping_end` event properties for use by filters.
+- Fixed bug where flapping would incorrectly end when `total_state_change` was below
+  `high_flap_threshold` instead of below `low_flap_threshold`.
+
+### Fixed
+- ensure that check/check config have a non-empty command
+- Check history is now in FIFO order, not ordered by executed timestamp.
 
 ## [5.18.0] - 2020-02-24
 
 ### Added
-- [agent] Added `/version` API
+- Added the `/version` API in sensu-agent.
+- Indicate in log messages which filter dropped an event.
 
 ### Fixed
+- sensuctl now supports the http_proxy, https_proxy, and no_proxy environment
+variables.
+- returns 401 instead of 500 when issues occur refreshing the access token.
 - Support Bonsai assets versions prefixed with the letter `v`.
 - Fixed a bug where wrapped resources were not getting their namespaces set by
 the default sensuctl configuration.
@@ -22,6 +34,8 @@ the default sensuctl configuration.
 - Fixed event payload validation on the backend events API to validate the
 payload with the URL parameters on the /events/:entity/:check endpoint and
 reject events that do not match.
+- Fix event payload validation on the backend events API.
+- The `auth/test` endpoint now returns the correct error messages.
 
 ### Changed
 - Updated Go version from 1.13.5 to 1.13.7.
@@ -33,14 +47,6 @@ entity that does not exist.
 
 ### Fixed
 
-- Fixed a bug where on an internal restart, enterprise HTTP routes could fail
-to intialize.
-
-### Fixed
-- The `auth/test` endpoint now returns the correct error messages.
-## [5.17.2] - 2020-02-19
-
-### Fixed
 - Fixed a bug where on an internal restart, enterprise HTTP routes could fail
 to intialize.
 

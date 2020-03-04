@@ -171,8 +171,8 @@ var jsonRe = regexp.MustCompile(`^(\s)*[\{\[]`)
 // 3. If the stream is YAML, split it on '---' to support multiple yaml documents.
 // 3. Convert the YAML to JSON document-by-document.
 // 4. Unmarshal the JSON one resource at a time.
-func ParseResources(in io.Reader) ([]types.Wrapper, error) {
-	var resources []types.Wrapper
+func ParseResources(in io.Reader) ([]*types.Wrapper, error) {
+	var resources []*types.Wrapper
 	b, err := ioutil.ReadAll(in)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing resources: %s", err)
@@ -209,7 +209,7 @@ func ParseResources(in io.Reader) ([]types.Wrapper, error) {
 				describeError(count, rerr)
 				errCount++
 			}
-			resources = append(resources, w)
+			resources = append(resources, &w)
 			count++
 		}
 	}
@@ -222,7 +222,7 @@ func ParseResources(in io.Reader) ([]types.Wrapper, error) {
 
 // filterCheckSubdue nils out any check subdue fields that are supplied.
 // TODO(echlebek): this is temporary; remove it after fixing check subdue.
-func filterCheckSubdue(resources []types.Wrapper) {
+func filterCheckSubdue(resources []*types.Wrapper) {
 	for i := range resources {
 		switch val := resources[i].Value.(type) {
 		case *types.CheckConfig:
@@ -237,30 +237,32 @@ func filterCheckSubdue(resources []types.Wrapper) {
 
 // ValidateResources loops through a list of resources, appends a namespace
 // if one is not already declared, and validates the resource.
-func ValidateResources(resources []types.Wrapper, namespace string) error {
-	var err error
+func ValidateResources(resources []*types.Wrapper, namespace string) error {
 	errCount := 0
 	for i, r := range resources {
 		resource := r.Value
 		if resource == nil {
 			errCount++
-			fmt.Fprintf(os.Stderr, "error validating resource %d: resource is nil\n", i)
+			fmt.Fprintf(
+				os.Stderr,
+				"error validating resource #%d with name %q and namespace %q: resource is nil\n",
+				i, r.ObjectMeta.Name, r.ObjectMeta.Namespace,
+			)
 			continue
 		}
 		if resource.GetObjectMeta().Namespace == "" {
 			resource.SetNamespace(namespace)
-		}
-		if verr := resource.Validate(); verr != nil {
-			errCount++
-			fmt.Fprintf(os.Stderr, "error validating resource %d (%s): %s\n", i, resource.URIPath(), verr)
-			if errCount >= 10 {
-				err = errors.New("too many errors")
-				break
+			// We just set the namespace within the underlying wrapped value. We also
+			// need to set it to the outer ObjectMeta for consistency, but only if the
+			// resource has a namespace; some resources are cluster-wide and should
+			// not be namespaced
+			if ns := resource.GetObjectMeta().Namespace; ns != "" {
+				r.ObjectMeta.Namespace = ns
 			}
-			err = errors.New("resource validation failed")
 		}
 	}
-	return err
+
+	return nil
 }
 
 func describeError(index int, err error) {
@@ -273,10 +275,13 @@ func describeError(index int, err error) {
 }
 
 // PutResources uses the GenericClient to PUT a resource at the inferred URI path.
-func PutResources(client client.GenericClient, resources []types.Wrapper) error {
+func PutResources(client client.GenericClient, resources []*types.Wrapper) error {
 	for i, resource := range resources {
-		if err := client.PutResource(resource); err != nil {
-			return fmt.Errorf("error putting resource %d (%s): %s", i, resource.Value.URIPath(), err)
+		if err := client.PutResource(*resource); err != nil {
+			return fmt.Errorf(
+				"error putting resource #%d with name %q and namespace %q (%s): %s",
+				i, resource.ObjectMeta.Name, resource.ObjectMeta.Namespace, resource.Value.URIPath(), err,
+			)
 		}
 	}
 	return nil

@@ -12,7 +12,8 @@ func isFlapping(check *Check) bool {
 	}
 
 	// Is the check already flapping?
-	if check.State == EventFlappingState {
+	previous := check.previousOccurrence()
+	if previous != nil && previous.Flapping {
 		return check.TotalStateChange > check.LowFlapThreshold
 	}
 
@@ -27,7 +28,7 @@ func updateCheckState(check *Check) {
 	if check == nil {
 		return
 	}
-	if flapping := isFlapping(check); flapping {
+	if isFlapping(check) {
 		check.State = EventFlappingState
 	} else if check.Status == 0 {
 		check.State = EventPassingState

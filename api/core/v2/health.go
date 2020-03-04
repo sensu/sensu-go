@@ -25,6 +25,18 @@ type ClusterHealth struct {
 	Healthy bool
 }
 
+// PostgresHealth holds postgres store status info.
+type PostgresHealth struct {
+	// Name is the name of the postgres resource.
+	Name string
+
+	// Active indicates if the store is configured to use the postgres configuration.
+	Active bool
+
+	// Healthy indicates if the postgres store is connected and can query the events table.
+	Healthy bool
+}
+
 func (h ClusterHealth) MarshalJSON() ([]byte, error) {
 	if h.MemberIDHex == "" {
 		h.MemberIDHex = fmt.Sprintf("%x", h.MemberID)
@@ -42,6 +54,8 @@ type HealthResponse struct {
 	ClusterHealth []*ClusterHealth
 	// Header is the response header for the entire cluster response.
 	Header *etcdserverpb.ResponseHeader
+	// PostgresHealth is the list of health status for each postgres config.
+	PostgresHealth []*PostgresHealth `json:"PostgresHealth,omitempty"`
 }
 
 // FixtureHealthResponse returns a HealthResponse fixture for testing.

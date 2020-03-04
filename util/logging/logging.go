@@ -16,6 +16,7 @@ func EventFields(event *types.Event, debug bool) map[string]interface{} {
 	fields := logrus.Fields{
 		"entity_name":      event.Entity.Name,
 		"entity_namespace": event.Entity.Namespace,
+		"uuid":             event.GetUUID().String(),
 	}
 
 	if event.HasCheck() {

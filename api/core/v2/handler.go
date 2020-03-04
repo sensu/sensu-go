@@ -32,6 +32,14 @@ const (
 
 	// HandlerGRPCType is a special kind of handler that represents an extension
 	HandlerGRPCType = "grpc"
+
+	// KeepaliveHandlerName is the name of the handler that is executed when
+	// a keepalive timeout occurs.
+	KeepaliveHandlerName = "keepalive"
+
+	// RegistrationHandlerName is the name of the handler that is executed when
+	// a registration event is passed to pipelined.
+	RegistrationHandlerName = "registration"
 )
 
 // StorePrefix returns the path prefix to this resource in the store

@@ -10,6 +10,7 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -21,7 +22,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // Namespace represents a virtual cluster
 type Namespace struct {
@@ -46,7 +47,7 @@ func (m *Namespace) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_Namespace.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -84,12 +85,12 @@ var fileDescriptor_ecb1e126f615f5dd = []byte{
 	0x2d, 0x2e, 0x48, 0x4c, 0x4e, 0xd5, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x2d, 0x4e, 0xcd,
 	0x2b, 0x2e, 0xd5, 0x4b, 0xce, 0x2f, 0x4a, 0xd5, 0x2b, 0x33, 0x92, 0x32, 0x49, 0xcf, 0x2c, 0xc9,
 	0x28, 0x4d, 0xd2, 0x4b, 0xce, 0xcf, 0xd5, 0x4f, 0xcf, 0x4f, 0xcf, 0xd7, 0x07, 0xab, 0x4a, 0x2a,
-	0x4d, 0x73, 0x28, 0x33, 0xd4, 0x33, 0xd2, 0x33, 0x04, 0x0b, 0x82, 0xc5, 0xc0, 0x2c, 0x88, 0x21,
+	0x4d, 0x73, 0x28, 0x33, 0xd4, 0x33, 0xd6, 0x33, 0x04, 0x0b, 0x82, 0xc5, 0xc0, 0x2c, 0x88, 0x21,
 	0x4a, 0xf2, 0x5c, 0x9c, 0x7e, 0x30, 0x73, 0x85, 0x84, 0xb8, 0x58, 0x40, 0x96, 0x48, 0x30, 0x2a,
 	0x30, 0x6a, 0x70, 0x06, 0x81, 0xd9, 0x4e, 0x0a, 0x3f, 0x1e, 0xca, 0x31, 0xae, 0x78, 0x24, 0xc7,
 	0xb8, 0xe3, 0x91, 0x1c, 0xe3, 0x89, 0x47, 0x72, 0x8c, 0x17, 0x1e, 0xc9, 0x31, 0x3e, 0x78, 0x24,
 	0xc7, 0x38, 0xe3, 0xb1, 0x1c, 0x43, 0x14, 0x53, 0x99, 0x51, 0x12, 0x1b, 0xd8, 0x24, 0x63, 0x40,
-	0x00, 0x00, 0x00, 0xff, 0xff, 0xa5, 0x9a, 0x72, 0x87, 0xa1, 0x00, 0x00, 0x00,
+	0x00, 0x00, 0x00, 0xff, 0xff, 0x67, 0x9b, 0x17, 0x72, 0xa1, 0x00, 0x00, 0x00,
 }
 
 func (this *Namespace) Equal(that interface{}) bool {
@@ -122,7 +123,7 @@ func (this *Namespace) Equal(that interface{}) bool {
 func (m *Namespace) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -130,30 +131,39 @@ func (m *Namespace) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Namespace) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Namespace) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Name) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintNamespace(dAtA, i, uint64(len(m.Name)))
-		i += copy(dAtA[i:], m.Name)
-	}
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	if len(m.Name) > 0 {
+		i -= len(m.Name)
+		copy(dAtA[i:], m.Name)
+		i = encodeVarintNamespace(dAtA, i, uint64(len(m.Name)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func encodeVarintNamespace(dAtA []byte, offset int, v uint64) int {
+	offset -= sovNamespace(v)
+	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return offset + 1
+	return base
 }
 func NewPopulatedNamespace(r randyNamespace, easy bool) *Namespace {
 	this := &Namespace{}
@@ -253,14 +263,7 @@ func (m *Namespace) Size() (n int) {
 }
 
 func sovNamespace(x uint64) (n int) {
-	for {
-		n++
-		x >>= 7
-		if x == 0 {
-			break
-		}
-	}
-	return n
+	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozNamespace(x uint64) (n int) {
 	return sovNamespace(uint64((x << 1) ^ uint64((int64(x) >> 63))))
@@ -354,6 +357,7 @@ func (m *Namespace) Unmarshal(dAtA []byte) error {
 func skipNamespace(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
+	depth := 0
 	for iNdEx < l {
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
@@ -385,10 +389,8 @@ func skipNamespace(dAtA []byte) (n int, err error) {
 					break
 				}
 			}
-			return iNdEx, nil
 		case 1:
 			iNdEx += 8
-			return iNdEx, nil
 		case 2:
 			var length int
 			for shift := uint(0); ; shift += 7 {
@@ -409,55 +411,30 @@ func skipNamespace(dAtA []byte) (n int, err error) {
 				return 0, ErrInvalidLengthNamespace
 			}
 			iNdEx += length
-			if iNdEx < 0 {
-				return 0, ErrInvalidLengthNamespace
-			}
-			return iNdEx, nil
 		case 3:
-			for {
-				var innerWire uint64
-				var start int = iNdEx
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return 0, ErrIntOverflowNamespace
-					}
-					if iNdEx >= l {
-						return 0, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					innerWire |= (uint64(b) & 0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				innerWireType := int(innerWire & 0x7)
-				if innerWireType == 4 {
-					break
-				}
-				next, err := skipNamespace(dAtA[start:])
-				if err != nil {
-					return 0, err
-				}
-				iNdEx = start + next
-				if iNdEx < 0 {
-					return 0, ErrInvalidLengthNamespace
-				}
-			}
-			return iNdEx, nil
+			depth++
 		case 4:
-			return iNdEx, nil
+			if depth == 0 {
+				return 0, ErrUnexpectedEndOfGroupNamespace
+			}
+			depth--
 		case 5:
 			iNdEx += 4
-			return iNdEx, nil
 		default:
 			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
 		}
+		if iNdEx < 0 {
+			return 0, ErrInvalidLengthNamespace
+		}
+		if depth == 0 {
+			return iNdEx, nil
+		}
 	}
-	panic("unreachable")
+	return 0, io.ErrUnexpectedEOF
 }
 
 var (
-	ErrInvalidLengthNamespace = fmt.Errorf("proto: negative length found during unmarshaling")
-	ErrIntOverflowNamespace   = fmt.Errorf("proto: integer overflow")
+	ErrInvalidLengthNamespace        = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowNamespace          = fmt.Errorf("proto: integer overflow")
+	ErrUnexpectedEndOfGroupNamespace = fmt.Errorf("proto: unexpected end of group")
 )

@@ -64,6 +64,7 @@ type Config struct {
 	Authenticator       *authentication.Authenticator
 	ClusterVersion      string
 	GraphQLService      *graphql.Service
+	HealthRouter        *routers.HealthRouter
 }
 
 // New creates a new APId.
@@ -240,9 +241,7 @@ func PublicSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	)
 
 	mountRouters(subrouter,
-		routers.NewHealthRouter(
-			actions.NewHealthController(cfg.Store, cfg.Cluster, cfg.EtcdClientTLSConfig),
-		),
+		cfg.HealthRouter,
 		routers.NewVersionRouter(actions.NewVersionController(cfg.ClusterVersion)),
 		routers.NewTessenMetricRouter(actions.NewTessenMetricController(cfg.Bus)),
 	)

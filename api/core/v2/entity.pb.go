@@ -11,6 +11,7 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	io "io"
 	math "math"
+	math_bits "math/bits"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -22,7 +23,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // Entity is the Entity supplying the event. The default Entity for any
 // Event is the running Agent process--if the Event is sent by an Agent.
@@ -64,7 +65,7 @@ func (m *Entity) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_Entity.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -86,14 +87,22 @@ var xxx_messageInfo_Entity proto.InternalMessageInfo
 // System contains information about the system that the Agent process
 // is running on, used for additional Entity context.
 type System struct {
-	Hostname             string   `protobuf:"bytes,1,opt,name=hostname,proto3" json:"hostname,omitempty"`
-	OS                   string   `protobuf:"bytes,2,opt,name=os,proto3" json:"os,omitempty"`
-	Platform             string   `protobuf:"bytes,3,opt,name=platform,proto3" json:"platform,omitempty"`
-	PlatformFamily       string   `protobuf:"bytes,4,opt,name=platform_family,json=platformFamily,proto3" json:"platform_family,omitempty"`
-	PlatformVersion      string   `protobuf:"bytes,5,opt,name=platform_version,json=platformVersion,proto3" json:"platform_version,omitempty"`
-	Network              Network  `protobuf:"bytes,6,opt,name=network,proto3" json:"network"`
-	Arch                 string   `protobuf:"bytes,7,opt,name=arch,proto3" json:"arch,omitempty"`
-	ARMVersion           int32    `protobuf:"varint,8,opt,name=arm_version,json=armVersion,proto3" json:"arm_version,omitempty"`
+	Hostname        string  `protobuf:"bytes,1,opt,name=hostname,proto3" json:"hostname,omitempty"`
+	OS              string  `protobuf:"bytes,2,opt,name=os,proto3" json:"os,omitempty"`
+	Platform        string  `protobuf:"bytes,3,opt,name=platform,proto3" json:"platform,omitempty"`
+	PlatformFamily  string  `protobuf:"bytes,4,opt,name=platform_family,json=platformFamily,proto3" json:"platform_family,omitempty"`
+	PlatformVersion string  `protobuf:"bytes,5,opt,name=platform_version,json=platformVersion,proto3" json:"platform_version,omitempty"`
+	Network         Network `protobuf:"bytes,6,opt,name=network,proto3" json:"network"`
+	Arch            string  `protobuf:"bytes,7,opt,name=arch,proto3" json:"arch,omitempty"`
+	ARMVersion      int32   `protobuf:"varint,8,opt,name=arm_version,json=armVersion,proto3" json:"arm_version,omitempty"`
+	// LibCType indicates the type of libc the agent has access to (glibc, musl, etc)
+	LibCType string `protobuf:"bytes,9,opt,name=LibCType,proto3" json:"libc_type"`
+	// VMSystem indicates the VM system of the agent (kvm, vbox, etc)
+	VMSystem string `protobuf:"bytes,10,opt,name=VMSystem,proto3" json:"vm_system"`
+	// VMRole indicates the VM role of the agent (host/guest)
+	VMRole string `protobuf:"bytes,11,opt,name=VMRole,proto3" json:"vm_role"`
+	// CloudProvider indicates the public cloud the agent is running on.
+	CloudProvider        string   `protobuf:"bytes,12,opt,name=CloudProvider,proto3" json:"cloud_provider"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -113,7 +122,7 @@ func (m *System) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_System.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -188,6 +197,34 @@ func (m *System) GetARMVersion() int32 {
 	return 0
 }
 
+func (m *System) GetLibCType() string {
+	if m != nil {
+		return m.LibCType
+	}
+	return ""
+}
+
+func (m *System) GetVMSystem() string {
+	if m != nil {
+		return m.VMSystem
+	}
+	return ""
+}
+
+func (m *System) GetVMRole() string {
+	if m != nil {
+		return m.VMRole
+	}
+	return ""
+}
+
+func (m *System) GetCloudProvider() string {
+	if m != nil {
+		return m.CloudProvider
+	}
+	return ""
+}
+
 // Network contains information about the system network interfaces
 // that the Agent process is running on, used for additional Entity
 // context.
@@ -212,7 +249,7 @@ func (m *Network) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return xxx_messageInfo_Network.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -263,7 +300,7 @@ func (m *NetworkInterface) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return xxx_messageInfo_NetworkInterface.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -325,7 +362,7 @@ func (m *Deregistration) XXX_Marshal(b []byte, deterministic bool) ([]byte, erro
 		return xxx_messageInfo_Deregistration.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
+		n, err := m.MarshalToSizedBuffer(b)
 		if err != nil {
 			return nil, err
 		}
@@ -362,55 +399,60 @@ func init() {
 func init() { proto.RegisterFile("entity.proto", fileDescriptor_cf50d946d740d100) }
 
 var fileDescriptor_cf50d946d740d100 = []byte{
-	// 757 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x54, 0xcd, 0x6e, 0xe3, 0x54,
-	0x14, 0xee, 0x4d, 0x9a, 0xbf, 0x93, 0x36, 0xd3, 0xde, 0x11, 0xc5, 0x53, 0x89, 0xd8, 0xca, 0x06,
-	0x33, 0x30, 0xae, 0x26, 0x45, 0x83, 0xc4, 0x8a, 0x7a, 0xf8, 0x15, 0x2a, 0x23, 0xdd, 0x0a, 0x16,
-	0x2c, 0x88, 0x6e, 0xec, 0xd3, 0xd4, 0x4c, 0x6c, 0x47, 0xf7, 0xde, 0x04, 0xfa, 0x06, 0x6c, 0xd9,
-	0xb1, 0x9c, 0xe5, 0xf0, 0x06, 0x3c, 0xc2, 0x2c, 0xe7, 0x09, 0x2c, 0x30, 0xbb, 0x3c, 0x01, 0x4b,
-	0x74, 0xaf, 0x7f, 0x9a, 0x44, 0xdd, 0x7d, 0xe7, 0x3b, 0xdf, 0xf9, 0xf3, 0x3d, 0xc7, 0x70, 0x80,
-	0x89, 0x8a, 0xd4, 0xad, 0xb7, 0x10, 0xa9, 0x4a, 0xe9, 0xa1, 0xc4, 0x44, 0x2e, 0xbd, 0x20, 0x15,
-	0xe8, 0xad, 0xc6, 0xa7, 0x1f, 0xcf, 0x22, 0x75, 0xb3, 0x9c, 0x7a, 0x41, 0x1a, 0x9f, 0xcd, 0xd2,
-	0x59, 0x7a, 0x66, 0x54, 0xd3, 0xe5, 0xf5, 0x67, 0xab, 0xa7, 0xde, 0xd8, 0x7b, 0x6a, 0x48, 0xc3,
-	0x19, 0x54, 0x24, 0x39, 0x85, 0x18, 0x15, 0x2f, 0xf0, 0xe8, 0xf7, 0x16, 0xb4, 0xbf, 0x30, 0x15,
-	0xe8, 0x79, 0x55, 0x6b, 0x12, 0xcc, 0xb9, 0x94, 0x16, 0x71, 0x88, 0xdb, 0xf3, 0x8f, 0xd6, 0x99,
-	0xbd, 0xc5, 0xb3, 0x7e, 0x61, 0x3d, 0xd7, 0x06, 0x3d, 0x87, 0xb6, 0xbc, 0x95, 0x0a, 0x63, 0xab,
-	0xe9, 0x10, 0xb7, 0x3f, 0x7e, 0xc7, 0xdb, 0xea, 0xd0, 0xbb, 0x32, 0x4e, 0x7f, 0xff, 0x4d, 0x66,
-	0xef, 0xb1, 0x52, 0x4a, 0x3f, 0x81, 0x43, 0xb9, 0x9c, 0xca, 0x40, 0x44, 0x0b, 0x15, 0xa5, 0x89,
-	0xb4, 0xf6, 0x9d, 0xa6, 0xdb, 0xf3, 0x8f, 0xd7, 0x99, 0xbd, 0xed, 0x60, 0xdb, 0x26, 0x7d, 0x0c,
-	0xbd, 0x39, 0x97, 0x6a, 0x22, 0x11, 0x13, 0xab, 0xe5, 0x10, 0xb7, 0xe9, 0x1f, 0xae, 0x33, 0xfb,
-	0x8e, 0x64, 0x5d, 0x0d, 0xaf, 0x10, 0x13, 0xea, 0x01, 0x84, 0x28, 0x70, 0x16, 0x49, 0x85, 0xc2,
-	0x6a, 0x3b, 0xc4, 0xed, 0xfa, 0x83, 0x75, 0x66, 0x6f, 0xb0, 0x6c, 0x03, 0xd3, 0x6f, 0x61, 0x50,
-	0x59, 0x82, 0xeb, 0x72, 0x56, 0xc7, 0x4c, 0xf4, 0xde, 0xce, 0x44, 0x9f, 0x6f, 0x89, 0xca, 0xc9,
-	0x76, 0x42, 0x29, 0x85, 0xfd, 0xa5, 0x44, 0x61, 0xf5, 0xf5, 0x37, 0x64, 0x06, 0xd3, 0x67, 0xf0,
-	0x10, 0x7f, 0x55, 0x98, 0x84, 0x18, 0x4e, 0xb8, 0x52, 0x22, 0x9a, 0x2e, 0x15, 0x4a, 0xeb, 0xc0,
-	0x21, 0xee, 0x81, 0xdf, 0x5a, 0x67, 0x36, 0x79, 0xc2, 0x68, 0xa5, 0xb8, 0xa8, 0x05, 0xf4, 0x04,
-	0xda, 0x02, 0x43, 0x1e, 0x28, 0xeb, 0x50, 0x7f, 0x26, 0x56, 0x5a, 0xf4, 0x7b, 0xe8, 0xea, 0x87,
-	0x0c, 0xb9, 0xe2, 0xd6, 0xc0, 0xb4, 0xfa, 0x68, 0xa7, 0xd5, 0x17, 0xd3, 0x9f, 0x31, 0x50, 0x97,
-	0xa8, 0xb8, 0x3f, 0xd4, 0x6d, 0xbe, 0xcd, 0x6c, 0xb2, 0xce, 0x6c, 0x5a, 0x85, 0x7d, 0x94, 0xc6,
-	0x91, 0xc2, 0x78, 0xa1, 0x6e, 0x59, 0x9d, 0x8a, 0x7e, 0x05, 0x0f, 0x4d, 0x96, 0x09, 0x9f, 0x61,
-	0xa2, 0x26, 0x2b, 0x14, 0x52, 0x7f, 0x8c, 0x07, 0x66, 0x1b, 0xde, 0x5d, 0x67, 0xf6, 0x7d, 0x6e,
-	0x76, 0x6c, 0xc8, 0x0b, 0xcd, 0xfd, 0x50, 0x50, 0xf4, 0x09, 0xd0, 0x97, 0x88, 0x0b, 0x3e, 0x8f,
-	0x56, 0x38, 0xb9, 0xe1, 0x49, 0x38, 0x47, 0x21, 0xad, 0x23, 0x33, 0xc3, 0x71, 0xed, 0xf9, 0xba,
-	0x74, 0x7c, 0xda, 0xfd, 0xed, 0x95, 0xbd, 0xf7, 0xfa, 0x95, 0x4d, 0x46, 0x7f, 0x36, 0xa0, 0x5d,
-	0xec, 0x0d, 0x3d, 0x85, 0xee, 0x4d, 0x2a, 0x55, 0xc2, 0x63, 0x2c, 0xf6, 0x91, 0xd5, 0x36, 0x3d,
-	0x81, 0x46, 0x2a, 0xad, 0x86, 0xe9, 0xab, 0x9d, 0x67, 0x76, 0xe3, 0xc5, 0x15, 0x6b, 0xa4, 0x52,
-	0xc7, 0x2c, 0xe6, 0x5c, 0x5d, 0xa7, 0xa2, 0x58, 0xca, 0x1e, 0xab, 0x6d, 0xfa, 0x3e, 0x3c, 0xa8,
-	0xf0, 0xe4, 0x9a, 0xc7, 0xd1, 0xfc, 0xd6, 0xda, 0x37, 0x92, 0x41, 0x45, 0x7f, 0x69, 0x58, 0xfa,
-	0x01, 0x1c, 0xd5, 0xc2, 0xea, 0x13, 0xb4, 0x8c, 0xb2, 0x4e, 0x50, 0xcd, 0xf9, 0x0c, 0x3a, 0x09,
-	0xaa, 0x5f, 0x52, 0xf1, 0xd2, 0x6c, 0x59, 0x7f, 0x7c, 0xb2, 0xf3, 0x0c, 0xdf, 0x15, 0xde, 0x72,
-	0x55, 0x2a, 0xb1, 0xde, 0x11, 0x2e, 0x82, 0x1b, 0xb3, 0x66, 0x3d, 0x66, 0x30, 0x3d, 0x83, 0x3e,
-	0xdf, 0xa8, 0xd8, 0x75, 0x88, 0xdb, 0xf2, 0x07, 0x79, 0x66, 0xc3, 0x05, 0xbb, 0x2c, 0x0b, 0x32,
-	0xe0, 0x75, 0xf1, 0xd1, 0x4f, 0xd0, 0x29, 0xd3, 0xd3, 0x2b, 0x80, 0x28, 0x51, 0x28, 0xae, 0x79,
-	0x80, 0xfa, 0x7a, 0x9b, 0x6e, 0x7f, 0x6c, 0xdf, 0xdf, 0xca, 0x37, 0x95, 0xce, 0xa7, 0xba, 0x27,
-	0x7d, 0x15, 0x77, 0xa1, 0x6c, 0x03, 0x8f, 0x12, 0x38, 0xda, 0x8d, 0xd1, 0x8d, 0x6f, 0x3c, 0x88,
-	0xc1, 0xf4, 0x11, 0x34, 0x63, 0x1e, 0x94, 0xaf, 0xd1, 0xc9, 0x33, 0xbb, 0x79, 0x79, 0xf1, 0x9c,
-	0x69, 0x8e, 0x7e, 0x08, 0x3d, 0x1e, 0x86, 0x02, 0xa5, 0x44, 0x69, 0x35, 0xcd, 0xa5, 0x9b, 0xa3,
-	0xad, 0x49, 0x76, 0x07, 0x47, 0x8f, 0x61, 0xb0, 0x7d, 0x60, 0xd4, 0x82, 0x4e, 0xb9, 0x3c, 0x65,
-	0xc1, 0xca, 0xf4, 0x9d, 0xff, 0xfe, 0x19, 0x92, 0xd7, 0xf9, 0x90, 0xfc, 0x95, 0x0f, 0xc9, 0x9b,
-	0x7c, 0x48, 0xde, 0xe6, 0x43, 0xf2, 0x77, 0x3e, 0x24, 0x7f, 0xfc, 0x3b, 0xdc, 0xfb, 0xb1, 0xb1,
-	0x1a, 0x4f, 0xdb, 0xe6, 0x27, 0x77, 0xfe, 0x7f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x6f, 0x20, 0x9b,
-	0x35, 0x45, 0x05, 0x00, 0x00,
+	// 848 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x6c, 0x54, 0xcb, 0x72, 0x1b, 0x45,
+	0x14, 0xf5, 0x48, 0xd6, 0xeb, 0xca, 0x52, 0xec, 0x4e, 0x61, 0x26, 0xae, 0x42, 0xa3, 0x12, 0x0b,
+	0x94, 0x40, 0xe4, 0x8a, 0x4c, 0x05, 0x8a, 0x15, 0x1e, 0xf3, 0x2c, 0x10, 0xa1, 0xda, 0xe0, 0x05,
+	0x0b, 0xa6, 0x5a, 0x33, 0xd7, 0xf2, 0x90, 0x79, 0xa8, 0xba, 0x5b, 0x02, 0xfd, 0x01, 0x5b, 0x76,
+	0x2c, 0xb3, 0xcc, 0x27, 0xf0, 0x09, 0x59, 0xe6, 0x0b, 0xa6, 0x40, 0xec, 0xe6, 0x0b, 0x58, 0x52,
+	0xdd, 0xf3, 0xd0, 0xa3, 0xb2, 0xbb, 0xf7, 0x9c, 0xd3, 0x7d, 0xbb, 0xcf, 0x9c, 0x69, 0x38, 0xc2,
+	0x48, 0xfa, 0x72, 0x35, 0x9a, 0xf3, 0x58, 0xc6, 0xa4, 0x23, 0x30, 0x12, 0x8b, 0x91, 0x1b, 0x73,
+	0x1c, 0x2d, 0xc7, 0x67, 0x1f, 0xce, 0x7c, 0x79, 0xb7, 0x98, 0x8e, 0xdc, 0x38, 0x3c, 0x9f, 0xc5,
+	0xb3, 0xf8, 0x5c, 0xab, 0xa6, 0x8b, 0xdb, 0x4f, 0x97, 0x4f, 0x46, 0x17, 0xa3, 0x27, 0x1a, 0xd4,
+	0x98, 0xae, 0xb2, 0x4d, 0xce, 0x20, 0x44, 0xc9, 0xb2, 0x7a, 0xf0, 0x47, 0x0d, 0xea, 0x9f, 0xeb,
+	0x09, 0xe4, 0xa2, 0x98, 0xe5, 0xb8, 0x01, 0x13, 0xc2, 0x34, 0xfa, 0xc6, 0xb0, 0x65, 0x1f, 0xa7,
+	0x89, 0xb5, 0x83, 0xd3, 0x76, 0xd6, 0x5d, 0xa9, 0x86, 0x5c, 0x40, 0x5d, 0xac, 0x84, 0xc4, 0xd0,
+	0xac, 0xf6, 0x8d, 0x61, 0x7b, 0xfc, 0xd6, 0x68, 0xe7, 0x84, 0xa3, 0x6b, 0x4d, 0xda, 0x87, 0xaf,
+	0x12, 0xeb, 0x80, 0xe6, 0x52, 0xf2, 0x11, 0x74, 0xc4, 0x62, 0x2a, 0x5c, 0xee, 0xcf, 0xa5, 0x1f,
+	0x47, 0xc2, 0x3c, 0xec, 0x57, 0x87, 0x2d, 0xfb, 0x24, 0x4d, 0xac, 0x5d, 0x82, 0xee, 0xb6, 0xe4,
+	0x11, 0xb4, 0x02, 0x26, 0xa4, 0x23, 0x10, 0x23, 0xb3, 0xd6, 0x37, 0x86, 0x55, 0xbb, 0x93, 0x26,
+	0xd6, 0x06, 0xa4, 0x4d, 0x55, 0x5e, 0x23, 0x46, 0x64, 0x04, 0xe0, 0x21, 0xc7, 0x99, 0x2f, 0x24,
+	0x72, 0xb3, 0xde, 0x37, 0x86, 0x4d, 0xbb, 0x9b, 0x26, 0xd6, 0x16, 0x4a, 0xb7, 0x6a, 0xf2, 0x0d,
+	0x74, 0x8b, 0x8e, 0x33, 0x35, 0xce, 0x6c, 0xe8, 0x1b, 0xbd, 0xb3, 0x77, 0xa3, 0xcf, 0x76, 0x44,
+	0xf9, 0xcd, 0xf6, 0x96, 0x12, 0x02, 0x87, 0x0b, 0x81, 0xdc, 0x6c, 0x2b, 0x0f, 0xa9, 0xae, 0xc9,
+	0x53, 0xb8, 0x8f, 0xbf, 0x49, 0x8c, 0x3c, 0xf4, 0x1c, 0x26, 0x25, 0xf7, 0xa7, 0x0b, 0x89, 0xc2,
+	0x3c, 0xea, 0x1b, 0xc3, 0x23, 0xbb, 0x96, 0x26, 0x96, 0xf1, 0x98, 0x92, 0x42, 0x71, 0x59, 0x0a,
+	0xc8, 0x29, 0xd4, 0x39, 0x7a, 0xcc, 0x95, 0x66, 0x47, 0xd9, 0x44, 0xf3, 0x8e, 0xfc, 0x08, 0x4d,
+	0xf5, 0x21, 0x3d, 0x26, 0x99, 0xd9, 0xd5, 0x47, 0x7d, 0xb0, 0x77, 0xd4, 0x67, 0xd3, 0x5f, 0xd0,
+	0x95, 0x13, 0x94, 0xcc, 0xee, 0xa9, 0x63, 0xbe, 0x4e, 0x2c, 0x23, 0x4d, 0x2c, 0x52, 0x2c, 0xfb,
+	0x20, 0x0e, 0x7d, 0x89, 0xe1, 0x5c, 0xae, 0x68, 0xb9, 0x15, 0xf9, 0x12, 0xee, 0xeb, 0x5d, 0x1c,
+	0x36, 0xc3, 0x48, 0x3a, 0x4b, 0xe4, 0x42, 0x99, 0x71, 0x4f, 0xa7, 0xe1, 0xed, 0x34, 0xb1, 0xde,
+	0x44, 0xd3, 0x13, 0x0d, 0x5e, 0x2a, 0xec, 0x26, 0x83, 0xc8, 0x63, 0x20, 0xcf, 0x11, 0xe7, 0x2c,
+	0xf0, 0x97, 0xe8, 0xdc, 0xb1, 0xc8, 0x0b, 0x90, 0x0b, 0xf3, 0x58, 0xdf, 0xe1, 0xa4, 0x64, 0xbe,
+	0xca, 0x89, 0x4f, 0x9a, 0xbf, 0xbf, 0xb0, 0x0e, 0x5e, 0xbe, 0xb0, 0x8c, 0x41, 0x52, 0x85, 0x7a,
+	0x96, 0x1b, 0x72, 0x06, 0xcd, 0xbb, 0x58, 0xc8, 0x88, 0x85, 0x98, 0xe5, 0x91, 0x96, 0x3d, 0x39,
+	0x85, 0x4a, 0x2c, 0xcc, 0x8a, 0x3e, 0x57, 0x7d, 0x9d, 0x58, 0x95, 0x67, 0xd7, 0xb4, 0x12, 0x0b,
+	0xb5, 0x66, 0x1e, 0x30, 0x79, 0x1b, 0xf3, 0x2c, 0x94, 0x2d, 0x5a, 0xf6, 0xe4, 0x3d, 0xb8, 0x57,
+	0xd4, 0xce, 0x2d, 0x0b, 0xfd, 0x60, 0x65, 0x1e, 0x6a, 0x49, 0xb7, 0x80, 0xbf, 0xd0, 0x28, 0x79,
+	0x08, 0xc7, 0xa5, 0xb0, 0xb0, 0xa0, 0xa6, 0x95, 0xe5, 0x06, 0xc5, 0x3d, 0x9f, 0x42, 0x23, 0x42,
+	0xf9, 0x6b, 0xcc, 0x9f, 0xeb, 0x94, 0xb5, 0xc7, 0xa7, 0x7b, 0x9f, 0xe1, 0xbb, 0x8c, 0xcd, 0xa3,
+	0x52, 0x88, 0x55, 0x46, 0x18, 0x77, 0xef, 0x74, 0xcc, 0x5a, 0x54, 0xd7, 0xe4, 0x1c, 0xda, 0x6c,
+	0x6b, 0x62, 0xb3, 0x6f, 0x0c, 0x6b, 0x76, 0x77, 0x9d, 0x58, 0x70, 0x49, 0x27, 0xf9, 0x40, 0x0a,
+	0x6c, 0x33, 0xfc, 0x21, 0x34, 0xbf, 0xf5, 0xa7, 0x57, 0x3f, 0xac, 0xe6, 0x68, 0xb6, 0xb4, 0x15,
+	0xd9, 0x0f, 0xe1, 0x4f, 0x5d, 0x47, 0xae, 0xe6, 0x48, 0x4b, 0x5a, 0x49, 0x6f, 0x26, 0x99, 0xaf,
+	0x26, 0x6c, 0xa4, 0xcb, 0xd0, 0xc9, 0x7e, 0x4b, 0x5a, 0xd2, 0xe4, 0x5d, 0xa8, 0xdf, 0x4c, 0x68,
+	0x1c, 0x60, 0x16, 0x60, 0xbb, 0x9d, 0x26, 0x56, 0x63, 0x19, 0x3a, 0x3c, 0x0e, 0x90, 0xe6, 0x14,
+	0xf9, 0x18, 0x3a, 0x57, 0x41, 0xbc, 0xf0, 0xbe, 0xe7, 0xf1, 0xd2, 0xf7, 0x90, 0xeb, 0x24, 0xb7,
+	0x6c, 0x92, 0x26, 0x56, 0xd7, 0x55, 0x84, 0x33, 0xcf, 0x19, 0xba, 0x2b, 0x1c, 0xfc, 0x0c, 0x8d,
+	0xdc, 0x13, 0x72, 0x0d, 0xe0, 0x47, 0x12, 0xf9, 0x2d, 0x73, 0x51, 0x3d, 0x39, 0xd5, 0x61, 0x7b,
+	0x6c, 0xbd, 0xd9, 0xbf, 0xaf, 0x0b, 0x9d, 0x4d, 0x94, 0x91, 0xea, 0x57, 0xde, 0x2c, 0xa5, 0x5b,
+	0xf5, 0x20, 0x82, 0xe3, 0xfd, 0x35, 0xca, 0xed, 0xad, 0x14, 0xe9, 0x9a, 0x3c, 0x80, 0x6a, 0xc8,
+	0xdc, 0x3c, 0x42, 0x8d, 0x75, 0x62, 0x55, 0x27, 0x97, 0x57, 0x54, 0x61, 0xe4, 0x7d, 0x68, 0x31,
+	0xcf, 0xe3, 0x28, 0x04, 0x0a, 0xb3, 0xaa, 0x9f, 0x27, 0xed, 0x56, 0x09, 0xd2, 0x4d, 0x39, 0x78,
+	0x04, 0xdd, 0xdd, 0x57, 0x81, 0x98, 0xd0, 0xc8, 0x13, 0x9f, 0x0f, 0x2c, 0x5a, 0xbb, 0xff, 0xdf,
+	0x3f, 0x3d, 0xe3, 0xe5, 0xba, 0x67, 0xfc, 0xb5, 0xee, 0x19, 0xaf, 0xd6, 0x3d, 0xe3, 0xf5, 0xba,
+	0x67, 0xfc, 0xbd, 0xee, 0x19, 0x7f, 0xfe, 0xdb, 0x3b, 0xf8, 0xa9, 0xb2, 0x1c, 0x4f, 0xeb, 0xfa,
+	0x65, 0xbe, 0xf8, 0x3f, 0x00, 0x00, 0xff, 0xff, 0x2b, 0x76, 0xc8, 0xad, 0xfa, 0x05, 0x00, 0x00,
 }
 
 func (this *Entity) Equal(that interface{}) bool {
@@ -529,6 +571,18 @@ func (this *System) Equal(that interface{}) bool {
 		return false
 	}
 	if this.ARMVersion != that1.ARMVersion {
+		return false
+	}
+	if this.LibCType != that1.LibCType {
+		return false
+	}
+	if this.VMSystem != that1.VMSystem {
+		return false
+	}
+	if this.VMRole != that1.VMRole {
+		return false
+	}
+	if this.CloudProvider != that1.CloudProvider {
 		return false
 	}
 	if !bytes.Equal(this.XXX_unrecognized, that1.XXX_unrecognized) {
@@ -726,7 +780,7 @@ func NewEntityFromFace(that EntityFace) *Entity {
 func (m *Entity) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -734,130 +788,128 @@ func (m *Entity) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Entity) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Entity) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.EntityClass) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.EntityClass)))
-		i += copy(dAtA[i:], m.EntityClass)
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	dAtA[i] = 0x1a
-	i++
-	i = encodeVarintEntity(dAtA, i, uint64(m.System.Size()))
-	n1, err := m.System.MarshalTo(dAtA[i:])
-	if err != nil {
-		return 0, err
-	}
-	i += n1
-	if len(m.Subscriptions) > 0 {
-		for _, s := range m.Subscriptions {
-			dAtA[i] = 0x22
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
+	if len(m.KeepaliveHandlers) > 0 {
+		for iNdEx := len(m.KeepaliveHandlers) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.KeepaliveHandlers[iNdEx])
+			copy(dAtA[i:], m.KeepaliveHandlers[iNdEx])
+			i = encodeVarintEntity(dAtA, i, uint64(len(m.KeepaliveHandlers[iNdEx])))
+			i--
+			dAtA[i] = 0x1
+			i--
+			dAtA[i] = 0x82
 		}
 	}
-	if m.LastSeen != 0 {
-		dAtA[i] = 0x28
-		i++
-		i = encodeVarintEntity(dAtA, i, uint64(m.LastSeen))
+	if len(m.SensuAgentVersion) > 0 {
+		i -= len(m.SensuAgentVersion)
+		copy(dAtA[i:], m.SensuAgentVersion)
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.SensuAgentVersion)))
+		i--
+		dAtA[i] = 0x7a
 	}
+	{
+		size, err := m.ObjectMeta.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintEntity(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x72
+	if len(m.Redact) > 0 {
+		for iNdEx := len(m.Redact) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Redact[iNdEx])
+			copy(dAtA[i:], m.Redact[iNdEx])
+			i = encodeVarintEntity(dAtA, i, uint64(len(m.Redact[iNdEx])))
+			i--
+			dAtA[i] = 0x6a
+		}
+	}
+	if len(m.ExtendedAttributes) > 0 {
+		i -= len(m.ExtendedAttributes)
+		copy(dAtA[i:], m.ExtendedAttributes)
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.ExtendedAttributes)))
+		i--
+		dAtA[i] = 0x62
+	}
+	if len(m.User) > 0 {
+		i -= len(m.User)
+		copy(dAtA[i:], m.User)
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.User)))
+		i--
+		dAtA[i] = 0x5a
+	}
+	{
+		size, err := m.Deregistration.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintEntity(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x3a
 	if m.Deregister {
-		dAtA[i] = 0x30
-		i++
+		i--
 		if m.Deregister {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
 		}
-		i++
+		i--
+		dAtA[i] = 0x30
 	}
-	dAtA[i] = 0x3a
-	i++
-	i = encodeVarintEntity(dAtA, i, uint64(m.Deregistration.Size()))
-	n2, err := m.Deregistration.MarshalTo(dAtA[i:])
-	if err != nil {
-		return 0, err
+	if m.LastSeen != 0 {
+		i = encodeVarintEntity(dAtA, i, uint64(m.LastSeen))
+		i--
+		dAtA[i] = 0x28
 	}
-	i += n2
-	if len(m.User) > 0 {
-		dAtA[i] = 0x5a
-		i++
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.User)))
-		i += copy(dAtA[i:], m.User)
-	}
-	if len(m.ExtendedAttributes) > 0 {
-		dAtA[i] = 0x62
-		i++
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.ExtendedAttributes)))
-		i += copy(dAtA[i:], m.ExtendedAttributes)
-	}
-	if len(m.Redact) > 0 {
-		for _, s := range m.Redact {
-			dAtA[i] = 0x6a
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
+	if len(m.Subscriptions) > 0 {
+		for iNdEx := len(m.Subscriptions) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Subscriptions[iNdEx])
+			copy(dAtA[i:], m.Subscriptions[iNdEx])
+			i = encodeVarintEntity(dAtA, i, uint64(len(m.Subscriptions[iNdEx])))
+			i--
+			dAtA[i] = 0x22
 		}
 	}
-	dAtA[i] = 0x72
-	i++
-	i = encodeVarintEntity(dAtA, i, uint64(m.ObjectMeta.Size()))
-	n3, err := m.ObjectMeta.MarshalTo(dAtA[i:])
-	if err != nil {
-		return 0, err
-	}
-	i += n3
-	if len(m.SensuAgentVersion) > 0 {
-		dAtA[i] = 0x7a
-		i++
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.SensuAgentVersion)))
-		i += copy(dAtA[i:], m.SensuAgentVersion)
-	}
-	if len(m.KeepaliveHandlers) > 0 {
-		for _, s := range m.KeepaliveHandlers {
-			dAtA[i] = 0x82
-			i++
-			dAtA[i] = 0x1
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
+	{
+		size, err := m.System.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
 		}
+		i -= size
+		i = encodeVarintEntity(dAtA, i, uint64(size))
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	i--
+	dAtA[i] = 0x1a
+	if len(m.EntityClass) > 0 {
+		i -= len(m.EntityClass)
+		copy(dAtA[i:], m.EntityClass)
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.EntityClass)))
+		i--
+		dAtA[i] = 0xa
 	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *System) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -865,69 +917,111 @@ func (m *System) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *System) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *System) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Hostname) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.Hostname)))
-		i += copy(dAtA[i:], m.Hostname)
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	if len(m.OS) > 0 {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.OS)))
-		i += copy(dAtA[i:], m.OS)
+	if len(m.CloudProvider) > 0 {
+		i -= len(m.CloudProvider)
+		copy(dAtA[i:], m.CloudProvider)
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.CloudProvider)))
+		i--
+		dAtA[i] = 0x62
 	}
-	if len(m.Platform) > 0 {
-		dAtA[i] = 0x1a
-		i++
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.Platform)))
-		i += copy(dAtA[i:], m.Platform)
+	if len(m.VMRole) > 0 {
+		i -= len(m.VMRole)
+		copy(dAtA[i:], m.VMRole)
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.VMRole)))
+		i--
+		dAtA[i] = 0x5a
 	}
-	if len(m.PlatformFamily) > 0 {
-		dAtA[i] = 0x22
-		i++
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.PlatformFamily)))
-		i += copy(dAtA[i:], m.PlatformFamily)
+	if len(m.VMSystem) > 0 {
+		i -= len(m.VMSystem)
+		copy(dAtA[i:], m.VMSystem)
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.VMSystem)))
+		i--
+		dAtA[i] = 0x52
 	}
-	if len(m.PlatformVersion) > 0 {
-		dAtA[i] = 0x2a
-		i++
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.PlatformVersion)))
-		i += copy(dAtA[i:], m.PlatformVersion)
-	}
-	dAtA[i] = 0x32
-	i++
-	i = encodeVarintEntity(dAtA, i, uint64(m.Network.Size()))
-	n4, err := m.Network.MarshalTo(dAtA[i:])
-	if err != nil {
-		return 0, err
-	}
-	i += n4
-	if len(m.Arch) > 0 {
-		dAtA[i] = 0x3a
-		i++
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.Arch)))
-		i += copy(dAtA[i:], m.Arch)
+	if len(m.LibCType) > 0 {
+		i -= len(m.LibCType)
+		copy(dAtA[i:], m.LibCType)
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.LibCType)))
+		i--
+		dAtA[i] = 0x4a
 	}
 	if m.ARMVersion != 0 {
-		dAtA[i] = 0x40
-		i++
 		i = encodeVarintEntity(dAtA, i, uint64(m.ARMVersion))
+		i--
+		dAtA[i] = 0x40
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.Arch) > 0 {
+		i -= len(m.Arch)
+		copy(dAtA[i:], m.Arch)
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.Arch)))
+		i--
+		dAtA[i] = 0x3a
 	}
-	return i, nil
+	{
+		size, err := m.Network.MarshalToSizedBuffer(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = encodeVarintEntity(dAtA, i, uint64(size))
+	}
+	i--
+	dAtA[i] = 0x32
+	if len(m.PlatformVersion) > 0 {
+		i -= len(m.PlatformVersion)
+		copy(dAtA[i:], m.PlatformVersion)
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.PlatformVersion)))
+		i--
+		dAtA[i] = 0x2a
+	}
+	if len(m.PlatformFamily) > 0 {
+		i -= len(m.PlatformFamily)
+		copy(dAtA[i:], m.PlatformFamily)
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.PlatformFamily)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.Platform) > 0 {
+		i -= len(m.Platform)
+		copy(dAtA[i:], m.Platform)
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.Platform)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if len(m.OS) > 0 {
+		i -= len(m.OS)
+		copy(dAtA[i:], m.OS)
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.OS)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Hostname) > 0 {
+		i -= len(m.Hostname)
+		copy(dAtA[i:], m.Hostname)
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.Hostname)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *Network) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -935,32 +1029,40 @@ func (m *Network) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Network) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Network) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
+	}
 	if len(m.Interfaces) > 0 {
-		for _, msg := range m.Interfaces {
-			dAtA[i] = 0xa
-			i++
-			i = encodeVarintEntity(dAtA, i, uint64(msg.Size()))
-			n, err := msg.MarshalTo(dAtA[i:])
-			if err != nil {
-				return 0, err
+		for iNdEx := len(m.Interfaces) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Interfaces[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintEntity(dAtA, i, uint64(size))
 			}
-			i += n
+			i--
+			dAtA[i] = 0xa
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
+	return len(dAtA) - i, nil
 }
 
 func (m *NetworkInterface) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -968,47 +1070,49 @@ func (m *NetworkInterface) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *NetworkInterface) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *NetworkInterface) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Name) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.Name)))
-		i += copy(dAtA[i:], m.Name)
-	}
-	if len(m.MAC) > 0 {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.MAC)))
-		i += copy(dAtA[i:], m.MAC)
+	if m.XXX_unrecognized != nil {
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
 	if len(m.Addresses) > 0 {
-		for _, s := range m.Addresses {
+		for iNdEx := len(m.Addresses) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Addresses[iNdEx])
+			copy(dAtA[i:], m.Addresses[iNdEx])
+			i = encodeVarintEntity(dAtA, i, uint64(len(m.Addresses[iNdEx])))
+			i--
 			dAtA[i] = 0x1a
-			i++
-			l = len(s)
-			for l >= 1<<7 {
-				dAtA[i] = uint8(uint64(l)&0x7f | 0x80)
-				l >>= 7
-				i++
-			}
-			dAtA[i] = uint8(l)
-			i++
-			i += copy(dAtA[i:], s)
 		}
 	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+	if len(m.MAC) > 0 {
+		i -= len(m.MAC)
+		copy(dAtA[i:], m.MAC)
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.MAC)))
+		i--
+		dAtA[i] = 0x12
 	}
-	return i, nil
+	if len(m.Name) > 0 {
+		i -= len(m.Name)
+		copy(dAtA[i:], m.Name)
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.Name)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func (m *Deregistration) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
 	if err != nil {
 		return nil, err
 	}
@@ -1016,30 +1120,39 @@ func (m *Deregistration) Marshal() (dAtA []byte, err error) {
 }
 
 func (m *Deregistration) MarshalTo(dAtA []byte) (int, error) {
-	var i int
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *Deregistration) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Handler) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintEntity(dAtA, i, uint64(len(m.Handler)))
-		i += copy(dAtA[i:], m.Handler)
-	}
 	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
+		i -= len(m.XXX_unrecognized)
+		copy(dAtA[i:], m.XXX_unrecognized)
 	}
-	return i, nil
+	if len(m.Handler) > 0 {
+		i -= len(m.Handler)
+		copy(dAtA[i:], m.Handler)
+		i = encodeVarintEntity(dAtA, i, uint64(len(m.Handler)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
 }
 
 func encodeVarintEntity(dAtA []byte, offset int, v uint64) int {
+	offset -= sovEntity(v)
+	base := offset
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
 		v >>= 7
 		offset++
 	}
 	dAtA[offset] = uint8(v)
-	return offset + 1
+	return base
 }
 func NewPopulatedEntity(r randyEntity, easy bool) *Entity {
 	this := &Entity{}
@@ -1097,15 +1210,19 @@ func NewPopulatedSystem(r randyEntity, easy bool) *System {
 	if r.Intn(2) == 0 {
 		this.ARMVersion *= -1
 	}
+	this.LibCType = string(randStringEntity(r))
+	this.VMSystem = string(randStringEntity(r))
+	this.VMRole = string(randStringEntity(r))
+	this.CloudProvider = string(randStringEntity(r))
 	if !easy && r.Intn(10) != 0 {
-		this.XXX_unrecognized = randUnrecognizedEntity(r, 9)
+		this.XXX_unrecognized = randUnrecognizedEntity(r, 13)
 	}
 	return this
 }
 
 func NewPopulatedNetwork(r randyEntity, easy bool) *Network {
 	this := &Network{}
-	if r.Intn(10) != 0 {
+	if r.Intn(5) != 0 {
 		v9 := r.Intn(5)
 		this.Interfaces = make([]NetworkInterface, v9)
 		for i := 0; i < v9; i++ {
@@ -1308,6 +1425,22 @@ func (m *System) Size() (n int) {
 	if m.ARMVersion != 0 {
 		n += 1 + sovEntity(uint64(m.ARMVersion))
 	}
+	l = len(m.LibCType)
+	if l > 0 {
+		n += 1 + l + sovEntity(uint64(l))
+	}
+	l = len(m.VMSystem)
+	if l > 0 {
+		n += 1 + l + sovEntity(uint64(l))
+	}
+	l = len(m.VMRole)
+	if l > 0 {
+		n += 1 + l + sovEntity(uint64(l))
+	}
+	l = len(m.CloudProvider)
+	if l > 0 {
+		n += 1 + l + sovEntity(uint64(l))
+	}
 	if m.XXX_unrecognized != nil {
 		n += len(m.XXX_unrecognized)
 	}
@@ -1375,14 +1508,7 @@ func (m *Deregistration) Size() (n int) {
 }
 
 func sovEntity(x uint64) (n int) {
-	for {
-		n++
-		x >>= 7
-		if x == 0 {
-			break
-		}
-	}
-	return n
+	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozEntity(x uint64) (n int) {
 	return sovEntity(uint64((x << 1) ^ uint64((int64(x) >> 63))))
@@ -2078,6 +2204,134 @@ func (m *System) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
+		case 9:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LibCType", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEntity
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthEntity
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEntity
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.LibCType = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 10:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VMSystem", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEntity
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthEntity
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEntity
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.VMSystem = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 11:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field VMRole", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEntity
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthEntity
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEntity
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.VMRole = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 12:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field CloudProvider", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowEntity
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthEntity
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthEntity
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.CloudProvider = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipEntity(dAtA[iNdEx:])
@@ -2430,6 +2684,7 @@ func (m *Deregistration) Unmarshal(dAtA []byte) error {
 func skipEntity(dAtA []byte) (n int, err error) {
 	l := len(dAtA)
 	iNdEx := 0
+	depth := 0
 	for iNdEx < l {
 		var wire uint64
 		for shift := uint(0); ; shift += 7 {
@@ -2461,10 +2716,8 @@ func skipEntity(dAtA []byte) (n int, err error) {
 					break
 				}
 			}
-			return iNdEx, nil
 		case 1:
 			iNdEx += 8
-			return iNdEx, nil
 		case 2:
 			var length int
 			for shift := uint(0); ; shift += 7 {
@@ -2485,55 +2738,30 @@ func skipEntity(dAtA []byte) (n int, err error) {
 				return 0, ErrInvalidLengthEntity
 			}
 			iNdEx += length
-			if iNdEx < 0 {
-				return 0, ErrInvalidLengthEntity
-			}
-			return iNdEx, nil
 		case 3:
-			for {
-				var innerWire uint64
-				var start int = iNdEx
-				for shift := uint(0); ; shift += 7 {
-					if shift >= 64 {
-						return 0, ErrIntOverflowEntity
-					}
-					if iNdEx >= l {
-						return 0, io.ErrUnexpectedEOF
-					}
-					b := dAtA[iNdEx]
-					iNdEx++
-					innerWire |= (uint64(b) & 0x7F) << shift
-					if b < 0x80 {
-						break
-					}
-				}
-				innerWireType := int(innerWire & 0x7)
-				if innerWireType == 4 {
-					break
-				}
-				next, err := skipEntity(dAtA[start:])
-				if err != nil {
-					return 0, err
-				}
-				iNdEx = start + next
-				if iNdEx < 0 {
-					return 0, ErrInvalidLengthEntity
-				}
-			}
-			return iNdEx, nil
+			depth++
 		case 4:
-			return iNdEx, nil
+			if depth == 0 {
+				return 0, ErrUnexpectedEndOfGroupEntity
+			}
+			depth--
 		case 5:
 			iNdEx += 4
-			return iNdEx, nil
 		default:
 			return 0, fmt.Errorf("proto: illegal wireType %d", wireType)
 		}
+		if iNdEx < 0 {
+			return 0, ErrInvalidLengthEntity
+		}
+		if depth == 0 {
+			return iNdEx, nil
+		}
 	}
-	panic("unreachable")
+	return 0, io.ErrUnexpectedEOF
 }
 
 var (
-	ErrInvalidLengthEntity = fmt.Errorf("proto: negative length found during unmarshaling")
-	ErrIntOverflowEntity   = fmt.Errorf("proto: integer overflow")
+	ErrInvalidLengthEntity        = fmt.Errorf("proto: negative length found during unmarshaling")
+	ErrIntOverflowEntity          = fmt.Errorf("proto: integer overflow")
+	ErrUnexpectedEndOfGroupEntity = fmt.Errorf("proto: unexpected end of group")
 )

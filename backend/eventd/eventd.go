@@ -210,11 +210,27 @@ func eventKey(event *corev2.Event) string {
 	return path.Join(event.Entity.Namespace, event.Check.Name, event.Entity.Name)
 }
 
+func logEvent(e *corev2.Event) {
+	fields := logrus.Fields{
+		"event_uuid": e.GetUUID().String(),
+		"entity":     e.Entity.Name,
+	}
+	if e.HasCheck() {
+		fields["check"] = e.Check.Name
+	}
+	if e.HasMetrics() {
+		fields["metrics"] = true
+	}
+	logger.WithFields(fields).Info("eventd received event")
+}
+
 func (e *Eventd) handleMessage(msg interface{}) error {
 	event, ok := msg.(*corev2.Event)
 	if !ok {
 		return errors.New("received non-Event on event channel")
 	}
+
+	logEvent(event)
 
 	// Validate the received event
 	if err := event.Validate(); err != nil {
@@ -230,7 +246,8 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, event.Entity.Namespace)
 
-	// Create a proxy entity if required and update the event's entity with it
+	// Create a proxy entity if required and update the event's entity with it,
+	// but only if the event's entity is not an agent.
 	if err := createProxyEntity(event, e.store); err != nil {
 		return err
 	}

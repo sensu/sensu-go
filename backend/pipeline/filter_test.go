@@ -59,101 +59,101 @@ func TestPipelineFilter(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name     string
-		status   uint32
-		history  []types.CheckHistory
-		metrics  *types.Metrics
-		silenced []string
-		filters  []string
-		expected bool
+		name           string
+		status         uint32
+		history        []types.CheckHistory
+		metrics        *types.Metrics
+		silenced       []string
+		filters        []string
+		expectedFilter string
 	}{
 		{
-			name:     "Not Incident",
-			status:   0,
-			metrics:  nil,
-			silenced: []string{},
-			filters:  []string{"is_incident"},
-			expected: true,
+			name:           "Not Incident",
+			status:         0,
+			metrics:        nil,
+			silenced:       []string{},
+			filters:        []string{"is_incident"},
+			expectedFilter: "is_incident",
 		},
 		{
-			name:     "Incident",
-			status:   1,
-			metrics:  nil,
-			silenced: []string{},
-			filters:  []string{"is_incident"},
-			expected: false,
+			name:           "Incident",
+			status:         1,
+			metrics:        nil,
+			silenced:       []string{},
+			filters:        []string{"is_incident"},
+			expectedFilter: "",
 		},
 		{
-			name:     "Metrics OK Status",
-			status:   0,
-			metrics:  &types.Metrics{},
-			silenced: []string{},
-			filters:  []string{"has_metrics"},
-			expected: false,
+			name:           "Metrics OK Status",
+			status:         0,
+			metrics:        &types.Metrics{},
+			silenced:       []string{},
+			filters:        []string{"has_metrics"},
+			expectedFilter: "",
 		},
 		{
-			name:     "Metrics Warning Status",
-			status:   1,
-			metrics:  &types.Metrics{},
-			silenced: []string{},
-			filters:  []string{"has_metrics"},
-			expected: false,
+			name:           "Metrics Warning Status",
+			status:         1,
+			metrics:        &types.Metrics{},
+			silenced:       []string{},
+			filters:        []string{"has_metrics"},
+			expectedFilter: "",
 		},
 		{
-			name:     "Allow Filter With No Match",
-			status:   1,
-			metrics:  nil,
-			silenced: []string{},
-			filters:  []string{"allowFilterBar"},
-			expected: true,
+			name:           "Allow Filter With No Match",
+			status:         1,
+			metrics:        nil,
+			silenced:       []string{},
+			filters:        []string{"allowFilterBar"},
+			expectedFilter: "allowFilterBar",
 		},
 		{
-			name:     "Allow Filter With Match",
-			status:   1,
-			metrics:  nil,
-			silenced: []string{},
-			filters:  []string{"allowFilterFoo"},
-			expected: false,
+			name:           "Allow Filter With Match",
+			status:         1,
+			metrics:        nil,
+			silenced:       []string{},
+			filters:        []string{"allowFilterFoo"},
+			expectedFilter: "",
 		},
 		{
-			name:     "Deny Filter With No Match",
-			status:   1,
-			metrics:  nil,
-			silenced: []string{},
-			filters:  []string{"denyFilterBar"},
-			expected: false,
+			name:           "Deny Filter With No Match",
+			status:         1,
+			metrics:        nil,
+			silenced:       []string{},
+			filters:        []string{"denyFilterBar"},
+			expectedFilter: "",
 		},
 		{
-			name:     "Deny Filter With Match",
-			status:   1,
-			metrics:  nil,
-			silenced: []string{},
-			filters:  []string{"denyFilterFoo"},
-			expected: true,
+			name:           "Deny Filter With Match",
+			status:         1,
+			metrics:        nil,
+			silenced:       []string{},
+			filters:        []string{"denyFilterFoo"},
+			expectedFilter: "denyFilterFoo",
 		},
 		{
-			name:     "Deny Filters With One Match",
-			status:   1,
-			metrics:  nil,
-			silenced: []string{},
-			filters:  []string{"denyFilterBar", "denyFilterFoo"},
-			expected: true,
+			name:           "Deny Filters With One Match",
+			status:         1,
+			metrics:        nil,
+			silenced:       []string{},
+			filters:        []string{"denyFilterBar", "denyFilterFoo"},
+			expectedFilter: "denyFilterFoo",
 		},
 		{
-			name:     "Silenced With Metrics",
-			status:   1,
-			metrics:  &types.Metrics{},
-			silenced: []string{"entity1"},
-			filters:  []string{"has_metrics"},
-			expected: false,
+			name:           "Silenced With Metrics",
+			status:         1,
+			metrics:        &types.Metrics{},
+			silenced:       []string{"entity1"},
+			filters:        []string{"has_metrics"},
+			expectedFilter: "",
 		},
 		{
-			name:     "Silenced Without Metrics",
-			status:   1,
-			metrics:  nil,
-			silenced: []string{"entity1"},
-			filters:  []string{"is_incident", "not_silenced"},
-			expected: true,
+			name:           "Silenced Without Metrics",
+			status:         1,
+			metrics:        nil,
+			silenced:       []string{"entity1"},
+			filters:        []string{"is_incident", "not_silenced"},
+			expectedFilter: "not_silenced",
 		},
 		{
 			name:   "Not Transitioned From Incident To Healthy",
@@ -162,10 +162,10 @@ func TestPipelineFilter(t *testing.T) {
 				types.CheckHistory{Status: 0},
 				types.CheckHistory{Status: 0},
 			},
-			metrics:  nil,
-			silenced: []string{},
-			filters:  []string{"is_incident"},
-			expected: true,
+			metrics:        nil,
+			silenced:       []string{},
+			filters:        []string{"is_incident"},
+			expectedFilter: "is_incident",
 		},
 		{
 			name:   "Transitioned From Incident To Healthy",
@@ -174,15 +174,15 @@ func TestPipelineFilter(t *testing.T) {
 				types.CheckHistory{Status: 1},
 				types.CheckHistory{Status: 0},
 			},
-			metrics:  nil,
-			silenced: []string{},
-			filters:  []string{"is_incident"},
-			expected: false,
+			metrics:        nil,
+			silenced:       []string{},
+			filters:        []string{"is_incident"},
+			expectedFilter: "",
 		},
 		{
-			name:     "Extension filter",
-			filters:  []string{"extension_filter"},
-			expected: true,
+			name:           "Extension filter",
+			filters:        []string{"extension_filter"},
+			expectedFilter: "extension_filter",
 		},
 	}
 
@@ -209,8 +209,8 @@ func TestPipelineFilter(t *testing.T) {
 				Metrics: tc.metrics,
 			}
 
-			filtered, _ := p.filterEvent(handler, event)
-			assert.Equal(t, tc.expected, filtered)
+			f, _ := p.filterEvent(handler, event)
+			assert.Equal(t, tc.expectedFilter, f)
 		})
 	}
 }
@@ -233,44 +233,44 @@ func TestPipelineWhenFilter(t *testing.T) {
 	}
 
 	testCases := []struct {
-		name       string
-		filterName string
-		action     string
-		begin      time.Duration
-		end        time.Duration
-		expected   bool
+		name           string
+		filterName     string
+		action         string
+		begin          time.Duration
+		end            time.Duration
+		expectedFilter string
 	}{
 		{
-			name:       "in time window action allow",
-			filterName: "in_time_window_allow",
-			action:     types.EventFilterActionAllow,
-			begin:      -time.Minute * time.Duration(1),
-			end:        time.Minute * time.Duration(1),
-			expected:   false,
+			name:           "in time window action allow",
+			filterName:     "in_time_window_allow",
+			action:         types.EventFilterActionAllow,
+			begin:          -time.Minute * time.Duration(1),
+			end:            time.Minute * time.Duration(1),
+			expectedFilter: "",
 		},
 		{
-			name:       "outside time window action allow",
-			filterName: "outside_time_window_allow",
-			action:     types.EventFilterActionAllow,
-			begin:      time.Minute * time.Duration(10),
-			end:        time.Minute * time.Duration(20),
-			expected:   true,
+			name:           "outside time window action allow",
+			filterName:     "outside_time_window_allow",
+			action:         types.EventFilterActionAllow,
+			begin:          time.Minute * time.Duration(10),
+			end:            time.Minute * time.Duration(20),
+			expectedFilter: "outside_time_window_allow",
 		},
 		{
-			name:       "in time window action deny",
-			filterName: "in_time_window_deny",
-			action:     types.EventFilterActionDeny,
-			begin:      -time.Minute * time.Duration(1),
-			end:        time.Minute * time.Duration(1),
-			expected:   true,
+			name:           "in time window action deny",
+			filterName:     "in_time_window_deny",
+			action:         types.EventFilterActionDeny,
+			begin:          -time.Minute * time.Duration(1),
+			end:            time.Minute * time.Duration(1),
+			expectedFilter: "in_time_window_deny",
 		},
 		{
-			name:       "outside time window action deny",
-			filterName: "outside_time_window_deny",
-			action:     types.EventFilterActionDeny,
-			begin:      time.Minute * time.Duration(10),
-			end:        time.Minute * time.Duration(20),
-			expected:   false,
+			name:           "outside time window action deny",
+			filterName:     "outside_time_window_deny",
+			action:         types.EventFilterActionDeny,
+			begin:          time.Minute * time.Duration(10),
+			end:            time.Minute * time.Duration(20),
+			expectedFilter: "",
 		},
 	}
 
@@ -303,8 +303,8 @@ func TestPipelineWhenFilter(t *testing.T) {
 				Filters: []string{tc.filterName},
 			}
 
-			filtered, _ := p.filterEvent(handler, event)
-			assert.Equal(t, tc.expected, filtered)
+			f, _ := p.filterEvent(handler, event)
+			assert.Equal(t, tc.expectedFilter, f)
 		})
 	}
 }

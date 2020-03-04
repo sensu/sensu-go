@@ -8,29 +8,33 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 )
 
 const (
+	// DEPRECATED, use core/v2
 	// KeepaliveCheckName is the name of the check that is created when a
 	// keepalive timeout occurs.
 	KeepaliveCheckName = "keepalive"
 
+	// DEPRECATED, use core/v2
 	// KeepaliveHandlerName is the name of the handler that is executed when
 	// a keepalive timeout occurs.
 	KeepaliveHandlerName = "keepalive"
 
+	// DEPRECATED, use core/v2
 	// RegistrationCheckName is the name of the check that is created when an
 	// entity sends a keepalive and the entity does not yet exist in the store.
 	RegistrationCheckName = "registration"
 
+	// DEPRECATED, use core/v2
 	// RegistrationHandlerName is the name of the handler that is executed when
 	// a registration event is passed to pipelined.
 	RegistrationHandlerName = "registration"
@@ -172,7 +176,7 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 	switches := k.livenessFactory(k.Name(), k.dead, k.alive, logger)
 
 	for _, keepalive := range keepalives {
-		entityCtx := context.WithValue(ctx, types.NamespaceKey, keepalive.Namespace)
+		entityCtx := context.WithValue(ctx, corev2.NamespaceKey, keepalive.Namespace)
 		tctx, cancel := context.WithTimeout(entityCtx, k.storeTimeout)
 		defer cancel()
 		event, err := k.store.GetEventByEntityCheck(tctx, keepalive.Name, "keepalive")
@@ -226,14 +230,14 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 	defer k.wg.Done()
 
 	var (
-		event *types.Event
+		event *corev2.Event
 		ok    bool
 	)
 
 	switches := k.livenessFactory(k.Name(), k.alive, k.dead, logger)
 
 	for msg := range k.keepaliveChan {
-		event, ok = msg.(*types.Event)
+		event, ok = msg.(*corev2.Event)
 		if !ok {
 			logger.Error("keepalived received non-Event on keepalive channel")
 			continue
@@ -284,7 +288,7 @@ func (k *Keepalived) processKeepalives(ctx context.Context) {
 
 		// Retrieve the keepalive timeout or use a default value in case an older
 		// agent version was used, since entity.KeepaliveTimeout no longer exist
-		ttl := int64(types.DefaultKeepaliveTimeout)
+		ttl := int64(corev2.DefaultKeepaliveTimeout)
 		if event.Check != nil {
 			ttl = int64(event.Check.Timeout)
 		}
@@ -326,12 +330,12 @@ func (k *Keepalived) HandleError(err error) {
 	logger.WithError(err).Error(err)
 }
 
-func (k *Keepalived) handleEntityRegistration(entity *types.Entity) error {
-	if entity.EntityClass != types.EntityAgentClass {
+func (k *Keepalived) handleEntityRegistration(entity *corev2.Entity) error {
+	if entity.EntityClass != corev2.EntityAgentClass {
 		return nil
 	}
 
-	ctx := types.SetContextFromResource(k.ctx, entity)
+	ctx := corev2.SetContextFromResource(k.ctx, entity)
 	tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
 	defer cancel()
 	fetchedEntity, err := k.store.GetEntityByName(tctx, entity.Name)
@@ -349,25 +353,25 @@ func (k *Keepalived) handleEntityRegistration(entity *types.Entity) error {
 	return err
 }
 
-func createKeepaliveEvent(rawEvent *types.Event) *types.Event {
+func createKeepaliveEvent(rawEvent *corev2.Event) *corev2.Event {
 	check := rawEvent.Check
 	if check == nil {
-		check = &types.Check{
+		check = &corev2.Check{
 			Interval: agent.DefaultKeepaliveInterval,
-			Timeout:  types.DefaultKeepaliveTimeout,
+			Timeout:  corev2.DefaultKeepaliveTimeout,
 		}
 	}
 
 	// Use the entity keepalive handlers if defined, otherwise fallback to the
 	// default keepalive handler
-	handlers := []string{KeepaliveHandlerName}
+	handlers := []string{corev2.KeepaliveHandlerName}
 	if len(rawEvent.Entity.KeepaliveHandlers) > 0 {
 		handlers = rawEvent.Entity.KeepaliveHandlers
 	}
 
-	keepaliveCheck := &types.Check{
-		ObjectMeta: types.ObjectMeta{
-			Name:      KeepaliveCheckName,
+	keepaliveCheck := &corev2.Check{
+		ObjectMeta: corev2.ObjectMeta{
+			Name:      corev2.KeepaliveCheckName,
 			Namespace: rawEvent.Entity.Namespace,
 		},
 		Interval: check.Interval,
@@ -377,28 +381,34 @@ func createKeepaliveEvent(rawEvent *types.Event) *types.Event {
 		Executed: time.Now().Unix(),
 		Issued:   time.Now().Unix(),
 	}
-	keepaliveEvent := &types.Event{
+	keepaliveEvent := &corev2.Event{
 		ObjectMeta: rawEvent.ObjectMeta,
 		Timestamp:  time.Now().Unix(),
 		Entity:     rawEvent.Entity,
 		Check:      keepaliveCheck,
+		ID:         rawEvent.ID,
+	}
+
+	if len(keepaliveEvent.ID) == 0 {
+		uid, _ := uuid.NewRandom()
+		keepaliveEvent.ID = uid[:]
 	}
 
 	return keepaliveEvent
 }
 
-func createRegistrationEvent(entity *types.Entity) *types.Event {
-	registrationCheck := &types.Check{
-		ObjectMeta: types.ObjectMeta{
-			Name:      RegistrationCheckName,
+func createRegistrationEvent(entity *corev2.Entity) *corev2.Event {
+	registrationCheck := &corev2.Check{
+		ObjectMeta: corev2.ObjectMeta{
+			Name:      corev2.RegistrationCheckName,
 			Namespace: entity.Namespace,
 		},
 		Interval: 1,
-		Handlers: []string{RegistrationHandlerName},
+		Handlers: []string{corev2.RegistrationHandlerName},
 		Status:   1,
 	}
-	registrationEvent := &types.Event{
-		ObjectMeta: types.ObjectMeta{
+	registrationEvent := &corev2.Event{
+		ObjectMeta: corev2.ObjectMeta{
 			Namespace: entity.Namespace,
 		},
 		Timestamp: time.Now().Unix(),
@@ -551,10 +561,10 @@ func parseKey(key string) (namespace, name string, err error) {
 
 // handleUpdate sets the entity's last seen time and publishes an OK check event
 // to the message bus.
-func (k *Keepalived) handleUpdate(e *types.Event) error {
+func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 	entity := e.Entity
 
-	ctx := types.SetContextFromResource(context.Background(), entity)
+	ctx := corev2.SetContextFromResource(context.Background(), entity)
 	if err := k.store.DeleteFailingKeepalive(ctx, e.Entity); err != nil {
 		// Warning: do not wrap this error
 		return err

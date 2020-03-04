@@ -268,11 +268,24 @@ func (a *Agent) receiveLoop(ctx context.Context, cancel context.CancelFunc, conn
 	}
 }
 
+func logEvent(e *corev2.Event) {
+	fields := logrus.Fields{
+		"event_uuid": e.GetUUID().String(),
+		"entity":     e.Entity.Name,
+	}
+	if e.HasCheck() {
+		fields["check"] = e.Check.Name
+	}
+	if e.HasMetrics() {
+		fields["metrics"] = true
+	}
+	logger.WithFields(fields).Info("sending event to backend")
+}
+
 func (a *Agent) sendLoop(ctx context.Context, cancel context.CancelFunc, conn transport.Transport) error {
 	defer cancel()
 	keepalive := time.NewTicker(time.Duration(a.config.KeepaliveInterval) * time.Second)
 	defer keepalive.Stop()
-	logger.Info("sending keepalive")
 	if err := conn.Send(a.newKeepalive()); err != nil {
 		logger.WithError(err).Error("error sending message over websocket")
 		return err
@@ -286,13 +299,11 @@ func (a *Agent) sendLoop(ctx context.Context, cancel context.CancelFunc, conn tr
 			}
 			return nil
 		case msg := <-a.sendq:
-			logger.Info("sending event")
 			if err := conn.Send(msg); err != nil {
 				logger.WithError(err).Error("error sending message over websocket")
 				return err
 			}
 		case <-keepalive.C:
-			logger.Info("sending keepalive")
 			if err := conn.Send(a.newKeepalive()); err != nil {
 				logger.WithError(err).Error("error sending message over websocket")
 				return err
@@ -307,8 +318,11 @@ func (a *Agent) newKeepalive() *transport.Message {
 	}
 	entity := a.getAgentEntity()
 
+	uid, _ := uuid.NewRandom()
+
 	keepalive := &corev2.Event{
 		ObjectMeta: corev2.NewObjectMeta("", entity.Namespace),
+		ID:         uid[:],
 	}
 
 	keepalive.Check = &corev2.Check{
@@ -319,6 +333,8 @@ func (a *Agent) newKeepalive() *transport.Message {
 	}
 	keepalive.Entity = a.getAgentEntity()
 	keepalive.Timestamp = time.Now().Unix()
+
+	logEvent(keepalive)
 
 	msgBytes, err := a.marshal(keepalive)
 	if err != nil {
