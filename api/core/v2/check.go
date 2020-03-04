@@ -260,19 +260,8 @@ func (c *Check) MergeWith(prevCheck *Check) {
 	// This has to be done after the call to updateCheckState, as that function is what
 	// sets the value for c.State that is used below, but the order can't be switched
 	// around as updateCheckState relies on the latest item (specifically, its status)
-	// being present in c.History. This would be simpler (read: with no iteration) if
-	// c.History was a pointer slice, but that ship has sailed.
-	// Also need to iterate to properly handle the case where the last item in the
-	// history isn't the current event.
-	// This may happen when events are received out of order.
-	// Normally we would expect it to be the last item though, so iterate backwards to
-	// minimise number of iterations in the expected case.
-	for i := len(history) - 1; i >= 0; i-- {
-		if c.History[i].Executed == histEntry.Executed && c.History[i].Status == histEntry.Status {
-			c.History[i].Flapping = c.State == EventFlappingState
-			break
-		}
-	}
+	// being present in c.History.
+	c.History[len(c.History)-1].Flapping = c.State == EventFlappingState
 }
 
 // ValidateOutputMetricFormat returns an error if the string is not a valid metric
