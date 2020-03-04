@@ -331,4 +331,9 @@ message CheckHistory {
 
     // Executed describes the time in which the check request was executed
     int64 executed = 2 [(gogoproto.jsontag) = "executed"];
+
+    // Flapping describes whether the check was flapping at this particular point in time.
+    // Comparing this value to the current flapping status allows filters to trigger
+    // only on start and end of flapping.
+    bool flapping = 3 [(gogoproto.jsontag) = "flapping"];
 }

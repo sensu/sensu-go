@@ -109,9 +109,8 @@ func (e *Event) IsResolution() bool {
 	// was a non-zero status, therefore indicating a resolution. The current event
 	// has already been added to the check history by eventd so we must retrieve
 	// the second to the last
-	return (len(e.Check.History) > 1 &&
-		e.Check.History[len(e.Check.History)-2].Status != 0 &&
-		!e.IsIncident())
+	previous := e.previousOccurrence()
+	return previous != nil && previous.Status != 0 && !e.IsIncident()
 }
 
 // IsSilenced determines if an event has any silenced entries
@@ -123,14 +122,44 @@ func (e *Event) IsSilenced() bool {
 	return len(e.Check.Silenced) > 0
 }
 
+// IsFlappingStart determines if an event started flapping on this occurrence.
+func (e *Event) IsFlappingStart() bool {
+	if !e.HasCheck() {
+		return false
+	}
+
+	previous := e.previousOccurrence()
+	return previous != nil && !previous.Flapping && e.Check.State == EventFlappingState
+}
+
+// IsFlappingEnd determines if an event stopped flapping on this occurrence.
+func (e *Event) IsFlappingEnd() bool {
+	if !e.HasCheck() {
+		return false
+	}
+
+	previous := e.previousOccurrence()
+	return previous != nil && previous.Flapping && e.Check.State != EventFlappingState
+}
+
+// previousOccurrence returns the most recent CheckHistory item, excluding the current event.
+func (e *Event) previousOccurrence() *CheckHistory {
+	if !e.HasCheck() || len(e.Check.History) < 2 {
+		return nil
+	}
+	return e.Check.previousOccurrence()
+}
+
 // SynthesizeExtras implements dynamic.SynthesizeExtras
 func (e *Event) SynthesizeExtras() map[string]interface{} {
 	return map[string]interface{}{
-		"has_check":     e.HasCheck(),
-		"has_metrics":   e.HasMetrics(),
-		"is_incident":   e.IsIncident(),
-		"is_resolution": e.IsResolution(),
-		"is_silenced":   e.IsSilenced(),
+		"has_check":         e.HasCheck(),
+		"has_metrics":       e.HasMetrics(),
+		"is_incident":       e.IsIncident(),
+		"is_resolution":     e.IsResolution(),
+		"is_silenced":       e.IsSilenced(),
+		"is_flapping_start": e.IsFlappingStart(),
+		"is_flapping_end":   e.IsFlappingEnd(),
 	}
 }
 

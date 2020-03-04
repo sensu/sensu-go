@@ -65,6 +65,33 @@ func TestMergeWith(t *testing.T) {
 
 	assert.NotEmpty(t, newCheck.History)
 	assert.Equal(t, newCheck.Status, newCheck.History[20].Status)
+	assert.False(t, newCheck.History[20].Flapping)
+}
+
+func TestMergeWithFlappingEvent(t *testing.T) {
+	originalCheck := FixtureCheck("check")
+	originalCheck.Status = 1
+
+	newCheck := FixtureCheck("check")
+	newCheck.History = []CheckHistory{}
+
+	// Make sure the check history flaps by alternating all historic event statuses
+	var status uint32 = 0
+	for i := range originalCheck.History {
+		originalCheck.History[i].Status = status
+		status = (status + 1) % 2
+	}
+
+	// Set flap thresholds to non-zero so we actually trigger the flap logic
+	newCheck.HighFlapThreshold = 25
+	newCheck.LowFlapThreshold = 10
+
+	newCheck.MergeWith(originalCheck)
+
+	assert.NotEmpty(t, newCheck.History)
+	assert.Equal(t, newCheck.Status, newCheck.History[20].Status)
+	assert.True(t, newCheck.History[20].Flapping)
+	assert.False(t, newCheck.History[19].Flapping)
 }
 
 func TestOutputMetricFormatValidate(t *testing.T) {

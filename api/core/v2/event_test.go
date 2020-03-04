@@ -202,6 +202,125 @@ func TestEventIsSilenced(t *testing.T) {
 	}
 }
 
+func TestEventIsFlappingStart(t *testing.T) {
+	testCases := []struct {
+		name     string
+		history  []CheckHistory
+		state    string
+		expected bool
+	}{
+		{
+			name:     "check has no history",
+			history:  []CheckHistory{CheckHistory{}},
+			state:    EventPassingState,
+			expected: false,
+		},
+		{
+			name: "check was not flapping previously, nor is now",
+			history: []CheckHistory{
+				CheckHistory{Flapping: false},
+				CheckHistory{Flapping: false},
+			},
+			state:    EventPassingState,
+			expected: false,
+		},
+		{
+			name: "check is already flapping",
+			history: []CheckHistory{
+				CheckHistory{Flapping: true},
+				CheckHistory{Flapping: true},
+			},
+			state:    EventFlappingState,
+			expected: false,
+		},
+		{
+			name: "check was not previously flapping",
+			history: []CheckHistory{
+				CheckHistory{Flapping: false},
+				CheckHistory{Flapping: true},
+			},
+			state:    EventFlappingState,
+			expected: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			event := &Event{
+				Check: &Check{
+					History: tc.history,
+					State:   tc.state,
+				},
+			}
+			assert.Equal(t, tc.expected, event.IsFlappingStart())
+		})
+	}
+}
+
+func TestEventIsFlappingEnd(t *testing.T) {
+	testCases := []struct {
+		name     string
+		history  []CheckHistory
+		state    string
+		expected bool
+	}{
+		{
+			name:     "check has no history",
+			history:  []CheckHistory{CheckHistory{}},
+			state:    EventPassingState,
+			expected: false,
+		},
+		{
+			name: "check was not flapping previously, nor is now",
+			history: []CheckHistory{
+				CheckHistory{Flapping: false},
+				CheckHistory{Flapping: false},
+			},
+			state:    EventPassingState,
+			expected: false,
+		},
+		{
+			name: "check is already flapping",
+			history: []CheckHistory{
+				CheckHistory{Flapping: true},
+				CheckHistory{Flapping: true},
+			},
+			state:    EventFlappingState,
+			expected: false,
+		},
+		{
+			name: "check was previously flapping but now is in OK state",
+			history: []CheckHistory{
+				CheckHistory{Flapping: true},
+				CheckHistory{Flapping: false},
+			},
+			state:    EventPassingState,
+			expected: true,
+		},
+		{
+			name: "check was previously flapping but now is in failing state",
+			history: []CheckHistory{
+				CheckHistory{Flapping: true},
+				CheckHistory{Flapping: false},
+			},
+			state:    EventFailingState,
+			expected: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			event := &Event{
+				Check: &Check{
+					History: tc.history,
+					State:   tc.state,
+				},
+			}
+			assert.Equal(t, tc.expected, event.IsFlappingEnd())
+		})
+	}
+}
+
 func TestEventIsSilencedBy(t *testing.T) {
 	testCases := []struct {
 		name     string

@@ -256,6 +256,12 @@ func (c *Check) MergeWith(prevCheck *Check) {
 	c.Occurrences = prevCheck.Occurrences
 	c.OccurrencesWatermark = prevCheck.OccurrencesWatermark
 	updateCheckState(c)
+
+	// This has to be done after the call to updateCheckState, as that function is what
+	// sets the value for c.State that is used below, but the order can't be switched
+	// around as updateCheckState relies on the latest item (specifically, its status)
+	// being present in c.History.
+	c.History[len(c.History)-1].Flapping = c.State == EventFlappingState
 }
 
 // ValidateOutputMetricFormat returns an error if the string is not a valid metric
@@ -265,6 +271,14 @@ func ValidateOutputMetricFormat(format string) error {
 		return nil
 	}
 	return errors.New("output metric format is not valid")
+}
+
+// previousOccurrence returns the most recent CheckHistory item, excluding the current result.
+func (c *Check) previousOccurrence() *CheckHistory {
+	if len(c.History) < 2 {
+		return nil
+	}
+	return &c.History[len(c.History)-2]
 }
 
 // DEPRECATED, DO NOT USE! Events should be ordered FIFO.
