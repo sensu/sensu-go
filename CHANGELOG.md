@@ -12,7 +12,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
   `high_flap_threshold` instead of below `low_flap_threshold`.
 
 ### Fixed
-- ensure that check/check config have a non-empty command
 - Check history is now in FIFO order, not ordered by executed timestamp.
 
 ## [5.18.0] - 2020-02-24
