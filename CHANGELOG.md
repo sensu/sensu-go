@@ -19,13 +19,15 @@ the default sensuctl configuration.
 - read/writes `initializationKey` to/from `EtcdRoot`, while support legacy as fallback (read-only)
 - check for a non-200 response when fetching assets
 - `/silenced` now supports API filtering (commercial feature).
+- Fixed event payload validation on the backend events API to validate the
+payload with the URL parameters on the /events/:entity/:check endpoint and
+reject events that do not match.
 
 ### Changed
 - Updated Go version from 1.13.5 to 1.13.7.
 - Default `event.entity.entity_class` to `proxy` in the POST/PUT `/events` API.
 - Proxy entities are now automatically created when events are published with an
 entity that does not exist.
-- Fixed event payload validation on the backend events API to validate the payload with the URL parameters on the /events/:entity/:check endpoint and reject events that do not match.
 
 ## [5.17.2] - 2020-02-19
 
