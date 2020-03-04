@@ -34,7 +34,6 @@ the default sensuctl configuration.
 - Fixed event payload validation on the backend events API to validate the
 payload with the URL parameters on the /events/:entity/:check endpoint and
 reject events that do not match.
-- Fix event payload validation on the backend events API.
 - The `auth/test` endpoint now returns the correct error messages.
 
 ### Changed
