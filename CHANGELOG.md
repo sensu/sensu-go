@@ -12,6 +12,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
   `is_flapping_end` event properties for use by filters.
 - The `sensu.io/managed_by` label is now automatically applied to resources
 created via `sensuctl create`.
+- Added `created_by` to object metadata and populate that field via the HTTP API.
 
 ### Fixed
 - Check history is now in FIFO order, not ordered by executed timestamp.

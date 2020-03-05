@@ -35,6 +35,9 @@ message ObjectMeta {
   // TODO: Link to Sensu documentation.
   // More info: http://kubernetes.io/docs/user-guide/annotations
   map<string, string> annotations = 4 [(gogoproto.jsontag) = "annotations,omitempty", (gogoproto.moretags) = "yaml: \"annotations,omitempty\""];
+
+  // CreatedBy indicates which user created the resource.
+  string created_by = 5 [(gogoproto.jsontag) = "created_by,omitempty", (gogoproto.moretags) = "yaml: \"created_by,omitempty\""];
 }
 
 // TypeMeta is information that can be used to resolve a data type
