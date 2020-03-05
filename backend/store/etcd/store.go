@@ -38,8 +38,8 @@ func NewStore(client *clientv3.Client, name string) *Store {
 }
 
 // Create the given key with the serialized object.
-func Create(ctx context.Context, client *clientv3.Client, key, namespace string, object proto.Message) error {
-	bytes, err := proto.Marshal(object)
+func Create(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
+	bytes, err := marshal(object)
 	if err != nil {
 		return &store.ErrEncode{Key: key, Err: err}
 	}
@@ -82,28 +82,9 @@ func Create(ctx context.Context, client *clientv3.Client, key, namespace string,
 // CreateOrUpdate writes the given key with the serialized object, regarless of
 // its current existence
 func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
-	var bytes []byte
-	var err error
-
-	switch object.(type) {
-	case types.Wrapper:
-		// Supporting protobuf serialization for wrapped resources is not
-		// straightforward since the types.Wrapper struct holds an interface. We
-		// will just use JSON encoding for now since the all store functions support
-		// both for decoding.
-		bytes, err = json.Marshal(object)
-		if err != nil {
-			return &store.ErrEncode{Key: key, Err: err}
-		}
-	default:
-		msg, ok := object.(proto.Message)
-		if !ok {
-			return &store.ErrEncode{Key: key, Err: fmt.Errorf("%T is not proto.Message", object)}
-		}
-		bytes, err = proto.Marshal(msg)
-		if err != nil {
-			return &store.ErrEncode{Key: key, Err: err}
-		}
+	bytes, err := marshal(object)
+	if err != nil {
+		return &store.ErrEncode{Key: key, Err: err}
 	}
 
 	comparisons := []clientv3.Cmp{}
@@ -384,4 +365,28 @@ func unmarshal(data []byte, v interface{}) error {
 	}
 
 	return nil
+}
+
+func marshal(v interface{}) (bytes []byte, err error) {
+	switch v.(type) {
+	case types.Wrapper:
+		// Supporting protobuf serialization for wrapped resources is not
+		// straightforward since the types.Wrapper struct holds an interface. We
+		// will just use JSON encoding for now since the all store functions support
+		// both for decoding.
+		bytes, err = json.Marshal(v)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		msg, ok := v.(proto.Message)
+		if !ok {
+			return nil, fmt.Errorf("%T is not proto.Message", v)
+		}
+		bytes, err = proto.Marshal(msg)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return
 }
