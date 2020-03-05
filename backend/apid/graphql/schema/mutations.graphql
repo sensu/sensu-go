@@ -17,7 +17,7 @@ type Mutation {
     resource instead.
     """
     upsert: Boolean = true,
-  ): PutWrappedPayload!
+  ): PutWrappedPayload! @deprecated(reason: "No longer supported and will be removed in a future release.")
 
   #
   # Checks
