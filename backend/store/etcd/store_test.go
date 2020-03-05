@@ -70,6 +70,10 @@ func TestCreate(t *testing.T) {
 		err := Create(ctx, s.client, "/default/foo", "default", obj)
 		assert.NoError(t, err)
 
+		// Creating a wrapped resource should work
+		err = Create(ctx, s.client, "/default/foo", "default", types.Wrapper{Value: obj})
+		assert.NoError(t, err)
+
 		// Creating this same key should return an error that it already exist
 		err = Create(ctx, s.client, "/default/foo", "default", obj)
 		switch err := err.(type) {
