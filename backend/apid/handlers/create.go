@@ -46,5 +46,5 @@ func (h Handlers) CreateResource(r *http.Request) (interface{}, error) {
 		}
 	}
 
-	return resource, nil
+	return nil, nil
 }

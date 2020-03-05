@@ -44,5 +44,5 @@ func (h Handlers) CreateOrUpdateResource(r *http.Request) (interface{}, error) {
 		}
 	}
 
-	return resource, nil
+	return nil, nil
 }

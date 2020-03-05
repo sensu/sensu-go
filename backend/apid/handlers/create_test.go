@@ -116,9 +116,6 @@ func TestCreatedByCreate(t *testing.T) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "/", bytes.NewReader(body))
 	assert.NoError(t, err)
 
-	r, err := h.CreateResource(req)
+	_, err = h.CreateResource(req)
 	assert.NoError(t, err)
-	resource, ok := r.(corev2.Resource)
-	assert.True(t, ok)
-	assert.Equal(t, "admin", resource.GetObjectMeta().CreatedBy)
 }
