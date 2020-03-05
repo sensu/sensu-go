@@ -83,8 +83,6 @@ func TestEventHandling(t *testing.T) {
 
 	mockStore.On("GetEntityByName", mock.Anything, "entity").
 		Return(event.Entity, nil)
-	mockStore.On("UpdateEntity", mock.Anything, mock.AnythingOfType("*v2.Entity")).
-		Return(nil)
 
 	var nilEvent *corev2.Event
 	// no previous event.
@@ -140,8 +138,6 @@ func TestEventMonitor(t *testing.T) {
 
 	mockStore.On("GetEntityByName", mock.Anything, "entity").
 		Return(event.Entity, nil)
-	mockStore.On("UpdateEntity", mock.Anything, mock.AnythingOfType("*v2.Entity")).
-		Return(nil)
 
 	var nilEvent *corev2.Event
 	// no previous event.
@@ -282,8 +278,6 @@ func TestCheckTTL(t *testing.T) {
 			store.On("GetSilencedEntriesByCheckName", mock.Anything, mock.Anything).
 				Return([]*corev2.Silenced{}, nil)
 			store.On("UpdateEvent", mock.Anything, mock.Anything).Return(tt.msg, mockEvent, nil)
-			store.On("UpdateEntity", mock.Anything, mock.AnythingOfType("*v2.Entity")).
-				Return(nil)
 
 			if err := e.handleMessage(tt.msg); (err != nil) != tt.wantErr {
 				t.Errorf("Eventd.handleMessage() error = %v, wantErr %v", err, tt.wantErr)
