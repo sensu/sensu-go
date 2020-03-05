@@ -6,13 +6,17 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+### Added
 - Added `flapping` field to check history, along with `is_flapping_start` and
   `is_flapping_end` event properties for use by filters.
-- Fixed bug where flapping would incorrectly end when `total_state_change` was below
-  `high_flap_threshold` instead of below `low_flap_threshold`.
+- The `sensu.io/managed_by` label is now automatically applied to resources
+created via `sensuctl create`.
 
 ### Fixed
 - Check history is now in FIFO order, not ordered by executed timestamp.
+- Fixed bug where flapping would incorrectly end when `total_state_change` was
+  below `high_flap_threshold` instead of below `low_flap_threshold`.
 
 ## [5.18.0] - 2020-02-24
 
