@@ -29,6 +29,8 @@ func TestCreateProxyEntity(t *testing.T) {
 			storeFunc: func(store *mockstore.MockStore) {
 				store.On("GetEntityByName", mock.Anything, "foo").
 					Return(corev2.FixtureEntity("foo"), nil)
+				store.On("UpdateEntity", mock.Anything, mock.AnythingOfType("*v2.Entity")).
+					Return(nil)
 			},
 			wantEntityName: "foo",
 		},
@@ -64,6 +66,8 @@ func TestCreateProxyEntity(t *testing.T) {
 			storeFunc: func(store *mockstore.MockStore) {
 				store.On("GetEntityByName", mock.Anything, "bar").
 					Return(corev2.FixtureEntity("bar"), nil)
+				store.On("UpdateEntity", mock.Anything, mock.AnythingOfType("*v2.Entity")).
+					Return(nil)
 			},
 			wantEntityName: "bar",
 		},

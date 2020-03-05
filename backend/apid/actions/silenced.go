@@ -4,6 +4,7 @@ import (
 	"context"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -56,6 +57,10 @@ func (c SilencedController) Create(ctx context.Context, entry *corev2.Silenced) 
 		return NewError(InvalidArgument, err)
 	}
 
+	if claims := jwt.GetClaimsFromContext(ctx); claims != nil {
+		entry.CreatedBy = claims.StandardClaims.Subject
+	}
+
 	// Check for existing
 	if e, serr := c.Store.GetSilencedEntryByName(ctx, entry.Name); serr != nil {
 		return NewError(InternalErr, serr)
@@ -79,6 +84,10 @@ func (c SilencedController) CreateOrReplace(ctx context.Context, entry *corev2.S
 	// Validate the silenced entry
 	if err := entry.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
+	}
+
+	if claims := jwt.GetClaimsFromContext(ctx); claims != nil {
+		entry.CreatedBy = claims.StandardClaims.Subject
 	}
 
 	// Persist

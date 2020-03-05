@@ -45,10 +45,11 @@ func createProxyEntity(event *corev2.Event, s store.EntityStore) error {
 			entity.EntityClass = corev2.EntityProxyClass
 			entity.Subscriptions = append(entity.Subscriptions, corev2.GetEntitySubscription(entityName))
 		}
+	}
 
-		if err := s.UpdateEntity(ctx, entity); err != nil {
-			return err
-		}
+	entity.CreatedBy = event.CreatedBy
+	if err := s.UpdateEntity(ctx, entity); err != nil {
+		return err
 	}
 
 	// Replace the event's entity with our entity

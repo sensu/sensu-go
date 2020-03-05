@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -341,4 +342,24 @@ func TestEventCreateOrReplace(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestEventCreatedBy(t *testing.T) {
+	claims, err := jwt.NewClaims(&corev2.User{Username: "admin"})
+	assert.NoError(t, err)
+	ctx := context.WithValue(context.Background(), corev2.ClaimsKey, claims)
+	event := corev2.FixtureEvent("entity1", "check1")
+
+	store := &mockstore.MockStore{}
+	bus := &mockbus.MockBus{}
+	actions := NewEventController(store, bus)
+
+	store.On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).Return(event, nil)
+	bus.On("Publish", mock.Anything, mock.Anything).Return(nil)
+
+	err = actions.CreateOrReplace(ctx, event)
+	assert.NoError(t, err)
+	assert.Equal(t, "admin", event.CreatedBy)
+	assert.Equal(t, "admin", event.Check.CreatedBy)
+	assert.Equal(t, "admin", event.Entity.CreatedBy)
 }
