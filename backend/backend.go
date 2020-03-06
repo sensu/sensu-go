@@ -176,7 +176,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	b.ctx = ctx
 	b.runCtx, b.runCancel = context.WithCancel(b.ctx)
 
-	b.Client, err = newClient(b.ctx, config, b)
+	b.Client, err = newClient(b.runCtx, config, b)
 	if err != nil {
 		return nil, err
 	}
@@ -228,8 +228,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
-		Store:                   stor,
-		Bus:                     bus,
+		Store: stor,
+		Bus:   bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 		AssetGetter:             assetGetter,
 		BufferSize:              viper.GetInt(FlagPipelinedBufferSize),
@@ -303,14 +303,14 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:                   bus,
-		Store:                 stor,
-		EventStore:            stor,
-		LivenessFactory:       liveness.EtcdFactory(b.runCtx, b.Client),
-		RingPool:              ringPool,
-		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
-		WorkerCount:           viper.GetInt(FlagKeepalivedWorkers),
-		StoreTimeout:          2 * time.Minute,
+		Bus:             bus,
+		Store:           stor,
+		EventStore:      stor,
+		LivenessFactory: liveness.EtcdFactory(b.runCtx, b.Client),
+		RingPool:        ringPool,
+		BufferSize:      viper.GetInt(FlagKeepalivedBufferSize),
+		WorkerCount:     viper.GetInt(FlagKeepalivedWorkers),
+		StoreTimeout:    2 * time.Minute,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
