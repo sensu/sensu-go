@@ -71,7 +71,7 @@ func TestCreate(t *testing.T) {
 		assert.NoError(t, err)
 
 		// Creating a wrapped resource should work
-		err = Create(ctx, s.client, "/default/foo", "default", types.Wrapper{Value: obj})
+		err = Create(ctx, s.client, "/default/bar", "default", types.Wrapper{Value: obj})
 		assert.NoError(t, err)
 
 		// Creating this same key should return an error that it already exist
