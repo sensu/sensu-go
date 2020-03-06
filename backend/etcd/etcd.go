@@ -262,7 +262,7 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 	}
 	return clientv3.New(clientv3.Config{
 		Endpoints:   e.cfg.AdvertiseClientURLs,
-		DialTimeout: 5 * time.Second,
+		DialTimeout: 60 * time.Second,
 		TLS:         tlsConfig,
 		DialOptions: []grpc.DialOption{
 			grpc.WithBlock(),
