@@ -26,6 +26,8 @@ manager cannot be obtained, and returns instead an error after 60 seconds.
   below `high_flap_threshold` instead of below `low_flap_threshold`.
 - Stopped using the etcd embedded client, which seems to trigger nil pointer
 panics when used against an etcd that is shutting down.
+- 64-bit align the `Resource` struct in the store cache to fix a crash on
+32-bit systems.
 
 ## [5.18.0] - 2020-02-24
 
