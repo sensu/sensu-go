@@ -153,6 +153,9 @@ func (w *Wrapper) UnmarshalJSON(b []byte) error {
 	if outerMeta.Name != "" {
 		innerMeta.Name = outerMeta.Name
 	}
+	if outerMeta.CreatedBy != "" {
+		innerMeta.CreatedBy = outerMeta.CreatedBy
+	}
 	for k, v := range outerMeta.Labels {
 		if innerMeta.Labels == nil {
 			innerMeta.Labels = make(map[string]string)
