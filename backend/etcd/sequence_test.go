@@ -25,10 +25,7 @@ func TestSequence(t *testing.T) {
 	e, cleanup := NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	client := e.NewEmbeddedClient()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -65,10 +62,7 @@ func TestSequences(t *testing.T) {
 	e, cleanup := NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	client := e.NewEmbeddedClient()
 
 	got, err := Sequences(context.TODO(), client, "/sensu.io/foobars/seq", 5)
 	if err != nil {

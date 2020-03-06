@@ -14,12 +14,9 @@ func TestNewEtcd(t *testing.T) {
 	e, cleanup := NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	assert.NoError(t, err)
-	kv := client.KV
-	assert.NotNil(t, kv)
+	client := e.NewEmbeddedClient()
 
-	putsResp, err := kv.Put(context.Background(), "key", "value")
+	putsResp, err := client.Put(context.Background(), "key", "value")
 	assert.NoError(t, err)
 	assert.NotNil(t, putsResp)
 
@@ -27,7 +24,7 @@ func TestNewEtcd(t *testing.T) {
 		assert.FailNow(t, "got nil put response from etcd")
 	}
 
-	getResp, err := kv.Get(context.Background(), "key")
+	getResp, err := client.Get(context.Background(), "key")
 	assert.NoError(t, err)
 	assert.NotNil(t, getResp)
 

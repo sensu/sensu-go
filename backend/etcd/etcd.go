@@ -21,6 +21,7 @@ import (
 	etcdTypes "github.com/coreos/etcd/pkg/types"
 	"github.com/coreos/pkg/capnslog"
 	"github.com/sensu/sensu-go/util/path"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/grpclog"
 )
 
@@ -256,20 +257,33 @@ func (e *Etcd) Shutdown() error {
 
 // NewClient returns a new etcd v3 client. Clients must be closed after use.
 func (e *Etcd) NewClient() (*clientv3.Client, error) {
-	return v3client.New(e.etcd.Server), nil
+	tlsConfig, err := ((transport.TLSInfo)(e.cfg.ClientTLSInfo)).ClientConfig()
+	if err != nil {
+		return nil, err
+	}
+	return clientv3.New(clientv3.Config{
+		Endpoints:   e.cfg.AdvertiseClientURLs,
+		DialTimeout: 60 * time.Second,
+		TLS:         tlsConfig,
+		DialOptions: []grpc.DialOption{
+			grpc.WithBlock(),
+		},
+	})
 }
 
-// Healthy returns Etcd status information.
+// NewEmbeddedClient delivers a new embedded etcd client. Only for testing.
+func (e *Etcd) NewEmbeddedClient() *clientv3.Client {
+	return v3client.New(e.etcd.Server)
+}
+
+// Healthy returns Etcd status information. DEPRECATED.
 func (e *Etcd) Healthy() bool {
 	if len(e.cfg.AdvertiseClientURLs) == 0 {
 		return false
 	}
-	client, err := e.NewClient()
-	if err != nil {
-		return false
-	}
+	client := e.NewEmbeddedClient()
 	mapi := client.Maintenance
-	_, err = mapi.Status(context.TODO(), e.cfg.AdvertiseClientURLs[0])
+	_, err := mapi.Status(context.TODO(), e.cfg.AdvertiseClientURLs[0])
 	return err == nil
 }
 

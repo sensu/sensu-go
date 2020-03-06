@@ -18,6 +18,14 @@ created via `sensuctl create`.
 - Check history is now in FIFO order, not ordered by executed timestamp.
 - Fixed bug where flapping would incorrectly end when `total_state_change` was
   below `high_flap_threshold` instead of below `low_flap_threshold`.
+### Fixed
+- sensu-backend no longers hang indefinitely if a file lock for the asset
+manager cannot be obtained, and returns instead an error after 60 seconds.
+- Check history is now in FIFO order, not ordered by executed timestamp.
+- Fixed bug where flapping would incorrectly end when `total_state_change` was
+  below `high_flap_threshold` instead of below `low_flap_threshold`.
+- Stopped using the etcd embedded client, which seems to trigger nil pointer
+panics when used against an etcd that is shutting down.
 
 ## [5.18.0] - 2020-02-24
 
@@ -39,6 +47,8 @@ the default sensuctl configuration.
 payload with the URL parameters on the /events/:entity/:check endpoint and
 reject events that do not match.
 - The `auth/test` endpoint now returns the correct error messages.
+- The `log-level` configuration option is now properly applied when running the
+Sensu Agent Windows service.
 
 ### Changed
 - Updated Go version from 1.13.5 to 1.13.7.

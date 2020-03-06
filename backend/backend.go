@@ -158,9 +158,15 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 	backend.Etcd = e
 
 	// Create an etcd client
-	client, err := e.NewClient()
-	if err != nil {
-		return nil, err
+	var client *clientv3.Client
+	if config.EtcdUseEmbeddedClient {
+		client = e.NewEmbeddedClient()
+	} else {
+		cl, err := e.NewClient()
+		if err != nil {
+			return nil, err
+		}
+		client = cl
 	}
 	if _, err := client.Get(ctx, "/sensu.io"); err != nil {
 		return nil, err
@@ -180,7 +186,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	b.ctx = ctx
 	b.runCtx, b.runCancel = context.WithCancel(b.ctx)
 
-	b.Client, err = newClient(b.ctx, config, b)
+	b.Client, err = newClient(b.runCtx, config, b)
 	if err != nil {
 		return nil, err
 	}
