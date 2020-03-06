@@ -30,10 +30,7 @@ func newTessendTest(t *testing.T) *Tessend {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	client := e.NewEmbeddedClient()
 	defer client.Close()
 
 	s := &mockstore.MockStore{}

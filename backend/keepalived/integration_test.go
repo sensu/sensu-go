@@ -22,10 +22,7 @@ func TestKeepaliveMonitor(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	client := e.NewEmbeddedClient()
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)

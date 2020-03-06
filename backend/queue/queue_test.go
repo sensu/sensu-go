@@ -18,13 +18,12 @@ func TestEnqueue(t *testing.T) {
 
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
-	client, err := e.NewClient()
+	client := e.NewEmbeddedClient()
 	defer client.Close()
-	require.NoError(t, err)
 
 	backendID := etcd.NewBackendIDGetter(context.TODO(), client)
 	queue := New("testenq", client, backendID)
-	err = queue.Enqueue(context.Background(), "test item")
+	err := queue.Enqueue(context.Background(), "test item")
 	assert.NoError(t, err)
 }
 
@@ -33,13 +32,12 @@ func TestDequeueSingleItem(t *testing.T) {
 
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
-	client, err := e.NewClient()
+	client := e.NewEmbeddedClient()
 	defer client.Close()
-	require.NoError(t, err)
 
 	backendID := etcd.NewBackendIDGetter(context.TODO(), client)
 	queue := New("testdeq", client, backendID)
-	err = queue.Enqueue(context.Background(), "test single item dequeue")
+	err := queue.Enqueue(context.Background(), "test single item dequeue")
 	require.NoError(t, err)
 
 	item, err := queue.Dequeue(context.Background())
@@ -60,9 +58,8 @@ func TestDequeueFIFO(t *testing.T) {
 
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
-	client, err := e.NewClient()
+	client := e.NewEmbeddedClient()
 	defer client.Close()
-	require.NoError(t, err)
 
 	backendID := etcd.NewBackendIDGetter(context.TODO(), client)
 	queue := New("testfifo", client, backendID)
@@ -88,13 +85,12 @@ func TestNack(t *testing.T) {
 
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
-	client, err := e.NewClient()
+	client := e.NewEmbeddedClient()
 	defer client.Close()
-	require.NoError(t, err)
 
 	backendID := etcd.NewBackendIDGetter(context.TODO(), client)
 	queue := New("testnack", client, backendID)
-	err = queue.Enqueue(context.Background(), "test item")
+	err := queue.Enqueue(context.Background(), "test item")
 	require.NoError(t, err)
 
 	item, err := queue.Dequeue(context.Background())
@@ -114,13 +110,12 @@ func TestAck(t *testing.T) {
 
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
-	client, err := e.NewClient()
+	client := e.NewEmbeddedClient()
 	defer client.Close()
-	require.NoError(t, err)
 
 	backendID := etcd.NewBackendIDGetter(context.TODO(), client)
 	queue := New("testack", client, backendID)
-	err = queue.Enqueue(context.Background(), "test item")
+	err := queue.Enqueue(context.Background(), "test item")
 	require.NoError(t, err)
 
 	item, err := queue.Dequeue(context.Background())
@@ -141,14 +136,13 @@ func TestOnce(t *testing.T) {
 
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
-	client, err := e.NewClient()
+	client := e.NewEmbeddedClient()
 	defer client.Close()
-	require.NoError(t, err)
 
 	backendID := etcd.NewBackendIDGetter(context.TODO(), client)
 	queue := New("testonce", client, backendID)
 
-	err = queue.Enqueue(context.Background(), "test item")
+	err := queue.Enqueue(context.Background(), "test item")
 	require.NoError(t, err)
 
 	item, err := queue.Dequeue(context.Background())
@@ -170,8 +164,7 @@ func TestMultipleSubscribers(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	require.NoError(t, err)
+	client := e.NewEmbeddedClient()
 	defer client.Close()
 
 	backendID1 := etcd.NewBackendIDGetter(context.TODO(), client)
@@ -202,9 +195,8 @@ func TestDequeueParallel(t *testing.T) {
 	t.Parallel()
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
-	client, err := e.NewClient()
+	client := e.NewEmbeddedClient()
 	defer client.Close()
-	require.NoError(t, err)
 	backendID := etcd.NewBackendIDGetter(context.TODO(), client)
 	queue := New("testparallel", client, backendID)
 	items := map[string]struct{}{

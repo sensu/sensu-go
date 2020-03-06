@@ -15,10 +15,7 @@ func TestPool(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	client := e.NewEmbeddedClient()
 	defer client.Close()
 
 	pool := NewPool(client)
