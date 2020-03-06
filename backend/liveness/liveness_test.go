@@ -11,7 +11,6 @@ import (
 
 	"github.com/sensu/sensu-go/backend/etcd"
 	"github.com/sirupsen/logrus"
-	"github.com/stretchr/testify/require"
 )
 
 var logger = logrus.New()
@@ -24,8 +23,7 @@ func TestSwitchSet(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	require.NoError(t, err)
+	client := e.NewEmbeddedClient()
 	defer client.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -88,8 +86,7 @@ func TestDead(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	require.NoError(t, err)
+	client := e.NewEmbeddedClient()
 	defer client.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -139,8 +136,7 @@ func TestBury(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	require.NoError(t, err)
+	client := e.NewEmbeddedClient()
 	defer client.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -177,8 +173,7 @@ func TestBuryOnCallback(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	require.NoError(t, err)
+	client := e.NewEmbeddedClient()
 	defer client.Close()
 
 	ctx, cancel := context.WithCancel(context.Background())

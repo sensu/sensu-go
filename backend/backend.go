@@ -154,9 +154,15 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 	backend.Etcd = e
 
 	// Create an etcd client
-	client, err := e.NewClient()
-	if err != nil {
-		return nil, err
+	var client *clientv3.Client
+	if config.EtcdUseEmbeddedClient {
+		client = e.NewEmbeddedClient()
+	} else {
+		cl, err := e.NewClient()
+		if err != nil {
+			return nil, err
+		}
+		client = cl
 	}
 	if _, err := client.Get(ctx, "/sensu.io"); err != nil {
 		return nil, err
@@ -228,8 +234,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
-		Store: stor,
-		Bus:   bus,
+		Store:                   stor,
+		Bus:                     bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 		AssetGetter:             assetGetter,
 		BufferSize:              viper.GetInt(FlagPipelinedBufferSize),
@@ -303,14 +309,14 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:             bus,
-		Store:           stor,
-		EventStore:      stor,
-		LivenessFactory: liveness.EtcdFactory(b.runCtx, b.Client),
-		RingPool:        ringPool,
-		BufferSize:      viper.GetInt(FlagKeepalivedBufferSize),
-		WorkerCount:     viper.GetInt(FlagKeepalivedWorkers),
-		StoreTimeout:    2 * time.Minute,
+		Bus:                   bus,
+		Store:                 stor,
+		EventStore:            stor,
+		LivenessFactory:       liveness.EtcdFactory(b.runCtx, b.Client),
+		RingPool:              ringPool,
+		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
+		WorkerCount:           viper.GetInt(FlagKeepalivedWorkers),
+		StoreTimeout:          2 * time.Minute,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)

@@ -55,12 +55,7 @@ func NewStoreInstance() (*IntegrationTestStore, error) {
 		return nil, err
 	}
 
-	client, err := e.NewClient()
-	if err != nil {
-		_ = e.Shutdown()
-		removeTmp()
-		return nil, err
-	}
+	client := e.NewEmbeddedClient()
 
 	st := etcdstore.NewStore(client, e.Name())
 

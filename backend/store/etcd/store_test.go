@@ -21,8 +21,7 @@ func testWithEtcd(t *testing.T, f func(store.Store)) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	require.NoError(t, err)
+	client := e.NewEmbeddedClient()
 
 	s := NewStore(client, e.Name())
 
@@ -36,8 +35,7 @@ func testWithEtcdStore(t *testing.T, f func(*Store)) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	require.NoError(t, err)
+	client := e.NewEmbeddedClient()
 
 	s := NewStore(client, e.Name())
 
@@ -51,8 +49,7 @@ func testWithEtcdClient(t *testing.T, f func(store.Store, *clientv3.Client)) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	require.NoError(t, err)
+	client := e.NewEmbeddedClient()
 
 	s := NewStore(client, e.Name())
 

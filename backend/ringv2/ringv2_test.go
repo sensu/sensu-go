@@ -23,10 +23,7 @@ func TestAdd(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	client := e.NewEmbeddedClient()
 	defer client.Close()
 
 	ring := New(client, t.Name())
@@ -45,10 +42,7 @@ func TestRemove(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	client := e.NewEmbeddedClient()
 	defer client.Close()
 
 	ring := New(client, t.Name())
@@ -71,10 +65,7 @@ func TestWatchAddRemove(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	client := e.NewEmbeddedClient()
 	defer client.Close()
 
 	ring := New(client, t.Name())
@@ -127,10 +118,7 @@ func TestWatchTrigger(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	client := e.NewEmbeddedClient()
 	defer client.Close()
 
 	ring := New(client, t.Name())
@@ -164,10 +152,7 @@ func TestRingOrdering(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	client := e.NewEmbeddedClient()
 	defer client.Close()
 
 	ring := New(client, t.Name())
@@ -215,10 +200,7 @@ func TestConcurrentRingOrdering(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	client := e.NewEmbeddedClient()
 	defer client.Close()
 
 	ring := New(client, t.Name())
@@ -307,10 +289,7 @@ func eventTest(t *testing.T, want []Event) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	client := e.NewEmbeddedClient()
 	defer client.Close()
 
 	ring := New(client, t.Name())
@@ -371,10 +350,7 @@ func TestWatchAfterAdd(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	client := e.NewEmbeddedClient()
 	defer client.Close()
 
 	ring := New(client, t.Name())
@@ -402,10 +378,7 @@ func GetSetInterval(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	client := e.NewEmbeddedClient()
 	defer client.Close()
 
 	ring := New(client, t.Name())
@@ -439,10 +412,7 @@ func TestMultipleItems(t *testing.T) {
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := e.NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	client := e.NewEmbeddedClient()
 	defer client.Close()
 
 	ring := New(client, t.Name())

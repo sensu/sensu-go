@@ -16,6 +16,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/embed"
+	"github.com/coreos/etcd/etcdserver/api/v3client"
 	"github.com/coreos/etcd/pkg/transport"
 	etcdTypes "github.com/coreos/etcd/pkg/types"
 	"github.com/coreos/pkg/capnslog"
@@ -270,17 +271,19 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 	})
 }
 
-// Healthy returns Etcd status information.
+// NewEmbeddedClient delivers a new embedded etcd client. Only for testing.
+func (e *Etcd) NewEmbeddedClient() *clientv3.Client {
+	return v3client.New(e.etcd.Server)
+}
+
+// Healthy returns Etcd status information. DEPRECATED.
 func (e *Etcd) Healthy() bool {
 	if len(e.cfg.AdvertiseClientURLs) == 0 {
 		return false
 	}
-	client, err := e.NewClient()
-	if err != nil {
-		return false
-	}
+	client := e.NewEmbeddedClient()
 	mapi := client.Maintenance
-	_, err = mapi.Status(context.TODO(), e.cfg.AdvertiseClientURLs[0])
+	_, err := mapi.Status(context.TODO(), e.cfg.AdvertiseClientURLs[0])
 	return err == nil
 }
 
