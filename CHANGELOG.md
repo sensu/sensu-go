@@ -18,16 +18,13 @@ created via `sensuctl create`.
 - Check history is now in FIFO order, not ordered by executed timestamp.
 - Fixed bug where flapping would incorrectly end when `total_state_change` was
   below `high_flap_threshold` instead of below `low_flap_threshold`.
-### Fixed
 - sensu-backend no longers hang indefinitely if a file lock for the asset
 manager cannot be obtained, and returns instead an error after 60 seconds.
-- Check history is now in FIFO order, not ordered by executed timestamp.
-- Fixed bug where flapping would incorrectly end when `total_state_change` was
-  below `high_flap_threshold` instead of below `low_flap_threshold`.
 - Stopped using the etcd embedded client, which seems to trigger nil pointer
 panics when used against an etcd that is shutting down.
 - 64-bit align the `Resource` struct in the store cache to fix a crash on
 32-bit systems.
+- Fixed a bug where sensu-backend would restart when agents disconnect.
 
 ## [5.18.0] - 2020-02-24
 

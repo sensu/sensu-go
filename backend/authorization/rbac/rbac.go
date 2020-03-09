@@ -136,7 +136,9 @@ func (a *Authorizer) Authorize(ctx context.Context, attrs *authorization.Attribu
 				// No ClusterRoleBindings founds, let's continue with the RoleBindings
 				logger.WithError(err).Debug("no bindings found")
 			default:
-				logger.WithError(err).Warning("could not retrieve the ClusterRoleBindings or RoleBindings")
+				if ctx.Err() == nil {
+					logger.WithError(err).Warning("could not retrieve the ClusterRoleBindings or RoleBindings")
+				}
 				visitErr = err
 				return false
 			}
