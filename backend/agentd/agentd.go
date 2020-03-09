@@ -333,7 +333,8 @@ func (a *Agentd) AuthorizationMiddleware(next http.Handler) http.Handler {
 		}
 		authorized, err := auth.Authorize(ctx, attrs)
 		if err != nil {
-			if _, ok := err.(*store.ErrInternal); ok {
+			if _, ok := err.(*store.ErrInternal); ok && ctx.Err() == nil {
+				logger.WithError(err).Error("unexpected error while authorizing the session")
 				select {
 				case a.errChan <- err:
 				case <-a.ctx.Done():
@@ -341,7 +342,6 @@ func (a *Agentd) AuthorizationMiddleware(next http.Handler) http.Handler {
 				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 				return
 			}
-			logger.WithError(err).Error("unexpected error while authorizing the session")
 			http.Error(w, http.StatusText(http.StatusForbidden), http.StatusForbidden)
 			return
 		}
