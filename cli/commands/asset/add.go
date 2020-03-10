@@ -10,7 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	goversion "github.com/hashicorp/go-version"
-	"github.com/sensu/sensu-go/cli/commands/create"
+	"github.com/sensu/sensu-go/cli/util"
 )
 
 var rename string
@@ -73,11 +73,11 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 			return err
 		}
 
-		resources, err := create.ParseResources(bytes.NewReader([]byte(asset)))
+		resources, err := util.ParseResources(bytes.NewReader([]byte(asset)))
 		if err != nil {
 			return err
 		}
-		if err := create.ValidateResources(resources, cli.Config.Namespace()); err != nil {
+		if err := util.ValidateResources(resources, cli.Config.Namespace()); err != nil {
 			return err
 		}
 		for i := range resources {
@@ -89,7 +89,7 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 			}
 			resources[i].Value.SetObjectMeta(meta)
 		}
-		if err := create.PutResources(cli.Client, resources); err != nil {
+		if err := util.PutResources(cli.Client, resources); err != nil {
 			return err
 		}
 
