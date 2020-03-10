@@ -235,7 +235,8 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			if err := util.ValidateResources(resources, cli.Config.Namespace()); err != nil {
 				return err
 			}
-			if err := util.PutResources(cli.Client, resources); err != nil {
+			processor := util.NewPutter()
+			if err := processor.Process(cli.Client, resources); err != nil {
 				return err
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "Updated %s\n", resources[0].Value.URIPath())

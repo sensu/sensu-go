@@ -20,15 +20,20 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/types"
-	"github.com/spf13/cobra"
 )
+
+// Processor is an interface that processes resources through the API.
+type Processor interface {
+	Process(client client.GenericClient, resources []*types.Wrapper) error
+}
 
 type httpDirectory struct {
 	XMLName xml.Name `xml:"pre"`
 	Files   []string `xml:"a"`
 }
 
-func ProcessFile(cli *cli.SensuCli, input string, recurse bool) error {
+// ProcessFile processes a file.
+func ProcessFile(cli *cli.SensuCli, input string, recurse bool, processor Processor) error {
 	var tld = true
 	return filepath.Walk(input, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -51,18 +56,19 @@ func ProcessFile(cli *cli.SensuCli, input string, recurse bool) error {
 		if err := ValidateResources(resources, cli.Config.Namespace()); err != nil {
 			return err
 		}
-		return PutResources(cli.Client, resources)
+		return processor.Process(cli.Client, resources)
 	})
 }
 
-func Process(cli *cli.SensuCli, client *http.Client, input string, recurse bool) error {
+// Process processes the input.
+func Process(cli *cli.SensuCli, client *http.Client, input string, recurse bool, processor Processor) error {
 	urly, err := url.Parse(input)
 	if err != nil {
 		return err
 	}
 	if urly.Scheme == "" || len(urly.Scheme) == 1 {
 		// We are dealing with a file path
-		return ProcessFile(cli, input, recurse)
+		return ProcessFile(cli, input, recurse, processor)
 	}
 	req, err := http.NewRequest("GET", urly.String(), nil)
 	if err != nil {
@@ -90,7 +96,7 @@ func Process(cli *cli.SensuCli, client *http.Client, input string, recurse bool)
 			return err
 		}
 		for _, file := range dir.Files {
-			if err := Process(cli, client, filepath.Join(input, file), recurse); err != nil {
+			if err := Process(cli, client, filepath.Join(input, file), recurse, processor); err != nil {
 				return err
 			}
 		}
@@ -103,39 +109,11 @@ func Process(cli *cli.SensuCli, client *http.Client, input string, recurse bool)
 	if err := ValidateResources(resources, cli.Config.Namespace()); err != nil {
 		return err
 	}
-	return PutResources(cli.Client, resources)
+	return processor.Process(cli.Client, resources)
 }
 
-func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
-	return func(cmd *cobra.Command, args []string) error {
-		if len(args) > 1 {
-			_ = cmd.Help()
-			return errors.New("invalid argument(s) received")
-		}
-		t := &http.Transport{}
-		t.RegisterProtocol("file", http.NewFileTransport(http.Dir("/")))
-		client := &http.Client{Transport: t}
-		inputs, err := cmd.Flags().GetStringSlice("file")
-		if err != nil {
-			return err
-		}
-		if len(inputs) == 0 {
-			return ProcessStdin(cli, client)
-		}
-		recurse, err := cmd.Flags().GetBool("recursive")
-		if err != nil {
-			return err
-		}
-		for _, input := range inputs {
-			if err := Process(cli, client, input, recurse); err != nil {
-				return err
-			}
-		}
-		return nil
-	}
-}
-
-func ProcessStdin(cli *cli.SensuCli, client *http.Client) error {
+// ProcessStdin processes standard in.
+func ProcessStdin(cli *cli.SensuCli, client *http.Client, processor Processor) error {
 	resources, err := ParseResources(os.Stdin)
 	if err != nil {
 		return fmt.Errorf("in stdin: %s", err)
@@ -143,7 +121,7 @@ func ProcessStdin(cli *cli.SensuCli, client *http.Client) error {
 	if err := ValidateResources(resources, cli.Config.Namespace()); err != nil {
 		return err
 	}
-	return PutResources(cli.Client, resources)
+	return processor.Process(cli.Client, resources)
 }
 
 var jsonRe = regexp.MustCompile(`^(\s)*[\{\[]`)
@@ -276,8 +254,16 @@ func describeError(index int, err error) {
 	fmt.Fprintf(os.Stderr, "resource %d: (offset %d): %s\n", index, jsonErr.Offset, err)
 }
 
-// PutResources uses the GenericClient to PUT a resource at the inferred URI path.
-func PutResources(client client.GenericClient, resources []*types.Wrapper) error {
+// Putter is a Processor that puts resources in the API.
+type Putter struct{}
+
+// NewPutter instantiates a new Putter Processor.
+func NewPutter() *Putter {
+	return &Putter{}
+}
+
+// Process puts resources in the API.
+func (p *Putter) Process(client client.GenericClient, resources []*types.Wrapper) error {
 	for i, resource := range resources {
 		if err := client.PutResource(*resource); err != nil {
 			return fmt.Errorf(

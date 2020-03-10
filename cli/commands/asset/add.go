@@ -89,7 +89,8 @@ func addCommandExecute(cli *cli.SensuCli) func(cmd *cobra.Command, args []string
 			}
 			resources[i].Value.SetObjectMeta(meta)
 		}
-		if err := util.PutResources(cli.Client, resources); err != nil {
+		processor := util.NewPutter()
+		if err := processor.Process(cli.Client, resources); err != nil {
 			return err
 		}
 

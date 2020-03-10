@@ -36,15 +36,16 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		if err != nil {
 			return err
 		}
+		processor := util.NewPutter()
 		if len(inputs) == 0 {
-			return util.ProcessStdin(cli, client)
+			return util.ProcessStdin(cli, client, processor)
 		}
 		recurse, err := cmd.Flags().GetBool("recursive")
 		if err != nil {
 			return err
 		}
 		for _, input := range inputs {
-			if err := util.Process(cli, client, input, recurse); err != nil {
+			if err := util.Process(cli, client, input, recurse, processor); err != nil {
 				return err
 			}
 		}
