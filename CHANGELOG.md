@@ -14,6 +14,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 created via `sensuctl create`.
 - Added `created_by` to object metadata and populate that field via the HTTP API.
 
+### Changed
+- Updated the store so that it may _create_ wrapped resources.
+
 ### Fixed
 - Check history is now in FIFO order, not ordered by executed timestamp.
 - Fixed bug where flapping would incorrectly end when `total_state_change` was
