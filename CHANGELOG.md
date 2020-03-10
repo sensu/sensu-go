@@ -17,6 +17,8 @@ created via `sensuctl create`.
 ### Changed
 - Updated the store so that it may _create_ wrapped resources.
 
+## [5.18.1] - 2020-03-10
+
 ### Fixed
 - Check history is now in FIFO order, not ordered by executed timestamp.
 - Fixed bug where flapping would incorrectly end when `total_state_change` was
