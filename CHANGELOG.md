@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.18.1] - 2020-03-10
+
 ### Fixed
 - sensu-backend no longers hang indefinitely if a file lock for the asset
 manager cannot be obtained, and returns instead an error after 60 seconds.
