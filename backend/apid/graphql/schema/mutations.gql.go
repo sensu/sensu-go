@@ -730,7 +730,7 @@ func _ObjectTypeMutationConfigFn() graphql1.ObjectConfig {
 						Type:         graphql1.Boolean,
 					},
 				},
-				DeprecationReason: "",
+				DeprecationReason: "No longer supported and will be removed in a future release.",
 				Description:       "Create or overrwrite resource from given wrapped resource.",
 				Name:              "putWrapped",
 				Type:              graphql1.NewNonNull(graphql.OutputType("PutWrappedPayload")),

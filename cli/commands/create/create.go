@@ -16,6 +16,7 @@ import (
 	"strings"
 
 	"github.com/ghodss/yaml"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/types"
@@ -209,6 +210,21 @@ func ParseResources(in io.Reader) ([]*types.Wrapper, error) {
 				describeError(count, rerr)
 				errCount++
 			}
+
+			// Mark the resource as managed by sensuctl in the outer labels
+			if len(w.ObjectMeta.Labels) == 0 {
+				w.ObjectMeta.Labels = map[string]string{}
+			}
+			w.ObjectMeta.Labels[corev2.ManagedByLabel] = "sensuctl"
+
+			// Mark the resource as managed by sensuctl in the inner labels
+			innerMeta := w.Value.GetObjectMeta()
+			if len(innerMeta.Labels) == 0 {
+				innerMeta.Labels = map[string]string{}
+			}
+			innerMeta.Labels[corev2.ManagedByLabel] = "sensuctl"
+			w.Value.SetObjectMeta(innerMeta)
+
 			resources = append(resources, &w)
 			count++
 		}
@@ -225,11 +241,11 @@ func ParseResources(in io.Reader) ([]*types.Wrapper, error) {
 func filterCheckSubdue(resources []*types.Wrapper) {
 	for i := range resources {
 		switch val := resources[i].Value.(type) {
-		case *types.CheckConfig:
+		case *corev2.CheckConfig:
 			val.Subdue = nil
-		case *types.Check:
+		case *corev2.Check:
 			val.Subdue = nil
-		case *types.EventFilter:
+		case *corev2.EventFilter:
 			val.When = nil
 		}
 	}

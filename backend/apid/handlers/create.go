@@ -8,6 +8,7 @@ import (
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/apid/actions"
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 )
 
@@ -26,6 +27,12 @@ func (h Handlers) CreateResource(r *http.Request) (interface{}, error) {
 	resource, ok := payload.Interface().(corev2.Resource)
 	if !ok {
 		return nil, actions.NewErrorf(actions.InvalidArgument)
+	}
+
+	meta := resource.GetObjectMeta()
+	if claims := jwt.GetClaimsFromContext(r.Context()); claims != nil {
+		meta.CreatedBy = claims.StandardClaims.Subject
+		resource.SetObjectMeta(meta)
 	}
 
 	if err := h.Store.CreateResource(r.Context(), resource); err != nil {

@@ -88,7 +88,10 @@ type cacheWatcher struct {
 // Resource is a cache of resources. The cache uses a watcher on a certain
 // type of resources in order to keep itself up to date. Cache resources can be
 // efficiently retrieved from the cache by namespace.
+// `sync/atomic` expects the first word in an allocated struct to be 64-bit
+// aligned on both ARM and x86-32. See https://goo.gl/zW7dgq for more details.
 type Resource struct {
+	count      int64
 	watcher    <-chan store.WatchEventResource
 	cache      cache
 	cacheMu    sync.Mutex
@@ -97,7 +100,6 @@ type Resource struct {
 	synthesize bool
 	resourceT  corev2.Resource
 	client     *clientv3.Client
-	count      int64
 }
 
 // getResources retrieves the resources from the store

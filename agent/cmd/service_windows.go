@@ -59,15 +59,14 @@ func (s *Service) start(ctx context.Context, args []string, changes chan<- svc.S
 		}
 		defer logFile.Close()
 
-		logger := logrus.New()
-		logger.SetFormatter(&logrus.JSONFormatter{})
-		logger.SetOutput(logFile)
-		entry := logger.WithFields(logrus.Fields{
+		logrus.SetFormatter(&logrus.JSONFormatter{})
+		logrus.SetOutput(logFile)
+		logger := logrus.WithFields(logrus.Fields{
 			"component": "cmd",
 		})
 
 		args = []string{binPath, "start", "-c", configFile}
-		command := newStartCommand(ctx, args, entry)
+		command := newStartCommand(ctx, args, logger)
 		accepts := svc.AcceptShutdown | svc.AcceptStop
 		changes <- svc.Status{State: svc.Running, Accepts: accepts}
 

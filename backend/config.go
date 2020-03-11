@@ -80,6 +80,7 @@ type Config struct {
 	EtcdElectionTimeout          uint
 	EtcdDiscovery                string
 	EtcdDiscoverySrv             string
+	EtcdUseEmbeddedClient        bool
 
 	// Etcd TLS configuration
 	EtcdClientTLSInfo     etcd.TLSInfo

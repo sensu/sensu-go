@@ -2,14 +2,17 @@ package handlers
 
 import (
 	"bytes"
+	"context"
 	"net/http"
 	"testing"
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/fixture"
 	"github.com/sensu/sensu-go/testing/mockstore"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -85,4 +88,25 @@ func TestHandlers_UpdateResource(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCreatedByUpdate(t *testing.T) {
+	claims, err := jwt.NewClaims(&corev2.User{Username: "admin"})
+	assert.NoError(t, err)
+	ctx := context.WithValue(context.Background(), corev2.ClaimsKey, claims)
+	body := marshal(t, fixture.Resource{ObjectMeta: corev2.ObjectMeta{}})
+
+	store := &mockstore.MockStore{}
+	h := Handlers{
+		Resource: &fixture.Resource{},
+		Store:    store,
+	}
+
+	store.On("CreateOrUpdateResource", mock.Anything, mock.AnythingOfType("*fixture.Resource")).Return(nil)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPut, "/", bytes.NewReader(body))
+	assert.NoError(t, err)
+
+	_, err = h.CreateOrUpdateResource(req)
+	assert.NoError(t, err)
 }

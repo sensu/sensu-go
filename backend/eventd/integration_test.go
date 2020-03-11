@@ -29,10 +29,7 @@ func TestEventdMonitor(t *testing.T) {
 	ed, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
-	client, err := ed.NewClient()
-	if err != nil {
-		t.Fatal(err)
-	}
+	client := ed.NewEmbeddedClient()
 
 	livenessFactory := liveness.EtcdFactory(context.Background(), client)
 

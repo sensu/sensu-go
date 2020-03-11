@@ -7,8 +7,29 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Added `flapping` field to check history, along with `is_flapping_start` and
+  `is_flapping_end` event properties for use by filters.
+- The `sensu.io/managed_by` label is now automatically applied to resources
+created via `sensuctl create`.
+- Added `created_by` to object metadata and populate that field via the HTTP API.
+
+### Changed
+- Updated the store so that it may _create_ wrapped resources.
+
+## [5.18.1] - 2020-03-10
+
 ### Fixed
-- ensure that check/check config have a non-empty command
+- Check history is now in FIFO order, not ordered by executed timestamp.
+- Fixed bug where flapping would incorrectly end when `total_state_change` was
+  below `high_flap_threshold` instead of below `low_flap_threshold`.
+- sensu-backend no longers hang indefinitely if a file lock for the asset
+manager cannot be obtained, and returns instead an error after 60 seconds.
+- Stopped using the etcd embedded client, which seems to trigger nil pointer
+panics when used against an etcd that is shutting down.
+- 64-bit align the `Resource` struct in the store cache to fix a crash on
+32-bit systems.
+- Fixed a bug where sensu-backend would restart when agents disconnect.
 
 ## [5.18.0] - 2020-02-24
 
@@ -26,8 +47,12 @@ the default sensuctl configuration.
 - read/writes `initializationKey` to/from `EtcdRoot`, while support legacy as fallback (read-only)
 - check for a non-200 response when fetching assets
 - `/silenced` now supports API filtering (commercial feature).
-- Fix event payload validation on the backend events API.
+- Fixed event payload validation on the backend events API to validate the
+payload with the URL parameters on the /events/:entity/:check endpoint and
+reject events that do not match.
 - The `auth/test` endpoint now returns the correct error messages.
+- The `log-level` configuration option is now properly applied when running the
+Sensu Agent Windows service.
 
 ### Changed
 - Updated Go version from 1.13.5 to 1.13.7.

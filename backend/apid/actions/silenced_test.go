@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	jwt "github.com/dgrijalva/jwt-go"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	coreJWT "github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
@@ -329,4 +331,26 @@ func TestSilencedCreate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestSilencedCreatedBy(t *testing.T) {
+	claims, err := coreJWT.NewClaims(&corev2.User{Username: "admin"})
+	assert.NoError(t, err)
+	ctx := context.WithValue(context.Background(), corev2.ClaimsKey, claims)
+	silenced := corev2.FixtureSilenced("silenced1:*")
+
+	store := &mockstore.MockStore{}
+	actions := NewSilencedController(store)
+
+	var s *corev2.Silenced
+	store.On("UpdateSilencedEntry", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	store.On("GetSilencedEntryByName", mock.Anything, mock.Anything).Return(s, nil)
+
+	err = actions.Create(ctx, silenced)
+	assert.NoError(t, err)
+	assert.Equal(t, "admin", silenced.CreatedBy)
+
+	err = actions.CreateOrReplace(ctx, silenced)
+	assert.NoError(t, err)
+	assert.Equal(t, "admin", silenced.CreatedBy)
 }
