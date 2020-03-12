@@ -62,6 +62,8 @@ message System {
 
   // CloudProvider indicates the public cloud the agent is running on.
   string CloudProvider = 12 [(gogoproto.jsontag) = "cloud_provider"];
+
+  string float_type = 13;
 }
 
 // Network contains information about the system network interfaces
