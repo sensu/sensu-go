@@ -70,6 +70,12 @@ type Agent struct {
 // NewAgent creates a new Agent. It returns non-nil error if there is any error
 // when creating the Agent.
 func NewAgent(config *Config) (*Agent, error) {
+	return NewAgentContext(context.Background(), config)
+}
+
+// NewAgentContext is like NewAgent, but allows threading a context through
+// the system.
+func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 	agent := &Agent{
 		backendSelector: &RandomBackendSelector{Backends: config.BackendURLs},
 		connected:       false,
@@ -89,7 +95,12 @@ func NewAgent(config *Config) (*Agent, error) {
 
 	// We don't check for errors here and let the agent get created regardless
 	// of system info status.
-	_ = agent.refreshSystemInfo()
+	systemInfoCtx, cancel := context.WithTimeout(ctx, time.Duration(DefaultSystemInfoRefreshInterval)*time.Second)
+	defer cancel()
+	_ = agent.refreshSystemInfo(systemInfoCtx)
+	if err := systemInfoCtx.Err(); err != nil {
+		logger.WithError(err).Error("couldn't refresh all system information within deadline")
+	}
 	var err error
 	agent.apiQueue, err = newQueue(config.CacheDir)
 	if err != nil {
@@ -114,10 +125,14 @@ func (a *Agent) sendMessage(msg *transport.Message) {
 	a.sendq <- msg
 }
 
-func (a *Agent) refreshSystemInfo() error {
+func (a *Agent) refreshSystemInfo(ctx context.Context) error {
 	info, err := system.Info()
 	if err != nil {
 		return err
+	}
+
+	if a.config.DetectCloudProvider {
+		info.CloudProvider = system.GetCloudProvider(ctx)
 	}
 
 	a.systemInfoMu.Lock()
@@ -135,7 +150,9 @@ func (a *Agent) refreshSystemInfoPeriodically(ctx context.Context) {
 	for {
 		select {
 		case <-ticker.C:
-			if err := a.refreshSystemInfo(); err != nil {
+			ctx, cancel := context.WithTimeout(ctx, time.Duration(DefaultSystemInfoRefreshInterval)*time.Second/2)
+			defer cancel()
+			if err := a.refreshSystemInfo(ctx); err != nil {
 				logger.WithError(err).Error("failed to refresh system info")
 			}
 		case <-ctx.Done():

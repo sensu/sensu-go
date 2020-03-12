@@ -13,6 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - The `sensu.io/managed_by` label is now automatically applied to resources
 created via `sensuctl create`.
 - Added `created_by` to object metadata and populate that field via the HTTP API.
+- Added agent discovery of libc type, VM system/role, and cloud provider.
 
 ### Changed
 - Updated the store so that it may _create_ wrapped resources.
