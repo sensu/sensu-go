@@ -14,6 +14,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 created via `sensuctl create`.
 - Added `created_by` to object metadata and populate that field via the HTTP API.
 - Added agent discovery of libc type, VM system/role, and cloud provider.
+- Added `float_type` field to system type to store which float type (softfloat,
+  hardfloat) a system is using.
 
 ### Changed
 - Updated the store so that it may _create_ wrapped resources.
