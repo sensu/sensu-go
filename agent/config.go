@@ -95,6 +95,12 @@ type Config struct {
 	// DeregistrationHandler specifies a single deregistration handler
 	DeregistrationHandler string
 
+	// DetectCloudProvider enables cloud provider detection mechanisms.
+	// When enabled, the agent will attempt to read files, resolve hostnames,
+	// and make HTTP requests to determine what cloud environment it is running
+	// in.
+	DetectCloudProvider bool
+
 	// DisableAPI disables the events API
 	DisableAPI bool
 

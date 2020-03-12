@@ -6,12 +6,14 @@ package system
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"os/exec"
 	"runtime"
 	"strings"
+	"sync"
 
 	_ "unsafe"
 
@@ -24,6 +26,11 @@ const defaultHostname = "unidentified-hostname"
 
 //go:linkname goarm runtime.goarm
 var goarm int32
+
+type azureMetadata struct {
+	Error          string   `json:"error"`
+	NewestVersions []string `json:"newest-versions"`
+}
 
 // Info describes the local system, hostname, OS, platform, platform
 // family, platform version, and network interfaces.
@@ -67,8 +74,6 @@ func Info() (types.System, error) {
 		}
 	}
 
-	system.CloudProvider = getCloudProvider()
-
 	return system, nil
 }
 
@@ -87,49 +92,69 @@ func getLibCType() (string, error) {
 	return "", nil
 }
 
-func getCloudProvider() string {
+// GetCloudProvider inspects local files, looks up hostnames, and makes HTTP
+// requests in order to determine if the local system is running within a cloud
+// provider.
+func GetCloudProvider(ctx context.Context) string {
 	switch runtime.GOOS {
 	case "linux":
 		// Issue a dmidecode command to see if we are on EC2 or GCP
+		logger.Debug("sudo -n dmidecode -s bios-version")
 		output, err := exec.Command("sudo", "-n", "dmidecode", "-s", "bios-version").CombinedOutput()
 		if err != nil {
-			return linuxCloudFallback()
+			logger.WithError(err).Debug("couldn't run dmidecode")
+			return cloudMetadataFallback(ctx)
 		}
 		text := strings.ToLower(string(output))
 		if strings.Contains(text, "amazon") {
+			logger.Debug("Running on EC2")
 			return "EC2"
 		}
 		if strings.Contains(text, "google") {
+			logger.Debug("Running on GCP")
 			return "GCP"
 		}
 		// At this point, we need to issue a slightly different command to see
 		// if we are on Azure
+		logger.Debug("sudo -n dmidecode -s system-manufacturer")
 		output, err = exec.Command("sudo", "-n", "dmidecode", "-s", "system-manufacturer").CombinedOutput()
 		if err != nil {
-			return linuxCloudFallback()
+			logger.WithError(err).Debug("couldn't run dmidecode")
+			return cloudMetadataFallback(ctx)
 		}
 		text = strings.ToLower(string(output))
 		if strings.Contains(text, "microsoft") {
+			logger.Debug("Running on Azure")
 			return "Azure"
 		}
 	case "windows":
-		return ""
+		return cloudMetadataFallback(ctx)
 	}
 	return ""
 }
 
-func linuxCloudFallback() string {
+func cloudMetadataFallback(outerCtx context.Context) string {
 	// Older EC2 instances have this file available to unprivileged users
 	// See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/identify_ec2_instances.html
+	logger.Debug("Reading /sys/hypervisor/uuid")
 	b, err := ioutil.ReadFile("/sys/hypervisor/uuid")
 	if err == nil && bytes.HasPrefix(b, []byte("ec2")) {
+		logger.Debug("Running on EC2")
 		return "EC2"
+	} else {
+		logger.WithError(err).Debug("couldn't read /sys/hypervisor/uuid")
 	}
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(outerCtx)
 	defer cancel()
-	c1 := dialEC2(ctx)
-	c2 := dialGCP(ctx)
-	c3 := dialAzure(ctx)
+	wg := new(sync.WaitGroup)
+	wg.Add(3)
+	c1 := dialEC2(ctx, wg)
+	c2 := dialGCP(ctx, wg)
+	c3 := dialAzure(ctx, wg)
+	go func() {
+		defer cancel()
+		wg.Wait()
+	}()
 	select {
 	case found := <-c1:
 		return found
@@ -137,14 +162,18 @@ func linuxCloudFallback() string {
 		return found
 	case found := <-c3:
 		return found
+	case <-ctx.Done():
+		return ""
 	}
 
 	return ""
 }
 
-func dialEC2(ctx context.Context) <-chan string {
+func dialEC2(ctx context.Context, wg *sync.WaitGroup) <-chan string {
 	c := make(chan string, 1)
 	go func() {
+		defer wg.Done()
+		logger.Debug("GET http://169.254.169.254/latest/dynamic/instance-identity")
 		req, err := http.NewRequestWithContext(
 			ctx, "GET", "http://169.254.169.254/latest/dynamic/instance-identity", nil)
 		if err != nil {
@@ -153,31 +182,58 @@ func dialEC2(ctx context.Context) <-chan string {
 		}
 		resp, err := http.DefaultClient.Do(req)
 		if err != nil {
+			logger.WithError(err).Debug("request failed")
 			return
 		}
 		resp.Body.Close()
 		if resp.StatusCode >= 200 && resp.StatusCode < 400 {
+			logger.Debug("Running on EC2")
 			c <- "EC2"
 		}
 	}()
 	return c
 }
 
-func dialGCP(ctx context.Context) <-chan string {
+func dialGCP(ctx context.Context, wg *sync.WaitGroup) <-chan string {
 	c := make(chan string, 1)
 	go func() {
+		defer wg.Done()
+		logger.Debug("Resolving metadata.google.internal")
 		_, err := net.DefaultResolver.LookupHost(ctx, "metadata.google.internal")
 		if err == nil {
+			logger.Debug("Running on GCP")
 			c <- "GCP"
+		} else {
+			logger.WithError(err).Debug("couldn't resolve metadata.google.internal")
 		}
 	}()
 	return c
 }
 
-func dialAzure(ctx context.Context) <-chan string {
+func dialAzure(ctx context.Context, wg *sync.WaitGroup) <-chan string {
 	c := make(chan string, 1)
 	go func() {
-
+		defer wg.Done()
+		logger.Debug("GET http://169.254.169.254/metadata/instance")
+		req, err := http.NewRequestWithContext(ctx, "GET", "http://169.254.169.254/metadata/instance", nil)
+		if err != nil {
+			// unlikely
+			panic(err)
+		}
+		req.Header.Set("Metadata", "true")
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			logger.WithError(err).Debug("request failed")
+			return
+		}
+		defer resp.Body.Close()
+		var meta azureMetadata
+		if err := json.NewDecoder(resp.Body).Decode(&meta); err == nil {
+			if len(meta.NewestVersions) > 0 {
+				logger.Debug("Running on Azure")
+				c <- "Azure"
+			}
+		}
 	}()
 	return c
 }
