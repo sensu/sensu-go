@@ -165,8 +165,6 @@ func cloudMetadataFallback(outerCtx context.Context) string {
 	case <-ctx.Done():
 		return ""
 	}
-
-	return ""
 }
 
 func dialEC2(ctx context.Context, wg *sync.WaitGroup) <-chan string {
