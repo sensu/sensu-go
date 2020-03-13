@@ -17,6 +17,7 @@ created via `sensuctl create`.
 
 ### Changed
 - Updated the store so that it may _create_ wrapped resources.
+- Bonsai client now logs at debug level instead of info level.
 
 ## [5.18.1] - 2020-03-10
 
