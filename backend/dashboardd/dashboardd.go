@@ -165,6 +165,9 @@ func httpRouter(c apid.Config, d *Dashboardd) (*mux.Router, error) {
 		return nil, err
 	}
 
+	// Don't let API or sensuctl users accidentally connect to the dashboard port
+	r.PathPrefix("/").HeadersRegexp("User-Agent", "(curl|sensuctl)").HandlerFunc(handleAPIMistake)
+
 	// Proxy endpoints
 	r.PathPrefix("/auth").Handler(router)
 	r.PathPrefix("/api").Handler(router)
@@ -178,6 +181,12 @@ func httpRouter(c apid.Config, d *Dashboardd) (*mux.Router, error) {
 	r.PathPrefix("/").Handler(rootHandler(d.Assets))
 
 	return r, nil
+}
+
+// handleAPIMistake sends errors to API clients that mistakenly connect to the
+// dashboard port.
+func handleAPIMistake(w http.ResponseWriter, req *http.Request) {
+	http.Error(w, "Client sent an API request to the web application port!", http.StatusBadRequest)
 }
 
 func staticHandler(fs http.FileSystem) http.Handler {
