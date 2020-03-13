@@ -22,11 +22,8 @@ func (client *RestClient) CreateAccessToken(url, userid, password string) (*core
 		return nil, err
 	}
 
-	if res.StatusCode() == 401 {
+	if res.StatusCode() >= 400 {
 		return nil, errors.New(string(res.Body()))
-	} else if res.StatusCode() >= 400 {
-		// TODO: (JK) we may want to expose a bit more of the error here
-		return nil, errors.New("received an unexpected response from the API")
 	}
 
 	tokens := &corev2.Tokens{}

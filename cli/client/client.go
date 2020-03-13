@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-resty/resty/v2"
 	"github.com/sensu/sensu-go/cli/client/config"
+	"github.com/sensu/sensu-go/version"
 	"github.com/sirupsen/logrus"
 )
 
@@ -50,6 +51,8 @@ func New(config config.Config) *RestClient {
 
 	// Check that Access-Token has not expired
 	restyInst.OnBeforeRequest(func(c *resty.Client, r *resty.Request) error {
+		c.SetHeader("User-Agent", "sensuctl/"+version.Semver())
+
 		// Guard against requests that are not sending auth details
 		if c.Token == "" || r.UserInfo != nil {
 			return nil

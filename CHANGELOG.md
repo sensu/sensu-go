@@ -20,6 +20,9 @@ created via `sensuctl create`.
 ### Changed
 - Updated the store so that it may _create_ wrapped resources.
 - Bonsai client now logs at debug level instead of info level.
+- The dashboard service now returns an error if the client User-Agent is curl
+or sensuctl. This should prevent users from using the dashboard port by
+mistake.
 
 ## [5.18.1] - 2020-03-10
 
