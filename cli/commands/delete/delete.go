@@ -8,7 +8,7 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/cli/util"
+	"github.com/sensu/sensu-go/cli/resource"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -43,11 +43,11 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 			return err
 		}
 
-		resources, err := util.ParseResources(in)
+		resources, err := resource.Parse(in)
 		if err != nil {
 			return err
 		}
-		if err := util.ValidateResources(resources, cli.Config.Namespace()); err != nil {
+		if err := resource.Validate(resources, cli.Config.Namespace()); err != nil {
 			return err
 		}
 

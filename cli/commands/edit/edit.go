@@ -18,7 +18,7 @@ import (
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/dump"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
-	"github.com/sensu/sensu-go/cli/util"
+	"github.com/sensu/sensu-go/cli/resource"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -225,17 +225,17 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			if bytes.Equal(orig.Bytes(), changedBytes) {
 				return nil
 			}
-			resources, err := util.ParseResources(bytes.NewReader(changedBytes))
+			resources, err := resource.Parse(bytes.NewReader(changedBytes))
 			if err != nil {
 				return err
 			}
 			if len(resources) == 0 {
 				return errors.New("no resources were parsed")
 			}
-			if err := util.ValidateResources(resources, cli.Config.Namespace()); err != nil {
+			if err := resource.Validate(resources, cli.Config.Namespace()); err != nil {
 				return err
 			}
-			processor := util.NewPutter()
+			processor := resource.NewPutter()
 			if err := processor.Process(cli.Client, resources); err != nil {
 				return err
 			}
