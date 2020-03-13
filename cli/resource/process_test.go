@@ -33,7 +33,8 @@ func TestProcessURL(t *testing.T) {
 	assert.NoError(t, err)
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
-		w.Write(bytes)
+		_, err := w.Write(bytes)
+		assert.NoError(t, err)
 	}))
 	defer ts.Close()
 
