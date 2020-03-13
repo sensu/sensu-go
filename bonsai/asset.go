@@ -14,7 +14,7 @@ func (c *RestClient) FetchAsset(namespace, name string) (*Asset, error) {
 		return nil, err
 	}
 
-	logger.WithField("request", req.URL.String()).Info("sending request to bonsai")
+	logger.WithField("request", req.URL.String()).Debug("sending request to bonsai")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
@@ -42,7 +42,7 @@ func (c *RestClient) FetchAssetVersion(namespace, name, version string) (string,
 		return "", err
 	}
 
-	logger.WithField("request", req.URL.String()).Info("sending request to bonsai")
+	logger.WithField("request", req.URL.String()).Debug("sending request to bonsai")
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
