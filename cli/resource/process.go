@@ -27,6 +27,19 @@ type httpDirectory struct {
 	Files   []string `xml:"a"`
 }
 
+// Process processes the input.
+func Process(cli *cli.SensuCli, client *http.Client, input string, recurse bool, processor Processor) error {
+	urly, err := url.Parse(input)
+	if err != nil {
+		return err
+	}
+	if urly.Scheme == "" || len(urly.Scheme) == 1 {
+		// We are dealing with a file path
+		return ProcessFile(cli, input, recurse, processor)
+	}
+	return ProcessURL(cli, client, urly, input, recurse, processor)
+}
+
 // ProcessFile processes a file.
 func ProcessFile(cli *cli.SensuCli, input string, recurse bool, processor Processor) error {
 	var tld = true
@@ -55,16 +68,8 @@ func ProcessFile(cli *cli.SensuCli, input string, recurse bool, processor Proces
 	})
 }
 
-// Process processes the input.
-func Process(cli *cli.SensuCli, client *http.Client, input string, recurse bool, processor Processor) error {
-	urly, err := url.Parse(input)
-	if err != nil {
-		return err
-	}
-	if urly.Scheme == "" || len(urly.Scheme) == 1 {
-		// We are dealing with a file path
-		return ProcessFile(cli, input, recurse, processor)
-	}
+// ProcessURL processes a url.
+func ProcessURL(cli *cli.SensuCli, client *http.Client, urly *url.URL, input string, recurse bool, processor Processor) error {
 	req, err := http.NewRequest("GET", urly.String(), nil)
 	if err != nil {
 		return err
