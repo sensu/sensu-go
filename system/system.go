@@ -26,6 +26,7 @@ const defaultHostname = "unidentified-hostname"
 
 //go:linkname goarm runtime.goarm
 var goarm int32
+var gomips string
 
 type azureMetadata struct {
 	Error          string   `json:"error"`
@@ -44,6 +45,7 @@ func Info() (types.System, error) {
 	system := types.System{
 		Arch:            runtime.GOARCH,
 		ARMVersion:      goarm,
+		FloatType:       gomips,
 		Hostname:        info.Hostname,
 		OS:              info.OS,
 		Platform:        info.Platform,
