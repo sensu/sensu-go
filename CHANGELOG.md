@@ -24,6 +24,10 @@ created via `sensuctl create`.
 or sensuctl. This should prevent users from using the dashboard port by
 mistake.
 
+### Fixed
+- Fixed a bug where the agent could connect to a backend using a namespace that
+doesn't exist.
+
 ## [5.18.1] - 2020-03-10
 
 ### Fixed

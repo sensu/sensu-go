@@ -213,13 +213,6 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	responseHeader.Set("Content-Type", contentType)
 	logger.WithField("header", fmt.Sprintf("Content-Type: %s", contentType)).Debug("setting header")
 
-	conn, err := upgrader.Upgrade(w, r, responseHeader)
-	if err != nil {
-		logger.WithField("addr", r.RemoteAddr).WithError(err).Error("transport error on websocket upgrade")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	cfg := SessionConfig{
 		AgentAddr:     r.RemoteAddr,
 		AgentName:     r.Header.Get(transport.HeaderKeyAgentName),
@@ -229,6 +222,22 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 		RingPool:      a.ringPool,
 		ContentType:   contentType,
 		WriteTimeout:  a.writeTimeout,
+	}
+
+	// Validate the agent namespace
+	if namespace, err := a.store.GetNamespace(a.ctx, cfg.Namespace); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	} else if namespace == nil {
+		http.Error(w, fmt.Sprintf("namespace not found: %s", cfg.Namespace), http.StatusNotFound)
+		return
+	}
+
+	conn, err := upgrader.Upgrade(w, r, responseHeader)
+	if err != nil {
+		logger.WithField("addr", r.RemoteAddr).WithError(err).Error("transport error on websocket upgrade")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
 
 	cfg.Subscriptions = addEntitySubscription(cfg.AgentName, cfg.Subscriptions)
