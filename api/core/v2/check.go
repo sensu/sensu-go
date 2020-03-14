@@ -179,6 +179,12 @@ func (c *Check) Validate() error {
 		}
 	}
 
+	for _, subscription := range c.Subscriptions {
+		if subscription == "" {
+			return fmt.Errorf("subscriptions cannot be empty strings")
+		}
+	}
+
 	// The entity can be empty but can't contain invalid characters (only
 	// alphanumeric string)
 	if c.ProxyEntityName != "" {

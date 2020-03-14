@@ -68,6 +68,27 @@ func TestMergeWith(t *testing.T) {
 	assert.False(t, newCheck.History[20].Flapping)
 }
 
+func TestCheckHasNoEmptyStringsInSub(t *testing.T) {
+	c := FixtureCheck("foo")
+	c.Subscriptions = append(c.Subscriptions, "demo", "foo")
+	assert.NoError(t, c.Validate())
+}
+
+func TestCheckErrIfHasEmptyStringsInSub(t *testing.T) {
+	c := FixtureCheck("foo")
+	c.Subscriptions = append(c.Subscriptions, "")
+
+	assert.Error(t, c.Validate())
+}
+
+func TestCheckErrMsgIfHasEmptyStringsInSub(t *testing.T) {
+	c := FixtureCheck("foo")
+	c.Subscriptions = append(c.Subscriptions, "")
+
+	err := c.Validate()
+	assert.EqualError(t, err,  "subscriptions cannot be empty strings")
+}
+
 func TestMergeWithFlappingEvent(t *testing.T) {
 	originalCheck := FixtureCheck("check")
 	originalCheck.Status = 1
