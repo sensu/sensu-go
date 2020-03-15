@@ -1,6 +1,8 @@
 package config
 
 import (
+	"time"
+
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 
 	"github.com/stretchr/testify/mock"
@@ -38,6 +40,14 @@ func (m *MockConfig) Namespace() string {
 	return args.String(0)
 }
 
+// Timeout mocks the timeout config
+func (m *MockConfig) Timeout() time.Duration {
+	args := m.Called()
+	timeoutString := args.String(0)
+	d, _ := time.ParseDuration(timeoutString)
+	return d
+}
+
 // TrustedCAFile mocks the trusted CA file config
 func (m *MockConfig) TrustedCAFile() string {
 	args := m.Called()
@@ -65,6 +75,12 @@ func (m *MockConfig) SaveInsecureSkipTLSVerify(verify bool) error {
 // SaveNamespace mocks saving the namespace
 func (m *MockConfig) SaveNamespace(namespace string) error {
 	args := m.Called(namespace)
+	return args.Error(0)
+}
+
+// SaveTimeout mocks saving the timeout
+func (m *MockConfig) SaveTimeout(timeout time.Duration) error {
+	args := m.Called(timeout)
 	return args.Error(0)
 }
 

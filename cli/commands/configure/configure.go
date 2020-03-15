@@ -3,6 +3,7 @@ package configure
 import (
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/AlecAivazis/survey"
 	"github.com/sensu/sensu-go/cli"
@@ -19,6 +20,7 @@ type configureAnswers struct {
 	Format                string `survey:"format"`
 	Namespace             string `survey:"namespace"`
 	InsecureSkipTLSVerify bool
+	Timeout               time.Duration
 	TrustedCAFile         string
 }
 
@@ -127,6 +129,24 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 				}
 			}
 
+			if value, err := flags.GetString("timeout"); err == nil {
+				duration, err := time.ParseDuration(value)
+				if err != nil {
+					fmt.Fprintln(cmd.OutOrStderr())
+					return fmt.Errorf(
+						"unable to parse timeout with error: %s",
+						err,
+					)
+				}
+				if err = cli.Config.SaveTimeout(duration); err != nil {
+					fmt.Fprintln(cmd.OutOrStderr())
+					return fmt.Errorf(
+						"unable to write new configuration file with error: %s",
+						err,
+					)
+				}
+			}
+
 			return nil
 		},
 		Annotations: map[string]string{
@@ -142,6 +162,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 	_ = cmd.Flags().StringP("password", "", "", "password")
 	_ = cmd.Flags().StringP("format", "", cli.Config.Format(), "preferred output format")
 	_ = cmd.Flags().StringP("namespace", "", cli.Config.Namespace(), "namespace")
+	_ = cmd.Flags().DurationP("timeout", "", cli.Config.Timeout(), "timeout when communicating with backend url")
 
 	return cmd
 }
@@ -164,6 +185,7 @@ func (answers *configureAnswers) withFlags(flags *pflag.FlagSet) {
 	answers.Password, _ = flags.GetString("password")
 	answers.Format, _ = flags.GetString("format")
 	answers.Namespace, _ = flags.GetString("namespace")
+	answers.Timeout, _ = flags.GetDuration("timeout")
 }
 
 func askForURL(c config.Config) *survey.Question {

@@ -40,7 +40,7 @@ func New(config config.Config) *RestClient {
 	client := &RestClient{resty: restyInst, config: config}
 
 	// set http client timeout
-	restyInst.SetTimeout(15 * time.Second)
+	restyInst.SetTimeout(config.Timeout())
 
 	// Standardize redirect policy
 	restyInst.SetRedirectPolicy(resty.FlexibleRedirectPolicy(10))

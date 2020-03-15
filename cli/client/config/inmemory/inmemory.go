@@ -1,6 +1,8 @@
 package inmemory
 
 import (
+	"time"
+
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/types"
 )
@@ -10,6 +12,7 @@ type Config struct {
 	url       string
 	format    string
 	namespace string
+	timeout   time.Duration
 	tokens    *types.Tokens
 }
 
@@ -39,6 +42,11 @@ func (c *Config) Namespace() string {
 	return c.namespace
 }
 
+// Timeout describes the timeout for communicating with the backend
+func (c *Config) Timeout() time.Duration {
+	return c.timeout
+}
+
 // Tokens describes the authorization tokens used to make requests
 func (c *Config) Tokens() *types.Tokens {
 	return c.tokens
@@ -59,6 +67,12 @@ func (c *Config) SaveFormat(val string) error {
 // SaveNamespace updates the current value
 func (c *Config) SaveNamespace(val string) error {
 	c.namespace = val
+	return nil
+}
+
+// SaveTimeout updates the current timeout value
+func (c *Config) SaveTimeout(val time.Duration) error {
+	c.timeout = val
 	return nil
 }
 

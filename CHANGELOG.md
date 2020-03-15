@@ -6,6 +6,7 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+- Added ability to make the Resty HTTP Timeout configurable.
 
 ### Added
 - Added `flapping` field to check history, along with `is_flapping_start` and
