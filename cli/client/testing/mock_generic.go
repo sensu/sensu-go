@@ -2,6 +2,7 @@ package testing
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/types"
@@ -28,6 +29,12 @@ func (c *MockClient) List(path string, objs interface{}, options *client.ListOpt
 // Post ...
 func (c *MockClient) Post(path string, obj interface{}) error {
 	args := c.Called(path, obj)
+	return args.Error(0)
+}
+
+// PostWithParams ...
+func (c *MockClient) PostWithParams(path string, obj interface{}, params url.Values) error {
+	args := c.Called(path, obj, params)
 	return args.Error(0)
 }
 

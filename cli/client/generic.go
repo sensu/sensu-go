@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"reflect"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -122,6 +123,20 @@ func (client *RestClient) List(path string, objs interface{}, options *ListOptio
 // Post sends a POST request with obj as the payload to the given path
 func (client *RestClient) Post(path string, obj interface{}) error {
 	res, err := client.R().SetBody(obj).Post(path)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return UnmarshalError(res)
+	}
+
+	return nil
+}
+
+// PostWithParams sends a POST request with obj as the payload to the given path with query params
+func (client *RestClient) PostWithParams(path string, obj interface{}, params url.Values) error {
+	res, err := client.R().SetBody(obj).SetQueryParamsFromValues(params).Post(path)
 	if err != nil {
 		return err
 	}

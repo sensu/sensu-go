@@ -2,6 +2,7 @@ package client
 
 import (
 	"net/http"
+	"net/url"
 
 	"github.com/coreos/etcd/clientv3"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -67,6 +68,8 @@ type GenericClient interface {
 	Post(path string, obj interface{}) error
 	// Put creates the given obj at the specified path
 	Put(path string, obj interface{}) error
+	// PostWithParams sends a POST request with obj as the payload to the given path with query params
+	PostWithParams(path string, obj interface{}, params url.Values) error
 
 	// PutResource puts a resource according to its URIPath.
 	PutResource(types.Wrapper) error
