@@ -24,6 +24,9 @@ created via `sensuctl create`.
 or sensuctl. This should prevent users from using the dashboard port by
 mistake.
 
+## Fixed
+ - Subscriptions cannot have empty strings in them (#2932)
+
 ## [5.18.1] - 2020-03-10
 
 ### Fixed

@@ -58,6 +58,27 @@ func TestCheckConfigHasNonNilHandlers(t *testing.T) {
 	require.NotNil(t, c.Handlers)
 }
 
+func TestCheckConfigHasNoEmptyStringsInSub(t *testing.T) {
+	c := FixtureCheckConfig("foo")
+	c.Subscriptions = append(c.Subscriptions, "demo", "foo")
+	assert.NoError(t, c.Validate())
+}
+
+func TestCheckConfigErrIfHasEmptyStringsInSub(t *testing.T) {
+	c := FixtureCheckConfig("foo")
+	c.Subscriptions = append(c.Subscriptions, "")
+
+	assert.Error(t, c.Validate())
+}
+
+func TestCheckConfigErrMsgIfHasEmptyStringsInSub(t *testing.T) {
+	c := FixtureCheckConfig("foo")
+	c.Subscriptions = append(c.Subscriptions, "")
+
+	err := c.Validate()
+	assert.EqualError(t, err,  "subscriptions cannot be empty strings")
+}
+
 func TestCheckConfigFlapThresholdValidation(t *testing.T) {
 	c := FixtureCheckConfig("foo")
 	// zero-valued flap threshold is valid
