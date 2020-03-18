@@ -27,6 +27,7 @@ mistake.
 ### Fixed
 - Fixed a bug where the agent could connect to a backend using a namespace that
 doesn't exist.
+- Subscriptions can no longer be empty strings (#2932)
 
 ## [5.18.1] - 2020-03-10
 

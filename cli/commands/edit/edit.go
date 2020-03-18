@@ -16,9 +16,9 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client/config"
-	"github.com/sensu/sensu-go/cli/commands/create"
 	"github.com/sensu/sensu-go/cli/commands/dump"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
+	"github.com/sensu/sensu-go/cli/resource"
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/cobra"
 )
@@ -225,17 +225,18 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			if bytes.Equal(orig.Bytes(), changedBytes) {
 				return nil
 			}
-			resources, err := create.ParseResources(bytes.NewReader(changedBytes))
+			resources, err := resource.Parse(bytes.NewReader(changedBytes))
 			if err != nil {
 				return err
 			}
 			if len(resources) == 0 {
 				return errors.New("no resources were parsed")
 			}
-			if err := create.ValidateResources(resources, cli.Config.Namespace()); err != nil {
+			if err := resource.Validate(resources, cli.Config.Namespace()); err != nil {
 				return err
 			}
-			if err := create.PutResources(cli.Client, resources); err != nil {
+			processor := resource.NewPutter()
+			if err := processor.Process(cli.Client, resources); err != nil {
 				return err
 			}
 			fmt.Fprintf(cmd.OutOrStdout(), "Updated %s\n", resources[0].Value.URIPath())
