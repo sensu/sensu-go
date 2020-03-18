@@ -3,7 +3,6 @@ package agentd
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -106,35 +105,6 @@ func TestGoodSessionConfigProto(t *testing.T) {
 	session, err := NewSession(context.Background(), cfg, conn, bus, st, proto.Unmarshal, proto.Marshal)
 	assert.NotNil(t, session)
 	assert.NoError(t, err)
-}
-
-func TestBadSessionConfig(t *testing.T) {
-	conn := &testTransport{
-		sendCh: make(chan *transport.Message, 10),
-	}
-
-	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
-	require.NoError(t, err)
-	require.NoError(t, bus.Start())
-
-	st := &mockstore.MockStore{}
-	st.On(
-		"UpdateEntity",
-		mock.Anything,
-		mock.Anything,
-	).Return(nil)
-	st.On(
-		"GetNamespace",
-		mock.Anything,
-		mock.AnythingOfType("string"),
-	).Return(&corev2.Namespace{}, fmt.Errorf("error"))
-
-	cfg := SessionConfig{
-		Subscriptions: []string{"testing"},
-	}
-	session, err := NewSession(context.Background(), cfg, conn, bus, st, UnmarshalJSON, MarshalJSON)
-	assert.Nil(t, session)
-	assert.Error(t, err)
 }
 
 func TestSessionTerminateOnSendError(t *testing.T) {

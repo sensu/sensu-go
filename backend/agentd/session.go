@@ -98,11 +98,6 @@ type SessionConfig struct {
 // The Session is responsible for stopping itself, and does so when it
 // encounters a receive error.
 func NewSession(ctx context.Context, cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store store.Store, unmarshal UnmarshalFunc, marshal MarshalFunc) (*Session, error) {
-	// Validate the agent namespace
-	if _, err := store.GetNamespace(ctx, cfg.Namespace); err != nil {
-		return nil, err
-	}
-
 	logger.WithFields(logrus.Fields{
 		"addr":          cfg.AgentAddr,
 		"namespace":     cfg.Namespace,

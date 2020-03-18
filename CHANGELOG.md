@@ -24,8 +24,10 @@ created via `sensuctl create`.
 or sensuctl. This should prevent users from using the dashboard port by
 mistake.
 
-## Fixed
- - Subscriptions cannot have empty strings in them (#2932)
+### Fixed
+- Fixed a bug where the agent could connect to a backend using a namespace that
+doesn't exist.
+- Subscriptions can no longer be empty strings (#2932)
 
 ## [5.18.1] - 2020-03-10
 
