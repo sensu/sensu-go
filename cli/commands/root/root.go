@@ -31,7 +31,7 @@ func Command() *cobra.Command {
 	cmd.PersistentFlags().Bool("insecure-skip-tls-verify", false, "skip TLS certificate verification (not recommended!)")
 	cmd.PersistentFlags().String("config-dir", path.UserConfigDir("sensuctl"), "path to directory containing configuration files")
 	cmd.PersistentFlags().String("cache-dir", path.UserCacheDir("sensuctl"), "path to directory containing cache & temporary files")
-	cmd.PersistentFlags().String("namespace", config.DefaultNamespace, "namespace in which we perform actions")
+	cmd.PersistentFlags().String("namespace", config.DefaultNamespace, "namespace in which we perform actions, it is a fallback value and will be ignored by cluster-wide resources")
 
 	return cmd
 }
