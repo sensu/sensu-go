@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- The proper HTTP status codes are returned for unauthenticated & permission
+denied errors in the REST API.
+
 ## [5.18.1] - 2020-03-10
 
 ### Fixed
