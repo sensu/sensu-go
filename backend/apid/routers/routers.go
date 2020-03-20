@@ -96,7 +96,7 @@ func HTTPStatusFromCode(code actions.ErrCode) int {
 	case actions.PaymentRequired:
 		return http.StatusPaymentRequired
 	case actions.PermissionDenied:
-		return http.StatusForbidden
+		return http.StatusNotFound
 	case actions.Unauthenticated:
 		return http.StatusUnauthorized
 	}
