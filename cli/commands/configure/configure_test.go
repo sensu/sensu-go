@@ -3,6 +3,7 @@ package configure
 import (
 	"bytes"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -23,6 +24,7 @@ func TestCommand(t *testing.T) {
 	mockConfig := cli.Config.(*client.MockConfig)
 	mockConfig.On("Format").Return(config.DefaultFormat)
 	mockConfig.On("APIUrl").Return("http://127.0.0.1:8080")
+	mockConfig.On("Timeout").Return(time.Second * 15)
 
 	cmd := Command(cli)
 
@@ -48,6 +50,7 @@ func TestCommandRunEClosureWithFlags(t *testing.T) {
 	mockConfig.On("SaveNamespace", mock.Anything).Return(nil)
 	mockConfig.On("SaveInsecureSkipTLSVerify", mock.Anything).Return(nil)
 	mockConfig.On("SaveTrustedCAFile", mock.Anything).Return(nil)
+	mockConfig.On("Timeout").Return(time.Second * 15)
 
 	// We need to call the "configure" command via the rootCmd so the global flags
 	// are set

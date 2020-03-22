@@ -48,9 +48,7 @@ func (m *MockConfig) TrustedCAFile() string {
 // Timeout mocks the timeout config
 func (m *MockConfig) Timeout() time.Duration {
 	args := m.Called()
-	timeoutString := args.String(0)
-	d, _ := time.ParseDuration(timeoutString)
-	return d
+	return args.Get(0).(time.Duration)
 }
 
 // SaveAPIUrl mocks saving the API URL
