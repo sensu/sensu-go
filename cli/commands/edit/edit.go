@@ -16,7 +16,6 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client/config"
-	"github.com/sensu/sensu-go/cli/commands/dump"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/cli/resource"
 	"github.com/sensu/sensu-go/types"
@@ -51,7 +50,7 @@ type client interface {
 func dumpResource(client client, cfg namespaceFormat, typeName string, key []string, to io.Writer) error {
 	// Determine the requested resource type. We will use this resource only to
 	// determine it's path in the store
-	requested, err := dump.ResolveResource(typeName)
+	requested, err := resource.Resolve(typeName)
 	if err != nil {
 		return fmt.Errorf("invalid resource type: %s", typeName)
 	}
@@ -102,7 +101,7 @@ func dumpResource(client client, cfg namespaceFormat, typeName string, key []str
 	// outside core/v2 are stored as wrapped value
 	var response interface{}
 	if types.ApiVersion(reflect.Indirect(reflect.ValueOf(requested)).Type().PkgPath()) == path.Join(corev2.APIGroupName, corev2.APIVersion) {
-		response, _ = dump.ResolveResource(typeName)
+		response, _ = resource.Resolve(typeName)
 	} else {
 		response = &types.Wrapper{}
 	}
@@ -132,7 +131,7 @@ func dumpResource(client client, cfg namespaceFormat, typeName string, key []str
 }
 
 func dumpBlank(cfg namespaceFormat, typeName string, to io.Writer) error {
-	resource, err := dump.ResolveResource(typeName)
+	resource, err := resource.Resolve(typeName)
 	if err != nil {
 		return fmt.Errorf("invalid resource type: %s", typeName)
 	}
