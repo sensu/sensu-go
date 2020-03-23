@@ -102,3 +102,12 @@ func GetResourceRequests(actionSpec string, resources []corev2.Resource) ([]type
 	}
 	return actions, nil
 }
+
+// WrapResources takes a list of resources and returns a list of wrappers.
+func WrapResources(resources []corev2.Resource) []types.Wrapper {
+	wrapped := []types.Wrapper{}
+	for _, resource := range resources {
+		wrapped = append(wrapped, types.WrapResource(resource))
+	}
+	return wrapped
+}
