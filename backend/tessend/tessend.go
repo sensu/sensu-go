@@ -70,6 +70,7 @@ var (
 		"silenced_count":             etcd.GetSilencedPath,
 		"user_count":                 etcd.GetUsersPath,
 	}
+	resourceMetricsMu = &sync.RWMutex{}
 )
 
 // Tessend is the tessen daemon.
@@ -561,6 +562,8 @@ func (t *Tessend) getPerResourceMetrics(now int64, data *Data) {
 
 	// loop through the resource map and collect the count of each
 	// resource every 5 seconds to distribute the load on etcd
+	resourceMetricsMu.RLock()
+	defer resourceMetricsMu.RUnlock()
 	for metricName, metricFunc := range resourceMetrics {
 		time.Sleep(t.duration)
 		count, err := etcd.Count(t.ctx, t.client, metricFunc(t.ctx, ""))
@@ -633,4 +636,12 @@ func appendInternalTag(m *corev2.MetricPoint) {
 			Value: internalEnv,
 		})
 	}
+}
+
+// RegisterResourceMetric adds a resource metric to resourceMetrics with its
+// etcd function
+func RegisterResourceMetric(key string, metricFunc func(context.Context, string) string) {
+	resourceMetricsMu.Lock()
+	defer resourceMetricsMu.Unlock()
+	resourceMetrics[key] = metricFunc
 }
