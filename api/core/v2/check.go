@@ -263,7 +263,8 @@ func (c *Check) MergeWith(prevCheck *Check) {
 	// sets the value for c.State that is used below, but the order can't be switched
 	// around as updateCheckState relies on the latest item (specifically, its status)
 	// being present in c.History.
-	c.History[len(c.History)-1].Flapping = c.State == EventFlappingState
+	// NB! This has been disabled for 5.x releases.
+	// c.History[len(c.History)-1].Flapping = c.State == EventFlappingState
 }
 
 // ValidateOutputMetricFormat returns an error if the string is not a valid metric

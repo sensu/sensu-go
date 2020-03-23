@@ -8,8 +8,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
-- Added `flapping` field to check history, along with `is_flapping_start` and
-  `is_flapping_end` event properties for use by filters.
 - The `sensu.io/managed_by` label is now automatically applied to resources
 created via `sensuctl create`.
 - Added `created_by` to object metadata and populate that field via the HTTP API.
