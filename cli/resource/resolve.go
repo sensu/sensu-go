@@ -80,10 +80,10 @@ func dedupTypes(arg string) []string {
 }
 
 // GetResourceRequests gets the resources based on the input.
-func GetResourceRequests(actionSpec string) ([]types.Resource, error) {
+func GetResourceRequests(actionSpec string, resources []corev2.Resource) ([]types.Resource, error) {
 	// parse the comma separated resource types and match against the defined actions
 	if actionSpec == "all" {
-		return All, nil
+		return resources, nil
 	}
 	var actions []types.Resource
 	// deduplicate requested resources

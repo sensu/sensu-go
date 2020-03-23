@@ -112,7 +112,7 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		}
 
 		// parse the comma separated resource types and match against the defined actions
-		requests, err := resource.GetResourceRequests(args[0])
+		requests, err := resource.GetResourceRequests(args[0], resource.All)
 		if err != nil {
 			return err
 		}
