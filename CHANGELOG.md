@@ -16,6 +16,7 @@ created via `sensuctl create`.
 - Added agent discovery of libc type, VM system/role, and cloud provider.
 - Added `float_type` field to system type to store which float type (softfloat,
   hardfloat) a system is using.
+- Additional Tessen resource metrics can now be registered at runtime.
 
 ### Changed
 - Updated the store so that it may _create_ wrapped resources.
