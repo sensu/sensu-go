@@ -3,6 +3,7 @@ package testing
 import (
 	"net/http"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/sensu/sensu-go/cli/client"
 	"github.com/sensu/sensu-go/types"
 )
@@ -29,6 +30,12 @@ func (c *MockClient) List(path string, objs interface{}, options *client.ListOpt
 func (c *MockClient) Post(path string, obj interface{}) error {
 	args := c.Called(path, obj)
 	return args.Error(0)
+}
+
+// PostWithResponse ...
+func (c *MockClient) PostWithResponse(path string, obj interface{}) (*resty.Response, error) {
+	args := c.Called(path, obj)
+	return args.Get(0).(*resty.Response), args.Error(1)
 }
 
 // Put ...

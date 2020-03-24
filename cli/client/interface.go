@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/coreos/etcd/clientv3"
+	"github.com/go-resty/resty/v2"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
@@ -67,6 +68,8 @@ type GenericClient interface {
 	Post(path string, obj interface{}) error
 	// Put creates the given obj at the specified path
 	Put(path string, obj interface{}) error
+	// PostWithResponse creates the given obj at the specified path, returning the response
+	PostWithResponse(path string, obj interface{}) (*resty.Response, error)
 
 	// PutResource puts a resource according to its URIPath.
 	PutResource(types.Wrapper) error

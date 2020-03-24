@@ -15,6 +15,7 @@ created via `sensuctl create`.
 - Added `float_type` field to system type to store which float type (softfloat,
   hardfloat) a system is using.
 - Additional Tessen resource metrics can now be registered at runtime.
+- Added a generic client POST function that can return the response.
 
 ### Changed
 - Updated the store so that it may _create_ wrapped resources.
