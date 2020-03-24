@@ -67,6 +67,8 @@ type GenericClient interface {
 	Post(path string, obj interface{}) error
 	// Put creates the given obj at the specified path
 	Put(path string, obj interface{}) error
+	// PostBody creates the given obj at the specified path, returning a response body
+	PostBody(path string, obj interface{}) ([]byte, error)
 
 	// PutResource puts a resource according to its URIPath.
 	PutResource(types.Wrapper) error

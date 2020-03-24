@@ -31,6 +31,12 @@ func (c *MockClient) Post(path string, obj interface{}) error {
 	return args.Error(0)
 }
 
+// PostBody ...
+func (c *MockClient) PostBody(path string, obj interface{}) ([]byte, error) {
+	args := c.Called(path, obj)
+	return args.Get(0).([]byte), args.Error(1)
+}
+
 // Put ...
 func (c *MockClient) Put(path string, obj interface{}) error {
 	args := c.Called(path, obj)

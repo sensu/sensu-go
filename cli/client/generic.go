@@ -133,6 +133,21 @@ func (client *RestClient) Post(path string, obj interface{}) error {
 	return nil
 }
 
+// PostBody sends a POST request with obj as the payload to the given path
+// and additionally returns the response body
+func (client *RestClient) PostBody(path string, obj interface{}) ([]byte, error) {
+	res, err := client.R().SetBody(obj).Post(path)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.StatusCode() >= 400 {
+		return nil, UnmarshalError(res)
+	}
+
+	return res.Body(), nil
+}
+
 // Put sends a PUT request with obj as the payload to the given path
 func (client *RestClient) Put(path string, obj interface{}) error {
 	res, err := client.R().SetBody(obj).Put(path)
