@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"reflect"
 
+	"github.com/go-resty/resty/v2"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
 )
@@ -133,9 +134,9 @@ func (client *RestClient) Post(path string, obj interface{}) error {
 	return nil
 }
 
-// PostBody sends a POST request with obj as the payload to the given path
-// and additionally returns the response body
-func (client *RestClient) PostBody(path string, obj interface{}) ([]byte, error) {
+// PostWithResponse sends a POST request with obj as the payload to the given path
+// and additionally returns the response
+func (client *RestClient) PostWithResponse(path string, obj interface{}) (*resty.Response, error) {
 	res, err := client.R().SetBody(obj).Post(path)
 	if err != nil {
 		return nil, err
@@ -145,7 +146,7 @@ func (client *RestClient) PostBody(path string, obj interface{}) ([]byte, error)
 		return nil, UnmarshalError(res)
 	}
 
-	return res.Body(), nil
+	return res, nil
 }
 
 // Put sends a PUT request with obj as the payload to the given path
