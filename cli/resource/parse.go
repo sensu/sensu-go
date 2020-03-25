@@ -62,6 +62,7 @@ func Parse(in io.Reader) ([]*types.Wrapper, error) {
 				}
 				describeError(count, rerr)
 				errCount++
+				continue
 			}
 
 			// Mark the resource as managed by sensuctl in the outer labels
