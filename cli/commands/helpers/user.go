@@ -14,7 +14,10 @@ func GetCurrentUsername(cfg config.Config) string {
 	}
 
 	accessToken := tokens.Access
-	token, _ := jwt.ParseWithClaims(accessToken, &corev2.Claims{}, nil)
+	token, err := jwt.ParseWithClaims(accessToken, &corev2.Claims{}, nil)
+	if err != nil || token == nil {
+		return ""
+	}
 	claims := token.Claims.(*corev2.Claims)
 	return claims.StandardClaims.Subject
 }
