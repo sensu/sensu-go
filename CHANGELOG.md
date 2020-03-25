@@ -7,13 +7,15 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.19.0] - 2020-03-26
+
 ### Added
 - The `sensu.io/managed_by` label is now automatically applied to resources
 created via `sensuctl create`.
 - Added `created_by` to object metadata and populate that field via the HTTP API.
 - Added agent discovery of libc type, VM system/role, and cloud provider.
 - Added `float_type` field to system type to store which float type (softfloat,
-  hardfloat) a system is using.
+hardfloat) a system is using.
 - Additional Tessen resource metrics can now be registered at runtime.
 - Added a generic client POST function that can return the response.
 - Tessen now reports the type of store used for events ("etcd or "postgres").
