@@ -7,7 +7,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
-## [5.19.0] - 2020-03-25
+## [5.19.0] - 2020-03-26
 
 ### Added
 - The `sensu.io/managed_by` label is now automatically applied to resources
