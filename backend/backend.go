@@ -407,10 +407,11 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	tessen, err := tessend.New(
 		b.runCtx,
 		tessend.Config{
-			Store:    stor,
-			RingPool: ringPool,
-			Client:   b.Client,
-			Bus:      bus,
+			Store:      stor,
+			EventStore: eventStoreProxy,
+			RingPool:   ringPool,
+			Client:     b.Client,
+			Bus:        bus,
 		})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", tessen.Name(), err)

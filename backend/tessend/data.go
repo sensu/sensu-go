@@ -48,3 +48,16 @@ type LicenseFile struct {
 type Wrapper struct {
 	Value LicenseFile `json:"spec"`
 }
+
+// StoreConfig contains information about what services Sensu is using to store
+// information.
+type StoreConfig struct {
+	// ConfigStore indicates the storage backend used to store Sensu configuration.
+	ConfigStore string `json:"config_store"`
+
+	// StateStore indicates the storage backend used to store Sensu state.
+	StateStore string `json:"state_store"`
+
+	// EventStore indicates the storage backend used to store Sensu events.
+	EventStore string `json:"event_store"`
+}

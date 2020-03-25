@@ -21,6 +21,7 @@ import (
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/etcd"
+	"github.com/sensu/sensu-go/backend/store/provider"
 	"github.com/sensu/sensu-go/version"
 	"github.com/sirupsen/logrus"
 )
@@ -77,6 +78,7 @@ var (
 type Tessend struct {
 	interval     uint32
 	store        store.Store
+	eventStore   store.EventStore
 	ctx          context.Context
 	cancel       context.CancelFunc
 	errChan      chan error
@@ -98,10 +100,11 @@ type Option func(*Tessend) error
 
 // Config configures Tessend.
 type Config struct {
-	Store    store.Store
-	RingPool *ringv2.Pool
-	Client   *clientv3.Client
-	Bus      messaging.MessageBus
+	Store      store.Store
+	EventStore store.EventStore
+	RingPool   *ringv2.Pool
+	Client     *clientv3.Client
+	Bus        messaging.MessageBus
 }
 
 // New creates a new TessenD.
@@ -109,6 +112,7 @@ func New(ctx context.Context, c Config, opts ...Option) (*Tessend, error) {
 	t := &Tessend{
 		interval:    corev2.DefaultTessenInterval,
 		store:       c.Store,
+		eventStore:  c.EventStore,
 		client:      c.Client,
 		errChan:     make(chan error, 1),
 		url:         tessenURL,
@@ -124,6 +128,23 @@ func New(ctx context.Context, c Config, opts ...Option) (*Tessend, error) {
 	t.ring = c.RingPool.Get(key)
 
 	return t, nil
+}
+
+// GetStoreConfig gets information about how the cluster stores information.
+func (t *Tessend) GetStoreConfig() StoreConfig {
+	return StoreConfig{
+		ConfigStore: "etcd",
+		StateStore:  "etcd",
+		EventStore:  t.getEventStore(),
+	}
+}
+
+func (t *Tessend) getEventStore() string {
+	if p, ok := t.eventStore.(provider.InfoGetter); ok {
+		info := p.GetProviderInfo()
+		return info.Type
+	}
+	return "etcd"
 }
 
 // Start the Tessen daemon.
@@ -246,6 +267,7 @@ func (t *Tessend) startMessageHandler() {
 					metric.Tags = append(metric.Tags, &corev2.MetricTag{Name: "hostname", Value: hostname})
 					metric.Timestamp = now
 					appendInternalTag(&metric)
+					appendStoreConfig(&metric, t.GetStoreConfig())
 					logMetric(&metric)
 					data.Metrics.Points = append(data.Metrics.Points, &metric)
 				}
@@ -407,6 +429,7 @@ func (t *Tessend) sendPromMetrics() {
 		},
 	}
 	appendInternalTag(mp)
+	appendStoreConfig(mp, t.GetStoreConfig())
 	logMetric(mp)
 	data.Metrics.Points = append(data.Metrics.Points, mp)
 
@@ -557,6 +580,7 @@ func (t *Tessend) getPerResourceMetrics(now int64, data *Data) {
 		Timestamp: now,
 	}
 	appendInternalTag(mp)
+	appendStoreConfig(mp, t.GetStoreConfig())
 	logMetric(mp)
 	data.Metrics.Points = append(data.Metrics.Points, mp)
 
@@ -578,6 +602,7 @@ func (t *Tessend) getPerResourceMetrics(now int64, data *Data) {
 			Timestamp: now,
 		}
 		appendInternalTag(mp)
+		appendStoreConfig(mp, t.GetStoreConfig())
 		logMetric(mp)
 		data.Metrics.Points = append(data.Metrics.Points, mp)
 	}
@@ -597,6 +622,7 @@ func (t *Tessend) getTessenConfigMetrics(now int64, tessen *corev2.TessenConfig,
 		},
 	}
 	appendInternalTag(mp)
+	appendStoreConfig(mp, t.GetStoreConfig())
 	logMetric(mp)
 	data.Metrics.Points = append(data.Metrics.Points, mp)
 }
@@ -644,4 +670,20 @@ func RegisterResourceMetric(key string, metricFunc func(context.Context, string)
 	resourceMetricsMu.Lock()
 	defer resourceMetricsMu.Unlock()
 	resourceMetrics[key] = metricFunc
+}
+
+func appendStoreConfig(m *corev2.MetricPoint, c StoreConfig) {
+	m.Tags = append(m.Tags,
+		&corev2.MetricTag{
+			Name:  "sensu_config_store",
+			Value: c.ConfigStore,
+		},
+		&corev2.MetricTag{
+			Name:  "sensu_state_store",
+			Value: c.StateStore,
+		},
+		&corev2.MetricTag{
+			Name:  "sensu_event_store",
+			Value: c.EventStore,
+		})
 }
