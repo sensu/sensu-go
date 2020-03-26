@@ -315,7 +315,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		DeregistrationHandler: config.DeregistrationHandler,
 		Bus:             bus,
 		Store:           stor,
-		EventStore:      stor,
+		EventStore:      eventStoreProxy,
 		LivenessFactory: liveness.EtcdFactory(b.runCtx, b.Client),
 		RingPool:        ringPool,
 		BufferSize:      viper.GetInt(FlagKeepalivedBufferSize),

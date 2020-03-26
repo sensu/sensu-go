@@ -96,9 +96,9 @@ func New(c Config, opts ...Option) (*Keepalived, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 
 	k := &Keepalived{
-		store:                 c.Store,
-		eventStore:            c.EventStore,
-		bus:                   c.Bus,
+		store:      c.Store,
+		eventStore: c.EventStore,
+		bus:        c.Bus,
 		deregistrationHandler: c.DeregistrationHandler,
 		livenessFactory:       c.LivenessFactory,
 		keepaliveChan:         make(chan interface{}, c.BufferSize),
@@ -179,7 +179,7 @@ func (k *Keepalived) initFromStore(ctx context.Context) error {
 		entityCtx := context.WithValue(ctx, corev2.NamespaceKey, keepalive.Namespace)
 		tctx, cancel := context.WithTimeout(entityCtx, k.storeTimeout)
 		defer cancel()
-		event, err := k.store.GetEventByEntityCheck(tctx, keepalive.Name, "keepalive")
+		event, err := k.eventStore.GetEventByEntityCheck(tctx, keepalive.Name, "keepalive")
 		if err != nil {
 			return err
 		}
@@ -480,6 +480,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 	if entity == nil {
 		// The entity has been deleted, there is no longer a need to
 		// track keepalives for it.
+		lager.Debug("nil entity")
 		return true
 	}
 
@@ -493,16 +494,18 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 		if err := deregisterer.Deregister(entity); err != nil {
 			lager.WithError(err).Error("error deregistering entity")
 		}
+		lager.Debug("deregistering entity")
 		return true
 	}
 
-	currentEvent, err := k.store.GetEventByEntityCheck(ctx, name, "keepalive")
+	currentEvent, err := k.eventStore.GetEventByEntityCheck(ctx, name, "keepalive")
 	if err != nil {
 		lager.WithError(err).Error("error while reading event")
 		return false
 	}
 	if currentEvent == nil {
 		// The keepalive was deleted, so bury the switch
+		lager.Debug("nil event")
 		return true
 	}
 

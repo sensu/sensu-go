@@ -31,9 +31,10 @@ mistake.
 - Fixed a bug where the agent could connect to a backend using a namespace that
 doesn't exist.
 - Subscriptions can no longer be empty strings (#2932)
-### Fixed
 - The proper HTTP status codes are returned for unauthenticated & permission
 denied errors in the REST API.
+- Fixed a bug where keepalives would not always fire correctly when using
+the postgres event store.
 
 ## [5.18.1] - 2020-03-10
 
