@@ -480,7 +480,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 	if entity == nil {
 		// The entity has been deleted, there is no longer a need to
 		// track keepalives for it.
-		logger.Debug("nil entity")
+		lager.Debug("nil entity")
 		return true
 	}
 
