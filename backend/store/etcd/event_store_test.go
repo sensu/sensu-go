@@ -704,3 +704,32 @@ func TestHandleExpireOnResolveEntries(t *testing.T) {
 		})
 	}
 }
+
+func TestEventStoreHistory(t *testing.T) {
+	testWithEtcd(t, func(s store.Store) {
+		ctx := store.NamespaceContext(context.Background(), "default")
+		event := corev2.FixtureEvent("foo", "bar")
+		want := []corev2.CheckHistory{}
+		for i := 0; i < 30; i++ {
+			event.Check.Executed = int64(i)
+			historyItem := corev2.CheckHistory{
+				Executed: int64(i),
+			}
+			want = append(want, historyItem)
+			_, _, err := s.UpdateEvent(ctx, event)
+			if err != nil {
+				t.Fatal(err)
+			}
+		}
+		want = want[len(want)-21:]
+		event, err := s.GetEventByEntityCheck(ctx, "foo", "bar")
+		if err != nil {
+			t.Fatal(err)
+		}
+		for i := 0; i < 21; i++ {
+		}
+		if got := event.Check.History; !reflect.DeepEqual(got, want) {
+			t.Fatalf("bad event history: got %v, want %v", got, want)
+		}
+	})
+}

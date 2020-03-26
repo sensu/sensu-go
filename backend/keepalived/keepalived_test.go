@@ -61,6 +61,7 @@ func newKeepalivedTest(t *testing.T) *keepalivedTest {
 	require.NoError(t, err)
 	k, err := New(Config{
 		Store:           store,
+		EventStore:      store,
 		Bus:             bus,
 		LivenessFactory: fakeFactory,
 		BufferSize:      1,
@@ -250,6 +251,7 @@ func TestProcessRegistration(t *testing.T) {
 
 			keepalived, err := New(Config{
 				Store:           store,
+				EventStore:      store,
 				Bus:             messageBus,
 				LivenessFactory: fakeFactory,
 				WorkerCount:     1,
@@ -314,6 +316,7 @@ func TestDeadCallbackNoEntity(t *testing.T) {
 	store := &mockstore.MockStore{}
 	keepalived, err := New(Config{
 		Store:           store,
+		EventStore:      store,
 		Bus:             messageBus,
 		LivenessFactory: fakeFactory,
 		WorkerCount:     1,
@@ -347,6 +350,7 @@ func TestDeadCallbackNoEvent(t *testing.T) {
 	store := &mockstore.MockStore{}
 	keepalived, err := New(Config{
 		Store:           store,
+		EventStore:      store,
 		Bus:             messageBus,
 		LivenessFactory: fakeFactory,
 		WorkerCount:     1,
