@@ -7,6 +7,7 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
+	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockbus"
 	"github.com/sensu/sensu-go/testing/mockstore"
@@ -310,6 +311,12 @@ func TestEventCreateOrReplace(t *testing.T) {
 			argument:    eventNoClass,
 			expectedErr: false,
 		},
+		{
+			name:        "Keepalive",
+			ctx:         defaultCtx,
+			argument:    corev2.FixtureEvent("entity", "keepalive"),
+			expectedErr: false,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -325,7 +332,8 @@ func TestEventCreateOrReplace(t *testing.T) {
 				On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)
 
-			bus.On("Publish", mock.Anything, mock.Anything).Return(tc.busErr)
+			bus.On("Publish", messaging.TopicEventRaw, mock.Anything).Return(tc.busErr)
+			bus.On("Publish", messaging.TopicKeepalive, mock.Anything).Return(tc.busErr)
 
 			// Exec Query
 			err := actions.CreateOrReplace(tc.ctx, tc.argument)
@@ -337,8 +345,14 @@ func TestEventCreateOrReplace(t *testing.T) {
 					assert.Error(err)
 					assert.FailNow("Given was not of type 'Error'")
 				}
-			} else {
-				assert.NoError(err)
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			bus.AssertCalled(t, "Publish", messaging.TopicEventRaw, tc.argument)
+			if tc.argument.Check.Name == "keepalive" {
+				bus.AssertCalled(t, "Publish", messaging.TopicKeepalive, tc.argument)
 			}
 		})
 	}
