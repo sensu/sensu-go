@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/sensu/sensu-go/types"
 	"github.com/spf13/pflag"
@@ -73,6 +74,21 @@ func TestSaveNamespace(t *testing.T) {
 	namespace := "json"
 	require.NoError(t, config.SaveNamespace(namespace))
 	assert.Equal(t, namespace, config.Namespace())
+}
+
+func TestSaveTimeout(t *testing.T) {
+	dir, cleanup := tmpDir(t)
+	defer cleanup()
+
+	// Set flags
+	flags := pflag.NewFlagSet("config-dir", pflag.ContinueOnError)
+	flags.String("config-dir", dir, "")
+
+	config := Load(flags)
+
+	timeout := 30 * time.Second
+	require.NoError(t, config.SaveTimeout(timeout))
+	assert.Equal(t, timeout, config.Timeout())
 }
 
 func TestSaveTokens(t *testing.T) {

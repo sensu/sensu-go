@@ -2,6 +2,7 @@ package basic
 
 import (
 	"testing"
+	"time"
 
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/types"
@@ -31,6 +32,16 @@ func TestNamespace(t *testing.T) {
 func TestNamespaceDefault(t *testing.T) {
 	conf := &Config{}
 	assert.Equal(t, config.DefaultNamespace, conf.Namespace())
+}
+
+func TestTimeout(t *testing.T) {
+	conf := &Config{Cluster: Cluster{Timeout: 30 * time.Second}}
+	assert.Equal(t, conf.Cluster.Timeout, conf.Timeout())
+}
+
+func TestTimeoutDefault(t *testing.T) {
+	conf := &Config{}
+	assert.Equal(t, config.DefaultTimeout, conf.Timeout())
 }
 
 func TestTokens(t *testing.T) {

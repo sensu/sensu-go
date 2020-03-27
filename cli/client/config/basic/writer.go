@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/sensu/sensu-go/types"
 )
@@ -35,6 +36,13 @@ func (c *Config) SaveNamespace(namespace string) error {
 	c.Profile.Namespace = namespace
 
 	return write(c.Profile, filepath.Join(c.path, profileFilename))
+}
+
+// SaveTimeout saves the user's timeout to a configuration file
+func (c *Config) SaveTimeout(timeout time.Duration) error {
+	c.Cluster.Timeout = timeout
+
+	return write(c.Cluster, filepath.Join(c.path, clusterFilename))
 }
 
 // SaveTokens saves the JWT into a configuration file

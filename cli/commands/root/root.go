@@ -1,6 +1,8 @@
 package root
 
 import (
+	"time"
+
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/cli/commands/version"
@@ -32,6 +34,7 @@ func Command() *cobra.Command {
 	cmd.PersistentFlags().String("config-dir", path.UserConfigDir("sensuctl"), "path to directory containing configuration files")
 	cmd.PersistentFlags().String("cache-dir", path.UserCacheDir("sensuctl"), "path to directory containing cache & temporary files")
 	cmd.PersistentFlags().String("namespace", config.DefaultNamespace, "namespace in which we perform actions")
+	cmd.PersistentFlags().Duration("timeout", 15*time.Second, "timeout when communicating with sensu backend")
 
 	return cmd
 }

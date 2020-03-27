@@ -1,6 +1,8 @@
 package basic
 
 import (
+	"time"
+
 	"github.com/sensu/sensu-go/cli/client/config"
 	"github.com/sensu/sensu-go/types"
 )
@@ -29,6 +31,14 @@ func (c *Config) Namespace() string {
 		return config.DefaultNamespace
 	}
 	return c.Profile.Namespace
+}
+
+// Timeout returns the configured timeout
+func (c *Config) Timeout() time.Duration {
+	if c.Cluster.Timeout == 0*time.Second {
+		return config.DefaultTimeout
+	}
+	return c.Cluster.Timeout
 }
 
 // Tokens returns the active cluster JWT

@@ -16,6 +16,7 @@ func HelpCommand(cli *cli.SensuCli) *cobra.Command {
 	cmd.AddCommand(
 		SetFormatCommand(cli),
 		SetNamespaceCommand(cli),
+		SetTimeoutCommand(cli),
 		ViewCommand(cli),
 	)
 

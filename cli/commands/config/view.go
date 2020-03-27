@@ -28,6 +28,7 @@ func ViewCommand(cli *cli.SensuCli) *cobra.Command {
 				"api-url":        cli.Config.APIUrl(),
 				"namespace":      cli.Config.Namespace(),
 				"format":         cli.Config.Format(),
+				"timeout":        cli.Config.Timeout().String(),
 				"username":       helpers.GetCurrentUsername(cli.Config),
 				"jwt_expires_at": strconv.Itoa(int(cli.Config.Tokens().GetExpiresAt())),
 			}
@@ -69,6 +70,10 @@ func printToList(v interface{}, writer io.Writer) error {
 			{
 				Label: "Format",
 				Value: r["format"],
+			},
+			{
+				Label: "Timeout",
+				Value: r["timeout"],
 			},
 			{
 				Label: "Username",

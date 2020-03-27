@@ -1,6 +1,8 @@
 package config
 
 import (
+	"time"
+
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -10,6 +12,9 @@ const (
 
 	// DefaultFormat is the default format output for printers.
 	DefaultFormat = FormatTabular
+
+	// DefaultTimeout is the default timeout
+	DefaultTimeout = 15 * time.Second
 
 	// FormatTabular indicates tabular format for printers.
 	FormatTabular = "tabular"
@@ -38,6 +43,7 @@ type Read interface {
 	InsecureSkipTLSVerify() bool
 	Namespace() string
 	Tokens() *types.Tokens
+	Timeout() time.Duration
 	TrustedCAFile() string
 }
 
@@ -49,4 +55,5 @@ type Write interface {
 	SaveNamespace(string) error
 	SaveTokens(*types.Tokens) error
 	SaveTrustedCAFile(string) error
+	SaveTimeout(time.Duration) error
 }

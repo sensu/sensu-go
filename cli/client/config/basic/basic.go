@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/sensu/sensu-go/cli/commands/helpers"
 	"github.com/sensu/sensu-go/types"
@@ -34,6 +35,7 @@ type Cluster struct {
 	TrustedCAFile         string `json:"trusted-ca-file"`
 	InsecureSkipTLSVerify bool   `json:"insecure-skip-tls-verify"`
 	*types.Tokens
+	Timeout time.Duration `json:"timeout"`
 }
 
 // Profile contains the active configuration
@@ -109,6 +111,16 @@ func (c *Config) flags(flags *pflag.FlagSet) {
 
 	if value, err := flags.GetString("trusted-ca-file"); err == nil && value != "" {
 		c.Cluster.TrustedCAFile = value
+	}
+
+	if value, err := flags.GetString("timeout"); err == nil && value != "" {
+		duration, err := time.ParseDuration(value)
+		if err == nil {
+			c.Cluster.Timeout = duration
+		} else {
+			// Default to timeout of 15 seconds
+			c.Cluster.Timeout = 15 * time.Second
+		}
 	}
 }
 
