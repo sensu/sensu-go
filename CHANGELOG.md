@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Require that pipe handlers have a command set.
+
 ## [5.19.0] - 2020-03-26
 
 ### Added

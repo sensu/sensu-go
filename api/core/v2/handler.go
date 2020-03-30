@@ -78,7 +78,12 @@ func (h *Handler) validateType() error {
 	}
 
 	switch h.Type {
-	case "pipe", "set", "grpc":
+	case "pipe":
+		if strings.TrimSpace(h.Command) == "" {
+			return errors.New("missing command")
+		}
+		return nil
+	case "set", "grpc":
 		return nil
 	case "tcp", "udp":
 		return h.Socket.Validate()
