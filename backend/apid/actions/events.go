@@ -139,5 +139,11 @@ func (a EventController) CreateOrReplace(ctx context.Context, event *corev2.Even
 		return NewError(InternalErr, err)
 	}
 
+	if event.HasCheck() && event.Check.Name == "keepalive" {
+		if err := a.bus.Publish(messaging.TopicKeepalive, event); err != nil {
+			return NewError(InternalErr, err)
+		}
+	}
+
 	return nil
 }
