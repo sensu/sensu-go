@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Keepalives can now be published via the HTTP API.
+- Token substitution templates can now express escape-quoted strings.
 
 ## [5.19.0] - 2020-03-26
 
