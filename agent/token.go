@@ -3,7 +3,6 @@ package agent
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"text/template"
@@ -18,49 +17,59 @@ func TokenSubstitution(data, input interface{}) ([]byte, error) {
 		return nil, fmt.Errorf("could not marshal the provided template: %s", err)
 	}
 
-	// replace special character \" with " only if contained within {{ }}
-	inputString := string(inputBytes)
-	for i := range inputString {
-		if i < len(inputString)-1 {
-			if string(inputString[i]) == "{" && string(inputString[i+1]) == "{" {
-				rightSlice := inputString[i+2:]
-				inner := strings.Split(rightSlice, "}}")[0]
-				innerParsed := strings.Replace(inner, "\\\"", "\"", -1)
-				inputString = strings.Replace(inputString, inner, innerParsed, -1)
+	var rawMap map[string]*json.RawMessage
+
+	if err := json.Unmarshal(inputBytes, &rawMap); err != nil {
+		return nil, err
+	}
+
+	for k, v := range rawMap {
+		if v == nil || len(*v) == 0 || (*v)[0] != '"' {
+			// null value, or not a string
+			continue
+		}
+		tmpl := template.New(k)
+		tmpl.Funcs(funcMap())
+
+		var value string
+
+		if err := json.Unmarshal([]byte(*v), &value); err != nil {
+			return nil, fmt.Errorf("parsing %s: %s", k, err)
+		}
+
+		var err error
+		tmpl, err = tmpl.Parse(value)
+		if err != nil {
+			return nil, fmt.Errorf("could not parse the template: %s", err)
+		}
+
+		var buf bytes.Buffer
+		err = tmpl.Execute(&buf, data)
+		if err != nil {
+			return nil, fmt.Errorf("could not execute the template: %s", err)
+		}
+
+		// Verify if the output contains the "<no value>" string, indicating that a
+		// token was not properly substituted. If so, re-execute the template but this
+		// time with "missingkey=error" option so we get the actual token that was
+		// unmatched. For reference, this option can't be added by default otherwise
+		// the default values (defaultFunc) couldn't work
+		if strings.Contains(buf.String(), "<no value>") {
+			tmpl.Option("missingkey=error")
+
+			if err = tmpl.Execute(&buf, data); err == nil {
+				return nil, fmt.Errorf("%s: unmatched token: found an undefined value but could not identify the token", k)
 			}
-		}
-	}
 
-	tmpl := template.New("")
-	tmpl.Funcs(funcMap())
-
-	tmpl, err = tmpl.Parse(inputString)
-	if err != nil {
-		return nil, fmt.Errorf("could not parse the template: %s", err)
-	}
-
-	var buf bytes.Buffer
-	err = tmpl.Execute(&buf, data)
-	if err != nil {
-		return nil, fmt.Errorf("could not execute the template: %s", err)
-	}
-
-	// Verify if the output contains the "<no value>" string, indicating that a
-	// token was not properly substituted. If so, re-execute the template but this
-	// time with "missingkey=error" option so we get the actual token that was
-	// unmatched. For reference, this option can't be added by default otherwise
-	// the default values (defaultFunc) couldn't work
-	if strings.Contains(buf.String(), "<no value>") {
-		tmpl.Option("missingkey=error")
-
-		if err = tmpl.Execute(&buf, data); err == nil {
-			return nil, errors.New("unmatched token: found an undefined value but could not identify the token")
+			return nil, fmt.Errorf("%s: unmatched token: %s", k, err)
 		}
 
-		return nil, fmt.Errorf("unmatched token: %s", err)
+		templated, _ := json.Marshal(buf.String())
+
+		rawMap[k] = (*json.RawMessage)(&templated)
 	}
 
-	return buf.Bytes(), nil
+	return json.Marshal(rawMap)
 }
 
 // funcMap defines the available custom functions in templates
