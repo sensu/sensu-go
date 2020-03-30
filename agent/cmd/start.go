@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"path/filepath"
 
@@ -197,7 +198,9 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 
 	// Set up distinct flagset for handling config file
 	configFlagSet := pflag.NewFlagSet("sensu", pflag.ContinueOnError)
-	_ = configFlagSet.StringP(flagConfigFile, "c", "", "path to sensu-agent config file")
+	configFileDefaultLocation := filepath.Join(path.SystemConfigDir(), "agent.yml")
+	configFileDefault := fmt.Sprintf("path to sensu-agent config file (default %q)", configFileDefaultLocation)
+	_ = configFlagSet.StringP(flagConfigFile, "c", "", configFileDefault)
 	configFlagSet.SetOutput(ioutil.Discard)
 	_ = configFlagSet.Parse(args[1:])
 

@@ -263,7 +263,9 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 func handleConfig(cmd *cobra.Command, server bool) error {
 	// Set up distinct flagset for handling config file
 	configFlagSet := pflag.NewFlagSet("sensu", pflag.ContinueOnError)
-	configFlagSet.StringP(flagConfigFile, "c", "", "path to sensu-backend config file")
+	configFileDefaultLocation := filepath.Join(path.SystemConfigDir(), "backend.yml")
+	configFileDefault := fmt.Sprintf("path to sensu-backend config file (default %q)", configFileDefaultLocation)
+	configFlagSet.StringP(flagConfigFile, "c", "", configFileDefault)
 	configFlagSet.SetOutput(ioutil.Discard)
 	_ = configFlagSet.Parse(os.Args[1:])
 
@@ -273,7 +275,7 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 
 	// use the default config path if flagConfigFile was used
 	if configFile == "" {
-		configFilePath = filepath.Join(path.SystemConfigDir(), "backend.yml")
+		configFilePath = configFileDefaultLocation
 	}
 
 	// Configure location of backend configuration

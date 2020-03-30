@@ -7,6 +7,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- The config file default path is now shown in the help for sensu-backend start
+and sensu-agent start.
+
 ## [5.19.0] - 2020-03-26
 
 ### Added
