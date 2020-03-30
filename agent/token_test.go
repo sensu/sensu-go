@@ -133,3 +133,29 @@ func TestTokenSubstitution(t *testing.T) {
 		})
 	}
 }
+
+func TestTokenSubstitutionLabels(t *testing.T) {
+	data := corev2.Check{
+		ObjectMeta: corev2.ObjectMeta{
+			Labels: map[string]string{"foo": "bar"},
+		},
+	}
+	input := corev2.CheckConfig{
+		ObjectMeta: corev2.ObjectMeta{
+			Labels: map[string]string{
+				"foo": `{{ .labels.foo }}`,
+			},
+		},
+	}
+	result, err := TokenSubstitution(dynamic.Synthesize(data), input)
+	if err != nil {
+		t.Fatal(err)
+	}
+	check := corev2.CheckConfig{}
+	if err := json.Unmarshal(result, &check); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := check.Labels["foo"], "bar"; got != want {
+		t.Fatalf("bad sub: got %q, want %q", got, want)
+	}
+}
