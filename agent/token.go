@@ -3,40 +3,55 @@ package agent
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"text/template"
 )
 
-// TokenSubstitution evaluates the input template, that possibly contains
-// tokens, with the provided data object and returns a slice of bytes
-// representing the result along with any error encountered
-func TokenSubstitution(data, input interface{}) ([]byte, error) {
-	inputBytes, err := json.Marshal(input)
-	if err != nil {
-		return nil, fmt.Errorf("could not marshal the provided template: %s", err)
+func substituteToken(key string, data interface{}, message *json.RawMessage) (*json.RawMessage, error) {
+	if message == nil {
+		return nil, nil
 	}
-
-	// replace special character \" with " only if contained within {{ }}
-	inputString := string(inputBytes)
-	for i := range inputString {
-		if i < len(inputString)-1 {
-			if string(inputString[i]) == "{" && string(inputString[i+1]) == "{" {
-				rightSlice := inputString[i+2:]
-				inner := strings.Split(rightSlice, "}}")[0]
-				innerParsed := strings.Replace(inner, "\\\"", "\"", -1)
-				inputString = strings.Replace(inputString, inner, innerParsed, -1)
-			}
+	if len(*message) == 0 {
+		return message, nil
+	}
+	switch (*message)[0] {
+	case '"':
+		return substituteString(key, data, message)
+	case '[':
+		return substituteArray(key, data, message)
+	case '{':
+		var object map[string]*json.RawMessage
+		if err := json.Unmarshal([]byte(*message), &object); err != nil {
+			return nil, fmt.Errorf("couldn't evaluate template for %s: %s (object)", key, err)
 		}
+		for k, v := range object {
+			value, err := substituteToken(k, data, v)
+			if err != nil {
+				return nil, err
+			}
+			object[k] = value
+		}
+		b, _ := json.Marshal(object)
+		return (*json.RawMessage)(&b), nil
+	default:
+		return message, nil
+	}
+}
+
+func substituteString(key string, data interface{}, message *json.RawMessage) (*json.RawMessage, error) {
+	var t string
+	if err := json.Unmarshal([]byte(*message), &t); err != nil {
+		return nil, fmt.Errorf("couldn't evaluate template for %s: %s (string)", key, err)
 	}
 
-	tmpl := template.New("")
+	tmpl := template.New(key)
 	tmpl.Funcs(funcMap())
 
-	tmpl, err = tmpl.Parse(inputString)
+	var err error
+	tmpl, err = tmpl.Parse(t)
 	if err != nil {
-		return nil, fmt.Errorf("could not parse the template: %s", err)
+		return nil, fmt.Errorf("%s: could not parse the template: %s", key, err)
 	}
 
 	var buf bytes.Buffer
@@ -54,13 +69,51 @@ func TokenSubstitution(data, input interface{}) ([]byte, error) {
 		tmpl.Option("missingkey=error")
 
 		if err = tmpl.Execute(&buf, data); err == nil {
-			return nil, errors.New("unmatched token: found an undefined value but could not identify the token")
+			return nil, fmt.Errorf("%s: unmatched token: found an undefined value but could not identify the token", key)
 		}
 
-		return nil, fmt.Errorf("unmatched token: %s", err)
+		return nil, fmt.Errorf("%s: unmatched token: %s", key, err)
 	}
 
-	return buf.Bytes(), nil
+	templated, _ := json.Marshal(buf.String())
+
+	return (*json.RawMessage)(&templated), nil
+}
+
+func substituteArray(key string, data interface{}, message *json.RawMessage) (*json.RawMessage, error) {
+	var messages []*json.RawMessage
+	if err := json.Unmarshal([]byte(*message), &messages); err != nil {
+		return nil, fmt.Errorf("couldn't evaluate template for %s: %s (array)", key, err)
+	}
+
+	for i := range messages {
+		templated, err := substituteToken(key, data, messages[i])
+		if err != nil {
+			return nil, fmt.Errorf("couldn't evaluate template for %s: %s (array %d)", key, err, i)
+		}
+		messages[i] = templated
+	}
+
+	b, _ := json.Marshal(messages)
+
+	return (*json.RawMessage)(&b), nil
+}
+
+// TokenSubstitution evaluates the input template, that possibly contains
+// tokens, with the provided data object and returns a slice of bytes
+// representing the result along with any error encountered
+func TokenSubstitution(data, input interface{}) ([]byte, error) {
+	inputBytes, err := json.Marshal(input)
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal the provided template: %s", err)
+	}
+
+	rawMessage, err := substituteToken("", data, (*json.RawMessage)(&inputBytes))
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(*rawMessage), nil
 }
 
 // funcMap defines the available custom functions in templates
