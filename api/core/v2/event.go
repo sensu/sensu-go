@@ -426,6 +426,8 @@ func EventFields(r Resource) map[string]string {
 	return map[string]string{
 		"event.name":                 resource.ObjectMeta.Name,
 		"event.namespace":            resource.ObjectMeta.Namespace,
+		"event.is_silenced":          isSilenced(resource),
+		"event.check.is_silenced":    isSilenced(resource),
 		"event.check.name":           resource.Check.Name,
 		"event.check.handlers":       strings.Join(resource.Check.Handlers, ","),
 		"event.check.publish":        strconv.FormatBool(resource.Check.Publish),
@@ -438,6 +440,13 @@ func EventFields(r Resource) map[string]string {
 		"event.entity.entity_class":  resource.Entity.EntityClass,
 		"event.entity.subscriptions": strings.Join(resource.Entity.Subscriptions, ","),
 	}
+}
+
+func isSilenced(e *Event) string {
+	if len(e.Check.Silenced) > 0 {
+		return "true"
+	}
+	return "false"
 }
 
 // SetNamespace sets the namespace of the resource.

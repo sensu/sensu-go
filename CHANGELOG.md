@@ -6,7 +6,10 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
+
+### Added
 - Added ability to make the Resty HTTP Timeout configurable.
+- Added the `event.is_silenced` & `event.check.is_silenced` field selectors.
 
 ### Fixed
 - Keepalives can now be published via the HTTP API.
