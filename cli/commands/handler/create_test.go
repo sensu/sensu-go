@@ -42,7 +42,7 @@ func TestCreateCommandRunEClosureWithFlags(t *testing.T) {
 	client.On("CreateHandler", mock.Anything).Return(nil)
 
 	cmd := CreateCommand(cli)
-	require.NoError(t, cmd.Flags().Set("type", "pipe"))
+	require.NoError(t, cmd.Flags().Set("type", "set"))
 	require.NoError(t, cmd.Flags().Set("timeout", "15"))
 	require.NoError(t, cmd.Flags().Set("mutator", ""))
 	require.NoError(t, cmd.Flags().Set("handlers", "slack,pagerduty"))
@@ -61,7 +61,7 @@ func TestCreateCommandRunEClosureWithAPIErr(t *testing.T) {
 	client.On("CreateHandler", mock.Anything).Return(errors.New("nope"))
 
 	cmd := CreateCommand(cli)
-	require.NoError(t, cmd.Flags().Set("type", "pipe"))
+	require.NoError(t, cmd.Flags().Set("type", "set"))
 	require.NoError(t, cmd.Flags().Set("timeout", "15"))
 	require.NoError(t, cmd.Flags().Set("mutator", ""))
 	require.NoError(t, cmd.Flags().Set("handlers", "slack,pagerduty"))
