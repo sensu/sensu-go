@@ -14,6 +14,8 @@ import (
 	"github.com/gorilla/mux"
 )
 
+const defaultTimeout = 3
+
 // ClusterController represents the controller needs of the ClusterRouter.
 type ClusterController interface {
 	// MemberList lists the current cluster membership.
@@ -73,7 +75,7 @@ func parsePeerAddrs(req *http.Request) ([]string, error) {
 func parseTimeout(req *http.Request) (int, error) {
 	val := req.FormValue("timeout")
 	if len(val) == 0 {
-		return 0, nil
+		return defaultTimeout, nil
 	}
 	return strconv.Atoi(val)
 }

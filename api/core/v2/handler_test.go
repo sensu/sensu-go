@@ -52,7 +52,8 @@ func TestHandlerValidate(t *testing.T) {
 				ObjectMeta: ObjectMeta{
 					Name: "foo",
 				},
-				Type: "pipe",
+				Type:    "pipe",
+				Command: "sl",
 			},
 			Error: "namespace must be set",
 		},
@@ -62,7 +63,8 @@ func TestHandlerValidate(t *testing.T) {
 					Name:      "foo",
 					Namespace: "default",
 				},
-				Type: "pipe",
+				Type:    "pipe",
+				Command: "sl",
 			},
 		},
 		{
@@ -190,10 +192,19 @@ func TestHandlerValidate(t *testing.T) {
 			},
 			Error: "unknown handler type: magic",
 		},
+		{
+			Handler: Handler{
+				ObjectMeta: ObjectMeta{
+					Name: "foo",
+				},
+				Type: "pipe",
+			},
+			Error: "missing command",
+		},
 	}
 
-	for _, test := range tests {
-		t.Run(fmt.Sprintf("%v", test.Handler), func(t *testing.T) {
+	for i, test := range tests {
+		t.Run(fmt.Sprintf("%d", i), func(t *testing.T) {
 			if err := test.Handler.Validate(); err != nil {
 				if len(test.Error) > 0 {
 					require.Equal(t, test.Error, err.Error())
