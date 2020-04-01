@@ -11,6 +11,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/pkg/transport"
+	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
@@ -55,6 +56,9 @@ func (e ErrStartup) Error() string {
 	return fmt.Sprintf("error starting %s: %s", e.Name, e.Err)
 }
 
+var backendID string
+var backendOnce sync.Once
+
 // Backend represents the backend server, which is used to hold the datastore
 // and coordinating the daemons
 type Backend struct {
@@ -72,6 +76,16 @@ type Backend struct {
 	runCtx    context.Context
 	runCancel context.CancelFunc
 	cfg       *Config
+	backendID string
+}
+
+// GetBackendID gets the backend ID. The ID persists for the lifetime of the
+// application at the package scope.
+func GetBackendID() string {
+	backendOnce.Do(func() {
+		backendID = uuid.New().String()
+	})
+	return backendID
 }
 
 // EventStoreUpdater offers a way to update an event store to a different
@@ -210,6 +224,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	logger.Debug("Registering backend...")
 
+	// TODO(eric): Investigate whether we can remove BackendIDGetter in favour
+	// of GetBackendID()
 	backendID := etcd.NewBackendIDGetter(b.runCtx, b.Client)
 	logger.Debug("Done registering backend.")
 	b.Daemons = append(b.Daemons, backendID)
@@ -412,6 +428,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 			RingPool:   ringPool,
 			Client:     b.Client,
 			Bus:        bus,
+			BackendID:  GetBackendID(),
 		})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", tessen.Name(), err)

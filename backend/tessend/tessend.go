@@ -105,10 +105,14 @@ type Config struct {
 	RingPool   *ringv2.Pool
 	Client     *clientv3.Client
 	Bus        messaging.MessageBus
+	BackendID  string
 }
 
 // New creates a new TessenD.
 func New(ctx context.Context, c Config, opts ...Option) (*Tessend, error) {
+	if c.BackendID == "" {
+		c.BackendID = uuid.New().String()
+	}
 	t := &Tessend{
 		interval:    corev2.DefaultTessenInterval,
 		store:       c.Store,
@@ -116,7 +120,7 @@ func New(ctx context.Context, c Config, opts ...Option) (*Tessend, error) {
 		client:      c.Client,
 		errChan:     make(chan error, 1),
 		url:         tessenURL,
-		backendID:   uuid.New().String(),
+		backendID:   c.BackendID,
 		bus:         c.Bus,
 		messageChan: make(chan interface{}, 1),
 		duration:    perResourceDuration,
