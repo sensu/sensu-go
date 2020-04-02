@@ -51,6 +51,7 @@ type Agent struct {
 	connected       bool
 	connectedMu     sync.RWMutex
 	contentType     string
+	ctx             context.Context
 	entity          *corev2.Entity
 	executor        command.Executor
 	handler         *handler.MessageHandler
@@ -70,16 +71,17 @@ type Agent struct {
 // NewAgent creates a new Agent. It returns non-nil error if there is any error
 // when creating the Agent.
 func NewAgent(config *Config) (*Agent, error) {
-	return NewAgentContext(context.Background(), config)
+	return Initialize(context.Background(), config)
 }
 
-// NewAgentContext is like NewAgent, but allows threading a context through
+// Initialize is like NewAgent, but allows threading a context through
 // the system.
-func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
+func Initialize(ctx context.Context, config *Config) (*Agent, error) {
 	agent := &Agent{
 		backendSelector: &RandomBackendSelector{Backends: config.BackendURLs},
 		connected:       false,
 		config:          config,
+		ctx:             ctx,
 		executor:        command.NewExecutor(),
 		handler:         handler.NewMessageHandler(),
 		inProgress:      make(map[string]*corev2.CheckConfig),
@@ -179,7 +181,8 @@ func (a *Agent) buildTransportHeaderMap() http.Header {
 	return header
 }
 
-// Run starts the Agent.
+// RunWithInitializer starts the Agent, but accepts an initialization function to use
+// for initialization, instead of using the default Initialize().
 //
 // 1. Start the asset manager.
 // 2. Start a statsd server on the agent and logs the received metrics.
@@ -190,7 +193,7 @@ func (a *Agent) buildTransportHeaderMap() http.Header {
 // 7. Start refreshing system info periodically.
 // 8. Start sending periodic keepalives.
 // 9. Start the API server, shutdown the agent if doing so fails.
-func (a *Agent) Run(ctx context.Context) error {
+func (a *Agent) RunWithInitializer(initialize func(context.Context, *Config) (*Agent, error)) error {
 	defer func() {
 		if err := a.apiQueue.Close(); err != nil {
 			logger.WithError(err).Error("error closing API queue")
@@ -212,7 +215,7 @@ func (a *Agent) Run(ctx context.Context) error {
 	if !a.config.DisableAssets {
 		assetManager := asset.NewManager(a.config.CacheDir, a.getAgentEntity(), &a.wg)
 		var err error
-		a.assetGetter, err = assetManager.StartAssetManager(ctx)
+		a.assetGetter, err = assetManager.StartAssetManager(a.ctx)
 		if err != nil {
 			return err
 		}
@@ -220,15 +223,29 @@ func (a *Agent) Run(ctx context.Context) error {
 
 	// Start the statsd listener only if the agent configuration has it enabled
 	if !a.config.StatsdServer.Disable {
-		a.StartStatsd(ctx)
+		a.StartStatsd(a.ctx)
 	}
 
-	go a.connectionManager(ctx)
-	go a.refreshSystemInfoPeriodically(ctx)
-	go a.handleAPIQueue(ctx)
+	if !a.config.DisableAPI {
+		a.StartAPI(a.ctx)
+	}
+
+	if !a.config.DisableSockets {
+		// Agent TCP/UDP sockets are deprecated in favor of the agent rest api
+		a.StartSocketListeners(a.ctx)
+	}
+
+	go a.connectionManager(a.ctx)
+	go a.refreshSystemInfoPeriodically(a.ctx)
+	go a.handleAPIQueue(a.ctx)
 
 	a.wg.Wait()
 	return nil
+}
+
+// Run starts all of the agent's processes
+func (a *Agent) Run() error {
+	return a.RunWithInitializer(Initialize)
 }
 
 func (a *Agent) connectionManager(ctx context.Context) {

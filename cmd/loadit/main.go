@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"log"
 	"os"
@@ -30,9 +29,6 @@ func main() {
 
 	subscriptions := strings.Split(*flagSubscriptions, ",")
 	backends := strings.Split(*flagBackends, ",")
-
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	for i := 0; i < *flagCount; i++ {
 		name := uuid.New().String()
@@ -66,7 +62,7 @@ func main() {
 			log.Fatal(err)
 		}
 		go func() {
-			if err := agent.Run(ctx); err != nil {
+			if err := agent.Run(); err != nil {
 				log.Fatal(err)
 			}
 		}()
