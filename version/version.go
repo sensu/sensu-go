@@ -18,6 +18,10 @@ var (
 	// BuildSHA stores the git sha of the build
 	// (e.g. 8673bed0a9705083987b9ecbbc1cc0758df13dd2)
 	BuildSHA string
+
+	// Edition stores the edition of the build
+	// (e.g. opensource or commercial)
+	Edition string = "opensource"
 )
 
 // Semver returns full semantic versioning compatible identifier.
@@ -45,6 +49,7 @@ func Println(component string) {
 		output += fmt.Sprintf("%s ", component)
 	}
 	output += fmt.Sprintf("version %s", Semver())
+	output += fmt.Sprintf(", %s edition", Edition)
 	if BuildSHA != "" {
 		output += fmt.Sprintf(", build %s", BuildSHA)
 	}
