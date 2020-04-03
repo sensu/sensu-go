@@ -1,5 +1,3 @@
-// +build integration
-
 package agent
 
 import (
@@ -82,9 +80,16 @@ func TestTLSAuth(t *testing.T) {
 	}
 	mockTime.Start()
 	defer mockTime.Stop()
-	err = ta.Run()
-	require.NoError(t, err)
-	wg.Wait()
+
+	var runError error
+	go func() {
+		defer wg.Done()
+		runError = ta.Run()
+	}()
+	defer func() {
+		wg.Wait()
+		assert.NoError(t, runError)
+	}()
 }
 
 func TestSendLoop(t *testing.T) {
@@ -124,9 +129,16 @@ func TestSendLoop(t *testing.T) {
 	}
 	mockTime.Start()
 	defer mockTime.Stop()
-	err = ta.Run()
-	require.NoError(t, err)
-	wg.Wait()
+
+	var runError error
+	go func() {
+		defer wg.Done()
+		runError = ta.Run()
+	}()
+	defer func() {
+		wg.Wait()
+		assert.NoError(t, runError)
+	}()
 }
 
 func TestReceiveLoop(t *testing.T) {
@@ -138,6 +150,7 @@ func TestReceiveLoop(t *testing.T) {
 	var once sync.Once
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		once.Do(func() {
+			defer wg.Done()
 			conn, err := server.Serve(w, r)
 			require.NoError(t, err)
 
@@ -174,8 +187,16 @@ func TestReceiveLoop(t *testing.T) {
 	msgBytes, _ := json.Marshal(&testMessageType{"message"})
 	tm := &transport.Message{Payload: msgBytes, Type: "testMessageType"}
 	ta.sendMessage(tm)
-	err = ta.Run()
-	require.NoError(t, err)
+
+	var runError error
+	go func() {
+		defer wg.Done()
+		runError = ta.Run()
+	}()
+	defer func() {
+		wg.Wait()
+		assert.NoError(t, runError)
+	}()
 }
 
 func TestKeepaliveLoggingRedaction(t *testing.T) {
@@ -238,7 +259,15 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 	}
 	mockTime.Start()
 	defer mockTime.Stop()
-	err = ta.Run()
+	var runError error
+	go func() {
+		defer wg.Done()
+		runError = ta.Run()
+	}()
+	defer func() {
+		wg.Wait()
+		assert.NoError(t, runError)
+	}()
 	close(errors)
 	for err := range errors {
 		if err != nil {
@@ -268,6 +297,12 @@ func TestInvalidAgentName_GH2022(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = ta.Run()
-	require.Error(t, err)
+
+	var runError error
+	go func() {
+		runError = ta.Run()
+	}()
+	defer func() {
+		assert.NoError(t, runError)
+	}()
 }
