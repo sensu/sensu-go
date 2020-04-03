@@ -9,6 +9,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Added
 - Added a `timeout` flag to `sensu-backend init`.
+- [Web] Added the ability for labels and annotations with links to images to be
+displayed inline.
+- [Web] Added additional modes for those with colour blindness.
 
 ### Changed
 - Removed deprecated flags in `sensuctl silenced update` subcommand.
@@ -25,6 +28,7 @@ filters matched.
 - Return underlying errors when fetching an asset.
 - Fixed a bug where the etcd event store would return prefixed matches rather than exact matches when getting events by entity.
 - `sensuctl logout` now resets the TLS configuration.
+- [Web] Fixes issue where labels with links could lead to a crash.
 
 ## [5.19.1] - 2020-04-13
 
