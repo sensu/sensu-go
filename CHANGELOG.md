@@ -10,6 +10,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Added ability to make the Resty HTTP Timeout configurable.
 - Added the `event.is_silenced` & `event.check.is_silenced` field selectors.
+- [Web] Added the ability for labels and annotations with links to images to be
+displayed inline.
+- [Web] Added additional modes for those with colour blindness.
 
 ### Fixed
 - Require that pipe handlers have a command set.
@@ -17,6 +20,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 and sensu-agent start.
 - Keepalives can now be published via the HTTP API.
 - Token substitution templates can now express escape-quoted strings.
+- [Web] Fixes issue where labels with links could lead to a crash.
 
 ## [5.19.0] - 2020-03-26
 
