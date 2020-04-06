@@ -183,11 +183,9 @@ func TestReceiveMetrics(t *testing.T) {
 		wg.Done()
 	}()
 
-	mockTime.Start()
-	go func() {
-		ta.StartStatsd(context.TODO())
-	}()
-	mockTime.Stop()
+	go ta.StartStatsd(context.TODO())
+	// Give the server a second to start up
+	time.Sleep(time.Second * 1)
 
 	udpClient, err := net.Dial("udp", GetMetricsAddr(ta.statsdServer))
 	if err != nil {
