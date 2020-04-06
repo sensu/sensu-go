@@ -80,7 +80,7 @@ const (
 )
 
 // InitializeFunc represents the signature of an initialization function, used
-// to initialize the backend
+// to initialize the agent
 type InitializeFunc func(context.Context, *agent.Config) (*agent.Agent, error)
 
 // StartCommand ...
