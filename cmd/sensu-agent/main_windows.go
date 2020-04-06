@@ -5,13 +5,10 @@ package main
 // management.
 
 import (
-	"context"
-	"os"
-	"os/signal"
-	"syscall"
-
+	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/agent/cmd"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
 var logger = logrus.WithFields(logrus.Fields{

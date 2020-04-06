@@ -9,6 +9,7 @@ import (
 
 	runtimedebug "runtime/debug"
 
+	"github.com/sensu/sensu-go/agent"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
