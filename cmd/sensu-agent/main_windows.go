@@ -22,7 +22,7 @@ func main() {
 	}
 
 	rootCmd.AddCommand(cmd.VersionCommand())
-	rootCmd.AddCommand(cmd.StartCommand(agent.Initialize))
+	rootCmd.AddCommand(cmd.StartCommand(agent.NewAgentContext))
 	rootCmd.AddCommand(cmd.NewWindowsServiceCommand())
 
 	if err := rootCmd.Execute(); err != nil {

@@ -25,6 +25,9 @@ type testMessageType struct {
 }
 
 func TestTLSAuth(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	caPath, certPath, keyPath, tlsCleanup := sensutesting.WithFakeCerts(t)
 	defer tlsCleanup()
 
@@ -51,6 +54,8 @@ func TestTLSAuth(t *testing.T) {
 			if auth := r.Header.Get("Authorization"); len(auth) > 0 {
 				t.Fatal("authorization header set")
 			}
+
+			cancel()
 		})
 	}))
 
@@ -82,19 +87,15 @@ func TestTLSAuth(t *testing.T) {
 	}
 	mockTime.Start()
 	defer mockTime.Stop()
-
-	var runError error
-	go func() {
-		defer wg.Done()
-		runError = ta.Run()
-	}()
-	defer func() {
-		wg.Wait()
-		assert.NoError(t, runError)
-	}()
+	err = ta.Run(ctx)
+	require.NoError(t, err)
+	wg.Wait()
 }
 
 func TestSendLoop(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
 	server := transport.NewServer()
 	var once sync.Once
 	var wg sync.WaitGroup
@@ -114,6 +115,7 @@ func TestSendLoop(t *testing.T) {
 			assert.NotNil(t, event.Entity)
 			assert.Equal(t, "agent", event.Entity.EntityClass)
 			assert.NotEmpty(t, event.Entity.System)
+			cancel()
 		})
 	}))
 	defer ts.Close()
@@ -131,28 +133,22 @@ func TestSendLoop(t *testing.T) {
 	}
 	mockTime.Start()
 	defer mockTime.Stop()
-
-	var runError error
-	go func() {
-		defer wg.Done()
-		runError = ta.Run()
-	}()
-	defer func() {
-		wg.Wait()
-		assert.NoError(t, runError)
-	}()
+	err = ta.Run(ctx)
+	require.NoError(t, err)
+	wg.Wait()
 }
 
 func TestReceiveLoop(t *testing.T) {
 	testMessage := &testMessageType{"message"}
 
 	server := transport.NewServer()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 	var wg sync.WaitGroup
 	wg.Add(1)
 	var once sync.Once
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		once.Do(func() {
-			defer wg.Done()
 			conn, err := server.Serve(w, r)
 			require.NoError(t, err)
 
@@ -165,6 +161,7 @@ func TestReceiveLoop(t *testing.T) {
 			}
 			err = conn.Send(tm)
 			assert.NoError(t, err)
+			cancel()
 		})
 	}))
 	defer ts.Close()
@@ -184,21 +181,14 @@ func TestReceiveLoop(t *testing.T) {
 		err := json.Unmarshal(payload, msg)
 		assert.NoError(t, err)
 		assert.Equal(t, testMessage.Data, msg.Data)
+		cancel()
 		return nil
 	})
 	msgBytes, _ := json.Marshal(&testMessageType{"message"})
 	tm := &transport.Message{Payload: msgBytes, Type: "testMessageType"}
 	ta.sendMessage(tm)
-
-	var runError error
-	go func() {
-		defer wg.Done()
-		runError = ta.Run()
-	}()
-	defer func() {
-		wg.Wait()
-		assert.NoError(t, runError)
-	}()
+	err = ta.Run(ctx)
+	require.NoError(t, err)
 }
 
 func TestKeepaliveLoggingRedaction(t *testing.T) {
@@ -261,15 +251,7 @@ func TestKeepaliveLoggingRedaction(t *testing.T) {
 	}
 	mockTime.Start()
 	defer mockTime.Stop()
-	var runError error
-	go func() {
-		defer wg.Done()
-		runError = ta.Run()
-	}()
-	defer func() {
-		wg.Wait()
-		assert.NoError(t, runError)
-	}()
+	err = ta.Run(ctx)
 	close(errors)
 	for err := range errors {
 		if err != nil {
@@ -299,12 +281,6 @@ func TestInvalidAgentName_GH2022(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	var runError error
-	go func() {
-		runError = ta.Run()
-	}()
-	defer func() {
-		assert.NoError(t, runError)
-	}()
+	err = ta.Run(context.Background())
+	require.Error(t, err)
 }

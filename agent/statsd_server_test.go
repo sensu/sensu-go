@@ -6,7 +6,6 @@ import (
 	"context"
 	"encoding/json"
 	"net"
-	"sync"
 	"testing"
 	"time"
 
@@ -161,28 +160,6 @@ func TestReceiveMetrics(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(1)
-	go func() {
-		msg := <-ta.sendq
-		assert.NotEmpty(msg)
-		assert.Equal("event", msg.Type)
-
-		var event types.Event
-		err = json.Unmarshal(msg.Payload, &event)
-		if err != nil {
-			assert.FailNow("failed to unmarshal event json")
-		}
-
-		assert.NotNil(event.Entity)
-		assert.NotNil(event.Metrics)
-		assert.Nil(event.Check)
-		for _, point := range event.Metrics.Points {
-			assert.Contains(point.Name, "foo")
-		}
-		wg.Done()
-	}()
-
 	go ta.StartStatsd(context.TODO())
 	// Give the server a second to start up
 	time.Sleep(time.Second * 1)
@@ -195,6 +172,23 @@ func TestReceiveMetrics(t *testing.T) {
 	_, err = udpClient.Write([]byte("foo:1|c"))
 	require.NoError(t, err)
 	require.NoError(t, udpClient.Close())
+
+	msg := <-ta.sendq
+	assert.NotEmpty(msg)
+	assert.Equal("event", msg.Type)
+
+	var event types.Event
+	err = json.Unmarshal(msg.Payload, &event)
+	if err != nil {
+		assert.FailNow("failed to unmarshal event json")
+	}
+
+	assert.NotNil(event.Entity)
+	assert.NotNil(event.Metrics)
+	assert.Nil(event.Check)
+	for _, point := range event.Metrics.Points {
+		assert.Contains(point.Name, "foo")
+	}
 }
 
 func FixtureCounter(now int64) gostatsd.Counter {

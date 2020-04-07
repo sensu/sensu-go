@@ -20,7 +20,7 @@ func main() {
 	}
 
 	rootCmd.AddCommand(cmd.VersionCommand())
-	rootCmd.AddCommand(cmd.StartCommand(agent.Initialize))
+	rootCmd.AddCommand(cmd.StartCommand(agent.NewAgentContext))
 
 	if err := rootCmd.Execute(); err != nil {
 		logger.WithError(err).Fatal("error executing sensu-agent")

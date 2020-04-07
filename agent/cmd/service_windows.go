@@ -67,7 +67,7 @@ func (s *Service) start(ctx context.Context, args []string, changes chan<- svc.S
 		})
 
 		args = []string{binPath, "start", "-c", configFile}
-		command := StartCommand(agent.Initialize)
+		command := StartCommand(agent.NewAgentContext)
 		accepts := svc.AcceptShutdown | svc.AcceptStop
 		changes <- svc.Status{State: svc.Running, Accepts: accepts}
 

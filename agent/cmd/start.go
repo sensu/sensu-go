@@ -191,7 +191,7 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				logger.Info("signal received: ", <-sigs)
 			}()
 
-			return sensuAgent.RunWithInitializer(initialize)
+			return sensuAgent.Run(ctx)
 		},
 	}
 
