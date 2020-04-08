@@ -13,6 +13,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 and sensu-agent start.
 - Keepalives can now be published via the HTTP API.
 - Token substitution templates can now express escape-quoted strings.
+- sensu-agent will not longer allow configuring keepalive timeouts less than
+the keepalive interval.
+- Eventd can no longer mistake keepalive events for checks with TTL.
+- Keepalives now generate a new event UUID for each keepalive failure event.
 
 ## [5.19.0] - 2020-03-26
 
