@@ -284,3 +284,20 @@ func TestInvalidAgentName_GH2022(t *testing.T) {
 	err = ta.Run(context.Background())
 	require.Error(t, err)
 }
+
+func TestInvalidKeepaliveTimeout(t *testing.T) {
+	cfg, cleanup := FixtureConfig()
+	defer cleanup()
+	cfg.KeepaliveWarningTimeout = cfg.KeepaliveInterval - 1
+	if _, err := NewAgent(cfg); err == nil {
+		t.Error("expected non-nil error")
+	}
+	cfg.KeepaliveWarningTimeout = cfg.KeepaliveInterval + 1
+	if _, err := NewAgent(cfg); err != nil {
+		t.Fatal(err)
+	}
+	cfg.KeepaliveCriticalTimeout = cfg.KeepaliveInterval - 1
+	if _, err := NewAgent(cfg); err == nil {
+		t.Error("expected non-nil error")
+	}
+}
