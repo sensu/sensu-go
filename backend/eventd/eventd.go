@@ -266,6 +266,10 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	switches := e.livenessFactory("eventd", e.dead, e.alive, logger)
 	switchKey := eventKey(event)
 
+	if event.Check.Name == corev2.KeepaliveCheckName {
+		goto NOTTL
+	}
+
 	if event.Check.Ttl > 0 {
 		// Reset the switch
 		timeout := int64(event.Check.Ttl)
@@ -281,6 +285,8 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 			logger.WithError(err).Error("error burying switch")
 		}
 	}
+
+NOTTL:
 
 	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess).Inc()
 
