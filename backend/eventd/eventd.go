@@ -274,6 +274,7 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		}
 	} else if (prevEvent != nil && prevEvent.Check.Ttl > 0) || event.Check.Ttl == deletedEventSentinel {
 		// The check TTL has been disabled, there is no longer a need to track it
+		logger.Debug("check ttl disabled")
 		if err := switches.Bury(context.TODO(), switchKey); err != nil {
 			// It's better to publish the event even if this fails, so
 			// don't return the error here.
