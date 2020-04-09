@@ -19,6 +19,7 @@ and sensu-agent start.
 the postgres event store.
 - The REST API now uses a timeout of 3 seconds by default when querying
 etcd health.
+- The system's libc_type attribute is now populated on alpine containers.
 
 ## [5.19.0] - 2020-03-26
 
