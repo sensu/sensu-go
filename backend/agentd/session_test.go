@@ -157,3 +157,21 @@ func TestSessionTerminateOnSendError(t *testing.T) {
 		t.Fatal("broken session never stopped")
 	}
 }
+
+func TestMakeEntitySwitchBurialEvent(t *testing.T) {
+	cfg := SessionConfig{
+		Namespace:     "default",
+		AgentName:     "entity",
+		Subscriptions: []string{"default"},
+	}
+	event := makeEntitySwitchBurialEvent(cfg)
+	if err := event.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	if err := event.Entity.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	if got, want := event.Timestamp, int64(deletedEventSentinel); got != want {
+		t.Errorf("bad timestamp: got %d, want %d", got, want)
+	}
+}
