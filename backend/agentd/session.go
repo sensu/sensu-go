@@ -20,6 +20,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const deletedEventSentinel = -1
+
 var (
 	sessionCounter = prometheus.NewGaugeVec(
 		prometheus.GaugeOpts{
@@ -122,8 +124,40 @@ func NewSession(ctx context.Context, cfg SessionConfig, conn transport.Transport
 		unmarshal:     unmarshal,
 		marshal:       marshal,
 	}
+	if err := s.bus.Publish(messaging.TopicKeepalive, makeEntitySwitchBurialEvent(cfg)); err != nil {
+		return nil, err
+	}
 	s.handler = newSessionHandler(s)
 	return s, nil
+}
+
+// When the session is created, it will send this event to keepalived, ensuring
+// that any previously existing switch is buried. This is necessary to make
+// sure that the switch is properly recreated if the timeouts have changed.
+//
+// Keepalived checks for deletedEventSentinel, so that other components can
+// message to it that a particular entity's switch can be buried.
+func makeEntitySwitchBurialEvent(cfg SessionConfig) *corev2.Event {
+	return &corev2.Event{
+		ObjectMeta: corev2.ObjectMeta{
+			Namespace: cfg.Namespace,
+		},
+		Entity: &corev2.Entity{
+			ObjectMeta: corev2.ObjectMeta{
+				Namespace: cfg.Namespace,
+				Name:      cfg.AgentName,
+			},
+			Subscriptions: cfg.Subscriptions,
+			EntityClass:   corev2.EntityAgentClass,
+		},
+		Check: &corev2.Check{
+			ObjectMeta: corev2.ObjectMeta{
+				Namespace: cfg.Namespace,
+				Name:      corev2.KeepaliveCheckName,
+			},
+		},
+		Timestamp: deletedEventSentinel,
+	}
 }
 
 // Receiver returns the check channel for the session.
