@@ -81,7 +81,10 @@ func Info() (types.System, error) {
 
 func getLibCType() (string, error) {
 	output, err := exec.Command("ldd", "--version").CombinedOutput()
-	if err != nil {
+	// The command above will return an exit code of 1 on alpine, but still output
+	// the relevant information. Therefore, as a workaround, we can inspect stderr
+	// and ignore the error if it contains pertinent data about the C library
+	if err != nil && !strings.Contains(strings.ToLower(string(output)), "libc") {
 		return "", err
 	}
 	text := strings.ToLower(string(output))
