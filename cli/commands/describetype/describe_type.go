@@ -1,6 +1,7 @@
 package describetype
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"strconv"
@@ -54,7 +55,17 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		var resources []apiResource
 
-		for _, resource := range resource.All {
+		if len(args) != 1 {
+			_ = cmd.Help()
+			return errors.New("invalid argument(s) received, expected a single one or a comma-separated list")
+		}
+
+		requested, err := resource.GetResourceRequests(args[0], resource.All)
+		if err != nil {
+			return err
+		}
+
+		for _, resource := range requested {
 			wrapped := types.WrapResource(resource)
 
 			// Short names are only supported for core/v2 resources
