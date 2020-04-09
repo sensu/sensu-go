@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.19.1] - 2020-04-13
+
 ### Fixed
 - Require that pipe handlers have a command set.
 - The config file default path is now shown in the help for sensu-backend start
