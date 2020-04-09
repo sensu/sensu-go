@@ -109,13 +109,7 @@ func getFormat(cli *cli.SensuCli, cmd *cobra.Command) string {
 // global resources, and inspecting the resulting namespace
 func isNamespaced(r corev2.Resource) bool {
 	r.SetNamespace("~sensu")
-	if r.GetObjectMeta().Namespace != "~sensu" {
-		// SetNamespace() didn't have the intended side effect; assume this is a
-		// global resource.
-		return false
-	}
-
-	return true
+	return r.GetObjectMeta().Namespace == "~sensu"
 }
 
 func printToTable(results interface{}, writer io.Writer) {
