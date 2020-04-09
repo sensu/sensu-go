@@ -223,6 +223,15 @@ func (a *Agent) Run(ctx context.Context) error {
 		a.StartStatsd(ctx)
 	}
 
+	if !a.config.DisableAPI {
+		a.StartAPI(ctx)
+	}
+
+	if !a.config.DisableSockets {
+		// Agent TCP/UDP sockets are deprecated in favor of the agent rest api
+		a.StartSocketListeners(ctx)
+	}
+
 	go a.connectionManager(ctx)
 	go a.refreshSystemInfoPeriodically(ctx)
 	go a.handleAPIQueue(ctx)

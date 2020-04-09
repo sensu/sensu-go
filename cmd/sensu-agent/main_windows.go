@@ -5,13 +5,10 @@ package main
 // management.
 
 import (
-	"context"
-	"os"
-	"os/signal"
-	"syscall"
-
+	"github.com/sensu/sensu-go/agent"
 	"github.com/sensu/sensu-go/agent/cmd"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/cobra"
 )
 
 var logger = logrus.WithFields(logrus.Fields{
@@ -19,19 +16,16 @@ var logger = logrus.WithFields(logrus.Fields{
 })
 
 func main() {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		defer cancel()
-		logger.Info("signal received: ", <-sigs)
-	}()
+	rootCmd := &cobra.Command{
+		Use:   "sensu-agent",
+		Short: "sensu agent",
+	}
 
-	command := cmd.NewRootCommand(ctx, os.Args)
-	command.AddCommand(cmd.NewWindowsServiceCommand())
+	rootCmd.AddCommand(cmd.VersionCommand())
+	rootCmd.AddCommand(cmd.StartCommand(agent.NewAgentContext))
+	rootCmd.AddCommand(cmd.NewWindowsServiceCommand())
 
-	if err := command.Execute(); err != nil {
+	if err := rootCmd.Execute(); err != nil {
 		logger.WithError(err).Fatal("error executing sensu-agent")
 	}
 }

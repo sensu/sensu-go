@@ -9,6 +9,7 @@ import (
 
 	runtimedebug "runtime/debug"
 
+	"github.com/sensu/sensu-go/agent"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sys/windows/svc"
 	"golang.org/x/sys/windows/svc/debug"
@@ -16,8 +17,9 @@ import (
 )
 
 var (
-	_    svc.Handler = &Service{}
-	elog debug.Log
+	_            svc.Handler = &Service{}
+	elog         debug.Log
+	AgentNewFunc = agent.NewAgentContext
 )
 
 func NewService(args []string) *Service {
@@ -66,7 +68,7 @@ func (s *Service) start(ctx context.Context, args []string, changes chan<- svc.S
 		})
 
 		args = []string{binPath, "start", "-c", configFile}
-		command := newStartCommand(ctx, args, logger)
+		command := StartCommand(AgentNewFunc)
 		accepts := svc.AcceptShutdown | svc.AcceptStop
 		changes <- svc.Status{State: svc.Running, Accepts: accepts}
 

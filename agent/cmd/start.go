@@ -4,13 +4,16 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
+	"os/signal"
 	"path/filepath"
+	"strings"
+	"syscall"
 
 	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/util/url"
-	"github.com/sensu/sensu-go/version"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -76,19 +79,12 @@ const (
 	deprecatedFlagKeepaliveTimeout = "keepalive-timeout"
 )
 
-func newVersionCommand() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "version",
-		Short: "Show the sensu-agent version information",
-		Run: func(cmd *cobra.Command, args []string) {
-			version.Println("sensu-agent")
-		},
-	}
+// InitializeFunc represents the signature of an initialization function, used
+// to initialize the agent
+type InitializeFunc func(context.Context, *agent.Config) (*agent.Agent, error)
 
-	return cmd
-}
-
-func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *cobra.Command {
+// StartCommand ...
+func StartCommand(initialize InitializeFunc) *cobra.Command {
 	var setupErr error
 
 	cmd := &cobra.Command{
@@ -178,31 +174,40 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 				cfg.Annotations = annotations
 			}
 
-			sensuAgent, err := agent.NewAgentContext(ctx, cfg)
+			cfg.DisableAPI = viper.GetBool(flagDisableAPI)
+			cfg.DisableSockets = viper.GetBool(flagDisableSockets)
+
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			sensuAgent, err := initialize(ctx, cfg)
 			if err != nil {
 				return err
 			}
 
-			if !viper.GetBool(flagDisableAPI) {
-				sensuAgent.StartAPI(ctx)
-			}
-
-			if !viper.GetBool(flagDisableSockets) {
-				// Agent TCP/UDP sockets are deprecated in favor of the agent rest api
-				sensuAgent.StartSocketListeners(ctx)
-			}
+			sigs := make(chan os.Signal, 1)
+			signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+			go func() {
+				defer cancel()
+				logger.Info("signal received: ", <-sigs)
+			}()
 
 			return sensuAgent.Run(ctx)
 		},
 	}
 
+	setupErr = handleConfig(cmd, true)
+
+	return cmd
+}
+
+func handleConfig(cmd *cobra.Command, server bool) error {
 	// Set up distinct flagset for handling config file
 	configFlagSet := pflag.NewFlagSet("sensu", pflag.ContinueOnError)
 	configFileDefaultLocation := filepath.Join(path.SystemConfigDir(), "agent.yml")
 	configFileDefault := fmt.Sprintf("path to sensu-agent config file (default %q)", configFileDefaultLocation)
 	_ = configFlagSet.StringP(flagConfigFile, "c", "", configFileDefault)
 	configFlagSet.SetOutput(ioutil.Discard)
-	_ = configFlagSet.Parse(args[1:])
+	_ = configFlagSet.Parse(os.Args[1:])
 
 	// Get the given config file path
 	configFile, _ := configFlagSet.GetString(flagConfigFile)
@@ -302,14 +307,18 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	cmd.Flags().SetNormalizeFunc(aliasNormalizeFunc(logger))
 
 	if err := viper.ReadInConfig(); err != nil && configFile != "" {
-		setupErr = err
+		return err
 	}
+
+	viper.SetEnvPrefix("sensu")
+	viper.SetEnvKeyReplacer(strings.NewReplacer("-", "_"))
+	viper.AutomaticEnv()
 
 	deprecatedConfigAttributes(logger)
 	viper.RegisterAlias(deprecatedFlagAgentID, flagAgentName)
 	viper.RegisterAlias(deprecatedFlagKeepaliveTimeout, flagKeepaliveWarningTimeout)
 
-	return cmd
+	return nil
 }
 
 func aliasNormalizeFunc(logger *logrus.Entry) func(*pflag.FlagSet, string) pflag.NormalizedName {
