@@ -7,6 +7,7 @@ package agent
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -76,6 +77,12 @@ func NewAgent(config *Config) (*Agent, error) {
 // NewAgentContext is like NewAgent, but allows threading a context through
 // the system.
 func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
+	if to := config.KeepaliveCriticalTimeout; to > 0 && to <= config.KeepaliveInterval {
+		return nil, errors.New("keepalive critical timeout must be greater than keepalive interval")
+	}
+	if to := config.KeepaliveWarningTimeout; to > 0 && to <= config.KeepaliveInterval {
+		return nil, errors.New("keepalive warning timeout must be greater than keepalive interval")
+	}
 	agent := &Agent{
 		backendSelector: &RandomBackendSelector{Backends: config.BackendURLs},
 		connected:       false,

@@ -386,13 +386,10 @@ func createKeepaliveEvent(rawEvent *corev2.Event) *corev2.Event {
 		Timestamp:  time.Now().Unix(),
 		Entity:     rawEvent.Entity,
 		Check:      keepaliveCheck,
-		ID:         rawEvent.ID,
 	}
 
-	if len(keepaliveEvent.ID) == 0 {
-		uid, _ := uuid.NewRandom()
-		keepaliveEvent.ID = uid[:]
-	}
+	uid, _ := uuid.NewRandom()
+	keepaliveEvent.ID = uid[:]
 
 	return keepaliveEvent
 }
