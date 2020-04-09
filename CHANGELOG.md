@@ -14,6 +14,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 displayed inline.
 - [Web] Added additional modes for those with colour blindness.
 
+### Changed
+- Warning messages from Resty library are now suppressed in sensuctl.
+
 ### Fixed
 - Require that pipe handlers have a command set.
 - The config file default path is now shown in the help for sensu-backend start
