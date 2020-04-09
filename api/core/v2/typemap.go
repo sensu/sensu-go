@@ -81,6 +81,8 @@ var typeMap = map[string]interface{}{
 	"object_meta":            &ObjectMeta{},
 	"PostgresHealth":         &PostgresHealth{},
 	"postgres_health":        &PostgresHealth{},
+	"Process":                &Process{},
+	"process":                &Process{},
 	"ProxyRequests":          &ProxyRequests{},
 	"proxy_requests":         &ProxyRequests{},
 	"Role":                   &Role{},

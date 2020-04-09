@@ -13,6 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - [Web] Added the ability for labels and annotations with links to images to be
 displayed inline.
 - [Web] Added additional modes for those with colour blindness.
+- Added `processes` field to the system type to store agent local services (commercial feature).
 
 ### Fixed
 - Require that pipe handlers have a command set.
