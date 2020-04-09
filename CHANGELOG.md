@@ -13,6 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 and sensu-agent start.
 - Keepalives can now be published via the HTTP API.
 - Token substitution templates can now express escape-quoted strings.
+- The system's libc_type attribute is now populated on alpine containers.
 
 ## [5.19.0] - 2020-03-26
 
