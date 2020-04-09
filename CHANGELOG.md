@@ -19,6 +19,7 @@ the keepalive interval.
 - Keepalives now generate a new event UUID for each keepalive failure event.
 - Agents now correctly reset keepalive switches on reconnect, fixing a bug
 where old keepalive timeout settings would persist too long.
+- The system's libc_type attribute is now populated on alpine containers.
 
 ## [5.19.0] - 2020-03-26
 
