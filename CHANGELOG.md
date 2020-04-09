@@ -15,6 +15,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 and sensu-agent start.
 - Keepalives can now be published via the HTTP API.
 - Token substitution templates can now express escape-quoted strings.
+- Fixed a bug where keepalives would not always fire correctly when using
+the postgres event store.
+- The REST API now uses a timeout of 3 seconds by default when querying
+etcd health.
 
 ## [5.19.0] - 2020-03-26
 
@@ -42,8 +46,6 @@ doesn't exist.
 - Subscriptions can no longer be empty strings (#2932)
 - The proper HTTP status codes are returned for unauthenticated & permission
 denied errors in the REST API.
-- Fixed a bug where keepalives would not always fire correctly when using
-the postgres event store.
 
 ## [5.18.1] - 2020-03-10
 
