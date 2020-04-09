@@ -109,6 +109,11 @@ func New(config config.Config) *RestClient {
 
 	restyInst.SetLogger(logger)
 
+	// Disable warning log entries from resty when an HTTP address is used to
+	// configure sensuctl. We should remove that line whenever we decide to make
+	// sensuctl log level configurable.
+	restyInst.SetDisableWarn(true)
+
 	return client
 }
 
