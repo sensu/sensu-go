@@ -16,6 +16,7 @@ displayed inline.
 
 ### Changed
 - Warning messages from Resty library are now suppressed in sensuctl.
+## [5.19.1] - 2020-04-13
 
 ### Fixed
 - Require that pipe handlers have a command set.
@@ -24,6 +25,10 @@ and sensu-agent start.
 - Keepalives can now be published via the HTTP API.
 - Token substitution templates can now express escape-quoted strings.
 - [Web] Fixes issue where labels with links could lead to a crash.
+- Fixed a bug where keepalives would not always fire correctly when using
+the postgres event store.
+- The REST API now uses a timeout of 3 seconds by default when querying
+etcd health.
 - sensu-agent will not longer allow configuring keepalive timeouts less than
 the keepalive interval.
 - Eventd can no longer mistake keepalive events for checks with TTL.
@@ -58,8 +63,6 @@ doesn't exist.
 - Subscriptions can no longer be empty strings (#2932)
 - The proper HTTP status codes are returned for unauthenticated & permission
 denied errors in the REST API.
-- Fixed a bug where keepalives would not always fire correctly when using
-the postgres event store.
 
 ## [5.18.1] - 2020-03-10
 
