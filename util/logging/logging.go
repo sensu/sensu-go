@@ -46,3 +46,13 @@ func EventFields(event *types.Event, debug bool) map[string]interface{} {
 
 	return fields
 }
+
+// IncrementLogLevel increments the log level, or wraps around to "error" level.
+func IncrementLogLevel(level logrus.Level) logrus.Level {
+	level++
+	if level > logrus.TraceLevel {
+		// wrap around to error level
+		level = logrus.ErrorLevel
+	}
+	return level
+}
