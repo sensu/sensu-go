@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Changed
+- Removed deprecated flags in `sensuctl silenced update` subcommand.
+
 ## [5.19.1] - 2020-04-13
 
 ### Fixed
