@@ -16,6 +16,7 @@ displayed inline.
 
 ### Changed
 - Warning messages from Resty library are now suppressed in sensuctl.
+- Removed deprecated flags in `sensuctl silenced update` subcommand.
 
 ## [5.19.1] - 2020-04-13
 
