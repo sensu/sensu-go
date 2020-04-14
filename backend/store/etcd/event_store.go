@@ -241,6 +241,13 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 		}
 
 		event.Check.MergeWith(prevEvent.Check)
+	} else {
+		// If there was no previous check, we still need to set State and LastOK
+		event.Check.State = corev2.EventFailingState
+		if event.Check.Status == 0 {
+			event.Check.LastOK = event.Check.Executed
+			event.Check.State = corev2.EventPassingState
+		}
 	}
 
 	updateOccurrences(event.Check)
