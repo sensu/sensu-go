@@ -15,9 +15,11 @@ displayed inline.
 - [Web] Added additional modes for those with colour blindness.
 - Users can now increment the logging level by sending SIGUSR1 to the
 sensu-backend or sensu-agent process.
+- Added a new `sensuctl describe-type` command to list all resource types.
 
 ### Changed
 - Warning messages from Resty library are now suppressed in sensuctl.
+- Removed deprecated flags in `sensuctl silenced update` subcommand.
 
 ## [5.19.1] - 2020-04-13
 

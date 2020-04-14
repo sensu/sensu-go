@@ -53,6 +53,7 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 	_ = cmd.Flags().StringP("format", "", format, fmt.Sprintf(`format of data returned ("%s"|"%s")`, config.FormatWrappedJSON, config.FormatYAML))
 	_ = cmd.Flags().StringP("file", "f", "", "file to dump resources to")
 	_ = cmd.Flags().BoolP("types", "t", false, "list supported resource types")
+	_ = cmd.Flags().MarkDeprecated("types", `please use "sensuctl describe-type all" instead`)
 
 	return cmd
 }
