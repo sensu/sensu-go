@@ -20,6 +20,11 @@ func init() {
 			newLevel := logging.IncrementLogLevel(level)
 			logrus.Warnf("set log level to %s", newLevel)
 			logrus.SetLevel(newLevel)
+			if newLevel == logrus.WarnLevel {
+				// repeat the log call, as it wouldn't have been logged at
+				// error level.
+				logrus.Warnf("set log level to %s", newLevel)
+			}
 		}
 	}()
 }
