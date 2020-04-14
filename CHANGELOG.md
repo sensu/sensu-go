@@ -7,6 +7,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Added a `timeout` flag to `sensu-backend init`.
+
+### Fixed
+- `sensu-backend init` now logs any TLS failures encountered.
+
 ## [5.19.1] - 2020-04-13
 
 ### Fixed
