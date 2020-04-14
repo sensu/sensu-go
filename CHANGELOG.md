@@ -13,6 +13,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - [Web] Added the ability for labels and annotations with links to images to be
 displayed inline.
 - [Web] Added additional modes for those with colour blindness.
+- Added a new `sensuctl describe-type` command to list all resource types.
 
 ### Changed
 - Warning messages from Resty library are now suppressed in sensuctl.
