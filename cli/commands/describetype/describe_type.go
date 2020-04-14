@@ -30,8 +30,8 @@ $ sensuctl describe-type all
 
 type apiResource struct {
 	Name       string `json:"name"`
-	ShortName  string `json:"short_name"`
-	APIVersion string `json:"api_version"`
+	ShortName  string `json:"short_name" yaml:"short_name"`
+	APIVersion string `json:"api_version" yaml:"api_version"`
 	Type       string `json:"type"`
 	Namespaced bool   `json:"namespaced"`
 }
