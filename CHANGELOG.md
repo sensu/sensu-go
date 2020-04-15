@@ -16,10 +16,14 @@ displayed inline.
 - Users can now increment the logging level by sending SIGUSR1 to the
 sensu-backend or sensu-agent process.
 - Added a new `sensuctl describe-type` command to list all resource types.
+- Added a `timeout` flag to `sensu-backend init`.
 
 ### Changed
 - Warning messages from Resty library are now suppressed in sensuctl.
 - Removed deprecated flags in `sensuctl silenced update` subcommand.
+
+### Fixed
+- `sensu-backend init` now logs any TLS failures encountered.
 
 ## [5.19.1] - 2020-04-13
 
