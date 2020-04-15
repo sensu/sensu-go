@@ -29,7 +29,7 @@ const (
 type seedConfig struct {
 	backend.Config
 	SeedConfig seeds.Config
-	Timeout    uint
+	Timeout    time.Duration
 }
 
 type initOpts struct {
@@ -118,11 +118,11 @@ func InitCommand() *cobra.Command {
 				clientURLs = viper.GetStringSlice(flagEtcdAdvertiseClientURLs)
 			}
 
-			timeout := viper.GetUint(flagTimeout)
+			timeout := viper.GetDuration(flagTimeout)
 
 			client, err := clientv3.New(clientv3.Config{
 				Endpoints:   clientURLs,
-				DialTimeout: time.Duration(timeout) * time.Second,
+				DialTimeout: timeout * time.Second,
 				TLS:         tlsConfig,
 			})
 
@@ -160,7 +160,7 @@ func InitCommand() *cobra.Command {
 			// the latest connection error (see
 			// https://github.com/sensu/sensu-go/issues/3663)
 			for _, url := range clientURLs {
-				tctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeout)*time.Second)
+				tctx, cancel := context.WithTimeout(context.Background(), timeout*time.Second)
 				defer cancel()
 				_, err = client.Status(tctx, url)
 				if err != nil {
@@ -191,7 +191,7 @@ func InitCommand() *cobra.Command {
 
 func seedCluster(client *clientv3.Client, config seedConfig) error {
 	store := etcdstore.NewStore(client, "")
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(config.Timeout)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), config.Timeout*time.Second)
 	defer cancel()
 	if err := seeds.SeedCluster(ctx, store, config.SeedConfig); err != nil {
 		return err
