@@ -15,6 +15,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - `sensu-backend init` now logs any TLS failures encountered.
+- Fixes a bug in multi-line metric extraction that appeared in windows agents.
 
 ## [5.19.1] - 2020-04-13
 
