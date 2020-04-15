@@ -10,6 +10,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Added a `timeout` flag to `sensu-backend init`.
 
+### Changed
+- Removed deprecated flags in `sensuctl silenced update` subcommand.
+
 ### Fixed
 - `sensu-backend init` now logs any TLS failures encountered.
 

@@ -51,10 +51,6 @@ func UpdateCommand(cli *cli.SensuCli) *cobra.Command {
 			return nil
 		},
 	}
-	_ = cmd.Flags().StringP("subscription", "s", "", "silenced subscription")
-	_ = cmd.Flags().StringP("check", "c", "", "silenced check")
-	_ = cmd.Flags().BoolP("expire-on-resolve", "x", false, "clear silenced entry on resolution")
-	_ = cmd.Flags().StringP("expire", "e", expireDefault, "expiry in seconds")
-	_ = cmd.Flags().StringP("begin", "b", beginDefault, "silence begin in human readable time (Format: Jan 02 2006 3:04PM MST)")
+
 	return cmd
 }
