@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	defaultTimeout = 5
+	defaultTimeout = "5"
 
 	flagInitAdminUsername = "cluster-admin-username"
 	flagInitAdminPassword = "cluster-admin-password"
@@ -182,7 +182,7 @@ func InitCommand() *cobra.Command {
 	cmd.Flags().String(flagInitAdminUsername, "", "cluster admin username")
 	cmd.Flags().String(flagInitAdminPassword, "", "cluster admin password")
 	cmd.Flags().Bool(flagInteractive, false, "interactive mode")
-	cmd.Flags().Uint(flagTimeout, defaultTimeout, "timeout, in seconds, for failing to establish a connection to etcd")
+	cmd.Flags().String(flagTimeout, defaultTimeout, "timeout, in seconds, for failing to establish a connection to etcd")
 
 	setupErr = handleConfig(cmd, false)
 
