@@ -250,7 +250,6 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 					log.Println(http.ListenAndServe("127.0.0.1:6060", nil))
 				}()
 			}
-
 			return sensuBackend.RunWithInitializer(initialize)
 		},
 	}
