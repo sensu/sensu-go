@@ -123,6 +123,9 @@ OUTER:
 		}
 		influxList = append(influxList, i)
 	}
+	if err := s.Err(); err != nil {
+		logger.WithFields(fields).WithError(ErrMetricExtraction).Error(err)
+	}
 
 	return influxList
 }

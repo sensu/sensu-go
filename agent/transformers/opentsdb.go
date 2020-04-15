@@ -110,6 +110,9 @@ OUTER:
 		// Add this metric to our list
 		openTSDBList = append(openTSDBList, o)
 	}
+	if err := s.Err(); err != nil {
+		logger.WithFields(fields).WithError(ErrMetricExtraction).Error(err)
+	}
 
 	return openTSDBList
 }
