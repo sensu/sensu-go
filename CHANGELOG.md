@@ -13,6 +13,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - [Web] Added the ability for labels and annotations with links to images to be
 displayed inline.
 - [Web] Added additional modes for those with colour blindness.
+- Users can now increment the logging level by sending SIGUSR1 to the
+sensu-backend or sensu-agent process.
 - Added a new `sensuctl describe-type` command to list all resource types.
 
 ### Changed
