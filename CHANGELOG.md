@@ -14,6 +14,19 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 displayed inline.
 - [Web] Added additional modes for those with colour blindness.
 - Added `processes` field to the system type to store agent local services (commercial feature).
+- Users can now increment the logging level by sending SIGUSR1 to the
+sensu-backend or sensu-agent process.
+- Added a new `sensuctl describe-type` command to list all resource types.
+- Added a `timeout` flag to `sensu-backend init`.
+
+### Changed
+- Warning messages from Resty library are now suppressed in sensuctl.
+- Removed deprecated flags in `sensuctl silenced update` subcommand.
+
+### Fixed
+- `sensu-backend init` now logs any TLS failures encountered.
+
+## [5.19.1] - 2020-04-13
 
 ### Fixed
 - Require that pipe handlers have a command set.
@@ -22,6 +35,17 @@ and sensu-agent start.
 - Keepalives can now be published via the HTTP API.
 - Token substitution templates can now express escape-quoted strings.
 - [Web] Fixes issue where labels with links could lead to a crash.
+- Fixed a bug where keepalives would not always fire correctly when using
+the postgres event store.
+- The REST API now uses a timeout of 3 seconds by default when querying
+etcd health.
+- sensu-agent will not longer allow configuring keepalive timeouts less than
+the keepalive interval.
+- Eventd can no longer mistake keepalive events for checks with TTL.
+- Keepalives now generate a new event UUID for each keepalive failure event.
+- Agents now correctly reset keepalive switches on reconnect, fixing a bug
+where old keepalive timeout settings would persist too long.
+- The system's libc_type attribute is now populated on alpine containers.
 
 ## [5.19.0] - 2020-03-26
 
@@ -49,8 +73,6 @@ doesn't exist.
 - Subscriptions can no longer be empty strings (#2932)
 - The proper HTTP status codes are returned for unauthenticated & permission
 denied errors in the REST API.
-- Fixed a bug where keepalives would not always fire correctly when using
-the postgres event store.
 
 ## [5.18.1] - 2020-03-10
 

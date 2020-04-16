@@ -266,6 +266,10 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 	switches := e.livenessFactory("eventd", e.dead, e.alive, logger)
 	switchKey := eventKey(event)
 
+	if event.Check.Name == corev2.KeepaliveCheckName {
+		goto NOTTL
+	}
+
 	if event.Check.Ttl > 0 {
 		// Reset the switch
 		timeout := int64(event.Check.Ttl)
@@ -274,12 +278,15 @@ func (e *Eventd) handleMessage(msg interface{}) error {
 		}
 	} else if (prevEvent != nil && prevEvent.Check.Ttl > 0) || event.Check.Ttl == deletedEventSentinel {
 		// The check TTL has been disabled, there is no longer a need to track it
+		logger.Debug("check ttl disabled")
 		if err := switches.Bury(context.TODO(), switchKey); err != nil {
 			// It's better to publish the event even if this fails, so
 			// don't return the error here.
 			logger.WithError(err).Error("error burying switch")
 		}
 	}
+
+NOTTL:
 
 	EventsProcessed.WithLabelValues(EventsProcessedLabelSuccess).Inc()
 

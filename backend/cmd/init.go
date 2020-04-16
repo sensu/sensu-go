@@ -15,18 +15,21 @@ import (
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"google.golang.org/grpc"
 )
 
 const (
+	defaultTimeout = "5"
+
 	flagInitAdminUsername = "cluster-admin-username"
 	flagInitAdminPassword = "cluster-admin-password"
 	flagInteractive       = "interactive"
+	flagTimeout           = "timeout"
 )
 
 type seedConfig struct {
 	backend.Config
 	SeedConfig seeds.Config
+	Timeout    time.Duration
 }
 
 type initOpts struct {
@@ -115,13 +118,12 @@ func InitCommand() *cobra.Command {
 				clientURLs = viper.GetStringSlice(flagEtcdAdvertiseClientURLs)
 			}
 
+			timeout := viper.GetDuration(flagTimeout)
+
 			client, err := clientv3.New(clientv3.Config{
 				Endpoints:   clientURLs,
-				DialTimeout: 5 * time.Second,
+				DialTimeout: timeout * time.Second,
 				TLS:         tlsConfig,
-				DialOptions: []grpc.DialOption{
-					grpc.WithBlock(),
-				},
 			})
 
 			if err != nil {
@@ -150,8 +152,29 @@ func InitCommand() *cobra.Command {
 					AdminUsername: uname,
 					AdminPassword: pword,
 				},
+				Timeout: timeout,
 			}
 
+			// Make sure at least one of the provided endpoints is reachable. This is
+			// required to debug TLS errors because the seeding below will not print
+			// the latest connection error (see
+			// https://github.com/sensu/sensu-go/issues/3663)
+			for _, url := range clientURLs {
+				tctx, cancel := context.WithTimeout(context.Background(), timeout*time.Second)
+				defer cancel()
+				_, err = client.Status(tctx, url)
+				if err != nil {
+					// We do not need to log the error, etcd's client interceptor will log
+					// the actual underlying error
+					continue
+				}
+				// The endpoint did not return any error, therefore we can proceed
+				goto seed
+			}
+			// All endpoints returned an error, return the latest one
+			return err
+
+		seed:
 			return seedCluster(client, seedConfig)
 		},
 	}
@@ -159,6 +182,7 @@ func InitCommand() *cobra.Command {
 	cmd.Flags().String(flagInitAdminUsername, "", "cluster admin username")
 	cmd.Flags().String(flagInitAdminPassword, "", "cluster admin password")
 	cmd.Flags().Bool(flagInteractive, false, "interactive mode")
+	cmd.Flags().String(flagTimeout, defaultTimeout, "timeout, in seconds, for failing to establish a connection to etcd")
 
 	setupErr = handleConfig(cmd, false)
 
@@ -167,7 +191,7 @@ func InitCommand() *cobra.Command {
 
 func seedCluster(client *clientv3.Client, config seedConfig) error {
 	store := etcdstore.NewStore(client, "")
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	ctx, cancel := context.WithTimeout(context.Background(), config.Timeout*time.Second)
 	defer cancel()
 	if err := seeds.SeedCluster(ctx, store, config.SeedConfig); err != nil {
 		return err
