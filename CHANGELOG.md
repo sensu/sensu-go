@@ -7,6 +7,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- Fixed a bug where check state and last_ok were not computed until the second
+instance of the event.
 ### Added
 - Added a `timeout` flag to `sensu-backend init`.
 
