@@ -65,6 +65,12 @@ type Config struct {
 	// Pipelined Configuration
 	DeregistrationHandler string
 
+	// Labels are key-value pairs that users can provide to backend entities
+	Labels map[string]string
+
+	// Annotations are key-value pairs that users can provide to backend entities
+	Annotations map[string]string
+
 	// Etcd configuration
 	EtcdAdvertiseClientURLs      []string
 	EtcdInitialAdvertisePeerURLs []string

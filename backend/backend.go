@@ -633,7 +633,11 @@ func (b *Backend) getBackendEntity(config *Config) *corev2.Entity {
 	entity := &corev2.Entity{
 		EntityClass: corev2.EntityBackendClass,
 		System:      getSystemInfo(),
-		ObjectMeta:  corev2.NewObjectMeta(getDefaultBackendID(), ""),
+		ObjectMeta: corev2.ObjectMeta{
+			Name:        getDefaultBackendID(),
+			Labels:      b.cfg.Labels,
+			Annotations: b.cfg.Annotations,
+		},
 	}
 
 	if config.DeregistrationHandler != "" {

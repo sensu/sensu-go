@@ -17,6 +17,7 @@ displayed inline.
 sensu-backend or sensu-agent process.
 - Added a new `sensuctl describe-type` command to list all resource types.
 - Added a `timeout` flag to `sensu-backend init`.
+- Added `labels` and `annotations` as backend config options.
 
 ### Changed
 - Warning messages from Resty library are now suppressed in sensuctl.

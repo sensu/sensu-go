@@ -23,6 +23,11 @@ import (
 	"github.com/spf13/viper"
 )
 
+var (
+	annotations map[string]string
+	labels      map[string]string
+)
+
 const (
 	// Flag constants
 	flagConfigFile            = "config-file"
@@ -43,6 +48,8 @@ const (
 	flagInsecureSkipTLSVerify = "insecure-skip-tls-verify"
 	flagDebug                 = "debug"
 	flagLogLevel              = "log-level"
+	flagLabels                = "labels"
+	flagAnnotations           = "annotations"
 
 	// Etcd flag constants
 	flagEtcdClientURLs               = "etcd-client-urls"
@@ -118,7 +125,7 @@ Use "{{.CommandPath}} [command] --help" for more information about a command.{{e
 `
 )
 
-// initializeFunc represents the signature of an initialization function, used
+// InitializeFunc represents the signature of an initialization function, used
 // to initialize the backend
 type InitializeFunc func(context.Context, *backend.Config) (*backend.Backend, error)
 
@@ -192,6 +199,15 @@ func StartCommand(initialize InitializeFunc) *cobra.Command {
 				EtcdHeartbeatInterval:        viper.GetUint(flagEtcdHeartbeatInterval),
 				EtcdElectionTimeout:          viper.GetUint(flagEtcdElectionTimeout),
 				NoEmbedEtcd:                  viper.GetBool(flagNoEmbedEtcd),
+				Labels:                       viper.GetStringMapString(flagLabels),
+				Annotations:                  viper.GetStringMapString(flagAnnotations),
+			}
+
+			if flag := cmd.Flags().Lookup(flagLabels); flag != nil && flag.Changed {
+				cfg.Labels = labels
+			}
+			if flag := cmd.Flags().Lookup(flagAnnotations); flag != nil && flag.Changed {
+				cfg.Annotations = annotations
 			}
 
 			// Sensu APIs TLS config
@@ -359,6 +375,8 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 		cmd.Flags().Int(backend.FlagAgentWriteTimeout, viper.GetInt(backend.FlagAgentWriteTimeout), "timeout in seconds for agent writes")
 		cmd.Flags().String(backend.FlagJWTPrivateKeyFile, viper.GetString(backend.FlagJWTPrivateKeyFile), "path to the PEM-encoded private key to use to sign JWTs")
 		cmd.Flags().String(backend.FlagJWTPublicKeyFile, viper.GetString(backend.FlagJWTPublicKeyFile), "path to the PEM-encoded public key to use to verify JWT signatures")
+		cmd.Flags().StringToStringVar(&labels, flagLabels, nil, "entity labels map")
+		cmd.Flags().StringToStringVar(&annotations, flagAnnotations, nil, "entity annotations map")
 
 		// Etcd server flags
 		cmd.Flags().StringSlice(flagEtcdPeerURLs, viper.GetStringSlice(flagEtcdPeerURLs), "list of URLs to listen on for peer traffic")
