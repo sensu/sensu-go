@@ -18,6 +18,7 @@ instance of the event.
 
 ### Fixed
 - `sensu-backend init` now logs any TLS failures encountered.
+- Fixed another bug where sensu-backend would restart when agents disconnect.
 
 ## [5.19.1] - 2020-04-13
 
