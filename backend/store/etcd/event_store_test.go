@@ -138,6 +138,10 @@ func TestEventStorage(t *testing.T) {
 			t.Errorf("bad event: got %v, want %v", got, want)
 		}
 
+		events, err = s.GetEventsByEntity(ctx, "entit", pred)
+		assert.NoError(t, err)
+		assert.Nil(t, events)
+
 		assert.NoError(t, s.DeleteEventByEntityCheck(ctx, "entity1", "check1"))
 		newEv, err = s.GetEventByEntityCheck(ctx, "entity1", "check1")
 		assert.Nil(t, newEv)
