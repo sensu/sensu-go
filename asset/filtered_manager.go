@@ -88,7 +88,7 @@ func (f *filteredManager) Get(ctx context.Context, asset *corev2.Asset) (*Runtim
 
 	// catch case where no asset build filters pass
 	if filteredAsset == nil {
-		logger.WithFields(fields).Debug("entity not filtered from any asset builds, not installing asset")
+		logger.WithFields(fields).Warn("entity not filtered from any asset builds, not installing asset")
 		return nil, nil
 	}
 

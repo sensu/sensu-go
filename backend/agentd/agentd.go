@@ -284,7 +284,15 @@ func (a *Agentd) AuthenticationMiddleware(next http.Handler) http.Handler {
 		// Authenticate against the provider
 		user, err := a.store.AuthenticateUser(r.Context(), username, password)
 		if err != nil {
+			if r.Context().Err() != nil {
+				http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+				return
+			}
 			if _, ok := err.(*store.ErrInternal); ok {
+				logger.
+					WithField("user", username).
+					WithError(err).
+					Error("unexpected error while authenticating the user")
 				select {
 				case a.errChan <- err:
 				case <-a.ctx.Done():
