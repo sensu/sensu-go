@@ -18,6 +18,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Fixed a bug where check state and last_ok were not computed until the second
 instance of the event.
 - Fix the validation for env_vars to allow the equal sign in values.
+- Log to the warning level when an asset is not installed because none of the
+filters matched.
+- Return underlying errors when fetching an asset.
 
 ## [5.19.1] - 2020-04-13
 
