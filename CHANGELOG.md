@@ -7,9 +7,6 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
-### Fixed
-- Fixed a bug where check state and last_ok were not computed until the second
-instance of the event.
 ### Added
 - Added a `timeout` flag to `sensu-backend init`.
 
@@ -18,6 +15,10 @@ instance of the event.
 
 ### Fixed
 - `sensu-backend init` now logs any TLS failures encountered.
+- Fixed a bug where check state and last_ok were not computed until the second
+instance of the event.
+- Log to the warning level when an asset is not installed because none of the
+filters matched.
 
 ## [5.19.1] - 2020-04-13
 
