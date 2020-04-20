@@ -17,6 +17,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - `sensu-backend init` now logs any TLS failures encountered.
 - Fixed a bug where check state and last_ok were not computed until the second
 instance of the event.
+- Log to the warning level when an asset is not installed because none of the
+filters matched.
 - Return underlying errors when fetching an asset.
 
 ## [5.19.1] - 2020-04-13
