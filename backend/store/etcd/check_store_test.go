@@ -6,16 +6,16 @@ import (
 	"context"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestCheckConfigStorage(t *testing.T) {
 	testWithEtcd(t, func(s store.Store) {
-		check := types.FixtureCheckConfig("check1")
-		ctx := context.WithValue(context.Background(), types.NamespaceKey, check.Namespace)
+		check := corev2.FixtureCheckConfig("check1")
+		ctx := context.WithValue(context.Background(), corev2.NamespaceKey, check.Namespace)
 
 		pred := &store.SelectionPredicate{}
 
