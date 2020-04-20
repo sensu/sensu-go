@@ -1,6 +1,7 @@
 package transformers
 
 import (
+	"bufio"
 	"strconv"
 	"strings"
 
@@ -44,11 +45,14 @@ func ParseOpenTSDB(event *types.Event) OpenTSDBList {
 
 	// Split each line of the output into its own metric
 	output := strings.TrimSpace(event.Check.Output)
-	metrics := strings.Split(output, "\n")
+	s := bufio.NewScanner(strings.NewReader(output))
+	l := 0
 
 OUTER:
-	for l, metric := range metrics {
+	for s.Scan() {
+		metric := s.Text()
 		fields["line"] = l
+		l++
 		parts := strings.Split(metric, " ")
 
 		// Ensure we have all the required components. A single metric requires a
@@ -105,6 +109,9 @@ OUTER:
 
 		// Add this metric to our list
 		openTSDBList = append(openTSDBList, o)
+	}
+	if err := s.Err(); err != nil {
+		logger.WithFields(fields).WithError(ErrMetricExtraction).Error(err)
 	}
 
 	return openTSDBList

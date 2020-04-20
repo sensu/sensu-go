@@ -1,6 +1,7 @@
 package transformers
 
 import (
+	"bufio"
 	"strconv"
 	"strings"
 	"time"
@@ -47,11 +48,14 @@ func ParseInflux(event *types.Event) InfluxList {
 	}
 
 	metric := strings.TrimSpace(event.Check.Output)
-	lines := strings.Split(metric, "\n")
+	s := bufio.NewScanner(strings.NewReader(metric))
+	l := 0
 
 OUTER:
-	for l, line := range lines {
+	for s.Scan() {
+		line := s.Text()
 		fields["line"] = l
+		l++
 		i := Influx{}
 		args := strings.Split(line, " ")
 		if len(args) != 3 && len(args) != 2 {
@@ -118,6 +122,9 @@ OUTER:
 			i.Timestamp = time.Now().UTC().Unix()
 		}
 		influxList = append(influxList, i)
+	}
+	if err := s.Err(); err != nil {
+		logger.WithFields(fields).WithError(ErrMetricExtraction).Error(err)
 	}
 
 	return influxList
