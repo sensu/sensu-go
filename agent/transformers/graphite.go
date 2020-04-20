@@ -1,6 +1,7 @@
 package transformers
 
 import (
+	"bufio"
 	"strconv"
 	"strings"
 
@@ -43,10 +44,13 @@ func ParseGraphite(event *types.Event) GraphiteList {
 	}
 
 	metric := strings.TrimSpace(event.Check.Output)
-	lines := strings.Split(metric, "\n")
+	s := bufio.NewScanner(strings.NewReader(metric))
+	l := 0
 
-	for l, line := range lines {
+	for s.Scan() {
+		line := s.Text()
 		fields["line"] = l
+		l++
 		g := Graphite{}
 		args := strings.Split(line, " ")
 		if len(args) != 3 {
@@ -70,6 +74,9 @@ func ParseGraphite(event *types.Event) GraphiteList {
 		}
 		g.Timestamp = i
 		graphiteList = append(graphiteList, g)
+	}
+	if err := s.Err(); err != nil {
+		logger.WithFields(fields).WithError(ErrMetricExtraction).Error(err)
 	}
 
 	return graphiteList

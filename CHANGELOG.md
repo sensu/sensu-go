@@ -25,6 +25,8 @@ sensu-backend or sensu-agent process.
 
 ### Fixed
 - `sensu-backend init` now logs any TLS failures encountered.
+- Fixes a bug in multi-line metric extraction that appeared in windows agents.
+- Fixed an authn bug where sensu-backend would restart when agents disconnect.
 - Fixed a bug where check state and last_ok were not computed until the second
 instance of the event.
 - Log to the warning level when an asset is not installed because none of the
