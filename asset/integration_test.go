@@ -11,6 +11,7 @@ import (
 	bolt "go.etcd.io/bbolt"
 
 	"github.com/sensu/sensu-go/asset"
+	"github.com/sensu/sensu-go/testing/testutil"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -23,7 +24,8 @@ func (f *localFetcher) Fetch(ctx context.Context, path string, headers map[strin
 func TestBoltDBManager(t *testing.T) {
 	t.Parallel()
 
-	tmpDir := os.TempDir()
+	tmpDir, remove := testutil.TempDir(t)
+	defer remove()
 
 	path, err := filepath.Abs(".")
 	if err != nil {

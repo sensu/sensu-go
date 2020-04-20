@@ -4,6 +4,8 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/sensu/sensu-go/testing/testutil"
 )
 
 func TestExpandValidTar(t *testing.T) {
@@ -15,12 +17,12 @@ func TestExpandValidTar(t *testing.T) {
 	}
 	defer f.Close()
 
-	tmpDir := os.TempDir()
+	tmpDir, remove := testutil.TempDir(t)
+	defer remove()
 	targetDirectory := filepath.Join(tmpDir, "rubby-on-rails-tar")
 	if err := os.Mkdir(targetDirectory, 0755); err != nil {
 		t.Fatalf("unable to create target directory, err: %v", err)
 	}
-	defer os.RemoveAll(targetDirectory)
 
 	expander := &archiveExpander{}
 	if err := expander.Expand(f, targetDirectory); err != nil {
@@ -50,12 +52,12 @@ func TestExpandValidTGZ(t *testing.T) {
 	}
 	defer f.Close()
 
-	tmpDir := os.TempDir()
+	tmpDir, remove := testutil.TempDir(t)
+	defer remove()
 	targetDirectory := filepath.Join(tmpDir, "rubby-on-rails-tgz")
 	if err := os.Mkdir(targetDirectory, 0755); err != nil {
 		t.Fatalf("unable to create target directory, err: %v", err)
 	}
-	defer os.RemoveAll(targetDirectory)
 
 	expander := &archiveExpander{}
 	if err := expander.Expand(f, targetDirectory); err != nil {
@@ -74,12 +76,12 @@ func TestExpandUnsupportedArchive(t *testing.T) {
 	}
 	defer f.Close()
 
-	tmpDir := os.TempDir()
+	tmpDir, remove := testutil.TempDir(t)
+	defer remove()
 	targetDirectory := filepath.Join(tmpDir, "unsupported-zip")
 	if err := os.Mkdir(targetDirectory, 0755); err != nil {
 		t.Fatalf("unable to create target directory, err: %v", err)
 	}
-	defer os.RemoveAll(targetDirectory)
 
 	expander := &archiveExpander{}
 	if err := expander.Expand(f, targetDirectory); err == nil {
@@ -98,12 +100,12 @@ func TestExpandInvalidArchive(t *testing.T) {
 	}
 	defer f.Close()
 
-	tmpDir := os.TempDir()
+	tmpDir, remove := testutil.TempDir(t)
+	defer remove()
 	targetDirectory := filepath.Join(tmpDir, "invalid-tar")
 	if err := os.Mkdir(targetDirectory, 0755); err != nil {
 		t.Fatalf("unable to create target directory, err: %v", err)
 	}
-	defer os.RemoveAll(targetDirectory)
 
 	expander := &archiveExpander{}
 	if err := expander.Expand(f, targetDirectory); err == nil {
