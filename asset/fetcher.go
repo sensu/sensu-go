@@ -73,12 +73,12 @@ func (h *httpFetcher) Fetch(ctx context.Context, url string, headers map[string]
 	// Write response to tmp
 	tmpFile, err := ioutil.TempFile(os.TempDir(), "sensu-asset")
 	if err != nil {
-		return nil, fmt.Errorf("can't open tmp file for asset")
+		return nil, fmt.Errorf("can't open tmp file for asset: %s", err)
 	}
 
 	buffered := bufio.NewWriter(tmpFile)
 	if _, err = io.Copy(buffered, resp); err != nil {
-		return nil, fmt.Errorf("error downloading asset")
+		return nil, fmt.Errorf("error downloading asset: %s", err)
 	}
 	if err := buffered.Flush(); err != nil {
 		return nil, fmt.Errorf("error downloading asset: %s", err)
