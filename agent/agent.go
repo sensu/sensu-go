@@ -99,7 +99,7 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 		systemInfo:      &corev2.System{},
 		unmarshal:       agentd.UnmarshalJSON,
 		marshal:         agentd.MarshalJSON,
-		ProcessGetter:   &process.ProcGetter{},
+		ProcessGetter:   &process.NoopProcessGetter{},
 	}
 
 	agent.statsdServer = NewStatsdServer(agent)

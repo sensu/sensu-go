@@ -11,10 +11,10 @@ type Getter interface {
 	Get(context.Context) ([]*corev2.Process, error)
 }
 
-// A ProcGetter is responsible for refreshing process info of an agent.
-type ProcGetter struct{}
+// A NoopProcessGetter is responsible for refreshing process info of an agent.
+type NoopProcessGetter struct{}
 
 // Get is not yet implemented.
-func (p *ProcGetter) Get(ctx context.Context) ([]*corev2.Process, error) {
+func (n *NoopProcessGetter) Get(ctx context.Context) ([]*corev2.Process, error) {
 	return nil, nil
 }
