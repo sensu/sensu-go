@@ -32,6 +32,7 @@ instance of the event.
 - Log to the warning level when an asset is not installed because none of the
 filters matched.
 - Return underlying errors when fetching an asset.
+- Fixed a bug where the etcd event store would return prefixed matches rather than exact matches when getting events by entity.
 
 ## [5.19.1] - 2020-04-13
 

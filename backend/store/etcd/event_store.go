@@ -140,7 +140,7 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *
 	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
 	opts = append(opts, clientv3.WithRange(rangeEnd))
 
-	resp, err := s.client.Get(ctx, path.Join(keyPrefix, pred.Continue), opts...)
+	resp, err := s.client.Get(ctx, fmt.Sprintf("%s/", path.Join(keyPrefix, pred.Continue)), opts...)
 	if err != nil {
 		return nil, &store.ErrInternal{Message: err.Error()}
 	}
