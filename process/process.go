@@ -16,5 +16,5 @@ type NoopProcessGetter struct{}
 
 // Get is not yet implemented.
 func (n *NoopProcessGetter) Get(ctx context.Context) ([]*corev2.Process, error) {
-	return nil, nil
+	return []*corev2.Process{}, nil
 }
