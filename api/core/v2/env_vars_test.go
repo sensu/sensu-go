@@ -23,6 +23,16 @@ func TestValidateEnvVars(t *testing.T) {
 			EnvVars:  []string{"FOO=BAR", "foo:bar"},
 			ExpError: true,
 		},
+		{
+			Name:     "it allows the equal sign in values",
+			EnvVars:  []string{"FOO=BAR=BAZ"},
+			ExpError: false,
+		},
+		{
+			Name:     "it requires a key and a value",
+			EnvVars:  []string{"FOO="},
+			ExpError: true,
+		},
 	}
 
 	for _, test := range tests {

@@ -30,6 +30,7 @@ sensu-backend or sensu-agent process.
 - Fixed an authn bug where sensu-backend would restart when agents disconnect.
 - Fixed a bug where check state and last_ok were not computed until the second
 instance of the event.
+- Fix the validation for env_vars to allow the equal sign in values.
 - Log to the warning level when an asset is not installed because none of the
 filters matched.
 - Return underlying errors when fetching an asset.
