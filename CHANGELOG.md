@@ -19,9 +19,17 @@ sensu-backend or sensu-agent process.
 - Added token substitution for assets.
 - Added `Edition` field to version information.
 - Added `GoVersion` field to version information.
+- Windows agent now has log rotation capabilities.
 
 ### Changed
 - Warning messages from Resty library are now suppressed in sensuctl.
+
+### Fixed
+- Windows agent now accepts and remembers arguments passed to 'service run' and
+'service install'.
+- Windows agent synchronizes writes to its log file, ensuring that file size
+will update with every log line written.
+- Windows agent now logs to both console and log file when 'service run' is used.
 
 ## [5.19.3] - 2020-04-30
 
