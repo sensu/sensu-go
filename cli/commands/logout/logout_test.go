@@ -22,6 +22,8 @@ func TestLogout(t *testing.T) {
 	config.On("SaveTokens", mock.Anything).Return(nil)
 	tokens := types.FixtureTokens("foo", "bar")
 	config.On("Tokens").Return(tokens)
+	config.On("SaveInsecureSkipTLSVerify", false).Return(nil)
+	config.On("SaveTrustedCAFile", "").Return(nil)
 
 	out, err := test.RunCmd(cmd, []string{})
 	assert.Regexp(t, "logged out", out)
@@ -38,6 +40,8 @@ func TestLogoutServerError(t *testing.T) {
 	config := cli.Config.(*clienttest.MockConfig)
 	tokens := types.FixtureTokens("foo", "bar")
 	config.On("Tokens").Return(tokens)
+	config.On("SaveInsecureSkipTLSVerify", false).Return(nil)
+	config.On("SaveTrustedCAFile", "").Return(nil)
 
 	out, err := test.RunCmd(cmd, []string{"bar"})
 	// No error, print help usage
@@ -56,6 +60,8 @@ func TestLogoutServerConfigFile(t *testing.T) {
 	tokens := types.FixtureTokens("foo", "bar")
 	config.On("SaveTokens", mock.Anything).Return(fmt.Errorf("error"))
 	config.On("Tokens").Return(tokens)
+	config.On("SaveInsecureSkipTLSVerify", false).Return(nil)
+	config.On("SaveTrustedCAFile", "").Return(nil)
 
 	out, err := test.RunCmd(cmd, []string{"bar"})
 	// Print usage
