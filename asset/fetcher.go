@@ -10,11 +10,14 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"golang.org/x/time/rate"
 )
 
 var (
 	defaultHTTPGetTimeout = 30 * time.Second
 	defaultFetcher        = &httpFetcher{}
+	limiterMap            = make(map[string]*rate.Limiter)
 )
 
 // A Fetcher fetches a file from the specified source and returns an *os.File
@@ -63,6 +66,18 @@ type httpFetcher struct {
 func (h *httpFetcher) Fetch(ctx context.Context, url string, headers map[string]string) (*os.File, error) {
 	if h.URLGetter == nil {
 		h.URLGetter = httpGet
+	}
+
+	limiter, ok := limiterMap[url]
+	if !ok {
+		// 0.03 = once every ~30 seconds per unique url
+		// 5 = burst allowed per unique url (ex. multiple assets accessing the same url at startup)
+		limiterMap[url] = rate.NewLimiter(0.03, 5)
+		limiter = limiterMap[url]
+	}
+
+	if !limiter.Allow() {
+		return nil, fmt.Errorf("can't download asset due to rate limit")
 	}
 
 	resp, err := h.URLGetter(ctx, url, headers)

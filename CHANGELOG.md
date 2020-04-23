@@ -29,6 +29,7 @@ filters matched.
 - Fixed a bug where the etcd event store would return prefixed matches rather than exact matches when getting events by entity.
 - `sensuctl logout` now resets the TLS configuration.
 - [Web] Fixes issue where labels with links could lead to a crash.
+- Added rate limiting for unique urls when downloading assets so that asset retries are not abusive.
 
 ## [5.19.1] - 2020-04-13
 
