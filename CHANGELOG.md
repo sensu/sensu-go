@@ -24,6 +24,7 @@ instance of the event.
 filters matched.
 - Return underlying errors when fetching an asset.
 - Fixed a bug where the etcd event store would return prefixed matches rather than exact matches when getting events by entity.
+- `sensuctl logout` now resets the TLS configuration.
 
 ## [5.19.1] - 2020-04-13
 

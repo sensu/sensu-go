@@ -31,6 +31,22 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
+			// Reset to the default configuration values
+			if err := cli.Config.SaveInsecureSkipTLSVerify(false); err != nil {
+				return fmt.Errorf(
+					"unable to write new configuration file with error: %s",
+					err,
+				)
+			}
+
+			if err := cli.Config.SaveTrustedCAFile(""); err != nil {
+				fmt.Fprintln(cmd.OutOrStderr())
+				return fmt.Errorf(
+					"unable to write new configuration file with error: %s",
+					err,
+				)
+			}
+
 			fmt.Fprintln(cmd.OutOrStdout(), "You have been logged out")
 			return nil
 		},
