@@ -1,4 +1,4 @@
-package agent
+package token
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestTokenSubstitution(t *testing.T) {
+func TestSubstitution(t *testing.T) {
 	testCases := []struct {
 		name            string
 		data            interface{}
@@ -120,7 +120,7 @@ func TestTokenSubstitution(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result, err := TokenSubstitution(dynamic.Synthesize(tc.data), tc.input)
+			result, err := Substitution(dynamic.Synthesize(tc.data), tc.input)
 			testutil.CompareError(err, tc.expectedError, t)
 
 			if !tc.expectedError {
@@ -134,7 +134,7 @@ func TestTokenSubstitution(t *testing.T) {
 	}
 }
 
-func TestTokenSubstitutionLabels(t *testing.T) {
+func TestSubstitutionLabels(t *testing.T) {
 	data := corev2.Check{
 		ObjectMeta: corev2.ObjectMeta{
 			Labels: map[string]string{"foo": "bar"},
@@ -147,7 +147,7 @@ func TestTokenSubstitutionLabels(t *testing.T) {
 			},
 		},
 	}
-	result, err := TokenSubstitution(dynamic.Synthesize(data), input)
+	result, err := Substitution(dynamic.Synthesize(data), input)
 	if err != nil {
 		t.Fatal(err)
 	}

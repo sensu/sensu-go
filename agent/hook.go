@@ -12,6 +12,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/command"
+	"github.com/sensu/sensu-go/token"
 	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/sensu/sensu-go/util/environment"
 	"github.com/sirupsen/logrus"
@@ -169,7 +170,7 @@ func (a *Agent) prepareHook(hookConfig *corev2.HookConfig) bool {
 
 	// Substitute tokens within the check configuration with the synthesized
 	// entity
-	hookConfigBytes, err := TokenSubstitution(synthesizedEntity, hookConfig)
+	hookConfigBytes, err := token.Substitution(synthesizedEntity, hookConfig)
 	if err != nil {
 		a.sendFailure(event, err)
 		return false

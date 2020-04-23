@@ -15,6 +15,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/command"
+	"github.com/sensu/sensu-go/token"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/sensu/sensu-go/util/environment"
@@ -284,7 +285,7 @@ func prepareCheck(cfg *corev2.CheckConfig, entity *corev2.Entity) error {
 
 	// Substitute tokens within the check configuration with the synthesized
 	// entity
-	checkBytes, err := TokenSubstitution(synthesizedEntity, cfg)
+	checkBytes, err := token.Substitution(synthesizedEntity, cfg)
 	if err != nil {
 		return err
 	}

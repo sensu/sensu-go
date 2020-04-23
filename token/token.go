@@ -1,4 +1,4 @@
-package agent
+package token
 
 import (
 	"bytes"
@@ -7,6 +7,23 @@ import (
 	"strings"
 	"text/template"
 )
+
+// Substitution evaluates the input template, that possibly contains
+// tokens, with the provided data object and returns a slice of bytes
+// representing the result along with any error encountered
+func Substitution(data, input interface{}) ([]byte, error) {
+	inputBytes, err := json.Marshal(input)
+	if err != nil {
+		return nil, fmt.Errorf("could not marshal the provided template: %s", err)
+	}
+
+	rawMessage, err := substituteToken("", data, (*json.RawMessage)(&inputBytes))
+	if err != nil {
+		return nil, err
+	}
+
+	return []byte(*rawMessage), nil
+}
 
 func substituteToken(key string, data interface{}, message *json.RawMessage) (*json.RawMessage, error) {
 	if message == nil {
@@ -97,45 +114,4 @@ func substituteArray(key string, data interface{}, message *json.RawMessage) (*j
 	b, _ := json.Marshal(messages)
 
 	return (*json.RawMessage)(&b), nil
-}
-
-// TokenSubstitution evaluates the input template, that possibly contains
-// tokens, with the provided data object and returns a slice of bytes
-// representing the result along with any error encountered
-func TokenSubstitution(data, input interface{}) ([]byte, error) {
-	inputBytes, err := json.Marshal(input)
-	if err != nil {
-		return nil, fmt.Errorf("could not marshal the provided template: %s", err)
-	}
-
-	rawMessage, err := substituteToken("", data, (*json.RawMessage)(&inputBytes))
-	if err != nil {
-		return nil, err
-	}
-
-	return []byte(*rawMessage), nil
-}
-
-// funcMap defines the available custom functions in templates
-func funcMap() template.FuncMap {
-	return template.FuncMap{
-		"default": defaultFunc,
-	}
-}
-
-// defaultFunc receives v, a slice of interfaces, which length range between one
-// and two arguments, depending on whether the token has a corresponding field.
-// The first argument always represents the default value, while the optional
-// second argument represent the value of the token if it was properly
-// substitued, in which case we should return that value instead of the default
-func defaultFunc(v ...interface{}) interface{} {
-	if len(v) == 1 {
-		return v[0]
-	} else if len(v) == 2 {
-		if v[1] == nil {
-			return v[0]
-		}
-		return v[1]
-	}
-	return nil
 }
