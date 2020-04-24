@@ -29,6 +29,8 @@ filters matched.
 - Fixed a bug where the etcd event store would return prefixed matches rather than exact matches when getting events by entity.
 - `sensuctl logout` now resets the TLS configuration.
 - [Web] Fixes issue where labels with links could lead to a crash.
+- [Web] Fixed an issue where trying to use an unregistered theme could lead to a
+crash.
 
 ## [5.19.1] - 2020-04-13
 
