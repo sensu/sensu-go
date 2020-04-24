@@ -38,7 +38,7 @@ func (h Handlers) CreateOrUpdateResource(r *http.Request) (interface{}, error) {
 	if err := h.Store.CreateOrUpdateResource(r.Context(), resource); err != nil {
 		switch err := err.(type) {
 		case *store.ErrNotValid:
-			return nil, actions.NewErrorf(actions.InvalidArgument)
+			return nil, actions.NewError(actions.InvalidArgument, err)
 		default:
 			return nil, actions.NewError(actions.InternalErr, err)
 		}

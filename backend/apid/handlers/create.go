@@ -40,7 +40,7 @@ func (h Handlers) CreateResource(r *http.Request) (interface{}, error) {
 		case *store.ErrAlreadyExists:
 			return nil, actions.NewErrorf(actions.AlreadyExistsErr)
 		case *store.ErrNotValid:
-			return nil, actions.NewErrorf(actions.InvalidArgument)
+			return nil, actions.NewError(actions.InvalidArgument, err)
 		default:
 			return nil, actions.NewError(actions.InternalErr, err)
 		}
