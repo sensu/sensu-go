@@ -17,7 +17,6 @@ import (
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/token"
 	"github.com/sensu/sensu-go/transport"
-	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/sensu/sensu-go/util/environment"
 	"github.com/sirupsen/logrus"
 )
@@ -125,9 +124,8 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 		return event
 	}
 
-	// Prepare Check
-	err := prepareCheck(checkConfig, entity)
-	if err != nil {
+	// Perform token substitution on the check configuration
+	if err := token.SubstituteCheck(checkConfig, entity); err != nil {
 		a.sendFailure(createEvent(), fmt.Errorf("error preparing check: %s", err))
 		return
 	}
@@ -274,30 +272,6 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 	logEvent(event)
 
 	a.sendMessage(tm)
-}
-
-// prepareCheck prepares a check before its execution by performing token
-// substitution.
-func prepareCheck(cfg *corev2.CheckConfig, entity *corev2.Entity) error {
-	// Extract the extended attributes from the entity and combine them at the
-	// top-level so they can be easily accessed using token substitution
-	synthesizedEntity := dynamic.Synthesize(entity)
-
-	// Substitute tokens within the check configuration with the synthesized
-	// entity
-	checkBytes, err := token.Substitution(synthesizedEntity, cfg)
-	if err != nil {
-		return err
-	}
-
-	// Unmarshal the check configuration obtained after the token substitution
-	// back into the check config struct
-	err = json.Unmarshal(checkBytes, cfg)
-	if err != nil {
-		return fmt.Errorf("could not unmarshal the check: %s", err)
-	}
-
-	return nil
 }
 
 func (a *Agent) sendFailure(event *corev2.Event, err error) {

@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"strings"
 	"text/template"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/types/dynamic"
 )
 
 // Substitution evaluates the input template, that possibly contains
@@ -23,6 +26,29 @@ func Substitution(data, input interface{}) ([]byte, error) {
 	}
 
 	return []byte(*rawMessage), nil
+}
+
+// SubstituteCheck performs token substitution on a check before its execution
+// with the provided entity
+func SubstituteCheck(cfg *corev2.CheckConfig, entity *corev2.Entity) error {
+	// Extract the extended attributes from the entity and combine them at the
+	// top-level so they can be easily accessed using token substitution
+	synthesizedEntity := dynamic.Synthesize(entity)
+
+	// Substitute tokens within the check configuration with the synthesized
+	// entity
+	checkBytes, err := Substitution(synthesizedEntity, cfg)
+	if err != nil {
+		return err
+	}
+
+	// Unmarshal the check configuration obtained after the token substitution
+	// back into the check config struct
+	if err := json.Unmarshal(checkBytes, cfg); err != nil {
+		return fmt.Errorf("could not unmarshal the check: %s", err)
+	}
+
+	return nil
 }
 
 func substituteToken(key string, data interface{}, message *json.RawMessage) (*json.RawMessage, error) {
