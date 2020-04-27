@@ -204,3 +204,75 @@ func TestSubstituteAsset(t *testing.T) {
 		})
 	}
 }
+
+func TestSubstituteCheck(t *testing.T) {
+	tests := []struct {
+		name        string
+		check       *corev2.CheckConfig
+		entity      *corev2.Entity
+		wantErr     bool
+		wantCommand string
+	}{
+		{
+			name:  "A token in the command can be substituted",
+			check: &corev2.CheckConfig{Command: "echo {{ .labels.region }}"},
+			entity: &corev2.Entity{ObjectMeta: corev2.ObjectMeta{
+				Labels: map[string]string{"region": "us-west-1"},
+			}},
+			wantCommand: "echo us-west-1",
+		},
+		{
+			name:        "Errors encountered while performing token substitution are returned",
+			check:       &corev2.CheckConfig{Command: "echo {{ .labels.region }}"},
+			entity:      &corev2.Entity{},
+			wantErr:     true,
+			wantCommand: "echo {{ .labels.region }}",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := SubstituteCheck(tt.check, tt.entity); (err != nil) != tt.wantErr {
+				t.Errorf("SubstituteCheck() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(tt.check.Command, tt.wantCommand) {
+				t.Errorf("SubstituteCheck() = %#v, want %#v", tt.check, tt.wantCommand)
+			}
+		})
+	}
+}
+
+func TestSubstituteHook(t *testing.T) {
+	tests := []struct {
+		name        string
+		hook        *corev2.HookConfig
+		entity      *corev2.Entity
+		wantErr     bool
+		wantCommand string
+	}{
+		{
+			name: "A token in the command can be substituted",
+			hook: &corev2.HookConfig{Command: "echo {{ .labels.region }}"},
+			entity: &corev2.Entity{ObjectMeta: corev2.ObjectMeta{
+				Labels: map[string]string{"region": "us-west-1"},
+			}},
+			wantCommand: "echo us-west-1",
+		},
+		{
+			name:        "Errors encountered while performing token substitution are returned",
+			hook:        &corev2.HookConfig{Command: "echo {{ .labels.region }}"},
+			entity:      &corev2.Entity{},
+			wantErr:     true,
+			wantCommand: "echo {{ .labels.region }}",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := SubstituteHook(tt.hook, tt.entity); (err != nil) != tt.wantErr {
+				t.Errorf("SubstituteHook() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(tt.hook.Command, tt.wantCommand) {
+				t.Errorf("SubstituteHook() = %#v, want %#v", tt.hook, tt.wantCommand)
+			}
+		})
+	}
+}
