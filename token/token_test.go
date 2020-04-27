@@ -2,6 +2,7 @@ package token
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -157,5 +158,49 @@ func TestSubstitutionLabels(t *testing.T) {
 	}
 	if got, want := check.Labels["foo"], "bar"; got != want {
 		t.Fatalf("bad sub: got %q, want %q", got, want)
+	}
+}
+
+func TestSubstituteAsset(t *testing.T) {
+	tests := []struct {
+		name    string
+		asset   *corev2.Asset
+		entity  *corev2.Entity
+		wantErr bool
+		want    *corev2.Asset
+	}{
+		{
+			name:  "A token in the URL can be substituted",
+			asset: &corev2.Asset{URL: "{{ .labels.asset_url }}/asset.tar.gz"},
+			entity: &corev2.Entity{ObjectMeta: corev2.ObjectMeta{
+				Labels: map[string]string{"asset_url": "http://127.0.0.1"},
+			}},
+			want: &corev2.Asset{URL: "http://127.0.0.1/asset.tar.gz"},
+		},
+		{
+			name:  "An asset checksum cannot be substituted",
+			asset: &corev2.Asset{Sha512: "{{ .labels.sha }}"},
+			entity: &corev2.Entity{ObjectMeta: corev2.ObjectMeta{
+				Labels: map[string]string{"sha": "83b51af2254470edbeabf840ae556f113452133f4abbe41e0ce5e0ac37d00262a17646d38ddc23fa16f39706f3506ade902eb1b29429bb0898cfd8c5ce0b0e36"},
+			}},
+			want: &corev2.Asset{Sha512: "{{ .labels.sha }}"},
+		},
+		{
+			name:    "Errors encountered while performing token substitution are returned",
+			asset:   &corev2.Asset{URL: "{{ .labels.asset_url }}"},
+			entity:  &corev2.Entity{},
+			wantErr: true,
+			want:    &corev2.Asset{URL: "{{ .labels.asset_url }}"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := SubstituteAsset(tt.asset, tt.entity); (err != nil) != tt.wantErr {
+				t.Errorf("SubstituteAsset() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if !reflect.DeepEqual(tt.asset, tt.want) {
+				t.Errorf("SubstituteAsset() = %#v, want %#v", tt.asset, tt.want)
+			}
+		})
 	}
 }

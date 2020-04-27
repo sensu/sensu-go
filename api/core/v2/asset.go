@@ -61,17 +61,6 @@ func (a *Asset) Validate() error {
 			return errors.New("URL cannot be empty")
 		}
 
-		if a.URL != "" {
-			u, err := url.Parse(a.URL)
-			if err != nil {
-				return errors.New("invalid URL provided")
-			}
-
-			if u.Scheme != "https" && u.Scheme != "http" {
-				return errors.New("URL must be HTTP or HTTPS")
-			}
-		}
-
 		return js.ParseExpressions(a.Filters)
 	}
 	for _, build := range a.Builds {
@@ -95,17 +84,6 @@ func (a *AssetBuild) Validate() error {
 
 	if a.URL == "" {
 		return errors.New("URL cannot be empty")
-	}
-
-	if a.URL != "" {
-		u, err := url.Parse(a.URL)
-		if err != nil {
-			return errors.New("invalid URL provided")
-		}
-
-		if u.Scheme != "https" && u.Scheme != "http" {
-			return errors.New("URL must be HTTP or HTTPS")
-		}
 	}
 
 	return js.ParseExpressions(a.Filters)

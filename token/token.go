@@ -28,6 +28,35 @@ func Substitution(data, input interface{}) ([]byte, error) {
 	return []byte(*rawMessage), nil
 }
 
+// SubstituteAsset performs token substitution on an asset with the provided
+// entity
+func SubstituteAsset(asset *corev2.Asset, entity *corev2.Entity) error {
+	// While we still validate an asset SHA512 value on creation/updates, we will
+	// want to make sure it cannot be substituted for security reasons
+	sha := asset.Sha512
+
+	// Extract the extended attributes from the entity and combine them at the
+	// top-level so they can be easily accessed using token substitution
+	synthesizedEntity := dynamic.Synthesize(entity)
+
+	// Substitute tokens within the asset with the synthesized entity
+	bytes, err := Substitution(synthesizedEntity, asset)
+	if err != nil {
+		return err
+	}
+
+	// Unmarshal the asset obtained after the token substitution back into the
+	// asset struct
+	if err := json.Unmarshal(bytes, asset); err != nil {
+		return fmt.Errorf("could not unmarshal the asset: %s", err)
+	}
+
+	// Set back the orginal SHA512 value
+	asset.Sha512 = sha
+
+	return nil
+}
+
 // SubstituteCheck performs token substitution on a check before its execution
 // with the provided entity
 func SubstituteCheck(cfg *corev2.CheckConfig, entity *corev2.Entity) error {
@@ -37,14 +66,14 @@ func SubstituteCheck(cfg *corev2.CheckConfig, entity *corev2.Entity) error {
 
 	// Substitute tokens within the check configuration with the synthesized
 	// entity
-	checkBytes, err := Substitution(synthesizedEntity, cfg)
+	bytes, err := Substitution(synthesizedEntity, cfg)
 	if err != nil {
 		return err
 	}
 
 	// Unmarshal the check configuration obtained after the token substitution
 	// back into the check config struct
-	if err := json.Unmarshal(checkBytes, cfg); err != nil {
+	if err := json.Unmarshal(bytes, cfg); err != nil {
 		return fmt.Errorf("could not unmarshal the check: %s", err)
 	}
 

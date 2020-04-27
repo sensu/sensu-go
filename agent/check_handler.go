@@ -126,7 +126,7 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 
 	// Perform token substitution on the check configuration
 	if err := token.SubstituteCheck(checkConfig, entity); err != nil {
-		a.sendFailure(createEvent(), fmt.Errorf("error preparing check: %s", err))
+		a.sendFailure(createEvent(), fmt.Errorf("error while substituting check tokens: %s", err))
 		return
 	}
 
@@ -153,6 +153,14 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 			return
 		}
 		logger.WithFields(fields).Debug("check matches agent allow list")
+	}
+
+	// Perform token substitution on the check assets
+	for i := range checkAssets {
+		if err := token.SubstituteAsset(&checkAssets[i], entity); err != nil {
+			a.sendFailure(createEvent(), fmt.Errorf("error while substituting asset %q tokens: %s", checkAssets[i].Name, err))
+			return
+		}
 	}
 
 	// Fetch and install all assets required for check execution.
