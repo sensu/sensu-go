@@ -59,22 +59,45 @@ func SubstituteAsset(asset *corev2.Asset, entity *corev2.Entity) error {
 
 // SubstituteCheck performs token substitution on a check before its execution
 // with the provided entity
-func SubstituteCheck(cfg *corev2.CheckConfig, entity *corev2.Entity) error {
+func SubstituteCheck(check *corev2.CheckConfig, entity *corev2.Entity) error {
 	// Extract the extended attributes from the entity and combine them at the
 	// top-level so they can be easily accessed using token substitution
 	synthesizedEntity := dynamic.Synthesize(entity)
 
 	// Substitute tokens within the check configuration with the synthesized
 	// entity
-	bytes, err := Substitution(synthesizedEntity, cfg)
+	bytes, err := Substitution(synthesizedEntity, check)
 	if err != nil {
 		return err
 	}
 
 	// Unmarshal the check configuration obtained after the token substitution
 	// back into the check config struct
-	if err := json.Unmarshal(bytes, cfg); err != nil {
+	if err := json.Unmarshal(bytes, check); err != nil {
 		return fmt.Errorf("could not unmarshal the check: %s", err)
+	}
+
+	return nil
+}
+
+// SubstituteHook performs token substitution on a hook configuration with the
+// provided entity
+func SubstituteHook(hook *corev2.HookConfig, entity *corev2.Entity) error {
+	// Extract the extended attributes from the entity and combine them at the
+	// top-level so they can be easily accessed using token substitution
+	synthesizedEntity := dynamic.Synthesize(entity)
+
+	// Substitute tokens within the check configuration with the synthesized
+	// entity
+	bytes, err := Substitution(synthesizedEntity, hook)
+	if err != nil {
+		return err
+	}
+
+	// Unmarshal the check configuration obtained after the token substitution
+	// back into the check config struct
+	if err := json.Unmarshal(bytes, hook); err != nil {
+		return fmt.Errorf("could not unmarshal the hook config: %s", err)
 	}
 
 	return nil
