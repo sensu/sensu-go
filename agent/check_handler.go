@@ -155,14 +155,6 @@ func (a *Agent) executeCheck(ctx context.Context, request *corev2.CheckRequest, 
 		logger.WithFields(fields).Debug("check matches agent allow list")
 	}
 
-	// Perform token substitution on the check assets
-	for i := range checkAssets {
-		if err := token.SubstituteAsset(&checkAssets[i], entity); err != nil {
-			a.sendFailure(createEvent(), fmt.Errorf("error while substituting asset %q tokens: %s", checkAssets[i].Name, err))
-			return
-		}
-	}
-
 	// Fetch and install all assets required for check execution.
 	logger.WithFields(fields).Debug("fetching assets for check")
 	assets, err := asset.GetAll(ctx, a.assetGetter, checkAssets)

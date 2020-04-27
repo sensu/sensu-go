@@ -246,6 +246,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		WorkerCount:             viper.GetInt(FlagPipelinedWorkers),
 		StoreTimeout:            2 * time.Minute,
 		SecretsProviderManager:  b.SecretsProviderManager,
+		BackendEntity:           backendEntity,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", pipeline.Name(), err)
