@@ -52,9 +52,11 @@ func TestPrintln(t *testing.T) {
 			want: "testing version 1.2.3+invalid, built with an invalid \"edition\" ldflag",
 		},
 		{
+			name: "component, version, and invalid edition specified",
 			component: "testing",
 			version:   "1.2.3",
-			edition:   "commercial",
+			edition:   "fake",
+			want: "testing version 1.2.3+invalid, built with an invalid \"edition\" ldflag",
 		},
 	}
 	for _, tt := range tests {
