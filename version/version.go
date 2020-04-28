@@ -44,7 +44,10 @@ func Semver() string {
 		}
 	}
 
-	// Append the edition suffix to the version
+	return version
+}
+
+func SemverWithEditionSuffix() string {
 	var editionSuffix string
 	switch Edition {
 	case "community":
@@ -54,9 +57,7 @@ func Semver() string {
 	default:
 		editionSuffix = InvalidEditionSuffix
 	}
-	version = fmt.Sprintf("%s+%s", version, editionSuffix)
-
-	return version
+	return fmt.Sprintf("%s+%s", Semver(), editionSuffix)
 }
 
 func SemverWithEditionSuffix() string {
