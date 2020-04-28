@@ -523,7 +523,14 @@ func (b *Backend) runOnce(sighup <-chan os.Signal) error {
 		derr = b.RunContext().Err()
 	}
 
+	eCloser := b.EventStore.(closer)
+	_ = eCloser.Close()
+
 	return derr
+}
+
+type closer interface {
+	Close() error
 }
 
 // RunContext returns the context for the current run of the backend.
