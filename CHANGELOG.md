@@ -25,6 +25,10 @@ displayed inline.
 - [Web] Added additional modes for those with colour blindness.
 - Added support for restarting the backend via SIGHUP. Config reloading is not
 supported yet.
+- [Web] Added the ability for labels and annotations with links to images to be
+displayed inline.
+- [Web] Added additional modes for those with colour blindness.
+- Added `Edition` field to version information.
 
 ### Changed
 - Warning messages from Resty library are now suppressed in sensuctl.
