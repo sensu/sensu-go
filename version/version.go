@@ -5,6 +5,12 @@ import (
 	"runtime/debug"
 )
 
+const (
+	CommunityEditionSuffix = "ce"
+	EnterpriseEditionSuffix = "ee"
+	InvalidEditionSuffix = "invalid"
+)
+
 // These values are baked into the sensu-agent and sensu-backend binaries
 // during compilation, and are accessed using the Semver() function
 var (
@@ -20,8 +26,8 @@ var (
 	BuildSHA string
 
 	// Edition stores the edition of the build
-	// (e.g. opensource or commercial)
-	Edition string = "opensource"
+	// (e.g. community or enterprise)
+	Edition string = "community"
 )
 
 // Semver returns full semantic versioning compatible identifier.
@@ -38,24 +44,46 @@ func Semver() string {
 		}
 	}
 
+	// Append the edition suffix to the version
+	var editionSuffix string
+	switch Edition {
+	case "community":
+		editionSuffix = CommunityEditionSuffix
+	case "enterprise":
+		editionSuffix = EnterpriseEditionSuffix
+	default:
+		editionSuffix = InvalidEditionSuffix
+	}
+	version = fmt.Sprintf("%s+%s", version, editionSuffix)
+
 	return version
 }
 
-// Println prints all available details about the current version in a
-// human-readable format, with an optional component name as the prefix
-func Println(component string) {
+func EditionOutput() string {
+	if Edition == "community" || Edition == "enterprise" {
+		return fmt.Sprintf("%s edition", Edition)
+	}
+	return fmt.Sprintf("built with an invalid \"edition\" ldflag")
+}
+
+func FormattedOutput(component string) string {
 	var output string
 	if component != "" {
 		output += fmt.Sprintf("%s ", component)
 	}
 	output += fmt.Sprintf("version %s", Semver())
-	output += fmt.Sprintf(", %s edition", Edition)
+	output += fmt.Sprintf(", %s", EditionOutput())
 	if BuildSHA != "" {
 		output += fmt.Sprintf(", build %s", BuildSHA)
 	}
 	if BuildDate != "" {
 		output += fmt.Sprintf(", built %s", BuildDate)
 	}
+	return output
+}
 
-	fmt.Println(output)
+// Println prints all available details about the current version in a
+// human-readable format, with an optional component name as the prefix
+func Println(component string) {
+	fmt.Println(FormattedOutput(component))
 }
