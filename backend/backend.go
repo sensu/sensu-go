@@ -5,8 +5,10 @@ import (
 	"crypto/tls"
 	"fmt"
 	"os"
+	"os/signal"
 	"runtime/debug"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
@@ -162,7 +164,7 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 	if config.EtcdUseEmbeddedClient {
 		client = e.NewEmbeddedClient()
 	} else {
-		cl, err := e.NewClient()
+		cl, err := e.NewClientContext(backend.runCtx)
 		if err != nil {
 			return nil, err
 		}
@@ -238,8 +240,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
-		Store:                   stor,
-		Bus:                     bus,
+		Store: stor,
+		Bus:   bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 		AssetGetter:             assetGetter,
 		BufferSize:              viper.GetInt(FlagPipelinedBufferSize),
@@ -313,14 +315,14 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:                   bus,
-		Store:                 stor,
-		EventStore:            eventStoreProxy,
-		LivenessFactory:       liveness.EtcdFactory(b.runCtx, b.Client),
-		RingPool:              ringPool,
-		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
-		WorkerCount:           viper.GetInt(FlagKeepalivedWorkers),
-		StoreTimeout:          2 * time.Minute,
+		Bus:             bus,
+		Store:           stor,
+		EventStore:      eventStoreProxy,
+		LivenessFactory: liveness.EtcdFactory(b.runCtx, b.Client),
+		RingPool:        ringPool,
+		BufferSize:      viper.GetInt(FlagKeepalivedBufferSize),
+		WorkerCount:     viper.GetInt(FlagKeepalivedWorkers),
+		StoreTimeout:    2 * time.Minute,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)
@@ -448,15 +450,21 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	return b, nil
 }
 
-func (b *Backend) runOnce() error {
+func (b *Backend) runOnce(sighup <-chan os.Signal) error {
 	var derr error
+
+	eg := errGroup{
+		out: make(chan error),
+	}
+
+	defer eg.WaitStop()
 
 	if b.Etcd != nil {
 		defer func() {
 			logger.Info("shutting down etcd")
 			if err := recover(); err != nil {
 				trace := string(debug.Stack())
-				logger.WithField("panic", trace).WithError(err.(error)).
+				logger.WithField("panic", trace).WithError(fmt.Errorf("%s", err)).
 					Error("recovering from panic due to error, shutting down etcd")
 			}
 			err := b.Etcd.Shutdown()
@@ -466,25 +474,20 @@ func (b *Backend) runOnce() error {
 		}()
 	}
 
-	eg := errGroup{
-		out: make(chan error),
-	}
 	sg := stopGroup{}
 
 	// Loop across the daemons in order to start them, then add them to our groups
 	for _, d := range b.Daemons {
 		if err := d.Start(); err != nil {
+			_ = sg.Stop()
 			return ErrStartup{Err: err, Name: d.Name()}
 		}
 
 		// Add the daemon to our errGroup
-		eg.errors = append(eg.errors, d)
+		eg.daemons = append(eg.daemons, d)
 
 		// Add the daemon to our stopGroup
-		sg = append(sg, daemonStopper{
-			Name:    d.Name(),
-			stopper: d,
-		})
+		sg = append(sg, d)
 	}
 
 	// Reverse the order of our stopGroup so daemons are stopped in the proper
@@ -496,27 +499,29 @@ func (b *Backend) runOnce() error {
 
 	if b.Etcd != nil {
 		// Add etcd to our errGroup, since it's not included in the daemon list
-		eg.errors = append(eg.errors, b.Etcd)
+		eg.daemons = append(eg.daemons, b.Etcd)
 	}
-	eg.Go()
+
+	errCtx, errCancel := context.WithCancel(b.runCtx)
+	defer errCancel()
+	eg.Go(errCtx)
 
 	select {
 	case err := <-eg.Err():
 		logger.WithError(err).Error("backend stopped working and is restarting")
 	case <-b.runCtx.Done():
 		logger.Info("backend shutting down")
+	case <-sighup:
+		logger.Warn("got SIGHUP, restarting")
 	}
 	if err := sg.Stop(); err != nil {
 		if derr == nil {
 			derr = err
 		}
 	}
-
 	if derr == nil {
 		derr = b.runCtx.Err()
 	}
-
-	_ = b.Client.Close()
 
 	return derr
 }
@@ -533,8 +538,11 @@ func (b *Backend) RunWithInitializer(initialize func(context.Context, *Config) (
 		Multiplier:           1,
 	}
 
+	sighup := make(chan os.Signal, 1)
+	signal.Notify(sighup, syscall.SIGHUP)
+
 	err := backoff.Retry(func(int) (bool, error) {
-		err := b.runOnce()
+		err := b.runOnce(sighup)
 		b.Stop()
 		if err != nil {
 			if b.ctx.Err() != nil {
@@ -546,6 +554,8 @@ func (b *Backend) RunWithInitializer(initialize func(context.Context, *Config) (
 				return true, err
 			}
 		}
+
+		_ = b.Client.Close()
 
 		// Yes, two levels of retry... this could improve. Unfortunately Intialize()
 		// is called elsewhere.
@@ -559,7 +569,7 @@ func (b *Backend) RunWithInitializer(initialize func(context.Context, *Config) (
 			}
 			// Replace b with a new backend - this is done to ensure that there is
 			// no side effects from the execution of b that have carried over
-			*b = *backend
+			b = backend
 			return true, nil
 		})
 		if err != nil {
@@ -582,18 +592,14 @@ func (b *Backend) Run() error {
 
 type stopper interface {
 	Stop() error
+	Name() string
 }
 
-type daemonStopper struct {
-	stopper
-	Name string
-}
-
-type stopGroup []daemonStopper
+type stopGroup []stopper
 
 func (s stopGroup) Stop() (err error) {
 	for _, stopper := range s {
-		logger.Info("shutting down ", stopper.Name)
+		logger.Info("shutting down ", stopper.Name())
 		e := stopper.Stop()
 		if err == nil {
 			err = e
@@ -604,24 +610,40 @@ func (s stopGroup) Stop() (err error) {
 
 type errorer interface {
 	Err() <-chan error
+	Name() string
 }
 
 type errGroup struct {
-	out    chan error
-	errors []errorer
+	out     chan error
+	daemons []errorer
+	wg      sync.WaitGroup
 }
 
-func (e errGroup) Go() {
-	for _, err := range e.errors {
-		err := err
+func (e *errGroup) Go(ctx context.Context) {
+	e.wg.Add(len(e.daemons))
+	for _, daemon := range e.daemons {
+		daemon := daemon
 		go func() {
-			e.out <- <-err.Err()
+			defer e.wg.Done()
+			select {
+			case err := <-daemon.Err():
+				err = fmt.Errorf("error from %s: %s", daemon.Name(), err)
+				select {
+				case e.out <- err:
+				case <-ctx.Done():
+				}
+			case <-ctx.Done():
+			}
 		}()
 	}
 }
 
-func (e errGroup) Err() <-chan error {
+func (e *errGroup) Err() <-chan error {
 	return e.out
+}
+
+func (e *errGroup) WaitStop() {
+	e.wg.Wait()
 }
 
 // Stop the Backend cleanly.
