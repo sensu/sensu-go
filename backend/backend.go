@@ -451,6 +451,9 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 }
 
 func (b *Backend) runOnce(sighup <-chan os.Signal) error {
+	eCloser := b.EventStore.(closer)
+	defer eCloser.Close()
+
 	var derr error
 
 	eg := errGroup{
@@ -524,6 +527,10 @@ func (b *Backend) runOnce(sighup <-chan os.Signal) error {
 	}
 
 	return derr
+}
+
+type closer interface {
+	Close() error
 }
 
 // RunContext returns the context for the current run of the backend.
