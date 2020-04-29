@@ -29,6 +29,7 @@ supported yet.
 displayed inline.
 - [Web] Added additional modes for those with colour blindness.
 - Added `Edition` field to version information.
+- Addded `GoVersion` field to version information.
 
 ### Changed
 - Warning messages from Resty library are now suppressed in sensuctl.
