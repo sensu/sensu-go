@@ -12,6 +12,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - [Web] Added the ability for labels and annotations with links to images to be
 displayed inline.
 - [Web] Added additional modes for those with colour blindness.
+- Added support for restarting the backend via SIGHUP. Config reloading is not
+supported yet.
 
 ### Changed
 - Removed deprecated flags in `sensuctl silenced update` subcommand.
@@ -31,6 +33,10 @@ filters matched.
 - [Web] Fixes issue where labels with links could lead to a crash.
 - [Web] Fixed an issue where trying to use an unregistered theme could lead to a
 crash.
+- Fixed a bug that would cause the backend to crash.
+- Fixed a bug that would cause messages like "unary invoker failed" to appear
+in the logs.
+- Fixed several goroutine leaks.
 
 ## [5.19.1] - 2020-04-13
 

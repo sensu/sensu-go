@@ -315,6 +315,9 @@ func (e *Eventd) alive(key string, prev liveness.State, leader bool) (bury bool)
 }
 
 func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) {
+	if e.ctx.Err() != nil {
+		return false
+	}
 	lager := logger.WithFields(logrus.Fields{
 		"status":          liveness.Dead.String(),
 		"previous_status": prev.String()})

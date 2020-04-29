@@ -235,9 +235,15 @@ func (t *Tessend) startMessageHandler() {
 	var hostname string
 	var err error
 	for {
-		msg, ok := <-t.messageChan
-		if !ok {
-			logger.Debug("tessen message channel closed")
+		var msg interface{}
+		var ok bool
+		select {
+		case msg, ok = <-t.messageChan:
+			if !ok {
+				logger.Debug("tessen message channel closed")
+				return
+			}
+		case <-t.ctx.Done():
 			return
 		}
 
@@ -349,31 +355,39 @@ func (t *Tessend) updateRing() {
 func (t *Tessend) watchRing(ctx context.Context, tessen *corev2.TessenConfig, wg *sync.WaitGroup) {
 	wc := t.ring.Watch(ctx, "tessen", 1, int(t.interval), "")
 	go func() {
-		t.handleEvents(tessen, wc)
+		t.handleEvents(ctx, tessen, wc)
 		defer wg.Done()
 	}()
 }
 
 // handleEvents logs different ring events and triggers tessen to run if applicable.
-func (t *Tessend) handleEvents(tessen *corev2.TessenConfig, ch <-chan ringv2.Event) {
-	for event := range ch {
-		switch event.Type {
-		case ringv2.EventError:
-			logger.WithError(event.Err).Error("ring event error")
-		case ringv2.EventAdd:
-			logger.WithField("values", event.Values).Debug("added a backend to tessen")
-		case ringv2.EventRemove:
-			logger.WithField("values", event.Values).Debug("removed a backend from tessen")
-		case ringv2.EventTrigger:
-			logger.WithField("values", event.Values).Debug("tessen ring trigger")
-			// only trigger tessen if the next backend in the ring is this backend
-			if event.Values[0] == t.backendID {
-				if t.enabled() {
-					go t.collectAndSend()
-				}
+func (t *Tessend) handleEvents(ctx context.Context, tessen *corev2.TessenConfig, ch <-chan ringv2.Event) {
+	for {
+		select {
+		case event, ok := <-ch:
+			if !ok {
+				return
 			}
-		case ringv2.EventClosing:
-			logger.Debug("tessen ring closing")
+			switch event.Type {
+			case ringv2.EventError:
+				logger.WithError(event.Err).Error("ring event error")
+			case ringv2.EventAdd:
+				logger.WithField("values", event.Values).Debug("added a backend to tessen")
+			case ringv2.EventRemove:
+				logger.WithField("values", event.Values).Debug("removed a backend from tessen")
+			case ringv2.EventTrigger:
+				logger.WithField("values", event.Values).Debug("tessen ring trigger")
+				// only trigger tessen if the next backend in the ring is this backend
+				if event.Values[0] == t.backendID {
+					if t.enabled() {
+						go t.collectAndSend()
+					}
+				}
+			case ringv2.EventClosing:
+				logger.Debug("tessen ring closing")
+			}
+		case <-ctx.Done():
+			return
 		}
 	}
 }
@@ -485,7 +499,15 @@ func (t *Tessend) enabled() bool {
 func (t *Tessend) collectAndSend() {
 	// collect data
 	data := t.getDataPayload()
-	t.getPerResourceMetrics(time.Now().Unix(), data)
+	if err := t.getPerResourceMetrics(time.Now().Unix(), data); err != nil {
+		if err, ok := err.(*store.ErrInternal); ok {
+			select {
+			case t.errChan <- err:
+			case <-t.ctx.Done():
+			}
+		}
+		return
+	}
 
 	logger.WithFields(logrus.Fields{
 		"url":           t.url,
@@ -552,22 +574,14 @@ func (t *Tessend) getDataPayload() *Data {
 }
 
 // getPerResourceMetrics populates the data payload with the total number of each resource.
-func (t *Tessend) getPerResourceMetrics(now int64, data *Data) {
+func (t *Tessend) getPerResourceMetrics(now int64, data *Data) error {
 	var backendCount float64
 
 	// collect backend count
 	cluster, err := t.client.Cluster.MemberList(t.ctx)
 	if err != nil {
 		logger.WithError(err).Error("unable to retrieve backend count")
-		if _, ok := err.(*store.ErrInternal); ok {
-			go func() {
-				select {
-				case <-t.ctx.Done():
-				case t.errChan <- err:
-				}
-			}()
-			return
-		}
+		return err
 	}
 	if cluster != nil {
 		backendCount = float64(len(cluster.Members))
@@ -588,12 +602,17 @@ func (t *Tessend) getPerResourceMetrics(now int64, data *Data) {
 	// resource every 5 seconds to distribute the load on etcd
 	resourceMetricsMu.RLock()
 	defer resourceMetricsMu.RUnlock()
+	ticker := time.NewTicker(t.duration)
+	defer ticker.Stop()
 	for metricName, metricFunc := range resourceMetrics {
-		time.Sleep(t.duration)
+		select {
+		case <-t.ctx.Done():
+			return t.ctx.Err()
+		case <-ticker.C:
+		}
 		count, err := etcd.Count(t.ctx, t.client, metricFunc(t.ctx, ""))
 		if err != nil {
-			logger.WithError(err).Error("unable to retrieve resource count")
-			return
+			return err
 		}
 
 		mp = &corev2.MetricPoint{
@@ -606,6 +625,7 @@ func (t *Tessend) getPerResourceMetrics(now int64, data *Data) {
 		logMetric(mp)
 		data.Metrics.Points = append(data.Metrics.Points, mp)
 	}
+	return nil
 }
 
 // getTessenConfigMetrics populates the data payload with an opt-out status event.

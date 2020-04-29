@@ -168,33 +168,55 @@ func (a *AdhocRequestExecutor) Stop() {
 
 func (a *AdhocRequestExecutor) listenQueue(ctx context.Context) {
 	for {
-		if err := a.ctx.Err(); err != nil {
-			return
-		}
 		// listen to the queue, unmarshal value into a check request, and execute it
 		item, err := a.adhocQueue.Dequeue(ctx)
 		if err != nil {
-			a.listenQueueErr <- err
+			select {
+			case a.listenQueueErr <- err:
+			case <-ctx.Done():
+				return
+			}
 			continue
 		}
 		var check corev2.CheckConfig
 		if err := json.NewDecoder(strings.NewReader(item.Value())).Decode(&check); err != nil {
-			a.listenQueueErr <- fmt.Errorf("unable to process invalid check: %s", err)
+			err = fmt.Errorf("unable to process invalid check: %s", err)
+			select {
+			case a.listenQueueErr <- err:
+			case <-ctx.Done():
+				return
+			}
 			if ackErr := item.Ack(ctx); ackErr != nil {
-				a.listenQueueErr <- ackErr
+				select {
+				case a.listenQueueErr <- err:
+				case <-ctx.Done():
+					return
+				}
 			}
 			continue
 		}
 
 		if err = a.processCheck(ctx, &check); err != nil {
-			a.listenQueueErr <- err
+			select {
+			case a.listenQueueErr <- err:
+			case <-ctx.Done():
+				return
+			}
 			if nackErr := item.Nack(ctx); nackErr != nil {
-				a.listenQueueErr <- nackErr
+				select {
+				case a.listenQueueErr <- err:
+				case <-ctx.Done():
+					return
+				}
 			}
 			continue
 		}
 		if err = item.Ack(ctx); err != nil {
-			a.listenQueueErr <- err
+			select {
+			case a.listenQueueErr <- err:
+			case <-ctx.Done():
+				return
+			}
 			continue
 		}
 	}
