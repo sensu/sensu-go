@@ -188,7 +188,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	b.ctx = ctx
 	b.runCtx, b.runCancel = context.WithCancel(b.ctx)
 
-	b.Client, err = newClient(b.runCtx, config, b)
+	b.Client, err = newClient(b.RunContext(), config, b)
 	if err != nil {
 		return nil, err
 	}
@@ -197,7 +197,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	stor := etcdstore.NewStore(b.Client, config.EtcdName)
 	b.Store = stor
 
-	if _, err := stor.GetClusterID(b.runCtx); err != nil {
+	if _, err := stor.GetClusterID(b.RunContext()); err != nil {
 		return nil, err
 	}
 
@@ -212,7 +212,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	logger.Debug("Registering backend...")
 
-	backendID := etcd.NewBackendIDGetter(b.runCtx, b.Client)
+	backendID := etcd.NewBackendIDGetter(b.RunContext(), b.Client)
 	logger.Debug("Done registering backend.")
 	b.Daemons = append(b.Daemons, backendID)
 
@@ -230,7 +230,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	backendEntity := b.getBackendEntity(config)
 	logger.WithField("entity", backendEntity).Info("backend entity information")
 	assetManager := asset.NewManager(config.CacheDir, backendEntity, &sync.WaitGroup{})
-	assetGetter, err := assetManager.StartAssetManager(b.runCtx)
+	assetGetter, err := assetManager.StartAssetManager(b.RunContext())
 	if err != nil {
 		return nil, fmt.Errorf("error initializing asset manager: %s", err)
 	}
@@ -256,12 +256,12 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	// Initialize eventd
 	event, err := eventd.New(
-		b.runCtx,
+		b.RunContext(),
 		eventd.Config{
 			Store:           stor,
 			EventStore:      eventStoreProxy,
 			Bus:             bus,
-			LivenessFactory: liveness.EtcdFactory(b.runCtx, b.Client),
+			LivenessFactory: liveness.EtcdFactory(b.RunContext(), b.Client),
 			Client:          b.Client,
 			BufferSize:      viper.GetInt(FlagEventdBufferSize),
 			WorkerCount:     viper.GetInt(FlagEventdWorkers),
@@ -277,7 +277,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	// Initialize schedulerd
 	scheduler, err := schedulerd.New(
-		b.runCtx,
+		b.RunContext(),
 		schedulerd.Config{
 			Store:                  stor,
 			Bus:                    bus,
@@ -318,7 +318,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		Bus:             bus,
 		Store:           stor,
 		EventStore:      eventStoreProxy,
-		LivenessFactory: liveness.EtcdFactory(b.runCtx, b.Client),
+		LivenessFactory: liveness.EtcdFactory(b.RunContext(), b.Client),
 		RingPool:        ringPool,
 		BufferSize:      viper.GetInt(FlagKeepalivedBufferSize),
 		WorkerCount:     viper.GetInt(FlagKeepalivedWorkers),
@@ -407,7 +407,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	// Initialize tessend
 	tessen, err := tessend.New(
-		b.runCtx,
+		b.RunContext(),
 		tessend.Config{
 			Store:      stor,
 			EventStore: eventStoreProxy,
@@ -502,14 +502,14 @@ func (b *Backend) runOnce(sighup <-chan os.Signal) error {
 		eg.daemons = append(eg.daemons, b.Etcd)
 	}
 
-	errCtx, errCancel := context.WithCancel(b.runCtx)
+	errCtx, errCancel := context.WithCancel(b.RunContext())
 	defer errCancel()
 	eg.Go(errCtx)
 
 	select {
 	case err := <-eg.Err():
 		logger.WithError(err).Error("backend stopped working and is restarting")
-	case <-b.runCtx.Done():
+	case <-b.RunContext().Done():
 		logger.Info("backend shutting down")
 	case <-sighup:
 		logger.Warn("got SIGHUP, restarting")
@@ -520,10 +520,15 @@ func (b *Backend) runOnce(sighup <-chan os.Signal) error {
 		}
 	}
 	if derr == nil {
-		derr = b.runCtx.Err()
+		derr = b.RunContext().Err()
 	}
 
 	return derr
+}
+
+// RunContext returns the context for the current run of the backend.
+func (b *Backend) RunContext() context.Context {
+	return b.runCtx
 }
 
 // RunWithInitializer is like Run but accepts an initialization function to use
