@@ -451,6 +451,9 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 }
 
 func (b *Backend) runOnce(sighup <-chan os.Signal) error {
+	eCloser := b.EventStore.(closer)
+	defer eCloser.Close()
+
 	var derr error
 
 	eg := errGroup{
@@ -522,9 +525,6 @@ func (b *Backend) runOnce(sighup <-chan os.Signal) error {
 	if derr == nil {
 		derr = b.RunContext().Err()
 	}
-
-	eCloser := b.EventStore.(closer)
-	_ = eCloser.Close()
 
 	return derr
 }
