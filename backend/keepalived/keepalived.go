@@ -222,104 +222,107 @@ func (k *Keepalived) startWorkers() {
 	k.wg.Add(k.workerCount)
 
 	for i := 0; i < k.workerCount; i++ {
-		go k.processKeepalives(context.Background())
+		go k.processKeepalives(k.ctx)
 	}
 }
 
 func (k *Keepalived) processKeepalives(ctx context.Context) {
 	defer k.wg.Done()
 
-	var (
-		event *corev2.Event
-		ok    bool
-	)
-
 	switches := k.livenessFactory(k.Name(), k.alive, k.dead, logger)
 
-	for msg := range k.keepaliveChan {
-		event, ok = msg.(*corev2.Event)
-		if !ok {
-			logger.Error("keepalived received non-Event on keepalive channel")
-			continue
-		}
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case msg, ok := <-k.keepaliveChan:
+			if !ok {
+				return
+			}
+			event, ok := msg.(*corev2.Event)
+			if !ok {
+				logger.Error("keepalived received non-Event on keepalive channel")
+				continue
+			}
 
-		entity := event.Entity
-		if entity == nil {
-			logger.Error("keepalive channel received keepalive with nil event")
-			continue
-		}
+			entity := event.Entity
+			if entity == nil {
+				logger.Error("keepalive channel received keepalive with nil event")
+				continue
+			}
 
-		if err := entity.Validate(); err != nil {
-			logger.WithError(err).Error("invalid keepalive event")
-			continue
-		}
+			if err := entity.Validate(); err != nil {
+				logger.WithError(err).Error("invalid keepalive event")
+				continue
+			}
 
-		if event.Timestamp == deletedEventSentinel {
-			// The keepalive event was deleted, so we should bury its associated switch
-			id := path.Join(entity.Namespace, entity.Name)
-			tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
-			err := switches.Bury(tctx, id)
-			cancel()
-			if err != nil {
+			if event.Timestamp == deletedEventSentinel {
+				// The keepalive event was deleted, so we should bury its associated switch
+				id := path.Join(entity.Namespace, entity.Name)
+				tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
+				err := switches.Bury(tctx, id)
+				cancel()
+				if err != nil {
+					if _, ok := err.(*store.ErrInternal); ok {
+						// Fatal error
+						select {
+						case k.errChan <- err:
+						case <-ctx.Done():
+						}
+						return
+					}
+					logger.WithError(err).Error("error deleting keepalive")
+				}
+				continue
+			}
+
+			if err := k.handleEntityRegistration(entity); err != nil {
+				logger.WithError(err).Error("error handling entity registration")
 				if _, ok := err.(*store.ErrInternal); ok {
 					// Fatal error
 					select {
 					case k.errChan <- err:
-					case <-k.ctx.Done():
+					case <-ctx.Done():
 					}
 					return
 				}
-				logger.WithError(err).Error("error deleting keepalive")
 			}
-			continue
-		}
 
-		if err := k.handleEntityRegistration(entity); err != nil {
-			logger.WithError(err).Error("error handling entity registration")
-			if _, ok := err.(*store.ErrInternal); ok {
-				// Fatal error
-				select {
-				case k.errChan <- err:
-				case <-k.ctx.Done():
-				}
-				return
+			// Retrieve the keepalive timeout or use a default value in case an older
+			// agent version was used, since entity.KeepaliveTimeout no longer exist
+			ttl := int64(corev2.DefaultKeepaliveTimeout)
+			if event.Check != nil {
+				ttl = int64(event.Check.Timeout)
 			}
-		}
 
-		// Retrieve the keepalive timeout or use a default value in case an older
-		// agent version was used, since entity.KeepaliveTimeout no longer exist
-		ttl := int64(corev2.DefaultKeepaliveTimeout)
-		if event.Check != nil {
-			ttl = int64(event.Check.Timeout)
-		}
+			key := path.Join(entity.Namespace, entity.Name)
 
-		key := path.Join(entity.Namespace, entity.Name)
-
-		tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
-		err := switches.Alive(tctx, key, ttl)
-		cancel()
-		if err != nil {
-			logger.WithError(err).Errorf("error on switch %q", key)
-			if _, ok := err.(*store.ErrInternal); ok {
-				// Fatal error
-				select {
-				case k.errChan <- err:
-				case <-k.ctx.Done():
+			tctx, cancel := context.WithTimeout(ctx, k.storeTimeout)
+			err := switches.Alive(tctx, key, ttl)
+			cancel()
+			if err != nil {
+				logger.WithError(err).Errorf("error on switch %q", key)
+				if _, ok := err.(*store.ErrInternal); ok {
+					// Fatal error
+					select {
+					case k.errChan <- err:
+					case <-ctx.Done():
+					}
+					return
 				}
-				return
+				continue
 			}
-			continue
-		}
 
-		if err := k.handleUpdate(event); err != nil {
-			logger.WithError(err).Error("error updating event")
-			if _, ok := err.(*store.ErrInternal); ok {
-				// Fatal error
-				select {
-				case k.errChan <- err:
-				case <-k.ctx.Done():
+			if err := k.handleUpdate(event); err != nil {
+				logger.WithError(err).Error("error updating event")
+				if _, ok := err.(*store.ErrInternal); ok {
+					// Fatal error
+					select {
+					case k.errChan <- err:
+					case <-ctx.Done():
+					}
+					return
 				}
-				return
 			}
 		}
 	}
@@ -436,6 +439,9 @@ func (k *Keepalived) alive(key string, prev liveness.State, leader bool) bool {
 
 // this is a callback - it should not write to k.errChan
 func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
+	if k.ctx.Err() != nil {
+		return false
+	}
 	// Parse the key to determine the namespace and entity name. The error will be
 	// verified later
 	namespace, name, err := parseKey(key)

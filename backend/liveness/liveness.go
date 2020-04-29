@@ -15,11 +15,6 @@ import (
 	"golang.org/x/time/rate"
 )
 
-var (
-	switches = make(map[string]Interface)
-	switchMu sync.Mutex
-)
-
 // SwitchPrefix contains the base path for switchset, which are tracked under
 // path.Join(SwitchPrefix, toggleName, key)
 var SwitchPrefix = "/sensu.io/switchsets"
@@ -73,6 +68,8 @@ type Factory func(name string, dead, alive EventFunc, logger logrus.FieldLogger)
 // cached after the first instantiation, and the EventFuncs and logger cannot
 // be changed later.
 func EtcdFactory(ctx context.Context, client *clientv3.Client) Factory {
+	switches := make(map[string]Interface)
+	switchMu := new(sync.Mutex)
 	return Factory(func(name string, dead, alive EventFunc, logger logrus.FieldLogger) Interface {
 		switchMu.Lock()
 		defer switchMu.Unlock()
@@ -326,8 +323,8 @@ func (t *SwitchSet) monitor(ctx context.Context) {
 // negative value, then it is ignored, as it is only an undead entity being
 // replaced by another undead entity.
 func (t *SwitchSet) handleEvent(ctx context.Context, event *clientv3.Event) {
-	if isBuried(event) {
-		// The event was buried - we don't need to handle it
+	if isBuried(event) || ctx.Err() != nil {
+		// The event was buried - we don't need to handle it, or the context was canceled.
 		return
 	}
 	ttl, prevState := t.getTTLFromEvent(event)

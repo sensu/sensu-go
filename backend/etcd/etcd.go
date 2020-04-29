@@ -255,8 +255,14 @@ func (e *Etcd) Shutdown() error {
 	return nil
 }
 
-// NewClient returns a new etcd v3 client. Clients must be closed after use.
+// NewClient returns a new etcd v3 client.
 func (e *Etcd) NewClient() (*clientv3.Client, error) {
+	return e.NewClientContext(context.Background())
+}
+
+// NewClientContext is like NewClient, but sets the provided context on the
+// client.
+func (e *Etcd) NewClientContext(ctx context.Context) (*clientv3.Client, error) {
 	tlsConfig, err := ((transport.TLSInfo)(e.cfg.ClientTLSInfo)).ClientConfig()
 	if err != nil {
 		return nil, err
@@ -268,6 +274,7 @@ func (e *Etcd) NewClient() (*clientv3.Client, error) {
 		DialOptions: []grpc.DialOption{
 			grpc.WithBlock(),
 		},
+		Context: ctx,
 	})
 }
 
