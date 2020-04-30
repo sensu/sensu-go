@@ -45,6 +45,7 @@ import (
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/util/retry"
 	"github.com/spf13/viper"
+	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 )
 
@@ -230,7 +231,11 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	backendEntity := b.getBackendEntity(config)
 	logger.WithField("entity", backendEntity).Info("backend entity information")
 	assetManager := asset.NewManager(config.CacheDir, backendEntity, &sync.WaitGroup{})
-	assetGetter, err := assetManager.StartAssetManager(b.RunContext())
+	limit := b.cfg.AssetsRateLimit
+	if limit == 0 {
+		limit = rate.Limit(asset.DefaultAssetsRateLimit)
+	}
+	assetGetter, err := assetManager.StartAssetManager(b.RunContext(), rate.NewLimiter(limit, b.cfg.AssetsBurstLimit))
 	if err != nil {
 		return nil, fmt.Errorf("error initializing asset manager: %s", err)
 	}
@@ -240,8 +245,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	// Initialize pipelined
 	pipeline, err := pipelined.New(pipelined.Config{
-		Store: stor,
-		Bus:   bus,
+		Store:                   stor,
+		Bus:                     bus,
 		ExtensionExecutorGetter: rpc.NewGRPCExtensionExecutor,
 		AssetGetter:             assetGetter,
 		BufferSize:              viper.GetInt(FlagPipelinedBufferSize),
@@ -315,14 +320,14 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
-		Bus:             bus,
-		Store:           stor,
-		EventStore:      eventStoreProxy,
-		LivenessFactory: liveness.EtcdFactory(b.RunContext(), b.Client),
-		RingPool:        ringPool,
-		BufferSize:      viper.GetInt(FlagKeepalivedBufferSize),
-		WorkerCount:     viper.GetInt(FlagKeepalivedWorkers),
-		StoreTimeout:    2 * time.Minute,
+		Bus:                   bus,
+		Store:                 stor,
+		EventStore:            eventStoreProxy,
+		LivenessFactory:       liveness.EtcdFactory(b.RunContext(), b.Client),
+		RingPool:              ringPool,
+		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
+		WorkerCount:           viper.GetInt(FlagKeepalivedWorkers),
+		StoreTimeout:          2 * time.Minute,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", keepalive.Name(), err)

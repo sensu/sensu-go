@@ -9,6 +9,7 @@ import (
 
 	"github.com/sensu/sensu-go/types"
 	bolt "go.etcd.io/bbolt"
+	"golang.org/x/time/rate"
 )
 
 const (
@@ -33,7 +34,7 @@ func NewManager(cacheDir string, entity *types.Entity, wg *sync.WaitGroup) *Mana
 }
 
 // StartAssetManager starts the asset manager for a backend or agent.
-func (m *Manager) StartAssetManager(ctx context.Context) (Getter, error) {
+func (m *Manager) StartAssetManager(ctx context.Context, limiter *rate.Limiter) (Getter, error) {
 	// create agent cache directory if it doesn't already exist
 	if err := os.MkdirAll(m.cacheDir, 0755); err != nil {
 		return nil, err
@@ -55,7 +56,7 @@ func (m *Manager) StartAssetManager(ctx context.Context) (Getter, error) {
 		}
 	}()
 	boltDBGetter := NewBoltDBGetter(
-		db, m.cacheDir, nil, nil, nil)
+		db, m.cacheDir, nil, nil, nil, limiter)
 
 	return NewFilteredManager(boltDBGetter, m.entity), nil
 }

@@ -19,6 +19,7 @@ import (
 	time "github.com/echlebek/timeproxy"
 	"github.com/gogo/protobuf/proto"
 	"github.com/google/uuid"
+	"golang.org/x/time/rate"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
@@ -219,7 +220,11 @@ func (a *Agent) Run(ctx context.Context) error {
 	if !a.config.DisableAssets {
 		assetManager := asset.NewManager(a.config.CacheDir, a.getAgentEntity(), &a.wg)
 		var err error
-		a.assetGetter, err = assetManager.StartAssetManager(ctx)
+		limit := a.config.AssetsRateLimit
+		if limit == 0 {
+			limit = rate.Limit(asset.DefaultAssetsRateLimit)
+		}
+		a.assetGetter, err = assetManager.StartAssetManager(ctx, rate.NewLimiter(limit, a.config.AssetsBurstLimit))
 		if err != nil {
 			return err
 		}
