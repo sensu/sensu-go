@@ -281,7 +281,10 @@ func Count(ctx context.Context, client *clientv3.Client, key string) (int64, err
 
 	resp, err := client.Get(ctx, key, opts...)
 	if err != nil {
-		return 0, &store.ErrInternal{Message: err.Error()}
+		if err != context.Canceled {
+			err = &store.ErrInternal{Message: err.Error()}
+		}
+		return 0, err
 	}
 
 	return resp.Count, nil

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/asset"
 	"golang.org/x/time/rate"
 )
 
@@ -81,6 +82,12 @@ type Config struct {
 
 	// API contains the Sensu client HTTP API configuration
 	API *APIConfig
+
+	// AssetsRateLimit is the maximum number of assets per second that will be fetched.
+	AssetsRateLimit rate.Limit
+
+	// AssetsBurstLimit is the maximum amount of burst allowed in a rate interval.
+	AssetsBurstLimit int
 
 	// BackendURLs is a list of URLs for the Sensu Backend. Default:
 	// ws://127.0.0.1:8081
@@ -211,6 +218,8 @@ func FixtureConfig() (*Config, func()) {
 			Host: DefaultAPIHost,
 			Port: DefaultAPIPort,
 		},
+		AssetsRateLimit:         asset.DefaultAssetsRateLimit,
+		AssetsBurstLimit:        asset.DefaultAssetsBurstLimit,
 		BackendURLs:             []string{},
 		CacheDir:                cacheDir,
 		EventsAPIRateLimit:      DefaultEventsAPIRateLimit,

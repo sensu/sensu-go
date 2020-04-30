@@ -84,6 +84,7 @@ func TestBoltDBManager(t *testing.T) {
 		&localFetcher{},
 		nil,
 		nil,
+		nil,
 	)
 
 	if getter == nil {

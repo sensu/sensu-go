@@ -381,8 +381,8 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, va
 	_ = r.watchLimiter.Wait(ctx)
 	watcher, err := newWatcher(r, ch, name, values, interval, cron)
 	if err != nil {
-		notifyError(ch, err)
-		notifyClosing(ch)
+		notifyError(ctx, ch, err)
+		notifyClosing(ctx, ch)
 		return
 	}
 	cancelCtx, cancel := context.WithCancel(clientv3.WithRequireLeader(ctx))
@@ -392,8 +392,8 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, va
 	r.watchers[watcher.watcherKey] = watcher
 	r.mu.Unlock()
 	if err := watcher.ensureActiveTrigger(ctx); err != nil {
-		notifyError(ch, fmt.Errorf("error while starting ring watcher: %s", err))
-		notifyClosing(ch)
+		notifyError(ctx, ch, fmt.Errorf("error while starting ring watcher: %s", err))
+		notifyClosing(ctx, ch)
 		cancel()
 		return
 	}
@@ -406,11 +406,11 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, va
 				r.mu.Lock()
 				delete(r.watchers, watcher.watcherKey)
 				r.mu.Unlock()
-				notifyClosing(ch)
+				notifyClosing(ctx, ch)
 				return
 			case response, ok := <-itemsC:
 				if err := response.Err(); err != nil {
-					notifyError(ch, err)
+					notifyError(ctx, ch, err)
 				}
 				if response.Canceled || !ok {
 					// The watcher needs to be reinstated
@@ -420,7 +420,7 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, va
 				notifyAddRemove(ch, response)
 			case response, ok := <-nextC:
 				if err := response.Err(); err != nil {
-					notifyError(ch, err)
+					notifyError(ctx, ch, err)
 				}
 				if response.Canceled || !ok {
 					// The watcher needs to be reinstated
@@ -430,15 +430,18 @@ func (r *Ring) startWatchers(ctx context.Context, ch chan Event, name string, va
 				watcher.handleRingTrigger(ctx, ch, response)
 			case <-watcher.notifier:
 				if err := watcher.ensureActiveTrigger(ctx); err != nil {
-					notifyError(ch, err)
+					notifyError(ctx, ch, err)
 				}
 			}
 		}
 	}()
 }
 
-func notifyClosing(ch chan<- Event) {
-	ch <- Event{Type: EventClosing}
+func notifyClosing(ctx context.Context, ch chan<- Event) {
+	select {
+	case ch <- Event{Type: EventClosing}:
+	case <-ctx.Done():
+	}
 	close(ch)
 }
 
@@ -538,7 +541,7 @@ func (w *watcher) handleRingTrigger(ctx context.Context, ch chan<- Event, respon
 	for _, event := range response.Events {
 		items, err := w.advanceRing(ctx, event.PrevKv)
 		if err != nil {
-			notifyError(ch, err)
+			notifyError(ctx, ch, err)
 		}
 		if len(items) > 0 {
 			// When the ring trigger was deleted by the Remove() method, the
@@ -592,6 +595,9 @@ func notifyTrigger(ch chan<- Event, items []*mvccpb.KeyValue) {
 }
 
 // notifyError sends EventError events to the channel
-func notifyError(ch chan<- Event, err error) {
-	ch <- Event{Err: err, Type: EventError}
+func notifyError(ctx context.Context, ch chan<- Event, err error) {
+	select {
+	case ch <- Event{Err: err, Type: EventError}:
+	case <-ctx.Done():
+	}
 }
