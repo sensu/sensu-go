@@ -16,8 +16,16 @@ import (
 
 var (
 	defaultHTTPGetTimeout = 30 * time.Second
-	defaultFetcher        = &httpFetcher{}
-	limiterMap            = make(map[string]*rate.Limiter)
+)
+
+const (
+	// DefaultAssetsRateLimit defines the rate limit for assets fetched per second.
+	// It equates to GitHub's user to server rate limit of 5000 requests per hour.
+	DefaultAssetsRateLimit rate.Limit = 1.39
+
+	// DefaultAssetsBurstLimit defines the burst ceiling for a rate limited asset fetch.
+	// If 0, then the setting has no effect.
+	DefaultAssetsBurstLimit int = 100
 )
 
 // A Fetcher fetches a file from the specified source and returns an *os.File
@@ -59,6 +67,7 @@ func httpGet(ctx context.Context, path string, headers map[string]string) (io.Re
 // An HTTPFetcher fetches the contents of files at a given URL.
 type httpFetcher struct {
 	URLGetter urlGetter
+	Limiter   *rate.Limiter
 }
 
 // Fetch the file found at the specified url, and return the file or an
@@ -68,16 +77,10 @@ func (h *httpFetcher) Fetch(ctx context.Context, url string, headers map[string]
 		h.URLGetter = httpGet
 	}
 
-	limiter, ok := limiterMap[url]
-	if !ok {
-		// 0.03 = once every ~30 seconds per unique url
-		// 5 = burst allowed per unique url (ex. multiple assets accessing the same url at startup)
-		limiterMap[url] = rate.NewLimiter(0.03, 5)
-		limiter = limiterMap[url]
-	}
-
-	if !limiter.Allow() {
-		return nil, fmt.Errorf("can't download asset due to rate limit")
+	if h.Limiter != nil {
+		if !h.Limiter.Allow() {
+			return nil, fmt.Errorf("can't download asset due to rate limit")
+		}
 	}
 
 	resp, err := h.URLGetter(ctx, url, headers)

@@ -8,6 +8,7 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	bolt "go.etcd.io/bbolt"
+	"golang.org/x/time/rate"
 )
 
 var (
@@ -20,10 +21,13 @@ func NewBoltDBGetter(db *bolt.DB,
 	localStorage string,
 	fetcher Fetcher,
 	verifier Verifier,
-	expander Expander) Getter {
+	expander Expander,
+	limiter *rate.Limiter) Getter {
 
 	if fetcher == nil {
-		fetcher = defaultFetcher
+		fetcher = &httpFetcher{
+			Limiter: limiter,
+		}
 	}
 
 	if expander == nil {

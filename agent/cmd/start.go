@@ -8,6 +8,7 @@ import (
 
 	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/util/path"
 	"github.com/sensu/sensu-go/util/url"
 	"github.com/sensu/sensu-go/version"
@@ -31,6 +32,8 @@ const (
 	flagAgentName                = "name"
 	flagAPIHost                  = "api-host"
 	flagAPIPort                  = "api-port"
+	flagAssetsRateLimit          = "assets-rate-limit"
+	flagAssetsBurstLimit         = "assets-burst-limit"
 	flagBackendURL               = "backend-url"
 	flagCacheDir                 = "cache-dir"
 	flagConfigFile               = "config-file"
@@ -112,6 +115,8 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 			cfg := agent.NewConfig()
 			cfg.API.Host = viper.GetString(flagAPIHost)
 			cfg.API.Port = viper.GetInt(flagAPIPort)
+			cfg.AssetsRateLimit = rate.Limit(viper.GetFloat64(flagAssetsRateLimit))
+			cfg.AssetsBurstLimit = viper.GetInt(flagAssetsBurstLimit)
 			cfg.CacheDir = viper.GetString(flagCacheDir)
 			cfg.Deregister = viper.GetBool(flagDeregister)
 			cfg.DeregistrationHandler = viper.GetString(flagDeregistrationHandler)
@@ -229,6 +234,8 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	viper.SetDefault(flagDisableAPI, false)
 	viper.SetDefault(flagDisableSockets, false)
 	viper.SetDefault(flagDisableAssets, false)
+	viper.SetDefault(flagAssetsRateLimit, asset.DefaultAssetsRateLimit)
+	viper.SetDefault(flagAssetsBurstLimit, asset.DefaultAssetsBurstLimit)
 	viper.SetDefault(flagEventsRateLimit, agent.DefaultEventsAPIRateLimit)
 	viper.SetDefault(flagEventsBurstLimit, agent.DefaultEventsAPIBurstLimit)
 	viper.SetDefault(flagKeepaliveInterval, agent.DefaultKeepaliveInterval)
@@ -266,6 +273,8 @@ func newStartCommand(ctx context.Context, args []string, logger *logrus.Entry) *
 	cmd.Flags().String(flagCacheDir, viper.GetString(flagCacheDir), "path to store cached data")
 	cmd.Flags().String(flagDeregistrationHandler, viper.GetString(flagDeregistrationHandler), "deregistration handler that should process the entity deregistration event")
 	cmd.Flags().Bool(flagDetectCloudProvider, viper.GetBool(flagDetectCloudProvider), "enable cloud provider detection")
+	cmd.Flags().Float64(flagAssetsRateLimit, viper.GetFloat64(flagAssetsRateLimit), "maximum number of assets fetched per second")
+	cmd.Flags().Int(flagAssetsBurstLimit, viper.GetInt(flagAssetsBurstLimit), "asset fetch burst limit")
 	cmd.Flags().Float64(flagEventsRateLimit, viper.GetFloat64(flagEventsRateLimit), "maximum number of events transmitted to the backend through the /events api")
 	cmd.Flags().Int(flagEventsBurstLimit, viper.GetInt(flagEventsBurstLimit), "/events api burst limit")
 	cmd.Flags().String(flagNamespace, viper.GetString(flagNamespace), "agent namespace")
