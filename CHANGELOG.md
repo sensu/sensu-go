@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.19.3] - 2020-04-30
+
 ### Added
 - Added a `timeout` flag to `sensu-backend init`.
 - [Web] Added the ability for labels and annotations with links to images to be
