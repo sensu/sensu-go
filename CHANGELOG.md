@@ -31,7 +31,8 @@ filters matched.
 - Fixed a bug where the etcd event store would return prefixed matches rather than exact matches when getting events by entity.
 - `sensuctl logout` now resets the TLS configuration.
 - [Web] Fixes issue where labels with links could lead to a crash.
-- Added rate limiting for unique urls when downloading assets so that asset retries are not abusive.
+- Added a global rate limit for fetching assets so that asset retries are not abusive (can be
+configured using `--assets-rate-limit` and `--assets-burst-limit` on the agent and backend).
 - [Web] Fixed an issue where trying to use an unregistered theme could lead to a
 crash.
 - Fixed a bug that would cause the backend to crash.
