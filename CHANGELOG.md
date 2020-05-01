@@ -41,6 +41,8 @@ crash.
 - Fixed a bug that would cause messages like "unary invoker failed" to appear
 in the logs.
 - Fixed several goroutine leaks.
+- Fixed a bug that would cause the backend to crash when the etcd client got an
+error saying "etcdserver: too many requests".
 
 ## [5.19.1] - 2020-04-13
 

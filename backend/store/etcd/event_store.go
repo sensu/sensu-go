@@ -65,8 +65,11 @@ func (s *Store) DeleteEventByEntityCheck(ctx context.Context, entityName, checkN
 		return &store.ErrNotValid{Err: err}
 	}
 
-	if _, err := s.client.Delete(ctx, path); err != nil {
-		return &store.ErrInternal{Message: err.Error()}
+	err = Delete(ctx, s.client, path)
+	if err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
 	}
 	return err
 }
@@ -91,9 +94,13 @@ func (s *Store) GetEvents(ctx context.Context, pred *store.SelectionPredicate) (
 		}
 	}
 
-	resp, err := s.client.Get(ctx, key, opts...)
+	var resp *clientv3.GetResponse
+	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = s.client.Get(ctx, key, opts...)
+		return RetryRequest(n, err)
+	})
 	if err != nil {
-		return nil, &store.ErrInternal{Message: err.Error()}
+		return nil, err
 	}
 
 	if len(resp.Kvs) == 0 {
@@ -140,9 +147,13 @@ func (s *Store) GetEventsByEntity(ctx context.Context, entityName string, pred *
 	rangeEnd := clientv3.GetPrefixRangeEnd(keyPrefix)
 	opts = append(opts, clientv3.WithRange(rangeEnd))
 
-	resp, err := s.client.Get(ctx, fmt.Sprintf("%s/", path.Join(keyPrefix, pred.Continue)), opts...)
+	var resp *clientv3.GetResponse
+	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = s.client.Get(ctx, fmt.Sprintf("%s/", path.Join(keyPrefix, pred.Continue)), opts...)
+		return RetryRequest(n, err)
+	})
 	if err != nil {
-		return nil, &store.ErrInternal{Message: err.Error()}
+		return nil, err
 	}
 
 	if len(resp.Kvs) == 0 {
@@ -187,9 +198,13 @@ func (s *Store) GetEventByEntityCheck(ctx context.Context, entityName, checkName
 		return nil, &store.ErrNotValid{Err: err}
 	}
 
-	resp, err := s.client.Get(ctx, path, clientv3.WithPrefix(), clientv3.WithSerializable())
+	var resp *clientv3.GetResponse
+	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = s.client.Get(ctx, path, clientv3.WithPrefix(), clientv3.WithSerializable())
+		return RetryRequest(n, err)
+	})
 	if err != nil {
-		return nil, &store.ErrInternal{Message: err.Error()}
+		return nil, err
 	}
 	if len(resp.Kvs) == 0 {
 		return nil, nil
@@ -293,9 +308,13 @@ func (s *Store) UpdateEvent(ctx context.Context, event *corev2.Event) (*corev2.E
 
 	cmp := namespaceExistsForResource(event.Entity)
 	req := clientv3.OpPut(getEventPath(event), string(eventBytes))
-	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
+	var res *clientv3.TxnResponse
+	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		res, err = s.client.Txn(ctx).If(cmp).Then(req).Commit()
+		return RetryRequest(n, err)
+	})
 	if err != nil {
-		return nil, nil, &store.ErrInternal{Message: err.Error()}
+		return nil, nil, err
 	}
 	if !res.Succeeded {
 		return nil, nil, &store.ErrNamespaceMissing{Namespace: event.Entity.Namespace}
@@ -351,7 +370,7 @@ func handleExpireOnResolveEntries(ctx context.Context, event *corev2.Event, st s
 
 	entries, err := st.GetSilencedEntriesByName(ctx, event.Check.Silenced...)
 	if err != nil {
-		return &store.ErrInternal{Message: fmt.Sprintf("couldn't resolve silences: %s", err)}
+		return err
 	}
 	toDelete := []string{}
 	toRetain := []string{}
@@ -364,7 +383,7 @@ func handleExpireOnResolveEntries(ctx context.Context, event *corev2.Event, st s
 	}
 
 	if err := st.DeleteSilencedEntryByName(ctx, toDelete...); err != nil {
-		return &store.ErrInternal{Message: fmt.Sprintf("couldn't resolve silences: %s", err)}
+		return err
 	}
 	event.Check.Silenced = toRetain
 

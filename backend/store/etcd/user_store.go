@@ -27,7 +27,7 @@ func GetUsersPath(ctx context.Context, id string) string {
 func (s *Store) AuthenticateUser(ctx context.Context, username, password string) (*corev2.User, error) {
 	user, err := s.GetUser(ctx, username)
 	if err != nil {
-		return nil, &store.ErrInternal{Message: err.Error()}
+		return nil, err
 	}
 	if user == nil {
 		return nil, &store.ErrNotFound{Key: username}
@@ -57,9 +57,13 @@ func (s *Store) CreateUser(u *corev2.User) error {
 	// if it does not exist
 	cmp := clientv3.Compare(clientv3.Version(getUserPath(u.Username)), "=", 0)
 	req := clientv3.OpPut(getUserPath(u.Username), string(userBytes))
-	res, err := s.client.Txn(context.TODO()).If(cmp).Then(req).Commit()
+	var res *clientv3.TxnResponse
+	err = Backoff(context.TODO()).Retry(func(n int) (done bool, err error) {
+		res, err = s.client.Txn(context.TODO()).If(cmp).Then(req).Commit()
+		return RetryRequest(n, err)
+	})
 	if err != nil {
-		return &store.ErrInternal{Message: err.Error()}
+		return err
 	}
 	if !res.Succeeded {
 		return &store.ErrAlreadyExists{Key: u.Username}
@@ -92,9 +96,14 @@ func (s *Store) DeleteUser(ctx context.Context, user *corev2.User) error {
 			clientv3.OpPut(userKey, string(userBytes)),
 		)
 
-	res, serr := txn.Commit()
+	var res *clientv3.TxnResponse
+
+	serr := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		res, err = txn.Commit()
+		return RetryRequest(n, err)
+	})
 	if serr != nil {
-		return &store.ErrInternal{Message: err.Error()}
+		return serr
 	}
 
 	if !res.Succeeded {
@@ -108,21 +117,15 @@ func (s *Store) DeleteUser(ctx context.Context, user *corev2.User) error {
 
 // GetUser gets a User.
 func (s *Store) GetUser(ctx context.Context, username string) (*corev2.User, error) {
-	resp, err := s.client.Get(ctx, getUserPath(username), clientv3.WithLimit(1))
+	var user corev2.User
+	err := Get(ctx, s.client, getUserPath(username), &user)
 	if err != nil {
-		return nil, &store.ErrInternal{Message: err.Error()}
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
+		return nil, err
 	}
-	if len(resp.Kvs) != 1 {
-		return nil, nil
-	}
-
-	user := &corev2.User{}
-	err = unmarshal(resp.Kvs[0].Value, user)
-	if err != nil {
-		return nil, &store.ErrDecode{Err: err}
-	}
-
-	return user, nil
+	return &user, nil
 }
 
 // GetUsers retrieves all enabled users
@@ -157,9 +160,8 @@ func (s *Store) UpdateUser(u *corev2.User) error {
 		return &store.ErrEncode{Err: err}
 	}
 
-	_, err = s.client.Put(context.TODO(), getUserPath(u.Username), string(bytes))
-	if err != nil {
-		return &store.ErrInternal{Message: err.Error()}
-	}
-	return nil
+	return Backoff(context.TODO()).Retry(func(n int) (done bool, err error) {
+		_, err = s.client.Put(context.TODO(), getUserPath(u.Username), string(bytes))
+		return RetryRequest(n, err)
+	})
 }

@@ -4,8 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/gogo/protobuf/proto"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
@@ -33,10 +32,13 @@ func (s *Store) DeleteCheckConfigByName(ctx context.Context, name string) error 
 		return &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 
-	if _, err := s.client.Delete(ctx, GetCheckConfigsPath(ctx, name)); err != nil {
-		return &store.ErrInternal{Message: err.Error()}
+	err := Delete(ctx, s.client, GetCheckConfigsPath(ctx, name))
+	if err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
 	}
-	return nil
+	return err
 }
 
 // GetCheckConfigs returns check configurations for an (optional) namespace.
@@ -52,18 +54,12 @@ func (s *Store) GetCheckConfigByName(ctx context.Context, name string) (*types.C
 		return nil, &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 
-	resp, err := s.client.Get(ctx, GetCheckConfigsPath(ctx, name))
-	if err != nil {
-		return nil, &store.ErrInternal{Message: err.Error()}
-	}
-	if len(resp.Kvs) == 0 {
-		return nil, nil
-	}
-
-	checkBytes := resp.Kvs[0].Value
-	check := &types.CheckConfig{}
-	if err := unmarshal(checkBytes, check); err != nil {
-		return nil, &store.ErrDecode{Err: err}
+	var check corev2.CheckConfig
+	if err := Get(ctx, s.client, GetCheckConfigsPath(ctx, name), &check); err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
+		return nil, err
 	}
 	if check.Labels == nil {
 		check.Labels = make(map[string]string)
@@ -72,7 +68,7 @@ func (s *Store) GetCheckConfigByName(ctx context.Context, name string) (*types.C
 		check.Annotations = make(map[string]string)
 	}
 
-	return check, nil
+	return &check, nil
 }
 
 // UpdateCheckConfig updates a CheckConfig.
@@ -81,20 +77,5 @@ func (s *Store) UpdateCheckConfig(ctx context.Context, check *types.CheckConfig)
 		return &store.ErrNotValid{Err: err}
 	}
 
-	checkBytes, err := proto.Marshal(check)
-	if err != nil {
-		return &store.ErrEncode{Err: err}
-	}
-
-	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(check.Namespace)), ">", 0)
-	req := clientv3.OpPut(getCheckConfigPath(check), string(checkBytes))
-	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
-	if err != nil {
-		return &store.ErrInternal{Message: err.Error()}
-	}
-	if !res.Succeeded {
-		return &store.ErrNamespaceMissing{Namespace: check.Namespace}
-	}
-
-	return nil
+	return CreateOrUpdate(ctx, s.client, getCheckConfigPath(check), check.Namespace, check)
 }

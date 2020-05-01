@@ -7,11 +7,13 @@ import (
 	"path"
 	"reflect"
 	"strings"
+	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/util/retry"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
@@ -37,6 +39,42 @@ func NewStore(client *clientv3.Client, name string) *Store {
 	return store
 }
 
+// EtcdInitialDelay is 100 ms.
+const EtcdInitialDelay = time.Millisecond * 100
+
+// Backoff delivers a pre-configured backoff object, suitable for use in making
+// etcd requests.
+func Backoff(ctx context.Context) *retry.ExponentialBackoff {
+	return &retry.ExponentialBackoff{
+		Ctx:                  ctx,
+		InitialDelayInterval: EtcdInitialDelay,
+	}
+}
+
+// RetryRequest will return whether or not to try a request again based on the
+// error given to it, and the number of times the request has been tried.
+//
+// If RetryRequest gets "etcdserver: too many requests", then it will return
+// (false, nil). Otherwise, it will return (true, err).
+func RetryRequest(n int, err error) (bool, error) {
+	if err == nil {
+		return true, nil
+	}
+	if err == context.Canceled {
+		return true, err
+	}
+	if err == context.DeadlineExceeded {
+		return true, err
+	}
+	// using string comparison here because it's too difficult to tell
+	// what kind of error the client is actually delivering
+	if strings.Contains(err.Error(), "etcdserver: too many requests") {
+		logger.WithError(err).WithField("retry", n).Error("retrying")
+		return false, nil
+	}
+	return true, &store.ErrInternal{Message: err.Error()}
+}
+
 // Create the given key with the serialized object.
 func Create(ctx context.Context, client *clientv3.Client, key, namespace string, object interface{}) error {
 	bytes, err := marshal(object)
@@ -53,11 +91,15 @@ func Create(ctx context.Context, client *clientv3.Client, key, namespace string,
 	comparisons = append(comparisons, keyNotFound(key))
 
 	req := clientv3.OpPut(key, string(bytes))
-	resp, err := client.Txn(ctx).If(comparisons...).Then(req).Else(
-		getNamespace(namespace), getKey(key),
-	).Commit()
+	var resp *clientv3.TxnResponse
+	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = client.Txn(ctx).If(comparisons...).Then(req).Else(
+			getNamespace(namespace), getKey(key),
+		).Commit()
+		return RetryRequest(n, err)
+	})
 	if err != nil {
-		return &store.ErrInternal{Message: err.Error()}
+		return err
 	}
 	if !resp.Succeeded {
 		// Check if the namespace was missing
@@ -75,7 +117,6 @@ func Create(ctx context.Context, client *clientv3.Client, key, namespace string,
 			Err: fmt.Errorf("could not create the key %s", key),
 		}
 	}
-
 	return nil
 }
 
@@ -94,9 +135,13 @@ func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace
 	}
 
 	req := clientv3.OpPut(key, string(bytes))
-	resp, err := client.Txn(ctx).If(comparisons...).Then(req).Commit()
+	var resp *clientv3.TxnResponse
+	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = client.Txn(ctx).If(comparisons...).Then(req).Commit()
+		return RetryRequest(n, err)
+	})
 	if err != nil {
-		return &store.ErrInternal{Message: err.Error()}
+		return err
 	}
 	if !resp.Succeeded {
 		// Check if the namespace was missing
@@ -109,29 +154,36 @@ func CreateOrUpdate(ctx context.Context, client *clientv3.Client, key, namespace
 			Err: fmt.Errorf("could not update the key %s", key),
 		}
 	}
-
 	return nil
+
 }
 
 // Delete the given key
 func Delete(ctx context.Context, client *clientv3.Client, key string) error {
-	resp, err := client.Delete(ctx, key)
+	var resp *clientv3.DeleteResponse
+	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = client.Delete(ctx, key)
+		return RetryRequest(n, err)
+	})
 	if err != nil {
-		return &store.ErrInternal{Message: err.Error()}
+		return err
 	}
 	if resp.Deleted == 0 {
 		return &store.ErrNotFound{Key: key}
 	}
-
 	return nil
 }
 
 // Get retrieves an object with the given key
 func Get(ctx context.Context, client *clientv3.Client, key string, object interface{}) error {
 	// Fetch the key from the store
-	resp, err := client.Get(ctx, key, clientv3.WithLimit(1))
+	var resp *clientv3.GetResponse
+	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = client.Get(ctx, key, clientv3.WithLimit(1))
+		return RetryRequest(n, err)
+	})
 	if err != nil {
-		return &store.ErrInternal{Message: err.Error()}
+		return err
 	}
 
 	// Ensure we only received a single item
@@ -143,7 +195,6 @@ func Get(ctx context.Context, client *clientv3.Client, key string, object interf
 	if err := unmarshal(resp.Kvs[0].Value, object); err != nil {
 		return &store.ErrDecode{Key: key, Err: err}
 	}
-
 	return nil
 }
 
@@ -182,9 +233,14 @@ func List(ctx context.Context, client *clientv3.Client, keyBuilder KeyBuilderFn,
 		}
 	}
 
-	resp, err := client.Get(ctx, key, opts...)
+	var resp *clientv3.GetResponse
+	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = client.Get(ctx, key, opts...)
+		return RetryRequest(n, err)
+	})
+
 	if err != nil {
-		return &store.ErrInternal{Message: err.Error()}
+		return err
 	}
 
 	for _, kv := range resp.Kvs {
@@ -245,11 +301,15 @@ func Update(ctx context.Context, client *clientv3.Client, key, namespace string,
 	comparisons = append(comparisons, keyFound(key))
 
 	req := clientv3.OpPut(key, string(bytes))
-	resp, err := client.Txn(ctx).If(comparisons...).Then(req).Else(
-		getNamespace(namespace), getKey(key),
-	).Commit()
+	var resp *clientv3.TxnResponse
+	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = client.Txn(ctx).If(comparisons...).Then(req).Else(
+			getNamespace(namespace), getKey(key),
+		).Commit()
+		return RetryRequest(n, err)
+	})
 	if err != nil {
-		return &store.ErrInternal{Message: err.Error()}
+		return err
 	}
 	if !resp.Succeeded {
 		// Check if the namespace was missing
@@ -279,11 +339,12 @@ func Count(ctx context.Context, client *clientv3.Client, key string) (int64, err
 		clientv3.WithRange(clientv3.GetPrefixRangeEnd(key)),
 	}
 
-	resp, err := client.Get(ctx, key, opts...)
+	var resp *clientv3.GetResponse
+	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = client.Get(ctx, key, opts...)
+		return RetryRequest(n, err)
+	})
 	if err != nil {
-		if err != context.Canceled {
-			err = &store.ErrInternal{Message: err.Error()}
-		}
 		return 0, err
 	}
 

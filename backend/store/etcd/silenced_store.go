@@ -39,18 +39,21 @@ func (s *Store) DeleteSilencedEntryByName(ctx context.Context, silencedNames ...
 		ops = append(ops, clientv3.OpDelete(GetSilencedPath(ctx, silenced)))
 	}
 
-	_, err := s.client.Txn(ctx).Then(ops...).Commit()
-	if err != nil {
-		return &store.ErrInternal{Message: fmt.Sprintf("error deleting silenced entries: %s", err)}
-	}
-	return nil
+	return Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		_, err = s.client.Txn(ctx).Then(ops...).Commit()
+		return RetryRequest(n, err)
+	})
 }
 
 // GetSilencedEntries gets all silenced entries.
 func (s *Store) GetSilencedEntries(ctx context.Context) ([]*corev2.Silenced, error) {
-	resp, err := s.client.Get(ctx, GetSilencedPath(ctx, ""), clientv3.WithPrefix())
+	var resp *clientv3.GetResponse
+	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = s.client.Get(ctx, GetSilencedPath(ctx, ""), clientv3.WithPrefix())
+		return RetryRequest(n, err)
+	})
 	if err != nil {
-		return nil, &store.ErrInternal{Message: err.Error()}
+		return nil, err
 	}
 	silencedArray, err := s.arraySilencedEntries(ctx, resp)
 	if err != nil {
@@ -69,9 +72,13 @@ func (s *Store) GetSilencedEntriesBySubscription(ctx context.Context, subscripti
 		ops = append(ops, clientv3.OpGet(GetSilencedPath(ctx, subscription), clientv3.WithPrefix()))
 	}
 
-	resp, err := s.client.Txn(ctx).Then(ops...).Commit()
+	var resp *clientv3.TxnResponse
+	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = s.client.Txn(ctx).Then(ops...).Commit()
+		return RetryRequest(n, err)
+	})
 	if err != nil {
-		return nil, &store.ErrInternal{Message: fmt.Sprintf("couldn't get silenced entries: %s", err)}
+		return nil, err
 	}
 
 	return s.arrayTxnSilencedEntries(ctx, resp)
@@ -82,9 +89,13 @@ func (s *Store) GetSilencedEntriesByCheckName(ctx context.Context, checkName str
 	if checkName == "" {
 		return nil, &store.ErrNotValid{Err: errors.New("must specify check name")}
 	}
-	resp, err := s.client.Get(ctx, GetSilencedPath(ctx, ""), clientv3.WithPrefix())
+	var resp *clientv3.GetResponse
+	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = s.client.Get(ctx, GetSilencedPath(ctx, ""), clientv3.WithPrefix())
+		return RetryRequest(n, err)
+	})
 	if err != nil {
-		return nil, &store.ErrInternal{Message: err.Error()}
+		return nil, err
 	}
 
 	// iterate through response entries
@@ -110,9 +121,13 @@ func (s *Store) GetSilencedEntryByName(ctx context.Context, name string) (*corev
 		return nil, &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 
-	resp, err := s.client.Get(ctx, GetSilencedPath(ctx, name))
+	var resp *clientv3.GetResponse
+	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = s.client.Get(ctx, GetSilencedPath(ctx, name))
+		return RetryRequest(n, err)
+	})
 	if err != nil {
-		return nil, &store.ErrInternal{Message: err.Error()}
+		return nil, err
 	}
 	silencedArray, err := s.arraySilencedEntries(ctx, resp)
 	if err != nil {
@@ -134,9 +149,13 @@ func (s *Store) GetSilencedEntriesByName(ctx context.Context, names ...string) (
 	for _, name := range names {
 		ops = append(ops, clientv3.OpGet(GetSilencedPath(ctx, name)))
 	}
-	resp, err := s.client.Txn(ctx).Then(ops...).Commit()
+	var resp *clientv3.TxnResponse
+	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = s.client.Txn(ctx).Then(ops...).Commit()
+		return RetryRequest(n, err)
+	})
 	if err != nil {
-		return nil, &store.ErrInternal{Message: fmt.Sprintf("couldn't get silenced entries: %s", err)}
+		return nil, err
 	}
 	return s.arrayTxnSilencedEntries(ctx, resp)
 }
@@ -167,18 +186,26 @@ func (s *Store) UpdateSilencedEntry(ctx context.Context, silenced *corev2.Silenc
 			expireTime = silenced.Expire
 		}
 
-		lease, err := s.client.Grant(ctx, expireTime)
+		var lease *clientv3.LeaseGrantResponse
+		err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+			lease, err = s.client.Grant(ctx, expireTime)
+			return RetryRequest(n, err)
+		})
 		if err != nil {
-			return &store.ErrInternal{Message: err.Error()}
+			return err
 		}
 
 		req = clientv3.OpPut(GetSilencedPath(ctx, silenced.Name), string(silencedBytes), clientv3.WithLease(lease.ID))
 	} else {
 		req = clientv3.OpPut(GetSilencedPath(ctx, silenced.Name), string(silencedBytes))
 	}
-	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
+	var res *clientv3.TxnResponse
+	err = Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		res, err = s.client.Txn(ctx).If(cmp).Then(req).Commit()
+		return RetryRequest(n, err)
+	})
 	if err != nil {
-		return &store.ErrInternal{Message: err.Error()}
+		return err
 	}
 	if !res.Succeeded {
 		return &store.ErrNamespaceMissing{Namespace: silenced.Namespace}
@@ -198,7 +225,8 @@ func (s *Store) arraySilencedEntries(ctx context.Context, resp *clientv3.GetResp
 		leaseID := clientv3.LeaseID(kv.Lease)
 		ttl, err := s.client.TimeToLive(ctx, leaseID)
 		if err != nil {
-			return nil, &store.ErrInternal{Message: err.Error()}
+			logger.WithError(err).Error("error setting TTL on silenced")
+			continue
 		}
 		silencedEntry := &corev2.Silenced{}
 		err = unmarshal(kv.Value, silencedEntry)
@@ -218,7 +246,8 @@ func (s *Store) arrayTxnSilencedEntries(ctx context.Context, resp *clientv3.TxnR
 			leaseID := clientv3.LeaseID(kv.Lease)
 			ttl, err := s.client.TimeToLive(ctx, leaseID)
 			if err != nil {
-				return nil, &store.ErrInternal{Message: fmt.Sprintf("couldn't get silenced entries: %s", err)}
+				logger.WithError(err).Error("error setting TTL on silenced")
+				continue
 			}
 			var silenced corev2.Silenced
 			if err := unmarshal(kv.Value, &silenced); err != nil {

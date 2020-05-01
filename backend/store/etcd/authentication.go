@@ -37,14 +37,14 @@ func (s *Store) GetJWTSecret() ([]byte, error) {
 
 	resp, err := s.client.Txn(ctx).If(cmp).Then(opPut).Else(opGet).Commit()
 	if err != nil {
-		return nil, &store.ErrInternal{Message: err.Error()}
+		return nil, err
 	}
 	if resp.Succeeded {
 		return randomBytes, nil
 	}
 	getResp := resp.Responses[0].GetResponseRange()
 	if len(getResp.Kvs) != 1 {
-		return nil, &store.ErrInternal{Message: "secret response is empty"}
+		return nil, errors.New("secret response is empty")
 	}
 	return getResp.Kvs[0].Value, nil
 }
@@ -54,7 +54,7 @@ func (s *Store) UpdateJWTSecret(secret []byte) error {
 	ctx, cancel := context.WithTimeout(context.TODO(), time.Second*5)
 	defer cancel()
 	if _, err := s.client.Put(ctx, getAuthenticationPath("secret"), string(secret)); err != nil {
-		return &store.ErrInternal{Message: err.Error()}
+		return err
 	}
 	return nil
 }

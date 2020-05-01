@@ -5,11 +5,11 @@ import (
 	"errors"
 	"path"
 
+	"github.com/coreos/etcd/clientv3"
 	v3 "github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/gogo/protobuf/proto"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 const (
@@ -26,7 +26,7 @@ func GetNamespacesPath(ctx context.Context, name string) string {
 }
 
 // CreateNamespace creates a namespace with the provided namespace
-func (s *Store) CreateNamespace(ctx context.Context, namespace *types.Namespace) error {
+func (s *Store) CreateNamespace(ctx context.Context, namespace *corev2.Namespace) error {
 	if err := namespace.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
@@ -63,14 +63,21 @@ func (s *Store) DeleteNamespace(ctx context.Context, name string) error {
 		return &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 
-	// Validate whether there are any resources referencing the namespace
-	getresp, err := s.client.Txn(ctx).Then(
-		v3.OpGet(checkKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
-		v3.OpGet(entityKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
-		v3.OpGet(assetKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
-		v3.OpGet(handlerKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
-		v3.OpGet(mutatorKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
-	).Commit()
+	var getresp *clientv3.TxnResponse
+	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		// Validate whether there are any resources referencing the namespace
+		getresp, err = s.client.Txn(ctx).Then(
+			v3.OpGet(checkKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
+			v3.OpGet(entityKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
+			v3.OpGet(assetKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
+			v3.OpGet(handlerKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
+			v3.OpGet(mutatorKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
+			v3.OpGet(eventFilterKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
+			v3.OpGet(hookKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
+			v3.OpGet(silencedKeyBuilder.WithNamespace(name).Build(), v3.WithPrefix(), v3.WithCountOnly()),
+		).Commit()
+		return RetryRequest(n, err)
+	})
 	if err != nil {
 		return err
 	}
@@ -80,51 +87,31 @@ func (s *Store) DeleteNamespace(ctx context.Context, name string) error {
 		}
 	}
 
-	// Delete the resource
-	resp, err := s.client.Delete(ctx, getNamespacePath(name), v3.WithPrefix())
-	if err != nil {
-		return &store.ErrInternal{Message: err.Error()}
-	}
-
-	if resp.Deleted != 1 {
-		return &store.ErrNotFound{Key: getNamespacePath(name)}
-	}
-
-	return nil
+	return Delete(ctx, s.client, getNamespacePath(name))
 }
 
 // GetNamespace returns a single namespace with the given name
-func (s *Store) GetNamespace(ctx context.Context, name string) (*types.Namespace, error) {
-	resp, err := s.client.Get(
-		ctx,
-		getNamespacePath(name),
-		v3.WithLimit(1),
-	)
+func (s *Store) GetNamespace(ctx context.Context, name string) (*corev2.Namespace, error) {
+	var namespace corev2.Namespace
+	err := Get(ctx, s.client, getNamespacePath(name), &namespace)
 	if err != nil {
-		return nil, &store.ErrInternal{Message: err.Error()}
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
+		return nil, err
 	}
-
-	if len(resp.Kvs) == 0 {
-		return nil, nil
-	}
-
-	namespaces, err := unmarshalNamespaces(resp.Kvs)
-	if err != nil {
-		return &types.Namespace{}, err
-	}
-
-	return namespaces[0], nil
+	return &namespace, nil
 }
 
 // ListNamespaces returns all namespaces
-func (s *Store) ListNamespaces(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Namespace, error) {
-	namespaces := []*types.Namespace{}
+func (s *Store) ListNamespaces(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Namespace, error) {
+	namespaces := []*corev2.Namespace{}
 	err := List(ctx, s.client, GetNamespacesPath, &namespaces, pred)
 	return namespaces, err
 }
 
 // UpdateNamespace updates a namespace with the given object
-func (s *Store) UpdateNamespace(ctx context.Context, namespace *types.Namespace) error {
+func (s *Store) UpdateNamespace(ctx context.Context, namespace *corev2.Namespace) error {
 	if err := namespace.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
@@ -134,22 +121,8 @@ func (s *Store) UpdateNamespace(ctx context.Context, namespace *types.Namespace)
 		return &store.ErrEncode{Err: err}
 	}
 
-	if _, err := s.client.Put(ctx, getNamespacePath(namespace.Name), string(bytes)); err != nil {
-		return &store.ErrInternal{Message: err.Error()}
-	}
-
-	return nil
-}
-
-func unmarshalNamespaces(kvs []*mvccpb.KeyValue) ([]*types.Namespace, error) {
-	s := make([]*types.Namespace, len(kvs))
-	for i, kv := range kvs {
-		namespace := &types.Namespace{}
-		s[i] = namespace
-		if err := unmarshal(kv.Value, namespace); err != nil {
-			return nil, &store.ErrDecode{Err: err}
-		}
-	}
-
-	return s, nil
+	return Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		_, err = s.client.Put(ctx, getNamespacePath(namespace.Name), string(bytes))
+		return RetryRequest(n, err)
+	})
 }
