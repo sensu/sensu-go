@@ -65,7 +65,13 @@ func (s *Store) DeleteEventByEntityCheck(ctx context.Context, entityName, checkN
 		return &store.ErrNotValid{Err: err}
 	}
 
-	return Delete(ctx, s.client, path)
+	err := Delete(ctx, s.client, path)
+	if err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
+	}
+	return err
 }
 
 // GetEvents returns the events for an (optional) namespace. If namespace is the

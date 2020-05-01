@@ -32,7 +32,13 @@ func (s *Store) DeleteAssetByName(ctx context.Context, name string) error {
 	if name == "" {
 		return &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
-	return Delete(ctx, s.client, GetAssetsPath(ctx, name))
+	err := Delete(ctx, s.client, GetAssetsPath(ctx, name))
+	if err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
+	}
+	return err
 }
 
 // GetAssets fetches all assets from the store
@@ -50,6 +56,9 @@ func (s *Store) GetAssetByName(ctx context.Context, name string) (*corev2.Asset,
 
 	var asset corev2.Asset
 	if err := Get(ctx, s.client, GetAssetsPath(ctx, name), &asset); err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
 		return nil, err
 	}
 	if asset.Labels == nil {

@@ -32,10 +32,13 @@ func (s *Store) DeleteCheckConfigByName(ctx context.Context, name string) error 
 		return &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 
-	if _, err := s.client.Delete(ctx, GetCheckConfigsPath(ctx, name)); err != nil {
-		return &store.ErrInternal{Message: err.Error()}
+	err := Delete(ctx, s.client, GetCheckConfigsPath(ctx, name))
+	if err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
 	}
-	return nil
+	return err
 }
 
 // GetCheckConfigs returns check configurations for an (optional) namespace.
@@ -53,6 +56,9 @@ func (s *Store) GetCheckConfigByName(ctx context.Context, name string) (*types.C
 
 	var check corev2.CheckConfig
 	if err := Get(ctx, s.client, GetCheckConfigsPath(ctx, name), &check); err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
 		return nil, err
 	}
 	if check.Labels == nil {
