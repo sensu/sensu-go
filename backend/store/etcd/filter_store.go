@@ -28,7 +28,13 @@ func (s *Store) DeleteEventFilterByName(ctx context.Context, name string) error 
 		return &store.ErrNotValid{Err: errors.New("must specify name of filter")}
 	}
 
-	return Delete(ctx, s.client, GetEventFiltersPath(ctx, name))
+	err := Delete(ctx, s.client, GetEventFiltersPath(ctx, name))
+	if err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
+	}
+	return err
 }
 
 // GetEventFilters gets the list of filters for a namespace.
@@ -46,6 +52,9 @@ func (s *Store) GetEventFilterByName(ctx context.Context, name string) (*corev2.
 
 	var filter corev2.EventFilter
 	if err := Get(ctx, s.client, GetEventFiltersPath(ctx, name), &filter); err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
 		return nil, err
 	}
 

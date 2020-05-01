@@ -31,7 +31,13 @@ func (s *Store) DeleteHookConfigByName(ctx context.Context, name string) error {
 		return errors.New("must specify name")
 	}
 
-	return Delete(ctx, s.client, GetHookConfigsPath(ctx, name))
+	err := Delete(ctx, s.client, GetHookConfigsPath(ctx, name))
+	if err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
+	}
+	return err
 }
 
 // GetHookConfigs returns hook configurations for a namespace.
@@ -49,6 +55,9 @@ func (s *Store) GetHookConfigByName(ctx context.Context, name string) (*corev2.H
 
 	var hook corev2.HookConfig
 	if err := Get(ctx, s.client, GetHookConfigsPath(ctx, name), &hook); err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
 		return nil, err
 	}
 

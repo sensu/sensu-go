@@ -3,7 +3,6 @@ package etcd
 import (
 	"context"
 	"errors"
-	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
@@ -61,7 +60,6 @@ func (s *Store) GetEntityByName(ctx context.Context, name string) (*corev2.Entit
 		if _, ok := err.(*store.ErrNotFound); ok {
 			return nil, nil
 		}
-		fmt.Println("hmm", err)
 		return nil, err
 	}
 	if entity.Labels == nil {
