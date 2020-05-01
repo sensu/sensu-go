@@ -839,6 +839,42 @@ type SystemArchFieldResolver interface {
 	Arch(p graphql.ResolveParams) (string, error)
 }
 
+// SystemARMVersionFieldResolver implement to resolve requests for the System's ARMVersion field.
+type SystemARMVersionFieldResolver interface {
+	// ARMVersion implements response to request for ARMVersion field.
+	ARMVersion(p graphql.ResolveParams) (int, error)
+}
+
+// SystemLibCTypeFieldResolver implement to resolve requests for the System's libCType field.
+type SystemLibCTypeFieldResolver interface {
+	// LibCType implements response to request for libCType field.
+	LibCType(p graphql.ResolveParams) (string, error)
+}
+
+// SystemVMSystemFieldResolver implement to resolve requests for the System's VMSystem field.
+type SystemVMSystemFieldResolver interface {
+	// VMSystem implements response to request for VMSystem field.
+	VMSystem(p graphql.ResolveParams) (string, error)
+}
+
+// SystemVMRoleFieldResolver implement to resolve requests for the System's VMRole field.
+type SystemVMRoleFieldResolver interface {
+	// VMRole implements response to request for VMRole field.
+	VMRole(p graphql.ResolveParams) (string, error)
+}
+
+// SystemCloudProviderFieldResolver implement to resolve requests for the System's cloudProvider field.
+type SystemCloudProviderFieldResolver interface {
+	// CloudProvider implements response to request for cloudProvider field.
+	CloudProvider(p graphql.ResolveParams) (string, error)
+}
+
+// SystemFloatTypeFieldResolver implement to resolve requests for the System's floatType field.
+type SystemFloatTypeFieldResolver interface {
+	// FloatType implements response to request for floatType field.
+	FloatType(p graphql.ResolveParams) (string, error)
+}
+
 //
 // SystemFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'System' type.
@@ -908,6 +944,12 @@ type SystemFieldResolvers interface {
 	SystemPlatformFamilyFieldResolver
 	SystemPlatformVersionFieldResolver
 	SystemArchFieldResolver
+	SystemARMVersionFieldResolver
+	SystemLibCTypeFieldResolver
+	SystemVMSystemFieldResolver
+	SystemVMRoleFieldResolver
+	SystemCloudProviderFieldResolver
+	SystemFloatTypeFieldResolver
 }
 
 // SystemAliases implements all methods on SystemFieldResolvers interface by using reflection to
@@ -1041,6 +1083,84 @@ func (_ SystemAliases) Arch(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
+// ARMVersion implements response to request for 'ARMVersion' field.
+func (_ SystemAliases) ARMVersion(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'ARMVersion'")
+	}
+	return ret, err
+}
+
+// LibCType implements response to request for 'libCType' field.
+func (_ SystemAliases) LibCType(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'libCType'")
+	}
+	return ret, err
+}
+
+// VMSystem implements response to request for 'VMSystem' field.
+func (_ SystemAliases) VMSystem(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'VMSystem'")
+	}
+	return ret, err
+}
+
+// VMRole implements response to request for 'VMRole' field.
+func (_ SystemAliases) VMRole(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'VMRole'")
+	}
+	return ret, err
+}
+
+// CloudProvider implements response to request for 'cloudProvider' field.
+func (_ SystemAliases) CloudProvider(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'cloudProvider'")
+	}
+	return ret, err
+}
+
+// FloatType implements response to request for 'floatType' field.
+func (_ SystemAliases) FloatType(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'floatType'")
+	}
+	return ret, err
+}
+
 /*
 SystemType System contains information about the system that the Agent process
 is running on, used for additional Entity context.
@@ -1100,10 +1220,73 @@ func _ObjTypeSystemArchHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeSystemARMVersionHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SystemARMVersionFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ARMVersion(frp)
+	}
+}
+
+func _ObjTypeSystemLibCTypeHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SystemLibCTypeFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.LibCType(frp)
+	}
+}
+
+func _ObjTypeSystemVMSystemHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SystemVMSystemFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.VMSystem(frp)
+	}
+}
+
+func _ObjTypeSystemVMRoleHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SystemVMRoleFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.VMRole(frp)
+	}
+}
+
+func _ObjTypeSystemCloudProviderHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SystemCloudProviderFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.CloudProvider(frp)
+	}
+}
+
+func _ObjTypeSystemFloatTypeHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SystemFloatTypeFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.FloatType(frp)
+	}
+}
+
 func _ObjectTypeSystemConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "System contains information about the system that the Agent process\nis running on, used for additional Entity context.",
 		Fields: graphql1.Fields{
+			"ARMVersion": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Version of ARM architecture in play",
+				Name:              "ARMVersion",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
+			"VMRole": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "VMRole indicates the VM role of the agent (host/guest)",
+				Name:              "VMRole",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"VMSystem": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "VMSystem indicates the VM system of the agent (kvm, vbox, etc)",
+				Name:              "VMSystem",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
 			"arch": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -1111,11 +1294,32 @@ func _ObjectTypeSystemConfigFn() graphql1.ObjectConfig {
 				Name:              "arch",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
+			"cloudProvider": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "CloudProvider indicates the public cloud the agent is running on.",
+				Name:              "cloudProvider",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"floatType": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Float type",
+				Name:              "floatType",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
 			"hostname": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "hostname",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"libCType": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "LibCType indicates the type of libc the agent has access to (glibc, musl, etc)",
+				Name:              "libCType",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"network": &graphql1.Field{
@@ -1171,8 +1375,14 @@ func _ObjectTypeSystemConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeSystemDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeSystemConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
+		"ARMVersion":      _ObjTypeSystemARMVersionHandler,
+		"VMRole":          _ObjTypeSystemVMRoleHandler,
+		"VMSystem":        _ObjTypeSystemVMSystemHandler,
 		"arch":            _ObjTypeSystemArchHandler,
+		"cloudProvider":   _ObjTypeSystemCloudProviderHandler,
+		"floatType":       _ObjTypeSystemFloatTypeHandler,
 		"hostname":        _ObjTypeSystemHostnameHandler,
+		"libCType":        _ObjTypeSystemLibCTypeHandler,
 		"network":         _ObjTypeSystemNetworkHandler,
 		"os":              _ObjTypeSystemOsHandler,
 		"platform":        _ObjTypeSystemPlatformHandler,
