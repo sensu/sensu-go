@@ -28,7 +28,13 @@ func (s *Store) DeleteHandlerByName(ctx context.Context, name string) error {
 		return &store.ErrNotValid{Err: errors.New("must specify name of handler")}
 	}
 
-	return Delete(ctx, s.client, GetHandlersPath(ctx, name))
+	err := Delete(ctx, s.client, GetHandlersPath(ctx, name))
+	if err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
+	}
+	return err
 }
 
 // GetHandlers gets the list of handlers for a namespace.
@@ -46,6 +52,9 @@ func (s *Store) GetHandlerByName(ctx context.Context, name string) (*corev2.Hand
 
 	var handler corev2.Handler
 	if err := Get(ctx, s.client, GetHandlersPath(ctx, name), &handler); err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
 		return nil, err
 	}
 	return &handler, nil
