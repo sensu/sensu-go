@@ -39,8 +39,11 @@ func NewStore(client *clientv3.Client, name string) *Store {
 	return store
 }
 
+// EtcdInitialDelay is 100 ms.
 const EtcdInitialDelay = time.Millisecond * 100
 
+// Backoff delivers a pre-configured backoff object, suitable for use in making
+// etcd requests.
 func Backoff(ctx context.Context) *retry.ExponentialBackoff {
 	return &retry.ExponentialBackoff{
 		Ctx:                  ctx,
@@ -48,6 +51,11 @@ func Backoff(ctx context.Context) *retry.ExponentialBackoff {
 	}
 }
 
+// RetryRequest will return whether or not to try a request again based on the
+// error given to it, and the number of times the request has been tried.
+//
+// If RetryRequest gets "etcdserver: too many requests", then it will return
+// (false, nil). Otherwise, it will return (true, err).
 func RetryRequest(n int, err error) (bool, error) {
 	if err == nil {
 		return true, nil
