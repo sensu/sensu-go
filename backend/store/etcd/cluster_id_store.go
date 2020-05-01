@@ -37,7 +37,7 @@ func (s *Store) GetClusterID(ctx context.Context) (string, error) {
 		return RetryRequest(n, err)
 	})
 	if err != nil {
-		return "", &store.ErrInternal{Message: err.Error()}
+		return "", err
 	}
 
 	if resp.Succeeded {

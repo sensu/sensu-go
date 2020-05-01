@@ -46,7 +46,13 @@ func (s *Store) DeleteEntityByName(ctx context.Context, name string) error {
 	}
 
 	key := GetEntitiesPath(ctx, name)
-	return Delete(ctx, s.client, key)
+	err := Delete(ctx, s.client, key)
+	if err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
+	}
+	return err
 }
 
 // GetEntityByName gets an Entity by its name.

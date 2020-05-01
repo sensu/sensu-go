@@ -65,7 +65,7 @@ func (s *Store) DeleteEventByEntityCheck(ctx context.Context, entityName, checkN
 		return &store.ErrNotValid{Err: err}
 	}
 
-	err := Delete(ctx, s.client, path)
+	err = Delete(ctx, s.client, path)
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {
 			err = nil
