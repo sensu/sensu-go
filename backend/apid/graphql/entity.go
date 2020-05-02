@@ -215,15 +215,15 @@ type processImpl struct {
 
 // Created implements response to request for 'created' field.
 func (r *processImpl) Created(p graphql.ResolveParams) (time.Time, error) {
-	i := p.Source.(corev2.Process)
-	sec := i.Created / int64(time.Second)
-	nsec := i.Created % int64(time.Second)
+	i := p.Source.(*corev2.Process)
+	sec := i.Created / 1000
+	nsec := i.Created % 1000
 	return time.Unix(sec, nsec), nil
 }
 
 // MemoryPercent implements response to request for 'memoryPercent' field.
 func (r *processImpl) MemoryPercent(p graphql.ResolveParams) (float64, error) {
-	i := p.Source.(corev2.Process)
+	i := p.Source.(*corev2.Process)
 	return float64(i.MemoryPercent), nil
 }
 
