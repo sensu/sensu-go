@@ -111,6 +111,24 @@ type System {
 
   "Float type"
   floatType: String!
+
+  "Processes contains information about the local processes on the agent."
+  processes: [Process!]!
+}
+
+"""
+Process contains information about a local process.
+"""
+type Process {
+  name: String!
+  pid: Int!
+  ppid: Int!
+  status: String!
+  created: DateTime!
+  running: Boolean!
+  background: Boolean!
+  cpuPercent: Float!
+  memoryPercent: Float!
 }
 
 """

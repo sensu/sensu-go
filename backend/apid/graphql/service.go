@@ -107,6 +107,7 @@ func NewService(cfg ServiceConfig) (*Service, error) {
 	schema.RegisterDeregistration(svc, &deregistrationImpl{})
 	schema.RegisterNetwork(svc, &networkImpl{})
 	schema.RegisterNetworkInterface(svc, &networkInterfaceImpl{})
+	schema.RegisterProcess(svc, &schema.ProcessAliases{})
 	schema.RegisterSystem(svc, &systemImpl{})
 
 	// Register event types
