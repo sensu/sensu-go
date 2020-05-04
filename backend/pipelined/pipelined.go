@@ -42,6 +42,7 @@ type Pipelined struct {
 	workerCount            int
 	storeTimeout           time.Duration
 	secretsProviderManager *secrets.ProviderManager
+	backendEntity          *corev2.Entity
 }
 
 // Config configures a Pipelined.
@@ -54,6 +55,7 @@ type Config struct {
 	WorkerCount             int
 	StoreTimeout            time.Duration
 	SecretsProviderManager  *secrets.ProviderManager
+	BackendEntity           *corev2.Entity
 }
 
 // Option is a functional option used to configure Pipelined.
@@ -88,6 +90,7 @@ func New(c Config, options ...Option) (*Pipelined, error) {
 		assetGetter:            c.AssetGetter,
 		storeTimeout:           c.StoreTimeout,
 		secretsProviderManager: c.SecretsProviderManager,
+		backendEntity:          c.BackendEntity,
 	}
 	for _, o := range options {
 		if err := o(p); err != nil {
@@ -149,6 +152,7 @@ func (p *Pipelined) createPipelines(count int, channel chan interface{}) {
 			AssetGetter:             p.assetGetter,
 			StoreTimeout:            p.storeTimeout,
 			SecretsProviderManager:  p.secretsProviderManager,
+			BackendEntity:           p.backendEntity,
 		})
 		p.wg.Add(1)
 		go func() {

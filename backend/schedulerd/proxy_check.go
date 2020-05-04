@@ -6,10 +6,10 @@ import (
 
 	time "github.com/echlebek/timeproxy"
 	cron "github.com/robfig/cron/v3"
-	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/js"
+	"github.com/sensu/sensu-go/token"
 	"github.com/sensu/sensu-go/types/dynamic"
 )
 
@@ -51,7 +51,7 @@ func substituteProxyEntityTokens(entity *corev2.Entity, check *corev2.CheckConfi
 
 	// Substitute tokens within the check configuration with the synthesized
 	// entity
-	checkBytes, err := agent.TokenSubstitution(synthesizedEntity, check)
+	checkBytes, err := token.Substitution(synthesizedEntity, check)
 	if err != nil {
 		logger.WithField("check", check.Name).WithField("entity", entity.Name).WithError(err).Error("unable to substitute tokens")
 		return nil, err

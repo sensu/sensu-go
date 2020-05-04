@@ -2,9 +2,11 @@ package asset
 
 import (
 	"context"
+	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/js"
+	"github.com/sensu/sensu-go/token"
 	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/sirupsen/logrus"
 )
@@ -90,6 +92,12 @@ func (f *filteredManager) Get(ctx context.Context, asset *corev2.Asset) (*Runtim
 	if filteredAsset == nil {
 		logger.WithFields(fields).Warn("entity not filtered from any asset builds, not installing asset")
 		return nil, nil
+	}
+
+	// Perform token substitution on the asset before retrieving it
+	if err := token.SubstituteAsset(filteredAsset, f.entity); err != nil {
+		logger.WithField("entity", f.entity).Debug(err)
+		return nil, fmt.Errorf("error while substituting asset %q tokens: %s", asset.Name, err)
 	}
 
 	return f.getter.Get(ctx, filteredAsset)

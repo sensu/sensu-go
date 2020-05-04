@@ -19,6 +19,7 @@ sensu-backend or sensu-agent process.
 - Added a new `sensuctl describe-type` command to list all resource types.
 - Added a `timeout` flag to `sensu-backend init`.
 - Added `labels` and `annotations` as backend config options.
+- Added token substitution for assets.
 - [Web] Added the ability for labels and annotations with links to images to be
 displayed inline.
 - [Web] Added additional modes for those with colour blindness.

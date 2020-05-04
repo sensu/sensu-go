@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"context"
+	"errors"
 	"net/http"
 	"testing"
 
@@ -44,7 +45,7 @@ func TestHandlers_UpdateResource(t *testing.T) {
 			body: marshal(t, fixture.Resource{ObjectMeta: corev2.ObjectMeta{}}),
 			storeFunc: func(s *mockstore.MockStore) {
 				s.On("CreateOrUpdateResource", mock.Anything, mock.AnythingOfType("*fixture.Resource")).
-					Return(&store.ErrNotValid{})
+					Return(&store.ErrNotValid{Err: errors.New("error")})
 			},
 			wantErr: true,
 		},
