@@ -217,7 +217,7 @@ type processImpl struct {
 func (r *processImpl) Created(p graphql.ResolveParams) (time.Time, error) {
 	i := p.Source.(*corev2.Process)
 	sec := i.Created / 1000
-	nsec := i.Created % 1000
+	nsec := (i.Created % 1000) * int64(time.Millisecond)
 	return time.Unix(sec, nsec), nil
 }
 

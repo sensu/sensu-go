@@ -182,12 +182,12 @@ func TestEntityTypeToJSONField(t *testing.T) {
 }
 
 func Test_processImpl_Created(t *testing.T) {
-	src := &corev2.Process{Created: 1588381473000}
+	src := &corev2.Process{Created: 1588381473555}
 	imp := &processImpl{}
 
 	res, err := imp.Created(graphql.ResolveParams{Source: src})
 	require.NoError(t, err)
-	assert.Equal(t, res, time.Unix(1588381473, 0))
+	assert.Equal(t, res, time.Unix(1588381473, 555000000))
 }
 
 func Test_processImpl_MemoryPercent(t *testing.T) {
