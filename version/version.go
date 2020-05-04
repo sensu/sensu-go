@@ -65,19 +65,6 @@ func SemverWithEditionSuffix() string {
 	return fmt.Sprintf("%s+%s", Semver(), editionSuffix)
 }
 
-func SemverWithEditionSuffix() string {
-	var editionSuffix string
-	switch Edition {
-	case "community":
-		editionSuffix = CommunityEditionSuffix
-	case "enterprise":
-		editionSuffix = EnterpriseEditionSuffix
-	default:
-		editionSuffix = InvalidEditionSuffix
-	}
-	return fmt.Sprintf("%s+%s", Semver(), editionSuffix)
-}
-
 func EditionOutput() string {
 	if Edition == "community" || Edition == "enterprise" {
 		return fmt.Sprintf("%s edition", Edition)
