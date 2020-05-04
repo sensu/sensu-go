@@ -108,7 +108,7 @@ func NewCommandManager(cli *cli.SensuCli) (*CommandManager, error) {
 	ctx := context.TODO()
 	wg := sync.WaitGroup{}
 	m.assetManager = asset.NewManager(cacheDir, entity, &wg)
-	m.assetGetter, err = m.assetManager.StartAssetManager(ctx)
+	m.assetGetter, err = m.assetManager.StartAssetManager(ctx, nil)
 	if err != nil {
 		return nil, err
 	}

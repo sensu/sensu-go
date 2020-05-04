@@ -382,7 +382,7 @@ func TestBuryConditions(t *testing.T) {
 			if test.store != nil {
 				test.store(store)
 			}
-			eventd := &Eventd{store: store, eventStore: store}
+			eventd := &Eventd{store: store, eventStore: store, ctx: context.Background()}
 			if got, want := eventd.dead(test.key, liveness.Alive, false), test.bury; got != want {
 				t.Fatalf("bad bury result: got %v, want %v", got, want)
 			}

@@ -20,6 +20,11 @@ sensu-backend or sensu-agent process.
 - Added a `timeout` flag to `sensu-backend init`.
 - Added `labels` and `annotations` as backend config options.
 - Added token substitution for assets.
+- [Web] Added the ability for labels and annotations with links to images to be
+displayed inline.
+- [Web] Added additional modes for those with colour blindness.
+- Added support for restarting the backend via SIGHUP. Config reloading is not
+supported yet.
 
 ### Changed
 - Warning messages from Resty library are now suppressed in sensuctl.
@@ -37,6 +42,15 @@ filters matched.
 - Return underlying errors when fetching an asset.
 - Fixed a bug where the etcd event store would return prefixed matches rather than exact matches when getting events by entity.
 - `sensuctl logout` now resets the TLS configuration.
+- [Web] Fixes issue where labels with links could lead to a crash.
+- Added a global rate limit for fetching assets so that asset retries are not abusive (can be
+configured using `--assets-rate-limit` and `--assets-burst-limit` on the agent and backend).
+- [Web] Fixed an issue where trying to use an unregistered theme could lead to a
+crash.
+- Fixed a bug that would cause the backend to crash.
+- Fixed a bug that would cause messages like "unary invoker failed" to appear
+in the logs.
+- Fixed several goroutine leaks.
 
 ## [5.19.1] - 2020-04-13
 

@@ -79,3 +79,11 @@ func (e *EventStoreProxy) UpdateEventStore(to EventStore) {
 	}
 	e.gcGuard = to
 }
+
+func (e *EventStoreProxy) Close() error {
+	s := e.do()
+	if c, ok := s.(closer); ok {
+		return c.Close()
+	}
+	return nil
+}

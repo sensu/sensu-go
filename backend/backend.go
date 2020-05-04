@@ -5,8 +5,10 @@ import (
 	"crypto/tls"
 	"fmt"
 	"os"
+	"os/signal"
 	"runtime/debug"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
@@ -43,6 +45,7 @@ import (
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/util/retry"
 	"github.com/spf13/viper"
+	"golang.org/x/time/rate"
 	"google.golang.org/grpc"
 )
 
@@ -162,7 +165,7 @@ func newClient(ctx context.Context, config *Config, backend *Backend) (*clientv3
 	if config.EtcdUseEmbeddedClient {
 		client = e.NewEmbeddedClient()
 	} else {
-		cl, err := e.NewClient()
+		cl, err := e.NewClientContext(backend.runCtx)
 		if err != nil {
 			return nil, err
 		}
@@ -186,7 +189,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	b.ctx = ctx
 	b.runCtx, b.runCancel = context.WithCancel(b.ctx)
 
-	b.Client, err = newClient(b.runCtx, config, b)
+	b.Client, err = newClient(b.RunContext(), config, b)
 	if err != nil {
 		return nil, err
 	}
@@ -195,7 +198,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	stor := etcdstore.NewStore(b.Client, config.EtcdName)
 	b.Store = stor
 
-	if _, err := stor.GetClusterID(b.runCtx); err != nil {
+	if _, err := stor.GetClusterID(b.RunContext()); err != nil {
 		return nil, err
 	}
 
@@ -210,7 +213,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	logger.Debug("Registering backend...")
 
-	backendID := etcd.NewBackendIDGetter(b.runCtx, b.Client)
+	backendID := etcd.NewBackendIDGetter(b.RunContext(), b.Client)
 	logger.Debug("Done registering backend.")
 	b.Daemons = append(b.Daemons, backendID)
 
@@ -228,7 +231,11 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	backendEntity := b.getBackendEntity(config)
 	logger.WithField("entity", backendEntity).Info("backend entity information")
 	assetManager := asset.NewManager(config.CacheDir, backendEntity, &sync.WaitGroup{})
-	assetGetter, err := assetManager.StartAssetManager(b.runCtx)
+	limit := b.cfg.AssetsRateLimit
+	if limit == 0 {
+		limit = rate.Limit(asset.DefaultAssetsRateLimit)
+	}
+	assetGetter, err := assetManager.StartAssetManager(b.RunContext(), rate.NewLimiter(limit, b.cfg.AssetsBurstLimit))
 	if err != nil {
 		return nil, fmt.Errorf("error initializing asset manager: %s", err)
 	}
@@ -255,12 +262,12 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	// Initialize eventd
 	event, err := eventd.New(
-		b.runCtx,
+		b.RunContext(),
 		eventd.Config{
 			Store:           stor,
 			EventStore:      eventStoreProxy,
 			Bus:             bus,
-			LivenessFactory: liveness.EtcdFactory(b.runCtx, b.Client),
+			LivenessFactory: liveness.EtcdFactory(b.RunContext(), b.Client),
 			Client:          b.Client,
 			BufferSize:      viper.GetInt(FlagEventdBufferSize),
 			WorkerCount:     viper.GetInt(FlagEventdWorkers),
@@ -276,7 +283,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	// Initialize schedulerd
 	scheduler, err := schedulerd.New(
-		b.runCtx,
+		b.RunContext(),
 		schedulerd.Config{
 			Store:                  stor,
 			Bus:                    bus,
@@ -317,7 +324,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		Bus:                   bus,
 		Store:                 stor,
 		EventStore:            eventStoreProxy,
-		LivenessFactory:       liveness.EtcdFactory(b.runCtx, b.Client),
+		LivenessFactory:       liveness.EtcdFactory(b.RunContext(), b.Client),
 		RingPool:              ringPool,
 		BufferSize:            viper.GetInt(FlagKeepalivedBufferSize),
 		WorkerCount:           viper.GetInt(FlagKeepalivedWorkers),
@@ -406,7 +413,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 
 	// Initialize tessend
 	tessen, err := tessend.New(
-		b.runCtx,
+		b.RunContext(),
 		tessend.Config{
 			Store:      stor,
 			EventStore: eventStoreProxy,
@@ -449,15 +456,24 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	return b, nil
 }
 
-func (b *Backend) runOnce() error {
+func (b *Backend) runOnce(sighup <-chan os.Signal) error {
+	eCloser := b.EventStore.(closer)
+	defer eCloser.Close()
+
 	var derr error
+
+	eg := errGroup{
+		out: make(chan error),
+	}
+
+	defer eg.WaitStop()
 
 	if b.Etcd != nil {
 		defer func() {
 			logger.Info("shutting down etcd")
 			if err := recover(); err != nil {
 				trace := string(debug.Stack())
-				logger.WithField("panic", trace).WithError(err.(error)).
+				logger.WithField("panic", trace).WithError(fmt.Errorf("%s", err)).
 					Error("recovering from panic due to error, shutting down etcd")
 			}
 			err := b.Etcd.Shutdown()
@@ -467,25 +483,20 @@ func (b *Backend) runOnce() error {
 		}()
 	}
 
-	eg := errGroup{
-		out: make(chan error),
-	}
 	sg := stopGroup{}
 
 	// Loop across the daemons in order to start them, then add them to our groups
 	for _, d := range b.Daemons {
 		if err := d.Start(); err != nil {
+			_ = sg.Stop()
 			return ErrStartup{Err: err, Name: d.Name()}
 		}
 
 		// Add the daemon to our errGroup
-		eg.errors = append(eg.errors, d)
+		eg.daemons = append(eg.daemons, d)
 
 		// Add the daemon to our stopGroup
-		sg = append(sg, daemonStopper{
-			Name:    d.Name(),
-			stopper: d,
-		})
+		sg = append(sg, d)
 	}
 
 	// Reverse the order of our stopGroup so daemons are stopped in the proper
@@ -497,29 +508,40 @@ func (b *Backend) runOnce() error {
 
 	if b.Etcd != nil {
 		// Add etcd to our errGroup, since it's not included in the daemon list
-		eg.errors = append(eg.errors, b.Etcd)
+		eg.daemons = append(eg.daemons, b.Etcd)
 	}
-	eg.Go()
+
+	errCtx, errCancel := context.WithCancel(b.RunContext())
+	defer errCancel()
+	eg.Go(errCtx)
 
 	select {
 	case err := <-eg.Err():
 		logger.WithError(err).Error("backend stopped working and is restarting")
-	case <-b.runCtx.Done():
+	case <-b.RunContext().Done():
 		logger.Info("backend shutting down")
+	case <-sighup:
+		logger.Warn("got SIGHUP, restarting")
 	}
 	if err := sg.Stop(); err != nil {
 		if derr == nil {
 			derr = err
 		}
 	}
-
 	if derr == nil {
-		derr = b.runCtx.Err()
+		derr = b.RunContext().Err()
 	}
 
-	_ = b.Client.Close()
-
 	return derr
+}
+
+type closer interface {
+	Close() error
+}
+
+// RunContext returns the context for the current run of the backend.
+func (b *Backend) RunContext() context.Context {
+	return b.runCtx
 }
 
 // RunWithInitializer is like Run but accepts an initialization function to use
@@ -534,8 +556,11 @@ func (b *Backend) RunWithInitializer(initialize func(context.Context, *Config) (
 		Multiplier:           1,
 	}
 
+	sighup := make(chan os.Signal, 1)
+	signal.Notify(sighup, syscall.SIGHUP)
+
 	err := backoff.Retry(func(int) (bool, error) {
-		err := b.runOnce()
+		err := b.runOnce(sighup)
 		b.Stop()
 		if err != nil {
 			if b.ctx.Err() != nil {
@@ -547,6 +572,8 @@ func (b *Backend) RunWithInitializer(initialize func(context.Context, *Config) (
 				return true, err
 			}
 		}
+
+		_ = b.Client.Close()
 
 		// Yes, two levels of retry... this could improve. Unfortunately Intialize()
 		// is called elsewhere.
@@ -560,7 +587,7 @@ func (b *Backend) RunWithInitializer(initialize func(context.Context, *Config) (
 			}
 			// Replace b with a new backend - this is done to ensure that there is
 			// no side effects from the execution of b that have carried over
-			*b = *backend
+			b = backend
 			return true, nil
 		})
 		if err != nil {
@@ -583,18 +610,14 @@ func (b *Backend) Run() error {
 
 type stopper interface {
 	Stop() error
+	Name() string
 }
 
-type daemonStopper struct {
-	stopper
-	Name string
-}
-
-type stopGroup []daemonStopper
+type stopGroup []stopper
 
 func (s stopGroup) Stop() (err error) {
 	for _, stopper := range s {
-		logger.Info("shutting down ", stopper.Name)
+		logger.Info("shutting down ", stopper.Name())
 		e := stopper.Stop()
 		if err == nil {
 			err = e
@@ -605,24 +628,40 @@ func (s stopGroup) Stop() (err error) {
 
 type errorer interface {
 	Err() <-chan error
+	Name() string
 }
 
 type errGroup struct {
-	out    chan error
-	errors []errorer
+	out     chan error
+	daemons []errorer
+	wg      sync.WaitGroup
 }
 
-func (e errGroup) Go() {
-	for _, err := range e.errors {
-		err := err
+func (e *errGroup) Go(ctx context.Context) {
+	e.wg.Add(len(e.daemons))
+	for _, daemon := range e.daemons {
+		daemon := daemon
 		go func() {
-			e.out <- <-err.Err()
+			defer e.wg.Done()
+			select {
+			case err := <-daemon.Err():
+				err = fmt.Errorf("error from %s: %s", daemon.Name(), err)
+				select {
+				case e.out <- err:
+				case <-ctx.Done():
+				}
+			case <-ctx.Done():
+			}
 		}()
 	}
 }
 
-func (e errGroup) Err() <-chan error {
+func (e *errGroup) Err() <-chan error {
 	return e.out
+}
+
+func (e *errGroup) WaitStop() {
+	e.wg.Wait()
 }
 
 // Stop the Backend cleanly.

@@ -3,6 +3,7 @@ package backend
 import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/etcd"
+	"golang.org/x/time/rate"
 )
 
 const (
@@ -55,6 +56,12 @@ type Config struct {
 	// Apid Configuration
 	APIListenAddress string
 	APIURL           string
+
+	// AssetsRateLimit is the maximum number of assets per second that will be fetched.
+	AssetsRateLimit rate.Limit
+
+	// AssetsBurstLimit is the maximum amount of burst allowed in a rate interval.
+	AssetsBurstLimit int
 
 	// Dashboardd Configuration
 	DashboardHost        string
