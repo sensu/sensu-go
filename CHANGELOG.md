@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.19.3] - 2020-04-30
+
 ### Added
 - Added ability to make the Resty HTTP Timeout configurable.
 - Added the `event.is_silenced` & `event.check.is_silenced` field selectors.
@@ -55,6 +57,11 @@ crash.
 - Fixed a bug that would cause messages like "unary invoker failed" to appear
 in the logs.
 - Fixed several goroutine leaks.
+- Fixed a bug that would cause the backend to crash when the etcd client got an
+error saying "etcdserver: too many requests".
+
+## [5.19.2] - 2020-04-27
+*No changelog for this release.*
 
 ## [5.19.1] - 2020-04-13
 

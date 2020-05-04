@@ -4,10 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/gogo/protobuf/proto"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 const (
@@ -18,7 +16,7 @@ var (
 	hookKeyBuilder = store.NewKeyBuilder(hooksPathPrefix)
 )
 
-func getHookConfigPath(hook *types.HookConfig) string {
+func getHookConfigPath(hook *corev2.HookConfig) string {
 	return hookKeyBuilder.WithResource(hook).Build(hook.Name)
 }
 
@@ -33,60 +31,44 @@ func (s *Store) DeleteHookConfigByName(ctx context.Context, name string) error {
 		return errors.New("must specify name")
 	}
 
-	_, err := s.client.Delete(ctx, GetHookConfigsPath(ctx, name))
+	err := Delete(ctx, s.client, GetHookConfigsPath(ctx, name))
+	if err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
+	}
 	return err
 }
 
 // GetHookConfigs returns hook configurations for a namespace.
-func (s *Store) GetHookConfigs(ctx context.Context, pred *store.SelectionPredicate) ([]*types.HookConfig, error) {
-	hooks := []*types.HookConfig{}
+func (s *Store) GetHookConfigs(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.HookConfig, error) {
+	hooks := []*corev2.HookConfig{}
 	err := List(ctx, s.client, GetHookConfigsPath, &hooks, pred)
 	return hooks, err
 }
 
 // GetHookConfigByName gets a HookConfig by name.
-func (s *Store) GetHookConfigByName(ctx context.Context, name string) (*types.HookConfig, error) {
+func (s *Store) GetHookConfigByName(ctx context.Context, name string) (*corev2.HookConfig, error) {
 	if name == "" {
 		return nil, &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 
-	resp, err := s.client.Get(ctx, GetHookConfigsPath(ctx, name))
-	if err != nil {
-		return nil, &store.ErrInternal{Message: err.Error()}
-	}
-	if len(resp.Kvs) == 0 {
-		return nil, nil
-	}
-
-	hookBytes := resp.Kvs[0].Value
-	hook := &types.HookConfig{}
-	if err := unmarshal(hookBytes, hook); err != nil {
-		return nil, &store.ErrDecode{Err: err}
+	var hook corev2.HookConfig
+	if err := Get(ctx, s.client, GetHookConfigsPath(ctx, name), &hook); err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
+		return nil, err
 	}
 
-	return hook, nil
+	return &hook, nil
 }
 
 // UpdateHookConfig updates a HookConfig.
-func (s *Store) UpdateHookConfig(ctx context.Context, hook *types.HookConfig) error {
+func (s *Store) UpdateHookConfig(ctx context.Context, hook *corev2.HookConfig) error {
 	if err := hook.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
 
-	hookBytes, err := proto.Marshal(hook)
-	if err != nil {
-		return &store.ErrEncode{Err: err}
-	}
-
-	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(hook.Namespace)), ">", 0)
-	req := clientv3.OpPut(getHookConfigPath(hook), string(hookBytes))
-	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
-	if err != nil {
-		return &store.ErrInternal{Message: err.Error()}
-	}
-	if !res.Succeeded {
-		return &store.ErrNamespaceMissing{Namespace: hook.Namespace}
-	}
-
-	return nil
+	return CreateOrUpdate(ctx, s.client, getHookConfigPath(hook), hook.Namespace, hook)
 }

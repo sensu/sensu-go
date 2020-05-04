@@ -4,10 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/gogo/protobuf/proto"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 const (
@@ -18,13 +16,13 @@ var (
 	assetKeyBuilder = store.NewKeyBuilder(assetsPathPrefix)
 )
 
-func getAssetPath(asset *types.Asset) string {
+func getAssetPath(asset *corev2.Asset) string {
 	return assetKeyBuilder.WithResource(asset).Build(asset.Name)
 }
 
 // GetAssetsPath gets the path of the asset store.
 func GetAssetsPath(ctx context.Context, name string) string {
-	namespace := types.ContextNamespace(ctx)
+	namespace := corev2.ContextNamespace(ctx)
 
 	return assetKeyBuilder.WithNamespace(namespace).Build(name)
 }
@@ -34,38 +32,34 @@ func (s *Store) DeleteAssetByName(ctx context.Context, name string) error {
 	if name == "" {
 		return &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
-
-	if _, err := s.client.Delete(ctx, GetAssetsPath(ctx, name)); err != nil {
-		return &store.ErrInternal{Message: err.Error()}
+	err := Delete(ctx, s.client, GetAssetsPath(ctx, name))
+	if err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
 	}
-	return nil
+	return err
 }
 
 // GetAssets fetches all assets from the store
-func (s *Store) GetAssets(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Asset, error) {
-	assets := []*types.Asset{}
+func (s *Store) GetAssets(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Asset, error) {
+	assets := []*corev2.Asset{}
 	err := List(ctx, s.client, GetAssetsPath, &assets, pred)
 	return assets, err
 }
 
 // GetAssetByName gets an Asset by name.
-func (s *Store) GetAssetByName(ctx context.Context, name string) (*types.Asset, error) {
+func (s *Store) GetAssetByName(ctx context.Context, name string) (*corev2.Asset, error) {
 	if name == "" {
 		return nil, &store.ErrNotValid{Err: errors.New("must specify namespace and name")}
 	}
 
-	resp, err := s.client.Get(ctx, GetAssetsPath(ctx, name))
-	if err != nil {
-		return nil, &store.ErrInternal{Message: err.Error()}
-	}
-	if len(resp.Kvs) == 0 {
-		return nil, nil
-	}
-
-	assetBytes := resp.Kvs[0].Value
-	asset := &types.Asset{}
-	if err := unmarshal(assetBytes, asset); err != nil {
-		return nil, &store.ErrDecode{Err: err}
+	var asset corev2.Asset
+	if err := Get(ctx, s.client, GetAssetsPath(ctx, name), &asset); err != nil {
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
+		return nil, err
 	}
 	if asset.Labels == nil {
 		asset.Labels = make(map[string]string)
@@ -74,29 +68,14 @@ func (s *Store) GetAssetByName(ctx context.Context, name string) (*types.Asset, 
 		asset.Annotations = make(map[string]string)
 	}
 
-	return asset, nil
+	return &asset, nil
 }
 
 // UpdateAsset updates an asset.
-func (s *Store) UpdateAsset(ctx context.Context, asset *types.Asset) error {
+func (s *Store) UpdateAsset(ctx context.Context, asset *corev2.Asset) error {
 	if err := asset.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
 
-	assetBytes, err := proto.Marshal(asset)
-	if err != nil {
-		return &store.ErrEncode{Err: err}
-	}
-
-	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(asset.Namespace)), ">", 0)
-	req := clientv3.OpPut(getAssetPath(asset), string(assetBytes))
-	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
-	if err != nil {
-		return &store.ErrInternal{Message: err.Error()}
-	}
-	if !res.Succeeded {
-		return &store.ErrNamespaceMissing{Namespace: asset.Namespace}
-	}
-
-	return nil
+	return CreateOrUpdate(ctx, s.client, getAssetPath(asset), asset.Namespace, asset)
 }

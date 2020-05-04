@@ -4,10 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/gogo/protobuf/proto"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 var (
@@ -15,7 +13,7 @@ var (
 	mutatorKeyBuilder  = store.NewKeyBuilder(mutatorsPathPrefix)
 )
 
-func getMutatorPath(mutator *types.Mutator) string {
+func getMutatorPath(mutator *corev2.Mutator) string {
 	return mutatorKeyBuilder.WithResource(mutator).Build(mutator.Name)
 }
 
@@ -37,55 +35,35 @@ func (s *Store) DeleteMutatorByName(ctx context.Context, name string) error {
 }
 
 // GetMutators gets the list of mutators for a namespace.
-func (s *Store) GetMutators(ctx context.Context, pred *store.SelectionPredicate) ([]*types.Mutator, error) {
-	mutators := []*types.Mutator{}
+func (s *Store) GetMutators(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Mutator, error) {
+	mutators := []*corev2.Mutator{}
 	err := List(ctx, s.client, GetMutatorsPath, &mutators, pred)
 	return mutators, err
 }
 
 // GetMutatorByName gets a Mutator by name.
-func (s *Store) GetMutatorByName(ctx context.Context, name string) (*types.Mutator, error) {
+func (s *Store) GetMutatorByName(ctx context.Context, name string) (*corev2.Mutator, error) {
 	if name == "" {
 		return nil, &store.ErrNotValid{Err: errors.New("must specify name of mutator")}
 	}
 
-	resp, err := s.client.Get(ctx, GetMutatorsPath(ctx, name))
+	var mutator corev2.Mutator
+	err := Get(ctx, s.client, GetMutatorsPath(ctx, name), &mutator)
 	if err != nil {
-		return nil, &store.ErrInternal{Message: err.Error()}
-	}
-	if len(resp.Kvs) == 0 {
-		return nil, nil
-	}
-
-	mutatorBytes := resp.Kvs[0].Value
-	mutator := &types.Mutator{}
-	if err := unmarshal(mutatorBytes, mutator); err != nil {
-		return nil, &store.ErrDecode{Err: err}
+		if _, ok := err.(*store.ErrNotFound); ok {
+			err = nil
+		}
+		return nil, err
 	}
 
-	return mutator, nil
+	return &mutator, nil
 }
 
 // UpdateMutator updates a Mutator.
-func (s *Store) UpdateMutator(ctx context.Context, mutator *types.Mutator) error {
+func (s *Store) UpdateMutator(ctx context.Context, mutator *corev2.Mutator) error {
 	if err := mutator.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
 	}
 
-	mutatorBytes, err := proto.Marshal(mutator)
-	if err != nil {
-		return &store.ErrEncode{Err: err}
-	}
-
-	cmp := clientv3.Compare(clientv3.Version(getNamespacePath(mutator.Namespace)), ">", 0)
-	req := clientv3.OpPut(getMutatorPath(mutator), string(mutatorBytes))
-	res, err := s.client.Txn(ctx).If(cmp).Then(req).Commit()
-	if err != nil {
-		return &store.ErrInternal{Message: err.Error()}
-	}
-	if !res.Succeeded {
-		return &store.ErrNamespaceMissing{Namespace: mutator.Namespace}
-	}
-
-	return nil
+	return CreateOrUpdate(ctx, s.client, getMutatorPath(mutator), mutator.Namespace, mutator)
 }
