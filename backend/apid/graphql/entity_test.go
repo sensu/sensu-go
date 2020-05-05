@@ -2,6 +2,7 @@ package graphql
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -178,4 +179,22 @@ func TestEntityTypeToJSONField(t *testing.T) {
 	res, err := imp.ToJSON(graphql.ResolveParams{Source: src})
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)
+}
+
+func Test_processImpl_Created(t *testing.T) {
+	src := &corev2.Process{Created: 1588381473555}
+	imp := &processImpl{}
+
+	res, err := imp.Created(graphql.ResolveParams{Source: src})
+	require.NoError(t, err)
+	assert.Equal(t, res, time.Unix(1588381473, 555000000))
+}
+
+func Test_processImpl_MemoryPercent(t *testing.T) {
+	src := &corev2.Process{MemoryPercent: 1.5}
+	imp := &processImpl{}
+
+	res, err := imp.MemoryPercent(graphql.ResolveParams{Source: src})
+	require.NoError(t, err)
+	assert.Equal(t, fmt.Sprint(res), "1.5")
 }

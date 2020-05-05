@@ -17,6 +17,7 @@ var _ schema.EntityFieldResolvers = (*entityImpl)(nil)
 var _ schema.SystemFieldResolvers = (*systemImpl)(nil)
 var _ schema.NetworkFieldResolvers = (*networkImpl)(nil)
 var _ schema.NetworkInterfaceFieldResolvers = (*networkInterfaceImpl)(nil)
+var _ schema.ProcessFieldResolvers = (*processImpl)(nil)
 var _ schema.DeregistrationFieldResolvers = (*deregistrationImpl)(nil)
 
 //
@@ -202,6 +203,28 @@ type networkInterfaceImpl struct {
 func (r *networkInterfaceImpl) Mac(p graphql.ResolveParams) (string, error) {
 	i := p.Source.(corev2.NetworkInterface)
 	return i.MAC, nil
+}
+
+//
+// Implement ProcessFieldResolvers
+//
+
+type processImpl struct {
+	schema.ProcessAliases
+}
+
+// Created implements response to request for 'created' field.
+func (r *processImpl) Created(p graphql.ResolveParams) (time.Time, error) {
+	i := p.Source.(*corev2.Process)
+	sec := i.Created / 1000
+	nsec := (i.Created % 1000) * int64(time.Millisecond)
+	return time.Unix(sec, nsec), nil
+}
+
+// MemoryPercent implements response to request for 'memoryPercent' field.
+func (r *processImpl) MemoryPercent(p graphql.ResolveParams) (float64, error) {
+	i := p.Source.(*corev2.Process)
+	return float64(i.MemoryPercent), nil
 }
 
 //
