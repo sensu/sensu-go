@@ -24,9 +24,9 @@ func fixtureAssets() []types.Asset {
 
 func fixtureRuntimeAssets() RuntimeAssetSet {
 	return RuntimeAssetSet{
-		&RuntimeAsset{Path: string(os.PathSeparator) + filepath.Join("foo", "bar", "asset-1")},
-		&RuntimeAsset{Path: string(os.PathSeparator) + filepath.Join("foo", "bar", "asset-2")},
-		&RuntimeAsset{Path: string(os.PathSeparator) + filepath.Join("foo", "bar", "asset-3")},
+		&RuntimeAsset{Name: "foo1", Path: string(os.PathSeparator) + filepath.Join("foo", "bar", "asset-1")},
+		&RuntimeAsset{Name: "foo2", Path: string(os.PathSeparator) + filepath.Join("foo", "bar", "asset-2")},
+		&RuntimeAsset{Name: "foo3", Path: string(os.PathSeparator) + filepath.Join("foo", "bar", "asset-3")},
 	}
 }
 
@@ -90,6 +90,9 @@ func TestEnvContainsPaths(t *testing.T) {
 	env := runtimeAssetSet.Env()
 	for _, envVar := range env {
 		for _, runtimeAsset := range runtimeAssetSet {
+			if strings.HasPrefix(envVar, "FOO") {
+				continue
+			}
 			assert.Contains(t, envVar, runtimeAsset.Path)
 		}
 	}

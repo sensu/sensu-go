@@ -41,6 +41,8 @@ type Getter interface {
 
 // A RuntimeAsset is a locally expanded Asset.
 type RuntimeAsset struct {
+	// Name is the name of the asset
+	Name string
 	// Path is the absolute path to the asset's base directory.
 	Path string
 	// SHA512 is the hash of the asset tarball.

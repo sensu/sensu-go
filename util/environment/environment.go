@@ -2,11 +2,21 @@ package environment
 
 import (
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 )
 
-var pathListSeparator = string(os.PathListSeparator)
+var (
+	keyRegex          = regexp.MustCompile("[^a-zA-Z0-9]+")
+	pathListSeparator = string(os.PathListSeparator)
+)
+
+// Key takes a string and converts it to an POSIX compliant environment key
+// variable in uppercase
+func Key(s string) string {
+	return strings.ToUpper(keyRegex.ReplaceAllString(s, "_"))
+}
 
 // MergeEnvironments merges one or more sets of environment variables,
 // overwriting any existing variable in the preceding set, except for the
