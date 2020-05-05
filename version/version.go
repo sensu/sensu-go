@@ -3,6 +3,7 @@ package version
 import (
 	"fmt"
 	"runtime/debug"
+	"runtime"
 )
 
 const (
@@ -28,6 +29,10 @@ var (
 	// Edition stores the edition of the build
 	// (e.g. community or enterprise)
 	Edition string = "community"
+
+	// GoVersion stores the version of Go used to build the binary
+	// (e.g. go1.14.2)
+	GoVersion string = runtime.Version()
 )
 
 // Semver returns full semantic versioning compatible identifier.
@@ -80,6 +85,7 @@ func FormattedOutput(component string) string {
 	if BuildDate != "" {
 		output += fmt.Sprintf(", built %s", BuildDate)
 	}
+	output += fmt.Sprintf(", built with %s", GoVersion)
 	return output
 }
 
