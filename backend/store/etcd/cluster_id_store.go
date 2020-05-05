@@ -31,9 +31,13 @@ func (s *Store) GetClusterID(ctx context.Context) (string, error) {
 	putOp := clientv3.OpPut(key, uid)
 	cmp := clientv3.Compare(clientv3.Version(key), "=", 0)
 
-	resp, err := s.client.Txn(ctx).If(cmp).Then(putOp).Else(getOp).Commit()
+	var resp *clientv3.TxnResponse
+	err := Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = s.client.Txn(ctx).If(cmp).Then(putOp).Else(getOp).Commit()
+		return RetryRequest(n, err)
+	})
 	if err != nil {
-		return "", &store.ErrInternal{Message: err.Error()}
+		return "", err
 	}
 
 	if resp.Succeeded {

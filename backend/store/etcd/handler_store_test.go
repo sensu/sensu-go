@@ -37,6 +37,11 @@ func TestHandlerStorage(t *testing.T) {
 		assert.Equal(t, handler.Command, retrieved.Command)
 		assert.Equal(t, handler.Timeout, retrieved.Timeout)
 
+		dne, err := s.GetHandlerByName(ctx, "doesnotexist")
+		require.NoError(t, err)
+		require.Nil(t, dne)
+		require.NoError(t, s.DeleteHandlerByName(ctx, "doesnotexist"))
+
 		handlers, err = s.GetHandlers(ctx, pred)
 		require.NoError(t, err)
 		require.NotEmpty(t, handlers)

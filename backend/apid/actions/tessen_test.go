@@ -44,7 +44,7 @@ func TestCreateOrUpdateTessenConfig(t *testing.T) {
 			name:            "Invalid input",
 			ctx:             context.Background(),
 			argument:        corev2.DefaultTessenConfig(),
-			storeErr:        &store.ErrNotValid{},
+			storeErr:        &store.ErrNotValid{Err: errors.New("error")},
 			expectedErr:     true,
 			expectedErrCode: InvalidArgument,
 		},

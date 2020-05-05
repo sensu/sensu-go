@@ -3,6 +3,7 @@ package routers
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -253,7 +254,7 @@ var createResourceInvalidTestCase = func(resource corev2.Resource) routerTestCas
 		body:   marshal(resource),
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("CreateResource", mock.Anything, mock.AnythingOfType(typ)).
-				Return(&store.ErrNotValid{}).
+				Return(&store.ErrNotValid{Err: errors.New("error")}).
 				Once()
 		},
 		wantStatusCode: http.StatusBadRequest,
@@ -342,7 +343,7 @@ var updateResourceInvalidTestCase = func(resource corev2.Resource) routerTestCas
 		body:   marshal(resource),
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("CreateOrUpdateResource", mock.Anything, mock.AnythingOfType(typ)).
-				Return(&store.ErrNotValid{}).
+				Return(&store.ErrNotValid{Err: errors.New("error")}).
 				Once()
 		},
 		wantStatusCode: http.StatusBadRequest,

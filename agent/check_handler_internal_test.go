@@ -9,6 +9,7 @@ import (
 
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/testing/mockexecutor"
+	"github.com/sensu/sensu-go/token"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/transport"
@@ -397,7 +398,7 @@ func TestPrepareCheck(t *testing.T) {
 	entity.Labels = map[string]string{"foo": "bar"}
 	check := corev2.FixtureCheckConfig("check")
 	check.Command = "echo {{ .labels.foo }}"
-	err = prepareCheck(check, entity)
+	err = token.SubstituteCheck(check, entity)
 	require.NoError(t, err)
 	assert.Equal(t, check.Command, "echo bar")
 }

@@ -3,6 +3,7 @@ package pipeline
 import (
 	"time"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
@@ -17,6 +18,7 @@ import (
 type Pipeline struct {
 	store                  store.Store
 	assetGetter            asset.Getter
+	backendEntity          *corev2.Entity
 	extensionExecutor      ExtensionExecutorGetterFunc
 	executor               command.Executor
 	storeTimeout           time.Duration
@@ -26,8 +28,9 @@ type Pipeline struct {
 // Config holds the configuration for a Pipeline.
 type Config struct {
 	Store                   store.Store
-	ExtensionExecutorGetter ExtensionExecutorGetterFunc
 	AssetGetter             asset.Getter
+	BackendEntity           *corev2.Entity
+	ExtensionExecutorGetter ExtensionExecutorGetterFunc
 	StoreTimeout            time.Duration
 	SecretsProviderManager  *secrets.ProviderManager
 }
@@ -40,6 +43,7 @@ func New(c Config, options ...Option) *Pipeline {
 	pipeline := &Pipeline{
 		store:                  c.Store,
 		assetGetter:            c.AssetGetter,
+		backendEntity:          c.BackendEntity,
 		extensionExecutor:      c.ExtensionExecutorGetter,
 		executor:               command.NewExecutor(),
 		storeTimeout:           c.StoreTimeout,

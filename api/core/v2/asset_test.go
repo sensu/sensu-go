@@ -34,16 +34,6 @@ func TestValidator(t *testing.T) {
 	asset.Namespace = ""
 	assert.Error(asset.Validate())
 
-	// Given asset with an invalid URL it should not pass
-	asset = FixtureAsset("name")
-	asset.URL = "asdfasdf"
-	assert.Error(asset.Validate())
-
-	// Given asset with a non-HTTP URL it should not pass
-	asset = FixtureAsset("name")
-	asset.URL = "file:///root/my_script.sh"
-	assert.Error(asset.Validate())
-
 	// Given asset with valid filters
 	asset = FixtureAsset("name")
 	asset.Filters = []string{`entity.OS in ("macos", "linux")`}

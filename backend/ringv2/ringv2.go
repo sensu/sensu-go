@@ -13,6 +13,7 @@ import (
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	cron "github.com/robfig/cron/v3"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/util/retry"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/time/rate"
@@ -171,10 +172,14 @@ func New(client *clientv3.Client, storePath string) *Ring {
 
 // IsEmpty returns true if there are no items in the ring.
 func (r *Ring) IsEmpty(ctx context.Context) (bool, error) {
-	resp, err := r.client.Get(ctx, r.itemPrefix,
-		clientv3.WithKeysOnly(),
-		clientv3.WithPrefix(),
-		clientv3.WithLimit(1))
+	var resp *clientv3.GetResponse
+	err := etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = r.client.Get(ctx, r.itemPrefix,
+			clientv3.WithKeysOnly(),
+			clientv3.WithPrefix(),
+			clientv3.WithLimit(1))
+		return etcd.RetryRequest(n, err)
+	})
 	if err != nil {
 		return false, err
 	}
@@ -197,7 +202,11 @@ func (r *Ring) Add(ctx context.Context, value string, keepalive int64) (rerr err
 
 	itemKey := path.Join(r.itemPrefix, value)
 
-	getresp, err := r.client.Get(ctx, itemKey)
+	var getresp *clientv3.GetResponse
+	err := etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		getresp, err = r.client.Get(ctx, itemKey)
+		return etcd.RetryRequest(n, err)
+	})
 	if err != nil {
 		return fmt.Errorf("couldn't add %q to ring: %s", value, err)
 	}
@@ -223,7 +232,11 @@ func (r *Ring) Add(ctx context.Context, value string, keepalive int64) (rerr err
 	}
 NEWLEASE:
 
-	lease, err := r.client.Grant(ctx, keepalive)
+	var lease *clientv3.LeaseGrantResponse
+	err = etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		lease, err = r.client.Grant(ctx, keepalive)
+		return etcd.RetryRequest(n, err)
+	})
 	if err != nil {
 		return fmt.Errorf("couldn't add %q to ring: %s", value, err)
 	}
@@ -233,7 +246,11 @@ NEWLEASE:
 		}
 	}()
 
-	if _, err := r.client.Put(ctx, itemKey, "", clientv3.WithLease(lease.ID)); err != nil {
+	err = etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		_, err = r.client.Put(ctx, itemKey, "", clientv3.WithLease(lease.ID))
+		return etcd.RetryRequest(n, err)
+	})
+	if err != nil {
 		return fmt.Errorf("couldn't add %q to ring: %s", value, err)
 	}
 
@@ -253,8 +270,10 @@ func (r *Ring) notifyWatchers() {
 // Remove removes a value from the list. If the value does not exist, nothing
 // happens.
 func (r *Ring) Remove(ctx context.Context, value string) error {
-	_, err := r.client.Delete(ctx, path.Join(r.itemPrefix, value))
-	return err
+	return etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		_, err = r.client.Delete(ctx, path.Join(r.itemPrefix, value))
+		return etcd.RetryRequest(n, err)
+	})
 }
 
 // Watch watches the ring for events. The events are sent on the channel that
@@ -314,7 +333,11 @@ func (w *watcher) getInterval() int {
 func (w *watcher) hasTrigger(ctx context.Context) (bool, string, error) {
 	getTrigger := clientv3.OpGet(w.triggerKey())
 	getFirst := clientv3.OpGet(w.ring.itemPrefix, clientv3.WithPrefix(), clientv3.WithLimit(1))
-	resp, err := w.ring.client.Txn(ctx).Then(getTrigger, getFirst).Commit()
+	var resp *clientv3.TxnResponse
+	err := etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = w.ring.client.Txn(ctx).Then(getTrigger, getFirst).Commit()
+		return etcd.RetryRequest(n, err)
+	})
 	if err != nil {
 		return false, "", err
 	}
@@ -365,8 +388,7 @@ func (w *watcher) ensureActiveTrigger(ctx context.Context) error {
 
 		resp, err := w.ring.client.Txn(ctx).If(triggerCmp).Then(triggerOp).Commit()
 		if err != nil {
-			logger.WithError(err).Error("can't write ring trigger, retrying")
-			return false, nil
+			return etcd.RetryRequest(retry, err)
 		}
 		if !resp.Succeeded {
 			_, _ = w.ring.client.Revoke(ctx, lease.ID)
@@ -458,7 +480,11 @@ func (r *Ring) nextInRing(ctx context.Context, prevKv *mvccpb.KeyValue, n int64)
 		opts = append(opts, clientv3.WithFromKey())
 		opts = append(opts, clientv3.WithRange(end))
 	}
-	resp, err := r.client.Get(ctx, key, opts...)
+	var resp *clientv3.GetResponse
+	err := etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = r.client.Get(ctx, key, opts...)
+		return etcd.RetryRequest(n, err)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("couldn't get next item(s) in ring: %s", err)
 	}
@@ -472,7 +498,11 @@ func (r *Ring) nextInRing(ctx context.Context, prevKv *mvccpb.KeyValue, n int64)
 	}
 	if int64(len(result)) < n {
 		m := n - int64(len(result))
-		resp, err := r.client.Get(ctx, r.itemPrefix, clientv3.WithPrefix(), clientv3.WithLimit(m))
+		var resp *clientv3.GetResponse
+		err := etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+			resp, err = r.client.Get(ctx, r.itemPrefix, clientv3.WithPrefix(), clientv3.WithLimit(m))
+			return etcd.RetryRequest(n, err)
+		})
 		if err != nil {
 			return nil, fmt.Errorf("couldn't get next item(s) in ring: %s", err)
 		}
@@ -526,7 +556,11 @@ func (w *watcher) advanceRing(ctx context.Context, prevKv *mvccpb.KeyValue) ([]*
 	triggerOp := clientv3.OpPut(w.triggerKey(), nextValue, clientv3.WithLease(lease.ID))
 	triggerCmp := clientv3.Compare(clientv3.Version(w.triggerKey()), "=", 0)
 
-	resp, err := w.ring.client.Txn(ctx).If(triggerCmp).Then(triggerOp).Commit()
+	var resp *clientv3.TxnResponse
+	err = etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		resp, err = w.ring.client.Txn(ctx).If(triggerCmp).Then(triggerOp).Commit()
+		return etcd.RetryRequest(n, err)
+	})
 	if err != nil {
 		return nil, fmt.Errorf("couldn't advance ring: %s", err)
 	}

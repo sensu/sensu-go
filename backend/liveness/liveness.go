@@ -11,6 +11,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
+	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/time/rate"
 )
@@ -147,7 +148,9 @@ func NewSwitchSet(client *clientv3.Client, name string, dead, alive EventFunc, l
 // TTL value is 5. If a smaller value is passed, then an error will be returned
 // and no registration will occur.
 func (t *SwitchSet) Alive(ctx context.Context, id string, ttl int64) error {
-	return t.ping(ctx, id, ttl, true)
+	return etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		return etcd.RetryRequest(n, t.ping(ctx, id, ttl, true))
+	})
 }
 
 // Bury buries a live or dead switch. The switch will no longer
@@ -157,10 +160,19 @@ func (t *SwitchSet) Bury(ctx context.Context, id string) error {
 
 	t.logger.WithFields(logrus.Fields{"key": key}).Debug("burying key")
 
-	if _, err := t.client.Put(ctx, key, buried); err != nil {
+	err := etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		_, err = t.client.Put(ctx, key, buried)
+		return etcd.RetryRequest(n, err)
+	})
+	if err != nil {
 		return fmt.Errorf("error burying switch: %s", err)
 	}
-	if _, err := t.client.Delete(ctx, key); err != nil {
+
+	err = etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		_, err = t.client.Delete(ctx, key)
+		return etcd.RetryRequest(n, err)
+	})
+	if err != nil {
 		return fmt.Errorf("error burying switch: %s", err)
 	}
 
@@ -179,7 +191,9 @@ func (t *SwitchSet) Bury(ctx context.Context, id string) error {
 // TTL value is 5. If a smaller value is passed, then an error will be returned
 // and no registration will occur.
 func (t *SwitchSet) Dead(ctx context.Context, id string, ttl int64) error {
-	return t.ping(ctx, id, ttl, false)
+	return etcd.Backoff(ctx).Retry(func(n int) (done bool, err error) {
+		return etcd.RetryRequest(n, t.ping(ctx, id, ttl, false))
+	})
 }
 
 func isBuried(event *clientv3.Event) bool {

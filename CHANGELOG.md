@@ -7,6 +7,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.19.3] - 2020-04-30
+
 ### Added
 - Added ability to make the Resty HTTP Timeout configurable.
 - Added the `event.is_silenced` & `event.check.is_silenced` field selectors.
@@ -19,11 +21,16 @@ sensu-backend or sensu-agent process.
 - Added a new `sensuctl describe-type` command to list all resource types.
 - Added a `timeout` flag to `sensu-backend init`.
 - Added `labels` and `annotations` as backend config options.
+- Added token substitution for assets.
 - [Web] Added the ability for labels and annotations with links to images to be
 displayed inline.
 - [Web] Added additional modes for those with colour blindness.
 - Added support for restarting the backend via SIGHUP. Config reloading is not
 supported yet.
+- [Web] Added the ability for labels and annotations with links to images to be
+displayed inline.
+- [Web] Added additional modes for those with colour blindness.
+- Added `Edition` field to version information.
 
 ### Changed
 - Warning messages from Resty library are now suppressed in sensuctl.
@@ -50,6 +57,11 @@ crash.
 - Fixed a bug that would cause messages like "unary invoker failed" to appear
 in the logs.
 - Fixed several goroutine leaks.
+- Fixed a bug that would cause the backend to crash when the etcd client got an
+error saying "etcdserver: too many requests".
+
+## [5.19.2] - 2020-04-27
+*No changelog for this release.*
 
 ## [5.19.1] - 2020-04-13
 

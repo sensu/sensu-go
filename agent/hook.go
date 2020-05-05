@@ -12,7 +12,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/command"
-	"github.com/sensu/sensu-go/types/dynamic"
+	"github.com/sensu/sensu-go/token"
 	"github.com/sensu/sensu-go/util/environment"
 	"github.com/sirupsen/logrus"
 )
@@ -163,22 +163,8 @@ func (a *Agent) prepareHook(hookConfig *corev2.HookConfig) bool {
 		return false
 	}
 
-	// Extract the extended attributes from the entity and combine them at the
-	// top-level so they can be easily accessed using token substitution
-	synthesizedEntity := dynamic.Synthesize(a.getAgentEntity())
-
-	// Substitute tokens within the check configuration with the synthesized
-	// entity
-	hookConfigBytes, err := TokenSubstitution(synthesizedEntity, hookConfig)
-	if err != nil {
-		a.sendFailure(event, err)
-		return false
-	}
-
-	// Unmarshal the check configuration obtained after the token substitution
-	// back into the check config struct
-	if err = json.Unmarshal(hookConfigBytes, hookConfig); err != nil {
-		a.sendFailure(event, fmt.Errorf("could not unmarshal the hook config: %s", err))
+	if err := token.SubstituteHook(hookConfig, a.getAgentEntity()); err != nil {
+		a.sendFailure(event, fmt.Errorf("error while substituting hook config tokens: %s", err))
 		return false
 	}
 
