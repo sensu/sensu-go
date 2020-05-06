@@ -20,6 +20,12 @@ type hookImpl struct {
 	schema.HookAliases
 }
 
+// Config implements response to request for 'config' field.
+func (*hookImpl) Config(p graphql.ResolveParams) (interface{}, error) {
+	hook := p.Source.(*corev2.Hook)
+	return &hook.HookConfig, nil
+}
+
 // IsTypeOf is used to determine if a given value is associated with the type
 func (*hookImpl) IsTypeOf(s interface{}, p graphql.IsTypeOfParams) bool {
 	_, ok := s.(*corev2.Hook)
