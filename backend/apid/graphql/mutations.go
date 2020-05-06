@@ -154,17 +154,15 @@ func (r *mutationsImpl) ExecuteCheck(p schema.MutationExecuteCheckFieldResolverP
 	ctx := setContextFromComponents(p.Context, components)
 
 	client := r.svc.CheckClient
-	check, err := client.FetchCheck(ctx, components.UniqueComponent())
-	if err != nil {
-		return nil, err
-	}
-
 	adhocReq := corev2.AdhocRequest{
-		ObjectMeta:    check.ObjectMeta,
+		ObjectMeta: corev2.NewObjectMeta(
+			components.UniqueComponent(),
+			components.Namespace(),
+		),
 		Subscriptions: p.Args.Input.Subscriptions,
 		Reason:        p.Args.Input.Reason,
 	}
-	err = client.ExecuteCheck(ctx, check.Name, &adhocReq)
+	err := client.ExecuteCheck(ctx, components.UniqueComponent(), &adhocReq)
 	return map[string]interface{}{
 		"clientMutationId": p.Args.Input.ClientMutationID,
 		"errors":           wrapInputErrors("id", err),
