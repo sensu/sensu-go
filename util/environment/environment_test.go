@@ -99,3 +99,34 @@ func TestMergeEnvironments(t *testing.T) {
 		})
 	}
 }
+
+func TestKey(t *testing.T) {
+	tests := []struct {
+		name string
+		s    string
+		want string
+	}{
+		{
+			name: "special characters are replaced",
+			s:    "FOO@BAR",
+			want: "FOO_BAR",
+		},
+		{
+			name: "the key is uppercase",
+			s:    "foo",
+			want: "FOO",
+		},
+		{
+			name: "underscores are preserved",
+			s:    "FOO_BAR",
+			want: "FOO_BAR",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Key(tt.s); got != tt.want {
+				t.Errorf("Key() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
