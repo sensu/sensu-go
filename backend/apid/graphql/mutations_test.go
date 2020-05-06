@@ -99,9 +99,7 @@ func TestMutationTypeExecuteCheck(t *testing.T) {
 	params := schema.MutationExecuteCheckFieldResolverParams{}
 	params.Args.Input = &inputs
 
-	check := corev2.FixtureCheckConfig("test")
 	client := new(MockCheckClient)
-	client.On("FetchCheck", mock.Anything, mock.Anything).Return(check, nil)
 	client.On("ExecuteCheck", mock.Anything, mock.Anything, mock.Anything).Return(nil).Once()
 	cfg := ServiceConfig{CheckClient: client}
 	impl := mutationsImpl{svc: cfg}
