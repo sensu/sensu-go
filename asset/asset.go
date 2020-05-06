@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/util/environment"
 )
 
 const (
@@ -78,6 +79,12 @@ func (r *RuntimeAsset) Env() []string {
 		// environment, or an empty string if var doesn't exist.
 		assetEnv[i] = os.ExpandEnv(envVar)
 	}
+
+	assetEnv = append(assetEnv, fmt.Sprintf("%s=%s",
+		fmt.Sprintf("%s_PATH", environment.Key(r.Name)),
+		r.Path,
+	))
+
 	return assetEnv
 }
 
