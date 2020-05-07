@@ -13,6 +13,8 @@
 package asset
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -20,21 +22,21 @@ import (
 func TestRuntimeAsset_Env(t *testing.T) {
 	r := &RuntimeAsset{
 		Name:   "foo",
-		Path:   "/tmp/foo",
+		Path:   string(os.PathSeparator) + filepath.Join("tmp", "foo"),
 		SHA512: "123456789",
 	}
 	got := r.Env()
 
-	if want := "/tmp/foo/bin"; !strings.Contains(got[0], want) {
+	if want := string(os.PathSeparator) + filepath.Join("tmp", "foo", "bin"); !strings.Contains(got[0], want) {
 		t.Errorf("RuntimeAsset.Env() PATH = %v, must contains %v", got[0], want)
 	}
-	if want := "/tmp/foo/lib"; !strings.Contains(got[1], want) {
+	if want := string(os.PathSeparator) + filepath.Join("tmp", "foo", "lib"); !strings.Contains(got[1], want) {
 		t.Errorf("RuntimeAsset.Env() LD_LIBRARY_PATH = %v, must contains %v", got[1], want)
 	}
-	if want := "/tmp/foo/include"; !strings.Contains(got[2], want) {
+	if want := string(os.PathSeparator) + filepath.Join("tmp", "foo", "include"); !strings.Contains(got[2], want) {
 		t.Errorf("RuntimeAsset.Env() CPATH = %v, must contains %v", got[2], want)
 	}
-	if want := "FOO_PATH=/tmp/foo"; !strings.Contains(got[3], want) {
+	if want := string(os.PathSeparator) + filepath.Join("tmp", "foo"); !strings.Contains(got[3], want) {
 		t.Errorf("RuntimeAsset.Env() asset path = %v, must contains %v", got[3], want)
 	}
 }
