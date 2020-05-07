@@ -22,6 +22,8 @@ displayed inline.
 - [Web] Added additional modes for those with colour blindness.
 - Added `Edition` field to version information.
 - Added `GoVersion` field to version information.
+- Assets paths are now accessible to consumers via an environment variable.
+- Added a helper function to token substitution to retrieve an asset path.
 
 ### Changed
 - Warning messages from Resty library are now suppressed in sensuctl.
