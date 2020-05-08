@@ -22,6 +22,7 @@ sensu-backend or sensu-agent process.
 
 ### Changed
 - Warning messages from Resty library are now suppressed in sensuctl.
+- Notepad is now the default editor on Windows, instead of vi.
 
 ## [5.19.3] - 2020-04-30
 
