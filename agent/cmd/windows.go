@@ -70,6 +70,7 @@ func NewWindowsInstallServiceCommand() *cobra.Command {
 		SilenceErrors: true,
 		SilenceUsage:  true,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			_ = viper.BindPFlags(cmd.Flags())
 			installArgs := append([]string{"service", "run"}, os.Args[numParents(cmd)+1:]...)
 			return installService(serviceName, serviceDisplayName, serviceDescription, installArgs...)
 		},
