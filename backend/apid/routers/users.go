@@ -141,7 +141,7 @@ func (r *UsersRouter) updatePassword(req *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
-	user.Password = params["password"]
+	user.PasswordHash = params["password"]
 	err = r.controller.CreateOrReplace(req.Context(), user)
 	return nil, err
 }

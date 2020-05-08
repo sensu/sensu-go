@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/AlecAivazis/survey"
+	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
@@ -89,8 +90,13 @@ func SetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
+			hash, err := bcrypt.HashPassword(password.New)
+			if err != nil {
+				return err
+			}
+
 			// Update password
-			err := cli.Client.UpdatePassword(username, password.New)
+			err = cli.Client.UpdatePassword(username, hash)
 			if err != nil {
 				return err
 			}
