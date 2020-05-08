@@ -580,9 +580,6 @@ type UserStore interface {
 	// CreateUsern creates a new user with the given user struct.
 	CreateUser(user *types.User) error
 
-	// DeleteUser deletes a user using the given user struct.
-	DeleteUser(ctx context.Context, user *types.User) error
-
 	// GetUser returns a user using the given username.
 	GetUser(ctx context.Context, username string) (*types.User, error)
 
