@@ -839,6 +839,48 @@ type SystemArchFieldResolver interface {
 	Arch(p graphql.ResolveParams) (string, error)
 }
 
+// SystemARMVersionFieldResolver implement to resolve requests for the System's ARMVersion field.
+type SystemARMVersionFieldResolver interface {
+	// ARMVersion implements response to request for ARMVersion field.
+	ARMVersion(p graphql.ResolveParams) (int, error)
+}
+
+// SystemLibCTypeFieldResolver implement to resolve requests for the System's libCType field.
+type SystemLibCTypeFieldResolver interface {
+	// LibCType implements response to request for libCType field.
+	LibCType(p graphql.ResolveParams) (string, error)
+}
+
+// SystemVMSystemFieldResolver implement to resolve requests for the System's VMSystem field.
+type SystemVMSystemFieldResolver interface {
+	// VMSystem implements response to request for VMSystem field.
+	VMSystem(p graphql.ResolveParams) (string, error)
+}
+
+// SystemVMRoleFieldResolver implement to resolve requests for the System's VMRole field.
+type SystemVMRoleFieldResolver interface {
+	// VMRole implements response to request for VMRole field.
+	VMRole(p graphql.ResolveParams) (string, error)
+}
+
+// SystemCloudProviderFieldResolver implement to resolve requests for the System's cloudProvider field.
+type SystemCloudProviderFieldResolver interface {
+	// CloudProvider implements response to request for cloudProvider field.
+	CloudProvider(p graphql.ResolveParams) (string, error)
+}
+
+// SystemFloatTypeFieldResolver implement to resolve requests for the System's floatType field.
+type SystemFloatTypeFieldResolver interface {
+	// FloatType implements response to request for floatType field.
+	FloatType(p graphql.ResolveParams) (string, error)
+}
+
+// SystemProcessesFieldResolver implement to resolve requests for the System's processes field.
+type SystemProcessesFieldResolver interface {
+	// Processes implements response to request for processes field.
+	Processes(p graphql.ResolveParams) (interface{}, error)
+}
+
 //
 // SystemFieldResolvers represents a collection of methods whose products represent the
 // response values of the 'System' type.
@@ -908,6 +950,13 @@ type SystemFieldResolvers interface {
 	SystemPlatformFamilyFieldResolver
 	SystemPlatformVersionFieldResolver
 	SystemArchFieldResolver
+	SystemARMVersionFieldResolver
+	SystemLibCTypeFieldResolver
+	SystemVMSystemFieldResolver
+	SystemVMRoleFieldResolver
+	SystemCloudProviderFieldResolver
+	SystemFloatTypeFieldResolver
+	SystemProcessesFieldResolver
 }
 
 // SystemAliases implements all methods on SystemFieldResolvers interface by using reflection to
@@ -1041,6 +1090,90 @@ func (_ SystemAliases) Arch(p graphql.ResolveParams) (string, error) {
 	return ret, err
 }
 
+// ARMVersion implements response to request for 'ARMVersion' field.
+func (_ SystemAliases) ARMVersion(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'ARMVersion'")
+	}
+	return ret, err
+}
+
+// LibCType implements response to request for 'libCType' field.
+func (_ SystemAliases) LibCType(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'libCType'")
+	}
+	return ret, err
+}
+
+// VMSystem implements response to request for 'VMSystem' field.
+func (_ SystemAliases) VMSystem(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'VMSystem'")
+	}
+	return ret, err
+}
+
+// VMRole implements response to request for 'VMRole' field.
+func (_ SystemAliases) VMRole(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'VMRole'")
+	}
+	return ret, err
+}
+
+// CloudProvider implements response to request for 'cloudProvider' field.
+func (_ SystemAliases) CloudProvider(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'cloudProvider'")
+	}
+	return ret, err
+}
+
+// FloatType implements response to request for 'floatType' field.
+func (_ SystemAliases) FloatType(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'floatType'")
+	}
+	return ret, err
+}
+
+// Processes implements response to request for 'processes' field.
+func (_ SystemAliases) Processes(p graphql.ResolveParams) (interface{}, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	return val, err
+}
+
 /*
 SystemType System contains information about the system that the Agent process
 is running on, used for additional Entity context.
@@ -1100,10 +1233,80 @@ func _ObjTypeSystemArchHandler(impl interface{}) graphql1.FieldResolveFn {
 	}
 }
 
+func _ObjTypeSystemARMVersionHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SystemARMVersionFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.ARMVersion(frp)
+	}
+}
+
+func _ObjTypeSystemLibCTypeHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SystemLibCTypeFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.LibCType(frp)
+	}
+}
+
+func _ObjTypeSystemVMSystemHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SystemVMSystemFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.VMSystem(frp)
+	}
+}
+
+func _ObjTypeSystemVMRoleHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SystemVMRoleFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.VMRole(frp)
+	}
+}
+
+func _ObjTypeSystemCloudProviderHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SystemCloudProviderFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.CloudProvider(frp)
+	}
+}
+
+func _ObjTypeSystemFloatTypeHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SystemFloatTypeFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.FloatType(frp)
+	}
+}
+
+func _ObjTypeSystemProcessesHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(SystemProcessesFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Processes(frp)
+	}
+}
+
 func _ObjectTypeSystemConfigFn() graphql1.ObjectConfig {
 	return graphql1.ObjectConfig{
 		Description: "System contains information about the system that the Agent process\nis running on, used for additional Entity context.",
 		Fields: graphql1.Fields{
+			"ARMVersion": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Version of ARM architecture in play",
+				Name:              "ARMVersion",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
+			"VMRole": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "VMRole indicates the VM role of the agent (host/guest)",
+				Name:              "VMRole",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"VMSystem": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "VMSystem indicates the VM system of the agent (kvm, vbox, etc)",
+				Name:              "VMSystem",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
 			"arch": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
@@ -1111,11 +1314,32 @@ func _ObjectTypeSystemConfigFn() graphql1.ObjectConfig {
 				Name:              "arch",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
+			"cloudProvider": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "CloudProvider indicates the public cloud the agent is running on.",
+				Name:              "cloudProvider",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"floatType": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Float type",
+				Name:              "floatType",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
 			"hostname": &graphql1.Field{
 				Args:              graphql1.FieldConfigArgument{},
 				DeprecationReason: "",
 				Description:       "self descriptive",
 				Name:              "hostname",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"libCType": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "LibCType indicates the type of libc the agent has access to (glibc, musl, etc)",
+				Name:              "libCType",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
 			"network": &graphql1.Field{
@@ -1153,6 +1377,13 @@ func _ObjectTypeSystemConfigFn() graphql1.ObjectConfig {
 				Name:              "platformVersion",
 				Type:              graphql1.NewNonNull(graphql1.String),
 			},
+			"processes": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "Processes contains information about the local processes on the agent.",
+				Name:              "processes",
+				Type:              graphql1.NewNonNull(graphql1.NewList(graphql1.NewNonNull(graphql.OutputType("Process")))),
+			},
 		},
 		Interfaces: []*graphql1.Interface{},
 		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
@@ -1171,13 +1402,478 @@ func _ObjectTypeSystemConfigFn() graphql1.ObjectConfig {
 var _ObjectTypeSystemDesc = graphql.ObjectDesc{
 	Config: _ObjectTypeSystemConfigFn,
 	FieldHandlers: map[string]graphql.FieldHandler{
+		"ARMVersion":      _ObjTypeSystemARMVersionHandler,
+		"VMRole":          _ObjTypeSystemVMRoleHandler,
+		"VMSystem":        _ObjTypeSystemVMSystemHandler,
 		"arch":            _ObjTypeSystemArchHandler,
+		"cloudProvider":   _ObjTypeSystemCloudProviderHandler,
+		"floatType":       _ObjTypeSystemFloatTypeHandler,
 		"hostname":        _ObjTypeSystemHostnameHandler,
+		"libCType":        _ObjTypeSystemLibCTypeHandler,
 		"network":         _ObjTypeSystemNetworkHandler,
 		"os":              _ObjTypeSystemOsHandler,
 		"platform":        _ObjTypeSystemPlatformHandler,
 		"platformFamily":  _ObjTypeSystemPlatformFamilyHandler,
 		"platformVersion": _ObjTypeSystemPlatformVersionHandler,
+		"processes":       _ObjTypeSystemProcessesHandler,
+	},
+}
+
+// ProcessNameFieldResolver implement to resolve requests for the Process's name field.
+type ProcessNameFieldResolver interface {
+	// Name implements response to request for name field.
+	Name(p graphql.ResolveParams) (string, error)
+}
+
+// ProcessPidFieldResolver implement to resolve requests for the Process's pid field.
+type ProcessPidFieldResolver interface {
+	// Pid implements response to request for pid field.
+	Pid(p graphql.ResolveParams) (int, error)
+}
+
+// ProcessPpidFieldResolver implement to resolve requests for the Process's ppid field.
+type ProcessPpidFieldResolver interface {
+	// Ppid implements response to request for ppid field.
+	Ppid(p graphql.ResolveParams) (int, error)
+}
+
+// ProcessStatusFieldResolver implement to resolve requests for the Process's status field.
+type ProcessStatusFieldResolver interface {
+	// Status implements response to request for status field.
+	Status(p graphql.ResolveParams) (string, error)
+}
+
+// ProcessCreatedFieldResolver implement to resolve requests for the Process's created field.
+type ProcessCreatedFieldResolver interface {
+	// Created implements response to request for created field.
+	Created(p graphql.ResolveParams) (time.Time, error)
+}
+
+// ProcessRunningFieldResolver implement to resolve requests for the Process's running field.
+type ProcessRunningFieldResolver interface {
+	// Running implements response to request for running field.
+	Running(p graphql.ResolveParams) (bool, error)
+}
+
+// ProcessBackgroundFieldResolver implement to resolve requests for the Process's background field.
+type ProcessBackgroundFieldResolver interface {
+	// Background implements response to request for background field.
+	Background(p graphql.ResolveParams) (bool, error)
+}
+
+// ProcessCpuPercentFieldResolver implement to resolve requests for the Process's cpuPercent field.
+type ProcessCpuPercentFieldResolver interface {
+	// CpuPercent implements response to request for cpuPercent field.
+	CpuPercent(p graphql.ResolveParams) (float64, error)
+}
+
+// ProcessMemoryPercentFieldResolver implement to resolve requests for the Process's memoryPercent field.
+type ProcessMemoryPercentFieldResolver interface {
+	// MemoryPercent implements response to request for memoryPercent field.
+	MemoryPercent(p graphql.ResolveParams) (float64, error)
+}
+
+//
+// ProcessFieldResolvers represents a collection of methods whose products represent the
+// response values of the 'Process' type.
+//
+// == Example SDL
+//
+//   """
+//   Dog's are not hooman.
+//   """
+//   type Dog implements Pet {
+//     "name of this fine beast."
+//     name:  String!
+//
+//     "breed of this silly animal; probably shibe."
+//     breed: [Breed]
+//   }
+//
+// == Example generated interface
+//
+//   // DogResolver ...
+//   type DogFieldResolvers interface {
+//     DogNameFieldResolver
+//     DogBreedFieldResolver
+//
+//     // IsTypeOf is used to determine if a given value is associated with the Dog type
+//     IsTypeOf(interface{}, graphql.IsTypeOfParams) bool
+//   }
+//
+// == Example implementation ...
+//
+//   // DogResolver implements DogFieldResolvers interface
+//   type DogResolver struct {
+//     logger logrus.LogEntry
+//     store interface{
+//       store.BreedStore
+//       store.DogStore
+//     }
+//   }
+//
+//   // Name implements response to request for name field.
+//   func (r *DogResolver) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     return dog.GetName()
+//   }
+//
+//   // Breed implements response to request for breed field.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // ... implementation details ...
+//     dog := p.Source.(DogGetter)
+//     breed := r.store.GetBreed(dog.GetBreedName())
+//     return breed
+//   }
+//
+//   // IsTypeOf is used to determine if a given value is associated with the Dog type
+//   func (r *DogResolver) IsTypeOf(p graphql.IsTypeOfParams) bool {
+//     // ... implementation details ...
+//     _, ok := p.Value.(DogGetter)
+//     return ok
+//   }
+//
+type ProcessFieldResolvers interface {
+	ProcessNameFieldResolver
+	ProcessPidFieldResolver
+	ProcessPpidFieldResolver
+	ProcessStatusFieldResolver
+	ProcessCreatedFieldResolver
+	ProcessRunningFieldResolver
+	ProcessBackgroundFieldResolver
+	ProcessCpuPercentFieldResolver
+	ProcessMemoryPercentFieldResolver
+}
+
+// ProcessAliases implements all methods on ProcessFieldResolvers interface by using reflection to
+// match name of field to a field on the given value. Intent is reduce friction
+// of writing new resolvers by removing all the instances where you would simply
+// have the resolvers method return a field.
+//
+// == Example SDL
+//
+//    type Dog {
+//      name:   String!
+//      weight: Float!
+//      dob:    DateTime
+//      breed:  [Breed]
+//    }
+//
+// == Example generated aliases
+//
+//   type DogAliases struct {}
+//   func (_ DogAliases) Name(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Weight(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Dob(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//   func (_ DogAliases) Breed(p graphql.ResolveParams) (interface{}, error) {
+//     // reflect...
+//   }
+//
+// == Example Implementation
+//
+//   type DogResolver struct { // Implements DogResolver
+//     DogAliases
+//     store store.BreedStore
+//   }
+//
+//   // NOTE:
+//   // All other fields are satisified by DogAliases but since this one
+//   // requires hitting the store we implement it in our resolver.
+//   func (r *DogResolver) Breed(p graphql.ResolveParams) interface{} {
+//     dog := v.(*Dog)
+//     return r.BreedsById(dog.BreedIDs)
+//   }
+//
+type ProcessAliases struct{}
+
+// Name implements response to request for 'name' field.
+func (_ ProcessAliases) Name(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'name'")
+	}
+	return ret, err
+}
+
+// Pid implements response to request for 'pid' field.
+func (_ ProcessAliases) Pid(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'pid'")
+	}
+	return ret, err
+}
+
+// Ppid implements response to request for 'ppid' field.
+func (_ ProcessAliases) Ppid(p graphql.ResolveParams) (int, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := graphql1.Int.ParseValue(val).(int)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'ppid'")
+	}
+	return ret, err
+}
+
+// Status implements response to request for 'status' field.
+func (_ ProcessAliases) Status(p graphql.ResolveParams) (string, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(string)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'status'")
+	}
+	return ret, err
+}
+
+// Created implements response to request for 'created' field.
+func (_ ProcessAliases) Created(p graphql.ResolveParams) (time.Time, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(time.Time)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'created'")
+	}
+	return ret, err
+}
+
+// Running implements response to request for 'running' field.
+func (_ ProcessAliases) Running(p graphql.ResolveParams) (bool, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'running'")
+	}
+	return ret, err
+}
+
+// Background implements response to request for 'background' field.
+func (_ ProcessAliases) Background(p graphql.ResolveParams) (bool, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := val.(bool)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'background'")
+	}
+	return ret, err
+}
+
+// CpuPercent implements response to request for 'cpuPercent' field.
+func (_ ProcessAliases) CpuPercent(p graphql.ResolveParams) (float64, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := graphql1.Float.ParseValue(val).(float64)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'cpuPercent'")
+	}
+	return ret, err
+}
+
+// MemoryPercent implements response to request for 'memoryPercent' field.
+func (_ ProcessAliases) MemoryPercent(p graphql.ResolveParams) (float64, error) {
+	val, err := graphql.DefaultResolver(p.Source, p.Info.FieldName)
+	ret, ok := graphql1.Float.ParseValue(val).(float64)
+	if err != nil {
+		return ret, err
+	}
+	if !ok {
+		return ret, errors.New("unable to coerce value for field 'memoryPercent'")
+	}
+	return ret, err
+}
+
+// ProcessType Process contains information about a local process.
+var ProcessType = graphql.NewType("Process", graphql.ObjectKind)
+
+// RegisterProcess registers Process object type with given service.
+func RegisterProcess(svc *graphql.Service, impl ProcessFieldResolvers) {
+	svc.RegisterObject(_ObjectTypeProcessDesc, impl)
+}
+func _ObjTypeProcessNameHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ProcessNameFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Name(frp)
+	}
+}
+
+func _ObjTypeProcessPidHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ProcessPidFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Pid(frp)
+	}
+}
+
+func _ObjTypeProcessPpidHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ProcessPpidFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Ppid(frp)
+	}
+}
+
+func _ObjTypeProcessStatusHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ProcessStatusFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Status(frp)
+	}
+}
+
+func _ObjTypeProcessCreatedHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ProcessCreatedFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Created(frp)
+	}
+}
+
+func _ObjTypeProcessRunningHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ProcessRunningFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Running(frp)
+	}
+}
+
+func _ObjTypeProcessBackgroundHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ProcessBackgroundFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.Background(frp)
+	}
+}
+
+func _ObjTypeProcessCpuPercentHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ProcessCpuPercentFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.CpuPercent(frp)
+	}
+}
+
+func _ObjTypeProcessMemoryPercentHandler(impl interface{}) graphql1.FieldResolveFn {
+	resolver := impl.(ProcessMemoryPercentFieldResolver)
+	return func(frp graphql1.ResolveParams) (interface{}, error) {
+		return resolver.MemoryPercent(frp)
+	}
+}
+
+func _ObjectTypeProcessConfigFn() graphql1.ObjectConfig {
+	return graphql1.ObjectConfig{
+		Description: "Process contains information about a local process.",
+		Fields: graphql1.Fields{
+			"background": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "background",
+				Type:              graphql1.NewNonNull(graphql1.Boolean),
+			},
+			"cpuPercent": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "cpuPercent",
+				Type:              graphql1.NewNonNull(graphql1.Float),
+			},
+			"created": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "created",
+				Type:              graphql1.NewNonNull(graphql1.DateTime),
+			},
+			"memoryPercent": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "memoryPercent",
+				Type:              graphql1.NewNonNull(graphql1.Float),
+			},
+			"name": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "name",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+			"pid": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "pid",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
+			"ppid": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "ppid",
+				Type:              graphql1.NewNonNull(graphql1.Int),
+			},
+			"running": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "running",
+				Type:              graphql1.NewNonNull(graphql1.Boolean),
+			},
+			"status": &graphql1.Field{
+				Args:              graphql1.FieldConfigArgument{},
+				DeprecationReason: "",
+				Description:       "self descriptive",
+				Name:              "status",
+				Type:              graphql1.NewNonNull(graphql1.String),
+			},
+		},
+		Interfaces: []*graphql1.Interface{},
+		IsTypeOf: func(_ graphql1.IsTypeOfParams) bool {
+			// NOTE:
+			// Panic by default. Intent is that when Service is invoked, values of
+			// these fields are updated with instantiated resolvers. If these
+			// defaults are called it is most certainly programmer err.
+			// If you're see this comment then: 'Whoops! Sorry, my bad.'
+			panic("Unimplemented; see ProcessFieldResolvers.")
+		},
+		Name: "Process",
+	}
+}
+
+// describe Process's configuration; kept private to avoid unintentional tampering of configuration at runtime.
+var _ObjectTypeProcessDesc = graphql.ObjectDesc{
+	Config: _ObjectTypeProcessConfigFn,
+	FieldHandlers: map[string]graphql.FieldHandler{
+		"background":    _ObjTypeProcessBackgroundHandler,
+		"cpuPercent":    _ObjTypeProcessCpuPercentHandler,
+		"created":       _ObjTypeProcessCreatedHandler,
+		"memoryPercent": _ObjTypeProcessMemoryPercentHandler,
+		"name":          _ObjTypeProcessNameHandler,
+		"pid":           _ObjTypeProcessPidHandler,
+		"ppid":          _ObjTypeProcessPpidHandler,
+		"running":       _ObjTypeProcessRunningHandler,
+		"status":        _ObjTypeProcessStatusHandler,
 	},
 }
 

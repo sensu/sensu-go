@@ -17,16 +17,22 @@ sensu-backend or sensu-agent process.
 - Added a new `sensuctl describe-type` command to list all resource types.
 - Added `labels` and `annotations` as backend config options.
 - Added token substitution for assets.
-- [Web] Added the ability for labels and annotations with links to images to be
-displayed inline.
-- [Web] Added additional modes for those with colour blindness.
 - Added `Edition` field to version information.
 - Added `GoVersion` field to version information.
 - Assets paths are now accessible to consumers via an environment variable.
 - Added a helper function to token substitution to retrieve an asset path.
+- Windows agent now has log rotation capabilities.
 
 ### Changed
 - Warning messages from Resty library are now suppressed in sensuctl.
+- Notepad is now the default editor on Windows, instead of vi.
+
+### Fixed
+- Windows agent now accepts and remembers arguments passed to 'service run' and
+'service install'.
+- Windows agent synchronizes writes to its log file, ensuring that file size
+will update with every log line written.
+- Windows agent now logs to both console and log file when 'service run' is used.
 
 ## [5.19.3] - 2020-04-30
 

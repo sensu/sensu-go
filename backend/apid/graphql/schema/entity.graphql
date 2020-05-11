@@ -52,7 +52,7 @@ type Entity implements Node & Namespaced & Silenceable & Resource {
     entity:venice
     silenced:true
     """
-    filters: [String!] = [],
+    filters: [String!] = []
   ): [Event!]!
 
   "isSilenced return true if the entity has any silences associated with it."
@@ -93,6 +93,42 @@ type System {
 
   "Architecture; eg. 386, amd64, arm, ..."
   arch: String!
+
+  "Version of ARM architecture in play"
+  ARMVersion: Int!
+
+  "LibCType indicates the type of libc the agent has access to (glibc, musl, etc)"
+  libCType: String!
+
+  "VMSystem indicates the VM system of the agent (kvm, vbox, etc)"
+  VMSystem: String!
+
+  "VMRole indicates the VM role of the agent (host/guest)"
+  VMRole: String!
+
+  "CloudProvider indicates the public cloud the agent is running on."
+  cloudProvider: String!
+
+  "Float type"
+  floatType: String!
+
+  "Processes contains information about the local processes on the agent."
+  processes: [Process!]!
+}
+
+"""
+Process contains information about a local process.
+"""
+type Process {
+  name: String!
+  pid: Int!
+  ppid: Int!
+  status: String!
+  created: DateTime!
+  running: Boolean!
+  background: Boolean!
+  cpuPercent: Float!
+  memoryPercent: Float!
 }
 
 """
