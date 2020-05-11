@@ -231,3 +231,8 @@ func (a UserController) findAndUpdateUser(
 	// Update
 	return a.updateUser(ctx, user)
 }
+
+// AuthenticateUser attempts to authenticate an internal user
+func (a UserController) AuthenticateUser(ctx context.Context, username, password string) (*corev2.User, error) {
+	return a.store.AuthenticateUser(ctx, username, password)
+}
