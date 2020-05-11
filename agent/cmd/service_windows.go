@@ -40,7 +40,7 @@ func (s *Service) start(ctx context.Context, cancel context.CancelFunc, changes 
 	accepts := svc.AcceptShutdown | svc.AcceptStop
 	changes <- svc.Status{State: svc.Running, Accepts: accepts}
 
-	sensuAgent, err := agent.NewAgentContext(ctx, s.cfg)
+	sensuAgent, err := AgentNewFunc(ctx, s.cfg)
 	if err != nil {
 		result <- err
 		return result
