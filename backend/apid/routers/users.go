@@ -139,7 +139,6 @@ func (r *UsersRouter) updatePassword(req *http.Request) (interface{}, error) {
 		return nil, err
 	}
 	password := params["password"]
-	fmt.Printf("password = %s\n", password)
 
 	user, err := r.controller.AuthenticateUser(req.Context(), username, password)
 	if err != nil {
