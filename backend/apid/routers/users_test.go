@@ -19,6 +19,14 @@ type mockUserController struct {
 	mock.Mock
 }
 
+func (m *mockUserController) AuthenticateUser(ctx context.Context, username, password string) (*corev2.User, error) {
+	args := m.Called(ctx, username, password)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*corev2.User), args.Error(1)
+}
+
 func (m *mockUserController) Create(ctx context.Context, user *corev2.User) error {
 	return m.Called(ctx, user).Error(0)
 }
