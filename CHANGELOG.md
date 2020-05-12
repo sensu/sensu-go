@@ -8,6 +8,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.20.0] - 2020-05-12
+
 ### Added
 - Added ability to make the Resty HTTP Timeout configurable.
 - Added the `event.is_silenced` & `event.check.is_silenced` field selectors.
