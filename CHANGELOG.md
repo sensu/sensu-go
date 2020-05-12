@@ -20,10 +20,18 @@ sensu-backend or sensu-agent process.
 - Added `Edition` field to version information.
 - Added `GoVersion` field to version information.
 - Windows agent now has log rotation capabilities.
+- [Web] Added check hook output to event details page.
 
 ### Changed
 - Warning messages from Resty library are now suppressed in sensuctl.
 - Notepad is now the default editor on Windows, instead of vi.
+- [Web] Any leading and trailing whitespace is now trimmed from the username
+when authenticating.
+- [Web] A toast is now displayed when a user attempts to delete an event but
+does not have appropriate authorization.
+- [Web] Only the first five groups a user belongs to are displayed in the
+preferences dialog. Showing too many made it difficult for users to locate the
+sign-out button.
 
 ### Fixed
 - Windows agent now accepts and remembers arguments passed to 'service run' and
@@ -31,6 +39,8 @@ sensu-backend or sensu-agent process.
 - Windows agent synchronizes writes to its log file, ensuring that file size
 will update with every log line written.
 - Windows agent now logs to both console and log file when 'service run' is used.
+- [Web] Fixed issue where the de-registration handler would always show up as
+undefined on the entity details page.
 
 ## [5.19.3] - 2020-04-30
 
