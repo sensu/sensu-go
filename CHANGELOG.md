@@ -7,6 +7,16 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 
 ## Unreleased
+### Added
+- Added the `sensuctl user hash-password` command to generate password hashes
+- Added the ability to reset passwords via the backend API & `sensuctl user
+reset-password`
+- The user resource now has a `password_hash` field to specify the password
+hash, in place of the cleartext password
+
+### Fixed
+- The password verification logic when running `sensuctl user change-password`
+has been moved from sensuctl to the backend API.
 
 ## [5.20.0] - 2020-05-12
 
