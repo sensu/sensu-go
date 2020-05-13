@@ -10,8 +10,8 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"strings"
 	"sync"
@@ -211,6 +211,7 @@ func (a *Agent) buildTransportHeaderMap() http.Header {
 // 8. Start sending periodic keepalives.
 // 9. Start the API server, shutdown the agent if doing so fails.
 func (a *Agent) Run(ctx context.Context) error {
+	ctx, cancel := context.WithCancel(ctx)
 	defer func() {
 		if err := a.apiQueue.Close(); err != nil {
 			logger.WithError(err).Error("error closing API queue")
@@ -219,15 +220,37 @@ func (a *Agent) Run(ctx context.Context) error {
 	a.header = a.buildTransportHeaderMap()
 
 	// Fail the agent after startup if the id is invalid
+	logger.Debug("validating agent name")
 	if err := corev2.ValidateName(a.config.AgentName); err != nil {
 		return fmt.Errorf("invalid agent name: %v", err)
 	}
+	logger.Debug("validating keepalive warning timeout")
 	if timeout := a.config.KeepaliveWarningTimeout; timeout < 5 {
 		return fmt.Errorf("bad keepalive timeout: %d (minimum value is 5 seconds)", timeout)
 	}
+	logger.Debug("validating keepalive critical timeout")
 	if timeout := a.config.KeepaliveCriticalTimeout; timeout > 0 && timeout < 5 {
 		return fmt.Errorf("bad keepalive critical timeout: %d (minimum value is 5 seconds)", timeout)
 	}
+
+	logger.Debug("validating backend URLs is defined")
+	if len(a.config.BackendURLs) == 0 {
+		return errors.New("no backend URLs defined")
+	}
+
+	logger.Debug("validating backend URLs", a.config.BackendURLs)
+	for _, burl := range a.config.BackendURLs {
+		logger.Debug("validating backend URL", burl)
+		if u, err := url.Parse(burl); err != nil {
+			return fmt.Errorf("bad backend URL (%s): %s", burl, err)
+		} else {
+			if u.Scheme != "ws" && u.Scheme != "wss" {
+				return fmt.Errorf("backend URL (%s) must have ws:// or wss:// scheme", burl)
+			}
+		}
+	}
+
+	logger.Info("configuration successfully validated")
 
 	if !a.config.DisableAssets {
 		assetManager := asset.NewManager(a.config.CacheDir, a.getAgentEntity(), &a.wg)
@@ -256,7 +279,7 @@ func (a *Agent) Run(ctx context.Context) error {
 		a.StartSocketListeners(ctx)
 	}
 
-	go a.connectionManager(ctx)
+	go a.connectionManager(ctx, cancel)
 	go a.refreshSystemInfoPeriodically(ctx)
 	go a.handleAPIQueue(ctx)
 
@@ -264,7 +287,7 @@ func (a *Agent) Run(ctx context.Context) error {
 	return nil
 }
 
-func (a *Agent) connectionManager(ctx context.Context) {
+func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc) {
 	defer logger.Debug("shutting down connection manager")
 	for {
 		a.connectedMu.Lock()
@@ -276,7 +299,8 @@ func (a *Agent) connectionManager(ctx context.Context) {
 			if err == ctx.Err() {
 				return
 			}
-			log.Fatal(err)
+			logger.WithError(err).Error("couldn't connect to backend")
+			cancel()
 		}
 
 		ctx, cancel := context.WithCancel(ctx)
@@ -473,12 +497,12 @@ func (a *Agent) connectWithBackoff(ctx context.Context) (transport.Transport, er
 	}
 
 	err := backoff.Retry(func(retry int) (bool, error) {
-		url := a.backendSelector.Select()
+		backendURL := a.backendSelector.Select()
 
-		logger.Infof("connecting to backend URL %q", url)
+		logger.Infof("connecting to backend URL %q", backendURL)
 		a.header.Set("Accept", agentd.ProtobufSerializationHeader)
 		logger.WithField("header", fmt.Sprintf("Accept: %s", agentd.ProtobufSerializationHeader)).Debug("setting header")
-		c, respHeader, err := transport.Connect(url, a.config.TLS, a.header, a.config.BackendHandshakeTimeout)
+		c, respHeader, err := transport.Connect(backendURL, a.config.TLS, a.header, a.config.BackendHandshakeTimeout)
 		if err != nil {
 			logger.WithError(err).Error("reconnection attempt failed")
 			return false, nil

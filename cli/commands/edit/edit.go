@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path"
 	"reflect"
+	"runtime"
 	"strings"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -22,8 +23,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// vi is the default editor!
-const defaultEditor = "vi"
+const (
+	// vi is the default editor!
+	defaultEditor = "vi"
+	// except on Windows
+	defaultWindowsEditor = "notepad.exe"
+)
 
 func extension(format string) string {
 	switch format {
@@ -208,6 +213,9 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 			editorEnv := os.Getenv("EDITOR")
 			if strings.TrimSpace(editorEnv) == "" {
 				editorEnv = defaultEditor
+				if runtime.GOOS == "windows" {
+					editorEnv = defaultWindowsEditor
+				}
 			}
 			editorArgs := parseCommand(editorEnv)
 			execCmd := exec.Command(editorArgs[0], append(editorArgs[1:], tf.Name())...)
