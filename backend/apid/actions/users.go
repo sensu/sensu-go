@@ -81,8 +81,9 @@ func (a UserController) CreateOrReplace(ctx context.Context, user *corev2.User) 
 	// Determine if a hashed and/or cleartext password was provided
 	if user.Password != "" && user.PasswordHash != "" {
 		// Both the cleartext & hashed passwords were provided, so we need to make
+		// sure they match
 		if ok := bcrypt.CheckPassword(user.PasswordHash, user.Password); !ok {
-			return NewError(InvalidArgument, errors.New("hashed password does not the match the password"))
+			return NewError(InvalidArgument, errors.New("hashed password does not the match the cleartext password"))
 		}
 		user.Password = ""
 	} else if user.Password != "" {
