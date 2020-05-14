@@ -8,6 +8,12 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Added the ability to omit types from sensuctl dump when using the "all" flag.
+
+### Fixed
+- Fixed a bug in sensuctl dump where duplicate resource names could be specified.
+
 ## [5.20.0] - 2020-05-12
 
 ### Added
