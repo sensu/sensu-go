@@ -83,9 +83,11 @@ func (a UserController) CreateOrReplace(ctx context.Context, user *corev2.User) 
 		// Both the cleartext & hashed passwords were provided, so we need to make
 		// sure they match
 		if ok := bcrypt.CheckPassword(user.PasswordHash, user.Password); !ok {
-			return NewError(InvalidArgument, errors.New("hashed password does not the match the cleartext password"))
+			return NewError(
+				InvalidArgument,
+				errors.New("hashed password does not the match the cleartext password, only one of those should be provided"),
+			)
 		}
-		user.Password = ""
 	} else if user.Password != "" {
 		// We need to validate the cleartext passsword so it matches our minimal
 		// requirements
@@ -99,12 +101,12 @@ func (a UserController) CreateOrReplace(ctx context.Context, user *corev2.User) 
 			return NewError(InternalErr, err)
 		}
 		user.PasswordHash = hash
-
-		// Override the cleartext password so we don't store it
-		user.Password = ""
 	} else if user.PasswordHash == "" {
 		return NewError(InvalidArgument, errors.New("a password or its hash is required"))
 	}
+
+	// Also add the hash to the password field for backward compatibility
+	user.Password = user.PasswordHash
 
 	// Persist
 	if err := a.store.UpdateUser(user); err != nil {

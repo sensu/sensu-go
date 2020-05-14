@@ -305,9 +305,9 @@ func setupAdminUser(store store.Store, username, password string) error {
 	}
 
 	admin := &types.User{
-		Username:     username,
-		PasswordHash: hash,
-		Groups:       []string{"cluster-admins"},
+		Username: username,
+		Password: hash,
+		Groups:   []string{"cluster-admins"},
 	}
 	return store.CreateUser(admin)
 }
@@ -319,9 +319,9 @@ func setupAgentUser(store store.Store, username, password string) error {
 	}
 
 	agent := &types.User{
-		Username:     username,
-		PasswordHash: hash,
-		Groups:       []string{"system:agents"},
+		Username: username,
+		Password: hash,
+		Groups:   []string{"system:agents"},
 	}
 	return store.CreateUser(agent)
 }
