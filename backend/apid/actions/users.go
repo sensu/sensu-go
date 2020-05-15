@@ -2,6 +2,7 @@ package actions
 
 import (
 	"context"
+	"errors"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
@@ -23,18 +24,17 @@ func NewUserController(store store.Store) UserController {
 // List returns resources available to the viewer filter by given params.
 func (a UserController) List(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
 	// Fetch from store
-	results, err := a.store.GetAllUsers(pred)
+	users, err := a.store.GetAllUsers(pred)
 	if err != nil {
 		return nil, NewError(InternalErr, err)
 	}
 
-	for i := range results {
-		results[i].Password = ""
-	}
-
-	resources := make([]corev2.Resource, len(results))
-	for i, v := range results {
-		resources[i] = corev2.Resource(v)
+	resources := make([]corev2.Resource, len(users))
+	for i, user := range users {
+		// Obfuscate the password hashes for now
+		user.Password = ""
+		user.PasswordHash = ""
+		resources[i] = corev2.Resource(user)
 	}
 
 	return resources, nil
@@ -44,15 +44,19 @@ func (a UserController) List(ctx context.Context, pred *store.SelectionPredicate
 // viewer.
 func (a UserController) Get(ctx context.Context, name string) (*corev2.User, error) {
 	// Fetch from store
-	result, serr := a.findUser(ctx, name)
+	user, serr := a.findUser(ctx, name)
 	if serr != nil {
 		return nil, serr
 	}
-	if result == nil {
+	if user == nil {
 		return nil, NewErrorf(NotFound)
 	}
 
-	return result, nil
+	// Obfuscate the password hashes for now
+	user.Password = ""
+	user.PasswordHash = ""
+
+	return user, nil
 }
 
 // Create creates a new user. It returns an error if the user already exists.
@@ -74,17 +78,35 @@ func (a UserController) CreateOrReplace(ctx context.Context, user *corev2.User) 
 		return NewError(InvalidArgument, err)
 	}
 
-	// Validate password
-	if err := user.ValidatePassword(); err != nil {
-		return NewError(InvalidArgument, err)
+	// Determine if a hashed and/or cleartext password was provided
+	if user.Password != "" && user.PasswordHash != "" {
+		// Both the cleartext & hashed passwords were provided, so we need to make
+		// sure they match
+		if ok := bcrypt.CheckPassword(user.PasswordHash, user.Password); !ok {
+			return NewError(
+				InvalidArgument,
+				errors.New("hashed password does not the match the cleartext password, only one of those should be provided"),
+			)
+		}
+	} else if user.Password != "" {
+		// We need to validate the cleartext passsword so it matches our minimal
+		// requirements
+		if err := user.ValidatePassword(); err != nil {
+			return NewError(InvalidArgument, err)
+		}
+
+		// Create a hash for this password
+		hash, err := bcrypt.HashPassword(user.Password)
+		if err != nil {
+			return NewError(InternalErr, err)
+		}
+		user.PasswordHash = hash
+	} else if user.PasswordHash == "" {
+		return NewError(InvalidArgument, errors.New("a password or its hash is required"))
 	}
 
-	// Create password digest
-	hash, err := bcrypt.HashPassword(user.Password)
-	if err != nil {
-		return NewError(InternalErr, err)
-	}
-	user.Password = hash
+	// Also add the hash to the password field for backward compatibility
+	user.Password = user.PasswordHash
 
 	// Persist
 	if err := a.store.UpdateUser(user); err != nil {
@@ -97,16 +119,18 @@ func (a UserController) CreateOrReplace(ctx context.Context, user *corev2.User) 
 // Disable disables user identified by given name if viewer has access.
 func (a UserController) Disable(ctx context.Context, name string) error {
 	// Fetch from store
-	result, serr := a.findUser(ctx, name)
+	user, serr := a.findUser(ctx, name)
 	if serr != nil {
 		return serr
 	}
 
-	// Disable
-	if !result.Disabled {
-		if serr := a.store.DeleteUser(ctx, result); serr != nil {
-			return NewError(InternalErr, serr)
-		}
+	if user.Disabled {
+		return nil
+	}
+
+	user.Disabled = true
+	if err := a.store.UpdateUser(user); err != nil {
+		return NewError(InternalErr, err)
 	}
 
 	return nil
@@ -209,4 +233,9 @@ func (a UserController) findAndUpdateUser(
 
 	// Update
 	return a.updateUser(ctx, user)
+}
+
+// AuthenticateUser attempts to authenticate an internal user
+func (a UserController) AuthenticateUser(ctx context.Context, username, password string) (*corev2.User, error) {
+	return a.store.AuthenticateUser(ctx, username, password)
 }

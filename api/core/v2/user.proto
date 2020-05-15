@@ -14,8 +14,12 @@ option (gogoproto.testgen_all) = true;
 
 // User describes an authenticated user
 message User {
-	string username = 1;
+  string username = 1;
+  // Password is used to define the cleartext password. It was also previously
+  // used to store the hashed password
 	string password = 2;
 	repeated string groups = 3;
-	bool disabled = 4 [(gogoproto.jsontag) = "disabled"];
+  bool disabled = 4 [(gogoproto.jsontag) = "disabled"];
+  // PasswordHash is the hashed password, which is safe to display
+  string password_hash = 5;
 }

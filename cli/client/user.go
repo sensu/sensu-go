@@ -139,9 +139,37 @@ func (client *RestClient) SetGroupsForUser(username string, groups []string) err
 	return nil
 }
 
+// ResetPassword reset the password of given user on configured Sensu instance
+func (client *RestClient) ResetPassword(username, passwordHash string) error {
+	bytes, err := json.Marshal(map[string]string{
+		"password_hash": passwordHash,
+	})
+	if err != nil {
+		return err
+	}
+
+	path := UsersPath(username, "reset_password")
+	res, err := client.R().
+		SetBody(bytes).
+		Put(path)
+
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode() >= 400 {
+		return UnmarshalError(res)
+	}
+
+	return nil
+}
+
 // UpdatePassword updates password of given user on configured Sensu instance
-func (client *RestClient) UpdatePassword(username, pwd string) error {
-	bytes, err := json.Marshal(map[string]string{"password": pwd})
+func (client *RestClient) UpdatePassword(username, newPasswordHash, currentPassword string) error {
+	bytes, err := json.Marshal(map[string]string{
+		"password":      currentPassword,
+		"password_hash": newPasswordHash,
+	})
 	if err != nil {
 		return err
 	}
