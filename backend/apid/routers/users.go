@@ -145,6 +145,9 @@ func (r *UsersRouter) updatePassword(req *http.Request) (interface{}, error) {
 		return nil, err
 	}
 
+	// Remove any old password hash and set the new password hash. The controller
+	// will set the resulting hash in both fields before storing it.
+	user.Password = ""
 	user.PasswordHash = params["password_hash"]
 	err = r.controller.CreateOrReplace(req.Context(), user)
 	return nil, err
