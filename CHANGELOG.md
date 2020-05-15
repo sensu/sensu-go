@@ -18,6 +18,9 @@ hash, in place of the cleartext password
 - The password verification logic when running `sensuctl user change-password`
 has been moved from sensuctl to the backend API.
 
+## [5.20.1] - 2020-05-15
+*No changelog for this release.*
+
 ## [5.20.0] - 2020-05-12
 
 ### Added
