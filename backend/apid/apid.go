@@ -135,9 +135,9 @@ func NewRouter() *mux.Router {
 func AuthenticationSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	subrouter := NewSubrouter(
 		router.NewRoute(),
-		middlewares.SimpleLogger{},
 		middlewares.RefreshToken{},
 		middlewares.LimitRequest{},
+		middlewares.SimpleLogger{},
 	)
 
 	mountRouters(subrouter,
@@ -152,13 +152,13 @@ func AuthenticationSubrouter(router *mux.Router, cfg Config) *mux.Router {
 func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	subrouter := NewSubrouter(
 		router.PathPrefix("/api/{group:core}/{version:v2}/"),
-		middlewares.SimpleLogger{},
 		middlewares.Namespace{},
 		middlewares.Authentication{Store: cfg.Store},
 		middlewares.AuthorizationAttributes{},
 		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},
 		middlewares.LimitRequest{},
 		middlewares.Pagination{},
+		middlewares.SimpleLogger{},
 	)
 	mountRouters(
 		subrouter,
@@ -189,13 +189,13 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 func EntityLimitedCoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	subrouter := NewSubrouter(
 		router.PathPrefix("/api/{group:core}/{version:v2}/"),
-		middlewares.SimpleLogger{},
 		middlewares.Namespace{},
 		middlewares.Authentication{Store: cfg.Store},
 		middlewares.AuthorizationAttributes{},
 		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},
 		middlewares.LimitRequest{},
 		middlewares.Pagination{},
+		middlewares.SimpleLogger{},
 	)
 	mountRouters(
 		subrouter,
@@ -211,7 +211,6 @@ func EntityLimitedCoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 func GraphQLSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	subrouter := NewSubrouter(
 		router.NewRoute(),
-		middlewares.SimpleLogger{},
 		middlewares.LimitRequest{},
 		// We permit requests that do not include an access token or API key,
 		// this allows unauthenticated clients to run introspecton queries or
@@ -221,6 +220,7 @@ func GraphQLSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		// https://github.com/graphql/graphiql
 		// https://graphql.org/learn/introspection/
 		middlewares.Authentication{IgnoreUnauthorized: true, Store: cfg.Store},
+		middlewares.SimpleLogger{},
 	)
 
 	mountRouters(
@@ -236,8 +236,8 @@ func GraphQLSubrouter(router *mux.Router, cfg Config) *mux.Router {
 func PublicSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	subrouter := NewSubrouter(
 		router.NewRoute(),
-		middlewares.SimpleLogger{},
 		middlewares.LimitRequest{},
+		middlewares.SimpleLogger{},
 	)
 
 	mountRouters(subrouter,
