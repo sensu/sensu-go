@@ -88,7 +88,7 @@ func getLibCType() (string, error) {
 		return "", err
 	}
 	text := strings.ToLower(string(output))
-	if strings.Contains(text, "gnu") {
+	if strings.Contains(text, "gnu") || strings.Contains(text, "glibc") {
 		return "glibc", nil
 	}
 	if strings.Contains(text, "musl") {
