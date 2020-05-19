@@ -180,3 +180,42 @@ func TestInternalTag(t *testing.T) {
 	assert.Equal(t, "sensu_internal_environment", mp.Tags[0].Name)
 	assert.Equal(t, "foo", mp.Tags[0].Value)
 }
+
+func TestGetEntityClassCounts(t *testing.T) {
+	tessend := newTessendTest(t)
+	now := time.Now().Unix()
+
+	// default entity class counts func
+	points := tessend.getEntityClassMetrics(now)
+	assert.Equal(t, 0, len(points))
+
+	// override entity class counts func
+	tessend.EntityClassCounts = func() map[string]int {
+		counts := make(map[string]int)
+		counts["foo"] = 10
+		counts["bar"] = 20
+		return counts
+	}
+
+	storeCfg := tessend.GetStoreConfig()
+	expectedFoo := &corev2.MetricPoint{
+		Name:      "entity_class_foo_count",
+		Value:     float64(10),
+		Timestamp: now,
+	}
+	appendInternalTag(expectedFoo)
+	appendStoreConfig(expectedFoo, storeCfg)
+
+	expectedBar := &corev2.MetricPoint{
+		Name:      "entity_class_bar_count",
+		Value:     float64(20),
+		Timestamp: now,
+	}
+	appendInternalTag(expectedBar)
+	appendStoreConfig(expectedBar, storeCfg)
+
+	points = tessend.getEntityClassMetrics(now)
+	assert.Equal(t, 2, len(points))
+	assert.Contains(t, points, expectedFoo)
+	assert.Contains(t, points, expectedBar)
+}

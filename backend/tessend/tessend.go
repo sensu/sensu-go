@@ -604,17 +604,7 @@ func (t *Tessend) getPerResourceMetrics(now int64, data *Data) error {
 	data.Metrics.Points = append(data.Metrics.Points, mp)
 
 	// loop through the entity class counts
-	for class, count := range t.EntityClassCounts() {
-		mp = &corev2.MetricPoint{
-			Name:      fmt.Sprintf("entity_class_%s_count", class),
-			Value:     float64(count),
-			Timestamp: now,
-		}
-		appendInternalTag(mp)
-		appendStoreConfig(mp, t.GetStoreConfig())
-		logMetric(mp)
-		data.Metrics.Points = append(data.Metrics.Points, mp)
-	}
+	data.Metrics.Points = append(data.Metrics.Points, t.getEntityClassMetrics(now)...)
 
 	// loop through the resource map and collect the count of each
 	// resource every 5 seconds to distribute the load on etcd
@@ -682,6 +672,22 @@ func (t *Tessend) send(data *Data) string {
 	}
 
 	return resp.Header.Get(tessenIntervalHeader)
+}
+
+func (t *Tessend) getEntityClassMetrics(now int64) []*corev2.MetricPoint {
+	var points []*corev2.MetricPoint
+	for class, count := range t.EntityClassCounts() {
+		mp := &corev2.MetricPoint{
+			Name:      fmt.Sprintf("entity_class_%s_count", class),
+			Value:     float64(count),
+			Timestamp: now,
+		}
+		appendInternalTag(mp)
+		appendStoreConfig(mp, t.GetStoreConfig())
+		logMetric(mp)
+		points = append(points, mp)
+	}
+	return points
 }
 
 // logMetric logs the metric name and value collected for transparency.
