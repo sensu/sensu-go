@@ -21,6 +21,12 @@ has been moved from sensuctl to the backend API.
 ## [5.20.1] - 2020-05-15
 *No changelog for this release.*
 
+### Added
+- Added the ability to omit types from sensuctl dump when using the "all" flag.
+
+### Fixed
+- Fixed a bug in sensuctl dump where duplicate resource names could be specified.
+
 ## [5.20.0] - 2020-05-12
 
 ### Added
