@@ -1,6 +1,7 @@
 package v2
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -264,7 +265,7 @@ func TestValidateSubjects(t *testing.T) {
 	}
 
 	for _, test := range tests {
-		t.Run(test.Name, func(t *testing.T) {
+		t.Run(test.Name+"_ValidateSubjects", func(t *testing.T) {
 			err := ValidateSubjects(test.Subjects)
 			if test.ExpErr {
 				if err == nil {
@@ -276,5 +277,45 @@ func TestValidateSubjects(t *testing.T) {
 				}
 			}
 		})
+
+		t.Run(test.Name+"_RoleBinding", func(t *testing.T) {
+			crb := FixtureClusterRoleBinding("b")
+			fmt.Println("CRB NAME", crb.Name)
+			crb.Subjects = test.Subjects
+			err := crb.Validate()
+			if test.ExpErr {
+				if err == nil {
+					t.Fatal("expected non-nil error")
+				}
+			} else {
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+
+		})
+
+		t.Run(test.Name+"_ClusterRoleBinding", func(t *testing.T) {
+			rb := FixtureRoleBinding("a", "b")
+			rb.Subjects = test.Subjects
+			err := rb.Validate()
+			if test.ExpErr {
+				if err == nil {
+					t.Fatal("expected non-nil error")
+				}
+			} else {
+				if err != nil {
+					t.Fatal(err)
+				}
+			}
+
+		})
+	}
+}
+
+func TestClusterRoleBindingValidateSub(t *testing.T) {
+	crb := FixtureClusterRoleBinding("a")
+	if err := crb.Validate(); err != nil {
+		t.Fatal(err)
 	}
 }
