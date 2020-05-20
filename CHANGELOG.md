@@ -8,6 +8,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Added the username as a field to the API request logger.
+
 ### Fixed
 - The proper libc implementation is now displayed for Ubuntu entities.
 

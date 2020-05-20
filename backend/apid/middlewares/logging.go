@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sirupsen/logrus"
 )
 
@@ -24,6 +25,12 @@ func (m SimpleLogger) Then(next http.Handler) http.Handler {
 		writerWithCapture := makeResponseWriterWithCapture(w)
 		next.ServeHTTP(writerWithCapture, r)
 
+		var user string
+		claims := jwt.GetClaimsFromContext(r.Context())
+		if claims != nil {
+			user = claims.StandardClaims.Subject
+		}
+
 		duration := float64(time.Since(start)) / float64(time.Millisecond)
 		logEntry := logger.WithFields(logrus.Fields{
 			"duration": fmt.Sprintf("%.3fms", duration),
@@ -31,6 +38,7 @@ func (m SimpleLogger) Then(next http.Handler) http.Handler {
 			"size":     writerWithCapture.Size(),
 			"path":     r.URL.Path,
 			"method":   r.Method,
+			"user":     user,
 		})
 		logEntry.Info("request completed")
 	})
