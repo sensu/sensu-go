@@ -13,6 +13,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - The proper libc implementation is now displayed for Ubuntu entities.
+- Add validation for subjects in RBAC RoleBinding and ClusterRoleBinding.
+- Fixed a bug where single-letter subscriptions were not allowed, even though
+they were intended to be.
 
 ## [5.20.1] - 2020-05-15
 *No changelog for this release.*

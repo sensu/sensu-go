@@ -20,7 +20,7 @@ var StrictNameRegex = regexp.MustCompile(`\A[a-z0-9\_\.\-]+\z`)
 // SubscriptionNameRegex is used to validate the name of a subscription, which
 // can contain a single ":" character in case of an entity subscription (e.g.
 // entity:foo)
-var SubscriptionNameRegex = regexp.MustCompile(`\A[\w\.\-]+\:?[\w\.\-]+\z`)
+var SubscriptionNameRegex = regexp.MustCompile(`\A[\w\.\-]+(\:?[\w\.\-]+)?\z`)
 
 // ValidateName validates the name of an element so it's not empty and it does
 // not contains specical characters. Compatible with Sensu 1.0.
