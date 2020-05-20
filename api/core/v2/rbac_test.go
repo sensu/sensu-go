@@ -56,9 +56,9 @@ func TestRuleResourceNameMatches(t *testing.T) {
 		want                  bool
 	}{
 		{
-			name:                  "rule allows all names",
+			name: "rule allows all names",
 			requestedResourceName: "checks",
-			want:                  true,
+			want: true,
 		},
 		{
 			name:          "rule only allows a specific name none specified in req",
@@ -69,13 +69,13 @@ func TestRuleResourceNameMatches(t *testing.T) {
 			name:                  "does not match",
 			resourceNames:         []string{"foo"},
 			requestedResourceName: "bar",
-			want:                  false,
+			want: false,
 		},
 		{
 			name:                  "matches",
 			resourceNames:         []string{"foo", "bar"},
 			requestedResourceName: "bar",
-			want:                  true,
+			want: true,
 		},
 	}
 	for _, tc := range tests {
@@ -190,6 +190,90 @@ func Test_split(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := split(tt.list); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("splitVerbs() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestValidateSubjects(t *testing.T) {
+	tests := []struct {
+		Name     string
+		ExpErr   bool
+		Subjects []Subject
+	}{
+		{
+			Name: "valid",
+			Subjects: []Subject{
+				{
+					Type: "user",
+					Name: "eric",
+				},
+			},
+		},
+		{
+			Name: "missing type",
+			Subjects: []Subject{
+				{
+					Name: "eric",
+				},
+			},
+			ExpErr: true,
+		},
+		{
+			Name: "missing name",
+			Subjects: []Subject{
+				{
+					Type: "user",
+				},
+			},
+			ExpErr: true,
+		},
+		{
+			Name: "invalid name",
+			Subjects: []Subject{
+				{
+					Name: "^*^*#$^&#^",
+					Type: "user",
+				},
+			},
+			ExpErr: true,
+		},
+		{
+			Name: "invalid type",
+			Subjects: []Subject{
+				{
+					Name: "eric",
+					Type: "#$*@$*@^#$*",
+				},
+			},
+			ExpErr: true,
+		},
+		{
+			Name: "one valid, one invalid",
+			Subjects: []Subject{
+				{
+					Type: "user",
+					Name: "eric",
+				},
+				{
+					Type: "user",
+				},
+			},
+			ExpErr: true,
+		},
+	}
+
+	for _, test := range tests {
+		t.Run(test.Name, func(t *testing.T) {
+			err := ValidateSubjects(test.Subjects)
+			if test.ExpErr {
+				if err == nil {
+					t.Fatal("expected non-nil error")
+				}
+			} else {
+				if err != nil {
+					t.Fatal(err)
+				}
 			}
 		})
 	}
