@@ -20,10 +20,11 @@ type ruleVisitor interface {
 type NamespaceClient struct {
 	client GenericClient
 	auth   authorization.Authorizer
+	pred   *store.SelectionPredicate
 }
 
 // NewNamespaceClient creates a new NamespaceClient, given a store and authorizer.
-func NewNamespaceClient(store store.ResourceStore, auth authorization.Authorizer) *NamespaceClient {
+func NewNamespaceClient(store store.ResourceStore, auth authorization.Authorizer, pred *store.SelectionPredicate) *NamespaceClient {
 	return &NamespaceClient{
 		client: GenericClient{
 			Kind:       &corev2.Namespace{},
@@ -33,6 +34,7 @@ func NewNamespaceClient(store store.ResourceStore, auth authorization.Authorizer
 			APIVersion: "v2",
 		},
 		auth: auth,
+		pred: pred,
 	}
 }
 
@@ -41,18 +43,14 @@ func NewNamespaceClient(store store.ResourceStore, auth authorization.Authorizer
 // that are in a namespace that the credentials are authorized to get.
 func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespace, error) {
 	var resources, namespaces []*corev2.Namespace
-	pred := &store.SelectionPredicate{
-		Continue: corev2.PageContinueFromContext(ctx),
-		Limit:    int64(corev2.PageSizeFromContext(ctx)),
-	}
 	visitor, ok := a.auth.(ruleVisitor)
 	if !ok {
-		if err := a.client.List(ctx, &namespaces, pred); err != nil {
+		if err := a.client.List(ctx, &namespaces, a.pred); err != nil {
 			return nil, err
 		}
 		return namespaces, nil
 	}
-	if err := a.client.Store.ListResources(ctx, a.client.Kind.StorePrefix(), &resources, pred); err != nil {
+	if err := a.client.Store.ListResources(ctx, a.client.Kind.StorePrefix(), &resources, a.pred); err != nil {
 		return nil, err
 	}
 	namespaceMap := make(map[string]*corev2.Namespace, len(resources))

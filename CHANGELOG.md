@@ -8,6 +8,10 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Fixed
+- The proper libc implementation is now displayed for Ubuntu entities.
+- Listing namespaces in sensuctl with `--chunk-size` now works properly.
+
 ## [5.20.1] - 2020-05-15
 *No changelog for this release.*
 
