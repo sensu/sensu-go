@@ -1,7 +1,6 @@
 package v2
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 )
@@ -280,7 +279,6 @@ func TestValidateSubjects(t *testing.T) {
 
 		t.Run(test.Name+"_RoleBinding", func(t *testing.T) {
 			crb := FixtureClusterRoleBinding("b")
-			fmt.Println("CRB NAME", crb.Name)
 			crb.Subjects = test.Subjects
 			err := crb.Validate()
 			if test.ExpErr {
