@@ -44,8 +44,8 @@ func (r *NamespacesRouter) Mount(parent *mux.Router) {
 	routes.Put(r.handlers.CreateOrUpdateResource)
 }
 
-func (r *NamespacesRouter) list(ctx context.Context, _ *store.SelectionPredicate) ([]corev2.Resource, error) {
-	client := api.NewNamespaceClient(r.store, r.auth)
+func (r *NamespacesRouter) list(ctx context.Context, pred *store.SelectionPredicate) ([]corev2.Resource, error) {
+	client := api.NewNamespaceClient(r.store, r.auth, pred)
 	namespaces, err := client.ListNamespaces(ctx)
 	if err != nil {
 		return nil, err
