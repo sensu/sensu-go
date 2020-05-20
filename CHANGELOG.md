@@ -7,6 +7,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 
 ## Unreleased
+
 ### Added
 - Added the `sensuctl user hash-password` command to generate password hashes
 - Added the ability to reset passwords via the backend API & `sensuctl user
@@ -17,8 +18,6 @@ hash, in place of the cleartext password
 ### Fixed
 - The password verification logic when running `sensuctl user change-password`
 has been moved from sensuctl to the backend API.
-
-### Fixed
 - The proper libc implementation is now displayed for Ubuntu entities.
 
 ## [5.20.1] - 2020-05-15
