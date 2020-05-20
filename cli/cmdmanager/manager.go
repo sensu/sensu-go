@@ -16,6 +16,7 @@ import (
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/system"
+	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/environment"
 	"github.com/sensu/sensu-go/util/path"
 
@@ -158,9 +159,14 @@ func (m *CommandManager) InstallCommandFromBonsai(alias, bonsaiAssetName string)
 		return err
 	}
 
-	var asset corev2.Asset
-	if err := json.Unmarshal([]byte(assetJSON), &asset); err != nil {
+	var wrapper types.Wrapper
+	if err := json.Unmarshal([]byte(assetJSON), &wrapper); err != nil {
 		return err
+	}
+
+	asset, ok := wrapper.Value.(*corev2.Asset)
+	if !ok {
+		return fmt.Errorf("bonsai returned %s.%s, want core/v2.Asset!", wrapper.APIVersion, wrapper.Type)
 	}
 
 	asset.Namespace = sensuctlAssetNamespace
@@ -173,23 +179,19 @@ func (m *CommandManager) InstallCommandFromBonsai(alias, bonsaiAssetName string)
 		if val != "sensuctl" {
 			return errors.New("requested asset is not a sensuctl asset")
 		}
-	} else {
-		return errors.New("requested asset does not have a type annotation set")
 	}
 
 	if val, ok := asset.Annotations["io.sensu.bonsai.provider"]; ok {
 		if val != "sensuctl/command" {
 			return errors.New("requested asset is not a sensuctl/command asset")
 		}
-	} else {
-		return errors.New("requested asset does not have a provider annotation set")
 	}
 
 	if len(asset.Builds) == 0 {
 		return errors.New("one or more asset builds are required")
 	}
 
-	return m.installCommand(alias, &asset)
+	return m.installCommand(alias, asset)
 }
 
 func (m *CommandManager) InstallCommandFromURL(alias, archiveURL, checksum string) error {
