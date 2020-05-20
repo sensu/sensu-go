@@ -135,9 +135,9 @@ func NewRouter() *mux.Router {
 func AuthenticationSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	subrouter := NewSubrouter(
 		router.NewRoute(),
+		middlewares.SimpleLogger{},
 		middlewares.RefreshToken{},
 		middlewares.LimitRequest{},
-		middlewares.SimpleLogger{},
 	)
 
 	mountRouters(subrouter,
@@ -154,11 +154,11 @@ func CoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		router.PathPrefix("/api/{group:core}/{version:v2}/"),
 		middlewares.Namespace{},
 		middlewares.Authentication{Store: cfg.Store},
+		middlewares.SimpleLogger{},
 		middlewares.AuthorizationAttributes{},
 		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},
 		middlewares.LimitRequest{},
 		middlewares.Pagination{},
-		middlewares.SimpleLogger{},
 	)
 	mountRouters(
 		subrouter,
@@ -191,11 +191,11 @@ func EntityLimitedCoreSubrouter(router *mux.Router, cfg Config) *mux.Router {
 		router.PathPrefix("/api/{group:core}/{version:v2}/"),
 		middlewares.Namespace{},
 		middlewares.Authentication{Store: cfg.Store},
+		middlewares.SimpleLogger{},
 		middlewares.AuthorizationAttributes{},
 		middlewares.Authorization{Authorizer: &rbac.Authorizer{Store: cfg.Store}},
 		middlewares.LimitRequest{},
 		middlewares.Pagination{},
-		middlewares.SimpleLogger{},
 	)
 	mountRouters(
 		subrouter,
@@ -236,8 +236,8 @@ func GraphQLSubrouter(router *mux.Router, cfg Config) *mux.Router {
 func PublicSubrouter(router *mux.Router, cfg Config) *mux.Router {
 	subrouter := NewSubrouter(
 		router.NewRoute(),
-		middlewares.LimitRequest{},
 		middlewares.SimpleLogger{},
+		middlewares.LimitRequest{},
 	)
 
 	mountRouters(subrouter,
