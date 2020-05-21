@@ -34,7 +34,8 @@ func (a Authentication) Then(next http.Handler) http.Handler {
 				token, err := jwt.ValidateToken(headerString)
 				if err != nil {
 					logger.WithError(err).Warn("invalid token")
-					writeErr(w, actions.NewErrorf(actions.Unauthenticated, "invalid credentials"))
+					actionErr := actions.NewErrorf(actions.Unauthenticated, "invalid credentials")
+					SimpleLogger{}.Then(errorWriter{err: actionErr}.Then(next)).ServeHTTP(w, r.WithContext(ctx))
 					return
 				}
 				// Set the claims into the request context
@@ -49,7 +50,8 @@ func (a Authentication) Then(next http.Handler) http.Handler {
 				claims, err := extractAPIKeyClaims(ctx, headerString, a.Store)
 				if err != nil {
 					logger.WithError(err).Warn("invalid api key")
-					writeErr(w, actions.NewErrorf(actions.Unauthenticated, "invalid credentials"))
+					actionErr := actions.NewErrorf(actions.Unauthenticated, "invalid credentials")
+					SimpleLogger{}.Then(errorWriter{err: actionErr}.Then(next)).ServeHTTP(w, r.WithContext(ctx))
 					return
 				}
 				if claims != nil {
@@ -67,7 +69,8 @@ func (a Authentication) Then(next http.Handler) http.Handler {
 			return
 		}
 
-		writeErr(w, actions.NewErrorf(actions.Unauthenticated, "bad credentials"))
+		actionErr := actions.NewErrorf(actions.Unauthenticated, "bad credentials")
+		SimpleLogger{}.Then(errorWriter{err: actionErr}.Then(next)).ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
@@ -103,4 +106,16 @@ func extractAPIKeyClaims(ctx context.Context, key string, store store.Store) (*c
 	}
 
 	return claims, nil
+}
+
+type errorWriter struct {
+	err actions.Error
+}
+
+// Then middleware
+func (e errorWriter) Then(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		writeErr(w, e.err)
+		return
+	})
 }

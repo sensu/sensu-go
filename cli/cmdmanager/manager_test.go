@@ -20,6 +20,7 @@ import (
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/testing/mockassetgetter"
 	"github.com/sensu/sensu-go/testing/mockexecutor"
+	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/environment"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -190,37 +191,6 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 			},
 		},
 		{
-			name:            "no type annotation",
-			wantErr:         true,
-			errMatch:        "requested asset does not have a type annotation set",
-			alias:           "testalias",
-			bonsaiAssetName: bAsset.fullNameWithVersion,
-			bonsaiClientFunc: func(m *MockBonsaiClient) {
-				bonsaiAsset := &bonsai.Asset{
-					Name: bAsset.fullName,
-					Versions: []*bonsai.AssetVersionGrouping{
-						{Version: bAsset.version},
-					},
-				}
-				asset := corev2.Asset{
-					ObjectMeta: corev2.ObjectMeta{
-						Name:      bAsset.name,
-						Namespace: bAsset.namespace,
-					},
-					URL:    bAsset.url,
-					Sha512: bAsset.sha512,
-				}
-				assetJSON, err := json.Marshal(asset)
-				if err != nil {
-					t.Fatal(err)
-				}
-				m.On("FetchAsset", bAsset.namespace, bAsset.name).
-					Return(bonsaiAsset, nil)
-				m.On("FetchAssetVersion", bAsset.namespace, bAsset.name, bAsset.version).
-					Return(string(assetJSON), nil)
-			},
-		},
-		{
 			name:            "invalid type annotation",
 			wantErr:         true,
 			errMatch:        "requested asset is not a sensuctl asset",
@@ -244,41 +214,7 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 					URL:    bAsset.url,
 					Sha512: bAsset.sha512,
 				}
-				assetJSON, err := json.Marshal(asset)
-				if err != nil {
-					t.Fatal(err)
-				}
-				m.On("FetchAsset", bAsset.namespace, bAsset.name).
-					Return(bonsaiAsset, nil)
-				m.On("FetchAssetVersion", bAsset.namespace, bAsset.name, bAsset.version).
-					Return(string(assetJSON), nil)
-			},
-		},
-		{
-			name:            "no provider annotation",
-			wantErr:         true,
-			errMatch:        "requested asset does not have a provider annotation set",
-			alias:           "testalias",
-			bonsaiAssetName: bAsset.fullNameWithVersion,
-			bonsaiClientFunc: func(m *MockBonsaiClient) {
-				bonsaiAsset := &bonsai.Asset{
-					Name: bAsset.fullName,
-					Versions: []*bonsai.AssetVersionGrouping{
-						{Version: bAsset.version},
-					},
-				}
-				asset := corev2.Asset{
-					ObjectMeta: corev2.ObjectMeta{
-						Name:      bAsset.name,
-						Namespace: bAsset.namespace,
-						Annotations: map[string]string{
-							"io.sensu.bonsai.type": "sensuctl",
-						},
-					},
-					URL:    bAsset.url,
-					Sha512: bAsset.sha512,
-				}
-				assetJSON, err := json.Marshal(asset)
+				assetJSON, err := json.Marshal(types.WrapResource(&asset))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -313,7 +249,7 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 					URL:    bAsset.url,
 					Sha512: bAsset.sha512,
 				}
-				assetJSON, err := json.Marshal(asset)
+				assetJSON, err := json.Marshal(types.WrapResource(&asset))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -347,7 +283,7 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 					URL:    bAsset.url,
 					Sha512: bAsset.sha512,
 				}
-				assetJSON, err := json.Marshal(asset)
+				assetJSON, err := json.Marshal(types.WrapResource(&asset))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -374,7 +310,7 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 						{},
 					},
 				}
-				assetJSON, err := json.Marshal(asset)
+				assetJSON, err := json.Marshal(types.WrapResource(&asset))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -415,7 +351,7 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 						},
 					},
 				}
-				assetJSON, err := json.Marshal(asset)
+				assetJSON, err := json.Marshal(types.WrapResource(&asset))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -452,7 +388,7 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 						},
 					},
 				}
-				assetJSON, err := json.Marshal(asset)
+				assetJSON, err := json.Marshal(types.WrapResource(&asset))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -491,7 +427,7 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 						},
 					},
 				}
-				assetJSON, err := json.Marshal(asset)
+				assetJSON, err := json.Marshal(types.WrapResource(&asset))
 				if err != nil {
 					t.Fatal(err)
 				}
@@ -528,7 +464,7 @@ func TestCommandManager_InstallCommandFromBonsai(t *testing.T) {
 						},
 					},
 				}
-				assetJSON, err := json.Marshal(asset)
+				assetJSON, err := json.Marshal(types.WrapResource(&asset))
 				if err != nil {
 					t.Fatal(err)
 				}

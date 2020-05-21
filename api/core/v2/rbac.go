@@ -182,15 +182,11 @@ func (b *ClusterRoleBinding) Validate() error {
 		return errors.New("a ClusterRoleBinding needs a roleRef")
 	}
 
-	if len(b.Subjects) == 0 {
-		return errors.New("a ClusterRoleBinding must have at least one subject")
-	}
-
 	if b.Namespace != "" {
 		return errors.New("ClusterRoleBinding cannot have a namespace")
 	}
 
-	return nil
+	return ValidateSubjects(b.Subjects)
 }
 
 // StorePrefix returns the path prefix to this resource in the store
@@ -262,8 +258,23 @@ func (b *RoleBinding) Validate() error {
 		return errors.New("a RoleBinding needs a roleRef")
 	}
 
-	if len(b.Subjects) == 0 {
+	return ValidateSubjects(b.Subjects)
+}
+
+// ValidateSubjects checks that there is at least one subject, and all subjects
+// have non-empty types and names.
+func ValidateSubjects(subjects []Subject) error {
+	if len(subjects) == 0 {
 		return errors.New("a RoleBinding must have at least one subject")
+	}
+
+	for i, subject := range subjects {
+		if err := ValidateName(subject.Type); err != nil {
+			return fmt.Errorf("subject %d: type not valid: %s", i, err)
+		}
+		if err := ValidateName(subject.Name); err != nil {
+			return fmt.Errorf("subject %d: name not valid: %s", i, err)
+		}
 	}
 
 	return nil
