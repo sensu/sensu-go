@@ -178,10 +178,16 @@ func synthesizeStruct(value reflect.Value) map[string]interface{} {
 	t := value.Type()
 	for i := 0; i < numField; i++ {
 		field := t.Field(i)
+
 		if field.PkgPath != "" {
 			// unexported fields are not included in the synthesis
 			continue
 		}
+		// Verify if the field should be ignored via a tag
+		if field.Tag.Get("synthesize") == "false" {
+			continue
+		}
+
 		s := structField{Field: field}
 		fieldName, omitEmpty := s.jsonFieldName()
 		fieldValue := value.Field(i)
