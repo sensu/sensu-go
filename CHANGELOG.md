@@ -16,6 +16,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Add validation for subjects in RBAC RoleBinding and ClusterRoleBinding.
 - Fixed a bug where single-letter subscriptions were not allowed, even though
 they were intended to be.
+- Fixed an issue when a GraphQL query could fail if a namespace contained a
+large number of events.
 
 ## [5.20.1] - 2020-05-15
 *No changelog for this release.*
