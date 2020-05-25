@@ -11,6 +11,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Added
 - Added the username as a field to the API request logger.
 
+### Changed
+- The Process struct only contains the name of the process.
+
 ### Fixed
 - The proper libc implementation is now displayed for Ubuntu entities.
 - Add validation for subjects in RBAC RoleBinding and ClusterRoleBinding.
