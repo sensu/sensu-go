@@ -225,3 +225,22 @@ func FixtureProcesses(length int) []*Process {
 
 	return processes
 }
+
+// FixtureSystem ...
+func FixtureSystem() System {
+	return System{
+		Arch:     "amd64",
+		Hostname: "localhost.localdomain",
+		Network: Network{
+			Interfaces: []NetworkInterface{
+				{
+					Name:      "en0",
+					MAC:       "64:0F:E8:43:7C:41",
+					Addresses: []string{"fe80::26:947d:d5e1:385a/64", "10.73.0.1/24"},
+				},
+			},
+		},
+		OS:              "darwin",
+		PlatformVersion: "10.15.4",
+	}
+}

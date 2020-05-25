@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"testing"
 
+	proto "github.com/golang/protobuf/proto"
 	"github.com/sensu/sensu-go/types/dynamic"
 )
 
@@ -52,5 +53,59 @@ func BenchmarkEntityUnmarshalWithProcesses(b *testing.B) {
 	for n := 0; n < b.N; n++ {
 		var e Entity
 		_ = json.Unmarshal(bytes, &e)
+	}
+}
+
+func BenchmarkEntityProtoUnmarshalWithoutProcesses(b *testing.B) {
+	entity := FixtureEntity("foo")
+	bytes, err := entity.Marshal()
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		var e Entity
+		_ = proto.Unmarshal(bytes, &e)
+	}
+}
+
+func BenchmarkEntityProtoUnmarshalWithProcesses(b *testing.B) {
+	entity := FixtureEntity("foo")
+	entity.System.Processes = processes
+	bytes, err := entity.Marshal()
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		var e Entity
+		_ = proto.Unmarshal(bytes, &e)
+	}
+}
+
+func BenchmarkSystemProtoUnmarshalWithoutProcesses(b *testing.B) {
+	system := FixtureSystem()
+	bytes, err := system.Marshal()
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		var e System
+		_ = proto.Unmarshal(bytes, &e)
+	}
+}
+
+func BenchmarkSystemProtoUnmarshalWithProcesses(b *testing.B) {
+	system := FixtureSystem()
+	system.Processes = processes
+	bytes, err := system.Marshal()
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+	for n := 0; n < b.N; n++ {
+		var e System
+		_ = proto.Unmarshal(bytes, &e)
 	}
 }
