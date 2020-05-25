@@ -72,14 +72,6 @@ message System {
 // Process contains information about a local process.
 message Process {
   string name = 1 [(gogoproto.jsontag) = "name"];
-  int32 pid = 2 [(gogoproto.jsontag) = "pid"];
-  int32 ppid = 3 [(gogoproto.jsontag) = "ppid"];
-  string status = 4 [(gogoproto.jsontag) = "status"];
-  bool background = 5 [(gogoproto.jsontag) = "background"];
-  bool running = 6 [(gogoproto.jsontag) = "running"];
-  int64 created = 7 [(gogoproto.jsontag) = "created"];
-  float memory_percent = 8 [(gogoproto.jsontag) = "memory_percent"];
-  double cpu_percent = 9 [(gogoproto.jsontag) = "cpu_percent"];
 }
 
 // Network contains information about the system network interfaces
