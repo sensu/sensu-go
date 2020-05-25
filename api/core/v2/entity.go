@@ -214,3 +214,14 @@ func (e *Entity) RBACName() string {
 func (e *Entity) SetName(name string) {
 	e.Name = name
 }
+
+// FixtureProcesses mocks a list of processes with the given length
+func FixtureProcesses(length int) []*Process {
+	processes := make([]*Process, length)
+
+	for i := range processes {
+		processes[i] = &Process{Name: fmt.Sprintf("process-%d", i)}
+	}
+
+	return processes
+}
