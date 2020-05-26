@@ -8,22 +8,26 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
-## [5.20.2] - 2020-05-26
-
 ### Added
 - Added the `sensuctl user hash-password` command to generate password hashes
 - Added the ability to reset passwords via the backend API & `sensuctl user
 reset-password`
 - The user resource now has a `password_hash` field to specify the password
 hash, in place of the cleartext password
+
+### Fixed
+- The password verification logic when running `sensuctl user change-password`
+has been moved from sensuctl to the backend API.
+
+## [5.20.2] - 2020-05-26
+
+### Added
 - Added the username as a field to the API request logger.
 
 ### Changed
 - The Process struct only contains the name of the process.
 
 ### Fixed
-- The password verification logic when running `sensuctl user change-password`
-has been moved from sensuctl to the backend API.
 - The proper libc implementation is now displayed for Ubuntu entities.
 - Add validation for subjects in RBAC RoleBinding and ClusterRoleBinding.
 - Fixed a bug where single-letter subscriptions were not allowed, even though
