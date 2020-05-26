@@ -1,11 +1,11 @@
 syntax = "proto3";
 
 import "github.com/gogo/protobuf@v1.3.1/gogoproto/gogo.proto";
-import "asset.proto";
-import "hook.proto";
-import "meta.proto";
-import "time_window.proto";
-import "secret.proto";
+import "github.com/sensu/sensu-go/api/core/v2/asset.proto";
+import "github.com/sensu/sensu-go/api/core/v2/hook.proto";
+import "github.com/sensu/sensu-go/api/core/v2/meta.proto";
+import "github.com/sensu/sensu-go/api/core/v2/time_window.proto";
+import "github.com/sensu/sensu-go/api/core/v2/secret.proto";
 
 package sensu.core.v2;
 
