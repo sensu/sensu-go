@@ -8,6 +8,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+## [5.20.2] - 2020-05-26
+
 ### Added
 - Added the username as a field to the API request logger.
 
@@ -19,6 +21,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 - Add validation for subjects in RBAC RoleBinding and ClusterRoleBinding.
 - Fixed a bug where single-letter subscriptions were not allowed, even though
 they were intended to be.
+- Fix retrieving command assets from bonsai.
 
 ## [5.20.1] - 2020-05-15
 *No changelog for this release.*
