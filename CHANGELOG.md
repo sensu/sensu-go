@@ -14,6 +14,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 reset-password`
 - The user resource now has a `password_hash` field to specify the password
 hash, in place of the cleartext password
+- Added the beginnings of the core/v3 API.
+- Added automatically generated tests for the core/v2 API.
 
 ### Fixed
 - The password verification logic when running `sensuctl user change-password`

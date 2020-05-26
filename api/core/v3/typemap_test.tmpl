@@ -1,0 +1,35 @@
+package v3
+
+// {{ .Comment }}
+
+import (
+	"testing"
+
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+)
+
+{{ range $index, $typename := .TypeNames }}
+func TestResolve{{ $typename }}(t *testing.T) {
+	var value interface{} = new({{ $typename }})
+	if _, ok := value.(corev2.Resource); ok {
+		if _, err := ResolveResource("{{ $typename }}"); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	_, err := ResolveResource("{{ $typename }}")
+	if err == nil {
+		t.Fatal("expected non-nil error")
+	}
+	if got, want := err.Error(), `"{{ $typename }}" is not a Resource`; got != want {
+		t.Fatalf("unexpected error: %s", err)
+	}
+}
+{{ end }}
+
+func TestResolveNotExists(t *testing.T) {
+	_, err := ResolveResource("!#$@$%@#$")
+	if err == nil {
+		t.Fatal("expected non-nil error")
+	}
+}
