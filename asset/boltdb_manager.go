@@ -98,6 +98,7 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 
 	// Check to see if the view was successful.
 	if localAsset != nil {
+		localAsset.Name = asset.Name
 		localAsset.SHA512 = asset.Sha512
 		return localAsset, nil
 	}
@@ -154,6 +155,7 @@ func (b *boltDBAssetManager) Get(ctx context.Context, asset *corev2.Asset) (*Run
 	}
 
 	if localAsset != nil {
+		localAsset.Name = asset.Name
 		localAsset.SHA512 = asset.Sha512
 	}
 

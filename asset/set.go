@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/util/environment"
 )
 
 // RuntimeAssetSet is a set of runtime assets.
@@ -75,6 +76,14 @@ func (r *RuntimeAssetSet) Env() []string {
 		// environment, or an empty string if var doesn't exist.
 		assetEnv[i] = os.ExpandEnv(envVar)
 	}
+
+	for _, asset := range *r {
+		assetEnv = append(assetEnv, fmt.Sprintf("%s=%s",
+			fmt.Sprintf("%s_PATH", environment.Key(asset.Name)),
+			asset.Path,
+		))
+	}
+
 	return assetEnv
 }
 

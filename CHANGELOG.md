@@ -56,6 +56,8 @@ sensu-backend or sensu-agent process.
 - Added token substitution for assets.
 - Added `Edition` field to version information.
 - Added `GoVersion` field to version information.
+- Assets paths are now accessible to consumers via an environment variable.
+- Added a helper function to token substitution to retrieve an asset path.
 - Windows agent now has log rotation capabilities.
 - [Web] Added check hook output to event details page.
 
