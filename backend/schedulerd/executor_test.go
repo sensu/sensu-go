@@ -11,9 +11,9 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/queue"
+	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
-	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -83,8 +83,15 @@ func TestPublishProxyCheckRequest(t *testing.T) {
 	defer cancel()
 	scheduler := newIntervalScheduler(ctx, t, "check")
 
-	entity := corev2.FixtureEntity("entity1")
+	// Create two entities, so the first one fails token substitution, therefore
+	// we can test that a check is scheduled for the second one
+	entity1 := corev2.FixtureEntity("entity1")
+	entity2 := corev2.FixtureEntity("entity2")
+	entity2.Labels = map[string]string{"foo": "bar"}
+
+	// Create a check that relies on token substitution
 	check := scheduler.check
+	check.Command = "{{ .labels.foo }}"
 	check.Subscriptions = []string{"subscription1"}
 	check.ProxyRequests = corev2.FixtureProxyRequests(true)
 
@@ -114,11 +121,11 @@ func TestPublishProxyCheckRequest(t *testing.T) {
 			res, ok := msg.(*corev2.CheckRequest)
 			assert.True(ok)
 			assert.Equal("check1", res.Config.Name)
-			assert.Equal("entity1", res.Config.ProxyEntityName)
+			assert.Equal("entity2", res.Config.ProxyEntityName)
 		}
 	}()
 
-	assert.NoError(scheduler.exec.publishProxyCheckRequests([]*corev2.Entity{entity}, check))
+	assert.NoError(scheduler.exec.publishProxyCheckRequests([]*corev2.Entity{entity1, entity2}, check))
 }
 
 func TestPublishProxyCheckRequestsInterval(t *testing.T) {
