@@ -18,6 +18,7 @@ hash, in place of the cleartext password
 ### Fixed
 - The password verification logic when running `sensuctl user change-password`
 has been moved from sensuctl to the backend API.
+- Listing namespaces in sensuctl with `--chunk-size` now works properly.
 
 ## [5.20.2] - 2020-05-26
 
@@ -29,7 +30,6 @@ has been moved from sensuctl to the backend API.
 
 ### Fixed
 - The proper libc implementation is now displayed for Ubuntu entities.
-- Listing namespaces in sensuctl with `--chunk-size` now works properly.
 - Add validation for subjects in RBAC RoleBinding and ClusterRoleBinding.
 - Fixed a bug where single-letter subscriptions were not allowed, even though
 they were intended to be.
