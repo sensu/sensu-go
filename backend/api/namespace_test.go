@@ -386,7 +386,7 @@ func TestFetchNamespace(t *testing.T) {
 			ctx := contextWithUser(defaultContext(), tt.attrs.User.Username, tt.attrs.User.Groups)
 
 			auth := &rbac.Authorizer{Store: store}
-			client := NewNamespaceClient(store, auth, nil)
+			client := NewNamespaceClient(store, auth)
 
 			got, err := client.FetchNamespace(ctx, tt.namespace)
 			if (err != nil) != tt.wantErr {
@@ -750,7 +750,7 @@ func TestNamespaceList(t *testing.T) {
 			ctx := contextWithUser(defaultContext(), test.Attrs.User.Username, test.Attrs.User.Groups)
 
 			auth := &rbac.Authorizer{Store: store}
-			client := NewNamespaceClient(store, auth, nil)
+			client := NewNamespaceClient(store, auth)
 
 			got, err := client.ListNamespaces(ctx)
 			if (err != nil) != test.WantErr {
