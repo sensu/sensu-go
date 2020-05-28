@@ -9,6 +9,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Fixed
+- Errors while publishing proxy check requests do not block scheduling for other
+entities.
 - Listing namespaces in sensuctl with `--chunk-size` now works properly.
 
 ## [5.20.2] - 2020-05-26
