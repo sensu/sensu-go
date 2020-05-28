@@ -271,14 +271,21 @@ func publishProxyCheckRequests(e Executor, entities []*corev2.Entity, check *cor
 		}
 	}
 
+	fields := logrus.Fields{
+		"check":     check.Name,
+		"namespace": check.Namespace,
+	}
+
 	for _, entity := range entities {
 		time.Sleep(splay)
 		substitutedCheck, err := substituteProxyEntityTokens(entity, check)
 		if err != nil {
-			return err
+			logger.WithFields(fields).WithError(err).Errorf("could not substitute tokens for proxy entity %q", entity.Name)
+			continue
 		}
 		if err := e.execute(substitutedCheck); err != nil {
-			return err
+			logger.WithFields(fields).WithError(err).Errorf("could not send check request for entity %q", entity.Name)
+			continue
 		}
 	}
 	return nil
@@ -330,15 +337,22 @@ func publishRoundRobinProxyCheckRequests(executor *CheckExecutor, check *corev2.
 		}
 	}
 
+	fields := logrus.Fields{
+		"check":     check.Name,
+		"namespace": check.Namespace,
+	}
+
 	for i, proxyEntity := range proxyEntities {
 		now := time.Now()
 		agentEntity := agentEntities[i]
 		substitutedCheck, err := substituteProxyEntityTokens(proxyEntity, check)
 		if err != nil {
-			return err
+			logger.WithFields(fields).WithError(err).Errorf("could not substitute tokens for proxy entity %q", proxyEntity.Name)
+			continue
 		}
 		if err := executor.executeOnEntity(substitutedCheck, agentEntity); err != nil {
-			return err
+			logger.WithFields(fields).WithError(err).Errorf("could not send check request for proxy entity %q", proxyEntity.Name)
+			continue
 		}
 		dreamtime := splay - time.Now().Sub(now)
 		time.Sleep(dreamtime)

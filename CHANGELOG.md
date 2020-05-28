@@ -18,6 +18,9 @@ hash, in place of the cleartext password
 ### Fixed
 - The password verification logic when running `sensuctl user change-password`
 has been moved from sensuctl to the backend API.
+### Fixed
+- Errors while publishing proxy check requests do not block scheduling for other
+entities.
 - Listing namespaces in sensuctl with `--chunk-size` now works properly.
 
 ## [5.20.2] - 2020-05-26
