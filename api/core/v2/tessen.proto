@@ -18,5 +18,5 @@ message TessenConfig {
   option (gogoproto.goproto_getters) = false;
 
   // OptOut is the opt-out status of the tessen configuration
-  bool opt_out = 1 [(gogoproto.jsontag) = "opt_out"];
+  bool opt_out = 1 [ (gogoproto.jsontag) = "opt_out" ];
 }

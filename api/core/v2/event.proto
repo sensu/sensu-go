@@ -18,29 +18,29 @@ option (gogoproto.testgen_all) = true;
 
 // An Event is the encapsulating type sent across the Sensu websocket transport.
 message Event {
-    option (gogoproto.face) = true;
-    option (gogoproto.goproto_getters) = false;
+  option (gogoproto.face) = true;
+  option (gogoproto.goproto_getters) = false;
 
-    // Timestamp is the time in seconds since the Epoch.
-    int64 timestamp = 1;
+  // Timestamp is the time in seconds since the Epoch.
+  int64 timestamp = 1;
 
-    // Entity describes the entity in which the event occurred.
-    Entity entity = 2 [(gogoproto.nullable) = true];
+  // Entity describes the entity in which the event occurred.
+  Entity entity = 2 [ (gogoproto.nullable) = true ];
 
-    // Check describes the result of a check; if event is associated to check
-    // execution.
-    Check check = 3 [(gogoproto.nullable) = true];
+  // Check describes the result of a check; if event is associated to check
+  // execution.
+  Check check = 3 [ (gogoproto.nullable) = true ];
 
-    // Metrics are zero or more Sensu metrics
-    Metrics metrics = 4 [(gogoproto.nullable) = true];
+  // Metrics are zero or more Sensu metrics
+  Metrics metrics = 4 [ (gogoproto.nullable) = true ];
 
-    // Metadata contains name, namespace, labels and annotations
-    ObjectMeta metadata = 5 [
-	(gogoproto.embed) = true,
-	(gogoproto.jsontag) = "metadata",
-	(gogoproto.nullable) = false
-    ];
+  // Metadata contains name, namespace, labels and annotations
+  ObjectMeta metadata = 5 [
+    (gogoproto.embed) = true,
+    (gogoproto.jsontag) = "metadata",
+    (gogoproto.nullable) = false
+  ];
 
-    // ID is the unique identifier of the event.
-    bytes ID = 6 [(gogoproto.jsontag) = "id"];
+  // ID is the unique identifier of the event.
+  bytes ID = 6 [ (gogoproto.jsontag) = "id" ];
 }
