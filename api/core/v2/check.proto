@@ -32,8 +32,7 @@ message CheckRequest {
   int64 Issued = 4 [ (gogoproto.jsontag) = "issued" ];
 
   // HookAssets is a map of assets required to execute hooks.
-  map<string, AssetList> hook_assets = 5
-      [ (gogoproto.jsontag) = "hook_assets" ];
+  map<string, AssetList> hook_assets = 5 [ (gogoproto.jsontag) = "hook_assets" ];
 
   // Secrets is a list of kv to be added to the env vars of a check.
   repeated string secrets = 6;
@@ -42,16 +41,14 @@ message CheckRequest {
 // An AssetList represents a list of assets for a CheckRequest.
 message AssetList {
   // Assets are a list of assets required to execute check or hook.
-  repeated Asset assets = 1
-      [ (gogoproto.jsontag) = "assets", (gogoproto.nullable) = false ];
+  repeated Asset assets = 1 [ (gogoproto.jsontag) = "assets", (gogoproto.nullable) = false ];
 }
 
 // A ProxyRequests represents a request to execute a proxy check
 message ProxyRequests {
   // EntityAttributes store serialized arbitrary JSON-encoded data to match
   // entities in the registry.
-  repeated string entity_attributes = 1
-      [ (gogoproto.jsontag) = "entity_attributes" ];
+  repeated string entity_attributes = 1 [ (gogoproto.jsontag) = "entity_attributes" ];
 
   // Splay indicates if proxy check requests should be splayed, published
   // evenly over a window of time.
@@ -75,8 +72,7 @@ message CheckConfig {
 
   // HighFlapThreshold is the flap detection high threshold (% state change)
   // for the check. Sensu uses the same flap detection algorithm as Nagios.
-  uint32 high_flap_threshold = 4
-      [ (gogoproto.jsontag) = "high_flap_threshold" ];
+  uint32 high_flap_threshold = 4 [ (gogoproto.jsontag) = "high_flap_threshold" ];
 
   // Interval is the interval, in seconds, at which the check should be run.
   uint32 interval = 5 [ (gogoproto.jsontag) = "interval" ];
@@ -89,8 +85,7 @@ message CheckConfig {
   bool publish = 9 [ (gogoproto.jsontag) = "publish" ];
 
   // RuntimeAssets are a list of assets required to execute check.
-  repeated string runtime_assets = 10
-      [ (gogoproto.jsontag) = "runtime_assets" ];
+  repeated string runtime_assets = 10 [ (gogoproto.jsontag) = "runtime_assets" ];
 
   // Subscriptions is the list of subscribers for the check.
   repeated string subscriptions = 11 [ (gogoproto.jsontag) = "subscriptions" ];
@@ -100,14 +95,10 @@ message CheckConfig {
 
   // Sources indicates the name of the entity representing an external
   // resource
-  string proxy_entity_name = 13 [
-    (gogoproto.jsontag) = "proxy_entity_name",
-    (gogoproto.customname) = "ProxyEntityName"
-  ];
+  string proxy_entity_name = 13 [ (gogoproto.jsontag) = "proxy_entity_name", (gogoproto.customname) = "ProxyEntityName" ];
 
   // CheckHooks is the list of check hooks for the check
-  repeated HookList check_hooks = 14
-      [ (gogoproto.jsontag) = "check_hooks", (gogoproto.nullable) = false ];
+  repeated HookList check_hooks = 14 [ (gogoproto.jsontag) = "check_hooks", (gogoproto.nullable) = false ];
 
   // STDIN indicates if the check command accepts JSON via stdin from the
   // agent
@@ -135,13 +126,11 @@ message CheckConfig {
 
   // OutputOutputMetricFormat is the metric protocol that the check's output
   // will be expected to follow in order to be extracted.
-  string output_metric_format = 22
-      [ (gogoproto.jsontag) = "output_metric_format" ];
+  string output_metric_format = 22 [ (gogoproto.jsontag) = "output_metric_format" ];
 
   // OutputOutputMetricHandlers is the list of event handlers that will
   // respond to metrics that have been extracted from the check.
-  repeated string output_metric_handlers = 23
-      [ (gogoproto.jsontag) = "output_metric_handlers" ];
+  repeated string output_metric_handlers = 23 [ (gogoproto.jsontag) = "output_metric_handlers" ];
 
   // EnvVars is the list of environment variables to set for the check's
   // execution environment.
@@ -149,11 +138,7 @@ message CheckConfig {
 
   // Metadata contains the name, namespace, labels and annotations of the
   // check
-  ObjectMeta metadata = 26 [
-    (gogoproto.jsontag) = "metadata,omitempty",
-    (gogoproto.embed) = true,
-    (gogoproto.nullable) = false
-  ];
+  ObjectMeta metadata = 26 [ (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false ];
 
   // MaxOutputSize is the maximum size in bytes that will be stored for check
   // output. If check output is larger than MaxOutputSize, it will be
@@ -184,8 +169,7 @@ message Check {
 
   // HighFlapThreshold is the flap detection high threshold (% state change)
   // for the check. Sensu uses the same flap detection algorithm as Nagios.
-  uint32 high_flap_threshold = 4
-      [ (gogoproto.jsontag) = "high_flap_threshold" ];
+  uint32 high_flap_threshold = 4 [ (gogoproto.jsontag) = "high_flap_threshold" ];
 
   // Interval is the interval, in seconds, at which the check should be run.
   uint32 interval = 5 [ (gogoproto.jsontag) = "interval" ];
@@ -198,22 +182,17 @@ message Check {
   bool publish = 9 [ (gogoproto.jsontag) = "publish" ];
 
   // RuntimeAssets are a list of assets required to execute check.
-  repeated string runtime_assets = 10
-      [ (gogoproto.jsontag) = "runtime_assets" ];
+  repeated string runtime_assets = 10 [ (gogoproto.jsontag) = "runtime_assets" ];
 
   // Subscriptions is the list of subscribers for the check.
   repeated string subscriptions = 11 [ (gogoproto.jsontag) = "subscriptions" ];
 
   // Sources indicates the name of the entity representing an external
   // resource
-  string proxy_entity_name = 13 [
-    (gogoproto.jsontag) = "proxy_entity_name",
-    (gogoproto.customname) = "ProxyEntityName"
-  ];
+  string proxy_entity_name = 13 [ (gogoproto.jsontag) = "proxy_entity_name", (gogoproto.customname) = "ProxyEntityName" ];
 
   // CheckHooks is the list of check hooks for the check
-  repeated HookList check_hooks = 14
-      [ (gogoproto.jsontag) = "check_hooks", (gogoproto.nullable) = false ];
+  repeated HookList check_hooks = 14 [ (gogoproto.jsontag) = "check_hooks", (gogoproto.nullable) = false ];
 
   // STDIN indicates if the check command accepts JSON via stdin from the
   // agent
@@ -246,8 +225,7 @@ message Check {
   int64 executed = 23 [ (gogoproto.jsontag) = "executed" ];
 
   // History is the check state history.
-  repeated CheckHistory history = 24
-      [ (gogoproto.jsontag) = "history", (gogoproto.nullable) = false ];
+  repeated CheckHistory history = 24 [ (gogoproto.jsontag) = "history", (gogoproto.nullable) = false ];
 
   // Issued describes the time in which the check request was issued
   int64 issued = 25 [ (gogoproto.jsontag) = "issued" ];
@@ -267,8 +245,7 @@ message Check {
 
   // LastOK displays last time this check was ok; if event status is 0 this is
   // set to timestamp
-  int64 last_ok = 30
-      [ (gogoproto.customname) = "LastOK", (gogoproto.jsontag) = "last_ok" ];
+  int64 last_ok = 30 [ (gogoproto.customname) = "LastOK", (gogoproto.jsontag) = "last_ok" ];
 
   // Occurrences indicates the number of times an event has occurred for a
   // client/check pair with the same check status
@@ -276,8 +253,7 @@ message Check {
 
   // OccurrencesWatermark indicates the high water mark tracking number of
   // occurrences at the current severity
-  int64 occurrences_watermark = 32
-      [ (gogoproto.jsontag) = "occurrences_watermark" ];
+  int64 occurrences_watermark = 32 [ (gogoproto.jsontag) = "occurrences_watermark" ];
 
   // Silenced is a list of silenced entry ids (subscription and check name)
   repeated string silenced = 33 [ (gogoproto.nullable) = true ];
@@ -288,13 +264,11 @@ message Check {
 
   // OutputOutputMetricFormat is the metric protocol that the check's output
   // will be expected to follow in order to be extracted.
-  string output_metric_format = 35
-      [ (gogoproto.jsontag) = "output_metric_format" ];
+  string output_metric_format = 35 [ (gogoproto.jsontag) = "output_metric_format" ];
 
   // OutputOutputMetricHandlers is the list of event handlers that will
   // respond to metrics that have been extracted from the check.
-  repeated string output_metric_handlers = 36
-      [ (gogoproto.jsontag) = "output_metric_handlers" ];
+  repeated string output_metric_handlers = 36 [ (gogoproto.jsontag) = "output_metric_handlers" ];
 
   // EnvVars is the list of environment variables to set for the check's
   // execution environment.
@@ -302,11 +276,7 @@ message Check {
 
   // Metadata contains the name, namespace, labels and annotations of the
   // check
-  ObjectMeta metadata = 38 [
-    (gogoproto.jsontag) = "metadata,omitempty",
-    (gogoproto.embed) = true,
-    (gogoproto.nullable) = false
-  ];
+  ObjectMeta metadata = 38 [ (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false ];
 
   // MaxOutputSize is the maximum size in bytes that will be stored for check
   // output. If check output is larger than MaxOutputSize, it will be

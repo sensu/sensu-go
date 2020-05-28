@@ -21,11 +21,7 @@ message Handler {
 
   // Metadata contains the name, namespace, labels and annotations of the
   // handler
-  ObjectMeta metadata = 1 [
-    (gogoproto.jsontag) = "metadata,omitempty",
-    (gogoproto.embed) = true,
-    (gogoproto.nullable) = false
-  ];
+  ObjectMeta metadata = 1 [ (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false ];
 
   // Type is the handler type, i.e. pipe.
   string type = 2;
@@ -53,8 +49,7 @@ message Handler {
   repeated string env_vars = 9 [ (gogoproto.jsontag) = "env_vars" ];
 
   // RuntimeAssets are a list of assets required to execute a handler.
-  repeated string runtime_assets = 13
-      [ (gogoproto.jsontag) = "runtime_assets" ];
+  repeated string runtime_assets = 13 [ (gogoproto.jsontag) = "runtime_assets" ];
 
   // Secrets is the list of Sensu secrets to set for the handler's
   // execution environment.

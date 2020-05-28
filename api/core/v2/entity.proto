@@ -32,14 +32,9 @@ message Entity {
   repeated string redact = 13;
   // Metadata contains the name, namespace, labels and annotations of the
   // entity
-  ObjectMeta metadata = 14 [
-    (gogoproto.jsontag) = "metadata,omitempty",
-    (gogoproto.embed) = true,
-    (gogoproto.nullable) = false
-  ];
+  ObjectMeta metadata = 14 [ (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false ];
   // SensuAgentVersion is the sensu-agent version.
-  string sensu_agent_version = 15
-      [ (gogoproto.jsontag) = "sensu_agent_version" ];
+  string sensu_agent_version = 15 [ (gogoproto.jsontag) = "sensu_agent_version" ];
   // KeepaliveHandlers contains a list of handlers to use for the entity's
   // keepalive events
   repeated string keepalive_handlers = 16;
@@ -82,10 +77,7 @@ message Process { string name = 1 [ (gogoproto.jsontag) = "name" ]; }
 // Network contains information about the system network interfaces
 // that the Agent process is running on, used for additional Entity
 // context.
-message Network {
-  repeated NetworkInterface interfaces = 1
-      [ (gogoproto.jsontag) = "interfaces", (gogoproto.nullable) = false ];
-}
+message Network { repeated NetworkInterface interfaces = 1 [ (gogoproto.jsontag) = "interfaces", (gogoproto.nullable) = false ]; }
 
 // NetworkInterface contains information about a system network
 // interface.

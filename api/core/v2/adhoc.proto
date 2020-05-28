@@ -25,9 +25,5 @@ message AdhocRequest {
 
   // Metadata contains the name, namespace, labels and annotations of the
   // AdhocCheck
-  ObjectMeta metadata = 5 [
-    (gogoproto.jsontag) = "metadata",
-    (gogoproto.embed) = true,
-    (gogoproto.nullable) = false
-  ];
+  ObjectMeta metadata = 5 [ (gogoproto.jsontag) = "metadata", (gogoproto.embed) = true, (gogoproto.nullable) = false ];
 }

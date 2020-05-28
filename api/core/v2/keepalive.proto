@@ -21,10 +21,6 @@ message KeepaliveRecord {
 
   // Metadata contains the name (of the entity), and namespace, labels and
   // annotations of the keepalive record
-  ObjectMeta metadata = 1 [
-    (gogoproto.jsontag) = "metadata,omitempty",
-    (gogoproto.embed) = true,
-    (gogoproto.nullable) = false
-  ];
+  ObjectMeta metadata = 1 [ (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false ];
   int64 time = 4 [ (gogoproto.jsontag) = "time" ];
 }

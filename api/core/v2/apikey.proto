@@ -20,11 +20,7 @@ message APIKey {
 
   // Metadata contains the name, namespace (N/A), labels and annotations of
   // the APIKey.
-  ObjectMeta metadata = 1 [
-    (gogoproto.jsontag) = "metadata,omitempty",
-    (gogoproto.embed) = true,
-    (gogoproto.nullable) = false
-  ];
+  ObjectMeta metadata = 1 [ (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false ];
 
   // Username is the username associated with the API key.
   string username = 2;

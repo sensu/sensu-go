@@ -35,11 +35,7 @@ message Event {
   Metrics metrics = 4 [ (gogoproto.nullable) = true ];
 
   // Metadata contains name, namespace, labels and annotations
-  ObjectMeta metadata = 5 [
-    (gogoproto.embed) = true,
-    (gogoproto.jsontag) = "metadata",
-    (gogoproto.nullable) = false
-  ];
+  ObjectMeta metadata = 5 [ (gogoproto.embed) = true, (gogoproto.jsontag) = "metadata", (gogoproto.nullable) = false ];
 
   // ID is the unique identifier of the event.
   bytes ID = 6 [ (gogoproto.jsontag) = "id" ];

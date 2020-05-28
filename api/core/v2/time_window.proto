@@ -15,8 +15,7 @@ option (gogoproto.testgen_all) = true;
 // TimeWindowWhen defines the "when" attributes for time windows
 message TimeWindowWhen {
   // Days is a hash of days
-  TimeWindowDays days = 1
-      [ (gogoproto.jsontag) = "days", (gogoproto.nullable) = false ];
+  TimeWindowDays days = 1 [ (gogoproto.jsontag) = "days", (gogoproto.nullable) = false ];
 }
 
 // TimeWindowDays defines the days of a time window

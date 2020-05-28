@@ -36,15 +36,10 @@ message ClusterRole {
   option (gogoproto.face) = true;
   option (gogoproto.goproto_getters) = false;
 
-  repeated Rule rules = 1
-      [ (gogoproto.jsontag) = "rules", (gogoproto.nullable) = false ];
+  repeated Rule rules = 1 [ (gogoproto.jsontag) = "rules", (gogoproto.nullable) = false ];
 
   // Metadata contains name, namespace, labels and annotations
-  ObjectMeta metadata = 3 [
-    (gogoproto.embed) = true,
-    (gogoproto.jsontag) = "metadata,omitempty",
-    (gogoproto.nullable) = false
-  ];
+  ObjectMeta metadata = 3 [ (gogoproto.embed) = true, (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.nullable) = false ];
 }
 
 // Role applies only to a single namespace.
@@ -52,15 +47,10 @@ message Role {
   option (gogoproto.face) = true;
   option (gogoproto.goproto_getters) = false;
 
-  repeated Rule rules = 1
-      [ (gogoproto.jsontag) = "rules", (gogoproto.nullable) = false ];
+  repeated Rule rules = 1 [ (gogoproto.jsontag) = "rules", (gogoproto.nullable) = false ];
 
   // Metadata contains name, namespace, labels and annotations
-  ObjectMeta metadata = 4 [
-    (gogoproto.embed) = true,
-    (gogoproto.jsontag) = "metadata,omitempty",
-    (gogoproto.nullable) = false
-  ];
+  ObjectMeta metadata = 4 [ (gogoproto.embed) = true, (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.nullable) = false ];
 }
 
 // RoleRef maps groups to Roles or ClusterRoles.
@@ -87,19 +77,13 @@ message ClusterRoleBinding {
   option (gogoproto.goproto_getters) = false;
 
   // Subjects holds references to the objects the ClusterRole applies to
-  repeated Subject subjects = 1
-      [ (gogoproto.jsontag) = "subjects", (gogoproto.nullable) = false ];
+  repeated Subject subjects = 1 [ (gogoproto.jsontag) = "subjects", (gogoproto.nullable) = false ];
 
   // RoleRef references a ClusterRole in the current namespace
-  RoleRef role_ref = 2
-      [ (gogoproto.jsontag) = "role_ref", (gogoproto.nullable) = false ];
+  RoleRef role_ref = 2 [ (gogoproto.jsontag) = "role_ref", (gogoproto.nullable) = false ];
 
   // Metadata contains name, namespace, labels and annotations
-  ObjectMeta metadata = 4 [
-    (gogoproto.embed) = true,
-    (gogoproto.jsontag) = "metadata,omitempty",
-    (gogoproto.nullable) = false
-  ];
+  ObjectMeta metadata = 4 [ (gogoproto.embed) = true, (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.nullable) = false ];
 }
 
 // RoleBinding grants the permissions defined in a Role referenced to a user or
@@ -109,17 +93,11 @@ message RoleBinding {
   option (gogoproto.goproto_getters) = false;
 
   // Subjects holds references to the objects the Role applies to
-  repeated Subject subjects = 1
-      [ (gogoproto.jsontag) = "subjects", (gogoproto.nullable) = false ];
+  repeated Subject subjects = 1 [ (gogoproto.jsontag) = "subjects", (gogoproto.nullable) = false ];
 
   // RoleRef references a Role in the current namespace
-  RoleRef role_ref = 2
-      [ (gogoproto.jsontag) = "role_ref", (gogoproto.nullable) = false ];
+  RoleRef role_ref = 2 [ (gogoproto.jsontag) = "role_ref", (gogoproto.nullable) = false ];
 
   // Metadata contains name, namespace, labels and annotations
-  ObjectMeta metadata = 5 [
-    (gogoproto.embed) = true,
-    (gogoproto.jsontag) = "metadata,omitempty",
-    (gogoproto.nullable) = false
-  ];
+  ObjectMeta metadata = 5 [ (gogoproto.embed) = true, (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.nullable) = false ];
 }
