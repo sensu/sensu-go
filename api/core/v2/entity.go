@@ -129,10 +129,6 @@ func FixtureEntity(name string) *Entity {
 		EntityClass:   "host",
 		User:          "agent1",
 		Subscriptions: []string{"linux", GetEntitySubscription(name)},
-		Deregister:    true,
-		Deregistration: Deregistration{
-			Handler: "foo",
-		},
 		Redact: []string{
 			"password",
 		},
