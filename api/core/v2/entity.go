@@ -126,15 +126,12 @@ func FixtureEntity(name string) *Entity {
 			Namespace: "default",
 			Name:      name,
 		},
-		EntityClass:   EntityAgentClass,
+		EntityClass:   "host",
 		User:          "agent1",
 		Subscriptions: []string{"linux", GetEntitySubscription(name)},
 		Deregister:    true,
 		Deregistration: Deregistration{
 			Handler: "foo",
-		},
-		KeepaliveHandlers: []string{
-			"alert",
 		},
 		Redact: []string{
 			"password",
