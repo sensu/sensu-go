@@ -26,11 +26,11 @@ const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // ObjectMeta is metadata all persisted objects have.
 type ObjectMeta struct {
-	// Name must be unique within a namespace. Name is primarily intended for creation
-	// idempotence and configuration definition.
+	// Name must be unique within a namespace. Name is primarily intended for
+	// creation idempotence and configuration definition.
 	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty" yaml: "name,omitempty"`
-	// Namespace defines a logical grouping of objects within which each object name must
-	// be unique.
+	// Namespace defines a logical grouping of objects within which each object
+	// name must be unique.
 	Namespace string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty" yaml: "namespace,omitempty"`
 	// Map of string keys and values that can be used to organize and categorize
 	// (scope and select) objects. May also be used in filters and token
@@ -38,9 +38,9 @@ type ObjectMeta struct {
 	// TODO: Link to Sensu documentation.
 	// More info: http://kubernetes.io/docs/user-guide/labels
 	Labels map[string]string `protobuf:"bytes,3,rep,name=labels,proto3" json:"labels,omitempty" yaml: ",labels,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	// Annotations is an unstructured key value map stored with a resource that may be
-	// set by external tools to store and retrieve arbitrary metadata. They are not
-	// queryable and should be preserved when modifying objects.
+	// Annotations is an unstructured key value map stored with a resource that
+	// may be set by external tools to store and retrieve arbitrary metadata. They
+	// are not queryable and should be preserved when modifying objects.
 	// TODO: Link to Sensu documentation.
 	// More info: http://kubernetes.io/docs/user-guide/annotations
 	Annotations map[string]string `protobuf:"bytes,4,rep,name=annotations,proto3" json:"annotations,omitempty" yaml: "annotations,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`

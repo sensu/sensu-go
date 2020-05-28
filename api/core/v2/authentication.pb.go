@@ -28,7 +28,8 @@ const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 type Tokens struct {
 	// Access token is used by client to make request
 	Access string `protobuf:"bytes,1,opt,name=access,proto3" json:"access_token"`
-	// ExpiresAt unix timestamp describing when the access token is no longer valid
+	// ExpiresAt unix timestamp describing when the access token is no longer
+	// valid
 	ExpiresAt int64 `protobuf:"varint,2,opt,name=expires_at,json=expiresAt,proto3" json:"expires_at"`
 	// Refresh token is used by client to request a new access token
 	Refresh              string   `protobuf:"bytes,3,opt,name=refresh,proto3" json:"refresh_token"`
