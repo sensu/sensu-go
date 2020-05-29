@@ -4,13 +4,11 @@ package v3
 
 import (
 	"testing"
-
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 func TestResolveEntityConfig(t *testing.T) {
 	var value interface{} = new(EntityConfig)
-	if _, ok := value.(corev2.Resource); ok {
+	if _, ok := value.(Resource); ok {
 		if _, err := ResolveResource("EntityConfig"); err != nil {
 			t.Fatal(err)
 		}
@@ -27,7 +25,7 @@ func TestResolveEntityConfig(t *testing.T) {
 
 func TestResolveEntityState(t *testing.T) {
 	var value interface{} = new(EntityState)
-	if _, ok := value.(corev2.Resource); ok {
+	if _, ok := value.(Resource); ok {
 		if _, err := ResolveResource("EntityState"); err != nil {
 			t.Fatal(err)
 		}

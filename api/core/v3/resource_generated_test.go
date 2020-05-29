@@ -133,7 +133,6 @@ func TestEntityConfigUnmarshalJSON(t *testing.T) {
 			t.Error("expected one annotation")
 		}
 	}
-
 }
 
 func TestEntityStateStoreSuffix(t *testing.T) {
@@ -259,5 +258,4 @@ func TestEntityStateUnmarshalJSON(t *testing.T) {
 			t.Error("expected one annotation")
 		}
 	}
-
 }
