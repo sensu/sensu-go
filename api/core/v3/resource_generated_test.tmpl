@@ -4,6 +4,7 @@ package v3
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 	"net/url"
 
@@ -11,6 +12,25 @@ import (
 )
 
 {{ range $index, $typename := .TypeNames }}
+func Test{{ $typename }}SetMetadata(t *testing.T) {
+	value := new({{ $typename }})
+	var iface interface{} = value
+	metaer, ok := iface.(getMetadataer)
+	if !ok {
+		return
+	}
+	meta := &corev2.ObjectMeta{
+		Name: "snoopdogg",
+		Namespace: "lbc",
+		Labels: make(map[string]string),
+		Annotations: make(map[string]string),
+	}
+	value.SetMetadata(meta)
+	if got, want := metaer.GetMetadata(), meta; !reflect.DeepEqual(got, want) {
+		t.Fatalf("bad metadata: got %v, want %v", got, want)
+	}
+}
+
 func Test{{ $typename }}StoreSuffix(t *testing.T) {
 	var value {{ $typename }}
 	got := value.StoreSuffix()

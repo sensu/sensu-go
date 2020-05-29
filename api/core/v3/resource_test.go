@@ -24,6 +24,10 @@ func (t testResource) GetMetadata() *corev2.ObjectMeta {
 	return t.meta
 }
 
+func (t testResource) SetMetadata(meta *corev2.ObjectMeta) {
+	t.meta = meta
+}
+
 func (t testResource) StoreSuffix() string {
 	return "test"
 }

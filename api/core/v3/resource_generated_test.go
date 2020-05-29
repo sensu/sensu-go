@@ -5,10 +5,30 @@ package v3
 import (
 	"encoding/json"
 	"net/url"
+	"reflect"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
+
+func TestEntityConfigSetMetadata(t *testing.T) {
+	value := new(EntityConfig)
+	var iface interface{} = value
+	metaer, ok := iface.(getMetadataer)
+	if !ok {
+		return
+	}
+	meta := &corev2.ObjectMeta{
+		Name:        "snoopdogg",
+		Namespace:   "lbc",
+		Labels:      make(map[string]string),
+		Annotations: make(map[string]string),
+	}
+	value.SetMetadata(meta)
+	if got, want := metaer.GetMetadata(), meta; !reflect.DeepEqual(got, want) {
+		t.Fatalf("bad metadata: got %v, want %v", got, want)
+	}
+}
 
 func TestEntityConfigStoreSuffix(t *testing.T) {
 	var value EntityConfig
@@ -132,6 +152,25 @@ func TestEntityConfigUnmarshalJSON(t *testing.T) {
 		if got, want := len(meta.Annotations), 1; got != want {
 			t.Error("expected one annotation")
 		}
+	}
+}
+
+func TestEntityStateSetMetadata(t *testing.T) {
+	value := new(EntityState)
+	var iface interface{} = value
+	metaer, ok := iface.(getMetadataer)
+	if !ok {
+		return
+	}
+	meta := &corev2.ObjectMeta{
+		Name:        "snoopdogg",
+		Namespace:   "lbc",
+		Labels:      make(map[string]string),
+		Annotations: make(map[string]string),
+	}
+	value.SetMetadata(meta)
+	if got, want := metaer.GetMetadata(), meta; !reflect.DeepEqual(got, want) {
+		t.Fatalf("bad metadata: got %v, want %v", got, want)
 	}
 }
 

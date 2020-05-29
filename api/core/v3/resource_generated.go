@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"reflect"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
@@ -41,6 +42,19 @@ func uriPath(typename, namespace, name string) string {
 		return path.Join("api", "core", "v3", typename, url.PathEscape(name))
 	}
 	return path.Join("api", "core", "v3", "namespaces", url.PathEscape(namespace), typename, url.PathEscape(name))
+}
+
+// SetMetadata sets the provided metadata on the type. If the type does not
+// have any metadata, nothing will happen.
+func (e *EntityConfig) SetMetadata(meta *corev2.ObjectMeta) {
+	// The function has to use reflection, since not all of the generated types
+	// will have metadata.
+	value := reflect.Indirect(reflect.ValueOf(e))
+	field := value.FieldByName("Metadata")
+	if !field.CanSet() {
+		return
+	}
+	field.Set(reflect.ValueOf(meta))
 }
 
 // StoreSuffix returns the store suffix for EntityConfig. It will be
@@ -126,6 +140,19 @@ func (e *EntityConfig) UnmarshalJSON(msg []byte) error {
 		}
 	}
 	return nil
+}
+
+// SetMetadata sets the provided metadata on the type. If the type does not
+// have any metadata, nothing will happen.
+func (e *EntityState) SetMetadata(meta *corev2.ObjectMeta) {
+	// The function has to use reflection, since not all of the generated types
+	// will have metadata.
+	value := reflect.Indirect(reflect.ValueOf(e))
+	field := value.FieldByName("Metadata")
+	if !field.CanSet() {
+		return
+	}
+	field.Set(reflect.ValueOf(meta))
 }
 
 // StoreSuffix returns the store suffix for EntityState. It will be

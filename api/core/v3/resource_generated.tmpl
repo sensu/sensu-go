@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"net/url"
 	"path"
+	"reflect"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
@@ -44,6 +45,19 @@ func uriPath(typename, namespace, name string) string {
 }
 
 {{ range $index, $typename := .TypeNames }}
+// SetMetadata sets the provided metadata on the type. If the type does not
+// have any metadata, nothing will happen.
+func ({{ receiver $typename }}) SetMetadata(meta *corev2.ObjectMeta) {
+	// The function has to use reflection, since not all of the generated types
+	// will have metadata.
+	value := reflect.Indirect(reflect.ValueOf({{ rvar $typename }}))
+	field := value.FieldByName("Metadata")
+	if !field.CanSet() {
+		return
+	}
+	field.Set(reflect.ValueOf(meta))
+}
+
 // StoreSuffix returns the store suffix for {{ $typename }}. It will be
 // overridden if there is a method for {{ $typename }} called "storeSuffix".
 func ({{ receiver $typename }}) StoreSuffix() string {
