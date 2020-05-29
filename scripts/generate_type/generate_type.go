@@ -5,12 +5,12 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
-	"html/template"
 	"log"
 	"os"
 	"os/exec"
 	"regexp"
 	"strings"
+	"text/template"
 	"unicode"
 	"unicode/utf8"
 )
