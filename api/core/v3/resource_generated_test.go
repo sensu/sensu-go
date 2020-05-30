@@ -298,3 +298,29 @@ func TestEntityStateUnmarshalJSON(t *testing.T) {
 		}
 	}
 }
+
+func TestResourceUniqueness(t *testing.T) {
+	types := make(map[reflect.Type]GeneratedType)
+	for _, v := range typeMap {
+		types[reflect.TypeOf(v)] = v.(GeneratedType)
+	}
+	if got, want := len(types), len(typeMap)/2; got != want {
+		t.Fatalf("bad number of types: got %d, want %d", got, want)
+	}
+	rbacNames := make(map[string]bool)
+	for _, v := range types {
+		if name := v.RBACName(); rbacNames[name] {
+			t.Errorf("duplicate rbac name: %s", name)
+		} else {
+			rbacNames[name] = true
+		}
+	}
+	storeSuffixes := make(map[string]bool)
+	for _, v := range types {
+		if name := v.StoreSuffix(); storeSuffixes[name] {
+			t.Errorf("duplicate store suffix: %s", name)
+		} else {
+			storeSuffixes[name] = true
+		}
+	}
+}
