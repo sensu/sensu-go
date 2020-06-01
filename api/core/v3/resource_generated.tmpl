@@ -142,4 +142,12 @@ func ({{ receiver $typename }}) UnmarshalJSON(msg []byte) error {
 	}
 	return nil
 }
+
+// GetTypeMeta gets the type metadata for a {{ $typename }}.
+func ({{ receiver $typename }}) GetTypeMeta() corev2.TypeMeta {
+	return corev2.TypeMeta{
+		APIVersion: "core/v3",
+		Type: "{{ $typename }}",
+	}
+}
 {{ end }}

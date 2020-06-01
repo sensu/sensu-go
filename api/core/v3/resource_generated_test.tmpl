@@ -155,6 +155,17 @@ func Test{{ $typename }}UnmarshalJSON(t *testing.T) {
 		}
 	}
 }
+
+func Test{{ $typename }}GetTypeMeta(t *testing.T) {
+	var value {{ $typename }}
+	meta := value.GetTypeMeta()
+	if got, want := meta.APIVersion, "core/v3"; got != want {
+		t.Errorf("bad api version: got %s, want %s", got, want)
+	}
+	if got, want := meta.Type, "{{ $typename }}"; got != want {
+		t.Errorf("bad type: got %s, want %s", got, want)
+	}
+}
 {{ end }}
 
 func TestResourceUniqueness(t *testing.T) {

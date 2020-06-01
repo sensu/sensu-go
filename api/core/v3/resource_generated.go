@@ -142,6 +142,14 @@ func (e *EntityConfig) UnmarshalJSON(msg []byte) error {
 	return nil
 }
 
+// GetTypeMeta gets the type metadata for a EntityConfig.
+func (e *EntityConfig) GetTypeMeta() corev2.TypeMeta {
+	return corev2.TypeMeta{
+		APIVersion: "core/v3",
+		Type:       "EntityConfig",
+	}
+}
+
 // SetMetadata sets the provided metadata on the type. If the type does not
 // have any metadata, nothing will happen.
 func (e *EntityState) SetMetadata(meta *corev2.ObjectMeta) {
@@ -238,4 +246,12 @@ func (e *EntityState) UnmarshalJSON(msg []byte) error {
 		}
 	}
 	return nil
+}
+
+// GetTypeMeta gets the type metadata for a EntityState.
+func (e *EntityState) GetTypeMeta() corev2.TypeMeta {
+	return corev2.TypeMeta{
+		APIVersion: "core/v3",
+		Type:       "EntityState",
+	}
 }

@@ -155,6 +155,17 @@ func TestEntityConfigUnmarshalJSON(t *testing.T) {
 	}
 }
 
+func TestEntityConfigGetTypeMeta(t *testing.T) {
+	var value EntityConfig
+	meta := value.GetTypeMeta()
+	if got, want := meta.APIVersion, "core/v3"; got != want {
+		t.Errorf("bad api version: got %s, want %s", got, want)
+	}
+	if got, want := meta.Type, "EntityConfig"; got != want {
+		t.Errorf("bad type: got %s, want %s", got, want)
+	}
+}
+
 func TestEntityStateSetMetadata(t *testing.T) {
 	value := new(EntityState)
 	var iface interface{} = value
@@ -296,6 +307,17 @@ func TestEntityStateUnmarshalJSON(t *testing.T) {
 		if got, want := len(meta.Annotations), 1; got != want {
 			t.Error("expected one annotation")
 		}
+	}
+}
+
+func TestEntityStateGetTypeMeta(t *testing.T) {
+	var value EntityState
+	meta := value.GetTypeMeta()
+	if got, want := meta.APIVersion, "core/v3"; got != want {
+		t.Errorf("bad api version: got %s, want %s", got, want)
+	}
+	if got, want := meta.Type, "EntityState"; got != want {
+		t.Errorf("bad type: got %s, want %s", got, want)
 	}
 }
 
