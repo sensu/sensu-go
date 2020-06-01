@@ -1,0 +1,33 @@
+package v2
+
+// {{ .Comment }}
+
+import (
+	"testing"
+)
+
+{{ range $index, $typename := .TypeNames }}
+func TestResolve{{ $typename }}(t *testing.T) {
+	var value interface{} = new({{ $typename }})
+	if _, ok := value.(Resource); ok {
+		if _, err := ResolveResource("{{ $typename }}"); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+	_, err := ResolveResource("{{ $typename }}")
+	if err == nil {
+		t.Fatal("expected non-nil error")
+	}
+	if got, want := err.Error(), `"{{ $typename }}" is not a Resource`; got != want {
+		t.Fatalf("unexpected error: %s", err)
+	}
+}
+{{ end }}
+
+func TestResolveNotExists(t *testing.T) {
+	_, err := ResolveResource("!#$@$%@#$")
+	if err == nil {
+		t.Fatal("expected non-nil error")
+	}
+}

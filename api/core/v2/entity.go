@@ -122,15 +122,45 @@ func GetEntitySubscription(entityName string) string {
 // FixtureEntity returns a testing fixture for an Entity object.
 func FixtureEntity(name string) *Entity {
 	return &Entity{
-		EntityClass:   "host",
-		Subscriptions: []string{"linux", GetEntitySubscription(name)},
 		ObjectMeta: ObjectMeta{
 			Namespace: "default",
 			Name:      name,
 		},
-		System: System{
-			Arch: "amd64",
+		EntityClass:   "host",
+		User:          "agent1",
+		Subscriptions: []string{"linux", GetEntitySubscription(name)},
+		Redact: []string{
+			"password",
 		},
+		System: System{
+			Arch:           "amd64",
+			OS:             "linux",
+			Platform:       "Gentoo",
+			PlatformFamily: "lol",
+			Network: Network{
+				Interfaces: []NetworkInterface{
+					{
+						Name: "eth0",
+						MAC:  "return of the",
+						Addresses: []string{
+							"127.0.0.1",
+						},
+					},
+				},
+			},
+			LibCType:      "glibc",
+			VMSystem:      "kvm",
+			VMRole:        "host",
+			CloudProvider: "aws",
+			FloatType:     "hard",
+			Processes: []*Process{
+				{
+					Name: "sensu-agent",
+				},
+			},
+		},
+		LastSeen:          12345,
+		SensuAgentVersion: "0.0.1",
 	}
 }
 

@@ -1,8 +1,8 @@
 syntax = "proto3";
 
 import "github.com/gogo/protobuf@v1.3.1/gogoproto/gogo.proto";
-import "meta.proto";
-import "secret.proto";
+import "github.com/sensu/sensu-go/api/core/v2/meta.proto";
+import "github.com/sensu/sensu-go/api/core/v2/secret.proto";
 
 package sensu.core.v2;
 
@@ -19,8 +19,9 @@ message Handler {
   option (gogoproto.face) = true;
   option (gogoproto.goproto_getters) = false;
 
-  // Metadata contains the name, namespace, labels and annotations of the handler
-  ObjectMeta metadata = 1 [(gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false];
+  // Metadata contains the name, namespace, labels and annotations of the
+  // handler
+  ObjectMeta metadata = 1 [ (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false ];
 
   // Type is the handler type, i.e. pipe.
   string type = 2;
@@ -32,26 +33,27 @@ message Handler {
   string command = 4;
 
   // Timeout is the handler timeout in seconds.
-  uint32 timeout = 5 [(gogoproto.jsontag) = "timeout"];
+  uint32 timeout = 5 [ (gogoproto.jsontag) = "timeout" ];
 
   // Socket contains configuration for a TCP or UDP handler.
-  HandlerSocket socket = 6 [(gogoproto.nullable) = true];
+  HandlerSocket socket = 6 [ (gogoproto.nullable) = true ];
 
   // Handlers is a list of handlers for a handler set.
-  repeated string handlers = 7 [(gogoproto.jsontag) = "handlers"];
+  repeated string handlers = 7 [ (gogoproto.jsontag) = "handlers" ];
 
-  // Filters is a list of filters name to evaluate before executing this handler
-  repeated string filters = 8 [(gogoproto.jsontag) = "filters"];
+  // Filters is a list of filters name to evaluate before executing this
+  // handler
+  repeated string filters = 8 [ (gogoproto.jsontag) = "filters" ];
 
   // EnvVars is a list of environment variables to use with command execution
-  repeated string env_vars = 9 [(gogoproto.jsontag) = "env_vars"];
+  repeated string env_vars = 9 [ (gogoproto.jsontag) = "env_vars" ];
 
   // RuntimeAssets are a list of assets required to execute a handler.
-  repeated string runtime_assets = 13 [(gogoproto.jsontag) = "runtime_assets"];
+  repeated string runtime_assets = 13 [ (gogoproto.jsontag) = "runtime_assets" ];
 
   // Secrets is the list of Sensu secrets to set for the handler's
   // execution environment.
-  repeated Secret secrets = 14 [(gogoproto.jsontag) = "secrets"];
+  repeated Secret secrets = 14 [ (gogoproto.jsontag) = "secrets" ];
 }
 
 // HandlerSocket contains configuration for a TCP or UDP handler.
@@ -60,5 +62,5 @@ message HandlerSocket {
   string host = 1;
 
   // Port is the socket peer port.
-  uint32 port = 2 [(gogoproto.jsontag) = "port"];
+  uint32 port = 2 [ (gogoproto.jsontag) = "port" ];
 }
