@@ -45,7 +45,7 @@ func ResolveResource(name string) (Resource, error) {
 		return nil, fmt.Errorf("type could not be found: %q", name)
 	}
 	if _, ok := t.(Resource); !ok {
-		return nil, fmt.Errorf("%q is not a Resource", name)
+		return nil, fmt.Errorf("%q is not a core/v3.Resource", name)
 	}
 	return newResource(t), nil
 }
