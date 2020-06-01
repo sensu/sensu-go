@@ -20,7 +20,7 @@ message Wrapper {
 
   // ObjectMeta contains the name, namespace, labels and annotations of the
   // resource
-  sensu.core.v2.ObjectMeta metadata = 2 [ (gogoproto.jsontag) = "metadata", (gogoproto.nullable) = true ];
+  sensu.core.v2.ObjectMeta objectmeta = 2 [ (gogoproto.jsontag) = "metadata", (gogoproto.nullable) = true, (gogoproto.customname) = "ObjectMeta" ];
 
   // Value contains the encoded resource value
   bytes value = 3;
