@@ -8,7 +8,7 @@ package v3
 //go:generate go run ../../../scripts/check_protoc/main.go
 //go:generate go build -o $GOPATH/bin/protoc-gen-gofast github.com/gogo/protobuf/protoc-gen-gofast
 //go:generate -command protoc protoc --plugin $GOPATH/bin/protoc-gen-gofast --gofast_out=plugins:$GOPATH/src -I=$GOPATH/pkg/mod -I=$GOPATH/pkg/mod/github.com/gogo/protobuf@v1.3.1/protobuf -I=$GOPATH/src
-//go:generate protoc github.com/sensu/sensu-go/api/core/v3/entitystate.proto github.com/sensu/sensu-go/api/core/v3/entityconfig.proto
+//go:generate protoc github.com/sensu/sensu-go/api/core/v3/entity_state.proto github.com/sensu/sensu-go/api/core/v3/entity_config.proto
 //go:generate go run ../../../scripts/generate_type -t typemap.tmpl -o typemap.go
 //go:generate go fmt typemap.go
 //go:generate go run ../../../scripts/generate_type -t typemap_test.tmpl -o typemap_test.go
