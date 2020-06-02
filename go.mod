@@ -5,6 +5,7 @@ go 1.13
 replace (
 	github.com/sensu/sensu-go/api/core/v2 => ./api/core/v2
 	github.com/sensu/sensu-go/api/core/v3 => ./api/core/v3
+	github.com/sensu/sensu-go/types => ./types
 )
 
 require (
@@ -46,7 +47,6 @@ require (
 	github.com/hashicorp/go-version v1.2.0
 	github.com/ipfs/go-log v0.0.0-20180416040000-7ecd3df29a4a // indirect
 	github.com/jbenet/go-reuseport v0.0.0-20180416043609-15a1cd37f050 // indirect
-	github.com/json-iterator/go v1.1.9
 	github.com/libp2p/go-reuseport v0.0.0-20180416043609-15a1cd37f050 // indirect
 	github.com/libp2p/go-sockaddr v0.0.0-20180329070516-f3e9f73a53d1 // indirect
 	github.com/mattn/go-colorable v0.0.9 // indirect
@@ -62,7 +62,8 @@ require (
 	github.com/robertkrimen/otto v0.0.0-20191219234010-c382bd3c16ff
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sensu/lasr v1.2.1
-	github.com/sensu/sensu-go/api/core/v2 v2.0.0-00010101000000-000000000000
+	github.com/sensu/sensu-go/api/core/v2 v2.0.0
+	github.com/sensu/sensu-go/types v0.0.0-00010101000000-000000000000
 	github.com/shirou/gopsutil v0.0.0-20180801053943-8048a2e9c577
 	github.com/shirou/w32 v0.0.0-20160930032740-bb4de0191aa4 // indirect
 	github.com/sirupsen/logrus v1.6.0
