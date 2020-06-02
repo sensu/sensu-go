@@ -224,6 +224,15 @@ func (p *Pipeline) pipeHandler(handler *corev2.Handler, event *corev2.Event, eve
 		fields["check"] = event.Check.Name
 	}
 
+	if p.licenseGetter != nil {
+		license, err := p.licenseGetter.Get()
+		if err != nil {
+			logger.WithFields(fields).WithError(err).Error("failed to retrieve license file")
+		} else if license != "" {
+			handler.EnvVars = append(handler.EnvVars, fmt.Sprintf("SENSU_LICENSE_FILE=%s", license))
+		}
+	}
+
 	secrets, err := p.secretsProviderManager.SubSecrets(ctx, handler.Secrets)
 	if err != nil {
 		logger.WithFields(fields).WithError(err).Error("failed to retrieve secrets for handler")

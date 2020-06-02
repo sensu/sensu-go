@@ -8,6 +8,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Added
+- Added `SENSU_LICENSE_FILE` environment variable to handler executions.
+
 ### Fixed
 - Errors while publishing proxy check requests do not block scheduling for other
 entities.
