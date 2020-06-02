@@ -1,6 +1,6 @@
 module github.com/sensu/sensu-go/api/core/v2
 
-go 1.14
+go 1.13
 
 require (
 	github.com/coreos/etcd v3.3.17+incompatible
