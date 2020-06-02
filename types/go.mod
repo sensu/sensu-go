@@ -1,6 +1,6 @@
 module github.com/sensu/sensu-go/types
 
-go 1.14
+go 1.13
 
 require (
 	github.com/json-iterator/go v1.1.9
