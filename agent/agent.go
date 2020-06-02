@@ -38,7 +38,7 @@ import (
 func GetDefaultAgentName() string {
 	defaultAgentName, err := os.Hostname()
 	if err != nil {
-		logger.WithError(err).Error("error getting hostname")
+		logger.WithError(err).Warn("failed to get hostname, generating unique ID instead")
 		defaultAgentName = uuid.New().String()
 	}
 	return defaultAgentName
@@ -163,7 +163,7 @@ func (a *Agent) RefreshSystemInfo(ctx context.Context) error {
 }
 
 func (a *Agent) refreshSystemInfoPeriodically(ctx context.Context) {
-	defer logger.Debug("shutting down system info collector")
+	defer logger.Info("shutting down system info collector")
 	ticker := time.NewTicker(time.Duration(DefaultSystemInfoRefreshInterval) * time.Second)
 	defer ticker.Stop()
 
@@ -288,7 +288,7 @@ func (a *Agent) Run(ctx context.Context) error {
 }
 
 func (a *Agent) connectionManager(ctx context.Context, cancel context.CancelFunc) {
-	defer logger.Debug("shutting down connection manager")
+	defer logger.Info("shutting down connection manager")
 	for {
 		a.connectedMu.Lock()
 		a.connected = false

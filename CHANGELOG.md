@@ -17,10 +17,12 @@ hash, in place of the cleartext password
 - Added the beginnings of the core/v3 API.
 - Added automatically generated tests for the core/v2 API.
 
+### Changed
+- `sensu-agent`'s default log level is now `info` instead of `warn`.
+
 ### Fixed
 - The password verification logic when running `sensuctl user change-password`
 has been moved from sensuctl to the backend API.
-### Fixed
 - Errors while publishing proxy check requests do not block scheduling for other
 entities.
 - Listing namespaces in sensuctl with `--chunk-size` now works properly.
