@@ -25,12 +25,16 @@ func WrapResource(r corev3.Resource) (Wrapper, error) {
 	if getter, ok := r.(tmGetter); ok {
 		tm = getter.GetTypeMeta()
 	} else {
-		return Wrapper{}, errors.New("given resource does not have a GetTypeMeta method")
+		return Wrapper{}, errors.New("resource does not have a GetTypeMeta method")
 	}
 
-	bytes, err := proto.Marshal(r)
-	if err != nil {
-		return Wrapper{}, err
+	var bytes []byte
+	var err error
+	if value, ok := r.(proto.Message); ok {
+		bytes, err = proto.Marshal(value)
+		if err != nil {
+			return Wrapper{}, err
+		}
 	}
 
 	return Wrapper{
