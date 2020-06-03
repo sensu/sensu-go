@@ -21,12 +21,9 @@ func TestUnmarshalWrapper(t *testing.T) {
 		t.Fatal(err)
 	}
 	w := &Wrapper{
-		TypeMeta: &corev2.TypeMeta{
+		Metadata: &corev2.TypeMeta{
 			APIVersion: "core/v3",
 			Type:       "entityconfig",
-		},
-		ObjectMeta: &corev2.ObjectMeta{
-			Name: "foo",
 		},
 		Value: a,
 	}
