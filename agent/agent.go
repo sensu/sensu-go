@@ -13,8 +13,10 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
 	"strings"
 	"sync"
+	"syscall"
 
 	time "github.com/echlebek/timeproxy"
 	"github.com/gogo/protobuf/proto"
@@ -166,7 +168,6 @@ func (a *Agent) refreshSystemInfoPeriodically(ctx context.Context) {
 	defer logger.Info("shutting down system info collector")
 	ticker := time.NewTicker(time.Duration(DefaultSystemInfoRefreshInterval) * time.Second)
 	defer ticker.Stop()
-	defer a.wg.Done()
 
 	for {
 		select {
@@ -218,6 +219,7 @@ func (a *Agent) Run(ctx context.Context) error {
 			logger.WithError(err).Error("error closing API queue")
 		}
 	}()
+	defer cancel()
 	a.header = a.buildTransportHeaderMap()
 
 	// Fail the agent after startup if the id is invalid
@@ -283,11 +285,22 @@ func (a *Agent) Run(ctx context.Context) error {
 	// Increment the waitgroup counter here too in case none of the components
 	// above were started, and rely on the system info collector to decrement it
 	// once it exits
-	a.wg.Add(1)
 	go a.connectionManager(ctx, cancel)
 	go a.refreshSystemInfoPeriodically(ctx)
 	go a.handleAPIQueue(ctx)
 
+	// Listen for a signal to gracefully shutdown the agent
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
+	select {
+	case <-ctx.Done():
+		logger.Info("agent shutting down")
+	case s := <-sigs:
+		logger.Infof("signal %q received, shutting down agent", s)
+		cancel()
+	}
+
+	// Wait for all goroutines to gracefully shutdown
 	a.wg.Wait()
 	return nil
 }
@@ -438,6 +451,9 @@ func (a *Agent) StartAPI(ctx context.Context) {
 	// Prepare the HTTP API server
 	a.api = newServer(a)
 
+	// Allow Stop() to block until the HTTP server shuts down.
+	a.wg.Add(1)
+
 	// Start the HTTP API server
 	go func() {
 		logger.Info("starting api on address: ", a.api.Addr)
@@ -446,9 +462,6 @@ func (a *Agent) StartAPI(ctx context.Context) {
 			logger.WithError(err).Fatal("the agent API has crashed")
 		}
 	}()
-
-	// Allow Stop() to block until the HTTP server shuts down.
-	a.wg.Add(1)
 
 	go func() {
 		// NOTE: This does not guarantee a clean shutdown of the HTTP API.
@@ -481,8 +494,10 @@ func (a *Agent) StartSocketListeners(ctx context.Context) {
 func (a *Agent) StartStatsd(ctx context.Context) {
 	metricsAddr := GetMetricsAddr(a.statsdServer)
 	logger.Info("starting statsd server on address: ", metricsAddr)
+	a.wg.Add(1)
 
 	go func() {
+		defer a.wg.Done()
 		if err := a.statsdServer.Run(ctx); err != nil && err != context.Canceled {
 			if err != StatsdUnsupported {
 				logger.WithError(err).Errorf("statsd listener failed on %s", metricsAddr)

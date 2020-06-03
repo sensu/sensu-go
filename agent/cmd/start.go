@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"strings"
-	"syscall"
 
 	"github.com/sensu/sensu-go/agent"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -86,6 +84,7 @@ const (
 // to initialize the agent
 type InitializeFunc func(context.Context, *agent.Config) (*agent.Agent, error)
 
+// NewAgentConfig initializes the agent config using Viper
 func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 	if err := viper.BindPFlags(cmd.Flags()); err != nil {
 		return nil, err
@@ -173,6 +172,8 @@ func NewAgentConfig(cmd *cobra.Command) (*agent.Config, error) {
 	return cfg, nil
 }
 
+// NewAgentRunE intializes and executes sensu-agent, and returns any errors
+// encountered
 func NewAgentRunE(initialize InitializeFunc, cmd *cobra.Command) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) error {
 		cfg, err := NewAgentConfig(cmd)
@@ -185,13 +186,6 @@ func NewAgentRunE(initialize InitializeFunc, cmd *cobra.Command) func(cmd *cobra
 		if err != nil {
 			return err
 		}
-
-		sigs := make(chan os.Signal, 1)
-		signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-		go func() {
-			defer cancel()
-			logger.Info("signal received: ", <-sigs)
-		}()
 
 		return sensuAgent.Run(ctx)
 	}
