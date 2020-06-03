@@ -69,6 +69,7 @@ func NewServer() *statsd.Server {
 		ConnPerReader:       statsd.DefaultConnPerReader,
 		HeartbeatEnabled:    statsd.DefaultHeartbeatEnabled,
 		ReceiveBatchSize:    statsd.DefaultReceiveBatchSize,
+		ServerMode:          statsd.DefaultServerMode,
 		Viper:               viper.New(),
 	}
 }

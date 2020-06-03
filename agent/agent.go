@@ -499,9 +499,7 @@ func (a *Agent) StartStatsd(ctx context.Context) {
 	go func() {
 		defer a.wg.Done()
 		if err := a.statsdServer.Run(ctx); err != nil && err != context.Canceled {
-			if err != StatsdUnsupported {
-				logger.WithError(err).Errorf("statsd listener failed on %s", metricsAddr)
-			}
+			logger.WithError(err).Errorf("statsd listener failed on %s", metricsAddr)
 		}
 	}()
 }
