@@ -16,12 +16,8 @@ option (gogoproto.testgen_all) = true;
 // Wrapper represents a serialized resource for storage purposes
 message Wrapper {
   // TypeMeta contains the type and the API version of the resource
-  sensu.core.v2.TypeMeta typemeta = 1 [ (gogoproto.jsontag) = "", (gogoproto.nullable) = true, (gogoproto.embed) = true ];
-
-  // ObjectMeta contains the name, namespace, labels and annotations of the
-  // resource
-  sensu.core.v2.ObjectMeta objectmeta = 2 [ (gogoproto.jsontag) = "metadata", (gogoproto.nullable) = true, (gogoproto.customname) = "ObjectMeta" ];
+  sensu.core.v2.TypeMeta metadata = 1 [ (gogoproto.jsontag) = "metadata", (gogoproto.nullable) = true, (gogoproto.embed) = false ];
 
   // Value contains the encoded resource value
-  bytes value = 3;
+  bytes value = 2;
 }

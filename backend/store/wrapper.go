@@ -1,11 +1,12 @@
 package store
 
 import (
-	"errors"
+	"reflect"
 
 	"github.com/golang/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/types"
 )
 
 //go:generate go run ../../scripts/check_protoc/main.go
@@ -25,7 +26,11 @@ func WrapResource(r corev3.Resource) (Wrapper, error) {
 	if getter, ok := r.(tmGetter); ok {
 		tm = getter.GetTypeMeta()
 	} else {
-		return Wrapper{}, errors.New("resource does not have a GetTypeMeta method")
+		typ := reflect.Indirect(reflect.ValueOf(r)).Type()
+		tm = corev2.TypeMeta{
+			Type:       typ.Name(),
+			APIVersion: types.ApiVersion(typ.PkgPath()),
+		}
 	}
 
 	var bytes []byte
@@ -38,8 +43,7 @@ func WrapResource(r corev3.Resource) (Wrapper, error) {
 	}
 
 	return Wrapper{
-		TypeMeta:   &tm,
-		ObjectMeta: r.GetMetadata(),
-		Value:      bytes,
+		Metadata: &tm,
+		Value:    bytes,
 	}, nil
 }
