@@ -225,10 +225,7 @@ func (p *Pipeline) pipeHandler(handler *corev2.Handler, event *corev2.Event, eve
 	}
 
 	if p.licenseGetter != nil {
-		license, err := p.licenseGetter.Get()
-		if err != nil {
-			logger.WithFields(fields).WithError(err).Error("failed to retrieve license file")
-		} else if license != "" {
+		if license := p.licenseGetter.Get(); license != "" {
 			handler.EnvVars = append(handler.EnvVars, fmt.Sprintf("SENSU_LICENSE_FILE=%s", license))
 		}
 	}
