@@ -11,7 +11,6 @@ option (gogoproto.equal_all) = true;
 option (gogoproto.marshaler_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.sizer_all) = true;
-option (gogoproto.testgen_all) = true;
 
 // Wrapper represents a serialized resource for storage purposes
 message Wrapper {
