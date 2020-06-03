@@ -166,6 +166,7 @@ func (a *Agent) refreshSystemInfoPeriodically(ctx context.Context) {
 	defer logger.Info("shutting down system info collector")
 	ticker := time.NewTicker(time.Duration(DefaultSystemInfoRefreshInterval) * time.Second)
 	defer ticker.Stop()
+	defer a.wg.Done()
 
 	for {
 		select {
@@ -279,6 +280,10 @@ func (a *Agent) Run(ctx context.Context) error {
 		a.StartSocketListeners(ctx)
 	}
 
+	// Increment the waitgroup counter here too in case none of the components
+	// above were started, and rely on the system info collector to decrement it
+	// once it exits
+	a.wg.Add(1)
 	go a.connectionManager(ctx, cancel)
 	go a.refreshSystemInfoPeriodically(ctx)
 	go a.handleAPIQueue(ctx)
