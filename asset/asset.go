@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/util/environment"
 )
 
 const (
@@ -41,6 +42,8 @@ type Getter interface {
 
 // A RuntimeAsset is a locally expanded Asset.
 type RuntimeAsset struct {
+	// Name is the name of the asset
+	Name string
 	// Path is the absolute path to the asset's base directory.
 	Path string
 	// SHA512 is the hash of the asset tarball.
@@ -76,6 +79,12 @@ func (r *RuntimeAsset) Env() []string {
 		// environment, or an empty string if var doesn't exist.
 		assetEnv[i] = os.ExpandEnv(envVar)
 	}
+
+	assetEnv = append(assetEnv, fmt.Sprintf("%s=%s",
+		fmt.Sprintf("%s_PATH", environment.Key(r.Name)),
+		r.Path,
+	))
+
 	return assetEnv
 }
 

@@ -276,7 +276,7 @@ func handleConfig(cmd *cobra.Command) error {
 	viper.SetDefault(flagUser, agent.DefaultUser)
 	viper.SetDefault(flagTrustedCAFile, "")
 	viper.SetDefault(flagInsecureSkipTLSVerify, false)
-	viper.SetDefault(flagLogLevel, "warn")
+	viper.SetDefault(flagLogLevel, "info")
 	viper.SetDefault(flagBackendHandshakeTimeout, 15)
 	viper.SetDefault(flagBackendHeartbeatInterval, 30)
 	viper.SetDefault(flagBackendHeartbeatTimeout, 45)

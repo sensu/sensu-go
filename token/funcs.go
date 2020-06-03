@@ -1,11 +1,17 @@
 package token
 
-import "text/template"
+import (
+	"fmt"
+	"text/template"
+
+	"github.com/sensu/sensu-go/util/environment"
+)
 
 // funcMap defines the available custom functions in templates
 func funcMap() template.FuncMap {
 	return template.FuncMap{
-		"default": defaultFunc,
+		"default":   defaultFunc,
+		"assetPath": assetPath,
 	}
 }
 
@@ -24,4 +30,8 @@ func defaultFunc(v ...interface{}) interface{} {
 		return v[1]
 	}
 	return nil
+}
+
+func assetPath(name string) string {
+	return fmt.Sprintf("%s_PATH", environment.Key(name))
 }

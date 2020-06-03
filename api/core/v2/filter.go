@@ -8,8 +8,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/sensu/sensu-go/js"
-	utilstrings "github.com/sensu/sensu-go/util/strings"
+	"github.com/sensu/sensu-go/api/core/v2/internal/js"
+	utilstrings "github.com/sensu/sensu-go/api/core/v2/internal/stringutil"
 )
 
 const (

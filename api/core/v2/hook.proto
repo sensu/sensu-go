@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 import "github.com/gogo/protobuf@v1.3.1/gogoproto/gogo.proto";
-import "meta.proto";
+import "github.com/sensu/sensu-go/api/core/v2/meta.proto";
 
 package sensu.core.v2;
 
@@ -19,46 +19,46 @@ message HookConfig {
   option (gogoproto.goproto_getters) = false;
 
   // Metadata contains the name, namespace, labels and annotations of the hook
-  ObjectMeta metadata = 1 [(gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false];
+  ObjectMeta metadata = 1 [ (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false ];
 
   // Command is the command to be executed
   string command = 2;
 
   // Timeout is the timeout, in seconds, at which the hook has to run
-  uint32 timeout = 3 [(gogoproto.jsontag) = "timeout"];
+  uint32 timeout = 3 [ (gogoproto.jsontag) = "timeout" ];
 
   // Stdin indicates if hook requests have stdin enabled
-  bool stdin = 4 [(gogoproto.jsontag) = "stdin"];
+  bool stdin = 4 [ (gogoproto.jsontag) = "stdin" ];
 
   // RuntimeAssets are a list of assets required to execute hook.
-  repeated string runtime_assets = 5 [(gogoproto.jsontag) = "runtime_assets"];
+  repeated string runtime_assets = 5 [ (gogoproto.jsontag) = "runtime_assets" ];
 }
 
 // A Hook is a hook specification and optionally the results of the hook's
 // execution.
 message Hook {
   // Config is the specification of a hook
-  HookConfig config = 1 [(gogoproto.nullable) = false, (gogoproto.embed) = true, (gogoproto.jsontag) = ""];
+  HookConfig config = 1 [ (gogoproto.nullable) = false, (gogoproto.embed) = true, (gogoproto.jsontag) = "" ];
 
   // Duration of execution
   double duration = 2;
 
   // Executed describes the time in which the hook request was executed
-  int64 executed = 3 [(gogoproto.jsontag) = "executed"];
+  int64 executed = 3 [ (gogoproto.jsontag) = "executed" ];
 
   // Issued describes the time in which the hook request was issued
-  int64 issued = 4 [(gogoproto.jsontag) = "issued"];
+  int64 issued = 4 [ (gogoproto.jsontag) = "issued" ];
 
   // Output from the execution of Command
   string output = 5;
 
   // Status is the exit status code produced by the hook
-  int32 status = 6 [(gogoproto.jsontag) = "status"];
+  int32 status = 6 [ (gogoproto.jsontag) = "status" ];
 }
 
 message HookList {
   // Hooks is the list of hooks for the check hook
-  repeated string hooks = 1 [(gogoproto.jsontag) = "hooks"];
+  repeated string hooks = 1 [ (gogoproto.jsontag) = "hooks" ];
 
   // Type indicates the type or response code for the check hook
   string type = 2;

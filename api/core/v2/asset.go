@@ -9,7 +9,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/sensu/sensu-go/js"
+	"github.com/sensu/sensu-go/api/core/v2/internal/js"
 )
 
 const (

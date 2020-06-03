@@ -66,7 +66,7 @@ func TestKeepaliveMonitor(t *testing.T) {
 			},
 			Interval: 1,
 			Timeout:  5,
-			Command: "command",
+			Command:  "command",
 		},
 		Entity:    entity,
 		Timestamp: time.Now().Unix(),
