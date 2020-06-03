@@ -49,12 +49,8 @@ message TypeMeta {
   string APIVersion = 2 [ (gogoproto.jsontag) = "api_version", (gogoproto.moretags) = "yaml: \"api_version,omitempty\"" ];
 
   enum Encoding {
-    option allow_alias = true;
-    Undefined = 0;
     undefined = 0;
-    JSON = 1;
     json = 1;
-    Protobuf = 2;
     protobuf = 2;
   }
 
@@ -62,10 +58,7 @@ message TypeMeta {
   Encoding encoding = 3 [ (gogoproto.jsontag) = "encoding,omitempty", (gogoproto.moretags) = "yaml: \"encoding,omitempty\"" ];
 
   enum Compression {
-    option allow_alias = true;
-    None = 0;
     none = 0;
-    Snappy = 1;
     snappy = 1;
   }
 
