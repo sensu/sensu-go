@@ -26,6 +26,8 @@ has been moved from sensuctl to the backend API.
 - Errors while publishing proxy check requests do not block scheduling for other
 entities.
 - Listing namespaces in sensuctl with `--chunk-size` now works properly.
+- Prevent the agent from immediately exiting in certain scenarios where
+components are disabled.
 
 ## [5.20.2] - 2020-05-26
 
