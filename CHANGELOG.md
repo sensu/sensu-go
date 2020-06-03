@@ -19,6 +19,7 @@ hash, in place of the cleartext password
 
 ### Changed
 - `sensu-agent`'s default log level is now `info` instead of `warn`.
+- Upgrade gostatsd to 20.3.2.
 
 ### Fixed
 - The password verification logic when running `sensuctl user change-password`
