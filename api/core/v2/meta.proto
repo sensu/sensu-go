@@ -10,7 +10,6 @@ option (gogoproto.equal_all) = true;
 option (gogoproto.marshaler_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.sizer_all) = true;
-option (gogoproto.testgen_all) = true;
 
 // ObjectMeta is metadata all persisted objects have.
 message ObjectMeta {
@@ -49,9 +48,8 @@ message TypeMeta {
   string APIVersion = 2 [ (gogoproto.jsontag) = "api_version", (gogoproto.moretags) = "yaml: \"api_version,omitempty\"" ];
 
   enum Encoding {
-    undefined = 0;
-    json = 1;
-    protobuf = 2;
+    json = 0;
+    protobuf = 1;
   }
 
   // Encoding is the type of serialization used
