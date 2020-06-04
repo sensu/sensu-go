@@ -754,7 +754,7 @@ func TestCommandManager_ExecCommand(t *testing.T) {
 				m.Return(executionResponse, nil)
 			},
 			executionRequestFunc: func(c context.Context, execution command.ExecutionRequest) {
-				assert.Equal(t, "entrypoint arg1 arg2", execution.Command)
+				assert.Equal(t, "entrypoint 'arg1' 'arg2'", execution.Command)
 			},
 		},
 		{
@@ -775,6 +775,42 @@ func TestCommandManager_ExecCommand(t *testing.T) {
 			},
 			executionRequestFunc: func(c context.Context, execution command.ExecutionRequest) {
 				assert.Equal(t, "entrypoint 'this is arg1' 'this is arg2'", execution.Command)
+			},
+		},
+		// NOTE: This is a problematic case because even if we generate a
+		// command line that looks like it would work, we can't have single
+		// quotes within single quotes. It will just generate unpredictable
+		// results.
+		//
+		// One promising solution is to escape "special characters" as defined
+		// by POSIX instead:
+		// sh -c "entrypoint --command echo\ \'test\ test\'\ \|\ wc"
+		// See section 2.2:
+		// https://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html
+		//
+		// The github.com/Wing924/shellwords library tries to do just that.
+		//
+		// This should always work. The big question is: does it work on
+		// Windows? Of course not; on Windows the escape charater is ^, except
+		// when it isn't.
+		{
+			name:  "problematic case",
+			alias: alias,
+			args:  []string{"--command", "echo 'test test'"},
+			assetGetterFunc: func(m *mockassetgetter.MockAssetGetter) {
+				runtimeAsset := asset.RuntimeAsset{
+					Path:   assetPath,
+					SHA512: checksum,
+				}
+				m.On("Get", ctx, &testAsset).
+					Return(&runtimeAsset, nil)
+			},
+			executorFunc: func(m *mockexecutor.MockExecutor) {
+				executionResponse := command.FixtureExecutionResponse(0, "success\n")
+				m.Return(executionResponse, nil)
+			},
+			executionRequestFunc: func(c context.Context, execution command.ExecutionRequest) {
+				assert.Equal(t, "entrypoint '--command' 'echo 'test test''", execution.Command)
 			},
 		},
 	}

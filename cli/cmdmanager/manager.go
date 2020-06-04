@@ -249,7 +249,22 @@ func (m *CommandManager) ExecCommand(ctx context.Context, alias string, args []s
 	env := environment.MergeEnvironments(os.Environ(), commandEnv)
 	env = environment.MergeEnvironments(env, runtimeAsset.Env())
 
-	commandWithArgs := append([]string{commandName}, args...)
+	singleQuote := func(s string) string {
+		b := strings.Builder{}
+
+		b.WriteRune('\'')
+		b.WriteString(s)
+		b.WriteRune('\'')
+
+		return b.String()
+	}
+
+	var quotedArgs []string
+	for _, arg := range args {
+		quotedArgs = append(quotedArgs, singleQuote(arg))
+	}
+
+	commandWithArgs := append([]string{commandName}, quotedArgs...)
 
 	ex := command.ExecutionRequest{
 		Env:     env,
