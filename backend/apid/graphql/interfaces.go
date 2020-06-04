@@ -73,7 +73,7 @@ type SilencedClient interface {
 }
 
 type NamespaceClient interface {
-	ListNamespaces(ctx context.Context) ([]*corev2.Namespace, error)
+	ListNamespaces(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Namespace, error)
 	FetchNamespace(ctx context.Context, name string) (*corev2.Namespace, error)
 	CreateNamespace(ctx context.Context, namespace *corev2.Namespace) error
 	UpdateNamespace(ctx context.Context, namespace *corev2.Namespace) error
