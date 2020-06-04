@@ -7,6 +7,7 @@ import (
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/mock"
 )
@@ -58,25 +59,32 @@ func TestNamespaceRouterList(t *testing.T) {
 		ObjectMeta: corev2.NewObjectMeta("cluster-admin", ""),
 	}
 
-	store := new(mockstore.MockStore)
-	store.On("ListClusterRoleBindings", mock.Anything, mock.Anything).Return([]*corev2.ClusterRoleBinding{&clusterRoleBinding}, nil)
-	store.On("GetClusterRole", mock.Anything, mock.Anything).Return(&clusterRole, nil)
-	store.On("ListRoleBindings", mock.Anything, mock.Anything).Return([]*corev2.RoleBinding{}, nil)
-	store.On("ListResources", mock.Anything, corev2.NamespacesResource, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+	s := new(mockstore.MockStore)
+	s.On("ListClusterRoleBindings", mock.Anything, mock.Anything).Return([]*corev2.ClusterRoleBinding{&clusterRoleBinding}, nil)
+	s.On("GetClusterRole", mock.Anything, mock.Anything).Return(&clusterRole, nil)
+	s.On("ListRoleBindings", mock.Anything, mock.Anything).Return([]*corev2.RoleBinding{}, nil)
+	s.On("ListResources", mock.Anything, corev2.NamespacesResource, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 		resources := args[2].(*[]*corev2.Namespace)
 		*resources = append(*resources, namespaces...)
+
+		pred := args[3].(*store.SelectionPredicate)
+		*pred = store.SelectionPredicate{Continue: "sensu-continue"}
 	}).Return(nil)
 
 	ctx := context.Background()
 	ctx = context.WithValue(ctx, corev2.ClaimsKey, corev2.FixtureClaims("foo", []string{"cluster-admins"}))
 
-	auth := &rbac.Authorizer{Store: store}
-	router := NewNamespacesRouter(store, auth)
-	got, err := router.list(ctx, nil)
+	auth := &rbac.Authorizer{Store: s}
+	router := NewNamespacesRouter(s, auth)
+	pred := &store.SelectionPredicate{Limit: 1}
+	got, err := router.list(ctx, pred)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if len(got) == 0 {
 		t.Fatal("expected namespaces to be returned")
+	}
+	if pred.Continue != "sensu-continue" {
+		t.Fatalf("expected a continue token, got %q", pred.Continue)
 	}
 }
