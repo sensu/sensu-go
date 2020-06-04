@@ -31,6 +31,8 @@ entities.
 - Listing namespaces in sensuctl with `--chunk-size` now works properly.
 - Prevent the agent from immediately exiting in certain scenarios where
 components are disabled.
+- Fixed an issue where a GraphQL query could fail when querying a namespace
+containing event data in excess of 2GBs.
 
 ## [5.20.2] - 2020-05-26
 
@@ -45,8 +47,6 @@ components are disabled.
 - Add validation for subjects in RBAC RoleBinding and ClusterRoleBinding.
 - Fixed a bug where single-letter subscriptions were not allowed, even though
 they were intended to be.
-- Fixed an issue when a GraphQL query could fail if a namespace contained a
-large number of events.
 - Fix retrieving command assets from bonsai.
 
 ## [5.20.1] - 2020-05-15
