@@ -9,6 +9,7 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
+	"github.com/sensu/sensu-go/backend/licensing"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/pipeline"
 	"github.com/sensu/sensu-go/backend/secrets"
@@ -43,6 +44,7 @@ type Pipelined struct {
 	storeTimeout           time.Duration
 	secretsProviderManager *secrets.ProviderManager
 	backendEntity          *corev2.Entity
+	LicenseGetter          licensing.Getter
 }
 
 // Config configures a Pipelined.
@@ -56,6 +58,7 @@ type Config struct {
 	StoreTimeout            time.Duration
 	SecretsProviderManager  *secrets.ProviderManager
 	BackendEntity           *corev2.Entity
+	LicenseGetter           licensing.Getter
 }
 
 // Option is a functional option used to configure Pipelined.
@@ -91,6 +94,7 @@ func New(c Config, options ...Option) (*Pipelined, error) {
 		storeTimeout:           c.StoreTimeout,
 		secretsProviderManager: c.SecretsProviderManager,
 		backendEntity:          c.BackendEntity,
+		LicenseGetter:          c.LicenseGetter,
 	}
 	for _, o := range options {
 		if err := o(p); err != nil {
@@ -153,6 +157,7 @@ func (p *Pipelined) createPipelines(count int, channel chan interface{}) {
 			StoreTimeout:            p.storeTimeout,
 			SecretsProviderManager:  p.secretsProviderManager,
 			BackendEntity:           p.backendEntity,
+			LicenseGetter:           p.LicenseGetter,
 		})
 		p.wg.Add(1)
 		go func() {

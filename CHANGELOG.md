@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+- Added `SENSU_LICENSE_FILE` environment variable to handler executions.
 - Added the `sensuctl user hash-password` command to generate password hashes
 - Added the ability to reset passwords via the backend API & `sensuctl user
 reset-password`

@@ -5,6 +5,7 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
+	"github.com/sensu/sensu-go/backend/licensing"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/command"
@@ -23,6 +24,7 @@ type Pipeline struct {
 	executor               command.Executor
 	storeTimeout           time.Duration
 	secretsProviderManager *secrets.ProviderManager
+	licenseGetter          licensing.Getter
 }
 
 // Config holds the configuration for a Pipeline.
@@ -33,6 +35,7 @@ type Config struct {
 	ExtensionExecutorGetter ExtensionExecutorGetterFunc
 	StoreTimeout            time.Duration
 	SecretsProviderManager  *secrets.ProviderManager
+	LicenseGetter           licensing.Getter
 }
 
 // Option is a functional option used to configure Pipelines.
@@ -48,6 +51,7 @@ func New(c Config, options ...Option) *Pipeline {
 		executor:               command.NewExecutor(),
 		storeTimeout:           c.StoreTimeout,
 		secretsProviderManager: c.SecretsProviderManager,
+		licenseGetter:          c.LicenseGetter,
 	}
 	for _, o := range options {
 		o(pipeline)
