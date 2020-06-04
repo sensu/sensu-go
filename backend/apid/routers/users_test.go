@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"path"
 	"testing"
 
 	"github.com/gorilla/mux"
@@ -17,6 +18,14 @@ import (
 
 type mockUserController struct {
 	mock.Mock
+}
+
+func (m *mockUserController) AuthenticateUser(ctx context.Context, username, password string) (*corev2.User, error) {
+	args := m.Called(ctx, username, password)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*corev2.User), args.Error(1)
 }
 
 func (m *mockUserController) Create(ctx context.Context, user *corev2.User) error {
@@ -202,6 +211,27 @@ func TestUsersRouter(t *testing.T) {
 				c.On("CreateOrReplace", mock.Anything, mock.Anything).
 					Return(nil).
 					Once()
+			},
+			wantStatusCode: http.StatusCreated,
+		},
+		{
+			name:   "it only pass the password hash to CreateOrReplace when updating a password",
+			method: http.MethodPut,
+			path:   path.Join(fixture.URIPath(), "password"),
+			body:   []byte(`{"password":"P@ssw0rd!","password_hash":"$2a$10$PdP2LURUHv7PylQtu8haL.8ZBSr5fjDmWXacNGWL6juiR4fRaRSNS"}`),
+			controllerFunc: func(c *mockUserController) {
+				c.On("AuthenticateUser", mock.Anything, mock.Anything, mock.Anything).
+					Return(&corev2.User{Username: "foo", Password: "password_hash", PasswordHash: "password_hash"}, nil).
+					Once()
+				c.On("CreateOrReplace", mock.Anything, mock.Anything).
+					Return(nil).
+					Once().
+					Run(func(args mock.Arguments) {
+						user := args.Get(1).(*corev2.User)
+						if user.Password != "" {
+							t.Fatal("only the password hash should be passed to the CreateOrReplace controller")
+						}
+					})
 			},
 			wantStatusCode: http.StatusCreated,
 		},

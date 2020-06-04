@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 import "github.com/gogo/protobuf@v1.3.1/gogoproto/gogo.proto";
-import "meta.proto";
+import "github.com/sensu/sensu-go/api/core/v2/meta.proto";
 
 package sensu.core.v2;
 
@@ -18,28 +18,29 @@ message Silenced {
   option (gogoproto.face) = true;
   option (gogoproto.goproto_getters) = false;
 
-  // Metadata contains the name, namespace, labels and annotations of the silenced
-  ObjectMeta metadata = 1 [(gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false];
+  // Metadata contains the name, namespace, labels and annotations of the
+  // silenced
+  ObjectMeta metadata = 1 [ (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false ];
 
   // Expire is the number of seconds the entry will live
-  int64 expire = 2 [(gogoproto.nullable) = true, (gogoproto.jsontag) = "expire"];
+  int64 expire = 2 [ (gogoproto.nullable) = true, (gogoproto.jsontag) = "expire" ];
 
-  // ExpireOnResolve defaults to false, clears the entry on resolution when set
-  // to true
-  bool expire_on_resolve = 3 [(gogoproto.nullable) = true, (gogoproto.jsontag) = "expire_on_resolve"];
+  // ExpireOnResolve defaults to false, clears the entry on resolution when
+  // set to true
+  bool expire_on_resolve = 3 [ (gogoproto.nullable) = true, (gogoproto.jsontag) = "expire_on_resolve" ];
 
   // Creator is the author of the silenced entry
-  string creator = 4 [(gogoproto.nullable) = true];
+  string creator = 4 [ (gogoproto.nullable) = true ];
 
   // Check is the name of the check event to be silenced.
   string check = 5;
 
   // Reason is used to provide context to the entry
-  string reason = 6 [(gogoproto.nullable) = true];
+  string reason = 6 [ (gogoproto.nullable) = true ];
 
   // Subscription is the name of the subscription to which the entry applies.
-  string subscription = 7 [(gogoproto.nullable) = true];
+  string subscription = 7 [ (gogoproto.nullable) = true ];
 
   // Begin is a timestamp at which the silenced entry takes effect.
-  int64 begin = 10 [(gogoproto.jsontag) = "begin"];
+  int64 begin = 10 [ (gogoproto.jsontag) = "begin" ];
 }

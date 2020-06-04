@@ -314,6 +314,8 @@ func TestDeadCallbackNoEntity(t *testing.T) {
 		t.Fatal(err)
 	}
 	store := &mockstore.MockStore{}
+	store.On("GetEntityByName", mock.Anything, mock.Anything).Return((*corev2.Entity)(nil), nil)
+	store.On("DeleteEntity", mock.Anything, mock.Anything).Return(nil)
 	keepalived, err := New(Config{
 		Store:           store,
 		EventStore:      store,
@@ -326,7 +328,6 @@ func TestDeadCallbackNoEntity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	store.On("GetEntityByName", mock.Anything, mock.Anything).Return((*corev2.Entity)(nil), nil)
 
 	if got, want := keepalived.dead("default/testSubscriber", liveness.Alive, true), true; got != want {
 		t.Fatalf("got bury: %v, want bury: %v", got, want)
@@ -348,6 +349,10 @@ func TestDeadCallbackNoEvent(t *testing.T) {
 		t.Fatal(err)
 	}
 	store := &mockstore.MockStore{}
+	store.On("GetEntityByName", mock.Anything, mock.Anything).Return(corev2.FixtureEntity("foo"), nil)
+	store.On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).Return((*corev2.Event)(nil), nil)
+	store.On("DeleteEntity", mock.Anything, mock.Anything).Return(nil)
+	store.On("GetEventsByEntity", mock.Anything, mock.Anything, mock.Anything).Return(([]*corev2.Event)(nil), nil)
 	keepalived, err := New(Config{
 		Store:           store,
 		EventStore:      store,
@@ -360,8 +365,6 @@ func TestDeadCallbackNoEvent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	store.On("GetEntityByName", mock.Anything, mock.Anything).Return(corev2.FixtureEntity("foo"), nil)
-	store.On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).Return((*corev2.Event)(nil), nil)
 
 	// The switch should be buried since the event is nil
 	if got, want := keepalived.dead("default/testSubscriber", liveness.Alive, true), true; got != want {

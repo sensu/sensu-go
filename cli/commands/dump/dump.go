@@ -50,10 +50,11 @@ func Command(cli *cli.SensuCli) *cobra.Command {
 	if format != config.FormatWrappedJSON && format != config.FormatYAML {
 		format = config.FormatYAML
 	}
-	_ = cmd.Flags().StringP("format", "", format, fmt.Sprintf(`format of data returned ("%s"|"%s")`, config.FormatWrappedJSON, config.FormatYAML))
+	_ = cmd.Flags().String("format", format, fmt.Sprintf(`format of data returned ("%s"|"%s")`, config.FormatWrappedJSON, config.FormatYAML))
 	_ = cmd.Flags().StringP("file", "f", "", "file to dump resources to")
 	_ = cmd.Flags().BoolP("types", "t", false, "list supported resource types")
 	_ = cmd.Flags().MarkDeprecated("types", `please use "sensuctl describe-type all" instead`)
+	_ = cmd.Flags().StringP("omit", "o", "", "when using 'sensuctl dump all', omit can be used to exclude types from being dumped")
 
 	return cmd
 }
@@ -117,6 +118,18 @@ func execute(cli *cli.SensuCli) func(*cobra.Command, []string) error {
 		if err != nil {
 			return err
 		}
+
+		omitSpec, err := cmd.Flags().GetString("omit")
+		if err != nil {
+			return err
+		}
+
+		omitRequests, err := resource.GetResourceRequests(omitSpec, resource.All)
+		if err != nil {
+			return fmt.Errorf("error parsing --omit: %s", err)
+		}
+
+		requests = resource.TrimResources(requests, omitRequests)
 
 		var w io.Writer = cmd.OutOrStdout()
 

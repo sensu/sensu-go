@@ -36,7 +36,7 @@ func TestUserStorage(t *testing.T) {
 		assert.Empty(t, users)
 
 		user := types.FixtureUser("foo")
-		user.Password = passwordDigest
+		user.PasswordHash = passwordDigest
 		err = s.CreateUser(user)
 		assert.NoError(t, err)
 
@@ -77,22 +77,9 @@ func TestUserStorage(t *testing.T) {
 		assert.NotEmpty(t, users)
 		assert.Equal(t, 2, len(users))
 
-		// Disable a user that does not exist
-		err = s.DeleteUser(ctx, &types.User{Username: "Frankieie"})
-		assert.NoError(t, err)
-
-		// Ensure that a user with that name wasn't created
-		baduser, err := s.GetUser(ctx, "Frankieie")
-		assert.NoError(t, err)
-		assert.Nil(t, baduser)
-
-		// Disable a user, which also removes all issued tokens
-		err = s.DeleteUser(ctx, mockedUser)
-		assert.NoError(t, err)
-
-		// Make sure the user is now disabled
-		disabledUser, _ := s.GetUser(ctx, mockedUser.Username)
-		assert.True(t, disabledUser.Disabled)
+		// Disable the user
+		mockedUser.Disabled = true
+		assert.NoError(t, s.UpdateUser(mockedUser))
 
 		// Authentication should be unsuccessful with a disabled user
 		_, err = s.AuthenticateUser(ctx, mockedUser.Username, password)

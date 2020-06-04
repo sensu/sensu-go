@@ -23,6 +23,7 @@ type UserController interface {
 	AddGroup(ctx context.Context, name string, group string) error
 	RemoveGroup(ctx context.Context, name string, group string) error
 	RemoveAllGroups(ctx context.Context, name string) error
+	AuthenticateUser(ctx context.Context, username, password string) (*corev2.User, error)
 }
 
 // UsersRouter handles requests for /users
@@ -55,8 +56,9 @@ func (r *UsersRouter) Mount(parent *mux.Router) {
 	routes.Path("{id}/{subresource:groups}/{user-group-name}", r.addGroup).Methods(http.MethodPut)
 	routes.Path("{id}/{subresource:groups}/{user-group-name}", r.removeGroup).Methods(http.MethodDelete)
 
-	// TODO: Remove?
+	// Password change & reset
 	routes.Path("{id}/{subresource:password}", r.updatePassword).Methods(http.MethodPut)
+	routes.Path("{id}/{subresource:reset_password}", r.resetPassword).Methods(http.MethodPut)
 }
 
 func (r *UsersRouter) get(req *http.Request) (interface{}, error) {
@@ -124,6 +126,7 @@ func (r *UsersRouter) reinstate(req *http.Request) (interface{}, error) {
 	return nil, err
 }
 
+// updatePassword updates a user password by requiring the current password
 func (r *UsersRouter) updatePassword(req *http.Request) (interface{}, error) {
 	params := map[string]string{}
 	if err := UnmarshalBody(req, &params); err != nil {
@@ -131,17 +134,44 @@ func (r *UsersRouter) updatePassword(req *http.Request) (interface{}, error) {
 	}
 
 	vars := mux.Vars(req)
-	id, err := url.PathUnescape(vars["id"])
+	username, err := url.PathUnescape(vars["id"])
+	if err != nil {
+		return nil, err
+	}
+	password := params["password"]
+
+	user, err := r.controller.AuthenticateUser(req.Context(), username, password)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := r.controller.Get(req.Context(), id)
+	// Remove any old password hash and set the new password hash. The controller
+	// will set the resulting hash in both fields before storing it.
+	user.Password = ""
+	user.PasswordHash = params["password_hash"]
+	err = r.controller.CreateOrReplace(req.Context(), user)
+	return nil, err
+}
+
+// resetPassword updates a user password without any kind of verification
+func (r *UsersRouter) resetPassword(req *http.Request) (interface{}, error) {
+	params := map[string]string{}
+	if err := UnmarshalBody(req, &params); err != nil {
+		return nil, err
+	}
+
+	vars := mux.Vars(req)
+	username, err := url.PathUnescape(vars["id"])
 	if err != nil {
 		return nil, err
 	}
 
-	user.Password = params["password"]
+	user, err := r.controller.Get(req.Context(), username)
+	if err != nil {
+		return nil, err
+	}
+
+	user.PasswordHash = params["password_hash"]
 	err = r.controller.CreateOrReplace(req.Context(), user)
 	return nil, err
 }

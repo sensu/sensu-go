@@ -37,7 +37,13 @@ func (s *Store) AuthenticateUser(ctx context.Context, username, password string)
 		return nil, &store.ErrNotValid{Err: fmt.Errorf("user %s is disabled", username)}
 	}
 
-	ok := bcrypt.CheckPassword(user.Password, password)
+	// Check if we have an explicitly hashed password, otherwise fallback to the
+	// password field for backward compatiblility
+	passwordHash := user.PasswordHash
+	if passwordHash == "" {
+		passwordHash = user.Password
+	}
+	ok := bcrypt.CheckPassword(passwordHash, password)
 	if !ok {
 		return nil, &store.ErrNotValid{Err: fmt.Errorf("wrong password for user %s", username)}
 	}
@@ -67,49 +73,6 @@ func (s *Store) CreateUser(u *corev2.User) error {
 	}
 	if !res.Succeeded {
 		return &store.ErrAlreadyExists{Key: u.Username}
-	}
-
-	return nil
-}
-
-// DeleteUser deletes a User.
-// NOTE:
-// Store probably shouldn't be responsible for deleting the token;
-// business logic.
-func (s *Store) DeleteUser(ctx context.Context, user *corev2.User) error {
-	// Mark it as disabled
-	user.Disabled = true
-
-	// Marshal the user struct
-	userBytes, err := proto.Marshal(user)
-	if err != nil {
-		return &store.ErrEncode{Err: err}
-	}
-
-	// Construct the list of operations to make in the transaction
-	userKey := getUserPath(user.Username)
-	txn := s.client.Txn(ctx).
-		// Ensure that the key exists
-		If(clientv3.Compare(clientv3.CreateRevision(userKey), ">", 0)).
-		// If key exists, delete user & any access token from allow list
-		Then(
-			clientv3.OpPut(userKey, string(userBytes)),
-		)
-
-	var res *clientv3.TxnResponse
-
-	serr := Backoff(ctx).Retry(func(n int) (done bool, err error) {
-		res, err = txn.Commit()
-		return RetryRequest(n, err)
-	})
-	if serr != nil {
-		return serr
-	}
-
-	if !res.Succeeded {
-		logger.
-			WithField("username", user.Username).
-			Info("given user was not already persisted")
 	}
 
 	return nil

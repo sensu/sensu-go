@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/AlecAivazis/survey"
+	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/cli"
 	"github.com/sensu/sensu-go/cli/commands/flags"
 	"github.com/sensu/sensu-go/cli/commands/helpers"
@@ -14,12 +15,12 @@ import (
 )
 
 var (
-	errBadCurrentPassword   = errors.New("given password did not match the one on file")
 	errEmptyCurrentPassword = errors.New("current user's password must be provided")
 	errPasswordsDoNotMatch  = errors.New("given passwords do not match")
 )
 
 type passwordOpts struct {
+	Current string `survey:"current-password`
 	New     string `survey:"new-password"`
 	Confirm string `survey:"confirm-password"`
 }
@@ -46,7 +47,6 @@ func SetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 			isInteractive, _ := cmd.Flags().GetBool(flags.Interactive)
 
 			password := &passwordOpts{}
-			var promptForCurrentPassword bool
 			var username string
 
 			// Retrieve current username from JWT
@@ -55,21 +55,8 @@ func SetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 			// If no username is given we use the current user's name
 			if len(args) > 0 {
 				username = args[0]
-
-				// Prompt for password if specified username is current user
-				if username == currentUsername {
-					promptForCurrentPassword = true
-				}
 			} else {
 				username = currentUsername
-				promptForCurrentPassword = true
-			}
-
-			// As a precaution, ask for the current user's password
-			if promptForCurrentPassword {
-				if err := verifyExistingPassword(cli, cmd.Flags(), isInteractive, currentUsername); err != nil {
-					return err
-				}
 			}
 
 			if isInteractive {
@@ -80,7 +67,7 @@ func SetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 			} else {
 				if err := password.withFlags(cmd.Flags()); err != nil {
 					_ = cmd.Help()
-					return errors.New("new password must be provided")
+					return err
 				}
 			}
 
@@ -89,9 +76,13 @@ func SetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			// Update password
-			err := cli.Client.UpdatePassword(username, password.New)
+			hash, err := bcrypt.HashPassword(password.New)
 			if err != nil {
+				return err
+			}
+
+			// Update password
+			if err := cli.Client.UpdatePassword(username, hash, password.Current); err != nil {
 				return err
 			}
 
@@ -100,49 +91,21 @@ func SetPasswordCommand(cli *cli.SensuCli) *cobra.Command {
 		},
 	}
 
-	_ = cmd.Flags().String("current-password", "", "current password")
-	_ = cmd.Flags().String("new-password", "", "new password")
+	_ = cmd.Flags().StringP("current-password", "c", "", "current password")
+	_ = cmd.Flags().StringP("new-password", "p", "", "new password")
 
 	helpers.AddInteractiveFlag(cmd.Flags())
 
 	return cmd
 }
 
-func verifyExistingPassword(cli *cli.SensuCli, flags *pflag.FlagSet, isInteractive bool, username string) error {
-	input := struct{ Password string }{}
-
-	if isInteractive {
-		qs := []*survey.Question{
-			{
-				Name:     "password",
-				Prompt:   &survey.Password{Message: "Current Password:\t"},
-				Validate: survey.Required,
-			},
-		}
-
-		// Get password
-		if err := survey.Ask(qs, &input); err != nil {
-			return err
-		}
-	} else {
-		input.Password, _ = flags.GetString("current-password")
-	}
-
-	// Validate that the current password has been provided
-	if input.Password == "" {
-		return errEmptyCurrentPassword
-	}
-
-	// Attempt to authenticate
-	if _, err := cli.Client.CreateAccessToken(cli.Config.APIUrl(), username, input.Password); err != nil {
-		return errBadCurrentPassword
-	}
-
-	return nil
-}
-
 func (opts *passwordOpts) administerQuestionnaire() error {
 	qs := []*survey.Question{
+		{
+			Name:     "current-password",
+			Prompt:   &survey.Password{Message: "Current Password:\t"},
+			Validate: survey.Required,
+		},
 		{
 			Name:     "new-password",
 			Prompt:   &survey.Password{Message: "New Password:\t\t"},
@@ -159,11 +122,17 @@ func (opts *passwordOpts) administerQuestionnaire() error {
 }
 
 func (opts *passwordOpts) withFlags(flags *pflag.FlagSet) error {
-	password, _ := flags.GetString("new-password")
-	if password == "" {
-		return errors.New("empty password")
+	currentPassword, _ := flags.GetString("current-password")
+	if currentPassword == "" {
+		return errors.New("current password must be provided")
 	}
 
+	password, _ := flags.GetString("new-password")
+	if password == "" {
+		return errors.New("new password must be provided")
+	}
+
+	opts.Current = currentPassword
 	opts.New = password
 	opts.Confirm = password
 
@@ -171,6 +140,10 @@ func (opts *passwordOpts) withFlags(flags *pflag.FlagSet) error {
 }
 
 func (opts *passwordOpts) validate() error {
+	if opts.Current == "" {
+		return errEmptyCurrentPassword
+	}
+
 	if opts.New != opts.Confirm {
 		return errPasswordsDoNotMatch
 	}

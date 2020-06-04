@@ -2,6 +2,7 @@ package resource
 
 import (
 	"fmt"
+	"reflect"
 	"regexp"
 	"strings"
 
@@ -11,7 +12,7 @@ import (
 
 var (
 	// All is all the core resource types and associated sensuctl verbs (non-namespaced resources are intentionally ordered first).
-	All = []types.Resource{
+	All = []corev2.Resource{
 		&corev2.Namespace{},
 		&corev2.ClusterRole{},
 		&corev2.ClusterRoleBinding{},
@@ -42,14 +43,14 @@ func init() {
 }
 
 type lifter interface {
-	Lift() types.Resource
+	Lift() corev2.Resource
 }
 
 var resourceRE = regexp.MustCompile(`(\w+\/v\d+\.)?(\w+)`)
 
 // Resolve resolves a named resource to an empty concrete type.
-// The value is boxed within a types.Resource interface value.
-func Resolve(resource string) (types.Resource, error) {
+// The value is boxed within a corev2.Resource interface value.
+func Resolve(resource string) (corev2.Resource, error) {
 	if resource, ok := synonyms[resource]; ok {
 		return resource, nil
 	}
@@ -66,26 +67,34 @@ func Resolve(resource string) (types.Resource, error) {
 }
 
 func dedupTypes(arg string) []string {
-	types := strings.Split(arg, ",")
+	typs := strings.Split(arg, ",")
 	seen := make(map[string]struct{})
-	result := make([]string, 0, len(types))
-	for _, t := range types {
+	result := make([]string, 0, len(typs))
+	for _, t := range typs {
 		if _, ok := seen[t]; ok {
 			continue
 		}
 		seen[t] = struct{}{}
+		if syn, ok := synonyms[t]; ok {
+			w := types.WrapResource(syn)
+			seen[fmt.Sprintf("%s.%s", w.APIVersion, w.Type)] = struct{}{}
+		}
 		result = append(result, t)
 	}
 	return result
 }
 
 // GetResourceRequests gets the resources based on the input.
-func GetResourceRequests(actionSpec string, resources []corev2.Resource) ([]types.Resource, error) {
+func GetResourceRequests(actionSpec string, resources []corev2.Resource) ([]corev2.Resource, error) {
 	// parse the comma separated resource types and match against the defined actions
 	if actionSpec == "all" {
 		return resources, nil
 	}
-	var actions []types.Resource
+	if actionSpec == "" {
+		// There were no specs, return an empty slice
+		return []corev2.Resource{}, nil
+	}
+	var actions []corev2.Resource
 	// deduplicate requested resources
 	types := dedupTypes(actionSpec)
 
@@ -101,6 +110,25 @@ func GetResourceRequests(actionSpec string, resources []corev2.Resource) ([]type
 		actions = append(actions, resource)
 	}
 	return actions, nil
+}
+
+// TrimResources removes all of the resources in the second slice from the
+// first slice, if they are in there.
+func TrimResources(resources []corev2.Resource, toRemove []corev2.Resource) []corev2.Resource {
+	result := make([]corev2.Resource, 0, len(resources))
+	for _, resource := range resources {
+		var found bool
+		for _, remove := range toRemove {
+			if reflect.DeepEqual(resource, remove) {
+				found = true
+				break
+			}
+		}
+		if !found {
+			result = append(result, resource)
+		}
+	}
+	return result
 }
 
 // WrapResources takes a list of resources and returns a list of wrappers.

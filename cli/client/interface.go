@@ -195,7 +195,8 @@ type UserAPIClient interface {
 	RemoveGroupFromUser(string, string) error
 	RemoveAllGroupsFromUser(string) error
 	SetGroupsForUser(string, []string) error
-	UpdatePassword(string, string) error
+	UpdatePassword(username, newPasswordHash, currentPassword string) error
+	ResetPassword(username, passwordHash string) error
 }
 
 // RoleAPIClient client methods for roles

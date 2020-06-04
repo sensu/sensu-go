@@ -9,7 +9,36 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ## Unreleased
 
 ### Added
+- Added `SENSU_LICENSE_FILE` environment variable to handler executions.
+- Added the `sensuctl user hash-password` command to generate password hashes
+- Added the ability to reset passwords via the backend API & `sensuctl user
+reset-password`
+- The user resource now has a `password_hash` field to specify the password
+hash, in place of the cleartext password
+- Added the beginnings of the core/v3 API.
+- Added automatically generated tests for the core/v2 API.
+- Added suport for the `aix/ppc64` platform.
+
+### Changed
+- `sensu-agent`'s default log level is now `info` instead of `warn`.
+- Upgrade gostatsd to 20.3.2.
+
+### Fixed
+- The password verification logic when running `sensuctl user change-password`
+has been moved from sensuctl to the backend API.
+- Errors while publishing proxy check requests do not block scheduling for other
+entities.
+- Listing namespaces in sensuctl with `--chunk-size` now works properly.
+- Prevent the agent from immediately exiting in certain scenarios where
+components are disabled.
+
+## [5.20.2] - 2020-05-26
+
+### Added
 - Added the username as a field to the API request logger.
+
+### Changed
+- The Process struct only contains the name of the process.
 
 ### Fixed
 - The proper libc implementation is now displayed for Ubuntu entities.
@@ -18,9 +47,16 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 they were intended to be.
 - Fixed an issue when a GraphQL query could fail if a namespace contained a
 large number of events.
+- Fix retrieving command assets from bonsai.
 
 ## [5.20.1] - 2020-05-15
 *No changelog for this release.*
+
+### Added
+- Added the ability to omit types from sensuctl dump when using the "all" flag.
+
+### Fixed
+- Fixed a bug in sensuctl dump where duplicate resource names could be specified.
 
 ## [5.20.0] - 2020-05-12
 
@@ -35,6 +71,8 @@ sensu-backend or sensu-agent process.
 - Added token substitution for assets.
 - Added `Edition` field to version information.
 - Added `GoVersion` field to version information.
+- Assets paths are now accessible to consumers via an environment variable.
+- Added a helper function to token substitution to retrieve an asset path.
 - Windows agent now has log rotation capabilities.
 - [Web] Added check hook output to event details page.
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -76,23 +77,24 @@ var (
 
 // Tessend is the tessen daemon.
 type Tessend struct {
-	interval     uint32
-	store        store.Store
-	eventStore   store.EventStore
-	ctx          context.Context
-	cancel       context.CancelFunc
-	errChan      chan error
-	ring         *ringv2.Ring
-	interrupt    chan *corev2.TessenConfig
-	client       *clientv3.Client
-	url          string
-	backendID    string
-	bus          messaging.MessageBus
-	messageChan  chan interface{}
-	subscription []messaging.Subscription
-	duration     time.Duration
-	AllowOptOut  bool
-	config       *corev2.TessenConfig
+	interval          uint32
+	store             store.Store
+	eventStore        store.EventStore
+	ctx               context.Context
+	cancel            context.CancelFunc
+	errChan           chan error
+	ring              *ringv2.Ring
+	interrupt         chan *corev2.TessenConfig
+	client            *clientv3.Client
+	url               string
+	backendID         string
+	bus               messaging.MessageBus
+	messageChan       chan interface{}
+	subscription      []messaging.Subscription
+	duration          time.Duration
+	AllowOptOut       bool
+	config            *corev2.TessenConfig
+	EntityClassCounts func() map[string]int
 }
 
 // Option is a functional option.
@@ -126,6 +128,9 @@ func New(ctx context.Context, c Config, opts ...Option) (*Tessend, error) {
 	t.interrupt = make(chan *corev2.TessenConfig, 1)
 	key := ringv2.Path("global", "backends")
 	t.ring = c.RingPool.Get(key)
+	t.EntityClassCounts = func() map[string]int {
+		return make(map[string]int)
+	}
 
 	return t, nil
 }
@@ -598,6 +603,9 @@ func (t *Tessend) getPerResourceMetrics(now int64, data *Data) error {
 	logMetric(mp)
 	data.Metrics.Points = append(data.Metrics.Points, mp)
 
+	// loop through the entity class counts
+	data.Metrics.Points = append(data.Metrics.Points, t.getEntityClassMetrics(now)...)
+
 	// loop through the resource map and collect the count of each
 	// resource every 5 seconds to distribute the load on etcd
 	resourceMetricsMu.RLock()
@@ -664,6 +672,22 @@ func (t *Tessend) send(data *Data) string {
 	}
 
 	return resp.Header.Get(tessenIntervalHeader)
+}
+
+func (t *Tessend) getEntityClassMetrics(now int64) []*corev2.MetricPoint {
+	var points []*corev2.MetricPoint
+	for class, count := range t.EntityClassCounts() {
+		mp := &corev2.MetricPoint{
+			Name:      fmt.Sprintf("entity_class_%s_count", class),
+			Value:     float64(count),
+			Timestamp: now,
+		}
+		appendInternalTag(mp)
+		appendStoreConfig(mp, t.GetStoreConfig())
+		logMetric(mp)
+		points = append(points, mp)
+	}
+	return points
 }
 
 // logMetric logs the metric name and value collected for transparency.

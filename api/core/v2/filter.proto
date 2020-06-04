@@ -1,8 +1,8 @@
 syntax = "proto3";
 
 import "github.com/gogo/protobuf@v1.3.1/gogoproto/gogo.proto";
-import "time_window.proto";
-import "meta.proto";
+import "github.com/sensu/sensu-go/api/core/v2/time_window.proto";
+import "github.com/sensu/sensu-go/api/core/v2/meta.proto";
 
 package sensu.core.v2;
 
@@ -19,20 +19,22 @@ message EventFilter {
   option (gogoproto.face) = true;
   option (gogoproto.goproto_getters) = false;
 
-  // Metadata contains the name, namespace, labels and annotations of the filter
-  ObjectMeta metadata = 1 [(gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false];
+  // Metadata contains the name, namespace, labels and annotations of the
+  // filter
+  ObjectMeta metadata = 1 [ (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false ];
 
   // Action specifies to allow/deny events to continue through the pipeline
   string action = 2;
 
   // Expressions is an array of boolean expressions that are &&'d together
   // to determine if the event matches this filter.
-  repeated string expressions = 3 [(gogoproto.jsontag) = "expressions"];
+  repeated string expressions = 3 [ (gogoproto.jsontag) = "expressions" ];
 
-  // When indicates a TimeWindowWhen that a filter uses to filter by days & times
+  // When indicates a TimeWindowWhen that a filter uses to filter by days &
+  // times
   TimeWindowWhen when = 6;
 
   // Runtime assets are Sensu assets that contain javascript libraries. They
   // are evaluated within the execution context.
-  repeated string runtime_assets = 8 [(gogoproto.jsontag) = "runtime_assets"];
+  repeated string runtime_assets = 8 [ (gogoproto.jsontag) = "runtime_assets" ];
 }

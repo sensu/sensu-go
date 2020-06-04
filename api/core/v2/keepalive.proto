@@ -1,7 +1,7 @@
 syntax = "proto3";
 
 import "github.com/gogo/protobuf@v1.3.1/gogoproto/gogo.proto";
-import "meta.proto";
+import "github.com/sensu/sensu-go/api/core/v2/meta.proto";
 
 package sensu.core.v2;
 
@@ -19,7 +19,8 @@ message KeepaliveRecord {
   option (gogoproto.face) = true;
   option (gogoproto.goproto_getters) = false;
 
-  // Metadata contains the name (of the entity), and namespace, labels and annotations of the keepalive record
-  ObjectMeta metadata = 1 [(gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false];
-  int64 time = 4 [(gogoproto.jsontag) = "time"];
+  // Metadata contains the name (of the entity), and namespace, labels and
+  // annotations of the keepalive record
+  ObjectMeta metadata = 1 [ (gogoproto.jsontag) = "metadata,omitempty", (gogoproto.embed) = true, (gogoproto.nullable) = false ];
+  int64 time = 4 [ (gogoproto.jsontag) = "time" ];
 }

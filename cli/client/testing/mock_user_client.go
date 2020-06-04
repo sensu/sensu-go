@@ -52,8 +52,14 @@ func (c *MockClient) SetGroupsForUser(username string, groups []string) error {
 	return args.Error(0)
 }
 
+// ResetPassword for use with mock lib
+func (c *MockClient) ResetPassword(username, passwordHash string) error {
+	args := c.Called(username, passwordHash)
+	return args.Error(0)
+}
+
 // UpdatePassword for use with mock lib
-func (c *MockClient) UpdatePassword(username, pwd string) error {
-	args := c.Called(username, pwd)
+func (c *MockClient) UpdatePassword(username, newPasswordHash, currentPassword string) error {
+	args := c.Called(username, newPasswordHash, currentPassword)
 	return args.Error(0)
 }

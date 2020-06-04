@@ -323,7 +323,7 @@ func TestUserDisable(t *testing.T) {
 		argument        string
 		fetchResult     *types.User
 		fetchErr        error
-		deleteErr       error
+		updateErr       error
 		expectedErr     bool
 		expectedErrCode ErrCode
 	}{
@@ -347,7 +347,7 @@ func TestUserDisable(t *testing.T) {
 			ctx:             defaultCtx,
 			argument:        "user1",
 			fetchResult:     types.FixtureUser("user1"),
-			deleteErr:       errors.New("dunno"),
+			updateErr:       errors.New("dunno"),
 			expectedErr:     true,
 			expectedErrCode: InternalErr,
 		},
@@ -362,8 +362,8 @@ func TestUserDisable(t *testing.T) {
 
 			// Mock store methods
 			store.
-				On("DeleteUser", mock.Anything, tc.fetchResult).
-				Return(tc.deleteErr)
+				On("UpdateUser", tc.fetchResult).
+				Return(tc.updateErr)
 			store.
 				On("GetUser", mock.Anything, mock.Anything).
 				Return(tc.fetchResult, tc.fetchErr)

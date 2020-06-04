@@ -1,10 +1,10 @@
 syntax = "proto3";
 
 import "github.com/gogo/protobuf@v1.3.1/gogoproto/gogo.proto";
-import "entity.proto";
-import "check.proto";
-import "metrics.proto";
-import "meta.proto";
+import "github.com/sensu/sensu-go/api/core/v2/entity.proto";
+import "github.com/sensu/sensu-go/api/core/v2/check.proto";
+import "github.com/sensu/sensu-go/api/core/v2/metrics.proto";
+import "github.com/sensu/sensu-go/api/core/v2/meta.proto";
 
 package sensu.core.v2;
 
@@ -25,17 +25,18 @@ message Event {
   int64 timestamp = 1;
 
   // Entity describes the entity in which the event occurred.
-  Entity entity = 2 [(gogoproto.nullable) = true];
+  Entity entity = 2 [ (gogoproto.nullable) = true ];
 
-  // Check describes the result of a check; if event is associated to check execution.
-  Check check = 3 [(gogoproto.nullable) = true];
+  // Check describes the result of a check; if event is associated to check
+  // execution.
+  Check check = 3 [ (gogoproto.nullable) = true ];
 
   // Metrics are zero or more Sensu metrics
-  Metrics metrics = 4 [(gogoproto.nullable) = true];
+  Metrics metrics = 4 [ (gogoproto.nullable) = true ];
 
   // Metadata contains name, namespace, labels and annotations
-  ObjectMeta metadata = 5 [(gogoproto.embed) = true, (gogoproto.jsontag) = "metadata", (gogoproto.nullable) = false];
+  ObjectMeta metadata = 5 [ (gogoproto.embed) = true, (gogoproto.jsontag) = "metadata", (gogoproto.nullable) = false ];
 
   // ID is the unique identifier of the event.
-  bytes ID = 6 [(gogoproto.jsontag) = "id"];
+  bytes ID = 6 [ (gogoproto.jsontag) = "id" ];
 }
