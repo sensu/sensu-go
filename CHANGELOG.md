@@ -31,6 +31,8 @@ entities.
 - Listing namespaces in sensuctl with `--chunk-size` now works properly.
 - Prevent the agent from immediately exiting in certain scenarios where
 components are disabled.
+- Fixed an issue where a GraphQL query could fail when querying a namespace
+containing event data in excess of 2GBs.
 
 ## [5.20.2] - 2020-05-26
 
