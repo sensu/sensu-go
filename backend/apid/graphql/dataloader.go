@@ -25,6 +25,8 @@ const (
 	mutatorsLoaderKey
 	namespacesLoaderKey
 	silencedsLoaderKey
+
+	loaderPageSize = 1000
 )
 
 var (
@@ -126,16 +128,15 @@ func loadEntities(ctx context.Context, ns string) ([]*corev2.Entity, error) {
 // events
 
 func listAllEvents(ctx context.Context, c EventClient) ([]*corev2.Event, error) {
-	limit := 2000
 	cont := ""
 	results := []*corev2.Event{}
 	for {
-		r, err := c.ListEvents(ctx, &store.SelectionPredicate{Continue: cont, Limit: int64(limit)})
+		r, err := c.ListEvents(ctx, &store.SelectionPredicate{Continue: cont, Limit: int64(loaderPageSize)})
 		if err != nil {
 			return results, err
 		}
 		results = append(results, r...)
-		if len(r) < limit {
+		if len(r) < loaderPageSize {
 			break
 		}
 		cont = etcd.ComputeContinueToken(ctx, r[len(r)-1])

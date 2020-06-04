@@ -2,6 +2,7 @@ package graphql
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/graph-gophers/dataloader"
@@ -29,6 +30,14 @@ func Test_listAllEvents(t *testing.T) {
 		wantErr bool
 	}{
 		{
+			name: "single page",
+			setup: func(c *MockEventClient) {
+				c.On("ListEvents", mock.Anything, mock.Anything).Return(mkEvents(500), nil).Once()
+			},
+			wantLen: 500,
+			wantErr: false,
+		},
+		{
 			name: "many pages",
 			setup: func(c *MockEventClient) {
 				c.On("ListEvents", mock.Anything, mock.Anything).Return(mkEvents(2000), nil).Once()
@@ -36,6 +45,14 @@ func Test_listAllEvents(t *testing.T) {
 			},
 			wantLen: 2020,
 			wantErr: false,
+		},
+		{
+			name: "fetch err",
+			setup: func(c *MockEventClient) {
+				c.On("ListEvents", mock.Anything, mock.Anything).Return(mkEvents(2), errors.New("err")).Once()
+			},
+			wantLen: 0,
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
