@@ -122,16 +122,26 @@ func main() {
 
 func discoverTypeNames() ([]string, error) {
 	var typeNames []string
-	doc, err := exec.Command("go", "doc", "-all", ".").CombinedOutput()
+	doc, err := exec.Command("go", "doc", "-all", "-src", ".").CombinedOutput()
 	if err != nil {
 		return nil, fmt.Errorf("%s: %s", string(doc), err)
 	}
 	scanner := bufio.NewScanner(bytes.NewReader(doc))
+	// skipNext is set true if a comment line containing sensu: nogen is found
+	var skipNext bool
 	for scanner.Scan() {
 		line := scanner.Bytes()
+		if bytes.Equal(bytes.TrimSpace(line), []byte(`//sensu:nogen`)) {
+			skipNext = true
+			continue
+		}
 		matches := typeRe.FindSubmatch(line)
 		if len(matches) > 1 {
 			// capturing group match in matches[1]
+			if skipNext {
+				skipNext = false
+				continue
+			}
 			typeNames = append(typeNames, string(matches[1]))
 		}
 	}
