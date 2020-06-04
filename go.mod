@@ -3,6 +3,7 @@ module github.com/sensu/sensu-go
 go 1.13
 
 replace (
+	github.com/fsnotify/fsnotify => github.com/sensu/fsnotify v1.4.8-0.20191126053121-0adce4777482
 	github.com/sensu/sensu-go/api/core/v2 => ./api/core/v2
 	github.com/sensu/sensu-go/api/core/v3 => ./api/core/v3
 	github.com/sensu/sensu-go/types => ./types
@@ -55,16 +56,17 @@ require (
 	github.com/sensu/sensu-go/types v0.1.0
 	github.com/shirou/gopsutil v0.0.0-20190901111213-e4ec7b275ada
 	github.com/sirupsen/logrus v1.6.0
+	github.com/spf13/afero v1.2.3-0.20200531133823-1524d0a48baf // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.2
 	github.com/stretchr/testify v1.6.0
 	github.com/willf/pad v0.0.0-20160331131008-b3d780601022
-	go.etcd.io/bbolt v1.3.2
+	go.etcd.io/bbolt v1.3.4
 	go.uber.org/multierr v1.2.0 // indirect
 	golang.org/x/crypto v0.0.0-20191011191535-87dc89f01550
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
-	golang.org/x/sys v0.0.0-20191113165036-4c7a9d0fe056
+	golang.org/x/sys v0.0.0-20200602225109-6fdc65e7d980
 	golang.org/x/time v0.0.0-20191024005414-555d28b269f0
 	google.golang.org/genproto v0.0.0-20191009194640-548a555dbc03 // indirect
 	google.golang.org/grpc v1.24.0
