@@ -246,8 +246,8 @@ type MockNamespaceClient struct {
 	mock.Mock
 }
 
-func (c *MockNamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespace, error) {
-	args := c.Called(ctx)
+func (c *MockNamespaceClient) ListNamespaces(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Namespace, error) {
+	args := c.Called(ctx, pred)
 	return args.Get(0).([]*corev2.Namespace), args.Error(1)
 }
 

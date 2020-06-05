@@ -268,7 +268,7 @@ func loadNamespacesBatchFn(c NamespaceClient) dataloader.BatchFunc {
 	return func(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 		results := make([]*dataloader.Result, 0, len(keys))
 		for range keys {
-			records, err := c.ListNamespaces(ctx)
+			records, err := c.ListNamespaces(ctx, &store.SelectionPredicate{})
 			result := &dataloader.Result{Data: records, Error: handleListErr(err)}
 			results = append(results, result)
 		}

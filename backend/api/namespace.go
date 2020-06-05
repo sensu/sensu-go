@@ -39,12 +39,9 @@ func NewNamespaceClient(store store.ResourceStore, auth authorization.Authorizer
 // ListNamespaces fetches a list of the namespace resources that are authorized
 // by the supplied credentials. This may include implicit access via resources
 // that are in a namespace that the credentials are authorized to get.
-func (a *NamespaceClient) ListNamespaces(ctx context.Context) ([]*corev2.Namespace, error) {
+func (a *NamespaceClient) ListNamespaces(ctx context.Context, pred *store.SelectionPredicate) ([]*corev2.Namespace, error) {
 	var resources, namespaces []*corev2.Namespace
-	pred := &store.SelectionPredicate{
-		Continue: corev2.PageContinueFromContext(ctx),
-		Limit:    int64(corev2.PageSizeFromContext(ctx)),
-	}
+
 	visitor, ok := a.auth.(ruleVisitor)
 	if !ok {
 		if err := a.client.List(ctx, &namespaces, pred); err != nil {
