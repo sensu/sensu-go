@@ -60,6 +60,8 @@ func (d *Deregistration) Deregister(entity *types.Entity) error {
 		event.Check.Status = 0
 		event.Check.History = []types.CheckHistory{}
 
+		fmt.Printf("deregistration event timestamp: #%v\n", event.Timestamp)
+
 		if err := d.MessageBus.Publish(messaging.TopicEvent, event); err != nil {
 			return fmt.Errorf("error publishing deregistration event: %s", err)
 		}
