@@ -46,20 +46,4 @@ message TypeMeta {
 
   // APIVersion is the APIVersion of the data type
   string APIVersion = 2 [ (gogoproto.jsontag) = "api_version", (gogoproto.moretags) = "yaml: \"api_version,omitempty\"" ];
-
-  enum Encoding {
-    json = 0;
-    protobuf = 1;
-  }
-
-  // Encoding is the type of serialization used
-  Encoding encoding = 3 [ (gogoproto.jsontag) = "encoding,omitempty", (gogoproto.moretags) = "yaml: \"encoding,omitempty\"" ];
-
-  enum Compression {
-    none = 0;
-    snappy = 1;
-  }
-
-  // Compression is the type of compression used
-  Compression compression = 4 [ (gogoproto.jsontag) = "compression,omitempty", (gogoproto.moretags) = "yaml: \"compression,omitempty\"" ];
 }

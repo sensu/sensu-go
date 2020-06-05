@@ -3,20 +3,36 @@ syntax = "proto3";
 import "github.com/gogo/protobuf@v1.3.1/gogoproto/gogo.proto";
 import "github.com/sensu/sensu-go/api/core/v2/meta.proto";
 
-package backend.store;
+package backend.store.wrap;
 
-option go_package = "store";
+option go_package = "wrap";
 option (gogoproto.populate_all) = true;
 option (gogoproto.equal_all) = true;
 option (gogoproto.marshaler_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.sizer_all) = true;
 
+enum Encoding {
+  json = 0;
+  protobuf = 1;
+}
+
+enum Compression {
+  none = 0;
+  snappy = 1;
+}
+
 // Wrapper represents a serialized resource for storage purposes
 message Wrapper {
   // TypeMeta contains the type and the API version of the resource
-  sensu.core.v2.TypeMeta metadata = 1 [ (gogoproto.jsontag) = "metadata", (gogoproto.nullable) = true, (gogoproto.embed) = false ];
+  sensu.core.v2.TypeMeta metadata = 1 [ (gogoproto.nullable) = true ];
+
+  // Encoding is the type of serialization used
+  Encoding encoding = 2;
+
+  // Compression is the type of compression used
+  Compression compression = 3;
 
   // Value contains the encoded resource value
-  bytes value = 2;
+  bytes value = 4;
 }
