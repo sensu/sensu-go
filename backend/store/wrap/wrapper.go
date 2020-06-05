@@ -163,9 +163,20 @@ func (w *Wrapper) Unwrap() (corev3.Resource, error) {
 		return nil, errors.New("only v3 resources are compatible with store wrappers")
 	}
 	resource := proxy.Resource
+	metadata := resource.GetMetadata()
+	if metadata == nil {
+		metadata = &corev2.ObjectMeta{}
+	}
+	if metadata.Labels == nil {
+		metadata.Labels = make(map[string]string)
+	}
+	if metadata.Annotations == nil {
+		metadata.Annotations = make(map[string]string)
+	}
+	resource.SetMetadata(metadata)
 	message, err := w.Compression.Decompress(w.Value)
 	if err != nil {
 		return nil, fmt.Errorf("error unwrapping %T: %s", resource, err)
 	}
-	return resource, w.Encoding.Decode(message, &resource)
+	return resource, w.Encoding.Decode(message, resource)
 }
