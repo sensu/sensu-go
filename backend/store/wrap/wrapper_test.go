@@ -80,10 +80,10 @@ func TestWrapResourceSimple(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, want := wrapper.Metadata.APIVersion, "store/wrap_test"; got != want {
+	if got, want := wrapper.TypeMeta.APIVersion, "store/wrap_test"; got != want {
 		t.Errorf("bad api version: got %s, want %s", got, want)
 	}
-	if got, want := wrapper.Metadata.Type, "testResource"; got != want {
+	if got, want := wrapper.TypeMeta.Type, "testResource"; got != want {
 		t.Errorf("bad type: got %s, want %s", got, want)
 	}
 	unwrapped, err := wrapper.Unwrap()
@@ -92,6 +92,9 @@ func TestWrapResourceSimple(t *testing.T) {
 	}
 	if got, want := unwrapped, resource; !reflect.DeepEqual(got, want) {
 		t.Errorf("bad resource: got %v, want %v", got, want)
+	}
+	if got, want := unwrapped.GetMetadata(), wrapper.GetObjectMeta(); got != want {
+		t.Errorf("wrapper metadata and resource metadata differ: got %p, want %p", got, want)
 	}
 }
 

@@ -182,3 +182,27 @@ func (e *EntityState) validate() error {
 
 	return nil
 }
+
+// NewEntityState creates a new EntityState.
+func NewEntityState(namespace, name string) *EntityState {
+	return &EntityState{
+		Metadata: &corev2.ObjectMeta{
+			Name:        name,
+			Namespace:   namespace,
+			Labels:      make(map[string]string),
+			Annotations: make(map[string]string),
+		},
+	}
+}
+
+// NewEntityConfig creates a new EntityConfig.
+func NewEntityConfig(namespace, name string) *EntityConfig {
+	return &EntityConfig{
+		Metadata: &corev2.ObjectMeta{
+			Name:        name,
+			Namespace:   namespace,
+			Labels:      make(map[string]string),
+			Annotations: make(map[string]string),
+		},
+	}
+}

@@ -12,27 +12,33 @@ option (gogoproto.marshaler_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.sizer_all) = true;
 
+// Encoding is the serialization encoding of the wrapped value.
 enum Encoding {
   json = 0;
   protobuf = 1;
 }
 
+// Compression is the compression algorithm used to compress the wrapped
+// value.
 enum Compression {
   none = 0;
   snappy = 1;
 }
 
-// Wrapper represents a serialized resource for storage purposes
+// Wrapper represents a serialized resource for storage purposes.
 message Wrapper {
-  // TypeMeta contains the type and the API version of the resource
-  sensu.core.v2.TypeMeta metadata = 1 [ (gogoproto.nullable) = true ];
+  // TypeMeta contains the type and the API version of the resource.
+  sensu.core.v2.TypeMeta TypeMeta = 1 [ (gogoproto.nullable) = true ];
 
-  // Encoding is the type of serialization used
-  Encoding encoding = 2;
+  // ObjectMeta contains the name and namespace of the resource.
+  sensu.core.v2.ObjectMeta ObjectMeta = 2 [ (gogoproto.nullable) = true ];
 
-  // Compression is the type of compression used
-  Compression compression = 3;
+  // Encoding is the type of serialization used.
+  Encoding encoding = 3;
+
+  // Compression is the type of compression used.
+  Compression compression = 4;
 
   // Value contains the encoded resource value
-  bytes value = 4;
+  bytes value = 5;
 }

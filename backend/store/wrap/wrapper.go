@@ -132,8 +132,10 @@ func Resource(r corev3.Resource, opts ...Option) (*Wrapper, error) {
 			APIVersion: types.ApiVersion(typ.PkgPath()),
 		}
 	}
-	var w Wrapper
-	w.Metadata = &tm
+	w := Wrapper{
+		TypeMeta:   &tm,
+		ObjectMeta: r.GetMetadata(),
+	}
 	opts = append([]Option{EncodeDefault, CompressDefault}, opts...)
 	for _, opt := range opts {
 		if err := opt(&w, r); err != nil {
@@ -154,7 +156,7 @@ func Resource(r corev3.Resource, opts ...Option) (*Wrapper, error) {
 // Unwrap unmarshals the wrapper's value into a resource, according to the
 // configuration of the wrapper.
 func (w *Wrapper) Unwrap() (corev3.Resource, error) {
-	r, err := types.ResolveType(w.Metadata.APIVersion, w.Metadata.Type)
+	r, err := types.ResolveType(w.TypeMeta.APIVersion, w.TypeMeta.Type)
 	if err != nil {
 		return nil, err
 	}
@@ -165,6 +167,9 @@ func (w *Wrapper) Unwrap() (corev3.Resource, error) {
 	resource := proxy.Resource
 	metadata := resource.GetMetadata()
 	if metadata == nil {
+		metadata = w.ObjectMeta
+	}
+	if metadata == nil {
 		metadata = &corev2.ObjectMeta{}
 	}
 	if metadata.Labels == nil {
@@ -174,6 +179,7 @@ func (w *Wrapper) Unwrap() (corev3.Resource, error) {
 		metadata.Annotations = make(map[string]string)
 	}
 	resource.SetMetadata(metadata)
+	w.ObjectMeta = metadata
 	message, err := w.Compression.Decompress(w.Value)
 	if err != nil {
 		return nil, fmt.Errorf("error unwrapping %T: %s", resource, err)
