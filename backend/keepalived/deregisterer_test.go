@@ -3,6 +3,7 @@ package keepalived
 import (
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/backend/store"
 
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -68,7 +69,7 @@ func TestDeregistrationHandler(t *testing.T) {
 		if event.Timestamp == 0 {
 			t.Fatal("event timestamp is nil, expected a timestamp in the deregistration event")
 		}
-		if event.GetUUID().String() == "00000000-0000-0000-0000-000000000000" {
+		if event.GetUUID() == uuid.Nil {
 			t.Fatal("event UUID is nil")
 		}
 	})
