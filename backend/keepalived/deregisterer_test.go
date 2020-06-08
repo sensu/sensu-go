@@ -68,6 +68,9 @@ func TestDeregistrationHandler(t *testing.T) {
 		if event.Timestamp == 0 {
 			t.Fatal("event timestamp is nil, expected a timestamp in the deregistration event")
 		}
+		if event.GetUUID().String() == "00000000-0000-0000-0000-000000000000" {
+			t.Fatal("event UUID is nil")
+		}
 	})
 
 	assert.NoError(adapter.Deregister(entity))
