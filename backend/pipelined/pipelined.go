@@ -171,6 +171,7 @@ func (p *Pipelined) createPipelines(count int, channel chan interface{}) {
 					if !ok {
 						continue
 					}
+
 					ctx, cancel := context.WithCancel(context.Background())
 					err := pipeline.HandleEvent(ctx, event)
 					cancel()
