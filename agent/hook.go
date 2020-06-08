@@ -3,6 +3,7 @@ package agent
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -27,12 +28,12 @@ func (a *Agent) ExecuteHooks(ctx context.Context, request *corev2.CheckRequest, 
 			// run all the hooks of that type
 			for _, hookName := range hookList.Hooks {
 				hookConfig := getHookConfig(hookName, request.Hooks)
+				if hookConfig == nil {
+					hookConfig = errorHookConfig(a.config.Namespace, hookName, errors.New("missing hook config"))
+				}
 				origCommand := hookConfig.Command
-				if ok := a.prepareHook(hookConfig); !ok {
-					// An error occured during the preparation of the hook and the error
-					// has been sent back to the server. At this point we should not
-					// execute the hook and wait for the next check request
-					continue
+				if err := a.prepareHook(hookConfig); err != nil {
+					hookConfig = errorHookConfig(hookConfig.Namespace, hookConfig.Name, err)
 				}
 				// Do not duplicate hook execution for types that fall into both an exit
 				// code and severity (ex. 0, ok)
@@ -48,6 +49,19 @@ func (a *Agent) ExecuteHooks(ctx context.Context, request *corev2.CheckRequest, 
 		}
 	}
 	return executedHooks
+}
+
+// errorHookConfig will return a hookConfig that will echo its error argument
+// and exit status 2.
+func errorHookConfig(namespace, name string, err error) *corev2.HookConfig {
+	return &corev2.HookConfig{
+		ObjectMeta: corev2.ObjectMeta{
+			Namespace: namespace,
+			Name:      name,
+		},
+		Command: fmt.Sprintf("echo 'hook %s: %s'; exit 2", name, err),
+		Timeout: 5,
+	}
 }
 
 func (a *Agent) executeHook(ctx context.Context, hookConfig *corev2.HookConfig, event *corev2.Event, hookAssets map[string]*corev2.AssetList) *corev2.Hook {
@@ -147,28 +161,21 @@ func (a *Agent) executeHook(ctx context.Context, hookConfig *corev2.HookConfig, 
 	return hook
 }
 
-func (a *Agent) prepareHook(hookConfig *corev2.HookConfig) bool {
+func (a *Agent) prepareHook(hookConfig *corev2.HookConfig) error {
 	if hookConfig == nil {
-		return false
-	}
-
-	// Instantiate an event in case of failure
-	event := &corev2.Event{
-		Check: &corev2.Check{},
+		return errors.New("nil hook config")
 	}
 
 	// Validate that the given hook is valid.
 	if err := hookConfig.Validate(); err != nil {
-		a.sendFailure(event, fmt.Errorf("given hook is invalid: %s", err))
-		return false
+		return fmt.Errorf("hook %q is invalid: %s", hookConfig.Name, err)
 	}
 
 	if err := token.SubstituteHook(hookConfig, a.getAgentEntity()); err != nil {
-		a.sendFailure(event, fmt.Errorf("error while substituting hook config tokens: %s", err))
-		return false
+		return fmt.Errorf("hook %q: error doing token substitution: %s", hookConfig.Name, err)
 	}
 
-	return true
+	return nil
 }
 
 func getHookConfig(hookName string, hookList []corev2.HookConfig) *corev2.HookConfig {

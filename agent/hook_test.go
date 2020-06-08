@@ -2,6 +2,7 @@ package agent
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	time "github.com/echlebek/timeproxy"
@@ -86,8 +87,6 @@ func TestExecuteHooks_GH3379(t *testing.T) {
 }
 
 func TestPrepareHook(t *testing.T) {
-	assert := assert.New(t)
-
 	config, cleanup := FixtureConfig()
 	defer cleanup()
 	agent, err := NewAgent(config)
@@ -96,16 +95,22 @@ func TestPrepareHook(t *testing.T) {
 	}
 
 	// nil hook
-	assert.False(agent.prepareHook(nil))
+	if err := agent.prepareHook(nil); err == nil {
+		t.Error("expected non-nil error")
+	}
 
 	// Invalid hook
 	hook := types.FixtureHookConfig("hook")
 	hook.Command = ""
-	assert.False(agent.prepareHook(hook))
+	if err := agent.prepareHook(hook); err == nil {
+		t.Error("expected non-nil error")
+	}
 
 	// Valid check
 	hook.Command = "{{ .name }}"
-	assert.True(agent.prepareHook(hook))
+	if err := agent.prepareHook(hook); err != nil {
+		t.Error(err)
+	}
 }
 
 func TestHookInList(t *testing.T) {
@@ -150,5 +155,12 @@ func TestHookInList(t *testing.T) {
 			in := hookInList(tc.hookName, tc.hookList)
 			assert.Equal(tc.expected, in)
 		})
+	}
+}
+
+func TestErrorHookConfig(t *testing.T) {
+	hc := errorHookConfig("default", "agent", errors.New("it ain't work"))
+	if err := hc.Validate(); err != nil {
+		t.Fatal(err)
 	}
 }
