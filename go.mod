@@ -74,5 +74,4 @@ require (
 	gopkg.in/h2non/filetype.v1 v1.0.3
 	gopkg.in/yaml.v2 v2.3.0
 	gotest.tools v2.2.0+incompatible // indirect
-	sigs.k8s.io/yaml v1.1.0
 )

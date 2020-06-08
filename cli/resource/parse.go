@@ -10,9 +10,9 @@ import (
 	"os"
 	"regexp"
 
+	"github.com/ghodss/yaml"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/types"
-	"sigs.k8s.io/yaml"
 )
 
 // Parse is a rather heroic function that will parse any number of valid
