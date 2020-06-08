@@ -57,7 +57,7 @@ func TestExecuteHook(t *testing.T) {
 	assert.Equal("hello", hook.Output)
 }
 
-func TestExecuteHooks_GH3379(t *testing.T) {
+func TestExecuteHooks_GH3779(t *testing.T) {
 	cfg, cleanup := FixtureConfig()
 	defer cleanup()
 	ag, err := NewAgent(cfg)
