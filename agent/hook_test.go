@@ -4,6 +4,8 @@ import (
 	"context"
 	"testing"
 
+	time "github.com/echlebek/timeproxy"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/testing/mockexecutor"
 
@@ -52,6 +54,35 @@ func TestExecuteHook(t *testing.T) {
 	assert.NotZero(hook.Executed)
 	assert.Equal(int32(0), hook.Status)
 	assert.Equal("hello", hook.Output)
+}
+
+func TestExecuteHooks_GH3379(t *testing.T) {
+	cfg, cleanup := FixtureConfig()
+	defer cleanup()
+	ag, err := NewAgent(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := &corev2.CheckRequest{
+		Config: corev2.FixtureCheckConfig("foo"),
+		// Deliberately set hooks to nil
+		Hooks:  nil,
+		Issued: time.Now().Unix(),
+	}
+	request.Config.CheckHooks = []corev2.HookList{
+		{
+			Hooks: []string{
+				"doesnotexist",
+			},
+			Type: "ok",
+		},
+	}
+	event := corev2.FixtureEvent("foo", "foo")
+	assets := make(map[string]*corev2.AssetList)
+	hooks := ag.ExecuteHooks(context.Background(), request, event, assets)
+	if got, want := len(hooks), 1; got != want {
+		t.Fatal("expected 1 hook")
+	}
 }
 
 func TestPrepareHook(t *testing.T) {
