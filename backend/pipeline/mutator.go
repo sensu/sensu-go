@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -19,7 +18,6 @@ import (
 // mutateEvent mutates (transforms) a Sensu event into a serialized
 // format (byte slice) to be provided to a Sensu event handler.
 func (p *Pipeline) mutateEvent(handler *corev2.Handler, event *corev2.Event) ([]byte, error) {
-	fmt.Printf("mutateEvent event timestamp: #%v\n", event.Timestamp)
 	// Prepare log entry
 	fields := utillogging.EventFields(event, false)
 	fields["handler"] = handler.Name
