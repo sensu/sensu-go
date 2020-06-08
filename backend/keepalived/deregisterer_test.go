@@ -3,6 +3,7 @@ package keepalived
 import (
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/sensu/sensu-go/backend/store"
 
 	"github.com/sensu/sensu-go/backend/messaging"
@@ -65,6 +66,12 @@ func TestDeregistrationHandler(t *testing.T) {
 	mockBus.On("Publish", messaging.TopicEvent, mock.Anything).Return(nil).Run(func(args mock.Arguments) {
 		event := args[1].(*types.Event)
 		assert.Equal("deregistration", event.Entity.Deregistration.Handler)
+		if event.Timestamp == 0 {
+			t.Fatal("event timestamp is nil, expected a timestamp in the deregistration event")
+		}
+		if event.GetUUID() == uuid.Nil {
+			t.Fatal("event UUID is nil")
+		}
 	})
 
 	assert.NoError(adapter.Deregister(entity))

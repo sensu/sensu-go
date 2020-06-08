@@ -33,6 +33,7 @@ entities.
 components are disabled.
 - Fixed an issue where a GraphQL query could fail when querying a namespace
 containing event data in excess of 2GBs.
+- Deregistration events now contain a timestamp.
 
 ## [5.20.2] - 2020-05-26
 
