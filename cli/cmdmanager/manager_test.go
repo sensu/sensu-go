@@ -717,21 +717,61 @@ func TestCommandManager_ExecCommand(t *testing.T) {
 
 func TestCommandManager_commandAbsolutePath(t *testing.T) {
 	tests := []struct {
-		name string
-	}{}
+		name     string
+		command  *asset.RuntimeAsset
+		expected string
+	}{
+		{
+			name:     "",
+			command:  &asset.RuntimeAsset{Path: "/some/path"},
+			expected: "/some/path/bin/entrypoint",
+		},
+	}
 
 	for _, tt := range tests {
-		_ = tt
+		t.Run(tt.name, func(t *testing.T) {
+			if got := commandAbsolutePath(tt.command); got != tt.expected {
+				t.Errorf("expected %s, got %s", tt.expected, got)
+			}
+		})
 	}
 }
 
 func TestCommandManager_commandEnvironment(t *testing.T) {
 	tests := []struct {
-		name string
-	}{}
+		name          string
+		command       *asset.RuntimeAsset
+		additionalEnv []string
+		expected      []string
+	}{
+		{
+			name: "additional env is passed through",
+			command: &asset.RuntimeAsset{
+				Name: "command",
+				Path: "/some/path",
+			},
+			additionalEnv: []string{"MY_VAR=value", "MY_OTHER_VAR=value"},
+		},
+	}
 
 	for _, tt := range tests {
-		_ = tt
+		t.Run(tt.name, func(t *testing.T) {
+			got := commandEnvironment(tt.command, tt.additionalEnv)
+
+			count := 0
+			for _, x := range tt.additionalEnv {
+				for _, y := range got {
+					if x == y {
+						count++
+						break
+					}
+				}
+			}
+
+			if count != len(tt.additionalEnv) {
+				t.Errorf("Expected %d additional env vars, got %d", len(tt.additionalEnv), count)
+			}
+		})
 	}
 }
 

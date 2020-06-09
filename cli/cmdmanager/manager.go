@@ -268,7 +268,6 @@ func commandAbsolutePath(command *asset.RuntimeAsset) string {
 func commandEnvironment(command *asset.RuntimeAsset, additionalEnv []string) []string {
 	env := environment.MergeEnvironments(os.Environ(), additionalEnv)
 	env = environment.MergeEnvironments(env, command.Env())
-
 	return env
 }
 
