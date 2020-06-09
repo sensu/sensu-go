@@ -3,7 +3,6 @@ module github.com/sensu/sensu-go
 go 1.13
 
 replace (
-	github.com/fsnotify/fsnotify => github.com/sensu/fsnotify v1.4.8-0.20191126053121-0adce4777482
 	github.com/sensu/sensu-go/api/core/v2 => ./api/core/v2
 	github.com/sensu/sensu-go/api/core/v3 => ./api/core/v3
 	github.com/sensu/sensu-go/types => ./types
@@ -64,7 +63,6 @@ require (
 	github.com/sensu/sensu-go/types v0.1.0
 	github.com/shirou/gopsutil v0.0.0-20190901111213-e4ec7b275ada
 	github.com/sirupsen/logrus v1.6.0
-	github.com/spf13/afero v1.2.3-0.20200531133823-1524d0a48baf // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.2

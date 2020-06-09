@@ -17,7 +17,6 @@ reset-password`
 hash, in place of the cleartext password
 - Added the beginnings of the core/v3 API.
 - Added automatically generated tests for the core/v2 API.
-- Added suport for the `aix/ppc64` platform.
 
 ### Changed
 - `sensu-agent`'s default log level is now `info` instead of `warn`.
