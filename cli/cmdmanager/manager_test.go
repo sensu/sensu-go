@@ -17,11 +17,9 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/bonsai"
-	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/testing/mockassetgetter"
 	"github.com/sensu/sensu-go/testing/mockexecutor"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/util/environment"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	bolt "go.etcd.io/bbolt"
@@ -617,7 +615,6 @@ func TestCommandManager_ExecCommand(t *testing.T) {
 	}
 	defer m.db.Close()
 
-	assetPath := "/path/to/asset"
 	alias := "testalias"
 	checksum := "2842ea31d1b9b68f25a76a3a323f9b480a6e8a499729cbd7d9ff42dd15a233951bfd7b1b14667edad979324476c9f9127ec74662795f37210291d5803d7647db"
 	testAsset := corev2.Asset{
@@ -683,136 +680,6 @@ func TestCommandManager_ExecCommand(t *testing.T) {
 					Return(nilRuntimeAsset, nil)
 			},
 		},
-		{
-			name:     "executor failure",
-			alias:    alias,
-			wantErr:  true,
-			errMatch: "executor failure",
-			assetGetterFunc: func(m *mockassetgetter.MockAssetGetter) {
-				runtimeAsset := asset.RuntimeAsset{
-					Path:   assetPath,
-					SHA512: checksum,
-				}
-				m.On("Get", ctx, &testAsset).
-					Return(&runtimeAsset, nil)
-			},
-			executorFunc: func(m *mockexecutor.MockExecutor) {
-				m.Return(nil, errors.New("executor failure"))
-			},
-		},
-		{
-			name:  "executor success without args",
-			alias: alias,
-			commandEnv: []string{
-				"EXAMPLE_SENSU_ENV_VAR=1234",
-			},
-			assetGetterFunc: func(m *mockassetgetter.MockAssetGetter) {
-				runtimeAsset := asset.RuntimeAsset{
-					Path:   assetPath,
-					SHA512: checksum,
-				}
-				m.On("Get", ctx, &testAsset).
-					Return(&runtimeAsset, nil)
-			},
-			executorFunc: func(m *mockexecutor.MockExecutor) {
-				executionResponse := command.FixtureExecutionResponse(0, "success\n")
-				m.Return(executionResponse, nil)
-			},
-			executionRequestFunc: func(c context.Context, execution command.ExecutionRequest) {
-				runtimeAsset := asset.RuntimeAsset{
-					Path:   assetPath,
-					SHA512: checksum,
-				}
-
-				commandEnv := []string{
-					"EXAMPLE_SENSU_ENV_VAR=1234",
-				}
-				env := environment.MergeEnvironments(os.Environ(), commandEnv)
-				env = environment.MergeEnvironments(env, runtimeAsset.Env())
-
-				assert.Equal(t, ctx, c)
-				assert.Equal(t, alias, execution.Name)
-				assert.Equal(t, "entrypoint", execution.Command)
-				assert.Equal(t, 30, execution.Timeout)
-				assert.Equal(t, env, execution.Env)
-			},
-		},
-		{
-			name:  "executor success with args",
-			alias: alias,
-			args:  []string{"arg1", "arg2"},
-			assetGetterFunc: func(m *mockassetgetter.MockAssetGetter) {
-				runtimeAsset := asset.RuntimeAsset{
-					Path:   assetPath,
-					SHA512: checksum,
-				}
-				m.On("Get", ctx, &testAsset).
-					Return(&runtimeAsset, nil)
-			},
-			executorFunc: func(m *mockexecutor.MockExecutor) {
-				executionResponse := command.FixtureExecutionResponse(0, "success\n")
-				m.Return(executionResponse, nil)
-			},
-			executionRequestFunc: func(c context.Context, execution command.ExecutionRequest) {
-				assert.Equal(t, "entrypoint 'arg1' 'arg2'", execution.Command)
-			},
-		},
-		{
-			name:  "executor success with args with spaces",
-			alias: alias,
-			args:  []string{"this is arg1", "this is arg2"},
-			assetGetterFunc: func(m *mockassetgetter.MockAssetGetter) {
-				runtimeAsset := asset.RuntimeAsset{
-					Path:   assetPath,
-					SHA512: checksum,
-				}
-				m.On("Get", ctx, &testAsset).
-					Return(&runtimeAsset, nil)
-			},
-			executorFunc: func(m *mockexecutor.MockExecutor) {
-				executionResponse := command.FixtureExecutionResponse(0, "success\n")
-				m.Return(executionResponse, nil)
-			},
-			executionRequestFunc: func(c context.Context, execution command.ExecutionRequest) {
-				assert.Equal(t, "entrypoint 'this is arg1' 'this is arg2'", execution.Command)
-			},
-		},
-		// NOTE: This is a problematic case because even if we generate a
-		// command line that looks like it would work, we can't have single
-		// quotes within single quotes. It will just generate unpredictable
-		// results.
-		//
-		// One promising solution is to escape "special characters" as defined
-		// by POSIX instead:
-		// sh -c "entrypoint --command echo\ \'test\ test\'\ \|\ wc"
-		// See section 2.2:
-		// https://pubs.opengroup.org/onlinepubs/009695399/utilities/xcu_chap02.html
-		//
-		// The github.com/Wing924/shellwords library tries to do just that.
-		//
-		// This should always work. The big question is: does it work on
-		// Windows? Of course not; on Windows the escape charater is ^, except
-		// when it isn't.
-		{
-			name:  "problematic case",
-			alias: alias,
-			args:  []string{"--command", "echo 'test test'"},
-			assetGetterFunc: func(m *mockassetgetter.MockAssetGetter) {
-				runtimeAsset := asset.RuntimeAsset{
-					Path:   assetPath,
-					SHA512: checksum,
-				}
-				m.On("Get", ctx, &testAsset).
-					Return(&runtimeAsset, nil)
-			},
-			executorFunc: func(m *mockexecutor.MockExecutor) {
-				executionResponse := command.FixtureExecutionResponse(0, "success\n")
-				m.Return(executionResponse, nil)
-			},
-			executionRequestFunc: func(c context.Context, execution command.ExecutionRequest) {
-				assert.Equal(t, "entrypoint '--command' 'echo 'test test''", execution.Command)
-			},
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -846,4 +713,40 @@ func TestCommandManager_ExecCommand(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCommandManager_commandAbsolutePath(t *testing.T) {
+	tests := []struct {
+		name string
+	}{}
+
+	for _, tt := range tests {
+		_ = tt
+	}
+}
+
+func TestCommandManager_commandEnvironment(t *testing.T) {
+	tests := []struct {
+		name string
+	}{}
+
+	for _, tt := range tests {
+		_ = tt
+	}
+}
+
+func TestCommandManager_prepareCommand(t *testing.T) {
+	entrypoint := "/some/path"
+	args := []string{"a", "b", "c"}
+	env := []string{"A=a", "B=b", "C=c"}
+
+	c := prepareCommand(context.Background(), entrypoint, args, env)
+
+	assert.Equal(t, c.Path, entrypoint)
+	assert.Equal(t, c.Args[0], entrypoint)
+	assert.Equal(t, c.Args[1:], args)
+	assert.Equal(t, c.Env, env)
+	assert.Equal(t, c.Stdin, os.Stdin)
+	assert.Equal(t, c.Stdout, os.Stdout)
+	assert.Equal(t, c.Stderr, os.Stderr)
 }

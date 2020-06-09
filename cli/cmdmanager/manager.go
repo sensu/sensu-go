@@ -247,25 +247,40 @@ func (m *CommandManager) ExecCommand(ctx context.Context, alias string, args []s
 		return errors.New("no asset filters were matched")
 	}
 
-	entrypoint := path.Join(runtimeAsset.BinDir(), commandName)
-
-	env := environment.MergeEnvironments(os.Environ(), commandEnv)
-	env = environment.MergeEnvironments(env, runtimeAsset.Env())
-
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 
-	p := exec.CommandContext(ctx, entrypoint, args...)
-	p.Env = env
-	p.Stdin = os.Stdin
-	p.Stdout = os.Stdout
-	p.Stderr = os.Stderr
+	entrypoint := commandAbsolutePath(runtimeAsset)
+	env := commandEnvironment(runtimeAsset, commandEnv)
 
+	p := prepareCommand(ctx, entrypoint, args, env)
 	if err := p.Run(); err != nil {
 		return err
 	}
 
 	return nil
+}
+
+func commandAbsolutePath(command *asset.RuntimeAsset) string {
+	return path.Join(command.BinDir(), commandName)
+}
+
+func commandEnvironment(command *asset.RuntimeAsset, additionalEnv []string) []string {
+	env := environment.MergeEnvironments(os.Environ(), additionalEnv)
+	env = environment.MergeEnvironments(env, command.Env())
+
+	return env
+}
+
+func prepareCommand(ctx context.Context, path string, args, env []string) *exec.Cmd {
+	p := exec.CommandContext(ctx, path, args...)
+	p.Env = env
+
+	p.Stdin = os.Stdin
+	p.Stdout = os.Stdout
+	p.Stderr = os.Stderr
+
+	return p
 }
 
 func (m *CommandManager) registerCommandPlugin(alias string, commandAsset *corev2.Asset) error {
