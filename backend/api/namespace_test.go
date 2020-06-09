@@ -7,6 +7,7 @@ import (
 
 	"github.com/sensu/sensu-go/backend/authorization"
 	"github.com/sensu/sensu-go/backend/authorization/rbac"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/mock"
 
@@ -736,23 +737,23 @@ func TestNamespaceList(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.Name, func(t *testing.T) {
-			store := new(mockstore.MockStore)
-			store.On("ListClusterRoles", mock.Anything, mock.Anything).Return(test.ClusterRoles, nil)
-			store.On("ListClusterRoleBindings", mock.Anything, mock.Anything).Return(test.ClusterRoleBindings, nil)
-			store.On("ListRoles", mock.Anything, mock.Anything).Return(test.Roles, nil)
-			store.On("ListRoleBindings", mock.Anything, mock.Anything).Return(test.RoleBindings, nil)
-			store.On("ListResources", mock.Anything, corev2.NamespacesResource, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+			s := new(mockstore.MockStore)
+			s.On("ListClusterRoles", mock.Anything, mock.Anything).Return(test.ClusterRoles, nil)
+			s.On("ListClusterRoleBindings", mock.Anything, mock.Anything).Return(test.ClusterRoleBindings, nil)
+			s.On("ListRoles", mock.Anything, mock.Anything).Return(test.Roles, nil)
+			s.On("ListRoleBindings", mock.Anything, mock.Anything).Return(test.RoleBindings, nil)
+			s.On("ListResources", mock.Anything, corev2.NamespacesResource, mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 				resources := args[2].(*[]*corev2.Namespace)
 				*resources = append(*resources, test.AllNamespaces...)
 			}).Return(nil)
-			setupGetClusterRoleAndGetRole(store, test.ClusterRoles, test.Roles)
+			setupGetClusterRoleAndGetRole(s, test.ClusterRoles, test.Roles)
 
 			ctx := contextWithUser(defaultContext(), test.Attrs.User.Username, test.Attrs.User.Groups)
 
-			auth := &rbac.Authorizer{Store: store}
-			client := NewNamespaceClient(store, auth)
+			auth := &rbac.Authorizer{Store: s}
+			client := NewNamespaceClient(s, auth)
 
-			got, err := client.ListNamespaces(ctx)
+			got, err := client.ListNamespaces(ctx, &store.SelectionPredicate{})
 			if (err != nil) != test.WantErr {
 				t.Errorf("NamespaceClient.ListNamespaces() error = %v, wantErr %v", err, test.WantErr)
 				return

@@ -55,7 +55,7 @@ func TestViewerTypeNamespacesField(t *testing.T) {
 	params.Context = contextWithLoadersNoCache(context.Background(), cfg)
 
 	// Success
-	client.On("ListNamespaces", mock.Anything).Return([]*corev2.Namespace{nsp}, nil).Once()
+	client.On("ListNamespaces", mock.Anything, mock.Anything).Return([]*corev2.Namespace{nsp}, nil).Once()
 	res, err := impl.Namespaces(params)
 	require.NoError(t, err)
 	assert.NotEmpty(t, res)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
@@ -75,9 +76,16 @@ func (d *Deregistration) Deregister(entity *types.Entity) error {
 			Status:        1,
 		}
 
+		id, err := uuid.NewRandom()
+		if err != nil {
+			return err
+		}
+
 		deregistrationEvent := &types.Event{
-			Entity: entity,
-			Check:  deregistrationCheck,
+			Entity:    entity,
+			Check:     deregistrationCheck,
+			ID:        id[:],
+			Timestamp: time.Now().Unix(),
 		}
 
 		return d.MessageBus.Publish(messaging.TopicEvent, deregistrationEvent)
