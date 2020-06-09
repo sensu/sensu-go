@@ -93,9 +93,6 @@ func TestWrapResourceSimple(t *testing.T) {
 	if got, want := unwrapped, resource; !reflect.DeepEqual(got, want) {
 		t.Errorf("bad resource: got %v, want %v", got, want)
 	}
-	if got, want := unwrapped.GetMetadata(), wrapper.GetObjectMeta(); got != want {
-		t.Errorf("wrapper metadata and resource metadata differ: got %p, want %p", got, want)
-	}
 }
 
 func TestWrapResourceOptions(t *testing.T) {

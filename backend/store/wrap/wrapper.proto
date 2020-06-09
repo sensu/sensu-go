@@ -30,15 +30,12 @@ message Wrapper {
   // TypeMeta contains the type and the API version of the resource.
   sensu.core.v2.TypeMeta TypeMeta = 1 [ (gogoproto.nullable) = true ];
 
-  // ObjectMeta contains the name and namespace of the resource.
-  sensu.core.v2.ObjectMeta ObjectMeta = 2 [ (gogoproto.nullable) = true ];
-
   // Encoding is the type of serialization used.
-  Encoding encoding = 3;
+  Encoding encoding = 2;
 
   // Compression is the type of compression used.
-  Compression compression = 4;
+  Compression compression = 3;
 
   // Value contains the encoded resource value
-  bytes value = 5;
+  bytes value = 4;
 }

@@ -3,6 +3,7 @@ package v3
 // automatically generated file, do not edit!
 
 import (
+	"reflect"
 	"testing"
 )
 

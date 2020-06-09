@@ -133,8 +133,7 @@ func Resource(r corev3.Resource, opts ...Option) (*Wrapper, error) {
 		}
 	}
 	w := Wrapper{
-		TypeMeta:   &tm,
-		ObjectMeta: r.GetMetadata(),
+		TypeMeta: &tm,
 	}
 	opts = append([]Option{EncodeDefault, CompressDefault}, opts...)
 	for _, opt := range opts {
@@ -165,21 +164,6 @@ func (w *Wrapper) Unwrap() (corev3.Resource, error) {
 		return nil, errors.New("only v3 resources are compatible with store wrappers")
 	}
 	resource := proxy.Resource
-	metadata := resource.GetMetadata()
-	if metadata == nil {
-		metadata = w.ObjectMeta
-	}
-	if metadata == nil {
-		metadata = &corev2.ObjectMeta{}
-	}
-	if metadata.Labels == nil {
-		metadata.Labels = make(map[string]string)
-	}
-	if metadata.Annotations == nil {
-		metadata.Annotations = make(map[string]string)
-	}
-	resource.SetMetadata(metadata)
-	w.ObjectMeta = metadata
 	message, err := w.Compression.Decompress(w.Value)
 	if err != nil {
 		return nil, fmt.Errorf("error unwrapping %T: %s", resource, err)
