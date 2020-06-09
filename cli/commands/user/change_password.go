@@ -20,7 +20,7 @@ var (
 )
 
 type passwordOpts struct {
-	Current string `survey:"current-password`
+	Current string `survey:"current-password"`
 	New     string `survey:"new-password"`
 	Confirm string `survey:"confirm-password"`
 }
