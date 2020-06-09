@@ -19,6 +19,8 @@ hash, in place of the cleartext password
 
 ### Changed
 - `sensu-agent`'s default log level is now `info` instead of `warn`.
+- `sensuctl command exec` now spawns the plugin directly instead of going
+  through a sub-shell.
 
 ### Fixed
 - The password verification logic when running `sensuctl user change-password`
