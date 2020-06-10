@@ -6,7 +6,7 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 
-## Unreleased
+## [5.21.0] - 2020-06-10
 
 ### Added
 - Added `SENSU_LICENSE_FILE` environment variable to handler executions.
