@@ -6,7 +6,7 @@ and this project adheres to [Semantic
 Versioning](http://semver.org/spec/v2.0.0.html).
 
 
-## Unreleased
+## [5.21.0] - 2020-06-10
 
 ### Added
 - Added `SENSU_LICENSE_FILE` environment variable to handler executions.
@@ -20,6 +20,8 @@ hash, in place of the cleartext password
 
 ### Changed
 - `sensu-agent`'s default log level is now `info` instead of `warn`.
+- `sensuctl command exec` now spawns the plugin directly instead of going
+  through a sub-shell.
 - Upgrade gostatsd to 20.3.2.
 
 ### Fixed

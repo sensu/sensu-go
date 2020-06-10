@@ -23,7 +23,7 @@ import (
 const packageURL = "https://s3.us-west-2.amazonaws.com/sensu-ci-web-builds"
 const packagePathPrefix = "oss/webapp"
 const packageFilename = "dashboard.tgz"
-const packageBranch = "master"
+const packageBranch = "embedded"
 
 const filenamePrefix = "assets_"
 

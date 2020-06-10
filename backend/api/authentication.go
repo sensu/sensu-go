@@ -152,7 +152,7 @@ func (a *AuthenticationClient) RefreshAccessToken(ctx context.Context) (*corev2.
 
 	return &corev2.Tokens{
 		Access:    accessTokenString,
-		ExpiresAt: accessClaims.ExpiresAt,
+		ExpiresAt: claims.ExpiresAt,
 		Refresh:   refreshTokenString,
 	}, nil
 }
