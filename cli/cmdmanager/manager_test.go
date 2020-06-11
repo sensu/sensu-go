@@ -716,6 +716,11 @@ func TestCommandManager_ExecCommand(t *testing.T) {
 }
 
 func TestCommandManager_commandAbsolutePath(t *testing.T) {
+	basePath, err := filepath.Abs(filepath.Join("some", "path"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	tests := []struct {
 		name     string
 		command  *asset.RuntimeAsset
@@ -723,8 +728,8 @@ func TestCommandManager_commandAbsolutePath(t *testing.T) {
 	}{
 		{
 			name:     "",
-			command:  &asset.RuntimeAsset{Path: "/some/path"},
-			expected: "/some/path/bin/entrypoint",
+			command:  &asset.RuntimeAsset{Path: basePath},
+			expected: filepath.Join(basePath, "bin", "entrypoint"),
 		},
 	}
 
@@ -748,7 +753,6 @@ func TestCommandManager_commandEnvironment(t *testing.T) {
 			name: "additional env is passed through",
 			command: &asset.RuntimeAsset{
 				Name: "command",
-				Path: "/some/path",
 			},
 			additionalEnv: []string{"MY_VAR=value", "MY_OTHER_VAR=value"},
 		},
