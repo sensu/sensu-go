@@ -6,8 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
+	"path"
 	"path/filepath"
-	"strings"
 	"sync"
 	"time"
 
@@ -18,7 +19,7 @@ import (
 	"github.com/sensu/sensu-go/system"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sensu/sensu-go/util/environment"
-	"github.com/sensu/sensu-go/util/path"
+	sensupath "github.com/sensu/sensu-go/util/path"
 
 	goversion "github.com/hashicorp/go-version"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -98,7 +99,7 @@ func NewCommandManager(cli *cli.SensuCli) (*CommandManager, error) {
 		executor:     command.NewExecutor(),
 	}
 
-	cacheDir := path.UserCacheDir("sensuctl")
+	cacheDir := sensupath.UserCacheDir("sensuctl")
 
 	entity, err := getEntity()
 	if err != nil {
@@ -201,7 +202,7 @@ func (m *CommandManager) InstallCommandFromURL(alias, archiveURL, checksum strin
 	}
 	asset := corev2.Asset{
 		Builds: []*corev2.AssetBuild{
-			&corev2.AssetBuild{
+			{
 				URL:    archiveURL,
 				Sha512: checksum,
 			},
@@ -246,26 +247,39 @@ func (m *CommandManager) ExecCommand(ctx context.Context, alias string, args []s
 		return errors.New("no asset filters were matched")
 	}
 
-	env := environment.MergeEnvironments(os.Environ(), commandEnv)
-	env = environment.MergeEnvironments(env, runtimeAsset.Env())
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
 
-	commandWithArgs := append([]string{commandName}, args...)
+	entrypoint := commandAbsolutePath(runtimeAsset)
+	env := commandEnvironment(runtimeAsset, commandEnv)
 
-	ex := command.ExecutionRequest{
-		Env:     env,
-		Command: strings.Join(commandWithArgs, " "),
-		Timeout: 30,
-		Name:    commandPlugin.Alias,
-	}
-
-	checkExec, err := m.executor.Execute(ctx, ex)
-	if err != nil {
+	p := prepareCommand(ctx, entrypoint, args, env)
+	if err := p.Run(); err != nil {
 		return err
-	} else {
-		fmt.Printf(checkExec.Output)
 	}
 
 	return nil
+}
+
+func commandAbsolutePath(command *asset.RuntimeAsset) string {
+	return path.Join(command.BinDir(), commandName)
+}
+
+func commandEnvironment(command *asset.RuntimeAsset, additionalEnv []string) []string {
+	env := environment.MergeEnvironments(os.Environ(), additionalEnv)
+	env = environment.MergeEnvironments(env, command.Env())
+	return env
+}
+
+func prepareCommand(ctx context.Context, path string, args, env []string) *exec.Cmd {
+	p := exec.CommandContext(ctx, path, args...)
+	p.Env = env
+
+	p.Stdin = os.Stdin
+	p.Stdout = os.Stdout
+	p.Stderr = os.Stderr
+
+	return p
 }
 
 func (m *CommandManager) registerCommandPlugin(alias string, commandAsset *corev2.Asset) error {

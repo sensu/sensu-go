@@ -18,6 +18,7 @@ import (
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"golang.org/x/time/rate"
 )
 
 // GetMetricsAddr gets the metrics address of the statsd server.
@@ -52,6 +53,7 @@ func NewStatsdServer(a *Agent) *statsd.Server {
 func NewServer() *statsd.Server {
 	return &statsd.Server{
 		Backends:            []gostatsd.Backend{},
+		Limiter:             rate.NewLimiter(statsd.DefaultMaxCloudRequests, statsd.DefaultBurstCloudRequests),
 		InternalTags:        statsd.DefaultInternalTags,
 		InternalNamespace:   statsd.DefaultInternalNamespace,
 		DefaultTags:         statsd.DefaultTags,
@@ -69,8 +71,13 @@ func NewServer() *statsd.Server {
 		ConnPerReader:       statsd.DefaultConnPerReader,
 		HeartbeatEnabled:    statsd.DefaultHeartbeatEnabled,
 		ReceiveBatchSize:    statsd.DefaultReceiveBatchSize,
-		ServerMode:          statsd.DefaultServerMode,
-		Viper:               viper.New(),
+		CacheOptions: statsd.CacheOptions{
+			CacheRefreshPeriod:        statsd.DefaultCacheRefreshPeriod,
+			CacheEvictAfterIdlePeriod: statsd.DefaultCacheEvictAfterIdlePeriod,
+			CacheTTL:                  statsd.DefaultCacheTTL,
+			CacheNegativeTTL:          statsd.DefaultCacheNegativeTTL,
+		},
+		Viper: viper.New(),
 	}
 }
 

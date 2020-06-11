@@ -17,11 +17,9 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/bonsai"
-	"github.com/sensu/sensu-go/command"
 	"github.com/sensu/sensu-go/testing/mockassetgetter"
 	"github.com/sensu/sensu-go/testing/mockexecutor"
 	"github.com/sensu/sensu-go/types"
-	"github.com/sensu/sensu-go/util/environment"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	bolt "go.etcd.io/bbolt"
@@ -617,7 +615,6 @@ func TestCommandManager_ExecCommand(t *testing.T) {
 	}
 	defer m.db.Close()
 
-	assetPath := "/path/to/asset"
 	alias := "testalias"
 	checksum := "2842ea31d1b9b68f25a76a3a323f9b480a6e8a499729cbd7d9ff42dd15a233951bfd7b1b14667edad979324476c9f9127ec74662795f37210291d5803d7647db"
 	testAsset := corev2.Asset{
@@ -683,80 +680,6 @@ func TestCommandManager_ExecCommand(t *testing.T) {
 					Return(nilRuntimeAsset, nil)
 			},
 		},
-		{
-			name:     "executor failure",
-			alias:    alias,
-			wantErr:  true,
-			errMatch: "executor failure",
-			assetGetterFunc: func(m *mockassetgetter.MockAssetGetter) {
-				runtimeAsset := asset.RuntimeAsset{
-					Path:   assetPath,
-					SHA512: checksum,
-				}
-				m.On("Get", ctx, &testAsset).
-					Return(&runtimeAsset, nil)
-			},
-			executorFunc: func(m *mockexecutor.MockExecutor) {
-				m.Return(nil, errors.New("executor failure"))
-			},
-		},
-		{
-			name:  "executor success without args",
-			alias: alias,
-			commandEnv: []string{
-				"EXAMPLE_SENSU_ENV_VAR=1234",
-			},
-			assetGetterFunc: func(m *mockassetgetter.MockAssetGetter) {
-				runtimeAsset := asset.RuntimeAsset{
-					Path:   assetPath,
-					SHA512: checksum,
-				}
-				m.On("Get", ctx, &testAsset).
-					Return(&runtimeAsset, nil)
-			},
-			executorFunc: func(m *mockexecutor.MockExecutor) {
-				executionResponse := command.FixtureExecutionResponse(0, "success\n")
-				m.Return(executionResponse, nil)
-			},
-			executionRequestFunc: func(c context.Context, execution command.ExecutionRequest) {
-				runtimeAsset := asset.RuntimeAsset{
-					Path:   assetPath,
-					SHA512: checksum,
-				}
-
-				commandEnv := []string{
-					"EXAMPLE_SENSU_ENV_VAR=1234",
-				}
-				env := environment.MergeEnvironments(os.Environ(), commandEnv)
-				env = environment.MergeEnvironments(env, runtimeAsset.Env())
-
-				assert.Equal(t, ctx, c)
-				assert.Equal(t, alias, execution.Name)
-				assert.Equal(t, "entrypoint", execution.Command)
-				assert.Equal(t, 30, execution.Timeout)
-				assert.Equal(t, env, execution.Env)
-			},
-		},
-		{
-			name:  "executor success with args",
-			alias: alias,
-			args:  []string{"arg1", "arg2"},
-			assetGetterFunc: func(m *mockassetgetter.MockAssetGetter) {
-				runtimeAsset := asset.RuntimeAsset{
-					Path:   assetPath,
-					SHA512: checksum,
-				}
-				m.On("Get", ctx, &testAsset).
-					Return(&runtimeAsset, nil)
-			},
-			executorFunc: func(m *mockexecutor.MockExecutor) {
-				executionResponse := command.FixtureExecutionResponse(0, "success\n")
-				m.Return(executionResponse, nil)
-			},
-			executionRequestFunc: func(c context.Context, execution command.ExecutionRequest) {
-				assert.Equal(t, "entrypoint arg1 arg2", execution.Command)
-			},
-		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -790,4 +713,80 @@ func TestCommandManager_ExecCommand(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestCommandManager_commandAbsolutePath(t *testing.T) {
+	tests := []struct {
+		name     string
+		command  *asset.RuntimeAsset
+		expected string
+	}{
+		{
+			name:     "",
+			command:  &asset.RuntimeAsset{Path: "/some/path"},
+			expected: "/some/path/bin/entrypoint",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := commandAbsolutePath(tt.command); got != tt.expected {
+				t.Errorf("expected %s, got %s", tt.expected, got)
+			}
+		})
+	}
+}
+
+func TestCommandManager_commandEnvironment(t *testing.T) {
+	tests := []struct {
+		name          string
+		command       *asset.RuntimeAsset
+		additionalEnv []string
+		expected      []string
+	}{
+		{
+			name: "additional env is passed through",
+			command: &asset.RuntimeAsset{
+				Name: "command",
+				Path: "/some/path",
+			},
+			additionalEnv: []string{"MY_VAR=value", "MY_OTHER_VAR=value"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := commandEnvironment(tt.command, tt.additionalEnv)
+
+			count := 0
+			for _, x := range tt.additionalEnv {
+				for _, y := range got {
+					if x == y {
+						count++
+						break
+					}
+				}
+			}
+
+			if count != len(tt.additionalEnv) {
+				t.Errorf("Expected %d additional env vars, got %d", len(tt.additionalEnv), count)
+			}
+		})
+	}
+}
+
+func TestCommandManager_prepareCommand(t *testing.T) {
+	entrypoint := "/some/path"
+	args := []string{"a", "b", "c"}
+	env := []string{"A=a", "B=b", "C=c"}
+
+	c := prepareCommand(context.Background(), entrypoint, args, env)
+
+	assert.Equal(t, c.Path, entrypoint)
+	assert.Equal(t, c.Args[0], entrypoint)
+	assert.Equal(t, c.Args[1:], args)
+	assert.Equal(t, c.Env, env)
+	assert.Equal(t, c.Stdin, os.Stdin)
+	assert.Equal(t, c.Stdout, os.Stdout)
+	assert.Equal(t, c.Stderr, os.Stderr)
 }
