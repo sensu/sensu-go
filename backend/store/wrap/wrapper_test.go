@@ -3,7 +3,6 @@ package wrap_test
 import (
 	"encoding/json"
 	fmt "fmt"
-	"reflect"
 	"testing"
 
 	proto "github.com/golang/protobuf/proto"
@@ -90,8 +89,8 @@ func TestWrapResourceSimple(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, want := unwrapped, resource; !reflect.DeepEqual(got, want) {
-		t.Errorf("bad resource: got %v, want %v", got, want)
+	if got, want := unwrapped.GetMetadata(), resource.GetMetadata(); !proto.Equal(got, want) {
+		t.Errorf("bad resource: got %#v, want %#v", got, want)
 	}
 }
 
@@ -172,14 +171,7 @@ func TestWrapResourceOptions(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			if got, want := resource, test.Resource; !reflect.DeepEqual(got, want) {
-				pa, oka := resource.(proto.Message)
-				pb, okb := test.Resource.(proto.Message)
-				if oka && okb {
-					if proto.Equal(pa, pb) {
-						return
-					}
-				}
+			if got, want := resource.GetMetadata(), test.Resource.GetMetadata(); !proto.Equal(got, want) {
 				t.Errorf("bad resource: got %v, want %v", got, want)
 			}
 		})
