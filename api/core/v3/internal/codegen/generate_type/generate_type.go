@@ -81,7 +81,7 @@ func rvar(name string) string {
 	return strings.ToLower(name[:1])
 }
 
-func storeSuffix(name string) string {
+func storeName(name string) string {
 	return fmt.Sprintf("%ss", snakeCase(name))
 }
 
@@ -92,12 +92,12 @@ func rbacName(name string) string {
 func main() {
 	flag.Parse()
 	tmpl, err := template.New(*tmplPath).Funcs(template.FuncMap{
-		"snakeCase":   snakeCase,
-		"receiver":    receiver,
-		"rvar":        rvar,
-		"storeSuffix": storeSuffix,
-		"rbacName":    rbacName,
-		"kebabCase":   kebabCase,
+		"snakeCase": snakeCase,
+		"receiver":  receiver,
+		"rvar":      rvar,
+		"storeName": storeName,
+		"rbacName":  rbacName,
+		"kebabCase": kebabCase,
 	}).ParseFiles(*tmplPath)
 
 	if err != nil {

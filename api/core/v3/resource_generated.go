@@ -18,9 +18,9 @@ type validator interface {
 	validate() error
 }
 
-// implement storeSuffixer to override StoreSuffix methods
-type storeSuffixer interface {
-	storeSuffix() string
+// implement storeNamer to override StoreName methods
+type storeNamer interface {
+	storeName() string
 }
 
 // implement rbacNamer to override RBACName methods
@@ -57,12 +57,12 @@ func (e *EntityConfig) SetMetadata(meta *corev2.ObjectMeta) {
 	field.Set(reflect.ValueOf(meta))
 }
 
-// StoreSuffix returns the store suffix for EntityConfig. It will be
-// overridden if there is a method for EntityConfig called "storeSuffix".
-func (e *EntityConfig) StoreSuffix() string {
+// StoreName returns the store name for EntityConfig. It will be
+// overridden if there is a method for EntityConfig called "storeName".
+func (e *EntityConfig) StoreName() string {
 	var iface interface{} = e
-	if prefixer, ok := iface.(storeSuffixer); ok {
-		return prefixer.storeSuffix()
+	if prefixer, ok := iface.(storeNamer); ok {
+		return prefixer.storeName()
 	}
 	return "entity_configs"
 }
@@ -163,12 +163,12 @@ func (e *EntityState) SetMetadata(meta *corev2.ObjectMeta) {
 	field.Set(reflect.ValueOf(meta))
 }
 
-// StoreSuffix returns the store suffix for EntityState. It will be
-// overridden if there is a method for EntityState called "storeSuffix".
-func (e *EntityState) StoreSuffix() string {
+// StoreName returns the store name for EntityState. It will be
+// overridden if there is a method for EntityState called "storeName".
+func (e *EntityState) StoreName() string {
 	var iface interface{} = e
-	if prefixer, ok := iface.(storeSuffixer); ok {
-		return prefixer.storeSuffix()
+	if prefixer, ok := iface.(storeNamer); ok {
+		return prefixer.storeName()
 	}
 	return "entity_states"
 }

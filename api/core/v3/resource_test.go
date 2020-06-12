@@ -28,7 +28,7 @@ func (t testResource) SetMetadata(meta *corev2.ObjectMeta) {
 	t.meta = meta
 }
 
-func (t testResource) StoreSuffix() string {
+func (t testResource) StoreName() string {
 	return "test"
 }
 
@@ -62,7 +62,7 @@ func TestV3ToV2Resource(t *testing.T) {
 		t.Errorf("SetNamespace had wrong effect: got Namespace %s, want %s", got, want)
 	}
 
-	if got, want := corev2Resource.StorePrefix(), resource.StoreSuffix(); got != want {
+	if got, want := corev2Resource.StorePrefix(), resource.StoreName(); got != want {
 		t.Errorf("bad StorePrefix: got %s, want %s", got, want)
 	}
 

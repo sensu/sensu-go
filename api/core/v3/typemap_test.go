@@ -59,10 +59,10 @@ func TestResolveEntityConfigByRBACName(t *testing.T) {
 	}
 }
 
-func TestResolveEntityConfigByStoreSuffix(t *testing.T) {
+func TestResolveEntityConfigByStoreName(t *testing.T) {
 	value := new(EntityConfig)
 	var iface interface{} = value
-	resource, err := ResolveResourceByStoreSuffix(value.StoreSuffix())
+	resource, err := ResolveResourceByStoreName(value.StoreName())
 	if _, ok := iface.(Resource); ok {
 		if err != nil {
 			t.Fatal(err)
@@ -137,10 +137,10 @@ func TestResolveEntityStateByRBACName(t *testing.T) {
 	}
 }
 
-func TestResolveEntityStateByStoreSuffix(t *testing.T) {
+func TestResolveEntityStateByStoreName(t *testing.T) {
 	value := new(EntityState)
 	var iface interface{} = value
-	resource, err := ResolveResourceByStoreSuffix(value.StoreSuffix())
+	resource, err := ResolveResourceByStoreName(value.StoreName())
 	if _, ok := iface.(Resource); ok {
 		if err != nil {
 			t.Fatal(err)

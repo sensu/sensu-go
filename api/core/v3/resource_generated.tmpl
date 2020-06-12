@@ -18,9 +18,9 @@ type validator interface {
 	validate() error
 }
 
-// implement storeSuffixer to override StoreSuffix methods
-type storeSuffixer interface {
-	storeSuffix() string
+// implement storeNamer to override StoreName methods
+type storeNamer interface {
+	storeName() string
 }
 
 // implement rbacNamer to override RBACName methods
@@ -58,14 +58,14 @@ func ({{ receiver $typename }}) SetMetadata(meta *corev2.ObjectMeta) {
 	field.Set(reflect.ValueOf(meta))
 }
 
-// StoreSuffix returns the store suffix for {{ $typename }}. It will be
-// overridden if there is a method for {{ $typename }} called "storeSuffix".
-func ({{ receiver $typename }}) StoreSuffix() string {
+// StoreName returns the store name for {{ $typename }}. It will be
+// overridden if there is a method for {{ $typename }} called "storeName".
+func ({{ receiver $typename }}) StoreName() string {
 	var iface interface{} = {{ rvar $typename }}
-	if prefixer, ok := iface.(storeSuffixer); ok {
-		return prefixer.storeSuffix()
+	if prefixer, ok := iface.(storeNamer); ok {
+		return prefixer.storeName()
 	}
-	return "{{ storeSuffix $typename }}"
+	return "{{ storeName $typename }}"
 }
 
 // RBACName returns the RBAC name for {{ $typename }}. It will be overridden if

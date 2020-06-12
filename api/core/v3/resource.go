@@ -18,8 +18,8 @@ type GeneratedType interface {
 	// to set. If the receiver does not have metadata to set, nothing happens.
 	SetMetadata(*corev2.ObjectMeta)
 
-	// StoreSuffix gives the path suffix to this resource type in the store.
-	StoreSuffix() string
+	// StoreName gives the name of the resource as it pertains to a store.
+	StoreName() string
 
 	// RBACName describes the name of the resource for RBAC purposes.
 	RBACName() string
@@ -65,5 +65,5 @@ func (v v2ResourceProxy) SetNamespace(ns string) {
 }
 
 func (v v2ResourceProxy) StorePrefix() string {
-	return v.StoreSuffix()
+	return v.StoreName()
 }

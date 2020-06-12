@@ -60,10 +60,10 @@ func TestResolve{{ $typename }}ByRBACName(t *testing.T) {
 	}
 }
 
-func TestResolve{{ $typename }}ByStoreSuffix(t *testing.T) {
+func TestResolve{{ $typename }}ByStoreName(t *testing.T) {
 	value := new({{ $typename }})
 	var iface interface{} = value
-	resource, err := ResolveResourceByStoreSuffix(value.StoreSuffix())
+	resource, err := ResolveResourceByStoreName(value.StoreName())
 	if _, ok := iface.(Resource); ok {
 		if err != nil {
 			t.Fatal(err)
