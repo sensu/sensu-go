@@ -17,7 +17,7 @@ func init() {
 		}
 	}
 	for _, v := range rbacMap {
-		storeMap[v.StoreSuffix()] = v
+		storeMap[v.StoreName()] = v
 	}
 }
 
@@ -33,7 +33,7 @@ var typeMap = map[string]interface{}{
 // Resource values.
 var rbacMap = make(map[string]Resource, len(typeMap)/2)
 
-// storeMap is like rbacMap, but its keys are store suffixes.
+// storeMap is like rbacMap, but its keys are store names.
 var storeMap = make(map[string]Resource, len(typeMap)/2)
 
 // ResolveResource returns a zero-valued resource, given a name.
@@ -82,8 +82,8 @@ func ResolveResourceByRBACName(name string) (Resource, error) {
 	return newResource(resource), nil
 }
 
-// ResolveResourceByStoreSuffix resolves a resource by its store suffix.
-func ResolveResourceByStoreSuffix(name string) (Resource, error) {
+// ResolveResourceByStoreName resolves a resource by its store name.
+func ResolveResourceByStoreName(name string) (Resource, error) {
 	resource, ok := storeMap[name]
 	if !ok {
 		return nil, fmt.Errorf("resource not found: %s", name)

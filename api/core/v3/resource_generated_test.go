@@ -30,15 +30,15 @@ func TestEntityConfigSetMetadata(t *testing.T) {
 	}
 }
 
-func TestEntityConfigStoreSuffix(t *testing.T) {
+func TestEntityConfigStoreName(t *testing.T) {
 	var value EntityConfig
-	got := value.StoreSuffix()
+	got := value.StoreName()
 	if len(got) == 0 {
 		t.Error("undefined store suffix")
 	}
 	var iface interface{} = value
-	if suffixer, ok := iface.(storeSuffixer); ok {
-		if got, want := value.StoreSuffix(), suffixer.storeSuffix(); got != want {
+	if suffixer, ok := iface.(storeNamer); ok {
+		if got, want := value.StoreName(), suffixer.storeName(); got != want {
 			t.Errorf("bad store suffix: got %s, want %s", got, want)
 		}
 	}
@@ -185,15 +185,15 @@ func TestEntityStateSetMetadata(t *testing.T) {
 	}
 }
 
-func TestEntityStateStoreSuffix(t *testing.T) {
+func TestEntityStateStoreName(t *testing.T) {
 	var value EntityState
-	got := value.StoreSuffix()
+	got := value.StoreName()
 	if len(got) == 0 {
 		t.Error("undefined store suffix")
 	}
 	var iface interface{} = value
-	if suffixer, ok := iface.(storeSuffixer); ok {
-		if got, want := value.StoreSuffix(), suffixer.storeSuffix(); got != want {
+	if suffixer, ok := iface.(storeNamer); ok {
+		if got, want := value.StoreName(), suffixer.storeName(); got != want {
 			t.Errorf("bad store suffix: got %s, want %s", got, want)
 		}
 	}
@@ -337,12 +337,12 @@ func TestResourceUniqueness(t *testing.T) {
 			rbacNames[name] = true
 		}
 	}
-	storeSuffixes := make(map[string]bool)
+	storeNames := make(map[string]bool)
 	for _, v := range types {
-		if name := v.StoreSuffix(); storeSuffixes[name] {
+		if name := v.StoreName(); storeNames[name] {
 			t.Errorf("duplicate store suffix: %s", name)
 		} else {
-			storeSuffixes[name] = true
+			storeNames[name] = true
 		}
 	}
 }
