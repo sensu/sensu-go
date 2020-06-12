@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path"
 	"path/filepath"
 	"sync"
 	"time"
@@ -262,7 +261,7 @@ func (m *CommandManager) ExecCommand(ctx context.Context, alias string, args []s
 }
 
 func commandAbsolutePath(command *asset.RuntimeAsset) string {
-	return path.Join(command.BinDir(), commandName)
+	return filepath.Join(command.BinDir(), commandName)
 }
 
 func commandEnvironment(command *asset.RuntimeAsset, additionalEnv []string) []string {
