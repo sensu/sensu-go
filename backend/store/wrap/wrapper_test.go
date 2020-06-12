@@ -39,7 +39,7 @@ func (t *testResource) SetMetadata(m *corev2.ObjectMeta) {
 	t.Metadata = m
 }
 
-func (t *testResource) StoreSuffix() string {
+func (t *testResource) StoreName() string {
 	return "testresource"
 }
 
@@ -190,7 +190,7 @@ func (t *testResource2) SetMetadata(m *corev2.ObjectMeta) {
 	t.Metadata = m
 }
 
-func (t *testResource2) StoreSuffix() string {
+func (t *testResource2) StoreName() string {
 	return "testresource2"
 }
 
