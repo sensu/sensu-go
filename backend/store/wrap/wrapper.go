@@ -2,7 +2,6 @@ package wrap
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"reflect"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/golang/snappy"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -73,11 +73,11 @@ func (c Compression) Decompress(m []byte) ([]byte, error) {
 }
 
 // Option is a functional option, for passing to wrap.Resource().
-type Option func(*Wrapper, corev3.Resource) error
+type Option func(wrapper *Wrapper, resource interface{}) error
 
 // EncodeProtobuf is an option for setting protobuf encoding. If the resource
 // is not a proto.Message, an error will be returned.
-var EncodeProtobuf Option = func(w *Wrapper, r corev3.Resource) error {
+var EncodeProtobuf Option = func(w *Wrapper, r interface{}) error {
 	if _, ok := r.(proto.Message); !ok {
 		return fmt.Errorf("protobuf encoding requested, but %T is not a proto.Message", r)
 	}
@@ -86,14 +86,14 @@ var EncodeProtobuf Option = func(w *Wrapper, r corev3.Resource) error {
 }
 
 // EncodeJSON is an option for setting JSON encoding.
-var EncodeJSON Option = func(w *Wrapper, r corev3.Resource) error {
+var EncodeJSON Option = func(w *Wrapper, r interface{}) error {
 	w.Encoding = Encoding_json
 	return nil
 }
 
 // EncodeDefault is the default encoder. It will be protobuf, unless the
 // resource cannot be type asserted to proto.Message.
-var EncodeDefault Option = func(w *Wrapper, r corev3.Resource) error {
+var EncodeDefault Option = func(w *Wrapper, r interface{}) error {
 	encoding := Encoding_json
 	if _, ok := r.(proto.Message); ok {
 		encoding = Encoding_protobuf
@@ -103,13 +103,13 @@ var EncodeDefault Option = func(w *Wrapper, r corev3.Resource) error {
 }
 
 // CompressNone is an option for turning off compression.
-var CompressNone Option = func(w *Wrapper, r corev3.Resource) error {
+var CompressNone Option = func(w *Wrapper, r interface{}) error {
 	w.Compression = Compression_none
 	return nil
 }
 
 // CompressSnappy is an option for setting snappy compression.
-var CompressSnappy Option = func(w *Wrapper, r corev3.Resource) error {
+var CompressSnappy Option = func(w *Wrapper, r interface{}) error {
 	w.Compression = Compression_snappy
 	return nil
 }
@@ -122,6 +122,15 @@ var CompressDefault = CompressSnappy
 // be overridden by supplying other options. Typically, protobuf-capable
 // resources will be marshalled to protobuf and then compressed with snappy.
 func Resource(r corev3.Resource, opts ...Option) (*Wrapper, error) {
+	return wrap(r, opts...)
+}
+
+// V2Resource is like Resource, but works on older core v2 resources.
+func V2Resource(r corev2.Resource, opts ...Option) (*Wrapper, error) {
+	return wrap(r, opts...)
+}
+
+func wrap(r interface{}, opts ...Option) (*Wrapper, error) {
 	var tm corev2.TypeMeta
 	if getter, ok := r.(tmGetter); ok {
 		tm = getter.GetTypeMeta()
@@ -153,20 +162,116 @@ func Resource(r corev3.Resource, opts ...Option) (*Wrapper, error) {
 }
 
 // Unwrap unmarshals the wrapper's value into a resource, according to the
-// configuration of the wrapper.
+// configuration of the wrapper. The unwrapped data structure will have
+// its labels and annotations set to non-nil empty slices, if they are nil.
 func (w *Wrapper) Unwrap() (corev3.Resource, error) {
-	r, err := types.ResolveType(w.TypeMeta.APIVersion, w.TypeMeta.Type)
+	r, err := w.UnwrapRaw()
 	if err != nil {
 		return nil, err
 	}
-	proxy, ok := r.(*corev3.V2ResourceProxy)
+	resource, ok := r.(corev3.Resource)
 	if !ok {
-		return nil, errors.New("only v3 resources are compatible with store wrappers")
+		return nil, fmt.Errorf("only v3 resources can be unwrapped")
 	}
-	resource := proxy.Resource
+	meta := resource.GetMetadata()
+	if meta == nil {
+		meta = new(corev2.ObjectMeta)
+		resource.SetMetadata(meta)
+	}
+	if meta.Labels == nil {
+		meta.Labels = make(map[string]string)
+	}
+	if meta.Annotations == nil {
+		meta.Annotations = make(map[string]string)
+	}
+	return resource, nil
+}
+
+// UnwrapRaw is like Unwrap, but returns a raw interface{} value.
+func (w *Wrapper) UnwrapRaw() (interface{}, error) {
+	resource, err := types.ResolveRaw(w.TypeMeta.APIVersion, w.TypeMeta.Type)
+	if err != nil {
+		return nil, err
+	}
 	message, err := w.Compression.Decompress(w.Value)
 	if err != nil {
 		return nil, fmt.Errorf("error unwrapping %T: %s", resource, err)
 	}
-	return resource, w.Encoding.Decode(message, resource)
+	if err := w.Encoding.Decode(message, resource); err != nil {
+		return nil, err
+	}
+	return resource, nil
+}
+
+// UnwrapInto unwraps a wrapper into a user-defined data structure. Most users
+// should use Unwrap.
+func (w *Wrapper) UnwrapInto(p interface{}) error {
+	message, err := w.Compression.Decompress(w.Value)
+	if err != nil {
+		return fmt.Errorf("error unwrapping %T: %s", p, err)
+	}
+	if err := w.Encoding.Decode(message, p); err != nil {
+		return err
+	}
+	return nil
+}
+
+// List is a slice of wrappers.
+type List []*Wrapper
+
+// Unwrap unwraps each item in the list and returns a slice of resources of the
+// same size.
+func (l List) Unwrap() ([]corev3.Resource, error) {
+	result := make([]corev3.Resource, len(l))
+	for i := range result {
+		p, err := l[i].Unwrap()
+		if err != nil {
+			return nil, fmt.Errorf("wrap list item %d: %s", i, err)
+		}
+		result[i] = p
+	}
+	return result, nil
+}
+
+func (l List) UnwrapInto(ptr interface{}) error {
+	if len(l) == 0 {
+		// if there are no elements to work on, modify nothing
+		return nil
+	}
+	// Assume that encoding and compression are the same throughout the range
+	encoding := l[0].Encoding
+	compression := l[0].Compression
+	// Make sure the interface is a pointer, and that the element at this address
+	// is a slice.
+	v := reflect.ValueOf(ptr)
+	if v.Kind() != reflect.Ptr {
+		return &store.ErrNotValid{Err: fmt.Errorf("expected pointer, but got %v type", v.Type())}
+	}
+	if v.Elem().Kind() != reflect.Slice {
+		return &store.ErrNotValid{Err: fmt.Errorf("expected slice, but got %s", v.Elem().Kind())}
+	}
+	v = v.Elem()
+	if v.Cap() < len(l) {
+		v.Set(reflect.MakeSlice(v.Type().Elem(), len(l), len(l)))
+	}
+	if v.Len() < v.Cap() {
+		v.SetLen(v.Cap())
+	}
+	for i, w := range l {
+		value, err := compression.Decompress(w.Value)
+		if err != nil {
+			return err
+		}
+		elt := v.Index(i)
+		if elt.Kind() != reflect.Ptr {
+			elt = elt.Addr()
+		}
+		if elt.IsNil() {
+			elt.Set(reflect.New(elt.Type().Elem()))
+		}
+		if err := encoding.Decode(value, elt.Interface()); err != nil {
+			return err
+		}
+	}
+	return nil
 }

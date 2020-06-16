@@ -20,7 +20,7 @@ func init() {
 	for _, v := range rbacMap {
 		storeMap[v.StoreName()] = v
 	}
-	types.RegisterTypeResolver("core/v3", ResolveV2Resource)
+	types.RegisterResolver("core/v3", ResolveRawResource)
 }
 
 // typeMap is used to dynamically look up data types from strings.
@@ -50,6 +50,12 @@ func ResolveResource(name string) (Resource, error) {
 		return nil, fmt.Errorf("%q is not a core/v3.Resource", name)
 	}
 	return newResource(t), nil
+}
+
+// ResolveRawResource is like ResolveResource, but uses interface{} instead of
+// Resource as a return type.
+func ResolveRawResource(name string) (interface{}, error) {
+	return ResolveResource(name)
 }
 
 // Make a new Resource to avoid aliasing problems with ResolveResource.

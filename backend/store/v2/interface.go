@@ -21,16 +21,8 @@ type Interface interface {
 	// Get gets a wrapped resource from the store.
 	Get(ResourceRequest) (*wrap.Wrapper, error)
 
-	// GetIfExists gets a wrapped resource from the store, and returns an error
-	// if it does not exist already.
-	GetIfExists(ResourceRequest) (*wrap.Wrapper, error)
-
 	// Delete deletes a resource from the store.
 	Delete(ResourceRequest) error
-
-	// DeleteIfExists deletes a resource from the store, and returns an error
-	// if it does not exist.
-	DeleteIfExists(ResourceRequest) error
 
 	// List lists all resources specified by the resource request, and the
 	// selection predicate.

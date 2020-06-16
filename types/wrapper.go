@@ -30,7 +30,7 @@ type rawWrapper struct {
 }
 
 // PackageMap contains a list of packages with their Resource Resolver func
-var packageMap = map[string]func(string) (Resource, error){
+var packageMap = map[string]interface{}{
 	"core/v2": corev2.ResolveResource,
 }
 
@@ -222,8 +222,15 @@ func WrapResource(r Resource) Wrapper {
 	}
 }
 
-// RegisterTypeResolver adds a package to packageMap with its resolver
+// RegisterTypeResolver adds a package to packageMap with its resolver. Deprecated.
 func RegisterTypeResolver(key string, resolver func(string) (Resource, error)) {
+	packageMapMu.Lock()
+	defer packageMapMu.Unlock()
+	packageMap[key] = resolver
+}
+
+// RegisterResolver adds a package to packageMap with its resolver.
+func RegisterResolver(key string, resolver func(string) (interface{}, error)) {
 	packageMapMu.Lock()
 	defer packageMapMu.Unlock()
 	packageMap[key] = resolver
@@ -238,7 +245,31 @@ func ResolveType(apiVersion string, typename string) (Resource, error) {
 	if !ok {
 		return nil, fmt.Errorf("invalid API version: %s", apiVersion)
 	}
-	return resolver(typename)
+	switch resolver := resolver.(type) {
+	case func(string) (Resource, error):
+		v, err := resolver(typename)
+		return v, err
+	default:
+		return nil, fmt.Errorf("%s does not implement v2.Resource", apiVersion)
+	}
+}
+
+// ResolveRaw resolves the raw type for the requested type.
+func ResolveRaw(apiVersion string, typename string) (interface{}, error) {
+	// Guard read access to packageMap
+	packageMapMu.RLock()
+	defer packageMapMu.RUnlock()
+	resolver, ok := packageMap[apiVersion]
+	if !ok {
+		return nil, fmt.Errorf("invalid API version: %s", apiVersion)
+	}
+	switch resolver := resolver.(type) {
+	case func(string) (Resource, error):
+		return resolver(typename)
+	case func(string) (interface{}, error):
+		return resolver(typename)
+	}
+	return nil, fmt.Errorf("bad resolver: %T", resolver)
 }
 
 func ApiVersion(version string) string {

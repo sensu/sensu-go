@@ -13,15 +13,15 @@ import (
 )
 
 func init() {
-	types.RegisterTypeResolver("store/wrap_test", testResolver)
+	types.RegisterResolver("store/wrap_test", testResolver)
 }
 
-func testResolver(name string) (corev2.Resource, error) {
+func testResolver(name string) (interface{}, error) {
 	switch name {
 	case "testResource":
-		return corev3.V3ToV2Resource(&testResource{}), nil
+		return &testResource{}, nil
 	case "testResource2":
-		return corev3.V3ToV2Resource(&testResource2{}), nil
+		return &testResource2{}, nil
 	default:
 		return nil, fmt.Errorf("invalid resource: %s", name)
 	}
