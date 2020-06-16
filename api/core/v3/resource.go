@@ -67,6 +67,6 @@ func (v *V2ResourceProxy) SetNamespace(ns string) {
 	v.GetMetadata().Namespace = ns
 }
 
-func (v *V2ResourceProxy) StorePrefix() string {
+func (v v2ResourceProxy) StorePrefix() string {
 	return v.StoreName()
 }
