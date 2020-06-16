@@ -25,7 +25,8 @@ const (
 )
 
 var (
-	namespaceStoreName = new(corev2.Namespace).StorePrefix()
+	namespaceStoreName                   = new(corev2.Namespace).StorePrefix()
+	_                  storev2.Interface = new(Store)
 )
 
 // ComputeContinueToken calculates a continue token based on the given resource.
