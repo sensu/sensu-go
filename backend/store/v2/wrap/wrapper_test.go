@@ -8,12 +8,12 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
-	"github.com/sensu/sensu-go/backend/store/wrap"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/types"
 )
 
 func init() {
-	types.RegisterResolver("store/wrap_test", testResolver)
+	types.RegisterResolver("v2/wrap_test", testResolver)
 }
 
 func testResolver(name string) (interface{}, error) {
@@ -58,7 +58,7 @@ func (t *testResource) Validate() error {
 func (t *testResource) GetTypeMeta() corev2.TypeMeta {
 	return corev2.TypeMeta{
 		Type:       "testResource",
-		APIVersion: "store/wrap_test",
+		APIVersion: "v2/wrap_test",
 	}
 }
 
@@ -79,7 +79,7 @@ func TestWrapResourceSimple(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, want := wrapper.TypeMeta.APIVersion, "store/wrap_test"; got != want {
+	if got, want := wrapper.TypeMeta.APIVersion, "v2/wrap_test"; got != want {
 		t.Errorf("bad api version: got %s, want %s", got, want)
 	}
 	if got, want := wrapper.TypeMeta.Type, "testResource"; got != want {

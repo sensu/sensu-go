@@ -12,7 +12,7 @@ import (
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/wrap"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/util/retry"
 )
 
@@ -155,7 +155,7 @@ func RetryRequest(n int, err error) (bool, error) {
 	return true, &store.ErrInternal{Message: err.Error()}
 }
 
-func (s *Store) CreateOrUpdate(req storev2.ResourceRequest, w *wrap.Wrapper) error {
+func (s *Store) CreateOrUpdate(req storev2.ResourceRequest, w *storev2.Wrapper) error {
 	key := StoreKey(req)
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
@@ -192,7 +192,7 @@ func (s *Store) CreateOrUpdate(req storev2.ResourceRequest, w *wrap.Wrapper) err
 	return nil
 }
 
-func (s *Store) UpdateIfExists(req storev2.ResourceRequest, w *wrap.Wrapper) error {
+func (s *Store) UpdateIfExists(req storev2.ResourceRequest, w *storev2.Wrapper) error {
 	key := StoreKey(req)
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
@@ -218,7 +218,7 @@ func (s *Store) UpdateIfExists(req storev2.ResourceRequest, w *wrap.Wrapper) err
 	return nil
 }
 
-func (s *Store) CreateIfNotExists(req storev2.ResourceRequest, w *wrap.Wrapper) error {
+func (s *Store) CreateIfNotExists(req storev2.ResourceRequest, w *storev2.Wrapper) error {
 	key := StoreKey(req)
 	if err := req.Validate(); err != nil {
 		return &store.ErrNotValid{Err: err}
@@ -256,7 +256,7 @@ func (s *Store) CreateIfNotExists(req storev2.ResourceRequest, w *wrap.Wrapper) 
 	return nil
 }
 
-func (s *Store) Get(req storev2.ResourceRequest) (*wrap.Wrapper, error) {
+func (s *Store) Get(req storev2.ResourceRequest) (*storev2.Wrapper, error) {
 	key := StoreKey(req)
 	if err := req.Validate(); err != nil {
 		return nil, &store.ErrNotValid{Err: err}
@@ -273,7 +273,7 @@ func (s *Store) Get(req storev2.ResourceRequest) (*wrap.Wrapper, error) {
 	if len(resp.Kvs) == 0 {
 		return nil, &store.ErrNotFound{Key: key}
 	}
-	var wrapper wrap.Wrapper
+	var wrapper storev2.Wrapper
 	if err := proto.UnmarshalMerge(resp.Kvs[0].Value, &wrapper); err != nil {
 		return nil, &store.ErrDecode{Key: key, Err: err}
 	}
@@ -338,9 +338,9 @@ func (s *Store) List(req storev2.ResourceRequest, pred *store.SelectionPredicate
 		return nil, err
 	}
 
-	result := make([]*wrap.Wrapper, 0, len(resp.Kvs))
+	result := make([]*storev2.Wrapper, 0, len(resp.Kvs))
 	for _, kv := range resp.Kvs {
-		var wrapper wrap.Wrapper
+		var wrapper storev2.Wrapper
 		if err := proto.Unmarshal(kv.Value, &wrapper); err != nil {
 			return nil, &store.ErrDecode{Key: string(kv.Key), Err: err}
 		}

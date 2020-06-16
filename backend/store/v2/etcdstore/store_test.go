@@ -11,7 +11,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/wrap"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
 func TestCreateOrUpdate(t *testing.T) {

@@ -10,7 +10,7 @@ import (
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/wrap"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sirupsen/logrus"
 )
 
