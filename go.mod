@@ -5,6 +5,7 @@ go 1.13
 replace (
 	github.com/sensu/sensu-go/api/core/v2 => ./api/core/v2
 	github.com/sensu/sensu-go/api/core/v3 => ./api/core/v3
+	github.com/sensu/sensu-go/backend/store/v2 => ./backend/store/v2
 	github.com/sensu/sensu-go/types => ./types
 )
 
@@ -31,6 +32,7 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/groupcache v0.0.0-20191002201903-404acd9df4cc // indirect
 	github.com/golang/protobuf v1.3.3
+	github.com/golang/snappy v0.0.1
 	github.com/google/go-cmp v0.4.0 // indirect
 	github.com/google/uuid v1.1.1
 	github.com/gorilla/mux v1.7.3
@@ -60,6 +62,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sensu/lasr v1.2.1
 	github.com/sensu/sensu-go/api/core/v2 v2.0.0
+	github.com/sensu/sensu-go/api/core/v3 v3.0.0-00010101000000-000000000000
 	github.com/sensu/sensu-go/types v0.1.0
 	github.com/shirou/gopsutil v0.0.0-20190901111213-e4ec7b275ada
 	github.com/sirupsen/logrus v1.6.0

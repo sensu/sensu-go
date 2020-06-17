@@ -10,7 +10,6 @@ option (gogoproto.equal_all) = true;
 option (gogoproto.marshaler_all) = true;
 option (gogoproto.unmarshaler_all) = true;
 option (gogoproto.sizer_all) = true;
-option (gogoproto.testgen_all) = true;
 
 // ObjectMeta is metadata all persisted objects have.
 message ObjectMeta {

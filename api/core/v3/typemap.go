@@ -8,6 +8,7 @@ import (
 	"sort"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	types "github.com/sensu/sensu-go/types"
 )
 
 func init() {
@@ -19,6 +20,7 @@ func init() {
 	for _, v := range rbacMap {
 		storeMap[v.StoreName()] = v
 	}
+	types.RegisterResolver("core/v3", ResolveRawResource)
 }
 
 // typeMap is used to dynamically look up data types from strings.
@@ -50,6 +52,12 @@ func ResolveResource(name string) (Resource, error) {
 	return newResource(t), nil
 }
 
+// ResolveRawResource is like ResolveResource, but uses interface{} instead of
+// Resource as a return type.
+func ResolveRawResource(name string) (interface{}, error) {
+	return ResolveResource(name)
+}
+
 // Make a new Resource to avoid aliasing problems with ResolveResource.
 // don't use this function. no, seriously.
 func newResource(r interface{}) Resource {
@@ -61,16 +69,14 @@ func newResource(r interface{}) Resource {
 	return value
 }
 
-// ListResources lists all of the resources in the package.
-func ListResources() []Resource {
-	result := make([]Resource, 0, len(rbacMap))
-	for _, v := range rbacMap {
-		result = append(result, newResource(v))
+// ResolveV2Resource resolves the resources in this package to core/v2.Resource
+// types, via the V2ResourceProxy type.
+func ResolveV2Resource(name string) (corev2.Resource, error) {
+	resource, err := ResolveResource(name)
+	if err != nil {
+		return nil, err
 	}
-	sort.Slice(result, func(i, j int) bool {
-		return result[i].RBACName() < result[j].RBACName()
-	})
-	return result
+	return V3ToV2Resource(resource), nil
 }
 
 // ResolveResourceByRBACName resolves a resource by its RBAC name.
@@ -89,4 +95,16 @@ func ResolveResourceByStoreName(name string) (Resource, error) {
 		return nil, fmt.Errorf("resource not found: %s", name)
 	}
 	return newResource(resource), nil
+}
+
+// ListResources lists all of the resources in the package.
+func ListResources() []Resource {
+	result := make([]Resource, 0, len(rbacMap))
+	for _, v := range rbacMap {
+		result = append(result, newResource(v))
+	}
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].RBACName() < result[j].RBACName()
+	})
+	return result
 }

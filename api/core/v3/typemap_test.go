@@ -3,6 +3,7 @@ package v3
 // automatically generated file, do not edit!
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -84,6 +85,20 @@ func TestResolveEntityConfigByStoreName(t *testing.T) {
 	}
 }
 
+func TestResolveV2ResourceEntityConfig(t *testing.T) {
+	v2Resource, err := ResolveV2Resource("EntityConfig")
+	if err != nil {
+		t.Fatal(err)
+	}
+	v3Resource, err := ResolveResource("EntityConfig")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := v2Resource.(*V2ResourceProxy).Resource, v3Resource; !reflect.DeepEqual(got, want) {
+		t.Fatalf("bad resource: got %v, want %v", got, want)
+	}
+}
+
 func TestResolveEntityState(t *testing.T) {
 	var value interface{} = new(EntityState)
 	if _, ok := value.(Resource); ok {
@@ -159,6 +174,20 @@ func TestResolveEntityStateByStoreName(t *testing.T) {
 		if err == nil {
 			t.Fatal("expected non-nil error")
 		}
+	}
+}
+
+func TestResolveV2ResourceEntityState(t *testing.T) {
+	v2Resource, err := ResolveV2Resource("EntityState")
+	if err != nil {
+		t.Fatal(err)
+	}
+	v3Resource, err := ResolveResource("EntityState")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := v2Resource.(*V2ResourceProxy).Resource, v3Resource; !reflect.DeepEqual(got, want) {
+		t.Fatalf("bad resource: got %v, want %v", got, want)
 	}
 }
 

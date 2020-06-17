@@ -2,7 +2,7 @@ package v3
 
 import corev2 "github.com/sensu/sensu-go/api/core/v2"
 
-var _ corev2.Resource = v2ResourceProxy{}
+var _ corev2.Resource = &V2ResourceProxy{}
 
 // Resource represents a Sensu resource.
 type Resource interface {
@@ -31,15 +31,18 @@ type GeneratedType interface {
 	Validate() error
 }
 
-type v2ResourceProxy struct {
+// V2ResourceProxy is a compatibility shim for converting from a v3 resource to
+// a v2 resource.
+//sensu:nogen
+type V2ResourceProxy struct {
 	Resource
 }
 
 func V3ToV2Resource(resource Resource) corev2.Resource {
-	return v2ResourceProxy{Resource: resource}
+	return &V2ResourceProxy{Resource: resource}
 }
 
-func (v v2ResourceProxy) GetObjectMeta() corev2.ObjectMeta {
+func (v *V2ResourceProxy) GetObjectMeta() corev2.ObjectMeta {
 	meta := v.GetMetadata()
 	if meta == nil {
 		return corev2.ObjectMeta{
@@ -50,11 +53,11 @@ func (v v2ResourceProxy) GetObjectMeta() corev2.ObjectMeta {
 	return *meta
 }
 
-func (v v2ResourceProxy) SetObjectMeta(meta corev2.ObjectMeta) {
+func (v *V2ResourceProxy) SetObjectMeta(meta corev2.ObjectMeta) {
 	v.SetMetadata(&meta)
 }
 
-func (v v2ResourceProxy) SetNamespace(ns string) {
+func (v *V2ResourceProxy) SetNamespace(ns string) {
 	if v.GetMetadata() == nil {
 		v.SetMetadata(&corev2.ObjectMeta{
 			Labels:      make(map[string]string),
@@ -64,6 +67,6 @@ func (v v2ResourceProxy) SetNamespace(ns string) {
 	v.GetMetadata().Namespace = ns
 }
 
-func (v v2ResourceProxy) StorePrefix() string {
+func (v *V2ResourceProxy) StorePrefix() string {
 	return v.StoreName()
 }
