@@ -9,13 +9,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
-	"time"
 
 	"golang.org/x/time/rate"
-)
-
-var (
-	defaultHTTPGetTimeout = 30 * time.Second
 )
 
 const (

@@ -8,9 +8,9 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
+	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
-	"github.com/sensu/sensu-go/backend/secrets"
 )
 
 // CheckWatcher manages all the check schedulers
@@ -168,7 +168,9 @@ func (c *CheckWatcher) handleWatchEvent(watchEvent store.WatchEventCheckConfig) 
 		// Call stop on the scheduler.
 		sched, ok := c.items[key]
 		if ok {
-			sched.Stop()
+			if err := sched.Stop(); err != nil {
+				logger.WithError(err).Error("error stopping check scheduler")
+			}
 			delete(c.items, key)
 		}
 	}

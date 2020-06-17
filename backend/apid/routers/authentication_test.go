@@ -9,7 +9,6 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/apid/middlewares"
 	"github.com/sensu/sensu-go/backend/authentication"
 	"github.com/sensu/sensu-go/backend/authentication/providers/basic"
 	realStore "github.com/sensu/sensu-go/backend/store"
@@ -118,21 +117,6 @@ func authenticationRouter(store realStore.Store) *AuthenticationRouter {
 	provider := &basic.Provider{Store: store, ObjectMeta: corev2.ObjectMeta{Name: basic.Type}}
 	authenticator.AddProvider(provider)
 	return &AuthenticationRouter{store: store, authenticator: authenticator}
-}
-
-func processRequestWithRefreshToken(
-	router Router,
-	req *http.Request,
-) *httptest.ResponseRecorder {
-	parent := mux.NewRouter()
-	router.Mount(parent)
-
-	middleware := middlewares.RefreshToken{}
-	routerStack := middleware.Then(parent)
-
-	res := httptest.NewRecorder()
-	routerStack.ServeHTTP(res, req)
-	return res
 }
 
 func processRequest(router Router, req *http.Request) *httptest.ResponseRecorder {

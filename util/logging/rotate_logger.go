@@ -114,7 +114,9 @@ func (f *rotateFile) Rotate() (*rotateFile, error) {
 	} else {
 		// archiver errors are silently ignored in production,
 		// as there is nothing that can be done about them.
-		go f.archive(currentName, archiveName)
+		go func() {
+			_ = f.archive(currentName, archiveName)
+		}()
 	}
 
 	return replacement, nil

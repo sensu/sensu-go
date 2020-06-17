@@ -20,7 +20,6 @@ const (
 type Manager struct {
 	cacheDir string
 	entity   *types.Entity
-	stopping chan struct{}
 	wg       *sync.WaitGroup
 }
 

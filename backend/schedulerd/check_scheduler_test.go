@@ -10,9 +10,9 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/queue"
+	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
-	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -137,7 +137,7 @@ func TestIntervalScheduling(t *testing.T) {
 		assert.FailNow(err.Error())
 	}
 	defer func() {
-		sub.Cancel()
+		_ = sub.Cancel()
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
@@ -195,7 +195,7 @@ func TestCheckSubdueInterval(t *testing.T) {
 		assert.FailNow(err.Error())
 	}
 	defer func() {
-		subscription.Cancel()
+		_ = subscription.Cancel()
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
@@ -231,7 +231,7 @@ func TestCronScheduling(t *testing.T) {
 		assert.FailNow(err.Error())
 	}
 	defer func() {
-		subscription.Cancel()
+		_ = subscription.Cancel()
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
@@ -290,7 +290,7 @@ func TestCheckSubdueCron(t *testing.T) {
 		assert.FailNow(err.Error())
 	}
 	defer func() {
-		subscription.Cancel()
+		_ = subscription.Cancel()
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 

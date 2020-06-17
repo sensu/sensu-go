@@ -33,10 +33,8 @@ func (s *Store) DeleteAssetByName(ctx context.Context, name string) error {
 		return &store.ErrNotValid{Err: errors.New("must specify name")}
 	}
 	err := Delete(ctx, s.client, GetAssetsPath(ctx, name))
-	if err != nil {
-		if _, ok := err.(*store.ErrNotFound); ok {
-			err = nil
-		}
+	if _, ok := err.(*store.ErrNotFound); ok {
+		err = nil
 	}
 	return err
 }

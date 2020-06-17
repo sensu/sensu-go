@@ -52,16 +52,16 @@ func TestWizardBus(t *testing.T) {
 	err = b.Publish("topic", "message4")
 	assert.NoError(t, err)
 
-	subscr4.Cancel()
+	_ = subscr4.Cancel()
 	close(sub4.Channel)
 
-	subscr1.Cancel()
+	_ = subscr1.Cancel()
 	close(sub1.Channel)
 
-	subscr2.Cancel()
+	_ = subscr2.Cancel()
 	close(sub2.Channel)
 
-	subscr3.Cancel()
+	_ = subscr3.Cancel()
 	close(sub3.Channel)
 
 	require.NoError(t, b.Stop())
@@ -119,7 +119,9 @@ func TestBug1407(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, bus.Start())
-	defer bus.Stop()
+	defer func() {
+		_ = bus.Stop()
+	}()
 
 	subscriber := channelSubscriber{make(chan interface{}, 1)}
 	subscription, err := bus.Subscribe("topic", "a", subscriber)

@@ -44,16 +44,6 @@ func (m *mockBackendIDGetterClient) Put(ctx context.Context, key, val string, op
 	return m.putResp, m.putErr
 }
 
-func (m *mockBackendIDGetterClient) clearGrantCh() {
-	for {
-		select {
-		case <-m.grantCh:
-		default:
-			return
-		}
-	}
-}
-
 func newMockBackendIDGetterClient() *mockBackendIDGetterClient {
 	return &mockBackendIDGetterClient{
 		grantResp: &clientv3.LeaseGrantResponse{

@@ -100,9 +100,6 @@ type Ring struct {
 	// watchCtr counts the number of open watchers
 	watchCtr int64
 
-	// cron is a cron schedule
-	cron cron.Schedule
-
 	// watchers is the set of active watchers
 	watchers map[watcherKey]*watcher
 

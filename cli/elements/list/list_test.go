@@ -59,11 +59,11 @@ func TestLabelLen(t *testing.T) {
 	test.row.label = "repo size"
 	test.row.value = "12GB"
 
-	test.row.write(test.out, 11)
+	assert.NoError(t, test.row.write(test.out, 11))
 	assert.Equal(t, "Repo Size: 12GB\n", test.out.result)
 
 	test.out.Clean()
-	test.row.write(test.out, 20)
+	assert.NoError(t, test.row.write(test.out, 20))
 	assert.Equal(t, "Repo Size:          12GB\n", test.out.result)
 }
 
@@ -109,7 +109,7 @@ func TestLongestLabel(t *testing.T) {
 func TestWriteTitle(t *testing.T) {
 	test := newListDetailsTest()
 	test.list.title = "Check 'disk_full'"
-	test.list.writeTitle(test.out)
+	assert.NoError(t, test.list.writeTitle(test.out))
 	assert.NotEmpty(t, test.out.result)
 	assert.Regexp(t, "^=== ", test.out.result)
 	assert.Regexp(t, "disk_full", test.out.result)
@@ -117,13 +117,13 @@ func TestWriteTitle(t *testing.T) {
 
 func TestWriteRows(t *testing.T) {
 	test := newListDetailsTest()
-	test.list.writeRows(test.out)
+	assert.NoError(t, test.list.writeRows(test.out))
 	assert.NotEmpty(t, test.out.result)
 }
 
 func TestWriteListDetails(t *testing.T) {
 	test := newListDetailsTest()
-	test.list.write(test.out)
+	assert.NoError(t, test.list.write(test.out))
 	assert.NotEmpty(t, test.out.result)
 }
 

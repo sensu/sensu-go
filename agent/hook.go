@@ -202,7 +202,7 @@ func hookShouldExecute(hookType string, status uint32) bool {
 		(hookType == "ok" && status == 0) ||
 		(hookType == "warning" && status == 1) ||
 		(hookType == "critical" && status == 2) ||
-		(hookType == "unknown" && (status < 0 || status > 2)) {
+		(hookType == "unknown" && status > 2) {
 		return true
 	}
 	return false

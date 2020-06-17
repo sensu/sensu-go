@@ -2,14 +2,14 @@ package version
 
 import (
 	"fmt"
-	"runtime/debug"
 	"runtime"
+	"runtime/debug"
 )
 
 const (
-	CommunityEditionSuffix = "ce"
+	CommunityEditionSuffix  = "ce"
 	EnterpriseEditionSuffix = "ee"
-	InvalidEditionSuffix = "invalid"
+	InvalidEditionSuffix    = "invalid"
 )
 
 // These values are baked into the sensu-agent and sensu-backend binaries
@@ -69,7 +69,7 @@ func EditionOutput() string {
 	if Edition == "community" || Edition == "enterprise" {
 		return fmt.Sprintf("%s edition", Edition)
 	}
-	return fmt.Sprintf("built with an invalid \"edition\" ldflag")
+	return "built with an invalid \"edition\" ldflag"
 }
 
 func FormattedOutput(component string) string {
