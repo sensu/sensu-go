@@ -108,7 +108,7 @@ func (m *ProviderManager) SubSecrets(ctx context.Context, secrets []*corev2.Secr
 		}
 		provider := providers[providerName]
 		if provider == nil {
-			err = fmt.Errorf("provider does not exist")
+			err = fmt.Errorf("provider not found, or not working: %s", providerName)
 			logger.WithFields(logrus.Fields{
 				"provider": providerName,
 				"secret":   secret.Secret,
