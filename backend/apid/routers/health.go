@@ -9,6 +9,7 @@ import (
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/store"
 )
 
 // HealthController represents the controller needs of the HealthRouter
@@ -44,7 +45,7 @@ func (r *HealthRouter) health(w http.ResponseWriter, req *http.Request) {
 	if timeout > 0 {
 		// We're storing the timeout as a value so it can be used by several
 		// contexts in GetClusterHealth, which is a concurrent gatherer.
-		ctx = context.WithValue(ctx, "timeout", time.Duration(timeout)*time.Second)
+		ctx = context.WithValue(ctx, store.ContextKeyTimeout, time.Duration(timeout)*time.Second)
 	}
 	r.mu.Lock()
 	clusterHealth := r.controller.GetClusterHealth(ctx)

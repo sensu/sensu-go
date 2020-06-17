@@ -30,7 +30,7 @@ func GrantCommand(cli *cli.SensuCli) *cobra.Command {
 				return err
 			}
 
-			fmt.Fprintln(cmd.OutOrStdout(), fmt.Sprintf("Created: %s", location))
+			fmt.Fprintf(cmd.OutOrStdout(), "Created: %s\n", location)
 			return nil
 		},
 	}

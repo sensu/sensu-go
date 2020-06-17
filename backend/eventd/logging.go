@@ -10,7 +10,7 @@ type Logger interface {
 type RawLogger struct{}
 
 // Println ...
-func (l *RawLogger) Println(v interface{}) { return }
+func (l *RawLogger) Println(v interface{}) {}
 
 // Stop ...
-func (l *RawLogger) Stop() { return }
+func (l *RawLogger) Stop() {}

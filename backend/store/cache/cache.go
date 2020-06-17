@@ -92,7 +92,6 @@ type cacheWatcher struct {
 // aligned on both ARM and x86-32. See https://goo.gl/zW7dgq for more details.
 type Resource struct {
 	count      int64
-	watcher    <-chan store.WatchEventResource
 	cache      cache
 	cacheMu    sync.Mutex
 	watchers   []cacheWatcher
@@ -290,15 +289,4 @@ func (r *Resource) rebuild(ctx context.Context) (bool, error) {
 	}
 	r.cache = newCache
 	return hasUpdates, nil
-}
-
-func makeNewUpdates(values []Value) []store.WatchEventResource {
-	result := make([]store.WatchEventResource, len(values))
-	for i := range values {
-		result[i] = store.WatchEventResource{
-			Resource: values[i].Resource,
-			Action:   store.WatchCreate,
-		}
-	}
-	return result
 }

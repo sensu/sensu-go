@@ -33,10 +33,8 @@ func (s *Store) DeleteCheckConfigByName(ctx context.Context, name string) error 
 	}
 
 	err := Delete(ctx, s.client, GetCheckConfigsPath(ctx, name))
-	if err != nil {
-		if _, ok := err.(*store.ErrNotFound); ok {
-			err = nil
-		}
+	if _, ok := err.(*store.ErrNotFound); ok {
+		err = nil
 	}
 	return err
 }

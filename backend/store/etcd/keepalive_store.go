@@ -20,10 +20,8 @@ func getKeepalivePath(keepalivesPath string, entity *corev2.Entity) string {
 // DeleteFailingKeepalive deletes a failing KeepaliveRecord.
 func (s *Store) DeleteFailingKeepalive(ctx context.Context, entity *corev2.Entity) error {
 	err := Delete(ctx, s.client, getKeepalivePath(s.keepalivesPath, entity))
-	if err != nil {
-		if _, ok := err.(*store.ErrNotFound); ok {
-			err = nil
-		}
+	if _, ok := err.(*store.ErrNotFound); ok {
+		err = nil
 	}
 	return err
 }

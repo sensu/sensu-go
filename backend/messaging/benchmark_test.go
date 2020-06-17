@@ -22,7 +22,7 @@ func BenchmarkWizardBusPublish(b *testing.B) {
 					case <-ch.Channel:
 					case <-done:
 						wg.Done()
-						subsc.Cancel()
+						_ = subsc.Cancel()
 						close(ch.Channel)
 						return
 					}

@@ -7,7 +7,6 @@ import (
 	"path"
 	"sync"
 	"sync/atomic"
-	"time"
 
 	"github.com/coreos/etcd/clientv3"
 	"github.com/sensu/sensu-go/backend/store"
@@ -16,10 +15,6 @@ import (
 var (
 	backendIDKeyPrefix         = store.NewKeyBuilder("backends").Build()
 	backendIDLeasePeriod int64 = 60
-	minRetryLeaseDelay         = time.Second
-	maxRetryLeaseDelay         = time.Minute
-	retryLeaseTimeout          = time.Hour
-	retryLeaseMultiplier       = 2.0
 )
 
 // BackendIDGetterClient represents the dependencies for BackendIDGetter.

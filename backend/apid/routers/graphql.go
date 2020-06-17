@@ -5,16 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/jwt"
 	"github.com/sensu/sensu-go/graphql"
-)
-
-var (
-	defaultExpiration = time.Second * 30
 )
 
 type GraphQLService interface {

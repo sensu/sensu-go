@@ -37,8 +37,6 @@ type Client interface {
 type RestClient struct {
 	httpClient http.Client
 	config     Config
-
-	configured bool
 }
 
 // New builds a new client with defaults

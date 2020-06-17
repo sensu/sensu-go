@@ -31,10 +31,8 @@ func (s *Store) DeleteEntity(ctx context.Context, e *corev2.Entity) error {
 		return &store.ErrNotValid{Err: err}
 	}
 	err := Delete(ctx, s.client, getEntityPath(e))
-	if err != nil {
-		if _, ok := err.(*store.ErrNotFound); ok {
-			err = nil
-		}
+	if _, ok := err.(*store.ErrNotFound); ok {
+		err = nil
 	}
 	return err
 }
@@ -47,10 +45,8 @@ func (s *Store) DeleteEntityByName(ctx context.Context, name string) error {
 
 	key := GetEntitiesPath(ctx, name)
 	err := Delete(ctx, s.client, key)
-	if err != nil {
-		if _, ok := err.(*store.ErrNotFound); ok {
-			err = nil
-		}
+	if _, ok := err.(*store.ErrNotFound); ok {
+		err = nil
 	}
 	return err
 }

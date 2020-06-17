@@ -50,7 +50,11 @@ func main() {
 	defer ln.Close()
 
 	server := extension.NewServer(ext, ln)
-	defer server.Stop()
+	defer func() {
+		if err := server.Stop(); err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	if err := server.Start(); err != nil {
 		log.Fatal(err)

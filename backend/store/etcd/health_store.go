@@ -12,6 +12,7 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/etcdserver/api/v3rpc/rpctypes"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	"github.com/sensu/sensu-go/backend/store"
 )
 
 func isEmbeddedClient(clientURLs []string) bool {
@@ -70,7 +71,7 @@ func (s *Store) GetClusterHealth(ctx context.Context, cluster clientv3.Cluster, 
 	healthResponse := &corev2.HealthResponse{}
 
 	var timeout time.Duration
-	if val := ctx.Value("timeout"); val != nil {
+	if val := ctx.Value(store.ContextKeyTimeout); val != nil {
 		timeout, _ = val.(time.Duration)
 	}
 

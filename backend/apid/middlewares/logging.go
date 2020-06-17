@@ -53,6 +53,7 @@ func makeResponseWriterWithCapture(w http.ResponseWriter) loggingResponseWriter 
 		logger = &hijackLogger{responseLogger{w: w, status: http.StatusOK}}
 	}
 	h, ok1 := logger.(http.Hijacker)
+	//nolint:staticcheck
 	c, ok2 := w.(http.CloseNotifier)
 	if ok1 && ok2 {
 		return hijackCloseNotifier{logger, h, c}

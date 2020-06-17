@@ -9,14 +9,6 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// silencedUpdateFields whitelists fields allowed to be updated for Silences
-var silencedUpdateFields = []string{
-	"Expire",
-	"ExpireOnResolve",
-	"Reason",
-	"Begin",
-}
-
 // SilencedController exposes actions in which a viewer can perform.
 type SilencedController struct {
 	Store store.SilencedStore

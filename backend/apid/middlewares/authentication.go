@@ -116,6 +116,5 @@ type errorWriter struct {
 func (e errorWriter) Then(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		writeErr(w, e.err)
-		return
 	})
 }

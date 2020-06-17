@@ -102,8 +102,7 @@ func main() { // nolint
 		}
 
 		// Close type
-		out += fmt.Sprintf("}\n")
-		out += "\n"
+		out += "}\n\n"
 	}
 
 	// Write to file
