@@ -14,6 +14,17 @@ import (
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
+func fixtureTestResource(name string) *testResource {
+	return &testResource{
+		Metadata: &corev2.ObjectMeta{
+			Namespace:   "default",
+			Name:        name,
+			Labels:      make(map[string]string),
+			Annotations: make(map[string]string),
+		},
+	}
+}
+
 func TestCreateOrUpdate(t *testing.T) {
 	testWithEtcdStore(t, func(s *Store) {
 		// Create a namespace to work within
