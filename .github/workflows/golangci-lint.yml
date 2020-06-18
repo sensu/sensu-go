@@ -32,7 +32,6 @@ jobs:
         with:
           version: v1.27
           working-directory: api/core/v2
-          args: --timeout=5m
   lint-api-core-v3-mod:
     name: lint-api-core-v3-mod
     runs-on: ubuntu-latest
@@ -46,7 +45,6 @@ jobs:
         with:
           version: v1.27
           working-directory: api/core/v3
-          args: --timeout=5m
   lint-backend-store-v2-mod:
     name: lint-backend-store-v2-mod
     runs-on: ubuntu-latest
@@ -60,7 +58,6 @@ jobs:
         with:
           version: v1.27
           working-directory: backend/store/v2
-          args: --timeout=5m
   lint-types-mod:
     name: lint-types-mod
     runs-on: ubuntu-latest
@@ -74,4 +71,3 @@ jobs:
         with:
           version: v1.27
           working-directory: types
-          args: --timeout=5m
