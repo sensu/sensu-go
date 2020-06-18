@@ -351,7 +351,7 @@ func TestGetEventsPagination(t *testing.T) {
 	testWithEtcd(t, func(s store.Store) {
 		// Create a "testing" namespace in the store
 		testingNS := corev2.FixtureNamespace("testing")
-		s.UpdateNamespace(context.Background(), testingNS)
+		assert.NoError(t, s.UpdateNamespace(context.Background(), testingNS))
 
 		// Add 42 objects in the store: 21 in the "default" namespace and 21 in
 		// the "testing" namespace
@@ -530,7 +530,7 @@ func TestGetEventsByEntityPagination(t *testing.T) {
 	testWithEtcd(t, func(store store.Store) {
 		// Create a "testing" namespace in the store
 		testingNS := corev2.FixtureNamespace("testing")
-		store.UpdateNamespace(context.Background(), testingNS)
+		assert.NoError(t, store.UpdateNamespace(context.Background(), testingNS))
 
 		// Add 42 objects in the store: 21 checks for entity1 in the "default"
 		// namespace and 21 checks for "entity1" in the "testing" namespace

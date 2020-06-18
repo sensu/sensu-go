@@ -15,7 +15,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
-func TestnamespaceStorage(t *testing.T) {
+func TestNamespaceStorage(t *testing.T) {
 	testWithEtcd(t, func(s store.Store) {
 		ctx := context.Background()
 

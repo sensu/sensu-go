@@ -52,7 +52,7 @@ func TestAdhocExecutor(t *testing.T) {
 
 	defer func() {
 		close(ch)
-		sub.Cancel()
+		assert.NoError(t, sub.Cancel())
 	}()
 
 	marshaledCheck, err := json.Marshal(goodCheck)
@@ -110,19 +110,17 @@ func TestPublishProxyCheckRequest(t *testing.T) {
 		assert.FailNow(err.Error())
 	}
 	defer func() {
-		sub.Cancel()
+		assert.NoError(sub.Cancel())
 		close(c1)
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
 	go func() {
-		select {
-		case msg := <-c1:
-			res, ok := msg.(*corev2.CheckRequest)
-			assert.True(ok)
-			assert.Equal("check1", res.Config.Name)
-			assert.Equal("entity2", res.Config.ProxyEntityName)
-		}
+		msg := <-c1
+		res, ok := msg.(*corev2.CheckRequest)
+		assert.True(ok)
+		assert.Equal("check1", res.Config.Name)
+		assert.Equal("entity2", res.Config.ProxyEntityName)
 	}()
 
 	assert.NoError(scheduler.exec.publishProxyCheckRequests([]*corev2.Entity{entity1, entity2}, check))
@@ -162,7 +160,7 @@ func TestPublishProxyCheckRequestsInterval(t *testing.T) {
 		assert.FailNow(err.Error())
 	}
 	defer func() {
-		sub.Cancel()
+		assert.NoError(sub.Cancel())
 		close(c1)
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
@@ -170,13 +168,11 @@ func TestPublishProxyCheckRequestsInterval(t *testing.T) {
 	go func() {
 		for i := 0; i < len(entities); i++ {
 			entityName := fmt.Sprintf("entity%d", i+1)
-			select {
-			case msg := <-c1:
-				res, ok := msg.(*corev2.CheckRequest)
-				assert.True(ok)
-				assert.Equal("check1", res.Config.Name)
-				assert.Equal(entityName, res.Config.ProxyEntityName)
-			}
+			msg := <-c1
+			res, ok := msg.(*corev2.CheckRequest)
+			assert.True(ok)
+			assert.Equal("check1", res.Config.Name)
+			assert.Equal(entityName, res.Config.ProxyEntityName)
 		}
 	}()
 
@@ -216,7 +212,7 @@ func TestPublishProxyCheckRequestsCron(t *testing.T) {
 		assert.FailNow(err.Error())
 	}
 	defer func() {
-		sub.Cancel()
+		assert.NoError(sub.Cancel())
 		close(c1)
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
@@ -224,13 +220,11 @@ func TestPublishProxyCheckRequestsCron(t *testing.T) {
 	go func() {
 		for i := 0; i < len(entities); i++ {
 			entityName := fmt.Sprintf("entity%d", i+1)
-			select {
-			case msg := <-c1:
-				res, ok := msg.(*corev2.CheckRequest)
-				assert.True(ok)
-				assert.Equal("check1", res.Config.Name)
-				assert.Equal(entityName, res.Config.ProxyEntityName)
-			}
+			msg := <-c1
+			res, ok := msg.(*corev2.CheckRequest)
+			assert.True(ok)
+			assert.Equal("check1", res.Config.Name)
+			assert.Equal(entityName, res.Config.ProxyEntityName)
 		}
 	}()
 

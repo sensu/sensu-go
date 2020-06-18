@@ -8,9 +8,9 @@ import (
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
-	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -22,7 +22,9 @@ func TestCheckWatcherSmoke(t *testing.T) {
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	require.NoError(t, bus.Start())
-	defer bus.Stop()
+	defer func() {
+		require.NoError(t, bus.Stop())
+	}()
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
