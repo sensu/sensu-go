@@ -14,10 +14,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-func make100Processes() []corev2.Process {
-	result := make([]corev2.Process, 0, 100)
+func make100Processes() []*corev2.Process {
+	result := make([]*corev2.Process, 0, 100)
 	for i := 0; i < 100; i++ {
-		result = append(result, corev2.Process{Name: fmt.Sprintf("process-%d", i)})
+		result = append(result, &corev2.Process{Name: fmt.Sprintf("process-%d", i)})
 	}
 	return result
 }

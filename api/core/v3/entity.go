@@ -149,7 +149,7 @@ func FixtureEntityState(name string) *EntityState {
 			VMRole:        "host",
 			CloudProvider: "aws",
 			FloatType:     "hard",
-			Processes: []Process{
+			Processes: []*Process{
 				{
 					Name: "sensu-agent",
 				},

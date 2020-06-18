@@ -68,7 +68,7 @@ message System {
   string float_type = 13;
 
   // Processes contains information about the local processes on the agent.
-  repeated Process Processes = 14 [ (gogoproto.jsontag) = "processes", (gogoproto.nullable) = false ];
+  repeated Process Processes = 14 [ (gogoproto.jsontag) = "processes" ];
 }
 
 // Process contains information about a local process.
