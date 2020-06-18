@@ -49,17 +49,6 @@ func (t *testResource) GetTypeMeta() corev2.TypeMeta {
 	}
 }
 
-func fixtureTestResource(name string) *testResource {
-	return &testResource{
-		Metadata: &corev2.ObjectMeta{
-			Name:        name,
-			Namespace:   "default",
-			Labels:      make(map[string]string),
-			Annotations: make(map[string]string),
-		},
-	}
-}
-
 func fixtureResolver(name string) (interface{}, error) {
 	switch name {
 	case "testResource":

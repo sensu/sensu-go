@@ -18,4 +18,56 @@ jobs:
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v1
         with:
-          version: v1.27
+          version: 1.27
+  golangci-api-core-v2-mod:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.13.12
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v1
+        with:
+          version: 1.27
+          working-dir: api/core/v2
+  golangci-api-core-v3-mod:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.13.12
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v1
+        with:
+          version: 1.27
+          working-dir: api/core/v3
+  golangci-backend-store-v2-mod:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.13.12
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v1
+        with:
+          version: 1.27
+          working-dir: backend/store/v2
+  golangci-types-mod:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-go@v2
+        with:
+          go-version: 1.13.12
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v1
+        with:
+          version: 1.27
+          working-dir: types

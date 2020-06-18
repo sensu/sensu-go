@@ -75,14 +75,6 @@ func ComputeContinueToken(namespace string, r interface{}) string {
 	}
 }
 
-func getKey(key string) clientv3.Op {
-	return clientv3.OpGet(key)
-}
-
-func getNamespace(namespace string) clientv3.Op {
-	return getKey(getNamespacePath(namespace))
-}
-
 func keyFound(key string) clientv3.Cmp {
 	return clientv3.Compare(
 		clientv3.CreateRevision(key), ">", 0,

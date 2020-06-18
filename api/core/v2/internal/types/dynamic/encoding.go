@@ -4,12 +4,9 @@ import (
 	"encoding/json"
 	"reflect"
 	"sync"
-
-	jsoniter "github.com/json-iterator/go"
 )
 
 var (
-	fastjson        = jsoniter.ConfigCompatibleWithStandardLibrary
 	structFieldPool sync.Pool
 	wrapperPool     sync.Pool
 )
