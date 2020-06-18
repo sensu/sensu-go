@@ -7,7 +7,7 @@ on:
       - master
   pull_request:
 jobs:
-  golangci:
+  lint:
     name: lint
     runs-on: ubuntu-latest
     steps:
@@ -19,8 +19,8 @@ jobs:
         uses: golangci/golangci-lint-action@v1
         with:
           version: 1.27
-  golangci-api-core-v2-mod:
-    name: lint
+  lint-api-core-v2-mod:
+    name: lint-api-core-v2-mod
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -31,10 +31,10 @@ jobs:
         uses: golangci/golangci-lint-action@v1
         with:
           version: v1.27
-          working-dir: api/core/v2
+          working-directory: api/core/v2
           args: --timeout=5m
-  golangci-api-core-v3-mod:
-    name: lint
+  lint-api-core-v3-mod:
+    name: lint-api-core-v3-mod
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -45,10 +45,10 @@ jobs:
         uses: golangci/golangci-lint-action@v1
         with:
           version: v1.27
-          working-dir: api/core/v3
+          working-directory: api/core/v3
           args: --timeout=5m
-  golangci-backend-store-v2-mod:
-    name: lint
+  lint-backend-store-v2-mod:
+    name: lint-backend-store-v2-mod
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -59,10 +59,10 @@ jobs:
         uses: golangci/golangci-lint-action@v1
         with:
           version: v1.27
-          working-dir: backend/store/v2
+          working-directory: backend/store/v2
           args: --timeout=5m
-  golangci-types-mod:
-    name: lint
+  lint-types-mod:
+    name: lint-types-mod
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -73,5 +73,5 @@ jobs:
         uses: golangci/golangci-lint-action@v1
         with:
           version: v1.27
-          working-dir: types
+          working-directory: types
           args: --timeout=5m
