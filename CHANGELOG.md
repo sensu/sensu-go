@@ -7,6 +7,11 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## Unreleased
 
+### Breaking Changes
+- The web interface is now a standalone product and no longer distributed
+inside the sensu-backend binary. Refer to https://github.com/sensu/web for
+more.
+
 ### Fixed
 - Clarifies wording around a secret provider error message.
 
