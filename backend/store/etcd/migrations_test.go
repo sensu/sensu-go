@@ -1,3 +1,5 @@
+// +build !race,integration
+
 package etcd
 
 import (
