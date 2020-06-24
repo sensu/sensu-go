@@ -434,10 +434,10 @@ func handleConfig(cmd *cobra.Command, server bool) error {
 	// Deprecated flags
 	if server && DeprecateDashboardFlags {
 		msg := "as of Sensu v6.0 the dashboard is no longer distributed as part of the sensu-backend binary"
-		cmd.Flags().MarkDeprecated(flagDashboardHost, msg)
-		cmd.Flags().MarkDeprecated(flagDashboardPort, msg)
-		cmd.Flags().MarkDeprecated(flagDashboardCertFile, msg)
-		cmd.Flags().MarkDeprecated(flagDashboardKeyFile, msg)
+		_ = cmd.Flags().MarkDeprecated(flagDashboardHost, msg)
+		_ = cmd.Flags().MarkDeprecated(flagDashboardPort, msg)
+		_ = cmd.Flags().MarkDeprecated(flagDashboardCertFile, msg)
+		_ = cmd.Flags().MarkDeprecated(flagDashboardKeyFile, msg)
 	}
 
 	// Etcd client/server flags
