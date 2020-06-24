@@ -22,7 +22,7 @@ func TestEntityStorage(t *testing.T) {
 		entities, err := s.GetEntities(ctx, pred)
 		assert.NoError(t, err)
 		assert.NotNil(t, entities)
-		assert.Equal(t, pred.Continue, `{}`)
+		assert.Equal(t, pred.Continue, "")
 
 		err = s.UpdateEntity(ctx, entity)
 		assert.NoError(t, err)
@@ -36,7 +36,7 @@ func TestEntityStorage(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, 1, len(entities))
 		assert.Equal(t, entity.Name, entities[0].Name)
-		assert.Equal(t, pred.Continue, `{}`)
+		assert.Equal(t, pred.Continue, "")
 
 		err = s.DeleteEntity(ctx, entity)
 		assert.NoError(t, err)

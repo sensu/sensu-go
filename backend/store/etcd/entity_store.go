@@ -226,7 +226,11 @@ func (s *Store) GetEntities(ctx context.Context, pred *store.SelectionPredicate)
 		token.ConfigContinue = []byte(configPred.Continue)
 		token.StateContinue = []byte(statePred.Continue)
 		b, _ := json.Marshal(token)
-		pred.Continue = string(b)
+		cont := string(b)
+		if cont == "{}" {
+			cont = ""
+		}
+		pred.Continue = cont
 	}
 	states := make([]corev3.EntityState, len(stateList))
 	if err := stateList.UnwrapInto(&states); err != nil {
