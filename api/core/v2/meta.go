@@ -6,6 +6,14 @@ const (
 	ManagedByLabel = "sensu.io/managed_by"
 )
 
+type Comparison int
+
+const (
+	MetaLess    Comparison = -1
+	MetaEqual   Comparison = 0
+	MetaGreater Comparison = 1
+)
+
 // NewObjectMeta makes a new ObjectMeta, with Labels and Annotations assigned
 // empty maps.
 func NewObjectMeta(name, namespace string) ObjectMeta {
@@ -15,4 +23,27 @@ func NewObjectMeta(name, namespace string) ObjectMeta {
 		Labels:      make(map[string]string),
 		Annotations: make(map[string]string),
 	}
+}
+
+// Cmp compares this ObjectMeta with another ObjectMeta.
+func (o *ObjectMeta) Cmp(other *ObjectMeta) Comparison {
+	if o == nil {
+		return MetaLess
+	}
+	if other == nil {
+		return MetaGreater
+	}
+	if o.Namespace < other.Namespace {
+		return MetaLess
+	}
+	if o.Namespace > other.Namespace {
+		return MetaGreater
+	}
+	if o.Name < other.Name {
+		return MetaLess
+	}
+	if o.Name > other.Name {
+		return MetaGreater
+	}
+	return MetaEqual
 }

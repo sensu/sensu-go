@@ -1,4 +1,4 @@
-package etcdstore
+package etcdstore_test
 
 import (
 	"context"
@@ -10,6 +10,7 @@ import (
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sirupsen/logrus"
 )
@@ -114,7 +115,7 @@ var fixtureV3EntityState = &corev3.EntityState{
 func BenchmarkCreateOrUpdateV2Entity(b *testing.B) {
 	capnslog.SetGlobalLogLevel(capnslog.ERROR)
 	logrus.SetLevel(logrus.ErrorLevel)
-	testWithEtcdStore(b, func(s *Store) {
+	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}
 		ctx := context.Background()
 		req := storev2.NewResourceRequestFromV2Resource(ctx, ns)
@@ -145,7 +146,7 @@ func BenchmarkCreateOrUpdateV2Entity(b *testing.B) {
 func BenchmarkCreateOrUpdateV3EntityState(b *testing.B) {
 	capnslog.SetGlobalLogLevel(capnslog.ERROR)
 	logrus.SetLevel(logrus.ErrorLevel)
-	testWithEtcdStore(b, func(s *Store) {
+	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}
 		ctx := context.Background()
 		req := storev2.NewResourceRequestFromV2Resource(ctx, ns)
@@ -176,7 +177,7 @@ func BenchmarkCreateOrUpdateV3EntityState(b *testing.B) {
 func BenchmarkCreateOrUpdateV3EntityConfig(b *testing.B) {
 	capnslog.SetGlobalLogLevel(capnslog.ERROR)
 	logrus.SetLevel(logrus.ErrorLevel)
-	testWithEtcdStore(b, func(s *Store) {
+	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}
 		ctx := context.Background()
 		req := storev2.NewResourceRequestFromV2Resource(ctx, ns)
@@ -254,7 +255,7 @@ func BenchmarkGetEntity(b *testing.B) {
 func BenchmarkGetV3EntityState(b *testing.B) {
 	capnslog.SetGlobalLogLevel(capnslog.ERROR)
 	logrus.SetLevel(logrus.ErrorLevel)
-	testWithEtcdStore(b, func(s *Store) {
+	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}
 		ctx := context.Background()
 		req := storev2.NewResourceRequestFromV2Resource(ctx, ns)
@@ -292,7 +293,7 @@ func BenchmarkGetV3EntityState(b *testing.B) {
 func BenchmarkGetV3EntityConfig(b *testing.B) {
 	capnslog.SetGlobalLogLevel(capnslog.ERROR)
 	logrus.SetLevel(logrus.ErrorLevel)
-	testWithEtcdStore(b, func(s *Store) {
+	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}
 		ctx := context.Background()
 		req := storev2.NewResourceRequestFromV2Resource(ctx, ns)
@@ -363,7 +364,7 @@ func BenchmarkListEntities(b *testing.B) {
 func BenchmarkListV3EntityState(b *testing.B) {
 	capnslog.SetGlobalLogLevel(capnslog.ERROR)
 	logrus.SetLevel(logrus.ErrorLevel)
-	testWithEtcdStore(b, func(s *Store) {
+	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}
 		ctx := context.Background()
 		req := storev2.NewResourceRequestFromV2Resource(ctx, ns)
@@ -410,7 +411,7 @@ func BenchmarkListV3EntityStateNoUnwrap(b *testing.B) {
 
 	capnslog.SetGlobalLogLevel(capnslog.ERROR)
 	logrus.SetLevel(logrus.ErrorLevel)
-	testWithEtcdStore(b, func(s *Store) {
+	testWithEtcdStore(b, func(s *etcdstore.Store) {
 		ns := &corev2.Namespace{Name: "default"}
 		ctx := context.Background()
 		req := storev2.NewResourceRequestFromV2Resource(ctx, ns)

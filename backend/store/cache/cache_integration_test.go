@@ -77,15 +77,15 @@ func TestEntityCacheIntegration(t *testing.T) {
 
 	watcher := cache.Watch(cacheCtx)
 
-	if got, want := cache.Get("default"), fixtures; !checkEntities(got, want) {
+	if got, want := cache.Get("default"), fixtures; !checkEntities(t, got, want) {
 		t.Fatalf("bad entities")
 	}
 
-	if got, want := cache.Get("notdefault"), []Value{}; !checkEntities(got, want) {
+	if got, want := cache.Get("notdefault"), []Value{}; !checkEntities(t, got, want) {
 		t.Fatal("bad entities")
 	}
 
-	if got, want := cache.Get("other"), otherFixtures; !checkEntities(got, want) {
+	if got, want := cache.Get("other"), otherFixtures; !checkEntities(t, got, want) {
 		t.Fatal("bad entities")
 	}
 
@@ -108,23 +108,24 @@ func TestEntityCacheIntegration(t *testing.T) {
 
 	<-watcher
 
-	if got, want := cache.Get("default"), fixtures; !checkEntities(got, want) {
+	if got, want := cache.Get("default"), fixtures; !checkEntities(t, got, want) {
 		t.Errorf("bad entities")
 	}
 
 }
 
-func checkEntities(got, want []Value) bool {
-	if len(got) != len(want) {
+func checkEntities(t testing.TB, got, want []Value) bool {
+	t.Helper()
+	success := true
+	if got, want := len(got), len(want); got != want {
+		t.Errorf("lengths do not match: got %d, want %d", got, want)
 		return false
 	}
 	for i := range got {
-		if got[i].Resource.GetObjectMeta().Namespace != want[i].Resource.GetObjectMeta().Namespace {
-			return false
-		}
-		if got[i].Resource.GetObjectMeta().Name != want[i].Resource.GetObjectMeta().Name {
-			return false
+		if got, want := got[i].Resource.GetObjectMeta(), want[i].Resource.GetObjectMeta(); got.Cmp(&want) != 0 {
+			t.Errorf("value %d: got %v, want %v", i, got, want)
+			success = false
 		}
 	}
-	return true
+	return success
 }

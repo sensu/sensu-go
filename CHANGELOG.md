@@ -10,6 +10,14 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Clarifies wording around a secret provider error message.
 
+### Breaking
+- The database schema for entities has changed. After upgrading, users will not
+be able to use their database with older versions of Sensu.
+
+### Changed
+- Entities are now stored as two separate data structures, in order to optimize
+data access patterns.
+
 ## [5.21.0] - 2020-06-10
 
 ### Added
