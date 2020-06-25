@@ -12,7 +12,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
-	cachev3 "github.com/sensu/sensu-go/backend/store/cache/v3"
+	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 )
@@ -24,7 +24,7 @@ var (
 // Executor executes scheduled or adhoc checks
 type Executor interface {
 	processCheck(ctx context.Context, check *corev2.CheckConfig) error
-	getEntities(ctx context.Context) ([]cachev3.Value, error)
+	getEntities(ctx context.Context) ([]cachev2.Value, error)
 	publishProxyCheckRequests(entities []*corev3.EntityConfig, check *corev2.CheckConfig) error
 	execute(check *corev2.CheckConfig) error
 	buildRequest(check *corev2.CheckConfig) (*corev2.CheckRequest, error)
@@ -35,12 +35,12 @@ type CheckExecutor struct {
 	bus                    messaging.MessageBus
 	store                  store.Store
 	namespace              string
-	entityCache            *cachev3.Resource
+	entityCache            *cachev2.Resource
 	secretsProviderManager *secrets.ProviderManager
 }
 
 // NewCheckExecutor creates a new check executor
-func NewCheckExecutor(bus messaging.MessageBus, namespace string, store store.Store, cache *cachev3.Resource, secretsProviderManager *secrets.ProviderManager) *CheckExecutor {
+func NewCheckExecutor(bus messaging.MessageBus, namespace string, store store.Store, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *CheckExecutor {
 	return &CheckExecutor{bus: bus, namespace: namespace, store: store, entityCache: cache, secretsProviderManager: secretsProviderManager}
 }
 
@@ -50,7 +50,7 @@ func (c *CheckExecutor) processCheck(ctx context.Context, check *corev2.CheckCon
 	return processCheck(ctx, c, check)
 }
 
-func (c *CheckExecutor) getEntities(ctx context.Context) ([]cachev3.Value, error) {
+func (c *CheckExecutor) getEntities(ctx context.Context) ([]cachev2.Value, error) {
 	return c.entityCache.Get(store.NewNamespaceFromContext(ctx)), nil
 }
 
@@ -142,12 +142,12 @@ type AdhocRequestExecutor struct {
 	ctx                    context.Context
 	cancel                 context.CancelFunc
 	listenQueueErr         chan error
-	entityCache            *cachev3.Resource
+	entityCache            *cachev2.Resource
 	secretsProviderManager *secrets.ProviderManager
 }
 
 // NewAdhocRequestExecutor returns a new AdhocRequestExecutor.
-func NewAdhocRequestExecutor(ctx context.Context, store store.Store, queue types.Queue, bus messaging.MessageBus, cache *cachev3.Resource, secretsProviderManager *secrets.ProviderManager) *AdhocRequestExecutor {
+func NewAdhocRequestExecutor(ctx context.Context, store store.Store, queue types.Queue, bus messaging.MessageBus, cache *cachev2.Resource, secretsProviderManager *secrets.ProviderManager) *AdhocRequestExecutor {
 	ctx, cancel := context.WithCancel(ctx)
 	executor := &AdhocRequestExecutor{
 		adhocQueue:             queue,
@@ -229,7 +229,7 @@ func (a *AdhocRequestExecutor) processCheck(ctx context.Context, check *corev2.C
 	return processCheck(ctx, a, check)
 }
 
-func (a *AdhocRequestExecutor) getEntities(ctx context.Context) ([]cachev3.Value, error) {
+func (a *AdhocRequestExecutor) getEntities(ctx context.Context) ([]cachev2.Value, error) {
 	return a.entityCache.Get(store.NewNamespaceFromContext(ctx)), nil
 }
 

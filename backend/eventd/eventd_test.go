@@ -11,7 +11,7 @@ import (
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
-	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
@@ -56,7 +56,7 @@ func newEventd(store store.Store, bus messaging.MessageBus, livenessFactory live
 		Logger:          &RawLogger{},
 		workerCount:     5,
 		storeTimeout:    time.Minute,
-		silencedCache:   &cachev2.Resource{},
+		silencedCache:   &cache.Resource{},
 	}
 }
 
@@ -262,7 +262,7 @@ func TestCheckTTL(t *testing.T) {
 				workerCount:     1,
 				wg:              &sync.WaitGroup{},
 				Logger:          &RawLogger{},
-				silencedCache:   &cachev2.Resource{},
+				silencedCache:   &cache.Resource{},
 			}
 			var err error
 			e.bus, err = messaging.NewWizardBus(messaging.WizardBusConfig{})

@@ -1,4 +1,4 @@
-package v3
+package cache
 
 import (
 	"context"
@@ -10,24 +10,23 @@ import (
 	"time"
 
 	"github.com/coreos/etcd/clientv3"
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	storev2 "github.com/sensu/sensu-go/backend/store/v2"
-	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
+	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/types/dynamic"
 )
 
 // Value contains a cached value, and its synthesized companion.
 type Value struct {
-	Resource corev3.Resource
+	Resource corev2.Resource
 	Synth    interface{}
 }
 
-func getCacheKey(resource corev3.Resource) string {
-	return resource.GetMetadata().Namespace
+func getCacheKey(resource corev2.Resource) string {
+	return resource.GetObjectMeta().Namespace
 }
 
-func getCacheValue(resource corev3.Resource, synthesize bool) Value {
+func getCacheValue(resource corev2.Resource, synthesize bool) Value {
 	v := Value{Resource: resource}
 	if synthesize {
 		v.Synth = dynamic.Synthesize(resource)
@@ -38,7 +37,7 @@ func getCacheValue(resource corev3.Resource, synthesize bool) Value {
 type cache map[string][]Value
 
 // buildCache ...
-func buildCache(resources []corev3.Resource, synthesize bool) cache {
+func buildCache(resources []corev2.Resource, synthesize bool) cache {
 	cache := make(map[string][]Value)
 	for i, resource := range resources {
 		key := getCacheKey(resource)
@@ -53,7 +52,7 @@ func (s resourceSlice) Find(value Value) Value {
 	idx := sort.Search(len(s), func(i int) bool {
 		return !resourceLT(s[i], value)
 	})
-	if idx < len(s) && s[idx].Resource.GetMetadata().Name == value.Resource.GetMetadata().Name {
+	if idx < len(s) && s[idx].Resource.GetObjectMeta().Name == value.Resource.GetObjectMeta().Name {
 		return s[idx]
 	}
 	return Value{}
@@ -78,7 +77,7 @@ func resourceLT(x, y Value) bool {
 	if y.Resource == nil {
 		return false
 	}
-	return x.Resource.GetMetadata().Name < y.Resource.GetMetadata().Name
+	return x.Resource.GetObjectMeta().Name < y.Resource.GetObjectMeta().Name
 }
 
 type cacheWatcher struct {
@@ -98,24 +97,45 @@ type Resource struct {
 	watchers   []cacheWatcher
 	watchersMu sync.Mutex
 	synthesize bool
-	resourceT  corev3.Resource
+	resourceT  corev2.Resource
 	client     *clientv3.Client
 }
 
 // getResources retrieves the resources from the store
-func getResources(ctx context.Context, client *clientv3.Client, resource corev3.Resource) ([]corev3.Resource, error) {
-	req := storev2.NewResourceRequestFromResource(ctx, resource)
-	stor := etcdstore.NewStore(client)
-	results, err := stor.List(req, &store.SelectionPredicate{})
+func getResources(ctx context.Context, client *clientv3.Client, resource corev2.Resource) ([]corev2.Resource, error) {
+	// Get the type of the resource and create a slice type of []type
+	typeOfResource := reflect.TypeOf(resource)
+	sliceOfResource := reflect.SliceOf(typeOfResource)
+	// Create a pointer to our slice type and then set the slice value
+	ptr := reflect.New(sliceOfResource)
+	ptr.Elem().Set(reflect.MakeSlice(sliceOfResource, 0, 0))
+
+	// Get a keybuilderFunc for this resource
+	keyBuilderFunc := func(ctx context.Context, name string) string {
+		return store.NewKeyBuilder(resource.StorePrefix()).WithContext(ctx).Build("")
+	}
+
+	err := etcd.List(ctx, client, keyBuilderFunc, ptr.Interface(), &store.SelectionPredicate{})
 	if err != nil {
 		return nil, fmt.Errorf("error creating ResourceCacher: %s", err)
 	}
-	return results.Unwrap()
+
+	results := ptr.Elem()
+	resources := make([]corev2.Resource, results.Len())
+	for i := 0; i < results.Len(); i++ {
+		r, ok := results.Index(i).Interface().(corev2.Resource)
+		if !ok {
+			logger.Errorf("%T is not core2.Resource", results.Index(i).Interface())
+			continue
+		}
+		resources[i] = r
+	}
+	return resources, nil
 }
 
 // New creates a new resource cache. It retrieves all resources from the
 // store on creation.
-func New(ctx context.Context, client *clientv3.Client, resource corev3.Resource, synthesize bool) (*Resource, error) {
+func New(ctx context.Context, client *clientv3.Client, resource corev2.Resource, synthesize bool) (*Resource, error) {
 	resources, err := getResources(ctx, client, resource)
 	if err != nil {
 		return nil, err
@@ -139,7 +159,7 @@ func New(ctx context.Context, client *clientv3.Client, resource corev3.Resource,
 // NewFromResources creates a new resources cache using the given resources.
 // This function should only be used for testing purpose; it provides a way to
 // inject resources directly into the cache without an actual store
-func NewFromResources(resources []corev3.Resource, synthesize bool) *Resource {
+func NewFromResources(resources []corev2.Resource, synthesize bool) *Resource {
 	return &Resource{
 		cacheMu: sync.Mutex{},
 		cache:   buildCache(resources, synthesize),

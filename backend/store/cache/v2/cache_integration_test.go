@@ -10,9 +10,12 @@ import (
 	"github.com/echlebek/crock"
 	time "github.com/echlebek/timeproxy"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/etcd"
-	store "github.com/sensu/sensu-go/backend/store/etcd"
-	"github.com/sensu/sensu-go/types"
+	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 )
 
 var mockTime = crock.NewTime(time.Unix(0, 0))
@@ -23,45 +26,69 @@ func init() {
 	time.TimeProxy = mockTime
 }
 
-func TestResourceCacheIntegration(t *testing.T) {
+func TestEntityCacheIntegration(t *testing.T) {
+	ctx := store.NamespaceContext(context.Background(), "default")
 	mockTime.Start()
 	defer mockTime.Stop()
 	e, cleanup := etcd.NewTestEtcd(t)
 	defer cleanup()
 
 	client := e.NewEmbeddedClient()
+	store := etcdstore.NewStore(client)
 
-	store := store.NewStore(client, e.Name())
-
-	if err := store.CreateNamespace(context.Background(), types.FixtureNamespace("default")); err != nil {
+	// Add namespace resource
+	namespace := corev2.FixtureNamespace("default")
+	req := storev2.NewResourceRequestFromV2Resource(ctx, namespace)
+	wrapper, err := wrap.V2Resource(namespace)
+	if err != nil {
 		t.Fatal(err)
 	}
-	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
+	if err := store.CreateOrUpdate(req, wrapper); err != nil {
+		t.Fatal(err)
+	}
+
 	fixtures := []Value{}
 
-	// Populate store with some initial checks
-	// v2 entities are no longer compatible with the v2 cache
+	// Populate store with some initial entities
 	for i := 0; i < 9; i++ {
-		fixture := corev2.FixtureCheckConfig(fmt.Sprintf("%d", i))
-		fixture.Command = "test"
+		fixture := corev3.FixtureEntityConfig(fmt.Sprintf("%d", i))
+		fixture.Metadata.Name = fmt.Sprintf("%d", i)
+		fixture.EntityClass = corev2.EntityProxyClass
 		fixtures = append(fixtures, getCacheValue(fixture, true))
-		if err := store.UpdateCheckConfig(ctx, fixture); err != nil {
+		req = storev2.NewResourceRequestFromResource(ctx, fixture)
+		wrapper, err = wrap.Resource(fixture)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := store.CreateOrUpdate(req, wrapper); err != nil {
 			t.Fatal(err)
 		}
 	}
 
 	otherFixtures := []Value{}
 
-	// Include some checks from a non-default namespace
-	if err := store.CreateNamespace(context.Background(), &corev2.Namespace{Name: "other"}); err != nil {
+	// Include some entities from a non-default namespace
+	namespace = corev2.FixtureNamespace("other")
+	req = storev2.NewResourceRequestFromV2Resource(ctx, namespace)
+	wrapper, err = wrap.V2Resource(namespace)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.CreateOrUpdate(req, wrapper); err != nil {
 		t.Fatal(err)
 	}
 	for i := 0; i < 3; i++ {
-		fixture := corev2.FixtureCheckConfig(fmt.Sprintf("%d", i))
-		fixture.Namespace = "other"
-		fixture.Command = "test"
+		fixture := corev3.FixtureEntityConfig(fmt.Sprintf("%d", i))
+		fixture.Metadata.Name = fmt.Sprintf("%d", i)
+		fixture.Metadata.Namespace = "other"
+		fixture.EntityClass = corev2.EntityProxyClass
 		otherFixtures = append(otherFixtures, getCacheValue(fixture, true))
-		if err := store.UpdateCheckConfig(ctx, fixture); err != nil {
+		req = storev2.NewResourceRequestFromResource(ctx, fixture)
+		wrapper, err = wrap.Resource(fixture)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := store.CreateOrUpdate(req, wrapper); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -69,62 +96,67 @@ func TestResourceCacheIntegration(t *testing.T) {
 	cacheCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	cache, err := New(cacheCtx, client, &corev2.CheckConfig{}, true)
+	cache, err := New(cacheCtx, client, &corev3.EntityConfig{}, true)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	watcher := cache.Watch(cacheCtx)
 
-	if got, want := cache.Get("default"), fixtures; !checkResources(t, got, want) {
-		t.Fatalf("bad resources")
+	if got, want := cache.Get("default"), fixtures; !checkEntities(got, want) {
+		t.Fatalf("bad entities")
 	}
 
-	if got, want := cache.Get("notdefault"), []Value{}; !checkResources(t, got, want) {
-		t.Fatal("bad resources")
+	if got, want := cache.Get("notdefault"), []Value{}; !checkEntities(got, want) {
+		t.Fatal("bad entities")
 	}
 
-	if got, want := cache.Get("other"), otherFixtures; !checkResources(t, got, want) {
-		t.Fatal("bad resources")
+	if got, want := cache.Get("other"), otherFixtures; !checkEntities(got, want) {
+		t.Fatal("bad entities")
 	}
 
-	newCheck := corev2.FixtureCheckConfig("new")
-	newCheck.Command = "test"
-	if err := store.UpdateCheckConfig(ctx, newCheck); err != nil {
+	newEntity := corev3.FixtureEntityConfig("new")
+	newEntity.EntityClass = corev2.EntityProxyClass
+	req = storev2.NewResourceRequestFromResource(ctx, newEntity)
+	wrapper, err = wrap.Resource(newEntity)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.CreateOrUpdate(req, wrapper); err != nil {
 		t.Fatal(err)
 	}
 	<-watcher
 
 	got := cache.Get("default")
 
-	if got, want := got[len(got)-1], getCacheValue(newCheck, true); got.Resource.GetObjectMeta().Name != want.Resource.GetObjectMeta().Name {
-		t.Errorf("bad resource: got %s, want %s", got.Resource.GetObjectMeta().Name, want.Resource.GetObjectMeta().Name)
+	if got, want := got[len(got)-1], getCacheValue(newEntity, true); got.Resource.GetMetadata().Name != want.Resource.GetMetadata().Name {
+		t.Errorf("bad entity: got %s, want %s", got.Resource.GetMetadata().Name, want.Resource.GetMetadata().Name)
 	}
 
-	if err := store.DeleteCheckConfigByName(ctx, newCheck.Name); err != nil {
+	req = storev2.NewResourceRequestFromResource(ctx, newEntity)
+	if err := store.Delete(req); err != nil {
 		t.Fatal(err)
 	}
 
 	<-watcher
 
-	if got, want := cache.Get("default"), fixtures; !checkResources(t, got, want) {
-		t.Errorf("bad resources")
+	if got, want := cache.Get("default"), fixtures; !checkEntities(got, want) {
+		t.Errorf("bad entities")
 	}
 
 }
 
-func checkResources(t testing.TB, got, want []Value) bool {
-	t.Helper()
-	success := true
-	if got, want := len(got), len(want); got != want {
-		t.Errorf("lengths do not match: got %d, want %d", got, want)
+func checkEntities(got, want []Value) bool {
+	if len(got) != len(want) {
 		return false
 	}
 	for i := range got {
-		if got, want := got[i].Resource.GetObjectMeta(), want[i].Resource.GetObjectMeta(); got.Cmp(&want) != 0 {
-			t.Errorf("value %d: got %v, want %v", i, got, want)
-			success = false
+		if got[i].Resource.GetMetadata().Namespace != want[i].Resource.GetMetadata().Namespace {
+			return false
+		}
+		if got[i].Resource.GetMetadata().Name != want[i].Resource.GetMetadata().Name {
+			return false
 		}
 	}
-	return success
+	return true
 }

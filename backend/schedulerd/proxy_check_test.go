@@ -7,7 +7,7 @@ import (
 	time "github.com/echlebek/timeproxy"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
-	cachev3 "github.com/sensu/sensu-go/backend/store/cache/v3"
+	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -87,7 +87,7 @@ func TestMatchEntities(t *testing.T) {
 			p := &corev2.ProxyRequests{
 				EntityAttributes: tc.entityAttributes,
 			}
-			cacher := cachev3.NewFromResources(tc.entities, true)
+			cacher := cachev2.NewFromResources(tc.entities, true)
 			got := matchEntities(cacher.Get("default"), p)
 
 			if len(got) != len(tc.want) {
@@ -171,7 +171,7 @@ func BenchmarkMatchEntities1000(b *testing.B) {
 	}
 
 	req := &corev2.ProxyRequests{EntityAttributes: expressions}
-	cacher := cachev3.NewFromResources(entities, true)
+	cacher := cachev2.NewFromResources(entities, true)
 	resources := cacher.Get("default")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

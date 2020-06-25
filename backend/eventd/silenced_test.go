@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
+	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -29,7 +29,7 @@ func TestGetSilenced(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
-			c := cachev2.NewFromResources(tc.silencedEntries, false)
+			c := cache.NewFromResources(tc.silencedEntries, false)
 
 			getSilenced(ctx, tc.event, c)
 			assert.Equal(t, tc.expectedEntries, tc.event.Check.Silenced)

@@ -1,3 +1,5 @@
+// +build integration
+
 package schedulerd
 
 import (
@@ -12,7 +14,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/secrets"
-	cachev3 "github.com/sensu/sensu-go/backend/store/cache/v3"
+	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +29,7 @@ func TestAdhocExecutor(t *testing.T) {
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	pm := secrets.NewProviderManager()
-	newAdhocExec := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus, &cachev3.Resource{}, pm)
+	newAdhocExec := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus, &cachev2.Resource{}, pm)
 	defer newAdhocExec.Stop()
 	assert.NoError(t, newAdhocExec.bus.Start())
 
