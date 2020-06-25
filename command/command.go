@@ -14,7 +14,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-const maxOutputLen = 1500000
+// Upper bounds of output captured during command's execution.
+const maxOutputLen = 1.5 * 1000 * 1000 // 1.5mbs
 
 const undocumentedTestCheckCommand = "!sensu_test_check!"
 
