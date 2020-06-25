@@ -2,11 +2,9 @@ package actions
 
 import (
 	"context"
-	"fmt"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/types"
 )
 
 // EntityController exposes actions in which a viewer can perform.
@@ -23,7 +21,7 @@ func NewEntityController(store store.EntityStore) EntityController {
 
 // Find returns resource associated with given parameters if available to the
 // viewer.
-func (c EntityController) Find(ctx context.Context, id string) (*types.Entity, error) {
+func (c EntityController) Find(ctx context.Context, id string) (*corev2.Entity, error) {
 	// Fetch from store
 	result, serr := c.store.GetEntityByName(ctx, id)
 	if serr != nil {
@@ -44,8 +42,6 @@ func (c EntityController) List(ctx context.Context, pred *store.SelectionPredica
 		return nil, NewError(InternalErr, err)
 	}
 
-	fmt.Printf("%d entities, pred: %v\n", len(results), pred)
-
 	resources := make([]corev2.Resource, len(results))
 	for i, v := range results {
 		resources[i] = v
@@ -55,7 +51,7 @@ func (c EntityController) List(ctx context.Context, pred *store.SelectionPredica
 }
 
 // Create instatiates, validates and persists new resource if viewer has access.
-func (c EntityController) Create(ctx context.Context, entity types.Entity) error {
+func (c EntityController) Create(ctx context.Context, entity corev2.Entity) error {
 	// Check for an already existing resource
 	if e, err := c.store.GetEntityByName(ctx, entity.Name); err != nil {
 		return NewError(InternalErr, err)
@@ -78,7 +74,7 @@ func (c EntityController) Create(ctx context.Context, entity types.Entity) error
 // CreateOrReplace creates or replaces an entity. It returns an error if the
 // provided entity is invalid, the user doesn't have permissions to create or
 // update the entity, or if an internal error is returned from the store.
-func (c EntityController) CreateOrReplace(ctx context.Context, entity types.Entity) error {
+func (c EntityController) CreateOrReplace(ctx context.Context, entity corev2.Entity) error {
 	// Validate
 	if err := entity.Validate(); err != nil {
 		return NewError(InvalidArgument, err)
