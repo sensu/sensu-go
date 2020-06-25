@@ -5,11 +5,12 @@ import (
 	"reflect"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
-	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/backend/secrets"
+	"github.com/sensu/sensu-go/backend/store"
+	cachev3 "github.com/sensu/sensu-go/backend/store/cache/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -33,11 +34,11 @@ type RoundRobinIntervalScheduler struct {
 	ringPool               *ringv2.Pool
 	executor               *CheckExecutor
 	cancels                map[string]ringCancel
-	entityCache            *cache.Resource
+	entityCache            *cachev3.Resource
 }
 
 // NewRoundRobinIntervalScheduler initializes a RoundRobinIntervalScheduler
-func NewRoundRobinIntervalScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, pool *ringv2.Pool, check *corev2.CheckConfig, cache *cache.Resource, secretsProviderManager *secrets.ProviderManager) *RoundRobinIntervalScheduler {
+func NewRoundRobinIntervalScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, pool *ringv2.Pool, check *corev2.CheckConfig, cache *cachev3.Resource, secretsProviderManager *secrets.ProviderManager) *RoundRobinIntervalScheduler {
 	sched := &RoundRobinIntervalScheduler{
 		store:             store,
 		bus:               bus,
@@ -61,7 +62,7 @@ func NewRoundRobinIntervalScheduler(ctx context.Context, store store.Store, bus 
 
 func (s *RoundRobinIntervalScheduler) updateRings() {
 	agentEntitiesRequest := 1
-	var proxyEntities []*corev2.Entity
+	var proxyEntities []*corev3.EntityConfig
 	if s.check.ProxyRequests != nil {
 		entities := s.entityCache.Get(s.check.Namespace)
 		proxyEntities = matchEntities(entities, s.check.ProxyRequests)
@@ -107,7 +108,7 @@ func (s *RoundRobinIntervalScheduler) Start() {
 	go s.start()
 }
 
-func (s *RoundRobinIntervalScheduler) handleEvents(executor *CheckExecutor, ch <-chan ringv2.Event, proxyEntities []*corev2.Entity) {
+func (s *RoundRobinIntervalScheduler) handleEvents(executor *CheckExecutor, ch <-chan ringv2.Event, proxyEntities []*corev3.EntityConfig) {
 	for event := range ch {
 		s.handleEvent(executor, event, proxyEntities)
 	}
@@ -121,7 +122,7 @@ func getAgentEntity(event ringv2.Event) string {
 	return entity
 }
 
-func (s *RoundRobinIntervalScheduler) handleEvent(executor *CheckExecutor, event ringv2.Event, proxyEntities []*corev2.Entity) {
+func (s *RoundRobinIntervalScheduler) handleEvent(executor *CheckExecutor, event ringv2.Event, proxyEntities []*corev3.EntityConfig) {
 	switch event.Type {
 	case ringv2.EventError:
 		s.logger.WithError(event.Err).Error("error scheduling check")
@@ -172,7 +173,7 @@ func (s *RoundRobinIntervalScheduler) start() {
 	}
 }
 
-func (s *RoundRobinIntervalScheduler) schedule(executor *CheckExecutor, proxyEntities []*corev2.Entity, agentEntities []string) {
+func (s *RoundRobinIntervalScheduler) schedule(executor *CheckExecutor, proxyEntities []*corev3.EntityConfig, agentEntities []string) {
 	if s.check.IsSubdued() {
 		s.logger.Debug("check is subdued")
 		return

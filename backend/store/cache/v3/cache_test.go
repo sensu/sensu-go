@@ -1,31 +1,30 @@
-package cache
+package v3
 
 import (
 	"context"
 	"reflect"
 	"testing"
 
-	"github.com/sensu/sensu-go/backend/store/etcd"
-	"github.com/sensu/sensu-go/types"
-
 	"github.com/coreos/etcd/integration"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/testing/fixture"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/types/dynamic"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
-func fixtureEntity(namespace, name string) *corev2.Entity {
-	entity := corev2.FixtureEntity(name)
-	entity.Namespace = namespace
+func fixtureEntity(namespace, name string) *corev3.EntityConfig {
+	entity := corev3.FixtureEntityConfig(name)
+	entity.Metadata.Namespace = namespace
 	return entity
 }
 
 func TestCacheGet(t *testing.T) {
 	cache := Resource{
-		cache: buildCache([]corev2.Resource{
+		cache: buildCache([]corev3.Resource{
 			fixtureEntity("a", "1"),
 			fixtureEntity("a", "2"),
 			fixtureEntity("a", "3"),
@@ -64,7 +63,7 @@ func TestCacheGet(t *testing.T) {
 
 func TestCacheGetAll(t *testing.T) {
 	cache := Resource{
-		cache: buildCache([]corev2.Resource{
+		cache: buildCache([]corev3.Resource{
 			fixtureEntity("a", "1"),
 			fixtureEntity("a", "2"),
 			fixtureEntity("b", "1"),
@@ -97,11 +96,12 @@ func TestCacheGetAll(t *testing.T) {
 }
 
 func TestBuildCache(t *testing.T) {
-	resource1 := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "resource1", Namespace: "default"}}
-	resource2 := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "resource2", Namespace: "default"}}
-	resource3 := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "resource3", Namespace: "acme"}}
+	resource1 := corev3.FixtureEntityConfig("resource1")
+	resource2 := corev3.FixtureEntityConfig("resource2")
+	resource3 := corev3.FixtureEntityConfig("resource3")
+	resource3.Metadata.Namespace = "acme"
 
-	cache := buildCache([]corev2.Resource{resource1, resource2, resource3}, false)
+	cache := buildCache([]corev3.Resource{resource1, resource2, resource3}, false)
 
 	assert.Len(t, cache["acme"], 1)
 	assert.Len(t, cache["default"], 2)
@@ -109,22 +109,37 @@ func TestBuildCache(t *testing.T) {
 }
 
 func TestResourceRebuild(t *testing.T) {
+	ctx := store.NamespaceContext(context.Background(), "default")
 	c := integration.NewClusterV3(t, &integration.ClusterConfig{Size: 1})
 	defer c.Terminate(t)
 	client := c.RandClient()
-	s := etcd.NewStore(client, "store")
-	require.NoError(t, s.CreateNamespace(context.Background(), types.FixtureNamespace("default")))
-	ctx := store.NamespaceContext(context.Background(), "default")
+	store := etcdstore.NewStore(client)
+
+	// Add namespace resource
+	namespace := corev2.FixtureNamespace("default")
+	req := storev2.NewResourceRequestFromV2Resource(ctx, namespace)
+	wrapper, err := wrap.V2Resource(namespace)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.CreateOrUpdate(req, wrapper); err != nil {
+		t.Fatal(err)
+	}
 
 	cacher := Resource{
 		cache:     make(map[string][]Value),
 		client:    client,
-		resourceT: &fixture.Resource{},
+		resourceT: &corev3.EntityConfig{},
 	}
 
 	// Resource added to a new namespace
-	foo := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "foo", Namespace: "default"}}
-	if err := s.CreateOrUpdateResource(ctx, foo); err != nil {
+	foo := corev3.FixtureEntityConfig("foo")
+	req = storev2.NewResourceRequestFromResource(ctx, foo)
+	wrapper, err = wrap.Resource(foo)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.CreateOrUpdate(req, wrapper); err != nil {
 		t.Fatal(err)
 	}
 	if updates, err := cacher.rebuild(ctx); err != nil {
@@ -136,8 +151,13 @@ func TestResourceRebuild(t *testing.T) {
 	assert.Equal(t, int64(1), cacher.Count())
 
 	// Resource added to an existing namespace
-	bar := &fixture.Resource{ObjectMeta: corev2.ObjectMeta{Name: "bar", Namespace: "default"}}
-	if err := s.CreateOrUpdateResource(ctx, bar); err != nil {
+	bar := corev3.FixtureEntityConfig("bar")
+	req = storev2.NewResourceRequestFromResource(ctx, bar)
+	wrapper, err = wrap.Resource(bar)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.CreateOrUpdate(req, wrapper); err != nil {
 		t.Fatal(err)
 	}
 	if updates, err := cacher.rebuild(ctx); err != nil {
@@ -149,8 +169,13 @@ func TestResourceRebuild(t *testing.T) {
 	assert.Equal(t, int64(2), cacher.Count())
 
 	// Resource updated
-	bar.Foo = "acme"
-	if err := s.CreateOrUpdateResource(ctx, bar); err != nil {
+	bar.User = "acme"
+	req = storev2.NewResourceRequestFromResource(ctx, bar)
+	wrapper, err = wrap.Resource(bar)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.CreateOrUpdate(req, wrapper); err != nil {
 		t.Fatal(err)
 	}
 	if updates, err := cacher.rebuild(ctx); err != nil {
@@ -162,7 +187,8 @@ func TestResourceRebuild(t *testing.T) {
 	assert.Equal(t, int64(2), cacher.Count())
 
 	// Resource deleted
-	if err := s.DeleteResource(ctx, bar.StorePrefix(), bar.GetObjectMeta().Name); err != nil {
+	req = storev2.NewResourceRequestFromResource(ctx, bar)
+	if err := store.Delete(req); err != nil {
 		t.Fatal(err)
 	}
 	if updates, err := cacher.rebuild(ctx); err != nil {

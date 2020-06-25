@@ -1,6 +1,6 @@
 // +build integration
 
-package cache
+package v2
 
 import (
 	"context"
@@ -23,7 +23,7 @@ func init() {
 	time.TimeProxy = mockTime
 }
 
-func TestEntityCacheIntegration(t *testing.T) {
+func TestResourceCacheIntegration(t *testing.T) {
 	mockTime.Start()
 	defer mockTime.Stop()
 	e, cleanup := etcd.NewTestEtcd(t)
@@ -39,30 +39,29 @@ func TestEntityCacheIntegration(t *testing.T) {
 	ctx := context.WithValue(context.Background(), corev2.NamespaceKey, "default")
 	fixtures := []Value{}
 
-	// Populate store with some initial entities
+	// Populate store with some initial checks
+	// v2 entities are no longer compatible with the v2 cache
 	for i := 0; i < 9; i++ {
-		fixture := corev2.FixtureEntity(fmt.Sprintf("%d", i))
-		fixture.Name = fmt.Sprintf("%d", i)
-		fixture.EntityClass = corev2.EntityProxyClass
+		fixture := corev2.FixtureCheckConfig(fmt.Sprintf("%d", i))
+		fixture.Command = "test"
 		fixtures = append(fixtures, getCacheValue(fixture, true))
-		if err := store.UpdateEntity(ctx, fixture); err != nil {
+		if err := store.UpdateCheckConfig(ctx, fixture); err != nil {
 			t.Fatal(err)
 		}
 	}
 
 	otherFixtures := []Value{}
 
-	// Include some entities from a non-default namespace
+	// Include some checks from a non-default namespace
 	if err := store.CreateNamespace(context.Background(), &corev2.Namespace{Name: "other"}); err != nil {
 		t.Fatal(err)
 	}
 	for i := 0; i < 3; i++ {
-		fixture := corev2.FixtureEntity(fmt.Sprintf("%d", i))
-		fixture.Name = fmt.Sprintf("%d", i)
+		fixture := corev2.FixtureCheckConfig(fmt.Sprintf("%d", i))
 		fixture.Namespace = "other"
-		fixture.EntityClass = corev2.EntityProxyClass
+		fixture.Command = "test"
 		otherFixtures = append(otherFixtures, getCacheValue(fixture, true))
-		if err := store.UpdateEntity(ctx, fixture); err != nil {
+		if err := store.UpdateCheckConfig(ctx, fixture); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -70,51 +69,51 @@ func TestEntityCacheIntegration(t *testing.T) {
 	cacheCtx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	cache, err := New(cacheCtx, client, &corev2.Entity{}, true)
+	cache, err := New(cacheCtx, client, &corev2.CheckConfig{}, true)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	watcher := cache.Watch(cacheCtx)
 
-	if got, want := cache.Get("default"), fixtures; !checkEntities(t, got, want) {
-		t.Fatalf("bad entities")
+	if got, want := cache.Get("default"), fixtures; !checkResources(t, got, want) {
+		t.Fatalf("bad resources")
 	}
 
-	if got, want := cache.Get("notdefault"), []Value{}; !checkEntities(t, got, want) {
-		t.Fatal("bad entities")
+	if got, want := cache.Get("notdefault"), []Value{}; !checkResources(t, got, want) {
+		t.Fatal("bad resources")
 	}
 
-	if got, want := cache.Get("other"), otherFixtures; !checkEntities(t, got, want) {
-		t.Fatal("bad entities")
+	if got, want := cache.Get("other"), otherFixtures; !checkResources(t, got, want) {
+		t.Fatal("bad resources")
 	}
 
-	newEntity := corev2.FixtureEntity("new")
-	newEntity.EntityClass = corev2.EntityProxyClass
-	if err := store.UpdateEntity(ctx, newEntity); err != nil {
+	newCheck := corev2.FixtureCheckConfig("new")
+	newCheck.Command = "test"
+	if err := store.UpdateCheckConfig(ctx, newCheck); err != nil {
 		t.Fatal(err)
 	}
 	<-watcher
 
 	got := cache.Get("default")
 
-	if got, want := got[len(got)-1], getCacheValue(newEntity, true); got.Resource.GetObjectMeta().Name != want.Resource.GetObjectMeta().Name {
-		t.Errorf("bad entity: got %s, want %s", got.Resource.GetObjectMeta().Name, want.Resource.GetObjectMeta().Name)
+	if got, want := got[len(got)-1], getCacheValue(newCheck, true); got.Resource.GetObjectMeta().Name != want.Resource.GetObjectMeta().Name {
+		t.Errorf("bad resource: got %s, want %s", got.Resource.GetObjectMeta().Name, want.Resource.GetObjectMeta().Name)
 	}
 
-	if err := store.DeleteEntity(ctx, newEntity); err != nil {
+	if err := store.DeleteCheckConfigByName(ctx, newCheck.Name); err != nil {
 		t.Fatal(err)
 	}
 
 	<-watcher
 
-	if got, want := cache.Get("default"), fixtures; !checkEntities(t, got, want) {
-		t.Errorf("bad entities")
+	if got, want := cache.Get("default"), fixtures; !checkResources(t, got, want) {
+		t.Errorf("bad resources")
 	}
 
 }
 
-func checkEntities(t testing.TB, got, want []Value) bool {
+func checkResources(t testing.TB, got, want []Value) bool {
 	t.Helper()
 	success := true
 	if got, want := len(got), len(want); got != want {

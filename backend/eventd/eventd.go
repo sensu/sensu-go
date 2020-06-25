@@ -16,7 +16,7 @@ import (
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/cache"
+	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -71,7 +71,7 @@ type Eventd struct {
 	shutdownChan    chan struct{}
 	wg              *sync.WaitGroup
 	Logger          Logger
-	silencedCache   *cache.Resource
+	silencedCache   *cachev2.Resource
 	storeTimeout    time.Duration
 }
 
@@ -121,7 +121,7 @@ func New(ctx context.Context, c Config, opts ...Option) (*Eventd, error) {
 	}
 
 	e.ctx, e.cancel = context.WithCancel(ctx)
-	cache, err := cache.New(e.ctx, c.Client, &corev2.Silenced{}, false)
+	cache, err := cachev2.New(e.ctx, c.Client, &corev2.Silenced{}, false)
 	if err != nil {
 		return nil, err
 	}

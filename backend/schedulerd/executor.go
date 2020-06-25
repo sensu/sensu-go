@@ -8,10 +8,11 @@ import (
 
 	time "github.com/echlebek/timeproxy"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/cache"
+	cachev3 "github.com/sensu/sensu-go/backend/store/cache/v3"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 )
@@ -23,8 +24,8 @@ var (
 // Executor executes scheduled or adhoc checks
 type Executor interface {
 	processCheck(ctx context.Context, check *corev2.CheckConfig) error
-	getEntities(ctx context.Context) ([]cache.Value, error)
-	publishProxyCheckRequests(entities []*corev2.Entity, check *corev2.CheckConfig) error
+	getEntities(ctx context.Context) ([]cachev3.Value, error)
+	publishProxyCheckRequests(entities []*corev3.EntityConfig, check *corev2.CheckConfig) error
 	execute(check *corev2.CheckConfig) error
 	buildRequest(check *corev2.CheckConfig) (*corev2.CheckRequest, error)
 }
@@ -34,12 +35,12 @@ type CheckExecutor struct {
 	bus                    messaging.MessageBus
 	store                  store.Store
 	namespace              string
-	entityCache            *cache.Resource
+	entityCache            *cachev3.Resource
 	secretsProviderManager *secrets.ProviderManager
 }
 
 // NewCheckExecutor creates a new check executor
-func NewCheckExecutor(bus messaging.MessageBus, namespace string, store store.Store, cache *cache.Resource, secretsProviderManager *secrets.ProviderManager) *CheckExecutor {
+func NewCheckExecutor(bus messaging.MessageBus, namespace string, store store.Store, cache *cachev3.Resource, secretsProviderManager *secrets.ProviderManager) *CheckExecutor {
 	return &CheckExecutor{bus: bus, namespace: namespace, store: store, entityCache: cache, secretsProviderManager: secretsProviderManager}
 }
 
@@ -49,11 +50,11 @@ func (c *CheckExecutor) processCheck(ctx context.Context, check *corev2.CheckCon
 	return processCheck(ctx, c, check)
 }
 
-func (c *CheckExecutor) getEntities(ctx context.Context) ([]cache.Value, error) {
+func (c *CheckExecutor) getEntities(ctx context.Context) ([]cachev3.Value, error) {
 	return c.entityCache.Get(store.NewNamespaceFromContext(ctx)), nil
 }
 
-func (c *CheckExecutor) publishProxyCheckRequests(entities []*corev2.Entity, check *corev2.CheckConfig) error {
+func (c *CheckExecutor) publishProxyCheckRequests(entities []*corev3.EntityConfig, check *corev2.CheckConfig) error {
 	return publishProxyCheckRequests(c, entities, check)
 }
 
@@ -141,12 +142,12 @@ type AdhocRequestExecutor struct {
 	ctx                    context.Context
 	cancel                 context.CancelFunc
 	listenQueueErr         chan error
-	entityCache            *cache.Resource
+	entityCache            *cachev3.Resource
 	secretsProviderManager *secrets.ProviderManager
 }
 
 // NewAdhocRequestExecutor returns a new AdhocRequestExecutor.
-func NewAdhocRequestExecutor(ctx context.Context, store store.Store, queue types.Queue, bus messaging.MessageBus, cache *cache.Resource, secretsProviderManager *secrets.ProviderManager) *AdhocRequestExecutor {
+func NewAdhocRequestExecutor(ctx context.Context, store store.Store, queue types.Queue, bus messaging.MessageBus, cache *cachev3.Resource, secretsProviderManager *secrets.ProviderManager) *AdhocRequestExecutor {
 	ctx, cancel := context.WithCancel(ctx)
 	executor := &AdhocRequestExecutor{
 		adhocQueue:             queue,
@@ -228,11 +229,11 @@ func (a *AdhocRequestExecutor) processCheck(ctx context.Context, check *corev2.C
 	return processCheck(ctx, a, check)
 }
 
-func (a *AdhocRequestExecutor) getEntities(ctx context.Context) ([]cache.Value, error) {
+func (a *AdhocRequestExecutor) getEntities(ctx context.Context) ([]cachev3.Value, error) {
 	return a.entityCache.Get(store.NewNamespaceFromContext(ctx)), nil
 }
 
-func (a *AdhocRequestExecutor) publishProxyCheckRequests(entities []*corev2.Entity, check *corev2.CheckConfig) error {
+func (a *AdhocRequestExecutor) publishProxyCheckRequests(entities []*corev3.EntityConfig, check *corev2.CheckConfig) error {
 	return publishProxyCheckRequests(a, entities, check)
 }
 
@@ -262,7 +263,7 @@ func (a *AdhocRequestExecutor) buildRequest(check *corev2.CheckConfig) (*corev2.
 	return buildRequest(check, a.store, a.secretsProviderManager)
 }
 
-func publishProxyCheckRequests(e Executor, entities []*corev2.Entity, check *corev2.CheckConfig) error {
+func publishProxyCheckRequests(e Executor, entities []*corev3.EntityConfig, check *corev2.CheckConfig) error {
 	var splay time.Duration
 	if check.ProxyRequests.Splay {
 		var err error
@@ -280,11 +281,11 @@ func publishProxyCheckRequests(e Executor, entities []*corev2.Entity, check *cor
 		time.Sleep(splay)
 		substitutedCheck, err := substituteProxyEntityTokens(entity, check)
 		if err != nil {
-			logger.WithFields(fields).WithError(err).Errorf("could not substitute tokens for proxy entity %q", entity.Name)
+			logger.WithFields(fields).WithError(err).Errorf("could not substitute tokens for proxy entity %q", entity.Metadata.Name)
 			continue
 		}
 		if err := e.execute(substitutedCheck); err != nil {
-			logger.WithFields(fields).WithError(err).Errorf("could not send check request for entity %q", entity.Name)
+			logger.WithFields(fields).WithError(err).Errorf("could not send check request for entity %q", entity.Metadata.Name)
 			continue
 		}
 	}
@@ -316,7 +317,7 @@ func processCheck(ctx context.Context, executor Executor, check *corev2.CheckCon
 	return nil
 }
 
-func processRoundRobinCheck(ctx context.Context, executor *CheckExecutor, check *corev2.CheckConfig, proxyEntities []*corev2.Entity, agentEntities []string) error {
+func processRoundRobinCheck(ctx context.Context, executor *CheckExecutor, check *corev2.CheckConfig, proxyEntities []*corev3.EntityConfig, agentEntities []string) error {
 	if check.ProxyRequests != nil {
 		return publishRoundRobinProxyCheckRequests(executor, check, proxyEntities, agentEntities)
 	}
@@ -328,7 +329,7 @@ func processRoundRobinCheck(ctx context.Context, executor *CheckExecutor, check 
 	return nil
 }
 
-func publishRoundRobinProxyCheckRequests(executor *CheckExecutor, check *corev2.CheckConfig, proxyEntities []*corev2.Entity, agentEntities []string) error {
+func publishRoundRobinProxyCheckRequests(executor *CheckExecutor, check *corev2.CheckConfig, proxyEntities []*corev3.EntityConfig, agentEntities []string) error {
 	var splay time.Duration
 	if check.ProxyRequests.Splay {
 		var err error
@@ -347,11 +348,11 @@ func publishRoundRobinProxyCheckRequests(executor *CheckExecutor, check *corev2.
 		agentEntity := agentEntities[i]
 		substitutedCheck, err := substituteProxyEntityTokens(proxyEntity, check)
 		if err != nil {
-			logger.WithFields(fields).WithError(err).Errorf("could not substitute tokens for proxy entity %q", proxyEntity.Name)
+			logger.WithFields(fields).WithError(err).Errorf("could not substitute tokens for proxy entity %q", proxyEntity.Metadata.Name)
 			continue
 		}
 		if err := executor.executeOnEntity(substitutedCheck, agentEntity); err != nil {
-			logger.WithFields(fields).WithError(err).Errorf("could not send check request for proxy entity %q", proxyEntity.Name)
+			logger.WithFields(fields).WithError(err).Errorf("could not send check request for proxy entity %q", proxyEntity.Metadata.Name)
 			continue
 		}
 		dreamtime := splay - time.Now().Sub(now)

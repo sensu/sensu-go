@@ -4,11 +4,12 @@ import (
 	"context"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
-	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/cache"
 	"github.com/sensu/sensu-go/backend/secrets"
+	"github.com/sensu/sensu-go/backend/store"
+	cachev3 "github.com/sensu/sensu-go/backend/store/cache/v3"
 	"github.com/sirupsen/logrus"
 )
 
@@ -26,11 +27,11 @@ type RoundRobinCronScheduler struct {
 	ringPool      *ringv2.Pool
 	cancels       map[string]ringCancel
 	executor      *CheckExecutor
-	entityCache   *cache.Resource
+	entityCache   *cachev3.Resource
 }
 
 // NewRoundRobinCronScheduler creates a new RoundRobinCronScheduler.
-func NewRoundRobinCronScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, pool *ringv2.Pool, check *corev2.CheckConfig, cache *cache.Resource, secretsProviderManager *secrets.ProviderManager) *RoundRobinCronScheduler {
+func NewRoundRobinCronScheduler(ctx context.Context, store store.Store, bus messaging.MessageBus, pool *ringv2.Pool, check *corev2.CheckConfig, cache *cachev3.Resource, secretsProviderManager *secrets.ProviderManager) *RoundRobinCronScheduler {
 	sched := &RoundRobinCronScheduler{
 		store:         store,
 		bus:           bus,
@@ -58,7 +59,7 @@ func (s *RoundRobinCronScheduler) Start() {
 	go s.start()
 }
 
-func (s *RoundRobinCronScheduler) handleEvent(executor *CheckExecutor, event ringv2.Event, proxyEntities []*corev2.Entity) {
+func (s *RoundRobinCronScheduler) handleEvent(executor *CheckExecutor, event ringv2.Event, proxyEntities []*corev3.EntityConfig) {
 	switch event.Type {
 	case ringv2.EventError:
 		s.logger.WithError(event.Err).Error("error scheduling check")
@@ -109,7 +110,7 @@ func (s *RoundRobinCronScheduler) start() {
 	}
 }
 
-func (s *RoundRobinCronScheduler) handleEvents(executor *CheckExecutor, ch <-chan ringv2.Event, proxyEntities []*corev2.Entity) {
+func (s *RoundRobinCronScheduler) handleEvents(executor *CheckExecutor, ch <-chan ringv2.Event, proxyEntities []*corev3.EntityConfig) {
 	for event := range ch {
 		s.handleEvent(executor, event, proxyEntities)
 	}
@@ -117,7 +118,7 @@ func (s *RoundRobinCronScheduler) handleEvents(executor *CheckExecutor, ch <-cha
 
 func (s *RoundRobinCronScheduler) updateRings() {
 	agentEntitiesRequest := 1
-	var proxyEntities []*corev2.Entity
+	var proxyEntities []*corev3.EntityConfig
 	if s.check.ProxyRequests != nil {
 		entities := s.entityCache.Get(s.check.Namespace)
 		proxyEntities = matchEntities(entities, s.check.ProxyRequests)
@@ -156,7 +157,7 @@ func (s *RoundRobinCronScheduler) updateRings() {
 	s.cancels = newCancels
 }
 
-func (s *RoundRobinCronScheduler) schedule(executor *CheckExecutor, proxyEntities []*corev2.Entity, agentEntities []string) {
+func (s *RoundRobinCronScheduler) schedule(executor *CheckExecutor, proxyEntities []*corev3.EntityConfig, agentEntities []string) {
 	if s.check.IsSubdued() {
 		s.logger.Debug("check is subdued")
 		return
