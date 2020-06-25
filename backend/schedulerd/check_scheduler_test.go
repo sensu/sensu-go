@@ -12,7 +12,7 @@ import (
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
-	"github.com/sensu/sensu-go/backend/store/cache"
+	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -66,15 +66,15 @@ func newIntervalScheduler(ctx context.Context, t *testing.T, executor string) *T
 	scheduler.msgBus = bus
 	pm := secrets.NewProviderManager()
 
-	scheduler.scheduler = NewIntervalScheduler(ctx, s, scheduler.msgBus, scheduler.check, &cache.Resource{}, pm)
+	scheduler.scheduler = NewIntervalScheduler(ctx, s, scheduler.msgBus, scheduler.check, &cachev2.Resource{}, pm)
 
 	assert.NoError(scheduler.msgBus.Start())
 
 	switch executor {
 	case "adhoc":
-		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, &cache.Resource{}, pm)
+		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, &cachev2.Resource{}, pm)
 	default:
-		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, &cache.Resource{}, pm)
+		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, &cachev2.Resource{}, pm)
 	}
 
 	return scheduler
@@ -104,15 +104,15 @@ func newCronScheduler(ctx context.Context, t *testing.T, executor string) *TestC
 	scheduler.msgBus = bus
 	pm := secrets.NewProviderManager()
 
-	scheduler.scheduler = NewCronScheduler(ctx, s, scheduler.msgBus, scheduler.check, &cache.Resource{}, pm)
+	scheduler.scheduler = NewCronScheduler(ctx, s, scheduler.msgBus, scheduler.check, &cachev2.Resource{}, pm)
 
 	assert.NoError(scheduler.msgBus.Start())
 
 	switch executor {
 	case "adhoc":
-		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, &cache.Resource{}, pm)
+		scheduler.exec = NewAdhocRequestExecutor(ctx, s, &queue.Memory{}, scheduler.msgBus, &cachev2.Resource{}, pm)
 	default:
-		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, &cache.Resource{}, pm)
+		scheduler.exec = NewCheckExecutor(scheduler.msgBus, "default", s, &cachev2.Resource{}, pm)
 	}
 
 	return scheduler

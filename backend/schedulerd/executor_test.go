@@ -6,13 +6,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/queue"
 	"github.com/sensu/sensu-go/backend/secrets"
-	"github.com/sensu/sensu-go/backend/store/cache"
+	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -27,7 +29,7 @@ func TestAdhocExecutor(t *testing.T) {
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
 	pm := secrets.NewProviderManager()
-	newAdhocExec := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus, &cache.Resource{}, pm)
+	newAdhocExec := NewAdhocRequestExecutor(context.Background(), store, &queue.Memory{}, bus, &cachev2.Resource{}, pm)
 	defer newAdhocExec.Stop()
 	assert.NoError(t, newAdhocExec.bus.Start())
 
@@ -85,9 +87,9 @@ func TestPublishProxyCheckRequest(t *testing.T) {
 
 	// Create two entities, so the first one fails token substitution, therefore
 	// we can test that a check is scheduled for the second one
-	entity1 := corev2.FixtureEntity("entity1")
-	entity2 := corev2.FixtureEntity("entity2")
-	entity2.Labels = map[string]string{"foo": "bar"}
+	entity1 := corev3.FixtureEntityConfig("entity1")
+	entity2 := corev3.FixtureEntityConfig("entity2")
+	entity2.Metadata.Labels = map[string]string{"foo": "bar"}
 
 	// Create a check that relies on token substitution
 	check := scheduler.check
@@ -115,7 +117,10 @@ func TestPublishProxyCheckRequest(t *testing.T) {
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		select {
 		case msg := <-c1:
 			res, ok := msg.(*corev2.CheckRequest)
@@ -125,7 +130,9 @@ func TestPublishProxyCheckRequest(t *testing.T) {
 		}
 	}()
 
-	assert.NoError(scheduler.exec.publishProxyCheckRequests([]*corev2.Entity{entity1, entity2}, check))
+	assert.NoError(scheduler.exec.publishProxyCheckRequests([]*corev3.EntityConfig{entity1, entity2}, check))
+
+	wg.Wait()
 }
 
 func TestPublishProxyCheckRequestsInterval(t *testing.T) {
@@ -138,10 +145,10 @@ func TestPublishProxyCheckRequestsInterval(t *testing.T) {
 	defer cancel()
 	scheduler := newIntervalScheduler(ctx, t, "check")
 
-	entity1 := corev2.FixtureEntity("entity1")
-	entity2 := corev2.FixtureEntity("entity2")
-	entity3 := corev2.FixtureEntity("entity3")
-	entities := []*corev2.Entity{entity1, entity2, entity3}
+	entity1 := corev3.FixtureEntityConfig("entity1")
+	entity2 := corev3.FixtureEntityConfig("entity2")
+	entity3 := corev3.FixtureEntityConfig("entity3")
+	entities := []*corev3.EntityConfig{entity1, entity2, entity3}
 	check := scheduler.check
 	check.Subscriptions = []string{"subscription1"}
 	check.ProxyRequests = corev2.FixtureProxyRequests(true)
@@ -193,10 +200,10 @@ func TestPublishProxyCheckRequestsCron(t *testing.T) {
 	defer cancel()
 	scheduler := newCronScheduler(ctx, t, "check")
 
-	entity1 := corev2.FixtureEntity("entity1")
-	entity2 := corev2.FixtureEntity("entity2")
-	entity3 := corev2.FixtureEntity("entity3")
-	entities := []*corev2.Entity{entity1, entity2, entity3}
+	entity1 := corev3.FixtureEntityConfig("entity1")
+	entity2 := corev3.FixtureEntityConfig("entity2")
+	entity3 := corev3.FixtureEntityConfig("entity3")
+	entities := []*corev3.EntityConfig{entity1, entity2, entity3}
 	check := scheduler.check
 	check.Subscriptions = []string{"subscription1"}
 	check.ProxyRequests = corev2.FixtureProxyRequests(true)

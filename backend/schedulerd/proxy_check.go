@@ -7,7 +7,8 @@ import (
 	time "github.com/echlebek/timeproxy"
 	cron "github.com/robfig/cron/v3"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	"github.com/sensu/sensu-go/backend/store/cache"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
+	cachev2 "github.com/sensu/sensu-go/backend/store/cache/v2"
 	"github.com/sensu/sensu-go/js"
 	"github.com/sensu/sensu-go/token"
 	"github.com/sensu/sensu-go/types/dynamic"
@@ -15,8 +16,8 @@ import (
 
 // matchEntities matches the provided list of entities to the entity attributes
 // configured in the proxy request
-func matchEntities(entities []cache.Value, proxyRequest *corev2.ProxyRequests) []*corev2.Entity {
-	matched := make([]*corev2.Entity, 0, len(entities))
+func matchEntities(entities []cachev2.Value, proxyRequest *corev2.ProxyRequests) []*corev3.EntityConfig {
+	matched := make([]*corev3.EntityConfig, 0, len(entities))
 	synthesizedEntities := make([]interface{}, 0, len(entities))
 	for _, entity := range entities {
 		synthesizedEntities = append(synthesizedEntities, entity.Synth)
@@ -35,7 +36,7 @@ func matchEntities(entities []cache.Value, proxyRequest *corev2.ProxyRequests) [
 
 	for i, result := range results {
 		if result {
-			matched = append(matched, entities[i].Resource.(*corev2.Entity))
+			matched = append(matched, entities[i].Resource.(*corev3.EntityConfig))
 		}
 	}
 
@@ -44,7 +45,7 @@ func matchEntities(entities []cache.Value, proxyRequest *corev2.ProxyRequests) [
 
 // substituteProxyEntityTokens substitutes entity tokens in the proxy check definition. If
 // there are unmatched entity tokens, it returns an error.
-func substituteProxyEntityTokens(entity *corev2.Entity, check *corev2.CheckConfig) (*corev2.CheckConfig, error) {
+func substituteProxyEntityTokens(entity *corev3.EntityConfig, check *corev2.CheckConfig) (*corev2.CheckConfig, error) {
 	// Extract the extended attributes from the entity and combine them at the
 	// top-level so they can be easily accessed using token substitution
 	synthesizedEntity := dynamic.Synthesize(entity)
@@ -53,7 +54,7 @@ func substituteProxyEntityTokens(entity *corev2.Entity, check *corev2.CheckConfi
 	// entity
 	checkBytes, err := token.Substitution(synthesizedEntity, check)
 	if err != nil {
-		logger.WithField("check", check.Name).WithField("entity", entity.Name).WithError(err).Error("unable to substitute tokens")
+		logger.WithField("check", check.Name).WithField("entity", entity.Metadata.Name).WithError(err).Error("unable to substitute tokens")
 		return nil, err
 	}
 
@@ -66,7 +67,7 @@ func substituteProxyEntityTokens(entity *corev2.Entity, check *corev2.CheckConfi
 		return nil, fmt.Errorf("could not unmarshal the check: %s", err)
 	}
 
-	substitutedCheck.ProxyEntityName = entity.Name
+	substitutedCheck.ProxyEntityName = entity.Metadata.Name
 	return substitutedCheck, nil
 }
 
