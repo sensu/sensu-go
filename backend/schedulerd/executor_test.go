@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 	"testing"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
@@ -114,7 +115,10 @@ func TestPublishProxyCheckRequest(t *testing.T) {
 		assert.NoError(scheduler.msgBus.Stop())
 	}()
 
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		select {
 		case msg := <-c1:
 			res, ok := msg.(*corev2.CheckRequest)
@@ -125,6 +129,8 @@ func TestPublishProxyCheckRequest(t *testing.T) {
 	}()
 
 	assert.NoError(scheduler.exec.publishProxyCheckRequests([]*corev3.EntityConfig{entity1, entity2}, check))
+
+	wg.Wait()
 }
 
 func TestPublishProxyCheckRequestsInterval(t *testing.T) {
