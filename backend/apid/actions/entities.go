@@ -9,11 +9,6 @@ import (
 	"github.com/sensu/sensu-go/types"
 )
 
-// entityUpdateFields whitelists fields allowed to be updated for Entities
-var entityUpdateFields = []string{
-	"Subscriptions",
-}
-
 // EntityController exposes actions in which a viewer can perform.
 type EntityController struct {
 	store store.EntityStore

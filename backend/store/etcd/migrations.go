@@ -120,17 +120,6 @@ func notifyUpgradeLoop(ctx context.Context) {
 	}
 }
 
-func versionCmp(version int) clientv3.Cmp {
-	return clientv3.Compare(
-		clientv3.Value(DatabaseVersionKey),
-		"=",
-		fmt.Sprintf("%d", version))
-}
-
-func versionOp(version int) clientv3.Op {
-	return clientv3.OpPut(DatabaseVersionKey, fmt.Sprintf("%d", version))
-}
-
 func doMigration(ctx context.Context, client *clientv3.Client, version int, do func(context.Context, *clientv3.Client) error) error {
 	if err := do(ctx, client); err != nil {
 		return err
