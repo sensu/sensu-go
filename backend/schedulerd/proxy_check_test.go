@@ -44,11 +44,10 @@ func TestMatchEntities(t *testing.T) {
 		want             []*corev3.EntityConfig
 	}{
 		{
-			// TODO(nikki): known failure (needs work to synthesize fields that are no longer embedded)
-			// name:             "standard string attribute",
-			// entityAttributes: []string{`entity.name == "entity1"`},
-			// entities:         []corev3.Resource{entity1, entity2, entity3},
-			// want:             []*corev3.EntityConfig{entity1},
+			name:             "standard string attribute",
+			entityAttributes: []string{`entity.name == "entity1"`},
+			entities:         []corev3.Resource{entity1, entity2, entity3},
+			want:             []*corev3.EntityConfig{entity1},
 		},
 		{
 			name:             "standard bool attribute",
