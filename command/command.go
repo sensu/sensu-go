@@ -2,7 +2,6 @@
 package command
 
 import (
-	"bytes"
 	"context"
 	"os/exec"
 	"strings"
@@ -10,9 +9,12 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/armon/circbuf"
 	"github.com/sensu/sensu-go/types"
 	"github.com/sirupsen/logrus"
 )
+
+const maxOutputLen = 1500000
 
 const undocumentedTestCheckCommand = "!sensu_test_check!"
 
@@ -145,10 +147,10 @@ func (e *ExecutionRequest) Execute(ctx context.Context, execution ExecutionReque
 
 	// Share an output buffer between STDOUT/ERR, following the
 	// Nagios plugin spec.
-	var output bytes.Buffer
+	output, _ := circbuf.NewBuffer(maxOutputLen)
 
-	cmd.Stdout = &output
-	cmd.Stderr = &output
+	cmd.Stdout = output
+	cmd.Stderr = output
 
 	// If Input is specified, write to STDIN.
 	if execution.Input != "" {

@@ -14,6 +14,7 @@ require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/NYTimes/gziphandler v0.0.0-20180227021810-5032c8878b9d
 	github.com/StackExchange/wmi v0.0.0-20180725035823-b12b22c5341f // indirect
+	github.com/armon/circbuf v0.0.0-20190214190532-5111143e8da2
 	github.com/ash2k/stager v0.0.0-20170622123058-6e9c7b0eacd4 // indirect
 	github.com/atlassian/gostatsd v0.0.0-20180514010436-af796620006e
 	github.com/coreos/bbolt v1.3.3 // indirect
