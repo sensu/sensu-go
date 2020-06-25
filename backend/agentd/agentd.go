@@ -124,9 +124,6 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 			if _, err := c.Read(msg); err != nil {
 				logger.WithError(err).Error("websocket connection error")
 			}
-			if len(msg) > 0 {
-				logger.WithField("msg", string(msg)).Debug("connection state changed")
-			}
 		},
 	}
 	for _, o := range opts {
