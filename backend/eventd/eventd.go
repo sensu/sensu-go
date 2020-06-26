@@ -12,13 +12,11 @@ import (
 	"github.com/coreos/etcd/clientv3"
 	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/keepalived"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/backend/store/cache"
-	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -61,7 +59,7 @@ const deletedEventSentinel = -1
 type Eventd struct {
 	ctx             context.Context
 	cancel          context.CancelFunc
-	store           storev2.Interface
+	store           store.Store
 	eventStore      store.EventStore
 	bus             messaging.MessageBus
 	workerCount     int
@@ -344,19 +342,15 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 		return true
 	}
 
+	ctx := store.NamespaceContext(context.Background(), namespace)
 	// TODO(eric): make this configurable? Or dynamic based on some property?
 	// 120s seems like a reasonable, it not somewhat large, timeout for check TTL processing.
-	ctx, cancel := context.WithTimeout(context.Background(), e.storeTimeout)
+	ctx, cancel := context.WithTimeout(ctx, e.storeTimeout)
 	defer cancel()
 
 	// The entity has been deleted, and so there is no reason to track check
 	// TTL for it anymore.
-	entityMeta := corev2.NewObjectMeta(entity, namespace)
-	cfg := &corev3.EntityConfig{Metadata: &entityMeta}
-	req := storev2.NewResourceRequestFromResource(ctx, cfg)
-
-	_, err = e.store.Get(req)
-	if _, ok := err.(*store.ErrNotFound); ok {
+	if ent, err := e.store.GetEntityByName(ctx, entity); err == nil && ent == nil {
 		return true
 	} else if err != nil {
 		lager.WithError(err).Error("check ttl: error retrieving entity")
