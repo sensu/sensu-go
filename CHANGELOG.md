@@ -10,6 +10,9 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Clarifies wording around a secret provider error message.
 
+### Changed
+- Improves logging around the agent websocket connection.
+
 ## [5.21.0] - 2020-06-10
 
 ### Added
