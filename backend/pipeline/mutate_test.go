@@ -8,10 +8,11 @@ import (
 	"strings"
 	"testing"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/secrets"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/testing/mockstore"
-	"github.com/sensu/sensu-go/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -35,10 +36,10 @@ func TestHelperMutatorProcess(t *testing.T) {
 func TestPipelineMutate(t *testing.T) {
 	p := New(Config{})
 
-	handler := types.FakeHandlerCommand("cat")
+	handler := corev2.FakeHandlerCommand("cat")
 	handler.Type = "pipe"
 
-	event := &types.Event{}
+	event := &corev2.Event{}
 
 	eventData, err := p.mutateEvent(handler, event)
 
@@ -51,7 +52,7 @@ func TestPipelineMutate(t *testing.T) {
 func TestPipelineJsonMutator(t *testing.T) {
 	p := New(Config{})
 
-	event := &types.Event{}
+	event := &corev2.Event{}
 
 	output, err := p.jsonMutator(event)
 
@@ -64,8 +65,8 @@ func TestPipelineJsonMutator(t *testing.T) {
 func TestPipelineOnlyCheckOutputMutator(t *testing.T) {
 	p := New(Config{})
 
-	event := &types.Event{}
-	event.Check = &types.Check{}
+	event := &corev2.Event{}
+	event.Check = &corev2.Check{}
 	event.Check.Output = "foo"
 
 	output := p.onlyCheckOutputMutator(event)
@@ -77,12 +78,12 @@ func TestPipelineOnlyCheckOutputMutator(t *testing.T) {
 func TestPipelineOnlyCheckOutputMutate(t *testing.T) {
 	p := New(Config{})
 
-	handler := types.FakeHandlerCommand("cat")
+	handler := corev2.FakeHandlerCommand("cat")
 	handler.Type = "pipe"
 	handler.Mutator = "only_check_output"
 
-	event := &types.Event{}
-	event.Check = &types.Check{}
+	event := &corev2.Event{}
+	event.Check = &corev2.Check{}
 	event.Check.Output = "foo"
 
 	eventData, err := p.mutateEvent(handler, event)
@@ -95,21 +96,21 @@ func TestPipelineOnlyCheckOutputMutate(t *testing.T) {
 
 func TestPipelineExtensionMutator(t *testing.T) {
 	m := &mockExec{}
-	ext := &types.Extension{URL: "http://127.0.0.1"}
+	ext := &corev2.Extension{URL: "http://127.0.0.1"}
 	store := &mockstore.MockStore{}
 	store.On("GetExtension", mock.Anything, "extension").Return(ext, nil)
-	store.On("GetMutatorByName", mock.Anything, "extension").Return((*types.Mutator)(nil), nil)
-	event := types.FixtureEvent("foo", "bar")
+	store.On("GetMutatorByName", mock.Anything, "extension").Return((*corev2.Mutator)(nil), nil)
+	event := corev2.FixtureEvent("foo", "bar")
 
 	m.On("MutateEvent", event).Return([]byte("remote"), nil)
 
-	getter := func(*types.Extension) (rpc.ExtensionExecutor, error) {
+	getter := func(*corev2.Extension) (rpc.ExtensionExecutor, error) {
 		return m, nil
 	}
 
 	p := New(Config{ExtensionExecutorGetter: getter, Store: store})
 
-	handler := &types.Handler{}
+	handler := &corev2.Handler{}
 	handler.Mutator = "extension"
 
 	eventData, err := p.mutateEvent(handler, event)
@@ -120,9 +121,9 @@ func TestPipelineExtensionMutator(t *testing.T) {
 func TestPipelinePipeMutator(t *testing.T) {
 	p := New(Config{SecretsProviderManager: secrets.NewProviderManager()})
 
-	mutator := types.FakeMutatorCommand("cat")
+	mutator := corev2.FakeMutatorCommand("cat")
 
-	event := &types.Event{}
+	event := &corev2.Event{}
 
 	output, err := p.pipeMutator(mutator, event)
 
@@ -130,4 +131,18 @@ func TestPipelinePipeMutator(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, expected, output)
+}
+
+func TestPipelineNoMutator_GH2784(t *testing.T) {
+	stor := &mockstore.MockStore{}
+	stor.On("GetExtension", mock.Anything, mock.Anything).Return((*corev2.Extension)(nil), store.ErrNoExtension)
+	stor.On("GetMutatorByName", mock.Anything, mock.Anything).Return((*corev2.Mutator)(nil), nil)
+
+	event := corev2.FixtureEvent("foo", "bar")
+	handler := &corev2.Handler{Mutator: "nope"}
+
+	p := New(Config{Store: stor})
+	eventData, err := p.mutateEvent(handler, event)
+	require.Error(t, err)
+	require.Nil(t, eventData)
 }

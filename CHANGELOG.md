@@ -9,6 +9,7 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Clarifies wording around a secret provider error message.
+- Logs and returns an error if a mutator cannot be found.
 
 ### Changed
 - Improves logging around the agent websocket connection.
