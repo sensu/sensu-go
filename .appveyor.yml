@@ -40,18 +40,3 @@ platform:
 
 build_script:
   - ps: .\build.ps1 $env:TEST_SUITE
-
-before_deploy:
-  - ps: .\build.ps1 wait_for_appveyor_jobs
-
-deploy:
-  provider: GitHub
-  release: $(appveyor_repo_tag_name)
-  description: ''
-  artifact: /sensu.*/
-  auth_token:
-    secure: e3aSzq/Y9btOgFMXc3rfGwjPLj/LnxyG8KY6czcrywgQXEm+9X74fvGFE0B9Km/j
-  draft: false
-  prerelease: true
-  on:
-    appveyor_repo_tag: true
