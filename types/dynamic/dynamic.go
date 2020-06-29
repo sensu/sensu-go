@@ -120,6 +120,17 @@ func Synthesize(v interface{}) interface{} {
 				result[k] = v
 			}
 		}
+		meta, ok := result["metadata"]
+		if ok {
+			meta, ok := meta.(map[string]interface{})
+			if ok {
+				// hack alert! put the metadata fields into the top-level object
+				// to avoid breaking user expectations.
+				for k, v := range meta {
+					result[k] = v
+				}
+			}
+		}
 		return result
 	case reflect.Slice, reflect.Array:
 		return synthesizeSlice(value)
