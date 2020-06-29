@@ -76,7 +76,7 @@ func (p *Pipeline) HandleEvent(ctx context.Context, event *corev2.Event) error {
 
 		eventData, err := p.mutateEvent(handler, event)
 		if err != nil {
-			logger.WithError(err).Warn("error mutating event")
+			logger.WithFields(fields).WithError(err).Warn("error mutating event")
 			if _, ok := err.(*store.ErrInternal); ok {
 				// Fatal error
 				return err
