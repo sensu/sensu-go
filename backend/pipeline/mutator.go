@@ -60,7 +60,7 @@ func (p *Pipeline) mutateEvent(handler *corev2.Handler, event *corev2.Event) ([]
 		extension, err := p.store.GetExtension(tctx, handler.Mutator)
 		if err != nil {
 			if err == store.ErrNoExtension {
-				return nil, fmt.Errorf("mutator '%s' does not exist", handler.Mutator)
+				return nil, fmt.Errorf("mutator %q does not exist", handler.Mutator)
 			}
 			// Warning: do not wrap this error
 			return nil, err
