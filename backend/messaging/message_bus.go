@@ -10,6 +10,10 @@ import (
 )
 
 const (
+	// TopicEntityConfig is the topic for the entity configuration sent by agentd
+	// to agents
+	TopicEntityConfig = "sensu:entity-config"
+
 	// TopicEvent is the topic for events that have been written to Etcd and
 	// normalized by eventd.
 	TopicEvent = "sensu:event"
@@ -81,6 +85,12 @@ type MessageBus interface {
 
 	// Publish sends a message to a topic.
 	Publish(topic string, message interface{}) error
+}
+
+// EntityConfigTopic is a helper to determine the proper topic name for an
+// entity
+func EntityConfigTopic(namespace, name string) string {
+	return fmt.Sprintf("%s:%s:%s", TopicEntityConfig, namespace, name)
 }
 
 // SubscriptionTopic is a helper to determine the proper topic name for a
