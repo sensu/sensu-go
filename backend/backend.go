@@ -40,6 +40,7 @@ import (
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
+	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/tessend"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/system"
@@ -197,6 +198,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	// Create the store, which lives on top of etcd
 	stor := etcdstore.NewStore(b.Client, config.EtcdName)
 	b.Store = stor
+	storv2 := etcdstorev2.NewStore(b.Client)
+	b.StoreV2 = storv2
 
 	if _, err := stor.GetClusterID(b.RunContext()); err != nil {
 		return nil, err
@@ -323,6 +326,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		DeregistrationHandler: config.DeregistrationHandler,
 		Bus:                   bus,
 		Store:                 stor,
+		StoreV2:               storev2,
 		EventStore:            eventStoreProxy,
 		LivenessFactory:       liveness.EtcdFactory(b.RunContext(), b.Client),
 		RingPool:              ringPool,

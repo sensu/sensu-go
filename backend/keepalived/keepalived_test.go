@@ -7,11 +7,13 @@ import (
 
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"go.etcd.io/etcd/integration"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
@@ -23,6 +25,7 @@ type mockDeregisterer struct {
 type keepalivedTest struct {
 	Keepalived   *Keepalived
 	MessageBus   messaging.MessageBus
+	StoreV2      *etcdstore.Store
 	Store        *mockstore.MockStore
 	Deregisterer *mockDeregisterer
 	receiver     chan interface{}
@@ -55,6 +58,10 @@ func fakeFactory(name string, dead, alive liveness.EventFunc, logger logrus.Fiel
 }
 
 func newKeepalivedTest(t *testing.T) *keepalivedTest {
+	c := integration.NewClusterV3(t, &integration.ClusterConfig{Size: 1})
+	defer c.Terminate(t)
+	client := c.RandClient()
+	storev2 := etcdstore.NewStore(client)
 	store := &mockstore.MockStore{}
 	deregisterer := &mockDeregisterer{}
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
@@ -72,6 +79,7 @@ func newKeepalivedTest(t *testing.T) *keepalivedTest {
 	test := &keepalivedTest{
 		MessageBus:   bus,
 		Store:        store,
+		StoreV2:      storev2,
 		Deregisterer: deregisterer,
 		Keepalived:   k,
 		receiver:     make(chan interface{}),
@@ -316,8 +324,13 @@ func TestDeadCallbackNoEntity(t *testing.T) {
 	store := &mockstore.MockStore{}
 	store.On("GetEntityByName", mock.Anything, mock.Anything).Return((*corev2.Entity)(nil), nil)
 	store.On("DeleteEntity", mock.Anything, mock.Anything).Return(nil)
+	c := integration.NewClusterV3(t, &integration.ClusterConfig{Size: 1})
+	defer c.Terminate(t)
+	client := c.RandClient()
+	storev2 := etcdstore.NewStore(client)
 	keepalived, err := New(Config{
 		Store:           store,
+		StoreV2:         *storev2,
 		EventStore:      store,
 		Bus:             messageBus,
 		LivenessFactory: fakeFactory,
@@ -353,8 +366,13 @@ func TestDeadCallbackNoEvent(t *testing.T) {
 	store.On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).Return((*corev2.Event)(nil), nil)
 	store.On("DeleteEntity", mock.Anything, mock.Anything).Return(nil)
 	store.On("GetEventsByEntity", mock.Anything, mock.Anything, mock.Anything).Return(([]*corev2.Event)(nil), nil)
+	c := integration.NewClusterV3(t, &integration.ClusterConfig{Size: 1})
+	defer c.Terminate(t)
+	client := c.RandClient()
+	storev2 := etcdstore.NewStore(client)
 	keepalived, err := New(Config{
 		Store:           store,
+		StoreV2:         *storev2,
 		EventStore:      store,
 		Bus:             messageBus,
 		LivenessFactory: fakeFactory,
