@@ -783,3 +783,93 @@ func sortFunc(namespaces []*corev2.Namespace) func(i, j int) bool {
 		return namespaces[i].Name < namespaces[j].Name
 	}
 }
+
+func TestNamespaceCRUDSideEffects(t *testing.T) {
+	clusterRoles := []*corev2.ClusterRole{
+		{
+			ObjectMeta: corev2.NewObjectMeta("cluster-admin", "cluster-admin"),
+			Rules: []corev2.Rule{
+				{
+					Verbs:     []string{corev2.VerbAll},
+					Resources: []string{corev2.ResourceAll},
+				},
+			},
+		},
+	}
+	clusterRoleBindings := []*corev2.ClusterRoleBinding{
+		{
+			Subjects: []corev2.Subject{
+				{
+					Type: "Group",
+					Name: "cluster-admins",
+				},
+			},
+			RoleRef: corev2.RoleRef{
+				Type: "ClusterRole",
+				Name: "cluster-admin",
+			},
+			ObjectMeta: corev2.NewObjectMeta("cluster-admin", "cluster-admin"),
+		},
+	}
+	s := new(mockstore.MockStore)
+	s.On("ListClusterRoles", mock.Anything, mock.Anything).Return(clusterRoles, nil)
+	s.On("ListClusterRoleBindings", mock.Anything, mock.Anything).Return(clusterRoleBindings, nil)
+	s.On("ListRoles", mock.Anything, mock.Anything).Return(([]*corev2.Role)(nil), nil)
+	s.On("ListRoleBindings", mock.Anything, mock.Anything).Return(([]*corev2.RoleBinding)(nil), nil)
+	s.On("CreateResource", mock.Anything, mock.Anything).Return(nil)
+	s.On("CreateOrUpdateResource", mock.Anything, mock.Anything).Return(nil)
+	s.On("DeleteResource", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	setupGetClusterRoleAndGetRole(s, clusterRoles, nil)
+
+	ctx := contextWithUser(defaultContext(), "cluster-admin", []string{"cluster-admins"})
+
+	auth := &rbac.Authorizer{Store: s}
+	client := NewNamespaceClient(s, auth)
+
+	namespace := &corev2.Namespace{Name: "test_namespace"}
+	if err := client.CreateNamespace(ctx, namespace); err != nil {
+		t.Fatal(err)
+	}
+
+	expRole := &corev2.Role{
+		ObjectMeta: corev2.ObjectMeta{
+			Namespace: "test_namespace",
+			Name:      pipelineRoleName,
+		},
+		Rules: []corev2.Rule{
+			{
+				Verbs:     []string{"get", "list"},
+				Resources: []string{new(corev2.Event).RBACName()},
+			},
+		},
+	}
+	expBinding := &corev2.RoleBinding{
+		Subjects: []corev2.Subject{
+			{
+				Type: "user",
+				Name: pipelineRoleName,
+			},
+		},
+		RoleRef: corev2.RoleRef{
+			Name: pipelineRoleName,
+			Type: "Role",
+		},
+		ObjectMeta: corev2.ObjectMeta{
+			Name:      pipelineRoleName,
+			Namespace: "test_namespace",
+		},
+	}
+	s.AssertNumberOfCalls(t, "CreateResource", 1)
+	s.AssertNumberOfCalls(t, "CreateOrUpdateResource", 2)
+	s.AssertCalled(t, "CreateOrUpdateResource", mock.Anything, expRole)
+	s.AssertCalled(t, "CreateOrUpdateResource", mock.Anything, expBinding)
+
+	if err := client.DeleteNamespace(ctx, namespace.Name); err != nil {
+		t.Fatal(err)
+	}
+
+	s.AssertNumberOfCalls(t, "DeleteResource", 3)
+	s.AssertCalled(t, "DeleteResource", mock.Anything, namespace.StorePrefix(), namespace.Name)
+	s.AssertCalled(t, "DeleteResource", mock.Anything, expRole.StorePrefix(), pipelineRoleName)
+	s.AssertCalled(t, "DeleteResource", mock.Anything, expBinding.StorePrefix(), pipelineRoleName)
+}

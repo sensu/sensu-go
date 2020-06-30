@@ -227,12 +227,16 @@ var createResourceInvalidMetaTestCase = func(resource corev2.Resource) routerTes
 
 var createResourceAlreadyExistsTestCase = func(resource corev2.Resource) routerTestCase {
 	resource.SetNamespace("default")
+	path := resource.URIPath()
+	if ns, ok := resource.(*corev2.Namespace); ok {
+		ns.Name = "default"
+	}
 	typ := reflect.TypeOf(resource).String()
 
 	return routerTestCase{
 		name:   "it returns 409 if the resource to create already exists",
 		method: http.MethodPost,
-		path:   resource.URIPath(),
+		path:   path,
 		body:   marshal(resource),
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("CreateResource", mock.Anything, mock.AnythingOfType(typ)).
@@ -245,12 +249,16 @@ var createResourceAlreadyExistsTestCase = func(resource corev2.Resource) routerT
 
 var createResourceInvalidTestCase = func(resource corev2.Resource) routerTestCase {
 	resource.SetNamespace("default")
+	path := resource.URIPath()
+	if ns, ok := resource.(*corev2.Namespace); ok {
+		ns.Name = "default"
+	}
 	typ := reflect.TypeOf(resource).String()
 
 	return routerTestCase{
 		name:   "it returns 400 if the resource to create is invalid",
 		method: http.MethodPost,
-		path:   resource.URIPath(),
+		path:   path,
 		body:   marshal(resource),
 		storeFunc: func(s *mockstore.MockStore) {
 			s.On("CreateResource", mock.Anything, mock.AnythingOfType(typ)).
