@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
@@ -70,8 +71,21 @@ type Session struct {
 	cancel       context.CancelFunc
 	marshal      MarshalFunc
 	unmarshal    UnmarshalFunc
+	entityConfig *entityConfig
 
 	subscriptions chan messaging.Subscription
+}
+
+// entityConfig is used by a session to subscribe to entity config updates
+type entityConfig struct {
+	subscriptions  chan messaging.Subscription
+	updatesChannel chan interface{}
+}
+
+// Receiver returns the channel for incoming entity updates from the entity
+// watcher
+func (e *entityConfig) Receiver() chan<- interface{} {
+	return e.updatesChannel
 }
 
 func newSessionHandler(s *Session) *handler.MessageHandler {
@@ -113,7 +127,6 @@ func NewSession(ctx context.Context, cfg SessionConfig, conn transport.Transport
 		conn:          conn,
 		cfg:           cfg,
 		wg:            &sync.WaitGroup{},
-		sendq:         make(chan *transport.Message, 10),
 		checkChannel:  make(chan interface{}, 100),
 		store:         store,
 		bus:           bus,
@@ -123,6 +136,10 @@ func NewSession(ctx context.Context, cfg SessionConfig, conn transport.Transport
 		ringPool:      cfg.RingPool,
 		unmarshal:     unmarshal,
 		marshal:       marshal,
+		entityConfig: &entityConfig{
+			subscriptions:  make(chan messaging.Subscription, 1),
+			updatesChannel: make(chan interface{}, 10),
+		},
 	}
 	if err := s.bus.Publish(messaging.TopicKeepalive, makeEntitySwitchBurialEvent(cfg)); err != nil {
 		return nil, err
@@ -214,7 +231,21 @@ func (s *Session) sender() {
 	for {
 		var msg *transport.Message
 		select {
-		case msg = <-s.sendq:
+		// case msg = <-s.sendq:
+		case c := <-s.entityConfig.updatesChannel:
+			cfg, ok := c.(*corev3.EntityConfig)
+			if !ok {
+				logger.Error("session received unknown config over entity config channel")
+				continue
+			}
+
+			bytes, err := s.marshal(cfg)
+			if err != nil {
+				logger.WithError(err).Error("session failed to serialize entity config")
+				continue
+			}
+
+			msg = transport.NewMessage(transport.MessageTypeEntityConfig, bytes)
 		case c := <-s.checkChannel:
 			request, ok := c.(*corev2.CheckRequest)
 			if !ok {
@@ -232,7 +263,10 @@ func (s *Session) sender() {
 		case <-s.ctx.Done():
 			return
 		}
-		logger.WithField("payload_size", len(msg.Payload)).Debug("session - sending message")
+		logger.WithFields(logrus.Fields{
+			"type":         msg.Type,
+			"payload_size": len(msg.Payload),
+		}).Debug("session - sending message")
 		if err := s.conn.Send(msg); err != nil {
 			switch err := err.(type) {
 			case transport.ConnectionError, transport.ClosedError:
@@ -284,7 +318,19 @@ func (s *Session) Start() (err error) {
 		}
 		s.subscriptions <- subscription
 	}
+
+	// Subscribe the agent to its entity_config topic
+	topic := messaging.EntityConfigTopic(namespace, s.cfg.AgentName)
+	logger.WithField("topic", topic).Debug("subscribing to topic")
+	subscription, err := s.bus.Subscribe(topic, agentName, s.entityConfig)
+	if err != nil {
+		logger.WithError(err).Error("error starting subscription")
+		return err
+	}
+	s.entityConfig.subscriptions <- subscription
+
 	close(s.subscriptions)
+	close(s.entityConfig.subscriptions)
 
 	return nil
 }
@@ -314,6 +360,14 @@ func (s *Session) stop() {
 		}
 	}
 	close(s.checkChannel)
+
+	for sub := range s.entityConfig.subscriptions {
+		if err := sub.Cancel(); err != nil {
+			logger.WithError(err).Error("unable to unsubscribe from message bus")
+		}
+	}
+	close(s.entityConfig.updatesChannel)
+
 	if s.ringPool == nil {
 		// This is a bit of a hack - allow ringPool to be nil for the benefit
 		// of the tests.

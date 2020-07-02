@@ -9,6 +9,7 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/mocktransport"
@@ -173,5 +174,60 @@ func TestMakeEntitySwitchBurialEvent(t *testing.T) {
 	}
 	if got, want := event.Timestamp, int64(deletedEventSentinel); got != want {
 		t.Errorf("bad timestamp: got %d, want %d", got, want)
+	}
+}
+
+func TestSessionEntityUpdates(t *testing.T) {
+	wait := make(chan struct{})
+
+	conn := new(mocktransport.MockTransport)
+	// Mock the Receive method by blocking it for 100ms and returns an empty
+	// message so it doesn't block our test for too long
+	conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
+	conn.On("Send", mock.Anything).Run(func(args mock.Arguments) {
+		// Assert the message type to make sure it's an entity update
+		msg := args[0].(*transport.Message)
+		if msg.Type != transport.MessageTypeEntityConfig {
+			t.Fatalf("expected message type %s, got %s", transport.MessageTypeEntityConfig, msg.Type)
+		}
+
+		// Close our wait channel once we asserted the message
+		close(wait)
+	}).Return(nil)
+	conn.On("Close").Return(nil)
+
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := bus.Start(); err != nil {
+		t.Fatal(err)
+	}
+
+	st := &mockstore.MockStore{}
+
+	cfg := SessionConfig{
+		AgentName:     "testing",
+		Namespace:     "acme",
+		Subscriptions: []string{""},
+	}
+	session, err := NewSession(context.Background(), cfg, conn, bus, st, UnmarshalJSON, MarshalJSON)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := session.Start(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Mock an entity update from the entity watcher
+	if err := bus.Publish(messaging.EntityConfigTopic("acme", "testing"), corev3.FixtureEntityConfig("testing")); err != nil {
+		t.Fatal(err)
+	}
+
+	select {
+	case <-wait:
+		session.Stop()
+	case <-time.After(5 * time.Second):
+		t.Fatal("session never stopped, we probably never received an entity update over the channel")
 	}
 }
