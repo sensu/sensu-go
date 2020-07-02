@@ -5,17 +5,19 @@ import (
 	"testing"
 	"time"
 
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/liveness"
 	"github.com/sensu/sensu-go/backend/messaging"
-	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
+	stor "github.com/sensu/sensu-go/backend/store"
+	storv2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/storetest"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"go.etcd.io/etcd/integration"
-
-	corev2 "github.com/sensu/sensu-go/api/core/v2"
 )
 
 type mockDeregisterer struct {
@@ -25,7 +27,7 @@ type mockDeregisterer struct {
 type keepalivedTest struct {
 	Keepalived   *Keepalived
 	MessageBus   messaging.MessageBus
-	StoreV2      *etcdstore.Store
+	StoreV2      *storetest.Store
 	Store        *mockstore.MockStore
 	Deregisterer *mockDeregisterer
 	receiver     chan interface{}
@@ -58,11 +60,8 @@ func fakeFactory(name string, dead, alive liveness.EventFunc, logger logrus.Fiel
 }
 
 func newKeepalivedTest(t *testing.T) *keepalivedTest {
-	c := integration.NewClusterV3(t, &integration.ClusterConfig{Size: 1})
-	defer c.Terminate(t)
-	client := c.RandClient()
-	storev2 := etcdstore.NewStore(client)
 	store := &mockstore.MockStore{}
+	storev2 := &storetest.Store{}
 	deregisterer := &mockDeregisterer{}
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	require.NoError(t, err)
@@ -321,17 +320,16 @@ func TestDeadCallbackNoEntity(t *testing.T) {
 	if _, err := messageBus.Subscribe(messaging.TopicEvent, "testSubscriber", tsub); err != nil {
 		t.Fatal(err)
 	}
-	store := &mockstore.MockStore{}
-	store.On("GetEntityByName", mock.Anything, mock.Anything).Return((*corev2.Entity)(nil), nil)
-	store.On("DeleteEntity", mock.Anything, mock.Anything).Return(nil)
-	c := integration.NewClusterV3(t, &integration.ClusterConfig{Size: 1})
-	defer c.Terminate(t)
-	client := c.RandClient()
-	storev2 := etcdstore.NewStore(client)
+	store := &storetest.Store{}
+	store.On("Get", mock.Anything).Return((*wrap.Wrapper)(nil), &stor.ErrNotFound{Key: "foo"})
+	store.On("Get", mock.MatchedBy(func(req storv2.ResourceRequest) bool {
+		if req.StoreName == new(corev3.EntityConfig).StoreName() {
+			return true
+		}
+		return false
+	})).Return((*wrap.Wrapper)(nil), &stor.ErrNotFound{Key: "foo"})
 	keepalived, err := New(Config{
-		Store:           store,
-		StoreV2:         *storev2,
-		EventStore:      store,
+		StoreV2:         store,
 		Bus:             messageBus,
 		LivenessFactory: fakeFactory,
 		WorkerCount:     1,
@@ -361,19 +359,31 @@ func TestDeadCallbackNoEvent(t *testing.T) {
 	if _, err := messageBus.Subscribe(messaging.TopicEvent, "testSubscriber", tsub); err != nil {
 		t.Fatal(err)
 	}
-	store := &mockstore.MockStore{}
-	store.On("GetEntityByName", mock.Anything, mock.Anything).Return(corev2.FixtureEntity("foo"), nil)
-	store.On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).Return((*corev2.Event)(nil), nil)
-	store.On("DeleteEntity", mock.Anything, mock.Anything).Return(nil)
-	store.On("GetEventsByEntity", mock.Anything, mock.Anything, mock.Anything).Return(([]*corev2.Event)(nil), nil)
-	c := integration.NewClusterV3(t, &integration.ClusterConfig{Size: 1})
-	defer c.Terminate(t)
-	client := c.RandClient()
-	storev2 := etcdstore.NewStore(client)
+
+	wrapper, err := wrap.Resource(
+		corev3.FixtureEntityConfig("entity1"),
+		[]wrap.Option{wrap.CompressNone, wrap.EncodeJSON}...)
+
+	store := &storetest.Store{}
+	store.On("Get", mock.MatchedBy(func(req storv2.ResourceRequest) bool {
+		if req.StoreName == new(corev3.EntityConfig).StoreName() {
+			return true
+		}
+		return false
+	})).Return(wrapper, nil)
+	store.On("Get", mock.MatchedBy(func(req storv2.ResourceRequest) bool {
+		if req.StoreName == new(corev2.Event).StorePrefix() {
+			return true
+		}
+		return false
+	})).Return((*wrap.Wrapper)(nil), &stor.ErrNotFound{Key: "foo"})
+
+	eventStore := &mockstore.MockStore{}
+	eventStore.On("GetEventByEntityCheck", mock.Anything, mock.Anything, mock.Anything).Return((*corev2.Event)(nil), nil)
+
 	keepalived, err := New(Config{
-		Store:           store,
-		StoreV2:         *storev2,
-		EventStore:      store,
+		StoreV2:         store,
+		EventStore:      eventStore,
 		Bus:             messageBus,
 		LivenessFactory: fakeFactory,
 		WorkerCount:     1,

@@ -16,8 +16,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
-	etcdstore "github.com/sensu/sensu-go/backend/store/v2"
-	storev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
 	"github.com/sirupsen/logrus"
 )
 
@@ -51,7 +50,7 @@ type Keepalived struct {
 	bus                   messaging.MessageBus
 	workerCount           int
 	store                 store.Store
-	storev2               storev2.Store
+	storev2               storev2.Interface
 	eventStore            store.EventStore
 	deregistrationHandler string
 	mu                    *sync.Mutex
@@ -72,7 +71,7 @@ type Option func(*Keepalived) error
 // Config configures Keepalived.
 type Config struct {
 	Store                 store.Store
-	StoreV2               storev2.Store
+	StoreV2               storev2.Interface
 	EventStore            store.EventStore
 	Bus                   messaging.MessageBus
 	LivenessFactory       liveness.Factory
@@ -481,7 +480,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 	meta := corev2.NewObjectMeta(name, namespace)
 	cfg := &corev3.EntityConfig{Metadata: &meta}
 
-	req := etcdstore.NewResourceRequestFromResource(k.ctx, cfg)
+	req := storev2.NewResourceRequestFromResource(k.ctx, cfg)
 	wrapper, err := k.storev2.Get(req)
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {
