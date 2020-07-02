@@ -63,7 +63,6 @@ type Session struct {
 	handler      *handler.MessageHandler
 	wg           *sync.WaitGroup
 	stopWG       sync.WaitGroup
-	sendq        chan *transport.Message
 	checkChannel chan interface{}
 	bus          messaging.MessageBus
 	ringPool     *ringv2.Pool
@@ -231,7 +230,6 @@ func (s *Session) sender() {
 	for {
 		var msg *transport.Message
 		select {
-		// case msg = <-s.sendq:
 		case c := <-s.entityConfig.updatesChannel:
 			cfg, ok := c.(*corev3.EntityConfig)
 			if !ok {
