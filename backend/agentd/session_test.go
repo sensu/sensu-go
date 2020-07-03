@@ -178,7 +178,7 @@ func TestMakeEntitySwitchBurialEvent(t *testing.T) {
 	}
 }
 
-func TestSessionEntityUpdates(t *testing.T) {
+func TestSessionEntityUpdate(t *testing.T) {
 	wait := make(chan struct{})
 
 	conn := new(mocktransport.MockTransport)
@@ -234,5 +234,62 @@ func TestSessionEntityUpdates(t *testing.T) {
 		session.Stop()
 	case <-time.After(5 * time.Second):
 		t.Fatal("session never stopped, we probably never received an entity update over the channel")
+	}
+}
+
+func TestSessionEntityWatchDeleteAndUnknown(t *testing.T) {
+	conn := new(mocktransport.MockTransport)
+	// Mock the Receive method by blocking it for 100ms and returns an empty
+	// message so it doesn't block our test for too long
+	conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
+
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := bus.Start(); err != nil {
+		t.Fatal(err)
+	}
+
+	st := &mockstore.MockStore{}
+
+	cfg := SessionConfig{
+		AgentName:     "testing",
+		Namespace:     "acme",
+		Subscriptions: []string{""},
+	}
+	session, err := NewSession(context.Background(), cfg, conn, bus, st, UnmarshalJSON, MarshalJSON)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := session.Start(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Mock an unknown watch event, which should only log an entry and continue
+	// with the next event
+	watchEvent := store.WatchEventEntityConfig{
+		Action: store.WatchUnknown,
+		Entity: corev3.FixtureEntityConfig("testing"),
+	}
+	if err := bus.Publish(messaging.EntityConfigTopic("acme", "testing"), &watchEvent); err != nil {
+		t.Fatal(err)
+	}
+
+	// Mock a delete watch event, which should force the session to close itself
+	// so the agent can attempt to reconnect in order to register itself again
+	watchEvent2 := store.WatchEventEntityConfig{
+		Action: store.WatchDelete,
+		Entity: corev3.FixtureEntityConfig("testing"),
+	}
+	if err := bus.Publish(messaging.EntityConfigTopic("acme", "testing"), &watchEvent2); err != nil {
+		t.Fatal(err)
+	}
+
+	// The session should close itself upon a WatchDelete
+	select {
+	case <-session.ctx.Done():
+	case <-time.After(time.Second * 5):
+		t.Fatal("broken session never stopped")
 	}
 }
