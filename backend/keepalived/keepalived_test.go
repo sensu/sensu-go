@@ -321,7 +321,6 @@ func TestDeadCallbackNoEntity(t *testing.T) {
 		t.Fatal(err)
 	}
 	store := &storetest.Store{}
-	store.On("Get", mock.Anything).Return((*wrap.Wrapper)(nil), &stor.ErrNotFound{Key: "foo"})
 	store.On("Get", mock.MatchedBy(func(req storv2.ResourceRequest) bool {
 		if req.StoreName == new(corev3.EntityConfig).StoreName() {
 			return true
