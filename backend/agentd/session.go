@@ -12,7 +12,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
@@ -230,14 +229,37 @@ func (s *Session) sender() {
 	for {
 		var msg *transport.Message
 		select {
-		case c := <-s.entityConfig.updatesChannel:
-			cfg, ok := c.(*corev3.EntityConfig)
+		case e := <-s.entityConfig.updatesChannel:
+			watchEvent, ok := e.(*store.WatchEventEntityConfig)
 			if !ok {
-				logger.Error("session received unknown config over entity config channel")
+				logger.Errorf("session received unexpected struct: %T", e)
 				continue
 			}
 
-			bytes, err := s.marshal(cfg)
+			if watchEvent.Entity == nil {
+				logger.Error("session received nil entity in watch event")
+				continue
+			}
+
+			logger.WithFields(logrus.Fields{
+				"action":    watchEvent.Action.String(),
+				"entity":    watchEvent.Entity.Metadata.Name,
+				"namespace": watchEvent.Entity.Metadata.Namespace,
+			}).Debug("entity update received")
+
+			// Handle the delete and unknown watch events
+			switch watchEvent.Action {
+			case store.WatchDelete:
+				// The entity was deleted, we should sever the connection to the agent
+				// so it can register back
+				s.cancel()
+				continue
+			case store.WatchUnknown:
+				logger.Error("session received unknown watch event")
+				continue
+			}
+
+			bytes, err := s.marshal(watchEvent.Entity)
 			if err != nil {
 				logger.WithError(err).Error("session failed to serialize entity config")
 				continue

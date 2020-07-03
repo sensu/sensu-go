@@ -11,6 +11,7 @@ import (
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/store"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/mocktransport"
 	"github.com/sensu/sensu-go/transport"
@@ -220,7 +221,11 @@ func TestSessionEntityUpdates(t *testing.T) {
 	}
 
 	// Mock an entity update from the entity watcher
-	if err := bus.Publish(messaging.EntityConfigTopic("acme", "testing"), corev3.FixtureEntityConfig("testing")); err != nil {
+	watchEvent := store.WatchEventEntityConfig{
+		Action: store.WatchUpdate,
+		Entity: corev3.FixtureEntityConfig("testing"),
+	}
+	if err := bus.Publish(messaging.EntityConfigTopic("acme", "testing"), &watchEvent); err != nil {
 		t.Fatal(err)
 	}
 
