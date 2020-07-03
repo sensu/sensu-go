@@ -259,6 +259,11 @@ func (s *Session) sender() {
 				continue
 			}
 
+			// Enforce the entity class to agent
+			if watchEvent.Entity.EntityClass != corev2.EntityAgentClass {
+				watchEvent.Entity.EntityClass = corev2.EntityAgentClass
+			}
+
 			bytes, err := s.marshal(watchEvent.Entity)
 			if err != nil {
 				logger.WithError(err).Error("session failed to serialize entity config")

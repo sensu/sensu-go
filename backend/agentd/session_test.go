@@ -192,6 +192,16 @@ func TestSessionEntityUpdate(t *testing.T) {
 			t.Fatalf("expected message type %s, got %s", transport.MessageTypeEntityConfig, msg.Type)
 		}
 
+		// Inspect the entity class, to make sure it was modified to be an
+		// EntityAgentClass
+		entityConfig := &corev3.EntityConfig{}
+		if err := UnmarshalJSON(msg.Payload, entityConfig); err != nil {
+			t.Fatal(err)
+		}
+		if entityConfig.EntityClass != corev2.EntityAgentClass {
+			t.Fatalf("expected entity class %q, got %q", corev2.EntityAgentClass, entityConfig.EntityClass)
+		}
+
 		// Close our wait channel once we asserted the message
 		close(wait)
 	}).Return(nil)
@@ -220,10 +230,13 @@ func TestSessionEntityUpdate(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Mock an entity update from the entity watcher
+	// Mock an entity update from the entity watcher, and update the entity class
+	// to simulate a misconfigured agent entity as a proxy entity
+	entity := corev3.FixtureEntityConfig("testing")
+	entity.EntityClass = corev2.EntityProxyClass
 	watchEvent := store.WatchEventEntityConfig{
 		Action: store.WatchUpdate,
-		Entity: corev3.FixtureEntityConfig("testing"),
+		Entity: entity,
 	}
 	if err := bus.Publish(messaging.EntityConfigTopic("acme", "testing"), &watchEvent); err != nil {
 		t.Fatal(err)
@@ -242,6 +255,7 @@ func TestSessionEntityWatchDeleteAndUnknown(t *testing.T) {
 	// Mock the Receive method by blocking it for 100ms and returns an empty
 	// message so it doesn't block our test for too long
 	conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
+	conn.On("Close").Return(nil)
 
 	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
 	if err != nil {
