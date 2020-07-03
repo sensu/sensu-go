@@ -318,6 +318,9 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	}
 	b.Daemons = append(b.Daemons, agent)
 
+	// Start the entity config watcher, so agentd sessions are notified of updates
+	agentd.EntityConfigWatcher(b.ctx, b.Client, bus)
+
 	// Initialize keepalived
 	keepalive, err := keepalived.New(keepalived.Config{
 		DeregistrationHandler: config.DeregistrationHandler,
