@@ -480,9 +480,9 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 
 	ctx := store.NamespaceContext(k.ctx, namespace)
 	meta := corev2.NewObjectMeta(name, namespace)
-	entityConfig := &corev3.EntityConfig{Metadata: &meta}
+	cfg := &corev3.EntityConfig{Metadata: &meta}
 
-	req := storev2.NewResourceRequestFromResource(ctx, entityConfig)
+	req := storev2.NewResourceRequestFromResource(ctx, cfg)
 	wrapper, err := k.storev2.Get(req)
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {
@@ -498,12 +498,6 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 	var entityConfig corev3.EntityConfig
 	if err := wrapper.UnwrapInto(&entityConfig); err != nil {
 		lager.WithError(err).Error("error unwrapping entity_config")
-		return err
-	}
-
-	entityConfig, ok := resource.(*corev3.EntityConfig)
-	if !ok {
-		lager.Error("error converting resource to entity_config")
 		return false
 	}
 
