@@ -495,14 +495,16 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 		return false
 	}
 
-	resource, err := wrapper.Unwrap()
-	if err != nil {
+	var entityConfig corev3.EntityConfig
+	if err := wrapper.UnwrapInto(&entityConfig); err != nil {
 		lager.WithError(err).Error("error unwrapping entity_config")
+		return err
 	}
 
 	entityConfig, ok := resource.(*corev3.EntityConfig)
 	if !ok {
 		lager.Error("error converting resource to entity_config")
+		return false
 	}
 
 	currentEvent, err := k.eventStore.GetEventByEntityCheck(ctx, name, "keepalive")
