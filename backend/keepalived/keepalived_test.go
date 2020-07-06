@@ -67,6 +67,7 @@ func newKeepalivedTest(t *testing.T) *keepalivedTest {
 	require.NoError(t, err)
 	k, err := New(Config{
 		Store:           store,
+		StoreV2:         storev2,
 		EventStore:      store,
 		Bus:             bus,
 		LivenessFactory: fakeFactory,
@@ -191,10 +192,17 @@ func TestEventProcessing(t *testing.T) {
 	test := newKeepalivedTest(t)
 	test.Store.On("GetFailingKeepalives", mock.Anything).Return([]*corev2.KeepaliveRecord{}, nil)
 	require.NoError(t, test.Keepalived.Start())
+
 	event := corev2.FixtureEvent("entity", "keepalive")
 	event.Check.Status = 1
 
-	test.Store.On("UpdateEntity", mock.Anything, event.Entity).Return(nil)
+	test.StoreV2.On("CreateOrUpdate", mock.MatchedBy(func(req storv2.ResourceRequest) bool {
+		if req.StoreName == new(corev3.EntityState).StoreName() {
+			return true
+		}
+		return false
+	}), mock.Anything).Return(nil)
+
 	test.Store.On("DeleteFailingKeepalive", mock.Anything, event.Entity).Return(nil)
 
 	test.Keepalived.keepaliveChan <- event

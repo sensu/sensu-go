@@ -17,6 +17,7 @@ import (
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
 	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sirupsen/logrus"
 )
 
@@ -593,12 +594,20 @@ func (k *Keepalived) handleUpdate(e *corev2.Event) error {
 	}
 
 	entity.LastSeen = e.Timestamp
+	_, entityState := corev3.V2EntityToV3(entity)
 
-	if err := k.store.UpdateEntity(ctx, entity); err != nil {
-		logger.WithError(err).Error("error updating entity in store")
-		// Warning: do not wrap this error
+	wrapper, err := wrap.Resource(entityState)
+	if err != nil {
+		logger.WithError(err).Error("error wrapping entity state")
 		return err
 	}
+
+	req := storev2.NewResourceRequestFromResource(k.ctx, entityState)
+	if err := k.storev2.CreateOrUpdate(req, wrapper); err != nil {
+		logger.WithError(err).Error("error updating entity state in store")
+		return err
+	}
+
 	event := createKeepaliveEvent(e)
 	event.Check.Status = 0
 	event.Check.Output = fmt.Sprintf("Keepalive last sent from %s at %s", entity.Name, time.Unix(entity.LastSeen, 0).String())
