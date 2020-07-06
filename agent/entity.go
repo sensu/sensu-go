@@ -16,6 +16,9 @@ func (a *Agent) getAgentEntity() *corev2.Entity {
 	}
 	state := a.getEntityState()
 	entity, err := corev3.V3EntityToV2(a.entityConfig, state)
+	if err == nil {
+		return entity
+	}
 	if err != nil {
 		state.Metadata = a.entityConfig.Metadata
 	}
