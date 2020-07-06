@@ -197,10 +197,7 @@ func TestEventProcessing(t *testing.T) {
 	event.Check.Status = 1
 
 	test.StoreV2.On("CreateOrUpdate", mock.MatchedBy(func(req storv2.ResourceRequest) bool {
-		if req.StoreName == new(corev3.EntityState).StoreName() {
-			return true
-		}
-		return false
+		return req.StoreName == new(corev3.EntityState).StoreName()
 	}), mock.Anything).Return(nil)
 
 	test.Store.On("DeleteFailingKeepalive", mock.Anything, event.Entity).Return(nil)
@@ -330,10 +327,7 @@ func TestDeadCallbackNoEntity(t *testing.T) {
 	}
 	store := &storetest.Store{}
 	store.On("Get", mock.MatchedBy(func(req storv2.ResourceRequest) bool {
-		if req.StoreName == new(corev3.EntityConfig).StoreName() {
-			return true
-		}
-		return false
+		return req.StoreName == new(corev3.EntityConfig).StoreName()
 	})).Return((*wrap.Wrapper)(nil), &stor.ErrNotFound{Key: "foo"})
 	keepalived, err := New(Config{
 		StoreV2:         store,
@@ -370,19 +364,14 @@ func TestDeadCallbackNoEvent(t *testing.T) {
 	wrapper, err := wrap.Resource(
 		corev3.FixtureEntityConfig("entity1"),
 		[]wrap.Option{wrap.CompressNone, wrap.EncodeJSON}...)
+	require.NoError(t, err)
 
 	store := &storetest.Store{}
 	store.On("Get", mock.MatchedBy(func(req storv2.ResourceRequest) bool {
-		if req.StoreName == new(corev3.EntityConfig).StoreName() {
-			return true
-		}
-		return false
+		return req.StoreName == new(corev3.EntityConfig).StoreName()
 	})).Return(wrapper, nil)
 	store.On("Get", mock.MatchedBy(func(req storv2.ResourceRequest) bool {
-		if req.StoreName == new(corev2.Event).StorePrefix() {
-			return true
-		}
-		return false
+		return req.StoreName == new(corev2.Event).StorePrefix()
 	})).Return((*wrap.Wrapper)(nil), &stor.ErrNotFound{Key: "foo"})
 
 	eventStore := &mockstore.MockStore{}
