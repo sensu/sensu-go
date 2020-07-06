@@ -4,41 +4,71 @@ import (
 	time "github.com/echlebek/timeproxy"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/version"
 )
 
 func (a *Agent) getAgentEntity() *corev2.Entity {
-	if a.entity == nil {
-		meta := corev2.NewObjectMeta(a.config.AgentName, a.config.Namespace)
-		meta.Labels = a.config.Labels
-		meta.Annotations = a.config.Annotations
-		e := &corev2.Entity{
-			EntityClass:       corev2.EntityAgentClass,
-			Deregister:        a.config.Deregister,
-			LastSeen:          time.Now().Unix(),
-			Redact:            a.config.Redact,
-			Subscriptions:     a.config.Subscriptions,
-			User:              a.config.User,
-			ObjectMeta:        meta,
-			SensuAgentVersion: version.Semver(),
-			KeepaliveHandlers: a.config.KeepaliveHandlers,
-		}
+	a.entityMu.Lock()
+	defer a.entityMu.Unlock()
+	if a.entityConfig == nil {
+		a.entityConfig = a.getLocalEntityConfig()
+	}
+	state := a.getEntityState()
+	entity, err := corev3.V3EntityToV2(a.entityConfig, state)
+	if err != nil {
+		state.Metadata = a.entityConfig.Metadata
+	}
+	entity, err = corev3.V3EntityToV2(a.entityConfig, state)
+	if err != nil {
+		// unrecoverable error
+		panic(err)
+	}
+	return entity
+}
 
-		if a.config.DeregistrationHandler != "" {
-			e.Deregistration = corev2.Deregistration{
-				Handler: a.config.DeregistrationHandler,
-			}
-		}
-
-		// Retrieve the system info from the agent's cached value
-		a.systemInfoMu.RLock()
-		e.System = *a.systemInfo
-		a.systemInfoMu.RUnlock()
-
-		a.entity = e
+func (a *Agent) getLocalEntityConfig() *corev3.EntityConfig {
+	meta := corev2.NewObjectMeta(a.config.AgentName, a.config.Namespace)
+	meta.Labels = a.config.Labels
+	meta.Annotations = a.config.Annotations
+	e := &corev3.EntityConfig{
+		EntityClass:       corev2.EntityAgentClass,
+		Deregister:        a.config.Deregister,
+		Redact:            a.config.Redact,
+		Subscriptions:     a.config.Subscriptions,
+		User:              a.config.User,
+		Metadata:          &meta,
+		KeepaliveHandlers: a.config.KeepaliveHandlers,
 	}
 
-	return a.entity
+	if a.config.DeregistrationHandler != "" {
+		e.Deregistration = corev2.Deregistration{
+			Handler: a.config.DeregistrationHandler,
+		}
+	}
+	return e
+}
+
+func (a *Agent) getEntityState() *corev3.EntityState {
+	meta := corev2.NewObjectMeta(a.config.AgentName, a.config.Namespace)
+	meta.Labels = a.config.Labels
+	meta.Annotations = a.config.Annotations
+	return &corev3.EntityState{
+		Metadata:          &meta,
+		SensuAgentVersion: version.Semver(),
+		LastSeen:          time.Now().Unix(),
+		System:            a.getSystemInfo(),
+	}
+}
+
+func (a *Agent) getSystemInfo() corev2.System {
+	// Retrieve the system info from the agent's cached value
+	a.systemInfoMu.RLock()
+	defer a.systemInfoMu.RUnlock()
+	if a.systemInfo == nil {
+		return corev2.System{}
+	}
+	return *a.systemInfo
 }
 
 // getEntities receives an event and verifies if we have a proxy entity, so it
