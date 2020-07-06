@@ -16,12 +16,12 @@ func TestHandleEntityConfig(t *testing.T) {
 		t.Fatal(err)
 	}
 	ecfg := corev3.FixtureEntityConfig("localhost.localdomain")
+	state := a.getEntityState()
+	ecfg.Metadata.Name = state.Metadata.Name
 	b, err := a.marshal(ecfg)
 	if err != nil {
 		t.Fatal(err)
 	}
-	state := a.getEntityState()
-	ecfg.Metadata.Name = state.Metadata.Name
 	exp, err := corev3.V3EntityToV2(ecfg, state)
 	if err != nil {
 		t.Fatal(err)
