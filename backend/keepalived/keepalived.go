@@ -478,10 +478,11 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 		return true
 	}
 
+	ctx := store.NamespaceContext(k.ctx, namespace)
 	meta := corev2.NewObjectMeta(name, namespace)
-	cfg := &corev3.EntityConfig{Metadata: &meta}
+	entityConfig := &corev3.EntityConfig{Metadata: &meta}
 
-	req := storev2.NewResourceRequestFromResource(k.ctx, cfg)
+	req := storev2.NewResourceRequestFromResource(ctx, entityConfig)
 	wrapper, err := k.storev2.Get(req)
 	if err != nil {
 		if _, ok := err.(*store.ErrNotFound); ok {
@@ -504,7 +505,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 		lager.Error("error converting resource to entity_config")
 	}
 
-	currentEvent, err := k.eventStore.GetEventByEntityCheck(k.ctx, name, "keepalive")
+	currentEvent, err := k.eventStore.GetEventByEntityCheck(ctx, name, "keepalive")
 	if err != nil {
 		lager.WithError(err).Error("error while reading event")
 		return false
@@ -554,7 +555,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 
 	expiration := time.Now().Unix() + int64(event.Check.Timeout)
 
-	if err := k.store.UpdateFailingKeepalive(k.ctx, event.Entity, expiration); err != nil {
+	if err := k.store.UpdateFailingKeepalive(ctx, event.Entity, expiration); err != nil {
 		lager.WithError(err).Error("error updating keepalive")
 		return false
 	}
@@ -565,7 +566,7 @@ func (k *Keepalived) dead(key string, prev liveness.State, leader bool) bool {
 
 	for _, sub := range event.Entity.Subscriptions {
 		ring := k.ringPool.Get(ringv2.Path(namespace, sub))
-		if err := ring.Remove(k.ctx, name); err != nil {
+		if err := ring.Remove(ctx, name); err != nil {
 			lager := lager.WithFields(logrus.Fields{"subscription": sub})
 			lager.WithError(err).Error("error removing entity from ring")
 		}
