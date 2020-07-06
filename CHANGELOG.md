@@ -9,6 +9,18 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 
 ### Fixed
 - Clarifies wording around a secret provider error message.
+- Logs and returns an error if a mutator cannot be found.
+
+### Changed
+- Improves logging around the agent websocket connection.
+
+### Breaking
+- The database schema for entities has changed. After upgrading, users will not
+be able to use their database with older versions of Sensu.
+
+### Changed
+- Entities are now stored as two separate data structures, in order to optimize
+data access patterns.
 
 ### Breaking
 - The database schema for entities has changed. After upgrading, users will not
