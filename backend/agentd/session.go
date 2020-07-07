@@ -15,6 +15,8 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sirupsen/logrus"
@@ -59,6 +61,7 @@ type Session struct {
 	cfg          SessionConfig
 	conn         transport.Transport
 	store        store.EntityStore
+	storev2      storev2.Interface
 	handler      *handler.MessageHandler
 	wg           *sync.WaitGroup
 	stopWG       sync.WaitGroup
@@ -94,7 +97,7 @@ func newSessionHandler(s *Session) *handler.MessageHandler {
 	return handler
 }
 
-// A SessionConfig contains all of the ncessary information to initialize
+// A SessionConfig contains all of the necessary information to initialize
 // an agent session.
 type SessionConfig struct {
 	ContentType   string
@@ -103,15 +106,23 @@ type SessionConfig struct {
 	AgentName     string
 	User          string
 	Subscriptions []string
-	RingPool      *ringv2.Pool
 	WriteTimeout  int
+
+	Bus      messaging.MessageBus
+	Conn     transport.Transport
+	RingPool *ringv2.Pool
+	Store    store.Store
+	Storev2  storev2.Interface
+
+	Marshal   MarshalFunc
+	Unmarshal UnmarshalFunc
 }
 
 // NewSession creates a new Session object given the triple of a transport
 // connection, message bus, and store.
 // The Session is responsible for stopping itself, and does so when it
 // encounters a receive error.
-func NewSession(ctx context.Context, cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store store.Store, unmarshal UnmarshalFunc, marshal MarshalFunc) (*Session, error) {
+func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 	logger.WithFields(logrus.Fields{
 		"addr":          cfg.AgentAddr,
 		"namespace":     cfg.Namespace,
@@ -122,18 +133,19 @@ func NewSession(ctx context.Context, cfg SessionConfig, conn transport.Transport
 	ctx, cancel := context.WithCancel(ctx)
 
 	s := &Session{
-		conn:          conn,
+		conn:          cfg.Conn,
 		cfg:           cfg,
 		wg:            &sync.WaitGroup{},
 		checkChannel:  make(chan interface{}, 100),
-		store:         store,
-		bus:           bus,
+		store:         cfg.Store,
+		storev2:       cfg.Storev2,
+		bus:           cfg.Bus,
 		subscriptions: make(chan messaging.Subscription, len(cfg.Subscriptions)),
 		ctx:           ctx,
 		cancel:        cancel,
 		ringPool:      cfg.RingPool,
-		unmarshal:     unmarshal,
-		marshal:       marshal,
+		unmarshal:     cfg.Unmarshal,
+		marshal:       cfg.Marshal,
 		entityConfig: &entityConfig{
 			subscriptions:  make(chan messaging.Subscription, 1),
 			updatesChannel: make(chan interface{}, 10),
@@ -262,6 +274,30 @@ func (s *Session) sender() {
 			// Enforce the entity class to agent
 			if watchEvent.Entity.EntityClass != corev2.EntityAgentClass {
 				watchEvent.Entity.EntityClass = corev2.EntityAgentClass
+				logger.WithFields(logrus.Fields{
+					"entity":    watchEvent.Entity.Metadata.Name,
+					"namespace": watchEvent.Entity.Metadata.Namespace,
+				}).Warningf(
+					"misconfigured entity class %q, updating entity to be a %s",
+					watchEvent.Entity.EntityClass,
+					corev2.EntityAgentClass,
+				)
+
+				// Update the entity in the store
+				configReq := storev2.NewResourceRequestFromResource(s.ctx, watchEvent.Entity)
+				wrapper, err := wrap.Resource(watchEvent.Entity)
+				if err != nil {
+					logger.WithError(err).Error("could not wrap the entity config")
+					continue
+				}
+
+				if err := s.storev2.CreateOrUpdate(configReq, wrapper); err != nil {
+					logger.WithError(err).Error("could not update the entity config")
+				}
+
+				// We will not immediately send an update to the agent, but rather wait
+				// for the watch event for that entity config
+				continue
 			}
 
 			bytes, err := s.marshal(watchEvent.Entity)
