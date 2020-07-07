@@ -193,7 +193,7 @@ func seedCluster(client *clientv3.Client, config seedConfig) error {
 	store := etcdstore.NewStore(client, "")
 	ctx, cancel := context.WithTimeout(context.Background(), config.Timeout*time.Second)
 	defer cancel()
-	if err := seeds.SeedCluster(ctx, store, config.SeedConfig); err != nil {
+	if err := seeds.SeedCluster(ctx, store, client, config.SeedConfig); err != nil {
 		return err
 	}
 	return nil

@@ -24,6 +24,7 @@ import (
 	"golang.org/x/time/rate"
 
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/asset"
 	"github.com/sensu/sensu-go/backend/agentd"
 	"github.com/sensu/sensu-go/command"
@@ -56,7 +57,8 @@ type Agent struct {
 	connected       bool
 	connectedMu     sync.RWMutex
 	contentType     string
-	entity          *corev2.Entity
+	entityConfig    *corev3.EntityConfig
+	entityMu        sync.Mutex
 	executor        command.Executor
 	handler         *handler.MessageHandler
 	header          http.Header
@@ -107,6 +109,7 @@ func NewAgentContext(ctx context.Context, config *Config) (*Agent, error) {
 
 	agent.statsdServer = NewStatsdServer(agent)
 	agent.handler.AddHandler(corev2.CheckRequestType, agent.handleCheck)
+	agent.handler.AddHandler(transport.MessageTypeEntityConfig, agent.handleEntityConfig)
 
 	// We don't check for errors here and let the agent get created regardless
 	// of system info status.
@@ -152,16 +155,13 @@ func (a *Agent) RefreshSystemInfo(ctx context.Context) error {
 	}
 
 	proccessInfo, err := a.ProcessGetter.Get(ctx)
-	if err != nil {
-		return err
-	}
 	info.Processes = proccessInfo
 
 	a.systemInfoMu.Lock()
 	a.systemInfo = &info
 	a.systemInfoMu.Unlock()
 
-	return nil
+	return err
 }
 
 func (a *Agent) refreshSystemInfoPeriodically(ctx context.Context) {
@@ -257,11 +257,11 @@ func (a *Agent) Run(ctx context.Context) error {
 
 	if !a.config.DisableAssets {
 		assetManager := asset.NewManager(a.config.CacheDir, a.getAgentEntity(), &a.wg)
-		var err error
 		limit := a.config.AssetsRateLimit
 		if limit == 0 {
 			limit = rate.Limit(asset.DefaultAssetsRateLimit)
 		}
+		var err error
 		a.assetGetter, err = assetManager.StartAssetManager(ctx, rate.NewLimiter(limit, a.config.AssetsBurstLimit))
 		if err != nil {
 			return err
@@ -409,7 +409,6 @@ func (a *Agent) newKeepalive() *transport.Message {
 		Type: transport.MessageTypeKeepalive,
 	}
 	entity := a.getAgentEntity()
-
 	uid, _ := uuid.NewRandom()
 
 	keepalive := &corev2.Event{

@@ -14,6 +14,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Breaking
 - The database schema for entities has changed. After upgrading, users will not
 be able to use their database with older versions of Sensu.
+- After initial creation, sensu-agent entity configuration cannot be changed
+by modifying the agent's configuration file.
 
 ### Changed
 - Entities are now stored as two separate data structures, in order to optimize
@@ -21,6 +23,8 @@ data access patterns.
 - Improves logging around the agent websocket connection.
 - The `dead` and `handleUpdate` methods in keepalived now use `EntityConfig` and
 `EntityState` respectively.
+- Improves logging around the agent websocket connection.
+- sensu-agent configuration can now be managed via the HTTP API.
 
 ## [5.21.0] - 2020-06-10
 
