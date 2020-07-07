@@ -40,9 +40,17 @@ func evaluateEventFilter(event *corev2.Event, filter *corev2.EventFilter, assets
 	}
 
 	synth := dynamic.Synthesize(event)
+	fee := FilterExecutionEnvironment{
+		Event:  synth,
+		Assets: assets,
+	}
 
 	for _, expression := range filter.Expressions {
-		match := evaluateJSFilter(synth, expression, assets)
+		match, err := fee.Eval(expression)
+		if err != nil {
+			logger.WithError(err).Error("error evaluating javascript event filter")
+			continue
+		}
 
 		// Allow - One of the expressions did not match, filter the event
 		if filter.Action == corev2.EventFilterActionAllow && !match {
