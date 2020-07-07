@@ -40,6 +40,8 @@ import (
 	"github.com/sensu/sensu-go/backend/secrets"
 	"github.com/sensu/sensu-go/backend/store"
 	etcdstore "github.com/sensu/sensu-go/backend/store/etcd"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	etcdstorev2 "github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/backend/tessend"
 	"github.com/sensu/sensu-go/rpc"
 	"github.com/sensu/sensu-go/system"
@@ -65,6 +67,7 @@ type Backend struct {
 	Daemons                []daemon.Daemon
 	Etcd                   *etcd.Etcd
 	Store                  store.Store
+	StoreV2                storev2.Interface
 	EventStore             EventStoreUpdater
 	GraphQLService         *graphql.Service
 	SecretsProviderManager *secrets.ProviderManager
@@ -197,6 +200,8 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 	// Create the store, which lives on top of etcd
 	stor := etcdstore.NewStore(b.Client, config.EtcdName)
 	b.Store = stor
+	storv2 := etcdstorev2.NewStore(b.Client)
+	b.StoreV2 = storv2
 
 	if _, err := stor.GetClusterID(b.RunContext()); err != nil {
 		return nil, err
@@ -312,6 +317,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		TLS:          config.AgentTLSOptions,
 		RingPool:     ringPool,
 		WriteTimeout: config.AgentWriteTimeout,
+		Client:       b.Client,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)
@@ -323,6 +329,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		DeregistrationHandler: config.DeregistrationHandler,
 		Bus:                   bus,
 		Store:                 stor,
+		StoreV2:               storv2,
 		EventStore:            eventStoreProxy,
 		LivenessFactory:       liveness.EtcdFactory(b.RunContext(), b.Client),
 		RingPool:              ringPool,

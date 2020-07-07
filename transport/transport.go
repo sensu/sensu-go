@@ -30,7 +30,7 @@ const (
 	// MessageTypeEvent is the message type string for events.
 	MessageTypeEvent = "event"
 
-	// MessageTypeEntityConfig is the message type string for entity configuration.
+	// MessageTypeEntityConfig is the message type sent for entity config updates
 	MessageTypeEntityConfig = "entity_config"
 
 	// HeaderKeyAgentName is the HTTP request header specifying the Agent name

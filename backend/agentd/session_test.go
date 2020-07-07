@@ -9,7 +9,10 @@ import (
 
 	"github.com/gogo/protobuf/proto"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/backend/messaging"
+	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/v2/storetest"
 	"github.com/sensu/sensu-go/testing/mockstore"
 	"github.com/sensu/sensu-go/testing/mocktransport"
 	"github.com/sensu/sensu-go/transport"
@@ -75,8 +78,13 @@ func TestGoodSessionConfig(t *testing.T) {
 		AgentName:     "testing",
 		Namespace:     "acme",
 		Subscriptions: []string{"testing"},
+		Conn:          conn,
+		Bus:           bus,
+		Store:         st,
+		Unmarshal:     UnmarshalJSON,
+		Marshal:       MarshalJSON,
 	}
-	session, err := NewSession(context.Background(), cfg, conn, bus, st, UnmarshalJSON, MarshalJSON)
+	session, err := NewSession(context.Background(), cfg)
 	assert.NotNil(t, session)
 	assert.NoError(t, err)
 }
@@ -101,8 +109,13 @@ func TestGoodSessionConfigProto(t *testing.T) {
 		AgentName:     "testing",
 		Namespace:     "acme",
 		Subscriptions: []string{"testing"},
+		Conn:          conn,
+		Bus:           bus,
+		Store:         st,
+		Unmarshal:     proto.Unmarshal,
+		Marshal:       proto.Marshal,
 	}
-	session, err := NewSession(context.Background(), cfg, conn, bus, st, proto.Unmarshal, proto.Marshal)
+	session, err := NewSession(context.Background(), cfg)
 	assert.NotNil(t, session)
 	assert.NoError(t, err)
 }
@@ -140,8 +153,13 @@ func TestSessionTerminateOnSendError(t *testing.T) {
 		AgentName:     "testing",
 		Namespace:     "acme",
 		Subscriptions: []string{"testing"},
+		Conn:          conn,
+		Bus:           bus,
+		Store:         st,
+		Unmarshal:     UnmarshalJSON,
+		Marshal:       MarshalJSON,
 	}
-	session, err := NewSession(context.Background(), cfg, conn, bus, st, UnmarshalJSON, MarshalJSON)
+	session, err := NewSession(context.Background(), cfg)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -173,5 +191,193 @@ func TestMakeEntitySwitchBurialEvent(t *testing.T) {
 	}
 	if got, want := event.Timestamp, int64(deletedEventSentinel); got != want {
 		t.Errorf("bad timestamp: got %d, want %d", got, want)
+	}
+}
+
+func TestSessionEntityUpdate(t *testing.T) {
+	wait := make(chan struct{})
+
+	conn := new(mocktransport.MockTransport)
+	// Mock the Receive method by blocking it for 100ms and returns an empty
+	// message so it doesn't block our test for too long
+	conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
+	conn.On("Send", mock.Anything).Run(func(args mock.Arguments) {
+		// Assert the message type to make sure it's an entity update
+		msg := args[0].(*transport.Message)
+		if msg.Type != transport.MessageTypeEntityConfig {
+			t.Fatalf("expected message type %s, got %s", transport.MessageTypeEntityConfig, msg.Type)
+		}
+
+		// Close our wait channel once we asserted the message
+		close(wait)
+	}).Return(nil)
+	conn.On("Close").Return(nil)
+
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := bus.Start(); err != nil {
+		t.Fatal(err)
+	}
+
+	st := &mockstore.MockStore{}
+
+	cfg := SessionConfig{
+		AgentName:     "testing",
+		Namespace:     "acme",
+		Subscriptions: []string{""},
+		Conn:          conn,
+		Bus:           bus,
+		Store:         st,
+		Unmarshal:     UnmarshalJSON,
+		Marshal:       MarshalJSON,
+	}
+	session, err := NewSession(context.Background(), cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := session.Start(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Send an entity config to mock an update to etcd
+	watchEvent := store.WatchEventEntityConfig{
+		Action: store.WatchUpdate,
+		Entity: corev3.FixtureEntityConfig("testing"),
+	}
+	if err := bus.Publish(messaging.EntityConfigTopic("acme", "testing"), &watchEvent); err != nil {
+		t.Fatal(err)
+	}
+
+	select {
+	case <-wait:
+		session.Stop()
+	case <-time.After(5 * time.Second):
+		t.Fatal("session never stopped, we probably never received an entity update over the channel")
+	}
+}
+
+func TestSessionEntityWatchDeleteAndUnknown(t *testing.T) {
+	conn := new(mocktransport.MockTransport)
+	// Mock the Receive method by blocking it for 100ms and returns an empty
+	// message so it doesn't block our test for too long
+	conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
+	conn.On("Close").Return(nil)
+
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := bus.Start(); err != nil {
+		t.Fatal(err)
+	}
+
+	st := &mockstore.MockStore{}
+
+	cfg := SessionConfig{
+		AgentName:     "testing",
+		Namespace:     "acme",
+		Subscriptions: []string{""},
+		Conn:          conn,
+		Bus:           bus,
+		Store:         st,
+		Unmarshal:     UnmarshalJSON,
+		Marshal:       MarshalJSON,
+	}
+	session, err := NewSession(context.Background(), cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := session.Start(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Mock an unknown watch event, which should only log an entry and continue
+	// with the next event
+	watchEvent := store.WatchEventEntityConfig{
+		Action: store.WatchUnknown,
+		Entity: corev3.FixtureEntityConfig("testing"),
+	}
+	if err := bus.Publish(messaging.EntityConfigTopic("acme", "testing"), &watchEvent); err != nil {
+		t.Fatal(err)
+	}
+
+	// Mock a delete watch event, which should force the session to close itself
+	// so the agent can attempt to reconnect in order to register itself again
+	watchEvent2 := store.WatchEventEntityConfig{
+		Action: store.WatchDelete,
+		Entity: corev3.FixtureEntityConfig("testing"),
+	}
+	if err := bus.Publish(messaging.EntityConfigTopic("acme", "testing"), &watchEvent2); err != nil {
+		t.Fatal(err)
+	}
+
+	// The session should close itself upon a WatchDelete
+	select {
+	case <-session.ctx.Done():
+	case <-time.After(time.Second * 5):
+		t.Fatal("broken session never stopped")
+	}
+}
+
+func TestSessionInvalidEntityClassUpdate(t *testing.T) {
+	wait := make(chan struct{})
+
+	conn := new(mocktransport.MockTransport)
+	// Mock the Receive method by blocking it for 100ms and returns an empty
+	// message so it doesn't block our test for too long
+	conn.On("Receive").After(100*time.Millisecond).Return(&transport.Message{}, nil)
+	conn.On("Close").Return(nil)
+
+	bus, err := messaging.NewWizardBus(messaging.WizardBusConfig{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := bus.Start(); err != nil {
+		t.Fatal(err)
+	}
+
+	storev2 := &storetest.Store{}
+	storev2.On("CreateOrUpdate", mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
+		// Close the wait channel once we receive the storev2 request
+		close(wait)
+	}).Return(nil)
+
+	cfg := SessionConfig{
+		AgentName:     "testing",
+		Namespace:     "acme",
+		Subscriptions: []string{""},
+		Conn:          conn,
+		Bus:           bus,
+		Storev2:       storev2,
+		Unmarshal:     UnmarshalJSON,
+		Marshal:       MarshalJSON,
+	}
+	session, err := NewSession(context.Background(), cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := session.Start(); err != nil {
+		t.Fatal(err)
+	}
+
+	// Mock an entity update from the entity watcher, and update the entity class
+	// to simulate a misconfigured agent entity as a proxy entity
+	entity := corev3.FixtureEntityConfig("testing")
+	entity.EntityClass = corev2.EntityProxyClass
+	watchEvent := store.WatchEventEntityConfig{
+		Action: store.WatchUpdate,
+		Entity: entity,
+	}
+	if err := bus.Publish(messaging.EntityConfigTopic("acme", "testing"), &watchEvent); err != nil {
+		t.Fatal(err)
+	}
+
+	select {
+	case <-wait:
+		session.Stop()
+	case <-time.After(5 * time.Second):
+		t.Fatal("session never stopped, we probably never received an entity update over the channel")
 	}
 }

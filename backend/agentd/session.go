@@ -15,6 +15,8 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/wrap"
 	"github.com/sensu/sensu-go/handler"
 	"github.com/sensu/sensu-go/transport"
 	"github.com/sirupsen/logrus"
@@ -59,10 +61,10 @@ type Session struct {
 	cfg          SessionConfig
 	conn         transport.Transport
 	store        store.EntityStore
+	storev2      storev2.Interface
 	handler      *handler.MessageHandler
 	wg           *sync.WaitGroup
 	stopWG       sync.WaitGroup
-	sendq        chan *transport.Message
 	checkChannel chan interface{}
 	bus          messaging.MessageBus
 	ringPool     *ringv2.Pool
@@ -70,8 +72,21 @@ type Session struct {
 	cancel       context.CancelFunc
 	marshal      MarshalFunc
 	unmarshal    UnmarshalFunc
+	entityConfig *entityConfig
 
 	subscriptions chan messaging.Subscription
+}
+
+// entityConfig is used by a session to subscribe to entity config updates
+type entityConfig struct {
+	subscriptions  chan messaging.Subscription
+	updatesChannel chan interface{}
+}
+
+// Receiver returns the channel for incoming entity updates from the entity
+// watcher
+func (e *entityConfig) Receiver() chan<- interface{} {
+	return e.updatesChannel
 }
 
 func newSessionHandler(s *Session) *handler.MessageHandler {
@@ -82,7 +97,7 @@ func newSessionHandler(s *Session) *handler.MessageHandler {
 	return handler
 }
 
-// A SessionConfig contains all of the ncessary information to initialize
+// A SessionConfig contains all of the necessary information to initialize
 // an agent session.
 type SessionConfig struct {
 	ContentType   string
@@ -91,15 +106,23 @@ type SessionConfig struct {
 	AgentName     string
 	User          string
 	Subscriptions []string
-	RingPool      *ringv2.Pool
 	WriteTimeout  int
+
+	Bus      messaging.MessageBus
+	Conn     transport.Transport
+	RingPool *ringv2.Pool
+	Store    store.Store
+	Storev2  storev2.Interface
+
+	Marshal   MarshalFunc
+	Unmarshal UnmarshalFunc
 }
 
 // NewSession creates a new Session object given the triple of a transport
 // connection, message bus, and store.
 // The Session is responsible for stopping itself, and does so when it
 // encounters a receive error.
-func NewSession(ctx context.Context, cfg SessionConfig, conn transport.Transport, bus messaging.MessageBus, store store.Store, unmarshal UnmarshalFunc, marshal MarshalFunc) (*Session, error) {
+func NewSession(ctx context.Context, cfg SessionConfig) (*Session, error) {
 	logger.WithFields(logrus.Fields{
 		"addr":          cfg.AgentAddr,
 		"namespace":     cfg.Namespace,
@@ -110,19 +133,23 @@ func NewSession(ctx context.Context, cfg SessionConfig, conn transport.Transport
 	ctx, cancel := context.WithCancel(ctx)
 
 	s := &Session{
-		conn:          conn,
+		conn:          cfg.Conn,
 		cfg:           cfg,
 		wg:            &sync.WaitGroup{},
-		sendq:         make(chan *transport.Message, 10),
 		checkChannel:  make(chan interface{}, 100),
-		store:         store,
-		bus:           bus,
+		store:         cfg.Store,
+		storev2:       cfg.Storev2,
+		bus:           cfg.Bus,
 		subscriptions: make(chan messaging.Subscription, len(cfg.Subscriptions)),
 		ctx:           ctx,
 		cancel:        cancel,
 		ringPool:      cfg.RingPool,
-		unmarshal:     unmarshal,
-		marshal:       marshal,
+		unmarshal:     cfg.Unmarshal,
+		marshal:       cfg.Marshal,
+		entityConfig: &entityConfig{
+			subscriptions:  make(chan messaging.Subscription, 1),
+			updatesChannel: make(chan interface{}, 10),
+		},
 	}
 	if err := s.bus.Publish(messaging.TopicKeepalive, makeEntitySwitchBurialEvent(cfg)); err != nil {
 		return nil, err
@@ -214,7 +241,72 @@ func (s *Session) sender() {
 	for {
 		var msg *transport.Message
 		select {
-		case msg = <-s.sendq:
+		case e := <-s.entityConfig.updatesChannel:
+			watchEvent, ok := e.(*store.WatchEventEntityConfig)
+			if !ok {
+				logger.Errorf("session received unexpected struct: %T", e)
+				continue
+			}
+
+			if watchEvent.Entity == nil {
+				logger.Error("session received nil entity in watch event")
+				continue
+			}
+
+			logger.WithFields(logrus.Fields{
+				"action":    watchEvent.Action.String(),
+				"entity":    watchEvent.Entity.Metadata.Name,
+				"namespace": watchEvent.Entity.Metadata.Namespace,
+			}).Debug("entity update received")
+
+			// Handle the delete and unknown watch events
+			switch watchEvent.Action {
+			case store.WatchDelete:
+				// The entity was deleted, we should sever the connection to the agent
+				// so it can register back
+				s.cancel()
+				continue
+			case store.WatchUnknown:
+				logger.Error("session received unknown watch event")
+				continue
+			}
+
+			// Enforce the entity class to agent
+			if watchEvent.Entity.EntityClass != corev2.EntityAgentClass {
+				watchEvent.Entity.EntityClass = corev2.EntityAgentClass
+				logger.WithFields(logrus.Fields{
+					"entity":    watchEvent.Entity.Metadata.Name,
+					"namespace": watchEvent.Entity.Metadata.Namespace,
+				}).Warningf(
+					"misconfigured entity class %q, updating entity to be a %s",
+					watchEvent.Entity.EntityClass,
+					corev2.EntityAgentClass,
+				)
+
+				// Update the entity in the store
+				configReq := storev2.NewResourceRequestFromResource(s.ctx, watchEvent.Entity)
+				wrapper, err := wrap.Resource(watchEvent.Entity)
+				if err != nil {
+					logger.WithError(err).Error("could not wrap the entity config")
+					continue
+				}
+
+				if err := s.storev2.CreateOrUpdate(configReq, wrapper); err != nil {
+					logger.WithError(err).Error("could not update the entity config")
+				}
+
+				// We will not immediately send an update to the agent, but rather wait
+				// for the watch event for that entity config
+				continue
+			}
+
+			bytes, err := s.marshal(watchEvent.Entity)
+			if err != nil {
+				logger.WithError(err).Error("session failed to serialize entity config")
+				continue
+			}
+
+			msg = transport.NewMessage(transport.MessageTypeEntityConfig, bytes)
 		case c := <-s.checkChannel:
 			request, ok := c.(*corev2.CheckRequest)
 			if !ok {
@@ -232,7 +324,10 @@ func (s *Session) sender() {
 		case <-s.ctx.Done():
 			return
 		}
-		logger.WithField("payload_size", len(msg.Payload)).Debug("session - sending message")
+		logger.WithFields(logrus.Fields{
+			"type":         msg.Type,
+			"payload_size": len(msg.Payload),
+		}).Debug("session - sending message")
 		if err := s.conn.Send(msg); err != nil {
 			switch err := err.(type) {
 			case transport.ConnectionError, transport.ClosedError:
@@ -284,7 +379,19 @@ func (s *Session) Start() (err error) {
 		}
 		s.subscriptions <- subscription
 	}
+
+	// Subscribe the agent to its entity_config topic
+	topic := messaging.EntityConfigTopic(namespace, s.cfg.AgentName)
+	logger.WithField("topic", topic).Debug("subscribing to topic")
+	subscription, err := s.bus.Subscribe(topic, agentName, s.entityConfig)
+	if err != nil {
+		logger.WithError(err).Error("error starting subscription")
+		return err
+	}
+	s.entityConfig.subscriptions <- subscription
+
 	close(s.subscriptions)
+	close(s.entityConfig.subscriptions)
 
 	return nil
 }
@@ -314,6 +421,14 @@ func (s *Session) stop() {
 		}
 	}
 	close(s.checkChannel)
+
+	for sub := range s.entityConfig.subscriptions {
+		if err := sub.Cancel(); err != nil {
+			logger.WithError(err).Error("unable to unsubscribe from message bus")
+		}
+	}
+	close(s.entityConfig.updatesChannel)
+
 	if s.ringPool == nil {
 		// This is a bit of a hack - allow ringPool to be nil for the benefit
 		// of the tests.
