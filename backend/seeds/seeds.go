@@ -5,9 +5,11 @@ import (
 	"errors"
 	"time"
 
+	"github.com/coreos/etcd/clientv3"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
 	"github.com/sensu/sensu-go/backend/authentication/bcrypt"
 	"github.com/sensu/sensu-go/backend/store"
+	"github.com/sensu/sensu-go/backend/store/etcd"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -22,7 +24,7 @@ type Config struct {
 var ErrAlreadyInitialized = errors.New("sensu-backend already initialized")
 
 // SeedCluster seeds the cluster according to the provided config.
-func SeedCluster(ctx context.Context, store store.Store, config Config) error {
+func SeedCluster(ctx context.Context, store store.Store, client *clientv3.Client, config Config) error {
 	errs := make(chan error, 1)
 	go func() {
 		var err error
@@ -93,6 +95,14 @@ func SeedCluster(ctx context.Context, store store.Store, config Config) error {
 			return
 		}
 
+		if client != nil {
+			// Migrate the cluster to the latest version
+			if err = etcd.MigrateDB(ctx, client, etcd.Migrations); err != nil {
+				logger.WithError(err).Error("error bringing the database to the latest version")
+				return
+			}
+		}
+
 		// Set initialized flag
 		err = initializer.FlagAsInitialized()
 	}()
@@ -113,7 +123,7 @@ func SeedInitialData(store store.Store) (err error) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
-	return SeedCluster(ctx, store, config)
+	return SeedCluster(ctx, store, nil, config)
 }
 
 func setupDefaultNamespace(store store.Store) error {
