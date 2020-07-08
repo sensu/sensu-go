@@ -48,6 +48,8 @@ func New(config config.Config) *RestClient {
 	// JSON
 	restyInst.SetHeader("Accept", "application/json")
 	restyInst.SetHeader("Content-Type", "application/json")
+
+	// Set the User-Agent header
 	restyInst.SetHeader("User-Agent", "sensuctl/"+version.Semver())
 
 	// Check that Access-Token has not expired
