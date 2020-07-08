@@ -345,9 +345,10 @@ func (e *Eventd) dead(key string, prev liveness.State, leader bool) (bury bool) 
 		return true
 	}
 
+	ctx := store.NamespaceContext(context.Background(), namespace)
 	// TODO(eric): make this configurable? Or dynamic based on some property?
 	// 120s seems like a reasonable, it not somewhat large, timeout for check TTL processing.
-	ctx, cancel := context.WithTimeout(context.Background(), e.storeTimeout)
+	ctx, cancel := context.WithTimeout(ctx, e.storeTimeout)
 	defer cancel()
 
 	// The entity has been deleted, and so there is no reason to track check

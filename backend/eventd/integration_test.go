@@ -12,6 +12,7 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/seeds"
 	"github.com/sensu/sensu-go/backend/store/etcd/testutil"
+	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	otherTestutil "github.com/sensu/sensu-go/testing/testutil"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -54,12 +55,13 @@ func TestEventdMonitor(t *testing.T) {
 	if err != nil {
 		assert.FailNow(t, err.Error())
 	}
+	storev2 := etcdstore.NewStore(store.Client)
 
 	if err := seeds.SeedInitialData(store); err != nil {
 		assert.FailNow(t, err.Error())
 	}
 
-	e := newEventd(store, bus, livenessFactory)
+	e := newEventd(storev2, store, bus, livenessFactory)
 
 	if err := e.Start(); err != nil {
 		assert.FailNow(t, err.Error())
