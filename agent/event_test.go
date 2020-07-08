@@ -8,7 +8,7 @@ import (
 	time "github.com/echlebek/timeproxy"
 	"github.com/google/uuid"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
-	v2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	corev1 "github.com/sensu/sensu-go/types/v1"
 )
 
@@ -229,8 +229,8 @@ func Test_prepareEvent(t *testing.T) {
 			name: "missing check",
 			args: args{
 				agent: &Agent{},
-				event: &v2.Event{
-					ObjectMeta: v2.ObjectMeta{Namespace: "default"},
+				event: &corev2.Event{
+					ObjectMeta: corev2.ObjectMeta{Namespace: "default"},
 				},
 			},
 			wantErr: true,
@@ -243,11 +243,11 @@ func Test_prepareEvent(t *testing.T) {
 						Namespace: "jamespace",
 					},
 				},
-				event: &v2.Event{
-					ObjectMeta: v2.ObjectMeta{
+				event: &corev2.Event{
+					ObjectMeta: corev2.ObjectMeta{
 						Namespace: "default",
 					},
-					Check: &v2.Check{
+					Check: &corev2.Check{
 						ProxyEntityName: "john",
 					},
 				},
@@ -261,11 +261,11 @@ func Test_prepareEvent(t *testing.T) {
 					config: &Config{
 						Namespace: "jamespace",
 					},
-					entity: v2.FixtureEntity("agent1"),
+					entityConfig: corev3.FixtureEntityConfig("agent1"),
 				},
-				event: &v2.Event{
-					Check:  v2.FixtureCheck("check1"),
-					Entity: v2.FixtureEntity("entity1"),
+				event: &corev2.Event{
+					Check:  corev2.FixtureCheck("check1"),
+					Entity: corev2.FixtureEntity("entity1"),
 				},
 			},
 			wantErr:       false,

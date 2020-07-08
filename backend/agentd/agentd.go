@@ -11,6 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
+	"github.com/coreos/etcd/clientv3"
 	"github.com/gogo/protobuf/proto"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -23,6 +24,8 @@ import (
 	"github.com/sensu/sensu-go/backend/messaging"
 	"github.com/sensu/sensu-go/backend/ringv2"
 	"github.com/sensu/sensu-go/backend/store"
+	storev2 "github.com/sensu/sensu-go/backend/store/v2"
+	"github.com/sensu/sensu-go/backend/store/v2/etcdstore"
 	"github.com/sensu/sensu-go/transport"
 )
 
@@ -49,6 +52,7 @@ type Agentd struct {
 	errChan      chan error
 	httpServer   *http.Server
 	store        store.Store
+	storev2      storev2.Interface
 	bus          messaging.MessageBus
 	tls          *corev2.TLSOptions
 	ringPool     *ringv2.Pool
@@ -66,6 +70,7 @@ type Config struct {
 	TLS          *corev2.TLSOptions
 	RingPool     *ringv2.Pool
 	WriteTimeout int
+	Client       *clientv3.Client
 }
 
 // Option is a functional option.
@@ -88,6 +93,7 @@ func New(c Config, opts ...Option) (*Agentd, error) {
 		ctx:          ctx,
 		cancel:       cancel,
 		writeTimeout: c.WriteTimeout,
+		storev2:      etcdstore.NewStore(c.Client),
 	}
 
 	// prepare server TLS config
@@ -219,6 +225,13 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 	responseHeader.Set("Content-Type", contentType)
 	logger.WithField("header", fmt.Sprintf("Content-Type: %s", contentType)).Debug("setting header")
 
+	conn, err := upgrader.Upgrade(w, r, responseHeader)
+	if err != nil {
+		logger.WithField("addr", r.RemoteAddr).WithError(err).Error("transport error on websocket upgrade")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	cfg := SessionConfig{
 		AgentAddr:     r.RemoteAddr,
 		AgentName:     r.Header.Get(transport.HeaderKeyAgentName),
@@ -228,6 +241,12 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 		RingPool:      a.ringPool,
 		ContentType:   contentType,
 		WriteTimeout:  a.writeTimeout,
+		Bus:           a.bus,
+		Conn:          transport.NewTransport(conn),
+		Store:         a.store,
+		Storev2:       a.storev2,
+		Marshal:       marshal,
+		Unmarshal:     unmarshal,
 	}
 
 	// Validate the agent namespace
@@ -239,16 +258,9 @@ func (a *Agentd) webSocketHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	conn, err := upgrader.Upgrade(w, r, responseHeader)
-	if err != nil {
-		logger.WithField("addr", r.RemoteAddr).WithError(err).Error("transport error on websocket upgrade")
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
 	cfg.Subscriptions = addEntitySubscription(cfg.AgentName, cfg.Subscriptions)
 
-	session, err := NewSession(a.ctx, cfg, transport.NewTransport(conn), a.bus, a.store, unmarshal, marshal)
+	session, err := NewSession(a.ctx, cfg)
 	if err != nil {
 		logger.WithError(err).Error("failed to create session")
 		http.Error(w, err.Error(), http.StatusInternalServerError)

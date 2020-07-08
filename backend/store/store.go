@@ -8,6 +8,7 @@ import (
 
 	"github.com/coreos/etcd/clientv3"
 	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/sensu/sensu-go/types"
 )
 
@@ -95,21 +96,22 @@ type SelectionPredicate struct {
 	Subcollection string
 }
 
-// A WatchEventCheckConfig contains the modified store object and the action that occured
-// during the modification.
+// A WatchEventCheckConfig contains the modified store object and the action
+// that occured during the modification.
 type WatchEventCheckConfig struct {
 	CheckConfig *types.CheckConfig
 	Action      WatchActionType
 }
 
-// A WatchEventHookConfig contains the modified asset object and the action that occurred
-// during the modification.
+// A WatchEventHookConfig contains the modified asset object and the action that
+// occurred during the modification.
 type WatchEventHookConfig struct {
 	HookConfig *types.HookConfig
 	Action     WatchActionType
 }
 
-// WatchEventTessenConfig is a notification that the tessen config store has been updated.
+// WatchEventTessenConfig is a notification that the tessen config store has
+// been updated.
 type WatchEventTessenConfig struct {
 	TessenConfig *corev2.TessenConfig
 	Action       WatchActionType
@@ -119,6 +121,13 @@ type WatchEventTessenConfig struct {
 type WatchEventResource struct {
 	Resource corev2.Resource
 	Action   WatchActionType
+}
+
+// WatchEventEntityConfig contains an updated entity config and the action that
+// occurred during this modification.
+type WatchEventEntityConfig struct {
+	Entity *corev3.EntityConfig
+	Action WatchActionType
 }
 
 // Store is used to abstract the durable storage used by the Sensu backend

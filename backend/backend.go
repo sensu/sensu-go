@@ -317,6 +317,7 @@ func Initialize(ctx context.Context, config *Config) (*Backend, error) {
 		TLS:          config.AgentTLSOptions,
 		RingPool:     ringPool,
 		WriteTimeout: config.AgentWriteTimeout,
+		Client:       b.Client,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error initializing %s: %s", agent.Name(), err)

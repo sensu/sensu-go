@@ -3,7 +3,8 @@ package agent
 import (
 	"testing"
 
-	"github.com/sensu/sensu-go/types"
+	corev2 "github.com/sensu/sensu-go/api/core/v2"
+	corev3 "github.com/sensu/sensu-go/api/core/v3"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,6 +21,7 @@ func TestGetAgentEntity(t *testing.T) {
 			agent: &Agent{
 				config: &Config{
 					AgentName:             "foo",
+					Namespace:             "default",
 					DeregistrationHandler: "slack",
 				},
 			},
@@ -28,7 +30,12 @@ func TestGetAgentEntity(t *testing.T) {
 		{
 			name: "The agent has an entity",
 			agent: &Agent{
-				entity: types.FixtureEntity("bar"),
+				entityConfig: corev3.FixtureEntityConfig("bar"),
+				config: &Config{
+					AgentName:             "bar",
+					Namespace:             "default",
+					DeregistrationHandler: "slack",
+				},
 			},
 			expectedAgentName: "bar",
 		},
@@ -36,7 +43,7 @@ func TestGetAgentEntity(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.agent.systemInfo = &types.System{}
+			tc.agent.systemInfo = &corev2.System{}
 
 			entity := tc.agent.getAgentEntity()
 			assert.Equal(tc.expectedAgentName, entity.Name)
@@ -50,17 +57,21 @@ func TestGetEntities(t *testing.T) {
 	testCases := []struct {
 		name              string
 		agent             *Agent
-		event             *types.Event
+		event             *corev2.Event
 		expectedAgentName string
 		expectedSource    string
 	}{
 		{
 			name: "The provided event has no entity",
 			agent: &Agent{
-				entity: types.FixtureEntity("foo"),
+				entityConfig: corev3.FixtureEntityConfig("foo"),
+				config: &Config{
+					Namespace: "default",
+					AgentName: "foo",
+				},
 			},
-			event: &types.Event{
-				Check: types.FixtureCheck("check_cpu"),
+			event: &corev2.Event{
+				Check: corev2.FixtureCheck("check_cpu"),
 			},
 			expectedAgentName: "foo",
 			expectedSource:    "",
@@ -69,10 +80,11 @@ func TestGetEntities(t *testing.T) {
 			name: "The provided event has an entity",
 			agent: &Agent{
 				config: &Config{
+					Namespace: "default",
 					AgentName: "agent_entity",
 				},
 			},
-			event:             types.FixtureEvent("proxy_entity", "check_cpu"),
+			event:             corev2.FixtureEvent("proxy_entity", "check_cpu"),
 			expectedAgentName: "agent_entity",
 			expectedSource:    "proxy_entity",
 		},
@@ -80,7 +92,7 @@ func TestGetEntities(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.agent.systemInfo = &types.System{}
+			tc.agent.systemInfo = &corev2.System{}
 
 			tc.agent.getEntities(tc.event)
 			assert.Equal(tc.expectedAgentName, tc.event.Entity.Name)
