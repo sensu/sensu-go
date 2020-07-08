@@ -48,6 +48,10 @@ func TestNamespacesRouter(t *testing.T) {
 	s.On("CreateOrUpdateResource", mock.Anything, mock.AnythingOfType("*v2.Role")).Return(nil)
 	s.On("CreateOrUpdateResource", mock.Anything, mock.AnythingOfType("*v2.RoleBinding")).Return(nil)
 
+	// Mock role & role binding deletion, which happens upon namespace deletion
+	s.On("DeleteResource", mock.Anything, "rbac/rolebindings", "system:pipeline").Return(nil)
+	s.On("DeleteResource", mock.Anything, "rbac/roles", "system:pipeline").Return(nil)
+
 	// Mock an authorizer since the api client performs authorization on its own
 	authorizer := &mockauthorizer.Authorizer{}
 	authorizer.On("Authorize", mock.Anything, mock.Anything).Return(true, nil)
@@ -67,7 +71,7 @@ func TestNamespacesRouter(t *testing.T) {
 	// TODO(eric): I can't figure out how to get this test to work.
 	// Need to figure out how to inject authentication so the test gets
 	// rbac claims in the context.
-	//tests = append(tests, deleteTestCases(fixture)...)
+	tests = append(tests, deleteTestCases(fixture)...)
 	for _, tt := range tests {
 		run(t, tt, parentRouter, s)
 	}
