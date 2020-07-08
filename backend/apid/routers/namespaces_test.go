@@ -68,9 +68,6 @@ func TestNamespacesRouter(t *testing.T) {
 	tests = append(tests, getTestCases(fixture)...)
 	tests = append(tests, createTestCases(empty)...)
 	tests = append(tests, updateTestCases(fixture)...)
-	// TODO(eric): I can't figure out how to get this test to work.
-	// Need to figure out how to inject authentication so the test gets
-	// rbac claims in the context.
 	tests = append(tests, deleteTestCases(fixture)...)
 	for _, tt := range tests {
 		run(t, tt, parentRouter, s)
