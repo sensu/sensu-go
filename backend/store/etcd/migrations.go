@@ -19,6 +19,7 @@ type Migration func(ctx context.Context, client *clientv3.Client) error
 var Migrations = []Migration{
 	Base,
 	MigrateV2EntityToV3,
+	MigrateAddPipelineDRoles,
 }
 
 // Base is the base version of the database. It is never executed.
@@ -39,6 +40,55 @@ func MigrateV2EntityToV3(ctx context.Context, client *clientv3.Client) error {
 			return err
 		}
 		if err := deleteV2Entity(ctx, client, response.Entity); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// In Sensu 6.0, whenever we create a namespace, we create a role and role binding
+// for pipelined.
+func MigrateAddPipelineDRoles(ctx context.Context, client *clientv3.Client) error {
+	namespaces := []*corev2.Namespace{}
+	err := List(ctx, client, GetNamespacesPath, &namespaces, &store.SelectionPredicate{})
+	if err != nil {
+		return err
+	}
+	const pipelineRoleName = "system:pipeline"
+	for _, ns := range namespaces {
+		namespace := ns.Name
+		role := &corev2.Role{
+			ObjectMeta: corev2.ObjectMeta{
+				Namespace: namespace,
+				Name:      pipelineRoleName,
+			},
+			Rules: []corev2.Rule{
+				{
+					Verbs:     []string{"get", "list"},
+					Resources: []string{new(corev2.Event).RBACName()},
+				},
+			},
+		}
+		if err := CreateOrUpdate(ctx, client, getRolePath(role), namespace, role); err != nil {
+			return err
+		}
+		binding := &corev2.RoleBinding{
+			Subjects: []corev2.Subject{
+				{
+					Type: "user",
+					Name: pipelineRoleName,
+				},
+			},
+			RoleRef: corev2.RoleRef{
+				Name: pipelineRoleName,
+				Type: "Role",
+			},
+			ObjectMeta: corev2.ObjectMeta{
+				Name:      pipelineRoleName,
+				Namespace: namespace,
+			},
+		}
+		if err := CreateOrUpdate(ctx, client, getRoleBindingPath(binding), namespace, binding); err != nil {
 			return err
 		}
 	}
