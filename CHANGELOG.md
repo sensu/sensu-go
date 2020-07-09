@@ -10,6 +10,8 @@ Versioning](http://semver.org/spec/v2.0.0.html).
 ### Fixed
 - Clarifies wording around a secret provider error message.
 - Logs and returns an error if a mutator cannot be found.
+- User-Agent header is only set on new client creation rather than on each
+request.
 
 ### Breaking
 - The database schema for entities has changed. After upgrading, users will not
