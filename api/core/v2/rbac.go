@@ -186,7 +186,9 @@ func (b *ClusterRoleBinding) Validate() error {
 		return errors.New("ClusterRoleBinding cannot have a namespace")
 	}
 
-	return ValidateSubjects(b.Subjects)
+	var err error
+	b.Subjects, err = ValidateSubjects(b.Subjects)
+	return err
 }
 
 // StorePrefix returns the path prefix to this resource in the store
@@ -258,26 +260,34 @@ func (b *RoleBinding) Validate() error {
 		return errors.New("a RoleBinding needs a roleRef")
 	}
 
-	return ValidateSubjects(b.Subjects)
+	var err error
+	b.Subjects, err = ValidateSubjects(b.Subjects)
+	return err
 }
 
 // ValidateSubjects checks that there is at least one subject, and all subjects
 // have non-empty types and names.
-func ValidateSubjects(subjects []Subject) error {
+func ValidateSubjects(subjects []Subject) ([]Subject, error) {
 	if len(subjects) == 0 {
-		return errors.New("a RoleBinding must have at least one subject")
+		return subjects, errors.New("a RoleBinding must have at least one subject")
 	}
 
 	for i, subject := range subjects {
-		if err := ValidateName(subject.Type); err != nil {
-			return fmt.Errorf("subject %d: type not valid: %s", i, err)
+		subjects[i].Type = strings.Title(subject.Type)
+		if subjects[i].Type != GroupType && subjects[i].Type != UserType {
+			return subjects, fmt.Errorf(
+				"subject type %q is invalid, expected either %q or %q",
+				subject.Type, GroupType, UserType,
+			)
 		}
-		if err := ValidateName(subject.Name); err != nil {
-			return fmt.Errorf("subject %d: name not valid: %s", i, err)
+		if len(subject.Name) == 0 {
+			return subjects, fmt.Errorf(
+				"subject name for the %q type is required", subjects[i].Type,
+			)
 		}
 	}
 
-	return nil
+	return subjects, nil
 }
 
 // ResourceMatches returns whether the specified requestedResource matches any

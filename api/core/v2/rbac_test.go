@@ -56,9 +56,9 @@ func TestRuleResourceNameMatches(t *testing.T) {
 		want                  bool
 	}{
 		{
-			name: "rule allows all names",
+			name:                  "rule allows all names",
 			requestedResourceName: "checks",
-			want: true,
+			want:                  true,
 		},
 		{
 			name:          "rule only allows a specific name none specified in req",
@@ -69,13 +69,13 @@ func TestRuleResourceNameMatches(t *testing.T) {
 			name:                  "does not match",
 			resourceNames:         []string{"foo"},
 			requestedResourceName: "bar",
-			want: false,
+			want:                  false,
 		},
 		{
 			name:                  "matches",
 			resourceNames:         []string{"foo", "bar"},
 			requestedResourceName: "bar",
-			want: true,
+			want:                  true,
 		},
 	}
 	for _, tc := range tests {
@@ -197,15 +197,16 @@ func Test_split(t *testing.T) {
 
 func TestValidateSubjects(t *testing.T) {
 	tests := []struct {
-		Name     string
-		ExpErr   bool
-		Subjects []Subject
+		Name         string
+		ExpErr       bool
+		Subjects     []Subject
+		WantSubjects []Subject
 	}{
 		{
 			Name: "valid",
 			Subjects: []Subject{
 				{
-					Type: "user",
+					Type: "User",
 					Name: "eric",
 				},
 			},
@@ -223,17 +224,7 @@ func TestValidateSubjects(t *testing.T) {
 			Name: "missing name",
 			Subjects: []Subject{
 				{
-					Type: "user",
-				},
-			},
-			ExpErr: true,
-		},
-		{
-			Name: "invalid name",
-			Subjects: []Subject{
-				{
-					Name: "^*^*#$^&#^",
-					Type: "user",
+					Type: "User",
 				},
 			},
 			ExpErr: true,
@@ -252,27 +243,57 @@ func TestValidateSubjects(t *testing.T) {
 			Name: "one valid, one invalid",
 			Subjects: []Subject{
 				{
-					Type: "user",
+					Type: "User",
 					Name: "eric",
 				},
 				{
-					Type: "user",
+					Type: "User",
 				},
 			},
 			ExpErr: true,
 		},
+		{
+			Name:     "at least one subject is required",
+			Subjects: []Subject{},
+			ExpErr:   true,
+		},
+		{
+			Name: "spaces in name are authorized",
+			Subjects: []Subject{
+				{
+					Type: "Group",
+					Name: "foo bar",
+				},
+			},
+			ExpErr: false,
+		},
+		{
+			Name: "subject types are capitalized",
+			Subjects: []Subject{
+				{
+					Type: "group",
+					Name: "foo",
+				},
+			},
+			WantSubjects: []Subject{
+				{
+					Type: "Group",
+					Name: "foo",
+				},
+			},
+			ExpErr: false,
+		},
 	}
-
 	for _, test := range tests {
 		t.Run(test.Name+"_ValidateSubjects", func(t *testing.T) {
-			err := ValidateSubjects(test.Subjects)
-			if test.ExpErr {
-				if err == nil {
-					t.Fatal("expected non-nil error")
-				}
-			} else {
-				if err != nil {
-					t.Fatal(err)
+			got, err := ValidateSubjects(test.Subjects)
+			if (err != nil) != test.ExpErr {
+				t.Errorf("ValidateSubjects() error = %v, ExpErr %v", err, test.ExpErr)
+			}
+
+			if test.WantSubjects != nil {
+				if !reflect.DeepEqual(got, test.WantSubjects) {
+					t.Errorf("ValidateSubjects() = %v, want %v", got, test.WantSubjects)
 				}
 			}
 		})
@@ -280,31 +301,16 @@ func TestValidateSubjects(t *testing.T) {
 		t.Run(test.Name+"_RoleBinding", func(t *testing.T) {
 			crb := FixtureClusterRoleBinding("b")
 			crb.Subjects = test.Subjects
-			err := crb.Validate()
-			if test.ExpErr {
-				if err == nil {
-					t.Fatal("expected non-nil error")
-				}
-			} else {
-				if err != nil {
-					t.Fatal(err)
-				}
+			if err := crb.Validate(); (err != nil) != test.ExpErr {
+				t.Errorf("ClusterRoleBinding.Validate() error = %v, ExpErr %v", err, test.ExpErr)
 			}
-
 		})
 
 		t.Run(test.Name+"_ClusterRoleBinding", func(t *testing.T) {
 			rb := FixtureRoleBinding("a", "b")
 			rb.Subjects = test.Subjects
-			err := rb.Validate()
-			if test.ExpErr {
-				if err == nil {
-					t.Fatal("expected non-nil error")
-				}
-			} else {
-				if err != nil {
-					t.Fatal(err)
-				}
+			if err := rb.Validate(); (err != nil) != test.ExpErr {
+				t.Errorf("RoleBinding.Validate() error = %v, ExpErr %v", err, test.ExpErr)
 			}
 
 		})
