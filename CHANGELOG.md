@@ -18,6 +18,10 @@ other events within the filter namespace.
 - User-Agent header is only set on new client creation rather than on each
 request.
 - Fixed a bug where highly concurrent event filtering could result in a panic.
+- Fixed a bug where nil labels or annotations in an event filtering context
+would result in a bad user experience, with the user having to explicitly
+check if the annotations or labels are undefined. Now, the user is guaranteed
+that labels and annotations are always defined, though they may be empty.
 
 ### Breaking
 - The web interface is now a standalone product and no longer distributed
